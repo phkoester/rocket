@@ -1,0 +1,12 @@
+#
+# .gitignore
+#
+
+/.cache/
+/target/
+
+/compile_commands.json
+
+!/*.code-workspace
+
+# EOF

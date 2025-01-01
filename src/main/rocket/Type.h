@@ -1,0 +1,125 @@
+/**
+ * @file Type.h
+ *
+ * Run-time types.
+ */
+
+#pragma once
+
+#include "Deferred.h"
+
+#include <iosfwd>
+#include <string>
+#include <typeindex>
+#include <typeinfo>
+
+namespace rocket {
+
+// 'Type' ---------------------------------------------------------------------------------------------------
+
+/**
+ * A #rocket::Type instance represents a run-time type.
+ *
+ * This class combines the functionality of @c std::type_info and @c std::type_index.
+ *
+ * The #name() member function obtains a pretty name.
+ */
+struct Type {
+  /**
+   * Makes a #rocket::Type of type @p T.
+   *
+   * @tparam T the type to obatain a #rocket::Type for
+   * @return a new #rocket::Type
+   */
+  template<typename T>
+  static inline Type of() { return typeid(T); }
+  
+  /**
+   * Makes a #rocket::Type of value @p v.
+   *
+   * @tparam T the type of @p v
+   * @param v a value of type @p T
+   * @return a new #rocket::Type
+   */
+  template<typename T>
+  static inline Type of(const T& v) { return typeid(v); }
+
+  /**
+   * @ctor
+   *
+   * @param info a @c std::type_info reference
+   */
+  // cppcheck-suppress noExplicitConstructor
+  Type(const std::type_info& info);
+
+  /// @member_op_cast{@c std::type_info}
+  operator const std::type_info&() const { return info_; }
+
+  /// @member_op_eq
+  bool operator==(const Type& rhs) const { return index_ == rhs.index_; }
+
+  /// @member_op_ne
+  bool operator!=(const Type& rhs) const { return index_ != rhs.index_; }
+
+  /// @member_op_lt
+  bool operator<(const Type& rhs) const { return index_ < rhs.index_; }
+
+  /// @member_op_le
+  bool operator<=(const Type& rhs) const { return index_ <= rhs.index_; }
+
+  /// @member_op_gt
+  bool operator>(const Type& rhs) const { return index_ > rhs.index_; }
+
+  /// @member_op_ge
+  bool operator>=(const Type& rhs) const { return index_ >= rhs.index_; }
+
+  /// @member_op_cmp_strong_ordering
+  std::strong_ordering operator<=>(const Type& rhs) const { return index_ <=> rhs.index_; }
+
+  /// @member_fn_hash
+  inline size_t hash() const { return hash_.get(); }
+
+  /**
+   * Obtains a pretty type name.
+   *
+   * @return a pretty type name
+   */
+  const std::string& name() const { return name_.get(); }
+
+private:
+
+  const std::type_info& info_;
+  const Deferred<std::string> name_;
+  const std::type_index index_;
+  const Deferred<size_t> hash_;
+};
+
+/// @op_output{#rocket::Type}
+inline std::ostream&
+operator<<(std::ostream& lhs, const Type& rhs) {
+  return lhs << rhs.name();
+}
+
+/// @fn_hash_value{#rocket::Type}
+inline size_t
+hash_value(const Type& v) {
+  return v.hash();
+} 
+
+} // namespace rocket
+
+// 'Type' (namespace 'std') ---------------------------------------------------------------------------------
+
+/// @spec_std_hash{#rocket::Type}
+template<>
+struct std::hash<rocket::Type> {
+  /**
+   * Obtains a hash value for @p v.
+   *
+   * @param v the value to hash
+   * @return a hash value
+   */
+  inline size_t operator()(const rocket::Type& v) const { return v.hash(); }
+};
+
+// EOF

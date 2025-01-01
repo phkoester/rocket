@@ -1,0 +1,22 @@
+/*
+ * launch.json
+ */
+
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "lldb-dap",
+      "request": "launch",
+      "name": "toy (linux-x64-llvm)",
+      "program": "${workspaceRoot}/target/linux-x64-llvm-debug/toy",
+      "args": [],
+      "env": [
+        "LD_LIBRARY_PATH=${workspaceRoot}/target/linux-x64-llvm-debug"
+      ],
+      "cwd": "${workspaceRoot}",
+    },
+  ]
+}
+
+// EOF

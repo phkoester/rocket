@@ -1,0 +1,14 @@
+#
+# Doxyfile
+#
+
+@INCLUDE = $(GAIA_DIR)/include/doxygen/Doxyfile.gaia
+
+PROJECT_NAME     = Rocket (Test)
+INPUT            = src/test
+FILE_PATTERNS    = *.h
+OUTPUT_DIRECTORY = $(BUILD_DIR)/test/doc
+
+EXCLUDE          =
+
+# EOF

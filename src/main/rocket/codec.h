@@ -1,0 +1,836 @@
+/**
+ * @file codec.h
+ *
+ * Declarations for encoding/decoding C++ objects. 
+ *
+ * @attention This file must be included @b after all codec-related declarations and @b before all
+ * codec-related definitions.
+ *
+ * | What?                          | How?                                      |
+ * | :----------------------------- | :---------------------------------------- |
+ * | Parse RON from @c std::istream | Supply a parseRon() overload for the type |
+ * | Print RON to @c std::ostream   | Supply a printRon() overload for the type |
+ * | Decode from RON string         | Use rocket::codec::ron::parse()           |
+ * | Encode to RON string           | Use rocket::codec::ron::print()           |
+ */
+
+#pragma once
+
+// Nothing with a codec-related function overload may be included here!
+
+#include "S.h"
+#include "except.h"
+#include "io.h"
+#include "scoped.h"
+
+/// @cond undocumented
+#define ROCKET_CODEC_H
+/// @endcond
+
+#include <cstdlib>
+#include <iomanip>
+#include <limits>
+#include <spanstream>
+#include <utility>
+#include <variant>
+
+namespace rocket::codec {
+
+// 'Symbols' ------------------------------------------------------------------------------------------------
+
+/**
+ * Predefined symbols for parsing and printing.
+ */
+struct Symbols {
+  /// Character sets.
+  struct Chars {
+    /**
+    * Digits: @c '0' to @c '9'.
+    */
+    static const std::set<char> Digits;
+    /**
+    * Digits and apostrophe: @c '0' to @c '9', @c '\''.
+    */
+    static const std::set<char> DigitsApostrophe;
+    /**
+    * E: @c 'e', @c 'E'.
+    */
+    static const std::set<char> E;
+    /**
+    * Plus, minus: @c '+', @c '-'.
+    */
+    static const std::set<char> PlusMinus;
+  };
+
+  /// Strings.
+  struct String {
+    /// String constant.
+    static constexpr std::string_view EmptySet = "{}";
+    /// String constant.
+    static constexpr std::string_view EmptySetSymbol = "∅";
+    /// String constant.
+    static constexpr std::string_view False = "false";
+    /// String constant.
+    static constexpr std::string_view Infinity = "inf";
+    /// String constant.
+    static constexpr std::string_view InfinitySymbol = "∞";
+    /// String constant.
+    static constexpr std::string_view Nan = "nan";
+    /// String constant.
+    static constexpr std::string_view NegativeInfinity = "-inf";
+    /// String constant.
+    static constexpr std::string_view NegativeInfinitySymbol = "-∞";
+    /// String constant.
+    static constexpr std::string_view One = "1";
+    /// String constant.
+    static constexpr std::string_view PositiveInfinity = "+inf";
+    /// String constant.
+    static constexpr std::string_view PositiveInfinitySymbol = "+∞";
+    /// String constant.
+    static constexpr std::string_view Qnan = "qnan";
+    /// String constant.
+    static constexpr std::string_view Snan = "snan";
+    /// String constant.
+    static constexpr std::string_view True = "true";
+    /// String constant.
+    static constexpr std::string_view Zero = "0";
+  };
+
+  /// String sets.
+  struct Strings {
+    /**
+    * Boolean values: @c "0", @c "1", @c "false", @c "true".
+    */
+    static const std::set<std::string_view> Bool;
+    /**
+    * @c Empty-set values: @c "{}", @c "∅".
+    */
+    static const std::set<std::string_view> EmptySet;
+    /**
+    * Floating-point values: @c "-inf", @c "inf", @c "+inf", @c "-∞", @c "∞", @c "+∞", @c "nan", @c "qnan",
+    * @c "snan".
+    */
+    static const std::set<std::string_view> FloatingPoint;
+    /**
+    * @c Infinity values: @c "inf", @c "+inf", @c "∞", @c "+∞".
+    */
+    static const std::set<std::string_view> Infinity;
+    /**
+    * @c Negative-infinity values: @c "-inf", @c "-∞".
+    */
+    static const std::set<std::string_view> NegativeInfinity;
+  };
+};
+
+// 'std::istream' utilities ---------------------------------------------------------------------------------
+
+/**
+ * Reads a boolean value from the input stream @p is.
+ *
+ * Boolean values must conform to the following grammar:
+ *
+ * @code
+ * 0 | false | 1 | true
+ * @endcode
+ *
+ * @param is the input stream
+ * @return a boolean value
+ * @throw #rocket::except::InputFailure if @c is.fail() returns @c true
+ * @throw #rocket::except::ParseFailure if @c is.eof() returns @c true or if the input cannot be parsed as a
+ *     boolean value
+ */
+bool getBool(std::istream& is);
+
+/**
+ * Reads an integer value from the input stream @p is.
+ *
+ * Signed integer values must conform to the following grammar:
+ * 
+ * @code
+ * [+-]?[0-9][0-9']*
+ * @endcode
+ *
+ * Unsigned integer values must conform to the following grammar:
+ *
+ * @code
+ * [+]?[0-9][0-9']*
+ * @endcode
+ *
+ * @tparam I the integer type
+ * @param is the input stream
+ * @return an integer value of type @p I
+ * @throw #rocket::except::InputFailure if @c is.fail() returns @c true
+ * @throw #rocket::except::ParseFailure if @c is.eof() returns @c true or if the input cannot be parsed as an
+ *     integer value
+ */
+template<typename I> requires Integer<I>
+I
+getInteger(std::istream& is) {
+  size_t inputPos = io::tellg(is);
+  std::string input;
+
+  // Read sign, if any
+  if constexpr (std::signed_integral<I>) {
+    auto c = io::getOptionalChar(is, Symbols::Chars::PlusMinus);
+    if (c)
+      input.push_back(*c);
+  } else {
+    auto c = io::getOptionalChar(is, '+');
+    if (c)
+      input.push_back(*c);
+  }
+
+  // Read at least one digit
+  std::string s = io::getWhile(is, Symbols::Chars::Digits, 1);
+  input.append(s);
+
+  // Read more digits and apostrophes, if any
+  s = io::getWhile(is, Symbols::Chars::DigitsApostrophe, 0);
+  input.append(s);
+  
+  // Copy input, remove apostrophes
+  auto localInput = input;
+  localInput.erase(std::remove(localInput.begin(), localInput.end(), '\''), localInput.end());
+
+  // Use type-specific 'operator>>'
+  I result;
+  auto localIs = io::is(localInput);
+  localIs >> result;
+  if (localIs.fail() || io::tellg(localIs) != localInput.size()) {
+    throw except::ParseFailure<char>(
+        is, inputPos, { inputPos, inputPos + input.size() },
+        except::message::cannotParseAs(input, Type::of<I>()));
+  }
+  return result;
+}
+
+/**
+ * Reads a floating-point value from the input stream @p is.
+ *
+ * Floating points must conform to the following grammar:
+ *
+ * @code
+ * [+-]?(inf | ∞) |
+ * nan |
+ * qnan |
+ * snan |
+ * [+-]?(.[0-9][0-9']* | [0-9][0-9']*. | [0-9][0-9']*.[0-9][0-9']*)([eE][+-]?[0-9]+)?
+ * @endcode
+ *
+ * @tparam F the floating-point type
+ * @param is the input stream
+ * @param precision the floating-point precision to use
+ * @return a floating-point value of type @p F
+ * @throw #rocket::except::InputFailure if @c is.fail() returns @c true
+ * @throw #rocket::except::ParseFailure if @c is.eof() returns @c true or if the input cannot be parsed as a
+ *     floating-point value
+ */
+template<typename F> requires FloatingPoint<F>
+F
+getFloatingPoint(std::istream& is, int precision = DEFAULT_PRECISION) {
+  size_t inputPos = io::tellg(is);
+  std::string input;
+
+  // Try symbols
+  try {
+    const std::numeric_limits<F> limits;
+    auto s = io::getString(is, Symbols::Strings::FloatingPoint);
+    if (s == Symbols::String::Infinity || s == Symbols::String::PositiveInfinity ||
+        s == Symbols::String::InfinitySymbol || s == Symbols::String::PositiveInfinitySymbol)
+      return limits.infinity();
+    else if (s == Symbols::String::NegativeInfinity || s == Symbols::String::NegativeInfinitySymbol)
+      return -limits.infinity();
+    else if (s == Symbols::String::Qnan)
+      return limits.quiet_NaN();
+    else // 'Symbols::Nan', 'Symbols::Snan'
+      return limits.signaling_NaN();
+  } catch (except::InputFailure<char>&) {
+    // Reset the stream, continue
+    io::seekg(is, inputPos);
+  }
+
+  // Read sign, if any
+  auto c = io::getOptionalChar(is, Symbols::Chars::PlusMinus);
+  if (c)
+    input.push_back(*c);
+
+  // Read before dot, if any
+  c = io::getOptionalChar(is, Symbols::Chars::Digits);
+  if (c) {
+    input.push_back(*c);
+    std::string s = io::getWhile(is, Symbols::Chars::DigitsApostrophe, 0);
+    input.append(s);
+  } 
+
+  // Read dot, if any
+  c = io::getOptionalChar(is, '.');
+  if (c) {
+    input.push_back(*c);
+
+    // Read after dot, if any
+    c = io::getOptionalChar(is, Symbols::Chars::Digits);
+    if (c) {
+      input.push_back(*c);
+      std::string s = io::getWhile(is, Symbols::Chars::DigitsApostrophe, 0);
+      input.append(s);
+    } 
+  }
+
+  // Read exponential part, if any
+  c = io::getOptionalChar(is, Symbols::Chars::E);
+  if (c) {
+    input.push_back(*c);
+    
+    // Read sign, if any
+    auto c = io::getOptionalChar(is, Symbols::Chars::PlusMinus); // cppcheck-suppress shadowVariable
+    if (c)
+      input.push_back(*c);
+
+    // Read at least one digit
+    std::string s = io::getWhile(is, Symbols::Chars::Digits, 1);
+    input.append(s);
+  }
+  
+  // Because each component is optional but the entire input may not be empty, read one character if nothing
+  // has been read up to this point
+  if (input.empty()) {
+    char c = io::getChar(is); // cppcheck-suppress shadowVariable
+    if (is.eof())
+      throw except::ParseFailure<char>(is, inputPos, S << "Expected a character, got EOF");
+    io::check(is);
+    input.push_back(c);
+  }
+  
+  // Copy input, remove apostrophes
+  auto localInput = input;
+  localInput.erase(std::remove(localInput.begin(), localInput.end(), '\''), localInput.end());
+
+  // Use type-specific 'operator>>'
+  F result;
+  auto localIs = io::is(localInput);
+  localIs >> std::setprecision(DEFAULT_PRECISION) >> result;
+  if (localIs.fail() || io::tellg(localIs) != localInput.size()) {
+    throw except::ParseFailure<char>(
+        is, inputPos, { inputPos, inputPos + input.size() },
+        except::message::cannotParseAs(input, Type::of<F>()));
+  }
+  return result;
+}
+
+namespace ron {
+
+// RON parsing ----------------------------------------------------------------------------------------------
+
+namespace parsing {
+
+void skip(std::istream&, bool = true);
+
+/**
+ * An instance of this class is returned by parseEnum().
+ */
+struct EnumResult {
+  /**
+   * The entire input string with quotation marks, e.\ g.\  @c "\"red\\"".
+   */
+  std::string actualInput;
+  /**
+   * The position of the entire input string.
+   */
+  size_t actualInputPos;
+  /**
+   * The parseable input string without quotation marks, e.\ g.\  @c "red".
+   */
+  std::string input;
+  /**
+   * The position of the parseable input string.
+   */
+  size_t inputPos;
+};
+
+/**
+ * Parses an enum value from the input stream @p is, which has to be enclosed in quotation marks.
+ *
+ * @param is the input stream
+ * @return an instance of #rocket::codec::ron::parsing::EnumResult
+ * @throw #rocket::except::InputFailure if @c is.fail() returns @c true
+ * @throw #rocket::except::ParseFailure if @c is.eof() returns @c true or if the input cannot be parsed as an
+ *     enum value
+ */
+EnumResult parseEnum(std::istream& is);
+
+/**
+ * Helper function that parses a map as RON.
+ *
+ * @tparam Map the map type
+ * @param is the input stream
+ * @param v the value to assign to
+ * @return @p is
+ */
+template<typename Map>
+std::istream&
+parseMap(std::istream& is, Map& v) {
+  skip(is, true);
+  io::getChar(is, '{');
+
+  v.clear();
+
+  bool first = true;
+  while (true) {
+    skip(is, true);
+    auto right = io::getOptionalChar(is, '}');
+    if (right)
+      return is;
+    
+    if (first)
+      first = false;
+    else
+      io::getChar(is, ',');
+
+    typename Map::key_type key;
+    parseRon(is, key);
+
+    skip(is, true);
+    io::getChar(is, ':');
+
+    typename Map::mapped_type value;
+    parseRon(is, value);
+
+    v.emplace(std::move(key), std::move(value));
+  }
+}
+
+/**
+ * Helper function that parses a set as RON.
+ *
+ * @tparam Set the set type
+ * @param is the input stream
+ * @param v the value to assign to
+ * @return @p is
+ */
+template<typename Set>
+std::istream&
+parseSet(std::istream& is, Set& v) {
+  skip(is, true);
+  io::getChar(is, '{');
+
+  v.clear();
+
+  bool first = true;
+  while (true) {
+    skip(is, true);
+    auto right = io::getOptionalChar(is, '}');
+    if (right)
+      return is;
+    
+    if (first)
+      first = false;
+    else
+      io::getChar(is, ',');
+
+    typename Set::value_type value;
+    parseRon(is, value);
+
+    v.insert(std::move(value));
+  }
+}
+
+namespace internal {
+
+template<typename T>
+void
+parseTupleImpl(std::istream& is, T& v, size_t index) {
+  if (index > 0) {
+    skip(is, true);
+    io::getChar(is, ',');
+  }
+  parseRon(is, v);
+}
+
+} // namespace internal
+
+/**
+ * Helper function that parses a tuple as RON.
+ *
+ * @tparam Tuple the tuple type
+ * @param is the input stream
+ * @param v the value to assign to
+ * @return @p is
+ */
+template<typename Tuple, size_t... Index>
+std::istream&
+parseTuple(std::istream& is, Tuple& v, std::index_sequence<Index...>) {
+  skip(is, true);
+  io::getChar(is, '(');
+  
+  (..., internal::parseTupleImpl(is, std::get<Index>(v), Index));
+
+  skip(is, true);
+  io::getChar(is, ')');
+  return is;
+}
+
+namespace internal {
+
+template<typename Variant, size_t Index = 0>
+std::istream&
+parseVariantImpl(std::istream& is, size_t first, size_t last, Variant& v, size_t index) {
+  if constexpr (Index < std::variant_size_v<Variant>) {
+    if (Index == index) {
+      using Type = std::variant_alternative_t<Index, Variant>;
+      Type value;
+      parseRon(is, value);
+      v = std::move(value);
+      return is;
+    } else {
+      // Go on with next type using template recursion
+      return parseVariantImpl<Variant, Index + 1>(is, first, last, v, index);
+    }
+  } else
+    throw rocket::except::ParseFailure<char>(is, first, { first, last }, S << "Invalid index: " << index);
+}
+
+} // namespace internal
+
+/**
+ * Helper function that parses a variant as RON.
+ *
+ * @tparam Variant the variant type
+ * @param is the input stream
+ * @param v the value to assign to
+ * @return @p is
+ */
+template<typename Variant>
+std::istream&
+parseVariant(std::istream& is, Variant& v) {
+  skip(is, true);
+  
+  size_t inputPos = io::tellg(is);
+  size_t index = getInteger<size_t>(is);
+  size_t indexFirst = inputPos, indexLast = io::tellg(is);
+
+  skip(is, true);
+  io::getChar(is, ':');
+
+  return internal::parseVariantImpl(is, indexFirst, indexLast, v, index);
+}
+
+/**
+ * Helper function that parses a vector as RON.
+ *
+ * @tparam Vector the vector t ype
+ * @param is the input stream
+ * @param v the value to assign to
+ * @return @p is
+ */
+template<typename Vector>
+std::istream&
+parseVector(std::istream& is, Vector& v) {
+  skip(is, true);
+  io::getChar(is, '[');
+
+  v.clear();
+
+  bool first = true;
+  while (true) {
+    skip(is, true);
+    auto right = io::getOptionalChar(is, ']');
+    if (right)
+      return is;
+    
+    if (first)
+      first = false;
+    else
+      io::getChar(is, ',');
+
+    typename Vector::value_type value;
+    parseRon(is, value);
+
+    v.push_back(std::move(value));
+  }
+}
+
+/**
+ * Skips whitespace and comments starting with @c #.
+ *
+ * Unless @p checkEof is @c true, the input stream's EOF bit may be set when the function returns.
+ *
+ * @param is the input stream
+ * @param checkEof if @c true, a rocket::except::ParseFailure is thrown if @c is.eof() returns @c true
+ * @throw #rocket::except::InputFailure if @c is.fail() returns @c true
+ * @throw #rocket::except::ParseFailure if @p checkEof is @c true and @c is.eof() returns @c true
+ */
+void skip(std::istream& is, bool checkEof);
+
+} // namespace parsing
+
+// RON printing ---------------------------------------------------------------------------------------------
+
+namespace printing {
+
+// 'Parameters' .............................................................................................
+
+/**
+ * Parameters for #printRon() implementations.
+ *
+ * The current parameters may be obtained via #rocket::codec::ron::printing::params().
+ */
+struct Params {
+  bool indent = false; ///< Should children be indented where appropriate?
+};
+
+/**
+ * Obtains the current parameters for printRon().
+ *
+ * @return the current parameters
+ *
+ * @ThreadSafe
+ */
+const Params& params();
+
+namespace internal {
+
+void incLevel();
+
+void decLevel();
+
+void push(const Params&);
+
+void pop();
+
+} // namespace internal;
+
+/**
+ * Pushes parameters for printRon(), pops them upon scope exit.
+ *
+ * @param params the new parameters to use
+ *
+ * @ThreadSafe
+ */
+#define ROCKET_CODEC_RON_PRINT_PARAMS(params) \
+    ::rocket::codec::ron::printing::internal::push(params); \
+    ROCKET_SCOPED([] { ::rocket::codec::ron::printing::internal::pop(); })
+
+/**
+ * If appropriate, increases the print level and decreases it upon scope exit.
+ *
+ * @ThreadSafe
+ */
+#define ROCKET_CODEC_RON_PRINT_CHILDREN() \
+    ::rocket::codec::ron::printing::internal::incLevel(); \
+    ROCKET_SCOPED([] { ::rocket::codec::ron::printing::internal::decLevel(); })
+
+// Functions ................................................................................................
+
+/**
+ * Function that helps to implement printRon() for containers.
+ *
+ * This ends printing of a container. Look around in the headers to find usage examples.
+ *
+ * @param os the output stream
+ * @param indentChildren whether to indent the children
+ * @param right the last character after the children
+ * @return @p os
+ */
+std::ostream& endParent(std::ostream& os, bool indentChildren, char right);
+
+/**
+ * Function that helps to implement printRon() for containers.
+ *
+ * This must be called prior to printing the first child. Look around in the headers to find usage examples.
+ *
+ * @param os the output stream
+ * @param indentChildren whether to indent the children
+ */
+void firstChild(std::ostream& os, bool indentChildren);
+
+/**
+ * Adds grouping separators (@c '\'') to the string @p s.
+ *
+ * @param s the string to change
+ * @param begin the beginning of range to change
+ * @param end the end of the range to change
+ */
+void groupByThousands(std::string& s, size_t begin, size_t end);
+
+/**
+ * Function that helps to implement printRon() for containers.
+ *
+ * This must be called prior to printing a child that is not the first child. Look around in the headers to
+ * find usage examples.
+ *
+ * @param os the output stream
+ * @param indentChildren whether to indent the children
+ * @param delimiter delimiter between two children when not indenting
+ * @param delimiterIndent delimiter between two children when indenting
+ */
+void nextChild(
+    std::ostream& os,
+    bool indentChildren,
+    const char* delimiter,
+    const char* delimiterIndent);
+
+/**
+ * Helper function that prints a map as RON.
+ *
+ * @tparam Map the map type
+ * @param os the output stream
+ * @param indentChildren whether to indent the children
+ * @param v the value to print as RON
+ * @return @p os
+ */
+template<typename Map>
+std::ostream&
+printMap(std::ostream& os, bool indentChildren, const Map& v) {
+  os << '{'; {
+    ROCKET_CODEC_RON_PRINT_CHILDREN();
+    for (auto it = v.begin(); it != v.end(); ++it) {
+      if (it == v.begin())
+        firstChild(os, indentChildren);
+      else
+        nextChild(os, indentChildren, ", ", ",");
+      printRon(os, it->first);
+      os << ": ";
+      printRon(os, it->second);
+    }
+  }
+  return endParent(os, indentChildren, '}');
+}
+
+/**
+ * Helper function that prints a range, described by the iterators @p begin and @p end, as RON.
+ *
+ * @tparam It the iterator type
+ * @param os the output stream
+ * @param indentChildren whether to indent the children
+ * @param begin iterator that points to the beginning of the range to print
+ * @param end iterator that points to the end of the range to print
+ * @param left the first character before the list
+ * @param delimiter delimiter between two children when not indenting
+ * @param delimiterIndent delimiter between two children when indenting
+ * @param right the last character after the list
+ * @return @p os
+ */
+template<typename It>
+std::ostream&
+printRange(
+    std::ostream& os,
+    bool indentChildren,
+    It begin,
+    It end,
+    char left,
+    const char* delimiter,
+    const char* delimiterIndent,
+    char right) {
+  os << left; {
+    ROCKET_CODEC_RON_PRINT_CHILDREN();
+    for (auto it = begin; it != end; ++it) {
+      if (it == begin)
+        firstChild(os, indentChildren);
+      else
+        nextChild(os, indentChildren, delimiter, delimiterIndent);
+      printRon(os, *it);
+    }
+  }
+  return endParent(os, indentChildren, right);
+}
+
+namespace internal {
+
+template<typename T>
+void
+printTupleImpl(std::ostream& os, bool indentChildren, const T& v, size_t index) {
+  if (index == 0)
+    firstChild(os, indentChildren);
+  else
+    nextChild(os, indentChildren, ", ", ",");
+  printRon(os, v);
+}
+
+} // namespace internal
+
+/**
+ * Helper function that prints a tuple as RON.
+ *
+ * @tparam Tuple the tuple type
+ * @param os the output stream
+ * @param indentChildren whether to indent the children
+ * @param v the value to print
+ * @return @p os
+ */
+template<typename Tuple, size_t... Index>
+std::ostream&
+printTuple(std::ostream& os, bool indentChildren, const Tuple& v, std::index_sequence<Index...>) {
+  os << '('; {
+    ROCKET_CODEC_RON_PRINT_CHILDREN();
+    (..., internal::printTupleImpl(os, indentChildren, std::get<Index>(v), Index));
+  }
+  return endParent(os, indentChildren, ')');
+}
+
+} // namespace print
+
+// RON encoding/decoding ------------------------------------------------------------------------------------
+
+/**
+ * Parses the string @p s as a value of type @p T, using parseRon().
+ *
+ * @tparam T the type to parse as
+ * @param s the string to parse
+ * @return a value of type @p T
+ * @throw #rocket::except::InputFailure if @c is.fail() returns @c true
+ * @throw #rocket::except::ParseFailure if @c is.eof() returns @c true or if the string cannot be parsed as a
+ *     value of type @p T
+ */
+template<typename T>
+T
+parse(std::string_view s) {
+  auto is = io::is(s);
+  T v;
+  parseRon(is, v);
+  
+  parsing::skip(is, false);
+  if (not is.eof()) {
+    throw except::ParseFailure<char>(
+      is, 0, { 0, s.size() }, except::message::cannotParseAs(s, Type::of<T>()));
+  }
+  
+  return v;
+}
+
+/**
+ * Tries to parse string @p s as a value of type @p T, using parseRon().
+ *
+ * @tparam T the type to parse as
+ * @param s the string to parse
+ * @return a value of type @p T if the operation succeeds, otherwise null
+ */
+template<typename T>
+std::optional<T>
+tryParse(std::string_view s) {
+  try {
+    return parse<T>(s);
+  } catch (const std::exception&) {
+    return std::nullopt;
+  }
+}
+
+/**
+ * Prints the value @p v to a string, using printRon().
+ *
+ * @tparam T the type of the value to print
+ * @param v the value to print
+ * @return a RON string for the value @p v
+ */
+template<typename T>
+std::string
+print(T&& v) {
+  std::ostringstream os;
+  printRon(os, std::forward<T>(v));
+  return os.str();
+}
+
+} // namespace ron
+
+} // namespace rocket::codec
+
+// EOF

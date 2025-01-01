@@ -1,0 +1,517 @@
+/*
+ * test-cl.cc
+ */
+
+#include "rocket-gtest/testing.h"
+
+#include "rocket/codec-std-decl.h"
+#include "rocket/codec-std.h"
+
+#include "rocket/cl.h"
+#include "rocket/log.h"
+
+using namespace rocket;
+using namespace rocket::cl;
+using namespace std;
+
+// Local functions ------------------------------------------------------------------------------------------
+
+namespace {
+
+bool parseCommandOmit; // CL 1 "-o"
+bool parseCommandHelp; // CL 1 "-?"
+string parseCommandCommand; // CL 1 command
+bool parseCommandList; // CL 2 "-l"
+bool parseCommandListHelp; // CL 2 "-?"
+bool parseCommandShow; // CL 2 "-s"
+bool parseCommandShowHelp; // CL 2 "-?"
+bool parseCommandShowTest; // CL 2 "-t"
+vector<string> parseCommandArgs; // CL 2 args
+
+vector<string>
+parse(const CommandLine& cl, const vector<string>& args, ostream& os = cerr) {
+  try {
+    return cl.parse(args);
+  } catch (const exception& ex) {
+    cl.handleException(ex, os, EXIT_SUCCESS);
+    return {};
+  }
+}
+
+/**
+ * Usage: cmd [-o | -?] list [-? | -l] FILE...
+ *   or   cmd [-o | -?] show [-? | -s | -t] [ARG]...
+ */
+void
+parseCommand(const vector<string>& args, ostream& out = cout, ostream& err = cerr) {
+  // Reset
+
+  parseCommandOmit = false;
+  parseCommandHelp = false;
+  parseCommandCommand.clear();
+  parseCommandList = false;
+  parseCommandListHelp = false;
+  parseCommandShow = false;
+  parseCommandShowHelp = false;
+  parseCommandShowTest = false;
+  parseCommandArgs.clear();
+
+  // Parse, step 1
+
+  OptionGroup general { "General control" };
+  OptionGroup misc { "Miscellaneous" };
+
+  CommandLineParams params {
+    .usages={ "[OPTION]... list [OPTION]... FILE...", "[OPTION]... show [OPTION]... [ARG]..." },
+    .prolog="List FILEs or show ARGs.\n\nThis is yet another paragraph.",
+    .epilog="Gallia est omnis divisa in partes tres, quarum unam incolunt Belgae, aliam Aquitani, tertiam qui ipsorum lingua Celtae, nostra Galli appellantur. Hi omnes lingua, institutis, legibus inter se differunt. Gallos ab Aquitanis Garunna flumen, a Belgis Matrona et Sequana dividit."
+  };
+
+  CommandLine cl({
+    Option::of(&general, "omit", 'o', nullopt, "omit what is not important", parseCommandOmit),
+    Option::of(&misc, "help", '?', nullopt, "display this help text", parseCommandHelp)
+  }, params);
+
+  auto take = [](string_view arg) -> CommandLine::Took {
+    if (arg == "list" || arg == "show") {
+      parseCommandCommand = arg;
+      return CommandLine::Stop;
+    }
+    throw except::InvalidState(S << "Invalid command " << arg);
+  };
+
+  vector<string> localArgs;
+  try {
+    localArgs = cl.parse(args, take);
+    if (parseCommandHelp) {
+      cl.help(out, false);
+      return;
+    }
+  } catch (const exception& ex) {
+    cl.handleException(ex, err, EXIT_SUCCESS);
+    return;
+  }
+
+  // Parse, step 2
+
+  if (parseCommandCommand == "list") {
+    // 1. "list" with "FILE..." (mandatory)
+
+    OptionGroup list { "List control" };
+
+    CommandLineParams listParams {
+      .command = params.command + " list",
+      .usages={ "[OPTION]... FILE..." },
+      .rocketOpts=false
+    };
+
+    CommandLine listCl({
+      Option::of(&list, "help", '?', nullopt, "display this help text", parseCommandListHelp),
+      Option::of(&list, "list", 'l', nullopt, "a list option that is good for nothing", parseCommandList)
+    }, listParams);
+
+    try {
+      parseCommandArgs = listCl.parse(localArgs);
+      if (parseCommandListHelp) {
+        listCl.help(out, false);
+        return;
+      }
+    } catch (const exception& ex) {
+      listCl.handleException(ex, err, EXIT_SUCCESS);
+      return;
+    }
+
+    if (parseCommandArgs.empty()) {
+      listCl.error(err, EXIT_SUCCESS);
+      return;
+    }
+    
+    out << "Listing ...\n";
+  } else {
+    // 2. "show" with "[ARG]..." (optional)
+
+    OptionGroup show { "Show control" };
+
+    CommandLineParams showParams {
+      .command = params.command + " show",
+      .usages={ "[OPTION]... [ARG]..." },
+      .rocketOpts=false
+    };
+
+    CommandLine showCl({
+      Option::of(&show, "help", '?', nullopt, "display this help text", parseCommandShowHelp),
+      Option::of(&show, "show", 's', nullopt, "a show option that is good for nothing", parseCommandShow),
+      Option::of(&show, "test", 't', nullopt, "test something, or don't", parseCommandShowTest)
+    }, showParams);
+
+    try {
+      parseCommandArgs = showCl.parse(localArgs);
+      if (parseCommandShowHelp) {
+        showCl.help(out, false);
+        return;
+      }
+    } catch (const exception& ex) {
+      showCl.handleException(ex, err, EXIT_SUCCESS);
+      return;
+    }
+
+    out << "Showing ...\n";
+  }
+}
+
+} // namespace
+
+// 'TEST' ---------------------------------------------------------------------------------------------------
+
+TEST(cl, parseNoOpts) {
+  CommandLine cl;
+  ostringstream os;
+  auto args = parse(cl, { "a", "b", "c" }, os);
+  EXPECT_EQ(args, (vector<string> { "a", "b", "c" }));
+}
+
+TEST(cl, parseOpt_bool) {
+  bool flag;
+
+  CommandLine cl( {
+    Option::of(nullptr, "flag", U'€', nullopt, nullopt, flag)
+  });
+
+  // Test no options
+  {
+    flag = false;
+    auto args = parse(cl, { "a", "b", "c" });
+    EXPECT_EQ(args, (vector<string> { "a", "b", "c" }));
+    EXPECT_FALSE(flag);
+  }
+
+  // Test mixed order
+  {
+    flag = false;
+    auto args = parse(cl, { "a", "--flag", "b", "c" });
+    EXPECT_EQ(args, (vector<string> { "a", "b", "c" }));
+    EXPECT_TRUE(flag);
+  }
+
+  // Test Unicode code point
+  {
+    flag = false;
+    auto args = parse(cl, { "a", "-€", "b", "c" });
+    EXPECT_EQ(args, (vector<string> { "a", "b", "c" }));
+    EXPECT_TRUE(flag);
+  }
+
+  // Test option-end tag
+  {
+    flag = false;
+    auto args = parse(cl, { "a", "--", "--flag", "b", "c" });
+    EXPECT_EQ(args, (vector<string> { "a", "--flag", "b", "c" }));
+    EXPECT_FALSE(flag);
+  }
+
+  // Test assignment for flag option, by name
+  {
+    flag = true;
+    auto args = parse(cl, { "a", "--flag=false", "b", "c" });
+    EXPECT_EQ(args, (vector<string> { "a", "b", "c" }));
+    EXPECT_FALSE(flag);
+  }
+
+  // Test assignment for flag option, by short name
+  {
+    flag = true;
+    auto args = parse(cl, { "a", "-€=0", "b", "c" });
+    EXPECT_EQ(args, (vector<string> { "a", "b", "c" }));
+    EXPECT_FALSE(flag);
+  }
+
+  // Test error when assigning other value
+  {
+    flag = false;
+    ostringstream os;
+    auto args = parse(cl, { "a", "-€=hello", "b", "c" }, os);
+    EXPECT_EQ(args, vector<string>());
+    EXPECT_FALSE(flag);
+    EXPECT_EQ(os.str(), "test-rocket-cl: Error: Option '-€' cannot take a value\n");
+  }
+}
+
+TEST(cl, parseOpt_int) {
+  int num;
+
+  CommandLine cl( {
+    Option::of(nullptr, "num", 'n', "NUM", nullopt, num)
+  });
+
+  // Test mixed order
+  {
+    num = 0;
+    auto args = parse(cl, { "a", "--num", "12", "b", "c" });
+    EXPECT_EQ(args, (vector<string> { "a", "b", "c" }));
+    EXPECT_EQ(num, 12);
+  }
+
+  // Test assignment via '='
+  {
+    num = 0;
+    auto args = parse(cl, { "a", "--num=12", "b", "c" });
+    EXPECT_EQ(args, (vector<string> { "a", "b", "c" }));
+    EXPECT_EQ(num, 12);
+  }
+
+  // Test error when missing value
+  {
+    num = 0;
+    ostringstream os;
+    auto args = parse(cl, { "a", "-n" }, os);
+    EXPECT_EQ(args, vector<string>());
+    EXPECT_EQ(num, 0);
+    EXPECT_EQ(os.str(), "test-rocket-cl: Error: Missing value for option '-n'\n");
+  }
+
+  // Test error when conversion fails
+  {
+    num = 0;
+    ostringstream os;
+    auto args = parse(cl, { "a", "-n", "hello" }, os);
+    EXPECT_EQ(args, vector<string>());
+    EXPECT_EQ(num, 0);
+    EXPECT_EQ(os.str(), "test-rocket-cl: Error: Option '-n': Invalid value \"hello\"; expected NUM\n");
+  }
+}
+
+TEST(cl, parseOpt_enum) {
+  log::LogLevel level;
+
+  CommandLine cl( {
+    Option::of(nullptr, "level", 'l', "LEVEL", nullopt, level)
+  });
+
+  // Test mixed order
+  {
+    level = log::LogLevel::none;
+    auto args = parse(cl, { "a", "--level", "info", "b", "c" });
+    EXPECT_EQ(args, (vector<string> { "a", "b", "c" }));
+    EXPECT_EQ(level, log::LogLevel::info);
+  }
+
+  // Test error when conversion fails
+  {
+    level = log::LogLevel::none;
+    ostringstream os;
+    auto args = parse(cl, { "a", "-l", "nonsense" }, os);
+    EXPECT_EQ(args, vector<string>());
+    EXPECT_EQ(level, log::LogLevel::none);
+    EXPECT_EQ(os.str(), "test-rocket-cl: Error: Option '-l': Invalid value \"nonsense\"; expected LEVEL\n");
+  }
+}
+
+TEST(cl, parseOpt_vector) {
+  vector<string> names;
+
+  CommandLine cl( {
+    Option::of(nullptr, "name", 'n', "NAME", nullopt, names)
+  });
+
+  // Test multiple values
+  {
+    names.clear();
+    auto args = parse(cl, { "a", "--name", "Shirley", "-n", "Deborah", "--name=Julie", "-n=Jane", "b" });
+    EXPECT_EQ(args, (vector<string> { "a", "b" }));
+    EXPECT_EQ(names, (vector<string> { "Shirley", "Deborah", "Julie", "Jane" }));
+  }
+}
+
+TEST(cl, parseShortOptions) {
+  bool ignore;
+  bool verbose;
+  string name;
+
+  CommandLine cl( {
+    Option::of(nullptr, "ignore", 'i', nullopt, nullopt, ignore),
+    Option::of(nullptr, "verbose", 'v', nullopt, nullopt, verbose),
+    Option::of(nullptr, "name", 'n', "NAME", nullopt, name)
+  });
+
+  // Test without '='
+  ignore = false; verbose = false; name.clear();
+  auto args = parse(cl, { "a", "-ivnSue", "b" });
+  EXPECT_EQ(args, (vector<string> { "a", "b" }));
+  EXPECT_TRUE(ignore);
+  EXPECT_TRUE(verbose);
+  EXPECT_EQ(name, "Sue");
+
+  // Test with '='
+  ignore = false; verbose = false; name.clear();
+  args = parse(cl, { "a", "-ivn=Sue", "b" });
+  EXPECT_EQ(args, (vector<string> { "a", "b" }));
+  EXPECT_TRUE(ignore);
+  EXPECT_TRUE(verbose);
+  EXPECT_EQ(name, "Sue");
+
+  // Test with ' '
+  ignore = false; verbose = false; name.clear();
+  args = parse(cl, { "a", "-ivn", "Sue", "b" });
+  EXPECT_EQ(args, (vector<string> { "a", "b" }));
+  EXPECT_TRUE(ignore);
+  EXPECT_TRUE(verbose);
+  EXPECT_EQ(name, "Sue");
+}
+
+/**
+ * Usage: cmd [-o | -?] list [-? | -l] FILE...
+ *   or   cmd [-o | -?] show [-? | -s | -t] [ARG]...
+ */
+TEST(cl, parseCommand) {
+  // Test invalid option
+  {
+    ostringstream os;
+    parseCommand({ "-p", "list", "a" }, os, os);
+    EXPECT_EQ(
+        os.str(),
+        "test-rocket-cl: Error: Unknown option '-p'\n"
+        "Usage: test-rocket-cl [OPTION]... list [OPTION]... FILE...\n"
+        "  or   test-rocket-cl [OPTION]... show [OPTION]... [ARG]...\n"
+        "Try 'test-rocket-cl --help' for more information.\n");
+  }
+
+  // Test invalid command
+  {
+    ostringstream os;
+    parseCommand({ "-o", "walk", "dog" }, os, os);
+    EXPECT_EQ(
+        os.str(),
+        "test-rocket-cl: Error: Invalid command \"walk\"\n"
+        "Usage: test-rocket-cl [OPTION]... list [OPTION]... FILE...\n"
+        "  or   test-rocket-cl [OPTION]... show [OPTION]... [ARG]...\n"
+        "Try 'test-rocket-cl --help' for more information.\n");
+  }
+
+  // Test help
+  {
+    ostringstream os;
+    parseCommand({ "--help" }, os, os);
+    EXPECT_EQ(
+        os.str(),
+        "Usage: test-rocket-cl [OPTION]... list [OPTION]... FILE...\n"
+        "  or   test-rocket-cl [OPTION]... show [OPTION]... [ARG]...\n"
+        "\n"
+        "List FILEs or show ARGs.\n"
+        "\n"
+        "This is yet another paragraph.\n"
+        "\n"
+        "Logging control:\n"
+        "\n"
+        "      --log ID[=LEVEL]\n"
+        "          set logging for identifier ID to level LEVEL. ID is a known log\n"
+        "          identifier or 'all'. LEVEL is 'none', 'error', 'warn', 'info',\n"
+        "          'debug', or 'trace'. If LEVEL is not supplied, 'info' is assumed\n"
+        "      --log-out OUT\n"
+        "          log to OUT. OUT is 'stdout', 'stderr', a file path, or a URL\n"
+        "          beginning with 'file://'\n"
+        "\n"
+        "General control:\n"
+        "\n"
+        "  -o, --omit\n"
+        "          omit what is not important\n"
+        "\n"
+        "Miscellaneous:\n"
+        "\n"
+        "  -?, --help\n"
+        "          display this help text\n"
+        "\n"
+        "Gallia est omnis divisa in partes tres, quarum unam incolunt Belgae, aliam\n"
+        "Aquitani, tertiam qui ipsorum lingua Celtae, nostra Galli appellantur. Hi omnes\n"
+        "lingua, institutis, legibus inter se differunt. Gallos ab Aquitanis Garunna\n"
+        "flumen, a Belgis Matrona et Sequana dividit.\n");
+  }
+
+  // Test list help
+  {
+    ostringstream os;
+    parseCommand({ "list", "--help" }, os, os);
+    EXPECT_EQ(
+      os.str(),
+      "Usage: test-rocket-cl list [OPTION]... FILE...\n"
+      "\n"
+      "List control:\n"
+      "\n"
+      "  -?, --help\n"
+      "          display this help text\n"
+      "  -l, --list\n"
+      "          a list option that is good for nothing\n");
+  }
+
+  // Test invalid list option
+  {
+    ostringstream os;
+    parseCommand({ "list", "-Q" }, os, os);
+    EXPECT_EQ(
+        os.str(),
+        "test-rocket-cl: Error: Unknown option '-Q'\n"
+        "Usage: test-rocket-cl list [OPTION]... FILE...\n"
+        "Try 'test-rocket-cl list --help' for more information.\n");
+  }
+
+  // Test missing FILE
+  {
+    ostringstream os;
+    parseCommand({ "list", "-l" }, os, os);
+    EXPECT_EQ(
+        os.str(),
+        "Usage: test-rocket-cl list [OPTION]... FILE...\n"
+        "Try 'test-rocket-cl list --help' for more information.\n");
+  }
+
+  // Test successful list command
+  {
+    ostringstream os;
+    parseCommand({ "list", "-l", "a", "b" }, os, os);
+    EXPECT_EQ(parseCommandCommand, "list");
+    EXPECT_TRUE(parseCommandList);
+    EXPECT_EQ(parseCommandArgs, (vector<string> { "a", "b" }));
+    EXPECT_EQ(os.str(), "Listing ...\n");
+  }
+
+  // Test show help
+  {
+    ostringstream os;
+    parseCommand({ "show", "--help" }, os, os);
+    EXPECT_EQ(
+      os.str(),
+      "Usage: test-rocket-cl show [OPTION]... [ARG]...\n"
+      "\n"
+      "Show control:\n"
+      "\n"
+      "  -?, --help\n"
+      "          display this help text\n"
+      "  -s, --show\n"
+      "          a show option that is good for nothing\n"
+      "  -t, --test\n"
+      "          test something, or don't\n");
+  }
+
+  // Test invalid show option
+  {
+    ostringstream os;
+    parseCommand({ "show", "-Q" }, os, os);
+    EXPECT_EQ(
+        os.str(),
+        "test-rocket-cl: Error: Unknown option '-Q'\n"
+        "Usage: test-rocket-cl show [OPTION]... [ARG]...\n"
+        "Try 'test-rocket-cl show --help' for more information.\n");
+  }
+
+  // Test successful show command
+  {
+    ostringstream os;
+    parseCommand({ "show", "a", "-st", "b" }, os, os);
+    EXPECT_EQ(parseCommandCommand, "show");
+    EXPECT_TRUE(parseCommandShow);
+    EXPECT_TRUE(parseCommandShowTest);
+    EXPECT_EQ(parseCommandArgs, (vector<string> { "a", "b" }));
+    EXPECT_EQ(os.str(), "Showing ...\n");
+  }
+}
+
+// EOF
