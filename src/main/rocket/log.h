@@ -19,7 +19,6 @@
 #include <boost/preprocessor/seq/cat.hpp>
 
 #include <exception>
-#include <string>
 #include <vector>
 
 namespace rocket::log {

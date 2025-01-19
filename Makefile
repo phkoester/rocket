@@ -21,34 +21,28 @@ all: check doc test
 buildMain:
 	@$(call printInfo,$@)
 	@+$(MAKE) $(MAKE_FLAGS) -f src/main/Makefile build
-	@echo Done.
 
 buildTest: buildMain
 	@$(call printInfo,$@)
 	@+$(MAKE) $(MAKE_FLAGS) -f src/test/Makefile build
-	@echo Done.
 
 doc: docMain docTest
 
 docMain:
 	@$(call printInfo,$@)
 	@+$(MAKE) $(MAKE_FLAGS) -f src/main/Makefile doc
-	@echo Done.
 
 docTest:
 	@$(call printInfo,$@)
 	@+$(MAKE) $(MAKE_FLAGS) -f src/test/Makefile doc
-	@echo Done.
 
 test: buildMain
 	@$(call printInfo,$@)
 	@+$(MAKE) $(MAKE_FLAGS) -f src/test/Makefile test
-	@echo Done.
 
 tests: buildMain
 	@$(call printInfo,$@)
 	@+$(MAKE) $(MAKE_FLAGS) -f src/test/Makefile tests
-	@echo Done.
 
 # -----------------------------------------------------------------------------------------------------------
 
