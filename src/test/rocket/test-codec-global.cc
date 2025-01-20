@@ -17,7 +17,7 @@ using namespace rocket::gtest::match;
 using namespace std;
 using namespace testing;
 
-// 'TEST' ---------------------------------------------------------------------------------------------------
+// `TEST` ---------------------------------------------------------------------------------------------------
 
 TEST(codec_global, opOutput_double) {
   using type = double;
@@ -169,7 +169,7 @@ TEST(codec_global, parseRon_char) {
     auto is = io::is("'\\x80'");
     EXPECT_THAT(
         [&] { parseRon(io::resetg(is), v); },
-        throwsParseFailure<char>(0, { 0, 6 }, HasSubstr("Cannot parse \"'\\\\x80'\" as 'char'")));
+        throwsParseFailure<char>(0, { 0, 6 }, HasSubstr("Cannot parse \"'\\\\x80'\" as `char`")));
     EXPECT_ISTREAM(is, true, false, 6);
   }
 
@@ -177,7 +177,7 @@ TEST(codec_global, parseRon_char) {
     auto is = io::is("'\\xfF'");
     EXPECT_THAT(
         [&] { parseRon(io::resetg(is), v); },
-        throwsParseFailure<char>(0, { 0, 6 }, HasSubstr("Cannot parse \"'\\\\xfF'\" as 'char'")));
+        throwsParseFailure<char>(0, { 0, 6 }, HasSubstr("Cannot parse \"'\\\\xfF'\" as `char`")));
     EXPECT_ISTREAM(is, true, false, 6);
   }
 }
@@ -393,7 +393,7 @@ TEST(codec_global, parseRon_char32_t) {
     auto is = io::is("'\\U00110000'");
     EXPECT_THAT(
         [&] { parseRon(io::resetg(is), v); },
-        throwsParseFailure<char>(0, { 0, 12 }, HasSubstr("Cannot parse \"'\\\\U00110000'\" as 'char32_t'")));
+        throwsParseFailure<char>(0, { 0, 12 }, HasSubstr("Cannot parse \"'\\\\U00110000'\" as `char32_t`")));
     EXPECT_ISTREAM(is, true, false, 12);
   }
 
@@ -401,7 +401,7 @@ TEST(codec_global, parseRon_char32_t) {
     auto is = io::is("'\\Ufe1001ef'");
     EXPECT_THAT(
         [&] { parseRon(io::resetg(is), v); },
-        throwsParseFailure<char>(0, { 0, 12 }, HasSubstr("Cannot parse \"'\\\\Ufe1001ef'\" as 'char32_t'")));
+        throwsParseFailure<char>(0, { 0, 12 }, HasSubstr("Cannot parse \"'\\\\Ufe1001ef'\" as `char32_t`")));
     EXPECT_ISTREAM(is, true, false, 12);
   }
 }
@@ -414,7 +414,7 @@ TEST(codec_global, printRon_char32_t) {
 }
 
 TEST(codec_global, parseRon_int32_t) {
-  using type = int32_t; // Prints as 'int'
+  using type = int32_t; // Prints as `int`
   using biggerType = int64_t;
 
   const numeric_limits<type> limits;
@@ -520,7 +520,7 @@ TEST(codec_global, parseRon_int32_t) {
     auto is = io::is(s);
     EXPECT_THAT(
         [&] { parseRon(io::resetg(is), v); },
-        throwsParseFailure<char>(0, { 0, 13 }, HasSubstr("Cannot parse \"2'147'483'648\" as 'int'")));
+        throwsParseFailure<char>(0, { 0, 13 }, HasSubstr("Cannot parse \"2'147'483'648\" as `int`")));
   }
 }
 
@@ -547,7 +547,7 @@ TEST(codec_global, printRon_unsigned_long) {
 }
 
 TEST(codec_global, parseRon_int128_t) {
-  using type = int128_t; // Prints as '__int128'
+  using type = int128_t; // Prints as `__int128`
 
   type v;
 
@@ -583,7 +583,7 @@ TEST(codec_global, printRon_int128_t) {
 }
 
 TEST(codec_global, parseRon_uint128_t) {
-  using type = uint128_t; // Prints as 'unsigned __int128'
+  using type = uint128_t; // Prints as `unsigned __int128`
 
   type v;
 
@@ -636,7 +636,7 @@ TEST(codec_global, parseRon_float) {
     auto is = io::is("a");
     EXPECT_THAT(
         [&] { parseRon(io::resetg(is), v); },
-        throwsParseFailure<char>(0, { 0, 1 }, HasSubstr("Cannot parse \"a\" as 'float'")));
+        throwsParseFailure<char>(0, { 0, 1 }, HasSubstr("Cannot parse \"a\" as `float`")));
     EXPECT_ISTREAM(is, true, false, 1);
   }
 
@@ -679,7 +679,7 @@ TEST(codec_global, parseRon_float) {
     auto is = io::is(".");
     EXPECT_THAT(
         [&] { parseRon(io::resetg(is), v); },
-        throwsParseFailure<char>(0, { 0, 1 }, HasSubstr("Cannot parse \".\" as 'float'")));
+        throwsParseFailure<char>(0, { 0, 1 }, HasSubstr("Cannot parse \".\" as `float`")));
     EXPECT_ISTREAM(is, true, false, 1);
   }
 
@@ -803,7 +803,7 @@ TEST(codec_global, parseRon_float) {
     auto is = io::is("3.4e+39");
     EXPECT_THAT(
         [&] { parseRon(io::resetg(is), v); },
-        throwsParseFailure<char>(0, { 0, 7 }, HasSubstr("Cannot parse \"3.4e+39\" as 'float'")));
+        throwsParseFailure<char>(0, { 0, 7 }, HasSubstr("Cannot parse \"3.4e+39\" as `float`")));
     EXPECT_ISTREAM(is, true, false, 7);
   }
 }

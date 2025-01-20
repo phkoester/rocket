@@ -34,21 +34,21 @@ std::vector<std::byte> exec(const std::string& cl);
 std::vector<std::byte> exec(const std::vector<std::string_view>& args);
 
 /**
- * Obtains the system-dependent executable suffix.
+ * Returns the system-dependent executable suffix.
  *
  * @return the executable suffix
  */
 std::string_view executableSuffix();
 
 /**
- * Obtains the system-dependent file separator.
+ * Returns the system-dependent file separator.
  *
  * @return the file separator
  */
 char fileSeparator();
 
 /**
- * Obtains the system-dependent path separator.
+ * Returns the system-dependent path separator.
  *
  * @return the path
  */
@@ -59,7 +59,7 @@ namespace env {
 // Environment ----------------------------------------------------------------------------------------------
 
 /**
- * Obtains the value of an environment variable. If the string conversion fails, this function returns null.
+ * Returns the value of an environment variable. If the string conversion fails, this function returns null.
  *
  * @tparam T the type to convert a string value to 
  * @param name the name of the environment variable
@@ -82,7 +82,7 @@ get(const std::string& name) {
  * @tparam T the type of the new value
  * @param name the name of the environment variable
  * @param value the new value
- * @param replace if @c true, then this function overwrites an existing value, otherwise it does not
+ * @param replace if `true`, then this function overwrites an existing value, otherwise it does not
  */
 template<typename T>
 inline void

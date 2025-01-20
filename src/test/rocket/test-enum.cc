@@ -18,7 +18,7 @@ using namespace rocket::gtest::match;
 using namespace std;
 using namespace testing;
 
-// 'MyEnum' -------------------------------------------------------------------------------------------------
+// `MyEnum` -------------------------------------------------------------------------------------------------
 
 enum MyEnum { fröb, fröber, fröberer, pörk, pörker, pörkerer };
 
@@ -27,7 +27,7 @@ ROCKET_ENUM_DEFINE(MyEnum, MyEnum, (fröb)(fröber)(fröberer)(pörk)(pörker)(p
 ROCKET_ENUM_DECLARE_STD_FORMATTER(MyEnum);
 ROCKET_ENUM_DEFINE_STD_FORMATTER(, MyEnum, MyEnum);
 
-// 'TEST' ---------------------------------------------------------------------------------------------------
+// `TEST` ---------------------------------------------------------------------------------------------------
 
 TEST(enum, parse_MyEnum) {
   EXPECT_EQ(codec::ron::parse<MyEnum>("\"fröb\""), fröb);
@@ -43,7 +43,7 @@ TEST(enum, parse_MyEnum) {
 
   EXPECT_THAT(
       [&] { codec::ron::parse<MyEnum>("\"foo\""); },
-      throwsParseFailure<char>(0, { 0, 5 }, HasSubstr("Cannot parse \"\\\"foo\\\"\" as 'MyEnum'")));
+      throwsParseFailure<char>(0, { 0, 5 }, HasSubstr("Cannot parse \"\\\"foo\\\"\" as `MyEnum`")));
 }
 
 TEST(enum, print_MyEnum) {
@@ -53,7 +53,7 @@ TEST(enum, print_MyEnum) {
 
   EXPECT_THAT(
       [] { codec::ron::print(static_cast<MyEnum>(6)); },
-      ThrowsMessage<except::InvalidArgument>(HasSubstr("Invalid 'MyEnum': 6")));
+      ThrowsMessage<except::InvalidArgument>(HasSubstr("Invalid `MyEnum`: 6")));
 }
 
 TEST(enum, opInput_MyEnum) {
@@ -126,7 +126,7 @@ TEST(enum, opOutput_MyEnum) {
     ostringstream os;
     EXPECT_THAT(
         [&] { os << static_cast<type>(6); },
-        ThrowsMessage<except::InvalidArgument>(HasSubstr("Invalid 'MyEnum': 6")));
+        ThrowsMessage<except::InvalidArgument>(HasSubstr("Invalid `MyEnum`: 6")));
   }
 }
 
@@ -169,7 +169,7 @@ TEST(enum, parseRon_MyEnum) {
     auto is = io::is("\"foo\"");
     EXPECT_THAT(
         [&] { parseRon(io::resetg(is), v); },
-        throwsParseFailure<char>(0, { 0, 5 }, HasSubstr("Cannot parse \"\\\"foo\\\"\" as 'MyEnum'")));
+        throwsParseFailure<char>(0, { 0, 5 }, HasSubstr("Cannot parse \"\\\"foo\\\"\" as `MyEnum`")));
     EXPECT_ISTREAM(is, true, false, 5);
   }
 }
@@ -199,12 +199,12 @@ TEST(enum, printRon_MyEnum) {
     ostringstream os;
     EXPECT_THAT(
         [&] { os << static_cast<type>(6); },
-        ThrowsMessage<except::InvalidArgument>(HasSubstr("Invalid 'MyEnum': 6")));
+        ThrowsMessage<except::InvalidArgument>(HasSubstr("Invalid `MyEnum`: 6")));
   }
 }
 
 /**
- * The size of the string is 10 here, but the code-point size is not. @c std::format is not UTF-8-aware.
+ * The size of the string is 10 here, but the code-point size is not. `std::format` is not UTF-8-aware.
  */
 TEST(enum, format_MyEnum) {
   EXPECT_EQ(format("{: >10}", fröber), "   fröber");

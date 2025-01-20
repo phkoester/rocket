@@ -23,7 +23,7 @@ using namespace rocket::gtest::match;
 using namespace std;
 using namespace testing;
 
-// 'TEST' ---------------------------------------------------------------------------------------------------
+// `TEST` ---------------------------------------------------------------------------------------------------
 
 TEST(escape, CString_char) {
   using type = char;

@@ -13,7 +13,7 @@ using namespace rocket::gtest::match;
 using namespace std;
 using namespace testing;
 
-// 'TEST' ---------------------------------------------------------------------------------------------------
+// `TEST` ---------------------------------------------------------------------------------------------------
 
 TEST(match, containsRegex) {
   EXPECT_THAT("Rocket", containsRegex("ock"));

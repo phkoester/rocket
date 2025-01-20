@@ -22,7 +22,7 @@ namespace rocket::math {
 
 namespace internal {
 
-// 'BoundTraits' ............................................................................................
+// `BoundTraits` ............................................................................................
 
 template<typename T, typename BoundType_, bool Left_, char Symbol_>
 struct BoundTraits {
@@ -100,7 +100,7 @@ unionImpl(
   return { Left::min(lhsLower, rhsLower), Right::max(lhsUpper, rhsUpper) };
 }
 
-// 'IntervalTraits' .........................................................................................
+// `IntervalTraits` .........................................................................................
 
 template<typename T, typename Left, typename Right>
 struct IntervalTraits;
@@ -218,7 +218,7 @@ struct IntervalTraits<T, LeftClosed<T>, RightOpen<T>> {
 
 } // namespace internal
 
-// 'IntervalImpl' -------------------------------------------------------------------------------------------
+// `IntervalImpl` -------------------------------------------------------------------------------------------
 
 /**
  * A mathematical interval for either integer or noninteger types.
@@ -281,9 +281,9 @@ struct IntervalImpl {
   constexpr IntervalImpl(LowerType lower, UpperType upper) : lower(lower), upper(upper) {}
 
   /**
-   * @member_op_cast{@c bool}
+   * @member_op_cast{`bool`}
    *
-   * @return @c true iff this interval is nonempty
+   * @return `true` if this interval is nonempty
    */
   inline operator bool() const { return not empty(); }
 
@@ -302,7 +302,7 @@ struct IntervalImpl {
    * Tests if @p v is contained in this interval.
    *
    * @param v a value of type @p T
-   * @return @c true iff @p v is contained in this interval
+   * @return `true` if @p v is contained in this interval
    */
   constexpr bool contains(T v) const { return Left::matches(lower, v) && Right::matches(upper, v); }
 
@@ -311,19 +311,19 @@ struct IntervalImpl {
    *
    * If either #lower or #upper are null, meaning "infinite", then this interval is nonempty.
    *
-   * @return @c true iff this interval is empty
+   * @return `true` if this interval is empty
    */
   constexpr bool empty() const { return Traits::empty(lower, upper); }
 
   /**
-   * Obtains the size of this interval.
+   * Returns the size of this interval.
    *
    * If either #lower or #upper are null, then the size of the interval is null, meaning "infinite".
    * Otherwise, the size is calculated as #upper - #lower.
    *
    * @attention A size of 0 doesn't necessarily mean an interval is empty. For instance, the closed interval
    * [2,2] has a size of 0 and is nonempty. On the other hand, an empty interval always has a size of 0. To
-   * check if an interval is empty, use the #empty() member function.
+   * check if an interval is empty, use the #empty member function.
    * 
    * @return the size of this interval
    */
@@ -355,7 +355,7 @@ operator<<(std::ostream& lhs, const IntervalImpl<T, Left, Right>& rhs) {
 }
 
 /**
- * Obtains the intersection of the intervals @p lhs and @p rhs.
+ * Returns the intersection of the intervals @p lhs and @p rhs.
  *
  * @tparam T the element type
  * @tparam Left the type of the lower-bound traits
@@ -373,7 +373,7 @@ operator&(const IntervalImpl<T, Left, Right>& lhs, const IntervalImpl<T, Left, R
 }
 
 /**
- * @c operator&=() for type #rocket::math::IntervalImpl.
+ * `operator&=` for type #rocket::math::IntervalImpl.
  *
  * @tparam T the element type
  * @tparam Left the type of the lower-bound traits
@@ -389,7 +389,7 @@ operator&=(const IntervalImpl<T, Left, Right>& lhs, const IntervalImpl<T, Left, 
 }
 
 /**
- * Obtains the union of the intervals @p lhs and @p rhs.
+ * Returns the union of the intervals @p lhs and @p rhs.
  *
  * @tparam T the element type
  * @tparam Left the type of the lower-bound traits
@@ -407,7 +407,7 @@ operator|(const IntervalImpl<T, Left, Right>& lhs, const IntervalImpl<T, Left, R
 }
 
 /**
- * @c operator|=() for type #rocket::math::IntervalImpl.
+ * `operator|=` for type #rocket::math::IntervalImpl.
  *
  * @tparam T the element type
  * @tparam Left the type of the lower-bound traits
@@ -425,8 +425,7 @@ operator|=(const IntervalImpl<T, Left, Right>& lhs, const IntervalImpl<T, Left, 
 // Interval types -------------------------------------------------------------------------------------------
 
 /**
- * A closed interval [@em lower,@em upper] contains all elements @em x such that
- * @em lower <= @em x <= @em upper.
+ * A closed interval [*lower*,*upper*] contains all elements *x* such that *lower* <= *x* <= *upper*.
  *
  * @tparam T the element type
  */
@@ -434,8 +433,7 @@ template<typename T>
 using Interval = IntervalImpl<T, internal::LeftClosed<T>, internal::RightClosed<T>>;
 
 /**
- * An open interval (@em lower,@em upper) contains all elements @em x such that
- * @em lower < @em x < @em upper.
+ * An open interval (*lower*,*upper*) contains all elements *x* such that *lower* < *x* < *upper*.
  *
  * @tparam T the element type
  */
@@ -443,8 +441,7 @@ template<typename T>
 using OpenInterval = IntervalImpl<T, internal::LeftOpen<T>, internal::RightOpen<T>>;
 
 /**
- * A left-open interval (@em lower,@em upper] contains all elements @em x such that
- * @em lower < @em x <= @em upper.
+ * A left-open interval (*lower*,*upper*] contains all elements *x* such that *lower* < *x* <= *upper*.
  *
  * @tparam T the element type
  */
@@ -452,8 +449,7 @@ template<typename T>
 using LeftOpenInterval = IntervalImpl<T, internal::LeftOpen<T>, internal::RightClosed<T>>;
 
 /**
- * A right-open interval [@em lower,@em upper) contains all elements @em x such that
- * @em lower <= @em x < @em upper.
+ * A right-open interval [*lower*,*upper*) contains all elements *x* such that *lower* <= *x* < *upper*.
  *
  * @tparam T the element type
  */
@@ -463,7 +459,7 @@ using RightOpenInterval = IntervalImpl<T, internal::LeftClosed<T>, internal::Rig
 // Functions ------------------------------------------------------------------------------------------------
 
 /**
- * Calculates the average mean for the values in the half-open interval [@c begin, @c end).
+ * Calculates the average mean for the values in the half-open interval [`begin`,`end`).
  *
  * To avoid overflow, this function calculates a <em>cumulative moving average</em>. Let the values be
  * @f$(x_{1},...,x_{N})@f$, this functions returns
@@ -492,7 +488,7 @@ mean(It begin, It end) {
 }
 
 /**
- * Calculates the standard deviation for the values in the half-open interval [@c begin,@c end).
+ * Calculates the standard deviation for the values in the half-open interval [`begin`,`end`).
  *
  * Let the values be @f$(x_{1},...,x_{N})@f$, this functions returns
  *

@@ -12,7 +12,7 @@
 #include <boost/spirit/home/x3/support/ast/variant.hpp>
 
 #ifdef ROCKET_CODEC_H
-#error 'codec.h' must be included after this file
+#error `codec.h` must be included after this file
 #endif
 
 // Template declarations ------------------------------------------------------------------------------------
@@ -35,11 +35,11 @@ template<typename... T> std::ostream& printRon(std::ostream&, const variant<T...
 
 } // namespace boost
 
-// 'IsContainerImpl' specializations ------------------------------------------------------------------------
+// `IsContainerImpl` specializations ------------------------------------------------------------------------
 
 namespace rocket {
 
-/// @spec_rocket_IsContainerImpl{@c boost::bimaps::bimap}
+/// @spec_rocket_IsContainerImpl{`boost::bimaps::bimap`}
 template<typename K, typename V> struct IsContainerImpl<::boost::bimaps::bimap<K, V>> : std::true_type {};
 
 } // namespace rocket

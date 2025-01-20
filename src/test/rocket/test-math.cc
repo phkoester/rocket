@@ -17,14 +17,14 @@ using namespace rocket::math;
 using namespace std;
 using namespace testing;
 
-// 'TEST' ---------------------------------------------------------------------------------------------------
+// `TEST` ---------------------------------------------------------------------------------------------------
 
 TEST(math, mean) {
   {
     vector<int> v;
     EXPECT_THAT(
         [&] { mean<double>(v.begin(), v.end()); },
-        ThrowsMessage<except::InvalidArgument>(HasSubstr("Parameter 'end': Check \"end > begin\" failed: Range is empty")));
+        ThrowsMessage<except::InvalidArgument>(HasSubstr("Parameter `end`: Check `end > begin` failed: Range is empty")));
   }
 
   {

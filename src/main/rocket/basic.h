@@ -5,30 +5,30 @@
  *
  * Size in bytes of basic types on all supported target systems:
  *
- * | Type                 | @c linux |
- * |----------------------|---------:|
- * | @c char              |        1 |
- * | @c std::byte         |        1 |
- * | @c short             |        2 |
- * | @c wchar_t           |        4 |
- * | @c char32_t          |        4 |
- * | @c int               |        4 |
- * | @c float             |        4 |
- * | @c long              |        8 |
- * | <tt>long long</tt>   |        8 |
- * | @c size_t            |        8 |
- * | @c double            |        8 |
- * | @c void*             |        8 |
- * | #int128_t            |       16 |
- * | <tt>long double</tt> |       16 |
+ * | Type          | `linux`
+ * | :------------ | ------:
+ * | `char`        |       1
+ * | `std::byte`   |       1
+ * | `short`       |       2
+ * | `wchar_t`     |       4
+ * | `char32_t`    |       4
+ * | `int`         |       4
+ * | `float`       |       4
+ * | `long`        |       8
+ * | `long long`   |       8
+ * | `size_t`      |       8
+ * | `double`      |       8
+ * | `void*`       |       8
+ * | `int128_t`    |      16
+ * | `long double` |      16
  *
- * In Rocket, C strings of type @c char* and instances of @c std::string or @c std::string_view are assumed
- * to be UTF-8-encoded. This is already true at compile time: A string literal like "ä" must expand to
- * @c "\xc3\xa4". Therefore, the @c char8_t from C++20 is never in use.
+ * In Rocket, C strings of type `char*` and instances of `std::string` or `std::string_view` are assumed to
+ * be UTF-8-encoded. This is already true at compile time: A string literal like `"ä"` must expand to
+ * `"\xc3\xa4"`. Therefore, the `char8_t` from C++20 is never in use.
  *
- * The size of @c wchar_t is platform-dependent. On Linux, a @c wchar_t is usually 4 bytes wide, whereas on
- * Windows, it is only 2 bytes wide. So there is no guarantee a @c wchar_t can hold a Unicode code point. For
- * UTF-32 encoding, Rocket uses the @c char32_t type from C++11.
+ * The size of `wchar_t` is platform-dependent. On Linux, a `wchar_t` is usually 4 bytes wide, whereas on
+ * Windows, it is only 2 bytes wide. So there is no guarantee a `wchar_t` can hold a Unicode code point. For
+ * UTF-32 encoding, Rocket uses the `char32_t` type from C++11.
  *
  * The only Unicode encodings that Rocket supports are UTF-8 and UTF-32.
  */
@@ -56,7 +56,7 @@
   #error Unknown compiler
 #endif
 
-// 'int128_t' -----------------------------------------------------------------------------------------------
+// `int128_t` -----------------------------------------------------------------------------------------------
 
 /**
  * A signed 128-bit integer type.
@@ -69,7 +69,7 @@ std::istream& operator>>(std::istream& lhs, int128_t& rhs);
 /// @op_output{#int128_t}
 std::ostream& operator<<(std::ostream& lhs, int128_t rhs);
 
-// 'uint128_t' ----------------------------------------------------------------------------------------------
+// `uint128_t` ----------------------------------------------------------------------------------------------
 
 /**
  * An unsigned 128-bit integer type.
@@ -96,108 +96,108 @@ constexpr int DEFAULT_PRECISION = 20;
  */
 constexpr size_t NPOS = -1L;
 
-// 'Char' ---------------------------------------------------------------------------------------------------
+// `Char` ---------------------------------------------------------------------------------------------------
 
 template<int N> struct Char;
 
 /**
- * One-byte character: @c char.
+ * One-byte character: `char`.
  */
 template<> struct Char<1> {
   using Type = char; ///< @type_alias
 };
 
 /**
- * Four-byte character: @c char32_t.
+ * Four-byte character: `char32_t`.
  */
 template<> struct Char<4> {
   using Type = char32_t; ///< @type_alias
 };
 
-// 'Int' ----------------------------------------------------------------------------------------------------
+// `Int` ----------------------------------------------------------------------------------------------------
 
 template<int N> struct Int;
 
 /**
- * One-byte signed integer: @c int8_t.
+ * One-byte signed integer: `int8_t`.
  */
 template<> struct Int<1> {
   using Type = int8_t; ///< @type_alias
 };
 
 /**
- * Two-byte signed integer: @c int16_t.
+ * Two-byte signed integer: `int16_t`.
  */
 template<> struct Int<2> {
   using Type = int16_t; ///< @type_alias
 };
 
 /**
- * Four-byte signed integer: @c int32_t.
+ * Four-byte signed integer: `int32_t`.
  */
 template<> struct Int<4> {
   using Type = int32_t; ///< @type_alias
 };
 
 /**
- * Eight-byte signed integer: @c int64_t.
+ * Eight-byte signed integer: `int64_t`.
  */
 template<> struct Int<8> {
   using Type = int64_t; ///< @type_alias
 };
 
 /**
- * Sixteen-byte signed integer: @c int128_t.
+ * Sixteen-byte signed integer: `int128_t`.
  */
 template<> struct Int<16> {
   using Type = int128_t; ///< @type_alias
 };
 
-// 'Uint' ---------------------------------------------------------------------------------------------------
+// `Uint` ---------------------------------------------------------------------------------------------------
 
 template<int N> struct Uint;
 
 /**
- * One-byte unsigned integer: @c uint8_t.
+ * One-byte unsigned integer: `uint8_t`.
  */
 template<> struct Uint<1> {
   using Type = uint8_t; ///< @type_alias
 };
 
 /**
- * Two-byte unsigned integer: @c uint16_t.
+ * Two-byte unsigned integer: `uint16_t`.
  */
 template<> struct Uint<2> {
   using Type = uint16_t; ///< @type_alias
 };
 
 /**
- * Four-byte unsigned integer: @c uint32_t.
+ * Four-byte unsigned integer: `uint32_t`.
  */
 template<> struct Uint<4> {
   using Type = uint32_t; ///< @type_alias
 };
 
 /**
- * Eight-byte unsigned integer: @c uint64_t.
+ * Eight-byte unsigned integer: `uint64_t`.
  */
 template<> struct Uint<8> {
   using Type = uint64_t; ///< @type_alias
 };
 
 /**
- * Sixteen-byte unsigned integer: @c uint128_t.
+ * Sixteen-byte unsigned integer: `uint128_t`.
  */
 template<> struct Uint<16> {
   using Type = uint128_t; ///< @type_alias
 };
 
-// 'Float' --------------------------------------------------------------------------------------------------
+// `Float` --------------------------------------------------------------------------------------------------
 
 template<int N> struct Float;
 
 /**
- * Four-byte floating point: @c float.
+ * Four-byte floating point: `float`.
  *
  * @todo Find a portable way to express a four-byte floating point.
  */
@@ -208,7 +208,7 @@ template<> struct Float<4> {
 static_assert(sizeof(Float<4>::Type) == 4);
 
 /**
- * Eight-byte floating point: @c double.
+ * Eight-byte floating point: `double`.
  *
  * @todo Find a portable way to express an eight-byte floating point.
  */
@@ -219,7 +219,7 @@ template<> struct Float<8> {
 static_assert(sizeof(Float<8>::Type) == 8);
 
 /**
- * Sixteen-byte floating point: <tt>long double</tt>.
+ * Sixteen-byte floating point: `long double`.
  *
  * @todo Find a portable way to express a sixteen-byte floating point.
  */
@@ -229,7 +229,7 @@ template<> struct Float<16> {
 
 static_assert(sizeof(Float<16>::Type) == 16);
 
-// 'Character' ----------------------------------------------------------------------------------------------
+// `Character` ----------------------------------------------------------------------------------------------
 
 namespace internal {
 
@@ -241,7 +241,7 @@ template<> struct IsCharacterImpl<Char<4>::Type> : std::true_type {};
 } // namespace internal
 
 /**
- * @c IsCharacter template.
+ * IsCharacter template.
  */
 template<typename C> struct IsCharacter : internal::IsCharacterImpl<std::decay_t<C>>::type {};
 
@@ -250,8 +250,8 @@ template<typename C> struct IsCharacter : internal::IsCharacterImpl<std::decay_t
  *
  * These are
  *
- * - @c char (UTF-8)
- * - @c char32_t (UTF-32)
+ * - `char` (UTF-8)
+ * - `char32_t` (UTF-32)
  *
  * For more information, read the documentation for this file.
  *
@@ -259,7 +259,7 @@ template<typename C> struct IsCharacter : internal::IsCharacterImpl<std::decay_t
  */
 template<typename C> concept Character = IsCharacter<C>::value;
 
-// 'Integer' ------------------------------------------------------------------------------------------------
+// `Integer` ------------------------------------------------------------------------------------------------
 
 namespace internal {
 
@@ -280,7 +280,7 @@ template<> struct IsIntegerImpl<Uint<16>::Type> : std::true_type {};
 } // namespace internal
 
 /**
- * @c IsInteger template.
+ * IsInteger template.
  *
  * @tparam I the type to test
  */
@@ -291,14 +291,14 @@ template<typename I> struct IsInteger : internal::IsIntegerImpl<std::decay_t<I>>
  *
  * These are:
  *
- * - @c @c int16_t, @c int32_t, @c int64_t, @c int128_t
- * - @c @c uint16_t, @c uint32_t, @c uint64_t, @c uint128_t
+ * - `int16_t`, `int32_t`, `int64_t`, `int128_t`
+ * - `uint16_t`, `uint32_t`, `uint64_t`, `uint128_t`
  *
  * @tparam I the type to test
  */
 template<typename I> concept Integer = IsInteger<I>::value;
 
-// 'FloatingPoint' ------------------------------------------------------------------------------------------
+// `FloatingPoint` ------------------------------------------------------------------------------------------
 
 namespace internal {
 
@@ -311,7 +311,7 @@ template<> struct IsFloatingPointImpl<Float<16>::Type> : std::true_type {};
 } // namespace internal
 
 /**
- * @c IsFloatingPoint template.
+ * IsFloatingPoint template.
  *
  * @tparam F the type to test
  */
@@ -322,9 +322,9 @@ template<typename F> struct IsFloatingPoint : internal::IsFloatingPointImpl<std:
  *
  * These are:
  *
- * - @c float
- * - @c double
- * - <tt>long double</tt>
+ * - `float`
+ * - `double`
+ * - `long double`
  *
  * @tparam F the type to test
  */
@@ -338,12 +338,11 @@ template<typename F> concept FloatingPoint = IsFloatingPoint<F>::value;
 inline void nop() {}
 
 /**
- * The @c option() function has several overloads to work with values either of type @p T or
- * @c std::optional<T>.
+ * The `option` function has several overloads to work with values either of type @p T or `std::optional<T>`.
  *
  * @tparam T the value type
- * @param v a value; either of type @p T or @c std::optional<T>
- * @return an optional value. If the value is to be taken from a @c std::optional<T>, that optional is
+ * @param v a value; either of type @p T or `std::optional<T>`
+ * @return an optional value. If the value is to be taken from a `std::optional<T>`, that optional is
  *    returned directly, otherwise a nonnull optional
  */
 template<typename T>
@@ -353,12 +352,11 @@ option(const T& v) {
 }
 
 /**
- * The @c option() function has several overloads to work with values either of type @p T or
- * @c std::optional<T>.
+ * The `option` function has several overloads to work with values either of type @p T or `std::optional<T>`.
  *
  * @tparam T the value type
- * @param v a value; either of type @p T or @c std::optional<T>
- * @return an optional value. If the value is to be taken from a @c std::optional<T>, that optional is
+ * @param v a value; either of type @p T or `std::optional<T>`
+ * @return an optional value. If the value is to be taken from a `std::optional<T>`, that optional is
  *    returned directly, otherwise a nonnull optional
  */
 template<typename T>
@@ -368,12 +366,11 @@ option(std::optional<T>& v) {
 }
 
 /**
- * The @c option() function has several overloads to work with values either of type @p T or
- * @c std::optional<T>.
+ * The `option` function has several overloads to work with values either of type @p T or `std::optional<T>`.
  *
  * @tparam T the value type
- * @param v a value; either of type @p T or @c std::optional<T>
- * @return an optional value. If the value is to be taken from a @c std::optional<T>, that optional is
+ * @param v a value; either of type @p T or `std::optional<T>`
+ * @return an optional value. If the value is to be taken from a `std::optional<T>`, that optional is
  *    returned directly, otherwise a nonnull optional
  */
 template<typename T>
@@ -383,11 +380,11 @@ option(const std::optional<T>& v) {
 }
 
 /**
- * Tells if @p v is a quiet not-a-number.
+ * Returns `true` if @p v is a quiet not-a-number.
  *
  * @tparam F the floating-point type
  * @param v a floating-point value
- * @return @c true iff @p v is a quiet not-a-number
+ * @return `true` if @p v is a quiet not-a-number
  */
 template<typename F> requires FloatingPoint<F>
 constexpr bool
@@ -396,11 +393,11 @@ quietNan(F v) {
 }
 
 /**
- * Tells if @p v is a signaling not-a-number.
+ * Returns `true` if @p v is a signaling not-a-number.
  *
  * @tparam F the floating-point type
  * @param v a floating-point value
- * @return @c true iff @p v is a signaling not-a-number
+ * @return `true` if @p v is a signaling not-a-number
  */
 template<typename F> requires FloatingPoint<F>
 constexpr bool
@@ -409,14 +406,14 @@ signalingNan(F v) {
 }
 
 /**
- * Obtains an unsigned integer value for @p v that has the same size in bytes as @p v.
+ * Returns an unsigned integer value for @p v that has the same size in bytes as @p v.
  *
  * This may be useful to quickly print hex values:
  *
- * @code{.cc}
+ * ```
  * auto v = ...
  * cout << hex << rocket::uint(v) << '\n';
- * @endcode
+ * ```
  *
  * @tparam T the type of @p v
  * @param v a value
@@ -440,12 +437,11 @@ template<typename... T>
 constexpr void use(T&&... args) {}
 
 /**
- * The @c value() function has several overloads to work with values either of type @p T or
- * @c std::optional<T>.
+ * The `value` function has several overloads to work with values either of type @p T or `std::optional<T>`.
  *
  * @tparam T the value type
- * @param v a value; either of type @p T or @c std::optional<T>
- * @return a value. If the value is to be taken from a @c std::optional<T>, that optional is dereferenced,
+ * @param v a value; either of type @p T or `std::optional<T>`
+ * @return a value. If the value is to be taken from a `std::optional<T>`, that optional is dereferenced,
  *     otherwise the value is returned directly
  */
 template<typename T>
@@ -455,12 +451,11 @@ value(T& v) {
 }
 
 /**
- * The @c value() function has several overloads to work with values either of type @p T or
- * @c std::optional<T>.
+ * The `value` function has several overloads to work with values either of type @p T or `std::optional<T>`.
  *
  * @tparam T the value type
- * @param v a value; either of type @p T or @c std::optional<T>
- * @return a value. If the value is to be taken from a @c std::optional<T>, that optional is dereferenced,
+ * @param v a value; either of type @p T or `std::optional<T>`
+ * @return a value. If the value is to be taken from a `std::optional<T>`, that optional is dereferenced,
  *     otherwise the value is returned directly
  */
 template<typename T>
@@ -470,12 +465,11 @@ value(const T& v) {
 }
 
 /**
- * The @c value() function has several overloads to work with values either of type @p T or
- * @c std::optional<T>.
+ * The `value` function has several overloads to work with values either of type @p T or `std::optional<T>`.
  *
  * @tparam T the value type
- * @param v a value; either of type @p T or @c std::optional<T>
- * @return a value. If the value is to be taken from a @c std::optional<T>, that optional is dereferenced,
+ * @param v a value; either of type @p T or `std::optional<T>`
+ * @return a value. If the value is to be taken from a `std::optional<T>`, that optional is dereferenced,
  *     otherwise the value is returned directly
  */
 template<typename T>
@@ -485,12 +479,11 @@ value(std::optional<T>& v) {
 }
 
 /**
- * The @c value() function has several overloads to work with values either of type @p T or
- * @c std::optional<T>.
+ * The `value` function has several overloads to work with values either of type @p T or `std::optional<T>`.
  *
  * @tparam T the value type
- * @param v a value; either of type @p T or @c std::optional<T>
- * @return a value. If the value is to be taken from a @c std::optional<T>, that optional is dereferenced,
+ * @param v a value; either of type @p T or `std::optional<T>`
+ * @return a value. If the value is to be taken from a `std::optional<T>`, that optional is dereferenced,
  *     otherwise the value is returned directly
  */
 template<typename T>

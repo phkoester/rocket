@@ -15,7 +15,7 @@
 // Macros ---------------------------------------------------------------------------------------------------
 
 /**
- * Calls Process::error(). This may be used even if the process isn't initialized yet.
+ * Calls #rocket::Process::error. This may be used even if the process isn't initialized yet.
  *
  * @param msg The error message
  */
@@ -30,21 +30,21 @@ namespace rocket {
 // Constants ------------------------------------------------------------------------------------------------
 
 /**
- * An exit value that may be used when the program cannot start, e.\ g.\ due to a a bad command line, a
- * bad environment or missing ressources.
+ * An exit value that may be used when the program cannot start, e.g. due to a a bad command line, a bad
+ * environment or missing ressources.
  *
- * Once the program started operating properly, @c EXIT_FAILURE (1) should be used to indicate a problem.
+ * Once the program started operating properly, `EXIT_FAILURE` (1) should be used to indicate a problem.
  */
 constexpr int EXIT_SERIOUS_FAILURE = 2;
 
-// 'Process' ------------------------------------------------------------------------------------------------
+// `Process` ------------------------------------------------------------------------------------------------
 
 /**
- * A central Rocket class to be used in @c main().
+ * A central Rocket class to be used in `main`.
  *
  * A very basic Rocket program may look like this:
  *
- * @code{.cc}
+ * ```
  * #include <rocket/Process.h>
  * #include <rocket/cl.h>
  *
@@ -69,14 +69,14 @@ constexpr int EXIT_SERIOUS_FAILURE = 2;
  *     terminate();
  *   }
  * }
- * @endcode
+ * ```
  *
  */
 struct Process {
   /**
-   * Obtains the command line.
+   * Returns the command line.
    *
-   * @return the command line, as separate strings. @c argv[0] is not included
+   * @return the command line, as separate strings. `argv[0]` is not included
    */
   const std::vector<std::string>& args() const { return args_; }
 
@@ -92,16 +92,16 @@ struct Process {
    *
    * This function may be called even if the process isn't initialized yet.
 
-   * @param os the output stream, usually @c std::cerr
+   * @param os the output stream, usually `std::cerr`
    * @param msg the error messsage
-   * @param status the exit status. If not @c EXIT_SUCCESS (0), then #exit() is called
+   * @param status the exit status. If not `EXIT_SUCCESS` (0), then #exit is called
    */
   void error(std::ostream& os, std::string_view msg, int status = EXIT_FAILURE) const;
 
   /**
    * Exits the program.
    *
-   * Depending on how init() was parametrized, this either calls @c std::quick_exit() or @c std::exit().
+   * Depending on how #init was parametrized, this either calls `std::quick_exit` or `std::exit`.
    *
    * @param status the exit status
    */
@@ -113,18 +113,18 @@ struct Process {
    * @attention This function must be called by any Rocket program; see the example in the documentation of
    * this class.
    *
-   * @param argc @c argc from main()
-   * @param argv @c argv from main()
-   * @param name the name of the program. If this is null, the file name from @c argv[0] is used. It is
-   *    recommended to give the program a proper name independent from @c argv[0]
-   * @param quickExit if @c true, #exit() calls @c std::quick_exit(), otherwise it calls @c std::exit(). It
-   *    is recommended to set this to @c true for faster process tear-down
+   * @param argc `argc` from `main`
+   * @param argv `argv` from `main`
+   * @param name the name of the program. If this is null, the file name from `argv[0]` is used. It is
+   *    recommended to give the program a proper name independent from `argv[0]`
+   * @param quickExit if `true`, #exit calls `std::quick_exit`, otherwise it calls `std::exit`. It is
+   *    recommended to set this to `true` for faster process tear-down
    */
   void init(
       int argc, char** argv, std::optional<std::string_view> name = std::nullopt, bool quickExit = true);
 
   /**
-   * Obtains the name of the process.
+   * Returns the name of the process.
    *
    * @return the name of the process
    */
@@ -149,7 +149,7 @@ struct Process {
    *
    * This function may be called even if the process isn't initialized yet.
    
-   * @param os the output stream, usually @c std::cerr
+   * @param os the output stream, usually `std::cerr`
    * @param msg the warning message
    */
   void warn(std::ostream& os, std::string_view msg) const;

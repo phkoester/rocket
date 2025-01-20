@@ -179,17 +179,17 @@ overflow(const Type& type) {
 
 } // namespace message
 
-// 'InvalidArgument' ----------------------------------------------------------------------------------------
+// `InvalidArgument` ----------------------------------------------------------------------------------------
 
 InvalidArgument::InvalidArgument(
     string_view name,
     string_view msg,
     optional<source_location>&& sourceLoc,
     optional<stacktrace>&& stackTrace) :
-    BaseType(message::baseMessage(S << "Parameter " << ROCKET_QUOTE_SS(name) << ": " << raw(msg), sourceLoc)),
+    BaseType(message::baseMessage(S << "Parameter " << ROCKET_QUOTE_BT(name) << ": " << raw(msg), sourceLoc)),
     Exception(msg, std::move(sourceLoc), std::move(stackTrace)) {}
 
-// 'InvalidState' -------------------------------------------------------------------------------------------
+// `InvalidState` -------------------------------------------------------------------------------------------
 
 InvalidState::InvalidState(
     string_view msg,

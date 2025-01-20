@@ -20,7 +20,7 @@ using namespace rocket::gtest::match;
 using namespace std;
 using namespace testing;
 
-// 'TEST' ---------------------------------------------------------------------------------------------------
+// `TEST` ---------------------------------------------------------------------------------------------------
 
 TEST(StringConvert, bool) {
   using type = bool;
@@ -35,7 +35,7 @@ TEST(StringConvert, bool) {
       throwsParseFailure<char>(1, { 0, 2 }, HasSubstr("\"fo\" does not match any of {\"0\", \"1\", \"false\", \"true\"}")));
   EXPECT_THAT(
       [] { stringToType<type>("falsex"); },
-      throwsParseFailure<char>(0, { 0, 6 }, HasSubstr("Cannot parse \"falsex\" as 'bool'")));
+      throwsParseFailure<char>(0, { 0, 6 }, HasSubstr("Cannot parse \"falsex\" as `bool`")));
 
   EXPECT_EQ(typeToString(false), "false");
   EXPECT_EQ(typeToString(true), "true");
@@ -49,10 +49,10 @@ TEST(StringConvert, int128_t) {
 
   EXPECT_THAT(
       [] { stringToType<type>("foo"); },
-      throwsParseFailure<char>(0, { 0, 3 }, HasSubstr("Cannot parse \"foo\" as '__int128'")));
+      throwsParseFailure<char>(0, { 0, 3 }, HasSubstr("Cannot parse \"foo\" as `__int128`")));
   EXPECT_THAT(
       [] { stringToType<type>("1x"); },
-      throwsParseFailure<char>(0, { 0, 2 }, HasSubstr("Cannot parse \"1x\" as '__int128'")));
+      throwsParseFailure<char>(0, { 0, 2 }, HasSubstr("Cannot parse \"1x\" as `__int128`")));
 
   EXPECT_EQ(typeToString(type(-999'999)), "-999'999");
 }
@@ -64,16 +64,16 @@ TEST(StringConvert, LogLevel) {
 
   EXPECT_THAT(
       [] { stringToType<type>("foo"); },
-      throwsParseFailure<char>(0, { 0, 3 }, HasSubstr("Cannot parse \"foo\" as 'rocket::log::LogLevel'")));
+      throwsParseFailure<char>(0, { 0, 3 }, HasSubstr("Cannot parse \"foo\" as `rocket::log::LogLevel")));
   EXPECT_THAT(
       [] { stringToType<type>("tracex"); },
-      throwsParseFailure<char>(0, { 0, 6 }, HasSubstr("Cannot parse \"tracex\" as 'rocket::log::LogLevel'")));
+      throwsParseFailure<char>(0, { 0, 6 }, HasSubstr("Cannot parse \"tracex\" as `rocket::log::LogLevel`")));
 
   EXPECT_EQ(typeToString(log::LogLevel::debug), "debug");
 
   EXPECT_THAT(
       [] { typeToString(static_cast<type>(6)); },
-      ThrowsMessage<except::InvalidArgument>(HasSubstr("Invalid 'rocket::log::LogLevel': 6")));
+      ThrowsMessage<except::InvalidArgument>(HasSubstr("Invalid `rocket::log::LogLevel`: 6")));
 }
 
 TEST(StringConvert, long_double) {

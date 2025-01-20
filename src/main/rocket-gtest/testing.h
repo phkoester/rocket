@@ -19,12 +19,12 @@
 // Macros ---------------------------------------------------------------------------------------------------
 
 /**
- * Checks the state of a @c std::istream.
+ * Checks the state of a `std::istream`.
  *
  * @param is the input stream
- * @param fail__ the expected value of @c is.fail()
- * @param eof__ the expected value of @c is.eof()
- * @param tell__ the expected value of @c rocket::io::tellg(is)
+ * @param fail__ the expected value of `is.fail()`
+ * @param eof__ the expected value of `is.eof()`
+ * @param tell__ the expected value of `rocket::io::tellg(is)`
  */
 #define EXPECT_ISTREAM(is, fail__, eof__, tell__) \
     EXPECT_EQ(is.fail(), fail__); \

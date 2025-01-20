@@ -42,7 +42,7 @@ using namespace testing;
     EXPECT_EQ(loc.message, message__); \
     EXPECT_EQ(loc.caption, caption__)
 
-// 'Config' -------------------------------------------------------------------------------------------------
+// `Config` -------------------------------------------------------------------------------------------------
 
 struct Config {
   vector<string> modules;
@@ -65,7 +65,7 @@ pars(const vector<vector<string>>& v) {
 
 } // namespace
 
-// 'TEST' ---------------------------------------------------------------------------------------------------
+// `TEST` ---------------------------------------------------------------------------------------------------
 
 TEST(text, internalParagraphs) {
   string nbsp = "\u00a0";
@@ -262,7 +262,7 @@ TEST(text, locations) {
   {
     string s = "a\nb\tc"; // 0: a, 1: \n, 2: b, 3: \t, 4: c
     auto is = io::is(s);
-    // Position 4 points to 'c' in the second line
+    // Position 4 points to `c` in the second line
     Position pos { .type=Position::Note, .position=4, .message="Oops" };
     auto result = locations(is, { pos }, { .setLineString=true, .tabSize=nullopt });
     EXPECT_EQ(result.locations.size(), 1);
@@ -275,7 +275,7 @@ TEST(text, locations) {
   {
     string s = "a\nb\tc"; // 0: a, 1: \n, 2: b, 3: \t, 4: c
     auto is = io::is(s);
-    // Position 4 points to 'c' in the second line
+    // Position 4 points to `c` in the second line
     Position pos { .type=Position::Note, .position=4, .message="Oops" };
     auto result = locations(is, { pos }, { .setLineString=true });
     EXPECT_EQ(result.locations.size(), 1);
@@ -285,7 +285,7 @@ TEST(text, locations) {
 }
 
 TEST(text, printLocations) {
-  // Test failing 'parseRon()'
+  // Test failing `parseRon`
   {
     string source = "src/test/rocket/test-text-Config.ron";
     string content;

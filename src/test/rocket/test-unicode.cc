@@ -36,9 +36,9 @@ printGrapheme(const Grapheme& grapheme, u32string_view s) {
 
 } // namespace
 
-// 'TEST' ---------------------------------------------------------------------------------------------------
+// `TEST` ---------------------------------------------------------------------------------------------------
 
-// 'rocket::unicode::internal' ..............................................................................
+// `rocket::unicode::internal` ..............................................................................
 
 TEST(unicode, biFind) {
   random_device rd;
@@ -82,14 +82,14 @@ TEST(unicode, emoji) {
   EXPECT_TRUE(emojiEmoji_Presentation(0x01f468U)); // MAN
 }
 
-// 'rocket::unicode' ........................................................................................
+// `rocket::unicode` ........................................................................................
 
 TEST(unicode, CodePoint) {
   EXPECT_EQ(static_cast<uint32_t>(CodePoint('\x7f')), 127);
 
   EXPECT_THAT(
       [&] { CodePoint('\x80'); },
-      ThrowsMessage<except::InvalidArgument>(HasSubstr("Parameter 'v': ")));
+      ThrowsMessage<except::InvalidArgument>(HasSubstr("Parameter `v`: ")));
 }
 
 TEST(unicode, CodePoint_opCast_string) {
@@ -249,7 +249,7 @@ TEST(unicode, Grapheme) {
   EXPECT_EQ(width(graphemes(U"a")), 1);
   EXPECT_EQ(width(graphemes(U"😁")), 2);
 
-  // The following tests are taken from the Rust crate 'unicode-display-width'
+  // The following tests are taken from the Rust crate `unicode-display-width`
 
   EXPECT_EQ(width(graphemes("🔥🗡🍩👩🏻‍🚀⏰💃🏼🔦👍🏻")), 15);
   EXPECT_EQ(width(graphemes("🦀")), 2);
@@ -527,7 +527,7 @@ TEST(unicode, GraphemeIterator_char32_t) {
   EXPECT_EQ(distance(beg, end), 2);
 }
 
-// 'rocket::unicode::utf8' ..................................................................................
+// `rocket::unicode::utf8` ..................................................................................
 
 TEST(unicode, utf8_codePointSize) {
   EXPECT_EQ(utf8::codePointSize(97), 1); // 'a'
@@ -568,7 +568,7 @@ TEST(unicode, utf8_valid) {
   EXPECT_EQ(out, "��"); // Incomplete '€', which is E2 82 AC
 }
 
-// 'rocket::unicode::utf32' ---------------------------------------------------------------------------------
+// `rocket::unicode::utf32` ---------------------------------------------------------------------------------
 
 TEST(unicode, utf32_graphemes) {
   {

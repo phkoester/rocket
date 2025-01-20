@@ -25,9 +25,9 @@ namespace {
 /**
  * Windows: Convert arguments to a command-line string. The rules are:
  *
- * - Replace a space by @c " "
- * - Replace a quotation mark by @c \"
- * - Replace a backslash followed by quotation markby @c "\\"
+ * - Replace a space by `" "`
+ * - Replace a quotation mark by `\"`
+ * - Replace a backslash followed by quotation mark by `"\\"`
  *
  * @todo Use a generalized escaping mechanism
  */

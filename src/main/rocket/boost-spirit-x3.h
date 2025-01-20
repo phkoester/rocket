@@ -1,7 +1,7 @@
 /**
  * @file boost-spirit-x3.h
  *
- * Adds @c char32_t support to Boost Spirit X3.
+ * Adds `char32_t` support to Boost Spirit X3.
  */
 
 #include <boost/spirit/home/support/char_encoding/unicode.hpp>
@@ -11,7 +11,7 @@
 
 #pragma once
 
-// Namespace 'boost::spirit::x3::unicode' -------------------------------------------------------------------
+// Namespace `boost::spirit::x3::unicode` -------------------------------------------------------------------
 
 namespace boost::spirit::x3 {
 
@@ -19,7 +19,7 @@ namespace unicode {
   /**
    * @name Character
    *
-   * These declarations correspond to @c boost/spirit/home/x3/char/char.hpp.
+   * These declarations correspond to `boost/spirit/home/x3/char/char.hpp`.
    */
   ///@{
 
@@ -28,12 +28,12 @@ namespace unicode {
    */
   using char_type = any_char<boost::spirit::char_encoding::unicode>;
   /**
-   * The @c char_ constant.
+   * The `char_` constant.
    */
   const auto char_ = char_type {};
 
   /**
-   * @c lit() overload.
+   * `lit` overload.
    *
    * @param ch a character
    * @return a literal character
@@ -48,12 +48,12 @@ namespace unicode {
   /**
    * @name String
    *
-   * These declarations correspond to @c boost/spirit/home/x3/string/literal_string.hpp.
+   * These declarations correspond to `boost/spirit/home/x3/string/literal_string.hpp`.
    */
   ///@{
         
   /**
-   * @c string() overload.
+   * `string` overload.
    *
    * @param s a string
    * @return a literal string
@@ -64,7 +64,7 @@ namespace unicode {
   }
 
   /**
-   * @c string() overload.
+   * `string` overload.
    *
    * @param s a string
    * @return a literal string
@@ -75,7 +75,7 @@ namespace unicode {
   }
 
   /**
-   * @c lit() overload.
+   * `lit` overload.
    *
    * @param s a string
    * @return a literal string
@@ -86,7 +86,7 @@ namespace unicode {
   }
 
   /**
-   * @c lit() overload.
+   * `lit` overload.
    *
    * @param s a string
    * @return a literal string
@@ -102,7 +102,7 @@ namespace unicode {
 /**
  * @name Character classes
  *
- * These declarations correspond to @c boost/spirit/home/x3/char/char_class.hpp.
+ * These declarations correspond to `boost/spirit/home/x3/char/char_class.hpp`.
  */
 ///@{
 

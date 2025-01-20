@@ -20,7 +20,7 @@ using namespace std;
 
 namespace rocket::cl {
 
-// 'CommandLine' --------------------------------------------------------------------------------------------
+// `CommandLine` --------------------------------------------------------------------------------------------
 
 CommandLine::CommandLine(const vector<Option>& opts, const CommandLineParams& params) :
     opts_(opts),
@@ -34,7 +34,7 @@ CommandLine::CommandLine(const vector<Option>& opts, const CommandLineParams& pa
     opts_.insert(opts_.begin(), logOpts.begin(), logOpts.end());
   }
 
-  // NOTE: Because we use string views and pointers in the maps, 'opts_' may never be changed from this point
+  // NOTE: Because we use string views and pointers in the maps, `opts_` may never be changed from this point
 
   // Validate options, populate maps
   
@@ -43,12 +43,12 @@ CommandLine::CommandLine(const vector<Option>& opts, const CommandLineParams& pa
       help_ = true;
     validate(opt.name, true);
     auto pair = byName_.emplace(opt.name, &opt);
-    ROCKET_CHECK(opts, pair.second, S << "Duplicate option " << ROCKET_QUOTE_SS(name(opt, true)));
+    ROCKET_CHECK(opts, pair.second, S << "Duplicate option " << ROCKET_QUOTE_BT(name(opt, true)));
     if (opt.shortName) {
       string shortName = static_cast<string>(*opt.shortName);
       validate(shortName, false);
       auto pair = byShortName_.emplace(*opt.shortName, &opt); // cppcheck-suppress shadowVariable
-      ROCKET_CHECK(opts, pair.second, S << "Duplicate option " << ROCKET_QUOTE_SS(name(opt, false)));
+      ROCKET_CHECK(opts, pair.second, S << "Duplicate option " << ROCKET_QUOTE_BT(name(opt, false)));
     }
   }
 }
@@ -56,17 +56,17 @@ CommandLine::CommandLine(const vector<Option>& opts, const CommandLineParams& pa
 void
 CommandLine::apply(const Option& opt, bool nameFlag, optional<string_view> value) {
   if (opt.takesValue && not value)
-    throw except::InvalidState(S << "Missing value for option " << ROCKET_QUOTE_SS(name(opt, nameFlag)));
+    throw except::InvalidState(S << "Missing value for option " << ROCKET_QUOTE_BT(name(opt, nameFlag)));
   
   // Usually, options not taking a value may not be assigned a value. There is one exception to this rule:
   // boolean values are allowed
   if (not opt.takesValue && value && not codec::Symbols::Strings::Bool.contains(*value))
-    throw except::InvalidState(S << "Option " << ROCKET_QUOTE_SS(name(opt, nameFlag)) << " cannot take a value");
+    throw except::InvalidState(S << "Option " << ROCKET_QUOTE_BT(name(opt, nameFlag)) << " cannot take a value");
 
   try {
     opt.apply(value);
   } catch (const exception& ex) {
-    string msg = S << "Option " << ROCKET_QUOTE_SS(name(opt, nameFlag)) << ": Invalid value " << *value;
+    string msg = S << "Option " << ROCKET_QUOTE_BT(name(opt, nameFlag)) << ": Invalid value " << *value;
     if (opt.format)
       msg += "; expected " + *opt.format;
     throw except::InvalidState(msg);
@@ -214,17 +214,17 @@ CommandLine::parse(const vector<string>& args, const Take& take) const {
   vector<string> result;
   
   for (auto it = args.begin(), end = args.end(); it != end; ++it) {
-    const auto& elem = *it; // 'string'
-    string_view arg = elem; // This makes 'substr()' more efficient
+    const auto& elem = *it; // `string`
+    string_view arg = elem; // This makes `substr()` more efficient
 
     if (arg == "--") {
-      // 1. "--" seen: Pass the rest, excluding the option-end tag, to the program and break the argument
+      // 1. `--` seen: Pass the rest, excluding the option-end tag, to the program and break the argument
       // loop
       
       result.insert(result.end(), it + 1, args.end());
       break;
     } else if (strings::beginsWith<char>(arg, "--")) {
-      // 2. "--..." seen: Parse option by name
+      // 2. `--...` seen: Parse option by name
 
       arg = arg.substr(2);
       auto eq = arg.find('=');
@@ -233,13 +233,13 @@ CommandLine::parse(const vector<string>& args, const Take& take) const {
       string_view name = eq == string::npos ? arg : arg.substr(0, eq);
       auto mapIt = byName_.find(name);
       if (mapIt == byName_.end())
-        throw except::InvalidState(S << "Unknown option " << ROCKET_QUOTE_SS("--" + string(name)));
+        throw except::InvalidState(S << "Unknown option " << ROCKET_QUOTE_BT("--" + string(name)));
       const Option& opt = *mapIt->second;
 
       // Obtain value, if any
       optional<string_view> value;
       if (eq != string::npos) {
-        // Take everything after the '='
+        // Take everything after the `=`
         value = arg.substr(eq + 1);
       } else if (opt.takesValue) {
         // Take the next argument
@@ -260,14 +260,14 @@ CommandLine::parse(const vector<string>& args, const Take& take) const {
         auto cp = *cpIt;
         auto mapIt = byShortName_.find(cp);
         if (mapIt == byShortName_.end())
-          throw except::InvalidState(S << "Unknown option " << ROCKET_QUOTE_SS("-" + static_cast<string>(cp)));
+          throw except::InvalidState(S << "Unknown option " << ROCKET_QUOTE_BT("-" + static_cast<string>(cp)));
         const Option& opt = *mapIt->second;
 
         // Obtain value, if any, apply option
         optional<string> value;
         auto cpItNext = cpIt + 1;
         if (cpItNext != cpEnd && *cpItNext == U'=') {
-          // Option is followed by '=': Take everything after the '=' and break the code-point loop
+          // Option is followed by `=`: Take everything after the `=` and break the code-point loop
           value = arg.substr((++cpItNext).position());
           apply(opt, false, value);
           break;
@@ -329,7 +329,7 @@ void
 CommandLine::printHelp(ostream& os) const {
   ROCKET_EXPECT(help_);
 
-  os << "Try '" << params_.command << " --help' for more information.\n";
+  os << "Try `" << params_.command << " --help` for more information.\n";
 }
 
 void

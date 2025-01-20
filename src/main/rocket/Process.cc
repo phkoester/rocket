@@ -43,7 +43,7 @@ onTerminate() {
       except::printException(cerr, ptr);
     cerr << "Aborting\n";
   } catch (...) {
-    ROCKET_PROCESS_ERROR("'onTerminate' failed");
+    ROCKET_PROCESS_ERROR("`onTerminate` failed");
   }
   abort();
 }
@@ -52,7 +52,7 @@ onTerminate() {
 
 namespace rocket {
 
-// 'Process' ------------------------------------------------------------------------------------------------
+// `Process` ------------------------------------------------------------------------------------------------
 
 Process process;
 
@@ -71,10 +71,10 @@ Process::atExit(void (*f)()) const { // cppcheck-suppress constParameterPointer
 
   if (quickExit_) {
     if (at_quick_exit(f))
-      throw except::InvalidState("'at_quick_exit()' failed");
+      throw except::InvalidState("`at_quick_exit()` failed");
   } else {
     if (atexit(f))
-      throw except::InvalidState("'atexit()' failed");
+      throw except::InvalidState("`atexit()` failed");
   }
 }
 
@@ -96,7 +96,7 @@ Process::init(int argc, char** argv, optional<string_view> name, bool quickExit)
   
   setlocale(LC_ALL, "");
   
-  // Add 'char32_t' support to STL streams
+  // Add `char32_t` support to STL streams
   
   locale newLocale = locale() <<
       new ctype<char32_t> << new numpunct<char32_t> << new num_get<char32_t> << new num_put<char32_t>;
@@ -125,7 +125,7 @@ Process::init(int argc, char** argv, optional<string_view> name, bool quickExit)
 
   inited_ = true;
 
-  // Set the terminate handler. This must be done AFTER setting 'inited_' to 'true'
+  // Set the terminate handler. This must be done AFTER setting `inited_` to `true`
   
   set_terminate(onTerminate);
 

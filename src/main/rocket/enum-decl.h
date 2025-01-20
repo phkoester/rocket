@@ -41,16 +41,16 @@
  *
  * This macro must be called in the enum's namespace.
  *
- * @param type the type of the enum, without namespace, e.g. @c MyClass::MyEnum
+ * @param type the type of the enum, without namespace, e.g. `MyClass::MyEnum`
  */
 #define ROCKET_ENUM_DECLARE(type) ROCKET_ENUM_DECLARE__(type)
 
 /**
- * Declares a @c std::formatter specialization for the enum @p type.
+ * Declares a `std::formatter` specialization for the enum @p type.
  *
  * This macro must be called in the global namespace.
  *
- * @param type the fully-qualified type of the enum, with namespace, e.g. @c mynamespace::MyClass::MyEnum
+ * @param type the fully-qualified type of the enum, with namespace, e.g. `mynamespace::MyClass::MyEnum`
  */
 #define ROCKET_ENUM_DECLARE_STD_FORMATTER(type) ROCKET_ENUM_DECLARE_STD_FORMATTER__(type)
 

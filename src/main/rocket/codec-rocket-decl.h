@@ -13,7 +13,7 @@
 #include "unicode-decl.h"
 
 #ifdef ROCKET_CODEC_H
-#error 'codec.h' must be included after this file
+#error `codec.h` must be included after this file
 #endif
 
 namespace rocket {

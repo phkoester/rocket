@@ -10,7 +10,7 @@ using namespace rocket;
 using namespace rocket::strings;
 using namespace std;
 
-// 'TEST' ---------------------------------------------------------------------------------------------------
+// `TEST` ---------------------------------------------------------------------------------------------------
 
 TEST(strings, removeLeading_char) {
   using type = char;

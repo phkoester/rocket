@@ -18,7 +18,7 @@
 
 namespace rocket::unicode {
 
-// 'CodePoint' ----------------------------------------------------------------------------------------------
+// `CodePoint` ----------------------------------------------------------------------------------------------
 
 /**
  * A code-point type.
@@ -30,7 +30,7 @@ struct CodePoint {
   /**
    * @ctor
    *
-   * @param v a @c char value. This must be an ASCII character in the range [0,127]
+   * @param v a `char` value. This must be an ASCII character in the range [0,127]
    */
   // cppcheck-suppress noExplicitConstructor
   CodePoint(char v);
@@ -38,7 +38,7 @@ struct CodePoint {
   /**
    * @ctor
    *
-   * @param v a @c char32_t value
+   * @param v a `char32_t` value
    */
   // cppcheck-suppress noExplicitConstructor
   constexpr CodePoint(char32_t v) : v_(v) {}
@@ -46,56 +46,56 @@ struct CodePoint {
   /**
    * @ctor
    *
-   * @param v a @c uint32_t value
+   * @param v a `uint32_t` value
    */
   // cppcheck-suppress noExplicitConstructor
   constexpr CodePoint(uint32_t v) : v_(v) {}
 
-  /// @member_op_cast{@c uint32_t}
+  /// @member_op_cast{`uint32_t`}
   operator uint32_t() const { return v_; }
 
-  /// @member_op_cast{@c std::string}
+  /// @member_op_cast{`std::string`}
   explicit operator std::string() const;
   
-  /// @member_op_cast{@c std::u32string}
+  /// @member_op_cast{`std::u32string`}
   inline explicit operator std::u32string() const { return std::u32string { v_ }; }
 
   /// @member_fn_hash
   inline size_t hash() const { return std::hash<uint32_t>()(v_); }
 
   /**
-   * Obtains a lower-case code point for this code point.
+   * Returns a lower-case code point for this code point.
    *
    * @return a code point in lower case
    */
   CodePoint lower() const;
 
   /**
-   * Tells if this code point is printable.
+   * Returns `true` if this code point is printable.
    *
    * @param width if nonnull, then this is assigned the display width of the code point.
    *
-   * @return @c true iff this code point is printable. If this function returns @c true, @p width is
-   *     guaranteed to be positive
+   * @return `true` if this code point is printable. If this function returns `true`, @p width is guaranteed
+   *     to be positive
    */
   bool print(int8_t* width = nullptr) const;
 
   /**
-   * Obtains an upper-case code point for this code point.
+   * Returns an upper-case code point for this code point.
    *
    * @return a code point in upper case
    */
   CodePoint upper() const;
 
   /**
-   * Tells if this code point is whitespace.
+   * Returns `true` if this code point is whitespace.
    *
-   * @return @c true iff this code point is whitespace
+   * @return `true` if this code point is whitespace
    */
   bool whitespace() const;
 
   /**
-   * Obtains the display width for a code point.
+   * Returns the display width for a code point.
    *
    * This function defines the display width of a code point as follows:
    *
@@ -116,8 +116,8 @@ struct CodePoint {
    *
    * This implementation is inspired by
    *
-   * - Markus Kuhn's work (<http://www.cl.cam.ac.uk/~mgk25/ucs/wcwidth.c>) and
-   * - the Rust crate @c unicode-display-width (<https://lib.rs/crates/unicode-display-width>).
+   * - [Markus Kuhn's work](http://www.cl.cam.ac.uk/~mgk25/ucs/wcwidth.c)
+   * - the Rust crate [`unicode-display-width`](https://crates.io/crates/unicode-display-width)
    *
    * @return a width in the range [-1,2]
    */
@@ -128,8 +128,8 @@ private:
   uint32_t v_;
 };
 
-// With this static assertion, we can safely use 'reinterpret_cast' between 'CodePoint', 'uint32_t', and
-// 'char32_t'
+// With this static assertion, we can safely use `reinterpret_cast` between `CodePoint`, `uint32_t`, and
+// `char32_t`
 static_assert(sizeof(CodePoint) == sizeof(uint32_t) && sizeof(uint32_t) == sizeof(char32_t));
 
 /// @fn_hash_value{#rocket::unicode::CodePoint}
@@ -173,14 +173,14 @@ std::u32istream& operator>>(std::u32istream& lhs, CodePoint& rhs);
  */
 std::ostream& operator<<(std::ostream& lhs, CodePoint rhs);
 
-// 'CodePoints' ---------------------------------------------------------------------------------------------
+// `CodePoints`----------------------------------------------------------------------------------------------
 
 /**
  * A code-point container.
  */
 using CodePoints = std::vector<CodePoint>;
 
-// 'Grapheme' -----------------------------------------------------------------------------------------------
+// `Grapheme` -----------------------------------------------------------------------------------------------
 
 /**
  * A grapheme consisting of one or more code points.
@@ -222,10 +222,10 @@ struct Grapheme {
    */
   explicit Grapheme(std::u32string_view s);
 
-  /// @member_op_cast{@c std::string}
+  /// @member_op_cast{`std::string`}
   explicit operator std::string() const;
   
-  /// @member_op_cast{@c std::u32string}
+  /// @member_op_cast{`std::u32string`}
   explicit operator std::u32string() const;
 
   /// @member_op_eq
@@ -235,7 +235,7 @@ struct Grapheme {
   inline bool operator!=(const Grapheme& rhs) const { return codePoints != rhs.codePoints; }
 
   /**
-   * Obtains the code point from this grapheme if there is exactly once, otherwise returns null.
+   * Returns the code point from this grapheme if there is exactly once, otherwise returns null.
    *
    * @return a code point if there is exactly one, otherwise null
    */
@@ -247,9 +247,9 @@ struct Grapheme {
   }
 
   /**
-   * Tells if this grapheme is a CRLF (carriage return / line feed, @c "\r\n").
+   * Returns `true` if this grapheme is a CRLF (carriage return / line feed, `"\r\n"`).
    *
-   * @return @c true iff this grapheme is a CRLF
+   * @return `true` if this grapheme is a CRLF
    */
   inline bool
   crlf() const {
@@ -257,9 +257,9 @@ struct Grapheme {
   }
 
   /**
-   * Tells if this grapheme is an EOL (end of line).
+   * Returns `true` if this grapheme is an EOL (end of line).
    *
-   * @return @c true iff this grapheme is an EOL
+   * @return `true` if this grapheme is an EOL
    */
   inline bool
   eol() const {
@@ -267,9 +267,9 @@ struct Grapheme {
   }
 
   /**
-   * Tells if this grapheme is a LF (line feed, @c "\n").
+   * Returns `true` if this grapheme is a LF (line feed, `"\n"`).
    *
-   * @return @c true iff this grapheme is a LF
+   * @return `true` if this grapheme is a LF
    */
   inline bool
   lf() const {
@@ -277,9 +277,9 @@ struct Grapheme {
   }
 
   /**
-   * Tells if this grapheme is an NBSP (non-breaking space, U+00A0).
+   * Returns `true` if this grapheme is an NBSP (non-breaking space, U+00A0).
    *
-   * @return @c true iff this grapheme is an NBSP
+   * @return `true` if this grapheme is an NBSP
    */
   inline bool
   nbsp() const {
@@ -287,16 +287,16 @@ struct Grapheme {
   }
 
   /**
-   * Tells if this grapheme is printable.
+   * Returns `true` if this grapheme is printable.
    *
-   * @return @c true iff this grapheme is printable
+   * @return `true` if this grapheme is printable
    */
   bool print() const;
   
   /**
-   * Tells if this grapheme is a tab (@c "\t").
+   * Returns `true` if this grapheme is a tab (`"\t"`).
    *
-   * @return @c true iff this grapheme is a tab
+   * @return `true` if this grapheme is a tab
    */
   inline bool
   tab() const {
@@ -304,9 +304,9 @@ struct Grapheme {
   }
 
   /**
-   * Tells if this grapheme is whitespace.
+   * Returns `true` if this grapheme is whitespace.
    *
-   * @return @c true iff this grapheme is whitespace
+   * @return `true` if this grapheme is whitespace
    */
   inline bool
   whitespace() const {
@@ -349,7 +349,7 @@ std::u32istream& operator>>(std::u32istream& lhs, Grapheme& rhs);
  */
 std::ostream& operator<<(std::ostream& lhs, const Grapheme& rhs);
 
-// 'Graphemes' ----------------------------------------------------------------------------------------------
+// `Graphemes` ----------------------------------------------------------------------------------------------
 
 /**
  * A grapheme container.
@@ -383,11 +383,11 @@ std::u32string utf8To32(std::string_view s);
 std::string utf32To8(std::u32string_view s);
 
 /**
- * Obtains the display width for code points that make up a grapheme.
+ * Returns the display width for code points that make up a grapheme.
  *
  * This implementation is inspired by
  *
- * - the Rust crate @c unicode-display-width (<https://lib.rs/crates/unicode-display-width>).
+ * - the Rust crate [`unicode-display-width`](https://crates.io/crates/unicode-display-width).
  *
  * @param cps code points that make up a grapheme
  * @return a width in the range [0,2].
@@ -395,7 +395,7 @@ std::string utf32To8(std::u32string_view s);
 uint8_t width(const CodePoints& cps);
 
 /**
- * Obtains the display width for graphemes that make up a string.
+ * Returns the display width for graphemes that make up a string.
  *
  * @param grs graphemes that make up a string
  * @param index index of the first element
@@ -409,7 +409,7 @@ size_t width(const Graphemes& grs, size_t index = 0, size_t n = NPOS);
 namespace utf8 {
 
 /**
- * Given the first byte @p c in a UTF-8 byte sequence, obtains the size in bytes of the code point.
+ * Given the first byte @p c in a UTF-8 byte sequence, Returns the size in bytes of the code point.
  *
  * If @p c is a continuation byte, this function returns 0.
  *
@@ -419,20 +419,20 @@ namespace utf8 {
 uint8_t codePointSize(char c);
 
 /**
- * Obtains the code points of a UTF-8 string.
+ * Returns the code points of a UTF-8 string.
  *
  * @param s a UTF-8 string
- * @param positions if nonnull, then the left index of this map translates code-point positions to @c char
+ * @param positions if nonnull, then the left index of this map translates code-point positions to `char`
  *     positions after the functions returns
  * @return a code-point container
  */
 CodePoints codePoints(std::string_view s, Positions* positions = nullptr);
 
 /**
- * Tells if the character @p c is a UTF-8 continuation byte.
+ * Returns `true` if the character @p c is a UTF-8 continuation byte.
  *
  * @param c a character
- * @return @c true iff @p c is a UTF-8 continuation byte
+ * @return `true` if @p c is a UTF-8 continuation byte
  */
 inline bool continuationByte(char c) { return (c & 0xc0) == 0x80; }
 
@@ -453,10 +453,10 @@ size_t countCodePoints(std::string_view s);
 size_t countGraphemes(std::string_view s);
 
 /**
- * Obtains the graphemes of a UTF-8 string.
+ * Returns the graphemes of a UTF-8 string.
  *
  * @param s a UTF-8 string
- * @param positions if nonnull, then the left index of this map translates grapheme positions to @c char
+ * @param positions if nonnull, then the left index of this map translates grapheme positions to `char`
  *     positions after the functions returns
  * @return a grapheme container
  */
@@ -468,8 +468,8 @@ Graphemes graphemes(std::string_view s, Positions* positions = nullptr);
  * @param s a UTF-8 string; possibly invalid
  * @param out if nonnull, this is assigned a valid UTF-8 string. If @p s is valid, then @p out is assigned
  *    @p s. If @p s is not valid, then @p out is assigned a modified version of @p s where invalid or
- *    incomplete UTF-8 byte sequences are replaced by a sequence of replacement characters @c � (U+FFFD).
- * @return @c true iff @p s is a valid UTF-8 string
+ *    incomplete UTF-8 byte sequences are replaced by a sequence of replacement characters `�` (U+FFFD).
+ * @return `true` if @p s is a valid UTF-8 string
  */
 bool valid(std::string_view s, std::string* out = nullptr);
 
@@ -480,11 +480,11 @@ bool valid(std::string_view s, std::string* out = nullptr);
 namespace utf32 {
 
 /**
- * Obtains the code points of a UTF-32 string.
+ * Returns the code points of a UTF-32 string.
  *
  * @param s a UTF-32 string
  * @param positions if nonnull, then the left index of this map translates code-point positions to
- *     @c char32_t positions after the functions returns (trivial, but provided for completeness)
+ *     `char32_t` positions after the functions returns (trivial, but provided for completeness)
  * @return a code-point container
  */
 CodePoints codePoints(std::u32string_view s, Positions* positions = nullptr);
@@ -506,10 +506,10 @@ inline size_t countCodePoints(std::u32string_view s) { return s.size(); }
 size_t countGraphemes(std::u32string_view s);
 
 /**
- * Obtains the graphemes of a UTF-32 string.
+ * Returns the graphemes of a UTF-32 string.
  *
  * @param s a UTF-32 string
- * @param positions if nonnull, then the left index of this map translates grapheme positions to @c char32_t
+ * @param positions if nonnull, then the left index of this map translates grapheme positions to `char32_t`
  *     positions after the functions returns
  * @return a grapheme container
  */
@@ -517,7 +517,7 @@ Graphemes graphemes(std::u32string_view s, Positions* positions = nullptr);
 
 } // namespace utf32
 
-// Merge functions from 'utf8' and 'utf32' so they can be used as overloads ---------------------------------
+// Merge functions from `utf8` and `utf32` so they can be used as overloads ---------------------------------
 
 using utf8::codePoints;
 using utf32::codePoints;
@@ -535,13 +535,13 @@ using utf32::graphemes;
 
 namespace std {
 
-// 'CodePoint' (namespace 'std') ----------------------------------------------------------------------------
+// `CodePoint` (namespace `std`) ----------------------------------------------------------------------------
 
 /// @spec_std_hash{#rocket::unicode::CodePoint}
 template<>
 struct hash<rocket::unicode::CodePoint> {
   /**
-   * Obtains a hash value for @p v.
+   * Returns a hash value for @p v.
    *
    * @param v the value to hash
    * @return a hash value
@@ -553,14 +553,14 @@ struct hash<rocket::unicode::CodePoint> {
 template<>
 struct numeric_limits<rocket::unicode::CodePoint> {
   /**
-   * Obtains the minimum code-point value, which is U+0000.
+   * Returns the minimum code-point value, which is U+0000.
    *
    * @return the minimum code-point value
    */
   static consteval rocket::unicode::CodePoint min() { return 0U; }
   
   /**
-   * Obtains the maximum code-point value, which is U+10FFFF.
+   * Returns the maximum code-point value, which is U+10FFFF.
    *
    * @return the maximum code-point value
    */

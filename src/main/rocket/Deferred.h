@@ -11,10 +11,10 @@
 
 namespace rocket {
 
-// 'Deferred' -----------------------------------------------------------------------------------------------
+// `Deferred` -----------------------------------------------------------------------------------------------
 
 /**
- * A lazy value that is evaluated on demand using a @c std::function.
+ * A lazy value that is evaluated on demand using a `std::function`.
  *
  * @tparam T the type of the lazy value
  */
@@ -40,7 +40,7 @@ struct Deferred {
   }
 
   /**
-   * Removes the evaluated value, if any, so that the next call to get() results in a fresh evaluation.
+   * Removes the evaluated value, if any, so that the next call of #get results in a fresh evaluation.
    */
   inline void reset() { v_ = std::nullopt; }
 

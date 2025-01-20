@@ -1,7 +1,7 @@
 /**
  * @file escape.h
  *
- * Escaped strings, offering an interface similar to @c std::quoted.
+ * Escaped strings, offering an interface similar to `std::quoted`.
  */
 
 #pragma once
@@ -19,7 +19,7 @@
 
 namespace rocket::escape {
 
-// 'CString' ------------------------------------------------------------------------------------------------
+// `CString` ------------------------------------------------------------------------------------------------
 
 /**
  * C-string escaping.
@@ -30,29 +30,33 @@ struct CString {
    */
   struct Params {
     /**
-     * Tells if the escaped string is to be enclosed in #quote characters.
+     * Is `true` if the escaped string is to be enclosed in #quote characters.
      */
     bool enclosed = false;
     /**
-     * The quote character to escape. This must be @c '\0', @c '"', or @c '\'', otherwise it is invalid.
+     * The quote character to escape.
+     *
+     * This must be <code>'\0'</code>, <code>'"'</code>, or <code>'\''</code>, otherwise it is invalid.
      */
     char quote = '\0';
     /**
-     * Configures the handling of tab characters. If this is null, then tab characters are escaped as
-     * @c "\\t". Otherwise, a tab expands to at most #tabSize spaces.
+     * Configures the handling of tab characters.
+     *
+     * If this is null, then tab characters are escaped as `"\\t"`. Otherwise, a tab expands to at most
+     * #tabSize spaces.
      */
     std::optional<size_t> tabSize;
 
     /**
-     * Tells if the escaped string is actually to be enclosed.
+     * Returns `true` if the escaped string is actually to be enclosed.
      *
-     * @return @c true iff the escaped string is actually to be enclosed
+     * @return `true` if the escaped string is actually to be enclosed
      */
     inline bool enclosing() const { return enclosed && quote != '\0'; }
   };
 };
 
-// 'Regex' --------------------------------------------------------------------------------------------------
+// `Regex` --------------------------------------------------------------------------------------------------
 
 /**
  * Regular-expression escaping.
@@ -64,7 +68,7 @@ struct Regex {
   struct Params {};
 };
 
-// 'Result' -------------------------------------------------------------------------------------------------
+// `Result` -------------------------------------------------------------------------------------------------
 
 /**
  * The result of an escape/unescape operation.
@@ -80,8 +84,8 @@ struct Result {
   /**
    * Translated positions after escaping/unescaping.
    *
-   * For each grapheme in the input string and for end-of-string, its character offset—i.e. either its
-   * @c char or @c char32_t offset—, is mapped to a character offset in the output string.
+   * For each grapheme in the input string and for end-of-string, its character offset---i.e. either its
+   * `char` or `char32_t` offset---, is mapped to a character offset in the output string.
    */
   Positions positions;
 };
@@ -104,7 +108,7 @@ struct EscapedString {
       Result<C>* result) : s(s), params(params), result(result) {}
 };
 
-// 'EscapedString<CString, ...>' ............................................................................
+// `EscapedString<CString, ...>` ............................................................................
 
 template<typename C> requires Character<C>
     std::basic_string<C> escapeCStringHex(unicode::CodePoint, size_t&);
@@ -162,7 +166,7 @@ escapeCString(unicode::CodePoint cp, size_t& column, const CString::Params& para
   // Printable characters
   int8_t w;
   if (cp.print(&w)) {
-    column += static_cast<size_t>(w); // We know 'w' > 0
+    column += static_cast<size_t>(w); // We know `w` > 0
     return static_cast<std::basic_string<C>>(cp);
   }
 
@@ -173,7 +177,7 @@ escapeCString(unicode::CodePoint cp, size_t& column, const CString::Params& para
 template<typename C> requires Character<C>
 std::basic_string<C>
 escapeCStringHex(unicode::CodePoint cp, size_t& column) {
-  // 'std::format' doesn't support 'char32_t'. Fortunately, we output ASCII only
+  // `std::format` doesn't support `char32_t`. Fortunately, we output ASCII only
   std::string s;
   if (cp > 0xffffU)
     s = std::format("\\U{:0>8x}", static_cast<uint32_t>(cp));
@@ -427,7 +431,7 @@ operator<<(std::basic_ostream<C>& lhs, const EscapedString<CString, C, String>& 
   return lhs;
 }
 
-// 'EscapedString<Regex, ...>' ..............................................................................
+// `EscapedString<Regex, ...>` ..............................................................................
 
 template<typename C> requires Character<C>
 std::basic_string<C>
@@ -481,7 +485,7 @@ escapeRegex(unicode::CodePoint cp, size_t& column) {
   if (cp.print(&w) || cp > 0xffffU) {
     if (w < 0)
       w = 0;
-    column += static_cast<size_t>(w); // We know 'w' >= 0
+    column += static_cast<size_t>(w); // We know `w` >= 0
     return static_cast<std::basic_string<C>>(cp);
   }
 
@@ -668,7 +672,7 @@ operator<<(std::basic_ostream<C>& lhs, const EscapedString<Regex, C, String>& rh
 
 } // namespace internal
 
-// 'Escaped' ------------------------------------------------------------------------------------------------
+// `Escaped` ------------------------------------------------------------------------------------------------
 
 /**
  * A concept for valid escaping schemata.
@@ -689,11 +693,20 @@ concept Escaped =
 // Functions ------------------------------------------------------------------------------------------------
 
 /**
- * @c escaped() overload with a nonconst string reference.
+ * `escaped` overload with a nonconst string reference.
  *
- * Use this function to unescape a string with @c operator>>. Example:
+ * Use this function to unescape a string with `operator>>`.
  *
- * @code{.cc}
+ * @tparam Schema the escaping Schema
+ * @tparam C the character type
+ * @param s a nonconst string reference
+ * @param params parameters for unescaping
+ * @param result pointer to a Result instance. If nonnull, then the members of this Result are initialized
+ * @return an internal representation of an escaped string
+ *
+ * ## Examples
+ *
+ * ```
  * using namespace rocket;
  * using namespace std;
  * 
@@ -704,15 +717,8 @@ concept Escaped =
  * cout << ss.str() << '\n'; // Quotation mark, 'a', backslash, quotation mark, 'b'
  * string out;
  * ss >> escaped::escaped<escaped::CString>(out, params);
- * assert(out == in); // After unescaping, 'out' equals 'in'
- * @endcode
- *
- * @tparam Schema the escaping Schema
- * @tparam C the character type
- * @param s a nonconst string reference
- * @param params parameters for unescaping
- * @param result pointer to a Result instance. If nonnull, then the members of this Result are initialized
- * @return an internal representation of an escaped string
+ * assert(out == in); // After unescaping, `out` equals `in`
+ * ```
  */
 template<typename Schema, typename C> requires Escaped<Schema, C>
 internal::EscapedString<Schema, C, std::basic_string<C>&>
@@ -724,11 +730,20 @@ escaped(
 }
 
 /**
- * @c escaped() overload with a const string reference.
+ * `escaped` overload with a const string reference.
  *
- * Use this function to escape a string with @c operator<<. Example:
+ * Use this function to escape a string with `operator<<`.
  *
- * @code{.cc}
+ * @tparam Schema the escaping Schema
+ * @tparam C the character type
+ * @param s a const string reference
+ * @param params parameters for escaping
+ * @param result pointer to a Result instance. If nonnull, then the members of this Result are initialized
+ * @return an internal representation of an escaped string
+ *
+ * ## Examples
+ *
+ * ```
  * using namespace rocket;
  * using namespace std;
  * 
@@ -739,15 +754,8 @@ escaped(
  * cout << ss.str() << '\n'; // ", a, \, ", b, "
  * string out;
  * ss >> escaped::escaped<escaped::CString>(out, params);
- * assert(out == in); // After unescaping, 'out' equals 'in'
- * @endcode
- *
- * @tparam Schema the escaping Schema
- * @tparam C the character type
- * @param s a const string reference
- * @param params parameters for escaping
- * @param result pointer to a Result instance. If nonnull, then the members of this Result are initialized
- * @return an internal representation of an escaped string
+ * assert(out == in); // After unescaping, `out` equals `in`
+ * ```
  */
 template<typename Schema, typename C> requires Escaped<Schema, C>
 internal::EscapedString<Schema, C, const std::basic_string<C>&>

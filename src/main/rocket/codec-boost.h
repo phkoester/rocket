@@ -13,7 +13,7 @@
 #include "codec.h"
 
 #ifndef ROCKET_CODEC_H
-#error 'codec.h' must be included before this file
+#error `codec.h` must be included before this file
 #endif
 
 // Template definitions -------------------------------------------------------------------------------------
@@ -25,7 +25,7 @@ using ::printRon;
 
 namespace bimaps {
 
-/// @fn_printRon{@c boost::bimaps::bimap}
+/// @fn_printRon{`boost::bimaps::bimap`}
 template<typename K, typename V>
 inline std::ostream&
 printRon(std::ostream& os, const bimap<K, V>& v) {
@@ -37,14 +37,14 @@ printRon(std::ostream& os, const bimap<K, V>& v) {
 
 namespace spirit::x3 {
 
-/// @fn_printRon{@c boost::spirit::x3::forward_ast}
+/// @fn_printRon{`boost::spirit::x3::forward_ast`}
 template<typename T>
 inline std::ostream&
 printRon(std::ostream& os, const forward_ast<T>& v) {
   return printRon(os, v.get());
 }
 
-/// @fn_printRon{@c boost::spirit::x3::variant}
+/// @fn_printRon{`boost::spirit::x3::variant`}
 template<typename... T>
 inline std::ostream&
 printRon(std::ostream& os, const variant<T...>& v) {

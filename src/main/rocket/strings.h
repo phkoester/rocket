@@ -1,7 +1,7 @@
 /**
  * @file strings.h
  *
- * A string library, ready for @c char (UTF-8) and @c char32_t (UTF-32).
+ * A string library, ready for `char` (UTF-8) and `char32_t` (UTF-32).
  */
 
 #include "basic.h"
@@ -18,12 +18,12 @@ namespace rocket::strings {
 // Functions ------------------------------------------------------------------------------------------------
 
 /**
- * Tells if string @p s begins with substring @p sub.
+ * Returns `true` if string @p s begins with substring @p sub.
  *
  * @tparam C the character type
  * @param s a string
  * @param sub the substring to look for
- * @return @c true iff @p s begins with substring @p sub
+ * @return `true` if @p s begins with substring @p sub
  */
 template<typename C> requires Character<C>
 bool
@@ -52,12 +52,12 @@ std::string capitalize(std::string_view s);
 std::u32string capitalize(std::u32string_view s);
 
 /**
- * Tells if string @p s ends with substring @p sub.
+ * Returns `true` if string @p s ends with substring @p sub.
  *
  * @tparam C the character type
  * @param s a string
  * @param sub the substring to look for
- * @return @c true iff @p s ends with substring @p sub
+ * @return `true` if @p s ends with substring @p sub
  */
 template<typename C> requires Character<C>
 bool

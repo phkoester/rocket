@@ -21,7 +21,7 @@ using namespace testing;
 
 constexpr size_t LARGE_STRING_SIZE = 16 * 1'204 * 1'024; // 16 MiB
 
-// 'TEST' ---------------------------------------------------------------------------------------------------
+// `TEST` ---------------------------------------------------------------------------------------------------
 
 TEST(io, istream) {
   string s = string(LARGE_STRING_SIZE, ' ');
@@ -39,7 +39,7 @@ TEST(io, istream) {
 }
 
 /**
- * With build type @c release, this test should be significantly faster than @c io.istream.
+ * With build type `release`, this test should be significantly faster than `io.istream`.
  */
 TEST(io, Buffer) {
   string s = string(LARGE_STRING_SIZE, ' ');

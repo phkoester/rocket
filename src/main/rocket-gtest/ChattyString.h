@@ -115,12 +115,12 @@ struct ChattyString {
     return *this;
   }
 
-  /// @member_op_cast{@c std::string}
+  /// @member_op_cast{`std::string`}
   operator std::string() const noexcept {
     return v_;
   }
 
-  /// @member_op_cast{@c std::string_view}
+  /// @member_op_cast{`std::string_view`}
   operator std::string_view() const noexcept {
     return v_;
   }

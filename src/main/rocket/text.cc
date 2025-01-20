@@ -155,7 +155,7 @@ locations(istream& is, const vector<Position>& positions, const LocationsParams&
       // Enter next line
       ++line;
       column = 0;
-      beginLine = buf.position(); // This is 'pos' + 'bytes->size()'
+      beginLine = buf.position(); // This is `pos + bytes->size()`
       lineString.clear();
       poi.clear();
     } else if (gr.tab() && params.tabSize) {
@@ -229,10 +229,10 @@ printLocations(
     linePrefix += " | ";
     os << linePrefix;
 
-    // Escape the line as C-string, take tab setting from 'locationsResult', print the line as graphemes
+    // Escape the line as C-string, take tab setting from `locationsResult`, print the line as graphemes
     // (skip zero-width graphemes)
     
-    ROCKET_CHECK(input, input || loc.lineString, "Either 'input' or 'lineString' must be supplied");
+    ROCKET_CHECK(input, input || loc.lineString, "Either `input` or `lineString` must be supplied");
     string line = loc.lineString ?
       *loc.lineString :
       string(input->substr(loc.lineRange.lower, *loc.lineRange.size()));
@@ -252,12 +252,12 @@ printLocations(
     // Print the ranges, the caret, and the caption. This is harder than it looks at first sight, because we
     // need to consider C-string escaping, tabs, UTF-8, and grapheme widths---all at the same time
     
-    // Prepare the indicators string. 'indicators' is in "grapheme-width coordinates"
+    // Prepare the indicators string. `indicators` is in "grapheme-width coordinates"
 
     size_t width = unicode::width(grs);
     string indicators(width, ' ');
     
-    // Make up a lambda that translates an input 'char' position to an 'indicators' position. This requires
+    // Make up a lambda that translates an input `char` position to an `indicators` position. This requires
     // several steps
 
     auto indicatorPos = [&](size_t pos) -> size_t {
@@ -274,16 +274,16 @@ printLocations(
       ROCKET_EXPECT(rightIt != grsp.right.end());
       pos = rightIt->second;
 
-      // 4. Translate escaped-line grapheme position to 'indicators' position
+      // 4. Translate escaped-line grapheme position to `indicators` position
       return unicode::width(grs, 0, pos);
     };
 
-    // Place the ranges in 'indicators'
+    // Place the ranges in `indicators`
 
     for (auto range : loc.ranges) {
       // Obtain the intersection between range and printed line
       if (auto inter = range & loc.lineRange) {
-        // Translate intersection into 'indicators' positions
+        // Translate intersection into `indicators` positions
         size_t lower = indicatorPos(inter.lower);
         size_t upper = indicatorPos(*inter.upper);
         // Place the range
@@ -291,7 +291,7 @@ printLocations(
       }
     }
 
-    // Place the caret in 'indicators'
+    // Place the caret in `indicators`
     
     size_t caretPos = indicatorPos(loc.position);
     if (caretPos < indicators.size())

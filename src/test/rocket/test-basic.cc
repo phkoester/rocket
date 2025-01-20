@@ -11,7 +11,7 @@ using namespace rocket;
 using namespace std;
 using namespace testing;
 
-// 'static_assert' ------------------------------------------------------------------------------------------
+// `static_assert` ------------------------------------------------------------------------------------------
 
 static_assert(sizeof(char32_t) == 4);
 static_assert(is_unsigned_v<char32_t>);
@@ -19,10 +19,10 @@ static_assert(sizeof(char32_t) == sizeof(U' '));
 static_assert(is_same_v<decltype(U' '), char32_t>);
 static_assert(is_same_v<decltype(0.0L), long double>);
 
-// 'TEST' ---------------------------------------------------------------------------------------------------
+// `TEST` ---------------------------------------------------------------------------------------------------
 
 /**
- * Tests that the introductory table in @c basic.h is correct.
+ * Tests that the introductory table in `basic.h` is correct.
  */
 TEST(basic, sizeof) {
   EXPECT_EQ(sizeof(char), 1);

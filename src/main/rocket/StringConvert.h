@@ -4,7 +4,7 @@
  * String-to-type and type-to-string conversions.
  *
  * @attention Before including this header, appopriate codec-declaration headers must be included, e.g.
- * @c codec-global.h or @c codec-std-decl.h and @c codec-std.h.
+ * `codec-global.h` or `codec-std-decl.h` and `codec-std.h`.
  */
 
 #pragma once
@@ -15,18 +15,18 @@
 
 namespace rocket {
 
-// 'StringConvert' ------------------------------------------------------------------------------------------
+// `StringConvert` ------------------------------------------------------------------------------------------
 
 /**
- * A general @c StringConvert class template.
+ * A general `StringConvert` class template.
  */
 template<typename T>
 struct StringConvert;
 
-// 'bool' ---------------------------------------------------------------------------------------------------
+// `StringConvert<bool>` ....................................................................................
 
 /**
- * StringConvert specialization for boolean values.
+ * `StringConvert` specialization for boolean values.
  */
 template<>
 struct StringConvert<bool> {
@@ -38,7 +38,7 @@ struct StringConvert<bool> {
    * @param s the string to convert
    * @return a boolean value
    *
-   * @throw #rocket::except::InputFailure if @c is.fail() returns @c true
+   * @throw #rocket::except::InputFailure if `is.fail()` returns `true`
    * @throw #rocket::except::ParseFailure if @p s cannot be parsed as a boolean value
    */
   Type stringToType(std::string_view s) const;
@@ -52,27 +52,27 @@ struct StringConvert<bool> {
   std::string typeToString(Type v) const;
 };
 
-// 'const char*' --------------------------------------------------------------------------------------------
+// `StringConvert<const char*>` .............................................................................
 
 /**
- * StringConvert specialization for <tt>const char*</tt>.
+ * `StringConvert` specialization for `const char*`.
  */
 template<>
 struct StringConvert<const char*> {
   using Type = const char*; ///< @type_alias
 
   /**
-   * Converts @p s to a <tt>const char*</tt> value.
+   * Converts @p s to a `const char*` value.
    *
    * @param s the string to convert
-   * @return a <tt>const char*</tt> value
+   * @return a `const char*` value
    */
   inline Type stringToType(std::string_view s) const { data_ = s; return data_.c_str(); }
 
   /**
    * Converts @p v to a string.
    *
-   * @param v a <tt>const char*</tt> value
+   * @param v a `const char*` value
    * @return a string
    */
   inline std::string typeToString(Type v) const { return v; }
@@ -82,59 +82,59 @@ private:
   mutable std::string data_;
 };
 
-// 'std::string' --------------------------------------------------------------------------------------------
+// `StringConvert<std::string>` .............................................................................
 
 /**
- * StringConvert specialization for @c std::string.
+ * `StringConvert` specialization for `std::string`.
  */
 template<>
 struct StringConvert<std::string> {
   using Type = std::string; ///< @type_alias
 
   /**
-   * Converts @p s to a @c std::string.
+   * Converts @p s to a `std::string`.
    *
    * @param s the string to convert
-   * @return a @c std::string value
+   * @return a `std::string` value
    */
   inline Type stringToType(std::string_view s) const { return std::string(s); }
 
   /**
    * Converts @p v to a string.
    *
-   * @param v a @c std::string value
+   * @param v a `std::string` value
    * @return a string
    */
   inline std::string typeToString(const Type& v) const { return v; }
 };
 
-// 'std::string_view' ---------------------------------------------------------------------------------------
+// `StringConvert<std::string_view>` ........................................................................
 
 /**
- * StringConvert specialization for @c std::string_view.
+ * `StringConvert` specialization for `std::string_view`.
  */
 template<>
 struct StringConvert<std::string_view> {
   using Type = std::string_view; ///< @type_alias
 
   /**
-   * Converts @p s to a @c std::string_view.
+   * Converts @p s to a `std::string_view`.
    *
    * @param s the string to convert
-   * @return a @c std::string_view value
+   * @return a `std::string_view` value
    */
   inline Type stringToType(std::string_view s) const { return s; }
 
   /**
    * Converts @p v to a string.
    *
-   * @param v a @c std::string_view value
+   * @param v a `std::string_view` value
    * @return a string
    */
   inline std::string typeToString(const Type& v) const { return std::string(v); }
 };
 
-// 'IntegerStringConvert' -----------------------------------------------------------------------------------
+// `IntegerStringConvert` -----------------------------------------------------------------------------------
 
 /**
  * Integer string conversions.
@@ -150,7 +150,7 @@ struct IntegerStringConvert {
    *
    * @param s the string to convert
    * @return an integer value
-   * @throw #rocket::except::InputFailure if @c is.fail() returns @c true
+   * @throw #rocket::except::InputFailure if `is.fail()` returns `true`
    * @throw #rocket::except::ParseFailure if @p s cannot be parsed as an integer value
    */
   Type
@@ -179,7 +179,7 @@ struct IntegerStringConvert {
   }
 };
 
-// 'EnumStringConvert' --------------------------------------------------------------------------------------
+// `EnumStringConvert` --------------------------------------------------------------------------------------
 
 /**
  * Enum string conversions.
@@ -223,7 +223,7 @@ struct EnumStringConvert {
   }
 };
 
-// 'FloatingPointStringConvert' -----------------------------------------------------------------------------
+// `FloatingPointStringConvert` -----------------------------------------------------------------------------
 
 /**
  * Floating-point string conversions.
@@ -240,7 +240,7 @@ struct FloatingPointStringConvert {
    * @param s the string to convert
    * @param precision the floating-point precision to use
    * @return a floating-point value
-   * @throw #rocket::except::InputFailure if @c is.fail() returns @c true
+   * @throw #rocket::except::InputFailure if `is.fail()` returns `true`
    * @throw #rocket::except::ParseFailure if @p s cannot be parsed as a floating-point value
    */
   Type

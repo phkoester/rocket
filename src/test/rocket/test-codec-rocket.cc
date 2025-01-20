@@ -15,11 +15,11 @@ using namespace rocket;
 using namespace std;
 using namespace testing;
 
-// 'TEST' ---------------------------------------------------------------------------------------------------
+// `TEST` ---------------------------------------------------------------------------------------------------
 
 TEST(codec_rocket, printRon_Type) {
-  EXPECT_EQ(S << Type::of<int>(), "'int'");
-  EXPECT_EQ(S << Type::of<Type>(), "'rocket::Type'");
+  EXPECT_EQ(S << Type::of<int>(), "`int`");
+  EXPECT_EQ(S << Type::of<Type>(), "`rocket::Type`");
 }
 
 TEST(codec_rocket, printRon_math_RightOpenInterval_int) {

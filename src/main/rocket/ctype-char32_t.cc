@@ -6,7 +6,7 @@
 
 namespace std {
 
-// 'ctype<char32_t>' ----------------------------------------------------------------------------------------
+// `ctype<char32_t>` ----------------------------------------------------------------------------------------
 
 ctype<char32_t>::ctype(size_t __refs) :
     __ctype_abstract_base<char32_t>(__refs),
@@ -223,7 +223,7 @@ ctype<char32_t>::do_narrow(const char32_t* __lo, const char32_t* __hi, char __df
   return __hi;
 }
 
-// 'numpunct<char32_t>' -------------------------------------------------------------------------------------
+// `numpunct<char32_t>` -------------------------------------------------------------------------------------
 
 template<> 
 numpunct<char32_t>::~numpunct() {
@@ -245,7 +245,7 @@ numpunct<char32_t>::_M_initialize_numpunct(__c_locale)
   _M_data->_M_decimal_point = U'.';
   _M_data->_M_thousands_sep = U',';
   
-  // Use 'ctype::widen' code without the facet ...
+  // Use `ctype::widen` code without the facet ...
   for (size_t __i = 0; __i < __num_base::_S_oend; ++__i)
     _M_data->_M_atoms_out[__i] = static_cast<char32_t>(__num_base::_S_atoms_out[__i]);
   

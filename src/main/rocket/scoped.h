@@ -12,10 +12,10 @@
 
 namespace rocket::scoped {
 
-// 'Scoped' -------------------------------------------------------------------------------------------------
+// `Scoped` -------------------------------------------------------------------------------------------------
 
 /**
- * An object that executes a function in its destructor, i\. e.\ when it goes out of scope.
+ * An object that executes a function in its destructor, i.e. when it goes out of scope.
  *
  * Use the #ROCKET_SCOPED macro for your convenience.
  */
@@ -30,7 +30,7 @@ struct Scoped {
   /**
    * @dtor
    *
-   * This destructor executes the function @c f that was passed to the constructor.
+   * This destructor executes the function `f` that was passed to the constructor.
    */
   inline ~Scoped() noexcept { f_(); }
 
@@ -46,11 +46,11 @@ private:
  */
 #define ROCKET_SCOPED(f) ::rocket::scoped::Scoped ROCKET_ID(f)
 
-// 'ScopedValue' --------------------------------------------------------------------------------------------
+// `ScopedValue` --------------------------------------------------------------------------------------------
 
 /**
  * An object that immediately assigns a new value to a variable and restores the old value in its destructor,
- * i.\ e.\ when it goes out of scope.
+ * i.e. when it goes out of scope.
  *
  * Use the #ROCKET_SCOPED_VALUE macro for your convenience.
  *
@@ -73,7 +73,7 @@ struct ScopedValue {
   /**
    * @dtor
    *
-   * This destructor reassigns the old value to @c ref that was passed to the constructor.
+   * This destructor reassigns the old value to `ref` that was passed to the constructor.
    */
   inline ~ScopedValue() noexcept { ref_ = oldValue_; }
 

@@ -18,7 +18,7 @@ namespace rocket {
 
 std::ostream&
 printRon(std::ostream& os, const Type& v) {
-  return os << '\'' << v.name() << '\'';
+  return os << '`' << v.name() << '`';
 }
 
 namespace text {
@@ -58,7 +58,7 @@ parseRon(istream& is, CodePoint& v) {
 
 ostream&
 printRon(ostream& os, CodePoint v) {
-  // Say goodbye to 'ostringstream' ...
+  // Say goodbye to `ostringstream` ...
   return os << format("U+{:0>4X}", static_cast<uint32_t>(v));
 }
 

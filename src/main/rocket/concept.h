@@ -10,17 +10,17 @@
 
 namespace rocket {
 
-// 'Container' ----------------------------------------------------------------------------------------------
+// `Container` ----------------------------------------------------------------------------------------------
 
 /**
- * @c IsContainerImpl template.
+ * `IsContainerImpl` template.
  *
  * This template is to be specialized.
  */
 template<typename> struct IsContainerImpl: std::false_type {};
 
 /**
- * @c IsContainer template.
+ * `IsContainer` template.
  *
  * @tparam T the type to test
  */

@@ -18,7 +18,7 @@ using namespace rocket::reflect;
 using namespace std;
 using namespace testing;
 
-// 'MyStruct' -----------------------------------------------------------------------------------------------
+// `MyStruct` -----------------------------------------------------------------------------------------------
 
 struct MyStruct {
   int ä = 0;
@@ -60,7 +60,7 @@ hash_value(const MyStruct& v) {
 ROCKET_REFLECT_MEMBERS_DEFINE_FN_PARSE_RON(MyStruct, index);
 ROCKET_REFLECT_MEMBERS_DEFINE_FN_PRINT_RON(MyStruct, index);
 
-// 'TEST' ---------------------------------------------------------------------------------------------------
+// `TEST` ---------------------------------------------------------------------------------------------------
 
 TEST(reflect, eq) {
   EXPECT_EQ(MyStruct(42, "rocket", true), MyStruct(42, "rocket", true));

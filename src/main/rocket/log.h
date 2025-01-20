@@ -3,16 +3,16 @@
  *
  * A logging API.
  *
- * This file may be included several times. If @c NDEBUG is not defined, the logging macros are active.
- * Otherwise, they expand to a call of #rocket::nop().
+ * This file may be included several times. If `NDEBUG` is not defined, the logging macros are active.
+ * Otherwise, they expand to a call of #rocket::nop.
  */
 
-// No '#pragma once' here!
+// No `#pragma once` here!
 
 #ifndef ROCKET_LOG_H
 #define ROCKET_LOG_H
 
-#include "basic.h" // 'rocket::nop()'
+#include "basic.h" // `rocket::nop()`
 #include "cl.h"
 #include "enum-decl.h"
 
@@ -23,18 +23,18 @@
 
 namespace rocket::log {
 
-// 'LogLevel' -----------------------------------------------------------------------------------------------
+// `LogLevel` -----------------------------------------------------------------------------------------------
 
 /**
  * A log-level enum, sorted from lowest to highest level.
  */
 enum class LogLevel {
-  none = 0, ///< Log level @c none.
-  error = 1, ///< Log level @c error.
-  warn = 2, ///< Log level @c warn.
-  info = 3, ///< Log level @c info.
-  debug = 4, ///< Log level @c debug.
-  trace = 5 ///< Log level @c trace.
+  none = 0, ///< Log level `none`.
+  error = 1, ///< Log level `error`.
+  warn = 2, ///< Log level `warn`.
+  info = 3, ///< Log level `info`.
+  debug = 4, ///< Log level `debug`.
+  trace = 5 ///< Log level `trace`.
 };
 
 /// @enum_declare{#rocket::log::LogLevel}

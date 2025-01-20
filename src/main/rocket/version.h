@@ -11,7 +11,7 @@
 /**
  * Rocket version. 
  *
- * A value of @c 0x010203 means 1.2.3.
+ * A value of `0x010203` means 1.2.3.
  */
 #define ROCKET_VERSION 0x000200 // 0.2.0
 /**

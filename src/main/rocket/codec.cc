@@ -16,7 +16,7 @@ using namespace std;
 
 namespace rocket::codec {
 
-// 'Symbols' ------------------------------------------------------------------------------------------------
+// `Symbols` ------------------------------------------------------------------------------------------------
 
 const set<char> Symbols::Chars::Digits { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' };
 const set<char> Symbols::Chars::DigitsApostrophe {
@@ -41,7 +41,7 @@ const set<string_view> Symbols::Strings::NegativeInfinity {
   String::NegativeInfinity, String::NegativeInfinitySymbol
 };
 
-// 'std::istream' utilities ---------------------------------------------------------------------------------
+// `std::istream` utilities ---------------------------------------------------------------------------------
 
 bool
 getBool(istream& is) {
@@ -111,7 +111,7 @@ skip(istream& is, bool checkEof) {
 
 namespace printing {
 
-// 'Params' .................................................................................................
+// `Params` .................................................................................................
 
 namespace internal {
 
@@ -185,7 +185,7 @@ void
 groupByThousands(string& s, size_t begin, size_t end) {
   size_t pos = end;
   while (true) {
-    if (pos <= 3) // Avoid 'size_t' overflow
+    if (pos <= 3) // Avoid `size_t` overflow
       break;
     pos -= 3;
     if (pos <= begin)

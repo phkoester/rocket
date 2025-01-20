@@ -46,12 +46,12 @@
 // Global namespace -----------------------------------------------------------------------------------------
 
 /**
- * The fabulous furry @c B class.
+ * The fabulous furry `B` class.
  */
 struct B {};
 
 /**
- * The irresistable @c C class, packed with content.
+ * The irresistable `C` class, packed with content.
  */
 struct C : B {};
 
@@ -127,7 +127,7 @@ std::ostream& operator<<(std::ostream& lhs, const MyClass& rhs);
  */
 template<typename T>
 struct MyClassTemplate {
-  /// An @c T.
+  /// A `T`.
   T a;
 };
 
@@ -160,7 +160,7 @@ void myFuncTemplate(T v);
 template<typename T>
 void myFuncTemplate(T v, T w);
 
-// Namespace 'foo::bar' -------------------------------------------------------------------------------------
+// Namespace `foo::bar` -------------------------------------------------------------------------------------
 
 namespace foo::bar {
 
@@ -230,7 +230,7 @@ std::ostream& operator<<(std::ostream& lhs, const FooMyClass& rhs);
  */
 template<typename T>
 struct FooMyClassTemplate {
-  /// An @c T.
+  /// A `T`.
   T a;
 };
 

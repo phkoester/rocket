@@ -1,7 +1,7 @@
 /**
  * @file Positions.h
  *
- * A general-purpose bidirectional map that translates @c size_t values.
+ * A general-purpose bidirectional map that translates `size_t` values.
  */
 
 #pragma once
@@ -10,15 +10,15 @@
 
 namespace rocket {
 
-// 'Positions' ----------------------------------------------------------------------------------------------
+// `Positions` ----------------------------------------------------------------------------------------------
 
-/// A general-purpose bidirectional map that translates @c size_t values.
+/// A general-purpose bidirectional map that translates `size_t` values.
 using Positions = boost::bimap::UnorderedBimap<size_t, size_t>::Type;
 
 // Functions ------------------------------------------------------------------------------------------------
 
 /**
- * Convenience function to make a #rocket::Positions map of a @c std::initializer_list.
+ * Convenience function to make a #rocket::Positions map of a `std::initializer_list`.
  *
  * @param list the map elements, as seen from the map's left index
  * @return a new #rocket::Positions map containing the elements of @p list in its left index

@@ -18,35 +18,35 @@
 #include <vector>
 
 #ifdef ROCKET_CODEC_H
-#error 'codec.h' must be included after this file
+#error `codec.h` must be included after this file
 #endif
 
 namespace std {
 
 // Functions ------------------------------------------------------------------------------------------------
 
-/// @fn_parseRon{@c byte}
+/// @fn_parseRon{`byte`}
 std::istream& parseRon(istream& is, byte& v);
 
-/// @fn_printRon{@c byte}
+/// @fn_printRon{`byte`}
 ostream& printRon(ostream& os, byte v);
 
-/// @fn_parseRon{@c string}
+/// @fn_parseRon{`string`}
 std::istream& parseRon(istream& is, string& v);
 
-/// @fn_printRon{@c string}
+/// @fn_printRon{`string`}
 ostream& printRon(ostream& os, const string& v);
 
-/// @fn_printRon{@c string_view}
+/// @fn_printRon{`string_view`}
 ostream& printRon(ostream& os, string_view v);
 
-/// @fn_parseRon{@c u32string}
+/// @fn_parseRon{`u32string`}
 std::istream& parseRon(istream& is, u32string& v);
 
-/// @fn_printRon{@c u32string}
+/// @fn_printRon{`u32string`}
 ostream& printRon(ostream& os, const u32string& v);
 
-/// @fn_printRon{@c u32string_view}
+/// @fn_printRon{`u32string_view`}
 ostream& printRon(ostream& os, u32string_view v);
 
 // Template declarations ------------------------------------------------------------------------------------
@@ -89,35 +89,35 @@ template<typename T> ostream& printRon(ostream&, const vector<T>&);
 
 } // namespace std
 
-// 'IsContainerImpl' specializations ------------------------------------------------------------------------
+// `IsContainerImpl` specializations ------------------------------------------------------------------------
 
 namespace rocket {
 
-/// @spec_rocket_IsContainerImpl{@c std::initializer_list}
+/// @spec_rocket_IsContainerImpl{`std::initializer_list`}
 template<typename T> struct IsContainerImpl<std::initializer_list<T>> : std::true_type {};
 
-/// @spec_rocket_IsContainerImpl{@c std::optional}
+/// @spec_rocket_IsContainerImpl{`std::optional`}
 template<typename T> struct IsContainerImpl<std::optional<T>> : IsContainerImpl<T>::type {};
 
-/// @spec_rocket_IsContainerImpl{@c std::pair}
+/// @spec_rocket_IsContainerImpl{`std::pair`}
 template<typename A, typename B> struct IsContainerImpl<std::pair<A, B>> : std::true_type {};
 
-/// @spec_rocket_IsContainerImpl{@c std::set}
+/// @spec_rocket_IsContainerImpl{`std::set`}
 template<typename K, typename V> struct IsContainerImpl<std::set<K, V>> : std::true_type {};
 
-/// @spec_rocket_IsContainerImpl{@c std::span}
+/// @spec_rocket_IsContainerImpl{`std::span`}
 template<typename T> struct IsContainerImpl<std::span<T>> : std::true_type {};
 
-/// @spec_rocket_IsContainerImpl{@c std::tuple}
+/// @spec_rocket_IsContainerImpl{`std::tuple`}
 template<typename... T> struct IsContainerImpl<std::tuple<T...>> : std::true_type {};
 
-/// @spec_rocket_IsContainerImpl{@c std::unordered_map}
+/// @spec_rocket_IsContainerImpl{`std::unordered_map`}
 template<typename K, typename V> struct IsContainerImpl<std::unordered_map<K, V>> : std::true_type {};
 
-/// @spec_rocket_IsContainerImpl{@c std::unordered_set}
+/// @spec_rocket_IsContainerImpl{`std::unordered_set`}
 template<typename T> struct IsContainerImpl<std::unordered_set<T>> : std::true_type {};
 
-/// @spec_rocket_IsContainerImpl{@c std::vector}
+/// @spec_rocket_IsContainerImpl{`std::vector`}
 template<typename T> struct IsContainerImpl<std::vector<T>> : std::true_type {};
 
 } // namespace rocket

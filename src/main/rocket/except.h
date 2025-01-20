@@ -20,11 +20,11 @@
   #define ROCKET_EXCEPT_DEFAULT_STACK_TRACE ::std::nullopt
 #else
   /**
-   * Yields null if @c NDEBUG is defined, the current source location otherwise.
+   * Yields null if `NDEBUG` is defined, the current source location otherwise.
    */
   #define ROCKET_EXCEPT_DEFAULT_SOURCE_LOC ::std::source_location::current()
   /**
-   * Yields null if @c NDEBUG is defined, the current stack trace otherwise.
+   * Yields null if `NDEBUG` is defined, the current stack trace otherwise.
    */
   #define ROCKET_EXCEPT_DEFAULT_STACK_TRACE ::std::stacktrace::current()
 #endif // NDEBUG
@@ -63,7 +63,7 @@ std::string overflow(const Type& type);
 
 } // namespace message
 
-// 'Exception' ----------------------------------------------------------------------------------------------
+// `Exception` ----------------------------------------------------------------------------------------------
 
 /**
  * A simple class that all Rocket exceptions derive from in addition to their base classes.
@@ -76,21 +76,21 @@ std::string overflow(const Type& type);
  */
 struct Exception {
   /**
-   * Obtains the plain message of this exception, not including any source-location information.
+   * Returns the plain message of this exception, not including any source-location information.
    *
    * @return a message
    */
   const std::string& message() const { return msg_; }
 
   /**
-   * Obtains the source location from which this exception was thrown.
+   * Returns the source location from which this exception was thrown.
    *
    * @return a source location, if present, or null otherwise
    */
   const std::optional<std::source_location>& sourceLocation() const { return sourceLoc_; }
 
   /**
-   * Obtains the stack trace of this exception.
+   * Returns the stack trace of this exception.
    *
    * @return a stack trace, if present, or null otherwise
    */
@@ -120,7 +120,7 @@ private:
   const std::optional<std::stacktrace> stackTrace_;
 };
 
-// 'InputFailure' -------------------------------------------------------------------------------------------
+// `InputFailure` -------------------------------------------------------------------------------------------
 
 /**
  * Instances of this class are thrown when reading from an input stream failed.
@@ -137,7 +137,7 @@ struct InputFailure : std::ios_base::failure, Exception {
    *
    * @attention Unless it is set already, this constructor sets the fail bit of the input stream.
    *
-   * The stored position is set to the value of @c rocket::io::tellg(is).
+   * The stored position is set to the value of `rocket::io::tellg(is)`.
    *
    * @param is the input stream
    * @param sourceLoc the source location
@@ -171,7 +171,7 @@ struct InputFailure : std::ios_base::failure, Exception {
    *
    * @attention Unless it is set already, this constructor sets the fail bit of the input stream.
    *
-   * The stored position is set to the value of @c rocket::io::tellg(is).
+   * The stored position is set to the value of `rocket::io::tellg(is)`.
    *
    * @param is the input stream
    * @param msg the message
@@ -210,7 +210,7 @@ struct InputFailure : std::ios_base::failure, Exception {
   }
 
   /**
-   * Obtains the stored position.
+   * Returns the stored position.
    *
    * @return the stored position
    */
@@ -221,7 +221,7 @@ private:
   const size_t pos_;
 };
 
-// 'InvalidArgument' ----------------------------------------------------------------------------------------
+// `InvalidArgument` ----------------------------------------------------------------------------------------
 
 /**
  * An exception indicating an invalid argument.
@@ -245,7 +245,7 @@ struct InvalidArgument : std::invalid_argument, Exception {
       std::optional<std::stacktrace>&& stackTrace = ROCKET_EXCEPT_DEFAULT_STACK_TRACE);
 };
 
-// 'InvalidState' -------------------------------------------------------------------------------------------
+// `InvalidState` -------------------------------------------------------------------------------------------
 
 /**
  * An exception indicating an invalid state.
@@ -267,7 +267,7 @@ struct InvalidState : std::runtime_error, Exception {
       std::optional<std::stacktrace>&& stackTrace = ROCKET_EXCEPT_DEFAULT_STACK_TRACE);
 };
 
-// 'ParseFailure' -------------------------------------------------------------------------------------------
+// `ParseFailure` -------------------------------------------------------------------------------------------
 
 /**
  * Instances of this class are thrown when parsing from an input stream fails.
@@ -342,7 +342,7 @@ struct ParseFailure : InputFailure<C> {
       ranges_(ranges) {}
 
   /**
-   * Obtains the stored position ranges.
+   * Returns the stored position ranges.
    *
    * @return the stored position ranges
    */
@@ -359,7 +359,7 @@ private:
  * Prints detailed information about the exception @p ex to the output stream @p os.
  *
  * If there are nested exceptions, the whole exception hierarchy is processed. The output may span multiple
- * lines, the last printed character is always @c '\\n'.
+ * lines, the last printed character is always <code>'\\n'</code>.
  *
  * @param os the output stream to print to
  * @param ex the exception
@@ -370,7 +370,7 @@ void printException(std::ostream& os, const std::exception& ex);
  * Prints detailed information about the exception pointer @p ex to the output stream @p os.
  *
  * If there are nested exceptions, the whole exception hierarchy is processed. The output may span multiple
- * lines, the last printed character is always @c '\\n'.
+ * lines, the last printed character is always <code>'\\n'</code>.
  *
  * @param os the output stream to print to
  * @param ptr the exception pointer. May not be null
@@ -378,7 +378,7 @@ void printException(std::ostream& os, const std::exception& ex);
 void printException(std::ostream& os, std::exception_ptr ptr);
 
 /**
- * Extracts the @c what message from an exception.
+ * Extracts the `what` message from an exception.
  *
  * If there are nested exceptions, the whole exception hierarchy is processed.
  *
@@ -388,7 +388,7 @@ void printException(std::ostream& os, std::exception_ptr ptr);
 std::string what(const std::exception& ex);
 
 /**
- * Extracts the @c what message from an exception pointer.
+ * Extracts the `what` message from an exception pointer.
  *
  * If there are nested exceptions, the whole exception hierarchy is processed.
  *

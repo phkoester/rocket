@@ -1,7 +1,7 @@
 /**
  * @file locale.h
  *
- * Utilities related to @c std::locale.
+ * Utilities related to `std::locale`.
  */
 
 #pragma once
@@ -9,7 +9,7 @@
 #include <locale>
 
 namespace std {
-  
+
 // Functions ------------------------------------------------------------------------------------------------
 
 /**
@@ -17,7 +17,7 @@ namespace std {
  *
  * @tparam Facet the facet type
  * @param lhs the locale to copy
- * @param rhs a pointer to a facet. This may be the result of @c new.
+ * @param rhs a pointer to a facet. This may be the result of `new`.
  * @return a new locale that is a copy of @p lhs, with the additional facet @p rhs
  */
 template<typename Facet>

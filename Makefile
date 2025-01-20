@@ -9,7 +9,7 @@ export SYSTEM_INCLUDE_DIRS := \
     $(GAIA_GTEST_DIR)/googlemock/include \
     $(GAIA_GTEST_DIR)/googletest/include
 
-# 'build' must be the first target and build everything, including tests
+# `build` must be the first target and build everything, including tests
 build: buildTest
 
 include $(GAIA_DIR)/src/main/make/Makefile.mk

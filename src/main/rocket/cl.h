@@ -41,7 +41,7 @@ applyTo(std::vector<T>& dest, std::optional<std::string_view> arg) {
 
 } // namespace internal
 
-// 'OptionGroup' --------------------------------------------------------------------------------------------
+// `OptionGroup` --------------------------------------------------------------------------------------------
 
 /**
  * An option group with a title. Command-line options may be assigned a pointer to an option group. When
@@ -51,17 +51,17 @@ struct OptionGroup {
   std::string title; ///< The title.
 };
 
-// 'Option' -------------------------------------------------------------------------------------------------
+// `Option` -------------------------------------------------------------------------------------------------
 
 /**
- * A command-line option. Use the #of() factory function to obtain an option and bind it to a destination. If
- * the destination is a @c bool value, the option takes no value, otherwise it does. If the destination is
- * a vector, multiple values may be supplied on the command line.
+ * A command-line option. Use the #of factory function to obtain an option and bind it to a destination. If
+ * the destination is a `bool` value, the option takes no value, otherwise it does. If the destination is a
+ * vector, multiple values may be supplied on the command line.
  */
 struct Option {
   /**
-   * Type for a function that is called to apply an option value. For @c bool values, @c v may be null. The
-   * #of() convenience function takes care of this all.
+   * Type for a function that is called to apply an option value. For `bool` values, @p v may be null. The
+   * #of convenience function takes care of this all.
    */
   using Apply = std::function<void(std::optional<std::string_view> v)>;
 
@@ -69,16 +69,16 @@ struct Option {
    * Makes a new option and binds it to a destination reference.
    *
    * @param group a pointer to an option group. May be null
-   * @param name the name of the option. For example, if this is @c "verbose", the option may be chosen via
-   *     @c --verbose on the command line
-   * @param shortName an optional short name. For example, if this is @c U'€', the option may be chosen via
-   *     @c -€ on the command line
+   * @param name the name of the option. For example, if this is `"verbose"`, the option may be chosen via
+   *     `--verbose` on the command line
+   * @param shortName an optional short name. For example, if this is <code>U'€'</code>, the option may be
+   *     chosen via `-€` on the command line
    * @param format if the option takes an argument, this parameter should briefly describe the format, e.g.
-   *     @c "FILE", @c "NUM" etc.
+   *     `"FILE"`, `"NUM"` etc.
    * @param help a short help text. By convention, this starts with a lower-case verb and does not end with
    *     a period, e.g. "print NUM lines of leading context"
-   * @param dest the destination reference that is assigned the option's value. If this is a @c bool
-   *     reference, the option takes no argument, otherwise it does. If this is a @c std::vector reference,
+   * @param dest the destination reference that is assigned the option's value. If this is a `bool`
+   *     reference, the option takes no argument, otherwise it does. If this is a `std::vector` reference,
    *     multiple values may be supplied on the command line
    * @return a new option
    */
@@ -95,7 +95,7 @@ struct Option {
       group,
       name,
       shortName,
-      std::is_same_v<T, bool> ? false : true, // 'takesValue' is false for 'bool', otherwise it is true
+      std::is_same_v<T, bool> ? false : true, // `takesValue` is `false` for `bool`, otherwise it is true
       format,
       help,
       [&](std::optional<std::string_view> arg) { internal::applyTo(dest, arg); }
@@ -111,7 +111,7 @@ struct Option {
   Apply apply; ///< Callback function that applies the option's value.
 };
 
-// 'CommandLineParams' --------------------------------------------------------------------------------------
+// `CommandLineParams` --------------------------------------------------------------------------------------
 
 /**
  * Parameters that configure the behavior of a #rocket::cl::CommandLine.
@@ -120,8 +120,8 @@ struct CommandLineParams {
   /// The name of the command. Needed to display the usage. By default, this is the process name.
   std::string command = process.name();
   /**
-   * One or more usages, e.g. <tt>{ "[OPTION]... FILE", "[OPTION]... PATTERN FILE" }</tt>. If this is empty,
-   * no usage hint is ever printed.
+   * One or more usages, e.g. `{ "[OPTION]... FILE", "[OPTION]... PATTERN FILE" }`. If this is empty, no
+   * usage hint is ever printed.
    */
   std::vector<std::string> usages;
   /// Prolog text to be displayed when #CommandLine#help() is called.
@@ -130,8 +130,8 @@ struct CommandLineParams {
   std::optional<std::string> epilog;
 
   /**
-   * Did another module process the command line and output something? If this is @c true, an extra empty
-   * line is printed when calling #CommandLine#help().
+   * Did another module process the command line and output something? If this is `true`, an extra empty line
+   * is printed when calling #CommandLine#help.
    */
   bool otherOutput = false;
   /**
@@ -140,7 +140,7 @@ struct CommandLineParams {
   bool rocketOpts = true;
 };
 
-// 'CommandLine' --------------------------------------------------------------------------------------------
+// `CommandLine` --------------------------------------------------------------------------------------------
 
 /**
  * A command-line parser and help-text formatter.
@@ -181,18 +181,16 @@ struct CommandLine {
    * rules.
    *
    * @param err the output stream
-   * @param status program exit status. If this is not @c EXIT_SUCCESS (0), the program exits with this
-   *     status
+   * @param status program exit status. If this is not `EXIT_SUCCESS` (0), the program exits with this status
    */
   void error(std::ostream& err = std::cerr, int status = EXIT_SERIOUS_FAILURE) const;
 
   /**
-   * To be called when #parse() threw an exception.
+   * To be called when #parse threw an exception.
    *
    * @param ex the exception that was caught
    * @param err the output stream
-   * @param status program exit status. If this is not @c EXIT_SUCCESS (0), the program exits with this
-   *     status
+   * @param status program exit status. If this is not `EXIT_SUCCESS` (0), the program exits with this status
    */
   void handleException(
       const std::exception& ex,
@@ -200,19 +198,19 @@ struct CommandLine {
       int status = EXIT_SERIOUS_FAILURE) const;
   
   /**
-   * To be called when the @c --help option appeared on the command line.
+   * To be called when the `--help` option appeared on the command line.
    *
    * @param out the output stream
-   * @param exit if @c true, the program exits with @c EXIT_SUCCESS, otherwise it continues to run
+   * @param exit if `true`, the program exits with `EXIT_SUCCESS`, otherwise it continues to run
    */
   void help(std::ostream& out, bool exit);
   
   /**
    * Parses the command-line arguments @p args, assigns values to bound destination references.
    *
-   * Call this function in a try/catch block. If an exception is thrown, call #handleException().
+   * Call this function in a try/catch block. If an exception is thrown, call #handleException.
    *
-   * @param args the command-line arguments, e.g. @c process.args()
+   * @param args the command-line arguments, e.g. `process.args()`
    * @param take a take function, may be null. This allows customizing how positional arguments are
    *     processed
    * @return the command-line arguments left for further processing

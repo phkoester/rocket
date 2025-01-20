@@ -20,7 +20,7 @@ bool oopsCalled = false;
 
 const char* oops() { oopsCalled = true; return "oops"; }
 
-// 'TEST' ---------------------------------------------------------------------------------------------------
+// `TEST` ---------------------------------------------------------------------------------------------------
 
 TEST(assert, ROCKET_ASSERT) {
   EXPECT_NO_THROW({ ROCKET_ASSERT(true); });
@@ -43,18 +43,18 @@ TEST(assert, ROCKET_CHECK) {
   
   EXPECT_THAT(
       [&] { ROCKET_CHECK(c, c == 'b'); },
-      ThrowsMessage<except::InvalidArgument>(HasSubstr("Parameter 'c': Check \"c == 'b'\" failed")));
+      ThrowsMessage<except::InvalidArgument>(HasSubstr("Parameter `c`: Check `c == 'b'` failed")));
 
   EXPECT_THAT(
       [&] { ROCKET_CHECK(c, c == 'b', "oops"); },
-      ThrowsMessage<except::InvalidArgument>(HasSubstr("Parameter 'c': Check \"c == 'b'\" failed: oops")));
+      ThrowsMessage<except::InvalidArgument>(HasSubstr("Parameter `c`: Check `c == 'b'` failed: oops")));
 }
 
 TEST(assert, ROCKET_EXPECT) {
   oopsCalled = false;
   EXPECT_THAT(
       [] { ROCKET_EXPECT(true && false, S << oops()); },
-      ThrowsMessage<except::InvalidState>(HasSubstr("Expectation \"true && false\" failed: oops")));
+      ThrowsMessage<except::InvalidState>(HasSubstr("Expectation `true && false` failed: oops")));
   EXPECT_TRUE(oopsCalled);
 }
 

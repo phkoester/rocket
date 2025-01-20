@@ -11,7 +11,7 @@
 
 namespace rocket::terminal {
 
-// 'Style' --------------------------------------------------------------------------------------------------
+// `Style` --------------------------------------------------------------------------------------------------
 
 /**
  * An enum for terminal colors and styles.
@@ -31,7 +31,7 @@ enum Style {
   underline = 2 << 11  ///< Underline modifier (4,096).
 };
 
-// 'Ansi' ---------------------------------------------------------------------------------------------------
+// `Ansi` ---------------------------------------------------------------------------------------------------
 
 /**
  * ANSI escape sequences.
@@ -40,7 +40,7 @@ struct Ansi {
   /**
    * @ctor
    *
-   * @param active if @c true, then ANSI escape sequences are generated, otherwise empty strings.
+   * @param active if `true`, then ANSI escape sequences are generated, otherwise empty strings.
    */
   explicit Ansi(bool active) : active_(active) {}
 
@@ -125,11 +125,11 @@ private:
 // Functions ------------------------------------------------------------------------------------------------
 
 /**
- * Obtains the terminal size, if available. The pair' s @c first is the width in columns, @c second the
- * height in lines.
+ * Returns the terminal size, if available. The pair' s `first` is the width in columns, `second` the height
+ * in lines.
  *
- * @param io the stream. If this is @c std::cin, @c std::cout, or @c std::cerr connected to a terminal, then
- *     a proper size is returned
+ * @param io the stream. If this is `std::cin`, `std::cout`, or `std::cerr` connected to a terminal, then a
+ *     proper size is returned
  * @return the terminal size, or null if not available
  */
 std::optional<std::pair<size_t, size_t>> size(const std::basic_ios<char>& io);

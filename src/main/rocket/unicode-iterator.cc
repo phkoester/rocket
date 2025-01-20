@@ -20,7 +20,7 @@ namespace {
 
 // Local constants ------------------------------------------------------------------------------------------
 
-const string SIZE_T_OVERFLOW = "'size_t' overflow";
+const string SIZE_T_OVERFLOW = "`size_t` overflow";
 
 // Local functions ------------------------------------------------------------------------------------------
 
@@ -31,7 +31,7 @@ template<typename C> requires Character<C>
 CodePointIterator<C> previousWordBreakProperty(const CodePointIterator<C>&);
 
 /**
- * This implementation is an iterator-based version of @c is_grapheme_boundary() in @c unicodelib.h.
+ * This implementation is an iterator-based version of `is_grapheme_boundary` in `unicodelib.h`.
  *
  * It works with both UTF-8 and UTF-32 iterators.
  */
@@ -346,7 +346,7 @@ CodePointIterator<C> previousWordBreakProperty(const CodePointIterator<C>& it) {
 }
 
 /**
- * This implementation is an iterator-based version of @c is_word_boundary() in @c unicodelib.h.
+ * This implementation is an iterator-based version of `is_word_boundary` in `unicodelib.h`.
  *
  * It works with both UTF-8 and UTF-32 iterators.
  */
@@ -636,9 +636,9 @@ iteratorAt(const Type& type, size_t pos, std::string_view msg) {
 
 } // namespace internal
 
-// 'CodePointIterator' --------------------------------------------------------------------------------------
+// `CodePointIterator` --------------------------------------------------------------------------------------
 
-// 'CodePointIterator<char>' ................................................................................
+// `CodePointIterator<char>` ................................................................................
 
 CodePointIterator<char>::CodePointIterator(string_view input, size_t position) :
     input_(input),
@@ -773,7 +773,7 @@ CodePointIterator<char>::decrement(difference_type n) {
 
 void
 CodePointIterator<char>::go(size_t newPos) {
-  // NOTE: 'cpPos_' may not be used inside this function
+  // NOTE: `cpPos_` may not be used inside this function
 
   // Check position
   ROCKET_EXPECT(newPos <= size_, internal::outOfBounds(*this, newPos));
@@ -849,7 +849,7 @@ operator-(const CodePointIterator<char>& lhs, const CodePointIterator<char>& rhs
   return lhs.codePointPosition() - rhs.codePointPosition();
 }
 
-// 'CodePointIterator<char32_t>' ............................................................................
+// `CodePointIterator<char32_t>` ............................................................................
 
 CodePointIterator<char32_t>::CodePointIterator(u32string_view input, size_t position) :
     input_(input),
@@ -941,7 +941,7 @@ CodePointIterator<char32_t>::decrement(difference_type n) {
     return increment(-n);
   else if (n > 0) {
     size_t newPos = pos_ - n;
-    if (newPos >= pos_) // 'size_t' overflow
+    if (newPos >= pos_) // `size_t` overflow
       return false;
     pos_ = newPos;
   }
@@ -966,7 +966,7 @@ CodePointIterator<char32_t>::increment(difference_type n) {
     return decrement(-n);
   else if (n > 0) {
     size_t newPos = pos_ + n;
-    if (newPos <= pos_ || newPos > size_) //  // 'size_t' overflow or out of bounds
+    if (newPos <= pos_ || newPos > size_) //  // `size_t` overflow or out of bounds
       return false;
     pos_ = newPos;
   }

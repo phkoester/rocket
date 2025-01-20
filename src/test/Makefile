@@ -4,7 +4,7 @@
 
 include $(GAIA_DIR)/src/main/make/Makefile.mk
 
-# 'rocket' --------------------------------------------------------------------------------------------------
+# `rocket` --------------------------------------------------------------------------------------------------
 
 NAME        := test-rocket-C++
 CC_FILES    := test/rocket/test-C++.cc
@@ -141,7 +141,7 @@ CC_FILES    := test/rocket/test-unicode.cc
 SHARED_LIBS := $(call sharedLibName,rocket,$(ROCKET_VERSION))
 include $(GAIA_DIR)/src/main/make/test-executable.mk
 
-# 'rocket-gtest' --------------------------------------------------------------------------------------------
+# `rocket-gtest` --------------------------------------------------------------------------------------------
 
 NAME        := test-rocket-gtest-match
 CC_FILES    := test/rocket-gtest/test-match.cc

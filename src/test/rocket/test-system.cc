@@ -21,7 +21,7 @@ const string BUILD_DIR = getenv("BUILD_DIR");
 const string PRINT_ARGS = BUILD_DIR + "/print-args";
 const string PRINT_ARGS_WITH_SPACE = BUILD_DIR + "/print args";
 
-// 'TEST' ---------------------------------------------------------------------------------------------------
+// `TEST` ---------------------------------------------------------------------------------------------------
 
 TEST(system, env_bool) {
   using type = bool;
@@ -31,7 +31,7 @@ TEST(system, env_bool) {
   EXPECT_EQ(env::get<log::LogLevel>(name), nullopt);
   
   env::set(name, true);
-  // Check twice, there was a bad surprise with 'putenv()' ...
+  // Check twice, there was a bad surprise with `putenv()` ...
   EXPECT_EQ(env::get<type>(name), true);
   EXPECT_EQ(env::get<type>(name), true);
 
@@ -54,7 +54,7 @@ TEST(system, env_double) {
   EXPECT_EQ(env::get<type>(name), nullopt);
   
   env::set(name, -1.2);
-  // Check twice, there was a bad surprise with 'putenv()' ...
+  // Check twice, there was a bad surprise with `putenv()` ...
   EXPECT_EQ(env::get<type>(name), -1.2);
   EXPECT_EQ(env::get<type>(name), -1.2);
 
@@ -73,7 +73,7 @@ TEST(system, env_LogLevel) {
   EXPECT_EQ(env::get<type>(name), nullopt);
 
   env::set(name, type::debug);
-  // Check twice, there was a bad surprise with 'putenv()' ...
+  // Check twice, there was a bad surprise with `putenv()` ...
   EXPECT_EQ(env::get<type>(name), type::debug);
   EXPECT_EQ(env::get<type>(name), type::debug);
 
@@ -89,7 +89,7 @@ TEST(system, env_string_view) {
   EXPECT_EQ(env::get<type>(name), nullopt);
   
   env::set(name, "some text"sv);
-  // Check twice, there was a bad surprise with 'putenv()' ...
+  // Check twice, there was a bad surprise with `putenv()` ...
   EXPECT_EQ(env::get<type>(name), "some text");
   EXPECT_EQ(env::get<type>(name), "some text");
 

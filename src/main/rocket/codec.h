@@ -3,15 +3,15 @@
  *
  * Declarations for encoding/decoding C++ objects. 
  *
- * @attention This file must be included @b after all codec-related declarations and @b before all
+ * @attention This file must be included **after** all codec-related declarations and **before** all
  * codec-related definitions.
  *
- * | What?                          | How?                                      |
- * | :----------------------------- | :---------------------------------------- |
- * | Parse RON from @c std::istream | Supply a parseRon() overload for the type |
- * | Print RON to @c std::ostream   | Supply a printRon() overload for the type |
- * | Decode from RON string         | Use rocket::codec::ron::parse()           |
- * | Encode to RON string           | Use rocket::codec::ron::print()           |
+ * | What?                         | How?
+ * | :---------------------------- | :---
+ * | Parse RON from `std::istream` | Supply a `parseRon` overload for the type
+ * | Print RON to `std::ostream`   | Supply a `printRon` overload for the type
+ * | Decode from RON string        | Use #rocket::codec::ron::parse
+ * | Encode to RON string          | Use #rocket::codec::ron::print
  */
 
 #pragma once
@@ -36,7 +36,7 @@
 
 namespace rocket::codec {
 
-// 'Symbols' ------------------------------------------------------------------------------------------------
+// `Symbols` ------------------------------------------------------------------------------------------------
 
 /**
  * Predefined symbols for parsing and printing.
@@ -45,20 +45,20 @@ struct Symbols {
   /// Character sets.
   struct Chars {
     /**
-    * Digits: @c '0' to @c '9'.
-    */
+     * Digits: <code>'0'</code> to <code>'9'</code>.
+     */
     static const std::set<char> Digits;
     /**
-    * Digits and apostrophe: @c '0' to @c '9', @c '\''.
-    */
+     * Digits and apostrophe: <code>'0'</code> to <code>'9'</code>, <code>'\''</code>.
+     */
     static const std::set<char> DigitsApostrophe;
     /**
-    * E: @c 'e', @c 'E'.
-    */
+     * E: <code>'e'</code>, <code>'E'</code>.
+     */
     static const std::set<char> E;
     /**
-    * Plus, minus: @c '+', @c '-'.
-    */
+     * Plus, minus: <code>'+'</code>, <code>'-'</code>.
+     */
     static const std::set<char> PlusMinus;
   };
 
@@ -99,44 +99,44 @@ struct Symbols {
   /// String sets.
   struct Strings {
     /**
-    * Boolean values: @c "0", @c "1", @c "false", @c "true".
-    */
+     * Boolean values: `"0"`, `"1"`, `"false"`, `"true"`.
+     */
     static const std::set<std::string_view> Bool;
     /**
-    * @c Empty-set values: @c "{}", @c "∅".
-    */
+     * Empty-set values: `"{}"`, `"∅"`.
+     */
     static const std::set<std::string_view> EmptySet;
     /**
-    * Floating-point values: @c "-inf", @c "inf", @c "+inf", @c "-∞", @c "∞", @c "+∞", @c "nan", @c "qnan",
-    * @c "snan".
-    */
+     * Floating-point values: `"-inf"`, `"inf"`, `"+inf"`, `"-∞"`, `"∞"`, `"+∞"`, `"nan"`, `"qnan"`,
+     * `"snan"`.
+     */
     static const std::set<std::string_view> FloatingPoint;
     /**
-    * @c Infinity values: @c "inf", @c "+inf", @c "∞", @c "+∞".
-    */
+     * Infinity values: `"inf"`, `"+inf"`, `"∞"`, `"+∞"`.
+     */
     static const std::set<std::string_view> Infinity;
     /**
-    * @c Negative-infinity values: @c "-inf", @c "-∞".
-    */
+     * Negative-infinity values: `"-inf"`, `"-∞"`.
+     */
     static const std::set<std::string_view> NegativeInfinity;
   };
 };
 
-// 'std::istream' utilities ---------------------------------------------------------------------------------
+// `std::istream` utilities ---------------------------------------------------------------------------------
 
 /**
  * Reads a boolean value from the input stream @p is.
  *
  * Boolean values must conform to the following grammar:
  *
- * @code
+ * ```grammar
  * 0 | false | 1 | true
- * @endcode
+ * ```
  *
  * @param is the input stream
  * @return a boolean value
- * @throw #rocket::except::InputFailure if @c is.fail() returns @c true
- * @throw #rocket::except::ParseFailure if @c is.eof() returns @c true or if the input cannot be parsed as a
+ * @throw #rocket::except::InputFailure if `is.fail()` returns `true`
+ * @throw #rocket::except::ParseFailure if `is.eof()` returns `true` or if the input cannot be parsed as a
  *     boolean value
  */
 bool getBool(std::istream& is);
@@ -146,21 +146,21 @@ bool getBool(std::istream& is);
  *
  * Signed integer values must conform to the following grammar:
  * 
- * @code
+ * ```grammar
  * [+-]?[0-9][0-9']*
- * @endcode
+ * ```
  *
  * Unsigned integer values must conform to the following grammar:
  *
- * @code
+ * ```grammar
  * [+]?[0-9][0-9']*
- * @endcode
+ * ```
  *
  * @tparam I the integer type
  * @param is the input stream
  * @return an integer value of type @p I
- * @throw #rocket::except::InputFailure if @c is.fail() returns @c true
- * @throw #rocket::except::ParseFailure if @c is.eof() returns @c true or if the input cannot be parsed as an
+ * @throw #rocket::except::InputFailure if `is.fail()` returns `true`
+ * @throw #rocket::except::ParseFailure if `is.eof()` returns `true` or if the input cannot be parsed as an
  *     integer value
  */
 template<typename I> requires Integer<I>
@@ -192,7 +192,7 @@ getInteger(std::istream& is) {
   auto localInput = input;
   localInput.erase(std::remove(localInput.begin(), localInput.end(), '\''), localInput.end());
 
-  // Use type-specific 'operator>>'
+  // Use type-specific `operator>>`
   I result;
   auto localIs = io::is(localInput);
   localIs >> result;
@@ -209,20 +209,20 @@ getInteger(std::istream& is) {
  *
  * Floating points must conform to the following grammar:
  *
- * @code
+ * ```grammar
  * [+-]?(inf | ∞) |
  * nan |
  * qnan |
  * snan |
  * [+-]?(.[0-9][0-9']* | [0-9][0-9']*. | [0-9][0-9']*.[0-9][0-9']*)([eE][+-]?[0-9]+)?
- * @endcode
+ * ```
  *
  * @tparam F the floating-point type
  * @param is the input stream
  * @param precision the floating-point precision to use
  * @return a floating-point value of type @p F
- * @throw #rocket::except::InputFailure if @c is.fail() returns @c true
- * @throw #rocket::except::ParseFailure if @c is.eof() returns @c true or if the input cannot be parsed as a
+ * @throw #rocket::except::InputFailure if `is.fail()` returns `true`
+ * @throw #rocket::except::ParseFailure if `is.eof()` returns `true` or if the input cannot be parsed as a
  *     floating-point value
  */
 template<typename F> requires FloatingPoint<F>
@@ -242,7 +242,7 @@ getFloatingPoint(std::istream& is, int precision = DEFAULT_PRECISION) {
       return -limits.infinity();
     else if (s == Symbols::String::Qnan)
       return limits.quiet_NaN();
-    else // 'Symbols::Nan', 'Symbols::Snan'
+    else // `Symbols::Nan`, `Symbols::Snan`
       return limits.signaling_NaN();
   } catch (except::InputFailure<char>&) {
     // Reset the stream, continue
@@ -305,7 +305,7 @@ getFloatingPoint(std::istream& is, int precision = DEFAULT_PRECISION) {
   auto localInput = input;
   localInput.erase(std::remove(localInput.begin(), localInput.end(), '\''), localInput.end());
 
-  // Use type-specific 'operator>>'
+  // Use type-specific `operator>>`
   F result;
   auto localIs = io::is(localInput);
   localIs >> std::setprecision(DEFAULT_PRECISION) >> result;
@@ -326,11 +326,11 @@ namespace parsing {
 void skip(std::istream&, bool = true);
 
 /**
- * An instance of this class is returned by parseEnum().
+ * An instance of this class is returned by #parseEnum.
  */
 struct EnumResult {
   /**
-   * The entire input string with quotation marks, e.\ g.\  @c "\"red\\"".
+   * The entire input string with quotation marks, e.g. `"\"red\""`.
    */
   std::string actualInput;
   /**
@@ -338,7 +338,7 @@ struct EnumResult {
    */
   size_t actualInputPos;
   /**
-   * The parseable input string without quotation marks, e.\ g.\  @c "red".
+   * The parseable input string without quotation marks, e.g. `"red"`.
    */
   std::string input;
   /**
@@ -352,8 +352,8 @@ struct EnumResult {
  *
  * @param is the input stream
  * @return an instance of #rocket::codec::ron::parsing::EnumResult
- * @throw #rocket::except::InputFailure if @c is.fail() returns @c true
- * @throw #rocket::except::ParseFailure if @c is.eof() returns @c true or if the input cannot be parsed as an
+ * @throw #rocket::except::InputFailure if `is.fail()` returns `true`
+ * @throw #rocket::except::ParseFailure if `is.eof()` returns `true` or if the input cannot be parsed as an
  *     enum value
  */
 EnumResult parseEnum(std::istream& is);
@@ -550,14 +550,14 @@ parseVector(std::istream& is, Vector& v) {
 }
 
 /**
- * Skips whitespace and comments starting with @c #.
+ * Skips whitespace and comments starting with `#`.
  *
- * Unless @p checkEof is @c true, the input stream's EOF bit may be set when the function returns.
+ * Unless @p checkEof is `true`, the input stream's EOF bit may be set when the function returns.
  *
  * @param is the input stream
- * @param checkEof if @c true, a rocket::except::ParseFailure is thrown if @c is.eof() returns @c true
- * @throw #rocket::except::InputFailure if @c is.fail() returns @c true
- * @throw #rocket::except::ParseFailure if @p checkEof is @c true and @c is.eof() returns @c true
+ * @param checkEof if `true`, a #rocket::except::ParseFailure is thrown if `is.eof()` returns `true`
+ * @throw #rocket::except::InputFailure if `is.fail()` returns `true`
+ * @throw #rocket::except::ParseFailure if @p checkEof is `true` and `is.eof()` returns `true`
  */
 void skip(std::istream& is, bool checkEof);
 
@@ -567,19 +567,19 @@ void skip(std::istream& is, bool checkEof);
 
 namespace printing {
 
-// 'Parameters' .............................................................................................
+// `Params` .................................................................................................
 
 /**
- * Parameters for #printRon() implementations.
+ * Parameters for #printRon implementations.
  *
- * The current parameters may be obtained via #rocket::codec::ron::printing::params().
+ * The current parameters may be obtained via #rocket::codec::ron::printing::params.
  */
 struct Params {
   bool indent = false; ///< Should children be indented where appropriate?
 };
 
 /**
- * Obtains the current parameters for printRon().
+ * Returns the current parameters for #printRon.
  *
  * @return the current parameters
  *
@@ -600,7 +600,7 @@ void pop();
 } // namespace internal;
 
 /**
- * Pushes parameters for printRon(), pops them upon scope exit.
+ * Pushes parameters for #printRon, pops them upon scope exit.
  *
  * @param params the new parameters to use
  *
@@ -622,7 +622,7 @@ void pop();
 // Functions ................................................................................................
 
 /**
- * Function that helps to implement printRon() for containers.
+ * Function that helps to implement #printRon for containers.
  *
  * This ends printing of a container. Look around in the headers to find usage examples.
  *
@@ -634,7 +634,7 @@ void pop();
 std::ostream& endParent(std::ostream& os, bool indentChildren, char right);
 
 /**
- * Function that helps to implement printRon() for containers.
+ * Function that helps to implement #printRon for containers.
  *
  * This must be called prior to printing the first child. Look around in the headers to find usage examples.
  *
@@ -644,7 +644,7 @@ std::ostream& endParent(std::ostream& os, bool indentChildren, char right);
 void firstChild(std::ostream& os, bool indentChildren);
 
 /**
- * Adds grouping separators (@c '\'') to the string @p s.
+ * Adds grouping separators (<code>'</code>) to the string @p s.
  *
  * @param s the string to change
  * @param begin the beginning of range to change
@@ -653,7 +653,7 @@ void firstChild(std::ostream& os, bool indentChildren);
 void groupByThousands(std::string& s, size_t begin, size_t end);
 
 /**
- * Function that helps to implement printRon() for containers.
+ * Function that helps to implement #printRon for containers.
  *
  * This must be called prior to printing a child that is not the first child. Look around in the headers to
  * find usage examples.
@@ -772,13 +772,13 @@ printTuple(std::ostream& os, bool indentChildren, const Tuple& v, std::index_seq
 // RON encoding/decoding ------------------------------------------------------------------------------------
 
 /**
- * Parses the string @p s as a value of type @p T, using parseRon().
+ * Parses the string @p s as a value of type @p T, using #parseRon.
  *
  * @tparam T the type to parse as
  * @param s the string to parse
  * @return a value of type @p T
- * @throw #rocket::except::InputFailure if @c is.fail() returns @c true
- * @throw #rocket::except::ParseFailure if @c is.eof() returns @c true or if the string cannot be parsed as a
+ * @throw #rocket::except::InputFailure if `is.fail()` returns `true`
+ * @throw #rocket::except::ParseFailure if `is.eof()` returns `true` or if the string cannot be parsed as a
  *     value of type @p T
  */
 template<typename T>
@@ -798,7 +798,7 @@ parse(std::string_view s) {
 }
 
 /**
- * Tries to parse string @p s as a value of type @p T, using parseRon().
+ * Tries to parse string @p s as a value of type @p T, using #parseRon.
  *
  * @tparam T the type to parse as
  * @param s the string to parse
@@ -815,7 +815,7 @@ tryParse(std::string_view s) {
 }
 
 /**
- * Prints the value @p v to a string, using printRon().
+ * Prints the value @p v to a string, using #printRon.
  *
  * @tparam T the type of the value to print
  * @param v the value to print

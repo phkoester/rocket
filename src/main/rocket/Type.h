@@ -15,14 +15,14 @@
 
 namespace rocket {
 
-// 'Type' ---------------------------------------------------------------------------------------------------
+// `Type` ---------------------------------------------------------------------------------------------------
 
 /**
  * A #rocket::Type instance represents a run-time type.
  *
- * This class combines the functionality of @c std::type_info and @c std::type_index.
+ * This class combines the functionality of `std::type_info` and `std::type_index`.
  *
- * The #name() member function obtains a pretty name.
+ * The #name member function returns a pretty name.
  */
 struct Type {
   /**
@@ -47,12 +47,12 @@ struct Type {
   /**
    * @ctor
    *
-   * @param info a @c std::type_info reference
+   * @param info a `std::type_info` reference
    */
   // cppcheck-suppress noExplicitConstructor
   Type(const std::type_info& info);
 
-  /// @member_op_cast{@c std::type_info}
+  /// @member_op_cast{`std::type_info`}
   operator const std::type_info&() const { return info_; }
 
   /// @member_op_eq
@@ -80,7 +80,7 @@ struct Type {
   inline size_t hash() const { return hash_.get(); }
 
   /**
-   * Obtains a pretty type name.
+   * Returns a pretty type name.
    *
    * @return a pretty type name
    */
@@ -108,13 +108,13 @@ hash_value(const Type& v) {
 
 } // namespace rocket
 
-// 'Type' (namespace 'std') ---------------------------------------------------------------------------------
+// `Type` (namespace `std`) ---------------------------------------------------------------------------------
 
 /// @spec_std_hash{#rocket::Type}
 template<>
 struct std::hash<rocket::Type> {
   /**
-   * Obtains a hash value for @p v.
+   * Returns a hash value for @p v.
    *
    * @param v the value to hash
    * @return a hash value

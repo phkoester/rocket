@@ -29,8 +29,8 @@ struct Regex {
 };
 
 /**
- * Implements polymorphic matchers for @c matchesRegex() and @c containsRegex(), which can be used as a
- * @c Matcher<T> as long as @p T can be converted to @c std::string.
+ * Implements polymorphic matchers for #matchesRegex and #containsRegex, which can be used as a `Matcher<T>`
+ * as long as @p T can be converted to `std::string`.
  */
 struct MatchesRegexMatcher {
   MatchesRegexMatcher(std::shared_ptr<const Regex> regex, bool fullMatch) :
@@ -59,10 +59,10 @@ struct MatchesRegexMatcher {
   /**
    * Accepts pointer types, particularly:
    *
-   * - @c char*
-   * - <tt>const char*</tt>
-   * - @c wchar_t*
-   * - <tt>const wchar_t*</tt>
+   * - `char*`
+   * - `const char*`
+   * - `wchar_t*`
+   * - `const wchar_t*`
    *
    * @tparam C the character type
    */
@@ -73,10 +73,10 @@ struct MatchesRegexMatcher {
   }
 
   /**
-   * Matches anything that can convert to @c std::string.
+   * Matches anything that can convert to `std::string`.
    *
-   * This is a template, not just a plain function with <tt>const std::string&</tt>, because
-   * @c absl::string_view has some interfering nonexplicit constructors.
+   * This is a template, not just a plain function with `const std::string&`, because `absl::string_view` has
+   * some interfering nonexplicit constructors.
    *
    * @tparam MatcheeStringType the matchee's string type
    */
@@ -100,9 +100,9 @@ private:
 /**
  * Matches a string that contains regular expression @p regex.
  *
- * The implementation is backed by @c std::regex.
+ * The implementation is backed by `std::regex`.
  *
- * @param regex a pointer to an @c internal::Regex
+ * @param regex a pointer to an `internal::Regex`
  * @return a matcher
  */
 inline testing::PolymorphicMatcher<internal::MatchesRegexMatcher>
@@ -113,7 +113,7 @@ containsRegex(std::shared_ptr<const internal::Regex> regex) {
 /**
  * Matches a string that contains regular expression @p pattern.
  *
- * The implementation is backed by @c std::regex.
+ * The implementation is backed by `std::regex`.
  *
  * @tparam T the pattern's string type
  * @param pattern a regular expression
@@ -128,9 +128,9 @@ containsRegex(const testing::internal::StringLike<T>& pattern) {
 /**
  * Matches a string that fully matches regular expression @p regex.
  *
- * The implementation is backed by @c std::regex.
+ * The implementation is backed by `std::regex`.
  *
- * @param regex a pointer to an @c internal::Regex
+ * @param regex a pointer to an `internal::Regex`
  * @return a matcher
  */
 inline testing::PolymorphicMatcher<internal::MatchesRegexMatcher>
@@ -141,7 +141,7 @@ matchesRegex(std::shared_ptr<const internal::Regex> regex) {
 /**
  * Matches a string that fully matches regular expression @p pattern.
  *
- * The implementation is backed by @c std::regex.
+ * The implementation is backed by `std::regex`.
  *
  * @tparam T the pattern's string type
  * @param pattern a regular expression
@@ -154,12 +154,12 @@ matchesRegex(const testing::internal::StringLike<T>& pattern) {
 }
 
 /**
- * Similar to @c Throws(), but here, an arbitrary number of matchers can be passed to examine the caught
+ * Similar to `Throws`, but here, an arbitrary number of matchers can be passed to examine the caught
  * exception.
  *
  * @tparam Exception the exception type
  * @tparam Matchers the matchers' types
- * @param matchers the matchers to be combined with @c AllOf()
+ * @param matchers the matchers to be combined with `AllOf`
  * @return a matcher
  */
 template<typename Exception, typename... Matchers>
@@ -169,7 +169,7 @@ throws(const Matchers&... matchers) {
       testing::internal::ExceptionMatcherImpl<Exception>(AllOf(matchers...)));
 }
 
-// 'rocket::except::InputFailure' ...........................................................................
+// `rocket::except::InputFailure` ...........................................................................
 
 /**
  * Matches a #rocket::except::InputFailure that matches @p positionMatcher and @p whatMatcher.
@@ -177,8 +177,8 @@ throws(const Matchers&... matchers) {
  * @tparam C the character type
  * @tparam PositionMatcher the type of @p positionMatcher
  * @tparam WhatMatcher the type of @p whatMatcher
- * @param positionMatcher a matcher for the @c .position() property of the exception
- * @param whatMatcher a matcher for the @c .what() property of the exception
+ * @param positionMatcher a matcher for the `.position()` property of the exception
+ * @param whatMatcher a matcher for the `.what()` property of the exception
  * @return a matcher
  */
 template<typename C, typename PositionMatcher, typename WhatMatcher> requires Character<C>
@@ -197,8 +197,8 @@ throwsInputFailure(PositionMatcher&& positionMatcher, WhatMatcher&& whatMatcher)
  *
  * @tparam C the character type
  * @tparam WhatMatcher the type of @p whatMatcher
- * @param position the expected value of the @c .position() property of the exception
- * @param whatMatcher a matcher for the @c .what() property of the exception
+ * @param position the expected value of the `.position()` property of the exception
+ * @param whatMatcher a matcher for the `.what()` property of the exception
  * @return a matcher
  */
 template<typename C, typename WhatMatcher> requires Character<C>
@@ -209,7 +209,7 @@ throwsInputFailure(size_t position, WhatMatcher&& whatMatcher) {
       std::forward<WhatMatcher>(whatMatcher));
 }
 
-// 'rocket::except::ParseFailure' ...........................................................................
+// `rocket::except::ParseFailure` ...........................................................................
 
 /**
  * Matches a #rocket::except::ParseFailure that matches @p positionMatcher and @p whatMatcher.
@@ -217,8 +217,8 @@ throwsInputFailure(size_t position, WhatMatcher&& whatMatcher) {
  * @tparam C the character type
  * @tparam PositionMatcher the type of @p positionMatcher
  * @tparam WhatMatcher the type of @p whatMatcher
- * @param positionMatcher a matcher for the @c .position() property of the exception
- * @param whatMatcher a matcher for the @c .what() property of the exception
+ * @param positionMatcher a matcher for the `.position()` property of the exception
+ * @param whatMatcher a matcher for the `.what()` property of the exception
  * @return a matcher
  */
 template<typename C, typename PositionMatcher, typename WhatMatcher> requires Character<C>
@@ -241,8 +241,8 @@ throwsParseFailure(PositionMatcher&& positionMatcher, WhatMatcher&& whatMatcher)
  *
  * @tparam C the character type
  * @tparam WhatMatcher the type of @p whatMatcher
- * @param position the expected value of the @c .position() property of the exception
- * @param whatMatcher a matcher for the @c .what() property of the exception
+ * @param position the expected value of the `.position()` property of the exception
+ * @param whatMatcher a matcher for the `.what()` property of the exception
  * @return a matcher
  */
 template<typename C, typename WhatMatcher> requires Character<C>
@@ -261,9 +261,9 @@ throwsParseFailure(size_t position, WhatMatcher&& whatMatcher) {
  * @tparam PositionMatcher the type of @p positionMatcher
  * @tparam RangesMatcher the type of @p rangesMatcher
  * @tparam WhatMatcher the type of @p whatMatcher
- * @param positionMatcher a matcher for the @c .position() property of the exception
- * @param rangesMatcher a matcher for the @c .ranges() property of the exception
- * @param whatMatcher a matcher for the @c .what() property of the exception
+ * @param positionMatcher a matcher for the `.position()` property of the exception
+ * @param rangesMatcher a matcher for the `.ranges()` property of the exception
+ * @param whatMatcher a matcher for the `.what()` property of the exception
  * @return a matcher
  */
 template<typename C, typename PositionMatcher, typename RangesMatcher, typename WhatMatcher> requires
@@ -290,9 +290,9 @@ throwsParseFailure(
  *
  * @tparam C the character type
  * @tparam WhatMatcher the type of @p whatMatcher
- * @param position the expected value of the @c .position() property of the exception
- * @param range the expected one and only element in the @c .ranges() property of the exception
- * @param whatMatcher a matcher for the @c .what() property of the exception
+ * @param position the expected value of the `.position()` property of the exception
+ * @param range the expected one and only element in the `.ranges()` property of the exception
+ * @param whatMatcher a matcher for the `.what()` property of the exception
  * @return a matcher
  */
 template<typename C, typename WhatMatcher> requires Character<C>
@@ -309,9 +309,9 @@ throwsParseFailure(size_t position, text::Range range, WhatMatcher&& whatMatcher
  *
  * @tparam C the character type
  * @tparam WhatMatcher the type of @p whatMatcher
- * @param position the expected value of the @c .position() property of the exception
- * @param ranges the expected value of the @c .ranges() property of the exception
- * @param whatMatcher a matcher for the @c .what() property of the exception
+ * @param position the expected value of the `.position()` property of the exception
+ * @param ranges the expected value of the `.ranges()` property of the exception
+ * @param whatMatcher a matcher for the `.what()` property of the exception
  * @return a matcher
  */
 template<typename C, typename WhatMatcher> requires Character<C>

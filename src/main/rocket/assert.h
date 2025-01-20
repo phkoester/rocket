@@ -3,16 +3,16 @@
  *
  * Assertions, argument checks, and expectations.
  *
- * This file may be included several times. If @c NDEBUG is not defined, the assertion macros are active.
- * Otherwise, they expand to a call of #rocket::nop().
+ * This file may be included several times. If `NDEBUG` is not defined, the assertion macros are active.
+ * Otherwise, they expand to a call of #rocket::nop.
  */
 
-// No '#pragma once' here!
+// No `#pragma once` here!
 
 #ifndef ROCKET_ASSERT_H
 #define ROCKET_ASSERT_H
 
-#include "basic.h" // 'rocket::nop()'
+#include "basic.h" // `rocket::nop()`
 
 #include <boost/preprocessor/stringize.hpp>
 #include <boost/preprocessor/tuple/elem.hpp>
@@ -61,7 +61,7 @@ namespace rocket::assert::internal {
 /**
  * Terminates.
  */
-#define ROCKET_TERMINATE_INVALID_CALL() ROCKET_ASSERT(false, ::rocket::S << "Invalid call of function '" << __PRETTY_FUNCTION__ << "'")
+#define ROCKET_TERMINATE_INVALID_CALL() ROCKET_ASSERT(false, ::rocket::S << "Invalid call of function `" << __PRETTY_FUNCTION__ << "`")
 
 /**
  * Terminates.
@@ -105,7 +105,7 @@ namespace rocket::assert::internal {
  *
  * @throw #rocket::except::InvalidState
  */
-#define ROCKET_FAIL_INVALID_CALL() ROCKET_EXPECT(false, ::rocket::S << "Invalid call of function '" << __PRETTY_FUNCTION__ << "'")
+#define ROCKET_FAIL_INVALID_CALL() ROCKET_EXPECT(false, ::rocket::S << "Invalid call of function `" << __PRETTY_FUNCTION__ << "`")
 
 /**
  * Throws #rocket::except::InvalidState.
@@ -138,11 +138,11 @@ namespace rocket::assert::internal {
 #else
 
 /**
- * Terminates if @p expr evaluates to @c false.
+ * Terminates if @p expr evaluates to `false`.
  *
- * Usage: <tt>ROCKET_ASSERT(expr)</tt>
+ * Usage: `ROCKET_ASSERT(expr)`
  *
- * Usage: <tt>ROCKET_ASSERT(expr, msg)</tt>
+ * Usage: `ROCKET_ASSERT(expr, msg)`
  *
  * Use this macro only in order to handle program states that result from a flawed implementation and make
  * further execution impossible or dangerous. Do not abuse it to catch states that may reasonably occur in
@@ -151,13 +151,13 @@ namespace rocket::assert::internal {
 #define ROCKET_ASSERT(...) ROCKET_ASSERT__(__VA_ARGS__)(__VA_ARGS__)
 
 /**
- * Throws #rocket::except::InvalidArgument if @p expr evaluates to @c false.
+ * Throws #rocket::except::InvalidArgument if @p expr evaluates to `false`.
  *
- * Usage: <tt>ROCKET_CHECK(name, expr)</tt>
+ * Usage: `ROCKET_CHECK(name, expr)`
  *
- * Usage: <tt>ROCKET_CHECK(name, expr, msg)</tt>
+ * Usage: `ROCKET_CHECK(name, expr, msg)`
  *
- * @throw #rocket::except::InvalidArgument if @p expr evaluates to @c false
+ * @throw #rocket::except::InvalidArgument if @p expr evaluates to `false`
  *
  * Use this macro only in order to check function arguments. The first parameter of this macro is always the
  * name of the function parameter the argument of which is to be checked.
@@ -165,13 +165,13 @@ namespace rocket::assert::internal {
 #define ROCKET_CHECK(...) ROCKET_CHECK__(__VA_ARGS__)(__VA_ARGS__)
 
 /**
- * Throws #rocket::except::InvalidState if @p expr evaluates to @c false.
+ * Throws #rocket::except::InvalidState if @p expr evaluates to `false`.
  *
- * Usage: <tt>ROCKET_EXPECT(expr)</tt>
+ * Usage: `ROCKET_EXPECT(expr)`
  *
- * Usage: <tt>ROCKET_EXPECT(expr, msg)</tt>
+ * Usage: `ROCKET_EXPECT(expr, msg)`
  *
- * @throw #rocket::except::InvalidState if @p expr evaluates to @c false
+ * @throw #rocket::except::InvalidState if @p expr evaluates to `false`
  *
  * Use this macro only in order to handle program states that result from a flawed implementation but may
  * be dealt with by throwing an exception. Do not abuse it to catch states that may reasonably occur in

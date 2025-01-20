@@ -79,7 +79,7 @@ eastAsianWidth(uint32_t cp) {
 
 } // namespace internal
 
-// 'CodePoint' ----------------------------------------------------------------------------------------------
+// `CodePoint` ----------------------------------------------------------------------------------------------
 
 CodePoint::CodePoint(char v) :
     v_(static_cast<unsigned char>(v)) {
@@ -153,7 +153,7 @@ CodePoint::width() const {
   if (eaw == internal::EastAsianWidth::wide || eaw == internal::EastAsianWidth::fullWidth)
     return 2;
   
-  // From 'unicode-display-width': Emoji characters in the Emoji_Presentation category
+  // From `unicode-display-width`: Emoji characters in the Emoji_Presentation category
   if (internal::emojiEmoji_Presentation(v_))
     return 2;
   
@@ -209,7 +209,7 @@ operator<<(ostream& lhs, CodePoint rhs) {
   return lhs;
 }
 
-// 'Grapheme' -----------------------------------------------------------------------------------------------
+// `Grapheme` -----------------------------------------------------------------------------------------------
 
 Grapheme::Grapheme(const CodePoints& cps) :
     codePoints(cps),
@@ -290,7 +290,7 @@ uint8_t
 width(const CodePoints& cps) {
   uint8_t result = 0;
   for (auto cp : cps) {
-    // From 'unicode-display-width'
+    // From `unicode-display-width`
     if (cp == 0xfe0fU)
       return 2;
     int8_t cw = cp.width();

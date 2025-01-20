@@ -1,7 +1,7 @@
 /**
  * @file spans.h
  *
- * @c std::span utilities.
+ * `std::span` utilities.
  *
  */
 

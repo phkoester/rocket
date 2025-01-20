@@ -16,10 +16,10 @@ namespace rocket::boost {
 
 namespace bimap {
 
-// 'UnorderedBimap' -----------------------------------------------------------------------------------------
+// `UnorderedBimap` -----------------------------------------------------------------------------------------
 
 /**
- * A class template that simplifies the usage of an unordered @c bimap with unordered indices for both keys
+ * A class template that simplifies the usage of an unordered `bimap` with unordered indices for both keys
  * and values.
  *
  * @tparam K the map's key type
@@ -36,21 +36,21 @@ struct UnorderedBimap {
    */
   using ValuesType = ::boost::bimaps::unordered_set_of<V>;
   /**
-   * The actual @c bimap type.
+   * The actual `bimap` type.
    */
   using Type = ::boost::bimaps::bimap<KeysType, ValuesType>;
 
   /**
-  * Convenience function to make an unordered @c bimap from a @c std::initializer_list.
+  * Convenience function to make an unordered `bimap` from a `std::initializer_list`.
   *
   * @param list the map elements
-  * @return an unordered @c bimap
+  * @return an unordered `bimap`
   */
   static inline Type
   of(const std::initializer_list<std::pair<K, V>>& list = {}) {
     Type result;
     for (const auto& elem : list)
-      result.insert({ elem.first, elem.second }); // 'bimap' has no 'emplace'
+      result.insert({ elem.first, elem.second }); // `bimap` has no `emplace`
     return result;
   }
 };
@@ -58,12 +58,12 @@ struct UnorderedBimap {
 // Functions ------------------------------------------------------------------------------------------------
 
 /**
- * Extracts the values from an unordered @c bimap.
+ * Extracts the values from an unordered `bimap`.
  *
  * @tparam K the map's key type
  * @tparam V the map's value type
- * @param map a @c bimap
- * @return the values from @p map as a @c std::set
+ * @param map a `bimap`
+ * @return the values from @p map as a `std::set`
  */
 template<typename K, typename V>
 std::set<V>
@@ -78,11 +78,11 @@ values(const typename UnorderedBimap<K, V>::Type& map) {
 
 } // namespace rocket::boost
 
-// 'boost::bimaps' ------------------------------------------------------------------------------------------
+// `boost::bimaps` ------------------------------------------------------------------------------------------
 
 namespace boost::bimaps {
 
-/// @op_eq{@c boost::bimaps::bimap}
+/// @op_eq{`boost::bimaps::bimap`}
 template<typename K, typename V>
 bool
 operator==(const bimap<K, V>& lhs, const bimap<K, V>& rhs) {
@@ -98,7 +98,7 @@ operator==(const bimap<K, V>& lhs, const bimap<K, V>& rhs) {
   return true;
 }
 
-/// @op_ne{@c boost::bimaps::bimap}
+/// @op_ne{`boost::bimaps::bimap`}
 template<typename K, typename V>
 inline bool
 operator!=(const bimap<K, V>& lhs, const bimap<K, V>& rhs) {

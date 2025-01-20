@@ -19,12 +19,12 @@ using namespace std;
 namespace {
 
 bool parseCommandOmit; // CL 1 "-o"
-bool parseCommandHelp; // CL 1 "-?"
+bool parseCommandHelp; // CL 1 "-h"
 string parseCommandCommand; // CL 1 command
 bool parseCommandList; // CL 2 "-l"
-bool parseCommandListHelp; // CL 2 "-?"
+bool parseCommandListHelp; // CL 2 "-h"
 bool parseCommandShow; // CL 2 "-s"
-bool parseCommandShowHelp; // CL 2 "-?"
+bool parseCommandShowHelp; // CL 2 "-h"
 bool parseCommandShowTest; // CL 2 "-t"
 vector<string> parseCommandArgs; // CL 2 args
 
@@ -39,8 +39,8 @@ parse(const CommandLine& cl, const vector<string>& args, ostream& os = cerr) {
 }
 
 /**
- * Usage: cmd [-o | -?] list [-? | -l] FILE...
- *   or   cmd [-o | -?] show [-? | -s | -t] [ARG]...
+ * Usage: cmd [-o | -h] list [-h | -l] FILE...
+ *   or   cmd [-o | -h] show [-h | -s | -t] [ARG]...
  */
 void
 parseCommand(const vector<string>& args, ostream& out = cout, ostream& err = cerr) {
@@ -69,7 +69,7 @@ parseCommand(const vector<string>& args, ostream& out = cout, ostream& err = cer
 
   CommandLine cl({
     Option::of(&general, "omit", 'o', nullopt, "omit what is not important", parseCommandOmit),
-    Option::of(&misc, "help", '?', nullopt, "display this help text", parseCommandHelp)
+    Option::of(&misc, "help", 'h', nullopt, "display this help text", parseCommandHelp)
   }, params);
 
   auto take = [](string_view arg) -> CommandLine::Took {
@@ -106,7 +106,7 @@ parseCommand(const vector<string>& args, ostream& out = cout, ostream& err = cer
     };
 
     CommandLine listCl({
-      Option::of(&list, "help", '?', nullopt, "display this help text", parseCommandListHelp),
+      Option::of(&list, "help", 'h', nullopt, "display this help text", parseCommandListHelp),
       Option::of(&list, "list", 'l', nullopt, "a list option that is good for nothing", parseCommandList)
     }, listParams);
 
@@ -139,7 +139,7 @@ parseCommand(const vector<string>& args, ostream& out = cout, ostream& err = cer
     };
 
     CommandLine showCl({
-      Option::of(&show, "help", '?', nullopt, "display this help text", parseCommandShowHelp),
+      Option::of(&show, "help", 'h', nullopt, "display this help text", parseCommandShowHelp),
       Option::of(&show, "show", 's', nullopt, "a show option that is good for nothing", parseCommandShow),
       Option::of(&show, "test", 't', nullopt, "test something, or don't", parseCommandShowTest)
     }, showParams);
@@ -161,7 +161,7 @@ parseCommand(const vector<string>& args, ostream& out = cout, ostream& err = cer
 
 } // namespace
 
-// 'TEST' ---------------------------------------------------------------------------------------------------
+// `TEST` ---------------------------------------------------------------------------------------------------
 
 TEST(cl, parseNoOpts) {
   CommandLine cl;
@@ -232,7 +232,7 @@ TEST(cl, parseOpt_bool) {
     auto args = parse(cl, { "a", "-€=hello", "b", "c" }, os);
     EXPECT_EQ(args, vector<string>());
     EXPECT_FALSE(flag);
-    EXPECT_EQ(os.str(), "test-rocket-cl: Error: Option '-€' cannot take a value\n");
+    EXPECT_EQ(os.str(), "test-rocket-cl: Error: Option `-€` cannot take a value\n");
   }
 }
 
@@ -266,7 +266,7 @@ TEST(cl, parseOpt_int) {
     auto args = parse(cl, { "a", "-n" }, os);
     EXPECT_EQ(args, vector<string>());
     EXPECT_EQ(num, 0);
-    EXPECT_EQ(os.str(), "test-rocket-cl: Error: Missing value for option '-n'\n");
+    EXPECT_EQ(os.str(), "test-rocket-cl: Error: Missing value for option `-n`\n");
   }
 
   // Test error when conversion fails
@@ -276,7 +276,7 @@ TEST(cl, parseOpt_int) {
     auto args = parse(cl, { "a", "-n", "hello" }, os);
     EXPECT_EQ(args, vector<string>());
     EXPECT_EQ(num, 0);
-    EXPECT_EQ(os.str(), "test-rocket-cl: Error: Option '-n': Invalid value \"hello\"; expected NUM\n");
+    EXPECT_EQ(os.str(), "test-rocket-cl: Error: Option `-n`: Invalid value \"hello\"; expected NUM\n");
   }
 }
 
@@ -302,7 +302,7 @@ TEST(cl, parseOpt_enum) {
     auto args = parse(cl, { "a", "-l", "nonsense" }, os);
     EXPECT_EQ(args, vector<string>());
     EXPECT_EQ(level, log::LogLevel::none);
-    EXPECT_EQ(os.str(), "test-rocket-cl: Error: Option '-l': Invalid value \"nonsense\"; expected LEVEL\n");
+    EXPECT_EQ(os.str(), "test-rocket-cl: error: Option `-l`: Invalid value \"nonsense\"; expected LEVEL\n");
   }
 }
 
@@ -359,8 +359,8 @@ TEST(cl, parseShortOptions) {
 }
 
 /**
- * Usage: cmd [-o | -?] list [-? | -l] FILE...
- *   or   cmd [-o | -?] show [-? | -s | -t] [ARG]...
+ * Usage: cmd [-o | -h] list [-h | -l] FILE...
+ *   or   cmd [-o | -h] show [-h | -s | -t] [ARG]...
  */
 TEST(cl, parseCommand) {
   // Test invalid option
@@ -369,10 +369,10 @@ TEST(cl, parseCommand) {
     parseCommand({ "-p", "list", "a" }, os, os);
     EXPECT_EQ(
         os.str(),
-        "test-rocket-cl: Error: Unknown option '-p'\n"
+        "test-rocket-cl: Error: Unknown option `-p`\n"
         "Usage: test-rocket-cl [OPTION]... list [OPTION]... FILE...\n"
         "  or   test-rocket-cl [OPTION]... show [OPTION]... [ARG]...\n"
-        "Try 'test-rocket-cl --help' for more information.\n");
+        "Try `test-rocket-cl --help` for more information.\n");
   }
 
   // Test invalid command
@@ -384,7 +384,7 @@ TEST(cl, parseCommand) {
         "test-rocket-cl: Error: Invalid command \"walk\"\n"
         "Usage: test-rocket-cl [OPTION]... list [OPTION]... FILE...\n"
         "  or   test-rocket-cl [OPTION]... show [OPTION]... [ARG]...\n"
-        "Try 'test-rocket-cl --help' for more information.\n");
+        "Try `test-rocket-cl --help` for more information.\n");
   }
 
   // Test help
@@ -404,11 +404,11 @@ TEST(cl, parseCommand) {
         "\n"
         "      --log ID[=LEVEL]\n"
         "          set logging for identifier ID to level LEVEL. ID is a known log\n"
-        "          identifier or 'all'. LEVEL is 'none', 'error', 'warn', 'info',\n"
-        "          'debug', or 'trace'. If LEVEL is not supplied, 'info' is assumed\n"
+        "          identifier or `all`. LEVEL is `none`, `error`, `warn`, `info`,\n"
+        "          `debug`, or `trace`. If LEVEL is not supplied, `info` is assumed\n"
         "      --log-out OUT\n"
-        "          log to OUT. OUT is 'stdout', 'stderr', a file path, or a URL\n"
-        "          beginning with 'file://'\n"
+        "          log to OUT. OUT is `stdout`, `stderr`, a file path, or a URL\n"
+        "          beginning with `file://`\n"
         "\n"
         "General control:\n"
         "\n"
@@ -417,7 +417,7 @@ TEST(cl, parseCommand) {
         "\n"
         "Miscellaneous:\n"
         "\n"
-        "  -?, --help\n"
+        "  -h, --help\n"
         "          display this help text\n"
         "\n"
         "Gallia est omnis divisa in partes tres, quarum unam incolunt Belgae, aliam\n"
@@ -436,7 +436,7 @@ TEST(cl, parseCommand) {
       "\n"
       "List control:\n"
       "\n"
-      "  -?, --help\n"
+      "  -h, --help\n"
       "          display this help text\n"
       "  -l, --list\n"
       "          a list option that is good for nothing\n");
@@ -448,9 +448,9 @@ TEST(cl, parseCommand) {
     parseCommand({ "list", "-Q" }, os, os);
     EXPECT_EQ(
         os.str(),
-        "test-rocket-cl: Error: Unknown option '-Q'\n"
+        "test-rocket-cl: Error: Unknown option `-Q`\n"
         "Usage: test-rocket-cl list [OPTION]... FILE...\n"
-        "Try 'test-rocket-cl list --help' for more information.\n");
+        "Try `test-rocket-cl list --help` for more information.\n");
   }
 
   // Test missing FILE
@@ -460,7 +460,7 @@ TEST(cl, parseCommand) {
     EXPECT_EQ(
         os.str(),
         "Usage: test-rocket-cl list [OPTION]... FILE...\n"
-        "Try 'test-rocket-cl list --help' for more information.\n");
+        "Try `test-rocket-cl list --help` for more information.\n");
   }
 
   // Test successful list command
@@ -483,7 +483,7 @@ TEST(cl, parseCommand) {
       "\n"
       "Show control:\n"
       "\n"
-      "  -?, --help\n"
+      "  -h, --help\n"
       "          display this help text\n"
       "  -s, --show\n"
       "          a show option that is good for nothing\n"
@@ -497,9 +497,9 @@ TEST(cl, parseCommand) {
     parseCommand({ "show", "-Q" }, os, os);
     EXPECT_EQ(
         os.str(),
-        "test-rocket-cl: Error: Unknown option '-Q'\n"
+        "test-rocket-cl: Error: Unknown option `-Q`\n"
         "Usage: test-rocket-cl show [OPTION]... [ARG]...\n"
-        "Try 'test-rocket-cl show --help' for more information.\n");
+        "Try `test-rocket-cl show --help` for more information.\n");
   }
 
   // Test successful show command

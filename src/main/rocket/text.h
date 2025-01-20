@@ -21,24 +21,24 @@ std::vector<std::vector<std::string>> paragraphs(std::string_view s);
 
 } // namespace internal
 
-// 'Range' --------------------------------------------------------------------------------------------------
+// `Range` --------------------------------------------------------------------------------------------------
 
 /**
  * The type used to store a position range.
  */
 using Range = math::RightOpenInterval<size_t>;
 
-// 'Ranges' -------------------------------------------------------------------------------------------------
+// `Ranges` -------------------------------------------------------------------------------------------------
 
 /**
  * The type used to store position ranges.
  */
 using Ranges = std::vector<Range>;
 
-// 'Position' -----------------------------------------------------------------------------------------------
+// `Position` -----------------------------------------------------------------------------------------------
 
 /**
- * Input positions that are passed to the #locations() function.
+ * Input positions that are passed to the #locations function.
  */
 struct Position {
   /**
@@ -53,7 +53,7 @@ struct Position {
   /**
    * The position to look for.
    *
-   * There must be a grapheme boundary at this position. The position is highlighted with a caret (@c ^)
+   * There must be a grapheme boundary at this position. The position is highlighted with a caret (`^`)
    * underneath.
    */
   size_t position;
@@ -61,7 +61,7 @@ struct Position {
    * The ranges associated with this position.
    *
    * There must be grapheme boundaries at the ranges' lower and upper positions. The ranges are underlined
-   * with the tilde (@c ~).
+   * with the tilde (`~`).
    */
   Ranges ranges;
   /**
@@ -73,15 +73,15 @@ struct Position {
   /**
    * The optional caption associated with this position.
    *
-   * The caption may be null, bot not empty. It is displayed underneath the caret (@c ^).
+   * The caption may be null, bot not empty. It is displayed underneath the caret (`^`).
    */
   std::optional<std::string> caption;
 };
 
-// 'LocationsParams' ----------------------------------------------------------------------------------------
+// `LocationsParams` ----------------------------------------------------------------------------------------
 
 /**
- * Parameters for the #locations() function.
+ * Parameters for the #locations function.
  */
 struct LocationsParams {
   /**
@@ -91,28 +91,27 @@ struct LocationsParams {
    */
   size_t bufferSize = io::DEFAULT_BUFFER_SIZE;
   /**
-   * If this is set to @c true, then lines are copied to the #rocket::text::LocationsResult.
+   * If this is set to `true`, then lines are copied to the #rocket::text::LocationsResult.
    */
   bool setLineString = false;
   /**
    * A string describing the source of the data.
    *
    * If a source is known, such as a file or an URL, it should be assigned here. If #source is empty, then
-   * the #locations() function sets this to @c "-" if the input stream is @c std::cin, to @c "(input)"
-   * otherwise.
+   * the #locations function sets this to `"-"` if the input stream is `std::cin`, to `"(input)"` otherwise.
    */
   std::string source;
   /**
    * Configures the handling of tab characters. If this is null, then there is no special treatment for tab
-   * characters—they are displayed as @c "\\t". Otherwise, a tab expands to at most #tabSize spaces.
+   * characters---they are displayed as `\t`. Otherwise, a tab expands to at most #tabSize spaces.
    */
   std::optional<size_t> tabSize = 8;
 };
 
-// 'LocationsResult' ----------------------------------------------------------------------------------------
+// `LocationsResult` ----------------------------------------------------------------------------------------
 
 /**
- * This is the result of a call to #locations().
+ * This is the result of a call to #locations.
  *
  * This class contains information about each inquired position.
  */
@@ -128,7 +127,7 @@ struct LocationsResult {
     size_t column; ///< The column number (counting Unicode grapheme widths), starting with 1.
     Range lineRange; ///< The range of the line containing #position.
     /**
-     * This member is only initialized if #LocationsParams#setLineString was set to @c true.
+     * This member is only initialized if #LocationsParams#setLineString was set to `true`.
      */
     std::optional<std::string> lineString;
     std::string message; ///< Copied from the input position.
@@ -136,32 +135,32 @@ struct LocationsResult {
   };
 
   /**
-   * A copy of the parameters that were passed to #locations().
+   * A copy of the parameters that were passed to #locations.
    *
    * The #LocationsParams#source member is possibly assigned a new value.
    */
   LocationsParams params;
   /**
-   * For each #rocket::text::Position passed to #locations(), a #rocket::text::LocationsResult::Location is
+   * For each #rocket::text::Position passed to #locations, a #rocket::text::LocationsResult::Location is
    * added to the result. The order of the positions is preserved in the #rocket::text::LocationsResult.
    */
   std::vector<Location> locations;
 };
 
-// 'PrintLocationsParams' -----------------------------------------------------------------------------------
+// `PrintLocationsParams` -----------------------------------------------------------------------------------
 
 /**
- * Parameters for the #printLocations() function.
+ * Parameters for the #printLocations function.
  */
 struct PrintLocationsParams {
   bool colored = true; ///< Use colors when printing to a terminal?
   size_t minLineNumberWidth = 5; ///< The minimum width to use when displaying line numbers.
 };
 
-// 'WrapParams' ---------------------------------------------------------------------------------------------
+// `WrapParams` ---------------------------------------------------------------------------------------------
 
 /**
- * Parameters for the #wrap() function.
+ * Parameters for the #wrap function.
  */
 struct WrapParams {
   /**
@@ -172,7 +171,7 @@ struct WrapParams {
    * Maximum line width. For example, if this is 80, created lines will be at most 79 columns wide (in
    * Unicode grapheme-width coordinates) if word wrapping is feasible.
    *
-   * @see #rocket::terminal::size()
+   * @see #rocket::terminal::size
    */
   size_t width = 80;
 };
@@ -183,7 +182,7 @@ struct WrapParams {
  * Finds information about the positions @p positions in the input stream @p is and returns the gathered
  * data in a #rocket::text::LocationsResult.
  *
- * @param is the input stream. The input must be UTF-8-encoded, using LF (@c "\n") or CRLF (@c "\r\n") as
+ * @param is the input stream. The input must be UTF-8-encoded, using LF (`"\n"`) or CRLF (`"\r\n"`) as
  *     line breaks
  * @param positions the positions to look for. They needn't be sorted in any way. The order of the positions
  *     is preserved in the #rocket::text::LocationsResult. The only restriction is that all
@@ -203,7 +202,7 @@ LocationsResult locations(
  * @param input the entire input as a string view. This may be null, but then, the line strings in
  *     @p locationsResult must be available
  * @param locationsResult the #rocket::text::LocationsResult instance that was returned by the
- *    #rocket::text::locations() function
+ *    #rocket::text::locations function
  * @param params parameters to configure the operation
  */
 void printLocations(
@@ -215,7 +214,7 @@ void printLocations(
 /**
  * Wraps the string @p s to fit the width specified by @p params.
  *
- * - Line breaks (@c "\n", @c "\r\n") are recognized.
+ * - Line breaks (`"\n"`, `"\r\n"`) are recognized.
  * - Non-breaking spaces (U+00A0) are recognized.
  * - Tabs are replaced by spaces.
  * - Consecutive whitespace is collapsed.

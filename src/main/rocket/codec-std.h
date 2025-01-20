@@ -14,7 +14,7 @@
 #include "io.h"
 
 #ifndef ROCKET_CODEC_H
-#error 'codec.h' must be included before this file
+#error `codec.h` must be included before this file
 #endif
 
 // Template definitions -------------------------------------------------------------------------------------
@@ -24,7 +24,7 @@ namespace std {
 using ::parseRon;
 using ::printRon;
 
-/// @fn_printRon{@c initializer_list}
+/// @fn_printRon{`initializer_list`}
 template<typename T>
 inline ostream&
 printRon(ostream& os, const initializer_list<T>& v) {
@@ -33,7 +33,7 @@ printRon(ostream& os, const initializer_list<T>& v) {
       os, indentChildren, v.begin(), v.end(), '[', ", ", ",", ']');
 }
 
-/// @fn_parseRon{@c optional}
+/// @fn_parseRon{`optional`}
 template<typename T>
 istream&
 parseRon(istream& is, optional<T>& v) {
@@ -58,14 +58,14 @@ parseRon(istream& is, optional<T>& v) {
   return is;
 }
 
-/// @fn_printRon{@c optional}
+/// @fn_printRon{`optional`}
 template<typename T>
 inline ostream&
 printRon(ostream& os, const optional<T>& v) {
   return v ? printRon(os, *v) : os << "null";
 }
 
-/// @fn_parseRon{@c pair}
+/// @fn_parseRon{`pair`}
 template<typename A, typename B>
 istream&
 parseRon(istream& is, pair<A, B>& v) {
@@ -86,7 +86,7 @@ parseRon(istream& is, pair<A, B>& v) {
   return is;
 }
 
-/// @fn_printRon{@c pair}
+/// @fn_printRon{`pair`}
 template<typename A, typename B>
 ostream&
 printRon(ostream& os, const pair<A, B>& v) {
@@ -103,14 +103,14 @@ printRon(ostream& os, const pair<A, B>& v) {
   return endParent(os, indentChildren, ')');
 }
 
-/// @fn_parseRon{@c set}
+/// @fn_parseRon{`set`}
 template<typename T>
 inline istream&
 parseRon(istream& is, set<T>& v) {
   return rocket::codec::ron::parsing::parseSet(is, v);
 }
 
-/// @fn_printRon{@c set}
+/// @fn_printRon{`set`}
 template<typename T>
 inline ostream&
 printRon(ostream& os, const set<T>& v) {
@@ -119,7 +119,7 @@ printRon(ostream& os, const set<T>& v) {
       os, indentChildren, v.begin(), v.end(), '{', ", ", ",", '}');
 }
 
-/// @fn_printRon{@c span}
+/// @fn_printRon{`span`}
 template<typename T>
 inline ostream&
 printRon(ostream& os, span<T> v) {
@@ -128,14 +128,14 @@ printRon(ostream& os, span<T> v) {
       os, indentChildren, v.begin(), v.end(), '[', ", ", ",", ']');
 }
 
-/// @fn_parseRon{@c tuple}
+/// @fn_parseRon{`tuple`}
 template<typename... T>
 inline istream&
 parseRon(istream& is, tuple<T...>& v) {
   return rocket::codec::ron::parsing::parseTuple(is, v, make_index_sequence<sizeof...(T)>());
 }
 
-/// @fn_printRon{@c tuple}
+/// @fn_printRon{`tuple`}
 template<typename... T>
 inline ostream&
 printRon(ostream& os, const tuple<T...>& v) {
@@ -144,14 +144,14 @@ printRon(ostream& os, const tuple<T...>& v) {
       os, indentChildren, v, make_index_sequence<sizeof...(T)>());
 }
 
-/// @fn_parseRon{@c unordered_map}
+/// @fn_parseRon{`unordered_map`}
 template<typename K, typename V>
 inline istream&
 parseRon(istream& is, unordered_map<K, V>& v) {
   return rocket::codec::ron::parsing::parseMap(is, v);
 }
 
-/// @fn_printRon{@c unordered_map}
+/// @fn_printRon{`unordered_map`}
 template<typename K, typename V>
 inline ostream&
 printRon(ostream& os, const unordered_map<K, V>& v) {
@@ -159,14 +159,14 @@ printRon(ostream& os, const unordered_map<K, V>& v) {
   return rocket::codec::ron::printing::printMap(os, indentChildren, v);
 }
 
-/// @fn_parseRon{@c unordered_set}
+/// @fn_parseRon{`unordered_set`}
 template<typename T>
 inline istream&
 parseRon(istream& is, unordered_set<T>& v) {
   return rocket::codec::ron::parsing::parseSet(is, v);
 }
 
-/// @fn_printRon{@c unordered_set}
+/// @fn_printRon{`unordered_set`}
 template<typename T>
 inline ostream&
 printRon(ostream& os, const unordered_set<T>& v) {
@@ -175,14 +175,14 @@ printRon(ostream& os, const unordered_set<T>& v) {
       os, indentChildren, v.begin(), v.end(), '{', ", ", ",", '}');
 }
 
-/// @fn_parseRon{@c variant}
+/// @fn_parseRon{`variant`}
 template<typename... T>
 inline istream&
 parseRon(istream& is, variant<T...>& v) {
   return rocket::codec::ron::parsing::parseVariant(is, v);
 }
 
-/// @fn_printRon{@c variant}
+/// @fn_printRon{`variant`}
 template<typename... T>
 inline ostream&
 printRon(ostream& os, const variant<T...>& v) {
@@ -192,14 +192,14 @@ printRon(ostream& os, const variant<T...>& v) {
   }, v);
 }
 
-/// @fn_parseRon{@c vector}
+/// @fn_parseRon{`vector`}
 template<typename T>
 inline istream&
 parseRon(istream& is, vector<T>& v) {
   return rocket::codec::ron::parsing::parseVector(is, v);
 }
 
-/// @fn_printRon{@c vector}
+/// @fn_printRon{`vector`}
 template<typename T>
 inline ostream&
 printRon(ostream& os, const vector<T>& v) {

@@ -58,12 +58,12 @@ uint128ToString(char* dest, uint128_t v) {
 
 } // namespace
 
-// 'int128_t' -----------------------------------------------------------------------------------------------
+// `int128_t` -----------------------------------------------------------------------------------------------
 
 istream&
 operator>>(istream& lhs, int128_t& rhs) {
   try {
-    // Read optional '+' or '-';
+    // Read optional `+` or `-`
     auto c = io::getOptionalChar(lhs, PLUS_MINUS);
     int sgn = c && *c == '-' ? -1 : 1;
 
@@ -80,7 +80,7 @@ operator>>(istream& lhs, int128_t& rhs) {
     string s = string(count, '0') + string(digits);
     if (sgn == -1) {
       // Check min limit
-      if (s > INT128_MIN.substr(1)) { // We don't need the '-' here
+      if (s > INT128_MIN.substr(1)) { // We don't need the `-` here
         lhs.setstate(ios::failbit);
         return lhs;
       }
@@ -116,12 +116,12 @@ operator<<(ostream& lhs, int128_t rhs) {
   return lhs << buf;
 }
 
-// 'uint128_t' ----------------------------------------------------------------------------------------------
+// `uint128_t` ----------------------------------------------------------------------------------------------
 
 istream&
 operator>>(istream& lhs, uint128_t& rhs) {
   try {
-    // Read optional '+'
+    // Read optional `+`
     io::getOptionalChar(lhs, PLUS);
 
     // Read digits, remove leading zeroes

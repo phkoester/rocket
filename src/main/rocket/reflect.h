@@ -108,16 +108,14 @@
     static consteval auto& name() { return ROCKET_REFLECT_MEMBERS_STRUCT__(name)::refs; } \
 
 /**
- * Provides an <tt>operator==()</tt> function for class @p cls, using the member-reference container named
- * @p name.
+ * Provides an `operator==` for class @p cls, using the member-reference container named @p name.
  *
  * @param cls name of the class that holds the members (without namespace)
  * @param name the name of the member-reference container to use
  */
 #define ROCKET_REFLECT_MEMBERS_DEFINE_OP_EQ(cls, name) ROCKET_REFLECT_MEMBERS_DEFINE_OP_EQ__(cls, name)
 /**
- * Provides an <tt>operator!=()</tt> function for class @p cls, using the member-reference container named
- * @p name.
+ * Provides an `operator!=` for class @p cls, using the member-reference container named @p name.
  *
  * @param cls name of the class that holds the members (without namespace)
  * @param name the name of the member-reference container to use
@@ -125,16 +123,14 @@
 #define ROCKET_REFLECT_MEMBERS_DEFINE_OP_NE(cls, name) ROCKET_REFLECT_MEMBERS_DEFINE_OP_NE__(cls, name)
 
 /**
- * Provides an <tt>operator<()</tt> function for class @p cls, using the member-reference container named
- * @p name.
+ * Provides an `operator<` for class @p cls, using the member-reference container named @p name.
  *
  * @param cls name of the class that holds the members (without namespace)
  * @param name the name of the member-reference container to use
  */
 #define ROCKET_REFLECT_MEMBERS_DEFINE_OP_GT(cls, name) ROCKET_REFLECT_MEMBERS_DEFINE_OP_GT__(cls, name)
 /**
- * Provides an <tt>operator>()</tt> function for class @p cls, using the member-reference container named
- * @p name.
+ * Provides an `operator>` for class @p cls, using the member-reference container named @p name.
  *
  * @param cls name of the class that holds the members (without namespace)
  * @param name the name of the member-reference container to use
@@ -142,8 +138,7 @@
 #define ROCKET_REFLECT_MEMBERS_DEFINE_OP_LT(cls, name) ROCKET_REFLECT_MEMBERS_DEFINE_OP_LT__(cls, name)
 
 /**
- * Provides a <tt>hash_value()</tt> function for class @p cls, using the member-reference container named
- * @p name.
+ * Provides a `hash_value` function for class @p cls, using the member-reference container named @p name.
  *
  * @param cls name of the class that holds the members (without namespace)
  * @param name the name of the member-reference container to use
@@ -152,7 +147,7 @@
     ROCKET_REFLECT_MEMBERS_DEFINE_FN_HASH_VALUE__(cls, name)
 
 /**
- * Provides a parseRon() function for class @p cls, using the member-reference container named @p name.
+ * Provides a `parseRon` function for class @p cls, using the member-reference container named @p name.
  *
  * @param cls name of the class that holds the members (without namespace)
  * @param name the name of the member-reference container to use
@@ -161,7 +156,7 @@
     ROCKET_REFLECT_MEMBERS_DEFINE_FN_PARSE_RON__(cls, name)
 
 /**
- * Provides a printRon() function for class @p cls, using the member-reference container named @p name.
+ * Provides a `printRon` function for class @p cls, using the member-reference container named @p name.
  *
  * @param cls name of the class that holds the members (without namespace)
  * @param name the name of the member-reference container to use
@@ -184,7 +179,7 @@ namespace rocket::reflect {
 
 namespace internal {
 
-// 'MemberRef' ..............................................................................................
+// `MemberRef` ..............................................................................................
 
 /**
  * References on members that need an instance to evaluate. Instances of this class are returned by
@@ -216,7 +211,7 @@ struct IsMemberRefImpl<MemberRef<C, T>> : std::true_type {};
 
 template<typename T> struct IsMemberRef : IsMemberRefImpl<std::decay_t<T>>::type {};
 
-// 'VarRef' .................................................................................................
+// `VarRef` .................................................................................................
 
 /**
  * References on variables that need need no instance to evaluate. Instances of this class are returned by
@@ -362,13 +357,13 @@ parseRon(std::istream& is, T* v, Tuple& refs, std::index_sequence<Index...>) {
   using namespace codec;
 
   if constexpr (IsMemberRef<decltype(std::get<0>(refs))>::value) {
-    // Member references: Simply default-construct '*v'
+    // Member references: Simply default-construct `*v`
     ROCKET_ASSERT(v, "Member references must be used with an instance");
     *v = T();
   }
   else {
     // Variable references: Reset each reference in the tuple
-    ROCKET_ASSERT(not v, "Variable references must be used without an instance, i.e. 'nullptr'");
+    ROCKET_ASSERT(not v, "Variable references must be used without an instance, i.e. `nullptr`");
     (..., std::get<Index>(refs).reset());
   }
 
@@ -435,7 +430,7 @@ printRon(
 
 } // namespace internal
 
-// 'Reference' ----------------------------------------------------------------------------------------------
+// `Reference` ----------------------------------------------------------------------------------------------
 
 /**
  * A concept for types that are considered member or variable references.
@@ -450,11 +445,11 @@ concept Reference = internal::IsMemberRef<T>::value || internal::IsVarRef<T>::va
 /**
  * Tests if (@p lhs, @p lhsRefs) equals (@p rhs, @p rhsRefs).
  *
- * @param lhs pointer to the left instance, or @c nullptr for variable references
+ * @param lhs pointer to the left instance, or `nullptr` for variable references
  * @param lhsRefs the left references
- * @param rhs pointer to the right instance, or @c nullptr for variable references
+ * @param rhs pointer to the right instance, or `nullptr` for variable references
  * @param rhsRefs the right references
- * @return @c true iff (@p lhs, @p lhsRefs) equals (@p rhs, @p rhsRefs)
+ * @return `true` if (@p lhs, @p lhsRefs) equals (@p rhs, @p rhsRefs)
  */
 template<typename T, typename... Ref> requires (... && Reference<Ref>)
 inline bool
@@ -465,11 +460,11 @@ eq(const T* lhs, const std::tuple<Ref...>& lhsRefs, const T* rhs, const std::tup
 /**
  * Tests if (@p lhs, @p lhsRefs) does not equal (@p rhs, @p rhsRefs).
  *
- * @param lhs pointer to the left instance, or @c nullptr for variable references
+ * @param lhs pointer to the left instance, or `nullptr` for variable references
  * @param lhsRefs the left references
- * @param rhs pointer to the right instance, or @c nullptr for variable references
+ * @param rhs pointer to the right instance, or `nullptr` for variable references
  * @param rhsRefs the right references
- * @return @c true iff (@p lhs, @p lhsRefs) does not equal (@p rhs, @p rhsRefs)
+ * @return `true` if (@p lhs, @p lhsRefs) does not equal (@p rhs, @p rhsRefs)
  */
 template<typename T, typename... Ref> requires (... && Reference<Ref>)
 inline bool
@@ -480,11 +475,11 @@ ne(const T* lhs, const std::tuple<Ref...>& lhsRefs, const T* rhs, const std::tup
 /**
  * Tests if (@p lhs, @p lhsRefs) is less than (@p rhs, @p rhsRefs).
  *
- * @param lhs pointer to the left instance, or @c nullptr for variable references
+ * @param lhs pointer to the left instance, or `nullptr` for variable references
  * @param lhsRefs the left references
- * @param rhs pointer to the right instance, or @c nullptr for variable references
+ * @param rhs pointer to the right instance, or `nullptr` for variable references
  * @param rhsRefs the right references
- * @return @c true iff (@p lhs, @p lhsRefs) is less than (@p rhs, @p rhsRefs)
+ * @return `true` if (@p lhs, @p lhsRefs) is less than (@p rhs, @p rhsRefs)
  */
 template<typename T, typename... Ref> requires (... && Reference<Ref>)
 inline bool
@@ -495,11 +490,11 @@ lt(const T* lhs, const std::tuple<Ref...>& lhsRefs, const T* rhs, const std::tup
 /**
  * Tests if (@p lhs, @p lhsRefs) is greater than (@p rhs, @p rhsRefs).
  *
- * @param lhs pointer to the left instance, or @c nullptr for variable references
+ * @param lhs pointer to the left instance, or `nullptr` for variable references
  * @param lhsRefs the left references
- * @param rhs pointer to the right instance, or @c nullptr for variable references
+ * @param rhs pointer to the right instance, or `nullptr` for variable references
  * @param rhsRefs the right references
- * @return @c true iff (@p lhs, @p lhsRefs) is greater than  (@p rhs, @p rhsRefs)
+ * @return `true` if (@p lhs, @p lhsRefs) is greater than  (@p rhs, @p rhsRefs)
  */
 template<typename T, typename... Ref> requires (... && Reference<Ref>)
 inline bool
@@ -510,7 +505,7 @@ gt(const T* lhs, const std::tuple<Ref...>& lhsRefs, const T* rhs, const std::tup
 /**
  * Calculates a hash value for (@p v, @p refs).
  *
- * @param v pointer to the instance, or @c nullptr for variable references
+ * @param v pointer to the instance, or `nullptr` for variable references
  * @param refs the references
  * @return a hash value
  */
@@ -555,7 +550,7 @@ parseRon(std::istream& is, std::tuple<Ref...>& refs) {
  * Prints (@p v, @p refs) as RON.
  *
  * @param os the output stream
- * @param v pointer to the instance, or @c nullptr for variable references
+ * @param v pointer to the instance, or `nullptr` for variable references
  * @param refs the references
  * @return @p os
  */

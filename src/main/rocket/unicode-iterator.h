@@ -35,7 +35,7 @@ outOfBounds(const It& it, size_t pos) {
 
 } // namespace internal
 
-// 'CodePointIterator' --------------------------------------------------------------------------------------
+// `CodePointIterator` --------------------------------------------------------------------------------------
 
 template<typename C> requires Character<C>
 struct CodePointIterator;
@@ -43,17 +43,17 @@ struct CodePointIterator;
 template<typename C> requires Character<C>
 struct GraphemeIterator;
 
-// 'CodePointIterator<char>' ................................................................................
+// `CodePointIterator<char>` ................................................................................
 
 /**
  * A #rocket::unicode::CodePoint iterator for UTF-8 strings.
  *
- * This class conforms to the @c std::contiguous_iterator concept.
+ * This class conforms to the `std::contiguous_iterator` concept.
  *
  * @attention If this iterator is constructed with an initial position of 0 or copy-constructed from another
  * iterator with a known code-point position, it always keeps track of its current code-point position. In
- * this case, #codePointPosition() immediately returns a precalculated value. Otherwise, calling
- * #codePointPosition() requires scanning the input string up to the iterator's current position. After
+ * this case, #codePointPosition immediately returns a precalculated value. Otherwise, calling
+ * #codePointPosition requires scanning the input string up to the iterator's current position. After
  * scanning, the iterator has a known code-point position.
  */
 template<>
@@ -61,19 +61,19 @@ struct CodePointIterator<char> {
   /// The character type.
   using CharType = char;
 
-  /// A type needed for @c std::contiguous_iterator.
+  /// A type needed for `std::contiguous_iterator`.
   using iterator_category = std::contiguous_iterator_tag;
-  /// A type needed for @c std::contiguous_iterator.
+  /// A type needed for `std::contiguous_iterator`.
   using difference_type = std::ptrdiff_t;
-  /// A type needed for @c std::contiguous_iterator.
+  /// A type needed for `std::contiguous_iterator`.
   using value_type = CodePoint;
-  /// A type needed for @c std::contiguous_iterator.
+  /// A type needed for `std::contiguous_iterator`.
   using pointer = value_type*;
-  /// A type needed for @c std::contiguous_iterator.
+  /// A type needed for `std::contiguous_iterator`.
   using reference = value_type&;
 
   /// @ctor_default
-  // No need  to initialize 'cpSize_' here because 'end()' is true
+  // No need  to initialize `cpSize_` here because `end() == true`
   // cppcheck-suppress uninitMemberVar
   constexpr CodePointIterator() : size_(0), pos_(0), cpPos_(0) {}
 
@@ -168,28 +168,28 @@ struct CodePointIterator<char> {
   CodePointIterator& operator-=(difference_type rhs);
 
   /**
-   * Tells if this iterator points to the beginning of the input.
+   * Returns `true` if this iterator points to the beginning of the input.
    *
-   * @return @c true iff this iterator points to the beginning of the input.
+   * @return `true` if this iterator points to the beginning of the input.
    */
   inline bool begin() const { return pos_ == 0; }
 
   /**
-   * Obtains the current byte offset in the input string.
+   * Returns the current byte offset in the input string.
    *
-   * For @c CodePointIterator<char>, this is is the same as #position().
+   * For `CodePointIterator<char>`, this is is the same as #position.
    *
    * @return the byte offset in the input string
    */
   inline size_t bytePosition() const { return pos_; }
 
   /**
-   * Obtains the current code-point position.
+   * Returns the current code-point position.
    *
    * @attention If this iterator was constructed with an initial position of 0 or copy-constructed from
    * another iterator with a known code-point position, it always keeps track of its current code-point
-   * position. In this case, #codePointPosition() immediately returns a precalculated value. Otherwise,
-   * calling #codePointPosition() requires scanning the input string up to the iterator's current position.
+   * position. In this case, #codePointPosition immediately returns a precalculated value. Otherwise,
+   * calling #codePointPosition requires scanning the input string up to the iterator's current position.
    * After scanning, the iterator has a known code-point position.
    *
    * @return the current code-point position
@@ -197,77 +197,77 @@ struct CodePointIterator<char> {
   size_t codePointPosition() const;
 
   /**
-   * Obtains the size of the UTF-8 byte sequence of the current code point.
+   * Returns the size of the UTF-8 byte sequence of the current code point.
    *
    * @return the size of the UTF-8 byte sequence of the current code point in the range [1, 4]
    */
   uint8_t codePointSize() const;
 
   /**
-   * Tells if this iterator can decrement by @p n code-point positions, and if so, performs the decrement
-   * operation.
+   * Returns `true` if this iterator can decrement by @p n code-point positions, and if so, performs the
+   * decrement operation.
    *
    * @param n the number of code-point positions to decrement
-   * @return @c true iff this iterator can decrement by @p n code-point positions. If this function returns
-   *     @c true, then the decrement operation is performed, otherwise the iterator remains unchanged
+   * @return `true` if this iterator can decrement by @p n code-point positions. If this function returns
+   *     `true`, then the decrement operation is performed, otherwise the iterator remains unchanged
    */
   bool decrement(difference_type n = 1);
 
   /**
-   * Tells if this iterator points to the end of the input.
+   * Returns `true` if this iterator points to the end of the input.
    *
-   * @return @c true iff this iterator points to the end of the input.
+   * @return `true` if this iterator points to the end of the input.
    */
   inline bool end() const { return pos_ == size_; }
 
   /**
-   * Tells if this iterator points to a grapheme boundary.
+   * Returns `true` if this iterator points to a grapheme boundary.
    *
-   * @return @c true iff this iterator points to a grapheme boundary
+   * @return `true` if this iterator points to a grapheme boundary
    */
   bool graphemeBoundary() const;
 
   /**
-   * Tells if this iterator can increment by @p n code-point positions, and if so, performs the increment
+   * Returns `true` if this iterator can increment by @p n code-point positions, and if so, performs the increment
    * operation.
    *
    * @param n the number of code-point positions to increment
-   * @return @c true iff this iterator can increment by @p n code-point positions. If this function returns
-   *     @c true, then the increment operation is performed, otherwise the iterator remains unchanged
+   * @return `true` if this iterator can increment by @p n code-point positions. If this function returns
+   *     `true`, then the increment operation is performed, otherwise the iterator remains unchanged
    */
   bool increment(difference_type n = 1);
 
   /**
-   * Obtains the input string this iterator was constructed with.
+   * Returns the input string this iterator was constructed with.
    *
    * @return the input string
    */
   std::string_view input() const { return input_; }
 
   /**
-   * Obtains the current @c char offset in the input string.
+   * Returns the current `char` offset in the input string.
    *
-   * @return the current @c char offset in the input string
+   * @return the current `char` offset in the input string
    */
   inline size_t position() const { return pos_; }
 
   /**
-   * Tells if this iterator points to a word boundary.
+   * Returns `true` if this iterator points to a word boundary.
    *
-   * @return @c true iff this iterator points to a word boundary
+   * @return `true` if this iterator points to a word boundary
    */
   bool wordBoundary() const;
 
 private:
 
   std::string_view input_; // The input string
-  size_t size_; // The size of 'input_'
-  size_t pos_; // The current 'char' offset in the string
+  size_t size_; // The size of `input_`
+  size_t pos_; // The current `char` offset in the string
   mutable size_t cpPos_; // Lazy value: the current code-point position
   /**
    * The byte size of the current code point.
    *
-   * @attention If #end() returns @c true, then this value is undefined and may not be used at all.
+   * @attention If #end returns `true`, then this value is undefined and may not be used at all.
    */
   uint8_t cpSize_;
 
@@ -286,27 +286,27 @@ private:
 
 static_assert(std::contiguous_iterator<CodePointIterator<char>>);
 
-// 'CodePointIterator<char32_t>' ............................................................................
+// `CodePointIterator<char32_t>` ............................................................................
 
 /**
  * A #rocket::unicode::CodePoint iterator for UTF-32 strings.
  *
- * This class conforms to the @c std::contiguous_iterator concept.
+ * This class conforms to the `std::contiguous_iterator` concept.
  */
 template<>
 struct CodePointIterator<char32_t> {
   /// The character type.
   using CharType = char32_t;
 
-  /// A type needed for @c std::contiguous_iterator.
+  /// A type needed for `std::contiguous_iterator`.
   using iterator_category = std::contiguous_iterator_tag;
-  /// A type needed for @c std::contiguous_iterator.
+  /// A type needed for `std::contiguous_iterator`.
   using difference_type = std::ptrdiff_t;
-  /// A type needed for @c std::contiguous_iterator.
+  /// A type needed for `std::contiguous_iterator`.
   using value_type = CodePoint;
-  /// A type needed for @c std::contiguous_iterator.
+  /// A type needed for `std::contiguous_iterator`.
   using pointer = value_type*;
-  /// A type needed for @c std::contiguous_iterator.
+  /// A type needed for `std::contiguous_iterator`.
   using reference = value_type&;
 
   /// @ctor_default
@@ -403,90 +403,90 @@ struct CodePointIterator<char32_t> {
   CodePointIterator& operator-=(difference_type rhs);
 
   /**
-   * Tells if this iterator points to the beginning of the input.
+   * Returns `true` if this iterator points to the beginning of the input.
    *
-   * @return @c true iff this iterator points to the beginning of the input.
+   * @return `true` if this iterator points to the beginning of the input.
    */
   inline bool begin() const { return pos_ == 0; }
 
   /**
-   * Obtains the current byte offset in the input string.
+   * Returns the current byte offset in the input string.
    *
-   * For @c CodePointIterator<char32_t>, this is 4 * #position().
+   * For `CodePointIterator<char32_t>`, this is `4 * position()`.
    *
    * @return the byte offset in the input string
    */
   inline size_t bytePosition() const { return sizeof(CharType) * pos_; }
 
   /**
-   * Obtains the current code-point position.
+   * Returns the current code-point position.
    *
-   * For @c CodePointIterator<char32_t>, this is the same as #position().
+   * For `CodePointIterator<char32_t>`, this is the same as #position.
    *
    * @return the byte offset in the input string
    */
   inline size_t codePointPosition() const { return pos_; }
 
   /**
-   * Tells if this iterator can decrement by @p n code-point positions, and if so, performs the decrement
-   * operation.
+   * Returns `true` if this iterator can decrement by @p n code-point positions, and if so, performs the
+   * decrement operation.
    *
    * @param n the number of code-point positions to decrement
-   * @return @c true iff this iterator can decrement by @p n code-point positions. If this function returns
-   *     @c true, then the decrement operation is performed, otherwise the iterator remains unchanged
+   * @return `true` if this iterator can decrement by @p n code-point positions. If this function returns
+   *     `true`, then the decrement operation is performed, otherwise the iterator remains unchanged
    */
   bool decrement(difference_type n = 1);
 
   /**
-   * Tells if this iterator points to the end of the input.
+   * Returns `true` if this iterator points to the end of the input.
    *
-   * @return @c true iff this iterator points to the end of the input.
+   * @return `true` if this iterator points to the end of the input.
    */
   inline bool end() const { return pos_ == size_; }
 
   /**
-   * Tells if this iterator points to a grapheme boundary.
+   * Returns `true` if this iterator points to a grapheme boundary.
    *
-   * @return @c true iff this iterator points to a grapheme boundary
+   * @return `true` if this iterator points to a grapheme boundary
    */
   bool graphemeBoundary() const;
 
   /**
-   * Tells if this iterator can increment by @p n code-point positions, and if so, performs the increment
+   * Returns `true` if this iterator can increment by @p n code-point positions, and if so, performs the increment
    * operation.
    *
    * @param n the number of code-point positions to increment
-   * @return @c true iff this iterator can increment by @p n code-point positions. If this function returns
-   *     @c true, then the increment operation is performed, otherwise the iterator remains unchanged
+   * @return `true` if this iterator can increment by @p n code-point positions. If this function returns
+   *     `true`, then the increment operation is performed, otherwise the iterator remains unchanged
    */
   bool increment(difference_type n = 1);
 
   /**
-   * Obtains the input string this iterator was constructed with.
+   * Returns the input string this iterator was constructed with.
    *
    * @return the input string
    */
   std::u32string_view input() const { return input_; }
 
   /**
-   * Obtains the current @c char32_t offset in the input string.
+   * Returns the current `char32_t` offset in the input string.
    *
-   * @return the current @c char32_t offset in the input string
+   * @return the current `char32_t` offset in the input string
    */
   inline size_t position() const { return pos_; }
 
   /**
-   * Tells if this iterator points to a word boundary.
+   * Returns `true` if this iterator points to a word boundary.
    *
-   * @return @c true iff this iterator points to a word boundary
+   * @return `true` if this iterator points to a word boundary
    */
   bool wordBoundary() const;
 
 private:
 
   std::u32string_view input_; // The input string
-  size_t size_; // The size of 'input_'
-  size_t pos_; // The current 'char32_t' offset in the string
+  size_t size_; // The size of `input_`
+  size_t pos_; // The current `char32_t` offset in the string
 
   void go(size_t newPos);
 
@@ -501,37 +501,37 @@ private:
 
 static_assert(std::contiguous_iterator<CodePointIterator<char32_t>>);
 
-// 'GraphemeIterator' ---------------------------------------------------------------------------------------
+// `GraphemeIterator` ---------------------------------------------------------------------------------------
 
 /**
  * A #rocket::unicode::Grapheme iterator for UTF-8 and UTF-32 strings.
  *
- * This class conforms to the @c std::contiguous_iterator concept.
+ * This class conforms to the `std::contiguous_iterator` concept.
  *
  * @attention If this iterator is constructed with an initial position of 0 or copy-constructed from another
  * iterator with a known grapheme position, it always keeps track of its current grapheme position. In this
- * case, #graphemePosition() immediately returns a precalculated value. Otherwise, calling
- * #graphemePosition() requires scanning the input string up to the iterator's current position. After
- * scanning, the iterator has a known grapheme position.
+ * case, #graphemePosition immediately returns a precalculated value. Otherwise, calling #graphemePosition
+ * requires scanning the input string up to the iterator's current position. After scanning, the iterator has
+ * a known grapheme position.
  */
 template<typename C> requires Character<C>
 struct GraphemeIterator {
   /// The character type.
   using CharType = C;
 
-  /// A type needed for @c std::contiguous_iterator.
+  /// A type needed for `std::contiguous_iterator`.
   using iterator_category = std::contiguous_iterator_tag;
-  /// A type needed for @c std::contiguous_iterator.
+  /// A type needed for `std::contiguous_iterator`.
   using difference_type = std::ptrdiff_t;
-  /// A type needed for @c std::contiguous_iterator.
+  /// A type needed for `std::contiguous_iterator`.
   using value_type = Grapheme;
-  /// A type needed for @c std::contiguous_iterator.
+  /// A type needed for `std::contiguous_iterator`.
   using pointer = value_type*;
-  /// A type needed for @c std::contiguous_iterator.
+  /// A type needed for `std::contiguous_iterator`.
   using reference = value_type&;
 
   /// @ctor_default
-  // No need  to initialize 'grSize_' here because 'end()' is true
+  // No need  to initialize `grSize_` here because `end() == true`
   // cppcheck-suppress uninitMemberVar
   constexpr GraphemeIterator() : it_(input_, 0), grPos_(0)  {}
 
@@ -539,7 +539,7 @@ struct GraphemeIterator {
    * @ctor
    *
    * @param input a string
-   * @param position a @c CharType offset
+   * @param position a `CharType` offset
    */
   explicit GraphemeIterator(std::basic_string_view<C> input, size_t position = 0) :
       input_(input),
@@ -674,26 +674,26 @@ struct GraphemeIterator {
   }
 
   /**
-   * Tells if this iterator points to the beginning of the input.
+   * Returns `true` if this iterator points to the beginning of the input.
    *
-   * @return @c true iff this iterator points to the beginning of the input.
+   * @return `true` if this iterator points to the beginning of the input.
    */
   inline bool begin() const { return it_.begin(); }
 
   /**
-   * Tells if this iterator points to the end of the input.
+   * Returns `true` if this iterator points to the end of the input.
    *
-   * @return @c true iff this iterator points to the end of the input.
+   * @return `true` if this iterator points to the end of the input.
    */
   inline bool end() const { return it_.end(); }
 
   /**
-   * Obtains the current grapheme position.
+   * Returns the current grapheme position.
    *
    * @attention If this iterator was constructed with an initial position of 0 or copy-constructed from
    * another iterator with a known grapheme position, it always keeps track of its current grapheme position.
-   * In this case, #graphemePosition() immediately returns a precalculated value. Otherwise, calling
-   * #graphemePosition() requires scanning the input string up to the iterator's current position. After
+   * In this case, #graphemePosition immediately returns a precalculated value. Otherwise, calling
+   * #graphemePosition requires scanning the input string up to the iterator's current position. After
    * scanning, the iterator has a known grapheme position.
    *
    * @return the current grapheme position
@@ -715,7 +715,7 @@ struct GraphemeIterator {
   }
 
   /**
-   * Obtains the code-point size of the current grapheme.
+   * Returns the code-point size of the current grapheme.
    *
    * @return the code-point size of the current grapheme
    */
@@ -726,23 +726,23 @@ struct GraphemeIterator {
   }
 
   /**
-   * Obtains the input string this iterator was constructed with.
+   * Returns the input string this iterator was constructed with.
    *
    * @return the input string
    */
   inline std::basic_string_view<C> input() const { return input_; }
 
   /**
-   * Obtains the current @c CharType offset in the input string.
+   * Returns the current `CharType` offset in the input string.
    *
-   * @return the current @c CharType offset in the input string
+   * @return the current `CharType` offset in the input string
    */
   inline size_t position() const { return it_.position(); }
 
   /**
-   * Tells if this iterator points to a word boundary.
+   * Returns `true` if this iterator points to a word boundary.
    *
-   * @return @c true iff this iterator points to a word boundary
+   * @return `true` if this iterator points to a word boundary
    */
   bool wordBoundary() const { return it_.wordBoundary(); }
 
@@ -754,13 +754,13 @@ private:
   /**
    * The code-point size of the current grapheme.
    *
-   * @attention If #end() returns @c true, then this value is undefined and may not be used at all.
+   * @attention If #end returns `true`, then this value is undefined and may not be used at all.
    */
   size_t grSize_;
 
   void
   go() {
-    // NOTE: 'grPos_' may not be used inside this function
+    // NOTE: `grPos_` may not be used inside this function
 
     if (end())
       return;

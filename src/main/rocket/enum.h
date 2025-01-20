@@ -108,21 +108,21 @@
  *
  * This macro must be called in the enum's namespace.
  *
- * @param type the type of the enum, without namespace, e.g. @c MyClass::MyEnum
- * @param name the name to use for generated identifiers, e.g. @c MyClass_MyEnum
+ * @param type the type of the enum, without namespace, e.g. `MyClass::MyEnum`
+ * @param name the name to use for generated identifiers, e.g. `MyClass_MyEnum`
  * @param seq a sequence for the enum values
  */
 #define ROCKET_ENUM_DEFINE(type, name, seq) ROCKET_ENUM_DEFINE__(type, name, seq)
 
 /**
- * Defines a @c std::formatter specialization for the enum @p type.
+ * Defines a `std::formatter` specialization for the enum @p type.
  *
  * This macro must be called in the global namespace.
  *
- * @param ns the namespace of the enum, e.g. @c mynamespace. May be left empty if the enum is in the global
+ * @param ns the namespace of the enum, e.g. `mynamespace`. May be left empty if the enum is in the global
  *     namespace
- * @param type the type of the enum, without namespace, e.g. @c MyClass::MyEnum
- * @param name the name to use for generated identifiers, e.g. @c MyClass_MyEnum
+ * @param type the type of the enum, without namespace, e.g. `MyClass::MyEnum`
+ * @param name the name to use for generated identifiers, e.g. `MyClass_MyEnum`
  */
 #define ROCKET_ENUM_DEFINE_STD_FORMATTER(ns, type, name) ROCKET_ENUM_DEFINE_STD_FORMATTER__(ns, type, name)
 

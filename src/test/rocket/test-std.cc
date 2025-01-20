@@ -44,12 +44,12 @@ TEST(std, chrono) {
 }
 
 /**
- * This test might require configuring the @c en_US.UTF8 locale. On Ubuntu, this can be done with
+ * This test might require configuring the `en_US.UTF8` locale. On Ubuntu, this can be done with
  *
- * @code{.sh}
- * $ sudo locale-gen en_US.UTF-8
- * $ sudo dpkg-reconfigure locales
- * @endcode
+ * ```sh
+ * sudo locale-gen en_US.UTF-8
+ * sudo dpkg-reconfigure locales
+ * ```
  */
 TEST(std, formatEnUsUtf8) {
   locale l = locale::global(locale("en_US.UTF8"));
@@ -139,7 +139,7 @@ TEST(std, istream_char_int) {
 }
 
 /**
- * This tests @c char32_t support from @c locale-char32_t.h.
+ * This tests `char32_t` support from `locale-char32_t.h`.
  */
 TEST(std, istream_char32_t_char32_t) {
   auto is = basic_istringstream<char32_t>(U"a");
@@ -149,7 +149,7 @@ TEST(std, istream_char32_t_char32_t) {
 }
 
 /**
- * This tests @c char32_t support from @c locale-char32_t.h.
+ * This tests `char32_t` support from `locale-char32_t.h`.
  */
 TEST(std, istream_char32_t_int) {
   auto is = basic_istringstream<char32_t>(U"12");
@@ -253,7 +253,7 @@ TEST(std, ostream_char_int) {
 }
 
 /**
- * This tests @c char32_t support from @c locale-char32_t.h.
+ * This tests `char32_t` support from `locale-char32_t.h`.
  */
 TEST(std, ostream_char32_t_int) {
   basic_ostringstream<char32_t> os;

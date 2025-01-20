@@ -14,26 +14,26 @@
 
 namespace rocket {
 
-// 'S' ------------------------------------------------------------------------------------------------------
+// `S` ------------------------------------------------------------------------------------------------------
 
 /**
  * An enum the only value of which serves as a unique tag.
  *
- * To implicitly construct a #rocket::StringBuffer, simply say
+ * To implicitly construct a #rocket::StringBuffer, simply write
  *
- * @code{.cc}
+ * ```
  * using rocket::S;
  * string s = S << ...;
- * @endcode
+ * ```
  */
 enum StringBufferTag {
   S ///< The only value in this enum, serving as a unique tag.
 };
 
-// 'Raw' ----------------------------------------------------------------------------------------------------
+// `Raw` ----------------------------------------------------------------------------------------------------
 
 /**
- * A class template that is used by the #raw() function to enforce unformatted output.
+ * A class template that is used by the #raw function to enforce unformatted output.
  *
  * @tparam T the type of the value to reference
  */
@@ -47,14 +47,14 @@ struct Raw {
   explicit Raw(const T& v) : v_(v) {}
 
   /**
-   * Obtains the encapsulated value.
+   * Returns the encapsulated value.
    *
    * @return the encapsulated value
    */
   const T& operator*() const { return v_; }
   
   /**
-   * Obtains the encapsulated value.
+   * Returns the encapsulated value.
    *
    * @return the encapsulated value
    */
@@ -68,14 +68,14 @@ private:
 /**
  * Stores a reference to a value in a #rocket::Raw class template in order to enforce unformatted output.
  *
- * Usually, when passing a value to a #rocket::StringBuffer using @c %operator<<(), a suitable @c %printRon()
- * overload is used. In order to inhibit this and use the type's standard @c %operator<<(), this function may
- * be used. Example:
+ * Usually, when passing a value to a #rocket::StringBuffer using `operator<<`, a suitable `printRon`
+ * overload is used. In order to inhibit this and use the type's standard `operator<<`, this function may be
+ * used. Example:
  *
- * @code{.cc}
+ * ```
  * cout << (S << 10000) << '\n';      // Output: "10'000\n"
  * cout << (S << raw(10000)) << '\n'; // Output: "10000\n"
- * @endcode
+ * ```
  *
  * @tparam T the type of the value to reference
  * @param v the value to reference
@@ -88,17 +88,16 @@ raw(const T& v) {
   return Raw<T>(v);
 }
 
-// 'StringBuffer' -------------------------------------------------------------------------------------------
+// `StringBuffer` -------------------------------------------------------------------------------------------
 
 /**
  * A convenient dynamic string buffer.
  *
- * Usually, you make a StringBuffer implicitly using <tt>S << ...</tt>, which gives you an object you can
- * pass on as a @c std::string or a @c std::string_view.
+ * Usually, you make a `StringBuffer` implicitly using `S << ...`, which gives you an object you can pass on
+ * as a `std::string` or a `std::string_view`.
  *
- * A StringBuffer appends elements using a suitable printRon() overload, which writes RON (Rocket object
- * notation), except for <tt>const char*</tt> and <tt>const char32_t*</tt>. To enforce unformatted output,
- * use raw().
+ * A `StringBuffer` appends elements using a suitable #printRon overload, which writes RON (Rocket object
+ * notation), except for `const char*` and `const char32_t*`. To enforce unformatted output, use #raw.
  */
 struct StringBuffer {
   /// @ctor_default
@@ -112,10 +111,10 @@ struct StringBuffer {
       os_(std::move(rhs.os_)),
       value_(std::move(rhs.value_)) {}
 
-  /// @member_op_cast{@c std::string&}
+  /// @member_op_cast{`std::string&`}
   operator const std::string&() const { return value(); }
 
-  /// @member_op_cast{@c std::string_view}
+  /// @member_op_cast{`std::string_view`}
   operator std::string_view() const { return value(); }
 
   /// @member_op_eq
@@ -123,7 +122,7 @@ struct StringBuffer {
   bool operator==(std::string_view rhs) const { return value() == rhs; }
 
   /**
-   * Appends @p v to this string buffer, using a suitable printRon() overload.
+   * Appends @p v to this string buffer, using a suitable #printRon overload.
    *
    * @tparam T the type of the value to appebd
    * @param v the value to append
@@ -139,7 +138,7 @@ struct StringBuffer {
   }
 
   /**
-   * Appends @p v to this string buffer, using a suitable operator<<() overload.
+   * Appends @p v to this string buffer, using a suitable `operator<<` overload.
    *
    * @tparam T the type of the value to append
    * @param v the value to append
@@ -152,9 +151,9 @@ struct StringBuffer {
   }
 
   /**
-   * Appends @p v to this string buffer, using a suitable operator<<() overload.
+   * Appends @p v to this string buffer, using a suitable `operator<<` overload.
    *
-   * @param v the value to append. If @p v is null, then @c "null" is printed
+   * @param v the value to append. If @p v is null, then `null` is printed
    * @return_this
    */
   StringBuffer&
@@ -163,9 +162,9 @@ struct StringBuffer {
   }
 
   /**
-   * Appends @p v to this string buffer, using a suitable operator<<() overload.
+   * Appends @p v to this string buffer, using a suitable `operator<<` overload.
    *
-   * @param v the value to append. If @p v is null, then @c "null" is printed
+   * @param v the value to append. If @p v is null, then `null` is printed
    * @return_this
    */
   StringBuffer&

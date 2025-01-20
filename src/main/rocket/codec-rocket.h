@@ -13,7 +13,7 @@
 #include "codec.h"
 
 #ifndef ROCKET_CODEC_H
-#error 'codec.h' must be included before this file
+#error `codec.h` must be included before this file
 #endif
 
 namespace rocket {
@@ -44,7 +44,7 @@ parseRon(std::istream& is, IntervalImpl<T, Left, Right>& v) {
 
   io::getChar(is, Left::Symbol);
 
-  // Parse 'lower'
+  // Parse `lower`
   ron::parsing::skip(is);
   bool parsed = false;
   if constexpr (not Left::Closed) {
@@ -63,7 +63,7 @@ parseRon(std::istream& is, IntervalImpl<T, Left, Right>& v) {
   ron::parsing::skip(is);
   io::getChar(is, ',');
 
-  // Parse 'upper'
+  // Parse `upper`
   ron::parsing::skip(is);
   parsed = false;
   if constexpr (not Right::Closed) {
@@ -84,7 +84,7 @@ parseRon(std::istream& is, IntervalImpl<T, Left, Right>& v) {
   return is;
 }
 
-/// @fn_printRon{#rocket::math::IntervalImpl
+/// @fn_printRon{#rocket::math::IntervalImpl}
 template<typename T, typename Left, typename Right>
 std::ostream&
 printRon(std::ostream& os, const IntervalImpl<T, Left, Right>& v) {
@@ -101,7 +101,7 @@ printRon(std::ostream& os, const IntervalImpl<T, Left, Right>& v) {
     os << ',';
     opt = option(v.upper);
     if (not opt)
-      os << "+∞"; // In interval notation, we prefer "+∞" over "∞"
+      os << "+∞"; // In interval notation, we prefer `+∞` over `∞`
     else
       printRon(os, *opt);
     return os << Right::Symbol;

@@ -30,7 +30,7 @@ void logFlush(ostream& os);
 
 void setLogLevel(string_view, string_view);
 
-// 'Entry' --------------------------------------------------------------------------------------------------
+// `Entry` --------------------------------------------------------------------------------------------------
 
 struct Entry {
   inline Entry(LogLevel* logId, const char* func, string&& begin) :
@@ -38,10 +38,10 @@ struct Entry {
 
   LogLevel* logId_;
   const char* func_;
-  optional<string> begin_; // Log entry from 'logBegin' that is flushed only if necessary
+  optional<string> begin_; // Log entry from `logBegin` that is flushed only if necessary
 };
 
-// 'Out' ----------------------------------------------------------------------------------------------------
+// `Out` ----------------------------------------------------------------------------------------------------
 
 struct Out {
   inline ostream& get() { return os_ ? *os_ : *p_; }
@@ -62,7 +62,7 @@ struct Out {
 
 private:
 
-  ostream* os_ = &cout; // 'cout' or 'cerr'
+  ostream* os_ = &cout; // `cout` or `cerr`
   unique_ptr<ofstream> p_; // A file stream
 };
 
@@ -74,18 +74,18 @@ cl::OptionGroup clGroup { "Logging control" };
 // Command-line options
 vector<cl::Option> clOpts {
   { &clGroup, "log", nullopt, true, "ID[=LEVEL]",
-    "set logging for identifier ID to level LEVEL. ID is a known log identifier or 'all'. LEVEL is 'none', "
-    "'error', 'warn', 'info', 'debug', or 'trace'. If LEVEL is not supplied, 'info' is assumed",
+    "set logging for identifier ID to level LEVEL. ID is a known log identifier or `all`. LEVEL is `none`, "
+    "`error`, `warn`, `info`, `debug`, or `trace`. If LEVEL is not supplied, `info` is assumed",
     applyLog },
   { &clGroup, "log-out", nullopt, true, "OUT",
-    "log to OUT. OUT is 'stdout', 'stderr', a file path, or a URL beginning with 'file://'",
+    "log to OUT. OUT is `stdout`, `stderr`, a file path, or a URL beginning with `file://`",
     applyLogOut }
 };
 
 // Defined log IDs
 auto definedIds = rocket::boost::bimap::UnorderedBimap<LogLevel*, string_view>::of();
 
-// The 'Out' instance
+// The `Out` instance
 Out out;
 
 // The function stack
@@ -94,7 +94,7 @@ thread_local vector<Entry> stack;
 // Local functions ------------------------------------------------------------------------------------------
 
 /**
- * This function handles the @c "--log" option.
+ * This function handles the `--log` option.
  *
  * @NotThreadSafe
  */
@@ -115,7 +115,7 @@ applyLog(optional<string_view> v) {
 }
 
 /**
- * This function handles the @c "--log-out" option.
+ * This function handles the `--log-out` option.
  *
  * @NotThreadSafe
  */
@@ -144,7 +144,7 @@ logFlush(ostream& os) {
   // Look for pending begin log entries
   for (auto it = stack.rbegin(); it != stack.rend(); ++it) {
     if (it->begin_)
-      begin = it.base() - 1; // 'base()' is confusing ...
+      begin = it.base() - 1; // `base()` is confusing ...
     else
       break;
   }
@@ -228,7 +228,7 @@ setLogLevel(string_view id, string_view value) {
 
 } // namespace
 
-// 'LogLevel' -----------------------------------------------------------------------------------------------
+// `LogLevel` -----------------------------------------------------------------------------------------------
 
 namespace rocket::log {
 
@@ -266,7 +266,7 @@ logBegin(LogLevel* logId, const char* func) {
 
 void
 logEnd() noexcept {
-  // We need to catch everything here to keep the 'noexcept' promise
+  // We need to catch everything here to keep the `noexcept` promise
   try {
     // Print end log entry only if begin log entry was flushed
     const Entry& entry = stack.back();
