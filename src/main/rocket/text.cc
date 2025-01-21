@@ -217,9 +217,9 @@ printLocations(
     ROCKET_CHECK(locationsResult, not loc.message.empty());
     os << locationsResult.params.source << ':' << loc.line << ':' << loc.column << ": ";
     switch (loc.type) {
-    case Position::Note: os << ansi.style(bold | cyan); break;
-    case Position::Warning: os << ansi.style(bold | yellow); break;
-    case Position::Error: os << ansi.style(bold | red); break;
+    case Position::note: os << ansi.style(bold | green); break;
+    case Position::warning: os << ansi.style(bold | yellow); break;
+    case Position::error: os << ansi.style(bold | red); break;
     }
     os << loc.type << ": " << ansi.style() << loc.message << '\n';
 

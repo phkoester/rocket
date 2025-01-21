@@ -19,6 +19,8 @@ namespace rocket {
 /**
  * An enum the only value of which serves as a unique tag.
  *
+ * ## Examples
+ *
  * To implicitly construct a #rocket::StringBuffer, simply write
  *
  * ```
@@ -70,17 +72,18 @@ private:
  *
  * Usually, when passing a value to a #rocket::StringBuffer using `operator<<`, a suitable `printRon`
  * overload is used. In order to inhibit this and use the type's standard `operator<<`, this function may be
- * used. Example:
+ * used.
+ *
+ * @tparam T the type of the value to reference
+ * @param v the value to reference
+ * @return a #rocket::Raw value
+ *
+ * ## Examples
  *
  * ```
  * cout << (S << 10000) << '\n';      // Output: "10'000\n"
  * cout << (S << raw(10000)) << '\n'; // Output: "10000\n"
  * ```
- *
- * @tparam T the type of the value to reference
- * @param v the value to reference
- * @return a #rocket::Raw value
- * 
  */
 template<typename T>
 inline Raw<T>

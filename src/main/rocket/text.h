@@ -44,7 +44,7 @@ struct Position {
   /**
    * An enum describing the position type.
    */
-  enum Type { Note, Warning, Error };
+  enum Type { note, warning, error };
   
   /**
    * The position type.

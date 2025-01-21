@@ -46,7 +46,7 @@ TEST(std, chrono) {
 /**
  * This test might require configuring the `en_US.UTF8` locale. On Ubuntu, this can be done with
  *
- * ```sh
+ * ```bash
  * sudo locale-gen en_US.UTF-8
  * sudo dpkg-reconfigure locales
  * ```

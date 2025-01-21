@@ -495,7 +495,7 @@ TEST(codec_global, parseRon_int32_t) {
     auto is = io::is(s);
     EXPECT_THAT(
         [&] { parseRon(io::resetg(is), v); },
-        throwsParseFailure<char>(0, { 0, 14 }, HasSubstr("Cannot parse \"-2'147'483'649\" as 'int'")));
+        throwsParseFailure<char>(0, { 0, 14 }, HasSubstr("Cannot parse \"-2'147'483'649\" as `int`")));
   }
 
   {

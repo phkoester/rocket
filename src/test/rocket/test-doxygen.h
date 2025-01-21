@@ -46,12 +46,12 @@
 // Global namespace -----------------------------------------------------------------------------------------
 
 /**
- * The fabulous furry `B` class.
+ * The fabulous furry #B class.
  */
 struct B {};
 
 /**
- * The irresistable `C` class, packed with content.
+ * The irresistable #C class, packed with content.
  */
 struct C : B {};
 
@@ -69,7 +69,7 @@ struct C : B {};
  * - #MyClass#a
  * - #MyClassTemplate
  * - #MyClassTemplate#a
- * - #myFunc()
+ * - #myFunc
  * - #myFunc(int)
  * - #myFuncTemplate(T)
  * - #myFuncTemplate(T, T)
@@ -132,19 +132,19 @@ struct MyClassTemplate {
 };
 
 /**
- * myFunc() without arguments.
+ * #myFunc without arguments.
  */
 void myFunc();
 
 /**
- * myFunc() with one argument.
+ * #myFunc(int) with one argument.
  *
  * @param n text
  */
 void myFunc(int n);
 
 /**
- * myFuncTemplate() with one argument.
+ * #myFuncTemplate(T) with one argument.
  *
  * @param v text
  */
@@ -152,7 +152,7 @@ template<typename T>
 void myFuncTemplate(T v);
 
 /**
- * myFuncTemplate() with two arguments.
+ * #myFuncTemplate(T, T) with two arguments.
  *
  * @param v text
  * @param w text
@@ -177,7 +177,7 @@ namespace foo::bar {
  * - #foo::bar::FooMyClass#a
  * - #foo::bar::FooMyClassTemplate
  * - #foo::bar::FooMyClassTemplate#a
- * - #foo::bar::fooMyFunc()
+ * - #foo::bar::fooMyFunc
  * - #foo::bar::fooMyFunc(int)
  * - #foo::bar::fooMyFuncTemplate(T)
  * - #foo::bar::fooMyFuncTemplate(T, T)
@@ -235,19 +235,19 @@ struct FooMyClassTemplate {
 };
 
 /**
- * fooMyFunc() without arguments.
+ * #foo::bar::fooMyFunc without arguments.
  */
 void fooMyFunc();
 
 /**
- * fooMyFunc() with one argument.
+ * #foo::bar::fooMyFunc(int) with one argument.
  *
  * @param n text
  */
 void fooMyFunc(int n);
 
 /**
- * fooMyFuncTemplate() with one argument.
+ * #foo::bar::fooMyFuncTemplate(T) with one argument.
  *
  * @param v text
  */
@@ -255,7 +255,7 @@ template<typename T>
 void fooMyFuncTemplate(T v);
 
 /**
- * fooMyFuncTemplate() with two arguments.
+ * #foo::bar::fooMyFuncTemplate(T, T) with two arguments.
  *
  * @param v text
  * @param w text

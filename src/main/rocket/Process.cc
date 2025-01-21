@@ -5,7 +5,7 @@
 #include "Process.h"
 
 #include "assert.h"
-#include "ctype-char32_t.h"
+#include "ctype-char32_t.h" // `ctype<char32_t>`
 #include "except.h"
 #include "locale.h"
 #include "log.h"
@@ -59,7 +59,7 @@ Process process;
 void
 Process::error(ostream& os, string_view msg, int status) const {
   string name = inited_ ? this->name() : invocationShortName();
-  os << name << ": Error: " << msg << '\n';
+  os << name << ": error: " << msg << '\n';
 
   if (status != EXIT_SUCCESS)
     exit(status);
@@ -153,7 +153,7 @@ Process::name() const {
 void
 Process::warn(ostream& os, string_view msg) const {
   string name = inited_ ? this->name() : invocationShortName();
-  os << name << ": Warning: " << msg << '\n';
+  os << name << ": warning: " << msg << '\n';
 }
 
 } // namespace rocket

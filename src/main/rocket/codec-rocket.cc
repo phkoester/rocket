@@ -23,7 +23,7 @@ printRon(std::ostream& os, const Type& v) {
 
 namespace text {
 
-ROCKET_ENUM_DEFINE(Position::Type, Position_Type, (Note)(Warning)(Error));
+ROCKET_ENUM_DEFINE(Position::Type, Position_Type, (note)(warning)(error));
 
 } // namespace text
 

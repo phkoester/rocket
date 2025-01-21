@@ -23,12 +23,14 @@
 /**
  * This macro executes a given function as a static initializer.
  *
- * If curly braces pose a problem, enclose the parameter in parentheses. Example:
+ * If curly braces pose a problem, enclose the parameter in parentheses.
  *
- * @code{.cc}
+ * ## Examples
+ *
+ * ```
  * int x = 0;
  * ROCKET_INIT(([&] { x = 1; }));
- * @endcode
+ * ```
  */
 #define ROCKET_INIT(f) \
     namespace { \

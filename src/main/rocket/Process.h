@@ -42,6 +42,8 @@ constexpr int EXIT_SERIOUS_FAILURE = 2;
 /**
  * A central Rocket class to be used in `main`.
  *
+ * ## Examples
+ *
  * A very basic Rocket program may look like this:
  *
  * ```
@@ -70,7 +72,6 @@ constexpr int EXIT_SERIOUS_FAILURE = 2;
  *   }
  * }
  * ```
- *
  */
 struct Process {
   /**
@@ -91,7 +92,7 @@ struct Process {
    * Outputs an error message.
    *
    * This function may be called even if the process isn't initialized yet.
-
+   *
    * @param os the output stream, usually `std::cerr`
    * @param msg the error messsage
    * @param status the exit status. If not `EXIT_SUCCESS` (0), then #exit is called

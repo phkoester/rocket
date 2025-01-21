@@ -31,7 +31,7 @@ TEST(except, printException1) {
         string s1 = os1.str();
         EXPECT_THAT(s1, AllOf(
             containsRegex("An instance of `std::_Nested_exception<rocket::except::InvalidState>` was thrown: .*\\.cc:\\d+: oops3\n"),
-            containsRegex("Caused by an instance of `std::_Nested_exception<rocket::except::InvalidArgument>`: .*\\.cc:\\d+: Parameter 'name': oops2\n"),
+            containsRegex("Caused by an instance of `std::_Nested_exception<rocket::except::InvalidArgument>`: .*\\.cc:\\d+: Parameter `name`: oops2\n"),
             containsRegex("Caused by an instance of `char const\\*`: \"oops1\"\n")));
 
         ostringstream os2;

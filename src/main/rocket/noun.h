@@ -15,12 +15,12 @@ namespace rocket::noun {
 /**
  * A noun that knows its singular and plural form, in US English.
  *
- * Example:
+ * ## Examples
  *
- * @code{.cc}
+ * ```
  * cout << rocket::nouns::character(1) << '\n'; // Output: "1 character\n"
  * cout << rocket::nouns::character(2) << '\n'; // Output: "2 characters\n"
- * @endcode
+ * ```
  */
 struct Noun {
   /**

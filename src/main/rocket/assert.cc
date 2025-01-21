@@ -10,6 +10,7 @@
 #include "Process.h"
 #include "S.h"
 #include "except.h"
+#include "quote.h"
 
 using namespace rocket;
 using namespace std;
@@ -24,7 +25,7 @@ onAssertFailed(
     const optional<string>& msg,
     const source_location& sourceLoc) {
   ostringstream buf;
-  buf << sourceLoc.file_name() << ':' << sourceLoc.line() << ": Assertion " << (S << string_view(expr)) << " failed";
+  buf << sourceLoc.file_name() << ':' << sourceLoc.line() << ": Assertion " << quote::bt(expr) << " failed";
   if (msg)
     buf << ": " << *msg;
 
@@ -39,7 +40,7 @@ onCheckFailed(
     const optional<string>& msg,
     const source_location& sourceLoc) {
   ostringstream buf;
-  buf << "Check " << (S << string_view(expr)) << " failed";
+  buf << "Check " << quote::bt(expr) << " failed";
   if (msg)
     buf << ": " << *msg;
 
@@ -52,7 +53,7 @@ onExpectFailed(
     const optional<string>& msg,
     const source_location& sourceLoc) {
   ostringstream buf;
-  buf << "Expectation " << (S << string_view(expr)) << " failed";
+  buf << "Expectation " << quote::bt(expr) << " failed";
   if (msg)
     buf << ": " << *msg;
 

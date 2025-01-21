@@ -232,7 +232,7 @@ TEST(cl, parseOpt_bool) {
     auto args = parse(cl, { "a", "-€=hello", "b", "c" }, os);
     EXPECT_EQ(args, vector<string>());
     EXPECT_FALSE(flag);
-    EXPECT_EQ(os.str(), "test-rocket-cl: Error: Option `-€` cannot take a value\n");
+    EXPECT_EQ(os.str(), "test-rocket-cl: error: Option `-€` cannot take a value\n");
   }
 }
 
@@ -266,7 +266,7 @@ TEST(cl, parseOpt_int) {
     auto args = parse(cl, { "a", "-n" }, os);
     EXPECT_EQ(args, vector<string>());
     EXPECT_EQ(num, 0);
-    EXPECT_EQ(os.str(), "test-rocket-cl: Error: Missing value for option `-n`\n");
+    EXPECT_EQ(os.str(), "test-rocket-cl: error: Missing value for option `-n`\n");
   }
 
   // Test error when conversion fails
@@ -276,7 +276,7 @@ TEST(cl, parseOpt_int) {
     auto args = parse(cl, { "a", "-n", "hello" }, os);
     EXPECT_EQ(args, vector<string>());
     EXPECT_EQ(num, 0);
-    EXPECT_EQ(os.str(), "test-rocket-cl: Error: Option `-n`: Invalid value \"hello\"; expected NUM\n");
+    EXPECT_EQ(os.str(), "test-rocket-cl: error: Option `-n`: Invalid value \"hello\"; expected NUM\n");
   }
 }
 
@@ -369,7 +369,7 @@ TEST(cl, parseCommand) {
     parseCommand({ "-p", "list", "a" }, os, os);
     EXPECT_EQ(
         os.str(),
-        "test-rocket-cl: Error: Unknown option `-p`\n"
+        "test-rocket-cl: error: Unknown option `-p`\n"
         "Usage: test-rocket-cl [OPTION]... list [OPTION]... FILE...\n"
         "  or   test-rocket-cl [OPTION]... show [OPTION]... [ARG]...\n"
         "Try `test-rocket-cl --help` for more information.\n");
@@ -381,7 +381,7 @@ TEST(cl, parseCommand) {
     parseCommand({ "-o", "walk", "dog" }, os, os);
     EXPECT_EQ(
         os.str(),
-        "test-rocket-cl: Error: Invalid command \"walk\"\n"
+        "test-rocket-cl: error: Invalid command \"walk\"\n"
         "Usage: test-rocket-cl [OPTION]... list [OPTION]... FILE...\n"
         "  or   test-rocket-cl [OPTION]... show [OPTION]... [ARG]...\n"
         "Try `test-rocket-cl --help` for more information.\n");
@@ -448,7 +448,7 @@ TEST(cl, parseCommand) {
     parseCommand({ "list", "-Q" }, os, os);
     EXPECT_EQ(
         os.str(),
-        "test-rocket-cl: Error: Unknown option `-Q`\n"
+        "test-rocket-cl: error: Unknown option `-Q`\n"
         "Usage: test-rocket-cl list [OPTION]... FILE...\n"
         "Try `test-rocket-cl list --help` for more information.\n");
   }
@@ -497,7 +497,7 @@ TEST(cl, parseCommand) {
     parseCommand({ "show", "-Q" }, os, os);
     EXPECT_EQ(
         os.str(),
-        "test-rocket-cl: Error: Unknown option `-Q`\n"
+        "test-rocket-cl: error: Unknown option `-Q`\n"
         "Usage: test-rocket-cl show [OPTION]... [ARG]...\n"
         "Try `test-rocket-cl show --help` for more information.\n");
   }

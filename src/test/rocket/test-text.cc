@@ -94,37 +94,37 @@ TEST(text, locations) {
   // Test empty input stream
   {
     auto is = io::is();
-    Position pos { .type=Position::Note, .position=0, .message="Oops" }; 
+    Position pos { .type=Position::note, .position=0, .message="Oops" }; 
     auto result = locations(is, { pos });
     EXPECT_EQ(result.params.source, "(input)");
     EXPECT_EQ(result.locations.size(), 1);
     auto& loc = result.locations[0];
-    EXPECT_LOCATION(loc, Position::Note, 0, ({}), 1, 1, ({ 0, 0 }), nullopt, "Oops", nullopt);
+    EXPECT_LOCATION(loc, Position::note, 0, ({}), 1, 1, ({ 0, 0 }), nullopt, "Oops", nullopt);
   }
 
   // Test EOF
   {
     string s = "a line without a line break at the end";
     auto is = io::is(s);
-    Position pos { .type=Position::Error, .position=10, .message="Oops" };
+    Position pos { .type=Position::error, .position=10, .message="Oops" };
     auto result = locations(is, { pos }, { .setLineString=true });
     EXPECT_EQ(result.params.source, "(input)");
     EXPECT_EQ(result.locations.size(), 1);
     auto& loc = result.locations[0];
-    EXPECT_LOCATION(loc, Position::Error, 10, ({}), 1, 11, ({ 0, s.size() }), s, "Oops", nullopt);
+    EXPECT_LOCATION(loc, Position::error, 10, ({}), 1, 11, ({ 0, s.size() }), s, "Oops", nullopt);
   }
 
   // Test LF line break
   {
     string s = "a line with an line break at the end\n";
     auto is = io::is(s);
-    Position pos { .type=Position::Error, .position=10, .message="Oops" };
+    Position pos { .type=Position::error, .position=10, .message="Oops" };
     auto result = locations(is, { pos }, { .setLineString=true });
     EXPECT_EQ(result.locations.size(), 1);
     auto& loc = result.locations[0];
     EXPECT_LOCATION(
         loc,
-        Position::Error,
+        Position::error,
         10, ({}),
         1, 11,
         ({ 0, s.size() - 1 }),
@@ -137,13 +137,13 @@ TEST(text, locations) {
   {
     string s = "a line with a line break at the end\r\n";
     auto is = io::is(s);
-    Position pos { .type=Position::Error, .position=10, .message="Oops" };
+    Position pos { .type=Position::error, .position=10, .message="Oops" };
     auto result = locations(is, { pos }, { .setLineString=true });
     EXPECT_EQ(result.locations.size(), 1);
     auto& loc = result.locations[0];
     EXPECT_LOCATION(
         loc,
-        Position::Error,
+        Position::error,
         10, ({}),
         1, 11,
         ({ 0, s.size() - 2 }),
@@ -156,11 +156,11 @@ TEST(text, locations) {
   {
     string s = "a\x00" "b"s;
     auto is = io::is(s);
-    Position pos { .type=Position::Error, .position=3, .message="Oops" };
+    Position pos { .type=Position::error, .position=3, .message="Oops" };
     auto result = locations(is, { pos }, { .setLineString=true });
     EXPECT_EQ(result.locations.size(), 1);
     auto& loc = result.locations[0];
-    EXPECT_LOCATION(loc, Position::Error, 3, ({}), 1, 3, ({ 0, 3 }), s, "Oops", nullopt);
+    EXPECT_LOCATION(loc, Position::error, 3, ({}), 1, 3, ({ 0, 3 }), s, "Oops", nullopt);
   }
 
   // Test multi-byte code points and line break
@@ -169,19 +169,19 @@ TEST(text, locations) {
     auto is = io::is(s);
     
     {
-      Position pos { .type=Position::Error, .position=2, .message="Oops" };
+      Position pos { .type=Position::error, .position=2, .message="Oops" };
       auto result = locations(io::resetg(is), { pos }, { .setLineString=true });
       EXPECT_EQ(result.locations.size(), 1);
       auto& loc = result.locations[0];
-      EXPECT_LOCATION(loc, Position::Error, 2, ({}), 1, 2, ({ 0, 5 }), "ä€", "Oops", nullopt);
+      EXPECT_LOCATION(loc, Position::error, 2, ({}), 1, 2, ({ 0, 5 }), "ä€", "Oops", nullopt);
     }
 
     {
-      Position pos { .type=Position::Error, .position=6, .message="Oops" };
+      Position pos { .type=Position::error, .position=6, .message="Oops" };
       auto result = locations(io::resetg(is), { pos }, { .setLineString=true });
       EXPECT_EQ(result.locations.size(), 1);
       auto& loc = result.locations[0];
-      EXPECT_LOCATION(loc, Position::Error, 6, ({}), 2, 1, ({ 6, 9 }), "€", "Oops", nullopt);
+      EXPECT_LOCATION(loc, Position::error, 6, ({}), 2, 1, ({ 6, 9 }), "€", "Oops", nullopt);
     }
   }
 
@@ -192,7 +192,7 @@ TEST(text, locations) {
     content << ifstream(source);
     auto is = io::is(content);
 
-    Position pos { .type=Position::Error, .position=3'000, .message="Oops" };
+    Position pos { .type=Position::error, .position=3'000, .message="Oops" };
     auto result = locations(
         is, { pos }, { .bufferSize=io::MIN_BUFFER_SIZE, .setLineString=true, .source=source });
     EXPECT_EQ(result.params.source, source);
@@ -200,7 +200,7 @@ TEST(text, locations) {
     auto& loc = result.locations[0];
     EXPECT_LOCATION(
         loc,
-        Position::Error,
+        Position::error,
         3'000, ({}),
         38, 77,
         ({ 2'922, 3'033 }),
@@ -220,7 +220,7 @@ TEST(text, locations) {
     // No grapheme boundary at position 4
     EXPECT_THAT(
       ([&] {
-        Position pos { .type=Position::Error, .position=4, .message="Oops" };
+        Position pos { .type=Position::error, .position=4, .message="Oops" };
         locations(io::resetg(is), { pos }, {});
       }),
       ThrowsMessage<except::InvalidState>(HasSubstr("Position 4 not found in input stream")));
@@ -228,18 +228,18 @@ TEST(text, locations) {
     // No grapheme boundary at position 7
     EXPECT_THAT(
       ([&] {
-        Position pos { .type=Position::Error, .position=7, .message="Oops" };
+        Position pos { .type=Position::error, .position=7, .message="Oops" };
         locations(io::resetg(is), { pos }, {});
       }),
       ThrowsMessage<except::InvalidState>(HasSubstr("Position 7 not found in input stream")));
 
     // Position 11 is okay
     {
-      Position pos { .type=Position::Error, .position=11, .message="Oops" };
+      Position pos { .type=Position::error, .position=11, .message="Oops" };
       auto result = locations(io::resetg(is), { pos }, { .setLineString=true });
       EXPECT_EQ(result.locations.size(), 1);
       auto& loc = result.locations[0];
-      EXPECT_LOCATION(loc, Position::Error, 11, ({}), 1, 3, ({ 0, 11 }), "🧑‍🌾", "Oops", nullopt);
+      EXPECT_LOCATION(loc, Position::error, 11, ({}), 1, 3, ({ 0, 11 }), "🧑‍🌾", "Oops", nullopt);
     }
   }
 
@@ -252,7 +252,7 @@ TEST(text, locations) {
 
     EXPECT_THAT(
       ([&] {
-        Position pos { .type=Position::Error, .position=1'000, .message="Oops" };
+        Position pos { .type=Position::error, .position=1'000, .message="Oops" };
         locations(io::resetg(is), { pos }, {});
       }),
       throwsInputFailure<char>(297, HasSubstr("Incomplete UTF-8 byte sequence")));
@@ -263,12 +263,12 @@ TEST(text, locations) {
     string s = "a\nb\tc"; // 0: a, 1: \n, 2: b, 3: \t, 4: c
     auto is = io::is(s);
     // Position 4 points to `c` in the second line
-    Position pos { .type=Position::Note, .position=4, .message="Oops" };
+    Position pos { .type=Position::note, .position=4, .message="Oops" };
     auto result = locations(is, { pos }, { .setLineString=true, .tabSize=nullopt });
     EXPECT_EQ(result.locations.size(), 1);
     auto& loc = result.locations[0];
     // Grapheme width of '\t' is 0
-    EXPECT_LOCATION(loc, Position::Note, 4, ({}), 2, 2, ({ 2, 5 }), "b\tc", "Oops", nullopt);
+    EXPECT_LOCATION(loc, Position::note, 4, ({}), 2, 2, ({ 2, 5 }), "b\tc", "Oops", nullopt);
   }
 
   // Test tab size 8
@@ -276,11 +276,11 @@ TEST(text, locations) {
     string s = "a\nb\tc"; // 0: a, 1: \n, 2: b, 3: \t, 4: c
     auto is = io::is(s);
     // Position 4 points to `c` in the second line
-    Position pos { .type=Position::Note, .position=4, .message="Oops" };
+    Position pos { .type=Position::note, .position=4, .message="Oops" };
     auto result = locations(is, { pos }, { .setLineString=true });
     EXPECT_EQ(result.locations.size(), 1);
     auto& loc = result.locations[0];
-    EXPECT_LOCATION(loc, Position::Note, 4, ({}), 2, 9, ({ 2, 5 }), "b\tc", "Oops", nullopt);
+    EXPECT_LOCATION(loc, Position::note, 4, ({}), 2, 9, ({ 2, 5 }), "b\tc", "Oops", nullopt);
   }
 }
 
@@ -300,7 +300,7 @@ TEST(text, printLocations) {
       // Test tab size null
       {
         Position pos {
-          .type=Position::Error,
+          .type=Position::error,
           .position=ex.position(),
           .ranges=ex.ranges(),
           .message=ex.message(),
@@ -313,7 +313,7 @@ TEST(text, printLocations) {
         printLocations(os, nullopt, result);
         EXPECT_EQ(
             os.str(),
-            "src/test/rocket/test-text-Config.ron:14:1: Error: Invalid name: \"pörts\"\n"
+            "src/test/rocket/test-text-Config.ron:14:1: error: Invalid name: \"pörts\"\n"
             "   14 | \\tpörts={80=\"http\", 443=\"https\"} # Typo: 'pörts', not 'ports'; ASCII 1: \\x01\n"
             "      |   ^~~~~\n"
             "      |   Look out!\n");
@@ -322,7 +322,7 @@ TEST(text, printLocations) {
       // Test tab size 8
       {
         Position pos {
-          .type=Position::Error,
+          .type=Position::error,
           .position=ex.position(),
           .ranges=ex.ranges(),
           .message=ex.message(),
@@ -333,7 +333,7 @@ TEST(text, printLocations) {
         ostringstream os;
         printLocations(os, nullopt, result);
         EXPECT_EQ(os.str(),
-            "src/test/rocket/test-text-Config.ron:14:9: Error: Invalid name: \"pörts\"\n"
+            "src/test/rocket/test-text-Config.ron:14:9: error: Invalid name: \"pörts\"\n"
             "   14 |         pörts={80=\"http\", 443=\"https\"} # Typo: 'pörts', not 'ports'; ASCII 1: \\x01\n"
             "      |         ^~~~~\n"
             "      |         Look out!\n");
@@ -345,16 +345,16 @@ TEST(text, printLocations) {
   {
     string s = "a multi-line\ntext, where the second line is somewhat longer";
     auto is = io::is(s);
-    Position pos0 { .type=Position::Note, .position=2, .message="Oops1" };
-    Position pos1 { .type=Position::Warning, .position=13, .message="Oops2" };
-    Position pos2 { .type=Position::Error, .position=19, .message="Oops3", .caption="Watch out!" };
+    Position pos0 { .type=Position::note, .position=2, .message="Oops1" };
+    Position pos1 { .type=Position::warning, .position=13, .message="Oops2" };
+    Position pos2 { .type=Position::error, .position=19, .message="Oops3", .caption="Watch out!" };
     auto result = locations(is, { pos0, pos1, pos2 }, { .setLineString=true, .source="foo" });
     EXPECT_EQ(result.params.source, "foo");
     EXPECT_EQ(result.locations.size(), 3);
     auto& loc0 = result.locations[0];
     EXPECT_LOCATION(
         loc0,
-        Position::Note,
+        Position::note,
         2, ({}),
         1, 3,
         ({ 0, 12 }),
@@ -364,7 +364,7 @@ TEST(text, printLocations) {
     auto& loc1 = result.locations[1];
     EXPECT_LOCATION(
         loc1,
-        Position::Warning,
+        Position::warning,
         13, ({}),
         2, 1,
         ({ 13, s.size() }),
@@ -374,7 +374,7 @@ TEST(text, printLocations) {
     auto& loc2 = result.locations[2];
     EXPECT_LOCATION(
         loc2,
-        Position::Error,
+        Position::error,
         19, ({}),
         2, 7,
         ({ 13, s.size() }),
@@ -384,13 +384,13 @@ TEST(text, printLocations) {
     ostringstream os;
     printLocations(os, nullopt, result, {});
     EXPECT_EQ(os.str(),
-        "foo:1:3: Note: Oops1\n"
+        "foo:1:3: note: Oops1\n"
         "    1 | a multi-line\n"
         "      |   ^\n"
-        "foo:2:1: Warning: Oops2\n"
+        "foo:2:1: warning: Oops2\n"
         "    2 | text, where the second line is somewhat longer\n"
         "      | ^\n"
-        "foo:2:7: Error: Oops3\n"
+        "foo:2:7: error: Oops3\n"
         "    2 | text, where the second line is somewhat longer\n"
         "      |       ^\n"
         "      |       Watch out!\n");
@@ -405,17 +405,17 @@ TEST(text, printLocations) {
         grsp,
         positions({ { 0, 0 }, { 1, 11 }, { 2, 12 }, { 3, 13 }, { 4, 14 }, { 5, 15 }, { 6, 16 } }));
     auto is = io::is(s);
-    Position pos { .type=Position::Note, .position=13, .message="Oops" };
+    Position pos { .type=Position::note, .position=13, .message="Oops" };
     auto result = locations(is, { pos }, {});
     EXPECT_EQ(result.locations.size(), 1);
     auto& loc = result.locations[0];
-    EXPECT_LOCATION(loc, Position::Note, 13, ({}), 1, 9, ({ 0, 16 }), nullopt, "Oops", nullopt);
+    EXPECT_LOCATION(loc, Position::note, 13, ({}), 1, 9, ({ 0, 16 }), nullopt, "Oops", nullopt);
     string line = s.substr(loc.lineRange.lower, *loc.lineRange.upper - loc.lineRange.lower);
     EXPECT_EQ(line, s);
     ostringstream os;
     printLocations(os, s, result, {});
     EXPECT_EQ(os.str(),
-        "(input):1:9: Note: Oops\n"
+        "(input):1:9: note: Oops\n"
         "    1 | 🧑‍🌾\\x00  abc\n"
         "      |         ^\n");
   }
@@ -424,16 +424,16 @@ TEST(text, printLocations) {
   {
     string s = "🧑‍🌾\x00\tabc"s;
     auto is = io::is(s);
-    Position pos { .type=Position::Note, .position=16, .ranges={ { 0, 16 } }, .message="Oops" };
+    Position pos { .type=Position::note, .position=16, .ranges={ { 0, 16 } }, .message="Oops" };
     auto result = locations(is, { pos }, {});
     EXPECT_EQ(result.locations.size(), 1);
     auto& loc = result.locations[0];
     // Test a range that spans the entire line
-    EXPECT_LOCATION(loc, Position::Note, 16, ({ { 0, 16 } }), 1, 12, ({ 0, 16 }), nullopt, "Oops", nullopt);
+    EXPECT_LOCATION(loc, Position::note, 16, ({ { 0, 16 } }), 1, 12, ({ 0, 16 }), nullopt, "Oops", nullopt);
     ostringstream os;
     printLocations(os, s, result, {});
     EXPECT_EQ(os.str(),
-        "(input):1:12: Note: Oops\n"
+        "(input):1:12: note: Oops\n"
         "    1 | 🧑‍🌾\\x00  abc\n"
         "      | ~~~~~~~~~~~^\n");
   }
