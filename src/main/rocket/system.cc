@@ -20,7 +20,7 @@ namespace {
 
 // Local functions ------------------------------------------------------------------------------------------
 
-#ifdef GAIA_TARGET_OS_FAMILY_WIN
+#ifdef GAIA_TARGET_OS_WINDOWS
 
 /**
  * Windows: Convert arguments to a command-line string. The rules are:
@@ -129,7 +129,7 @@ exec(const vector<string_view>& args) {
 
 string_view
 executableSuffix() {
-#ifdef GAIA_TARGET_OS_FAMILY_WIN
+#ifdef GAIA_TARGET_OS_WINDOWS
   return ".exe";
 #else
   return "";
@@ -138,7 +138,7 @@ executableSuffix() {
 
 char
 fileSeparator() {
-#ifdef GAIA_TARGET_OS_FAMILY_WIN
+#ifdef GAIA_TARGET_OS_WINDOWS
   return '\\';
 #else
   return '/';
@@ -147,7 +147,7 @@ fileSeparator() {
 
 char
 pathSeparator() {
-#ifdef GAIA_TARGET_OS_FAMILY_WIN
+#ifdef GAIA_TARGET_OS_WINDOWS
   return ';';
 #else
   return ':';

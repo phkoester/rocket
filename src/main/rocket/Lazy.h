@@ -1,7 +1,7 @@
 /**
- * @file Deferred.h
+ * @file Lazy.h
  *
- * Deferred, "lazy" values.
+ * Lazy values.
  */
 
 #pragma once
@@ -11,21 +11,23 @@
 
 namespace rocket {
 
-// `Deferred` -----------------------------------------------------------------------------------------------
+// `Lazy` ---------------------------------------------------------------------------------------------------
 
 /**
  * A lazy value that is evaluated on demand using a `std::function`.
  *
  * @tparam T the type of the lazy value
+ *
+ * @NotThreadSafe
  */
 template<typename T>
-struct Deferred {
+struct Lazy {
   /**
    * @ctor
    *
    * @param f the evaluation function
    */
-  inline explicit Deferred(std::function<T()>&& f) : f_(std::move(f)) {}
+  inline explicit Lazy(std::function<T()>&& f) : f_(std::move(f)) {}
 
   /**
    * If needed, evaluates, then returns the value.

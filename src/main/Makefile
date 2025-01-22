@@ -6,6 +6,12 @@ COMPILE_DEPS := src/main/rocket/version.h
 
 include $(GAIA_DIR)/src/main/make/Makefile.mk
 
+# `version.h` -----------------------------------------------------------------------------------------------
+
+src/main/rocket/version.h: project.json
+	@echo ">" $@
+	@$(call writeVersionHeader,$@,ROCKET_VERSION,$(ROCKET_VERSION))
+
 # `bare` ----------------------------------------------------------------------------------------------------
 
 NAME     := bare
@@ -62,17 +68,6 @@ NAME        := toy
 CC_FILES    := $(foreach it,$(wildcard src/main/toy/*.cc),$(it:src/%=%))
 SHARED_LIBS := $(call sharedLibName,rocket,$(ROCKET_VERSION))
 include $(GAIA_DIR)/src/main/make/executable.mk
-
-# `version.h` -----------------------------------------------------------------------------------------------
-
-src/main/rocket/version.h: ROCKET_HEX_VERSION := $(call hexVersion,.)
-src/main/rocket/version.h: ROCKET_VERSION_CODE := $(call versionCode,.)
-src/main/rocket/version.h: project.json $(MAKEFILE_DEPS)
-	@echo ">" $@
-	@sed -Ei \
-	    -e 's|(.*)_VERSION .* // .*|\1_VERSION $(ROCKET_HEX_VERSION) // $(ROCKET_VERSION)|' \
-	    -e 's|(.*)_VERSION_CODE .*|\1_VERSION_CODE $(ROCKET_VERSION_CODE)|' \
-            $@
 
 # All -------------------------------------------------------------------------------------------------------
 

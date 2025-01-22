@@ -1,7 +1,12 @@
+/*
+ * project.json
+ */
+
 {
   "dependencies": [
     "gaia"
   ],
   "version": "0.2.0",
-  "versionCode": 12
 }
+
+// EOF

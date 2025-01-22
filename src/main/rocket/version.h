@@ -1,22 +1,14 @@
-/**
- * @file version.h
+/*
+ * version.h
  *
- * Rocket version information.
- *
- * This file is automatically updated, so do not edit it.
+ * THIS IS A GENERATED FILE. DO NOT EDIT.
  */
 
 #pragma once
 
-/**
- * Rocket version. 
- *
- * A value of `0x010203` means 1.2.3.
- */
-#define ROCKET_VERSION 0x000200 // 0.2.0
-/**
- * Internal Rocket version code.
- */
-#define ROCKET_VERSION_CODE 12
-
+// SemVer string
+#define ROCKET_VERSION_INFO "0.2.0"
+// Major, minor (4 decimal digits), patch (4 decimal digits)
+#define ROCKET_VERSION 000020000UL
+ 
 // EOF

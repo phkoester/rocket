@@ -19,7 +19,7 @@ using namespace std;
 
 namespace {
 
-#ifdef GAIA_TARGET_SYSTEM_LINUX
+#ifdef GAIA_TARGET_OS_LINUX
 
 const string&
 invocationName() {

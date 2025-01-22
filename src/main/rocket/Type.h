@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include "Deferred.h"
+#include "Lazy.h"
 
 #include <iosfwd>
 #include <string>
@@ -89,9 +89,9 @@ struct Type {
 private:
 
   const std::type_info& info_;
-  const Deferred<std::string> name_;
+  const Lazy<std::string> name_;
   const std::type_index index_;
-  const Deferred<size_t> hash_;
+  const Lazy<size_t> hash_;
 };
 
 /// @op_output{#rocket::Type}

@@ -129,8 +129,8 @@ struct Symbols {
  *
  * Boolean values must conform to the following grammar:
  *
- * ```grammar
- * 0 | false | 1 | true
+ * ```
+ * Boolean = "0" | "false" | "1" | "true"
  * ```
  *
  * @param is the input stream
@@ -146,14 +146,18 @@ bool getBool(std::istream& is);
  *
  * Signed integer values must conform to the following grammar:
  * 
- * ```grammar
- * [+-]?[0-9][0-9']*
+ * ```
+ * SignedInteger = ["+" | "-"] Digit (Digit | "'")*
+ *
+ * Digit = "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9"
  * ```
  *
  * Unsigned integer values must conform to the following grammar:
  *
- * ```grammar
- * [+]?[0-9][0-9']*
+ * ```
+ * UnsignedInteger = ["+"] Digit (Digit | "'")*
+ *
+ * Digit = "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9"
  * ```
  *
  * @tparam I the integer type
@@ -209,12 +213,16 @@ getInteger(std::istream& is) {
  *
  * Floating points must conform to the following grammar:
  *
- * ```grammar
- * [+-]?(inf | ∞) |
- * nan |
- * qnan |
- * snan |
- * [+-]?(.[0-9][0-9']* | [0-9][0-9']*. | [0-9][0-9']*.[0-9][0-9']*)([eE][+-]?[0-9]+)?
+ * ```
+ * FloatingPoint = Infinity | Nan | Number
+ *
+ * Infinity = ["+" | "-"] ("inf" | "∞")
+ * Nan = "nan" | "qnan" | "snan"
+ * Number = ["+" | "-"] NumberSpec [Exp]
+ * NumberSpec = Digits ["."] | "." Digits | Digits "." Digits
+ * Digits = Digit (Digit | "'")*
+ * Digit = "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9"
+ * Exp = ("e" | "E") ["+" | "-"] Digit+
  * ```
  *
  * @tparam F the floating-point type

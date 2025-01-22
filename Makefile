@@ -14,7 +14,10 @@ build: buildTest
 
 include $(GAIA_DIR)/src/main/make/Makefile.mk
 
-export ROCKET_VERSION := $(call version,.)
+export ROCKET_VERSION := $(call printVersion,.)
+ifeq ($(ROCKET_VERSION),)
+  $(error Cannot set `ROCKET_VERSION`)
+endif
 
 all: check doc test
 
