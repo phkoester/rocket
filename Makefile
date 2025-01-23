@@ -14,7 +14,7 @@ build: buildTest
 
 include $(GAIA_DIR)/src/main/make/Makefile.mk
 
-export ROCKET_VERSION := $(call printVersion,.)
+export ROCKET_VERSION := $(call print-version,.)
 ifeq ($(ROCKET_VERSION),)
   $(error Cannot set `ROCKET_VERSION`)
 endif
@@ -22,29 +22,29 @@ endif
 all: check doc test
 
 buildMain:
-	@$(call printInfo,$@)
+	@$(call print-info,$@)
 	@+$(MAKE) $(MAKE_FLAGS) -f src/main/Makefile build
 
 buildTest: buildMain
-	@$(call printInfo,$@)
+	@$(call print-info,$@)
 	@+$(MAKE) $(MAKE_FLAGS) -f src/test/Makefile build
 
 doc: docMain docTest
 
 docMain:
-	@$(call printInfo,$@)
+	@$(call print-info,$@)
 	@+$(MAKE) $(MAKE_FLAGS) -f src/main/Makefile doc
 
 docTest:
-	@$(call printInfo,$@)
+	@$(call print-info,$@)
 	@+$(MAKE) $(MAKE_FLAGS) -f src/test/Makefile doc
 
 test: buildMain
-	@$(call printInfo,$@)
+	@$(call print-info,$@)
 	@+$(MAKE) $(MAKE_FLAGS) -f src/test/Makefile test
 
 tests: buildMain
-	@$(call printInfo,$@)
+	@$(call print-info,$@)
 	@+$(MAKE) $(MAKE_FLAGS) -f src/test/Makefile tests
 
 # -----------------------------------------------------------------------------------------------------------
