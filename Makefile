@@ -56,15 +56,15 @@ bare: buildMain
 
 print-args: buildMain
 	@$(SHARED_LIB_PATH_NAME)="$(SHARED_LIB_PATH):$(subst $(SPACE),:,$(SHARED_LIB_DIRS))" \
-	 $(BUILD_DIR)/print-args $(ARGS)
+	    $(BUILD_DIR)/print-args $(ARGS)
 
 print\ args: buildMain
 	@$(SHARED_LIB_PATH_NAME)="$(SHARED_LIB_PATH):$(subst $(SPACE),:,$(SHARED_LIB_DIRS))" \
-	 "$(BUILD_DIR)/print args" $(ARGS)
+	    "$(BUILD_DIR)/print args" $(ARGS)
 
 toy: buildMain
 	@$(SHARED_LIB_PATH_NAME)="$(SHARED_LIB_PATH):$(subst $(SPACE),:,$(SHARED_LIB_DIRS))" \
-	 $(BUILD_DIR)/toy $(ARGS)
+	    $(BUILD_DIR)/toy $(ARGS)
 
 .PHONY: crank
 

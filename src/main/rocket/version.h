@@ -1,7 +1,7 @@
 /*
  * version.h
  *
- * THIS IS A GENERATED FILE. DO NOT EDIT.
+ * GENERATED FILE. DO NOT EDIT.
  */
 
 #pragma once
