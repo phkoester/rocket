@@ -8,7 +8,7 @@ include $(GAIA_DIR)/src/main/make/Makefile.mk
 
 # `version.h` -----------------------------------------------------------------------------------------------
 
-src/main/rocket/version.h: project.json
+src/main/rocket/version.h: gaia-project.json
 	@echo ">" $@
 	@$(call write-version-header,$@,ROCKET_VERSION,$(ROCKET_VERSION))
 
