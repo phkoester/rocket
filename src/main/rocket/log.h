@@ -53,7 +53,7 @@ namespace rocket::log {
 
 /// @cond undocumented
 
-#define ROCKET_LOG_ID__(id) BOOST_PP_SEQ_CAT((_rocketLog)(id))
+#define ROCKET_LOG_ID__(id) BOOST_PP_SEQ_CAT((rocketLog)(id)(__))
 
 /// @endcond
 

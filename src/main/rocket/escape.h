@@ -249,14 +249,14 @@ operator>>(std::basic_istream<C>& lhs, const EscapedString<CString, C, String>& 
     }
     io::check(lhs);
     size_t pos2 = io::tellg(lhs);
-    
+
     if (gr.codePoint()) {
       // Single-code-point grapheme
-      
+
       unicode::CodePoint cp = *gr.codePoint();
       if (params.enclosing() && cp == static_cast<uint32_t>(params.quote)) {
         // Terminating quote: end of input
-        
+
         if (result)
           result->input.push_back(params.quote);
         return lhs;
@@ -359,7 +359,7 @@ operator>>(std::basic_istream<C>& lhs, const EscapedString<CString, C, String>& 
         }
       } else {
         // No backslash: just add the code point
-        
+
         auto add = static_cast<std::basic_string<C>>(cp);
         s.append(add);
         if (result)
@@ -367,7 +367,7 @@ operator>>(std::basic_istream<C>& lhs, const EscapedString<CString, C, String>& 
       }
     } else {
       // Multi-code-point grapheme: just add it
-      
+
       auto add = static_cast<std::basic_string<C>>(gr);
       s.append(add);
       if (result)
@@ -617,7 +617,7 @@ operator>>(std::basic_istream<C>& lhs, const EscapedString<Regex, C, String>& rh
       }
     } else {
       // Multi-code-point grapheme: just add it
-      
+
       auto add = static_cast<std::basic_string<C>>(gr);
       s.append(add);
       if (result)
@@ -666,7 +666,7 @@ operator<<(std::basic_ostream<C>& lhs, const EscapedString<Regex, C, String>& rh
   }
   if (result)
     result->positions.insert({ it.position(), to });
-    
+
   return lhs;
 }
 
@@ -709,7 +709,7 @@ concept Escaped =
  * ```
  * using namespace rocket;
  * using namespace std;
- * 
+ *
  * stringstream ss;
  * string in = "a\"b";
  * escaped::CString::Params params { .enclosed=true, .quote='"' };
@@ -746,7 +746,7 @@ escaped(
  * ```
  * using namespace rocket;
  * using namespace std;
- * 
+ *
  * stringstream ss;
  * string in = "a\"b";
  * escaped::CString::Params params { .enclosed=true, .quote='"' };

@@ -92,13 +92,13 @@ void
 Process::init(int argc, char** argv, optional<string_view> name, bool quickExit) {
   ROCKET_ASSERT(not inited_, "Process already initialized");
 
-  // Pick locale settings from environment
-  
+  // Set the C locale from the environment
+
   setlocale(LC_ALL, "");
-  
-  // Add `char32_t` support to STL streams
-  
-  locale newLocale = locale() <<
+
+  // Set the C++ locale from the environment, add `char32_t` support to STL streams
+
+  locale newLocale = locale("") <<
       new ctype<char32_t> << new numpunct<char32_t> << new num_get<char32_t> << new num_put<char32_t>;
   oldLocale_ = locale::global(newLocale);
 
@@ -126,7 +126,7 @@ Process::init(int argc, char** argv, optional<string_view> name, bool quickExit)
   inited_ = true;
 
   // Set the terminate handler. This must be done AFTER setting `inited_` to `true`
-  
+
   set_terminate(onTerminate);
 
   // Init the logging module
@@ -136,19 +136,19 @@ Process::init(int argc, char** argv, optional<string_view> name, bool quickExit)
 
 const string&
 Process::invocationName() const {
-  return ::invocationName();  
+  return ::invocationName();
 }
 
 const string&
 Process::invocationShortName() const {
-  return ::invocationShortName();  
+  return ::invocationShortName();
 }
 
 const string&
 Process::name() const {
   ROCKET_ASSERT(inited_, "Process not initialized");
   return name_;
-}  
+}
 
 void
 Process::warn(ostream& os, string_view msg) const {

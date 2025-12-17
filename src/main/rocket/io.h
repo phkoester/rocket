@@ -27,13 +27,13 @@
 // Macros ---------------------------------------------------------------------------------------------------
 
 /**
- * Makes a scope guard that automatically restores the stream's flags upon scope exit.
+ * Makes a guard that automatically restores the I/O stream's flags upon scope exit.
  *
  * @param ios the I/O stream the flags of which are to restore upon scope exit
  */
-#define ROCKET_IO_STREAM_FLAGS_GUARD(ios) \
-    const auto _rocketIoStreamFlagsGuard = ios.flags(); \
-    ROCKET_GUARD([&] { ios.flags(_rocketIoStreamFlagsGuard); })
+#define ROCKET_IO_FLAGS_GUARD(ios) \
+    const auto rocketIoFlagsGuard__ = ios.flags(); \
+    ROCKET_GUARD([&] { ios.flags(rocketIoFlagsGuard__); })
 
 namespace rocket::io {
 

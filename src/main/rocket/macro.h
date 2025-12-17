@@ -18,7 +18,7 @@
 /**
  * Generates a unique identifier.
  */
-#define ROCKET_ID BOOST_PP_SEQ_CAT((_rocketId)(__LINE__))
+#define ROCKET_ID BOOST_PP_SEQ_CAT((rocketId)(__LINE__)(__))
 
 /**
  * This macro executes a given function as a static initializer.

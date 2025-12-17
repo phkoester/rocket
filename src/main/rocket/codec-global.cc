@@ -32,7 +32,7 @@ printInteger(ostream& os, I v) {
   ostringstream buf;
   buf << v;
   string s = buf.str();
-  
+
   // Group by thousands
   size_t begin;
   if constexpr (is_unsigned_v<I>)
@@ -40,7 +40,7 @@ printInteger(ostream& os, I v) {
   else
     begin = s[0] == '-' ? 1 : 0;
   ron::printing::groupByThousands(s, begin, s.size());
-  
+
   return os << s;
 }
 
@@ -59,7 +59,7 @@ printFloatingPoint(ostream& os, F v, int precision) {
     return os << (v < 0 ? Symbols::String::NegativeInfinitySymbol : Symbols::String::InfinitySymbol);
   if (isnan(v))
     return os << (issignaling(v) ? Symbols::String::Snan : Symbols::String::Qnan);
-  
+
   ostringstream buf;
   buf << setprecision(precision) << v;
   string s = buf.str();
@@ -76,7 +76,7 @@ printFloatingPoint(ostream& os, F v, int precision) {
   else
     end = s.size();
   ron::printing::groupByThousands(s, begin, end);
-  
+
   return os << s;
 }
 
@@ -124,7 +124,7 @@ printRon(ostream& os, char v) {
     oss << escape::escaped<escape::CString>(s, { .enclosed=true, .quote='\'' });
     return os << oss.str();
   } else {
-    return os << std::format("'\\x{:0>2x}'", static_cast<int>(static_cast<unsigned char>(v)));
+    return os << format("'\\x{:0>2x}'", static_cast<int>(static_cast<unsigned char>(v)));
   }
 }
 
@@ -138,7 +138,7 @@ parseRon(istream& is, unsigned char& v) {
 
 ostream&
 printRon(ostream& os, unsigned char v) {
-  return os << std::format("{:0>2x}", static_cast<int>(v));
+  return os << format("{:0>2x}", static_cast<int>(v));
 }
 
 istream&
