@@ -7,9 +7,12 @@
 
 #include "terminal.h"
 
-#include "system.h"
+#include "assert.h"
+#include "io.h"
+#include "scoped.h"
 
 #include <format>
+#include <termios.h>
 #include <sys/ioctl.h>
 
 using namespace rocket::terminal;
@@ -25,7 +28,7 @@ styleCode(int i, bool fg) {
   bool high = (i & Style::high) != 0;
   bool underline = (i & Style::underline) != 0;
   i &= ~(Style::bold | Style::high | Style::underline);
-  
+
   if (not fg)
     i += 10;
   if (high)
@@ -62,8 +65,46 @@ Ansi::left(int n) const {
 }
 
 string
-Ansi::move(int line, int column) const {
+Ansi::move(int column, int line) const {
   return active_ ? format("\e[{};{}H", line, column) : string();
+}
+
+string
+Ansi::request(ostream& os, string_view sequence) const {
+  ROCKET_CHECK(os, &os == &cout || &os == &cerr);
+
+  if (not active_)
+    return string();
+
+  // Save current `STDIN` settings
+
+  termios oldT, newT;
+  tcgetattr(STDIN_FILENO, &oldT);
+  newT = oldT;
+
+  // Disable echo and canonical input on `STDIN`
+
+  newT.c_lflag &= ~(ECHO | ICANON);
+  tcsetattr(STDIN_FILENO, TCSANOW, &newT);
+  ROCKET_SCOPED([&] { tcsetattr(STDIN_FILENO, TCSANOW, &oldT); });
+
+  // Send the ANSI code requesting cursor position
+
+  os << sequence;
+  os.flush();
+
+  // Read the response
+
+  string ret;
+  while (true) {
+    char c;
+    if (read(STDIN_FILENO, &c, 1) != 1)
+      throw except::InputFailure(cin, ret.size(), "Failed to read response");
+    ret.push_back(c);
+    if (c == 'R')
+      break;
+  }
+  return ret;
 }
 
 string
@@ -89,15 +130,42 @@ Ansi::up(int n) const {
 // Functions ------------------------------------------------------------------------------------------------
 
 optional<pair<size_t, size_t>>
-size(const basic_ios<char>& io) {
-  int fd;
-  if (&io == &cin)
-    fd = STDIN_FILENO;
-  else if (&io == &cout)
-    fd = STDOUT_FILENO;
-  else if (&io == &cerr)
-    fd = STDERR_FILENO;
-  else
+position(ostream& os) {
+  if (not io::isatty(os))
+    return nullopt;
+
+  // Save current `STDIN` settings
+
+  termios oldT, newT;
+  tcgetattr(STDIN_FILENO, &oldT);
+  newT = oldT;
+
+  // Disable echo and canonical input on `STDIN`
+
+  newT.c_lflag &= ~(ECHO | ICANON);
+  tcsetattr(STDIN_FILENO, TCSANOW, &newT);
+  ROCKET_SCOPED([&] { tcsetattr(STDIN_FILENO, TCSANOW, &oldT); });
+
+  // Send the ANSI code requesting cursor position
+
+  Ansi ansi(true);
+  string response = ansi.request(os, "\e[6n");
+
+  // Parse the response
+
+  int x, y;
+  auto sscanfResult = sscanf(response.c_str(), "\e[%d;%dR", &y, &x);
+  ROCKET_EXPECT(sscanfResult == 2);
+
+  // Done
+
+  return make_pair(x, y);
+}
+
+optional<pair<size_t, size_t>>
+size(const basic_ios<char>& ios) {
+  int fd = io::fd(ios);
+  if (fd == -1)
     return nullopt;
 
   winsize ws;

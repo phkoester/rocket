@@ -168,6 +168,28 @@ check(std::basic_istream<C>& is) {
 }
 
 /**
+ * Returns a file descriptor for an I/O stream.
+ *
+ * @tparam C the character type
+ * @param ios the stream
+ * @return `STDOUT_FILENO`, `STDERR_FILENO`, `STDIN_FILENO`, or -1 if a file descriptor cannot be determined
+ */
+template<typename C> requires Character<C>
+int
+fd(const std::basic_ios<C>& ios)
+{
+  if constexpr (std::is_same_v<C, char>) {
+    if (&ios == &std::cout)
+      return STDOUT_FILENO;
+    else if (&ios == &std::cerr)
+      return STDERR_FILENO;
+    else if (&ios == &std::cin)
+      return STDIN_FILENO;
+  }
+  return -1;
+}
+
+/**
  * Reads a character from the input stream @p is.
  *
  * @tparam C the character type
@@ -294,7 +316,7 @@ getOptionalChar(std::basic_istream<C>& is, C v) {
     return std::nullopt;
   }
   check(is);
-  
+
   if (c != v) {
     seekg(is, inputPos);
     return std::nullopt;
@@ -322,7 +344,7 @@ getOptionalChar(std::basic_istream<C>& is, const std::set<C>& values) {
     return std::nullopt;
   }
   check(is);
-  
+
   if (not values.contains(c)) {
     seekg(is, inputPos);
     return std::nullopt;
@@ -389,7 +411,7 @@ getString(std::basic_istream<C>& is, const std::set<std::basic_string_view<C>>& 
 
   size_t inputPos = tellg(is);
   std::basic_string<C> input; // Input so far
-  
+
   while (true) {
     // Read one code point
     size_t pos = tellg(is);
@@ -552,7 +574,7 @@ std::string
 getWhile(std::basic_istream<C>& is, const std::set<C>& values, size_t min) {
   size_t inputPos = tellg(is);
   std::basic_string<C> input;
-  
+
   while (true) {
     size_t pos = tellg(is);
     C c = getChar(is);
@@ -656,12 +678,7 @@ template<typename C> requires Character<C>
 bool
 isatty(const std::basic_ios<C>& ios) {
   if constexpr (std::is_same_v<C, char>) {
-    if (&ios == &std::cout)
-      return ::isatty(STDOUT_FILENO);
-    if (&ios == &std::cerr)
-      return ::isatty(STDERR_FILENO);
-    if (&ios == &std::cin)
-      return ::isatty(STDIN_FILENO);
+    return ::isatty(fd(ios));
   }
   return false;
 }
@@ -742,7 +759,7 @@ template<typename C> requires Character<C>
 size_t
 tellg(std::basic_istream<C>& is) noexcept {
   const auto state = is.rdstate();
-  
+
   // Clear all bits
   is.clear();
   // This is expected to never throw, otherwise this implementation is flawed
@@ -781,7 +798,7 @@ template<typename C> requires Character<C>
 size_t
 tellp(std::basic_ostream<C>& os) noexcept {
   const auto state = os.rdstate();
-  
+
   // Clear all bits
   os.clear();
   // This is expected to never throw, otherwise this implementation is flawed

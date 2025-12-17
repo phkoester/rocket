@@ -8,6 +8,7 @@
 #include "rocket/codec-std.h"
 
 #include "rocket/io.h"
+#include "rocket/system.h"
 
 #include "rocket-gtest/match.h"
 
@@ -23,23 +24,10 @@ constexpr size_t LARGE_STRING_SIZE = 16 * 1'204 * 1'024; // 16 MiB
 
 // `TEST` ---------------------------------------------------------------------------------------------------
 
-TEST(io, istream) {
-  string s = string(LARGE_STRING_SIZE, ' ');
-  EXPECT_EQ(s.size(), LARGE_STRING_SIZE);
-  auto is = io::is(s);
-  size_t n = 0;
-  while (true) {
-    char c = io::getChar(is);
-    if (is.eof())
-      break;
-    EXPECT_EQ(c, ' ');
-    ++n;
-  }
-  EXPECT_EQ(n, LARGE_STRING_SIZE);
-}
+// `Buffer` .................................................................................................
 
 /**
- * With build type `release`, this test should be significantly faster than `io.istream`.
+ * With build type `release`, this test should be significantly faster than `io.is`.
  */
 TEST(io, Buffer) {
   string s = string(LARGE_STRING_SIZE, ' ');
@@ -78,7 +66,7 @@ TEST(io, Buffer_getGrapheme) {
   //  €:  3 bytes, 1 code point
   // ☢️:  6 bytes, 2 code points
   // 🧑‍🌾: 11 bytes, 3 code points
-  
+
   string s = "ä€☢️🧑‍🌾";
   auto is = io::is(s);
   Buffer buf(is);
@@ -123,6 +111,17 @@ TEST(io, Buffer_put) {
   EXPECT_EQ(got = buf.get(), byte('b'));
   EXPECT_EQ(got = buf.get(), byte('c'));
   EXPECT_EQ(buf.position(), 3);
+}
+
+// Functions ................................................................................................
+
+TEST(io, fd) {
+  EXPECT_EQ(fd(cin), STDIN_FILENO);
+  EXPECT_EQ(fd(cout), STDOUT_FILENO);
+  EXPECT_EQ(fd(cerr), STDERR_FILENO);
+
+  EXPECT_EQ(fd(istringstream()), -1);
+  EXPECT_EQ(fd(ostringstream()), -1);
 }
 
 TEST(io, getChar) {
@@ -287,6 +286,40 @@ TEST(io, getWhile) {
     EXPECT_EQ(getWhile(is, { 'x', 'y' }, 2), "yx");
     EXPECT_ISTREAM(is, false, false, 2);
   }
+}
+
+/**
+ * With build type `release`, this test should be significantly slower than `io.Buffer`.
+ */
+TEST(io, is) {
+  string s = string(LARGE_STRING_SIZE, ' ');
+  EXPECT_EQ(s.size(), LARGE_STRING_SIZE);
+  auto is = io::is(s);
+  size_t n = 0;
+  while (true) {
+    char c = io::getChar(is);
+    if (is.eof())
+      break;
+    EXPECT_EQ(c, ' ');
+    ++n;
+  }
+  EXPECT_EQ(n, LARGE_STRING_SIZE);
+}
+
+TEST(io, isatty) {
+  EXPECT_EQ(isatty(istringstream()), false);
+  EXPECT_EQ(isatty(ostringstream()), false);
+}
+
+/**
+ * This test requires `ROCKET_TEST_TERMINAL=1`.
+ */
+TEST(io, isattyTerminal) {
+  EXPECT_ENV("ROCKET_TEST_TERMINAL");
+
+  EXPECT_EQ(isatty(cout), true);
+  EXPECT_EQ(isatty(cerr), true);
+  EXPECT_EQ(isatty(cin), true);
 }
 
 // EOF

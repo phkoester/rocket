@@ -47,8 +47,7 @@ struct Ansi {
   /**
    * Clears the screen, including the back log.
    *
-   * @return an ANSI escape sequence if the output stream this instance was constructed with is connected to
-   *     a terminal, otherwise an empty string
+   * @return an ANSI escape sequence if this instance is active, otherwise an empty string
    */
   std::string clear() const;
 
@@ -56,8 +55,7 @@ struct Ansi {
    * Moves the cursor down by @p n lines.
    *
    * @param n the number of lines to move
-   * @return an ANSI escape sequence if the output stream this instance was constructed with is connected to
-   *     a terminal, otherwise an empty string
+   * @return an ANSI escape sequence if this instance is active, otherwise an empty string
    */
   std::string down(int n) const;
 
@@ -65,27 +63,34 @@ struct Ansi {
    * Moves the cursor left by @p n columns.
    *
    * @param n the number of columns to move
-   * @return an ANSI escape sequence if the output stream this instance was constructed with is connected to
-   *     a terminal, otherwise an empty string
+   * @return an ANSI escape sequence if this instance is active, otherwise an empty string
    */
   std::string left(int n) const;
 
   /**
    * Moves the cursor to line @p line and column @p column.
    *
-   * @param line the line to move to
-   * @param column the column to move to
-   * @return an ANSI escape sequence if the output stream this instance was constructed with is connected to
-   *     a terminal, otherwise an empty string
+   * @param column the column to move to, starting with 1
+   * @param line the line to move to, starting with 1
+   * @return an ANSI escape sequence if this instance is active, otherwise an empty string
    */
-  std::string move(int line, int column) const;
+  std::string move(int column, int line) const;
+
+  /**
+   * Sends an ANSI escape sequence to the output stream and returns the response from the input stream.
+   *
+   * @param os the output stream
+   * @param sequence the ANSI escape sequence to send
+   * @return the response from the input stream if this instance is active, otherwise an empty string
+   * @throw #rocket::except::InputFailure if the response from the input stream is not valid
+   */
+  std::string request(std::ostream& os, std::string_view sequence) const;
 
   /**
    * Moves the cursor right by @p n columns.
    *
    * @param n the number of columns to move
-   * @return an ANSI escape sequence if the output stream this instance was constructed with is connected to
-   *     a terminal, otherwise an empty string
+   * @return an ANSI escape sequence if this instance is active, otherwise an empty string
    */
   std::string right(int n) const;
 
@@ -93,8 +98,7 @@ struct Ansi {
    * Sets the foreground style.
    *
    * @param fg a bit mask for the foreground style
-   * @return an ANSI escape sequence if the output stream this instance was constructed with is connected to
-   *     a terminal, otherwise an empty string
+   * @return an ANSI escape sequence if this instance is active, otherwise an empty string
    */
   std::string style(int fg = 0) const;
 
@@ -103,8 +107,7 @@ struct Ansi {
    *
    * @param fg a bit mask for the foreground style
    * @param bg a bit mask for the background style
-   * @return an ANSI escape sequence if the output stream this instance was constructed with is connected to
-   *     a terminal, otherwise an empty string
+   * @return an ANSI escape sequence if this instance is active, otherwise an empty string
    */
   std::string style(int fg, int bg) const;
 
@@ -112,8 +115,7 @@ struct Ansi {
    * Moves the cursor down by @p n lines.
    *
    * @param n the number of lines to move
-   * @return an ANSI escape sequence if the output stream this instance was constructed with is connected to
-   *     a terminal, otherwise an empty string
+   * @return an ANSI escape sequence if this instance is active, otherwise an empty string
    */
   std::string up(int n) const;
 
@@ -125,14 +127,24 @@ private:
 // Functions ------------------------------------------------------------------------------------------------
 
 /**
- * Returns the terminal size, if available. The pair' s `first` is the width in columns, `second` the height
- * in lines.
+ * Returns the terminal's current cursor position, if available. The pair' s `first` is the column starting
+ * with 1, `second` is the line starting with 1.
  *
- * @param io the stream. If this is `std::cin`, `std::cout`, or `std::cerr` connected to a terminal, then a
+ * @param os the output stream. If this is `std::cout` or `std::cerr` connected to a terminal, then a proper
+ *     position is returned
+ * @return the cursor position, or null if not available
+ */
+std::optional<std::pair<size_t, size_t>> position(std::ostream& os);
+
+/**
+ * Returns the terminal's current size, if available. The pair' s `first` is the width in columns, `second`
+ * is the height in lines.
+ *
+ * @param ios the stream. If this is `std::cin`, `std::cout`, or `std::cerr` connected to a terminal, then a
  *     proper size is returned
  * @return the terminal size, or null if not available
  */
-std::optional<std::pair<size_t, size_t>> size(const std::basic_ios<char>& io);
+std::optional<std::pair<size_t, size_t>> size(const std::basic_ios<char>& ios);
 
 } // namespace rocket::terminal
 

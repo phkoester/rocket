@@ -31,7 +31,7 @@ paragraphs(string_view s) {
   vector<string> par; // The current paragraph
   string word; // The current word
 
-  auto it = unicode::GraphemeIterator<char>(s), end = unicode::GraphemeIterator<char>(s, s.size());
+  auto it = unicode::GraphemeIterator<char>(s);
   while (true) {
     if (it.end() || it->eol()) {
       // Handle EOT/EOL
@@ -82,28 +82,28 @@ locations(istream& is, const vector<Position>& positions, const LocationsParams&
   ROCKET_CHECK(is, io::tellg(is) == 0, "Input stream must be at position 0");
 
   // Prepare result
-  
+
   LocationsResult result;
   result.params = params;
   if (result.params.source.empty())
     result.params.source = &is == &cin ? "-" : "(input)";
 
   // Map input position -> location
-  
+
   size_t maxPos = 0;
   unordered_map<size_t, LocationsResult::Location> locations;
   for (const auto& pos : positions) {
-    LocationsResult::Location loc;
-    loc.type = pos.type;
-    loc.position = pos.position;
-    loc.ranges = pos.ranges;
-    loc.line = NPOS; // Marks this location as unprocessed
     ROCKET_CHECK(positions, not pos.message.empty());
-    loc.message = pos.message;
     ROCKET_CHECK(positions, not (pos.caption && pos.caption->empty()));
-    loc.caption = pos.caption;
-    auto emplace = locations.emplace(pos.position, loc);
-    ROCKET_CHECK(positions, emplace.second, S << "Duplicate position " << pos.position);
+    auto emplaceResult = locations.emplace(pos.position, LocationsResult::Location {
+      .type = pos.type,
+      .position = pos.position,
+      .ranges = pos.ranges,
+      .line = NPOS, // Marks this location as unprocessed
+      .message = pos.message,
+      .caption = pos.caption
+    });
+    ROCKET_CHECK(positions, emplaceResult.second, S << "Duplicate position " << pos.position);
 
     maxPos = max(pos.position, maxPos);
   }
@@ -111,7 +111,7 @@ locations(istream& is, const vector<Position>& positions, const LocationsParams&
   // Use a byte buffer to read the input stream
 
   io::Buffer buf(is, params.bufferSize);
-  
+
   size_t line = 0, column = 0, beginLine = 0;
   string lineString;
 
@@ -139,7 +139,7 @@ locations(istream& is, const vector<Position>& positions, const LocationsParams&
     auto bytes = buf.getGrapheme(&gr);
     if (not bytes || gr.eol()) {
       // Handle EOF or EOL
-      
+
       // Exit current line
       for (const auto& p : poi) {
         auto& loi = locations.find(p)->second; // "Location of interest"
@@ -147,7 +147,7 @@ locations(istream& is, const vector<Position>& positions, const LocationsParams&
         if (params.setLineString)
           loi.lineString = lineString;
       }
-      
+
       // Finish?
       if (not bytes || finish)
         break;
@@ -160,7 +160,7 @@ locations(istream& is, const vector<Position>& positions, const LocationsParams&
       poi.clear();
     } else if (gr.tab() && params.tabSize) {
       // Handle tab
-      
+
       size_t mod = column % *params.tabSize;
       size_t n = *params.tabSize - mod;
       column += n;
@@ -194,7 +194,7 @@ printLocations(
     const PrintLocationsParams& params) {
   ROCKET_CHECK(input, not (input && input->empty()), "May not be empty");
   ROCKET_CHECK(locationsResult, not locationsResult.params.source.empty());
-  
+
   // Find out line-number width and format
   const auto& locations = locationsResult.locations;
   size_t maxLine = accumulate(
@@ -213,7 +213,7 @@ printLocations(
 
   for (const auto& loc : locations) {
     // Print source, line number, column column number, type, and message
-    
+
     ROCKET_CHECK(locationsResult, not loc.message.empty());
     os << locationsResult.params.source << ':' << loc.line << ':' << loc.column << ": ";
     switch (loc.type) {
@@ -224,14 +224,14 @@ printLocations(
     os << loc.type << ": " << ansi.style() << loc.message << '\n';
 
     // Print the line prefix
-    
+
     string linePrefix = vformat(lineNumberFmt, make_format_args(loc.line));
     linePrefix += " | ";
     os << linePrefix;
 
     // Escape the line as C-string, take tab setting from `locationsResult`, print the line as graphemes
     // (skip zero-width graphemes)
-    
+
     ROCKET_CHECK(input, input || loc.lineString, "Either `input` or `lineString` must be supplied");
     string line = loc.lineString ?
       *loc.lineString :
@@ -251,12 +251,12 @@ printLocations(
 
     // Print the ranges, the caret, and the caption. This is harder than it looks at first sight, because we
     // need to consider C-string escaping, tabs, UTF-8, and grapheme widths---all at the same time
-    
+
     // Prepare the indicators string. `indicators` is in "grapheme-width coordinates"
 
     size_t width = unicode::width(grs);
     string indicators(width, ' ');
-    
+
     // Make up a lambda that translates an input `char` position to an `indicators` position. This requires
     // several steps
 
@@ -292,7 +292,7 @@ printLocations(
     }
 
     // Place the caret in `indicators`
-    
+
     size_t caretPos = indicatorPos(loc.position);
     if (caretPos < indicators.size())
       indicators[caretPos] = '^';
@@ -302,12 +302,12 @@ printLocations(
     }
 
     // Right-trim, print the indicators
-    
+
     indicators = strings::removeTrailing<char>(indicators, " ");
     os << blankPrefix << ansi.style(bold | green) << indicators << ansi.style() << '\n';
 
     // If supplied, print caption
-    
+
     if (loc.caption) {
       string caption = string(caretPos, ' ') + *loc.caption;
       oss.str("");

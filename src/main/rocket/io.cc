@@ -60,7 +60,7 @@ Buffer::getCodePoint(unicode::CodePoint* cp) {
   auto cpSize = unicode::utf8::codePointSize(c);
   if (cpSize == 0)
     throw except::InputFailure(is_, pos, S << "Invalid UTF-8 byte: " << *got);
-  
+
   vector<byte> result;
   result.reserve(cpSize);
   result.push_back(*got);
@@ -89,7 +89,7 @@ Buffer::getGrapheme(unicode::Grapheme* gr) {
   auto bytes = getCodePoint(&cp);
   if (not bytes)
     return nullopt;
-  
+
   // Update values
   u32string s { cp };
   vector<byte> result;

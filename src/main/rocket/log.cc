@@ -50,7 +50,7 @@ struct Out {
     os_ = &v;
     p_ = nullptr;
   }
- 
+
   void set(string_view v) {
     os_ = nullptr;
     p_ = make_unique<ofstream>(string(v), ios::out | ios::app); // Append to avoid data loss
@@ -101,7 +101,7 @@ thread_local vector<Entry> stack;
 void
 applyLog(optional<string_view> v) {
   ROCKET_EXPECT(v);
-  
+
   string_view lhs, rhs;
   if (auto eq = v->find('='); eq == string::npos) {
     lhs = *v;
@@ -110,7 +110,7 @@ applyLog(optional<string_view> v) {
     lhs = v->substr(0, eq);
     rhs = v->substr(eq + 1);
   }
-  
+
   setLogLevel(lhs, rhs);
 }
 
@@ -122,7 +122,7 @@ applyLog(optional<string_view> v) {
 void
 applyLogOut(optional<string_view> v) {
   ROCKET_EXPECT(v);
-  
+
   if (v == "stdout")
     out.set(cout);
   else if (v == "stderr")
@@ -140,7 +140,7 @@ applyLogOut(optional<string_view> v) {
 void
 logFlush(ostream& os) {
   auto begin = stack.end();
-  
+
   // Look for pending begin log entries
   for (auto it = stack.rbegin(); it != stack.rend(); ++it) {
     if (it->begin_)
@@ -194,7 +194,7 @@ logImpl(ostream& os, LogLevel* logId, LogLevel level, size_t stackLevel, string_
     strings::replaceIn<char>(localMsg, "\n", to);
     os << localMsg;
   }
-  
+
   // Print line feed
   os << '\n';
 }
@@ -214,9 +214,9 @@ setLogLevel(string_view id, string_view value) {
   auto is = io::is(value);
   LogLevel level;
   is >> level;
-  if (is.fail() || is.tellg() != value.size())
+  if (is.fail() || io::tellg(is) != value.size())
     throw except::InvalidState(S << "Invalid log level " << value);
-    
+
   if (not all)
     *it->second = level;
   else {

@@ -9,6 +9,8 @@
 
 #include "rocket/except.h"
 #include "rocket/io.h"
+#include "rocket/system.h"
+#include "rocket/terminal.h"
 #include "rocket/unicode.h"
 #include "rocket/internal/unicode-internal.h"
 
@@ -28,10 +30,19 @@ using namespace testing;
 namespace {
 
 void
-printGrapheme(const Grapheme& grapheme, u32string_view s) {
+testGrapheme(const Grapheme& grapheme, u32string_view s) {
+  if (not system::env::get<bool>("ROCKET_TEST_TERMINAL").value_or(false)) {
+    cout << "Not testing grapheme because `ROCKET_TEST_TERMINAL` is not set\n";
+    return;
+  }
+
   string s8 = utf32To8(s);
-  cout << "Width should be " << static_cast<int>(grapheme.width) << ": [" << s8 << "]\n";
-  cout << "                   [" << string(grapheme.width, '~') << "]\n";
+  cout << '[' << s8 << ']';
+  auto pos = terminal::position(cout);
+  EXPECT_TRUE(pos);
+  EXPECT_EQ(pos->first, grapheme.width + 3);
+  cout << '\n';
+  cout << '[' << string(grapheme.width, '~') << "]\n";
 }
 
 } // namespace
@@ -68,7 +79,7 @@ TEST(unicode, eastAsianWidth) {
 
 TEST(unicode, emoji) {
   EXPECT_FALSE(emojiEmoji(0x0000U));
-  
+
   EXPECT_TRUE(emojiEmoji(0x0023U)); // HASH SIGN
   EXPECT_FALSE(emojiEmoji_Presentation(0x0023U));
   EXPECT_TRUE(emojiEmoji_Component(0x0023U));
@@ -361,7 +372,7 @@ TEST(unicode, conversions) {
   EXPECT_EQ(utf32To8(U"äöü€"), "äöü€");
 
   const char* s1 = "a€b";
-  
+
   vector<char32_t> v;
   u32string s = utf8To32(s1);
   copy(s.begin(), s.end(), back_inserter(v));
@@ -401,7 +412,7 @@ TEST(unicode, CodePointIterator_char) {
   it2 -= 2;
   EXPECT_TRUE(it2.begin());
   EXPECT_FALSE(it2.end());
-  
+
   auto end = CodePointIterator<type>(s, s.size());
   EXPECT_EQ(end.codePointPosition(), 2);
 
@@ -433,7 +444,7 @@ TEST(unicode, CodePointIterator_char32_t) {
   it2 -= 2;
   EXPECT_TRUE(it2.begin());
   EXPECT_FALSE(it2.end());
-  
+
   auto end = CodePointIterator<type>(s, s.size());
   EXPECT_EQ(end.codePointPosition(), 2);
 
@@ -476,7 +487,7 @@ TEST(unicode, GraphemeIterator_char) {
   it2 -= 1;
   EXPECT_TRUE(it2.begin());
   EXPECT_FALSE(it2.end());
-  
+
   auto end = GraphemeIterator<type>(s, s.size());
   EXPECT_EQ(end.graphemePosition(), 2);
 
@@ -519,7 +530,7 @@ TEST(unicode, GraphemeIterator_char32_t) {
   it2 -= 1;
   EXPECT_TRUE(it2.begin());
   EXPECT_FALSE(it2.end());
-  
+
   auto end = GraphemeIterator<type>(s, s.size());
   EXPECT_EQ(end.graphemePosition(), 2);
 
@@ -563,7 +574,7 @@ TEST(unicode, utf8_valid) {
 
   EXPECT_FALSE(utf8::valid("\xc3", &out));
   EXPECT_EQ(out, "�"); // Incomplete 'ä', which is C3 A4
-  
+
   EXPECT_FALSE(utf8::valid("\xe2\x82", &out));
   EXPECT_EQ(out, "��"); // Incomplete '€', which is E2 82 AC
 }
@@ -578,7 +589,7 @@ TEST(unicode, utf32_graphemes) {
     EXPECT_EQ(graphemes.size(), 1);
     EXPECT_EQ(graphemes[0].codePoints.size(), 1);
     EXPECT_EQ(graphemes[0].width, 0);
-    printGrapheme(graphemes[0], s);
+    testGrapheme(graphemes[0], s);
   }
 
   {
@@ -588,7 +599,7 @@ TEST(unicode, utf32_graphemes) {
     EXPECT_EQ(graphemes.size(), 1);
     EXPECT_EQ(graphemes[0].codePoints.size(), 3);
     EXPECT_EQ(graphemes[0].width, 1);
-    printGrapheme(graphemes[0], s);
+    testGrapheme(graphemes[0], s);
   }
 
   {
@@ -598,7 +609,7 @@ TEST(unicode, utf32_graphemes) {
     EXPECT_EQ(graphemes.size(), 1);
     EXPECT_EQ(graphemes[0].codePoints.size(), 3);
     EXPECT_EQ(graphemes[0].width, 2);
-    printGrapheme(graphemes[0], s);
+    testGrapheme(graphemes[0], s);
   }
 
   {
@@ -608,7 +619,7 @@ TEST(unicode, utf32_graphemes) {
     EXPECT_EQ(graphemes.size(), 1);
     EXPECT_EQ(graphemes[0].codePoints.size(), 5);
     EXPECT_EQ(graphemes[0].width, 2);
-    printGrapheme(graphemes[0], s);
+    testGrapheme(graphemes[0], s);
   }
 
   {
@@ -617,7 +628,7 @@ TEST(unicode, utf32_graphemes) {
     EXPECT_EQ(graphemes.size(), 1);
     EXPECT_EQ(graphemes[0].codePoints.size(), 4);
     EXPECT_EQ(graphemes[0].width, 2);
-    printGrapheme(graphemes[0], s);
+    testGrapheme(graphemes[0], s);
   }
 }
 
