@@ -8,13 +8,13 @@
 
 #include "io-decl.h"
 
+#include "Guard.h"
 #include "Process.h"
 #include "S.h"
 #include "assert.h"
 #include "basic.h"
 #include "except.h"
 #include "noun.h"
-#include "scoped.h"
 #include "unicode.h"
 #include "unicode-iterator.h"
 
@@ -29,11 +29,11 @@
 /**
  * Makes a scope guard that automatically restores the stream's flags upon scope exit.
  *
- * @param stream the stream the flags of which are to restore upon scope exit
+ * @param ios the I/O stream the flags of which are to restore upon scope exit
  */
-#define ROCKET_IO_SCOPED_STREAM_FLAGS(stream) \
-    const auto rocketIoScopedStreamFlags__ = stream.flags(); \
-    ROCKET_SCOPED([&] { stream.flags(rocketIoScopedStreamFlags__); })
+#define ROCKET_IO_STREAM_FLAGS_GUARD(ios) \
+    const auto _rocketIoStreamFlagsGuard = ios.flags(); \
+    ROCKET_GUARD([&] { ios.flags(_rocketIoStreamFlagsGuard); })
 
 namespace rocket::io {
 

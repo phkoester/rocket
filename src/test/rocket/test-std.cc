@@ -9,8 +9,8 @@
 #include "rocket/codec-std-decl.h"
 #include "rocket/codec-std.h"
 
+#include "rocket/Guard.h"
 #include "rocket/io.h"
-#include "rocket/scoped.h"
 
 #include "rocket-gtest/match.h"
 
@@ -53,7 +53,7 @@ TEST(std, chrono) {
  */
 TEST(std, formatEnUsUtf8) {
   locale l = locale::global(locale("en_US.UTF8"));
-  ROCKET_SCOPED([&] { locale::global(l); });
+  ROCKET_GUARD([&] { locale::global(l); });
   EXPECT_EQ(format("{:L}", 123'456), "123,456");
   EXPECT_EQ(format("{:L}", 123456.789012), "123,456.789012");
 }

@@ -27,7 +27,7 @@
 
 // Members ..................................................................................................
 
-#define ROCKET_REFLECT_MEMBERS_STRUCT__(name) BOOST_PP_SEQ_CAT((RocketReflect)(name)(__))
+#define ROCKET_REFLECT_MEMBERS_STRUCT__(name) BOOST_PP_SEQ_CAT((_RocketReflect)(name))
 
 #define ROCKET_REFLECT_MEMBERS_MAKE_REFS_IMPL__(r, data, elem) \
     (::rocket::reflect::internal::MemberRef(BOOST_PP_STRINGIZE(elem), &data::elem))
@@ -200,7 +200,7 @@ struct MemberRef {
 private:
 
   const std::string_view name_;
-  T C::*p_;  
+  T C::*p_;
 };
 
 template<typename T>
@@ -251,9 +251,9 @@ template<size_t Index, typename T, typename Tuple>
 constexpr auto&
 refGet(T* v, const Tuple& refs) noexcept {
   auto& ref = std::get<Index>(refs);
-  
+
   static_assert(IsMemberRef<decltype(ref)>::value || IsVarRef<decltype(ref)>::value);
-  
+
   if constexpr (IsMemberRef<decltype(ref)>::value)
     return ref.get(*v);
   else
@@ -377,7 +377,7 @@ parseRon(std::istream& is, T* v, Tuple& refs, std::index_sequence<Index...>) {
     auto right = io::getOptionalChar(is, '}');
     if (right)
       return is;
-    
+
     if (first)
       first = false;
     else
@@ -392,7 +392,7 @@ parseRon(std::istream& is, T* v, Tuple& refs, std::index_sequence<Index...>) {
         false,
         1);
     size_t nameLast = nameFirst + name.size();
-    
+
     ron::parsing::skip(is);
     io::getChar(is, '=');
 

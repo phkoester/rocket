@@ -7,9 +7,9 @@
 
 #include "terminal.h"
 
+#include "Guard.h"
 #include "assert.h"
 #include "io.h"
-#include "scoped.h"
 
 #include <format>
 #include <termios.h>
@@ -86,7 +86,7 @@ Ansi::request(ostream& os, string_view sequence) const {
 
   newT.c_lflag &= ~(ECHO | ICANON);
   tcsetattr(STDIN_FILENO, TCSANOW, &newT);
-  ROCKET_SCOPED([&] { tcsetattr(STDIN_FILENO, TCSANOW, &oldT); });
+  ROCKET_GUARD([&] { tcsetattr(STDIN_FILENO, TCSANOW, &oldT); });
 
   // Send the ANSI code requesting cursor position
 
@@ -144,7 +144,7 @@ position(ostream& os) {
 
   newT.c_lflag &= ~(ECHO | ICANON);
   tcsetattr(STDIN_FILENO, TCSANOW, &newT);
-  ROCKET_SCOPED([&] { tcsetattr(STDIN_FILENO, TCSANOW, &oldT); });
+  ROCKET_GUARD([&] { tcsetattr(STDIN_FILENO, TCSANOW, &oldT); });
 
   // Send the ANSI code requesting cursor position
 

@@ -1,26 +1,26 @@
 /*
- * test-scoped.cc
+ * test-Guard.cc
  */
 
 #include "rocket-gtest/testing.h"
 
-#include "rocket/scoped.h"
+#include "rocket/Guard.h"
 
 // `TEST` ---------------------------------------------------------------------------------------------------
 
-TEST(scope, ROCKET_SCOPED) {
+TEST(Guard, ROCKET_GUARD) {
   bool flag = true;
   {
-    ROCKET_SCOPED([&] { flag = false; });
+    ROCKET_GUARD([&] { flag = false; });
     EXPECT_TRUE(flag);
   }
   EXPECT_FALSE(flag);
 }
 
-TEST(scope, ROCKET_SCOPED_VALUE) {
+TEST(Guard, ROCKET_VALUE_GUARD) {
   int n = 1;
   {
-    ROCKET_SCOPED_VALUE(n, 2);
+    ROCKET_VALUE_GUARD(n, 2);
     EXPECT_EQ(n, 2);
   }
   EXPECT_EQ(n, 1);

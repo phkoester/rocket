@@ -12,7 +12,9 @@
 #ifndef ROCKET_LOG_H
 #define ROCKET_LOG_H
 
+#ifdef NDEBUG
 #include "basic.h" // `rocket::nop()`
+#endif
 #include "cl.h"
 #include "enum-decl.h"
 
@@ -51,7 +53,7 @@ namespace rocket::log {
 
 /// @cond undocumented
 
-#define ROCKET_LOG_ID__(id) BOOST_PP_SEQ_CAT((rocketLog)(id)(__))
+#define ROCKET_LOG_ID__(id) BOOST_PP_SEQ_CAT((_rocketLog)(id))
 
 /// @endcond
 

@@ -1,7 +1,7 @@
 /**
  * @file codec.h
  *
- * Declarations for encoding/decoding C++ objects. 
+ * Declarations for encoding/decoding C++ objects.
  *
  * @attention This file must be included **after** all codec-related declarations and **before** all
  * codec-related definitions.
@@ -18,10 +18,10 @@
 
 // Nothing with a codec-related function overload may be included here!
 
+#include "Guard.h"
 #include "S.h"
 #include "except.h"
 #include "io.h"
-#include "scoped.h"
 
 /// @cond undocumented
 #define ROCKET_CODEC_H
@@ -145,7 +145,7 @@ bool getBool(std::istream& is);
  * Reads an integer value from the input stream @p is.
  *
  * Signed integer values must conform to the following grammar:
- * 
+ *
  * ```
  * SignedInteger = ["+" | "-"] Digit (Digit | "'")*
  *
@@ -191,7 +191,7 @@ getInteger(std::istream& is) {
   // Read more digits and apostrophes, if any
   s = io::getWhile(is, Symbols::Chars::DigitsApostrophe, 0);
   input.append(s);
-  
+
   // Copy input, remove apostrophes
   auto localInput = input;
   localInput.erase(std::remove(localInput.begin(), localInput.end(), '\''), localInput.end());
@@ -268,7 +268,7 @@ getFloatingPoint(std::istream& is, int precision = DEFAULT_PRECISION) {
     input.push_back(*c);
     std::string s = io::getWhile(is, Symbols::Chars::DigitsApostrophe, 0);
     input.append(s);
-  } 
+  }
 
   // Read dot, if any
   c = io::getOptionalChar(is, '.');
@@ -281,14 +281,14 @@ getFloatingPoint(std::istream& is, int precision = DEFAULT_PRECISION) {
       input.push_back(*c);
       std::string s = io::getWhile(is, Symbols::Chars::DigitsApostrophe, 0);
       input.append(s);
-    } 
+    }
   }
 
   // Read exponential part, if any
   c = io::getOptionalChar(is, Symbols::Chars::E);
   if (c) {
     input.push_back(*c);
-    
+
     // Read sign, if any
     auto c = io::getOptionalChar(is, Symbols::Chars::PlusMinus); // cppcheck-suppress shadowVariable
     if (c)
@@ -298,7 +298,7 @@ getFloatingPoint(std::istream& is, int precision = DEFAULT_PRECISION) {
     std::string s = io::getWhile(is, Symbols::Chars::Digits, 1);
     input.append(s);
   }
-  
+
   // Because each component is optional but the entire input may not be empty, read one character if nothing
   // has been read up to this point
   if (input.empty()) {
@@ -308,7 +308,7 @@ getFloatingPoint(std::istream& is, int precision = DEFAULT_PRECISION) {
     io::check(is);
     input.push_back(c);
   }
-  
+
   // Copy input, remove apostrophes
   auto localInput = input;
   localInput.erase(std::remove(localInput.begin(), localInput.end(), '\''), localInput.end());
@@ -388,7 +388,7 @@ parseMap(std::istream& is, Map& v) {
     auto right = io::getOptionalChar(is, '}');
     if (right)
       return is;
-    
+
     if (first)
       first = false;
     else
@@ -429,7 +429,7 @@ parseSet(std::istream& is, Set& v) {
     auto right = io::getOptionalChar(is, '}');
     if (right)
       return is;
-    
+
     if (first)
       first = false;
     else
@@ -469,7 +469,7 @@ std::istream&
 parseTuple(std::istream& is, Tuple& v, std::index_sequence<Index...>) {
   skip(is, true);
   io::getChar(is, '(');
-  
+
   (..., internal::parseTupleImpl(is, std::get<Index>(v), Index));
 
   skip(is, true);
@@ -511,7 +511,7 @@ template<typename Variant>
 std::istream&
 parseVariant(std::istream& is, Variant& v) {
   skip(is, true);
-  
+
   size_t inputPos = io::tellg(is);
   size_t index = getInteger<size_t>(is);
   size_t indexFirst = inputPos, indexLast = io::tellg(is);
@@ -544,7 +544,7 @@ parseVector(std::istream& is, Vector& v) {
     auto right = io::getOptionalChar(is, ']');
     if (right)
       return is;
-    
+
     if (first)
       first = false;
     else
@@ -616,7 +616,7 @@ void pop();
  */
 #define ROCKET_CODEC_RON_PRINT_PARAMS(params) \
     ::rocket::codec::ron::printing::internal::push(params); \
-    ROCKET_SCOPED([] { ::rocket::codec::ron::printing::internal::pop(); })
+    ROCKET_GUARD([] { ::rocket::codec::ron::printing::internal::pop(); })
 
 /**
  * If appropriate, increases the print level and decreases it upon scope exit.
@@ -625,7 +625,7 @@ void pop();
  */
 #define ROCKET_CODEC_RON_PRINT_CHILDREN() \
     ::rocket::codec::ron::printing::internal::incLevel(); \
-    ROCKET_SCOPED([] { ::rocket::codec::ron::printing::internal::decLevel(); })
+    ROCKET_GUARD([] { ::rocket::codec::ron::printing::internal::decLevel(); })
 
 // Functions ................................................................................................
 
@@ -795,13 +795,13 @@ parse(std::string_view s) {
   auto is = io::is(s);
   T v;
   parseRon(is, v);
-  
+
   parsing::skip(is, false);
   if (not is.eof()) {
     throw except::ParseFailure<char>(
       is, 0, { 0, s.size() }, except::message::cannotParseAs(s, Type::of<T>()));
   }
-  
+
   return v;
 }
 

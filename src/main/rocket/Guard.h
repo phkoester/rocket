@@ -1,7 +1,7 @@
 /**
- * @file scoped.h
+ * @file Guard.h
  *
- * Managed objects, utilizing C++ constructors and destructors.
+ * Guards, utilizing C++ constructors and destructors.
  */
 
 #pragma once
@@ -10,29 +10,29 @@
 
 #include <functional>
 
-namespace rocket::scoped {
+namespace rocket::guard {
 
-// `Scoped` -------------------------------------------------------------------------------------------------
+// `Guard` --------------------------------------------------------------------------------------------------
 
 /**
  * An object that executes a function in its destructor, i.e. when it goes out of scope.
  *
- * Use the #ROCKET_SCOPED macro for your convenience.
+ * Use the #ROCKET_GUARD macro for your convenience.
  */
-struct Scoped {
+struct Guard {
   /**
    * @ctor
    *
    * @param f the function to execute upon scope exit
    */
-  inline explicit Scoped(std::function<void()>&& f) : f_(std::move(f)) {}
+  inline explicit Guard(std::function<void()>&& f) : f_(std::move(f)) {}
 
   /**
    * @dtor
    *
    * This destructor executes the function `f` that was passed to the constructor.
    */
-  inline ~Scoped() noexcept { f_(); }
+  inline ~Guard() noexcept { f_(); }
 
 private:
 
@@ -40,31 +40,31 @@ private:
 };
 
 /**
- * Makes a #rocket::scoped::Scoped instance implicitly.
+ * Makes a #rocket::guard::Guard instance implicitly.
  *
  * @param f the function to execute upon scope exit
  */
-#define ROCKET_SCOPED(f) ::rocket::scoped::Scoped ROCKET_ID(f)
+#define ROCKET_GUARD(f) ::rocket::guard::Guard ROCKET_ID(f)
 
-// `ScopedValue` --------------------------------------------------------------------------------------------
+// `ValueGuard` ---------------------------------------------------------------------------------------------
 
 /**
  * An object that immediately assigns a new value to a variable and restores the old value in its destructor,
  * i.e. when it goes out of scope.
  *
- * Use the #ROCKET_SCOPED_VALUE macro for your convenience.
+ * Use the #ROCKET_VALUE_GUARD macro for your convenience.
  *
  * @tparam T the type of the value
  */
 template<typename T>
-struct ScopedValue {
+struct ValueGuard {
   /**
    * @ctor
    *
    * @param ref a reference to the variable that is to be assigned
    * @param newValue the new value to assign immediately
    */
-  inline ScopedValue(T& ref, T&& newValue) :
+  inline ValueGuard(T& ref, T&& newValue) :
       ref_(ref),
       oldValue_(ref) {
     ref = std::forward<T>(newValue);
@@ -75,7 +75,7 @@ struct ScopedValue {
    *
    * This destructor reassigns the old value to `ref` that was passed to the constructor.
    */
-  inline ~ScopedValue() noexcept { ref_ = oldValue_; }
+  inline ~ValueGuard() noexcept { ref_ = oldValue_; }
 
 private:
 
@@ -84,13 +84,13 @@ private:
 };
 
 /**
- * Makes a #rocket::scoped::ScopedValue instance implicitly.
+ * Makes a #rocket::guard::ValueGuard instance implicitly.
  *
  * @param ref a reference to the variable that is to be assigned
  * @param newValue the new value to assign immediately
  */
-#define ROCKET_SCOPED_VALUE(ref, newValue) ::rocket::scoped::ScopedValue ROCKET_ID(ref, newValue)
+#define ROCKET_VALUE_GUARD(ref, newValue) ::rocket::guard::ValueGuard ROCKET_ID(ref, newValue)
 
-} // namespace rocket::scoped
+} // namespace rocket::guard
 
 // EOF

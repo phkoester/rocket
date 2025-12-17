@@ -18,7 +18,7 @@
 /**
  * Generates a unique identifier.
  */
-#define ROCKET_ID BOOST_PP_SEQ_CAT((rocketId)(__LINE__)(__))
+#define ROCKET_ID BOOST_PP_SEQ_CAT((_rocketId)(__LINE__))
 
 /**
  * This macro executes a given function as a static initializer.
@@ -34,10 +34,10 @@
  */
 #define ROCKET_INIT(f) \
     namespace { \
-      struct BOOST_PP_SEQ_CAT((RocketInit)(__LINE__)(__)) { \
-        BOOST_PP_SEQ_CAT((RocketInit)(__LINE__)(__))() { f(); } \
+      struct BOOST_PP_SEQ_CAT((_RocketInit)(__LINE__)) { \
+        BOOST_PP_SEQ_CAT((_RocketInit)(__LINE__))() { f(); } \
       }; \
-      BOOST_PP_SEQ_CAT((RocketInit)(__LINE__)(__)) BOOST_PP_SEQ_CAT((instance)(__LINE__)(__)); \
+      BOOST_PP_SEQ_CAT((_RocketInit)(__LINE__)) BOOST_PP_SEQ_CAT((_instance)(__LINE__)); \
     }
 
 // EOF
