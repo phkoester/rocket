@@ -27,7 +27,7 @@ TEST(boost_spirit_x3, parseComplex) {
   };
 
   Attr attr;
-  
+
   EXPECT_TRUE(parse("(1.1,-2.2)", attr));
   EXPECT_EQ(attr, Attr(1.1, -2.2));
 

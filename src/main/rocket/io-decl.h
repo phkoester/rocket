@@ -18,8 +18,8 @@ namespace rocket::io {
 // Constants ------------------------------------------------------------------------------------------------
 
 /**
-  * The default buffer size in bytes.
-  */
+ * The default buffer size in bytes.
+ */
 static constexpr size_t DEFAULT_BUFFER_SIZE = 64 * 1'024; // 64 KiB
 /**
   * The minimum buffer size in bytes.

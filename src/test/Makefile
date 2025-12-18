@@ -148,8 +148,8 @@ include $(GAIA_DIR)/src/main/make/test-executable.mk
 
 # `rocket-gtest` --------------------------------------------------------------------------------------------
 
-NAME        := test-rocket-gtest-match
-CC_FILES    := test/rocket-gtest/test-match.cc
+NAME        := test-rocket-gtest-matcher
+CC_FILES    := test/rocket-gtest/test-matcher.cc
 SHARED_LIBS := $(call shared-lib-name,rocket,$(ROCKET_VERSION))
 include $(GAIA_DIR)/src/main/make/test-executable.mk
 

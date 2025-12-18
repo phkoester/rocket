@@ -6,11 +6,11 @@
 
 #include "rocket/except.h"
 
-#include "rocket-gtest/match.h"
+#include "rocket-gtest/matcher.h"
 
 using namespace rocket;
 using namespace rocket::except;
-using namespace rocket::gtest::match;
+using namespace rocket::gtest::matcher;
 using namespace std;
 using namespace testing;
 

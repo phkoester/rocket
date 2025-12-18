@@ -27,7 +27,7 @@
 
 // Members ..................................................................................................
 
-#define ROCKET_REFLECT_MEMBERS_STRUCT__(name) BOOST_PP_SEQ_CAT((_RocketReflect)(name))
+#define ROCKET_REFLECT_MEMBERS_STRUCT__(name) BOOST_PP_SEQ_CAT((RocketReflect)(name)(__))
 
 #define ROCKET_REFLECT_MEMBERS_MAKE_REFS_IMPL__(r, data, elem) \
     (::rocket::reflect::internal::MemberRef(BOOST_PP_STRINGIZE(elem), &data::elem))

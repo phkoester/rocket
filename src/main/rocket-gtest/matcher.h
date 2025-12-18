@@ -1,5 +1,5 @@
 /**
- * @file match.h
+ * @file matcher.h
  *
  * A collection of GoogleTest matchers.
  */
@@ -13,7 +13,7 @@
 
 #include <regex>
 
-namespace rocket::gtest::match {
+namespace rocket::gtest::matcher {
 
 // Internal -------------------------------------------------------------------------------------------------
 
@@ -323,6 +323,6 @@ throwsParseFailure(size_t position, const text::Ranges& ranges, WhatMatcher&& wh
       std::forward<WhatMatcher>(whatMatcher));
 }
 
-} // namespace rocket::gtest::match
+} // namespace rocket::gtest::matcher
 
 // EOF

@@ -12,14 +12,14 @@
 #include "rocket/Guard.h"
 #include "rocket/io.h"
 
-#include "rocket-gtest/match.h"
+#include "rocket-gtest/matcher.h"
 
 #include <chrono>
 #include <format>
 #include <regex>
 
 using namespace rocket;
-using namespace rocket::gtest::match;
+using namespace rocket::gtest::matcher;
 using namespace std;
 using namespace testing;
 
@@ -213,6 +213,7 @@ TEST(std, istream_int) {
   {
     long l = numeric_limits<int>::max() + 1L;
     ostringstream os;
+    os.imbue(locale::classic());
     os << l;
     auto is = io::is(os.str());
     type v = 0;

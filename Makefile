@@ -10,8 +10,8 @@ export SYSTEM_INCLUDE_DIRS := \
     $(GAIA_GTEST_DIR)/googlemock/include \
     $(GAIA_GTEST_DIR)/googletest/include
 
-# `build` must be the first target and build everything, including tests
-build: buildTest
+# `build` must be the first target and build everything, including benches and tests
+build: buildBench buildTest
 
 include $(GAIA_DIR)/src/main/make/Makefile.mk
 
@@ -20,7 +20,19 @@ ifeq ($(ROCKET_VERSION),)
   $(error Cannot set `ROCKET_VERSION`)
 endif
 
-all: check doc test
+all: check doc test bench
+
+bench: buildMain
+	@$(call print-info,$@)
+	@+$(MAKE) $(MAKE_FLAGS) -f src/bench/Makefile bench
+
+benches: buildMain
+	@$(call print-info,$@)
+	@+$(MAKE) $(MAKE_FLAGS) -f src/bench/Makefile benches
+
+buildBench: buildMain
+	@$(call print-info,$@)
+	@+$(MAKE) $(MAKE_FLAGS) -f src/bench/Makefile build
 
 buildMain:
 	@$(call print-info,$@)

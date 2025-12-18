@@ -9,6 +9,8 @@
 #include "codec-global.h"
 #include "unicode-decl.h"
 
+#include "Guard.h"
+
 #include <optional>
 #include <sstream>
 
@@ -54,7 +56,7 @@ struct Raw {
    * @return the encapsulated value
    */
   const T& operator*() const { return v_; }
-  
+
   /**
    * Returns the encapsulated value.
    *
@@ -150,6 +152,8 @@ struct StringBuffer {
   template<typename T>
   StringBuffer&
   print(Raw<T>&& v) {
+    auto oldLocale = os_.imbue(std::locale::classic());
+    ROCKET_GUARD([&] { os_.imbue(oldLocale); });
     return stream(v.get());
   }
 

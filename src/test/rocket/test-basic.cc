@@ -44,7 +44,7 @@ TEST(basic, opInput_int128_t) {
   using type = int128_t;
 
   type v;
-  
+
   {
     auto is = io::is("-170141183460469231731687303715884105729"); // min - 1
     is >> v;
@@ -74,9 +74,9 @@ TEST(basic, opInput_int128_t) {
 
 TEST(basic, opOutput_int128_t) {
   using type = int128_t;
-  
+
   type v;
-  
+
   v = numeric_limits<int128_t>::min(); // -2^127
   EXPECT_EQ(S << raw(v), "-170141183460469231731687303715884105728");
   v = numeric_limits<int128_t>::max(); // 2^127 - 1
@@ -87,7 +87,7 @@ TEST(basic, opInput_uint128_t) {
   using type = uint128_t;
 
   type v;
-  
+
   {
     auto is = io::is();
     is >> v;
@@ -161,7 +161,7 @@ TEST(basic, opOutput_uint128) {
   using type = uint128_t;
 
   type v;
-  
+
   v = numeric_limits<type>::min(); // 0
   EXPECT_EQ(S << raw(v), "0");
 

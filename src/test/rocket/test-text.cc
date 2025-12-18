@@ -16,14 +16,14 @@
 #include "rocket/unicode.h"
 #include "rocket/reflect.h"
 
-#include "rocket-gtest/match.h"
-#include "rocket-gtest/print.h"
+#include "rocket-gtest/matcher.h"
+#include "rocket-gtest/PrintTo.h"
 
 #include <fstream>
 
 using namespace rocket;
 using namespace rocket::gtest;
-using namespace rocket::gtest::match;
+using namespace rocket::gtest::matcher;
 using namespace rocket::text;
 using namespace std;
 using namespace testing;
@@ -94,7 +94,7 @@ TEST(text, locations) {
   // Test empty input stream
   {
     auto is = io::is();
-    Position pos { .type=Position::note, .position=0, .message="Oops" }; 
+    Position pos { .type=Position::note, .position=0, .message="Oops" };
     auto result = locations(is, { pos });
     EXPECT_EQ(result.params.source, "(input)");
     EXPECT_EQ(result.locations.size(), 1);
@@ -167,7 +167,7 @@ TEST(text, locations) {
   {
     string s = "ä€\n€";
     auto is = io::is(s);
-    
+
     {
       Position pos { .type=Position::error, .position=2, .message="Oops" };
       auto result = locations(io::resetg(is), { pos }, { .setLineString=true });
@@ -207,7 +207,7 @@ TEST(text, locations) {
         "blödsinnig. Der Mensch muß seinen Schlaf haben. Andere Reisende leben wie Haremsfrauen. Wenn ich zum Beispiel",
         "Oops",
         nullopt);
-    
+
     string_view line(content.begin() + loc.lineRange.lower, content.begin() + *loc.lineRange.upper);
     EXPECT_EQ(line, loc.lineString);
   }
@@ -216,7 +216,7 @@ TEST(text, locations) {
   {
     // 🧑‍🌾: U+1F9D1, U+200D, U+1F33E, 4 + 3 + 4 = 11 bytes
     auto is = io::is("🧑‍🌾");
-    
+
     // No grapheme boundary at position 4
     EXPECT_THAT(
       ([&] {
@@ -224,7 +224,7 @@ TEST(text, locations) {
         locations(io::resetg(is), { pos }, {});
       }),
       ThrowsMessage<except::InvalidState>(HasSubstr("Position 4 not found in input stream")));
-    
+
     // No grapheme boundary at position 7
     EXPECT_THAT(
       ([&] {

@@ -1,15 +1,15 @@
 /*
- * test-match.cc
+ * test-matcher.cc
  */
 
 #include "rocket-gtest/testing.h"
 
 #include "rocket/io.h"
 
-#include "rocket-gtest/match.h"
+#include "rocket-gtest/matcher.h"
 
 using namespace rocket;
-using namespace rocket::gtest::match;
+using namespace rocket::gtest::matcher;
 using namespace std;
 using namespace testing;
 

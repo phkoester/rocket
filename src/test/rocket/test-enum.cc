@@ -11,10 +11,10 @@
 
 #include "rocket/enum.h"
 
-#include "rocket-gtest/match.h"
+#include "rocket-gtest/matcher.h"
 
 using namespace rocket;
-using namespace rocket::gtest::match;
+using namespace rocket::gtest::matcher;
 using namespace std;
 using namespace testing;
 
@@ -115,7 +115,7 @@ TEST(enum, opOutput_MyEnum) {
     os << static_cast<type>(1);
     EXPECT_EQ(os.str(), "fröber");
   }
-  
+
   {
     ostringstream os;
     os << static_cast<type>(5);
@@ -188,7 +188,7 @@ TEST(enum, printRon_MyEnum) {
     printRon(os, static_cast<type>(1));
     EXPECT_EQ(os.str(), "\"fröber\"");
   }
-  
+
   {
     ostringstream os;
     printRon(os, pörkerer);

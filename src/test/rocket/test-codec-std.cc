@@ -9,10 +9,10 @@
 
 #include "rocket/S.h"
 
-#include "rocket-gtest/match.h"
+#include "rocket-gtest/matcher.h"
 
 using namespace rocket;
-using namespace rocket::gtest::match;
+using namespace rocket::gtest::matcher;
 using namespace std;
 using namespace testing;
 
@@ -203,14 +203,14 @@ TEST(codec_std, parseRon_u32string) {
 
 TEST(codec_std, printRon_pair_string_view) {
   using type = pair<int, optional<string_view>>;
-  
+
   EXPECT_EQ(S << type(), "(0, null)");
   EXPECT_EQ(S << type(12, "hi"), "(12, \"hi\")");
 }
 
 TEST(codec_std, printRon_pair_u32string_view) {
   using type = pair<int, optional<u32string_view>>;
-  
+
   EXPECT_EQ(S << type(), "(0, null)");
   EXPECT_EQ(S << type(12, U"hi"), "(12, \"hi\")");
 }
@@ -227,7 +227,7 @@ TEST(codec_std, parseRon_tuple) {
 TEST(codec_std, printRon_tuple) {
   using Tuple = tuple<int, double, bool>;
   using Vector = vector<optional<Tuple>>;
-  
+
   EXPECT_EQ(S << Vector(), "[]");
   EXPECT_EQ(
       (S << Vector{ make_tuple(2, 3.0, false), nullopt, make_tuple(4, 2.5, true) }),

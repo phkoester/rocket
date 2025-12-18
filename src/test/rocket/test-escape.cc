@@ -13,13 +13,13 @@
 
 #include "rocket/escape.h"
 
-#include "rocket-gtest/match.h"
-#include "rocket-gtest/print.h"
+#include "rocket-gtest/matcher.h"
+#include "rocket-gtest/PrintTo.h"
 
 using namespace rocket;
 using namespace rocket::escape;
 using namespace rocket::gtest;
-using namespace rocket::gtest::match;
+using namespace rocket::gtest::matcher;
 using namespace std;
 using namespace testing;
 

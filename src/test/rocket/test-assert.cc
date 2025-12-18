@@ -40,7 +40,7 @@ TEST(assert, ROCKET_ASSERT_NDEBUG) {
 
 TEST(assert, ROCKET_CHECK) {
   char c = 'a';
-  
+
   EXPECT_THAT(
       [&] { ROCKET_CHECK(c, c == 'b'); },
       ThrowsMessage<except::InvalidArgument>(HasSubstr("Parameter `c`: Check `c == 'b'` failed")));

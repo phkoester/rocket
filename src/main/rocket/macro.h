@@ -34,10 +34,10 @@
  */
 #define ROCKET_INIT(f) \
     namespace { \
-      struct BOOST_PP_SEQ_CAT((_RocketInit)(__LINE__)) { \
-        BOOST_PP_SEQ_CAT((_RocketInit)(__LINE__))() { f(); } \
+      struct BOOST_PP_SEQ_CAT((RocketInit)(__LINE__)(__)) { \
+        BOOST_PP_SEQ_CAT((RocketInit)(__LINE__)(__))() { f(); } \
       }; \
-      BOOST_PP_SEQ_CAT((_RocketInit)(__LINE__)) BOOST_PP_SEQ_CAT((_instance)(__LINE__)); \
+      BOOST_PP_SEQ_CAT((RocketInit)(__LINE__)(__)) BOOST_PP_SEQ_CAT((rocketInit)(__LINE__)(__)); \
     }
 
 // EOF

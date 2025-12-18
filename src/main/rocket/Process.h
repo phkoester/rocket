@@ -122,7 +122,26 @@ struct Process {
    *    recommended to set this to `true` for faster process tear-down
    */
   void init(
-      int argc, char** argv, std::optional<std::string_view> name = std::nullopt, bool quickExit = true);
+      int argc,
+      char** argv,
+      std::optional<std::string_view> name = std::nullopt,
+      std::optional<std::locale> locale = std::nullopt,
+      bool quickExit = true);
+
+  /**
+   * Returns the classic locale. This is the locale as returned by `std::locale::classic`, with added support
+   * for `char32_t`.
+   *
+   * @return a locale
+   */
+  const std::locale& classicLocale() const { return classicLocale_; }
+
+  /**
+   * Returns the locale this process picked in #init, with added support for `char32_t`.
+   *
+   * @return a locale
+   */
+  const std::locale& initLocale() const { return initLocale_; }
 
   /**
    * Returns the name of the process.
@@ -146,10 +165,18 @@ struct Process {
   const std::string& invocationShortName() const;
 
   /**
+   * Returns the system locale. This is the locale that was returned by the first call of
+   * `std::locale::global`.
+   *
+   * @return a locale
+   */
+  const std::locale& systemLocale() const { return systemLocale_; }
+
+  /**
    * Outputs a warning.
    *
    * This function may be called even if the process isn't initialized yet.
-   
+
    * @param os the output stream, usually `std::cerr`
    * @param msg the warning message
    */
@@ -164,7 +191,10 @@ private:
 
   std::vector<std::string> args_;
   bool inited_ = false;
-  std::locale oldLocale_;
+
+  std::locale classicLocale_;
+  std::locale initLocale_;
+  std::locale systemLocale_;
 };
 
 /**

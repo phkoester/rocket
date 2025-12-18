@@ -10,11 +10,11 @@
 #include "rocket/codec.h"
 #include "rocket/io.h"
 
-#include "rocket-gtest/match.h"
+#include "rocket-gtest/matcher.h"
 
 using namespace rocket;
 using namespace rocket::codec;
-using namespace rocket::gtest::match;
+using namespace rocket::gtest::matcher;
 using namespace std;
 using namespace testing;
 

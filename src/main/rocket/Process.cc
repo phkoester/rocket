@@ -89,18 +89,21 @@ Process::exit(int status) const {
 }
 
 void
-Process::init(int argc, char** argv, optional<string_view> name, bool quickExit) {
+Process::init(int argc, char** argv, optional<string_view> name, optional<locale> locale, bool quickExit) {
   ROCKET_ASSERT(not inited_, "Process already initialized");
 
   // Set the C locale from the environment
 
-  setlocale(LC_ALL, "");
+  string localeName = locale ? locale->name() : "";
+  setlocale(LC_ALL, localeName.c_str());
 
   // Set the C++ locale from the environment, add `char32_t` support to STL streams
 
-  locale newLocale = locale("") <<
+  classicLocale_ = std::locale::classic() <<
       new ctype<char32_t> << new numpunct<char32_t> << new num_get<char32_t> << new num_put<char32_t>;
-  oldLocale_ = locale::global(newLocale);
+  initLocale_ = std::locale(localeName) <<
+      new ctype<char32_t> << new numpunct<char32_t> << new num_get<char32_t> << new num_put<char32_t>;
+  systemLocale_ = locale::global(initLocale_);
 
   // Initialize members
 

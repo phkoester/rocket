@@ -8,40 +8,18 @@
 #include "rocket/codec-std.h"
 
 #include "rocket/io.h"
-#include "rocket/system.h"
 
-#include "rocket-gtest/match.h"
+#include "rocket-gtest/matcher.h"
 
 using namespace rocket;
-using namespace rocket::gtest::match;
+using namespace rocket::gtest::matcher;
 using namespace rocket::io;
 using namespace std;
 using namespace testing;
 
-// Constants ------------------------------------------------------------------------------------------------
-
-constexpr size_t LARGE_STRING_SIZE = 16 * 1'204 * 1'024; // 16 MiB
-
 // `TEST` ---------------------------------------------------------------------------------------------------
 
 // `Buffer` .................................................................................................
-
-/**
- * With build type `release`, this test should be significantly faster than `io.is`.
- */
-TEST(io, Buffer) {
-  string s = string(LARGE_STRING_SIZE, ' ');
-  EXPECT_EQ(s.size(), LARGE_STRING_SIZE);
-  auto is = io::is(s);
-  Buffer buf(is);
-  while (true) {
-    auto got = buf.get();
-    if (not got)
-      break;
-    EXPECT_EQ(*got, byte(' ')); // Slow with build type 'debug'
-  }
-  EXPECT_EQ(buf.position(), LARGE_STRING_SIZE);
-}
 
 TEST(io, Buffer_getCodePoint) {
   string s = "ä€";
@@ -286,24 +264,6 @@ TEST(io, getWhile) {
     EXPECT_EQ(getWhile(is, { 'x', 'y' }, 2), "yx");
     EXPECT_ISTREAM(is, false, false, 2);
   }
-}
-
-/**
- * With build type `release`, this test should be significantly slower than `io.Buffer`.
- */
-TEST(io, is) {
-  string s = string(LARGE_STRING_SIZE, ' ');
-  EXPECT_EQ(s.size(), LARGE_STRING_SIZE);
-  auto is = io::is(s);
-  size_t n = 0;
-  while (true) {
-    char c = io::getChar(is);
-    if (is.eof())
-      break;
-    EXPECT_EQ(c, ' ');
-    ++n;
-  }
-  EXPECT_EQ(n, LARGE_STRING_SIZE);
 }
 
 TEST(io, isatty) {

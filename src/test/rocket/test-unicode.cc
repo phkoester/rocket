@@ -14,12 +14,12 @@
 #include "rocket/unicode.h"
 #include "rocket/internal/unicode-internal.h"
 
-#include "rocket-gtest/match.h"
+#include "rocket-gtest/matcher.h"
 
 #include <random>
 
 using namespace rocket;
-using namespace rocket::gtest::match;
+using namespace rocket::gtest::matcher;
 using namespace rocket::unicode;
 using namespace rocket::unicode::internal;
 using namespace std;

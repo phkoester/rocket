@@ -14,16 +14,16 @@ GTEST_API_ int
 main(int argc, char** argv) {
   try {
     testing::InitGoogleMock(&argc, argv);
-    process.init(argc, argv);
-    
+    process.init(argc, argv, nullopt, locale("en_US.UTF-8"));
+
     bool help = false;
-    
+
     cl::OptionGroup general("General control");
     cl::CommandLineParams params { .usages={ "[OPTION]..." }, .otherOutput=true };
     cl::CommandLine cl({
       cl::Option::of(&general, "help", 'h', nullopt, "display this help text and exit", help)
     }, params);
-    
+
     try {
       cl.parse(process.args());
       if (help) {
@@ -32,7 +32,7 @@ main(int argc, char** argv) {
     } catch (const exception& ex) {
       cl.handleException(ex);
     }
-    
+
     int status = RUN_ALL_TESTS();
     process.exit(status);
   } catch (...) {

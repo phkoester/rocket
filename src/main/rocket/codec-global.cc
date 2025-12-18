@@ -30,6 +30,7 @@ template<typename I> requires Integer<I>
 ostream&
 printInteger(ostream& os, I v) {
   ostringstream buf;
+  buf.imbue(locale::classic());
   buf << v;
   string s = buf.str();
 
@@ -61,6 +62,7 @@ printFloatingPoint(ostream& os, F v, int precision) {
     return os << (issignaling(v) ? Symbols::String::Snan : Symbols::String::Qnan);
 
   ostringstream buf;
+  buf.imbue(locale::classic());
   buf << setprecision(precision) << v;
   string s = buf.str();
 

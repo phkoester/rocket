@@ -1,5 +1,5 @@
 /**
- * @file print.h
+ * @file PrintTo.h
  *
  * A collection of GoogleTest printers.
  */

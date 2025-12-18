@@ -10,10 +10,10 @@
 #include "rocket/S.h"
 #include "rocket/reflect.h"
 
-#include "rocket-gtest/match.h"
+#include "rocket-gtest/matcher.h"
 
 using namespace rocket;
-using namespace rocket::gtest::match;
+using namespace rocket::gtest::matcher;
 using namespace rocket::reflect;
 using namespace std;
 using namespace testing;
@@ -135,7 +135,7 @@ TEST(reflect, memberRef) {
   EXPECT_EQ(m1.b, "here");
   get<1>(MyStruct::index()).get(m1) = "everywhere";
   EXPECT_EQ(m1.b, "everywhere");
-  
+
   EXPECT_EQ(m1.getC(), true);
   get<2>(MyStruct::index()).get(m1) = false;
   EXPECT_EQ(m1.getC(), false);

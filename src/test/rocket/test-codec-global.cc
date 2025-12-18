@@ -10,10 +10,10 @@
 #include "rocket/codec.h"
 #include "rocket/io.h"
 
-#include "rocket-gtest/match.h"
+#include "rocket-gtest/matcher.h"
 
 using namespace rocket;
-using namespace rocket::gtest::match;
+using namespace rocket::gtest::matcher;
 using namespace std;
 using namespace testing;
 
@@ -828,7 +828,7 @@ TEST(codec_global, printRon_float) {
 
 TEST(codec_global, printRon_double) {
   using type = double;
-  
+
   EXPECT_THAT(S << 123456.78901, StartsWith("123'456.7890"));
   EXPECT_THAT(S << -123456.78901, StartsWith("-123'456.7890"));
   EXPECT_EQ(S << 1.0 / 3, "0.33333333333333331483");
