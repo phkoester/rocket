@@ -82,6 +82,14 @@ struct Process {
   const std::vector<std::string>& args() const { return args_; }
 
   /**
+   * Returns the classic locale. This is the locale as returned by `std::locale::classic`, with added support
+   * for `char32_t`.
+   *
+   * @return a locale
+   */
+  const std::locale& classicLocale() const { return classicLocale_; }
+
+   /**
    * Registers a function to be called upon exit.
    *
    * @param f the function to register
@@ -127,14 +135,6 @@ struct Process {
       std::optional<std::string_view> name = std::nullopt,
       std::optional<std::locale> locale = std::nullopt,
       bool quickExit = true);
-
-  /**
-   * Returns the classic locale. This is the locale as returned by `std::locale::classic`, with added support
-   * for `char32_t`.
-   *
-   * @return a locale
-   */
-  const std::locale& classicLocale() const { return classicLocale_; }
 
   /**
    * Returns the locale this process picked in #init, with added support for `char32_t`.
