@@ -14,7 +14,7 @@ GTEST_API_ int
 main(int argc, char** argv) {
   try {
     testing::InitGoogleMock(&argc, argv);
-    process.init(argc, argv, nullopt, locale("en_US.UTF-8"));
+    process.init(argc, argv, nullopt, process.codeLocale());
 
     bool help = false;
 

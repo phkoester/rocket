@@ -9,13 +9,11 @@
 #include "rocket/codec-std-decl.h"
 #include "rocket/codec-std.h"
 
-#include "rocket/Guard.h"
 #include "rocket/io.h"
 
 #include "rocket-gtest/matcher.h"
 
 #include <chrono>
-#include <format>
 #include <regex>
 
 using namespace rocket;
@@ -31,31 +29,21 @@ TEST(std, chrono) {
     chrono::time_point tp = time_point_cast<chrono::microseconds>(chrono::system_clock::now());
     // const auto zt { chrono::zoned_time{ chrono::current_zone(), tp } };
     chrono::zoned_time zt { chrono::current_zone(), tp };
-    string s = format("{:%FT%T%Ez}", zt);
+    string s = std::format("{:%FT%T%Ez}", zt);
     EXPECT_THAT(s, matchesRegex("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{6}[+-]\\d{2}:\\d{2}"));
   }
 
   {
     // UTC time in ISO-8601, with microseconds
     chrono::time_point tp = time_point_cast<chrono::microseconds>(chrono::utc_clock::now());
-    string s = format("{:%FT%TZ}", tp);
+    string s = std::format("{:%FT%TZ}", tp);
     EXPECT_THAT(s, matchesRegex("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{6}Z"));
   }
 }
 
-/**
- * This test might require configuring the `en_US.UTF8` locale. On Ubuntu, this can be done with
- *
- * ```bash
- * sudo locale-gen en_US.UTF-8
- * sudo dpkg-reconfigure locales
- * ```
- */
-TEST(std, formatEnUsUtf8) {
-  locale l = locale::global(locale("en_US.UTF8"));
-  ROCKET_GUARD([&] { locale::global(l); });
-  EXPECT_EQ(format("{:L}", 123'456), "123,456");
-  EXPECT_EQ(format("{:L}", 123456.789012), "123,456.789012");
+TEST(std, formatLocale) {
+  EXPECT_EQ(std::format("{:L}", 123'456), "123,456");
+  EXPECT_EQ(std::format("{:L}", 123456.789012), "123,456.789012");
 }
 
 TEST(std, istreamDefaultExceptions) {

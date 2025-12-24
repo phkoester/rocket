@@ -27,7 +27,7 @@ template<typename C> requires Character<C>
 basic_istream<C>&
 getGrapheme(basic_istream<C>& is, Grapheme& v) {
   // Read first code point
-  
+
   CodePoint cp;
   is >> cp;
   if (is.eof())
@@ -43,7 +43,7 @@ getGrapheme(basic_istream<C>& is, Grapheme& v) {
     // Read next code point
     size_t pos = io::tellg(is);
     is >> cp;
-    
+
     // If EOF, finish
     if (is.eof()) {
       io::seekg(is, pos);
@@ -121,11 +121,11 @@ CodePoint::width() const {
   // NUL
   if (v_ == 0)
     return 0;
-  
+
   // C0 controls, DEL
   if (v_ <= 31 || v_ == 127)
     return -1;
-  
+
   // C1 controls
   if (v_ >= 128 && v_ <= 159)
     return -1;
@@ -148,15 +148,15 @@ CodePoint::width() const {
   if (v_ >= 0x1160U && v_ <= 0x11ffU)
     return 0;
 
-   // Spacing characters in the East Asian Wide (W) or East Asian Full-width (F) category
+  // Spacing characters in the East Asian Wide (W) or East Asian Full-width (F) category
   auto eaw = internal::eastAsianWidth(v_);
   if (eaw == internal::EastAsianWidth::wide || eaw == internal::EastAsianWidth::fullWidth)
     return 2;
-  
+
   // From `unicode-display-width`: Emoji characters in the Emoji_Presentation category
   if (internal::emojiEmoji_Presentation(v_))
     return 2;
-  
+
   return 1;
 }
 

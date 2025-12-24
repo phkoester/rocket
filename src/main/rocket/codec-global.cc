@@ -126,7 +126,7 @@ printRon(ostream& os, char v) {
     oss << escape::escaped<escape::CString>(s, { .enclosed=true, .quote='\'' });
     return os << oss.str();
   } else {
-    return os << format("'\\x{:0>2x}'", static_cast<int>(static_cast<unsigned char>(v)));
+    return os << fmt::format("'\\x{:0>2x}'", static_cast<int>(static_cast<unsigned char>(v)));
   }
 }
 
@@ -140,7 +140,7 @@ parseRon(istream& is, unsigned char& v) {
 
 ostream&
 printRon(ostream& os, unsigned char v) {
-  return os << format("{:0>2x}", static_cast<int>(v));
+  return os << fmt::format("{:0>2x}", static_cast<int>(v));
 }
 
 istream&

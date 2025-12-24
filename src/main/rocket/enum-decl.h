@@ -6,7 +6,8 @@
 
 #pragma once
 
-#include <format>
+#include <fmt/format.h>
+
 #include <iosfwd>
 
 // Macros ---------------------------------------------------------------------------------------------------
@@ -24,15 +25,11 @@
     ROCKET_ENUM_DECLARE_FN_PARSE_RON__(type); \
     ROCKET_ENUM_DECLARE_FN_PRINT_RON__(type) \
 
-#define ROCKET_ENUM_DECLARE_STD_FORMATTER__(type) \
-  namespace std { \
-  \
-  template <> \
-  struct formatter<type> : formatter<string_view> { \
+#define ROCKET_ENUM_DECLARE_FMT_FORMATTER__(type) \
+  template<> \
+  struct ::fmt::formatter<type> : formatter<::std::string_view> { \
     format_context::iterator format(type v, format_context& ctx) const; \
   }; \
-  \
-  }
 
 /// @endcond
 
@@ -46,12 +43,12 @@
 #define ROCKET_ENUM_DECLARE(type) ROCKET_ENUM_DECLARE__(type)
 
 /**
- * Declares a `std::formatter` specialization for the enum @p type.
+ * Declares a `fmt::formatter` specialization for the enum @p type.
  *
  * This macro must be called in the global namespace.
  *
  * @param type the fully-qualified type of the enum, with namespace, e.g. `mynamespace::MyClass::MyEnum`
  */
-#define ROCKET_ENUM_DECLARE_STD_FORMATTER(type) ROCKET_ENUM_DECLARE_STD_FORMATTER__(type)
+#define ROCKET_ENUM_DECLARE_FMT_FORMATTER(type) ROCKET_ENUM_DECLARE_FMT_FORMATTER__(type)
 
 // EOF

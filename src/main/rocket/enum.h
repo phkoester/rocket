@@ -88,18 +88,15 @@
     ROCKET_ENUM_DEFINE_PARSE_RON__(type, name) \
     ROCKET_ENUM_DEFINE_PRINT_RON__(type, name) \
 
-#define ROCKET_ENUM_DEFINE_STD_FORMATTER__(ns, type, name) \
-    namespace std { \
-    \
-    format_context::iterator \
-    formatter<ns::type>::format(ns::type v, format_context& ctx) const { \
+#define ROCKET_ENUM_DEFINE_FMT_FORMATTER__(ns, type, name) \
+    auto \
+    ::fmt::formatter<ns::type>::format(ns::type v, format_context& ctx) const -> \
+        format_context::iterator { \
       if (auto it = ns::name##Map__.left.find(v); it != ns::name##Map__.left.end()) \
         return formatter<string_view>::format(it->second, ctx); \
       else \
         ROCKET_CHECK(v, false, ::rocket::S << "Invalid " << ::rocket::Type::of<ns::type>() << ": " << static_cast<int>(v)); \
     } \
-    \
-    }
 
 /// @endcond
 
@@ -115,7 +112,7 @@
 #define ROCKET_ENUM_DEFINE(type, name, seq) ROCKET_ENUM_DEFINE__(type, name, seq)
 
 /**
- * Defines a `std::formatter` specialization for the enum @p type.
+ * Defines a `fmt::formatter` specialization for the enum @p type.
  *
  * This macro must be called in the global namespace.
  *
@@ -124,6 +121,6 @@
  * @param type the type of the enum, without namespace, e.g. `MyClass::MyEnum`
  * @param name the name to use for generated identifiers, e.g. `MyClass_MyEnum`
  */
-#define ROCKET_ENUM_DEFINE_STD_FORMATTER(ns, type, name) ROCKET_ENUM_DEFINE_STD_FORMATTER__(ns, type, name)
+#define ROCKET_ENUM_DEFINE_FMT_FORMATTER(ns, type, name) ROCKET_ENUM_DEFINE_FMT_FORMATTER__(ns, type, name)
 
 // EOF

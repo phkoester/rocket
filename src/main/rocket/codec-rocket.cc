@@ -51,7 +51,7 @@ parseRon(istream& is, CodePoint& v) {
   uint32_t i;
   localIs >> hex >> i;
   v = i;
-  
+
   // Done
   return is;
 }
@@ -59,7 +59,7 @@ parseRon(istream& is, CodePoint& v) {
 ostream&
 printRon(ostream& os, CodePoint v) {
   // Say goodbye to `ostringstream` ...
-  return os << format("U+{:0>4X}", static_cast<uint32_t>(v));
+  return os << fmt::format("U+{:0>4X}", static_cast<uint32_t>(v));
 }
 
 istream&

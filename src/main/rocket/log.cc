@@ -161,13 +161,13 @@ logImpl(ostream& os, LogLevel* logId, LogLevel level, size_t stackLevel, string_
   // Item: time point in ISO-8601, current time zone, with microseconds
   chrono::time_point tp = time_point_cast<chrono::microseconds>(chrono::system_clock::now());
   chrono::zoned_time zt { chrono::current_zone(), tp };
-  string s = format("{:%FT%T%Ez} ", zt);
+  string s = std::format("{:%FT%T%Ez} ", zt);
   os << s;
   size_t indentSize = s.size();
 
   // Item: caller level
   if (level > LogLevel::none) {
-    os << format("[{: <5}] ", level); // Width is 8
+    os << fmt::format("[{: <5}] ", level); // Width is 8
   } else
     os << "        "; // 8 spaces
   indentSize += 8;
@@ -191,7 +191,7 @@ logImpl(ostream& os, LogLevel* logId, LogLevel level, size_t stackLevel, string_
     // Multi-line message: left-adjust
     string localMsg(msg);
     string to = "\n" + string(indentSize, ' ');
-    strings::replaceIn<char>(localMsg, "\n", to);
+    strings::replaceIn<char>(localMsg, "\n", to, 1);
     os << localMsg;
   }
 
@@ -236,7 +236,7 @@ ROCKET_ENUM_DEFINE(LogLevel, LogLevel, (none)(error)(warn)(info)(debug)(trace));
 
 } // namespace rocket::log
 
-ROCKET_ENUM_DEFINE_STD_FORMATTER(rocket::log, LogLevel, LogLevel);
+ROCKET_ENUM_DEFINE_FMT_FORMATTER(rocket::log, LogLevel, LogLevel);
 
 namespace rocket::log {
 

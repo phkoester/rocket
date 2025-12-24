@@ -24,8 +24,8 @@ enum MyEnum { fröb, fröber, fröberer, pörk, pörker, pörkerer };
 
 ROCKET_ENUM_DEFINE(MyEnum, MyEnum, (fröb)(fröber)(fröberer)(pörk)(pörker)(pörkerer));
 
-ROCKET_ENUM_DECLARE_STD_FORMATTER(MyEnum);
-ROCKET_ENUM_DEFINE_STD_FORMATTER(, MyEnum, MyEnum);
+ROCKET_ENUM_DECLARE_FMT_FORMATTER(MyEnum);
+ROCKET_ENUM_DEFINE_FMT_FORMATTER(, MyEnum, MyEnum);
 
 // `TEST` ---------------------------------------------------------------------------------------------------
 
@@ -204,10 +204,10 @@ TEST(enum, printRon_MyEnum) {
 }
 
 /**
- * The size of the string is 10 here, but the code-point size is not. `std::format` is not UTF-8-aware.
+ * Tests UTF-8.
  */
 TEST(enum, format_MyEnum) {
-  EXPECT_EQ(format("{: >10}", fröber), "   fröber");
+  EXPECT_EQ(fmt::format("{: >10}", fröber), "    fröber");
 }
 
 // EOF

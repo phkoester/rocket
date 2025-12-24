@@ -224,6 +224,7 @@ TEST(escape, CString_char32_t) {
     EXPECT_EQ(result.input, in);
     EXPECT_EQ(result.positions, positions({ { 0, 0 }, { 1, 1 }, { 2, 5 }, { 3, 6 } }));
     u32string out;
+    // This needs the `char32_t` facets in the process locale ...
     ss >> escaped<CString>(out, params, &result);
     EXPECT_EQ(out, in);
     EXPECT_EQ(result.input, esc);

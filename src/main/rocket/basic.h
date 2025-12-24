@@ -348,7 +348,7 @@ inline void nop() {}
 template<typename T>
 constexpr std::optional<T>
 option(const T& v) {
-  return std::optional<T>(v);  
+  return std::optional<T>(v);
 }
 
 /**

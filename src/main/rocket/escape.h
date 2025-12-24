@@ -13,7 +13,8 @@
 #include "except.h"
 #include "unicode-iterator.h"
 
-#include <format>
+#include <fmt/format.h>
+
 #include <optional>
 #include <string>
 
@@ -180,11 +181,11 @@ escapeCStringHex(unicode::CodePoint cp, size_t& column) {
   // `std::format` doesn't support `char32_t`. Fortunately, we output ASCII only
   std::string s;
   if (cp > 0xffffU)
-    s = std::format("\\U{:0>8x}", static_cast<uint32_t>(cp));
+    s = fmt::format("\\U{:0>8x}", static_cast<uint32_t>(cp));
   else if (cp > 0x00ffU)
-    s = std::format("\\u{:0>4x}", static_cast<uint32_t>(cp));
+    s = fmt::format("\\u{:0>4x}", static_cast<uint32_t>(cp));
   else
-    s = std::format("\\x{:0>2x}", static_cast<uint32_t>(cp));
+    s = fmt::format("\\x{:0>2x}", static_cast<uint32_t>(cp));
   column += s.size();
   if constexpr (std::is_same_v<C, char>)
     return s;

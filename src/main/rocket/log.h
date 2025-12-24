@@ -44,8 +44,8 @@ ROCKET_ENUM_DECLARE(LogLevel);
 
 } // namespace rocket::log
 
-/// @spec_std_formatter{#rocket::log::LogLevel}
-ROCKET_ENUM_DECLARE_STD_FORMATTER(rocket::log::LogLevel);
+/// @spec_fmt_formatter{#rocket::log::LogLevel}
+ROCKET_ENUM_DECLARE_FMT_FORMATTER(rocket::log::LogLevel);
 
 namespace rocket::log {
 

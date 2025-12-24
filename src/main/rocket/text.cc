@@ -205,7 +205,7 @@ printLocations(
   ostringstream oss;
   oss << maxLine;
   size_t lineNumberWidth = max(params.minLineNumberWidth, oss.str().size());
-  string lineNumberFmt = format("{{: >{}d}}", lineNumberWidth);
+  string lineNumberFmt = fmt::format("{{: >{}d}}", lineNumberWidth);
   string blankPrefix = string(lineNumberWidth, ' ') + " | ";
 
   using namespace terminal;
@@ -225,7 +225,7 @@ printLocations(
 
     // Print the line prefix
 
-    string linePrefix = vformat(lineNumberFmt, make_format_args(loc.line));
+    string linePrefix = fmt::vformat(lineNumberFmt, fmt::make_format_args(loc.line));
     linePrefix += " | ";
     os << linePrefix;
 

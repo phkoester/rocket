@@ -28,4 +28,16 @@ operator<<(const locale& lhs, Facet* rhs) {
 
 } // namespace std
 
+namespace rocket::locale {
+
+/**
+ * If needed, adds `char32_t` support to the locale.
+ *
+ * @param v the locale
+ * @return a locale with `char32_t` support
+ */
+std::locale withChar32Facets(const std::locale& v);
+
+} // namespace rocket::locale
+
 // EOF

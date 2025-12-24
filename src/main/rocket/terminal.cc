@@ -11,7 +11,8 @@
 #include "assert.h"
 #include "io.h"
 
-#include <format>
+#include <fmt/format.h>
+
 #include <termios.h>
 #include <sys/ioctl.h>
 
@@ -34,7 +35,7 @@ styleCode(int i, bool fg) {
   if (high)
     i += 60;
 
-  string result = format("\e[{}", i);
+  string result = fmt::format("\e[{}", i);
   if (bold)
     result += ";1";
   if (underline)
@@ -56,17 +57,17 @@ Ansi::clear() const {
 
 string
 Ansi::down(int n) const {
-  return active_ ? format("\e[{}B", n) : string();
+  return active_ ? fmt::format("\e[{}B", n) : string();
 }
 
 string
 Ansi::left(int n) const {
-  return active_ ? format("\e[{}D", n) : string();
+  return active_ ? fmt::format("\e[{}D", n) : string();
 }
 
 string
 Ansi::move(int column, int line) const {
-  return active_ ? format("\e[{};{}H", line, column) : string();
+  return active_ ? fmt::format("\e[{};{}H", line, column) : string();
 }
 
 string
@@ -109,7 +110,7 @@ Ansi::request(ostream& os, string_view sequence) const {
 
 string
 Ansi::right(int n) const {
-  return active_ ? format("\e[{}C", n) : string();
+  return active_ ? fmt::format("\e[{}C", n) : string();
 }
 
 string
@@ -124,7 +125,7 @@ Ansi::style(int fg, int bg) const {
 
 string
 Ansi::up(int n) const {
-  return active_ ? format("\e[{}A", n) : string();
+  return active_ ? fmt::format("\e[{}A", n) : string();
 }
 
 // Functions ------------------------------------------------------------------------------------------------

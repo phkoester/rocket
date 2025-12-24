@@ -82,19 +82,32 @@ struct Process {
   const std::vector<std::string>& args() const { return args_; }
 
   /**
-   * Returns the classic locale. This is the locale as returned by `std::locale::classic`, with added support
-   * for `char32_t`.
-   *
-   * @return a locale
-   */
-  const std::locale& classicLocale() const { return classicLocale_; }
-
-   /**
    * Registers a function to be called upon exit.
    *
    * @param f the function to register
    */
   void atExit(void (*f)()) const;
+
+  /**
+   * Returns the classic locale. This is the locale as returned by `std::locale::classic`.
+   *
+   * @return a locale
+   */
+  const std::locale& classicLocale() const { return classicLocale_; }
+
+  /**
+   * Returns the code locale used for logging and error messages, which is `en_US.UTF-8`.
+   *
+   * On Linux, the locale may be configured like this:
+   *
+   * ```bash
+   * sudo locale-gen en_US.UTF-8
+   * sudo dpkg-reconfigure locales
+   * ```
+
+   * @return a locale
+   */
+  const std::locale& codeLocale() const { return codeLocale_; }
 
   /**
    * Outputs an error message.
@@ -137,7 +150,7 @@ struct Process {
       bool quickExit = true);
 
   /**
-   * Returns the locale this process picked in #init, with added support for `char32_t`.
+   * Returns the locale this process picked in #init.
    *
    * @return a locale
    */
@@ -192,7 +205,8 @@ private:
   std::vector<std::string> args_;
   bool inited_ = false;
 
-  std::locale classicLocale_;
+  const std::locale classicLocale_ = std::locale::classic();
+  const std::locale codeLocale_ = std::locale("en_US.UTF-8");
   std::locale initLocale_;
   std::locale systemLocale_;
 };
