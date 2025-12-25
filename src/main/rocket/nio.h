@@ -6,7 +6,6 @@
 
 #pragma once
 
-#include "basic.h"
 #include "strings.h"
 
 #include <fmt/format.h>
