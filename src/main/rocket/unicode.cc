@@ -230,10 +230,10 @@ Grapheme::operator string() const {
 }
 
 Grapheme::operator u32string() const {
-  u32string result;
-  result.reserve(codePoints.size());
-  copy(codePoints.begin(), codePoints.end(), back_inserter(result));
-  return result;
+  u32string ret;
+  ret.reserve(codePoints.size());
+  copy(codePoints.begin(), codePoints.end(), back_inserter(ret));
+  return ret;
 }
 
 bool
@@ -266,42 +266,42 @@ operator<<(ostream& lhs, const Grapheme& rhs) {
 
 u32string
 asciiTo32(string_view s) {
-  u32string result(s.size(), ' ');
-  transform(s.begin(), s.end(), result.begin(), [](char c) {
+  u32string ret(s.size(), ' ');
+  transform(s.begin(), s.end(), ret.begin(), [](char c) {
     ROCKET_CHECK(s, isascii(c));
     return static_cast<char32_t>(c);
   });
-  return result;
+  return ret;
 }
 
 u32string
 utf8To32(string_view s) {
-  u32string result;
-  unicodelib::utf8::decode(s.data(), s.size(), result);
-  return result;
+  u32string ret;
+  unicodelib::utf8::decode(s.data(), s.size(), ret);
+  return ret;
 }
 
 string
 utf32To8(u32string_view s) {
-  string result;
-  unicodelib::utf8::encode(s.data(), s.size(), result);
-  return result;
+  string ret;
+  unicodelib::utf8::encode(s.data(), s.size(), ret);
+  return ret;
 }
 
 uint8_t
 width(const CodePoints& cps) {
-  uint8_t result = 0;
+  uint8_t ret = 0;
   for (auto cp : cps) {
     // From `unicode-display-width`
     if (cp == 0xfe0fU)
       return 2;
     int8_t cw = cp.width();
     if (cw > 0) // Ignore nonpositive values
-      result = max(static_cast<uint8_t>(cw), result);
-    if (result == 2)
+      ret = max(static_cast<uint8_t>(cw), ret);
+    if (ret == 2)
       return 2;
   }
-  return result;
+  return ret;
 }
 
 size_t
@@ -310,9 +310,9 @@ width(const Graphemes& grs, size_t index, size_t n) {
   auto end = n == NPOS ? grs.end() : begin + n;
 
   return accumulate(begin, end, 0UL, [](size_t n, const Grapheme& gr) {
-    size_t result = n + gr.width;
-    ROCKET_EXPECT(result >= n, "{}", except::message::overflow(Type::of<size_t>()));
-    return result;
+    size_t ret = n + gr.width;
+    ROCKET_EXPECT(ret >= n, "{}", except::message::overflow(Type::of<size_t>()));
+    return ret;
   });
 }
 
@@ -329,17 +329,17 @@ CodePoints
 codePoints(string_view s, Positions* positions) {
   if (positions)
     positions->clear();
-  CodePoints result;
+  CodePoints ret;
   size_t i = 0;
   auto it = CodePointIterator<char>(s), end = CodePointIterator<char>(s, s.size());
   for (; it != end; ++it) {
-    result.push_back(*it);
+    ret.push_back(*it);
     if (positions)
       positions->insert({ i++, it.position() });
   }
   if (positions)
     positions->insert({ i++, it.position() });
-  return result;
+  return ret;
 }
 
 size_t
@@ -356,17 +356,17 @@ Graphemes
 graphemes(string_view s, Positions* positions) {
   if (positions)
     positions->clear();
-  Graphemes result;
+  Graphemes ret;
   size_t i = 0;
   auto it = GraphemeIterator<char>(s), end = GraphemeIterator<char>(s, s.size());
   for (; it != end; ++it) {
-    result.push_back(*it);
+    ret.push_back(*it);
     if (positions)
       positions->insert({ i++, it.position() });
   }
   if (positions)
     positions->insert({ i++, it.position()});
-  return result;
+  return ret;
 }
 
 bool
@@ -374,7 +374,7 @@ valid(string_view s, string* out) {
   if (out)
     out->clear();
 
-  bool result = true;
+  bool ret = true;
 
   for (size_t i = 0, size = s.size(); i < size;) {
     char c = s[i];
@@ -382,7 +382,7 @@ valid(string_view s, string* out) {
     if (cpSize == 0) {
       // Invalid UTF-8 byte
       if (out) {
-        result = false;
+        ret = false;
         out->append("�");
       } else
         return false;
@@ -391,7 +391,7 @@ valid(string_view s, string* out) {
       // Incomplete UTF-8 byte sequence
       if (not out)
         return false;
-      result = false;
+      ret = false;
       out->append(strings::repeat<char>("�", size - i));
       break;
     } else if (cpSize == 1) {
@@ -414,14 +414,14 @@ valid(string_view s, string* out) {
         // Invalid UTF-8 byte sequence
         if (not out)
           return false;
-        result = false;
+        ret = false;
         out->append(strings::repeat<char>("�", cpSize));
       }
       i += cpSize;
     }
   }
 
-  return result;
+  return ret;
 }
 
 } // namespace utf8
@@ -434,14 +434,14 @@ CodePoints
 codePoints(u32string_view s, Positions* positions) {
   if (positions)
     positions->clear();
-  CodePoints result;
-  result.reserve(s.size());
-  copy(s.begin(), s.end(), back_inserter(result));
+  CodePoints ret;
+  ret.reserve(s.size());
+  copy(s.begin(), s.end(), back_inserter(ret));
   if (positions) {
     for (size_t i = 0, size = s.size(); i <= size; ++i)
       positions->insert({ i, i });
   }
-  return result;
+  return ret;
 }
 
 size_t
@@ -453,17 +453,17 @@ Graphemes
 graphemes(u32string_view s, Positions* positions) {
   if (positions)
     positions->clear();
-  Graphemes result;
+  Graphemes ret;
   size_t i = 0;
   auto it = GraphemeIterator<char32_t>(s), end = GraphemeIterator<char32_t>(s, s.size());
   for (; it != end; ++it) {
-    result.push_back(*it);
+    ret.push_back(*it);
     if (positions)
       positions->insert({ i++, it.position() });
   }
   if (positions)
     positions->insert({ i++, it.position() });
-  return result;
+  return ret;
 }
 
 } // namespace utf32

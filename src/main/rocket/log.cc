@@ -123,13 +123,14 @@ void
 applyLogOut(optional<string_view> v) {
   ROCKET_EXPECT(v);
 
-  if (v == "stdout")
+  if (v == "stdout") {
     out.set(cout);
-  else if (v == "stderr")
+  }else if (v == "stderr") {
     out.set(cerr);
-  else {
-    if (strings::beginsWith<char>(*v, "file://"))
+  } else {
+    if (strings::beginsWith<char>(*v, "file://")) {
       *v = v->substr(7);
+    }
     out.set(*v);
   }
 }
@@ -143,10 +144,11 @@ logFlush(ostream& os) {
 
   // Look for pending begin log entries
   for (auto it = stack.rbegin(); it != stack.rend(); ++it) {
-    if (it->begin_)
+    if (it->begin_) {
       begin = it.base() - 1; // `base()` is confusing ...
-    else
+    } else {
       break;
+    }
   }
 
   // Flush them, if any
@@ -168,8 +170,9 @@ logImpl(ostream& os, LogLevel* logId, LogLevel level, size_t stackLevel, string_
   // Item: caller level
   if (level > LogLevel::none) {
     os << fmt::format("[{: <5}] ", level); // Width is 8
-  } else
+  } else {
     os << "        "; // 8 spaces
+  }
   indentSize += 8;
 
   // Item: stack level
@@ -207,22 +210,25 @@ setLogLevel(string_view id, string_view value) {
   auto it = definedIds.right.end();
   if (not all) {
     it = definedIds.right.find(id);
-    if (it == definedIds.right.end())
-      throw except::InvalidState(S << "Invalid log ID " << id);
+    if (it == definedIds.right.end()) {
+      except::throwInvalidState(ROCKET_EXCEPT_SL, "Invalid log ID `{}`", id);
+    }
   }
 
   auto is = io::is(value);
   LogLevel level;
   is >> level;
-  if (is.fail() || io::tellg(is) != value.size())
-    throw except::InvalidState(S << "Invalid log level " << value);
+  if (is.fail() || io::tellg(is) != value.size()) {
+    except::throwInvalidState(ROCKET_EXCEPT_SL, "Invalid log level `{}`", value);
+  }
 
-  if (not all)
+  if (not all) {
     *it->second = level;
-  else {
+  } else {
     // "all"
-    for (const auto& pair : definedIds.right)
+    for (const auto& pair : definedIds.right) {
       *pair.second = level;
+    }
   }
 }
 
@@ -270,8 +276,9 @@ logEnd() noexcept {
   try {
     // Print end log entry only if begin log entry was flushed
     const Entry& entry = stack.back();
-    if (not entry.begin_)
+    if (not entry.begin_) {
       logImpl(out.get(), entry.logId_, LogLevel::none, stack.size() - 1, S << "} " << entry.func_);
+    }
   } catch (const exception& ex) {
     ROCKET_PROCESS_ERROR("Cannot log message: {}", except::what(ex));
   } catch (...) {

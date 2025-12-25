@@ -48,10 +48,10 @@ struct UnorderedBimap {
   */
   static inline Type
   of(const std::initializer_list<std::pair<K, V>>& list = {}) {
-    Type result;
+    Type ret;
     for (const auto& elem : list)
-      result.insert({ elem.first, elem.second }); // `bimap` has no `emplace`
-    return result;
+      ret.insert({ elem.first, elem.second }); // `bimap` has no `emplace`
+    return ret;
   }
 };
 
@@ -68,10 +68,10 @@ struct UnorderedBimap {
 template<typename K, typename V>
 std::set<V>
 values(const typename UnorderedBimap<K, V>::Type& map) {
-  std::set<V> result;
+  std::set<V> ret;
   for (const auto& elem : map.left)
-    result.insert(elem.second);
-  return result;
+    ret.insert(elem.second);
+  return ret;
 }
 
 } // namespace bimap

@@ -15,15 +15,6 @@
 #include "Process.h"
 #include "basic.h" // `rocket::nop()`
 #include "except.h"
-#include "nio.h"
-
-#include <boost/preprocessor/stringize.hpp>
-#include <boost/preprocessor/facilities/check_empty.hpp>
-#include <boost/preprocessor/logical/not.hpp>
-#include <boost/preprocessor/punctuation/comma_if.hpp>
-#include <boost/preprocessor/tuple/elem.hpp>
-
-#include <fmt/format.h>
 
 #include <source_location>
 #include <string>
@@ -31,6 +22,31 @@
 // Internal -------------------------------------------------------------------------------------------------
 
 namespace rocket::assert::internal {
+
+#if 0 // XXX
+
+template<typename... T>
+[[noreturn]] void
+onAssertFailed(
+    const std::source_location& sl,
+    const char* expr,
+    fmt::format_string<T...> fmt = "",
+    T&&... args) {
+  process.error(
+      nio::stderr,
+      EXIT_SUCCESS,
+      "{}:{}: Assertion `{}` failed{}", sl.file_name(), sl.line(), expr, nio::Format([&] {
+    if (fmt.get().size() > 0) {
+      // XXX fmt ist falsch!
+      return nio::Format::params(": {}", fmt, std::forward<T>(args)...);
+    } else {
+      return nio::Format::params();
+    }
+  }));
+  std::terminate();
+}
+
+#else
 
 template<typename... T>
 [[noreturn]] void
@@ -45,9 +61,14 @@ onAssertFailed(
     nio::StringSink sink(msg);
     sink.print(fmt, std::forward<T>(args)...);
   }
-  process.error(nio::stderr, EXIT_SUCCESS, "{}:{}: Assertion `{}` failed{}", sl.file_name(), sl.line(), expr, msg);
+  process.error(
+      nio::stderr,
+      EXIT_SUCCESS,
+      "{}:{}: Assertion `{}` failed{}", sl.file_name(), sl.line(), expr, msg);
   std::terminate();
 }
+
+#endif
 
 template<typename... T>
 [[noreturn]] void
@@ -68,7 +89,7 @@ onCheckFailed(
 
 template<typename... T>
 [[noreturn]] void onExpectFailed(
-    const std::source_location&sl,
+    const std::source_location& sl,
     const char* expr,
     fmt::format_string<T...> fmt = "",
     T&&... args) {
@@ -149,10 +170,9 @@ template<typename... T>
 #define ROCKET_ASSERT(expr, ...) \
     if (not (expr)) { \
       ::rocket::assert::internal::onAssertFailed( \
-          ::std::source_location::current(), \
+          ROCKET_EXCEPT_SL, \
           BOOST_PP_STRINGIZE(expr) \
-          BOOST_PP_COMMA_IF(BOOST_PP_NOT(BOOST_PP_CHECK_EMPTY(BOOST_PP_TUPLE_ELEM(0, (__VA_ARGS__))))) \
-          __VA_ARGS__); \
+          ROCKET_COMMA_IF_VA_ARGS(__VA_ARGS__)); \
     }
 
 /**
@@ -168,11 +188,10 @@ template<typename... T>
 #define ROCKET_CHECK(name, expr, ...) \
     if (not (expr)) { \
       ::rocket::assert::internal::onCheckFailed( \
-          ::std::source_location::current(), \
+          ROCKET_EXCEPT_SL, \
           BOOST_PP_STRINGIZE(name), \
           BOOST_PP_STRINGIZE(expr) \
-          BOOST_PP_COMMA_IF(BOOST_PP_NOT(BOOST_PP_CHECK_EMPTY(BOOST_PP_TUPLE_ELEM(0, (__VA_ARGS__))))) \
-          __VA_ARGS__); \
+          ROCKET_COMMA_IF_VA_ARGS(__VA_ARGS__)); \
     }
 
 /**
@@ -189,10 +208,9 @@ template<typename... T>
 #define ROCKET_EXPECT(expr, ...) \
     if (not (expr)) { \
       ::rocket::assert::internal::onExpectFailed( \
-          ::std::source_location::current(), \
+          ROCKET_EXCEPT_SL, \
           BOOST_PP_STRINGIZE(expr) \
-          BOOST_PP_COMMA_IF(BOOST_PP_NOT(BOOST_PP_CHECK_EMPTY(BOOST_PP_TUPLE_ELEM(0, (__VA_ARGS__))))) \
-          __VA_ARGS__); \
+          ROCKET_COMMA_IF_VA_ARGS(__VA_ARGS__)); \
     }
 
 #endif // NDEBUG

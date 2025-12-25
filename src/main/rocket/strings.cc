@@ -24,18 +24,18 @@ capitalize(string_view s) {
     return string();
   unicode::CodePointIterator<char> it(s);
   unicode::CodePoint upper = (*it++).upper();
-  string result = static_cast<string>(upper);
-  result.append(s.substr(it.position()));
-  return result;
+  string ret = static_cast<string>(upper);
+  ret.append(s.substr(it.position()));
+  return ret;
 }
 
 u32string
 capitalize(u32string_view s) {
   if (s.empty())
     return u32string();
-  u32string result(s);
-  result[0] = unicode::CodePoint(s[0]).upper();
-  return result;
+  u32string ret(s);
+  ret[0] = unicode::CodePoint(s[0]).upper();
+  return ret;
 }
 
 string
@@ -47,9 +47,9 @@ lower(string_view s) {
 
 u32string
 lower(u32string_view s) {
-  u32string result(s);
-  lowerIn(result);
-  return result;
+  u32string ret(s);
+  lowerIn(ret);
+  return ret;
 }
 
 void
@@ -66,9 +66,9 @@ upper(string_view s) {
 
 u32string
 upper(u32string_view s) {
-  u32string result(s);
-  upperIn(result);
-  return result;
+  u32string ret(s);
+  upperIn(ret);
+  return ret;
 }
 
 void

@@ -23,7 +23,7 @@ struct Cxx : public Test {
   Cxx() {
     reset();
   }
-  
+
   ~Cxx() override {}
 
 protected:
@@ -75,7 +75,7 @@ protected:
   reset() {
     fooLvalue = 0;
     fooRvalue = 0;
-    
+
     ChattyString::reset();
   }
 };
@@ -134,16 +134,16 @@ TEST_F(Cxx, optionalEmplace) {
 
 TEST_F(Cxx, utf8Identifier) {
   // German
-  int blöße; use(blöße);
-  
+  int _blöße; nop(_blöße);
+
   // French
-  int ça; use(ça);
-  
+  int _ça; nop(_ça);
+
   // Japanese
-  int こんにちわ; use(こんにちわ);
-  
+  int _こんにちわ; nop(_こんにちわ);
+
   // Chinese (traditional)
-  int 你好; use(你好);
+  int _你好; nop(_你好);
 }
 
 TEST_F(Cxx, utf8StringLiteral) {
@@ -209,7 +209,7 @@ TEST_F(Cxx, forwardWithBaz) {
 }
 
 TEST_F(Cxx, implicitVirtualDtor) {
-  A* p = new B;  
+  A* p = new B;
   EXPECT_FALSE(Member::dtorCalled);
   delete p;
   // Class `B` needs not declare an overriding destructor---it is there implicitly

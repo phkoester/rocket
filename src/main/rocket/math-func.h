@@ -39,11 +39,11 @@ mean(It begin, It end) {
   ROCKET_CHECK(end, end > begin, "Range is empty");
 
   // Calculating CMA = Cumulative Moving Average
-  T result = 0;
+  T ret = 0;
   size_t n = 1;
   for (auto it = begin; it != end; ++it)
-    result += (*it - result) / n++;
-  return result;
+    ret += (*it - ret) / n++;
+  return ret;
 }
 
 /**

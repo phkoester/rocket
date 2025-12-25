@@ -197,15 +197,15 @@ getInteger(std::istream& is) {
   localInput.erase(std::remove(localInput.begin(), localInput.end(), '\''), localInput.end());
 
   // Use type-specific `operator>>`
-  I result;
+  I ret;
   auto localIs = io::is(localInput);
-  localIs >> result;
+  localIs >> ret;
   if (localIs.fail() || io::tellg(localIs) != localInput.size()) {
     throw except::ParseFailure<char>(
         is, inputPos, { inputPos, inputPos + input.size() },
         except::message::cannotParseAs(input, Type::of<I>()));
   }
-  return result;
+  return ret;
 }
 
 /**
@@ -314,15 +314,15 @@ getFloatingPoint(std::istream& is, int precision = DEFAULT_PRECISION) {
   localInput.erase(std::remove(localInput.begin(), localInput.end(), '\''), localInput.end());
 
   // Use type-specific `operator>>`
-  F result;
+  F ret;
   auto localIs = io::is(localInput);
-  localIs >> std::setprecision(DEFAULT_PRECISION) >> result;
+  localIs >> std::setprecision(DEFAULT_PRECISION) >> ret;
   if (localIs.fail() || io::tellg(localIs) != localInput.size()) {
     throw except::ParseFailure<char>(
         is, inputPos, { inputPos, inputPos + input.size() },
         except::message::cannotParseAs(input, Type::of<F>()));
   }
-  return result;
+  return ret;
 }
 
 namespace ron {

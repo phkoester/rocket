@@ -6,40 +6,18 @@
 
 #include "assert.h"
 
+#include <cstdio>
 #include <unistd.h>
 
 using namespace std;
 
 namespace rocket::nio {
 
-// `Sink`----------------------------------------------------------------------------------------------------
-
-int
-Sink::vprint(fmt::locale_ref locale, fmt::string_view fmt, fmt::format_args args) {
-  fmt::memory_buffer buf;
-  fmt::detail::vformat_to(buf, fmt, args, locale);
-  return write({ buf.data(), buf.size() });
-}
-
-int
-Sink::vprintln(fmt::locale_ref locale, fmt::string_view fmt, fmt::format_args args) {
-  fmt::memory_buffer buf;
-  fmt::detail::vformat_to(buf, fmt, args, locale);
-  buf.push_back('\n');
-  write({ buf.data(), buf.size() });
-  return flush();
-}
+// `Sink` ---------------------------------------------------------------------------------------------------
 
 int
 Sink::writeln(std::string_view data) {
   write(data);
-  write("\n");
-  return flush();
-}
-
-int
-Sink::writeln(std::string_view data, size_t offset, size_t n) {
-  write(data, offset, n);
   write("\n");
   return flush();
 }
@@ -53,8 +31,16 @@ FileSink::FileSink(FILE* file, bool closeOnDestroy) :
 }
 
 FileSink::FileSink(const string& path, bool closeOnDestroy) :
-    file_(fopen(path.c_str(), "wb")),
-    closeOnDestroy_(closeOnDestroy) {}
+    file_(std::fopen(path.c_str(), "wb")),
+    closeOnDestroy_(closeOnDestroy) {
+  if (file_ == nullptr) {
+    error_ = errno;
+    if (error_ == 0) {
+      error_ = ENOENT;
+    }
+    open_ = false;
+  }
+}
 
 FileSink::~FileSink() {
   if (closeOnDestroy_) {
@@ -67,8 +53,14 @@ FileSink::close()
 {
   if (open_) {
     open_ = false;
-    if (int result = fclose(file_); result != 0 ) {
+    if (int result = std::fclose(file_); result != 0) {
       error_ = result;
+      if (error_ == 0) {
+        error_ = errno;
+      }
+      if (error_ == 0) {
+        error_ = EIO;
+      }
     }
   } else if (error_ == 0) {
     error_ = EBADF;
@@ -79,7 +71,7 @@ FileSink::close()
 int
 FileSink::flush() {
   if (open_) {
-    if (int result = fflush(file_); result != 0) {
+    if (int result = std::fflush(file_); result != 0) {
       error_ = result;
     }
   } else if (error_ == 0) {
@@ -91,8 +83,12 @@ FileSink::flush() {
 int
 FileSink::write(string_view data) {
   if (open_) {
-    if (int result = fwrite(data.data(), 1, data.size(), file_); result != 0) {
-      error_ = result;
+    if (int result = std::fwrite(data.data(), 1, data.size(), file_); result < data.size()) {
+      cout << "fwrite: size=" << data.size() << ", result=" << result << "\n"; // XXX
+      error_ = errno;
+      if (error_ == 0) {
+        error_ = EIO;
+      }
     }
   } else if (error_ == 0) {
     error_ = EBADF;

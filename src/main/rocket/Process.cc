@@ -22,14 +22,14 @@ namespace {
 
 const string&
 invocationName() {
-  static string result(program_invocation_name);
-  return result;
+  static string ret(program_invocation_name);
+  return ret;
 }
 
 const string&
 invocationShortName() {
-  static string result(program_invocation_short_name);
-  return result;
+  static string ret(program_invocation_short_name);
+  return ret;
 }
 
 #endif
@@ -37,10 +37,10 @@ invocationShortName() {
 [[noreturn]] void
 onTerminate() {
   try {
-    nio::stderr.println("{}: : fatal error: Terminate handler called", process.name());
+    nio::stderr.println("{}: fatal error: Terminate handler called", process.name());
     if (auto ptr = current_exception())
       except::printException(cerr, ptr);
-    nio::stderr.println("Aborting");
+    nio::stderr.writeln("Aborting");
   } catch (...) {
     ROCKET_PROCESS_ERROR("`onTerminate` failed");
   }
@@ -60,11 +60,13 @@ Process::atExit(void (*f)()) const { // cppcheck-suppress constParameterPointer
   ROCKET_ASSERT(inited_, "Process not initialized");
 
   if (quickExit_) {
-    if (at_quick_exit(f))
+    if (at_quick_exit(f)) {
       throw except::InvalidState("`at_quick_exit()` failed");
+    }
   } else {
-    if (atexit(f))
+    if (atexit(f)) {
       throw except::InvalidState("`atexit()` failed");
+    }
   }
 }
 

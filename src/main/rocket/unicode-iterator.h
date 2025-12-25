@@ -623,9 +623,9 @@ struct GraphemeIterator {
   /// @member_op_inc_post
   GraphemeIterator
   operator++(int) {
-    auto result(*this);
+    auto ret(*this);
     operator++();
-    return result;
+    return ret;
   }
 
   /// @member_op_dec
@@ -644,9 +644,9 @@ struct GraphemeIterator {
   /// @member_op_dec_post
   GraphemeIterator
     operator--(int) {
-    auto result(*this);
+    auto ret(*this);
     operator--();
-    return result;
+    return ret;
   }
 
   /// @member_op_add_assign
@@ -778,23 +778,23 @@ private:
 
   friend GraphemeIterator
   operator+(const GraphemeIterator& lhs, difference_type rhs) {
-    auto result(lhs);
-    result += rhs;
-    return result;
+    auto ret(lhs);
+    ret += rhs;
+    return ret;
   }
 
   friend GraphemeIterator
   operator+(difference_type lhs, const GraphemeIterator& rhs) {
-    auto result(rhs);
-    result += lhs;
-    return result;
+    auto ret(rhs);
+    ret += lhs;
+    return ret;
   }
 
   friend GraphemeIterator
   operator-(const GraphemeIterator& lhs, difference_type rhs) {
-    auto result(lhs);
-    result -= rhs;
-    return result;
+    auto ret(lhs);
+    ret -= rhs;
+    return ret;
   }
 
   friend difference_type

@@ -100,7 +100,7 @@ printThrown(
     size_t level,
     const optional<Type>& type,
     const optional<string>& what,
-    const optional<stacktrace>& stackTrace) {
+    const optional<stacktrace>& st) {
   ostringstream instanceOf;
   if (type)
     instanceOf << "instance of " << (S << *type);
@@ -116,8 +116,8 @@ printThrown(
     msg << ": " << *what;
   os << msg.str() << '\n';
 
-  if (stackTrace)
-    os << *stackTrace; // This prints a '\n' at the end
+  if (st)
+    os << *st; // This prints a '\n' at the end
 }
 
 void

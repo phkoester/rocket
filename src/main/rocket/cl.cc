@@ -110,7 +110,7 @@ CommandLine::help(nio::Sink& sink, bool exit) {
 
   if (usage_) {
     if (output) {
-      sink.print("\n");
+      sink.write("\n");
     }
     printUsage(sink);
     output = true;
@@ -120,9 +120,9 @@ CommandLine::help(nio::Sink& sink, bool exit) {
 
   if (params_.prolog) {
     if (output) {
-      sink.print("\n");
+      sink.write("\n");
     }
-    sink.println("{}", text::wrap(*params_.prolog, { .width=width }));
+    sink.writeln(text::wrap(*params_.prolog, { .width=width }));
     output = true;
   }
 
@@ -130,7 +130,7 @@ CommandLine::help(nio::Sink& sink, bool exit) {
 
   if (not opts_.empty()) {
     if (output) {
-      sink.print("\n");
+      sink.write("\n");
     }
     helpOpts(sink, width);
     output = true;
@@ -140,9 +140,9 @@ CommandLine::help(nio::Sink& sink, bool exit) {
 
   if (params_.epilog) {
     if (output) {
-      sink.print("\n");
+      sink.write("\n");
     }
-    sink.println("{}", text::wrap(*params_.epilog, { .width=width }));
+    sink.writeln(text::wrap(*params_.epilog, { .width=width }));
   }
 
   if (exit)
@@ -186,7 +186,7 @@ CommandLine::helpOpts(nio::Sink& sink, size_t width) const {
     if (opts.empty())
       continue;
     if (output) {
-      sink.print("\n");
+      sink.write("\n");
     }
     sink.println("{}:\n", group->title);
     output = true;
@@ -194,19 +194,19 @@ CommandLine::helpOpts(nio::Sink& sink, size_t width) const {
     // Loop through options
 
     for (const auto* opt : opts) {
-      sink.print("  ");
+      sink.write("  ");
       if (opt->shortName) {
         sink.print("-{}, ", static_cast<string>(*opt->shortName));
       } else {
-        sink.print("    ");
+        sink.write("    ");
       }
       sink.print("--{}", opt->name);
       if (opt->format) {
         sink.print(" {}", *opt->format);
       }
-      sink.print("\n");
+      sink.write("\n");
       if (opt->help) {
-        sink.println("{}", text::wrap(*opt->help, wrapParams));
+        sink.writeln(text::wrap(*opt->help, wrapParams));
       }
     }
   }
@@ -219,7 +219,7 @@ CommandLine::name(const Option& opt, bool nameFlag) {
 
 vector<string>
 CommandLine::parse(const vector<string>& args, const Take& take) const {
-  vector<string> result;
+  vector<string> ret;
 
   for (auto it = args.begin(), end = args.end(); it != end; ++it) {
     const auto& elem = *it; // `string`
@@ -229,7 +229,7 @@ CommandLine::parse(const vector<string>& args, const Take& take) const {
       // 1. `--` seen: Pass the rest, excluding the option-end tag, to the program and break the argument
       // loop
 
-      result.insert(result.end(), it + 1, args.end());
+      ret.insert(ret.end(), it + 1, args.end());
       break;
     } else if (strings::beginsWith<char>(arg, "--")) {
       // 2. `--...` seen: Parse option by name
@@ -310,18 +310,18 @@ CommandLine::parse(const vector<string>& args, const Take& take) const {
       case Stop:
         // Argument was accepted and consumed, but a stop was requested: Pass the rest, excluding the current
         // argument, to the program and break the argument loop
-        result.insert(result.end(), it + 1, args.end());
+        ret.insert(ret.end(), it + 1, args.end());
         finish = true;
         break;
       case Store:
         // Argument was not processed, but a store was requested: Pass it to the program and continue in the
         // argument loop
-        result.push_back(elem);
+        ret.push_back(elem);
         break;
       case Reject:
         // Argument was rejected: Pass the rest, including the current argument, to the program and break the
         // argument loop
-        result.insert(result.end(), it, args.end());
+        ret.insert(ret.end(), it, args.end());
         finish = true;
         break;
       }
@@ -330,7 +330,7 @@ CommandLine::parse(const vector<string>& args, const Take& take) const {
     }
   }
 
-  return result;
+  return ret;
 }
 
 void

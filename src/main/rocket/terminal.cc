@@ -35,13 +35,13 @@ styleCode(int i, bool fg) {
   if (high)
     i += 60;
 
-  string result = fmt::format("\e[{}", i);
+  string ret = fmt::format("\e[{}", i);
   if (bold)
-    result += ";1";
+    ret += ";1";
   if (underline)
-    result += ";4";
-  result.push_back('m');
-  return result;
+    ret += ";4";
+  ret.push_back('m');
+  return ret;
 }
 
 } // namespace

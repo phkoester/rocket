@@ -16,6 +16,11 @@ CC_FILES    := test/rocket/test-Guard.cc
 SHARED_LIBS := $(call shared-lib-name,rocket,$(ROCKET_VERSION))
 include $(GAIA_DIR)/src/main/make/test-executable.mk
 
+NAME        := test-rocket-Process
+CC_FILES    := test/rocket/test-Process.cc
+SHARED_LIBS := $(call shared-lib-name,rocket,$(ROCKET_VERSION))
+include $(GAIA_DIR)/src/main/make/test-executable.mk
+
 NAME        := test-rocket-S
 CC_FILES    := test/rocket/test-S.cc
 SHARED_LIBS := $(call shared-lib-name,rocket,$(ROCKET_VERSION))
@@ -108,6 +113,11 @@ include $(GAIA_DIR)/src/main/make/test-executable.mk
 
 NAME        := test-rocket-math-func
 CC_FILES    := test/rocket/test-math-func.cc
+SHARED_LIBS := $(call shared-lib-name,rocket,$(ROCKET_VERSION))
+include $(GAIA_DIR)/src/main/make/test-executable.mk
+
+NAME        := test-rocket-nio
+CC_FILES    := test/rocket/test-nio.cc
 SHARED_LIBS := $(call shared-lib-name,rocket,$(ROCKET_VERSION))
 include $(GAIA_DIR)/src/main/make/test-executable.mk
 

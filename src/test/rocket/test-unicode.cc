@@ -44,7 +44,7 @@ testGrapheme(const Grapheme& grapheme, u32string_view s) {
   EXPECT_TRUE(pos);
   EXPECT_EQ(pos->first, grapheme.width + 3);
   out.write("\n");
-  out.println("[{}]", string(grapheme.width, '~'));
+  out.println("[{:~<{}}]", "", grapheme.width);
 }
 
 } // namespace

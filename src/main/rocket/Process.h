@@ -6,18 +6,12 @@
 
 #pragma once
 
-#include "nio.h"
+#include "macro.h"
 
 #include <locale>
 #include <optional>
 #include <string>
 #include <vector>
-
-#include <boost/preprocessor/stringize.hpp>
-#include <boost/preprocessor/facilities/check_empty.hpp>
-#include <boost/preprocessor/logical/not.hpp>
-#include <boost/preprocessor/punctuation/comma_if.hpp>
-#include <boost/preprocessor/tuple/elem.hpp>
 
 // Macros ---------------------------------------------------------------------------------------------------
 
@@ -32,8 +26,7 @@
   sink.print("{}:{}: ", __FILE__, __LINE__); \
   sink.print( \
       fmt \
-      BOOST_PP_COMMA_IF(BOOST_PP_NOT(BOOST_PP_CHECK_EMPTY(BOOST_PP_TUPLE_ELEM(0, (__VA_ARGS__))))) \
-      __VA_ARGS__); \
+      ROCKET_COMMA_IF_VA_ARGS(__VA_ARGS__)); \
   ::rocket::process.error(::rocket::nio::stderr, EXIT_SUCCESS, "{}", msg, EXIT_SUCCESS); \
 }
 
@@ -109,13 +102,15 @@ struct Process {
   /**
    * Returns the code locale used for logging and error messages, which is `en_US.UTF-8`.
    *
+   * This is also the default locale for unit tests and benchmarks.
+   *
    * On Linux, the locale may be configured like this:
    *
    * ```bash
    * sudo locale-gen en_US.UTF-8
    * sudo dpkg-reconfigure locales
    * ```
-
+   *
    * @return a locale
    */
   const std::locale& codeLocale() const { return codeLocale_; }

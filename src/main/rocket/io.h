@@ -282,8 +282,8 @@ getHex(std::basic_istream<C>& is, size_t n, std::basic_string<C>& input) {
 
   // Use type-specific `operator>>`
   auto localIs = io::is(input);
-  I result;
-  localIs >> std::hex >> result;
+  I ret;
+  localIs >> std::hex >> ret;
   if (localIs.fail() || tellg(localIs) != input.size()) {
     std::string msg;
     if constexpr (std::is_same_v<C, char>)
@@ -292,7 +292,7 @@ getHex(std::basic_istream<C>& is, size_t n, std::basic_string<C>& input) {
       msg = except::message::cannotParseAs(unicode::utf32To8(input), Type::of<I>());
    throw except::ParseFailure<C>(is, inputPos, { inputPos, inputPos + input.size() }, msg);
   }
-  return result;
+  return ret;
 }
 
 /**
@@ -406,7 +406,7 @@ getString(std::basic_istream<C>& is, std::basic_string_view<C> v) {
 template<typename C> requires Character<C>
 std::basic_string<C>
 getString(std::basic_istream<C>& is, const std::set<std::basic_string_view<C>>& values) {
-  std::basic_string<C> result;
+  std::basic_string<C> ret;
 
   auto localValues(values);
 
@@ -419,9 +419,9 @@ getString(std::basic_istream<C>& is, const std::set<std::basic_string_view<C>>& 
     unicode::CodePoint cp;
     is >> cp;
     if (is.eof()) {
-      if (not result.empty()) {
+      if (not ret.empty()) {
         seekg(is, pos);
-        return result;
+        return ret;
       } else {
         throw except::ParseFailure<C>(
             is, pos, { inputPos, tellg(is) },
@@ -441,7 +441,7 @@ getString(std::basic_istream<C>& is, const std::set<std::basic_string_view<C>>& 
         it = localValues.erase(it);
       else if (value.size() == input.size()) {
         match = true;
-        result = input;
+        ret = input;
         it = localValues.erase(it);
       } else {
        match = true;
@@ -451,10 +451,10 @@ getString(std::basic_istream<C>& is, const std::set<std::basic_string_view<C>>& 
 
     // Finished?
     if (localValues.empty()) {
-      if (not result.empty()) {
+      if (not ret.empty()) {
         if (not match)
           seekg(is, pos);
-        return result;
+        return ret;
       } else {
         throw except::ParseFailure<C>(
             is, pos, { inputPos, tellg(is) },
@@ -618,9 +618,9 @@ getWhile(std::basic_istream<C>& is, const std::set<C>& values, size_t min) {
 template<typename C> requires Character<C>
 std::basic_ispanstream<C>
 is(std::span<C> v, std::ios::openmode mode, std::ios::iostate exceptions) {
-  auto result = std::basic_ispanstream<C>(v, mode);
-  result.exceptions(exceptions);
-  return result;
+  auto ret = std::basic_ispanstream<C>(v, mode);
+  ret.exceptions(exceptions);
+  return ret;
 }
 
 /**

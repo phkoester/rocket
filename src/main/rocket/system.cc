@@ -33,30 +33,30 @@ namespace {
  */
 string
 makeCl(const vector<string_view>& args) {
-  string result;
+  string ret;
 
   for (const auto& arg : args) {
-    if (not result.empty())
-      result.push_back(' ');
+    if (not ret.empty())
+      ret.push_back(' ');
 
     for (size_t i = 0, size = arg.size(); i < size; ++i) {
       char c = arg[i];
       optional<char> next;
       if (i < size - 1)
         next = arg[i + 1];
-      
+
       if (c == ' ')
-        result.append("\" \"");
+        ret.append("\" \"");
       else if (c == '"')
-        result.append("\\\"");
+        ret.append("\\\"");
       else if (c == '\\' && next && *next == '"')
-        result.append("\"\\\\\"");
+        ret.append("\"\\\\\"");
       else
-        result.push_back(c);
+        ret.push_back(c);
     }
   }
 
-  return result;
+  return ret;
 }
 
 #else
@@ -73,27 +73,27 @@ makeCl(const vector<string_view>& args) {
  */
 string
 makeCl(const vector<string_view>& args) {
-  string result;
+  string ret;
 
   for (const auto& arg : args) {
-    if (not result.empty())
-      result.push_back(' ');
+    if (not ret.empty())
+      ret.push_back(' ');
 
     for (char c : arg) {
       if (c == ' ')
-        result.append("\\ ");
+        ret.append("\\ ");
       else if (c == '"')
-        result.append("\\\"");
+        ret.append("\\\"");
       else if (c == '\'')
-        result.append("\\'");
+        ret.append("\\'");
       else if (c == '\\')
-        result.append("\\\\");
+        ret.append("\\\\");
       else
-        result.push_back(c);
+        ret.push_back(c);
     }
   }
 
-  return result;
+  return ret;
 }
 
 #endif
@@ -106,20 +106,22 @@ namespace rocket::system {
 
 vector<byte>
 exec(const string& cl) {
-  vector<byte> result;
+  vector<byte> ret;
   array<byte, 128> buf;
-  
+
   unique_ptr<FILE, decltype(&pclose)> pipe(popen(cl.c_str(), "r"), pclose);
-  if (not pipe)
-    throw except::InvalidState(S << "Cannot open pipe for command " << cl);
+  if (not pipe) {
+    except::throwInvalidState(ROCKET_EXCEPT_SL, "Cannot open pipe for command `{}`", cl);
+  }
   size_t n;
   while ((n = fread(buf.data(), 1, buf.size(), pipe.get())) > 0) {
-    result.insert(result.end(), buf.begin(), buf.begin() + n);
+    ret.insert(ret.end(), buf.begin(), buf.begin() + n);
   }
-  if (ferror(pipe.get()) != 0)
-    throw except::InvalidState(S << "Cannot read from pipe for command " << cl);
-  
-  return result;
+  if (ferror(pipe.get()) != 0) {
+    except::throwInvalidState(ROCKET_EXCEPT_SL, "Cannot read from pipe for command `{}`", cl);
+  }
+
+  return ret;
 }
 
 vector<byte>

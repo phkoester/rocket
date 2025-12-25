@@ -687,9 +687,9 @@ CodePointIterator<char>::operator++() {
 
 CodePointIterator<char>
 CodePointIterator<char>::operator++(int) {
-  auto result(*this);
+  auto ret(*this);
   operator++();
-  return result;
+  return ret;
 }
 
 CodePointIterator<char>&
@@ -709,9 +709,9 @@ CodePointIterator<char>::operator--() {
 
 CodePointIterator<char>
 CodePointIterator<char>::operator--(int) {
-  auto result(*this);
+  auto ret(*this);
   operator--();
-  return result;
+  return ret;
 }
 
 CodePointIterator<char>&
@@ -825,23 +825,23 @@ CodePointIterator<char>::wordBoundary() const {
 
 CodePointIterator<char>
 operator+(const CodePointIterator<char>& lhs, CodePointIterator<char>::difference_type rhs) {
-  auto result(lhs);
-  result += rhs;
-  return result;
+  auto ret(lhs);
+  ret += rhs;
+  return ret;
 }
 
 CodePointIterator<char>
 operator+(CodePointIterator<char>::difference_type lhs, const CodePointIterator<char>& rhs) {
-  auto result(rhs);
-  result += lhs;
-  return result;
+  auto ret(rhs);
+  ret += lhs;
+  return ret;
 }
 
 CodePointIterator<char>
 operator-(const CodePointIterator<char>& lhs, CodePointIterator<char>::difference_type rhs) {
-  auto result(lhs);
-  result -= rhs;
-  return result;
+  auto ret(lhs);
+  ret -= rhs;
+  return ret;
 }
 
 CodePointIterator<char>::difference_type
@@ -894,9 +894,9 @@ CodePointIterator<char32_t>::operator++() {
 
 CodePointIterator<char32_t>
 CodePointIterator<char32_t>::operator++(int) {
-  auto result(*this);
+  auto ret(*this);
   operator++();
-  return result;
+  return ret;
 }
 
 CodePointIterator<char32_t>&
@@ -908,9 +908,9 @@ CodePointIterator<char32_t>::operator--() {
 
 CodePointIterator<char32_t>
 CodePointIterator<char32_t>::operator--(int) {
-  auto result(*this);
+  auto ret(*this);
   operator--();
-  return result;
+  return ret;
 }
 
 CodePointIterator<char32_t>&
@@ -980,23 +980,23 @@ CodePointIterator<char32_t>::wordBoundary() const {
 
 CodePointIterator<char32_t>
 operator+(const CodePointIterator<char32_t>& lhs, CodePointIterator<char32_t>::difference_type rhs) {
-  auto result(lhs);
-  result += rhs;
-  return result;
+  auto ret(lhs);
+  ret += rhs;
+  return ret;
 }
 
 CodePointIterator<char32_t>
 operator+(CodePointIterator<char32_t>::difference_type lhs, const CodePointIterator<char32_t>& rhs) {
-  auto result(rhs);
-  result += lhs;
-  return result;
+  auto ret(rhs);
+  ret += lhs;
+  return ret;
 }
 
 CodePointIterator<char32_t>
 operator-(const CodePointIterator<char32_t>& lhs, CodePointIterator<char32_t>::difference_type rhs) {
-  auto result(lhs);
-  result -= rhs;
-  return result;
+  auto ret(lhs);
+  ret -= rhs;
+  return ret;
 }
 
 CodePointIterator<char>::difference_type

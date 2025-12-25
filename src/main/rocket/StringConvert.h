@@ -156,13 +156,13 @@ struct IntegerStringConvert {
   Type
   stringToType(std::string_view s) const {
     auto is = io::is(s);
-    
+
     try {
-      auto result = codec::getInteger<Type>(is);
+      auto ret = codec::getInteger<Type>(is);
       if (io::tellg(is) == s.size())
-        return result;
+        return ret;
     } catch (const std::exception& ex) {}
-    
+
     throw except::ParseFailure<char>(
       is, 0, { 0, s.size() }, except::message::cannotParseAs(s, rocket::Type::of<Type>()));
   }
@@ -199,14 +199,14 @@ struct EnumStringConvert {
    */
   Type
   stringToType(std::string_view s) const {
-    Type result;
+    Type ret;
     auto is = io::is(s);
-    is >> result;
+    is >> ret;
     if (is.fail() || io::tellg(is) != s.size()) {
       throw except::ParseFailure<char>(
           is, 0, { 0, s.size() }, except::message::cannotParseAs(s, rocket::Type::of<Type>()));
     }
-    return result;
+    return ret;
   }
 
   /**
@@ -246,11 +246,11 @@ struct FloatingPointStringConvert {
   Type
   stringToType(std::string_view s, int precision = rocket::DEFAULT_PRECISION) const {
     auto is = io::is(s);
-    
+
     try {
-      auto result = codec::getFloatingPoint<Type>(is, precision);
+      auto ret = codec::getFloatingPoint<Type>(is, precision);
       if (io::tellg(is) == s.size())
-        return result;
+        return ret;
     } catch (const std::exception& ex) {}
 
     throw except::ParseFailure<char>(

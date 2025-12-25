@@ -21,10 +21,10 @@ typeInfoName(const type_info& info) {
   int status = 0;
   unique_ptr<char, decltype(free)*> p(abi::__cxa_demangle(info.name(), nullptr, nullptr, &status), free);
   if (p && status == 0) {
-    string result = p.get();
+    string ret = p.get();
     // Eliminate spaces before '>'
-    strings::replaceIn<char>(result, " >", ">");
-    return result;
+    strings::replaceIn<char>(ret, " >", ">");
+    return ret;
   } else
     return info.name();
 }

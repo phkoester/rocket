@@ -122,46 +122,46 @@ escapeCString(unicode::CodePoint cp, size_t& column, const CString::Params& para
   using String = std::basic_string<C>;
 
   // Escapable characters
-  String result;
+  String ret;
   if (cp >= '\a' && cp <= '\\') {
     switch (cp) {
     case '\a': // Alert = 7
-      result = String { '\\', 'a' };
+      ret = String { '\\', 'a' };
       break;
     case '\b':// Backspace = 8
-      result = String { '\\', 'b' };
+      ret = String { '\\', 'b' };
       break;
     case '\t':// Horizontal tab = 9
       return escapeCStringTab<C>(column, params);
     case '\n': // Line feed = 10
-      result = String { '\\', 'n' };
+      ret = String { '\\', 'n' };
       break;
     case '\v': // Vertical tab = 11
-      result = String { '\\', 'v' };
+      ret = String { '\\', 'v' };
       break;
     case '\f': // Form feed = 12
-      result = String { '\\', 'f' };
+      ret = String { '\\', 'f' };
       break;
     case '\r': // Carriage return = 13
-      result = String { '\\', 'r' };
+      ret = String { '\\', 'r' };
       break;
     case '\e': // Escape = 27
-      result = String { '\\', 'e' };
+      ret = String { '\\', 'e' };
       break;
     case '"': // Quotation mark = 34
-      result = params.quote == '"' ? String { '\\', '"' } : String { '"' };
+      ret = params.quote == '"' ? String { '\\', '"' } : String { '"' };
       break;
     case '\'': // Apostrophe = 39
-      result = params.quote == '\'' ? String { '\\', '\'' } : String { '\'' };
+      ret = params.quote == '\'' ? String { '\\', '\'' } : String { '\'' };
       break;
     case '\\': // Backslash = 92
-      result = String { '\\', '\\' };
+      ret = String { '\\', '\\' };
       break;
     }
   }
-  if (not result.empty()) {
-    column += result.size();
-    return result;
+  if (not ret.empty()) {
+    column += ret.size();
+    return ret;
   }
 
   // Printable characters
@@ -199,15 +199,15 @@ escapeCStringTab(size_t& column, const CString::Params& params) {
   using String = std::basic_string<C>;
 
   if (not params.tabSize) {
-    String result { '\\', 't' };
-    column += result.size();
-    return result;
+    String ret { '\\', 't' };
+    column += ret.size();
+    return ret;
   }
   else {
     size_t mod = column % *params.tabSize;
-    String result(*params.tabSize - mod, ' ');
-    column += result.size();
-    return result;
+    String ret(*params.tabSize - mod, ' ');
+    column += ret.size();
+    return ret;
   }
 }
 
@@ -440,23 +440,23 @@ escapeRegex(unicode::CodePoint cp, size_t& column) {
   using String = std::basic_string<C>;
 
   // Escapable characters
-  String result;
+  String ret;
   if (cp >= '\t' && cp <= '}') {
     switch (cp) {
     case '\t': // Horizontal tab = 9
-      result = String { '\\', 't' };
+      ret = String { '\\', 't' };
       break;
     case '\n': // Line feed = 10
-      result = String { '\\', 'n' };
+      ret = String { '\\', 'n' };
       break;
     case '\v': // Vertical tab = 11
-      result = String { '\\', 'v' };
+      ret = String { '\\', 'v' };
       break;
     case '\f': // Form feed = 12
-      result = String { '\\', 'f' };
+      ret = String { '\\', 'f' };
       break;
     case '\r': // Carriage return = 13
-      result = String { '\\', 'r' };
+      ret = String { '\\', 'r' };
       break;
     case '$' : // Dollar sign = 36
     case '(' : // Left parenthesis = 40
@@ -472,13 +472,13 @@ escapeRegex(unicode::CodePoint cp, size_t& column) {
     case '{' : // Left Brace = 123
     case '|' : // Vertical bar = 124
     case '}' : // Right brace = 125
-      result = String { '\\', static_cast<C>(cp) };
+      ret = String { '\\', static_cast<C>(cp) };
       break;
     }
   }
-  if (not result.empty()) {
-    column += result.size();
-    return result;
+  if (not ret.empty()) {
+    column += ret.size();
+    return ret;
   }
 
   // Printable characters, code points > U+FFFF

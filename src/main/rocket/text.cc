@@ -44,15 +44,17 @@ paragraphs(string_view s) {
       pars.push_back(par);
       par.clear();
 
-      if (it.end())
+      if (it.end()) {
         break;
+      }
       ++it;
       continue;
     }
 
     unicode::Grapheme gr(*it);
-    if (gr.tab())
+    if (gr.tab()) {
       gr = unicode::Grapheme(U" ");
+    }
 
     if (gr.nbsp()) {
       // Handle NBSP
@@ -85,10 +87,11 @@ locations(istream& is, const vector<Position>& positions, const LocationsParams&
 
   // Prepare result
 
-  LocationsResult result;
-  result.params = params;
-  if (result.params.source.empty())
-    result.params.source = &is == &cin ? "-" : "(input)";
+  LocationsResult ret;
+  ret.params = params;
+  if (ret.params.source.empty()) {
+    ret.params.source = &is == &cin ? "-" : "(input)";
+  }
 
   // Map input position -> location
 
@@ -179,13 +182,14 @@ locations(istream& is, const vector<Position>& positions, const LocationsParams&
 
   for (const auto& pos : positions) {
     const auto& loc = locations.find(pos.position)->second;
-    if (loc.line != NPOS)
-      result.locations.push_back(loc);
-    else
-      throw except::InvalidState(S << "Position " << loc.position << " not found in input stream");
+    if (loc.line != NPOS) {
+      ret.locations.push_back(loc);
+    } else {
+      except::throwInvalidState(ROCKET_EXCEPT_SL, "Position {} not found in input stream", loc.position);
+    }
   }
 
-  return result;
+  return ret;
 }
 
 void
@@ -207,7 +211,6 @@ printLocations(
   ostringstream oss;
   oss << maxLine;
   size_t lineNumberWidth = max(params.minLineNumberWidth, oss.str().size());
-  string lineNumberFmt = fmt::format("{{: >{}d}}", lineNumberWidth);
   string blankPrefix = string(lineNumberWidth, ' ') + " | ";
 
   using namespace terminal;
@@ -227,7 +230,7 @@ printLocations(
 
     // Print the line prefix
 
-    string linePrefix = fmt::vformat(lineNumberFmt, fmt::make_format_args(loc.line));
+    string linePrefix = fmt::format("{: >{}d}", loc.line, lineNumberWidth);
     linePrefix += " | ";
     os << linePrefix;
 
@@ -359,18 +362,19 @@ wrap(string_view s, const WrapParams& params) {
 
   // Concatenate lines, consider left indent
 
-  string result;
+  string ret;
   string indent(params.leftIndent, ' ');
   bool first = true;
   for (const auto& line : lines) {
-    if (first)
+    if (first) {
       first = false;
-    else
-      result.push_back('\n');
-    result.append(indent);
-    result.append(line);
+    } else {
+      ret.push_back('\n');
+    }
+    ret.append(indent);
+    ret.append(line);
   }
-  return result;
+  return ret;
 }
 
 } // namespace rocket::text

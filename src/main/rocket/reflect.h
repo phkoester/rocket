@@ -300,13 +300,13 @@ lt(
     const T* rhs,
     const Tuple& rhsRefs,
     std::index_sequence<Index...> indices) {
-  bool result = false;
-  auto unused = (... ||
-      ((result = std::less()(refGet<Index>(lhs, lhsRefs), refGet<Index>(rhs, rhsRefs))) == true ||
+  bool ret = false;
+  auto _unused = (... ||
+      ((ret = std::less()(refGet<Index>(lhs, lhsRefs), refGet<Index>(rhs, rhsRefs))) == true ||
        ((Index + 1 < indices.size()) &&
         std::less()(refGet<Index>(rhs, rhsRefs), refGet<Index>(lhs, lhsRefs)))));
-  use(unused);
-  return result;
+  nop(_unused);
+  return ret;
 }
 
 template<typename T, typename Tuple, size_t... Index>
@@ -317,21 +317,21 @@ gt(
     const T* rhs,
     const Tuple& rhsRefs,
     std::index_sequence<Index...> indices) {
-  bool result = false;
-  auto unused = (... ||
-      ((result = std::greater()(refGet<Index>(lhs, lhsRefs), refGet<Index>(rhs, rhsRefs))) == true ||
+  bool ret = false;
+  auto _unused = (... ||
+      ((ret = std::greater()(refGet<Index>(lhs, lhsRefs), refGet<Index>(rhs, rhsRefs))) == true ||
        ((Index + 1 < indices.size()) &&
         std::greater()(refGet<Index>(rhs, rhsRefs), refGet<Index>(lhs, lhsRefs)))));
-  use(unused);
-  return result;
+  nop(_unused);
+  return ret;
 }
 
 template<typename T, typename Tuple, size_t... Index>
 size_t
 hash(const T* v, const Tuple& refs, std::index_sequence<Index...>) {
-  size_t result = 0;
-  (..., ::boost::hash_combine(result, refGet<Index>(v, refs)));
-  return result;
+  size_t ret = 0;
+  (..., ::boost::hash_combine(ret, refGet<Index>(v, refs)));
+  return ret;
 }
 
 template<size_t Size, size_t Index = 0, typename T, typename Tuple>

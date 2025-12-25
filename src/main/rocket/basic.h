@@ -338,6 +338,15 @@ template<typename F> concept FloatingPoint = IsFloatingPoint<F>::value;
 inline void nop() {}
 
 /**
+ * A NOP function that helps to suppress warnings about unused variables.
+ *
+ * @tparam T the types of @p args
+ * @param args the variables to suprress warnings for
+ */
+template<typename... T>
+constexpr void nop(T&&... args) {}
+
+/**
  * The `option` function has several overloads to work with values either of type @p T or `std::optional<T>`.
  *
  * @tparam T the value type
@@ -424,19 +433,10 @@ signalingNan(F v) {
 template<typename T>
 constexpr typename Uint<sizeof(T)>::Type
 uint(T v) {
-  typename Uint<sizeof(T)>::Type result;
-  std::memcpy(&result, &v, sizeof(T));
-  return result;
+  typename Uint<sizeof(T)>::Type ret;
+  std::memcpy(&ret, &v, sizeof(T));
+  return ret;
 }
-
-/**
- * A NOP function that helps to suppress warnings about unused variables.
- *
- * @tparam T the types of @p args
- * @param args the variables to suprress warnings for
- */
-template<typename... T>
-constexpr void use(T&&... args) {}
 
 /**
  * The `value` function has several overloads to work with values either of type @p T or `std::optional<T>`.

@@ -77,7 +77,7 @@ parseCommand(const vector<string>& args, nio::Sink& out = nio::stdout, nio::Sink
       parseCommandCommand = arg;
       return CommandLine::Stop;
     }
-    throw except::InvalidState(S << "Invalid command " << arg);
+    except::throwInvalidState(ROCKET_EXCEPT_SL, "Invalid command `{}`", arg);
   };
 
   vector<string> localArgs;
@@ -388,7 +388,7 @@ TEST(cl, parseCommand) {
     parseCommand({ "-o", "walk", "dog" }, sink, sink);
     EXPECT_EQ(
         buf,
-        "test-rocket-cl: error: Invalid command \"walk\"\n"
+        "test-rocket-cl: error: Invalid command `walk`\n"
         "Usage: test-rocket-cl [OPTION]... list [OPTION]... FILE...\n"
         "  or   test-rocket-cl [OPTION]... show [OPTION]... [ARG]...\n"
         "Try `test-rocket-cl --help` for more information.\n");

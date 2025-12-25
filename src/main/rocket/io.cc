@@ -30,10 +30,10 @@ optional<byte>
 Buffer::get() {
   // If available, obtain byte that was put back
   if (not intermediate_.empty()) {
-    byte result = intermediate_.back();
+    byte ret = intermediate_.back();
     intermediate_.pop_back();
     ++pos_;
-    return result;
+    return ret;
   }
 
   // If needed, load the next chunk of data
@@ -61,9 +61,9 @@ Buffer::getCodePoint(unicode::CodePoint* cp) {
   if (cpSize == 0)
     throw except::InputFailure(is_, pos, S << "Invalid UTF-8 byte: " << *got);
 
-  vector<byte> result;
-  result.reserve(cpSize);
-  result.push_back(*got);
+  vector<byte> ret;
+  ret.reserve(cpSize);
+  ret.push_back(*got);
 
   for (uint8_t i = 1; i < cpSize; ++i) {
     got = get();
@@ -71,15 +71,15 @@ Buffer::getCodePoint(unicode::CodePoint* cp) {
       throw except::InputFailure(is_, pos, "Incomplete UTF-8 byte sequence");
     if (not unicode::utf8::continuationByte(static_cast<char>(*got)))
       throw except::InputFailure(is_, pos, "Invalid UTF-8 byte sequence");
-    result.push_back(*got);
+    ret.push_back(*got);
   }
 
   if (cp) {
-    string_view s(reinterpret_cast<const char*>(result.data()), result.size());
+    string_view s(reinterpret_cast<const char*>(ret.data()), ret.size());
     *cp = *unicode::CodePointIterator<char>(s);
   }
 
-  return result;
+  return ret;
 }
 
 optional<vector<byte>>
@@ -92,8 +92,8 @@ Buffer::getGrapheme(unicode::Grapheme* gr) {
 
   // Update values
   u32string s { cp };
-  vector<byte> result;
-  copy(bytes->begin(), bytes->end(), back_inserter(result));
+  vector<byte> ret;
+  copy(bytes->begin(), bytes->end(), back_inserter(ret));
 
   // Read more code points
 
@@ -105,7 +105,7 @@ Buffer::getGrapheme(unicode::Grapheme* gr) {
     if (not bytes) {
       if (gr)
         *gr = unicode::Grapheme(s);
-      return result;
+      return ret;
     }
 
     // Update values I
@@ -117,11 +117,11 @@ Buffer::getGrapheme(unicode::Grapheme* gr) {
       put(*bytes);
       if (gr)
         *gr = unicode::Grapheme(s.substr(0, pos));
-      return result;
+      return ret;
     }
 
     // Update values II
-    copy(bytes->begin(), bytes->end(), back_inserter(result));
+    copy(bytes->begin(), bytes->end(), back_inserter(ret));
   }
 }
 

@@ -6,8 +6,6 @@
 
 #include "basic.h"
 
-#include "assert.h"
-
 #include <limits>
 #include <string>
 
@@ -112,15 +110,15 @@ removeLeading(
   if (sub.empty() || sub.size() > s.size())
     return s;
 
-  std::basic_string_view<C> result(s);
+  std::basic_string_view<C> ret(s);
   for (size_t i = 0; i < max; ++i) {
-    std::basic_string_view<C> leading(result.begin(), sub.size());
+    std::basic_string_view<C> leading(ret.begin(), sub.size());
     if (leading == sub)
-      result.remove_prefix(sub.size());
+      ret.remove_prefix(sub.size());
     else
-      return result;
+      return ret;
   }
-  return result;
+  return ret;
 }
 
 /**
@@ -143,16 +141,16 @@ removeTrailing(
   if (sub.empty() || sub.size() > s.size())
     return s;
 
-  std::basic_string_view<C> result(s);
+  std::basic_string_view<C> ret(s);
   for (size_t i = 0; i < max; ++i) {
-    auto begin = result.end() - sub.size();
-    std::basic_string_view<C> trailing(begin, result.end());
+    auto begin = ret.end() - sub.size();
+    std::basic_string_view<C> trailing(begin, ret.end());
     if (trailing == sub)
-      result.remove_suffix(sub.size());
+      ret.remove_suffix(sub.size());
     else
-      return result;
+      return ret;
   }
-  return result;
+  return ret;
 }
 
 /**
@@ -166,11 +164,11 @@ removeTrailing(
 template<typename C> requires Character<C>
 [[nodiscard]] std::basic_string<C>
 repeat(const std::basic_string_view<C> s, size_t n) {
-  std::basic_string<C> result;
-  result.reserve(n * s.size());
+  std::basic_string<C> ret;
+  ret.reserve(n * s.size());
   for (size_t i = 0; i < n; ++i)
-    result.append(s);
-  return result;
+    ret.append(s);
+  return ret;
 }
 
 /**
@@ -192,14 +190,14 @@ replaceIn(
     std::basic_string_view<C> from,
     std::basic_string_view<C> to,
     size_t max = std::numeric_limits<size_t>::max()) {
-  size_t pos = 0, result = 0;
+  size_t pos = 0, ret = 0;
   while ((pos = s.find(from, pos)) != std::string::npos) {
     s.replace(pos, from.size(), to);
-    if (++result >= max)
+    if (++ret >= max)
       break;
     pos += to.size();
   }
-  return result;
+  return ret;
 }
 
 /**

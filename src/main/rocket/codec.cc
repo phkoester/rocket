@@ -57,14 +57,14 @@ namespace parsing {
 
 EnumResult
 parseEnum(istream& is) {
-  EnumResult result;
+  EnumResult ret;
   skip(is);
-  result.actualInputPos = io::tellg(is);
+  ret.actualInputPos = io::tellg(is);
   io::getChar(is, '"');
-  result.inputPos = result.actualInputPos + 1;
-  result.input = io::getUntil(is, '"', true, 1);
-  result.actualInput = '"' + result.input + '"';
-  return result;
+  ret.inputPos = ret.actualInputPos + 1;
+  ret.input = io::getUntil(is, '"', true, 1);
+  ret.actualInput = '"' + ret.input + '"';
+  return ret;
 }
 
 void
