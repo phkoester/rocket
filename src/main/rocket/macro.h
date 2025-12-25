@@ -68,4 +68,11 @@
       BOOST_PP_SEQ_CAT((RocketInit)(__LINE__)(__)) BOOST_PP_SEQ_CAT((rocketInit)(__LINE__)(__)); \
     }
 
+/**
+ * Generates a scoped mutex lock.
+ *
+ * Usage: `ROCKET_LOCK(mutex)`
+ */
+#define ROCKET_LOCK(mutex) auto BOOST_PP_SEQ_CAT((rocketLock)(__LINE__)(__)) = ::std::scoped_lock(mutex)
+
 // EOF

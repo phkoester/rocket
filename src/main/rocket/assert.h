@@ -13,7 +13,9 @@
 #define ROCKET_ASSERT_H
 
 #include "Process.h"
+#ifdef NDEBUG
 #include "basic.h" // `rocket::nop()`
+#endif
 #include "except.h"
 
 #include <source_location>
@@ -22,8 +24,6 @@
 // Internal -------------------------------------------------------------------------------------------------
 
 namespace rocket::assert::internal {
-
-#if 0 // XXX
 
 template<typename... T>
 [[noreturn]] void
@@ -37,38 +37,15 @@ onAssertFailed(
       EXIT_SUCCESS,
       "{}:{}: Assertion `{}` failed{}", sl.file_name(), sl.line(), expr, nio::Format([&] {
     if (fmt.get().size() > 0) {
-      // XXX fmt ist falsch!
-      return nio::Format::params(": {}", fmt, std::forward<T>(args)...);
+      auto params = nio::Format::params(": \\@0");
+      params.tag("\\@0", fmt, std::forward<T>(args)...);
+      return params;
     } else {
       return nio::Format::params();
     }
   }));
   std::terminate();
 }
-
-#else
-
-template<typename... T>
-[[noreturn]] void
-onAssertFailed(
-    const std::source_location& sl,
-    const char* expr,
-    fmt::format_string<T...> fmt = "",
-    T&&... args) {
-  std::string msg;
-  if (fmt.get().size() > 0) {
-    msg = ": ";
-    nio::StringSink sink(msg);
-    sink.print(fmt, std::forward<T>(args)...);
-  }
-  process.error(
-      nio::stderr,
-      EXIT_SUCCESS,
-      "{}:{}: Assertion `{}` failed{}", sl.file_name(), sl.line(), expr, msg);
-  std::terminate();
-}
-
-#endif
 
 template<typename... T>
 [[noreturn]] void
@@ -78,13 +55,15 @@ onCheckFailed(
     const char* expr,
     fmt::format_string<T...> fmt = "",
     T&&... args) {
-  std::string msg;
-  if (fmt.get().size() > 0) {
-    msg = ": ";
-    nio::StringSink sink(msg);
-    sink.print(fmt, std::forward<T>(args)...);
-  }
-  except::throwInvalidArgument(sl, name, "Check `{}` failed{}", expr, msg);
+  except::throwInvalidArgument(sl, name, "Check `{}` failed{}", expr, nio::Format([&] {
+    if (fmt.get().size() > 0) {
+      auto params = nio::Format::params(": \\@0");
+      params.tag("\\@0", fmt, std::forward<T>(args)...);
+      return params;
+    } else {
+      return nio::Format::params();
+    }
+  }));
 }
 
 template<typename... T>
@@ -93,13 +72,15 @@ template<typename... T>
     const char* expr,
     fmt::format_string<T...> fmt = "",
     T&&... args) {
-  std::string msg;
-  if (fmt.get().size() > 0) {
-    msg = ": ";
-    nio::StringSink sink(msg);
-    sink.print(fmt, std::forward<T>(args)...);
-  }
-  except::throwInvalidState(sl, "Expectation `{}` failed{}", expr, msg);
+  except::throwInvalidState(sl, "Expectation `{}` failed{}", expr, nio::Format([&] {
+    if (fmt.get().size() > 0) {
+      auto params = nio::Format::params(": \\@0");
+      params.tag("\\@0", fmt, std::forward<T>(args)...);
+      return params;
+    } else {
+      return nio::Format::params();
+    }
+  }));
 }
 
 } // namespace rocket::assert::internal

@@ -6,7 +6,7 @@
 
 #pragma once
 
-#define ROCKET_EXCEPT_H // XXX
+#define ROCKET_EXCEPT_H
 
 #include "Type.h"
 #include "io-decl.h"

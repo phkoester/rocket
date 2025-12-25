@@ -162,9 +162,14 @@ protected:
 // `FileSink` -----------------------------------------------------------------------------------------------
 
 struct FileSink : Sink {
-  FileSink(FILE* file, bool closeOnDestroy = true);
+  struct Params {
+    bool append = false;
+    bool closeOnDestroy = true;
+  };
 
-  FileSink(const std::string& path, bool closeOnDestroy = true);
+  FileSink(FILE* file, const Params& params);
+
+  FileSink(const std::string& path, const Params& params);
 
   virtual ~FileSink() override;
 
@@ -181,7 +186,7 @@ struct FileSink : Sink {
 ROCKET_PRIVATE:
 
   FILE* file_;
-  bool closeOnDestroy_;
+  Params params_;
 };
 
 // `NullSink` -----------------------------------------------------------------------------------------------

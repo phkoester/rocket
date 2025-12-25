@@ -75,36 +75,7 @@ void
 toy() {
   ROCKET_LOG(toy);
 
-  auto& out = nio::stdout;
-
-  out.println(locale("de_DE.UTF-8"), "de_DE: {:L}", 123456.78);
-  out.println(locale("en_US.UTF-8"), "en_US: {:L}", 123456.78);
-  optional<int> opt;
-  out.println("opt: {}", opt);
-
   ROCKET_LOG_INFO("hi");
-
-  Point p { 1000, 2000 };
-  out.println("Point: {:L}", p);
-
-  int n = 6000;
-  // < 10: The value of n is small. Everything less than 10 is small
-  // < 50: The value of n is mediuml. Everything less than 50 is small
-  // >= 50: The value of n is large. Everything larger than 50 is large
-  out.println(
-      "A note from {}: The value of n is {}. Here goes some answer: {}",
-      process.name(),
-      nio::Format([&] {
-    if (n < 10) {
-      return nio::Format::params("{}, which is small. Everything less than {} is small", n, 10);
-    } else if (n < 5000) {
-      return nio::Format::params("{}, which is medium. Everything less than {} is medium", n, 5000);
-    } else {
-      return nio::Format::params();
-    }
-  }), 42);
-
-  cout << "end of toy" << endl;
 }
 
 } // namespace

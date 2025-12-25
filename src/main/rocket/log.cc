@@ -11,10 +11,9 @@
 
 #include "Process.h"
 #include "enum.h"
-#include "strings.h"
+#include "macro.h"
 
 #include <chrono>
-#include <fstream>
 
 using namespace rocket;
 using namespace rocket::log;
@@ -26,7 +25,7 @@ void applyLog(optional<string_view>);
 
 void applyLogOut(optional<string_view>);
 
-void logFlush(ostream& os);
+void logFlush(nio::Sink& sink);
 
 void setLogLevel(string_view, string_view);
 
@@ -44,29 +43,30 @@ struct Entry {
 // `Out` ----------------------------------------------------------------------------------------------------
 
 struct Out {
-  inline ostream& get() { return os_ ? *os_ : *p_; }
+  inline nio::Sink& get() { return sink_ ? *sink_ : *p_; }
 
-  void set(ostream& v) {
-    os_ = &v;
+  void set(nio::Sink& v) {
+    sink_ = &v;
     p_ = nullptr;
   }
 
   void set(string_view v) {
-    os_ = nullptr;
-    p_ = make_unique<ofstream>(string(v), ios::out | ios::app); // Append to avoid data loss
+    sink_ = nullptr;
+    // Append to avoid data loss
+    p_ = make_unique<nio::FileSink>(string(v), nio::FileSink::Params { .append=true });
     if (not p_->good()) {
       process.error(nio::stderr, EXIT_SUCCESS, "Cannot open log file `{}`; logging to standard output instead", v);
-      set(cout);
+      set(nio::stdout);
     }
   }
 
 private:
 
-  ostream* os_ = &cout; // `cout` or `cerr`
-  unique_ptr<ofstream> p_; // A file stream
+  nio::Sink* sink_ = &nio::stdout; // `stdout` or `stderr`
+  unique_ptr<nio::FileSink> p_; // A file sink
 };
 
-// Local variables ------------------------------------------------------------------------------------------
+// Local variables1 -----------------------------------------------------------------------------------------
 
 // Command-line-option group
 cl::OptionGroup clGroup { "Logging control" };
@@ -84,9 +84,11 @@ vector<cl::Option> clOpts {
 
 // Defined log IDs
 auto definedIds = rocket::boost::bimap::UnorderedBimap<LogLevel*, string_view>::of();
+mutex definedIdsMutex;
 
 // The `Out` instance
 Out out;
+recursive_mutex outMutex;
 
 // The function stack
 thread_local vector<Entry> stack;
@@ -96,7 +98,7 @@ thread_local vector<Entry> stack;
 /**
  * This function handles the `--log` option.
  *
- * @NotThreadSafe
+ * @ThreadSafe
  */
 void
 applyLog(optional<string_view> v) {
@@ -117,16 +119,18 @@ applyLog(optional<string_view> v) {
 /**
  * This function handles the `--log-out` option.
  *
- * @NotThreadSafe
+ * @ThreadSafe
  */
 void
 applyLogOut(optional<string_view> v) {
   ROCKET_EXPECT(v);
 
+  ROCKET_LOCK(outMutex);
+
   if (v == "stdout") {
-    out.set(cout);
-  }else if (v == "stderr") {
-    out.set(cerr);
+    out.set(nio::stdout);
+  } else if (v == "stderr") {
+    out.set(nio::stderr);
   } else {
     if (strings::beginsWith<char>(*v, "file://")) {
       *v = v->substr(7);
@@ -139,7 +143,7 @@ applyLogOut(optional<string_view> v) {
  * Flushes pending begin log entries.
  */
 void
-logFlush(ostream& os) {
+logFlush(nio::Sink& sink) {
   auto begin = stack.end();
 
   // Look for pending begin log entries
@@ -153,59 +157,67 @@ logFlush(ostream& os) {
 
   // Flush them, if any
   for (auto it = begin; it != stack.end(); ++it) {
-    os << *it->begin_;
+    sink.write(*it->begin_);
     it->begin_= nullopt;
   }
 }
 
+/**
+ * @ThreadSafe
+ */
 void
-logImpl(ostream& os, LogLevel* logId, LogLevel level, size_t stackLevel, string_view msg) {
+logImpl(nio::Sink& sink, LogLevel* logId, LogLevel level, size_t stackLevel, string_view msg) {
   // Item: time point in ISO-8601, current time zone, with microseconds
   chrono::time_point tp = time_point_cast<chrono::microseconds>(chrono::system_clock::now());
   chrono::zoned_time zt { chrono::current_zone(), tp };
   string s = std::format("{:%FT%T%Ez} ", zt);
-  os << s;
+  sink.write(s);
   size_t indentSize = s.size();
 
   // Item: caller level
   if (level > LogLevel::none) {
-    os << fmt::format("[{: <5}] ", level); // Width is 8
+    sink.write(fmt::format("[{: <5}] ", level)); // Width is 8
   } else {
-    os << "        "; // 8 spaces
+    sink.write("        "); // 8 spaces
   }
   indentSize += 8;
 
   // Item: stack level
   string indent(2 * stackLevel, ' ');
-  os << indent;
+  sink.write(indent);
   indentSize += indent.size();
 
   // Item: log ID
-  auto it = definedIds.left.find(logId);
-  ROCKET_ASSERT(it != definedIds.left.end());
-  os << it->second << ' ';
-  indentSize += it->second.size() + 1;
+  {
+    ROCKET_LOCK(definedIdsMutex);
+    auto it = definedIds.left.find(logId);
+    ROCKET_ASSERT(it != definedIds.left.end());
+    sink.print("{} ", it->second);
+    indentSize += it->second.size() + 1;
+  }
 
   // Item: message
   if (auto lf = msg.find('\n'); lf == string::npos) {
     // Single-line message: just print it
-    os << msg;
+    sink.write(msg);
   } else {
     // Multi-line message: left-adjust
     string localMsg(msg);
     string to = "\n" + string(indentSize, ' ');
-    strings::replaceIn<char>(localMsg, "\n", to, 1);
-    os << localMsg;
+    strings::replaceIn<char>(localMsg, "\n", to);
+    sink.write(localMsg);
   }
 
   // Print line feed
-  os << '\n';
+  sink.write("\n");
 }
 
-// @NotThreadSafe
+// @ThreadSafe
 void
 setLogLevel(string_view id, string_view value) {
   bool all = id == "all";
+
+  ROCKET_LOCK(definedIdsMutex);
 
   auto it = definedIds.right.end();
   if (not all) {
@@ -252,22 +264,27 @@ namespace internal {
 
 void init() {
   // We need this in case of quick exit
-  process.atExit([] { out.get().flush(); });
+  process.atExit([] {
+    ROCKET_LOCK(outMutex);
+    out.get().flush();
+  });
 }
 
 LogLevel
 logDefine(LogLevel* logId, string_view id) {
   ROCKET_CHECK(id, id != "all", "Invalid log ID: \"all\"; this ID is reserved");
+  ROCKET_LOCK(definedIdsMutex);
   definedIds.left.insert({ logId, id });
   return LogLevel::none;
 }
 
 void
 logBegin(LogLevel* logId, const char* func) {
-  ostringstream os;
+  string buf;
+  nio::StringSink sink(buf);
   // Begin log entry will be flushed later if necessary
-  logImpl(os, logId, LogLevel::none, stack.size(), S << func << " {");
-  stack.emplace_back(logId, func, os.str());
+  logImpl(sink, logId, LogLevel::none, stack.size(), S << func << " {");
+  stack.emplace_back(logId, func, std::move(buf));
 }
 
 void
@@ -277,6 +294,7 @@ logEnd() noexcept {
     // Print end log entry only if begin log entry was flushed
     const Entry& entry = stack.back();
     if (not entry.begin_) {
+      ROCKET_LOCK(outMutex);
       logImpl(out.get(), entry.logId_, LogLevel::none, stack.size() - 1, S << "} " << entry.func_);
     }
   } catch (const exception& ex) {
@@ -290,28 +308,37 @@ logEnd() noexcept {
 
 void
 log(LogLevel level, const exception& ex) {
-  logFlush(out.get());
+  ROCKET_LOCK(outMutex);
+
+  auto& out = ::out.get();
+  logFlush(out);
   ostringstream os;
   except::printException(os, ex);
   auto s = os.str();
   string_view msg(s.begin(), s.end() - 1); // Strip '\n'
-  logImpl(out.get(), stack.back().logId_, level, stack.size(), msg);
+  logImpl(out, stack.back().logId_, level, stack.size(), msg);
 }
 
 void
 log(LogLevel level, exception_ptr ptr) {
-  logFlush(out.get());
+  ROCKET_LOCK(outMutex);
+
+  auto& out = ::out.get();
+  logFlush(out);
   ostringstream os;
   except::printException(os, ptr);
   auto s = os.str();
   string_view msg(s.begin(), s.end() - 1); // Strip '\n'
-  logImpl(out.get(), stack.back().logId_, level, stack.size(), msg);
+  logImpl(out, stack.back().logId_, level, stack.size(), msg);
 }
 
 void
 log(LogLevel level, string_view msg) {
-  logFlush(out.get());
-  logImpl(out.get(), stack.back().logId_, level, stack.size(), msg);
+  ROCKET_LOCK(outMutex);
+
+  auto& out = ::out.get();
+  logFlush(out);
+  logImpl(out, stack.back().logId_, level, stack.size(), msg);
 }
 
 const vector<cl::Option>& opts() { return clOpts; }

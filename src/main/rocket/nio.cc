@@ -24,15 +24,19 @@ Sink::writeln(std::string_view data) {
 
 // `FileSink` -----------------------------------------------------------------------------------------------
 
-FileSink::FileSink(FILE* file, bool closeOnDestroy) :
+
+FileSink::FileSink(FILE* file, const Params& params) :
     file_(file),
-    closeOnDestroy_(closeOnDestroy) {
+    params_(params) {
   ROCKET_CHECK(file, file != nullptr);
 }
 
-FileSink::FileSink(const string& path, bool closeOnDestroy) :
-    file_(std::fopen(path.c_str(), "wb")),
-    closeOnDestroy_(closeOnDestroy) {
+FileSink::FileSink(const string& path, const Params& params) :
+    file_(nullptr),
+    params_(params) {
+  string modes = params.append ? "a" : "w";
+  file_ = std::fopen(path.c_str(), modes.c_str());
+
   if (file_ == nullptr) {
     error_ = errno;
     if (error_ == 0) {
@@ -43,7 +47,7 @@ FileSink::FileSink(const string& path, bool closeOnDestroy) :
 }
 
 FileSink::~FileSink() {
-  if (closeOnDestroy_) {
+  if (params_.closeOnDestroy) {
     close();
   }
 }
@@ -84,7 +88,6 @@ int
 FileSink::write(string_view data) {
   if (open_) {
     if (int result = std::fwrite(data.data(), 1, data.size(), file_); result < data.size()) {
-      cout << "fwrite: size=" << data.size() << ", result=" << result << "\n"; // XXX
       error_ = errno;
       if (error_ == 0) {
         error_ = EIO;
@@ -199,9 +202,9 @@ StringSink::write(string_view data) {
 
 // Variables ------------------------------------------------------------------------------------------------
 
-FileSink stderr = FileSink(::stderr, false);
+FileSink stderr = FileSink(::stderr, FileSink::Params { .closeOnDestroy=false });
 
-FileSink stdout = FileSink(::stdout, false);
+FileSink stdout = FileSink(::stdout, FileSink::Params { .closeOnDestroy=false });
 
 // Functions ------------------------------------------------------------------------------------------------
 

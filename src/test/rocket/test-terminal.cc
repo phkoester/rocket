@@ -30,10 +30,10 @@ TEST(terminal, position) {
   EXPECT_EQ(position(out), make_pair(5UL, 1UL));
 
   out.write("\nab");
-  EXPECT_EQ(position(out), make_pair(3UL, 2UL)); // XXX
+  EXPECT_EQ(position(out), make_pair(3UL, 2UL));
 
   out.write(ansi.move(4, 7));
-  EXPECT_EQ(position(out), make_pair(4UL, 7UL)); // XXX
+  EXPECT_EQ(position(out), make_pair(4UL, 7UL));
 }
 
 /**
