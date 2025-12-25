@@ -79,7 +79,7 @@ TEST(nio, FormatWithTagged) {
 }
 
 TEST(nio, FileSink) {
-  FileSink sink("/does/not/exist");
+  FileSink sink("/does/not/exist", FileSink::Params { .append=true });
 
   EXPECT_EQ(sink.error(), ENOENT);
   EXPECT_EQ(sink.good(), false);

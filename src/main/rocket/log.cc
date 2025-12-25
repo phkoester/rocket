@@ -209,7 +209,7 @@ logImpl(nio::Sink& sink, LogLevel* logId, LogLevel level, size_t stackLevel, str
   }
 
   // Print line feed
-  sink.write("\n");
+  sink.write('\n');
 }
 
 // @ThreadSafe

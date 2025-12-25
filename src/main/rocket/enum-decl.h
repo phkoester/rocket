@@ -27,7 +27,7 @@
 
 #define ROCKET_ENUM_DECLARE_FMT_FORMATTER__(type) \
   template<> \
-  struct ::fmt::formatter<type> : formatter<::std::string_view> { \
+  struct fmt::formatter<type> : formatter<::std::string_view> { \
     format_context::iterator format(type v, format_context& ctx) const; \
   }; \
 

@@ -12,10 +12,22 @@
 #include <fmt/format.h>
 
 #include <functional>
-#include <ostream>
+#include <memory>
 #include <string>
+#include <unordered_map>
 
 namespace rocket::nio {
+
+// Constants ------------------------------------------------------------------------------------------------
+
+/**
+ * The default buffer size in bytes.
+ */
+static constexpr size_t DEFAULT_BUFFER_SIZE = 64 * 1'024; // 64 KiB
+/**
+  * The minimum buffer size in bytes.
+  */
+static constexpr size_t MIN_BUFFER_SIZE = 128;
 
 // `Format` -------------------------------------------------------------------------------------------------
 
@@ -107,13 +119,13 @@ struct Sink {
 
   virtual int close() = 0;
 
-  int error() const { return error_; }
+  virtual int error() const { return error_; }
 
   virtual int flush() = 0;
 
-  bool good() const { return open_ && error_ == 0; }
+  virtual bool good() const { return open_ && error_ == 0; }
 
-  bool open() const { return open_; }
+  virtual bool open() const { return open_; }
 
   template<typename... T>
   int print(fmt::format_string<T...> fmt, T&&... args) {
@@ -130,15 +142,19 @@ struct Sink {
   template<typename... T>
   int println(fmt::format_string<T...> fmt, T&&... args) {
     print(fmt, std::forward<T>(args)...);
-    write("\n");
+    write('\n');
     return flush();
   }
 
   template<typename... T>
   int println(const std::locale& locale, fmt::format_string<T...> fmt, T&&... args) {
     print(locale, fmt, std::forward<T>(args)...);
-    write("\n");
+    write('\n');
     return flush();
+  }
+
+  int write(char c) {
+    return write(std::string_view(&c, 1));
   }
 
   virtual int write(std::string_view data) = 0;
@@ -157,6 +173,33 @@ protected:
 
   int error_ = 0;
   bool open_ = true;
+};
+
+// `BufferedSink` -------------------------------------------------------------------------------------------
+
+struct BufferedSink : Sink {
+  BufferedSink(Sink& sink, size_t size = DEFAULT_BUFFER_SIZE);
+
+  virtual int close() override;
+
+  virtual int error() const override { return sink_.error(); }
+
+  virtual int flush() override;
+
+  virtual bool good() const override { return sink_.good(); }
+
+  virtual bool open() const override { return sink_.open(); }
+
+  virtual int write(std::string_view data) override;
+
+private:
+
+  Sink& sink_;
+  const size_t size_;
+  std::unique_ptr<char[]> buf_;
+  size_t pos_ = 0;
+
+  void flushBuffer();
 };
 
 // `FileSink` -----------------------------------------------------------------------------------------------
@@ -233,9 +276,8 @@ private:
 
 // Variables ------------------------------------------------------------------------------------------------
 
-extern FileSink stderr;
-
-extern FileSink stdout;
+extern Sink& stdout;
+extern Sink& stderr;
 
 // Functions ------------------------------------------------------------------------------------------------
 

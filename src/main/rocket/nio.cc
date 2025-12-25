@@ -18,12 +18,65 @@ namespace rocket::nio {
 int
 Sink::writeln(std::string_view data) {
   write(data);
-  write("\n");
+  write('\n');
   return flush();
 }
 
-// `FileSink` -----------------------------------------------------------------------------------------------
+// `BufferedSink` -------------------------------------------------------------------------------------------
 
+BufferedSink::BufferedSink(Sink& sink, size_t size) :
+    sink_(sink),
+    size_(size) {
+  ROCKET_CHECK(size, size >= MIN_BUFFER_SIZE);
+  buf_ = make_unique<char[]>(size);
+}
+
+int
+BufferedSink::close() {
+  int ret = sink_.close();
+  buf_ = nullptr;
+  pos_ = 0;
+  return ret;
+}
+
+int
+BufferedSink::flush() {
+  if (buf_ && pos_ > 0) {
+    flushBuffer();
+  }
+  return sink_.flush();
+}
+
+void
+BufferedSink::flushBuffer() {
+  sink_.write(string_view(&buf_[0], pos_));
+  pos_ = 0;
+}
+
+int
+BufferedSink::write(string_view data) {
+  if (not good()) {
+    return sink_.write(data);
+  }
+  ROCKET_ASSERT(buf_);
+
+  auto rest = data;
+  while (not rest.empty()) {
+    size_t free = size_ - pos_;
+    if (rest.size() <= free) {
+      memcpy(&buf_[pos_], rest.data(), rest.size());
+      pos_ += rest.size();
+      break;
+    }
+    memcpy(&buf_[pos_], rest.data(), free);
+    pos_ += free;
+    rest = rest.substr(free);
+    flushBuffer();
+  }
+  return 0;
+}
+
+// `FileSink` -----------------------------------------------------------------------------------------------
 
 FileSink::FileSink(FILE* file, const Params& params) :
     file_(file),
@@ -34,7 +87,7 @@ FileSink::FileSink(FILE* file, const Params& params) :
 FileSink::FileSink(const string& path, const Params& params) :
     file_(nullptr),
     params_(params) {
-  string modes = params.append ? "a" : "w";
+  string modes = params.append ? "ab" : "wb"; // `b` is for non-Linux only
   file_ = std::fopen(path.c_str(), modes.c_str());
 
   if (file_ == nullptr) {
@@ -87,7 +140,7 @@ FileSink::flush() {
 int
 FileSink::write(string_view data) {
   if (open_) {
-    if (int result = std::fwrite(data.data(), 1, data.size(), file_); result < data.size()) {
+    if (size_t result = std::fwrite(data.data(), 1, data.size(), file_); result < data.size()) {
       error_ = errno;
       if (error_ == 0) {
         error_ = EIO;
@@ -202,9 +255,15 @@ StringSink::write(string_view data) {
 
 // Variables ------------------------------------------------------------------------------------------------
 
-FileSink stderr = FileSink(::stderr, FileSink::Params { .closeOnDestroy=false });
+namespace {
 
-FileSink stdout = FileSink(::stdout, FileSink::Params { .closeOnDestroy=false });
+FileSink fileSinkStdout = FileSink(::stdout, FileSink::Params { .closeOnDestroy=false });
+FileSink fileSinkStderr = FileSink(::stderr, FileSink::Params { .closeOnDestroy=false });
+
+} // namespace
+
+Sink& stdout = fileSinkStdout;
+Sink& stderr = fileSinkStderr;
 
 // Functions ------------------------------------------------------------------------------------------------
 

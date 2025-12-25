@@ -43,7 +43,7 @@ testGrapheme(const Grapheme& grapheme, u32string_view s) {
   auto pos = terminal::position(out);
   EXPECT_TRUE(pos);
   EXPECT_EQ(pos->first, grapheme.width + 3);
-  out.write("\n");
+  out.write('\n');
   out.println("[{:~<{}}]", "", grapheme.width);
 }
 

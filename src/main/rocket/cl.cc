@@ -110,7 +110,7 @@ CommandLine::help(nio::Sink& sink, bool exit) {
 
   if (usage_) {
     if (output) {
-      sink.write("\n");
+      sink.write('\n');
     }
     printUsage(sink);
     output = true;
@@ -120,7 +120,7 @@ CommandLine::help(nio::Sink& sink, bool exit) {
 
   if (params_.prolog) {
     if (output) {
-      sink.write("\n");
+      sink.write('\n');
     }
     sink.writeln(text::wrap(*params_.prolog, { .width=width }));
     output = true;
@@ -130,7 +130,7 @@ CommandLine::help(nio::Sink& sink, bool exit) {
 
   if (not opts_.empty()) {
     if (output) {
-      sink.write("\n");
+      sink.write('\n');
     }
     helpOpts(sink, width);
     output = true;
@@ -140,7 +140,7 @@ CommandLine::help(nio::Sink& sink, bool exit) {
 
   if (params_.epilog) {
     if (output) {
-      sink.write("\n");
+      sink.write('\n');
     }
     sink.writeln(text::wrap(*params_.epilog, { .width=width }));
   }
@@ -186,7 +186,7 @@ CommandLine::helpOpts(nio::Sink& sink, size_t width) const {
     if (opts.empty())
       continue;
     if (output) {
-      sink.write("\n");
+      sink.write('\n');
     }
     sink.println("{}:\n", group->title);
     output = true;
@@ -204,7 +204,7 @@ CommandLine::helpOpts(nio::Sink& sink, size_t width) const {
       if (opt->format) {
         sink.print(" {}", *opt->format);
       }
-      sink.write("\n");
+      sink.write('\n');
       if (opt->help) {
         sink.writeln(text::wrap(*opt->help, wrapParams));
       }
