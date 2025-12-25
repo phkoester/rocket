@@ -8,9 +8,9 @@
 
 #include "Process.h"
 #include "StringConvert.h"
+#include "nio.h"
 #include "unicode.h"
 
-#include <iostream>
 #include <unordered_map>
 
 namespace rocket::cl {
@@ -22,7 +22,7 @@ namespace internal {
 template<typename T>
 inline void
 applyTo(T& dest, std::optional<std::string_view> arg) {
-  dest = stringToType<T>(*arg);  
+  dest = stringToType<T>(*arg);
 }
 
 template<>
@@ -101,7 +101,7 @@ struct Option {
       [&](std::optional<std::string_view> arg) { internal::applyTo(dest, arg); }
     };
   }
-  
+
   const OptionGroup* group = nullptr; ///< The option group.
   std::string name; ///< The option name.
   std::optional<unicode::CodePoint> shortName; ///< The option short name.
@@ -180,31 +180,31 @@ struct CommandLine {
    * To be called when the command line, in particular its positional arguments, did not satisfy the usage
    * rules.
    *
-   * @param err the output stream
+   * @param sink the sink to write to
    * @param status program exit status. If this is not `EXIT_SUCCESS` (0), the program exits with this status
    */
-  void error(std::ostream& err = std::cerr, int status = EXIT_SERIOUS_FAILURE) const;
+  void error(nio::Sink& sink, int status = EXIT_SERIOUS_FAILURE) const;
 
   /**
    * To be called when #parse threw an exception.
    *
    * @param ex the exception that was caught
-   * @param err the output stream
+   * @param sink the sink to write to
    * @param status program exit status. If this is not `EXIT_SUCCESS` (0), the program exits with this status
    */
   void handleException(
       const std::exception& ex,
-      std::ostream& err = std::cerr,
+      nio::Sink& sink,
       int status = EXIT_SERIOUS_FAILURE) const;
-  
+
   /**
    * To be called when the `--help` option appeared on the command line.
    *
-   * @param out the output stream
+   * @param sink the sink to write to
    * @param exit if `true`, the program exits with `EXIT_SUCCESS`, otherwise it continues to run
    */
-  void help(std::ostream& out, bool exit);
-  
+  void help(nio::Sink& sink, bool exit);
+
   /**
    * Parses the command-line arguments @p args, assigns values to bound destination references.
    *
@@ -237,11 +237,11 @@ private:
   std::unordered_map<std::string_view, const Option*> byName_;
   std::unordered_map<uint32_t, const Option*> byShortName_;
 
-  void helpOpts(std::ostream& os, size_t width) const;
+  void helpOpts(nio::Sink& sink, size_t width) const;
 
-  void printHelp(std::ostream& os) const;
+  void printHelp(nio::Sink& sink) const;
 
-  void printUsage(std::ostream& os) const;
+  void printUsage(nio::Sink& sink) const;
 };
 
 } // namespace cl

@@ -6,6 +6,8 @@
 
 #include "assert.h"
 
+#include <unistd.h>
+
 using namespace std;
 
 namespace rocket::nio {
@@ -183,6 +185,26 @@ StringSink::write(string_view data) {
     error_ = EBADF;
   }
   return error_;
+}
+
+// Functions ------------------------------------------------------------------------------------------------
+
+int
+fd(const nio::Sink& sink) {
+  const auto* fileSink = dynamic_cast<const nio::FileSink*>(&sink);
+  if (fileSink) {
+    if (fileSink->stdout()) {
+      return STDOUT_FILENO;
+    } else if (fileSink->stderr()) {
+      return STDERR_FILENO;
+    }
+  }
+  return -1;
+}
+
+bool
+isatty(const nio::Sink& sink) {
+  return ::isatty(fd(sink));
 }
 
 } // namespace rocket::nio

@@ -9,23 +9,34 @@
 
 #include "nio.h"
 
-#include <iosfwd>
 #include <locale>
 #include <optional>
 #include <string>
 #include <vector>
+
+#include <boost/preprocessor/stringize.hpp>
+#include <boost/preprocessor/facilities/check_empty.hpp>
+#include <boost/preprocessor/logical/not.hpp>
+#include <boost/preprocessor/punctuation/comma_if.hpp>
+#include <boost/preprocessor/tuple/elem.hpp>
 
 // Macros ---------------------------------------------------------------------------------------------------
 
 /**
  * Calls #rocket::Process::error. This may be used even if the process isn't initialized yet.
  *
- * @param msg The error message
+ * Usage: `ROCKET_PROCESS_ERROR(fmt, [args]...])`
  */
-#define ROCKET_PROCESS_ERROR(msg) { \
-  ::std::ostringstream os; \
-  os << __FILE__ << ':' << __LINE__ << ": " << msg; \
-  ::rocket::process.error(::std::cerr, os.str(), EXIT_SUCCESS); \
+#define ROCKET_PROCESS_ERROR(fmt, ...) { \
+  ::std::string msg; \
+  ::rocket::nio::StringSink sink(msg); \
+  sink.print("{}:{}: ", __FILE__, __LINE__); \
+  sink.print( \
+      fmt \
+      BOOST_PP_COMMA_IF(BOOST_PP_NOT(BOOST_PP_CHECK_EMPTY(BOOST_PP_TUPLE_ELEM(0, (__VA_ARGS__))))) \
+      __VA_ARGS__); \
+  auto stderr = ::rocket::nio::stderr(); \
+  ::rocket::process.error(stderr, EXIT_SUCCESS, "{}", msg, EXIT_SUCCESS); \
 }
 
 namespace rocket {
@@ -52,8 +63,7 @@ constexpr int EXIT_SERIOUS_FAILURE = 2;
  * ```
  * #include <rocket/Process.h>
  * #include <rocket/cl.h>
- *
- * #include <iostream>
+ * #include <rocket/nio.h>
  *
  * using namespace rocket;
  * using namespace std;
@@ -68,7 +78,8 @@ constexpr int EXIT_SERIOUS_FAILURE = 2;
  *     } catch (const exception& ex) {
  *       cl.handleException(ex);
  *     }
- *     cout << "This is " << process.name() << '\n';
+ *     auto stdout = nio::stdout();
+ *     stdout.println("This is {}", process.name());
  *     process.exit(EXIT_SUCCESS);
  *   } catch (...) {
  *     terminate();
@@ -111,17 +122,6 @@ struct Process {
    * @return a locale
    */
   const std::locale& codeLocale() const { return codeLocale_; }
-
-  /**
-   * Outputs an error message.
-   *
-   * This function may be called even if the process isn't initialized yet.
-   *
-   * @param os the output stream, usually `std::cerr`
-   * @param msg the error messsage
-   * @param status the exit status. If not `EXIT_SUCCESS` (0), then #exit is called
-   */
-  void error(std::ostream& os, std::string_view msg, int status = EXIT_FAILURE) const;
 
   /**
    * Outputs an error message.
@@ -212,11 +212,17 @@ struct Process {
    * Outputs a warning.
    *
    * This function may be called even if the process isn't initialized yet.
-
-   * @param os the output stream, usually `std::cerr`
-   * @param msg the warning message
+   *
+   * @param sink the sink to write to, usually `rocket::nio::stderr()`
+   * @param fmt the format string
+   * @param args the format arguments
    */
-  void warn(std::ostream& os, std::string_view msg) const;
+   template<typename... T>
+   void warn(nio::Sink& sink, fmt::format_string<T...> fmt, T&&... args) {
+     std::string name = inited_ ? this->name() : invocationShortName();
+     sink.print("{}: warning: ", name);
+     sink.println(fmt, std::forward<T>(args)...);
+   }
 
 private:
 

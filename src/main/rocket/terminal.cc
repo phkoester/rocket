@@ -71,8 +71,9 @@ Ansi::move(int column, int line) const {
 }
 
 string
-Ansi::request(ostream& os, string_view sequence) const {
-  ROCKET_CHECK(os, &os == &cout || &os == &cerr);
+Ansi::request(nio::Sink& sink, string_view sequence) const {
+  nio::FileSink* fileSink = dynamic_cast<nio::FileSink*>(&sink);
+  ROCKET_CHECK(sink, fileSink && (fileSink->stdout() || fileSink->stderr()));
 
   if (not active_)
     return string();
@@ -91,8 +92,8 @@ Ansi::request(ostream& os, string_view sequence) const {
 
   // Send the ANSI code requesting cursor position
 
-  os << sequence;
-  os.flush();
+  sink.write(sequence);
+  sink.flush();
 
   // Read the response
 
@@ -131,26 +132,15 @@ Ansi::up(int n) const {
 // Functions ------------------------------------------------------------------------------------------------
 
 optional<pair<size_t, size_t>>
-position(ostream& os) {
-  if (not io::isatty(os))
+position(nio::Sink& sink) {
+  if (not nio::isatty(sink)) {
     return nullopt;
-
-  // Save current `STDIN` settings
-
-  termios oldT, newT;
-  tcgetattr(STDIN_FILENO, &oldT);
-  newT = oldT;
-
-  // Disable echo and canonical input on `STDIN`
-
-  newT.c_lflag &= ~(ECHO | ICANON);
-  tcsetattr(STDIN_FILENO, TCSANOW, &newT);
-  ROCKET_GUARD([&] { tcsetattr(STDIN_FILENO, TCSANOW, &oldT); });
+  }
 
   // Send the ANSI code requesting cursor position
 
-  Ansi ansi(true);
-  string response = ansi.request(os, "\e[6n");
+  Ansi ansi(true); // We know that the sink is connected to a terminal
+  string response = ansi.request(sink, "\e[6n");
 
   // Parse the response
 
@@ -164,15 +154,17 @@ position(ostream& os) {
 }
 
 optional<pair<size_t, size_t>>
-size(const basic_ios<char>& ios) {
-  int fd = io::fd(ios);
-  if (fd == -1)
+size(const ostream& os) {
+  int fd = io::fd(os);
+  if (fd == -1) {
     return nullopt;
+  }
 
   winsize ws;
   int res = ioctl(fd, TIOCGWINSZ, &ws);
-  if (res != 0)
+  if (res != 0) {
     return nullopt;
+  }
   return make_pair(ws.ws_col, ws.ws_row);
 }
 

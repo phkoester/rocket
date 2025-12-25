@@ -6,6 +6,8 @@
 
 #pragma once
 
+#include "nio.h"
+
 #include <optional>
 #include <string>
 
@@ -77,14 +79,14 @@ struct Ansi {
   std::string move(int column, int line) const;
 
   /**
-   * Sends an ANSI escape sequence to the output stream and returns the response from the input stream.
+   * Sends an ANSI escape sequence to the sink, and returns the response from `stdin`.
    *
-   * @param os the output stream
+   * @param sink the sink
    * @param sequence the ANSI escape sequence to send
-   * @return the response from the input stream if this instance is active, otherwise an empty string
-   * @throw #rocket::except::InputFailure if the response from the input stream is not valid
+   * @return the response from `stdin` if this instance is active, otherwise an empty string
+   * @throw #rocket::except::InputFailure if the response from `stdin` is not valid
    */
-  std::string request(std::ostream& os, std::string_view sequence) const;
+  std::string request(nio::Sink& sink, std::string_view sequence) const;
 
   /**
    * Moves the cursor right by @p n columns.
@@ -130,21 +132,21 @@ private:
  * Returns the terminal's current cursor position, if available. The pair' s `first` is the column starting
  * with 1, `second` is the line starting with 1.
  *
- * @param os the output stream. If this is `std::cout` or `std::cerr` connected to a terminal, then a proper
- *     position is returned
+ * @param sink the sink. If this is `stdout` or `stderr` connected to a terminal, then a proper position is
+ *     returned
  * @return the cursor position, or null if not available
  */
-std::optional<std::pair<size_t, size_t>> position(std::ostream& os);
+std::optional<std::pair<size_t, size_t>> position(nio::Sink& sink);
 
 /**
  * Returns the terminal's current size, if available. The pair' s `first` is the width in columns, `second`
  * is the height in lines.
  *
- * @param ios the stream. If this is `std::cin`, `std::cout`, or `std::cerr` connected to a terminal, then a
- *     proper size is returned
+ * @param sink the sink. If this is `stdout` or `stderr` connected to a terminal, then a proper size is
+ *     returned
  * @return the terminal size, or null if not available
  */
-std::optional<std::pair<size_t, size_t>> size(const std::basic_ios<char>& ios);
+std::optional<std::pair<size_t, size_t>> size(const nio::Sink& sink);
 
 } // namespace rocket::terminal
 

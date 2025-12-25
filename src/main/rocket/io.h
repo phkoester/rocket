@@ -179,12 +179,13 @@ int
 fd(const std::basic_ios<C>& ios)
 {
   if constexpr (std::is_same_v<C, char>) {
-    if (&ios == &std::cout)
+    if (&ios == &std::cout) {
       return STDOUT_FILENO;
-    else if (&ios == &std::cerr)
+    } else if (&ios == &std::cerr) {
       return STDERR_FILENO;
-    else if (&ios == &std::cin)
+    } else if (&ios == &std::cin) {
       return STDIN_FILENO;
+    }
   }
   return -1;
 }

@@ -97,6 +97,10 @@ struct FileSink : Sink {
 
   virtual int flush() override;
 
+  bool stderr() const { return file_ == ::stderr; }
+
+  bool stdout() const { return file_ == ::stdout; }
+
   virtual int write(std::string_view data) override;
 
 private:
@@ -148,6 +152,22 @@ private:
 };
 
 // Functions ------------------------------------------------------------------------------------------------
+
+/**
+ * Returns a file descriptor for a #rocket::nio::Sink.
+ *
+ * @param sink the sink
+ * @return `STDOUT_FILENO`, `STDERR_FILENO`, or -1 if a file descriptor cannot be determined
+ */
+int fd(const nio::Sink& sink);
+
+/**
+ * Returns `true` if the sink @p sink is connected to a terminal.
+ *
+ * @param sink the sink
+ * @return `true` if @p sink is connected to a terminal
+ */
+bool isatty(const nio::Sink& sink);
 
 inline FileSink stderr() { return FileSink(::stderr, false); }
 

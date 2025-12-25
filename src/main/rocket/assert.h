@@ -45,8 +45,8 @@ onAssertFailed(
     nio::StringSink sink(msg);
     sink.print(fmt, std::forward<T>(args)...);
   }
-  auto sink = nio::stderr();
-  process.error(sink, EXIT_SUCCESS, "{}:{}: Assertion `{}` failed{}", sl.file_name(), sl.line(), expr, msg);
+  auto stderr = nio::stderr();
+  process.error(stderr, EXIT_SUCCESS, "{}:{}: Assertion `{}` failed{}", sl.file_name(), sl.line(), expr, msg);
   std::terminate();
 }
 
@@ -106,7 +106,7 @@ template<typename... T>
  *
  * @throw #rocket::except::InvalidState
  */
-#define ROCKET_FAIL_INVALID_CALL() ROCKET_EXPECT(false, ::rocket::S << "Invalid call of function `" << __PRETTY_FUNCTION__ << "`")
+#define ROCKET_FAIL_INVALID_CALL() ROCKET_EXPECT(false, "Invalid call of function `{}`", __PRETTY_FUNCTION__)
 
 /**
  * Throws #rocket::except::InvalidState.

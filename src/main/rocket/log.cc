@@ -55,7 +55,8 @@ struct Out {
     os_ = nullptr;
     p_ = make_unique<ofstream>(string(v), ios::out | ios::app); // Append to avoid data loss
     if (not p_->good()) {
-      process.error(cerr, S << "Cannot open log file " << v << "; logging to standard output instead");
+      auto stderr = nio::stderr();
+      process.error(stderr, EXIT_SUCCESS, "Cannot open log file `{}`; logging to standard output instead", v);
       set(cout);
     }
   }
@@ -273,7 +274,7 @@ logEnd() noexcept {
     if (not entry.begin_)
       logImpl(out.get(), entry.logId_, LogLevel::none, stack.size() - 1, S << "} " << entry.func_);
   } catch (const exception& ex) {
-    ROCKET_PROCESS_ERROR("Cannot log message: " << except::what(ex));
+    ROCKET_PROCESS_ERROR("Cannot log message: {}", except::what(ex));
   } catch (...) {
     ROCKET_PROCESS_ERROR("Cannot log message");
   }

@@ -37,10 +37,11 @@ invocationShortName() {
 [[noreturn]] void
 onTerminate() {
   try {
-    cerr << process.name() << ": fatal error: Terminate handler called\n";
+    auto stderr = nio::stderr();
+    stderr.println("{}: : fatal error: Terminate handler called", process.name());
     if (auto ptr = current_exception())
       except::printException(cerr, ptr);
-    cerr << "Aborting\n";
+    stderr.println("Aborting");
   } catch (...) {
     ROCKET_PROCESS_ERROR("`onTerminate` failed");
   }
@@ -54,15 +55,6 @@ namespace rocket {
 // `Process` ------------------------------------------------------------------------------------------------
 
 Process process;
-
-void
-Process::error(ostream& os, string_view msg, int status) const {
-  string name = inited_ ? this->name() : invocationShortName();
-  os << name << ": error: " << msg << '\n';
-
-  if (status != EXIT_SUCCESS)
-    exit(status);
-}
 
 void
 Process::atExit(void (*f)()) const { // cppcheck-suppress constParameterPointer
@@ -152,12 +144,6 @@ const string&
 Process::name() const {
   ROCKET_ASSERT(inited_, "Process not initialized");
   return name_;
-}
-
-void
-Process::warn(ostream& os, string_view msg) const {
-  string name = inited_ ? this->name() : invocationShortName();
-  os << name << ": warning: " << msg << '\n';
 }
 
 } // namespace rocket
