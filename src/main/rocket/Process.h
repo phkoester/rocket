@@ -6,7 +6,6 @@
 
 #pragma once
 
-
 #include "nio.h"
 
 #include <locale>
@@ -35,8 +34,7 @@
       fmt \
       BOOST_PP_COMMA_IF(BOOST_PP_NOT(BOOST_PP_CHECK_EMPTY(BOOST_PP_TUPLE_ELEM(0, (__VA_ARGS__))))) \
       __VA_ARGS__); \
-  auto stderr = ::rocket::nio::stderr(); \
-  ::rocket::process.error(stderr, EXIT_SUCCESS, "{}", msg, EXIT_SUCCESS); \
+  ::rocket::process.error(::rocket::nio::stderr, EXIT_SUCCESS, "{}", msg, EXIT_SUCCESS); \
 }
 
 namespace rocket {
@@ -76,10 +74,9 @@ constexpr int EXIT_SERIOUS_FAILURE = 2;
  *     try {
  *       cl.parse(process.args());
  *     } catch (const exception& ex) {
- *       cl.handleException(ex);
+ *       cl.handleException(ex, nio::stderr);
  *     }
- *     auto stdout = nio::stdout();
- *     stdout.println("This is {}", process.name());
+ *     nio::stdout.println("This is {}", process.name());
  *     process.exit(EXIT_SUCCESS);
  *   } catch (...) {
  *     terminate();
@@ -128,7 +125,7 @@ struct Process {
    *
    * This function may be called even if the process isn't initialized yet.
    *
-   * @param sink the sink to write to, usually `rocket::nio::stderr()`
+   * @param sink the sink to write to, usually `rocket::nio::stderr`
    * @param status the exit status. If not `EXIT_SUCCESS` (0), then #exit is called
    * @param fmt the format string
    * @param args the format arguments
@@ -213,7 +210,7 @@ struct Process {
    *
    * This function may be called even if the process isn't initialized yet.
    *
-   * @param sink the sink to write to, usually `rocket::nio::stderr()`
+   * @param sink the sink to write to, usually `rocket::nio::stderr`
    * @param fmt the format string
    * @param args the format arguments
    */

@@ -29,11 +29,11 @@ bool parseCommandShowTest; // CL 2 "-t"
 vector<string> parseCommandArgs; // CL 2 args
 
 vector<string>
-parse(const CommandLine& cl, const vector<string>& args, ostream& os = cerr) {
+parse(const CommandLine& cl, const vector<string>& args, nio::Sink& err = nio::stderr) {
   try {
     return cl.parse(args);
   } catch (const exception& ex) {
-    cl.handleException(ex, os, EXIT_SUCCESS);
+    cl.handleException(ex, err, EXIT_SUCCESS);
     return {};
   }
 }
@@ -43,7 +43,7 @@ parse(const CommandLine& cl, const vector<string>& args, ostream& os = cerr) {
  *   or   cmd [-o | -h] show [-h | -s | -t] [ARG]...
  */
 void
-parseCommand(const vector<string>& args, ostream& out = cout, ostream& err = cerr) {
+parseCommand(const vector<string>& args, nio::Sink& out = nio::stdout, nio::Sink& err = nio::stderr) {
   // Reset
 
   parseCommandOmit = false;
@@ -125,8 +125,8 @@ parseCommand(const vector<string>& args, ostream& out = cout, ostream& err = cer
       listCl.error(err, EXIT_SUCCESS);
       return;
     }
-    
-    out << "Listing ...\n";
+
+    out.writeln("Listing ...");
   } else {
     // 2. "show" with "[ARG]..." (optional)
 

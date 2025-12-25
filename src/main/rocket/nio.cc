@@ -14,20 +14,34 @@ namespace rocket::nio {
 
 // `Sink`----------------------------------------------------------------------------------------------------
 
-void
+int
 Sink::vprint(fmt::locale_ref locale, fmt::string_view fmt, fmt::format_args args) {
   fmt::memory_buffer buf;
   fmt::detail::vformat_to(buf, fmt, args, locale);
-  write({ buf.data(), buf.size() });
+  return write({ buf.data(), buf.size() });
 }
 
-void
+int
 Sink::vprintln(fmt::locale_ref locale, fmt::string_view fmt, fmt::format_args args) {
   fmt::memory_buffer buf;
   fmt::detail::vformat_to(buf, fmt, args, locale);
   buf.push_back('\n');
   write({ buf.data(), buf.size() });
-  flush();
+  return flush();
+}
+
+int
+Sink::writeln(std::string_view data) {
+  write(data);
+  write("\n");
+  return flush();
+}
+
+int
+Sink::writeln(std::string_view data, size_t offset, size_t n = std::string_view::npos) {
+  write(data, offset, n);
+  write("\n");
+  return flush();
 }
 
 // `FileSink` -----------------------------------------------------------------------------------------------
@@ -186,6 +200,12 @@ StringSink::write(string_view data) {
   }
   return error_;
 }
+
+// Variables ------------------------------------------------------------------------------------------------
+
+FileSink stderr = FileSink(::stderr, false);
+
+FileSink stdout = FileSink(::stdout, false);
 
 // Functions ------------------------------------------------------------------------------------------------
 

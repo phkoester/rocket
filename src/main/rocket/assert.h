@@ -45,8 +45,7 @@ onAssertFailed(
     nio::StringSink sink(msg);
     sink.print(fmt, std::forward<T>(args)...);
   }
-  auto stderr = nio::stderr();
-  process.error(stderr, EXIT_SUCCESS, "{}:{}: Assertion `{}` failed{}", sl.file_name(), sl.line(), expr, msg);
+  process.error(nio::stderr, EXIT_SUCCESS, "{}:{}: Assertion `{}` failed{}", sl.file_name(), sl.line(), expr, msg);
   std::terminate();
 }
 

@@ -27,10 +27,10 @@ main(int argc, char** argv) {
     try {
       cl.parse(process.args());
       if (help) {
-        cl.help(cout, true);
+        cl.help(nio::stdout, true);
       }
     } catch (const exception& ex) {
-      cl.handleException(ex);
+      cl.handleException(ex, nio::stderr);
     }
 
     int status = RUN_ALL_TESTS();

@@ -55,8 +55,7 @@ struct Out {
     os_ = nullptr;
     p_ = make_unique<ofstream>(string(v), ios::out | ios::app); // Append to avoid data loss
     if (not p_->good()) {
-      auto stderr = nio::stderr();
-      process.error(stderr, EXIT_SUCCESS, "Cannot open log file `{}`; logging to standard output instead", v);
+      process.error(nio::stderr, EXIT_SUCCESS, "Cannot open log file `{}`; logging to standard output instead", v);
       set(cout);
     }
   }

@@ -71,9 +71,7 @@ void
 toy() {
   ROCKET_LOG(toy);
 
-  ROCKET_ASSERT(false, "oops {}", 42);
-
-  auto stdout = nio::stdout();
+  auto& stdout = nio::stdout;
 
   stdout.println(locale("de_DE.UTF-8"), "de_DE: {:L}", 123456.78);
   stdout.println(locale("en_US.UTF-8"), "en_US: {:L}", 123456.78);
@@ -101,14 +99,13 @@ main(int argc, char **argv) {
     try {
       args = cl.parse(process.args());
     } catch (const exception& ex) {
-      cl.handleException(ex);
+      cl.handleException(ex, nio::stderr);
     }
 
     {
       ROCKET_LOG(toy);
-      auto stdout = nio::stdout();
-      stdout.println("This is {}", process.name());
-      stdout.println("args: {}", args);
+      nio::stdout.println("This is {}", process.name());
+      nio::stdout.println("args: {}", args);
       toy();
     }
 

@@ -41,42 +41,46 @@ struct Sink {
   bool open() const { return open_; }
 
   template<typename... T>
-  void print(fmt::format_string<T...> fmt, T&&... args) {
-    vprint(fmt, fmt::make_format_args(args...));
+  int print(fmt::format_string<T...> fmt, T&&... args) {
+    return vprint(fmt, fmt::make_format_args(args...));
   }
 
   template<typename... T>
-  void print(const std::locale& locale, fmt::format_string<T...> fmt, T&&... args) {
-    vprint(locale, fmt, fmt::make_format_args(args...));
+  int print(const std::locale& locale, fmt::format_string<T...> fmt, T&&... args) {
+    return vprint(locale, fmt, fmt::make_format_args(args...));
   }
 
   template<typename... T>
-  void println(fmt::format_string<T...> fmt, T&&... args) {
-    vprintln(fmt, fmt::make_format_args(args...));
+  int println(fmt::format_string<T...> fmt, T&&... args) {
+    return vprintln(fmt, fmt::make_format_args(args...));
   }
 
   template<typename... T>
-  void println(const std::locale& locale, fmt::format_string<T...> fmt, T&&... args) {
-    vprintln(locale, fmt, fmt::make_format_args(args...));
+  int println(const std::locale& locale, fmt::format_string<T...> fmt, T&&... args) {
+    return vprintln(locale, fmt, fmt::make_format_args(args...));
   }
 
-  void vprint(fmt::string_view fmt, fmt::format_args args) {
-    vprint({}, fmt, args);
+  int vprint(fmt::string_view fmt, fmt::format_args args) {
+    return vprint({}, fmt, args);
   }
 
-  void vprint(fmt::locale_ref locale, fmt::string_view fmt, fmt::format_args args);
+  int vprint(fmt::locale_ref locale, fmt::string_view fmt, fmt::format_args args);
 
-  void vprintln(fmt::string_view fmt, fmt::format_args args) {
-    vprintln({}, fmt, args);
+  int vprintln(fmt::string_view fmt, fmt::format_args args) {
+    return vprintln({}, fmt, args);
   }
 
-  void vprintln(fmt::locale_ref locale, fmt::string_view fmt, fmt::format_args args);
+  int vprintln(fmt::locale_ref locale, fmt::string_view fmt, fmt::format_args args);
 
   virtual int write(std::string_view data) = 0;
 
   int write(std::string_view data, size_t offset, size_t n = std::string_view::npos) {
     return write(data.substr(offset, n));
   }
+
+  int writeln(std::string_view data);
+
+  int writeln(std::string_view data, size_t offset, size_t n = std::string_view::npos);
 
 protected:
 
@@ -151,6 +155,12 @@ private:
   std::string& buf_;
 };
 
+// Variables ------------------------------------------------------------------------------------------------
+
+extern FileSink stderr;
+
+extern FileSink stdout;
+
 // Functions ------------------------------------------------------------------------------------------------
 
 /**
@@ -168,10 +178,6 @@ int fd(const nio::Sink& sink);
  * @return `true` if @p sink is connected to a terminal
  */
 bool isatty(const nio::Sink& sink);
-
-inline FileSink stderr() { return FileSink(::stderr, false); }
-
-inline FileSink stdout() { return FileSink(::stdout, false); }
 
 } // namespace rocket::nio
 

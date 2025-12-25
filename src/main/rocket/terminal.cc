@@ -154,8 +154,8 @@ position(nio::Sink& sink) {
 }
 
 optional<pair<size_t, size_t>>
-size(const ostream& os) {
-  int fd = io::fd(os);
+size(const nio::Sink& sink) {
+  int fd = nio::fd(sink);
   if (fd == -1) {
     return nullopt;
   }
