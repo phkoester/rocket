@@ -38,7 +38,7 @@ Sink::writeln(std::string_view data) {
 }
 
 int
-Sink::writeln(std::string_view data, size_t offset, size_t n = std::string_view::npos) {
+Sink::writeln(std::string_view data, size_t offset, size_t n) {
   write(data, offset, n);
   write("\n");
   return flush();

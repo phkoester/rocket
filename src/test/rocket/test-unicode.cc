@@ -36,13 +36,15 @@ testGrapheme(const Grapheme& grapheme, u32string_view s) {
     return;
   }
 
+  auto& out = nio::stdout;
+
   string s8 = utf32To8(s);
-  cout << '[' << s8 << ']';
-  auto pos = terminal::position(cout);
+  out.print("[{}]", s8);
+  auto pos = terminal::position(out);
   EXPECT_TRUE(pos);
   EXPECT_EQ(pos->first, grapheme.width + 3);
-  cout << '\n';
-  cout << '[' << string(grapheme.width, '~') << "]\n";
+  out.write("\n");
+  out.println("[{}]", string(grapheme.width, '~'));
 }
 
 } // namespace

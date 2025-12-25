@@ -21,17 +21,19 @@ TEST(terminal, position) {
 
   Ansi ansi(true);
 
-  cout << ansi.clear();
-  EXPECT_EQ(position(cout), make_pair(1UL, 1UL));
+  auto& out = nio::stdout;
 
-  cout << "abcd";
-  EXPECT_EQ(position(cout), make_pair(5UL, 1UL));
+  out.write(ansi.clear());
+  EXPECT_EQ(position(out), make_pair(1UL, 1UL));
 
-  cout << "\nab";
-  EXPECT_EQ(position(cout), make_pair(3UL, 2UL)); // XXX
+  out.write("abcd");
+  EXPECT_EQ(position(out), make_pair(5UL, 1UL));
 
-  cout << ansi.move(4, 7);
-  EXPECT_EQ(position(cout), make_pair(4UL, 7UL)); // XXX
+  out.write("\nab");
+  EXPECT_EQ(position(out), make_pair(3UL, 2UL)); // XXX
+
+  out.write(ansi.move(4, 7));
+  EXPECT_EQ(position(out), make_pair(4UL, 7UL)); // XXX
 }
 
 /**
@@ -40,17 +42,12 @@ TEST(terminal, position) {
 TEST(terminal, size) {
   EXPECT_ENV("ROCKET_TEST_TERMINAL");
 
-  auto size = terminal::size(cout);
+  auto size = terminal::size(nio::stdout);
   EXPECT_EQ(static_cast<bool>(size), true);
   EXPECT_GT(size->first, 0UL);
   EXPECT_GT(size->second, 0UL);
 
-  size = terminal::size(cerr);
-  EXPECT_EQ(static_cast<bool>(size), true);
-  EXPECT_GT(size->first, 0UL);
-  EXPECT_GT(size->second, 0UL);
-
-  size = terminal::size(cin);
+  size = terminal::size(nio::stderr);
   EXPECT_EQ(static_cast<bool>(size), true);
   EXPECT_GT(size->first, 0UL);
   EXPECT_GT(size->second, 0UL);
