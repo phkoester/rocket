@@ -12,12 +12,19 @@
 #ifndef ROCKET_ASSERT_H
 #define ROCKET_ASSERT_H
 
+#include "Process.h"
 #include "basic.h" // `rocket::nop()`
+#include "except.h"
+#include "nio.h"
 
 #include <boost/preprocessor/stringize.hpp>
+#include <boost/preprocessor/facilities/check_empty.hpp>
+#include <boost/preprocessor/logical/not.hpp>
+#include <boost/preprocessor/punctuation/comma_if.hpp>
 #include <boost/preprocessor/tuple/elem.hpp>
 
-#include <optional>
+#include <fmt/format.h>
+
 #include <source_location>
 #include <string>
 
@@ -25,43 +32,64 @@
 
 namespace rocket::assert::internal {
 
-[[noreturn]] void onAssertFailed(
+template<typename... T>
+[[noreturn]] void
+onAssertFailed(
+    const std::source_location& sl,
     const char* expr,
-    const std::optional<std::string>& msg = std::nullopt,
-    const std::source_location& sourceLoc = std::source_location::current());
+    fmt::format_string<T...> fmt = "",
+    T&&... args) {
+  std::string msg;
+  if (fmt.get().size() > 0) {
+    msg = ": ";
+    nio::StringSink sink(msg);
+    sink.print(fmt, std::forward<T>(args)...);
+  }
+  auto sink = nio::stderr();
+  process.error(sink, EXIT_SUCCESS, "{}:{}: Assertion `{}` failed{}", sl.file_name(), sl.line(), expr, msg);
+  std::terminate();
+}
 
-[[noreturn]] void onCheckFailed(
+template<typename... T>
+[[noreturn]] void
+onCheckFailed(
+    const std::source_location& sl,
     const char* name,
     const char* expr,
-    const std::optional<std::string>& msg = std::nullopt,
-    const std::source_location& sourceLoc = std::source_location::current());
+    fmt::format_string<T...> fmt = "",
+    T&&... args) {
+  std::string msg;
+  if (fmt.get().size() > 0) {
+    msg = ": ";
+    nio::StringSink sink(msg);
+    sink.print(fmt, std::forward<T>(args)...);
+  }
+  except::throwInvalidArgument(sl, name, "Check `{}` failed{}", expr, msg);
+}
 
+template<typename... T>
 [[noreturn]] void onExpectFailed(
+    const std::source_location&sl,
     const char* expr,
-    const std::optional<std::string>& msg = std::nullopt,
-    const std::source_location& sourceLoc = std::source_location::current());
+    fmt::format_string<T...> fmt = "",
+    T&&... args) {
+  std::string msg;
+  if (fmt.get().size() > 0) {
+    msg = ": ";
+    nio::StringSink sink(msg);
+    sink.print(fmt, std::forward<T>(args)...);
+  }
+  except::throwInvalidState(sl, "Expectation `{}` failed{}", expr, msg);
+}
 
 } // namespace rocket::assert::internal
 
 // Macros ---------------------------------------------------------------------------------------------------
 
-/// @cond undocumented
-
-#define ROCKET_ASSERT_1__(expr) \
-    if (not (expr)) \
-      ::rocket::assert::internal::onAssertFailed(BOOST_PP_STRINGIZE(expr))
-#define ROCKET_ASSERT_2__(expr, msg) \
-    if (not (expr)) \
-      ::rocket::assert::internal::onAssertFailed(BOOST_PP_STRINGIZE(expr), msg)
-#define ROCKET_ASSERT__(...) \
-    BOOST_PP_TUPLE_ELEM(2, (__VA_ARGS__, ROCKET_ASSERT_2__, ROCKET_ASSERT_1__))
-
-/// @endcond
-
 /**
  * Terminates.
  */
-#define ROCKET_TERMINATE_INVALID_CALL() ROCKET_ASSERT(false, ::rocket::S << "Invalid call of function `" << __PRETTY_FUNCTION__ << "`")
+#define ROCKET_TERMINATE_INVALID_CALL() ROCKET_ASSERT(false, "Invalid call of function `{}`", __PRETTY_FUNCTION__)
 
 /**
  * Terminates.
@@ -72,33 +100,6 @@ namespace rocket::assert::internal {
  * Terminates.
  */
 #define ROCKET_TERMINATE_UNREACHABLE_CODE() ROCKET_ASSERT(false, "Unreachable code")
-
-/// @cond undocumented
-
-#define ROCKET_CHECK_2__(name, expr) \
-    if (not (expr)) \
-      ::rocket::assert::internal::onCheckFailed( \
-          BOOST_PP_STRINGIZE(name), \
-          BOOST_PP_STRINGIZE(expr))
-#define ROCKET_CHECK_3__(name, expr, msg) \
-    if (not (expr)) \
-      ::rocket::assert::internal::onCheckFailed( \
-          BOOST_PP_STRINGIZE(name), \
-          BOOST_PP_STRINGIZE(expr), \
-          msg)
-#define ROCKET_CHECK__(...) \
-    BOOST_PP_TUPLE_ELEM(3, (__VA_ARGS__, ROCKET_CHECK_3__, ROCKET_CHECK_2__))
-
-#define ROCKET_EXPECT_1__(expr) \
-    if (not (expr)) \
-      ::rocket::assert::internal::onExpectFailed(BOOST_PP_STRINGIZE(expr))
-#define ROCKET_EXPECT_2__(expr, msg) \
-    if (not (expr)) \
-      ::rocket::assert::internal::onExpectFailed(BOOST_PP_STRINGIZE(expr), msg)
-#define ROCKET_EXPECT__(...) \
-    BOOST_PP_TUPLE_ELEM(2, (__VA_ARGS__, ROCKET_EXPECT_2__, ROCKET_EXPECT_1__))
-
-/// @endcond
 
 /**
  * Throws #rocket::except::InvalidState.
@@ -131,45 +132,54 @@ namespace rocket::assert::internal {
 
 #ifdef NDEBUG
 
-#define ROCKET_ASSERT(...) ::rocket::nop()
-#define ROCKET_CHECK(...) ::rocket::nop()
-#define ROCKET_EXPECT(...) ::rocket::nop()
+#define ROCKET_ASSERT(expr, ...) ::rocket::nop()
+#define ROCKET_CHECK(name, expr, ...) ::rocket::nop()
+#define ROCKET_EXPECT(expr, ...) ::rocket::nop()
 
 #else
 
 /**
  * Terminates if @p expr evaluates to `false`.
  *
- * Usage: `ROCKET_ASSERT(expr)`
- *
- * Usage: `ROCKET_ASSERT(expr, msg)`
+ * Usage: `ROCKET_ASSERT(expr, [fmt, [args]...])`
  *
  * Use this macro only in order to handle program states that result from a flawed implementation and make
  * further execution impossible or dangerous. Do not abuse it to catch states that may reasonably occur in
  * normal program execution. If an assertion fails, code needs to be fixed.
  */
-#define ROCKET_ASSERT(...) ROCKET_ASSERT__(__VA_ARGS__)(__VA_ARGS__)
+#define ROCKET_ASSERT(expr, ...) \
+    if (not (expr)) { \
+      ::rocket::assert::internal::onAssertFailed( \
+          ::std::source_location::current(), \
+          BOOST_PP_STRINGIZE(expr) \
+          BOOST_PP_COMMA_IF(BOOST_PP_NOT(BOOST_PP_CHECK_EMPTY(BOOST_PP_TUPLE_ELEM(0, (__VA_ARGS__))))) \
+          __VA_ARGS__); \
+    }
 
 /**
  * Throws #rocket::except::InvalidArgument if @p expr evaluates to `false`.
  *
- * Usage: `ROCKET_CHECK(name, expr)`
- *
- * Usage: `ROCKET_CHECK(name, expr, msg)`
+ * Usage: `ROCKET_CHECK(name, expr, [fmt, [args]...])`
  *
  * @throw #rocket::except::InvalidArgument if @p expr evaluates to `false`
  *
  * Use this macro only in order to check function arguments. The first parameter of this macro is always the
  * name of the function parameter the argument of which is to be checked.
  */
-#define ROCKET_CHECK(...) ROCKET_CHECK__(__VA_ARGS__)(__VA_ARGS__)
+#define ROCKET_CHECK(name, expr, ...) \
+    if (not (expr)) { \
+      ::rocket::assert::internal::onCheckFailed( \
+          ::std::source_location::current(), \
+          BOOST_PP_STRINGIZE(name), \
+          BOOST_PP_STRINGIZE(expr) \
+          BOOST_PP_COMMA_IF(BOOST_PP_NOT(BOOST_PP_CHECK_EMPTY(BOOST_PP_TUPLE_ELEM(0, (__VA_ARGS__))))) \
+          __VA_ARGS__); \
+    }
 
 /**
  * Throws #rocket::except::InvalidState if @p expr evaluates to `false`.
  *
- * Usage: `ROCKET_EXPECT(expr)`
- *
- * Usage: `ROCKET_EXPECT(expr, msg)`
+ * Usage: `ROCKET_EXPECT(expr, [fmt, [args]...])`
  *
  * @throw #rocket::except::InvalidState if @p expr evaluates to `false`
  *
@@ -177,7 +187,14 @@ namespace rocket::assert::internal {
  * be dealt with by throwing an exception. Do not abuse it to catch states that may reasonably occur in
  * normal program execution. If an expectation fails, code needs to be fixed.
  */
-#define ROCKET_EXPECT(...) ROCKET_EXPECT__(__VA_ARGS__)(__VA_ARGS__)
+#define ROCKET_EXPECT(expr, ...) \
+    if (not (expr)) { \
+      ::rocket::assert::internal::onExpectFailed( \
+          ::std::source_location::current(), \
+          BOOST_PP_STRINGIZE(expr) \
+          BOOST_PP_COMMA_IF(BOOST_PP_NOT(BOOST_PP_CHECK_EMPTY(BOOST_PP_TUPLE_ELEM(0, (__VA_ARGS__))))) \
+          __VA_ARGS__); \
+    }
 
 #endif // NDEBUG
 

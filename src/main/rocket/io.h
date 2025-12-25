@@ -715,7 +715,7 @@ seekg(std::basic_istream<C>& is, size_t position) {
   // Clear `eofbit` and `failbit`, leave `badbit` unchanged
   is.clear(state & ~(std::ios::eofbit | std::ios::failbit));
   typename std::basic_istream<C>::pos_type seekg = position;
-  ROCKET_CHECK(position, seekg >= 0, except::message::overflow(Type::of(seekg)));
+  ROCKET_CHECK(position, seekg >= 0, "{}", except::message::overflow(Type::of(seekg)));
   // This might throw due to `badbit`, which is okay
   return is.seekg(seekg);
 }
@@ -740,7 +740,7 @@ seekg(std::basic_istream<C>& is, size_t position, std::ios::seekdir dir) {
   // Clear `eofbit` and `failbit`, leave `badbit` unchanged
   is.clear(state & ~(std::ios::eofbit | std::ios::failbit));
   typename std::basic_istream<C>::pos_type seekg = position;
-  ROCKET_CHECK(position, seekg >= 0, except::message::overflow(Type::of(seekg)));
+  ROCKET_CHECK(position, seekg >= 0, "{}", except::message::overflow(Type::of(seekg)));
   // This might throw due to `badbit`, which is okay
   return is.seekg(seekg, dir);
 }

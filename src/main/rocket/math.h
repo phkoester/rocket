@@ -6,15 +6,12 @@
 
 #pragma once
 
-#include "assert.h"
 #include "basic.h"
 
 #include <algorithm>
 #include <iostream>
-#include <numeric>
 #include <optional>
 #include <type_traits>
-#include <vector>
 
 namespace rocket::math {
 
@@ -87,7 +84,7 @@ template<typename T> using RightOpen = BoundTraits<T, std::optional<T>, false, '
 template<typename Left, typename Right>
 constexpr std::pair<typename Left::BoundType, typename Right::BoundType>
 intersectionImpl(
-    typename Left::BoundType lhsLower, typename Right::BoundType lhsUpper, 
+    typename Left::BoundType lhsLower, typename Right::BoundType lhsUpper,
     typename Left::BoundType rhsLower, typename Right::BoundType rhsUpper) {
   return { Left::max(lhsLower, rhsLower), Right::min(lhsUpper, rhsUpper) };
 }
@@ -95,7 +92,7 @@ intersectionImpl(
 template<typename Left, typename Right>
 constexpr std::pair<typename Left::BoundType, typename Right::BoundType>
 unionImpl(
-    typename Left::BoundType lhsLower, typename Right::BoundType lhsUpper, 
+    typename Left::BoundType lhsLower, typename Right::BoundType lhsUpper,
     typename Left::BoundType rhsLower, typename Right::BoundType rhsUpper) {
   return { Left::min(lhsLower, rhsLower), Right::max(lhsUpper, rhsUpper) };
 }
@@ -236,7 +233,7 @@ struct IntervalImpl {
 
   /// The element type.
   using Type = T;
-  
+
   /// The type of the lower-bound traits.
   using LeftType = Left;
   /// The type of the upper-bound traits.
@@ -294,7 +291,7 @@ struct IntervalImpl {
       return true;
     return lower == rhs.lower && upper == rhs.upper;
   }
-  
+
   /// @member_op_ne
   inline bool operator!=(const IntervalImpl& rhs) const { return not operator==(rhs); }
 
@@ -324,7 +321,7 @@ struct IntervalImpl {
    * @attention A size of 0 doesn't necessarily mean an interval is empty. For instance, the closed interval
    * [2,2] has a size of 0 and is nonempty. On the other hand, an empty interval always has a size of 0. To
    * check if an interval is empty, use the #empty member function.
-   * 
+   *
    * @return the size of this interval
    */
   constexpr Traits::SizeType size() const { return Traits::size(lower, upper); }
@@ -455,66 +452,6 @@ using LeftOpenInterval = IntervalImpl<T, internal::LeftOpen<T>, internal::RightC
  */
 template<typename T>
 using RightOpenInterval = IntervalImpl<T, internal::LeftClosed<T>, internal::RightOpen<T>>;
-
-// Functions ------------------------------------------------------------------------------------------------
-
-/**
- * Calculates the average mean for the values in the half-open interval [`begin`,`end`).
- *
- * To avoid overflow, this function calculates a <em>cumulative moving average</em>. Let the values be
- * @f$(x_{1},...,x_{N})@f$, this functions returns
- *
- * @f[
- * \overline{x} = \frac{\sum_{i=1}^N x_i}{N}
- * @f]
- *
- * @tparam T the element type
- * @tparam It the iterator type
- * @param begin the beginning of the range, inclusive
- * @param end the end of the range, exclusive
- * @return the mean
- */
-template<typename T, typename It> requires FloatingPoint<T>
-T
-mean(It begin, It end) {
-  ROCKET_CHECK(end, end > begin, "Range is empty");
-
-  // Calculating CMA = Cumulative Moving Average
-  T result = 0;
-  size_t n = 1;
-  for (auto it = begin; it != end; ++it)
-    result += (*it - result) / n++;
-  return result;
-}
-
-/**
- * Calculates the standard deviation for the values in the half-open interval [`begin`,`end`).
- *
- * Let the values be @f$(x_{1},...,x_{N})@f$, this functions returns
- *
- * @f[
- * \sigma = \sqrt{\frac{1}{N} \sum_{i=1}^N (x_i - \overline{x})^2}
- * @f]
- *
- * @tparam T the element type
- * @tparam It the iterator type
- * @param begin the beginning of the range, inclusive
- * @param end the end of the range, exclusive
- * @return the standard deviation
- */
-template<typename T, typename It> requires FloatingPoint<T>
-T
-standardDeviation(It begin, It end) {
-  T m = mean<T>(begin, end);
-
-  auto n = std::distance(begin, end); // We know this is > 0
-  std::vector<T> diff;
-  diff.reserve(n);
-  std::for_each(begin, end, [&](auto&& x) { diff.push_back(std::forward<decltype(x)>(x) - m); });
-
-  T sumOfSquares = std::inner_product(diff.begin(), diff.end(), diff.begin(), static_cast<T>(0));
-  return std::sqrt(sumOfSquares / n);
-}
 
 } // namespace rocket::math
 

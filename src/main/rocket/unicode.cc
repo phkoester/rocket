@@ -13,6 +13,8 @@
 #include <unicodelib.h>
 #include <unicodelib_encodings.h>
 
+#include <numeric>
+
 using namespace rocket;
 using namespace rocket::unicode;
 using namespace std;
@@ -309,7 +311,7 @@ width(const Graphemes& grs, size_t index, size_t n) {
 
   return accumulate(begin, end, 0UL, [](size_t n, const Grapheme& gr) {
     size_t result = n + gr.width;
-    ROCKET_EXPECT(result >= n, except::message::overflow(Type::of<size_t>()));
+    ROCKET_EXPECT(result >= n, "{}", except::message::overflow(Type::of<size_t>()));
     return result;
   });
 }

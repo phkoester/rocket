@@ -16,6 +16,8 @@
 #include "terminal.h"
 #include "unicode.h"
 
+#include <numeric>
+
 using namespace rocket;
 using namespace std;
 
@@ -103,7 +105,7 @@ locations(istream& is, const vector<Position>& positions, const LocationsParams&
       .message = pos.message,
       .caption = pos.caption
     });
-    ROCKET_CHECK(positions, emplaceResult.second, S << "Duplicate position " << pos.position);
+    ROCKET_CHECK(positions, emplaceResult.second, "Duplicate position {}", pos.position);
 
     maxPos = max(pos.position, maxPos);
   }

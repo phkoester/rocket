@@ -8,8 +8,6 @@
 #include "rocket/assert.h"
 #include "rocket/except.h"
 
-#include <boost/preprocessor/tuple/elem.hpp>
-
 using namespace rocket;
 using namespace std;
 using namespace testing;
@@ -26,7 +24,7 @@ TEST(assert, ROCKET_ASSERT) {
   EXPECT_NO_THROW({ ROCKET_ASSERT(true); });
 
   oopsCalled = false;
-  ROCKET_ASSERT(true, S << oops());
+  ROCKET_ASSERT(true, "{}", oops());
   EXPECT_FALSE(oopsCalled);
 }
 
@@ -53,7 +51,7 @@ TEST(assert, ROCKET_CHECK) {
 TEST(assert, ROCKET_EXPECT) {
   oopsCalled = false;
   EXPECT_THAT(
-      [] { ROCKET_EXPECT(true && false, S << oops()); },
+      [] { ROCKET_EXPECT(true && false, "{}", oops()); },
       ThrowsMessage<except::InvalidState>(HasSubstr("Expectation `true && false` failed: oops")));
   EXPECT_TRUE(oopsCalled);
 }

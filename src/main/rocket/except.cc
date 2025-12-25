@@ -159,10 +159,10 @@ namespace rocket::except {
 namespace message {
 
 string
-baseMessage(string_view msg, const optional<source_location>& sourceLoc) {
+baseMessage(string_view msg, const optional<source_location>& sl) {
   ostringstream os;
-  if (sourceLoc)
-    os << sourceLoc->file_name() << ':' << sourceLoc->line() << ": ";
+  if (sl)
+    os << sl->file_name() << ':' << sl->line() << ": ";
   os << msg;
   return os.str();
 }
@@ -184,19 +184,19 @@ overflow(const Type& type) {
 InvalidArgument::InvalidArgument(
     string_view name,
     string_view msg,
-    optional<source_location>&& sourceLoc,
-    optional<stacktrace>&& stackTrace) :
-    BaseType(message::baseMessage(S << "Parameter " << ROCKET_QUOTE_BT(name) << ": " << raw(msg), sourceLoc)),
-    Exception(msg, std::move(sourceLoc), std::move(stackTrace)) {}
+    optional<source_location>&& sl,
+    optional<stacktrace>&& st) :
+    BaseType(message::baseMessage(S << "Parameter " << ROCKET_QUOTE_BT(name) << ": " << raw(msg), sl)),
+    Exception(msg, std::move(sl), std::move(st)) {}
 
 // `InvalidState` -------------------------------------------------------------------------------------------
 
 InvalidState::InvalidState(
     string_view msg,
-    optional<source_location>&& sourceLoc,
-    optional<stacktrace>&& stackTrace) :
-    BaseType(message::baseMessage(msg, sourceLoc)),
-    Exception(msg, std::move(sourceLoc), std::move(stackTrace)) {}
+    optional<source_location>&& sl,
+    optional<stacktrace>&& st) :
+    BaseType(message::baseMessage(msg, sl)),
+    Exception(msg, std::move(sl), std::move(st)) {}
 
 // Functions ------------------------------------------------------------------------------------------------
 
@@ -204,7 +204,7 @@ void
 printException(ostream& os, const exception& ex) {
   const Exception* p = dynamic_cast<const Exception*>(&ex);
   printThrown(os, 0, Type::of(ex), getWhat(ex), p ? p->stackTrace() : nullopt);
-  
+
   try {
      rethrow_if_nested(ex);
   } catch (...) {

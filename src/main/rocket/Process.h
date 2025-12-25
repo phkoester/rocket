@@ -6,6 +6,9 @@
 
 #pragma once
 
+
+#include "nio.h"
+
 #include <iosfwd>
 #include <locale>
 #include <optional>
@@ -119,6 +122,26 @@ struct Process {
    * @param status the exit status. If not `EXIT_SUCCESS` (0), then #exit is called
    */
   void error(std::ostream& os, std::string_view msg, int status = EXIT_FAILURE) const;
+
+  /**
+   * Outputs an error message.
+   *
+   * This function may be called even if the process isn't initialized yet.
+   *
+   * @param sink the sink to write to, usually `rocket::nio::stderr()`
+   * @param status the exit status. If not `EXIT_SUCCESS` (0), then #exit is called
+   * @param fmt the format string
+   * @param args the format arguments
+   */
+  template<typename... T>
+  void error(nio::Sink& sink, int status, fmt::format_string<T...> fmt, T&&... args) {
+    std::string name = inited_ ? this->name() : invocationShortName();
+    sink.print("{}: error: ", name);
+    sink.println(fmt, std::forward<T>(args)...);
+
+    if (status != EXIT_SUCCESS)
+      exit(status);
+  }
 
   /**
    * Exits the program.

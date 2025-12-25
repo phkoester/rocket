@@ -131,6 +131,22 @@ private:
   std::ostream& os_;
 };
 
+// `StringSink` ---------------------------------------------------------------------------------------------
+
+struct StringSink : Sink {
+  StringSink(std::string& buf) : buf_(buf) {}
+
+  virtual int close() override;
+
+  virtual int flush() override;
+
+  virtual int write(std::string_view data) override;
+
+private:
+
+  std::string& buf_;
+};
+
 // Functions ------------------------------------------------------------------------------------------------
 
 inline FileSink stderr() { return FileSink(::stderr, false); }

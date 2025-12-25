@@ -1,5 +1,5 @@
 /*
- * test-math.cc
+ * test-math-func.cc
  */
 
 #include "rocket-gtest/testing.h"
@@ -8,7 +8,7 @@
 
 #include "rocket/S.h"
 #include "rocket/except.h"
-#include "rocket/math.h"
+#include "rocket/math-func.h"
 
 #include <random>
 

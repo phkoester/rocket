@@ -10,6 +10,24 @@ using namespace std;
 
 namespace rocket::nio {
 
+// `Sink`----------------------------------------------------------------------------------------------------
+
+void
+Sink::vprint(fmt::locale_ref locale, fmt::string_view fmt, fmt::format_args args) {
+  fmt::memory_buffer buf;
+  fmt::detail::vformat_to(buf, fmt, args, locale);
+  write({ buf.data(), buf.size() });
+}
+
+void
+Sink::vprintln(fmt::locale_ref locale, fmt::string_view fmt, fmt::format_args args) {
+  fmt::memory_buffer buf;
+  fmt::detail::vformat_to(buf, fmt, args, locale);
+  buf.push_back('\n');
+  write({ buf.data(), buf.size() });
+  flush();
+}
+
 // `FileSink` -----------------------------------------------------------------------------------------------
 
 FileSink::FileSink(FILE* file, bool closeOnDestroy) :
@@ -87,22 +105,6 @@ NullSink::flush() {
   return error_;
 }
 
-void
-Sink::vprint(fmt::locale_ref locale, fmt::string_view fmt, fmt::format_args args) {
-  fmt::memory_buffer buf;
-  fmt::detail::vformat_to(buf, fmt, args, locale);
-  write({ buf.data(), buf.size() });
-}
-
-void
-Sink::vprintln(fmt::locale_ref locale, fmt::string_view fmt, fmt::format_args args) {
-  fmt::memory_buffer buf;
-  fmt::detail::vformat_to(buf, fmt, args, locale);
-  buf.push_back('\n');
-  write({ buf.data(), buf.size() });
-  flush();
-}
-
 int
 NullSink::write(string_view data) {
   if (not open_ && error_ == 0) {
@@ -147,6 +149,36 @@ StreamSink::write(string_view data) {
     if (not os_) {
       error_ = EIO;
     }
+  } else if (error_ == 0) {
+    error_ = EBADF;
+  }
+  return error_;
+}
+
+// `StringSink` ---------------------------------------------------------------------------------------------
+
+int
+StringSink::close() {
+  if (open_) {
+    open_ = false;
+  } else if (error_ == 0) {
+    error_ = EBADF;
+  }
+  return error_;
+}
+
+int
+StringSink::flush() {
+  if (not open_ && error_ == 0) {
+    error_ = EBADF;
+  }
+  return error_;
+}
+
+int
+StringSink::write(string_view data) {
+  if (open_) {
+    buf_ += data;
   } else if (error_ == 0) {
     error_ = EBADF;
   }

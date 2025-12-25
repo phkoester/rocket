@@ -6,27 +6,31 @@
 
 #pragma once
 
+#define ROCKET_EXCEPT_H // XXX
+
 #include "Type.h"
 #include "io-decl.h"
+#include "nio.h"
 #include "text.h"
 
+#include <source_location>
 #include <stacktrace>
 #include <stdexcept>
 
 // Macros ---------------------------------------------------------------------------------------------------
 
 #ifdef NDEBUG
-  #define ROCKET_EXCEPT_DEFAULT_SOURCE_LOC ::std::nullopt
-  #define ROCKET_EXCEPT_DEFAULT_STACK_TRACE ::std::nullopt
+  #define ROCKET_EXCEPT_SL ::std::nullopt
+  #define ROCKET_EXCEPT_ST ::std::nullopt
 #else
   /**
    * Yields null if `NDEBUG` is defined, the current source location otherwise.
    */
-  #define ROCKET_EXCEPT_DEFAULT_SOURCE_LOC ::std::source_location::current()
+  #define ROCKET_EXCEPT_SL ::std::source_location::current()
   /**
    * Yields null if `NDEBUG` is defined, the current stack trace otherwise.
    */
-  #define ROCKET_EXCEPT_DEFAULT_STACK_TRACE ::std::stacktrace::current()
+  #define ROCKET_EXCEPT_ST ::std::stacktrace::current()
 #endif // NDEBUG
 
 namespace rocket::except {
@@ -39,10 +43,10 @@ namespace message {
  * Makes a message to be passed to the standard base classes.
  *
  * @param msg the exception message
- * @param sourceLoc the source location
+ * @param sl the source location
  * @return a message
  */
-std::string baseMessage(std::string_view msg, const std::optional<std::source_location>& sourceLoc);
+std::string baseMessage(std::string_view msg, const std::optional<std::source_location>& sl);
 
 /**
   * Makes a message saying the input @p input cannot be parsed as a value of type @p type.
@@ -87,14 +91,14 @@ struct Exception {
    *
    * @return a source location, if present, or null otherwise
    */
-  const std::optional<std::source_location>& sourceLocation() const { return sourceLoc_; }
+  const std::optional<std::source_location>& sourceLocation() const { return sl_; }
 
   /**
    * Returns the stack trace of this exception.
    *
    * @return a stack trace, if present, or null otherwise
    */
-  const std::optional<std::stacktrace>& stackTrace() const { return stackTrace_; }
+  const std::optional<std::stacktrace>& stackTrace() const { return st_; }
 
 protected:
 
@@ -102,22 +106,22 @@ protected:
    * @ctor
    *
    * @param msg the plain message
-   * @param sourceLoc the source location
-   * @param stackTrace the stack trace
+   * @param sl the source location
+   * @param st the stack trace
    */
   Exception(
       std::string_view msg,
-      std::optional<std::source_location>&& sourceLoc,
-      std::optional<std::stacktrace>&& stackTrace) :
+      std::optional<std::source_location>&& sl,
+      std::optional<std::stacktrace>&& st) :
       msg_(msg),
-      sourceLoc_(std::move(sourceLoc)),
-      stackTrace_(std::move(stackTrace)) {}
+      sl_(std::move(sl)),
+      st_(std::move(st)) {}
 
 private:
 
   const std::string msg_;
-  const std::optional<std::source_location> sourceLoc_;
-  const std::optional<std::stacktrace> stackTrace_;
+  const std::optional<std::source_location> sl_;
+  const std::optional<std::stacktrace> st_;
 };
 
 // `InputFailure` -------------------------------------------------------------------------------------------
@@ -140,14 +144,14 @@ struct InputFailure : std::ios_base::failure, Exception {
    * The stored position is set to the value of `rocket::io::tellg(is)`.
    *
    * @param is the input stream
-   * @param sourceLoc the source location
-   * @param stackTrace the stack trace
+   * @param sl the source location
+   * @param st the stack trace
    */
   explicit InputFailure(
       std::basic_istream<C>& is,
-      std::optional<std::source_location>&& sourceLoc = ROCKET_EXCEPT_DEFAULT_SOURCE_LOC,
-      std::optional<std::stacktrace>&& stackTrace = ROCKET_EXCEPT_DEFAULT_STACK_TRACE) :
-      InputFailure(is, io::tellg(is), std::move(sourceLoc), std::move(stackTrace)) {}
+      std::optional<std::source_location>&& sl = ROCKET_EXCEPT_SL,
+      std::optional<std::stacktrace>&& st = ROCKET_EXCEPT_ST) :
+      InputFailure(is, io::tellg(is), std::move(sl), std::move(st)) {}
 
   /**
    * @ctor
@@ -156,15 +160,15 @@ struct InputFailure : std::ios_base::failure, Exception {
    *
    * @param is the input stream
    * @param position the position to store
-   * @param sourceLoc the source location
-   * @param stackTrace the stack trace
+   * @param sl the source location
+   * @param st the stack trace
    */
   explicit InputFailure(
       std::basic_istream<C>& is,
       size_t position,
-      std::optional<std::source_location>&& sourceLoc = ROCKET_EXCEPT_DEFAULT_SOURCE_LOC,
-      std::optional<std::stacktrace>&& stackTrace = ROCKET_EXCEPT_DEFAULT_STACK_TRACE) :
-      InputFailure(is, position, "Input failure", std::move(sourceLoc), std::move(stackTrace)) {}
+      std::optional<std::source_location>&& sl = ROCKET_EXCEPT_SL,
+      std::optional<std::stacktrace>&& st = ROCKET_EXCEPT_ST) :
+      InputFailure(is, position, "Input failure", std::move(sl), std::move(st)) {}
 
   /**
    * @ctor
@@ -175,15 +179,15 @@ struct InputFailure : std::ios_base::failure, Exception {
    *
    * @param is the input stream
    * @param msg the message
-   * @param sourceLoc the source location
-   * @param stackTrace the stack trace
+   * @param sl the source location
+   * @param st the stack trace
    */
   InputFailure(
       std::basic_istream<C>& is,
       std::string_view msg,
-      std::optional<std::source_location>&& sourceLoc = ROCKET_EXCEPT_DEFAULT_SOURCE_LOC,
-      std::optional<std::stacktrace>&& stackTrace = ROCKET_EXCEPT_DEFAULT_STACK_TRACE) :
-      InputFailure(is, io::tellg(is), msg, std::move(sourceLoc), std::move(stackTrace)) {}
+      std::optional<std::source_location>&& sl = ROCKET_EXCEPT_SL,
+      std::optional<std::stacktrace>&& st = ROCKET_EXCEPT_ST) :
+      InputFailure(is, io::tellg(is), msg, std::move(sl), std::move(sl)) {}
 
   /**
    * @ctor
@@ -193,17 +197,17 @@ struct InputFailure : std::ios_base::failure, Exception {
    * @param is the input stream
    * @param position the position to store
    * @param msg the message
-   * @param sourceLoc the source location
-   * @param stackTrace the stack trace
+   * @param sl the source location
+   * @param st the stack trace
    */
   InputFailure(
       std::basic_istream<C>& is,
       size_t position,
       std::string_view msg,
-      std::optional<std::source_location>&& sourceLoc = ROCKET_EXCEPT_DEFAULT_SOURCE_LOC,
-      std::optional<std::stacktrace>&& stackTrace = ROCKET_EXCEPT_DEFAULT_STACK_TRACE) :
-      BaseType(message::baseMessage(msg, sourceLoc)),
-      Exception(msg, std::move(sourceLoc), std::move(stackTrace)),
+      std::optional<std::source_location>&& sl = ROCKET_EXCEPT_SL,
+      std::optional<std::stacktrace>&& st = ROCKET_EXCEPT_ST) :
+      BaseType(message::baseMessage(msg, sl)),
+      Exception(msg, std::move(sl), std::move(st)),
       pos_(position) {
     if (not is.fail())
       is.setstate(std::ios::failbit);
@@ -235,15 +239,28 @@ struct InvalidArgument : std::invalid_argument, Exception {
    *
    * @param name the name of the argument
    * @param msg the message
-   * @param sourceLoc the source location
-   * @param stackTrace the stack trace
+   * @param sl the source location
+   * @param st the stack trace
    */
   InvalidArgument(
       std::string_view name,
       std::string_view msg,
-      std::optional<std::source_location>&& sourceLoc = ROCKET_EXCEPT_DEFAULT_SOURCE_LOC,
-      std::optional<std::stacktrace>&& stackTrace = ROCKET_EXCEPT_DEFAULT_STACK_TRACE);
+      std::optional<std::source_location>&& sl = ROCKET_EXCEPT_SL,
+      std::optional<std::stacktrace>&& st = ROCKET_EXCEPT_ST);
 };
+
+template<typename... T>
+[[noreturn]] void
+throwInvalidArgument(
+    const std::source_location& sl,
+    const char* name,
+    fmt::format_string<T...> fmt,
+    T&&... args) {
+  std::string msg;
+  nio::StringSink sink(msg);
+  sink.print(fmt, std::forward<T>(args)...);
+  throw InvalidArgument(name, msg, sl);
+}
 
 // `InvalidState` -------------------------------------------------------------------------------------------
 
@@ -258,14 +275,26 @@ struct InvalidState : std::runtime_error, Exception {
    * @ctor
    *
    * @param msg the message
-   * @param sourceLoc the source location
-   * @param stackTrace the stack trace
+   * @param sl the source location
+   * @param st the stack trace
    */
   explicit InvalidState(
       std::string_view msg,
-      std::optional<std::source_location>&& sourceLoc = ROCKET_EXCEPT_DEFAULT_SOURCE_LOC,
-      std::optional<std::stacktrace>&& stackTrace = ROCKET_EXCEPT_DEFAULT_STACK_TRACE);
+      std::optional<std::source_location>&& sl = ROCKET_EXCEPT_SL,
+      std::optional<std::stacktrace>&& st = ROCKET_EXCEPT_ST);
 };
+
+template<typename... T>
+[[noreturn]] void
+throwInvalidState(
+    const std::source_location& sl,
+    fmt::format_string<T...> fmt,
+    T&&... args) {
+  std::string msg;
+  nio::StringSink sink(msg);
+  sink.print(fmt, std::forward<T>(args)...);
+  throw InvalidState(msg, sl);
+}
 
 // `ParseFailure` -------------------------------------------------------------------------------------------
 
@@ -287,16 +316,16 @@ struct ParseFailure : InputFailure<C> {
    * @param is the input stream
    * @param position the position to store
    * @param msg the message
-   * @param sourceLoc the source location
-   * @param stackTrace the stack trace
+   * @param sl the source location
+   * @param st the stack trace
    */
   ParseFailure(
       std::basic_istream<C>& is,
       size_t position,
       std::string_view msg,
-      std::optional<std::source_location>&& sourceLoc = ROCKET_EXCEPT_DEFAULT_SOURCE_LOC,
-      std::optional<std::stacktrace>&& stackTrace = ROCKET_EXCEPT_DEFAULT_STACK_TRACE) :
-      ParseFailure(is, position, {}, msg, std::move(sourceLoc), std::move(stackTrace)) {}
+      std::optional<std::source_location>&& sl = ROCKET_EXCEPT_SL,
+      std::optional<std::stacktrace>&& st = ROCKET_EXCEPT_ST) :
+      ParseFailure(is, position, {}, msg, std::move(sl), std::move(st)) {}
 
   /**
    * @ctor
@@ -307,17 +336,17 @@ struct ParseFailure : InputFailure<C> {
    * @param position the position to store
    * @param range the range to store
    * @param msg the message
-   * @param sourceLoc the source location
-   * @param stackTrace the stack trace
+   * @param sl the source location
+   * @param st the stack trace
    */
   ParseFailure(
       std::basic_istream<C>& is,
       size_t position,
       text::Range range,
       std::string_view msg,
-      std::optional<std::source_location>&& sourceLoc = ROCKET_EXCEPT_DEFAULT_SOURCE_LOC,
-      std::optional<std::stacktrace>&& stackTrace = ROCKET_EXCEPT_DEFAULT_STACK_TRACE) :
-      ParseFailure(is, position, { range }, msg, std::move(sourceLoc), std::move(stackTrace)) {}
+      std::optional<std::source_location>&& sl = ROCKET_EXCEPT_SL,
+      std::optional<std::stacktrace>&& st = ROCKET_EXCEPT_ST) :
+      ParseFailure(is, position, { range }, msg, std::move(sl), std::move(st)) {}
 
   /**
    * @ctor
@@ -328,17 +357,17 @@ struct ParseFailure : InputFailure<C> {
    * @param position the position to store
    * @param ranges the ranges to store
    * @param msg the message
-   * @param sourceLoc the source location
-   * @param stackTrace the stack trace
+   * @param sl the source location
+   * @param st the stack trace
    */
   ParseFailure(
       std::basic_istream<C>& is,
       size_t position,
       std::initializer_list<text::Range> ranges,
       std::string_view msg,
-      std::optional<std::source_location>&& sourceLoc = ROCKET_EXCEPT_DEFAULT_SOURCE_LOC,
-      std::optional<std::stacktrace>&& stackTrace = ROCKET_EXCEPT_DEFAULT_STACK_TRACE):
-      BaseType(is, position, msg, std::move(sourceLoc), std::move(stackTrace)),
+      std::optional<std::source_location>&& sl = ROCKET_EXCEPT_SL,
+      std::optional<std::stacktrace>&& st = ROCKET_EXCEPT_ST):
+      BaseType(is, position, msg, std::move(sl), std::move(st)),
       ranges_(ranges) {}
 
   /**

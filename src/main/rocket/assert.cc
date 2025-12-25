@@ -8,8 +8,8 @@
 #include "assert.h"
 
 #include "Process.h"
-#include "S.h"
 #include "except.h"
+#include "nio.h"
 #include "quote.h"
 
 using namespace rocket;
@@ -18,47 +18,6 @@ using namespace std;
 // Internal -------------------------------------------------------------------------------------------------
 
 namespace rocket::assert::internal {
-
-void
-onAssertFailed(
-    const char* expr,
-    const optional<string>& msg,
-    const source_location& sourceLoc) {
-  ostringstream buf;
-  buf << sourceLoc.file_name() << ':' << sourceLoc.line() << ": Assertion " << quote::bt(expr) << " failed";
-  if (msg)
-    buf << ": " << *msg;
-
-  process.error(cerr, buf.str(), EXIT_SUCCESS);
-  terminate();
-}
-
-void
-onCheckFailed(
-    const char* name,
-    const char* expr,
-    const optional<string>& msg,
-    const source_location& sourceLoc) {
-  ostringstream buf;
-  buf << "Check " << quote::bt(expr) << " failed";
-  if (msg)
-    buf << ": " << *msg;
-
-  throw except::InvalidArgument(name, buf.str(), sourceLoc);
-}
-
-void
-onExpectFailed(
-    const char* expr,
-    const optional<string>& msg,
-    const source_location& sourceLoc) {
-  ostringstream buf;
-  buf << "Expectation " << quote::bt(expr) << " failed";
-  if (msg)
-    buf << ": " << *msg;
-
-  throw except::InvalidState(buf.str(), sourceLoc);
-}
 
 } // namespace rocket::assert::internal
 

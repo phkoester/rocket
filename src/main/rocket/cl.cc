@@ -5,13 +5,11 @@
 #include "codec-std-decl.h"
 #include "codec-std.h"
 
-#include "S.h"
 #include "assert.h"
 #include "cl.h"
 #include "codec.h"
 #include "except.h"
 #include "log.h"
-#include "quote.h"
 #include "strings.h"
 #include "terminal.h"
 #include "unicode-iterator.h"
@@ -37,18 +35,18 @@ CommandLine::CommandLine(const vector<Option>& opts, const CommandLineParams& pa
   // NOTE: Because we use string views and pointers in the maps, `opts_` may never be changed from this point
 
   // Validate options, populate maps
-  
+
   for (const auto& opt : opts_) {
     if (opt.name == "help")
       help_ = true;
     validate(opt.name, true);
     auto pair = byName_.emplace(opt.name, &opt);
-    ROCKET_CHECK(opts, pair.second, S << "Duplicate option " << ROCKET_QUOTE_BT(name(opt, true)));
+    ROCKET_CHECK(opts, pair.second, "Duplicate option `{}`", name(opt, true));
     if (opt.shortName) {
       string shortName = static_cast<string>(*opt.shortName);
       validate(shortName, false);
       auto pair = byShortName_.emplace(*opt.shortName, &opt); // cppcheck-suppress shadowVariable
-      ROCKET_CHECK(opts, pair.second, S << "Duplicate option " << ROCKET_QUOTE_BT(name(opt, false)));
+      ROCKET_CHECK(opts, pair.second, "Duplicate option `{}`", name(opt, false));
     }
   }
 }
@@ -56,20 +54,22 @@ CommandLine::CommandLine(const vector<Option>& opts, const CommandLineParams& pa
 void
 CommandLine::apply(const Option& opt, bool nameFlag, optional<string_view> value) {
   if (opt.takesValue && not value)
-    throw except::InvalidState(S << "Missing value for option " << ROCKET_QUOTE_BT(name(opt, nameFlag)));
-  
+    except::throwInvalidState(ROCKET_EXCEPT_SL, "Missing value for option `{}`", name(opt, nameFlag));
+
   // Usually, options not taking a value may not be assigned a value. There is one exception to this rule:
   // boolean values are allowed
   if (not opt.takesValue && value && not codec::Symbols::Strings::Bool.contains(*value))
-    throw except::InvalidState(S << "Option " << ROCKET_QUOTE_BT(name(opt, nameFlag)) << " cannot take a value");
+    except::throwInvalidState(ROCKET_EXCEPT_SL, "Option `{}` cannot take a value", name(opt, nameFlag));
 
   try {
     opt.apply(value);
   } catch (const exception& ex) {
-    string msg = S << "Option " << ROCKET_QUOTE_BT(name(opt, nameFlag)) << ": Invalid value " << *value;
-    if (opt.format)
-      msg += "; expected " + *opt.format;
-    throw except::InvalidState(msg);
+    string expected;
+    if (opt.format) {
+      nio::StringSink sink(expected);
+      sink.print("; expected {}", *opt.format);
+    }
+    except::throwInvalidState(ROCKET_EXCEPT_SL, "Option `{}`: Invalid value {:?}{}", name(opt, nameFlag), *value, expected);
   }
 }
 
@@ -89,7 +89,7 @@ CommandLine::handleException(const exception& ex, ostream& err, int status) cons
     process.error(err, p->message(), EXIT_SUCCESS);
   else
     process.error(err, ex.what(), EXIT_SUCCESS);
-  
+
   if (usage_)
     printUsage(err);
   if (help_)
@@ -105,7 +105,7 @@ CommandLine::help(ostream& out, bool exit) {
   auto size = terminal::size(out);
   size_t width = max(40UL, size ? size->first : 80UL);
   bool output = params_.otherOutput;
-  
+
   // Usage
 
   if (usage_) {
@@ -212,7 +212,7 @@ CommandLine::name(const Option& opt, bool nameFlag) {
 vector<string>
 CommandLine::parse(const vector<string>& args, const Take& take) const {
   vector<string> result;
-  
+
   for (auto it = args.begin(), end = args.end(); it != end; ++it) {
     const auto& elem = *it; // `string`
     string_view arg = elem; // This makes `substr()` more efficient
@@ -220,7 +220,7 @@ CommandLine::parse(const vector<string>& args, const Take& take) const {
     if (arg == "--") {
       // 1. `--` seen: Pass the rest, excluding the option-end tag, to the program and break the argument
       // loop
-      
+
       result.insert(result.end(), it + 1, args.end());
       break;
     } else if (strings::beginsWith<char>(arg, "--")) {
@@ -228,12 +228,12 @@ CommandLine::parse(const vector<string>& args, const Take& take) const {
 
       arg = arg.substr(2);
       auto eq = arg.find('=');
-      
+
       // Extract name, look it up in map
       string_view name = eq == string::npos ? arg : arg.substr(0, eq);
       auto mapIt = byName_.find(name);
       if (mapIt == byName_.end())
-        throw except::InvalidState(S << "Unknown option " << ROCKET_QUOTE_BT("--" + string(name)));
+        except::throwInvalidState(ROCKET_EXCEPT_SL, "Unknown option `--{}`", name);
       const Option& opt = *mapIt->second;
 
       // Obtain value, if any
@@ -260,7 +260,7 @@ CommandLine::parse(const vector<string>& args, const Take& take) const {
         auto cp = *cpIt;
         auto mapIt = byShortName_.find(cp);
         if (mapIt == byShortName_.end())
-          throw except::InvalidState(S << "Unknown option " << ROCKET_QUOTE_BT("-" + static_cast<string>(cp)));
+          except::throwInvalidState(ROCKET_EXCEPT_SL, "Unknown option `-{}`", static_cast<string>(cp));
         const Option& opt = *mapIt->second;
 
         // Obtain value, if any, apply option
@@ -292,7 +292,7 @@ CommandLine::parse(const vector<string>& args, const Take& take) const {
       }
     } else {
       // 4. Not an option, but a positional argument: Let the program take the argument
-      
+
       bool finish = false;
       auto took = take ? take(arg) : Store;
       switch (took) {
@@ -321,7 +321,7 @@ CommandLine::parse(const vector<string>& args, const Take& take) const {
         break;
     }
   }
-  
+
   return result;
 }
 
@@ -335,7 +335,7 @@ CommandLine::printHelp(ostream& os) const {
 void
 CommandLine::printUsage(ostream& os) const {
   ROCKET_EXPECT(usage_);
-  
+
   os << "Usage: " << params_.command << ' ' << params_.usages[0] << '\n';
   for (size_t i = 1; i < params_.usages.size(); ++i)
     os << "  or   " << params_.command << ' ' << params_.usages[i] << '\n';
@@ -345,9 +345,9 @@ void
 CommandLine::validate(string_view name, bool nameFlag) {
   const char* what = nameFlag ? "option name" : "option short name";
   if (name.empty())
-    throw except::InvalidState(S << raw(strings::capitalize(what)) << " may not be empty");
+    except::throwInvalidState(ROCKET_EXCEPT_SL, "{} may not be empty", strings::capitalize(what));
   if (strings::beginsWith<char>(name, "-") || name.find_first_of(" =") != string::npos)
-    throw except::InvalidState(S << "Invalid " << what << " " << name);
+    except::throwInvalidState(ROCKET_EXCEPT_SL, "Invalid {} {:?}", what, name);
 }
 
 } // namespace rocket::cl

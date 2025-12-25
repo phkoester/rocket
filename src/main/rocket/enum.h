@@ -8,13 +8,13 @@
 
 #include "enum-decl.h"
 
-#include "rocket/S.h"
-#include "rocket/Type.h"
-#include "rocket/assert.h"
-#include "rocket/boost.h"
-#include "rocket/codec.h"
-#include "rocket/except.h"
-#include "rocket/io-decl.h"
+#include "S.h"
+#include "Type.h"
+#include "assert.h"
+#include "boost.h"
+#include "codec.h"
+#include "except.h"
+#include "io-decl.h"
 
 #include <boost/preprocessor/stringize.hpp>
 #include <boost/preprocessor/seq/for_each.hpp>
@@ -46,20 +46,20 @@
       } \
     }
 
-#define ROCKET_ENUM_DEFINE_OUTPUT_OP__(type, name) \
+#define ROCKET_ENUM_DEFINE_OUTPUT_OP__(type, _name) \
     ::std::ostream& \
     operator<<(::std::ostream& lhs, type rhs) { \
-      if (auto it = name##Map__.left.find(rhs); it != name##Map__.left.end()) \
+      if (auto it = _name##Map__.left.find(rhs); it != _name##Map__.left.end()) \
         return lhs << it->second; \
       else \
-        ROCKET_CHECK(rhs, false, ::rocket::S << "Invalid " << ::rocket::Type::of<type>() << ": " << static_cast<int>(rhs)); \
+        ROCKET_CHECK(rhs, false, "Invalid `{}`: {}", ::rocket::Type::of<type>().name(), static_cast<int>(rhs)); \
     }
 
-#define ROCKET_ENUM_DEFINE_PARSE_RON__(type, name) \
+#define ROCKET_ENUM_DEFINE_PARSE_RON__(type, _name) \
     ::std::istream& \
     parseRon(::std::istream& is, type& v) { \
       auto enumResult = ::rocket::codec::ron::parsing::parseEnum(is); \
-      if (auto it = name##Map__.right.find(enumResult.input); it != name##Map__.right.end()) { \
+      if (auto it = _name##Map__.right.find(enumResult.input); it != _name##Map__.right.end()) { \
         v = it->second; \
         return is; \
       } else { \
@@ -71,13 +71,13 @@
       } \
     }
 
-#define ROCKET_ENUM_DEFINE_PRINT_RON__(type, name) \
+#define ROCKET_ENUM_DEFINE_PRINT_RON__(type, _name) \
     ::std::ostream& \
     printRon(::std::ostream& os, type v) { \
-      if (auto it = name##Map__.left.find(v); it != name##Map__.left.end()) \
+      if (auto it = _name##Map__.left.find(v); it != _name##Map__.left.end()) \
         return printRon(os, it->second); \
       else \
-        ROCKET_CHECK(v, false, ::rocket::S << "Invalid " << ::rocket::Type::of<type>() << ": " << static_cast<int>(v)); \
+        ROCKET_CHECK(v, false, "Invalid `{}`: {}", ::rocket::Type::of<type>().name(), static_cast<int>(v)); \
     }
 
 #define ROCKET_ENUM_DEFINE__(type, name, seq) \
@@ -88,14 +88,14 @@
     ROCKET_ENUM_DEFINE_PARSE_RON__(type, name) \
     ROCKET_ENUM_DEFINE_PRINT_RON__(type, name) \
 
-#define ROCKET_ENUM_DEFINE_FMT_FORMATTER__(ns, type, name) \
+#define ROCKET_ENUM_DEFINE_FMT_FORMATTER__(ns, type, _name) \
     auto \
     ::fmt::formatter<ns::type>::format(ns::type v, format_context& ctx) const -> \
         format_context::iterator { \
-      if (auto it = ns::name##Map__.left.find(v); it != ns::name##Map__.left.end()) \
+      if (auto it = ns::_name##Map__.left.find(v); it != ns::_name##Map__.left.end()) \
         return formatter<string_view>::format(it->second, ctx); \
       else \
-        ROCKET_CHECK(v, false, ::rocket::S << "Invalid " << ::rocket::Type::of<ns::type>() << ": " << static_cast<int>(v)); \
+        ROCKET_CHECK(v, false, "Invalid `{}`: {}", ::rocket::Type::of<ns::type>().name(), static_cast<int>(v)); \
     } \
 
 /// @endcond

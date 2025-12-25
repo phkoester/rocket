@@ -555,7 +555,7 @@ struct GraphemeIterator {
    */
   const Grapheme&
   operator*() const {
-    ROCKET_EXPECT(not end(), internal::outOfBounds(*this, position()));
+    ROCKET_EXPECT(not end(), "{}", internal::outOfBounds(*this, position()));
     CodePoints cps;
     cps.reserve(grSize_);
     copy(it_, it_ + grSize_, back_inserter(cps));
@@ -570,7 +570,7 @@ struct GraphemeIterator {
    */
   const Grapheme*
   operator->() const {
-    ROCKET_EXPECT(not end(), internal::outOfBounds(*this, position()));
+    ROCKET_EXPECT(not end(), "{}", internal::outOfBounds(*this, position()));
     CodePoints cps;
     cps.reserve(grSize_);
     copy(it_, it_ + grSize_, back_inserter(cps));
@@ -605,14 +605,14 @@ struct GraphemeIterator {
 
   /// @member_op_gt
   inline bool operator>(const GraphemeIterator& rhs) const { return it_ > rhs.it_; }
-  
+
   /// @member_op_ge
   inline bool operator>=(const GraphemeIterator& rhs) const { return it_ >= rhs.it_; }
 
   /// @member_op_inc
   GraphemeIterator&
   operator++() {
-    ROCKET_EXPECT(not end(), internal::iteratorAt(*this, position(), "cannot increment"));
+    ROCKET_EXPECT(not end(), "{}", internal::iteratorAt(*this, position(), "cannot increment"));
     it_ += grSize_;
     go();
     if (grPos_ != NPOS)
@@ -631,7 +631,7 @@ struct GraphemeIterator {
   /// @member_op_dec
   GraphemeIterator&
   operator--() {
-    ROCKET_EXPECT(not begin(), internal::iteratorAt(*this, position(), "cannot decrement"));
+    ROCKET_EXPECT(not begin(), "{}", internal::iteratorAt(*this, position(), "cannot decrement"));
     --it_;
     while (not it_.graphemeBoundary())
       --it_;
@@ -658,7 +658,7 @@ struct GraphemeIterator {
       for (difference_type i = 0; i < rhs; ++i)
         operator++();
     }
-    return *this;  
+    return *this;
   }
 
   /// @member_op_sub_assign
@@ -670,7 +670,7 @@ struct GraphemeIterator {
       for (difference_type i = 0; i < rhs; ++i)
         operator--();
     }
-    return *this;  
+    return *this;
   }
 
   /**
@@ -721,7 +721,7 @@ struct GraphemeIterator {
    */
   size_t
   graphemeSize() const {
-    ROCKET_EXPECT(not end(), internal::outOfBounds(*this, position()));
+    ROCKET_EXPECT(not end(), "{}", internal::outOfBounds(*this, position()));
     return grSize_;
   }
 
@@ -764,10 +764,10 @@ private:
 
     if (end())
       return;
-    
+
     // Check grapheme boundary
-    ROCKET_EXPECT(it_.graphemeBoundary(), internal::iteratorAt(*this, position(), "does not point to a grapheme boundary"));
-    
+    ROCKET_EXPECT(it_.graphemeBoundary(), "{}", internal::iteratorAt(*this, position(), "does not point to a grapheme boundary"));
+
     // Update grapheme size
     it_.codePointPosition(); // Optimization: enforce known code-point position
     auto it(it_ + 1);

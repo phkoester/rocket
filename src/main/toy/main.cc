@@ -25,7 +25,6 @@
 #include <boost/preprocessor/facilities/empty.hpp>
 #include <boost/preprocessor/tuple/enum.hpp>
 
-#include <fmt/compile.h>
 #include <fmt/ranges.h>
 
 using namespace rocket;
@@ -41,7 +40,6 @@ enum class Color {
   blue,
 };
 
-
 template<>
 struct fmt::formatter<Color> : formatter<string_view> {
   template<typename FormatContext>
@@ -51,7 +49,7 @@ struct fmt::formatter<Color> : formatter<string_view> {
     case Color::red:   name = "red"; break;
     case Color::green: name = "green"; break;
     case Color::blue:  name = "blue"; break;
-    default: ROCKET_CHECK(v, false, S << "Invalid " << ::rocket::Type::of<Color>() << ": " << static_cast<int>(v));
+    default: ROCKET_CHECK(v, false, "Invalid `{}`: {}", ::rocket::Type::of<Color>().name(), static_cast<int>(v));
     }
     return formatter<string_view>::format(name, ctx);
   }
@@ -83,7 +81,7 @@ private:
 namespace {
 
 template<typename... T>
-void myAssertFailed(
+void myAssertFailedImpl(
     const std::source_location& sl,
     const char* expr,
     fmt::format_string<T...> fmt = "",
@@ -93,6 +91,15 @@ void myAssertFailed(
   if (sv.size() > 0) {
     nio::stdout().vprintln(process.codeLocale(), fmt, fmt::make_format_args(args...));
   }
+}
+
+template<typename... T>
+void myAssertFailed(
+    const std::source_location& sl,
+    const char* expr,
+    fmt::format_string<T...> fmt = "",
+    T&&... args) {
+  myAssertFailedImpl(sl, expr, fmt, std::forward<T>(args)...);
 }
 
 #define MY_ASSERT(expr, ...) \
@@ -111,6 +118,8 @@ toy() {
 
   MY_ASSERT(false);
   MY_ASSERT(false, "oops {}", 42);
+
+  ROCKET_ASSERT(false, "oops {}", 42);
 
   auto sink = nio::stdout();
 
