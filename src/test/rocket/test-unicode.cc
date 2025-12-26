@@ -263,6 +263,12 @@ TEST(unicode, CodePointFormat) {
   EXPECT_EQ(fmt::format("{:?}", CodePoint(U'\u20ac')), "U+20AC");
 }
 
+TEST(unicode, CodePointsFormat) {
+  CodePoints cps = { CodePoint(U'a'), CodePoint(U'b'), CodePoint(U'c') };
+  EXPECT_EQ(fmt::format("{}", cps), "[a, b, c]");
+  EXPECT_EQ(fmt::format("{::?}", cps), "[U+0061, U+0062, U+0063]");
+}
+
 TEST(unicode, Grapheme) {
   EXPECT_EQ(width(graphemes(U"a")), 1);
   EXPECT_EQ(width(graphemes(U"😁")), 2);
