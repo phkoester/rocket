@@ -27,7 +27,7 @@
   sink.print( \
       fmt \
       ROCKET_COMMA_IF_VA_ARGS(__VA_ARGS__)); \
-  ::rocket::process.error(::rocket::nio::stderr, EXIT_SUCCESS, "{}", msg, EXIT_SUCCESS); \
+  ::rocket::process.error(::rocket::nio::stderr, EXIT_SUCCESS, "{}", msg); \
 }
 
 namespace rocket {

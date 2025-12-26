@@ -33,7 +33,7 @@ struct Type {
    */
   template<typename T>
   static inline Type of() { return typeid(T); }
-  
+
   /**
    * Makes a #rocket::Type of value @p v.
    *
@@ -104,9 +104,20 @@ operator<<(std::ostream& lhs, const Type& rhs) {
 inline size_t
 hash_value(const Type& v) {
   return v.hash();
-} 
+}
 
 } // namespace rocket
+
+// `Type` (namespace `fmt`) ---------------------------------------------------------------------------------
+
+/// @spec_fmt_formatter{#rocket::Type)
+template<>
+struct fmt::formatter<rocket::Type> : formatter<string_view> {
+  template<typename FormatContext>
+  constexpr auto format(const rocket::Type& v, FormatContext& ctx) const {
+    return formatter<string_view>::format(v.name(), ctx);
+  }
+};
 
 // `Type` (namespace `std`) ---------------------------------------------------------------------------------
 

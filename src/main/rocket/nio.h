@@ -1,19 +1,15 @@
 /**
  * @file nio.h
  *
- * New I/O.
+ * New I/O: effiicient sinks and sources.
  */
 
 #pragma once
 
-#include "strings.h"
-
 #include <fmt/format.h>
 
-#include <functional>
 #include <memory>
 #include <string>
-#include <unordered_map>
 
 namespace rocket::nio {
 
@@ -27,85 +23,6 @@ static constexpr size_t DEFAULT_BUFFER_SIZE = 64 * 1'024; // 64 KiB
   * The minimum buffer size in bytes.
   */
 static constexpr size_t MIN_BUFFER_SIZE = 128;
-
-// `Format` -------------------------------------------------------------------------------------------------
-
-struct Format {
-  struct Params {
-    std::string formatted_;
-    std::unordered_map<std::string_view, std::string> tagged_;
-
-    template<typename... T>
-    void set(fmt::format_string<T...> fmt, T&&... args) {
-      formatted_ = fmt::format(fmt, std::forward<T>(args)...);
-    }
-
-    template<typename... T>
-    void set(const std::locale& locale,fmt::format_string<T...> fmt, T&&... args) {
-      formatted_ = fmt::format(locale, fmt, std::forward<T>(args)...);
-    }
-
-    template<typename... T>
-    void tag(std::string_view tag, fmt::format_string<T...> fmt, T&&... args) {
-      tagged_.emplace(tag, fmt::format(fmt, std::forward<T>(args)...));
-    }
-
-    template<typename... T>
-    void tag(std::string_view tag, const std::locale& locale, fmt::format_string<T...> fmt, T&&... args) {
-      tagged_.emplace(tag, fmt::format(locale, fmt, std::forward<T>(args)...));
-    }
-  };
-
-  using ParamsProducer = std::function<Params()>;
-
-  static Params params() {
-    return {};
-  }
-
-  template<typename... T>
-  static Params params(fmt::format_string<T...> fmt, T&&... args) {
-    Params ret;
-    ret.set(fmt, std::forward<T>(args)...);
-    return ret;
-  }
-
-  template<typename... T>
-  static Params params(const std::locale& locale, fmt::format_string<T...> fmt, T&&... args) {
-    Params ret;
-    ret.set(locale, fmt, std::forward<T>(args)...);
-    return ret;
-  }
-
-  Format(ParamsProducer&& f) : params_(f()) {}
-
-  const Params& get() const { return params_; }
-
-private:
-
-  Params params_;
-};
-
-} // namespace rocket::nio
-
-/// @spec_fmt_formatter{#rocket::nio::Format)
-template<>
-struct fmt::formatter<rocket::nio::Format> {
-  template<typename FormatContext>
-  constexpr auto format(const rocket::nio::Format& v, FormatContext& ctx) const {
-    const auto& params = v.get();
-    auto formatted = params.formatted_;
-    for (const auto& [tag, value] : params.tagged_) {
-      rocket::strings::replaceIn<char>(formatted, tag, value);
-    }
-    return format_to(ctx.out(), "{}", formatted);
-  }
-
-  constexpr auto parse(format_parse_context& ctx) {
-    return ctx.begin();
-  }
-};
-
-namespace rocket::nio {
 
 // `Sink` ---------------------------------------------------------------------------------------------------
 
@@ -184,25 +101,25 @@ protected:
 // `BufferedSink` -------------------------------------------------------------------------------------------
 
 struct BufferedSink : Sink {
-  BufferedSink(Sink& sink, size_t size = DEFAULT_BUFFER_SIZE);
+  explicit BufferedSink(Sink& sink, size_t size = DEFAULT_BUFFER_SIZE);
 
   virtual int close() override;
 
-  virtual int error() const override { return sink_.error(); }
+  virtual int error() const override { return delegate_.error(); } // cppcheck-suppress uselessOverride
 
-  virtual int fd() const override { return sink_.fd(); }
+  virtual int fd() const override { return delegate_.fd(); }
 
   virtual int flush() override;
 
-  virtual bool good() const override { return sink_.good(); }
+  virtual bool good() const override { return delegate_.good(); } // cppcheck-suppress uselessOverride
 
-  virtual bool open() const override { return sink_.open(); }
+  virtual bool open() const override { return delegate_.open(); } // cppcheck-suppress uselessOverride
 
   virtual int write(std::string_view data) override;
 
 private:
 
-  Sink& sink_;
+  Sink& delegate_;
   const size_t size_;
   std::unique_ptr<char[]> buf_;
   size_t pos_ = 0;
@@ -223,9 +140,9 @@ struct FileSink : Sink {
     bool closeOnDestroy = true;
   };
 
-  FileSink(FILE* file, const Params& params = { .append=false, .closeOnDestroy=true });
+  explicit FileSink(FILE* file, const Params& params = { .append=false, .closeOnDestroy=true });
 
-  FileSink(const std::string& path, const Params& params = { .append=false, .closeOnDestroy=true });
+  explicit FileSink(const std::string& path, const Params& params = { .append=false, .closeOnDestroy=true });
 
   virtual ~FileSink() override;
 
@@ -258,14 +175,13 @@ struct NullSink : Sink {
 // `StreamSink` ---------------------------------------------------------------------------------------------
 
 /**
- * Use `StreamSink` for I/O streams operability,
+ * The class `StreamSink` provides support for I/O streams.
  *
- * Using I/O streams is generally discouraged, because it's not portable and not efficient. Wherever
- * possible, use `FileSink` instead.
- *
+ * Using I/O streams is generally discouraged, because it’s not efficient. Wherever possible, use #FileSink
+ * instead.
  */
 struct StreamSink : Sink {
-  StreamSink(std::ostream& os) : os_(os) {}
+  explicit StreamSink(std::ostream& os) : os_(os) {}
 
   virtual int close() override;
 
@@ -283,7 +199,7 @@ private:
 // `StringSink` ---------------------------------------------------------------------------------------------
 
 struct StringSink : Sink {
-  StringSink(std::string& buf) : buf_(buf) {}
+  explicit StringSink(std::string& buf) : buf_(buf) {}
 
   virtual int close() override;
 

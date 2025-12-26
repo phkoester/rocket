@@ -4,7 +4,7 @@
  * A string library, ready for `char` (UTF-8) and `char32_t` (UTF-32).
  */
 
-#include "basic.h"
+#include "base.h"
 
 #include <limits>
 #include <string>

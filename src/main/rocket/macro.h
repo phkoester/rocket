@@ -29,21 +29,6 @@
     __VA_ARGS__
 
 /**
- * Issues an error message on standard error.
- *
- * Usage: `ROCKET_ERROR(fmt, [args]...])`
- */
-#define ROCKET_ERROR(fmt, ...) { \
-  ::std::string msg; \
-  ::rocket::nio::StringSink sink(msg); \
-  sink.print("{}:{}: ", __FILE__, __LINE__); \
-  sink.print( \
-      fmt \
-      ROCKET_COMMA_IF_VA_ARGS(__VA_ARGS__)); \
-  ::rocket::nio::stderr.writeln(msg); \
-}
-
-/**
  * Generates a unique identifier.
  */
 #define ROCKET_ID BOOST_PP_SEQ_CAT((rocketId)(__LINE__)(__))

@@ -12,7 +12,7 @@
 #include "Process.h"
 #include "S.h"
 #include "assert.h"
-#include "basic.h"
+#include "base.h"
 #include "except.h"
 #include "noun.h"
 #include "unicode.h"

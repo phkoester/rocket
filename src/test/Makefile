@@ -41,8 +41,8 @@ CC_FILES    := test/rocket/test-assert.cc
 SHARED_LIBS := $(call shared-lib-name,rocket,$(ROCKET_VERSION))
 include $(GAIA_DIR)/src/main/make/test-executable.mk
 
-NAME        := test-rocket-basic
-CC_FILES    := test/rocket/test-basic.cc
+NAME        := test-rocket-base
+CC_FILES    := test/rocket/test-base.cc
 SHARED_LIBS := $(call shared-lib-name,rocket,$(ROCKET_VERSION))
 include $(GAIA_DIR)/src/main/make/test-executable.mk
 
@@ -93,6 +93,21 @@ include $(GAIA_DIR)/src/main/make/test-executable.mk
 
 NAME        := test-rocket-except
 CC_FILES    := test/rocket/test-except.cc
+SHARED_LIBS := $(call shared-lib-name,rocket,$(ROCKET_VERSION))
+include $(GAIA_DIR)/src/main/make/test-executable.mk
+
+NAME        := test-rocket-format
+CC_FILES    := test/rocket/test-format.cc
+SHARED_LIBS := $(call shared-lib-name,rocket,$(ROCKET_VERSION))
+include $(GAIA_DIR)/src/main/make/test-executable.mk
+
+NAME        := test-rocket-format-global
+CC_FILES    := test/rocket/test-format-global.cc
+SHARED_LIBS := $(call shared-lib-name,rocket,$(ROCKET_VERSION))
+include $(GAIA_DIR)/src/main/make/test-executable.mk
+
+NAME        := test-rocket-format-std
+CC_FILES    := test/rocket/test-format-std.cc
 SHARED_LIBS := $(call shared-lib-name,rocket,$(ROCKET_VERSION))
 include $(GAIA_DIR)/src/main/make/test-executable.mk
 

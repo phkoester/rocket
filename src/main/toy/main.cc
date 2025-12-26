@@ -75,9 +75,9 @@ void
 toy() {
   ROCKET_LOG(toy);
 
-  nio::FileSink sink("tmp");
-  sink.println("hi");
-  nio::stdout.println("fd={}", sink.fd());
+  using namespace unicode;
+  CodePoints cps = { CodePoint(U'a'), CodePoint(U'b'), CodePoint(U'c') };
+  nio::stdout.println("cps: {::?}", cps);
 
   ROCKET_LOG_INFO("hi");
 }
@@ -89,7 +89,6 @@ toy() {
 int
 main(int argc, char **argv) {
   try {
-    ROCKET_ERROR("Test error");
     ROCKET_PROCESS_ERROR("Test process error");
 
     process.init(argc, argv, "toy");

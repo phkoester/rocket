@@ -258,6 +258,11 @@ TEST(unicode, printRon_CodePoint) {
   EXPECT_EQ(S << CodePoint(0x1000000U), "U+1000000");
 }
 
+TEST(unicode, CodePointFormat) {
+  EXPECT_EQ(fmt::format("{}", CodePoint(U'\u20ac')), "€");
+  EXPECT_EQ(fmt::format("{:?}", CodePoint(U'\u20ac')), "U+20AC");
+}
+
 TEST(unicode, Grapheme) {
   EXPECT_EQ(width(graphemes(U"a")), 1);
   EXPECT_EQ(width(graphemes(U"😁")), 2);
@@ -367,6 +372,14 @@ TEST(unicode, parseRon_Grapheme) {
 
 TEST(unicode, printRon_Grapheme) {
   EXPECT_EQ(S << Grapheme("😁"), "\"😁\"");
+}
+
+TEST(unicode, GraphemeFormat) {
+  // U+01F9D1 (Adult), U+200D (ZWJ), U+01F33E (Ear of rice)
+  // u32string s = U"🧑‍🌾";
+
+  EXPECT_EQ(fmt::format("{}", Grapheme("🧑‍🌾")), "🧑‍🌾");
+  EXPECT_EQ(fmt::format("{:?}", Grapheme("a")), "\"a\"");
 }
 
 TEST(unicode, conversions) {

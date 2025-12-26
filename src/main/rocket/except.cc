@@ -11,7 +11,6 @@
 
 #include "S.h"
 #include "assert.h"
-#include "quote.h"
 
 using namespace rocket;
 using namespace rocket::except;
@@ -186,7 +185,7 @@ InvalidArgument::InvalidArgument(
     string_view msg,
     optional<source_location>&& sl,
     optional<stacktrace>&& st) :
-    BaseType(message::baseMessage(S << "Parameter " << ROCKET_QUOTE_BT(name) << ": " << raw(msg), sl)),
+    Base(message::baseMessage(fmt::format("Parameter `{}`: {}", name, msg), sl)),
     Exception(msg, std::move(sl), std::move(st)) {}
 
 // `InvalidState` -------------------------------------------------------------------------------------------
@@ -195,7 +194,7 @@ InvalidState::InvalidState(
     string_view msg,
     optional<source_location>&& sl,
     optional<stacktrace>&& st) :
-    BaseType(message::baseMessage(msg, sl)),
+    Base(message::baseMessage(msg, sl)),
     Exception(msg, std::move(sl), std::move(st)) {}
 
 // Functions ------------------------------------------------------------------------------------------------

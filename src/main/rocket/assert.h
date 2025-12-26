@@ -14,12 +14,12 @@
 
 #include "Process.h"
 #ifdef NDEBUG
-#include "basic.h" // `rocket::nop()`
+#include "base.h" // `rocket::nop()`
 #endif
 #include "except.h"
+#include "format.h"
 
 #include <source_location>
-#include <string>
 
 // Internal -------------------------------------------------------------------------------------------------
 
@@ -35,13 +35,13 @@ onAssertFailed(
   process.error(
       nio::stderr,
       EXIT_SUCCESS,
-      "{}:{}: Assertion `{}` failed{}", sl.file_name(), sl.line(), expr, nio::Format([&] {
+      "{}:{}: Assertion `{}` failed{}", sl.file_name(), sl.line(), expr, format::Format([&] {
     if (fmt.get().size() > 0) {
-      auto params = nio::Format::params(": \\@0");
+      auto params = format::Format::params(": \\@0");
       params.tag("\\@0", fmt, std::forward<T>(args)...);
       return params;
     } else {
-      return nio::Format::params();
+      return format::Format::params();
     }
   }));
   std::terminate();
@@ -55,13 +55,13 @@ onCheckFailed(
     const char* expr,
     fmt::format_string<T...> fmt = "",
     T&&... args) {
-  except::throwInvalidArgument(sl, name, "Check `{}` failed{}", expr, nio::Format([&] {
+  except::throwInvalidArgument(sl, name, "Check `{}` failed{}", expr, format::Format([&] {
     if (fmt.get().size() > 0) {
-      auto params = nio::Format::params(": \\@0");
+      auto params = format::Format::params(": \\@0");
       params.tag("\\@0", fmt, std::forward<T>(args)...);
       return params;
     } else {
-      return nio::Format::params();
+      return format::Format::params();
     }
   }));
 }
@@ -72,13 +72,13 @@ template<typename... T>
     const char* expr,
     fmt::format_string<T...> fmt = "",
     T&&... args) {
-  except::throwInvalidState(sl, "Expectation `{}` failed{}", expr, nio::Format([&] {
+  except::throwInvalidState(sl, "Expectation `{}` failed{}", expr, format::Format([&] {
     if (fmt.get().size() > 0) {
-      auto params = nio::Format::params(": \\@0");
+      auto params = format::Format::params(": \\@0");
       params.tag("\\@0", fmt, std::forward<T>(args)...);
       return params;
     } else {
-      return nio::Format::params();
+      return format::Format::params();
     }
   }));
 }

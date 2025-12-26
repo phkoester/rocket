@@ -6,8 +6,10 @@
 
 #pragma once
 
-#include "basic.h"
 #include "Positions.h"
+#include "base.h"
+
+#include "format.h"
 #include "unicode-decl.h"
 
 #include <cstdint>
@@ -34,7 +36,7 @@ struct CodePoint {
    */
   // cppcheck-suppress noExplicitConstructor
   CodePoint(char v);
-  
+
   /**
    * @ctor
    *
@@ -56,7 +58,7 @@ struct CodePoint {
 
   /// @member_op_cast{`std::string`}
   explicit operator std::string() const;
-  
+
   /// @member_op_cast{`std::u32string`}
   inline explicit operator std::u32string() const { return std::u32string { v_ }; }
 
@@ -136,7 +138,7 @@ static_assert(sizeof(CodePoint) == sizeof(uint32_t) && sizeof(uint32_t) == sizeo
 inline size_t
 hash_value(CodePoint v) {
   return v.hash();
-} 
+}
 
 /**
  * UTF-8 input operator for #rocket::unicode::CodePoint.
@@ -172,6 +174,28 @@ std::u32istream& operator>>(std::u32istream& lhs, CodePoint& rhs);
  * @return @p lhs
  */
 std::ostream& operator<<(std::ostream& lhs, CodePoint rhs);
+
+} // namespace rocket::unicode
+
+// `CodePoint` (namespace `fmt`) ----------------------------------------------------------------------------
+
+/// @spec_fmt_formatter{#rocket::unicode::CodePoint}
+template<>
+struct fmt::formatter<rocket::unicode::CodePoint> : rocket::format::NativeFormatter<string_view> {
+  using Base = rocket::format::NativeFormatter<string_view>;
+
+  template<typename FormatContext>
+  constexpr auto
+  format(const rocket::unicode::CodePoint& v, FormatContext& ctx) const -> decltype(ctx.out()) {
+    if (specs_.type() == fmt::presentation_type::debug) {
+      return fmt::format_to(ctx.out(), "U+{:0>4X}", static_cast<uint32_t>(v));
+    } else {
+     return Base::format(static_cast<std::string>(v), ctx);
+    }
+  }
+};
+
+namespace rocket::unicode {
 
 // `CodePoints`----------------------------------------------------------------------------------------------
 
@@ -224,7 +248,7 @@ struct Grapheme {
 
   /// @member_op_cast{`std::string`}
   explicit operator std::string() const;
-  
+
   /// @member_op_cast{`std::u32string`}
   explicit operator std::u32string() const;
 
@@ -292,7 +316,7 @@ struct Grapheme {
    * @return `true` if this grapheme is printable
    */
   bool print() const;
-  
+
   /**
    * Returns `true` if this grapheme is a tab (`"\t"`).
    *
@@ -349,7 +373,25 @@ std::u32istream& operator>>(std::u32istream& lhs, Grapheme& rhs);
  */
 std::ostream& operator<<(std::ostream& lhs, const Grapheme& rhs);
 
-// `Graphemes` ----------------------------------------------------------------------------------------------
+} // namespace rocket::unicode
+
+// `Grapheme` (namespace `fmt`) ----------------------------------------------------------------------------
+
+/// @spec_fmt_formatter{#rocket::unicode::Grapheme}
+template<>
+struct fmt::formatter<rocket::unicode::Grapheme> : rocket::format::NativeFormatter<string_view> {
+  using Base = rocket::format::NativeFormatter<string_view>;
+
+  template<typename FormatContext>
+  constexpr auto
+  format(const rocket::unicode::Grapheme& v, FormatContext& ctx) const -> decltype(ctx.out()) {
+    return Base::format(static_cast<std::string>(v), ctx);
+  }
+};
+
+namespace rocket::unicode {
+
+  // `Graphemes` ----------------------------------------------------------------------------------------------
 
 /**
  * A grapheme container.
@@ -558,7 +600,7 @@ struct numeric_limits<rocket::unicode::CodePoint> {
    * @return the minimum code-point value
    */
   static consteval rocket::unicode::CodePoint min() { return 0U; }
-  
+
   /**
    * Returns the maximum code-point value, which is U+10FFFF.
    *

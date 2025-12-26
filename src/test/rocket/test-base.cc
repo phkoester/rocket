@@ -1,5 +1,5 @@
 /*
- * test-basic.cc
+ * test-base.cc
  */
 
 #include "rocket-gtest/testing.h"
@@ -22,9 +22,9 @@ static_assert(is_same_v<decltype(0.0L), long double>);
 // `TEST` ---------------------------------------------------------------------------------------------------
 
 /**
- * Tests that the introductory table in `basic.h` is correct.
+ * Tests that the introductory table in `base.h` is correct.
  */
-TEST(basic, sizeof) {
+TEST(base, sizeof) {
   EXPECT_EQ(sizeof(char), 1);
   EXPECT_EQ(sizeof(std::byte), 1);
   EXPECT_EQ(sizeof(short), 2);
@@ -40,7 +40,7 @@ TEST(basic, sizeof) {
   EXPECT_EQ(sizeof(long double), 16);
 }
 
-TEST(basic, opInput_int128_t) {
+TEST(base, opInput_int128_t) {
   using type = int128_t;
 
   type v;
@@ -72,7 +72,7 @@ TEST(basic, opInput_int128_t) {
   }
 }
 
-TEST(basic, opOutput_int128_t) {
+TEST(base, opOutput_int128_t) {
   using type = int128_t;
 
   type v;
@@ -83,7 +83,7 @@ TEST(basic, opOutput_int128_t) {
   EXPECT_EQ(S << raw(v), "170141183460469231731687303715884105727");
 }
 
-TEST(basic, opInput_uint128_t) {
+TEST(base, opInput_uint128_t) {
   using type = uint128_t;
 
   type v;
@@ -157,7 +157,7 @@ TEST(basic, opInput_uint128_t) {
   }
 }
 
-TEST(basic, opOutput_uint128) {
+TEST(base, opOutput_uint128) {
   using type = uint128_t;
 
   type v;

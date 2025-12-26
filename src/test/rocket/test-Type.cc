@@ -5,7 +5,7 @@
 #include "rocket-gtest/testing.h"
 
 #include "rocket/Type.h"
-#include "rocket/basic.h"
+#include "rocket/base.h"
 
 #include <map>
 #include <tuple>
@@ -28,6 +28,11 @@ enum Enum2 { D, E, F };
 } // namespace
 
 // `TEST` ---------------------------------------------------------------------------------------------------
+
+TEST(Type, format) {
+  EXPECT_EQ(fmt::format("{}", Type::of<int>()), "int");
+  EXPECT_EQ(fmt::format("{:?}", Type::of<int>()), "\"int\"");
+}
 
 TEST(Type, name) {
   Enum1 e1 = A;

@@ -1,7 +1,7 @@
 /**
- * @file basic.h
+ * @file base.h
  *
- * Basic types and concepts.
+ * Rocket base header. Contains basic types and concepts.
  *
  * Size in bytes of basic types on all supported target systems:
  *
@@ -34,6 +34,8 @@
  */
 
 #pragma once
+
+// No Rocket includes allowed here!
 
 #include <cmath>
 #include <cstdint>

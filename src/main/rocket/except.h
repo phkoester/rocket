@@ -134,7 +134,7 @@ private:
 template<typename C> requires Character<C>
 struct InputFailure : std::ios_base::failure, Exception {
   /// @type_base
-  using BaseType = std::ios_base::failure;
+  using Base = std::ios_base::failure;
 
   /**
    * @ctor
@@ -206,7 +206,7 @@ struct InputFailure : std::ios_base::failure, Exception {
       std::string_view msg,
       std::optional<std::source_location>&& sl = ROCKET_EXCEPT_SL,
       std::optional<std::stacktrace>&& st = ROCKET_EXCEPT_ST) :
-      BaseType(message::baseMessage(msg, sl)),
+      Base(message::baseMessage(msg, sl)),
       Exception(msg, std::move(sl), std::move(st)),
       pos_(position) {
     if (not is.fail())
@@ -232,7 +232,7 @@ private:
  */
 struct InvalidArgument : std::invalid_argument, Exception {
   /// @type_base
-  using BaseType = std::invalid_argument;
+  using Base = std::invalid_argument;
 
   /**
    * @ctor
@@ -269,7 +269,7 @@ throwInvalidArgument(
  */
 struct InvalidState : std::runtime_error, Exception {
   /// @type_base
-  using BaseType = std::runtime_error;
+  using Base = std::runtime_error;
 
   /**
    * @ctor
@@ -306,7 +306,7 @@ throwInvalidState(
 template<typename C> requires Character<C>
 struct ParseFailure : InputFailure<C> {
   /// @type_base
-  using BaseType = InputFailure<C>;
+  using Base = InputFailure<C>;
 
   /**
    * @ctor
@@ -367,7 +367,7 @@ struct ParseFailure : InputFailure<C> {
       std::string_view msg,
       std::optional<std::source_location>&& sl = ROCKET_EXCEPT_SL,
       std::optional<std::stacktrace>&& st = ROCKET_EXCEPT_ST):
-      BaseType(is, position, msg, std::move(sl), std::move(st)),
+      Base(is, position, msg, std::move(sl), std::move(st)),
       ranges_(ranges) {}
 
   /**

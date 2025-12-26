@@ -1,11 +1,11 @@
 /*
- * basic.cc
+ * base.cc
  */
 
 #include "codec-std-decl.h"
 #include "codec-std.h"
 
-#include "basic.h"
+#include "base.h"
 
 #include "io.h"
 #include "strings.h"
@@ -46,7 +46,7 @@ int128ToString(char* dest, int128_t v) {
     *uint128ToStringImpl(dest + 1, static_cast<uint128_t>(-1 - v) + 1) = '\0';
   } else
     *uint128ToStringImpl(dest, static_cast<uint128_t>(v)) = '\0';
-  
+
   return dest;
 }
 
@@ -70,7 +70,7 @@ operator>>(istream& lhs, int128_t& rhs) {
     // Read digits, remove leading zeroes
     string input = io::getWhile(lhs, DIGITS, 1);
     auto digits = strings::removeLeading<char>(input, "0");
-    
+
     // Check limits
     if (digits.size() > INT128_MAX.size()) {
       lhs.setstate(ios::failbit);
@@ -100,7 +100,7 @@ operator>>(istream& lhs, int128_t& rhs) {
       value += f * v;
       f *= 10;
     }
-    
+
     // Done
     rhs = value;
     return lhs;
@@ -127,7 +127,7 @@ operator>>(istream& lhs, uint128_t& rhs) {
     // Read digits, remove leading zeroes
     string input = io::getWhile(lhs, DIGITS, 1);
     auto digits = strings::removeLeading<char>(input, "0");
-    
+
     // Check max limit
     if (digits.size() > UINT128_MAX.size()) {
       lhs.setstate(ios::failbit);
@@ -148,7 +148,7 @@ operator>>(istream& lhs, uint128_t& rhs) {
       value += f * v;
       f *= 10;
     }
-    
+
     // Done
     rhs = value;
     return lhs;
