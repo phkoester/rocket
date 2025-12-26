@@ -32,7 +32,6 @@ struct formatter<std::optional<T>, Char, std::enable_if_t<is_formattable<T, Char
 
   constexpr const Char*
   parse(parse_context<Char>& ctx) {
-    // XXX detail::maybe_set_debug_format(underlying_, true);
     return underlying_.parse(ctx);
   }
 
@@ -76,7 +75,7 @@ struct formatter<Variant, Char, std::enable_if_t<
       }, value);
     }
     catch (const std::bad_variant_access&) {
-      detail::write<Char>(out, "<std::bad_variant_access>");
+      out = detail::write<Char>(out, "<std::bad_variant_access>");
     }
     return out;
   }

@@ -8,6 +8,8 @@
 
 #include "base.h"
 
+#include <fmt/format.h>
+
 #include <algorithm>
 #include <iostream>
 #include <optional>
@@ -418,6 +420,52 @@ inline IntervalImpl<T, Left, Right>&
 operator|=(const IntervalImpl<T, Left, Right>& lhs, const IntervalImpl<T, Left, Right>& rhs) {
   return lhs = lhs | rhs;
 }
+
+} // namespace rocket::math
+
+// `IntervalImpl` (namespace `fmt`) -------------------------------------------------------------------------
+
+template<typename T, typename Left, typename Right>
+struct fmt::formatter<rocket::math::IntervalImpl<T, Left, Right>> {
+  template<typename FormatContext>
+  constexpr auto format(const rocket::math::IntervalImpl<T, Left, Right>& v, FormatContext& ctx) const {
+    auto out = ctx.out();
+    if (v.empty()) {
+      // Use a neat mathematical symbol
+      out = detail::write<char>(out, "∅");
+    } else {
+      out = detail::write<char>(out, Left::Symbol);
+      auto opt = rocket::option(v.lower);
+      if (not opt) {
+        out = detail::write<char>(out, "-∞");
+      } else {
+        out = underlying_.format(*opt, ctx);
+      }
+      out = detail::write<char>(out, ",");
+      opt = rocket::option(v.upper);
+      if (not opt) {
+        // In interval notation, we prefer `+∞` over `∞`
+        out = detail::write<char>(out, "+∞");
+      }
+      else {
+        out = underlying_.format(*opt, ctx);
+      }
+      out = detail::write<char>(out, Right::Symbol);
+    }
+    return out;
+  }
+
+  constexpr const char*
+  parse(parse_context<char>& ctx) {
+    return underlying_.parse(ctx);
+  }
+
+  private:
+
+  fmt::formatter<T> underlying_;
+};
+
+namespace rocket::math {
 
 // Interval types -------------------------------------------------------------------------------------------
 
