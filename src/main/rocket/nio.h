@@ -101,25 +101,25 @@ protected:
 // `BufferedSink` -------------------------------------------------------------------------------------------
 
 struct BufferedSink : Sink {
-  explicit BufferedSink(Sink& sink, size_t size = DEFAULT_BUFFER_SIZE);
+  explicit BufferedSink(Sink& underlying, size_t size = DEFAULT_BUFFER_SIZE);
 
   virtual int close() override;
 
-  virtual int error() const override { return delegate_.error(); } // cppcheck-suppress uselessOverride
+  virtual int error() const override { return underlying_.error(); } // cppcheck-suppress uselessOverride
 
-  virtual int fd() const override { return delegate_.fd(); }
+  virtual int fd() const override { return underlying_.fd(); }
 
   virtual int flush() override;
 
-  virtual bool good() const override { return delegate_.good(); } // cppcheck-suppress uselessOverride
+  virtual bool good() const override { return underlying_.good(); } // cppcheck-suppress uselessOverride
 
-  virtual bool open() const override { return delegate_.open(); } // cppcheck-suppress uselessOverride
+  virtual bool open() const override { return underlying_.open(); } // cppcheck-suppress uselessOverride
 
   virtual int write(std::string_view data) override;
 
 private:
 
-  Sink& delegate_;
+  Sink& underlying_;
   const size_t size_;
   std::unique_ptr<char[]> buf_;
   size_t pos_ = 0;

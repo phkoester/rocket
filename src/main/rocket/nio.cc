@@ -24,8 +24,8 @@ Sink::writeln(std::string_view data) {
 
 // `BufferedSink` -------------------------------------------------------------------------------------------
 
-BufferedSink::BufferedSink(Sink& sink, size_t size) :
-    delegate_(sink),
+BufferedSink::BufferedSink(Sink& underlying, size_t size) :
+    underlying_(underlying),
     size_(size) {
   ROCKET_CHECK(size, size >= MIN_BUFFER_SIZE);
   buf_ = make_unique<char[]>(size);
@@ -35,19 +35,19 @@ int
 BufferedSink::close() {
   flush();
   buf_ = nullptr;
-  return delegate_.close();
+  return underlying_.close();
 }
 
 int
 BufferedSink::flush() {
   flushBuffer();
-  return delegate_.flush();
+  return underlying_.flush();
 }
 
 void
 BufferedSink::flushBuffer() {
   if (buf_ && pos_ > 0) {
-    delegate_.write(string_view(&buf_[0], pos_));
+    underlying_.write(string_view(&buf_[0], pos_));
     pos_ = 0;
   }
 }
@@ -55,7 +55,8 @@ BufferedSink::flushBuffer() {
 int
 BufferedSink::write(string_view data) {
   if (not open()) {
-    return delegate_.write(data);
+    // If the underlying sink is not open, a call to `write` must immediately fail
+    return underlying_.write(data);
   }
   ROCKET_EXPECT(buf_);
 
