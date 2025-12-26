@@ -376,8 +376,6 @@ TEST(unicode, printRon_Grapheme) {
 
 TEST(unicode, GraphemeFormat) {
   // U+01F9D1 (Adult), U+200D (ZWJ), U+01F33E (Ear of rice)
-  // u32string s = U"🧑‍🌾";
-
   EXPECT_EQ(fmt::format("{}", Grapheme("🧑‍🌾")), "🧑‍🌾");
   EXPECT_EQ(fmt::format("{:?}", Grapheme("a")), "\"a\"");
 }

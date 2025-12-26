@@ -82,19 +82,21 @@ private:
 // `Format` (namespace `fmt`) -------------------------------------------------------------------------------
 
 /// @spec_fmt_formatter{#rocket::format::Format)
-template<>
-struct fmt::formatter<rocket::format::Format> {
+template<typename Char>
+struct fmt::formatter<rocket::format::Format, Char> {
   template<typename FormatContext>
-  constexpr auto format(const rocket::format::Format& v, FormatContext& ctx) const {
+  constexpr auto
+  format(const rocket::format::Format& v, FormatContext& ctx) const -> decltype(ctx.out()) {
     const auto& params = v.get();
     auto formatted = params.formatted_;
     for (const auto& [tag, value] : params.tagged_) {
       rocket::strings::replaceIn<char>(formatted, tag, value);
     }
-    return format_to(ctx.out(), "{}", formatted);
+    return detail::write<Char>(ctx.out(), formatted);
   }
 
-  constexpr auto parse(format_parse_context& ctx) {
+  constexpr const Char*
+  parse(parse_context<Char>& ctx) {
     return ctx.begin();
   }
 };
@@ -107,7 +109,7 @@ namespace rocket::format {
  * This is essentially a copy of `fmt::native_formatter`, which gives us access to the `specs_` member, and
  * the flexibility to adapt the code.
  */
-template<typename T, typename Char = char>
+template<typename T, typename Char>
 struct NativeFormatter {
   using nonlocking = void;
   using type = fmt::detail::type;

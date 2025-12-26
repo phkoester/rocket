@@ -180,17 +180,18 @@ std::ostream& operator<<(std::ostream& lhs, CodePoint rhs);
 // `CodePoint` (namespace `fmt`) ----------------------------------------------------------------------------
 
 /// @spec_fmt_formatter{#rocket::unicode::CodePoint}
-template<>
-struct fmt::formatter<rocket::unicode::CodePoint> : rocket::format::NativeFormatter<string_view> {
-  using Base = rocket::format::NativeFormatter<string_view>;
+template<typename Char>
+struct fmt::formatter<rocket::unicode::CodePoint, Char> :
+    rocket::format::NativeFormatter<string_view, Char> {
+  using Base = rocket::format::NativeFormatter<string_view, Char>;
 
   template<typename FormatContext>
   constexpr auto
   format(const rocket::unicode::CodePoint& v, FormatContext& ctx) const -> decltype(ctx.out()) {
-    if (specs_.type() == fmt::presentation_type::debug) {
+    if (Base::specs_.type() == fmt::presentation_type::debug) {
       return fmt::format_to(ctx.out(), "U+{:0>4X}", static_cast<uint32_t>(v));
     } else {
-     return Base::format(static_cast<std::string>(v), ctx);
+      return Base::format(static_cast<std::string>(v), ctx);
     }
   }
 };
@@ -378,9 +379,9 @@ std::ostream& operator<<(std::ostream& lhs, const Grapheme& rhs);
 // `Grapheme` (namespace `fmt`) ----------------------------------------------------------------------------
 
 /// @spec_fmt_formatter{#rocket::unicode::Grapheme}
-template<>
-struct fmt::formatter<rocket::unicode::Grapheme> : rocket::format::NativeFormatter<string_view> {
-  using Base = rocket::format::NativeFormatter<string_view>;
+template<typename Char>
+struct fmt::formatter<rocket::unicode::Grapheme, Char> : rocket::format::NativeFormatter<string_view, Char> {
+  using Base = rocket::format::NativeFormatter<string_view, Char>;
 
   template<typename FormatContext>
   constexpr auto

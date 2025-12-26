@@ -425,38 +425,39 @@ operator|=(const IntervalImpl<T, Left, Right>& lhs, const IntervalImpl<T, Left, 
 
 // `IntervalImpl` (namespace `fmt`) -------------------------------------------------------------------------
 
-template<typename T, typename Left, typename Right>
-struct fmt::formatter<rocket::math::IntervalImpl<T, Left, Right>> {
+template<typename T, typename Left, typename Right, typename Char>
+struct fmt::formatter<rocket::math::IntervalImpl<T, Left, Right>, Char> {
   template<typename FormatContext>
-  constexpr auto format(const rocket::math::IntervalImpl<T, Left, Right>& v, FormatContext& ctx) const {
+  constexpr auto
+  format(const rocket::math::IntervalImpl<T, Left, Right>& v, FormatContext& ctx) const ->
+      decltype(ctx.out()) {
     auto out = ctx.out();
     if (v.empty()) {
       // Use a neat mathematical symbol
-      out = detail::write<char>(out, "∅");
+      out = detail::write<Char>(out, "∅");
     } else {
-      out = detail::write<char>(out, Left::Symbol);
+      out = detail::write<Char>(out, Left::Symbol);
       auto opt = rocket::option(v.lower);
       if (not opt) {
-        out = detail::write<char>(out, "-∞");
+        out = detail::write<Char>(out, "-∞");
       } else {
         out = underlying_.format(*opt, ctx);
       }
-      out = detail::write<char>(out, ",");
+      out = detail::write<Char>(out, ",");
       opt = rocket::option(v.upper);
       if (not opt) {
         // In interval notation, we prefer `+∞` over `∞`
-        out = detail::write<char>(out, "+∞");
-      }
-      else {
+        out = detail::write<Char>(out, "+∞");
+      } else {
         out = underlying_.format(*opt, ctx);
       }
-      out = detail::write<char>(out, Right::Symbol);
+      out = detail::write<Char>(out, Right::Symbol);
     }
     return out;
   }
 
-  constexpr const char*
-  parse(parse_context<char>& ctx) {
+  constexpr const Char*
+  parse(parse_context<Char>& ctx) {
     return underlying_.parse(ctx);
   }
 

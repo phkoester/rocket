@@ -29,6 +29,15 @@ ROCKET_ENUM_DEFINE_FMT_FORMATTER(, MyEnum, MyEnum);
 
 // `TEST` ---------------------------------------------------------------------------------------------------
 
+TEST(enum, enumFormat) {
+  EXPECT_EQ(fmt::format("{}", fröb), "fröb");
+  EXPECT_EQ(fmt::format("{}", fröber), "fröber");
+  EXPECT_EQ(fmt::format("{}", fröberer), "fröberer");
+  EXPECT_EQ(fmt::format("{}", pörk), "pörk");
+  EXPECT_EQ(fmt::format("{}", pörker), "pörker");
+  EXPECT_EQ(fmt::format("{}", pörkerer), "pörkerer");
+}
+
 TEST(enum, parse_MyEnum) {
   EXPECT_EQ(codec::ron::parse<MyEnum>("\"fröb\""), fröb);
   EXPECT_EQ(codec::ron::parse<MyEnum>("\"pörkerer\""), pörkerer);

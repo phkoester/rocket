@@ -111,11 +111,23 @@ hash_value(const Type& v) {
 // `Type` (namespace `fmt`) ---------------------------------------------------------------------------------
 
 /// @spec_fmt_formatter{#rocket::Type)
-template<>
-struct fmt::formatter<rocket::Type> : formatter<string_view> {
+template<typename Char>
+struct fmt::formatter<rocket::Type, Char> : formatter<string_view, Char> {
+  using Base = formatter<string_view, Char>;
+
   template<typename FormatContext>
-  constexpr auto format(const rocket::Type& v, FormatContext& ctx) const {
-    return formatter<string_view>::format(v.name(), ctx);
+  constexpr auto
+  format(const rocket::Type& v, FormatContext& ctx) const -> decltype(ctx.out()) {
+    return Base::format(v.name(), ctx);
+  }
+
+  constexpr const Char*
+  parse(parse_context<Char>& ctx) {
+    // Disallow '?'
+    if (std::find(ctx.begin(), ctx.end(), '?') != ctx.end()) {
+      report_error("invalid format specifier");
+    }
+    return Base::parse(ctx);
   }
 };
 

@@ -27,17 +27,17 @@
     ROCKET_ENUM_DECLARE_FN_PRINT_RON__(type) \
 
 #define ROCKET_ENUM_DECLARE_FMT_FORMATTER__(type) \
-    template<> \
-    struct fmt::formatter<type> : ::rocket::format::NativeFormatter<string_view> { \
-      using Base = ::rocket::format::NativeFormatter<string_view>; \
+    template<typename Char> \
+    struct fmt::formatter<type, Char> : ::rocket::format::NativeFormatter<string_view, Char> { \
+      using Base = ::rocket::format::NativeFormatter<string_view, Char>; \
       \
       template<typename FormatContext> \
       auto \
       format(type val, FormatContext& ctx) const -> decltype(ctx.out()); \
       \
-      constexpr const char* \
-      parse(fmt::parse_context<char>& ctx) { \
-        /* Disallow '?' for enums */ \
+      constexpr const Char* \
+      parse(parse_context<Char>& ctx) { \
+        /* Disallow '?' */ \
         if (::std::find(ctx.begin(), ctx.end(), '?') != ctx.end()) { \
           report_error("invalid format specifier"); \
         } \

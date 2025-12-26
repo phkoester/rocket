@@ -25,16 +25,17 @@ enum class Color {
   blue,
 };
 
-template<>
-struct fmt::formatter<Color> : formatter<string_view> {
+template<typename Char>
+struct fmt::formatter<Color, Char> : formatter<string_view, Char> {
   template<typename FormatContext>
-  constexpr auto format(Color v, FormatContext& ctx) const {
+  constexpr auto
+  format(Color v, FormatContext& ctx) const -> decltype(ctx.out()) {
     string_view name;
     switch (v) {
     case Color::red:   name = "red"; break;
     case Color::green: name = "green"; break;
     case Color::blue:  name = "blue"; break;
-    default: ROCKET_CHECK(v, false, "Invalid `{}`: {}", ::rocket::Type::of<Color>().name(), static_cast<int>(v));
+    default: name = "<invalid>";
     }
     return formatter<string_view>::format(name, ctx);
   }
@@ -46,15 +47,17 @@ struct Point {
   int x, y;
 };
 
-template<>
-struct fmt::formatter<Point> {
+template<typename Char>
+struct fmt::formatter<Point, Char> {
   template<typename FormatContext>
-  constexpr auto format(const Point& v, FormatContext& ctx) const {
+  constexpr auto
+  format(const Point& v, FormatContext& ctx) const -> decltype(ctx.out()) {
     string pointFormat = fmt::format("({{:{0}}}, {{:{0}}})", intFormat_);
     return format_to(ctx.out(), fmt::runtime(pointFormat), v.x, v.y);
   }
 
-  constexpr auto parse(format_parse_context& ctx) {
+  constexpr Char*
+  parse(parse_context<Char>& ctx) {
     auto end = formatter<int>().parse(ctx);
     intFormat_ = string_view(ctx.begin(), end - ctx.begin());
     return end;

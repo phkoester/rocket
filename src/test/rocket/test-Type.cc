@@ -31,7 +31,6 @@ enum Enum2 { D, E, F };
 
 TEST(Type, format) {
   EXPECT_EQ(fmt::format("{}", Type::of<int>()), "int");
-  EXPECT_EQ(fmt::format("{:?}", Type::of<int>()), "\"int\"");
   EXPECT_EQ(fmt::format("{}", Type::of<Type>()), "rocket::Type");
 }
 

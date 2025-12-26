@@ -89,13 +89,14 @@
     ROCKET_ENUM_DEFINE_PRINT_RON__(type, name) \
 
 #define ROCKET_ENUM_DEFINE_FMT_FORMATTER__(ns, type, _name) \
+    template<typename Char> \
     template<typename FormatContext> \
     auto \
-    ::fmt::formatter<ns::type>::format(ns::type v, FormatContext& ctx) const -> decltype(ctx.out()) { \
+    ::fmt::formatter<ns::type, Char>::format(ns::type v, FormatContext& ctx) const -> decltype(ctx.out()) { \
       if (auto it = ns::_name##Map__.left.find(v); it != ns::_name##Map__.left.end()) \
         return Base::format(it->second, ctx); \
       else \
-        ROCKET_CHECK(v, false, "Invalid `{}`: {}", ::rocket::Type::of<ns::type>().name(), static_cast<int>(v)); \
+        return detail::write<char>(ctx.out(), "<invalid>"); \
     } \
 
 /// @endcond
