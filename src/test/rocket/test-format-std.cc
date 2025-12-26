@@ -29,7 +29,7 @@ TEST(format_std, formatOptional) {
 TEST(format_std, formatOptionalAndVectorInTypeLoop) {
   using type = optional<vector<optional<LogLevel>>>;
   type v1 = nullopt;
-  EXPECT_EQ(fmt::format("{}", v1), "none");
+  EXPECT_EQ(fmt::format("{:}", v1), "none");
   type v2 = vector<optional<LogLevel>> { optional<LogLevel>(LogLevel::info), nullopt, optional<LogLevel>(LogLevel::error) };
   EXPECT_EQ(fmt::format("{::}", v2), "[info, none, error]");
 }

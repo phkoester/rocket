@@ -125,8 +125,8 @@ struct NativeFormatter {
     return write<Char>(ctx.out(), val, specs, ctx.locale());
   }
 
-  constexpr auto
-  parse(fmt::parse_context<Char>& ctx) -> const Char* {
+  constexpr const Char*
+  parse(fmt::parse_context<Char>& ctx) {
     using namespace fmt::detail;
 
     if (ctx.begin() == ctx.end() || *ctx.begin() == '}') {
