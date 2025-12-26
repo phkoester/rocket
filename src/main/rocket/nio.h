@@ -199,7 +199,9 @@ private:
 // `StringSink` ---------------------------------------------------------------------------------------------
 
 struct StringSink : Sink {
-  explicit StringSink(std::string& buf) : buf_(buf) {}
+  explicit StringSink() {}
+
+  explicit StringSink(std::string& ref) : ref_(&ref) {}
 
   virtual int close() override;
 
@@ -207,11 +209,14 @@ struct StringSink : Sink {
 
   virtual int flush() override;
 
+  std::string str() const;
+
   virtual int write(std::string_view data) override;
 
 private:
 
-  std::string& buf_;
+  std::string* ref_ = nullptr;
+  std::string managed_;
 };
 
 // Variables ------------------------------------------------------------------------------------------------

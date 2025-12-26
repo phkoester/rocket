@@ -39,7 +39,7 @@ onTerminate() {
   try {
     nio::stderr.println("{}: fatal error: Terminate handler called", process.name());
     if (auto ptr = current_exception())
-      except::printException(cerr, ptr);
+      except::printException(nio::stderr, ptr);
     nio::stderr.writeln("Aborting");
   } catch (...) {
     ROCKET_PROCESS_ERROR("`onTerminate` failed");

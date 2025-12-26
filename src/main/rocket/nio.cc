@@ -260,10 +260,20 @@ StringSink::flush() {
   return error_;
 }
 
+string
+StringSink::str() const {
+  ROCKET_EXPECT(not ref_);
+  return managed_;
+}
+
 int
 StringSink::write(string_view data) {
   if (open_) {
-    buf_ += data;
+    if (ref_) {
+      *ref_ += data;
+    } else {
+      managed_ += data;
+    }
   } else if (error_ == 0) {
     error_ = EBADF;
   }

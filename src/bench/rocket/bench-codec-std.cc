@@ -8,11 +8,9 @@
 #include "rocket/codec-std.h"
 
 #include "rocket/S.h"
+#include "rocket/format-std.h"
 
 #include "rocket-gtest/bench.h"
-
-#include <fmt/ranges.h>
-#include <fmt/std.h>
 
 using namespace rocket;
 using namespace std;

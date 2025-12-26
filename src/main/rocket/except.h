@@ -256,10 +256,9 @@ throwInvalidArgument(
     const char* name,
     fmt::format_string<T...> fmt,
     T&&... args) {
-  std::string msg;
-  nio::StringSink sink(msg);
-  sink.print(fmt, std::forward<T>(args)...);
-  throw InvalidArgument(name, msg, sl);
+  nio::StringSink msg;
+  msg.print(fmt, std::forward<T>(args)...);
+  throw InvalidArgument(name, msg.str(), sl);
 }
 
 // `InvalidState` -------------------------------------------------------------------------------------------
@@ -290,10 +289,9 @@ throwInvalidState(
     const std::source_location& sl,
     fmt::format_string<T...> fmt,
     T&&... args) {
-  std::string msg;
-  nio::StringSink sink(msg);
-  sink.print(fmt, std::forward<T>(args)...);
-  throw InvalidState(msg, sl);
+  nio::StringSink msg;
+  msg.print(fmt, std::forward<T>(args)...);
+  throw InvalidState(msg.str(), sl);
 }
 
 // `ParseFailure` -------------------------------------------------------------------------------------------
@@ -385,26 +383,26 @@ private:
 // Functions ------------------------------------------------------------------------------------------------
 
 /**
- * Prints detailed information about the exception @p ex to the output stream @p os.
+ * Prints detailed information about the exception @p ex to the sink @p sink.
  *
  * If there are nested exceptions, the whole exception hierarchy is processed. The output may span multiple
  * lines, the last printed character is always <code>'\\n'</code>.
  *
- * @param os the output stream to print to
+ * @param sink the sink to print to
  * @param ex the exception
  */
-void printException(std::ostream& os, const std::exception& ex);
+void printException(nio::Sink& sink, const std::exception& ex);
 
 /**
- * Prints detailed information about the exception pointer @p ex to the output stream @p os.
+ * Prints detailed information about the exception pointer @p ex to the sink @p sink.
  *
  * If there are nested exceptions, the whole exception hierarchy is processed. The output may span multiple
  * lines, the last printed character is always <code>'\\n'</code>.
  *
- * @param os the output stream to print to
+ * @param sink the sink to print to
  * @param ptr the exception pointer. May not be null
  */
-void printException(std::ostream& os, std::exception_ptr ptr);
+void printException(nio::Sink& sink, std::exception_ptr ptr);
 
 /**
  * Extracts the `what` message from an exception.

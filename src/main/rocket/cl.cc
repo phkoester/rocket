@@ -64,12 +64,11 @@ CommandLine::apply(const Option& opt, bool nameFlag, optional<string_view> value
   try {
     opt.apply(value);
   } catch (const exception& ex) {
-    string expected;
+    nio::StringSink expected;
     if (opt.format) {
-      nio::StringSink sink(expected);
-      sink.print("; expected {}", *opt.format);
+      expected.print("; expected {}", *opt.format);
     }
-    except::throwInvalidState(ROCKET_EXCEPT_SL, "Option `{}`: Invalid value {:?}{}", name(opt, nameFlag), *value, expected);
+    except::throwInvalidState(ROCKET_EXCEPT_SL, "Option `{}`: Invalid value {:?}{}", name(opt, nameFlag), *value, expected.str());
   }
 }
 

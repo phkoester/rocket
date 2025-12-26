@@ -6,7 +6,12 @@
 
 #pragma once
 
-#include <fmt/format.h>
+#include <version>
+
+#include <fmt/ranges.h>
+#define FMT_STD_NO_OPTIONAL
+#define FMT_STD_NO_VARIANT
+#include <fmt/std.h>
 
 #include <optional>
 
@@ -16,27 +21,72 @@ namespace fmt {
 
 template<typename T, typename Char>
 struct formatter<std::optional<T>, Char, std::enable_if_t<is_formattable<T, Char>::value>> {
-  FMT_CONSTEXPR auto parse(parse_context<Char>& ctx) {
-    // XXX detail::maybe_set_debug_format(underlying_, true);
-    return underlying_.parse(ctx);
-  }
-
   template <typename FormatContext>
-  auto
+  constexpr auto
   format(const std::optional<T>& v, FormatContext& ctx) const -> decltype(ctx.out()) {
     if (not v) {
-      return detail::write<Char>(ctx.out(), NONE);
+      return detail::write<Char>(ctx.out(), "none");
     }
     return underlying_.format(*v, ctx);
   }
 
-private:
+  constexpr const Char*
+  parse(parse_context<Char>& ctx) {
+    // XXX detail::maybe_set_debug_format(underlying_, true);
+    return underlying_.parse(ctx);
+  }
 
-  static constexpr basic_string_view<Char> NONE = detail::string_literal<Char, 'n', 'o', 'n', 'e'>{};
+private:
 
   formatter<std::remove_cv_t<T>, Char> underlying_;
 };
 
-}
+// `std::variant` ------------------------------------------------------------------------------------------
+
+template<typename T> struct is_variant_like {
+  static constexpr bool value = detail::is_variant_like_<T>::value;
+};
+
+template<typename Char> struct formatter<std::monostate, Char> {
+  template<typename FormatContext>
+  constexpr auto
+  format(const std::monostate&, FormatContext& ctx) const -> decltype(ctx.out()) {
+    return detail::write<Char>(ctx.out(), "monostate");
+  }
+
+  constexpr const Char*
+  parse(parse_context<Char>& ctx) {
+    return ctx.begin();
+  }
+};
+
+template <typename Variant, typename Char>
+struct formatter<Variant, Char, std::enable_if_t<
+    std::conjunction_v<
+        is_variant_like<Variant>,
+        detail::is_variant_formattable<Variant, Char>>>> {
+  template <typename FormatContext>
+  constexpr auto
+  format(const Variant& value, FormatContext& ctx) const -> decltype(ctx.out()) {
+    auto out = ctx.out();
+    try {
+      std::visit([&](const auto& v) {
+        out = format_to(out, "{}:", value.index());
+        out = detail::write_escaped_alternative<Char>(out, v, ctx);
+      }, value);
+    }
+    catch (const std::bad_variant_access&) {
+      detail::write<Char>(out, "<std::bad_variant_access>");
+    }
+    return out;
+  }
+
+  constexpr const Char*
+  parse(parse_context<Char>& ctx) {
+    return ctx.begin();
+  }
+};
+
+} // namespace fmt
 
 // EOF

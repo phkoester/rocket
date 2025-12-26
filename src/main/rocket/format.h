@@ -8,6 +8,10 @@
 
 #include "strings.h"
 
+#define FMT_STD_NO_OPTIONAL
+
+#include <fmt/ranges.h>
+
 #include <fmt/format.h>
 
 #include <functional>

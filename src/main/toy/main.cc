@@ -9,10 +9,8 @@
 
 #include "rocket/Process.h"
 #include "rocket/cl.h"
+#include "rocket/format-std.h"
 #include "rocket/log.h"
-
-#include <fmt/ranges.h>
-#include <fmt/std.h>
 
 using namespace rocket;
 using namespace std;

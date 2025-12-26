@@ -21,13 +21,12 @@
  * Usage: `ROCKET_PROCESS_ERROR(fmt, [args]...])`
  */
 #define ROCKET_PROCESS_ERROR(fmt, ...) { \
-  ::std::string msg; \
-  ::rocket::nio::StringSink sink(msg); \
-  sink.print("{}:{}: ", __FILE__, __LINE__); \
-  sink.print( \
+  ::rocket::nio::StringSink msg; \
+  msg.print("{}:{}: ", __FILE__, __LINE__); \
+  msg.print( \
       fmt \
       ROCKET_COMMA_IF_VA_ARGS(__VA_ARGS__)); \
-  ::rocket::process.error(::rocket::nio::stderr, EXIT_SUCCESS, "{}", msg); \
+  ::rocket::process.error(::rocket::nio::stderr, EXIT_SUCCESS, "{}", msg.str()); \
 }
 
 namespace rocket {

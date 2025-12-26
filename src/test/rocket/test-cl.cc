@@ -165,9 +165,8 @@ parseCommand(const vector<string>& args, nio::Sink& out = nio::stdout, nio::Sink
 
 TEST(cl, parseNoOpts) {
   CommandLine cl;
-  string buf;
-  nio::StringSink sink(buf);
-  auto args = parse(cl, { "a", "b", "c" }, sink);
+  nio::StringSink buf;
+  auto args = parse(cl, { "a", "b", "c" }, buf);
   EXPECT_EQ(args, (vector<string> { "a", "b", "c" }));
 }
 
@@ -229,12 +228,11 @@ TEST(cl, parseOpt_bool) {
   // Test error when assigning other value
   {
     flag = false;
-    string buf;
-    nio::StringSink sink(buf);
-    auto args = parse(cl, { "a", "-€=hello", "b", "c" }, sink);
+    nio::StringSink buf;
+    auto args = parse(cl, { "a", "-€=hello", "b", "c" }, buf);
     EXPECT_EQ(args, vector<string>());
     EXPECT_FALSE(flag);
-    EXPECT_EQ(buf, "test-rocket-cl: error: Option `-€` cannot take a value\n");
+    EXPECT_EQ(buf.str(), "test-rocket-cl: error: Option `-€` cannot take a value\n");
   }
 }
 
@@ -264,23 +262,21 @@ TEST(cl, parseOpt_int) {
   // Test error when missing value
   {
     num = 0;
-    string buf;
-    nio::StringSink sink(buf);
-    auto args = parse(cl, { "a", "-n" }, sink);
+    nio::StringSink buf;
+    auto args = parse(cl, { "a", "-n" }, buf);
     EXPECT_EQ(args, vector<string>());
     EXPECT_EQ(num, 0);
-    EXPECT_EQ(buf, "test-rocket-cl: error: Missing value for option `-n`\n");
+    EXPECT_EQ(buf.str(), "test-rocket-cl: error: Missing value for option `-n`\n");
   }
 
   // Test error when conversion fails
   {
     num = 0;
-    string buf;
-    nio::StringSink sink(buf);
-    auto args = parse(cl, { "a", "-n", "hello" }, sink);
+    nio::StringSink buf;
+    auto args = parse(cl, { "a", "-n", "hello" }, buf);
     EXPECT_EQ(args, vector<string>());
     EXPECT_EQ(num, 0);
-    EXPECT_EQ(buf, "test-rocket-cl: error: Option `-n`: Invalid value \"hello\"; expected NUM\n");
+    EXPECT_EQ(buf.str(), "test-rocket-cl: error: Option `-n`: Invalid value \"hello\"; expected NUM\n");
   }
 }
 
@@ -302,12 +298,11 @@ TEST(cl, parseOpt_enum) {
   // Test error when conversion fails
   {
     level = log::LogLevel::none;
-    string buf;
-    nio::StringSink sink(buf);
-    auto args = parse(cl, { "a", "-l", "nonsense" }, sink);
+    nio::StringSink buf;
+    auto args = parse(cl, { "a", "-l", "nonsense" }, buf);
     EXPECT_EQ(args, vector<string>());
     EXPECT_EQ(level, log::LogLevel::none);
-    EXPECT_EQ(buf, "test-rocket-cl: error: Option `-l`: Invalid value \"nonsense\"; expected LEVEL\n");
+    EXPECT_EQ(buf.str(), "test-rocket-cl: error: Option `-l`: Invalid value \"nonsense\"; expected LEVEL\n");
   }
 }
 
@@ -370,11 +365,10 @@ TEST(cl, parseShortOptions) {
 TEST(cl, parseCommand) {
   // Test invalid option
   {
-    string buf;
-    nio::StringSink sink(buf);
-    parseCommand({ "-p", "list", "a" }, sink, sink);
+    nio::StringSink buf;
+    parseCommand({ "-p", "list", "a" }, buf, buf);
     EXPECT_EQ(
-        buf,
+        buf.str(),
         "test-rocket-cl: error: Unknown option `-p`\n"
         "Usage: test-rocket-cl [OPTION]... list [OPTION]... FILE...\n"
         "  or   test-rocket-cl [OPTION]... show [OPTION]... [ARG]...\n"
@@ -383,11 +377,10 @@ TEST(cl, parseCommand) {
 
   // Test invalid command
   {
-    string buf;
-    nio::StringSink sink(buf);
-    parseCommand({ "-o", "walk", "dog" }, sink, sink);
+    nio::StringSink buf;
+    parseCommand({ "-o", "walk", "dog" }, buf, buf);
     EXPECT_EQ(
-        buf,
+        buf.str(),
         "test-rocket-cl: error: Invalid command `walk`\n"
         "Usage: test-rocket-cl [OPTION]... list [OPTION]... FILE...\n"
         "  or   test-rocket-cl [OPTION]... show [OPTION]... [ARG]...\n"
@@ -396,11 +389,10 @@ TEST(cl, parseCommand) {
 
   // Test help
   {
-    string buf;
-    nio::StringSink sink(buf);
-    parseCommand({ "--help" }, sink, sink);
+    nio::StringSink buf;
+    parseCommand({ "--help" }, buf, buf);
     EXPECT_EQ(
-        buf,
+        buf.str(),
         "Usage: test-rocket-cl [OPTION]... list [OPTION]... FILE...\n"
         "  or   test-rocket-cl [OPTION]... show [OPTION]... [ARG]...\n"
         "\n"
@@ -436,11 +428,10 @@ TEST(cl, parseCommand) {
 
   // Test list help
   {
-    string buf;
-    nio::StringSink sink(buf);
-    parseCommand({ "list", "--help" }, sink, sink);
+    nio::StringSink buf;
+    parseCommand({ "list", "--help" }, buf, buf);
     EXPECT_EQ(
-      buf,
+      buf.str(),
       "Usage: test-rocket-cl list [OPTION]... FILE...\n"
       "\n"
       "List control:\n"
@@ -453,11 +444,10 @@ TEST(cl, parseCommand) {
 
   // Test invalid list option
   {
-    string buf;
-    nio::StringSink sink(buf);
-    parseCommand({ "list", "-Q" }, sink, sink);
+    nio::StringSink buf;
+    parseCommand({ "list", "-Q" }, buf, buf);
     EXPECT_EQ(
-        buf,
+        buf.str(),
         "test-rocket-cl: error: Unknown option `-Q`\n"
         "Usage: test-rocket-cl list [OPTION]... FILE...\n"
         "Try `test-rocket-cl list --help` for more information.\n");
@@ -465,33 +455,30 @@ TEST(cl, parseCommand) {
 
   // Test missing FILE
   {
-    string buf;
-    nio::StringSink sink(buf);
-    parseCommand({ "list", "-l" }, sink, sink);
+    nio::StringSink buf;
+    parseCommand({ "list", "-l" }, buf, buf);
     EXPECT_EQ(
-        buf,
+        buf.str(),
         "Usage: test-rocket-cl list [OPTION]... FILE...\n"
         "Try `test-rocket-cl list --help` for more information.\n");
   }
 
   // Test successful list command
   {
-    string buf;
-    nio::StringSink sink(buf);
-    parseCommand({ "list", "-l", "a", "b" }, sink, sink);
+    nio::StringSink buf;
+    parseCommand({ "list", "-l", "a", "b" }, buf, buf);
     EXPECT_EQ(parseCommandCommand, "list");
     EXPECT_TRUE(parseCommandList);
     EXPECT_EQ(parseCommandArgs, (vector<string> { "a", "b" }));
-    EXPECT_EQ(buf, "Listing ...\n");
+    EXPECT_EQ(buf.str(), "Listing ...\n");
   }
 
   // Test show help
   {
-    string buf;
-    nio::StringSink sink(buf);
-    parseCommand({ "show", "--help" }, sink, sink);
+    nio::StringSink buf;
+    parseCommand({ "show", "--help" }, buf, buf);
     EXPECT_EQ(
-      buf,
+      buf.str(),
       "Usage: test-rocket-cl show [OPTION]... [ARG]...\n"
       "\n"
       "Show control:\n"
@@ -506,11 +493,10 @@ TEST(cl, parseCommand) {
 
   // Test invalid show option
   {
-    string buf;
-    nio::StringSink sink(buf);
-    parseCommand({ "show", "-Q" }, sink, sink);
+    nio::StringSink buf;
+    parseCommand({ "show", "-Q" }, buf, buf);
     EXPECT_EQ(
-        buf,
+        buf.str(),
         "test-rocket-cl: error: Unknown option `-Q`\n"
         "Usage: test-rocket-cl show [OPTION]... [ARG]...\n"
         "Try `test-rocket-cl show --help` for more information.\n");
@@ -518,14 +504,13 @@ TEST(cl, parseCommand) {
 
   // Test successful show command
   {
-    string buf;
-    nio::StringSink sink(buf);
-    parseCommand({ "show", "a", "-st", "b" }, sink, sink);
+    nio::StringSink buf;
+    parseCommand({ "show", "a", "-st", "b" }, buf, buf);
     EXPECT_EQ(parseCommandCommand, "show");
     EXPECT_TRUE(parseCommandShow);
     EXPECT_TRUE(parseCommandShowTest);
     EXPECT_EQ(parseCommandArgs, (vector<string> { "a", "b" }));
-    EXPECT_EQ(buf, "Showing ...\n");
+    EXPECT_EQ(buf.str(), "Showing ...\n");
   }
 }
 

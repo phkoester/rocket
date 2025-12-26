@@ -25,9 +25,8 @@ TEST(format, Format) {
   for (int i = 0; i < 100; ++i) {
     auto n = dist(rng);
 
-    string buf;
-    nio::StringSink sink(buf);
-    sink.print("n is {}.{}", n, Format([&] {
+    nio::StringSink buf;
+    buf.print("n is {}.{}", n, Format([&] {
       if (n == 11) {
         return Format::params();
       } if (n < 6) {
@@ -38,11 +37,11 @@ TEST(format, Format) {
     }));
 
     if (n == 11) {
-      EXPECT_EQ(buf, "n is 11.");
+      EXPECT_EQ(buf.str(), "n is 11.");
     } else if (n < 6) {
-      EXPECT_THAT(buf, matchesRegex("n is \\d+\\. This means it is less than 6\\."));
+      EXPECT_THAT(buf.str(), matchesRegex("n is \\d+\\. This means it is less than 6\\."));
     } else {
-      EXPECT_THAT(buf, matchesRegex("n is \\d+\\. This means it is greater than 5\\."));
+      EXPECT_THAT(buf.str(), matchesRegex("n is \\d+\\. This means it is greater than 5\\."));
     }
   }
 }
@@ -55,9 +54,8 @@ TEST(format, FormatWithTagged) {
   for (int i = 0; i < 10; ++i) {
     auto n = dist(rng);
 
-    string buf;
-    nio::StringSink sink(buf);
-    sink.print("{}:{}{}", __FILE__, __LINE__, Format([&] {
+    nio::StringSink buf;
+    buf.print("{}:{}{}", __FILE__, __LINE__, Format([&] {
       if (n == 1) {
         auto params = Format::params(": First case: The {0} is `@@`{1} Again, the {0} is `@@`{1} But here comes another one: `⊕`{1}", "command line", ".");
         params.tag("@@", "grep {} {} {}", "-i", "foo", "bar");
@@ -71,9 +69,9 @@ TEST(format, FormatWithTagged) {
     }));
 
     if (n == 1) {
-      EXPECT_THAT(buf, matchesRegex(".*:\\d+: First case: The command line is `grep -i foo bar`\\. Again, the command line is `grep -i foo bar`\\. But here comes another one: `ls -l`\\."));
+      EXPECT_THAT(buf.str(), matchesRegex(".*:\\d+: First case: The command line is `grep -i foo bar`\\. Again, the command line is `grep -i foo bar`\\. But here comes another one: `ls -l`\\."));
     } else {
-      EXPECT_THAT(buf, matchesRegex(".*:\\d+: Second case: This sentence doesn't mean much\\."));
+      EXPECT_THAT(buf.str(), matchesRegex(".*:\\d+: Second case: This sentence doesn't mean much\\."));
     }
   }
 }

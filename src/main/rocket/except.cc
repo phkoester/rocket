@@ -21,7 +21,7 @@ namespace {
 // Local functions ------------------------------------------------------------------------------------------
 
 void printThrown(
-    ostream&, size_t, const optional<Type>&, const optional<string>&, const optional<stacktrace>&);
+  nio::Sink&, size_t, const optional<Type>&, const optional<string>&, const optional<stacktrace>&);
 
 string
 getWhat(int v) {
@@ -63,60 +63,66 @@ getWhat(const exception& v) {
 }
 
 void
-printExceptionPtr(ostream& os, size_t level, const exception_ptr& ptr) {
+printExceptionPtr(nio::Sink& sink, size_t level, const exception_ptr& ptr) {
   try {
     rethrow_exception(ptr);
   } catch (const exception& ex) {
     const Exception* p = dynamic_cast<const Exception*>(&ex);
-    printThrown(os, level, Type::of(ex), getWhat(ex), p ? p->stackTrace() : nullopt);
+    printThrown(sink, level, Type::of(ex), getWhat(ex), p ? p->stackTrace() : nullopt);
     try {
       rethrow_if_nested(ex);
     } catch (...) {
-      printExceptionPtr(os, level + 1, current_exception());
+      printExceptionPtr(sink, level + 1, current_exception());
     }
   } catch (int v) {
-    printThrown(os, level, Type::of(v), getWhat(v), nullopt);
+    printThrown(sink, level, Type::of(v), getWhat(v), nullopt);
   } catch (long v) {
-    printThrown(os, level, Type::of(v), getWhat(v), nullopt);
+    printThrown(sink, level, Type::of(v), getWhat(v), nullopt);
   } catch (const char* v) {
-    printThrown(os, level, Type::of(v), getWhat(v), nullopt);
+    printThrown(sink, level, Type::of(v), getWhat(v), nullopt);
   } catch (const string& v) {
-    printThrown(os, level, Type::of(v), getWhat(v), nullopt);
+    printThrown(sink, level, Type::of(v), getWhat(v), nullopt);
   } catch (string_view v) { // cppcheck-suppress catchExceptionByValue
-    printThrown(os, level, Type::of(v), getWhat(v), nullopt);
+    printThrown(sink, level, Type::of(v), getWhat(v), nullopt);
   } catch (...) {
     const type_info* info = current_exception().__cxa_exception_type();
     if (info)
-      printThrown(os, level, Type(*info), nullopt, nullopt);
+      printThrown(sink, level, Type(*info), nullopt, nullopt);
     else
-      printThrown(os, level, nullopt, nullopt, nullopt);
+      printThrown(sink, level, nullopt, nullopt, nullopt);
   }
 }
 
 void
 printThrown(
-    ostream& os,
+    nio::Sink& sink,
     size_t level,
     const optional<Type>& type,
     const optional<string>& what,
     const optional<stacktrace>& st) {
-  ostringstream instanceOf;
-  if (type)
-    instanceOf << "instance of " << (S << *type);
-  else
-    instanceOf << "instance of an unknown type";
+  nio::StringSink instanceOf;
+  if (type) {
+    instanceOf.print("instance of `{}`", *type);
+  } else {
+    instanceOf.write("instance of an unknown type");
+  }
 
-  ostringstream msg;
-  if (level == 0)
-    msg << "An " << instanceOf.str() << " was thrown";
-  else
-    msg << "Caused by an " << instanceOf.str();
-  if (what)
-    msg << ": " << *what;
-  os << msg.str() << '\n';
+  nio::StringSink msg;
+  if (level == 0) {
+    msg.print("An {} was thrown", instanceOf.str());
+  } else {
+    msg.print("Caused by an {}", instanceOf.str());
+  }
+  if (what) {
+    msg.print(": {}", *what);
+  }
+  sink.writeln(msg.str());
 
-  if (st)
+  if (st) {
+    ostringstream os;
     os << *st; // This prints a '\n' at the end
+    sink.write(os.str());
+  }
 }
 
 void
@@ -200,21 +206,21 @@ InvalidState::InvalidState(
 // Functions ------------------------------------------------------------------------------------------------
 
 void
-printException(ostream& os, const exception& ex) {
+printException(nio::Sink& sink, const exception& ex) {
   const Exception* p = dynamic_cast<const Exception*>(&ex);
-  printThrown(os, 0, Type::of(ex), getWhat(ex), p ? p->stackTrace() : nullopt);
+  printThrown(sink, 0, Type::of(ex), getWhat(ex), p ? p->stackTrace() : nullopt);
 
   try {
      rethrow_if_nested(ex);
   } catch (...) {
-    printExceptionPtr(os, 1, current_exception());
+    printExceptionPtr(sink, 1, current_exception());
   }
 }
 
 void
-printException(ostream& os, exception_ptr ptr) {
+printException(nio::Sink& sink, exception_ptr ptr) {
   ROCKET_CHECK(ptr, static_cast<bool>(ptr));
-  printExceptionPtr(os, 0, ptr);
+  printExceptionPtr(sink, 0, ptr);
 }
 
 string

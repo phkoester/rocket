@@ -8,6 +8,7 @@
 
 #include <fmt/format.h>
 
+#include <algorithm>
 #include <iosfwd>
 
 // Macros ---------------------------------------------------------------------------------------------------
@@ -36,6 +37,10 @@
       \
       constexpr const char* \
       parse(fmt::parse_context<char>& ctx) { \
+        /* Disallow '?' for enums */ \
+        if (::std::find(ctx.begin(), ctx.end(), '?') != ctx.end()) { \
+          report_error("invalid format specifier"); \
+        } \
         return Base::parse(ctx); \
       } \
     };

@@ -280,11 +280,10 @@ logDefine(LogLevel* logId, string_view id) {
 
 void
 logBegin(LogLevel* logId, const char* func) {
-  string buf;
-  nio::StringSink sink(buf);
+  nio::StringSink buf;
   // Begin log entry will be flushed later if necessary
-  logImpl(sink, logId, LogLevel::none, stack.size(), S << func << " {");
-  stack.emplace_back(logId, func, std::move(buf));
+  logImpl(buf, logId, LogLevel::none, stack.size(), S << func << " {");
+  stack.emplace_back(logId, func, buf.str());
 }
 
 void
@@ -312,9 +311,9 @@ log(LogLevel level, const exception& ex) {
 
   auto& out = ::out.get();
   logFlush(out);
-  ostringstream os;
-  except::printException(os, ex);
-  auto s = os.str();
+  nio::StringSink sink;
+  except::printException(sink, ex);
+  string s = sink.str();
   string_view msg(s.begin(), s.end() - 1); // Strip '\n'
   logImpl(out, stack.back().logId_, level, stack.size(), msg);
 }
@@ -325,9 +324,9 @@ log(LogLevel level, exception_ptr ptr) {
 
   auto& out = ::out.get();
   logFlush(out);
-  ostringstream os;
-  except::printException(os, ptr);
-  auto s = os.str();
+  nio::StringSink sink;
+  except::printException(sink, ptr);
+  string s = sink.str();
   string_view msg(s.begin(), s.end() - 1); // Strip '\n'
   logImpl(out, stack.back().logId_, level, stack.size(), msg);
 }

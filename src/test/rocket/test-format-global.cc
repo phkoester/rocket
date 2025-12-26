@@ -89,6 +89,7 @@ TEST(format_global, formatDouble) {
   static_assert(sizeof(double) == 8);
   EXPECT_EQ(fmt::format("{:.5}", 0.999'999), "1");
   EXPECT_EQ(fmt::format("{:.5}", 0.999'99), "0.99999");
+  EXPECT_EQ(fmt::format("{:.3f}", 12.1236), "12.124"); // Round to 3 significant digits after the decimal point
   static_assert(is_same_v<decltype(1.0 / 3), double> == true);
   EXPECT_EQ(fmt::format("{:.5}", 1.0 / 3), "0.33333");
 }
@@ -97,6 +98,7 @@ TEST(format_global, formatLongDouble) {
   static_assert(sizeof(long double) == 16);
   EXPECT_EQ(fmt::format("{:.5}", 0.999'999L), "1");
   EXPECT_EQ(fmt::format("{:.5}", 0.999'99L), "0.99999");
+  EXPECT_EQ(fmt::format("{:.3f}", 12.1236L), "12.124"); // Round to 3 significant digits after the decimal point
   static_assert(is_same_v<decltype(1.0L / 3), long double> == true);
   EXPECT_EQ(fmt::format("{:.5}", 1.0L / 3), "0.33333");
 }
