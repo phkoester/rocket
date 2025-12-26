@@ -33,47 +33,49 @@ BufferedSink::BufferedSink(Sink& sink, size_t size) :
 
 int
 BufferedSink::close() {
-  int ret = sink_.close();
+  flush();
   buf_ = nullptr;
-  pos_ = 0;
-  return ret;
+  return sink_.close();
 }
 
 int
 BufferedSink::flush() {
-  if (buf_ && pos_ > 0) {
-    flushBuffer();
-  }
+  flushBuffer();
   return sink_.flush();
 }
 
 void
 BufferedSink::flushBuffer() {
-  sink_.write(string_view(&buf_[0], pos_));
-  pos_ = 0;
+  if (buf_ && pos_ > 0) {
+    sink_.write(string_view(&buf_[0], pos_));
+    pos_ = 0;
+  }
 }
 
 int
 BufferedSink::write(string_view data) {
-  if (not good()) {
+  if (not open()) {
     return sink_.write(data);
   }
-  ROCKET_ASSERT(buf_);
 
+  // Loop while there is data to write
   auto rest = data;
   while (not rest.empty()) {
     size_t free = size_ - pos_;
     if (rest.size() <= free) {
+      // Store the rest in the buffer, exit loop
       memcpy(&buf_[pos_], rest.data(), rest.size());
       pos_ += rest.size();
       break;
     }
+    // Fill and flush the buffer, continue in loop
     memcpy(&buf_[pos_], rest.data(), free);
     pos_ += free;
     rest = rest.substr(free);
     flushBuffer();
   }
-  return 0;
+
+  return error();
 }
 
 // `FileSink` -----------------------------------------------------------------------------------------------
@@ -82,13 +84,15 @@ FileSink::FileSink(FILE* file, const Params& params) :
     file_(file),
     params_(params) {
   ROCKET_CHECK(file, file != nullptr);
+  if (int fd = this->fd(); fd == STDOUT_FILENO || fd == STDERR_FILENO)
+    params_.closeOnDestroy = false;
 }
 
 FileSink::FileSink(const string& path, const Params& params) :
     file_(nullptr),
     params_(params) {
-  string modes = params.append ? "ab" : "wb"; // `b` is for non-Linux only
-  file_ = std::fopen(path.c_str(), modes.c_str());
+  const char* modes = params.append ? "ab" : "wb"; // `b` is for non-Linux only
+  file_ = std::fopen(path.c_str(), modes);
 
   if (file_ == nullptr) {
     error_ = errno;
@@ -109,20 +113,20 @@ int
 FileSink::close()
 {
   if (open_) {
+    flush();
     open_ = false;
     if (int result = std::fclose(file_); result != 0) {
       error_ = result;
-      if (error_ == 0) {
-        error_ = errno;
-      }
-      if (error_ == 0) {
-        error_ = EIO;
-      }
     }
   } else if (error_ == 0) {
     error_ = EBADF;
   }
   return error_;
+}
+
+int
+FileSink::fd() const {
+  return file_ ? fileno(file_) : -1;
 }
 
 int
@@ -186,9 +190,9 @@ NullSink::write(string_view data) {
 int
 StreamSink::close() {
   if (open_) {
+    flush();
     open_ = false;
-    os_.flush();
-    if (not os_) {
+    if (os_.fail()) {
       error_ = EIO;
     }
   } else if (error_ == 0) {
@@ -198,10 +202,21 @@ StreamSink::close() {
 }
 
 int
+StreamSink::fd() const {
+  if (&os_ == &cout) {
+    return STDOUT_FILENO;
+  } else if (&os_ == &cerr) {
+    return STDERR_FILENO;
+  } else {
+    return -1;
+  }
+}
+
+int
 StreamSink::flush() {
   if (open_) {
     os_.flush();
-    if (not os_) {
+    if (os_.fail()) {
       error_ = EIO;
     }
   } else if (error_ == 0) {
@@ -214,7 +229,7 @@ int
 StreamSink::write(string_view data) {
   if (open_) {
     os_.write(data.data(), data.size());
-    if (not os_) {
+    if (os_.fail()) {
       error_ = EIO;
     }
   } else if (error_ == 0) {
@@ -257,33 +272,13 @@ StringSink::write(string_view data) {
 
 namespace {
 
-FileSink fileSinkStdout = FileSink(::stdout, FileSink::Params { .closeOnDestroy=false });
-FileSink fileSinkStderr = FileSink(::stderr, FileSink::Params { .closeOnDestroy=false });
+FileSink fileSinkStdout = FileSink(::stdout);
+FileSink fileSinkStderr = FileSink(::stderr);
 
 } // namespace
 
 Sink& stdout = fileSinkStdout;
 Sink& stderr = fileSinkStderr;
-
-// Functions ------------------------------------------------------------------------------------------------
-
-int
-fd(const nio::Sink& sink) {
-  const auto* fileSink = dynamic_cast<const nio::FileSink*>(&sink);
-  if (fileSink) {
-    if (fileSink->stdout()) {
-      return STDOUT_FILENO;
-    } else if (fileSink->stderr()) {
-      return STDERR_FILENO;
-    }
-  }
-  return -1;
-}
-
-bool
-isatty(const nio::Sink& sink) {
-  return ::isatty(fd(sink));
-}
 
 } // namespace rocket::nio
 

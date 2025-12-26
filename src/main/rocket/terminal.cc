@@ -72,8 +72,9 @@ Ansi::move(int column, int line) const {
 
 string
 Ansi::request(nio::Sink& sink, string_view sequence) const {
+  // XXX
   nio::FileSink* fileSink = dynamic_cast<nio::FileSink*>(&sink);
-  ROCKET_CHECK(sink, fileSink && (fileSink->stdout() || fileSink->stderr()));
+  ROCKET_CHECK(sink, fileSink && (fileSink->fd() == STDOUT_FILENO || fileSink->fd() == STDERR_FILENO));
 
   if (not active_)
     return string();
@@ -133,7 +134,7 @@ Ansi::up(int n) const {
 
 optional<pair<size_t, size_t>>
 position(nio::Sink& sink) {
-  if (not nio::isatty(sink)) {
+  if (not isatty(sink.fd())) {
     return nullopt;
   }
 
@@ -155,8 +156,8 @@ position(nio::Sink& sink) {
 
 optional<pair<size_t, size_t>>
 size(const nio::Sink& sink) {
-  int fd = nio::fd(sink);
-  if (fd == -1) {
+  int fd = sink.fd();
+  if (not isatty(fd)) {
     return nullopt;
   }
 

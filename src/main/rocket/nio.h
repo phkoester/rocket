@@ -120,6 +120,13 @@ struct Sink {
 
   virtual int error() const { return error_; }
 
+  /**
+   * Returns the file descriptor.
+   *
+   * @return the file descriptor of the sink, or -1 if the sink is not connected to a file
+   */
+  virtual int fd() const = 0;
+
   virtual int flush() = 0;
 
   virtual bool good() const { return open_ && error_ == 0; }
@@ -183,6 +190,8 @@ struct BufferedSink : Sink {
 
   virtual int error() const override { return sink_.error(); }
 
+  virtual int fd() const override { return sink_.fd(); }
+
   virtual int flush() override;
 
   virtual bool good() const override { return sink_.good(); }
@@ -206,22 +215,25 @@ private:
 struct FileSink : Sink {
   struct Params {
     bool append = false;
+    /**
+     * Whether to close the file on destruction.
+     *
+     * The default is `true`. For `stdout` and `stderr`, this is automatically configured to be `false`.
+     */
     bool closeOnDestroy = true;
   };
 
-  FileSink(FILE* file, const Params& params);
+  FileSink(FILE* file, const Params& params = { .append=false, .closeOnDestroy=true });
 
-  FileSink(const std::string& path, const Params& params);
+  FileSink(const std::string& path, const Params& params = { .append=false, .closeOnDestroy=true });
 
   virtual ~FileSink() override;
 
   virtual int close() override;
 
+  virtual int fd() const override;
+
   virtual int flush() override;
-
-  bool stderr() const { return file_ == ::stderr; }
-
-  bool stdout() const { return file_ == ::stdout; }
 
   virtual int write(std::string_view data) override;
 
@@ -236,6 +248,8 @@ ROCKET_PRIVATE:
 struct NullSink : Sink {
   virtual int close() override;
 
+  virtual int fd() const override { return -1; }
+
   virtual int flush() override;
 
   virtual int write(std::string_view data) override;
@@ -243,10 +257,19 @@ struct NullSink : Sink {
 
 // `StreamSink` ---------------------------------------------------------------------------------------------
 
+/**
+ * Use `StreamSink` for I/O streams operability,
+ *
+ * Using I/O streams is generally discouraged, because it's not portable and not efficient. Wherever
+ * possible, use `FileSink` instead.
+ *
+ */
 struct StreamSink : Sink {
   StreamSink(std::ostream& os) : os_(os) {}
 
   virtual int close() override;
+
+  virtual int fd() const override;
 
   virtual int flush() override;
 
@@ -264,6 +287,8 @@ struct StringSink : Sink {
 
   virtual int close() override;
 
+  virtual int fd() const override { return -1; }
+
   virtual int flush() override;
 
   virtual int write(std::string_view data) override;
@@ -277,24 +302,6 @@ private:
 
 extern Sink& stdout;
 extern Sink& stderr;
-
-// Functions ------------------------------------------------------------------------------------------------
-
-/**
- * Returns a file descriptor for a #rocket::nio::Sink.
- *
- * @param sink the sink
- * @return `STDOUT_FILENO`, `STDERR_FILENO`, or -1 if a file descriptor cannot be determined
- */
-int fd(const nio::Sink& sink);
-
-/**
- * Returns `true` if the sink @p sink is connected to a terminal.
- *
- * @param sink the sink
- * @return `true` if @p sink is connected to a terminal
- */
-bool isatty(const nio::Sink& sink);
 
 } // namespace rocket::nio
 

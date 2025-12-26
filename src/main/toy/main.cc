@@ -75,6 +75,10 @@ void
 toy() {
   ROCKET_LOG(toy);
 
+  nio::FileSink sink("tmp");
+  sink.println("hi");
+  nio::stdout.println("fd={}", sink.fd());
+
   ROCKET_LOG_INFO("hi");
 }
 
