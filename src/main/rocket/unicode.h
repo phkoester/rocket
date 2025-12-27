@@ -156,18 +156,6 @@ hash_value(CodePoint v) {
 std::istream& operator>>(std::istream& lhs, CodePoint& rhs);
 
 /**
- * UTF-32 input operator for #rocket::unicode::CodePoint.
- *
- * This operator reads a code point from a UTF-32 stream. If the reading fails, the fail bit of the input
- * stream @p is is set, and @p rhs is not assigned any value.
- *
- * @param lhs the input stream
- * @param rhs a code point
- * @return @p lhs
- */
-std::u32istream& operator>>(std::u32istream& lhs, CodePoint& rhs);
-
-/**
  * Output operator for #rocket::unicode::CodePoint.
  *
  * This operator writes a code point to a UTF-8 stream.
@@ -394,18 +382,6 @@ struct Grapheme {
  * @return @p lhs
  */
 std::istream& operator>>(std::istream& lhs, Grapheme& rhs);
-
-/**
- * UTF-32 input operator for #rocket::unicode::Grapheme.
- *
- * This operator reads a grapheme from a UTF-32 stream. If the reading fails, the fail bit of the input
- * stream @p is is set, and @p rhs is not assigned any value.
- *
- * @param lhs the input stream
- * @param rhs a grapheme
- * @return @p lhs
- */
-std::u32istream& operator>>(std::u32istream& lhs, Grapheme& rhs);
 
 /**
  * Output operator for #rocket::unicode::Grapheme.

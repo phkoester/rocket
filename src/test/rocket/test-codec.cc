@@ -27,7 +27,7 @@ TEST(codec, getBool) {
     auto is = io::is();
     EXPECT_THAT(
         [&] { getBool(io::resetg(is)); },
-        throwsParseFailure<char>(0, { 0, 0 }, HasSubstr("\"\" does not match any of {\"0\", \"1\", \"false\", \"true\"}, got EOF")));
+        throwsParseFailure(0, { 0, 0 }, HasSubstr("\"\" does not match any of {\"0\", \"1\", \"false\", \"true\"}, got EOF")));
     EXPECT_ISTREAM(is, true, true, 0);
   }
 
@@ -41,7 +41,7 @@ TEST(codec, getBool) {
     auto is = io::is("tru");
     EXPECT_THAT(
         [&] { getBool(io::resetg(is)); },
-        throwsParseFailure<char>(3, { 0, 3 }, HasSubstr("\"tru\" does not match any of {\"0\", \"1\", \"false\", \"true\"}, got EOF")));
+        throwsParseFailure(3, { 0, 3 }, HasSubstr("\"tru\" does not match any of {\"0\", \"1\", \"false\", \"true\"}, got EOF")));
     EXPECT_ISTREAM(is, true, true, 3);
   }
 
@@ -71,7 +71,7 @@ TEST(codec, getInteger_int) {
     auto is = io::is();
     EXPECT_THAT(
         [&] { getInteger<type>(io::resetg(is)); },
-        throwsParseFailure<char>(0, { 0, 1 }, HasSubstr("Expected at least 1 character contained in {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9'}, got 0 and EOF")));
+        throwsParseFailure(0, { 0, 1 }, HasSubstr("Expected at least 1 character contained in {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9'}, got 0 and EOF")));
     EXPECT_ISTREAM(is, true, true, 0);
   }
 
@@ -79,7 +79,7 @@ TEST(codec, getInteger_int) {
     auto is = io::is("-");
     EXPECT_THAT(
         [&] { getInteger<type>(io::resetg(is)); },
-        throwsParseFailure<char>(1, { 1, 2 }, HasSubstr("Expected at least 1 character contained in {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9'}, got 0 and EOF")));
+        throwsParseFailure(1, { 1, 2 }, HasSubstr("Expected at least 1 character contained in {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9'}, got 0 and EOF")));
     EXPECT_ISTREAM(is, true, true, 1);
   }
 
@@ -87,7 +87,7 @@ TEST(codec, getInteger_int) {
     auto is = io::is("-'");
     EXPECT_THAT(
         [&] { getInteger<type>(io::resetg(is)); },
-        throwsParseFailure<char>(1, { 1, 2 }, HasSubstr("Expected at least 1 character contained in {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9'}, got 0 and '\\''")));
+        throwsParseFailure(1, { 1, 2 }, HasSubstr("Expected at least 1 character contained in {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9'}, got 0 and '\\''")));
     EXPECT_ISTREAM(is, true, false, 2);
   }
 
@@ -117,7 +117,7 @@ TEST(codec, parseEnum) {
     auto is = io::is();
     EXPECT_THAT(
         [&] { ron::parsing::parseEnum(io::resetg(is)); },
-        throwsParseFailure<char>(0, HasSubstr("EOF")));
+        throwsParseFailure(0, HasSubstr("EOF")));
     EXPECT_ISTREAM(is, true, true, 0);
   }
 
@@ -125,7 +125,7 @@ TEST(codec, parseEnum) {
     auto is = io::is("\"");
     EXPECT_THAT(
         [&] { ron::parsing::parseEnum(io::resetg(is)); },
-        throwsParseFailure<char>(1, HasSubstr("Seeking '\"', got EOF")));
+        throwsParseFailure(1, HasSubstr("Seeking '\"', got EOF")));
     EXPECT_ISTREAM(is, true, true, 1);
   }
 
@@ -133,7 +133,7 @@ TEST(codec, parseEnum) {
     auto is = io::is("\"\"");
     EXPECT_THAT(
         [&] { ron::parsing::parseEnum(io::resetg(is)); },
-        throwsParseFailure<char>(1, { 1, 2 }, HasSubstr("Expected at least 1 character before '\"', got 0")));
+        throwsParseFailure(1, { 1, 2 }, HasSubstr("Expected at least 1 character before '\"', got 0")));
     EXPECT_ISTREAM(is, true, false, 2);
   }
 

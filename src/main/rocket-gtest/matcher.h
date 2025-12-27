@@ -181,13 +181,13 @@ throws(const Matchers&... matchers) {
  * @param whatMatcher a matcher for the `.what()` property of the exception
  * @return a matcher
  */
-template<typename C, typename PositionMatcher, typename WhatMatcher> requires Character<C>
-inline testing::PolymorphicMatcher<testing::internal::ExceptionMatcherImpl<io::InputFailure<C>>>
+template<typename PositionMatcher, typename WhatMatcher>
+inline testing::PolymorphicMatcher<testing::internal::ExceptionMatcherImpl<io::InputFailure>>
 throwsInputFailure(PositionMatcher&& positionMatcher, WhatMatcher&& whatMatcher) {
-  return throws<io::InputFailure<C>>(
+  return throws<io::InputFailure>(
     testing::Property(
         ".position()",
-        &io::InputFailure<C>::position,
+        &io::InputFailure::position,
         std::forward<PositionMatcher>(positionMatcher)),
     testing::internal::WithWhat(MatcherCast<std::string>(std::forward<WhatMatcher>(whatMatcher))));
 }
@@ -201,10 +201,10 @@ throwsInputFailure(PositionMatcher&& positionMatcher, WhatMatcher&& whatMatcher)
  * @param whatMatcher a matcher for the `.what()` property of the exception
  * @return a matcher
  */
-template<typename C, typename WhatMatcher> requires Character<C>
-inline testing::PolymorphicMatcher<testing::internal::ExceptionMatcherImpl<io::InputFailure<C>>>
+template<typename WhatMatcher>
+inline testing::PolymorphicMatcher<testing::internal::ExceptionMatcherImpl<io::InputFailure>>
 throwsInputFailure(size_t position, WhatMatcher&& whatMatcher) {
-  return throwsInputFailure<C>(
+  return throwsInputFailure(
       testing::Eq(position),
       std::forward<WhatMatcher>(whatMatcher));
 }
@@ -221,17 +221,17 @@ throwsInputFailure(size_t position, WhatMatcher&& whatMatcher) {
  * @param whatMatcher a matcher for the `.what()` property of the exception
  * @return a matcher
  */
-template<typename C, typename PositionMatcher, typename WhatMatcher> requires Character<C>
-inline testing::PolymorphicMatcher<testing::internal::ExceptionMatcherImpl<io::ParseFailure<C>>>
+template<typename PositionMatcher, typename WhatMatcher>
+inline testing::PolymorphicMatcher<testing::internal::ExceptionMatcherImpl<io::ParseFailure>>
 throwsParseFailure(PositionMatcher&& positionMatcher, WhatMatcher&& whatMatcher) {
-  return throws<io::ParseFailure<C>>(
+  return throws<io::ParseFailure>(
     testing::Property(
         ".position()",
-        &io::ParseFailure<C>::position,
+        &io::ParseFailure::position,
         std::forward<PositionMatcher>(positionMatcher)),
     testing::Property(
         ".ranges()",
-        &io::ParseFailure<C>::ranges,
+        &io::ParseFailure::ranges,
         testing::Eq(text::Ranges {})),
     testing::internal::WithWhat(MatcherCast<std::string>(std::forward<WhatMatcher>(whatMatcher))));
 }
@@ -245,10 +245,10 @@ throwsParseFailure(PositionMatcher&& positionMatcher, WhatMatcher&& whatMatcher)
  * @param whatMatcher a matcher for the `.what()` property of the exception
  * @return a matcher
  */
-template<typename C, typename WhatMatcher> requires Character<C>
-inline testing::PolymorphicMatcher<testing::internal::ExceptionMatcherImpl<io::ParseFailure<C>>>
+template<typename WhatMatcher>
+inline testing::PolymorphicMatcher<testing::internal::ExceptionMatcherImpl<io::ParseFailure>>
 throwsParseFailure(size_t position, WhatMatcher&& whatMatcher) {
-  return throwsParseFailure<C>(
+  return throwsParseFailure(
       testing::Eq(position),
       std::forward<WhatMatcher>(whatMatcher));
 }
@@ -266,21 +266,20 @@ throwsParseFailure(size_t position, WhatMatcher&& whatMatcher) {
  * @param whatMatcher a matcher for the `.what()` property of the exception
  * @return a matcher
  */
-template<typename C, typename PositionMatcher, typename RangesMatcher, typename WhatMatcher> requires
-    Character<C>
-inline testing::PolymorphicMatcher<testing::internal::ExceptionMatcherImpl<io::ParseFailure<C>>>
+template<typename PositionMatcher, typename RangesMatcher, typename WhatMatcher>
+inline testing::PolymorphicMatcher<testing::internal::ExceptionMatcherImpl<io::ParseFailure>>
 throwsParseFailure(
     PositionMatcher&& positionMatcher,
     RangesMatcher&& rangesMatcher,
     WhatMatcher&& whatMatcher) {
-  return throws<io::ParseFailure<C>>(
+  return throws<io::ParseFailure>(
     testing::Property(
         ".position()",
-        &io::ParseFailure<C>::position,
+        &io::ParseFailure::position,
         std::forward<PositionMatcher>(positionMatcher)),
     testing::Property(
         ".ranges()",
-        &io::ParseFailure<C>::ranges,
+        &io::ParseFailure::ranges,
         std::forward<RangesMatcher>(rangesMatcher)),
     testing::internal::WithWhat(MatcherCast<std::string>(std::forward<WhatMatcher>(whatMatcher))));
 }
@@ -295,10 +294,10 @@ throwsParseFailure(
  * @param whatMatcher a matcher for the `.what()` property of the exception
  * @return a matcher
  */
-template<typename C, typename WhatMatcher> requires Character<C>
-inline testing::PolymorphicMatcher<testing::internal::ExceptionMatcherImpl<io::ParseFailure<C>>>
+template<typename WhatMatcher>
+inline testing::PolymorphicMatcher<testing::internal::ExceptionMatcherImpl<io::ParseFailure>>
 throwsParseFailure(size_t position, text::Range range, WhatMatcher&& whatMatcher) {
-  return throwsParseFailure<C>(
+  return throwsParseFailure(
       testing::Eq(position),
       testing::Eq(text::Ranges { range }),
       std::forward<WhatMatcher>(whatMatcher));
@@ -314,10 +313,10 @@ throwsParseFailure(size_t position, text::Range range, WhatMatcher&& whatMatcher
  * @param whatMatcher a matcher for the `.what()` property of the exception
  * @return a matcher
  */
-template<typename C, typename WhatMatcher> requires Character<C>
-inline testing::PolymorphicMatcher<testing::internal::ExceptionMatcherImpl<io::ParseFailure<C>>>
+template<typename WhatMatcher>
+inline testing::PolymorphicMatcher<testing::internal::ExceptionMatcherImpl<io::ParseFailure>>
 throwsParseFailure(size_t position, const text::Ranges& ranges, WhatMatcher&& whatMatcher) {
-  return throwsParseFailure<C>(
+  return throwsParseFailure(
       testing::Eq(position),
       testing::Eq(ranges),
       std::forward<WhatMatcher>(whatMatcher));

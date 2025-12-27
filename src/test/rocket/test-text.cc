@@ -252,7 +252,7 @@ TEST(text, locations) {
         Position pos { .type=Position::error, .position=1'000, .message="Oops" };
         locations(io::resetg(is), { pos }, {});
       }),
-      throwsInputFailure<char>(297, HasSubstr("Incomplete UTF-8 byte sequence")));
+      throwsInputFailure(297, HasSubstr("Incomplete UTF-8 byte sequence")));
   }
 
   // Test tab size null
@@ -293,7 +293,7 @@ TEST(text, printLocations) {
     try {
       parseRon(is, config);
       FAIL();
-    } catch (io::ParseFailure<char>& ex) {
+    } catch (io::ParseFailure& ex) {
       // Test tab size null
       {
         Position pos {

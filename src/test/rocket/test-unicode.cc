@@ -122,6 +122,7 @@ TEST(unicode, CodePoint_opCast_u32string) {
 
 TEST(unicode, CodePointLower) {
   using type = char32_t;
+
   EXPECT_EQ(static_cast<type>(CodePoint(U'a').lower()), U'a');
   EXPECT_EQ(static_cast<type>(CodePoint(U'Ä').lower()), U'ä');
   EXPECT_EQ(static_cast<type>(CodePoint(U'É').lower()), U'é');
@@ -129,6 +130,7 @@ TEST(unicode, CodePointLower) {
 
 TEST(unicode, CodePointUpper) {
   using type = char32_t;
+
   EXPECT_EQ(static_cast<type>(CodePoint(U'A').upper()), U'A');
   EXPECT_EQ(static_cast<type>(CodePoint(U'ä').upper()), U'Ä');
   EXPECT_EQ(static_cast<type>(CodePoint(U'é').upper()), U'É');
@@ -147,14 +149,11 @@ TEST(unicode, CodePointWidth) {
   EXPECT_EQ(CodePoint(0x0300U).width(), 0); // Combining Grave Accent, Category Mn (768)
 }
 
-TEST(unicode, opInput_CodePoint_char) {
-  using type = CodePoint;
-  using charType = char;
-
-  type v;
+TEST(unicode, opInput_CodePoint) {
+  CodePoint v;
 
   {
-    auto is = io::is<charType>();
+    auto is = io::is();
     is >> v;
     EXPECT_ISTREAM(is, true, true, 0);
   }
@@ -176,35 +175,6 @@ TEST(unicode, opInput_CodePoint_char) {
   }
 }
 
-TEST(unicode, opInput_CodePoint_char32_t) {
-  using type = CodePoint;
-  using charType = char32_t;
-
-  type v;
-
-  {
-    auto is = io::is<charType>();
-    is >> v;
-    EXPECT_ISTREAM(is, true, true, 0);
-  }
-
-  {
-    u32string input = U"x";
-    auto is = io::is(input);
-    is >> v;
-    EXPECT_EQ(v, 'x');
-    EXPECT_ISTREAM(is, false, false, input.size());
-  }
-
-  {
-    u32string input = U"€";
-    auto is = io::is(input);
-    is >> v;
-    EXPECT_EQ(v, 0x20acU);
-    EXPECT_ISTREAM(is, false, false, input.size());
-  }
-}
-
 TEST(unicode, parseRon_CodePoint) {
   CodePoint v;
 
@@ -212,7 +182,7 @@ TEST(unicode, parseRon_CodePoint) {
     auto is = io::is("U+12345678abcd,");
     EXPECT_THAT(
         [&] { parseRon(io::resetg(is), v); },
-        throwsParseFailure<char>(10, { 0, 14 }, HasSubstr("Expected at most 8 hexadecimal characters, got 12")));
+        throwsParseFailure(10, { 0, 14 }, HasSubstr("Expected at most 8 hexadecimal characters, got 12")));
     EXPECT_ISTREAM(is, true, false, 14);
   }
 
@@ -285,46 +255,17 @@ TEST(unicode, Grapheme_opCast_u32string) {
   EXPECT_EQ(static_cast<type>(Grapheme("😁")), U"😁");
 }
 
-TEST(unicode, opInput_Grapheme_char) {
-  using type = Grapheme;
-  using charType = char;
-
-  type v;
+TEST(unicode, opInput_Grapheme) {
+  Grapheme v;
 
   {
-    auto is = io::is<charType>();
+    auto is = io::is();
     is >> v;
     EXPECT_ISTREAM(is, true, true, 0);
   }
 
   {
     string input = "🧑‍🌾a";
-    auto is = io::is(input);
-    is >> v;
-    EXPECT_EQ(v.codePoints.size(), 3);
-    EXPECT_EQ(v.width, 2);
-    EXPECT_ISTREAM(is, false, false, input.size() - 1);
-    is >> v;
-    EXPECT_EQ(v.codePoints.size(), 1);
-    EXPECT_EQ(v.width, 1);
-    EXPECT_ISTREAM(is, false, false, input.size());
-  }
-}
-
-TEST(unicode, opInput_Grapheme_char32_t) {
-  using type = Grapheme;
-  using charType = char32_t;
-
-  type v;
-
-  {
-    auto is = io::is<charType>();
-    is >> v;
-    EXPECT_ISTREAM(is, true, true, 0);
-  }
-
-  {
-    u32string input = U"🧑‍🌾a";
     auto is = io::is(input);
     is >> v;
     EXPECT_EQ(v.codePoints.size(), 3);

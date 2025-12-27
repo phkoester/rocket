@@ -107,7 +107,7 @@ TEST(io, getChar) {
     auto is = io::is();
     EXPECT_THAT(
         [&] { getChar(io::resetg(is), 'x'); },
-        throwsParseFailure<char>(0, HasSubstr("EOF")));
+        throwsParseFailure(0, HasSubstr("EOF")));
     EXPECT_ISTREAM(is, true, true, 0);
   }
 
@@ -115,7 +115,7 @@ TEST(io, getChar) {
     auto is = io::is("y");
     EXPECT_THAT(
         [&] { getChar(io::resetg(is), { 'x', 'z' }); },
-        throwsParseFailure<char>(0, HasSubstr("Expected any of {'x', 'z'}, got 'y'")));
+        throwsParseFailure(0, HasSubstr("Expected any of {'x', 'z'}, got 'y'")));
     EXPECT_ISTREAM(is, true, false, 1);
   }
 
@@ -151,7 +151,7 @@ TEST(io, getString) {
     auto is = io::is();
     EXPECT_THAT(
         [&] { getString(io::resetg(is), set<string_view> { "a", "b", "c" }); },
-        throwsParseFailure<char>(0, { 0, 0 }, HasSubstr("\"\" does not match any of {\"a\", \"b\", \"c\"}, got EOF")));
+        throwsParseFailure(0, { 0, 0 }, HasSubstr("\"\" does not match any of {\"a\", \"b\", \"c\"}, got EOF")));
     EXPECT_ISTREAM(is, true, true, 0);
   }
 
@@ -159,7 +159,7 @@ TEST(io, getString) {
     auto is = io::is("ab");
     EXPECT_THAT(
         [&] { getString(io::resetg(is), set<string_view> { "abc", "def" }); },
-        throwsParseFailure<char>(2, { 0, 2 }, HasSubstr("\"ab\" does not match any of {\"abc\", \"def\"}, got EOF")));
+        throwsParseFailure(2, { 0, 2 }, HasSubstr("\"ab\" does not match any of {\"abc\", \"def\"}, got EOF")));
     EXPECT_ISTREAM(is, true, true, 2);
   }
 
@@ -181,7 +181,7 @@ TEST(io, getUntil) {
     auto is = io::is();
     EXPECT_THAT(
         [&] { getUntil(io::resetg(is), ';', false, 1); },
-        throwsParseFailure<char>(0, HasSubstr("Seeking ';', got EOF")));
+        throwsParseFailure(0, HasSubstr("Seeking ';', got EOF")));
     EXPECT_ISTREAM(is, true, true, 0);
   }
 
@@ -189,7 +189,7 @@ TEST(io, getUntil) {
     auto is = io::is("abcde");
     EXPECT_THAT(
         [&] { getUntil(io::resetg(is), ';', false, 1); },
-        throwsParseFailure<char>(5, HasSubstr("Seeking ';', got EOF")));
+        throwsParseFailure(5, HasSubstr("Seeking ';', got EOF")));
     EXPECT_ISTREAM(is, true, true, 5);
   }
 
@@ -217,15 +217,15 @@ TEST(io, getUntil) {
     auto is = io::is("abc|");
     EXPECT_THAT(
         [&] { getUntil(io::resetg(io::resetg(is)), '|', true, 4); },
-        throwsParseFailure<char>(3, { 0, 4 }, HasSubstr("Expected at least 4 characters before '|', got 3")));
+        throwsParseFailure(3, { 0, 4 }, HasSubstr("Expected at least 4 characters before '|', got 3")));
     EXPECT_ISTREAM(is, true, false, 4);
   }
 
   {
     auto is = io::is("abc|");
     EXPECT_THAT(
-        [&] { getUntil<char>(io::resetg(io::resetg(is)), [](char c) { return c == '|'; }, "pipe symbol", true, 4); },
-        throwsParseFailure<char>(3, { 0, 4 }, HasSubstr("Expected at least 4 characters before pipe symbol, got 3")));
+        [&] { getUntil(io::resetg(io::resetg(is)), [](char c) { return c == '|'; }, "pipe symbol", true, 4); },
+        throwsParseFailure(3, { 0, 4 }, HasSubstr("Expected at least 4 characters before pipe symbol, got 3")));
     EXPECT_ISTREAM(is, true, false, 4);
   }
 }
@@ -241,7 +241,7 @@ TEST(io, getWhile) {
     auto is = io::is();
     EXPECT_THAT(
         [&] { getWhile(io::resetg(io::resetg(is)), { 'x', 'y' }, 1); },
-        throwsParseFailure<char>(0, { 0, 1 }, HasSubstr("Expected at least 1 character contained in {'x', 'y'}, got 0 and EOF")));
+        throwsParseFailure(0, { 0, 1 }, HasSubstr("Expected at least 1 character contained in {'x', 'y'}, got 0 and EOF")));
     EXPECT_ISTREAM(is, true, true, 0);
   }
 
@@ -255,7 +255,7 @@ TEST(io, getWhile) {
     auto is = io::is("x");
     EXPECT_THAT(
         [&] { getWhile(io::resetg(is), { 'x', 'y' }, 2); },
-        throwsParseFailure<char>(1, { 0, 2 }, HasSubstr("Expected at least 2 characters contained in {'x', 'y'}, got 1 and EOF")));
+        throwsParseFailure(1, { 0, 2 }, HasSubstr("Expected at least 2 characters contained in {'x', 'y'}, got 1 and EOF")));
     EXPECT_ISTREAM(is, true, true, 1);
   }
 

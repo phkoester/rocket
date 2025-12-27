@@ -332,7 +332,7 @@ parseRonImpl(
     }
   }
   else {
-    throw io::ParseFailure<char>(is, first, { first, last }, fmt::format("Invalid name: {:?}", name));
+    throw io::ParseFailure(is, first, { first, last }, fmt::format("Invalid name: {:?}", name));
   }
 }
 
@@ -370,7 +370,7 @@ parseRon(std::istream& is, T* v, Tuple& refs, std::index_sequence<Index...>) {
 
     ron::parsing::skip(is);
     size_t nameFirst = io::tellg(is);
-    std::string name = io::getUntil<char>(
+    std::string name = io::getUntil(
         is,
         [](char c) { return std::isspace(c) || c == '=' || c == ',' || c == '}'; },
         "whitespace, '=', ',', or '}'",

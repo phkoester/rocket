@@ -78,7 +78,7 @@ TEST(codec_std, parseRon_string) {
     auto is = io::is("\"a");
     EXPECT_THAT(
         [&] { parseRon(io::resetg(is), v); },
-        throwsParseFailure<char>(2, { 0, 2 }, HasSubstr("Missing terminating '\"' character")));
+        throwsParseFailure(2, { 0, 2 }, HasSubstr("Missing terminating '\"' character")));
     EXPECT_ISTREAM(is, true, true, 2);
   }
 
@@ -86,7 +86,7 @@ TEST(codec_std, parseRon_string) {
     auto is = io::is("\"\\Q");
     EXPECT_THAT(
         [&] { parseRon(io::resetg(is), v); },
-        throwsParseFailure<char>(1, { 1, 3 }, HasSubstr("Invalid escape sequence")));
+        throwsParseFailure(1, { 1, 3 }, HasSubstr("Invalid escape sequence")));
     EXPECT_ISTREAM(is, true, false, 3);
   }
 
@@ -128,7 +128,7 @@ TEST(codec_std, parseRon_u32string) {
     auto is = io::is("\"a");
     EXPECT_THAT(
         [&] { parseRon(io::resetg(is), v); },
-        throwsParseFailure<char>(2, { 0, 2 }, HasSubstr("Missing terminating '\"' character")));
+        throwsParseFailure(2, { 0, 2 }, HasSubstr("Missing terminating '\"' character")));
     EXPECT_ISTREAM(is, true, true, 2);
   }
 
@@ -136,7 +136,7 @@ TEST(codec_std, parseRon_u32string) {
     auto is = io::is("\"\\Q");
     EXPECT_THAT(
         [&] { parseRon(io::resetg(is), v); },
-        throwsParseFailure<char>(1, { 1, 3 }, HasSubstr("Invalid escape sequence")));
+        throwsParseFailure(1, { 1, 3 }, HasSubstr("Invalid escape sequence")));
     EXPECT_ISTREAM(is, true, false, 3);
   }
 
@@ -144,7 +144,7 @@ TEST(codec_std, parseRon_u32string) {
     auto is = io::is("\"\\€");
     EXPECT_THAT(
         [&] { parseRon(io::resetg(is), v); },
-        throwsParseFailure<char>(1, { 1, 5 }, HasSubstr("Invalid escape sequence")));
+        throwsParseFailure(1, { 1, 5 }, HasSubstr("Invalid escape sequence")));
     EXPECT_ISTREAM(is, true, false, 5);
   }
 
@@ -233,7 +233,7 @@ TEST(codec_std, parseRon_variant) {
     auto is = io::is(" 123: something");
     EXPECT_THAT(
         [&] { parseRon(io::resetg(is), v); },
-        throwsParseFailure<char>(1, { 1, 4 }, HasSubstr("Invalid index: 123")));
+        throwsParseFailure(1, { 1, 4 }, HasSubstr("Invalid index: 123")));
   }
 }
 

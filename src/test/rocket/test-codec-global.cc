@@ -27,7 +27,7 @@ TEST(codec_global, parseRon_bool) {
     auto is = io::is();
     EXPECT_THAT(
         [&] { parseRon(io::resetg(is), v); },
-        throwsParseFailure<char>(0, HasSubstr("EOF")));
+        throwsParseFailure(0, HasSubstr("EOF")));
     EXPECT_ISTREAM(is, true, true, 0);
   }
 
@@ -35,7 +35,7 @@ TEST(codec_global, parseRon_bool) {
     auto is = io::is("foo");
     EXPECT_THAT(
         [&] { parseRon(io::resetg(is), v); },
-        throwsParseFailure<char>(1, { 0, 2 }, HasSubstr("\"fo\" does not match any of {\"0\", \"1\", \"false\", \"true\"}")));
+        throwsParseFailure(1, { 0, 2 }, HasSubstr("\"fo\" does not match any of {\"0\", \"1\", \"false\", \"true\"}")));
     EXPECT_ISTREAM(is, true, false, 2);
   }
 
@@ -63,7 +63,7 @@ TEST(codec_global, parseRon_char) {
     auto is = io::is();
     EXPECT_THAT(
         [&] { parseRon(io::resetg(is), v); },
-        throwsParseFailure<char>(0, HasSubstr("EOF")));
+        throwsParseFailure(0, HasSubstr("EOF")));
     EXPECT_ISTREAM(is, true, true, 0);
   }
 
@@ -71,7 +71,7 @@ TEST(codec_global, parseRon_char) {
     auto is = io::is("foo");
     EXPECT_THAT(
         [&] { parseRon(io::resetg(is), v); },
-        throwsParseFailure<char>(0, HasSubstr("Expected '\\'', got 'f'")));
+        throwsParseFailure(0, HasSubstr("Expected '\\'', got 'f'")));
     EXPECT_ISTREAM(is, true, false, 1);
   }
 
@@ -79,7 +79,7 @@ TEST(codec_global, parseRon_char) {
     auto is = io::is("'");
     EXPECT_THAT(
         [&] { parseRon(io::resetg(is), v); },
-        throwsParseFailure<char>(1, { 0, 1 }, HasSubstr("Missing terminating '\\'' character")));
+        throwsParseFailure(1, { 0, 1 }, HasSubstr("Missing terminating '\\'' character")));
     EXPECT_ISTREAM(is, true, true, 1);
   }
 
@@ -87,7 +87,7 @@ TEST(codec_global, parseRon_char) {
     auto is = io::is("'\\q");
     EXPECT_THAT(
         [&] { parseRon(io::resetg(is), v); },
-        throwsParseFailure<char>(1, { 1, 3 }, HasSubstr("Invalid escape sequence")));
+        throwsParseFailure(1, { 1, 3 }, HasSubstr("Invalid escape sequence")));
     EXPECT_ISTREAM(is, true, false, 3);
   }
 
@@ -95,14 +95,14 @@ TEST(codec_global, parseRon_char) {
     auto is = io::is("'a");
     EXPECT_THAT(
         [&] { parseRon(io::resetg(is), v); },
-        throwsParseFailure<char>(2, { 0, 2 }, HasSubstr("Missing terminating '\\'' character")));
+        throwsParseFailure(2, { 0, 2 }, HasSubstr("Missing terminating '\\'' character")));
     EXPECT_ISTREAM(is, true, true, 2);
   }
   {
     auto is = io::is("'\\xP");
     EXPECT_THAT(
         [&] { parseRon(io::resetg(is), v); },
-        throwsParseFailure<char>(3, HasSubstr("Expected any of {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F', 'a', 'b', 'c', 'd', 'e', 'f'}, got 'P'")));
+        throwsParseFailure(3, HasSubstr("Expected any of {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F', 'a', 'b', 'c', 'd', 'e', 'f'}, got 'P'")));
     EXPECT_ISTREAM(is, true, false, 4);
   }
 
@@ -145,7 +145,7 @@ TEST(codec_global, parseRon_char) {
     auto is = io::is("'\\x80'");
     EXPECT_THAT(
         [&] { parseRon(io::resetg(is), v); },
-        throwsParseFailure<char>(0, { 0, 6 }, HasSubstr("Cannot parse \"'\\\\x80'\" as `char`")));
+        throwsParseFailure(0, { 0, 6 }, HasSubstr("Cannot parse \"'\\\\x80'\" as `char`")));
     EXPECT_ISTREAM(is, true, false, 6);
   }
 
@@ -153,7 +153,7 @@ TEST(codec_global, parseRon_char) {
     auto is = io::is("'\\xfF'");
     EXPECT_THAT(
         [&] { parseRon(io::resetg(is), v); },
-        throwsParseFailure<char>(0, { 0, 6 }, HasSubstr("Cannot parse \"'\\\\xfF'\" as `char`")));
+        throwsParseFailure(0, { 0, 6 }, HasSubstr("Cannot parse \"'\\\\xfF'\" as `char`")));
     EXPECT_ISTREAM(is, true, false, 6);
   }
 }
@@ -167,7 +167,7 @@ TEST(codec_global, parseRon_unsigned_char) {
     auto is = io::is();
     EXPECT_THAT(
         [&] { parseRon(io::resetg(is), v); },
-        throwsParseFailure<char>(0, HasSubstr("EOF")));
+        throwsParseFailure(0, HasSubstr("EOF")));
     EXPECT_ISTREAM(is, true, true, 0);
   }
 
@@ -175,7 +175,7 @@ TEST(codec_global, parseRon_unsigned_char) {
     auto is = io::is("foo");
     EXPECT_THAT(
         [&] { parseRon(io::resetg(is), v); },
-        throwsParseFailure<char>(1, HasSubstr("Expected any of {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F', 'a', 'b', 'c', 'd', 'e', 'f'}, got 'o'")));
+        throwsParseFailure(1, HasSubstr("Expected any of {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F', 'a', 'b', 'c', 'd', 'e', 'f'}, got 'o'")));
     EXPECT_ISTREAM(is, true, false, 2);
   }
 
@@ -210,7 +210,7 @@ TEST(codec_global, parseRon_char32_t) {
     auto is = io::is();
     EXPECT_THAT(
         [&] { parseRon(io::resetg(is), v); },
-        throwsParseFailure<char>(0, HasSubstr("EOF")));
+        throwsParseFailure(0, HasSubstr("EOF")));
     EXPECT_ISTREAM(is, true, true, 0);
   }
 
@@ -218,7 +218,7 @@ TEST(codec_global, parseRon_char32_t) {
     auto is = io::is("foo");
     EXPECT_THAT(
         [&] { parseRon(io::resetg(is), v); },
-        throwsParseFailure<char>(0, HasSubstr("Expected '\\'', got 'f'")));
+        throwsParseFailure(0, HasSubstr("Expected '\\'', got 'f'")));
     EXPECT_ISTREAM(is, true, false, 1);
   }
 
@@ -226,7 +226,7 @@ TEST(codec_global, parseRon_char32_t) {
     auto is = io::is("'");
     EXPECT_THAT(
         [&] { parseRon(io::resetg(is), v); },
-        throwsParseFailure<char>(1, { 0, 1 }, HasSubstr("Missing terminating '\\'' character")));
+        throwsParseFailure(1, { 0, 1 }, HasSubstr("Missing terminating '\\'' character")));
     EXPECT_ISTREAM(is, true, true, 1);
   }
 
@@ -234,7 +234,7 @@ TEST(codec_global, parseRon_char32_t) {
     auto is = io::is("'\\q");
     EXPECT_THAT(
         [&] { parseRon(io::resetg(is), v); },
-        throwsParseFailure<char>(1, { 1, 3 }, HasSubstr("Invalid escape sequence")));
+        throwsParseFailure(1, { 1, 3 }, HasSubstr("Invalid escape sequence")));
     EXPECT_ISTREAM(is, true, false, 3);
   }
 
@@ -242,14 +242,14 @@ TEST(codec_global, parseRon_char32_t) {
     auto is = io::is("'a");
     EXPECT_THAT(
         [&] { parseRon(io::resetg(is), v); },
-        throwsParseFailure<char>(2, { 0, 2 }, HasSubstr("Missing terminating '\\'' character")));
+        throwsParseFailure(2, { 0, 2 }, HasSubstr("Missing terminating '\\'' character")));
     EXPECT_ISTREAM(is, true, true, 2);
   }
   {
     auto is = io::is("'\\xP");
     EXPECT_THAT(
         [&] { parseRon(io::resetg(is), v); },
-        throwsParseFailure<char>(3, HasSubstr("Expected any of {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F', 'a', 'b', 'c', 'd', 'e', 'f'}, got 'P'")));
+        throwsParseFailure(3, HasSubstr("Expected any of {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F', 'a', 'b', 'c', 'd', 'e', 'f'}, got 'P'")));
     EXPECT_ISTREAM(is, true, false, 4);
   }
 
@@ -306,7 +306,7 @@ TEST(codec_global, parseRon_char32_t) {
     auto is = io::is("'\\ö'");
     EXPECT_THAT(
         [&] { parseRon(io::resetg(is), v); },
-        throwsParseFailure<char>(1, { 1, 4 }, HasSubstr("Invalid escape sequence")));
+        throwsParseFailure(1, { 1, 4 }, HasSubstr("Invalid escape sequence")));
     EXPECT_ISTREAM(is, true, false, 4);
   }
 
@@ -348,7 +348,7 @@ TEST(codec_global, parseRon_char32_t) {
     auto is = io::is("'\\U00110000'");
     EXPECT_THAT(
         [&] { parseRon(io::resetg(is), v); },
-        throwsParseFailure<char>(0, { 0, 12 }, HasSubstr("Cannot parse \"'\\\\U00110000'\" as `char32_t`")));
+        throwsParseFailure(0, { 0, 12 }, HasSubstr("Cannot parse \"'\\\\U00110000'\" as `char32_t`")));
     EXPECT_ISTREAM(is, true, false, 12);
   }
 
@@ -356,7 +356,7 @@ TEST(codec_global, parseRon_char32_t) {
     auto is = io::is("'\\Ufe1001ef'");
     EXPECT_THAT(
         [&] { parseRon(io::resetg(is), v); },
-        throwsParseFailure<char>(0, { 0, 12 }, HasSubstr("Cannot parse \"'\\\\Ufe1001ef'\" as `char32_t`")));
+        throwsParseFailure(0, { 0, 12 }, HasSubstr("Cannot parse \"'\\\\Ufe1001ef'\" as `char32_t`")));
     EXPECT_ISTREAM(is, true, false, 12);
   }
 }
@@ -373,7 +373,7 @@ TEST(codec_global, parseRon_int32_t) {
     auto is = io::is();
     EXPECT_THAT(
         [&] { parseRon(io::resetg(is), v); },
-        throwsParseFailure<char>(0, HasSubstr("EOF")));
+        throwsParseFailure(0, HasSubstr("EOF")));
     EXPECT_ISTREAM(is, true, true, 0);
   }
 
@@ -381,7 +381,7 @@ TEST(codec_global, parseRon_int32_t) {
     auto is = io::is("foo");
     EXPECT_THAT(
         [&] { parseRon(io::resetg(is), v); },
-        throwsParseFailure<char>(0, { 0, 1 }, HasSubstr("Expected at least 1 character contained in {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9'}, got 0 and 'f'")));
+        throwsParseFailure(0, { 0, 1 }, HasSubstr("Expected at least 1 character contained in {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9'}, got 0 and 'f'")));
     EXPECT_ISTREAM(is, true, false, 1);
   }
 
@@ -389,7 +389,7 @@ TEST(codec_global, parseRon_int32_t) {
     auto is = io::is("++foo");
     EXPECT_THAT(
         [&] { parseRon(io::resetg(is), v); },
-        throwsParseFailure<char>(1, { 1, 2 }, HasSubstr("Expected at least 1 character contained in {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9'}, got 0 and '+'")));
+        throwsParseFailure(1, { 1, 2 }, HasSubstr("Expected at least 1 character contained in {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9'}, got 0 and '+'")));
     EXPECT_ISTREAM(is, true, false, 2);
   }
 
@@ -397,7 +397,7 @@ TEST(codec_global, parseRon_int32_t) {
     auto is = io::is("++12x");
     EXPECT_THAT(
         [&] { parseRon(io::resetg(is), v); },
-        throwsParseFailure<char>(1, { 1, 2 }, HasSubstr("Expected at least 1 character contained in {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9'}, got 0 and '+'")));
+        throwsParseFailure(1, { 1, 2 }, HasSubstr("Expected at least 1 character contained in {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9'}, got 0 and '+'")));
     EXPECT_ISTREAM(is, true, false, 2);
   }
 
@@ -412,7 +412,7 @@ TEST(codec_global, parseRon_int32_t) {
     auto is = io::is("+'");
     EXPECT_THAT(
         [&] { parseRon(io::resetg(is), v); },
-        throwsParseFailure<char>(1, { 1, 2 }, HasSubstr("Expected at least 1 character contained in {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9'}, got 0 and '\\''")));
+        throwsParseFailure(1, { 1, 2 }, HasSubstr("Expected at least 1 character contained in {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9'}, got 0 and '\\''")));
     EXPECT_ISTREAM(is, true, false, 2);
   }
 
@@ -443,7 +443,7 @@ TEST(codec_global, parseRon_int32_t) {
     auto is = io::is(s);
     EXPECT_THAT(
         [&] { parseRon(io::resetg(is), v); },
-        throwsParseFailure<char>(0, { 0, 14 }, HasSubstr("Cannot parse \"-2'147'483'649\" as `int`")));
+        throwsParseFailure(0, { 0, 14 }, HasSubstr("Cannot parse \"-2'147'483'649\" as `int`")));
   }
 
   {
@@ -468,7 +468,7 @@ TEST(codec_global, parseRon_int32_t) {
     auto is = io::is(s);
     EXPECT_THAT(
         [&] { parseRon(io::resetg(is), v); },
-        throwsParseFailure<char>(0, { 0, 13 }, HasSubstr("Cannot parse \"2'147'483'648\" as `int`")));
+        throwsParseFailure(0, { 0, 13 }, HasSubstr("Cannot parse \"2'147'483'648\" as `int`")));
   }
 }
 
@@ -481,7 +481,7 @@ TEST(codec_global, parseRon_int128_t) {
     auto is = io::is();
     EXPECT_THAT(
         [&] { parseRon(io::resetg(is), v); },
-        throwsParseFailure<char>(0, HasSubstr("EOF")));
+        throwsParseFailure(0, HasSubstr("EOF")));
     EXPECT_ISTREAM(is, true, true, 0);
   }
 
@@ -489,7 +489,7 @@ TEST(codec_global, parseRon_int128_t) {
     auto is = io::is("-");
     EXPECT_THAT(
         [&] { parseRon(io::resetg(is), v); },
-        throwsParseFailure<char>(1, { 1, 2 }, HasSubstr("Expected at least 1 character contained in {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9'}, got 0 and EOF")));
+        throwsParseFailure(1, { 1, 2 }, HasSubstr("Expected at least 1 character contained in {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9'}, got 0 and EOF")));
     EXPECT_ISTREAM(is, true, true, 1);
   }
 
@@ -510,7 +510,7 @@ TEST(codec_global, parseRon_uint128_t) {
     auto is = io::is();
     EXPECT_THAT(
         [&] { parseRon(io::resetg(is), v); },
-        throwsParseFailure<char>(0, HasSubstr("EOF")));
+        throwsParseFailure(0, HasSubstr("EOF")));
     EXPECT_ISTREAM(is, true, true, 0);
   }
 
@@ -518,7 +518,7 @@ TEST(codec_global, parseRon_uint128_t) {
     auto is = io::is("-");
     EXPECT_THAT(
         [&] { parseRon(io::resetg(is), v); },
-        throwsParseFailure<char>(0, { 0, 1 }, HasSubstr("Expected at least 1 character contained in {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9'}, got 0 and '-'")));
+        throwsParseFailure(0, { 0, 1 }, HasSubstr("Expected at least 1 character contained in {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9'}, got 0 and '-'")));
     EXPECT_ISTREAM(is, true, false, 1);
   }
 
@@ -541,7 +541,7 @@ TEST(codec_global, parseRon_float) {
     auto is = io::is();
     EXPECT_THAT(
         [&] { parseRon(io::resetg(is), v); },
-        throwsParseFailure<char>(0, HasSubstr("EOF")));
+        throwsParseFailure(0, HasSubstr("EOF")));
     EXPECT_ISTREAM(is, true, true, 0);
   }
 
@@ -549,7 +549,7 @@ TEST(codec_global, parseRon_float) {
     auto is = io::is("a");
     EXPECT_THAT(
         [&] { parseRon(io::resetg(is), v); },
-        throwsParseFailure<char>(0, { 0, 1 }, HasSubstr("Cannot parse \"a\" as `float`")));
+        throwsParseFailure(0, { 0, 1 }, HasSubstr("Cannot parse \"a\" as `float`")));
     EXPECT_ISTREAM(is, true, false, 1);
   }
 
@@ -592,7 +592,7 @@ TEST(codec_global, parseRon_float) {
     auto is = io::is(".");
     EXPECT_THAT(
         [&] { parseRon(io::resetg(is), v); },
-        throwsParseFailure<char>(0, { 0, 1 }, HasSubstr("Cannot parse \".\" as `float`")));
+        throwsParseFailure(0, { 0, 1 }, HasSubstr("Cannot parse \".\" as `float`")));
     EXPECT_ISTREAM(is, true, false, 1);
   }
 
@@ -677,7 +677,7 @@ TEST(codec_global, parseRon_float) {
     auto is = io::is("-3.4e");
     EXPECT_THAT(
         [&] { parseRon(io::resetg(is), v); },
-        throwsParseFailure<char>(5, { 5, 6 }, HasSubstr("Expected at least 1 character contained in {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9'}")));
+        throwsParseFailure(5, { 5, 6 }, HasSubstr("Expected at least 1 character contained in {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9'}")));
     EXPECT_ISTREAM(is, true, true, 5);
   }
 
@@ -685,7 +685,7 @@ TEST(codec_global, parseRon_float) {
     auto is = io::is("-3.4E+");
     EXPECT_THAT(
         [&] { parseRon(io::resetg(is), v); },
-        throwsParseFailure<char>(6, { 6, 7 }, HasSubstr("Expected at least 1 character contained in {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9'}")));
+        throwsParseFailure(6, { 6, 7 }, HasSubstr("Expected at least 1 character contained in {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9'}")));
     EXPECT_ISTREAM(is, true, true, 6);
   }
 
@@ -716,7 +716,7 @@ TEST(codec_global, parseRon_float) {
     auto is = io::is("3.4e+39");
     EXPECT_THAT(
         [&] { parseRon(io::resetg(is), v); },
-        throwsParseFailure<char>(0, { 0, 7 }, HasSubstr("Cannot parse \"3.4e+39\" as `float`")));
+        throwsParseFailure(0, { 0, 7 }, HasSubstr("Cannot parse \"3.4e+39\" as `float`")));
     EXPECT_ISTREAM(is, true, false, 7);
   }
 }

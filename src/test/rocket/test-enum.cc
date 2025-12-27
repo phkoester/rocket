@@ -46,15 +46,15 @@ TEST(enum, parse_MyEnum) {
 
   EXPECT_THAT(
       [&] { codec::ron::parse<MyEnum>(""); },
-      throwsParseFailure<char>(0, HasSubstr("EOF")));
+      throwsParseFailure(0, HasSubstr("EOF")));
 
   EXPECT_THAT(
       [&] { codec::ron::parse<MyEnum>("\"\""); },
-      throwsParseFailure<char>(1, { 1, 2 }, HasSubstr("Expected at least 1 character before '\"', got 0")));
+      throwsParseFailure(1, { 1, 2 }, HasSubstr("Expected at least 1 character before '\"', got 0")));
 
   EXPECT_THAT(
       [&] { codec::ron::parse<MyEnum>("\"foo\""); },
-      throwsParseFailure<char>(0, { 0, 5 }, HasSubstr("Cannot parse \"\\\"foo\\\"\" as `MyEnum`")));
+      throwsParseFailure(0, { 0, 5 }, HasSubstr("Cannot parse \"\\\"foo\\\"\" as `MyEnum`")));
 }
 
 TEST(enum, opInput_MyEnum) {
@@ -162,7 +162,7 @@ TEST(enum, parseRon_MyEnum) {
     auto is = io::is("\"\"");
     EXPECT_THAT(
         [&] { parseRon(io::resetg(is), v); },
-        throwsParseFailure<char>(1, { 1, 2 }, HasSubstr("Expected at least 1 character before '\"', got 0")));
+        throwsParseFailure(1, { 1, 2 }, HasSubstr("Expected at least 1 character before '\"', got 0")));
     EXPECT_ISTREAM(is, true, false, 2);
   }
 
@@ -170,7 +170,7 @@ TEST(enum, parseRon_MyEnum) {
     auto is = io::is("\"foo\"");
     EXPECT_THAT(
         [&] { parseRon(io::resetg(is), v); },
-        throwsParseFailure<char>(0, { 0, 5 }, HasSubstr("Cannot parse \"\\\"foo\\\"\" as `MyEnum`")));
+        throwsParseFailure(0, { 0, 5 }, HasSubstr("Cannot parse \"\\\"foo\\\"\" as `MyEnum`")));
     EXPECT_ISTREAM(is, true, false, 5);
   }
 }

@@ -31,10 +31,10 @@ TEST(StringConvert, bool) {
 
   EXPECT_THAT(
       [] { stringToType<type>("foo"); },
-      throwsParseFailure<char>(1, { 0, 2 }, HasSubstr("\"fo\" does not match any of {\"0\", \"1\", \"false\", \"true\"}")));
+      throwsParseFailure(1, { 0, 2 }, HasSubstr("\"fo\" does not match any of {\"0\", \"1\", \"false\", \"true\"}")));
   EXPECT_THAT(
       [] { stringToType<type>("falsex"); },
-      throwsParseFailure<char>(0, { 0, 6 }, HasSubstr("Cannot parse \"falsex\" as `bool`")));
+      throwsParseFailure(0, { 0, 6 }, HasSubstr("Cannot parse \"falsex\" as `bool`")));
 }
 
 TEST(StringConvert, int128_t) {
@@ -45,10 +45,10 @@ TEST(StringConvert, int128_t) {
 
   EXPECT_THAT(
       [] { stringToType<type>("foo"); },
-      throwsParseFailure<char>(0, { 0, 3 }, HasSubstr("Cannot parse \"foo\" as `__int128`")));
+      throwsParseFailure(0, { 0, 3 }, HasSubstr("Cannot parse \"foo\" as `__int128`")));
   EXPECT_THAT(
       [] { stringToType<type>("1x"); },
-      throwsParseFailure<char>(0, { 0, 2 }, HasSubstr("Cannot parse \"1x\" as `__int128`")));
+      throwsParseFailure(0, { 0, 2 }, HasSubstr("Cannot parse \"1x\" as `__int128`")));
 }
 
 TEST(StringConvert, LogLevel) {
@@ -58,10 +58,10 @@ TEST(StringConvert, LogLevel) {
 
   EXPECT_THAT(
       [] { stringToType<type>("foo"); },
-      throwsParseFailure<char>(0, { 0, 3 }, HasSubstr("Cannot parse \"foo\" as `rocket::log::LogLevel")));
+      throwsParseFailure(0, { 0, 3 }, HasSubstr("Cannot parse \"foo\" as `rocket::log::LogLevel")));
   EXPECT_THAT(
       [] { stringToType<type>("tracex"); },
-      throwsParseFailure<char>(0, { 0, 6 }, HasSubstr("Cannot parse \"tracex\" as `rocket::log::LogLevel`")));
+      throwsParseFailure(0, { 0, 6 }, HasSubstr("Cannot parse \"tracex\" as `rocket::log::LogLevel`")));
 }
 
 TEST(StringConvert, long_double) {

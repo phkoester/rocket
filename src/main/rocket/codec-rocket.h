@@ -34,7 +34,7 @@ parseRon(std::istream& is, IntervalImpl<T, Left, Right>& v) {
   ron::parsing::skip(is);
   size_t pos = io::tellg(is);
   try {
-    io::getString<>(is, Symbols::Strings::EmptySet);
+    io::getString(is, Symbols::Strings::EmptySet);
     v = {};
     return is;
   } catch (const io::InputFailure& ex) {
@@ -49,7 +49,7 @@ parseRon(std::istream& is, IntervalImpl<T, Left, Right>& v) {
   if constexpr (not Left::Closed) {
     pos = io::tellg(is);
     try {
-      io::getString<>(is, Symbols::Strings::NegativeInfinity);
+      io::getString(is, Symbols::Strings::NegativeInfinity);
       v.lower = std::nullopt;
       parsed = true;
     } catch (const io::InputFailure&) {
@@ -68,7 +68,7 @@ parseRon(std::istream& is, IntervalImpl<T, Left, Right>& v) {
   if constexpr (not Right::Closed) {
     pos = io::tellg(is);
     try {
-      io::getString<>(is, Symbols::Strings::Infinity);
+      io::getString(is, Symbols::Strings::Infinity);
       v.upper = std::nullopt;
       parsed = true;
     } catch (const io::InputFailure&) {

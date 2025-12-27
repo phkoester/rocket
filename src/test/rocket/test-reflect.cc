@@ -113,14 +113,14 @@ TEST(reflect, parseRon) {
     auto is = io::is("{ä=13, b=\"ho\", =true}");
     EXPECT_THAT(
         [&] { parseRon(io::resetg(is), v); },
-        throwsParseFailure<char>(16, { 16, 17 }, HasSubstr("Expected at least 1 character before whitespace, '=', ',', or '}', got 0")));
+        throwsParseFailure(16, { 16, 17 }, HasSubstr("Expected at least 1 character before whitespace, '=', ',', or '}', got 0")));
   }
 
   {
     auto is = io::is("\t{ä=13, b=\"ho\", charles=true}");
     EXPECT_THAT(
         [&] { parseRon(io::resetg(is), v); },
-        throwsParseFailure<char>(17, { 17, 24 }, HasSubstr("Invalid name: \"charles\"")));
+        throwsParseFailure(17, { 17, 24 }, HasSubstr("Invalid name: \"charles\"")));
   }
 }
 

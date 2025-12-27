@@ -197,13 +197,6 @@ operator>>(istream& lhs, CodePoint& rhs) {
   return lhs;
 }
 
-u32istream&
-operator>>(u32istream& lhs, CodePoint& rhs)  {
-  char32_t c = io::getChar(lhs);
-  rhs = c;
-  return lhs;
-}
-
 ostream&
 operator<<(ostream& lhs, CodePoint rhs) {
   string s = static_cast<string>(rhs);
@@ -247,11 +240,6 @@ Grapheme::print() const {
 
 istream&
 operator>>(istream& lhs, Grapheme& rhs) {
-  return getGrapheme(lhs, rhs);
-}
-
-u32istream&
-operator>>(u32istream& lhs, Grapheme& rhs)  {
   return getGrapheme(lhs, rhs);
 }
 
