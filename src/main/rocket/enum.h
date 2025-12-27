@@ -51,7 +51,7 @@
         v = it->second; \
         return is; \
       } else { \
-        throw ::rocket::io::ParseFailure<char>( \
+        throw ::rocket::io::ParseFailure( \
             is, \
             enumResult.actualInputPos, \
             { enumResult.actualInputPos, enumResult.actualInputPos + enumResult.actualInput.size() }, \

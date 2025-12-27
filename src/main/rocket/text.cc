@@ -240,7 +240,7 @@ printLocations(
     string line = loc.lineString ?
       *loc.lineString :
       string(input->substr(loc.lineRange.lower, *loc.lineRange.size()));
-    escape::Result<char> result;
+    escape::Result result;
     oss.str("");
     oss << escape::escaped<escape::CString>(line, { .tabSize=locationsResult.params.tabSize }, &result);
     string escapedLine = oss.str();

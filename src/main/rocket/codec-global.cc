@@ -55,7 +55,8 @@ parseRon(istream& is, char& v) {
   escape::CString::Params params { .enclosed=true, .quote='\'' };
   escape::Result escapedResult;
   string input;
-  is >> escape::escaped<escape::CString>(input, params, &escapedResult);
+  auto escaped = escape::escaped<escape::CString>(input, params, &escapedResult);
+  is >> escaped;
   if (input.size() != 1 || unicode::countCodePoints(input) != 1) {
     throw io::ParseFailure(is, pos, { pos, io::tellg(is) },
         fmt::format("{}", message::cannotParseAs(escapedResult.input, Type::of<char>())));
@@ -82,7 +83,8 @@ parseRon(istream& is, char32_t& v) {
   escape::CString::Params params { .enclosed=true, .quote='\'' };
   escape::Result escapedResult;
   string input;
-  is >> escape::escaped<escape::CString>(input, params, &escapedResult);
+  auto escaped = escape::escaped<escape::CString>(input, params, &escapedResult);
+  is >> escaped;
   u32string input32 = unicode::utf8To32(input);
   if (input32.size() != 1 || unicode::countCodePoints(input32) != 1) {
     throw io::ParseFailure(is, pos, { pos, io::tellg(is) },

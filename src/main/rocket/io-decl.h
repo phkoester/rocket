@@ -30,54 +30,43 @@ static constexpr size_t MIN_BUFFER_SIZE = 128;
 
 // Functions ------------------------------------------------------------------------------------------------
 
-template<typename C> requires Character<C>
-void check(std::basic_istream<C>&);
+void check(std::istream&);
 
-template<typename C> requires Character<C>
-C getChar(std::basic_istream<C>&);
+char getChar(std::istream&);
 
-template<typename C> requires Character<C>
-C getChar(std::basic_istream<C>&, C);
+char getChar(std::istream&, char);
 
-template<typename C> requires Character<C>
-C getChar(std::basic_istream<C>&, const std::set<C>&);
+char getChar(std::istream&, const std::set<char>&);
 
-template<typename I, typename C> requires Integer<I> && Character<C>
-I getHex(std::basic_istream<C>&, size_t, std::basic_string<C>&);
+template<typename I> requires Integer<I>
+I getHex(std::istream&, size_t, std::string&);
 
-template<typename C> requires Character<C>
-std::basic_string<C>
-getString(std::basic_istream<C>&, const std::set<std::basic_string_view<C>>&);
+std::string
+getString(std::istream&, const std::set<std::string_view>&);
 
-template<typename C = char> requires Character<C>
-std::basic_ispanstream<C> is(
-    std::span<C> = std::span<C>(),
+std::ispanstream is(
+    std::span<char> = std::span<char>(),
     std::ios::openmode = std::ios::in,
     std::ios::iostate = std::ios::badbit);
 
-template<typename C> requires Character<C>
-std::basic_ispanstream<C> is(
-    const C*,
+std::ispanstream is(
+    const char*,
     std::ios::openmode = std::ios::in,
     std::ios::iostate = std::ios::badbit);
 
-template<typename C> requires Character<C>
-std::basic_ispanstream<C> is(
-    const std::basic_string<C>&,
+std::ispanstream is(
+    const std::string&,
     std::ios::openmode = std::ios::in,
     std::ios::iostate = std::ios::badbit);
 
-template<typename C> requires Character<C>
-std::basic_ispanstream<C> is(
-    std::basic_string_view<C>,
+std::ispanstream is(
+    std::string_view,
     std::ios::openmode = std::ios::in,
     std::ios::iostate = std::ios::badbit);
 
-template<typename C> requires Character<C>
-std::basic_istream<C>& seekg(std::basic_istream<C>&, size_t);
+std::istream& seekg(std::istream&, size_t);
 
-template<typename C> requires Character<C>
-size_t tellg(std::basic_istream<C>&) noexcept;
+size_t tellg(std::istream&) noexcept;
 
 } // namespace rocket::io
 

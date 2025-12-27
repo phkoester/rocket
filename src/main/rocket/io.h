@@ -304,7 +304,7 @@ struct Symbols {
   /**
     * Hexadecimal digits: `'0' to `'9'`, `'a'` to `'f'`, `'A'` to `'F'`.
     */
-  static std::set<char> HexDigits;
+  static const std::set<char> HexDigits;
 };
 
 // Functions ------------------------------------------------------------------------------------------------
@@ -316,15 +316,7 @@ struct Symbols {
  * @throw #rocket::io::InputFailure if `is.fail()` returns `true`
  * @throw #rocket::io::ParseFailure if `is.eof()` returns `true`
  */
-void
-check(std::istream& is) {
-  if (is.eof()) {
-    throw ParseFailure(is, tellg(is), "EOF");
-  }
-  if (is.fail()) {
-    throw InputFailure(is);
-  }
-}
+void check(std::istream& is);
 
 /**
  * Returns a file descriptor for an I/O stream.
@@ -333,17 +325,7 @@ check(std::istream& is) {
  * @return `STDOUT_FILENO`, `STDERR_FILENO`, `STDIN_FILENO`, or -1 if a file descriptor cannot be determined
  */
 int
-fd(const std::ios& ios)
-{
-  if (&ios == &std::cout) {
-    return STDOUT_FILENO;
-  } else if (&ios == &std::cerr) {
-    return STDERR_FILENO;
-  } else if (&ios == &std::cin) {
-    return STDIN_FILENO;
-  }
-  return -1;
-}
+fd(const std::ios& ios);
 
 /**
  * Reads a character from the input stream @p is.
@@ -351,12 +333,7 @@ fd(const std::ios& ios)
  * @param is the input stream
  * @return a character
  */
-char
-getChar(std::istream& is) {
-  char c = '\0';
-  is.read(&c, 1);
-  return c;
-}
+char getChar(std::istream& is);
 
 /**
  * Reads a character matching @p v from the input stream @p is.
@@ -367,22 +344,7 @@ getChar(std::istream& is) {
  * @throw #rocket::io::InputFailure if `is.fail()` returns `true`
  * @throw #rocket::io::ParseFailure if `is.eof()` returns `true` or if the read character is not @p v
  */
-char
-getChar(std::istream& is, char v) {
-  ROCKET_CHECK(v, isascii(v));
-
-  size_t inputPos = tellg(is);
-
-  char c = getChar(is);
-  if (is.eof()) {
-    throw ParseFailure(is, inputPos, fmt::format("Expected '{}' got EOF", v)); // XXX
-  }
-  check(is);
-  if (c != v) {
-    throw ParseFailure(is, inputPos, fmt::format("Expected '{}' got '{}'", v, c)); // XXX
-  }
-  return c;
-}
+char getChar(std::istream& is, char v);
 
 /**
  * Reads a character contained in @p values from the input stream @p is.
@@ -394,20 +356,7 @@ getChar(std::istream& is, char v) {
  * @throw #rocket::io::ParseFailure if `is.eof()` returns` true` or if the read character is not
  *     contained in @p values
  */
-char
-getChar(std::istream& is, const std::set<char>& values) {
-  size_t inputPos = tellg(is);
-
-  char c = getChar(is);
-  if (is.eof()) {
-    throw ParseFailure(is, inputPos, fmt::format("Expected any of {} got EOF", values)); // XXX values
-  }
-  check(is);
-  if (not values.contains(c)) {
-    throw ParseFailure(is, inputPos, fmt::format("Expected any of {} got '{}'", values, c)); // XXX values
-  }
-  return c;
-}
+char getChar(std::istream& is, const std::set<char>& values);
 
 /**
  * Reads @p n hexadecimal characters from the input stream @p is and converts them to an integer value.
@@ -428,7 +377,7 @@ getHex(std::istream& is, size_t n, std::string& input) {
   input.clear();
 
   for (size_t i = 0; i < n; ++i) {
-    char c = getChar(is, Symbols::Chars::HexDigits);
+    char c = getChar(is, Symbols::HexDigits);
     input.push_back(c);
   }
 
@@ -452,25 +401,7 @@ getHex(std::istream& is, size_t n, std::string& input) {
  * @return @p v if the expected character @p v was read, otherwise null
  * @throw #rocket::io::InputFailure if `is.fail()` returns `true`
  */
-std::optional<char>
-getOptionalChar(std::istream& is, char v) {
-  ROCKET_CHECK(v, isascii(v));
-
-  size_t inputPos = tellg(is);
-
-  char c = getChar(is);
-  if (is.eof()) {
-    seekg(is, inputPos);
-    return std::nullopt;
-  }
-  check(is);
-
-  if (c != v) {
-    seekg(is, inputPos);
-    return std::nullopt;
-  } else
-    return c;
-}
+std::optional<char> getOptionalChar(std::istream& is, char v);
 
 /**
  * Reads an optional character contained in @p values from the input stream @p is.
@@ -480,23 +411,7 @@ getOptionalChar(std::istream& is, char v) {
  * @return a character contained in @p values if such a character was read, otherwise null
  * @throw #rocket::io::InputFailure if `is.fail()` returns `true`
  */
-std::optional<char>
-getOptionalChar(std::istream& is, const std::set<char>& values) {
-  size_t inputPos = tellg(is);
-
-  char c = getChar(is);
-  if (is.eof()) {
-    seekg(is, inputPos);
-    return std::nullopt;
-  }
-  check(is);
-
-  if (not values.contains(c)) {
-    seekg(is, inputPos);
-    return std::nullopt;
-  } else
-    return c;
-}
+std::optional<char> getOptionalChar(std::istream& is, const std::set<char>& values);
 
 /**
  * Reads the string value @p v from the input stream @p is.
@@ -507,31 +422,7 @@ getOptionalChar(std::istream& is, const std::set<char>& values) {
  * @throw #rocket::io::InputFailure if `is.fail()` returns `true`
  * @throw #rocket::io::ParseFailure if `is.eof()` returns `true` or if the read string is not @p v
  */
-std::string_view
-getString(std::istream& is, std::string_view v) {
-  ROCKET_CHECK(v, not v.empty());
-
-  size_t inputPos = tellg(is);
-
-  auto it = unicode::CodePointIterator<char>(v), end = unicode::CodePointIterator<char>(v, v.size());
-  for (; it != end; ++it) {
-    // Read one code point
-    size_t pos = io::tellg(is);
-    unicode::CodePoint cp;
-    is >> cp;
-    if (is.eof()) {
-      throw ParseFailure(is, pos, { inputPos, pos },
-          fmt::format("{} does not match {}, got EOF", v.substr(0, pos - inputPos), v)); // XXX
-    }
-    check(is);
-
-    if (cp != *it) {
-      throw ParseFailure(is, pos, { inputPos, tellg(is) },
-          fmt::format("{} does not match {}", v.substr(0, pos - inputPos), v)); // XXX
-    }
-  }
-  return v;
-}
+std::string_view getString(std::istream& is, std::string_view v);
 
 /**
  * Reads a string value contained in @p values from the input stream @p is.
@@ -543,63 +434,7 @@ getString(std::istream& is, std::string_view v) {
  * @throw #rocket::io::ParseFailure if `is.eof()` returns `true` or if a string contained in @p values
  *     cannot be read
  */
-std::string
-getString(std::istream& is, const std::set<std::string_view>& values) {
-  std::string ret;
-
-  auto localValues(values);
-
-  size_t inputPos = tellg(is);
-  std::string input; // Input so far
-
-  while (true) {
-    // Read one code point
-    size_t pos = tellg(is);
-    unicode::CodePoint cp;
-    is >> cp;
-    if (is.eof()) {
-      if (not ret.empty()) {
-        seekg(is, pos);
-        return ret;
-      } else {
-        throw ParseFailure(is, pos, { inputPos, tellg(is) },
-            fmt::format("{} does not match any of {}, got EOF", input, values)); // XXX
-      }
-    }
-    check(is);
-
-    // Advance by one code point
-    input.append(static_cast<std::string>(cp));
-
-    // Remove nonmatching values and fully matched value from set
-    bool match = false;
-    for (auto it = localValues.begin(), end = localValues.end(); it != end;) {
-      auto value = *it;
-      if (value.substr(0, input.size()) != input)
-        it = localValues.erase(it);
-      else if (value.size() == input.size()) {
-        match = true;
-        ret = input;
-        it = localValues.erase(it);
-      } else {
-       match = true;
-       ++it;
-      }
-    }
-
-    // Finished?
-    if (localValues.empty()) {
-      if (not ret.empty()) {
-        if (not match)
-          seekg(is, pos);
-        return ret;
-      } else {
-        throw ParseFailure(is, pos, { inputPos, tellg(is) },
-            fmt::format("{} does not match any of {}, got EOF", input, values)); // XXX
-      }
-    }
-  }
-}
+std::string getString(std::istream& is, const std::set<std::string_view>& values);
 
 /**
  * Reads from the input stream @p is until the delimiter @p delimiter is read.
@@ -615,34 +450,7 @@ getString(std::istream& is, const std::set<std::string_view>& values) {
  * @throw #rocket::io::InputFailure if `is.fail()` returns `true`
  * @throw #rocket::io::ParseFailure if `is.eof()` returns `true`
  */
-std::string
-getUntil(std::istream& is, char delimiter, bool consumeDelimiter, size_t min) {
-  ROCKET_CHECK(delimiter, isascii(delimiter));
-
-  size_t inputPos = tellg(is);
-  std::string input;
-
-  while (true) {
-    size_t pos = tellg(is);
-    char c = getChar(is);
-    if (is.eof()) {
-      throw ParseFailure(is, pos, fmt::format("Seeking {}, got EOF", delimiter)); // XXX
-    }
-    check(is);
-
-    if (c == delimiter) {
-      if (not consumeDelimiter) {
-        is.putback(c);
-      }
-      if (input.size() < min) {
-        throw ParseFailure(is, pos, { inputPos, inputPos + min },
-            fmt::format("Expected at least {} before {}, got {}", noun::character(min), delimiter, input.size())); // XXX
-      }
-      return input;
-    }
-    input.push_back(c);
-  }
-}
+std::string getUntil(std::istream& is, char delimiter, bool consumeDelimiter, size_t min);
 
 /**
  * Reads from the input stream @p is until the function @p delimiter returns `true`.
@@ -665,30 +473,7 @@ getUntil(
     std::function<bool(char)> delimiter,
     std::string_view delimiterDescription,
     bool consumeDelimiter,
-    size_t min) {
-  size_t inputPos = tellg(is);
-  std::string input;
-
-  while (true) {
-    size_t pos = tellg(is);
-    char c = getChar(is);
-    if (is.eof()) {
-      throw ParseFailure(is, pos, fmt::format("Seeking {:?}, got EOF", delimiterDescription)); // XXX
-    }
-    check(is);
-
-    if (delimiter(c)) {
-      if (not consumeDelimiter)
-        is.putback(c);
-      if (input.size() < min) {
-        throw ParseFailure(is, pos, { inputPos, inputPos + min },
-            fmt::format("Expected at least {} before {}, got {}", noun::character(min), delimiterDescription, input.size())); // XXX
-      }
-      return input;
-    }
-    input.push_back(c);
-  }
-}
+    size_t min);
 
 /**
  * Reads from the input stream @p is while the read characters are contained in @p values.
@@ -703,38 +488,7 @@ getUntil(
  * @throw #rocket::io::ParseFailure if `is.eof()` returns `true` or if less than @p min characters were
  *     read
  */
-std::string
-getWhile(std::istream& is, const std::set<char>& values, size_t min) {
-  size_t inputPos = tellg(is);
-  std::string input;
-
-  while (true) {
-    size_t pos = tellg(is);
-    char c = getChar(is);
-    if (is.eof()) {
-      if (input.size() >= min) {
-        seekg(is, pos);
-        return input;
-      } else {
-        throw ParseFailure(is, pos, { inputPos, inputPos + min },
-            fmt::format("Expected at least {} contained in {}, got {} and EOF", noun::character(min), values, input.size())); // XXX
-      }
-    }
-    check(is);
-
-    if (values.contains(c)) {
-      input.push_back(c);
-    } else {
-      if (input.size() >= min) {
-        seekg(is, pos);
-        return input;
-      } else {
-        throw ParseFailure(is, pos, { inputPos, inputPos + min },
-            fmt::format("Expected at least {} contained in {}, got {} and {}", noun::character(min), values, input.size(), c)); // XXX
-      }
-    }
-  }
-}
+std::string getWhile(std::istream& is, const std::set<char>& values, size_t min);
 
 /**
  * Makes an input stream for a span.
@@ -744,12 +498,7 @@ getWhile(std::istream& is, const std::set<char>& values, size_t min) {
  * @param exceptions the exception mask
  * @return an input stream
  */
-std::ispanstream
-is(std::span<char> v, std::ios::openmode mode, std::ios::iostate exceptions) {
-  auto ret = std::ispanstream(v, mode);
-  ret.exceptions(exceptions);
-  return ret;
-}
+std::ispanstream is(std::span<char> v, std::ios::openmode mode, std::ios::iostate exceptions);
 
 /**
  * Makes an input stream for a C string.
@@ -797,7 +546,7 @@ is(std::string_view s, std::ios::openmode mode, std::ios::iostate exceptions) {
  * @return `true` if @p ios is connected to a terminal
  */
 bool
-isatty(const std::ios& ios) {
+inline isatty(const std::ios& ios) {
   return ::isatty(fd(ios));
 }
 
@@ -823,16 +572,7 @@ resetg(std::istream& is) noexcept {
  * @throw std::ios::failure from `std::istream::seekg`
  * @return @p is
  */
-std::istream&
-seekg(std::istream& is, size_t position) {
-  const auto state = is.rdstate();
-  // Clear `eofbit` and `failbit`, leave `badbit` unchanged
-  is.clear(state & ~(std::ios::eofbit | std::ios::failbit));
-  typename std::istream::pos_type seekg = position;
-  ROCKET_CHECK(position, seekg >= 0, "{}", message::overflow(Type::of(seekg)));
-  // This might throw due to `badbit`, which is okay
-  return is.seekg(seekg);
-}
+std::istream& seekg(std::istream& is, size_t position);
 
 /**
  * Similar to `std::istream::seekg`, but clears `std::ios::eofbit` and `std::ios::failbit` in advance.
@@ -846,16 +586,7 @@ seekg(std::istream& is, size_t position) {
  * @throw std::ios::failure from `std::istream::seekg`
  * @return @p is
  */
-std::istream&
-seekg(std::istream& is, size_t position, std::ios::seekdir dir) {
-  const auto state = is.rdstate();
-  // Clear `eofbit` and `failbit`, leave `badbit` unchanged
-  is.clear(state & ~(std::ios::eofbit | std::ios::failbit));
-  typename std::istream::pos_type seekg = position;
-  ROCKET_CHECK(position, seekg >= 0, "{}", message::overflow(Type::of(seekg)));
-  // This might throw due to `badbit`, which is okay
-  return is.seekg(seekg, dir);
-}
+std::istream& seekg(std::istream& is, size_t position, std::ios::seekdir dir);
 
 /**
  * Similar to `std::istream::tellg`, but leaves @p is unchanged and returns the actual current
@@ -866,33 +597,7 @@ seekg(std::istream& is, size_t position, std::ios::seekdir dir) {
  * @param is the input stream
  * @return the actual current position as a `size_t`
  */
-size_t
-tellg(std::istream& is) noexcept {
-  const auto state = is.rdstate();
-
-  // Clear all bits
-  is.clear();
-  // This is expected to never throw, otherwise this implementation is flawed
-  auto tellg = is.tellg();
-  ROCKET_ASSERT(tellg >= 0);
-
-  // Restore the state
-  if ((is.exceptions() & state) == 0) {
-    // Restore the state without exception
-    is.clear(state);
-  } else {
-    // Restore the state with exception
-    try {
-      is.clear(state);
-    } catch (const std::ios::failure&) {
-      // Nothing to do, we want to catch this silently
-    } catch (...) {
-      ROCKET_PROCESS_ERROR("`is.clear()` failed");
-    }
-  }
-
-  return tellg;
-}
+size_t tellg(std::istream& is) noexcept;
 
 } // namespace rocket::io
 
@@ -907,13 +612,7 @@ namespace std {
  * @param rhs the input stream to read
  * @return lhs
  */
-string&
-operator<<(std::string& lhs, const istream& rhs) {
-  ostringstream os;
-  os << rhs.rdbuf();
-  lhs.append(os.str());
-  return lhs;
-}
+string& operator<<(string& lhs, const istream& rhs);
 
 } // namespace std
 

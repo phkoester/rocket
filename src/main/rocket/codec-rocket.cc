@@ -31,12 +31,12 @@ parseRon(istream& is, CodePoint& v) {
   size_t inputPos = io::tellg(is);
 
   // "U+"
-  io::getString<char>(is, "U+");
-  string input = io::getWhile(is, io::Symbols<char>::Chars::HexDigits, 4);
+  io::getString(is, "U+");
+  string input = io::getWhile(is, io::Symbols::HexDigits, 4);
 
   // Hex digits
   if (input.size() > 8) {
-    throw io::ParseFailure<char>(is, inputPos + 2 + 8, { inputPos, io::tellg(is) },
+    throw io::ParseFailure(is, inputPos + 2 + 8, { inputPos, io::tellg(is) },
         fmt::format("Expected at most 8 hexadecimal characters, got {}", input.size()));
   }
 
@@ -58,11 +58,12 @@ parseRon(istream& is, Grapheme& v) {
 
   // Unescape
   escape::CString::Params params { .enclosed=true, .quote='"' };
-  escape::Result<char> escapedResult;
+  escape::Result escapedResult;
   string input;
-  is >> escape::escaped<escape::CString>(input, params, &escapedResult);
+  auto escaped = escape::escaped<escape::CString>(input, params, &escapedResult);
+  is >> escaped;
   if (unicode::countGraphemes(input) != 1) {
-    throw io::ParseFailure<char>(is, pos, { pos, io::tellg(is) },
+    throw io::ParseFailure(is, pos, { pos, io::tellg(is) },
         message::cannotParseAs(escapedResult.input, Type::of<Grapheme>()));
   }
   v = Grapheme(input);

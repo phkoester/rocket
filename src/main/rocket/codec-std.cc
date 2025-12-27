@@ -28,7 +28,8 @@ parseRon(istream& is, string& v) {
   // Unescape
   escape::CString::Params params { .enclosed=true, .quote='"' };
   string input;
-  is >> escape::escaped<escape::CString>(input, params);
+  auto escaped = escape::escaped<escape::CString>(input, params);
+  is >> escaped;
   v = input;
   return is;
 }
@@ -41,7 +42,8 @@ parseRon(istream& is, u32string& v) {
   // Unescape
   escape::CString::Params params { .enclosed=true, .quote='"' };
   string input;
-  is >> escape::escaped<escape::CString>(input, params);
+  auto escaped = escape::escaped<escape::CString>(input, params);
+  is >> escaped;
   v = unicode::utf8To32(input);
   return is;
 }
