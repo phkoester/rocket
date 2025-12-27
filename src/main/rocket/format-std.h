@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include "format-global.h"
+#include "format.h"
 
 /// This requires modifying `fmt/std.h`!
 #define FMT_STD_NO_OPTIONAL
@@ -53,7 +53,7 @@ template<typename Char> struct formatter<std::monostate, Char> {
   template<typename FormatContext>
   constexpr auto
   format(const std::monostate&, FormatContext& ctx) const -> decltype(ctx.out()) {
-    return detail::write<Char>(ctx.out(), "monostate");
+    return detail::write<Char>(ctx.out(), "<monostate>");
   }
 
   constexpr const Char*

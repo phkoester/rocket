@@ -14,12 +14,12 @@ using namespace std;
 
 // `TEST` ---------------------------------------------------------------------------------------------------
 
-TEST(format_global, formatBool) {
+TEST(format_global, boolFormat) {
   EXPECT_EQ(fmt::format("{}", false), "false");
   EXPECT_EQ(fmt::format("{}", true), "true");
 }
 
-TEST(format_global, formatChar) {
+TEST(format_global, charFormat) {
   EXPECT_EQ(fmt::format("{}", 'a'), "a");
   EXPECT_EQ(fmt::format("{:?}", 'a'), "'a'");
   EXPECT_EQ(fmt::format("{}", '\x01'), "\x01");
@@ -27,61 +27,57 @@ TEST(format_global, formatChar) {
   EXPECT_EQ(fmt::format("{:?}", '\xff'), "'\\xff'");
 }
 
-TEST(format_global, formatChar32) {
-  EXPECT_EQ(fmt::format("{}", U'a'), "a");
-}
-
-TEST(format_global, formatUnsignedChar) {
+TEST(format_global, unsignedCharFormat) {
   EXPECT_EQ(fmt::format("{}", static_cast<unsigned char>('a')), "97");
   EXPECT_EQ(fmt::format("{:X}", static_cast<unsigned char>(-1)), "FF");
   EXPECT_EQ(fmt::format("{:#x}", static_cast<unsigned char>(-1)), "0xff");
 }
 
-// No support for `char32_t`
+// No support for `char32_t`! Instead, `rocket::unicode::CodePoint` may be used.
 
-TEST(format_global, formatInt8) {
+TEST(format_global, int8Format) {
   EXPECT_EQ(fmt::format("{:+}", static_cast<int8_t>(42)), "+42");
 }
 
-TEST(format_global, formatUint8) {
+TEST(format_global, uint8Format) {
   EXPECT_EQ(fmt::format("{}", static_cast<uint8_t>(-1)), "255");
 }
 
-TEST(format_global, formatInt16) {
+TEST(format_global, int16Format) {
   EXPECT_EQ(fmt::format("{:+}", static_cast<int16_t>(42)), "+42");
 }
 
-TEST(format_global, formatUint16) {
+TEST(format_global, uint16Format) {
   EXPECT_EQ(fmt::format("{}", static_cast<uint16_t>(-1)), "65535");
 }
 
-TEST(format_global, formatInt32) {
+TEST(format_global, int32Format) {
   EXPECT_EQ(fmt::format("{:+}", static_cast<int32_t>(42)), "+42");
 }
 
-TEST(format_global, formatUint32) {
+TEST(format_global, uint32Format) {
   EXPECT_EQ(fmt::format("{}", static_cast<uint32_t>(-1)), "4294967295");
 }
 
-TEST(format_global, formatInt64) {
+TEST(format_global, int64Format) {
   EXPECT_EQ(fmt::format("{:+}", static_cast<int64_t>(42)), "+42");
 }
 
-TEST(format_global, formatUint64) {
+TEST(format_global, uint64Format) {
   EXPECT_EQ(fmt::format("{}", static_cast<uint64_t>(-1)), "18446744073709551615");
 }
 
-TEST(format_global, formatInt128) {
+TEST(format_global, int128Format) {
   static_assert(sizeof(int128_t) == 16);
   EXPECT_EQ(fmt::format("{:+}", static_cast<int128_t>(42)), "+42");
 }
 
-TEST(format_global, formatUint128) {
+TEST(format_global, uint128Format) {
   static_assert(sizeof(uint128_t) == 16);
   EXPECT_EQ(fmt::format("{}", static_cast<uint128_t>(-1)), "340282366920938463463374607431768211455");
 }
 
-TEST(format_global, formatFloat) {
+TEST(format_global, floatFormat) {
   static_assert(sizeof(float) == 4);
 
   EXPECT_EQ(fmt::format("{}", numeric_limits<float>::quiet_NaN()), "nan");
@@ -96,7 +92,7 @@ TEST(format_global, formatFloat) {
   EXPECT_EQ(fmt::format("{:.5}", 1.0f / 3), "0.33333");
 }
 
-TEST(format_global, formatDouble) {
+TEST(format_global, doubleFormat) {
   static_assert(sizeof(double) == 8);
 
   EXPECT_EQ(fmt::format("{:.5}", 0.999'999), "1");
@@ -106,7 +102,7 @@ TEST(format_global, formatDouble) {
   EXPECT_EQ(fmt::format("{:.5}", 1.0 / 3), "0.33333");
 }
 
-TEST(format_global, formatLongDouble) {
+TEST(format_global, longDoubleFormat) {
   static_assert(sizeof(long double) == 16);
 
   EXPECT_EQ(fmt::format("{:.5}", 0.999'999L), "1");
@@ -116,7 +112,7 @@ TEST(format_global, formatLongDouble) {
   EXPECT_EQ(fmt::format("{:.5}", 1.0L / 3), "0.33333");
 }
 
-TEST(format_global, charPtr) {
+TEST(format_global, charPtrFormat) {
   EXPECT_EQ(fmt::format("{}", "hello"), "hello");
   EXPECT_EQ(fmt::format("{:?}", "hello"), "\"hello\"");
   EXPECT_EQ(fmt::format("{}", "a\bc"), "a\bc");
