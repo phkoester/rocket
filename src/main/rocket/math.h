@@ -423,7 +423,7 @@ operator|=(const IntervalImpl<T, Left, Right>& lhs, const IntervalImpl<T, Left, 
 
 } // namespace rocket::math
 
-// `IntervalImpl` (namespace `fmt`) -------------------------------------------------------------------------
+// `fmt::formatter<IntervalImpl> ----------------------------------------------------------------------------
 
 template<typename T, typename Left, typename Right, typename Char>
 struct fmt::formatter<rocket::math::IntervalImpl<T, Left, Right>, Char> {
@@ -461,7 +461,7 @@ struct fmt::formatter<rocket::math::IntervalImpl<T, Left, Right>, Char> {
     return underlying_.parse(ctx);
   }
 
-  private:
+private:
 
   fmt::formatter<T> underlying_;
 };

@@ -92,7 +92,7 @@
     template<typename Char> \
     template<typename FormatContext> \
     auto \
-    ::fmt::formatter<ns::type, Char>::format(ns::type v, FormatContext& ctx) const -> decltype(ctx.out()) { \
+    fmt::formatter<ns::type, Char>::format(ns::type v, FormatContext& ctx) const -> decltype(ctx.out()) { \
       if (auto it = ns::_name##Map__.left.find(v); it != ns::_name##Map__.left.end()) \
         return Base::format(it->second, ctx); \
       else \

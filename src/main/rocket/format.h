@@ -79,7 +79,7 @@ private:
 
 } // namespace rocket::format
 
-// `Format` (namespace `fmt`) -------------------------------------------------------------------------------
+// `fmt::formatter<Format>`----------------------------------------------------------------------------------
 
 /// @spec_fmt_formatter{#rocket::format::Format)
 template<typename Char>

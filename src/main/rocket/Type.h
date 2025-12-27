@@ -108,7 +108,7 @@ hash_value(const Type& v) {
 
 } // namespace rocket
 
-// `Type` (namespace `fmt`) ---------------------------------------------------------------------------------
+// `fmt::formatter<Type>` -----------------------------------------------------------------------------------
 
 /// @spec_fmt_formatter{#rocket::Type)
 template<typename Char>
@@ -131,7 +131,7 @@ struct fmt::formatter<rocket::Type, Char> : formatter<string_view, Char> {
   }
 };
 
-// `Type` (namespace `std`) ---------------------------------------------------------------------------------
+// `std::hash<Type>` ----------------------------------------------------------------------------------------
 
 /// @spec_std_hash{#rocket::Type}
 template<>

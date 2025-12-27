@@ -177,7 +177,7 @@ std::ostream& operator<<(std::ostream& lhs, CodePoint rhs);
 
 } // namespace rocket::unicode
 
-// `CodePoint` (namespace `fmt`) ----------------------------------------------------------------------------
+// `fmt::formatter<CodePoint>` ------------------------------------------------------------------------------
 
 /// @spec_fmt_formatter{#rocket::unicode::CodePoint}
 template<typename Char>
@@ -194,6 +194,40 @@ struct fmt::formatter<rocket::unicode::CodePoint, Char> :
       return Base::format(static_cast<std::string>(v), ctx);
     }
   }
+};
+
+// `std::hash<CodePoint>` -----------------------------------------------------------------------------------
+
+/// @spec_std_hash{#rocket::unicode::CodePoint}
+template<>
+struct std::hash<rocket::unicode::CodePoint> {
+  /**
+   * Returns a hash value for @p v.
+   *
+   * @param v the value to hash
+   * @return a hash value
+   */
+  inline size_t operator()(rocket::unicode::CodePoint v) const { return v.hash(); }
+};
+
+// `std::numeric_limits<CodePoint>` -------------------------------------------------------------------------
+
+/// @spec_std_numeric_limits{#rocket::unicode::CodePoint}
+template<>
+struct std::numeric_limits<rocket::unicode::CodePoint> {
+  /**
+   * Returns the minimum code-point value, which is U+0000.
+   *
+   * @return the minimum code-point value
+   */
+  static consteval rocket::unicode::CodePoint min() { return 0U; }
+
+  /**
+   * Returns the maximum code-point value, which is U+10FFFF.
+   *
+   * @return the maximum code-point value
+   */
+  static consteval rocket::unicode::CodePoint max() { return 0x10ffffU; } // U+10FFFF (1,114,111)
 };
 
 namespace rocket::unicode {
@@ -376,7 +410,7 @@ std::ostream& operator<<(std::ostream& lhs, const Grapheme& rhs);
 
 } // namespace rocket::unicode
 
-// `Grapheme` (namespace `fmt`) ----------------------------------------------------------------------------
+// `fmt::formatter<Grapheme>` -------------------------------------------------------------------------------
 
 /// @spec_fmt_formatter{#rocket::unicode::Grapheme}
 template<typename Char>
@@ -392,7 +426,7 @@ struct fmt::formatter<rocket::unicode::Grapheme, Char> : rocket::format::NativeF
 
 namespace rocket::unicode {
 
-  // `Graphemes` ----------------------------------------------------------------------------------------------
+// `Graphemes` ----------------------------------------------------------------------------------------------
 
 /**
  * A grapheme container.
@@ -575,41 +609,5 @@ using utf8::graphemes;
 using utf32::graphemes;
 
 } // namespace rocket::unicode
-
-namespace std {
-
-// `CodePoint` (namespace `std`) ----------------------------------------------------------------------------
-
-/// @spec_std_hash{#rocket::unicode::CodePoint}
-template<>
-struct hash<rocket::unicode::CodePoint> {
-  /**
-   * Returns a hash value for @p v.
-   *
-   * @param v the value to hash
-   * @return a hash value
-   */
-  inline size_t operator()(rocket::unicode::CodePoint v) const { return v.hash(); }
-};
-
-/// @spec_std_numeric_limits{#rocket::unicode::CodePoint}
-template<>
-struct numeric_limits<rocket::unicode::CodePoint> {
-  /**
-   * Returns the minimum code-point value, which is U+0000.
-   *
-   * @return the minimum code-point value
-   */
-  static consteval rocket::unicode::CodePoint min() { return 0U; }
-
-  /**
-   * Returns the maximum code-point value, which is U+10FFFF.
-   *
-   * @return the maximum code-point value
-   */
-  static consteval rocket::unicode::CodePoint max() { return 0x10ffffU; } // U+10FFFF (1,114,111)
-};
-
-} // namespace std
 
 // EOF
