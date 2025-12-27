@@ -141,16 +141,10 @@ Buffer::put(const vector<byte>& bytes) {
 
 // `Symbols` ------------------------------------------------------------------------------------------------
 
-const set<char> Symbols<char>::Chars::HexDigits {
+const set<char> Symbols::HexDigits {
   '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
   'a', 'b', 'c', 'd', 'e', 'f',
   'A', 'B', 'C', 'D', 'E', 'F'
-};
-
-const set<char32_t> Symbols<char32_t>::Chars::HexDigits {
-  U'0', U'1', U'2', U'3', U'4', U'5', U'6', U'7', U'8', U'9',
-  U'a', U'b', U'c', U'd', U'e', U'f',
-  U'A', U'B', U'C', U'D', U'E', U'F'
 };
 
 } // namespace rocket::io

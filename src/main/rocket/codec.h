@@ -196,7 +196,7 @@ getInteger(std::istream& is) {
   auto localIs = io::is(localInput);
   localIs >> ret;
   if (localIs.fail() || io::tellg(localIs) != localInput.size()) {
-    throw io::ParseFailure<char>(is, inputPos, { inputPos, inputPos + input.size() },
+    throw io::ParseFailure(is, inputPos, { inputPos, inputPos + input.size() },
         message::cannotParseAs(input, Type::of<I>()));
   }
   return ret;
@@ -246,7 +246,7 @@ getFloatingPoint(std::istream& is, int precision = DEFAULT_PRECISION) {
       return limits.quiet_NaN();
     else // `Symbols::Nan`, `Symbols::Snan`
       return limits.signaling_NaN();
-  } catch (io::InputFailure<char>&) {
+  } catch (io::InputFailure&) {
     // Reset the stream, continue
     io::seekg(is, inputPos);
   }
@@ -298,7 +298,7 @@ getFloatingPoint(std::istream& is, int precision = DEFAULT_PRECISION) {
   if (input.empty()) {
     char c = io::getChar(is); // cppcheck-suppress shadowVariable
     if (is.eof()) {
-      throw io::ParseFailure<char>(is, inputPos, "Expected a character, got EOF");
+      throw io::ParseFailure(is, inputPos, "Expected a character, got EOF");
     }
     io::check(is);
     input.push_back(c);
@@ -313,7 +313,7 @@ getFloatingPoint(std::istream& is, int precision = DEFAULT_PRECISION) {
   auto localIs = io::is(localInput);
   localIs >> std::setprecision(DEFAULT_PRECISION) >> ret;
   if (localIs.fail() || io::tellg(localIs) != localInput.size()) {
-    throw io::ParseFailure<char>(is, inputPos, { inputPos, inputPos + input.size() },
+    throw io::ParseFailure(is, inputPos, { inputPos, inputPos + input.size() },
         fmt::format("{}", message::cannotParseAs(input, Type::of<F>())));
   }
   return ret;
@@ -488,7 +488,7 @@ parseVariantImpl(std::istream& is, size_t first, size_t last, Variant& v, size_t
       return parseVariantImpl<Variant, Index + 1>(is, first, last, v, index);
     }
   } else {
-    throw io::ParseFailure<char>(is, first, { first, last }, fmt::format("Invalid index: {}", index));
+    throw io::ParseFailure(is, first, { first, last }, fmt::format("Invalid index: {}", index));
   }
 }
 
@@ -587,7 +587,7 @@ parse(std::string_view s) {
 
   parsing::skip(is, false);
   if (not is.eof()) {
-    throw io::ParseFailure<char>(is, 0, { 0, s.size() },
+    throw io::ParseFailure(is, 0, { 0, s.size() },
         message::cannotParseAs(s, Type::of<T>()));
   }
 

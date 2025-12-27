@@ -34,10 +34,10 @@ parseRon(istream& is, optional<T>& v) {
 
   // Try "null"
   try {
-    rocket::io::getString<char>(is, "null");
+    rocket::io::getString(is, "null");
     v.reset();
     return is;
-  } catch (const rocket::io::InputFailure<char>&) {
+  } catch (const rocket::io::InputFailure&) {
     // Reset the stream, continue
     rocket::io::seekg(is, inputPos);
   }

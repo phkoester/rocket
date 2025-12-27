@@ -12,7 +12,6 @@
 #include "Guard.h"
 #include "Process.h"
 #include "assert.h"
-#include "base.h"
 #include "message.h"
 #include "noun.h"
 #include "unicode.h"
@@ -118,10 +117,7 @@ private:
 
 /**
  * Instances of this class are thrown when reading from an input stream failed.
- *
- * @tparam C the character type
  */
-template<typename C> requires Character<C>
 struct InputFailure : std::ios_base::failure, Exception {
   /// @type_base
   using Base = std::ios_base::failure;
@@ -138,7 +134,7 @@ struct InputFailure : std::ios_base::failure, Exception {
    * @param st the stack trace
    */
   explicit InputFailure(
-      std::basic_istream<C>& is,
+      std::istream& is,
       std::optional<std::source_location>&& sl = ROCKET_EXCEPT_SL,
       std::optional<std::stacktrace>&& st = ROCKET_EXCEPT_ST) :
       InputFailure(is, io::tellg(is), std::move(sl), std::move(st)) {}
@@ -154,7 +150,7 @@ struct InputFailure : std::ios_base::failure, Exception {
    * @param st the stack trace
    */
   explicit InputFailure(
-      std::basic_istream<C>& is,
+      std::istream& is,
       size_t position,
       std::optional<std::source_location>&& sl = ROCKET_EXCEPT_SL,
       std::optional<std::stacktrace>&& st = ROCKET_EXCEPT_ST) :
@@ -173,11 +169,11 @@ struct InputFailure : std::ios_base::failure, Exception {
    * @param st the stack trace
    */
   InputFailure(
-      std::basic_istream<C>& is,
+      std::istream& is,
       std::string_view msg,
       std::optional<std::source_location>&& sl = ROCKET_EXCEPT_SL,
       std::optional<std::stacktrace>&& st = ROCKET_EXCEPT_ST) :
-      InputFailure(is, io::tellg(is), msg, std::move(sl), std::move(sl)) {}
+      InputFailure(is, io::tellg(is), msg, std::move(sl), std::move(st)) {}
 
   /**
    * @ctor
@@ -191,7 +187,7 @@ struct InputFailure : std::ios_base::failure, Exception {
    * @param st the stack trace
    */
   InputFailure(
-      std::basic_istream<C>& is,
+      std::istream& is,
       size_t position,
       std::string_view msg,
       std::optional<std::source_location>&& sl = ROCKET_EXCEPT_SL,
@@ -220,12 +216,10 @@ private:
 /**
  * Instances of this class are thrown when parsing from an input stream fails.
  *
- * @tparam C the character type
  */
-template<typename C> requires Character<C>
-struct ParseFailure : InputFailure<C> {
+struct ParseFailure : InputFailure {
   /// @type_base
-  using Base = InputFailure<C>;
+  using Base = InputFailure;
 
   /**
    * @ctor
@@ -239,7 +233,7 @@ struct ParseFailure : InputFailure<C> {
    * @param st the stack trace
    */
   ParseFailure(
-      std::basic_istream<C>& is,
+      std::istream& is,
       size_t position,
       std::string_view msg,
       std::optional<std::source_location>&& sl = ROCKET_EXCEPT_SL,
@@ -259,7 +253,7 @@ struct ParseFailure : InputFailure<C> {
    * @param st the stack trace
    */
   ParseFailure(
-      std::basic_istream<C>& is,
+      std::istream& is,
       size_t position,
       text::Range range,
       std::string_view msg,
@@ -280,7 +274,7 @@ struct ParseFailure : InputFailure<C> {
    * @param st the stack trace
    */
   ParseFailure(
-      std::basic_istream<C>& is,
+      std::istream& is,
       size_t position,
       std::initializer_list<text::Range> ranges,
       std::string_view msg,
@@ -303,37 +297,14 @@ private:
 
 // `Symbols` ------------------------------------------------------------------------------------------------
 
-template<typename C> requires Character<C>
-struct Symbols;
-
 /**
- * Predefined `char` symbols.
+ * Predefined symbols.
  */
-template<>
-struct Symbols<char> {
-  /// Character sets.
-  struct Chars {
-    /**
-     * Hexadecimal digits: <code>'0'</code> to <code>'9'</code>, <code>'a'</code> to <code>'f'</code>,
-     * <code>'A'</code> to <code>'F'</code>.
-     */
-    static const std::set<char> HexDigits;
-  };
-};
-
-/**
- * Predefined `char32_t` symbols.
- */
-template<>
-struct Symbols<char32_t> {
-  /// Character sets.
-  struct Chars {
-    /**
-     * Hexadecimal digits: <code>U'0'</code> to <code>>U'9'</code>, <code>U'a'</code> to <code>U'f'</code>,
-     * <code>U'A'</code> to <code>U'F'</code>.
-     */
-    static const std::set<char32_t> HexDigits;
-  };
+struct Symbols {
+  /**
+    * Hexadecimal digits: `'0' to `'9'`, `'a'` to `'f'`, `'A'` to `'F'`.
+    */
+  static std::set<char> HexDigits;
 };
 
 // Functions ------------------------------------------------------------------------------------------------
@@ -341,41 +312,35 @@ struct Symbols<char32_t> {
 /**
  * Checks the state of the input stream @p is.
  *
- * @tparam C the character type
  * @param is the input stream
  * @throw #rocket::io::InputFailure if `is.fail()` returns `true`
  * @throw #rocket::io::ParseFailure if `is.eof()` returns `true`
  */
-template<typename C> requires Character<C>
 void
-check(std::basic_istream<C>& is) {
+check(std::istream& is) {
   if (is.eof()) {
-    throw ParseFailure<C>(is, tellg(is), "EOF");
+    throw ParseFailure(is, tellg(is), "EOF");
   }
   if (is.fail()) {
-    throw InputFailure<C>(is);
+    throw InputFailure(is);
   }
 }
 
 /**
  * Returns a file descriptor for an I/O stream.
  *
- * @tparam C the character type
  * @param ios the stream
  * @return `STDOUT_FILENO`, `STDERR_FILENO`, `STDIN_FILENO`, or -1 if a file descriptor cannot be determined
  */
-template<typename C> requires Character<C>
 int
-fd(const std::basic_ios<C>& ios)
+fd(const std::ios& ios)
 {
-  if constexpr (std::is_same_v<C, char>) {
-    if (&ios == &std::cout) {
-      return STDOUT_FILENO;
-    } else if (&ios == &std::cerr) {
-      return STDERR_FILENO;
-    } else if (&ios == &std::cin) {
-      return STDIN_FILENO;
-    }
+  if (&ios == &std::cout) {
+    return STDOUT_FILENO;
+  } else if (&ios == &std::cerr) {
+    return STDERR_FILENO;
+  } else if (&ios == &std::cin) {
+    return STDIN_FILENO;
   }
   return -1;
 }
@@ -383,14 +348,12 @@ fd(const std::basic_ios<C>& ios)
 /**
  * Reads a character from the input stream @p is.
  *
- * @tparam C the character type
  * @param is the input stream
  * @return a character
  */
-template<typename C> requires Character<C>
-C
-getChar(std::basic_istream<C>& is) {
-  C c(0);
+char
+getChar(std::istream& is) {
+  char c = '\0';
   is.read(&c, 1);
   return c;
 }
@@ -398,27 +361,25 @@ getChar(std::basic_istream<C>& is) {
 /**
  * Reads a character matching @p v from the input stream @p is.
  *
- * @tparam C the character type
  * @param is the input stream
  * @param v the expected character. This must be an ASCII character in the range [0,127]
  * @return @p v
  * @throw #rocket::io::InputFailure if `is.fail()` returns `true`
  * @throw #rocket::io::ParseFailure if `is.eof()` returns `true` or if the read character is not @p v
  */
-template<typename C> requires Character<C>
-C
-getChar(std::basic_istream<C>& is, C v) {
+char
+getChar(std::istream& is, char v) {
   ROCKET_CHECK(v, isascii(v));
 
   size_t inputPos = tellg(is);
 
-  C c = getChar(is);
+  char c = getChar(is);
   if (is.eof()) {
-    throw ParseFailure<C>(is, inputPos, fmt::format("Expected '{}' got EOF", v)); // XXX
+    throw ParseFailure(is, inputPos, fmt::format("Expected '{}' got EOF", v)); // XXX
   }
   check(is);
   if (c != v) {
-    throw ParseFailure<C>(is, inputPos, fmt::format("Expected '{}' got '{}'", v, c)); // XXX
+    throw ParseFailure(is, inputPos, fmt::format("Expected '{}' got '{}'", v, c)); // XXX
   }
   return c;
 }
@@ -426,7 +387,6 @@ getChar(std::basic_istream<C>& is, C v) {
 /**
  * Reads a character contained in @p values from the input stream @p is.
  *
- * @tparam C the character type
  * @param is the input stream
  * @param values expected characters. These must be ASCII characters in the range [0,127]
  * @return a character contained in @p values
@@ -434,18 +394,17 @@ getChar(std::basic_istream<C>& is, C v) {
  * @throw #rocket::io::ParseFailure if `is.eof()` returns` true` or if the read character is not
  *     contained in @p values
  */
-template<typename C> requires Character<C>
-C
-getChar(std::basic_istream<C>& is, const std::set<C>& values) {
+char
+getChar(std::istream& is, const std::set<char>& values) {
   size_t inputPos = tellg(is);
 
-  C c = getChar(is);
+  char c = getChar(is);
   if (is.eof()) {
-    throw ParseFailure<C>(is, inputPos, fmt::format("Expected any of {} got EOF", values)); // XXX values
+    throw ParseFailure(is, inputPos, fmt::format("Expected any of {} got EOF", values)); // XXX values
   }
   check(is);
   if (not values.contains(c)) {
-    throw ParseFailure<C>(is, inputPos, fmt::format("Expected any of {} got '{}'", values, c)); // XXX values
+    throw ParseFailure(is, inputPos, fmt::format("Expected any of {} got '{}'", values, c)); // XXX values
   }
   return c;
 }
@@ -454,7 +413,6 @@ getChar(std::basic_istream<C>& is, const std::set<C>& values) {
  * Reads @p n hexadecimal characters from the input stream @p is and converts them to an integer value.
  *
  * @tparam I the integer type
- * @tparam C the character type
  * @param is the input stream
  * @param n the number of hexadecimal characters to read
  * @param input after the function returns, @p input holds the input that was read
@@ -463,14 +421,14 @@ getChar(std::basic_istream<C>& is, const std::set<C>& values) {
  * @throw #rocket::io::ParseFailure if `is.eof()` returns `true` or if less than @p n characters were
  *     read
  */
-template<typename I, typename C> requires Integer<I> && Character<C>
+template<typename I> requires Integer<I>
 I
-getHex(std::basic_istream<C>& is, size_t n, std::basic_string<C>& input) {
+getHex(std::istream& is, size_t n, std::string& input) {
   size_t inputPos = tellg(is);
   input.clear();
 
   for (size_t i = 0; i < n; ++i) {
-    C c = getChar(is, Symbols<C>::Chars::HexDigits);
+    char c = getChar(is, Symbols::Chars::HexDigits);
     input.push_back(c);
   }
 
@@ -480,13 +438,8 @@ getHex(std::basic_istream<C>& is, size_t n, std::basic_string<C>& input) {
   localIs >> std::hex >> ret;
   if (localIs.fail() || tellg(localIs) != input.size()) {
     std::string msg;
-    if constexpr (std::is_same_v<C, char>) {
-      msg = message::cannotParseAs(input, Type::of<I>());
-    }
-    else {
-      msg = message::cannotParseAs(unicode::utf32To8(input), Type::of<I>());
-    }
-    throw ParseFailure<C>(is, inputPos, { inputPos, inputPos + input.size() }, msg);
+    msg = message::cannotParseAs(input, Type::of<I>());
+    throw ParseFailure(is, inputPos, { inputPos, inputPos + input.size() }, msg);
   }
   return ret;
 }
@@ -494,20 +447,18 @@ getHex(std::basic_istream<C>& is, size_t n, std::basic_string<C>& input) {
 /**
  * Reads an optional character matching @p v from the input stream @p is.
  *
- * @tparam C the character type
  * @param is the input stream
  * @param v the expected character. This must be an ASCII character in the range [0,127]
  * @return @p v if the expected character @p v was read, otherwise null
  * @throw #rocket::io::InputFailure if `is.fail()` returns `true`
  */
-template<typename C> requires Character<C>
-std::optional<C>
-getOptionalChar(std::basic_istream<C>& is, C v) {
+std::optional<char>
+getOptionalChar(std::istream& is, char v) {
   ROCKET_CHECK(v, isascii(v));
 
   size_t inputPos = tellg(is);
 
-  C c = getChar(is);
+  char c = getChar(is);
   if (is.eof()) {
     seekg(is, inputPos);
     return std::nullopt;
@@ -524,18 +475,16 @@ getOptionalChar(std::basic_istream<C>& is, C v) {
 /**
  * Reads an optional character contained in @p values from the input stream @p is.
  *
- * @tparam C the character type
  * @param is the input stream
  * @param values expected characters. These must be ASCII characters in the range [0,127]
  * @return a character contained in @p values if such a character was read, otherwise null
  * @throw #rocket::io::InputFailure if `is.fail()` returns `true`
  */
-template<typename C> requires Character<C>
-std::optional<C>
-getOptionalChar(std::basic_istream<C>& is, const std::set<C>& values) {
+std::optional<char>
+getOptionalChar(std::istream& is, const std::set<char>& values) {
   size_t inputPos = tellg(is);
 
-  C c = getChar(is);
+  char c = getChar(is);
   if (is.eof()) {
     seekg(is, inputPos);
     return std::nullopt;
@@ -552,34 +501,32 @@ getOptionalChar(std::basic_istream<C>& is, const std::set<C>& values) {
 /**
  * Reads the string value @p v from the input stream @p is.
  *
- * @tparam C the character type
  * @param is the input stream
  * @param v the expected string. May not be empty
  * @return @p v
  * @throw #rocket::io::InputFailure if `is.fail()` returns `true`
  * @throw #rocket::io::ParseFailure if `is.eof()` returns `true` or if the read string is not @p v
  */
-template<typename C> requires Character<C>
-std::basic_string_view<C>
-getString(std::basic_istream<C>& is, std::basic_string_view<C> v) {
+std::string_view
+getString(std::istream& is, std::string_view v) {
   ROCKET_CHECK(v, not v.empty());
 
   size_t inputPos = tellg(is);
 
-  auto it = unicode::CodePointIterator<C>(v), end = unicode::CodePointIterator<C>(v, v.size());
+  auto it = unicode::CodePointIterator<char>(v), end = unicode::CodePointIterator<char>(v, v.size());
   for (; it != end; ++it) {
     // Read one code point
     size_t pos = io::tellg(is);
     unicode::CodePoint cp;
     is >> cp;
     if (is.eof()) {
-      throw ParseFailure<C>(is, pos, { inputPos, pos },
+      throw ParseFailure(is, pos, { inputPos, pos },
           fmt::format("{} does not match {}, got EOF", v.substr(0, pos - inputPos), v)); // XXX
     }
     check(is);
 
     if (cp != *it) {
-      throw ParseFailure<C>(is, pos, { inputPos, tellg(is) },
+      throw ParseFailure(is, pos, { inputPos, tellg(is) },
           fmt::format("{} does not match {}", v.substr(0, pos - inputPos), v)); // XXX
     }
   }
@@ -589,7 +536,6 @@ getString(std::basic_istream<C>& is, std::basic_string_view<C> v) {
 /**
  * Reads a string value contained in @p values from the input stream @p is.
  *
- * @tparam C the character type
  * @param is the input stream
  * @param values expected strings. May not contain an empty string
  * @return a string value contained in @p values
@@ -597,15 +543,14 @@ getString(std::basic_istream<C>& is, std::basic_string_view<C> v) {
  * @throw #rocket::io::ParseFailure if `is.eof()` returns `true` or if a string contained in @p values
  *     cannot be read
  */
-template<typename C> requires Character<C>
-std::basic_string<C>
-getString(std::basic_istream<C>& is, const std::set<std::basic_string_view<C>>& values) {
-  std::basic_string<C> ret;
+std::string
+getString(std::istream& is, const std::set<std::string_view>& values) {
+  std::string ret;
 
   auto localValues(values);
 
   size_t inputPos = tellg(is);
-  std::basic_string<C> input; // Input so far
+  std::string input; // Input so far
 
   while (true) {
     // Read one code point
@@ -617,14 +562,14 @@ getString(std::basic_istream<C>& is, const std::set<std::basic_string_view<C>>& 
         seekg(is, pos);
         return ret;
       } else {
-        throw ParseFailure<C>(is, pos, { inputPos, tellg(is) },
+        throw ParseFailure(is, pos, { inputPos, tellg(is) },
             fmt::format("{} does not match any of {}, got EOF", input, values)); // XXX
       }
     }
     check(is);
 
     // Advance by one code point
-    input.append(static_cast<std::basic_string<C>>(cp));
+    input.append(static_cast<std::string>(cp));
 
     // Remove nonmatching values and fully matched value from set
     bool match = false;
@@ -649,7 +594,7 @@ getString(std::basic_istream<C>& is, const std::set<std::basic_string_view<C>>& 
           seekg(is, pos);
         return ret;
       } else {
-        throw ParseFailure<C>(is, pos, { inputPos, tellg(is) },
+        throw ParseFailure(is, pos, { inputPos, tellg(is) },
             fmt::format("{} does not match any of {}, got EOF", input, values)); // XXX
       }
     }
@@ -661,7 +606,6 @@ getString(std::basic_istream<C>& is, const std::set<std::basic_string_view<C>>& 
  *
  * At least @p min characters must be read for the function to succeed.
  *
- * @tparam C the character type
  * @param is the input stream
  * @param delimiter the delimiter. This must be an ASCII character in the range [0,127]
  * @param consumeDelimiter if `true`, then the delimiter is consumed after the function successfully returns,
@@ -671,19 +615,18 @@ getString(std::basic_istream<C>& is, const std::set<std::basic_string_view<C>>& 
  * @throw #rocket::io::InputFailure if `is.fail()` returns `true`
  * @throw #rocket::io::ParseFailure if `is.eof()` returns `true`
  */
-template<typename C> requires Character<C>
-std::basic_string<C>
-getUntil(std::basic_istream<C>& is, C delimiter, bool consumeDelimiter, size_t min) {
+std::string
+getUntil(std::istream& is, char delimiter, bool consumeDelimiter, size_t min) {
   ROCKET_CHECK(delimiter, isascii(delimiter));
 
   size_t inputPos = tellg(is);
-  std::basic_string<C> input;
+  std::string input;
 
   while (true) {
     size_t pos = tellg(is);
-    C c = getChar(is);
+    char c = getChar(is);
     if (is.eof()) {
-      throw ParseFailure<C>(is, pos, fmt::format("Seeking {}, got EOF", delimiter)); // XXX
+      throw ParseFailure(is, pos, fmt::format("Seeking {}, got EOF", delimiter)); // XXX
     }
     check(is);
 
@@ -692,7 +635,7 @@ getUntil(std::basic_istream<C>& is, C delimiter, bool consumeDelimiter, size_t m
         is.putback(c);
       }
       if (input.size() < min) {
-        throw ParseFailure<C>(is, pos, { inputPos, inputPos + min },
+        throw ParseFailure(is, pos, { inputPos, inputPos + min },
             fmt::format("Expected at least {} before {}, got {}", noun::character(min), delimiter, input.size())); // XXX
       }
       return input;
@@ -706,7 +649,6 @@ getUntil(std::basic_istream<C>& is, C delimiter, bool consumeDelimiter, size_t m
  *
  * At least @p min characters must be read for the function to succeed.
  *
- * @tparam C the character type
  * @param is the input stream
  * @param delimiter unary function that returns `true` if its argument is considered a delimiter
  * @param delimiterDescription a description for @p delimiter, e.g. `"whitespace"`
@@ -717,22 +659,21 @@ getUntil(std::basic_istream<C>& is, C delimiter, bool consumeDelimiter, size_t m
  * @throw #rocket::io::InputFailure if `is.fail()` returns `true`
  * @throw #rocket::io::ParseFailure if `is.eof()` returns `true`
  */
-template<typename C> requires Character<C>
 std::string
 getUntil(
-    std::basic_istream<C>& is,
-    std::function<bool(C)> delimiter,
-    std::basic_string_view<C> delimiterDescription,
+    std::istream& is,
+    std::function<bool(char)> delimiter,
+    std::string_view delimiterDescription,
     bool consumeDelimiter,
     size_t min) {
   size_t inputPos = tellg(is);
-  std::basic_string<C> input;
+  std::string input;
 
   while (true) {
     size_t pos = tellg(is);
-    C c = getChar(is);
+    char c = getChar(is);
     if (is.eof()) {
-      throw ParseFailure<C>(is, pos, fmt::format("Seeking {:?}, got EOF", delimiterDescription)); // XXX
+      throw ParseFailure(is, pos, fmt::format("Seeking {:?}, got EOF", delimiterDescription)); // XXX
     }
     check(is);
 
@@ -740,7 +681,7 @@ getUntil(
       if (not consumeDelimiter)
         is.putback(c);
       if (input.size() < min) {
-        throw ParseFailure<C>(is, pos, { inputPos, inputPos + min },
+        throw ParseFailure(is, pos, { inputPos, inputPos + min },
             fmt::format("Expected at least {} before {}, got {}", noun::character(min), delimiterDescription, input.size())); // XXX
       }
       return input;
@@ -754,7 +695,6 @@ getUntil(
  *
  * At least @p min characters must be read for the function to succeed.
  *
- * @tparam C the character type
  * @param is the input stream
  * @param values expected characters. These must be ASCII characters in the range [0,127]
  * @param min minimum amount of characters to be read
@@ -763,21 +703,20 @@ getUntil(
  * @throw #rocket::io::ParseFailure if `is.eof()` returns `true` or if less than @p min characters were
  *     read
  */
-template<typename C> requires Character<C>
 std::string
-getWhile(std::basic_istream<C>& is, const std::set<C>& values, size_t min) {
+getWhile(std::istream& is, const std::set<char>& values, size_t min) {
   size_t inputPos = tellg(is);
-  std::basic_string<C> input;
+  std::string input;
 
   while (true) {
     size_t pos = tellg(is);
-    C c = getChar(is);
+    char c = getChar(is);
     if (is.eof()) {
       if (input.size() >= min) {
         seekg(is, pos);
         return input;
       } else {
-        throw ParseFailure<C>(is, pos, { inputPos, inputPos + min },
+        throw ParseFailure(is, pos, { inputPos, inputPos + min },
             fmt::format("Expected at least {} contained in {}, got {} and EOF", noun::character(min), values, input.size())); // XXX
       }
     }
@@ -790,7 +729,7 @@ getWhile(std::basic_istream<C>& is, const std::set<C>& values, size_t min) {
         seekg(is, pos);
         return input;
       } else {
-        throw ParseFailure<C>(is, pos, { inputPos, inputPos + min },
+        throw ParseFailure(is, pos, { inputPos, inputPos + min },
             fmt::format("Expected at least {} contained in {}, got {} and {}", noun::character(min), values, input.size(), c)); // XXX
       }
     }
@@ -800,16 +739,14 @@ getWhile(std::basic_istream<C>& is, const std::set<C>& values, size_t min) {
 /**
  * Makes an input stream for a span.
  *
- * @tparam C the character type
  * @param v the span
  * @param mode the open mode
  * @param exceptions the exception mask
  * @return an input stream
  */
-template<typename C> requires Character<C>
-std::basic_ispanstream<C>
-is(std::span<C> v, std::ios::openmode mode, std::ios::iostate exceptions) {
-  auto ret = std::basic_ispanstream<C>(v, mode);
+std::ispanstream
+is(std::span<char> v, std::ios::openmode mode, std::ios::iostate exceptions) {
+  auto ret = std::ispanstream(v, mode);
   ret.exceptions(exceptions);
   return ret;
 }
@@ -817,74 +754,61 @@ is(std::span<C> v, std::ios::openmode mode, std::ios::iostate exceptions) {
 /**
  * Makes an input stream for a C string.
  *
- * @tparam C the character type
  * @param p a C string
  * @param mode the open mode
  * @param exceptions the exception mask
  * @return an input stream
  */
-template<typename C> requires Character<C>
-inline std::basic_ispanstream<C>
-is(const C* p, std::ios::openmode mode, std::ios::iostate exceptions) {
-  return is(std::span<C>(const_cast<C*>(p), std::basic_string_view<C>(p).size()), mode, exceptions);
+inline std::ispanstream
+is(const char* p, std::ios::openmode mode, std::ios::iostate exceptions) {
+  return is(std::span(const_cast<char*>(p), std::string_view(p).size()), mode, exceptions);
 }
 
 /**
  * Makes an input stream for a string.
  *
- * @tparam C the character type
  * @param s a string
  * @param mode the open mode
  * @param exceptions the exception mask
  * @return an input stream
  */
-template<typename C> requires Character<C>
-inline std::basic_ispanstream<C>
-is(const std::basic_string<C>& s, std::ios::openmode mode, std::ios::iostate exceptions) {
-  return is(std::span<C>(const_cast<C*>(s.c_str()), s.size()), mode, exceptions);
+inline std::ispanstream
+is(const std::string& s, std::ios::openmode mode, std::ios::iostate exceptions) {
+  return is(std::span(const_cast<char*>(s.c_str()), s.size()), mode, exceptions);
 }
 
 /**
  * Makes an input stream for a string view.
  *
- * @tparam C the character type
  * @param s a string view
  * @param mode the open mode
  * @param exceptions the exception mask
  * @return an input stream
  */
-template<typename C> requires Character<C>
-inline std::basic_ispanstream<C>
-is(std::basic_string_view<C> s, std::ios::openmode mode, std::ios::iostate exceptions) {
-  return is(std::span<C>(const_cast<C*>(s.data()), s.size()), mode, exceptions);
+inline std::ispanstream
+is(std::string_view s, std::ios::openmode mode, std::ios::iostate exceptions) {
+  return is(std::span(const_cast<char*>(s.data()), s.size()), mode, exceptions);
 }
 
 /**
  * Returns `true` if the stream @p ios is connected to a terminal.
  *
- * @tparam C the character type
  * @param ios the stream
  * @return `true` if @p ios is connected to a terminal
  */
-template<typename C> requires Character<C>
 bool
-isatty(const std::basic_ios<C>& ios) {
-  if constexpr (std::is_same_v<C, char>) {
-    return ::isatty(fd(ios));
-  }
-  return false;
+isatty(const std::ios& ios) {
+  return ::isatty(fd(ios));
 }
 
 /**
  * `resetg(is)` is equivalent to `seekg(is, 0)`.
  *
- * @tparam C the character type
  * @param is the input stream
  * @return @p is
  */
-template<typename C> requires Character<C>
-inline std::basic_istream<C>&
-resetg(std::basic_istream<C>& is) noexcept {
+inline std::istream&
+resetg(std::istream& is) noexcept {
   return seekg(is, 0);
 }
 
@@ -893,20 +817,18 @@ resetg(std::basic_istream<C>& is) noexcept {
  *
  * Because the position can never be negative, a value of type `size_t` is expected.
  *
- * @tparam C the character type
  * @param is the input stream
  * @param position the position to seek as a `size_t`
  * @throw #rocket::InvalidArgument if there is a position overflow
  * @throw std::ios::failure from `std::istream::seekg`
  * @return @p is
  */
-template<typename C> requires Character<C>
-std::basic_istream<C>&
-seekg(std::basic_istream<C>& is, size_t position) {
+std::istream&
+seekg(std::istream& is, size_t position) {
   const auto state = is.rdstate();
   // Clear `eofbit` and `failbit`, leave `badbit` unchanged
   is.clear(state & ~(std::ios::eofbit | std::ios::failbit));
-  typename std::basic_istream<C>::pos_type seekg = position;
+  typename std::istream::pos_type seekg = position;
   ROCKET_CHECK(position, seekg >= 0, "{}", message::overflow(Type::of(seekg)));
   // This might throw due to `badbit`, which is okay
   return is.seekg(seekg);
@@ -917,7 +839,6 @@ seekg(std::basic_istream<C>& is, size_t position) {
  *
  * Because the position can never be negative, a value of type `size_t` is expected.
  *
- * @tparam C the character type
  * @param is the input stream
  * @param position the position to seek as a `size_t`
  * @param dir the seek direction
@@ -925,31 +846,28 @@ seekg(std::basic_istream<C>& is, size_t position) {
  * @throw std::ios::failure from `std::istream::seekg`
  * @return @p is
  */
-template<typename C> requires Character<C>
 std::istream&
-seekg(std::basic_istream<C>& is, size_t position, std::ios::seekdir dir) {
+seekg(std::istream& is, size_t position, std::ios::seekdir dir) {
   const auto state = is.rdstate();
   // Clear `eofbit` and `failbit`, leave `badbit` unchanged
   is.clear(state & ~(std::ios::eofbit | std::ios::failbit));
-  typename std::basic_istream<C>::pos_type seekg = position;
+  typename std::istream::pos_type seekg = position;
   ROCKET_CHECK(position, seekg >= 0, "{}", message::overflow(Type::of(seekg)));
   // This might throw due to `badbit`, which is okay
   return is.seekg(seekg, dir);
 }
 
 /**
- * Similar to `std::basic_istream<C>::tellg`, but leaves @p is unchanged and returns the actual current
+ * Similar to `std::istream::tellg`, but leaves @p is unchanged and returns the actual current
  * position rather than -1 if `is.fail()` returns `true`.
  *
  * Because the result can never be negative, a value of type `size_t` is returned.
  *
- * @tparam C the character type
  * @param is the input stream
  * @return the actual current position as a `size_t`
  */
-template<typename C> requires Character<C>
 size_t
-tellg(std::basic_istream<C>& is) noexcept {
+tellg(std::istream& is) noexcept {
   const auto state = is.rdstate();
 
   // Clear all bits
@@ -985,15 +903,13 @@ namespace std {
 /**
  * Appends the entire input of the input stream @p rhs to the string @p lhs.
  *
- * @tparam C the character type
  * @param lhs the string to append to
  * @param rhs the input stream to read
  * @return lhs
  */
-template<typename C> requires rocket::Character<C>
-basic_string<C>&
-operator<<(std::basic_string<C>& lhs, const basic_istream<C>& rhs) {
-  basic_ostringstream<C> os;
+string&
+operator<<(std::string& lhs, const istream& rhs) {
+  ostringstream os;
   os << rhs.rdbuf();
   lhs.append(os.str());
   return lhs;

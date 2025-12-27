@@ -8,8 +8,8 @@
 
 #include "Positions.h"
 #include "assert.h"
-#include "base.h"
 #include "format.h"
+#include "io.h" // XXX Klappt das?
 #include "unicode-iterator.h"
 
 #include <optional>
@@ -70,15 +70,12 @@ struct Regex {
 
 /**
  * The result of an escape/unescape operation.
- *
- * @tparam C the character type
  */
-template<typename C> requires Character<C>
 struct Result {
   /**
    * The input of the escape/unescape operation.
    */
-  std::basic_string<C> input;
+  std::string input;
   /**
    * Translated positions after escaping/unescaping.
    *
@@ -92,67 +89,61 @@ struct Result {
 
 namespace internal {
 
-template<typename Schema, typename C, typename String>
+template<typename Schema>
 struct EscapedString {
-  static_assert(std::is_reference_v<String>);
-
-  String s;
+  std::string s;
   Schema::Params params;
-  Result<C>* result;
+  Result* result;
 
   EscapedString(
-      String s,
+      std::string s,
       const Schema::Params& params,
-      Result<C>* result) : s(s), params(params), result(result) {}
+      Result* result) : s(s), params(params), result(result) {}
 };
 
 // `EscapedString<CString, ...>` ............................................................................
 
-template<typename C> requires Character<C>
-    std::basic_string<C> escapeCStringHex(unicode::CodePoint, size_t&);
-template<typename C> requires Character<C>
-    std::basic_string<C> escapeCStringTab(size_t&, const CString::Params&);
+std::string escapeCStringHex(unicode::CodePoint, size_t&);
 
-template<typename C> requires Character<C>
-std::basic_string<C>
+std::string escapeCStringTab(size_t&, const CString::Params&);
+
+std::string
 escapeCString(unicode::CodePoint cp, size_t& column, const CString::Params& params) {
-  using String = std::basic_string<C>;
-
   // Escapable characters
-  String ret;
+  std::string ret;
   if (cp >= '\a' && cp <= '\\') {
     switch (cp) {
     case '\a': // Alert = 7
-      ret = String { '\\', 'a' };
+      ret = std::string { '\\', 'a' };
       break;
     case '\b':// Backspace = 8
-      ret = String { '\\', 'b' };
+      ret = std::string { '\\', 'b' };
       break;
     case '\t':// Horizontal tab = 9
-      return escapeCStringTab<C>(column, params);
+      return escapeCStringTab(column, params);
     case '\n': // Line feed = 10
-      ret = String { '\\', 'n' };
+      ret = std::string { '\\', 'n' };
       break;
     case '\v': // Vertical tab = 11
-      ret = String { '\\', 'v' };
+      ret = std::string { '\\', 'v' };
       break;
     case '\f': // Form feed = 12
-      ret = String { '\\', 'f' };
+      ret = std::string { '\\', 'f' };
       break;
     case '\r': // Carriage return = 13
-      ret = String { '\\', 'r' };
+      ret = std::string { '\\', 'r' };
       break;
     case '\e': // Escape = 27
-      ret = String { '\\', 'e' };
+      ret = std::string { '\\', 'e' };
       break;
     case '"': // Quotation mark = 34
-      ret = params.quote == '"' ? String { '\\', '"' } : String { '"' };
+      ret = params.quote == '"' ? std::string { '\\', '"' } :std::string { '"' };
       break;
     case '\'': // Apostrophe = 39
-      ret = params.quote == '\'' ? String { '\\', '\'' } : String { '\'' };
+      ret = params.quote == '\'' ? std::string { '\\', '\'' } : std::string { '\'' };
       break;
     case '\\': // Backslash = 92
-      ret = String { '\\', '\\' };
+      ret = std::string { '\\', '\\' };
       break;
     }
   }
@@ -165,56 +156,47 @@ escapeCString(unicode::CodePoint cp, size_t& column, const CString::Params& para
   int8_t w;
   if (cp.print(&w)) {
     column += static_cast<size_t>(w); // We know `w` > 0
-    return static_cast<std::basic_string<C>>(cp);
+    return static_cast<std::string>(cp);
   }
 
   // Hex otherwise
-  return escapeCStringHex<C>(cp, column);
+  return escapeCStringHex(cp, column);
 }
 
-template<typename C> requires Character<C>
-std::basic_string<C>
+std::string
 escapeCStringHex(unicode::CodePoint cp, size_t& column) {
-  // `std::format` doesn't support `char32_t`. Fortunately, we output ASCII only
-  std::string s;
+  std::string ret;
   if (cp > 0xffffU)
-    s = fmt::format("\\U{:0>8x}", static_cast<uint32_t>(cp));
+    ret = fmt::format("\\U{:0>8X}", static_cast<uint32_t>(cp));
   else if (cp > 0x00ffU)
-    s = fmt::format("\\u{:0>4x}", static_cast<uint32_t>(cp));
+    ret = fmt::format("\\u{:0>4X}", static_cast<uint32_t>(cp));
   else
-    s = fmt::format("\\x{:0>2x}", static_cast<uint32_t>(cp));
-  column += s.size();
-  if constexpr (std::is_same_v<C, char>)
-    return s;
-  else
-    return unicode::asciiTo32(s);
+    ret = fmt::format("\\x{:0>2X}", static_cast<uint32_t>(cp));
+  column += ret.size();
+  return ret;
 }
 
-template<typename C> requires Character<C>
-std::basic_string<C>
+std::string
 escapeCStringTab(size_t& column, const CString::Params& params) {
-  using String = std::basic_string<C>;
-
   if (not params.tabSize) {
-    String ret { '\\', 't' };
+    std::string ret { '\\', 't' };
     column += ret.size();
     return ret;
   }
   else {
     size_t mod = column % *params.tabSize;
-    String ret(*params.tabSize - mod, ' ');
+    std::string ret(*params.tabSize - mod, ' ');
     column += ret.size();
     return ret;
   }
 }
 
-template<typename C, typename String>
-std::basic_istream<C>&
-operator>>(std::basic_istream<C>& lhs, const EscapedString<CString, C, String>& rhs) {
+std::istream&
+operator>>(std::istream& lhs, const EscapedString<CString>& rhs) { // XXX const
   ROCKET_CHECK(rhs, rhs.params.quote == '\0' || rhs.params.quote == '"' || rhs.params.quote == '\'');
-  std::basic_string<C>& s = rhs.s;
+  std::string& s = rhs.s;
   const auto& params = rhs.params;
-  Result<C>* result = rhs.result;
+  Result* result = rhs.result;
 
   s.clear();
   if (result) {
@@ -225,7 +207,7 @@ operator>>(std::basic_istream<C>& lhs, const EscapedString<CString, C, String>& 
 
   // If needed, read quote
   if (params.enclosing()) {
-    io::getChar(lhs, static_cast<C>(params.quote));
+    io::getChar(lhs, params.quote);
     if (result)
       result->input.push_back(params.quote);
   }
@@ -241,7 +223,7 @@ operator>>(std::basic_istream<C>& lhs, const EscapedString<CString, C, String>& 
     if (lhs.eof()) {
       // EOF: end of input
       if (params.enclosing()) {
-        throw io::ParseFailure<C>(lhs, pos1, { inputPos, pos1 },
+        throw io::ParseFailure(lhs, pos1, { inputPos, pos1 },
             fmt::format("Missing terminating {:?} character", params.quote)); // XXX ''?
       }
       return lhs;
@@ -272,12 +254,12 @@ operator>>(std::basic_istream<C>& lhs, const EscapedString<CString, C, String>& 
 
         lhs >> gr;
         if (lhs.eof()) {
-          throw io::ParseFailure<C>(lhs, pos2, { pos1, pos2 }, "Expected a Unicode grapheme, got EOF");
+          throw io::ParseFailure(lhs, pos2, { pos1, pos2 }, "Expected a Unicode grapheme, got EOF");
         }
         io::check(lhs);
 
         if (not gr.codePoint()) {
-          throw io::ParseFailure<C>(lhs, pos1, { pos1, io::tellg(lhs) }, "Invalid escape sequence");
+          throw io::ParseFailure(lhs, pos1, { pos1, io::tellg(lhs) }, "Invalid escape sequence");
         }
         cp = *gr.codePoint();
         switch (cp) {
@@ -324,48 +306,48 @@ operator>>(std::basic_istream<C>& lhs, const EscapedString<CString, C, String>& 
         case '"' : // Quotation mark = 34
         case '\'': // Apostrophe = 39
         case '\\': // Backslash = 92
-          s.push_back(static_cast<C>(cp));
+          s.push_back(static_cast<char>(cp));
           if (result)
-            result->input.push_back(static_cast<C>(cp));
+            result->input.push_back(static_cast<char>(cp));
           break;
         case 'x': {
-          std::basic_string<C> input;
+          std::string input;
           uint32_t i = io::getHex<uint32_t>(lhs, 2, input);
           if (result) {
             result->input.push_back('x');
             result->input.append(input);
           }
-          s.append(static_cast<std::basic_string<C>>(unicode::CodePoint(i)));
+          s.append(static_cast<std::string>(unicode::CodePoint(i)));
           break;
         }
         case 'u': {
-          std::basic_string<C> input;
+          std::string input;
           uint32_t i = io::getHex<uint32_t>(lhs, 4, input);
           if (result) {
             result->input.push_back('u');
             result->input.append(input);
           }
-          s.append(static_cast<std::basic_string<C>>(unicode::CodePoint(i)));
+          s.append(static_cast<std::string>(unicode::CodePoint(i)));
           break;
         }
         case 'U': {
-          std::basic_string<C> input;
+          std::string input;
           uint32_t i = io::getHex<uint32_t>(lhs, 8, input);
           if (result) {
             result->input.push_back('U');
             result->input.append(input);
           }
-          s.append(static_cast<std::basic_string<C>>(unicode::CodePoint(i)));
+          s.append(static_cast<std::string>(unicode::CodePoint(i)));
           break;
         }
         default: {
-          throw io::ParseFailure<C>(lhs, pos1, { pos1, io::tellg(lhs) }, "Invalid escape sequence");
+          throw io::ParseFailure(lhs, pos1, { pos1, io::tellg(lhs) }, "Invalid escape sequence");
         }
         }
       } else {
         // No backslash: just add the code point
 
-        auto add = static_cast<std::basic_string<C>>(cp);
+        auto add = static_cast<std::string>(cp);
         s.append(add);
         if (result) {
           result->input.append(add);
@@ -374,7 +356,7 @@ operator>>(std::basic_istream<C>& lhs, const EscapedString<CString, C, String>& 
     } else {
       // Multi-code-point grapheme: just add it
 
-      auto add = static_cast<std::basic_string<C>>(gr);
+      auto add = static_cast<std::string>(gr);
       s.append(add);
       if (result) {
         result->input.append(add);
@@ -383,13 +365,12 @@ operator>>(std::basic_istream<C>& lhs, const EscapedString<CString, C, String>& 
   }
 }
 
-template<typename C, typename String>
-std::basic_ostream<C>&
-operator<<(std::basic_ostream<C>& lhs, const EscapedString<CString, C, String>& rhs) {
+std::ostream&
+operator<<(std::ostream& lhs, const EscapedString<CString>& rhs) {
   ROCKET_CHECK(rhs, rhs.params.quote == '\0' || rhs.params.quote == '"' || rhs.params.quote == '\'');
-  std::basic_string_view<C> s = rhs.s;
+  std::string_view s = rhs.s;
   const auto& params = rhs.params;
-  Result<C>* result = rhs.result;
+  Result* result = rhs.result;
 
   if (result) {
     result->input = s;
@@ -399,12 +380,12 @@ operator<<(std::basic_ostream<C>& lhs, const EscapedString<CString, C, String>& 
 
   // If needed, print quote
   if (params.enclosing()) {
-    lhs << static_cast<C>(params.quote);
+    lhs << params.quote;
     ++to;
   }
 
   // Loop through graphemes
-  auto it = unicode::GraphemeIterator<C>(s), end = unicode::GraphemeIterator<C>(s, s.size());
+  auto it = unicode::GraphemeIterator<char>(s), end = unicode::GraphemeIterator<char>(s, s.size());
   size_t column = 0;
   for (; it != end; ++it) {
     unicode::Grapheme gr = *it;
@@ -413,7 +394,7 @@ operator<<(std::basic_ostream<C>& lhs, const EscapedString<CString, C, String>& 
     if (gr.codePoint()) {
       // Single-code-point grapheme
       unicode::CodePoint cp = *gr.codePoint();
-      auto escaped = escapeCString<C>(cp, column, params);
+      auto escaped = escapeCString(cp, column, params);
       lhs << escaped;
       to += escaped.size();
     } else if (gr.crlf()) {
@@ -424,7 +405,7 @@ operator<<(std::basic_ostream<C>& lhs, const EscapedString<CString, C, String>& 
     } else {
       // Multi-code-point grapheme
       column += gr.width;
-      auto add = static_cast<std::basic_string<C>>(gr);
+      auto add = static_cast<std::string>(gr);
       lhs << add;
       to += add.size();
     }
@@ -434,35 +415,32 @@ operator<<(std::basic_ostream<C>& lhs, const EscapedString<CString, C, String>& 
 
   // If needed, print quote
   if (params.enclosing())
-    lhs << static_cast<C>(params.quote);
+    lhs << params.quote;
   return lhs;
 }
 
 // `EscapedString<Regex, ...>` ..............................................................................
 
-template<typename C> requires Character<C>
-std::basic_string<C>
+std::string
 escapeRegex(unicode::CodePoint cp, size_t& column) {
-  using String = std::basic_string<C>;
-
   // Escapable characters
-  String ret;
+  std::string ret;
   if (cp >= '\t' && cp <= '}') {
     switch (cp) {
     case '\t': // Horizontal tab = 9
-      ret = String { '\\', 't' };
+      ret = std::string { '\\', 't' };
       break;
     case '\n': // Line feed = 10
-      ret = String { '\\', 'n' };
+      ret = std::string { '\\', 'n' };
       break;
     case '\v': // Vertical tab = 11
-      ret = String { '\\', 'v' };
+      ret = std::string { '\\', 'v' };
       break;
     case '\f': // Form feed = 12
-      ret = String { '\\', 'f' };
+      ret = std::string { '\\', 'f' };
       break;
     case '\r': // Carriage return = 13
-      ret = String { '\\', 'r' };
+      ret = std::string { '\\', 'r' };
       break;
     case '$' : // Dollar sign = 36
     case '(' : // Left parenthesis = 40
@@ -478,7 +456,7 @@ escapeRegex(unicode::CodePoint cp, size_t& column) {
     case '{' : // Left Brace = 123
     case '|' : // Vertical bar = 124
     case '}' : // Right brace = 125
-      ret = String { '\\', static_cast<C>(cp) };
+      ret = std::string { '\\', static_cast<char>(cp) };
       break;
     }
   }
@@ -493,18 +471,17 @@ escapeRegex(unicode::CodePoint cp, size_t& column) {
     if (w < 0)
       w = 0;
     column += static_cast<size_t>(w); // We know `w` >= 0
-    return static_cast<std::basic_string<C>>(cp);
+    return static_cast<std::basic_string<char>>(cp);
   }
 
   // Hex otherwise (only up to U+FFFF)
-  return escapeCStringHex<C>(cp, column);
+  return escapeCStringHex(cp, column);
 }
 
-template<typename C, typename String>
-std::basic_istream<C>&
-operator>>(std::basic_istream<C>& lhs, const EscapedString<Regex, C, String>& rhs) {
-  std::basic_string<C>& s = rhs.s;
-  Result<C>* result = rhs.result;
+std::istream&
+operator>>(std::istream& lhs, const EscapedString<Regex>& rhs) { // XXX const
+  std::string& s = rhs.s;
+  Result* result = rhs.result;
 
   s.clear();
   if (result) {
@@ -542,12 +519,12 @@ operator>>(std::basic_istream<C>& lhs, const EscapedString<Regex, C, String>& rh
 
         lhs >> gr;
         if (lhs.eof()) {
-          throw io::ParseFailure<C>(lhs, pos2, { pos1, pos2 }, "Expected a Unicode grapheme, got EOF");
+          throw io::ParseFailure(lhs, pos2, { pos1, pos2 }, "Expected a Unicode grapheme, got EOF");
         }
         io::check(lhs);
 
         if (not gr.codePoint()) {
-          throw io::ParseFailure<C>(lhs, pos1, { pos1, io::tellg(lhs) }, "Invalid escape sequence");
+          throw io::ParseFailure(lhs, pos1, { pos1, io::tellg(lhs) }, "Invalid escape sequence");
         }
         cp = *gr.codePoint();
         switch (cp) {
@@ -590,38 +567,38 @@ operator>>(std::basic_istream<C>& lhs, const EscapedString<Regex, C, String>& rh
         case '{': // Left brace = 123
         case '|': // Vertical bar = 124
         case '}': // Right brace = 123
-          s.push_back(static_cast<C>(cp));
+          s.push_back(static_cast<char>(cp));
           if (result)
-            result->input.push_back(static_cast<C>(cp));
+            result->input.push_back(static_cast<char>(cp));
           break;
         case 'x': {
-          std::basic_string<C> input;
+          std::string input;
           uint32_t i = io::getHex<uint32_t>(lhs, 2, input);
           if (result) {
             result->input.push_back('x');
             result->input.append(input);
           }
-          s.append(static_cast<std::basic_string<C>>(unicode::CodePoint(i)));
+          s.append(static_cast<std::string>(unicode::CodePoint(i)));
           break;
         }
         case 'u': {
-          std::basic_string<C> input;
+          std::string input;
           uint32_t i = io::getHex<uint32_t>(lhs, 4, input);
           if (result) {
             result->input.push_back('u');
             result->input.append(input);
           }
-          s.append(static_cast<std::basic_string<C>>(unicode::CodePoint(i)));
+          s.append(static_cast<std::string>(unicode::CodePoint(i)));
           break;
         }
         default: {
-          throw io::ParseFailure<C>(lhs, pos1, { pos1, io::tellg(lhs) }, "Invalid escape sequence");
+          throw io::ParseFailure(lhs, pos1, { pos1, io::tellg(lhs) }, "Invalid escape sequence");
         }
         }
       } else {
         // No backslash: just add the code point
 
-        auto add = static_cast<std::basic_string<C>>(cp);
+        auto add = static_cast<std::string>(cp);
         s.append(add);
         if (result)
           result->input.append(add);
@@ -629,7 +606,7 @@ operator>>(std::basic_istream<C>& lhs, const EscapedString<Regex, C, String>& rh
     } else {
       // Multi-code-point grapheme: just add it
 
-      auto add = static_cast<std::basic_string<C>>(gr);
+      auto add = static_cast<std::string>(gr);
       s.append(add);
       if (result)
         result->input.append(add);
@@ -637,11 +614,10 @@ operator>>(std::basic_istream<C>& lhs, const EscapedString<Regex, C, String>& rh
   }
 }
 
-template<typename C, typename String>
-std::basic_ostream<C>&
-operator<<(std::basic_ostream<C>& lhs, const EscapedString<Regex, C, String>& rhs) {
-  std::basic_string_view<C> s = rhs.s;
-  Result<C>* result = rhs.result;
+std::ostream&
+operator<<(std::ostream& lhs, const EscapedString<Regex>& rhs) {
+  std::string_view s = rhs.s;
+  Result* result = rhs.result;
 
   if (result) {
     result->input = s;
@@ -650,7 +626,7 @@ operator<<(std::basic_ostream<C>& lhs, const EscapedString<Regex, C, String>& rh
   size_t to = 0;
 
   // Loop through graphemes
-  auto it = unicode::GraphemeIterator<C>(s), end = unicode::GraphemeIterator<C>(s, s.size());
+  auto it = unicode::GraphemeIterator<char>(s), end = unicode::GraphemeIterator<char>(s, s.size());
   size_t column = 0;
   for (; it != end; ++it) {
     unicode::Grapheme gr = *it;
@@ -659,7 +635,7 @@ operator<<(std::basic_ostream<C>& lhs, const EscapedString<Regex, C, String>& rh
     if (gr.codePoint()) {
       // Single-code-point grapheme
       unicode::CodePoint cp = *gr.codePoint();
-      auto escaped = escapeRegex<C>(cp, column);
+      auto escaped = escapeRegex(cp, column);
       lhs << escaped;
       to += escaped.size();
     } else if (gr.crlf()) {
@@ -670,7 +646,7 @@ operator<<(std::basic_ostream<C>& lhs, const EscapedString<Regex, C, String>& rh
     } else {
       // Multi-code-point grapheme
       column += gr.width;
-      auto add = static_cast<std::basic_string<C>>(gr);
+      auto add = static_cast<std::string>(gr);
       lhs << add;
       to += add.size();
     }
@@ -696,10 +672,8 @@ operator<<(std::basic_ostream<C>& lhs, const EscapedString<Regex, C, String>& rh
  * @tparam Schema the escaping schema
  * @tparam C the character type
  */
-template<typename Schema, typename C>
-concept Escaped =
-    (std::is_same_v<Schema, CString> || std::is_same_v<Schema, Regex>) &&
-    Character<C>;
+template<typename Schema>
+concept Escaped = std::is_same_v<Schema, CString> || std::is_same_v<Schema, Regex>;
 
 // Functions ------------------------------------------------------------------------------------------------
 
@@ -731,13 +705,13 @@ concept Escaped =
  * assert(out == in); // After unescaping, `out` equals `in`
  * ```
  */
-template<typename Schema, typename C> requires Escaped<Schema, C>
-internal::EscapedString<Schema, C, std::basic_string<C>&>
+template<typename Schema> requires Escaped<Schema>
+internal::EscapedString<Schema>
 escaped(
-    std::basic_string<C>& s,
+    std::string& s,
     const typename Schema::Params& params = {},
-    Result<C>* result = nullptr) {
-  return internal::EscapedString<Schema, C, std::basic_string<C>&>(s, params, result);
+    Result* result = nullptr) {
+  return internal::EscapedString<Schema>(s, params, result);
 }
 
 /**
@@ -768,13 +742,13 @@ escaped(
  * assert(out == in); // After unescaping, `out` equals `in`
  * ```
  */
-template<typename Schema, typename C> requires Escaped<Schema, C>
-internal::EscapedString<Schema, C, const std::basic_string<C>&>
+template<typename Schema> requires Escaped<Schema>
+internal::EscapedString<Schema>
 escaped(
-    const std::basic_string<C>& s,
+    const std::string& s,
     const typename Schema::Params& params = {},
-    Result<C>* result = nullptr) {
-  return internal::EscapedString<Schema, C, const std::basic_string<C>&>(s, params, result);
+    Result* result = nullptr) {
+  return internal::EscapedString<Schema>(s, params, result);
 }
 
 } // namespace rocket::escape

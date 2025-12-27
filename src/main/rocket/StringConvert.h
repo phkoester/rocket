@@ -132,7 +132,7 @@ struct IntegerStringConvert {
         return ret;
     } catch (const std::exception& ex) {}
 
-    throw io::ParseFailure<char>(is, 0, { 0, s.size() }, message::cannotParseAs(s, rocket::Type::of<Type>()));
+    throw io::ParseFailure(is, 0, { 0, s.size() }, message::cannotParseAs(s, rocket::Type::of<Type>()));
   }
 };
 
@@ -160,7 +160,7 @@ struct EnumStringConvert {
     auto is = io::is(s);
     is >> ret;
     if (is.fail() || io::tellg(is) != s.size()) {
-      throw io::ParseFailure<char>(is, 0, { 0, s.size() }, message::cannotParseAs(s, rocket::Type::of<Type>()));
+      throw io::ParseFailure(is, 0, { 0, s.size() }, message::cannotParseAs(s, rocket::Type::of<Type>()));
     }
     return ret;
   }
@@ -196,7 +196,7 @@ struct FloatingPointStringConvert {
         return ret;
     } catch (const std::exception& ex) {}
 
-    throw io::ParseFailure<char>(is, 0, { 0, s.size() }, message::cannotParseAs(s, rocket::Type::of<Type>()));
+    throw io::ParseFailure(is, 0, { 0, s.size() }, message::cannotParseAs(s, rocket::Type::of<Type>()));
   }
 };
 
