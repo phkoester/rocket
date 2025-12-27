@@ -15,8 +15,8 @@ namespace fmt {
 
 // `char32_t` -----------------------------------------------------------------------------------------------
 
-template<typename Char>
-struct formatter<char32_t, Char> {
+template<>
+struct formatter<char32_t, char> {
   template<typename FormatContext>
   constexpr auto
   format(char32_t v, FormatContext& ctx) const -> decltype(ctx.out()) {
@@ -39,14 +39,14 @@ struct formatter<char32_t, Char> {
     return out;
   }
 
-  constexpr const Char*
-  parse(parse_context<Char>& ctx) {
+  constexpr const char*
+  parse(parse_context<char>& ctx) {
     return underlying_.parse(ctx);
   }
 
 private:
 
-  rocket::format::NativeFormatter<string_view, Char> underlying_;
+  rocket::format::NativeFormatter<string_view, char> underlying_;
 };
 
 } // namespace fmt

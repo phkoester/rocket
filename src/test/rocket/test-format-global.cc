@@ -27,6 +27,10 @@ TEST(format_global, formatChar) {
   EXPECT_EQ(fmt::format("{:?}", '\xff'), "'\\xff'");
 }
 
+TEST(format_global, formatChar32) {
+  EXPECT_EQ(fmt::format("{}", U'a'), "a");
+}
+
 TEST(format_global, formatUnsignedChar) {
   EXPECT_EQ(fmt::format("{}", static_cast<unsigned char>('a')), "97");
   EXPECT_EQ(fmt::format("{:X}", static_cast<unsigned char>(-1)), "FF");
