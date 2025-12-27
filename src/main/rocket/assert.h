@@ -19,6 +19,8 @@
 #include "except.h"
 #include "format.h"
 
+#include <boost/preprocessor/stringize.hpp>
+
 #include <source_location>
 
 // Internal -------------------------------------------------------------------------------------------------

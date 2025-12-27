@@ -6,11 +6,10 @@
 
 #pragma once
 
-#include <version>
-
-#include <fmt/ranges.h>
 #define FMT_STD_NO_OPTIONAL
 #define FMT_STD_NO_VARIANT
+
+#include <fmt/ranges.h>
 #include <fmt/std.h>
 
 #include <optional>
@@ -75,7 +74,7 @@ struct formatter<Variant, Char, std::enable_if_t<
       }, value);
     }
     catch (const std::bad_variant_access&) {
-      out = detail::write<Char>(out, "<std::bad_variant_access>");
+      out = detail::write<Char>(out, "<invalid>");
     }
     return out;
   }

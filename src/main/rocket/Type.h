@@ -8,6 +8,8 @@
 
 #include "Lazy.h"
 
+#include <fmt/format.h>
+
 #include <iosfwd>
 #include <string>
 #include <typeindex>

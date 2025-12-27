@@ -6,16 +6,11 @@
 
 #pragma once
 
-#include "nio.h"
-
-#include <boost/preprocessor/stringize.hpp>
 #include <boost/preprocessor/facilities/check_empty.hpp>
 #include <boost/preprocessor/logical/not.hpp>
 #include <boost/preprocessor/punctuation/comma_if.hpp>
 #include <boost/preprocessor/seq/cat.hpp>
 #include <boost/preprocessor/tuple/elem.hpp>
-
-#include <string>
 
 // Macros ---------------------------------------------------------------------------------------------------
 

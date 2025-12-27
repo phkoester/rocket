@@ -7,6 +7,7 @@
 #pragma once
 
 #include "macro.h"
+#include "nio.h"
 
 #include <locale>
 #include <optional>
