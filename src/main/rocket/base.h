@@ -68,9 +68,6 @@ using int128_t = __int128;
 /// @op_input{#int128_t}
 std::istream& operator>>(std::istream& lhs, int128_t& rhs);
 
-/// @op_output{#int128_t}
-std::ostream& operator<<(std::ostream& lhs, int128_t rhs);
-
 // `uint128_t` ----------------------------------------------------------------------------------------------
 
 /**
@@ -80,9 +77,6 @@ using uint128_t = unsigned __int128;
 
 /// @op_input{#uint128_t}
 std::istream& operator>>(std::istream& lhs, uint128_t& rhs);
-
-/// @op_output{#uint128_t}
-std::ostream& operator<<(std::ostream& lhs, uint128_t rhs);
 
 namespace rocket {
 

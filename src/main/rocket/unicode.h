@@ -25,6 +25,7 @@ namespace rocket::unicode {
 /**
  * A code-point type.
  */
+// XXX Warum nicht char32_t?
 struct CodePoint {
   /// @ctor_default
   constexpr CodePoint() : v_(0) {}
@@ -52,6 +53,8 @@ struct CodePoint {
    */
   // cppcheck-suppress noExplicitConstructor
   constexpr CodePoint(uint32_t v) : v_(v) {}
+
+  // XXX Warum kein operator char32_t()?
 
   /// @member_op_cast{`uint32_t`}
   operator uint32_t() const { return v_; }
@@ -181,19 +184,25 @@ std::ostream& operator<<(std::ostream& lhs, CodePoint rhs);
 
 /// @spec_fmt_formatter{#rocket::unicode::CodePoint}
 template<typename Char>
-struct fmt::formatter<rocket::unicode::CodePoint, Char> :
-    rocket::format::NativeFormatter<string_view, Char> {
-  using Base = rocket::format::NativeFormatter<string_view, Char>;
-
+struct fmt::formatter<rocket::unicode::CodePoint, Char> {
   template<typename FormatContext>
   constexpr auto
   format(const rocket::unicode::CodePoint& v, FormatContext& ctx) const -> decltype(ctx.out()) {
-    if (Base::specs_.type() == fmt::presentation_type::debug) {
+    if (underlying_.specs().type() == fmt::presentation_type::debug) {
       return fmt::format_to(ctx.out(), "U+{:0>4X}", static_cast<uint32_t>(v));
     } else {
-      return Base::format(static_cast<std::string>(v), ctx);
+      return underlying_.format(static_cast<std::string>(v), ctx);
     }
   }
+
+  constexpr const Char*
+  parse(fmt::parse_context<Char>& ctx) {
+    return underlying_.parse(ctx);
+  }
+
+private:
+
+  rocket::format::NativeFormatter<string_view, Char> underlying_;
 };
 
 // `std::hash<CodePoint>` -----------------------------------------------------------------------------------
@@ -294,10 +303,11 @@ struct Grapheme {
   inline bool operator!=(const Grapheme& rhs) const { return codePoints != rhs.codePoints; }
 
   /**
-   * Returns the code point from this grapheme if there is exactly once, otherwise returns null.
+   * Returns the code point from this grapheme if there is exactly one, otherwise returns null.
    *
    * @return a code point if there is exactly one, otherwise null
    */
+  // XXX Sieht unsinnig aus
   inline std::optional<CodePoint>
   codePoint() const {
     if (codePoints.size() == 1)
@@ -414,14 +424,21 @@ std::ostream& operator<<(std::ostream& lhs, const Grapheme& rhs);
 
 /// @spec_fmt_formatter{#rocket::unicode::Grapheme}
 template<typename Char>
-struct fmt::formatter<rocket::unicode::Grapheme, Char> : rocket::format::NativeFormatter<string_view, Char> {
-  using Base = rocket::format::NativeFormatter<string_view, Char>;
-
+struct fmt::formatter<rocket::unicode::Grapheme, Char> {
   template<typename FormatContext>
   constexpr auto
   format(const rocket::unicode::Grapheme& v, FormatContext& ctx) const -> decltype(ctx.out()) {
-    return Base::format(static_cast<std::string>(v), ctx);
+    return underlying_.format(static_cast<std::string>(v), ctx);
   }
+
+  constexpr const Char*
+  parse(fmt::parse_context<Char>& ctx) {
+    return underlying_.parse(ctx);
+  }
+
+private:
+
+  rocket::format::NativeFormatter<string_view, Char> underlying_;
 };
 
 namespace rocket::unicode {

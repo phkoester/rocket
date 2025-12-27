@@ -380,6 +380,47 @@ private:
   const text::Ranges ranges_;
 };
 
+template<typename C, typename... T>
+[[noreturn]] void
+throwParseFailure(
+    const std::source_location& sl,
+    std::basic_istream<C>& is,
+    size_t position,
+    fmt::format_string<T...> fmt,
+    T&&... args) {
+  nio::StringSink msg;
+  msg.print(fmt, std::forward<T>(args)...);
+  throw ParseFailure(is, position, msg.str(), sl);
+}
+
+template<typename C, typename... T>
+[[noreturn]] void
+throwParseFailure(
+    const std::source_location& sl,
+    std::basic_istream<C>& is,
+    size_t position,
+    text::Range range,
+    fmt::format_string<T...> fmt,
+    T&&... args) {
+  nio::StringSink msg;
+  msg.print(fmt, std::forward<T>(args)...);
+  throw ParseFailure(is, position, range, msg.str(), sl);
+}
+
+template<typename C, typename... T>
+[[noreturn]] void
+throwParseFailure(
+    const std::source_location& sl,
+    std::basic_istream<C>& is,
+    size_t position,
+    std::initializer_list<text::Range> ranges,
+    fmt::format_string<T...> fmt,
+    T&&... args) {
+  nio::StringSink msg;
+  msg.print(fmt, std::forward<T>(args)...);
+  throw ParseFailure(is, position, ranges, msg.str(), sl);
+}
+
 // Functions ------------------------------------------------------------------------------------------------
 
 /**

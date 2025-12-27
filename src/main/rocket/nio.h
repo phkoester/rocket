@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include <fmt/format.h>
+#include "format-std.h"
 
 #include <memory>
 #include <string>
@@ -154,7 +154,7 @@ struct FileSink : Sink {
 
   virtual int write(std::string_view data) override;
 
-ROCKET_PRIVATE:
+ROCKET_TESTING_PRIVATE:
 
   FILE* file_;
   Params params_;

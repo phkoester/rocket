@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include "S.h"
+#include <fmt/format.h>
 
 namespace rocket::noun {
 
@@ -41,10 +41,11 @@ struct Noun {
    */
   std::string
   operator()(size_t count) const {
-    if (count == 1)
-      return S << count << " " << raw(singular);
-    else
-      return S << count << " " << raw(plural);
+    if (count == 1) {
+      return fmt::format("{} {}", count, singular);
+    } else {
+      return fmt::format("{} {}", count, plural);
+    }
   }
 };
 

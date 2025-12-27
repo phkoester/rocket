@@ -8,9 +8,7 @@
 
 #include "enum-decl.h"
 
-#include "S.h"
 #include "Type.h"
-#include "assert.h"
 #include "boost.h"
 #include "codec.h"
 #include "except.h"
@@ -46,15 +44,6 @@
       } \
     }
 
-#define ROCKET_ENUM_DEFINE_OUTPUT_OP__(type, _name) \
-    ::std::ostream& \
-    operator<<(::std::ostream& lhs, type rhs) { \
-      if (auto it = _name##Map__.left.find(rhs); it != _name##Map__.left.end()) \
-        return lhs << it->second; \
-      else \
-        ROCKET_CHECK(rhs, false, "Invalid `{}`: {}", ::rocket::Type::of<type>().name(), static_cast<int>(rhs)); \
-    }
-
 #define ROCKET_ENUM_DEFINE_PARSE_RON__(type, _name) \
     ::std::istream& \
     parseRon(::std::istream& is, type& v) { \
@@ -63,30 +52,20 @@
         v = it->second; \
         return is; \
       } else { \
-        throw ::rocket::except::ParseFailure<char>( \
+        except::throwParseFailure<char>( \
+            ROCKET_EXCEPT_SL, \
             is, \
             enumResult.actualInputPos, \
             { enumResult.actualInputPos, enumResult.actualInputPos + enumResult.actualInput.size() }, \
-            ::rocket::except::message::cannotParseAs(enumResult.actualInput, Type::of<type>())); \
+            "{}", except::message::cannotParseAs(enumResult.actualInput, Type::of<type>())); \
       } \
-    }
-
-#define ROCKET_ENUM_DEFINE_PRINT_RON__(type, _name) \
-    ::std::ostream& \
-    printRon(::std::ostream& os, type v) { \
-      if (auto it = _name##Map__.left.find(v); it != _name##Map__.left.end()) \
-        return printRon(os, it->second); \
-      else \
-        ROCKET_CHECK(v, false, "Invalid `{}`: {}", ::rocket::Type::of<type>().name(), static_cast<int>(v)); \
     }
 
 #define ROCKET_ENUM_DEFINE__(type, name, seq) \
     ROCKET_ENUM_DEFINE_MAP__(type, name, seq); \
     ROCKET_ENUM_DEFINE_VALUES__(type, name); \
     ROCKET_ENUM_DEFINE_INPUT_OP__(type, name) \
-    ROCKET_ENUM_DEFINE_OUTPUT_OP__(type, name) \
     ROCKET_ENUM_DEFINE_PARSE_RON__(type, name) \
-    ROCKET_ENUM_DEFINE_PRINT_RON__(type, name) \
 
 #define ROCKET_ENUM_DEFINE_FMT_FORMATTER__(ns, type, _name) \
     template<typename Char> \

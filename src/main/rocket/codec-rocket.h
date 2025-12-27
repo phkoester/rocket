@@ -19,7 +19,6 @@
 namespace rocket {
 
 using ::parseRon;
-using ::printRon;
 
 // Template definitions -------------------------------------------------------------------------------------
 
@@ -82,30 +81,6 @@ parseRon(std::istream& is, IntervalImpl<T, Left, Right>& v) {
   ron::parsing::skip(is);
   io::getChar(is, Right::Symbol);
   return is;
-}
-
-/// @fn_printRon{#rocket::math::IntervalImpl}
-template<typename T, typename Left, typename Right>
-std::ostream&
-printRon(std::ostream& os, const IntervalImpl<T, Left, Right>& v) {
-  if (v.empty()) {
-    // Use a neat mathematical symbol
-    return os << "∅";
-  } else {
-    os << Left::Symbol;
-    auto opt = option(v.lower);
-    if (not opt)
-      os << "-∞";
-    else
-      printRon(os, *opt);
-    os << ',';
-    opt = option(v.upper);
-    if (not opt)
-      os << "+∞"; // In interval notation, we prefer `+∞` over `∞`
-    else
-      printRon(os, *opt);
-    return os << Right::Symbol;
-  }
 }
 
 } // namespace math

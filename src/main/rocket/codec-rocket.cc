@@ -16,11 +16,6 @@ namespace rocket {
 
 // Functions ------------------------------------------------------------------------------------------------
 
-std::ostream&
-printRon(std::ostream& os, const Type& v) {
-  return os << '`' << v.name() << '`';
-}
-
 namespace text {
 
 ROCKET_ENUM_DEFINE(Position::Type, Position_Type, (note)(warning)(error));
@@ -41,9 +36,8 @@ parseRon(istream& is, CodePoint& v) {
 
   // Hex digits
   if (input.size() > 8) {
-    throw except::ParseFailure<char>(
-        is, inputPos + 2 + 8, { inputPos, io::tellg(is) },
-        S << "Expected at most 8 hexadecimal characters, got " << input.size());
+    except::throwParseFailure<char>( ROCKET_EXCEPT_SL, is, inputPos + 2 + 8, { inputPos, io::tellg(is) },
+        "Expected at most 8 hexadecimal characters, got {}", input.size());
   }
 
   // Parse
@@ -54,12 +48,6 @@ parseRon(istream& is, CodePoint& v) {
 
   // Done
   return is;
-}
-
-ostream&
-printRon(ostream& os, CodePoint v) {
-  // Say goodbye to `ostringstream` ...
-  return os << fmt::format("U+{:0>4X}", static_cast<uint32_t>(v));
 }
 
 istream&
@@ -74,17 +62,11 @@ parseRon(istream& is, Grapheme& v) {
   string input;
   is >> escape::escaped<escape::CString>(input, params, &escapedResult);
   if (unicode::countGraphemes(input) != 1) {
-    throw except::ParseFailure<char>(
-        is, pos, { pos, io::tellg(is) },
-        except::message::cannotParseAs(escapedResult.input, Type::of<Grapheme>()));
+    except::throwParseFailure<char>( ROCKET_EXCEPT_SL, is, pos, { pos, io::tellg(is) },
+        "{}", except::message::cannotParseAs(escapedResult.input, Type::of<Grapheme>()));
   }
   v = Grapheme(input);
   return is;
-}
-
-ostream&
-printRon(ostream& os, const Grapheme& v) {
-  return printRon(os, static_cast<string>(v));
 }
 
 } // namespace unicode

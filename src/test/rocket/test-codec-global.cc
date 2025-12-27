@@ -6,7 +6,6 @@
 
 #include "rocket/codec-global.h"
 
-#include "rocket/S.h"
 #include "rocket/codec.h"
 #include "rocket/io.h"
 
@@ -18,21 +17,6 @@ using namespace std;
 using namespace testing;
 
 // `TEST` ---------------------------------------------------------------------------------------------------
-
-TEST(codec_global, opOutput_double) {
-  using type = double;
-
-  const numeric_limits<type> limits;
-
-  EXPECT_EQ(S << raw(123456.7890123), "123457");
-  EXPECT_EQ(S << raw(limits.lowest()), "-1.79769e+308");
-  EXPECT_EQ(S << raw(limits.denorm_min()), "4.94066e-324");
-  EXPECT_EQ(S << raw(-limits.denorm_min()), "-4.94066e-324");
-  EXPECT_EQ(S << raw(limits.infinity()), "inf");
-  EXPECT_EQ(S << raw(-limits.infinity()), "-inf");
-  EXPECT_EQ(S << raw(limits.signaling_NaN()), "nan");
-  EXPECT_EQ(S << raw(limits.quiet_NaN()), "nan");
-}
 
 TEST(codec_global, parseRon_bool) {
   using type = bool;
@@ -68,14 +52,6 @@ TEST(codec_global, parseRon_bool) {
     EXPECT_EQ(v, false);
     EXPECT_ISTREAM(is, false, false, 1);
   }
-}
-
-TEST(codec_global, printRon_bool) {
-  using type = bool;
-
-  EXPECT_EQ(S << false, "false");
-  EXPECT_EQ(S << true, "true");
-  EXPECT_EQ(S << static_cast<type>(2), "true");
 }
 
 TEST(codec_global, parseRon_char) {
@@ -182,18 +158,6 @@ TEST(codec_global, parseRon_char) {
   }
 }
 
-TEST(codec_global, printRon_char) {
-  using type = char;
-
-  EXPECT_EQ(S << 'A', "'A'");
-  EXPECT_EQ(S << '\'', "'\\\''");
-  EXPECT_EQ(S << '\n', "'\\n'");
-  EXPECT_EQ(S << '\\', "'\\\\'");
-  EXPECT_EQ(S << type(127), "'\\x7f'");
-  EXPECT_EQ(S << type(128), "'\\x80'");
-  EXPECT_EQ(S << type(-1), "'\\xff'");
-}
-
 TEST(codec_global, parseRon_unsigned_char) {
   using type = unsigned char;
 
@@ -235,15 +199,6 @@ TEST(codec_global, parseRon_unsigned_char) {
     EXPECT_EQ(v, 10);
     EXPECT_ISTREAM(is, false, false, 2);
   }
-}
-
-TEST(codec_global, printRon_unsigned_char) {
-  using type = unsigned char;
-
-  EXPECT_EQ(S << type(-1), "ff");
-  EXPECT_EQ(S << type(0), "00");
-  EXPECT_EQ(S << type(128), "80");
-  EXPECT_EQ(S << type(255), "ff");
 }
 
 TEST(codec_global, parseRon_char32_t) {
@@ -406,13 +361,6 @@ TEST(codec_global, parseRon_char32_t) {
   }
 }
 
-TEST(codec_global, printRon_char32_t) {
-  using type = char32_t;
-
-  EXPECT_EQ(S << type(128), "'\\x80'");
-  EXPECT_EQ(S << type(0x20ac), "'€'");
-}
-
 TEST(codec_global, parseRon_int32_t) {
   using type = int32_t; // Prints as `int`
   using biggerType = int64_t;
@@ -491,7 +439,7 @@ TEST(codec_global, parseRon_int32_t) {
 
   {
     biggerType value = static_cast<biggerType>(limits.min()) - 1;
-    string s = codec::ron::print(value);
+    string s = fmt::format("{}", value);
     auto is = io::is(s);
     EXPECT_THAT(
         [&] { parseRon(io::resetg(is), v); },
@@ -500,7 +448,7 @@ TEST(codec_global, parseRon_int32_t) {
 
   {
     auto value = limits.min();
-    string s = codec::ron::print(value);
+    string s = fmt::format("{}", value);
     auto is = io::is(s);
     parseRon(is, v);
     EXPECT_EQ(v, value);
@@ -508,7 +456,7 @@ TEST(codec_global, parseRon_int32_t) {
 
   {
     auto value = limits.max();
-    string s = codec::ron::print(value);
+    string s = fmt::format("{}", value);
     auto is = io::is(s);
     parseRon(is, v);
     EXPECT_EQ(v, value);
@@ -516,34 +464,12 @@ TEST(codec_global, parseRon_int32_t) {
 
   {
     biggerType value = static_cast<biggerType>(limits.max()) + 1;
-    string s = codec::ron::print(value);
+    string s = fmt::format("{}", value);
     auto is = io::is(s);
     EXPECT_THAT(
         [&] { parseRon(io::resetg(is), v); },
         throwsParseFailure<char>(0, { 0, 13 }, HasSubstr("Cannot parse \"2'147'483'648\" as `int`")));
   }
-}
-
-TEST(codec_global, printRon_int) {
-  EXPECT_EQ(S << -4'711, "-4'711");
-  EXPECT_EQ(S << 4'711, "4'711");
-  EXPECT_EQ(S << -1'000'000, "-1'000'000");
-}
-
-TEST(codec_global, printRon_unsigned_int) {
-  EXPECT_EQ(S << 4'711U, "4'711");
-  EXPECT_EQ(S << 1'000'000U, "1'000'000");
-}
-
-TEST(codec_global, printRon_long) {
-  EXPECT_EQ(S << -4'711L, "-4'711");
-  EXPECT_EQ(S << 4'711L, "4'711");
-  EXPECT_EQ(S << -1'000'000L, "-1'000'000");
-}
-
-TEST(codec_global, printRon_unsigned_long) {
-  EXPECT_EQ(S << 4'711UL, "4'711");
-  EXPECT_EQ(S << 1'000'000UL, "1'000'000");
 }
 
 TEST(codec_global, parseRon_int128_t) {
@@ -575,13 +501,6 @@ TEST(codec_global, parseRon_int128_t) {
   }
 }
 
-TEST(codec_global, printRon_int128_t) {
-  using type = int128_t;
-
-  EXPECT_EQ(S << type(-1000000), "-1'000'000");
-  EXPECT_EQ(S << type(1000000), "1'000'000");
-}
-
 TEST(codec_global, parseRon_uint128_t) {
   using type = uint128_t; // Prints as `unsigned __int128`
 
@@ -609,12 +528,6 @@ TEST(codec_global, parseRon_uint128_t) {
     EXPECT_EQ(v, 999'999);
     EXPECT_ISTREAM(is, false, false, 7);
   }
-}
-
-TEST(codec_global, printRon_uint128_t) {
-  using type = uint128_t;
-
-  EXPECT_EQ(S << type(1000000), "1'000'000");
 }
 
 TEST(codec_global, parseRon_float) {
@@ -785,7 +698,7 @@ TEST(codec_global, parseRon_float) {
 
   {
     type value = -limits.max();
-    string s = codec::ron::print(value);
+    string s = fmt::format("{}", value);
     auto is = io::is(s);
     parseRon(is, v);
     EXPECT_EQ(v, value);
@@ -793,7 +706,7 @@ TEST(codec_global, parseRon_float) {
 
   {
     type value = limits.max();
-    string s = codec::ron::print(value);
+    string s = fmt::format("{}", value);
     auto is = io::is(s);
     parseRon(is, v);
     EXPECT_EQ(v, value);
@@ -806,64 +719,6 @@ TEST(codec_global, parseRon_float) {
         throwsParseFailure<char>(0, { 0, 7 }, HasSubstr("Cannot parse \"3.4e+39\" as `float`")));
     EXPECT_ISTREAM(is, true, false, 7);
   }
-}
-
-TEST(codec_global, printRon_float) {
-  using type = float;
-
-  EXPECT_THAT(S << 123456.78901F, matchesRegex("123'456\\.78.*"));
-  EXPECT_THAT(S << -123456.78901F, matchesRegex("-123'456\\.78.*"));
-  EXPECT_EQ(S << 1.0F / 3, "0.3333333432674407959");
-
-  numeric_limits<type> limits;
-
-  EXPECT_EQ(S << limits.signaling_NaN(), "snan");
-  EXPECT_EQ(S << limits.quiet_NaN(), "qnan");
-  auto qnan1 = nanf("1");
-  static_assert(is_same_v<decltype(qnan1), type>);
-  EXPECT_EQ(S << qnan1, "qnan");
-  EXPECT_EQ(S << -limits.infinity(), "-∞");
-  EXPECT_EQ(S << limits.infinity(), "∞");
-}
-
-TEST(codec_global, printRon_double) {
-  using type = double;
-
-  EXPECT_THAT(S << 123456.78901, StartsWith("123'456.7890"));
-  EXPECT_THAT(S << -123456.78901, StartsWith("-123'456.7890"));
-  EXPECT_EQ(S << 1.0 / 3, "0.33333333333333331483");
-
-  EXPECT_THAT(S << 123456.789012, StartsWith("123'456.78901"));
-
-  numeric_limits<type> limits;
-
-  EXPECT_EQ(S << limits.signaling_NaN(), "snan");
-  EXPECT_EQ(S << limits.quiet_NaN(), "qnan");
-  auto qnan1 = nan("1");
-  static_assert(is_same_v<decltype(qnan1), type>);
-  EXPECT_EQ(S << qnan1, "qnan");
-  EXPECT_EQ(S << -limits.infinity(), "-∞");
-  EXPECT_EQ(S << limits.infinity(), "∞");
-}
-
-TEST(codec_global, printRon_long_double) {
-  using type = long double;
-
-  EXPECT_THAT(S << 123456.78901L, matchesRegex("123'456.7890.*"));
-  EXPECT_THAT(S << -123456.78901L, matchesRegex("-123'456.7890.*"));
-  EXPECT_EQ(S << 1.0L / 3, "0.33333333333333333334");
-
-  EXPECT_EQ(S << 123456.789012L, "123'456.789012");
-
-  numeric_limits<type> limits;
-
-  EXPECT_EQ(S << limits.signaling_NaN(), "snan");
-  EXPECT_EQ(S << limits.quiet_NaN(), "qnan");
-  auto qnan1 = nanl("1");
-  static_assert(is_same_v<decltype(qnan1), type>);
-  EXPECT_EQ(S << qnan1, "qnan");
-  EXPECT_EQ(S << -limits.infinity(), "-∞");
-  EXPECT_EQ(S << limits.infinity(), "∞");
 }
 
 // EOF

@@ -28,6 +28,7 @@ const set<char> PLUS_MINUS { '+', '-' };
 
 // Local functions ------------------------------------------------------------------------------------------
 
+#if 0 // XXX Weg
 /**
  * @return pointer to the end
  */
@@ -55,6 +56,7 @@ uint128ToString(char* dest, uint128_t v) {
   *uint128ToStringImpl(dest, v) = '\0';
   return dest;
 }
+#endif
 
 } // namespace
 
@@ -109,13 +111,6 @@ operator>>(istream& lhs, int128_t& rhs) {
   }
 }
 
-ostream&
-operator<<(ostream& lhs, int128_t rhs) {
-  char buf[41];
-  int128ToString(buf, rhs);
-  return lhs << buf;
-}
-
 // `uint128_t` ----------------------------------------------------------------------------------------------
 
 istream&
@@ -155,13 +150,6 @@ operator>>(istream& lhs, uint128_t& rhs) {
   } catch (const exception& ex) {
     return lhs;
   }
-}
-
-ostream&
-operator<<(ostream& lhs, uint128_t rhs) {
-  char buf[41];
-  uint128ToString(buf, rhs);
-  return lhs << buf;
 }
 
 // EOF

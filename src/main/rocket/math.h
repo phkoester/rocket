@@ -11,7 +11,6 @@
 #include <fmt/format.h>
 
 #include <algorithm>
-#include <iostream>
 #include <optional>
 #include <type_traits>
 
@@ -328,30 +327,6 @@ struct IntervalImpl {
    */
   constexpr Traits::SizeType size() const { return Traits::size(lower, upper); }
 };
-
-/// @op_output{#rocket::math::IntervalImpl}
-template<typename T, typename Left, typename Right>
-std::ostream&
-operator<<(std::ostream& lhs, const IntervalImpl<T, Left, Right>& rhs) {
-  if (rhs.empty()) {
-    // Use a neat mathematical symbol
-    return lhs << "∅";
-  } else {
-    lhs << Left::Symbol;
-    auto opt = option(rhs.lower);
-    if (not opt)
-      lhs << "-∞";
-    else
-      lhs << *opt;
-    lhs << ',';
-    opt = option(rhs.upper);
-    if (not opt)
-      lhs << "+∞"; // In interval notation, we prefer "+∞" over "∞"
-    else
-      lhs << *opt;
-    return lhs << Right::Symbol;
-  }
-}
 
 /**
  * Returns the intersection of the intervals @p lhs and @p rhs.

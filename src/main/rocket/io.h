@@ -10,7 +10,6 @@
 
 #include "Guard.h"
 #include "Process.h"
-#include "S.h"
 #include "assert.h"
 #include "base.h"
 #include "except.h"
@@ -18,6 +17,7 @@
 #include "unicode.h"
 #include "unicode-iterator.h"
 
+#include <iostream>
 #include <memory>
 #include <optional>
 #include <set>
@@ -161,10 +161,12 @@ struct Symbols<char32_t> {
 template<typename C> requires Character<C>
 void
 check(std::basic_istream<C>& is) {
-  if (is.eof())
+  if (is.eof()) {
     throw except::ParseFailure<C>(is, tellg(is), "EOF");
-  if (is.fail())
+  }
+  if (is.fail()) {
     throw except::InputFailure<C>(is);
+  }
 }
 
 /**
@@ -223,11 +225,13 @@ getChar(std::basic_istream<C>& is, C v) {
   size_t inputPos = tellg(is);
 
   C c = getChar(is);
-  if (is.eof())
-    throw except::ParseFailure<C>(is, inputPos, S << "Expected " << v << ", got EOF");
+  if (is.eof()) {
+    except::throwParseFailure<C>(ROCKET_EXCEPT_SL, is, inputPos, "Expected '{}' got EOF", v); // XXX
+  }
   check(is);
-  if (c != v)
-    throw except::ParseFailure<C>(is, inputPos, S << "Expected " << v << ", got " << c);
+  if (c != v) {
+    except::throwParseFailure<C>(ROCKET_EXCEPT_SL, is, inputPos, "Expected '{}' got '{}'", v, c); // XXX
+  }
   return c;
 }
 
@@ -248,11 +252,13 @@ getChar(std::basic_istream<C>& is, const std::set<C>& values) {
   size_t inputPos = tellg(is);
 
   C c = getChar(is);
-  if (is.eof())
-    throw except::ParseFailure<C>(is, inputPos, S << "Expected any of " << values << ", got EOF");
+  if (is.eof()) {
+    except::throwParseFailure<C>(ROCKET_EXCEPT_SL, is, inputPos, "Expected any of {} got EOF", values); // XXX values
+  }
   check(is);
-  if (not values.contains(c))
-    throw except::ParseFailure<C>(is, inputPos, S << "Expected any of " << values << ", got " << c);
+  if (not values.contains(c)) {
+    except::throwParseFailure<C>(ROCKET_EXCEPT_SL, is, inputPos, "Expected any of {} got '{}'", values, c); // XXX values
+  }
   return c;
 }
 
@@ -286,11 +292,13 @@ getHex(std::basic_istream<C>& is, size_t n, std::basic_string<C>& input) {
   localIs >> std::hex >> ret;
   if (localIs.fail() || tellg(localIs) != input.size()) {
     std::string msg;
-    if constexpr (std::is_same_v<C, char>)
+    if constexpr (std::is_same_v<C, char>) {
       msg = except::message::cannotParseAs(input, Type::of<I>());
-    else
+    }
+    else {
       msg = except::message::cannotParseAs(unicode::utf32To8(input), Type::of<I>());
-   throw except::ParseFailure<C>(is, inputPos, { inputPos, inputPos + input.size() }, msg);
+    }
+    throw except::ParseFailure<C>(is, inputPos, { inputPos, inputPos + input.size() }, msg);
   }
   return ret;
 }
@@ -377,16 +385,14 @@ getString(std::basic_istream<C>& is, std::basic_string_view<C> v) {
     unicode::CodePoint cp;
     is >> cp;
     if (is.eof()) {
-      throw except::ParseFailure<C>(
-          is, pos, { inputPos, pos },
-          S << v.substr(0, pos - inputPos) << " does not match " << v << ", got EOF");
+      except::throwParseFailure<C>(ROCKET_EXCEPT_SL, is, pos, { inputPos, pos },
+          "{} does not match {}, got EOF", v.substr(0, pos - inputPos), v); // XXX
     }
     check(is);
 
     if (cp != *it) {
-      throw except::ParseFailure<C>(
-         is, pos, { inputPos, tellg(is) },
-         S << v.substr(0, pos - inputPos) << " does not match " << v);
+      except::throwParseFailure<C>(ROCKET_EXCEPT_SL, is, pos, { inputPos, tellg(is) },
+          "{} does not match {}", v.substr(0, pos - inputPos), v); // XXX
     }
   }
   return v;
@@ -423,9 +429,8 @@ getString(std::basic_istream<C>& is, const std::set<std::basic_string_view<C>>& 
         seekg(is, pos);
         return ret;
       } else {
-        throw except::ParseFailure<C>(
-            is, pos, { inputPos, tellg(is) },
-            S << input << " does not match any of " << values << ", got EOF");
+        except::throwParseFailure<C>(ROCKET_EXCEPT_SL, is, pos, { inputPos, tellg(is) },
+            "{} does not match any of {}, got EOF", input, values); // XXX
       }
     }
     check(is);
@@ -456,9 +461,8 @@ getString(std::basic_istream<C>& is, const std::set<std::basic_string_view<C>>& 
           seekg(is, pos);
         return ret;
       } else {
-        throw except::ParseFailure<C>(
-            is, pos, { inputPos, tellg(is) },
-            S << input << " does not match any of " << values);
+        except::throwParseFailure<C>(ROCKET_EXCEPT_SL, is, pos, { inputPos, tellg(is) },
+            "{} does not match any of {}, got EOF", input, values); // XXX
       }
     }
   }
@@ -490,17 +494,17 @@ getUntil(std::basic_istream<C>& is, C delimiter, bool consumeDelimiter, size_t m
   while (true) {
     size_t pos = tellg(is);
     C c = getChar(is);
-    if (is.eof())
-      throw except::ParseFailure<C>(is, pos, S << "Seeking " << delimiter << ", got EOF");
+    if (is.eof()) {
+      except::throwParseFailure<C>(ROCKET_EXCEPT_SL, is, pos, "Seeking {}, got EOF", delimiter); // XXX
+    }
     check(is);
 
     if (c == delimiter) {
       if (not consumeDelimiter)
         is.putback(c);
       if (input.size() < min) {
-        throw except::ParseFailure<C>(
-            is, pos, { inputPos, inputPos + min },
-            S << "Expected at least " << raw(noun::character(min)) << " before " << delimiter << ", got " << input.size());
+        except::throwParseFailure<C>(ROCKET_EXCEPT_SL, is, pos, { inputPos, inputPos + min },
+            "Expected at least {} before {}, got {}", noun::character(min), delimiter, input.size()); // XXX
       }
       return input;
     }
@@ -538,17 +542,17 @@ getUntil(
   while (true) {
     size_t pos = tellg(is);
     C c = getChar(is);
-    if (is.eof())
-      throw except::ParseFailure<C>(is, pos, S << "Seeking " << raw(delimiterDescription) << ", got EOF");
+    if (is.eof()) {
+      except::throwParseFailure<C>(ROCKET_EXCEPT_SL, is, pos, "Seeking {:?}, got EOF", delimiterDescription); // XXX
+    }
     check(is);
 
     if (delimiter(c)) {
       if (not consumeDelimiter)
         is.putback(c);
       if (input.size() < min) {
-        throw except::ParseFailure<C>(
-            is, pos, { inputPos, inputPos + min },
-            S << "Expected at least " << raw(noun::character(min)) << " before " << raw(delimiterDescription) << ", got " << input.size());
+        except::throwParseFailure<C>(ROCKET_EXCEPT_SL, is, pos, { inputPos, inputPos + min },
+            "Expected at least {} before {}, got {}", noun::character(min), delimiterDescription, input.size()); // XXX
       }
       return input;
     }
@@ -584,9 +588,8 @@ getWhile(std::basic_istream<C>& is, const std::set<C>& values, size_t min) {
         seekg(is, pos);
         return input;
       } else {
-        throw except::ParseFailure<C>(
-            is, pos, { inputPos, inputPos + min },
-            S << "Expected at least " << raw(noun::character(min)) << " contained in " << values << ", got " << input.size() << " and EOF");
+        except::throwParseFailure<C>(ROCKET_EXCEPT_SL, is, pos, { inputPos, inputPos + min },
+            "Expected at least {} contained in {}, got {} and EOF", noun::character(min), values, input.size()); // XXX
       }
     }
     check(is);
@@ -598,9 +601,8 @@ getWhile(std::basic_istream<C>& is, const std::set<C>& values, size_t min) {
         seekg(is, pos);
         return input;
       } else {
-          throw except::ParseFailure<C>(
-              is, pos, { inputPos, inputPos + min },
-              S << "Expected at least " << raw(noun::character(min)) << " contained in " << values << ", got " << input.size() << " and " << c);
+        except::throwParseFailure<C>(ROCKET_EXCEPT_SL, is, pos, { inputPos, inputPos + min },
+            "Expected at least {} contained in {}, got {} and {}", noun::character(min), values, input.size(), c); // XXX
       }
     }
   }
@@ -783,45 +785,6 @@ tellg(std::basic_istream<C>& is) noexcept {
   }
 
   return tellg;
-}
-
-/**
- * Similar to `std::basic_ostream<C>::tellp`, but leaves @p os unchanged and returns the actual current
- * position rather than -1 if `os.fail()` returns `true`.
- *
- * Because the result can never be negative, a value of type `size_t` is returned.
- *
- * @tparam C the character type
- * @param os the output stream
- * @return the actual current position as a `size_t`
- */
-template<typename C> requires Character<C>
-size_t
-tellp(std::basic_ostream<C>& os) noexcept {
-  const auto state = os.rdstate();
-
-  // Clear all bits
-  os.clear();
-  // This is expected to never throw, otherwise this implementation is flawed
-  auto tellp = os.tellp();
-  ROCKET_ASSERT(tellp >= 0);
-
-  // Restore the state
-  if ((os.exceptions() & state) == 0) {
-    // Restore the state without exception
-    os.clear(state);
-  } else {
-    // Restore the state with exception
-    try {
-      os.clear(state);
-    } catch (const std::ios::failure&) {
-      // Nothing to do, we want to catch this silently
-    } catch (...) {
-      ROCKET_PROCESS_ERROR("`os.clear()` failed");
-    }
-  }
-
-  return tellp;
 }
 
 } // namespace rocket::io

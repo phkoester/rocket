@@ -93,7 +93,6 @@ TEST(format_std, formatStringView) {
   EXPECT_EQ(fmt::format("{:?}", "🧑‍🌾"sv), "\"🧑\\u200d🌾\"");
 }
 
-// test variant
 TEST(format_std, formatVariant) {
   EXPECT_EQ(fmt::format("{}", variant<int, string, long> { 1 }), "0:1");
   EXPECT_EQ(fmt::format("{}", variant<int, string, long> { "one" }), "1:\"one\"");

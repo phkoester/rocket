@@ -7,7 +7,6 @@
 
 #include "io.h"
 
-#include "S.h"
 #include "assert.h"
 
 #include <memory>
@@ -58,8 +57,10 @@ Buffer::getCodePoint(unicode::CodePoint* cp) {
 
   char c = static_cast<char>(*got);
   auto cpSize = unicode::utf8::codePointSize(c);
-  if (cpSize == 0)
-    throw except::InputFailure(is_, pos, S << "Invalid UTF-8 byte: " << *got);
+  if (cpSize == 0) {
+    // XXX thowInputFailure?
+    throw except::InputFailure(is_, pos, fmt::format("Invalid UTF-8 byte: {:#x}", *got)); // XXX x02?
+  }
 
   vector<byte> ret;
   ret.reserve(cpSize);

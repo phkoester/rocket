@@ -73,8 +73,9 @@ skip(istream& is, bool checkEof) {
     // Skip whitespace, if any
     is >> ws;
     if (is.eof()) {
-      if (checkEof)
-        throw except::ParseFailure<char>(is, io::tellg(is), "EOF");
+      if (checkEof) {
+        except::throwParseFailure<char>( ROCKET_EXCEPT_SL, is, io::tellg(is), "EOF");
+      }
       return;
     }
     io::check(is);
@@ -82,8 +83,9 @@ skip(istream& is, bool checkEof) {
     // Read one char
     char c = io::getChar(is);
     if (is.eof()) {
-      if (checkEof)
-        throw except::ParseFailure<char>(is, io::tellg(is), "EOF");
+      if (checkEof) {
+        except::throwParseFailure<char>( ROCKET_EXCEPT_SL, is, io::tellg(is), "EOF");
+      }
       return;
     }
     io::check(is);
@@ -92,8 +94,9 @@ skip(istream& is, bool checkEof) {
       // Skip comment, continue
       is.ignore(numeric_limits<streamsize>::max(), '\n');
       if (is.eof()) {
-        if (checkEof)
-          throw except::ParseFailure<char>(is, io::tellg(is), "EOF");
+        if (checkEof) {
+          except::throwParseFailure<char>( ROCKET_EXCEPT_SL, is, io::tellg(is), "EOF");
+        }
         return;
       }
       io::check(is);
@@ -106,111 +109,6 @@ skip(istream& is, bool checkEof) {
 }
 
 } // namespace parsing
-
-// RON printing ---------------------------------------------------------------------------------------------
-
-namespace printing {
-
-// `Params` .................................................................................................
-
-namespace internal {
-
-// The stack always holds at least one default-constructed element
-thread_local vector<Params> stack(1);
-
-thread_local size_t level = 0;
-
-void
-incLevel() {
-  const auto& params = printing::params();
-  if (not params.indent)
-    return;
-  ++level;
-}
-
-void
-decLevel() {
-  const auto& params = printing::params();
-  if (not params.indent)
-    return;
-  ROCKET_ASSERT(level > 0);
-  --level;
-}
-
-void
-indent(ostream& os, size_t level) {
-  for (size_t i = 0; i < level; ++i)
-    os << "  ";
-}
-
-void
-push(const Params& params) {
-  stack.push_back(params);
-}
-
-void
-pop() {
-  ROCKET_ASSERT(stack.size() > 1);
-  stack.pop_back();
-}
-
-} // namespace internal
-
-const Params& params() { return internal::stack.back(); }
-
-// Functions ................................................................................................
-
-ostream&
-endParent(ostream& os, bool indentChildren, char right) {
-  const auto& params = printing::params();
-  bool indent = params.indent && indentChildren;
-  if (indent) {
-    os << '\n';
-    internal::indent(os, internal::level);
-  }
-  return os << right;
-}
-
-void
-firstChild(ostream& os, bool indentChildren) {
-  const auto& params = printing::params();
-  bool indent = params.indent && indentChildren;
-  if (not indent)
-    return;
-  os << '\n';
-  internal::indent(os, internal::level);
-}
-
-void
-groupByThousands(string& s, size_t begin, size_t end) {
-  size_t pos = end;
-  while (true) {
-    if (pos <= 3) // Avoid `size_t` overflow
-      break;
-    pos -= 3;
-    if (pos <= begin)
-      break;
-    s.insert(pos, 1, '\'');
-  }
-}
-
-void
-nextChild(
-    ostream& os,
-    bool indentChildren,
-    const char* delimiter,
-    const char* delimiterIndent) {
-  const auto& params = printing::params();
-  bool indent = params.indent && indentChildren;
-  if (not indent)
-    os << delimiter;
-  else {
-    os << delimiterIndent << '\n';
-    internal::indent(os, internal::level);
-  }
-}
-
-} // namespace printing
 
 } // namespace ron
 

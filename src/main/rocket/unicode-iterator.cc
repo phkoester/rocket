@@ -631,7 +631,7 @@ thread_local Grapheme gr;
 
 std::string
 iteratorAt(const Type& type, size_t pos, std::string_view msg) {
-  return S << type << " at position " << pos << " " << raw(msg);
+  return fmt::format("`{}` at position {} {}", type, pos, msg); // XXX
 }
 
 } // namespace internal

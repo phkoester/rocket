@@ -7,8 +7,6 @@
 #include "rocket/codec-std-decl.h"
 #include "rocket/codec-std.h"
 
-#include "rocket/S.h"
-
 #include "rocket-gtest/matcher.h"
 
 using namespace rocket;
@@ -17,31 +15,6 @@ using namespace std;
 using namespace testing;
 
 // `TEST` ---------------------------------------------------------------------------------------------------
-
-TEST(codec_std, printRon_byte) {
-  using type = byte;
-
-  EXPECT_EQ(S << type(-1), "ff");
-  EXPECT_EQ(S << type(0), "00");
-  EXPECT_EQ(S << type(128), "80");
-  EXPECT_EQ(S << type(255), "ff");
-}
-
-TEST(codec_std, printRon_string) {
-  EXPECT_EQ(S << "a€b", "a€b");
-  EXPECT_EQ(S << string_view("a€b"), "\"a€b\"");
-  EXPECT_EQ(S << string("a€b"), "\"a€b\"");
-
-  EXPECT_EQ(S << U"a€b", "a€b");
-  EXPECT_EQ(S << u32string_view(U"a€b"), "\"a€b\"");
-  EXPECT_EQ(S << u32string(U"a€b"), "\"a€b\"");
-
-  EXPECT_EQ(S << 'c' << string_view("hi"), "'c'\"hi\"");
-  EXPECT_EQ(S << raw('c') << raw(string_view("hi")), "chi");
-  EXPECT_EQ(S << raw('a') << 'b', "a'b'");
-  EXPECT_EQ(S << raw("hello\nworld"), "hello\nworld");
-  EXPECT_EQ(S << "hello\nworld", "hello\nworld");
-}
 
 TEST(codec_std, parseRon_optional) {
   using type = optional<char>;
@@ -69,11 +42,6 @@ TEST(codec_std, parseRon_optional) {
     parseRon(is, v);
     EXPECT_EQ(v, 'x');
   }
-}
-
-TEST(codec_std, printRon_optional) {
-  EXPECT_EQ(S << optional<int>(), "null");
-  EXPECT_EQ(S << optional<char>('a'), "'a'");
 }
 
 TEST(codec_std, parseRon_pair) {
@@ -201,20 +169,6 @@ TEST(codec_std, parseRon_u32string) {
   }
 }
 
-TEST(codec_std, printRon_pair_string_view) {
-  using type = pair<int, optional<string_view>>;
-
-  EXPECT_EQ(S << type(), "(0, null)");
-  EXPECT_EQ(S << type(12, "hi"), "(12, \"hi\")");
-}
-
-TEST(codec_std, printRon_pair_u32string_view) {
-  using type = pair<int, optional<u32string_view>>;
-
-  EXPECT_EQ(S << type(), "(0, null)");
-  EXPECT_EQ(S << type(12, U"hi"), "(12, \"hi\")");
-}
-
 TEST(codec_std, parseRon_tuple) {
   using type = tuple<int, string, double>;
 
@@ -222,16 +176,6 @@ TEST(codec_std, parseRon_tuple) {
   auto is = io::is("(12, \"hi\", 2.5)");
   parseRon(is, v);
   EXPECT_EQ(v, make_tuple(12, "hi", 2.5));
-}
-
-TEST(codec_std, printRon_tuple) {
-  using Tuple = tuple<int, double, bool>;
-  using Vector = vector<optional<Tuple>>;
-
-  EXPECT_EQ(S << Vector(), "[]");
-  EXPECT_EQ(
-      (S << Vector{ make_tuple(2, 3.0, false), nullopt, make_tuple(4, 2.5, true) }),
-      "[(2, 3, false), null, (4, 2.5, true)]");
 }
 
 TEST(codec_std, parseRon_unordered_map) {
@@ -293,20 +237,6 @@ TEST(codec_std, parseRon_variant) {
   }
 }
 
-TEST(codec_std, printRon_variant) {
-  using type = variant<int, char, double>;
-
-  EXPECT_EQ(S << type(1), "0:1");
-  EXPECT_EQ(S << type('a'), "1:'a'");
-  EXPECT_EQ(S << type(2.5), "2:2.5");
-}
-
-TEST(codec_std, printRon_vector) {
-  EXPECT_EQ((S << vector{ 2, 3, 4 }), "[2, 3, 4]");
-  EXPECT_EQ(S << optional<vector<int>>{}, "null");
-  EXPECT_EQ((S << optional<vector<int>>(vector{ 1, 2 })), "[1, 2]");
-}
-
 TEST(codec_std, parseRon_vector) {
   using type = vector<pair<bool, int>>;
 
@@ -324,26 +254,6 @@ TEST(codec_std, parseRon_vector) {
     parseRon(is, v);
     EXPECT_EQ(v, (type { { false, 0 }, { true, 1 } }));
   }
-}
-
-TEST(codec_std, printRonIndent_pair) {
-  using type = pair<pair<int, int>, pair<int, int>>;
-
-  auto v = type(make_pair(1, 2), make_pair(3, 4));
-  EXPECT_EQ(S << v, "((1, 2), (3, 4))");
-
-  ROCKET_CODEC_RON_PRINT_PARAMS({ .indent=true });
-  EXPECT_EQ(S << v, "(\n  (1, 2),\n  (3, 4)\n)");
-}
-
-TEST(codec_std, printRonIndent_vector) {
-  using type = vector<vector<int>>;
-
-  auto v = type { { 1, 2, 3 }, { 4, 5, 6 } };
-  EXPECT_EQ(S << v, "[[1, 2, 3], [4, 5, 6]]");
-
-  ROCKET_CODEC_RON_PRINT_PARAMS({ .indent=true });
-  EXPECT_EQ(S << v, "[\n  [1, 2, 3],\n  [4, 5, 6]\n]");
 }
 
 // EOF

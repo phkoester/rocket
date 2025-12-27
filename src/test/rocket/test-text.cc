@@ -4,10 +4,8 @@
 
 #include "rocket-gtest/testing.h"
 
-#include "rocket/codec-boost-decl.h"
 #include "rocket/codec-rocket-decl.h"
 #include "rocket/codec-std-decl.h"
-#include "rocket/codec-boost.h"
 #include "rocket/codec-rocket.h"
 #include "rocket/codec-std.h"
 

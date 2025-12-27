@@ -9,7 +9,6 @@
 
 #include "except.h"
 
-#include "S.h"
 #include "assert.h"
 
 using namespace rocket;
@@ -25,30 +24,29 @@ void printThrown(
 
 string
 getWhat(int v) {
-  return S << v;
+  return fmt::format("{}", v);
 }
 
 string
 getWhat(long v) {
-  return S << v;
+  return fmt::format("{}", v);
 }
 
 string
 getWhat(const char* v) {
   if (not v)
     return "null";
-  string_view s(v);
-  return S << s; // With quotation marks
+  return fmt::format("\"{}\"", v); // With quotation marks
 }
 
 string
 getWhat(const string& v) {
-  return S << v; // With quotation marks
+  return fmt::format("\"{}\"", v); // With quotation marks
 }
 
 string
 getWhat(string_view v) {
-  return S << v; // With quotation marks
+  return fmt::format("\"{}\"", v); // With quotation marks
 }
 
 string
@@ -58,8 +56,8 @@ getWhat(const exception& v) {
     return "null";
   string_view s(p);
   if (s.empty())
-    return "No message";
-  return string(s); // Without quotation marks
+    return "none";
+  return fmt::format("\"{}\"", s); // With quotation marks
 }
 
 void
@@ -126,33 +124,35 @@ printThrown(
 }
 
 void
-whatExceptionPtr(ostream& os, size_t level, const exception_ptr& ptr) {
-  if (level > 0)
-    os << " (Because: ";
+whatExceptionPtr(nio::Sink& sink, size_t level, const exception_ptr& ptr) {
+  if (level > 0) {
+    sink.write(" (Because: ");
+  }
 
   try {
     rethrow_exception(ptr);
   } catch (const exception& ex) {
-    os << getWhat(ex);
+    sink.write(getWhat(ex));
     try {
       rethrow_if_nested(ex);
     } catch (...) {
-      whatExceptionPtr(os, level + 1, current_exception());
+      whatExceptionPtr(sink, level + 1, current_exception());
     }
   } catch (int v) {
-    os << getWhat(v);
+    sink.write(getWhat(v));
   } catch (long v) {
-    os << getWhat(v);
+    sink.write(getWhat(v));
   } catch (const char* v) {
-    os << getWhat(v);
+    sink.write(getWhat(v));
   } catch (const string& v) {
-    os << getWhat(v);
+    sink.write(getWhat(v));
   } catch (string_view v) { // cppcheck-suppress catchExceptionByValue
-    os << getWhat(v);
+    sink.write(getWhat(v));
   } catch (...) {}
 
-  if (level > 0)
-    os << ')';
+  if (level > 0) {
+    sink.write(')');
+  }
 }
 
 } // namespace
@@ -165,21 +165,22 @@ namespace message {
 
 string
 baseMessage(string_view msg, const optional<source_location>& sl) {
-  ostringstream os;
-  if (sl)
-    os << sl->file_name() << ':' << sl->line() << ": ";
-  os << msg;
-  return os.str();
+  nio::StringSink sink;
+  if (sl) {
+    sink.print("{}:{}: ", sl->file_name(), sl->line());
+  }
+  sink.write(msg);
+  return sink.str();
 }
 
 string
 cannotParseAs(string_view input, const Type& type) {
-  return S << "Cannot parse " << input << " as " << type;
+  return fmt::format("Cannot parse {:?} as `{}`", input, type);
 }
 
 string
 overflow(const Type& type) {
-  return S << type << " overflow";
+  return fmt::format("`{}` overflow", type);
 }
 
 } // namespace message
@@ -225,22 +226,22 @@ printException(nio::Sink& sink, exception_ptr ptr) {
 
 string
 what(const exception& ex) {
-  ostringstream os;
-  os << getWhat(ex);
+  nio::StringSink sink;
+  sink.write(getWhat(ex));
   try {
     rethrow_if_nested(ex);
   } catch (...) {
-    whatExceptionPtr(os, 1, current_exception());
+    whatExceptionPtr(sink, 1, current_exception());
   }
-  return os.str();
+  return sink.str();
 }
 
 string
 what(exception_ptr ptr) {
   ROCKET_CHECK(ptr, static_cast<bool>(ptr));
-  ostringstream os;
-  whatExceptionPtr(os, 0, ptr);
-  return os.str();
+  nio::StringSink sink;
+  whatExceptionPtr(sink, 0, ptr);
+  return sink.str();
 }
 
 } // namespace rocket::except

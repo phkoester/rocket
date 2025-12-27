@@ -16,15 +16,11 @@
 /// @cond undocumented
 
 #define ROCKET_ENUM_DECLARE_OP_INPUT__(type) ::std::istream& operator>>(::std::istream&, type&)
-#define ROCKET_ENUM_DECLARE_OP_OUTPUT__(type) ::std::ostream& operator<<(::std::ostream&, type)
 #define ROCKET_ENUM_DECLARE_FN_PARSE_RON__(type) ::std::istream& parseRon(::std::istream&, type&)
-#define ROCKET_ENUM_DECLARE_FN_PRINT_RON__(type) ::std::ostream& printRon(::std::ostream&, type)
 
 #define ROCKET_ENUM_DECLARE__(type) \
     ROCKET_ENUM_DECLARE_OP_INPUT__(type); \
-    ROCKET_ENUM_DECLARE_OP_OUTPUT__(type); \
     ROCKET_ENUM_DECLARE_FN_PARSE_RON__(type); \
-    ROCKET_ENUM_DECLARE_FN_PRINT_RON__(type) \
 
 #define ROCKET_ENUM_DECLARE_FMT_FORMATTER__(type) \
     template<typename Char> \

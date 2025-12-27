@@ -2,9 +2,7 @@
  * main.cc
  */
 
-#include <iostream>
-
-using namespace std;
+#include <cstdio>
 
 // Functions ------------------------------------------------------------------------------------------------
 
@@ -16,9 +14,9 @@ bare() {
 
 int
 main(int argc, char **argv) {
-  cout << "This is bare\n";
+  puts("This is bare");
   bare();
-  return EXIT_SUCCESS;
+  return 0;
 }
 
 // EOF

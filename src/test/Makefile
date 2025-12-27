@@ -21,11 +21,6 @@ CC_FILES    := test/rocket/test-Process.cc
 SHARED_LIBS := $(call shared-lib-name,rocket,$(ROCKET_VERSION))
 include $(GAIA_DIR)/src/main/make/test-executable.mk
 
-NAME        := test-rocket-S
-CC_FILES    := test/rocket/test-S.cc
-SHARED_LIBS := $(call shared-lib-name,rocket,$(ROCKET_VERSION))
-include $(GAIA_DIR)/src/main/make/test-executable.mk
-
 NAME        := test-rocket-StringConvert
 CC_FILES    := test/rocket/test-StringConvert.cc
 SHARED_LIBS := $(call shared-lib-name,rocket,$(ROCKET_VERSION))
@@ -58,11 +53,6 @@ include $(GAIA_DIR)/src/main/make/test-executable.mk
 
 NAME        := test-rocket-codec
 CC_FILES    := test/rocket/test-codec.cc
-SHARED_LIBS := $(call shared-lib-name,rocket,$(ROCKET_VERSION))
-include $(GAIA_DIR)/src/main/make/test-executable.mk
-
-NAME        := test-rocket-codec-boost
-CC_FILES    := test/rocket/test-codec-boost.cc
 SHARED_LIBS := $(call shared-lib-name,rocket,$(ROCKET_VERSION))
 include $(GAIA_DIR)/src/main/make/test-executable.mk
 

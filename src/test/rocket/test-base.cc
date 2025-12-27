@@ -4,7 +4,6 @@
 
 #include "rocket-gtest/testing.h"
 
-#include "rocket/S.h"
 #include "rocket/io.h"
 
 using namespace rocket;
@@ -78,9 +77,9 @@ TEST(base, opOutput_int128_t) {
   type v;
 
   v = numeric_limits<int128_t>::min(); // -2^127
-  EXPECT_EQ(S << raw(v), "-170141183460469231731687303715884105728");
+  EXPECT_EQ(fmt::format("{}", v), "-170141183460469231731687303715884105728");
   v = numeric_limits<int128_t>::max(); // 2^127 - 1
-  EXPECT_EQ(S << raw(v), "170141183460469231731687303715884105727");
+  EXPECT_EQ(fmt::format("{}", v), "170141183460469231731687303715884105727");
 }
 
 TEST(base, opInput_uint128_t) {
@@ -163,10 +162,10 @@ TEST(base, opOutput_uint128) {
   type v;
 
   v = numeric_limits<type>::min(); // 0
-  EXPECT_EQ(S << raw(v), "0");
+  EXPECT_EQ(fmt::format("{}", v), "0");
 
   v = numeric_limits<type>::max(); // 2^128 - 1
-  EXPECT_EQ(S << rocket::raw(v), "340282366920938463463374607431768211455");
+  EXPECT_EQ(fmt::format("{}", v), "340282366920938463463374607431768211455");
 }
 
 // EOF

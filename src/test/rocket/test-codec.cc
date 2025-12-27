@@ -187,40 +187,4 @@ TEST(codec, skip) {
   }
 }
 
-// RON printing .............................................................................................
-
-TEST(codec, groupByThousands) {
-  string s = "";
-  ron::printing::groupByThousands(s, 0, s.size());
-  EXPECT_EQ(s, "");
-
-  s = "1";
-  ron::printing::groupByThousands(s, 0, s.size());
-  EXPECT_EQ(s, "1");
-
-  s = "12";
-  ron::printing::groupByThousands(s, 0, s.size());
-  EXPECT_EQ(s, "12");
-
-  s = "123";
-  ron::printing::groupByThousands(s, 0, s.size());
-  EXPECT_EQ(s, "123");
-
-  s = "1234";
-  ron::printing::groupByThousands(s, 0, s.size());
-  EXPECT_EQ(s, "1'234");
-
-  s = "12345";
-  ron::printing::groupByThousands(s, 0, s.size());
-  EXPECT_EQ(s, "12'345");
-
-  s = "123456";
-  ron::printing::groupByThousands(s, 0, s.size());
-  EXPECT_EQ(s, "123'456");
-
-  s = "1234567";
-  ron::printing::groupByThousands(s, 0, s.size());
-  EXPECT_EQ(s, "1'234'567");
-}
-
 // EOF

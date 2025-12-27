@@ -8,7 +8,6 @@
 #include "rocket/codec-std.h"
 
 #include "rocket/StringConvert.h"
-#include "rocket/except.h"
 #include "rocket/log.h"
 
 #include "rocket-gtest/matcher.h"
@@ -36,9 +35,6 @@ TEST(StringConvert, bool) {
   EXPECT_THAT(
       [] { stringToType<type>("falsex"); },
       throwsParseFailure<char>(0, { 0, 6 }, HasSubstr("Cannot parse \"falsex\" as `bool`")));
-
-  EXPECT_EQ(typeToString(false), "false");
-  EXPECT_EQ(typeToString(true), "true");
 }
 
 TEST(StringConvert, int128_t) {
@@ -53,8 +49,6 @@ TEST(StringConvert, int128_t) {
   EXPECT_THAT(
       [] { stringToType<type>("1x"); },
       throwsParseFailure<char>(0, { 0, 2 }, HasSubstr("Cannot parse \"1x\" as `__int128`")));
-
-  EXPECT_EQ(typeToString(type(-999'999)), "-999'999");
 }
 
 TEST(StringConvert, LogLevel) {
@@ -68,12 +62,6 @@ TEST(StringConvert, LogLevel) {
   EXPECT_THAT(
       [] { stringToType<type>("tracex"); },
       throwsParseFailure<char>(0, { 0, 6 }, HasSubstr("Cannot parse \"tracex\" as `rocket::log::LogLevel`")));
-
-  EXPECT_EQ(typeToString(log::LogLevel::debug), "debug");
-
-  EXPECT_THAT(
-      [] { typeToString(static_cast<type>(6)); },
-      ThrowsMessage<except::InvalidArgument>(HasSubstr("Invalid `rocket::log::LogLevel`: 6")));
 }
 
 TEST(StringConvert, long_double) {
@@ -82,9 +70,6 @@ TEST(StringConvert, long_double) {
   const numeric_limits<type> limits;
 
   EXPECT_EQ(stringToType<type>("-inf"), -limits.infinity());
-
-  EXPECT_EQ(typeToString(limits.quiet_NaN()), "qnan");
-  EXPECT_EQ(typeToString(limits.signaling_NaN()), "snan");
 }
 
 // EOF

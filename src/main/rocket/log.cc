@@ -280,9 +280,10 @@ logDefine(LogLevel* logId, string_view id) {
 
 void
 logBegin(LogLevel* logId, const char* func) {
-  nio::StringSink buf;
   // Begin log entry will be flushed later if necessary
-  logImpl(buf, logId, LogLevel::none, stack.size(), S << func << " {");
+  nio::StringSink buf;
+  buf.print("{} {{", func);
+  logImpl(buf, logId, LogLevel::none, stack.size(), buf.str());
   stack.emplace_back(logId, func, buf.str());
 }
 
@@ -294,7 +295,9 @@ logEnd() noexcept {
     const Entry& entry = stack.back();
     if (not entry.begin_) {
       ROCKET_LOCK(outMutex);
-      logImpl(out.get(), entry.logId_, LogLevel::none, stack.size() - 1, S << "} " << entry.func_);
+      nio::StringSink buf;
+      buf.print("}} {}", entry.func_);
+      logImpl(out.get(), entry.logId_, LogLevel::none, stack.size() - 1, buf.str());
     }
   } catch (const exception& ex) {
     ROCKET_PROCESS_ERROR("Cannot log message: {}", except::what(ex));

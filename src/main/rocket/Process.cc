@@ -96,7 +96,7 @@ Process::init(
 
   // Set the C++ locale from the environment, add `char32_t` support to STL streams
 
-  initLocale_ = locale::withChar32Facets(locale ? *locale : std::locale(localeName));
+  initLocale_ = locale ? *locale : std::locale(localeName);
   systemLocale_ = std::locale::global(initLocale_);
 
   // Initialize members

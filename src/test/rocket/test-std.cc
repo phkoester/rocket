@@ -199,11 +199,9 @@ TEST(std, istream_int) {
   }
 
   {
-    long l = numeric_limits<int>::max() + 1L;
-    ostringstream os;
-    os.imbue(locale::classic());
-    os << l;
-    auto is = io::is(os.str());
+    nio::StringSink buf;
+    buf.print("{}", numeric_limits<int>::max() + 1L);
+    auto is = io::is(buf.str());
     type v = 0;
     is >> v;
     // If the value is greater than the maximum value, then the result is capped!
@@ -233,38 +231,6 @@ TEST(std, istream_long_double) {
     EXPECT_EQ(v, 1.2L);
     EXPECT_ISTREAM(is, false, true, 3);
   }
-}
-
-TEST(std, ostream_char_int) {
-  basic_ostringstream<char> os;
-  os << 42;
-  EXPECT_EQ(os.str(), "42");
-}
-
-/**
- * This tests `char32_t` support from `locale-char32_t.h`.
- */
-TEST(std, ostream_char32_t_int) {
-  basic_ostringstream<char32_t> os;
-  os << 42;
-  EXPECT_EQ(os.str(), U"42");
-}
-
-TEST(std, ostream_wchar_t_int) {
-  basic_ostringstream<wchar_t> os;
-  os << 42;
-  EXPECT_EQ(os.str(), L"42");
-}
-
-TEST(std, ostream_double) {
-  EXPECT_EQ(S << raw(-numeric_limits<double>::infinity()), "-inf");
-  EXPECT_EQ(S << raw(numeric_limits<double>::infinity()), "inf");
-  EXPECT_EQ(S << raw(numeric_limits<double>::quiet_NaN()), "nan");
-  EXPECT_EQ(S << raw(numeric_limits<double>::signaling_NaN()), "nan");
-}
-
-TEST(std, ostream_long_double) {
-  EXPECT_EQ(S << raw(1.2L), "1.2");
 }
 
 TEST(std, regexGreedy) {

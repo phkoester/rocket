@@ -8,8 +8,6 @@
 
 #include "rocket/codec-global.h"
 
-#include "rocket/S.h"
-
 #include "rocket-gtest/ChattyString.h"
 
 using namespace rocket;
@@ -115,10 +113,10 @@ TEST_F(Cxx, divideByZero_double) {
   type zero = 0;
 
   type n = 4.2;
-  EXPECT_EQ(S << raw(n / zero), "inf");
+  EXPECT_EQ(n / zero, numeric_limits<type>::infinity());
 
   n = -4.2;
-  EXPECT_EQ(S << raw(n / zero), "-inf");
+  EXPECT_EQ(n / zero, -numeric_limits<type>::infinity());
 }
 
 TEST_F(Cxx, optionalEmplace) {

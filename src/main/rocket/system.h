@@ -61,7 +61,7 @@ namespace env {
 /**
  * Returns the value of an environment variable. If the string conversion fails, this function returns null.
  *
- * @tparam T the type to convert a string value to 
+ * @tparam T the type to convert a string value to
  * @param name the name of the environment variable
  * @return null if the environment variable does not exist or if the string conversion fails, otherwise a
  *     value of type @p T
@@ -87,7 +87,7 @@ get(const std::string& name) {
 template<typename T>
 inline void
 set(const std::string& name, T&& value, bool replace = true) {
-  setenv(name.c_str(), typeToString(std::forward<T>(value)).c_str(), replace ? 1 : 0);
+  setenv(name.c_str(), fmt::format("{}", std::forward<T>(value)).c_str(), replace ? 1 : 0);
 }
 
 /**

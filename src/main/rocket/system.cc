@@ -7,7 +7,6 @@
 
 #include "system.h"
 
-#include "S.h"
 #include "except.h"
 
 #include <array>

@@ -8,10 +8,6 @@
 
 #include "strings.h"
 
-#define FMT_STD_NO_OPTIONAL
-
-#include <fmt/ranges.h>
-
 #include <fmt/format.h>
 
 #include <functional>
@@ -115,6 +111,7 @@ struct NativeFormatter {
   using type = fmt::detail::type;
 
   static constexpr type TYPE = fmt::detail::type_constant<T, Char>::value;
+  static_assert(TYPE != fmt::detail::type::custom_type, "NativeFormatter cannot be used for custom types");
 
   template<typename FormatContext>
   constexpr auto
@@ -145,7 +142,11 @@ struct NativeFormatter {
     return end;
   }
 
-protected:
+  auto& specs() { return specs_; }
+
+  const auto& specs() const { return specs_; }
+
+private:
 
   fmt::detail::dynamic_format_specs<Char> specs_;
 };

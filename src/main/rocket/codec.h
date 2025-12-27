@@ -9,17 +9,13 @@
  * | What?                         | How?
  * | :---------------------------- | :---
  * | Parse RON from `std::istream` | Supply a `parseRon` overload for the type
- * | Print RON to `std::ostream`   | Supply a `printRon` overload for the type
  * | Decode from RON string        | Use #rocket::codec::ron::parse
- * | Encode to RON string          | Use #rocket::codec::ron::print
  */
 
 #pragma once
 
 // Nothing with a codec-related function overload may be included here!
 
-#include "Guard.h"
-#include "S.h"
 #include "except.h"
 #include "io.h"
 
@@ -201,9 +197,8 @@ getInteger(std::istream& is) {
   auto localIs = io::is(localInput);
   localIs >> ret;
   if (localIs.fail() || io::tellg(localIs) != localInput.size()) {
-    throw except::ParseFailure<char>(
-        is, inputPos, { inputPos, inputPos + input.size() },
-        except::message::cannotParseAs(input, Type::of<I>()));
+    except::throwParseFailure<char>( ROCKET_EXCEPT_SL, is, inputPos, { inputPos, inputPos + input.size() },
+        "{}", except::message::cannotParseAs(input, Type::of<I>()));
   }
   return ret;
 }
@@ -303,8 +298,9 @@ getFloatingPoint(std::istream& is, int precision = DEFAULT_PRECISION) {
   // has been read up to this point
   if (input.empty()) {
     char c = io::getChar(is); // cppcheck-suppress shadowVariable
-    if (is.eof())
-      throw except::ParseFailure<char>(is, inputPos, S << "Expected a character, got EOF");
+    if (is.eof()) {
+      except::throwParseFailure<char>( ROCKET_EXCEPT_SL, is, inputPos, "Expected a character, got EOF");
+    }
     io::check(is);
     input.push_back(c);
   }
@@ -318,9 +314,8 @@ getFloatingPoint(std::istream& is, int precision = DEFAULT_PRECISION) {
   auto localIs = io::is(localInput);
   localIs >> std::setprecision(DEFAULT_PRECISION) >> ret;
   if (localIs.fail() || io::tellg(localIs) != localInput.size()) {
-    throw except::ParseFailure<char>(
-        is, inputPos, { inputPos, inputPos + input.size() },
-        except::message::cannotParseAs(input, Type::of<F>()));
+    except::throwParseFailure<char>( ROCKET_EXCEPT_SL, is, inputPos, { inputPos, inputPos + input.size() },
+        "{}", except::message::cannotParseAs(input, Type::of<F>()));
   }
   return ret;
 }
@@ -493,8 +488,10 @@ parseVariantImpl(std::istream& is, size_t first, size_t last, Variant& v, size_t
       // Go on with next type using template recursion
       return parseVariantImpl<Variant, Index + 1>(is, first, last, v, index);
     }
-  } else
-    throw rocket::except::ParseFailure<char>(is, first, { first, last }, S << "Invalid index: " << index);
+  } else {
+    except::throwParseFailure<char>( ROCKET_EXCEPT_SL, is, first, { first, last },
+        "Invalid index: {}", index);
+  }
 }
 
 } // namespace internal
@@ -571,212 +568,6 @@ void skip(std::istream& is, bool checkEof);
 
 } // namespace parsing
 
-// RON printing ---------------------------------------------------------------------------------------------
-
-namespace printing {
-
-// `Params` .................................................................................................
-
-/**
- * Parameters for #printRon implementations.
- *
- * The current parameters may be obtained via #rocket::codec::ron::printing::params.
- */
-struct Params {
-  bool indent = false; ///< Should children be indented where appropriate?
-};
-
-/**
- * Returns the current parameters for #printRon.
- *
- * @return the current parameters
- *
- * @ThreadSafe
- */
-const Params& params();
-
-namespace internal {
-
-void incLevel();
-
-void decLevel();
-
-void push(const Params&);
-
-void pop();
-
-} // namespace internal;
-
-/**
- * Pushes parameters for #printRon, pops them upon scope exit.
- *
- * @param params the new parameters to use
- *
- * @ThreadSafe
- */
-#define ROCKET_CODEC_RON_PRINT_PARAMS(params) \
-    ::rocket::codec::ron::printing::internal::push(params); \
-    ROCKET_GUARD([] { ::rocket::codec::ron::printing::internal::pop(); })
-
-/**
- * If appropriate, increases the print level and decreases it upon scope exit.
- *
- * @ThreadSafe
- */
-#define ROCKET_CODEC_RON_PRINT_CHILDREN() \
-    ::rocket::codec::ron::printing::internal::incLevel(); \
-    ROCKET_GUARD([] { ::rocket::codec::ron::printing::internal::decLevel(); })
-
-// Functions ................................................................................................
-
-/**
- * Function that helps to implement #printRon for containers.
- *
- * This ends printing of a container. Look around in the headers to find usage examples.
- *
- * @param os the output stream
- * @param indentChildren whether to indent the children
- * @param right the last character after the children
- * @return @p os
- */
-std::ostream& endParent(std::ostream& os, bool indentChildren, char right);
-
-/**
- * Function that helps to implement #printRon for containers.
- *
- * This must be called prior to printing the first child. Look around in the headers to find usage examples.
- *
- * @param os the output stream
- * @param indentChildren whether to indent the children
- */
-void firstChild(std::ostream& os, bool indentChildren);
-
-/**
- * Adds grouping separators (<code>'</code>) to the string @p s.
- *
- * @param s the string to change
- * @param begin the beginning of range to change
- * @param end the end of the range to change
- */
-void groupByThousands(std::string& s, size_t begin, size_t end);
-
-/**
- * Function that helps to implement #printRon for containers.
- *
- * This must be called prior to printing a child that is not the first child. Look around in the headers to
- * find usage examples.
- *
- * @param os the output stream
- * @param indentChildren whether to indent the children
- * @param delimiter delimiter between two children when not indenting
- * @param delimiterIndent delimiter between two children when indenting
- */
-void nextChild(
-    std::ostream& os,
-    bool indentChildren,
-    const char* delimiter,
-    const char* delimiterIndent);
-
-/**
- * Helper function that prints a map as RON.
- *
- * @tparam Map the map type
- * @param os the output stream
- * @param indentChildren whether to indent the children
- * @param v the value to print as RON
- * @return @p os
- */
-template<typename Map>
-std::ostream&
-printMap(std::ostream& os, bool indentChildren, const Map& v) {
-  os << '{'; {
-    ROCKET_CODEC_RON_PRINT_CHILDREN();
-    for (auto it = v.begin(); it != v.end(); ++it) {
-      if (it == v.begin())
-        firstChild(os, indentChildren);
-      else
-        nextChild(os, indentChildren, ", ", ",");
-      printRon(os, it->first);
-      os << ": ";
-      printRon(os, it->second);
-    }
-  }
-  return endParent(os, indentChildren, '}');
-}
-
-/**
- * Helper function that prints a range, described by the iterators @p begin and @p end, as RON.
- *
- * @tparam It the iterator type
- * @param os the output stream
- * @param indentChildren whether to indent the children
- * @param begin iterator that points to the beginning of the range to print
- * @param end iterator that points to the end of the range to print
- * @param left the first character before the list
- * @param delimiter delimiter between two children when not indenting
- * @param delimiterIndent delimiter between two children when indenting
- * @param right the last character after the list
- * @return @p os
- */
-template<typename It>
-std::ostream&
-printRange(
-    std::ostream& os,
-    bool indentChildren,
-    It begin,
-    It end,
-    char left,
-    const char* delimiter,
-    const char* delimiterIndent,
-    char right) {
-  os << left; {
-    ROCKET_CODEC_RON_PRINT_CHILDREN();
-    for (auto it = begin; it != end; ++it) {
-      if (it == begin)
-        firstChild(os, indentChildren);
-      else
-        nextChild(os, indentChildren, delimiter, delimiterIndent);
-      printRon(os, *it);
-    }
-  }
-  return endParent(os, indentChildren, right);
-}
-
-namespace internal {
-
-template<typename T>
-void
-printTupleImpl(std::ostream& os, bool indentChildren, const T& v, size_t index) {
-  if (index == 0)
-    firstChild(os, indentChildren);
-  else
-    nextChild(os, indentChildren, ", ", ",");
-  printRon(os, v);
-}
-
-} // namespace internal
-
-/**
- * Helper function that prints a tuple as RON.
- *
- * @tparam Tuple the tuple type
- * @param os the output stream
- * @param indentChildren whether to indent the children
- * @param v the value to print
- * @return @p os
- */
-template<typename Tuple, size_t... Index>
-std::ostream&
-printTuple(std::ostream& os, bool indentChildren, const Tuple& v, std::index_sequence<Index...>) {
-  os << '('; {
-    ROCKET_CODEC_RON_PRINT_CHILDREN();
-    (..., internal::printTupleImpl(os, indentChildren, std::get<Index>(v), Index));
-  }
-  return endParent(os, indentChildren, ')');
-}
-
-} // namespace print
-
 // RON encoding/decoding ------------------------------------------------------------------------------------
 
 /**
@@ -798,8 +589,8 @@ parse(std::string_view s) {
 
   parsing::skip(is, false);
   if (not is.eof()) {
-    throw except::ParseFailure<char>(
-      is, 0, { 0, s.size() }, except::message::cannotParseAs(s, Type::of<T>()));
+    except::throwParseFailure<char>( ROCKET_EXCEPT_SL, is, 0, { 0, s.size() },
+        "{}", except::message::cannotParseAs(s, Type::of<T>()));
   }
 
   return v;
@@ -820,21 +611,6 @@ tryParse(std::string_view s) {
   } catch (const std::exception&) {
     return std::nullopt;
   }
-}
-
-/**
- * Prints the value @p v to a string, using #printRon.
- *
- * @tparam T the type of the value to print
- * @param v the value to print
- * @return a RON string for the value @p v
- */
-template<typename T>
-std::string
-print(T&& v) {
-  std::ostringstream os;
-  printRon(os, std::forward<T>(v));
-  return os.str();
 }
 
 } // namespace ron

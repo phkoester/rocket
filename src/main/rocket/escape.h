@@ -7,7 +7,6 @@
 #pragma once
 
 #include "Positions.h"
-#include "S.h"
 #include "assert.h"
 #include "base.h"
 #include "except.h"
@@ -236,15 +235,16 @@ operator>>(std::basic_istream<C>& lhs, const EscapedString<CString, C, String>& 
   while (true) {
     // Read grapheme
     size_t pos1 = io::tellg(lhs);
-    if (result)
+    if (result) {
       result->positions.insert({ pos1 - inputPos, s.size() });
+    }
     unicode::Grapheme gr;
     lhs >> gr;
     if (lhs.eof()) {
       // EOF: end of input
       if (params.enclosing()) {
-        throw except::ParseFailure<C>(
-            lhs, pos1, { inputPos, pos1 }, S << "Missing terminating " << params.quote << " character");
+        except::throwParseFailure<C>( ROCKET_EXCEPT_SL, lhs, pos1, { inputPos, pos1 },
+            "Missing terminating {:?} character", params.quote); // XXX ''?
       }
       return lhs;
     }
@@ -258,25 +258,31 @@ operator>>(std::basic_istream<C>& lhs, const EscapedString<CString, C, String>& 
       if (params.enclosing() && cp == static_cast<uint32_t>(params.quote)) {
         // Terminating quote: end of input
 
-        if (result)
+        if (result) {
           result->input.push_back(params.quote);
+        }
         return lhs;
       } else if (cp == '\\') {
         // Backslash: this may either be a C-string-escaped character or a hexadecimal sequence starting with
         // "\\x", "\\u", or "\\U"
 
-        if (result)
+        if (result) {
           result->input.push_back('\\');
+        }
 
         // Read another grapheme following the backslash
 
         lhs >> gr;
-        if (lhs.eof())
-          throw except::ParseFailure<C>(lhs, pos2, { pos1, pos2 }, "Expected a Unicode grapheme, got EOF");
+        if (lhs.eof()) {
+          except::throwParseFailure<C>(ROCKET_EXCEPT_SL, lhs, pos2, { pos1, pos2 },
+              "Expected a Unicode grapheme, got EOF");
+        }
         io::check(lhs);
 
-        if (not gr.codePoint())
-          throw except::ParseFailure<C>(lhs, pos1, { pos1, io::tellg(lhs) }, "Invalid escape sequence");          ;
+        if (not gr.codePoint()) {
+          except::throwParseFailure<C>(ROCKET_EXCEPT_SL, lhs, pos1, { pos1, io::tellg(lhs) },
+              "Invalid escape sequence");
+        }
         cp = *gr.codePoint();
         switch (cp) {
         case 'a': // Alert = 7
@@ -356,23 +362,28 @@ operator>>(std::basic_istream<C>& lhs, const EscapedString<CString, C, String>& 
           s.append(static_cast<std::basic_string<C>>(unicode::CodePoint(i)));
           break;
         }
-        default: throw except::ParseFailure<C>(lhs, pos1, { pos1, io::tellg(lhs) }, "Invalid escape sequence");
+        default: {
+          except::throwParseFailure<C>(ROCKET_EXCEPT_SL, lhs, pos1, { pos1, io::tellg(lhs) },
+              "Invalid escape sequence");
+        }
         }
       } else {
         // No backslash: just add the code point
 
         auto add = static_cast<std::basic_string<C>>(cp);
         s.append(add);
-        if (result)
+        if (result) {
           result->input.append(add);
+        }
       }
     } else {
       // Multi-code-point grapheme: just add it
 
       auto add = static_cast<std::basic_string<C>>(gr);
       s.append(add);
-      if (result)
+      if (result) {
         result->input.append(add);
+      }
     }
   }
 }
@@ -535,12 +546,16 @@ operator>>(std::basic_istream<C>& lhs, const EscapedString<Regex, C, String>& rh
         // Read another grapheme following the backslash
 
         lhs >> gr;
-        if (lhs.eof())
-          throw except::ParseFailure<C>(lhs, pos2, { pos1, pos2 }, "Expected a Unicode grapheme, got EOF");
+        if (lhs.eof()) {
+          except::throwParseFailure<C>(ROCKET_EXCEPT_SL, lhs, pos2, { pos1, pos2 },
+              "Expected a Unicode grapheme, got EOF");
+        }
         io::check(lhs);
 
-        if (not gr.codePoint())
-          throw except::ParseFailure<C>(lhs, pos1, { pos1, io::tellg(lhs) }, "Invalid escape sequence");          ;
+        if (not gr.codePoint()) {
+          except::throwParseFailure<C>(ROCKET_EXCEPT_SL, lhs, pos1, { pos1, io::tellg(lhs) },
+              "Invalid escape sequence");
+        }
         cp = *gr.codePoint();
         switch (cp) {
         case 't': // Horizontal tab = 9
@@ -606,7 +621,10 @@ operator>>(std::basic_istream<C>& lhs, const EscapedString<Regex, C, String>& rh
           s.append(static_cast<std::basic_string<C>>(unicode::CodePoint(i)));
           break;
         }
-        default: throw except::ParseFailure<C>(lhs, pos1, { pos1, io::tellg(lhs) }, "Invalid escape sequence");
+        default: {
+          except::throwParseFailure<C>(ROCKET_EXCEPT_SL, lhs, pos1, { pos1, io::tellg(lhs) },
+              "Invalid escape sequence");
+        }
         }
       } else {
         // No backslash: just add the code point

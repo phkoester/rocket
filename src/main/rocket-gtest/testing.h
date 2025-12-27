@@ -18,10 +18,10 @@
 
 // Macros ---------------------------------------------------------------------------------------------------
 
-#undef ROCKET_PROTECTED
-#define ROCKET_PROTECTED public
-#undef ROCKET_PRIVATE
-#define ROCKET_PRIVATE public
+#undef ROCKET_TESTING_PROTECTED
+#define ROCKET_TESTING_PROTECTED public
+#undef ROCKET_TESTING_PRIVATE
+#define ROCKET_TESTING_PRIVATE public
 
 /**
  * Checks if an environment variable is set to `true`. If it is not, the test is skipped.

@@ -29,13 +29,15 @@ ROCKET_ENUM_DEFINE_FMT_FORMATTER(, MyEnum, MyEnum);
 
 // `TEST` ---------------------------------------------------------------------------------------------------
 
-TEST(enum, enumFormat) {
+TEST(enum, MyEnumFormat) {
   EXPECT_EQ(fmt::format("{}", fröb), "fröb");
   EXPECT_EQ(fmt::format("{}", fröber), "fröber");
   EXPECT_EQ(fmt::format("{}", fröberer), "fröberer");
   EXPECT_EQ(fmt::format("{}", pörk), "pörk");
   EXPECT_EQ(fmt::format("{}", pörker), "pörker");
   EXPECT_EQ(fmt::format("{}", pörkerer), "pörkerer");
+  EXPECT_EQ(fmt::format("{}", static_cast<MyEnum>(10)), "<invalid>");
+  EXPECT_EQ(fmt::format("{: >10}", fröber), "    fröber"); // Tests UTF-8 code points
 }
 
 TEST(enum, parse_MyEnum) {
@@ -53,16 +55,6 @@ TEST(enum, parse_MyEnum) {
   EXPECT_THAT(
       [&] { codec::ron::parse<MyEnum>("\"foo\""); },
       throwsParseFailure<char>(0, { 0, 5 }, HasSubstr("Cannot parse \"\\\"foo\\\"\" as `MyEnum`")));
-}
-
-TEST(enum, print_MyEnum) {
-  EXPECT_EQ(codec::ron::print(fröb), "\"fröb\"");
-  EXPECT_EQ(codec::ron::print(static_cast<MyEnum>(1)), "\"fröber\"");
-  EXPECT_EQ(codec::ron::print(pörkerer), "\"pörkerer\"");
-
-  EXPECT_THAT(
-      [] { codec::ron::print(static_cast<MyEnum>(6)); },
-      ThrowsMessage<except::InvalidArgument>(HasSubstr("Invalid `MyEnum`: 6")));
 }
 
 TEST(enum, opInput_MyEnum) {
@@ -181,42 +173,6 @@ TEST(enum, parseRon_MyEnum) {
         throwsParseFailure<char>(0, { 0, 5 }, HasSubstr("Cannot parse \"\\\"foo\\\"\" as `MyEnum`")));
     EXPECT_ISTREAM(is, true, false, 5);
   }
-}
-
-TEST(enum, printRon_MyEnum) {
-  using type = MyEnum;
-
-  {
-    ostringstream os;
-    printRon(os, fröb);
-    EXPECT_EQ(os.str(), "\"fröb\"");
-  }
-
-  {
-    ostringstream os;
-    printRon(os, static_cast<type>(1));
-    EXPECT_EQ(os.str(), "\"fröber\"");
-  }
-
-  {
-    ostringstream os;
-    printRon(os, pörkerer);
-    EXPECT_EQ(os.str(), "\"pörkerer\"");
-  }
-
-  {
-    ostringstream os;
-    EXPECT_THAT(
-        [&] { os << static_cast<type>(6); },
-        ThrowsMessage<except::InvalidArgument>(HasSubstr("Invalid `MyEnum`: 6")));
-  }
-}
-
-/**
- * Tests UTF-8.
- */
-TEST(enum, format_MyEnum) {
-  EXPECT_EQ(fmt::format("{: >10}", fröber), "    fröber");
 }
 
 // EOF

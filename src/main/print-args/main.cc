@@ -2,11 +2,8 @@
  * main.cc
  */
 
-#include "rocket/codec-std-decl.h"
-#include "rocket/codec-std.h"
-
-#include "rocket/S.h"
 #include "rocket/Process.h"
+#include "rocket/format-std.h"
 
 using namespace rocket;
 using namespace std;
@@ -20,8 +17,9 @@ main(int argc, char **argv) {
       vector<byte> bytes;
       bytes.reserve(arg.size());
       for_each(arg.begin(), arg.end(), [&](char c) { bytes.push_back(byte(c)); });
-      cout << i << ':' << (S << bytes) << '\n';
-      cout << i << '=' << arg << "=\n";
+      auto& out = nio::stdout;
+      out.println("{}: {}", i, bytes); // XXX
+      out.println("{}={}", i, arg);
     }
     process.exit(EXIT_SUCCESS);
   } catch (...) {

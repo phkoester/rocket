@@ -7,6 +7,7 @@
 #include "assert.h"
 
 #include <cstdio>
+#include <iostream>
 #include <unistd.h>
 
 using namespace std;

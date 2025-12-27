@@ -4,7 +4,6 @@
 
 #include "rocket-gtest/testing.h"
 
-#include "rocket/S.h"
 #include "rocket/assert.h"
 #include "rocket/except.h"
 

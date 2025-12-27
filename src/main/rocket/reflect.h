@@ -6,7 +6,6 @@
 
 #pragma once
 
-#include "S.h"
 #include "assert.h"
 #include "codec.h"
 #include "concept.h"
@@ -70,12 +69,6 @@
     inline ::std::istream& \
     parseRon(::std::istream& is, cls& v) { \
       return ::rocket::reflect::parseRon(is, v, cls::name()); \
-    }
-
-#define ROCKET_REFLECT_MEMBERS_DEFINE_FN_PRINT_RON__(cls, name) \
-    inline ::std::ostream& \
-    printRon(::std::ostream& os, const cls& v) { \
-      return ::rocket::reflect::printRon(os, &v, cls::name()); \
     }
 
 // Variables ................................................................................................
@@ -347,8 +340,9 @@ parseRonImpl(
       return parseRonImpl<Size, Index + 1>(is, pos, first, last, v, refs, name);
     }
   }
-  else
-    throw except::ParseFailure<char>(is, first, { first, last }, S << "Invalid name: " << name);
+  else {
+    except::throwParseFailure<char>(ROCKET_EXCEPT_SL, is, first, { first, last }, "Invalid name: {:?}", name); // XXX
+  }
 }
 
 template<typename T, typename Tuple, size_t... Index>
@@ -398,34 +392,6 @@ parseRon(std::istream& is, T* v, Tuple& refs, std::index_sequence<Index...>) {
 
     parseRonImpl<std::tuple_size_v<Tuple>>(is, inputPos, nameFirst, nameLast, v, refs, name);
   }
-}
-
-template<size_t Index, typename T, typename Tuple>
-void
-printRonImpl(std::ostream& os, bool indentChildren, const T* v, const Tuple& refs) {
-  using namespace codec::ron::printing;
-  if constexpr (Index == 0)
-    firstChild(os, indentChildren);
-  else
-    nextChild(os, indentChildren, ", ", ",");
-  os << refName<Index>(refs) << '=';
-  printRon(os, refGet<Index>(v, refs));
-}
-
-template<typename T, typename Tuple, size_t... Index>
-std::ostream&
-printRon(
-    std::ostream& os,
-    bool indentChildren,
-    const T* v,
-    const Tuple& refs,
-    std::index_sequence<Index...>) {
-  using namespace codec::ron::printing;
-  os << '{'; {
-    ROCKET_CODEC_RON_PRINT_CHILDREN();
-    (..., printRonImpl<Index>(os, indentChildren, v, refs));
-  }
-  return endParent(os, indentChildren, '}');
 }
 
 } // namespace internal
@@ -544,21 +510,6 @@ template<typename T, typename... Ref> requires (... && internal::IsVarRef<Ref>::
 inline std::istream&
 parseRon(std::istream& is, std::tuple<Ref...>& refs) {
   return internal::parseRon(is, nullptr, refs, std::make_index_sequence<sizeof...(Ref)>());
-}
-
-/**
- * Prints (@p v, @p refs) as RON.
- *
- * @param os the output stream
- * @param v pointer to the instance, or `nullptr` for variable references
- * @param refs the references
- * @return @p os
- */
-template<typename T, typename... Ref> requires (... && Reference<Ref>)
-inline std::ostream&
-printRon(std::ostream& os, const T* v, const std::tuple<Ref...>& refs) {
-  constexpr bool indentChildren = (... || IsContainer<typename Ref::ValueType>::value);
-  return internal::printRon(os, indentChildren, v, refs, std::make_index_sequence<sizeof...(Ref)>());
 }
 
 } // namespace rocket::reflect
