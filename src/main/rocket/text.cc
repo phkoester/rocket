@@ -11,7 +11,6 @@
 
 #include "assert.h"
 #include "escape.h"
-#include "except.h"
 #include "strings.h"
 #include "terminal.h"
 #include "unicode.h"
@@ -185,7 +184,7 @@ locations(istream& is, const vector<Position>& positions, const LocationsParams&
     if (loc.line != NPOS) {
       ret.locations.push_back(loc);
     } else {
-      except::throwInvalidState(ROCKET_EXCEPT_SL, "Position {} not found in input stream", loc.position);
+      throw InvalidState(fmt::format("Position {} not found in input stream", loc.position));
     }
   }
 

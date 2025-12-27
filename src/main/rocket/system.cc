@@ -7,8 +7,6 @@
 
 #include "system.h"
 
-#include "except.h"
-
 #include <array>
 #include <memory>
 
@@ -110,14 +108,14 @@ exec(const string& cl) {
 
   unique_ptr<FILE, decltype(&pclose)> pipe(popen(cl.c_str(), "r"), pclose);
   if (not pipe) {
-    except::throwInvalidState(ROCKET_EXCEPT_SL, "Cannot open pipe for command `{}`", cl);
+    throw InvalidState(fmt::format("Cannot open pipe for command `{}`", cl));
   }
   size_t n;
   while ((n = fread(buf.data(), 1, buf.size(), pipe.get())) > 0) {
     ret.insert(ret.end(), buf.begin(), buf.begin() + n);
   }
   if (ferror(pipe.get()) != 0) {
-    except::throwInvalidState(ROCKET_EXCEPT_SL, "Cannot read from pipe for command `{}`", cl);
+    throw InvalidState(fmt::format("Cannot read from pipe for command `{}`", cl));
   }
 
   return ret;

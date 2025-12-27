@@ -16,7 +16,6 @@
 
 // Nothing with a codec-related function overload may be included here!
 
-#include "except.h"
 #include "io.h"
 
 /// @cond undocumented
@@ -131,8 +130,8 @@ struct Symbols {
  *
  * @param is the input stream
  * @return a boolean value
- * @throw #rocket::except::InputFailure if `is.fail()` returns `true`
- * @throw #rocket::except::ParseFailure if `is.eof()` returns `true` or if the input cannot be parsed as a
+ * @throw #rocket::io::InputFailure if `is.fail()` returns `true`
+ * @throw #rocket::io::ParseFailure if `is.eof()` returns `true` or if the input cannot be parsed as a
  *     boolean value
  */
 bool getBool(std::istream& is);
@@ -159,8 +158,8 @@ bool getBool(std::istream& is);
  * @tparam I the integer type
  * @param is the input stream
  * @return an integer value of type @p I
- * @throw #rocket::except::InputFailure if `is.fail()` returns `true`
- * @throw #rocket::except::ParseFailure if `is.eof()` returns `true` or if the input cannot be parsed as an
+ * @throw #rocket::io::InputFailure if `is.fail()` returns `true`
+ * @throw #rocket::io::ParseFailure if `is.eof()` returns `true` or if the input cannot be parsed as an
  *     integer value
  */
 template<typename I> requires Integer<I>
@@ -197,8 +196,8 @@ getInteger(std::istream& is) {
   auto localIs = io::is(localInput);
   localIs >> ret;
   if (localIs.fail() || io::tellg(localIs) != localInput.size()) {
-    except::throwParseFailure<char>( ROCKET_EXCEPT_SL, is, inputPos, { inputPos, inputPos + input.size() },
-        "{}", except::message::cannotParseAs(input, Type::of<I>()));
+    throw io::ParseFailure<char>(is, inputPos, { inputPos, inputPos + input.size() },
+        message::cannotParseAs(input, Type::of<I>()));
   }
   return ret;
 }
@@ -224,8 +223,8 @@ getInteger(std::istream& is) {
  * @param is the input stream
  * @param precision the floating-point precision to use
  * @return a floating-point value of type @p F
- * @throw #rocket::except::InputFailure if `is.fail()` returns `true`
- * @throw #rocket::except::ParseFailure if `is.eof()` returns `true` or if the input cannot be parsed as a
+ * @throw #rocket::io::InputFailure if `is.fail()` returns `true`
+ * @throw #rocket::io::ParseFailure if `is.eof()` returns `true` or if the input cannot be parsed as a
  *     floating-point value
  */
 template<typename F> requires FloatingPoint<F>
@@ -247,7 +246,7 @@ getFloatingPoint(std::istream& is, int precision = DEFAULT_PRECISION) {
       return limits.quiet_NaN();
     else // `Symbols::Nan`, `Symbols::Snan`
       return limits.signaling_NaN();
-  } catch (except::InputFailure<char>&) {
+  } catch (io::InputFailure<char>&) {
     // Reset the stream, continue
     io::seekg(is, inputPos);
   }
@@ -299,7 +298,7 @@ getFloatingPoint(std::istream& is, int precision = DEFAULT_PRECISION) {
   if (input.empty()) {
     char c = io::getChar(is); // cppcheck-suppress shadowVariable
     if (is.eof()) {
-      except::throwParseFailure<char>( ROCKET_EXCEPT_SL, is, inputPos, "Expected a character, got EOF");
+      throw io::ParseFailure<char>(is, inputPos, "Expected a character, got EOF");
     }
     io::check(is);
     input.push_back(c);
@@ -314,8 +313,8 @@ getFloatingPoint(std::istream& is, int precision = DEFAULT_PRECISION) {
   auto localIs = io::is(localInput);
   localIs >> std::setprecision(DEFAULT_PRECISION) >> ret;
   if (localIs.fail() || io::tellg(localIs) != localInput.size()) {
-    except::throwParseFailure<char>( ROCKET_EXCEPT_SL, is, inputPos, { inputPos, inputPos + input.size() },
-        "{}", except::message::cannotParseAs(input, Type::of<F>()));
+    throw io::ParseFailure<char>(is, inputPos, { inputPos, inputPos + input.size() },
+        fmt::format("{}", message::cannotParseAs(input, Type::of<F>())));
   }
   return ret;
 }
@@ -355,8 +354,8 @@ struct EnumResult {
  *
  * @param is the input stream
  * @return an instance of #rocket::codec::ron::parsing::EnumResult
- * @throw #rocket::except::InputFailure if `is.fail()` returns `true`
- * @throw #rocket::except::ParseFailure if `is.eof()` returns `true` or if the input cannot be parsed as an
+ * @throw #rocket::io::InputFailure if `is.fail()` returns `true`
+ * @throw #rocket::io::ParseFailure if `is.eof()` returns `true` or if the input cannot be parsed as an
  *     enum value
  */
 EnumResult parseEnum(std::istream& is);
@@ -489,8 +488,7 @@ parseVariantImpl(std::istream& is, size_t first, size_t last, Variant& v, size_t
       return parseVariantImpl<Variant, Index + 1>(is, first, last, v, index);
     }
   } else {
-    except::throwParseFailure<char>( ROCKET_EXCEPT_SL, is, first, { first, last },
-        "Invalid index: {}", index);
+    throw io::ParseFailure<char>(is, first, { first, last }, fmt::format("Invalid index: {}", index));
   }
 }
 
@@ -560,9 +558,9 @@ parseVector(std::istream& is, Vector& v) {
  * Unless @p checkEof is `true`, the input stream's EOF bit may be set when the function returns.
  *
  * @param is the input stream
- * @param checkEof if `true`, a #rocket::except::ParseFailure is thrown if `is.eof()` returns `true`
- * @throw #rocket::except::InputFailure if `is.fail()` returns `true`
- * @throw #rocket::except::ParseFailure if @p checkEof is `true` and `is.eof()` returns `true`
+ * @param checkEof if `true`, a #rocket::io::ParseFailure is thrown if `is.eof()` returns `true`
+ * @throw #rocket::io::InputFailure if `is.fail()` returns `true`
+ * @throw #rocket::io::ParseFailure if @p checkEof is `true` and `is.eof()` returns `true`
  */
 void skip(std::istream& is, bool checkEof);
 
@@ -576,8 +574,8 @@ void skip(std::istream& is, bool checkEof);
  * @tparam T the type to parse as
  * @param s the string to parse
  * @return a value of type @p T
- * @throw #rocket::except::InputFailure if `is.fail()` returns `true`
- * @throw #rocket::except::ParseFailure if `is.eof()` returns `true` or if the string cannot be parsed as a
+ * @throw #rocket::io::InputFailure if `is.fail()` returns `true`
+ * @throw #rocket::io::ParseFailure if `is.eof()` returns `true` or if the string cannot be parsed as a
  *     value of type @p T
  */
 template<typename T>
@@ -589,8 +587,8 @@ parse(std::string_view s) {
 
   parsing::skip(is, false);
   if (not is.eof()) {
-    except::throwParseFailure<char>( ROCKET_EXCEPT_SL, is, 0, { 0, s.size() },
-        "{}", except::message::cannotParseAs(s, Type::of<T>()));
+    throw io::ParseFailure<char>(is, 0, { 0, s.size() },
+        message::cannotParseAs(s, Type::of<T>()));
   }
 
   return v;

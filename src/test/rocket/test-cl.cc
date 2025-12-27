@@ -77,7 +77,7 @@ parseCommand(const vector<string>& args, nio::Sink& out = nio::stdout, nio::Sink
       parseCommandCommand = arg;
       return CommandLine::Stop;
     }
-    except::throwInvalidState(ROCKET_EXCEPT_SL, "Invalid command `{}`", arg);
+    throw InvalidState(fmt::format("Invalid command `{}`", arg));
   };
 
   vector<string> localArgs;

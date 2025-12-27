@@ -148,15 +148,6 @@
 #define ROCKET_REFLECT_MEMBERS_DEFINE_FN_PARSE_RON(cls, name) \
     ROCKET_REFLECT_MEMBERS_DEFINE_FN_PARSE_RON__(cls, name)
 
-/**
- * Provides a `printRon` function for class @p cls, using the member-reference container named @p name.
- *
- * @param cls name of the class that holds the members (without namespace)
- * @param name the name of the member-reference container to use
- */
-#define ROCKET_REFLECT_MEMBERS_DEFINE_FN_PRINT_RON(cls, name) \
-    ROCKET_REFLECT_MEMBERS_DEFINE_FN_PRINT_RON__(cls, name)
-
 // Variables ................................................................................................
 
 /**
@@ -341,7 +332,7 @@ parseRonImpl(
     }
   }
   else {
-    except::throwParseFailure<char>(ROCKET_EXCEPT_SL, is, first, { first, last }, "Invalid name: {:?}", name); // XXX
+    throw io::ParseFailure<char>(is, first, { first, last }, fmt::format("Invalid name: {:?}", name));
   }
 }
 

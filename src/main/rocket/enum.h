@@ -11,7 +11,6 @@
 #include "Type.h"
 #include "boost.h"
 #include "codec.h"
-#include "except.h"
 #include "io-decl.h"
 
 #include <boost/preprocessor/stringize.hpp>
@@ -52,12 +51,11 @@
         v = it->second; \
         return is; \
       } else { \
-        except::throwParseFailure<char>( \
-            ROCKET_EXCEPT_SL, \
+        throw ::rocket::io::ParseFailure<char>( \
             is, \
             enumResult.actualInputPos, \
             { enumResult.actualInputPos, enumResult.actualInputPos + enumResult.actualInput.size() }, \
-            "{}", except::message::cannotParseAs(enumResult.actualInput, Type::of<type>())); \
+            message::cannotParseAs(enumResult.actualInput, Type::of<type>())); \
       } \
     }
 

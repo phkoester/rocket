@@ -28,7 +28,7 @@ struct formatter<std::optional<T>, Char, std::enable_if_t<is_formattable<T, Char
   constexpr auto
   format(const std::optional<T>& v, FormatContext& ctx) const -> decltype(ctx.out()) {
     if (not v) {
-      return detail::write<Char>(ctx.out(), "none");
+      return detail::write<Char>(ctx.out(), "<null>");
     }
     return underlying_.format(*v, ctx);
   }
@@ -40,7 +40,7 @@ struct formatter<std::optional<T>, Char, std::enable_if_t<is_formattable<T, Char
 
 private:
 
-  formatter<std::remove_cv_t<T>, Char> underlying_;
+  formatter<T, Char> underlying_;
 };
 
 // `std::variant` ------------------------------------------------------------------------------------------
@@ -73,6 +73,7 @@ struct formatter<Variant, Char, std::enable_if_t<
     auto out = ctx.out();
     try {
       std::visit([&](const auto& v) {
+        // We need the index to be able to parse the variant back
         out = format_to(out, "{}:", value.index());
         out = detail::write_escaped_alternative<Char>(out, v, ctx);
       }, value);

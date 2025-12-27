@@ -7,7 +7,6 @@
 #include "rocket/codec-rocket-decl.h"
 #include "rocket/codec-rocket.h"
 
-#include "rocket/except.h"
 #include "rocket/io.h"
 #include "rocket/system.h"
 #include "rocket/terminal.h"
@@ -102,7 +101,7 @@ TEST(unicode, CodePoint) {
 
   EXPECT_THAT(
       [&] { CodePoint('\x80'); },
-      ThrowsMessage<except::InvalidArgument>(HasSubstr("Parameter `v`: ")));
+      ThrowsMessage<InvalidArgument>(HasSubstr("Parameter `v`: ")));
 }
 
 TEST(unicode, CodePoint_opCast_string) {

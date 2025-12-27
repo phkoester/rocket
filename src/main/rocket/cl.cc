@@ -8,7 +8,6 @@
 #include "assert.h"
 #include "cl.h"
 #include "codec.h"
-#include "except.h"
 #include "log.h"
 #include "strings.h"
 #include "terminal.h"
@@ -53,13 +52,15 @@ CommandLine::CommandLine(const vector<Option>& opts, const CommandLineParams& pa
 
 void
 CommandLine::apply(const Option& opt, bool nameFlag, optional<string_view> value) {
-  if (opt.takesValue && not value)
-    except::throwInvalidState(ROCKET_EXCEPT_SL, "Missing value for option `{}`", name(opt, nameFlag));
+  if (opt.takesValue && not value) {
+    throw InvalidState(fmt::format("Missing value for option `{}`", name(opt, nameFlag)));
+  }
 
   // Usually, options not taking a value may not be assigned a value. There is one exception to this rule:
   // boolean values are allowed
-  if (not opt.takesValue && value && not codec::Symbols::Strings::Bool.contains(*value))
-    except::throwInvalidState(ROCKET_EXCEPT_SL, "Option `{}` cannot take a value", name(opt, nameFlag));
+  if (not opt.takesValue && value && not codec::Symbols::Strings::Bool.contains(*value)) {
+    throw InvalidState(fmt::format("Option `{}` cannot take a value", name(opt, nameFlag)));
+  }
 
   try {
     opt.apply(value);
@@ -68,7 +69,7 @@ CommandLine::apply(const Option& opt, bool nameFlag, optional<string_view> value
     if (opt.format) {
       expected.print("; expected {}", *opt.format);
     }
-    except::throwInvalidState(ROCKET_EXCEPT_SL, "Option `{}`: Invalid value {:?}{}", name(opt, nameFlag), *value, expected.str());
+    throw InvalidState(fmt::format("Option `{}`: Invalid value {:?}{}", name(opt, nameFlag), *value, expected.str()));
   }
 }
 
@@ -84,7 +85,7 @@ CommandLine::error(nio::Sink& sink, int status) const {
 
 void
 CommandLine::handleException(const exception& ex, nio::Sink& sink, int status) const {
-  if (auto p = dynamic_cast<const except::Exception*>(&ex))
+  if (auto p = dynamic_cast<const Exception*>(&ex))
     process.error(sink, EXIT_SUCCESS, "{}", p->message());
   else
     process.error(sink, EXIT_SUCCESS, "{}", ex.what());
@@ -239,8 +240,9 @@ CommandLine::parse(const vector<string>& args, const Take& take) const {
       // Extract name, look it up in map
       string_view name = eq == string::npos ? arg : arg.substr(0, eq);
       auto mapIt = byName_.find(name);
-      if (mapIt == byName_.end())
-        except::throwInvalidState(ROCKET_EXCEPT_SL, "Unknown option `--{}`", name);
+      if (mapIt == byName_.end()) {
+        throw InvalidState(fmt::format("Unknown option `--{}`", name));
+      }
       const Option& opt = *mapIt->second;
 
       // Obtain value, if any
@@ -267,7 +269,7 @@ CommandLine::parse(const vector<string>& args, const Take& take) const {
         auto cp = *cpIt;
         auto mapIt = byShortName_.find(cp);
         if (mapIt == byShortName_.end())
-          except::throwInvalidState(ROCKET_EXCEPT_SL, "Unknown option `-{}`", static_cast<string>(cp));
+          throw InvalidState(fmt::format("Unknown option `-{}`", static_cast<string>(cp)));
         const Option& opt = *mapIt->second;
 
         // Obtain value, if any, apply option
@@ -353,9 +355,9 @@ void
 CommandLine::validate(string_view name, bool nameFlag) {
   const char* what = nameFlag ? "option name" : "option short name";
   if (name.empty())
-    except::throwInvalidState(ROCKET_EXCEPT_SL, "{} may not be empty", strings::capitalize(what));
+    throw InvalidState(fmt::format("{} may not be empty", strings::capitalize(what)));
   if (strings::beginsWith<char>(name, "-") || name.find_first_of(" =") != string::npos)
-    except::throwInvalidState(ROCKET_EXCEPT_SL, "Invalid {} {:?}", what, name);
+    throw InvalidState(fmt::format("Invalid {} {:?}", what, name));
 }
 
 } // namespace rocket::cl

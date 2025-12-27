@@ -12,11 +12,11 @@
 #ifndef ROCKET_ASSERT_H
 #define ROCKET_ASSERT_H
 
+#include "Exception.h"
 #include "Process.h"
 #ifdef NDEBUG
 #include "base.h" // `rocket::nop()`
 #endif
-#include "except.h"
 #include "format.h"
 
 #include <boost/preprocessor/stringize.hpp>
@@ -57,7 +57,7 @@ onCheckFailed(
     const char* expr,
     fmt::format_string<T...> fmt = "",
     T&&... args) {
-  except::throwInvalidArgument(sl, name, "Check `{}` failed{}", expr, format::Format([&] {
+  throw InvalidArgument(name, fmt::format("Check `{}` failed{}", expr, format::Format([&] {
     if (fmt.get().size() > 0) {
       auto params = format::Format::params(": \\@0");
       params.tag("\\@0", fmt, std::forward<T>(args)...);
@@ -65,7 +65,7 @@ onCheckFailed(
     } else {
       return format::Format::params();
     }
-  }));
+  })), sl);
 }
 
 template<typename... T>
@@ -74,7 +74,7 @@ template<typename... T>
     const char* expr,
     fmt::format_string<T...> fmt = "",
     T&&... args) {
-  except::throwInvalidState(sl, "Expectation `{}` failed{}", expr, format::Format([&] {
+  throw InvalidState(fmt::format("Expectation `{}` failed{}", expr, format::Format([&] {
     if (fmt.get().size() > 0) {
       auto params = format::Format::params(": \\@0");
       params.tag("\\@0", fmt, std::forward<T>(args)...);
@@ -82,7 +82,7 @@ template<typename... T>
     } else {
       return format::Format::params();
     }
-  }));
+  }), sl));
 }
 
 } // namespace rocket::assert::internal
@@ -105,23 +105,23 @@ template<typename... T>
 #define ROCKET_TERMINATE_UNREACHABLE_CODE() ROCKET_ASSERT(false, "Unreachable code")
 
 /**
- * Throws #rocket::except::InvalidState.
+ * Throws #rocket::InvalidState.
  *
- * @throw #rocket::except::InvalidState
+ * @throw #rocket::InvalidState
  */
 #define ROCKET_FAIL_INVALID_CALL() ROCKET_EXPECT(false, "Invalid call of function `{}`", __PRETTY_FUNCTION__)
 
 /**
- * Throws #rocket::except::InvalidState.
+ * Throws #rocket::InvalidState.
  *
- * @throw #rocket::except::InvalidState
+ * @throw #rocket::InvalidState
  */
 #define ROCKET_FAIL_NOT_IMPLEMENTED ROCKET_EXPECT(false, "Not implemented")
 
 /**
- * Throws #rocket::except::InvalidState.
+ * Throws #rocket::InvalidState.
  *
- * @throw #rocket::except::InvalidState
+ * @throw #rocket::InvalidState
  */
 #define ROCKET_FAIL_UNREACHABLE_CODE() ROCKET_EXPECT(false, "Unreachable code")
 
@@ -159,11 +159,11 @@ template<typename... T>
     }
 
 /**
- * Throws #rocket::except::InvalidArgument if @p expr evaluates to `false`.
+ * Throws #rocket::InvalidArgument if @p expr evaluates to `false`.
  *
  * Usage: `ROCKET_CHECK(name, expr, [fmt, [args]...])`
  *
- * @throw #rocket::except::InvalidArgument if @p expr evaluates to `false`
+ * @throw #rocket::InvalidArgument if @p expr evaluates to `false`
  *
  * Use this macro only in order to check function arguments. The first parameter of this macro is always the
  * name of the function parameter the argument of which is to be checked.
@@ -178,11 +178,11 @@ template<typename... T>
     }
 
 /**
- * Throws #rocket::except::InvalidState if @p expr evaluates to `false`.
+ * Throws #rocket::InvalidState if @p expr evaluates to `false`.
  *
  * Usage: `ROCKET_EXPECT(expr, [fmt, [args]...])`
  *
- * @throw #rocket::except::InvalidState if @p expr evaluates to `false`
+ * @throw #rocket::InvalidState if @p expr evaluates to `false`
  *
  * Use this macro only in order to handle program states that result from a flawed implementation but may
  * be dealt with by throwing an exception. Do not abuse it to catch states that may reasonably occur in

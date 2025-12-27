@@ -311,7 +311,7 @@ width(const Graphemes& grs, size_t index, size_t n) {
 
   return accumulate(begin, end, 0UL, [](size_t n, const Grapheme& gr) {
     size_t ret = n + gr.width;
-    ROCKET_EXPECT(ret >= n, "{}", except::message::overflow(Type::of<size_t>()));
+    ROCKET_EXPECT(ret >= n, "{}", message::overflow(Type::of<size_t>()));
     return ret;
   });
 }

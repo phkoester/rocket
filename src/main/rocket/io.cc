@@ -59,7 +59,7 @@ Buffer::getCodePoint(unicode::CodePoint* cp) {
   auto cpSize = unicode::utf8::codePointSize(c);
   if (cpSize == 0) {
     // XXX thowInputFailure?
-    throw except::InputFailure(is_, pos, fmt::format("Invalid UTF-8 byte: {:#x}", *got)); // XXX x02?
+    throw InputFailure(is_, pos, fmt::format("Invalid UTF-8 byte: {:#x}", *got)); // XXX x02?
   }
 
   vector<byte> ret;
@@ -69,9 +69,9 @@ Buffer::getCodePoint(unicode::CodePoint* cp) {
   for (uint8_t i = 1; i < cpSize; ++i) {
     got = get();
     if (not got)
-      throw except::InputFailure(is_, pos, "Incomplete UTF-8 byte sequence");
+      throw InputFailure(is_, pos, "Incomplete UTF-8 byte sequence");
     if (not unicode::utf8::continuationByte(static_cast<char>(*got)))
-      throw except::InputFailure(is_, pos, "Invalid UTF-8 byte sequence");
+      throw InputFailure(is_, pos, "Invalid UTF-8 byte sequence");
     ret.push_back(*got);
   }
 

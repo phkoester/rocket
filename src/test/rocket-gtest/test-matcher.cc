@@ -29,19 +29,19 @@ TEST(match, throwsParseFailure) {
   auto is = io::is();
 
   EXPECT_THAT(
-    [&] { throw except::ParseFailure<char>(is, 2, "oops"); },
+    [&] { throw io::ParseFailure<char>(is, 2, "oops"); },
     throwsParseFailure<char>(Eq(2), HasSubstr("oops")));
 
   EXPECT_THAT(
-    [&] { throw except::ParseFailure<char>(is, 2, "oops"); },
+    [&] { throw io::ParseFailure<char>(is, 2, "oops"); },
     throwsParseFailure<char>(2, HasSubstr("oops")));
 
   EXPECT_THAT(
-    [&] { throw except::ParseFailure<char>(is, 2, { { 1, 2 }, { 3, 4 } }, "oops"); },
+    [&] { throw io::ParseFailure<char>(is, 2, { { 1, 2 }, { 3, 4 } }, "oops"); },
     throwsParseFailure<char>(Eq(2), Eq(text::Ranges { { 1, 2 }, { 3, 4 } }), HasSubstr("oops")));
 
   EXPECT_THAT(
-    [&] { throw except::ParseFailure<char>(is, 2, { { 1, 2 }, { 3, 4 } }, "oops"); },
+    [&] { throw io::ParseFailure<char>(is, 2, { { 1, 2 }, { 3, 4 } }, "oops"); },
     throwsParseFailure<char>(2, { { 1, 2 }, { 3, 4 } }, HasSubstr("oops")));
 }
 

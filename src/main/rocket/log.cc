@@ -223,7 +223,7 @@ setLogLevel(string_view id, string_view value) {
   if (not all) {
     it = definedIds.right.find(id);
     if (it == definedIds.right.end()) {
-      except::throwInvalidState(ROCKET_EXCEPT_SL, "Invalid log ID `{}`", id);
+      throw InvalidState(fmt::format("Invalid log ID `{}`", id));
     }
   }
 
@@ -231,7 +231,7 @@ setLogLevel(string_view id, string_view value) {
   LogLevel level;
   is >> level;
   if (is.fail() || io::tellg(is) != value.size()) {
-    except::throwInvalidState(ROCKET_EXCEPT_SL, "Invalid log level `{}`", value);
+    throw InvalidState(fmt::format("Invalid log level `{}`", value));
   }
 
   if (not all) {
@@ -300,7 +300,7 @@ logEnd() noexcept {
       logImpl(out.get(), entry.logId_, LogLevel::none, stack.size() - 1, buf.str());
     }
   } catch (const exception& ex) {
-    ROCKET_PROCESS_ERROR("Cannot log message: {}", except::what(ex));
+    ROCKET_PROCESS_ERROR("Cannot log message: {}", what(ex));
   } catch (...) {
     ROCKET_PROCESS_ERROR("Cannot log message");
   }
@@ -315,7 +315,7 @@ log(LogLevel level, const exception& ex) {
   auto& out = ::out.get();
   logFlush(out);
   nio::StringSink sink;
-  except::printException(sink, ex);
+  printException(sink, ex);
   string s = sink.str();
   string_view msg(s.begin(), s.end() - 1); // Strip '\n'
   logImpl(out, stack.back().logId_, level, stack.size(), msg);
@@ -328,7 +328,7 @@ log(LogLevel level, exception_ptr ptr) {
   auto& out = ::out.get();
   logFlush(out);
   nio::StringSink sink;
-  except::printException(sink, ptr);
+  printException(sink, ptr);
   string s = sink.str();
   string_view msg(s.begin(), s.end() - 1); // Strip '\n'
   logImpl(out, stack.back().logId_, level, stack.size(), msg);

@@ -127,7 +127,7 @@ TEST(enum, opOutput_MyEnum) {
     ostringstream os;
     EXPECT_THAT(
         [&] { os << static_cast<type>(6); },
-        ThrowsMessage<except::InvalidArgument>(HasSubstr("Invalid `MyEnum`: 6")));
+        ThrowsMessage<InvalidArgument>(HasSubstr("Invalid `MyEnum`: 6")));
   }
 }
 

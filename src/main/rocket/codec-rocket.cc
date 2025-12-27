@@ -36,8 +36,8 @@ parseRon(istream& is, CodePoint& v) {
 
   // Hex digits
   if (input.size() > 8) {
-    except::throwParseFailure<char>( ROCKET_EXCEPT_SL, is, inputPos + 2 + 8, { inputPos, io::tellg(is) },
-        "Expected at most 8 hexadecimal characters, got {}", input.size());
+    throw io::ParseFailure<char>(is, inputPos + 2 + 8, { inputPos, io::tellg(is) },
+        fmt::format("Expected at most 8 hexadecimal characters, got {}", input.size()));
   }
 
   // Parse
@@ -62,8 +62,8 @@ parseRon(istream& is, Grapheme& v) {
   string input;
   is >> escape::escaped<escape::CString>(input, params, &escapedResult);
   if (unicode::countGraphemes(input) != 1) {
-    except::throwParseFailure<char>( ROCKET_EXCEPT_SL, is, pos, { pos, io::tellg(is) },
-        "{}", except::message::cannotParseAs(escapedResult.input, Type::of<Grapheme>()));
+    throw io::ParseFailure<char>(is, pos, { pos, io::tellg(is) },
+        message::cannotParseAs(escapedResult.input, Type::of<Grapheme>()));
   }
   v = Grapheme(input);
   return is;

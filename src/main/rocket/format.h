@@ -29,7 +29,7 @@ struct Format {
     }
 
     template<typename... T>
-    void set(const std::locale& locale,fmt::format_string<T...> fmt, T&&... args) {
+    void set(const std::locale& locale, fmt::format_string<T...> fmt, T&&... args) {
       formatted_ = fmt::format(locale, fmt, std::forward<T>(args)...);
     }
 

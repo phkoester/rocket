@@ -4,7 +4,7 @@
 
 #include "rocket-gtest/testing.h"
 
-#include "rocket/except.h"
+#include "rocket/Exception.h"
 #include "rocket/math-func.h"
 
 #include <random>
@@ -21,7 +21,7 @@ TEST(math, mean) {
     vector<int> v;
     EXPECT_THAT(
         [&] { mean<double>(v.begin(), v.end()); },
-        ThrowsMessage<except::InvalidArgument>(HasSubstr("Parameter `end`: Check `end > begin` failed: Range is empty")));
+        ThrowsMessage<InvalidArgument>(HasSubstr("Parameter `end`: Check `end > begin` failed: Range is empty")));
   }
 
   {

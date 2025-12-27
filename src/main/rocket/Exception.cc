@@ -1,5 +1,5 @@
 /*
- * except.cc
+ * Exception.cc
  */
 
 #include "codec-rocket-decl.h"
@@ -7,12 +7,12 @@
 #include "codec-rocket.h"
 #include "codec-std.h"
 
-#include "except.h"
+#include "Exception.h"
 
 #include "assert.h"
+#include "message.h"
 
 using namespace rocket;
-using namespace rocket::except;
 using namespace std;
 
 namespace {
@@ -157,33 +157,7 @@ whatExceptionPtr(nio::Sink& sink, size_t level, const exception_ptr& ptr) {
 
 } // namespace
 
-namespace rocket::except {
-
-// Messages -------------------------------------------------------------------------------------------------
-
-namespace message {
-
-string
-baseMessage(string_view msg, const optional<source_location>& sl) {
-  nio::StringSink sink;
-  if (sl) {
-    sink.print("{}:{}: ", sl->file_name(), sl->line());
-  }
-  sink.write(msg);
-  return sink.str();
-}
-
-string
-cannotParseAs(string_view input, const Type& type) {
-  return fmt::format("Cannot parse {:?} as `{}`", input, type);
-}
-
-string
-overflow(const Type& type) {
-  return fmt::format("`{}` overflow", type);
-}
-
-} // namespace message
+namespace rocket {
 
 // `InvalidArgument` ----------------------------------------------------------------------------------------
 
@@ -192,7 +166,7 @@ InvalidArgument::InvalidArgument(
     string_view msg,
     optional<source_location>&& sl,
     optional<stacktrace>&& st) :
-    Base(message::baseMessage(fmt::format("Parameter `{}`: {}", name, msg), sl)),
+    Base(message::exceptionBase(fmt::format("Parameter `{}`: {}", name, msg), sl)),
     Exception(msg, std::move(sl), std::move(st)) {}
 
 // `InvalidState` -------------------------------------------------------------------------------------------
@@ -201,7 +175,7 @@ InvalidState::InvalidState(
     string_view msg,
     optional<source_location>&& sl,
     optional<stacktrace>&& st) :
-    Base(message::baseMessage(msg, sl)),
+    Base(message::exceptionBase(msg, sl)),
     Exception(msg, std::move(sl), std::move(st)) {}
 
 // Functions ------------------------------------------------------------------------------------------------

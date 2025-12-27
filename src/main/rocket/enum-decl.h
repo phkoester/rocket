@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include <fmt/format.h>
+#include "format.h"
 
 #include <algorithm>
 #include <iosfwd>

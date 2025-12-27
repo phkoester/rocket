@@ -9,7 +9,6 @@
 #include "rocket/codec-rocket.h"
 #include "rocket/codec-std.h"
 
-#include "rocket/except.h"
 #include "rocket/text.h"
 #include "rocket/unicode.h"
 #include "rocket/reflect.h"
@@ -221,7 +220,7 @@ TEST(text, locations) {
         Position pos { .type=Position::error, .position=4, .message="Oops" };
         locations(io::resetg(is), { pos }, {});
       }),
-      ThrowsMessage<except::InvalidState>(HasSubstr("Position 4 not found in input stream")));
+      ThrowsMessage<InvalidState>(HasSubstr("Position 4 not found in input stream")));
 
     // No grapheme boundary at position 7
     EXPECT_THAT(
@@ -229,7 +228,7 @@ TEST(text, locations) {
         Position pos { .type=Position::error, .position=7, .message="Oops" };
         locations(io::resetg(is), { pos }, {});
       }),
-      ThrowsMessage<except::InvalidState>(HasSubstr("Position 7 not found in input stream")));
+      ThrowsMessage<InvalidState>(HasSubstr("Position 7 not found in input stream")));
 
     // Position 11 is okay
     {
@@ -294,7 +293,7 @@ TEST(text, printLocations) {
     try {
       parseRon(is, config);
       FAIL();
-    } catch (except::ParseFailure<char>& ex) {
+    } catch (io::ParseFailure<char>& ex) {
       // Test tab size null
       {
         Position pos {

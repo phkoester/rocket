@@ -11,7 +11,7 @@
 #include "assert.h"
 #include "io.h"
 
-#include <fmt/format.h>
+#include "format.h"
 
 #include <termios.h>
 #include <sys/ioctl.h>
@@ -101,11 +101,13 @@ Ansi::request(nio::Sink& sink, string_view sequence) const {
   string ret;
   while (true) {
     char c;
-    if (read(STDIN_FILENO, &c, 1) != 1)
-      throw except::InputFailure(cin, ret.size(), "Failed to read response");
+    if (read(STDIN_FILENO, &c, 1) != 1) {
+      throw io::InputFailure(cin, ret.size(), "Failed to read response");
+    }
     ret.push_back(c);
-    if (c == 'R')
+    if (c == 'R') {
       break;
+    }
   }
   return ret;
 }

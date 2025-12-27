@@ -7,8 +7,7 @@
 #pragma once
 
 #include "base.h"
-
-#include <fmt/format.h>
+#include "format.h"
 
 #include <algorithm>
 #include <optional>

@@ -1,15 +1,14 @@
 /*
- * test-except.cc
+ * test-Exception.cc
  */
 
 #include "rocket-gtest/testing.h"
 
-#include "rocket/except.h"
+#include "rocket/Exception.h"
 
 #include "rocket-gtest/matcher.h"
 
 using namespace rocket;
-using namespace rocket::except;
 using namespace rocket::gtest::matcher;
 using namespace std;
 using namespace testing;
@@ -29,8 +28,8 @@ TEST(except, printException1) {
         nio::StringSink s1;
         printException(s1, ex3);
         EXPECT_THAT(s1.str(), AllOf(
-            containsRegex("An instance of `std::_Nested_exception<rocket::except::InvalidState>` was thrown: .*\\.cc:\\d+: oops3\n"),
-            containsRegex("Caused by an instance of `std::_Nested_exception<rocket::except::InvalidArgument>`: .*\\.cc:\\d+: Parameter `name`: oops2\n"),
+            containsRegex("An instance of `std::_Nested_exception<rocket::InvalidState>` was thrown: .*\\.cc:\\d+: oops3\n"),
+            containsRegex("Caused by an instance of `std::_Nested_exception<rocket::InvalidArgument>`: .*\\.cc:\\d+: Parameter `name`: oops2\n"),
             containsRegex("Caused by an instance of `char const\\*`: \"oops1\"\n")));
 
         nio::StringSink s2;

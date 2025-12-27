@@ -7,8 +7,7 @@
 #pragma once
 
 #include "Lazy.h"
-
-#include <fmt/format.h>
+#include "format.h"
 
 #include <iosfwd>
 #include <string>

@@ -214,7 +214,7 @@ struct CommandLine {
    * @param take a take function, may be null. This allows customizing how positional arguments are
    *     processed
    * @return the command-line arguments left for further processing
-   * @throw #rocket::except::InvalidState if the command line could not be parsed successfully
+   * @throw #rocket::InvalidState if the command line could not be parsed successfully
    * @throw std::exception if a problem arises in an option's apply function
    * @see #Take
    * @see #Took

@@ -4,8 +4,8 @@
 
 #include "rocket-gtest/testing.h"
 
+#include "rocket/Exception.h"
 #include "rocket/assert.h"
-#include "rocket/except.h"
 
 using namespace rocket;
 using namespace std;
@@ -40,18 +40,18 @@ TEST(assert, ROCKET_CHECK) {
 
   EXPECT_THAT(
       [&] { ROCKET_CHECK(c, c == 'b'); },
-      ThrowsMessage<except::InvalidArgument>(HasSubstr("Parameter `c`: Check `c == 'b'` failed")));
+      ThrowsMessage<InvalidArgument>(HasSubstr("Parameter `c`: Check `c == 'b'` failed")));
 
   EXPECT_THAT(
       [&] { ROCKET_CHECK(c, c == 'b', "oops"); },
-      ThrowsMessage<except::InvalidArgument>(HasSubstr("Parameter `c`: Check `c == 'b'` failed: oops")));
+      ThrowsMessage<InvalidArgument>(HasSubstr("Parameter `c`: Check `c == 'b'` failed: oops")));
 }
 
 TEST(assert, ROCKET_EXPECT) {
   oopsCalled = false;
   EXPECT_THAT(
       [] { ROCKET_EXPECT(true && false, "{}", oops()); },
-      ThrowsMessage<except::InvalidState>(HasSubstr("Expectation `true && false` failed: oops")));
+      ThrowsMessage<InvalidState>(HasSubstr("Expectation `true && false` failed: oops")));
   EXPECT_TRUE(oopsCalled);
 }
 

@@ -74,7 +74,7 @@ skip(istream& is, bool checkEof) {
     is >> ws;
     if (is.eof()) {
       if (checkEof) {
-        except::throwParseFailure<char>( ROCKET_EXCEPT_SL, is, io::tellg(is), "EOF");
+        throw io::ParseFailure<char>(is, io::tellg(is), "EOF");
       }
       return;
     }
@@ -84,7 +84,7 @@ skip(istream& is, bool checkEof) {
     char c = io::getChar(is);
     if (is.eof()) {
       if (checkEof) {
-        except::throwParseFailure<char>( ROCKET_EXCEPT_SL, is, io::tellg(is), "EOF");
+        throw io::ParseFailure<char>(is, io::tellg(is), "EOF");
       }
       return;
     }
@@ -95,7 +95,7 @@ skip(istream& is, bool checkEof) {
       is.ignore(numeric_limits<streamsize>::max(), '\n');
       if (is.eof()) {
         if (checkEof) {
-          except::throwParseFailure<char>( ROCKET_EXCEPT_SL, is, io::tellg(is), "EOF");
+          throw io::ParseFailure<char>(is, io::tellg(is), "EOF");
         }
         return;
       }

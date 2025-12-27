@@ -84,7 +84,7 @@ struct Ansi {
    * @param sink the sink
    * @param sequence the ANSI escape sequence to send
    * @return the response from `stdin` if this instance is active, otherwise an empty string
-   * @throw #rocket::except::InputFailure if the response from `stdin` is not valid
+   * @throw #rocket::io::InputFailure if the response from `stdin` is not valid
    */
   std::string request(nio::Sink& sink, std::string_view sequence) const;
 

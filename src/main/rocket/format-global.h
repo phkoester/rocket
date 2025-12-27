@@ -31,6 +31,7 @@ struct formatter<char32_t, Char> {
     // Debug?
     if (underlying_.specs().type() == presentation_type::debug) {
       // Replace double quotes by single quotes
+      // XXX
       std::cout << "XXX Peek begin: [" << *begin << "]" << std::endl;
       std::cout << "XXX Peek out - 1: [" << *(out - 1) << "]" << std::endl;
     }

@@ -6,8 +6,9 @@
 
 #pragma once
 
+#include "rocket/format.h"
+
 #include <chrono>
-#include <fmt/format.h>
 
 // Macros ---------------------------------------------------------------------------------------------------
 

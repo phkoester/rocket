@@ -12,8 +12,7 @@
 #pragma once
 
 #include "codec.h"
-#include "except.h"
-#include "io-decl.h"
+#include "io.h" // XXX
 
 namespace rocket {
 
@@ -40,8 +39,8 @@ struct StringConvert<bool> {
    * @param s the string to convert
    * @return a boolean value
    *
-   * @throw #rocket::except::InputFailure if `is.fail()` returns `true`
-   * @throw #rocket::except::ParseFailure if @p s cannot be parsed as a boolean value
+   * @throw #rocket::io::InputFailure if `is.fail()` returns `true`
+   * @throw #rocket::io::ParseFailure if @p s cannot be parsed as a boolean value
    */
   Type stringToType(std::string_view s) const;
 };
@@ -120,8 +119,8 @@ struct IntegerStringConvert {
    *
    * @param s the string to convert
    * @return an integer value
-   * @throw #rocket::except::InputFailure if `is.fail()` returns `true`
-   * @throw #rocket::except::ParseFailure if @p s cannot be parsed as an integer value
+   * @throw #rocket::io::InputFailure if `is.fail()` returns `true`
+   * @throw #rocket::io::ParseFailure if @p s cannot be parsed as an integer value
    */
   Type
   stringToType(std::string_view s) const {
@@ -133,8 +132,7 @@ struct IntegerStringConvert {
         return ret;
     } catch (const std::exception& ex) {}
 
-    throw except::ParseFailure<char>(is, 0, { 0, s.size() },
-        except::message::cannotParseAs(s, rocket::Type::of<Type>()));
+    throw io::ParseFailure<char>(is, 0, { 0, s.size() }, message::cannotParseAs(s, rocket::Type::of<Type>()));
   }
 };
 
@@ -154,7 +152,7 @@ struct EnumStringConvert {
    *
    * @param s the string to convert
    * @return an enum value
-   * @throw #rocket::except::ParseFailure if @p s could not be parsed as a value of the appropriate type
+   * @throw #rocket::io::ParseFailure if @p s could not be parsed as a value of the appropriate type
    */
   Type
   stringToType(std::string_view s) const {
@@ -162,8 +160,7 @@ struct EnumStringConvert {
     auto is = io::is(s);
     is >> ret;
     if (is.fail() || io::tellg(is) != s.size()) {
-      throw except::ParseFailure<char>(is, 0, { 0, s.size() },
-          except::message::cannotParseAs(s, rocket::Type::of<Type>()));
+      throw io::ParseFailure<char>(is, 0, { 0, s.size() }, message::cannotParseAs(s, rocket::Type::of<Type>()));
     }
     return ret;
   }
@@ -186,8 +183,8 @@ struct FloatingPointStringConvert {
    * @param s the string to convert
    * @param precision the floating-point precision to use
    * @return a floating-point value
-   * @throw #rocket::except::InputFailure if `is.fail()` returns `true`
-   * @throw #rocket::except::ParseFailure if @p s cannot be parsed as a floating-point value
+   * @throw #rocket::io::InputFailure if `is.fail()` returns `true`
+   * @throw #rocket::io::ParseFailure if @p s cannot be parsed as a floating-point value
    */
   Type
   stringToType(std::string_view s, int precision = rocket::DEFAULT_PRECISION) const {
@@ -199,8 +196,7 @@ struct FloatingPointStringConvert {
         return ret;
     } catch (const std::exception& ex) {}
 
-    throw except::ParseFailure<char>(is, 0, { 0, s.size() },
-        except::message::cannotParseAs(s, rocket::Type::of<Type>()));
+    throw io::ParseFailure<char>(is, 0, { 0, s.size() }, message::cannotParseAs(s, rocket::Type::of<Type>()));
   }
 };
 
