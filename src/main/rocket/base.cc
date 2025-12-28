@@ -72,7 +72,7 @@ operator>>(istream& lhs, int128_t& rhs) {
 
     lhs >> c;
     if (lhs.eof()) {
-      // EOF: clear fail bit
+      // EOF: clear fail bit, exit loop
       lhs.clear(lhs.rdstate() & ~ios::failbit);
       break;
     }
