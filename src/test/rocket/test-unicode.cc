@@ -219,6 +219,7 @@ TEST(unicode, CodePointsFormat) {
   EXPECT_EQ(fmt::format("{}", cps), "[a, b, c]");
   EXPECT_EQ(fmt::format("{::?}", cps), "[U+0061, U+0062, U+0063]");
   EXPECT_EQ(fmt::format("{::~>6?}", cps), "[~~U+0061, ~~U+0062, ~~U+0063]");
+  EXPECT_EQ(fmt::format("{:n:~>6?}", cps), "~~U+0061, ~~U+0062, ~~U+0063");
 }
 
 TEST(unicode, Grapheme) {

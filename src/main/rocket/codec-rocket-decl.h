@@ -7,8 +7,8 @@
 #pragma once
 
 #include "enum-decl.h"
-#include "math.h"
-#include "text.h"
+#include "math.h" // XXX
+#include "text.h" // XXX
 #include "unicode-decl.h"
 
 #ifdef ROCKET_CODEC_H

@@ -411,30 +411,6 @@ signalingNan(F v) {
 }
 
 /**
- * Returns an unsigned integer value for @p v that has the same size in bytes as @p v.
- *
- * @tparam T the type of @p v
- * @param v a value
- * @return an unsigned integer value for @p that has the same size in bytes as @p v
- *
- * ## Examples
- *
- * This may be useful to quickly print hex values:
- *
- * ```
- * auto v = ...
- * cout << hex << rocket::uint(v) << '\n';
- * ```
- */
-template<typename T>
-constexpr typename Uint<sizeof(T)>::Type
-uint(T v) {
-  typename Uint<sizeof(T)>::Type ret;
-  std::memcpy(&ret, &v, sizeof(T));
-  return ret;
-}
-
-/**
  * The `value` function has several overloads to work with values either of type @p T or `std::optional<T>`.
  *
  * @tparam T the value type

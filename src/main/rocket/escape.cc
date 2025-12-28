@@ -99,7 +99,7 @@ escapeCStringTab(size_t& column, const CString::Params& params) {
 }
 
 std::istream&
-operator>>(std::istream& lhs, EscapedString<CString>& rhs) { // XXX const
+operator>>(std::istream& lhs, EscapedString<CString>& rhs) {
   ROCKET_CHECK(rhs, rhs.params.quote == '\0' || rhs.params.quote == '"' || rhs.params.quote == '\'');
   std::string& s = rhs.s;
   const auto& params = rhs.params;
@@ -115,8 +115,9 @@ operator>>(std::istream& lhs, EscapedString<CString>& rhs) { // XXX const
   // If needed, read quote
   if (params.enclosing()) {
     io::getChar(lhs, params.quote);
-    if (result)
+    if (result) {
       result->input.push_back(params.quote);
+    }
   }
 
   while (true) {
@@ -172,50 +173,59 @@ operator>>(std::istream& lhs, EscapedString<CString>& rhs) { // XXX const
         switch (cp) {
         case 'a': // Alert = 7
           s.push_back('\a');
-          if (result)
+          if (result) {
             result->input.push_back('a');
+          }
           break;
         case 'b': // Backspace = 8
           s.push_back('\b');
-          if (result)
+          if (result) {
             result->input.push_back('b');
+          }
           break;
         case 't': // Horzontal tab = 9
           s.push_back('\t');
-          if (result)
+          if (result) {
             result->input.push_back('t');
+          }
           break;
         case 'n': // Line feed = 10
           s.push_back('\n');
-          if (result)
+          if (result) {
             result->input.push_back('n');
+          }
           break;
         case 'v': // Vertical tab = 11
           s.push_back('\v');
-          if (result)
+          if (result) {
             result->input.push_back('v');
+          }
           break;
         case 'f': // Form feed = 12
           s.push_back('\f');
-          if (result)
+          if (result) {
             result->input.push_back('f');
+          }
           break;
         case 'r': // Carriage return = 13
           s.push_back('\r');
-          if (result)
+          if (result) {
             result->input.push_back('r');
+          }
           break;
         case 'e': // Escape = 27
           s.push_back('\e');
-          if (result)
+          if (result) {
             result->input.push_back('e');
+          }
           break;
         case '"' : // Quotation mark = 34
         case '\'': // Apostrophe = 39
         case '\\': // Backslash = 92
           s.push_back(static_cast<char>(cp));
-          if (result)
+          if (result) {
             result->input.push_back(static_cast<char>(cp));
+          }
           break;
         case 'x': {
           std::string input;
@@ -296,8 +306,9 @@ operator<<(std::ostream& lhs, const EscapedString<CString>& rhs) {
   size_t column = 0;
   for (; it != end; ++it) {
     unicode::Grapheme gr = *it;
-    if (result)
+    if (result) {
       result->positions.insert({ it.position(), to });
+    }
     if (gr.codePoint()) {
       // Single-code-point grapheme
       unicode::CodePoint cp = *gr.codePoint();
@@ -317,8 +328,9 @@ operator<<(std::ostream& lhs, const EscapedString<CString>& rhs) {
       to += add.size();
     }
   }
-  if (result)
+  if (result) {
     result->positions.insert({ it.position(), to });
+  }
 
   // If needed, print quote
   if (params.enclosing())
@@ -386,7 +398,7 @@ escapeRegex(unicode::CodePoint cp, size_t& column) {
 }
 
 std::istream&
-operator>>(std::istream& lhs, EscapedString<Regex>& rhs) { // XXX const
+operator>>(std::istream& lhs, EscapedString<Regex>& rhs) {
   std::string& s = rhs.s;
   Result* result = rhs.result;
 
@@ -400,8 +412,9 @@ operator>>(std::istream& lhs, EscapedString<Regex>& rhs) { // XXX const
   while (true) {
     // Read grapheme
     size_t pos1 = io::tellg(lhs);
-    if (result)
+    if (result) {
       result->positions.insert({ pos1 - inputPos, s.size() });
+    }
     unicode::Grapheme gr;
     lhs >> gr;
     if (lhs.eof()) {
@@ -419,8 +432,9 @@ operator>>(std::istream& lhs, EscapedString<Regex>& rhs) { // XXX const
         // Backslash: this may either be a regular-expresssion-escaped character or a hexadecimal sequence
         // starting with "\\x" or "\\u"
 
-        if (result)
+        if (result) {
           result->input.push_back('\\');
+        }
 
         // Read another grapheme following the backslash
 
@@ -437,28 +451,33 @@ operator>>(std::istream& lhs, EscapedString<Regex>& rhs) { // XXX const
         switch (cp) {
         case 't': // Horizontal tab = 9
           s.push_back('\t');
-          if (result)
+          if (result) {
             result->input.push_back('t');
+          }
           break;
         case 'n': // Line feed = 10
           s.push_back('\n');
-          if (result)
+          if (result) {
             result->input.push_back('n');
+          }
           break;
         case 'v': // Vertical tab = 11
           s.push_back('\v');
-          if (result)
+          if (result) {
             result->input.push_back('v');
+          }
           break;
         case 'f': // Form feed = 12
           s.push_back('\f');
-          if (result)
+          if (result) {
             result->input.push_back('f');
+          }
           break;
         case 'r': // Carriage return = 13
           s.push_back('\r');
-          if (result)
+          if (result) {
             result->input.push_back('r');
+          }
           break;
         case '$': // Dollar sign = 36
         case '(': // Left parenthesis = 40
@@ -475,8 +494,9 @@ operator>>(std::istream& lhs, EscapedString<Regex>& rhs) { // XXX const
         case '|': // Vertical bar = 124
         case '}': // Right brace = 123
           s.push_back(static_cast<char>(cp));
-          if (result)
+          if (result) {
             result->input.push_back(static_cast<char>(cp));
+          }
           break;
         case 'x': {
           std::string input;
@@ -507,18 +527,65 @@ operator>>(std::istream& lhs, EscapedString<Regex>& rhs) { // XXX const
 
         auto add = static_cast<std::string>(cp);
         s.append(add);
-        if (result)
+        if (result) {
           result->input.append(add);
+        }
       }
     } else {
       // Multi-code-point grapheme: just add it
 
       auto add = static_cast<std::string>(gr);
       s.append(add);
-      if (result)
+      if (result) {
         result->input.append(add);
+      }
     }
   }
+}
+
+std::ostream&
+operator<<(std::ostream& lhs, const EscapedString<Regex>& rhs) {
+  std::string_view s = rhs.s;
+  Result* result = rhs.result;
+
+  if (result) {
+    result->input = s;
+    result->positions.clear();
+  }
+  size_t to = 0;
+
+  // Loop through graphemes
+  auto it = unicode::GraphemeIterator<char>(s), end = unicode::GraphemeIterator<char>(s, s.size());
+  size_t column = 0;
+  for (; it != end; ++it) {
+    unicode::Grapheme gr = *it;
+    if (result) {
+      result->positions.insert({ it.position(), to });
+    }
+    if (gr.codePoint()) {
+      // Single-code-point grapheme
+      unicode::CodePoint cp = *gr.codePoint();
+      auto escaped = escapeRegex(cp, column);
+      lhs << escaped;
+      to += escaped.size();
+    } else if (gr.crlf()) {
+      // CRLF
+      column += 4;
+      lhs << "\\r\\n";
+      to += 4;
+    } else {
+      // Multi-code-point grapheme
+      column += gr.width;
+      auto add = static_cast<std::string>(gr);
+      lhs << add;
+      to += add.size();
+    }
+  }
+  if (result) {
+    result->positions.insert({ it.position(), to });
+  }
+
+  return lhs;
 }
 
 } // namespace internal
