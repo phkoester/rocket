@@ -8,6 +8,7 @@
 #include "rocket/system.h"
 #include "rocket/terminal.h"
 #include "rocket/unicode.h"
+#include "rocket/unicode-iterator.h"
 #include "rocket/internal/unicode-internal.h"
 
 #include "rocket-gtest/matcher.h"
@@ -172,32 +173,6 @@ TEST(unicode, opInput_CodePoint) {
   }
 }
 
-TEST(unicode, parseRon_CodePoint) {
-  CodePoint v;
-
-  {
-    auto is = io::is("U+12345678abcd,");
-    EXPECT_THAT(
-        [&] { parseRon(io::resetg(is), v); },
-        throwsParseFailure(10, { 0, 14 }, HasSubstr("Expected at most 8 hexadecimal characters, got 12")));
-    EXPECT_ISTREAM(is, true, false, 14);
-  }
-
-  {
-    auto is = io::is("U+007f");
-    parseRon(io::resetg(is), v);
-    EXPECT_EQ(v, CodePoint(0x007fU));
-    EXPECT_ISTREAM(is, false, false, 6);
-  }
-
-  {
-    auto is = io::is("U+1abcD");
-    parseRon(io::resetg(is), v);
-    EXPECT_EQ(v, CodePoint(0x1abcdU));
-    EXPECT_ISTREAM(is, false, false, 7);
-  }
-}
-
 TEST(unicode, CodePointFormat) {
   EXPECT_EQ(fmt::format("{}", CodePoint(U'\u20ac')), "€");
   EXPECT_EQ(fmt::format("{:?}", CodePoint(U'\u20ac')), "U+20AC");
@@ -273,17 +248,6 @@ TEST(unicode, opInput_Grapheme) {
     EXPECT_EQ(v.codePoints.size(), 1);
     EXPECT_EQ(v.width, 1);
     EXPECT_ISTREAM(is, false, false, input.size());
-  }
-}
-
-TEST(unicode, parseRon_Grapheme) {
-  Grapheme v;
-
-  {
-    auto is = io::is("\"😁\"");
-    parseRon(is, v);
-    EXPECT_EQ(v, Grapheme("😁"));
-    EXPECT_ISTREAM(is, false, false, 6);
   }
 }
 
