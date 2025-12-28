@@ -63,10 +63,12 @@ operator>>(istream& lhs, int128_t& rhs) {
     // Read optional `+` or `-`
     auto c = io::getOptionalChar(lhs, PLUS_MINUS);
     int sgn = c && *c == '-' ? -1 : 1;
+    cout << "=== INT AFTER sgn, tell=" << io::tellg(lhs) << endl; // XXX
 
     // Read digits, remove leading zeroes
     string input = io::getWhile(lhs, DIGITS, 1);
     auto digits = strings::removeLeading<char>(input, "0");
+    cout << "=== INT AFTER digits, tell=" << io::tellg(lhs) << endl; // XXX
 
     // Check limits
     if (digits.size() > INT128_MAX.size()) {
@@ -101,7 +103,8 @@ operator>>(istream& lhs, int128_t& rhs) {
     // Done
     rhs = value;
     return lhs;
-  } catch (const exception&) {
+  } catch (const exception& ex) {
+    cout << "=== INT EX: " << ex.what() << endl; // XXX
     return lhs;
   }
 }
@@ -149,7 +152,9 @@ operator>>(istream& lhs, uint128_t& rhs) {
     // Done
     rhs = value;
     return lhs;
-  } catch (const exception&) {
+  } catch (const exception& ex) {
+    cout << "=== UINT EX: " << ex.what() << endl; // XXX
+    lhs.setstate(ios::failbit);
     return lhs;
   }
 }

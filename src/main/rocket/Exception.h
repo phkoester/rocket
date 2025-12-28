@@ -1,5 +1,5 @@
 /**
- * @file Exception.h"
+ * @file Exception.h
  *
  * A collection of basic exceptions.
  */
@@ -8,10 +8,7 @@
 
 #define ROCKET_EXCEPT_H
 
-#include "Type.h"
-#include "io-decl.h"
 #include "nio.h"
-#include "text.h"
 
 #include <source_location>
 #include <stacktrace>

@@ -8,6 +8,7 @@
 
 #include "Process.h"
 #include "StringConvert.h"
+#include "assert.h"
 #include "nio.h"
 #include "unicode.h"
 
@@ -20,23 +21,25 @@ namespace rocket::cl {
 namespace internal {
 
 template<typename T>
-inline void
+void
 applyTo(T& dest, std::optional<std::string_view> arg) {
-  dest = stringToType<T>(*arg);
+  ROCKET_CHECK(arg, arg);
+  dest = toType<T>(*arg);
 }
 
 template<>
 inline void
 applyTo(bool& dest, std::optional<std::string_view> arg) {
-  dest = arg ? stringToType<bool>(*arg) : true;
+  // For `bool` only, `arg` may be null
+  dest = arg ? toType<bool>(*arg) : true;
 }
 
 template<typename T>
 void
 applyTo(std::vector<T>& dest, std::optional<std::string_view> arg) {
-  T v;
-  applyTo(v, arg);
-  dest.push_back(v);
+  ROCKET_CHECK(arg, arg);
+  T val = toType<T>(*arg);
+  dest.push_back(val);
 }
 
 } // namespace internal

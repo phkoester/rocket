@@ -2,11 +2,6 @@
  * text.cc
  */
 
-#include "codec-std-decl.h"
-#include "codec-rocket-decl.h"
-#include "codec-std.h"
-#include "codec-rocket.h"
-
 #include "text.h"
 
 #include "assert.h"

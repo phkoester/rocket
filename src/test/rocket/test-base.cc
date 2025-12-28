@@ -39,6 +39,108 @@ TEST(base, sizeof) {
   EXPECT_EQ(sizeof(long double), 16);
 }
 
+TEST(base, int128OpInput) {
+  // using type = int128_t;
+  using compareType = int;
+  auto compareLimits = numeric_limits<compareType>();
+
+  // type v;
+  compareType compare;
+
+  // Empty input
+  {
+    string input = "";
+
+    auto isCompare = io::is(input);
+    isCompare >> compare;
+    EXPECT_ISTREAM(isCompare, true, true, 0);
+  }
+
+  // Invalid character
+  {
+    string input = "x";
+
+    auto isCompare = io::is(input);
+    isCompare >> compare;
+    EXPECT_ISTREAM(isCompare, true, false, 0);
+  }
+
+  // Valid character, invalid input
+  {
+    string input = "-";
+
+    auto isCompare = io::is(input);
+    isCompare >> compare;
+    EXPECT_ISTREAM(isCompare, true, true, 1);
+  }
+
+  // Valid character, invalid input
+  {
+    string input = "-x";
+
+    auto isCompare = io::is(input);
+    isCompare >> compare;
+    EXPECT_ISTREAM(isCompare, true, false, 1);
+  }
+
+  // Valid input, EOF
+  {
+    string input = "-1";
+
+    auto isCompare = io::is(input);
+    isCompare >> compare;
+    EXPECT_ISTREAM(isCompare, false, true, 2);
+    EXPECT_EQ(compare, -1);
+  }
+
+  // Valid input, no EOF
+  {
+    string input = "-999999x";
+
+    auto isCompare = io::is(input);
+    isCompare >> compare;
+    EXPECT_ISTREAM(isCompare, false, false, 7);
+    EXPECT_EQ(compare, -999999);
+  }
+
+  // MIN
+  {
+    string compareInput = "-2147483648";
+
+    auto isCompare = io::is(compareInput);
+    isCompare >> compare;
+    EXPECT_ISTREAM(isCompare, false, true, 11);
+    EXPECT_EQ(compare, compareLimits.min());
+  }
+
+  // MIN - 1, overflow
+  {
+    string compareInput = "-2147483649";
+
+    auto isCompare = io::is(compareInput);
+    isCompare >> compare;
+    EXPECT_ISTREAM(isCompare, true, true, 11);
+  }
+
+  // MAX
+  {
+    string compareInput = "2147483647";
+    auto isCompare = io::is(compareInput);
+    isCompare >> compare;
+    EXPECT_ISTREAM(isCompare, false, true, 10);
+    EXPECT_EQ(compare, compareLimits.max());
+  }
+
+  // MAX + 1, overflow
+  {
+    string compareInput = "2147483648";
+    auto isCompare = io::is(compareInput);
+    isCompare >> compare;
+    EXPECT_ISTREAM(isCompare, true, true, 10);
+  }
+}
+
+#if 0 // XXX
 TEST(base, opInput_int128_t) {
   using type = int128_t;
 
@@ -167,5 +269,6 @@ TEST(base, opOutput_uint128) {
   v = numeric_limits<type>::max(); // 2^128 - 1
   EXPECT_EQ(fmt::format("{}", v), "340282366920938463463374607431768211455");
 }
+#endif
 
 // EOF

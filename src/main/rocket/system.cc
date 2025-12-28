@@ -2,9 +2,6 @@
  * system.cc
  */
 
-#include "codec-std-decl.h"
-#include "codec-std.h"
-
 #include "system.h"
 
 #include <array>

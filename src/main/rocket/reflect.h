@@ -6,17 +6,12 @@
 
 #pragma once
 
-#include "assert.h"
-#include "codec.h"
-#include "concept.h"
-
 #include <boost/functional/hash.hpp>
 #include <boost/preprocessor/stringize.hpp>
 #include <boost/preprocessor/seq/cat.hpp>
 #include <boost/preprocessor/seq/enum.hpp>
 #include <boost/preprocessor/seq/for_each.hpp>
 
-#include <iosfwd>
 #include <type_traits>
 #include <utility>
 
@@ -63,12 +58,6 @@
     inline size_t \
     hash_value(const cls& v) { \
       return ::rocket::reflect::hash(&v, cls::name()); \
-    }
-
-#define ROCKET_REFLECT_MEMBERS_DEFINE_FN_PARSE_RON__(cls, name) \
-    inline ::std::istream& \
-    parseRon(::std::istream& is, cls& v) { \
-      return ::rocket::reflect::parseRon(is, v, cls::name()); \
     }
 
 // Variables ................................................................................................
@@ -138,15 +127,6 @@
  */
 #define ROCKET_REFLECT_MEMBERS_DEFINE_FN_HASH_VALUE(cls, name) \
     ROCKET_REFLECT_MEMBERS_DEFINE_FN_HASH_VALUE__(cls, name)
-
-/**
- * Provides a `parseRon` function for class @p cls, using the member-reference container named @p name.
- *
- * @param cls name of the class that holds the members (without namespace)
- * @param name the name of the member-reference container to use
- */
-#define ROCKET_REFLECT_MEMBERS_DEFINE_FN_PARSE_RON(cls, name) \
-    ROCKET_REFLECT_MEMBERS_DEFINE_FN_PARSE_RON__(cls, name)
 
 // Variables ................................................................................................
 
@@ -318,73 +298,6 @@ hash(const T* v, const Tuple& refs, std::index_sequence<Index...>) {
   return ret;
 }
 
-template<size_t Size, size_t Index = 0, typename T, typename Tuple>
-std::istream&
-parseRonImpl(
-    std::istream& is, size_t pos, size_t first, size_t last, T* v, Tuple& refs, std::string_view name) {
-  if constexpr (Index < Size) {
-    if (refName<Index>(refs) == name) {
-      auto& value = refGet<Index>(v, refs);
-      return parseRon(is, value);
-    } else {
-      // Go on with next tuple element using template recursion
-      return parseRonImpl<Size, Index + 1>(is, pos, first, last, v, refs, name);
-    }
-  }
-  else {
-    throw io::ParseFailure(is, first, { first, last }, fmt::format("Invalid name: {:?}", name));
-  }
-}
-
-template<typename T, typename Tuple, size_t... Index>
-std::istream&
-parseRon(std::istream& is, T* v, Tuple& refs, std::index_sequence<Index...>) {
-  using namespace codec;
-
-  if constexpr (IsMemberRef<decltype(std::get<0>(refs))>::value) {
-    // Member references: Simply default-construct `*v`
-    ROCKET_ASSERT(v, "Member references must be used with an instance");
-    *v = T();
-  }
-  else {
-    // Variable references: Reset each reference in the tuple
-    ROCKET_ASSERT(not v, "Variable references must be used without an instance, i.e. `nullptr`");
-    (..., std::get<Index>(refs).reset());
-  }
-
-  ron::parsing::skip(is);
-  size_t inputPos = io::tellg(is);
-  io::getChar(is, '{');
-
-  bool first = true;
-  while (true) {
-    ron::parsing::skip(is);
-    auto right = io::getOptionalChar(is, '}');
-    if (right)
-      return is;
-
-    if (first)
-      first = false;
-    else
-      io::getChar(is, ',');
-
-    ron::parsing::skip(is);
-    size_t nameFirst = io::tellg(is);
-    std::string name = io::getUntil(
-        is,
-        [](char c) { return std::isspace(c) || c == '=' || c == ',' || c == '}'; },
-        "whitespace, '=', ',', or '}'",
-        false,
-        1);
-    size_t nameLast = nameFirst + name.size();
-
-    ron::parsing::skip(is);
-    io::getChar(is, '=');
-
-    parseRonImpl<std::tuple_size_v<Tuple>>(is, inputPos, nameFirst, nameLast, v, refs, name);
-  }
-}
-
 } // namespace internal
 
 // `Reference` ----------------------------------------------------------------------------------------------
@@ -470,37 +383,6 @@ template<typename T, typename... Ref> requires (... && Reference<Ref>)
 inline size_t
 hash(const T* v, const std::tuple<Ref...>& refs) {
   return internal::hash(v, refs, std::make_index_sequence<sizeof...(Ref)>());
-}
-
-/**
- * Parses (@p v, @p refs) as RON.
- *
- * This overload is for member references. In this case, the tuple may be a const.
- *
- * @param is the output stream
- * @param v the instance
- * @param refs the member references
- * @return @p is
- */
-template<typename T, typename... Ref> requires (... && internal::IsMemberRef<Ref>::value)
-inline std::istream&
-parseRon(std::istream& is, T& v, const std::tuple<Ref...>& refs) {
-  return internal::parseRon(is, &v, refs, std::make_index_sequence<sizeof...(Ref)>());
-}
-
-/**
- * Parses @p refs as RON.
- *
- * This overload is for variable references.
- *
- * @param is the output stream
- * @param refs the variable references
- * @return @p is
- */
-template<typename T, typename... Ref> requires (... && internal::IsVarRef<Ref>::value)
-inline std::istream&
-parseRon(std::istream& is, std::tuple<Ref...>& refs) {
-  return internal::parseRon(is, nullptr, refs, std::make_index_sequence<sizeof...(Ref)>());
 }
 
 } // namespace rocket::reflect

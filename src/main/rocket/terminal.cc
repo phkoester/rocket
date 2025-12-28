@@ -2,16 +2,11 @@
  * terminal.cc
  */
 
-#include "codec-std-decl.h"
-#include "codec-std.h"
-
 #include "terminal.h"
 
 #include "Guard.h"
 #include "assert.h"
 #include "io.h"
-
-#include "format.h"
 
 #include <termios.h>
 #include <sys/ioctl.h>

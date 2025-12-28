@@ -11,6 +11,7 @@
 #include "assert.h"
 #include "io-decl.h"
 #include "message.h"
+#include "text.h"
 #include "unicode.h"
 
 #include <iostream>
@@ -582,7 +583,9 @@ std::istream& seekg(std::istream& is, size_t position);
  * @throw std::ios::failure from `std::istream::seekg`
  * @return @p is
  */
+#if 0 // XXX
 std::istream& seekg(std::istream& is, size_t position, std::ios::seekdir dir);
+#endif
 
 /**
  * Similar to `std::istream::tellg`, but leaves @p is unchanged and returns the actual current

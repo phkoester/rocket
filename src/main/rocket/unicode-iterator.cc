@@ -2,9 +2,6 @@
  * unicode-iterator.cc
  */
 
-#include "codec-rocket-decl.h"
-#include "codec-rocket.h"
-
 #include "unicode-iterator.h"
 
 #include <unicodelib.h>

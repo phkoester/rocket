@@ -7,6 +7,7 @@
 #include "log.h"
 #include "strings.h"
 #include "terminal.h"
+#include "text.h"
 #include "unicode-iterator.h"
 
 using namespace std;

@@ -5,6 +5,8 @@
 #include "io.h"
 
 #include "assert.h"
+#include "noun.h"
+#include "unicode-iterator.h"
 
 #include <memory>
 
@@ -403,6 +405,7 @@ getWhile(std::istream& is, const std::set<char>& values, size_t min) {
         seekg(is, pos);
         return input;
       } else {
+        seekg(is, inputPos);
         throw ParseFailure(is, pos, { inputPos, inputPos + min },
             fmt::format("Expected at least {} contained in {}, got {} and EOF", noun::character(min), values, input.size())); // XXX
       }
@@ -416,6 +419,7 @@ getWhile(std::istream& is, const std::set<char>& values, size_t min) {
         seekg(is, pos);
         return input;
       } else {
+        seekg(is, inputPos);
         throw ParseFailure(is, pos, { inputPos, inputPos + min },
             fmt::format("Expected at least {} contained in {}, got {} and {}", noun::character(min), values, input.size(), c)); // XXX
       }
@@ -441,6 +445,7 @@ seekg(std::istream& is, size_t position) {
   return is.seekg(seekg);
 }
 
+#if 0
 std::istream&
 seekg(std::istream& is, size_t position, std::ios::seekdir dir) {
   const auto state = is.rdstate();
@@ -451,6 +456,7 @@ seekg(std::istream& is, size_t position, std::ios::seekdir dir) {
   // This might throw due to `badbit`, which is okay
   return is.seekg(seekg, dir);
 }
+#endif
 
 size_t
 tellg(std::istream& is) noexcept {
