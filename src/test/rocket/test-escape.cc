@@ -4,11 +4,6 @@
 
 #include "rocket-gtest/testing.h"
 
-#include "rocket/codec-rocket-decl.h"
-#include "rocket/codec-std-decl.h"
-#include "rocket/codec-rocket.h"
-#include "rocket/codec-std.h"
-
 #include "rocket/escape.h"
 
 #include "rocket-gtest/matcher.h"

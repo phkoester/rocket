@@ -4,9 +4,6 @@
 
 #include "rocket-gtest/testing.h"
 
-#include "rocket/codec-std-decl.h"
-#include "rocket/codec-std.h"
-
 #include "rocket/reflect.h"
 
 #include "rocket-gtest/matcher.h"
@@ -56,7 +53,6 @@ hash_value(const MyStruct& v) {
 }
 #endif
 
-ROCKET_REFLECT_MEMBERS_DEFINE_FN_PARSE_RON(MyStruct, index);
 // XXX ROCKET_REFLECT_MEMBERS_DEFINE_FN_PRINT_RON(MyStruct, index);
 
 // `TEST` ---------------------------------------------------------------------------------------------------
@@ -87,41 +83,6 @@ TEST(reflect, hash) {
       ::boost::hash<MyStruct>()(MyStruct(42, "rocket", false)));
 
   EXPECT_TRUE(hashValueCalled);
-}
-
-TEST(reflect, parseRon) {
-  using type = MyStruct;
-
-  type v { 12, "hey", true };
-#if 0 // XXX
-  EXPECT_EQ(S << v, "{ä=12, b=\"hey\", c=true}");
-#endif
-
-  {
-    auto is = io::is("{}");
-    parseRon(is, v);
-    EXPECT_EQ(v, type(0, "", false));
-  }
-
-  {
-    auto is = io::is("{c=true, b=\"ho\", ä=13}");
-    parseRon(is, v);
-    EXPECT_EQ(v, type(13, "ho", true));
-  }
-
-  {
-    auto is = io::is("{ä=13, b=\"ho\", =true}");
-    EXPECT_THAT(
-        [&] { parseRon(io::resetg(is), v); },
-        throwsParseFailure(16, { 16, 17 }, HasSubstr("Expected at least 1 character before whitespace, '=', ',', or '}', got 0")));
-  }
-
-  {
-    auto is = io::is("\t{ä=13, b=\"ho\", charles=true}");
-    EXPECT_THAT(
-        [&] { parseRon(io::resetg(is), v); },
-        throwsParseFailure(17, { 17, 24 }, HasSubstr("Invalid name: \"charles\"")));
-  }
 }
 
 #if 0 // XXX Mit format() testen

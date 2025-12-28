@@ -274,7 +274,7 @@ toType(std::string_view s) {
 }
 
 template<typename T>
-std::optional<std::string>
+std::optional<T>
 tryToType(std::string_view s) {
   try {
     return StringConvert<T>().toType(s);

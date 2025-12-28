@@ -6,8 +6,7 @@
 
 #include "rocket-gtest/testing.h"
 
-#include "rocket/codec-global.h"
-
+#include "rocket/base.h"
 #include "rocket-gtest/ChattyString.h"
 
 using namespace rocket;

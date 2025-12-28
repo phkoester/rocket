@@ -4,9 +4,6 @@
 
 #include "rocket-gtest/testing.h"
 
-#include "rocket/codec-rocket-decl.h"
-#include "rocket/codec-rocket.h"
-
 #include "rocket/io.h"
 #include "rocket/system.h"
 #include "rocket/terminal.h"

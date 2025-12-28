@@ -73,7 +73,7 @@ get(const std::string& name) {
   if (not p)
     return std::nullopt;
   std::string_view s(p);
-  return tryStringToType<T>(s);
+  return tryToType<T>(s);
 }
 
 /**

@@ -6,6 +6,8 @@
 
 #pragma once
 
+#include "base.h"
+
 #include <boost/functional/hash.hpp>
 #include <boost/preprocessor/stringize.hpp>
 #include <boost/preprocessor/seq/cat.hpp>

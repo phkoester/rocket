@@ -6,9 +6,6 @@
 
 #include "rocket-gtest/testing.h"
 
-#include "rocket/codec-std-decl.h"
-#include "rocket/codec-std.h"
-
 #include "rocket/io.h"
 
 #include "rocket-gtest/matcher.h"

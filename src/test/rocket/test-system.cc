@@ -4,9 +4,6 @@
 
 #include "rocket-gtest/testing.h"
 
-#include "rocket/codec-std-decl.h"
-#include "rocket/codec-std.h"
-
 #include "rocket/log.h"
 #include "rocket/system.h"
 
@@ -29,7 +26,7 @@ TEST(system, env_bool) {
   const char* name = "MY_BOOL";
 
   EXPECT_EQ(env::get<log::LogLevel>(name), nullopt);
-  
+
   env::set(name, true);
   // Check twice, there was a bad surprise with `putenv()` ...
   EXPECT_EQ(env::get<type>(name), true);
@@ -52,7 +49,7 @@ TEST(system, env_double) {
   const char* name = "MY_DOUBLE";
 
   EXPECT_EQ(env::get<type>(name), nullopt);
-  
+
   env::set(name, -1.2);
   // Check twice, there was a bad surprise with `putenv()` ...
   EXPECT_EQ(env::get<type>(name), -1.2);
@@ -87,7 +84,7 @@ TEST(system, env_string_view) {
   const char* name = "MY_STRING_VIEW";
 
   EXPECT_EQ(env::get<type>(name), nullopt);
-  
+
   env::set(name, "some text"sv);
   // Check twice, there was a bad surprise with `putenv()` ...
   EXPECT_EQ(env::get<type>(name), "some text");

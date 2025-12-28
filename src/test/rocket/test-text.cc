@@ -4,11 +4,6 @@
 
 #include "rocket-gtest/testing.h"
 
-#include "rocket/codec-rocket-decl.h"
-#include "rocket/codec-std-decl.h"
-#include "rocket/codec-rocket.h"
-#include "rocket/codec-std.h"
-
 #include "rocket/text.h"
 #include "rocket/unicode.h"
 #include "rocket/reflect.h"
@@ -47,8 +42,6 @@ struct Config {
 
   ROCKET_REFLECT_MEMBERS(Config, index, (modules)(ports)(userName));
 };
-
-ROCKET_REFLECT_MEMBERS_DEFINE_FN_PARSE_RON(Config, index);
 
 // Local functions ------------------------------------------------------------------------------------------
 
@@ -286,62 +279,6 @@ TEST(text, locations) {
 }
 
 TEST(text, printLocations) {
-  // Test failing `parseRon`
-  {
-    string source = "src/test/rocket/test-text-Config.ron";
-    string content;
-    content << ifstream(source);
-    auto is = io::is(content);
-
-    Config config;
-    try {
-      parseRon(is, config);
-      FAIL();
-    } catch (io::ParseFailure& ex) {
-      // Test tab size null
-      {
-        Position pos {
-          .type=Position::error,
-          .position=ex.position(),
-          .ranges=ex.ranges(),
-          .message=ex.message(),
-          .caption="Look out!"
-        };
-        auto result = locations(
-            io::resetg(is), { pos }, { .setLineString=true, .source=source, .tabSize=nullopt });
-        EXPECT_EQ(result.locations.size(), 1);
-        ostringstream os;
-        printLocations(os, nullopt, result);
-        EXPECT_EQ(
-            os.str(),
-            "src/test/rocket/test-text-Config.ron:14:1: error: Invalid name: \"pörts\"\n"
-            "   14 | \\tpörts={80=\"http\", 443=\"https\"} # Typo: 'pörts', not 'ports'; ASCII 1: \\x01\n"
-            "      |   ^~~~~\n"
-            "      |   Look out!\n");
-      }
-
-      // Test tab size 8
-      {
-        Position pos {
-          .type=Position::error,
-          .position=ex.position(),
-          .ranges=ex.ranges(),
-          .message=ex.message(),
-          .caption="Look out!"
-        };
-        auto result = locations(io::resetg(is), { pos }, { .setLineString=true, .source=source });
-        EXPECT_EQ(result.locations.size(), 1);
-        ostringstream os;
-        printLocations(os, nullopt, result);
-        EXPECT_EQ(os.str(),
-            "src/test/rocket/test-text-Config.ron:14:9: error: Invalid name: \"pörts\"\n"
-            "   14 |         pörts={80=\"http\", 443=\"https\"} # Typo: 'pörts', not 'ports'; ASCII 1: \\x01\n"
-            "      |         ^~~~~\n"
-            "      |         Look out!\n");
-      }
-    }
-  }
-
   // Test multi-line input, more than one position per line
   {
     string s = "a multi-line\ntext, where the second line is somewhat longer";
