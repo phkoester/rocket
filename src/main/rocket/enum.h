@@ -9,8 +9,8 @@
 #include "enum-decl.h"
 
 #include "Type.h"
-#include "boost.h"
 #include "codec.h"
+#include "container.h"
 #include "io-decl.h"
 
 #include <boost/preprocessor/stringize.hpp>
@@ -23,12 +23,12 @@
 #define ROCKET_ENUM_DEFINE_MAP_ELEM__(r, data, elem) { data::elem, BOOST_PP_STRINGIZE(elem) },
 
 #define ROCKET_ENUM_DEFINE_MAP__(type, name, seq) \
-    const auto name##Map__ = ::rocket::boost::bimap::UnorderedBimap<type, ::std::string_view>::of({ \
+    const auto name##Map__ = ::rocket::container::makeUnorderedBimap<type, ::std::string_view>({ \
       BOOST_PP_SEQ_FOR_EACH(ROCKET_ENUM_DEFINE_MAP_ELEM__, type, seq) \
     })
 
 #define ROCKET_ENUM_DEFINE_VALUES__(type, name) \
-    const auto name##Values__ = ::rocket::boost::bimap::values<type, ::std::string_view>(name##Map__)
+    const auto name##Values__ = ::rocket::container::values<type, ::std::string_view>(name##Map__)
 
 #define ROCKET_ENUM_DEFINE_INPUT_OP__(type, name) \
     ::std::istream& \

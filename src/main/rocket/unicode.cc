@@ -314,7 +314,7 @@ codePointSize(char c) {
 }
 
 CodePoints
-codePoints(string_view s, Positions* positions) {
+codePoints(string_view s, container::UnorderedBimap<size_t, size_t>* positions) {
   if (positions)
     positions->clear();
   CodePoints ret;
@@ -341,7 +341,7 @@ countGraphemes(string_view s) {
 }
 
 Graphemes
-graphemes(string_view s, Positions* positions) {
+graphemes(string_view s, container::UnorderedBimap<size_t, size_t>* positions) {
   if (positions)
     positions->clear();
   Graphemes ret;
@@ -419,7 +419,7 @@ valid(string_view s, string* out) {
 namespace utf32 {
 
 CodePoints
-codePoints(u32string_view s, Positions* positions) {
+codePoints(u32string_view s, container::UnorderedBimap<size_t, size_t>* positions) {
   if (positions)
     positions->clear();
   CodePoints ret;
@@ -438,7 +438,7 @@ countGraphemes(u32string_view s) {
 }
 
 Graphemes
-graphemes(u32string_view s, Positions* positions) {
+graphemes(u32string_view s, container::UnorderedBimap<size_t, size_t>* positions) {
   if (positions)
     positions->clear();
   Graphemes ret;

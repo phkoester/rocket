@@ -60,6 +60,11 @@ pars(const vector<vector<string>>& v) {
   return v;
 }
 
+auto
+positions(initializer_list<pair<size_t, size_t>> list) {
+  return rocket::container::makeUnorderedBimap(list);
+}
+
 } // namespace
 
 // `TEST` ---------------------------------------------------------------------------------------------------
@@ -396,7 +401,7 @@ TEST(text, printLocations) {
   // Test multi-code-point grapheme
   {
     string s = "🧑‍🌾\x00\tabc"s;
-    Positions grsp;
+    container::UnorderedBimap<size_t, size_t> grsp;
     auto grs = unicode::graphemes(s, &grsp);
     EXPECT_EQ(
         grsp,

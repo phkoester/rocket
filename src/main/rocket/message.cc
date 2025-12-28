@@ -10,7 +10,7 @@ using namespace std;
 
 namespace rocket::message {
 
-// Messages -------------------------------------------------------------------------------------------------
+// Functions ------------------------------------------------------------------------------------------------
 
 string
 cannotParseAs(string_view input, const Type& type) {
@@ -25,6 +25,11 @@ exceptionBase(string_view msg, const optional<source_location>& sl) {
   }
   sink.write(msg);
   return sink.str();
+}
+
+string
+iteratorAt(const Type& type, size_t pos, string_view msg) {
+  return fmt::format("`{}` at position {} {}", type, pos, msg);
 }
 
 string

@@ -6,6 +6,7 @@
 
 #pragma once
 
+#include "enum-decl.h"
 #include "io-decl.h"
 #include "math.h"
 
@@ -45,7 +46,7 @@ struct Position {
    * An enum describing the position type.
    */
   enum Type { note, warning, error };
-  
+
   /**
    * The position type.
    */
@@ -197,7 +198,7 @@ LocationsResult locations(
 
 /**
  * Prints Clang-style messages for all locations in @p locations to the output stream @p os.
- * 
+ *
  * @param os the output stream
  * @param input the entire input as a string view. This may be null, but then, the line strings in
  *     @p locationsResult must be available
@@ -226,5 +227,7 @@ void printLocations(
 std::string wrap(std::string_view s, const WrapParams& params = {});
 
 } // namespace rocket::text
+
+ROCKET_ENUM_DECLARE_FMT_FORMATTER(rocket::text::Position::Type);
 
 // EOF

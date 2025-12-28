@@ -6,8 +6,8 @@
 
 #pragma once
 
-#include "Positions.h"
 #include "base.h"
+#include "container.h"
 
 #include "format.h"
 #include "unicode-decl.h"
@@ -496,7 +496,7 @@ uint8_t codePointSize(char c);
  *     positions after the functions returns
  * @return a code-point container
  */
-CodePoints codePoints(std::string_view s, Positions* positions = nullptr);
+CodePoints codePoints(std::string_view s, container::UnorderedBimap<size_t, size_t>* positions = nullptr);
 
 /**
  * Returns `true` if the character @p c is a UTF-8 continuation byte.
@@ -530,7 +530,7 @@ size_t countGraphemes(std::string_view s);
  *     positions after the functions returns
  * @return a grapheme container
  */
-Graphemes graphemes(std::string_view s, Positions* positions = nullptr);
+Graphemes graphemes(std::string_view s, container::UnorderedBimap<size_t, size_t>* positions = nullptr);
 
 /**
  * Checks if string @p s is a valid UTF-8 string.
@@ -557,7 +557,7 @@ namespace utf32 {
  *     `char32_t` positions after the functions returns (trivial, but provided for completeness)
  * @return a code-point container
  */
-CodePoints codePoints(std::u32string_view s, Positions* positions = nullptr);
+CodePoints codePoints(std::u32string_view s, container::UnorderedBimap<size_t, size_t>* positions = nullptr);
 
 /**
  * Counts the number of code points in a UTF-32 string.
@@ -583,7 +583,7 @@ size_t countGraphemes(std::u32string_view s);
  *     positions after the functions returns
  * @return a grapheme container
  */
-Graphemes graphemes(std::u32string_view s, Positions* positions = nullptr);
+Graphemes graphemes(std::u32string_view s, container::UnorderedBimap<size_t, size_t>* positions = nullptr);
 
 } // namespace utf32
 

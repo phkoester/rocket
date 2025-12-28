@@ -314,7 +314,7 @@ getFloatingPoint(std::istream& is, int precision = DEFAULT_PRECISION) {
   localIs >> std::setprecision(DEFAULT_PRECISION) >> ret;
   if (localIs.fail() || io::tellg(localIs) != localInput.size()) {
     throw io::ParseFailure(is, inputPos, { inputPos, inputPos + input.size() },
-        fmt::format("{}", message::cannotParseAs(input, Type::of<F>())));
+        message::cannotParseAs(input, Type::of<F>()));
   }
   return ret;
 }

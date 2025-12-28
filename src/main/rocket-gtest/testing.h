@@ -26,12 +26,11 @@
 /**
  * Checks if an environment variable is set to `true`. If it is not, the test is skipped.
  */
-#define EXPECT_ENV(name) \
-    { \
-      const char* p = getenv(name); \
-      if (not p || (strcmp(p, "1") != 0 && strcmp(p, "true") != 0)) \
-        GTEST_SKIP_("Skipping test because `" name "` is not set\n"); \
-    }
+#define EXPECT_ENV(name) { \
+  const char* p = getenv(name); \
+  if (not p || (strcmp(p, "1") != 0 && strcmp(p, "true") != 0)) \
+    GTEST_SKIP_("Skipping test because `" name "` is not set\n"); \
+}
 
 /**
  * Checks the state of a `std::istream`.

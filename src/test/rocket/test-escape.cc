@@ -21,6 +21,13 @@ using namespace rocket::gtest::matcher;
 using namespace std;
 using namespace testing;
 
+// Functions ------------------------------------------------------------------------------------------------
+
+auto
+positions(initializer_list<pair<size_t, size_t>> list) {
+  return rocket::container::makeUnorderedBimap(list);
+}
+
 // `TEST` ---------------------------------------------------------------------------------------------------
 
 TEST(escape, CString) {

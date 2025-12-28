@@ -244,12 +244,13 @@ printLocations(
     oss.str("");
     oss << escape::escaped<escape::CString>(line, { .tabSize=locationsResult.params.tabSize }, &result);
     string escapedLine = oss.str();
-    Positions grsp;
+    container::UnorderedBimap<size_t, size_t> grsp;
     unicode::Graphemes grs = unicode::graphemes(escapedLine, &grsp);
     // Print graphemes one by one, skip zero-width graphemes
     for (const auto& gr : grs) {
-      if (gr.width > 0)
+      if (gr.width > 0) {
         os << static_cast<string>(gr);
+      }
     }
     os << '\n';
 
@@ -298,9 +299,9 @@ printLocations(
     // Place the caret in `indicators`
 
     size_t caretPos = indicatorPos(loc.position);
-    if (caretPos < indicators.size())
+    if (caretPos < indicators.size()) {
       indicators[caretPos] = '^';
-    else {
+    } else {
       ROCKET_EXPECT(caretPos == indicators.size());
       indicators.push_back('^');
     }

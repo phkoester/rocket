@@ -17,6 +17,8 @@
 
 namespace rocket {
 
+// XXX Die Funktionen müssen alle verteilt werden
+
 // Functions ------------------------------------------------------------------------------------------------
 
 namespace text {

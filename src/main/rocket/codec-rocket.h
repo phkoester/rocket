@@ -24,6 +24,8 @@ using ::parseRon;
 
 namespace math {
 
+// XXX Das muß nach math.h
+
 /// @fn_parseRon{#rocket::math::IntervalImpl}
 template<typename T, typename Left, typename Right>
 std::istream&

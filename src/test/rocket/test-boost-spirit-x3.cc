@@ -4,7 +4,7 @@
 
 #include "rocket-gtest/testing.h"
 
-#include "rocket/boost-spirit-x3.h"
+#include "rocket/experimental/boost-spirit-x3.h"
 
 #include <boost/fusion/adapted/std_pair.hpp>
 #include <boost/spirit/home/x3.hpp>

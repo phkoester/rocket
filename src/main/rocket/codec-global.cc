@@ -59,7 +59,7 @@ parseRon(istream& is, char& v) {
   is >> escaped;
   if (input.size() != 1 || unicode::countCodePoints(input) != 1) {
     throw io::ParseFailure(is, pos, { pos, io::tellg(is) },
-        fmt::format("{}", message::cannotParseAs(escapedResult.input, Type::of<char>())));
+        message::cannotParseAs(escapedResult.input, Type::of<char>()));
   }
   v = input[0];
   return is;
