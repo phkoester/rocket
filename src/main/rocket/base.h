@@ -62,6 +62,9 @@
 
 /**
  * A signed 128-bit integer type.
+ *
+ * - Minimum value: -170141183460469231731687303715884105728
+ * - Maximum value:  170141183460469231731687303715884105727
  */
 using int128_t = __int128;
 
@@ -75,6 +78,8 @@ std::istream& operator>>(std::istream& lhs, int128_t& rhs);
 
 /**
  * An unsigned 128-bit integer type.
+ *
+ * - Maximum value: 340282366920938463463374607431768211455
  */
 using uint128_t = unsigned __int128;
 

@@ -4,24 +4,12 @@
 
 #include "base.h"
 
-#include "io.h"
-#include "strings.h"
+#include <iostream>
 
 using namespace rocket;
 using namespace std;
 
 namespace {
-
-// Local constants ------------------------------------------------------------------------------------------
-
-constexpr string_view INT128_MIN = "-170141183460469231731687303715884105728";
-constexpr string_view INT128_MAX = "170141183460469231731687303715884105727";
-
-constexpr string_view UINT128_MAX = "340282366920938463463374607431768211455";
-
-const set<char> DIGITS { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' };
-const set<char> PLUS { '+' };
-const set<char> PLUS_MINUS { '+', '-' };
 
 // Local functions ------------------------------------------------------------------------------------------
 
@@ -59,54 +47,83 @@ uint128ToString(char* dest, uint128_t v) {
 
 istream&
 operator>>(istream& lhs, int128_t& rhs) {
-  try {
-    // Read optional `+` or `-`
-    auto c = io::getOptionalChar(lhs, PLUS_MINUS);
-    int sgn = c && *c == '-' ? -1 : 1;
-    cout << "=== INT AFTER sgn, tell=" << io::tellg(lhs) << endl; // XXX
+  // Read optional sign ('+' or '-')
 
-    // Read digits, remove leading zeroes
-    string input = io::getWhile(lhs, DIGITS, 1);
-    auto digits = strings::removeLeading<char>(input, "0");
-    cout << "=== INT AFTER digits, tell=" << io::tellg(lhs) << endl; // XXX
+  char c;
+  lhs >> c;
+  if (lhs.fail() || lhs.eof()) {
+    return lhs;
+  }
+  int128_t sgn = 1;
+  if (c == '-') {
+    sgn = -1;
+  }
+  if (c != '+' && c != '-') {
+    // Not a sign: go back, clear EOF
+    lhs.seekg(-1, ios::cur);
+  }
 
-    // Check limits
-    if (digits.size() > INT128_MAX.size()) {
-      lhs.setstate(ios::failbit);
+  // Read digits
+
+  string buf;
+
+  while (true) {
+    // Read one digit
+
+    lhs >> c;
+    if (lhs.eof()) {
+      // EOF: clear fail bit
+      lhs.clear(lhs.rdstate() & ~ios::failbit);
+      break;
+    }
+    if (lhs.fail()) {
       return lhs;
     }
-    size_t count = INT128_MAX.size() - digits.size();
-    string s = string(count, '0') + string(digits);
+    if (c < '0' || c > '9') {
+      // Not a digit: go back, clear EOF
+      lhs.seekg(-1, ios::cur);
+      break;
+    }
+    buf.push_back(c);
+  }
+
+  // Got no digits, or too many?
+
+  if (buf.empty() || buf.size() > 39) {
+    lhs.setstate(ios::failbit);
+    return lhs;
+  }
+
+  // Convert string to value, check for overflow
+
+  int128_t val = 0;
+  int128_t factor = 1;
+
+  for (auto it = buf.rbegin(); it != buf.rend(); ++it) {
+    int128_t v = *it - '0';
+    auto old = val;
     if (sgn == -1) {
-      // Check min limit
-      if (s > INT128_MIN.substr(1)) { // We don't need the `-` here
+      val -= v * factor;
+      if (val > old) {
+        // Negative overflow
         lhs.setstate(ios::failbit);
         return lhs;
       }
     } else {
-      // Check max limit
-      if (s > INT128_MAX) {
+      val += v * factor;
+      if (val < old) {
+        // Positive overflow
         lhs.setstate(ios::failbit);
         return lhs;
       }
     }
-
-    // Apply digits
-    int128_t value = 0;
-    int128_t f = sgn;
-    for (auto it = digits.rbegin(); it != digits.rend(); ++it) {
-      uint128_t v = *it - '0';
-      value += f * v;
-      f *= 10;
-    }
-
-    // Done
-    rhs = value;
-    return lhs;
-  } catch (const exception& ex) {
-    cout << "=== INT EX: " << ex.what() << endl; // XXX
-    return lhs;
+    factor *= 10;
   }
+
+  // Done
+
+  rhs = val;
+  return lhs;
 }
 
 ostream&
@@ -120,43 +137,75 @@ operator<<(ostream& lhs, int128_t rhs) {
 
 istream&
 operator>>(istream& lhs, uint128_t& rhs) {
-  try {
-    // Read optional `+`
-    io::getOptionalChar(lhs, PLUS);
+  // Read optional sign ('+' or '-')
 
-    // Read digits, remove leading zeroes
-    string input = io::getWhile(lhs, DIGITS, 1);
-    auto digits = strings::removeLeading<char>(input, "0");
-
-    // Check max limit
-    if (digits.size() > UINT128_MAX.size()) {
-      lhs.setstate(ios::failbit);
-      return lhs;
-    }
-    size_t count = UINT128_MAX.size() - digits.size();
-    string s = string(count, '0') + string(digits);
-    if (s > UINT128_MAX) {
-      lhs.setstate(ios::failbit);
-      return lhs;
-    }
-
-    // Apply digits
-    uint128_t value = 0;
-    uint128_t f = 1;
-    for (auto it = digits.rbegin(); it != digits.rend(); ++it) {
-      uint128_t v = *it - '0';
-      value += f * v;
-      f *= 10;
-    }
-
-    // Done
-    rhs = value;
+  char c;
+  lhs >> c;
+  if (lhs.fail() || lhs.eof()) {
     return lhs;
-  } catch (const exception& ex) {
-    cout << "=== UINT EX: " << ex.what() << endl; // XXX
+  }
+  if (c == '-') {
+    // Negative number: use the `ìnt128_t``overload
+    lhs.seekg(-1, ios::cur);
+    return operator>>(lhs, reinterpret_cast<int128_t&>(rhs));
+  }
+  if (c != '+') {
+    // Not a sign: go back, clear EOF
+    lhs.seekg(-1, ios::cur);
+  }
+
+  // Read digits
+
+  string buf;
+
+  while (true) {
+    // Read one digit
+
+    lhs >> c;
+    if (lhs.eof()) {
+      // EOF: clear fail bit
+      lhs.clear(lhs.rdstate() & ~ios::failbit);
+      break;
+    }
+    if (lhs.fail()) {
+      return lhs;
+    }
+    if (c < '0' || c > '9') {
+      // Not a digit: go back, clear EOF
+      lhs.seekg(-1, ios::cur);
+      break;
+    }
+    buf.push_back(c);
+  }
+
+  // Got no digits, or too many?
+
+  if (buf.empty() || buf.size() > 39) {
     lhs.setstate(ios::failbit);
     return lhs;
   }
+
+  // Convert string to value, check for overflow
+
+  uint128_t val = 0;
+  uint128_t factor = 1;
+
+  for (auto it = buf.rbegin(); it != buf.rend(); ++it) {
+    uint128_t v = *it - '0';
+    auto old = val;
+    val += v * factor;
+    if (val < old) {
+      // Overflow
+      lhs.setstate(ios::failbit);
+      return lhs;
+    }
+    factor *= 10;
+  }
+
+  // Done
+
+  rhs = val;
+  return lhs;
 }
 
 ostream&

@@ -33,7 +33,7 @@
     ::std::istream& \
     operator>>(::std::istream& lhs, type& rhs) { \
       try { \
-        auto value = ::rocket::io::getString(lhs, name##Values__); \
+        auto value = ::rocket::_enum::internal::getEnumString(lhs, name##Values__); \
         auto it = name##Map__.right.find(value); \
         ROCKET_EXPECT(it != name##Map__.right.end()); \
         rhs = it->second; \
@@ -97,7 +97,7 @@
 
 namespace rocket::_enum::internal {
 
-std::string getString(std::istream& is, const std::set<std::string_view>& values);
+std::string getEnumString(std::istream& is, const std::set<std::string_view>& values);
 
 } // namespace rocket::_enum::internal
 
