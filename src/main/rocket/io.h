@@ -6,16 +6,12 @@
 
 #pragma once
 
-#include "io-decl.h" // XXX Raus?
-
 #include "Exception.h"
 #include "Guard.h"
-#include "Process.h"
 #include "assert.h"
+#include "io-decl.h"
 #include "message.h"
-#include "noun.h"
 #include "unicode.h"
-#include "unicode-iterator.h"
 
 #include <iostream>
 #include <memory>

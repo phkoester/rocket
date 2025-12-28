@@ -23,7 +23,7 @@ using namespace testing;
 
 // TEST -----------------------------------------------------------------------------------------------------
 
-TEST(std, chrono) {
+TEST(std, chronoFormat) {
   {
     // Local time in ISO-8601, with microseconds
     chrono::time_point tp = time_point_cast<chrono::microseconds>(chrono::system_clock::now());
@@ -88,7 +88,7 @@ TEST(std, istreamEof) {
   }
 }
 
-TEST(std, istream_bool) {
+TEST(std, istreamBool) {
   using type = bool;
 
   {
@@ -112,55 +112,14 @@ TEST(std, istream_bool) {
   }
 }
 
-TEST(std, istream_char_char) {
-  auto is = basic_istringstream<char>("a");
+TEST(std, istreamChar) {
+  auto is = io::is("a");
   char c;
   is >> c;
   EXPECT_EQ(c, 'a');
 }
 
-TEST(std, istream_char_int) {
-  auto is = basic_istringstream<char>("12");
-  int i;
-  is >> i;
-  EXPECT_EQ(i, 12);
-}
-
-/**
- * This tests `char32_t` support from `locale-char32_t.h`.
- */
-TEST(std, istream_char32_t_char32_t) {
-  auto is = basic_istringstream<char32_t>(U"a");
-  char32_t c(U'\0'); // GNU needs initialization here
-  is >> c;
-  EXPECT_EQ(c, U'a');
-}
-
-/**
- * This tests `char32_t` support from `locale-char32_t.h`.
- */
-TEST(std, istream_char32_t_int) {
-  auto is = basic_istringstream<char32_t>(U"12");
-  int i;
-  is >> i;
-  EXPECT_EQ(i, 12);
-}
-
-TEST(std, istream_wchar_t_wchar_t) {
-  auto is = basic_istringstream<wchar_t>(L"a");
-  wchar_t c;
-  is >> c;
-  EXPECT_EQ(c, L'a');
-}
-
-TEST(std, istream_wchar_t_int) {
-  auto is = basic_istringstream<wchar_t>(L"12");
-  int i;
-  is >> i;
-  EXPECT_EQ(i, 12);
-}
-
-TEST(std, istream_int) {
+TEST(std, istreamInt) {
   using type = int;
 
   {
@@ -211,17 +170,23 @@ TEST(std, istream_int) {
   }
 }
 
-TEST(std, istream_double) {
+TEST(std, istreamDouble) {
   using type = double;
 
-  // Reading symbols doesn't work
-  auto is = io::is("-inf");
-  type v = 0;
-  is >> v;
-  EXPECT_EQ(v, 0);
+  ostringstream os;
+  os << -numeric_limits<type>::infinity();
+  EXPECT_EQ(os.str(), "-inf");
+
+  {
+    // Reading symbols doesn't work
+    auto is = io::is("-inf");
+    type v = 0;
+    is >> v;
+    EXPECT_EQ(v, 0);
+  }
 }
 
-TEST(std, istream_long_double) {
+TEST(std, istreamLongDouble) {
   using type = long double;
 
   {
@@ -244,7 +209,7 @@ TEST(std, regexGreedy) {
   EXPECT_EQ(matches, vector<string> { "1: 2: 3: " });
 }
 
-TEST(std, regexNonGreedy) {
+TEST(std, regexNongreedy) {
   string s = "1: 2: 3: 4";
   regex re(".*?: ");
   vector<string> matches;

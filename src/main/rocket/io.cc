@@ -2,9 +2,6 @@
  * io.cc
  */
 
-#include "codec-std-decl.h"
-#include "codec-std.h"
-
 #include "io.h"
 
 #include "assert.h"

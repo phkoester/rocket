@@ -65,6 +65,9 @@
  */
 using int128_t = __int128;
 
+/// @op_output{#int128_t}
+std::ostream& operator<<(std::ostream& lhs, int128_t rhs);
+
 /// @op_input{#int128_t}
 std::istream& operator>>(std::istream& lhs, int128_t& rhs);
 
@@ -77,6 +80,9 @@ using uint128_t = unsigned __int128;
 
 /// @op_input{#uint128_t}
 std::istream& operator>>(std::istream& lhs, uint128_t& rhs);
+
+/// @op_output{#uint128_t}
+std::ostream& operator<<(std::ostream& lhs, uint128_t rhs);
 
 namespace rocket {
 
@@ -276,7 +282,7 @@ template<> struct IsIntegerImpl<Uint<16>::Type> : std::true_type {};
 } // namespace internal
 
 /**
- * IsInteger template.
+ * `IsInteger` template.
  *
  * @tparam I the type to test
  */
@@ -307,7 +313,7 @@ template<> struct IsFloatingPointImpl<Float<16>::Type> : std::true_type {};
 } // namespace internal
 
 /**
- * IsFloatingPoint template.
+ * `IsFloatingPoint` template.
  *
  * @tparam F the type to test
  */
@@ -331,7 +337,7 @@ template<typename F> concept FloatingPoint = IsFloatingPoint<F>::value;
 /**
  * A NOP function.
  */
-inline void nop() {}
+constexpr void nop() {}
 
 /**
  * A NOP function that helps to suppress warnings about unused variables.

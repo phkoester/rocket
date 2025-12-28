@@ -8,10 +8,9 @@
 
 #include "enum-decl.h"
 
-#include "Type.h"
-#include "codec.h"
+#include "assert.h"
 #include "container.h"
-#include "io-decl.h"
+#include "io.h"
 
 #include <boost/preprocessor/stringize.hpp>
 #include <boost/preprocessor/seq/for_each.hpp>
@@ -49,22 +48,6 @@
     ::std::ostream& \
     operator<<(::std::ostream& lhs, type rhs) { \
       return lhs << fmt::format("{}", rhs); \
-    }
-
-#define ROCKET_ENUM_DEFINE_PARSE_RON__(type, _name) \
-    ::std::istream& \
-    parseRon(::std::istream& is, type& v) { \
-      auto enumResult = ::rocket::codec::ron::parsing::parseEnum(is); \
-      if (auto it = _name##Map__.right.find(enumResult.input); it != _name##Map__.right.end()) { \
-        v = it->second; \
-        return is; \
-      } else { \
-        throw ::rocket::io::ParseFailure( \
-            is, \
-            enumResult.actualInputPos, \
-            { enumResult.actualInputPos, enumResult.actualInputPos + enumResult.actualInput.size() }, \
-            message::cannotParseAs(enumResult.actualInput, Type::of<type>())); \
-      } \
     }
 
 #define ROCKET_ENUM_DEFINE__(type, name, seq) \
@@ -109,5 +92,13 @@
  * @param name the name to use for generated identifiers, e.g. `MyClass_MyEnum`
  */
 #define ROCKET_ENUM_DEFINE_FMT_FORMATTER(ns, type, name) ROCKET_ENUM_DEFINE_FMT_FORMATTER__(ns, type, name)
+
+// Internal -------------------------------------------------------------------------------------------------
+
+namespace rocket::_enum::internal {
+
+std::string getString(std::istream& is, const std::set<std::string_view>& values);
+
+} // namespace rocket::_enum::internal
 
 // EOF

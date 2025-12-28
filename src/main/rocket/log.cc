@@ -2,11 +2,6 @@
  * log.cc
  */
 
-#include "codec-rocket-decl.h"
-#include "codec-std-decl.h"
-#include "codec-rocket.h"
-#include "codec-std.h"
-
 #include "log.h"
 
 #include "Process.h"

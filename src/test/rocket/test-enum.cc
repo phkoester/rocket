@@ -4,17 +4,9 @@
 
 #include "rocket-gtest/testing.h"
 
-#include "rocket/codec-rocket-decl.h"
-#include "rocket/codec-std-decl.h"
-#include "rocket/codec-rocket.h"
-#include "rocket/codec-std.h"
-
 #include "rocket/enum.h"
 
-#include "rocket-gtest/matcher.h"
-
 using namespace rocket;
-using namespace rocket::gtest::matcher;
 using namespace std;
 using namespace testing;
 
@@ -22,7 +14,7 @@ using namespace testing;
 
 enum MyEnum { fröb, fröber, fröberer, pörk, pörker, pörkerer };
 
-ROCKET_ENUM_DECLARE(MyEnum); // Not strictly necessary here, but we want to test the macro
+ROCKET_ENUM_DECLARE(MyEnum);
 ROCKET_ENUM_DECLARE_FMT_FORMATTER(MyEnum);
 
 ROCKET_ENUM_DEFINE(MyEnum, MyEnum, (fröb)(fröber)(fröberer)(pörk)(pörker)(pörkerer));
@@ -30,45 +22,8 @@ ROCKET_ENUM_DEFINE_FMT_FORMATTER(, MyEnum, MyEnum);
 
 // `TEST` ---------------------------------------------------------------------------------------------------
 
-TEST(enum, MyEnumFormat) {
-  EXPECT_EQ(fmt::format("{}", fröb), "fröb");
-  EXPECT_EQ(fmt::format("{}", fröber), "fröber");
-  EXPECT_EQ(fmt::format("{}", fröberer), "fröberer");
-  EXPECT_EQ(fmt::format("{}", pörk), "pörk");
-  EXPECT_EQ(fmt::format("{}", pörker), "pörker");
-  EXPECT_EQ(fmt::format("{}", pörkerer), "pörkerer");
-  EXPECT_EQ(fmt::format("{}", static_cast<MyEnum>(10)), "<invalid>");
-  EXPECT_EQ(fmt::format("{: >10}", fröber), "    fröber"); // Tests UTF-8 code points
-}
-
-TEST(enum, opOutput) {
-  ostringstream os;
-  os << fröb;
-  EXPECT_EQ(os.str(), "fröb");
-}
-
-#if 0 // XXX
-TEST(enum, parse_MyEnum) {
-  EXPECT_EQ(codec::ron::parse<MyEnum>("\"fröb\""), fröb);
-  EXPECT_EQ(codec::ron::parse<MyEnum>("\"pörkerer\""), pörkerer);
-
-  EXPECT_THAT(
-      [&] { codec::ron::parse<MyEnum>(""); },
-      throwsParseFailure(0, HasSubstr("EOF")));
-
-  EXPECT_THAT(
-      [&] { codec::ron::parse<MyEnum>("\"\""); },
-      throwsParseFailure(1, { 1, 2 }, HasSubstr("Expected at least 1 character before '\"', got 0")));
-
-  EXPECT_THAT(
-      [&] { codec::ron::parse<MyEnum>("\"foo\""); },
-      throwsParseFailure(0, { 0, 5 }, HasSubstr("Cannot parse \"\\\"foo\\\"\" as `MyEnum`")));
-}
-
-TEST(enum, opInput_MyEnum) {
-  using type = MyEnum;
-
-  type v;
+TEST(enum, MyEnumOpInput) {
+  MyEnum v;
 
   {
     auto is = io::is("fröb");
@@ -110,78 +65,21 @@ TEST(enum, opInput_MyEnum) {
   }
 }
 
-TEST(enum, opOutput_MyEnum) {
-  using type = MyEnum;
-
-  {
-    ostringstream os;
-    os << fröb;
-    EXPECT_EQ(os.str(), "fröb");
-  }
-
-  {
-    ostringstream os;
-    os << static_cast<type>(1);
-    EXPECT_EQ(os.str(), "fröber");
-  }
-
-  {
-    ostringstream os;
-    os << static_cast<type>(5);
-    EXPECT_EQ(os.str(), "pörkerer");
-  }
-
-  {
-    ostringstream os;
-    EXPECT_THAT(
-        [&] { os << static_cast<type>(6); },
-        ThrowsMessage<InvalidArgument>(HasSubstr("Invalid `MyEnum`: 6")));
-  }
+TEST(enum, opOutput) {
+  ostringstream os;
+  os << fröb;
+  EXPECT_EQ(os.str(), "fröb");
 }
 
-TEST(enum, parseRon_MyEnum) {
-  using type = MyEnum;
-
-  type v;
-
-  {
-    auto is = io::is("\"fröb\"");
-    parseRon(is, v);
-    EXPECT_ISTREAM(is, false, false, 7);
-    EXPECT_EQ(v, fröb);
-  }
-
-  {
-    auto is = io::is("\"pörkerer\"");
-    parseRon(is, v);
-    EXPECT_ISTREAM(is, false, false, 11);
-    EXPECT_EQ(v, pörkerer);
-  }
-
-  {
-    auto is = io::is();
-    EXPECT_THAT(
-        [&] { parseRon(io::resetg(is), v); },
-        throwsParseFailure<char>(0, HasSubstr("EOF")));
-    EXPECT_ISTREAM(is, true, true, 0);
-  }
-
-  {
-    auto is = io::is("\"\"");
-    EXPECT_THAT(
-        [&] { parseRon(io::resetg(is), v); },
-        throwsParseFailure(1, { 1, 2 }, HasSubstr("Expected at least 1 character before '\"', got 0")));
-    EXPECT_ISTREAM(is, true, false, 2);
-  }
-
-  {
-    auto is = io::is("\"foo\"");
-    EXPECT_THAT(
-        [&] { parseRon(io::resetg(is), v); },
-        throwsParseFailure(0, { 0, 5 }, HasSubstr("Cannot parse \"\\\"foo\\\"\" as `MyEnum`")));
-    EXPECT_ISTREAM(is, true, false, 5);
-  }
+TEST(enum, MyEnumFormat) {
+  EXPECT_EQ(fmt::format("{}", fröb), "fröb");
+  EXPECT_EQ(fmt::format("{}", fröber), "fröber");
+  EXPECT_EQ(fmt::format("{}", fröberer), "fröberer");
+  EXPECT_EQ(fmt::format("{}", pörk), "pörk");
+  EXPECT_EQ(fmt::format("{}", pörker), "pörker");
+  EXPECT_EQ(fmt::format("{}", pörkerer), "pörkerer");
+  EXPECT_EQ(fmt::format("{}", static_cast<MyEnum>(10)), "<invalid>");
+  EXPECT_EQ(fmt::format("{: >10}", fröber), "    fröber"); // Tests UTF-8 alignment; 4 spaces expected
 }
-#endif
 
 // EOF

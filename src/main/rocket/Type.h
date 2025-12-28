@@ -116,10 +116,6 @@ struct fmt::formatter<rocket::Type, Char> {
 
   constexpr const Char*
   parse(parse_context<Char>& ctx) {
-    // Disallow '?'
-    if (std::find(ctx.begin(), ctx.end(), '?') != ctx.end()) {
-      report_error("invalid format specifier");
-    }
     return underlying_.parse(ctx);
   }
 

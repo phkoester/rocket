@@ -12,7 +12,7 @@
 
 #include <ios>
 #include <set>
-#include <span>
+#include <spanstream>
 #include <string>
 
 namespace rocket::io {

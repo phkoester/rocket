@@ -56,26 +56,6 @@ CC_FILES    := test/rocket/test-cl.cc
 SHARED_LIBS := $(call shared-lib-name,rocket,$(ROCKET_VERSION))
 include $(GAIA_DIR)/src/main/make/test-executable.mk
 
-NAME        := test-rocket-codec
-CC_FILES    := test/rocket/test-codec.cc
-SHARED_LIBS := $(call shared-lib-name,rocket,$(ROCKET_VERSION))
-include $(GAIA_DIR)/src/main/make/test-executable.mk
-
-NAME        := test-rocket-codec-global
-CC_FILES    := test/rocket/test-codec-global.cc
-SHARED_LIBS := $(call shared-lib-name,rocket,$(ROCKET_VERSION))
-include $(GAIA_DIR)/src/main/make/test-executable.mk
-
-NAME        := test-rocket-codec-rocket
-CC_FILES    := test/rocket/test-codec-rocket.cc
-SHARED_LIBS := $(call shared-lib-name,rocket,$(ROCKET_VERSION))
-include $(GAIA_DIR)/src/main/make/test-executable.mk
-
-NAME        := test-rocket-codec-std
-CC_FILES    := test/rocket/test-codec-std.cc
-SHARED_LIBS := $(call shared-lib-name,rocket,$(ROCKET_VERSION))
-include $(GAIA_DIR)/src/main/make/test-executable.mk
-
 NAME        := test-rocket-container
 CC_FILES    := test/rocket/test-container.cc
 SHARED_LIBS := $(call shared-lib-name,rocket,$(ROCKET_VERSION))

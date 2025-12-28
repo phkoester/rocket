@@ -2,12 +2,8 @@
  * cl.cc
  */
 
-#include "codec-std-decl.h"
-#include "codec-std.h"
-
 #include "assert.h"
 #include "cl.h"
-#include "codec.h"
 #include "log.h"
 #include "strings.h"
 #include "terminal.h"
@@ -58,7 +54,8 @@ CommandLine::apply(const Option& opt, bool nameFlag, optional<string_view> value
 
   // Usually, options not taking a value may not be assigned a value. There is one exception to this rule:
   // boolean values are allowed
-  if (not opt.takesValue && value && not codec::Symbols::Strings::Bool.contains(*value)) {
+  static const set<string_view> BOOL_VALUES { "0", "false", "1", "true" }; // XXX Testen
+  if (not opt.takesValue && value && not BOOL_VALUES.contains(*value)) {
     throw InvalidState(fmt::format("Option `{}` cannot take a value", name(opt, nameFlag)));
   }
 

@@ -40,6 +40,7 @@ TEST(Type, op_ne) {
 TEST(Type, format) {
   EXPECT_EQ(fmt::format("{}", Type::of<int>()), "int");
   EXPECT_EQ(fmt::format("{}", Type::of<Type>()), "rocket::Type");
+  EXPECT_EQ(fmt::format("{:?}", Type::of<Type>()), "\"rocket::Type\"");
 }
 
 /**

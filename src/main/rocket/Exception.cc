@@ -2,11 +2,6 @@
  * Exception.cc
  */
 
-#include "codec-rocket-decl.h"
-#include "codec-std-decl.h"
-#include "codec-rocket.h"
-#include "codec-std.h"
-
 #include "Exception.h"
 
 #include "assert.h"
@@ -36,17 +31,17 @@ string
 getWhat(const char* v) {
   if (not v)
     return "null";
-  return fmt::format("\"{}\"", v); // With quotation marks
+  return fmt::format("{:?}", v); // With quotation marks
 }
 
 string
 getWhat(const string& v) {
-  return fmt::format("\"{}\"", v); // With quotation marks
+  return fmt::format("{:?}", v); // With quotation marks
 }
 
 string
 getWhat(string_view v) {
-  return fmt::format("\"{}\"", v); // With quotation marks
+  return fmt::format("{:?}", v); // With quotation marks
 }
 
 string
@@ -57,7 +52,7 @@ getWhat(const exception& v) {
   string_view s(p);
   if (s.empty())
     return "none";
-  return fmt::format("\"{}\"", s); // With quotation marks
+  return fmt::format("{:?}", s); // With quotation marks
 }
 
 void
