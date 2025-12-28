@@ -95,12 +95,6 @@ private:
   const Lazy<size_t> hash_;
 };
 
-/// @op_output{#rocket::Type}
-inline std::ostream&
-operator<<(std::ostream& lhs, const Type& rhs) {
-  return lhs << rhs.name();
-}
-
 /// @fn_hash_value{#rocket::Type}
 inline size_t
 hash_value(const Type& v) {
@@ -109,17 +103,15 @@ hash_value(const Type& v) {
 
 } // namespace rocket
 
-// `fmt::formatter<Type>` -----------------------------------------------------------------------------------
+// Namespace `fmt` ------------------------------------------------------------------------------------------
 
 /// @spec_fmt_formatter{#rocket::Type)
 template<typename Char>
-struct fmt::formatter<rocket::Type, Char> : formatter<string_view, Char> {
-  using Base = formatter<string_view, Char>;
-
+struct fmt::formatter<rocket::Type, Char> {
   template<typename FormatContext>
   constexpr auto
   format(const rocket::Type& v, FormatContext& ctx) const -> decltype(ctx.out()) {
-    return Base::format(v.name(), ctx);
+    return underlying_.format(v.name(), ctx);
   }
 
   constexpr const Char*
@@ -128,11 +120,25 @@ struct fmt::formatter<rocket::Type, Char> : formatter<string_view, Char> {
     if (std::find(ctx.begin(), ctx.end(), '?') != ctx.end()) {
       report_error("invalid format specifier");
     }
-    return Base::parse(ctx);
+    return underlying_.parse(ctx);
   }
+
+private:
+
+  rocket::format::NativeFormatter<string_view, Char> underlying_;
 };
 
-// `std::hash<Type>` ----------------------------------------------------------------------------------------
+namespace rocket {
+
+/// @op_output{#Type}
+inline std::ostream&
+operator<<(std::ostream& lhs, const Type& rhs) {
+  return lhs << fmt::format("{}", rhs);
+}
+
+} // namespace rocket
+
+// Namespace `std` ------------------------------------------------------------------------------------------
 
 /// @spec_std_hash{#rocket::Type}
 template<>

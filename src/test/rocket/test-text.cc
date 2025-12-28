@@ -14,7 +14,6 @@
 #include "rocket/reflect.h"
 
 #include "rocket-gtest/matcher.h"
-#include "rocket-gtest/PrintTo.h"
 
 #include <fstream>
 

@@ -16,12 +16,6 @@ namespace rocket {
 
 // Functions ------------------------------------------------------------------------------------------------
 
-namespace text {
-
-ROCKET_ENUM_DEFINE(Position::Type, Position_Type, (note)(warning)(error));
-
-} // namespace text
-
 namespace unicode {
 
 istream&

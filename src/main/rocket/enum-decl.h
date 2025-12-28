@@ -16,17 +16,15 @@
 /// @cond undocumented
 
 #define ROCKET_ENUM_DECLARE_OP_INPUT__(type) ::std::istream& operator>>(::std::istream&, type&)
-#define ROCKET_ENUM_DECLARE_FN_PARSE_RON__(type) ::std::istream& parseRon(::std::istream&, type&)
+#define ROCKET_ENUM_DECLARE_OP_OUTPUT__(type) ::std::ostream& operator>>(::std::ostream&, type)
 
 #define ROCKET_ENUM_DECLARE__(type) \
     ROCKET_ENUM_DECLARE_OP_INPUT__(type); \
-    ROCKET_ENUM_DECLARE_FN_PARSE_RON__(type); \
+    ROCKET_ENUM_DECLARE_OP_OUTPUT__(type); \
 
 #define ROCKET_ENUM_DECLARE_FMT_FORMATTER__(type) \
     template<typename Char> \
-    struct fmt::formatter<type, Char> : ::rocket::format::NativeFormatter<string_view, Char> { \
-      using Base = ::rocket::format::NativeFormatter<string_view, Char>; \
-      \
+    struct fmt::formatter<type, Char> { \
       template<typename FormatContext> \
       auto \
       format(type val, FormatContext& ctx) const -> decltype(ctx.out()); \
@@ -37,8 +35,11 @@
         if (::std::find(ctx.begin(), ctx.end(), '?') != ctx.end()) { \
           report_error("invalid format specifier"); \
         } \
-        return Base::parse(ctx); \
+        return underlying_.parse(ctx); \
       } \
+      private: \
+      \
+      ::rocket::format::NativeFormatter<string_view, Char> underlying_; \
     };
 
 /// @endcond

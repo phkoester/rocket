@@ -12,7 +12,6 @@
 #include "rocket/escape.h"
 
 #include "rocket-gtest/matcher.h"
-#include "rocket-gtest/PrintTo.h"
 
 using namespace rocket;
 using namespace rocket::escape;

@@ -29,13 +29,26 @@ enum Enum2 { D, E, F };
 
 // `TEST` ---------------------------------------------------------------------------------------------------
 
-TEST(Type, eq) {
-  EXPECT_EQ(Type::of<int>(), Type::of<long>());
+TEST(Type, op_eq) {
+  EXPECT_EQ(Type::of<int>(), Type::of<int>());
+}
+
+TEST(Type, op_ne) {
+  EXPECT_NE(Type::of<int>(), Type::of<long>());
 }
 
 TEST(Type, format) {
   EXPECT_EQ(fmt::format("{}", Type::of<int>()), "int");
   EXPECT_EQ(fmt::format("{}", Type::of<Type>()), "rocket::Type");
+}
+
+/**
+ * Test passes if it compiles.
+ */
+ TEST(Type, map) {
+  map<Type, string> map;
+  map.emplace(Type::of<int>(), "int");
+  map.emplace(Type::of<string>(), "string");
 }
 
 TEST(Type, name) {
@@ -51,15 +64,6 @@ TEST(Type, name) {
   EXPECT_EQ(
       Type::of<type>().name(),
       "std::variant<int, std::tuple<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char>>, std::vector<unsigned __int128, std::allocator<unsigned __int128>>>>");
-}
-
-/**
- * Test passes if it compiles.
- */
-TEST(Type, map) {
-  map<Type, string> map;
-  map.emplace(Type::of<int>(), "int");
-  map.emplace(Type::of<string>(), "string");
 }
 
 /**

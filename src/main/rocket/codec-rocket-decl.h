@@ -21,13 +21,6 @@ namespace rocket {
 
 // Functions ------------------------------------------------------------------------------------------------
 
-namespace text {
-
-/// @enum_declare{#rocket::text::Position::Type}
-ROCKET_ENUM_DECLARE(Position::Type);
-
-} // namespace text
-
 namespace unicode {
 
 /// @fn_parseRon{#rocket::unicode::CodePoint}

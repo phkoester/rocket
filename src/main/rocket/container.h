@@ -6,10 +6,13 @@
 
 #pragma once
 
+#include "format-std.h"
+
 #include <boost/bimap.hpp>
-#include <boost/version.hpp>
 #include <boost/bimap/unordered_set_of.hpp>
 
+#include <map>
+#include <ostream>
 #include <set>
 
 namespace rocket::container {
@@ -28,21 +31,21 @@ using UnorderedBimap =
  */
 template<typename K, typename V>
 UnorderedBimap<K, V>
-makeUnorderedBimap(const std::initializer_list<std::pair<K, V>>& list = {}) {
+makeUnorderedBimap(std::initializer_list<std::pair<K, V>> list = {}) {
   UnorderedBimap<K, V> ret;
   for (const auto& elem : list) {
-    ret.insert({ elem.first, elem.second }); // `bimap` has no `emplace`
+    ret.insert({ std::move(elem.first), std::move(elem.second) }); // `bimap` has no `emplace`
   }
   return ret;
 }
 
 /**
- * Extracts the values from an #UnorderedBimap.
+ * Extracts the values from an #UnorderedBimap, as seen from the map's left index.
  *
  * @tparam K the map's key type
  * @tparam V the map's value type
  * @param v an #UnorderedBimap
- * @return the values from @p v as a `std::set`
+ * @return the values from @p v as a `std::set`, as seen from the map's left index
  */
 template<typename K, typename V>
 std::set<V>
@@ -60,9 +63,9 @@ values(const UnorderedBimap<K, V>& v) {
 namespace boost::bimaps {
 
 /// @op_eq{`boost::bimaps::bimap`}
-template<typename K, typename V>
+template<typename A, typename B>
 bool
-operator==(const bimap<K, V>& lhs, const bimap<K, V>& rhs) {
+operator==(const bimap<A, B>& lhs, const bimap<A, B>& rhs) {
   if (lhs.size() != rhs.size())
     return false;
   for (const auto& [k, v] : lhs.left) {
@@ -78,10 +81,50 @@ operator==(const bimap<K, V>& lhs, const bimap<K, V>& rhs) {
 }
 
 /// @op_ne{`boost::bimaps::bimap`}
-template<typename K, typename V>
+template<typename A, typename B>
 inline bool
-operator!=(const bimap<K, V>& lhs, const bimap<K, V>& rhs) {
+operator!=(const bimap<A, B>& lhs, const bimap<A, B>& rhs) {
   return not operator==(lhs, rhs);
+}
+
+} // namespace boost::bimaps
+
+// Namespace `fmt` ------------------------------------------------------------------------------------------
+
+template<typename A, typename B, typename Char>
+struct fmt::formatter<boost::bimaps::bimap<A, B>, Char> {
+  template<typename FormatContext>
+  constexpr auto
+  format(const boost::bimaps::bimap<A, B>& v, FormatContext& ctx) const -> decltype(ctx.out()) {
+    // @todo Understand how `underlying_` is implemented in `fmt/ranges.h`, and don't make a copy of the
+    // whole map here
+    std::map<K, V> map;
+    for (const auto& [k, v] : v.left) {
+      map.emplace(k, v);
+    }
+    return underlying_.format(map, ctx);
+  }
+
+  constexpr const Char*
+  parse(parse_context<Char>& ctx) {
+    return underlying_.parse(ctx);
+  }
+
+private:
+
+  using K = boost::bimaps::bimap<A, B>::left_value_type::first_type;
+  using V = boost::bimaps::bimap<A, B>::left_value_type::second_type;
+
+  fmt::formatter<std::map<K, V>> underlying_;
+};
+
+namespace boost::bimaps {
+
+/// @op_output{`boost::bimaps::bimap`}
+template<typename A, typename B>
+std::ostream&
+operator<<(std::ostream& os, const bimap<A, B>& v) {
+  return os << fmt::format("{}", v);
 }
 
 } // namespace boost::bimaps

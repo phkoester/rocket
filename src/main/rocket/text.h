@@ -79,6 +79,9 @@ struct Position {
   std::optional<std::string> caption;
 };
 
+/// @enum_declare{#Position::Type}
+ROCKET_ENUM_DECLARE(Position::Type);
+
 // `LocationsParams` ----------------------------------------------------------------------------------------
 
 /**
@@ -227,6 +230,8 @@ void printLocations(
 std::string wrap(std::string_view s, const WrapParams& params = {});
 
 } // namespace rocket::text
+
+// Namespace `fmt` ------------------------------------------------------------------------------------------
 
 ROCKET_ENUM_DECLARE_FMT_FORMATTER(rocket::text::Position::Type);
 

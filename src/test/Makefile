@@ -76,6 +76,11 @@ CC_FILES    := test/rocket/test-codec-std.cc
 SHARED_LIBS := $(call shared-lib-name,rocket,$(ROCKET_VERSION))
 include $(GAIA_DIR)/src/main/make/test-executable.mk
 
+NAME        := test-rocket-container
+CC_FILES    := test/rocket/test-container.cc
+SHARED_LIBS := $(call shared-lib-name,rocket,$(ROCKET_VERSION))
+include $(GAIA_DIR)/src/main/make/test-executable.mk
+
 NAME        := test-rocket-enum
 CC_FILES    := test/rocket/test-enum.cc
 SHARED_LIBS := $(call shared-lib-name,rocket,$(ROCKET_VERSION))

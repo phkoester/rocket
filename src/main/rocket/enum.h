@@ -30,17 +30,25 @@
 #define ROCKET_ENUM_DEFINE_VALUES__(type, name) \
     const auto name##Values__ = ::rocket::container::values<type, ::std::string_view>(name##Map__)
 
-#define ROCKET_ENUM_DEFINE_INPUT_OP__(type, name) \
+#define ROCKET_ENUM_DEFINE_OP_INPUT__(type, name) \
     ::std::istream& \
     operator>>(::std::istream& lhs, type& rhs) { \
       try { \
         auto value = ::rocket::io::getString(lhs, name##Values__); \
-        rhs = name##Map__.right.find(value)->second; \
+        auto it = name##Map__.right.find(value); \
+        ROCKET_EXPECT(it != name##Map__.right.end()); \
+        rhs = it->second; \
         return lhs; \
-      } catch (const ::std::exception& ex) { \
+      } catch (const ::std::exception&) { \
         lhs.setstate(std::ios::failbit); \
         return lhs; \
       } \
+    }
+
+#define ROCKET_ENUM_DEFINE_OP_OUTPUT__(type, name) \
+    ::std::ostream& \
+    operator<<(::std::ostream& lhs, type rhs) { \
+      return lhs << fmt::format("{}", rhs); \
     }
 
 #define ROCKET_ENUM_DEFINE_PARSE_RON__(type, _name) \
@@ -62,19 +70,20 @@
 #define ROCKET_ENUM_DEFINE__(type, name, seq) \
     ROCKET_ENUM_DEFINE_MAP__(type, name, seq); \
     ROCKET_ENUM_DEFINE_VALUES__(type, name); \
-    ROCKET_ENUM_DEFINE_INPUT_OP__(type, name) \
-    ROCKET_ENUM_DEFINE_PARSE_RON__(type, name) \
+    ROCKET_ENUM_DEFINE_OP_INPUT__(type, name) \
+    ROCKET_ENUM_DEFINE_OP_OUTPUT__(type, name)
 
 #define ROCKET_ENUM_DEFINE_FMT_FORMATTER__(ns, type, _name) \
     template<typename Char> \
     template<typename FormatContext> \
     auto \
     fmt::formatter<ns::type, Char>::format(ns::type v, FormatContext& ctx) const -> decltype(ctx.out()) { \
-      if (auto it = ns::_name##Map__.left.find(v); it != ns::_name##Map__.left.end()) \
-        return Base::format(it->second, ctx); \
-      else \
+      if (auto it = ns::_name##Map__.left.find(v); it != ns::_name##Map__.left.end()) { \
+        return underlying_.format(it->second, ctx); \
+      } else { \
         return detail::write<char>(ctx.out(), "<invalid>"); \
-    } \
+      } \
+    }
 
 /// @endcond
 

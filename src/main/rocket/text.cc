@@ -11,6 +11,7 @@
 
 #include "assert.h"
 #include "escape.h"
+#include "enum.h"
 #include "strings.h"
 #include "terminal.h"
 #include "unicode.h"
@@ -76,7 +77,11 @@ paragraphs(string_view s) {
   return pars;
 }
 
-} // namespace
+} // namespace internal
+
+// `Position` -----------------------------------------------------------------------------------------------
+
+ROCKET_ENUM_DEFINE(Position::Type, Position_Type, (note)(warning)(error));
 
 // Functions ------------------------------------------------------------------------------------------------
 
@@ -378,5 +383,9 @@ wrap(string_view s, const WrapParams& params) {
 }
 
 } // namespace rocket::text
+
+// Namespace `fmt` ------------------------------------------------------------------------------------------
+
+ROCKET_ENUM_DEFINE_FMT_FORMATTER(rocket::text, Position::Type, Position_Type);
 
 // EOF
