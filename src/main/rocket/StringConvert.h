@@ -188,7 +188,7 @@ struct StringConvert<E> {
     auto is = io::is(s);
     Type ret;
     is >> ret;
-    if (is.fail()) {
+    if (is.fail() || not is.eof()) {
       throw InvalidState(message::cannotParseAs(s, rocket::Type::of<Type>()));
     }
     return ret;

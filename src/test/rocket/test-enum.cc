@@ -22,14 +22,14 @@ ROCKET_ENUM_DEFINE_FMT_FORMATTER(, MyEnum, MyEnum);
 
 // `TEST` ---------------------------------------------------------------------------------------------------
 
-TEST(enum, MyEnumOpInput) {
+TEST(enum, opInput) {
   MyEnum v;
 
   {
     auto is = io::is("fröb");
     is >> v;
     EXPECT_EQ(v, fröb);
-    EXPECT_ISTREAM(is, false, false, 5);
+    EXPECT_ISTREAM(is, false, true, 5);
   }
 
   {
@@ -40,10 +40,17 @@ TEST(enum, MyEnumOpInput) {
   }
 
   {
+    auto is = io::is("fröbex");
+    is >> v;
+    EXPECT_EQ(v, fröb);
+    EXPECT_ISTREAM(is, false, false, 5);
+  }
+
+  {
     auto is = io::is("pörkerer");
     is >> v;
     EXPECT_EQ(v, pörkerer);
-    EXPECT_ISTREAM(is, false, false, 9);
+    EXPECT_ISTREAM(is, false, true, 9);
   }
 
   {
@@ -55,13 +62,13 @@ TEST(enum, MyEnumOpInput) {
   {
     auto is = io::is("frö");
     is >> v;
-    EXPECT_ISTREAM(is, true, true, 4);
+    EXPECT_ISTREAM(is, true, false, 0);
   }
 
   {
     auto is = io::is("foo");
     is >> v;
-    EXPECT_ISTREAM(is, true, false, 2);
+    EXPECT_ISTREAM(is, true, false, 0);
   }
 }
 

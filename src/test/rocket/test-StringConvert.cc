@@ -5,6 +5,7 @@
 #include "rocket-gtest/testing.h"
 
 #include "rocket/StringConvert.h"
+#include "rocket/enum.h"
 #include "rocket/log.h"
 
 #include "rocket-gtest/matcher.h"
@@ -13,6 +14,16 @@ using namespace rocket;
 using namespace rocket::gtest::matcher;
 using namespace std;
 using namespace testing;
+
+// `MyEnum --------------------------------------------------------------------------------------------------
+
+enum MyEnum { fröb, fröber, fröberer, pörk, pörker, pörkerer };
+
+ROCKET_ENUM_DECLARE(MyEnum);
+ROCKET_ENUM_DECLARE_FMT_FORMATTER(MyEnum);
+
+ROCKET_ENUM_DEFINE(MyEnum, MyEnum, (fröb)(fröber)(fröberer)(pörk)(pörker)(pörkerer));
+ROCKET_ENUM_DEFINE_FMT_FORMATTER(, MyEnum, MyEnum);
 
 // `TEST` ---------------------------------------------------------------------------------------------------
 
@@ -80,14 +91,14 @@ TEST(StringConvert, longDouble) {
       ThrowsMessage<InvalidState>(HasSubstr("Cannot parse \"1x\" as `long double`")));
 }
 
-TEST(StringConvert, LogLevel) {
+TEST(StringConvert, enum) {
   using type = log::LogLevel;
 
   EXPECT_EQ(toType<type>("trace"), log::LogLevel::trace);
 
   EXPECT_THAT(
       [] { toType<type>("foo"); },
-      ThrowsMessage<InvalidState>(HasSubstr("Cannot parse \"foo\" as `rocket::log::LogLevel")));
+      ThrowsMessage<InvalidState>(HasSubstr("Cannot parse \"foo\" as `rocket::log::LogLevel`")));
   EXPECT_THAT(
       [] { toType<type>("tracex"); },
       ThrowsMessage<InvalidState>(HasSubstr("Cannot parse \"tracex\" as `rocket::log::LogLevel`")));
