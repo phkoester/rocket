@@ -8,10 +8,10 @@
 
 #include "base.h"
 #include "Exception.h"
-#include "io-decl.h"
+#include "enum-decl.h"
+#include "io.h" // XXX
 #include "message.h"
 
-#include <iostream> // XXX
 #include <limits>
 
 namespace rocket {
@@ -185,13 +185,7 @@ struct StringConvert<E> {
    */
   Type
   toType(std::string_view s) const {
-    auto is = io::is(s);
-    Type ret;
-    is >> ret;
-    if (is.fail() || not is.eof()) {
-      throw InvalidState(message::cannotParseAs(s, rocket::Type::of<Type>()));
-    }
-    return ret;
+    return Enum<Type>::toType(s);
   }
 };
 

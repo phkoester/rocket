@@ -10,6 +10,7 @@
 #include <iostream>
 #include <unistd.h>
 
+using namespace rocket::nio;
 using namespace std;
 
 namespace rocket::nio {
@@ -87,8 +88,9 @@ FileSink::FileSink(FILE* file, const Params& params) :
     file_(file),
     params_(params) {
   ROCKET_CHECK(file, file != nullptr);
-  if (int fd = this->fd(); fd == STDOUT_FILENO || fd == STDERR_FILENO)
+  if (int fd = this->fd(); fd == STDOUT_FILENO || fd == STDERR_FILENO) {
     params_.closeOnDestroy = false;
+  }
 }
 
 FileSink::FileSink(const string& path, const Params& params) :
@@ -263,15 +265,15 @@ StringSink::flush() {
 
 string
 StringSink::str() const {
-  ROCKET_EXPECT(not ref_);
+  ROCKET_EXPECT(not out);
   return managed_;
 }
 
 int
 StringSink::write(string_view data) {
   if (open_) {
-    if (ref_) {
-      *ref_ += data;
+    if (out) {
+      *out += data;
     } else {
       managed_ += data;
     }
@@ -281,17 +283,90 @@ StringSink::write(string_view data) {
   return error_;
 }
 
+// `FileSource` ---------------------------------------------------------------------------------------------
+
+FileSource::FileSource(FILE* file, const Params& params) :
+    file_(file),
+    params_(params) {
+  ROCKET_CHECK(file, file != nullptr);
+  if (int fd = this->fd(); fd == STDIN_FILENO || fd == STDERR_FILENO) {
+    params_.closeOnDestroy = false;
+  }
+}
+
+FileSource::FileSource(const string& path, const Params& params) :
+    file_(nullptr),
+    params_(params) {
+  file_ = std::fopen(path.c_str(), "fb");
+
+  if (file_ == nullptr) {
+    error_ = errno;
+    if (error_ == 0) {
+      error_ = ENOENT;
+    }
+    open_ = false;
+  }
+}
+
+FileSource::~FileSource() {
+  if (params_.closeOnDestroy) {
+    close();
+  }
+}
+
+int
+FileSource::close()
+{
+  if (open_) {
+    open_ = false;
+    if (int result = std::fclose(file_); result != 0) {
+      error_ = result;
+    }
+  } else if (error_ == 0) {
+    error_ = EBADF;
+  }
+  return error_;
+}
+
+int
+FileSource::fd() const {
+  return file_ ? fileno(file_) : -1;
+}
+
+uint8_t
+FileSource::read(char& out) {
+  if (open_) {
+    if (int result = std::fread(&out, 1, 1, file_); result != 1) {
+      error_ = errno;
+      if (error_ == 0) {
+        error_ = EIO;
+      }
+    } else {
+      return 1;
+    }
+  } else if (error_ == 0) {
+    error_ = EBADF;
+  }
+  return 0;
+}
+
+} // namespace rocket::nio
+
 // Variables ------------------------------------------------------------------------------------------------
 
 namespace {
 
 FileSink fileSinkStdout = FileSink(::stdout);
 FileSink fileSinkStderr = FileSink(::stderr);
+FileSource fileSourceStdin = FileSource(::stdin);
 
 } // namespace
 
+namespace rocket::nio {
+
 Sink& stdout = fileSinkStdout;
 Sink& stderr = fileSinkStderr;
+Source& stdin = fileSourceStdin;
 
 } // namespace rocket::nio
 

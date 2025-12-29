@@ -8,6 +8,7 @@
 
 #include "format-std.h"
 
+#include <iostream>
 #include <memory>
 #include <string>
 
@@ -175,7 +176,7 @@ struct NullSink : Sink {
 // `StreamSink` ---------------------------------------------------------------------------------------------
 
 /**
- * The class `StreamSink` provides support for I/O streams.
+ * The class `StreamSink` provides support for `std::ostream`.
  *
  * Using I/O streams is generally discouraged, because it’s not efficient. Wherever possible, use #FileSink
  * instead.
@@ -201,7 +202,7 @@ private:
 struct StringSink : Sink {
   explicit StringSink() {}
 
-  explicit StringSink(std::string& ref) : ref_(&ref) {}
+  explicit StringSink(std::string& out) : out(&out) {}
 
   virtual int close() override;
 
@@ -215,12 +216,181 @@ struct StringSink : Sink {
 
 private:
 
-  std::string* ref_ = nullptr;
+  std::string* out = nullptr;
   std::string managed_;
+};
+
+// `StringViewSink` -----------------------------------------------------------------------------------------
+
+struct StringViewSink : Sink {
+  explicit StringViewSink(std::string_view out) : out_(out) {}
+
+  virtual int close() override;
+
+  virtual int fd() const override { return -1; }
+
+  virtual int flush() override;
+
+  std::string_view str() const;
+
+  virtual int write(std::string_view data) override;
+
+private:
+
+  std::string_view out_;
+};
+
+// `Source` -------------------------------------------------------------------------------------------------
+
+struct Source {
+  Source() = default;
+
+  Source(const Sink& rhs) = delete;
+
+  virtual ~Source() = default;
+
+  virtual int close() = 0;
+
+  virtual int error() const { return error_; }
+
+  /**
+   * Returns the file descriptor.
+   *
+   * @return the file descriptor of the sink, or -1 if the sink is not connected to a file
+   */
+  virtual int fd() const = 0;
+
+  virtual bool good() const { return open_ && error_ == 0; }
+
+  virtual bool open() const { return open_; }
+
+  virtual uint8_t read(char& out) = 0;
+
+  // XXX read mit OutputIterator wie std::fill[_n]
+
+  size_t read(std::string& out);
+
+  size_t read(std::string_view out);
+
+  // XXX readln mit OutputIterator wie std::fill[_n]
+
+  size_t readln(std::string& out);
+
+  size_t readln(std::string_view out);
+
+protected:
+
+  int error_ = 0;
+  bool open_ = true;
+};
+
+// `BufferedSource` -----------------------------------------------------------------------------------------
+
+struct BufferedSource : Source {
+  explicit BufferedSource(Source& underlying, size_t size = DEFAULT_BUFFER_SIZE);
+
+  virtual int close() override;
+
+  virtual int error() const override { return underlying_.error(); } // cppcheck-suppress uselessOverride
+
+  virtual int fd() const override { return underlying_.fd(); }
+
+  virtual bool good() const override { return underlying_.good(); } // cppcheck-suppress uselessOverride
+
+  virtual bool open() const override { return underlying_.open(); } // cppcheck-suppress uselessOverride
+
+  virtual uint8_t read(char& out) override;
+
+private:
+
+  Source& underlying_;
+  const size_t size_;
+  std::unique_ptr<char[]> buf_;
+  size_t pos_ = 0;
+};
+
+// `FileSource` ---------------------------------------------------------------------------------------------
+
+struct FileSource : Source {
+  struct Params {
+    /**
+     * Whether to close the file on destruction.
+     *
+     * The default is `true`. For `stdin`, this is automatically configured to be `false`.
+     */
+    bool closeOnDestroy = true;
+  };
+
+  explicit FileSource(FILE* file, const Params& params = { .closeOnDestroy=true });
+
+  explicit FileSource(const std::string& path, const Params& params = { .closeOnDestroy=true });
+
+  virtual ~FileSource() override;
+
+  virtual int close() override;
+
+  virtual int fd() const override;
+
+  uint8_t read(char& out) override;
+
+ROCKET_TESTING_PRIVATE:
+
+  FILE* file_;
+  Params params_;
+};
+
+// `NullSource` ---------------------------------------------------------------------------------------------
+
+struct NullSource : Source {
+  virtual int close() override;
+
+  virtual int fd() const override { return -1; }
+
+  uint8_t read(char& out) override { return 0; }
+};
+
+// `StreamSource` -------------------------------------------------------------------------------------------
+
+/**
+ * The class `StreamSource` provides support for `std::istream`.
+ *
+ * Using I/O streams is generally discouraged, because it’s not efficient. Wherever possible, use #FileSource
+ * instead.
+ */
+ struct StreamSource : Source {
+  explicit StreamSource(std::istream& is) : is_(is) {}
+
+  virtual int close() override;
+
+  virtual int fd() const override;
+
+  uint8_t read(char& out) override;
+
+private:
+
+  std::istream& is_;
+};
+
+// `StringSource` -------------------------------------------------------------------------------------------
+
+struct StringSource : Source {
+  explicit StringSource(std::string_view in, bool copy = false);
+
+  virtual int close() override;
+
+  virtual int fd() const override { return -1; }
+
+  uint8_t read(char& out) override;
+
+private:
+
+  std::string_view in_;
+  std::optional<std::string> managed_;
 };
 
 // Variables ------------------------------------------------------------------------------------------------
 
+extern Source& stdin;
 extern Sink& stdout;
 extern Sink& stderr;
 

@@ -222,12 +222,7 @@ setLogLevel(string_view id, string_view value) {
     }
   }
 
-  auto is = io::is(value);
-  LogLevel level;
-  is >> level;
-  if (is.fail() || io::tellg(is) != value.size()) {
-    throw InvalidState(fmt::format("Invalid log level `{}`", value));
-  }
+  LogLevel level = Enum<LogLevel>::toType(value);
 
   if (not all) {
     *it->second = level;
@@ -245,11 +240,11 @@ setLogLevel(string_view id, string_view value) {
 
 namespace rocket::log {
 
-ROCKET_ENUM_DEFINE(LogLevel, LogLevel, (none)(error)(warn)(info)(debug)(trace));
+ROCKET_ENUM_DEFINE_LOCAL(LogLevel, LogLevel, (none)(error)(warn)(info)(debug)(trace));
 
 } // namespace rocket::log
 
-ROCKET_ENUM_DEFINE_FMT_FORMATTER(rocket::log, LogLevel, LogLevel);
+ROCKET_ENUM_DEFINE_GLOBAL(rocket::log, LogLevel, LogLevel);
 
 namespace rocket::log {
 
@@ -257,7 +252,8 @@ namespace rocket::log {
 
 namespace internal {
 
-void init() {
+void
+init() {
   // We need this in case of quick exit
   process.atExit([] {
     ROCKET_LOCK(outMutex);

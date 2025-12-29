@@ -76,7 +76,13 @@ paragraphs(string_view s) {
 
 // `Position` -----------------------------------------------------------------------------------------------
 
-ROCKET_ENUM_DEFINE(Position::Type, Position_Type, (note)(warning)(error));
+ROCKET_ENUM_DEFINE_LOCAL(Position::Type, Position_Type, (note)(warning)(error));
+
+} // namespace rocket::text
+
+ROCKET_ENUM_DEFINE_GLOBAL(rocket::text, Position::Type, Position_Type);
+
+namespace rocket::text {
 
 // Functions ------------------------------------------------------------------------------------------------
 
@@ -378,9 +384,5 @@ wrap(string_view s, const WrapParams& params) {
 }
 
 } // namespace rocket::text
-
-// Namespace `fmt` ------------------------------------------------------------------------------------------
-
-ROCKET_ENUM_DEFINE_FMT_FORMATTER(rocket::text, Position::Type, Position_Type);
 
 // EOF

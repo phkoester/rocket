@@ -340,11 +340,6 @@ template<typename F> concept FloatingPoint = IsFloatingPoint<F>::value;
 // Functions ------------------------------------------------------------------------------------------------
 
 /**
- * A NOP function.
- */
-constexpr void nop() {}
-
-/**
  * A NOP function that helps to suppress warnings about unused variables.
  *
  * @tparam T the types of @p args

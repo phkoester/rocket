@@ -15,16 +15,6 @@ using namespace rocket::gtest::matcher;
 using namespace std;
 using namespace testing;
 
-// `MyEnum --------------------------------------------------------------------------------------------------
-
-enum MyEnum { fröb, fröber, fröberer, pörk, pörker, pörkerer };
-
-ROCKET_ENUM_DECLARE(MyEnum);
-ROCKET_ENUM_DECLARE_FMT_FORMATTER(MyEnum);
-
-ROCKET_ENUM_DEFINE(MyEnum, MyEnum, (fröb)(fröber)(fröberer)(pörk)(pörker)(pörkerer));
-ROCKET_ENUM_DEFINE_FMT_FORMATTER(, MyEnum, MyEnum);
-
 // `TEST` ---------------------------------------------------------------------------------------------------
 
 TEST(StringConvert, bool) {

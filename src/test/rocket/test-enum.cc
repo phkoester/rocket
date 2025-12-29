@@ -14,62 +14,28 @@ using namespace testing;
 
 enum MyEnum { fröb, fröber, fröberer, pörk, pörker, pörkerer };
 
-ROCKET_ENUM_DECLARE(MyEnum);
-ROCKET_ENUM_DECLARE_FMT_FORMATTER(MyEnum);
+ROCKET_ENUM_DECLARE_LOCAL(MyEnum);
+ROCKET_ENUM_DECLARE_GLOBAL(MyEnum);
 
-ROCKET_ENUM_DEFINE(MyEnum, MyEnum, (fröb)(fröber)(fröberer)(pörk)(pörker)(pörkerer));
-ROCKET_ENUM_DEFINE_FMT_FORMATTER(, MyEnum, MyEnum);
+ROCKET_ENUM_DEFINE_LOCAL(MyEnum, MyEnum, (fröb)(fröber)(fröberer)(pörk)(pörker)(pörkerer));
+ROCKET_ENUM_DEFINE_GLOBAL(, MyEnum, MyEnum);
 
 // `TEST` ---------------------------------------------------------------------------------------------------
 
-TEST(enum, opInput) {
-  MyEnum v;
+TEST(enum, toType) {
+  EXPECT_EQ(Enum<MyEnum>::toType("fröb"), fröb);
+  EXPECT_EQ(Enum<MyEnum>::toType("fröber"), fröber);
+  EXPECT_EQ(Enum<MyEnum>::toType("fröberer"), fröberer);
+  EXPECT_EQ(Enum<MyEnum>::toType("pörk"), pörk);
+  EXPECT_EQ(Enum<MyEnum>::toType("pörker"), pörker);
+  EXPECT_EQ(Enum<MyEnum>::toType("pörkerer"), pörkerer);
 
-  {
-    auto is = io::is("fröb");
-    is >> v;
-    EXPECT_EQ(v, fröb);
-    EXPECT_ISTREAM(is, false, true, 5);
-  }
-
-  {
-    auto is = io::is("fröbx");
-    is >> v;
-    EXPECT_EQ(v, fröb);
-    EXPECT_ISTREAM(is, false, false, 5);
-  }
-
-  {
-    auto is = io::is("fröbex");
-    is >> v;
-    EXPECT_EQ(v, fröb);
-    EXPECT_ISTREAM(is, false, false, 5);
-  }
-
-  {
-    auto is = io::is("pörkerer");
-    is >> v;
-    EXPECT_EQ(v, pörkerer);
-    EXPECT_ISTREAM(is, false, true, 9);
-  }
-
-  {
-    auto is = io::is();
-    is >> v;
-    EXPECT_ISTREAM(is, true, true, 0);
-  }
-
-  {
-    auto is = io::is("frö");
-    is >> v;
-    EXPECT_ISTREAM(is, true, false, 0);
-  }
-
-  {
-    auto is = io::is("foo");
-    is >> v;
-    EXPECT_ISTREAM(is, true, false, 0);
-  }
+  EXPECT_THAT(
+      [] { Enum<MyEnum>::toType("foo"); },
+      ThrowsMessage<InvalidState>(HasSubstr("Cannot parse \"foo\" as `MyEnum`")));
+  EXPECT_THAT(
+      [] { Enum<MyEnum>::toType("fröbx"); },
+      ThrowsMessage<InvalidState>(HasSubstr("Cannot parse \"fröbx\" as `MyEnum`")));
 }
 
 TEST(enum, opOutput) {

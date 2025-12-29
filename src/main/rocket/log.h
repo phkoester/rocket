@@ -39,13 +39,11 @@ enum class LogLevel {
   trace = 5 ///< Log level `trace`.
 };
 
-/// @enum_declare{#rocket::log::LogLevel}
-ROCKET_ENUM_DECLARE(LogLevel);
+ROCKET_ENUM_DECLARE_LOCAL(LogLevel);
 
 } // namespace rocket::log
 
-/// @spec_fmt_formatter{#rocket::log::LogLevel}
-ROCKET_ENUM_DECLARE_FMT_FORMATTER(rocket::log::LogLevel);
+ROCKET_ENUM_DECLARE_GLOBAL(rocket::log::LogLevel);
 
 namespace rocket::log {
 
@@ -92,7 +90,7 @@ const std::vector<cl::Option>& opts();
 
 #endif // ROCKET_LOG_H
 
-// End of header guard --------------------------------------------------------------------------------------
+// Macros ---------------------------------------------------------------------------------------------------
 
 #undef ROCKET_LOG_DECLARE
 #undef ROCKET_LOG_DEFINE
