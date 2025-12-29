@@ -69,9 +69,9 @@ TEST(format, FormatWithTagged) {
     }));
 
     if (n == 1) {
-      EXPECT_THAT(buf.str(), matchesRegex(".*:\\d+: First case: The command line is `grep -i foo bar`\\. Again, the command line is `grep -i foo bar`\\. But here comes another one: `ls -l`\\."));
+      EXPECT_THAT(buf.str(), matchesRegex(".*\\.cc:\\d+: First case: The command line is `grep -i foo bar`\\. Again, the command line is `grep -i foo bar`\\. But here comes another one: `ls -l`\\."));
     } else {
-      EXPECT_THAT(buf.str(), matchesRegex(".*:\\d+: Second case: This sentence doesn't mean much\\."));
+      EXPECT_THAT(buf.str(), matchesRegex(".*\\.cc:\\d+: Second case: This sentence doesn't mean much\\."));
     }
   }
 }

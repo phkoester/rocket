@@ -57,7 +57,6 @@ Buffer::getCodePoint(unicode::CodePoint* cp) {
   char c = static_cast<char>(*got);
   auto cpSize = unicode::utf8::codePointSize(c);
   if (cpSize == 0) {
-    // XXX thowInputFailure?
     throw InputFailure(is_, pos, fmt::format("Invalid UTF-8 byte: {:#x}", *got)); // XXX x02?
   }
 
@@ -201,11 +200,11 @@ getChar(std::istream& is, const std::set<char>& values) {
 
   char c = getChar(is);
   if (is.eof()) {
-    throw ParseFailure(is, inputPos, fmt::format("Expected any of {} got EOF", values)); // XXX values
+    throw ParseFailure(is, inputPos, fmt::format("Expected any of {}, got EOF", values)); // XXX values
   }
   check(is);
   if (not values.contains(c)) {
-    throw ParseFailure(is, inputPos, fmt::format("Expected any of {} got '{}'", values, c)); // XXX values
+    throw ParseFailure(is, inputPos, fmt::format("Expected any of {}, got '{}'", values, c)); // XXX values
   }
   return c;
 }
@@ -294,7 +293,7 @@ getString(std::istream& is, const std::set<std::string_view>& values) {
         return ret;
       } else {
         throw ParseFailure(is, pos, { inputPos, tellg(is) },
-            fmt::format("{} does not match any of {}, got EOF", input, values)); // XXX
+            fmt::format("{:?} does not match any of {}, got EOF", input, values));
       }
     }
     check(is);
@@ -326,7 +325,7 @@ getString(std::istream& is, const std::set<std::string_view>& values) {
         return ret;
       } else {
         throw ParseFailure(is, pos, { inputPos, tellg(is) },
-            fmt::format("{} does not match any of {}, got EOF", input, values)); // XXX
+            fmt::format("{:?} does not match any of {}, got EOF", input, values));
       }
     }
   }
@@ -343,7 +342,7 @@ getUntil(std::istream& is, char delimiter, bool consumeDelimiter, size_t min) {
     size_t pos = tellg(is);
     char c = getChar(is);
     if (is.eof()) {
-      throw ParseFailure(is, pos, fmt::format("Seeking {}, got EOF", delimiter)); // XXX
+      throw ParseFailure(is, pos, fmt::format("Seeking {:?}, got EOF", delimiter));
     }
     check(is);
 
@@ -353,7 +352,7 @@ getUntil(std::istream& is, char delimiter, bool consumeDelimiter, size_t min) {
       }
       if (input.size() < min) {
         throw ParseFailure(is, pos, { inputPos, inputPos + min },
-            fmt::format("Expected at least {} before {}, got {}", noun::character(min), delimiter, input.size())); // XXX
+            fmt::format("Expected at least {} before {:?}, got {}", noun::character(min), delimiter, input.size()));
       }
       return input;
     }
@@ -405,7 +404,6 @@ getWhile(std::istream& is, const std::set<char>& values, size_t min) {
         seekg(is, pos);
         return input;
       } else {
-        seekg(is, inputPos);
         throw ParseFailure(is, pos, { inputPos, inputPos + min },
             fmt::format("Expected at least {} contained in {}, got {} and EOF", noun::character(min), values, input.size())); // XXX
       }
@@ -415,11 +413,10 @@ getWhile(std::istream& is, const std::set<char>& values, size_t min) {
     if (values.contains(c)) {
       input.push_back(c);
     } else {
+      seekg(is, pos);
       if (input.size() >= min) {
-        seekg(is, pos);
         return input;
       } else {
-        seekg(is, inputPos);
         throw ParseFailure(is, pos, { inputPos, inputPos + min },
             fmt::format("Expected at least {} contained in {}, got {} and {}", noun::character(min), values, input.size(), c)); // XXX
       }
@@ -437,6 +434,10 @@ is(std::span<char> v, std::ios::openmode mode, std::ios::iostate exceptions) {
 std::istream&
 seekg(std::istream& is, size_t position) {
   const auto state = is.rdstate();
+  if (position == tellg(is)) {
+    is.clear(state & ~(std::ios::failbit));
+    return is; // XXX
+  }
   // Clear `eofbit` and `failbit`, leave `badbit` unchanged
   is.clear(state & ~(std::ios::eofbit | std::ios::failbit));
   typename std::istream::pos_type seekg = position;

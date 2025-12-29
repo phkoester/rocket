@@ -19,7 +19,7 @@ main(int argc, char **argv) {
       for_each(arg.begin(), arg.end(), [&](char c) { bytes.push_back(byte(c)); });
       auto& out = nio::stdout;
       out.println("{}: {}", i, bytes); // XXX
-      out.println("{}={}", i, arg);
+      out.println("{}={}=", i, arg);
     }
     process.exit(EXIT_SUCCESS);
   } catch (...) {

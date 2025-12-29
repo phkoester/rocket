@@ -91,12 +91,12 @@ namespace internal {
 
 template<typename Schema>
 struct EscapedString {
-  std::string s;
+  std::string& s;
   Schema::Params params;
   Result* result;
 
   EscapedString(
-      std::string s,
+      std::string& s,
       const Schema::Params& params,
       Result* result) : s(s), params(params), result(result) {}
 };
@@ -113,7 +113,7 @@ std::string escapeCStringHex(unicode::CodePoint cp, size_t& column);
 
 std::string escapeCStringTab(size_t& column, const CString::Params& params);
 
-std::istream& operator>>(std::istream& lhs, EscapedString<CString>& rhs);
+std::istream& operator>>(std::istream& lhs, const EscapedString<CString>& rhs);
 
 std::ostream& operator<<(std::ostream& lhs, const EscapedString<CString>& rhs);
 
@@ -121,7 +121,7 @@ std::ostream& operator<<(std::ostream& lhs, const EscapedString<CString>& rhs);
 
 std::string escapeRegex(unicode::CodePoint cp, size_t& column);
 
-std::istream& operator>>(std::istream& lhs, EscapedString<Regex>& rhs);
+std::istream& operator>>(std::istream& lhs, const EscapedString<Regex>& rhs);
 
 std::ostream& operator<<(std::ostream& lhs, const EscapedString<Regex>& rhs);
 
@@ -213,7 +213,7 @@ escaped(
     const std::string& s,
     const typename Schema::Params& params = {},
     Result* result = nullptr) {
-  return internal::EscapedString<Schema>(s, params, result);
+  return internal::EscapedString<Schema>(const_cast<std::string&>(s), params, result);
 }
 
 } // namespace rocket::escape

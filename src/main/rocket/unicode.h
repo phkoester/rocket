@@ -177,6 +177,7 @@ struct fmt::formatter<rocket::unicode::CodePoint, Char> {
   constexpr auto
   format(const rocket::unicode::CodePoint& v, FormatContext& ctx) const -> decltype(ctx.out()) {
     if (underlying_.specs().type() == fmt::presentation_type::debug) {
+      // @todo This no longer respects format specs
       return fmt::format_to(ctx.out(), "U+{:0>4X}", static_cast<uint32_t>(v));
     } else {
       return underlying_.format(static_cast<std::string>(v), ctx);

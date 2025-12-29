@@ -48,11 +48,11 @@ string
 getWhat(const exception& v) {
   const char* p = v.what();
   if (not p)
-    return "null";
+    return "<null>";
   string_view s(p);
   if (s.empty())
-    return "none";
-  return fmt::format("{:?}", s); // With quotation marks
+    return "<none>";
+  return fmt::format("{}", s);
 }
 
 void

@@ -99,9 +99,9 @@ escapeCStringTab(size_t& column, const CString::Params& params) {
 }
 
 std::istream&
-operator>>(std::istream& lhs, EscapedString<CString>& rhs) {
+operator>>(std::istream& lhs, const EscapedString<CString>& rhs) {
   ROCKET_CHECK(rhs, rhs.params.quote == '\0' || rhs.params.quote == '"' || rhs.params.quote == '\'');
-  std::string& s = rhs.s;
+  std::string& s = const_cast<std::string&>(rhs.s);
   const auto& params = rhs.params;
   Result* result = rhs.result;
 
@@ -398,8 +398,8 @@ escapeRegex(unicode::CodePoint cp, size_t& column) {
 }
 
 std::istream&
-operator>>(std::istream& lhs, EscapedString<Regex>& rhs) {
-  std::string& s = rhs.s;
+operator>>(std::istream& lhs, const EscapedString<Regex>& rhs) {
+  std::string& s = const_cast<std::string&>(rhs.s);
   Result* result = rhs.result;
 
   s.clear();

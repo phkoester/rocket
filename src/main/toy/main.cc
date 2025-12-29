@@ -4,6 +4,7 @@
 
 #include "rocket/Process.h"
 #include "rocket/cl.h"
+#include "rocket/escape.h"
 #include "rocket/log.h"
 
 using namespace rocket;
@@ -20,6 +21,9 @@ toy() {
   ROCKET_LOG(toy);
 
   ROCKET_LOG_INFO("hi");
+
+  char c = '\xfd';
+  nio::stdout.println("c {:?}", c);
 }
 
 } // namespace

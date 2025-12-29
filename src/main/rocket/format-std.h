@@ -28,7 +28,7 @@ struct formatter<std::optional<T>, Char, std::enable_if_t<is_formattable<T, Char
   constexpr auto
   format(const std::optional<T>& v, FormatContext& ctx) const -> decltype(ctx.out()) {
     if (not v) {
-      return detail::write<Char>(ctx.out(), "<null>");
+      return detail::write<Char>(ctx.out(), "<none>");
     }
     return underlying_.format(*v, ctx);
   }

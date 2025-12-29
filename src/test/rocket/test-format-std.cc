@@ -34,7 +34,7 @@ TEST(format_std, mapFormat) {
 }
 
 TEST(format_std, optionalFormat) {
-  EXPECT_EQ(fmt::format("{:0>5d}", optional<int>()), "<null>");
+  EXPECT_EQ(fmt::format("{:0>5d}", optional<int>()), "<none>");
   EXPECT_EQ(fmt::format("{:0>5d}", optional<int>(3)), "00003");
   EXPECT_EQ(fmt::format("{}", optional<LogLevel>(LogLevel::info)), "info");
 }
@@ -42,9 +42,9 @@ TEST(format_std, optionalFormat) {
 TEST(format_std, optionalAndVectorInTypeLoopFormat) {
   using type = optional<vector<optional<LogLevel>>>;
   type v1 = nullopt;
-  EXPECT_EQ(fmt::format("{:}", v1), "<null>");
+  EXPECT_EQ(fmt::format("{:}", v1), "<none>");
   type v2 = vector<optional<LogLevel>> { optional<LogLevel>(LogLevel::info), nullopt, optional<LogLevel>(LogLevel::error) };
-  EXPECT_EQ(fmt::format("{}", v2), "[info, <null>, error]");
+  EXPECT_EQ(fmt::format("{}", v2), "[info, <none>, error]");
 }
 
 TEST(format_std, pairFormat) {

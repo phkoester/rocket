@@ -127,7 +127,7 @@ TEST(io, getOptionalChar) {
   {
     auto is = io::is();
     EXPECT_EQ(getOptionalChar(is, set<char> { 'x' }), nullopt);
-    EXPECT_ISTREAM(is, false, false, 0);
+    EXPECT_ISTREAM(is, false, true, 0);
   }
 
   {
@@ -231,7 +231,7 @@ TEST(io, getWhile) {
   {
     auto is = io::is();
     EXPECT_EQ(getWhile(is, { 'x', 'y' }, 0), "");
-    EXPECT_ISTREAM(is, false, false, 0);
+    EXPECT_ISTREAM(is, false, true, 0);
   }
 
   {
@@ -245,7 +245,7 @@ TEST(io, getWhile) {
   {
     auto is = io::is("y");
     EXPECT_EQ(getWhile(is, { 'x', 'y' }, 1), "y");
-    EXPECT_ISTREAM(is, false, false, 1);
+    EXPECT_ISTREAM(is, false, true, 1);
   }
 
   {
@@ -259,7 +259,7 @@ TEST(io, getWhile) {
   {
     auto is = io::is("yx");
     EXPECT_EQ(getWhile(is, { 'x', 'y' }, 2), "yx");
-    EXPECT_ISTREAM(is, false, false, 2);
+    EXPECT_ISTREAM(is, false, true, 2);
   }
 }
 
