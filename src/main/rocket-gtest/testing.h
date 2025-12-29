@@ -11,7 +11,7 @@
  *
  * This must be defined before including any other header file.
  */
-#define TESTING
+#define ROCKET_TESTING
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>

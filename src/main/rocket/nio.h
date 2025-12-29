@@ -23,15 +23,11 @@ static constexpr size_t DEFAULT_BUFFER_SIZE = 64 * 1'024; // 64 KiB
 /**
   * The minimum buffer size in bytes.
   */
-static constexpr size_t MIN_BUFFER_SIZE = 128;
+static constexpr size_t MIN_BUFFER_SIZE = 64;
 
 // `Sink` ---------------------------------------------------------------------------------------------------
 
 struct Sink {
-  Sink() = default;
-
-  Sink(const Sink& rhs) = delete;
-
   virtual ~Sink() = default;
 
   virtual int close() = 0;
@@ -95,6 +91,12 @@ struct Sink {
 
 protected:
 
+  Sink() {}
+
+  Sink(const Sink& rhs) = delete;
+
+  bool checkOpen();
+
   int error_ = 0;
   bool open_ = true;
 };
@@ -118,7 +120,7 @@ struct BufferedSink : Sink {
 
   virtual int write(std::string_view data) override;
 
-private:
+ROCKET_TESTING_PRIVATE:
 
   Sink& underlying_;
   const size_t size_;
@@ -141,7 +143,9 @@ struct FileSink : Sink {
     bool closeOnDestroy = true;
   };
 
-  explicit FileSink(FILE* file, const Params& params = { .append=false, .closeOnDestroy=true });
+  static consteval Params defaultParams() { return {}; }
+
+  explicit FileSink(FILE* file, const Params& params = defaultParams());
 
   explicit FileSink(const std::string& path, const Params& params = { .append=false, .closeOnDestroy=true });
 
@@ -243,10 +247,6 @@ private:
 // `Source` -------------------------------------------------------------------------------------------------
 
 struct Source {
-  Source() = default;
-
-  Source(const Sink& rhs) = delete;
-
   virtual ~Source() = default;
 
   virtual int close() = 0;
@@ -264,21 +264,23 @@ struct Source {
 
   virtual bool open() const { return open_; }
 
-  virtual uint8_t read(char& out) = 0;
+  std::string read();
 
-  // XXX read mit OutputIterator wie std::fill[_n]
+  size_t read(char& out) { return read({ &out, 1 }); }
 
-  size_t read(std::string& out);
+  virtual size_t read(std::string_view out) = 0;
 
-  size_t read(std::string_view out);
-
-  // XXX readln mit OutputIterator wie std::fill[_n]
-
-  size_t readln(std::string& out);
+  std::string readln();
 
   size_t readln(std::string_view out);
 
 protected:
+
+  Source() {}
+
+  Source(const Sink& rhs) = delete;
+
+  bool checkOpen();
 
   int error_ = 0;
   bool open_ = true;
@@ -299,7 +301,7 @@ struct BufferedSource : Source {
 
   virtual bool open() const override { return underlying_.open(); } // cppcheck-suppress uselessOverride
 
-  virtual uint8_t read(char& out) override;
+  virtual size_t read(std::string_view out) override;
 
 private:
 
@@ -321,7 +323,9 @@ struct FileSource : Source {
     bool closeOnDestroy = true;
   };
 
-  explicit FileSource(FILE* file, const Params& params = { .closeOnDestroy=true });
+  static consteval Params defaultParams() { return {}; }
+
+  explicit FileSource(FILE* file, const Params& params = defaultParams());
 
   explicit FileSource(const std::string& path, const Params& params = { .closeOnDestroy=true });
 
@@ -331,7 +335,7 @@ struct FileSource : Source {
 
   virtual int fd() const override;
 
-  uint8_t read(char& out) override;
+  virtual size_t read(std::string_view out) override;
 
 ROCKET_TESTING_PRIVATE:
 
@@ -346,7 +350,7 @@ struct NullSource : Source {
 
   virtual int fd() const override { return -1; }
 
-  uint8_t read(char& out) override { return 0; }
+  virtual size_t read(std::string_view out) override;
 };
 
 // `StreamSource` -------------------------------------------------------------------------------------------
@@ -357,14 +361,14 @@ struct NullSource : Source {
  * Using I/O streams is generally discouraged, because it’s not efficient. Wherever possible, use #FileSource
  * instead.
  */
- struct StreamSource : Source {
+struct StreamSource : Source {
   explicit StreamSource(std::istream& is) : is_(is) {}
 
   virtual int close() override;
 
   virtual int fd() const override;
 
-  uint8_t read(char& out) override;
+  virtual size_t read(std::string_view out) override;
 
 private:
 
@@ -380,7 +384,7 @@ struct StringSource : Source {
 
   virtual int fd() const override { return -1; }
 
-  uint8_t read(char& out) override;
+  virtual size_t read(std::string_view out) override;
 
 private:
 

@@ -5,6 +5,7 @@
 #include "nio.h"
 
 #include "assert.h"
+#include "log.h"
 
 #include <cstdio>
 #include <iostream>
@@ -13,9 +14,22 @@
 using namespace rocket::nio;
 using namespace std;
 
+ROCKET_LOG_DEFINE(rocket_nio);
+
 namespace rocket::nio {
 
 // `Sink` ---------------------------------------------------------------------------------------------------
+
+bool
+Sink::checkOpen() {
+  if (not open_) {
+    if (error_ == 0) {
+      error_ = EBADF;
+    }
+    return false;
+  }
+  return true;
+}
 
 int
 Sink::writeln(std::string_view data) {
@@ -35,6 +49,10 @@ BufferedSink::BufferedSink(Sink& underlying, size_t size) :
 
 int
 BufferedSink::close() {
+  if (not checkOpen()) {
+    return error();
+  }
+
   flush();
   buf_ = nullptr;
   return underlying_.close();
@@ -42,12 +60,18 @@ BufferedSink::close() {
 
 int
 BufferedSink::flush() {
+  if (not checkOpen()) {
+    return error();
+  }
+
   flushBuffer();
   return underlying_.flush();
 }
 
 void
 BufferedSink::flushBuffer() {
+  ROCKET_EXPECT(buf_);
+
   if (buf_ && pos_ > 0) {
     underlying_.write(string_view(&buf_[0], pos_));
     pos_ = 0;
@@ -56,11 +80,9 @@ BufferedSink::flushBuffer() {
 
 int
 BufferedSink::write(string_view data) {
-  if (not open()) {
-    // If the underlying sink is not open, a call to `write` must immediately fail
-    return underlying_.write(data);
+  if (not checkOpen()) {
+    return error();
   }
-  ROCKET_EXPECT(buf_);
 
   // Loop while there is data to write
   auto rest = data;
@@ -96,14 +118,14 @@ FileSink::FileSink(FILE* file, const Params& params) :
 FileSink::FileSink(const string& path, const Params& params) :
     file_(nullptr),
     params_(params) {
+  ROCKET_LOG(rocket_nio);
+
   const char* modes = params.append ? "ab" : "wb"; // `b` is for non-Linux only
   file_ = std::fopen(path.c_str(), modes);
+  ROCKET_LOG_DEBUG("fopen={}, errno={}, ferror={}", fmt::ptr(file_), errno, file_ ? ferror(file_) : -1);
 
   if (file_ == nullptr) {
-    error_ = errno;
-    if (error_ == 0) {
-      error_ = ENOENT;
-    }
+    error_ = ENOENT;
     open_ = false;
   }
 }
@@ -117,15 +139,20 @@ FileSink::~FileSink() {
 int
 FileSink::close()
 {
-  if (open_) {
-    flush();
-    open_ = false;
-    if (int result = std::fclose(file_); result != 0) {
-      error_ = result;
-    }
-  } else if (error_ == 0) {
-    error_ = EBADF;
+  ROCKET_LOG(rocket_nio);
+
+  if (not checkOpen()) {
+    return error_;
   }
+
+  flush();
+  open_ = false;
+  int result;
+  if ((result = std::fclose(file_)) != 0) {
+    error_ = result;
+  }
+  ROCKET_LOG_DEBUG("fclose={}, errno={}", result, errno);
+  file_ = nullptr;
   return error_;
 }
 
@@ -136,28 +163,36 @@ FileSink::fd() const {
 
 int
 FileSink::flush() {
-  if (open_) {
-    if (int result = std::fflush(file_); result != 0) {
-      error_ = result;
-    }
-  } else if (error_ == 0) {
-    error_ = EBADF;
+  ROCKET_LOG(rocket_nio);
+
+  if (not checkOpen()) {
+    return error_;
   }
+
+  int result;
+  if ((result = std::fflush(file_)) != 0) {
+    error_ = result;
+  }
+  ROCKET_LOG_DEBUG("fflush={}, errno={}, ferror={}", result, errno, ferror(file_));
   return error_;
 }
 
 int
 FileSink::write(string_view data) {
-  if (open_) {
-    if (size_t result = std::fwrite(data.data(), 1, data.size(), file_); result < data.size()) {
-      error_ = errno;
-      if (error_ == 0) {
-        error_ = EIO;
-      }
-    }
-  } else if (error_ == 0) {
-    error_ = EBADF;
+  ROCKET_LOG(rocket_nio);
+
+  if (not checkOpen()) {
+    return error_;
   }
+
+  size_t result;
+  if ((result = std::fwrite(data.data(), 1, data.size(), file_)) < data.size()) {
+    error_ = errno;
+    if (error_ == 0) {
+      error_ = EIO;
+    }
+  }
+  ROCKET_LOG_DEBUG("fwrite={}, data.size={}, errno={}, ferror={}", result, data.size(), errno, ferror(file_));
   return error_;
 }
 
@@ -219,26 +254,26 @@ StreamSink::fd() const {
 
 int
 StreamSink::flush() {
-  if (open_) {
-    os_.flush();
-    if (os_.fail()) {
-      error_ = EIO;
-    }
-  } else if (error_ == 0) {
-    error_ = EBADF;
+  if (not checkOpen()) {
+    return error_;
+  }
+
+  os_.flush();
+  if (os_.fail()) {
+    error_ = EIO;
   }
   return error_;
 }
 
 int
 StreamSink::write(string_view data) {
-  if (open_) {
-    os_.write(data.data(), data.size());
-    if (os_.fail()) {
-      error_ = EIO;
-    }
-  } else if (error_ == 0) {
-    error_ = EBADF;
+  if (not checkOpen()) {
+    return error_;
+  }
+
+  os_.write(data.data(), data.size());
+  if (os_.fail()) {
+    error_ = EIO;
   }
   return error_;
 }
@@ -247,19 +282,17 @@ StreamSink::write(string_view data) {
 
 int
 StringSink::close() {
-  if (open_) {
-    open_ = false;
-  } else if (error_ == 0) {
-    error_ = EBADF;
+  if (not checkOpen()) {
+    return error_;
   }
+
+  open_ = false;
   return error_;
 }
 
 int
 StringSink::flush() {
-  if (not open_ && error_ == 0) {
-    error_ = EBADF;
-  }
+  checkOpen();
   return error_;
 }
 
@@ -271,16 +304,39 @@ StringSink::str() const {
 
 int
 StringSink::write(string_view data) {
-  if (open_) {
-    if (out) {
-      *out += data;
-    } else {
-      managed_ += data;
-    }
-  } else if (error_ == 0) {
-    error_ = EBADF;
+  if (not checkOpen()) {
+    return error_;
+  }
+
+  if (out) {
+    *out += data;
+  } else {
+    managed_ += data;
   }
   return error_;
+}
+
+// `Source` -------------------------------------------------------------------------------------------------
+
+string
+Source::read() {
+  if (not checkOpen()) {
+    return string();
+  }
+
+  auto buf = make_unique<char[]>(DEFAULT_BUFFER_SIZE);
+  return ""; // XXX
+}
+
+bool
+Source::checkOpen() {
+  if (not open_) {
+    if (error_ == 0) {
+      error_ = EBADF;
+    }
+    return false;
+  }
+  return true;
 }
 
 // `FileSource` ---------------------------------------------------------------------------------------------
@@ -297,7 +353,10 @@ FileSource::FileSource(FILE* file, const Params& params) :
 FileSource::FileSource(const string& path, const Params& params) :
     file_(nullptr),
     params_(params) {
+  ROCKET_LOG(rocket_nio);
+
   file_ = std::fopen(path.c_str(), "fb");
+  ROCKET_LOG_DEBUG("fopen={}, errno={}, ferror={}", fmt::ptr(file_), errno, file_ ? ferror(file_) : -1);
 
   if (file_ == nullptr) {
     error_ = errno;
@@ -317,14 +376,18 @@ FileSource::~FileSource() {
 int
 FileSource::close()
 {
-  if (open_) {
-    open_ = false;
-    if (int result = std::fclose(file_); result != 0) {
-      error_ = result;
-    }
-  } else if (error_ == 0) {
-    error_ = EBADF;
+  ROCKET_LOG(rocket_nio);
+
+  if (not checkOpen()) {
+    return error_;
   }
+
+  open_ = false;
+  int result;
+  if ((result = std::fclose(file_)) != 0) {
+    error_ = result;
+  }
+  ROCKET_LOG_DEBUG("fclose={}, errno={}", result, errno);
   return error_;
 }
 
@@ -333,21 +396,21 @@ FileSource::fd() const {
   return file_ ? fileno(file_) : -1;
 }
 
-uint8_t
-FileSource::read(char& out) {
-  if (open_) {
-    if (int result = std::fread(&out, 1, 1, file_); result != 1) {
-      error_ = errno;
-      if (error_ == 0) {
-        error_ = EIO;
-      }
-    } else {
-      return 1;
-    }
-  } else if (error_ == 0) {
-    error_ = EBADF;
+size_t
+FileSource::read(string_view out) {
+  ROCKET_LOG(rocket_nio);
+
+  if (not checkOpen()) {
+    return error_;
   }
-  return 0;
+
+  if (size_t result = std::fread(&out, 1, out.size(), file_); result != 1) {
+    error_ = errno;
+    if (error_ == 0) {
+      error_ = EIO;
+    }
+  }
+  return error_;
 }
 
 } // namespace rocket::nio

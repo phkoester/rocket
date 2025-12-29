@@ -113,16 +113,20 @@ std::string escapeCStringHex(unicode::CodePoint cp, size_t& column);
 
 std::string escapeCStringTab(size_t& column, const CString::Params& params);
 
+// XXX Weg, mit Source
 std::istream& operator>>(std::istream& lhs, const EscapedString<CString>& rhs);
 
+// XXX Weg, mit Source
 std::ostream& operator<<(std::ostream& lhs, const EscapedString<CString>& rhs);
 
 // `EscapedString<Regex>` ...................................................................................
 
 std::string escapeRegex(unicode::CodePoint cp, size_t& column);
 
+// XXX Weg, mit Source
 std::istream& operator>>(std::istream& lhs, const EscapedString<Regex>& rhs);
 
+// XXX Weg, mit Source
 std::ostream& operator<<(std::ostream& lhs, const EscapedString<Regex>& rhs);
 
 } // namespace internal

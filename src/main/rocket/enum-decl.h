@@ -17,7 +17,7 @@
 
 // Local ....................................................................................................
 
-#define ROCKET_ENUM_DECLARE_OP_OUTPUT__(type) ::std::ostream& operator>>(::std::ostream&, type)
+#define ROCKET_ENUM_DECLARE_OP_OUTPUT__(type) ::std::ostream& operator<<(::std::ostream&, type)
 
 #define ROCKET_ENUM_DECLARE_LOCAL__(type) \
     ROCKET_ENUM_DECLARE_OP_OUTPUT__(type)
@@ -35,7 +35,8 @@
       parse(parse_context<Char>& ctx) { \
         return underlying_.parse(ctx); \
       } \
-      private: \
+    \
+    private: \
       \
       ::rocket::format::NativeFormatter<string_view, Char> underlying_; \
     }

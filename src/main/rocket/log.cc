@@ -299,6 +299,7 @@ logEnd() noexcept {
   stack.pop_back();
 }
 
+# if 0 // XXX Was machen wir damit?
 void
 log(LogLevel level, const exception& ex) {
   ROCKET_LOCK(outMutex);
@@ -324,9 +325,10 @@ log(LogLevel level, exception_ptr ptr) {
   string_view msg(s.begin(), s.end() - 1); // Strip '\n'
   logImpl(out, stack.back().logId_, level, stack.size(), msg);
 }
+#endif
 
 void
-log(LogLevel level, string_view msg) {
+logMessage(LogLevel level, string_view msg) {
   ROCKET_LOCK(outMutex);
 
   auto& out = ::out.get();

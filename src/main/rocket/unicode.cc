@@ -162,6 +162,7 @@ CodePoint::width() const {
   return 1;
 }
 
+// XXX Weg, mit Source
 istream&
 operator>>(istream& lhs, CodePoint& rhs) {
   string buf;
@@ -238,6 +239,7 @@ Grapheme::print() const {
   }
 }
 
+// XXX Weg, mit Source
 istream&
 operator>>(istream& lhs, Grapheme& rhs) {
   return getGrapheme(lhs, rhs);
