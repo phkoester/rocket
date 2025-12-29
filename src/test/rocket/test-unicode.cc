@@ -174,24 +174,22 @@ TEST(unicode, opInput_CodePoint) {
 }
 
 TEST(unicode, CodePointFormat) {
-  EXPECT_EQ(fmt::format("{}", CodePoint(U'\u20ac')), "€");
-  EXPECT_EQ(fmt::format("{:?}", CodePoint(U'\u20ac')), "U+20AC");
-  EXPECT_EQ(fmt::format("{:?}", CodePoint(0x00U)), "U+0000");
-  EXPECT_EQ(fmt::format("{:?}", CodePoint(0xffU)), "U+00FF");
-  EXPECT_EQ(fmt::format("{:?}", CodePoint(0xffU)), "U+00FF");
-  EXPECT_EQ(fmt::format("{:?}", CodePoint(0x1abcdU)), "U+1ABCD");
-  EXPECT_EQ(fmt::format("{:?}", CodePoint(U'\U0010ffff')), "U+10FFFF");
-  EXPECT_EQ(fmt::format("{:?}", CodePoint(U'\U0010ffff')), "U+10FFFF");
-  EXPECT_EQ(fmt::format("{:?}", CodePoint(0x110000U)), "U+110000");
-  EXPECT_EQ(fmt::format("{:?}", CodePoint(0x1000000U)), "U+1000000");
+  EXPECT_EQ(fmt::format("{}", CodePoint(U'\u20ac')), "U+20AC");
+  EXPECT_EQ(fmt::format("{}", CodePoint(0x00U)), "U+0000");
+  EXPECT_EQ(fmt::format("{}", CodePoint(0xffU)), "U+00FF");
+  EXPECT_EQ(fmt::format("{}", CodePoint(0xffU)), "U+00FF");
+  EXPECT_EQ(fmt::format("{}", CodePoint(0x1abcdU)), "U+1ABCD");
+  EXPECT_EQ(fmt::format("{}", CodePoint(U'\U0010ffff')), "U+10FFFF");
+  EXPECT_EQ(fmt::format("{}", CodePoint(U'\U0010ffff')), "U+10FFFF");
+  EXPECT_EQ(fmt::format("{}", CodePoint(0x110000U)), "U+110000");
+  EXPECT_EQ(fmt::format("{}", CodePoint(0x1000000U)), "U+1000000");
 }
 
 TEST(unicode, CodePointsFormat) {
   CodePoints cps = { CodePoint(U'a'), CodePoint(U'b'), CodePoint(U'c') };
-  EXPECT_EQ(fmt::format("{}", cps), "[a, b, c]");
-  EXPECT_EQ(fmt::format("{::?}", cps), "[U+0061, U+0062, U+0063]");
-  // @todo EXPECT_EQ(fmt::format("{::~>8?}", cps), "[~~U+0061, ~~U+0062, ~~U+0063]");
-  // @todo EXPECT_EQ(fmt::format("{:n:~>8?}", cps), "~~U+0061, ~~U+0062, ~~U+0063");
+  EXPECT_EQ(fmt::format("{::}", cps), "[U+0061, U+0062, U+0063]");
+  EXPECT_EQ(fmt::format("{::~>8}", cps), "[~~U+0061, ~~U+0062, ~~U+0063]");
+  EXPECT_EQ(fmt::format("{:n:~>8}", cps), "~~U+0061, ~~U+0062, ~~U+0063");
 }
 
 TEST(unicode, Grapheme) {
