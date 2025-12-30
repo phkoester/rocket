@@ -183,6 +183,7 @@ TEST(nio, StreamSourceRead) {
   StreamSource source(is);
   string s = source.Source::read();
   EXPECT_EQ(source.error(), 0);
+  EXPECT_EQ(source.tell(), 10);
   EXPECT_EQ(s, "Hey there\n");
   s = source.Source::read();
   EXPECT_EQ(s, "");

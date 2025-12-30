@@ -16,7 +16,7 @@ using namespace std;
 
 /* Logging --------------------------------------------------------------------------------------------------
 
-Because the logging framework utilitizes `nio`, we can't use it to log `nio` itself. So we need to make up a
+Because the logging framework utilizes `nio`, we can't use it to log `nio` itself. So we need to make up a
 tiny logging facility here.
 
 ---------------------------------------------------------------------------------------------------------- */
@@ -24,9 +24,9 @@ tiny logging facility here.
 #define NIO_LOG // Use this to activate logging
 
 #ifdef NIO_LOG
-#define LOG(name, args) cout << "# " << #name << ": " << args << endl;
+#define LOG(func, args) cout << "# " << #func << ": " << args << endl;
 #else
-#define LOG(name, args)
+#define LOG(func, args)
 #endif
 
 // Local functions ------------------------------------------------------------------------------------------
@@ -600,7 +600,7 @@ BufferedSource::read(span<char> out) {
 int
 BufferedSource::seek(long pos, SeekMode mode) {
   if (not checkOpen()) {
-    return -1L;
+    return error_;
   }
 
   long oldPos = tell();
@@ -609,10 +609,10 @@ BufferedSource::seek(long pos, SeekMode mode) {
   long delta = newPos - oldPos;
 
   if (pos_ + delta >= 0 && pos_ + delta <= end_) {
-    LOG(BufferedSoure::Seek, "Going from " << pos_ << " to " << (pos_ + delta));
+    LOG(BufferedSource::seek, "Going from " << pos_ << " to " << (pos_ + delta));
     pos_ += delta;
   } else {
-    LOG(BufferedSoure::Seek, "Invalidating buffer");
+    LOG(BufferedSource::seek, "Invalidating buffer");
     pos_ = end_ = 0;
   }
   return ret;
@@ -717,7 +717,7 @@ FileSource::seek(long pos, SeekMode mode) {
 long
 FileSource::tell() {
   if (not checkOpen()) {
-    return -1;
+    return -1L;
   }
 
   long ret = std::ftell(file_);
@@ -760,7 +760,7 @@ NullSource::seek(long pos, SeekMode mode) {
 long
 NullSource::tell() {
   checkOpen();
-  return -1;
+  return -1L;
 }
 
 // `StreamSource` -------------------------------------------------------------------------------------------
@@ -838,7 +838,7 @@ StreamSource::tell() {
     return -1L;
   }
 
-  auto ret = is_.tellg(); // XXX Probleme?
+  auto ret = is_.tellg();
   LOG(StreamSource::tell, "tellg=" << ret << ", bad=" << is_.bad() << ", fail=" << is_.fail() << ", eof=" << is_.eof());
   error_ = is_.rdstate();
   return ret;
