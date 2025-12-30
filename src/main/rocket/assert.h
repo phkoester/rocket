@@ -116,7 +116,7 @@ template<typename... T>
  *
  * @throw #rocket::InvalidState
  */
-#define ROCKET_FAIL_NOT_IMPLEMENTED ROCKET_EXPECT(false, "Not implemented")
+#define ROCKET_FAIL_NOT_IMPLEMENTED() ROCKET_EXPECT(false, "Not implemented")
 
 /**
  * Throws #rocket::InvalidState.

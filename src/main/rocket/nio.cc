@@ -599,7 +599,23 @@ BufferedSource::read(span<char> out) {
 
 int
 BufferedSource::seek(long pos, SeekMode mode) {
-  ROCKET_FAIL_NOT_IMPLEMENTED; // XXX
+  if (not checkOpen()) {
+    return -1L;
+  }
+
+  long oldPos = tell();
+  int ret = underlying_.seek(pos, mode);
+  long newPos = tell();
+  long delta = newPos - oldPos;
+
+  if (pos_ + delta >= 0 && pos_ + delta <= end_) {
+    LOG(BufferedSoure::Seek, "Going from " << pos_ << " to " << (pos_ + delta));
+    pos_ += delta;
+  } else {
+    LOG(BufferedSoure::Seek, "Invalidating buffer");
+    pos_ = end_ = 0;
+  }
+  return ret;
 }
 
 // `FileSource` ---------------------------------------------------------------------------------------------
@@ -698,6 +714,20 @@ FileSource::seek(long pos, SeekMode mode) {
   return error_;
 }
 
+long
+FileSource::tell() {
+  if (not checkOpen()) {
+    return -1;
+  }
+
+  long ret = std::ftell(file_);
+  LOG(FileSource::tell, "ftell=" << ret << ", ferror=" << ferror(file_));
+  if (ret == -1L) {
+    error_ = ferror(file_);
+  }
+  return ret;
+}
+
 // `NullSource` ---------------------------------------------------------------------------------------------
 
 NullSource::~NullSource() {
@@ -725,6 +755,12 @@ int
 NullSource::seek(long pos, SeekMode mode) {
   checkOpen();
   return error_;
+}
+
+long
+NullSource::tell() {
+  checkOpen();
+  return -1;
 }
 
 // `StreamSource` -------------------------------------------------------------------------------------------
@@ -796,6 +832,18 @@ StreamSource::seek(long pos, SeekMode mode) {
   return error_;
 }
 
+long
+StreamSource::tell() {
+  if (not checkOpen()) {
+    return -1L;
+  }
+
+  auto ret = is_.tellg(); // XXX Probleme?
+  LOG(StreamSource::tell, "tellg=" << ret << ", bad=" << is_.bad() << ", fail=" << is_.fail() << ", eof=" << is_.eof());
+  error_ = is_.rdstate();
+  return ret;
+}
+
 // `StringSource` -------------------------------------------------------------------------------------------
 
 StringSource::~StringSource() {
@@ -836,6 +884,14 @@ StringSource::seek(long pos, SeekMode mode) {
 
   pos_ = seekPos(pos_, in_.size(), pos, mode);
   return error_;
+}
+
+long
+StringSource::tell() {
+  if (not checkOpen()) {
+    return -1L;
+  }
+  return pos_;
 }
 
 } // namespace rocket::nio

@@ -297,6 +297,8 @@ struct Source {
 
   virtual int seek(long pos, SeekMode mode = SeekMode::beg) = 0;
 
+  virtual long tell() = 0;
+
 protected:
 
   Source() {}
@@ -329,6 +331,8 @@ struct BufferedSource : Source {
   virtual size_t read(std::span<char> out) override;
 
   virtual int seek(long pos, SeekMode mode = SeekMode::beg) override;
+
+  virtual long tell() override { return underlying_.tell(); }
 
 ROCKET_TESTING_PRIVATE:
 
@@ -367,6 +371,8 @@ struct FileSource : Source {
 
   virtual int seek(long pos, SeekMode mode = SeekMode::beg) override;
 
+  virtual long tell() override;
+
 ROCKET_TESTING_PRIVATE:
 
   FILE* file_;
@@ -385,6 +391,8 @@ struct NullSource : Source {
   virtual size_t read(std::span<char> out) override;
 
   virtual int seek(long pos, SeekMode mode = SeekMode::beg) override;
+
+  virtual long tell() override;
 };
 
 // `StreamSource` -------------------------------------------------------------------------------------------
@@ -408,7 +416,9 @@ struct StreamSource : Source {
 
   virtual int seek(long pos, SeekMode mode = SeekMode::beg) override;
 
-  private:
+  virtual long tell() override;
+
+private:
 
   std::istream& is_;
 };
@@ -427,6 +437,8 @@ struct StringSource : Source {
   virtual size_t read(std::span<char> out) override;
 
   virtual int seek(long pos, SeekMode mode = SeekMode::beg) override;
+
+  virtual long tell() override;
 
 private:
 
