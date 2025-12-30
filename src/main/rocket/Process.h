@@ -17,7 +17,9 @@
 // Macros ---------------------------------------------------------------------------------------------------
 
 /**
- * Calls #rocket::Process::error. This may be used even if the process isn't initialized yet.
+ * Calls #rocket::Process::error.
+ *
+ * This may be used even if the process isn't initialized yet.
  *
  * Usage: `ROCKET_PROCESS_ERROR(fmt, [args]...])`
  */
@@ -26,8 +28,24 @@
   msg.print("{}:{}: ", __FILE__, __LINE__); \
   msg.print( \
       fmt \
-      ROCKET_COMMA_IF_VA_ARGS(__VA_ARGS__)); \
+      ROCKET_COMMA_AND_VA_ARGS(__VA_ARGS__)); \
   ::rocket::process.error(::rocket::nio::stderr, EXIT_SUCCESS, "{}", msg.str()); \
+}
+
+/**
+ * Calls #rocket::Process::warn.
+ *
+ * This may be used even if the process isn't initialized yet.
+ *
+ * Usage: `ROCKET_PROCESS_WARN(fmt, [args]...])`
+ */
+ #define ROCKET_PROCESS_WARN(fmt, ...) { \
+  ::rocket::nio::StringSink msg; \
+  msg.print("{}:{}: ", __FILE__, __LINE__); \
+  msg.print( \
+      fmt \
+      ROCKET_COMMA_AND_VA_ARGS(__VA_ARGS__)); \
+  ::rocket::process.warn(::rocket::nio::stderr, "{}", msg.str()); \
 }
 
 namespace rocket {
@@ -86,11 +104,13 @@ struct Process {
   const std::vector<std::string>& args() const { return args_; }
 
   /**
-   * Registers a function to be called upon exit.
+   * Registers a function to be called upon exit, and even on abnormal termination.
+   *
+   * This function may be called even if the process isn't initialized yet.
    *
    * @param f the function to register
    */
-  void atExit(void (*f)()) const;
+  void atExit(std::function<void()> f);
 
   /**
    * Returns the classic locale. This is the locale as returned by `std::locale::classic`.
@@ -138,7 +158,7 @@ struct Process {
   /**
    * Exits the program.
    *
-   * Depending on how #init was parametrized, this either calls `std::quick_exit` or `std::exit`.
+   * Depending on how #init was parametrized, this either calls `std::exit` or `std::quick_exit`.
    *
    * @param status the exit status
    */
@@ -154,8 +174,9 @@ struct Process {
    * @param argv `argv` from `main`
    * @param name the name of the program. If this is null, the file name from `argv[0]` is used. It is
    *    recommended to give the program a proper name independent from `argv[0]`
-   * @param quickExit if `true`, #exit calls `std::quick_exit`, otherwise it calls `std::exit`. It is
-   *    recommended to set this to `true` for faster process tear-down
+   * @param locale the locale to use for the process. If this is null, the locale from the environment is
+   *    used
+   * @param quickExit if `true`, #exit calls `std::quick_exit`, otherwise it calls `std::exit`
    */
   void init(
       int argc,
@@ -209,12 +230,12 @@ struct Process {
    * @param fmt the format string
    * @param args the format arguments
    */
-   template<typename... T>
-   void warn(nio::Sink& sink, fmt::format_string<T...> fmt, T&&... args) {
-     std::string name = inited_ ? this->name() : invocationShortName();
-     sink.print("{}: warning: ", name);
-     sink.println(fmt, std::forward<T>(args)...);
-   }
+  template<typename... T>
+  void warn(nio::Sink& sink, fmt::format_string<T...> fmt, T&&... args) {
+    std::string name = inited_ ? this->name() : invocationShortName();
+    sink.print("{}: warning: ", name);
+    sink.println(fmt, std::forward<T>(args)...);
+  }
 
 private:
 

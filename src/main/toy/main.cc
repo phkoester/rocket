@@ -4,7 +4,6 @@
 
 #include "rocket/Process.h"
 #include "rocket/cl.h"
-#include "rocket/escape.h"
 #include "rocket/log.h"
 
 using namespace rocket;
@@ -22,11 +21,11 @@ toy() {
 
   ROCKET_LOG_INFO("hi {}", 5);
 
-  std::vector<int> v{1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
-  std::fill_n(std::back_inserter(v), 3, -1);
-  for (int n : v)
-      std::cout << n << ' ';
-  std::cout << '\n';
+  string text =
+      "oeiwoeiw oeipqowe pqwoiepqoeiqpwoei qoeiq pwoeiqpoiqwpei poeqpoiepei qpweopwqei qpeipoqe qpeiqpwe\n"
+      "udiuwieoqwoieuqwuewqieu iqwueqowi euqoweu qwioeuwo qe eu qowieu qieuiqowue qiweuwo eueu ioeu\n"
+      "asdf";
+  ROCKET_LOG_TRACE("{}", text);
 }
 
 } // namespace
@@ -50,6 +49,7 @@ main(int argc, char **argv) {
 
     {
       ROCKET_LOG(toy);
+      ROCKET_LOG_INFO("hey {}", "there");
       auto& out = nio::stdout;
       out.println("This is {}", process.name());
       out.println("args: {}", args);

@@ -178,7 +178,7 @@ logImpl(nio::Sink& sink, LogLevel* logId, LogLevel level, size_t stackLevel, str
   indentSize += 8;
 
   // Item: stack level
-  string indent(2 * stackLevel, ' ');
+  string indent(2 * stackLevel, ' '); // XXX Besser mit ">"
   sink.write(indent);
   indentSize += indent.size();
 
@@ -272,9 +272,9 @@ logDefine(LogLevel* logId, string_view id) {
 void
 logBegin(LogLevel* logId, const char* func) {
   // Begin log entry will be flushed later if necessary
+  string msg = string(func) + " {";
   nio::StringSink buf;
-  buf.print("{} {{", func);
-  logImpl(buf, logId, LogLevel::none, stack.size(), buf.str());
+  logImpl(buf, logId, LogLevel::none, stack.size(), msg);
   stack.emplace_back(logId, func, buf.str());
 }
 
@@ -286,9 +286,9 @@ logEnd() noexcept {
     const Entry& entry = stack.back();
     if (not entry.begin_) {
       ROCKET_LOCK(outMutex);
+      string msg = "} " + string(entry.func_);
       nio::StringSink buf;
-      buf.print("}} {}", entry.func_);
-      logImpl(out.get(), entry.logId_, LogLevel::none, stack.size() - 1, buf.str());
+      logImpl(out.get(), entry.logId_, LogLevel::none, stack.size() - 1, msg);
     }
   } catch (const exception& ex) {
     ROCKET_PROCESS_ERROR("Cannot log message: {}", what(ex));
@@ -328,7 +328,7 @@ log(LogLevel level, exception_ptr ptr) {
 #endif
 
 void
-logMessage(LogLevel level, string_view msg) {
+log(LogLevel level, string_view msg) {
   ROCKET_LOCK(outMutex);
 
   auto& out = ::out.get();

@@ -152,7 +152,7 @@ position(nio::Sink& sink) {
 }
 
 optional<pair<size_t, size_t>>
-size(const nio::Sink& sink) {
+size(nio::Sink& sink) {
   int fd = sink.fd();
   if (not isatty(fd)) {
     return nullopt;

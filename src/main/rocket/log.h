@@ -83,11 +83,11 @@ void log(LogLevel level, const std::exception& ex);
 void log(LogLevel level, std::exception_ptr ptr);
 #endif
 
-void logMessage(LogLevel level, std::string_view msg);
+void log(LogLevel level, std::string_view msg);
 
 template<typename... T>
-void log(LogLevel level, fmt::format_string<T...> fmt, T&&... args) {
-  logMessage(level, fmt::format(fmt, std::forward<T>(args)...));
+void logMessage(LogLevel level, fmt::format_string<T...> fmt, T&&... args) {
+  log(level, fmt::format(fmt, std::forward<T>(args)...));
 }
 
 const std::vector<cl::Option>& opts();
@@ -162,71 +162,66 @@ const std::vector<cl::Option>& opts();
 /**
  * Logs a message, using log level #rocket::log::error.
  *
- * @param fmt the format string
- * @param ... the arguments to the format string
+ * Usage: `ROCKET_LOG_ERROR(fmt, [args]...])`
  */
 #define ROCKET_LOG_ERROR(fmt, ...) \
     if (rocketLog__ && rocketLog__->level_ >= ::rocket::log::LogLevel::error) { \
-      ::rocket::log::internal::log( \
+      ::rocket::log::internal::logMessage( \
           ::rocket::log::LogLevel::error, \
           fmt \
-          ROCKET_COMMA_IF_VA_ARGS(__VA_ARGS__)); \
+          ROCKET_COMMA_AND_VA_ARGS(__VA_ARGS__)); \
     }
 
 /**
  * Logs a message, using log level #rocket::log::warn.
  *
- * @param fmt the format string
- * @param ... the arguments to the format string
+ * Usage: `ROCKET_LOG_WARN(fmt, [args]...])`
  */
 #define ROCKET_LOG_WARN(fmt, ...) \
     if (rocketLog__ && rocketLog__->level_ >= ::rocket::log::LogLevel::warn) { \
-      ::rocket::log::internal::log( \
+      ::rocket::log::internal::logMessag( \
           ::rocket::log::LogLevel::warn, \
           fmt \
-          ROCKET_COMMA_IF_VA_ARGS(__VA_ARGS__)); \
+          ROCKET_COMMA_AND_VA_ARGS(__VA_ARGS__)); \
     }
 
 /**
  * Logs a message, using log level #rocket::log::info.
  *
- * @param fmt the format string
- * @param ... the arguments to the format string
+ * Usage: `ROCKET_LOG_INFO(fmt, [args]...])`
  */
 #define ROCKET_LOG_INFO(fmt, ...) \
     if (rocketLog__ && rocketLog__->level_ >= ::rocket::log::LogLevel::info) { \
-      ::rocket::log::internal::log( \
+      ::rocket::log::internal::logMessage( \
           ::rocket::log::LogLevel::info, \
           fmt \
-          ROCKET_COMMA_IF_VA_ARGS(__VA_ARGS__)); \
+          ROCKET_COMMA_AND_VA_ARGS(__VA_ARGS__)); \
     }
 
 /**
  * Logs a message, using log level #rocket::log::debug.
  *
- * @param fmt the format string
- * @param ... the arguments to the format string
+ * Usage: `ROCKET_LOG_DEBUG(fmt, [args]...])`
  */
 #define ROCKET_LOG_DEBUG(fmt, ...) \
     if (rocketLog__ && rocketLog__->level_ >= ::rocket::log::LogLevel::debug) { \
-      ::rocket::log::internal::log( \
+      ::rocket::log::internal::logMessage( \
           ::rocket::log::LogLevel::debug, \
           fmt \
-          ROCKET_COMMA_IF_VA_ARGS(__VA_ARGS__)); \
+          ROCKET_COMMA_AND_VA_ARGS(__VA_ARGS__)); \
     }
 
 /**
  * Logs a message, using log level #rocket::log::trace.
  *
- * @param fmt the format string
- * @param ... the arguments to the format string
+ * Usage: `ROCKET_LOG_TRACE(fmt, [args]...])`
  */
 #define ROCKET_LOG_TRACE(fmt, ...) \
     if (rocketLog__ && rocketLog__->level_ >= ::rocket::log::LogLevel::trace) { \
-      ::rocket::log::internal::log( \
+      ::rocket::log::internal::logMessage( \
           ::rocket::log::LogLevel::trace, \
           fmt \
-          ROCKET_COMMA_IF_VA_ARGS(__VA_ARGS__)); \
+          ROCKET_COMMA_AND_VA_ARGS(__VA_ARGS__)); \
     }
 
 #endif // NDEBUG

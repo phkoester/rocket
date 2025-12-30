@@ -5,10 +5,9 @@
 #include "rocket-gtest/testing.h"
 
 #include "rocket/format.h"
+#include "rocket/random.h"
 
 #include "rocket-gtest/matcher.h"
-
-#include <random>
 
 using namespace rocket;
 using namespace rocket::format;
@@ -18,12 +17,10 @@ using namespace std;
 // `TEST` ---------------------------------------------------------------------------------------------------
 
 TEST(format, Format) {
-  random_device dev;
-  mt19937 rng(dev());
-  uniform_int_distribution<mt19937::result_type> dist(1, 11); // Distribution in range [1,11]
+  auto gen = random::gen();
 
   for (int i = 0; i < 100; ++i) {
-    auto n = dist(rng);
+    auto n = random::random(gen, 1, 11);
 
     nio::StringSink buf;
     buf.print("n is {}.{}", n, Format([&] {
@@ -47,12 +44,10 @@ TEST(format, Format) {
 }
 
 TEST(format, FormatWithTagged) {
-  random_device dev;
-  mt19937 rng(dev());
-  uniform_int_distribution<mt19937::result_type> dist(1, 2); // Distribution in range [1,2]
+  auto gen = random::gen();
 
   for (int i = 0; i < 10; ++i) {
-    auto n = dist(rng);
+    auto n = random::random(gen, 1, 2);
 
     nio::StringSink buf;
     buf.print("{}:{}{}", __FILE__, __LINE__, Format([&] {

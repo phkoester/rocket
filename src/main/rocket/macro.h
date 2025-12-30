@@ -17,9 +17,9 @@
 /**
  * If `__VA_ARGS__` is empty, expands to nothing. Otherwise, expands to `, __VA_ARGS__`.
  *
- * Usage: `ROCKET_COMMA_IF_VA_ARGS(__VA_ARGS__)`
+ * Usage: `ROCKET_COMMA_AND_VA_ARGS(__VA_ARGS__)`
  */
-#define ROCKET_COMMA_IF_VA_ARGS(...) \
+#define ROCKET_COMMA_AND_VA_ARGS(...) \
     BOOST_PP_COMMA_IF(BOOST_PP_NOT(BOOST_PP_CHECK_EMPTY(BOOST_PP_TUPLE_ELEM(0, (__VA_ARGS__))))) \
     __VA_ARGS__
 

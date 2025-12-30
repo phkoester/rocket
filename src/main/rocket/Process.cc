@@ -13,9 +13,14 @@
 using namespace rocket;
 using namespace std;
 
-// Local functions ------------------------------------------------------------------------------------------
-
 namespace {
+
+// Local variables ------------------------------------------------------------------------------------------
+
+vector<function<void()>> onExitFns;
+mutex onExitFnsMutex;
+
+// Local functions ------------------------------------------------------------------------------------------
 
 #ifdef GAIA_TARGET_OS_LINUX
 
@@ -33,8 +38,19 @@ invocationShortName() {
 
 #endif
 
+void
+onExit() {
+  ROCKET_LOCK(onExitFnsMutex);
+  for (auto& fn : onExitFns) {
+    fn();
+  }
+  onExitFns.clear();
+}
+
 [[noreturn]] void
 onTerminate() {
+  onExit();
+
   try {
     nio::stderr.println("{}: fatal error: Terminate handler called", process.name());
     if (auto ptr = current_exception())
@@ -55,18 +71,9 @@ namespace rocket {
 Process process;
 
 void
-Process::atExit(void (*f)()) const { // cppcheck-suppress constParameterPointer
-  ROCKET_ASSERT(inited_, "Process not initialized");
-
-  if (quickExit_) {
-    if (at_quick_exit(f)) {
-      throw InvalidState("`at_quick_exit()` failed");
-    }
-  } else {
-    if (atexit(f)) {
-      throw InvalidState("`atexit()` failed");
-    }
-  }
+Process::atExit(std::function<void()> f) { // cppcheck-suppress constParameterPointer
+  ROCKET_LOCK(onExitFnsMutex);
+  onExitFns.push_back(f);
 }
 
 void
@@ -118,6 +125,11 @@ Process::init(
 
   for (int i = 1; i < argc; ++i)
     args_.emplace_back(argv[i]);
+
+  // Register `onExit` both for `std::exit` and `std::quick_exit`
+
+  std::atexit(onExit);
+  std::at_quick_exit(onExit);
 
   inited_ = true;
 

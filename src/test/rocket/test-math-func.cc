@@ -6,8 +6,7 @@
 
 #include "rocket/Exception.h"
 #include "rocket/math-func.h"
-
-#include <random>
+#include "rocket/random.h"
 
 using namespace rocket;
 using namespace rocket::math;
@@ -31,8 +30,7 @@ TEST(math, mean) {
 }
 
 TEST(math, meanAndStandardDeviation) {
-  random_device rd;
-  mt19937 gen(rd());
+  auto gen = random::gen();
   normal_distribution<double> distrib(7, 3); // Mean 7, standard deviation 3
 
   vector<double> v(1'000'000); // 1 million

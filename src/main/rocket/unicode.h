@@ -25,7 +25,6 @@ namespace rocket::unicode {
 /**
  * A code-point type.
  */
-// XXX Warum nicht char32_t?
 struct CodePoint {
   /// @ctor_default
   constexpr CodePoint() : v_(0) {}

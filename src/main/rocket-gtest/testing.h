@@ -16,6 +16,8 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include <filesystem>
+
 // Macros ---------------------------------------------------------------------------------------------------
 
 #undef ROCKET_TESTING_PROTECTED
@@ -44,5 +46,16 @@
     EXPECT_EQ(is.fail(), fail__); \
     EXPECT_EQ(is.eof(), eof__); \
     EXPECT_EQ(::rocket::io::tellg(is), tell__)
+
+namespace rocket::gtest {
+
+// Functions ------------------------------------------------------------------------------------------------
+
+/**
+ * Returns a a path to a temporary file that is automatically removed upon exit.
+ */
+std::filesystem::path tempPath();
+
+} // namespace rocket::gtest
 
 // EOF

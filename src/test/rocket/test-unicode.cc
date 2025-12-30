@@ -5,6 +5,7 @@
 #include "rocket-gtest/testing.h"
 
 #include "rocket/io.h"
+#include "rocket/random.h"
 #include "rocket/system.h"
 #include "rocket/terminal.h"
 #include "rocket/unicode.h"
@@ -12,8 +13,6 @@
 #include "rocket/internal/unicode-internal.h"
 
 #include "rocket-gtest/matcher.h"
-
-#include <random>
 
 using namespace rocket;
 using namespace rocket::gtest::matcher;
@@ -51,13 +50,11 @@ testGrapheme(const Grapheme& grapheme, u32string_view s) {
 // `rocket::unicode::internal` ..............................................................................
 
 TEST(unicode, biFind) {
-  random_device rd;
-  mt19937 gen(rd());
-  uniform_int_distribution<> distrib(0, 0xffffU);
+  auto gen = random::gen();
 
   size_t hits = 0;
   for (size_t i = 0; i < 1'000'000; ++i) {
-    uint32_t cp = distrib(gen);
+    uint32_t cp = random::random(gen, 0U, 0xffffU);
     const auto* p = biFind(eastAsianWidthBlocks, cp);
     if (p)
      ++hits;

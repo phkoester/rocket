@@ -146,7 +146,7 @@ std::optional<std::pair<size_t, size_t>> position(nio::Sink& sink);
  *     returned
  * @return the terminal size, or null if not available
  */
-std::optional<std::pair<size_t, size_t>> size(const nio::Sink& sink);
+std::optional<std::pair<size_t, size_t>> size(nio::Sink& sink);
 
 } // namespace rocket::terminal
 

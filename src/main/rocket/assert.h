@@ -155,7 +155,7 @@ template<typename... T>
       ::rocket::assert::internal::onAssertFailed( \
           ROCKET_EXCEPT_SL, \
           BOOST_PP_STRINGIZE(expr) \
-          ROCKET_COMMA_IF_VA_ARGS(__VA_ARGS__)); \
+          ROCKET_COMMA_AND_VA_ARGS(__VA_ARGS__)); \
     }
 
 /**
@@ -174,7 +174,7 @@ template<typename... T>
           ROCKET_EXCEPT_SL, \
           BOOST_PP_STRINGIZE(name), \
           BOOST_PP_STRINGIZE(expr) \
-          ROCKET_COMMA_IF_VA_ARGS(__VA_ARGS__)); \
+          ROCKET_COMMA_AND_VA_ARGS(__VA_ARGS__)); \
     }
 
 /**
@@ -193,7 +193,7 @@ template<typename... T>
       ::rocket::assert::internal::onExpectFailed( \
           ROCKET_EXCEPT_SL, \
           BOOST_PP_STRINGIZE(expr) \
-          ROCKET_COMMA_IF_VA_ARGS(__VA_ARGS__)); \
+          ROCKET_COMMA_AND_VA_ARGS(__VA_ARGS__)); \
     }
 
 #endif // NDEBUG
