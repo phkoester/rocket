@@ -413,14 +413,6 @@ StringSink::write(string_view in) {
 
 // `Source` -------------------------------------------------------------------------------------------------
 
-bool
-Source::checkOpen() {
-  if (not open_ && error_ == 0) {
-    error_ = EBADF;
-  }
-  return open_;
-}
-
 string
 Source::read() {
   if (not checkOpen()) {

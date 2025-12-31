@@ -317,11 +317,6 @@ struct Source : Io {
 protected:
 
   Source() {}
-
-  bool checkOpen();
-
-  int error_ = 0;
-  bool open_ = true;
 };
 
 // `BufferedSource` -----------------------------------------------------------------------------------------
