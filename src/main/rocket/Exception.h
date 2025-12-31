@@ -44,6 +44,8 @@ namespace rocket {
  * - and an optional stack trace.
  */
 struct Exception {
+  virtual ~Exception() = default;
+
   /**
    * Returns the plain message of this exception, not including any source-location information.
    *
@@ -111,6 +113,8 @@ struct InvalidArgument : std::invalid_argument, Exception {
       std::string_view msg,
       std::optional<std::source_location>&& sl = ROCKET_EXCEPT_SL,
       std::optional<std::stacktrace>&& st = ROCKET_EXCEPT_ST);
+
+  virtual ~InvalidArgument() = default;
 };
 
 // `InvalidState` -------------------------------------------------------------------------------------------
@@ -133,6 +137,8 @@ struct InvalidState : std::runtime_error, Exception {
       std::string_view msg,
       std::optional<std::source_location>&& sl = ROCKET_EXCEPT_SL,
       std::optional<std::stacktrace>&& st = ROCKET_EXCEPT_ST);
+
+  virtual ~InvalidState() = default;
 };
 
 // Functions ------------------------------------------------------------------------------------------------
