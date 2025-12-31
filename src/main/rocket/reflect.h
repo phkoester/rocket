@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include "base.h"
+#include "rocket.h"
 
 #include <boost/functional/hash.hpp>
 #include <boost/preprocessor/stringize.hpp>

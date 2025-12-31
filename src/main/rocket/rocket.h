@@ -1,5 +1,5 @@
 /**
- * @file base.h
+ * @file rocket.h
  *
  * Rocket base header. Contains basic types and concepts.
  *

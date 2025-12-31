@@ -2,7 +2,7 @@
  * test-assert.cc
  */
 
-#include "rocket-gtest/testing.h"
+#include "rocket-gtest/rocket-gtest.h"
 
 #include "rocket/Exception.h"
 #include "rocket/assert.h"

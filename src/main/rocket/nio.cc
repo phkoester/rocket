@@ -595,32 +595,38 @@ BufferedSource::seek(Offset offset, SeekMode mode) {
     return error_;
   }
 
-  long oldTell = underlying_.tell();
+  Position oldTell = underlying_.tell();
   if (oldTell == -1) {
     // Invalidate buffer
     LOG(BufferedSource::seek, "`underlying.tell()` (old) failed; invalidating buffer");
     pos_ = end_ = 0;
-    error_ = error();
-    ROCKET_ASSERT(error_ != 0);
-    return error_;
+    return EIO;
   }
   int ret = underlying_.seek(offset, mode);
-  long newTell = underlying_.tell();
+  Position newTell = underlying_.tell();
   if (newTell == -1) {
     // Invalidate buffer
     LOG(BufferedSource::seek, "`underlying.tell()` (new) failed; invalidating buffer");
     pos_ = end_ = 0;
-    error_ = error();
-    ROCKET_ASSERT(error_ != 0);
-    return error_;
+    return ret;
   }
-  long delta = sub<long, int128_t>(newTell, oldTell);
-  size_t newPos = add<size_t, int128_t>(pos_, delta);
-  LOG(BufferedSource::seek, "oldTell=" << oldTell << ", newTell=" << newTell << ", pos_=" << pos_ << ", delta=" << delta << ", newPos=" << newPos);
+  auto delta = trySub<long, int128_t>(newTell, oldTell);
+  if (not delta) {
+    LOG(BufferedSource::seek, "Failed to determine delta; invalidating buffer");
+    pos_ = end_ = 0;
+    return ret;
+  }
+  auto newPos = tryAdd<size_t, int128_t>(pos_, *delta);
+  if (not newPos) {
+    LOG(BufferedSource::seek, "Failed to determine new position; invalidating buffer");
+    pos_ = end_ = 0;
+    return ret;
+  }
+  LOG(BufferedSource::seek, "oldTell=" << oldTell << ", newTell=" << newTell << ", pos_=" << pos_ << ", delta=" << *delta << ", newPos=" << *newPos);
 
-  if (newPos <= end_) {
-    LOG(BufferedSource::seek, "Going from " << pos_ << " to " << newPos);
-    pos_ = newPos;
+  if (*newPos <= end_) {
+    LOG(BufferedSource::seek, "Going from " << pos_ << " to " << *newPos);
+    pos_ = *newPos;
     underlying_.seek(oldTell); // Nothing to be done in the underlying: restore position
   } else {
     // Invalidate buffer
@@ -917,27 +923,24 @@ StringSource::seek(Offset offset, SeekMode mode) {
     return error_;
   }
 
-  optional<Offset> newPos;
+  int128_t newPos;
   switch (mode) {
   case SeekMode::beg:
-    newPos = tryAdd<Offset, int128_t>(offset, 0);
+    newPos = add<int128_t, int128_t>(offset, 0);
     break;
   case SeekMode::cur:
-    newPos = tryAdd<Offset, int128_t>(pos_, offset);
+    newPos = add<int128_t, int128_t>(pos_, offset);
     break;
   case SeekMode::end:
-    newPos = trySub<Offset, int128_t>(in_.size(), offset);
+    newPos = sub<int128_t, int128_t>(in_.size(), offset);
     break;
   default:
     ROCKET_FAIL_UNREACHABLE_CODE();
   }
 
-  if (not newPos) {
-    return EINVAL;
-  }
-  newPos = max(0L, *newPos);
-  pos_ = *newPos; // This works because `newPos` is nonnegative
-  pos_ = min(in_.size(), pos_);
+  newPos = max<int128_t>(0, newPos);
+  newPos = min<int128_t>(in_.size(), newPos);
+  pos_ = static_cast<Position>(newPos);
   return error_;
 }
 

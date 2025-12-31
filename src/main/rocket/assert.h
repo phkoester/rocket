@@ -15,7 +15,7 @@
 #include "Exception.h"
 #include "Process.h"
 #ifdef NDEBUG
-#include "base.h" // `rocket::nop()`
+#include "rocket.h" // `rocket::nop()`
 #endif
 #include "format.h"
 

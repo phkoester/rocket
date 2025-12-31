@@ -2,9 +2,9 @@
  * test-format-global.cc
  */
 
-#include "rocket-gtest/testing.h"
+#include "rocket-gtest/rocket-gtest.h"
 
-#include "rocket/base.h"
+#include "rocket/rocket.h"
 #include "rocket/format.h"
 
 #include <limits>

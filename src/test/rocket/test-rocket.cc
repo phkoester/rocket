@@ -1,9 +1,10 @@
 /*
- * test-base.cc
+ * test-rocket.cc
  */
 
-#include "rocket-gtest/testing.h"
+#include "rocket-gtest/rocket-gtest.h"
 
+#include "rocket/rocket.h"
 #include "rocket/io.h"
 
 using namespace rocket;
@@ -21,9 +22,9 @@ static_assert(is_same_v<decltype(0.0L), long double>);
 // `TEST` ---------------------------------------------------------------------------------------------------
 
 /**
- * Tests that the introductory table in `base.h` is correct.
+ * Tests that the introductory table in `rocket.h` is correct.
  */
-TEST(base, sizeof) {
+TEST(rocket, sizeof) {
   EXPECT_EQ(sizeof(char), 1);
   EXPECT_EQ(sizeof(std::byte), 1);
   EXPECT_EQ(sizeof(short), 2);
@@ -39,7 +40,7 @@ TEST(base, sizeof) {
   EXPECT_EQ(sizeof(long double), 16);
 }
 
-TEST(base, int128OpInput) {
+TEST(rocket, int128OpInput) {
   using compareType = int;
   compareType compare;
   auto compareLimits = numeric_limits<compareType>();

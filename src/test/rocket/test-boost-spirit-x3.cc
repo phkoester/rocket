@@ -2,7 +2,7 @@
  * test-boost-spirit-x3.cc
  */
 
-#include "rocket-gtest/testing.h"
+#include "rocket-gtest/rocket-gtest.h"
 
 #include "rocket/experimental/boost-spirit-x3.h"
 

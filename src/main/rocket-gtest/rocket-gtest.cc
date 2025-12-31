@@ -1,8 +1,8 @@
 /*
- * testing.cc
+ * rocket-gtest.cc
  */
 
-#include "testing.h"
+#include "rocket-gtest.h"
 
 #include "rocket/random.h"
 

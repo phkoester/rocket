@@ -2,7 +2,7 @@
  * test-number.cc
  */
 
-#include "rocket-gtest/testing.h"
+#include "rocket-gtest/rocket-gtest.h"
 
 #include "rocket/number.h"
 
@@ -17,6 +17,12 @@ TEST(number, addLong) {
   EXPECT_THAT(
     ([] { add<unsigned long, int128_t>(-3L, 0); }),
     ThrowsMessage<overflow_error>(HasSubstr("`unsigned long` overflow: -3 + 0")));
+}
+
+TEST(number, addInt128) {
+  size_t pos = 7;
+  long offset = -10;
+  EXPECT_EQ((add<int128_t, int128_t>(pos, offset)), -3);
 }
 
 TEST(number, subLong) {

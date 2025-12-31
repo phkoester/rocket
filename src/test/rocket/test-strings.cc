@@ -2,7 +2,7 @@
  * test-strings.cc
  */
 
-#include "rocket-gtest/testing.h"
+#include "rocket-gtest/rocket-gtest.h"
 
 #include "rocket/strings.h"
 
@@ -33,7 +33,7 @@ TEST(strings, removeLeading_char) {
 
 TEST(strings, removeLeading_char32_t) {
   using type = char32_t;
-  
+
   u32string s = U"";
   EXPECT_EQ(removeLeading<type>(s, U"hello"), U"");
 

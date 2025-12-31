@@ -20,7 +20,6 @@ template<typename Result, typename Control, typename Lhs, typename Rhs>
 Result
 add(Lhs lhs, Rhs rhs) {
   static_assert(std::is_signed_v<Control>);
-  static_assert(sizeof(Control) >= 2 * sizeof(Result));
   static_assert(sizeof(Control) >= 2 * sizeof(Lhs));
   static_assert(sizeof(Control) >= 2 * sizeof(Rhs));
 
@@ -37,7 +36,6 @@ template<typename Result, typename Control, typename Lhs, typename Rhs>
 Result
 sub(Lhs lhs, Rhs rhs) {
   static_assert(std::is_signed_v<Control>);
-  static_assert(sizeof(Control) >= 2 * sizeof(Result));
   static_assert(sizeof(Control) >= 2 * sizeof(Lhs));
   static_assert(sizeof(Control) >= 2 * sizeof(Rhs));
 
@@ -54,7 +52,6 @@ template<typename Result, typename Control, typename Lhs, typename Rhs>
 std::optional<Result>
 tryAdd(Lhs lhs, Rhs rhs) {
   static_assert(std::is_signed_v<Control>);
-  static_assert(sizeof(Control) >= 2 * sizeof(Result));
   static_assert(sizeof(Control) >= 2 * sizeof(Lhs));
   static_assert(sizeof(Control) >= 2 * sizeof(Rhs));
 
@@ -71,7 +68,6 @@ template<typename Result, typename Control, typename Lhs, typename Rhs>
 std::optional<Result>
 trySub(Lhs lhs, Rhs rhs) {
   static_assert(std::is_signed_v<Control>);
-  static_assert(sizeof(Control) >= 2 * sizeof(Result));
   static_assert(sizeof(Control) >= 2 * sizeof(Lhs));
   static_assert(sizeof(Control) >= 2 * sizeof(Rhs));
 

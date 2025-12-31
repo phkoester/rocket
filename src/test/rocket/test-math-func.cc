@@ -2,7 +2,7 @@
  * test-math-func.cc
  */
 
-#include "rocket-gtest/testing.h"
+#include "rocket-gtest/rocket-gtest.h"
 
 #include "rocket/Exception.h"
 #include "rocket/math-func.h"

@@ -1,5 +1,5 @@
 /**
- * @file testing.h
+ * @file rocket-gtest.h
  *
  * This header must always be the first included file in a test.
  */

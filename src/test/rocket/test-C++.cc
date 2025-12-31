@@ -4,9 +4,9 @@
  * Tests related to the C++ language itself.
  */
 
-#include "rocket-gtest/testing.h"
+#include "rocket-gtest/rocket-gtest.h"
 
-#include "rocket/base.h"
+#include "rocket/rocket.h"
 #include "rocket-gtest/ChattyString.h"
 
 using namespace rocket;

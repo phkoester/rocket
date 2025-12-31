@@ -2,7 +2,7 @@
  * test-Exception.cc
  */
 
-#include "rocket-gtest/testing.h"
+#include "rocket-gtest/rocket-gtest.h"
 
 #include "rocket/Exception.h"
 

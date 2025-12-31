@@ -6,11 +6,11 @@
 
 #pragma once
 
-#include "base.h"
 #include "Exception.h"
 #include "enum-decl.h"
 #include "io.h" // XXX
 #include "message.h"
+#include "rocket.h"
 
 #include <limits>
 

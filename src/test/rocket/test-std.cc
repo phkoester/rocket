@@ -4,7 +4,7 @@
  * Tests related to the STL.
  */
 
-#include "rocket-gtest/testing.h"
+#include "rocket-gtest/rocket-gtest.h"
 
 #include "rocket/io.h"
 
