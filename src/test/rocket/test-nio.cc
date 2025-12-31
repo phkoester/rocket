@@ -136,6 +136,7 @@ TEST(nio, BufferedSourceSeek) {
   string s128 = testString(128);
   StringSource source(s128);
   BufferedSource buffered(source, 64);
+  EXPECT_EQ(buffered.tell(), 0);
 
   char c;
   EXPECT_EQ(buffered.Source::read(c), 1);
@@ -145,21 +146,41 @@ TEST(nio, BufferedSourceSeek) {
   EXPECT_EQ(buffered.tell(), 1);
   EXPECT_EQ(buffered.underlying_.tell(), 64);
 
-  /*
   buffered.seek(30);
+  EXPECT_EQ(buffered.bufPos_, 0);
   EXPECT_EQ(buffered.pos_, 30);
   EXPECT_EQ(buffered.end_, 64);
   EXPECT_EQ(buffered.tell(), 30);
   EXPECT_EQ(buffered.underlying_.tell(), 64);
-  */
 
-  /*
-  buffered.seek(51);
-  EXPECT_EQ(buffered.pos_, 51);
+  buffered.seek(64);
+  EXPECT_EQ(buffered.bufPos_, 0);
+  EXPECT_EQ(buffered.pos_, 64);
   EXPECT_EQ(buffered.end_, 64);
+  EXPECT_EQ(buffered.tell(), 64);
+  EXPECT_EQ(buffered.underlying_.tell(), 64);
+
   EXPECT_EQ(buffered.Source::read(c), 1);
-  EXPECT_EQ(c, '1');
-  */
+  EXPECT_EQ(c, '4');
+  EXPECT_EQ(buffered.bufPos_, 64);
+  EXPECT_EQ(buffered.pos_, 1);
+  EXPECT_EQ(buffered.end_, 64);
+  EXPECT_EQ(buffered.tell(), 65);
+  EXPECT_EQ(buffered.underlying_.tell(), 128);
+
+  buffered.seek(-20, SeekMode::end);
+  EXPECT_EQ(buffered.bufPos_, 64);
+  EXPECT_EQ(buffered.pos_, 44);
+  EXPECT_EQ(buffered.end_, 64);
+  EXPECT_EQ(buffered.tell(), 108);
+  EXPECT_EQ(buffered.underlying_.tell(), 128);
+
+  buffered.seek(20);
+  EXPECT_EQ(buffered.bufPos_, 20);
+  EXPECT_EQ(buffered.pos_, 0);
+  EXPECT_EQ(buffered.end_, 0);
+  EXPECT_EQ(buffered.tell(), 20);
+  EXPECT_EQ(buffered.underlying_.tell(), 20);
 }
 
 TEST(nio, FileSourceDoesNotExist) {
@@ -196,16 +217,20 @@ TEST(nio, FileSourceRead) {
   s = source.Source::read();
   EXPECT_EQ(s, "");
   EXPECT_EQ(source.error(), 0);
+
+  source.seek(-6, SeekMode::end);
+  EXPECT_EQ(source.tell(), 4);
+  s = source.Source::read();
+  EXPECT_EQ(s, "there\n");
+  EXPECT_EQ(source.tell(), 10);
 }
 
 TEST(nio, StreamSourceRead) {
   auto tmp = tempPath();
 
-  {
-    ofstream os(tmp.c_str());
-    StreamSink sink(os);
-    sink.writeln("Hey there");
-  }
+  ofstream os(tmp.c_str());
+  StreamSink sink(os);
+  sink.writeln("Hey there");
 
   ifstream is(tmp.c_str());
   StreamSource source(is);
@@ -216,6 +241,12 @@ TEST(nio, StreamSourceRead) {
   s = source.Source::read();
   EXPECT_EQ(s, "");
   EXPECT_EQ(source.error(), 0);
+
+  source.seek(-6, SeekMode::end);
+  EXPECT_EQ(source.tell(), 4);
+  s = source.Source::read();
+  EXPECT_EQ(s, "there\n");
+  EXPECT_EQ(source.tell(), 10);
 }
 
 TEST(nio, StringSource) {
@@ -285,13 +316,13 @@ TEST(nio, StringSourceSeek) {
   source.seek(0, SeekMode::end);
   EXPECT_EQ(source.tell(), 128);
 
-  source.seek(10, SeekMode::end);
+  source.seek(-10, SeekMode::end);
   EXPECT_EQ(source.tell(), 118);
 
-  source.seek(-3, SeekMode::end);
+  source.seek(3, SeekMode::end);
   EXPECT_EQ(source.tell(), 128);
 
-  source.seek(200, SeekMode::end);
+  source.seek(-200, SeekMode::end);
   EXPECT_EQ(source.tell(), 0);
 }
 

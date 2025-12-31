@@ -347,6 +347,7 @@ ROCKET_TESTING_PRIVATE:
   Source& underlying_;
   size_t size_;
   std::unique_ptr<char[]> buf_;
+  size_t bufPos_ = -1;
   size_t pos_ = 0;
   /**
    * This is the actual input size of the buffer, which may be less than its allocated size.

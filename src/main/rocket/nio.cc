@@ -22,7 +22,7 @@ tiny logging facility here.
 
 ---------------------------------------------------------------------------------------------------------- */
 
-#define NIO_LOG // Use this to activate logging
+// #define NIO_LOG // Use this to activate logging
 
 #ifdef NIO_LOG
 #define LOG(func, args) cout << "# " << #func << ": " << args << endl;
@@ -501,6 +501,7 @@ BufferedSource::BufferedSource(Source& underlying, size_t size) :
     size_(size) {
   ROCKET_CHECK(size, size >= MIN_BUFFER_SIZE);
   buf_ = make_unique<char[]>(size);
+  bufPos_ = underlying.tell();
 }
 
 BufferedSource::~BufferedSource() {
@@ -515,6 +516,7 @@ BufferedSource::close() {
 
   size_ = 0;
   buf_ = nullptr;
+  bufPos_ = -1;
   pos_ = 0;
   end_ = 0;
   return underlying_.close();
@@ -535,23 +537,24 @@ BufferedSource::read(span<char> out) {
     return 0;
   }
 
-  // If needed, initialize buffer
-
-  if (end_ == 0) {
-    ROCKET_ASSERT(pos_ == 0);
-    end_ = underlying_.read(span<char>(&buf_[0], size_));
-    LOG(BufferedSource::read, "Initialized buffer with " << end_ << " bytes from underlying source");
-    if (end_ == 0) {
-      return 0;
-    }
-  }
-
   // Loop while there is data to read
 
   size_t ret = 0;
 
   auto rest = out;
-  while (true) {
+  while (not rest.empty()) {
+    // If needed, initialize buffer
+
+    if (pos_ == end_) {
+      bufPos_ = underlying_.tell();
+      pos_ = 0;
+      end_ = underlying_.read(span<char>(&buf_[0], size_));
+      LOG(BufferedSource::read, "Initialized buffer with " << end_ << " bytes from underlying source; bufPos=" << bufPos_ << ", pos=" << pos_ << ", end=" << end_);
+      if (end_ == 0) {
+        break;
+      }
+    }
+
     // Find out if the buffer can fulfill the request
 
     size_t available = end_ - pos_;
@@ -571,16 +574,7 @@ BufferedSource::read(span<char> out) {
     pos_ += available;
     ret += available;
     rest = rest.subspan(available);
-    if (end_ < size_ || rest.empty()) {
-      break;
-    }
-
-    // Fill the buffer
-
-    pos_ = 0;
-    end_ = underlying_.read(span<char>(&buf_[0], size_));
-    LOG(BufferedSource::read, "Filled buffer with " << end_ << " bytes from underlying source");
-    if (end_ == 0) {
+    if (end_ < size_) {
       break;
     }
   }
@@ -595,56 +589,57 @@ BufferedSource::seek(Offset offset, SeekMode mode) {
     return error_;
   }
 
+  // Get the old position so we can restore it later
   Position oldTell = underlying_.tell();
   if (oldTell == -1) {
-    // Invalidate buffer
-    LOG(BufferedSource::seek, "`underlying.tell()` (old) failed; invalidating buffer");
+    LOG(BufferedSource::seek, "Getting old position failed; invalidating buffer");
+    bufPos_ = -1;
     pos_ = end_ = 0;
     return EIO;
   }
+
+  // Do the job
   int ret = underlying_.seek(offset, mode);
+
+  // Get the new position se we can see if we have a buffer hit
   Position newTell = underlying_.tell();
   if (newTell == -1) {
-    // Invalidate buffer
-    LOG(BufferedSource::seek, "`underlying.tell()` (new) failed; invalidating buffer");
+    LOG(BufferedSource::seek, "Getting new position failed; invalidating buffer");
+    bufPos_ = -1;
     pos_ = end_ = 0;
     return ret;
   }
-  auto delta = trySub<long, int128_t>(newTell, oldTell);
-  if (not delta) {
-    LOG(BufferedSource::seek, "Failed to determine delta; invalidating buffer");
-    pos_ = end_ = 0;
-    return ret;
-  }
-  auto newPos = tryAdd<size_t, int128_t>(pos_, *delta);
-  if (not newPos) {
-    LOG(BufferedSource::seek, "Failed to determine new position; invalidating buffer");
-    pos_ = end_ = 0;
-    return ret;
-  }
-  LOG(BufferedSource::seek, "oldTell=" << oldTell << ", newTell=" << newTell << ", pos_=" << pos_ << ", delta=" << *delta << ", newPos=" << *newPos);
 
-  if (*newPos <= end_) {
-    LOG(BufferedSource::seek, "Going from " << pos_ << " to " << *newPos);
-    pos_ = *newPos;
-    underlying_.seek(oldTell); // Nothing to be done in the underlying: restore position
-  } else {
-    // Invalidate buffer
-    LOG(BufferedSource::seek, "New position is beyond the buffer; invalidating buffer");
+  // Do we know at all where we are?
+  if (bufPos_ == -1) {
+    LOG(BufferedSource::seek, "Buffer position is unknown; invalidating the buffer");
+    bufPos_ = newTell;
     pos_ = end_ = 0;
+    return ret;
   }
+
+  // Do we have a buffer hit?
+  Position ourPos = newTell - bufPos_;
+  if (ourPos <= end_) {
+    // Yes, we do: Update our position and restore the underlying position
+    LOG(BufferedSource::seek, "Going from " << pos_ << " to " << ourPos);
+    pos_ = ourPos;
+    return underlying_.seek(oldTell);
+  }
+
+  // No buffer hit
+  LOG(BufferedSource::seek, "New position is beyond the buffer; invalidating buffer");
+  bufPos_ = newTell;
+  pos_ = end_ = 0;
   return ret;
 }
 
 Io::Position
 BufferedSource::tell() {
-  Position result = underlying_.tell();
-  if (result == -1 || end_ == 0) {
-    // Position unknown or buffer is invalid: return the position of the underlying source
-    return result;
+  if (bufPos_ == -1) {
+    return -1;
   }
-  // Otherwise, transpose position to match the buffer
-  return result - end_ + pos_;
+  return bufPos_ + pos_;
 }
 
 // `FileSource` ---------------------------------------------------------------------------------------------
@@ -735,6 +730,9 @@ FileSource::seek(Offset offset, SeekMode mode) {
     ROCKET_FAIL_UNREACHABLE_CODE();
   }
 
+
+  // The type of the `offset` parameter is `long`, se we can directly pass `offset`
+  static_assert(is_same_v<Offset, long>);
   size_t result = std::fseek(file_, offset, origin);
   LOG(FileSource::seek, "fseek=" << result << ", ferror=" << ferror(file_));
   if (result != 0) {
@@ -758,6 +756,7 @@ FileSource::tell() {
     return -1;
   }
   ROCKET_ASSERT(result >= 0);
+  // Convert nonnegative `long` to `Position`
   return result;
 }
 
@@ -860,6 +859,7 @@ StreamSource::seek(Offset offset, SeekMode mode) {
     ROCKET_FAIL_UNREACHABLE_CODE();
   }
 
+  // `istream::off_type` is `long`, so we can directly pass `offset`
   static_assert(is_same_v<istream::off_type, long>);
   is_.seekg(offset, dir);
   error_ = is_.rdstate();
@@ -932,7 +932,7 @@ StringSource::seek(Offset offset, SeekMode mode) {
     newPos = add<int128_t, int128_t>(pos_, offset);
     break;
   case SeekMode::end:
-    newPos = sub<int128_t, int128_t>(in_.size(), offset);
+    newPos = add<int128_t, int128_t>(in_.size(), offset);
     break;
   default:
     ROCKET_FAIL_UNREACHABLE_CODE();
