@@ -143,8 +143,9 @@ CommandLine::help(nio::Sink& sink, bool exit) {
     sink.writeln(text::wrap(*params_.epilog, { .width=width }));
   }
 
-  if (exit)
+  if (exit) {
     process.exit(EXIT_SUCCESS);
+  }
 }
 
 /**

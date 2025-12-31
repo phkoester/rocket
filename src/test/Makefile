@@ -116,6 +116,11 @@ CC_FILES    := test/rocket/test-nio.cc
 SHARED_LIBS := $(call shared-lib-name,rocket,$(ROCKET_VERSION))
 include $(GAIA_DIR)/src/main/make/test-executable.mk
 
+NAME        := test-rocket-number
+CC_FILES    := test/rocket/test-number.cc
+SHARED_LIBS := $(call shared-lib-name,rocket,$(ROCKET_VERSION))
+include $(GAIA_DIR)/src/main/make/test-executable.mk
+
 NAME        := test-rocket-reflect
 CC_FILES    := test/rocket/test-reflect.cc
 SHARED_LIBS := $(call shared-lib-name,rocket,$(ROCKET_VERSION))

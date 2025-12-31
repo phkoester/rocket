@@ -151,8 +151,9 @@ struct Process {
     sink.print("{}: error: ", name);
     sink.println(fmt, std::forward<T>(args)...);
 
-    if (status != EXIT_SUCCESS)
+    if (status != EXIT_SUCCESS) {
       exit(status);
+    }
   }
 
   /**

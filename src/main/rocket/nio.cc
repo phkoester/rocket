@@ -5,6 +5,7 @@
 #include "nio.h"
 
 #include "assert.h"
+#include "number.h"
 
 #include <cstdio>
 #include <iostream>
@@ -29,39 +30,12 @@ tiny logging facility here.
 #define LOG(func, args)
 #endif
 
-// Local functions ------------------------------------------------------------------------------------------
-
-namespace {
-
-size_t
-seekPos(size_t current, size_t size, long pos, SeekMode mode) {
-  size_t ret;
-
-  switch (mode) {
-  case SeekMode::beg:
-    ret = pos;
-    break;
-  case SeekMode::cur:
-    ret = current + pos;
-    break;
-  case SeekMode::end:
-     ret = size - pos;
-     break;
-  default:
-    ROCKET_FAIL_UNREACHABLE_CODE();
-  }
-
-  return min(ret, size);
-}
-
-} // namespace
-
 namespace rocket::nio {
 
-// `Sink` ---------------------------------------------------------------------------------------------------
+// `Io` -----------------------------------------------------------------------------------------------------
 
 bool
-Sink::checkOpen() {
+Io::checkOpen() {
   if (not open_) {
     if (error_ == 0) {
       error_ = EBADF;
@@ -71,10 +45,12 @@ Sink::checkOpen() {
   return true;
 }
 
+// `Sink` ---------------------------------------------------------------------------------------------------
+
 size_t
 Sink::writeln(std::string_view in) {
   if (not checkOpen()) {
-    return error_;
+    return 0;
   }
 
   size_t ret = write(in);
@@ -108,6 +84,15 @@ BufferedSink::close() {
   buf_ = nullptr;
   pos_ = 0;
   return underlying_.close();
+}
+
+int
+BufferedSink::fd() {
+  if (not checkOpen()) {
+    return -1;
+  }
+
+  return underlying_.fd();
 }
 
 int
@@ -266,6 +251,12 @@ NullSink::close()
 
   open_ = false;
   return error_;
+}
+
+int
+NullSink::fd() {
+  checkOpen();
+  return -1;
 }
 
 int
@@ -537,10 +528,19 @@ BufferedSource::close() {
   return underlying_.close();
 }
 
+int
+BufferedSource::fd() {
+  if (not checkOpen()) {
+    return -1;
+  }
+
+  return underlying_.fd();
+}
+
 size_t
 BufferedSource::read(span<char> out) {
   if (not checkOpen()) {
-    return error();
+    return 0;
   }
 
   // If needed, initialize buffer
@@ -598,24 +598,55 @@ BufferedSource::read(span<char> out) {
 }
 
 int
-BufferedSource::seek(long pos, SeekMode mode) {
+BufferedSource::seek(Offset offset, SeekMode mode) {
   if (not checkOpen()) {
     return error_;
   }
 
-  long oldPos = tell();
-  int ret = underlying_.seek(pos, mode);
-  long newPos = tell();
-  long delta = newPos - oldPos;
+  long oldTell = underlying_.tell();
+  if (oldTell == -1) {
+    // Invalidate buffer
+    LOG(BufferedSource::seek, "`underlying.tell()` (old) failed; invalidating buffer");
+    pos_ = end_ = 0;
+    error_ = error();
+    ROCKET_ASSERT(error_ != 0);
+    return error_;
+  }
+  int ret = underlying_.seek(offset, mode);
+  long newTell = underlying_.tell();
+  if (newTell == -1) {
+    // Invalidate buffer
+    LOG(BufferedSource::seek, "`underlying.tell()` (new) failed; invalidating buffer");
+    pos_ = end_ = 0;
+    error_ = error();
+    ROCKET_ASSERT(error_ != 0);
+    return error_;
+  }
+  long delta = sub<long, int128_t>(newTell, oldTell);
+  size_t newPos = add<size_t, int128_t>(pos_, delta);
+  LOG(BufferedSource::seek, "oldTell=" << oldTell << ", newTell=" << newTell << ", pos_=" << pos_ << ", delta=" << delta << ", newPos=" << newPos);
 
-  if (pos_ + delta >= 0 && pos_ + delta <= end_) {
-    LOG(BufferedSource::seek, "Going from " << pos_ << " to " << (pos_ + delta));
-    pos_ += delta;
+  if (newPos <= end_) {
+    LOG(BufferedSource::seek, "Going from " << pos_ << " to " << newPos);
+    pos_ = newPos;
+    underlying_.seek(oldTell); // Nothing to be done in the underlying: restore position
   } else {
-    LOG(BufferedSource::seek, "Invalidating buffer");
+    // Invalidate buffer
+    LOG(BufferedSource::seek, "New position is beyond the buffer; invalidating buffer");
     pos_ = end_ = 0;
   }
   return ret;
+}
+
+Io::Position
+BufferedSource::tell() {
+  Position result = underlying_.tell();
+  if (result == -1 || end_ == 0) {
+    // Position unknown or buffer is invalid: return the position of the underlying source
+    return result;
+  }
+  // Otherwise, transpose position to match the buffer
+  return result - end_ + pos_;
 }
 
 // `FileSource` ---------------------------------------------------------------------------------------------
@@ -686,7 +717,7 @@ FileSource::read(span<char> out) {
 }
 
 int
-FileSource::seek(long pos, SeekMode mode) {
+FileSource::seek(Offset offset, SeekMode mode) {
   if (not checkOpen()) {
     return error_;
   }
@@ -706,7 +737,7 @@ FileSource::seek(long pos, SeekMode mode) {
     ROCKET_FAIL_UNREACHABLE_CODE();
   }
 
-  size_t result = std::fseek(file_, pos, origin);
+  size_t result = std::fseek(file_, offset, origin);
   LOG(FileSource::seek, "fseek=" << result << ", ferror=" << ferror(file_));
   if (result != 0) {
     error_ = ferror(file_);
@@ -714,18 +745,22 @@ FileSource::seek(long pos, SeekMode mode) {
   return error_;
 }
 
-long
+Io::Position
 FileSource::tell() {
   if (not checkOpen()) {
-    return -1L;
+    return -1;
   }
 
-  long ret = std::ftell(file_);
-  LOG(FileSource::tell, "ftell=" << ret << ", ferror=" << ferror(file_));
-  if (ret == -1L) {
+  using ftell_t = decltype(std::ftell(file_));
+  static_assert(is_same_v<ftell_t, long>);
+  long result = std::ftell(file_);
+  LOG(FileSource::tell, "ftell=" << result << ", ferror=" << ferror(file_));
+  if (result == -1) {
     error_ = ferror(file_);
+    return -1;
   }
-  return ret;
+  ROCKET_ASSERT(result >= 0);
+  return result;
 }
 
 // `NullSource` ---------------------------------------------------------------------------------------------
@@ -748,19 +783,19 @@ NullSource::close()
 size_t
 NullSource::read(span<char> out) {
   checkOpen();
-  return error_;
+  return 0;
 }
 
 int
-NullSource::seek(long pos, SeekMode mode) {
+NullSource::seek(Offset offset, SeekMode mode) {
   checkOpen();
-  return error_;
+  return EINVAL;
 }
 
-long
+Io::Position
 NullSource::tell() {
   checkOpen();
-  return -1L;
+  return -1;
 }
 
 // `StreamSource` -------------------------------------------------------------------------------------------
@@ -796,7 +831,7 @@ StreamSource::fd() {
 size_t
 StreamSource::read(span<char> out) {
   if (not checkOpen()) {
-    return error_;
+    return 0;
   }
 
   // If less bytes than `out.size()` are read, `bad`, `fail`, and `eof` all remain `false``
@@ -807,7 +842,7 @@ StreamSource::read(span<char> out) {
 }
 
 int
-StreamSource::seek(long pos, SeekMode mode) {
+StreamSource::seek(Offset offset, SeekMode mode) {
   if (not checkOpen()) {
     return error_;
   }
@@ -815,33 +850,41 @@ StreamSource::seek(long pos, SeekMode mode) {
   ios::seekdir dir;
   switch (mode) {
   case SeekMode::beg:
-    dir = std::ios::beg;
+    dir = ios::beg;
     break;
   case SeekMode::cur:
-    dir = std::ios::cur;
+    dir = ios::cur;
     break;
   case SeekMode::end:
-    dir = std::ios::end;
+    dir = ios::end;
     break;
   default:
     ROCKET_FAIL_UNREACHABLE_CODE();
   }
 
-  is_.seekg(pos, dir);
+  static_assert(is_same_v<istream::off_type, long>);
+  is_.seekg(offset, dir);
   error_ = is_.rdstate();
   return error_;
 }
 
-long
+Io::Position
 StreamSource::tell() {
   if (not checkOpen()) {
-    return -1L;
+    return -1;
   }
 
-  auto ret = is_.tellg();
-  LOG(StreamSource::tell, "tellg=" << ret << ", bad=" << is_.bad() << ", fail=" << is_.fail() << ", eof=" << is_.eof());
+  using tellg_t = decltype(is_.tellg());
+  // It is some 128-bit type, we don't know whether it is signed or unsigned
+  static_assert(sizeof(tellg_t) == 16);
+  tellg_t result = is_.tellg();
+  LOG(StreamSource::tell, "tellg=" << result << ", bad=" << is_.bad() << ", fail=" << is_.fail() << ", eof=" << is_.eof());
   error_ = is_.rdstate();
-  return ret;
+
+  if (result < 0 || result > numeric_limits<long>::max()) {
+    return -1;
+  }
+  return static_cast<Position>(result);
 }
 
 // `StringSource` -------------------------------------------------------------------------------------------
@@ -877,20 +920,41 @@ StringSource::read(span<char> out) {
 }
 
 int
-StringSource::seek(long pos, SeekMode mode) {
+StringSource::seek(Offset offset, SeekMode mode) {
   if (not checkOpen()) {
     return error_;
   }
 
-  pos_ = seekPos(pos_, in_.size(), pos, mode);
+  optional<Offset> newPos;
+  switch (mode) {
+  case SeekMode::beg:
+    newPos = tryAdd<Offset, int128_t>(offset, 0);
+    break;
+  case SeekMode::cur:
+    newPos = tryAdd<Offset, int128_t>(pos_, offset);
+    break;
+  case SeekMode::end:
+    newPos = trySub<Offset, int128_t>(in_.size(), offset);
+    break;
+  default:
+    ROCKET_FAIL_UNREACHABLE_CODE();
+  }
+
+  if (not newPos) {
+    return EINVAL;
+  }
+  newPos = max(0L, *newPos);
+  pos_ = *newPos; // This works because `newPos` is nonnegative
+  pos_ = min(in_.size(), pos_);
   return error_;
 }
 
-long
+Io::Position
 StringSource::tell() {
   if (not checkOpen()) {
-    return -1L;
+    return -1;
   }
+
   return pos_;
 }
 

@@ -33,7 +33,7 @@ TEST(format_global, unsignedCharFormat) {
   EXPECT_EQ(fmt::format("{:#x}", static_cast<unsigned char>(-1)), "0xff");
 }
 
-// No support for `char32_t`! Instead, `rocket::unicode::CodePoint` may be used.
+// No support for `char32_t`!
 
 TEST(format_global, int8Format) {
   EXPECT_EQ(fmt::format("{:+}", static_cast<int8_t>(42)), "+42");

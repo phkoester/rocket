@@ -22,10 +22,8 @@ string
 testString(size_t n, int add = 0) {
   string ret;
   for (size_t i = 0; i < n; ++i) {
-    ret += static_cast<char>('0' + add++);
-    if (add == 10) {
-      add = 0;
-    }
+    ret += static_cast<char>('0' + add);
+    add = (add + 1) % 10;
   }
   return ret;
 }
@@ -134,6 +132,36 @@ TEST(nio, BufferedSourceExactMatch) {
   EXPECT_EQ(buffered.end_, 20);
 }
 
+TEST(nio, BufferedSourceSeek) {
+  string s128 = testString(128);
+  StringSource source(s128);
+  BufferedSource buffered(source, 64);
+
+  char c;
+  EXPECT_EQ(buffered.Source::read(c), 1);
+  EXPECT_EQ(c, '0');
+  EXPECT_EQ(buffered.pos_, 1);
+  EXPECT_EQ(buffered.end_, 64);
+  EXPECT_EQ(buffered.tell(), 1);
+  EXPECT_EQ(buffered.underlying_.tell(), 64);
+
+  /*
+  buffered.seek(30);
+  EXPECT_EQ(buffered.pos_, 30);
+  EXPECT_EQ(buffered.end_, 64);
+  EXPECT_EQ(buffered.tell(), 30);
+  EXPECT_EQ(buffered.underlying_.tell(), 64);
+  */
+
+  /*
+  buffered.seek(51);
+  EXPECT_EQ(buffered.pos_, 51);
+  EXPECT_EQ(buffered.end_, 64);
+  EXPECT_EQ(buffered.Source::read(c), 1);
+  EXPECT_EQ(c, '1');
+  */
+}
+
 TEST(nio, FileSourceDoesNotExist) {
   FileSource source("/does/not/exist");
 
@@ -226,6 +254,45 @@ TEST(nio, StringSourceReadlnSpan) {
   n = source.readln(span20);
   EXPECT_EQ(n, 11);
   EXPECT_EQ(string_view(span20.data(), n), "Second line");
+}
+
+TEST(nio, StringSourceSeek) {
+  string s128 = testString(128);
+  StringSource source(s128);
+
+  source.seek(0);
+  EXPECT_EQ(source.tell(), 0);
+  char c;
+  EXPECT_EQ(source.Source::read(c), 1);
+  EXPECT_EQ(c, '0');
+  EXPECT_EQ(source.tell(), 1);
+
+  source.seek(127);
+  EXPECT_EQ(source.tell(), 127);
+  EXPECT_EQ(source.Source::read(c), 1);
+  EXPECT_EQ(c, '7');
+  EXPECT_EQ(source.tell(), 128);
+
+  source.seek(129);
+  EXPECT_EQ(source.tell(), 128);
+
+  source.seek(-11, SeekMode::cur);
+  EXPECT_EQ(source.tell(), 117);
+
+  source.seek(-1);
+  EXPECT_EQ(source.tell(), 0);
+
+  source.seek(0, SeekMode::end);
+  EXPECT_EQ(source.tell(), 128);
+
+  source.seek(10, SeekMode::end);
+  EXPECT_EQ(source.tell(), 118);
+
+  source.seek(-3, SeekMode::end);
+  EXPECT_EQ(source.tell(), 128);
+
+  source.seek(200, SeekMode::end);
+  EXPECT_EQ(source.tell(), 0);
 }
 
 // EOF

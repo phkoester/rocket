@@ -26,14 +26,15 @@ static constexpr size_t DEFAULT_BUFFER_SIZE = 64 * 1'024; // 64 KiB
   */
 static constexpr size_t MIN_BUFFER_SIZE = 64;
 
-// `Sink` ---------------------------------------------------------------------------------------------------
+// `Io` -----------------------------------------------------------------------------------------------------
 
-struct Sink {
-  virtual ~Sink() = default;
+struct Io {
+  using Offset = long;
+  using Position = unsigned long;
+
+  virtual ~Io() = default;
 
   virtual int close() = 0;
-
-  virtual int error() const { return error_; }
 
   /**
    * Returns the file descriptor.
@@ -42,11 +43,30 @@ struct Sink {
    */
   virtual int fd() = 0;
 
-  virtual int flush() = 0;
+  virtual int error() const { return error_; }
 
   virtual bool good() const { return open_ && error_ == 0; }
 
   virtual bool open() const { return open_; }
+
+protected:
+
+  Io() {}
+
+  Io(const Io& rhs) = delete;
+
+  int error_ = 0;
+  bool open_ = true;
+
+  bool checkOpen();
+};
+
+// `Sink` ---------------------------------------------------------------------------------------------------
+
+struct Sink : Io {
+  virtual ~Sink() override= default;
+
+  virtual int flush() = 0;
 
   template<typename... T>
   void
@@ -100,13 +120,6 @@ struct Sink {
 protected:
 
   Sink() {}
-
-  Sink(const Sink& rhs) = delete;
-
-  bool checkOpen();
-
-  int error_ = 0;
-  bool open_ = true;
 };
 
 // `BufferedSink` -------------------------------------------------------------------------------------------
@@ -120,7 +133,7 @@ struct BufferedSink : Sink {
 
   virtual int error() const override { return underlying_.error(); } // cppcheck-suppress uselessOverride
 
-  virtual int fd() override { return underlying_.fd(); }
+  virtual int fd() override;
 
   virtual int flush() override;
 
@@ -182,7 +195,7 @@ struct NullSink : Sink {
 
   virtual int close() override;
 
-  virtual int fd() override { return -1; }
+  virtual int fd() override;
 
   virtual int flush() override;
 
@@ -239,8 +252,14 @@ private:
 // `StringSink` ---------------------------------------------------------------------------------------------
 
 struct StringSink : Sink {
+  /**
+   * Makes a new `StringSink` with a managed string.
+   */
   explicit StringSink() {}
 
+  /**
+   * Makes a new `StringSink` with a string reference and no managed string.
+   */
   explicit StringSink(std::string& out) : out(&out) {}
 
   virtual ~StringSink() override;
@@ -251,6 +270,12 @@ struct StringSink : Sink {
 
   virtual int flush() override;
 
+  /**
+   * Returns the managed string.
+   *
+   * @return the managed string
+   * @throws #rocket::InvalidState if the sink has no managed string
+   */
   std::string str() const;
 
   virtual size_t write(std::string_view in) override;
@@ -267,23 +292,8 @@ enum class SeekMode { beg, cur, end };
 
 // `Source` -------------------------------------------------------------------------------------------------
 
-struct Source {
-  virtual ~Source() = default;
-
-  virtual int close() = 0;
-
-  virtual int error() const { return error_; }
-
-  /**
-   * Returns the file descriptor.
-   *
-   * @return the file descriptor of the sink, or -1 if the sink is not connected to a file
-   */
-  virtual int fd() = 0;
-
-  virtual bool good() const { return open_ && error_ == 0; }
-
-  virtual bool open() const { return open_; }
+struct Source : Io {
+  virtual ~Source() override = default;
 
   std::string read();
 
@@ -295,15 +305,18 @@ struct Source {
 
   size_t readln(std::span<char> out);
 
-  virtual int seek(long pos, SeekMode mode = SeekMode::beg) = 0;
+  virtual int seek(Offset offset, SeekMode mode = SeekMode::beg) = 0;
 
-  virtual long tell() = 0;
+  /**
+   * Returns the current input position
+   *
+   * @return the current input position, or -1 if that position cannot be determined
+   */
+  virtual Position tell() = 0;
 
 protected:
 
   Source() {}
-
-  Source(const Sink& rhs) = delete;
 
   bool checkOpen();
 
@@ -322,7 +335,7 @@ struct BufferedSource : Source {
 
   virtual int error() const override { return underlying_.error(); } // cppcheck-suppress uselessOverride
 
-  virtual int fd() override { return underlying_.fd(); }
+  virtual int fd() override;
 
   virtual bool good() const override { return underlying_.good(); } // cppcheck-suppress uselessOverride
 
@@ -330,9 +343,9 @@ struct BufferedSource : Source {
 
   virtual size_t read(std::span<char> out) override;
 
-  virtual int seek(long pos, SeekMode mode = SeekMode::beg) override;
+  virtual int seek(Offset offset, SeekMode mode = SeekMode::beg) override;
 
-  virtual long tell() override { return underlying_.tell(); }
+  virtual Position tell() override;
 
 ROCKET_TESTING_PRIVATE:
 
@@ -340,6 +353,11 @@ ROCKET_TESTING_PRIVATE:
   size_t size_;
   std::unique_ptr<char[]> buf_;
   size_t pos_ = 0;
+  /**
+   * This is the actual input size of the buffer, which may be less than its allocated size.
+   *
+   * If this is 0, #pos_ must be 0, too, and the buffer is considered to be invalid.
+   */
   size_t end_ = 0;
 };
 
@@ -369,9 +387,9 @@ struct FileSource : Source {
 
   virtual size_t read(std::span<char> out) override;
 
-  virtual int seek(long pos, SeekMode mode = SeekMode::beg) override;
+  virtual int seek(Offset offset, SeekMode mode = SeekMode::beg) override;
 
-  virtual long tell() override;
+  virtual Position tell() override;
 
 ROCKET_TESTING_PRIVATE:
 
@@ -390,9 +408,9 @@ struct NullSource : Source {
 
   virtual size_t read(std::span<char> out) override;
 
-  virtual int seek(long pos, SeekMode mode = SeekMode::beg) override;
+  virtual int seek(Offset offset, SeekMode mode = SeekMode::beg) override;
 
-  virtual long tell() override;
+  virtual Position tell() override;
 };
 
 // `StreamSource` -------------------------------------------------------------------------------------------
@@ -414,9 +432,9 @@ struct StreamSource : Source {
 
   virtual size_t read(std::span<char> out) override;
 
-  virtual int seek(long pos, SeekMode mode = SeekMode::beg) override;
+  virtual int seek(Offset offset, SeekMode mode = SeekMode::beg) override;
 
-  virtual long tell() override;
+  virtual Position tell() override;
 
 private:
 
@@ -436,9 +454,9 @@ struct StringSource : Source {
 
   virtual size_t read(std::span<char> out) override;
 
-  virtual int seek(long pos, SeekMode mode = SeekMode::beg) override;
+  virtual int seek(Offset offset, SeekMode mode = SeekMode::beg) override;
 
-  virtual long tell() override;
+  virtual Position tell() override;
 
 private:
 
