@@ -17,7 +17,7 @@ namespace rocket {
 // Functions ------------------------------------------------------------------------------------------------
 
 template<typename Result, typename Control, typename Lhs, typename Rhs>
-Result
+constexpr Result
 add(Lhs lhs, Rhs rhs) {
   static_assert(std::is_signed_v<Control>);
   static_assert(sizeof(Control) >= 2 * sizeof(Lhs));
@@ -33,7 +33,7 @@ add(Lhs lhs, Rhs rhs) {
 }
 
 template<typename Result, typename Control, typename Lhs, typename Rhs>
-Result
+constexpr Result
 sub(Lhs lhs, Rhs rhs) {
   static_assert(std::is_signed_v<Control>);
   static_assert(sizeof(Control) >= 2 * sizeof(Lhs));
@@ -49,7 +49,7 @@ sub(Lhs lhs, Rhs rhs) {
 }
 
 template<typename Result, typename Control, typename Lhs, typename Rhs>
-std::optional<Result>
+constexpr std::optional<Result>
 tryAdd(Lhs lhs, Rhs rhs) {
   static_assert(std::is_signed_v<Control>);
   static_assert(sizeof(Control) >= 2 * sizeof(Lhs));
@@ -65,7 +65,7 @@ tryAdd(Lhs lhs, Rhs rhs) {
 }
 
 template<typename Result, typename Control, typename Lhs, typename Rhs>
-std::optional<Result>
+constexpr std::optional<Result>
 trySub(Lhs lhs, Rhs rhs) {
   static_assert(std::is_signed_v<Control>);
   static_assert(sizeof(Control) >= 2 * sizeof(Lhs));
