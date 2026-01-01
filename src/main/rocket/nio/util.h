@@ -16,8 +16,6 @@ char getChar(Source& in, char expected);
 
 char getChar(Source& in, const char* expected, const char* what);
 
-unicode::CodePoint getCodePoint(Source& in);
-
 unicode::Grapheme getGrapheme(Source& in);
 
 uint32_t getHex(Source& in, size_t n);

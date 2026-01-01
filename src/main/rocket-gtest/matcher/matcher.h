@@ -6,8 +6,7 @@
 
 #pragma once
 
-#include "rocket/io/io.h"
-#include "rocket/text/text.h"
+#include "rocket/InputFailure.h"
 
 #include <gmock/gmock.h>
 
@@ -169,10 +168,10 @@ throws(const Matchers&... matchers) {
       testing::internal::ExceptionMatcherImpl<Exception>(AllOf(matchers...)));
 }
 
-// `rocket::io::InputFailure` ...............................................................................
+// `rocket::InputFailure` ...................................................................................
 
 /**
- * Matches a #rocket::io::InputFailure that matches @p positionMatcher and @p whatMatcher.
+ * Matches a #rocket::InputFailure that matches @p positionMatcher and @p whatMatcher.
  *
  * @tparam C the character type
  * @tparam PositionMatcher the type of @p positionMatcher
@@ -182,18 +181,22 @@ throws(const Matchers&... matchers) {
  * @return a matcher
  */
 template<typename PositionMatcher, typename WhatMatcher>
-inline testing::PolymorphicMatcher<testing::internal::ExceptionMatcherImpl<io::InputFailure>>
+inline testing::PolymorphicMatcher<testing::internal::ExceptionMatcherImpl<InputFailure>>
 throwsInputFailure(PositionMatcher&& positionMatcher, WhatMatcher&& whatMatcher) {
-  return throws<io::InputFailure>(
+  return throws<InputFailure>(
     testing::Property(
         ".position()",
-        &io::InputFailure::position,
+        &InputFailure::position,
         std::forward<PositionMatcher>(positionMatcher)),
+    testing::Property(
+        ".ranges()",
+        &InputFailure::ranges,
+        testing::Eq(text::Ranges {})),
     testing::internal::WithWhat(MatcherCast<std::string>(std::forward<WhatMatcher>(whatMatcher))));
 }
 
 /**
- * Matches a #rocket::io::InputFailure that matches @p position and @p whatMatcher.
+ * Matches a #rocket::InputFailure that matches @p position and @p whatMatcher.
  *
  * @tparam C the character type
  * @tparam WhatMatcher the type of @p whatMatcher
@@ -202,59 +205,15 @@ throwsInputFailure(PositionMatcher&& positionMatcher, WhatMatcher&& whatMatcher)
  * @return a matcher
  */
 template<typename WhatMatcher>
-inline testing::PolymorphicMatcher<testing::internal::ExceptionMatcherImpl<io::InputFailure>>
+inline testing::PolymorphicMatcher<testing::internal::ExceptionMatcherImpl<InputFailure>>
 throwsInputFailure(size_t position, WhatMatcher&& whatMatcher) {
   return throwsInputFailure(
       testing::Eq(position),
       std::forward<WhatMatcher>(whatMatcher));
 }
 
-// `rocket::io::ParseFailure` ...........................................................................
-
 /**
- * Matches a #rocket::io::ParseFailure that matches @p positionMatcher and @p whatMatcher.
- *
- * @tparam C the character type
- * @tparam PositionMatcher the type of @p positionMatcher
- * @tparam WhatMatcher the type of @p whatMatcher
- * @param positionMatcher a matcher for the `.position()` property of the exception
- * @param whatMatcher a matcher for the `.what()` property of the exception
- * @return a matcher
- */
-template<typename PositionMatcher, typename WhatMatcher>
-inline testing::PolymorphicMatcher<testing::internal::ExceptionMatcherImpl<io::ParseFailure>>
-throwsParseFailure(PositionMatcher&& positionMatcher, WhatMatcher&& whatMatcher) {
-  return throws<io::ParseFailure>(
-    testing::Property(
-        ".position()",
-        &io::ParseFailure::position,
-        std::forward<PositionMatcher>(positionMatcher)),
-    testing::Property(
-        ".ranges()",
-        &io::ParseFailure::ranges,
-        testing::Eq(text::Ranges {})),
-    testing::internal::WithWhat(MatcherCast<std::string>(std::forward<WhatMatcher>(whatMatcher))));
-}
-
-/**
- * Matches a #rocket::io::ParseFailure that matches @p position and @p whatMatcher.
- *
- * @tparam C the character type
- * @tparam WhatMatcher the type of @p whatMatcher
- * @param position the expected value of the `.position()` property of the exception
- * @param whatMatcher a matcher for the `.what()` property of the exception
- * @return a matcher
- */
-template<typename WhatMatcher>
-inline testing::PolymorphicMatcher<testing::internal::ExceptionMatcherImpl<io::ParseFailure>>
-throwsParseFailure(size_t position, WhatMatcher&& whatMatcher) {
-  return throwsParseFailure(
-      testing::Eq(position),
-      std::forward<WhatMatcher>(whatMatcher));
-}
-
-/**
- * Matches a #rocket::io::ParseFailure that matches @p positionMatcher, @p rangesMatcher, and
+ * Matches a #rocket::InputFailure that matches @p positionMatcher, @p rangesMatcher, and
  * @p whatMatcher.
  *
  * @tparam C the character type
@@ -267,25 +226,25 @@ throwsParseFailure(size_t position, WhatMatcher&& whatMatcher) {
  * @return a matcher
  */
 template<typename PositionMatcher, typename RangesMatcher, typename WhatMatcher>
-inline testing::PolymorphicMatcher<testing::internal::ExceptionMatcherImpl<io::ParseFailure>>
-throwsParseFailure(
+inline testing::PolymorphicMatcher<testing::internal::ExceptionMatcherImpl<InputFailure>>
+throwsInputFailure(
     PositionMatcher&& positionMatcher,
     RangesMatcher&& rangesMatcher,
     WhatMatcher&& whatMatcher) {
-  return throws<io::ParseFailure>(
+  return throws<InputFailure>(
     testing::Property(
         ".position()",
-        &io::ParseFailure::position,
+        &InputFailure::position,
         std::forward<PositionMatcher>(positionMatcher)),
     testing::Property(
         ".ranges()",
-        &io::ParseFailure::ranges,
+        &InputFailure::ranges,
         std::forward<RangesMatcher>(rangesMatcher)),
     testing::internal::WithWhat(MatcherCast<std::string>(std::forward<WhatMatcher>(whatMatcher))));
 }
 
 /**
- * Matches a #rocket::io::ParseFailure that matches @p position and @p range.
+ * Matches a #rocket::InputFailure that matches @p position and @p range.
  *
  * @tparam C the character type
  * @tparam WhatMatcher the type of @p whatMatcher
@@ -295,16 +254,16 @@ throwsParseFailure(
  * @return a matcher
  */
 template<typename WhatMatcher>
-inline testing::PolymorphicMatcher<testing::internal::ExceptionMatcherImpl<io::ParseFailure>>
-throwsParseFailure(size_t position, text::Range range, WhatMatcher&& whatMatcher) {
-  return throwsParseFailure(
+inline testing::PolymorphicMatcher<testing::internal::ExceptionMatcherImpl<InputFailure>>
+throwsInputFailure(size_t position, text::Range range, WhatMatcher&& whatMatcher) {
+  return throwsInputFailure(
       testing::Eq(position),
       testing::Eq(text::Ranges { range }),
       std::forward<WhatMatcher>(whatMatcher));
 }
 
 /**
- * Matches a #rocket::io::ParseFailure that matches @p position and @p range.
+ * Matches a #rocket::InputFailure that matches @p position and @p range.
  *
  * @tparam C the character type
  * @tparam WhatMatcher the type of @p whatMatcher
@@ -314,9 +273,9 @@ throwsParseFailure(size_t position, text::Range range, WhatMatcher&& whatMatcher
  * @return a matcher
  */
 template<typename WhatMatcher>
-inline testing::PolymorphicMatcher<testing::internal::ExceptionMatcherImpl<io::ParseFailure>>
-throwsParseFailure(size_t position, const text::Ranges& ranges, WhatMatcher&& whatMatcher) {
-  return throwsParseFailure(
+inline testing::PolymorphicMatcher<testing::internal::ExceptionMatcherImpl<InputFailure>>
+throwsInputFailure(size_t position, const text::Ranges& ranges, WhatMatcher&& whatMatcher) {
+  return throwsInputFailure(
       testing::Eq(position),
       testing::Eq(ranges),
       std::forward<WhatMatcher>(whatMatcher));

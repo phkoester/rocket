@@ -17,10 +17,6 @@ namespace rocket::escape {
 
 struct CStringParams {
   /**
-    * Is `true` if the escaped string is to be enclosed in #quote characters.
-    */
-  bool enclosed = false;
-  /**
     * The quote character to escape.
     *
     * This must be <code>'\0'</code>, <code>'"'</code>, or <code>'\''</code>, otherwise it is invalid.
@@ -35,11 +31,11 @@ struct CStringParams {
   std::optional<size_t> tabSize;
 
   /**
-    * Returns `true` if the escaped string is actually to be enclosed.
+    * Returns `true` if the escaped string is actually to be quoted.
     *
-    * @return `true` if the escaped string is actually to be enclosed
+    * @return `true` if the escaped string is actually to be quoted.
     */
-  inline bool enclosing() const { return enclosed && quote != '\0'; }
+  inline bool quoted() const { return quote != '\0'; }
 };
 
 // `Result` -------------------------------------------------------------------------------------------------

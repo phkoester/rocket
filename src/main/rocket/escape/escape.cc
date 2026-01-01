@@ -429,7 +429,7 @@ escapeCString(string_view input, const CStringParams& params, Result* result) {
 
   // If needed, print quote
 
-  if (params.enclosing()) {
+  if (params.quoted()) {
     ret.push_back(params.quote);
     ++to;
   }
@@ -470,7 +470,7 @@ escapeCString(string_view input, const CStringParams& params, Result* result) {
 
   // If needed, print quote
 
-  if (params.enclosing()) {
+  if (params.quoted()) {
     ret.push_back(params.quote);
   }
 
@@ -489,7 +489,7 @@ unescapeCString(const string& input, const CStringParams& params, Result* result
 
   // If needed, read quote
 
-  if (params.enclosing()) {
+  if (params.quoted()) {
     nio::getChar(in, params.quote);
   }
 
@@ -501,7 +501,7 @@ unescapeCString(const string& input, const CStringParams& params, Result* result
 
     if (not gr1) {
       // EOF
-      if (params.enclosing()) {
+      if (params.quoted()) {
         throw InputFailure(pos, { 0, pos }, fmt::format("Missing terminating {:?} character", params.quote));
       }
       return ret;
@@ -514,7 +514,7 @@ unescapeCString(const string& input, const CStringParams& params, Result* result
       // Single-code-point grapheme
 
       unicode::CodePoint cp1 = *gr1->codePoint();
-      if (params.enclosing() && cp1 == params.quote) {
+      if (params.quoted() && cp1 == params.quote) {
         // Terminating quote: end of input
 
         return ret;
