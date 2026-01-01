@@ -72,7 +72,7 @@ constexpr int EXIT_SERIOUS_FAILURE = 2;
  * ```
  * #include <rocket/Process.h>
  * #include <rocket/cl/cl.h>
- * #include <rocket/cl/nio.h>
+ * #include <rocket/nio/nio.h>
  *
  * using namespace rocket;
  * using namespace std;
