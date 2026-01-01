@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "rocket/math/math.h"
+#include "rocket/math/Interval.h"
 
 #include <unicodelib.h>
 

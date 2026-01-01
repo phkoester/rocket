@@ -7,7 +7,6 @@
 #include "rocket/assert.h"
 #include "rocket/enum.h"
 #include "rocket/escape/escape.h"
-#include "rocket/io/io.h" // XXX
 #include "rocket/str/str.h"
 #include "rocket/terminal/terminal.h"
 #include "rocket/unicode/iterator.h"
@@ -88,15 +87,15 @@ namespace rocket::text {
 // Functions ------------------------------------------------------------------------------------------------
 
 LocationsResult
-locations(istream& is, const vector<Position>& positions, const LocationsParams& params) {
-  ROCKET_CHECK(is, io::tellg(is) == 0, "Input stream must be at position 0");
+locations(nio::Source& in, const vector<Position>& positions, const LocationsParams& params) {
+  ROCKET_CHECK(in, in.tell() == 0, "Source must be at position 0");
 
   // Prepare result
 
   LocationsResult ret;
   ret.params = params;
   if (ret.params.source.empty()) {
-    ret.params.source = &is == &cin ? "-" : "(input)";
+    ret.params.source = in.fd() == STDIN_FILENO ? "-" : "(input)";
   }
 
   // Map input position -> location
@@ -119,9 +118,7 @@ locations(istream& is, const vector<Position>& positions, const LocationsParams&
     maxPos = max(pos.position, maxPos);
   }
 
-  // Use a byte buffer to read the input stream
-
-  io::Buffer buf(is, params.bufferSize);
+  // Read from source
 
   size_t line = 0, column = 0, beginLine = 0;
   string lineString;
@@ -130,14 +127,15 @@ locations(istream& is, const vector<Position>& positions, const LocationsParams&
   bool finish = false; // Finish on next line feed?
 
   while (true) {
-    auto pos = buf.position();
+    auto pos = in.tell();
 
     // Did we reach a position of interest?
     auto it = locations.find(pos);
     if (it != locations.end()) {
       poi.push_back(pos);
-      if (pos == maxPos)
+      if (pos == maxPos) {
         finish = true;
+      }
 
       auto& loc = it->second;
       loc.line = line + 1; // Marks this location as processed
@@ -145,10 +143,10 @@ locations(istream& is, const vector<Position>& positions, const LocationsParams&
       loc.lineRange.lower = beginLine;
     }
 
-    // Get next grapheme from buffer, if any
+    // Get next grapheme from source, if any
     unicode::Grapheme gr;
-    auto bytes = buf.getGrapheme(&gr);
-    if (not bytes || gr.eol()) {
+    size_t n = read(in, gr);
+    if (n == 0 || gr.eol()) {
       // Handle EOF or EOL
 
       // Exit current line
@@ -160,13 +158,13 @@ locations(istream& is, const vector<Position>& positions, const LocationsParams&
       }
 
       // Finish?
-      if (not bytes || finish)
+      if (n == 0 || finish)
         break;
 
       // Enter next line
       ++line;
       column = 0;
-      beginLine = buf.position(); // This is `pos + bytes->size()`
+      beginLine = in.tell();
       lineString.clear();
       poi.clear();
     } else if (gr.tab() && params.tabSize) {
@@ -180,7 +178,7 @@ locations(istream& is, const vector<Position>& positions, const LocationsParams&
       // Add the grapheme
 
       column += gr.width;
-      for_each(bytes->begin(), bytes->end(), [&](byte b) { lineString.push_back(static_cast<char>(b)); } );
+      lineString.append(static_cast<string>(gr)); // XXX
     }
   }
 
@@ -191,7 +189,7 @@ locations(istream& is, const vector<Position>& positions, const LocationsParams&
     if (loc.line != NPOS) {
       ret.locations.push_back(loc);
     } else {
-      throw InvalidState(fmt::format("Position {} not found in input stream", loc.position));
+      throw InvalidState(fmt::format("Position {} not found in source", loc.position));
     }
   }
 
@@ -200,7 +198,7 @@ locations(istream& is, const vector<Position>& positions, const LocationsParams&
 
 void
 printLocations(
-    ostream& os,
+    nio::Sink& out,
     optional<string_view> input,
     const LocationsResult& locationsResult,
     const PrintLocationsParams& params) {
@@ -219,25 +217,23 @@ printLocations(
   string blankPrefix = string(lineNumberWidth, ' ') + " | ";
 
   using namespace terminal;
-  Ansi ansi(params.colored && io::isatty(os));
+  Ansi ansi(params.colored && ::isatty(out.fd()));
 
   for (const auto& loc : locations) {
     // Print source, line number, column column number, type, and message
 
     ROCKET_CHECK(locationsResult, not loc.message.empty());
-    os << locationsResult.params.source << ':' << loc.line << ':' << loc.column << ": ";
+    out.print("{}:{}:{}: ", locationsResult.params.source, loc.line, loc.column);
     switch (loc.type) {
-    case Position::note: os << ansi.style(bold | green); break;
-    case Position::warning: os << ansi.style(bold | yellow); break;
-    case Position::error: os << ansi.style(bold | red); break;
+    case Position::note: out.write(ansi.style(bold | green)); break;
+    case Position::warning: out.write(ansi.style(bold | yellow)); break;
+    case Position::error: out.write(ansi.style(bold | red)); break;
     }
-    os << loc.type << ": " << ansi.style() << loc.message << '\n';
+    out.println("{}: {}{}", loc.type, ansi.style(), loc.message);
 
     // Print the line prefix
 
-    string linePrefix = fmt::format("{: >{}d}", loc.line, lineNumberWidth);
-    linePrefix += " | ";
-    os << linePrefix;
+    out.print("{: >{}d} | ", loc.line, lineNumberWidth); // XXX
 
     // Escape the line as C-string, take tab setting from `locationsResult`, print the line as graphemes
     // (skip zero-width graphemes)
@@ -253,10 +249,10 @@ printLocations(
     // Print graphemes one by one, skip zero-width graphemes
     for (const auto& gr : grs) {
       if (gr.width > 0) {
-        os << static_cast<string>(gr);
+        out.write(static_cast<string>(gr));
       }
     }
-    os << '\n';
+    out.write('\n');
 
     // Print the ranges, the caret, and the caption. This is harder than it looks at first sight, because we
     // need to consider C-string escaping, tabs, UTF-8, and grapheme widths---all at the same time
@@ -313,14 +309,14 @@ printLocations(
     // Right-trim, print the indicators
 
     indicators = str::removeTrailing<char>(indicators, " ");
-    os << blankPrefix << ansi.style(bold | green) << indicators << ansi.style() << '\n';
+    out.println("{}{}{}{}", blankPrefix, ansi.style(bold | green), indicators, ansi.style());
 
     // If supplied, print caption
 
     if (loc.caption) {
       string caption = string(caretPos, ' ') + *loc.caption;
       string escapedCaption = escape::escapeCString(caption, { .tabSize=locationsResult.params.tabSize });
-      os << blankPrefix << ansi.style(green) << escapedCaption << ansi.style() << "\n";
+      out.println("{}{}{}{}", blankPrefix, ansi.style(green), escapedCaption, ansi.style());
     }
   }
 }

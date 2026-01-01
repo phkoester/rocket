@@ -4,7 +4,7 @@
 
 #include "rocket-gtest/rocket-gtest.h"
 
-#include "rocket/io/io.h"
+#include "rocket/InputFailure.h"
 
 #include "rocket-gtest/matcher/matcher.h"
 
@@ -26,22 +26,20 @@ TEST(match, matchesRegex) {
 }
 
 TEST(match, throwsInputFailure) {
-  auto is = io::is();
-
   EXPECT_THAT(
-    [&] { throw io::ParseFailure(is, 2, "oops"); },
+    [&] { throw InputFailure(2, "oops"); },
     throwsInputFailure(Eq(2), HasSubstr("oops")));
 
   EXPECT_THAT(
-    [&] { throw io::ParseFailure(is, 2, "oops"); },
+    [&] { throw InputFailure(2, "oops"); },
     throwsInputFailure(2, HasSubstr("oops")));
 
   EXPECT_THAT(
-    [&] { throw io::ParseFailure(is, 2, { { 1, 2 }, { 3, 4 } }, "oops"); },
+    [&] { throw InputFailure(2, { { 1, 2 }, { 3, 4 } }, "oops"); },
     throwsInputFailure(Eq(2), Eq(text::Ranges { { 1, 2 }, { 3, 4 } }), HasSubstr("oops")));
 
   EXPECT_THAT(
-    [&] { throw io::ParseFailure(is, 2, { { 1, 2 }, { 3, 4 } }, "oops"); },
+    [&] { throw InputFailure(2, { { 1, 2 }, { 3, 4 } }, "oops"); },
     throwsInputFailure(2, { { 1, 2 }, { 3, 4 } }, HasSubstr("oops")));
 }
 

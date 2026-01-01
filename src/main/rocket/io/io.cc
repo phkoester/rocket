@@ -490,18 +490,4 @@ tellg(std::istream& is) noexcept {
 
 } // namespace rocket::io
 
-// `std` ----------------------------------------------------------------------------------------------------
-
-namespace std {
-
-string&
-operator<<(string& lhs, const istream& rhs) {
-  ostringstream os;
-  os << rhs.rdbuf();
-  lhs.append(os.str());
-  return lhs;
-}
-
-} // namespace std
-
 // EOF

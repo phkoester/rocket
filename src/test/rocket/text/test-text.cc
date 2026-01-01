@@ -4,8 +4,6 @@
 
 #include "rocket-gtest/rocket-gtest.h"
 
-#include "rocket/reflect/reflect.h"
-#include "rocket/io/io.h"
 #include "rocket/text/text.h"
 #include "rocket/unicode/unicode.h"
 
@@ -33,16 +31,6 @@ using namespace testing;
     EXPECT_EQ(loc.lineString, lineString__); \
     EXPECT_EQ(loc.message, message__); \
     EXPECT_EQ(loc.caption, caption__)
-
-// `Config` -------------------------------------------------------------------------------------------------
-
-struct Config {
-  vector<string> modules;
-  unordered_map<int, string> ports;
-  string userName;
-
-  ROCKET_REFLECT_MEMBERS(Config, index, (modules)(ports)(userName));
-};
 
 // Local functions ------------------------------------------------------------------------------------------
 
@@ -88,9 +76,9 @@ TEST(text, Range) {
 TEST(text, locations) {
   // Test empty input stream
   {
-    auto is = io::is();
+    nio::StringSource in("");
     Position pos { .type=Position::note, .position=0, .message="Oops" };
-    auto result = locations(is, { pos });
+    auto result = locations(in, { pos });
     EXPECT_EQ(result.params.source, "(input)");
     EXPECT_EQ(result.locations.size(), 1);
     auto& loc = result.locations[0];
@@ -100,9 +88,9 @@ TEST(text, locations) {
   // Test EOF
   {
     string s = "a line without a line break at the end";
-    auto is = io::is(s);
+    nio::StringSource in(s);
     Position pos { .type=Position::error, .position=10, .message="Oops" };
-    auto result = locations(is, { pos }, { .setLineString=true });
+    auto result = locations(in, { pos }, { .setLineString=true });
     EXPECT_EQ(result.params.source, "(input)");
     EXPECT_EQ(result.locations.size(), 1);
     auto& loc = result.locations[0];
@@ -112,9 +100,9 @@ TEST(text, locations) {
   // Test LF line break
   {
     string s = "a line with an line break at the end\n";
-    auto is = io::is(s);
+    nio::StringSource in(s);
     Position pos { .type=Position::error, .position=10, .message="Oops" };
-    auto result = locations(is, { pos }, { .setLineString=true });
+    auto result = locations(in, { pos }, { .setLineString=true });
     EXPECT_EQ(result.locations.size(), 1);
     auto& loc = result.locations[0];
     EXPECT_LOCATION(
@@ -131,9 +119,9 @@ TEST(text, locations) {
   // Test CRLF line break
   {
     string s = "a line with a line break at the end\r\n";
-    auto is = io::is(s);
+    nio::StringSource in(s);
     Position pos { .type=Position::error, .position=10, .message="Oops" };
-    auto result = locations(is, { pos }, { .setLineString=true });
+    auto result = locations(in, { pos }, { .setLineString=true });
     EXPECT_EQ(result.locations.size(), 1);
     auto& loc = result.locations[0];
     EXPECT_LOCATION(
@@ -150,9 +138,9 @@ TEST(text, locations) {
   // Test null byte
   {
     string s = "a\x00" "b"s;
-    auto is = io::is(s);
+    nio::StringSource in(s);
     Position pos { .type=Position::error, .position=3, .message="Oops" };
-    auto result = locations(is, { pos }, { .setLineString=true });
+    auto result = locations(in, { pos }, { .setLineString=true });
     EXPECT_EQ(result.locations.size(), 1);
     auto& loc = result.locations[0];
     EXPECT_LOCATION(loc, Position::error, 3, ({}), 1, 3, ({ 0, 3 }), s, "Oops", nullopt);
@@ -161,11 +149,12 @@ TEST(text, locations) {
   // Test multi-byte code points and line break
   {
     string s = "ä€\n€";
-    auto is = io::is(s);
+    nio::StringSource in(s);
 
     {
       Position pos { .type=Position::error, .position=2, .message="Oops" };
-      auto result = locations(io::resetg(is), { pos }, { .setLineString=true });
+      in.seek(0);
+      auto result = locations(in, { pos }, { .setLineString=true });
       EXPECT_EQ(result.locations.size(), 1);
       auto& loc = result.locations[0];
       EXPECT_LOCATION(loc, Position::error, 2, ({}), 1, 2, ({ 0, 5 }), "ä€", "Oops", nullopt);
@@ -173,23 +162,23 @@ TEST(text, locations) {
 
     {
       Position pos { .type=Position::error, .position=6, .message="Oops" };
-      auto result = locations(io::resetg(is), { pos }, { .setLineString=true });
+      in.seek(0);
+      auto result = locations(in, { pos }, { .setLineString=true });
       EXPECT_EQ(result.locations.size(), 1);
       auto& loc = result.locations[0];
       EXPECT_LOCATION(loc, Position::error, 6, ({}), 2, 1, ({ 6, 9 }), "€", "Oops", nullopt);
     }
   }
 
-  // Test a somewhat larger file with a small buffer size
+  // Test a somewhat larger file
   {
     string source = "src/test/rocket/text/test-text-Kafka.txt";
-    string content;
-    content << ifstream(source);
-    auto is = io::is(content);
+    nio::FileSource in(source);
+    string content = in.Source::read();
+    in.seek(0);
 
     Position pos { .type=Position::error, .position=3'000, .message="Oops" };
-    auto result = locations(
-        is, { pos }, { .bufferSize=io::MIN_BUFFER_SIZE, .setLineString=true, .source=source });
+    auto result = locations(in, { pos }, { .setLineString=true, .source=source });
     EXPECT_EQ(result.params.source, source);
     EXPECT_EQ(result.locations.size(), 1);
     auto& loc = result.locations[0];
@@ -210,28 +199,31 @@ TEST(text, locations) {
   // Test multi-code-point grapheme
   {
     // 🧑‍🌾: U+1F9D1, U+200D, U+1F33E, 4 + 3 + 4 = 11 bytes
-    auto is = io::is("🧑‍🌾");
+    nio::StringSource in("🧑‍🌾");
 
     // No grapheme boundary at position 4
     EXPECT_THAT(
       ([&] {
         Position pos { .type=Position::error, .position=4, .message="Oops" };
-        locations(io::resetg(is), { pos }, {});
+        in.seek(0);
+        locations(in, { pos }, {});
       }),
-      ThrowsMessage<InvalidState>(HasSubstr("Position 4 not found in input stream")));
+      ThrowsMessage<InvalidState>(HasSubstr("Position 4 not found in source")));
 
     // No grapheme boundary at position 7
     EXPECT_THAT(
       ([&] {
         Position pos { .type=Position::error, .position=7, .message="Oops" };
-        locations(io::resetg(is), { pos }, {});
+        in.seek(0);
+        locations(in, { pos }, {});
       }),
-      ThrowsMessage<InvalidState>(HasSubstr("Position 7 not found in input stream")));
+      ThrowsMessage<InvalidState>(HasSubstr("Position 7 not found in source")));
 
     // Position 11 is okay
     {
       Position pos { .type=Position::error, .position=11, .message="Oops" };
-      auto result = locations(io::resetg(is), { pos }, { .setLineString=true });
+      in.seek(0);
+      auto result = locations(in, { pos }, { .setLineString=true });
       EXPECT_EQ(result.locations.size(), 1);
       auto& loc = result.locations[0];
       EXPECT_LOCATION(loc, Position::error, 11, ({}), 1, 3, ({ 0, 11 }), "🧑‍🌾", "Oops", nullopt);
@@ -243,23 +235,24 @@ TEST(text, locations) {
     u32string s32(100, U'€'); // A hundred times "€"
     string s8 = unicode::utf32To8(s32); // 300 bytes + 1 zero byte
     string_view s(s8.begin(), s8.end() - 1);
-    auto is = io::is(s);
+    nio::StringSource in(s);
 
     EXPECT_THAT(
       ([&] {
         Position pos { .type=Position::error, .position=1'000, .message="Oops" };
-        locations(io::resetg(is), { pos }, {});
+        in.seek(0);
+        locations(in, { pos }, {});
       }),
-      throwsInputFailure(297, HasSubstr("Incomplete UTF-8 byte sequence")));
+      ThrowsMessage<InvalidState>(HasSubstr("Position 1000 not found in source")));
   }
 
   // Test tab size null
   {
     string s = "a\nb\tc"; // 0: a, 1: \n, 2: b, 3: \t, 4: c
-    auto is = io::is(s);
+    nio::StringSource in(s);
     // Position 4 points to `c` in the second line
     Position pos { .type=Position::note, .position=4, .message="Oops" };
-    auto result = locations(is, { pos }, { .setLineString=true, .tabSize=nullopt });
+    auto result = locations(in, { pos }, { .setLineString=true, .tabSize=nullopt });
     EXPECT_EQ(result.locations.size(), 1);
     auto& loc = result.locations[0];
     // Grapheme width of '\t' is 0
@@ -269,10 +262,10 @@ TEST(text, locations) {
   // Test tab size 8
   {
     string s = "a\nb\tc"; // 0: a, 1: \n, 2: b, 3: \t, 4: c
-    auto is = io::is(s);
+    nio::StringSource in(s);
     // Position 4 points to `c` in the second line
     Position pos { .type=Position::note, .position=4, .message="Oops" };
-    auto result = locations(is, { pos }, { .setLineString=true });
+    auto result = locations(in, { pos }, { .setLineString=true });
     EXPECT_EQ(result.locations.size(), 1);
     auto& loc = result.locations[0];
     EXPECT_LOCATION(loc, Position::note, 4, ({}), 2, 9, ({ 2, 5 }), "b\tc", "Oops", nullopt);
@@ -283,11 +276,11 @@ TEST(text, printLocations) {
   // Test multi-line input, more than one position per line
   {
     string s = "a multi-line\ntext, where the second line is somewhat longer";
-    auto is = io::is(s);
+    nio::StringSource in(s);
     Position pos0 { .type=Position::note, .position=2, .message="Oops1" };
     Position pos1 { .type=Position::warning, .position=13, .message="Oops2" };
     Position pos2 { .type=Position::error, .position=19, .message="Oops3", .caption="Watch out!" };
-    auto result = locations(is, { pos0, pos1, pos2 }, { .setLineString=true, .source="foo" });
+    auto result = locations(in, { pos0, pos1, pos2 }, { .setLineString=true, .source="foo" });
     EXPECT_EQ(result.params.source, "foo");
     EXPECT_EQ(result.locations.size(), 3);
     auto& loc0 = result.locations[0];
@@ -320,9 +313,9 @@ TEST(text, printLocations) {
         s.substr(13),
         "Oops3",
         "Watch out!");
-    ostringstream os;
-    printLocations(os, nullopt, result, {});
-    EXPECT_EQ(os.str(),
+    nio::StringSink out;
+    printLocations(out, nullopt, result, {});
+    EXPECT_EQ(out.str(),
         "foo:1:3: note: Oops1\n"
         "    1 | a multi-line\n"
         "      |   ^\n"
@@ -343,17 +336,17 @@ TEST(text, printLocations) {
     EXPECT_EQ(
         grsp,
         positions({ { 0, 0 }, { 1, 11 }, { 2, 12 }, { 3, 13 }, { 4, 14 }, { 5, 15 }, { 6, 16 } }));
-    auto is = io::is(s);
+    nio::StringSource in(s);
     Position pos { .type=Position::note, .position=13, .message="Oops" };
-    auto result = locations(is, { pos }, {});
+    auto result = locations(in, { pos }, {});
     EXPECT_EQ(result.locations.size(), 1);
     auto& loc = result.locations[0];
     EXPECT_LOCATION(loc, Position::note, 13, ({}), 1, 9, ({ 0, 16 }), nullopt, "Oops", nullopt);
     string line = s.substr(loc.lineRange.lower, *loc.lineRange.upper - loc.lineRange.lower);
     EXPECT_EQ(line, s);
-    ostringstream os;
-    printLocations(os, s, result, {});
-    EXPECT_EQ(os.str(),
+    nio::StringSink out;
+    printLocations(out, s, result, {});
+    EXPECT_EQ(out.str(),
         "(input):1:9: note: Oops\n"
         "    1 | 🧑‍🌾\\x00  abc\n"
         "      |         ^\n");
@@ -362,16 +355,16 @@ TEST(text, printLocations) {
   // Test multi-code-point grapheme, position at end of string
   {
     string s = "🧑‍🌾\x00\tabc"s;
-    auto is = io::is(s);
+    nio::StringSource in(s);
     Position pos { .type=Position::note, .position=16, .ranges={ { 0, 16 } }, .message="Oops" };
-    auto result = locations(is, { pos }, {});
+    auto result = locations(in, { pos }, {});
     EXPECT_EQ(result.locations.size(), 1);
     auto& loc = result.locations[0];
     // Test a range that spans the entire line
     EXPECT_LOCATION(loc, Position::note, 16, ({ { 0, 16 } }), 1, 12, ({ 0, 16 }), nullopt, "Oops", nullopt);
-    ostringstream os;
-    printLocations(os, s, result, {});
-    EXPECT_EQ(os.str(),
+    nio::StringSink out;
+    printLocations(out, s, result, {});
+    EXPECT_EQ(out.str(),
         "(input):1:12: note: Oops\n"
         "    1 | 🧑‍🌾\\x00  abc\n"
         "      | ~~~~~~~~~~~^\n");

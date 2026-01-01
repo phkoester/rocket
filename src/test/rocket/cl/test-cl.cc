@@ -229,7 +229,7 @@ TEST(cl, parseOpt_bool) {
     auto args = parse(cl, { "a", "-€=hello", "b", "c" }, buf);
     EXPECT_EQ(args, vector<string>());
     EXPECT_FALSE(flag);
-    EXPECT_EQ(buf.str(), "test-rocket-cl: error: Option `-€` cannot take a value\n");
+    EXPECT_EQ(buf.str(), "test-rocket-cl-cl: error: Option `-€` cannot take a value\n");
   }
 }
 
@@ -263,7 +263,7 @@ TEST(cl, parseOpt_int) {
     auto args = parse(cl, { "a", "-n" }, buf);
     EXPECT_EQ(args, vector<string>());
     EXPECT_EQ(num, 0);
-    EXPECT_EQ(buf.str(), "test-rocket-cl: error: Missing value for option `-n`\n");
+    EXPECT_EQ(buf.str(), "test-rocket-cl-cl: error: Missing value for option `-n`\n");
   }
 
   // Test error when conversion fails
@@ -273,7 +273,7 @@ TEST(cl, parseOpt_int) {
     auto args = parse(cl, { "a", "-n", "hello" }, buf);
     EXPECT_EQ(args, vector<string>());
     EXPECT_EQ(num, 0);
-    EXPECT_EQ(buf.str(), "test-rocket-cl: error: Option `-n`: Invalid value \"hello\"; expected NUM\n");
+    EXPECT_EQ(buf.str(), "test-rocket-cl-cl: error: Option `-n`: Invalid value \"hello\"; expected NUM\n");
   }
 }
 
@@ -299,7 +299,7 @@ TEST(cl, parseOpt_enum) {
     auto args = parse(cl, { "a", "-l", "nonsense" }, buf);
     EXPECT_EQ(args, vector<string>());
     EXPECT_EQ(level, log::LogLevel::none);
-    EXPECT_EQ(buf.str(), "test-rocket-cl: error: Option `-l`: Invalid value \"nonsense\"; expected LEVEL\n");
+    EXPECT_EQ(buf.str(), "test-rocket-cl-cl: error: Option `-l`: Invalid value \"nonsense\"; expected LEVEL\n");
   }
 }
 
@@ -366,10 +366,10 @@ TEST(cl, parseCommand) {
     parseCommand({ "-p", "list", "a" }, buf, buf);
     EXPECT_EQ(
         buf.str(),
-        "test-rocket-cl: error: Unknown option `-p`\n"
-        "Usage: test-rocket-cl [OPTION]... list [OPTION]... FILE...\n"
-        "  or   test-rocket-cl [OPTION]... show [OPTION]... [ARG]...\n"
-        "Try `test-rocket-cl --help` for more information.\n");
+        "test-rocket-cl-cl: error: Unknown option `-p`\n"
+        "Usage: test-rocket-cl-cl [OPTION]... list [OPTION]... FILE...\n"
+        "  or   test-rocket-cl-cl [OPTION]... show [OPTION]... [ARG]...\n"
+        "Try `test-rocket-cl-cl --help` for more information.\n");
   }
 
   // Test invalid command
@@ -378,10 +378,10 @@ TEST(cl, parseCommand) {
     parseCommand({ "-o", "walk", "dog" }, buf, buf);
     EXPECT_EQ(
         buf.str(),
-        "test-rocket-cl: error: Invalid command `walk`\n"
-        "Usage: test-rocket-cl [OPTION]... list [OPTION]... FILE...\n"
-        "  or   test-rocket-cl [OPTION]... show [OPTION]... [ARG]...\n"
-        "Try `test-rocket-cl --help` for more information.\n");
+        "test-rocket-cl-cl: error: Invalid command `walk`\n"
+        "Usage: test-rocket-cl-cl [OPTION]... list [OPTION]... FILE...\n"
+        "  or   test-rocket-cl-cl [OPTION]... show [OPTION]... [ARG]...\n"
+        "Try `test-rocket-cl-cl --help` for more information.\n");
   }
 
   // Test help
@@ -390,8 +390,8 @@ TEST(cl, parseCommand) {
     parseCommand({ "--help" }, buf, buf);
     EXPECT_EQ(
         buf.str(),
-        "Usage: test-rocket-cl [OPTION]... list [OPTION]... FILE...\n"
-        "  or   test-rocket-cl [OPTION]... show [OPTION]... [ARG]...\n"
+        "Usage: test-rocket-cl-cl [OPTION]... list [OPTION]... FILE...\n"
+        "  or   test-rocket-cl-cl [OPTION]... show [OPTION]... [ARG]...\n"
         "\n"
         "List FILEs or show ARGs.\n"
         "\n"
@@ -429,7 +429,7 @@ TEST(cl, parseCommand) {
     parseCommand({ "list", "--help" }, buf, buf);
     EXPECT_EQ(
       buf.str(),
-      "Usage: test-rocket-cl list [OPTION]... FILE...\n"
+      "Usage: test-rocket-cl-cl list [OPTION]... FILE...\n"
       "\n"
       "List control:\n"
       "\n"
@@ -445,9 +445,9 @@ TEST(cl, parseCommand) {
     parseCommand({ "list", "-Q" }, buf, buf);
     EXPECT_EQ(
         buf.str(),
-        "test-rocket-cl: error: Unknown option `-Q`\n"
-        "Usage: test-rocket-cl list [OPTION]... FILE...\n"
-        "Try `test-rocket-cl list --help` for more information.\n");
+        "test-rocket-cl-cl: error: Unknown option `-Q`\n"
+        "Usage: test-rocket-cl-cl list [OPTION]... FILE...\n"
+        "Try `test-rocket-cl-cl list --help` for more information.\n");
   }
 
   // Test missing FILE
@@ -456,8 +456,8 @@ TEST(cl, parseCommand) {
     parseCommand({ "list", "-l" }, buf, buf);
     EXPECT_EQ(
         buf.str(),
-        "Usage: test-rocket-cl list [OPTION]... FILE...\n"
-        "Try `test-rocket-cl list --help` for more information.\n");
+        "Usage: test-rocket-cl-cl list [OPTION]... FILE...\n"
+        "Try `test-rocket-cl-cl list --help` for more information.\n");
   }
 
   // Test successful list command
@@ -476,7 +476,7 @@ TEST(cl, parseCommand) {
     parseCommand({ "show", "--help" }, buf, buf);
     EXPECT_EQ(
       buf.str(),
-      "Usage: test-rocket-cl show [OPTION]... [ARG]...\n"
+      "Usage: test-rocket-cl-cl show [OPTION]... [ARG]...\n"
       "\n"
       "Show control:\n"
       "\n"
@@ -494,9 +494,9 @@ TEST(cl, parseCommand) {
     parseCommand({ "show", "-Q" }, buf, buf);
     EXPECT_EQ(
         buf.str(),
-        "test-rocket-cl: error: Unknown option `-Q`\n"
-        "Usage: test-rocket-cl show [OPTION]... [ARG]...\n"
-        "Try `test-rocket-cl show --help` for more information.\n");
+        "test-rocket-cl-cl: error: Unknown option `-Q`\n"
+        "Usage: test-rocket-cl-cl show [OPTION]... [ARG]...\n"
+        "Try `test-rocket-cl-cl show --help` for more information.\n");
   }
 
   // Test successful show command

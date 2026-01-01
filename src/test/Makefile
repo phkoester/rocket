@@ -116,8 +116,8 @@ CC_FILES    := test/rocket/math/test-math.cc
 SHARED_LIBS := $(call shared-lib-name,rocket,$(ROCKET_VERSION))
 include $(GAIA_DIR)/src/main/make/test-executable.mk
 
-NAME        := test-rocket-math-math-func
-CC_FILES    := test/rocket/math/test-math-func.cc
+NAME        := test-rocket-math-math-Interval
+CC_FILES    := test/rocket/math/test-Interval.cc
 SHARED_LIBS := $(call shared-lib-name,rocket,$(ROCKET_VERSION))
 include $(GAIA_DIR)/src/main/make/test-executable.mk
 
