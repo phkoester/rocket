@@ -5,7 +5,6 @@
 #include "unicode.h"
 
 #include "rocket/assert.h"
-#include "rocket/io/io.h"
 #include "rocket/str/str.h"
 #include "rocket/unicode/iterator.h"
 #include "rocket/unicode/internal/block.h"
@@ -20,52 +19,6 @@ using namespace rocket::unicode;
 using namespace std;
 
 namespace unicodelib = ::unicode;
-
-// Local functions ------------------------------------------------------------------------------------------
-
-namespace {
-
-template<typename C> requires Character<C>
-basic_istream<C>&
-getGrapheme(basic_istream<C>& is, Grapheme& v) {
-  // Read first code point
-
-  CodePoint cp;
-  is >> cp;
-  if (is.eof())
-    is.setstate(ios::failbit);
-  if (is.fail())
-    return is;
-
-  u32string input { cp };
-
-  // Read more code points
-
-  while (true) {
-    // Read next code point
-    size_t pos = io::tellg(is);
-    is >> cp;
-
-    // If EOF, finish
-    if (is.eof()) {
-      io::seekg(is, pos);
-      v = Grapheme(input);
-      return is;
-    }
-    if (is.fail())
-      return is;
-
-    // If grapheme boundary, finish
-    input.push_back(cp);
-    if (CodePointIterator<char32_t>(input, input.size() - 1).graphemeBoundary()) {
-      io::seekg(is, pos);
-      v = Grapheme(input.substr(0, input.size() - 1));
-      return is;
-    }
-  }
-}
-
-} // namespace
 
 namespace rocket::unicode {
 
@@ -121,84 +74,61 @@ CodePoint::whitespace() const {
 int8_t
 CodePoint::width() const {
   // NUL
-  if (v_ == 0)
+  if (v_ == 0) {
     return 0;
+  }
 
   // C0 controls, DEL
-  if (v_ <= 31 || v_ == 127)
+  if (v_ <= 31 || v_ == 127) {
     return -1;
+  }
 
   // C1 controls
-  if (v_ >= 128 && v_ <= 159)
+  if (v_ >= 128 && v_ <= 159) {
     return -1;
+  }
 
   // General category Mn or Me
   auto gc = unicodelib::_general_category_properties::get_value(v_);
   if (gc == unicodelib::GeneralCategory::Nonspacing_Mark ||
-      gc == unicodelib::GeneralCategory::Enclosing_Mark)
+      gc == unicodelib::GeneralCategory::Enclosing_Mark) {
     return 0;
+  }
 
   // Soft hyphen
-  if (v_ == 0x00adU)
+  if (v_ == 0x00adU) {
     return 1;
+  }
 
   // General category Cf, Zero Width Space
-  if (gc == unicodelib::GeneralCategory::Cf || v_ == 0x200bU)
+  if (gc == unicodelib::GeneralCategory::Cf || v_ == 0x200bU) {
     return 0;
+  }
 
   // Hangul Jamo medial vowels and final consonants
-  if (v_ >= 0x1160U && v_ <= 0x11ffU)
+  if (v_ >= 0x1160U && v_ <= 0x11ffU) {
     return 0;
+  }
 
   // Spacing characters in the East Asian Wide (W) or East Asian Full-width (F) category
   auto eaw = internal::eastAsianWidth(v_);
-  if (eaw == internal::EastAsianWidth::wide || eaw == internal::EastAsianWidth::fullWidth)
+  if (eaw == internal::EastAsianWidth::wide || eaw == internal::EastAsianWidth::fullWidth) {
     return 2;
+  }
 
   // From `unicode-display-width`: Emoji characters in the Emoji_Presentation category
-  if (internal::emojiEmoji_Presentation(v_))
+  if (internal::emojiEmoji_Presentation(v_)) {
     return 2;
+  }
 
   return 1;
 }
 
-// XXX Weg, mit Source
-istream&
-operator>>(istream& lhs, CodePoint& rhs) {
-  string buf;
-  char c = io::getChar(lhs);
-  if (lhs.eof() || lhs.fail())
-    return lhs;
-  buf.push_back(c);
-  auto cpSize = utf8::codePointSize(c);
-  if (cpSize == 0) {
-    // Not a UTF-8 code-point boundary
-    lhs.setstate(ios::failbit);
-    return lhs;
-  }
-  for (uint8_t i = 0; i < cpSize - 1; ++i) {
-    c = io::getChar(lhs);
-    if (lhs.eof()) {
-      // Incomplete UTF-8 byte sequence
-      lhs.setstate(ios::failbit);
-    }
-    if (i > 0 && not utf8::continuationByte(c)) {
-      // Invalid UTF-8 byte sequence
-      lhs.setstate(ios::failbit);
-    }
-    if (lhs.fail())
-      return lhs;
-    buf.push_back(c);
-  }
-  u32string buf32 = utf8To32(buf);
-  if (buf32.size() != 1)
-    lhs.setstate(ios::failbit);
-  else
-    rhs = buf32[0];
-  return lhs;
+ostream&
+operator<<(ostream& lhs, CodePoint rhs) {
+  return lhs << fmt::format("{}", rhs);
 }
 
-// XXX Weg, mit Source
 size_t
 read(nio::Source& in, CodePoint& v) {
   auto pos = in.tell();
@@ -244,13 +174,6 @@ read(nio::Source& in, CodePoint& v) {
   return in.tell() - pos;
 }
 
-ostream&
-operator<<(ostream& lhs, CodePoint rhs) {
-  string s = static_cast<string>(rhs);
-  lhs.write(s.c_str(), s.size());
-  return lhs;
-}
-
 // `Grapheme` -----------------------------------------------------------------------------------------------
 
 Grapheme::Grapheme(const CodePoints& cps) :
@@ -285,10 +208,9 @@ Grapheme::print() const {
   }
 }
 
-// XXX Weg, mit Source
-istream&
-operator>>(istream& lhs, Grapheme& rhs) {
-  return getGrapheme(lhs, rhs);
+ostream&
+operator<<(ostream& lhs, const Grapheme& rhs) {
+  return lhs << fmt::format("{}", rhs);
 }
 
 size_t
@@ -325,13 +247,6 @@ read(nio::Source& in, Grapheme& v) {
       return in.tell() - pos1;
     }
   }
-}
-
-ostream&
-operator<<(ostream& lhs, const Grapheme& rhs) {
-  for (auto cp : rhs.codePoints)
-    lhs << cp;
-  return lhs;
 }
 
 // Functions ------------------------------------------------------------------------------------------------
@@ -443,8 +358,9 @@ graphemes(string_view s, container::UnorderedBimap<size_t, size_t>* positions) {
 
 bool
 valid(string_view s, string* out) {
-  if (out)
+  if (out) {
     out->clear();
+  }
 
   bool ret = true;
 
@@ -456,19 +372,22 @@ valid(string_view s, string* out) {
       if (out) {
         ret = false;
         out->append("�");
-      } else
+      } else {
         return false;
+      }
       ++i;
     } else if (i + cpSize > size) {
       // Incomplete UTF-8 byte sequence
-      if (not out)
+      if (not out) {
         return false;
+      }
       ret = false;
       out->append(str::repeat<char>("�", size - i));
       break;
     } else if (cpSize == 1) {
-      if (out)
+      if (out) {
         out->push_back(c);
+      }
       ++i;
     } else {
       // Multi-byte sequence: Check that all following bytes are continuation bytes
@@ -480,12 +399,14 @@ valid(string_view s, string* out) {
         }
       }
       if (valid) {
-        if (out)
+        if (out) {
           out->append(s.substr(i, cpSize));
+        }
       } else {
         // Invalid UTF-8 byte sequence
-        if (not out)
+        if (not out) {
           return false;
+        }
         ret = false;
         out->append(str::repeat<char>("�", cpSize));
       }
@@ -504,14 +425,16 @@ namespace utf32 {
 
 CodePoints
 codePoints(u32string_view s, container::UnorderedBimap<size_t, size_t>* positions) {
-  if (positions)
+  if (positions) {
     positions->clear();
+  }
   CodePoints ret;
   ret.reserve(s.size());
   copy(s.begin(), s.end(), back_inserter(ret));
   if (positions) {
-    for (size_t i = 0, size = s.size(); i <= size; ++i)
+    for (size_t i = 0, size = s.size(); i <= size; ++i) {
       positions->insert({ i, i });
+    }
   }
   return ret;
 }
@@ -523,18 +446,21 @@ countGraphemes(u32string_view s) {
 
 Graphemes
 graphemes(u32string_view s, container::UnorderedBimap<size_t, size_t>* positions) {
-  if (positions)
+  if (positions) {
     positions->clear();
+  }
   Graphemes ret;
   size_t i = 0;
   auto it = GraphemeIterator<char32_t>(s), end = GraphemeIterator<char32_t>(s, s.size());
   for (; it != end; ++it) {
     ret.push_back(*it);
-    if (positions)
+    if (positions) {
       positions->insert({ i++, it.position() });
+    }
   }
-  if (positions)
+  if (positions) {
     positions->insert({ i++, it.position() });
+  }
   return ret;
 }
 

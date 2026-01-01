@@ -56,7 +56,7 @@ CommandLine::apply(const Option& opt, bool nameFlag, optional<string_view> value
 
   // Usually, options not taking a value may not be assigned a value. There is one exception to this rule:
   // boolean values are allowed
-  static const set<string_view> BOOL_VALUES { "0", "false", "1", "true" }; // XXX Testen
+  static const set<string_view> BOOL_VALUES { "0", "false", "1", "true" };
   if (not opt.takesValue && value && not BOOL_VALUES.contains(*value)) {
     throw InvalidState(fmt::format("Option `{}` cannot take a value", name(opt, nameFlag)));
   }
@@ -64,11 +64,11 @@ CommandLine::apply(const Option& opt, bool nameFlag, optional<string_view> value
   try {
     opt.apply(value);
   } catch (const exception& ex) {
-    nio::StringSink expected;
+    string expected;
     if (opt.format) {
-      expected.print("; expected {}", *opt.format);
+      expected = fmt::format("; expected {}", *opt.format);
     }
-    throw InvalidState(fmt::format("Option `{}`: Invalid value {:?}{}", name(opt, nameFlag), *value, expected.str()));
+    throw InvalidState(fmt::format("Option `{}`: Invalid value {:?}{}", name(opt, nameFlag), *value, expected));
   }
 }
 

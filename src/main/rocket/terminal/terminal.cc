@@ -5,8 +5,8 @@
 #include "terminal.h"
 
 #include "rocket/Guard.h"
+#include "rocket/InputFailure.h"
 #include "rocket/assert.h"
-#include "rocket/io/io.h"
 
 #include <termios.h>
 #include <sys/ioctl.h>
@@ -67,9 +67,7 @@ Ansi::move(int column, int line) const {
 
 string
 Ansi::request(nio::Sink& out, string_view sequence) const {
-  // XXX
-  nio::FileSink* fileSink = dynamic_cast<nio::FileSink*>(&out);
-  ROCKET_CHECK(sink, fileSink && (fileSink->fd() == STDOUT_FILENO || fileSink->fd() == STDERR_FILENO));
+  ROCKET_CHECK(sink, out.fd() == STDOUT_FILENO || out.fd() == STDERR_FILENO);
 
   if (not active_)
     return string();
@@ -96,8 +94,8 @@ Ansi::request(nio::Sink& out, string_view sequence) const {
   string ret;
   while (true) {
     char c;
-    if (read(STDIN_FILENO, &c, 1) != 1) {
-      throw io::InputFailure(cin, ret.size(), "Failed to read response");
+    if (::read(STDIN_FILENO, &c, 1) != 1) {
+      throw InputFailure(ret.size(), "Failed to read response");
     }
     ret.push_back(c);
     if (c == 'R') {

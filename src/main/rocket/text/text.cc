@@ -178,7 +178,7 @@ locations(nio::Source& in, const vector<Position>& positions, const LocationsPar
       // Add the grapheme
 
       column += gr.width;
-      lineString.append(static_cast<string>(gr)); // XXX
+      lineString.append(static_cast<string>(gr));
     }
   }
 
@@ -233,7 +233,7 @@ printLocations(
 
     // Print the line prefix
 
-    out.print("{: >{}d} | ", loc.line, lineNumberWidth); // XXX
+    out.print("{: >{}d} | ", loc.line, lineNumberWidth);
 
     // Escape the line as C-string, take tab setting from `locationsResult`, print the line as graphemes
     // (skip zero-width graphemes)

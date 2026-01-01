@@ -8,8 +8,8 @@
 
 #include "rocket/Exception.h"
 #include "rocket/enum-decl.h"
+#include "rocket/io/io.h"
 #include "rocket/rocket.h"
-#include "rocket/io/io.h" // XXX
 #include "rocket/message/message.h"
 
 #include <limits>

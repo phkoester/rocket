@@ -13,6 +13,8 @@
  */
 #define ROCKET_TESTING
 
+#include "rocket/io/io.h"
+
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
@@ -30,8 +32,9 @@
  */
 #define EXPECT_ENV(name) { \
   const char* p = getenv(name); \
-  if (not p || (strcmp(p, "1") != 0 && strcmp(p, "true") != 0)) \
+  if (not p || (strcmp(p, "1") != 0 && strcmp(p, "true") != 0)) { \
     GTEST_SKIP_("Skipping test because `" name "` is not set\n"); \
+  } \
 }
 
 /**

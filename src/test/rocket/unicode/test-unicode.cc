@@ -5,7 +5,6 @@
 #include "rocket-gtest/rocket-gtest.h"
 
 #include "rocket/format/std.h"
-#include "rocket/io/io.h"
 #include "rocket/random/random.h"
 #include "rocket/system/system.h"
 #include "rocket/terminal/terminal.h"
@@ -144,38 +143,11 @@ TEST(unicode, CodePointWidth) {
   EXPECT_EQ(CodePoint(0x0300U).width(), 0); // Combining Grave Accent, Category Mn (768)
 }
 
-TEST(unicode, opInput_CodePoint) {
-  CodePoint v;
-
-  {
-    auto is = io::is();
-    is >> v;
-    EXPECT_ISTREAM(is, true, true, 0);
-  }
-
-  {
-    string input = "x";
-    auto is = io::is(input);
-    is >> v;
-    EXPECT_EQ(v, 'x');
-    EXPECT_ISTREAM(is, false, false, input.size());
-  }
-
-  {
-    string input = "€";
-    auto is = io::is(input);
-    is >> v;
-    EXPECT_EQ(v, 0x20acU);
-    EXPECT_ISTREAM(is, false, false, input.size());
-  }
-}
-
-// XXX
 TEST(unicode, CodePointRead) {
   CodePoint v;
 
   {
-    nio::StringSource in("");
+    nio::StringSource in;
     EXPECT_EQ(read(in, v), 0);
     EXPECT_EQ(in.tell(), 0);
   }
@@ -241,7 +213,7 @@ TEST(unicode, Grapheme) {
   EXPECT_EQ(width(graphemes("\ue000")), 1);
 }
 
-TEST(unicode, Grapheme_opCast_string) {
+TEST(unicode, GraphemeOpCastString) {
   using type = string;
 
   EXPECT_EQ(static_cast<type>(Grapheme("A")), "A");
@@ -249,7 +221,7 @@ TEST(unicode, Grapheme_opCast_string) {
   EXPECT_EQ(static_cast<type>(Grapheme("😁")), "😁");
 }
 
-TEST(unicode, Grapheme_opCast_u32string) {
+TEST(unicode, GraphemeOpCastU32string) {
   using type = u32string;
 
   EXPECT_EQ(static_cast<type>(Grapheme("A")), U"A");
@@ -257,35 +229,11 @@ TEST(unicode, Grapheme_opCast_u32string) {
   EXPECT_EQ(static_cast<type>(Grapheme("😁")), U"😁");
 }
 
-TEST(unicode, opInput_Grapheme) {
-  Grapheme v;
-
-  {
-    auto is = io::is();
-    is >> v;
-    EXPECT_ISTREAM(is, true, true, 0);
-  }
-
-  {
-    string input = "🧑‍🌾a";
-    auto is = io::is(input);
-    is >> v;
-    EXPECT_EQ(v.codePoints.size(), 3);
-    EXPECT_EQ(v.width, 2);
-    EXPECT_ISTREAM(is, false, false, input.size() - 1);
-    is >> v;
-    EXPECT_EQ(v.codePoints.size(), 1);
-    EXPECT_EQ(v.width, 1);
-    EXPECT_ISTREAM(is, false, true, input.size());
-  }
-}
-
-// XXX
 TEST(unicode, GraphemeRead) {
   Grapheme v;
 
   {
-    nio::StringSource in("");
+    nio::StringSource in;
     EXPECT_EQ(read(in, v), 0);
     EXPECT_EQ(in.tell(), 0);
   }

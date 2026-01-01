@@ -101,11 +101,6 @@ CC_FILES    := test/rocket/format/test-format-std.cc
 SHARED_LIBS := $(call shared-lib-name,rocket,$(ROCKET_VERSION))
 include $(GAIA_DIR)/src/main/make/test-executable.mk
 
-NAME        := test-rocket-io-io
-CC_FILES    := test/rocket/io/test-io.cc
-SHARED_LIBS := $(call shared-lib-name,rocket,$(ROCKET_VERSION))
-include $(GAIA_DIR)/src/main/make/test-executable.mk
-
 NAME        := test-rocket-log-log
 CC_FILES    := test/rocket/log/test-log.cc
 SHARED_LIBS := $(call shared-lib-name,rocket,$(ROCKET_VERSION))

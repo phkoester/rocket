@@ -121,14 +121,18 @@ operator!=(const bimap<A, B>& lhs, const bimap<A, B>& rhs) {
 
 /// @op_output{`boost::bimaps::bimap`}
 template<typename A, typename B>
-std::ostream&
+inline std::ostream&
 operator<<(std::ostream& lhs, const bimap<A, B>& rhs) {
   return lhs << fmt::format("{}", rhs);
 }
 
-/// @fn_PrintTo{`boost::bimaps::bimap`}
+/**
+ * @fn_PrintTo{`boost::bimaps::bimap`}
+ *
+ * @todo Why do we need this? For some reason, GoogleTest doesn find `operator<<` ...
+ */
 template<typename A, typename B>
-void PrintTo(const bimap<A, B>& v, std::ostream* os) {
+inline void PrintTo(const bimap<A, B>& v, std::ostream* os) {
   *os << v;
 }
 
@@ -142,7 +146,7 @@ struct fmt::formatter<boost::bimaps::bimap<A, B>, Char> {
   constexpr auto
   format(const boost::bimaps::bimap<A, B>& v, FormatContext& ctx) const -> decltype(ctx.out()) {
     // @todo Understand how `underlying_` is implemented in `fmt/ranges.h`, and don't make a copy of the
-    // whole map here
+    // whole map here. May there is an `is_map_like` or such ...
     std::map<K, V> map;
     for (const auto& [k, v] : v.left) {
       map.emplace(k, v);

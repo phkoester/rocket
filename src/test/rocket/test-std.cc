@@ -44,15 +44,8 @@ TEST(std, formatLocale) {
 }
 
 TEST(std, istreamDefaultExceptions) {
-  {
-    auto is = istringstream();
-    EXPECT_EQ(is.exceptions(), 0);
-  }
-
-  {
-    auto is = io::is();
-    EXPECT_EQ(is.exceptions(), ios::badbit);
-  }
+  auto is = io::is();
+  EXPECT_EQ(is.exceptions(), 0);
 }
 
 TEST(std, istreamEof) {

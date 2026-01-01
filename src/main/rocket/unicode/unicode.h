@@ -10,7 +10,6 @@
 #include "rocket/container/container.h"
 #include "rocket/format/format.h"
 #include "rocket/nio/nio.h"
-#include "rocket/unicode/unicode-decl.h"
 
 #include <cstdint>
 #include <limits>
@@ -52,8 +51,6 @@ struct CodePoint {
    */
   // cppcheck-suppress noExplicitConstructor
   constexpr CodePoint(uint32_t v) : v_(v) {}
-
-  // XXX Warum kein operator char32_t()?
 
   /// @member_op_cast{`uint32_t`}
   operator uint32_t() const { return v_; }
@@ -136,37 +133,14 @@ private:
 // `char32_t`
 static_assert(sizeof(CodePoint) == sizeof(uint32_t) && sizeof(uint32_t) == sizeof(char32_t));
 
-/// @fn_hash_value{#rocket::unicode::CodePoint}
-inline size_t
-hash_value(CodePoint v) {
-  return v.hash();
-}
-
-/**
- * UTF-8 input operator for #rocket::unicode::CodePoint.
- *
- * This operator reads a code point from a UTF-8 stream. If the reading fails, the fail bit of the input
- * stream @p is is set, and @p rhs is not assigned any value.
- *
- * @param lhs the input stream
- * @param rhs a code point
- * @return @p lhs
- */
-std::istream& operator>>(std::istream& lhs, CodePoint& rhs);
-
-// XXX
-size_t read(nio::Source& in, CodePoint& v);
-
-/**
- * Output operator for #rocket::unicode::CodePoint.
- *
- * This operator writes a code point to a UTF-8 stream.
- *
- * @param lhs the output stream
- * @param rhs a code point
- * @return @p lhs
- */
+/// @op_output{#rocket::unicode::CodePoint}
 std::ostream& operator<<(std::ostream& lhs, CodePoint rhs);
+
+/// @fn_hash_value{#rocket::unicode::CodePoint}
+inline size_t hash_value(CodePoint v) { return v.hash(); }
+
+/// @fn_read{#rocket::unicode::CodePoint}
+size_t read(nio::Source& in, CodePoint& v);
 
 } // namespace rocket::unicode
 
@@ -294,11 +268,11 @@ struct Grapheme {
    *
    * @return a code point if there is exactly one, otherwise null
    */
-  // XXX Sieht unsinnig aus
   inline std::optional<CodePoint>
   codePoint() const {
-    if (codePoints.size() == 1)
+    if (codePoints.size() == 1) {
       return codePoints[0];
+    }
     return std::nullopt;
   }
 
@@ -370,31 +344,11 @@ struct Grapheme {
   }
 };
 
-// XXX
-size_t read(nio::Source& in, Grapheme& v);
-
-/**
- * UTF-8 input operator for #rocket::unicode::Grapheme.
- *
- * This operator reads a grapheme from a UTF-8 stream. If the reading fails, the fail bit of the input stream
- * @p is is set, and @p rhs is not assigned any value.
- *
- * @param lhs the input stream
- * @param rhs a grapheme
- * @return @p lhs
- */
-std::istream& operator>>(std::istream& lhs, Grapheme& rhs);
-
-/**
- * Output operator for #rocket::unicode::Grapheme.
- *
- * This operator writes a grapheme to a UTF-8 stream.
- *
- * @param lhs the output stream
- * @param rhs a grapheme
- * @return @p lhs
- */
+/// @op_output{#rocket::unicode::Grapheme}
 std::ostream& operator<<(std::ostream& lhs, const Grapheme& rhs);
+
+// @fn_read{#rocket::unicode::Grapheme}
+size_t read(nio::Source& in, Grapheme& v);
 
 } // namespace rocket::unicode
 

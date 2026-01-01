@@ -440,6 +440,8 @@ private:
 // `StringSource` -------------------------------------------------------------------------------------------
 
 struct StringSource : Source {
+  StringSource() {}
+
   explicit StringSource(std::string_view in) : in_(in) {}
 
   virtual ~StringSource() override;

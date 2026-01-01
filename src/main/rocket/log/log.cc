@@ -178,7 +178,7 @@ logImpl(nio::Sink& out, LogLevel* logId, LogLevel level, size_t stackLevel, stri
   indentSize += 8;
 
   // Item: stack level
-  string indent(2 * stackLevel, ' '); // XXX Besser mit ">"
+  string indent(2 * stackLevel, ' ');
   out.write(indent);
   indentSize += indent.size();
 
