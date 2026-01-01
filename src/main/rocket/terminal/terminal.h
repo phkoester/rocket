@@ -86,7 +86,7 @@ struct Ansi {
    * @return the response from `stdin` if this instance is active, otherwise an empty string
    * @throw #rocket::io::InputFailure if the response from `stdin` is not valid
    */
-  std::string request(nio::Sink& sink, std::string_view sequence) const;
+  std::string request(nio::Sink& out, std::string_view sequence) const;
 
   /**
    * Moves the cursor right by @p n columns.
@@ -136,7 +136,7 @@ private:
  *     returned
  * @return the cursor position, or null if not available
  */
-std::optional<std::pair<size_t, size_t>> position(nio::Sink& sink);
+std::optional<std::pair<size_t, size_t>> position(nio::Sink& out);
 
 /**
  * Returns the terminal's current size, if available. The pair' s `first` is the width in columns, `second`
@@ -146,7 +146,7 @@ std::optional<std::pair<size_t, size_t>> position(nio::Sink& sink);
  *     returned
  * @return the terminal size, or null if not available
  */
-std::optional<std::pair<size_t, size_t>> size(nio::Sink& sink);
+std::optional<std::pair<size_t, size_t>> size(nio::Sink& out);
 
 } // namespace rocket::terminal
 

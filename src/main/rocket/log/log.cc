@@ -20,7 +20,7 @@ void applyLog(optional<string_view>);
 
 void applyLogOut(optional<string_view>);
 
-void logFlush(nio::Sink& sink);
+void logFlush(nio::Sink& out);
 
 void setLogLevel(string_view, string_view);
 
@@ -38,18 +38,18 @@ struct Entry {
 // `Out` ----------------------------------------------------------------------------------------------------
 
 struct Out {
-  inline nio::Sink& get() { return sink_ ? *sink_ : *p_; }
+  inline nio::Sink& get() { return out_ ? *out_ : *fileOut_; }
 
   void set(nio::Sink& v) {
-    sink_ = &v;
-    p_ = nullptr;
+    out_ = &v;
+    fileOut_ = nullptr;
   }
 
   void set(string_view v) {
-    sink_ = nullptr;
+    out_ = nullptr;
     // Append to avoid data loss
-    p_ = make_unique<nio::FileSink>(string(v), nio::FileSink::Params { .append=true });
-    if (not p_->good()) {
+    fileOut_ = make_unique<nio::FileSink>(string(v), nio::FileSink::Params { .append=true });
+    if (not fileOut_->good()) {
       process.error(nio::stderr, EXIT_SUCCESS, "Cannot open log file `{}`; logging to standard output instead", v);
       set(nio::stdout);
     }
@@ -57,8 +57,8 @@ struct Out {
 
 private:
 
-  nio::Sink* sink_ = &nio::stdout; // `stdout` or `stderr`
-  unique_ptr<nio::FileSink> p_; // A file sink
+  nio::Sink* out_ = &nio::stdout; // `stdout` or `stderr`
+  unique_ptr<nio::FileSink> fileOut_; // A file sink
 };
 
 // Local variables1 -----------------------------------------------------------------------------------------
@@ -138,7 +138,7 @@ applyLogOut(optional<string_view> v) {
  * Flushes pending begin log entries.
  */
 void
-logFlush(nio::Sink& sink) {
+logFlush(nio::Sink& out) {
   auto begin = stack.end();
 
   // Look for pending begin log entries
@@ -152,7 +152,7 @@ logFlush(nio::Sink& sink) {
 
   // Flush them, if any
   for (auto it = begin; it != stack.end(); ++it) {
-    sink.write(*it->begin_);
+    out.write(*it->begin_);
     it->begin_= nullopt;
   }
 }
@@ -161,25 +161,25 @@ logFlush(nio::Sink& sink) {
  * @ThreadSafe
  */
 void
-logImpl(nio::Sink& sink, LogLevel* logId, LogLevel level, size_t stackLevel, string_view msg) {
+logImpl(nio::Sink& out, LogLevel* logId, LogLevel level, size_t stackLevel, string_view msg) {
   // Item: time point in ISO-8601, current time zone, with microseconds
   chrono::time_point tp = time_point_cast<chrono::microseconds>(chrono::system_clock::now());
   chrono::zoned_time zt { chrono::current_zone(), tp };
   string s = std::format("{:%FT%T%Ez} ", zt);
-  sink.write(s);
+  out.write(s);
   size_t indentSize = s.size();
 
   // Item: caller level
   if (level > LogLevel::none) {
-    sink.write(fmt::format("[{: <5}] ", level)); // Width is 8
+    out.write(fmt::format("[{: <5}] ", level)); // Width is 8
   } else {
-    sink.write("        "); // 8 spaces
+    out.write("        "); // 8 spaces
   }
   indentSize += 8;
 
   // Item: stack level
   string indent(2 * stackLevel, ' '); // XXX Besser mit ">"
-  sink.write(indent);
+  out.write(indent);
   indentSize += indent.size();
 
   // Item: log ID
@@ -187,24 +187,24 @@ logImpl(nio::Sink& sink, LogLevel* logId, LogLevel level, size_t stackLevel, str
     ROCKET_LOCK(definedIdsMutex);
     auto it = definedIds.left.find(logId);
     ROCKET_ASSERT(it != definedIds.left.end());
-    sink.print("{} ", it->second);
+    out.print("{} ", it->second);
     indentSize += it->second.size() + 1;
   }
 
   // Item: message
   if (auto lf = msg.find('\n'); lf == string::npos) {
     // Single-line message: just print it
-    sink.write(msg);
+    out.write(msg);
   } else {
     // Multi-line message: left-adjust
     string localMsg(msg);
     string to = "\n" + string(indentSize, ' ');
     str::replaceIn<char>(localMsg, "\n", to);
-    sink.write(localMsg);
+    out.write(localMsg);
   }
 
   // Print line feed
-  sink.write('\n');
+  out.write('\n');
 }
 
 // @ThreadSafe

@@ -152,7 +152,7 @@ struct InvalidState : std::runtime_error, Exception {
  * @param sink the sink to print to
  * @param ex the exception
  */
-void printException(nio::Sink& sink, const std::exception& ex);
+void printException(nio::Sink& out, const std::exception& ex);
 
 /**
  * Prints detailed information about the exception pointer @p ex to the sink @p sink.
@@ -163,7 +163,7 @@ void printException(nio::Sink& sink, const std::exception& ex);
  * @param sink the sink to print to
  * @param ptr the exception pointer. May not be null
  */
-void printException(nio::Sink& sink, std::exception_ptr ptr);
+void printException(nio::Sink& out, std::exception_ptr ptr);
 
 /**
  * Extracts the `what` message from an exception.

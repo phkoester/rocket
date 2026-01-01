@@ -66,9 +66,9 @@ Ansi::move(int column, int line) const {
 }
 
 string
-Ansi::request(nio::Sink& sink, string_view sequence) const {
+Ansi::request(nio::Sink& out, string_view sequence) const {
   // XXX
-  nio::FileSink* fileSink = dynamic_cast<nio::FileSink*>(&sink);
+  nio::FileSink* fileSink = dynamic_cast<nio::FileSink*>(&out);
   ROCKET_CHECK(sink, fileSink && (fileSink->fd() == STDOUT_FILENO || fileSink->fd() == STDERR_FILENO));
 
   if (not active_)
@@ -88,8 +88,8 @@ Ansi::request(nio::Sink& sink, string_view sequence) const {
 
   // Send the ANSI code requesting cursor position
 
-  sink.write(sequence);
-  sink.flush();
+  out.write(sequence);
+  out.flush();
 
   // Read the response
 
@@ -130,15 +130,15 @@ Ansi::up(int n) const {
 // Functions ------------------------------------------------------------------------------------------------
 
 optional<pair<size_t, size_t>>
-position(nio::Sink& sink) {
-  if (not isatty(sink.fd())) {
+position(nio::Sink& out) {
+  if (not isatty(out.fd())) {
     return nullopt;
   }
 
   // Send the ANSI code requesting cursor position
 
   Ansi ansi(true); // We know that the sink is connected to a terminal
-  string response = ansi.request(sink, "\e[6n");
+  string response = ansi.request(out, "\e[6n");
 
   // Parse the response
 
@@ -152,8 +152,8 @@ position(nio::Sink& sink) {
 }
 
 optional<pair<size_t, size_t>>
-size(nio::Sink& sink) {
-  int fd = sink.fd();
+size(nio::Sink& out) {
+  int fd = out.fd();
   if (not isatty(fd)) {
     return nullopt;
   }

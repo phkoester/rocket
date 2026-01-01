@@ -73,35 +73,35 @@ CommandLine::apply(const Option& opt, bool nameFlag, optional<string_view> value
 }
 
 void
-CommandLine::error(nio::Sink& sink, int status) const {
+CommandLine::error(nio::Sink& out, int status) const {
   if (usage_)
-    printUsage(sink);
+    printUsage(out);
   if (help_)
-    printHelp(sink);
+    printHelp(out);
   if (status != EXIT_SUCCESS)
     process.exit(status);
 }
 
 void
-CommandLine::handleException(const exception& ex, nio::Sink& sink, int status) const {
+CommandLine::handleException(const exception& ex, nio::Sink& out, int status) const {
   if (auto p = dynamic_cast<const Exception*>(&ex))
-    process.error(sink, EXIT_SUCCESS, "{}", p->message());
+    process.error(out, EXIT_SUCCESS, "{}", p->message());
   else
-    process.error(sink, EXIT_SUCCESS, "{}", ex.what());
+    process.error(out, EXIT_SUCCESS, "{}", ex.what());
 
   if (usage_)
-    printUsage(sink);
+    printUsage(out);
   if (help_)
-    printHelp(sink);
+    printHelp(out);
   if (status != EXIT_SUCCESS)
     process.exit(status);
 }
 
 void
-CommandLine::help(nio::Sink& sink, bool exit) {
+CommandLine::help(nio::Sink& out, bool exit) {
   ROCKET_EXPECT(help_);
 
-  auto size = terminal::size(sink);
+  auto size = terminal::size(out);
   size_t width = max(40UL, size ? size->first : 80UL);
   bool output = params_.otherOutput;
 
@@ -109,9 +109,9 @@ CommandLine::help(nio::Sink& sink, bool exit) {
 
   if (usage_) {
     if (output) {
-      sink.write('\n');
+      out.write('\n');
     }
-    printUsage(sink);
+    printUsage(out);
     output = true;
   }
 
@@ -119,9 +119,9 @@ CommandLine::help(nio::Sink& sink, bool exit) {
 
   if (params_.prolog) {
     if (output) {
-      sink.write('\n');
+      out.write('\n');
     }
-    sink.writeln(text::wrap(*params_.prolog, { .width=width }));
+    out.writeln(text::wrap(*params_.prolog, { .width=width }));
     output = true;
   }
 
@@ -129,9 +129,9 @@ CommandLine::help(nio::Sink& sink, bool exit) {
 
   if (not opts_.empty()) {
     if (output) {
-      sink.write('\n');
+      out.write('\n');
     }
-    helpOpts(sink, width);
+    helpOpts(out, width);
     output = true;
   }
 
@@ -139,9 +139,9 @@ CommandLine::help(nio::Sink& sink, bool exit) {
 
   if (params_.epilog) {
     if (output) {
-      sink.write('\n');
+      out.write('\n');
     }
-    sink.writeln(text::wrap(*params_.epilog, { .width=width }));
+    out.writeln(text::wrap(*params_.epilog, { .width=width }));
   }
 
   if (exit) {
@@ -154,7 +154,7 @@ CommandLine::help(nio::Sink& sink, bool exit) {
  * first. Within the groups, options appear in the order they are seen.
  */
 void
-CommandLine::helpOpts(nio::Sink& sink, size_t width) const {
+CommandLine::helpOpts(nio::Sink& out, size_t width) const {
   // Collect groups and options therein
 
   unordered_map<const OptionGroup*, vector<const Option*>> options;
@@ -186,27 +186,27 @@ CommandLine::helpOpts(nio::Sink& sink, size_t width) const {
     if (opts.empty())
       continue;
     if (output) {
-      sink.write('\n');
+      out.write('\n');
     }
-    sink.println("{}:\n", group->title);
+    out.println("{}:\n", group->title);
     output = true;
 
     // Loop through options
 
     for (const auto* opt : opts) {
-      sink.write("  ");
+      out.write("  ");
       if (opt->shortName) {
-        sink.print("-{}, ", static_cast<string>(*opt->shortName));
+        out.print("-{}, ", static_cast<string>(*opt->shortName));
       } else {
-        sink.write("    ");
+        out.write("    ");
       }
-      sink.print("--{}", opt->name);
+      out.print("--{}", opt->name);
       if (opt->format) {
-        sink.print(" {}", *opt->format);
+        out.print(" {}", *opt->format);
       }
-      sink.write('\n');
+      out.write('\n');
       if (opt->help) {
-        sink.writeln(text::wrap(*opt->help, wrapParams));
+        out.writeln(text::wrap(*opt->help, wrapParams));
       }
     }
   }
@@ -335,19 +335,19 @@ CommandLine::parse(const vector<string>& args, const Take& take) const {
 }
 
 void
-CommandLine::printHelp(nio::Sink& sink) const {
+CommandLine::printHelp(nio::Sink& out) const {
   ROCKET_EXPECT(help_);
 
-  sink.println("Try `{} --help` for more information.", params_.command);
+  out.println("Try `{} --help` for more information.", params_.command);
 }
 
 void
-CommandLine::printUsage(nio::Sink& sink) const {
+CommandLine::printUsage(nio::Sink& out) const {
   ROCKET_EXPECT(usage_);
 
-  sink.println("Usage: {} {}", params_.command, params_.usages[0]);
+  out.println("Usage: {} {}", params_.command, params_.usages[0]);
   for (size_t i = 1; i < params_.usages.size(); ++i) {
-    sink.println("  or   {} {}", params_.command, params_.usages[i]);
+    out.println("  or   {} {}", params_.command, params_.usages[i]);
   }
 }
 

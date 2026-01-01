@@ -183,10 +183,10 @@ struct CommandLine {
    * To be called when the command line, in particular its positional arguments, did not satisfy the usage
    * rules.
    *
-   * @param sink the sink to write to
+   * @param out the sink to write to
    * @param status program exit status. If this is not `EXIT_SUCCESS` (0), the program exits with this status
    */
-  void error(nio::Sink& sink, int status = EXIT_SERIOUS_FAILURE) const;
+  void error(nio::Sink& out, int status = EXIT_SERIOUS_FAILURE) const;
 
   /**
    * To be called when #parse threw an exception.
@@ -197,7 +197,7 @@ struct CommandLine {
    */
   void handleException(
       const std::exception& ex,
-      nio::Sink& sink,
+      nio::Sink& out,
       int status = EXIT_SERIOUS_FAILURE) const;
 
   /**
@@ -206,7 +206,7 @@ struct CommandLine {
    * @param sink the sink to write to
    * @param exit if `true`, the program exits with `EXIT_SUCCESS`, otherwise it continues to run
    */
-  void help(nio::Sink& sink, bool exit);
+  void help(nio::Sink& out, bool exit);
 
   /**
    * Parses the command-line arguments @p args, assigns values to bound destination references.
@@ -240,11 +240,11 @@ private:
   std::unordered_map<std::string_view, const Option*> byName_;
   std::unordered_map<uint32_t, const Option*> byShortName_;
 
-  void helpOpts(nio::Sink& sink, size_t width) const;
+  void helpOpts(nio::Sink& out, size_t width) const;
 
-  void printHelp(nio::Sink& sink) const;
+  void printHelp(nio::Sink& out) const;
 
-  void printUsage(nio::Sink& sink) const;
+  void printUsage(nio::Sink& out) const;
 };
 
 } // namespace cl

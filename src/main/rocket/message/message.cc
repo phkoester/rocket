@@ -19,12 +19,12 @@ cannotParseAs(string_view input, const Type& type) {
 
 string
 exceptionBase(string_view msg, const optional<source_location>& sl) {
-  nio::StringSink sink;
+  nio::StringSink out;
   if (sl) {
-    sink.print("{}:{}: ", sl->file_name(), sl->line());
+    out.print("{}:{}: ", sl->file_name(), sl->line());
   }
-  sink.write(msg);
-  return sink.str();
+  out.write(msg);
+  return out.str();
 }
 
 string

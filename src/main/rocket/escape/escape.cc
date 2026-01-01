@@ -7,7 +7,7 @@
 #include "rocket/InputFailure.h"
 #include "rocket/assert.h"
 #include "rocket/nio/util.h"
-#include "rocket/unicode/unicode.h"
+#include "rocket/unicode/iterator.h"
 
 using namespace rocket;
 using namespace rocket::escape;
@@ -17,47 +17,46 @@ namespace {
 
 // Local functions ------------------------------------------------------------------------------------------
 
-#if 0
-std::string escapeCStringCodePointHex(unicode::CodePoint, size_t&);
-std::string escapeCStringTab(size_t&, const CStringParams&);
+string escapeCStringCodePointHex(unicode::CodePoint, size_t&);
+string escapeCStringTab(size_t&, const CStringParams&);
 
-std::string
+string
 escapeCStringCodePoint(unicode::CodePoint cp, size_t& column, const CStringParams& params) {
   // Escapable characters
-  std::string ret;
+  string ret;
   if (cp >= '\a' && cp <= '\\') {
     switch (cp) {
     case '\a': // Alert = 7
-      ret = std::string { '\\', 'a' };
+      ret = string { '\\', 'a' };
       break;
     case '\b':// Backspace = 8
-      ret = std::string { '\\', 'b' };
+      ret = string { '\\', 'b' };
       break;
     case '\t':// Horizontal tab = 9
       return escapeCStringTab(column, params);
     case '\n': // Line feed = 10
-      ret = std::string { '\\', 'n' };
+      ret = string { '\\', 'n' };
       break;
     case '\v': // Vertical tab = 11
-      ret = std::string { '\\', 'v' };
+      ret = string { '\\', 'v' };
       break;
     case '\f': // Form feed = 12
-      ret = std::string { '\\', 'f' };
+      ret = string { '\\', 'f' };
       break;
     case '\r': // Carriage return = 13
-      ret = std::string { '\\', 'r' };
+      ret = string { '\\', 'r' };
       break;
     case '\e': // Escape = 27
-      ret = std::string { '\\', 'e' };
+      ret = string { '\\', 'e' };
       break;
     case '"': // Quotation mark = 34
-      ret = params.quote == '"' ? std::string { '\\', '"' } :std::string { '"' };
+      ret = params.quote == '"' ? string { '\\', '"' } : string { '"' };
       break;
     case '\'': // Apostrophe = 39
-      ret = params.quote == '\'' ? std::string { '\\', '\'' } : std::string { '\'' };
+      ret = params.quote == '\'' ? string { '\\', '\'' } : string { '\'' };
       break;
     case '\\': // Backslash = 92
-      ret = std::string { '\\', '\\' };
+      ret = string { '\\', '\\' };
       break;
     }
   }
@@ -70,16 +69,16 @@ escapeCStringCodePoint(unicode::CodePoint cp, size_t& column, const CStringParam
   int8_t w;
   if (cp.print(&w)) {
     column += static_cast<size_t>(w); // We know `w` > 0
-    return static_cast<std::string>(cp);
+    return static_cast<string>(cp);
   }
 
   // Hex otherwise
   return escapeCStringCodePointHex(cp, column);
 }
 
-std::string
+string
 escapeCStringCodePointHex(unicode::CodePoint cp, size_t& column) {
-  std::string ret;
+  string ret;
   if (cp > 0xffffU)
     ret = fmt::format("\\U{:0>8x}", static_cast<uint32_t>(cp));
   else if (cp > 0x00ffU)
@@ -90,20 +89,22 @@ escapeCStringCodePointHex(unicode::CodePoint cp, size_t& column) {
   return ret;
 }
 
-std::string
+string
 escapeCStringTab(size_t& column, const CStringParams& params) {
   if (not params.tabSize) {
-    std::string ret { '\\', 't' };
+    string ret { '\\', 't' };
     column += ret.size();
     return ret;
   }
   else {
     size_t mod = column % *params.tabSize;
-    std::string ret(*params.tabSize - mod, ' ');
+    string ret(*params.tabSize - mod, ' ');
     column += ret.size();
     return ret;
   }
 }
+
+#if 0
 
 std::ostream&
 operator<<(std::ostream& lhs, const EscapedString<CString>& rhs) {
@@ -416,10 +417,64 @@ operator<<(std::ostream& lhs, const EscapedString<Regex>& rhs) {
 
 namespace rocket::escape {
 
-// XXX
 string
 escapeCString(string_view input, const CStringParams& params, Result* result) {
-  return "Hello from escapeCString!";
+  ROCKET_CHECK(params, params.quote == '\0' || params.quote == '"' || params.quote == '\'');
+
+  string ret;
+  if (result) {
+    result->positions.clear();
+  }
+  size_t to = 0;
+
+  // If needed, print quote
+
+  if (params.enclosing()) {
+    ret.push_back(params.quote);
+    ++to;
+  }
+
+  // Loop through graphemes
+
+  auto it = unicode::GraphemeIterator(input), end = unicode::GraphemeIterator(input, input.size());
+  size_t column = 0;
+  for (; it != end; ++it) {
+    // Obtain grapheme
+
+    unicode::Grapheme gr = *it;
+    if (result) {
+      result->positions.insert({ it.position(), to });
+    }
+
+    if (gr.codePoint()) {
+      // Single-code-point grapheme
+
+      unicode::CodePoint cp = *gr.codePoint();
+      auto escaped = escapeCStringCodePoint(cp, column, params);
+      ret.append(escaped);
+      to += escaped.size();
+    } else if (gr.crlf()) {
+      // CRLF
+      column += 4;
+      ret.append("\\r\\n");
+      to += 4;
+    } else {
+      // Multi-code-point grapheme
+
+      column += gr.width;
+      auto add = static_cast<string>(gr);
+      ret.append(add);
+      to += add.size();
+    }
+  }
+
+  // If needed, print quote
+
+  if (params.enclosing()) {
+    ret.push_back(params.quote);
+  }
+
+  return ret;
 }
 
 string
@@ -507,17 +562,17 @@ unescapeCString(const string& input, const CStringParams& params, Result* result
           break;
         case 'x': {
           auto i = nio::getHex(in, 2);
-          ret.append(static_cast<std::string>(unicode::CodePoint(i)));
+          ret.append(static_cast<string>(unicode::CodePoint(i)));
           break;
         }
         case 'u': {
           auto i = nio::getHex(in, 4);
-          ret.append(static_cast<std::string>(unicode::CodePoint(i)));
+          ret.append(static_cast<string>(unicode::CodePoint(i)));
           break;
         }
         case 'U': {
           auto i = nio::getHex(in, 8);
-          ret.append(static_cast<std::string>(unicode::CodePoint(i)));
+          ret.append(static_cast<string>(unicode::CodePoint(i)));
           break;
         }
         default: {

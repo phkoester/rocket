@@ -31,9 +31,9 @@ TEST(bench_nio, FileSink) {
 
   ROCKET_BENCH(N, [&] {
     {
-      FileSink sink(tmp);
+      FileSink out(tmp);
       for (size_t i = 0; i < ITERATIONS; ++i) {
-        sink.write(chunk);
+        out.write(chunk);
       }
     }
     EXPECT_EQ(file_size(tmp), FILE_SIZE);
@@ -46,9 +46,9 @@ TEST(bench_nio, BufferedFileSink) {
 
   ROCKET_BENCH(N, [&] {
     {
-      FileSink sink(tmp);
-      std::setbuf(sink.file_, nullptr); // Disable buffering
-      BufferedSink buffered(sink);
+      FileSink out(tmp);
+      std::setbuf(out.file_, nullptr); // Disable buffering
+      BufferedSink buffered(out);
       for (size_t i = 0; i < ITERATIONS; ++i) {
         buffered.write(chunk);
       }
@@ -64,9 +64,9 @@ TEST(bench_nio, StreamSink) {
   ROCKET_BENCH(N, [&] {
     {
       ofstream os(tmp.c_str());
-      StreamSink sink(os);
+      StreamSink out(os);
       for (size_t i = 0; i < ITERATIONS; ++i) {
-        sink.write(chunk);
+        out.write(chunk);
       }
     }
     EXPECT_EQ(file_size(tmp), FILE_SIZE);
@@ -81,8 +81,8 @@ TEST(bench_nio, BufferedStreamSink) {
     {
       ofstream os(tmp.c_str());
       os.rdbuf()->pubsetbuf(nullptr, 0); // Disable buffering
-      StreamSink sink(os);
-      BufferedSink buffered(sink);
+      StreamSink out(os);
+      BufferedSink buffered(out);
       for (size_t i = 0; i < ITERATIONS; ++i) {
         buffered.write(chunk);
       }

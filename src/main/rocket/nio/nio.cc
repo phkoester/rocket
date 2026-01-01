@@ -110,7 +110,7 @@ BufferedSink::flushBuffer() {
   ROCKET_ASSERT(buf_);
 
   if (pos_ > 0) {
-    LOG(BufferedSink::flushBuffer, "Flushing " << pos_ << " bytes from buffer to underlying sink")
+    LOG(BufferedSink::flushBuffer, "Flushing " << pos_ << " bytes from buffer to underlying")
     underlying_.write(string_view(&buf_[0], pos_));
     pos_ = 0;
   }
@@ -549,7 +549,7 @@ BufferedSource::read(span<char> out) {
       bufPos_ = underlying_.tell();
       pos_ = 0;
       end_ = underlying_.read(span<char>(&buf_[0], size_));
-      LOG(BufferedSource::read, "Initialized buffer with " << end_ << " bytes from underlying source; bufPos=" << bufPos_ << ", pos=" << pos_ << ", end=" << end_);
+      LOG(BufferedSource::read, "Initialized buffer with " << end_ << " bytes from underlying; bufPos=" << bufPos_ << ", pos=" << pos_ << ", end=" << end_);
       if (end_ == 0) {
         break;
       }
