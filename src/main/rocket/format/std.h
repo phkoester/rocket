@@ -45,11 +45,13 @@ private:
 
 // `std::variant` ------------------------------------------------------------------------------------------
 
-template<typename T> struct is_variant_like {
+template<typename T>
+struct is_variant_like {
   static constexpr bool value = detail::is_variant_like_<T>::value;
 };
 
-template<typename Char> struct formatter<std::monostate, Char> {
+template<typename Char>
+struct formatter<std::monostate, Char> {
   template<typename FormatContext>
   constexpr auto
   format(const std::monostate&, FormatContext& ctx) const -> decltype(ctx.out()) {

@@ -7,7 +7,7 @@
 #include "rocket/format/format.h"
 #include "rocket/random/random.h"
 
-#include "rocket-gtest/matcher.h"
+#include "rocket-gtest/matcher/matcher.h"
 
 using namespace rocket;
 using namespace rocket::format;

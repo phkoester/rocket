@@ -12,7 +12,7 @@
 #include "rocket/unicode/iterator.h"
 #include "rocket/unicode/internal/block.h"
 
-#include "rocket-gtest/matcher.h"
+#include "rocket-gtest/matcher/matcher.h"
 
 using namespace rocket;
 using namespace rocket::gtest::matcher;

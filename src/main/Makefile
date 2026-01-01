@@ -14,8 +14,8 @@ src/main/rocket/version.h: gaia-project.json
 
 # `bare` ----------------------------------------------------------------------------------------------------
 
-NAME     := bare
-CC_FILES := $(foreach it,$(wildcard src/main/bare/*.cc),$(it:src/%=%))
+NAME    := bare
+SRC_DIR := main/bare
 include $(GAIA_DIR)/src/main/make/executable.mk
 
 # `print args` ----------------------------------------------------------------------------------------------
@@ -31,7 +31,7 @@ printArgsWithSpace: $(BUILD_DIR)/print\ args$(EXECUTABLE_SUFFIX)
 # `print-args` ----------------------------------------------------------------------------------------------
 
 NAME        := print-args
-CC_FILES    := $(foreach it,$(wildcard src/main/print-args/*.cc),$(it:src/%=%))
+SRC_DIR     := main/print-args
 SHARED_LIBS := $(call shared-lib-name,rocket,$(ROCKET_VERSION))
 include $(GAIA_DIR)/src/main/make/executable.mk
 
@@ -47,27 +47,25 @@ $(BUILD_DIR)/main/rocket/unicode/emoji-data.cc: src/main/rocket/unicode/emoji-da
 	@mkdir -p $(dir $@)
 	@python3 -c 'from gaia.unicode import *; parse_emoji("$<", "$@")'
 
-NAME     := rocket
-VERSION  := $(ROCKET_VERSION)
+NAME           := rocket
+VERSION        := $(ROCKET_VERSION)
+SRC_DIR        := main/rocket
+SRC_ADD        := unicode/EastAsianWidth.cc unicode/emoji-data.cc
 # Move `log.cc` to front so Rocket can use its own logging API
 # Move `Process.cc` to front so the global `process` instance is available early
-CC_FILES := $(call move-front, \
-    main/rocket/log/log.cc main/rocket/Process.cc, \
-    $(foreach it,$(shell find src/main/rocket -type f -name "*.cc"),$(it:src/%=%))) \
-    main/rocket/unicode/EastAsianWidth.cc \
-    main/rocket/unicode/emoji-data.cc
+SRC_MOVE_FRONT := log/log.cc Process.cc
 include $(GAIA_DIR)/src/main/make/shared-lib.mk
 
 # `rocket-gtest` --------------------------------------------------------------------------------------------
 
 NAME     := rocket-gtest
-CC_FILES := $(foreach it,$(wildcard src/main/rocket-gtest/*.cc),$(it:src/%=%))
+SRC_DIR  := main/rocket-gtest
 include $(GAIA_DIR)/src/main/make/lib.mk
 
 # `toy` -----------------------------------------------------------------------------------------------------
 
 NAME        := toy
-CC_FILES    := $(foreach it,$(wildcard src/main/toy/*.cc),$(it:src/%=%))
+SRC_DIR     := main/toy
 SHARED_LIBS := $(call shared-lib-name,rocket,$(ROCKET_VERSION))
 include $(GAIA_DIR)/src/main/make/executable.mk
 

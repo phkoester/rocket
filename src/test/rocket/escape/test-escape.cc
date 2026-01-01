@@ -6,7 +6,7 @@
 
 #include "rocket/escape/escape.h"
 
-#include "rocket-gtest/matcher.h"
+#include "rocket-gtest/matcher/matcher.h"
 
 using namespace rocket;
 using namespace rocket::escape;

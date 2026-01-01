@@ -8,7 +8,7 @@
 #include "rocket/text/text.h"
 #include "rocket/unicode/unicode.h"
 
-#include "rocket-gtest/matcher.h"
+#include "rocket-gtest/matcher/matcher.h"
 
 #include <fstream>
 
@@ -181,7 +181,7 @@ TEST(text, locations) {
 
   // Test a somewhat larger file with a small buffer size
   {
-    string source = "src/test/rocket/test-text-Kafka.txt";
+    string source = "src/test/rocket/text/test-text-Kafka.txt";
     string content;
     content << ifstream(source);
     auto is = io::is(content);

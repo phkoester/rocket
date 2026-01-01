@@ -6,7 +6,7 @@
 
 #include "rocket/Exception.h"
 
-#include "rocket-gtest/matcher.h"
+#include "rocket-gtest/matcher/matcher.h"
 
 using namespace rocket;
 using namespace rocket::gtest::matcher;

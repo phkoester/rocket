@@ -8,7 +8,7 @@
 #include "rocket/enum.h"
 #include "rocket/log/log.h"
 
-#include "rocket-gtest/matcher.h"
+#include "rocket-gtest/matcher/matcher.h"
 
 using namespace rocket;
 using namespace rocket::gtest::matcher;
