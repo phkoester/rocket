@@ -104,20 +104,6 @@ escapeCStringTab(size_t& column, const CStringParams& params) {
     return ret;
   }
 }
-#endif
-
-
-
-
-
-
-
-
-
-
-
-
-#if 0
 
 std::ostream&
 operator<<(std::ostream& lhs, const EscapedString<CString>& rhs) {
@@ -428,209 +414,141 @@ operator<<(std::ostream& lhs, const EscapedString<Regex>& rhs) {
 
 } // namespace
 
-#if 0
 namespace rocket::escape {
+
+// XXX
+string
+escapeCString(string_view input, const CStringParams& params, Result* result) {
+  return "Hello from escapeCString!";
+}
 
 string
 unescapeCString(const string& input, const CStringParams& params, Result* result) {
   ROCKET_CHECK(params, params.quote == '\0' || params.quote == '"' || params.quote == '\'');
 
   string ret;
-
+  nio::StringSource in(input);
   if (result) {
     result->positions.clear();
   }
-  nio::StringSource in(input);
-  char c;
 
   // If needed, read quote
+
   if (params.enclosing()) {
-    nio::getChar(in, c, params.quote);
+    nio::getChar(in, params.quote);
   }
 
   while (true) {
-    // Test char
-    size_t pos1 = in.tell();
-    if (nio::getChar(in, c) == 0) {
-      // EOF: end of input
+    // Read grapheme
+
+    size_t pos = in.tell();
+    auto gr1 = nio::getOptionalGrapheme(in);
+
+    if (not gr1) {
+      // EOF
       if (params.enclosing()) {
-        throw InputFailure(pos1, { 0, pos1 },
-            fmt::format("Missing terminating {:?} character", params.quote));
+        throw InputFailure(pos, { 0, pos }, fmt::format("Missing terminating {:?} character", params.quote));
       }
       return ret;
     }
-
-    // Terminating quote?
-    if (params.enclosing() && c == params.quote) {
-    }
-
-    // Read grapheme
-    auto pos1 = in.tell();
     if (result) {
-      result->positions.insert({ pos1, ret.size() });
+      result->positions.insert({ pos, ret.size() });
     }
-    unicode::Grapheme gr = nio::getGrapheme(in);
-    in >> gr;
-    if (in.eof()) {
-      // EOF: end of input
-      if (params.enclosing()) {
-        throw io::ParseFailure(lhs, pos1, { inputPos, pos1 },
-            fmt::format("Missing terminating {:?} character", params.quote)); // XXX ''?
-      }
-      return lhs;
-    }
-    io::check(lhs);
-    size_t pos2 = io::tellg(lhs);
 
-    if (gr.codePoint()) {
+    if (gr1->codePoint()) {
       // Single-code-point grapheme
 
-      unicode::CodePoint cp = *gr.codePoint();
-      if (params.enclosing() && cp == static_cast<uint32_t>(params.quote)) {
+      unicode::CodePoint cp1 = *gr1->codePoint();
+      if (params.enclosing() && cp1 == params.quote) {
         // Terminating quote: end of input
 
-        if (result) {
-          result->input.push_back(params.quote);
-        }
-        return lhs;
-      } else if (cp == '\\') {
+        return ret;
+      } else if (cp1 == '\\') {
         // Backslash: this may either be a C-string-escaped character or a hexadecimal sequence starting with
         // "\\x", "\\u", or "\\U"
 
-        if (result) {
-          result->input.push_back('\\');
-        }
-
         // Read another grapheme following the backslash
 
-        lhs >> gr;
-        if (lhs.eof()) {
-          throw io::ParseFailure(lhs, pos2, { pos1, pos2 }, "Expected a Unicode grapheme, got EOF");
-        }
-        io::check(lhs);
+        unicode::Grapheme gr2 = nio::getGrapheme(in);
 
-        if (not gr.codePoint()) {
-          throw io::ParseFailure(lhs, pos1, { pos1, io::tellg(lhs) }, "Invalid escape sequence");
+        if (not gr2.codePoint()) {
+          throw InputFailure(pos, { pos, in.tell() }, "Invalid escape sequence");
         }
-        cp = *gr.codePoint();
-        switch (cp) {
+        unicode::CodePoint cp2 = *gr2.codePoint();
+        switch (cp2) {
         case 'a': // Alert = 7
           ret.push_back('\a');
-          if (result) {
-            result->input.push_back('a');
-          }
           break;
         case 'b': // Backspace = 8
           ret.push_back('\b');
-          if (result) {
-            result->input.push_back('b');
-          }
           break;
         case 't': // Horzontal tab = 9
           ret.push_back('\t');
-          if (result) {
-            result->input.push_back('t');
-          }
           break;
         case 'n': // Line feed = 10
           ret.push_back('\n');
-          if (result) {
-            result->input.push_back('n');
-          }
           break;
         case 'v': // Vertical tab = 11
           ret.push_back('\v');
-          if (result) {
-            result->input.push_back('v');
-          }
           break;
         case 'f': // Form feed = 12
           ret.push_back('\f');
-          if (result) {
-            result->input.push_back('f');
-          }
           break;
         case 'r': // Carriage return = 13
           ret.push_back('\r');
-          if (result) {
-            result->input.push_back('r');
-          }
           break;
         case 'e': // Escape = 27
           ret.push_back('\e');
-          if (result) {
-            result->input.push_back('e');
-          }
           break;
         case '"' : // Quotation mark = 34
         case '\'': // Apostrophe = 39
         case '\\': // Backslash = 92
-          ret.push_back(static_cast<char>(cp));
-          if (result) {
-            result->input.push_back(static_cast<char>(cp));
-          }
+          ret.push_back(static_cast<char>(cp2));
           break;
         case 'x': {
-          std::string input;
-          uint32_t i = io::getHex<uint32_t>(lhs, 2, input);
-          if (result) {
-            result->input.push_back('x');
-            result->input.append(input);
-          }
+          auto i = nio::getHex(in, 2);
           ret.append(static_cast<std::string>(unicode::CodePoint(i)));
           break;
         }
         case 'u': {
-          std::string input;
-          uint32_t i = io::getHex<uint32_t>(lhs, 4, input);
-          if (result) {
-            result->input.push_back('u');
-            result->input.append(input);
-          }
+          auto i = nio::getHex(in, 4);
           ret.append(static_cast<std::string>(unicode::CodePoint(i)));
           break;
         }
         case 'U': {
-          std::string input;
-          uint32_t i = io::getHex<uint32_t>(lhs, 8, input);
-          if (result) {
-            result->input.push_back('U');
-            result->input.append(input);
-          }
+          auto i = nio::getHex(in, 8);
           ret.append(static_cast<std::string>(unicode::CodePoint(i)));
           break;
         }
         default: {
-          throw io::ParseFailure(lhs, pos1, { pos1, io::tellg(lhs) }, "Invalid escape sequence");
+          throw InputFailure(pos, { pos, in.tell() }, "Invalid escape sequence");
         }
         }
       } else {
         // No backslash: just add the code point
 
-        auto add = static_cast<std::string>(cp);
-        ret.append(add);
-        if (result) {
-          result->input.append(add);
-        }
+        ret.append(static_cast<string>(cp1));
       }
     } else {
       // Multi-code-point grapheme: just add it
 
-      auto add = static_cast<std::string>(gr);
-      ret.append(add);
-      if (result) {
-        result->input.append(add);
-      }
+      ret.append(static_cast<string>(*gr1));
     }
   }
 }
 
-} // namespace rocket::escape
-#endif
+// XXX
+string
+escapeRegex(string_view input, Result* result) {
+  return "Hello from escapeRegex!";
+}
 
 // XXX
-std::string rocket::escape::escapeCString(std::string_view input, const CStringParams& params, Result* result) {
-  return "Hello from escapeCString!";
+string
+unescapeRegex(string_view input, Result* result) {
+  return "Hello from unescapeRegex!";
 }
+
+} // namespace rocket::escape
 
 // EOF

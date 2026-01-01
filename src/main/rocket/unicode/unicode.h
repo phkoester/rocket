@@ -9,6 +9,7 @@
 #include "rocket/rocket.h"
 #include "rocket/container/container.h"
 #include "rocket/format/format.h"
+#include "rocket/nio/nio.h"
 #include "rocket/unicode/unicode-decl.h"
 
 #include <cstdint>
@@ -152,6 +153,9 @@ hash_value(CodePoint v) {
  * @return @p lhs
  */
 std::istream& operator>>(std::istream& lhs, CodePoint& rhs);
+
+// XXX
+size_t read(nio::Source& in, CodePoint& v);
 
 /**
  * Output operator for #rocket::unicode::CodePoint.
@@ -365,6 +369,9 @@ struct Grapheme {
     return codePoints.size() == 1 && codePoints[0].whitespace();
   }
 };
+
+// XXX
+size_t read(nio::Source& in, Grapheme& v);
 
 /**
  * UTF-8 input operator for #rocket::unicode::Grapheme.

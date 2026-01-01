@@ -170,6 +170,40 @@ TEST(unicode, opInput_CodePoint) {
   }
 }
 
+// XXX
+TEST(unicode, CodePointRead) {
+  CodePoint v;
+
+  {
+    nio::StringSource in("");
+    EXPECT_EQ(read(in, v), 0);
+    EXPECT_EQ(in.tell(), 0);
+  }
+
+  {
+    nio::StringSource in("x");
+    EXPECT_EQ(read(in, v), 1);
+    EXPECT_EQ(v, 'x');
+    EXPECT_EQ(in.tell(), 1);
+  }
+
+  {
+    string input = "€";
+    nio::StringSource in(input);
+    EXPECT_EQ(read(in, v), input.size());
+    EXPECT_EQ(v, U'€');
+    EXPECT_EQ(in.tell(), input.size());
+  }
+
+  {
+    string s = "€";
+    string_view input(&s[1]); // Invalid UTF-8 byte sequence
+    nio::StringSource in(input);
+    EXPECT_EQ(read(in, v), 0);
+    EXPECT_EQ(in.tell(), 0);
+  }
+}
+
 TEST(unicode, CodePointFormat) {
   EXPECT_EQ(fmt::format("{}", CodePoint(U'\u20ac')), "U+20AC");
   EXPECT_EQ(fmt::format("{}", CodePoint(0x00U)), "U+0000");
@@ -243,6 +277,31 @@ TEST(unicode, opInput_Grapheme) {
     EXPECT_EQ(v.codePoints.size(), 1);
     EXPECT_EQ(v.width, 1);
     EXPECT_ISTREAM(is, false, true, input.size());
+  }
+}
+
+// XXX
+TEST(unicode, GraphemeRead) {
+  Grapheme v;
+
+  {
+    nio::StringSource in("");
+    EXPECT_EQ(read(in, v), 0);
+    EXPECT_EQ(in.tell(), 0);
+  }
+
+  {
+    nio::StringSource in("🧑‍🌾a");
+
+    EXPECT_EQ(read(in, v), 11);
+    EXPECT_EQ(v.codePoints.size(), 3);
+    EXPECT_EQ(static_cast<string>(v), "🧑‍🌾");
+    EXPECT_EQ(in.tell(), 11);
+
+    EXPECT_EQ(read(in, v), 1);
+    EXPECT_EQ(v.codePoints.size(), 1);
+    EXPECT_EQ(static_cast<string>(v), "a");
+    EXPECT_EQ(in.tell(), 12);
   }
 }
 

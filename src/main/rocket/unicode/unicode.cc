@@ -198,6 +198,52 @@ operator>>(istream& lhs, CodePoint& rhs) {
   return lhs;
 }
 
+// XXX Weg, mit Source
+size_t
+read(nio::Source& in, CodePoint& v) {
+  auto pos = in.tell();
+
+  string buf;
+
+  char c;
+  if (in.read(c) == 0) {
+    return 0;
+  }
+  buf.push_back(c);
+
+  auto cpSize = utf8::codePointSize(c);
+  if (cpSize == 0) {
+    // Not a UTF-8 code-point boundary
+    in.seek(pos);
+    return 0;
+  }
+  for (uint8_t i = 0; i < cpSize - 1; ++i) {
+    if (in.read(c) == 0) {
+      // Incomplete UTF-8 byte sequence
+      in.seek(pos);
+      return 0;
+    }
+    if (i > 0 && not utf8::continuationByte(c)) {
+      // Invalid UTF-8 byte sequence
+      in.seek(pos);
+      return 0;
+    }
+    buf.push_back(c);
+  }
+
+  u32string buf32 = utf8To32(buf);
+  if (buf32.size() != 1) {
+    // Something went wrong
+    in.seek(pos);
+    return 0;
+  }
+  else {
+    v = buf32[0];
+  }
+
+  return in.tell() - pos;
+}
+
 ostream&
 operator<<(ostream& lhs, CodePoint rhs) {
   string s = static_cast<string>(rhs);
@@ -243,6 +289,42 @@ Grapheme::print() const {
 istream&
 operator>>(istream& lhs, Grapheme& rhs) {
   return getGrapheme(lhs, rhs);
+}
+
+size_t
+read(nio::Source& in, Grapheme& v) {
+  size_t pos1 = in.tell();
+
+  // Read first code point
+
+  CodePoint cp;
+  if (read(in, cp) == 0) {
+    return 0;
+  }
+
+  u32string input { cp };
+
+  // Read more code points
+
+  while (true) {
+    // Read next code point
+
+    size_t pos2 = in.tell();
+    if (read(in, cp) == 0) {
+      // EOF
+      v = Grapheme(input);
+      return in.tell() - pos1;
+    }
+
+    // If grapheme boundary, finish
+
+    input.push_back(cp);
+    if (CodePointIterator<char32_t>(input, input.size() - 1).graphemeBoundary()) {
+      in.seek(pos2);
+      v = Grapheme(input.substr(0, input.size() - 1));
+      return in.tell() - pos1;
+    }
+  }
 }
 
 ostream&
