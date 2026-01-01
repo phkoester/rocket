@@ -6,7 +6,6 @@
 
 #pragma once
 
-#include "rocket/Type.h"
 #include "rocket/assert.h"
 #include "rocket/message/message.h"
 #include "rocket/unicode/unicode.h"

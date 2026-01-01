@@ -114,82 +114,48 @@ TEST(escape, CString) {
     EXPECT_EQ(result.positions, positions({ { 0, 0 }, { 1, 2 }, { 12, 13 }, { 13, 17 }, { 14, 18 } }));
   }
 
-  {
-    string in = "\"äbc";
-    CStringParams params { .quote='"' };
-    EXPECT_THAT(
-        [&] { escape::unescapeCString(in, params); },
-        throwsInputFailure(5, { 0, 5 }, HasSubstr("Missing terminating '\"' character")));
-  }
+  EXPECT_THAT(
+      [&] { escape::unescapeCString("\"äbc", { .quote='"' }); },
+      throwsInputFailure(5, { 0, 5 }, HasSubstr("Missing terminating '\"' character")));
 
-  {
-    string in = "abc\\";
-    CStringParams params;
-    EXPECT_THAT(
-        [&] { escape::unescapeCString(in, params); },
-        throwsInputFailure(4, HasSubstr("Expected a UTF-8 grapheme")));
-  }
+  EXPECT_THAT(
+      [&] { escape::unescapeCString("abc\\"); },
+      throwsInputFailure(4, HasSubstr("Expected a UTF-8 grapheme")));
 
-  {
-    string in = "abc\\Ä";
-    CStringParams params;
-    EXPECT_THAT(
-        [&] { escape::unescapeCString(in, params); },
-        throwsInputFailure(3, { 3, 6 }, HasSubstr("Invalid escape sequence")));
-  }
+  EXPECT_THAT(
+      [&] { escape::unescapeCString("abc\\Ä"); },
+      throwsInputFailure(3, { 3, 6 }, HasSubstr("Invalid escape sequence")));
 
-  {
-    string in = "\\x";
-    CStringParams params;
-    EXPECT_THAT(
-        [&] { escape::unescapeCString(in, params); },
-        throwsInputFailure(2, HasSubstr("Expected a hexadecimal digit, got EOF")));
-  }
+  EXPECT_THAT(
+      [&] { escape::unescapeCString("\\x"); },
+      throwsInputFailure(2, HasSubstr("Expected a hexadecimal digit, got EOF")));
 
-  {
-    string in = "\\x0\xff";
-    CStringParams params;
-    EXPECT_THAT(
-        [&] { escape::unescapeCString(in, params); },
-        throwsInputFailure(4, HasSubstr("Expected a hexadecimal digit, got '\\xff'")));
-  }
+  EXPECT_THAT(
+      [&] { escape::unescapeCString("\\x0\xff"); },
+      throwsInputFailure(4, HasSubstr("Expected a hexadecimal digit, got '\\xff'")));
 
-  {
-    // 🧑‍🌾: 11 bytes, 3 code points
-    string in = "abc\\🧑‍🌾";
-    CStringParams params;
-    EXPECT_THAT(
-        [&] { escape::unescapeCString(in, params); },
-        throwsInputFailure(3, { 3, 15 }, HasSubstr("Invalid escape sequence")));
-  }
+  // 🧑‍🌾: 11 bytes, 3 code points
+  EXPECT_THAT(
+      [&] { escape::unescapeCString("abc\\🧑‍🌾"); },
+      throwsInputFailure(3, { 3, 15 }, HasSubstr("Invalid escape sequence")));
 }
-
-#if 0 // XXX Escape ist kaputt, erstmal Source schreiben, um EOF-Problematik zu beheben
 
 TEST(escape, Regex) {
   Result result;
 
   {
-    stringstream ss;
-    string in = "\r\t\uFFFF()[a-z]";
-    Regex::Params params;
-    ss << escaped<Regex>(in, params, &result);
-    string esc = "\\r\\t\\uFFFF\\(\\)\\[a-z\\]";
-    EXPECT_EQ(ss.str(), esc);
-    EXPECT_EQ(result.input, in);
+    string in = "\r\t\uffff()[a-z]";
+    auto escaped = escape::escapeRegex(in, &result);
+    EXPECT_EQ(escaped, "\\r\\t\\uffff\\(\\)\\[a-z\\]");
     EXPECT_EQ(
         result.positions,
         positions({ { 0, 0 }, { 1, 2 }, { 2, 4 }, { 5, 10 }, { 6, 12 }, { 7, 14 }, { 8, 16 }, { 9, 17 }, { 10, 18 }, { 11, 19 }, { 12, 21 } }));
-    string out;
-    ss >> escaped<Regex>(out, params, &result);
+    auto out = escape::unescapeRegex(escaped, &result);
     EXPECT_EQ(out, in);
-    EXPECT_EQ(result.input, esc);
     EXPECT_EQ(
         result.positions,
         positions({ { 0, 0 }, { 2, 1 }, { 4, 2 }, { 10, 5 }, { 12, 6 }, { 14, 7 }, { 16, 8 }, { 17, 9 }, { 18, 10 }, { 19, 11 }, { 21, 12 } }));
   }
 }
-
-#endif
 
 // EOF
