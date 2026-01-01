@@ -4,7 +4,7 @@
 
 #include "rocket-gtest.h"
 
-#include "rocket/random.h"
+#include "rocket/random/random.h"
 
 using namespace rocket;
 using namespace std;

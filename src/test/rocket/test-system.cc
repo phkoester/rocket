@@ -4,8 +4,8 @@
 
 #include "rocket-gtest/rocket-gtest.h"
 
-#include "rocket/log.h"
-#include "rocket/system.h"
+#include "rocket/log/log.h"
+#include "rocket/system/system.h"
 
 using namespace rocket;
 using namespace rocket::system;

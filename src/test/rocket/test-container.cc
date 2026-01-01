@@ -4,7 +4,7 @@
 
 #include "rocket-gtest/rocket-gtest.h"
 
-#include "rocket/container.h"
+#include "rocket/container/container.h"
 
 using namespace rocket;
 using namespace rocket::container;

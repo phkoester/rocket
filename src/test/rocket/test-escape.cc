@@ -4,7 +4,7 @@
 
 #include "rocket-gtest/rocket-gtest.h"
 
-#include "rocket/escape.h"
+#include "rocket/escape/escape.h"
 
 #include "rocket-gtest/matcher.h"
 

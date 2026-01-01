@@ -23,7 +23,7 @@ typeInfoName(const type_info& info) {
   if (p && status == 0) {
     string ret = p.get();
     // Eliminate spaces before '>'
-    strings::replaceIn<char>(ret, " >", ">");
+    str::replaceIn<char>(ret, " >", ">");
     return ret;
   } else
     return info.name();

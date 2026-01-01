@@ -37,12 +37,14 @@ include $(GAIA_DIR)/src/main/make/executable.mk
 
 # `rocket` --------------------------------------------------------------------------------------------------
 
-$(BUILD_DIR)/main/rocket/unicode-EastAsianWidth.cc: src/main/rocket/EastAsianWidth.txt
+$(BUILD_DIR)/main/rocket/unicode/EastAsianWidth.cc: src/main/rocket/unicode/EastAsianWidth.txt
 	@echo ">" $@
+	@mkdir -p $(dir $@)
 	@python3 -c 'from gaia.unicode import *; parse_east_asian_width("$<", "$@")'
 
-$(BUILD_DIR)/main/rocket/unicode-Emoji.cc: src/main/rocket/emoji-data.txt
+$(BUILD_DIR)/main/rocket/unicode/emoji-data.cc: src/main/rocket/unicode/emoji-data.txt
 	@echo ">" $@
+	@mkdir -p $(dir $@)
 	@python3 -c 'from gaia.unicode import *; parse_emoji("$<", "$@")'
 
 NAME     := rocket
@@ -50,10 +52,10 @@ VERSION  := $(ROCKET_VERSION)
 # Move `log.cc` to front so Rocket can use its own logging API
 # Move `Process.cc` to front so the global `process` instance is available early
 CC_FILES := $(call move-front, \
-    main/rocket/log.cc main/rocket/Process.cc, \
-    $(foreach it,$(wildcard src/main/rocket/*.cc),$(it:src/%=%))) \
-    main/rocket/unicode-EastAsianWidth.cc \
-    main/rocket/unicode-Emoji.cc
+    main/rocket/log/log.cc main/rocket/Process.cc, \
+    $(foreach it,$(shell find src/main/rocket -type f -name "*.cc"),$(it:src/%=%))) \
+    main/rocket/unicode/EastAsianWidth.cc \
+    main/rocket/unicode/emoji-data.cc
 include $(GAIA_DIR)/src/main/make/shared-lib.mk
 
 # `rocket-gtest` --------------------------------------------------------------------------------------------

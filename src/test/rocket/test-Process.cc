@@ -5,7 +5,7 @@
 #include "rocket-gtest/rocket-gtest.h"
 
 #include "rocket/Process.h"
-#include "rocket/nio.h"
+#include "rocket/nio/nio.h"
 
 using namespace rocket;
 using namespace std;

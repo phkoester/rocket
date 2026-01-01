@@ -4,7 +4,7 @@
 
 #include "rocket-gtest/rocket-gtest.h"
 
-#include "rocket/reflect.h"
+#include "rocket/reflect/reflect.h"
 
 #include "rocket-gtest/matcher.h"
 

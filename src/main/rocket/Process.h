@@ -6,8 +6,8 @@
 
 #pragma once
 
-#include "macro.h"
-#include "nio.h"
+#include "rocket/macro.h"
+#include "rocket/nio/nio.h"
 
 #include <locale>
 #include <optional>
@@ -71,8 +71,8 @@ constexpr int EXIT_SERIOUS_FAILURE = 2;
  *
  * ```
  * #include <rocket/Process.h>
- * #include <rocket/cl.h>
- * #include <rocket/nio.h>
+ * #include <rocket/cl/cl.h>
+ * #include <rocket/cl/nio.h>
  *
  * using namespace rocket;
  * using namespace std;

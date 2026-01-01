@@ -4,11 +4,10 @@
 
 #include "Process.h"
 
-#include "assert.h"
-#include "locale.h"
-#include "log.h"
-#include "strings.h"
-#include "system.h"
+#include "rocket/assert.h"
+#include "rocket/log/log.h"
+#include "rocket/str/str.h"
+#include "rocket/system/system.h"
 
 using namespace rocket;
 using namespace std;
@@ -117,7 +116,7 @@ Process::init(
     auto lastFileSep = name.find_last_of(system::fileSeparator());
     if (lastFileSep != string::npos)
       name = name.substr(lastFileSep + 1);
-    name = strings::removeTrailing(name, system::executableSuffix());
+    name = str::removeTrailing(name, system::executableSuffix());
     name_ = name;
   }
 

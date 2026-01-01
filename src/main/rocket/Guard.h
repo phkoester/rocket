@@ -10,7 +10,7 @@
 
 #include <functional>
 
-namespace rocket::guard {
+namespace rocket {
 
 // `Guard` --------------------------------------------------------------------------------------------------
 
@@ -40,11 +40,11 @@ private:
 };
 
 /**
- * Makes a #rocket::guard::Guard instance implicitly.
+ * Makes a #rocket::Guard instance implicitly.
  *
  * @param f the function to execute upon scope exit
  */
-#define ROCKET_GUARD(f) ::rocket::guard::Guard ROCKET_ID(f)
+#define ROCKET_GUARD(f) ::rocket::Guard ROCKET_ID(f)
 
 // `ValueGuard` ---------------------------------------------------------------------------------------------
 
@@ -84,13 +84,13 @@ private:
 };
 
 /**
- * Makes a #rocket::guard::ValueGuard instance implicitly.
+ * Makes a #rocket::ValueGuard instance implicitly.
  *
  * @param ref a reference to the variable that is to be assigned
  * @param newValue the new value to assign immediately
  */
-#define ROCKET_VALUE_GUARD(ref, newValue) ::rocket::guard::ValueGuard ROCKET_ID(ref, newValue)
+#define ROCKET_VALUE_GUARD(ref, newValue) ::rocket::ValueGuard ROCKET_ID(ref, newValue)
 
-} // namespace rocket::guard
+} // namespace rocket
 
 // EOF

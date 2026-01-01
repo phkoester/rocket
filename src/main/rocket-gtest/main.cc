@@ -3,7 +3,7 @@
  */
 
 #include "rocket/Process.h"
-#include "rocket/cl.h"
+#include "rocket/cl/cl.h"
 
 #include <gmock/gmock.h>
 

@@ -4,7 +4,7 @@
 
 #include "rocket-gtest/rocket-gtest.h"
 
-#include "rocket/terminal.h"
+#include "rocket/terminal/terminal.h"
 
 using namespace rocket;
 using namespace rocket::terminal;

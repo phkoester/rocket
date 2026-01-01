@@ -3,8 +3,9 @@
  */
 
 #include "rocket/Process.h"
-#include "rocket/cl.h"
-#include "rocket/log.h"
+#include "rocket/cl/cl.h"
+#include "rocket/format/std.h"
+#include "rocket/log/log.h"
 
 using namespace rocket;
 using namespace std;

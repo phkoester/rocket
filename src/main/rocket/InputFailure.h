@@ -8,8 +8,8 @@
 
 #define ROCKET_EXCEPT_H
 
-#include "Exception.h"
-#include "text.h"
+#include "rocket/Exception.h"
+#include "rocket/text/text.h"
 
 namespace rocket {
 

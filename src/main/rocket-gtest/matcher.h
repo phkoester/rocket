@@ -6,8 +6,8 @@
 
 #pragma once
 
-#include "rocket/io.h"
-#include "rocket/text.h"
+#include "rocket/io/io.h"
+#include "rocket/text/text.h"
 
 #include <gmock/gmock.h>
 

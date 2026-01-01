@@ -6,7 +6,7 @@
 
 #include "rocket/StringConvert.h"
 #include "rocket/enum.h"
-#include "rocket/log.h"
+#include "rocket/log/log.h"
 
 #include "rocket-gtest/matcher.h"
 

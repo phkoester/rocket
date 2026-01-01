@@ -4,13 +4,13 @@
 
 #include "rocket-gtest/rocket-gtest.h"
 
-#include "rocket/io.h"
-#include "rocket/random.h"
-#include "rocket/system.h"
-#include "rocket/terminal.h"
-#include "rocket/unicode.h"
-#include "rocket/unicode-iterator.h"
-#include "rocket/internal/unicode-internal.h"
+#include "rocket/format/std.h"
+#include "rocket/io/io.h"
+#include "rocket/random/random.h"
+#include "rocket/system/system.h"
+#include "rocket/terminal/terminal.h"
+#include "rocket/unicode/iterator.h"
+#include "rocket/unicode/internal/block.h"
 
 #include "rocket-gtest/matcher.h"
 
@@ -49,7 +49,7 @@ testGrapheme(const Grapheme& grapheme, u32string_view s) {
 
 // `rocket::unicode::internal` ..............................................................................
 
-TEST(unicode, biFind) {
+TEST(unicode, blockBiFind) {
   auto gen = random::gen();
 
   size_t hits = 0;
@@ -62,7 +62,7 @@ TEST(unicode, biFind) {
   EXPECT_GT(hits, 900'000);
 }
 
-TEST(unicode, eastAsianWidth) {
+TEST(unicode, blockEastAsianWidth) {
   EXPECT_EQ(eastAsianWidth(0x0000U), EastAsianWidth::neutral);
   EXPECT_EQ(eastAsianWidth(0x0020U), EastAsianWidth::narrow);
   EXPECT_EQ(eastAsianWidth(0x00b8U), EastAsianWidth::ambiguous);
@@ -73,7 +73,7 @@ TEST(unicode, eastAsianWidth) {
   EXPECT_EQ(eastAsianWidth(0x01f468U), EastAsianWidth::wide); // MAN
 }
 
-TEST(unicode, emoji) {
+TEST(unicode, blockEmoji) {
   EXPECT_FALSE(emojiEmoji(0x0000U));
 
   EXPECT_TRUE(emojiEmoji(0x0023U)); // HASH SIGN

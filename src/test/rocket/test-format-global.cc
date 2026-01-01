@@ -5,7 +5,7 @@
 #include "rocket-gtest/rocket-gtest.h"
 
 #include "rocket/rocket.h"
-#include "rocket/format.h"
+#include "rocket/format/format.h"
 
 #include <limits>
 #include <type_traits>

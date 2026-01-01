@@ -6,12 +6,12 @@
 
 #pragma once
 
-#include "enum-decl.h"
+#include "rocket/enum-decl.h"
 
-#include "Exception.h"
-#include "Type.h"
-#include "container.h"
-#include "message.h"
+#include "rocket/Exception.h"
+#include "rocket/Type.h"
+#include "container/container.h"
+#include "rocket/message/message.h"
 
 #include <boost/preprocessor/stringize.hpp>
 #include <boost/preprocessor/seq/for_each.hpp>

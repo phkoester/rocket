@@ -4,8 +4,8 @@
 
 #include "rocket-gtest/rocket-gtest.h"
 
-#include "rocket/format.h"
-#include "rocket/random.h"
+#include "rocket/format/format.h"
+#include "rocket/random/random.h"
 
 #include "rocket-gtest/matcher.h"
 

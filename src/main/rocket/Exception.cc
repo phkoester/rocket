@@ -4,8 +4,8 @@
 
 #include "Exception.h"
 
-#include "assert.h"
-#include "message.h"
+#include "rocket/assert.h"
+#include "rocket/message/message.h"
 
 using namespace rocket;
 using namespace std;

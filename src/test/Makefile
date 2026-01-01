@@ -131,8 +131,8 @@ CC_FILES    := test/rocket/test-std.cc
 SHARED_LIBS := $(call shared-lib-name,rocket,$(ROCKET_VERSION))
 include $(GAIA_DIR)/src/main/make/test-executable.mk
 
-NAME        := test-rocket-strings
-CC_FILES    := test/rocket/test-strings.cc
+NAME        := test-rocket-str
+CC_FILES    := test/rocket/test-str.cc
 SHARED_LIBS := $(call shared-lib-name,rocket,$(ROCKET_VERSION))
 include $(GAIA_DIR)/src/main/make/test-executable.mk
 

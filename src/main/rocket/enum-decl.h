@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include "format.h"
+#include "rocket/format/format.h"
 
 #include <iosfwd>
 #include <type_traits>

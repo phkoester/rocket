@@ -5,8 +5,8 @@
 #include "rocket-gtest/rocket-gtest.h"
 
 #include "rocket/Exception.h"
-#include "rocket/math-func.h"
-#include "rocket/random.h"
+#include "rocket/math/func.h"
+#include "rocket/random/random.h"
 
 using namespace rocket;
 using namespace rocket::math;

@@ -4,7 +4,7 @@
 
 #include "rocket-gtest/rocket-gtest.h"
 
-#include "rocket/io.h"
+#include "rocket/io/io.h"
 
 #include "rocket-gtest/matcher.h"
 

@@ -4,9 +4,9 @@
 
 #include "rocket-gtest/rocket-gtest.h"
 
-#include "rocket/text.h"
-#include "rocket/unicode.h"
-#include "rocket/reflect.h"
+#include "rocket/reflect/reflect.h"
+#include "rocket/text/text.h"
+#include "rocket/unicode/unicode.h"
 
 #include "rocket-gtest/matcher.h"
 

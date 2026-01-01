@@ -4,7 +4,7 @@
 
 #include "rocket-gtest/rocket-gtest.h"
 
-#include "rocket/math.h"
+#include "rocket/math/math.h"
 
 using namespace rocket;
 using namespace rocket::math;

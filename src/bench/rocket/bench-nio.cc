@@ -4,9 +4,11 @@
 
 #include "rocket-gtest/rocket-gtest.h"
 
-#include "rocket/nio.h"
+#include "rocket/nio/nio.h"
 
 #include "rocket-gtest/bench.h"
+
+#include <fstream>
 
 using namespace rocket;
 using namespace rocket::gtest;

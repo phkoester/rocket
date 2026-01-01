@@ -12,12 +12,12 @@
 #ifndef ROCKET_ASSERT_H
 #define ROCKET_ASSERT_H
 
-#include "Exception.h"
-#include "Process.h"
+#include "rocket/Exception.h"
+#include "rocket/Process.h"
 #ifdef NDEBUG
-#include "rocket.h" // `rocket::nop()`
+#include "rocket/rocket.h" // `rocket::nop()`
 #endif
-#include "format.h"
+#include "rocket/format/format.h"
 
 #include <boost/preprocessor/stringize.hpp>
 
@@ -82,7 +82,7 @@ template<typename... T>
     } else {
       return format::Format::params();
     }
-  }), sl));
+  })), sl);
 }
 
 } // namespace rocket::assert::internal

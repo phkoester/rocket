@@ -4,11 +4,11 @@
 
 #include "rocket-gtest/rocket-gtest.h"
 
-#include "rocket/log.h"
-#include "rocket/format-std.h"
+#include "rocket/format/std.h"
+#include "rocket/log/log.h"
 
-#include <type_traits>
 #include <span>
+#include <type_traits>
 #include <unordered_map>
 #include <unordered_set>
 
@@ -20,7 +20,7 @@ using rocket::log::LogLevel;
 
 TEST(format_std, byteFormat) {
   EXPECT_EQ(fmt::format("{}", byte { 0 }), "0");
-  EXPECT_EQ(fmt::format("{:X}", byte { 255 }), "FF");
+  EXPECT_EQ(fmt::format("{:#x}", byte { 255 }), "0xff");
 }
 
 // test std::initializer_list

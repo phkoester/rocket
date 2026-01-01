@@ -5,7 +5,7 @@
 #include "rocket-gtest/rocket-gtest.h"
 
 #include "rocket/rocket.h"
-#include "rocket/io.h"
+#include "rocket/io/io.h"
 
 using namespace rocket;
 using namespace std;
