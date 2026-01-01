@@ -79,7 +79,7 @@ getHex(Source& in, size_t n) {
     }
 
     uint32_t ret;
-    std::sscanf(input.c_str(), "%" SCNd32 "x", &ret);
+    std::sscanf(input.c_str(), "%" SCNx32, &ret);
     return ret;
   } catch (const exception&) {
     in.seek(pos);

@@ -25,24 +25,24 @@ TEST(match, matchesRegex) {
   EXPECT_THAT("main.cc:42: foo", matchesRegex(".*\\.cc:\\d+: foo"));
 }
 
-TEST(match, throwsParseFailure) {
+TEST(match, throwsInputFailure) {
   auto is = io::is();
 
   EXPECT_THAT(
     [&] { throw io::ParseFailure(is, 2, "oops"); },
-    throwsParseFailure(Eq(2), HasSubstr("oops")));
+    throwsInputFailure(Eq(2), HasSubstr("oops")));
 
   EXPECT_THAT(
     [&] { throw io::ParseFailure(is, 2, "oops"); },
-    throwsParseFailure(2, HasSubstr("oops")));
+    throwsInputFailure(2, HasSubstr("oops")));
 
   EXPECT_THAT(
     [&] { throw io::ParseFailure(is, 2, { { 1, 2 }, { 3, 4 } }, "oops"); },
-    throwsParseFailure(Eq(2), Eq(text::Ranges { { 1, 2 }, { 3, 4 } }), HasSubstr("oops")));
+    throwsInputFailure(Eq(2), Eq(text::Ranges { { 1, 2 }, { 3, 4 } }), HasSubstr("oops")));
 
   EXPECT_THAT(
     [&] { throw io::ParseFailure(is, 2, { { 1, 2 }, { 3, 4 } }, "oops"); },
-    throwsParseFailure(2, { { 1, 2 }, { 3, 4 } }, HasSubstr("oops")));
+    throwsInputFailure(2, { { 1, 2 }, { 3, 4 } }, HasSubstr("oops")));
 }
 
 // EOF

@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include "rocket/format/format.h"
+#include "rocket/format/std.h"
 
 #include <boost/bimap.hpp>
 #include <boost/bimap/unordered_set_of.hpp>
@@ -119,6 +119,19 @@ operator!=(const bimap<A, B>& lhs, const bimap<A, B>& rhs) {
   return not operator==(lhs, rhs);
 }
 
+/// @op_output{`boost::bimaps::bimap`}
+template<typename A, typename B>
+std::ostream&
+operator<<(std::ostream& lhs, const bimap<A, B>& rhs) {
+  return lhs << fmt::format("{}", rhs);
+}
+
+/// @fn_PrintTo{`boost::bimaps::bimap`}
+template<typename A, typename B>
+void PrintTo(const bimap<A, B>& v, std::ostream* os) {
+  *os << v;
+}
+
 } // namespace boost::bimaps
 
 // Namespace `fmt` ------------------------------------------------------------------------------------------
@@ -151,3 +164,4 @@ private:
 };
 
 // EOF
+

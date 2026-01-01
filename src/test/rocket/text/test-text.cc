@@ -5,6 +5,7 @@
 #include "rocket-gtest/rocket-gtest.h"
 
 #include "rocket/reflect/reflect.h"
+#include "rocket/io/io.h"
 #include "rocket/text/text.h"
 #include "rocket/unicode/unicode.h"
 

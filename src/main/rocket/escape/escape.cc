@@ -468,6 +468,12 @@ escapeCString(string_view input, const CStringParams& params, Result* result) {
     }
   }
 
+  // Add end position
+
+  if (result) {
+    result->positions.insert({ it.position(), to });
+  }
+
   // If needed, print quote
 
   if (params.quoted()) {
@@ -478,7 +484,7 @@ escapeCString(string_view input, const CStringParams& params, Result* result) {
 }
 
 string
-unescapeCString(const string& input, const CStringParams& params, Result* result) {
+unescapeCString(string_view input, const CStringParams& params, Result* result) {
   ROCKET_CHECK(params, params.quote == '\0' || params.quote == '"' || params.quote == '\'');
 
   string ret;
@@ -493,10 +499,11 @@ unescapeCString(const string& input, const CStringParams& params, Result* result
     nio::getChar(in, params.quote);
   }
 
+  size_t pos;
   while (true) {
     // Read grapheme
 
-    size_t pos = in.tell();
+    pos = in.tell();
     auto gr1 = nio::getOptionalGrapheme(in);
 
     if (not gr1) {
@@ -504,7 +511,7 @@ unescapeCString(const string& input, const CStringParams& params, Result* result
       if (params.quoted()) {
         throw InputFailure(pos, { 0, pos }, fmt::format("Missing terminating {:?} character", params.quote));
       }
-      return ret;
+      break;
     }
     if (result) {
       result->positions.insert({ pos, ret.size() });
@@ -517,7 +524,7 @@ unescapeCString(const string& input, const CStringParams& params, Result* result
       if (params.quoted() && cp1 == params.quote) {
         // Terminating quote: end of input
 
-        return ret;
+        break;
       } else if (cp1 == '\\') {
         // Backslash: this may either be a C-string-escaped character or a hexadecimal sequence starting with
         // "\\x", "\\u", or "\\U"
@@ -590,6 +597,14 @@ unescapeCString(const string& input, const CStringParams& params, Result* result
       ret.append(static_cast<string>(*gr1));
     }
   }
+
+  // Add end position
+
+  if (result) {
+    result->positions.insert({ pos, ret.size() });
+  }
+
+  return ret;
 }
 
 // XXX

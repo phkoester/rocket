@@ -27,7 +27,7 @@ positions(initializer_list<pair<size_t, size_t>> list) {
 TEST(escape, CString) {
   Result result;
 
-  // Test double quotes, escaping, UTF-8 'ä'
+  // Double quotes, escaping, UTF-8 'ä'
   {
     string in = "\\ä\"b";
     CStringParams params { .quote='"' };
@@ -40,7 +40,7 @@ TEST(escape, CString) {
     EXPECT_EQ(result.positions, positions({ { 1, 0 }, { 3, 1 }, { 5, 3 }, { 7, 4 }, { 8, 5 } }));
   }
 
-  // Test apostrophes
+  // Apostrophes
   {
     string in = "a'b";
     CStringParams params { .quote='\'' };
@@ -52,7 +52,7 @@ TEST(escape, CString) {
     EXPECT_EQ(result.positions, positions({ { 1, 0 }, { 2, 1 }, { 4, 2 }, { 5, 3 } }));
   }
 
-  // Test null char
+  // Null char
   {
     string in = "a\x00" "b"s;
     EXPECT_EQ(in.size(), 3);
@@ -65,7 +65,7 @@ TEST(escape, CString) {
     EXPECT_EQ(result.positions, positions({ { 0, 0 }, { 1, 1 }, { 5, 2 }, { 6, 3 } }));
   }
 
-  // Test multi-code-point graphemes
+  // Multi-code-point graphemes
   {
     // ☢️:  6 bytes, 2 code points
     // 🧑‍🌾: 11 bytes, 3 code points
@@ -84,7 +84,12 @@ TEST(escape, CString) {
         positions({ { 0, 0 }, { 1, 1 }, { 7, 7 }, { 8, 8 }, { 19, 19 }, { 20, 20 } }));
   }
 
-  // Test tab
+  // Hex
+  EXPECT_EQ(escape::unescapeCString("\\x7f"), "\x7f");
+  EXPECT_EQ(escape::unescapeCString("\\u20AC"), "€");
+  EXPECT_EQ(escape::unescapeCString("\\U0001f971"), "🥱"); // U+1F971 (Yawning Face)
+
+  // Tab
   {
     string in = "a\tb";
     CStringParams params;
@@ -122,7 +127,7 @@ TEST(escape, CString) {
     CStringParams params;
     EXPECT_THAT(
         [&] { escape::unescapeCString(in, params); },
-        throwsInputFailure(4, { 3, 4 }, HasSubstr("Expected a Unicode grapheme, got EOF")));
+        throwsInputFailure(4, HasSubstr("Expected a UTF-8 grapheme")));
   }
 
   {
@@ -131,6 +136,22 @@ TEST(escape, CString) {
     EXPECT_THAT(
         [&] { escape::unescapeCString(in, params); },
         throwsInputFailure(3, { 3, 6 }, HasSubstr("Invalid escape sequence")));
+  }
+
+  {
+    string in = "\\x";
+    CStringParams params;
+    EXPECT_THAT(
+        [&] { escape::unescapeCString(in, params); },
+        throwsInputFailure(2, HasSubstr("Expected a hexadecimal digit, got EOF")));
+  }
+
+  {
+    string in = "\\x0\xff";
+    CStringParams params;
+    EXPECT_THAT(
+        [&] { escape::unescapeCString(in, params); },
+        throwsInputFailure(4, HasSubstr("Expected a hexadecimal digit, got '\\xff'")));
   }
 
   {
