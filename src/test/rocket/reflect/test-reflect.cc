@@ -57,32 +57,16 @@ hash_value(const MyStruct& v) {
 
 // `TEST` ---------------------------------------------------------------------------------------------------
 
-TEST(reflect, eq) {
-  EXPECT_EQ(MyStruct(42, "rocket", true), MyStruct(42, "rocket", true));
-  EXPECT_NE(MyStruct(42, "rocket", true), MyStruct(42, "rocket", false));
-}
-
-TEST(reflect, lt) {
-  EXPECT_THAT(MyStruct(42, "rocket", false), Lt(MyStruct(43, "rocket", false)));
-  EXPECT_THAT(MyStruct(42, "rocket", false), Lt(MyStruct(42, "rocket", true)));
-  EXPECT_THAT(MyStruct(42, "rocket", false), Not(Lt(MyStruct(42, "rocket", false))));
-}
-
-TEST(reflect, gt) {
-  EXPECT_THAT(MyStruct(43, "rocket", false), Gt(MyStruct(42, "rocket", false)));
-  EXPECT_THAT(MyStruct(42, "rocket", true), Gt(MyStruct(42, "rocket", false)));
-  EXPECT_THAT(MyStruct(42, "rocket", false), Not(Gt(MyStruct(42, "rocket", false))));
-}
-
-TEST(reflect, hash) {
-  EXPECT_EQ(
-      ::boost::hash<MyStruct>()(MyStruct(42, "rocket", false)),
-      ::boost::hash<MyStruct>()(MyStruct(42, "rocket", false)));
-  EXPECT_NE(
-      ::boost::hash<MyStruct>()(MyStruct(42, "rocket", true)),
-      ::boost::hash<MyStruct>()(MyStruct(42, "rocket", false)));
-
-  EXPECT_TRUE(hashValueCalled);
+/**
+ * Tests that the macro #ROCKET_REFLECT_MEMBERS doesn't affect the size of a class.
+ */
+ TEST(reflect, sizeof) {
+  struct BareStruct {
+    int ä;
+    string b;
+    bool c;
+  };
+  EXPECT_EQ(sizeof(BareStruct), sizeof(MyStruct));
 }
 
 #if 0 // XXX Mit format() testen
@@ -93,7 +77,7 @@ TEST(reflect, printRon) {
 }
 #endif
 
-TEST(reflect, memberRef) {
+TEST(reflect, MemberRef) {
   MyStruct m1(12, "here", true);
 
   EXPECT_EQ(m1.b, "here");
@@ -115,7 +99,7 @@ TEST(reflect, memberRef) {
 #endif
 }
 
-TEST(reflect, varRef) {
+TEST(reflect, VarRef) {
   int ä1 = 2;
   string b1 = "hi";
   float f1 = .5f;
@@ -143,16 +127,32 @@ TEST(reflect, varRef) {
   EXPECT_EQ(ä1, 3);
 }
 
-/**
- * Tests that the macro #ROCKET_REFLECT_MEMBERS doesn't affect the size of a class.
- */
-TEST(reflect, sizeof) {
-  struct BareStruct {
-    int ä;
-    string b;
-    bool c;
-  };
-  EXPECT_EQ(sizeof(BareStruct), sizeof(MyStruct));
+TEST(reflect, eq) {
+  EXPECT_EQ(MyStruct(42, "rocket", true), MyStruct(42, "rocket", true));
+  EXPECT_NE(MyStruct(42, "rocket", true), MyStruct(42, "rocket", false));
+}
+
+TEST(reflect, lt) {
+  EXPECT_THAT(MyStruct(42, "rocket", false), Lt(MyStruct(43, "rocket", false)));
+  EXPECT_THAT(MyStruct(42, "rocket", false), Lt(MyStruct(42, "rocket", true)));
+  EXPECT_THAT(MyStruct(42, "rocket", false), Not(Lt(MyStruct(42, "rocket", false))));
+}
+
+TEST(reflect, gt) {
+  EXPECT_THAT(MyStruct(43, "rocket", false), Gt(MyStruct(42, "rocket", false)));
+  EXPECT_THAT(MyStruct(42, "rocket", true), Gt(MyStruct(42, "rocket", false)));
+  EXPECT_THAT(MyStruct(42, "rocket", false), Not(Gt(MyStruct(42, "rocket", false))));
+}
+
+TEST(reflect, hash) {
+  EXPECT_EQ(
+      ::boost::hash<MyStruct>()(MyStruct(42, "rocket", false)),
+      ::boost::hash<MyStruct>()(MyStruct(42, "rocket", false)));
+  EXPECT_NE(
+      ::boost::hash<MyStruct>()(MyStruct(42, "rocket", true)),
+      ::boost::hash<MyStruct>()(MyStruct(42, "rocket", false)));
+
+  EXPECT_TRUE(hashValueCalled);
 }
 
 // EOF

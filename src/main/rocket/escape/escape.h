@@ -47,8 +47,8 @@ struct Result {
   /**
    * Translated positions after escaping/unescaping.
    *
-   * For each grapheme in the input string and for end-of-string, its character offset—i.e. either its `char`
-   * or `char32_t` offset—, is mapped to a character offset in the output string.
+   * For each grapheme in the input string and for end-of-input, its character offset is mapped to a
+   * character offset in the output string.
    */
   container::UnorderedBimap<size_t, size_t> positions;
 };

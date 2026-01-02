@@ -7,6 +7,8 @@
 #include "rocket/format/std.h"
 #include "rocket/log/log.h"
 
+#include <fmt/xchar.h>
+
 using namespace rocket;
 using namespace std;
 
@@ -27,6 +29,14 @@ toy() {
       "udiuwieoqwoieuqwuewqieu iqwueqowi euqoweu qwioeuwo qe eu qowieu qieuiqowue qiweuwo eueu ioeu\n"
       "asdf";
   ROCKET_LOG_TRACE("{}", text);
+
+  try {
+    throw InvalidState("oops");
+  } catch (const InvalidState& ex) {
+    fmt::print("Here is an ex: ");
+    printException(nio::stdout, ex);
+    throw;
+  }
 }
 
 } // namespace

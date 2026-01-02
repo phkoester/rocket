@@ -20,7 +20,7 @@ const string PRINT_ARGS_WITH_SPACE = BUILD_DIR + "/print args";
 
 // `TEST` ---------------------------------------------------------------------------------------------------
 
-TEST(system, env_bool) {
+TEST(system, envBool) {
   using type = bool;
 
   const char* name = "MY_BOOL";
@@ -43,7 +43,7 @@ TEST(system, env_bool) {
   EXPECT_EQ(env::get<type>(name), nullopt);
 }
 
-TEST(system, env_double) {
+TEST(system, envDouble) {
   using type = double;
 
   const char* name = "MY_DOUBLE";
@@ -62,7 +62,7 @@ TEST(system, env_double) {
   EXPECT_EQ(env::get<type>(name), -1.3);
 }
 
-TEST(system, env_LogLevel) {
+TEST(system, envLogLevel) {
   using type = log::LogLevel;
 
   const char* name = "MY_LOG_LEVEL";
@@ -78,7 +78,7 @@ TEST(system, env_LogLevel) {
   EXPECT_EQ(env::get<type>(name), nullopt);
 }
 
-TEST(system, env_string_view) {
+TEST(system, envStringView) {
   using type = string_view;
 
   const char* name = "MY_STRING_VIEW";

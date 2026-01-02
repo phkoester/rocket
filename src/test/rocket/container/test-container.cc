@@ -25,4 +25,9 @@ TEST(UnorderedMap, opNe) {
   EXPECT_NE(map2, map1);
 }
 
+TEST(UnorderedMap, format) {
+  auto map = makeUnorderedBimap<int, int>({ { 1, 2 }, { 3, 4 } });
+  EXPECT_EQ(fmt::format("{}", map), "{1: 2, 3: 4}");
+}
+
 // EOF

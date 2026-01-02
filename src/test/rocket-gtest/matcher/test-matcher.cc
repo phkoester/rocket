@@ -15,17 +15,17 @@ using namespace testing;
 
 // `TEST` ---------------------------------------------------------------------------------------------------
 
-TEST(match, containsRegex) {
+TEST(matcher, containsRegex) {
   EXPECT_THAT("Rocket", containsRegex("ock"));
   EXPECT_THAT("Rocket", containsRegex(".ck"));
   EXPECT_THAT("Rocket", containsRegex("o.+e"));
 }
 
-TEST(match, matchesRegex) {
+TEST(matcher, matchesRegex) {
   EXPECT_THAT("main.cc:42: foo", matchesRegex(".*\\.cc:\\d+: foo"));
 }
 
-TEST(match, throwsInputFailure) {
+TEST(matcher, throwsInputFailure) {
   EXPECT_THAT(
     [&] { throw InputFailure(2, "oops"); },
     throwsInputFailure(Eq(2), HasSubstr("oops")));

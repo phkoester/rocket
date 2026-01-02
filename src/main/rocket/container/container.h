@@ -145,8 +145,7 @@ struct fmt::formatter<boost::bimaps::bimap<A, B>, Char> {
   template<typename FormatContext>
   constexpr auto
   format(const boost::bimaps::bimap<A, B>& v, FormatContext& ctx) const -> decltype(ctx.out()) {
-    // @todo Understand how `underlying_` is implemented in `fmt/ranges.h`, and don't make a copy of the
-    // whole map here. May there is an `is_map_like` or such ...
+    // @todo Don't copy the whole map here
     std::map<K, V> map;
     for (const auto& [k, v] : v.left) {
       map.emplace(k, v);

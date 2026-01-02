@@ -98,7 +98,7 @@ TEST(unicode, CodePoint) {
       ThrowsMessage<InvalidArgument>(HasSubstr("Parameter `v`: ")));
 }
 
-TEST(unicode, CodePoint_opCast_string) {
+TEST(unicode, CodePointOpCasString) {
   using type = string;
 
   EXPECT_EQ(static_cast<type>(CodePoint(0x41U)), "A");
@@ -106,7 +106,7 @@ TEST(unicode, CodePoint_opCast_string) {
   EXPECT_EQ(static_cast<type>(CodePoint(0x20acU)), "€");
 }
 
-TEST(unicode, CodePoint_opCast_u32string) {
+TEST(unicode, CodePointOpCastU32String) {
   using type = u32string;
 
   EXPECT_EQ(static_cast<type>(CodePoint(0x41U)), U"A");
@@ -278,7 +278,7 @@ TEST(unicode, conversions) {
   EXPECT_EQ(s3, s1);
 }
 
-TEST(unicode, CodePointIterator_char) {
+TEST(unicode, CodePointIteratorChar) {
   using type = char;
 
   string_view s = "ä€";
@@ -312,7 +312,7 @@ TEST(unicode, CodePointIterator_char) {
   EXPECT_EQ(distance(beg, end), 2);
 }
 
-TEST(unicode, CodePointIterator_char32_t) {
+TEST(unicode, CodePointIteratorChar32) {
   using type = char32_t;
 
   u32string_view s = U"ä€";
@@ -344,7 +344,7 @@ TEST(unicode, CodePointIterator_char32_t) {
   EXPECT_EQ(distance(beg, end), 2);
 }
 
-TEST(unicode, GraphemeIterator_char) {
+TEST(unicode, GraphemeIteratorChar) {
   using type = char;
 
   // ☢️:  6 bytes, 2 code points
@@ -387,7 +387,7 @@ TEST(unicode, GraphemeIterator_char) {
   EXPECT_EQ(distance(beg, end), 2);
 }
 
-TEST(unicode, GraphemeIterator_char32_t) {
+TEST(unicode, GraphemeIteratorChar32) {
   using type = char32_t;
 
   // ☢️: 2 code points
@@ -432,24 +432,24 @@ TEST(unicode, GraphemeIterator_char32_t) {
 
 // `rocket::unicode::utf8` ..................................................................................
 
-TEST(unicode, utf8_codePointSize) {
+TEST(unicode, utf8CodePointSize) {
   EXPECT_EQ(utf8::codePointSize(97), 1); // 'a'
   EXPECT_EQ(utf8::codePointSize(0xc3), 2); // First byte of 'ä'
   EXPECT_EQ(utf8::codePointSize(0x80), 0); // Continuation byte: 1000 0000
   EXPECT_EQ(utf8::codePointSize(0xbf), 0); // Continuation byte: 1011 1111
 }
 
-TEST(unicode, utf8_codePoints) {
+TEST(unicode, utf8CodePoints) {
   EXPECT_EQ(utf8::codePoints("a"), (CodePoints { 0x61U }));
   EXPECT_EQ(utf8::codePoints("ä€"), (CodePoints { 0xe4U, 0x20acU }));
 }
 
-TEST(unicode, utf8_countCodePoints) {
+TEST(unicode, utf8CountCodePoints) {
   EXPECT_EQ(utf8::countCodePoints("abcde"), 5);
   EXPECT_EQ(utf8::countCodePoints("äüöß€"), 5);
 }
 
-TEST(unicode, utf8_valid) {
+TEST(unicode, utf8Valid) {
   EXPECT_TRUE(utf8::valid("äöüß€"));
   EXPECT_FALSE(utf8::valid("\x80äöü€"));
 
@@ -473,7 +473,7 @@ TEST(unicode, utf8_valid) {
 
 // `rocket::unicode::utf32` ---------------------------------------------------------------------------------
 
-TEST(unicode, utf32_graphemes) {
+TEST(unicode, utf32Graphemes) {
   {
     // ZWJ
     u32string s = U"\u200D";

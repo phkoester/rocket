@@ -217,7 +217,7 @@ escapeCString(string_view input, const CStringParams& params, Result* result) {
     }
   }
 
-  // Add end position
+  // Add end-of-input position
 
   if (result) {
     result->positions.insert({ it.position(), to });
@@ -387,7 +387,7 @@ escapeRegex(string_view input, Result* result) {
     }
   }
 
-  // Add end position
+  // Add end-of-input position
 
   if (result) {
     result->positions.insert({ it.position(), to });

@@ -77,7 +77,7 @@ TEST(boost_spirit_x3, parseEscaped) {
   }
 }
 
-TEST(boost_spirit_x3, parse_char) {
+TEST(boost_spirit_x3, parseChar) {
   using Char = char;
   using Attr = basic_string<Char>;
 
@@ -103,7 +103,7 @@ TEST(boost_spirit_x3, parse_char) {
   }
 }
 
-TEST(boost_spirit_x3, parse_wchar_t) {
+TEST(boost_spirit_x3, parseWchar) {
   using Char = wchar_t;
   using Attr = basic_string<Char>;
 
@@ -129,7 +129,7 @@ TEST(boost_spirit_x3, parse_wchar_t) {
   }
 }
 
-TEST(boost_spirit_x3, parse_char32_t) {
+TEST(boost_spirit_x3, parseChar32) {
   using Char = char32_t;
   using Attr = basic_string<Char>;
 

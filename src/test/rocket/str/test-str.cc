@@ -12,7 +12,7 @@ using namespace std;
 
 // `TEST` ---------------------------------------------------------------------------------------------------
 
-TEST(strings, removeLeading_char) {
+TEST(str, removeLeadingChar) {
   using type = char;
 
   string s = "";
@@ -31,7 +31,7 @@ TEST(strings, removeLeading_char) {
   EXPECT_EQ(removeLeading<type>(s, "/"), "dir");
 }
 
-TEST(strings, removeLeading_char32_t) {
+TEST(str, removeLeadingChar32) {
   using type = char32_t;
 
   u32string s = U"";
@@ -50,7 +50,7 @@ TEST(strings, removeLeading_char32_t) {
   EXPECT_EQ(removeLeading<type>(s, U"/"), U"dir");
 }
 
-TEST(strings, removeTrailing_char) {
+TEST(str, removeTrailingChar) {
   using type = char;
 
   string s = "";
@@ -69,7 +69,7 @@ TEST(strings, removeTrailing_char) {
   EXPECT_EQ(removeTrailing<type>(s, "/"), "dir");
 }
 
-TEST(strings, removeTrailing_char32_t) {
+TEST(str, removeTrailingChar32) {
   using type = char32_t;
 
   u32string s = U"";
@@ -85,7 +85,7 @@ TEST(strings, removeTrailing_char32_t) {
   EXPECT_EQ(removeTrailing<type>(s, U"/"), U"dir");
 }
 
-TEST(strings, replaceIn_char) {
+TEST(str, replaceInChar) {
   using type = char;
 
   string s = "(abc)(abc)(abc)";
@@ -93,7 +93,7 @@ TEST(strings, replaceIn_char) {
   EXPECT_EQ(s, "(a)(a)(a)");
 }
 
-TEST(strings, replaceIn_char32_t) {
+TEST(str, replaceInChar32) {
   using type = char32_t;
 
   u32string s = U"(abc)(abc)(abc)";
@@ -101,13 +101,13 @@ TEST(strings, replaceIn_char32_t) {
   EXPECT_EQ(s, U"(a)(a)(a)");
 }
 
-TEST(strings, upper_char) {
+TEST(str, upperChar) {
   EXPECT_EQ(str::upper("debug"), "DEBUG");
   EXPECT_EQ(str::upper("DEBUG"), "DEBUG");
   EXPECT_EQ(str::upper("äöü"), "ÄÖÜ");
 }
 
-TEST(strings, upper_char32_t) {
+TEST(str, upperChar32) {
   EXPECT_EQ(str::upper(U"debug"), U"DEBUG");
   EXPECT_EQ(str::upper(U"DEBUG"), U"DEBUG");
   EXPECT_EQ(str::upper(U"äöü"), U"ÄÖÜ");

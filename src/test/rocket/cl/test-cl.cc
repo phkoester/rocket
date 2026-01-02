@@ -167,7 +167,7 @@ TEST(cl, parseNoOpts) {
   EXPECT_EQ(args, (vector<string> { "a", "b", "c" }));
 }
 
-TEST(cl, parseOpt_bool) {
+TEST(cl, parseOptBool) {
   bool flag;
 
   CommandLine cl( {
@@ -233,7 +233,7 @@ TEST(cl, parseOpt_bool) {
   }
 }
 
-TEST(cl, parseOpt_int) {
+TEST(cl, parseOptInt) {
   int num;
 
   CommandLine cl( {
@@ -277,7 +277,7 @@ TEST(cl, parseOpt_int) {
   }
 }
 
-TEST(cl, parseOpt_enum) {
+TEST(cl, parseOptEnum) {
   log::LogLevel level;
 
   CommandLine cl( {
@@ -303,7 +303,7 @@ TEST(cl, parseOpt_enum) {
   }
 }
 
-TEST(cl, parseOpt_vector) {
+TEST(cl, parseOptVector) {
   vector<string> names;
 
   CommandLine cl( {

@@ -23,8 +23,6 @@ TEST(format_std, byteFormat) {
   EXPECT_EQ(fmt::format("{:#x}", byte { 255 }), "0xff");
 }
 
-// test std::initializer_list
-
 TEST(format_std, initializerListFormat) {
   EXPECT_EQ(fmt::format("{}", initializer_list<int> { 1, 2, 3 }), "[1, 2, 3]");
 }
@@ -110,6 +108,14 @@ TEST(format_std, vectorFormat) {
   EXPECT_EQ(fmt::format("{::0>5}", vector<int> { 1, 2, 3 }), "[00001, 00002, 00003]");
   EXPECT_EQ(fmt::format("{}", vector<string> { "one", "two", "three" }), "[\"one\", \"two\", \"three\"]");
   EXPECT_EQ(fmt::format("{::}", vector<string> { "one", "two", "three" }), "[one, two, three]");
+}
+
+TEST(format_std, vectorAndOptionalInTypeLoopFormat) {
+  using type = vector<optional<vector<LogLevel>>>;
+  type v1 = {};
+  EXPECT_EQ(fmt::format("{}", v1), "[]");
+  type v2 = type { vector<LogLevel> { vector<LogLevel> { LogLevel::info, LogLevel::warn } } };
+  EXPECT_EQ(fmt::format("{}", v2), "[[info, warn]]");
 }
 
 // EOF

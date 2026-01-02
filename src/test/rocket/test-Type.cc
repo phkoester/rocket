@@ -29,11 +29,11 @@ enum Enum2 { D, E, F };
 
 // `TEST` ---------------------------------------------------------------------------------------------------
 
-TEST(Type, op_eq) {
+TEST(Type, opEq) {
   EXPECT_EQ(Type::of<int>(), Type::of<int>());
 }
 
-TEST(Type, op_ne) {
+TEST(Type, opNe) {
   EXPECT_NE(Type::of<int>(), Type::of<long>());
 }
 
@@ -46,7 +46,7 @@ TEST(Type, format) {
 /**
  * Test passes if it compiles.
  */
- TEST(Type, map) {
+TEST(Type, map) {
   map<Type, string> map;
   map.emplace(Type::of<int>(), "int");
   map.emplace(Type::of<string>(), "string");
