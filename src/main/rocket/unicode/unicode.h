@@ -212,7 +212,7 @@ using CodePoints = std::vector<CodePoint>;
 // `Grapheme` -----------------------------------------------------------------------------------------------
 
 /**
- * A grapheme consisting of one or more code points.
+ * A grapheme, more precisely a grapheme cluster, consisting of one or more code points.
  */
 struct Grapheme {
   /// The code points this grapheme consists of.

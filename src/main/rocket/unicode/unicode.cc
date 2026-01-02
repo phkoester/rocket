@@ -126,7 +126,7 @@ CodePoint::width() const {
 
 ostream&
 operator<<(ostream& lhs, CodePoint rhs) {
-  return lhs << fmt::format("{}", rhs);
+  return lhs << static_cast<string>(rhs);
 }
 
 size_t
@@ -210,7 +210,7 @@ Grapheme::print() const {
 
 ostream&
 operator<<(ostream& lhs, const Grapheme& rhs) {
-  return lhs << fmt::format("{}", rhs);
+  return lhs << static_cast<string>(rhs);
 }
 
 size_t
@@ -314,18 +314,21 @@ codePointSize(char c) {
 
 CodePoints
 codePoints(string_view s, container::UnorderedBimap<size_t, size_t>* positions) {
-  if (positions)
+  if (positions) {
     positions->clear();
+  }
   CodePoints ret;
   size_t i = 0;
   auto it = CodePointIterator<char>(s), end = CodePointIterator<char>(s, s.size());
   for (; it != end; ++it) {
     ret.push_back(*it);
-    if (positions)
+    if (positions) {
       positions->insert({ i++, it.position() });
+    }
   }
-  if (positions)
+  if (positions) {
     positions->insert({ i++, it.position() });
+  }
   return ret;
 }
 
@@ -348,11 +351,13 @@ graphemes(string_view s, container::UnorderedBimap<size_t, size_t>* positions) {
   auto it = GraphemeIterator<char>(s), end = GraphemeIterator<char>(s, s.size());
   for (; it != end; ++it) {
     ret.push_back(*it);
-    if (positions)
+    if (positions) {
       positions->insert({ i++, it.position() });
+    }
   }
-  if (positions)
+  if (positions) {
     positions->insert({ i++, it.position()});
+  }
   return ret;
 }
 

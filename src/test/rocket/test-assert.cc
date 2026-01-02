@@ -19,7 +19,7 @@ const char* oops() { oopsCalled = true; return "oops"; }
 
 // `TEST` ---------------------------------------------------------------------------------------------------
 
-TEST(assert, ROCKET_ASSERT) {
+TEST(assert, RocketAssertTrue) {
   EXPECT_NO_THROW({ ROCKET_ASSERT(true); });
 
   oopsCalled = false;
@@ -27,15 +27,22 @@ TEST(assert, ROCKET_ASSERT) {
   EXPECT_FALSE(oopsCalled);
 }
 
+TEST(assertDeathTest, RocketAssertFalse) {
+  GTEST_FLAG_SET(death_test_style, "threadsafe");
+  EXPECT_EXIT(
+      { ROCKET_ASSERT(false, "My message"); },
+      KilledBySignal(SIGABRT), "Assertion `false` failed: My message");
+}
+
 #define NDEBUG 1
 #include "rocket/assert.h"
-TEST(assert, ROCKET_ASSERT_NDEBUG) {
+TEST(assert, RocketAssertNdebug) {
   ROCKET_ASSERT(false, "This must have no effect");
 }
 #undef NDEBUG
 #include "rocket/assert.h"
 
-TEST(assert, ROCKET_CHECK) {
+TEST(assert, RocketCheck) {
   char c = 'a';
 
   EXPECT_THAT(
@@ -47,7 +54,7 @@ TEST(assert, ROCKET_CHECK) {
       ThrowsMessage<InvalidArgument>(HasSubstr("Parameter `c`: Check `c == 'b'` failed: oops")));
 }
 
-TEST(assert, ROCKET_EXPECT) {
+TEST(assert, RocketExpect) {
   oopsCalled = false;
   EXPECT_THAT(
       [] { ROCKET_EXPECT(true && false, "{}", oops()); },

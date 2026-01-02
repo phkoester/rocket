@@ -17,7 +17,7 @@ ROCKET_INIT(([] { y = 13; }));
 
 // `TEST` ---------------------------------------------------------------------------------------------------
 
-TEST(macro, ROCKET_INIT) {
+TEST(macro, RocketInit) {
   EXPECT_EQ(x, 12);
   EXPECT_EQ(y, 13);
 }

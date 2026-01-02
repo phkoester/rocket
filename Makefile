@@ -8,7 +8,8 @@ export SYSTEM_INCLUDE_DIRS := \
     $(GAIA_CPP_UNICODELIB_DIR) \
     $(GAIA_FMT_DIR)/include \
     $(GAIA_GTEST_DIR)/googlemock/include \
-    $(GAIA_GTEST_DIR)/googletest/include
+    $(GAIA_GTEST_DIR)/googletest/include \
+    $(GAIA_LIBUNICODE_DIR)/src
 
 # `build` must be the first target and build everything, including benches and tests
 build: buildBench buildTest
