@@ -126,7 +126,7 @@ CodePoint::width() const {
 
 ostream&
 operator<<(ostream& lhs, CodePoint rhs) {
-  return lhs << static_cast<string>(rhs);
+  return lhs << fmt::format("{}", rhs);
 }
 
 size_t
@@ -210,7 +210,7 @@ Grapheme::print() const {
 
 ostream&
 operator<<(ostream& lhs, const Grapheme& rhs) {
-  return lhs << static_cast<string>(rhs);
+  return lhs << fmt::format("{}", rhs);
 }
 
 size_t

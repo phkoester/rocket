@@ -21,6 +21,9 @@ ifeq ($(ROCKET_VERSION),)
   $(error Cannot set `ROCKET_VERSION`)
 endif
 
+# Libraries in this directory must have been made by `gaia-make-libunicode`
+export LIBUNICODE_LIB_DIR := $(GAIA_LIBUNICODE_DIR)/target/$(BUILD_TARGET)
+
 all: check doc test bench
 
 bench: buildMain
