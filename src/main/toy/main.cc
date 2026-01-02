@@ -60,6 +60,8 @@ toy() {
     int width = u32_gc_width((const u32_char_t*) segment.data(), segment.size(), GC_WIDTH_MODE_MODIFIABLE);
     out.println("grapheme 32 #{}: {: <2}, codepoints={}, width={}", i++, s8, segment.size(), width);
   }
+
+  // XXX UTF-8-Segmenter
 }
 
 } // namespace

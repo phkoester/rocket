@@ -228,8 +228,8 @@ private:
 /**
  * The class `StreamSink` provides support for `std::ostream`.
  *
- * Using I/O streams is generally discouraged, because it’s not efficient. Wherever possible, use #FileSink
- * instead.
+ * Using I/O streams is generally discouraged, because it’s not partable and not efficient. Wherever
+ * possible, use #FileSink instead.
  */
 struct StreamSink : Sink {
   explicit StreamSink(std::ostream& os) : os_(os) {}
@@ -414,8 +414,8 @@ struct NullSource : Source {
 /**
  * The class `StreamSource` provides support for `std::istream`.
  *
- * Using I/O streams is generally discouraged, because it’s not efficient. Wherever possible, use #FileSource
- * instead.
+ * Using I/O streams is generally discouraged, because it’s not partable and not efficient. Wherever
+ * possible, use #FileSink instead.
  */
 struct StreamSource : Source {
   explicit StreamSource(std::istream& is) : is_(is) {}
