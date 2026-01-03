@@ -54,7 +54,6 @@ SRC_ADD        := unicode/EastAsianWidth.cc unicode/emoji-data.cc
 # Move `log.cc` to front so Rocket can use its own logging API
 # Move `Process.cc` to front so the global `process` instance is available early
 SRC_MOVE_FRONT := log/log.cc Process.cc
-LIB_FILES      := $(SCNLIB_LIB_DIR)/libscn.a
 include $(GAIA_DIR)/src/main/make/shared-lib.mk
 
 # `rocket-gtest` --------------------------------------------------------------------------------------------
@@ -67,7 +66,6 @@ include $(GAIA_DIR)/src/main/make/lib.mk
 
 NAME        := toy
 SRC_DIR     := main/toy
-LIB_FILES   := $(LIBUNICODE_LIB_DIR)/libunicode.a
 SHARED_LIBS := $(call shared-lib-name,rocket,$(ROCKET_VERSION))
 include $(GAIA_DIR)/src/main/make/executable.mk
 

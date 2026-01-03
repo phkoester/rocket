@@ -7,9 +7,9 @@
 #pragma once
 
 #include "rocket/Process.h"
-#include "rocket/StringConvert.h"
 #include "rocket/assert.h"
 #include "rocket/nio/nio.h"
+#include "rocket/str/StringConvert.h"
 #include "rocket/unicode/unicode.h"
 
 #include <unordered_map>
@@ -24,21 +24,21 @@ template<typename T>
 void
 applyTo(T& dest, std::optional<std::string_view> arg) {
   ROCKET_CHECK(arg, arg);
-  dest = toType<T>(*arg);
+  dest = str::toType<T>(*arg);
 }
 
 template<>
 inline void
 applyTo(bool& dest, std::optional<std::string_view> arg) {
   // For `bool` only, `arg` may be null
-  dest = arg ? toType<bool>(*arg) : true;
+  dest = arg ? str::toType<bool>(*arg) : true;
 }
 
 template<typename T>
 void
 applyTo(std::vector<T>& dest, std::optional<std::string_view> arg) {
   ROCKET_CHECK(arg, arg);
-  T val = toType<T>(*arg);
+  T val = str::toType<T>(*arg);
   dest.push_back(val);
 }
 

@@ -5,7 +5,7 @@
 #include "nio.h"
 
 #include "rocket/assert.h"
-#include "rocket/number.h"
+#include "rocket/numeric.h"
 
 #include <cstdio>
 #include <iostream>

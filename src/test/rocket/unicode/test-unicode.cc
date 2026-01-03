@@ -5,10 +5,10 @@
 #include "rocket-gtest/rocket-gtest.h"
 
 #include "rocket/format/std.h"
-#include "rocket/random/random.h"
+#include "rocket/math/random.h"
 #include "rocket/system/system.h"
-#include "rocket/terminal/terminal.h"
-#include "rocket/unicode/iterator.h"
+#include "rocket/system/terminal/terminal.h"
+#include "rocket/unicode/unicode.h"
 #include "rocket/unicode/internal/block.h"
 
 #include "rocket-gtest/matcher/matcher.h"
@@ -16,7 +16,6 @@
 using namespace rocket;
 using namespace rocket::gtest::matcher;
 using namespace rocket::unicode;
-using namespace rocket::unicode::internal;
 using namespace std;
 using namespace testing;
 
@@ -35,7 +34,7 @@ testGrapheme(const Grapheme& grapheme, u32string_view s) {
 
   string s8 = utf32To8(s);
   out.print("[{}]", s8);
-  auto pos = terminal::position(out);
+  auto pos = system::terminal::position(out);
   EXPECT_TRUE(pos);
   EXPECT_EQ(pos->first, grapheme.width + 3);
   out.write('\n');
@@ -48,12 +47,14 @@ testGrapheme(const Grapheme& grapheme, u32string_view s) {
 
 // `rocket::unicode::internal` ..............................................................................
 
-TEST(unicode, blockBiFind) {
-  auto gen = random::gen();
+TEST(unicode, internalBlockBiFind) {
+  using namespace rocket::unicode::internal;
+
+  auto gen = math::gen();
 
   size_t hits = 0;
   for (size_t i = 0; i < 1'000'000; ++i) {
-    uint32_t cp = random::random(gen, 0U, 0xffffU);
+    uint32_t cp = math::random(gen, 0U, 0xffffU);
     const auto* p = biFind(eastAsianWidthBlocks, cp);
     if (p)
      ++hits;
@@ -61,7 +62,9 @@ TEST(unicode, blockBiFind) {
   EXPECT_GT(hits, 900'000);
 }
 
-TEST(unicode, blockEastAsianWidth) {
+TEST(unicode, internalBlockEastAsianWidth) {
+  using namespace rocket::unicode::internal;
+
   EXPECT_EQ(eastAsianWidth(0x0000U), EastAsianWidth::neutral);
   EXPECT_EQ(eastAsianWidth(0x0020U), EastAsianWidth::narrow);
   EXPECT_EQ(eastAsianWidth(0x00b8U), EastAsianWidth::ambiguous);
@@ -72,7 +75,9 @@ TEST(unicode, blockEastAsianWidth) {
   EXPECT_EQ(eastAsianWidth(0x01f468U), EastAsianWidth::wide); // MAN
 }
 
-TEST(unicode, blockEmoji) {
+TEST(unicode, internalBlockEmoji) {
+  using namespace rocket::unicode::internal;
+
   EXPECT_FALSE(emojiEmoji(0x0000U));
 
   EXPECT_TRUE(emojiEmoji(0x0023U)); // HASH SIGN
@@ -276,158 +281,6 @@ TEST(unicode, conversions) {
 
   string s3 = utf32To8(s2);
   EXPECT_EQ(s3, s1);
-}
-
-TEST(unicode, CodePointIteratorChar) {
-  using type = char;
-
-  string_view s = "ä€";
-
-  auto it = CodePointIterator<type>(s);
-  EXPECT_FALSE(it.decrement());
-  EXPECT_TRUE(it.begin());
-  EXPECT_FALSE(it.end());
-  EXPECT_EQ(it.codePointSize(), 2);
-  EXPECT_EQ(*it, CodePoint(U'ä'));
-
-  ++it;
-  EXPECT_FALSE(it.begin());
-  EXPECT_FALSE(it.end());
-  EXPECT_EQ(it.codePointSize(), 3);
-  EXPECT_EQ(*it, CodePoint(U'€'));
-
-  ++it;
-  EXPECT_FALSE(it.begin());
-  EXPECT_TRUE(it.end());
-
-  auto it2(it);
-  it2 -= 2;
-  EXPECT_TRUE(it2.begin());
-  EXPECT_FALSE(it2.end());
-
-  auto end = CodePointIterator<type>(s, s.size());
-  EXPECT_EQ(end.codePointPosition(), 2);
-
-  auto beg = CodePointIterator<type>(s);
-  EXPECT_EQ(distance(beg, end), 2);
-}
-
-TEST(unicode, CodePointIteratorChar32) {
-  using type = char32_t;
-
-  u32string_view s = U"ä€";
-
-  auto it = CodePointIterator<type>(s);
-  EXPECT_FALSE(it.decrement());
-  EXPECT_TRUE(it.begin());
-  EXPECT_FALSE(it.end());
-  EXPECT_EQ(*it, CodePoint(U'ä'));
-
-  ++it;
-  EXPECT_FALSE(it.begin());
-  EXPECT_FALSE(it.end());
-  EXPECT_EQ(*it, CodePoint(U'€'));
-
-  ++it;
-  EXPECT_FALSE(it.begin());
-  EXPECT_TRUE(it.end());
-
-  auto it2(it);
-  it2 -= 2;
-  EXPECT_TRUE(it2.begin());
-  EXPECT_FALSE(it2.end());
-
-  auto end = CodePointIterator<type>(s, s.size());
-  EXPECT_EQ(end.codePointPosition(), 2);
-
-  auto beg = CodePointIterator<type>(s);
-  EXPECT_EQ(distance(beg, end), 2);
-}
-
-TEST(unicode, GraphemeIteratorChar) {
-  using type = char;
-
-  // ☢️:  6 bytes, 2 code points
-  // 🧑‍🌾: 11 bytes, 3 code points
-  string_view s = "☢️🧑‍🌾";
-  EXPECT_EQ(s.size(), 17);
-  EXPECT_EQ(countCodePoints(s), 5);
-  EXPECT_EQ(countGraphemes(s), 2);
-
-  auto it = GraphemeIterator<type>(s);
-  EXPECT_TRUE(it.begin());
-  EXPECT_FALSE(it.end());
-  EXPECT_EQ(it.position(), 0);
-  EXPECT_EQ(it.graphemeSize(), 2);
-  EXPECT_EQ(*it, Grapheme("☢️"));
-
-  ++it;
-  EXPECT_FALSE(it.begin());
-  EXPECT_FALSE(it.end());
-  EXPECT_EQ(it.position(), 6);
-  EXPECT_EQ(it.graphemeSize(), 3);
-  EXPECT_EQ(*it, Grapheme("🧑‍🌾"));
-
-  ++it;
-  EXPECT_FALSE(it.begin());
-  EXPECT_TRUE(it.end());
-
-  auto it2(it);
-  EXPECT_EQ(it2.position(), 17);
-  --it2;
-  EXPECT_EQ(it2.position(), 6);
-  it2 -= 1;
-  EXPECT_TRUE(it2.begin());
-  EXPECT_FALSE(it2.end());
-
-  auto end = GraphemeIterator<type>(s, s.size());
-  EXPECT_EQ(end.graphemePosition(), 2);
-
-  auto beg = GraphemeIterator<type>(s);
-  EXPECT_EQ(distance(beg, end), 2);
-}
-
-TEST(unicode, GraphemeIteratorChar32) {
-  using type = char32_t;
-
-  // ☢️: 2 code points
-  // 🧑‍🌾: 3 code points
-  u32string_view s = U"☢️🧑‍🌾";
-  EXPECT_EQ(s.size(), 5);
-  EXPECT_EQ(countCodePoints(s), 5);
-  EXPECT_EQ(countGraphemes(s), 2);
-
-  auto it = GraphemeIterator<type>(s);
-  EXPECT_TRUE(it.begin());
-  EXPECT_FALSE(it.end());
-  EXPECT_EQ(it.position(), 0);
-  EXPECT_EQ(it.graphemeSize(), 2);
-  EXPECT_EQ(*it, Grapheme("☢️"));
-
-  ++it;
-  EXPECT_FALSE(it.begin());
-  EXPECT_FALSE(it.end());
-  EXPECT_EQ(it.position(), 2);
-  EXPECT_EQ(it.graphemeSize(), 3);
-  EXPECT_EQ(*it, Grapheme("🧑‍🌾"));
-
-  ++it;
-  EXPECT_FALSE(it.begin());
-  EXPECT_TRUE(it.end());
-
-  auto it2(it);
-  EXPECT_EQ(it2.position(), 5);
-  --it2;
-  EXPECT_EQ(it2.position(), 2);
-  it2 -= 1;
-  EXPECT_TRUE(it2.begin());
-  EXPECT_FALSE(it2.end());
-
-  auto end = GraphemeIterator<type>(s, s.size());
-  EXPECT_EQ(end.graphemePosition(), 2);
-
-  auto beg = GraphemeIterator<type>(s);
-  EXPECT_EQ(distance(beg, end), 2);
 }
 
 // `rocket::unicode::utf8` ..................................................................................

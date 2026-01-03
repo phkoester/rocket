@@ -7,8 +7,7 @@
 #include "rocket/assert.h"
 #include "rocket/log/log.h"
 #include "rocket/str/str.h"
-#include "rocket/terminal/terminal.h"
-#include "rocket/text/text.h"
+#include "rocket/system/terminal/terminal.h"
 #include "rocket/unicode/iterator.h"
 
 using namespace std;
@@ -101,7 +100,7 @@ void
 CommandLine::help(nio::Sink& out, bool exit) {
   ROCKET_EXPECT(help_);
 
-  auto size = terminal::size(out);
+  auto size = system::terminal::size(out);
   size_t width = max(40UL, size ? size->first : 80UL);
   bool output = params_.otherOutput;
 
@@ -121,7 +120,7 @@ CommandLine::help(nio::Sink& out, bool exit) {
     if (output) {
       out.write('\n');
     }
-    out.writeln(text::wrap(*params_.prolog, { .width=width }));
+    out.writeln(str::wrap(*params_.prolog, 0, width));
     output = true;
   }
 
@@ -141,7 +140,7 @@ CommandLine::help(nio::Sink& out, bool exit) {
     if (output) {
       out.write('\n');
     }
-    out.writeln(text::wrap(*params_.epilog, { .width=width }));
+    out.writeln(str::wrap(*params_.epilog, 0, width));
   }
 
   if (exit) {
@@ -179,7 +178,6 @@ CommandLine::helpOpts(nio::Sink& out, size_t width) const {
   // Loop though groups
 
   bool output = false;
-  text::WrapParams wrapParams { .leftIndent=10, .width=width };
 
   for (const auto* group : groups) {
     const auto& opts = options.find(group)->second;
@@ -206,7 +204,7 @@ CommandLine::helpOpts(nio::Sink& out, size_t width) const {
       }
       out.write('\n');
       if (opt->help) {
-        out.writeln(text::wrap(*opt->help, wrapParams));
+        out.writeln(str::wrap(*opt->help, 10, width));
       }
     }
   }

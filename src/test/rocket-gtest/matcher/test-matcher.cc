@@ -36,7 +36,7 @@ TEST(matcher, throwsInputFailure) {
 
   EXPECT_THAT(
     [&] { throw InputFailure(2, { { 1, 2 }, { 3, 4 } }, "oops"); },
-    throwsInputFailure(Eq(2), Eq(text::Ranges { { 1, 2 }, { 3, 4 } }), HasSubstr("oops")));
+    throwsInputFailure(Eq(2), Eq(str::Ranges { { 1, 2 }, { 3, 4 } }), HasSubstr("oops")));
 
   EXPECT_THAT(
     [&] { throw InputFailure(2, { { 1, 2 }, { 3, 4 } }, "oops"); },

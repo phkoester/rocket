@@ -204,7 +204,8 @@ TEST(nio, FileSourceDoesNotExist) {
 }
 
 TEST(nio, FileSourceRead) {
-  auto tmp = tempPath();
+  auto tmp = ROCKET_GTEST_TEMP_PATH();
+  cout << "tmp: " << tmp << endl;
 
   FileSink out(tmp);
   out.writeln("Hey there");
@@ -226,7 +227,7 @@ TEST(nio, FileSourceRead) {
 }
 
 TEST(nio, StreamSourceRead) {
-  auto tmp = tempPath();
+  auto tmp = ROCKET_GTEST_TEMP_PATH();
 
   ofstream os(tmp.c_str());
   StreamSink out(os);

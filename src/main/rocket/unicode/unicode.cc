@@ -5,6 +5,7 @@
 #include "unicode.h"
 
 #include "rocket/assert.h"
+#include "rocket/numeric.h"
 #include "rocket/str/str.h"
 #include "rocket/unicode/iterator.h"
 #include "rocket/unicode/internal/block.h"
@@ -297,9 +298,7 @@ width(const Graphemes& grs, size_t index, size_t n) {
   auto end = n == NPOS ? grs.end() : begin + n;
 
   return accumulate(begin, end, 0UL, [](size_t n, const Grapheme& gr) {
-    size_t ret = n + gr.width;
-    ROCKET_EXPECT(ret >= n, "{}", message::overflow(Type::of<size_t>()));
-    return ret;
+    return add<size_t, int128_t>(n, gr.width);
   });
 }
 
@@ -313,7 +312,7 @@ codePointSize(char c) {
 }
 
 CodePoints
-codePoints(string_view s, container::UnorderedBimap<size_t, size_t>* positions) {
+codePoints(string_view s, UnorderedBimap<size_t, size_t>* positions) {
   if (positions) {
     positions->clear();
   }
@@ -343,7 +342,7 @@ countGraphemes(string_view s) {
 }
 
 Graphemes
-graphemes(string_view s, container::UnorderedBimap<size_t, size_t>* positions) {
+graphemes(string_view s, UnorderedBimap<size_t, size_t>* positions) {
   if (positions)
     positions->clear();
   Graphemes ret;
@@ -429,7 +428,7 @@ valid(string_view s, string* out) {
 namespace utf32 {
 
 CodePoints
-codePoints(u32string_view s, container::UnorderedBimap<size_t, size_t>* positions) {
+codePoints(u32string_view s, UnorderedBimap<size_t, size_t>* positions) {
   if (positions) {
     positions->clear();
   }
@@ -450,7 +449,7 @@ countGraphemes(u32string_view s) {
 }
 
 Graphemes
-graphemes(u32string_view s, container::UnorderedBimap<size_t, size_t>* positions) {
+graphemes(u32string_view s, UnorderedBimap<size_t, size_t>* positions) {
   if (positions) {
     positions->clear();
   }

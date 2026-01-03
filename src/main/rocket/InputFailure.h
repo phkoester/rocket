@@ -9,14 +9,14 @@
 #define ROCKET_EXCEPT_H
 
 #include "rocket/Exception.h"
-#include "rocket/text/text.h"
+#include "rocket/str/Range.h"
 
 namespace rocket {
 
 // `InputFailure` -------------------------------------------------------------------------------------------
 
 /**
- * Instances of this class are thrown when reading an input fails.
+ * Instances of this class are thrown when reading a string input fails.
  */
 struct InputFailure : InvalidState {
   /// @type_base
@@ -48,7 +48,7 @@ struct InputFailure : InvalidState {
    */
   InputFailure(
       size_t position,
-      text::Range range,
+      str::Range range,
       std::string_view msg,
       std::optional<std::source_location>&& sl = ROCKET_EXCEPT_SL,
       std::optional<std::stacktrace>&& st = ROCKET_EXCEPT_ST) :
@@ -65,7 +65,7 @@ struct InputFailure : InvalidState {
    */
   InputFailure(
       size_t position,
-      std::initializer_list<text::Range> ranges,
+      std::initializer_list<str::Range> ranges,
       std::string_view msg,
       std::optional<std::source_location>&& sl = ROCKET_EXCEPT_SL,
       std::optional<std::stacktrace>&& st = ROCKET_EXCEPT_ST) :
@@ -88,12 +88,12 @@ struct InputFailure : InvalidState {
    *
    * @return the stored position ranges
    */
-  const text::Ranges& ranges() const { return ranges_; }
+  const str::Ranges& ranges() const { return ranges_; }
 
 private:
 
   const size_t position_;
-  const text::Ranges ranges_;
+  const str::Ranges ranges_;
 };
 
 } // namespace rocket

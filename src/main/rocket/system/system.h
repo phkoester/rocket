@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include "rocket/StringConvert.h"
+#include "rocket/str/StringConvert.h"
 
 #include <cstdlib>
 #include <optional>
@@ -73,7 +73,7 @@ get(const std::string& name) {
   if (not p)
     return std::nullopt;
   std::string_view s(p);
-  return tryToType<T>(s);
+  return str::tryToType<T>(s);
 }
 
 /**

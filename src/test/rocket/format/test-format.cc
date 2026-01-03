@@ -5,7 +5,7 @@
 #include "rocket-gtest/rocket-gtest.h"
 
 #include "rocket/format/format.h"
-#include "rocket/random/random.h"
+#include "rocket/math/random.h"
 
 #include "rocket-gtest/matcher/matcher.h"
 
@@ -17,10 +17,10 @@ using namespace std;
 // `TEST` ---------------------------------------------------------------------------------------------------
 
 TEST(format, Format) {
-  auto gen = random::gen();
+  auto gen = math::gen();
 
   for (int i = 0; i < 100; ++i) {
-    auto n = random::random(gen, 1, 11);
+    auto n = math::random(gen, 1, 11);
 
     nio::StringSink buf;
     buf.print("n is {}.{}", n, Format([&] {
@@ -44,10 +44,10 @@ TEST(format, Format) {
 }
 
 TEST(format, FormatWithTagged) {
-  auto gen = random::gen();
+  auto gen = math::gen();
 
   for (int i = 0; i < 10; ++i) {
-    auto n = random::random(gen, 1, 2);
+    auto n = math::random(gen, 1, 2);
 
     nio::StringSink buf;
     buf.print("{}:{}{}", __FILE__, __LINE__, Format([&] {

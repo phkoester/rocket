@@ -6,7 +6,7 @@ include $(GAIA_DIR)/src/main/make/Makefile.mk
 
 # `rocket` --------------------------------------------------------------------------------------------------
 
-NAME        := bench-rocket-nio-nio
+NAME        := bench-rocket-nio
 CC_FILES    := bench/rocket/nio/bench-nio.cc
 SHARED_LIBS := $(call shared-lib-name,rocket,$(ROCKET_VERSION))
 include $(GAIA_DIR)/src/main/make/bench-executable.mk

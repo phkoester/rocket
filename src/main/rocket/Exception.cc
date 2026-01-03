@@ -5,7 +5,7 @@
 #include "Exception.h"
 
 #include "rocket/assert.h"
-#include "rocket/message/message.h"
+#include "rocket/str/message/message.h"
 
 using namespace rocket;
 using namespace std;
@@ -161,7 +161,7 @@ InvalidArgument::InvalidArgument(
     string_view msg,
     optional<source_location>&& sl,
     optional<stacktrace>&& st) :
-    Base(message::exceptionBase(fmt::format("Parameter `{}`: {}", name, msg), sl)),
+    Base(str::message::exceptionBase(fmt::format("Parameter `{}`: {}", name, msg), sl)),
     Exception(msg, std::move(sl), std::move(st)) {}
 
 // `InvalidState` -------------------------------------------------------------------------------------------
@@ -170,7 +170,7 @@ InvalidState::InvalidState(
     string_view msg,
     optional<source_location>&& sl,
     optional<stacktrace>&& st) :
-    Base(message::exceptionBase(msg, sl)),
+    Base(str::message::exceptionBase(msg, sl)),
     Exception(msg, std::move(sl), std::move(st)) {}
 
 // Functions ------------------------------------------------------------------------------------------------

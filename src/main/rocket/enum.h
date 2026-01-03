@@ -9,9 +9,9 @@
 #include "rocket/enum-decl.h"
 
 #include "rocket/Exception.h"
+#include "rocket/UnorderedBimap.h"
 #include "rocket/Type.h"
-#include "container/container.h"
-#include "rocket/message/message.h"
+#include "rocket/str/message/message.h"
 
 #include <boost/preprocessor/stringize.hpp>
 #include <boost/preprocessor/seq/for_each.hpp>
@@ -25,12 +25,12 @@
 #define ROCKET_ENUM_DEFINE_MAP_ELEM__(r, data, elem) { data::elem, BOOST_PP_STRINGIZE(elem) },
 
 #define ROCKET_ENUM_DEFINE_MAP__(type, name, seq) \
-    const auto name##Map__ = ::rocket::container::makeUnorderedBimap<type, ::std::string_view>({ \
+    const auto name##Map__ = ::rocket::makeUnorderedBimap<type, ::std::string_view>({ \
       BOOST_PP_SEQ_FOR_EACH(ROCKET_ENUM_DEFINE_MAP_ELEM__, type, seq) \
     })
 
 #define ROCKET_ENUM_DEFINE_VALUES__(type, name) \
-    const auto name##Values__ = ::rocket::container::values<type, ::std::string_view>(name##Map__)
+    const auto name##Values__ = ::rocket::values<type, ::std::string_view>(name##Map__)
 
 #define ROCKET_ENUM_DEFINE_OP_OUTPUT__(type, name) \
     ::std::ostream& \
@@ -64,7 +64,7 @@
       if (it != ns::name##Map__.right.end()) { \
         return it->second; \
       } else { \
-        throw ::rocket::InvalidState(::rocket::message::cannotParseAs(s, rocket::Type::of<ns::type>())); \
+        throw ::rocket::InvalidState(::rocket::str::message::cannotParseAs(s, ::rocket::Type::of<ns::type>())); \
       } \
     }
 

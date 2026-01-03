@@ -8,6 +8,7 @@
 
 #include <limits>
 #include <string>
+#include <vector>
 
 #pragma once
 
@@ -82,6 +83,16 @@ endsWith(std::basic_string_view<C> s, std::basic_string_view<C> sub) {
  * @return a new string
  */
 [[nodiscard]] std::u32string lower(std::u32string_view s);
+
+/**
+ * Converts a UTF-32 string to lower case, handling Unicode characters correctly.
+ *
+ * @param s the string to convert
+ */
+void lowerIn(std::u32string& s);
+
+// XXX
+std::vector<std::vector<std::string>> paragraphs(std::string_view s);
 
 /**
  * Converts a UTF-32 string to lower case, handling Unicode characters correctly.
@@ -222,6 +233,21 @@ replaceIn(
  * @param s the string to convert
  */
 void upperIn(std::u32string& s);
+
+/**
+ * Wraps the string @p s to fit the width specified by @p params.
+ *
+ * - Line breaks (`"\n"`, `"\r\n"`) are recognized.
+ * - Non-breaking spaces (U+00A0) are recognized.
+ * - Tabs are replaced by spaces.
+ * - Consecutive whitespace is collapsed.
+ *
+ * @param s the string to wrap
+ * @param params parameters configuring the operation
+ * @return a new string
+ */
+// XXX Mit <C>
+std::string wrap(std::string_view s, size_t leftIndent = 0, size_t width = 80);
 
 } // namespace rocket::str
 

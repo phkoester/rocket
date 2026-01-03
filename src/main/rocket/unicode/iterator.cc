@@ -636,13 +636,13 @@ CodePointIterator<char>::CodePointIterator(string_view input, size_t position) :
 }
 
 CodePointIterator<char>::operator std::string_view () const {
-  ROCKET_EXPECT(not end(), "{}", message::iteratorOutOfBounds(*this, pos_));
+  ROCKET_EXPECT(not end(), "{}", str::message::iteratorOutOfBounds(*this, pos_));
   return input_.substr(pos_, cpSize_);
 }
 
 const CodePoint&
 CodePointIterator<char>::operator*() const {
-  ROCKET_EXPECT(not end(), "{}", message::iteratorOutOfBounds(*this, pos_));
+  ROCKET_EXPECT(not end(), "{}", str::message::iteratorOutOfBounds(*this, pos_));
   unicodelib::utf8::decode_codepoint(
       &input_[pos_], cpSize_, reinterpret_cast<char32_t&>(internal::cp));
   return internal::cp;
@@ -650,7 +650,7 @@ CodePointIterator<char>::operator*() const {
 
 const CodePoint*
 CodePointIterator<char>::operator->() const {
-  ROCKET_EXPECT(not end(), "{}", message::iteratorOutOfBounds(*this, pos_));
+  ROCKET_EXPECT(not end(), "{}", str::message::iteratorOutOfBounds(*this, pos_));
   unicodelib::utf8::decode_codepoint(
       &input_[pos_], cpSize_, reinterpret_cast<char32_t&>(internal::cp));
   return &internal::cp;
@@ -666,7 +666,7 @@ CodePointIterator<char>::operator[](difference_type index) const {
 
 CodePointIterator<char>&
 CodePointIterator<char>::operator++() {
-  ROCKET_EXPECT(not end(), "{}", message::iteratorAt(*this, pos_, "cannot increment"));
+  ROCKET_EXPECT(not end(), "{}", str::message::iteratorAt(*this, pos_, "cannot increment"));
   go(pos_ + cpSize_);
   if (cpPos_ != NPOS)
     ++cpPos_;
@@ -682,11 +682,11 @@ CodePointIterator<char>::operator++(int) {
 
 CodePointIterator<char>&
 CodePointIterator<char>::operator--() {
-  ROCKET_EXPECT(not begin(), "{}", message::iteratorAt(*this, pos_, "cannot decrement"));
+  ROCKET_EXPECT(not begin(), "{}", str::message::iteratorAt(*this, pos_, "cannot decrement"));
   size_t newPos = pos_ - 1;
   // Skip continuation bytes
   while (utf8::continuationByte(input_[newPos])) {
-    ROCKET_EXPECT(newPos != 0, "{}", message::iteratorAt(*this, 0, "does not point to UTF-8 code-point boundary"));
+    ROCKET_EXPECT(newPos != 0, "{}", str::message::iteratorAt(*this, 0, "does not point to UTF-8 code-point boundary"));
     --newPos;
   }
   go(newPos);
@@ -738,7 +738,7 @@ CodePointIterator<char>::codePointPosition() const {
 
 uint8_t
 CodePointIterator<char>::codePointSize() const {
-  ROCKET_EXPECT(not end(), "{}", message::iteratorOutOfBounds(*this, pos_));
+  ROCKET_EXPECT(not end(), "{}", str::message::iteratorOutOfBounds(*this, pos_));
   return cpSize_;
 }
 
@@ -764,23 +764,23 @@ CodePointIterator<char>::go(size_t newPos) {
   // NOTE: `cpPos_` may not be used inside this function
 
   // Check position
-  ROCKET_EXPECT(newPos <= size_, "{}", message::iteratorOutOfBounds(*this, newPos));
+  ROCKET_EXPECT(newPos <= size_, "{}", str::message::iteratorOutOfBounds(*this, newPos));
   pos_ = newPos;
   if (end())
     return;
 
   // Check code-point boundary
   cpSize_ = utf8::codePointSize(input_[pos_]);
-  ROCKET_EXPECT(cpSize_ != 0, "{}", message::iteratorAt(*this, pos_, "does not point to UTF-8 code-point boundary"));
+  ROCKET_EXPECT(cpSize_ != 0, "{}", str::message::iteratorAt(*this, pos_, "does not point to UTF-8 code-point boundary"));
 
   // Multi-byte sequence?
   if (cpSize_ > 1) {
     // Check string size
-    ROCKET_EXPECT(pos_ + cpSize_ <= size_, "{}", message::iteratorAt(*this, pos_, "does not point to a complete UTF-8 byte sequence"));
+    ROCKET_EXPECT(pos_ + cpSize_ <= size_, "{}", str::message::iteratorAt(*this, pos_, "does not point to a complete UTF-8 byte sequence"));
 
     // Check continuation bytes
     for (size_t i = 1; i < cpSize_; ++i)
-      ROCKET_EXPECT(utf8::continuationByte(input_[pos_ + i]), "{}", message::iteratorAt(*this, pos_, "does not point to a valid UTF-8 byte sequence"));
+      ROCKET_EXPECT(utf8::continuationByte(input_[pos_ + i]), "{}", str::message::iteratorAt(*this, pos_, "does not point to a valid UTF-8 byte sequence"));
   }
 }
 
@@ -846,36 +846,36 @@ CodePointIterator<char32_t>::CodePointIterator(u32string_view input, size_t posi
 }
 
 CodePointIterator<char32_t>::operator std::u32string_view() const {
-  ROCKET_EXPECT(not end(), "{}", message::iteratorOutOfBounds(*this, pos_));
+  ROCKET_EXPECT(not end(), "{}", str::message::iteratorOutOfBounds(*this, pos_));
   return input_.substr(pos_, 1);
 }
 
 const CodePoint&
 CodePointIterator<char32_t>::operator*() const {
-  ROCKET_EXPECT(not end(), "{}", message::iteratorOutOfBounds(*this, pos_));
+  ROCKET_EXPECT(not end(), "{}", str::message::iteratorOutOfBounds(*this, pos_));
   return reinterpret_cast<const CodePoint&>(input_[pos_]);
 }
 
 const CodePoint*
 CodePointIterator<char32_t>::operator->() const {
-  ROCKET_EXPECT(not end(), "{}", message::iteratorOutOfBounds(*this, pos_));
+  ROCKET_EXPECT(not end(), "{}", str::message::iteratorOutOfBounds(*this, pos_));
   return reinterpret_cast<const CodePoint*>(&input_[pos_]);
 }
 
 const CodePoint&
 CodePointIterator<char32_t>::operator[](difference_type index) const {
   if (index < 0) {
-    ROCKET_CHECK(index, pos_ + index < pos_, "{}", message::SIZE_T_OVERFLOW);
+    ROCKET_CHECK(index, pos_ + index < pos_, "{}", str::message::SIZE_T_OVERFLOW);
   } else if (index > 0) {
-    ROCKET_CHECK(index, pos_ + index > pos_, "{}", message::SIZE_T_OVERFLOW);
-    ROCKET_CHECK(index, pos_ + index < size_, "{}", message::iteratorOutOfBounds(*this, pos_ + index));
+    ROCKET_CHECK(index, pos_ + index > pos_, "{}", str::message::SIZE_T_OVERFLOW);
+    ROCKET_CHECK(index, pos_ + index < size_, "{}", str::message::iteratorOutOfBounds(*this, pos_ + index));
   }
   return reinterpret_cast<const CodePoint&>(input_[pos_ + index]);
 }
 
 CodePointIterator<char32_t>&
 CodePointIterator<char32_t>::operator++() {
-  ROCKET_EXPECT(not end(), "{}", message::iteratorAt(*this, pos_, "cannot increment"));
+  ROCKET_EXPECT(not end(), "{}", str::message::iteratorAt(*this, pos_, "cannot increment"));
   go(pos_ + 1);
   return *this;
 }
@@ -889,7 +889,7 @@ CodePointIterator<char32_t>::operator++(int) {
 
 CodePointIterator<char32_t>&
 CodePointIterator<char32_t>::operator--() {
-  ROCKET_EXPECT(not begin(), "{}", message::iteratorAt(*this, pos_, "cannot decrement"));
+  ROCKET_EXPECT(not begin(), "{}", str::message::iteratorAt(*this, pos_, "cannot decrement"));
   go(pos_ - 1);
   return *this;
 }
@@ -906,7 +906,7 @@ CodePointIterator<char32_t>::operator+=(difference_type rhs) {
   if (rhs < 0)
     return operator-=(-rhs);
   else if (rhs > 0) {
-    ROCKET_CHECK(n, pos_ + rhs > pos_, "{}", message::SIZE_T_OVERFLOW);
+    ROCKET_CHECK(n, pos_ + rhs > pos_, "{}", str::message::SIZE_T_OVERFLOW);
     go(pos_ + rhs);
   }
   return *this;
@@ -917,7 +917,7 @@ CodePointIterator<char32_t>::operator-=(difference_type rhs) {
   if (rhs < 0)
     return operator+=(-rhs);
   else if (rhs > 0) {
-    ROCKET_CHECK(n, pos_ - rhs < pos_, "{}", message::SIZE_T_OVERFLOW);
+    ROCKET_CHECK(n, pos_ - rhs < pos_, "{}", str::message::SIZE_T_OVERFLOW);
     go(pos_ - rhs);
   }
   return *this;
@@ -939,7 +939,7 @@ CodePointIterator<char32_t>::decrement(difference_type n) {
 void
 CodePointIterator<char32_t>::go(size_t newPos) {
   // Check position
-  ROCKET_EXPECT(newPos <= size_, "{}", message::iteratorOutOfBounds(*this, newPos));
+  ROCKET_EXPECT(newPos <= size_, "{}", str::message::iteratorOutOfBounds(*this, newPos));
   pos_ = newPos;
 }
 

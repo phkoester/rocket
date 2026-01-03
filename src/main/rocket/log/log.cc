@@ -78,7 +78,7 @@ vector<cl::Option> clOpts {
 };
 
 // Defined log IDs
-auto definedIds = rocket::container::makeUnorderedBimap<LogLevel*, string_view>();
+auto definedIds = rocket::makeUnorderedBimap<LogLevel*, string_view>();
 mutex definedIdsMutex;
 
 // The `Out` instance

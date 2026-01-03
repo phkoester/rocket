@@ -191,7 +191,7 @@ throwsInputFailure(PositionMatcher&& positionMatcher, WhatMatcher&& whatMatcher)
     testing::Property(
         ".ranges()",
         &InputFailure::ranges,
-        testing::Eq(text::Ranges {})),
+        testing::Eq(str::Ranges {})),
     testing::internal::WithWhat(MatcherCast<std::string>(std::forward<WhatMatcher>(whatMatcher))));
 }
 
@@ -255,10 +255,10 @@ throwsInputFailure(
  */
 template<typename WhatMatcher>
 inline testing::PolymorphicMatcher<testing::internal::ExceptionMatcherImpl<InputFailure>>
-throwsInputFailure(size_t position, text::Range range, WhatMatcher&& whatMatcher) {
+throwsInputFailure(size_t position, str::Range range, WhatMatcher&& whatMatcher) {
   return throwsInputFailure(
       testing::Eq(position),
-      testing::Eq(text::Ranges { range }),
+      testing::Eq(str::Ranges { range }),
       std::forward<WhatMatcher>(whatMatcher));
 }
 
@@ -274,7 +274,7 @@ throwsInputFailure(size_t position, text::Range range, WhatMatcher&& whatMatcher
  */
 template<typename WhatMatcher>
 inline testing::PolymorphicMatcher<testing::internal::ExceptionMatcherImpl<InputFailure>>
-throwsInputFailure(size_t position, const text::Ranges& ranges, WhatMatcher&& whatMatcher) {
+throwsInputFailure(size_t position, const str::Ranges& ranges, WhatMatcher&& whatMatcher) {
   return throwsInputFailure(
       testing::Eq(position),
       testing::Eq(ranges),

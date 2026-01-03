@@ -10,7 +10,33 @@ using namespace rocket;
 using namespace rocket::str;
 using namespace std;
 
+// Local functions ------------------------------------------------------------------------------------------
+
+namespace {
+
+vector<vector<string>>
+pars(const vector<vector<string>>& v) {
+  return v;
+}
+
+} // namespace
+
 // `TEST` ---------------------------------------------------------------------------------------------------
+
+TEST(text, paragraphs) {
+  string nbsp = "\u00a0";
+
+  EXPECT_EQ(paragraphs(""), (pars({{}})));
+  EXPECT_EQ(paragraphs("a b"), (pars({{ "a", "b" }})));
+  EXPECT_EQ(
+      paragraphs(nbsp + "a" + nbsp + nbsp + "b cd e" + nbsp + "f"),
+      (pars({{ "a b", "cd", "e f" }})));
+  EXPECT_EQ(paragraphs("a \t\t b"), (pars({{ "a", "b" }})));
+  EXPECT_EQ(paragraphs("a\nb c"), (pars({{"a"}, { "b", "c" }})));
+  EXPECT_EQ(paragraphs("a\r\nb c"), (pars({{"a"}, { "b", "c" }})));
+  EXPECT_EQ(paragraphs("a\n\nb"), (pars({{"a"}, {}, { "b" }})));
+  EXPECT_EQ(paragraphs("\na"), (pars({{}, {"a"} })));
+}
 
 TEST(str, removeLeadingChar) {
   using type = char;

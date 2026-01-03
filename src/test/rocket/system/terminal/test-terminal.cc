@@ -1,0 +1,56 @@
+/*
+ * test-terminal.cc
+ */
+
+#include "rocket-gtest/rocket-gtest.h"
+
+#include "rocket/system/terminal/terminal.h"
+
+using namespace rocket;
+using namespace rocket::system::terminal;
+using namespace std;
+using namespace testing;
+
+// `TEST` ---------------------------------------------------------------------------------------------------
+
+/**
+ * This test requires `ROCKET_TEST_TERMINAL=1`.
+ */
+TEST(terminal, position) {
+  EXPECT_ENV("ROCKET_TEST_TERMINAL");
+
+  Ansi ansi(true);
+
+  auto& out = nio::stdout;
+
+  out.write(ansi.clear());
+  EXPECT_EQ(position(out), make_pair(1UL, 1UL));
+
+  out.write("abcd");
+  EXPECT_EQ(position(out), make_pair(5UL, 1UL));
+
+  out.write("\nab");
+  EXPECT_EQ(position(out), make_pair(3UL, 2UL));
+
+  out.write(ansi.move(4, 7));
+  EXPECT_EQ(position(out), make_pair(4UL, 7UL));
+}
+
+/**
+ * This test requires `ROCKET_TEST_TERMINAL=1`.
+ */
+TEST(terminal, size) {
+  EXPECT_ENV("ROCKET_TEST_TERMINAL");
+
+  auto size = system::terminal::size(nio::stdout);
+  EXPECT_EQ(static_cast<bool>(size), true);
+  EXPECT_GT(size->first, 0UL);
+  EXPECT_GT(size->second, 0UL);
+
+  size = system::terminal::size(nio::stderr);
+  EXPECT_EQ(static_cast<bool>(size), true);
+  EXPECT_GT(size->first, 0UL);
+  EXPECT_GT(size->second, 0UL);
+}
+
+// EOF

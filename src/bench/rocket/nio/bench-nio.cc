@@ -25,9 +25,9 @@ constexpr size_t ITERATIONS = FILE_SIZE / CHUNK_SIZE;
 
 // `TEST` ---------------------------------------------------------------------------------------------------
 
-TEST(bench_nio, FileSink) {
+TEST(nio, FileSink) {
   string chunk(CHUNK_SIZE, ' ');
-  auto tmp = tempPath();
+  auto tmp = ROCKET_GTEST_TEMP_PATH();
 
   ROCKET_BENCH(N, [&] {
     {
@@ -40,9 +40,9 @@ TEST(bench_nio, FileSink) {
   });
 }
 
-TEST(bench_nio, BufferedFileSink) {
+TEST(nio, BufferedFileSink) {
   string chunk(CHUNK_SIZE, ' ');
-  auto tmp = tempPath();
+  auto tmp = ROCKET_GTEST_TEMP_PATH();
 
   ROCKET_BENCH(N, [&] {
     {
@@ -57,9 +57,9 @@ TEST(bench_nio, BufferedFileSink) {
   });
 }
 
-TEST(bench_nio, StreamSink) {
+TEST(nio, StreamSink) {
   string chunk(CHUNK_SIZE, ' ');
-  auto tmp = tempPath();
+  auto tmp = ROCKET_GTEST_TEMP_PATH();
 
   ROCKET_BENCH(N, [&] {
     {
@@ -73,9 +73,9 @@ TEST(bench_nio, StreamSink) {
   });
 }
 
-TEST(bench_nio, BufferedStreamSink) {
+TEST(nio, BufferedStreamSink) {
   string chunk(CHUNK_SIZE, ' ');
-  auto tmp = tempPath();
+  auto tmp = ROCKET_GTEST_TEMP_PATH();
 
   ROCKET_BENCH(N, [&] {
     {

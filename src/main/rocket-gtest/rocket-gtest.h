@@ -50,15 +50,14 @@
     EXPECT_EQ(is.eof(), eof__); \
     EXPECT_EQ(::rocket::io::tellg(is), tell__)
 
-namespace rocket::gtest {
+#define ROCKET_GTEST_TEMP_PATH() ::rocket::gtest::internal::tempPath(__FILE__)
 
-// Functions ------------------------------------------------------------------------------------------------
+namespace rocket::gtest::internal {
 
-/**
- * Returns a a path to a temporary file that is automatically removed upon exit.
- */
-std::filesystem::path tempPath();
+// Internal -------------------------------------------------------------------------------------------------
 
-} // namespace rocket::gtest
+std::filesystem::path tempPath(const char* file);
+
+} // namespace rocket::gtest::internal
 
 // EOF

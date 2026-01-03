@@ -10,7 +10,7 @@ export SYSTEM_INCLUDE_DIRS := \
     $(GAIA_GOOGLETEST_DIR)/googlemock/include \
     $(GAIA_GOOGLETEST_DIR)/googletest/include \
     $(GAIA_LIBUNICODE_DIR)/src \
-    $(GAIA_SCNLIN_DIR)/include
+    $(GAIA_SCNLIB_DIR)/include
 
 # `build` must be the first target and build everything, including benches and tests
 build: buildBench buildTest
@@ -21,12 +21,6 @@ export ROCKET_VERSION := $(call print-version,.)
 ifeq ($(ROCKET_VERSION),)
   $(error Cannot set `ROCKET_VERSION`)
 endif
-
-# Libraries in this directory must have been made by `gaia-make-libunicode`
-export LIBUNICODE_LIB_DIR := $(GAIA_LIBUNICODE_DIR)/target/$(BUILD_TARGET)
-
-# Libraries in this directory must have been made by `gaia-make-scnlib`
-export SCNLIB_LIB_DIR := $(GAIA_SCNLIB_DIR)/target/$(BUILD_TARGET)
 
 all: check doc test bench
 

@@ -1,0 +1,178 @@
+/**
+ * @file location.h
+ *
+ * Positions and locations.
+ */
+
+#pragma once
+
+#include "rocket/enum-decl.h"
+#include "rocket/nio/nio.h"
+#include "rocket/str/Range.h"
+
+#include <vector>
+
+namespace rocket::str::location {
+
+// `Position` -----------------------------------------------------------------------------------------------
+
+/**
+ * Input positions that are passed to the #locations function.
+ */
+struct Position {
+  /**
+   * An enum describing the position type.
+   */
+  enum Type { note, warning, error };
+
+  /**
+   * The position type.
+   */
+  Type type;
+  /**
+   * The position to look for.
+   *
+   * There must be a grapheme boundary at this position. The position is highlighted with a caret (`^`)
+   * underneath.
+   */
+  size_t position;
+  /**
+   * The ranges associated with this position.
+   *
+   * There must be grapheme boundaries at the ranges' lower and upper positions. The ranges are underlined
+   * with the tilde (`~`).
+   */
+  Ranges ranges;
+  /**
+   * The message associated with this position.
+   *
+   * THe message may not be empty. It is part of the error message.
+   */
+  std::string message;
+  /**
+   * The optional caption associated with this position.
+   *
+   * The caption may be null, bot not empty. It is displayed underneath the caret (`^`).
+   */
+  std::optional<std::string> caption;
+};
+
+ROCKET_ENUM_DECLARE_LOCAL(Position::Type);
+
+} // namespace rocket::str::location
+
+ROCKET_ENUM_DECLARE_GLOBAL(rocket::str::location::Position::Type);
+
+namespace rocket::str::location {
+
+// `Location` -----------------------------------------------------------------------------------------------
+
+/**
+ * Location information.
+ */
+struct Location {
+  Position::Type type; ///< Copied from the input position.
+  size_t position; ///< Copied from the input position.
+  Ranges ranges; ///< Copied from the input position.
+  size_t line; ///< The line number, starting with 1.
+  size_t column; ///< The column number (counting Unicode grapheme widths), starting with 1.
+  Range lineRange; ///< The range of the line containing #position.
+  /**
+    * This member is only initialized if #LocationsParams#setLineString was set to `true`.
+    */
+  std::optional<std::string> lineString;
+  std::string message; ///< Copied from the input position.
+  std::optional<std::string> caption; ///< Copied from the input position.
+};
+
+// `LocationsParams` ----------------------------------------------------------------------------------------
+
+/**
+ * Parameters for the #locations function.
+ */
+struct LocationsParams {
+  /**
+   * If this is set to `true`, then lines are copied to the #LocationsResult.
+   */
+  bool setLineString = false;
+  /**
+   * A string describing the source of the data.
+   *
+   * If a source is known, such as a file or an URL, it should be assigned here. If #source is empty, then
+   * the #locations function sets this to `"-"` if the source is `stdin`, to `"(input)"` otherwise.
+   */
+  std::string source;
+  /**
+   * Configures the handling of tab characters. If this is null, then there is no special treatment for tab
+   * characters---they are displayed as `\t`. Otherwise, a tab expands to at most #tabSize spaces.
+   */
+  std::optional<size_t> tabSize = 8;
+};
+
+// `LocationsResult` ----------------------------------------------------------------------------------------
+
+/**
+ * This is the result of a call to #locations.
+ *
+ * This class contains information about each inquired position.
+ */
+struct LocationsResult {
+  /**
+   * A copy of the parameters that were passed to #locations.
+   *
+   * The #LocationsParams#source member is possibly assigned a new value.
+   */
+  LocationsParams params;
+  /**
+   * For each #Position passed to #locations, a #Location is added to the result. The order of the positions
+   * is preserved in the #LocationsResult.
+   */
+  std::vector<Location> locations;
+};
+
+// `PrintLocationsParams` -----------------------------------------------------------------------------------
+
+/**
+ * Parameters for the #printLocations function.
+ */
+struct PrintLocationsParams {
+  bool colored = true; ///< Use colors when printing to a terminal?
+  size_t minLineNumberWidth = 5; ///< The minimum width to use when displaying line numbers.
+};
+
+// Functions ------------------------------------------------------------------------------------------------
+
+/**
+ * Finds information about the positions @p positions in the Source @p in and returns the gathered data in a
+ * #LocationsResult.
+ *
+ * @param in the source. The input must be UTF-8-encoded, using LF (`"\n"`) or CRLF (`"\r\n"`) as line breaks
+ * @param positions the positions to look for. They needn't be sorted in any way. The order of the positions
+ *     is preserved in the #LocationsResult. The only restriction is that all #Position#position values have
+ *     to be unique
+ * @param params parameters to configure the operation
+ * @return a #LocationsResult
+ */
+LocationsResult locations(
+    nio::Source& in,
+    const std::vector<Position>& positions,
+    const LocationsParams& params = {});
+
+/**
+ * Prints Clang-style messages for all locations in @p locations to the sink @p out.
+ *
+ * @param out the sink to print to
+ * @param input the entire input as a string view. This may be null, but then, the line strings in
+ *     @p locationsResult must be available
+ * @param locationsResult the #LocationsResult instance that was returned by the #locations function
+ * @param params parameters to configure the operation
+ */
+void printLocations(
+    nio::Sink& out,
+    std::optional<std::string_view> input,
+    const LocationsResult& locationsResult,
+    const PrintLocationsParams& params = {});
+
+} // namespace rocket::str::location
+
+// EOF
