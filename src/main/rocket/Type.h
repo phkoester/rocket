@@ -106,22 +106,22 @@ hash_value(const Type& v) {
 // Namespace `fmt` ------------------------------------------------------------------------------------------
 
 /// @spec_fmt_formatter{#rocket::Type)
-template<typename Char>
-struct fmt::formatter<rocket::Type, Char> {
+template<typename C>
+struct fmt::formatter<rocket::Type, C> {
   template<typename FormatContext>
-  constexpr auto
-  format(const rocket::Type& v, FormatContext& ctx) const -> decltype(ctx.out()) {
+  constexpr FormatContext::iterator
+  format(const rocket::Type& v, FormatContext& ctx) const {
     return underlying_.format(v.name(), ctx);
   }
 
-  constexpr const Char*
-  parse(parse_context<Char>& ctx) {
+  constexpr const C*
+  parse(parse_context<C>& ctx) {
     return underlying_.parse(ctx);
   }
 
 private:
 
-  rocket::format::NativeFormatter<string_view, Char> underlying_;
+  rocket::format::NativeFormatter<string_view, C> underlying_;
 };
 
 namespace rocket {

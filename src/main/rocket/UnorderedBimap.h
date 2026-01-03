@@ -107,8 +107,8 @@ inline void PrintTo(const bimap<A, B>& v, std::ostream* os) {
 
 // `fmt::formatter<boost::bimaps::bimap>`--------------------------------------------------------------------
 
-template<typename A, typename B, typename Char>
-struct fmt::formatter<boost::bimaps::bimap<A, B>, Char> {
+template<typename A, typename B, typename C>
+struct fmt::formatter<boost::bimaps::bimap<A, B>, C> {
   template<typename FormatContext>
   constexpr FormatContext::iterator
   format(const boost::bimaps::bimap<A, B>& v, FormatContext& ctx) const {
@@ -120,8 +120,8 @@ struct fmt::formatter<boost::bimaps::bimap<A, B>, Char> {
     return underlying_.format(map, ctx);
   }
 
-  constexpr const Char*
-  parse(parse_context<Char>& ctx) {
+  constexpr const C*
+  parse(parse_context<C>& ctx) {
     return underlying_.parse(ctx);
   }
 
@@ -130,7 +130,7 @@ private:
   using K = boost::bimaps::bimap<A, B>::left_value_type::first_type;
   using V = boost::bimaps::bimap<A, B>::left_value_type::second_type;
 
-  fmt::formatter<std::map<K, V>, Char> underlying_;
+  fmt::formatter<std::map<K, V>, C> underlying_;
 };
 
 // EOF

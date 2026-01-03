@@ -398,45 +398,44 @@ operator|=(const IntervalImpl<T, Left, Right>& lhs, const IntervalImpl<T, Left, 
 
 // `fmt::formatter<IntervalImpl>` ---------------------------------------------------------------------------
 
-template<typename T, typename Left, typename Right, typename Char>
-struct fmt::formatter<rocket::math::IntervalImpl<T, Left, Right>, Char> {
+template<typename T, typename Left, typename Right, typename C>
+struct fmt::formatter<rocket::math::IntervalImpl<T, Left, Right>, C> {
   template<typename FormatContext>
-  constexpr auto
-  format(const rocket::math::IntervalImpl<T, Left, Right>& v, FormatContext& ctx) const ->
-      decltype(ctx.out()) {
+  constexpr FormatContext::iterator
+  format(const rocket::math::IntervalImpl<T, Left, Right>& v, FormatContext& ctx) const {
     auto out = ctx.out();
     if (v.empty()) {
       // Use a neat mathematical symbol
-      out = detail::write<Char>(out, "∅");
+      out = detail::write<C>(out, "∅");
     } else {
-      out = detail::write<Char>(out, Left::Symbol);
+      out = detail::write<C>(out, Left::Symbol);
       auto opt = rocket::option(v.lower);
       if (not opt) {
-        out = detail::write<Char>(out, "-∞");
+        out = detail::write<C>(out, "-∞");
       } else {
         out = underlying_.format(*opt, ctx);
       }
-      out = detail::write<Char>(out, ",");
+      out = detail::write<C>(out, ",");
       opt = rocket::option(v.upper);
       if (not opt) {
         // In interval notation, we prefer `+∞` over `∞`
-        out = detail::write<Char>(out, "+∞");
+        out = detail::write<C>(out, "+∞");
       } else {
         out = underlying_.format(*opt, ctx);
       }
-      out = detail::write<Char>(out, Right::Symbol);
+      out = detail::write<C>(out, Right::Symbol);
     }
     return out;
   }
 
-  constexpr const Char*
-  parse(parse_context<Char>& ctx) {
+  constexpr const C*
+  parse(parse_context<C>& ctx) {
     return underlying_.parse(ctx);
   }
 
 private:
 
-  fmt::formatter<T> underlying_;
+  fmt::formatter<T, C> underlying_;
 };
 
 namespace rocket::math {

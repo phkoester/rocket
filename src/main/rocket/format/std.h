@@ -22,25 +22,25 @@ namespace fmt {
 
 // `std::optional` ------------------------------------------------------------------------------------------
 
-template<typename T, typename Char>
-struct formatter<std::optional<T>, Char, std::enable_if_t<is_formattable<T, Char>::value>> {
+template<typename T, typename C>
+struct formatter<std::optional<T>, C, std::enable_if_t<is_formattable<T, C>::value>> {
   template <typename FormatContext>
-  constexpr auto
-  format(const std::optional<T>& v, FormatContext& ctx) const -> decltype(ctx.out()) {
+  constexpr FormatContext::iterator
+  format(const std::optional<T>& v, FormatContext& ctx) const {
     if (not v) {
-      return detail::write<Char>(ctx.out(), "<none>");
+      return detail::write<C>(ctx.out(), "<none>");
     }
     return underlying_.format(*v, ctx);
   }
 
-  constexpr const Char*
-  parse(parse_context<Char>& ctx) {
+  constexpr const C*
+  parse(parse_context<C>& ctx) {
     return underlying_.parse(ctx);
   }
 
 private:
 
-  formatter<T, Char> underlying_;
+  formatter<T, C> underlying_;
 };
 
 // `std::variant` ------------------------------------------------------------------------------------------
@@ -50,44 +50,44 @@ struct is_variant_like {
   static constexpr bool value = detail::is_variant_like_<T>::value;
 };
 
-template<typename Char>
-struct formatter<std::monostate, Char> {
+template<typename C>
+struct formatter<std::monostate, C> {
   template<typename FormatContext>
-  constexpr auto
-  format(const std::monostate&, FormatContext& ctx) const -> decltype(ctx.out()) {
-    return detail::write<Char>(ctx.out(), "<monostate>");
+  constexpr FormatContext::iterator
+  format(const std::monostate&, FormatContext& ctx) const {
+    return detail::write<C>(ctx.out(), "<monostate>");
   }
 
-  constexpr const Char*
-  parse(parse_context<Char>& ctx) {
+  constexpr const C*
+  parse(parse_context<C>& ctx) {
     return ctx.begin();
   }
 };
 
-template <typename Variant, typename Char>
-struct formatter<Variant, Char, std::enable_if_t<
+template <typename Variant, typename C>
+struct formatter<Variant, C, std::enable_if_t<
     std::conjunction_v<
         is_variant_like<Variant>,
-        detail::is_variant_formattable<Variant, Char>>>> {
+        detail::is_variant_formattable<Variant, C>>>> {
   template <typename FormatContext>
-  constexpr auto
-  format(const Variant& value, FormatContext& ctx) const -> decltype(ctx.out()) {
+  constexpr FormatContext::iterator
+  format(const Variant& value, FormatContext& ctx) const {
     auto out = ctx.out();
     try {
       std::visit([&](const auto& v) {
         // We need the index to be able to parse the variant back
         out = format_to(out, "{}:", value.index());
-        out = detail::write_escaped_alternative<Char>(out, v, ctx);
+        out = detail::write_escaped_alternative<C>(out, v, ctx);
       }, value);
     }
     catch (const std::bad_variant_access&) {
-      out = detail::write<Char>(out, "<invalid>");
+      out = detail::write<C>(out, "<invalid>");
     }
     return out;
   }
 
-  constexpr const Char*
-  parse(parse_context<Char>& ctx) {
+  constexpr const C*
+  parse(parse_context<C>& ctx) {
     return ctx.begin();
   }
 };

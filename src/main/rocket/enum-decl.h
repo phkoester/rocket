@@ -25,20 +25,20 @@
 // Global ...................................................................................................
 
 #define ROCKET_ENUM_DECLARE_FMT_FORMATTER__(type) \
-    template<typename Char> \
-    struct fmt::formatter<type, Char> { \
+    template<typename C> \
+    struct fmt::formatter<type, C> { \
       template<typename FormatContext> \
-      auto \
-      format(type val, FormatContext& ctx) const -> decltype(ctx.out()); \
+      FormatContext::iterator \
+      format(type val, FormatContext& ctx) const; \
       \
-      constexpr const Char* \
-      parse(parse_context<Char>& ctx) { \
+      constexpr const C* \
+      parse(parse_context<C>& ctx) { \
         return underlying_.parse(ctx); \
       } \
     \
     private: \
       \
-      ::rocket::format::NativeFormatter<string_view, Char> underlying_; \
+      ::rocket::format::NativeFormatter<string_view, C> underlying_; \
     }
 
 #define ROCKET_ENUM_DECLARE_ROCKET_ENUM__(type) \

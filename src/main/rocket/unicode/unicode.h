@@ -59,7 +59,7 @@ struct CodePoint {
   explicit operator std::string() const;
 
   /// @member_op_cast{`std::u32string`}
-  inline explicit operator std::u32string() const { return std::u32string { v_ }; }
+  inline explicit operator std::u32string() const { return { v_ }; }
 
   /// @member_fn_hash
   inline size_t hash() const { return std::hash<uint32_t>()(v_); }
@@ -147,23 +147,23 @@ size_t read(nio::Source& in, CodePoint& v);
 // `fmt::formatter<CodePoint>` ------------------------------------------------------------------------------
 
 /// @spec_fmt_formatter{#rocket::unicode::CodePoint}
-template<typename Char>
-struct fmt::formatter<rocket::unicode::CodePoint, Char> {
+template<typename C>
+struct fmt::formatter<rocket::unicode::CodePoint, C> {
   template<typename FormatContext>
-  constexpr auto
-  format(const rocket::unicode::CodePoint& v, FormatContext& ctx) const -> decltype(ctx.out()) {
+  constexpr FormatContext::iterator
+  format(const rocket::unicode::CodePoint& v, FormatContext& ctx) const {
     std::string s = fmt::format("U+{:0>4X}", static_cast<uint32_t>(v));
     return underlying_.format(s, ctx);
   }
 
-  constexpr const Char*
-  parse(fmt::parse_context<Char>& ctx) {
+  constexpr const C*
+  parse(fmt::parse_context<C>& ctx) {
     return underlying_.parse(ctx);
   }
 
 private:
 
-  rocket::format::NativeFormatter<string_view, Char> underlying_;
+  rocket::format::NativeFormatter<string_view, C> underlying_;
 };
 
 // `std::hash<CodePoint>` -----------------------------------------------------------------------------------
@@ -355,22 +355,22 @@ size_t read(nio::Source& in, Grapheme& v);
 // `fmt::formatter<Grapheme>` -------------------------------------------------------------------------------
 
 /// @spec_fmt_formatter{#rocket::unicode::Grapheme}
-template<typename Char>
-struct fmt::formatter<rocket::unicode::Grapheme, Char> {
+template<typename C>
+struct fmt::formatter<rocket::unicode::Grapheme, C> {
   template<typename FormatContext>
-  constexpr auto
-  format(const rocket::unicode::Grapheme& v, FormatContext& ctx) const -> decltype(ctx.out()) {
+  constexpr FormatContext::iterator
+  format(const rocket::unicode::Grapheme& v, FormatContext& ctx) const {
     return underlying_.format(static_cast<std::string>(v), ctx);
   }
 
-  constexpr const Char*
-  parse(fmt::parse_context<Char>& ctx) {
+  constexpr const C*
+  parse(fmt::parse_context<C>& ctx) {
     return underlying_.parse(ctx);
   }
 
 private:
 
-  rocket::format::NativeFormatter<string_view, Char> underlying_;
+  rocket::format::NativeFormatter<string_view, C> underlying_;
 };
 
 namespace rocket::unicode {

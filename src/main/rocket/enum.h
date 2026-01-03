@@ -46,10 +46,10 @@
 // Global ...................................................................................................
 
 #define ROCKET_ENUM_DEFINE_FMT_FORMATTER__(ns, type, name) \
-    template<typename Char> \
+    template<typename C> \
     template<typename FormatContext> \
-    auto \
-    fmt::formatter<ns::type, Char>::format(ns::type v, FormatContext& ctx) const -> decltype(ctx.out()) { \
+    FormatContext::iterator \
+    fmt::formatter<ns::type, C>::format(ns::type v, FormatContext& ctx) const { \
       if (auto it = ns::name##Map__.left.find(v); it != ns::name##Map__.left.end()) { \
         return underlying_.format(it->second, ctx); \
       } else { \

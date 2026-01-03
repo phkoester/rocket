@@ -78,21 +78,21 @@ private:
 // `fmt::formatter<Format>`----------------------------------------------------------------------------------
 
 /// @spec_fmt_formatter{#rocket::format::Format)
-template<typename Char>
-struct fmt::formatter<rocket::format::Format, Char> {
+template<typename C>
+struct fmt::formatter<rocket::format::Format, C> {
   template<typename FormatContext>
-  constexpr auto
-  format(const rocket::format::Format& v, FormatContext& ctx) const -> decltype(ctx.out()) {
+  constexpr FormatContext::iterator
+  format(const rocket::format::Format& v, FormatContext& ctx) const {
     const auto& params = v.get();
     auto formatted = params.formatted_;
     for (const auto& [tag, value] : params.tagged_) {
       rocket::str::replaceIn<char>(formatted, tag, value);
     }
-    return detail::write<Char>(ctx.out(), formatted);
+    return detail::write<C>(ctx.out(), formatted);
   }
 
-  constexpr const Char*
-  parse(parse_context<Char>& ctx) {
+  constexpr const C*
+  parse(parse_context<C>& ctx) {
     return ctx.begin();
   }
 };
@@ -105,31 +105,31 @@ namespace rocket::format {
  * This is essentially a copy of `fmt::native_formatter`, which gives us access to the `specs_` member, and
  * the flexibility to adapt the code.
  */
-template<typename T, typename Char>
+template<typename T, typename C>
 struct NativeFormatter {
   using nonlocking = void;
   using type = fmt::detail::type;
 
-  static constexpr type TYPE = fmt::detail::type_constant<T, Char>::value;
+  static constexpr type TYPE = fmt::detail::type_constant<T, C>::value;
   static_assert(TYPE != fmt::detail::type::custom_type, "NativeFormatter cannot be used for custom types");
 
   template<typename FormatContext>
-  constexpr auto
-  format(const T& val, FormatContext& ctx) const -> decltype(ctx.out()) {
+  constexpr FormatContext::iterator
+  format(const T& val, FormatContext& ctx) const {
     using namespace fmt;
     using namespace fmt::detail;
 
     if (not specs_.dynamic()) {
-      return write<Char>(ctx.out(), val, specs_, ctx.locale());
+      return write<C>(ctx.out(), val, specs_, ctx.locale());
     }
     auto specs = format_specs(specs_);
     handle_dynamic_spec(specs.dynamic_width(), specs.width, specs_.width_ref, ctx);
     handle_dynamic_spec(specs.dynamic_precision(), specs.precision, specs_.precision_ref, ctx);
-    return write<Char>(ctx.out(), val, specs, ctx.locale());
+    return write<C>(ctx.out(), val, specs, ctx.locale());
   }
 
-  constexpr const Char*
-  parse(fmt::parse_context<Char>& ctx) {
+  constexpr const C*
+  parse(fmt::parse_context<C>& ctx) {
     using namespace fmt::detail;
 
     if (ctx.begin() == ctx.end() || *ctx.begin() == '}') {
@@ -148,7 +148,7 @@ struct NativeFormatter {
 
 private:
 
-  fmt::detail::dynamic_format_specs<Char> specs_;
+  fmt::detail::dynamic_format_specs<C> specs_;
 };
 
 } // namespace rocket::format
