@@ -15,7 +15,7 @@ using namespace testing;
 
 // `TEST` ---------------------------------------------------------------------------------------------------
 
-TEST(except, printException1) {
+TEST(Exception, printException1) {
   try {
     throw "oops1";
   } catch (...) {
@@ -40,7 +40,7 @@ TEST(except, printException1) {
   }
 }
 
-TEST(except, printException2) {
+TEST(Exception, printException2) {
   try {
     throw "oops";
   } catch (...) {
@@ -50,7 +50,7 @@ TEST(except, printException2) {
   }
 }
 
-TEST(except, what1) {
+TEST(Exception, what1) {
   try {
     throw "oops1";
   } catch (...) {
@@ -61,7 +61,7 @@ TEST(except, what1) {
         throw_with_nested(InvalidState("oops3"));
       } catch (const InvalidState& ex3) {
         string s1 = what(ex3);
-        EXPECT_THAT(s1, matchesRegex(".*\\.cc:\\d+: oops3 \\(Because: .*: Parameter `name`: oops2 \\(Because: \"oops1\"\\)\\)"));
+        EXPECT_THAT(s1, matchesRegex(".*\\.cc:\\d+: oops3 \\(Because: .*\\.cc:\\d+: Parameter `name`: oops2 \\(Because: \"oops1\"\\)\\)"));
 
         string s2 = what(current_exception());
         EXPECT_EQ(s2, s1);
@@ -70,7 +70,7 @@ TEST(except, what1) {
   }
 }
 
-TEST(except, what2) {
+TEST(Exception, what2) {
   try {
     throw "oops";
   } catch (...) {

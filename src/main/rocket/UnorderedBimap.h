@@ -99,7 +99,8 @@ operator<<(std::ostream& lhs, const bimap<A, B>& rhs) {
  * @todo Why do we need this? For some reason, GoogleTest doesn find `operator<<` ...
  */
 template<typename A, typename B>
-inline void PrintTo(const bimap<A, B>& v, std::ostream* os) {
+inline void
+PrintTo(const bimap<A, B>& v, std::ostream* os) {
   *os << v;
 }
 
