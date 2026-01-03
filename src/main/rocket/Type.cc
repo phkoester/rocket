@@ -4,8 +4,6 @@
 
 #include "Type.h"
 
-#include "strings.h"
-
 #include <cxxabi.h>
 #include <memory>
 

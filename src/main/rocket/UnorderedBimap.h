@@ -110,11 +110,11 @@ inline void PrintTo(const bimap<A, B>& v, std::ostream* os) {
 template<typename A, typename B, typename Char>
 struct fmt::formatter<boost::bimaps::bimap<A, B>, Char> {
   template<typename FormatContext>
-  constexpr auto
-  format(const boost::bimaps::bimap<A, B>& v, FormatContext& ctx) const -> decltype(ctx.out()) {
+  constexpr FormatContext::iterator
+  format(const boost::bimaps::bimap<A, B>& v, FormatContext& ctx) const {
     // @todo Don't copy the whole map here
     std::map<K, V> map;
-    for (const auto& [k, v] : v.left) {
+    for (const auto& [k, v] : v.left) { // cppcheck-suppress shadowArgument
       map.emplace(k, v);
     }
     return underlying_.format(map, ctx);
@@ -130,7 +130,7 @@ private:
   using K = boost::bimaps::bimap<A, B>::left_value_type::first_type;
   using V = boost::bimaps::bimap<A, B>::left_value_type::second_type;
 
-  fmt::formatter<std::map<K, V>> underlying_;
+  fmt::formatter<std::map<K, V>, Char> underlying_;
 };
 
 // EOF

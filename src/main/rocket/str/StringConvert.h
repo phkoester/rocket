@@ -225,7 +225,7 @@ struct StringConvert<std::string> {
    * @param v the value to convert
    * @return a string
    */
-  std::string toString(Type v) const noexcept { return v; }
+  std::string toString(const Type& v) const noexcept { return v; }
 
   /**
    * Converts @p s to a `std::string`.

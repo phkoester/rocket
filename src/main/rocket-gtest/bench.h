@@ -16,7 +16,7 @@
   using namespace std::chrono; \
   \
   auto t1 = steady_clock::now(); \
-  for (size_t i = 0; i < n; ++i) { \
+  for (size_t i__ = 0; i__ < n; ++i__) { \
     f(); \
   } \
   auto t2 = steady_clock::now(); \
