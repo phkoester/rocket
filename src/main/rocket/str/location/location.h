@@ -94,7 +94,7 @@ struct Location {
  */
 struct LocationsParams {
   /**
-   * If this is set to `true`, then lines are copied to the #LocationsResult.
+   * If this is set to `true`, then lines are copied to the #rocket::str::location::LocationsResult.
    */
   bool setLineString = false;
   /**
@@ -126,8 +126,9 @@ struct LocationsResult {
    */
   LocationsParams params;
   /**
-   * For each #Position passed to #locations, a #Location is added to the result. The order of the positions
-   * is preserved in the #LocationsResult.
+   * For each #rocket::str::location::Position passed to #locations, a #rocket::str::location::Location is
+   * added to the result. The order of the positions is preserved in the
+   * #rocket::str::location::LocationsResult.
    */
   std::vector<Location> locations;
 };

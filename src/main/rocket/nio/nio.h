@@ -29,38 +29,68 @@ static constexpr size_t MIN_BUFFER_SIZE = 64;
 // `Io` -----------------------------------------------------------------------------------------------------
 
 /**
- * The base class for #Sink and #Source.
+ * The base class for #rocket::nio::Sink and #rocket::nio::Source.
  */
 struct Io {
+  /// The offset type.
   using Offset = long;
+  /// The position type.
   using Position = unsigned long;
 
+  /// @dtor
   virtual ~Io() = default;
 
+  /**
+   * Closes the object.
+   *
+   * @return 0 if successful, an error code otherwise
+   */
   virtual int close() = 0;
 
   /**
    * Returns the file descriptor.
    *
-   * @return the file descriptor of the sink, or -1 if the sink is not connected to a file
+   * @return the file descriptor, or -1 if the file descriptor cannot be determined
    */
   virtual int fd() = 0;
 
-  virtual int error() const { return error_; }
+  /**
+   * Returns the error status.
+   *
+   * @return the error status
+   */
+   virtual int error() const { return error_; }
 
-  virtual bool good() const { return open_ && error_ == 0; }
+  /**
+   * Returns whether the object is open and the error status is 0.
+   *
+   * @return `true` if the object is open and the error status is 0
+   */
+   virtual bool good() const { return open_ && error_ == 0; }
 
-  virtual bool open() const { return open_; }
+   /**
+    * Returns whether the object is open.
+    *
+    * @return `true` if the object is open
+    */
+   virtual bool open() const { return open_; }
 
 protected:
 
+  /// @ctor_default
   Io() {}
 
   Io(const Io& rhs) = delete;
 
-  int error_ = 0;
-  bool open_ = true;
+  int error_ = 0; ///< The error status.
+  bool open_ = true; ///< Open flag.
 
+  /**
+   * Checks whether the object is open. If not and if the error status is 0, sets the error status to
+   * `EBADF`.
+   *
+   * @return `true` if the object is open
+   */
   bool checkOpen();
 };
 
@@ -70,54 +100,125 @@ protected:
  * Sink base class.
  */
 struct Sink : Io {
-  virtual ~Sink() override= default;
+  virtual ~Sink() override {}
 
+  /**
+   * Flushes the sink.
+   *
+   * @return 0 if successful, an error code otherwise
+   */
   virtual int flush() = 0;
 
+  /**
+   * Prints a formatted message to the sink.
+   *
+   * @param fmt the format string
+   * @param args the arguments
+   * @return the number of bytes written
+   */
   template<typename... T>
-  void
+  size_t
   print(fmt::format_string<T...> fmt, T&&... args) {
     auto formatted = fmt::format(fmt, std::forward<T>(args)...);
-    write(formatted);
+    return write(formatted);
   }
 
+  /**
+   * Prints a formatted message to the sink.
+   *
+   * @param locale the locale
+   * @param fmt the format string
+   * @param args the arguments
+   * @return the number of bytes written
+   */
   template<typename... T>
-  void
+  size_t
   print(const std::locale& locale, fmt::format_string<T...> fmt, T&&... args) {
     auto formatted = fmt::format(locale, fmt, std::forward<T>(args)...);
-    write(formatted);
+    return write(formatted);
   }
 
+  /**
+   * Prints a formatted message and a line feed to the sink.
+   *
+   * @param fmt the format string
+   * @param args the arguments
+   * @return the number of bytes written
+   */
   template<typename... T>
-  void
+  size_t
   println(fmt::format_string<T...> fmt, T&&... args) {
-    print(fmt, std::forward<T>(args)...);
-    write('\n');
+    auto ret = print(fmt, std::forward<T>(args)...);
+    ret += write('\n');
     flush();
+    return ret;
   }
 
+  /**
+   * Prints a formatted message and a line feed to the sink.
+   *
+   * @param locale the locale
+   * @param fmt the format string
+   * @param args the arguments
+   * @return the number of bytes written
+   */
   template<typename... T>
-  void
+  size_t
   println(const std::locale& locale, fmt::format_string<T...> fmt, T&&... args) {
-    print(locale, fmt, std::forward<T>(args)...);
-    write('\n');
+    auto ret = print(locale, fmt, std::forward<T>(args)...);
+    ret += write('\n');
     flush();
+    return ret;
   }
 
+  /**
+   * Writes a single character to the sink.
+   *
+   * @param c the character
+   * @return the number of bytes written
+   */
   size_t
   write(char c) {
     return write(std::string_view(&c, 1));
   }
 
+  /**
+   * Writes a string to the sink.
+   *
+   * @param in the string to write
+   * @return the number of bytes written
+   */
   virtual size_t write(std::string_view in) = 0;
 
+  /**
+   * Writes a string to the sink.
+   *
+   * @param in the string to write
+   * @param offset the offset at which to start writing
+   * @param n the number of bytes to write
+   * @return the number of bytes written
+   */
   size_t
   write(std::string_view in, size_t offset, size_t n = std::string_view::npos) {
     return write(in.substr(offset, n));
   }
 
+  /**
+   * Writes a string and a line feed to the sink.
+   *
+   * @param in the string to write
+   * @return the number of bytes written
+   */
   size_t writeln(std::string_view in);
 
+  /**
+   * Writes a string and a line feed to the sink.
+   *
+   * @param in the string to write
+   * @param offset the offset at which to start writing
+   * @param n the number of bytes to write
+   * @return the number of bytes written
+   */
   size_t
   writeln(std::string_view in, size_t offset, size_t n = std::string_view::npos) {
     return writeln(in.substr(offset, n));
@@ -125,6 +226,7 @@ struct Sink : Io {
 
 protected:
 
+  /// @ctor_default
   Sink() {}
 };
 
@@ -133,11 +235,18 @@ protected:
 /**
  * A buffered sink that may be attached to another sink.
  *
- * @attention Applying an additional buffer only makes sense if the underlying sink isn't already buffered.
+ * @note Applying an additional buffer only makes sense if the underlying sink isn't already buffered.
  */
  struct BufferedSink : Sink {
+  /**
+   * @ctor
+   *
+   * @param underlying the underlying sink
+   * @param size the size of the buffer
+   */
   explicit BufferedSink(Sink& underlying, size_t size = DEFAULT_BUFFER_SIZE);
 
+  /// @dtor
   virtual ~BufferedSink() override;
 
   virtual int close() override;
@@ -156,12 +265,16 @@ protected:
 
 ROCKET_TESTING_PRIVATE:
 
+  /// @cond undocumented
+
   Sink& underlying_;
   size_t size_;
   std::unique_ptr<char[]> buf_;
   size_t pos_ = 0;
 
   void flushBuffer();
+
+  /// @endcond
 };
 
 // `FileSink` -----------------------------------------------------------------------------------------------
@@ -186,12 +299,30 @@ struct FileSink : Sink {
     bool closeOnDestroy = true;
   };
 
+  /**
+   * Returns default parameters.
+   *
+   * @return the default parameters
+   */
   static consteval Params defaultParams() { return {}; }
 
+  /**
+   * @ctor
+   *
+   * @param file a `FILE` pointer to use
+   * @param params the parameters
+   */
   explicit FileSink(FILE* file, const Params& params = defaultParams());
 
+  /**
+   * @ctor
+   *
+   * @param path a path to a file
+   * @param params the parameters
+   */
   explicit FileSink(const std::string& path, const Params& params = { .append=false, .closeOnDestroy=true });
 
+  /// @dtor
   virtual ~FileSink() override;
 
   virtual int close() override;
@@ -204,8 +335,12 @@ struct FileSink : Sink {
 
 ROCKET_TESTING_PRIVATE:
 
+  /// @cond undocumented
+
   FILE* file_;
   Params params_;
+
+  /// @endcond
 };
 
 // `NullSink` -----------------------------------------------------------------------------------------------
@@ -231,6 +366,11 @@ struct NullSink : Sink {
  * A sink that writes to a span, i.e. into preallocated memory.
  */
 struct SpanSink : Sink {
+  /**
+   * @ctor
+   *
+   * @param out the span to write to
+   */
   explicit SpanSink(std::span<char> out) : out_(out) {}
 
   virtual ~SpanSink() override;
@@ -255,9 +395,14 @@ private:
  * The class `StreamSink` provides support for `std::ostream`.
  *
  * Using I/O streams is generally discouraged, because it’s not partable and not efficient. Wherever
- * possible, use #FileSink instead.
+ * possible, use #rocket::nio::FileSink instead.
  */
 struct StreamSink : Sink {
+  /**
+   * @ctor
+   *
+   * @param os the output stream to write to
+   */
   explicit StreamSink(std::ostream& os) : os_(os) {}
 
   virtual ~StreamSink() override;
@@ -291,6 +436,8 @@ struct StringSink : Sink {
 
   /**
    * Makes a new `StringSink` with a string reference and no managed string.
+   *
+   * @param out the string to write to
    */
   explicit StringSink(std::string& out) : out(&out) {}
 
@@ -337,16 +484,55 @@ enum class SeekMode {
 struct Source : Io {
   virtual ~Source() override = default;
 
+  /**
+   * Reads all characters from a source into string.
+   *
+   * @return the string read
+   */
   std::string read();
 
+  /**
+   * Reads a single character from a source.
+   *
+   * @param out the character to read
+   * @return the number of bytes read
+   */
   size_t read(char& out) { return read({ &out, 1 }); }
 
+  /**
+   * Reads as many characters as available into a span.
+   *
+   * @param out the span to read into
+   * @return the number of bytes read
+   */
   virtual size_t read(std::span<char> out) = 0;
 
+  /**
+   * Reads a line from a source into a string.
+   *
+   * A trailing `\r` is removed if it precedes a `\n`.
+   *
+   * @return the line read, not containing the trailing `\r` or `\n`
+   */
   std::string readln();
 
+  /**
+   * Reads a line from a source into a span.
+   *
+   * A trailing `\r` is removed if it precedes a `\n`.
+   *
+   * @param out the span to read into
+   * @return the number of bytes read
+   */
   size_t readln(std::span<char> out);
 
+  /**
+   * Seeks to a new position in the source.
+   *
+   * @param offset the offset to seek to
+   * @param mode the seek mode
+   * @return 0 if successful, an error code otherwise
+   */
   virtual int seek(Offset offset, SeekMode mode = SeekMode::beg) = 0;
 
   /**
@@ -358,6 +544,7 @@ struct Source : Io {
 
 protected:
 
+  /// @ctor_default
   Source() {}
 };
 
@@ -366,10 +553,16 @@ protected:
 /**
  * A buffered source that may be attached to another source.
  *
- * @attention Applying an additional buffer only makes sense if the underlying source isn't already buffered.
+ * @note Applying an additional buffer only makes sense if the underlying source isn't already buffered.
  */
 struct BufferedSource : Source {
-  explicit BufferedSource(Source& underlying, size_t size = DEFAULT_BUFFER_SIZE);
+  /**
+   * @ctor
+   *
+   * @param underlying the underlying source
+   * @param size the size of the buffer
+   */
+   explicit BufferedSource(Source& underlying, size_t size = DEFAULT_BUFFER_SIZE);
 
   virtual ~BufferedSource() override;
 
@@ -391,6 +584,8 @@ struct BufferedSource : Source {
 
 ROCKET_TESTING_PRIVATE:
 
+  /// @cond undocumented
+
   Source& underlying_;
   size_t size_;
   std::unique_ptr<char[]> buf_;
@@ -402,6 +597,8 @@ ROCKET_TESTING_PRIVATE:
    * If this is 0, #pos_ must be 0, too, and the buffer is considered to be invalid.
    */
   size_t end_ = 0;
+
+  /// @endcond
 };
 
 // `FileSource` ---------------------------------------------------------------------------------------------
@@ -422,10 +619,27 @@ struct FileSource : Source {
     bool closeOnDestroy = true;
   };
 
+  /**
+   * Returns default parameters.
+   *
+   * @return the default parameters
+   */
   static consteval Params defaultParams() { return {}; }
 
+  /**
+   * @ctor
+   *
+   * @param file a `FILE` pointer to use
+   * @param params the parameters
+   */
   explicit FileSource(FILE* file, const Params& params = defaultParams());
 
+  /**
+   * @ctor
+   *
+   * @param path a path to a file
+   * @param params the parameters
+   */
   explicit FileSource(const std::string& path, const Params& params = { .closeOnDestroy=true });
 
   virtual ~FileSource() override;
@@ -442,8 +656,12 @@ struct FileSource : Source {
 
 ROCKET_TESTING_PRIVATE:
 
+  /// @cond undocumented
+
   FILE* file_;
   Params params_;
+
+  /// @endcond
 };
 
 // `NullSource` ---------------------------------------------------------------------------------------------
@@ -471,9 +689,14 @@ ROCKET_TESTING_PRIVATE:
  * The class `StreamSource` provides support for `std::istream`.
  *
  * Using I/O streams is generally discouraged, because it’s not partable and not efficient. Wherever
- * possible, use #FileSink instead.
+ * possible, use #rocket::nio::FileSource instead.
  */
 struct StreamSource : Source {
+  /**
+   * @ctor
+   *
+   * @param is the input stream to read from
+   */
   explicit StreamSource(std::istream& is) : is_(is) {}
 
   virtual ~StreamSource() override;
@@ -501,6 +724,11 @@ private:
 struct StringSource : Source {
   StringSource() {}
 
+  /**
+   * @ctor
+   *
+   * @param in the string to read from
+   */
   explicit StringSource(std::string_view in) : in_(in) {}
 
   virtual ~StringSource() override;

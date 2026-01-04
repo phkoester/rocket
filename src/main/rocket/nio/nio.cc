@@ -53,7 +53,7 @@ Sink::writeln(std::string_view in) {
     return 0;
   }
 
-  size_t ret = write(in);
+  auto ret = write(in);
   ret += write('\n');
   flush();
   return ret;
@@ -190,14 +190,14 @@ FileSink::close()
 
   flush();
 
-  int result = std::fclose(file_);
-  LOG(FileSink::ctor, "fclose=" << result << ", ferror=" << ferror(file_));
-  if (result != 0) {
+  int ret = std::fclose(file_);
+  LOG(FileSink::ctor, "fclose=" << ret << ", ferror=" << ferror(file_));
+  if (ret != 0) {
     error_ = ferror(file_);
   }
   open_ = false;
   file_ = nullptr;
-  return error_;
+  return ret;
 }
 
 int
@@ -215,12 +215,12 @@ FileSink::flush() {
     return error_;
   }
 
-  int result = std::fflush(file_);
-  LOG(FileSink::flush, "fflush=" << result << ", ferror=" << ferror(file_));
-  if (result != 0) {
+  int ret = std::fflush(file_);
+  LOG(FileSink::flush, "fflush=" << ret << ", ferror=" << ferror(file_));
+  if (ret != 0) {
     error_ = ferror(file_);
   }
-  return error_;
+  return ret;
 }
 
 size_t
@@ -250,7 +250,7 @@ NullSink::close()
   }
 
   open_ = false;
-  return error_;
+  return 0;
 }
 
 int
@@ -284,7 +284,7 @@ SpanSink::close() {
   }
 
   open_ = false;
-  return error_;
+  return 0;
 }
 
 int
@@ -324,7 +324,7 @@ StreamSink::close() {
 
   open_ = false;
   // An `ostream` can't close, it can only be destroyed
-  return error_;
+  return 0;
 }
 
 int
@@ -382,7 +382,7 @@ StringSink::close() {
   }
 
   open_ = false;
-  return error_;
+  return 0;
 }
 
 int
@@ -400,7 +400,7 @@ StringSink::str() const {
 size_t
 StringSink::write(string_view in) {
   if (not checkOpen()) {
-    return error_;
+    return 0;
   }
 
   if (out) {
@@ -680,12 +680,12 @@ FileSource::close()
     return error_;
   }
 
-  int result = std::fclose(file_);
-  LOG(FileSource::close, "fclose=" << result);
-  error_ = result;
+  int ret = std::fclose(file_);
+  LOG(FileSource::close, "fclose=" << ret);
+  error_ = ret;
   open_ = false;
   file_ = nullptr;
-  return error_;
+  return ret;
 }
 
 int
@@ -733,12 +733,12 @@ FileSource::seek(Offset offset, SeekMode mode) {
 
   // The type of the `offset` parameter is `long`, se we can directly pass `offset`
   static_assert(is_same_v<Offset, long>);
-  size_t result = std::fseek(file_, offset, origin);
-  LOG(FileSource::seek, "fseek=" << result << ", ferror=" << ferror(file_));
-  if (result != 0) {
+  size_t ret = std::fseek(file_, offset, origin);
+  LOG(FileSource::seek, "fseek=" << ret << ", ferror=" << ferror(file_));
+  if (ret != 0) {
     error_ = ferror(file_);
   }
-  return error_;
+  return ret;
 }
 
 Io::Position
@@ -749,15 +749,15 @@ FileSource::tell() {
 
   using ftell_t = decltype(std::ftell(file_));
   static_assert(is_same_v<ftell_t, long>);
-  long result = std::ftell(file_);
-  LOG(FileSource::tell, "ftell=" << result << ", ferror=" << ferror(file_));
-  if (result == -1) {
+  long ret = std::ftell(file_);
+  LOG(FileSource::tell, "ftell=" << ret << ", ferror=" << ferror(file_));
+  if (ret == -1) {
     error_ = ferror(file_);
     return -1;
   }
-  ROCKET_ASSERT(result >= 0);
+  ROCKET_ASSERT(ret >= 0);
   // Convert nonnegative `long` to `Position`
-  return result;
+  return ret;
 }
 
 // `NullSource` ---------------------------------------------------------------------------------------------
@@ -774,7 +774,7 @@ NullSource::close()
   }
 
   open_ = false;
-  return error_;
+  return 0;
 }
 
 size_t
@@ -809,7 +809,7 @@ StreamSource::close() {
 
   open_ = false;
   // An `istream` can't close, it can only be destroyed
-  return error_;
+  return 0;
 }
 
 int
@@ -875,14 +875,14 @@ StreamSource::tell() {
   using tellg_t = decltype(is_.tellg());
   // It is some 128-bit type, we don't know whether it is signed or unsigned
   static_assert(sizeof(tellg_t) == 16);
-  tellg_t result = is_.tellg();
-  LOG(StreamSource::tell, "tellg=" << result << ", bad=" << is_.bad() << ", fail=" << is_.fail() << ", eof=" << is_.eof());
+  tellg_t ret = is_.tellg();
+  LOG(StreamSource::tell, "tellg=" << ret << ", bad=" << is_.bad() << ", fail=" << is_.fail() << ", eof=" << is_.eof());
   error_ = is_.rdstate();
 
-  if (result < 0 || result > numeric_limits<long>::max()) {
+  if (ret < 0 || ret > numeric_limits<long>::max()) {
     return -1;
   }
-  return static_cast<Position>(result);
+  return static_cast<Position>(ret);
 }
 
 // `StringSource` -------------------------------------------------------------------------------------------
@@ -900,7 +900,7 @@ StringSource::close()
 
   open_ = false;
   pos_ = 0;
-  return error_;
+  return 0;
 }
 
 size_t
@@ -941,7 +941,7 @@ StringSource::seek(Offset offset, SeekMode mode) {
   newPos = max<int128_t>(0, newPos);
   newPos = min<int128_t>(in_.size(), newPos);
   pos_ = static_cast<Position>(newPos);
-  return error_;
+  return 0;
 }
 
 Io::Position

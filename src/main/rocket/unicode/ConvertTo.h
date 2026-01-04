@@ -26,18 +26,42 @@ struct ConvertTo;
  */
 template<>
 struct ConvertTo<char> {
+  /**
+   * Applies this converter to a string.
+   *
+   * @param s the string to convert
+   * @return the converted string
+   */
   inline std::string_view apply(std::string_view s) const { return s; }
 
+  /**
+   * Applies this converter to a string.
+   *
+   * @param s the string to convert
+   * @return the converted string
+   */
   inline std::string apply(std::u32string_view s) const { return utf32To8(s); }
 };
 
 /**
  * Specialization for `char32_t`.
  */
- template<>
+template<>
 struct ConvertTo<char32_t> {
+  /**
+   * Applies this converter to a string.
+   *
+   * @param s the string to convert
+   * @return the converted string
+   */
   inline std::u32string_view apply(std::u32string_view s) const { return s; }
 
+  /**
+   * Applies this converter to a string.
+   *
+   * @param s the string to convert
+   * @return the converted string
+   */
   inline std::u32string apply(std::string_view s) const { return utf8To32(s); }
 };
 

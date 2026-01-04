@@ -7,7 +7,6 @@
 #include "rocket/Exception.h"
 #include "rocket/math/math.h"
 #include "rocket/math/random.h"
-#include "rocket/nio/nio.h"
 
 using namespace rocket;
 using namespace rocket::math;
