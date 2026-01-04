@@ -5,7 +5,6 @@
 #include "rocket-gtest/rocket-gtest.h"
 
 #include "rocket/Type.h"
-#include "rocket/rocket.h"
 
 #include <map>
 #include <tuple>

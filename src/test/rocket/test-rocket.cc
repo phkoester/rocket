@@ -4,8 +4,6 @@
 
 #include "rocket-gtest/rocket-gtest.h"
 
-#include "rocket/rocket.h"
-
 using namespace rocket;
 using namespace std;
 using namespace testing;

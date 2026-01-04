@@ -5,19 +5,50 @@
 #include "rocket-gtest/rocket-gtest.h"
 
 #include "rocket/format/std.h"
+#include "rocket/nio/nio.h"
+
+#include "rocket-gtest/matcher/matcher.h"
 
 #include <span>
 #include <type_traits>
 #include <unordered_map>
 #include <unordered_set>
 
+using namespace rocket;
+using namespace rocket::gtest::matcher;
 using namespace std;
+using namespace testing;
 
 // `TEST` ---------------------------------------------------------------------------------------------------
 
 TEST(std, byteFormat) {
   EXPECT_EQ(fmt::format("{}", byte { 0 }), "0");
   EXPECT_EQ(fmt::format("{:#x}", byte { 255 }), "0xff");
+}
+
+TEST(std, exceptionFormat) {
+  try  {
+    throw InvalidState("oops1");
+  } catch (const exception& ex1) {
+    EXPECT_THAT(fmt::format("{}", ex1), matchesRegex(".*\\.cc:\\d+: oops1"));
+    EXPECT_THAT(fmt::format("{:t}", ex1), matchesRegex("`rocket::InvalidState`: .*\\.cc:\\d+: oops1"));
+
+    u32string s32 = fmt::format(U"{}", ex1);
+    EXPECT_NE(s32.find(U"oops1"), u32string::npos);
+
+    auto msg = regex_replace(fmt::format("{:?}", ex1), std::regex("\\n"), "|");
+    EXPECT_THAT(msg, matchesRegex(".*\\.cc:\\d+: oops1\\|   0# .*.*# "));
+
+    msg = regex_replace(fmt::format("{:?t}", ex1), std::regex("\\n"), "|");
+    EXPECT_THAT(msg, matchesRegex("`rocket::InvalidState`: .*\\.cc:\\d+: oops1\\|   0# .*.*# "));
+
+    try {
+      throw_with_nested(InvalidArgument("name", "oops2"));
+    } catch (const exception& ex2) {
+      EXPECT_THAT(fmt::format("{}", ex2), matchesRegex(".*\\.cc:\\d+: Parameter `name`: oops2 \\(Because: .*\\.cc:\\d+: oops1\\)"));
+      EXPECT_THAT(fmt::format("{:t}", ex2), matchesRegex("`std::_Nested_exception<rocket::InvalidArgument>`: .*\\.cc:\\d+: Parameter `name`: oops2 \\(Because: .*\\.cc:\\d+: oops1\\)"));
+    }
+  }
 }
 
 TEST(std, initializerListFormat) {

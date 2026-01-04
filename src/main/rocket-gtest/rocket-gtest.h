@@ -13,6 +13,7 @@
  */
 #define ROCKET_TESTING
 
+#include "rocket/rocket.h"
 #include "rocket/io/io.h"
 
 #include <gmock/gmock.h>

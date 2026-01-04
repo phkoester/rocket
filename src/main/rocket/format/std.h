@@ -6,8 +6,12 @@
 
 #pragma once
 
+#include "rocket/Exception.h"
+#include "rocket/Type.h"
 #include "rocket/format/format.h"
 
+/// This requires modifying `fmt/std.h`!
+#define FMT_STD_NO_EXCEPTION
 /// This requires modifying `fmt/std.h`!
 #define FMT_STD_NO_OPTIONAL
 /// This requires modifying `fmt/std.h`!
@@ -17,6 +21,76 @@
 #include <fmt/std.h>
 
 #include <optional>
+
+// `fmt::formatter<Exception>` ------------------------------------------------------------------------------
+
+template <typename Exception, typename C>
+struct fmt::formatter<Exception, C,
+    std::enable_if_t<std::is_base_of<std::exception, Exception>::value>> {
+
+  template<typename FormatContext>
+  FormatContext::iterator
+  format(const Exception& v, FormatContext& ctx) const{
+    auto out = ctx.out();
+
+    // If requested, append type
+
+    if (withType_) {
+      auto type = rocket::Type::of(v);
+      if constexpr (std::is_same_v<C, char>) {
+        out = format_to(out, "`{}`: ", rocket::unicode::ConvertTo<C>().apply(type.name()));
+      } else {
+        out = format_to(out, U"`{}`: ", rocket::unicode::ConvertTo<C>().apply(type.name()));
+      }
+    }
+
+    // Append message
+
+    out = detail::write<C>(out, rocket::unicode::ConvertTo<C>().apply(rocket::what(v)));
+
+    // If debug, append stack trace
+
+    if (debug_) {
+      const rocket::Exception* p = dynamic_cast<const rocket::Exception*>(&v);
+      if (p && p->stackTrace()) {
+        out = detail::write<C>(out, static_cast<C>('\n'));
+        std::ostringstream os;
+        os << *p->stackTrace();
+        std::string s = os.str();
+        s.pop_back(); // Remove trailing '\n'
+        out = detail::write<C>(out, rocket::unicode::ConvertTo<C>().apply(s));
+      }
+    }
+
+    return out;
+  }
+
+  constexpr const C*
+  parse(parse_context<C>& ctx) {
+    auto it = ctx.begin(), end = ctx.end();
+
+    if (it != end && *it == '?') {
+      debug_ = true;
+      ++it;
+    }
+    if (it != end && *it == 't') {
+      withType_ = true;
+      ++it;
+    }
+
+    return it;
+  }
+
+  constexpr void
+  set_debug_format(bool v = true) {
+    debug_ = v;
+  }
+
+private:
+
+  bool debug_ = false;
+  bool withType_ = false;
+};
 
 // `fmt::formatter<std::optional>` --------------------------------------------------------------------------
 
@@ -90,13 +164,10 @@ struct fmt::formatter<Variant, C, std::enable_if_t<
           out = format_to(out, U"{}:", value.index());
         }
 
-        if (debug_) {
-          out = detail::write_escaped_alternative<C>(out, v, ctx);
-        } else {
-          ctx.advance_to(out);
-          formatter<std::remove_cvref_t<decltype(v)>, C> underlying;
-          out = underlying.format(v, ctx);
-        }
+        formatter<std::remove_cvref_t<decltype(v)>, C> underlying;
+        detail::maybe_set_debug_format(underlying, debug_);
+        ctx.advance_to(out);
+        out = underlying.format(v, ctx);
       }, value);
       return out;
     }

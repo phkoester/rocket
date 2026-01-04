@@ -6,7 +6,6 @@
 
 #include "rocket-gtest/rocket-gtest.h"
 
-#include "rocket/rocket.h"
 #include "rocket-gtest/ChattyString.h"
 
 using namespace rocket;
