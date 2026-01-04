@@ -106,9 +106,15 @@ hash_value(const Type& v) {
 
 // Namespace `fmt` ------------------------------------------------------------------------------------------
 
-/// @spec_fmt_formatter{#rocket::Type}
+/**
+ * @spec_fmt_formatter{#rocket::Type}
+ *
+ * This formatter uses the same format specifiers as the underlying formatter for type `std::string`.
+ */
 template<typename C>
 struct fmt::formatter<rocket::Type, C> {
+  /// @cond undocumented
+
   template<typename FormatContext>
   constexpr FormatContext::iterator
   format(const rocket::Type& v, FormatContext& ctx) const {
@@ -119,6 +125,13 @@ struct fmt::formatter<rocket::Type, C> {
   parse(parse_context<C>& ctx) {
     return underlying_.parse(ctx);
   }
+
+  constexpr void
+  set_debug_format(bool v = true) {
+    underlying_.set_debug_format(v);
+  }
+
+  /// @endcond
 
 private:
 

@@ -26,10 +26,17 @@ namespace fmt {
 
 // `fmt::formatter<Exception>` ------------------------------------------------------------------------------
 
-/// @spec_fmt_formatter{`Exception`}
+/**
+ * @spec_fmt_formatter{`Exception`}
+ *
+ * If the `?` format specifier is used, then the stack trace is also included. If the `t` format specifier is
+ * used, then the type of the exception is also included.
+ */
 template <typename Exception, typename C>
 struct formatter<Exception, C,
     std::enable_if_t<std::is_base_of<std::exception, Exception>::value>> {
+
+  /// @cond undocumented
 
   template<typename FormatContext>
   FormatContext::iterator
@@ -89,6 +96,8 @@ struct formatter<Exception, C,
     debug_ = v;
   }
 
+  /// @endcond
+
 private:
 
   bool debug_ = false;
@@ -97,9 +106,15 @@ private:
 
 // `fmt::formatter<std::optional>` --------------------------------------------------------------------------
 
-/// @spec_fmt_formatter{`std::optional`}
+/**
+ * @spec_fmt_formatter{`std::optional`}
+ *
+ * This formatter uses the same format specifiers as the underlying formatter for type @p T.
+ */
 template<typename T, typename C>
 struct formatter<std::optional<T>, C, std::enable_if_t<is_formattable<T, C>::value>> {
+  /// @cond undocumented
+
   template <typename FormatContext>
   constexpr FormatContext::iterator
   format(const std::optional<T>& v, FormatContext& ctx) const {
@@ -119,6 +134,8 @@ struct formatter<std::optional<T>, C, std::enable_if_t<is_formattable<T, C>::val
     detail::maybe_set_debug_format(underlying_, v);
   }
 
+  /// @endcond
+
 private:
 
   static constexpr basic_string_view<C> NONE =
@@ -132,6 +149,8 @@ private:
 /// @spec_fmt_formatter{`std::monostate`}
 template<typename C>
 struct formatter<std::monostate, C> {
+  /// @cond undocumented
+
   template<typename FormatContext>
   constexpr FormatContext::iterator
   format(const std::monostate&, FormatContext& ctx) const {
@@ -143,6 +162,8 @@ struct formatter<std::monostate, C> {
     return ctx.begin();
   }
 
+  /// @endcond
+
 private:
 
   static constexpr basic_string_view<C> MONOSTATE =
@@ -151,12 +172,18 @@ private:
 
 // `fmt::formatter<Variant>` --------------------------------------------------------------------------------
 
-/// @spec_fmt_formatter{`Variant`}
+/**
+ * @spec_fmt_formatter{`Variant`}
+ *
+ * If the `?` format specifier is used, then the variant's value is formatted in debug mode.
+ */
 template<typename Variant, typename C>
 struct formatter<Variant, C, std::enable_if_t<
     std::conjunction_v<
         is_variant_like<Variant>,
         detail::is_variant_formattable<Variant, C>>>> {
+  /// @cond undocumented
+
   template <typename FormatContext>
   constexpr FormatContext::iterator
   format(const Variant& value, FormatContext& ctx) const {
@@ -196,6 +223,8 @@ struct formatter<Variant, C, std::enable_if_t<
   set_debug_format(bool v = true) {
     debug_ = v;
   }
+
+  /// @endcond
 
 private:
 

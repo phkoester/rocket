@@ -419,9 +419,15 @@ operator|=(const IntervalImpl<T, Left, Right>& lhs, const IntervalImpl<T, Left, 
 
 // `fmt::formatter<IntervalImpl>` ---------------------------------------------------------------------------
 
-/// @spec_fmt_formatter{#rocket::math::IntervalImpl}
+/**
+ * @spec_fmt_formatter{#rocket::math::IntervalImpl}
+ *
+ * This formatter uses the same format specifiers as the underlying formatter for type @p T.
+ */
 template<typename T, typename Left, typename Right, typename C>
 struct fmt::formatter<rocket::math::IntervalImpl<T, Left, Right>, C> {
+  /// @cond undocumented
+
   template<typename FormatContext>
   constexpr FormatContext::iterator
   format(const rocket::math::IntervalImpl<T, Left, Right>& v, FormatContext& ctx) const {
@@ -466,6 +472,8 @@ struct fmt::formatter<rocket::math::IntervalImpl<T, Left, Right>, C> {
   set_debug_format(bool v = true) {
     detail::maybe_set_debug_format(underlying_, v);
   }
+
+  /// @endcond
 
 private:
 

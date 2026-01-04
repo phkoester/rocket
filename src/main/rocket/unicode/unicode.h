@@ -146,9 +146,15 @@ size_t read(nio::Source& in, CodePoint& v);
 
 // `fmt::formatter<CodePoint>` ------------------------------------------------------------------------------
 
-/// @spec_fmt_formatter{#rocket::unicode::CodePoint}
+/**
+ * @spec_fmt_formatter{#rocket::unicode::CodePoint}
+ *
+ * This formatter uses the same format specifiers as the underlying formatter for type `std::string`.
+ */
 template<typename C>
 struct fmt::formatter<rocket::unicode::CodePoint, C> {
+  /// @cond undocumented
+
   template<typename FormatContext>
   constexpr FormatContext::iterator
   format(const rocket::unicode::CodePoint& v, FormatContext& ctx) const {
@@ -163,6 +169,13 @@ struct fmt::formatter<rocket::unicode::CodePoint, C> {
   parse(fmt::parse_context<C>& ctx) {
     return underlying_.parse(ctx);
   }
+
+  constexpr void
+  set_debug_format(bool v = true) {
+    underlying_.set_debug_format(v);
+  }
+
+  /// @endcond
 
 private:
 
@@ -361,9 +374,15 @@ size_t read(nio::Source& in, Grapheme& v);
 
 // `fmt::formatter<Grapheme>` -------------------------------------------------------------------------------
 
-/// @spec_fmt_formatter{#rocket::unicode::Grapheme}
+/**
+ * @spec_fmt_formatter{#rocket::unicode::Grapheme}
+ *
+ * This formatter uses the same format specifiers as the underlying formatter for type `std::string`.
+ */
 template<typename C>
 struct fmt::formatter<rocket::unicode::Grapheme, C> {
+  /// @cond undocumented
+
   template<typename FormatContext>
   constexpr FormatContext::iterator
   format(const rocket::unicode::Grapheme& v, FormatContext& ctx) const {
@@ -374,6 +393,13 @@ struct fmt::formatter<rocket::unicode::Grapheme, C> {
   parse(fmt::parse_context<C>& ctx) {
     return underlying_.parse(ctx);
   }
+
+  constexpr void
+  set_debug_format(bool v = true) {
+    underlying_.set_debug_format(v);
+  }
+
+  /// @endcond
 
 private:
 

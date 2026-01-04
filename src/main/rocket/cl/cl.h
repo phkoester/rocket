@@ -192,7 +192,7 @@ struct CommandLine {
    * To be called when #parse threw an exception.
    *
    * @param ex the exception that was caught
-   * @param sink the sink to write to
+   * @param out the sink to write to
    * @param status program exit status. If this is not `EXIT_SUCCESS` (0), the program exits with this status
    */
   void handleException(
@@ -203,7 +203,7 @@ struct CommandLine {
   /**
    * To be called when the `--help` option appeared on the command line.
    *
-   * @param sink the sink to write to
+   * @param out the sink to write to
    * @param exit if `true`, the program exits with `EXIT_SUCCESS`, otherwise it continues to run
    */
   void help(nio::Sink& out, bool exit);

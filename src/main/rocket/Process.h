@@ -140,7 +140,7 @@ struct Process {
    *
    * This function may be called even if the process isn't initialized yet.
    *
-   * @param sink the sink to write to, usually `rocket::nio::stderr`
+   * @param out the sink to write to, usually `rocket::nio::stderr`
    * @param status the exit status. If not `EXIT_SUCCESS` (0), then #exit is called
    * @param fmt the format string
    * @param args the format arguments
@@ -227,7 +227,7 @@ struct Process {
    *
    * This function may be called even if the process isn't initialized yet.
    *
-   * @param sink the sink to write to, usually `rocket::nio::stderr`
+   * @param out the sink to write to, usually `rocket::nio::stderr`
    * @param fmt the format string
    * @param args the format arguments
    */
