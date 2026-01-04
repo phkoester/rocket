@@ -81,7 +81,7 @@ struct Ansi {
   /**
    * Sends an ANSI escape sequence to the sink, and returns the response from `stdin`.
    *
-   * @param sink the sink
+   * @param out the sink
    * @param sequence the ANSI escape sequence to send
    * @return the response from `stdin` if this instance is active, otherwise an empty string
    * @throw #rocket::io::InputFailure if the response from `stdin` is not valid
