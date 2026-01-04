@@ -16,12 +16,24 @@ namespace rocket {
 
 // Functions ------------------------------------------------------------------------------------------------
 
+/**
+ * Adds two values and returns the result, checking the `Result` type for overflow.
+ *
+ * @tparam Result the result type
+ * @tparam Control the control type
+ * @tparam Lhs the left-hand side type
+ * @tparam Rhs the right-hand side type
+ * @param lhs the left-hand side value
+ * @param rhs the right-hand side value
+ * @return the result
+ * @throws `std::overflow_error` if the result is out of range
+ */
 template<typename Result, typename Control, typename Lhs, typename Rhs>
 constexpr Result
 add(Lhs lhs, Rhs rhs) {
   static_assert(std::is_signed_v<Control>);
-  static_assert(sizeof(Control) >= 2 * sizeof(Lhs));
-  static_assert(sizeof(Control) >= 2 * sizeof(Rhs));
+  static_assert(sizeof(Control) > sizeof(Lhs));
+  static_assert(sizeof(Control) > sizeof(Rhs));
 
   Control controlRet = static_cast<Control>(lhs) + static_cast<Control>(rhs);
   constexpr Control min = std::numeric_limits<Result>::min();
@@ -32,12 +44,24 @@ add(Lhs lhs, Rhs rhs) {
   return static_cast<Result>(controlRet);
 }
 
+/**
+ * Subtracts two values and returns the result, checking the `Result` type for overflow.
+ *
+ * @tparam Result the result type
+ * @tparam Control the control type
+ * @tparam Lhs the left-hand side type
+ * @tparam Rhs the right-hand side type
+ * @param lhs the left-hand side value
+ * @param rhs the right-hand side value
+ * @return the result
+ * @throws `std::overflow_error` if the result is out of range
+ */
 template<typename Result, typename Control, typename Lhs, typename Rhs>
 constexpr Result
 sub(Lhs lhs, Rhs rhs) {
   static_assert(std::is_signed_v<Control>);
-  static_assert(sizeof(Control) >= 2 * sizeof(Lhs));
-  static_assert(sizeof(Control) >= 2 * sizeof(Rhs));
+  static_assert(sizeof(Control) > sizeof(Lhs));
+  static_assert(sizeof(Control) > sizeof(Rhs));
 
   Control controlRet = static_cast<Control>(lhs) - static_cast<Control>(rhs);
   constexpr Control min = std::numeric_limits<Result>::min();
@@ -48,12 +72,23 @@ sub(Lhs lhs, Rhs rhs) {
   return static_cast<Result>(controlRet);
 }
 
+/**
+ * Tries to add two values and return the result, returning `nullopt` if the result is out of range.
+ *
+ * @tparam Result the result type
+ * @tparam Control the control type
+ * @tparam Lhs the left-hand side type
+ * @tparam Rhs the right-hand side type
+ * @param lhs the left-hand side value
+ * @param rhs the right-hand side value
+ * @return the result, or `nullopt` if the result is out of range
+ */
 template<typename Result, typename Control, typename Lhs, typename Rhs>
 constexpr std::optional<Result>
 tryAdd(Lhs lhs, Rhs rhs) {
   static_assert(std::is_signed_v<Control>);
-  static_assert(sizeof(Control) >= 2 * sizeof(Lhs));
-  static_assert(sizeof(Control) >= 2 * sizeof(Rhs));
+  static_assert(sizeof(Control) > sizeof(Lhs));
+  static_assert(sizeof(Control) > sizeof(Rhs));
 
   Control controlRet = static_cast<Control>(lhs) + static_cast<Control>(rhs);
   constexpr Control min = std::numeric_limits<Result>::min();
@@ -64,12 +99,23 @@ tryAdd(Lhs lhs, Rhs rhs) {
   return static_cast<Result>(controlRet);
 }
 
+/**
+ * Tries to subtract two values and return the result, returning `nullopt` if the result is out of range.
+ *
+ * @tparam Result the result type
+ * @tparam Control the control type
+ * @tparam Lhs the left-hand side type
+ * @tparam Rhs the right-hand side type
+ * @param lhs the left-hand side value
+ * @param rhs the right-hand side value
+ * @return the result, or `nullopt` if the result is out of range
+ */
 template<typename Result, typename Control, typename Lhs, typename Rhs>
 constexpr std::optional<Result>
 trySub(Lhs lhs, Rhs rhs) {
   static_assert(std::is_signed_v<Control>);
-  static_assert(sizeof(Control) >= 2 * sizeof(Lhs));
-  static_assert(sizeof(Control) >= 2 * sizeof(Rhs));
+  static_assert(sizeof(Control) > sizeof(Lhs));
+  static_assert(sizeof(Control) > sizeof(Rhs));
 
   Control controlRet = static_cast<Control>(lhs) - static_cast<Control>(rhs);
   constexpr Control min = std::numeric_limits<Result>::min();

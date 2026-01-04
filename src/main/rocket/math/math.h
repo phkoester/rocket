@@ -18,7 +18,7 @@ namespace rocket::math {
 // Functions ------------------------------------------------------------------------------------------------
 
 /**
- * Calculates the average mean for the values in the half-open interval [`begin`,`end`).
+ * Calculates the average mean for the values in the half-open interval @f$[begin,end)@f$.
  *
  * To avoid overflow, this function calculates a <em>cumulative moving average</em>. Let the values be
  * @f$(x_{1},...,x_{N})@f$, this functions returns
@@ -47,7 +47,7 @@ namespace rocket::math {
  }
 
  /**
-  * Calculates the standard deviation for the values in the half-open interval [`begin`,`end`).
+  * Calculates the standard deviation for the values in the half-open interval @f$[begin,end)@f$.
   *
   * Let the values be @f$(x_{1},...,x_{N})@f$, this functions returns
   *

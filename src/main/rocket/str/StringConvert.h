@@ -23,7 +23,7 @@ namespace rocket::str {
 template<typename T>
 struct StringConvert;
 
-/// @spec_rocket_string_convert{`bool`}
+/// @spec_rocket_StringConvert{`bool`}
 template<>
 struct StringConvert<bool> {
   using Type = bool; ///< @type_alias
@@ -56,7 +56,7 @@ struct StringConvert<bool> {
   }
 };
 
-/// @spec_rocket_string_convert{`char`}
+/// @spec_rocket_StringConvert{`char`}
 template<>
 struct StringConvert<char> {
   using Type = char; ///< @type_alias
@@ -86,7 +86,7 @@ struct StringConvert<char> {
   }
 };
 
-/// @spec_rocket_string_convert{#Integer}
+/// @spec_rocket_StringConvert{#rocket::Integer}
 template<typename I> requires Integer<I>
 struct StringConvert<I> {
   using Type = I; ///< @type_alias
@@ -118,7 +118,7 @@ struct StringConvert<I> {
   }
 };
 
-/// @spec_rocket_string_convert{#FloatingPoint}
+/// @spec_rocket_StringConvert{#rocket::FloatingPoint}
 template<typename F> requires FloatingPoint<F>
 struct StringConvert<F> {
   using Type = F; ///< @type_alias
@@ -162,7 +162,7 @@ struct StringConvert<F> {
   }
 };
 
-/// @spec_rocket_string_convert{enums}
+/// @spec_rocket_StringConvert{enums}
 template<typename E> requires std::is_enum_v<E>
 struct StringConvert<E> {
   using Type = E; ///< @type_alias
@@ -188,7 +188,7 @@ struct StringConvert<E> {
   }
 };
 
-/// @spec_rocket_string_convert{`const char*`}
+/// @spec_rocket_StringConvert{`const char*`}
 template<>
 struct StringConvert<const char*> {
   using Type = const char*; ///< @type_alias
@@ -214,7 +214,7 @@ private:
   mutable std::string data_;
 };
 
-/// @spec_rocket_string_convert{`std::string`}
+/// @spec_rocket_StringConvert{`std::string`}
 template<>
 struct StringConvert<std::string> {
   using Type = std::string; ///< @type_alias
@@ -236,7 +236,7 @@ struct StringConvert<std::string> {
   Type toType(std::string_view s) const { return std::string(s); }
 };
 
-/// @spec_rocket_string_convert{`std::string_view`}
+/// @spec_rocket_StringConvert{`std::string_view`}
 template<>
 struct StringConvert<std::string_view> {
   using Type = std::string_view; ///< @type_alias
@@ -260,12 +260,27 @@ struct StringConvert<std::string_view> {
 
 // Functions ------------------------------------------------------------------------------------------------
 
+/**
+ * Converts a string to a value of type @p T.
+ *
+ * @tparam T the type to convert to
+ * @param s the string to convert
+ * @return a value of type @p T
+ * @throw #rocket::InvalidState if @p s cannot be parsed
+ */
 template<typename T>
 T
 toType(std::string_view s) {
   return StringConvert<T>().toType(s);
 }
 
+/**
+ * Tries to convert a string to a value of type @p T.
+ *
+ * @tparam T the type to convert to
+ * @param s the string to convert
+ * @return a value of type @p T, or `nullopt` if @p s cannot be parsed
+ */
 template<typename T>
 std::optional<T>
 tryToType(std::string_view s) {
@@ -276,6 +291,13 @@ tryToType(std::string_view s) {
   }
 }
 
+/**
+ * Converts a value of type @p T to a string.
+ *
+ * @tparam T the type to convert from
+ * @param v the value to convert
+ * @return a string
+ */
 template<typename T>
 std::string
 toString(T v) noexcept {

@@ -18,15 +18,18 @@ namespace rocket {
 
 // `UnorderedBimap` -----------------------------------------------------------------------------------------
 
+/// The `UnorderedBimap` type.
 template<typename K, typename V>
 using UnorderedBimap =
     boost::bimaps::bimap<boost::bimaps::unordered_set_of<K>, boost::bimaps::unordered_set_of<V>>;
 
 /**
- * Convenience function to make an #UnorderedBimap of a `std::initializer_list`.
+ * Convenience function to make an #rocket::UnorderedBimap of a `std::initializer_list`.
  *
+ * @tparam K the map's left key type
+ * @tparam V the map's left value type
  * @param list the map elements, as seen from the map's left index
- * @return a new #UnorderedBimap containing the elements of @p list in its left index
+ * @return a new #rocket::UnorderedBimap containing the elements of @p list in its left index
  */
 template<typename K, typename V>
 UnorderedBimap<K, V>
@@ -39,11 +42,11 @@ makeUnorderedBimap(std::initializer_list<std::pair<K, V>> list = {}) {
 }
 
 /**
- * Extracts the values from an #UnorderedBimap, as seen from the map's left index.
+ * Extracts the values from an #rocket::UnorderedBimap, as seen from the map's left index.
  *
- * @tparam K the map's key type
- * @tparam V the map's value type
- * @param v an #UnorderedBimap
+ * @tparam K the map's left key type
+ * @tparam V the map's left value type
+ * @param v a #rocket::UnorderedBimap
  * @return the values from @p v as a `std::set`, as seen from the map's left index
  */
 template<typename K, typename V>
@@ -108,9 +111,16 @@ PrintTo(const bimap<A, B>& v, std::ostream* os) {
 
 // `fmt::formatter<boost::bimaps::bimap>`--------------------------------------------------------------------
 
-/// @spec_fmt_formatter{`boost::bimaps::bimap`}
+/**
+ * @spec_fmt_formatter{`boost::bimaps::bimap`}
+ *
+ * This formatter formats the left map of a #rocket::UnorderedBimap. For the format specifiers, see
+ * `fmt::formatter<std::map>`.
+ */
 template<typename A, typename B, typename C>
 struct fmt::formatter<boost::bimaps::bimap<A, B>, C> {
+  /// @cond undocumented
+
   template<typename FormatContext>
   constexpr FormatContext::iterator
   format(const boost::bimaps::bimap<A, B>& v, FormatContext& ctx) const {
@@ -126,6 +136,13 @@ struct fmt::formatter<boost::bimaps::bimap<A, B>, C> {
   parse(parse_context<C>& ctx) {
     return underlying_.parse(ctx);
   }
+
+  constexpr void
+  set_debug_format(bool v = true) {
+    underlying_.set_debug_format(v);
+  }
+
+  /// @endcond
 
 private:
 

@@ -12,6 +12,12 @@
 
 // Macros ---------------------------------------------------------------------------------------------------
 
+/**
+ * Executes the function @p f @p n times and measures the excution time.
+ *
+ * @param n the number of times to run the benchmark
+ * @param f the benchmark function
+ */
 #define ROCKET_BENCH(n, f) { \
   using namespace std::chrono; \
   \

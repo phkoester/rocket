@@ -57,10 +57,12 @@ struct Position {
   std::optional<std::string> caption;
 };
 
+/// @enum_declare{#rocket::str::location::Position::Type}
 ROCKET_ENUM_DECLARE_LOCAL(Position::Type);
 
 } // namespace rocket::str::location
 
+/// @enum_declare{#rocket::str::location::Position::Type}
 ROCKET_ENUM_DECLARE_GLOBAL(rocket::str::location::Position::Type);
 
 namespace rocket::str::location {
@@ -144,14 +146,14 @@ struct PrintLocationsParams {
 
 /**
  * Finds information about the positions @p positions in the Source @p in and returns the gathered data in a
- * #LocationsResult.
+ * #rocket::str::location::LocationsResult.
  *
  * @param in the source. The input must be UTF-8-encoded, using LF (`"\n"`) or CRLF (`"\r\n"`) as line breaks
  * @param positions the positions to look for. They needn't be sorted in any way. The order of the positions
- *     is preserved in the #LocationsResult. The only restriction is that all #Position#position values have
- *     to be unique
+ *     is preserved in the #rocket::str::location::LocationsResult. The only restriction is that all
+ *     #rocket::str::location::Position#position values have to be unique
  * @param params parameters to configure the operation
- * @return a #LocationsResult
+ * @return a #rocket::str::location::LocationsResult
  */
 LocationsResult locations(
     nio::Source& in,
@@ -164,7 +166,8 @@ LocationsResult locations(
  * @param out the sink to print to
  * @param input the entire input as a string view. This may be null, but then, the line strings in
  *     @p locationsResult must be available
- * @param locationsResult the #LocationsResult instance that was returned by the #locations function
+ * @param locationsResult the #rocket::str::location::LocationsResult instance that was returned by the
+ *     #rocket::str::location::locations function
  * @param params parameters to configure the operation
  */
 void printLocations(

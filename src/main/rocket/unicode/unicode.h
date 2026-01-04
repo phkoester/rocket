@@ -354,7 +354,7 @@ struct Grapheme {
 /// @op_output{#rocket::unicode::Grapheme}
 std::ostream& operator<<(std::ostream& lhs, const Grapheme& rhs);
 
-// @fn_read{#rocket::unicode::Grapheme}
+/// @fn_read{#rocket::unicode::Grapheme}
 size_t read(nio::Source& in, Grapheme& v);
 
 } // namespace rocket::unicode

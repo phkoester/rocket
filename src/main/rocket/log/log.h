@@ -39,10 +39,12 @@ enum class LogLevel {
   trace = 5 ///< Log level `trace`.
 };
 
+/// @enum_declare{LogLevel}
 ROCKET_ENUM_DECLARE_LOCAL(LogLevel);
 
 } // namespace rocket::log
 
+/// @enum_declare{LogLevel}
 ROCKET_ENUM_DECLARE_GLOBAL(rocket::log::LogLevel);
 
 namespace rocket::log {
@@ -75,12 +77,6 @@ struct Log {
 
   const LogLevel level_;
 };
-
-#if 0 // XXX Was machen wir damit?
-void log(LogLevel level, const std::exception& ex);
-
-void log(LogLevel level, std::exception_ptr ptr);
-#endif
 
 void log(LogLevel level, std::string_view msg);
 

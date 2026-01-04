@@ -648,7 +648,7 @@ FileSource::FileSource(FILE* file, const Params& params) :
     file_(file),
     params_(params) {
   ROCKET_CHECK(file, file != nullptr);
-  if (int fd = this->fd(); fd == STDIN_FILENO || fd == STDERR_FILENO) {
+  if (int fd = this->fd(); fd == STDIN_FILENO) {
     params_.closeOnDestroy = false;
   }
 }

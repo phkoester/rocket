@@ -6,8 +6,6 @@
 
 #pragma once
 
-#define ROCKET_EXCEPT_H
-
 #include "rocket/nio/nio-fwd.h"
 
 #include <optional>
@@ -18,17 +16,17 @@
 // Macros ---------------------------------------------------------------------------------------------------
 
 #ifdef NDEBUG
-  #define ROCKET_EXCEPT_SL ::std::nullopt
-  #define ROCKET_EXCEPT_ST ::std::nullopt
+  #define ROCKET_EXCEPTION_SL ::std::nullopt
+  #define ROCKET_EXCEPTION_ST ::std::nullopt
 #else
   /**
    * Yields null if `NDEBUG` is defined, the current source location otherwise.
    */
-  #define ROCKET_EXCEPT_SL ::std::source_location::current()
+  #define ROCKET_EXCEPTION_SL ::std::source_location::current()
   /**
    * Yields null if `NDEBUG` is defined, the current stack trace otherwise.
    */
-  #define ROCKET_EXCEPT_ST ::std::stacktrace::current()
+  #define ROCKET_EXCEPTION_ST ::std::stacktrace::current()
 #endif // NDEBUG
 
 namespace rocket {
@@ -112,8 +110,8 @@ struct InvalidArgument : std::invalid_argument, Exception {
   InvalidArgument(
       std::string_view name,
       std::string_view msg,
-      std::optional<std::source_location>&& sl = ROCKET_EXCEPT_SL,
-      std::optional<std::stacktrace>&& st = ROCKET_EXCEPT_ST);
+      std::optional<std::source_location>&& sl = ROCKET_EXCEPTION_SL,
+      std::optional<std::stacktrace>&& st = ROCKET_EXCEPTION_ST);
 
   virtual ~InvalidArgument() = default;
 };
@@ -136,8 +134,8 @@ struct InvalidState : std::runtime_error, Exception {
    */
   explicit InvalidState(
       std::string_view msg,
-      std::optional<std::source_location>&& sl = ROCKET_EXCEPT_SL,
-      std::optional<std::stacktrace>&& st = ROCKET_EXCEPT_ST);
+      std::optional<std::source_location>&& sl = ROCKET_EXCEPTION_SL,
+      std::optional<std::stacktrace>&& st = ROCKET_EXCEPTION_ST);
 
   virtual ~InvalidState() = default;
 };
@@ -150,7 +148,7 @@ struct InvalidState : std::runtime_error, Exception {
  * If there are nested exceptions, the whole exception hierarchy is processed. The output may span multiple
  * lines, the last printed character is always <code>'\\n'</code>.
  *
- * @param sink the sink to print to
+ * @param out the sink to print to
  * @param ex the exception
  */
 void printException(nio::Sink& out, const std::exception& ex);
@@ -161,7 +159,7 @@ void printException(nio::Sink& out, const std::exception& ex);
  * If there are nested exceptions, the whole exception hierarchy is processed. The output may span multiple
  * lines, the last printed character is always <code>'\\n'</code>.
  *
- * @param sink the sink to print to
+ * @param out the sink to print to
  * @param ptr the exception pointer. May not be null
  */
 void printException(nio::Sink& out, std::exception_ptr ptr);

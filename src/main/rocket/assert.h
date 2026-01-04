@@ -153,7 +153,7 @@ template<typename... T>
 #define ROCKET_ASSERT(expr, ...) \
     if (not (expr)) { \
       ::rocket::assert::internal::onAssertFailed( \
-          ROCKET_EXCEPT_SL, \
+          ROCKET_EXCEPTION_SL, \
           BOOST_PP_STRINGIZE(expr) \
           ROCKET_COMMA_AND_VA_ARGS(__VA_ARGS__)); \
     }
@@ -171,7 +171,7 @@ template<typename... T>
 #define ROCKET_CHECK(name, expr, ...) \
     if (not (expr)) { \
       ::rocket::assert::internal::onCheckFailed( \
-          ROCKET_EXCEPT_SL, \
+          ROCKET_EXCEPTION_SL, \
           BOOST_PP_STRINGIZE(name), \
           BOOST_PP_STRINGIZE(expr) \
           ROCKET_COMMA_AND_VA_ARGS(__VA_ARGS__)); \
@@ -191,7 +191,7 @@ template<typename... T>
 #define ROCKET_EXPECT(expr, ...) \
     if (not (expr)) { \
       ::rocket::assert::internal::onExpectFailed( \
-          ROCKET_EXCEPT_SL, \
+          ROCKET_EXCEPTION_SL, \
           BOOST_PP_STRINGIZE(expr) \
           ROCKET_COMMA_AND_VA_ARGS(__VA_ARGS__)); \
     }

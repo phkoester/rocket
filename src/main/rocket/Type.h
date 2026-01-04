@@ -106,7 +106,7 @@ hash_value(const Type& v) {
 
 // Namespace `fmt` ------------------------------------------------------------------------------------------
 
-/// @spec_fmt_formatter{#rocket::Type)
+/// @spec_fmt_formatter{#rocket::Type}
 template<typename C>
 struct fmt::formatter<rocket::Type, C> {
   template<typename FormatContext>

@@ -21,6 +21,9 @@ std::string utf32To8(std::u32string_view s);
 template<typename C> requires Character<C>
 struct ConvertTo;
 
+/**
+ * Specialization for `char`.
+ */
 template<>
 struct ConvertTo<char> {
   inline std::string_view apply(std::string_view s) const { return s; }
@@ -28,7 +31,10 @@ struct ConvertTo<char> {
   inline std::string apply(std::u32string_view s) const { return utf32To8(s); }
 };
 
-template<>
+/**
+ * Specialization for `char32_t`.
+ */
+ template<>
 struct ConvertTo<char32_t> {
   inline std::u32string_view apply(std::u32string_view s) const { return s; }
 

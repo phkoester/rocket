@@ -6,8 +6,6 @@
 
 #pragma once
 
-#define ROCKET_EXCEPT_H
-
 #include "rocket/Exception.h"
 #include "rocket/str/Range.h"
 
@@ -33,8 +31,8 @@ struct InputFailure : InvalidState {
   InputFailure(
       size_t position,
       std::string_view msg,
-      std::optional<std::source_location>&& sl = ROCKET_EXCEPT_SL,
-      std::optional<std::stacktrace>&& st = ROCKET_EXCEPT_ST) :
+      std::optional<std::source_location>&& sl = ROCKET_EXCEPTION_SL,
+      std::optional<std::stacktrace>&& st = ROCKET_EXCEPTION_ST) :
       InputFailure(position, {}, msg, std::move(sl), std::move(st)) {}
 
   /**
@@ -50,8 +48,8 @@ struct InputFailure : InvalidState {
       size_t position,
       str::Range range,
       std::string_view msg,
-      std::optional<std::source_location>&& sl = ROCKET_EXCEPT_SL,
-      std::optional<std::stacktrace>&& st = ROCKET_EXCEPT_ST) :
+      std::optional<std::source_location>&& sl = ROCKET_EXCEPTION_SL,
+      std::optional<std::stacktrace>&& st = ROCKET_EXCEPTION_ST) :
       InputFailure(position, { range }, msg, std::move(sl), std::move(st)) {}
 
   /**
@@ -67,8 +65,8 @@ struct InputFailure : InvalidState {
       size_t position,
       std::initializer_list<str::Range> ranges,
       std::string_view msg,
-      std::optional<std::source_location>&& sl = ROCKET_EXCEPT_SL,
-      std::optional<std::stacktrace>&& st = ROCKET_EXCEPT_ST) :
+      std::optional<std::source_location>&& sl = ROCKET_EXCEPTION_SL,
+      std::optional<std::stacktrace>&& st = ROCKET_EXCEPTION_ST) :
       Base(msg, std::move(sl), std::move(st)),
       position_(position),
       ranges_(ranges) {}

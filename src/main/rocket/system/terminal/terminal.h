@@ -132,7 +132,7 @@ private:
  * Returns the terminal's current cursor position, if available. The pair' s `first` is the column starting
  * with 1, `second` is the line starting with 1.
  *
- * @param sink the sink. If this is `stdout` or `stderr` connected to a terminal, then a proper position is
+ * @param out the sink. If this is `stdout` or `stderr` connected to a terminal, then a proper position is
  *     returned
  * @return the cursor position, or null if not available
  */
@@ -142,7 +142,7 @@ std::optional<std::pair<size_t, size_t>> position(nio::Sink& out);
  * Returns the terminal's current size, if available. The pair' s `first` is the width in columns, `second`
  * is the height in lines.
  *
- * @param sink the sink. If this is `stdout` or `stderr` connected to a terminal, then a proper size is
+ * @param out the sink. If this is `stdout` or `stderr` connected to a terminal, then a proper size is
  *     returned
  * @return the terminal size, or null if not available
  */

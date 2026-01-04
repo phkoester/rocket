@@ -170,7 +170,13 @@ ROCKET_TESTING_PRIVATE:
  * A file sink, backed by a `FILE` pointer.
  */
 struct FileSink : Sink {
+  /**
+   * Parameters for the #FileSink constructor.
+   */
   struct Params {
+    /**
+     * Whether to append to the file instead of overwriting it.
+     */
     bool append = false;
     /**
      * Whether to close the file on destruction.
@@ -204,6 +210,9 @@ ROCKET_TESTING_PRIVATE:
 
 // `NullSink` -----------------------------------------------------------------------------------------------
 
+/**
+ * A null sink that never writes anything.
+ */
 struct NullSink : Sink {
   virtual ~NullSink() override;
 
@@ -218,6 +227,9 @@ struct NullSink : Sink {
 
 // `SpanSink` -----------------------------------------------------------------------------------------------
 
+/**
+ * A sink that writes to a span, i.e. into preallocated memory.
+ */
 struct SpanSink : Sink {
   explicit SpanSink(std::span<char> out) : out_(out) {}
 
@@ -265,6 +277,12 @@ private:
 
 // `StringSink` ---------------------------------------------------------------------------------------------
 
+/**
+ * A sink that appends to a string.
+ *
+ * If the sink is constructed without a string reference, it holds its own managed string that can be
+ * accessed via #StringSink::str.
+ */
 struct StringSink : Sink {
   /**
    * Makes a new `StringSink` with a managed string.
@@ -303,7 +321,7 @@ private:
 // `SeekMode` -----------------------------------------------------------------------------------------------
 
 /**
- * The seek mode for #Source::seek.
+ * The seek mode for #rocket::nio::Source#seek.
  */
 enum class SeekMode {
   beg, ///< Seek relative to the beginning of the source
@@ -392,7 +410,10 @@ ROCKET_TESTING_PRIVATE:
  * A file source, backed by a `FILE` pointer.
  */
 struct FileSource : Source {
-  struct Params {
+  /**
+   * Parameters for the #FileSource constructor.
+   */
+   struct Params {
     /**
      * Whether to close the file on destruction.
      *
@@ -427,7 +448,10 @@ ROCKET_TESTING_PRIVATE:
 
 // `NullSource` ---------------------------------------------------------------------------------------------
 
-struct NullSource : Source {
+/**
+ * A null source that never reads anything.
+ */
+ struct NullSource : Source {
   virtual ~NullSource() override;
 
   virtual int close() override;
@@ -471,6 +495,9 @@ private:
 
 // `StringSource` -------------------------------------------------------------------------------------------
 
+/**
+ * A sourcde that reads from a string.
+ */
 struct StringSource : Source {
   StringSource() {}
 

@@ -91,15 +91,22 @@ endsWith(std::basic_string_view<C> s, std::basic_string_view<C> sub) {
  */
 void lowerIn(std::u32string& s);
 
-// XXX
-std::vector<std::vector<std::string>> paragraphs(std::string_view s);
-
 /**
  * Converts a UTF-32 string to lower case, handling Unicode characters correctly.
  *
  * @param s the string to convert
  */
 void lowerIn(std::u32string& s);
+
+/**
+ * Splits a string into paragraphs.
+ *
+ * @param s the string to split. The string must be UTF-8-encoded, using LF (`"\n"`) or CRLF (`"\r\n"`) as
+ *     line breaks. Non-breaking spaces (U+00A0) are recognized. Tabs are replaced by spaces. Consecutive
+ *     whitespace is collapsed.
+ * @return a vector of paragraphs. Each paragraph is a vector of words. Each word is a UTF-8 string.
+ */
+std::vector<std::vector<std::string>> paragraphs(std::string_view s);
 
 /**
  * Makes a string view such that it has up to @p max leading occurrencies of @p sub removed.
@@ -243,10 +250,10 @@ void upperIn(std::u32string& s);
  * - Consecutive whitespace is collapsed.
  *
  * @param s the string to wrap
- * @param params parameters configuring the operation
- * @return a new string
+ * @param leftIndent the left indentation
+ * @param width the width to wrap to
+ * @return a new string, containing the wrapped lines separated by `'\n'`.
  */
-// XXX Mit <C>
 std::string wrap(std::string_view s, size_t leftIndent = 0, size_t width = 80);
 
 } // namespace rocket::str

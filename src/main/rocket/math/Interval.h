@@ -462,6 +462,11 @@ struct fmt::formatter<rocket::math::IntervalImpl<T, Left, Right>, C> {
     return underlying_.parse(ctx);
   }
 
+  constexpr void
+  set_debug_format(bool v = true) {
+    detail::maybe_set_debug_format(underlying_, v);
+  }
+
 private:
 
   fmt::formatter<std::remove_cvref_t<T>, C> underlying_;
