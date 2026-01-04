@@ -8,6 +8,7 @@
 
 #include "rocket/Lazy.h"
 #include "rocket/format/format.h"
+#include "rocket/unicode/ConvertTo.h"
 
 #include <iosfwd>
 #include <string>
@@ -111,7 +112,7 @@ struct fmt::formatter<rocket::Type, C> {
   template<typename FormatContext>
   constexpr FormatContext::iterator
   format(const rocket::Type& v, FormatContext& ctx) const {
-    return underlying_.format(v.name(), ctx);
+    return underlying_.format(rocket::unicode::ConvertTo<C>().apply(v.name()), ctx);
   }
 
   constexpr const C*
@@ -121,7 +122,7 @@ struct fmt::formatter<rocket::Type, C> {
 
 private:
 
-  rocket::format::NativeFormatter<string_view, C> underlying_;
+  fmt::formatter<basic_string_view<C>, C> underlying_;
 };
 
 namespace rocket {

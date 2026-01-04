@@ -5,6 +5,7 @@
 #include "rocket-gtest/rocket-gtest.h"
 
 #include "rocket/Exception.h"
+#include "rocket/nio/nio.h"
 
 #include "rocket-gtest/matcher/matcher.h"
 

@@ -8,8 +8,9 @@
 
 #define ROCKET_EXCEPT_H
 
-#include "rocket/nio/nio.h"
+#include "rocket/nio/nio-fwd.h"
 
+#include <optional>
 #include <source_location>
 #include <stacktrace>
 #include <stdexcept>

@@ -12,6 +12,7 @@
 #include "rocket/UnorderedBimap.h"
 #include "rocket/Type.h"
 #include "rocket/str/message/message.h"
+#include "rocket/unicode/ConvertTo.h"
 
 #include <boost/preprocessor/stringize.hpp>
 #include <boost/preprocessor/seq/for_each.hpp>
@@ -51,9 +52,9 @@
     FormatContext::iterator \
     fmt::formatter<ns::type, C>::format(ns::type v, FormatContext& ctx) const { \
       if (auto it = ns::name##Map__.left.find(v); it != ns::name##Map__.left.end()) { \
-        return underlying_.format(it->second, ctx); \
+        return underlying_.format(::rocket::unicode::ConvertTo<C>().apply(it->second), ctx); \
       } else { \
-        return detail::write<char>(ctx.out(), "<invalid>"); \
+        return detail::write<C>(ctx.out(), INVALID); \
       } \
     }
 

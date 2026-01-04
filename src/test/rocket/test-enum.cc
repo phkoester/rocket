@@ -59,7 +59,6 @@ TEST(enum, MyEnumOpOutput) {
 }
 
 TEST(enum, MyEnumFormat) {
-  EXPECT_EQ(fmt::format("{}", fröb), "fröb");
   EXPECT_EQ(fmt::format("{}", fröber), "fröber");
   EXPECT_EQ(fmt::format("{}", fröberer), "fröberer");
   EXPECT_EQ(fmt::format("{}", pörk), "pörk");
@@ -67,6 +66,9 @@ TEST(enum, MyEnumFormat) {
   EXPECT_EQ(fmt::format("{}", pörkerer), "pörkerer");
   EXPECT_EQ(fmt::format("{}", static_cast<MyEnum>(10)), "<invalid>");
   EXPECT_EQ(fmt::format("{: >10}", fröber), "    fröber"); // Tests UTF-8 alignment; 4 spaces expected
+
+  EXPECT_EQ(fmt::format(U"{}", fröb), U"fröb");
+  EXPECT_EQ(fmt::format(U"{}", static_cast<MyEnum>(10)), U"<invalid>");
 }
 
 TEST(enum, MyEnumToType) {

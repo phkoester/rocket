@@ -1,7 +1,7 @@
 /**
  * @file nio.h
  *
- * New I/O: effiicient sinks and sources.
+ * New I/O: efficient sinks and sources.
  */
 
 #pragma once

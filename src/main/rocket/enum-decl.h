@@ -38,7 +38,10 @@
     \
     private: \
       \
-      ::rocket::format::NativeFormatter<string_view, C> underlying_; \
+      static constexpr basic_string_view<C> INVALID = \
+          detail::string_literal<C, '<', 'i', 'n', 'v', 'a', 'l', 'i', 'd', '>'> {}; \
+      \
+      ::fmt::formatter<basic_string_view<C>, C> underlying_; \
     }
 
 #define ROCKET_ENUM_DECLARE_ROCKET_ENUM__(type) \

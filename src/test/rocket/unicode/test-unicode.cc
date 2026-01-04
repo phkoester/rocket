@@ -191,6 +191,8 @@ TEST(unicode, CodePointFormat) {
   EXPECT_EQ(fmt::format("{}", CodePoint(U'\U0010ffff')), "U+10FFFF");
   EXPECT_EQ(fmt::format("{}", CodePoint(0x110000U)), "U+110000");
   EXPECT_EQ(fmt::format("{}", CodePoint(0x1000000U)), "U+1000000");
+
+  EXPECT_EQ(fmt::format(U"{}", CodePoint(U'\u20ac')), U"U+20AC");
 }
 
 TEST(unicode, CodePointsFormat) {
@@ -262,6 +264,8 @@ TEST(unicode, GraphemeFormat) {
   // U+01F9D1 (Adult), U+200D (ZWJ), U+01F33E (Ear of rice)
   EXPECT_EQ(fmt::format("{}", Grapheme("🧑‍🌾")), "🧑‍🌾");
   EXPECT_EQ(fmt::format("{:?}", Grapheme("a")), "\"a\"");
+
+  EXPECT_EQ(fmt::format(U"{}", Grapheme("🧑‍🌾")), U"🧑‍🌾");
 }
 
 TEST(unicode, conversions) {

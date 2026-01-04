@@ -41,6 +41,7 @@ TEST(Type, format) {
   EXPECT_EQ(fmt::format("{}", Type::of<int>()), "int");
   EXPECT_EQ(fmt::format("{}", Type::of<Type>()), "rocket::Type");
   EXPECT_EQ(fmt::format("{:?}", Type::of<Type>()), "\"rocket::Type\"");
+  EXPECT_EQ(fmt::format(U"{:?}", Type::of<Type>()), U"\"rocket::Type\"");
 }
 
 /**

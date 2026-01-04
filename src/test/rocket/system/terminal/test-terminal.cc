@@ -4,6 +4,7 @@
 
 #include "rocket-gtest/rocket-gtest.h"
 
+#include "rocket/nio/nio.h"
 #include "rocket/system/terminal/terminal.h"
 
 using namespace rocket;

@@ -18,17 +18,15 @@
 
 #include <optional>
 
-namespace fmt {
-
-// `std::optional` ------------------------------------------------------------------------------------------
+// `fmt::formatter<std::optional>` --------------------------------------------------------------------------
 
 template<typename T, typename C>
-struct formatter<std::optional<T>, C, std::enable_if_t<is_formattable<T, C>::value>> {
+struct fmt::formatter<std::optional<T>, C, std::enable_if_t<fmt::is_formattable<T, C>::value>> {
   template <typename FormatContext>
   constexpr FormatContext::iterator
   format(const std::optional<T>& v, FormatContext& ctx) const {
     if (not v) {
-      return detail::write<C>(ctx.out(), "<none>");
+      return detail::write<C>(ctx.out(), NONE);
     }
     return underlying_.format(*v, ctx);
   }
@@ -38,37 +36,47 @@ struct formatter<std::optional<T>, C, std::enable_if_t<is_formattable<T, C>::val
     return underlying_.parse(ctx);
   }
 
+  constexpr void
+  set_debug_format(bool v = true) {
+    detail::maybe_set_debug_format(underlying_, v);
+  }
+
 private:
 
-  formatter<T, C> underlying_;
+  static constexpr basic_string_view<C> NONE =
+      detail::string_literal<C, '<', 'n', 'o', 'n', 'e', '>'> {};
+
+  formatter<std::remove_cvref_t<T>, C> underlying_;
 };
 
-// `std::variant` ------------------------------------------------------------------------------------------
-
-template<typename T>
-struct is_variant_like {
-  static constexpr bool value = detail::is_variant_like_<T>::value;
-};
+// `fmt::formatter<std::monostate>` -------------------------------------------------------------------------
 
 template<typename C>
-struct formatter<std::monostate, C> {
+struct fmt::formatter<std::monostate, C> {
   template<typename FormatContext>
   constexpr FormatContext::iterator
   format(const std::monostate&, FormatContext& ctx) const {
-    return detail::write<C>(ctx.out(), "<monostate>");
+    return detail::write<C>(ctx.out(), MONOSTATE);
   }
 
   constexpr const C*
   parse(parse_context<C>& ctx) {
     return ctx.begin();
   }
+
+private:
+
+  static constexpr basic_string_view<C> MONOSTATE =
+      detail::string_literal<C, '<', 'm', 'o', 'n', 'o', 's', 't', 'a', 't', 'e', '>'> {};
 };
 
-template <typename Variant, typename C>
-struct formatter<Variant, C, std::enable_if_t<
+// `fmt::formatter<Variant>` --------------------------------------------------------------------------------
+
+template<typename Variant, typename C>
+struct fmt::formatter<Variant, C, std::enable_if_t<
     std::conjunction_v<
-        is_variant_like<Variant>,
-        detail::is_variant_formattable<Variant, C>>>> {
+        fmt::is_variant_like<Variant>,
+        fmt::detail::is_variant_formattable<Variant, C>>>> {
   template <typename FormatContext>
   constexpr FormatContext::iterator
   format(const Variant& value, FormatContext& ctx) const {
@@ -76,22 +84,48 @@ struct formatter<Variant, C, std::enable_if_t<
     try {
       std::visit([&](const auto& v) {
         // We need the index to be able to parse the variant back
-        out = format_to(out, "{}:", value.index());
-        out = detail::write_escaped_alternative<C>(out, v, ctx);
+        if constexpr (std::is_same_v<C, char>) {
+          out = format_to(out, "{}:", value.index());
+        } else {
+          out = format_to(out, U"{}:", value.index());
+        }
+
+        if (debug_) {
+          out = detail::write_escaped_alternative<C>(out, v, ctx);
+        } else {
+          ctx.advance_to(out);
+          formatter<std::remove_cvref_t<decltype(v)>, C> underlying;
+          out = underlying.format(v, ctx);
+        }
       }, value);
+      return out;
     }
     catch (const std::bad_variant_access&) {
-      out = detail::write<C>(out, "<invalid>");
+      return detail::write<C>(out, INVALID);
     }
-    return out;
   }
 
   constexpr const C*
   parse(parse_context<C>& ctx) {
-    return ctx.begin();
+    auto it = ctx.begin(), end = ctx.end();
+    if (it != end && *it == '?') {
+      debug_ = true;
+      ++it;
+    }
+    return it;
   }
-};
 
-} // namespace fmt
+  constexpr void
+  set_debug_format(bool v = true) {
+    debug_ = v;
+  }
+
+private:
+
+  static constexpr basic_string_view<C> INVALID =
+      detail::string_literal<C, '<', 'i', 'n', 'v', 'a', 'l', 'i', 'd', '>'> {};
+
+  bool debug_ = false;
+};
 
 // EOF

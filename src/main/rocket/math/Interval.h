@@ -80,21 +80,24 @@ template<typename T> using LeftOpen = BoundTraits<T, std::optional<T>, true, '('
 template<typename T> using RightClosed = BoundTraits<T, T, false, ']'>;
 template<typename T> using RightOpen = BoundTraits<T, std::optional<T>, false, ')'>;
 
-template<typename Left, typename Right>
-constexpr std::pair<typename Left::BoundType, typename Right::BoundType>
-intersectionImpl(
-    typename Left::BoundType lhsLower, typename Right::BoundType lhsUpper,
-    typename Left::BoundType rhsLower, typename Right::BoundType rhsUpper) {
-  return { Left::max(lhsLower, rhsLower), Right::min(lhsUpper, rhsUpper) };
-}
+// `IntervalSymbols` ........................................................................................
 
-template<typename Left, typename Right>
-constexpr std::pair<typename Left::BoundType, typename Right::BoundType>
-unionImpl(
-    typename Left::BoundType lhsLower, typename Right::BoundType lhsUpper,
-    typename Left::BoundType rhsLower, typename Right::BoundType rhsUpper) {
-  return { Left::min(lhsLower, rhsLower), Right::max(lhsUpper, rhsUpper) };
-}
+template<typename C> requires Character<C>
+struct IntervalSymbols;
+
+template<>
+struct IntervalSymbols<char> {
+  static constexpr auto Empty = "∅";
+  static constexpr auto NegativeInfinity = "-∞";
+  static constexpr auto PositiveInfinity = "+∞";
+};
+
+template<>
+struct IntervalSymbols<char32_t> {
+  static constexpr auto Empty = U"∅";
+  static constexpr auto NegativeInfinity = U"-∞";
+  static constexpr auto PositiveInfinity = U"+∞";
+};
 
 // `IntervalTraits` .........................................................................................
 
@@ -211,6 +214,24 @@ struct IntervalTraits<T, LeftClosed<T>, RightOpen<T>> {
     return *upper - lower;
   }
 };
+
+// Functions ................................................................................................
+
+template<typename Left, typename Right>
+constexpr std::pair<typename Left::BoundType, typename Right::BoundType>
+intersectionImpl(
+    typename Left::BoundType lhsLower, typename Right::BoundType lhsUpper,
+    typename Left::BoundType rhsLower, typename Right::BoundType rhsUpper) {
+  return { Left::max(lhsLower, rhsLower), Right::min(lhsUpper, rhsUpper) };
+}
+
+template<typename Left, typename Right>
+constexpr std::pair<typename Left::BoundType, typename Right::BoundType>
+unionImpl(
+    typename Left::BoundType lhsLower, typename Right::BoundType lhsUpper,
+    typename Left::BoundType rhsLower, typename Right::BoundType rhsUpper) {
+  return { Left::min(lhsLower, rhsLower), Right::max(lhsUpper, rhsUpper) };
+}
 
 } // namespace internal
 
@@ -403,27 +424,34 @@ struct fmt::formatter<rocket::math::IntervalImpl<T, Left, Right>, C> {
   template<typename FormatContext>
   constexpr FormatContext::iterator
   format(const rocket::math::IntervalImpl<T, Left, Right>& v, FormatContext& ctx) const {
+    using namespace rocket::math::internal;
+
     auto out = ctx.out();
     if (v.empty()) {
-      // Use a neat mathematical symbol
-      out = detail::write<C>(out, "∅");
+      // Empty: Use a neat mathematical symbol
+
+      out = detail::write<C>(out, IntervalSymbols<C>::Empty);
     } else {
-      out = detail::write<C>(out, Left::Symbol);
+      // Nonempty
+
+      out = detail::write<C>(out, static_cast<C>(Left::Symbol));
       auto opt = rocket::option(v.lower);
       if (not opt) {
-        out = detail::write<C>(out, "-∞");
+        out = detail::write<C>(out, IntervalSymbols<C>::NegativeInfinity);
       } else {
+        ctx.advance_to(out);
         out = underlying_.format(*opt, ctx);
       }
-      out = detail::write<C>(out, ",");
+      out = detail::write<C>(out, static_cast<C>(','));
       opt = rocket::option(v.upper);
       if (not opt) {
         // In interval notation, we prefer `+∞` over `∞`
-        out = detail::write<C>(out, "+∞");
+        out = detail::write<C>(out, IntervalSymbols<C>::PositiveInfinity);
       } else {
+        ctx.advance_to(out);
         out = underlying_.format(*opt, ctx);
       }
-      out = detail::write<C>(out, Right::Symbol);
+      out = detail::write<C>(out, static_cast<C>(Right::Symbol));
     }
     return out;
   }
@@ -435,7 +463,7 @@ struct fmt::formatter<rocket::math::IntervalImpl<T, Left, Right>, C> {
 
 private:
 
-  fmt::formatter<T, C> underlying_;
+  fmt::formatter<std::remove_cvref_t<T>, C> underlying_;
 };
 
 namespace rocket::math {

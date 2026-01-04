@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include "rocket/nio/nio.h"
+#include "rocket/nio/nio-fwd.h"
 
 #include <optional>
 #include <string>

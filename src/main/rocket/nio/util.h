@@ -7,7 +7,7 @@
 #pragma once
 
 #include "rocket/assert.h"
-#include "rocket/nio/nio.h"
+#include "rocket/nio/nio-fwd.h"
 #include "rocket/unicode/unicode.h"
 
 namespace rocket::nio {

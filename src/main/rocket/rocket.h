@@ -37,9 +37,8 @@
 
 // No Rocket includes allowed here!
 
-#include <cmath>
-#include <cstdint>
-#include <cstring>
+#include <cmath> // `std::isnan`
+#include <cstdint> // `uint8_t`, ...
 #include <iosfwd>
 #include <optional>
 #include <type_traits>

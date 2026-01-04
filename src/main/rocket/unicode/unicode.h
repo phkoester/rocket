@@ -9,7 +9,7 @@
 #include "rocket/UnorderedBimap.h"
 #include "rocket/rocket.h"
 #include "rocket/format/format.h"
-#include "rocket/nio/nio.h"
+#include "rocket/nio/nio-fwd.h"
 
 #include <cstdint>
 #include <limits>
@@ -152,8 +152,11 @@ struct fmt::formatter<rocket::unicode::CodePoint, C> {
   template<typename FormatContext>
   constexpr FormatContext::iterator
   format(const rocket::unicode::CodePoint& v, FormatContext& ctx) const {
-    std::string s = fmt::format("U+{:0>4X}", static_cast<uint32_t>(v));
-    return underlying_.format(s, ctx);
+    if constexpr (std::is_same_v<C, char>) {
+      return underlying_.format(fmt::format("U+{:0>4X}", static_cast<uint32_t>(v)), ctx);
+    } else {
+      return underlying_.format(fmt::format(U"U+{:0>4X}", static_cast<uint32_t>(v)), ctx);
+    }
   }
 
   constexpr const C*
@@ -163,7 +166,7 @@ struct fmt::formatter<rocket::unicode::CodePoint, C> {
 
 private:
 
-  rocket::format::NativeFormatter<string_view, C> underlying_;
+  fmt::formatter<basic_string_view<C>, C> underlying_;
 };
 
 // `std::hash<CodePoint>` -----------------------------------------------------------------------------------
@@ -360,7 +363,7 @@ struct fmt::formatter<rocket::unicode::Grapheme, C> {
   template<typename FormatContext>
   constexpr FormatContext::iterator
   format(const rocket::unicode::Grapheme& v, FormatContext& ctx) const {
-    return underlying_.format(static_cast<std::string>(v), ctx);
+    return underlying_.format(static_cast<std::basic_string<C>>(v), ctx);
   }
 
   constexpr const C*
@@ -370,7 +373,7 @@ struct fmt::formatter<rocket::unicode::Grapheme, C> {
 
 private:
 
-  rocket::format::NativeFormatter<string_view, C> underlying_;
+  fmt::formatter<basic_string_view<C>, C> underlying_;
 };
 
 namespace rocket::unicode {

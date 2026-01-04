@@ -37,13 +37,13 @@ onAssertFailed(
   process.error(
       nio::stderr,
       EXIT_SUCCESS,
-      "{}:{}: Assertion `{}` failed{}", sl.file_name(), sl.line(), expr, format::Format([&] {
+      "{}:{}: Assertion `{}` failed{}", sl.file_name(), sl.line(), expr, format::Format<char>([&] {
     if (fmt.get().size() > 0) {
-      auto params = format::Format::params(": \\@0");
+      auto params = format::Format<char>::params(": \\@0");
       params.tag("\\@0", fmt, std::forward<T>(args)...);
       return params;
     } else {
-      return format::Format::params();
+      return format::Format<char>::params();
     }
   }));
   std::terminate();
@@ -57,13 +57,13 @@ onCheckFailed(
     const char* expr,
     fmt::format_string<T...> fmt = "",
     T&&... args) {
-  throw InvalidArgument(name, fmt::format("Check `{}` failed{}", expr, format::Format([&] {
+  throw InvalidArgument(name, fmt::format("Check `{}` failed{}", expr, format::Format<char>([&] {
     if (fmt.get().size() > 0) {
-      auto params = format::Format::params(": \\@0");
+      auto params = format::Format<char>::params(": \\@0");
       params.tag("\\@0", fmt, std::forward<T>(args)...);
       return params;
     } else {
-      return format::Format::params();
+      return format::Format<char>::params();
     }
   })), sl);
 }
@@ -74,13 +74,13 @@ template<typename... T>
     const char* expr,
     fmt::format_string<T...> fmt = "",
     T&&... args) {
-  throw InvalidState(fmt::format("Expectation `{}` failed{}", expr, format::Format([&] {
+  throw InvalidState(fmt::format("Expectation `{}` failed{}", expr, format::Format<char>([&] {
     if (fmt.get().size() > 0) {
-      auto params = format::Format::params(": \\@0");
+      auto params = format::Format<char>::params(": \\@0");
       params.tag("\\@0", fmt, std::forward<T>(args)...);
       return params;
     } else {
-      return format::Format::params();
+      return format::Format<char>::params();
     }
   })), sl);
 }
