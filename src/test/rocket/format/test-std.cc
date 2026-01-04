@@ -36,10 +36,10 @@ TEST(std, exceptionFormat) {
     u32string s32 = fmt::format(U"{}", ex1);
     EXPECT_NE(s32.find(U"oops1"), u32string::npos);
 
-    auto msg = regex_replace(fmt::format("{:?}", ex1), std::regex("\\n"), "|");
+    auto msg = regex_replace(fmt::format("{:?}", ex1), regex("\\n"), "|");
     EXPECT_THAT(msg, matchesRegex(".*\\.cc:\\d+: oops1\\|   0# .*.*# "));
 
-    msg = regex_replace(fmt::format("{:?t}", ex1), std::regex("\\n"), "|");
+    msg = regex_replace(fmt::format("{:?t}", ex1), regex("\\n"), "|");
     EXPECT_THAT(msg, matchesRegex("`rocket::InvalidState`: .*\\.cc:\\d+: oops1\\|   0# .*.*# "));
 
     try {
