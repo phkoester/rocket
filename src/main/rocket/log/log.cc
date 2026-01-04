@@ -120,7 +120,7 @@ void
 applyLogOut(optional<string_view> v) {
   ROCKET_EXPECT(v);
 
-  ROCKET_LOCK(outMutex);
+  ROCKET_MUTEX_LOCK(outMutex);
 
   if (v == "stdout") {
     out.set(nio::stdout);
@@ -184,7 +184,7 @@ logImpl(nio::Sink& out, LogLevel* logId, LogLevel level, size_t stackLevel, stri
 
   // Item: log ID
   {
-    ROCKET_LOCK(definedIdsMutex);
+    ROCKET_MUTEX_LOCK(definedIdsMutex);
     auto it = definedIds.left.find(logId);
     ROCKET_ASSERT(it != definedIds.left.end());
     out.print("{} ", it->second);
@@ -212,7 +212,7 @@ void
 setLogLevel(string_view id, string_view value) {
   bool all = id == "all";
 
-  ROCKET_LOCK(definedIdsMutex);
+  ROCKET_MUTEX_LOCK(definedIdsMutex);
 
   auto it = definedIds.right.end();
   if (not all) {
@@ -256,7 +256,7 @@ void
 init() {
   // We need this in case of quick exit
   process.atExit([] {
-    ROCKET_LOCK(outMutex);
+    ROCKET_MUTEX_LOCK(outMutex);
     out.get().flush();
   });
 }
@@ -264,7 +264,7 @@ init() {
 LogLevel
 logDefine(LogLevel* logId, string_view id) {
   ROCKET_CHECK(id, id != "all", "Invalid log ID: \"all\"; this ID is reserved");
-  ROCKET_LOCK(definedIdsMutex);
+  ROCKET_MUTEX_LOCK(definedIdsMutex);
   definedIds.left.insert({ logId, id });
   return LogLevel::none;
 }
@@ -285,7 +285,7 @@ logEnd() noexcept {
     // Print end log entry only if begin log entry was flushed
     const Entry& entry = stack.back();
     if (not entry.begin_) {
-      ROCKET_LOCK(outMutex);
+      ROCKET_MUTEX_LOCK(outMutex);
       string msg = "} " + string(entry.func_);
       nio::StringSink buf;
       logImpl(out.get(), entry.logId_, LogLevel::none, stack.size() - 1, msg);
@@ -301,7 +301,7 @@ logEnd() noexcept {
 
 void
 log(LogLevel level, string_view msg) {
-  ROCKET_LOCK(outMutex);
+  ROCKET_MUTEX_LOCK(outMutex);
 
   auto& out = ::out.get();
   logFlush(out);

@@ -78,9 +78,9 @@ struct ThreadSafeLazy {
    *
    * @return a value of type @p T
    */
-  inline const T&
+  const T&
   get() const {
-    ROCKET_LOCK(mutex_);
+    ROCKET_MUTEX_LOCK(mutex_);
     if (not v_)
       v_ = f_();
     return *v_;
@@ -89,9 +89,9 @@ struct ThreadSafeLazy {
   /**
    * Removes the evaluated value, if any, so that the next call of #get results in a fresh evaluation.
    */
-  inline void
+  void
   reset() {
-    ROCKET_LOCK(mutex_);
+    ROCKET_MUTEX_LOCK(mutex_);
     v_ = std::nullopt;
   }
 

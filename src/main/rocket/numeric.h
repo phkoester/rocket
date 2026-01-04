@@ -73,7 +73,7 @@ sub(Lhs lhs, Rhs rhs) {
 }
 
 /**
- * Tries to add two values and return the result, returning `nullopt` if the result is out of range.
+ * Tries to add two values and return the result, returning null if the result is out of range.
  *
  * @tparam Result the result type
  * @tparam Control the control type
@@ -81,7 +81,7 @@ sub(Lhs lhs, Rhs rhs) {
  * @tparam Rhs the right-hand side type
  * @param lhs the left-hand side value
  * @param rhs the right-hand side value
- * @return the result, or `nullopt` if the result is out of range
+ * @return the result, or null if the result is out of range
  */
 template<typename Result, typename Control, typename Lhs, typename Rhs>
 constexpr std::optional<Result>
@@ -100,7 +100,7 @@ tryAdd(Lhs lhs, Rhs rhs) {
 }
 
 /**
- * Tries to subtract two values and return the result, returning `nullopt` if the result is out of range.
+ * Tries to subtract two values and return the result, returning null if the result is out of range.
  *
  * @tparam Result the result type
  * @tparam Control the control type
@@ -108,7 +108,7 @@ tryAdd(Lhs lhs, Rhs rhs) {
  * @tparam Rhs the right-hand side type
  * @param lhs the left-hand side value
  * @param rhs the right-hand side value
- * @return the result, or `nullopt` if the result is out of range
+ * @return the result, or null if the result is out of range
  */
 template<typename Result, typename Control, typename Lhs, typename Rhs>
 constexpr std::optional<Result>

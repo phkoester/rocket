@@ -29,8 +29,8 @@ namespace fmt {
 /**
  * @spec_fmt_formatter{`Exception`}
  *
- * If the `?` format specifier is used, then the stack trace is also included. If the `t` format specifier is
- * used, then the type of the exception is also included.
+ * - If the `?` format specifier is used, then the stack trace is included.
+ * - If the `t` format specifier is used, then the type of the exception is included.
  */
 template <typename Exception, typename C>
 struct formatter<Exception, C,
@@ -175,7 +175,7 @@ private:
 /**
  * @spec_fmt_formatter{`Variant`}
  *
- * If the `?` format specifier is used, then the variant's value is formatted in debug mode.
+ * - If the `?` format specifier is used, then the variant's value is formatted in debug mode.
  */
 template<typename Variant, typename C>
 struct formatter<Variant, C, std::enable_if_t<

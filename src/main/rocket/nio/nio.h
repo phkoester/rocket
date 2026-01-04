@@ -38,7 +38,7 @@ struct Io {
   using Position = unsigned long;
 
   /// @dtor
-  virtual ~Io() = default;
+  virtual ~Io() {}
 
   /**
    * Closes the object.
@@ -482,7 +482,7 @@ enum class SeekMode {
  * Source base class.
  */
 struct Source : Io {
-  virtual ~Source() override = default;
+  virtual ~Source() override {}
 
   /**
    * Reads all characters from a source into string.

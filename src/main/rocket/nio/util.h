@@ -56,19 +56,19 @@ unicode::Grapheme getGrapheme(Source& in);
 uint32_t getHex(Source& in, size_t n);
 
 /**
- * Reads an optional character from the source @p in, returning `nullopt` if the source is at EOF.
+ * Reads an optional character from the source @p in, returning null if the source is at EOF.
  *
  * @param in the source
- * @return the read character, or `nullopt` if the source is at EOF
+ * @return the read character, or null if the source is at EOF
  * @throws #rocket::InputFailure if the source has an error
  */
 std::optional<char> getOptionalChar(Source& in);
 
 /**
- * Reads an optional grapheme from the source @p in, returning `nullopt` if the source is at EOF.
+ * Reads an optional grapheme from the source @p in, returning null if the source is at EOF.
  *
  * @param in the source
- * @return the read grapheme, or `nullopt` if the source is at EOF
+ * @return the read grapheme, or null if the source is at EOF
  * @throws #rocket::InputFailure if the source has an error
  */
  std::optional<unicode::Grapheme> getOptionalGrapheme(Source& in);

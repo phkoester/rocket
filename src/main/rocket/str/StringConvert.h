@@ -279,7 +279,7 @@ toType(std::string_view s) {
  *
  * @tparam T the type to convert to
  * @param s the string to convert
- * @return a value of type @p T, or `nullopt` if @p s cannot be parsed
+ * @return a value of type @p T, or null if @p s cannot be parsed
  */
 template<typename T>
 std::optional<T>

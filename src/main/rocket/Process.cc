@@ -39,7 +39,7 @@ invocationShortName() {
 
 void
 onExit() {
-  ROCKET_LOCK(onExitFnsMutex);
+  ROCKET_MUTEX_LOCK(onExitFnsMutex);
   for (auto& fn : onExitFns) {
     fn();
   }
@@ -71,7 +71,7 @@ Process process;
 
 void
 Process::atExit(std::function<void()> f) { // cppcheck-suppress constParameterPointer
-  ROCKET_LOCK(onExitFnsMutex);
+  ROCKET_MUTEX_LOCK(onExitFnsMutex);
   onExitFns.push_back(f);
 }
 

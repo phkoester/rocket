@@ -15,7 +15,7 @@ namespace rocket::str {
 // `Range` --------------------------------------------------------------------------------------------------
 
 /**
- * A string range.
+ * A string range, which is a right-open interval @f$[lower,upper)@f$.
  */
 using Range = math::RightOpenInterval<size_t>;
 

@@ -17,7 +17,7 @@
  * How about some math:
  *
  * @f[
- * |I_2|=\left| \int_{0}^T \psi(t) 
+ * |I_2|=\left| \int_{0}^T \psi(t)
  *         \left\{
  *           u(a,t)-
  *           \int_{\gamma(t)}^a
