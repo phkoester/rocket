@@ -108,6 +108,7 @@ PrintTo(const bimap<A, B>& v, std::ostream* os) {
 
 // `fmt::formatter<boost::bimaps::bimap>`--------------------------------------------------------------------
 
+/// @spec_fmt_formatter{`boost::bimaps::bimap`}
 template<typename A, typename B, typename C>
 struct fmt::formatter<boost::bimaps::bimap<A, B>, C> {
   template<typename FormatContext>

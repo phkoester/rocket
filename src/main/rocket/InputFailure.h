@@ -1,5 +1,5 @@
 /**
- * @file InputFailure.
+ * @file InputFailure.h
  *
  * An `InputFailure` exception.
  */

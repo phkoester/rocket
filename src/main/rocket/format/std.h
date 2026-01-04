@@ -22,10 +22,13 @@
 
 #include <optional>
 
+namespace fmt {
+
 // `fmt::formatter<Exception>` ------------------------------------------------------------------------------
 
+/// @spec_fmt_formatter{Exception}
 template <typename Exception, typename C>
-struct fmt::formatter<Exception, C,
+struct formatter<Exception, C,
     std::enable_if_t<std::is_base_of<std::exception, Exception>::value>> {
 
   template<typename FormatContext>
@@ -94,8 +97,9 @@ private:
 
 // `fmt::formatter<std::optional>` --------------------------------------------------------------------------
 
+/// @spec_fmt_formatter{`std::optional`}
 template<typename T, typename C>
-struct fmt::formatter<std::optional<T>, C, std::enable_if_t<fmt::is_formattable<T, C>::value>> {
+struct formatter<std::optional<T>, C, std::enable_if_t<is_formattable<T, C>::value>> {
   template <typename FormatContext>
   constexpr FormatContext::iterator
   format(const std::optional<T>& v, FormatContext& ctx) const {
@@ -125,8 +129,9 @@ private:
 
 // `fmt::formatter<std::monostate>` -------------------------------------------------------------------------
 
+/// @spec_fmt_formatter{`std::monostate`}
 template<typename C>
-struct fmt::formatter<std::monostate, C> {
+struct formatter<std::monostate, C> {
   template<typename FormatContext>
   constexpr FormatContext::iterator
   format(const std::monostate&, FormatContext& ctx) const {
@@ -146,11 +151,12 @@ private:
 
 // `fmt::formatter<Variant>` --------------------------------------------------------------------------------
 
+/// @spec_fmt_formatter{Variant}
 template<typename Variant, typename C>
-struct fmt::formatter<Variant, C, std::enable_if_t<
+struct formatter<Variant, C, std::enable_if_t<
     std::conjunction_v<
-        fmt::is_variant_like<Variant>,
-        fmt::detail::is_variant_formattable<Variant, C>>>> {
+        is_variant_like<Variant>,
+        detail::is_variant_formattable<Variant, C>>>> {
   template <typename FormatContext>
   constexpr FormatContext::iterator
   format(const Variant& value, FormatContext& ctx) const {
@@ -198,5 +204,7 @@ private:
 
   bool debug_ = false;
 };
+
+} // namespace fmt
 
 // EOF
