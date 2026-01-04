@@ -28,6 +28,9 @@ static constexpr size_t MIN_BUFFER_SIZE = 64;
 
 // `Io` -----------------------------------------------------------------------------------------------------
 
+/**
+ * The base class for #Sink and #Source.
+ */
 struct Io {
   using Offset = long;
   using Position = unsigned long;
@@ -63,6 +66,9 @@ protected:
 
 // `Sink` ---------------------------------------------------------------------------------------------------
 
+/**
+ * Sink base class.
+ */
 struct Sink : Io {
   virtual ~Sink() override= default;
 
@@ -124,7 +130,12 @@ protected:
 
 // `BufferedSink` -------------------------------------------------------------------------------------------
 
-struct BufferedSink : Sink {
+/**
+ * A buffered sink that may be attached to another sink.
+ *
+ * @attention Applying an additional buffer only makes sense if the underlying sink isn't already buffered.
+ */
+ struct BufferedSink : Sink {
   explicit BufferedSink(Sink& underlying, size_t size = DEFAULT_BUFFER_SIZE);
 
   virtual ~BufferedSink() override;
@@ -155,6 +166,9 @@ ROCKET_TESTING_PRIVATE:
 
 // `FileSink` -----------------------------------------------------------------------------------------------
 
+/**
+ * A file sink, backed by a `FILE` pointer.
+ */
 struct FileSink : Sink {
   struct Params {
     bool append = false;
@@ -288,10 +302,20 @@ private:
 
 // `SeekMode` -----------------------------------------------------------------------------------------------
 
-enum class SeekMode { beg, cur, end };
+/**
+ * The seek mode for #Source::seek.
+ */
+enum class SeekMode {
+  beg, ///< Seek relative to the beginning of the source
+  cur, ///< Seek relative to the current position of the source
+  end ///< Seek relative to the end of the source
+};
 
 // `Source` -------------------------------------------------------------------------------------------------
 
+/**
+ * Source base class.
+ */
 struct Source : Io {
   virtual ~Source() override = default;
 
@@ -321,6 +345,11 @@ protected:
 
 // `BufferedSource` -----------------------------------------------------------------------------------------
 
+/**
+ * A buffered source that may be attached to another source.
+ *
+ * @attention Applying an additional buffer only makes sense if the underlying source isn't already buffered.
+ */
 struct BufferedSource : Source {
   explicit BufferedSource(Source& underlying, size_t size = DEFAULT_BUFFER_SIZE);
 
@@ -359,6 +388,9 @@ ROCKET_TESTING_PRIVATE:
 
 // `FileSource` ---------------------------------------------------------------------------------------------
 
+/**
+ * A file source, backed by a `FILE` pointer.
+ */
 struct FileSource : Source {
   struct Params {
     /**
@@ -464,8 +496,11 @@ private:
 
 // Variables ------------------------------------------------------------------------------------------------
 
+/// The standard input source.
 extern Source& stdin;
+/// The standard output sink.
 extern Sink& stdout;
+/// The standard error sink.
 extern Sink& stderr;
 
 } // namespace rocket::nio

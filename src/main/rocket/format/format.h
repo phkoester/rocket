@@ -17,8 +17,13 @@
 
 namespace rocket::format {
 
-// `Format` -------------------------------------------------------------------------------------------------
+// `FormatParams` -------------------------------------------------------------------------------------------
 
+/**
+  * Parameters for the #Format class.
+  *
+  * @tparam C the character type
+  */
 template<typename C> requires Character<C>
 struct FormatParams {
   std::basic_string<C> formatted_;
@@ -53,6 +58,14 @@ struct FormatParams {
   }
 };
 
+// `Format` -------------------------------------------------------------------------------------------------
+
+/**
+ * A subformat that may be passed to `fmt::format`.
+ *
+ * @tparam C the character type
+ *
+ */
 template<typename C> requires Character<C>
 struct Format {
 

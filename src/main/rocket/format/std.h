@@ -26,7 +26,7 @@ namespace fmt {
 
 // `fmt::formatter<Exception>` ------------------------------------------------------------------------------
 
-/// @spec_fmt_formatter{Exception}
+/// @spec_fmt_formatter{`Exception`}
 template <typename Exception, typename C>
 struct formatter<Exception, C,
     std::enable_if_t<std::is_base_of<std::exception, Exception>::value>> {
@@ -151,7 +151,7 @@ private:
 
 // `fmt::formatter<Variant>` --------------------------------------------------------------------------------
 
-/// @spec_fmt_formatter{Variant}
+/// @spec_fmt_formatter{`Variant`}
 template<typename Variant, typename C>
 struct formatter<Variant, C, std::enable_if_t<
     std::conjunction_v<
