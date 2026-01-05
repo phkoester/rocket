@@ -4,6 +4,8 @@
 
 #include "iterator.h"
 
+#include "rocket/numeric.h"
+
 #include <unicodelib.h>
 #include <unicodelib_encodings.h>
 
@@ -864,14 +866,9 @@ CodePointIterator<char32_t>::operator->() const {
 
 const CodePoint&
 CodePointIterator<char32_t>::operator[](difference_type index) const {
-  // XXX Numeric einsetzen
-  if (index < 0) {
-    ROCKET_CHECK(index, pos_ + index < pos_, "{}", str::message::overflow(Type::of<size_t>()));
-  } else if (index > 0) {
-    ROCKET_CHECK(index, pos_ + index > pos_, "{}", str::message::overflow(Type::of<size_t>()));
-    ROCKET_CHECK(index, pos_ + index < size_, "{}", str::message::iteratorOutOfBounds(*this, pos_ + index));
-  }
-  return reinterpret_cast<const CodePoint&>(input_[pos_ + index]);
+  auto ourIndex = tryAdd<size_t>(pos_, index);
+  ROCKET_CHECK(index, ourIndex && *ourIndex < size_, "{}", str::message::iteratorOutOfBounds(*this, pos_ + index));
+  return reinterpret_cast<const CodePoint&>(input_[*ourIndex]);
 }
 
 CodePointIterator<char32_t>&
@@ -904,37 +901,34 @@ CodePointIterator<char32_t>::operator--(int) {
 
 CodePointIterator<char32_t>&
 CodePointIterator<char32_t>::operator+=(difference_type rhs) {
-  // XXX Numeric einsetzen
-  if (rhs < 0)
+  if (rhs < 0) {
     return operator-=(-rhs);
-  else if (rhs > 0) {
-    ROCKET_CHECK(n, pos_ + rhs > pos_, "{}", str::message::overflow(Type::of<size_t>()));
-    go(pos_ + rhs);
+  } else if (rhs > 0) {
+    go(add<size_t>(pos_, rhs));
   }
   return *this;
 }
 
 CodePointIterator<char32_t>&
 CodePointIterator<char32_t>::operator-=(difference_type rhs) {
-  // XXX Numeric einsetzen
-  if (rhs < 0)
+  if (rhs < 0) {
     return operator+=(-rhs);
-  else if (rhs > 0) {
-    ROCKET_CHECK(n, pos_ - rhs < pos_, "{}", str::message::overflow(Type::of<size_t>()));
-    go(pos_ - rhs);
+  } else if (rhs > 0) {
+    go(sub<size_t>(pos_, rhs));
   }
   return *this;
 }
 
 bool
 CodePointIterator<char32_t>::decrement(difference_type n) {
-  // XXX Numeric einsetzen
-  if (n < 0)
+  if (n < 0) {
     return increment(-n);
-  else if (n > 0) {
+  } else if (n > 0) {
     size_t newPos = pos_ - n;
-    if (newPos >= pos_) // `size_t` overflow
+    if (newPos >= pos_) {
+      // `size_t` overflow
       return false;
+    }
     pos_ = newPos;
   }
   return true;
@@ -954,13 +948,14 @@ CodePointIterator<char32_t>::graphemeBoundary() const {
 
 bool
 CodePointIterator<char32_t>::increment(difference_type n) {
-  // XXX Numeric einsetzen
-  if (n < 0)
+  if (n < 0) {
     return decrement(-n);
-  else if (n > 0) {
+  } else if (n > 0) {
     size_t newPos = pos_ + n;
-    if (newPos <= pos_ || newPos > size_) //  // `size_t` overflow or out of bounds
+    if (newPos <= pos_ || newPos > size_) {
+      // `size_t` overflow or out of bounds
       return false;
+    }
     pos_ = newPos;
   }
   return true;

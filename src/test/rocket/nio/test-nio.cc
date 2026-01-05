@@ -68,11 +68,11 @@ TEST(nio, FileSinkDoesNotExist) {
 }
 
 TEST(nio, SpanSink) {
-  string s = "---[XXXX]---";
+  string s = "---[abcd]---";
   span<char> span(&s[4], 4);
   SpanSink out(span);
-  EXPECT_EQ(out.write("YYYYYY"), 4); // 6 times `Y`, but only 4 fit
-  EXPECT_EQ(s, "---[YYYY]---");
+  EXPECT_EQ(out.write("ABCDEF"), 4); // 6 times `Y`, but only 4 fit
+  EXPECT_EQ(s, "---[ABCD]---");
 }
 
 TEST(nio, StreamSink) {
@@ -205,7 +205,6 @@ TEST(nio, FileSourceDoesNotExist) {
 
 TEST(nio, FileSourceRead) {
   auto tmp = ROCKET_GTEST_TEMP_PATH();
-  cout << "tmp: " << tmp << endl;
 
   FileSink out(tmp);
   out.writeln("Hey there");

@@ -298,7 +298,7 @@ width(const Graphemes& grs, size_t index, size_t n) {
   auto end = n == NPOS ? grs.end() : begin + n;
 
   return accumulate(begin, end, 0UL, [](size_t n, const Grapheme& gr) {
-    return add<size_t, int128_t>(n, gr.width);
+    return add<size_t>(n, gr.width);
   });
 }
 

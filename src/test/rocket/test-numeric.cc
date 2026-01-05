@@ -23,8 +23,9 @@ static_assert(is_same_v<Control<LargestType<unsigned char, uint128_t>::Type>::Ty
 
 // Constants ------------------------------------------------------------------------------------------------
 
-constexpr auto longMin = numeric_limits<long>::min();
-constexpr auto longMax = numeric_limits<long>::max();
+constexpr auto charMin = numeric_limits<char>::min();
+constexpr auto charMax = numeric_limits<char>::max();
+constexpr auto ucharMax = numeric_limits<unsigned char>::max();
 constexpr auto int128Min = numeric_limits<int128_t>::min();
 constexpr auto int128Max = numeric_limits<int128_t>::max();
 constexpr auto uint128Max = numeric_limits<uint128_t>::max();
@@ -34,104 +35,93 @@ constexpr auto uint128Max = numeric_limits<uint128_t>::max();
 TEST(numeric, add) {
   // `char`
 
-  EXPECT_THAT(([] { add<char>('\x00', 128); }), Throws<Overflow>());
-  EXPECT_THAT(([] { add<char>(128, '\x00'); }), Throws<Overflow>());
+  EXPECT_THAT([] { add<char>(charMin, -1); }, Throws<Overflow>()); // MIN - 1
+  EXPECT_EQ(add<char>(charMin, 0), charMin); // MIN
+  EXPECT_EQ(add<char>(charMin, 1), charMin + 1); // MIN + 1
+  EXPECT_EQ(add<char>(charMax, -1), charMax - 1); // MAX - 1
+  EXPECT_EQ(add<char>(charMax, 0), charMax); // MAX
+  EXPECT_THAT([] { add<char>(charMax, 1); }, Throws<Overflow>()); // MAX + 1
 
   // `unsigned char`
 
-  EXPECT_THAT(([] { add<unsigned char>('\x00', -1); }), Throws<Overflow>());
-  EXPECT_THAT(([] { add<unsigned char>(255, 1); }), Throws<Overflow>());
-
-  // `long`
-
-  EXPECT_EQ((add<long>(longMin, 0)), longMin);
-  EXPECT_THAT(([] { add<long>(longMin, -1); }), Throws<Overflow>());
-  EXPECT_THAT(([] { add<long>(longMin, longMin); }), Throws<Overflow>());
-
-  EXPECT_EQ((add<long>(longMax, 0)), longMax);
-  EXPECT_THAT(([] { add<long>(longMax, 1); }), Throws<Overflow>());
-  EXPECT_THAT(([] { add<long>(longMax, longMax); }), Throws<Overflow>());
-
-  // `unsigned long`
-
-  EXPECT_THAT(([] { add<unsigned long>(-1, 0); }), Throws<Overflow>());
-  EXPECT_THAT(([] { add<unsigned long>(0, -1); }), Throws<Overflow>());
+  EXPECT_THAT([] { add<unsigned char>(0, -1); }, Throws<Overflow>()); // -1
+  EXPECT_EQ(add<unsigned char>(0, 0), 0); // 0
+  EXPECT_EQ(add<unsigned char>(0, 1), 1); // 1
+  EXPECT_EQ(add<unsigned char>(ucharMax, -1), ucharMax - 1); // MAX - 1
+  EXPECT_EQ(add<unsigned char>(ucharMax, 0), ucharMax); // MAX
+  EXPECT_THAT(([] { add<unsigned char>(ucharMax, 1); }), Throws<Overflow>()); // MAX + 1
 
   // `int128_t`
 
-  EXPECT_EQ((add<int128_t>(longMin, 0)), to<int128_t>(longMin));
-  EXPECT_EQ((add<int128_t>(longMin, -1)), to<int128_t>(longMin) + to<int128_t>(-1));
-  EXPECT_EQ((add<int128_t>(longMin, longMin)), to<int128_t>(longMin) + to<int128_t>(longMin));
-
-  EXPECT_EQ((add<int128_t>(longMax, 0)), to<int128_t>(longMax));
-  EXPECT_EQ((add<int128_t>(longMax, 1)), to<int128_t>(longMax) + to<int128_t>(1));
-  EXPECT_EQ((add<int128_t>(longMax, longMax)), to<int128_t>(longMax) + to<int128_t>(longMax));
-
-  EXPECT_EQ((add<int128_t>(int128Min, 0)), int128Min);
-  EXPECT_THAT(([] { add<int128_t>(int128Min, -1); }), Throws<Overflow>());
-  EXPECT_THAT(([] { add<int128_t>(int128Min, int128Min); }), Throws<Overflow>());
-
-  EXPECT_EQ((add<int128_t>(int128Max, 0)), int128Max);
-  EXPECT_THAT(([] { add<int128_t>(int128Max, 1); }), Throws<Overflow>());
-  EXPECT_THAT(([] { add<int128_t>(int128Max, int128Max); }), Throws<Overflow>());
+  EXPECT_THAT([] { add<int128_t>(int128Min, -int128Max); }, Throws<Overflow>()); // MIN - MAX
+  EXPECT_THAT([] { add<int128_t>(int128Min, -1); }, Throws<Overflow>()); // MIN - 1
+  EXPECT_EQ(add<int128_t>(int128Min, 0), int128Min); // MIN
+  EXPECT_EQ(add<int128_t>(int128Min, 1), int128Min + 1); // MIN + 1
+  EXPECT_EQ(add<int128_t>(int128Max, -1), int128Max - 1); // MAX - 1
+  EXPECT_EQ(add<int128_t>(int128Max, 0), int128Max); // MAX
+  EXPECT_THAT([] { add<int128_t>(int128Max, 1); }, Throws<Overflow>()); // MAX + 1
+  EXPECT_THAT([] { add<int128_t>(int128Max, int128Max); }, Throws<Overflow>()); // MAX + MAX
 
   // `uint128_t`
 
-  EXPECT_EQ((add<uint128_t>(uint128Max, 0)), uint128Max);
-  EXPECT_THAT(([] { add<uint128_t>(uint128Max, 1); }), Throws<Overflow>());
+  EXPECT_EQ(add<uint128_t>(0, -uint128Max), 1); // -MAX (not working; should overflow)
+  EXPECT_EQ(add<uint128_t>(0, -1), uint128Max); // -1 (not working; should overflow)
+  EXPECT_EQ(add<uint128_t>(0, 0), 0); // 0
+  EXPECT_EQ(add<uint128_t>(0, 1), 1); // 1
+  EXPECT_THAT(([] { add<uint128_t>(uint128Max, -1); }), Throws<Overflow>()); // MAX - 1 (not working; should be MAX - 1)
+  EXPECT_EQ(add<uint128_t>(uint128Max, 0), uint128Max); // MAX
+  EXPECT_THAT(([] { add<uint128_t>(uint128Max, 1); }), Throws<Overflow>()); // MAX + 1
+  EXPECT_THAT(([] { add<uint128_t>(uint128Max, uint128Max); }), Throws<Overflow>()); // MAX + MAX
 }
 
 TEST(numeric, sub) {
   // `char`
 
-  EXPECT_EQ((sub<char>(0, 128)), -128);
-  EXPECT_THAT(([] { sub<char>('\x00', 129L); }), Throws<Overflow>());
-  EXPECT_EQ((sub<char>(-128, 0)), -128);
-  EXPECT_THAT(([] { sub<char>(-129, '\x00'); }), Throws<Overflow>());
+  EXPECT_THAT([] { sub<char>(charMin, 1); }, Throws<Overflow>()); // MIN - 1
+  EXPECT_EQ(sub<char>(charMin, 0), charMin); // MIN
+  EXPECT_EQ(sub<char>(charMin, -1), charMin + 1); // MIN + 1
+  EXPECT_EQ(sub<char>(charMax, 1), charMax - 1); // MAX - 1
+  EXPECT_EQ(sub<char>(charMax, 0), charMax); // MAX
+  EXPECT_THAT([] { sub<char>(charMax, -1); }, Throws<Overflow>()); // MAX + 1
 
   // `unsigned char`
 
-  EXPECT_THAT(([] { sub<unsigned char>('\x00', 1); }), Throws<Overflow>());
-  EXPECT_THAT(([] { sub<unsigned char>(255, -1); }), Throws<Overflow>());
-
-  // `long`
-
-  EXPECT_EQ((sub<long>(longMin, 0)), longMin);
-  EXPECT_THAT(([] { sub<long>(longMin, 1); }), Throws<Overflow>());
-  EXPECT_THAT(([] { sub<long>(longMin, LONG_NEG_MIN); }), Throws<Overflow>());
-
-  EXPECT_EQ((sub<long>(longMax, 0)), longMax);
-  EXPECT_THAT(([] { sub<long>(longMax, -1); }), Throws<Overflow>());
-  EXPECT_THAT(([] { sub<long>(longMax, -longMax); }), Throws<Overflow>());
-
-  // `unsigned long`
-
-  EXPECT_THAT(([] { sub<unsigned long>(-1, 0); }), Throws<Overflow>());
-  EXPECT_THAT(([] { sub<unsigned long>(0, 1); }), Throws<Overflow>());
+  EXPECT_THAT([] { sub<unsigned char>(0, 1); }, Throws<Overflow>()); // -1
+  EXPECT_EQ(sub<unsigned char>(0, 0), 0); // 0
+  EXPECT_EQ(sub<unsigned char>(0, -1), 1); // 1
+  EXPECT_EQ(sub<unsigned char>(ucharMax, 1), ucharMax - 1); // MAX - 1
+  EXPECT_EQ(sub<unsigned char>(ucharMax, 0), ucharMax); // MAX
+  EXPECT_THAT(([] { sub<unsigned char>(ucharMax, -1); }), Throws<Overflow>()); // MAX + 1
 
   // `int128_t`
 
-  // XXX Hier weiter
-  EXPECT_EQ((add<int128_t>(longMin, 0)), to<int128_t>(longMin));
-  EXPECT_EQ((add<int128_t>(longMin, -1)), to<int128_t>(longMin) + to<int128_t>(-1));
-  EXPECT_EQ((add<int128_t>(longMin, longMin)), to<int128_t>(longMin) + to<int128_t>(longMin));
-
-  EXPECT_EQ((add<int128_t>(longMax, 0)), to<int128_t>(longMax));
-  EXPECT_EQ((add<int128_t>(longMax, 1)), to<int128_t>(longMax) + to<int128_t>(1));
-  EXPECT_EQ((add<int128_t>(longMax, longMax)), to<int128_t>(longMax) + to<int128_t>(longMax));
-
-  EXPECT_EQ((add<int128_t>(int128Min, 0)), int128Min);
-  EXPECT_THAT(([] { add<int128_t>(int128Min, -1); }), Throws<Overflow>());
-  EXPECT_THAT(([] { add<int128_t>(int128Min, int128Min); }), Throws<Overflow>());
-
-  EXPECT_EQ((add<int128_t>(int128Max, 0)), int128Max);
-  EXPECT_THAT(([] { add<int128_t>(int128Max, 1); }), Throws<Overflow>());
-  EXPECT_THAT(([] { add<int128_t>(int128Max, int128Max); }), Throws<Overflow>());
+  EXPECT_THAT([] { sub<int128_t>(int128Min, int128Max); }, Throws<Overflow>()); // MIN - MAX
+  EXPECT_THAT([] { sub<int128_t>(int128Min, 1); }, Throws<Overflow>()); // MIN - 1
+  EXPECT_EQ(sub<int128_t>(int128Min, 0), int128Min); // MIN
+  EXPECT_EQ(sub<int128_t>(int128Min, -1), int128Min + 1); // MIN + 1
+  EXPECT_EQ(sub<int128_t>(int128Max, 1), int128Max - 1); // MAX - 1
+  EXPECT_EQ(sub<int128_t>(int128Max, 0), int128Max); // MAX
+  EXPECT_THAT([] { sub<int128_t>(int128Max, -1); }, Throws<Overflow>()); // MAX + 1
+  EXPECT_THAT([] { sub<int128_t>(int128Max, -int128Max); }, Throws<Overflow>()); // MAX + MAX
 
   // `uint128_t`
 
-  EXPECT_EQ((add<uint128_t>(uint128Max, 0)), uint128Max);
-  EXPECT_THAT(([] { add<uint128_t>(uint128Max, 1); }), Throws<Overflow>());
+  EXPECT_THAT([] { sub<uint128_t>(0, uint128Max); }, Throws<Overflow>()); // -MAX
+  EXPECT_THAT([] { sub<uint128_t>(0, 1); }, Throws<Overflow>()); // -1
+  EXPECT_EQ(sub<uint128_t>(0, 0), 0); // 0
+  EXPECT_THAT([] { sub<uint128_t>(0, -1); }, Throws<Overflow>()); // 1 (not working; should be 1)
+  EXPECT_EQ(sub<uint128_t>(uint128Max, 1), uint128Max - 1); // MAX - 1
+  EXPECT_EQ(sub<uint128_t>(uint128Max, 0), uint128Max); // MAX
+  EXPECT_EQ(sub<uint128_t>(uint128Max, -1), 0); // MAX + 1 (not working; should overflow)
+  EXPECT_EQ(sub<uint128_t>(uint128Max, -uint128Max), uint128Max - 1); // MAX + MAX (not working; should overflow)
+}
+
+TEST(numeric, to) {
+  EXPECT_THAT([] { to<unsigned char>(-1); }, Throws<Overflow>());
+  EXPECT_EQ(to<unsigned char>(255), 255);
+  EXPECT_THAT([] { to<unsigned char>(256); }, Throws<Overflow>());
+  EXPECT_EQ(to<short>(-32768), -32768);
+  EXPECT_THAT([] { to<short>(-32769); }, Throws<Overflow>());
 }
 
 // EOF

@@ -6,6 +6,7 @@
 
 #include "rocket/nio/nio.h"
 #include "rocket/str/location/location.h"
+#include "rocket/system/system.h"
 #include "rocket/unicode/unicode.h"
 
 #include "rocket-gtest/matcher/matcher.h"
@@ -32,6 +33,10 @@ using namespace testing;
     EXPECT_EQ(loc.lineString, lineString__); \
     EXPECT_EQ(loc.message, message__); \
     EXPECT_EQ(loc.caption, caption__)
+
+// Constants ------------------------------------------------------------------------------------------------
+
+const auto TEST_TERMINAL = system::env::get<bool>("ROCKET_TEST_TERMINAL").value_or(false);
 
 // Local functions ------------------------------------------------------------------------------------------
 
@@ -287,6 +292,9 @@ TEST(location, printLocations) {
         "Oops3",
         "Watch out!");
     nio::StringSink out;
+    if (TEST_TERMINAL) {
+      printLocations(nio::stdout, nullopt, result, { .colored=true });
+    }
     printLocations(out, nullopt, result, {});
     EXPECT_EQ(out.str(),
         "foo:1:3: note: Oops1\n"
@@ -318,6 +326,9 @@ TEST(location, printLocations) {
     string line = s.substr(loc.lineRange.lower, *loc.lineRange.upper - loc.lineRange.lower);
     EXPECT_EQ(line, s);
     nio::StringSink out;
+    if (TEST_TERMINAL) {
+      printLocations(nio::stdout, s, result, { .colored=true });
+    }
     printLocations(out, s, result, {});
     EXPECT_EQ(out.str(),
         "(input):1:9: note: Oops\n"
@@ -336,6 +347,9 @@ TEST(location, printLocations) {
     // Test a range that spans the entire line
     EXPECT_LOCATION(loc, Position::note, 16, ({ { 0, 16 } }), 1, 12, ({ 0, 16 }), nullopt, "Oops", nullopt);
     nio::StringSink out;
+    if (TEST_TERMINAL) {
+      printLocations(nio::stdout, s, result, { .colored=true });
+    }
     printLocations(out, s, result, {});
     EXPECT_EQ(out.str(),
         "(input):1:12: note: Oops\n"

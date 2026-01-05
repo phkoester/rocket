@@ -22,7 +22,7 @@ namespace internal {
 
 template<typename T> struct Control;
 
-template<> struct Control<signed char> { using Type = int; };
+template<> struct Control<char> { using Type = int; };
 template<> struct Control<unsigned char> { using Type = int; };
 template<> struct Control<short> { using Type = int; };
 template<> struct Control<unsigned short> { using Type = int; };
@@ -35,16 +35,39 @@ template<> struct Control<uint128_t> { using Type = uint128_t; };
 
 } // namespace internal
 
-// Constants ------------------------------------------------------------------------------------------------
+// `NumericTraits` ------------------------------------------------------------------------------------------
 
-/// 2^7 = 128.
-constexpr int CHAR_NEG_MIN = static_cast<int>(std::numeric_limits<char>::max()) + 1;
-/// 2^15 = 32,768.
-constexpr int SHORT_NEG_MIN = static_cast<int>(std::numeric_limits<short>::max()) + 1;
-/// 2^31 = 2,147,483,648.
-constexpr long INT_NEG_MIN = static_cast<long>(std::numeric_limits<int>::max()) + 1;
-/// 2^63 = 9,223,372,036,854,775,808.
-constexpr int128_t LONG_NEG_MIN = static_cast<int128_t>(std::numeric_limits<long>::max()) + 1;
+/// The `NumericTraits` template.
+template<typename T>
+struct NumericTraits;
+
+/// @spec{#rocket::NumericTraits, `char`}
+template<>
+struct NumericTraits<char> {
+  /// 2^7 = 128.
+  static constexpr int negativeMin = static_cast<int>(std::numeric_limits<char>::max()) + 1;
+};
+
+/// @spec{#rocket::NumericTraits, `short`}
+template<>
+struct NumericTraits<short> {
+  /// 2^15 = 32,768.
+  static constexpr int negativeMin = static_cast<int>(std::numeric_limits<short>::max()) + 1;
+};
+
+/// @spec{#rocket::NumericTraits, `int`}
+template<>
+struct NumericTraits<int> {
+  /// 2^31 = 2,147,483,648.
+  static constexpr long negativeMin = static_cast<long>(std::numeric_limits<int>::max()) + 1;
+};
+
+/// @spec{#rocket::NumericTraits, `long`}
+template<>
+struct NumericTraits<long> {
+  /// 2^63 = 9,223,372,036,854,775,808.
+  static constexpr int128_t negativeMin = static_cast<int128_t>(std::numeric_limits<long>::max()) + 1;
+};
 
 // Functions ------------------------------------------------------------------------------------------------
 
@@ -70,7 +93,7 @@ add(Lhs lhs, Rhs rhs) {
   if constexpr (sizeof(Control) == sizeof(Result)) {
     // Mixing `int128_t` and `uint128_t` is not implemented yet
     static_assert(std::is_signed_v<Control> == std::is_signed_v<Result>);
-    if ((controlRhs > 0 && controlRet < controlLhs) || (controlRhs < 0 && controlRet > controlLhs)) {
+    if ((controlRhs > 0 && controlRet <= controlLhs) || (controlRhs < 0 && controlRet >= controlLhs)) {
       throw Overflow(Type::of<Result>(), fmt::format("{} + {}", controlLhs, controlRhs));
     }
   } else {
@@ -106,7 +129,7 @@ sub(Lhs lhs, Rhs rhs) {
   if constexpr (sizeof(Control) == sizeof(Result)) {
     // Mixing `int128_t` and `uint128_t` is not implemented yet
     static_assert(std::is_signed_v<Control> == std::is_signed_v<Result>);
-    if ((controlRhs > 0 && controlRet > controlLhs) || (controlRhs < 0 && controlRet < controlLhs)) {
+    if ((controlRhs > 0 && controlRet >= controlLhs) || (controlRhs < 0 && controlRet <= controlLhs)) {
       throw Overflow(Type::of<Result>(), fmt::format("{} - {}", controlLhs, controlRhs));
     }
   } else {
@@ -170,7 +193,7 @@ tryAdd(Lhs lhs, Rhs rhs) {
   if constexpr (sizeof(Control) == sizeof(Result)) {
     // Mixing `int128_t` and `uint128_t` is not implemented yet
     static_assert(std::is_signed_v<Control> == std::is_signed_v<Result>);
-    if ((controlRhs > 0 && controlRet < controlLhs) || (controlRhs < 0 && controlRet > controlLhs)) {
+    if ((controlRhs > 0 && controlRet <= controlLhs) || (controlRhs < 0 && controlRet >= controlLhs)) {
       return std::nullopt;
     }
   } else {
@@ -205,7 +228,7 @@ trySub(Lhs lhs, Rhs rhs) {
   if constexpr (sizeof(Control) == sizeof(Result)) {
     // Mixing `int128_t` and `uint128_t` is not implemented yet
     static_assert(std::is_signed_v<Control> == std::is_signed_v<Result>);
-    if ((controlRhs > 0 && controlRet > controlLhs) || (controlRhs < 0 && controlRet < controlLhs)) {
+    if ((controlRhs > 0 && controlRet >= controlLhs) || (controlRhs < 0 && controlRet <= controlLhs)) {
       return std::nullopt;
     }
   } else {

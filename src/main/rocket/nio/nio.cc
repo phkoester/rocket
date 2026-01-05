@@ -923,26 +923,26 @@ StringSource::seek(Offset offset, SeekMode mode) {
     return error_;
   }
 
-  // XXX
-  int128_t newPos;
+  optional<size_t> newPos;
   switch (mode) {
   case SeekMode::beg:
-    newPos = to<int128_t>(offset);
+    newPos = tryTo<size_t>(offset);
     break;
   case SeekMode::cur:
-    newPos = add<int128_t>(pos_, offset);
+    newPos = tryAdd<size_t>(pos_, offset);
     break;
   case SeekMode::end:
-    newPos = add<int128_t>(in_.size(), offset);
+    newPos = tryAdd<size_t>(in_.size(), offset);
     break;
   default:
     ROCKET_FAIL_UNREACHABLE_CODE();
   }
 
-  newPos = max<int128_t>(0, newPos);
-  newPos = min<int128_t>(in_.size(), newPos);
-  pos_ = static_cast<Position>(newPos);
-  return 0;
+  if (newPos) {
+    pos_ = min(in_.size(), *newPos);
+    return 0;
+  }
+  return EINVAL;
 }
 
 Io::Position
