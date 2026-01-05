@@ -35,35 +35,7 @@
     ::std::make_tuple( \
         BOOST_PP_SEQ_ENUM(BOOST_PP_SEQ_FOR_EACH(ROCKET_REFLECT_MEMBERS_MAKE_REFS_IMPL__, cls, seq)))
 
-#define ROCKET_REFLECT_MEMBERS_DEFINE_OP_EQ__(cls, name) \
-    inline bool \
-    operator==(const cls& lhs, const cls& rhs) { \
-      return ::rocket::reflect::eq(lhs, cls::name(), rhs, cls::name()); \
-    }
-
-#define ROCKET_REFLECT_MEMBERS_DEFINE_OP_NE__(cls, name) \
-    inline bool \
-    operator!=(const cls& lhs, const cls& rhs) { \
-      return ::rocket::reflect::ne(lhs, cls::name(), rhs, cls::name()); \
-    }
-
-#define ROCKET_REFLECT_MEMBERS_DEFINE_OP_LT__(cls, name) \
-    inline bool \
-    operator<(const cls& lhs, const cls& rhs) { \
-      return ::rocket::reflect::lt(lhs, cls::name(), rhs, cls::name()); \
-    }
-
-#define ROCKET_REFLECT_MEMBERS_DEFINE_OP_GT__(cls, name) \
-    inline bool \
-    operator>(const cls& lhs, const cls& rhs) { \
-      return ::rocket::reflect::gt(lhs, cls::name(), rhs, cls::name()); \
-    }
-
-#define ROCKET_REFLECT_MEMBERS_DEFINE_OP_OUTPUT__(cls) \
-    inline ::std::ostream& \
-    operator<<(::std::ostream& lhs, const cls& rhs) { \
-      return lhs << ::fmt::format("{}", rhs); \
-    }
+// Members (global) .........................................................................................
 
 #define ROCKET_REFLECT_MEMBERS_DEFINE_FMT_FORMATTER__(cls, _name) \
     template<typename C> \
@@ -105,6 +77,48 @@
       bool withType_ = false; \
     };
 
+#define ROCKERT_REFLECT_MEMBERS_DEFINE_GLOBAL__(cls, name) \
+    ROCKET_REFLECT_MEMBERS_DEFINE_FMT_FORMATTER__(cls, name)
+
+// Members (local) ..........................................................................................
+
+#define ROCKET_REFLECT_MEMBERS_DEFINE_OP_EQ__(cls, name) \
+    inline bool \
+    operator==(const cls& lhs, const cls& rhs) { \
+      return ::rocket::reflect::eq(lhs, cls::name(), rhs, cls::name()); \
+    }
+
+#define ROCKET_REFLECT_MEMBERS_DEFINE_OP_NE__(cls, name) \
+    inline bool \
+    operator!=(const cls& lhs, const cls& rhs) { \
+      return ::rocket::reflect::ne(lhs, cls::name(), rhs, cls::name()); \
+    }
+
+#define ROCKET_REFLECT_MEMBERS_DEFINE_OP_LT__(cls, name) \
+    inline bool \
+    operator<(const cls& lhs, const cls& rhs) { \
+      return ::rocket::reflect::lt(lhs, cls::name(), rhs, cls::name()); \
+    }
+
+#define ROCKET_REFLECT_MEMBERS_DEFINE_OP_GT__(cls, name) \
+    inline bool \
+    operator>(const cls& lhs, const cls& rhs) { \
+      return ::rocket::reflect::gt(lhs, cls::name(), rhs, cls::name()); \
+    }
+
+#define ROCKET_REFLECT_MEMBERS_DEFINE_OP_OUTPUT__(cls) \
+    inline ::std::ostream& \
+    operator<<(::std::ostream& lhs, const cls& rhs) { \
+      return lhs << ::fmt::format("{}", rhs); \
+    }
+
+#define ROCKERT_REFLECT_MEMBERS_DEFINE_LOCAL__(cls, name) \
+    ROCKET_REFLECT_MEMBERS_DEFINE_OP_EQ__(cls, name) \
+    ROCKET_REFLECT_MEMBERS_DEFINE_OP_NE__(cls, name) \
+    ROCKET_REFLECT_MEMBERS_DEFINE_OP_LT__(cls, name) \
+    ROCKET_REFLECT_MEMBERS_DEFINE_OP_GT__(cls, name) \
+    ROCKET_REFLECT_MEMBERS_DEFINE_OP_OUTPUT__(cls)
+
 // Variables ................................................................................................
 
 #define ROCKET_REFLECT_VARS_MAKE_REFS_IMPL__(r, data, elem) \
@@ -133,6 +147,34 @@
     }; \
     \
     static consteval auto& name() { return ROCKET_REFLECT_MEMBERS_STRUCT__(name)::refs; } \
+
+// Members (global) .........................................................................................
+
+/**
+ * Provides a `fmt::formatter for @p cls.
+ *
+ * @note This macro must be called in the global namespace.
+ *
+ * - If the `?` format specifier is used, then the formatter is set to debug mode.
+ * - If the `t` format specifier is used, then the type of the instance is included.
+ *
+ * @param cls fully qualified name of the class, including namespace
+ * @param name the name of the member-reference container to use
+ */
+#define ROCKET_REFLECT_MEMBERS_DEFINE_FMT_FORMATTER(cls, name) ROCKET_REFLECT_MEMBERS_DEFINE_FMT_FORMATTER__(cls, name)
+
+/**
+ * Provides all necessary definitions in the global namespace for full Rocket interoperability.
+ *
+ * @note This macro must be called in the global namespace, and prior to
+ *     #ROCKERT_REFLECT_MEMBERS_DEFINE_LOCAL.
+ *
+ * @param cls fully qualified name of the class, including namespace
+ * @param name the name of the member-reference container to use
+ */
+#define ROCKERT_REFLECT_MEMBERS_DEFINE_GLOBAL(cls, name) ROCKET_REFLECT_MEMBERS_DEFINE_GLOBAL__(cls, name)
+
+// Members (local) ..........................................................................................
 
 /**
  * Provides an `operator==` for class @p cls, using the member-reference container named @p name.
@@ -176,17 +218,14 @@
 #define ROCKET_REFLECT_MEMBERS_DEFINE_OP_OUTPUT(cls) ROCKET_REFLECT_MEMBERS_DEFINE_OP_OUTPUT__(cls)
 
 /**
- * Provides a `fmt::formatter for @p cls.
+ * Provides all necessary definitions in the local namespace for full Rocket interoperability.
  *
- * @note This macro must be called in the global namespace.
+ * @note This macro must be called in the local namespace, and after #ROCKERT_REFLECT_MEMBERS_DEFINE_GLOBAL.
  *
- * - If the `?` format specifier is used, then the formatter is set to debug mode.
- * - If the `t` format specifier is used, then the type of the instance is included.
- *
- * @param cls fully qualified name of the class, including namespace
+ * @param cls name of the class that holds the members (without namespace)
  * @param name the name of the member-reference container to use
  */
-#define ROCKET_REFLECT_MEMBERS_DEFINE_FMT_FORMATTER(cls, name) ROCKET_REFLECT_MEMBERS_DEFINE_FMT_FORMATTER__(cls, name)
+#define ROCKERT_REFLECT_MEMBERS_DEFINE_LOCAL(cls, name) ROCKET_REFLECT_MEMBERS_DEFINE_LOCAL__(cls, name)
 
 // Variables ................................................................................................
 
@@ -467,7 +506,6 @@ struct fmt::formatter<rocket::reflect::VarRef<T>, C> {
     auto out = ctx.out();
     out = detail::write<C>(out, rocket::unicode::ConvertTo<C>().apply(v.name()));
     out = detail::write<C>(out, static_cast<C>('='));
-    // XXX ctx.advance_to(out);
     out = underlying_.format(v.get(), ctx);
     return out;
   }

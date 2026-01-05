@@ -196,7 +196,6 @@ struct formatter<Variant, C> {
 
         formatter<std::remove_cvref_t<decltype(v)>, C> underlying;
         detail::maybe_set_debug_format(underlying, debug_);
-        // XXX ctx.advance_to(out);
         out = underlying.format(v, ctx);
       }, value);
       return out;
