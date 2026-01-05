@@ -38,14 +38,8 @@ public:
   ROCKET_REFLECT_MEMBERS(MyStruct, index, (ä)(b)(c));
 };
 
-ROCKET_REFLECT_MEMBERS_DEFINE_FMT_FORMATTER(MyStruct, index);
-
-ROCKET_REFLECT_MEMBERS_DEFINE_OP_EQ(MyStruct, index);
-ROCKET_REFLECT_MEMBERS_DEFINE_OP_NE(MyStruct, index);
-ROCKET_REFLECT_MEMBERS_DEFINE_OP_LT(MyStruct, index);
-ROCKET_REFLECT_MEMBERS_DEFINE_OP_GT(MyStruct, index);
-
-ROCKET_REFLECT_MEMBERS_DEFINE_OP_OUTPUT(MyStruct);
+ROCKET_REFLECT_MEMBERS_DECLARE_GLOBAL(MyStruct, index);
+ROCKET_REFLECT_MEMBERS_DECLARE_LOCAL(MyStruct, index);
 
 // `TEST` ---------------------------------------------------------------------------------------------------
 

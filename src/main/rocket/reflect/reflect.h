@@ -37,7 +37,7 @@
 
 // Members (global) .........................................................................................
 
-#define ROCKET_REFLECT_MEMBERS_DEFINE_FMT_FORMATTER__(cls, _name) \
+#define ROCKET_REFLECT_MEMBERS_DECLARE_FMT_FORMATTER__(cls, _name) \
     template<typename C> \
     struct fmt::formatter<cls, C> { \
       template<typename FormatContext> \
@@ -77,47 +77,47 @@
       bool withType_ = false; \
     };
 
-#define ROCKERT_REFLECT_MEMBERS_DEFINE_GLOBAL__(cls, name) \
-    ROCKET_REFLECT_MEMBERS_DEFINE_FMT_FORMATTER__(cls, name)
+#define ROCKET_REFLECT_MEMBERS_DECLARE_GLOBAL__(cls, name) \
+    ROCKET_REFLECT_MEMBERS_DECLARE_FMT_FORMATTER__(cls, name)
 
 // Members (local) ..........................................................................................
 
-#define ROCKET_REFLECT_MEMBERS_DEFINE_OP_EQ__(cls, name) \
+#define ROCKET_REFLECT_MEMBERS_DECLARE_OP_EQ__(cls, name) \
     inline bool \
     operator==(const cls& lhs, const cls& rhs) { \
       return ::rocket::reflect::eq(lhs, cls::name(), rhs, cls::name()); \
     }
 
-#define ROCKET_REFLECT_MEMBERS_DEFINE_OP_NE__(cls, name) \
+#define ROCKET_REFLECT_MEMBERS_DECLARE_OP_NE__(cls, name) \
     inline bool \
     operator!=(const cls& lhs, const cls& rhs) { \
       return ::rocket::reflect::ne(lhs, cls::name(), rhs, cls::name()); \
     }
 
-#define ROCKET_REFLECT_MEMBERS_DEFINE_OP_LT__(cls, name) \
+#define ROCKET_REFLECT_MEMBERS_DECLARE_OP_LT__(cls, name) \
     inline bool \
     operator<(const cls& lhs, const cls& rhs) { \
       return ::rocket::reflect::lt(lhs, cls::name(), rhs, cls::name()); \
     }
 
-#define ROCKET_REFLECT_MEMBERS_DEFINE_OP_GT__(cls, name) \
+#define ROCKET_REFLECT_MEMBERS_DECLARE_OP_GT__(cls, name) \
     inline bool \
     operator>(const cls& lhs, const cls& rhs) { \
       return ::rocket::reflect::gt(lhs, cls::name(), rhs, cls::name()); \
     }
 
-#define ROCKET_REFLECT_MEMBERS_DEFINE_OP_OUTPUT__(cls) \
+#define ROCKET_REFLECT_MEMBERS_DECLARE_OP_OUTPUT__(cls) \
     inline ::std::ostream& \
     operator<<(::std::ostream& lhs, const cls& rhs) { \
       return lhs << ::fmt::format("{}", rhs); \
     }
 
-#define ROCKERT_REFLECT_MEMBERS_DEFINE_LOCAL__(cls, name) \
-    ROCKET_REFLECT_MEMBERS_DEFINE_OP_EQ__(cls, name) \
-    ROCKET_REFLECT_MEMBERS_DEFINE_OP_NE__(cls, name) \
-    ROCKET_REFLECT_MEMBERS_DEFINE_OP_LT__(cls, name) \
-    ROCKET_REFLECT_MEMBERS_DEFINE_OP_GT__(cls, name) \
-    ROCKET_REFLECT_MEMBERS_DEFINE_OP_OUTPUT__(cls)
+#define ROCKET_REFLECT_MEMBERS_DECLARE_LOCAL__(cls, name) \
+    ROCKET_REFLECT_MEMBERS_DECLARE_OP_EQ__(cls, name); \
+    ROCKET_REFLECT_MEMBERS_DECLARE_OP_NE__(cls, name); \
+    ROCKET_REFLECT_MEMBERS_DECLARE_OP_LT__(cls, name); \
+    ROCKET_REFLECT_MEMBERS_DECLARE_OP_GT__(cls, name); \
+    ROCKET_REFLECT_MEMBERS_DECLARE_OP_OUTPUT__(cls)
 
 // Variables ................................................................................................
 
@@ -136,6 +136,8 @@
 
 /**
  * Provides access to a named member-reference container.
+ *
+ * @note This macro must be called inside the class declaration, in a public section.
  *
  * @param cls the name of the class that holds the members (without namespace)
  * @param name the name for this member-reference container. e.g. `index`
@@ -161,18 +163,18 @@
  * @param cls fully qualified name of the class, including namespace
  * @param name the name of the member-reference container to use
  */
-#define ROCKET_REFLECT_MEMBERS_DEFINE_FMT_FORMATTER(cls, name) ROCKET_REFLECT_MEMBERS_DEFINE_FMT_FORMATTER__(cls, name)
+#define ROCKET_REFLECT_MEMBERS_DECLARE_FMT_FORMATTER(cls, name) ROCKET_REFLECT_MEMBERS_DECLARE_FMT_FORMATTER__(cls, name)
 
 /**
- * Provides all necessary definitions in the global namespace for full Rocket interoperability.
+ * Provides all the necessary declarations in the global namespace for full Rocket interoperability.
  *
  * @note This macro must be called in the global namespace, and prior to
- *     #ROCKERT_REFLECT_MEMBERS_DEFINE_LOCAL.
+ *     #ROCKERT_REFLECT_MEMBERS_DECLARE_LOCAL.
  *
  * @param cls fully qualified name of the class, including namespace
  * @param name the name of the member-reference container to use
  */
-#define ROCKERT_REFLECT_MEMBERS_DEFINE_GLOBAL(cls, name) ROCKET_REFLECT_MEMBERS_DEFINE_GLOBAL__(cls, name)
+#define ROCKET_REFLECT_MEMBERS_DECLARE_GLOBAL(cls, name) ROCKET_REFLECT_MEMBERS_DECLARE_GLOBAL__(cls, name)
 
 // Members (local) ..........................................................................................
 
@@ -182,7 +184,7 @@
  * @param cls name of the class that holds the members (without namespace)
  * @param name the name of the member-reference container to use
  */
-#define ROCKET_REFLECT_MEMBERS_DEFINE_OP_EQ(cls, name) ROCKET_REFLECT_MEMBERS_DEFINE_OP_EQ__(cls, name)
+#define ROCKET_REFLECT_MEMBERS_DECLARE_OP_EQ(cls, name) ROCKET_REFLECT_MEMBERS_DECLARE_OP_EQ__(cls, name)
 
 /**
  * Provides an `operator!=` for class @p cls, using the member-reference container named @p name.
@@ -190,7 +192,7 @@
  * @param cls name of the class that holds the members (without namespace)
  * @param name the name of the member-reference container to use
  */
-#define ROCKET_REFLECT_MEMBERS_DEFINE_OP_NE(cls, name) ROCKET_REFLECT_MEMBERS_DEFINE_OP_NE__(cls, name)
+#define ROCKET_REFLECT_MEMBERS_DECLARE_OP_NE(cls, name) ROCKET_REFLECT_MEMBERS_DECLARE_OP_NE__(cls, name)
 
 /**
  * Provides an `operator<` for class @p cls, using the member-reference container named @p name.
@@ -198,7 +200,7 @@
  * @param cls name of the class that holds the members (without namespace)
  * @param name the name of the member-reference container to use
  */
-#define ROCKET_REFLECT_MEMBERS_DEFINE_OP_LT(cls, name) ROCKET_REFLECT_MEMBERS_DEFINE_OP_LT__(cls, name)
+#define ROCKET_REFLECT_MEMBERS_DECLARE_OP_LT(cls, name) ROCKET_REFLECT_MEMBERS_DECLARE_OP_LT__(cls, name)
 
 /**
  * Provides an `operator>` for class @p cls, using the member-reference container named @p name.
@@ -206,26 +208,27 @@
  * @param cls name of the class that holds the members (without namespace)
  * @param name the name of the member-reference container to use
  */
-#define ROCKET_REFLECT_MEMBERS_DEFINE_OP_GT(cls, name) ROCKET_REFLECT_MEMBERS_DEFINE_OP_GT__(cls, name)
+#define ROCKET_REFLECT_MEMBERS_DECLARE_OP_GT(cls, name) ROCKET_REFLECT_MEMBERS_DECLARE_OP_GT__(cls, name)
 
 /**
  * Provides an `operator<<` for class @p cls.
  *
- * Requires a preceding #ROCKET_REFLECT_MEMBERS_DEFINE_FMT_FORMATTER.
+ * Requires a preceding #ROCKET_REFLECT_MEMBERS_DECLARE_FMT_FORMATTER.
  *
  * @param cls name of the class that holds the members (without namespace)
  */
-#define ROCKET_REFLECT_MEMBERS_DEFINE_OP_OUTPUT(cls) ROCKET_REFLECT_MEMBERS_DEFINE_OP_OUTPUT__(cls)
+#define ROCKET_REFLECT_MEMBERS_DECLARE_OP_OUTPUT(cls) ROCKET_REFLECT_MEMBERS_DECLARE_OP_OUTPUT__(cls)
 
 /**
- * Provides all necessary definitions in the local namespace for full Rocket interoperability.
+ * Provides all the necessary declarations in the local namespace for full Rocket interoperability.
  *
- * @note This macro must be called in the local namespace, and after #ROCKERT_REFLECT_MEMBERS_DEFINE_GLOBAL.
+ * @note This macro must be called in the class's local namespace, and after
+ *     #ROCKERT_REFLECT_MEMBERS_DECLARE_GLOBAL.
  *
  * @param cls name of the class that holds the members (without namespace)
  * @param name the name of the member-reference container to use
  */
-#define ROCKERT_REFLECT_MEMBERS_DEFINE_LOCAL(cls, name) ROCKET_REFLECT_MEMBERS_DEFINE_LOCAL__(cls, name)
+#define ROCKET_REFLECT_MEMBERS_DECLARE_LOCAL(cls, name) ROCKET_REFLECT_MEMBERS_DECLARE_LOCAL__(cls, name)
 
 // Variables ................................................................................................
 
