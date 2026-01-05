@@ -32,10 +32,8 @@ namespace fmt {
  * - If the `?` format specifier is used, then the stack trace is included.
  * - If the `t` format specifier is used, then the type of the exception is included.
  */
-template <typename Exception, typename C>
-struct formatter<Exception, C,
-    std::enable_if_t<std::is_base_of<std::exception, Exception>::value>> {
-
+template<typename Exception, typename C> requires std::is_base_of<std::exception, Exception>::value
+struct formatter<Exception, C> {
   /// @cond undocumented
 
   template<typename FormatContext>
@@ -111,8 +109,8 @@ private:
  *
  * This formatter uses the same format specifiers as the underlying formatter for type @p T.
  */
-template<typename T, typename C>
-struct formatter<std::optional<T>, C, std::enable_if_t<is_formattable<T, C>::value>> {
+template<typename T, typename C> requires is_formattable<T, C>::value
+struct formatter<std::optional<T>, C> {
   /// @cond undocumented
 
   template <typename FormatContext>
@@ -177,11 +175,10 @@ private:
  *
  * - If the `?` format specifier is used, then the underlying formatter is set to debug mode.
  */
-template<typename Variant, typename C>
-struct formatter<Variant, C, std::enable_if_t<
-    std::conjunction_v<
-        is_variant_like<Variant>,
-        detail::is_variant_formattable<Variant, C>>>> {
+template<typename Variant, typename C> requires std::conjunction_v<
+    is_variant_like<Variant>,
+    detail::is_variant_formattable<Variant, C>>
+struct formatter<Variant, C> {
   /// @cond undocumented
 
   template <typename FormatContext>
