@@ -446,7 +446,7 @@ struct fmt::formatter<rocket::math::IntervalImpl<T, Left, Right>, C> {
       if (not opt) {
         out = detail::write<C>(out, IntervalSymbols<C>::NegativeInfinity);
       } else {
-        ctx.advance_to(out);
+        // XXX ctx.advance_to(out);
         out = underlying_.format(*opt, ctx);
       }
       out = detail::write<C>(out, static_cast<C>(','));
@@ -455,7 +455,7 @@ struct fmt::formatter<rocket::math::IntervalImpl<T, Left, Right>, C> {
         // In interval notation, we prefer `+∞` over `∞`
         out = detail::write<C>(out, IntervalSymbols<C>::PositiveInfinity);
       } else {
-        ctx.advance_to(out);
+        // XXX ctx.advance_to(out);
         out = underlying_.format(*opt, ctx);
       }
       out = detail::write<C>(out, static_cast<C>(Right::Symbol));

@@ -279,7 +279,6 @@ formatMemberRefImpl(const T& v, FormatContext& ctx, bool debug, const Tuple& ref
   using namespace fmt;
 
   // Write separator
-
   auto out = ctx.out();
   if constexpr (Index > 0) {
     detail::write<C>(out, static_cast<C>(','));
@@ -287,17 +286,14 @@ formatMemberRefImpl(const T& v, FormatContext& ctx, bool debug, const Tuple& ref
   }
 
   // Get ref at index
-
   const auto& ref = std::get<Index>(refs);
   static_assert(IsMemberRef<decltype(ref)>::value);
 
   // Write name
-
   detail::write<C>(out, rocket::unicode::ConvertTo<C>().apply(ref.name()));
   detail::write<C>(out, static_cast<C>('='));
 
   // Write value
-
   auto&& value = ref.get(v);
   using valueType = decltype(value);
   fmt::formatter<std::remove_cvref_t<valueType>, C> underlying;
@@ -471,7 +467,7 @@ struct fmt::formatter<rocket::reflect::VarRef<T>, C> {
     auto out = ctx.out();
     out = detail::write<C>(out, rocket::unicode::ConvertTo<C>().apply(v.name()));
     out = detail::write<C>(out, static_cast<C>('='));
-    ctx.advance_to(out);
+    // XXX ctx.advance_to(out);
     out = underlying_.format(v.get(), ctx);
     return out;
   }
