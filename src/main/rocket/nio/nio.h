@@ -62,14 +62,14 @@ struct Io {
    virtual int error() const { return error_; }
 
   /**
-   * Returns whether the object is open and the error status is 0.
+   * Returns if the object is open and the error status is 0.
    *
    * @return `true` if the object is open and the error status is 0
    */
    virtual bool good() const { return open_ && error_ == 0; }
 
    /**
-    * Returns whether the object is open.
+    * Returns if the object is open.
     *
     * @return `true` if the object is open
     */
@@ -86,8 +86,7 @@ protected:
   bool open_ = true; ///< Open flag.
 
   /**
-   * Checks whether the object is open. If not and if the error status is 0, sets the error status to
-   * `EBADF`.
+   * Checks if the object is open. If not and if the error status is 0, sets the error status to `EBADF`.
    *
    * @return `true` if the object is open
    */
@@ -503,16 +502,16 @@ struct Source : Io {
   /**
    * Reads a line from a source into a string.
    *
-   * A trailing `\r` is removed if it precedes a `\n`.
+   * A trailing @c '\\r' is removed if it precedes a @c '\\n'.
    *
-   * @return the line read, not containing the trailing `\r` or `\n`
+   * @return the line read, not containing the trailing @c '\\r' or @c '\\n'
    */
   std::string readln();
 
   /**
    * Reads a line from a source into a span.
    *
-   * A trailing `\r` is removed if it precedes a `\n`.
+   * A trailing @c '\\r' is removed if it precedes a @c '\\n'.
    *
    * @param out the span to read into
    * @return the number of bytes read

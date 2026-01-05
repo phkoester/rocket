@@ -873,16 +873,15 @@ StreamSource::tell() {
   }
 
   using tellg_t = decltype(is_.tellg());
-  // It is some 128-bit type, we don't know whether it is signed or unsigned
-  static_assert(sizeof(tellg_t) == 16);
-  tellg_t ret = is_.tellg();
-  LOG(StreamSource::tell, "tellg=" << ret << ", bad=" << is_.bad() << ", fail=" << is_.fail() << ", eof=" << is_.eof());
+  // The return type is `std::fpos<__mbstate_t>`, whatever that means ...
+  tellg_t result = is_.tellg();
+  LOG(StreamSource::tell, "tellg=" << result << ", bad=" << is_.bad() << ", fail=" << is_.fail() << ", eof=" << is_.eof());
   error_ = is_.rdstate();
 
-  if (ret < 0 || ret > numeric_limits<long>::max()) {
+  if (result < 0 || result > numeric_limits<Position>::max()) {
     return -1;
   }
-  return static_cast<Position>(ret);
+  return static_cast<Position>(result);
 }
 
 // `StringSource` -------------------------------------------------------------------------------------------

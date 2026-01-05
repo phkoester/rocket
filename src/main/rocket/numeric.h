@@ -44,28 +44,28 @@ struct NumericTraits;
 /// @spec{#rocket::NumericTraits, `char`}
 template<>
 struct NumericTraits<char> {
-  /// 2^7 = 128.
+  /// @f$2^{7}@f$ = 128.
   static constexpr int negativeMin = static_cast<int>(std::numeric_limits<char>::max()) + 1;
 };
 
 /// @spec{#rocket::NumericTraits, `short`}
 template<>
 struct NumericTraits<short> {
-  /// 2^15 = 32,768.
+  /// @f$2^{15}@f$ = 32,768.
   static constexpr int negativeMin = static_cast<int>(std::numeric_limits<short>::max()) + 1;
 };
 
 /// @spec{#rocket::NumericTraits, `int`}
 template<>
 struct NumericTraits<int> {
-  /// 2^31 = 2,147,483,648.
+  /// @f$2^{31}@f$ = 2,147,483,648.
   static constexpr long negativeMin = static_cast<long>(std::numeric_limits<int>::max()) + 1;
 };
 
 /// @spec{#rocket::NumericTraits, `long`}
 template<>
 struct NumericTraits<long> {
-  /// 2^63 = 9,223,372,036,854,775,808.
+  /// @f$2^{63}@f$ = 9,223,372,036,854,775,808.
   static constexpr int128_t negativeMin = static_cast<int128_t>(std::numeric_limits<long>::max()) + 1;
 };
 

@@ -114,8 +114,8 @@ PrintTo(const bimap<A, B>& v, std::ostream* os) {
 /**
  * @spec_fmt_formatter{`boost::bimaps::bimap`}
  *
- * This formatter formats the left map of a #rocket::UnorderedBimap. For the format specifiers, see
- * `fmt::formatter<std::map>`.
+ * This formatter formats the left map of a #rocket::UnorderedBimap. It uses the same format specifiers as
+ * the underlying formatter for type `std::map`.
  */
 template<typename A, typename B, typename C>
 struct fmt::formatter<boost::bimaps::bimap<A, B>, C> {

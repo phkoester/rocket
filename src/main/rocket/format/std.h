@@ -175,7 +175,7 @@ private:
 /**
  * @spec_fmt_formatter{`Variant`}
  *
- * - If the `?` format specifier is used, then the variant's value is formatted in debug mode.
+ * - If the `?` format specifier is used, then the underlying formatter is set to debug mode.
  */
 template<typename Variant, typename C>
 struct formatter<Variant, C, std::enable_if_t<

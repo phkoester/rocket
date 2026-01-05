@@ -127,8 +127,8 @@ struct Process {
    * On Linux, the locale may be configured like this:
    *
    * ```bash
-   * sudo locale-gen en_US.UTF-8
-   * sudo dpkg-reconfigure locales
+   * $ sudo locale-gen en_US.UTF-8
+   * $ sudo dpkg-reconfigure locales
    * ```
    *
    * @return a locale
