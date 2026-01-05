@@ -30,6 +30,8 @@ static constexpr size_t MIN_BUFFER_SIZE = 64;
 
 /**
  * The base class for #rocket::nio::Sink and #rocket::nio::Source.
+ *
+ * An I/O instance, either a sink or a source.
  */
 struct Io {
   /// The offset type.
@@ -41,7 +43,7 @@ struct Io {
   virtual ~Io() {}
 
   /**
-   * Closes the object.
+   * Closes the instance.
    *
    * @return 0 if successful, an error code otherwise
    */
@@ -62,16 +64,16 @@ struct Io {
    virtual int error() const { return error_; }
 
   /**
-   * Returns if the object is open and the error status is 0.
+   * Returns if the instance is open and the error status is 0.
    *
-   * @return `true` if the object is open and the error status is 0
+   * @return `true` if the instance is open and the error status is 0
    */
    virtual bool good() const { return open_ && error_ == 0; }
 
    /**
-    * Returns if the object is open.
+    * Returns if the instance is open.
     *
-    * @return `true` if the object is open
+    * @return `true` if the instance is open
     */
    virtual bool open() const { return open_; }
 
@@ -86,9 +88,9 @@ protected:
   bool open_ = true; ///< Open flag.
 
   /**
-   * Checks if the object is open. If not and if the error status is 0, sets the error status to `EBADF`.
+   * Checks if the instance is open. If not and if the error status is 0, sets the error status to `EBADF`.
    *
-   * @return `true` if the object is open
+   * @return `true` if the instance is open
    */
   bool checkOpen();
 };

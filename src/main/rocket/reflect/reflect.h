@@ -180,6 +180,9 @@
  *
  * @note This macro must be called in the global namespace.
  *
+ * - If the `?` format specifier is used, then the formatter is set to debug mode.
+ * - If the `t` format specifier is used, then the type of the instance is included.
+ *
  * @param cls fully qualified name of the class, including namespace
  * @param name the name of the member-reference container to use
  */
