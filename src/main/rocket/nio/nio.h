@@ -265,16 +265,13 @@ protected:
 
 ROCKET_TESTING_PRIVATE:
 
-  /// @cond undocumented
+  Sink& underlying_; ///< The underlying sink.
+  size_t size_; ///< The size of the buffer.
+  std::unique_ptr<char[]> buf_; ///< The buffer.
+  size_t pos_ = 0; ///< The current position in the buffer.
 
-  Sink& underlying_;
-  size_t size_;
-  std::unique_ptr<char[]> buf_;
-  size_t pos_ = 0;
-
+  /// Flushes the buffer to the underlying sink.
   void flushBuffer();
-
-  /// @endcond
 };
 
 // `FileSink` -----------------------------------------------------------------------------------------------
@@ -335,12 +332,8 @@ struct FileSink : Sink {
 
 ROCKET_TESTING_PRIVATE:
 
-  /// @cond undocumented
-
-  FILE* file_;
-  Params params_;
-
-  /// @endcond
+  FILE* file_; ///< The `FILE` pointer.
+  Params params_; ///< The parameters.
 };
 
 // `NullSink` -----------------------------------------------------------------------------------------------
@@ -584,21 +577,17 @@ struct BufferedSource : Source {
 
 ROCKET_TESTING_PRIVATE:
 
-  /// @cond undocumented
-
-  Source& underlying_;
-  size_t size_;
-  std::unique_ptr<char[]> buf_;
-  size_t bufPos_ = -1;
-  size_t pos_ = 0;
+  Source& underlying_; ///< The underlying source.
+  size_t size_; ///< The size of the buffer.
+  std::unique_ptr<char[]> buf_; ///< The buffer.
+  size_t bufPos_ = -1; ///< Where buffer position 0 maps to in the underlying source.
+  size_t pos_ = 0; ///< The current position in the buffer.
   /**
    * This is the actual input size of the buffer, which may be less than its allocated size.
    *
    * If this is 0, #pos_ must be 0, too, and the buffer is considered to be invalid.
    */
   size_t end_ = 0;
-
-  /// @endcond
 };
 
 // `FileSource` ---------------------------------------------------------------------------------------------
@@ -656,12 +645,8 @@ struct FileSource : Source {
 
 ROCKET_TESTING_PRIVATE:
 
-  /// @cond undocumented
-
-  FILE* file_;
-  Params params_;
-
-  /// @endcond
+  FILE* file_; ///< The `FILE` pointer.
+  Params params_; ///< The parameters.
 };
 
 // `NullSource` ---------------------------------------------------------------------------------------------

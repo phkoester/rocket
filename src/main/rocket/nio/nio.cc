@@ -923,16 +923,17 @@ StringSource::seek(Offset offset, SeekMode mode) {
     return error_;
   }
 
+  // XXX
   int128_t newPos;
   switch (mode) {
   case SeekMode::beg:
-    newPos = add<int128_t, int128_t>(offset, 0);
+    newPos = to<int128_t>(offset);
     break;
   case SeekMode::cur:
-    newPos = add<int128_t, int128_t>(pos_, offset);
+    newPos = add<int128_t>(pos_, offset);
     break;
   case SeekMode::end:
-    newPos = add<int128_t, int128_t>(in_.size(), offset);
+    newPos = add<int128_t>(in_.size(), offset);
     break;
   default:
     ROCKET_FAIL_UNREACHABLE_CODE();

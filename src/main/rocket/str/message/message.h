@@ -14,13 +14,6 @@
 
 namespace rocket::str::message {
 
-// Constants ------------------------------------------------------------------------------------------------
-
-/**
- * A message saying there is an overflow of type `size_t`.
- */
-constexpr std::string_view SIZE_T_OVERFLOW = "`size_t` overflow";
-
 // Functions ------------------------------------------------------------------------------------------------
 
 /**
@@ -84,10 +77,11 @@ iteratorOutOfBounds(const It& it, size_t pos) {
 /**
  * Makes a message saying there is an overflow of type @p type.
  *
- * @param type a #rocket::Type value
+ * @param type the type
+ * @param msg additional message
  * @return a message
  */
-std::string overflow(const Type& type);
+std::string overflow(const Type& type, std::string_view msg = "");
 
 } // namespace rocket::str::message
 

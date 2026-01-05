@@ -295,7 +295,7 @@ logEnd() noexcept {
   } catch (...) {
     ROCKET_PROCESS_ERROR("Cannot log message");
   }
-  // After catching '...', we can safely pop from the stack
+  // After catching `...`, we can safely pop from the stack
   stack.pop_back();
 }
 

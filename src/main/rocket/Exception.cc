@@ -173,6 +173,16 @@ InvalidState::InvalidState(
     Base(str::message::exceptionBase(msg, sl)),
     Exception(msg, std::move(sl), std::move(st)) {}
 
+// `Overflow` -----------------------------------------------------------------------------------------------
+
+Overflow::Overflow(
+  const Type& type,
+  string_view msg,
+  optional<source_location>&& sl,
+  optional<stacktrace>&& st) :
+  Base(str::message::overflow(type, msg)),
+  Exception(msg, std::move(sl), std::move(st)) {}
+
 // Functions ------------------------------------------------------------------------------------------------
 
 void

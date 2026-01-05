@@ -33,8 +33,12 @@ iteratorAt(const Type& type, size_t pos, string_view msg) {
 }
 
 string
-overflow(const Type& type) {
-  return fmt::format("`{}` overflow", type);
+overflow(const Type& type, string_view msg) {
+  if (msg.empty()) {
+    return fmt::format("`{}` overflow", type);
+  } else {
+    return fmt::format("`{}` overflow: {}", type, msg);
+  }
 }
 
 } // namespace rocket::str::message

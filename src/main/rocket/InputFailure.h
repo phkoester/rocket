@@ -71,8 +71,7 @@ struct InputFailure : InvalidState {
       position_(position),
       ranges_(ranges) {}
 
-  /// @dtor
-  virtual ~InputFailure() = default;
+  virtual ~InputFailure() override {}
 
   /**
    * Returns the stored position.

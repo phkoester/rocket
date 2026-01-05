@@ -864,10 +864,11 @@ CodePointIterator<char32_t>::operator->() const {
 
 const CodePoint&
 CodePointIterator<char32_t>::operator[](difference_type index) const {
+  // XXX Numeric einsetzen
   if (index < 0) {
-    ROCKET_CHECK(index, pos_ + index < pos_, "{}", str::message::SIZE_T_OVERFLOW);
+    ROCKET_CHECK(index, pos_ + index < pos_, "{}", str::message::overflow(Type::of<size_t>()));
   } else if (index > 0) {
-    ROCKET_CHECK(index, pos_ + index > pos_, "{}", str::message::SIZE_T_OVERFLOW);
+    ROCKET_CHECK(index, pos_ + index > pos_, "{}", str::message::overflow(Type::of<size_t>()));
     ROCKET_CHECK(index, pos_ + index < size_, "{}", str::message::iteratorOutOfBounds(*this, pos_ + index));
   }
   return reinterpret_cast<const CodePoint&>(input_[pos_ + index]);
@@ -903,10 +904,11 @@ CodePointIterator<char32_t>::operator--(int) {
 
 CodePointIterator<char32_t>&
 CodePointIterator<char32_t>::operator+=(difference_type rhs) {
+  // XXX Numeric einsetzen
   if (rhs < 0)
     return operator-=(-rhs);
   else if (rhs > 0) {
-    ROCKET_CHECK(n, pos_ + rhs > pos_, "{}", str::message::SIZE_T_OVERFLOW);
+    ROCKET_CHECK(n, pos_ + rhs > pos_, "{}", str::message::overflow(Type::of<size_t>()));
     go(pos_ + rhs);
   }
   return *this;
@@ -914,10 +916,11 @@ CodePointIterator<char32_t>::operator+=(difference_type rhs) {
 
 CodePointIterator<char32_t>&
 CodePointIterator<char32_t>::operator-=(difference_type rhs) {
+  // XXX Numeric einsetzen
   if (rhs < 0)
     return operator+=(-rhs);
   else if (rhs > 0) {
-    ROCKET_CHECK(n, pos_ - rhs < pos_, "{}", str::message::SIZE_T_OVERFLOW);
+    ROCKET_CHECK(n, pos_ - rhs < pos_, "{}", str::message::overflow(Type::of<size_t>()));
     go(pos_ - rhs);
   }
   return *this;
@@ -925,6 +928,7 @@ CodePointIterator<char32_t>::operator-=(difference_type rhs) {
 
 bool
 CodePointIterator<char32_t>::decrement(difference_type n) {
+  // XXX Numeric einsetzen
   if (n < 0)
     return increment(-n);
   else if (n > 0) {
@@ -950,6 +954,7 @@ CodePointIterator<char32_t>::graphemeBoundary() const {
 
 bool
 CodePointIterator<char32_t>::increment(difference_type n) {
+  // XXX Numeric einsetzen
   if (n < 0)
     return decrement(-n);
   else if (n > 0) {

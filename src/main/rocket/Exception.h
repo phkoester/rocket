@@ -6,6 +6,7 @@
 
 #pragma once
 
+#include "rocket/Type.h"
 #include "rocket/nio/nio-fwd.h"
 
 #include <optional>
@@ -43,7 +44,8 @@ namespace rocket {
  * - and an optional stack trace.
  */
 struct Exception {
-  virtual ~Exception() = default;
+  /// @dtor
+  virtual ~Exception() {}
 
   /**
    * Returns the plain message of this exception, not including any source-location information.
@@ -113,7 +115,7 @@ struct InvalidArgument : std::invalid_argument, Exception {
       std::optional<std::source_location>&& sl = ROCKET_EXCEPTION_SL,
       std::optional<std::stacktrace>&& st = ROCKET_EXCEPTION_ST);
 
-  virtual ~InvalidArgument() = default;
+  virtual ~InvalidArgument() override {}
 };
 
 // `InvalidState` -------------------------------------------------------------------------------------------
@@ -137,7 +139,46 @@ struct InvalidState : std::runtime_error, Exception {
       std::optional<std::source_location>&& sl = ROCKET_EXCEPTION_SL,
       std::optional<std::stacktrace>&& st = ROCKET_EXCEPTION_ST);
 
-  virtual ~InvalidState() = default;
+  virtual ~InvalidState() override {}
+};
+
+// `Overflow` -----------------------------------------------------------------------------------------------
+
+/**
+ * An exception indicating a type overflow.
+ */
+struct Overflow : std::overflow_error, Exception {
+  /// @type_base
+  using Base = std::overflow_error;
+
+  /**
+   * @ctor
+   *
+   * @param type the type
+   * @param sl the source location
+   * @param st the stack trace
+   */
+  explicit Overflow(
+      const Type& type,
+      std::optional<std::source_location>&& sl = ROCKET_EXCEPTION_SL,
+      std::optional<std::stacktrace>&& st = ROCKET_EXCEPTION_ST) :
+      Overflow(type, "", std::move(sl), std::move(st)) {}
+
+  /**
+   * @ctor
+   *
+   * @param type the type
+   * @param msg additional message
+   * @param sl the source location
+   * @param st the stack trace
+   */
+  Overflow(
+    const Type& type,
+    std::string_view msg,
+    std::optional<std::source_location>&& sl = ROCKET_EXCEPTION_SL,
+    std::optional<std::stacktrace>&& st = ROCKET_EXCEPTION_ST);
+
+    virtual ~Overflow() override {}
 };
 
 // Functions ------------------------------------------------------------------------------------------------
