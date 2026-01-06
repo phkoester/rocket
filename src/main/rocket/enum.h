@@ -137,7 +137,7 @@
 #define ROCKET_ENUM_DEFINE__(ns, type, name, seq) \
     ROCKET_NS_BEGIN(ns); \
     ROCKET_ENUM_DEFINE_MAP__(type, name, seq); \
-    ROCKET_ENUM_DEFINE_OP_OUTPUT__(type, name) \
+    ROCKET_ENUM_DEFINE_OP_OUTPUT__(type, name); \
     ROCKET_NS_END(ns); \
     ROCKET_ENUM_DEFINE_ROCKET_ENUM__(ns, type, name)
 
