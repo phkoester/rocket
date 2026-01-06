@@ -8,7 +8,7 @@
 
 #include "rocket/rocket.h"
 
-#include <cstdint> // `uint8_t`, ...
+#include <cstdint> // `int8_t`, `uint8_t`, ...
 #include <type_traits>
 
 namespace rocket {
@@ -193,7 +193,17 @@ concept FloatingPoint = std::is_same_v<PurgeType<T>, typename Float<sizeof(Purge
 
 // `LargestType` --------------------------------------------------------------------------------------------
 
-/// The `LargestType` template.
+/**
+ * The `LargestType` template.
+ *
+ * Given a list of types, this template figures out the largest type.
+ *
+ * ## Examples
+ *
+ * ```
+ * static_assert(is_same_v<LargestType<char, int>::Type, int>);
+ * ```
+ */
 template <typename... Ts>
 struct LargestType;
 
@@ -203,7 +213,7 @@ struct LargestType<T> {
   using Type = T; ///< @type_alias
 };
 
-/// @spec{#rocket::LargestType, `T U Ts...`}
+/// @spec{#rocket::LargestType, `T\, U\, Ts...`}
 template<typename T, typename U, typename... Ts>
 struct LargestType<T, U, Ts...> {
   using Type = typename LargestType<

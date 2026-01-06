@@ -1,7 +1,7 @@
 /**
  * @file io.h
  *
- * I/O utilities.
+ * I/O stream utilities.
  */
 
 #pragma once

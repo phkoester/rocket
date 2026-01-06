@@ -1,7 +1,7 @@
 /**
  * @file rocket.h
  *
- * Rocket base header. Contains basic types and concepts.
+ * Rocket base header. Contains basic types and other declarations.
  *
  * Size in bytes of basic types on all supported target systems:
  *
@@ -37,9 +37,7 @@
 
 // No Rocket includes allowed here!
 
-#include <cmath> // `std::isnan`
 #include <iosfwd>
-#include <optional>
 
 // Macros ---------------------------------------------------------------------------------------------------
 

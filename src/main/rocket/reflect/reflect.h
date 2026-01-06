@@ -538,14 +538,18 @@ private:
 
 // `std::hash<VarRef>` --------------------------------------------------------------------------------------
 
+namespace std { // Doxygen demands this
+
 /// @spec_std_hash{#rocket::reflect::VarRef}
 template<typename T>
-struct std::hash<rocket::reflect::VarRef<T>> {
+struct hash<rocket::reflect::VarRef<T>> {
   /// @cond undocumented
 
   size_t operator()(const rocket::reflect::VarRef<T>& v) const { return v.hash(); }
 
   /// @endcond
 };
+
+} // namespace std
 
 // EOF

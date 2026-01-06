@@ -4,11 +4,7 @@
 
 #include "rocket-gtest/rocket-gtest.h"
 
-#include "rocket/Type.h"
-#include "rocket/format/std.h"
-#include "rocket/std.h"
 #include "rocket/reflect/reflect.h"
-#include "rocket/unicode/ConvertTo.h"
 
 #include "rocket-gtest/matcher/matcher.h"
 
