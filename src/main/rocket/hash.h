@@ -15,6 +15,22 @@
 namespace rocket {
 
 /**
+ * Combines two hash values.
+ *
+ * Taken from `boost::hash_combine`.
+ *
+ * @tparam T the type of the value
+ * @tparam Hash the hasher class
+ * @param seed the seed value, which is modified
+ * @param v the value to hash
+ */
+ template<typename T, typename Hash = std::hash<T>>
+ void
+ combineHash(size_t& seed, const T& v) {
+   seed = boost::hash_detail::hash_mix(seed + 0x9e3779b9 + Hash()(v));
+ }
+
+ /**
  * Generates a 32-bit hash value for the given 32-bit value.
  *
  * Taken from https://stackoverflow.com/questions/664014/.
@@ -44,22 +60,6 @@ hash64(uint64_t v) {
   v = (v ^ (v >> 27)) * UINT64_C(0x94d049bb133111eb);
   v = v ^ (v >> 31);
   return v;
-}
-
-/**
- * Combines two hash values.
- *
- * Taken from `boost::hash_combine`.
- *
- * @tparam T the type of the value
- * @tparam Hash the hasher class
- * @param seed the seed value, which is modified
- * @param v the value to hash
- */
-template<typename T, typename Hash = std::hash<T>>
-void
-hashCombine(size_t& seed, const T& v) {
-  seed = boost::hash_detail::hash_mix(seed + 0x9e3779b9 + Hash()(v));
 }
 
 /**

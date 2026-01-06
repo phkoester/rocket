@@ -96,9 +96,12 @@ private:
   const Lazy<size_t> hash_;
 };
 
+/// @op_output{#rocket::Type}
+std::ostream& operator<<(std::ostream& lhs, const Type& rhs);
+
 } // namespace rocket
 
-// Namespace `fmt` ------------------------------------------------------------------------------------------
+// `fmt::formatter<Type>` -----------------------------------------------------------------------------------
 
 /**
  * @spec_fmt_formatter{#rocket::Type}
@@ -132,28 +135,16 @@ private:
   fmt::formatter<basic_string_view<C>, C> underlying_;
 };
 
-namespace rocket {
-
-/// @op_output{#rocket::Type}
-inline std::ostream&
-operator<<(std::ostream& lhs, const Type& rhs) {
-  return lhs << fmt::format("{}", rhs);
-}
-
-} // namespace rocket
-
-// Namespace `std` ------------------------------------------------------------------------------------------
+// `std::hash<Type>` ----------------------------------------------------------------------------------------
 
 /// @spec_std_hash{#rocket::Type}
 template<>
 struct std::hash<rocket::Type> {
-  /**
-   * Returns a hash value for @p v.
-   *
-   * @param v the value to hash
-   * @return a hash value
-   */
+  /// @cond undocumented
+
   inline size_t operator()(const rocket::Type& v) const { return v.hash(); }
+
+  /// @endcond
 };
 
 // EOF

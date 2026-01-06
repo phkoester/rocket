@@ -108,6 +108,32 @@ add(Lhs lhs, Rhs rhs) {
 }
 
 /**
+ * Returns `true` if @p v is a quiet not-a-number.
+ *
+ * @tparam F the floating-point type
+ * @param v a floating-point value
+ * @return `true` if @p v is a quiet not-a-number
+ */
+template<typename F> requires FloatingPoint<F>
+constexpr bool
+quietNan(F v) {
+  return std::isnan(v) && not issignaling(v);
+}
+
+/**
+ * Returns `true` if @p v is a signaling not-a-number.
+ *
+ * @tparam F the floating-point type
+ * @param v a floating-point value
+ * @return `true` if @p v is a signaling not-a-number
+ */
+template<typename F> requires FloatingPoint<F>
+constexpr bool
+signalingNan(F v) {
+  return std::isnan(v) && issignaling(v);
+}
+
+/**
  * Subtracts two values and returns the result, checking the @p Result type for overflow.
  *
  * @tparam Result the result type

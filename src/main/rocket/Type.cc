@@ -39,6 +39,11 @@ Type::Type(const type_info& info) :
     index_(info),
     hash_([&] { return index_.hash_code(); }) {}
 
+ostream&
+operator<<(ostream& lhs, const Type& rhs) {
+  return lhs << fmt::format("{}", rhs);
+}
+
 } // namespace rocket
 
 // EOF

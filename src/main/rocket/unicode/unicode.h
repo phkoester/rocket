@@ -180,13 +180,11 @@ private:
   fmt::formatter<basic_string_view<C>, C> underlying_;
 };
 
-namespace std {
-
 // `std::hash<CodePoint>` -----------------------------------------------------------------------------------
 
 /// @spec_std_hash{#rocket::unicode::CodePoint}
 template<>
-struct hash<rocket::unicode::CodePoint> {
+struct std::hash<rocket::unicode::CodePoint> {
   /**
    * Returns a hash value for @p v.
    *
@@ -200,7 +198,7 @@ struct hash<rocket::unicode::CodePoint> {
 
 /// @spec_std_numeric_limits{#rocket::unicode::CodePoint}
 template<>
-struct numeric_limits<rocket::unicode::CodePoint> {
+struct std::numeric_limits<rocket::unicode::CodePoint> {
   /**
    * Returns the minimum code-point value, which is U+0000.
    *
@@ -215,8 +213,6 @@ struct numeric_limits<rocket::unicode::CodePoint> {
    */
   static consteval rocket::unicode::CodePoint max() { return 0x10ffffU; } // U+10FFFF (1,114,111)
 };
-
-} // namespace std
 
 namespace rocket::unicode {
 

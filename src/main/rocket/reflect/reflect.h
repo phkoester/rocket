@@ -191,7 +191,7 @@
       const auto& refs = ns::cls::name(); \
       using RefsType = ::rocket::PurgeType<decltype(refs)>; \
       size_t ret = tuple_size<RefsType>::value; \
-      apply([&](auto&&... arg) { (rocket::hashCombine(ret, arg.get(v)), ...); }, refs); \
+      apply([&](auto&&... arg) { (rocket::combineHash(ret, arg.get(v)), ...); }, refs); \
       return ret; \
     }
 
