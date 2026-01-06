@@ -46,10 +46,10 @@
         auto out = ctx.out(); \
         if (withType_) { \
           auto type = ::rocket::Type::of(v); \
-          detail::write<C>(out, ::rocket::unicode::ConvertTo<C>().apply(type.name())); \
+          out = ::fmt::detail::write<C>(out, ::rocket::unicode::ConvertTo<C>().apply(type.name())); \
         } \
-        ::rocket::reflect::internal::format<cls, C>(v, ctx, debug_, cls::_name()); \
-        return ctx.out(); \
+        out = ::rocket::reflect::internal::format<cls, C>(v, ctx, debug_, cls::_name()); \
+        return out; \
       } \
       \
       constexpr const C* \
@@ -166,7 +166,7 @@
 #define ROCKET_REFLECT_MEMBERS_DECLARE_FMT_FORMATTER(cls, name) ROCKET_REFLECT_MEMBERS_DECLARE_FMT_FORMATTER__(cls, name)
 
 /**
- * Provides all the necessary declarations in the global namespace for full Rocket interoperability.
+ * Provides all the declarations in the global namespace needed for full Rocket interoperability.
  *
  * @note This macro must be called in the global namespace, and prior to
  *     #ROCKERT_REFLECT_MEMBERS_DECLARE_LOCAL.
@@ -220,7 +220,7 @@
 #define ROCKET_REFLECT_MEMBERS_DECLARE_OP_OUTPUT(cls) ROCKET_REFLECT_MEMBERS_DECLARE_OP_OUTPUT__(cls)
 
 /**
- * Provides all the necessary declarations in the local namespace for full Rocket interoperability.
+ * Provides all the declarations in the local namespace needed for full Rocket interoperability.
  *
  * @note This macro must be called in the class's local namespace, and after
  *     #ROCKERT_REFLECT_MEMBERS_DECLARE_GLOBAL.
@@ -316,15 +316,15 @@ namespace internal {
 // Internal -------------------------------------------------------------------------------------------------
 
 template<typename T, typename C, size_t Index, typename FormatContext, typename Tuple>
-void
+constexpr FormatContext::iterator
 formatMemberRefImpl(const T& v, FormatContext& ctx, bool debug, const Tuple& refs) {
   using namespace fmt;
 
   // Write separator
   auto out = ctx.out();
   if constexpr (Index > 0) {
-    detail::write<C>(out, static_cast<C>(','));
-    detail::write<C>(out, static_cast<C>(' '));
+    out = detail::write<C>(out, static_cast<C>(','));
+    out = detail::write<C>(out, static_cast<C>(' '));
   }
 
   // Get ref at index
@@ -332,34 +332,36 @@ formatMemberRefImpl(const T& v, FormatContext& ctx, bool debug, const Tuple& ref
   static_assert(IsMemberRef<decltype(ref)>::value);
 
   // Write name
-  detail::write<C>(out, rocket::unicode::ConvertTo<C>().apply(ref.name()));
-  detail::write<C>(out, static_cast<C>('='));
+  out = detail::write<C>(out, rocket::unicode::ConvertTo<C>().apply(ref.name()));
+  out = detail::write<C>(out, static_cast<C>('='));
 
   // Write value
   auto&& value = ref.get(v);
-  using valueType = decltype(value);
-  fmt::formatter<std::remove_cvref_t<valueType>, C> underlying;
+  using ValueType = decltype(value);
+  fmt::formatter<std::remove_cvref_t<ValueType>, C> underlying;
   detail::maybe_set_debug_format(underlying, debug);
-  underlying.format(value, ctx);
+  ctx.advance_to(out);
+  out = underlying.format(value, ctx);
+  return out;
 }
 
 template<typename T, typename C, typename FormatContext, typename Tuple, size_t... Index>
-void
+constexpr FormatContext::iterator
 formatImpl(const T& v, FormatContext& ctx, bool debug, const Tuple& refs, std::index_sequence<Index...>) {
   using namespace fmt;
 
   // Write outer parentheses, inner members
   auto out = ctx.out();
-  detail::write<C>(out, static_cast<C>('('));
-  (..., formatMemberRefImpl<T, C, Index>(v, ctx, debug, refs));
-  detail::write<C>(out, static_cast<C>(')'));
+  out = detail::write<C>(out, static_cast<C>('('));
+  (..., (out = formatMemberRefImpl<T, C, Index>(v, ctx, debug, refs)));
+  return detail::write<C>(out, static_cast<C>(')'));
 }
 
 template<typename T, typename C, typename FormatContext, typename... Ref> requires
     (... && IsMemberRef<Ref>::value)
-void
+constexpr FormatContext::iterator
 format(const T& v, FormatContext& ctx, bool debug, const std::tuple<Ref...>& refs) {
-  formatImpl<T, C>(v, ctx, debug, refs, std::make_index_sequence<sizeof...(Ref)>());
+  return formatImpl<T, C>(v, ctx, debug, refs, std::make_index_sequence<sizeof...(Ref)>());
 }
 
 template<size_t Index, typename T, typename Tuple>
@@ -509,6 +511,7 @@ struct fmt::formatter<rocket::reflect::VarRef<T>, C> {
     auto out = ctx.out();
     out = detail::write<C>(out, rocket::unicode::ConvertTo<C>().apply(v.name()));
     out = detail::write<C>(out, static_cast<C>('='));
+    ctx.advance_to(out);
     out = underlying_.format(v.get(), ctx);
     return out;
   }

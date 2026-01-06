@@ -14,41 +14,26 @@ using namespace testing;
 
 enum MyEnum { fröb, fröber, fröberer, pörk, pörker, pörkerer };
 
-ROCKET_ENUM_DECLARE_LOCAL(MyEnum);
-ROCKET_ENUM_DECLARE_GLOBAL(MyEnum);
-
-ROCKET_ENUM_DEFINE_LOCAL(MyEnum, MyEnum, (fröb)(fröber)(fröberer)(pörk)(pörker)(pörkerer));
-ROCKET_ENUM_DEFINE_GLOBAL(, MyEnum, MyEnum);
+ROCKET_ENUM_DECLARE(, MyEnum, MyEnum);
+ROCKET_ENUM_DEFINE(, MyEnum, MyEnum, (fröb)(fröber)(fröberer)(pörk)(pörker)(pörkerer));
 
 // `MyEnumClass` --------------------------------------------------------------------------------------------
 
 enum class MyEnumClass { hürx, hürxer, hürxerer };
 
-ROCKET_ENUM_DECLARE_LOCAL(MyEnumClass);
-ROCKET_ENUM_DECLARE_GLOBAL(MyEnumClass);
-
-ROCKET_ENUM_DEFINE_LOCAL(MyEnumClass, MyEnumClass, (hürx)(hürxer)(hürxerer));
-ROCKET_ENUM_DEFINE_GLOBAL(, MyEnumClass, MyEnumClass);
+ROCKET_ENUM_DECLARE(, MyEnumClass, MyEnumClass);
+ROCKET_ENUM_DEFINE(, MyEnumClass, MyEnumClass, (hürx)(hürxer)(hürxerer));
 
 // `MyEnumInNamespace` --------------------------------------------------------------------------------------
 
-namespace my_namespace {
+namespace mynamespace {
 
 enum MyEnumInNamespace { red, green, blue };
 
-ROCKET_ENUM_DECLARE_LOCAL(MyEnumInNamespace);
-
 } // namespace my_namespace
 
-ROCKET_ENUM_DECLARE_GLOBAL(my_namespace::MyEnumInNamespace);
-
-namespace my_namespace {
-
-ROCKET_ENUM_DEFINE_LOCAL(MyEnumInNamespace, MyEnumInNamespace, (red)(green)(blue));
-
-} // namespace my_namespace
-
-ROCKET_ENUM_DEFINE_GLOBAL(my_namespace, MyEnumInNamespace, MyEnumInNamespace);
+ROCKET_ENUM_DECLARE(mynamespace, MyEnumInNamespace, MyEnumInNamespace);
+ROCKET_ENUM_DEFINE(mynamespace, MyEnumInNamespace, MyEnumInNamespace, (red)(green)(blue));
 
 // `TEST` ---------------------------------------------------------------------------------------------------
 

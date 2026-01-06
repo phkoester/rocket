@@ -9,10 +9,8 @@
 #include "rocket/enum-decl.h"
 
 #include "rocket/Exception.h"
-#include "rocket/UnorderedBimap.h"
 #include "rocket/Type.h"
 #include "rocket/str/message/message.h"
-#include "rocket/unicode/ConvertTo.h"
 
 #include <boost/preprocessor/stringize.hpp>
 #include <boost/preprocessor/seq/for_each.hpp>
@@ -21,8 +19,6 @@
 
 /// @cond undocumented
 
-// Local ....................................................................................................
-
 #define ROCKET_ENUM_DEFINE_MAP_ELEM__(r, data, elem) { data::elem, BOOST_PP_STRINGIZE(elem) },
 
 #define ROCKET_ENUM_DEFINE_MAP__(type, name, seq) \
@@ -30,32 +26,10 @@
       BOOST_PP_SEQ_FOR_EACH(ROCKET_ENUM_DEFINE_MAP_ELEM__, type, seq) \
     })
 
-#define ROCKET_ENUM_DEFINE_VALUES__(type, name) \
-    const auto name##Values__ = ::rocket::values<type, ::std::string_view>(name##Map__)
-
 #define ROCKET_ENUM_DEFINE_OP_OUTPUT__(type, name) \
     ::std::ostream& \
     operator<<(::std::ostream& lhs, type rhs) { \
-      return lhs << fmt::format("{}", rhs); \
-    }
-
-#define ROCKET_ENUM_DEFINE_LOCAL__(type, name, seq) \
-    ROCKET_ENUM_DEFINE_MAP__(type, name, seq); \
-    ROCKET_ENUM_DEFINE_VALUES__(type, name); \
-    ROCKET_ENUM_DEFINE_OP_OUTPUT__(type, name)
-
-// Global ...................................................................................................
-
-#define ROCKET_ENUM_DEFINE_FMT_FORMATTER__(ns, type, name) \
-    template<typename C> \
-    template<typename FormatContext> \
-    FormatContext::iterator \
-    fmt::formatter<ns::type, C>::format(ns::type v, FormatContext& ctx) const { \
-      if (auto it = ns::name##Map__.left.find(v); it != ns::name##Map__.left.end()) { \
-        return underlying_.format(::rocket::unicode::ConvertTo<C>().apply(it->second), ctx); \
-      } else { \
-        return detail::write<C>(ctx.out(), INVALID); \
-      } \
+      return lhs << ::fmt::format("{}", rhs); \
     }
 
 #define ROCKET_ENUM_DEFINE_ROCKET_ENUM__(ns, type, name) \
@@ -69,33 +43,26 @@
       } \
     }
 
-#define ROCKET_ENUM_DEFINE_GLOBAL__(ns, type, name) \
-    ROCKET_ENUM_DEFINE_FMT_FORMATTER__(ns, type, name); \
+#define ROCKET_ENUM_DEFINE__(ns, type, name, seq) \
+    ROCKET_NS_BEGIN(ns); \
+    ROCKET_ENUM_DEFINE_MAP__(type, name, seq); \
+    ROCKET_ENUM_DEFINE_OP_OUTPUT__(type, name) \
+    ROCKET_NS_END(ns); \
     ROCKET_ENUM_DEFINE_ROCKET_ENUM__(ns, type, name)
 
 /// @endcond
 
 /**
- * Provides definitions for the enum @p name needed for full Rocket interoperability.
+ * Provides all the definitions for the enum @p name needed for full Rocket interoperability.
  *
  * This macro must be called in the enum's local namespace.
- *
- * @param type the type of the enum, without namespace, e.g. `MyClass::MyEnum`
- * @param name the name to use for generated identifiers, e.g. `MyClass_MyEnum`
- * @param seq a sequence for the enum values, e.g. `(red)(green)(blue)`
- */
-#define ROCKET_ENUM_DEFINE_LOCAL(type, name, seq) ROCKET_ENUM_DEFINE_LOCAL__(type, name, seq)
-
-/**
- * Provides definitions for the enum @p name needed for full Rocket interoperability.
- *
- * This macro must be called in the global namespace.
  *
  * @param ns the namespace of the enum, e.g. `mynamespace`. May be left empty if the enum is in the global
  *     namespace
  * @param type the type of the enum, without namespace, e.g. `MyClass::MyEnum`
  * @param name the name to use for generated identifiers, e.g. `MyClass_MyEnum`
+ * @param seq a sequence for the enum values, e.g. `(red)(green)(blue)`
  */
-#define ROCKET_ENUM_DEFINE_GLOBAL(ns, type, name) ROCKET_ENUM_DEFINE_GLOBAL__(ns, type, name)
+#define ROCKET_ENUM_DEFINE(ns, type, name, seq) ROCKET_ENUM_DEFINE__(ns, type, name, seq)
 
 // EOF

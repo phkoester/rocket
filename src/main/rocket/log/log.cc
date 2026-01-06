@@ -238,13 +238,7 @@ setLogLevel(string_view id, string_view value) {
 
 // `LogLevel` -----------------------------------------------------------------------------------------------
 
-namespace rocket::log {
-
-ROCKET_ENUM_DEFINE_LOCAL(LogLevel, LogLevel, (none)(error)(warn)(info)(debug)(trace));
-
-} // namespace rocket::log
-
-ROCKET_ENUM_DEFINE_GLOBAL(rocket::log, LogLevel, LogLevel);
+ROCKET_ENUM_DEFINE(rocket::log, LogLevel, LogLevel, (none)(error)(warn)(info)(debug)(trace));
 
 namespace rocket::log {
 

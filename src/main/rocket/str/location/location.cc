@@ -16,15 +16,9 @@
 using namespace rocket;
 using namespace std;
 
-namespace rocket::str::location {
+// `Position::Type` -----------------------------------------------------------------------------------------
 
-// `Position` -----------------------------------------------------------------------------------------------
-
-ROCKET_ENUM_DEFINE_LOCAL(Position::Type, Position_Type, (note)(warning)(error));
-
-} // namespace rocket::str::location
-
-ROCKET_ENUM_DEFINE_GLOBAL(rocket::str::location, Position::Type, Position_Type);
+ROCKET_ENUM_DEFINE(rocket::str::location, Position::Type, Position_Type, (note)(warning)(error));
 
 namespace rocket::str::location {
 

@@ -57,13 +57,10 @@ struct Position {
   std::optional<std::string> caption;
 };
 
-/// @enum_declare{#rocket::str::location::Position::Type}
-ROCKET_ENUM_DECLARE_LOCAL(Position::Type);
-
 } // namespace rocket::str::location
 
 /// @enum_declare{#rocket::str::location::Position::Type}
-ROCKET_ENUM_DECLARE_GLOBAL(rocket::str::location::Position::Type);
+ROCKET_ENUM_DECLARE(rocket::str::location, Position::Type, Position_Type);
 
 namespace rocket::str::location {
 

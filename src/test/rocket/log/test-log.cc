@@ -31,4 +31,9 @@ TEST(log, logNDEBUG) {
 #undef NDEBUG
 #include "rocket/log/log.h"
 
+TEST(log, LogLevelFormat) {
+  EXPECT_EQ(fmt::format("{}", LogLevel::none), "none");
+  EXPECT_EQ(fmt::format(U"{}", LogLevel::none), U"none");
+}
+
 // EOF

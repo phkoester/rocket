@@ -39,10 +39,9 @@ struct formatter<Exception, C> {
   template<typename FormatContext>
   FormatContext::iterator
   format(const Exception& v, FormatContext& ctx) const{
-    auto out = ctx.out();
-
     // If requested, append type
 
+    auto out = ctx.out();
     if (withType_) {
       auto type = rocket::Type::of(v);
       if constexpr (std::is_same_v<C, char>) {
@@ -69,14 +68,12 @@ struct formatter<Exception, C> {
         out = detail::write<C>(out, rocket::unicode::ConvertTo<C>().apply(s));
       }
     }
-
     return out;
   }
 
   constexpr const C*
   parse(parse_context<C>& ctx) {
     auto it = ctx.begin(), end = ctx.end();
-
     if (it != end && *it == '?') {
       debug_ = true;
       ++it;
@@ -85,7 +82,6 @@ struct formatter<Exception, C> {
       withType_ = true;
       ++it;
     }
-
     return it;
   }
 
@@ -196,6 +192,7 @@ struct formatter<Variant, C> {
 
         formatter<std::remove_cvref_t<decltype(v)>, C> underlying;
         detail::maybe_set_debug_format(underlying, debug_);
+        ctx.advance_to(out);
         out = underlying.format(v, ctx);
       }, value);
       return out;

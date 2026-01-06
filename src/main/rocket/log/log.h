@@ -39,13 +39,10 @@ enum class LogLevel {
   trace = 5 ///< Log level `trace`.
 };
 
-/// @enum_declare{LogLevel}
-ROCKET_ENUM_DECLARE_LOCAL(LogLevel);
-
 } // namespace rocket::log
 
-/// @enum_declare{LogLevel}
-ROCKET_ENUM_DECLARE_GLOBAL(rocket::log::LogLevel);
+/// @enum_declare{#rocket::log::LogLevel}
+ROCKET_ENUM_DECLARE(rocket::log, LogLevel, LogLevel);
 
 namespace rocket::log {
 

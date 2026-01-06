@@ -6,6 +6,7 @@
 
 #pragma once
 
+#include <boost/preprocessor/control/if.hpp>
 #include <boost/preprocessor/facilities/check_empty.hpp>
 #include <boost/preprocessor/logical/not.hpp>
 #include <boost/preprocessor/punctuation/comma_if.hpp>
@@ -53,6 +54,16 @@
  *
  * Usage: `ROCKET_MUTEX_LOCK(mutex)`
  */
-#define ROCKET_MUTEX_LOCK(mutex) auto BOOST_PP_SEQ_CAT((rocketLock)(__LINE__)(__)) = ::std::scoped_lock(mutex)
+#define ROCKET_MUTEX_LOCK(v) auto BOOST_PP_SEQ_CAT((rocketLock)(__LINE__)(__)) = ::std::scoped_lock(v)
+
+/**
+ * If `ns` is empty, expands to nothing. Otherwise, expands to `namespace ns {`.
+ */
+#define ROCKET_NS_BEGIN(ns) BOOST_PP_IF(BOOST_PP_CHECK_EMPTY(ns), , namespace ns {)
+
+/**
+ * If `ns` is empty, expands to nothing. Otherwise, expands to `}`.
+ */
+#define ROCKET_NS_END(ns) BOOST_PP_IF(BOOST_PP_CHECK_EMPTY(ns), , })
 
 // EOF

@@ -163,7 +163,7 @@ struct StringConvert<F> {
 };
 
 /// @spec_rocket_StringConvert{enums}
-template<typename E> requires std::is_enum_v<E>
+template<typename E> requires Enum<E>::value
 struct StringConvert<E> {
   using Type = E; ///< @type_alias
 

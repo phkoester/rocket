@@ -6,10 +6,21 @@
 #include "rocket/cl/cl.h"
 #include "rocket/log/log.h"
 
+#include <boost/preprocessor/control/if.hpp>
+#include <boost/preprocessor/facilities/check_empty.hpp>
+
 using namespace rocket;
 using namespace std;
 
 ROCKET_LOG_DEFINE(toy);
+
+ROCKET_NS_BEGIN();
+void foo();
+ROCKET_NS_END();
+
+ROCKET_NS_BEGIN(myns);
+void foo();
+ROCKET_NS_END(myns);
 
 // Local functions ------------------------------------------------------------------------------------------
 
