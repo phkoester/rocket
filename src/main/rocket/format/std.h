@@ -135,7 +135,7 @@ private:
   static constexpr basic_string_view<C> NONE =
       detail::string_literal<C, '<', 'n', 'o', 'n', 'e', '>'> {};
 
-  formatter<std::remove_cvref_t<T>, C> underlying_;
+  formatter<rocket::PurgeType<T>, C> underlying_;
 };
 
 // `fmt::formatter<std::monostate>` -------------------------------------------------------------------------
@@ -190,7 +190,7 @@ struct formatter<Variant, C> {
           out = format_to(out, U"{}:", value.index());
         }
 
-        formatter<std::remove_cvref_t<decltype(v)>, C> underlying;
+        formatter<rocket::PurgeType<decltype(v)>, C> underlying;
         detail::maybe_set_debug_format(underlying, debug_);
         ctx.advance_to(out);
         out = underlying.format(v, ctx);

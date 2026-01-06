@@ -12,7 +12,7 @@
 #ifndef ROCKET_LOG_H
 #define ROCKET_LOG_H
 
-#include "rocket/enum-decl.h"
+#include "rocket/enum.h"
 #include "rocket/macro.h"
 #ifdef NDEBUG
 #include "rocket/rocket.h" // `rocket::nop()`

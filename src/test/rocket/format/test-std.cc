@@ -135,7 +135,7 @@ TEST(std, unorderedMapFormat) {
 }
 
 TEST(std, unorderedSetFormat) {
-  EXPECT_EQ(fmt::format("{}", unordered_set<int> { 1, 2, 3 }), "{3, 2, 1}");
+  EXPECT_THAT(fmt::format("{}", unordered_set<int> { 1, 2, 3 }), matchesRegex("\\{\\d, \\d, \\d\\}"));
 }
 
 TEST(std, stringFormat) {

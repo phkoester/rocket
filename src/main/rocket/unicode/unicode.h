@@ -12,6 +12,7 @@
 #include "rocket/nio/nio-fwd.h"
 
 #include <cstdint>
+#include <functional>
 #include <limits>
 #include <optional>
 #include <string>
@@ -135,9 +136,6 @@ static_assert(sizeof(CodePoint) == sizeof(uint32_t) && sizeof(uint32_t) == sizeo
 
 /// @op_output{#rocket::unicode::CodePoint}
 std::ostream& operator<<(std::ostream& lhs, CodePoint rhs);
-
-/// @fn_hash_value{#rocket::unicode::CodePoint}
-inline size_t hash_value(CodePoint v) { return v.hash(); }
 
 /// @fn_read{#rocket::unicode::CodePoint}
 size_t read(nio::Source& in, CodePoint& v);

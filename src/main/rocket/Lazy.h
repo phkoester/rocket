@@ -28,9 +28,9 @@ struct Lazy {
   /**
    * @ctor
    *
-   * @param f the evaluation function
+   * @param fn the evaluation function
    */
-  inline explicit Lazy(std::function<T()>&& f) : f_(std::move(f)) {}
+  inline explicit Lazy(const std::function<T()>& fn) : fn_(fn) {}
 
   /**
    * If needed, evaluates, then returns the value.
@@ -40,7 +40,7 @@ struct Lazy {
   inline const T&
   get() const {
     if (not v_)
-      v_ = f_();
+      v_ = fn_();
     return *v_;
   }
 
@@ -51,7 +51,7 @@ struct Lazy {
 
 private:
 
-  const std::function<T()> f_;
+  const std::function<T()> fn_;
   mutable std::optional<T> v_;
 };
 
@@ -69,9 +69,9 @@ struct ThreadSafeLazy {
   /**
    * @ctor
    *
-   * @param f the evaluation function
+   * @param fn the evaluation function
    */
-  inline explicit ThreadSafeLazy(std::function<T()>&& f) : f_(std::move(f)) {}
+  inline explicit ThreadSafeLazy(const std::function<T()>& fn) : fn_(fn) {}
 
   /**
    * If needed, evaluates, then returns the value.
@@ -82,7 +82,7 @@ struct ThreadSafeLazy {
   get() const {
     ROCKET_MUTEX_LOCK(mutex_);
     if (not v_)
-      v_ = f_();
+      v_ = fn_();
     return *v_;
   }
 
@@ -97,7 +97,7 @@ struct ThreadSafeLazy {
 
 private:
 
-  const std::function<T()> f_;
+  const std::function<T()> fn_;
   mutable std::optional<T> v_;
   mutable std::mutex mutex_; // Guards `v_`
 };

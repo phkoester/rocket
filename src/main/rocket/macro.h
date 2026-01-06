@@ -25,14 +25,21 @@
     __VA_ARGS__
 
 /**
- * Generates a unique identifier.
+ * Generates a file-unique identifier.
  */
-#define ROCKET_ID BOOST_PP_SEQ_CAT((rocketId)(__LINE__)(__))
+#define ROCKET_ID() BOOST_PP_SEQ_CAT((rocketId)(__LINE__)(__))
+
+/**
+ * If @p v is empty, expands to @p t, otherwise to @p f.
+ */
+#define ROCKET_IF_EMPTY(v, t, f) BOOST_PP_IF(BOOST_PP_CHECK_EMPTY(v), t, f)
 
 /**
  * This macro executes a given function as a static initializer.
  *
  * If curly braces pose a problem, enclose the parameter in parentheses.
+ *
+ * @param fn the function to execute as a static initializer
  *
  * ## Examples
  *
@@ -41,10 +48,10 @@
  * ROCKET_INIT(([&] { x = 1; }));
  * ```
  */
-#define ROCKET_INIT(f) \
+#define ROCKET_INIT(fn) \
     namespace { \
       struct BOOST_PP_SEQ_CAT((RocketInit)(__LINE__)(__)) { \
-        BOOST_PP_SEQ_CAT((RocketInit)(__LINE__)(__))() { f(); } \
+        BOOST_PP_SEQ_CAT((RocketInit)(__LINE__)(__))() { fn(); } \
       }; \
       BOOST_PP_SEQ_CAT((RocketInit)(__LINE__)(__)) BOOST_PP_SEQ_CAT((rocketInit)(__LINE__)(__)); \
     }
@@ -59,11 +66,11 @@
 /**
  * If `ns` is empty, expands to nothing. Otherwise, expands to `namespace ns {`.
  */
-#define ROCKET_NS_BEGIN(ns) BOOST_PP_IF(BOOST_PP_CHECK_EMPTY(ns), , namespace ns {)
+#define ROCKET_NS_BEGIN(ns) ROCKET_IF_EMPTY(ns, , namespace ns {)
 
 /**
  * If `ns` is empty, expands to nothing. Otherwise, expands to `}`.
  */
-#define ROCKET_NS_END(ns) BOOST_PP_IF(BOOST_PP_CHECK_EMPTY(ns), , })
+#define ROCKET_NS_END(ns) ROCKET_IF_EMPTY(ns, , })
 
 // EOF

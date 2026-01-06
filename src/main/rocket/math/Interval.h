@@ -477,7 +477,7 @@ struct fmt::formatter<rocket::math::IntervalImpl<T, Left, Right>, C> {
 
 private:
 
-  fmt::formatter<std::remove_cvref_t<T>, C> underlying_;
+  fmt::formatter<rocket::PurgeType<T>, C> underlying_;
 };
 
 namespace rocket::math {

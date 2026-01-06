@@ -70,9 +70,9 @@ namespace rocket {
 Process process;
 
 void
-Process::atExit(std::function<void()> f) { // cppcheck-suppress constParameterPointer
+Process::atExit(std::function<void()> fn) { // cppcheck-suppress constParameterPointer
   ROCKET_MUTEX_LOCK(onExitFnsMutex);
-  onExitFns.push_back(f);
+  onExitFns.push_back(fn);
 }
 
 void

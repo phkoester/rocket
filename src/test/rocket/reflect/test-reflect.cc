@@ -6,6 +6,7 @@
 
 #include "rocket/Type.h"
 #include "rocket/format/std.h"
+#include "rocket/std.h"
 #include "rocket/reflect/reflect.h"
 #include "rocket/unicode/ConvertTo.h"
 
@@ -38,8 +39,8 @@ public:
   ROCKET_REFLECT_MEMBERS(MyStruct, index, (ä)(b)(c));
 };
 
-ROCKET_REFLECT_MEMBERS_DECLARE_GLOBAL(MyStruct, index);
-ROCKET_REFLECT_MEMBERS_DECLARE_LOCAL(MyStruct, index);
+ROCKET_REFLECT_MEMBERS_DECLARE(, MyStruct, index);
+ROCKET_REFLECT_MEMBERS_DEFINE(, MyStruct, index);
 
 // `TEST` ---------------------------------------------------------------------------------------------------
 
@@ -102,6 +103,21 @@ TEST(reflect, MyStructFormat) {
   EXPECT_EQ(fmt::format("{:?t}", m), "MyStruct(ä=42, b=\"rocket\", c=true)");
 }
 
+TEST(reflect, MyStructHash) {
+  MyStruct m1(42, "rocket", true);
+  MyStruct m2(42, "rocket", true);
+  MyStruct m3(43, "rocket", true);
+
+  auto hash1 = std::hash<MyStruct>()(m1);
+  auto hash2 = std::hash<MyStruct>()(m2);
+  auto hash3 = std::hash<MyStruct>()(m3);
+
+  EXPECT_NE(hash1, 0);
+  EXPECT_EQ(hash2, hash1);
+  EXPECT_NE(hash1, hash3);
+  EXPECT_NE(hash3, 0);
+}
+
 TEST(reflect, VarRef) {
   int ä1 = 2;
   string b1 = "hi";
@@ -130,6 +146,32 @@ TEST(reflect, VarRef) {
 
   get<0>(vars1).get() = 3;
   EXPECT_EQ(ä1, 3);
+}
+
+TEST(reflect, VarRefOpOutput) {
+  int i = 2;
+  long l = 3;
+  auto vars = ROCKET_REFLECT_VARS((i)(l));
+
+  auto v0 = get<0>(vars);
+  ostringstream os;
+  os << v0;
+  EXPECT_EQ(os.str(), "i=2");
+}
+
+TEST(reflect, VarRefHash) {
+  int i1 = 2;
+  long l1 = 3;
+  auto vars1 = ROCKET_REFLECT_VARS((i1)(l1));
+  size_t hash1 = std::hash<decltype(vars1)>()(vars1);
+
+  int i2 = 2;
+  long l2 = 3;
+  auto vars2 = ROCKET_REFLECT_VARS((i2)(l2));
+  size_t hash2 = std::hash<decltype(vars2)>()(vars2);
+
+  EXPECT_NE(hash1, 0);
+  EXPECT_EQ(hash2, hash1);
 }
 
 // EOF

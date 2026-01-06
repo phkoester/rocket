@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include "rocket/enum-decl.h"
+#include "rocket/enum.h"
 #include "rocket/nio/nio-fwd.h"
 #include "rocket/str/Range.h"
 

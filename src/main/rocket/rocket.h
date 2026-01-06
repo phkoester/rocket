@@ -93,14 +93,22 @@ namespace rocket {
 // Constants ------------------------------------------------------------------------------------------------
 
 /**
- * The default precision for floating-point I/O.
- */
-constexpr int DEFAULT_PRECISION = 20;
-
-/**
  * A constant for "not a position".
  */
 constexpr size_t NPOS = -1L;
+
+// `Purge` --------------------------------------------------------------------------------------------------
+
+/// An alias for `std::remove_cvref<T>`.
+template<typename T>
+using Purge = std::remove_cvref<T>;
+
+/// An alias for `Purge<T>::type`.
+template<typename T>
+using PurgeType = Purge<T>::type;
+
+static_assert(std::is_same_v<PurgeType<const volatile int>, int>);
+static_assert(std::is_same_v<PurgeType<const std::true_type&>, std::true_type>);
 
 // `Char` ---------------------------------------------------------------------------------------------------
 
@@ -249,7 +257,7 @@ template<> struct IsCharacterImpl<Char<4>::Type> : std::true_type {};
 /**
  * IsCharacter template.
  */
-template<typename C> struct IsCharacter : internal::IsCharacterImpl<std::decay_t<C>>::type {};
+template<typename C> struct IsCharacter : internal::IsCharacterImpl<PurgeType<C>>::type {};
 
 /**
  * A basic concept for types that are onsidered characters.
@@ -290,7 +298,7 @@ template<> struct IsIntegerImpl<Uint<16>::Type> : std::true_type {};
  *
  * @tparam I the type to test
  */
-template<typename I> struct IsInteger : internal::IsIntegerImpl<std::decay_t<I>>::type {};
+template<typename I> struct IsInteger : internal::IsIntegerImpl<PurgeType<I>>::type {};
 
 /**
  * A basic concept for types that are considered integers.
@@ -321,7 +329,7 @@ template<> struct IsFloatingPointImpl<Float<16>::Type> : std::true_type {};
  *
  * @tparam F the type to test
  */
-template<typename F> struct IsFloatingPoint : internal::IsFloatingPointImpl<std::decay_t<F>>::type {};
+template<typename F> struct IsFloatingPoint : internal::IsFloatingPointImpl<PurgeType<F>>::type {};
 
 /**
  * A basic concept for types that are considered floating-points.

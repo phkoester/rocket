@@ -23,28 +23,28 @@ struct Guard {
   /**
    * @ctor
    *
-   * @param f the function to execute upon scope exit
+   * @param fn the function to execute upon scope exit
    */
-  inline explicit Guard(std::function<void()>&& f) : f_(std::move(f)) {}
+  inline explicit Guard(const std::function<void()>& fn) : fn_(fn) {}
 
   /**
    * @dtor
    *
-   * This destructor executes the function `f` that was passed to the constructor.
+   * This destructor executes the function that was passed to the constructor.
    */
-  inline ~Guard() noexcept { f_(); }
+  inline ~Guard() noexcept { fn_(); }
 
 private:
 
-  std::function<void()> f_;
+  std::function<void()> fn_;
 };
 
 /**
  * Makes a #rocket::Guard instance implicitly.
  *
- * @param f the function to execute upon scope exit
+ * @param fn the function to execute upon scope exit
  */
-#define ROCKET_GUARD(f) ::rocket::Guard ROCKET_ID(f)
+#define ROCKET_GUARD(fn) ::rocket::Guard ROCKET_ID()(fn)
 
 // `ValueGuard` ---------------------------------------------------------------------------------------------
 
@@ -89,7 +89,7 @@ private:
  * @param ref a reference to the variable that is to be assigned
  * @param newValue the new value to assign immediately
  */
-#define ROCKET_VALUE_GUARD(ref, newValue) ::rocket::ValueGuard ROCKET_ID(ref, newValue)
+#define ROCKET_VALUE_GUARD(ref, newValue) ::rocket::ValueGuard ROCKET_ID()(ref, newValue)
 
 } // namespace rocket
 

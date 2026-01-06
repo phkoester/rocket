@@ -96,12 +96,6 @@ private:
   const Lazy<size_t> hash_;
 };
 
-/// @fn_hash_value{#rocket::Type}
-inline size_t
-hash_value(const Type& v) {
-  return v.hash();
-}
-
 } // namespace rocket
 
 // Namespace `fmt` ------------------------------------------------------------------------------------------
@@ -140,7 +134,7 @@ private:
 
 namespace rocket {
 
-/// @op_output{#Type}
+/// @op_output{#rocket::Type}
 inline std::ostream&
 operator<<(std::ostream& lhs, const Type& rhs) {
   return lhs << fmt::format("{}", rhs);

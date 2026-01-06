@@ -108,9 +108,9 @@ struct Process {
    *
    * This function may be called even if the process isn't initialized yet.
    *
-   * @param f the function to register
+   * @param fn the function to register
    */
-  void atExit(std::function<void()> f);
+  void atExit(std::function<void()> fn);
 
   /**
    * Returns the classic locale. This is the locale as returned by `std::locale::classic`.

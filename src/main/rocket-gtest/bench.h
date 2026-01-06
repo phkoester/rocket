@@ -13,17 +13,17 @@
 // Macros ---------------------------------------------------------------------------------------------------
 
 /**
- * Executes the function @p f @p n times and measures the excution time.
+ * Executes the function @p fn @p n times and measures the excution time.
  *
  * @param n the number of times to run the benchmark
- * @param f the benchmark function
+ * @param fn the benchmark function
  */
-#define ROCKET_BENCH(n, f) { \
+#define ROCKET_BENCH(n, fn) { \
   using namespace std::chrono; \
   \
   auto t1 = steady_clock::now(); \
   for (size_t i__ = 0; i__ < n; ++i__) { \
-    f(); \
+    fn(); \
   } \
   auto t2 = steady_clock::now(); \
   auto ms = duration_cast<milliseconds>(t2 - t1); \

@@ -6,21 +6,13 @@
 #include "rocket/cl/cl.h"
 #include "rocket/log/log.h"
 
-#include <boost/preprocessor/control/if.hpp>
-#include <boost/preprocessor/facilities/check_empty.hpp>
+#include <iostream>
+#include <vector>
 
 using namespace rocket;
 using namespace std;
 
 ROCKET_LOG_DEFINE(toy);
-
-ROCKET_NS_BEGIN();
-void foo();
-ROCKET_NS_END();
-
-ROCKET_NS_BEGIN(myns);
-void foo();
-ROCKET_NS_END(myns);
 
 // Local functions ------------------------------------------------------------------------------------------
 
@@ -29,6 +21,12 @@ namespace {
 void
 toy() {
   ROCKET_LOG(toy);
+
+  auto i = 3;
+  cout << "hash: " << std::hash<decltype(i)>()(i) << endl;
+
+  // auto v = vector<int> { 1, 2, 3 };
+  // cout << "hash: " << std::hash<decltype(v)>()(v) << endl;
 
   ROCKET_LOG_TRACE("Hey {}", "there");
 }
