@@ -28,13 +28,13 @@ static_assert(std::is_same_v<PurgeType<const std::true_type&>, std::true_type>);
 
 // `Char` ---------------------------------------------------------------------------------------------------
 
-template<int N> struct Char : std::false_type {};
+template<int N> struct Char;
 
 /**
  * 1-byte character: `char`.
  */
 template<>
-struct Char<1> : std::true_type {
+struct Char<1> {
   using Type = char; ///< @type_alias
 };
 
@@ -42,19 +42,19 @@ struct Char<1> : std::true_type {
  * 4-byte character: `char32_t`.
  */
 template<>
-struct Char<4> : std::true_type {
+struct Char<4> {
   using Type = char32_t; ///< @type_alias
 };
 
 // `Int` ----------------------------------------------------------------------------------------------------
 
-template<int N> struct Int : std::false_type {};
+template<int N> struct Int;
 
 /**
  * 1-byte signed integer: `int8_t`.
  */
 template<>
-struct Int<1> : std::true_type {
+struct Int<1> {
   using Type = int8_t; ///< @type_alias
 };
 
@@ -62,7 +62,7 @@ struct Int<1> : std::true_type {
  * 2-byte signed integer: `int16_t`.
  */
 template<>
-struct Int<2> : std::true_type {
+struct Int<2> {
   using Type = int16_t; ///< @type_alias
 };
 
@@ -70,7 +70,7 @@ struct Int<2> : std::true_type {
  * 4-byte signed integer: `int32_t`.
  */
 template<>
-struct Int<4> : std::true_type {
+struct Int<4> {
   using Type = int32_t; ///< @type_alias
 };
 
@@ -78,7 +78,7 @@ struct Int<4> : std::true_type {
  * 8-byte signed integer: `int64_t`.
  */
 template<>
-struct Int<8> : std::true_type {
+struct Int<8> {
   using Type = int64_t; ///< @type_alias
 };
 
@@ -86,19 +86,19 @@ struct Int<8> : std::true_type {
  * 16-byte signed integer: `int128_t`.
  */
 template<>
-struct Int<16> : std::true_type {
+struct Int<16> {
   using Type = int128_t; ///< @type_alias
 };
 
 // `Uint` ---------------------------------------------------------------------------------------------------
 
-template<int N> struct Uint : std::false_type {};
+template<int N> struct Uint;
 
 /**
  * 1-byte unsigned integer: `uint8_t`.
  */
 template<>
-struct Uint<1> : std::true_type {
+struct Uint<1> {
   using Type = uint8_t; ///< @type_alias
 };
 
@@ -106,7 +106,7 @@ struct Uint<1> : std::true_type {
  * 2-byte unsigned integer: `uint16_t`.
  */
 template<>
-struct Uint<2> : std::true_type {
+struct Uint<2> {
   using Type = uint16_t; ///< @type_alias
 };
 
@@ -114,7 +114,7 @@ struct Uint<2> : std::true_type {
  * 4-byte unsigned integer: `uint32_t`.
  */
 template<>
-struct Uint<4> : std::true_type {
+struct Uint<4> {
   using Type = uint32_t; ///< @type_alias
 };
 
@@ -122,7 +122,7 @@ struct Uint<4> : std::true_type {
  * 8-byte unsigned integer: `uint64_t`.
  */
 template<>
-struct Uint<8> : std::true_type {
+struct Uint<8> {
   using Type = uint64_t; ///< @type_alias
 };
 
@@ -130,13 +130,13 @@ struct Uint<8> : std::true_type {
  * 16-byte unsigned integer: `uint128_t`.
  */
 template<>
-struct Uint<16> : std::true_type {
+struct Uint<16> {
   using Type = uint128_t; ///< @type_alias
 };
 
 // `Float` --------------------------------------------------------------------------------------------------
 
-template<int N> struct Float : std::false_type {};
+template<int N> struct Float;
 
 /**
  * 4-byte floating point: `float`.
@@ -144,7 +144,7 @@ template<int N> struct Float : std::false_type {};
  * @todo Find a portable way to express a four-byte floating point.
  */
 template<>
-struct Float<4> : std::true_type {
+struct Float<4> {
   using Type = float; ///< @type_alias
 };
 
@@ -156,7 +156,7 @@ static_assert(sizeof(Float<4>::Type) == 4);
  * @todo Find a portable way to express an eight-byte floating point.
  */
 template<>
-struct Float<8> : std::true_type {
+struct Float<8> {
   using Type = double; ///< @type_alias
 };
 
@@ -168,7 +168,7 @@ static_assert(sizeof(Float<8>::Type) == 8);
  * @todo Find a portable way to express a sixteen-byte floating point.
  */
 template<>
-struct Float<16> : std::true_type {
+struct Float<16> {
   using Type = long double; ///< @type_alias
 };
 
@@ -177,19 +177,19 @@ static_assert(sizeof(Float<16>::Type) == 16);
 // Concepts -------------------------------------------------------------------------------------------------
 
 template<typename T>
-concept Character = Char<sizeof(PurgeType<T>)>::value;
+concept Character = std::is_same_v<PurgeType<T>, typename Char<sizeof(PurgeType<T>)>::Type>;
 
 template<typename T>
-concept SignedInteger = Int<sizeof(PurgeType<T>)>::value;
+concept SignedInteger = std::is_same_v<PurgeType<T>, typename Int<sizeof(PurgeType<T>)>::Type>;
 
 template<typename T>
-concept UnsignedInteger = Uint<sizeof(PurgeType<T>)>::value;
+concept UnsignedInteger = std::is_same_v<PurgeType<T>, typename Uint<sizeof(PurgeType<T>)>::Type>;
 
 template<typename T>
 concept Integer = SignedInteger<T> || UnsignedInteger<T>;
 
 template<typename T>
-concept FloatingPoint = Float<sizeof(PurgeType<T>)>::value;
+concept FloatingPoint = std::is_same_v<PurgeType<T>, typename Float<sizeof(PurgeType<T>)>::Type>;
 
 // `LargestType` --------------------------------------------------------------------------------------------
 

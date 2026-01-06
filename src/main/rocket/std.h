@@ -4,6 +4,8 @@
  * Additional standard library support.
  */
 
+#pragma once
+
 #include "rocket/TypeTraits.h"
 #include "rocket/hash.h"
 

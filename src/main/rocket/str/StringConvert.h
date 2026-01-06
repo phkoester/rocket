@@ -7,6 +7,7 @@
 #pragma once
 
 #include "rocket/Exception.h"
+#include "rocket/TypeTraits.h"
 #include "rocket/enum.h"
 #include "rocket/io/io.h"
 #include "rocket/str/message/message.h"
