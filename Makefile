@@ -9,7 +9,6 @@ export SYSTEM_INCLUDE_DIRS := \
     $(GAIA_FMT_DIR)/include \
     $(GAIA_GOOGLETEST_DIR)/googlemock/include \
     $(GAIA_GOOGLETEST_DIR)/googletest/include \
-    $(GAIA_LIBUNICODE_DIR)/src \
     $(GAIA_SCNLIB_DIR)/include
 
 # `build` must be the first target and build everything, including benches and tests
