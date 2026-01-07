@@ -443,7 +443,7 @@ std::string utf32To8(std::u32string_view s);
  * - the Rust crate [`unicode-display-width`](https://crates.io/crates/unicode-display-width).
  *
  * @param cps code points that make up a grapheme
- * @return a width in the range [0,2].
+ * @return a width in the range @f$[0,2]@f$.
  */
 uint8_t width(const CodePoints& cps);
 
@@ -467,7 +467,7 @@ namespace utf8 {
  * If @p c is a continuation byte, this function returns 0.
  *
  * @param c the first byte of a UTF-8 byte sequence
- * @return a value in the range [0,4]. A return value of 0 indicates a UTF-8 continuation byte
+ * @return a value in the range @f$[0,4]@f$. A return value of 0 indicates a UTF-8 continuation byte
  */
 uint8_t codePointSize(char c);
 

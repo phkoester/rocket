@@ -281,8 +281,9 @@ width(const CodePoints& cps) {
   uint8_t ret = 0;
   for (auto cp : cps) {
     // From `unicode-display-width`
-    if (cp == 0xfe0fU)
+    if (cp == 0xfe0fU) {
       return 2;
+    }
     int8_t cw = cp.width();
     if (cw > 0) // Ignore nonpositive values
       ret = max(static_cast<uint8_t>(cw), ret);

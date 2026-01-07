@@ -37,11 +37,13 @@ include $(GAIA_DIR)/src/main/make/executable.mk
 
 # `rocket` --------------------------------------------------------------------------------------------------
 
+# https://www.unicode.org/Public/17.0.0/ucd/EastAsianWidth.txt
 $(BUILD_DIR)/main/rocket/unicode/EastAsianWidth.cc: src/main/rocket/unicode/EastAsianWidth.txt
 	@echo ">" $@
 	@mkdir -p $(dir $@)
 	@python3 -c 'from gaia.unicode import *; parse_east_asian_width("$<", "$@")'
 
+# https://www.unicode.org/Public/17.0.0/ucd/emoji/emoji-data.txt
 $(BUILD_DIR)/main/rocket/unicode/emoji-data.cc: src/main/rocket/unicode/emoji-data.txt
 	@echo ">" $@
 	@mkdir -p $(dir $@)
