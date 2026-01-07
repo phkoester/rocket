@@ -119,6 +119,32 @@ struct StringConvert<I> {
   }
 };
 
+/// @spec_rocket_StringConvert{enums}
+template<typename E> requires Enum<E>::value
+struct StringConvert<E> {
+  using Type = E; ///< @type_alias
+
+  /**
+   * Converts @p v to a string.
+   *
+   * @param v the value to convert
+   * @return a string
+   */
+  std::string toString(Type v) const noexcept { return fmt::format("{}", v); }
+
+  /**
+   * Converts @p s to an enum value.
+   *
+   * @param s the string to convert
+   * @return an enum value
+   * @throw #rocket::InvalidState if @p s cannot be parsed
+   */
+  Type
+  toType(std::string_view s) const {
+    return Enum<Type>::toType(s);
+  }
+};
+
 /// @spec_rocket_StringConvert{#rocket::FloatingPoint}
 template<typename F> requires FloatingPoint<F>
 struct StringConvert<F> {
@@ -160,32 +186,6 @@ struct StringConvert<F> {
       throw InvalidState(message::cannotParseAs(s, rocket::Type::of<Type>()));
     }
     return ret;
-  }
-};
-
-/// @spec_rocket_StringConvert{enums}
-template<typename E> requires Enum<E>::value
-struct StringConvert<E> {
-  using Type = E; ///< @type_alias
-
-  /**
-   * Converts @p v to a string.
-   *
-   * @param v the value to convert
-   * @return a string
-   */
-  std::string toString(Type v) const noexcept { return fmt::format("{}", v); }
-
-  /**
-   * Converts @p s to an enum value.
-   *
-   * @param s the string to convert
-   * @return an enum value
-   * @throw #rocket::InvalidState if @p s cannot be parsed
-   */
-  Type
-  toType(std::string_view s) const {
-    return Enum<Type>::toType(s);
   }
 };
 

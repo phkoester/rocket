@@ -621,8 +621,8 @@ namespace rocket::unicode {
 
 namespace internal {
 
-thread_local CodePoint cp;
-thread_local Grapheme gr;
+thread_local CodePoint threadLocalCp;
+thread_local Grapheme threadLocalGr;
 
 } // namespace internal
 
@@ -646,16 +646,16 @@ const CodePoint&
 CodePointIterator<char>::operator*() const {
   ROCKET_EXPECT(not end(), "{}", str::message::iteratorOutOfBounds(*this, pos_));
   unicodelib::utf8::decode_codepoint(
-      &input_[pos_], cpSize_, reinterpret_cast<char32_t&>(internal::cp));
-  return internal::cp;
+      &input_[pos_], cpSize_, reinterpret_cast<char32_t&>(internal::threadLocalCp));
+  return internal::threadLocalCp;
 }
 
 const CodePoint*
 CodePointIterator<char>::operator->() const {
   ROCKET_EXPECT(not end(), "{}", str::message::iteratorOutOfBounds(*this, pos_));
   unicodelib::utf8::decode_codepoint(
-      &input_[pos_], cpSize_, reinterpret_cast<char32_t&>(internal::cp));
-  return &internal::cp;
+      &input_[pos_], cpSize_, reinterpret_cast<char32_t&>(internal::threadLocalCp));
+  return &internal::threadLocalCp;
 }
 
 const CodePoint&
@@ -663,7 +663,7 @@ CodePointIterator<char>::operator[](difference_type index) const {
   auto it(*this);
   it += index;
   *it;
-  return internal::cp;
+  return internal::threadLocalCp;
 }
 
 CodePointIterator<char>&

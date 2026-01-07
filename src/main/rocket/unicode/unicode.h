@@ -138,7 +138,7 @@ static_assert(sizeof(CodePoint) == sizeof(uint32_t) && sizeof(uint32_t) == sizeo
 std::ostream& operator<<(std::ostream& lhs, CodePoint rhs);
 
 /// @fn_read{#rocket::unicode::CodePoint}
-size_t read(nio::Source& in, CodePoint& v);
+size_t read(nio::Source& in, CodePoint& out);
 
 } // namespace rocket::unicode
 
@@ -362,7 +362,7 @@ struct Grapheme {
 std::ostream& operator<<(std::ostream& lhs, const Grapheme& rhs);
 
 /// @fn_read{#rocket::unicode::Grapheme}
-size_t read(nio::Source& in, Grapheme& v);
+size_t read(nio::Source& in, Grapheme& out);
 
 } // namespace rocket::unicode
 

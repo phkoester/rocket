@@ -131,7 +131,7 @@ operator<<(ostream& lhs, CodePoint rhs) {
 }
 
 size_t
-read(nio::Source& in, CodePoint& v) {
+read(nio::Source& in, CodePoint& out) {
   auto pos = in.tell();
 
   string buf;
@@ -169,7 +169,7 @@ read(nio::Source& in, CodePoint& v) {
     return 0;
   }
   else {
-    v = buf32[0];
+    out = buf32[0];
   }
 
   return in.tell() - pos;
@@ -215,7 +215,7 @@ operator<<(ostream& lhs, const Grapheme& rhs) {
 }
 
 size_t
-read(nio::Source& in, Grapheme& v) {
+read(nio::Source& in, Grapheme& out) {
   size_t pos1 = in.tell();
 
   // Read first code point
@@ -235,7 +235,7 @@ read(nio::Source& in, Grapheme& v) {
     size_t pos2 = in.tell();
     if (read(in, cp) == 0) {
       // EOF
-      v = Grapheme(input);
+      out = Grapheme(input);
       return in.tell() - pos1;
     }
 
@@ -244,7 +244,7 @@ read(nio::Source& in, Grapheme& v) {
     input.push_back(cp);
     if (CodePointIterator<char32_t>(input, input.size() - 1).graphemeBoundary()) {
       in.seek(pos2);
-      v = Grapheme(input.substr(0, input.size() - 1));
+      out = Grapheme(input.substr(0, input.size() - 1));
       return in.tell() - pos1;
     }
   }

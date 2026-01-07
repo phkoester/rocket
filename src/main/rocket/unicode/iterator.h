@@ -16,7 +16,7 @@ namespace rocket::unicode {
 
 namespace internal {
 
-extern thread_local Grapheme gr;
+extern thread_local Grapheme threadLocalGr;
 
 } // namespace internal
 
@@ -544,8 +544,8 @@ struct GraphemeIterator {
     CodePoints cps;
     cps.reserve(grSize_);
     copy(it_, it_ + grSize_, back_inserter(cps));
-    internal::gr = Grapheme(cps);
-    return internal::gr;
+    internal::threadLocalGr = Grapheme(cps);
+    return internal::threadLocalGr;
   }
 
   /**
@@ -559,8 +559,8 @@ struct GraphemeIterator {
     CodePoints cps;
     cps.reserve(grSize_);
     copy(it_, it_ + grSize_, back_inserter(cps));
-    internal::gr = Grapheme(cps);
-    return &internal::gr;
+    internal::threadLocalGr = Grapheme(cps);
+    return &internal::threadLocalGr;
   }
 
   /**
@@ -573,7 +573,7 @@ struct GraphemeIterator {
     auto it(*this);
     it += index;
     *it;
-    return internal::gr;
+    return internal::threadLocalGr;
   }
 
   /// @member_op_eq
