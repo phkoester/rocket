@@ -11,11 +11,11 @@
 #include "rocket/format/format.h"
 
 /// @attention This requires modifying `<fmt/std.h>`!
-#define FMT_STD_NO_EXCEPTION
+#define FMT_STD_NO_EXCEPTION_FORMATTER
 /// @attention This requires modifying `<fmt/std.h>`!
-#define FMT_STD_NO_OPTIONAL
+#define FMT_STD_NO_OPTIONAL_FORMATTER
 /// @attention This requires modifying `<fmt/std.h>`!
-#define FMT_STD_NO_VARIANT
+#define FMT_STD_NO_VARIANT_FORMATTER
 
 #include <fmt/ranges.h>
 #include <fmt/std.h>

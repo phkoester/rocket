@@ -68,7 +68,7 @@ struct InputFailure : InvalidState {
       position_(position),
       ranges_(ranges) {}
 
-  virtual ~InputFailure() override {}
+  ~InputFailure() override {}
 
   /**
    * Returns the stored position.

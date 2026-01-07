@@ -337,11 +337,11 @@ struct IntervalImpl {
    * Returns the size of this interval.
    *
    * If either #lower or #upper are null, then the size of the interval is null, meaning "infinite".
-   * Otherwise, the size is calculated as #upper - #lower.
+   * Otherwise, the size is calculated as @f$upper -lower@f$.
    *
    * @attention A size of 0 doesn't necessarily mean an interval is empty. For instance, the closed interval
-   * [2,2] has a size of 0 and is nonempty. On the other hand, an empty interval always has a size of 0. To
-   * check if an interval is empty, use the #empty member function.
+   * @f$[2,2]@f$ has a size of 0 and is nonempty. On the other hand, an empty interval always has a size of
+   * 0. To check if an interval is empty, use the #empty member function.
    *
    * @return the size of this interval
    */

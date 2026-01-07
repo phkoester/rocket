@@ -101,7 +101,7 @@ protected:
  * Sink base class.
  */
 struct Sink : Io {
-  virtual ~Sink() override {}
+  ~Sink() override {}
 
   /**
    * Flushes the sink.
@@ -247,22 +247,21 @@ protected:
    */
   explicit BufferedSink(Sink& underlying, size_t size = DEFAULT_BUFFER_SIZE);
 
-  /// @dtor
-  virtual ~BufferedSink() override;
+  ~BufferedSink() override;
 
-  virtual int close() override;
+  int close() override;
 
-  virtual int error() const override { return underlying_.error(); } // cppcheck-suppress uselessOverride
+  int error() const override { return underlying_.error(); } // cppcheck-suppress uselessOverride
 
-  virtual int fd() override;
+  int fd() override;
 
-  virtual int flush() override;
+  int flush() override;
 
-  virtual bool good() const override { return underlying_.good(); } // cppcheck-suppress uselessOverride
+  bool good() const override { return underlying_.good(); } // cppcheck-suppress uselessOverride
 
-  virtual bool open() const override { return underlying_.open(); } // cppcheck-suppress uselessOverride
+  bool open() const override { return underlying_.open(); } // cppcheck-suppress uselessOverride
 
-  virtual size_t write(std::string_view in) override;
+  size_t write(std::string_view in) override;
 
 ROCKET_TESTING_PRIVATE:
 
@@ -320,16 +319,15 @@ struct FileSink : Sink {
    */
   explicit FileSink(const std::string& path, const Params& params = { .append=false, .closeOnDestroy=true });
 
-  /// @dtor
-  virtual ~FileSink() override;
+  ~FileSink() override;
 
-  virtual int close() override;
+  int close() override;
 
-  virtual int fd() override;
+  int fd() override;
 
-  virtual int flush() override;
+  int flush() override;
 
-  virtual size_t write(std::string_view in) override;
+  size_t write(std::string_view in) override;
 
 ROCKET_TESTING_PRIVATE:
 
@@ -343,15 +341,15 @@ ROCKET_TESTING_PRIVATE:
  * A null sink that never writes anything.
  */
 struct NullSink : Sink {
-  virtual ~NullSink() override;
+  ~NullSink() override;
 
-  virtual int close() override;
+  int close() override;
 
-  virtual int fd() override;
+  int fd() override;
 
-  virtual int flush() override;
+  int flush() override;
 
-  virtual size_t write(std::string_view in) override;
+  size_t write(std::string_view in) override;
 };
 
 // `SpanSink` -----------------------------------------------------------------------------------------------
@@ -367,15 +365,15 @@ struct SpanSink : Sink {
    */
   explicit SpanSink(std::span<char> out) : out_(out) {}
 
-  virtual ~SpanSink() override;
+  ~SpanSink() override;
 
-  virtual int close() override;
+  int close() override;
 
-  virtual int fd() override { return -1; }
+  int fd() override { return -1; }
 
-  virtual int flush() override;
+  int flush() override;
 
-  virtual size_t write(std::string_view in) override;
+  size_t write(std::string_view in) override;
 
 private:
 
@@ -399,15 +397,15 @@ struct StreamSink : Sink {
    */
   explicit StreamSink(std::ostream& os) : os_(os) {}
 
-  virtual ~StreamSink() override;
+  ~StreamSink() override;
 
-  virtual int close() override;
+  int close() override;
 
-  virtual int fd() override;
+  int fd() override;
 
-  virtual int flush() override;
+  int flush() override;
 
-  virtual size_t write(std::string_view in) override;
+  size_t write(std::string_view in) override;
 
 private:
 
@@ -435,13 +433,13 @@ struct StringSink : Sink {
    */
   explicit StringSink(std::string& out) : out(&out) {}
 
-  virtual ~StringSink() override;
+  ~StringSink() override;
 
-  virtual int close() override;
+  int close() override;
 
-  virtual int fd() override { return -1; }
+  int fd() override { return -1; }
 
-  virtual int flush() override;
+  int flush() override;
 
   /**
    * Returns the managed string.
@@ -451,7 +449,7 @@ struct StringSink : Sink {
    */
   std::string str() const;
 
-  virtual size_t write(std::string_view in) override;
+  size_t write(std::string_view in) override;
 
 private:
 
@@ -476,7 +474,7 @@ enum class SeekMode {
  * Source base class.
  */
 struct Source : Io {
-  virtual ~Source() override {}
+  ~Source() override {}
 
   /**
    * Reads all characters from a source into string.
@@ -558,23 +556,23 @@ struct BufferedSource : Source {
    */
    explicit BufferedSource(Source& underlying, size_t size = DEFAULT_BUFFER_SIZE);
 
-  virtual ~BufferedSource() override;
+  ~BufferedSource() override;
 
-  virtual int close() override;
+  int close() override;
 
-  virtual int error() const override { return underlying_.error(); } // cppcheck-suppress uselessOverride
+  int error() const override { return underlying_.error(); } // cppcheck-suppress uselessOverride
 
-  virtual int fd() override;
+  int fd() override;
 
-  virtual bool good() const override { return underlying_.good(); } // cppcheck-suppress uselessOverride
+  bool good() const override { return underlying_.good(); } // cppcheck-suppress uselessOverride
 
-  virtual bool open() const override { return underlying_.open(); } // cppcheck-suppress uselessOverride
+  bool open() const override { return underlying_.open(); } // cppcheck-suppress uselessOverride
 
-  virtual size_t read(std::span<char> out) override;
+  size_t read(std::span<char> out) override;
 
-  virtual int seek(Offset offset, SeekMode mode = SeekMode::beg) override;
+  int seek(Offset offset, SeekMode mode = SeekMode::beg) override;
 
-  virtual Position tell() override;
+  Position tell() override;
 
 ROCKET_TESTING_PRIVATE:
 
@@ -632,17 +630,17 @@ struct FileSource : Source {
    */
   explicit FileSource(const std::string& path, const Params& params = { .closeOnDestroy=true });
 
-  virtual ~FileSource() override;
+  ~FileSource() override;
 
-  virtual int close() override;
+  int close() override;
 
-  virtual int fd() override;
+  int fd() override;
 
-  virtual size_t read(std::span<char> out) override;
+  size_t read(std::span<char> out) override;
 
-  virtual int seek(Offset offset, SeekMode mode = SeekMode::beg) override;
+  int seek(Offset offset, SeekMode mode = SeekMode::beg) override;
 
-  virtual Position tell() override;
+  Position tell() override;
 
 ROCKET_TESTING_PRIVATE:
 
@@ -656,17 +654,17 @@ ROCKET_TESTING_PRIVATE:
  * A null source that never reads anything.
  */
  struct NullSource : Source {
-  virtual ~NullSource() override;
+  ~NullSource() override;
 
-  virtual int close() override;
+  int close() override;
 
-  virtual int fd() override { return -1; }
+  int fd() override { return -1; }
 
-  virtual size_t read(std::span<char> out) override;
+  size_t read(std::span<char> out) override;
 
-  virtual int seek(Offset offset, SeekMode mode = SeekMode::beg) override;
+  int seek(Offset offset, SeekMode mode = SeekMode::beg) override;
 
-  virtual Position tell() override;
+  Position tell() override;
 };
 
 // `StreamSource` -------------------------------------------------------------------------------------------
@@ -685,17 +683,17 @@ struct StreamSource : Source {
    */
   explicit StreamSource(std::istream& is) : is_(is) {}
 
-  virtual ~StreamSource() override;
+  ~StreamSource() override;
 
-  virtual int close() override;
+  int close() override;
 
-  virtual int fd() override;
+  int fd() override;
 
-  virtual size_t read(std::span<char> out) override;
+  size_t read(std::span<char> out) override;
 
-  virtual int seek(Offset offset, SeekMode mode = SeekMode::beg) override;
+  int seek(Offset offset, SeekMode mode = SeekMode::beg) override;
 
-  virtual Position tell() override;
+  Position tell() override;
 
 private:
 
@@ -717,17 +715,17 @@ struct StringSource : Source {
    */
   explicit StringSource(std::string_view in) : in_(in) {}
 
-  virtual ~StringSource() override;
+  ~StringSource() override;
 
-  virtual int close() override;
+  int close() override;
 
-  virtual int fd() override { return -1; }
+  int fd() override { return -1; }
 
-  virtual size_t read(std::span<char> out) override;
+  size_t read(std::span<char> out) override;
 
-  virtual int seek(Offset offset, SeekMode mode = SeekMode::beg) override;
+  int seek(Offset offset, SeekMode mode = SeekMode::beg) override;
 
-  virtual Position tell() override;
+  Position tell() override;
 
 private:
 

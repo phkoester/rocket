@@ -115,7 +115,7 @@ struct InvalidArgument : Exception, std::invalid_argument {
       std::optional<std::source_location>&& sl = ROCKET_EXCEPTION_SL,
       std::optional<std::stacktrace>&& st = ROCKET_EXCEPTION_ST);
 
-  virtual ~InvalidArgument() override {}
+  ~InvalidArgument() override {}
 };
 
 // `InvalidState` -------------------------------------------------------------------------------------------
@@ -139,7 +139,7 @@ struct InvalidState : Exception, std::runtime_error {
       std::optional<std::source_location>&& sl = ROCKET_EXCEPTION_SL,
       std::optional<std::stacktrace>&& st = ROCKET_EXCEPTION_ST);
 
-  virtual ~InvalidState() override {}
+  ~InvalidState() override {}
 };
 
 // `Overflow` -----------------------------------------------------------------------------------------------
@@ -178,7 +178,7 @@ struct Overflow : Exception, std::overflow_error {
     std::optional<std::source_location>&& sl = ROCKET_EXCEPTION_SL,
     std::optional<std::stacktrace>&& st = ROCKET_EXCEPTION_ST);
 
-    virtual ~Overflow() override {}
+    ~Overflow() override {}
 };
 
 // Functions ------------------------------------------------------------------------------------------------
