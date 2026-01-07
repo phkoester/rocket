@@ -26,15 +26,6 @@ namespace rocket::str::message {
 std::string cannotParseAs(std::string_view input, const Type& type);
 
 /**
- * Makes a message to be passed to the #rocket::Exception base class.
- *
- * @param msg the exception message
- * @param sl the source location
- * @return a message
- */
-std::string exceptionBase(std::string_view msg, const std::optional<std::source_location>& sl);
-
-/**
  * Makes a message for an iterator.
  *
  * @param type the type of the iterator
@@ -82,6 +73,15 @@ iteratorOutOfBounds(const It& it, size_t pos) {
  * @return a message
  */
 std::string overflow(const Type& type, std::string_view msg = "");
+
+/**
+ * If available, prepends a source location to a message.
+ *
+ * @param msg a message
+ * @param sl the source location, or null if not available
+ * @return a message
+ */
+std::string withSourceLocation(std::string_view msg, const std::optional<std::source_location>& sl);
 
 } // namespace rocket::str::message
 

@@ -161,8 +161,8 @@ InvalidArgument::InvalidArgument(
     string_view msg,
     optional<source_location>&& sl,
     optional<stacktrace>&& st) :
-    Base(str::message::exceptionBase(fmt::format("Parameter `{}`: {}", name, msg), sl)),
-    Exception(msg, std::move(sl), std::move(st)) {}
+    Exception(fmt::format("Parameter `{}`: {}", name, msg), std::move(sl), std::move(st)),
+    Base(str::message::withSourceLocation(Exception::message(), Exception::sourceLocation())) {}
 
 // `InvalidState` -------------------------------------------------------------------------------------------
 
@@ -170,8 +170,8 @@ InvalidState::InvalidState(
     string_view msg,
     optional<source_location>&& sl,
     optional<stacktrace>&& st) :
-    Base(str::message::exceptionBase(msg, sl)),
-    Exception(msg, std::move(sl), std::move(st)) {}
+    Exception(msg, std::move(sl), std::move(st)),
+    Base(str::message::withSourceLocation(Exception::message(), Exception::sourceLocation())) {}
 
 // `Overflow` -----------------------------------------------------------------------------------------------
 
@@ -180,8 +180,8 @@ Overflow::Overflow(
   string_view msg,
   optional<source_location>&& sl,
   optional<stacktrace>&& st) :
-  Base(str::message::overflow(type, msg)),
-  Exception(msg, std::move(sl), std::move(st)) {}
+  Exception(str::message::overflow(type, msg), std::move(sl), std::move(st)),
+  Base(str::message::withSourceLocation(Exception::message(), Exception::sourceLocation())) {}
 
 // Functions ------------------------------------------------------------------------------------------------
 

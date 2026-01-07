@@ -17,9 +17,6 @@ namespace rocket {
  * Instances of this class are thrown when reading a string input fails.
  */
 struct InputFailure : InvalidState {
-  /// @type_base
-  using Base = InvalidState;
-
   /**
    * @ctor
    *
@@ -67,7 +64,7 @@ struct InputFailure : InvalidState {
       std::string_view msg,
       std::optional<std::source_location>&& sl = ROCKET_EXCEPTION_SL,
       std::optional<std::stacktrace>&& st = ROCKET_EXCEPTION_ST) :
-      Base(msg, std::move(sl), std::move(st)),
+      InvalidState(msg, std::move(sl), std::move(st)),
       position_(position),
       ranges_(ranges) {}
 

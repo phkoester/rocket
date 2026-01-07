@@ -18,16 +18,6 @@ cannotParseAs(string_view input, const Type& type) {
 }
 
 string
-exceptionBase(string_view msg, const optional<source_location>& sl) {
-  nio::StringSink out;
-  if (sl) {
-    out.print("{}:{}: ", sl->file_name(), sl->line());
-  }
-  out.write(msg);
-  return out.str();
-}
-
-string
 iteratorAt(const Type& type, size_t pos, string_view msg) {
   return fmt::format("`{}` at position {} {}", type, pos, msg);
 }
@@ -39,6 +29,16 @@ overflow(const Type& type, string_view msg) {
   } else {
     return fmt::format("`{}` overflow: {}", type, msg);
   }
+}
+
+string
+withSourceLocation(string_view msg, const optional<source_location>& sl) {
+  nio::StringSink out;
+  if (sl) {
+    out.print("{}:{}: ", sl->file_name(), sl->line());
+  }
+  out.write(msg);
+  return out.str();
 }
 
 } // namespace rocket::str::message

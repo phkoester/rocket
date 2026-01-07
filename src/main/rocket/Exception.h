@@ -97,7 +97,7 @@ private:
 /**
  * An exception indicating an invalid argument.
  */
-struct InvalidArgument : std::invalid_argument, Exception {
+struct InvalidArgument : Exception, std::invalid_argument {
   /// @type_base
   using Base = std::invalid_argument;
 
@@ -123,7 +123,7 @@ struct InvalidArgument : std::invalid_argument, Exception {
 /**
  * An exception indicating an invalid state.
  */
-struct InvalidState : std::runtime_error, Exception {
+struct InvalidState : Exception, std::runtime_error {
   /// @type_base
   using Base = std::runtime_error;
 
@@ -147,7 +147,7 @@ struct InvalidState : std::runtime_error, Exception {
 /**
  * An exception indicating a type overflow.
  */
-struct Overflow : std::overflow_error, Exception {
+struct Overflow : Exception, std::overflow_error {
   /// @type_base
   using Base = std::overflow_error;
 
