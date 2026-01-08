@@ -252,7 +252,7 @@ init() {
   process.atExit([] {
     ROCKET_MUTEX_LOCK(outMutex);
     out.get().flush();
-  });
+  }, true);
 }
 
 LogLevel

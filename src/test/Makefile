@@ -80,7 +80,7 @@ include $(GAIA_DIR)/src/main/make/test-executable.mk
 
 NAME        := test-rocket-3rdparty-scnlib
 CC_FILES    := test/rocket/3rdparty/test-scnlib.cc
-LIB_FILES   := $(SCNLIB_LIB_DIR)/libscn.a
+LIB_FILES   := $(LIB_DIR)/libscn$(G).a
 SHARED_LIBS := $(call shared-lib-name,rocket,$(ROCKET_VERSION))
 include $(GAIA_DIR)/src/main/make/test-executable.mk
 

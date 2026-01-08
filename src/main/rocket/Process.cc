@@ -4,10 +4,13 @@
 
 #include "Process.h"
 
+#include "rocket/Guard.h"
 #include "rocket/assert.h"
 #include "rocket/log/log.h"
 #include "rocket/str/str.h"
 #include "rocket/system/system.h"
+
+#include <iostream> // XXX
 
 using namespace rocket;
 using namespace std;
@@ -16,10 +19,28 @@ namespace {
 
 // Local variables ------------------------------------------------------------------------------------------
 
-vector<function<void()>> onExitFns;
+vector<pair<function<void()>, bool>> onExitFns;
 mutex onExitFnsMutex;
 
 // Local functions ------------------------------------------------------------------------------------------
+
+void
+callExitFns(bool onTerminate) {
+  ROCKET_MUTEX_LOCK(onExitFnsMutex);
+  ROCKET_GUARD([] { onExitFns.clear(); });
+
+  for (auto it = onExitFns.rbegin(); it != onExitFns.rend(); ++it) {
+    const auto& [fn, callOnTerminate] = *it;
+    if (not onTerminate || callOnTerminate) {
+      try {
+        fn();
+      } catch (...) {
+        nio::stderr.write("While running at-exit function: ");
+        printException(nio::stderr, current_exception());
+      }
+    }
+  }
+}
 
 #ifdef GAIA_TARGET_OS_LINUX
 
@@ -39,21 +60,18 @@ invocationShortName() {
 
 void
 onExit() {
-  ROCKET_MUTEX_LOCK(onExitFnsMutex);
-  for (auto& fn : onExitFns) {
-    fn();
-  }
-  onExitFns.clear();
+  callExitFns(false);
 }
 
 [[noreturn]] void
 onTerminate() {
-  onExit();
+  callExitFns(true);
 
   try {
     nio::stderr.println("{}: fatal error: Terminate handler called", process.name());
-    if (auto ptr = current_exception())
+    if (auto ptr = current_exception()) {
       printException(nio::stderr, ptr);
+    }
     nio::stderr.writeln("Aborting");
   } catch (...) {
     ROCKET_PROCESS_ERROR("`onTerminate` failed");
@@ -67,12 +85,14 @@ namespace rocket {
 
 // `Process` ------------------------------------------------------------------------------------------------
 
-Process process;
+// A little trickery to keep the ctor private
+Process makeProcess__() { return Process(); }
+Process process = makeProcess__();
 
 void
-Process::atExit(std::function<void()> fn) { // cppcheck-suppress constParameterPointer
+Process::atExit(std::function<void()> fn, bool callOnTerminate) {
   ROCKET_MUTEX_LOCK(onExitFnsMutex);
-  onExitFns.push_back(fn);
+  onExitFns.push_back({ fn, callOnTerminate });
 }
 
 void

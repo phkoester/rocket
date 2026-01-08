@@ -33,7 +33,7 @@ tempPath(const char* file) {
 
   process.atExit([=] {
     remove(ret);
-  });
+  }, true);
 
   return ret;
 }

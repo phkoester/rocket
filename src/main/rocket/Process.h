@@ -65,6 +65,8 @@ constexpr int EXIT_SERIOUS_FAILURE = 2;
 /**
  * A central Rocket class to be used in `main`.
  *
+ * You don't ever create a `Process` object. To access the singleton, use #rocket::process.
+ *
  * ## Examples
  *
  * A very basic Rocket program may look like this:
@@ -75,23 +77,18 @@ constexpr int EXIT_SERIOUS_FAILURE = 2;
  * #include <rocket/nio/nio.h>
  *
  * using namespace rocket;
- * using namespace std;
  *
  * int
  * main(int argc, char** argv) {
+ *   process.init(argc, argv, "my-program");
+ *   cl::CommandLine cl;
  *   try {
- *     process.init(argc, argv, "my-program");
- *     cl::CommandLine cl;
- *     try {
- *       cl.parse(process.args());
- *     } catch (const exception& ex) {
- *       cl.handleException(ex, nio::stderr);
- *     }
- *     nio::stdout.println("This is {}", process.name());
- *     process.exit(EXIT_SUCCESS);
- *   } catch (...) {
- *     terminate();
+ *     cl.parse(process.args());
+ *   } catch (const exception& ex) {
+ *     cl.handleException(ex, nio::stderr);
  *   }
+ *   nio::stdout.println("This is {}", process.name());
+ *   process.exit(EXIT_SUCCESS);
  * }
  * ```
  */
@@ -109,8 +106,9 @@ struct Process {
    * This function may be called even if the process isn't initialized yet.
    *
    * @param fn the function to register
+   * @param callOnTerminate whether to call the function even on abnormal termination
    */
-  void atExit(std::function<void()> fn);
+  void atExit(std::function<void()> fn, bool callOnTerminate = false);
 
   /**
    * Returns the classic locale. This is the locale as returned by `std::locale::classic`.
@@ -238,6 +236,10 @@ struct Process {
   }
 
 private:
+
+  Process() {}
+
+  friend Process makeProcess__();
 
   int argc_ = 0;
   char** argv_ = nullptr;

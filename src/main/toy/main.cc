@@ -22,12 +22,6 @@ void
 toy() {
   ROCKET_LOG(toy);
 
-  auto i = 3;
-  cout << "hash: " << std::hash<decltype(i)>()(i) << endl;
-
-  // auto v = vector<int> { 1, 2, 3 };
-  // cout << "hash: " << std::hash<decltype(v)>()(v) << endl;
-
   ROCKET_LOG_TRACE("Hey {}", "there");
 }
 
@@ -35,34 +29,45 @@ toy() {
 
 // `main` ---------------------------------------------------------------------------------------------------
 
+void
+myExit() {
+  cout << "myExit" << endl;
+  // throw InvalidState("Oopsers!");
+}
+
+void
+myTerminate() {
+  cout << "myTerminate" << endl;
+  // throw 7;
+}
+
 int
 main(int argc, char **argv) {
+  ROCKET_PROCESS_ERROR("Test process error");
+
+  process.atExit([] { myExit(); });
+  process.atExit([] { myTerminate(); }, true);
+
+  process.init(argc, argv, "toy");
+
+  cl::CommandLine cl;
+  vector<string> args;
   try {
-    ROCKET_PROCESS_ERROR("Test process error");
-
-    process.init(argc, argv, "toy");
-
-    cl::CommandLine cl;
-    vector<string> args;
-    try {
-      args = cl.parse(process.args());
-    } catch (const exception& ex) {
-      cl.handleException(ex, nio::stderr);
-    }
-
-    {
-      ROCKET_LOG(toy);
-      ROCKET_LOG_INFO("Hey {}", "there");
-      auto& out = nio::stdout;
-      out.println("This is {}", process.name());
-      out.println("args: {}", args);
-      toy();
-    }
-
-    process.exit(EXIT_SUCCESS);
-  } catch (...) {
-    terminate();
+    args = cl.parse(process.args());
+  } catch (const exception& ex) {
+    cl.handleException(ex, nio::stderr);
   }
+
+  {
+    ROCKET_LOG(toy);
+    ROCKET_LOG_INFO("Hey {}", "there");
+    auto& out = nio::stdout;
+    out.println("This is {}", process.name());
+    out.println("args: {}", args);
+    toy();
+  }
+
+  process.exit(EXIT_SUCCESS);
 }
 
 // EOF
