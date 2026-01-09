@@ -143,7 +143,8 @@ struct Process {
    * @param args the format arguments
    */
   template<typename... T>
-  void error(nio::Sink& out, int status, fmt::format_string<T...> fmt, T&&... args) {
+  void
+  error(nio::Sink& out, int status, fmt::format_string<T...> fmt, T&&... args) {
     std::string name = inited_ ? this->name() : invocationShortName();
     out.print("{}: error: ", name);
     out.println(fmt, std::forward<T>(args)...);
@@ -229,7 +230,8 @@ struct Process {
    * @param args the format arguments
    */
   template<typename... T>
-  void warn(nio::Sink& out, fmt::format_string<T...> fmt, T&&... args) {
+  void
+  warn(nio::Sink& out, fmt::format_string<T...> fmt, T&&... args) {
     std::string name = inited_ ? this->name() : invocationShortName();
     out.print("{}: warning: ", name);
     out.println(fmt, std::forward<T>(args)...);

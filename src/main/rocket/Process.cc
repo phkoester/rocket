@@ -86,7 +86,7 @@ namespace rocket {
 // `Process` ------------------------------------------------------------------------------------------------
 
 // A little trickery to keep the ctor private
-Process makeProcess__() { return Process(); }
+inline Process makeProcess__() { return Process(); }
 Process process = makeProcess__();
 
 void
