@@ -31,9 +31,7 @@ tempPath(const char* file) {
       s, info->test_suite_name(), info->name(), math::randomHex(gen, 16));
   path ret = temp_directory_path() / name;
 
-  process.atExit([=] {
-    remove(ret);
-  }, true);
+  process.atExit([=] { remove(ret); }, true);
 
   return ret;
 }

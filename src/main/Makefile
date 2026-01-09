@@ -32,7 +32,7 @@ printArgsWithSpace: $(BUILD_DIR)/print\ args$(EXECUTABLE_SUFFIX)
 
 NAME        := print-args
 SRC_DIR     := main/print-args
-SHARED_LIBS := $(call shared-lib-name,rocket,$(ROCKET_VERSION))
+SHARED_LIBS := $(call shared-lib-name,rocket,$(ROCKET_VERSION),$(G))
 include $(GAIA_DIR)/src/main/make/executable.mk
 
 # `rocket` --------------------------------------------------------------------------------------------------
@@ -56,19 +56,21 @@ SRC_ADD        := unicode/EastAsianWidth.cc unicode/emoji-data.cc
 # Move `log.cc` to front so Rocket can use its own logging API
 # Move `Process.cc` to front so the global `process` instance is available early
 SRC_MOVE_FRONT := log/log.cc Process.cc
+INSTALL        := 1
 include $(GAIA_DIR)/src/main/make/shared-lib.mk
 
 # `rocket-gtest` --------------------------------------------------------------------------------------------
 
-NAME     := rocket-gtest
-SRC_DIR  := main/rocket-gtest
+NAME      := rocket-gtest
+SRC_DIR   := main/rocket-gtest
+INSTALL   := 1
 include $(GAIA_DIR)/src/main/make/lib.mk
 
 # `toy` -----------------------------------------------------------------------------------------------------
 
 NAME        := toy
 SRC_DIR     := main/toy
-SHARED_LIBS := $(call shared-lib-name,rocket,$(ROCKET_VERSION))
+SHARED_LIBS := $(call shared-lib-name,rocket,$(ROCKET_VERSION),$(G))
 include $(GAIA_DIR)/src/main/make/executable.mk
 
 # All -------------------------------------------------------------------------------------------------------

@@ -46,14 +46,14 @@
  * Checks the state of a `std::istream`.
  *
  * @param is the input stream
- * @param fail__ the expected value of `is.fail()`
- * @param eof__ the expected value of `is.eof()`
- * @param tell__ the expected value of `rocket::io::tellg(is)`
+ * @param _fail the expected value of `is.fail()`
+ * @param _eof the expected value of `is.eof()`
+ * @param _tell the expected value of `rocket::io::tellg(is)`
  */
-#define EXPECT_ISTREAM(is, fail__, eof__, tell__) \
-    EXPECT_EQ(is.fail(), fail__); \
-    EXPECT_EQ(is.eof(), eof__); \
-    EXPECT_EQ(::rocket::io::tellg(is), tell__)
+#define EXPECT_ISTREAM(is, _fail, _eof, _tell) \
+    EXPECT_EQ(is.fail(), _fail); \
+    EXPECT_EQ(is.eof(), _eof); \
+    EXPECT_EQ(::rocket::io::tellg(is), _tell)
 
 /**
  * Makes a new unique `filesystem::path` that points to a temporary test file.
