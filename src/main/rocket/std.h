@@ -159,7 +159,7 @@ struct std::hash<std::tuple<T...>> {
   operator()(const tuple<T...>& v) const {
     using TupleType = rocket::PurgeType<decltype(v)>;
     size_t ret = tuple_size<TupleType>::value;
-    apply([&](auto&&... arg) { (rocket::combineHash(ret, arg), ...); }, v);
+    apply([&](const auto&... arg) { (rocket::combineHash(ret, arg), ...); }, v);
     return ret;
   }
 

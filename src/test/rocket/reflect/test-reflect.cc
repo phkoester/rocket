@@ -143,6 +143,26 @@ TEST(reflect, MyStructIndex2Ne) {
   EXPECT_EQ(ne(m1, index2, m3, index2), true);
 }
 
+TEST(reflect, MyStructIndex2Hash) {
+  MyStruct m1(42, "rocket", true);
+  MyStruct m2(42, "rocket", false);
+  MyStruct m3(43, "rocket", true);
+
+  size_t hash1 = reflect::hash(m1, MyStruct::index2());
+  size_t hash2 = reflect::hash(m2, MyStruct::index2());
+  size_t hash3 = reflect::hash(m3, MyStruct::index2());
+
+  EXPECT_EQ(hash1, hash2);
+  EXPECT_NE(hash1, hash3);
+}
+
+TEST(reflect, MyStructIndex2Write) {
+  MyStruct m(42, "rocket", true);
+  nio::StringSink out;
+  write(out, m, MyStruct::index2());
+  EXPECT_EQ(out.str(), "(ä=42, b=rocket)");
+}
+
 TEST(reflect, VarRef) {
   int ä1 = 2;
   string b1 = "hi";

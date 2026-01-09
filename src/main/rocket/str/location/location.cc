@@ -149,7 +149,7 @@ printLocations(
       locations.begin(),
       locations.end(),
       0UL,
-      [](size_t max, auto&& loc) { return std::max(loc.line, max); });
+      [](size_t max, const auto& loc) { return std::max(loc.line, max); });
   string maxLineStr =  fmt::format("{}", maxLine);
   size_t lineNumberWidth = max(params.minLineNumberWidth, maxLineStr.size());
   string blankPrefix = string(lineNumberWidth, ' ') + " | ";

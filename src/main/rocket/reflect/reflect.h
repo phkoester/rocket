@@ -6,8 +6,10 @@
 
 #pragma once
 
+#include "rocket/hash.h"
 #include "rocket/rocket.h"
 #include "rocket/format/std.h"
+#include "rocket/nio/nio.h"
 #include "rocket/unicode/ConvertTo.h"
 
 #include <boost/preprocessor/stringize.hpp>
@@ -188,11 +190,7 @@
 #define ROCKET_REFLECT_MEMBERS_DEFINE_STD_HASH__(ns, cls, name) \
     size_t \
     std::hash<ns::cls>::operator()(const ns::cls& v) const { \
-      const auto& refs = ns::cls::name(); \
-      using RefsType = ::rocket::PurgeType<decltype(refs)>; \
-      size_t ret = tuple_size<RefsType>::value; \
-      apply([&](auto&&... arg) { (rocket::combineHash(ret, arg.get(v)), ...); }, refs); \
-      return ret; \
+      return ::rocket::reflect::hash(v, ns::cls::name()); \
     }
 
 #define ROCKET_REFLECT_MEMBERS_DEFINE__(ns, cls, name) \
@@ -352,7 +350,7 @@ namespace internal {
 
 template<typename T, typename C, size_t Index, typename FormatContext, typename Tuple>
 constexpr FormatContext::iterator
-formatMemberRefImpl(const T& v, FormatContext& ctx, bool debug, const Tuple& refs) {
+formatElemImpl(const T& v, FormatContext& ctx, bool debug, const Tuple& refs) {
   using namespace fmt;
 
   // Write separator
@@ -371,7 +369,7 @@ formatMemberRefImpl(const T& v, FormatContext& ctx, bool debug, const Tuple& ref
   out = detail::write<C>(out, static_cast<C>('='));
 
   // Write value
-  auto&& value = ref.get(v);
+  const auto& value = ref.get(v);
   using ValueType = decltype(value);
   fmt::formatter<rocket::PurgeType<ValueType>, C> underlying;
   detail::maybe_set_debug_format(underlying, debug);
@@ -388,7 +386,7 @@ formatImpl(const T& v, FormatContext& ctx, bool debug, const Tuple& refs, std::i
   // Write outer parentheses, inner members
   auto out = ctx.out();
   out = detail::write<C>(out, static_cast<C>('('));
-  (..., (out = formatMemberRefImpl<T, C, Index>(v, ctx, debug, refs)));
+  (..., (out = formatElemImpl<T, C, Index>(v, ctx, debug, refs)));
   return detail::write<C>(out, static_cast<C>(')'));
 }
 
@@ -456,11 +454,50 @@ gtImpl(
   return ret;
 }
 
+template<typename T, typename... Ref>
+size_t
+hashImpl(const T& v, const std::tuple<Ref...>& refs) {
+  using TupleType = PurgeType<decltype(refs)>;
+  size_t ret = std::tuple_size<TupleType>::value;
+  apply([&](const auto&... arg) { (combineHash(ret, arg.get(v)), ...); }, refs);
+  return ret;
+}
+
+template<typename T, size_t Index, typename Tuple>
+size_t
+writeElemImpl(nio::Sink& out, const T& v, const Tuple& refs) {
+  // Write separator
+  size_t ret = 0;
+  if constexpr (Index > 0) {
+    ret += out.write(", ");
+  }
+
+  // Get ref at index
+  const auto& ref = std::get<Index>(refs);
+  static_assert(IsMemberRef<decltype(ref)>::value);
+
+  // Write name
+  ret += out.write(ref.name());
+  ret += out.write('=');
+
+  // Write value
+  const auto& value = ref.get(v);
+  ret += out.print("{}", value);
+  return ret;
+}
+
+template<typename T, typename Tuple, size_t... Index>
+size_t
+writeImpl(nio::Sink& out, const T& v, const Tuple& refs, std::index_sequence<Index...> indices) {
+  size_t ret = out.write('(');
+  (..., (ret += writeElemImpl<T, Index>(out, v, refs)));
+  ret += out.write(')');
+  return ret;
+}
+
 } // namespace internal
 
 // Functions ------------------------------------------------------------------------------------------------
-
-/// @cond undocumented
 
 template<typename T, typename C, typename FormatContext, typename... Ref> requires
     (... && IsMemberRef<Ref>::value)
@@ -493,7 +530,17 @@ gt(const T& lhs, const std::tuple<Ref...>& lhsRefs, const T& rhs, const std::tup
   return internal::gtImpl(lhs, lhsRefs, rhs, rhsRefs, std::make_index_sequence<sizeof...(Ref)>());
 }
 
-/// @endcond
+template<typename T, typename... Ref> requires (... && IsMemberRef<Ref>::value)
+inline size_t
+hash(const T& v, const std::tuple<Ref...>& refs) {
+  return internal::hashImpl(v, refs);
+}
+
+template<typename T, typename... Ref> requires (... && IsMemberRef<Ref>::value)
+inline size_t
+write(nio::Sink& out, const T& v, const std::tuple<Ref...>& refs) {
+  return internal::writeImpl(out, v, refs, std::make_index_sequence<sizeof...(Ref)>());
+}
 
 } // namespace rocket::reflect
 
