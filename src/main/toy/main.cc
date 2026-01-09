@@ -45,8 +45,8 @@ int
 main(int argc, char **argv) {
   ROCKET_PROCESS_ERROR("Test process error");
 
-  process.atExit([] { myExit(); });
-  process.atExit([] { myTerminate(); }, true);
+  process.atExit(myExit);
+  process.atExit(myTerminate, true);
 
   process.init(argc, argv, "toy");
 

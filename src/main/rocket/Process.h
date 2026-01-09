@@ -28,7 +28,7 @@
   msg.print("{}:{}: ", __FILE__, __LINE__); \
   msg.print( \
       fmt \
-      ROCKET_COMMA_AND_VA_ARGS(__VA_ARGS__)); \
+      __VA_OPT__(,) __VA_ARGS__); \
   ::rocket::process.error(::rocket::nio::stderr, EXIT_SUCCESS, "{}", msg.str()); \
 }
 
@@ -44,7 +44,7 @@
   msg.print("{}:{}: ", __FILE__, __LINE__); \
   msg.print( \
       fmt \
-      ROCKET_COMMA_AND_VA_ARGS(__VA_ARGS__)); \
+      __VA_OPT__(,) __VA_ARGS__); \
   ::rocket::process.warn(::rocket::nio::stderr, "{}", msg.str()); \
 }
 

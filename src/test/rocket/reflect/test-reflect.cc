@@ -33,6 +33,8 @@ private:
 public:
 
   ROCKET_REFLECT_MEMBERS(MyStruct, index, (ä)(b)(c));
+
+  ROCKET_REFLECT_MEMBERS(MyStruct, index2, (ä)(b));
 };
 
 ROCKET_REFLECT_MEMBERS_DECLARE(, MyStruct, index);
@@ -42,11 +44,9 @@ ROCKET_REFLECT_MEMBERS_DEFINE(, MyStruct, index);
 
 TEST(reflect, MyStruct) {
   MyStruct m1(12, "here", true);
-
   EXPECT_EQ(m1.b, "here");
   get<1>(MyStruct::index()).get(m1) = "everywhere";
   EXPECT_EQ(m1.b, "everywhere");
-
   EXPECT_EQ(m1.getC(), true);
   get<2>(MyStruct::index()).get(m1) = false;
   EXPECT_EQ(m1.getC(), false);
@@ -112,6 +112,35 @@ TEST(reflect, MyStructHash) {
   EXPECT_EQ(hash2, hash1);
   EXPECT_NE(hash1, hash3);
   EXPECT_NE(hash3, 0);
+}
+
+TEST(reflect, MyStructIndex2) {
+  MyStruct m1(12, "here", true);
+  EXPECT_EQ(m1.b, "here");
+  get<1>(MyStruct::index()).get(m1) = "everywhere";
+  EXPECT_EQ(m1.b, "everywhere");
+
+  const MyStruct m2(13, "there", true);
+  EXPECT_EQ(get<0>(MyStruct::index()).get(m2), 13);
+  EXPECT_EQ(get<1>(MyStruct::index()).get(m2), "there");
+}
+
+TEST(reflect, MyStructIndex2Eq) {
+  MyStruct m1(42, "rocket", true);
+  MyStruct m2(42, "rocket", false);
+  MyStruct m3(43, "rocket", true);
+  auto& index2 = MyStruct::index2();
+  EXPECT_EQ(eq(m1, index2, m2, index2), true);
+  EXPECT_EQ(eq(m1, index2, m3, index2), false);
+}
+
+TEST(reflect, MyStructIndex2Ne) {
+  MyStruct m1(42, "rocket", true);
+  MyStruct m2(42, "rocket", false);
+  MyStruct m3(43, "rocket", true);
+  auto& index2 = MyStruct::index2();
+  EXPECT_EQ(ne(m1, index2, m2, index2), false);
+  EXPECT_EQ(ne(m1, index2, m3, index2), true);
 }
 
 TEST(reflect, VarRef) {

@@ -161,7 +161,7 @@ const std::vector<cl::Option>& opts();
       ::rocket::log::internal::logMessage( \
           ::rocket::log::LogLevel::error, \
           fmt \
-          ROCKET_COMMA_AND_VA_ARGS(__VA_ARGS__)); \
+          __VA_OPT__(,) __VA_ARGS__); \
     }
 
 /**
@@ -174,7 +174,7 @@ const std::vector<cl::Option>& opts();
       ::rocket::log::internal::logMessag( \
           ::rocket::log::LogLevel::warn, \
           fmt \
-          ROCKET_COMMA_AND_VA_ARGS(__VA_ARGS__)); \
+          __VA_OPT__(,) __VA_ARGS__); \
     }
 
 /**
@@ -187,7 +187,7 @@ const std::vector<cl::Option>& opts();
       ::rocket::log::internal::logMessage( \
           ::rocket::log::LogLevel::info, \
           fmt \
-          ROCKET_COMMA_AND_VA_ARGS(__VA_ARGS__)); \
+          __VA_OPT__(,) __VA_ARGS__); \
     }
 
 /**
@@ -200,7 +200,7 @@ const std::vector<cl::Option>& opts();
       ::rocket::log::internal::logMessage( \
           ::rocket::log::LogLevel::debug, \
           fmt \
-          ROCKET_COMMA_AND_VA_ARGS(__VA_ARGS__)); \
+          __VA_OPT__(,) __VA_ARGS__); \
     }
 
 /**
@@ -213,7 +213,7 @@ const std::vector<cl::Option>& opts();
       ::rocket::log::internal::logMessage( \
           ::rocket::log::LogLevel::trace, \
           fmt \
-          ROCKET_COMMA_AND_VA_ARGS(__VA_ARGS__)); \
+          __VA_OPT__(,) __VA_ARGS__); \
     }
 
 #endif // NDEBUG
