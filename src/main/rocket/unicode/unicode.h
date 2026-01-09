@@ -32,7 +32,7 @@ struct CodePoint {
   /**
    * @ctor
    *
-   * @param v a `char` value. This must be an ASCII character in the range [0,127]
+   * @param v a `char` value. This must be an ASCII character in the range @f$[0,127]@f$
    */
   // cppcheck-suppress noExplicitConstructor
   CodePoint(char v);
@@ -97,7 +97,7 @@ struct CodePoint {
   bool whitespace() const;
 
   /**
-   * Returns the display width for a code point.
+   * Calculates the display width for a code point.
    *
    * This function defines the display width of a code point as follows:
    *
@@ -121,7 +121,7 @@ struct CodePoint {
    * - [Markus Kuhn's work](http://www.cl.cam.ac.uk/~mgk25/ucs/wcwidth.c)
    * - the Rust crate [`unicode-display-width`](https://crates.io/crates/unicode-display-width)
    *
-   * @return a width in the range [-1,2]
+   * @return a width in the range @f$[-1,2]@f$
    */
   int8_t width() const;
 
@@ -229,27 +229,22 @@ using CodePoints = std::vector<CodePoint>;
  * A grapheme, more precisely a grapheme cluster, consisting of one or more code points.
  */
 struct Grapheme {
-  /// The code points this grapheme consists of.
-  CodePoints codePoints;
-  /// The grapheme's display width, in the range [0,2].
-  uint8_t width;
-
   /// @ctor_default
-  constexpr Grapheme() : width(0) {}
+  constexpr Grapheme() {}
 
   /**
    * @ctor
    *
    * @param cps a code-point container
    */
-  explicit Grapheme(const CodePoints& cps);
+  explicit Grapheme(const CodePoints& cps) : codePoints_(cps) {}
 
   /**
    * @ctor
    *
    * @param cps a code-point container
    */
-  explicit Grapheme(CodePoints&& cps);
+  explicit Grapheme(CodePoints&& cps) : codePoints_(std::move(cps)) {}
 
   /**
    * @ctor
@@ -272,10 +267,10 @@ struct Grapheme {
   explicit operator std::u32string() const;
 
   /// @member_op_eq
-  inline bool operator==(const Grapheme& rhs) const { return codePoints == rhs.codePoints; }
+  inline bool operator==(const Grapheme& rhs) const { return codePoints_ == rhs.codePoints_; }
 
   /// @member_op_ne
-  inline bool operator!=(const Grapheme& rhs) const { return codePoints != rhs.codePoints; }
+  inline bool operator!=(const Grapheme& rhs) const { return codePoints_ != rhs.codePoints_; }
 
   /**
    * Returns the code point from this grapheme if there is exactly one, otherwise returns null.
@@ -284,8 +279,8 @@ struct Grapheme {
    */
   inline std::optional<CodePoint>
   codePoint() const {
-    if (codePoints.size() == 1) {
-      return codePoints[0];
+    if (codePoints_.size() == 1) {
+      return codePoints_[0];
     }
     return std::nullopt;
   }
@@ -297,7 +292,7 @@ struct Grapheme {
    */
   inline bool
   crlf() const {
-    return codePoints.size() == 2 && codePoints[0] == '\r' && codePoints[1] == '\n';
+    return codePoints_.size() == 2 && codePoints_[0] == '\r' && codePoints_[1] == '\n';
   }
 
   /**
@@ -317,7 +312,7 @@ struct Grapheme {
    */
   inline bool
   lf() const {
-    return codePoints.size() == 1 && codePoints[0] == '\n';
+    return codePoints_.size() == 1 && codePoints_[0] == '\n';
   }
 
   /**
@@ -327,7 +322,7 @@ struct Grapheme {
    */
   inline bool
   nbsp() const {
-    return codePoints.size() == 1 && codePoints[0] == U'\u00a0';
+    return codePoints_.size() == 1 && codePoints_[0] == U'\u00a0';
   }
 
   /**
@@ -338,13 +333,20 @@ struct Grapheme {
   bool print() const;
 
   /**
-   * Returns `true` if this grapheme is a tab (`"\t"`).
+   * Returns the grapheme's size in code points.
+   *
+   * @return the grapheme's size in code points
+   */
+  inline size_t size() const { return codePoints_.size(); }
+
+  /**
+   * Returns `true` if this grapheme is a tab
    *
    * @return `true` if this grapheme is a tab
    */
   inline bool
   tab() const {
-    return codePoints.size() == 1 && codePoints[0] == '\t';
+    return codePoints_.size() == 1 && codePoints_[0] == '\t';
   }
 
   /**
@@ -354,8 +356,24 @@ struct Grapheme {
    */
   inline bool
   whitespace() const {
-    return codePoints.size() == 1 && codePoints[0].whitespace();
+    return codePoints_.size() == 1 && codePoints_[0].whitespace();
   }
+
+  /**
+   * Calculates the grapheme's display width.
+   *
+   * This implementation is inspired by
+   *
+   * - the Rust crate [`unicode-display-width`](https://crates.io/crates/unicode-display-width).
+   *
+   * @return the grapheme's display width, in the range @f$[0,2]@f$
+   */
+  uint8_t width() const;
+
+private:
+
+  /// The code points this grapheme consists of.
+  CodePoints codePoints_;
 };
 
 /// @op_output{#rocket::unicode::Grapheme}
@@ -412,14 +430,6 @@ using Graphemes = std::vector<Grapheme>;
 // Functions ------------------------------------------------------------------------------------------------
 
 /**
- * Converts the ASCII string @p s to a UTF-32 string.
- *
- * @param s an ASCII string
- * @return a UTF-32 string
- */
-std::u32string asciiTo32(std::string_view s);
-
-/**
  * Converts the UTF-8 string @p s to a UTF-32 string.
  *
  * @param s a UTF-8 string
@@ -434,18 +444,6 @@ std::u32string utf8To32(std::string_view s);
  * @return a UTF-8 string
  */
 std::string utf32To8(std::u32string_view s);
-
-/**
- * Returns the display width for code points that make up a grapheme.
- *
- * This implementation is inspired by
- *
- * - the Rust crate [`unicode-display-width`](https://crates.io/crates/unicode-display-width).
- *
- * @param cps code points that make up a grapheme
- * @return a width in the range @f$[0,2]@f$.
- */
-uint8_t width(const CodePoints& cps);
 
 /**
  * Returns the display width for graphemes that make up a string.

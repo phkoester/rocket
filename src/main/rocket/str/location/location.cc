@@ -115,7 +115,7 @@ locations(nio::Source& in, const vector<Position>& positions, const LocationsPar
     } else {
       // Add the grapheme
 
-      column += gr.width;
+      column += gr.width();
       lineString.append(static_cast<string>(gr));
     }
   }
@@ -186,7 +186,7 @@ printLocations(
     unicode::Graphemes grs = unicode::graphemes(escapedLine, &grsp);
     // Print graphemes one by one, skip zero-width graphemes
     for (const auto& gr : grs) {
-      if (gr.width > 0) {
+      if (gr.width() > 0) {
         out.write(static_cast<string>(gr));
       }
     }

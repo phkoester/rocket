@@ -212,7 +212,7 @@ escapeCString(string_view input, const CStringParams& params, Result* result) {
     } else {
       // Multi-code-point grapheme
 
-      column += gr.width;
+      column += gr.width();
       auto add = static_cast<string>(gr);
       ret.append(add);
       to += add.size();
@@ -382,7 +382,7 @@ escapeRegex(string_view input, Result* result) {
     } else {
       // Multi-code-point grapheme
 
-      column += gr.width;
+      column += gr.width();
       auto add = static_cast<string>(gr);
       ret.append(add);
       to += add.size();

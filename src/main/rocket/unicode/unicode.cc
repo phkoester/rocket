@@ -177,14 +177,6 @@ read(nio::Source& in, CodePoint& out) {
 
 // `Grapheme` -----------------------------------------------------------------------------------------------
 
-Grapheme::Grapheme(const CodePoints& cps) :
-    codePoints(cps),
-    width(unicode::width(codePoints)) {}
-
-Grapheme::Grapheme(CodePoints&& cps) :
-    codePoints(std::move(cps)),
-    width(unicode::width(codePoints)) {}
-
 Grapheme::Grapheme(string_view s) : Grapheme(unicode::codePoints(s)) {}
 
 Grapheme::Grapheme(u32string_view s) : Grapheme(unicode::codePoints(s)) {}
@@ -195,18 +187,38 @@ Grapheme::operator string() const {
 
 Grapheme::operator u32string() const {
   u32string ret;
-  ret.reserve(codePoints.size());
-  copy(codePoints.begin(), codePoints.end(), back_inserter(ret));
+  ret.reserve(codePoints_.size());
+  copy(codePoints_.begin(), codePoints_.end(), back_inserter(ret));
   return ret;
 }
 
 bool
 Grapheme::print() const {
-  switch (codePoints.size()) {
+  switch (codePoints_.size()) {
   case 0: return false;
-  case 1: return codePoints[0].print();
+  case 1: return codePoints_[0].print();
   default: return true;
   }
+}
+
+uint8_t
+Grapheme::width() const {
+  uint8_t ret = 0;
+  for (auto cp : codePoints_) {
+    // From `unicode-display-width`
+    if (cp == 0xfe0fU) {
+      return 2;
+    }
+    int8_t cpw = cp.width();
+    // Ignore nonpositive values
+    if (cpw > 0) {
+      ret = max(static_cast<uint8_t>(cpw), ret);
+    }
+    if (ret == 2) {
+      return 2;
+    }
+  }
+  return ret;
 }
 
 ostream&
@@ -253,16 +265,6 @@ read(nio::Source& in, Grapheme& out) {
 // Functions ------------------------------------------------------------------------------------------------
 
 u32string
-asciiTo32(string_view s) {
-  u32string ret(s.size(), ' ');
-  transform(s.begin(), s.end(), ret.begin(), [](char c) {
-    ROCKET_CHECK(s, isascii(c));
-    return static_cast<char32_t>(c);
-  });
-  return ret;
-}
-
-u32string
 utf8To32(string_view s) {
   u32string ret;
   unicodelib::utf8::decode(s.data(), s.size(), ret);
@@ -276,30 +278,13 @@ utf32To8(u32string_view s) {
   return ret;
 }
 
-uint8_t
-width(const CodePoints& cps) {
-  uint8_t ret = 0;
-  for (auto cp : cps) {
-    // From `unicode-display-width`
-    if (cp == 0xfe0fU) {
-      return 2;
-    }
-    int8_t cw = cp.width();
-    if (cw > 0) // Ignore nonpositive values
-      ret = max(static_cast<uint8_t>(cw), ret);
-    if (ret == 2)
-      return 2;
-  }
-  return ret;
-}
-
 size_t
 width(const Graphemes& grs, size_t index, size_t n) {
   auto begin = grs.begin() + index;
   auto end = n == NPOS ? grs.end() : begin + n;
 
   return accumulate(begin, end, 0UL, [](size_t n, const Grapheme& gr) {
-    return add<size_t>(n, gr.width);
+    return add<size_t>(n, gr.width());
   });
 }
 
@@ -344,8 +329,9 @@ countGraphemes(string_view s) {
 
 Graphemes
 graphemes(string_view s, UnorderedBimap<size_t, size_t>* positions) {
-  if (positions)
+  if (positions) {
     positions->clear();
+  }
   Graphemes ret;
   size_t i = 0;
   auto it = GraphemeIterator<char>(s), end = GraphemeIterator<char>(s, s.size());

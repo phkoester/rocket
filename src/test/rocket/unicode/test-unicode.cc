@@ -5,7 +5,7 @@
 #include "rocket-gtest/rocket-gtest.h"
 
 #include "rocket/format/std.h"
-#include "rocket/math/random.h"
+#include "rocket/nio/nio.h"
 #include "rocket/system/system.h"
 #include "rocket/system/terminal/terminal.h"
 #include "rocket/unicode/unicode.h"
@@ -36,9 +36,9 @@ testGrapheme(const Grapheme& grapheme, u32string_view s) {
   out.print("[{}]", s8);
   auto pos = system::terminal::position(out);
   EXPECT_TRUE(pos);
-  EXPECT_EQ(pos->first, grapheme.width + 3);
+  EXPECT_EQ(pos->first, grapheme.width() + 3);
   out.write('\n');
-  out.println("[{:~<{}}]", "", grapheme.width);
+  out.println("[{:~<{}}]", "", grapheme.width());
 }
 
 } // namespace
@@ -47,19 +47,14 @@ testGrapheme(const Grapheme& grapheme, u32string_view s) {
 
 // `rocket::unicode::internal` ..............................................................................
 
-TEST(unicode, internalBlockBiFind) {
+TEST(unicode, internalBiFind) {
   using namespace rocket::unicode::internal;
 
-  auto gen = math::gen();
-
-  size_t hits = 0;
-  for (size_t i = 0; i < 1'000'000; ++i) {
-    uint32_t cp = math::random(gen, 0U, 0xffffU);
-    const auto* p = biFind(eastAsianWidthBlocks, cp);
-    if (p)
-     ++hits;
-  }
-  EXPECT_GT(hits, 900'000);
+  EXPECT_NE(biFind(eastAsianWidthBlocks, 0x100U), nullptr);
+  EXPECT_NE(biFind(eastAsianWidthBlocks, 0x3fffdU), nullptr);
+  EXPECT_EQ(biFind(eastAsianWidthBlocks, 0x3fffeU), nullptr);
+  EXPECT_NE(biFind(eastAsianWidthBlocks, 0x10fffdU), nullptr);
+  EXPECT_EQ(biFind(eastAsianWidthBlocks, 0x10fffeU), nullptr);
 }
 
 TEST(unicode, internalBlockEastAsianWidth) {
@@ -249,12 +244,12 @@ TEST(unicode, GraphemeRead) {
     nio::StringSource in("🧑‍🌾a");
 
     EXPECT_EQ(read(in, v), 11);
-    EXPECT_EQ(v.codePoints.size(), 3);
+    EXPECT_EQ(v.size(), 3);
     EXPECT_EQ(static_cast<string>(v), "🧑‍🌾");
     EXPECT_EQ(in.tell(), 11);
 
     EXPECT_EQ(read(in, v), 1);
-    EXPECT_EQ(v.codePoints.size(), 1);
+    EXPECT_EQ(v.size(), 1);
     EXPECT_EQ(static_cast<string>(v), "a");
     EXPECT_EQ(in.tell(), 12);
   }
@@ -336,8 +331,8 @@ TEST(unicode, utf32Graphemes) {
     u32string s = U"\u200D";
     auto graphemes = utf32::graphemes(s);
     EXPECT_EQ(graphemes.size(), 1);
-    EXPECT_EQ(graphemes[0].codePoints.size(), 1);
-    EXPECT_EQ(graphemes[0].width, 0);
+    EXPECT_EQ(graphemes[0].size(), 1);
+    EXPECT_EQ(graphemes[0].width(), 0);
     testGrapheme(graphemes[0], s);
   }
 
@@ -346,8 +341,8 @@ TEST(unicode, utf32Graphemes) {
     u32string s = U"\u0065\u0302\u0300";
     auto graphemes = utf32::graphemes(s);
     EXPECT_EQ(graphemes.size(), 1);
-    EXPECT_EQ(graphemes[0].codePoints.size(), 3);
-    EXPECT_EQ(graphemes[0].width, 1);
+    EXPECT_EQ(graphemes[0].size(), 3);
+    EXPECT_EQ(graphemes[0].width(), 1);
     testGrapheme(graphemes[0], s);
   }
 
@@ -356,8 +351,8 @@ TEST(unicode, utf32Graphemes) {
     u32string s = U"🧑‍🌾";
     auto graphemes = utf32::graphemes(s);
     EXPECT_EQ(graphemes.size(), 1);
-    EXPECT_EQ(graphemes[0].codePoints.size(), 3);
-    EXPECT_EQ(graphemes[0].width, 2);
+    EXPECT_EQ(graphemes[0].size(), 3);
+    EXPECT_EQ(graphemes[0].width(), 2);
     testGrapheme(graphemes[0], s);
   }
 
@@ -366,8 +361,8 @@ TEST(unicode, utf32Graphemes) {
     u32string s = U"👨‍👩‍👦";
     auto graphemes = utf32::graphemes(s);
     EXPECT_EQ(graphemes.size(), 1);
-    EXPECT_EQ(graphemes[0].codePoints.size(), 5);
-    EXPECT_EQ(graphemes[0].width, 2);
+    EXPECT_EQ(graphemes[0].size(), 5);
+    EXPECT_EQ(graphemes[0].width(), 2);
     testGrapheme(graphemes[0], s);
   }
 
@@ -375,8 +370,8 @@ TEST(unicode, utf32Graphemes) {
     u32string s = U"👩🏻\u200d🚀";
     auto graphemes = utf32::graphemes(s);
     EXPECT_EQ(graphemes.size(), 1);
-    EXPECT_EQ(graphemes[0].codePoints.size(), 4);
-    EXPECT_EQ(graphemes[0].width, 2);
+    EXPECT_EQ(graphemes[0].size(), 4);
+    EXPECT_EQ(graphemes[0].width(), 2);
     testGrapheme(graphemes[0], s);
   }
 }

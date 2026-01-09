@@ -53,20 +53,22 @@ const Block*
 biFind(const std::vector<Block>& blocks, uint32_t cp) {
   size_t min = 0, max = blocks.size() - 1;
 
-  if (cp < blocks[min].interval.lower || cp >= blocks[max].interval.upper)
+  if (cp < blocks[min].interval.lower || cp >= blocks[max].interval.upper) {
     return nullptr;
+  }
 
   while (max > min) {
     size_t mid = (min + max) / 2;
     const auto& midInterval = blocks[mid].interval;
-    if (cp >= midInterval.upper)
+    if (cp >= midInterval.upper) {
       min = mid + 1;
-    else if (cp < midInterval.lower)
+    } else if (cp < midInterval.lower) {
       max = mid - 1;
-    else if (not blocks[min].interval.contains(cp))
+    } else if (not blocks[min].interval.contains(cp)) {
       ++min;
-    else
+    } else {
       return &blocks[min];
+    }
   }
 
   return blocks[min].interval.contains(cp) ? &blocks[min] : nullptr;
