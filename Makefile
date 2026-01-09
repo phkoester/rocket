@@ -16,10 +16,15 @@ build: buildBench buildTest
 
 include $(GAIA_DIR)/src/main/make/Makefile.mk
 
+# Constants -------------------------------------------------------------------------------------------------
+
 export ROCKET_VERSION := $(call print-version,.)
 ifeq ($(ROCKET_VERSION),)
   $(error Cannot set `ROCKET_VERSION`)
 endif
+export ROCKET_SHARED_LIB := $(call shared-lib-name,rocket,$(ROCKET_VERSION),$(G))
+
+# Targets ---------------------------------------------------------------------------------------------------
 
 all: check doc test bench
 

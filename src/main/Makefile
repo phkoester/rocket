@@ -32,7 +32,7 @@ printArgsWithSpace: $(BUILD_DIR)/print\ args$(EXECUTABLE_SUFFIX)
 
 NAME        := print-args
 SRC_DIR     := main/print-args
-SHARED_LIBS := $(call shared-lib-name,rocket,$(ROCKET_VERSION),$(G))
+SHARED_LIBS := $(ROCKET_SHARED_LIB)
 include $(GAIA_DIR)/src/main/make/executable.mk
 
 # `rocket` --------------------------------------------------------------------------------------------------
@@ -70,7 +70,7 @@ include $(GAIA_DIR)/src/main/make/lib.mk
 
 NAME        := toy
 SRC_DIR     := main/toy
-SHARED_LIBS := $(call shared-lib-name,rocket,$(ROCKET_VERSION),$(G))
+SHARED_LIBS := $(ROCKET_SHARED_LIB)
 include $(GAIA_DIR)/src/main/make/executable.mk
 
 # All -------------------------------------------------------------------------------------------------------

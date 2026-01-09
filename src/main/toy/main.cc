@@ -43,7 +43,7 @@ myTerminate() {
 
 int
 main(int argc, char **argv) {
-  ROCKET_PROCESS_ERROR("Test process error");
+  ROCKET_PROCESS_ERROR("Testing error before `process.init` ...");
 
   process.atExit(myExit);
   process.atExit(myTerminate, true);

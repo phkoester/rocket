@@ -10,6 +10,8 @@
 #include <boost/preprocessor/facilities/check_empty.hpp>
 #include <boost/preprocessor/seq/cat.hpp>
 
+#include <mutex>
+
 // Macros ---------------------------------------------------------------------------------------------------
 
 /**

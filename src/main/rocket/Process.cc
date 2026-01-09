@@ -10,7 +10,7 @@
 #include "rocket/str/str.h"
 #include "rocket/system/system.h"
 
-#include <iostream> // XXX
+#include <thread>
 
 using namespace rocket;
 using namespace std;
@@ -19,14 +19,18 @@ namespace {
 
 // Local variables ------------------------------------------------------------------------------------------
 
+thread::id mainThreadId = thread::id();
+
+recursive_mutex processMutex;
+
 vector<pair<function<void()>, bool>> onExitFns;
-mutex onExitFnsMutex;
 
 // Local functions ------------------------------------------------------------------------------------------
 
 void
 callExitFns(bool onTerminate) {
-  ROCKET_MUTEX_LOCK(onExitFnsMutex);
+  ROCKET_MUTEX_LOCK(processMutex);
+
   ROCKET_GUARD([] { onExitFns.clear(); });
 
   for (auto it = onExitFns.rbegin(); it != onExitFns.rend(); ++it) {
@@ -46,13 +50,13 @@ callExitFns(bool onTerminate) {
 
 const string&
 invocationName() {
-  static string ret(program_invocation_name);
+  static string ret(::program_invocation_name);
   return ret;
 }
 
 const string&
 invocationShortName() {
-  static string ret(program_invocation_short_name);
+  static string ret(::program_invocation_short_name);
   return ret;
 }
 
@@ -76,6 +80,7 @@ onTerminate() {
   } catch (...) {
     ROCKET_PROCESS_ERROR("`onTerminate` failed");
   }
+
   abort();
 }
 
@@ -85,18 +90,28 @@ namespace rocket {
 
 // `Process` ------------------------------------------------------------------------------------------------
 
-// A little trickery to keep the ctor private
+// Some trickery to keep the ctor private
 inline Process makeProcess__() { return Process(); }
 Process process = makeProcess__();
 
 void
 Process::atExit(std::function<void()> fn, bool callOnTerminate) {
-  ROCKET_MUTEX_LOCK(onExitFnsMutex);
+  ROCKET_MUTEX_LOCK(processMutex);
+
   onExitFns.push_back({ fn, callOnTerminate });
+}
+
+string
+Process::autoName() {
+  ROCKET_MUTEX_LOCK(processMutex);
+
+  return inited_ ? name() : invocationShortName();
 }
 
 void
 Process::exit(int status) const {
+  ROCKET_MUTEX_LOCK(processMutex);
+
   ROCKET_ASSERT(inited_, "Process not initialized");
 
   if (quickExit_)
@@ -112,6 +127,9 @@ Process::init(
     optional<string_view> name,
     optional<std::locale> locale,
     bool quickExit) {
+  ROCKET_MUTEX_LOCK(processMutex);
+
+  ROCKET_ASSERT(thread::id() == mainThreadId, "Process::init must be called in the main thread");
   ROCKET_ASSERT(not inited_, "Process already initialized");
 
   // Set the C locale from the environment
@@ -173,6 +191,8 @@ Process::invocationShortName() const {
 
 const string&
 Process::name() const {
+  ROCKET_MUTEX_LOCK(processMutex);
+
   ROCKET_ASSERT(inited_, "Process not initialized");
   return name_;
 }

@@ -67,6 +67,8 @@ constexpr int EXIT_SERIOUS_FAILURE = 2;
  *
  * You don't ever create a `Process` object. To access the singleton, use #rocket::process.
  *
+ * @ThreadSafe
+ *
  * ## Examples
  *
  * A very basic Rocket program may look like this:
@@ -96,14 +98,16 @@ struct Process {
   /**
    * Returns the command line.
    *
+   * Must be called after #init.
+   *
    * @return the command line, as separate strings. `argv[0]` is not included
    */
   const std::vector<std::string>& args() const { return args_; }
 
   /**
-   * Registers a function to be called upon exit, and even on abnormal termination.
+   * Registers a function to be called upon exit and quick exit, and even possibly on abnormal termination.
    *
-   * This function may be called even if the process isn't initialized yet.
+   * May be called before #init.
    *
    * @param fn the function to register
    * @param callOnTerminate whether to call the function even on abnormal termination
@@ -113,6 +117,8 @@ struct Process {
   /**
    * Returns the classic locale. This is the locale as returned by `std::locale::classic`.
    *
+   * Must be called after #init.
+   *
    * @return a locale
    */
   const std::locale& classicLocale() const { return classicLocale_; }
@@ -121,6 +127,8 @@ struct Process {
    * Returns the code locale used for logging and error messages, which is `en_US.UTF-8`.
    *
    * This is also the default locale for unit tests and benchmarks.
+   *
+   * Must be called after #init.
    *
    * On Linux, the locale may be configured like this:
    *
@@ -135,7 +143,7 @@ struct Process {
   /**
    * Outputs an error message.
    *
-   * This function may be called even if the process isn't initialized yet.
+   * May be called before #init.
    *
    * @param out the sink to write to, usually `rocket::nio::stderr`
    * @param status the exit status. If not `EXIT_SUCCESS` (0), then #exit is called
@@ -145,8 +153,7 @@ struct Process {
   template<typename... T>
   void
   error(nio::Sink& out, int status, fmt::format_string<T...> fmt, T&&... args) {
-    std::string name = inited_ ? this->name() : invocationShortName();
-    out.print("{}: error: ", name);
+    out.print("{}: error: ", autoName());
     out.println(fmt, std::forward<T>(args)...);
 
     if (status != EXIT_SUCCESS) {
@@ -157,7 +164,9 @@ struct Process {
   /**
    * Exits the program.
    *
-   * Depending on how #init was parametrized, this either calls `std::exit` or `std::quick_exit`.
+   * Must be called after #init. Depending on how #init was parametrized, this function either calls
+   * `std::exit` or `std::quick_exit`. It doesn't do much else, so clients are free to use this function or
+   * not.
    *
    * @param status the exit status
    */
@@ -168,6 +177,8 @@ struct Process {
    *
    * @attention This function must be called by any Rocket program; see the example in the documentation of
    * this class.
+   *
+   * @MainThread
    *
    * @param argc `argc` from `main`
    * @param argv `argv` from `main`
@@ -187,12 +198,16 @@ struct Process {
   /**
    * Returns the locale this process picked in #init.
    *
+   * Must be called after #init.
+   *
    * @return a locale
    */
   const std::locale& initLocale() const { return initLocale_; }
 
   /**
    * Returns the name of the process.
+   *
+   * Must be called after #init.
    *
    * @return the name of the process
    */
@@ -201,12 +216,16 @@ struct Process {
   /**
    * Returns the command this program was started with.
    *
+   * May be called before #init.
+   *
    * @return the invocation name
    */
   const std::string& invocationName() const;
 
   /**
    * Returns the file-name portion of the command this program was started with.
+   *
+   * May be called before #init.
    *
    * @return the invocation short name
    */
@@ -216,6 +235,8 @@ struct Process {
    * Returns the system locale. This is the locale that was returned by the first call of
    * `std::locale::global`.
    *
+   * Must be called after #init.
+   *
    * @return a locale
    */
   const std::locale& systemLocale() const { return systemLocale_; }
@@ -223,7 +244,7 @@ struct Process {
   /**
    * Outputs a warning.
    *
-   * This function may be called even if the process isn't initialized yet.
+   * May be called before #init.
    *
    * @param out the sink to write to, usually `rocket::nio::stderr`
    * @param fmt the format string
@@ -232,16 +253,11 @@ struct Process {
   template<typename... T>
   void
   warn(nio::Sink& out, fmt::format_string<T...> fmt, T&&... args) {
-    std::string name = inited_ ? this->name() : invocationShortName();
-    out.print("{}: warning: ", name);
+    out.print("{}: warning: ", autoName());
     out.println(fmt, std::forward<T>(args)...);
   }
 
 private:
-
-  Process() {}
-
-  friend Process makeProcess__();
 
   int argc_ = 0;
   char** argv_ = nullptr;
@@ -255,6 +271,12 @@ private:
   const std::locale codeLocale_ = std::locale("en_US.UTF-8");
   std::locale initLocale_;
   std::locale systemLocale_;
+
+  Process() {}
+
+  std::string autoName();
+
+  friend Process makeProcess__();
 };
 
 /**
