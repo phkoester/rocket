@@ -416,6 +416,7 @@ std::string utf32To8(std::u32string_view s);
  * @param n the number of elementss
  * @return a width
  */
+// XXX Weg
 size_t width(const Graphemes& grs, size_t index = 0, size_t n = NPOS);
 
 // UTF8 .....................................................................................................
@@ -477,6 +478,7 @@ size_t countGraphemes(std::string_view s);
  *     positions after the functions returns
  * @return a grapheme container
  */
+// XXX Weg
 Graphemes graphemes(std::string_view s, UnorderedBimap<size_t, size_t>* positions = nullptr);
 
 /**
