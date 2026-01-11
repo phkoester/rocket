@@ -21,9 +21,10 @@ using namespace testing;
 
 // Constants ------------------------------------------------------------------------------------------------
 
-constexpr char TWO_BYTES    = 0b1101'1111;
-constexpr char THREE_BYTES  = 0b1110'1111;
-constexpr char FOUR_BYTES   = 0b1111'0111;
+// XXX
+// constexpr char TWO_BYTES    = 0b1101'1111;
+// constexpr char THREE_BYTES  = 0b1110'1111;
+// constexpr char FOUR_BYTES   = 0b1111'0111;
 constexpr char CONT         = 0b1011'1111;
 
 // Local functions ------------------------------------------------------------------------------------------

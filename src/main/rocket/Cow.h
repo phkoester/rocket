@@ -17,7 +17,7 @@ namespace rocket {
 /**
  * A copy-on-write value.
  */
-template<typename T, typename U = T> requires std::is_convertible_v<U, T>
+template<typename T>
 struct Cow {
   /**
    * @ctor
@@ -43,7 +43,7 @@ struct Cow {
    * @return_this
    */
   Cow&
-  operator=(const U& value) {
+  operator=(const T& value) {
     ptr_ = nullptr;
     owned_ = value;
     return *this;
@@ -58,9 +58,9 @@ struct Cow {
    * @return_this
    */
   Cow&
-  operator=(U&& value) {
+  operator=(T&& value) {
     ptr_ = nullptr;
-    owned_ = std::forward(value);
+    owned_ = std::forward<T>(value);
     return *this;
   }
 
@@ -86,7 +86,7 @@ struct Cow {
    *
    * @return a reference to the owned object
    */
-  U& get() { ROCKET_EXPECT(not readOnly()); return *owned_; }
+  T& get() { ROCKET_EXPECT(not readOnly()); return *owned_; }
 
   /**
    * Returns `true` if the `Cow` is read-only, i.e. it is referencing a value and has not been assigned an
@@ -99,7 +99,7 @@ struct Cow {
 private:
 
   const T* ptr_;
-  std::optional<U> owned_;
+  std::optional<T> owned_;
 };
 
 } // namespace rocket

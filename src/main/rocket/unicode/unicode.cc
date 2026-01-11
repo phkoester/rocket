@@ -351,9 +351,9 @@ graphemes(string_view s, UnorderedBimap<size_t, size_t>* positions) {
   return ret;
 }
 
-Cow<string_view, string>
-validate(string_view s, UnorderedBimap<size_t, size_t>* positions) {
-  Cow<string_view, string> ret(s);
+Cow<string>
+validate(const string& s, UnorderedBimap<size_t, size_t>* positions) {
+  Cow<string> ret(s);
 
   if (positions) {
     positions->clear();

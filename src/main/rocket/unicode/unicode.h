@@ -489,8 +489,8 @@ Graphemes graphemes(std::string_view s, UnorderedBimap<size_t, size_t>* position
  *    incomplete UTF-8 byte sequences are replaced by a sequence of replacement characters `�` (U+FFFD).
  * @return `true` if @p s is a valid UTF-8 string
  */
-Cow<std::string_view, std::string>
-validate(std::string_view s, UnorderedBimap<size_t, size_t>* positions = nullptr);
+Cow<std::string>
+validate(const std::string& s, UnorderedBimap<size_t, size_t>* positions = nullptr);
 
 } // namespace utf8
 

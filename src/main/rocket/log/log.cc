@@ -27,8 +27,8 @@ void setLogLevel(string_view, string_view);
 // `Entry` --------------------------------------------------------------------------------------------------
 
 struct Entry {
-  inline Entry(LogLevel* logId, const char* func, string&& begin) :
-      logId_(logId), func_(func), begin_(std::move(begin)) {}
+  inline Entry(LogLevel* logId, const char* func, const string& begin) :
+      logId_(logId), func_(func), begin_(begin) {}
 
   LogLevel* logId_;
   const char* func_;
