@@ -6,6 +6,7 @@
 
 #pragma once
 
+#include "rocket/TypeTraits.h"
 #include "rocket/rocket.h"
 
 #include <string>

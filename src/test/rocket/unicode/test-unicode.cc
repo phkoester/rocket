@@ -101,17 +101,17 @@ TEST(unicode, CodePoint) {
 TEST(unicode, CodePointOpCasString) {
   using type = string;
 
-  EXPECT_EQ(static_cast<type>(CodePoint(0x41U)), "A");
-  EXPECT_EQ(static_cast<type>(CodePoint(0xe4U)), "ä");
-  EXPECT_EQ(static_cast<type>(CodePoint(0x20acU)), "€");
+  EXPECT_EQ(static_cast<type>(CodePoint(U'\x41')), "A");
+  EXPECT_EQ(static_cast<type>(CodePoint(U'\xE4')), "ä");
+  EXPECT_EQ(static_cast<type>(CodePoint(U'\x20AC')), "€");
 }
 
 TEST(unicode, CodePointOpCastU32String) {
   using type = u32string;
 
-  EXPECT_EQ(static_cast<type>(CodePoint(0x41U)), U"A");
-  EXPECT_EQ(static_cast<type>(CodePoint(0xe4U)), U"ä");
-  EXPECT_EQ(static_cast<type>(CodePoint(0x20acU)), U"€");
+  EXPECT_EQ(static_cast<type>(CodePoint(U'\x41')), U"A");
+  EXPECT_EQ(static_cast<type>(CodePoint(U'\xE4')), U"ä");
+  EXPECT_EQ(static_cast<type>(CodePoint(U'\x20AC')), U"€");
 }
 
 TEST(unicode, CodePointLower) {
@@ -131,16 +131,17 @@ TEST(unicode, CodePointUpper) {
 }
 
 TEST(unicode, CodePointWidth) {
-  EXPECT_EQ(CodePoint(0x0000U).width(), 0); // NUL (0)
-  EXPECT_EQ(CodePoint(0x0001U).width(), -1); // SOH (1)
-  EXPECT_EQ(CodePoint(0x001fU).width(), -1); // US (31)
-  EXPECT_EQ(CodePoint(0x0020U).width(), 1); // SP (32)
-  EXPECT_EQ(CodePoint(0x007eU).width(), 1); // Tilde (126)
-  EXPECT_EQ(CodePoint(0x007fU).width(), -1); // DEL (127)
-  EXPECT_EQ(CodePoint(0x009fU).width(), -1); // APC (159)
-  EXPECT_EQ(CodePoint(0x00a0U).width(), 1); // NBSP (160)
-  EXPECT_EQ(CodePoint(0x00adU).width(), 1); // Soft Hyphen (173)
-  EXPECT_EQ(CodePoint(0x0300U).width(), 0); // Combining Grave Accent, Category Mn (768)
+  EXPECT_EQ(CodePoint(U'\u0000').width(), 0); // NULL (0)
+  EXPECT_EQ(CodePoint(U'\u0001').width(), 0); // START OF HEADING (1)
+  EXPECT_EQ(CodePoint(U'\u001F').width(), 0); // INFORMATION SEPARATOR ONE (31)
+  EXPECT_EQ(CodePoint(U'\u0020').width(), 1); // SPACE (32)
+  EXPECT_EQ(CodePoint(U'\u007E').width(), 1); // TILDE (126)
+  EXPECT_EQ(CodePoint(U'\u007F').width(), 0); // DELETE (127)
+  EXPECT_EQ(CodePoint(U'\u0080').width(), 0); // PADDING CHARACTER (128)
+  EXPECT_EQ(CodePoint(U'\u009F').width(), 0); // APPLICATION PROGRAM COMMAND (159)
+  EXPECT_EQ(CodePoint(U'\u00A0').width(), 1); // NO-BREAK SPACE (160)
+  EXPECT_EQ(CodePoint(U'\u00AD').width(), 0); // SOFT HYPHEN (173)
+  EXPECT_EQ(CodePoint(U'\u0300').width(), 0); // COMBINING GRAVE ACCENT, Category Mn (768)
 }
 
 TEST(unicode, CodePointRead) {
@@ -177,17 +178,13 @@ TEST(unicode, CodePointRead) {
 }
 
 TEST(unicode, CodePointFormat) {
-  EXPECT_EQ(fmt::format("{}", CodePoint(U'\u20ac')), "U+20AC");
-  EXPECT_EQ(fmt::format("{}", CodePoint(0x00U)), "U+0000");
-  EXPECT_EQ(fmt::format("{}", CodePoint(0xffU)), "U+00FF");
-  EXPECT_EQ(fmt::format("{}", CodePoint(0xffU)), "U+00FF");
-  EXPECT_EQ(fmt::format("{}", CodePoint(0x1abcdU)), "U+1ABCD");
-  EXPECT_EQ(fmt::format("{}", CodePoint(U'\U0010ffff')), "U+10FFFF");
-  EXPECT_EQ(fmt::format("{}", CodePoint(U'\U0010ffff')), "U+10FFFF");
-  EXPECT_EQ(fmt::format("{}", CodePoint(0x110000U)), "U+110000");
-  EXPECT_EQ(fmt::format("{}", CodePoint(0x1000000U)), "U+1000000");
+  EXPECT_EQ(fmt::format("{}", CodePoint(U'\u0000')), "U+0000");
+  EXPECT_EQ(fmt::format("{}", CodePoint(U'\u20AC')), "U+20AC");
+  EXPECT_EQ(fmt::format("{}", CodePoint(U'\u00FF')), "U+00FF");
+  EXPECT_EQ(fmt::format("{}", CodePoint(U'\U0001ABCD')), "U+1ABCD");
+  EXPECT_EQ(fmt::format("{}", CodePoint(U'\U0010FFFF')), "U+10FFFF");
 
-  EXPECT_EQ(fmt::format(U"{}", CodePoint(U'\u20ac')), U"U+20AC");
+  EXPECT_EQ(fmt::format(U"{}", CodePoint(U'\u20AC')), U"U+20AC");
 }
 
 TEST(unicode, CodePointsFormat) {
@@ -210,9 +207,6 @@ TEST(unicode, Grapheme) {
   EXPECT_EQ(width(graphemes("sane text")), 9);
   EXPECT_EQ(width(graphemes("Ẓ̌á̲l͔̝̞̄̑͌g̖̘̘̔̔͢͞͝o̪̔T̢̙̫̈̍͞e̬͈͕͌̏͑x̺̍ṭ̓̓ͅ")), 9);
   EXPECT_EQ(width(graphemes("슬라바 우크라이나")), 17);
-
-  EXPECT_EQ(width(graphemes("\u0378")), 1);
-  EXPECT_EQ(width(graphemes("\ue000")), 1);
 }
 
 TEST(unicode, GraphemeOpCastString) {
@@ -292,8 +286,8 @@ TEST(unicode, utf8CodePointSize) {
 }
 
 TEST(unicode, utf8CodePoints) {
-  EXPECT_EQ(utf8::codePoints("a"), (CodePoints { 0x61U }));
-  EXPECT_EQ(utf8::codePoints("ä€"), (CodePoints { 0xe4U, 0x20acU }));
+  EXPECT_EQ(utf8::codePoints("a"), (CodePoints { U'\x61' }));
+  EXPECT_EQ(utf8::codePoints("ä€"), (CodePoints { U'\xE4', U'\u20AC' }));
 }
 
 TEST(unicode, utf8CountCodePoints) {

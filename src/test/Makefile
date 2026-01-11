@@ -80,7 +80,7 @@ include $(GAIA_DIR)/src/main/make/test-executable.mk
 
 NAME        := test-rocket-3rdparty-icu
 CC_FILES    := test/rocket/3rdparty/test-icu.cc
-SHARED_LIBS := $(ROCKET_SHARED_LIB)
+SHARED_LIBS := $(ROCKET_SHARED_LIB) libicuuc.so.$(ICU_VERSION)
 include $(GAIA_DIR)/src/main/make/test-executable.mk
 
 NAME        := test-rocket-3rdparty-scnlib

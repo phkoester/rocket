@@ -30,13 +30,13 @@ TEST(assert, RocketAssertTrue) {
 TEST(assertDeathTest, RocketAssertFalse) {
   GTEST_FLAG_SET(death_test_style, "threadsafe");
   EXPECT_EXIT(
-      { ROCKET_ASSERT(false, "My message"); },
-      KilledBySignal(SIGABRT), "Assertion `false` failed: My message");
+      { ROCKET_ASSERT(false, "My message: {}", 42); },
+      KilledBySignal(SIGABRT), "Assertion `false` failed: My message: 42");
 }
 
 #define NDEBUG 1
 #include "rocket/assert.h"
-TEST(assert, RocketAssertNdebug) {
+TEST(assert, RocketAssertFalseNdebug) {
   ROCKET_ASSERT(false, "This must have no effect");
 }
 #undef NDEBUG
@@ -60,6 +60,21 @@ TEST(assert, RocketExpect) {
       [] { ROCKET_EXPECT(true && false, "{}", oops()); },
       ThrowsMessage<InvalidState>(HasSubstr("Expectation `true && false` failed: oops")));
   EXPECT_TRUE(oopsCalled);
+}
+
+TEST(assert, RocketFail) {
+  oopsCalled = false;
+  EXPECT_THAT(
+      [] { ROCKET_FAIL("{}", oops()); },
+      ThrowsMessage<InvalidState>(HasSubstr("oops")));
+  EXPECT_TRUE(oopsCalled);
+}
+
+TEST(assertDeathTest, RocketTerminate) {
+  GTEST_FLAG_SET(death_test_style, "threadsafe");
+  EXPECT_EXIT(
+      { ROCKET_TERMINATE("My message: {}", 42); },
+      KilledBySignal(SIGABRT), "My message: 42");
 }
 
 // EOF

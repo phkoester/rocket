@@ -45,16 +45,8 @@ struct CodePoint {
   // cppcheck-suppress noExplicitConstructor
   constexpr CodePoint(char32_t v) : v_(v) {}
 
-  /**
-   * @ctor
-   *
-   * @param v a `uint32_t` value
-   */
-  // cppcheck-suppress noExplicitConstructor
-  constexpr CodePoint(uint32_t v) : v_(v) {}
-
-  /// @member_op_cast{`uint32_t`}
-  operator uint32_t() const { return v_; }
+  /// @member_op_cast{`char32_t`}
+  operator char32_t() const { return v_; }
 
   /// @member_op_cast{`std::string`}
   explicit operator std::string() const;
@@ -63,7 +55,23 @@ struct CodePoint {
   inline explicit operator std::u32string() const { return { v_ }; }
 
   /// @member_fn_hash
-  inline size_t hash() const { return std::hash<uint32_t>()(v_); }
+  inline size_t hash() const { return std::hash<char32_t>()(v_); }
+
+  bool isAscii() const { return v_ < 0x80; }
+
+  /**
+   * Returns `true` if this code point is printable.
+   *
+   * @return `true` if this code point is printable
+   */
+  bool isPrint() const;
+
+  /**
+   * Returns `true` if this code point is whitespace.
+   *
+   * @return `true` if this code point is whitespace
+   */
+  bool isWhitespace() const;
 
   /**
    * Returns a lower-case code point for this code point.
@@ -73,16 +81,6 @@ struct CodePoint {
   CodePoint lower() const;
 
   /**
-   * Returns `true` if this code point is printable.
-   *
-   * @param width if nonnull, then this is assigned the display width of the code point.
-   *
-   * @return `true` if this code point is printable. If this function returns `true`, @p width is guaranteed
-   *     to be positive
-   */
-  bool print(int8_t* width = nullptr) const;
-
-  /**
    * Returns an upper-case code point for this code point.
    *
    * @return a code point in upper case
@@ -90,49 +88,16 @@ struct CodePoint {
   CodePoint upper() const;
 
   /**
-   * Returns `true` if this code point is whitespace.
-   *
-   * @return `true` if this code point is whitespace
-   */
-  bool whitespace() const;
-
-  /**
    * Calculates the display width for a code point.
    *
-   * This function defines the display width of a code point as follows:
-   *
-   * - The null character (U+0000) has a width of 0.
-   * - Other C0/C1 control characters and DEL will lead to a return value of -1.
-   * - Nonspacing and enclosing combining characters (general category code Mn or Me in the Unicode database)
-   *   have a width of 0.
-   * - SOFT HYPHEN (U+00AD) has a width of 1.
-   * - Other format characters (general category code Cf in the Unicode database) and ZERO WIDTH SPACE
-   *   (U+200B) have a width of 0.
-   * - Hangul Jamo medial vowels and final consonants (U+1160-U+11FF) have a width of 0.
-   * - Spacing characters in the East Asian Wide (W) or East Asian Full-width (F) category as defined in
-   *   Unicode Technical Report #11 have a width of 2.
-   * - Emoji characters in the Emoji_Presentation category as defined in Emoji Data for UTS #51 have a width
-   *   of 2.
-   * - All remaining characters (including all printable ISO 8859-1 and WGL4 characters, Unicode control
-   *   characters, etc.) have a width of 1.
-   *
-   * This implementation is inspired by
-   *
-   * - [Markus Kuhn's work](http://www.cl.cam.ac.uk/~mgk25/ucs/wcwidth.c)
-   * - the Rust crate [`unicode-display-width`](https://crates.io/crates/unicode-display-width)
-   *
-   * @return a width in the range @f$[-1,2]@f$
+   * @return a width in the range @f$[0,2]@f$
    */
-  int8_t width() const;
+  uint8_t width() const;
 
 private:
 
-  uint32_t v_;
+  char32_t v_;
 };
-
-// With this static assertion, we can safely use `reinterpret_cast` between `CodePoint`, `uint32_t`, and
-// `char32_t`
-static_assert(sizeof(CodePoint) == sizeof(uint32_t) && sizeof(uint32_t) == sizeof(char32_t));
 
 /// @op_output{#rocket::unicode::CodePoint}
 std::ostream& operator<<(std::ostream& lhs, CodePoint rhs);
@@ -204,14 +169,14 @@ struct std::numeric_limits<rocket::unicode::CodePoint> {
    *
    * @return the minimum code-point value
    */
-  static consteval rocket::unicode::CodePoint min() { return 0U; }
+  static consteval rocket::unicode::CodePoint min() { return U'\u0000'; }
 
   /**
    * Returns the maximum code-point value, which is U+10FFFF.
    *
    * @return the maximum code-point value
    */
-  static consteval rocket::unicode::CodePoint max() { return 0x10ffffU; } // U+10FFFF (1,114,111)
+  static consteval rocket::unicode::CodePoint max() { return U'\U0010FFFF'; }
 };
 
 namespace rocket::unicode {
@@ -354,17 +319,14 @@ struct Grapheme {
    *
    * @return `true` if this grapheme is whitespace
    */
+  // XXX
   inline bool
   whitespace() const {
-    return codePoints_.size() == 1 && codePoints_[0].whitespace();
+    return codePoints_.size() == 1 && codePoints_[0].isWhitespace();
   }
 
   /**
    * Calculates the grapheme's display width.
-   *
-   * This implementation is inspired by
-   *
-   * - the Rust crate [`unicode-display-width`](https://crates.io/crates/unicode-display-width).
    *
    * @return the grapheme's display width, in the range @f$[0,2]@f$
    */
@@ -432,6 +394,8 @@ using Graphemes = std::vector<Grapheme>;
 /**
  * Converts the UTF-8 string @p s to a UTF-32 string.
  *
+ * If @p s is not a valid UTF-8 string, the behavior of this function is undefined.
+ *
  * @param s a UTF-8 string
  * @return a UTF-32 string
  */
@@ -460,12 +424,13 @@ size_t width(const Graphemes& grs, size_t index = 0, size_t n = NPOS);
 namespace utf8 {
 
 /**
- * Given the first byte @p c in a UTF-8 byte sequence, Returns the size in bytes of the code point.
+ * Given the first byte @p c in a UTF-8 byte sequence, returns the size in bytes of the UTF-8 encoded code
+ * point, including @p c itself.
  *
- * If @p c is a continuation byte, this function returns 0.
+ * If @p c is not a valid first byte of a UTF-8 encoded code point, this function returns 0.
  *
- * @param c the first byte of a UTF-8 byte sequence
- * @return a value in the range @f$[0,4]@f$. A return value of 0 indicates a UTF-8 continuation byte
+ * @param c a character from a UTF-8 byte sequence
+ * @return a value in the range @f$[0,4]@f$
  */
 uint8_t codePointSize(char c);
 
@@ -480,12 +445,12 @@ uint8_t codePointSize(char c);
 CodePoints codePoints(std::string_view s, UnorderedBimap<size_t, size_t>* positions = nullptr);
 
 /**
- * Returns `true` if the character @p c is a UTF-8 continuation byte.
+ * Returns `true` if the byte @p c is a UTF-8 continuation byte.
  *
- * @param c a character
+ * @param c a character from a UTF-8 byte sequence
  * @return `true` if @p c is a UTF-8 continuation byte
  */
-inline bool continuationByte(char c) { return (c & 0xc0) == 0x80; }
+inline bool continuationByte(char c) { return (c & 0xC0) == 0x80; }
 
 /**
  * Counts the number of code points in a UTF-8 string.
@@ -493,6 +458,7 @@ inline bool continuationByte(char c) { return (c & 0xc0) == 0x80; }
  * @param s a UTF-8 string
  * @return the number of code points
  */
+// XXX Am besten weg
 size_t countCodePoints(std::string_view s);
 
 /**
@@ -501,6 +467,7 @@ size_t countCodePoints(std::string_view s);
  * @param s a UTF-8 string
  * @return the number of graphemes
  */
+// XXX Am besten weg
 size_t countGraphemes(std::string_view s);
 
 /**

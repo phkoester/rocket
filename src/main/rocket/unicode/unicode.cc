@@ -7,14 +7,18 @@
 #include "rocket/assert.h"
 #include "rocket/numeric.h"
 #include "rocket/str/str.h"
-#include "rocket/unicode/iterator.h"
+#include "rocket/unicode/iterator.h" // XXX Ganz weg
 #include "rocket/unicode/internal/block.h"
 
 #include <unicodelib.h>
 #include <unicodelib_encodings.h>
 
+#include <unicode/uchar.h>
+#include <unicode/unistr.h>
+
 #include <numeric>
 
+using namespace icu;
 using namespace rocket;
 using namespace rocket::unicode;
 using namespace std;
@@ -39,86 +43,60 @@ eastAsianWidth(uint32_t cp) {
 
 CodePoint::CodePoint(char v) :
     v_(static_cast<unsigned char>(v)) {
-  ROCKET_CHECK(v, isascii(v));
+  ROCKET_CHECK(v, isAscii());
 }
 
 CodePoint::operator string() const {
   return utf32To8(operator u32string());
 }
 
-CodePoint
-CodePoint::lower() const {
-  return unicodelib::simple_lowercase_mapping(v_);
-}
-
 bool
-CodePoint::print(int8_t* width) const {
+CodePoint::isPrint() const {
+  return u_isprint(v_) != 0;
+#if 0 // XXX
   // Block: Special
   if (v_ >= 0xfff0U && v_ <= 0xffffU)
     return false;
-  int8_t w = this->width();
-  if (width)
-    *width = w;
-  return w > 0;
+#endif
+}
+
+bool
+CodePoint::isWhitespace() const {
+  return u_isWhitespace(v_) != 0;
+}
+
+CodePoint
+CodePoint::lower() const {
+  return static_cast<char32_t>(u_tolower(v_));
 }
 
 CodePoint
 CodePoint::upper() const {
-  return unicodelib::simple_uppercase_mapping(v_);
+  return static_cast<char32_t>(u_toupper(v_));
 }
 
-bool
-CodePoint::whitespace() const {
-  return unicodelib::is_white_space(v_);
-}
 
-int8_t
+uint8_t
 CodePoint::width() const {
-  // NUL
-  if (v_ == 0) {
+  if (not isPrint()) {
     return 0;
   }
 
-  // C0 controls, DEL
-  if (v_ <= 31 || v_ == 127) {
-    return -1;
-  }
-
-  // C1 controls
-  if (v_ >= 128 && v_ <= 159) {
-    return -1;
-  }
-
-  // General category Mn or Me
-  auto gc = unicodelib::_general_category_properties::get_value(v_);
-  if (gc == unicodelib::GeneralCategory::Nonspacing_Mark ||
-      gc == unicodelib::GeneralCategory::Enclosing_Mark) {
+  auto generalCategory = u_getIntPropertyValue(v_, UCHAR_GENERAL_CATEGORY);
+  switch (generalCategory) {
+  case U_NON_SPACING_MARK:
+  case U_ENCLOSING_MARK:
     return 0;
   }
 
-  // Soft hyphen
-  if (v_ == 0x00adU) {
-    return 1;
-  }
-
-  // General category Cf, Zero Width Space
-  if (gc == unicodelib::GeneralCategory::Cf || v_ == 0x200bU) {
-    return 0;
-  }
-
-  // Hangul Jamo medial vowels and final consonants
-  if (v_ >= 0x1160U && v_ <= 0x11ffU) {
-    return 0;
-  }
-
-  // Spacing characters in the East Asian Wide (W) or East Asian Full-width (F) category
-  auto eaw = internal::eastAsianWidth(v_);
-  if (eaw == internal::EastAsianWidth::wide || eaw == internal::EastAsianWidth::fullWidth) {
+  auto eastAsianWidth = u_getIntPropertyValue(v_, UCHAR_EAST_ASIAN_WIDTH);
+  switch (eastAsianWidth) {
+  case U_EA_FULLWIDTH:
+  case U_EA_WIDE:
     return 2;
   }
 
-  // From `unicode-display-width`: Emoji characters in the Emoji_Presentation category
-  if (internal::emojiEmoji_Presentation(v_)) {
+  if (u_hasBinaryProperty(v_, UCHAR_EMOJI_PRESENTATION)) {
     return 2;
   }
 
@@ -193,10 +171,10 @@ Grapheme::operator u32string() const {
 }
 
 bool
-Grapheme::print() const {
+Grapheme::print() const { // XXX Weg
   switch (codePoints_.size()) {
   case 0: return false;
-  case 1: return codePoints_[0].print();
+  case 1: return codePoints_[0].isPrint();
   default: return true;
   }
 }
@@ -205,6 +183,11 @@ uint8_t
 Grapheme::width() const {
   uint8_t ret = 0;
   for (auto cp : codePoints_) {
+    ret = max(ret, cp.width());
+    if (ret == 2) {
+      return 2;
+    }
+#if 0 // XXX
     // From `unicode-display-width`
     if (cp == 0xfe0fU) {
       return 2;
@@ -217,6 +200,7 @@ Grapheme::width() const {
     if (ret == 2) {
       return 2;
     }
+#endif
   }
   return ret;
 }
@@ -266,15 +250,22 @@ read(nio::Source& in, Grapheme& out) {
 
 u32string
 utf8To32(string_view s) {
-  u32string ret;
-  unicodelib::utf8::decode(s.data(), s.size(), ret);
+  auto us = UnicodeString::fromUTF8(s);
+  auto size = us.countChar32();
+  u32string ret(size, 0);
+  UErrorCode status = U_ZERO_ERROR;
+  us.toUTF32(reinterpret_cast<UChar32*>(ret.data()), size, status);
+  if (not U_SUCCESS(status)) {
+    ROCKET_PROCESS_ERROR("status={}", u_errorName(status));
+  }
   return ret;
 }
 
 string
 utf32To8(u32string_view s) {
+  auto us = UnicodeString::fromUTF32(reinterpret_cast<const UChar32*>(s.data()), s.size());
   string ret;
-  unicodelib::utf8::encode(s.data(), s.size(), ret);
+  us.toUTF8String(ret);
   return ret;
 }
 
@@ -294,7 +285,19 @@ namespace utf8 {
 
 uint8_t
 codePointSize(char c) {
-  return unicodelib::utf8::codepoint_length(&c, 1);
+  if ((c & 0x80) == 0) {
+    return 1;
+  }
+  if ((c & 0xE0) == 0xC0) {
+    return 2;
+  }
+  if ((c & 0xF0) == 0xE0) {
+    return 3;
+  }
+  if ((c & 0xF8) == 0xF0) {
+    return 4;
+  }
+  return 0;
 }
 
 CodePoints
@@ -319,11 +322,13 @@ codePoints(string_view s, UnorderedBimap<size_t, size_t>* positions) {
 
 size_t
 countCodePoints(string_view s) {
-  return CodePointIterator<char>(s, s.size()).codePointPosition();
+  auto us = UnicodeString::fromUTF8(s);
+  return us.countChar32();
 }
 
 size_t
 countGraphemes(string_view s) {
+  // XXX Ohne GrahemeIterator
   return GraphemeIterator<char>(s, s.size()).graphemePosition();
 }
 

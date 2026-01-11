@@ -56,6 +56,7 @@ SRC_ADD        := unicode/EastAsianWidth.cc unicode/emoji-data.cc
 # Move `log.cc` to front so Rocket can use its own logging API
 # Move `Process.cc` to front so the global `process` instance is available early
 SRC_MOVE_FRONT := log/log.cc Process.cc
+SHARED_LIBS    := libicuuc.so.$(ICU_VERSION)
 INSTALL        := 1
 include $(GAIA_DIR)/src/main/make/shared-lib.mk
 

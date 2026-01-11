@@ -67,9 +67,8 @@ escapeCStringCodePoint(unicode::CodePoint cp, size_t& column, const CStringParam
   }
 
   // Printable characters
-  int8_t w;
-  if (cp.print(&w)) {
-    column += static_cast<size_t>(w); // We know `w` > 0
+  if (cp.isPrint()) {
+    column += cp.width();
     return static_cast<string>(cp);
   }
 
@@ -150,12 +149,8 @@ escapeRegexCodePoint(unicode::CodePoint cp, size_t& column) {
   }
 
   // Printable characters, code points > U+FFFF
-  int8_t w;
-  if (cp.print(&w) || cp > 0xffffU) {
-    if (w < 0) {
-      w = 0;
-    }
-    column += static_cast<size_t>(w); // We know `w` >= 0
+  if (cp.isPrint() || cp > 0xffffU) {
+    column += cp.width();
     return static_cast<string>(cp);
   }
 
@@ -317,17 +312,17 @@ unescapeCString(string_view input, const CStringParams& params, Result* result) 
           ret.push_back(static_cast<char>(cp2));
           break;
         case 'x': {
-          auto i = nio::getHex(in, 2);
+          char32_t i = nio::getHex(in, 2);
           ret.append(static_cast<string>(unicode::CodePoint(i)));
           break;
         }
         case 'u': {
-          auto i = nio::getHex(in, 4);
+          char32_t i = nio::getHex(in, 4);
           ret.append(static_cast<string>(unicode::CodePoint(i)));
           break;
         }
         case 'U': {
-          auto i = nio::getHex(in, 8);
+          char32_t i = nio::getHex(in, 8);
           ret.append(static_cast<string>(unicode::CodePoint(i)));
           break;
         }
@@ -468,12 +463,12 @@ unescapeRegex(string_view input, Result* result) {
           ret.push_back(static_cast<char>(cp2));
           break;
         case 'x': {
-          auto i = nio::getHex(in, 2);
+          char32_t i = nio::getHex(in, 2);
           ret.append(static_cast<string>(unicode::CodePoint(i)));
           break;
         }
         case 'u': {
-          auto i = nio::getHex(in, 4);
+          char32_t i = nio::getHex(in, 4);
           ret.append(static_cast<string>(unicode::CodePoint(i)));
           break;
         }

@@ -29,8 +29,8 @@ namespace rocket::assert::internal {
 
 template<typename... T>
 [[noreturn]] void
-onAssertFailed(
-    const std::source_location& sl,
+assertFailed(
+    std::source_location&& sl,
     const char* expr,
     fmt::format_string<T...> fmt = "",
     T&&... args) {
@@ -51,8 +51,8 @@ onAssertFailed(
 
 template<typename... T>
 [[noreturn]] void
-onCheckFailed(
-    const std::source_location& sl,
+checkFailed(
+    std::source_location&& sl,
     const char* name,
     const char* expr,
     fmt::format_string<T...> fmt = "",
@@ -69,8 +69,9 @@ onCheckFailed(
 }
 
 template<typename... T>
-[[noreturn]] void onExpectFailed(
-    const std::source_location& sl,
+[[noreturn]] void
+expectFailed(
+    std::source_location&& sl,
     const char* expr,
     fmt::format_string<T...> fmt = "",
     T&&... args) {
@@ -85,45 +86,68 @@ template<typename... T>
   })), sl);
 }
 
+template<typename... T>
+[[noreturn]] void
+fail(
+    std::source_location&& sl,
+    fmt::format_string<T...> fmt,
+    T&&... args) {
+  throw InvalidState(fmt::format(fmt, std::forward<T>(args)...), sl);
+}
+
+template<typename... T>
+[[noreturn]] void
+terminate(
+    std::source_location&& sl,
+    fmt::format_string<T...> fmt,
+    T&&... args) {
+  process.error(
+      nio::stderr,
+      EXIT_SUCCESS,
+      fmt,
+      std::forward<T>(args)...);
+  std::terminate();
+}
+
 } // namespace rocket::assert::internal
 
 // Macros ---------------------------------------------------------------------------------------------------
 
 /**
- * Terminates.
+ * Throws #rocket::InvalidState.
+ *
+ * @throw #rocket::InvalidState
  */
-#define ROCKET_TERMINATE_INVALID_CALL() ROCKET_ASSERT(false, "Invalid call of function `{}`", __PRETTY_FUNCTION__)
-
-/**
- * Terminates.
- */
-#define ROCKET_TERMINATE_NOT_IMPLEMENTED() ROCKET_ASSERT(false, "Not implemented")
-
-/**
- * Terminates.
- */
-#define ROCKET_TERMINATE_UNREACHABLE_CODE() ROCKET_ASSERT(false, "Unreachable code")
+#define ROCKET_FAIL_INVALID_CALL() ROCKET_FAIL("Invalid call of function `{}`", __PRETTY_FUNCTION__)
 
 /**
  * Throws #rocket::InvalidState.
  *
  * @throw #rocket::InvalidState
  */
-#define ROCKET_FAIL_INVALID_CALL() ROCKET_EXPECT(false, "Invalid call of function `{}`", __PRETTY_FUNCTION__)
+#define ROCKET_FAIL_NOT_IMPLEMENTED() ROCKET_FAIL("Not implemented")
 
 /**
  * Throws #rocket::InvalidState.
  *
  * @throw #rocket::InvalidState
  */
-#define ROCKET_FAIL_NOT_IMPLEMENTED() ROCKET_EXPECT(false, "Not implemented")
+#define ROCKET_FAIL_UNREACHABLE_CODE() ROCKET_FAIL("Unreachable code")
 
 /**
- * Throws #rocket::InvalidState.
- *
- * @throw #rocket::InvalidState
+ * Terminates because of an invalid function call.
  */
-#define ROCKET_FAIL_UNREACHABLE_CODE() ROCKET_EXPECT(false, "Unreachable code")
+#define ROCKET_TERMINATE_INVALID_CALL() ROCKET_TERMINATE("Invalid call of function `{}`", __PRETTY_FUNCTION__)
+
+/**
+ * Terminates because of a missing implementation.
+ */
+#define ROCKET_TERMINATE_NOT_IMPLEMENTED() ROCKET_TERMINATE("Not implemented")
+
+/**
+ * Terminates because code was reached that was supposed to be unreachable.
+ */
+#define ROCKET_TERMINATE_UNREACHABLE_CODE() ROCKET_TERMINATE("Unreachable code")
 
 #endif // ROCKET_ASSERT_H
 
@@ -132,12 +156,16 @@ template<typename... T>
 #undef ROCKET_ASSERT
 #undef ROCKET_CHECK
 #undef ROCKET_EXPECT
+#undef ROCKET_FAIL
+#undef ROCKET_TERMINATE
 
 #ifdef NDEBUG
 
 #define ROCKET_ASSERT(expr, ...) ::rocket::nop()
 #define ROCKET_CHECK(name, expr, ...) ::rocket::nop()
 #define ROCKET_EXPECT(expr, ...) ::rocket::nop()
+#define ROCKET_FAIL(fmt, ...) ::rocket::nop()
+#define ROCKET_TERMINATL(fmt, ...) ::rocket::nop()
 
 #else
 
@@ -146,13 +174,12 @@ template<typename... T>
  *
  * Usage: `ROCKET_ASSERT(expr, [fmt, [args]...])`
  *
- * Use this macro only in order to handle program states that result from a flawed implementation and make
- * further execution impossible or dangerous. Do not abuse it to catch states that may reasonably occur in
- * normal program execution. If an assertion fails, code needs to be fixed.
+ * Use this macro in order to handle invalid program states that make further execution impossible or
+ * dangerous. If an assertion fails, possibly code needs to be fixed.
  */
 #define ROCKET_ASSERT(expr, ...) \
     if (not (expr)) { \
-      ::rocket::assert::internal::onAssertFailed( \
+      ::rocket::assert::internal::assertFailed( \
           ROCKET_EXCEPTION_SL, \
           BOOST_PP_STRINGIZE(expr) \
           __VA_OPT__(,) __VA_ARGS__); \
@@ -165,12 +192,12 @@ template<typename... T>
  *
  * @throw #rocket::InvalidArgument if @p expr evaluates to `false`
  *
- * Use this macro only in order to check function arguments. The first parameter of this macro is always the
- * name of the function parameter the argument of which is to be checked.
+ * Use this macro in order to check function arguments. The first parameter @p name is always the name of the
+ * function parameter the argument of which is to be checked.
  */
 #define ROCKET_CHECK(name, expr, ...) \
     if (not (expr)) { \
-      ::rocket::assert::internal::onCheckFailed( \
+      ::rocket::assert::internal::checkFailed( \
           ROCKET_EXCEPTION_SL, \
           BOOST_PP_STRINGIZE(name), \
           BOOST_PP_STRINGIZE(expr) \
@@ -184,17 +211,44 @@ template<typename... T>
  *
  * @throw #rocket::InvalidState if @p expr evaluates to `false`
  *
- * Use this macro only in order to handle program states that result from a flawed implementation but may
- * be dealt with by throwing an exception. Do not abuse it to catch states that may reasonably occur in
- * normal program execution. If an expectation fails, code needs to be fixed.
+ * Use this macro in order to handle invalid program states that may be dealt with by throwing an exception.
  */
 #define ROCKET_EXPECT(expr, ...) \
     if (not (expr)) { \
-      ::rocket::assert::internal::onExpectFailed( \
+      ::rocket::assert::internal::expectFailed( \
           ROCKET_EXCEPTION_SL, \
           BOOST_PP_STRINGIZE(expr) \
           __VA_OPT__(,) __VA_ARGS__); \
     }
+
+/**
+ * Throws #rocket::InvalidState.
+ *
+ * Usage: `ROCKET_FAIL(fmt, [args]...)`
+ *
+ * @throw #rocket::InvalidState
+ *
+ * Use this macro in order to handle invalid program states that may be dealt with by throwing an exception.
+ */
+#define ROCKET_FAIL(fmt, ...) \
+    ::rocket::assert::internal::fail( \
+        ROCKET_EXCEPTION_SL, \
+        fmt \
+        __VA_OPT__(,) __VA_ARGS__)
+
+/**
+ * Terminates.
+ *
+ * Usage: `ROCKET_TERMINATE(fmt, [args]...)`
+ *
+ * Use this macro in order to handle invalid program states that make further execution impossible or
+ * dangerous.
+ */
+#define ROCKET_TERMINATE(fmt, ...) \
+    ::rocket::assert::internal::terminate( \
+        ROCKET_EXCEPTION_SL, \
+        fmt \
+        __VA_OPT__(,) __VA_ARGS__)
 
 #endif // NDEBUG
 

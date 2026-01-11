@@ -18,6 +18,7 @@ include $(GAIA_DIR)/src/main/make/Makefile.mk
 
 # Constants -------------------------------------------------------------------------------------------------
 
+export ICU_VERSION := 74.2
 export ROCKET_VERSION := $(call print-version,.)
 ifeq ($(ROCKET_VERSION),)
   $(error Cannot set `ROCKET_VERSION`)

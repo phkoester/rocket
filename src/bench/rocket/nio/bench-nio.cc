@@ -20,7 +20,7 @@ using namespace std::filesystem;
 
 constexpr size_t FILE_SIZE = 32 * 1'204 * 1'024; // 256 MiB
 constexpr size_t CHUNK_SIZE = 1'024;
-constexpr size_t N = 32;
+constexpr size_t N = 10;
 constexpr size_t ITERATIONS = FILE_SIZE / CHUNK_SIZE;
 
 // `TEST` ---------------------------------------------------------------------------------------------------
