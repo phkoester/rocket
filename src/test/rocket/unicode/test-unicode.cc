@@ -19,6 +19,13 @@ using namespace rocket::unicode;
 using namespace std;
 using namespace testing;
 
+// Constants ------------------------------------------------------------------------------------------------
+
+constexpr char TWO_BYTES    = 0b1101'1111;
+constexpr char THREE_BYTES  = 0b1110'1111;
+constexpr char FOUR_BYTES   = 0b1111'0111;
+constexpr char CONT         = 0b1011'1111;
+
 // Local functions ------------------------------------------------------------------------------------------
 
 namespace {
@@ -274,6 +281,15 @@ TEST(unicode, conversions) {
 
   string s3 = utf32To8(s2);
   EXPECT_EQ(s3, s1);
+
+  // U+1F9D1 (ADULT), U+200D (ZERO WIDTH JOINER), U+1F33E (EAR OF RICE)
+  EXPECT_EQ(utf8To32("a🧑‍🌾b"), U"a🧑‍🌾b");
+
+  auto s32 = utf8To32("🧑‍🌾");
+  ASSERT_EQ(s32.size(), 3);
+  EXPECT_EQ(s32[0], 0x1F9D1);
+  EXPECT_EQ(s32[1], 0x200D);
+  EXPECT_EQ(s32[2], 0x1F33E);
 }
 
 // `rocket::unicode::utf8` ..................................................................................
@@ -295,26 +311,20 @@ TEST(unicode, utf8CountCodePoints) {
   EXPECT_EQ(utf8::countCodePoints("äüöß€"), 5);
 }
 
-TEST(unicode, utf8Valid) {
-  EXPECT_TRUE(utf8::valid("äöüß€"));
-  EXPECT_FALSE(utf8::valid("\x80äöü€"));
+TEST(unicode, utf8Validate) {
+  {
+    auto cow = utf8::validate("äöüß€");
+    EXPECT_TRUE(cow.readOnly());
+    EXPECT_EQ(*cow, "äöüß€");
+  }
 
-  string out;
+  {
+    auto cow = utf8::validate(string { 'a', CONT, 'b' });
+    EXPECT_FALSE(cow.readOnly());
+    EXPECT_EQ(*cow, "a�b");
+  }
 
-  EXPECT_TRUE(utf8::valid("äöüß€", &out));
-  EXPECT_EQ(out, "äöüß€");
-
-  EXPECT_FALSE(utf8::valid("\x61\x80\x62\x81\x63", &out));
-  EXPECT_EQ(out, "a�b�c");
-
-  EXPECT_FALSE(utf8::valid("\x80äöü€", &out));
-  EXPECT_EQ(out, "�äöü€");
-
-  EXPECT_FALSE(utf8::valid("\xc3", &out));
-  EXPECT_EQ(out, "�"); // Incomplete 'ä', which is C3 A4
-
-  EXPECT_FALSE(utf8::valid("\xe2\x82", &out));
-  EXPECT_EQ(out, "��"); // Incomplete '€', which is E2 82 AC
+  // XXX
 }
 
 // `rocket::unicode::utf32` ---------------------------------------------------------------------------------

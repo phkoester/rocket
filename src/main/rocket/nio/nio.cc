@@ -391,10 +391,10 @@ StringSink::flush() {
   return error_;
 }
 
-string
+const string&
 StringSink::str() const {
-  ROCKET_EXPECT(not out);
-  return managed_;
+  ROCKET_EXPECT(not ptr_);
+  return owned_;
 }
 
 size_t
@@ -403,10 +403,10 @@ StringSink::write(string_view in) {
     return 0;
   }
 
-  if (out) {
-    out->append(in);
+  if (ptr_) {
+    ptr_->append(in);
   } else {
-    managed_.append(in);
+    owned_.append(in);
   }
   return in.size();
 }

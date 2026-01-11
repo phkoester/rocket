@@ -6,6 +6,7 @@
 
 #pragma once
 
+#include "rocket/Cow.h"
 #include "rocket/UnorderedBimap.h"
 #include "rocket/rocket.h"
 #include "rocket/format/format.h"
@@ -394,8 +395,6 @@ using Graphemes = std::vector<Grapheme>;
 /**
  * Converts the UTF-8 string @p s to a UTF-32 string.
  *
- * If @p s is not a valid UTF-8 string, the behavior of this function is undefined.
- *
  * @param s a UTF-8 string
  * @return a UTF-32 string
  */
@@ -481,6 +480,7 @@ size_t countGraphemes(std::string_view s);
 Graphemes graphemes(std::string_view s, UnorderedBimap<size_t, size_t>* positions = nullptr);
 
 /**
+* XXX
  * Checks if string @p s is a valid UTF-8 string.
  *
  * @param s a UTF-8 string; possibly invalid
@@ -489,7 +489,8 @@ Graphemes graphemes(std::string_view s, UnorderedBimap<size_t, size_t>* position
  *    incomplete UTF-8 byte sequences are replaced by a sequence of replacement characters `�` (U+FFFD).
  * @return `true` if @p s is a valid UTF-8 string
  */
-bool valid(std::string_view s, std::string* out = nullptr);
+Cow<std::string_view, std::string>
+validate(std::string_view s, UnorderedBimap<size_t, size_t>* positions = nullptr);
 
 } // namespace utf8
 

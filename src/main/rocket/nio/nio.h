@@ -417,21 +417,21 @@ private:
 /**
  * A sink that appends to a string.
  *
- * If the sink is constructed without a string reference, it holds its own managed string that can be
- * accessed via #StringSink::str.
+ * If the sink is constructed without a string reference, it holds an owned string that can be accessed via
+ * #StringSink::str.
  */
 struct StringSink : Sink {
   /**
-   * Makes a new `StringSink` with a managed string.
+   * Makes a new `StringSink` with an owned string.
    */
   explicit StringSink() {}
 
   /**
-   * Makes a new `StringSink` with a string reference and no managed string.
+   * Makes a new `StringSink` with a string reference and no owned string.
    *
    * @param out the string to write to
    */
-  explicit StringSink(std::string& out) : out(&out) {}
+  explicit StringSink(std::string& out) : ptr_(&out) {}
 
   ~StringSink() override;
 
@@ -442,19 +442,19 @@ struct StringSink : Sink {
   int flush() override;
 
   /**
-   * Returns the managed string.
+   * Returns the owned string.
    *
-   * @return the managed string
-   * @throws #rocket::InvalidState if the sink has no managed string
+   * @return the owned string
+   * @throws #rocket::InvalidState if the sink has no owned string
    */
-  std::string str() const;
+  const std::string& str() const;
 
   size_t write(std::string_view in) override;
 
 private:
 
-  std::string* out = nullptr;
-  std::string managed_;
+  std::string* ptr_ = nullptr;
+  std::string owned_;
 };
 
 // `SeekMode` -----------------------------------------------------------------------------------------------

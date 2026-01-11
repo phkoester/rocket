@@ -6,12 +6,11 @@
 
 #include "rocket/assert.h"
 #include "rocket/numeric.h"
-#include "rocket/str/str.h"
 #include "rocket/unicode/iterator.h" // XXX Ganz weg
-#include "rocket/unicode/internal/block.h"
+#include "rocket/unicode/internal/block.h" // XXX Ganz weg
 
-#include <unicodelib.h>
-#include <unicodelib_encodings.h>
+#include <unicodelib.h> // XXX Weg
+#include <unicodelib_encodings.h> // XXX Weg
 
 #include <unicode/uchar.h>
 #include <unicode/unistr.h>
@@ -352,63 +351,83 @@ graphemes(string_view s, UnorderedBimap<size_t, size_t>* positions) {
   return ret;
 }
 
-bool
-valid(string_view s, string* out) {
-  if (out) {
-    out->clear();
+Cow<string_view, string>
+validate(string_view s, UnorderedBimap<size_t, size_t>* positions) {
+  Cow<string_view, string> ret(s);
+
+  if (positions) {
+    positions->clear();
   }
 
-  bool ret = true;
+  auto addPosition = [&](size_t i) {
+    if (positions) {
+      if (ret.readOnly()) {
+        positions->insert({ i, i });
+      } else {
+        positions->insert({ i , ret->size() });
+      }
+    }
+  };
 
-  for (size_t i = 0, size = s.size(); i < size;) {
+  auto append = [&](string_view s) {
+    if (not ret.readOnly()) {
+      ret.get().append(s);
+    }
+  };
+
+  auto invalidate = [&](size_t i) {
+    if (ret.readOnly()) {
+      ret = string(s.data(), i);
+    }
+  };
+
+  auto push = [&](char c) {
+    if (not ret.readOnly()) {
+      ret.get().push_back(c);
+    }
+  };
+
+  for (size_t i = 0, size = s.size(); i < size; /* Empty */) {
+    addPosition(i);
+
     char c = s[i];
     auto cpSize = codePointSize(c);
     if (cpSize == 0) {
       // Invalid UTF-8 byte
-      if (out) {
-        ret = false;
-        out->append("�");
-      } else {
-        return false;
-      }
+      invalidate(i);
+      append("�");
+      ++i;
+    } else if (cpSize == 1) {
+      // ASCII character
+      push(c);
       ++i;
     } else if (i + cpSize > size) {
       // Incomplete UTF-8 byte sequence
-      if (not out) {
-        return false;
-      }
-      ret = false;
-      out->append(str::repeat<char>("�", size - i));
-      break;
-    } else if (cpSize == 1) {
-      if (out) {
-        out->push_back(c);
-      }
-      ++i;
+      invalidate(i);
+      append("�");
+      i = size;
     } else {
       // Multi-byte sequence: Check that all following bytes are continuation bytes
-      bool valid = true;
+      bool validSeq = true;
       for (uint8_t j = 1; j < cpSize; ++j) {
         if (not utf8::continuationByte(s[i + j])) {
-          valid = false;
+          validSeq = false;
           break;
         }
       }
-      if (valid) {
-        if (out) {
-          out->append(s.substr(i, cpSize));
-        }
+      if (validSeq) {
+        // Valid sequence
+        append(s.substr(i, cpSize));
       } else {
-        // Invalid UTF-8 byte sequence
-        if (not out) {
-          return false;
-        }
-        ret = false;
-        out->append(str::repeat<char>("�", cpSize));
+        // Invalid sequence
+        invalidate(i);
+        append("�");
       }
       i += cpSize;
     }
   }
+
+  addPosition(s.size());
 
   return ret;
 }
