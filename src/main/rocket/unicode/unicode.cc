@@ -24,6 +24,12 @@ using namespace std;
 
 namespace unicodelib = ::unicode;
 
+namespace {
+
+// Local functions ------------------------------------------------------------------------------------------
+
+} // namespace
+
 namespace rocket::unicode {
 
 // Internal -------------------------------------------------------------------------------------------------
@@ -74,6 +80,10 @@ CodePoint::upper() const {
   return static_cast<char32_t>(u_toupper(v_));
 }
 
+bool
+CodePoint::valid() const {
+  return v_ <= 0x10FFFFU && not (v_ >= 0xD800U && v_ <= 0xDFFFU);
+}
 
 uint8_t
 CodePoint::width() const {
@@ -107,6 +117,7 @@ operator<<(ostream& lhs, CodePoint rhs) {
   return lhs << fmt::format("{}", rhs);
 }
 
+// XXX Weg
 size_t
 read(nio::Source& in, CodePoint& out) {
   auto pos = in.tell();
@@ -209,6 +220,7 @@ operator<<(ostream& lhs, const Grapheme& rhs) {
   return lhs << fmt::format("{}", rhs);
 }
 
+// XXX Weg
 size_t
 read(nio::Source& in, Grapheme& out) {
   size_t pos1 = in.tell();
@@ -247,22 +259,24 @@ read(nio::Source& in, Grapheme& out) {
 
 // Functions ------------------------------------------------------------------------------------------------
 
+// XXX throw dok.
 u32string
 utf8To32(string_view s) {
   auto us = UnicodeString::fromUTF8(s);
+  ROCKET_CHECK(s, not us.isBogus());
   auto size = us.countChar32();
   u32string ret(size, 0);
   UErrorCode status = U_ZERO_ERROR;
   us.toUTF32(reinterpret_cast<UChar32*>(ret.data()), size, status);
-  if (not U_SUCCESS(status)) {
-    ROCKET_PROCESS_ERROR("status={}", u_errorName(status));
-  }
+  ROCKET_EXPECT(U_SUCCESS(status));
   return ret;
 }
 
+// XXX throw dok.
 string
 utf32To8(u32string_view s) {
   auto us = UnicodeString::fromUTF32(reinterpret_cast<const UChar32*>(s.data()), s.size());
+  ROCKET_CHECK(s, not us.isBogus());
   string ret;
   us.toUTF8String(ret);
   return ret;
@@ -282,6 +296,7 @@ width(const Graphemes& grs, size_t index, size_t n) {
 
 namespace utf8 {
 
+// XXX Weg
 uint8_t
 codePointSize(char c) {
   if ((c & 0x80) == 0) {
@@ -331,6 +346,77 @@ countGraphemes(string_view s) {
   return GraphemeIterator<char>(s, s.size()).graphemePosition();
 }
 
+char32_t
+decodeBuffer(const char* buf, size_t size, size_t& numBytes) {
+  ROCKET_ASSERT(size > 0);
+
+  uint8_t b = buf[0];
+  if ((b & 0x80) == 0) {
+    numBytes = 1;
+    return b;
+  } else if ((b & 0xE0) == 0xC0) {
+    numBytes = 2;
+    if (size >= 2 && continuationByte(buf[1])) {
+      return
+          ((static_cast<char32_t>(buf[0] & 0x1F)) << 6) |
+          (static_cast<char32_t>(buf[1] & 0x3F));
+    }
+  } else if ((b & 0xF0) == 0xE0) {
+    numBytes = 3;
+    if (size >= 3 && continuationByte(buf[1]) && continuationByte(buf[2])) {
+      return
+          ((static_cast<char32_t>(buf[0] & 0x0F)) << 12) |
+          ((static_cast<char32_t>(buf[1] & 0x3F)) << 6) |
+          (static_cast<char32_t>(buf[2] & 0x3F));
+    }
+  } else if ((b & 0xF8) == 0xF0) {
+    numBytes = 4;
+    if (size >= 4 && continuationByte(buf[1]) && continuationByte(buf[2]) && continuationByte(buf[3])) {
+      return
+          ((static_cast<char32_t>(buf[0] & 0x07)) << 18) |
+          ((static_cast<char32_t>(buf[1] & 0x3F)) << 12) |
+          ((static_cast<char32_t>(buf[2] & 0x3F)) << 6) |
+          (static_cast<char32_t>(buf[3] & 0x3F));
+    }
+  } else {
+    numBytes = 0;
+  }
+
+  return -1;
+}
+
+size_t
+encodeBuffer(char32_t cp, char *buf) {
+  if (cp < 0x0080) {
+    buf[0] = static_cast<uint8_t>(cp & 0x7F);
+    return 1;
+  } else if (cp < 0x0800) {
+    buf[0] = static_cast<uint8_t>(0xC0 | ((cp >> 6) & 0x1F));
+    buf[1] = static_cast<uint8_t>(0x80 | (cp & 0x3F));
+    return 2;
+  } else if (cp < 0xD800) {
+    buf[0] = static_cast<uint8_t>(0xE0 | ((cp >> 12) & 0xF));
+    buf[1] = static_cast<uint8_t>(0x80 | ((cp >> 6) & 0x3F));
+    buf[2] = static_cast<uint8_t>(0x80 | (cp & 0x3F));
+    return 3;
+  } else if (cp < 0xE000) {
+    // [D800,DFFF] is invalid
+    return 0;
+  } else if (cp < 0x10000) {
+    buf[0] = static_cast<uint8_t>(0xE0 | ((cp >> 12) & 0xF));
+    buf[1] = static_cast<uint8_t>(0x80 | ((cp >> 6) & 0x3F));
+    buf[2] = static_cast<uint8_t>(0x80 | (cp & 0x3F));
+    return 3;
+  } else if (cp < 0x110000) {
+    buf[0] = static_cast<uint8_t>(0xF0 | ((cp >> 18) & 0x7));
+    buf[1] = static_cast<uint8_t>(0x80 | ((cp >> 12) & 0x3F));
+    buf[2] = static_cast<uint8_t>(0x80 | ((cp >> 6) & 0x3F));
+    buf[3] = static_cast<uint8_t>(0x80 | (cp & 0x3F));
+    return 4;
+  }
+  return 0;
+}
+
 Graphemes
 graphemes(string_view s, UnorderedBimap<size_t, size_t>* positions) {
   if (positions) {
@@ -351,9 +437,9 @@ graphemes(string_view s, UnorderedBimap<size_t, size_t>* positions) {
   return ret;
 }
 
-Cow<string>
-validate(const string& s, UnorderedBimap<size_t, size_t>* positions) {
-  Cow<string> ret(s);
+Cow<string_view, string>
+validate(const string_view& s, UnorderedBimap<size_t, size_t>* positions) {
+  Cow<string_view, string> ret(s);
 
   if (positions) {
     positions->clear();
@@ -361,70 +447,32 @@ validate(const string& s, UnorderedBimap<size_t, size_t>* positions) {
 
   auto addPosition = [&](size_t i) {
     if (positions) {
-      if (ret.readOnly()) {
+      if (not ret.modified()) {
         positions->insert({ i, i });
       } else {
-        positions->insert({ i , ret->size() });
+        positions->insert({ i , ret.get().size() });
       }
-    }
-  };
-
-  auto append = [&](string_view s) {
-    if (not ret.readOnly()) {
-      ret.get().append(s);
-    }
-  };
-
-  auto invalidate = [&](size_t i) {
-    if (ret.readOnly()) {
-      ret = string(s.data(), i);
-    }
-  };
-
-  auto push = [&](char c) {
-    if (not ret.readOnly()) {
-      ret.get().push_back(c);
     }
   };
 
   for (size_t i = 0, size = s.size(); i < size; /* Empty */) {
     addPosition(i);
 
-    char c = s[i];
-    auto cpSize = codePointSize(c);
-    if (cpSize == 0) {
-      // Invalid UTF-8 byte
-      invalidate(i);
-      append("�");
-      ++i;
-    } else if (cpSize == 1) {
-      // ASCII character
-      push(c);
-      ++i;
-    } else if (i + cpSize > size) {
-      // Incomplete UTF-8 byte sequence
-      invalidate(i);
-      append("�");
-      i = size;
+    size_t numBytes;
+    auto cp = decodeBuffer(&s[i], size - i, numBytes);
+    if (CodePoint(cp).valid()) {
+      // Valid code point
+      if (ret.modified()) {
+        ret.owned().append(s.substr(i, numBytes));
+      }
     } else {
-      // Multi-byte sequence: Check that all following bytes are continuation bytes
-      bool validSeq = true;
-      for (uint8_t j = 1; j < cpSize; ++j) {
-        if (not utf8::continuationByte(s[i + j])) {
-          validSeq = false;
-          break;
-        }
+      // Invalid code point
+      if (not ret.modified()) {
+        ret = string(s.data(), i);
       }
-      if (validSeq) {
-        // Valid sequence
-        append(s.substr(i, cpSize));
-      } else {
-        // Invalid sequence
-        invalidate(i);
-        append("�");
-      }
-      i += cpSize;
+      ret.owned().append("�");
     }
+    i += max(1UL, numBytes); // `numBytes` may be 0
   }
 
   addPosition(s.size());
@@ -476,6 +524,29 @@ graphemes(u32string_view s, UnorderedBimap<size_t, size_t>* positions) {
   if (positions) {
     positions->insert({ i++, it.position() });
   }
+  return ret;
+}
+
+Cow<u32string_view, u32string>
+validate(const u32string_view& s) {
+  Cow<u32string_view, u32string> ret(s);
+
+  for (size_t i = 0, size = s.size(); i < size; ++i ) {
+    char32_t c = s[i];
+    if (CodePoint(c).valid()) {
+      // Valid code point
+      if (ret.modified()) {
+        ret.owned().push_back(c);
+      }
+    } else {
+      // Invalid code point
+      if (not ret.modified()) {
+        ret = u32string(s.data(), i);
+      }
+      ret.owned().push_back(U'�');
+    }
+  }
+
   return ret;
 }
 

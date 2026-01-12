@@ -23,6 +23,14 @@ toy() {
   ROCKET_LOG(toy);
 
   ROCKET_LOG_TRACE("Hey {}", "there");
+
+  string s = "Hello there";
+
+  Cow<string_view, string> cow(s);
+  cout << "cow=" << cow.get() << endl;
+  cow = "I changed my mind";
+  cout << "cow=" << cow.get() << endl;
+  cout << "cow.owned=" << cow.owned() << endl;
 }
 
 } // namespace

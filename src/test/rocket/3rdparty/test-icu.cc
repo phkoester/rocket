@@ -109,31 +109,4 @@ TEST(icu, graphemeClusters) {
   dumpSegments(SegmentType::grapheme, std::locale(), "a🧑‍🌾b");
 }
 
-/**
- * The result of #rocket::unicode::utf8To32 is undefined if the input string is invalid. However, this test
- * checks its exact behavior.
- */
-TEST(icu, utf8ToUtf32) {
-  using namespace unicode;
-
-  // Invalid UTF-8
-
-  EXPECT_EQ(utf8To32(string { CONT }), U"\uFFFD"); // U+FFFD (REPLACEMENT CHARACTER)
-  EXPECT_EQ(utf8To32(string { CONT }), U"�");
-  EXPECT_EQ(utf8To32(string { CONT, 'a', 'b' }), U"�ab");
-
-  EXPECT_EQ(utf8To32(string { TWO_BYTES }), U"�");
-  EXPECT_EQ(utf8To32(string { TWO_BYTES, 'a' }), U"�a");
-  EXPECT_EQ(utf8To32(string { TWO_BYTES, 'a', 'b' }), U"�ab");
-
-  EXPECT_EQ(utf8To32(string { THREE_BYTES }), U"�");
-  EXPECT_EQ(utf8To32(string { THREE_BYTES, 'a', 'b' }), U"�ab");
-  EXPECT_EQ(utf8To32(string { THREE_BYTES, CONT, 'a', 'b' }), U"�ab");
-
-  EXPECT_EQ(utf8To32(string { FOUR_BYTES }), U"�");
-  EXPECT_EQ(utf8To32(string { FOUR_BYTES, 'a', 'b' }), U"�ab");
-  EXPECT_EQ(utf8To32(string { FOUR_BYTES, CONT, 'a', 'b' }), U"��ab");
-  EXPECT_EQ(utf8To32(string { FOUR_BYTES, CONT, CONT, 'a', 'b' }), U"���ab");
-}
-
 // EOF

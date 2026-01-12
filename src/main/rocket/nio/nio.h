@@ -429,9 +429,9 @@ struct StringSink : Sink {
   /**
    * Makes a new `StringSink` with a string reference and no owned string.
    *
-   * @param out the string to write to
+   * @param ref the string to write to. The reference must remain valid for the lifetime of the `StringSink`
    */
-  explicit StringSink(std::string& out) : ptr_(&out) {}
+  explicit StringSink(std::string& ref) : ptr_(&ref) {}
 
   ~StringSink() override;
 
@@ -442,12 +442,11 @@ struct StringSink : Sink {
   int flush() override;
 
   /**
-   * Returns the owned string.
+   * Returns the referenced or the owned string.
    *
-   * @return the owned string
-   * @throws #rocket::InvalidState if the sink has no owned string
+   * @return the referenced or the owned string
    */
-  const std::string& str() const;
+  const std::string& str() const { return ptr_ ? *ptr_ : owned_; }
 
   size_t write(std::string_view in) override;
 

@@ -89,6 +89,16 @@ struct CodePoint {
   CodePoint upper() const;
 
   /**
+   * Returns `true` if this code point is valid.
+   *
+   * A code point is valid if it is less than or equal to U+10FFFF and not a surrogate in the range
+   * [U+D800,U+DFFF].
+   *
+   * @return `true` if this code point is valid
+   */
+  bool valid() const;
+
+  /**
    * Calculates the display width for a code point.
    *
    * @return a width in the range @f$[0,2]@f$
@@ -97,7 +107,7 @@ struct CodePoint {
 
 private:
 
-  char32_t v_;
+  char32_t v_; ///< The code-point value.
 };
 
 /// @op_output{#rocket::unicode::CodePoint}
@@ -424,6 +434,33 @@ size_t width(const Graphemes& grs, size_t index = 0, size_t n = NPOS);
 namespace utf8 {
 
 /**
+ * Decodes a UTF-8 byte sequence from a buffer to a code point.
+ *
+ * The function returns -1 if
+ * - @p numBytes cannot be determined (in which case it is set to 0),
+ * - the buffer is too small to contain the full byte sequence,
+ * - the byte sequence is invalid
+ *
+ * @param buf a buffer pointing to a UTF-8 byte sequence
+ * @param size the size of the buffer in bytes
+ * @param numBytes the number of bytes needed to encode the code point, as indicated by the first byte in the
+ *     buffer, or 0 if the value cannot be determined
+ * @return the decoded code point, or -1 if the result cannot be determined. The result is not checked for
+ *     valid code points
+ */
+char32_t decodeBuffer(const char* buf, size_t size, size_t& numBytes);
+
+/**
+ * Encodes a code point to a UTF-8 byte sequence into a buffer.
+ *
+ * @param cp a code point
+ * @param buf a buffer to encode the code point into. The buffer must be large enough to contain the encoded
+ *     code point, so there should be at least 4 bytes available
+ * @return the number of bytes encoded, or 0 if the code point is invalid
+ */
+size_t encodeBuffer(char32_t cp, char* buf);
+
+/**
  * Given the first byte @p c in a UTF-8 byte sequence, returns the size in bytes of the UTF-8 encoded code
  * point, including @p c itself.
  *
@@ -482,17 +519,22 @@ size_t countGraphemes(std::string_view s);
 Graphemes graphemes(std::string_view s, UnorderedBimap<size_t, size_t>* positions = nullptr);
 
 /**
-* XXX
- * Checks if string @p s is a valid UTF-8 string.
+ * Validates the UTF-8 string @p s.
  *
- * @param s a UTF-8 string; possibly invalid
- * @param out if nonnull, this is assigned a valid UTF-8 string. If @p s is valid, then @p out is assigned
- *    @p s. If @p s is not valid, then @p out is assigned a modified version of @p s where invalid or
- *    incomplete UTF-8 byte sequences are replaced by a sequence of replacement characters `�` (U+FFFD).
- * @return `true` if @p s is a valid UTF-8 string
+ * If the string @p s is found to be valid, the result contains a reference to the original string @p s.
+ *
+ * If the string @p s is found to be invalid, the result contains a modified, corrected version of the
+ * string. Invalid or incomplete UTF-8 byte sequences, as well as invalid code points, are replaced by the
+ * replacement character `�` (U+FFFD).
+ *
+ * @attention The `std::string_view` @p s must remain valid for the lifetime of the returned #rocket::Cow!
+ *
+ * @param s the string to validate
+ * @param positions if nonnull, then the left index of this map translates `char` offsets from @p s
+ *   to `char` offsets in the result for each code point and the end of string.
  */
-Cow<std::string>
-validate(const std::string& s, UnorderedBimap<size_t, size_t>* positions = nullptr);
+Cow<std::string_view, std::string>
+validate(const std::string_view& s, UnorderedBimap<size_t, size_t>* positions = nullptr);
 
 } // namespace utf8
 
@@ -536,6 +578,21 @@ size_t countGraphemes(std::u32string_view s);
  */
 Graphemes graphemes(std::u32string_view s, UnorderedBimap<size_t, size_t>* positions = nullptr);
 
+/**
+ * Validates the UTF-32 string @p s.
+ *
+ * If the string @p s is found to be valid, the result contains a reference to the original string @p s.
+ *
+ * If the string @p s is found to be invalid, the result contains a modified, corrected version of the
+ * string. Invalid code points are replaced by the replacement character `�` (U+FFFD).
+ *
+ * @attention The `std::u32string_view` @p s must remain valid for the lifetime of the returned #rocket::Cow!
+ *
+ * @param s the string to validate
+ */
+Cow<std::u32string_view, std::u32string>
+validate(const std::u32string_view& s);
+
 } // namespace utf32
 
 // Merge functions from `utf8` and `utf32` so they can be used as overloads ---------------------------------
@@ -551,6 +608,9 @@ using utf32::countGraphemes;
 
 using utf8::graphemes;
 using utf32::graphemes;
+
+using utf8::validate;
+using utf32::validate;
 
 } // namespace rocket::unicode
 

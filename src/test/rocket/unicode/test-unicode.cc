@@ -21,24 +21,31 @@ using namespace testing;
 
 // Constants ------------------------------------------------------------------------------------------------
 
-// XXX
-// constexpr char TWO_BYTES    = 0b1101'1111;
-// constexpr char THREE_BYTES  = 0b1110'1111;
+constexpr char TWO_BYTES    = 0b1101'1111;
+constexpr char THREE_BYTES  = 0b1110'1111;
 // constexpr char FOUR_BYTES   = 0b1111'0111;
 constexpr char CONT         = 0b1011'1111;
 
-// Local functions ------------------------------------------------------------------------------------------
+constexpr char32_t D800 = static_cast<char32_t>(0xD800U);
+constexpr char32_t MAX_PLUS_1 = static_cast<char32_t>(0x10FFFFU + 1);
 
-namespace {
+// Functions ------------------------------------------------------------------------------------------------
+
+// Functions ------------------------------------------------------------------------------------------------
+
+auto
+positions(initializer_list<pair<size_t, size_t>> list) {
+  return makeUnorderedBimap(list);
+}
 
 void
 testGrapheme(const Grapheme& grapheme, u32string_view s) {
+  auto& out = nio::stdout;
+
   if (not system::env::get<bool>("ROCKET_TEST_TERMINAL").value_or(false)) {
-    cout << "Not testing grapheme because `ROCKET_TEST_TERMINAL` is not set\n";
+    out.println("Not testing grapheme because `ROCKET_TEST_TERMINAL` is not set");
     return;
   }
-
-  auto& out = nio::stdout;
 
   string s8 = utf32To8(s);
   out.print("[{}]", s8);
@@ -48,8 +55,6 @@ testGrapheme(const Grapheme& grapheme, u32string_view s) {
   out.write('\n');
   out.println("[{:~<{}}]", "", grapheme.width());
 }
-
-} // namespace
 
 // `TEST` ---------------------------------------------------------------------------------------------------
 
@@ -313,19 +318,44 @@ TEST(unicode, utf8CountCodePoints) {
 }
 
 TEST(unicode, utf8Validate) {
+  UnorderedBimap<size_t, size_t> pos;
+
   {
-    auto cow = utf8::validate("äöüß€");
-    EXPECT_TRUE(cow.readOnly());
-    EXPECT_EQ(*cow, "äöüß€");
+    string_view sv = "äöüß€";
+    auto cow = utf8::validate(sv, &pos);
+    EXPECT_FALSE(cow.modified());
+    EXPECT_EQ(cow.get(), "äöüß€");
+    EXPECT_EQ(pos, positions({ { 0, 0 }, { 2, 2 }, { 4, 4 }, { 6, 6 }, { 8, 8 }, { 11, 11 }}));
+  }
+
+  static_assert("�"sv.size() == 3);
+
+  {
+    string s = { 'a', CONT, 'b' };
+    string_view sv = s;
+    auto cow = utf8::validate(sv, &pos);
+    EXPECT_TRUE(cow.modified());
+    EXPECT_EQ(cow.get(), "a�b");
+    EXPECT_EQ(pos, positions({ { 0, 0 }, { 1, 1 }, { 2, 4 }, { 3, 5 } }));
   }
 
   {
-    auto cow = utf8::validate(string { 'a', CONT, 'b' });
-    EXPECT_FALSE(cow.readOnly());
-    EXPECT_EQ(*cow, "a�b");
+    string s = { 'a', TWO_BYTES, 'b', 'c' };
+    string_view sv = s;
+    auto cow = utf8::validate(sv, &pos);
+    EXPECT_TRUE(cow.modified());
+    EXPECT_EQ(cow.get(), "a�c");
+    EXPECT_EQ(pos, positions({ { 0, 0 }, { 1, 1 }, { 3, 4 }, { 4, 5 } }));
   }
 
-  // XXX
+  {
+    string s = { 'a', THREE_BYTES, CONT };
+    string_view sv = s;
+    auto cow = utf8::validate(sv, &pos);
+    EXPECT_TRUE(cow.modified());
+    EXPECT_EQ(cow.get(), "a�");
+    EXPECT_EQ(pos, positions({ { 0, 0 }, { 1, 1 }, { 3, 4 } }));
+  }
 }
 
 // `rocket::unicode::utf32` ---------------------------------------------------------------------------------
@@ -378,6 +408,23 @@ TEST(unicode, utf32Graphemes) {
     EXPECT_EQ(graphemes[0].size(), 4);
     EXPECT_EQ(graphemes[0].width(), 2);
     testGrapheme(graphemes[0], s);
+  }
+}
+
+TEST(unicode, utf32Validate) {
+  {
+    u32string_view sv = U"abc";
+    auto cow = utf32::validate(sv);
+    EXPECT_FALSE(cow.modified());
+    EXPECT_EQ(cow.get(), U"abc");
+  }
+
+  {
+    u32string s = { 'a', D800, 'b', MAX_PLUS_1 };
+    u32string_view sv = s;
+    auto cow = utf32::validate(sv);
+    EXPECT_TRUE(cow.modified());
+    EXPECT_EQ(cow.get(), U"a�b�");
   }
 }
 

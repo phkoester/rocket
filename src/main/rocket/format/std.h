@@ -2,6 +2,8 @@
  * @file std.h
  *
  * Formatting of standard library types, built on top of {fmt}.
+ *
+ * Include this file rather than `fmt/ranges.h` or `fmt/std.h` directly.
  */
 
 #pragma once

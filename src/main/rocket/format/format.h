@@ -2,6 +2,8 @@
  * @file format.h
  *
  * Formatting, built on top of {fmt}.
+ *
+ * Include this file rather than `fmt/format.h` or `fmt/xchar.h` directly.
  */
 
 #pragma once

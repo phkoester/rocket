@@ -391,12 +391,6 @@ StringSink::flush() {
   return error_;
 }
 
-const string&
-StringSink::str() const {
-  ROCKET_EXPECT(not ptr_);
-  return owned_;
-}
-
 size_t
 StringSink::write(string_view in) {
   if (not checkOpen()) {
