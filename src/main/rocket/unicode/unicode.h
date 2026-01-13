@@ -491,25 +491,13 @@ Graphemes graphemes(std::string_view s, UnorderedBimap<size_t, size_t>* position
  * string. Invalid or incomplete UTF-8 byte sequences, as well as invalid code points, are replaced by the
  * replacement character `�` (U+FFFD).
  *
- * @attention The `std::string_view` @p s must remain valid for the lifetime of the returned #rocket::Cow!
- *
- * @param s the string to validate. This is a const reference to a `std::string_view`.
- *     The `std::string_view` must remain valid for the lifetime of the returned #rocket::Cow
- * @param positions if nonnull, then the left index of this map translates `char` offsets from @p s
- *   to `char` offsets in the result for each code point and the end of string.
- * @return a #rocket::Cow result, see above
- *
- * ## Examples
- *
- * ```
- * std::string_view sv = "abc"; // Make a `string_view` that outlives the `Cow`
- * auto cow = utf8::validate(sv);
- * assert(not cow.modified());
- * assert(cow.get() == "abc"); // `cow.get()` still references `sv`!
- * ```
+ * @param s the string to validate
+ * @param positions if nonnull, then the left index of this map translates `char` offsets from @p s to `char`
+ *   offsets in the result for each code point and the end of the string
+ * @return a #rocket::Cow result
  */
 Cow<std::string_view, std::string>
-validate(const std::string_view& s, UnorderedBimap<size_t, size_t>* positions = nullptr);
+validate(std::string_view s, UnorderedBimap<size_t, size_t>* positions = nullptr);
 
 } // namespace utf8
 
@@ -564,25 +552,14 @@ Graphemes graphemes(std::u32string_view s, UnorderedBimap<size_t, size_t>* posit
  * If the string @p s is found to be invalid, the result contains a modified, corrected version of the
  * string. Invalid code points are replaced by the replacement character `�` (U+FFFD).
  *
- * @attention The `std::u32string_view` @p s must remain valid for the lifetime of the returned #rocket::Cow!
- *
  * @param s the string to validate
- * @param positions if nonnull, then the left index of this map translates `char32_t` offsets from @p s
- *   to `char32_t` offsets in the result for each code point and the end of string. This is trivial, but
- *   provided for completeness
- * @return a #rocket::Cow result, see above
- *
- * ## Examples
- *
- * ```
- * std::u32string_view sv = U"abc"; // Make a `u32string_view` that outlives the `Cow`
- * auto cow = utf32::validate(sv);
- * assert(not cow.modified());
- * assert(cow.get() == U"abc"); // `cow.get()` still references `sv`!
- * ```
+ * @param positions if nonnull, then the left index of this map translates `char32_t` offsets from @p s to
+ *   char32_t` offsets in the result for each code point and the end of string (trivial, but provided for
+ *   completeness)
+ * @return a #rocket::Cow result
  */
 Cow<std::u32string_view, std::u32string>
-validate(const std::u32string_view& s, UnorderedBimap<size_t, size_t>* positions = nullptr);
+validate(std::u32string_view s, UnorderedBimap<size_t, size_t>* positions = nullptr);
 
 } // namespace utf32
 

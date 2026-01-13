@@ -274,8 +274,7 @@ TEST(unicode, utf8Validate) {
   UnorderedBimap<size_t, size_t> pos;
 
   {
-    string_view sv = "äöüß€";
-    auto cow = utf8::validate(sv, &pos);
+    auto cow = utf8::validate("äöüß€", &pos);
     EXPECT_FALSE(cow.modified());
     EXPECT_EQ(cow.get(), "äöüß€");
     EXPECT_EQ(pos, positions({ { 0, 0 }, { 2, 2 }, { 4, 4 }, { 6, 6 }, { 8, 8 }, { 11, 11 }}));
@@ -285,8 +284,7 @@ TEST(unicode, utf8Validate) {
 
   {
     string s = { 'a', CONT, 'b' };
-    string_view sv = s;
-    auto cow = utf8::validate(sv, &pos);
+    auto cow = utf8::validate(s, &pos);
     EXPECT_TRUE(cow.modified());
     EXPECT_EQ(cow.get(), "a�b");
     EXPECT_EQ(pos, positions({ { 0, 0 }, { 1, 1 }, { 2, 4 }, { 3, 5 } }));
@@ -294,8 +292,7 @@ TEST(unicode, utf8Validate) {
 
   {
     string s = { 'a', TWO_BYTES, 'b', 'c' };
-    string_view sv = s;
-    auto cow = utf8::validate(sv, &pos);
+    auto cow = utf8::validate(s, &pos);
     EXPECT_TRUE(cow.modified());
     EXPECT_EQ(cow.get(), "a�bc");
     EXPECT_EQ(pos, positions({ { 0, 0 }, { 1, 1 }, { 2, 4 }, { 3, 5 }, { 4, 6 } }));
@@ -303,8 +300,7 @@ TEST(unicode, utf8Validate) {
 
   {
     string s = { 'a', THREE_BYTES, CONT };
-    string_view sv = s;
-    auto cow = utf8::validate(sv, &pos);
+    auto cow = utf8::validate(s, &pos);
     EXPECT_TRUE(cow.modified());
     EXPECT_EQ(cow.get(), "a�");
     EXPECT_EQ(pos, positions({ { 0, 0 }, { 1, 1 }, { 3, 4 } }));
@@ -312,8 +308,7 @@ TEST(unicode, utf8Validate) {
 
   {
     string s = { 'a', FOUR_BYTES, CONT, 'b' };
-    string_view sv = s;
-    auto cow = utf8::validate(sv, &pos);
+    auto cow = utf8::validate(s, &pos);
     EXPECT_TRUE(cow.modified());
     EXPECT_EQ(cow.get(), "a��b");
     EXPECT_EQ(pos, positions({ { 0, 0 }, { 1, 1 }, { 2, 4 }, { 3, 7 }, { 4, 8 } }));

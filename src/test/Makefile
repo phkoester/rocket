@@ -6,6 +6,11 @@ include $(GAIA_DIR)/src/main/make/Makefile.mk
 
 # `rocket` --------------------------------------------------------------------------------------------------
 
+NAME        := test-rocket-Cow
+CC_FILES    := test/rocket/test-Cow.cc
+SHARED_LIBS := $(ROCKET_SHARED_LIB)
+include $(GAIA_DIR)/src/main/make/test-executable.mk
+
 NAME        := test-rocket-Exception
 CC_FILES    := test/rocket/test-Exception.cc
 SHARED_LIBS := $(ROCKET_SHARED_LIB)

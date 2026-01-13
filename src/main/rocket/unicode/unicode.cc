@@ -299,7 +299,7 @@ graphemes(string_view s, UnorderedBimap<size_t, size_t>* positions) {
 }
 
 Cow<string_view, string>
-validate(const string_view& s, UnorderedBimap<size_t, size_t>* positions) {
+validate(string_view s, UnorderedBimap<size_t, size_t>* positions) {
   Cow<string_view, string> ret(s);
 
   if (positions) {
@@ -374,7 +374,7 @@ graphemes(u32string_view s, UnorderedBimap<size_t, size_t>* positions) {
 }
 
 Cow<u32string_view, u32string>
-validate(const u32string_view& s, UnorderedBimap<size_t, size_t>* positions) {
+validate(u32string_view s, UnorderedBimap<size_t, size_t>* positions) {
   Cow<u32string_view, u32string> ret(s);
 
   if (positions) {
