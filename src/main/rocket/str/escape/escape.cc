@@ -6,8 +6,8 @@
 
 #include "rocket/InputFailure.h"
 #include "rocket/assert.h"
-#include "rocket/nio/util.h"
-#include "rocket/unicode/iterator.h"
+#include "rocket/unicode/Char.h"
+#include "rocket/unicode/Iterator.h"
 
 using namespace rocket;
 using namespace rocket::str;
@@ -158,9 +158,41 @@ escapeRegexCodePoint(unicode::CodePoint cp, size_t& column) {
   return escapeCStringCodePointHex(cp, column);
 }
 
+unicode::Char<char>
+getChar(unicode::Iterator<char>& iter) {
+  unicode::Char c(iter.nextSegment());
+  if (c.empty()) {
+    throw InputFailure(iter.current(), "Expected character, got EOI");
+  }
+  return c;
+}
+
+void
+getChar(unicode::Iterator<char>& iter, char expected) {
+  size_t current = iter.current();
+  unicode::Char c(iter.nextSegment());
+  if (c.empty()) {
+    throw InputFailure(current, fmt::format("Expected character {:?}, got EOI", expected));
+  }
+  auto cp = c.codePoint();
+  if (not cp || *cp != expected) {
+    throw InputFailure(current, fmt::format("Expected character {:?}, got {:?}", expected, c));
+  }
+}
+
+optional<unicode::Char<char>>
+getOptionalChar(unicode::Iterator<char>& iter) {
+  unicode::Char c(iter.nextSegment());
+  if (c.empty()) {
+    return nullopt;
+  }
+  return c;
+}
+
 } // namespace
 
 // Functions ------------------------------------------------------------------------------------------------
+
 namespace rocket::str::escape {
 
 string
@@ -180,44 +212,49 @@ escapeCString(string_view input, const CStringParams& params, Result* result) {
     ++to;
   }
 
-  // Loop through graphemes
+  // Loop through characters
 
-  auto it = unicode::GraphemeIterator(input), end = unicode::GraphemeIterator(input, input.size());
+  auto iter = unicode::Iterator<char>(unicode::IteratorType::Char, input);
   size_t column = 0;
-  for (; it != end; ++it) {
-    // Obtain grapheme
+  while (true) {
+    // Obtain character
 
-    unicode::Grapheme gr = *it;
-    if (result) {
-      result->positions.insert({ it.position(), to });
+    auto current = iter.current();
+    auto c = unicode::Char(iter.nextSegment());
+    if (c.empty()) {
+      // EOI
+      break;
     }
 
-    if (gr.codePoint()) {
-      // Single-code-point grapheme
+    if (result) {
+      result->positions.insert({ current, to });
+    }
 
-      unicode::CodePoint cp = *gr.codePoint();
-      auto escaped = escapeCStringCodePoint(cp, column, params);
+    if (auto cp = c.codePoint(); cp) {
+      // Single-code-point character
+
+      auto escaped = escapeCStringCodePoint(*cp, column, params);
       ret.append(escaped);
       to += escaped.size();
-    } else if (gr.crlf()) {
+    } else if (c.crlf()) {
       // CRLF
       column += 4;
       ret.append("\\r\\n");
       to += 4;
     } else {
-      // Multi-code-point grapheme
+      // Multi-code-point character
 
-      column += gr.width();
-      auto add = static_cast<string>(gr);
+      column += c.width();
+      auto add = static_cast<string_view>(c);
       ret.append(add);
       to += add.size();
     }
   }
 
-  // Add end-of-input position
+  // Add EOI position
 
   if (result) {
-    result->positions.insert({ it.position(), to });
+    result->positions.insert({ iter.current(), to });
   }
 
   // If needed, print quote
@@ -234,54 +271,54 @@ unescapeCString(string_view input, const CStringParams& params, Result* result) 
   ROCKET_CHECK(params, params.quote == '\0' || params.quote == '"' || params.quote == '\'');
 
   string ret;
-  nio::StringSource in(input);
+
   if (result) {
     result->positions.clear();
   }
 
   // If needed, read quote
 
+  auto iter = unicode::Iterator<char>(unicode::IteratorType::Char, input);
   if (params.quoted()) {
-    nio::getChar(in, params.quote);
+    getChar(iter, params.quote);
   }
 
   while (true) {
-    // Read grapheme
+    // Read character
 
-    size_t pos = in.tell();
-    auto gr1 = nio::getOptionalGrapheme(in);
+    size_t pos = iter.current();
+    auto c1 = getOptionalChar(iter);
     if (result) {
       result->positions.insert({ pos, ret.size() });
     }
-    if (not gr1) {
-      // EOF
+    if (not c1) {
+      // EOI
       if (params.quoted()) {
         throw InputFailure(pos, { 0, pos }, fmt::format("Missing terminating {:?} character", params.quote));
       }
       return ret;
     }
 
-    if (gr1->codePoint()) {
+    if (auto cp1 = c1->codePoint(); cp1) {
       // Single-code-point grapheme
 
-      unicode::CodePoint cp1 = *gr1->codePoint();
-      if (params.quoted() && cp1 == params.quote) {
+      if (params.quoted() && *cp1 == params.quote) {
         // Terminating quote: end of input
 
         return ret;
-      } else if (cp1 == '\\') {
+      } else if (*cp1 == '\\') {
         // Backslash: this may either be a C-string-escaped character or a hexadecimal sequence starting with
         // "\\x", "\\u", or "\\U"
 
-        // Read another grapheme following the backslash
+        // Read another character following the backslash
 
-        unicode::Grapheme gr2 = nio::getGrapheme(in);
-        if (not gr2.codePoint()) {
-          throw InputFailure(pos, { pos, in.tell() }, "Invalid escape sequence");
+        unicode::Char c2 = getChar(iter);
+        auto cp2 = c2.codePoint();
+        if (not cp2) {
+          throw InputFailure(pos, { pos, iter.current() }, "Invalid escape sequence");
         }
-        unicode::CodePoint cp2 = *gr2.codePoint();
 
-        switch (cp2) {
+        switch (*cp2) {
         case 'a': // Alert = 7
           ret.push_back('\a');
           break;
@@ -309,36 +346,36 @@ unescapeCString(string_view input, const CStringParams& params, Result* result) 
         case '"' : // Quotation mark = 34
         case '\'': // Apostrophe = 39
         case '\\': // Backslash = 92
-          ret.push_back(static_cast<char>(cp2));
+          ret.push_back(static_cast<char>(*cp2));
           break;
         case 'x': {
-          char32_t i = nio::getHex(in, 2);
+          char32_t i = getHex(iter, 2);
           ret.append(static_cast<string>(unicode::CodePoint(i)));
           break;
         }
         case 'u': {
-          char32_t i = nio::getHex(in, 4);
+          char32_t i = getHex(iter, 4);
           ret.append(static_cast<string>(unicode::CodePoint(i)));
           break;
         }
         case 'U': {
-          char32_t i = nio::getHex(in, 8);
+          char32_t i = getHex(iter, 8);
           ret.append(static_cast<string>(unicode::CodePoint(i)));
           break;
         }
         default: {
-          throw InputFailure(pos, { pos, in.tell() }, "Invalid escape sequence");
+          throw InputFailure(pos, { pos, iter.current() }, "Invalid escape sequence");
         }
         }
       } else {
         // No backslash: just add the code point
 
-        ret.append(static_cast<string>(cp1));
+        ret.append(static_cast<string>(*cp1));
       }
     } else {
       // Multi-code-point grapheme: just add it
 
-      ret.append(static_cast<string>(*gr1));
+      ret.append(*c1);
     }
   }
 }
@@ -353,41 +390,47 @@ escapeRegex(string_view input, Result* result) {
 
   // Loop through graphemes
 
-  auto it = unicode::GraphemeIterator(input), end = unicode::GraphemeIterator(input, input.size());
+  auto iter = unicode::Iterator<char>(unicode::IteratorType::Char, input);
   size_t column = 0;
-  for (; it != end; ++it) {
-    // Obtain grapheme
+  while (true) {
+    // Obtain character
 
-    unicode::Grapheme gr = *it;
-    if (result) {
-      result->positions.insert({ it.position(), to });
+    auto current = iter.current();
+    auto c = unicode::Char(iter.nextSegment());
+    if (c.empty()) {
+      // EOI
+      break;
     }
-    if (gr.codePoint()) {
-      // Single-code-point grapheme
 
-      unicode::CodePoint cp = *gr.codePoint();
-      auto escaped = escapeRegexCodePoint(cp, column);
+    if (result) {
+      result->positions.insert({ current, to });
+    }
+
+    if (auto cp = c.codePoint(); cp) {
+      // Single-code-point character
+
+      auto escaped = escapeRegexCodePoint(*cp, column);
       ret.append(escaped);
       to += escaped.size();
-    } else if (gr.crlf()) {
+    } else if (c.crlf()) {
       // CRLF
       column += 4;
       ret.append("\\r\\n");
       to += 4;
     } else {
-      // Multi-code-point grapheme
+      // Multi-code-point character
 
-      column += gr.width();
-      auto add = static_cast<string>(gr);
+      column += c.width();
+      auto add = static_cast<string_view>(c);
       ret.append(add);
       to += add.size();
     }
   }
 
-  // Add end-of-input position
+  // Add EOI position
 
   if (result) {
-    result->positions.insert({ it.position(), to });
+    result->positions.insert({ iter.current(), to });
   }
 
   return ret;

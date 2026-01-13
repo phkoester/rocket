@@ -146,7 +146,8 @@ struct PrintLocationsParams {
  * Finds information about the positions @p positions in the Source @p in and returns the gathered data in a
  * #rocket::str::location::LocationsResult.
  *
- * @param in the source. The input must be UTF-8-encoded, using LF (`"\n"`) or CRLF (`"\r\n"`) as line breaks
+ * @param input the input string. It must be UTF-8-encoded, using LF (`"\n"`) or CRLF (`"\r\n"`) as line
+ *     breaks
  * @param positions the positions to look for. They needn't be sorted in any way. The order of the positions
  *     is preserved in the #rocket::str::location::LocationsResult. The only restriction is that all
  *     #rocket::str::location::Position#position values have to be unique
@@ -154,7 +155,7 @@ struct PrintLocationsParams {
  * @return a #rocket::str::location::LocationsResult
  */
 LocationsResult locations(
-    nio::Source& in,
+    std::string_view input,
     const std::vector<Position>& positions,
     const LocationsParams& params = {});
 

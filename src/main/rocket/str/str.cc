@@ -63,7 +63,7 @@ paragraphs(string_view s) {
   while (true) {
     auto c = unicode::Char(iter.nextSegment());
     if (c.empty() || c.eol()) {
-      // Handle EOT/EOL
+      // Handle EOI/EOL
       if (not word.empty()) {
         par.push_back(word);
         word.clear();

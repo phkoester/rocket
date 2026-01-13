@@ -9,6 +9,7 @@
 #include "rocket/str/str.h"
 #include "rocket/str/escape/escape.h"
 #include "rocket/system/terminal/terminal.h"
+#include "rocket/unicode/Char.h"
 #include "rocket/unicode/Iterator.h"
 
 #include <numeric>
@@ -25,15 +26,13 @@ namespace rocket::str::location {
 // Functions ------------------------------------------------------------------------------------------------
 
 LocationsResult
-locations(nio::Source& in, const vector<Position>& positions, const LocationsParams& params) {
-  ROCKET_CHECK(in, in.tell() == 0, "Source must be at position 0");
-
+locations(string_view input, const vector<Position>& positions, const LocationsParams& params) {
   // Prepare result
 
   LocationsResult ret;
   ret.params = params;
   if (ret.params.source.empty()) {
-    ret.params.source = in.fd() == STDIN_FILENO ? "-" : "(input)";
+    ret.params.source = "(input)";
   }
 
   // Map input position -> location
@@ -56,7 +55,7 @@ locations(nio::Source& in, const vector<Position>& positions, const LocationsPar
     maxPos = max(pos.position, maxPos);
   }
 
-  // Read from source
+  // Iterate through input
 
   size_t line = 0, column = 0, beginLine = 0;
   string lineString;
@@ -64,8 +63,10 @@ locations(nio::Source& in, const vector<Position>& positions, const LocationsPar
   vector<size_t> poi; // "Positions of interest" in the current line
   bool finish = false; // Finish on next line feed?
 
+  size_t inputPos = 0;
+  unicode::Iterator<char> iter(unicode::IteratorType::Char, input);
   while (true) {
-    auto pos = in.tell();
+    auto pos = inputPos;
 
     // Did we reach a position of interest?
     auto it = locations.find(pos);
@@ -82,30 +83,31 @@ locations(nio::Source& in, const vector<Position>& positions, const LocationsPar
     }
 
     // Get next grapheme from source, if any
-    unicode::Grapheme gr;
-    size_t n = read(in, gr);
-    if (n == 0 || gr.eol()) {
+    auto c = unicode::Char(iter.nextSegment());
+    inputPos += c.size();
+    if (c.empty() || c.eol()) {
       // Handle EOF or EOL
 
       // Exit current line
       for (const auto& p : poi) {
         auto& loi = locations.find(p)->second; // "Location of interest"
         loi.lineRange.upper = pos;
-        if (params.setLineString)
+        if (params.setLineString) {
           loi.lineString = lineString;
+        }
       }
 
       // Finish?
-      if (n == 0 || finish)
+      if (c.empty() == 0 || finish)
         break;
 
       // Enter next line
       ++line;
       column = 0;
-      beginLine = in.tell();
+      beginLine = inputPos;
       lineString.clear();
       poi.clear();
-    } else if (gr.tab() && params.tabSize) {
+    } else if (c.tab() && params.tabSize) {
       // Handle tab
 
       size_t mod = column % *params.tabSize;
@@ -113,10 +115,10 @@ locations(nio::Source& in, const vector<Position>& positions, const LocationsPar
       column += n;
       lineString.push_back('\t');
     } else {
-      // Add the grapheme
+      // Add the character
 
-      column += gr.width();
-      lineString.append(static_cast<string>(gr));
+      column += c.width();
+      lineString.append(c);
     }
   }
 
@@ -182,12 +184,25 @@ printLocations(
       string(input->substr(loc.lineRange.lower, *loc.lineRange.size()));
     escape::Result result;
     string escapedLine = escape::escapeCString(line, { .tabSize=locationsResult.params.tabSize }, &result);
-    UnorderedBimap<size_t, size_t> grsp;
-    unicode::Graphemes grs = unicode::graphemes(escapedLine, &grsp);
-    // Print graphemes one by one, skip zero-width graphemes
-    for (const auto& gr : grs) {
-      if (gr.width() > 0) {
-        out.write(static_cast<string>(gr));
+
+    // For `escapedLine`, map `Char` index -> byte offset
+    unicode::Iterator<char> iter(unicode::IteratorType::Char, escapedLine);
+    auto chars = iter.nextSegments();
+    UnorderedBimap<size_t, size_t> escapedLinePositions;
+    size_t escapedLineWidth = 0;
+    size_t offset = 0;
+    for (size_t i = 0; i < chars.size(); ++i) {
+      escapedLinePositions.insert({ i, offset });
+      unicode::Char c(chars[i]);
+      offset += c.size();
+      escapedLineWidth += c.width();
+    }
+    escapedLinePositions.insert({ chars.size(), offset });
+
+    // Print characters one by one, skip zero-width characters
+    for (const auto& c : chars) {
+      if (unicode::Char(c).width() > 0) {
+        out.write(c);
       }
     }
     out.write('\n');
@@ -195,9 +210,9 @@ printLocations(
     // Print the ranges, the caret, and the caption. This is harder than it looks at first sight, because we
     // need to consider C-string escaping, tabs, UTF-8, and grapheme widths---all at the same time
 
-    // Prepare the indicators string. `indicators` is in "grapheme-width coordinates"
+    // Prepare the indicators string. `indicators` is in "`Char`-width coordinates"
 
-    size_t width = unicode::width(grs);
+    size_t width = escapedLineWidth;
     string indicators(width, ' ');
 
     // Make up a lambda that translates an input `char` position to an `indicators` position. This requires
@@ -213,12 +228,16 @@ printLocations(
       pos = leftIt->second;
 
       // 3. Translate escaped-line position to escaped-line grapheme position
-      auto rightIt = grsp.right.find(pos);
-      ROCKET_EXPECT(rightIt != grsp.right.end());
+      auto rightIt = escapedLinePositions.right.find(pos);
+      ROCKET_EXPECT(rightIt != escapedLinePositions.right.end());
       pos = rightIt->second;
 
       // 4. Translate escaped-line grapheme position to `indicators` position
-      return unicode::width(grs, 0, pos);
+      size_t ret = 0;
+      for (size_t i = 0; i < pos; ++i) {
+        ret += unicode::Char(chars[i]).width();
+      }
+      return ret;
     };
 
     // Place the ranges in `indicators`
