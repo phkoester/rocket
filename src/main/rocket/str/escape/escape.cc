@@ -180,6 +180,17 @@ getChar(unicode::Iterator<char>& iter, char expected) {
   }
 }
 
+// XXX Hier weiter
+template<typename C> requires Character<C>
+uint32_t
+getHex(unicode::Iterator<C>& iter, size_t length) {
+  string ret;
+  for (size_t i = 0; i < length; ++i) {
+    ret.push_back(iter.nextSegment());
+  }
+  return ret;
+}
+
 optional<unicode::Char<char>>
 getOptionalChar(unicode::Iterator<char>& iter) {
   unicode::Char c(iter.nextSegment());

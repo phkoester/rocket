@@ -15,16 +15,16 @@ namespace rocket::unicode {
 // `Iterator` -----------------------------------------------------------------------------------------------
 
 template<typename C> requires Character<C>
-Iterator<C>::Iterator(IteratorType type, basic_string_view<C> text, const locale& loc) :
-    text_(text) {
+Iterator<C>::Iterator(IteratorType type, basic_string_view<C> input, const locale& loc) :
+    input_(input) {
   // 1. Make the `UnicodeString`
 
   if constexpr (is_same_v<C, char>) {
-    us_ = icu::UnicodeString::fromUTF8(text);
+    us_ = icu::UnicodeString::fromUTF8(input);
   } else {
-    us_ = icu::UnicodeString::fromUTF32(reinterpret_cast<const UChar32*>(text.data()), text.size());
+    us_ = icu::UnicodeString::fromUTF32(reinterpret_cast<const UChar32*>(input.data()), input.size());
   }
-  ROCKET_CHECK(text, not us_.isBogus());
+  ROCKET_CHECK(input, not us_.isBogus());
 
   // 2. Loop through the `UnicodeString` and populate `usToTxt_`
 
@@ -33,62 +33,62 @@ Iterator<C>::Iterator(IteratorType type, basic_string_view<C> text, const locale
   int32_t u16Index = 0;
   UChar32 u16cp;
 
-  size_t textLength = text.size();
-  size_t textIndex = 0;
-  UChar32 textCp;
+  size_t inputLength = input.size();
+  size_t inputIndex = 0;
+  UChar32 inputCp;
 
   while (u16Index < u16length) {
-    // Add a mapping for this text position
-    usToText_.insert({ static_cast<size_t>(u16Index), textIndex });
+    // Add a mapping for this input position
+    usToInput_.insert({ static_cast<size_t>(u16Index), inputIndex });
 
     // Get next U16 code point
     U16_NEXT(u16Buf, u16Index, u16length, u16cp);
 
-    // Get next text code point (UTF-8 or UTF-32)
-    ROCKET_CHECK(text, textIndex < textLength);
+    // Get next input code point (UTF-8 or UTF-32)
+    ROCKET_CHECK(input, inputIndex < inputLength);
     if constexpr (is_same_v<C, char>) {
-      // UTF-8: Use `U8_NEXT` to loop through `text`
-      U8_NEXT(text.data(), textIndex, textLength, textCp);
+      // UTF-8: Use `U8_NEXT` to loop through `input`
+      U8_NEXT(input.data(), inputIndex, inputLength, inputCp);
     } else {
       // UTF-32: Easy
-      textCp = text[textIndex++];
+      inputCp = input[inputIndex++];
     }
 
     // Verify the code points match
-    ROCKET_CHECK(text, textCp == u16cp);
+    ROCKET_CHECK(input, inputCp == u16cp);
   }
 
-  // Add a mapping for the end of the text
-  usToText_.insert({ static_cast<size_t>(u16Index), textIndex });
+  // Add a mapping for the end of the input
+  usToInput_.insert({ static_cast<size_t>(u16Index), inputIndex });
 
   // 3. Create the `BreakIterator`
 
-  icu::Locale locale(loc.name().c_str());
-  ROCKET_CHECK(loc, not locale.isBogus());
+  icu::Locale icuLoc(loc.name().c_str());
+  ROCKET_CHECK(loc, not icuLoc.isBogus());
 
   UErrorCode status = U_ZERO_ERROR;
   switch (type) {
   case IteratorType::Char:
-    iter_.reset(icu::BreakIterator::createCharacterInstance(locale, status));
+    iter_.reset(icu::BreakIterator::createCharacterInstance(icuLoc, status));
     break;
   case IteratorType::Line:
-    iter_.reset(icu::BreakIterator::createLineInstance(locale, status));
+    iter_.reset(icu::BreakIterator::createLineInstance(icuLoc, status));
     break;
   case IteratorType::Sentence:
-    iter_.reset(icu::BreakIterator::createSentenceInstance(locale, status));
+    iter_.reset(icu::BreakIterator::createSentenceInstance(icuLoc, status));
     break;
   case IteratorType::Title:
-    iter_.reset(icu::BreakIterator::createTitleInstance(locale, status));
+    iter_.reset(icu::BreakIterator::createTitleInstance(icuLoc, status));
     break;
   case IteratorType::Word:
-    iter_.reset(icu::BreakIterator::createWordInstance(locale, status));
+    iter_.reset(icu::BreakIterator::createWordInstance(icuLoc, status));
     break;
   default:
     ROCKET_FAIL("Invalid iterator type: {}", static_cast<int>(type));
   }
   ROCKET_EXPECT(U_SUCCESS(status));
 
-  // Assign the text to iterator
+  // Assign the `UnicodeString`
   iter_->setText(us_);
 }
 

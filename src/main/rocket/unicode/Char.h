@@ -34,7 +34,7 @@ struct Char {
   constexpr operator std::basic_string_view<C>() const { return s_; }
 
   /**
-   * If this characters consists of a single code point, returns it. Otherwise, returns null.
+   * If this character consists of a single code point, returns it. Otherwise, returns null.
    *
    * @return the code point, or null if the character is empty or consists of multiple code points
    */
@@ -70,6 +70,8 @@ struct Char {
     return pos == s_.size();
   }
 
+  constexpr bool empty() const { return s_.empty(); }
+
   /**
    * Returns `true` if the character is an EOL (end of line).
    *
@@ -79,8 +81,6 @@ struct Char {
   eol() const {
     return lf() || crlf();
   }
-
-  constexpr bool empty() const { return s_.empty(); }
 
   /**
    * Returns `true` if the character is whitespace.

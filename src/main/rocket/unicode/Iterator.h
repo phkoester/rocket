@@ -1,7 +1,7 @@
 /**
  * @file Iterator.h
  *
- * A Unicode-aware text iterator.
+ * A Unicode-aware string iterator.
  */
 
 #pragma once
@@ -26,7 +26,7 @@ enum class IteratorType {
 // `Iterator` -----------------------------------------------------------------------------------------------
 
 /**
- * A Unicode-aware text iterator.
+ * A Unicode-aware string iterator.
  *
  * @tparam C the character type
  */
@@ -36,28 +36,28 @@ struct Iterator {
    * @ctor
    *
    * @param type the type of iterator
-   * @param text the text to iterate over. It must remain valid for the lifetime of the iterator
-   * @throw #rocket::InvalidArgument if @p text is invalid
+   * @param input the input string to iterate over. It must remain valid for the lifetime of the iterator
+   * @throw #rocket::InvalidArgument if @p input is invalid
    * @throw #rocket::InvalidState if something goes wrong
    */
-  Iterator(IteratorType type, std::basic_string_view<C> text) : Iterator(type, text, std::locale()) {}
+  Iterator(IteratorType type, std::basic_string_view<C> input) : Iterator(type, input, std::locale()) {}
 
   /**
    * @ctor
    *
    * @param type the type of iterator
-   * @param text the text to iterate over. It must remain valid for the lifetime of the iterator
+   * @param input the input string to iterate over. It must remain valid for the lifetime of the iterator
    * @param loc the locale to use
-   * @throw #rocket::InvalidArgument if @p text or @p loc are invalid
+   * @throw #rocket::InvalidArgument if @p input or @p loc are invalid
    * @throw #rocket::InvalidState if something goes wrong
    */
-  Iterator(IteratorType type, std::basic_string_view<C> text, const std::locale& loc);
+  Iterator(IteratorType type, std::basic_string_view<C> input, const std::locale& loc);
 
-  size_t current() const { return usToText_.left.at(iter_->current()); }
+  size_t current() const { return usToInput_.left.at(iter_->current()); }
 
-  size_t first() const { auto v = iter_->first(); return usToText_.left.at(v); }
+  size_t first() const { auto v = iter_->first(); return usToInput_.left.at(v); }
 
-  size_t last() const { auto v = iter_->last(); return usToText_.left.at(v); }
+  size_t last() const { auto v = iter_->last(); return usToInput_.left.at(v); }
 
   size_t
   next() const {
@@ -65,7 +65,7 @@ struct Iterator {
     if (pos == icu::BreakIterator::DONE) {
       return NPOS;
     }
-    return usToText_.left.at(pos);
+    return usToInput_.left.at(pos);
   }
 
   std::basic_string_view<C>
@@ -75,7 +75,7 @@ struct Iterator {
     if (next == NPOS) {
       return std::basic_string_view<C>();
     }
-    return text_.substr(current, next - current);
+    return input_.substr(current, next - current);
   }
 
   std::vector<std::basic_string_view<C>>
@@ -93,7 +93,7 @@ struct Iterator {
     if (pos == icu::BreakIterator::DONE) {
       return NPOS;
     }
-    return usToText_.left.at(pos);
+    return usToInput_.left.at(pos);
   }
 
   std::basic_string_view<C>
@@ -103,7 +103,7 @@ struct Iterator {
     if (previous == NPOS) {
       return std::basic_string_view<C>();
     }
-    return text_.substr(previous, current - previous);
+    return input_.substr(previous, current - previous);
   }
 
   std::vector<std::basic_string_view<C>>
@@ -115,13 +115,13 @@ struct Iterator {
     return ret;
   }
 
-  std::basic_string_view<C> text() const { return text_; }
+  std::basic_string_view<C> input() const { return input_; }
 
 private:
 
-  std::basic_string_view<C> text_;
+  std::basic_string_view<C> input_;
   icu::UnicodeString us_;
-  UnorderedBimap<size_t, size_t> usToText_;
+  UnorderedBimap<size_t, size_t> usToInput_;
   std::unique_ptr<icu::BreakIterator> iter_;
 };
 

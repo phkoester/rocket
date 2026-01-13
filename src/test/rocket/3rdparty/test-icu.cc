@@ -6,11 +6,9 @@
 
 #include "rocket-gtest/rocket-gtest.h"
 
-#include "rocket/assert.h"
 #include "rocket/unicode/ConvertTo.h"
 #include "rocket/unicode/Iterator.h"
 
-using namespace icu;
 using namespace rocket;
 using namespace rocket::unicode;
 using namespace std;
@@ -25,7 +23,7 @@ dumpSegments(Iterator<C>& it) {
   cout << "-------\n";
 
   for( const auto& c : it.nextSegments()) {
-    auto c8 = unicode::ConvertTo<char>().apply(c);
+    auto c8 = ConvertTo<char>().apply(c);
     cout << "Char: [" << c8 << "], current=" << it.current() << endl;
   }
 
@@ -34,7 +32,7 @@ dumpSegments(Iterator<C>& it) {
 
   it.last();
   for( const auto& c : it.previousSegments()) {
-    auto c8 = unicode::ConvertTo<char>().apply(c);
+    auto c8 = ConvertTo<char>().apply(c);
     cout << "Char: [" << c8 << "], current=" << it.current() << endl;
   }
 }
