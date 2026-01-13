@@ -201,7 +201,7 @@ concept FloatingPoint = std::is_same_v<PurgeType<T>, typename Float<sizeof(Purge
  * ## Examples
  *
  * ```
- * static_assert(is_same_v<LargestType<char, int>::Type, int>);
+ * static_assert(std::is_same_v<LargestType<char, int>::Type, int>);
  * ```
  */
 template <typename... Ts>

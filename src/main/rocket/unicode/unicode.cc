@@ -7,42 +7,19 @@
 #include "rocket/assert.h"
 #include "rocket/numeric.h"
 #include "rocket/unicode/iterator.h" // XXX Ganz weg
-#include "rocket/unicode/internal/block.h" // XXX Ganz weg
-
-#include <unicodelib.h> // XXX Weg
-#include <unicodelib_encodings.h> // XXX Weg
 
 #include <unicode/uchar.h>
 #include <unicode/unistr.h>
+#include <unicode/utf8.h>
 
-#include <numeric>
+#include <numeric> // `accumulate`
 
 using namespace icu;
 using namespace rocket;
 using namespace rocket::unicode;
 using namespace std;
 
-namespace unicodelib = ::unicode;
-
-namespace {
-
-// Local functions ------------------------------------------------------------------------------------------
-
-} // namespace
-
 namespace rocket::unicode {
-
-// Internal -------------------------------------------------------------------------------------------------
-
-namespace internal {
-
-EastAsianWidth
-eastAsianWidth(uint32_t cp) {
-  const auto* block = biFind(eastAsianWidthBlocks, cp);
-  return block ? block->eastAsianWidth : EastAsianWidth::neutral;
-}
-
-} // namespace internal
 
 // `CodePoint` ----------------------------------------------------------------------------------------------
 
@@ -58,11 +35,6 @@ CodePoint::operator string() const {
 bool
 CodePoint::isPrint() const {
   return u_isprint(v_) != 0;
-#if 0 // XXX
-  // Block: Special
-  if (v_ >= 0xfff0U && v_ <= 0xffffU)
-    return false;
-#endif
 }
 
 bool
@@ -80,11 +52,6 @@ CodePoint::upper() const {
   return static_cast<char32_t>(u_toupper(v_));
 }
 
-bool
-CodePoint::valid() const {
-  return v_ <= 0x10FFFFU && not (v_ >= 0xD800U && v_ <= 0xDFFFU);
-}
-
 uint8_t
 CodePoint::width() const {
   if (not isPrint()) {
@@ -93,8 +60,8 @@ CodePoint::width() const {
 
   auto generalCategory = u_getIntPropertyValue(v_, UCHAR_GENERAL_CATEGORY);
   switch (generalCategory) {
-  case U_NON_SPACING_MARK:
   case U_ENCLOSING_MARK:
+  case U_NON_SPACING_MARK:
     return 0;
   }
 
@@ -165,26 +132,17 @@ read(nio::Source& in, CodePoint& out) {
 
 // `Grapheme` -----------------------------------------------------------------------------------------------
 
-Grapheme::Grapheme(string_view s) : Grapheme(unicode::codePoints(s)) {}
-
-Grapheme::Grapheme(u32string_view s) : Grapheme(unicode::codePoints(s)) {}
+Grapheme::Grapheme(string_view s) : Grapheme(utf8To32(s)) {}
 
 Grapheme::operator string() const {
   return utf32To8(operator u32string());
-}
-
-Grapheme::operator u32string() const {
-  u32string ret;
-  ret.reserve(codePoints_.size());
-  copy(codePoints_.begin(), codePoints_.end(), back_inserter(ret));
-  return ret;
 }
 
 bool
 Grapheme::print() const { // XXX Weg
   switch (codePoints_.size()) {
   case 0: return false;
-  case 1: return codePoints_[0].isPrint();
+  case 1: return CodePoint(codePoints_[0]).isPrint();
   default: return true;
   }
 }
@@ -193,24 +151,18 @@ uint8_t
 Grapheme::width() const {
   uint8_t ret = 0;
   for (auto cp : codePoints_) {
-    ret = max(ret, cp.width());
+    ret = max(ret, CodePoint(cp).width());
     if (ret == 2) {
       return 2;
     }
-#if 0 // XXX
-    // From `unicode-display-width`
-    if (cp == 0xfe0fU) {
-      return 2;
-    }
-    int8_t cpw = cp.width();
-    // Ignore nonpositive values
-    if (cpw > 0) {
-      ret = max(static_cast<uint8_t>(cpw), ret);
-    }
-    if (ret == 2) {
-      return 2;
-    }
-#endif
+
+    /*
+     * In the rust crate `unicode-display-width`, the following code is used to handle U+FEOF:
+     *
+     *  // emoji style variation selector
+     *  if scalar_value == '\u{FE0F}' {
+     *    return 2;
+     */
   }
   return ret;
 }
@@ -314,6 +266,8 @@ codePointSize(char c) {
   return 0;
 }
 
+#if 0
+// XXX Weg
 CodePoints
 codePoints(string_view s, UnorderedBimap<size_t, size_t>* positions) {
   if (positions) {
@@ -333,6 +287,7 @@ codePoints(string_view s, UnorderedBimap<size_t, size_t>* positions) {
   }
   return ret;
 }
+#endif
 
 size_t
 countCodePoints(string_view s) {
@@ -344,77 +299,6 @@ size_t
 countGraphemes(string_view s) {
   // XXX Ohne GrahemeIterator
   return GraphemeIterator<char>(s, s.size()).graphemePosition();
-}
-
-char32_t
-decodeBuffer(const char* buf, size_t size, size_t& numBytes) {
-  ROCKET_ASSERT(size > 0);
-
-  uint8_t b = buf[0];
-  if ((b & 0x80) == 0) {
-    numBytes = 1;
-    return b;
-  } else if ((b & 0xE0) == 0xC0) {
-    numBytes = 2;
-    if (size >= 2 && continuationByte(buf[1])) {
-      return
-          ((static_cast<char32_t>(buf[0] & 0x1F)) << 6) |
-          (static_cast<char32_t>(buf[1] & 0x3F));
-    }
-  } else if ((b & 0xF0) == 0xE0) {
-    numBytes = 3;
-    if (size >= 3 && continuationByte(buf[1]) && continuationByte(buf[2])) {
-      return
-          ((static_cast<char32_t>(buf[0] & 0x0F)) << 12) |
-          ((static_cast<char32_t>(buf[1] & 0x3F)) << 6) |
-          (static_cast<char32_t>(buf[2] & 0x3F));
-    }
-  } else if ((b & 0xF8) == 0xF0) {
-    numBytes = 4;
-    if (size >= 4 && continuationByte(buf[1]) && continuationByte(buf[2]) && continuationByte(buf[3])) {
-      return
-          ((static_cast<char32_t>(buf[0] & 0x07)) << 18) |
-          ((static_cast<char32_t>(buf[1] & 0x3F)) << 12) |
-          ((static_cast<char32_t>(buf[2] & 0x3F)) << 6) |
-          (static_cast<char32_t>(buf[3] & 0x3F));
-    }
-  } else {
-    numBytes = 0;
-  }
-
-  return -1;
-}
-
-size_t
-encodeBuffer(char32_t cp, char *buf) {
-  if (cp < 0x0080) {
-    buf[0] = static_cast<uint8_t>(cp & 0x7F);
-    return 1;
-  } else if (cp < 0x0800) {
-    buf[0] = static_cast<uint8_t>(0xC0 | ((cp >> 6) & 0x1F));
-    buf[1] = static_cast<uint8_t>(0x80 | (cp & 0x3F));
-    return 2;
-  } else if (cp < 0xD800) {
-    buf[0] = static_cast<uint8_t>(0xE0 | ((cp >> 12) & 0xF));
-    buf[1] = static_cast<uint8_t>(0x80 | ((cp >> 6) & 0x3F));
-    buf[2] = static_cast<uint8_t>(0x80 | (cp & 0x3F));
-    return 3;
-  } else if (cp < 0xE000) {
-    // [D800,DFFF] is invalid
-    return 0;
-  } else if (cp < 0x10000) {
-    buf[0] = static_cast<uint8_t>(0xE0 | ((cp >> 12) & 0xF));
-    buf[1] = static_cast<uint8_t>(0x80 | ((cp >> 6) & 0x3F));
-    buf[2] = static_cast<uint8_t>(0x80 | (cp & 0x3F));
-    return 3;
-  } else if (cp < 0x110000) {
-    buf[0] = static_cast<uint8_t>(0xF0 | ((cp >> 18) & 0x7));
-    buf[1] = static_cast<uint8_t>(0x80 | ((cp >> 12) & 0x3F));
-    buf[2] = static_cast<uint8_t>(0x80 | ((cp >> 6) & 0x3F));
-    buf[3] = static_cast<uint8_t>(0x80 | (cp & 0x3F));
-    return 4;
-  }
-  return 0;
 }
 
 Graphemes
@@ -455,24 +339,25 @@ validate(const string_view& s, UnorderedBimap<size_t, size_t>* positions) {
     }
   };
 
-  for (size_t i = 0, size = s.size(); i < size; /* Empty */) {
+  size_t i = 0, size  = s.size();
+  while (i < size) {
     addPosition(i);
 
-    size_t numBytes;
-    auto cp = decodeBuffer(&s[i], size - i, numBytes);
-    if (CodePoint(cp).valid()) {
+    UChar32 cp;
+    auto oldI = i;
+    U8_NEXT(s.data(), i, size, cp);
+    if (cp >= 0) {
       // Valid code point
       if (ret.modified()) {
-        ret.owned().append(s.substr(i, numBytes));
+        ret.owned().append(&s[oldI], i - oldI);
       }
     } else {
       // Invalid code point
       if (not ret.modified()) {
-        ret = string(s.data(), i);
+        ret = string(s.data(), oldI);
       }
       ret.owned().append("�");
     }
-    i += max(1UL, numBytes); // `numBytes` may be 0
   }
 
   addPosition(s.size());
@@ -486,6 +371,8 @@ validate(const string_view& s, UnorderedBimap<size_t, size_t>* positions) {
 
 namespace utf32 {
 
+#if 0
+// XXX Weg
 CodePoints
 codePoints(u32string_view s, UnorderedBimap<size_t, size_t>* positions) {
   if (positions) {
@@ -501,6 +388,7 @@ codePoints(u32string_view s, UnorderedBimap<size_t, size_t>* positions) {
   }
   return ret;
 }
+#endif
 
 size_t
 countGraphemes(u32string_view s) {
@@ -528,10 +416,22 @@ graphemes(u32string_view s, UnorderedBimap<size_t, size_t>* positions) {
 }
 
 Cow<u32string_view, u32string>
-validate(const u32string_view& s) {
+validate(const u32string_view& s, UnorderedBimap<size_t, size_t>* positions) {
   Cow<u32string_view, u32string> ret(s);
 
+  if (positions) {
+    positions->clear();
+  }
+
+  auto addPosition = [&](size_t i) {
+    if (positions) {
+      positions->insert({ i, i });
+    }
+  };
+
   for (size_t i = 0, size = s.size(); i < size; ++i ) {
+    addPosition(i);
+
     char32_t c = s[i];
     if (CodePoint(c).valid()) {
       // Valid code point
@@ -546,6 +446,8 @@ validate(const u32string_view& s) {
       ret.owned().push_back(U'�');
     }
   }
+
+  addPosition(s.size());
 
   return ret;
 }

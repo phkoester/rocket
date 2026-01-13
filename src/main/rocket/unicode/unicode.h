@@ -92,16 +92,16 @@ struct CodePoint {
    * Returns `true` if this code point is valid.
    *
    * A code point is valid if it is less than or equal to U+10FFFF and not a surrogate in the range
-   * [U+D800,U+DFFF].
+   * U+D800–U+DFFF.
    *
    * @return `true` if this code point is valid
    */
-  bool valid() const;
+  bool valid() const { return v_ <= 0x10FFFFU && not (v_ >= 0xD800U && v_ <= 0xDFFFU); }
 
   /**
    * Calculates the display width for a code point.
    *
-   * @return a width in the range @f$[0,2]@f$
+   * @return the code point's display width, in the range @f$[0,2]@f$
    */
   uint8_t width() const;
 
@@ -192,13 +192,6 @@ struct std::numeric_limits<rocket::unicode::CodePoint> {
 
 namespace rocket::unicode {
 
-// `CodePoints`----------------------------------------------------------------------------------------------
-
-/**
- * A code-point container.
- */
-using CodePoints = std::vector<CodePoint>;
-
 // `Grapheme` -----------------------------------------------------------------------------------------------
 
 /**
@@ -211,36 +204,29 @@ struct Grapheme {
   /**
    * @ctor
    *
-   * @param cps a code-point container
-   */
-  explicit Grapheme(const CodePoints& cps) : codePoints_(cps) {}
-
-  /**
-   * @ctor
-   *
-   * @param cps a code-point container
-   */
-  explicit Grapheme(CodePoints&& cps) : codePoints_(std::move(cps)) {}
-
-  /**
-   * @ctor
-   *
    * @param s a UTF-8 string
    */
-  explicit Grapheme(std::string_view s);
+  explicit Grapheme(const std::string_view s);
 
   /**
    * @ctor
    *
    * @param s a UTF-32 string
    */
-  explicit Grapheme(std::u32string_view s);
+  explicit Grapheme(const std::u32string_view s) : codePoints_(s) {}
+
+  /**
+   * @ctor
+   *
+   * @param s a UTF-32 string
+   */
+  explicit Grapheme(std::u32string&& s) : codePoints_(std::move(s)) {}
 
   /// @member_op_cast{`std::string`}
   explicit operator std::string() const;
 
   /// @member_op_cast{`std::u32string`}
-  explicit operator std::u32string() const;
+  explicit operator std::u32string() const { return codePoints_; }
 
   /// @member_op_eq
   inline bool operator==(const Grapheme& rhs) const { return codePoints_ == rhs.codePoints_; }
@@ -292,13 +278,13 @@ struct Grapheme {
   }
 
   /**
-   * Returns `true` if this grapheme is an NBSP (non-breaking space, U+00A0).
+   * Returns `true` if this grapheme is a no-break space
    *
-   * @return `true` if this grapheme is an NBSP
+   * @return `true` if this grapheme is a no-break space
    */
   inline bool
   nbsp() const {
-    return codePoints_.size() == 1 && codePoints_[0] == U'\u00a0';
+    return codePoints_.size() == 1 && codePoints_[0] == U'\u00A0'; // U+00A0 (NO-BREAK SPACE)
   }
 
   /**
@@ -333,7 +319,7 @@ struct Grapheme {
   // XXX
   inline bool
   whitespace() const {
-    return codePoints_.size() == 1 && codePoints_[0].isWhitespace();
+    return codePoints_.size() == 1 && CodePoint(codePoints_[0]).isWhitespace();
   }
 
   /**
@@ -346,7 +332,7 @@ struct Grapheme {
 private:
 
   /// The code points this grapheme consists of.
-  CodePoints codePoints_;
+  std::u32string codePoints_; // XXX Nicht kopieren
 };
 
 /// @op_output{#rocket::unicode::Grapheme}
@@ -398,6 +384,7 @@ namespace rocket::unicode {
 /**
  * A grapheme container.
  */
+// XXX Weg
 using Graphemes = std::vector<Grapheme>;
 
 // Functions ------------------------------------------------------------------------------------------------
@@ -434,33 +421,6 @@ size_t width(const Graphemes& grs, size_t index = 0, size_t n = NPOS);
 namespace utf8 {
 
 /**
- * Decodes a UTF-8 byte sequence from a buffer to a code point.
- *
- * The function returns -1 if
- * - @p numBytes cannot be determined (in which case it is set to 0),
- * - the buffer is too small to contain the full byte sequence,
- * - the byte sequence is invalid
- *
- * @param buf a buffer pointing to a UTF-8 byte sequence
- * @param size the size of the buffer in bytes
- * @param numBytes the number of bytes needed to encode the code point, as indicated by the first byte in the
- *     buffer, or 0 if the value cannot be determined
- * @return the decoded code point, or -1 if the result cannot be determined. The result is not checked for
- *     valid code points
- */
-char32_t decodeBuffer(const char* buf, size_t size, size_t& numBytes);
-
-/**
- * Encodes a code point to a UTF-8 byte sequence into a buffer.
- *
- * @param cp a code point
- * @param buf a buffer to encode the code point into. The buffer must be large enough to contain the encoded
- *     code point, so there should be at least 4 bytes available
- * @return the number of bytes encoded, or 0 if the code point is invalid
- */
-size_t encodeBuffer(char32_t cp, char* buf);
-
-/**
  * Given the first byte @p c in a UTF-8 byte sequence, returns the size in bytes of the UTF-8 encoded code
  * point, including @p c itself.
  *
@@ -471,6 +431,7 @@ size_t encodeBuffer(char32_t cp, char* buf);
  */
 uint8_t codePointSize(char c);
 
+#if 0
 /**
  * Returns the code points of a UTF-8 string.
  *
@@ -479,7 +440,9 @@ uint8_t codePointSize(char c);
  *     positions after the functions returns
  * @return a code-point container
  */
+// XXX Weg
 CodePoints codePoints(std::string_view s, UnorderedBimap<size_t, size_t>* positions = nullptr);
+#endif
 
 /**
  * Returns `true` if the byte @p c is a UTF-8 continuation byte.
@@ -487,6 +450,7 @@ CodePoints codePoints(std::string_view s, UnorderedBimap<size_t, size_t>* positi
  * @param c a character from a UTF-8 byte sequence
  * @return `true` if @p c is a UTF-8 continuation byte
  */
+// XXX Weg
 inline bool continuationByte(char c) { return (c & 0xC0) == 0x80; }
 
 /**
@@ -529,9 +493,19 @@ Graphemes graphemes(std::string_view s, UnorderedBimap<size_t, size_t>* position
  *
  * @attention The `std::string_view` @p s must remain valid for the lifetime of the returned #rocket::Cow!
  *
- * @param s the string to validate
+ * @param s the string to validate. This is a const reference to a `std::string_view`.
+ *     The `std::string_view` must remain valid for the lifetime of the returned #rocket::Cow
  * @param positions if nonnull, then the left index of this map translates `char` offsets from @p s
  *   to `char` offsets in the result for each code point and the end of string.
+ *
+ * ## Examples
+ *
+ * ```
+ * std::string_view sv = "abc"; // Make a `string_view` that outlives the `Cow`
+ * auto cow = utf8::validate(sv);
+ * assert(not cow.modified());
+ * assert(cow.get() == "abc"); // `cow.get()` still references `sv`!
+ * ```
  */
 Cow<std::string_view, std::string>
 validate(const std::string_view& s, UnorderedBimap<size_t, size_t>* positions = nullptr);
@@ -542,6 +516,7 @@ validate(const std::string_view& s, UnorderedBimap<size_t, size_t>* positions = 
 
 namespace utf32 {
 
+#if 0
 /**
  * Returns the code points of a UTF-32 string.
  *
@@ -550,7 +525,9 @@ namespace utf32 {
  *     `char32_t` positions after the functions returns (trivial, but provided for completeness)
  * @return a code-point container
  */
+// XXX Weg
 CodePoints codePoints(std::u32string_view s, UnorderedBimap<size_t, size_t>* positions = nullptr);
+#endif
 
 /**
  * Counts the number of code points in a UTF-32 string.
@@ -589,16 +566,28 @@ Graphemes graphemes(std::u32string_view s, UnorderedBimap<size_t, size_t>* posit
  * @attention The `std::u32string_view` @p s must remain valid for the lifetime of the returned #rocket::Cow!
  *
  * @param s the string to validate
+ * @param positions if nonnull, then the left index of this map translates `char32_t` offsets from @p s
+ *   to `char32_t` offsets in the result for each code point and the end of string. This is trivial, but
+ *   provided for completeness
+ *
+ * ## Examples
+ *
+ * ```
+ * std::u32string_view sv = U"abc"; // Make a `u32string_view` that outlives the `Cow`
+ * auto cow = utf32::validate(sv);
+ * assert(not cow.modified());
+ * assert(cow.get() == U"abc"); // `cow.get()` still references `sv`!
+ * ```
  */
 Cow<std::u32string_view, std::u32string>
-validate(const std::u32string_view& s);
+validate(const std::u32string_view& s, UnorderedBimap<size_t, size_t>* positions = nullptr);
 
 } // namespace utf32
 
 // Merge functions from `utf8` and `utf32` so they can be used as overloads ---------------------------------
 
-using utf8::codePoints;
-using utf32::codePoints;
+// XXX using utf8::codePoints;
+// XXX using utf32::codePoints;
 
 using utf8::countCodePoints;
 using utf32::countCodePoints;

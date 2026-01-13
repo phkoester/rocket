@@ -9,7 +9,6 @@
 #include "rocket/system/system.h"
 #include "rocket/system/terminal/terminal.h"
 #include "rocket/unicode/unicode.h"
-#include "rocket/unicode/internal/block.h"
 
 #include "rocket-gtest/matcher/matcher.h"
 
@@ -23,13 +22,11 @@ using namespace testing;
 
 constexpr char TWO_BYTES    = 0b1101'1111;
 constexpr char THREE_BYTES  = 0b1110'1111;
-// constexpr char FOUR_BYTES   = 0b1111'0111;
+constexpr char FOUR_BYTES   = 0b1111'0111;
 constexpr char CONT         = 0b1011'1111;
 
-constexpr char32_t D800 = static_cast<char32_t>(0xD800U);
+constexpr char32_t D800       = static_cast<char32_t>(0xD800U);
 constexpr char32_t MAX_PLUS_1 = static_cast<char32_t>(0x10FFFFU + 1);
-
-// Functions ------------------------------------------------------------------------------------------------
 
 // Functions ------------------------------------------------------------------------------------------------
 
@@ -58,51 +55,6 @@ testGrapheme(const Grapheme& grapheme, u32string_view s) {
 
 // `TEST` ---------------------------------------------------------------------------------------------------
 
-// `rocket::unicode::internal` ..............................................................................
-
-TEST(unicode, internalBiFind) {
-  using namespace rocket::unicode::internal;
-
-  EXPECT_NE(biFind(eastAsianWidthBlocks, 0x100U), nullptr);
-  EXPECT_NE(biFind(eastAsianWidthBlocks, 0x3fffdU), nullptr);
-  EXPECT_EQ(biFind(eastAsianWidthBlocks, 0x3fffeU), nullptr);
-  EXPECT_NE(biFind(eastAsianWidthBlocks, 0x10fffdU), nullptr);
-  EXPECT_EQ(biFind(eastAsianWidthBlocks, 0x10fffeU), nullptr);
-}
-
-TEST(unicode, internalBlockEastAsianWidth) {
-  using namespace rocket::unicode::internal;
-
-  EXPECT_EQ(eastAsianWidth(0x0000U), EastAsianWidth::neutral);
-  EXPECT_EQ(eastAsianWidth(0x0020U), EastAsianWidth::narrow);
-  EXPECT_EQ(eastAsianWidth(0x00b8U), EastAsianWidth::ambiguous);
-  EXPECT_EQ(eastAsianWidth(0xe0002U), EastAsianWidth::neutral);
-  EXPECT_EQ(eastAsianWidth(0x10fffdU), EastAsianWidth::ambiguous);
-  EXPECT_EQ(eastAsianWidth(0x10fffeU), EastAsianWidth::neutral);
-
-  EXPECT_EQ(eastAsianWidth(0x01f468U), EastAsianWidth::wide); // MAN
-}
-
-TEST(unicode, internalBlockEmoji) {
-  using namespace rocket::unicode::internal;
-
-  EXPECT_FALSE(emojiEmoji(0x0000U));
-
-  EXPECT_TRUE(emojiEmoji(0x0023U)); // HASH SIGN
-  EXPECT_FALSE(emojiEmoji_Presentation(0x0023U));
-  EXPECT_TRUE(emojiEmoji_Component(0x0023U));
-  EXPECT_FALSE(emojiExtended_Pictographic(0x0023U));
-
-  EXPECT_TRUE(emojiEmoji(0x2622U)); // RADIOACTIVE
-  EXPECT_FALSE(emojiEmoji_Presentation(0x2622U));
-  EXPECT_FALSE(emojiEmoji_Component(0x2622U));
-  EXPECT_TRUE(emojiExtended_Pictographic(0x2622U));
-
-  EXPECT_TRUE(emojiEmoji_Presentation(0x01f468U)); // MAN
-}
-
-// `rocket::unicode` ........................................................................................
-
 TEST(unicode, CodePoint) {
   EXPECT_EQ(static_cast<uint32_t>(CodePoint('\x7f')), 127);
 
@@ -125,6 +77,12 @@ TEST(unicode, CodePointOpCastU32String) {
   EXPECT_EQ(static_cast<type>(CodePoint(U'\x41')), U"A");
   EXPECT_EQ(static_cast<type>(CodePoint(U'\xE4')), U"ä");
   EXPECT_EQ(static_cast<type>(CodePoint(U'\x20AC')), U"€");
+}
+
+TEST(unicode, CodePointIsPrint) {
+  EXPECT_TRUE(CodePoint('a').isPrint());
+  EXPECT_FALSE(CodePoint(U'\uFFF0').isPrint());
+  EXPECT_FALSE(CodePoint(U'\uFFFF').isPrint());
 }
 
 TEST(unicode, CodePointLower) {
@@ -200,8 +158,8 @@ TEST(unicode, CodePointFormat) {
   EXPECT_EQ(fmt::format(U"{}", CodePoint(U'\u20AC')), U"U+20AC");
 }
 
-TEST(unicode, CodePointsFormat) {
-  CodePoints cps = { CodePoint(U'a'), CodePoint(U'b'), CodePoint(U'c') };
+TEST(unicode, CodePointVectorFormat) {
+  auto cps = vector<CodePoint> { CodePoint(U'a'), CodePoint(U'b'), CodePoint(U'c') };
   EXPECT_EQ(fmt::format("{::}", cps), "[U+0061, U+0062, U+0063]");
   EXPECT_EQ(fmt::format("{::~>8}", cps), "[~~U+0061, ~~U+0062, ~~U+0063]");
   EXPECT_EQ(fmt::format("{:n:~>8}", cps), "~~U+0061, ~~U+0062, ~~U+0063");
@@ -307,11 +265,6 @@ TEST(unicode, utf8CodePointSize) {
   EXPECT_EQ(utf8::codePointSize(0xbf), 0); // Continuation byte: 1011 1111
 }
 
-TEST(unicode, utf8CodePoints) {
-  EXPECT_EQ(utf8::codePoints("a"), (CodePoints { U'\x61' }));
-  EXPECT_EQ(utf8::codePoints("ä€"), (CodePoints { U'\xE4', U'\u20AC' }));
-}
-
 TEST(unicode, utf8CountCodePoints) {
   EXPECT_EQ(utf8::countCodePoints("abcde"), 5);
   EXPECT_EQ(utf8::countCodePoints("äüöß€"), 5);
@@ -344,8 +297,8 @@ TEST(unicode, utf8Validate) {
     string_view sv = s;
     auto cow = utf8::validate(sv, &pos);
     EXPECT_TRUE(cow.modified());
-    EXPECT_EQ(cow.get(), "a�c");
-    EXPECT_EQ(pos, positions({ { 0, 0 }, { 1, 1 }, { 3, 4 }, { 4, 5 } }));
+    EXPECT_EQ(cow.get(), "a�bc");
+    EXPECT_EQ(pos, positions({ { 0, 0 }, { 1, 1 }, { 2, 4 }, { 3, 5 }, { 4, 6 } }));
   }
 
   {
@@ -355,6 +308,15 @@ TEST(unicode, utf8Validate) {
     EXPECT_TRUE(cow.modified());
     EXPECT_EQ(cow.get(), "a�");
     EXPECT_EQ(pos, positions({ { 0, 0 }, { 1, 1 }, { 3, 4 } }));
+  }
+
+  {
+    string s = { 'a', FOUR_BYTES, CONT, 'b' };
+    string_view sv = s;
+    auto cow = utf8::validate(sv, &pos);
+    EXPECT_TRUE(cow.modified());
+    EXPECT_EQ(cow.get(), "a��b");
+    EXPECT_EQ(pos, positions({ { 0, 0 }, { 1, 1 }, { 2, 4 }, { 3, 7 }, { 4, 8 } }));
   }
 }
 

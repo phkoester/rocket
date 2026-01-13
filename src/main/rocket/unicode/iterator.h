@@ -541,7 +541,8 @@ struct GraphemeIterator {
   const Grapheme&
   operator*() const {
     ROCKET_EXPECT(not end(), "{}", str::message::iteratorOutOfBounds(*this, position()));
-    CodePoints cps;
+    // XXX
+    std::u32string cps;
     cps.reserve(grSize_);
     copy(it_, it_ + grSize_, back_inserter(cps));
     internal::threadLocalGr = Grapheme(cps);
@@ -556,7 +557,8 @@ struct GraphemeIterator {
   const Grapheme*
   operator->() const {
     ROCKET_EXPECT(not end(), "{}", str::message::iteratorOutOfBounds(*this, position()));
-    CodePoints cps;
+    // XXX
+    std::u32string cps;
     cps.reserve(grSize_);
     copy(it_, it_ + grSize_, back_inserter(cps));
     internal::threadLocalGr = Grapheme(cps);

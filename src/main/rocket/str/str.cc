@@ -80,7 +80,7 @@ paragraphs(string_view s) {
 
     unicode::Grapheme gr(*it);
     if (gr.tab()) {
-      gr = unicode::Grapheme(U" ");
+      gr = unicode::Grapheme(U" "sv);
     }
 
     if (gr.nbsp()) {
