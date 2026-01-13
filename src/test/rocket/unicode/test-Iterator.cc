@@ -1,5 +1,5 @@
 /*
- * test-iterator.cc
+ * test-Iterator.cc
  */
 
 #include "rocket-gtest/rocket-gtest.h"

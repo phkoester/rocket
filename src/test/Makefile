@@ -192,8 +192,8 @@ CC_FILES    := test/rocket/unicode/test-unicode.cc
 SHARED_LIBS := $(ROCKET_SHARED_LIB)
 include $(GAIA_DIR)/src/main/make/test-executable.mk
 
-NAME        := test-rocket-unicode-iterator
-CC_FILES    := test/rocket/unicode/test-iterator.cc
+NAME        := test-rocket-unicode-Iterator
+CC_FILES    := test/rocket/unicode/test-Iterator.cc
 SHARED_LIBS := $(ROCKET_SHARED_LIB)
 include $(GAIA_DIR)/src/main/make/test-executable.mk
 

@@ -4,10 +4,8 @@
 
 #include "str.h"
 
-#include "rocket/unicode/unicode.h"
-#include "rocket/unicode/iterator.h"
-
-#include <algorithm>
+#include "rocket/unicode/Char.h"
+#include "rocket/unicode/Iterator.h"
 
 using namespace std;
 
@@ -19,10 +17,11 @@ string
 capitalize(string_view s) {
   if (s.empty())
     return string();
-  unicode::CodePointIterator<char> it(s);
-  unicode::CodePoint upper = (*it++).upper();
-  string ret = static_cast<string>(upper);
-  ret.append(s.substr(it.position()));
+
+  size_t pos = 0;
+  auto cp = unicode::nextCodePoint(s, pos);
+  string ret = static_cast<string>(cp.upper());
+  ret.append(s.substr(pos));
   return ret;
 }
 
@@ -60,9 +59,10 @@ paragraphs(string_view s) {
   vector<string> par; // The current paragraph
   string word; // The current word
 
-  auto it = unicode::GraphemeIterator<char>(s);
+  auto iter = unicode::Iterator<char>(unicode::IteratorType::Char, s);
   while (true) {
-    if (it.end() || it->eol()) {
+    auto c = unicode::Char(iter.nextSegment());
+    if (c.empty() || c.eol()) {
       // Handle EOT/EOL
       if (not word.empty()) {
         par.push_back(word);
@@ -71,26 +71,24 @@ paragraphs(string_view s) {
       pars.push_back(par);
       par.clear();
 
-      if (it.end()) {
+      if (c.empty()) {
         break;
       }
-      ++it;
       continue;
     }
 
-    unicode::Grapheme gr(*it);
-    if (gr.tab()) {
-      gr = unicode::Grapheme(U" "sv);
+    if (c.tab()) {
+      c = unicode::Char(" "sv);
     }
 
-    if (gr.nbsp()) {
-      // Handle NBSP
+    if (c.nbsp()) {
+      // Handle NO-BREAK SPACE
       if (not word.empty() && not str::endsWith<char>(word, " ")) {
         word.push_back(' ');
       }
-    } else if (not gr.whitespace()) {
+    } else if (not c.isWhitespace()) {
       // Enter/continue word
-      word.append(static_cast<string>(gr));
+      word.append(c);
     } else {
       // End word, if any
       if (not word.empty()) {
@@ -98,8 +96,6 @@ paragraphs(string_view s) {
         word.clear();
       }
     }
-
-    ++it;
   }
 
   return pars;
@@ -143,8 +139,12 @@ wrap(string_view s, size_t leftIndent, size_t width) {
     size_t lineWidth = 0; // The display width of the current line
 
     for (const auto& word : par) {
-      auto grs = unicode::graphemes(word);
-      size_t wordWidth = unicode::width(grs);
+      size_t wordWidth = 0;
+      auto iter = unicode::Iterator<char>(unicode::IteratorType::Char, word);
+      auto chars = iter.nextSegments();
+      for (const auto& c : chars) {
+        wordWidth += unicode::Char(c).width();
+      }
       size_t newLineWidth = lineWidth + wordWidth + (lineWidth > 0 ? 1 : 0);
       if (lineWidth == 0 || newLineWidth < width) {
         if (lineWidth > 0)

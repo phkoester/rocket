@@ -6,8 +6,6 @@
 
 #pragma once
 
-#include <optional>
-
 #include "rocket/assert.h"
 
 namespace rocket {
@@ -45,7 +43,7 @@ struct Cow {
   Cow(Cow&& rhs) :
       modified_(rhs.modified_),
       choice_(rhs.choice_) {
-    memset(&rhs, 0, sizeof(rhs));
+    std::memset(&rhs, 0, sizeof(rhs));
   }
 
   /// @ member_op_assign_copy
@@ -55,7 +53,7 @@ struct Cow {
   Cow& operator=(Cow&& rhs) {
     modified_ = rhs.modified_;
     choice_ = rhs.choice_;
-    memset(&rhs, 0, sizeof(rhs));
+    std::memset(&rhs, 0, sizeof(rhs));
     return *this;
   }
 

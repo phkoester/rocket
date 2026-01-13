@@ -8,7 +8,7 @@
 #include "rocket/log/log.h"
 #include "rocket/str/str.h"
 #include "rocket/system/terminal/terminal.h"
-#include "rocket/unicode/iterator.h"
+#include "rocket/unicode/Iterator.h"
 
 using namespace std;
 
@@ -260,35 +260,39 @@ CommandLine::parse(const vector<string>& args, const Take& take) const {
       // 3. "-..." seen: Parse options by short name; the last one may take a value
 
       arg = arg.substr(1);
-      auto cpIt = unicode::CodePointIterator<char>(arg);
-      auto cpEnd = unicode::CodePointIterator<char>(arg, arg.size());
-      for (; cpIt != cpEnd; ++cpIt) {
+      auto iter = unicode::Iterator<char>(unicode::IteratorType::Char, arg);
+      auto chars = iter.nextSegments();
+      auto charBegin = chars.begin();
+      auto charEnd = chars.end();
+      for (auto charIt = charBegin; charIt != charEnd; ++charIt) {
         // Extract short name, look it up in map
-        auto cp = *cpIt;
-        auto mapIt = byShortName_.find(cp);
-        if (mapIt == byShortName_.end())
-          throw InvalidState(fmt::format("Unknown option `-{}`", static_cast<string>(cp)));
+        auto c = *charIt;
+        auto mapIt = byShortName_.find(c);
+        if (mapIt == byShortName_.end()) {
+          throw InvalidState(fmt::format("Unknown option `-{}`", c));
+        }
         const Option& opt = *mapIt->second;
 
         // Obtain value, if any, apply option
         optional<string> value;
-        auto cpItNext = cpIt + 1;
-        if (cpItNext != cpEnd && *cpItNext == U'=') {
-          // Option is followed by `=`: Take everything after the `=` and break the code-point loop
-          value = arg.substr((++cpItNext).position());
+        auto charNext = charIt + 1;
+        if (charNext != charEnd && *charNext == "=") {
+          // Option is followed by `=`: Take everything after the `=` and break the character loop
+          value = unicode::concat(chars, ++charNext - charBegin);
           apply(opt, false, value);
           break;
         } else if (opt.takesValue) {
-          // Option takes value: break the code-point loop
-          if (cpItNext != cpEnd) {
+          // Option takes value: break the character loop
+          if (charNext != charEnd) {
             // Take the rest of the argument
-            value = arg.substr(cpItNext.position());
+            value = unicode::concat(chars, charNext - charBegin);
             apply(opt, false, value);
           }
           else {
             // Take the next argument
-            if (it + 1 != args.end())
+            if (it + 1 != args.end()) {
               value = *++it;
+            }
             apply(opt, false, value);
           }
           break;

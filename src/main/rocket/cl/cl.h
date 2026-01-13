@@ -10,7 +10,7 @@
 #include "rocket/assert.h"
 #include "rocket/nio/nio-fwd.h"
 #include "rocket/str/StringConvert.h"
-#include "rocket/unicode/unicode.h"
+#include "rocket/unicode/Char.h"
 
 #include <unordered_map>
 
@@ -90,7 +90,7 @@ struct Option {
   of(
       const OptionGroup* group,
       const std::string& name,
-      const std::optional<unicode::CodePoint>& shortName,
+      const std::optional<unicode::Char<char>>& shortName,
       const std::optional<std::string>& format,
       const std::optional<std::string>& help,
       T& dest) {
@@ -107,7 +107,7 @@ struct Option {
 
   const OptionGroup* group = nullptr; ///< The option group.
   std::string name; ///< The option name.
-  std::optional<unicode::CodePoint> shortName; ///< The option short name.
+  std::optional<unicode::Char<char>> shortName; ///< The option short name.
   bool takesValue = false; ///< Option takes value?
   std::optional<std::string> format; ///< Format text.
   std::optional<std::string> help; ///< Help text.
@@ -238,7 +238,7 @@ private:
   bool help_;
 
   std::unordered_map<std::string_view, const Option*> byName_;
-  std::unordered_map<uint32_t, const Option*> byShortName_;
+  std::unordered_map<std::string_view, const Option*> byShortName_;
 
   void helpOpts(nio::Sink& out, size_t width) const;
 

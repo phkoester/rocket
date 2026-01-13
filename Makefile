@@ -5,7 +5,6 @@
 export INCLUDE_DIRS := main test
 export SYSTEM_INCLUDE_DIRS := \
     $(GAIA_BOOST_DIR) \
-    $(GAIA_CPP_UNICODELIB_DIR) \
     $(GAIA_FMT_DIR)/include \
     $(GAIA_GOOGLETEST_DIR)/googlemock/include \
     $(GAIA_GOOGLETEST_DIR)/googletest/include \

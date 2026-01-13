@@ -9,7 +9,7 @@
 #include "rocket/str/str.h"
 #include "rocket/str/escape/escape.h"
 #include "rocket/system/terminal/terminal.h"
-#include "rocket/unicode/iterator.h"
+#include "rocket/unicode/Iterator.h"
 
 #include <numeric>
 
