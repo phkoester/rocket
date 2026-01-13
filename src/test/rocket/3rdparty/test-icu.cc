@@ -13,6 +13,7 @@
 #include <unicode/uchar.h>
 #include <unicode/unistr.h>
 #include <unicode/utf8.h>
+#include <unicode/utf16.h>
 
 #include <locale>
 #include <memory>
@@ -45,12 +46,26 @@ enum SegmentType {
   title
 };
 
+void loopWithMacros(const UnicodeString& s) {
+  int32_t length = s.length();
+  const UChar* buffer = s.getBuffer(); // Direct access to UTF-16 buffer
+  int32_t i = 0;
+  UChar32 cp;
+
+  while (i < length) {
+      // This macro extracts the code point and increments 'i' automatically
+      U16_NEXT(buffer, i, length, cp);
+      cout << "Code point: " << hex << cp << dec << ", i=" << i << endl;
+  }
+}
+
 void
 dumpSegments(SegmentType type, const std::locale& loc, string_view s) {
   Locale icuLoc(loc.name().c_str());
   ROCKET_EXPECT(not icuLoc.isBogus());
 
   UnicodeString text = UnicodeString::fromUTF8(s);
+  loopWithMacros(text);
 
   UErrorCode status = U_ZERO_ERROR;
 
@@ -79,6 +94,8 @@ dumpSegments(SegmentType type, const std::locale& loc, string_view s) {
 
   iter->setText(text);
 
+  cout << "FORWARD\n";
+  cout << "-------\n";
   // 3. Iterate through the grapheme clusters
   int32_t begin = iter->first();
   int32_t end = iter->next();
@@ -90,17 +107,34 @@ dumpSegments(SegmentType type, const std::locale& loc, string_view s) {
     // Print the cluster (converting back to UTF-8 for console output)
     string out;
     seg.toUTF8String(out);
-    cout << "Segment: [" << out << "], U16 length=" << (end - begin) << ", U32 length=" << seg.countChar32() << endl;
+    cout << "Segment: [" << out << "], U16 length=" << (end - begin) << ", U32 length=" << seg.countChar32() << ", current=" << iter->current() << endl;
 
     begin = end;
     end = iter->next();
+  }
+
+  cout << "BACKWARD\n";
+  cout << "--------\n";
+
+  end = iter->last();
+  begin = iter->previous();
+
+  while (begin != BreakIterator::DONE) {
+    UnicodeString seg;
+    text.extractBetween(begin, end, seg);
+    string out;
+    seg.toUTF8String(out);
+    cout << "Segment: [" << out << "], U16 length=" << (end - begin) << ", U32 length=" << seg.countChar32() << ", current=" << iter->current() << endl;
+
+    end = begin;
+    begin = iter->previous();
   }
 }
 
 // TEST -----------------------------------------------------------------------------------------------------
 
 TEST(icu, graphemeClusters) {
-  dumpSegments(SegmentType::grapheme, std::locale(), "a🧑‍🌾b");
+  dumpSegments(SegmentType::grapheme, std::locale(), "a🧑‍🌾\nb");
 }
 
 // EOF

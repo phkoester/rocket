@@ -266,29 +266,6 @@ codePointSize(char c) {
   return 0;
 }
 
-#if 0
-// XXX Weg
-CodePoints
-codePoints(string_view s, UnorderedBimap<size_t, size_t>* positions) {
-  if (positions) {
-    positions->clear();
-  }
-  CodePoints ret;
-  size_t i = 0;
-  auto it = CodePointIterator<char>(s), end = CodePointIterator<char>(s, s.size());
-  for (; it != end; ++it) {
-    ret.push_back(*it);
-    if (positions) {
-      positions->insert({ i++, it.position() });
-    }
-  }
-  if (positions) {
-    positions->insert({ i++, it.position() });
-  }
-  return ret;
-}
-#endif
-
 size_t
 countCodePoints(string_view s) {
   auto us = UnicodeString::fromUTF8(s);
@@ -370,25 +347,6 @@ validate(const string_view& s, UnorderedBimap<size_t, size_t>* positions) {
 // UTF-32 ...................................................................................................
 
 namespace utf32 {
-
-#if 0
-// XXX Weg
-CodePoints
-codePoints(u32string_view s, UnorderedBimap<size_t, size_t>* positions) {
-  if (positions) {
-    positions->clear();
-  }
-  CodePoints ret;
-  ret.reserve(s.size());
-  copy(s.begin(), s.end(), back_inserter(ret));
-  if (positions) {
-    for (size_t i = 0, size = s.size(); i <= size; ++i) {
-      positions->insert({ i, i });
-    }
-  }
-  return ret;
-}
-#endif
 
 size_t
 countGraphemes(u32string_view s) {

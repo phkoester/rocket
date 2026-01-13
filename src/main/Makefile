@@ -40,9 +40,9 @@ include $(GAIA_DIR)/src/main/make/executable.mk
 NAME           := rocket
 VERSION        := $(ROCKET_VERSION)
 SRC_DIR        := main/rocket
-# Move `log.cc` to front so Rocket can use its own logging API
 # Move `Process.cc` to front so the global `process` instance is available early
-SRC_MOVE_FRONT := log/log.cc Process.cc
+# Move `log.cc` to front so Rocket can use its own logging API
+SRC_MOVE_FRONT := Process.cc log/log.cc
 SHARED_LIBS    := libicuuc.so.$(ICU_VERSION)
 INSTALL        := 1
 include $(GAIA_DIR)/src/main/make/shared-lib.mk
@@ -56,8 +56,14 @@ include $(GAIA_DIR)/src/main/make/lib.mk
 
 # `toy` -----------------------------------------------------------------------------------------------------
 
+$(BUILD_DIR)/main/toy/generated.cc: $(MAKEFILE_DEPS)
+	@echo ">" $@
+	@mkdir -p $(dir $@)
+	@echo 'const char* generated() { return "Hello from `generated.cc`!"; }' > $@
+
 NAME        := toy
 SRC_DIR     := main/toy
+SRC_ADD     := generated.cc
 SHARED_LIBS := $(ROCKET_SHARED_LIB)
 include $(GAIA_DIR)/src/main/make/executable.mk
 

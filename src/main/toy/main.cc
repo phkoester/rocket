@@ -49,6 +49,8 @@ myTerminate() {
   // throw 7;
 }
 
+extern const char* generated();
+
 int
 main(int argc, char **argv) {
   ROCKET_PROCESS_ERROR("Testing error before `process.init` ...");
@@ -71,6 +73,7 @@ main(int argc, char **argv) {
     ROCKET_LOG_INFO("Hey {}", "there");
     auto& out = nio::stdout;
     out.println("This is {}", process.name());
+    out.println("{}", generated());
     out.println("args: {}", args);
     toy();
   }

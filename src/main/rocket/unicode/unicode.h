@@ -497,6 +497,7 @@ Graphemes graphemes(std::string_view s, UnorderedBimap<size_t, size_t>* position
  *     The `std::string_view` must remain valid for the lifetime of the returned #rocket::Cow
  * @param positions if nonnull, then the left index of this map translates `char` offsets from @p s
  *   to `char` offsets in the result for each code point and the end of string.
+ * @return a #rocket::Cow result, see above
  *
  * ## Examples
  *
@@ -569,6 +570,7 @@ Graphemes graphemes(std::u32string_view s, UnorderedBimap<size_t, size_t>* posit
  * @param positions if nonnull, then the left index of this map translates `char32_t` offsets from @p s
  *   to `char32_t` offsets in the result for each code point and the end of string. This is trivial, but
  *   provided for completeness
+ * @return a #rocket::Cow result, see above
  *
  * ## Examples
  *
@@ -585,9 +587,6 @@ validate(const std::u32string_view& s, UnorderedBimap<size_t, size_t>* positions
 } // namespace utf32
 
 // Merge functions from `utf8` and `utf32` so they can be used as overloads ---------------------------------
-
-// XXX using utf8::codePoints;
-// XXX using utf32::codePoints;
 
 using utf8::countCodePoints;
 using utf32::countCodePoints;
