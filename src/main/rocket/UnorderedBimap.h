@@ -41,24 +41,6 @@ makeUnorderedBimap(std::initializer_list<std::pair<K, V>> list = {}) {
   return ret;
 }
 
-/**
- * Extracts the values from a #rocket::UnorderedBimap, as seen from the map's left index.
- *
- * @tparam K the map's left key type
- * @tparam V the map's left value type
- * @param v a #rocket::UnorderedBimap
- * @return the values from @p v as a `std::set`, as seen from the map's left index
- */
-// XXX Weg, oder wenigstens unordered
-template<typename K, typename V>
-std::set<V>
-values(const UnorderedBimap<K, V>& v) {
-  std::set<V> ret;
-  for (const auto& elem : v.left)
-    ret.insert(elem.second);
-  return ret;
-}
-
 } // namespace rocket
 
 // Namespace `boost::bimaps` --------------------------------------------------------------------------------

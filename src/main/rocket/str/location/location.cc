@@ -103,7 +103,7 @@ locations(string_view input, const vector<Position>& positions, const LocationsP
       // Enter next line
       ++line;
       column = 0;
-      beginLine = iter.current(); // XXX
+      beginLine = iter.current();
       lineString.clear();
       pois.clear();
     } else if (c.tab() && params.tabSize) {

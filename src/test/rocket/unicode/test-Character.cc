@@ -28,20 +28,19 @@ testCharacter(const Character<C>& c) {
   out.print("[{}]", ConvertTo<char>().apply(c));
   auto pos = system::terminal::position(out);
   EXPECT_TRUE(pos);
-  EXPECT_EQ(pos->first, c.width() + 3);
+  EXPECT_EQ(pos->first, c.width() + 3); // Check terminal's cursor position
   out.write('\n');
   out.println("[{:~<{}}]", "", c.width());
 }
 
 // `TEST` ---------------------------------------------------------------------------------------------------
 
-TEST(Character, width) {
+TEST(Character, charWidth) {
   EXPECT_EQ(Character("\t"sv).width(), 0);
 
   {
     Character c("\u200D"sv); // u+0200D (ZERO WIDTH JOINER)
     EXPECT_EQ(c.width(), 0);
-    testCharacter(c);
   }
 
   {
@@ -60,7 +59,6 @@ TEST(Character, width) {
 
   {
     // MAN, ZERO WIDTH JOINER, WOMAN, ZERO WIDTH JOINER, BOY
-    // `char`
     Character c("👨‍👩‍👦"sv);
     EXPECT_EQ(c.countCodePoints(), 5);
     EXPECT_EQ(c.width(), 2);
@@ -68,8 +66,17 @@ TEST(Character, width) {
   }
 
   {
+    // ?, ZERO WIDTH JOINER, ?
+    Character c("👩🏻\u200D🚀"sv);
+    EXPECT_EQ(c.countCodePoints(), 4);
+    EXPECT_EQ(c.width(), 2);
+    testCharacter(c);
+  }
+}
+
+TEST(Character, char32Width) {
+  {
     // MAN, ZERO WIDTH JOINER, WOMAN, ZERO WIDTH JOINER, BOY
-    // `char32_t`
     Character c(U"👨‍👩‍👦"sv);
     EXPECT_EQ(c.countCodePoints(), 5);
     EXPECT_EQ(c.width(), 2);
@@ -78,16 +85,6 @@ TEST(Character, width) {
 
   {
     // ?, ZERO WIDTH JOINER, ?
-    // `char`
-    Character c("👩🏻\u200D🚀"sv);
-    EXPECT_EQ(c.countCodePoints(), 4);
-    EXPECT_EQ(c.width(), 2);
-    testCharacter(c);
-  }
-
-  {
-    // ?, ZERO WIDTH JOINER, ?
-    // `char32_t`
     Character c(U"👩🏻\u200D🚀"sv);
     EXPECT_EQ(c.countCodePoints(), 4);
     EXPECT_EQ(c.width(), 2);

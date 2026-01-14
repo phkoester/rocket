@@ -30,7 +30,7 @@ struct Cow {
   Cow(const T& ref) :
       modified_(false) {
     if constexpr (HAS_VIEW) {
-      choice_.view = new T(ref);
+      new(choice_.view) T(ref);
     } else {
       choice_.ptr = &ref;
     }
@@ -41,8 +41,14 @@ struct Cow {
 
   /// @ ctor_move
   Cow(Cow&& rhs) :
-      modified_(rhs.modified_),
-      choice_(rhs.choice_) {
+      modified_(rhs.modified_) {
+    if (modified_) {
+      new(choice_.owned) U(std::move(*rhs.ownedPtr()));
+    } else if constexpr (HAS_VIEW) {
+      new(choice_.view) T(std::move(*rhs.viewPtr()));
+    } else {
+      choice_.ptr = rhs.choice_.ptr;
+    }
     std::memset(&rhs, 0, sizeof(rhs));
   }
 
@@ -52,7 +58,13 @@ struct Cow {
   /// @ member_op_assign_move
   Cow& operator=(Cow&& rhs) {
     modified_ = rhs.modified_;
-    choice_ = rhs.choice_;
+    if (modified_) {
+      new(choice_.owned) U(std::move(*rhs.ownedPtr()));
+    } else if constexpr (HAS_VIEW) {
+      new(choice_.view) T(std::move(*rhs.viewPtr()));
+    } else {
+      choice_.ptr = rhs.choice_.ptr;
+    }
     std::memset(&rhs, 0, sizeof(rhs));
     return *this;
   }
@@ -60,9 +72,9 @@ struct Cow {
   /// @dtor
   ~Cow() {
     if (modified_) {
-      delete choice_.owned;
+      destroyOwned();
     } else if constexpr (HAS_VIEW) {
-      delete choice_.view;
+      destroyView();
     }
   }
 
@@ -77,13 +89,14 @@ struct Cow {
   Cow&
   operator=(const U& value) {
     if (modified_) {
-      *choice_.owned = value;
+      destroyOwned();
+      new(choice_.owned) U(value);
     } else {
       if constexpr (HAS_VIEW) {
-        delete choice_.view;
+        destroyView();
       }
       modified_ = true;
-      choice_.owned = new U(value);
+      new(choice_.owned) U(value);
     }
     return *this;
   }
@@ -99,13 +112,14 @@ struct Cow {
   Cow&
   operator=(U&& value) {
     if (modified_) {
-      *choice_.owned = std::forward<U>(value);
+      destroyOwned();
+      new(choice_.owned) U(std::forward<U>(value));
     } else {
       if constexpr (HAS_VIEW) {
-        delete choice_.view;
+        destroyView();
       }
       modified_ = true;
-      choice_.owned = new U(std::forward<U>(value));
+      new(choice_.owned) U(std::forward<U>(value));
     }
     return *this;
   }
@@ -121,7 +135,7 @@ struct Cow {
   const V&
   get() const {
     static_assert(not HAS_VIEW);
-    return not modified_ ? *choice_.ptr : *choice_.owned;
+    return not modified_ ? *choice_.ptr : *ownedPtr();
   }
 
   /**
@@ -135,7 +149,7 @@ struct Cow {
   V
   get() const {
     static_assert(HAS_VIEW);
-    return not modified_ ? *choice_.view : V(*choice_.owned);
+    return not modified_ ? *viewPtr() : V(*ownedPtr());
   }
 
   /**
@@ -151,19 +165,30 @@ struct Cow {
    * @note This requires that the `Cow` is "modified", i.e. it has been assigned an owned value.
    *
    * @return a nonconst reference to the owned value
-   * @throw #rocket::InvalidState if the `Cow` has not been assigned an owned value
    */
-  U& owned() { ROCKET_EXPECT(modified_); return *choice_.owned; }
+  U& owned() { ROCKET_EXPECT(modified_); return *ownedPtr(); }
 
 private:
 
   static constexpr bool HAS_VIEW = not std::is_same_v<T, U>;
 
+  inline void destroyOwned() { ownedPtr()->~U(); }
+
+  inline void destroyView() { viewPtr()->~T(); }
+
+  constexpr U* ownedPtr() { return reinterpret_cast<U*>(choice_.owned); }
+
+  constexpr const U* ownedPtr() const { return reinterpret_cast<const U*>(choice_.owned); }
+
+  constexpr T* viewPtr() { return reinterpret_cast<T*>(choice_.view); }
+
+  constexpr const T* viewPtr() const { return reinterpret_cast<const T*>(choice_.view); }
+
   bool modified_;
   union {
     const T* ptr; ///< A reference if #HAS_VIEW is `false`
-    const T* view; ///< A copyable view if #HAS_VIEW is `true`
-    U* owned; ///< An owned value if #modified_ is `true`
+    char view[sizeof(T)]; ///< A copyable view if #HAS_VIEW is `true`
+    char owned[sizeof(U)]; ///< An owned value if #modified_ is `true`
   } choice_;
 };
 

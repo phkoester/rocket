@@ -22,7 +22,7 @@ namespace rocket::unicode {
 
 CodePoint::CodePoint(char v) :
     v_(static_cast<unsigned char>(v)) {
-  ROCKET_CHECK(v, isAscii());
+  ROCKET_CHECK(v, ascii());
 }
 
 CodePoint::operator string() const {
@@ -83,7 +83,6 @@ operator<<(ostream& lhs, CodePoint rhs) {
 
 // Functions ------------------------------------------------------------------------------------------------
 
-// XXX throw dok.
 u32string
 utf8To32(string_view s) {
   auto us = UnicodeString::fromUTF8(s);
@@ -96,7 +95,6 @@ utf8To32(string_view s) {
   return ret;
 }
 
-// XXX throw dok.
 string
 utf32To8(u32string_view s) {
   auto us = UnicodeString::fromUTF32(reinterpret_cast<const UChar32*>(s.data()), s.size());

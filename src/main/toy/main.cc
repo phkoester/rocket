@@ -19,6 +19,17 @@ ROCKET_LOG_DEFINE(toy);
 
 namespace {
 
+struct A {
+  int i = 3;
+  A() { cout << "A(), i=" << i << endl; }
+  ~A() { cout << "~A()" << endl; }
+};
+
+struct B {
+  B() { cout << "B()" << endl; }
+  ~B() { cout << "~B()" << endl; }
+};
+
 void
 toy() {
   ROCKET_LOG(toy);
@@ -32,6 +43,11 @@ toy() {
   cow = "I changed my mind";
   cout << "cow=" << cow.get() << endl;
   cout << "cow.owned=" << cow.owned() << endl;
+
+  cout << "sizeof(A)=" << sizeof(A) << endl;
+  char a[sizeof(A)];
+  new(a) A();
+  reinterpret_cast<A*>(a)->~A();
 }
 
 } // namespace

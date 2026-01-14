@@ -26,47 +26,6 @@ namespace rocket::str::message {
 std::string cannotParseAs(std::string_view input, const Type& type);
 
 /**
- * Makes a message for an iterator.
- *
- * @param type the type of the iterator
- * @param pos the position in the input
- * @param msg the message
- * @return a message
- */
-// XXX Aufräumen
-std::string
-iteratorAt(const Type& type, size_t pos, std::string_view msg);
-
-/**
- * Makes a message for an iterator.
- *
- * @tparam It the iterator type
- * @param it the iterator
- * @param pos the position in the input
- * @param msg the message
- * @return a message
- */
-template<typename It>
-std::string
-iteratorAt(const It& it, size_t pos, std::string_view msg) {
-  return iteratorAt(Type::of(it), pos, msg);
-}
-
-/**
- * Makes a message saying an iterator is out of bounds.
- *
- * @tparam It the iterator type
- * @param it the iterator
- * @param pos the position in the input
- * @return a message
- */
-template<typename It>
-std::string
-iteratorOutOfBounds(const It& it, size_t pos) {
-  return iteratorAt(it, pos, "is out of bounds");
-}
-
-/**
  * Makes a message saying there is an overflow of type @p type.
  *
  * @param type the type

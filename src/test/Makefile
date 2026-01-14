@@ -199,7 +199,7 @@ include $(GAIA_DIR)/src/main/make/test-executable.mk
 
 NAME        := test-rocket-unicode-Iterator
 CC_FILES    := test/rocket/unicode/test-Iterator.cc
-SHARED_LIBS := $(ROCKET_SHARED_LIB) libicuuc.so.$(ICU_VERSION) # XXX
+SHARED_LIBS := $(ICU_UC_SHARED_LIB) $(ROCKET_SHARED_LIB)
 include $(GAIA_DIR)/src/main/make/test-executable.mk
 
 # `rocket-gtest` --------------------------------------------------------------------------------------------

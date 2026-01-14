@@ -18,11 +18,6 @@ cannotParseAs(string_view input, const Type& type) {
 }
 
 string
-iteratorAt(const Type& type, size_t pos, string_view msg) {
-  return fmt::format("`{}` at position {} {}", type, pos, msg);
-}
-
-string
 overflow(const Type& type, string_view msg) {
   if (msg.empty()) {
     return fmt::format("`{}` overflow", type);

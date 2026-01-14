@@ -43,7 +43,7 @@ SRC_DIR        := main/rocket
 # Move `Process.cc` to front so the global `process` instance is available early
 # Move `log.cc` to front so Rocket can use its own logging API
 SRC_MOVE_FRONT := Process.cc log/log.cc
-SHARED_LIBS    := libicuuc.so.$(ICU_VERSION)
+SHARED_LIBS    := $(ICU_UC_SHARED_LIB)
 INSTALL        := 1
 include $(GAIA_DIR)/src/main/make/shared-lib.mk
 

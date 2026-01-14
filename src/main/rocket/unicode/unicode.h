@@ -48,10 +48,10 @@ struct CodePoint {
   /// @member_op_cast{`std::u32string`}
   inline explicit operator std::u32string() const { return { v_ }; }
 
+  bool ascii() const { return v_ < 0x80; }
+
   /// @member_fn_hash
   inline size_t hash() const { return std::hash<char32_t>()(v_); }
-
-  bool isAscii() const { return v_ < 0x80; }
 
   /**
    * Returns `true` if this code point is printable.
@@ -204,8 +204,15 @@ std::string utf32To8(std::u32string_view s);
 
 namespace utf8 {
 
-// XXX dok pos < size
-CodePoint nextCodePoint(std::string_view s, size_t& pos);
+/**
+ * Returns the next code point from the UTF-8 string @p s at the position @p pos.
+ *
+ * @param s a UTF-8 string
+ * @param pos the position to get the next code point from. This must be less than the size of @p s. The
+ *     position is updated to the position of the next code point
+ * @return the next code point
+ */
+ CodePoint nextCodePoint(std::string_view s, size_t& pos);
 
 /**
  * Validates the UTF-8 string @p s.
@@ -231,7 +238,14 @@ validate(std::string_view s, UnorderedBimap<size_t, size_t>* positions = nullptr
 
 namespace utf32 {
 
-// XXX dok pos < size
+/**
+ * Returns the next code point from the UTF-32 string @p s at the position @p pos.
+ *
+ * @param s a UTF-32 string
+ * @param pos the position to get the next code point from. This must be less than the size of @p s. The
+ *     position is updated to the position of the next code point
+ * @return the next code point
+ */
 CodePoint nextCodePoint(std::u32string_view s, size_t& pos);
 
 /**
