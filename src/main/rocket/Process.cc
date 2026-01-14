@@ -17,9 +17,14 @@ using namespace std;
 
 namespace {
 
-// Local variables ------------------------------------------------------------------------------------------
+// Local constants ------------------------------------------------------------------------------------------
 
-thread::id mainThreadId = thread::id();
+const bool ROCKET_EXIT = system::env::get<bool>("ROCKET_EXIT").value_or(false);
+const bool ROCKET_QUICK_EXIT = system::env::get<bool>("ROCKET_QUICK_EXIT").value_or(false);
+
+const thread::id MAIN_THREAD_ID = thread::id();
+
+// Local variables ------------------------------------------------------------------------------------------
 
 recursive_mutex processMutex;
 
@@ -114,10 +119,19 @@ Process::exit(int status) const {
 
   ROCKET_ASSERT(inited_, "Process not initialized");
 
-  if (quickExit_)
-    std::quick_exit(status);
-  else
+  if (ROCKET_EXIT) {
     std::exit(status);
+  }
+  if (ROCKET_QUICK_EXIT) {
+    std::quick_exit(status);
+  }
+
+  if (quickExit_) {
+    std::quick_exit(status);
+  }
+  else {
+    std::exit(status);
+  }
 }
 
 void
@@ -129,7 +143,7 @@ Process::init(
     bool quickExit) {
   ROCKET_MUTEX_LOCK(processMutex);
 
-  ROCKET_ASSERT(thread::id() == mainThreadId, "Process::init must be called in the main thread");
+  ROCKET_ASSERT(thread::id() == MAIN_THREAD_ID, "Process::init must be called in the main thread");
   ROCKET_ASSERT(not inited_, "Process already initialized");
 
   // Set the C locale from the environment

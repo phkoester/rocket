@@ -14,6 +14,10 @@ using namespace std::filesystem;
 
 namespace rocket::gtest {
 
+// Constants ------------------------------------------------------------------------------------------------
+
+const bool TEST_TERMINAL = system::env::get<bool>(ROCKET_TEST_TERMINAL).value_or(false);
+
 namespace internal {
 
 // Internal -------------------------------------------------------------------------------------------------
@@ -40,10 +44,6 @@ tempPath(const char* file) {
 }
 
 } // namespace internal
-
-// Constants ------------------------------------------------------------------------------------------------
-
-const bool TEST_TERMINAL = system::env::get<bool>(ROCKET_TEST_TERMINAL).value_or(false);
 
 } // namespace rocket::gtest
 

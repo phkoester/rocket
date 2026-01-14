@@ -67,6 +67,11 @@
 
 namespace rocket::gtest {
 
+// Constants ------------------------------------------------------------------------------------------------
+
+/// Reflects the environment variable `ROCKET_TEST_TERMINAL`.
+extern const bool TEST_TERMINAL;
+
 namespace internal {
 
 // Internal -------------------------------------------------------------------------------------------------
@@ -74,11 +79,6 @@ namespace internal {
 std::filesystem::path tempPath(const char* file);
 
 } // namespace internal
-
-// Constants ------------------------------------------------------------------------------------------------
-
-/// Reflects the environment variable `ROCKET_TEST_TERMINAL`.
-extern const bool TEST_TERMINAL;
 
 } // namespace rocket::gtest
 
