@@ -6,8 +6,8 @@
 
 #pragma once
 
-#include "rocket/TypeTraits.h"
 #include "rocket/hash.h"
+#include "rocket/type-traits.h"
 
 #include <functional>
 #include <optional>

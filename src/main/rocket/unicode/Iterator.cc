@@ -14,7 +14,7 @@ namespace rocket::unicode {
 
 // `Iterator` -----------------------------------------------------------------------------------------------
 
-template<typename C> requires Character<C>
+template<typename C> requires IsChar<C>
 Iterator<C>::Iterator(IteratorType type, basic_string_view<C> input, const locale& loc) :
     input_(input) {
   // 1. Make the `UnicodeString`
@@ -68,7 +68,7 @@ Iterator<C>::Iterator(IteratorType type, basic_string_view<C> input, const local
 
   UErrorCode status = U_ZERO_ERROR;
   switch (type) {
-  case IteratorType::Char:
+  case IteratorType::Character:
     iter_.reset(icu::BreakIterator::createCharacterInstance(icuLoc, status));
     break;
   case IteratorType::Line:

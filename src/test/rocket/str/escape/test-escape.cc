@@ -65,7 +65,7 @@ TEST(escape, CString) {
     EXPECT_EQ(result.positions, positions({ { 0, 0 }, { 1, 1 }, { 5, 2 }, { 6, 3 } }));
   }
 
-  // Multi-code-point graphemes
+  // Multi-code-point characters
   {
     // ☢️:  6 bytes, 2 code points
     // 🧑‍🌾: 11 bytes, 3 code points
@@ -105,7 +105,7 @@ TEST(escape, CString) {
     in = "a\r\n\tb";
     escaped = escapeCString(in, params, &result);
     EXPECT_EQ(escaped, "a\\r\\n   b");
-    // CRLF is one grapheme
+    // CR/LF is one character
     EXPECT_EQ(result.positions, positions({ { 0, 0 }, { 1, 1 }, { 3, 5 }, { 4, 8 }, { 5, 9 } }));
 
     in = "\b🧑‍🌾\tb";
@@ -120,7 +120,7 @@ TEST(escape, CString) {
 
   EXPECT_THAT(
       [&] { unescapeCString("abc\\"); },
-      throwsInputFailure(4, HasSubstr("Expected a UTF-8 grapheme")));
+      throwsInputFailure(4, HasSubstr("Expected character, got EOI")));
 
   EXPECT_THAT(
       [&] { unescapeCString("abc\\Ä"); },
@@ -128,11 +128,15 @@ TEST(escape, CString) {
 
   EXPECT_THAT(
       [&] { unescapeCString("\\x"); },
-      throwsInputFailure(2, HasSubstr("Expected a hexadecimal digit, got EOF")));
+      throwsInputFailure(2, HasSubstr("Expected 2 hexadecimal digits, got EOI")));
 
   EXPECT_THAT(
-      [&] { unescapeCString("\\x0\xff"); },
-      throwsInputFailure(4, HasSubstr("Expected a hexadecimal digit, got '\\xff'")));
+      [&] { unescapeCString("\\x0X"); },
+      throwsInputFailure(3, { 2, 4 }, HasSubstr("Expected a hexadecimal digit, got \"X\"")));
+
+  EXPECT_THAT(
+      [&] { unescapeCString("\\U123456"); },
+      throwsInputFailure(8, { 2, 8 }, HasSubstr("Expected 8 hexadecimal digits, got \"123456\"")));
 
   // 🧑‍🌾: 11 bytes, 3 code points
   EXPECT_THAT(

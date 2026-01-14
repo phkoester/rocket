@@ -26,7 +26,7 @@ namespace rocket::format {
   *
   * @tparam C the character type
   */
-template<typename C> requires Character<C>
+template<typename C> requires IsChar<C>
 struct FormatParams {
   /// The formatted string.
   std::basic_string<C> formatted_;
@@ -108,7 +108,7 @@ struct FormatParams {
  *
  * @tparam C the character type
  */
-template<typename C> requires Character<C>
+template<typename C> requires IsChar<C>
 struct Format {
 
   /// A function that produces #rocket::format::FormatParams.

@@ -1,7 +1,7 @@
 /**
- * @file Char.h
+ * @file Character.h
  *
- * Unicode characters, i.e. grapheme clusters.
+ * Unicode characters, or grapheme clusters.
  */
 
 #pragma once
@@ -11,7 +11,7 @@
 
 namespace rocket::unicode {
 
-// `Char` ---------------------------------------------------------------------------------------------------
+// `Character` ----------------------------------------------------------------------------------------------
 
 /**
  * A Unicode character, or a grapheme cluster, consisting of one or more code points.
@@ -19,14 +19,17 @@ namespace rocket::unicode {
  * A string suitable for a `Char` can be obtained as a segment from a #rocket::unicode::Iterator with the
  * iterator type #rocket::unicode::IteratorType::Char.
  */
-template<typename C> requires Character<C>
-struct Char {
+template<typename C> requires IsChar<C>
+struct Character {
   /**
    * @ctor
    *
+   * This constructor does not check that @p s is a valid Unicode character. If the character is invalid,
+   * the behavior is undefined.
+   *
    * @param s a string. The string must remain valid for the lifetime of the character.
    */
-  explicit constexpr Char(std::basic_string_view<C> s) : s_(s) {}
+  explicit constexpr Character(std::basic_string_view<C> s) : s_(s) {}
 
   /// @member_op_cast{`std::basic_string_view<C>`}
   constexpr operator std::basic_string_view<C>() const { return s_; }
@@ -106,6 +109,9 @@ struct Char {
    */
   bool
   nbsp() const {
+    if (empty()) {
+      return false;
+    }
     size_t pos = 0;
     auto cp = nextCodePoint(s_, pos);
     if (cp != U'\u00A0') { // U+00A0 (NO-BREAK SPACE)
@@ -128,6 +134,9 @@ struct Char {
 
   std::optional<CodePoint>
   toCodePoint() const {
+    if (empty()) {
+      return std::nullopt;
+    }
     size_t pos = 0;
     auto cp = nextCodePoint(s_, pos);
     if (pos == s_.size()) {
@@ -161,15 +170,30 @@ struct Char {
     return ret;
   }
 
-private:
+ROCKET_TESTING_PRIVATE:
 
-  std::basic_string_view<C> s_;
+  std::basic_string_view<C> s_; ///< The string.
+
+  /**
+   * Returns the number of code points in the character.
+   *
+   * @return the number of code points in the character
+   */
+  size_t
+  countCodePoints() const {
+    size_t ret = 0;
+    for (size_t pos = 0; pos < s_.size(); /* Empty */) {
+      nextCodePoint(s_, pos);
+      ++ret;
+    }
+    return ret;
+  }
 };
 
-/// @fn_format_as{`Char<C>`}
-template<typename C> requires Character<C>
+/// @fn_format_as{`Character<C>`}
+template<typename C> requires IsChar<C>
 constexpr auto
-format_as(Char<C> v) {
+format_as(Character<C> v) {
   return static_cast<std::basic_string_view<C>>(v);
 }
 

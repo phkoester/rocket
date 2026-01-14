@@ -8,7 +8,7 @@
 
 // `TEST` ---------------------------------------------------------------------------------------------------
 
-TEST(Guard, ROCKET_GUARD) {
+TEST(Guard, Guard) {
   bool flag = true;
   {
     ROCKET_GUARD([&] { flag = false; });
@@ -17,7 +17,7 @@ TEST(Guard, ROCKET_GUARD) {
   EXPECT_FALSE(flag);
 }
 
-TEST(Guard, ROCKET_VALUE_GUARD) {
+TEST(Guard, ValueGuard) {
   int n = 1;
   {
     ROCKET_VALUE_GUARD(n, 2);

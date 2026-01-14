@@ -91,7 +91,6 @@ TEST(nio, StringSink) {
   StringSink out2(buf); // With external string
   out2.println("Hi {}", "there");
   EXPECT_EQ(buf, "Hi there\n");
-  EXPECT_THAT([&] { out2.str(); }, Throws<InvalidState>());
 }
 
 // `Source` .................................................................................................

@@ -65,8 +65,10 @@ parseCommand(const vector<string>& args, nio::Sink& out = nio::stdout, nio::Sink
   };
 
   CommandLine cl({
-    Option::of(&general, "omit", unicode::Char("o"sv), nullopt, "omit what is not important", parseCommandOmit),
-    Option::of(&misc, "help", unicode::Char("h"sv), nullopt, "display this help text", parseCommandHelp)
+    Option::of(&general, "omit", unicode::Character("o"sv), nullopt,
+        "omit what is not important", parseCommandOmit),
+    Option::of(&misc, "help", unicode::Character("h"sv), nullopt,
+        "display this help text", parseCommandHelp)
   }, params);
 
   auto take = [](string_view arg) -> CommandLine::Took {
@@ -103,8 +105,10 @@ parseCommand(const vector<string>& args, nio::Sink& out = nio::stdout, nio::Sink
     };
 
     CommandLine listCl({
-      Option::of(&list, "help", unicode::Char("h"sv), nullopt, "display this help text", parseCommandListHelp),
-      Option::of(&list, "list", unicode::Char("l"sv), nullopt, "a list option that is good for nothing", parseCommandList)
+      Option::of(&list, "help", unicode::Character("h"sv), nullopt,
+          "display this help text", parseCommandListHelp),
+      Option::of(&list, "list", unicode::Character("l"sv), nullopt,
+          "a list option that is good for nothing", parseCommandList)
     }, listParams);
 
     try {
@@ -136,9 +140,12 @@ parseCommand(const vector<string>& args, nio::Sink& out = nio::stdout, nio::Sink
     };
 
     CommandLine showCl({
-      Option::of(&show, "help", unicode::Char("h"sv), nullopt, "display this help text", parseCommandShowHelp),
-      Option::of(&show, "show", unicode::Char("s"sv), nullopt, "a show option that is good for nothing", parseCommandShow),
-      Option::of(&show, "test", unicode::Char("t"sv), nullopt, "test something, or don't", parseCommandShowTest)
+      Option::of(&show, "help", unicode::Character("h"sv), nullopt,
+          "display this help text", parseCommandShowHelp),
+      Option::of(&show, "show", unicode::Character("s"sv), nullopt,
+          "a show option that is good for nothing", parseCommandShow),
+      Option::of(&show, "test", unicode::Character("t"sv), nullopt,
+          "test something, or don't", parseCommandShowTest)
     }, showParams);
 
     try {
@@ -171,7 +178,7 @@ TEST(cl, parseOptBool) {
   bool flag;
 
   CommandLine cl( {
-    Option::of(nullptr, "flag", U'€', nullopt, nullopt, flag)
+    Option::of(nullptr, "flag", unicode::Character("€"sv), nullopt, nullopt, flag)
   });
 
   // Test no options
@@ -237,7 +244,7 @@ TEST(cl, parseOptInt) {
   int num;
 
   CommandLine cl( {
-    Option::of(nullptr, "num", 'n', "NUM", nullopt, num)
+    Option::of(nullptr, "num", unicode::Character("n"sv), "NUM", nullopt, num)
   });
 
   // Test mixed order
@@ -281,7 +288,7 @@ TEST(cl, parseOptEnum) {
   log::LogLevel level;
 
   CommandLine cl( {
-    Option::of(nullptr, "level", 'l', "LEVEL", nullopt, level)
+    Option::of(nullptr, "level", unicode::Character("l"sv), "LEVEL", nullopt, level)
   });
 
   // Test mixed order
@@ -307,7 +314,7 @@ TEST(cl, parseOptVector) {
   vector<string> names;
 
   CommandLine cl( {
-    Option::of(nullptr, "name", 'n', "NAME", nullopt, names)
+    Option::of(nullptr, "name", unicode::Character("n"sv), "NAME", nullopt, names)
   });
 
   // Test multiple values
@@ -325,9 +332,9 @@ TEST(cl, parseShortOptions) {
   string name;
 
   CommandLine cl( {
-    Option::of(nullptr, "ignore", 'i', nullopt, nullopt, ignore),
-    Option::of(nullptr, "verbose", 'v', nullopt, nullopt, verbose),
-    Option::of(nullptr, "name", 'n', "NAME", nullopt, name)
+    Option::of(nullptr, "ignore", unicode::Character("i"sv), nullopt, nullopt, ignore),
+    Option::of(nullptr, "verbose", unicode::Character("v"sv), nullopt, nullopt, verbose),
+    Option::of(nullptr, "name", unicode::Character("n"sv), "NAME", nullopt, name)
   });
 
   // Test without '='

@@ -5,15 +5,9 @@
 #include "rocket-gtest/rocket-gtest.h"
 
 #include "rocket/format/std.h"
-#include "rocket/nio/nio.h"
-#include "rocket/system/system.h"
-#include "rocket/system/terminal/terminal.h"
 #include "rocket/unicode/unicode.h"
 
-#include "rocket-gtest/matcher/matcher.h"
-
 using namespace rocket;
-using namespace rocket::gtest::matcher;
 using namespace rocket::unicode;
 using namespace std;
 using namespace testing;
@@ -33,24 +27,6 @@ constexpr char32_t MAX_PLUS_1 = static_cast<char32_t>(0x10FFFFU + 1);
 auto
 positions(initializer_list<pair<size_t, size_t>> list) {
   return makeUnorderedBimap(list);
-}
-
-void
-testGrapheme(const Grapheme& grapheme, u32string_view s) {
-  auto& out = nio::stdout;
-
-  if (not system::env::get<bool>("ROCKET_TEST_TERMINAL").value_or(false)) {
-    out.println("Not testing grapheme because `ROCKET_TEST_TERMINAL` is not set");
-    return;
-  }
-
-  string s8 = utf32To8(s);
-  out.print("[{}]", s8);
-  auto pos = system::terminal::position(out);
-  EXPECT_TRUE(pos);
-  EXPECT_EQ(pos->first, grapheme.width() + 3);
-  out.write('\n');
-  out.println("[{:~<{}}]", "", grapheme.width());
 }
 
 // `TEST` ---------------------------------------------------------------------------------------------------
@@ -115,39 +91,6 @@ TEST(unicode, CodePointWidth) {
   EXPECT_EQ(CodePoint(U'\u0300').width(), 0); // COMBINING GRAVE ACCENT, Category Mn (768)
 }
 
-TEST(unicode, CodePointRead) {
-  CodePoint v;
-
-  {
-    nio::StringSource in;
-    EXPECT_EQ(read(in, v), 0);
-    EXPECT_EQ(in.tell(), 0);
-  }
-
-  {
-    nio::StringSource in("x");
-    EXPECT_EQ(read(in, v), 1);
-    EXPECT_EQ(v, 'x');
-    EXPECT_EQ(in.tell(), 1);
-  }
-
-  {
-    string input = "€";
-    nio::StringSource in(input);
-    EXPECT_EQ(read(in, v), input.size());
-    EXPECT_EQ(v, U'€');
-    EXPECT_EQ(in.tell(), input.size());
-  }
-
-  {
-    string s = "€";
-    string_view input(&s[1]); // Invalid UTF-8 byte sequence
-    nio::StringSource in(input);
-    EXPECT_EQ(read(in, v), 0);
-    EXPECT_EQ(in.tell(), 0);
-  }
-}
-
 TEST(unicode, CodePointFormat) {
   EXPECT_EQ(fmt::format("{}", CodePoint(U'\u0000')), "U+0000");
   EXPECT_EQ(fmt::format("{}", CodePoint(U'\u20AC')), "U+20AC");
@@ -163,69 +106,6 @@ TEST(unicode, CodePointVectorFormat) {
   EXPECT_EQ(fmt::format("{::}", cps), "[U+0061, U+0062, U+0063]");
   EXPECT_EQ(fmt::format("{::~>8}", cps), "[~~U+0061, ~~U+0062, ~~U+0063]");
   EXPECT_EQ(fmt::format("{:n:~>8}", cps), "~~U+0061, ~~U+0062, ~~U+0063");
-}
-
-TEST(unicode, Grapheme) {
-  EXPECT_EQ(width(graphemes(U"a")), 1);
-  EXPECT_EQ(width(graphemes(U"😁")), 2);
-
-  // The following tests are taken from the Rust crate `unicode-display-width`
-
-  EXPECT_EQ(width(graphemes("🔥🗡🍩👩🏻‍🚀⏰💃🏼🔦👍🏻")), 15);
-  EXPECT_EQ(width(graphemes("🦀")), 2);
-  EXPECT_EQ(width(graphemes("👨‍👩‍👧‍👧")), 2);
-  EXPECT_EQ(width(graphemes("👩‍🔬")), 2);
-  EXPECT_EQ(width(graphemes("sane text")), 9);
-  EXPECT_EQ(width(graphemes("Ẓ̌á̲l͔̝̞̄̑͌g̖̘̘̔̔͢͞͝o̪̔T̢̙̫̈̍͞e̬͈͕͌̏͑x̺̍ṭ̓̓ͅ")), 9);
-  EXPECT_EQ(width(graphemes("슬라바 우크라이나")), 17);
-}
-
-TEST(unicode, GraphemeOpCastString) {
-  using type = string;
-
-  EXPECT_EQ(static_cast<type>(Grapheme("A")), "A");
-  EXPECT_EQ(static_cast<type>(Grapheme("€")), "€");
-  EXPECT_EQ(static_cast<type>(Grapheme("😁")), "😁");
-}
-
-TEST(unicode, GraphemeOpCastU32string) {
-  using type = u32string;
-
-  EXPECT_EQ(static_cast<type>(Grapheme("A")), U"A");
-  EXPECT_EQ(static_cast<type>(Grapheme("€")), U"€");
-  EXPECT_EQ(static_cast<type>(Grapheme("😁")), U"😁");
-}
-
-TEST(unicode, GraphemeRead) {
-  Grapheme v;
-
-  {
-    nio::StringSource in;
-    EXPECT_EQ(read(in, v), 0);
-    EXPECT_EQ(in.tell(), 0);
-  }
-
-  {
-    nio::StringSource in("🧑‍🌾a");
-
-    EXPECT_EQ(read(in, v), 11);
-    EXPECT_EQ(v.size(), 3);
-    EXPECT_EQ(static_cast<string>(v), "🧑‍🌾");
-    EXPECT_EQ(in.tell(), 11);
-
-    EXPECT_EQ(read(in, v), 1);
-    EXPECT_EQ(v.size(), 1);
-    EXPECT_EQ(static_cast<string>(v), "a");
-    EXPECT_EQ(in.tell(), 12);
-  }
-}
-
-TEST(unicode, GraphemeFormat) {
-  // U+01F9D1 (Adult), U+200D (ZWJ), U+01F33E (Ear of rice)
-  EXPECT_EQ(fmt::format("{}", Grapheme("🧑‍🌾")), "🧑‍🌾");
-  EXPECT_EQ(fmt::format("{:?}", Grapheme("a")), "\"a\"");
-
-  EXPECT_EQ(fmt::format(U"{}", Grapheme("🧑‍🌾")), U"🧑‍🌾");
 }
 
 TEST(unicode, conversions) {
@@ -257,18 +137,6 @@ TEST(unicode, conversions) {
 }
 
 // `rocket::unicode::utf8` ..................................................................................
-
-TEST(unicode, utf8CodePointSize) {
-  EXPECT_EQ(utf8::codePointSize(97), 1); // 'a'
-  EXPECT_EQ(utf8::codePointSize(0xc3), 2); // First byte of 'ä'
-  EXPECT_EQ(utf8::codePointSize(0x80), 0); // Continuation byte: 1000 0000
-  EXPECT_EQ(utf8::codePointSize(0xbf), 0); // Continuation byte: 1011 1111
-}
-
-TEST(unicode, utf8CountCodePoints) {
-  EXPECT_EQ(utf8::countCodePoints("abcde"), 5);
-  EXPECT_EQ(utf8::countCodePoints("äüöß€"), 5);
-}
 
 TEST(unicode, utf8Validate) {
   UnorderedBimap<size_t, size_t> pos;
@@ -316,57 +184,6 @@ TEST(unicode, utf8Validate) {
 }
 
 // `rocket::unicode::utf32` ---------------------------------------------------------------------------------
-
-TEST(unicode, utf32Graphemes) {
-  {
-    // ZWJ
-    u32string s = U"\u200D";
-    auto graphemes = utf32::graphemes(s);
-    EXPECT_EQ(graphemes.size(), 1);
-    EXPECT_EQ(graphemes[0].size(), 1);
-    EXPECT_EQ(graphemes[0].width(), 0);
-    testGrapheme(graphemes[0], s);
-  }
-
-  {
-    // ề: Latin Small Letter E, Combining Circumflex Accent, Combining Grave Acccent
-    u32string s = U"\u0065\u0302\u0300";
-    auto graphemes = utf32::graphemes(s);
-    EXPECT_EQ(graphemes.size(), 1);
-    EXPECT_EQ(graphemes[0].size(), 3);
-    EXPECT_EQ(graphemes[0].width(), 1);
-    testGrapheme(graphemes[0], s);
-  }
-
-  {
-    // U+01F9D1 (Adult), U+200D (ZWJ), U+01F33E (Ear of rice)
-    u32string s = U"🧑‍🌾";
-    auto graphemes = utf32::graphemes(s);
-    EXPECT_EQ(graphemes.size(), 1);
-    EXPECT_EQ(graphemes[0].size(), 3);
-    EXPECT_EQ(graphemes[0].width(), 2);
-    testGrapheme(graphemes[0], s);
-  }
-
-  {
-    // Man, ZWJ, Woman, ZWJ, Boy
-    u32string s = U"👨‍👩‍👦";
-    auto graphemes = utf32::graphemes(s);
-    EXPECT_EQ(graphemes.size(), 1);
-    EXPECT_EQ(graphemes[0].size(), 5);
-    EXPECT_EQ(graphemes[0].width(), 2);
-    testGrapheme(graphemes[0], s);
-  }
-
-  {
-    u32string s = U"👩🏻\u200d🚀";
-    auto graphemes = utf32::graphemes(s);
-    EXPECT_EQ(graphemes.size(), 1);
-    EXPECT_EQ(graphemes[0].size(), 4);
-    EXPECT_EQ(graphemes[0].width(), 2);
-    testGrapheme(graphemes[0], s);
-  }
-}
 
 TEST(unicode, utf32Validate) {
   {

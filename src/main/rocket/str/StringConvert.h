@@ -7,8 +7,8 @@
 #pragma once
 
 #include "rocket/Exception.h"
-#include "rocket/TypeTraits.h"
 #include "rocket/enum.h"
+#include "rocket/type-traits.h"
 #include "rocket/io/io.h"
 #include "rocket/str/message/message.h"
 
@@ -87,8 +87,8 @@ struct StringConvert<char> {
   }
 };
 
-/// @spec_rocket_StringConvert{#rocket::Integer}
-template<typename I> requires Integer<I>
+/// @spec_rocket_StringConvert{#rocket::IsInteger<I>}
+template<typename I> requires IsInteger<I>
 struct StringConvert<I> {
   using Type = I; ///< @type_alias
 
@@ -145,8 +145,8 @@ struct StringConvert<E> {
   }
 };
 
-/// @spec_rocket_StringConvert{#rocket::FloatingPoint}
-template<typename F> requires FloatingPoint<F>
+/// @spec_rocket_StringConvert{#rocket::IsFloat<F>}
+template<typename F> requires IsFloat<F>
 struct StringConvert<F> {
   using Type = F; ///< @type_alias
 

@@ -8,8 +8,8 @@
 
 #include "rocket/Exception.h"
 #include "rocket/Type.h"
-#include "rocket/TypeTraits.h"
 #include "rocket/rocket.h"
+#include "rocket/type-traits.h"
 
 #include <limits>
 #include <type_traits>
@@ -114,7 +114,7 @@ add(Lhs lhs, Rhs rhs) {
  * @param v a floating-point value
  * @return `true` if @p v is a quiet not-a-number
  */
-template<typename F> requires FloatingPoint<F>
+template<typename F> requires IsFloat<F>
 constexpr bool
 quietNan(F v) {
   return std::isnan(v) && not issignaling(v);
@@ -127,7 +127,7 @@ quietNan(F v) {
  * @param v a floating-point value
  * @return `true` if @p v is a signaling not-a-number
  */
-template<typename F> requires FloatingPoint<F>
+template<typename F> requires IsFloat<F>
 constexpr bool
 signalingNan(F v) {
   return std::isnan(v) && issignaling(v);

@@ -4,7 +4,7 @@
  * A string library, ready for `char` (UTF-8) and `char32_t` (UTF-32).
  */
 
-#include "rocket/TypeTraits.h"
+#include "rocket/type-traits.h"
 
 #include <limits>
 #include <string>
@@ -24,7 +24,7 @@ namespace rocket::str {
  * @param sub the substring to look for
  * @return `true` if @p s begins with substring @p sub
  */
-template<typename C> requires Character<C>
+template<typename C> requires IsChar<C>
 bool
 beginsWith(std::basic_string_view<C> s, std::basic_string_view<C> sub) {
   if (sub.empty())
@@ -58,7 +58,7 @@ std::u32string capitalize(std::u32string_view s);
  * @param sub the substring to look for
  * @return `true` if @p s ends with substring @p sub
  */
-template<typename C> requires Character<C>
+template<typename C> requires IsChar<C>
 bool
 endsWith(std::basic_string_view<C> s, std::basic_string_view<C> sub) {
   if (sub.empty())
@@ -119,7 +119,7 @@ std::vector<std::vector<std::string>> paragraphs(std::string_view s);
  * @param max maximum amount of removals
  * @return a string view
  */
-template<typename C> requires Character<C>
+template<typename C> requires IsChar<C>
 std::basic_string_view<C>
 removeLeading(
     std::basic_string_view<C> s,
@@ -150,7 +150,7 @@ removeLeading(
  * @param max maximum amount of removals
  * @return a string view
  */
-template<typename C> requires Character<C>
+template<typename C> requires IsChar<C>
 std::basic_string_view<C>
 removeTrailing(
     std::basic_string_view<C> s,
@@ -179,7 +179,7 @@ removeTrailing(
  * @param n a number
  * @return a new string
  */
-template<typename C> requires Character<C>
+template<typename C> requires IsChar<C>
 [[nodiscard]] std::basic_string<C>
 repeat(const std::basic_string_view<C> s, size_t n) {
   std::basic_string<C> ret;
@@ -201,7 +201,7 @@ repeat(const std::basic_string_view<C> s, size_t n) {
  * @param max maximum amount of replacements
  * @return the number of replacements made
  */
-template<typename C> requires Character<C>
+template<typename C> requires IsChar<C>
 size_t
 replaceIn(
     std::basic_string<C>& s,

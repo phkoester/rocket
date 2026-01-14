@@ -32,14 +32,14 @@ struct Position {
   /**
    * The position to look for.
    *
-   * There must be a grapheme boundary at this position. The position is highlighted with a caret (`^`)
+   * There must be a character bondary at this position. The position is highlighted with a caret (`^`)
    * underneath.
    */
   size_t position;
   /**
    * The ranges associated with this position.
    *
-   * There must be grapheme boundaries at the ranges' lower and upper positions. The ranges are underlined
+   * There must be character bondaries at the ranges' lower and upper positions. The ranges are underlined
    * with the tilde (`~`).
    */
   Ranges ranges;
@@ -74,7 +74,7 @@ struct Location {
   size_t position; ///< Copied from the input position.
   Ranges ranges; ///< Copied from the input position.
   size_t line; ///< The line number, starting with 1.
-  size_t column; ///< The column number (counting Unicode grapheme widths), starting with 1.
+  size_t column; ///< The column number (counting character widths), starting with 1.
   Range lineRange; ///< The range of the line containing #position.
   /**
     * This member is only initialized if #LocationsParams#setLineString was set to `true`.

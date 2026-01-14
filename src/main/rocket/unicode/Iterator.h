@@ -18,7 +18,7 @@ namespace rocket::unicode {
 
 /// Iterator types.
 enum class IteratorType {
-  Char, ///< Iterate over characters, i.e. grapheme clusters
+  Character, ///< Iterate over characters
   Line, ///< Iterate over lines
   Sentence, ///< Iterate over sentences
   Title, ///< Iterate over title boundaries
@@ -32,7 +32,7 @@ enum class IteratorType {
  *
  * @tparam C the character type
  */
-template<typename C> requires Character<C>
+template<typename C> requires IsChar<C>
 struct Iterator {
   /**
    * @ctor
@@ -129,7 +129,7 @@ private:
 
 // Functions ------------------------------------------------------------------------------------------------
 
-template<typename C> requires Character<C>
+template<typename C> requires IsChar<C>
 std::basic_string<C>
 concat(const std::vector<std::basic_string_view<C>>& segments, size_t pos = 0, size_t n = NPOS) {
   std::basic_string<C> ret;

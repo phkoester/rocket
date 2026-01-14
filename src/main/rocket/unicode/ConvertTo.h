@@ -6,8 +6,8 @@
 
 #pragma once
 
-#include "rocket/TypeTraits.h"
 #include "rocket/rocket.h"
+#include "rocket/type-traits.h"
 
 #include <string>
 
@@ -19,7 +19,7 @@ std::string utf32To8(std::u32string_view s);
 
 // `ConvertTo` ----------------------------------------------------------------------------------------------
 
-template<typename C> requires Character<C>
+template<typename C> requires IsChar<C>
 struct ConvertTo;
 
 /**

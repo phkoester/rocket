@@ -30,6 +30,9 @@
 /// Use this macro instead of `private` to allow access to private members of a class when testing.
 #define ROCKET_TESTING_PRIVATE public
 
+/// An environment variable indicating whether terminal output is tested.
+#define ROCKET_TEST_TERMINAL "ROCKET_TEST_TERMINAL"
+
 /**
  * Checks if an environment variable is set to `true`. If it is not, the test is skipped.
  *
@@ -62,12 +65,20 @@
  */
 #define ROCKET_GTEST_TEMP_PATH() ::rocket::gtest::internal::tempPath(__FILE__)
 
-namespace rocket::gtest::internal {
+namespace rocket::gtest {
+
+namespace internal {
 
 // Internal -------------------------------------------------------------------------------------------------
 
 std::filesystem::path tempPath(const char* file);
 
-} // namespace rocket::gtest::internal
+} // namespace internal
+
+// Constants ------------------------------------------------------------------------------------------------
+
+extern const bool TEST_TERMINAL;
+
+} // namespace rocket::gtest
 
 // EOF

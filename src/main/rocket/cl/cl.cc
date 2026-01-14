@@ -260,7 +260,7 @@ CommandLine::parse(const vector<string>& args, const Take& take) const {
       // 3. "-..." seen: Parse options by short name; the last one may take a value
 
       arg = arg.substr(1);
-      auto iter = unicode::Iterator<char>(unicode::IteratorType::Char, arg);
+      auto iter = unicode::Iterator<char>(unicode::IteratorType::Character, arg);
       auto chars = iter.nextSegments();
       auto charBegin = chars.begin();
       auto charEnd = chars.end();

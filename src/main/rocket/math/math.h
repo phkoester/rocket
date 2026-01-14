@@ -7,7 +7,7 @@
 #pragma once
 
 #include "rocket/assert.h"
-#include "rocket/rocket.h"
+#include "rocket/type-traits.h"
 
 #include <algorithm>
 #include <numeric>
@@ -34,7 +34,7 @@ namespace rocket::math {
  * @throws #rocket::Overflow if the result is out of range
  * @return the mean
  */
-template<typename T, typename It> requires FloatingPoint<T>
+template<typename T, typename It> requires IsFloat<T>
 T
 mean(It begin, It end) {
   ROCKET_CHECK(end, end > begin, "Range is empty");
@@ -63,7 +63,7 @@ mean(It begin, It end) {
  * @param end the end of the range, exclusive
  * @return the standard deviation
  */
-template<typename T, typename It> requires FloatingPoint<T>
+template<typename T, typename It> requires IsFloat<T>
 T
 standardDeviation(It begin, It end) {
   T m = mean<T>(begin, end);

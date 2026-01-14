@@ -9,7 +9,7 @@
 #include "rocket/str/str.h"
 #include "rocket/str/escape/escape.h"
 #include "rocket/system/terminal/terminal.h"
-#include "rocket/unicode/Char.h"
+#include "rocket/unicode/Character.h"
 #include "rocket/unicode/Iterator.h"
 
 #include <numeric>
@@ -64,7 +64,7 @@ locations(string_view input, const vector<Position>& positions, const LocationsP
   bool finish = false; // Finish on next line feed?
 
   size_t inputPos = 0;
-  unicode::Iterator<char> iter(unicode::IteratorType::Char, input);
+  unicode::Iterator<char> iter(unicode::IteratorType::Character, input);
   while (true) {
     auto pos = inputPos;
 
@@ -83,7 +83,7 @@ locations(string_view input, const vector<Position>& positions, const LocationsP
     }
 
     // Get next character from iterator, if any
-    auto c = unicode::Char(iter.nextSegment());
+    auto c = unicode::Character(iter.nextSegment());
     inputPos += c.size();
     if (c.empty() || c.eol()) {
       // Handle EOF or EOL
@@ -175,8 +175,8 @@ printLocations(
 
     out.print("{: >{}d} | ", loc.line, lineNumberWidth);
 
-    // Escape the line as C-string, take tab setting from `locationsResult`, print the line as graphemes
-    // (skip zero-width graphemes)
+    // Escape the line as C-string, take tab setting from `locationsResult`, print the line as characers
+    // (skip zero-width characters)
 
     ROCKET_CHECK(input, input || loc.lineString, "Either `input` or `lineString` must be supplied");
     string line = loc.lineString ?
@@ -186,14 +186,14 @@ printLocations(
     string escapedLine = escape::escapeCString(line, { .tabSize=locationsResult.params.tabSize }, &result);
 
     // For `escapedLine`, map `Char` index -> byte offset
-    unicode::Iterator<char> iter(unicode::IteratorType::Char, escapedLine);
+    unicode::Iterator<char> iter(unicode::IteratorType::Character, escapedLine);
     auto chars = iter.nextSegments();
     UnorderedBimap<size_t, size_t> escapedLinePositions;
     size_t escapedLineWidth = 0;
     size_t offset = 0;
     for (size_t i = 0; i < chars.size(); ++i) {
       escapedLinePositions.insert({ i, offset });
-      unicode::Char c(chars[i]);
+      unicode::Character c(chars[i]);
       offset += c.size();
       escapedLineWidth += c.width();
     }
@@ -201,7 +201,7 @@ printLocations(
 
     // Print characters one by one, skip zero-width characters
     for (const auto& c : chars) {
-      if (unicode::Char(c).width() > 0) {
+      if (unicode::Character(c).width() > 0) {
         out.write(c);
       }
     }
@@ -232,10 +232,10 @@ printLocations(
       ROCKET_EXPECT(rightIt != escapedLinePositions.right.end());
       pos = rightIt->second;
 
-      // 4. Translate escaped-line grapheme position to `indicators` position
+      // 4. Translate escaped-line character position to `indicators` position
       size_t ret = 0;
       for (size_t i = 0; i < pos; ++i) {
-        ret += unicode::Char(chars[i]).width();
+        ret += unicode::Character(chars[i]).width();
       }
       return ret;
     };

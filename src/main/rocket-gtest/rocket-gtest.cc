@@ -6,12 +6,15 @@
 
 #include "rocket/math/random.h"
 #include "rocket/str/str.h"
+#include "rocket/system/system.h"
 
 using namespace rocket;
 using namespace std;
 using namespace std::filesystem;
 
-namespace rocket::gtest::internal {
+namespace rocket::gtest {
+
+namespace internal {
 
 // Internal -------------------------------------------------------------------------------------------------
 
@@ -36,6 +39,12 @@ tempPath(const char* file) {
   return ret;
 }
 
-} // namespace rocket::gtest::internal
+} // namespace internal
+
+// Constants ------------------------------------------------------------------------------------------------
+
+const bool TEST_TERMINAL = system::env::get<bool>(ROCKET_TEST_TERMINAL).value_or(false);
+
+} // namespace rocket::gtest
 
 // EOF

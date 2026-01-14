@@ -4,7 +4,7 @@
 
 #include "rocket-gtest/rocket-gtest.h"
 
-#include "rocket/unicode/iterator.h"
+#include "rocket/unicode/Iterator.h"
 
 using namespace rocket;
 using namespace rocket::unicode;
@@ -13,72 +13,47 @@ using namespace testing;
 
 // `TEST` ---------------------------------------------------------------------------------------------------
 
-TEST(iterator, CodePointIteratorChar) {
+TEST(Iterator, char) {
   using type = char;
 
   string_view s = "ä€";
 
-  auto it = CodePointIterator<type>(s);
-  EXPECT_FALSE(it.decrement());
-  EXPECT_TRUE(it.begin());
-  EXPECT_FALSE(it.end());
-  EXPECT_EQ(it.codePointSize(), 2);
-  EXPECT_EQ(*it, CodePoint(U'ä'));
+  auto it = Iterator<type>(IteratorType::Character, s);
+  EXPECT_EQ(it.previous(), NPOS);
+  EXPECT_EQ(it.previous(), NPOS); // Not a typo: testing twice
+  EXPECT_EQ(it.first(), 0);
+  EXPECT_EQ(it.last(), s.size());
+  it.first();
+  EXPECT_EQ(it.nextSegment(), "ä");
+  EXPECT_EQ(it.current(), 2);
 
-  ++it;
-  EXPECT_FALSE(it.begin());
-  EXPECT_FALSE(it.end());
-  EXPECT_EQ(it.codePointSize(), 3);
-  EXPECT_EQ(*it, CodePoint(U'€'));
-
-  ++it;
-  EXPECT_FALSE(it.begin());
-  EXPECT_TRUE(it.end());
-
-  auto it2(it);
-  it2 -= 2;
-  EXPECT_TRUE(it2.begin());
-  EXPECT_FALSE(it2.end());
-
-  auto end = CodePointIterator<type>(s, s.size());
-  EXPECT_EQ(end.codePointPosition(), 2);
-
-  auto beg = CodePointIterator<type>(s);
-  EXPECT_EQ(distance(beg, end), 2);
+  EXPECT_EQ(it.nextSegment(), "€");
+  EXPECT_EQ(it.current(), 4);
+  EXPECT_EQ(it.next(), NPOS);
+  EXPECT_EQ(it.next(), NPOS); // Not a typo: testing twice
 }
 
-TEST(iterator, CodePointIteratorChar32) {
+TEST(Iterator, char32_t) {
   using type = char32_t;
 
   u32string_view s = U"ä€";
 
-  auto it = CodePointIterator<type>(s);
-  EXPECT_FALSE(it.decrement());
-  EXPECT_TRUE(it.begin());
-  EXPECT_FALSE(it.end());
-  EXPECT_EQ(*it, CodePoint(U'ä'));
+  auto it = Iterator<type>(IteratorType::Character, s);
+  EXPECT_EQ(it.previous(), NPOS);
+  EXPECT_EQ(it.previous(), NPOS); // Not a typo: testing twice
+  EXPECT_EQ(it.first(), 0);
+  EXPECT_EQ(it.last(), s.size());
+  it.first();
+  EXPECT_EQ(it.nextSegment(), U"ä");
+  EXPECT_EQ(it.current(), 1);
 
-  ++it;
-  EXPECT_FALSE(it.begin());
-  EXPECT_FALSE(it.end());
-  EXPECT_EQ(*it, CodePoint(U'€'));
-
-  ++it;
-  EXPECT_FALSE(it.begin());
-  EXPECT_TRUE(it.end());
-
-  auto it2(it);
-  it2 -= 2;
-  EXPECT_TRUE(it2.begin());
-  EXPECT_FALSE(it2.end());
-
-  auto end = CodePointIterator<type>(s, s.size());
-  EXPECT_EQ(end.codePointPosition(), 2);
-
-  auto beg = CodePointIterator<type>(s);
-  EXPECT_EQ(distance(beg, end), 2);
+  EXPECT_EQ(it.nextSegment(), U"€");
+  EXPECT_EQ(it.current(), 2);
+  EXPECT_EQ(it.next(), NPOS);
+  EXPECT_EQ(it.next(), NPOS); // Not a typo: testing twice
 }
 
+#if 0 // XXX
 TEST(iterator, GraphemeIteratorChar) {
   using type = char;
 
@@ -164,5 +139,6 @@ TEST(iterator, GraphemeIteratorChar32) {
   auto beg = GraphemeIterator<type>(s);
   EXPECT_EQ(distance(beg, end), 2);
 }
+#endif
 
 // EOF

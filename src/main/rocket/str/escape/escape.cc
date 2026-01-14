@@ -6,7 +6,7 @@
 
 #include "rocket/InputFailure.h"
 #include "rocket/assert.h"
-#include "rocket/unicode/Char.h"
+#include "rocket/unicode/Character.h"
 #include "rocket/unicode/Iterator.h"
 
 #include <inttypes.h> // `SCNx32`
@@ -160,9 +160,9 @@ escapeRegexCodePoint(unicode::CodePoint cp, size_t& column) {
   return escapeCStringCodePointHex(cp, column);
 }
 
-unicode::Char<char>
+unicode::Character<char>
 getChar(unicode::Iterator<char>& iter) {
-  unicode::Char c(iter.nextSegment());
+  unicode::Character c(iter.nextSegment());
   if (c.empty()) {
     throw InputFailure(iter.current(), "Expected character, got EOI");
   }
@@ -172,7 +172,7 @@ getChar(unicode::Iterator<char>& iter) {
 void
 getChar(unicode::Iterator<char>& iter, char expected) {
   size_t pos = iter.current();
-  unicode::Char c(iter.nextSegment());
+  unicode::Character c(iter.nextSegment());
   if (c.empty()) {
     throw InputFailure(pos, fmt::format("Expected character {:?}, got EOI", expected));
   }
@@ -188,7 +188,7 @@ getHex(unicode::Iterator<char>& iter, size_t n) {
   string input;
   for (size_t i = 0; i < n; ++i) {
     auto pos = iter.current();
-    auto c = unicode::Char(iter.nextSegment());
+    auto c = unicode::Character(iter.nextSegment());
     if (c.empty()) {
       if (input.empty()) {
         // No more `Char`, no input at all
@@ -212,9 +212,9 @@ getHex(unicode::Iterator<char>& iter, size_t n) {
   return ret;
 }
 
-optional<unicode::Char<char>>
+optional<unicode::Character<char>>
 getOptionalChar(unicode::Iterator<char>& iter) {
-  unicode::Char c(iter.nextSegment());
+  unicode::Character c(iter.nextSegment());
   if (c.empty()) {
     return nullopt;
   }
@@ -246,13 +246,13 @@ escapeCString(string_view input, const CStringParams& params, Result* result) {
 
   // Loop through characters
 
-  auto iter = unicode::Iterator<char>(unicode::IteratorType::Char, input);
+  auto iter = unicode::Iterator<char>(unicode::IteratorType::Character, input);
   size_t column = 0;
   while (true) {
     // Obtain character
 
     auto current = iter.current();
-    auto c = unicode::Char(iter.nextSegment());
+    auto c = unicode::Character(iter.nextSegment());
     if (c.empty()) {
       // EOI
       break;
@@ -310,7 +310,7 @@ unescapeCString(string_view input, const CStringParams& params, Result* result) 
 
   // If needed, read quote
 
-  auto iter = unicode::Iterator<char>(unicode::IteratorType::Char, input);
+  auto iter = unicode::Iterator<char>(unicode::IteratorType::Character, input);
   if (params.quoted()) {
     getChar(iter, params.quote);
   }
@@ -344,7 +344,7 @@ unescapeCString(string_view input, const CStringParams& params, Result* result) 
 
         // Read another character following the backslash
 
-        unicode::Char c2 = getChar(iter);
+        unicode::Character c2 = getChar(iter);
         auto cp2 = c2.toCodePoint();
         if (not cp2) {
           throw InputFailure(pos, { pos, iter.current() }, "Invalid escape sequence");
@@ -420,15 +420,15 @@ escapeRegex(string_view input, Result* result) {
   }
   size_t to = 0;
 
-  // Loop through graphemes
+  // Loop through characters
 
-  auto iter = unicode::Iterator<char>(unicode::IteratorType::Char, input);
+  auto iter = unicode::Iterator<char>(unicode::IteratorType::Character, input);
   size_t column = 0;
   while (true) {
     // Obtain character
 
     auto current = iter.current();
-    auto c = unicode::Char(iter.nextSegment());
+    auto c = unicode::Character(iter.nextSegment());
     if (c.empty()) {
       // EOI
       break;
@@ -476,7 +476,7 @@ unescapeRegex(string_view input, Result* result) {
     result->positions.clear();
   }
 
-  auto iter = unicode::Iterator<char>(unicode::IteratorType::Char, input);
+  auto iter = unicode::Iterator<char>(unicode::IteratorType::Character, input);
   while (true) {
     // Read character
 
@@ -499,7 +499,7 @@ unescapeRegex(string_view input, Result* result) {
 
         // Read another character following the backslash
 
-        unicode::Char c2 = getChar(iter);
+        unicode::Character c2 = getChar(iter);
         auto cp2 = c2.toCodePoint();
         if (not cp2) {
           throw InputFailure(pos, { pos, iter.current() }, "Invalid escape sequence");

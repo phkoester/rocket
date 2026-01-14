@@ -7,6 +7,7 @@
 #pragma once
 
 #include "rocket/assert.h"
+#include "rocket/type-traits.h"
 
 #include <random>
 
@@ -35,7 +36,7 @@ gen() {
  * @param upper the upper bound
  * @return a random integer number in the closed interval @f$[lower,upper]@f$.
  */
-template<typename Gen, typename I> requires Integer<I>
+template<typename Gen, typename I> requires IsInteger<I>
 I
 random(Gen& gen, I lower, I upper) {
   std::uniform_int_distribution<I> distrib(lower, upper);

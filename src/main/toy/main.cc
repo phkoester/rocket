@@ -2,6 +2,7 @@
  * main.cc
  */
 
+#include "rocket/Cow.h"
 #include "rocket/Process.h"
 #include "rocket/cl/cl.h"
 #include "rocket/log/log.h"

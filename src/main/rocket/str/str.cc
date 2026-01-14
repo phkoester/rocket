@@ -4,7 +4,7 @@
 
 #include "str.h"
 
-#include "rocket/unicode/Char.h"
+#include "rocket/unicode/Character.h"
 #include "rocket/unicode/Iterator.h"
 
 using namespace std;
@@ -15,8 +15,9 @@ namespace rocket::str {
 
 string
 capitalize(string_view s) {
-  if (s.empty())
+  if (s.empty()) {
     return string();
+  }
 
   size_t pos = 0;
   auto cp = unicode::nextCodePoint(s, pos);
@@ -59,9 +60,9 @@ paragraphs(string_view s) {
   vector<string> par; // The current paragraph
   string word; // The current word
 
-  auto iter = unicode::Iterator<char>(unicode::IteratorType::Char, s);
+  auto iter = unicode::Iterator<char>(unicode::IteratorType::Character, s);
   while (true) {
-    auto c = unicode::Char(iter.nextSegment());
+    auto c = unicode::Character(iter.nextSegment());
     if (c.empty() || c.eol()) {
       // Handle EOI/EOL
       if (not word.empty()) {
@@ -78,7 +79,7 @@ paragraphs(string_view s) {
     }
 
     if (c.tab()) {
-      c = unicode::Char(" "sv);
+      c = unicode::Character(" "sv);
     }
 
     if (c.nbsp()) {
@@ -140,10 +141,10 @@ wrap(string_view s, size_t leftIndent, size_t width) {
 
     for (const auto& word : par) {
       size_t wordWidth = 0;
-      auto iter = unicode::Iterator<char>(unicode::IteratorType::Char, word);
+      auto iter = unicode::Iterator<char>(unicode::IteratorType::Character, word);
       auto chars = iter.nextSegments();
       for (const auto& c : chars) {
-        wordWidth += unicode::Char(c).width();
+        wordWidth += unicode::Character(c).width();
       }
       size_t newLineWidth = lineWidth + wordWidth + (lineWidth > 0 ? 1 : 0);
       if (lineWidth == 0 || newLineWidth < width) {

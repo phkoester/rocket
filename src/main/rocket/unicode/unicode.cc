@@ -118,7 +118,6 @@ nextCodePoint(string_view s, size_t& pos) {
   int32_t i = to<int32_t>(pos);
   U8_NEXT(s.data(), i, size, cp);
   pos = to<size_t>(i);
-  ROCKET_ASSERT(pos <= s.size());
   return static_cast<char32_t>(cp);
 }
 

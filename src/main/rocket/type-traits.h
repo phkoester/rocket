@@ -1,5 +1,5 @@
 /**
- * @file TypeTraits.h
+ * @file type-traits.h
  *
  * Template magic for types.
  */
@@ -177,19 +177,19 @@ static_assert(sizeof(Float<16>::Type) == 16);
 // Concepts -------------------------------------------------------------------------------------------------
 
 template<typename T>
-concept Character = std::is_same_v<PurgeType<T>, typename Char<sizeof(PurgeType<T>)>::Type>;
+concept IsChar = std::is_same_v<PurgeType<T>, typename Char<sizeof(PurgeType<T>)>::Type>;
 
 template<typename T>
-concept SignedInteger = std::is_same_v<PurgeType<T>, typename Int<sizeof(PurgeType<T>)>::Type>;
+concept IsInt = std::is_same_v<PurgeType<T>, typename Int<sizeof(PurgeType<T>)>::Type>;
 
 template<typename T>
-concept UnsignedInteger = std::is_same_v<PurgeType<T>, typename Uint<sizeof(PurgeType<T>)>::Type>;
+concept IsUint = std::is_same_v<PurgeType<T>, typename Uint<sizeof(PurgeType<T>)>::Type>;
 
 template<typename T>
-concept Integer = SignedInteger<T> || UnsignedInteger<T>;
+concept IsInteger = IsInt<T> || IsUint<T>;
 
 template<typename T>
-concept FloatingPoint = std::is_same_v<PurgeType<T>, typename Float<sizeof(PurgeType<T>)>::Type>;
+concept IsFloat = std::is_same_v<PurgeType<T>, typename Float<sizeof(PurgeType<T>)>::Type>;
 
 // `LargestType` --------------------------------------------------------------------------------------------
 
@@ -207,13 +207,13 @@ concept FloatingPoint = std::is_same_v<PurgeType<T>, typename Float<sizeof(Purge
 template <typename... Ts>
 struct LargestType;
 
-/// @spec{#rocket::LargestType, `T`}
+/// @spec{#rocket::LargestType<T>}
 template<typename T>
 struct LargestType<T> {
   using Type = T; ///< @type_alias
 };
 
-/// @spec{#rocket::LargestType, `T\, U\, Ts...`}
+/// @spec{#rocket::LargestType<T, U, Ts...>}
 template<typename T, typename U, typename... Ts>
 struct LargestType<T, U, Ts...> {
   using Type = typename LargestType<

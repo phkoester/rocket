@@ -83,7 +83,7 @@ template<typename T> using RightOpen = BoundTraits<T, std::optional<T>, false, '
 
 // `IntervalSymbols` ........................................................................................
 
-template<typename C> requires Character<C>
+template<typename C> requires IsChar<C>
 struct IntervalSymbols;
 
 template<>
