@@ -36,10 +36,10 @@ struct Cow {
     }
   }
 
-  /// @ ctor_copy
+  /// @ctor_copy
   Cow(const Cow& rhs) = delete;
 
-  /// @ ctor_move
+  /// @ctor_move
   Cow(Cow&& rhs) :
       modified_(rhs.modified_) {
     if (modified_) {
@@ -52,10 +52,10 @@ struct Cow {
     std::memset(&rhs, 0, sizeof(rhs));
   }
 
-  /// @ member_op_assign_copy
+  /// @member_op_asgmt_copy
   Cow& operator=(const Cow& rhs) = delete;
 
-  /// @ member_op_assign_move
+  /// @member_op_asgmt_move
   Cow& operator=(Cow&& rhs) {
     modified_ = rhs.modified_;
     if (modified_) {

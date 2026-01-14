@@ -19,7 +19,7 @@ namespace rocket::unicode {
  * A Unicode character, or a grapheme cluster, consisting of one or more code points.
  *
  * A string suitable for a `Char` can be obtained as a segment from a #rocket::unicode::Iterator with the
- * iterator type #rocket::unicode::IteratorType::Char.
+ * iterator type #rocket::unicode::IteratorType::Character.
  */
 template<typename C> requires IsChar<C>
 struct Character {
@@ -36,25 +36,35 @@ struct Character {
   /// @member_op_cast{`std::basic_string_view<C>`}
   constexpr operator std::basic_string_view<C>() const { return s_; }
 
+  /**
+   * Checks if the character is an ASCII character.
+   *
+   * @return `true` if the character is an ASCII character
+   */
   bool
   ascii() const {
     return s_.size() == 1 && static_cast<uint32_t>(s_[0]) < 0x80;
   }
 
   /**
-   * Returns `true` if the character is a CRLF.
+   * Checks if the character is a CR/LF.
    *
-   * @return `true` if the character is a CRLF
+   * @return `true` if the character is a CR/LF
    */
   bool
   crLf() const {
     return s_.size() == 2 && s_[0] == '\r' && s_[1] == '\n';
   }
 
+  /**
+   * Checks if the character is empty.
+   *
+   * @return `true` if the character is empty
+   */
   constexpr bool empty() const { return s_.empty(); }
 
   /**
-   * Returns `true` if the character is an EOL (end of line).
+   * Checks if the character is an end of line (EOL)
    *
    * @return `true` if the character is an EOL
    */
@@ -63,13 +73,19 @@ struct Character {
     return lf() || crLf();
   }
 
+  /**
+   * Checks if the character is the specified ASCII character.
+   *
+   * @param c the ASCII character to check
+   * @return `true` if the character is the specified ASCII character
+   */
   bool
   is(char c) const {
     return ascii() && s_[0] == c;
   }
 
   /**
-   * Returns `true` if the character is whitespace.
+   * Checks if the character is whitespace.
    *
    * @return `true` if the character is whitespace
    */
@@ -85,7 +101,7 @@ struct Character {
   }
 
   /**
-   * Returns `true` if the character is a hexadecimal digit.
+   * Checks if the character is a hexadecimal digit.
    *
    * @return `true` if the character is a hexadecimal digit
    */
@@ -95,7 +111,7 @@ struct Character {
   }
 
   /**
-   * Returns `true` if the character is a LF.
+   * Checks if the character is a LF.
    *
    * @return `true` if the character is a LF
    */
@@ -105,7 +121,7 @@ struct Character {
   }
 
   /**
-   * Returns `true` if the character is a no-break space
+   * Checks if the character is a no-break space
    *
    * @return `true` if the character is a no-break space
    */
@@ -122,10 +138,15 @@ struct Character {
     return pos == s_.size();
   }
 
+  /**
+   * Returns the size of the underlying string, in code units (`char` or `char32_t`)
+   *
+   * @return the size of the underlying string
+   */
   size_t size() const { return s_.size(); }
 
   /**
-   * Returns `true` if the character is a tab.
+   * Checks if the character is a tab.
    *
    * @return `true` if the character is a tab
    */
@@ -134,6 +155,11 @@ struct Character {
     return s_.size() == 1 && s_[0] == '\t';
   }
 
+  /**
+   * Tries to convert the character to a code point.
+   *
+   * @return a code point if the character consists of exctly one codepoint, null otherwise
+   */
   std::optional<CodePoint>
   toCodePoint() const {
     if (empty()) {

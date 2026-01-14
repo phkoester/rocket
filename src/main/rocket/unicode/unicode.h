@@ -48,6 +48,11 @@ struct CodePoint {
   /// @member_op_cast{`std::u32string`}
   inline explicit operator std::u32string() const { return { v_ }; }
 
+  /**
+   * Checks if the code point is an ASCII character.
+   *
+   * @return `true` if the code point is an ASCII character
+   */
   bool ascii() const { return v_ < 0x80; }
 
   /// @member_fn_hash

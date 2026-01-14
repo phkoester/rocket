@@ -503,12 +503,12 @@ writeImpl(nio::Sink& out, const T& v, const Tuple& refs, std::index_sequence<Ind
 // Functions ------------------------------------------------------------------------------------------------
 
 /**
- * An `eq` function for member references.
+ * `eq` function for member references.
  *
  * @param lhs the left-hand side
  * @param rhs the right-hand side
  * @param refs the references
- * @return true if @p lhs and @rhs equal as defined by `std::equal_to`
+ * @return true if @p lhs and @p rhs are equal as defined by `std::equal_to`
  */
 template<typename T, typename... Ref> requires (... && IsMemberRef<Ref>::value)
 inline bool
@@ -516,30 +516,65 @@ eq(const T& lhs, const T& rhs, const std::tuple<Ref...>& refs) {
   return internal::eqImpl(lhs, rhs, refs, std::make_index_sequence<sizeof...(Ref)>());
 }
 
+/**
+ * `ne` function for member references.
+ *
+ * @param lhs the left-hand side
+ * @param rhs the right-hand side
+ * @param refs the references
+ * @return true if @p lhs and @p rhs are not equal as defined by `std::not_equal_to`
+ */
 template<typename T, typename... Ref> requires (... && IsMemberRef<Ref>::value)
 inline bool
 ne(const T& lhs, const T& rhs, const std::tuple<Ref...>& refs) {
   return internal::neImpl(lhs, rhs, refs, std::make_index_sequence<sizeof...(Ref)>());
 }
 
+/**
+ * `le` function for member references.
+ *
+ * @param lhs the left-hand side
+ * @param rhs the right-hand side
+ * @param refs the references
+ * @return true if @p lhs is less than @p rhs as defined by `std::less`
+ */
 template<typename T, typename... Ref> requires (... && IsMemberRef<Ref>::value)
 inline bool
 lt(const T& lhs, const T& rhs, const std::tuple<Ref...>& refs) {
   return internal::ltImpl(lhs, rhs, refs, std::make_index_sequence<sizeof...(Ref)>());
 }
 
+/**
+ * `gt` function for member references.
+ *
+ * @param lhs the left-hand side
+ * @param rhs the right-hand side
+ * @param refs the references
+ * @return true if @p lhs is greater than @p rhs as defined by `std::greater`
+ */
 template<typename T, typename... Ref> requires (... && IsMemberRef<Ref>::value)
 inline bool
 gt(const T& lhs, const T& rhs, const std::tuple<Ref...>& refs) {
   return internal::gtImpl(lhs, rhs, refs, std::make_index_sequence<sizeof...(Ref)>());
 }
 
+/**
+ * `hash` function for member references.
+ *
+ * @param v the instance
+ * @param refs the references
+ * @return a hash value
+ */
 template<typename T, typename... Ref> requires (... && IsMemberRef<Ref>::value)
 inline size_t
 hash(const T& v, const std::tuple<Ref...>& refs) {
   return internal::hashImpl(v, refs);
 }
 
+/**
+ * @fn_write{`std::tuple<MemberRef...>`}
+ * @param refs the references
+ */
 template<typename T, typename... Ref> requires (... && IsMemberRef<Ref>::value)
 inline size_t
 write(nio::Sink& out, const T& v, const std::tuple<Ref...>& refs) {
