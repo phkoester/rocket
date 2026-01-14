@@ -82,7 +82,7 @@ locations(string_view input, const vector<Position>& positions, const LocationsP
       loc.lineRange.lower = beginLine;
     }
 
-    // Get next grapheme from source, if any
+    // Get next character from iterator, if any
     auto c = unicode::Char(iter.nextSegment());
     inputPos += c.size();
     if (c.empty() || c.eol()) {
@@ -208,7 +208,7 @@ printLocations(
     out.write('\n');
 
     // Print the ranges, the caret, and the caption. This is harder than it looks at first sight, because we
-    // need to consider C-string escaping, tabs, UTF-8, and grapheme widths---all at the same time
+    // need to consider C-string escaping, tabs, UTF-8, and `Char` widths---all at the same time
 
     // Prepare the indicators string. `indicators` is in "`Char`-width coordinates"
 
@@ -227,7 +227,7 @@ printLocations(
       ROCKET_EXPECT(leftIt != result.positions.left.end());
       pos = leftIt->second;
 
-      // 3. Translate escaped-line position to escaped-line grapheme position
+      // 3. Translate escaped-line position to escaped-line character position
       auto rightIt = escapedLinePositions.right.find(pos);
       ROCKET_EXPECT(rightIt != escapedLinePositions.right.end());
       pos = rightIt->second;

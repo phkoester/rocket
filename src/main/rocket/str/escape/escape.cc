@@ -9,6 +9,8 @@
 #include "rocket/unicode/Char.h"
 #include "rocket/unicode/Iterator.h"
 
+#include <inttypes.h> // `SCNx32`
+
 using namespace rocket;
 using namespace rocket::str;
 using namespace rocket::str::escape;
@@ -169,25 +171,44 @@ getChar(unicode::Iterator<char>& iter) {
 
 void
 getChar(unicode::Iterator<char>& iter, char expected) {
-  size_t current = iter.current();
+  size_t pos = iter.current();
   unicode::Char c(iter.nextSegment());
   if (c.empty()) {
-    throw InputFailure(current, fmt::format("Expected character {:?}, got EOI", expected));
+    throw InputFailure(pos, fmt::format("Expected character {:?}, got EOI", expected));
   }
-  auto cp = c.codePoint();
-  if (not cp || *cp != expected) {
-    throw InputFailure(current, fmt::format("Expected character {:?}, got {:?}", expected, c));
+  if (not c.is(expected)) {
+    throw InputFailure(pos, fmt::format("Expected character {:?}, got {:?}", expected, c));
   }
 }
 
-// XXX Hier weiter
-template<typename C> requires Character<C>
 uint32_t
-getHex(unicode::Iterator<C>& iter, size_t length) {
-  string ret;
-  for (size_t i = 0; i < length; ++i) {
-    ret.push_back(iter.nextSegment());
+getHex(unicode::Iterator<char>& iter, size_t n) {
+  size_t pos0 = iter.current();
+
+  string input;
+  for (size_t i = 0; i < n; ++i) {
+    auto pos = iter.current();
+    auto c = unicode::Char(iter.nextSegment());
+    if (c.empty()) {
+      if (input.empty()) {
+        // No more `Char`, no input at all
+        throw InputFailure(pos,
+            fmt::format("Expected {} hexadecimal digits, got EOI", n));
+      } else {
+        // No more `Char`, but some input
+        throw InputFailure(pos, { pos0, iter.current() },
+            fmt::format("Expected {} hexadecimal digits, got {:?}", n, input));
+      }
+    }
+    if (not c.isXdigit()) {
+      throw InputFailure(pos, { pos0, iter.current() },
+          fmt::format("Expected a hexadecimal digit, got {:?}", c));
+    }
+    input.append(c);
   }
+
+  uint32_t ret = 0;
+  std::sscanf(input.c_str(), "%" SCNx32, &ret);
   return ret;
 }
 
@@ -216,7 +237,7 @@ escapeCString(string_view input, const CStringParams& params, Result* result) {
   }
   size_t to = 0;
 
-  // If needed, print quote
+  // If needed, add quote
 
   if (params.quoted()) {
     ret.push_back(params.quote);
@@ -241,14 +262,14 @@ escapeCString(string_view input, const CStringParams& params, Result* result) {
       result->positions.insert({ current, to });
     }
 
-    if (auto cp = c.codePoint(); cp) {
+    if (auto cp = c.toCodePoint(); cp) {
       // Single-code-point character
 
       auto escaped = escapeCStringCodePoint(*cp, column, params);
       ret.append(escaped);
       to += escaped.size();
-    } else if (c.crlf()) {
-      // CRLF
+    } else if (c.crLf()) {
+      // CR/LF
       column += 4;
       ret.append("\\r\\n");
       to += 4;
@@ -268,7 +289,7 @@ escapeCString(string_view input, const CStringParams& params, Result* result) {
     result->positions.insert({ iter.current(), to });
   }
 
-  // If needed, print quote
+  // If needed, add quote
 
   if (params.quoted()) {
     ret.push_back(params.quote);
@@ -310,8 +331,8 @@ unescapeCString(string_view input, const CStringParams& params, Result* result) 
       return ret;
     }
 
-    if (auto cp1 = c1->codePoint(); cp1) {
-      // Single-code-point grapheme
+    if (auto cp1 = c1->toCodePoint(); cp1) {
+      // Single-code-point character
 
       if (params.quoted() && *cp1 == params.quote) {
         // Terminating quote: end of input
@@ -324,7 +345,7 @@ unescapeCString(string_view input, const CStringParams& params, Result* result) 
         // Read another character following the backslash
 
         unicode::Char c2 = getChar(iter);
-        auto cp2 = c2.codePoint();
+        auto cp2 = c2.toCodePoint();
         if (not cp2) {
           throw InputFailure(pos, { pos, iter.current() }, "Invalid escape sequence");
         }
@@ -384,7 +405,7 @@ unescapeCString(string_view input, const CStringParams& params, Result* result) 
         ret.append(static_cast<string>(*cp1));
       }
     } else {
-      // Multi-code-point grapheme: just add it
+      // Multi-code-point character: just add it
 
       ret.append(*c1);
     }
@@ -417,14 +438,14 @@ escapeRegex(string_view input, Result* result) {
       result->positions.insert({ current, to });
     }
 
-    if (auto cp = c.codePoint(); cp) {
+    if (auto cp = c.toCodePoint(); cp) {
       // Single-code-point character
 
       auto escaped = escapeRegexCodePoint(*cp, column);
       ret.append(escaped);
       to += escaped.size();
-    } else if (c.crlf()) {
-      // CRLF
+    } else if (c.crLf()) {
+      // CR/LF
       column += 4;
       ret.append("\\r\\n");
       to += 4;
@@ -450,41 +471,41 @@ escapeRegex(string_view input, Result* result) {
 string
 unescapeRegex(string_view input, Result* result) {
   string ret;
-  nio::StringSource in(input);
+
   if (result) {
     result->positions.clear();
   }
 
+  auto iter = unicode::Iterator<char>(unicode::IteratorType::Char, input);
   while (true) {
-    // Read grapheme
+    // Read character
 
-    size_t pos = in.tell();
-    auto gr1 = nio::getOptionalGrapheme(in);
+    size_t pos = iter.current();
+    auto c1 = getOptionalChar(iter);
     if (result) {
       result->positions.insert({ pos, ret.size() });
     }
-    if (not gr1) {
+    if (not c1) {
       // EOF
       return ret;
     }
 
-    if (gr1->codePoint()) {
-      // Single-code-point grapheme
+    if (auto cp1 = c1->toCodePoint(); cp1) {
+      // Single-code-point character
 
-      unicode::CodePoint cp1 = *gr1->codePoint();
-      if (cp1 == '\\') {
+      if (*cp1 == '\\') {
         // Backslash: this may either be a regular-expresssion-escaped character or a hexadecimal sequence
         // starting with "\\x" or "\\u"
 
-        // Read another grapheme following the backslash
+        // Read another character following the backslash
 
-        unicode::Grapheme gr2 = nio::getGrapheme(in);
-        if (not gr2.codePoint()) {
-          throw InputFailure(pos, { pos, in.tell() }, "Invalid escape sequence");
+        unicode::Char c2 = getChar(iter);
+        auto cp2 = c2.toCodePoint();
+        if (not cp2) {
+          throw InputFailure(pos, { pos, iter.current() }, "Invalid escape sequence");
         }
-        unicode::CodePoint cp2 = *gr2.codePoint();
 
-        switch (cp2) {
+        switch (*cp2) {
         case 't': // Horizontal tab = 9
           ret.push_back('\t');
           break;
@@ -514,31 +535,31 @@ unescapeRegex(string_view input, Result* result) {
         case '{': // Left brace = 123
         case '|': // Vertical bar = 124
         case '}': // Right brace = 123
-          ret.push_back(static_cast<char>(cp2));
+          ret.push_back(static_cast<char>(*cp2));
           break;
         case 'x': {
-          char32_t i = nio::getHex(in, 2);
+          char32_t i = getHex(iter, 2);
           ret.append(static_cast<string>(unicode::CodePoint(i)));
           break;
         }
         case 'u': {
-          char32_t i = nio::getHex(in, 4);
+          char32_t i = getHex(iter, 4);
           ret.append(static_cast<string>(unicode::CodePoint(i)));
           break;
         }
         default: {
-          throw InputFailure(pos, { pos, in.tell() }, "Invalid escape sequence");
+          throw InputFailure(pos, { pos, iter.current() }, "Invalid escape sequence");
         }
         }
       } else {
         // No backslash: just add the code point
 
-        ret.append(static_cast<string>(cp1));
+        ret.append(static_cast<string>(*cp1));
       }
     } else {
-      // Multi-code-point grapheme: just add it
+      // Multi-code-point character: just add it
 
-      ret.append(static_cast<string>(*gr1));
+      ret.append(*c1);
     }
   }
 }

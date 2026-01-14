@@ -204,6 +204,7 @@ std::string utf32To8(std::u32string_view s);
 
 namespace utf8 {
 
+// XXX dok pos < size
 CodePoint nextCodePoint(std::string_view s, size_t& pos);
 
 /**
@@ -230,6 +231,7 @@ validate(std::string_view s, UnorderedBimap<size_t, size_t>* positions = nullptr
 
 namespace utf32 {
 
+// XXX dok pos < size
 CodePoint nextCodePoint(std::u32string_view s, size_t& pos);
 
 /**

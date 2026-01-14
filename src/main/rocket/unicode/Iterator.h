@@ -10,6 +10,8 @@
 
 #include <unicode/brkiter.h>
 
+#include <algorithm> // `std::min`
+
 namespace rocket::unicode {
 
 // `IteratorType` -------------------------------------------------------------------------------------------
@@ -55,12 +57,12 @@ struct Iterator {
 
   size_t current() const { return usToInput_.left.at(iter_->current()); }
 
-  size_t first() const { auto v = iter_->first(); return usToInput_.left.at(v); }
+  size_t first() { auto v = iter_->first(); return usToInput_.left.at(v); }
 
-  size_t last() const { auto v = iter_->last(); return usToInput_.left.at(v); }
+  size_t last() { auto v = iter_->last(); return usToInput_.left.at(v); }
 
   size_t
-  next() const {
+  next() {
     auto pos = iter_->next();
     if (pos == icu::BreakIterator::DONE) {
       return NPOS;
@@ -69,7 +71,7 @@ struct Iterator {
   }
 
   std::basic_string_view<C>
-  nextSegment() const {
+  nextSegment()  {
     auto current = this->current();
     auto next = this->next();
     if (next == NPOS) {
@@ -79,7 +81,7 @@ struct Iterator {
   }
 
   std::vector<std::basic_string_view<C>>
-  nextSegments() const {
+  nextSegments() {
     std::vector<std::basic_string_view<C>> ret;
     for (auto seg = nextSegment(); not seg.empty(); seg = nextSegment()) {
       ret.push_back(seg);
@@ -88,7 +90,7 @@ struct Iterator {
   }
 
   size_t
-  previous() const {
+  previous() {
     auto pos = iter_->previous();
     if (pos == icu::BreakIterator::DONE) {
       return NPOS;
@@ -97,7 +99,7 @@ struct Iterator {
   }
 
   std::basic_string_view<C>
-  previousSegment() const {
+  previousSegment() {
     auto current = this->current();
     auto previous = this->previous();
     if (previous == NPOS) {
@@ -107,7 +109,7 @@ struct Iterator {
   }
 
   std::vector<std::basic_string_view<C>>
-  previousSegments() const {
+  previousSegments() {
     std::vector<std::basic_string_view<C>> ret;
     for (auto seg = previousSegment(); not seg.empty(); seg = previousSegment()) {
       ret.push_back(seg);
@@ -131,8 +133,8 @@ template<typename C> requires Character<C>
 std::basic_string<C>
 concat(const std::vector<std::basic_string_view<C>>& segments, size_t pos = 0, size_t n = NPOS) {
   std::basic_string<C> ret;
-  pos = min(pos, segments.size());
-  n = min(n, segments.size() - pos);
+  pos = std::min(pos, segments.size());
+  n = std::min(n, segments.size() - pos);
   for (size_t i = pos, end = pos + n; i < end; ++i) {
     ret.append(segments[i]);
   }

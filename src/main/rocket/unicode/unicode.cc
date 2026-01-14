@@ -5,6 +5,7 @@
 #include "unicode.h"
 
 #include "rocket/assert.h"
+#include "rocket/numeric.h"
 
 #include <unicode/uchar.h>
 #include <unicode/unistr.h>
@@ -109,6 +110,18 @@ utf32To8(u32string_view s) {
 
 namespace utf8 {
 
+CodePoint
+nextCodePoint(string_view s, size_t& pos) {
+  const auto size = s.size();
+  ROCKET_CHECK(pos, pos < size);
+  UChar32 cp;
+  int32_t i = to<int32_t>(pos);
+  U8_NEXT(s.data(), i, size, cp);
+  pos = to<size_t>(i);
+  ROCKET_ASSERT(pos <= s.size());
+  return static_cast<char32_t>(cp);
+}
+
 Cow<string_view, string>
 validate(string_view s, UnorderedBimap<size_t, size_t>* positions) {
   Cow<string_view, string> ret(s);
@@ -158,6 +171,13 @@ validate(string_view s, UnorderedBimap<size_t, size_t>* positions) {
 // UTF-32 ...................................................................................................
 
 namespace utf32 {
+
+CodePoint
+nextCodePoint(u32string_view s, size_t& pos) {
+  const auto size = s.size();
+  ROCKET_CHECK(pos, pos < size);
+  return s[pos++];
+}
 
 Cow<u32string_view, u32string>
 validate(u32string_view s, UnorderedBimap<size_t, size_t>* positions) {

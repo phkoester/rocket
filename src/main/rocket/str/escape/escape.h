@@ -50,8 +50,8 @@ struct Result {
   /**
    * Translated positions after escaping/unescaping.
    *
-   * For each grapheme in the input string and for end-of-input, its character offset is mapped to a
-   * character offset in the output string.
+   * For each character in the input string and for EOI, its `char` offset is mapped to a `char` offset in
+   * the output string.
    */
   UnorderedBimap<size_t, size_t> positions;
 };

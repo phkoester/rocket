@@ -20,7 +20,7 @@ main(int argc, char** argv) {
   cl::OptionGroup general("General control");
   cl::CommandLineParams params { .usages={ "[OPTION]..." }, .otherOutput=true };
   cl::CommandLine cl({
-    cl::Option::of(&general, "help", 'h', nullopt, "display this help text and exit", help)
+    cl::Option::of(&general, "help", unicode::Char("h"sv), nullopt, "display this help text and exit", help)
   }, params);
 
   try {

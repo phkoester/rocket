@@ -65,8 +65,8 @@ parseCommand(const vector<string>& args, nio::Sink& out = nio::stdout, nio::Sink
   };
 
   CommandLine cl({
-    Option::of(&general, "omit", 'o', nullopt, "omit what is not important", parseCommandOmit),
-    Option::of(&misc, "help", 'h', nullopt, "display this help text", parseCommandHelp)
+    Option::of(&general, "omit", unicode::Char("o"sv), nullopt, "omit what is not important", parseCommandOmit),
+    Option::of(&misc, "help", unicode::Char("h"sv), nullopt, "display this help text", parseCommandHelp)
   }, params);
 
   auto take = [](string_view arg) -> CommandLine::Took {
@@ -103,8 +103,8 @@ parseCommand(const vector<string>& args, nio::Sink& out = nio::stdout, nio::Sink
     };
 
     CommandLine listCl({
-      Option::of(&list, "help", 'h', nullopt, "display this help text", parseCommandListHelp),
-      Option::of(&list, "list", 'l', nullopt, "a list option that is good for nothing", parseCommandList)
+      Option::of(&list, "help", unicode::Char("h"sv), nullopt, "display this help text", parseCommandListHelp),
+      Option::of(&list, "list", unicode::Char("l"sv), nullopt, "a list option that is good for nothing", parseCommandList)
     }, listParams);
 
     try {
@@ -136,9 +136,9 @@ parseCommand(const vector<string>& args, nio::Sink& out = nio::stdout, nio::Sink
     };
 
     CommandLine showCl({
-      Option::of(&show, "help", 'h', nullopt, "display this help text", parseCommandShowHelp),
-      Option::of(&show, "show", 's', nullopt, "a show option that is good for nothing", parseCommandShow),
-      Option::of(&show, "test", 't', nullopt, "test something, or don't", parseCommandShowTest)
+      Option::of(&show, "help", unicode::Char("h"sv), nullopt, "display this help text", parseCommandShowHelp),
+      Option::of(&show, "show", unicode::Char("s"sv), nullopt, "a show option that is good for nothing", parseCommandShow),
+      Option::of(&show, "test", unicode::Char("t"sv), nullopt, "test something, or don't", parseCommandShowTest)
     }, showParams);
 
     try {

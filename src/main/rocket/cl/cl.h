@@ -74,7 +74,7 @@ struct Option {
    * @param group a pointer to an option group. May be null
    * @param name the name of the option. For example, if this is `"verbose"`, the option may be chosen via
    *     `--verbose` on the command line
-   * @param shortName an optional short name. For example, if this is <code>U'€'</code>, the option may be
+   * @param shortName an optional short name. For example, if this is <code>"€"</code>, the option may be
    *     chosen via `-€` on the command line
    * @param format if the option takes an argument, this parameter should briefly describe the format, e.g.
    *     `"FILE"`, `"NUM"` etc.

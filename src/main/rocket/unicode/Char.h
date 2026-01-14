@@ -9,8 +9,6 @@
 #include "rocket/format/format.h"
 #include "rocket/unicode/unicode.h"
 
-#include <algorithm>
-
 namespace rocket::unicode {
 
 // `Char` ---------------------------------------------------------------------------------------------------
@@ -33,22 +31,9 @@ struct Char {
   /// @member_op_cast{`std::basic_string_view<C>`}
   constexpr operator std::basic_string_view<C>() const { return s_; }
 
-  /**
-   * If this character consists of a single code point, returns it. Otherwise, returns null.
-   *
-   * @return the code point, or null if the character is empty or consists of multiple code points
-   */
-  std::optional<CodePoint>
-  codePoint() const {
-    if (empty()) {
-      return std::nullopt;
-    }
-    size_t pos = 0;
-    auto cp = nextCodePoint(s_, pos);
-    if (pos == s_.size()) {
-      return cp;
-    }
-    return std::nullopt;
+  bool
+  ascii() const {
+    return s_.size() == 1 && static_cast<uint32_t>(s_[0]) < 0x80;
   }
 
   /**
@@ -57,17 +42,8 @@ struct Char {
    * @return `true` if the character is a CRLF
    */
   bool
-  crlf() const {
-    size_t pos = 0;
-    auto cp = nextCodePoint(s_, pos);
-    if (cp != '\r') {
-      return false;
-    }
-    cp = nextCodePoint(s_, pos);
-    if (cp != '\n') {
-      return false;
-    }
-    return pos == s_.size();
+  crLf() const {
+    return s_.size() == 2 && s_[0] == '\r' && s_[1] == '\n';
   }
 
   constexpr bool empty() const { return s_.empty(); }
@@ -79,7 +55,12 @@ struct Char {
    */
   bool
   eol() const {
-    return lf() || crlf();
+    return lf() || crLf();
+  }
+
+  bool
+  is(char c) const {
+    return ascii() && s_[0] == c;
   }
 
   /**
@@ -99,18 +80,23 @@ struct Char {
   }
 
   /**
+   * Returns `true` if the character is a hexadecimal digit.
+   *
+   * @return `true` if the character is a hexadecimal digit
+   */
+  bool
+  isXdigit() const {
+    return s_.size() == 1 && std::isxdigit(s_[0]);
+  }
+
+  /**
    * Returns `true` if the character is a LF.
    *
    * @return `true` if the character is a LF
    */
   bool
   lf() const {
-    size_t pos = 0;
-    auto cp = nextCodePoint(s_, pos);
-    if (cp != '\n') {
-      return false;
-    }
-    return pos == s_.size();
+    return s_.size() == 1 && s_[0] == '\n';
   }
 
   /**
@@ -137,12 +123,17 @@ struct Char {
    */
   bool
   tab() const {
+    return s_.size() == 1 && s_[0] == '\t';
+  }
+
+  std::optional<CodePoint>
+  toCodePoint() const {
     size_t pos = 0;
     auto cp = nextCodePoint(s_, pos);
-    if (cp != '\t') {
-      return false;
+    if (pos == s_.size()) {
+      return CodePoint(cp);
     }
-    return pos == s_.size();
+    return std::nullopt;
   }
 
   /**
