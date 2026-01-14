@@ -199,7 +199,7 @@ operator<<(std::ostream& lhs, Character<C> rhs) {
   return lhs << static_cast<std::basic_string_view<C>>(rhs);
 }
 
-  /// @fn_format_as{#rocket::unicode::Character}
+/// @fn_format_as{#rocket::unicode::Character}
 template<typename C> requires IsChar<C>
 constexpr auto
 format_as(Character<C> v) {

@@ -86,6 +86,7 @@ TEST(escape, CString) {
 
   // Hex
   EXPECT_EQ(unescapeCString("\\x7f"), "\x7f");
+  EXPECT_EQ(unescapeCString("\\u20ac"), "€");
   EXPECT_EQ(unescapeCString("\\u20AC"), "€");
   EXPECT_EQ(unescapeCString("\\U0001f971"), "🥱"); // U+1F971 (Yawning Face)
 
@@ -148,9 +149,9 @@ TEST(escape, Regex) {
   Result result;
 
   {
-    string in = "\r\t\uffff()[a-z]";
+    string in = "\r\t\uFFFF()[a-z]";
     auto escaped = escapeRegex(in, &result);
-    EXPECT_EQ(escaped, "\\r\\t\\uffff\\(\\)\\[a-z\\]");
+    EXPECT_EQ(escaped, "\\r\\t\\uFFFF\\(\\)\\[a-z\\]");
     EXPECT_EQ(
         result.positions,
         positions({ { 0, 0 }, { 1, 2 }, { 2, 4 }, { 5, 10 }, { 6, 12 }, { 7, 14 }, { 8, 16 }, { 9, 17 }, { 10, 18 }, { 11, 19 }, { 12, 21 } }));

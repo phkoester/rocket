@@ -207,13 +207,13 @@ concept IsFloat = std::is_same_v<PurgeType<T>, typename Float<sizeof(PurgeType<T
 template <typename... Ts>
 struct LargestType;
 
-/// @spec{#rocket::LargestType<T>}
+/// @spec{#rocket::LargestType, T}
 template<typename T>
 struct LargestType<T> {
   using Type = T; ///< @type_alias
 };
 
-/// @spec{#rocket::LargestType<T, U, Ts...>}
+/// @spec{#rocket::LargestType, T U Ts...}
 template<typename T, typename U, typename... Ts>
 struct LargestType<T, U, Ts...> {
   using Type = typename LargestType<

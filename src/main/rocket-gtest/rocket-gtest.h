@@ -77,6 +77,7 @@ std::filesystem::path tempPath(const char* file);
 
 // Constants ------------------------------------------------------------------------------------------------
 
+/// Reflects the environment variable `ROCKET_TEST_TERMINAL`.
 extern const bool TEST_TERMINAL;
 
 } // namespace rocket::gtest

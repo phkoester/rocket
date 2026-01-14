@@ -130,8 +130,8 @@ TEST(reflect, MyStructIndex2Eq) {
   MyStruct m2(42, "rocket", false);
   MyStruct m3(43, "rocket", true);
   auto& index2 = MyStruct::index2();
-  EXPECT_EQ(eq(m1, index2, m2, index2), true);
-  EXPECT_EQ(eq(m1, index2, m3, index2), false);
+  EXPECT_EQ(eq(m1, m2, index2), true);
+  EXPECT_EQ(eq(m1, m3, index2), false);
 }
 
 TEST(reflect, MyStructIndex2Ne) {
@@ -139,8 +139,8 @@ TEST(reflect, MyStructIndex2Ne) {
   MyStruct m2(42, "rocket", false);
   MyStruct m3(43, "rocket", true);
   auto& index2 = MyStruct::index2();
-  EXPECT_EQ(ne(m1, index2, m2, index2), false);
-  EXPECT_EQ(ne(m1, index2, m3, index2), true);
+  EXPECT_EQ(ne(m1, m2, index2), false);
+  EXPECT_EQ(ne(m1, m3, index2), true);
 }
 
 TEST(reflect, MyStructIndex2Hash) {

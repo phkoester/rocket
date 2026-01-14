@@ -178,7 +178,8 @@ TEST(cl, parseOptBool) {
   bool flag;
 
   CommandLine cl( {
-    Option::of(nullptr, "flag", unicode::Character("€"sv), nullopt, nullopt, flag)
+    // 🧑‍🌾: U+1F9D1 (ADULT), U+200D (ZERO WIDTH JOINER), U+1F33E (EAR OF RICE)
+    Option::of(nullptr, "flag", unicode::Character("🧑‍🌾"sv), nullopt, nullopt, flag)
   });
 
   // Test no options
@@ -200,7 +201,7 @@ TEST(cl, parseOptBool) {
   // Test Unicode code point
   {
     flag = false;
-    auto args = parse(cl, { "a", "-€", "b", "c" });
+    auto args = parse(cl, { "a", "-🧑‍🌾", "b", "c" });
     EXPECT_EQ(args, (vector<string> { "a", "b", "c" }));
     EXPECT_TRUE(flag);
   }
@@ -224,7 +225,7 @@ TEST(cl, parseOptBool) {
   // Test assignment for flag option, by short name
   {
     flag = true;
-    auto args = parse(cl, { "a", "-€=0", "b", "c" });
+    auto args = parse(cl, { "a", "-🧑‍🌾=0", "b", "c" });
     EXPECT_EQ(args, (vector<string> { "a", "b", "c" }));
     EXPECT_FALSE(flag);
   }
@@ -233,10 +234,10 @@ TEST(cl, parseOptBool) {
   {
     flag = false;
     nio::StringSink buf;
-    auto args = parse(cl, { "a", "-€=hello", "b", "c" }, buf);
+    auto args = parse(cl, { "a", "-🧑‍🌾=hello", "b", "c" }, buf);
     EXPECT_EQ(args, vector<string>());
     EXPECT_FALSE(flag);
-    EXPECT_EQ(buf.str(), "test-rocket-cl: error: Option `-€` cannot take a value\n");
+    EXPECT_EQ(buf.str(), "test-rocket-cl: error: Option `-🧑‍🌾` cannot take a value\n");
   }
 }
 

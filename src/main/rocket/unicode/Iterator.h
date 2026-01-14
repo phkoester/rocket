@@ -39,8 +39,6 @@ struct Iterator {
    *
    * @param type the type of iterator
    * @param input the input string to iterate over. It must remain valid for the lifetime of the iterator
-   * @throw #rocket::InvalidArgument if @p input is invalid
-   * @throw #rocket::InvalidState if something goes wrong
    */
   Iterator(IteratorType type, std::basic_string_view<C> input) : Iterator(type, input, std::locale()) {}
 
@@ -50,8 +48,6 @@ struct Iterator {
    * @param type the type of iterator
    * @param input the input string to iterate over. It must remain valid for the lifetime of the iterator
    * @param loc the locale to use
-   * @throw #rocket::InvalidArgument if @p input or @p loc are invalid
-   * @throw #rocket::InvalidState if something goes wrong
    */
   Iterator(IteratorType type, std::basic_string_view<C> input, const std::locale& loc);
 

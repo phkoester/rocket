@@ -82,11 +82,11 @@ string
 escapeCStringCodePointHex(unicode::CodePoint cp, size_t& column) {
   string ret;
   if (cp > 0xffffU)
-    ret = fmt::format("\\U{:0>8x}", static_cast<uint32_t>(cp));
+    ret = fmt::format("\\U{:0>8X}", static_cast<uint32_t>(cp));
   else if (cp > 0x00ffU)
-    ret = fmt::format("\\u{:0>4x}", static_cast<uint32_t>(cp));
+    ret = fmt::format("\\u{:0>4X}", static_cast<uint32_t>(cp));
   else
-    ret = fmt::format("\\x{:0>2x}", static_cast<uint32_t>(cp));
+    ret = fmt::format("\\x{:0>2X}", static_cast<uint32_t>(cp));
   column += ret.size();
   return ret;
 }

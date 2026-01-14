@@ -111,7 +111,7 @@
           auto type = ::rocket::Type::of(v); \
           out = ::fmt::detail::write<C>(out, ::rocket::unicode::ConvertTo<C>().apply(type.name())); \
         } \
-        out = ::rocket::reflect::format<ns::cls, C>(v, ctx, debug_, ns::cls::_name()); \
+        out = ::rocket::reflect::internal::format<ns::cls, C>(v, ctx, debug_, ns::cls::_name()); \
         return out; \
       } \
       \
@@ -143,25 +143,25 @@
 #define ROCKET_REFLECT_MEMBERS_DECLARE_OP_EQ__(cls, name) \
     inline bool \
     operator==(const cls& lhs, const cls& rhs) { \
-      return ::rocket::reflect::eq(lhs, cls::name(), rhs, cls::name()); \
+      return ::rocket::reflect::eq(lhs, rhs, cls::name()); \
     }
 
 #define ROCKET_REFLECT_MEMBERS_DECLARE_OP_NE__(cls, name) \
     inline bool \
     operator!=(const cls& lhs, const cls& rhs) { \
-      return ::rocket::reflect::ne(lhs, cls::name(), rhs, cls::name()); \
+      return ::rocket::reflect::ne(lhs, rhs, cls::name()); \
     }
 
 #define ROCKET_REFLECT_MEMBERS_DECLARE_OP_LT__(cls, name) \
     inline bool \
     operator<(const cls& lhs, const cls& rhs) { \
-      return ::rocket::reflect::lt(lhs, cls::name(), rhs, cls::name()); \
+      return ::rocket::reflect::lt(lhs, rhs, cls::name()); \
     }
 
 #define ROCKET_REFLECT_MEMBERS_DECLARE_OP_GT__(cls, name) \
     inline bool \
     operator>(const cls& lhs, const cls& rhs) { \
-      return ::rocket::reflect::gt(lhs, cls::name(), rhs, cls::name()); \
+      return ::rocket::reflect::gt(lhs, rhs, cls::name()); \
     }
 
 #define ROCKET_REFLECT_MEMBERS_DECLARE_OP_OUTPUT__(cls) \
@@ -390,6 +390,13 @@ formatImpl(const T& v, FormatContext& ctx, bool debug, const Tuple& refs, std::i
   return detail::write<C>(out, static_cast<C>(')'));
 }
 
+template<typename T, typename C, typename FormatContext, typename... Ref> requires
+    (... && IsMemberRef<Ref>::value)
+constexpr FormatContext::iterator
+format(const T& v, FormatContext& ctx, bool debug, const std::tuple<Ref...>& refs) {
+  return internal::formatImpl<T, C>(v, ctx, debug, refs, std::make_index_sequence<sizeof...(Ref)>());
+}
+
 template<size_t Index, typename T, typename Tuple>
 constexpr auto&
 refGet(T& v, const Tuple& refs) noexcept {
@@ -402,37 +409,34 @@ template<typename T, typename Tuple, size_t... Index>
 bool
 eqImpl(
     const T& lhs,
-    const Tuple& lhsRefs,
     const T& rhs,
-    const Tuple& rhsRefs,
+    const Tuple& refs,
     std::index_sequence<Index...>) {
-  return (... && std::equal_to()(refGet<Index>(lhs, lhsRefs), refGet<Index>(rhs, rhsRefs)));
+  return (... && std::equal_to()(refGet<Index>(lhs, refs), refGet<Index>(rhs, refs)));
 }
 
 template<typename T, typename Tuple, size_t... Index>
 bool
 neImpl(
     const T& lhs,
-    const Tuple& lhsRefs,
     const T& rhs,
-    const Tuple& rhsRefs,
+    const Tuple& refs,
     std::index_sequence<Index...>) {
-  return (... || std::not_equal_to()(refGet<Index>(lhs, lhsRefs), refGet<Index>(rhs, rhsRefs)));
+  return (... || std::not_equal_to()(refGet<Index>(lhs, refs), refGet<Index>(rhs, refs)));
 }
 
 template<typename T, typename Tuple, size_t... Index>
 bool
 ltImpl(
     const T& lhs,
-    const Tuple& lhsRefs,
     const T& rhs,
-    const Tuple& rhsRefs,
+    const Tuple& refs,
     std::index_sequence<Index...> indices) {
   bool ret = false;
   auto _unused = (... ||
-      ((ret = std::less()(refGet<Index>(lhs, lhsRefs), refGet<Index>(rhs, rhsRefs))) == true ||
+      ((ret = std::less()(refGet<Index>(lhs, refs), refGet<Index>(rhs, refs))) == true ||
        ((Index + 1 < indices.size()) &&
-        std::less()(refGet<Index>(rhs, rhsRefs), refGet<Index>(lhs, lhsRefs)))));
+        std::less()(refGet<Index>(rhs, refs), refGet<Index>(lhs, refs)))));
   nop(_unused);
   return ret;
 }
@@ -441,15 +445,14 @@ template<typename T, typename Tuple, size_t... Index>
 bool
 gtImpl(
     const T& lhs,
-    const Tuple& lhsRefs,
     const T& rhs,
-    const Tuple& rhsRefs,
+    const Tuple& refs,
     std::index_sequence<Index...> indices) {
   bool ret = false;
   auto _unused = (... ||
-      ((ret = std::greater()(refGet<Index>(lhs, lhsRefs), refGet<Index>(rhs, rhsRefs))) == true ||
+      ((ret = std::greater()(refGet<Index>(lhs, refs), refGet<Index>(rhs, refs))) == true ||
        ((Index + 1 < indices.size()) &&
-        std::greater()(refGet<Index>(rhs, rhsRefs), refGet<Index>(lhs, lhsRefs)))));
+        std::greater()(refGet<Index>(rhs, refs), refGet<Index>(lhs, refs)))));
   nop(_unused);
   return ret;
 }
@@ -499,35 +502,36 @@ writeImpl(nio::Sink& out, const T& v, const Tuple& refs, std::index_sequence<Ind
 
 // Functions ------------------------------------------------------------------------------------------------
 
-template<typename T, typename C, typename FormatContext, typename... Ref> requires
-    (... && IsMemberRef<Ref>::value)
-constexpr FormatContext::iterator
-format(const T& v, FormatContext& ctx, bool debug, const std::tuple<Ref...>& refs) {
-  return internal::formatImpl<T, C>(v, ctx, debug, refs, std::make_index_sequence<sizeof...(Ref)>());
+/**
+ * An `eq` function for member references.
+ *
+ * @param lhs the left-hand side
+ * @param rhs the right-hand side
+ * @param refs the references
+ * @return true if @p lhs and @rhs equal as defined by `std::equal_to`
+ */
+template<typename T, typename... Ref> requires (... && IsMemberRef<Ref>::value)
+inline bool
+eq(const T& lhs, const T& rhs, const std::tuple<Ref...>& refs) {
+  return internal::eqImpl(lhs, rhs, refs, std::make_index_sequence<sizeof...(Ref)>());
 }
 
 template<typename T, typename... Ref> requires (... && IsMemberRef<Ref>::value)
 inline bool
-eq(const T& lhs, const std::tuple<Ref...>& lhsRefs, const T& rhs, const std::tuple<Ref...>& rhsRefs) {
-  return internal::eqImpl(lhs, lhsRefs, rhs, rhsRefs, std::make_index_sequence<sizeof...(Ref)>());
+ne(const T& lhs, const T& rhs, const std::tuple<Ref...>& refs) {
+  return internal::neImpl(lhs, rhs, refs, std::make_index_sequence<sizeof...(Ref)>());
 }
 
 template<typename T, typename... Ref> requires (... && IsMemberRef<Ref>::value)
 inline bool
-ne(const T& lhs, const std::tuple<Ref...>& lhsRefs, const T& rhs, const std::tuple<Ref...>& rhsRefs) {
-  return internal::neImpl(lhs, lhsRefs, rhs, rhsRefs, std::make_index_sequence<sizeof...(Ref)>());
+lt(const T& lhs, const T& rhs, const std::tuple<Ref...>& refs) {
+  return internal::ltImpl(lhs, rhs, refs, std::make_index_sequence<sizeof...(Ref)>());
 }
 
 template<typename T, typename... Ref> requires (... && IsMemberRef<Ref>::value)
 inline bool
-lt(const T& lhs, const std::tuple<Ref...>& lhsRefs, const T& rhs, const std::tuple<Ref...>& rhsRefs) {
-  return internal::ltImpl(lhs, lhsRefs, rhs, rhsRefs, std::make_index_sequence<sizeof...(Ref)>());
-}
-
-template<typename T, typename... Ref> requires (... && IsMemberRef<Ref>::value)
-inline bool
-gt(const T& lhs, const std::tuple<Ref...>& lhsRefs, const T& rhs, const std::tuple<Ref...>& rhsRefs) {
-  return internal::gtImpl(lhs, lhsRefs, rhs, rhsRefs, std::make_index_sequence<sizeof...(Ref)>());
+gt(const T& lhs, const T& rhs, const std::tuple<Ref...>& refs) {
+  return internal::gtImpl(lhs, rhs, refs, std::make_index_sequence<sizeof...(Ref)>());
 }
 
 template<typename T, typename... Ref> requires (... && IsMemberRef<Ref>::value)

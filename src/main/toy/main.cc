@@ -2,71 +2,42 @@
  * main.cc
  */
 
-#include "rocket/Cow.h"
 #include "rocket/Process.h"
 #include "rocket/cl/cl.h"
 #include "rocket/log/log.h"
-
-#include <iostream>
-#include <vector>
 
 using namespace rocket;
 using namespace std;
 
 ROCKET_LOG_DEFINE(toy);
 
-// Local functions ------------------------------------------------------------------------------------------
+// Variables -----------------------------------------------------------------------------------------------
 
-namespace {
+auto& out = nio::stdout;
 
-struct A {
-  int i = 3;
-  A() { cout << "A(), i=" << i << endl; }
-  ~A() { cout << "~A()" << endl; }
-};
+// Functions -----------------------------------------------------------------------------------------------
 
-struct B {
-  B() { cout << "B()" << endl; }
-  ~B() { cout << "~B()" << endl; }
-};
+extern const char* generated();
+
+void
+myExit() {
+  out.println("myExit");
+  // throw InvalidState("Oopsers!");
+}
+
+void
+myTerminate() {
+  out.println("myTerminate");
+}
 
 void
 toy() {
   ROCKET_LOG(toy);
 
   ROCKET_LOG_TRACE("Hey {}", "there");
-
-  string s = "Hello there";
-
-  Cow<string_view, string> cow(s);
-  cout << "cow=" << cow.get() << endl;
-  cow = "I changed my mind";
-  cout << "cow=" << cow.get() << endl;
-  cout << "cow.owned=" << cow.owned() << endl;
-
-  cout << "sizeof(A)=" << sizeof(A) << endl;
-  char a[sizeof(A)];
-  new(a) A();
-  reinterpret_cast<A*>(a)->~A();
 }
-
-} // namespace
 
 // `main` ---------------------------------------------------------------------------------------------------
-
-void
-myExit() {
-  cout << "myExit" << endl;
-  // throw InvalidState("Oopsers!");
-}
-
-void
-myTerminate() {
-  cout << "myTerminate" << endl;
-  // throw 7;
-}
-
-extern const char* generated();
 
 int
 main(int argc, char **argv) {
@@ -88,7 +59,6 @@ main(int argc, char **argv) {
   {
     ROCKET_LOG(toy);
     ROCKET_LOG_INFO("Hey {}", "there");
-    auto& out = nio::stdout;
     out.println("This is {}", process.name());
     out.println("{}", generated());
     out.println("args: {}", args);

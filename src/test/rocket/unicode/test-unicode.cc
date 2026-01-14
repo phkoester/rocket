@@ -186,19 +186,23 @@ TEST(unicode, utf8Validate) {
 // `rocket::unicode::utf32` ---------------------------------------------------------------------------------
 
 TEST(unicode, utf32Validate) {
+  UnorderedBimap<size_t, size_t> pos;
+
   {
     u32string_view sv = U"abc";
-    auto cow = utf32::validate(sv);
+    auto cow = utf32::validate(sv, &pos);
     EXPECT_FALSE(cow.modified());
     EXPECT_EQ(cow.get(), U"abc");
+    EXPECT_EQ(pos, positions({ { 0, 0 }, { 1, 1 }, { 2, 2 }, { 3, 3 } }));
   }
 
   {
     u32string s = { 'a', D800, 'b', MAX_PLUS_1 };
     u32string_view sv = s;
-    auto cow = utf32::validate(sv);
+    auto cow = utf32::validate(sv, &pos);
     EXPECT_TRUE(cow.modified());
     EXPECT_EQ(cow.get(), U"a�b�");
+    EXPECT_EQ(pos, positions({ { 0, 0 }, { 1, 1 }, { 2, 2 }, { 3, 3 }, { 4, 4 } }));
   }
 }
 
