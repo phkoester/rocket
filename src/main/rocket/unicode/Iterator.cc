@@ -55,7 +55,13 @@ Iterator<C>::Iterator(IteratorType type, basic_string_view<C> input, const local
     }
 
     // Verify the code points match
-    ROCKET_CHECK(input, inputCp == u16cp);
+    const char* msg;
+    if constexpr (is_same_v<C, char>) {
+      msg = "Invalid UTF-8 input";
+    } else {
+      msg = "Invalid UTF-32 input";
+    }
+    ROCKET_CHECK(input, inputCp == u16cp, "{}", msg);
   }
 
   // Add a mapping for the end of the input

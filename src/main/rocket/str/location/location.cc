@@ -60,18 +60,17 @@ locations(string_view input, const vector<Position>& positions, const LocationsP
   size_t line = 0, column = 0, beginLine = 0;
   string lineString;
 
-  vector<size_t> poi; // "Positions of interest" in the current line
+  vector<size_t> pois; // "Positions of interest" in the current line
   bool finish = false; // Finish on next line feed?
 
-  size_t inputPos = 0;
   unicode::Iterator<char> iter(unicode::IteratorType::Character, input);
   while (true) {
-    auto pos = inputPos;
+    auto pos = iter.current();
 
     // Did we reach a position of interest?
     auto it = locations.find(pos);
     if (it != locations.end()) {
-      poi.push_back(pos);
+      pois.push_back(pos);
       if (pos == maxPos) {
         finish = true;
       }
@@ -84,13 +83,12 @@ locations(string_view input, const vector<Position>& positions, const LocationsP
 
     // Get next character from iterator, if any
     auto c = unicode::Character(iter.nextSegment());
-    inputPos += c.size();
     if (c.empty() || c.eol()) {
-      // Handle EOF or EOL
+      // Handle EOI or EOL
 
       // Exit current line
-      for (const auto& p : poi) {
-        auto& loi = locations.find(p)->second; // "Location of interest"
+      for (const auto& poi : pois) {
+        auto& loi = locations.find(poi)->second; // "Location of interest"
         loi.lineRange.upper = pos;
         if (params.setLineString) {
           loi.lineString = lineString;
@@ -98,15 +96,16 @@ locations(string_view input, const vector<Position>& positions, const LocationsP
       }
 
       // Finish?
-      if (c.empty() == 0 || finish)
+      if (c.empty() || finish) {
         break;
+      }
 
       // Enter next line
       ++line;
       column = 0;
-      beginLine = inputPos;
+      beginLine = iter.current(); // XXX
       lineString.clear();
-      poi.clear();
+      pois.clear();
     } else if (c.tab() && params.tabSize) {
       // Handle tab
 

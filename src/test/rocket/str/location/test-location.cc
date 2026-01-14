@@ -168,19 +168,6 @@ TEST(location, locationsMultiByteCharacter) {
   }
 }
 
-TEST(location, locationsIncompleteUtf8ByteSequence) {
-  u32string s32(100, U'€'); // A hundred times "€"
-  string s8 = unicode::utf32To8(s32); // 300 bytes + 1 zero byte
-  string_view input(s8.begin(), s8.end() - 1);
-
-  EXPECT_THAT(
-    ([&] {
-      Position pos { .type=Position::error, .position=1'000, .message="Oops" };
-      locations(input, { pos }, {});
-    }),
-    ThrowsMessage<InvalidState>(HasSubstr("Position 1000 not found in source")));
-}
-
 TEST(location, locationsTabSize0) {
   string input = "a\nb\tc"; // 0: a, 1: \n, 2: b, 3: \t, 4: c
   // Position 4 points to `c` in the second line

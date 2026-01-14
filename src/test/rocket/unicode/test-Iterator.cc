@@ -4,6 +4,7 @@
 
 #include "rocket-gtest/rocket-gtest.h"
 
+#include "rocket/unicode/Character.h"
 #include "rocket/unicode/Iterator.h"
 
 using namespace rocket;
@@ -16,7 +17,7 @@ using namespace testing;
 TEST(Iterator, char) {
   using type = char;
 
-  string_view s = "ä€";
+  string_view s = "ä€"; // 2 + 3 bytes
 
   auto it = Iterator<type>(IteratorType::Character, s);
   EXPECT_EQ(it.previous(), NPOS);
@@ -28,12 +29,29 @@ TEST(Iterator, char) {
   EXPECT_EQ(it.current(), 2);
 
   EXPECT_EQ(it.nextSegment(), "€");
-  EXPECT_EQ(it.current(), 4);
+  EXPECT_EQ(it.current(), 5);
   EXPECT_EQ(it.next(), NPOS);
   EXPECT_EQ(it.next(), NPOS); // Not a typo: testing twice
 }
 
-TEST(Iterator, char32_t) {
+TEST(Iterator, charMultiCodePoint) {
+  using type = char;
+
+  string_view s = "🧑‍🌾\r\n👨‍👩‍👦"sv;
+  auto it = Iterator<type>(IteratorType::Character, s);
+  auto chars = it.nextSegments();
+  EXPECT_EQ(chars.size(), 3);
+  EXPECT_EQ(chars[0], "🧑‍🌾");
+  EXPECT_EQ(unicode::Character(chars[0]).countCodePoints(), 3);
+  EXPECT_EQ(chars[1], "\r\n");
+  EXPECT_TRUE(unicode::Character(chars[1]).crLf());
+  EXPECT_TRUE(unicode::Character(chars[1]).eol());
+  EXPECT_EQ(unicode::Character(chars[1]).countCodePoints(), 2);
+  EXPECT_EQ(chars[2], "👨‍👩‍👦");
+  EXPECT_EQ(unicode::Character(chars[2]).countCodePoints(), 5);
+}
+
+TEST(Iterator, char32) {
   using type = char32_t;
 
   u32string_view s = U"ä€";
@@ -53,92 +71,21 @@ TEST(Iterator, char32_t) {
   EXPECT_EQ(it.next(), NPOS); // Not a typo: testing twice
 }
 
-#if 0 // XXX
-TEST(iterator, GraphemeIteratorChar) {
-  using type = char;
-
-  // ☢️:  6 bytes, 2 code points
-  // 🧑‍🌾: 11 bytes, 3 code points
-  string_view s = "☢️🧑‍🌾";
-  EXPECT_EQ(s.size(), 17);
-  EXPECT_EQ(countCodePoints(s), 5);
-  EXPECT_EQ(countGraphemes(s), 2);
-
-  auto it = GraphemeIterator<type>(s);
-  EXPECT_TRUE(it.begin());
-  EXPECT_FALSE(it.end());
-  EXPECT_EQ(it.position(), 0);
-  EXPECT_EQ(it.graphemeSize(), 2);
-  EXPECT_EQ(*it, Grapheme("☢️"));
-
-  ++it;
-  EXPECT_FALSE(it.begin());
-  EXPECT_FALSE(it.end());
-  EXPECT_EQ(it.position(), 6);
-  EXPECT_EQ(it.graphemeSize(), 3);
-  EXPECT_EQ(*it, Grapheme("🧑‍🌾"));
-
-  ++it;
-  EXPECT_FALSE(it.begin());
-  EXPECT_TRUE(it.end());
-
-  auto it2(it);
-  EXPECT_EQ(it2.position(), 17);
-  --it2;
-  EXPECT_EQ(it2.position(), 6);
-  it2 -= 1;
-  EXPECT_TRUE(it2.begin());
-  EXPECT_FALSE(it2.end());
-
-  auto end = GraphemeIterator<type>(s, s.size());
-  EXPECT_EQ(end.graphemePosition(), 2);
-
-  auto beg = GraphemeIterator<type>(s);
-  EXPECT_EQ(distance(beg, end), 2);
-}
-
-TEST(iterator, GraphemeIteratorChar32) {
+TEST(Iterator, char32MultiCodePoint) {
   using type = char32_t;
 
-  // ☢️: 2 code points
-  // 🧑‍🌾: 3 code points
-  u32string_view s = U"☢️🧑‍🌾";
-  EXPECT_EQ(s.size(), 5);
-  EXPECT_EQ(countCodePoints(s), 5);
-  EXPECT_EQ(countGraphemes(s), 2);
-
-  auto it = GraphemeIterator<type>(s);
-  EXPECT_TRUE(it.begin());
-  EXPECT_FALSE(it.end());
-  EXPECT_EQ(it.position(), 0);
-  EXPECT_EQ(it.graphemeSize(), 2);
-  EXPECT_EQ(*it, Grapheme("☢️"));
-
-  ++it;
-  EXPECT_FALSE(it.begin());
-  EXPECT_FALSE(it.end());
-  EXPECT_EQ(it.position(), 2);
-  EXPECT_EQ(it.graphemeSize(), 3);
-  EXPECT_EQ(*it, Grapheme("🧑‍🌾"));
-
-  ++it;
-  EXPECT_FALSE(it.begin());
-  EXPECT_TRUE(it.end());
-
-  auto it2(it);
-  EXPECT_EQ(it2.position(), 5);
-  --it2;
-  EXPECT_EQ(it2.position(), 2);
-  it2 -= 1;
-  EXPECT_TRUE(it2.begin());
-  EXPECT_FALSE(it2.end());
-
-  auto end = GraphemeIterator<type>(s, s.size());
-  EXPECT_EQ(end.graphemePosition(), 2);
-
-  auto beg = GraphemeIterator<type>(s);
-  EXPECT_EQ(distance(beg, end), 2);
+  u32string_view s = U"🧑‍🌾\r\n👨‍👩‍👦";
+  auto it = Iterator<type>(IteratorType::Character, s);
+  auto chars = it.nextSegments();
+  EXPECT_EQ(chars.size(), 3);
+  EXPECT_EQ(chars[0], U"🧑‍🌾");
+  EXPECT_EQ(unicode::Character(chars[0]).countCodePoints(), 3);
+  EXPECT_EQ(chars[1], U"\r\n");
+  EXPECT_TRUE(unicode::Character(chars[1]).crLf());
+  EXPECT_TRUE(unicode::Character(chars[1]).eol());
+  EXPECT_EQ(unicode::Character(chars[1]).countCodePoints(), 2);
+  EXPECT_EQ(chars[2], U"👨‍👩‍👦");
+  EXPECT_EQ(unicode::Character(chars[2]).countCodePoints(), 5);
 }
-#endif
 
 // EOF
