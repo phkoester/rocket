@@ -103,8 +103,6 @@ protected:
  * Sink base class.
  */
 struct Sink : Io {
-  ~Sink() override {}
-
   /**
    * Flushes the sink.
    *
@@ -475,8 +473,6 @@ enum class SeekMode {
  * Source base class.
  */
 struct Source : Io {
-  ~Source() override {}
-
   /**
    * Reads all characters from a source into string.
    *

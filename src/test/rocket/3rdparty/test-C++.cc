@@ -6,7 +6,7 @@
 
 #include "rocket-gtest/rocket-gtest.h"
 
-#include "rocket-gtest/ChattyString.h"
+#include "rocket-gtest/TracingString.h"
 
 using namespace rocket;
 using namespace rocket::gtest;
@@ -72,38 +72,40 @@ protected:
     fooLvalue = 0;
     fooRvalue = 0;
 
-    ChattyString::reset();
+    TracingString::reset();
   }
 };
 
 bool Cxx::Member::dtorCalled = false;
 
 TEST_F(Cxx, assignLvalueToOptional) {
-  ostringstream os;
+  string trace;
   {
-    optional<ChattyString> dest;
-    ChattyString lvalue("a", os);
+    optional<TracingString> dest;
+    TracingString lvalue(trace, "a");
     dest = lvalue;
   }
-  EXPECT_EQ(os.str(),
-      "1.a: Ctor p\n"
-      "2.a: Copy ctor\n"
-      "1.a: Dtor\n"
-      "2.a: Dtor\n");
+  EXPECT_EQ(TracingString::NUM_INSTANCES, 0);
+  EXPECT_EQ(trace,
+      "1.ctorP: a\n"
+      "2.ctorCopy: a\n"
+      "1.dtor: a\n"
+      "2.dtor: a\n");
 }
 
 TEST_F(Cxx, assignLvalueToOptionalWithMove) {
-  ostringstream os;
+  string trace;
   {
-    optional<ChattyString> dest;
-    ChattyString lvalue("a", os);
+    optional<TracingString> dest;
+    TracingString lvalue(trace, "a");
     dest = std::move(lvalue);
   }
-  EXPECT_EQ(os.str(),
-      "1.a: Ctor p\n"
-      "2.a: Move ctor\n"
-      "1.invalid: Dtor\n"
-      "2.a: Dtor\n");
+  EXPECT_EQ(TracingString::NUM_INSTANCES, 0);
+  EXPECT_EQ(trace,
+      "1.ctorP: a\n"
+      "2.ctorMove: a\n"
+      "1.dtor: invalid\n"
+      "2.dtor: a\n");
 }
 
 TEST_F(Cxx, divideByZero_double) {
@@ -118,14 +120,15 @@ TEST_F(Cxx, divideByZero_double) {
 }
 
 TEST_F(Cxx, optionalEmplace) {
-  ostringstream os;
+  string trace;
   {
-    optional<ChattyString> dest;
-    dest.emplace("a", os);
+    optional<TracingString> dest;
+    dest.emplace(trace, "a");
   }
-  EXPECT_EQ(os.str(),
-      "1.a: Ctor p\n"
-      "1.a: Dtor\n");
+  EXPECT_EQ(TracingString::NUM_INSTANCES, 0);
+  EXPECT_EQ(trace,
+      "1.ctorP: a\n"
+      "1.dtor: a\n");
 }
 
 TEST_F(Cxx, utf8Identifier) {
@@ -148,42 +151,45 @@ TEST_F(Cxx, utf8StringLiteral) {
 }
 
 TEST_F(Cxx, vectorPushBackLvalue) {
-  ostringstream os;
+  string trace;
   {
-    vector<ChattyString> v;
-    ChattyString lvalue("a", os);
+    vector<TracingString> v;
+    TracingString lvalue(trace, "a");
     v.push_back(lvalue);
   }
-  EXPECT_EQ(os.str(),
-      "1.a: Ctor p\n"
-      "2.a: Copy ctor\n"
-      "1.a: Dtor\n"
-      "2.a: Dtor\n");
+  EXPECT_EQ(TracingString::NUM_INSTANCES, 0);
+  EXPECT_EQ(trace,
+      "1.ctorP: a\n"
+      "2.ctorCopy: a\n"
+      "1.dtor: a\n"
+      "2.dtor: a\n");
 }
 
 TEST_F(Cxx, vectorPushBackLvalueWithMove) {
-  ostringstream os;
+  string trace;
   {
-    vector<ChattyString> v;
-    ChattyString lvalue("a", os);
+    vector<TracingString> v;
+    TracingString lvalue(trace, "a");
     v.push_back(std::move(lvalue));
   }
-  EXPECT_EQ(os.str(),
-      "1.a: Ctor p\n"
-      "2.a: Move ctor\n"
-      "1.invalid: Dtor\n"
-      "2.a: Dtor\n");
+  EXPECT_EQ(TracingString::NUM_INSTANCES, 0);
+  EXPECT_EQ(trace,
+      "1.ctorP: a\n"
+      "2.ctorMove: a\n"
+      "1.dtor: invalid\n"
+      "2.dtor: a\n");
 }
 
 TEST_F(Cxx, vectorEmplaceBack) {
-  ostringstream os;
+  string trace;
   {
-    vector<ChattyString> v;
-    v.emplace_back("a", os);
+    vector<TracingString> v;
+    v.emplace_back(trace, "a");
   }
-  EXPECT_EQ(os.str(),
-      "1.a: Ctor p\n"
-      "1.a: Dtor\n");
+  EXPECT_EQ(TracingString::NUM_INSTANCES, 0);
+  EXPECT_EQ(trace,
+      "1.ctorP: a\n"
+      "1.dtor: a\n");
 }
 
 TEST_F(Cxx, forwardWithBar) {
