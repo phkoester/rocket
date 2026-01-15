@@ -82,8 +82,13 @@ locations(string_view input, const vector<Position>& positions, const LocationsP
     }
 
     // Get next character from iterator, if any
-    auto c = unicode::Character(iter.nextSegment());
-    if (c.empty() || c.eol()) {
+    auto seg = iter.nextSegment();
+    optional<unicode::Character<char>> c;
+    if (not seg.empty()) {
+      c = unicode::Character(seg);
+    }
+
+    if (seg.empty() || c->eol()) {
       // Handle EOI or EOL
 
       // Exit current line
@@ -96,7 +101,7 @@ locations(string_view input, const vector<Position>& positions, const LocationsP
       }
 
       // Finish?
-      if (c.empty() || finish) {
+      if (seg.empty() || finish) {
         break;
       }
 
@@ -106,7 +111,7 @@ locations(string_view input, const vector<Position>& positions, const LocationsP
       beginLine = iter.current();
       lineString.clear();
       pois.clear();
-    } else if (c.tab() && params.tabSize) {
+    } else if (c->tab() && params.tabSize) {
       // Handle tab
 
       size_t mod = column % *params.tabSize;
@@ -116,8 +121,8 @@ locations(string_view input, const vector<Position>& positions, const LocationsP
     } else {
       // Add the character
 
-      column += c.width();
-      lineString.append(c);
+      column += c->width();
+      lineString.append(*c);
     }
   }
 
@@ -243,7 +248,7 @@ printLocations(
 
     for (auto range : loc.ranges) {
       // Obtain the intersection between range and printed line
-      if (auto inter = range & loc.lineRange) {
+      if (auto inter = range & loc.lineRange; not inter.empty()) {
         // Translate intersection into `indicators` positions
         size_t lower = indicatorPos(inter.lower);
         size_t upper = indicatorPos(*inter.upper);

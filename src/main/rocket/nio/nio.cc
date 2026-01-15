@@ -585,9 +585,9 @@ BufferedSource::seek(Offset offset, SeekMode mode) {
 
   // Get the old position so we can restore it later
   Position oldTell = underlying_.tell();
-  if (oldTell == -1) {
+  if (oldTell == NPOS) {
     LOG(BufferedSource::seek, "Getting old position failed; invalidating buffer");
-    bufPos_ = -1;
+    bufPos_ = NPOS;
     pos_ = end_ = 0;
     return EIO;
   }
@@ -597,15 +597,15 @@ BufferedSource::seek(Offset offset, SeekMode mode) {
 
   // Get the new position se we can see if we have a buffer hit
   Position newTell = underlying_.tell();
-  if (newTell == -1) {
+  if (newTell == NPOS) {
     LOG(BufferedSource::seek, "Getting new position failed; invalidating buffer");
-    bufPos_ = -1;
+    bufPos_ = NPOS;
     pos_ = end_ = 0;
     return ret;
   }
 
   // Do we know at all where we are?
-  if (bufPos_ == -1) {
+  if (bufPos_ == NPOS) {
     LOG(BufferedSource::seek, "Buffer position is unknown; invalidating the buffer");
     bufPos_ = newTell;
     pos_ = end_ = 0;
@@ -630,8 +630,8 @@ BufferedSource::seek(Offset offset, SeekMode mode) {
 
 Io::Position
 BufferedSource::tell() {
-  if (bufPos_ == -1) {
-    return -1;
+  if (bufPos_ == NPOS) {
+    return NPOS;
   }
   return bufPos_ + pos_;
 }
@@ -738,7 +738,7 @@ FileSource::seek(Offset offset, SeekMode mode) {
 Io::Position
 FileSource::tell() {
   if (not checkOpen()) {
-    return -1;
+    return NPOS;
   }
 
   using ftell_t = decltype(std::ftell(file_));
@@ -747,7 +747,7 @@ FileSource::tell() {
   LOG(FileSource::tell, "ftell=" << ret << ", ferror=" << ferror(file_));
   if (ret == -1) {
     error_ = ferror(file_);
-    return -1;
+    return NPOS;
   }
   ROCKET_ASSERT(ret >= 0);
   // Convert nonnegative `long` to `Position`
@@ -786,7 +786,7 @@ NullSource::seek(Offset offset, SeekMode mode) {
 Io::Position
 NullSource::tell() {
   checkOpen();
-  return -1;
+  return NPOS;
 }
 
 // `StreamSource` -------------------------------------------------------------------------------------------
@@ -863,17 +863,15 @@ StreamSource::seek(Offset offset, SeekMode mode) {
 Io::Position
 StreamSource::tell() {
   if (not checkOpen()) {
-    return -1;
+    return NPOS;
   }
 
-  using tellg_t = decltype(is_.tellg());
-  // The return type is `std::fpos<__mbstate_t>`, whatever that means ...
-  tellg_t result = is_.tellg();
+  auto result = is_.tellg();
   LOG(StreamSource::tell, "tellg=" << result << ", bad=" << is_.bad() << ", fail=" << is_.fail() << ", eof=" << is_.eof());
   error_ = is_.rdstate();
 
-  if (result < 0 || result > numeric_limits<Position>::max()) {
-    return -1;
+  if (result < 0) {
+    return NPOS;
   }
   return static_cast<Position>(result);
 }
@@ -940,7 +938,7 @@ StringSource::seek(Offset offset, SeekMode mode) {
 Io::Position
 StringSource::tell() {
   if (not checkOpen()) {
-    return -1;
+    return NPOS;
   }
 
   return pos_;

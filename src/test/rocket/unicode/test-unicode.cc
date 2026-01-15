@@ -31,78 +31,74 @@ positions(initializer_list<pair<size_t, size_t>> list) {
 
 // `TEST` ---------------------------------------------------------------------------------------------------
 
-TEST(unicode, CodePoint) {
-  EXPECT_EQ(static_cast<uint32_t>(CodePoint('\x7f')), 127);
+TEST(unicode, CodePointCtorChar) {
+  EXPECT_EQ(static_cast<uint32_t>('\x7f'_cp), 127);
 
   EXPECT_THAT(
-      [&] { CodePoint('\x80'); },
+      [&] { '\x80'_cp; },
       ThrowsMessage<InvalidArgument>(HasSubstr("Parameter `v`: ")));
 }
 
 TEST(unicode, CodePointOpCasString) {
   using type = string;
 
-  EXPECT_EQ(static_cast<type>(CodePoint(U'\x41')), "A");
-  EXPECT_EQ(static_cast<type>(CodePoint(U'\xE4')), "ä");
-  EXPECT_EQ(static_cast<type>(CodePoint(U'\x20AC')), "€");
+  EXPECT_EQ(static_cast<type>('\x41'_cp), "A");
+  EXPECT_EQ(static_cast<type>(U'\xE4'_cp), "ä");
+  EXPECT_EQ(static_cast<type>(U'\x20AC'_cp), "€");
 }
 
 TEST(unicode, CodePointOpCastU32String) {
   using type = u32string;
 
-  EXPECT_EQ(static_cast<type>(CodePoint(U'\x41')), U"A");
-  EXPECT_EQ(static_cast<type>(CodePoint(U'\xE4')), U"ä");
-  EXPECT_EQ(static_cast<type>(CodePoint(U'\x20AC')), U"€");
+  EXPECT_EQ(static_cast<type>('\x41'_cp), U"A");
+  EXPECT_EQ(static_cast<type>(U'\xE4'_cp), U"ä");
+  EXPECT_EQ(static_cast<type>(U'\x20AC'_cp), U"€");
 }
 
 TEST(unicode, CodePointIsPrint) {
-  EXPECT_TRUE(CodePoint('a').isPrint());
-  EXPECT_FALSE(CodePoint(U'\uFFF0').isPrint());
-  EXPECT_FALSE(CodePoint(U'\uFFFF').isPrint());
+  EXPECT_TRUE('a'_cp.isPrint());
+  EXPECT_FALSE(U'\uFFF0'_cp.isPrint());
+  EXPECT_FALSE(U'\uFFFF'_cp.isPrint());
 }
 
 TEST(unicode, CodePointLower) {
-  using type = char32_t;
-
-  EXPECT_EQ(static_cast<type>(CodePoint(U'a').lower()), U'a');
-  EXPECT_EQ(static_cast<type>(CodePoint(U'Ä').lower()), U'ä');
-  EXPECT_EQ(static_cast<type>(CodePoint(U'É').lower()), U'é');
+  EXPECT_EQ('a'_cp.lower(), U'a');
+  EXPECT_EQ(U'Ä'_cp.lower(), U'ä');
+  EXPECT_EQ(U'É'_cp.lower(), U'é');
 }
 
 TEST(unicode, CodePointUpper) {
-  using type = char32_t;
-
-  EXPECT_EQ(static_cast<type>(CodePoint(U'A').upper()), U'A');
-  EXPECT_EQ(static_cast<type>(CodePoint(U'ä').upper()), U'Ä');
-  EXPECT_EQ(static_cast<type>(CodePoint(U'é').upper()), U'É');
+  EXPECT_EQ('A'_cp.upper(), U'A');
+  EXPECT_EQ(U'ä'_cp.upper(), U'Ä');
+  EXPECT_EQ(U'é'_cp.upper(), U'É');
 }
 
 TEST(unicode, CodePointWidth) {
-  EXPECT_EQ(CodePoint(U'\u0000').width(), 0); // NULL (0)
-  EXPECT_EQ(CodePoint(U'\u0001').width(), 0); // START OF HEADING (1)
-  EXPECT_EQ(CodePoint(U'\u001F').width(), 0); // INFORMATION SEPARATOR ONE (31)
-  EXPECT_EQ(CodePoint(U'\u0020').width(), 1); // SPACE (32)
-  EXPECT_EQ(CodePoint(U'\u007E').width(), 1); // TILDE (126)
-  EXPECT_EQ(CodePoint(U'\u007F').width(), 0); // DELETE (127)
-  EXPECT_EQ(CodePoint(U'\u0080').width(), 0); // PADDING CHARACTER (128)
-  EXPECT_EQ(CodePoint(U'\u009F').width(), 0); // APPLICATION PROGRAM COMMAND (159)
-  EXPECT_EQ(CodePoint(U'\u00A0').width(), 1); // NO-BREAK SPACE (160)
-  EXPECT_EQ(CodePoint(U'\u00AD').width(), 0); // SOFT HYPHEN (173)
-  EXPECT_EQ(CodePoint(U'\u0300').width(), 0); // COMBINING GRAVE ACCENT, Category Mn (768)
+  EXPECT_EQ(U'\u0000'_cp.width(), 0); // NULL (0)
+  EXPECT_EQ(U'\u0001'_cp.width(), 0); // START OF HEADING (1)
+  EXPECT_EQ(U'\u001F'_cp.width(), 0); // INFORMATION SEPARATOR ONE (31)
+  EXPECT_EQ(U'\u0020'_cp.width(), 1); // SPACE (32)
+  EXPECT_EQ(U'\u007E'_cp.width(), 1); // TILDE (126)
+  EXPECT_EQ(U'\u007F'_cp.width(), 0); // DELETE (127)
+  EXPECT_EQ(U'\u0080'_cp.width(), 0); // PADDING CHARACTER (128)
+  EXPECT_EQ(U'\u009F'_cp.width(), 0); // APPLICATION PROGRAM COMMAND (159)
+  EXPECT_EQ(U'\u00A0'_cp.width(), 1); // NO-BREAK SPACE (160)
+  EXPECT_EQ(U'\u00AD'_cp.width(), 0); // SOFT HYPHEN (173)
+  EXPECT_EQ(U'\u0300'_cp.width(), 0); // COMBINING GRAVE ACCENT, Category Mn (768)
 }
 
 TEST(unicode, CodePointFormat) {
-  EXPECT_EQ(fmt::format("{}", CodePoint(U'\u0000')), "U+0000");
-  EXPECT_EQ(fmt::format("{}", CodePoint(U'\u20AC')), "U+20AC");
-  EXPECT_EQ(fmt::format("{}", CodePoint(U'\u00FF')), "U+00FF");
-  EXPECT_EQ(fmt::format("{}", CodePoint(U'\U0001ABCD')), "U+1ABCD");
-  EXPECT_EQ(fmt::format("{}", CodePoint(U'\U0010FFFF')), "U+10FFFF");
+  EXPECT_EQ(fmt::format("{}", '\0'_cp), "U+0000");
+  EXPECT_EQ(fmt::format("{}", U'\u20AC'_cp), "U+20AC");
+  EXPECT_EQ(fmt::format("{}", U'\u00FF'_cp), "U+00FF");
+  EXPECT_EQ(fmt::format("{}", U'\U0001ABCD'_cp), "U+1ABCD");
+  EXPECT_EQ(fmt::format("{}", U'\U0010FFFF'_cp), "U+10FFFF");
 
-  EXPECT_EQ(fmt::format(U"{}", CodePoint(U'\u20AC')), U"U+20AC");
+  EXPECT_EQ(fmt::format(U"{}", U'\u20AC'_cp), U"U+20AC");
 }
 
 TEST(unicode, CodePointVectorFormat) {
-  auto cps = vector<CodePoint> { CodePoint(U'a'), CodePoint(U'b'), CodePoint(U'c') };
+  auto cps = vector<CodePoint> { 'a'_cp, 'b'_cp, 'c'_cp };
   EXPECT_EQ(fmt::format("{::}", cps), "[U+0061, U+0062, U+0063]");
   EXPECT_EQ(fmt::format("{::~>8}", cps), "[~~U+0061, ~~U+0062, ~~U+0063]");
   EXPECT_EQ(fmt::format("{:n:~>8}", cps), "~~U+0061, ~~U+0062, ~~U+0063");

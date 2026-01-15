@@ -49,7 +49,7 @@ struct Cow {
     } else {
       choice_.ptr = rhs.choice_.ptr;
     }
-    std::memset(&rhs, 0, sizeof(rhs));
+    std::memset(static_cast<void*>(&rhs), 0, sizeof(rhs));
   }
 
   /// @member_op_asgmt_copy
@@ -65,7 +65,7 @@ struct Cow {
     } else {
       choice_.ptr = rhs.choice_.ptr;
     }
-    std::memset(&rhs, 0, sizeof(rhs));
+    std::memset(static_cast<void*>(&rhs), 0, sizeof(rhs));
     return *this;
   }
 
@@ -129,7 +129,7 @@ struct Cow {
    *
    * This overload only exists when the types @p T and @p U are the same.
    *
-   * @return a const reference to the referenced or the owned object
+   * @return a const reference to either the referenced or the owned value
    */
   template<typename V = T> requires std::is_same_v<V, T> && std::is_same_v<T, U>
   const V&
@@ -143,7 +143,7 @@ struct Cow {
    *
    * This overload only exists when the types @p T and @p U are different.
    *
-   * @return a view to either the referenced or the owned object
+   * @return a view to either the referenced or the owned value
    */
   template<typename V = T> requires std::is_same_v<V, T> && (not std::is_same_v<T, U>)
   V
@@ -153,9 +153,9 @@ struct Cow {
   }
 
   /**
-   * Returns `true` if the `Cow` has been assigned an owned value.
+   * Checks if the `Cow` has been assigned an owned value.
    *
-   * @return `true` if the `Cow` has been assigned an owned value
+   * @return whether the `Cow` has been assigned an owned value
    */
   bool modified() const { return modified_; }
 
@@ -184,7 +184,7 @@ private:
 
   constexpr const T* viewPtr() const { return reinterpret_cast<const T*>(choice_.view); }
 
-  bool modified_;
+  bool modified_; ///< Whether there is an owned value
   union {
     const T* ptr; ///< A reference if #HAS_VIEW is `false`
     char view[sizeof(T)]; ///< A copyable view if #HAS_VIEW is `true`

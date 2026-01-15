@@ -132,6 +132,8 @@ Process::exit(int status) const {
   else {
     std::exit(status);
   }
+
+  // XXX ROCKET_TERMINATE_UNREACHABLE_CODE();
 }
 
 void

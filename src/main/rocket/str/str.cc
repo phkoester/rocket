@@ -7,6 +7,7 @@
 #include "rocket/unicode/Character.h"
 #include "rocket/unicode/Iterator.h"
 
+using namespace rocket::unicode;
 using namespace std;
 
 namespace rocket::str {
@@ -20,7 +21,7 @@ capitalize(string_view s) {
   }
 
   size_t pos = 0;
-  auto cp = unicode::nextCodePoint(s, pos);
+  auto cp = nextCodePoint(s, pos);
   string ret = static_cast<string>(cp.upper());
   ret.append(s.substr(pos));
   return ret;
@@ -31,15 +32,15 @@ capitalize(u32string_view s) {
   if (s.empty())
     return u32string();
   u32string ret(s);
-  ret[0] = unicode::CodePoint(s[0]).upper();
+  ret[0] = CodePoint(s[0]).upper();
   return ret;
 }
 
 string
 lower(string_view s) {
-  u32string localS = unicode::utf8To32(s);
+  u32string localS = utf8To32(s);
   lowerIn(localS);
-  return unicode::utf32To8(localS);
+  return utf32To8(localS);
 }
 
 u32string
@@ -51,7 +52,7 @@ lower(u32string_view s) {
 
 void
 lowerIn(u32string& s) {
-  transform(s.begin(), s.end(), s.begin(), [](char32_t c) { return unicode::CodePoint(c).lower(); });
+  transform(s.begin(), s.end(), s.begin(), [](char32_t c) { return CodePoint(c).lower(); });
 }
 
 vector<vector<string>>
@@ -60,11 +61,18 @@ paragraphs(string_view s) {
   vector<string> par; // The current paragraph
   string word; // The current word
 
-  auto iter = unicode::Iterator<char>(unicode::IteratorType::Character, s);
+  auto iter = Iterator<char>(IteratorType::Character, s);
   while (true) {
-    auto c = unicode::Character(iter.nextSegment());
-    if (c.empty() || c.eol()) {
-      // Handle EOI/EOL
+    // Get next character from iterator, if any
+    auto seg = iter.nextSegment();
+    optional<Character<char>> c;
+    if (not seg.empty()) {
+      c = Character(seg);
+    }
+
+    if (seg.empty() || c->eol()) {
+      // EOI/EOL
+
       if (not word.empty()) {
         par.push_back(word);
         word.clear();
@@ -72,24 +80,27 @@ paragraphs(string_view s) {
       pars.push_back(par);
       par.clear();
 
-      if (c.empty()) {
+      if (seg.empty()) {
+        // EOI
         break;
       }
+      // EOL
       continue;
     }
 
-    if (c.tab()) {
-      c = unicode::Character(" "sv);
+    // Replace tab by space
+    if (c->tab()) {
+      c = " "_c;
     }
 
-    if (c.nbsp()) {
+    if (c->nbsp()) {
       // Handle NO-BREAK SPACE
       if (not word.empty() && not str::endsWith<char>(word, " ")) {
         word.push_back(' ');
       }
-    } else if (not c.isWhitespace()) {
+    } else if (not c->isWhitespace()) {
       // Enter/continue word
-      word.append(c);
+      word.append(*c);
     } else {
       // End word, if any
       if (not word.empty()) {
@@ -104,9 +115,9 @@ paragraphs(string_view s) {
 
 string
 upper(string_view s) {
-  u32string localS = unicode::utf8To32(s);
+  u32string localS = utf8To32(s);
   upperIn(localS);
-  return unicode::utf32To8(localS);
+  return utf32To8(localS);
 }
 
 u32string
@@ -118,7 +129,7 @@ upper(u32string_view s) {
 
 void
 upperIn(u32string& s) {
-  transform(s.begin(), s.end(), s.begin(), [](char32_t c) { return unicode::CodePoint(c).upper(); });
+  transform(s.begin(), s.end(), s.begin(), [](char32_t c) { return CodePoint(c).upper(); });
 }
 
 string
@@ -141,10 +152,10 @@ wrap(string_view s, size_t leftIndent, size_t width) {
 
     for (const auto& word : par) {
       size_t wordWidth = 0;
-      auto iter = unicode::Iterator<char>(unicode::IteratorType::Character, word);
+      auto iter = Iterator<char>(IteratorType::Character, word);
       auto chars = iter.nextSegments();
       for (const auto& c : chars) {
-        wordWidth += unicode::Character(c).width();
+        wordWidth += Character(c).width();
       }
       size_t newLineWidth = lineWidth + wordWidth + (lineWidth > 0 ? 1 : 0);
       if (lineWidth == 0 || newLineWidth < width) {

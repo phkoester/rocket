@@ -34,9 +34,9 @@ struct CStringParams {
   std::optional<size_t> tabSize;
 
   /**
-    * Returns `true` if the escaped string is actually to be quoted.
+    * Checks if the escaped string is to be quoted.
     *
-    * @return `true` if the escaped string is actually to be quoted.
+    * @return whether the escaped string is to be quoted
     */
   inline bool quoted() const { return quote != '\0'; }
 };

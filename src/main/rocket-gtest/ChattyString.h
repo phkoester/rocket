@@ -2,6 +2,8 @@
  * @file ChattyString.h
  *
  * A test class with detailed output and statistics.
+ *
+ * Useful for testing/debugging copy and move semantics.
  */
 
 #pragma once
@@ -14,16 +16,21 @@ namespace rocket::gtest {
  * A test class with detailed output and statistics.
  *
  * Useful for testing/debugging copy and move semantics.
+ *
+ * @NotThreadSafe
  */
 struct ChattyString {
+  /// The number of currently existing instances.
+  static size_t NUM_INSTANCES;
+
   /**
    * Resets the ID counter. This may be called on test setup.
    */
   static void
   reset() {
-    idCounter_ = 0;
+    ID_COUNTER = 0;
   }
-  
+
   /// Counts how often the default constructor was called for this instance.
   size_t defaultCtor = 0;
   /// Counts how often the copy constructor was called for this instance.
@@ -47,7 +54,8 @@ struct ChattyString {
    */
   explicit ChattyString(std::ostream& os = std::cout) noexcept :
       os_(&os),
-      id_(++idCounter_) {
+      id_(++ID_COUNTER) {
+    ++NUM_INSTANCES;
     info("Default ctor");
     ++defaultCtor;
   }
@@ -56,7 +64,8 @@ struct ChattyString {
   ChattyString(const ChattyString& rhs) noexcept :
       v_(rhs.v_),
       os_(rhs.os_),
-      id_(++idCounter_) {
+      id_(++ID_COUNTER) {
+    ++NUM_INSTANCES;
     info("Copy ctor");
     ++copyCtor;
   }
@@ -65,9 +74,9 @@ struct ChattyString {
   ChattyString(ChattyString&& rhs) noexcept :
       v_(rhs.v_),
       os_(rhs.os_),
-      id_(++idCounter_) {
+      id_(++ID_COUNTER) {
+    ++NUM_INSTANCES;
     rhs.invalidate();
-
     info("Move ctor");
     ++moveCtor;
   }
@@ -81,13 +90,15 @@ struct ChattyString {
   explicit ChattyString(const char* p, std::ostream& os = std::cout) noexcept :
       v_(p),
       os_(&os),
-      id_(++idCounter_) {
+      id_(++ID_COUNTER) {
+    ++NUM_INSTANCES;
     info("Ctor p");
     ++ctorP;
   }
 
   /// @dtor
   ~ChattyString() noexcept {
+    --NUM_INSTANCES;
     info("Dtor");
     ++dtor;
   }
@@ -129,7 +140,7 @@ private:
 
   friend std::ostream& operator<<(std::ostream&, const ChattyString&);
 
-  static size_t idCounter_;
+  static size_t ID_COUNTER;
 
   std::string v_;
   std::ostream* os_;

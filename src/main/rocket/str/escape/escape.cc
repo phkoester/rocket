@@ -162,20 +162,21 @@ escapeRegexCodePoint(unicode::CodePoint cp, size_t& column) {
 
 unicode::Character<char>
 getChar(unicode::Iterator<char>& iter) {
-  unicode::Character c(iter.nextSegment());
-  if (c.empty()) {
+  auto seg = iter.nextSegment();
+  if (seg.empty()) {
     throw InputFailure(iter.current(), "Expected character, got EOI");
   }
-  return c;
+  return unicode::Character(seg);
 }
 
 void
 getChar(unicode::Iterator<char>& iter, char expected) {
   size_t pos = iter.current();
-  unicode::Character c(iter.nextSegment());
-  if (c.empty()) {
+  auto seg = iter.nextSegment();
+  if (seg.empty()) {
     throw InputFailure(pos, fmt::format("Expected character {:?}, got EOI", expected));
   }
+  unicode::Character c(seg);
   if (not c.is(expected)) {
     throw InputFailure(pos, fmt::format("Expected character {:?}, got {:?}", expected, c));
   }
@@ -188,18 +189,12 @@ getHex(unicode::Iterator<char>& iter, size_t n) {
   string input;
   for (size_t i = 0; i < n; ++i) {
     auto pos = iter.current();
-    auto c = unicode::Character(iter.nextSegment());
-    if (c.empty()) {
-      if (input.empty()) {
-        // No more `Char`, no input at all
-        throw InputFailure(pos,
-            fmt::format("Expected {} hexadecimal digits, got EOI", n));
-      } else {
-        // No more `Char`, but some input
-        throw InputFailure(pos, { pos0, iter.current() },
-            fmt::format("Expected {} hexadecimal digits, got {:?}", n, input));
-      }
+    auto seg = iter.nextSegment();
+    if (seg.empty()) {
+      throw InputFailure(pos, { pos0, iter.current() },
+          fmt::format("Expected {} hexadecimal digits, got EOI", n, input));
     }
+    unicode::Character c(seg);
     if (not c.isXdigit()) {
       throw InputFailure(pos, { pos0, iter.current() },
           fmt::format("Expected a hexadecimal digit, got {:?}", c));
@@ -214,11 +209,11 @@ getHex(unicode::Iterator<char>& iter, size_t n) {
 
 optional<unicode::Character<char>>
 getOptionalChar(unicode::Iterator<char>& iter) {
-  unicode::Character c(iter.nextSegment());
-  if (c.empty()) {
+  auto seg = iter.nextSegment();
+  if (seg.empty()) {
     return nullopt;
   }
-  return c;
+  return unicode::Character(seg);
 }
 
 } // namespace
@@ -252,11 +247,12 @@ escapeCString(string_view input, const CStringParams& params, Result* result) {
     // Obtain character
 
     auto current = iter.current();
-    auto c = unicode::Character(iter.nextSegment());
-    if (c.empty()) {
+    auto seg = iter.nextSegment();
+    if (seg.empty()) {
       // EOI
       break;
     }
+    auto c = unicode::Character(seg);
 
     if (result) {
       result->positions.insert({ current, to });
@@ -334,8 +330,8 @@ unescapeCString(string_view input, const CStringParams& params, Result* result) 
     if (auto cp1 = c1->toCodePoint(); cp1) {
       // Single-code-point character
 
-      if (params.quoted() && *cp1 == params.quote) {
-        // Terminating quote: end of input
+      if (params.quoted() && cp1->is(params.quote)) {
+        // Terminating quote: EOI
 
         return ret;
       } else if (*cp1 == '\\') {
@@ -428,11 +424,12 @@ escapeRegex(string_view input, Result* result) {
     // Obtain character
 
     auto current = iter.current();
-    auto c = unicode::Character(iter.nextSegment());
-    if (c.empty()) {
+    auto seg = iter.nextSegment();
+    if (seg.empty()) {
       // EOI
       break;
     }
+    auto c = unicode::Character(seg);
 
     if (result) {
       result->positions.insert({ current, to });

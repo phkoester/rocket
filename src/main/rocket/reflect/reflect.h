@@ -508,7 +508,7 @@ writeImpl(nio::Sink& out, const T& v, const Tuple& refs, std::index_sequence<Ind
  * @param lhs the left-hand side
  * @param rhs the right-hand side
  * @param refs the references
- * @return true if @p lhs and @p rhs are equal as defined by `std::equal_to`
+ * @return whether @p lhs is equal to @p rhs as defined by `std::equal_to`
  */
 template<typename T, typename... Ref> requires (... && IsMemberRef<Ref>::value)
 inline bool
@@ -522,7 +522,7 @@ eq(const T& lhs, const T& rhs, const std::tuple<Ref...>& refs) {
  * @param lhs the left-hand side
  * @param rhs the right-hand side
  * @param refs the references
- * @return true if @p lhs and @p rhs are not equal as defined by `std::not_equal_to`
+ * @return whether @p lhs is not equal to @p rhs as defined by `std::not_equal_to`
  */
 template<typename T, typename... Ref> requires (... && IsMemberRef<Ref>::value)
 inline bool
@@ -536,7 +536,7 @@ ne(const T& lhs, const T& rhs, const std::tuple<Ref...>& refs) {
  * @param lhs the left-hand side
  * @param rhs the right-hand side
  * @param refs the references
- * @return true if @p lhs is less than @p rhs as defined by `std::less`
+ * @return whether @p lhs is less than @p rhs as defined by `std::less`
  */
 template<typename T, typename... Ref> requires (... && IsMemberRef<Ref>::value)
 inline bool
@@ -550,7 +550,7 @@ lt(const T& lhs, const T& rhs, const std::tuple<Ref...>& refs) {
  * @param lhs the left-hand side
  * @param rhs the right-hand side
  * @param refs the references
- * @return true if @p lhs is greater than @p rhs as defined by `std::greater`
+ * @return whether @p lhs is greater than @p rhs as defined by `std::greater`
  */
 template<typename T, typename... Ref> requires (... && IsMemberRef<Ref>::value)
 inline bool

@@ -9,6 +9,7 @@
 
 using namespace rocket;
 using namespace rocket::cl;
+using namespace rocket::unicode;
 using namespace std;
 
 // Local functions ------------------------------------------------------------------------------------------
@@ -65,10 +66,8 @@ parseCommand(const vector<string>& args, nio::Sink& out = nio::stdout, nio::Sink
   };
 
   CommandLine cl({
-    Option::of(&general, "omit", unicode::Character("o"sv), nullopt,
-        "omit what is not important", parseCommandOmit),
-    Option::of(&misc, "help", unicode::Character("h"sv), nullopt,
-        "display this help text", parseCommandHelp)
+    Option::of(&general, "omit", "o"_c, nullopt, "omit what is not important", parseCommandOmit),
+    Option::of(&misc, "help", "h"_c, nullopt, "display this help text", parseCommandHelp)
   }, params);
 
   auto take = [](string_view arg) -> CommandLine::Took {
@@ -105,10 +104,8 @@ parseCommand(const vector<string>& args, nio::Sink& out = nio::stdout, nio::Sink
     };
 
     CommandLine listCl({
-      Option::of(&list, "help", unicode::Character("h"sv), nullopt,
-          "display this help text", parseCommandListHelp),
-      Option::of(&list, "list", unicode::Character("l"sv), nullopt,
-          "a list option that is good for nothing", parseCommandList)
+      Option::of(&list, "help", "h"_c, nullopt, "display this help text", parseCommandListHelp),
+      Option::of(&list, "list", "l"_c, nullopt, "a list option that is good for nothing", parseCommandList)
     }, listParams);
 
     try {
@@ -140,12 +137,9 @@ parseCommand(const vector<string>& args, nio::Sink& out = nio::stdout, nio::Sink
     };
 
     CommandLine showCl({
-      Option::of(&show, "help", unicode::Character("h"sv), nullopt,
-          "display this help text", parseCommandShowHelp),
-      Option::of(&show, "show", unicode::Character("s"sv), nullopt,
-          "a show option that is good for nothing", parseCommandShow),
-      Option::of(&show, "test", unicode::Character("t"sv), nullopt,
-          "test something, or don't", parseCommandShowTest)
+      Option::of(&show, "help", "h"_c, nullopt, "display this help text", parseCommandShowHelp),
+      Option::of(&show, "show", "s"_c, nullopt, "a show option that is good for nothing", parseCommandShow),
+      Option::of(&show, "test", "t"_c, nullopt, "test something, or don't", parseCommandShowTest)
     }, showParams);
 
     try {
@@ -179,7 +173,7 @@ TEST(cl, parseOptBool) {
 
   CommandLine cl( {
     // 🧑‍🌾: U+1F9D1 (ADULT), U+200D (ZERO WIDTH JOINER), U+1F33E (EAR OF RICE)
-    Option::of(nullptr, "flag", unicode::Character("🧑‍🌾"sv), nullopt, nullopt, flag)
+    Option::of(nullptr, "flag", "🧑‍🌾"_c, nullopt, nullopt, flag)
   });
 
   // Test no options
@@ -245,7 +239,7 @@ TEST(cl, parseOptInt) {
   int num;
 
   CommandLine cl( {
-    Option::of(nullptr, "num", unicode::Character("n"sv), "NUM", nullopt, num)
+    Option::of(nullptr, "num", "n"_c, "NUM", nullopt, num)
   });
 
   // Test mixed order
@@ -289,7 +283,7 @@ TEST(cl, parseOptEnum) {
   log::LogLevel level;
 
   CommandLine cl( {
-    Option::of(nullptr, "level", unicode::Character("l"sv), "LEVEL", nullopt, level)
+    Option::of(nullptr, "level", "l"_c, "LEVEL", nullopt, level)
   });
 
   // Test mixed order
@@ -315,7 +309,7 @@ TEST(cl, parseOptVector) {
   vector<string> names;
 
   CommandLine cl( {
-    Option::of(nullptr, "name", unicode::Character("n"sv), "NAME", nullopt, names)
+    Option::of(nullptr, "name", "n"_c, "NAME", nullopt, names)
   });
 
   // Test multiple values
@@ -333,9 +327,9 @@ TEST(cl, parseShortOptions) {
   string name;
 
   CommandLine cl( {
-    Option::of(nullptr, "ignore", unicode::Character("i"sv), nullopt, nullopt, ignore),
-    Option::of(nullptr, "verbose", unicode::Character("v"sv), nullopt, nullopt, verbose),
-    Option::of(nullptr, "name", unicode::Character("n"sv), "NAME", nullopt, name)
+    Option::of(nullptr, "ignore", "i"_c, nullopt, nullopt, ignore),
+    Option::of(nullptr, "verbose", "v"_c, nullopt, nullopt, verbose),
+    Option::of(nullptr, "name", "n"_c, "NAME", nullopt, name)
   });
 
   // Test without '='

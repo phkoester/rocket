@@ -17,12 +17,12 @@ namespace rocket::str {
 // Functions ------------------------------------------------------------------------------------------------
 
 /**
- * Returns `true` if string @p s begins with substring @p sub.
+ * Checks if string @p s begins with substring @p sub.
  *
  * @tparam C the character type
  * @param s a string
  * @param sub the substring to look for
- * @return `true` if @p s begins with substring @p sub
+ * @return whether @p s begins with substring @p sub
  */
 template<typename C> requires IsChar<C>
 bool
@@ -51,12 +51,12 @@ std::string capitalize(std::string_view s);
 std::u32string capitalize(std::u32string_view s);
 
 /**
- * Returns `true` if string @p s ends with substring @p sub.
+ * Checks if string @p s ends with substring @p sub.
  *
  * @tparam C the character type
  * @param s a string
  * @param sub the substring to look for
- * @return `true` if @p s ends with substring @p sub
+ * @return whether @p s ends with substring @p sub
  */
 template<typename C> requires IsChar<C>
 bool

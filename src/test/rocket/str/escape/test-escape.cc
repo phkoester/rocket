@@ -129,15 +129,15 @@ TEST(escape, CString) {
 
   EXPECT_THAT(
       [&] { unescapeCString("\\x"); },
-      throwsInputFailure(2, HasSubstr("Expected 2 hexadecimal digits, got EOI")));
+      throwsInputFailure(2, { 2,  2 }, HasSubstr("Expected 2 hexadecimal digits, got EOI")));
+
+  EXPECT_THAT(
+      [&] { unescapeCString("\\U123456"); },
+      throwsInputFailure(8, { 2, 8 }, HasSubstr("Expected 8 hexadecimal digits, got EOI")));
 
   EXPECT_THAT(
       [&] { unescapeCString("\\x0X"); },
       throwsInputFailure(3, { 2, 4 }, HasSubstr("Expected a hexadecimal digit, got \"X\"")));
-
-  EXPECT_THAT(
-      [&] { unescapeCString("\\U123456"); },
-      throwsInputFailure(8, { 2, 8 }, HasSubstr("Expected 8 hexadecimal digits, got \"123456\"")));
 
   // 🧑‍🌾: 11 bytes, 3 code points
   EXPECT_THAT(

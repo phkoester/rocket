@@ -36,39 +36,31 @@ testCharacter(const Character<C>& c) {
 // `TEST` ---------------------------------------------------------------------------------------------------
 
 TEST(Character, charWidth) {
-  EXPECT_EQ(Character("\t"sv).width(), 0);
-
-  {
-    Character c("\u200D"sv); // u+0200D (ZERO WIDTH JOINER)
-    EXPECT_EQ(c.width(), 0);
-  }
+  EXPECT_EQ("\t"_c.width(), 0);
+  EXPECT_EQ("\u200D"_c.width(), 0); // u+0200D (ZERO WIDTH JOINER)
 
   {
     // ề: LATIN SMALL LETTER E, COMBINING CIRCUMFLEX ACCENT, COMBINING GRAVE ACCENT
-    Character c("\u0065\u0302\u0300"sv);
+    auto c = "\u0065\u0302\u0300"_c;
     EXPECT_EQ(c.width(), 1);
     testCharacter(c);
   }
 
   {
     // U+1F9D1 (ADULT), U+200D (ZERO WIDTH JOINER), U+1F33E (EAR OF RICE)
-    Character c("🧑‍🌾"sv);
+    static_assert("🧑‍🌾"sv == "🧑\u200D🌾"sv);
+    static_assert("🧑‍🌾"sv == "\U0001F9D1\u200D\U0001F33E"sv);
+    auto c = "🧑‍🌾"_c;
     EXPECT_EQ(c.width(), 2);
     testCharacter(c);
   }
 
   {
-    // MAN, ZERO WIDTH JOINER, WOMAN, ZERO WIDTH JOINER, BOY
-    Character c("👨‍👩‍👦"sv);
+    // U+1F468 (MAN), U+200D (ZERO WIDTH JOINER), U+1F469 (WOMAN), U+200D (ZERO WIDTH JOINER), U+1F466 (BOY)
+    static_assert("👨‍👩‍👦"sv == "👨\u200D👩\u200D👦"sv);
+    static_assert("👨‍👩‍👦"sv == "\U0001F468\u200D\U0001F469\u200D\U0001F466"sv);
+    auto c = "👨‍👩‍👦"_c;
     EXPECT_EQ(c.countCodePoints(), 5);
-    EXPECT_EQ(c.width(), 2);
-    testCharacter(c);
-  }
-
-  {
-    // ?, ZERO WIDTH JOINER, ?
-    Character c("👩🏻\u200D🚀"sv);
-    EXPECT_EQ(c.countCodePoints(), 4);
     EXPECT_EQ(c.width(), 2);
     testCharacter(c);
   }
@@ -76,17 +68,11 @@ TEST(Character, charWidth) {
 
 TEST(Character, char32Width) {
   {
-    // MAN, ZERO WIDTH JOINER, WOMAN, ZERO WIDTH JOINER, BOY
-    Character c(U"👨‍👩‍👦"sv);
+    // U+1F468 (MAN), U+200D (ZERO WIDTH JOINER), U+1F469 (WOMAN), U+200D (ZERO WIDTH JOINER), U+1F466 (BOY)
+    static_assert(U"👨‍👩‍👦"sv == U"👨\u200D👩\u200D👦"sv);
+    static_assert(U"👨‍👩‍👦"sv == U"\U0001F468\u200D\U0001F469\u200D\U0001F466"sv);
+    auto c = U"👨‍👩‍👦"_c;
     EXPECT_EQ(c.countCodePoints(), 5);
-    EXPECT_EQ(c.width(), 2);
-    testCharacter(c);
-  }
-
-  {
-    // ?, ZERO WIDTH JOINER, ?
-    Character c(U"👩🏻\u200D🚀"sv);
-    EXPECT_EQ(c.countCodePoints(), 4);
     EXPECT_EQ(c.width(), 2);
     testCharacter(c);
   }

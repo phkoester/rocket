@@ -64,7 +64,7 @@ Iterator<C>::Iterator(IteratorType type, basic_string_view<C> input, const local
     ROCKET_CHECK(input, inputCp == u16cp, "{}", msg);
   }
 
-  // Add a mapping for the end of the input
+  // Add a mapping for EOI
   usToInput_.insert({ static_cast<size_t>(u16Index), inputIndex });
 
   // 3. Create the `BreakIterator`

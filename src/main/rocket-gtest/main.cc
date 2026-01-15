@@ -8,6 +8,7 @@
 #include <gmock/gmock.h>
 
 using namespace rocket;
+using namespace rocket::unicode;
 using namespace std;
 
 GTEST_API_ int
@@ -20,7 +21,7 @@ main(int argc, char** argv) {
   cl::OptionGroup general("General control");
   cl::CommandLineParams params { .usages={ "[OPTION]..." }, .otherOutput=true };
   cl::CommandLine cl({
-    cl::Option::of(&general, "help", unicode::Character("h"sv), nullopt, "display this help text and exit", help)
+    cl::Option::of(&general, "help", "h"_c, nullopt, "display this help text and exit", help)
   }, params);
 
   try {

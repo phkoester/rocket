@@ -6,10 +6,11 @@
 
 #pragma once
 
+#include "rocket/assert.h"
 #include "rocket/format/format.h"
 #include "rocket/unicode/unicode.h"
 
-#include <iostream>
+#include <ostream>
 
 namespace rocket::unicode {
 
@@ -20,18 +21,45 @@ namespace rocket::unicode {
  *
  * A string suitable for a `Char` can be obtained as a segment from a #rocket::unicode::Iterator with the
  * iterator type #rocket::unicode::IteratorType::Character.
+ *
+ * Think of this as a basic text-processing element that is superior to `char`, `char32_t`, or even
+ * #rocket::unicode::CodePoint. Use it whenever you can, and make your code Unicode-ready.
+ *
+ * @note Internally, this class is backed by a string view. It does not copy the string passed to its
+ *     constructor. Therefore, the string must remain valid for the lifetime of the character.
+ *
+ * @tparam C the character type
+ *
+ * ## Examples
+ *
+ * ```
+ * auto c1 = "a"_c; // ASCII character 'a'
+ * assert(c1.width() == 1);
+ * auto c2 = "€"_c; // U+20AC (EURO SIGN)
+ * assert(c2.width() == 1);
+ * auto c3 = "👨"_c; // U+1F468 (MAN)
+ * assert(c3.width() == 2);
+ * // U+1F468 (MAN), U+200D (ZERO WIDTH JOINER), U+1F469 (WOMAN), U+200D (ZERO WIDTH JOINER), U+1F466 (BOY)
+ * auto c4 = "👨‍👩‍👦"_c;
+ * assert(c4.countCodePoints() == 5);
+ * assert(c4.width() == 2);
+ * ```
  */
 template<typename C> requires IsChar<C>
 struct Character {
   /**
    * @ctor
    *
-   * This constructor does not check that @p s is a valid Unicode character. If the character is invalid,
-   * the behavior is undefined.
+   * This constructor does not check that @p s describes a valid Unicode character. If the character is
+   * invalid, its behavior is undefined. Use #rocket::unicode::Iterator to obtain segments suitable for
+   * `Character`.
    *
-   * @param s a string. The string must remain valid for the lifetime of the character.
+   * @param s a string. The string must not be empty and must remain valid for the lifetime of the character.
    */
-  explicit constexpr Character(std::basic_string_view<C> s) : s_(s) {}
+  explicit constexpr Character(std::basic_string_view<C> s) :
+      s_(s) {
+    ROCKET_CHECK(s, not s.empty());
+  }
 
   /// @member_op_cast{`std::basic_string_view<C>`}
   constexpr operator std::basic_string_view<C>() const { return s_; }
@@ -39,7 +67,7 @@ struct Character {
   /**
    * Checks if the character is an ASCII character.
    *
-   * @return `true` if the character is an ASCII character
+   * @return whether the character is an ASCII character
    */
   bool
   ascii() const {
@@ -47,9 +75,27 @@ struct Character {
   }
 
   /**
-   * Checks if the character is a CR/LF.
+   * Returns the number of code points in the character.
    *
-   * @return `true` if the character is a CR/LF
+   * @note You usually don't need this function. If you do, something might be wrong with your code. Using
+   *     this function on a segment returned by #rocket::unicode::Iterator is redundant and inefficient.
+   *
+   * @return the number of code points in the character
+   */
+  size_t
+  countCodePoints() const {
+    size_t ret = 0;
+    for (size_t pos = 0; pos < s_.size(); /* Empty */) {
+      nextCodePoint(s_, pos);
+      ++ret;
+    }
+    return ret;
+  }
+
+  /**
+   * Checks if the character is a carriage return / line feed sequence (CR/LF).
+   *
+   * @return whether the character is a carriage return / line feed sequence
    */
   bool
   crLf() const {
@@ -57,16 +103,9 @@ struct Character {
   }
 
   /**
-   * Checks if the character is empty.
-   *
-   * @return `true` if the character is empty
-   */
-  constexpr bool empty() const { return s_.empty(); }
-
-  /**
    * Checks if the character is an end of line (EOL)
    *
-   * @return `true` if the character is an EOL
+   * @return whether the character is an end of line
    */
   bool
   eol() const {
@@ -77,7 +116,7 @@ struct Character {
    * Checks if the character is the specified ASCII character.
    *
    * @param c the ASCII character to check
-   * @return `true` if the character is the specified ASCII character
+   * @return whether the character is the specified ASCII character
    */
   bool
   is(char c) const {
@@ -87,7 +126,7 @@ struct Character {
   /**
    * Checks if the character is whitespace.
    *
-   * @return `true` if the character is whitespace
+   * @return whether the character is whitespace
    */
   bool
   isWhitespace() const {
@@ -103,7 +142,7 @@ struct Character {
   /**
    * Checks if the character is a hexadecimal digit.
    *
-   * @return `true` if the character is a hexadecimal digit
+   * @return whether the character is a hexadecimal digit
    */
   bool
   isXdigit() const {
@@ -111,9 +150,9 @@ struct Character {
   }
 
   /**
-   * Checks if the character is a LF.
+   * Checks if the character is a line feed (LF).
    *
-   * @return `true` if the character is a LF
+   * @return whether the character is a line feed
    */
   bool
   lf() const {
@@ -123,13 +162,10 @@ struct Character {
   /**
    * Checks if the character is a no-break space
    *
-   * @return `true` if the character is a no-break space
+   * @return whether the character is a no-break space
    */
   bool
   nbsp() const {
-    if (empty()) {
-      return false;
-    }
     size_t pos = 0;
     auto cp = nextCodePoint(s_, pos);
     if (cp != U'\u00A0') { // U+00A0 (NO-BREAK SPACE)
@@ -148,7 +184,7 @@ struct Character {
   /**
    * Checks if the character is a tab.
    *
-   * @return `true` if the character is a tab
+   * @return whether the character is a tab
    */
   bool
   tab() const {
@@ -158,13 +194,10 @@ struct Character {
   /**
    * Tries to convert the character to a code point.
    *
-   * @return a code point if the character consists of exctly one codepoint, null otherwise
+   * @return a code point if the character consists of exactly one code point, null otherwise
    */
   std::optional<CodePoint>
   toCodePoint() const {
-    if (empty()) {
-      return std::nullopt;
-    }
     size_t pos = 0;
     auto cp = nextCodePoint(s_, pos);
     if (pos == s_.size()) {
@@ -198,25 +231,34 @@ struct Character {
     return ret;
   }
 
-ROCKET_TESTING_PRIVATE:
+private:
 
-  std::basic_string_view<C> s_; ///< The string.
-
-  /**
-   * Returns the number of code points in the character.
-   *
-   * @return the number of code points in the character
-   */
-  size_t
-  countCodePoints() const {
-    size_t ret = 0;
-    for (size_t pos = 0; pos < s_.size(); /* Empty */) {
-      nextCodePoint(s_, pos);
-      ++ret;
-    }
-    return ret;
-  }
+  std::basic_string_view<C> s_; ///< The string, not empty.
 };
+
+/**
+ * Literal operator for #rocket::unicode::Character.
+ *
+ * @param p the string literal
+ * @param len the length of the string literal
+ * @return a #rocket::unicode::Character
+ */
+constexpr inline Character<char>
+operator""_c(const char* p, size_t len) {
+  return Character(std::string_view(p, len));
+}
+
+/**
+ * Literal operator for #rocket::unicode::Character.
+ *
+ * @param p the string literal
+ * @param len the length of the string literal
+ * @return a #rocket::unicode::Character
+*/
+constexpr inline Character<char32_t>
+operator""_c(const char32_t* p, size_t len) {
+  return Character(std::u32string_view(p, len));
+}
 
 /// @op_output{#rocket::unicode::Character}
 template<typename C> requires IsChar<C>

@@ -51,7 +51,7 @@ struct CodePoint {
   /**
    * Checks if the code point is an ASCII character.
    *
-   * @return `true` if the code point is an ASCII character
+   * @return whether the code point is an ASCII character
    */
   bool ascii() const { return v_ < 0x80; }
 
@@ -59,16 +59,27 @@ struct CodePoint {
   inline size_t hash() const { return std::hash<char32_t>()(v_); }
 
   /**
-   * Returns `true` if this code point is printable.
+   * Checks if the code point is the specified ASCII character.
    *
-   * @return `true` if this code point is printable
+   * @param c the ASCII character to check
+   * @return whether the code point is the specified ASCII character
+   */
+  bool
+  is(char c) const {
+    return ascii() && v_ == static_cast<char32_t>(c);
+  }
+
+  /**
+   * Checks if the code point is printable.
+   *
+   * @return whether the code point is printable
    */
   bool isPrint() const;
 
   /**
-   * Returns `true` if this code point is whitespace.
+   * Checks if the code point is whitespace.
    *
-   * @return `true` if this code point is whitespace
+   * @return whether the code point is whitespace
    */
   bool isWhitespace() const;
 
@@ -87,12 +98,12 @@ struct CodePoint {
   CodePoint upper() const;
 
   /**
-   * Returns `true` if this code point is valid.
+   * Checks if the code point is valid.
    *
    * A code point is valid if it is less than or equal to U+10FFFF and not a surrogate in the range
    * U+D800–U+DFFF.
    *
-   * @return `true` if this code point is valid
+   * @return whether the code point is valid
    */
   bool valid() const { return v_ <= 0x10FFFFU && not (v_ >= 0xD800U && v_ <= 0xDFFFU); }
 
@@ -107,6 +118,28 @@ private:
 
   char32_t v_; ///< The code-point value.
 };
+
+/**
+ * Literal operator for #rocket::unicode::CodePoint.
+ *
+ * @param v the `char` value
+ * @return a #rocket::unicode::CodePoint
+ */
+constexpr CodePoint
+operator""_cp(char v) {
+  return CodePoint(v);
+}
+
+/**
+ * Literal operator for #rocket::unicode::CodePoint.
+ *
+ * @param v the `char32_t` value
+ * @return a #rocket::unicode::CodePoint
+ */
+constexpr CodePoint
+operator""_cp(char32_t v) {
+  return CodePoint(v) ;
+}
 
 /// @op_output{#rocket::unicode::CodePoint}
 std::ostream& operator<<(std::ostream& lhs, CodePoint rhs);
@@ -175,10 +208,10 @@ struct std::numeric_limits<rocket::unicode::CodePoint> {
    *
    * @return the minimum code-point value
    */
-  static consteval rocket::unicode::CodePoint min() { return U'\u0000'; }
+  static consteval rocket::unicode::CodePoint min() { return '\0'; }
 
   /**
-   * Returns the maximum code-point value, which is U+10FFFF.
+   * Returns the maximum code-point value, which is U+10FFFF, or decimal 1,114,111.
    *
    * @return the maximum code-point value
    */

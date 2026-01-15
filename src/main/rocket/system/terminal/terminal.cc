@@ -25,16 +25,20 @@ styleCode(int i, bool fg) {
   bool underline = (i & Style::underline) != 0;
   i &= ~(Style::bold | Style::high | Style::underline);
 
-  if (not fg)
+  if (not fg) {
     i += 10;
-  if (high)
+  }
+  if (high) {
     i += 60;
+  }
 
   string ret = fmt::format("\e[{}", i);
-  if (bold)
+  if (bold) {
     ret += ";1";
-  if (underline)
+  }
+  if (underline) {
     ret += ";4";
+  }
   ret.push_back('m');
   return ret;
 }
@@ -135,7 +139,7 @@ position(nio::Sink& out) {
 
   // Send the ANSI code requesting cursor position
 
-  Ansi ansi(true); // We know that the sink is connected to a terminal
+  Ansi ansi(true); // We know the sink is connected to a terminal
   string response = ansi.request(out, "\e[6n");
 
   // Parse the response

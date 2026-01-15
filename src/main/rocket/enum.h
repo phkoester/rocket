@@ -113,7 +113,9 @@
 #define ROCKET_ENUM_DEFINE_MAP_ELEM__(r, data, elem) { data::elem, BOOST_PP_STRINGIZE(elem) },
 
 #define ROCKET_ENUM_DEFINE_MAP__(type, name, seq) \
-    const auto name##Map__ = ::rocket::makeUnorderedBimap<type, ::std::string_view>({ \
+    /* gcc accepts no `auto` here*/ \
+    const ::rocket::UnorderedBimap<type, ::std::string_view> name##Map__ = \
+        ::rocket::makeUnorderedBimap<type, ::std::string_view>({ \
       BOOST_PP_SEQ_FOR_EACH(ROCKET_ENUM_DEFINE_MAP_ELEM__, type, seq) \
     })
 

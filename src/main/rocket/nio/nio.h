@@ -64,16 +64,16 @@ struct Io {
    virtual int error() const { return error_; }
 
   /**
-   * Returns if the instance is open and the error status is 0.
+   * Checks if the instance is open and the error status is 0.
    *
-   * @return `true` if the instance is open and the error status is 0
+   * @return whether the instance is open and the error status is 0
    */
    virtual bool good() const { return open_ && error_ == 0; }
 
    /**
-    * Returns if the instance is open.
+    * Checks if the instance is open.
     *
-    * @return `true` if the instance is open
+    * @return whether the instance is open
     */
    virtual bool open() const { return open_; }
 
@@ -88,9 +88,11 @@ protected:
   bool open_ = true; ///< Open flag.
 
   /**
-   * Checks if the instance is open. If not and if the error status is 0, sets the error status to `EBADF`.
+   * Checks if the instance is open.
    *
-   * @return `true` if the instance is open
+   * If it is not and if the error status is 0, sets the error status to `EBADF`.
+   *
+   * @return whether the instance is open
    */
   bool checkOpen();
 };
@@ -529,7 +531,7 @@ struct Source : Io {
   /**
    * Returns the current input position
    *
-   * @return the current input position, or -1 if that position cannot be determined
+   * @return the current input position, or #rocket::NPOS if that position cannot be determined
    */
   virtual Position tell() = 0;
 
@@ -578,7 +580,7 @@ ROCKET_TESTING_PRIVATE:
   Source& underlying_; ///< The underlying source.
   size_t size_; ///< The size of the buffer.
   std::unique_ptr<char[]> buf_; ///< The buffer.
-  size_t bufPos_ = -1; ///< Where buffer position 0 maps to in the underlying source.
+  size_t bufPos_ = NPOS; ///< Where buffer position 0 maps to in the underlying source.
   size_t pos_ = 0; ///< The current position in the buffer.
   /**
    * This is the actual input size of the buffer, which may be less than its allocated size.

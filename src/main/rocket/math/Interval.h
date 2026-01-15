@@ -298,13 +298,6 @@ struct IntervalImpl {
    */
   constexpr IntervalImpl(LowerType lower, UpperType upper) : lower(lower), upper(upper) {}
 
-  /**
-   * @member_op_cast{`bool`}
-   *
-   * @return `true` if this interval is nonempty
-   */
-  inline operator bool() const { return not empty(); }
-
   /// @member_op_eq
   bool
   operator==(const IntervalImpl& rhs) const {
@@ -320,7 +313,7 @@ struct IntervalImpl {
    * Tests if @p v is contained in this interval.
    *
    * @param v a value of type @p T
-   * @return `true` if @p v is contained in this interval
+   * @return whether @p v is contained in this interval
    */
   constexpr bool contains(T v) const { return Left::matches(lower, v) && Right::matches(upper, v); }
 
@@ -329,7 +322,7 @@ struct IntervalImpl {
    *
    * If either #lower or #upper are null, meaning "infinite", then this interval is nonempty.
    *
-   * @return `true` if this interval is empty
+   * @return whether this interval is empty
    */
   constexpr bool empty() const { return Traits::empty(lower, upper); }
 
