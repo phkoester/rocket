@@ -25,9 +25,9 @@ tiny logging facility here.
 // #define NIO_LOG // Use this to activate logging
 
 #ifdef NIO_LOG
-#define LOG(func, args) cout << "# " << #func << ": " << args << endl;
+#define LOG(args) cout << "# " << __FILE__ << ':' << __LINE__ << ' ' << __FUNCTION__ << ": " << args << endl;
 #else
-#define LOG(func, args)
+#define LOG(args)
 #endif
 
 namespace rocket::nio {
@@ -110,7 +110,7 @@ BufferedSink::flushBuffer() {
   ROCKET_ASSERT(buf_);
 
   if (pos_ > 0) {
-    LOG(BufferedSink::flushBuffer, "Flushing " << pos_ << " bytes from buffer to underlying")
+    LOG("Flushing " << pos_ << " bytes from buffer to underlying")
     underlying_.write(string_view(&buf_[0], pos_));
     pos_ = 0;
   }
@@ -132,7 +132,7 @@ BufferedSink::write(string_view in) {
     if (rest.size() <= available) {
       // Yes, it can: Store the rest in the buffer, exit loop
       memcpy(&buf_[pos_], rest.data(), rest.size());
-      LOG(BufferedSink::write, "Buffer can fulfill request, storing " << rest.size() << " bytes in buffer");
+      LOG("Buffer can fulfill request, storing " << rest.size() << " bytes in buffer");
       pos_ += rest.size();
       break;
     }
@@ -140,7 +140,7 @@ BufferedSink::write(string_view in) {
     // Fill and flush the buffer, continue in loop
 
     memcpy(&buf_[pos_], rest.data(), available);
-    LOG(BufferedSink::write, "Storing " << available << " available bytes in buffer");
+    LOG("Storing " << available << " available bytes in buffer");
     pos_ += available;
     rest = rest.substr(available);
     flushBuffer();
@@ -165,7 +165,7 @@ FileSink::FileSink(const string& path, const Params& params) :
     params_(params) {
   const char* modes = params.append ? "ab" : "wb"; // `b` is for non-Linux only
   file_ = std::fopen(path.c_str(), modes);
-  LOG(FileSink::ctor, "fopen=" << file_ << ", ferror=" << (file_ ? ferror(file_) : -1));
+  LOG("fopen=" << file_ << ", ferror=" << (file_ ? ferror(file_) : -1));
 
   if (file_ == nullptr) {
     error_ = ENOENT;
@@ -191,7 +191,7 @@ FileSink::close()
   flush();
 
   int ret = std::fclose(file_);
-  LOG(FileSink::ctor, "fclose=" << ret << ", ferror=" << ferror(file_));
+  LOG("fclose=" << ret << ", ferror=" << ferror(file_));
   if (ret != 0) {
     error_ = ferror(file_);
   }
@@ -216,7 +216,7 @@ FileSink::flush() {
   }
 
   int ret = std::fflush(file_);
-  LOG(FileSink::flush, "fflush=" << ret << ", ferror=" << ferror(file_));
+  LOG("fflush=" << ret << ", ferror=" << ferror(file_));
   if (ret != 0) {
     error_ = ferror(file_);
   }
@@ -230,7 +230,7 @@ FileSink::write(string_view in) {
   }
 
   size_t ret = std::fwrite(in.data(), 1, in.size(), file_);
-  LOG(FileSink::write, "fwrite=" << ret << ", in.size=" << in.size() << ", ferror=" << ferror(file_));
+  LOG("fwrite=" << ret << ", in.size=" << in.size() << ", ferror=" << ferror(file_));
   error_ = ferror(file_);
   ROCKET_ASSERT(ret == in.size() || error_ != 0);
   return ret;
@@ -349,7 +349,7 @@ StreamSink::flush() {
   }
 
   os_.flush();
-  LOG(StreamSink::flush, "bad=" << os_.bad() << ", fail=" << os_.fail() << ", eof=" << os_.eof());
+  LOG("bad=" << os_.bad() << ", fail=" << os_.fail() << ", eof=" << os_.eof());
   error_ = os_.rdstate();
   return error_;
 }
@@ -364,7 +364,7 @@ StreamSink::write(string_view in) {
   if (ret != in.size()) {
     os_.setstate(ios_base::badbit);
   }
-  LOG(StreamSink::write, "rdbuf()->sputn=" << ret << ", bad=" << os_.bad() << ", fail=" << os_.fail() << ", eof=" << os_.eof());
+  LOG("rdbuf()->sputn=" << ret << ", bad=" << os_.bad() << ", fail=" << os_.fail() << ", eof=" << os_.eof());
   error_ = os_.rdstate();
   return ret;
 }
@@ -543,7 +543,7 @@ BufferedSource::read(span<char> out) {
       bufPos_ = underlying_.tell();
       pos_ = 0;
       end_ = underlying_.read(span<char>(&buf_[0], size_));
-      LOG(BufferedSource::read, "Initialized buffer with " << end_ << " bytes from underlying; bufPos=" << bufPos_ << ", pos=" << pos_ << ", end=" << end_);
+      LOG("Initialized buffer with " << end_ << " bytes from underlying; bufPos=" << bufPos_ << ", pos=" << pos_ << ", end=" << end_);
       if (end_ == 0) {
         break;
       }
@@ -554,7 +554,7 @@ BufferedSource::read(span<char> out) {
     size_t available = end_ - pos_;
     if (rest.size() <= available) {
       // Yes, it can: Copy the buffer to the rest, exit loop
-      LOG(BufferedSource::read, "Buffer can fulfill request, copying " << rest.size() << " bytes from buffer");
+      LOG("Buffer can fulfill request, copying " << rest.size() << " bytes from buffer");
       memcpy(rest.data(), &buf_[pos_], rest.size());
       pos_ += rest.size();
       ret += rest.size();
@@ -563,7 +563,7 @@ BufferedSource::read(span<char> out) {
 
     // Flush the buffer, continue in loop
 
-    LOG(BufferedSource::read, "Copying " << available << " available bytes from buffer");
+    LOG("Copying " << available << " available bytes from buffer");
     memcpy(rest.data(), &buf_[pos_], available);
     pos_ += available;
     ret += available;
@@ -586,7 +586,7 @@ BufferedSource::seek(Offset offset, SeekMode mode) {
   // Get the old position so we can restore it later
   Position oldTell = underlying_.tell();
   if (oldTell == NPOS) {
-    LOG(BufferedSource::seek, "Getting old position failed; invalidating buffer");
+    LOG("Getting old position failed; invalidating buffer");
     bufPos_ = NPOS;
     pos_ = end_ = 0;
     return EIO;
@@ -598,7 +598,7 @@ BufferedSource::seek(Offset offset, SeekMode mode) {
   // Get the new position se we can see if we have a buffer hit
   Position newTell = underlying_.tell();
   if (newTell == NPOS) {
-    LOG(BufferedSource::seek, "Getting new position failed; invalidating buffer");
+    LOG("Getting new position failed; invalidating buffer");
     bufPos_ = NPOS;
     pos_ = end_ = 0;
     return ret;
@@ -606,7 +606,7 @@ BufferedSource::seek(Offset offset, SeekMode mode) {
 
   // Do we know at all where we are?
   if (bufPos_ == NPOS) {
-    LOG(BufferedSource::seek, "Buffer position is unknown; invalidating the buffer");
+    LOG("Buffer position is unknown; invalidating the buffer");
     bufPos_ = newTell;
     pos_ = end_ = 0;
     return ret;
@@ -616,13 +616,13 @@ BufferedSource::seek(Offset offset, SeekMode mode) {
   Position ourPos = newTell - bufPos_;
   if (ourPos <= end_) {
     // Yes, we do: Update our position and restore the underlying position
-    LOG(BufferedSource::seek, "Going from " << pos_ << " to " << ourPos);
+    LOG("Going from " << pos_ << " to " << ourPos);
     pos_ = ourPos;
     return underlying_.seek(oldTell);
   }
 
   // No buffer hit
-  LOG(BufferedSource::seek, "New position is beyond the buffer; invalidating buffer");
+  LOG("New position is beyond the buffer; invalidating buffer");
   bufPos_ = newTell;
   pos_ = end_ = 0;
   return ret;
@@ -651,7 +651,7 @@ FileSource::FileSource(const string& path, const Params& params) :
     file_(nullptr),
     params_(params) {
   file_ = std::fopen(path.c_str(), "rb");  // `b` is for non-Linux only
-  LOG(FileSource::ctor, "fopen=" << file_ << ", ferror=" << (file_ ? ferror(file_) : -1));
+  LOG("fopen=" << file_ << ", ferror=" << (file_ ? ferror(file_) : -1));
 
   if (file_ == nullptr) {
     error_ = ENOENT;
@@ -675,7 +675,7 @@ FileSource::close()
   }
 
   int ret = std::fclose(file_);
-  LOG(FileSource::close, "fclose=" << ret);
+  LOG("fclose=" << ret);
   error_ = ret;
   open_ = false;
   file_ = nullptr;
@@ -698,7 +698,7 @@ FileSource::read(span<char> out) {
   }
 
   size_t ret = std::fread(out.data(), 1, out.size(), file_);
-  LOG(FileSource::read, "fread=" << ret << ", out.size=" << out.size() << ", ferror=" << ferror(file_));
+  LOG("fread=" << ret << ", out.size=" << out.size() << ", ferror=" << ferror(file_));
   error_ = ferror(file_);
   return ret;
 }
@@ -728,7 +728,7 @@ FileSource::seek(Offset offset, SeekMode mode) {
   // The type of the `offset` parameter is `long`, se we can directly pass `offset`
   static_assert(is_same_v<Offset, long>);
   size_t ret = std::fseek(file_, offset, origin);
-  LOG(FileSource::seek, "fseek=" << ret << ", ferror=" << ferror(file_));
+  LOG("fseek=" << ret << ", ferror=" << ferror(file_));
   if (ret != 0) {
     error_ = ferror(file_);
   }
@@ -744,7 +744,7 @@ FileSource::tell() {
   using ftell_t = decltype(std::ftell(file_));
   static_assert(is_same_v<ftell_t, long>);
   long ret = std::ftell(file_);
-  LOG(FileSource::tell, "ftell=" << ret << ", ferror=" << ferror(file_));
+  LOG("ftell=" << ret << ", ferror=" << ferror(file_));
   if (ret == -1) {
     error_ = ferror(file_);
     return NPOS;
@@ -827,7 +827,7 @@ StreamSource::read(span<char> out) {
 
   // If less bytes than `out.size()` are read, `bad`, `fail`, and `eof` all remain `false``
   size_t ret = is_.readsome(out.data(), out.size());
-  LOG(StreamSource::read, "readsome=" << ret << ", out.size=" << out.size() << ", bad=" << is_.bad() << ", fail=" << is_.fail() << ", eof=" << is_.eof());
+  LOG("readsome=" << ret << ", out.size=" << out.size() << ", bad=" << is_.bad() << ", fail=" << is_.fail() << ", eof=" << is_.eof());
   error_ = is_.rdstate();
   return ret;
 }
@@ -867,7 +867,7 @@ StreamSource::tell() {
   }
 
   auto result = is_.tellg();
-  LOG(StreamSource::tell, "tellg=" << result << ", bad=" << is_.bad() << ", fail=" << is_.fail() << ", eof=" << is_.eof());
+  LOG("tellg=" << result << ", bad=" << is_.bad() << ", fail=" << is_.fail() << ", eof=" << is_.eof());
   error_ = is_.rdstate();
 
   if (result < 0) {

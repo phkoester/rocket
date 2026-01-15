@@ -125,7 +125,7 @@ private:
  * @param v the `char` value
  * @return a #rocket::unicode::CodePoint
  */
-constexpr CodePoint
+inline CodePoint
 operator""_cp(char v) {
   return CodePoint(v);
 }
@@ -208,7 +208,7 @@ struct std::numeric_limits<rocket::unicode::CodePoint> {
    *
    * @return the minimum code-point value
    */
-  static consteval rocket::unicode::CodePoint min() { return '\0'; }
+  static consteval rocket::unicode::CodePoint min() { return U'\u0000'; }
 
   /**
    * Returns the maximum code-point value, which is U+10FFFF, or decimal 1,114,111.

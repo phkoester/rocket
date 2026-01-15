@@ -18,25 +18,91 @@ namespace {
 
 void applyLog(optional<string_view>);
 
+void applyLogFmt(optional<string_view>);
+
 void applyLogOut(optional<string_view>);
 
-void logFlush(nio::Sink& out);
-
 void setLogLevel(string_view, string_view);
+
+// `TimePoint ` ---------------------------------------------------------------------------------------------
+
+using TimePoint = chrono::time_point<chrono::system_clock>;
 
 // `Entry` --------------------------------------------------------------------------------------------------
 
 struct Entry {
-  inline Entry(LogLevel* logId, const char* func, const string& begin) :
-      logId_(logId), func_(func), begin_(begin) {}
-
   LogLevel* logId_;
-  const char* func_;
+  const char* function_;
+  const char* prettyFunction_;
+  const char* file_;
+  int line_;
   optional<string> begin_; // Log entry from `logBegin` that is flushed only if necessary
+  const TimePoint time_;
+
+  inline Entry(
+      LogLevel* logId,
+      const char* function,
+      const char* prettyFunction,
+      const char* file,
+      int line,
+      const string& begin,
+      const TimePoint& time) :
+      logId_(logId),
+      function_(function),
+      prettyFunction_(prettyFunction),
+      file_(file),
+      line_(line),
+      begin_(begin),
+      time_(time) {}
 };
+
+// `Format` -------------------------------------------------------------------------------------------------
+
+struct Format {
+  bool measureTimes = true; // "t": `false`, "T": `true`
+  bool prettyFunction = true; // "f": `false`, "F": `true`
+  int secondsRez = 6; // "s3": 3 (milliseconds), "s6": 6 (microseconds), "s9": 9 (nanoseconds)
+  bool sourceLocation = true; // "l": `false`, "L": `true`
+  bool utc = false; // "z": `false`, "Z": `true`
+
+  Format(string_view s) {
+    apply(s);
+  }
+
+  void apply(string_view s) {
+    for (auto it = s.begin(), end = s.end(); it != end; ++it) {
+      switch (*it) {
+      case 'f': prettyFunction = false; break;
+      case 'F': prettyFunction = true; break;
+      case 'l': sourceLocation = false; break;
+      case 'L': sourceLocation = true; break;
+      case 's': {
+        if (it == end - 1) {
+          ROCKET_FAIL("Missing seconds resolution");
+        }
+        switch (*++it) {
+        case '3': secondsRez = 3; break;
+        case '6': secondsRez = 6; break;
+        case '9': secondsRez = 9; break;
+        default: ROCKET_FAIL("Invalid seconds resolution: {:?}", *it);
+        }
+        break;
+      }
+      case 't': measureTimes = false; break;
+      case 'T': measureTimes = true; break;
+      case 'z': utc = false; break;
+      case 'Z': utc = true; break;
+      default: ROCKET_FAIL("Invalid format specifier: {:?}", *it);
+      }
+    }
+  }
+};
+
+Format logFmt("");
 
 // `Out` ----------------------------------------------------------------------------------------------------
 
+/// @NotThreadSafe
 struct Out {
   inline nio::Sink& get() { return out_ ? *out_ : *fileOut_; }
 
@@ -61,7 +127,7 @@ private:
   unique_ptr<nio::FileSink> fileOut_; // A file sink
 };
 
-// Local variables1 -----------------------------------------------------------------------------------------
+// Local variables ------------------------------------------------------------------------------------------
 
 // Command-line-option group
 cl::OptionGroup clGroup { "Logging control" };
@@ -72,18 +138,22 @@ vector<cl::Option> clOpts {
     "set logging for identifier ID to level LEVEL. ID is a known log identifier or `all`. LEVEL is `none`, "
     "`error`, `warn`, `info`, `debug`, or `trace`. If LEVEL is not supplied, `info` is assumed",
     applyLog },
+  { &clGroup, "log-fmt", nullopt, true, "[f][F][l][L][s3][s6][s9][t][T][z][Z]",
+    "set log-format options",
+    applyLogFmt },
   { &clGroup, "log-out", nullopt, true, "OUT",
     "log to OUT. OUT is `stdout`, `stderr`, a file path, or a URL beginning with `file://`",
-    applyLogOut }
+    applyLogOut },
 };
+
+// The log mutex
+recursive_mutex logMutex;
 
 // Defined log IDs
 auto definedIds = rocket::makeUnorderedBimap<LogLevel*, string_view>();
-mutex definedIdsMutex;
 
 // The `Out` instance
 Out out;
-recursive_mutex outMutex;
 
 // The function stack
 thread_local vector<Entry> stack;
@@ -112,6 +182,20 @@ applyLog(optional<string_view> v) {
 }
 
 /**
+ * This function handles the `--log-fmt` option.
+ *
+ * @ThreadSafe
+ */
+void
+applyLogFmt(optional<string_view> v) {
+  ROCKET_EXPECT(v);
+
+  ROCKET_MUTEX_LOCK(logMutex);
+
+  logFmt.apply(*v);
+}
+
+/**
  * This function handles the `--log-out` option.
  *
  * @ThreadSafe
@@ -120,7 +204,7 @@ void
 applyLogOut(optional<string_view> v) {
   ROCKET_EXPECT(v);
 
-  ROCKET_MUTEX_LOCK(outMutex);
+  ROCKET_MUTEX_LOCK(logMutex);
 
   if (v == "stdout") {
     out.set(nio::stdout);
@@ -134,8 +218,40 @@ applyLogOut(optional<string_view> v) {
   }
 }
 
+/// @NotThreadSafe
+string
+formatTimePoint(const TimePoint& tp) {
+  if (logFmt.secondsRez == 3) {
+    chrono::time_point ctp = time_point_cast<chrono::milliseconds>(tp);
+    if (logFmt.utc) {
+      return std::format("{:%FT%TZ} ", ctp);
+    } else {
+      chrono::zoned_time zt { chrono::current_zone(), ctp };
+      return std::format("{:%FT%T%Ez} ", zt);
+    }
+  } else if (logFmt.secondsRez == 6) {
+    chrono::time_point ctp = time_point_cast<chrono::microseconds>(tp);
+    if (logFmt.utc) {
+      return std::format("{:%FT%TZ} ", ctp);
+    } else {
+      chrono::zoned_time zt { chrono::current_zone(), ctp };
+      return std::format("{:%FT%T%Ez} ", zt);
+    }
+  } else {
+    chrono::time_point ctp = time_point_cast<chrono::nanoseconds>(tp);
+    if (logFmt.utc) {
+      return std::format("{:%FT%TZ} ", ctp);
+    } else {
+      chrono::zoned_time zt { chrono::current_zone(), ctp };
+      return std::format("{:%FT%T%Ez} ", zt);
+    }
+  }
+}
+
 /**
  * Flushes pending begin log entries.
+ *
+ * @NotThreadSafe
  */
 void
 logFlush(nio::Sink& out) {
@@ -158,18 +274,33 @@ logFlush(nio::Sink& out) {
 }
 
 /**
- * @ThreadSafe
+ * @NotThreadSafe
  */
 void
-logImpl(nio::Sink& out, LogLevel* logId, LogLevel level, size_t stackLevel, string_view msg) {
-  // Item: time point in ISO-8601, current time zone, with microseconds
-  chrono::time_point tp = time_point_cast<chrono::microseconds>(chrono::system_clock::now());
-  chrono::zoned_time zt { chrono::current_zone(), tp };
-  string s = std::format("{:%FT%T%Ez} ", zt);
+logImpl(
+    nio::Sink& out,
+    LogLevel* logId,
+    LogLevel level,
+    size_t stackLevel,
+    const TimePoint& time,
+    string_view msg) {
+  // Item: time point
+  string s = formatTimePoint(time);
   out.write(s);
   size_t indentSize = s.size();
 
-  // Item: caller level
+  // Item: log ID
+  auto it = definedIds.left.find(logId);
+  ROCKET_ASSERT(it != definedIds.left.end());
+  auto id = it->second;
+  if (id.size() <= 16) {
+    out.print("{: <16} ", id);
+  } else {
+    out.print("{}… ", id.substr(0, 15));
+  }
+  indentSize += 17; // 16 chars + 1 space
+
+  // Item: log level
   if (level > LogLevel::none) {
     out.write(fmt::format("[{: <5}] ", level)); // Width is 8
   } else {
@@ -177,19 +308,10 @@ logImpl(nio::Sink& out, LogLevel* logId, LogLevel level, size_t stackLevel, stri
   }
   indentSize += 8;
 
-  // Item: stack level
+  // Item: Indent by stack level
   string indent(2 * stackLevel, ' ');
   out.write(indent);
   indentSize += indent.size();
-
-  // Item: log ID
-  {
-    ROCKET_MUTEX_LOCK(definedIdsMutex);
-    auto it = definedIds.left.find(logId);
-    ROCKET_ASSERT(it != definedIds.left.end());
-    out.print("{} ", it->second);
-    indentSize += it->second.size() + 1;
-  }
 
   // Item: message
   if (auto lf = msg.find('\n'); lf == string::npos) {
@@ -212,7 +334,7 @@ void
 setLogLevel(string_view id, string_view value) {
   bool all = id == "all";
 
-  ROCKET_MUTEX_LOCK(definedIdsMutex);
+  ROCKET_MUTEX_LOCK(logMutex);
 
   auto it = definedIds.right.end();
   if (not all) {
@@ -250,7 +372,7 @@ void
 init() {
   // We need this in case of quick exit
   process.atExit([] {
-    ROCKET_MUTEX_LOCK(outMutex);
+    ROCKET_MUTEX_LOCK(logMutex);
     out.get().flush();
   }, true);
 }
@@ -258,20 +380,25 @@ init() {
 LogLevel
 logDefine(LogLevel* logId, string_view id) {
   ROCKET_CHECK(id, id != "all", "Invalid log ID: \"all\"; this ID is reserved");
-  ROCKET_MUTEX_LOCK(definedIdsMutex);
+  ROCKET_MUTEX_LOCK(logMutex);
   definedIds.left.insert({ logId, id });
   return LogLevel::none;
 }
 
+/// @ThreadSafe
 void
-logBegin(LogLevel* logId, const char* func) {
+logBegin(LogLevel* logId, const char* function, const char* prettyFunction, const char* file, int line) {
+  ROCKET_MUTEX_LOCK(logMutex);
+
   // Begin log entry will be flushed later if necessary
-  string msg = string(func) + " {";
+  string msg = string(prettyFunction) + " {";
   nio::StringSink buf;
-  logImpl(buf, logId, LogLevel::none, stack.size(), msg);
-  stack.emplace_back(logId, func, buf.str());
+  auto time = chrono::system_clock::now();
+  logImpl(buf, logId, LogLevel::none, stack.size(), time, msg);
+  stack.emplace_back(logId, function, prettyFunction, file, line, buf.str(), time);
 }
 
+/// @ThreadSafe
 void
 logEnd() noexcept {
   // We need to catch everything here to keep the `noexcept` promise
@@ -279,10 +406,11 @@ logEnd() noexcept {
     // Print end log entry only if begin log entry was flushed
     const Entry& entry = stack.back();
     if (not entry.begin_) {
-      ROCKET_MUTEX_LOCK(outMutex);
-      string msg = "} " + string(entry.func_);
-      nio::StringSink buf;
-      logImpl(out.get(), entry.logId_, LogLevel::none, stack.size() - 1, msg);
+      ROCKET_MUTEX_LOCK(logMutex);
+      string msg = "} " + string(entry.prettyFunction_);
+      auto time = chrono::system_clock::now();
+      // XXX Hier measure
+      logImpl(out.get(), entry.logId_, LogLevel::none, stack.size() - 1, time, msg);
     }
   } catch (const exception& ex) {
     ROCKET_PROCESS_ERROR("Cannot log message: {}", what(ex));
@@ -293,13 +421,15 @@ logEnd() noexcept {
   stack.pop_back();
 }
 
+/// @ThreadSafe
 void
 log(LogLevel level, string_view msg) {
-  ROCKET_MUTEX_LOCK(outMutex);
+  ROCKET_MUTEX_LOCK(logMutex);
 
   auto& out = ::out.get();
   logFlush(out);
-  logImpl(out, stack.back().logId_, level, stack.size(), msg);
+  auto time = chrono::system_clock::now();
+  logImpl(out, stack.back().logId_, level, stack.size(), time, msg);
 }
 
 const vector<cl::Option>& opts() { return clOpts; }

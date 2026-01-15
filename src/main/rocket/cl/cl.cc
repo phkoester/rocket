@@ -62,6 +62,12 @@ CommandLine::apply(const Option& opt, bool nameFlag, optional<string_view> value
 
   try {
     opt.apply(value);
+  } catch (const Exception& ex) {
+    string expected;
+    if (opt.format) {
+      expected = fmt::format("; expected {}", *opt.format);
+    }
+    throw InvalidState(fmt::format("Option `{}`: {}{}", name(opt, nameFlag), ex.message(), expected));
   } catch (const exception& ex) {
     string expected;
     if (opt.format) {

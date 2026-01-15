@@ -9,11 +9,16 @@
 using namespace rocket;
 using namespace std;
 
+ROCKET_LOG_DEFINE(thisIsARatherLongName);
 ROCKET_LOG_DEFINE(toy);
 
 // Variables -----------------------------------------------------------------------------------------------
 
 auto& out = nio::stdout;
+
+ROCKET_INIT(([&] {
+  out.println("ROCKET_INIT: {}, {}", __FUNCTION__, __PRETTY_FUNCTION__);
+}));
 
 // Functions -----------------------------------------------------------------------------------------------
 
@@ -30,9 +35,17 @@ myTerminate() {
   out.println("myTerminate");
 }
 
+void tox() {
+  ROCKET_LOG(thisIsARatherLongName);
+
+  ROCKET_LOG_INFO("Hello from tox!\nWe're going multi-line ...\nAnd again.");
+}
+
 void
 toy() {
   ROCKET_LOG(toy);
+
+  tox();
 
   ROCKET_LOG_TRACE("Hey {}", "there");
 }

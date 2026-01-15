@@ -60,14 +60,14 @@ void init();
 
 LogLevel logDefine(LogLevel* logId, std::string_view id);
 
-void logBegin(LogLevel* logId, const char* func);
+void logBegin(LogLevel* logId, const char* function, const char* prettyFunction, const char* file, int line);
 
 void logEnd() noexcept;
 
 struct Log {
-  inline Log(LogLevel* logId, const char* func) :
+  inline Log(LogLevel* logId, const char* function, const char* prettyFunction, const char* file, int line) :
       level_(*logId) {
-    logBegin(logId, func);
+    logBegin(logId, function, prettyFunction, file, line);
   }
 
   inline ~Log() noexcept { logEnd(); }
@@ -147,9 +147,14 @@ const std::vector<cl::Option>& opts();
  */
 #define ROCKET_LOG(id) \
     ::std::unique_ptr<::rocket::log::internal::Log> rocketLog__; \
-    if (::rocket::log::internal::ROCKET_LOG_ID__(id) > ::rocket::log::LogLevel::none) \
+    if (::rocket::log::internal::ROCKET_LOG_ID__(id) > ::rocket::log::LogLevel::none) { \
       rocketLog__ = ::std::make_unique<::rocket::log::internal::Log>( \
-          &::rocket::log::internal::ROCKET_LOG_ID__(id), __PRETTY_FUNCTION__)
+          &::rocket::log::internal::ROCKET_LOG_ID__(id), \
+          __FUNCTION__, \
+          __PRETTY_FUNCTION__, \
+          __FILE__, \
+          __LINE__); \
+    }
 
 /**
  * Logs a message, using log level #rocket::log::error.
