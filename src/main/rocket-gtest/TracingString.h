@@ -30,7 +30,7 @@ struct TracingString {
   }
 
   /// Counts how often the default constructor was called for this instance.
-  size_t ctorDefault = 0;
+  size_t ctor = 0;
   /// Counts how often the copy constructor was called for this instance.
   size_t ctorCopy = 0;
   /// Counts how often the move constructor was called for this instance.
@@ -48,14 +48,14 @@ struct TracingString {
   /**
    * @ctor
    *
-   * @param os the output stream to chat to
+   * @param trace the string to append tracing messages to
    */
   explicit TracingString(std::string& trace) noexcept :
       trace_(&trace),
       id_(++ID_COUNTER) {
     ++NUM_INSTANCES;
-    this->trace("ctorDefault");
-    ++ctorDefault;
+    this->trace("ctor");
+    ++ctor;
   }
 
   /// @ctor_copy
@@ -82,6 +82,7 @@ struct TracingString {
   /**
    * @ctor
    *
+   * @param trace the string to append tracing messages to
    * @param p a pointer to a C string
    */
   explicit TracingString(std::string& trace, const char* p) noexcept :

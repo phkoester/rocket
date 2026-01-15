@@ -186,9 +186,9 @@ private:
 
   bool modified_; ///< Whether there is an owned value
   union {
-    const T* ptr; ///< A reference if #HAS_VIEW is `false`
-    char view[sizeof(T)]; ///< A copyable view if #HAS_VIEW is `true`
-    char owned[sizeof(U)]; ///< An owned value if #modified_ is `true`
+    const T* ptr; ///< A reference if not #HAS_VIEW
+    char view[sizeof(T)]; ///< A copyable view if #HAS_VIEW
+    char owned[sizeof(U)]; ///< An owned value if #modified_
   } choice_;
 };
 
