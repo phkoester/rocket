@@ -11,18 +11,15 @@
 #include <variant>
 #include <vector>
 
-using namespace rocket;
-using namespace std;
-
 // `Enum1` --------------------------------------------------------------------------------------------------
 
-enum Enum1 { A, B, C };
+enum Enum1 { One, Two, Three };
 
 // `Enum2` --------------------------------------------------------------------------------------------------
 
 namespace {
 
-enum Enum2 { D, E, F };
+enum Enum2 { Four, Five, Six };
 
 } // namespace
 
@@ -53,11 +50,11 @@ TEST(Type, map) {
 }
 
 TEST(Type, name) {
-  Enum1 e1 = A;
+  Enum1 e1 = One;
   EXPECT_EQ(Type::of(e1).name(), "Enum1");
   EXPECT_EQ(Type::of<Enum1>().name(), "Enum1");
 
-  Enum2 e2 = D;
+  Enum2 e2 = Four;
   EXPECT_EQ(Type::of(e2).name(), "(anonymous namespace)::Enum2");
   EXPECT_EQ(Type::of<Enum2>().name(), "(anonymous namespace)::Enum2");
 

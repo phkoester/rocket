@@ -7,10 +7,7 @@
 #include "rocket/format/std.h"
 #include "rocket/unicode/unicode.h"
 
-using namespace rocket;
 using namespace rocket::unicode;
-using namespace std;
-using namespace testing;
 
 // Constants ------------------------------------------------------------------------------------------------
 

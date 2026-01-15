@@ -4,8 +4,6 @@
 
 #include "rocket-gtest/rocket-gtest.h"
 
-using namespace std;
-
 #include <scn/scan.h>
 
 // `TEST` ---------------------------------------------------------------------------------------------------

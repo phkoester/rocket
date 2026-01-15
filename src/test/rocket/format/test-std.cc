@@ -7,17 +7,10 @@
 #include "rocket/format/std.h"
 #include "rocket/nio/nio.h"
 
-#include "rocket-gtest/matcher/matcher.h"
-
 #include <span>
 #include <type_traits>
 #include <unordered_map>
 #include <unordered_set>
-
-using namespace rocket;
-using namespace rocket::gtest::matcher;
-using namespace std;
-using namespace testing;
 
 // `TEST` ---------------------------------------------------------------------------------------------------
 

@@ -2,6 +2,10 @@
  * @file rocket-gtest.h
  *
  * This header must always be the first included file in a test.
+ *
+ * Parameters:
+ *
+ * - `ROCKET_GTEST_NO_USING_NAMESPACE`: If defined, the `using namespace` directives are not included.
  */
 
 #pragma once
@@ -16,10 +20,22 @@
 #include "rocket/rocket.h"
 #include "rocket/io/io.h"
 
+#include "rocket-gtest/matcher/matcher.h"
+
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 #include <filesystem>
+
+#ifndef ROCKET_GTEST_NO_USING_NAMESPACE
+
+using namespace rocket;
+using namespace rocket::gtest;
+using namespace rocket::gtest::matcher;
+using namespace std;
+using namespace testing;
+
+#endif // ROCKET_GTEST_NO_USING_NAMESPACE
 
 // Macros ---------------------------------------------------------------------------------------------------
 

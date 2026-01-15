@@ -9,8 +9,6 @@
 #include <boost/fusion/adapted/std_pair.hpp>
 #include <boost/spirit/home/x3.hpp>
 
-using namespace std;
-
 namespace x3 = boost::spirit::x3;
 
 // `TEST` ---------------------------------------------------------------------------------------------------

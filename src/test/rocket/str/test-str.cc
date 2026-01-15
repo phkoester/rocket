@@ -6,9 +6,7 @@
 
 #include "rocket/str/str.h"
 
-using namespace rocket;
 using namespace rocket::str;
-using namespace std;
 
 // Local functions ------------------------------------------------------------------------------------------
 

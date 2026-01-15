@@ -6,9 +6,6 @@
 
 #include "rocket/Cow.h"
 
-using namespace rocket;
-using namespace std;
-
 // `TEST` ---------------------------------------------------------------------------------------------------
 
 TEST(Cow, differentTypes) {

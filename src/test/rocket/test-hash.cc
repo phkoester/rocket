@@ -6,8 +6,6 @@
 
 #include "rocket/hash.h"
 
-using namespace rocket;
-
 // `TEST` ---------------------------------------------------------------------------------------------------
 
 TEST(hash, unhash) {

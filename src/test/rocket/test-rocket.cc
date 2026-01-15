@@ -4,10 +4,6 @@
 
 #include "rocket-gtest/rocket-gtest.h"
 
-using namespace rocket;
-using namespace std;
-using namespace testing;
-
 // `static_assert` ------------------------------------------------------------------------------------------
 
 static_assert(sizeof(char32_t) == 4);

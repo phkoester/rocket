@@ -8,11 +8,6 @@
 
 #include "rocket-gtest/TracingString.h"
 
-using namespace rocket;
-using namespace rocket::gtest;
-using namespace std;
-using namespace testing;
-
 // `Cxx` ----------------------------------------------------------------------------------------------------
 
 struct Cxx : public Test {

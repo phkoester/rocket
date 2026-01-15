@@ -8,10 +8,7 @@
 #include "rocket/unicode/Character.h"
 #include "rocket/unicode/ConvertTo.h"
 
-using namespace rocket;
-using namespace rocket::gtest;
 using namespace rocket::unicode;
-using namespace std;
 
 // Functions ------------------------------------------------------------------------------------------------
 

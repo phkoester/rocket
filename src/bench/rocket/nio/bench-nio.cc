@@ -2,19 +2,13 @@
  * bench-nio.cc
  */
 
-#include "rocket-gtest/rocket-gtest.h"
+#include "rocket-gtest/bench.h"
 
 #include "rocket/nio/nio.h"
 
-#include "rocket-gtest/bench.h"
-
 #include <fstream>
 
-using namespace rocket;
-using namespace rocket::gtest;
 using namespace rocket::nio;
-using namespace std;
-using namespace std::filesystem;
 
 // Constants ------------------------------------------------------------------------------------------------
 

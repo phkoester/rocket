@@ -8,13 +8,7 @@
 #include "rocket/log/log.h"
 #include "rocket/str/StringConvert.h"
 
-#include "rocket-gtest/matcher/matcher.h"
-
-using namespace rocket;
-using namespace rocket::gtest::matcher;
 using namespace rocket::str;
-using namespace std;
-using namespace testing;
 
 // `TEST` ---------------------------------------------------------------------------------------------------
 

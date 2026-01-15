@@ -7,10 +7,6 @@
 #include "rocket/Process.h"
 #include "rocket/nio/nio.h"
 
-using namespace rocket;
-using namespace std;
-using namespace testing;
-
 // `TEST` ---------------------------------------------------------------------------------------------------
 
 TEST(Process, error) {

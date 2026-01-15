@@ -10,7 +10,6 @@
 
 #include "rocket/log/log.h"
 
-using namespace rocket;
 using namespace rocket::log;
 
 ROCKET_LOG_DEFINE(test_log);

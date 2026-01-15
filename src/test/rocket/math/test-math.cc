@@ -8,10 +8,7 @@
 #include "rocket/math/math.h"
 #include "rocket/math/random.h"
 
-using namespace rocket;
 using namespace rocket::math;
-using namespace std;
-using namespace testing;
 
 // `TEST` ---------------------------------------------------------------------------------------------------
 

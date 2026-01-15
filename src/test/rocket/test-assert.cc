@@ -7,10 +7,6 @@
 #include "rocket/Exception.h"
 #include "rocket/assert.h"
 
-using namespace rocket;
-using namespace std;
-using namespace testing;
-
 // Local functions ------------------------------------------------------------------------------------------
 
 bool oopsCalled = false;

@@ -8,11 +8,7 @@
 #include "rocket/str/location/location.h"
 #include "rocket/unicode/unicode.h"
 
-using namespace rocket;
-using namespace rocket::gtest;
 using namespace rocket::str::location;
-using namespace std;
-using namespace testing;
 
 // Macros ---------------------------------------------------------------------------------------------------
 

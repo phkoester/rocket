@@ -6,10 +6,6 @@
 
 #include "rocket/numeric.h"
 
-using namespace rocket;
-using namespace std;
-using namespace testing;
-
 using rocket::internal::Control;
 
 // `static_assert` ------------------------------------------------------------------------------------------

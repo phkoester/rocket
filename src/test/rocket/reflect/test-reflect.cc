@@ -6,13 +6,7 @@
 
 #include "rocket/reflect/reflect.h"
 
-#include "rocket-gtest/matcher/matcher.h"
-
-using namespace rocket;
-using namespace rocket::gtest::matcher;
 using namespace rocket::reflect;
-using namespace std;
-using namespace testing;
 
 // `MyStruct` -----------------------------------------------------------------------------------------------
 

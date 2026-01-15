@@ -7,10 +7,7 @@
 #include "rocket/nio/nio.h"
 #include "rocket/system/terminal/terminal.h"
 
-using namespace rocket;
 using namespace rocket::system::terminal;
-using namespace std;
-using namespace testing;
 
 // `TEST` ---------------------------------------------------------------------------------------------------
 

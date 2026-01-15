@@ -6,6 +6,8 @@
 
 #pragma once
 
+#include "rocket-gtest/rocket-gtest.h"
+
 #include "rocket/format/format.h"
 
 #include <chrono>

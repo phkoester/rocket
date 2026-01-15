@@ -6,14 +6,7 @@
 
 #include "rocket/str/escape/escape.h"
 
-#include "rocket-gtest/matcher/matcher.h"
-
-using namespace rocket;
 using namespace rocket::str::escape;
-using namespace rocket::gtest;
-using namespace rocket::gtest::matcher;
-using namespace std;
-using namespace testing;
 
 // Functions ------------------------------------------------------------------------------------------------
 

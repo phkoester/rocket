@@ -7,13 +7,6 @@
 #include "rocket/Exception.h"
 #include "rocket/nio/nio.h"
 
-#include "rocket-gtest/matcher/matcher.h"
-
-using namespace rocket;
-using namespace rocket::gtest::matcher;
-using namespace std;
-using namespace testing;
-
 // `TEST` ---------------------------------------------------------------------------------------------------
 
 TEST(Exception, printException1) {

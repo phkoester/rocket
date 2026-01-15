@@ -6,10 +6,6 @@
 
 #include "rocket/enum.h"
 
-using namespace rocket;
-using namespace std;
-using namespace testing;
-
 // `MyEnum` -------------------------------------------------------------------------------------------------
 
 enum MyEnum { fröb, fröber, fröberer, pörk, pörker, pörkerer };

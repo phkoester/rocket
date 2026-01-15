@@ -9,15 +9,8 @@
 #include "rocket/io/io.h"
 #include "rocket/nio/nio.h"
 
-#include "rocket-gtest/matcher/matcher.h"
-
 #include <chrono>
 #include <regex>
-
-using namespace rocket;
-using namespace rocket::gtest::matcher;
-using namespace std;
-using namespace testing;
 
 // TEST -----------------------------------------------------------------------------------------------------
 

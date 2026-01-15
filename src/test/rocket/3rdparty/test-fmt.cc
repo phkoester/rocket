@@ -9,8 +9,6 @@
 #include <limits>
 #include <type_traits>
 
-using namespace std;
-
 // `TEST` ---------------------------------------------------------------------------------------------------
 
 TEST(fmt, boolFormat) {

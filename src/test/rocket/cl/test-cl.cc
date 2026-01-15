@@ -7,10 +7,8 @@
 #include "rocket/cl/cl.h"
 #include "rocket/log/log.h"
 
-using namespace rocket;
 using namespace rocket::cl;
 using namespace rocket::unicode;
-using namespace std;
 
 // Local functions ------------------------------------------------------------------------------------------
 

@@ -7,12 +7,7 @@
 #include "rocket/format/format.h"
 #include "rocket/nio/nio.h"
 
-#include "rocket-gtest/matcher/matcher.h"
-
-using namespace rocket;
 using namespace rocket::format;
-using namespace rocket::gtest::matcher;
-using namespace std;
 
 // `TEST` ---------------------------------------------------------------------------------------------------
 

@@ -9,11 +9,7 @@
 
 #include <fstream>
 
-using namespace rocket;
-using namespace rocket::gtest;
 using namespace rocket::nio;
-using namespace std;
-using namespace testing;
 
 // Local functions ------------------------------------------------------------------------------------------
 

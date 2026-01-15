@@ -8,8 +8,6 @@
 #include "rocket/str/str.h"
 #include "rocket/system/system.h"
 
-using namespace rocket;
-using namespace std;
 using namespace std::filesystem;
 
 namespace rocket::gtest {

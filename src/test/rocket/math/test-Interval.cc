@@ -6,9 +6,7 @@
 
 #include "rocket/math/Interval.h"
 
-using namespace rocket;
 using namespace rocket::math;
-using namespace std;
 
 // `TEST` ---------------------------------------------------------------------------------------------------
 

@@ -7,10 +7,7 @@
 #include "rocket/unicode/Character.h"
 #include "rocket/unicode/Iterator.h"
 
-using namespace rocket;
 using namespace rocket::unicode;
-using namespace std;
-using namespace testing;
 
 // `TEST` ---------------------------------------------------------------------------------------------------
 

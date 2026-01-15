@@ -6,9 +6,6 @@
 
 #include "rocket/UnorderedBimap.h"
 
-using namespace rocket;
-using namespace std;
-
 // `TEST` ---------------------------------------------------------------------------------------------------
 
 TEST(UnorderedBimap, opEq) {
