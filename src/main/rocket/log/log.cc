@@ -11,8 +11,6 @@
 #include "rocket/str/str.h"
 #include "rocket/system/system.h"
 
-#include <iostream>
-
 using namespace rocket;
 using namespace rocket::log;
 using namespace std;

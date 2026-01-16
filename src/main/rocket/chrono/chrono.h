@@ -25,6 +25,7 @@ void setClockOffset(std::chrono::hours offset);
 
 // `SystemClockTimePoint` -----------------------------------------------------------------------------------
 
+/// @type_alias
 using SystemClockTimePoint = std::chrono::time_point<std::chrono::system_clock>;
 
 // Functions -----------------------------------------------------------------------------------------------
@@ -35,6 +36,8 @@ using SystemClockTimePoint = std::chrono::time_point<std::chrono::system_clock>;
  * Code to be unit-tested should use this function instead of `std::chrono::system_clock::now()`.
  *
  * @ThreadSafe
+ *
+ * @return the current time
  */
 SystemClockTimePoint systemClockNow();
 

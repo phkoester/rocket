@@ -17,8 +17,15 @@ namespace rocket::str {
 
 // `SplitIterator` ------------------------------------------------------------------------------------------
 
+/**
+ * The iterator used by #rocket::str::SplitResult.
+ *
+ * @tparam C the character type
+ */
 template<typename C> requires IsChar<C>
 struct SplitIterator {
+  /// @cond undocumented
+
   SplitIterator(std::basic_string_view<C> s, size_t pos, std::basic_string_view<C> sep) :
       s_(s), pos_(pos), sep_(sep) {
     if (pos == NPOS) {
@@ -71,11 +78,14 @@ struct SplitIterator {
 
   std::basic_string_view<C> operator*() const { return s_.substr(pos_, end_ - pos_); }
 
+  /// @endcond
+
 private:
 
   /// The input string to split.
   std::basic_string_view<C> s_;
-  size_t pos_; ///< The current position in the string.
+  /// The current position in the string.
+  size_t pos_;
   /**
    * The end of the current token.
    *
@@ -95,15 +105,21 @@ private:
  */
 template<typename C> requires IsChar<C>
 struct SplitResult {
+  /// @cond undocumented
+
   SplitResult(std::basic_string_view<C> s, std::basic_string_view<C> sep) : s_(s), sep_(sep) {}
 
   SplitIterator<C> begin() const { return SplitIterator<C>(s_, 0, sep_); }
 
   SplitIterator<C> end() const { return SplitIterator<C>(s_, NPOS, sep_); }
 
+  /// @endcond
+
 private:
 
+  /// The input string to split.
   std::basic_string_view<C> s_;
+  /// The separator.
   std::basic_string<C> sep_;
 };
 
