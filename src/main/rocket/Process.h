@@ -54,7 +54,8 @@
  *
  * The rocket logging API considers the thread name for logging.
  *
- * @param name the name to set. If not given, the current thread name is returned
+ * Usage: `ROCKET_THREAD_NAME([name])`
+ *
  * @return the current thread name
  */
 #define ROCKET_THREAD_NAME(...) ::rocket::internal::setThreadName(__VA_ARGS__)
