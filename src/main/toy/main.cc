@@ -7,6 +7,8 @@
 #include "rocket/log/log.h"
 #include "rocket/unicode/Character.h"
 
+#include <thread>
+
 using namespace rocket;
 using namespace rocket::unicode;
 using namespace std;
@@ -33,15 +35,21 @@ myTerminate() {
   // out.println("myTerminate");
 }
 
-void zz() {
+void zz(int level) {
   ROCKET_LOG(thisIsARatherLongLogId);
-  ROCKET_LOG_INFO("zz");
+  ROCKET_LOG_INFO("zz at level {}", level);
+
+  if (level == 4)
+    return;
+  this_thread::sleep_for(chrono::milliseconds(100));
+  zz(level + 1);
 }
 
 void tox() {
   ROCKET_LOG(thisIsARatherLongLogId);
+  ROCKET_LOG_INFO("in tox(), threadName={}, id={}", ROCKET_THREAD_NAME(), this_thread::get_id());
 
-  zz();
+  zz(0);
 
   ROCKET_LOG_INFO("Hello from tox!\nWe're going multi-line ...\nAnd again.");
 }

@@ -95,9 +95,7 @@ paragraphs(string_view s) {
 
     if (c->nbsp()) {
       // Handle NO-BREAK SPACE
-      if (not word.empty() && not str::endsWith<char>(word, " ")) {
-        word.push_back(' ');
-      }
+      word.push_back(' ');
     } else if (not c->isWhitespace()) {
       // Enter/continue word
       word.append(*c);
@@ -159,8 +157,9 @@ wrap(string_view s, size_t leftIndent, size_t width) {
       }
       size_t newLineWidth = lineWidth + wordWidth + (lineWidth > 0 ? 1 : 0);
       if (lineWidth == 0 || newLineWidth < width) {
-        if (lineWidth > 0)
+        if (lineWidth > 0) {
           line.push_back(' ');
+        }
         line.append(word);
         lineWidth = newLineWidth;
       } else {

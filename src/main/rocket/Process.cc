@@ -10,8 +10,6 @@
 #include "rocket/str/str.h"
 #include "rocket/system/system.h"
 
-#include <thread>
-
 using namespace rocket;
 using namespace std;
 
@@ -21,8 +19,6 @@ namespace {
 
 const bool ROCKET_EXIT = system::env::get<bool>("ROCKET_EXIT").value_or(false);
 const bool ROCKET_QUICK_EXIT = system::env::get<bool>("ROCKET_QUICK_EXIT").value_or(false);
-
-const thread::id MAIN_THREAD_ID = thread::id();
 
 // Local variables ------------------------------------------------------------------------------------------
 
@@ -93,6 +89,27 @@ onTerminate() {
 
 namespace rocket {
 
+// Internal -------------------------------------------------------------------------------------------------
+
+namespace internal {
+
+thread_local string threadName;
+
+ROCKET_INIT([&] { threadName = "main"; });
+
+const string& setThreadName(std::string_view name) {
+  if (not name.empty()) {
+    threadName = name;
+  }
+  return threadName;
+}
+
+} // namespace internal
+
+// Constants ------------------------------------------------------------------------------------------------
+
+const thread::id MAIN_THREAD_ID = this_thread::get_id();
+
 // `Process` ------------------------------------------------------------------------------------------------
 
 // Some trickery to keep the ctor private
@@ -132,8 +149,6 @@ Process::exit(int status) const {
   else {
     std::exit(status);
   }
-
-  // XXX ROCKET_TERMINATE_UNREACHABLE_CODE();
 }
 
 void
@@ -145,7 +160,7 @@ Process::init(
     bool quickExit) {
   ROCKET_MUTEX_LOCK(processMutex);
 
-  ROCKET_ASSERT(thread::id() == MAIN_THREAD_ID, "Process::init must be called in the main thread");
+  ROCKET_ASSERT(this_thread::get_id() == MAIN_THREAD_ID, "Process::init must be called in the main thread");
   ROCKET_ASSERT(not inited_, "Process already initialized");
 
   // Set the C locale from the environment

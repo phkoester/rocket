@@ -62,10 +62,10 @@ TEST(enum, MyEnumToType) {
 
   EXPECT_THAT(
       [] { Enum<MyEnum>::toType("foo"); },
-      ThrowsMessage<InvalidState>(HasSubstr("Cannot parse \"foo\" as `MyEnum`")));
+      ThrowsMessage<InvalidState>(HasSubstr("Cannot scan \"foo\" as `MyEnum`")));
   EXPECT_THAT(
       [] { Enum<MyEnum>::toType("fröbx"); },
-      ThrowsMessage<InvalidState>(HasSubstr("Cannot parse \"fröbx\" as `MyEnum`")));
+      ThrowsMessage<InvalidState>(HasSubstr("Cannot scan \"fröbx\" as `MyEnum`")));
 }
 
 TEST(enum, MyEnumClassOpOutput) {
@@ -83,10 +83,10 @@ TEST(enum, MyEnumClassToType) {
 
   EXPECT_THAT(
       [] { Enum<MyEnumClass>::toType("foo"); },
-      ThrowsMessage<InvalidState>(HasSubstr("Cannot parse \"foo\" as `MyEnumClass`")));
+      ThrowsMessage<InvalidState>(HasSubstr("Cannot scan \"foo\" as `MyEnumClass`")));
   EXPECT_THAT(
       [] { Enum<MyEnumClass>::toType("hürxerx"); },
-      ThrowsMessage<InvalidState>(HasSubstr("Cannot parse \"hürxerx\" as `MyEnumClass`")));
+      ThrowsMessage<InvalidState>(HasSubstr("Cannot scan \"hürxerx\" as `MyEnumClass`")));
 }
 
 // EOF

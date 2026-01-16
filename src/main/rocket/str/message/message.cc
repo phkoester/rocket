@@ -13,8 +13,8 @@ namespace rocket::str::message {
 // Functions ------------------------------------------------------------------------------------------------
 
 string
-cannotParseAs(string_view input, const Type& type) {
-  return fmt::format("Cannot parse {:?} as `{}`", input, type);
+cannotScanAs(string_view input, const Type& type) {
+  return fmt::format("Cannot scan {:?} as `{}`", input, type);
 }
 
 string

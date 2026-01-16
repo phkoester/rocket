@@ -21,14 +21,14 @@ pars(const vector<vector<string>>& v) {
 
 // `TEST` ---------------------------------------------------------------------------------------------------
 
-TEST(text, paragraphs) {
-  string nbsp = "\u00a0";
+#define NBSP "\u00A0"
 
+TEST(str, paragraphs) {
   EXPECT_EQ(paragraphs(""), (pars({{}})));
   EXPECT_EQ(paragraphs("a b"), (pars({{ "a", "b" }})));
   EXPECT_EQ(
-      paragraphs(nbsp + "a" + nbsp + nbsp + "b cd e" + nbsp + "f"),
-      (pars({{ "a b", "cd", "e f" }})));
+      paragraphs(NBSP "a" NBSP NBSP "b      cd e" NBSP "f"),
+      (pars({{ " a  b", "cd", "e f" }})));
   EXPECT_EQ(paragraphs("a \t\t b"), (pars({{ "a", "b" }})));
   EXPECT_EQ(paragraphs("a\nb c"), (pars({{"a"}, { "b", "c" }})));
   EXPECT_EQ(paragraphs("a\r\nb c"), (pars({{"a"}, { "b", "c" }})));

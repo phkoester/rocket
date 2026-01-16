@@ -12,6 +12,7 @@
 #include <locale>
 #include <optional>
 #include <string>
+#include <thread>
 #include <vector>
 
 // Macros ---------------------------------------------------------------------------------------------------
@@ -48,7 +49,25 @@
   ::rocket::process.warn(::rocket::nio::stderr, "{}", msg.str()); \
 }
 
+/**
+ * Sets or returns the name of the current thread.
+ *
+ * The rocket logging API considers the thread name for logging.
+ *
+ * @param name the name to set. If not given, the current thread name is returned
+ * @return the current thread name
+ */
+#define ROCKET_THREAD_NAME(...) ::rocket::internal::setThreadName(__VA_ARGS__)
+
 namespace rocket {
+
+// Internal -------------------------------------------------------------------------------------------------
+
+namespace internal {
+
+const std::string& setThreadName(std::string_view name = "");
+
+} // namespace internal
 
 // Constants ------------------------------------------------------------------------------------------------
 
@@ -59,6 +78,9 @@ namespace rocket {
  * Once the program started operating properly, `EXIT_FAILURE` (1) should be used to indicate a problem.
  */
 constexpr int EXIT_SERIOUS_FAILURE = 2;
+
+/// The ID of the main thread.
+extern const std::thread::id MAIN_THREAD_ID;
 
 // `Process` ------------------------------------------------------------------------------------------------
 

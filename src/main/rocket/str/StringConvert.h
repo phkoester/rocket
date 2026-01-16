@@ -43,7 +43,7 @@ struct StringConvert<bool> {
    * @param s the string to convert
    * @return a `bool` value
    *
-   * @throw #rocket::InvalidState if @p s cannot be parsed
+   * @throw #rocket::InvalidState if @p s cannot be scanned
    */
   Type
   toType(std::string_view s) const {
@@ -52,7 +52,7 @@ struct StringConvert<bool> {
     } else if (s == "true" || s == "1") {
       return true;
     } else {
-      throw InvalidState(message::cannotParseAs(s, rocket::Type::of<Type>()));
+      throw InvalidState(message::cannotScanAs(s, rocket::Type::of<Type>()));
     }
   }
 };
@@ -76,12 +76,12 @@ struct StringConvert<char> {
    * @param s the string to convert
    * @return a `char` value
    *
-   * @throw #rocket::InvalidState if @p s cannot be parsed
+   * @throw #rocket::InvalidState if @p s cannot be scanned
    */
   Type
   toType(std::string_view s) const {
     if (s.size() != 1) {
-      throw InvalidState(message::cannotParseAs(s, rocket::Type::of<Type>()));
+      throw InvalidState(message::cannotScanAs(s, rocket::Type::of<Type>()));
     }
     return s[0];
   }
@@ -105,7 +105,7 @@ struct StringConvert<I> {
    *
    * @param s the string to convert
    * @return an integer value
-   * @throw #rocket::InvalidState if @p s cannot be parsed
+   * @throw #rocket::InvalidState if @p s cannot be scanned
    */
   Type
   toType(std::string_view s) const {
@@ -113,7 +113,7 @@ struct StringConvert<I> {
     Type ret;
     is >> ret;
     if (is.fail() || not is.eof()) {
-      throw InvalidState(message::cannotParseAs(s, rocket::Type::of<Type>()));
+      throw InvalidState(message::cannotScanAs(s, rocket::Type::of<Type>()));
     }
     return ret;
   }
@@ -137,7 +137,7 @@ struct StringConvert<E> {
    *
    * @param s the string to convert
    * @return an enum value
-   * @throw #rocket::InvalidState if @p s cannot be parsed
+   * @throw #rocket::InvalidState if @p s cannot be scanned
    */
   Type
   toType(std::string_view s) const {
@@ -163,7 +163,7 @@ struct StringConvert<F> {
    *
    * @param s the string to convert
    * @return a floating-point value
-   * @throw #rocket::InvalidState if @p s cannot be parsed
+   * @throw #rocket::InvalidState if @p s cannot be scanned
    */
   Type
   toType(std::string_view s) const {
@@ -183,7 +183,7 @@ struct StringConvert<F> {
     Type ret;
     is >> ret;
     if (is.fail() || not is.eof()) {
-      throw InvalidState(message::cannotParseAs(s, rocket::Type::of<Type>()));
+      throw InvalidState(message::cannotScanAs(s, rocket::Type::of<Type>()));
     }
     return ret;
   }
@@ -267,7 +267,7 @@ struct StringConvert<std::string_view> {
  * @tparam T the type to convert to
  * @param s the string to convert
  * @return a value of type @p T
- * @throw #rocket::InvalidState if @p s cannot be parsed
+ * @throw #rocket::InvalidState if @p s cannot be scanned
  */
 template<typename T>
 T
@@ -280,7 +280,7 @@ toType(std::string_view s) {
  *
  * @tparam T the type to convert to
  * @param s the string to convert
- * @return a value of type @p T, or null if @p s cannot be parsed
+ * @return a value of type @p T, or null if @p s cannot be scanned
  */
 template<typename T>
 std::optional<T>

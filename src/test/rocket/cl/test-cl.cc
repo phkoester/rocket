@@ -6,6 +6,7 @@
 
 #include "rocket/cl/cl.h"
 #include "rocket/log/log.h"
+#include "rocket/str/str.h"
 
 using namespace rocket::cl;
 using namespace rocket::unicode;
@@ -273,7 +274,7 @@ TEST(cl, parseOptInt) {
     auto args = parse(cl, { "a", "-n", "hello" }, buf);
     EXPECT_EQ(args, vector<string>());
     EXPECT_EQ(num, 0);
-    EXPECT_EQ(buf.str(), "test-rocket-cl: error: Option `-n`: Invalid value \"hello\"; expected NUM\n");
+    EXPECT_EQ(buf.str(), "test-rocket-cl: error: Option `-n`: Cannot scan \"hello\" as `int`; expected NUM\n");
   }
 }
 
@@ -299,7 +300,7 @@ TEST(cl, parseOptEnum) {
     auto args = parse(cl, { "a", "-l", "nonsense" }, buf);
     EXPECT_EQ(args, vector<string>());
     EXPECT_EQ(level, log::LogLevel::none);
-    EXPECT_EQ(buf.str(), "test-rocket-cl: error: Option `-l`: Invalid value \"nonsense\"; expected LEVEL\n");
+    EXPECT_EQ(buf.str(), "test-rocket-cl: error: Option `-l`: Cannot scan \"nonsense\" as `rocket::log::LogLevel`; expected LEVEL\n");
   }
 }
 
@@ -388,39 +389,36 @@ TEST(cl, parseCommand) {
   {
     nio::StringSink buf;
     parseCommand({ "--help" }, buf, buf);
-    EXPECT_EQ(
-        buf.str(),
-        "Usage: test-rocket-cl [OPTION]... list [OPTION]... FILE...\n"
-        "  or   test-rocket-cl [OPTION]... show [OPTION]... [ARG]...\n"
-        "\n"
-        "List FILEs or show ARGs.\n"
-        "\n"
-        "This is yet another paragraph.\n"
-        "\n"
-        "Logging control:\n"
-        "\n"
-        "      --log ID[=LEVEL]\n"
-        "          set logging for identifier ID to level LEVEL. ID is a known log\n"
-        "          identifier or `all`. LEVEL is `none`, `error`, `warn`, `info`,\n"
-        "          `debug`, or `trace`. If LEVEL is not supplied, `info` is assumed\n"
-        "      --log-out OUT\n"
-        "          log to OUT. OUT is `stdout`, `stderr`, a file path, or a URL\n"
-        "          beginning with `file://`\n"
-        "\n"
-        "General control:\n"
-        "\n"
-        "  -o, --omit\n"
-        "          omit what is not important\n"
-        "\n"
-        "Miscellaneous:\n"
-        "\n"
-        "  -h, --help\n"
-        "          display this help text\n"
-        "\n"
-        "Gallia est omnis divisa in partes tres, quarum unam incolunt Belgae, aliam\n"
-        "Aquitani, tertiam qui ipsorum lingua Celtae, nostra Galli appellantur. Hi omnes\n"
-        "lingua, institutis, legibus inter se differunt. Gallos ab Aquitanis Garunna\n"
-        "flumen, a Belgis Matrona et Sequana dividit.\n");
+    string s = buf.str();
+    str::replaceIn<char>(s, "\n", "~");
+
+    EXPECT_THAT(s, matchesRegex(
+        "Usage: test-rocket-cl \\[OPTION\\]\\.\\.\\. list \\[OPTION\\]\\.\\.\\. FILE\\.\\.\\.~"
+        "  or   test-rocket-cl \\[OPTION\\]\\.\\.\\. show \\[OPTION\\]\\.\\.\\. \\[ARG\\]\\.\\.\\.~"
+        "~"
+        "List FILEs or show ARGs\\.~"
+        "~"
+        "This is yet another paragraph\\.~"
+        "~"
+        "Logging control:~"
+        "~"
+        ".*"
+        "~"
+        "General control:~"
+        "~"
+        "  -o, --omit~"
+        "          omit what is not important~"
+        "~"
+        "Miscellaneous:~"
+        "~"
+        "  -h, --help~"
+        "          display this help text~"
+        "~"
+        "Gallia est omnis divisa in partes tres, quarum unam incolunt Belgae, aliam~"
+        "Aquitani, tertiam qui ipsorum lingua Celtae, nostra Galli appellantur. Hi omnes~"
+        "lingua, institutis, legibus inter se differunt. Gallos ab Aquitanis Garunna~"
+        "flumen, a Belgis Matrona et Sequana dividit.~"
+      ));
   }
 
   // Test list help

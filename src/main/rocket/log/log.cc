@@ -26,6 +26,20 @@ void applyLogOut(optional<string_view>);
 
 void setLogLevel(string_view, string_view);
 
+// Local constants ------------------------------------------------------------------------------------------
+
+constexpr auto THREAD_WIDTH = 12;
+constexpr auto LOG_ID_WIDTH = 16;
+
+const unordered_map<LogLevel, string_view> LEVEL_DISPLAY {
+  { LogLevel::none,  "NONE "sv },
+  { LogLevel::error, "ERROR"sv },
+  { LogLevel::warn,  "WARN "sv },
+  { LogLevel::info,  "INFO "sv },
+  { LogLevel::debug, "DEBUG"sv },
+  { LogLevel::trace, "TRACE"sv },
+};
+
 // `TimePoint ` ---------------------------------------------------------------------------------------------
 
 using TimePoint = chrono::time_point<chrono::system_clock>;
@@ -63,9 +77,9 @@ struct Entry {
 struct Format {
   bool execTimes = true; // x, X
   bool prettyFunction = true; // f, F
-  uint8_t secondsRez = 6; // s3, s6, s9
+  uint8_t secondsRez = 6; // s0, s3, s6, s9
   bool sourceLocation = true; // l, L
-  bool threadIds = true; // t, T
+  bool threadIds = false; // t, T
   bool utc = false; // z, Z
 
   void apply(string_view s) {
@@ -80,6 +94,7 @@ struct Format {
           ROCKET_FAIL("Missing seconds resolution");
         }
         switch (*++it) {
+        case '0': secondsRez = 0; break;
         case '3': secondsRez = 3; break;
         case '6': secondsRez = 6; break;
         case '9': secondsRez = 9; break;
@@ -135,6 +150,8 @@ private:
 // Command-line-option group
 cl::OptionGroup clGroup { "Logging control" };
 
+#define NBSP "\u00A0"
+
 // Command-line options
 vector<cl::Option> clOpts {
   { &clGroup, "log", nullopt, true, "ID[=LEVEL]",
@@ -143,19 +160,20 @@ vector<cl::Option> clOpts {
     applyLog },
   { &clGroup, "log-fmt", nullopt, true, "FMT",
     "set log format. FMT is a string of format specifiers, e.g. `fs3Z`. Valid specifiers are:\n"
-    "- f : display function names\n"
-    "- F : display pretty function names (*)\n"
-    "- l : do not display source location\n"
-    "- L : display source location (*)\n"
-    "- s3: display time with milliseconds\n"
-    "- s6: display time with microseconds (*)\n"
-    "- s9: display time with nanoseconds\n"
-    "- t : do not display thread IDs\n"
-    "- T : display thread IDs (*)\n"
-    "- x : do not display function execution times\n"
-    "- X : display function execution times (*)\n"
-    "- z : display local time (*)\n"
-    "- Z : display UTC time\n"
+    NBSP NBSP "f" NBSP NBSP NBSP "display function names\n"
+    NBSP NBSP "F" NBSP NBSP NBSP "display pretty function names (*)\n"
+    NBSP NBSP "l" NBSP NBSP NBSP "do not display source location\n"
+    NBSP NBSP "L" NBSP NBSP NBSP "display source location (*)\n"
+    NBSP NBSP "s0"     NBSP NBSP "display time with seconds\n"
+    NBSP NBSP "s3"     NBSP NBSP "display time with milliseconds\n"
+    NBSP NBSP "s6"     NBSP NBSP "display time with microseconds (*)\n"
+    NBSP NBSP "s9"     NBSP NBSP "display time with nanoseconds\n"
+    NBSP NBSP "t" NBSP NBSP NBSP "do not display thread IDs/names (*)\n"
+    NBSP NBSP "T" NBSP NBSP NBSP "display thread IDs/names\n"
+    NBSP NBSP "x" NBSP NBSP NBSP "do not display function execution times\n"
+    NBSP NBSP "X" NBSP NBSP NBSP "display function execution times (*)\n"
+    NBSP NBSP "z" NBSP NBSP NBSP "display local time (*)\n"
+    NBSP NBSP "Z" NBSP NBSP NBSP "display UTC time\n"
     "An asterisk (*) indicates that the setting is enabled by default",
     applyLogFmt },
   { &clGroup, "log-out", nullopt, true, "OUT",
@@ -264,6 +282,7 @@ formatExecTime(const TimePoint& t1, const TimePoint& t2) {
 string
 formatTimePoint(const TimePoint& tp) {
   auto formatImpl = [](const auto& ctp) {
+    // Note we're using `std::format` here because `fmt::format` doesn't support `chrono::zoned_time`
     if (logFmt.utc) {
       return std::format("{:%FT%TZ} ", ctp);
     } else {
@@ -272,7 +291,9 @@ formatTimePoint(const TimePoint& tp) {
     }
   };
 
-  if (logFmt.secondsRez == 3) {
+  if (logFmt.secondsRez == 0) {
+    return formatImpl(time_point_cast<chrono::seconds>(tp));
+  } else if (logFmt.secondsRez == 3) {
     return formatImpl(time_point_cast<chrono::milliseconds>(tp));
   } else if (logFmt.secondsRez == 6) {
     return formatImpl(time_point_cast<chrono::microseconds>(tp));
@@ -316,28 +337,51 @@ logImpl(
     const TimePoint& time,
     string_view msg) {
   // Item: time point
-  string s = formatTimePoint(time);
+  string s = formatTimePoint(time); // Formats with a trailing space
   out.write(s);
   size_t indent = s.size();
+
+  // Item: thread ID/name
+  if (logFmt.threadIds) {
+    auto threadId = this_thread::get_id();
+    string s;
+    auto name = ROCKET_THREAD_NAME();
+    if (not name.empty()) {
+      // Use thread name
+      s = name;
+      if (s.size() > THREAD_WIDTH) {
+        s = s.substr(0, THREAD_WIDTH - 1) + "…"; // Cut name on the right side
+      }
+    } else {
+      // Use thread ID
+      s = fmt::format("{}", threadId);
+      if (s.size() > THREAD_WIDTH) {
+        s = "…" + s.substr(s.size() - THREAD_WIDTH + 1); // Cut ID on the left side
+      }
+    }
+    out.print("{: <{}} ", s, THREAD_WIDTH);
+    indent += THREAD_WIDTH + 1;
+  }
 
   // Item: log ID
   auto it = definedIds.left.find(logId);
   ROCKET_ASSERT(it != definedIds.left.end());
   auto id = string(it->second);
-  if (id.size() > 16) {
-    id = id.substr(0, 15) + "…";
+  if (id.size() > LOG_ID_WIDTH) {
+    id = id.substr(0, LOG_ID_WIDTH - 1) + "…"; // Cut ID on the right side
   }
-  out.print("{: <16} ", id);
+  out.print("{: <{}} ", id, LOG_ID_WIDTH);
   size_t idIndent = indent; // We need this for multi-line messages later
-  indent += 17; // 16 chars + 1 space
+  indent += LOG_ID_WIDTH + 1;
 
   // Item: log level
   if (level > LogLevel::none) {
-    out.write(fmt::format("[{: <5}] ", level)); // Width is 8
+    out.write(LEVEL_DISPLAY.at(level));
+    out.write(' '); // Width is 6
   } else {
-    out.write("        "); // 8 spaces
+    out.write("      "); // 6 spaces
   }
-  indent += 8;
+  indent += 6;
 
   // Item: Indent by stack level
   out.print("{: <{}}", "", 2 * stackLevel);

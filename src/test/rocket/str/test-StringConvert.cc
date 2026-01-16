@@ -22,10 +22,10 @@ TEST(StringConvert, bool) {
 
   EXPECT_THAT(
       [] { toType<type>("foo"); },
-      ThrowsMessage<InvalidState>(HasSubstr("Cannot parse \"foo\" as `bool`")));
+      ThrowsMessage<InvalidState>(HasSubstr("Cannot scan \"foo\" as `bool`")));
   EXPECT_THAT(
       [] { toType<type>("falsex"); },
-      ThrowsMessage<InvalidState>(HasSubstr("Cannot parse \"falsex\" as `bool`")));
+      ThrowsMessage<InvalidState>(HasSubstr("Cannot scan \"falsex\" as `bool`")));
 }
 
 TEST(StringConvert, int) {
@@ -36,10 +36,10 @@ TEST(StringConvert, int) {
 
   EXPECT_THAT(
       [] { toType<type>("foo"); },
-      ThrowsMessage<InvalidState>(HasSubstr("Cannot parse \"foo\" as `int`")));
+      ThrowsMessage<InvalidState>(HasSubstr("Cannot scan \"foo\" as `int`")));
   EXPECT_THAT(
       [] { toType<type>("1x"); },
-      ThrowsMessage<InvalidState>(HasSubstr("Cannot parse \"1x\" as `int`")));
+      ThrowsMessage<InvalidState>(HasSubstr("Cannot scan \"1x\" as `int`")));
 }
 
 TEST(StringConvert, int128) {
@@ -50,10 +50,10 @@ TEST(StringConvert, int128) {
 
   EXPECT_THAT(
       [] { toType<type>("foo"); },
-      ThrowsMessage<InvalidState>(HasSubstr("Cannot parse \"foo\" as `__int128`")));
+      ThrowsMessage<InvalidState>(HasSubstr("Cannot scan \"foo\" as `__int128`")));
   EXPECT_THAT(
       [] { toType<type>("1x"); },
-      ThrowsMessage<InvalidState>(HasSubstr("Cannot parse \"1x\" as `__int128`")));
+      ThrowsMessage<InvalidState>(HasSubstr("Cannot scan \"1x\" as `__int128`")));
 }
 
 TEST(StringConvert, longDouble) {
@@ -70,10 +70,10 @@ TEST(StringConvert, longDouble) {
 
   EXPECT_THAT(
       [] { toType<type>("foo"); },
-      ThrowsMessage<InvalidState>(HasSubstr("Cannot parse \"foo\" as `long double`")));
+      ThrowsMessage<InvalidState>(HasSubstr("Cannot scan \"foo\" as `long double`")));
   EXPECT_THAT(
       [] { toType<type>("1x"); },
-      ThrowsMessage<InvalidState>(HasSubstr("Cannot parse \"1x\" as `long double`")));
+      ThrowsMessage<InvalidState>(HasSubstr("Cannot scan \"1x\" as `long double`")));
 }
 
 TEST(StringConvert, enum) {
@@ -83,10 +83,10 @@ TEST(StringConvert, enum) {
 
   EXPECT_THAT(
       [] { toType<type>("foo"); },
-      ThrowsMessage<InvalidState>(HasSubstr("Cannot parse \"foo\" as `rocket::log::LogLevel`")));
+      ThrowsMessage<InvalidState>(HasSubstr("Cannot scan \"foo\" as `rocket::log::LogLevel`")));
   EXPECT_THAT(
       [] { toType<type>("tracex"); },
-      ThrowsMessage<InvalidState>(HasSubstr("Cannot parse \"tracex\" as `rocket::log::LogLevel`")));
+      ThrowsMessage<InvalidState>(HasSubstr("Cannot scan \"tracex\" as `rocket::log::LogLevel`")));
 }
 
 // EOF

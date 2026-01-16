@@ -17,13 +17,13 @@ namespace rocket::str::message {
 // Functions ------------------------------------------------------------------------------------------------
 
 /**
- * Makes a message saying the input @p input cannot be parsed as a value of type @p type.
+ * Makes a message saying the input @p input cannot be scanned as a value of type @p type.
  *
  * @param input the input
  * @param type a #rocket::Type value
  * @return a message
  */
-std::string cannotParseAs(std::string_view input, const Type& type);
+std::string cannotScanAs(std::string_view input, const Type& type);
 
 /**
  * Makes a message saying there is an overflow of type @p type.

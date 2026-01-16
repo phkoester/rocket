@@ -132,7 +132,7 @@
       if (it != ns::name##Map__.right.end()) { \
         return it->second; \
       } else { \
-        throw ::rocket::InvalidState(::rocket::str::message::cannotParseAs(s, ::rocket::Type::of<ns::type>())); \
+        throw ::rocket::InvalidState(::rocket::str::message::cannotScanAs(s, ::rocket::Type::of<ns::type>())); \
       } \
     }
 
