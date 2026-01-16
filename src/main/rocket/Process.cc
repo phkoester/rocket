@@ -160,7 +160,7 @@ Process::init(
     bool quickExit) {
   ROCKET_MUTEX_LOCK(processMutex);
 
-  ROCKET_ASSERT(this_thread::get_id() == MAIN_THREAD_ID, "Process::init must be called in the main thread");
+  ROCKET_ASSERT(this_thread::get_id() == MAIN_THREAD_ID, "`Process::init` must be called in the main thread");
   ROCKET_ASSERT(not inited_, "Process already initialized");
 
   // Set the C locale from the environment
@@ -168,7 +168,7 @@ Process::init(
   string localeName = locale ? locale->name() : "";
   setlocale(LC_ALL, localeName.c_str());
 
-  // Set the C++ locale from the environment, add `char32_t` support to STL streams
+  // Set the C++ locale from the environment
 
   initLocale_ = locale ? *locale : std::locale(localeName);
   systemLocale_ = std::locale::global(initLocale_);

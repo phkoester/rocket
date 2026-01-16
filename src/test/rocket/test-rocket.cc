@@ -6,39 +6,36 @@
 
 // `static_assert` ------------------------------------------------------------------------------------------
 
-static_assert(sizeof(char32_t) == 4);
-static_assert(is_unsigned_v<char32_t>);
-static_assert(sizeof(char32_t) == sizeof(U' '));
-static_assert(is_same_v<decltype(U' '), char32_t>);
-static_assert(is_same_v<decltype(0.0L), long double>);
+static_assert(is_signed_v<char>);
+static_assert(sizeof(char) == 1);
+static_assert(sizeof(char) == sizeof(' '));
+static_assert(is_unsigned_v<char32>);
+static_assert(sizeof(char32) == 4);
+static_assert(sizeof(char32) == sizeof(U' '));
+
+static_assert(sizeof(i8) == 1);
+static_assert(sizeof(i16) == 2);
+static_assert(sizeof(i32) == 4);
+static_assert(sizeof(i64) == 8);
+static_assert(sizeof(i128) == 16);
+
+static_assert(is_same_v<u64, size_t>);
+
+static_assert(sizeof(f32) == 4);
+static_assert(is_same_v<decltype(1.0F), f32>);
+static_assert(sizeof(f64) == 8);
+static_assert(is_same_v<decltype(1.0), f64>);
+static_assert(sizeof(f128) == 16);
+static_assert(is_same_v<decltype(0.0L), f128>);
 
 // `TEST` ---------------------------------------------------------------------------------------------------
 
-/**
- * Tests that the introductory table in `rocket.h` is correct.
- */
-TEST(rocket, sizeof) {
-  EXPECT_EQ(sizeof(char), 1);
-  EXPECT_EQ(sizeof(std::byte), 1);
-  EXPECT_EQ(sizeof(short), 2);
-  EXPECT_EQ(sizeof(wchar_t), 4);
-  EXPECT_EQ(sizeof(char32_t), 4);
-  EXPECT_EQ(sizeof(int), 4);
-  EXPECT_EQ(sizeof(float), 4);
-  EXPECT_EQ(sizeof(long), 8);
-  EXPECT_EQ(sizeof(long long), 8);
-  EXPECT_EQ(sizeof(double), 8);
-  EXPECT_EQ(sizeof(void*), 8);
-  EXPECT_EQ(sizeof(int128_t), 16);
-  EXPECT_EQ(sizeof(long double), 16);
-}
-
-TEST(rocket, int128OpInput) {
+TEST(rocket, i128OpInput) {
   using compareType = int;
   compareType compare;
   auto compareLimits = numeric_limits<compareType>();
 
-  using type = int128_t;
+  using type = i128;
   type v;
   auto limits = numeric_limits<type>();
 
@@ -207,8 +204,8 @@ TEST(rocket, int128OpInput) {
   }
 }
 
-TEST(base, int128OpOutput) {
-  using type = int128_t;
+TEST(base, i128OpOutput) {
+  using type = i128;
 
   auto limits = numeric_limits<type>();
 
@@ -225,12 +222,12 @@ TEST(base, int128OpOutput) {
   }
 }
 
-TEST(base, uint128OpInput) {
+TEST(base, u128OpInput) {
   using compareType = uint;
   compareType compare;
   auto compareLimits = numeric_limits<compareType>();
 
-  using type = uint128_t;
+  using type = u128;
   type v;
   auto limits = numeric_limits<type>();
 
@@ -401,8 +398,8 @@ TEST(base, uint128OpInput) {
   }
 }
 
-TEST(base, uint128OpOutput) {
-  using type = uint128_t;
+TEST(base, u128OpOutput) {
+  using type = u128;
 
   auto limits = numeric_limits<type>();
 

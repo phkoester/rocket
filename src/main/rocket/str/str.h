@@ -1,7 +1,7 @@
 /**
  * @file str.h
  *
- * A string library, ready for `char` (UTF-8) and `char32_t` (UTF-32).
+ * A string library, ready for `char` (UTF-8) and `char32` (UTF-32).
  */
 
 #include "rocket/type-traits.h"
@@ -124,12 +124,12 @@ std::basic_string_view<C>
 removeLeading(
     std::basic_string_view<C> s,
     std::basic_string_view<C> sub,
-    size_t max = std::numeric_limits<size_t>::max()) {
+    u64 max = std::numeric_limits<u64>::max()) {
   if (sub.empty() || sub.size() > s.size())
     return s;
 
   std::basic_string_view<C> ret(s);
-  for (size_t i = 0; i < max; ++i) {
+  for (u64 i = 0; i < max; ++i) {
     std::basic_string_view<C> leading(ret.begin(), sub.size());
     if (leading == sub)
       ret.remove_prefix(sub.size());
@@ -155,12 +155,12 @@ std::basic_string_view<C>
 removeTrailing(
     std::basic_string_view<C> s,
     std::basic_string_view<C> sub,
-    size_t max = std::numeric_limits<size_t>::max()) {
+    u64 max = std::numeric_limits<u64>::max()) {
   if (sub.empty() || sub.size() > s.size())
     return s;
 
   std::basic_string_view<C> ret(s);
-  for (size_t i = 0; i < max; ++i) {
+  for (u64 i = 0; i < max; ++i) {
     auto begin = ret.end() - sub.size();
     std::basic_string_view<C> trailing(begin, ret.end());
     if (trailing == sub)
@@ -181,10 +181,10 @@ removeTrailing(
  */
 template<typename C> requires IsChar<C>
 [[nodiscard]] std::basic_string<C>
-repeat(const std::basic_string_view<C> s, size_t n) {
+repeat(const std::basic_string_view<C> s, u64 n) {
   std::basic_string<C> ret;
   ret.reserve(n * s.size());
-  for (size_t i = 0; i < n; ++i)
+  for (u64 i = 0; i < n; ++i)
     ret.append(s);
   return ret;
 }
@@ -202,13 +202,13 @@ repeat(const std::basic_string_view<C> s, size_t n) {
  * @return the number of replacements made
  */
 template<typename C> requires IsChar<C>
-size_t
+u64
 replaceIn(
     std::basic_string<C>& s,
     std::basic_string_view<C> from,
     std::basic_string_view<C> to,
-    size_t max = std::numeric_limits<size_t>::max()) {
-  size_t pos = 0, ret = 0;
+    u64 max = std::numeric_limits<u64>::max()) {
+  u64 pos = 0, ret = 0;
   while ((pos = s.find(from, pos)) != std::string::npos) {
     s.replace(pos, from.size(), to);
     if (++ret >= max)
@@ -254,7 +254,7 @@ void upperIn(std::u32string& s);
  * @param width the width to wrap to
  * @return a new string, containing the wrapped lines separated by `'\n'`.
  */
-std::string wrap(std::string_view s, size_t leftIndent = 0, size_t width = 80);
+std::string wrap(std::string_view s, u64 leftIndent = 0, u64 width = 80);
 
 } // namespace rocket::str
 

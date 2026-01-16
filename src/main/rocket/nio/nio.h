@@ -20,11 +20,11 @@ namespace rocket::nio {
 /**
  * The default buffer size in bytes.
  */
-static constexpr size_t DEFAULT_BUFFER_SIZE = 64 * 1'024; // 64 KiB
+static constexpr u64 DEFAULT_BUFFER_SIZE = 64 * 1'024; // 64 KiB
 /**
   * The minimum buffer size in bytes.
   */
-static constexpr size_t MIN_BUFFER_SIZE = 64;
+static constexpr u64 MIN_BUFFER_SIZE = 64;
 
 // `Io` -----------------------------------------------------------------------------------------------------
 
@@ -34,11 +34,6 @@ static constexpr size_t MIN_BUFFER_SIZE = 64;
  * An I/O instance, either a sink or a source.
  */
 struct Io {
-  /// The offset type.
-  using Offset = long;
-  /// The position type.
-  using Position = unsigned long;
-
   /// @dtor
   virtual ~Io() {}
 
@@ -118,7 +113,7 @@ struct Sink : Io {
    * @return the number of bytes written
    */
   template<typename... T>
-  size_t
+  u64
   print(fmt::format_string<T...> fmt, T&&... args) {
     auto formatted = fmt::format(fmt, std::forward<T>(args)...);
     return write(formatted);
@@ -133,7 +128,7 @@ struct Sink : Io {
    * @return the number of bytes written
    */
   template<typename... T>
-  size_t
+  u64
   print(const std::locale& locale, fmt::format_string<T...> fmt, T&&... args) {
     auto formatted = fmt::format(locale, fmt, std::forward<T>(args)...);
     return write(formatted);
@@ -147,7 +142,7 @@ struct Sink : Io {
    * @return the number of bytes written
    */
   template<typename... T>
-  size_t
+  u64
   println(fmt::format_string<T...> fmt, T&&... args) {
     auto ret = print(fmt, std::forward<T>(args)...);
     ret += write('\n');
@@ -164,7 +159,7 @@ struct Sink : Io {
    * @return the number of bytes written
    */
   template<typename... T>
-  size_t
+  u64
   println(const std::locale& locale, fmt::format_string<T...> fmt, T&&... args) {
     auto ret = print(locale, fmt, std::forward<T>(args)...);
     ret += write('\n');
@@ -178,7 +173,7 @@ struct Sink : Io {
    * @param c the character
    * @return the number of bytes written
    */
-  size_t
+  u64
   write(char c) {
     return write(std::string_view(&c, 1));
   }
@@ -189,7 +184,7 @@ struct Sink : Io {
    * @param in the string to write
    * @return the number of bytes written
    */
-  virtual size_t write(std::string_view in) = 0;
+  virtual u64 write(std::string_view in) = 0;
 
   /**
    * Writes a string to the sink.
@@ -199,8 +194,8 @@ struct Sink : Io {
    * @param n the number of bytes to write
    * @return the number of bytes written
    */
-  size_t
-  write(std::string_view in, size_t offset, size_t n = std::string_view::npos) {
+  u64
+  write(std::string_view in, u64 offset, u64 n = std::string_view::npos) {
     return write(in.substr(offset, n));
   }
 
@@ -210,7 +205,7 @@ struct Sink : Io {
    * @param in the string to write
    * @return the number of bytes written
    */
-  size_t writeln(std::string_view in);
+  u64 writeln(std::string_view in);
 
   /**
    * Writes a string and a line feed to the sink.
@@ -220,8 +215,8 @@ struct Sink : Io {
    * @param n the number of bytes to write
    * @return the number of bytes written
    */
-  size_t
-  writeln(std::string_view in, size_t offset, size_t n = std::string_view::npos) {
+  u64
+  writeln(std::string_view in, u64 offset, u64 n = std::string_view::npos) {
     return writeln(in.substr(offset, n));
   }
 
@@ -245,7 +240,7 @@ protected:
    * @param underlying the underlying sink
    * @param size the size of the buffer
    */
-  explicit BufferedSink(Sink& underlying, size_t size = DEFAULT_BUFFER_SIZE);
+  explicit BufferedSink(Sink& underlying, u64 size = DEFAULT_BUFFER_SIZE);
 
   ~BufferedSink() override;
 
@@ -261,14 +256,14 @@ protected:
 
   bool open() const override { return underlying_.open(); } // cppcheck-suppress uselessOverride
 
-  size_t write(std::string_view in) override;
+  u64 write(std::string_view in) override;
 
 ROCKET_TESTING_PRIVATE:
 
   Sink& underlying_; ///< The underlying sink.
-  size_t size_; ///< The size of the buffer.
+  u64 size_; ///< The size of the buffer.
   std::unique_ptr<char[]> buf_; ///< The buffer.
-  size_t pos_ = 0; ///< The current position in the buffer.
+  u64 pos_ = 0; ///< The current position in the buffer.
 
   /// Flushes the buffer to the underlying sink.
   void flushBuffer();
@@ -327,7 +322,7 @@ struct FileSink : Sink {
 
   int flush() override;
 
-  size_t write(std::string_view in) override;
+  u64 write(std::string_view in) override;
 
 ROCKET_TESTING_PRIVATE:
 
@@ -349,7 +344,7 @@ struct NullSink : Sink {
 
   int flush() override;
 
-  size_t write(std::string_view in) override;
+  u64 write(std::string_view in) override;
 };
 
 // `SpanSink` -----------------------------------------------------------------------------------------------
@@ -373,12 +368,12 @@ struct SpanSink : Sink {
 
   int flush() override;
 
-  size_t write(std::string_view in) override;
+  u64 write(std::string_view in) override;
 
 private:
 
   std::span<char> out_;
-  size_t pos_ = 0;
+  u64 pos_ = 0;
 };
 
 // `StreamSink` ---------------------------------------------------------------------------------------------
@@ -405,7 +400,7 @@ struct StreamSink : Sink {
 
   int flush() override;
 
-  size_t write(std::string_view in) override;
+  u64 write(std::string_view in) override;
 
 private:
 
@@ -448,7 +443,7 @@ struct StringSink : Sink {
    */
   const std::string& str() const { return ptr_ ? *ptr_ : owned_; }
 
-  size_t write(std::string_view in) override;
+  u64 write(std::string_view in) override;
 
 private:
 
@@ -486,7 +481,7 @@ struct Source : Io {
    * @param out the character to read
    * @return the number of bytes read
    */
-  size_t read(char& out) { return read({ &out, 1 }); }
+  u64 read(char& out) { return read({ &out, 1 }); }
 
   /**
    * Reads as many characters as available into a span.
@@ -494,7 +489,7 @@ struct Source : Io {
    * @param out the span to read into
    * @return the number of bytes read
    */
-  virtual size_t read(std::span<char> out) = 0;
+  virtual u64 read(std::span<char> out) = 0;
 
   /**
    * Reads a line from a source into a string.
@@ -513,7 +508,7 @@ struct Source : Io {
    * @param out the span to read into
    * @return the number of bytes read
    */
-  size_t readln(std::span<char> out);
+  u64 readln(std::span<char> out);
 
   /**
    * Seeks to a new position in the source.
@@ -522,14 +517,14 @@ struct Source : Io {
    * @param mode the seek mode
    * @return 0 if successful, an error code otherwise
    */
-  virtual int seek(Offset offset, SeekMode mode = SeekMode::beg) = 0;
+  virtual int seek(i64 offset, SeekMode mode = SeekMode::beg) = 0;
 
   /**
    * Returns the current input position
    *
    * @return the current input position, or #rocket::NPOS if that position cannot be determined
    */
-  virtual Position tell() = 0;
+  virtual u64 tell() = 0;
 
 protected:
 
@@ -551,7 +546,7 @@ struct BufferedSource : Source {
    * @param underlying the underlying source
    * @param size the size of the buffer
    */
-   explicit BufferedSource(Source& underlying, size_t size = DEFAULT_BUFFER_SIZE);
+   explicit BufferedSource(Source& underlying, u64 size = DEFAULT_BUFFER_SIZE);
 
   ~BufferedSource() override;
 
@@ -565,25 +560,25 @@ struct BufferedSource : Source {
 
   bool open() const override { return underlying_.open(); } // cppcheck-suppress uselessOverride
 
-  size_t read(std::span<char> out) override;
+  u64 read(std::span<char> out) override;
 
-  int seek(Offset offset, SeekMode mode = SeekMode::beg) override;
+  int seek(i64 offset, SeekMode mode = SeekMode::beg) override;
 
-  Position tell() override;
+  u64 tell() override;
 
 ROCKET_TESTING_PRIVATE:
 
   Source& underlying_; ///< The underlying source.
-  size_t size_; ///< The size of the buffer.
+  u64 size_; ///< The size of the buffer.
   std::unique_ptr<char[]> buf_; ///< The buffer.
-  size_t bufPos_ = NPOS; ///< Where buffer position 0 maps to in the underlying source.
-  size_t pos_ = 0; ///< The current position in the buffer.
+  u64 bufPos_ = NPOS; ///< Where buffer position 0 maps to in the underlying source.
+  u64 pos_ = 0; ///< The current position in the buffer.
   /**
    * This is the actual input size of the buffer, which may be less than its allocated size.
    *
    * If this is 0, #pos_ must be 0, too, and the buffer is considered to be invalid.
    */
-  size_t end_ = 0;
+  u64 end_ = 0;
 };
 
 // `FileSource` ---------------------------------------------------------------------------------------------
@@ -633,11 +628,11 @@ struct FileSource : Source {
 
   int fd() override;
 
-  size_t read(std::span<char> out) override;
+  u64 read(std::span<char> out) override;
 
-  int seek(Offset offset, SeekMode mode = SeekMode::beg) override;
+  int seek(i64 offset, SeekMode mode = SeekMode::beg) override;
 
-  Position tell() override;
+  u64 tell() override;
 
 ROCKET_TESTING_PRIVATE:
 
@@ -657,11 +652,11 @@ ROCKET_TESTING_PRIVATE:
 
   int fd() override { return -1; }
 
-  size_t read(std::span<char> out) override;
+  u64 read(std::span<char> out) override;
 
-  int seek(Offset offset, SeekMode mode = SeekMode::beg) override;
+  int seek(i64 offset, SeekMode mode = SeekMode::beg) override;
 
-  Position tell() override;
+  u64 tell() override;
 };
 
 // `StreamSource` -------------------------------------------------------------------------------------------
@@ -686,11 +681,11 @@ struct StreamSource : Source {
 
   int fd() override;
 
-  size_t read(std::span<char> out) override;
+  u64 read(std::span<char> out) override;
 
-  int seek(Offset offset, SeekMode mode = SeekMode::beg) override;
+  int seek(i64 offset, SeekMode mode = SeekMode::beg) override;
 
-  Position tell() override;
+  u64 tell() override;
 
 private:
 
@@ -718,16 +713,16 @@ struct StringSource : Source {
 
   int fd() override { return -1; }
 
-  size_t read(std::span<char> out) override;
+  u64 read(std::span<char> out) override;
 
-  int seek(Offset offset, SeekMode mode = SeekMode::beg) override;
+  int seek(i64 offset, SeekMode mode = SeekMode::beg) override;
 
-  Position tell() override;
+  u64 tell() override;
 
 private:
 
   std::string_view in_;
-  size_t pos_ = 0;
+  u64 pos_ = 0;
 };
 
 // Variables ------------------------------------------------------------------------------------------------

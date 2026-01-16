@@ -8,9 +8,7 @@
 
 #include "rocket/rocket.h"
 
-#include <cstdint> // `int8_t`, `uint8_t`, ...
 #include <type_traits>
-
 namespace rocket {
 
 // `Purge` --------------------------------------------------------------------------------------------------
@@ -23,7 +21,7 @@ using Purge = std::remove_cvref<T>;
 template<typename T>
 using PurgeType = Purge<T>::type;
 
-static_assert(std::is_same_v<PurgeType<const volatile int>, int>);
+static_assert(std::is_same_v<PurgeType<const volatile i32>, i32>);
 static_assert(std::is_same_v<PurgeType<const std::true_type&>, std::true_type>);
 
 // `Char` ---------------------------------------------------------------------------------------------------
@@ -39,11 +37,11 @@ struct Char<1> {
 };
 
 /**
- * 4-byte character: `char32_t`.
+ * 4-byte character: `char32`.
  */
 template<>
 struct Char<4> {
-  using Type = char32_t; ///< @type_alias
+  using Type = char32; ///< @type_alias
 };
 
 // `Int` ----------------------------------------------------------------------------------------------------
@@ -51,43 +49,43 @@ struct Char<4> {
 template<int N> struct Int;
 
 /**
- * 1-byte signed integer: `int8_t`.
+ * 1-byte signed integer: `i8`.
  */
 template<>
 struct Int<1> {
-  using Type = int8_t; ///< @type_alias
+  using Type = i8; ///< @type_alias
 };
 
 /**
- * 2-byte signed integer: `int16_t`.
+ * 2-byte signed integer: `i16`.
  */
 template<>
 struct Int<2> {
-  using Type = int16_t; ///< @type_alias
+  using Type = i16; ///< @type_alias
 };
 
 /**
- * 4-byte signed integer: `int32_t`.
+ * 4-byte signed integer: `i32`.
  */
 template<>
 struct Int<4> {
-  using Type = int32_t; ///< @type_alias
+  using Type = i32; ///< @type_alias
 };
 
 /**
- * 8-byte signed integer: `int64_t`.
+ * 8-byte signed integer: `i64`.
  */
 template<>
 struct Int<8> {
-  using Type = int64_t; ///< @type_alias
+  using Type = i64; ///< @type_alias
 };
 
 /**
- * 16-byte signed integer: `int128_t`.
+ * 16-byte signed integer: `i128`.
  */
 template<>
 struct Int<16> {
-  using Type = int128_t; ///< @type_alias
+  using Type = i128; ///< @type_alias
 };
 
 // `Uint` ---------------------------------------------------------------------------------------------------
@@ -95,43 +93,43 @@ struct Int<16> {
 template<int N> struct Uint;
 
 /**
- * 1-byte unsigned integer: `uint8_t`.
+ * 1-byte unsigned integer: `u8`.
  */
 template<>
 struct Uint<1> {
-  using Type = uint8_t; ///< @type_alias
+  using Type = u8; ///< @type_alias
 };
 
 /**
- * 2-byte unsigned integer: `uint16_t`.
+ * 2-byte unsigned integer: `u16`.
  */
 template<>
 struct Uint<2> {
-  using Type = uint16_t; ///< @type_alias
+  using Type = u16; ///< @type_alias
 };
 
 /**
- * 4-byte unsigned integer: `uint32_t`.
+ * 4-byte unsigned integer: `u32`.
  */
 template<>
 struct Uint<4> {
-  using Type = uint32_t; ///< @type_alias
+  using Type = u32; ///< @type_alias
 };
 
 /**
- * 8-byte unsigned integer: `uint64_t`.
+ * 8-byte unsigned integer: `u64`.
  */
 template<>
 struct Uint<8> {
-  using Type = uint64_t; ///< @type_alias
+  using Type = u64; ///< @type_alias
 };
 
 /**
- * 16-byte unsigned integer: `uint128_t`.
+ * 16-byte unsigned integer: `u128`.
  */
 template<>
 struct Uint<16> {
-  using Type = uint128_t; ///< @type_alias
+  using Type = u128; ///< @type_alias
 };
 
 // `Float` --------------------------------------------------------------------------------------------------
@@ -139,40 +137,28 @@ struct Uint<16> {
 template<int N> struct Float;
 
 /**
- * 4-byte floating point: `float`.
- *
- * @todo Find a portable way to express a four-byte floating point.
+ * 4-byte floating point: `f32`.
  */
 template<>
 struct Float<4> {
-  using Type = float; ///< @type_alias
+  using Type = f32; ///< @type_alias
 };
 
-static_assert(sizeof(Float<4>::Type) == 4);
-
 /**
- * 8-byte floating point: `double`.
- *
- * @todo Find a portable way to express an eight-byte floating point.
+ * 8-byte floating point: `f64`.
  */
 template<>
 struct Float<8> {
-  using Type = double; ///< @type_alias
+  using Type = f64; ///< @type_alias
 };
 
-static_assert(sizeof(Float<8>::Type) == 8);
-
 /**
- * 16-byte floating point: `long double`.
- *
- * @todo Find a portable way to express a sixteen-byte floating point.
+ * 16-byte floating point: `f128`.
  */
 template<>
 struct Float<16> {
-  using Type = long double; ///< @type_alias
+  using Type = f128; ///< @type_alias
 };
-
-static_assert(sizeof(Float<16>::Type) == 16);
 
 // Concepts -------------------------------------------------------------------------------------------------
 

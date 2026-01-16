@@ -47,7 +47,7 @@ Io::checkOpen() {
 
 // `Sink` ---------------------------------------------------------------------------------------------------
 
-size_t
+u64
 Sink::writeln(std::string_view in) {
   if (not checkOpen()) {
     return 0;
@@ -61,7 +61,7 @@ Sink::writeln(std::string_view in) {
 
 // `BufferedSink` -------------------------------------------------------------------------------------------
 
-BufferedSink::BufferedSink(Sink& underlying, size_t size) :
+BufferedSink::BufferedSink(Sink& underlying, u64 size) :
     underlying_(underlying),
     size_(size) {
   ROCKET_CHECK(size, size >= MIN_BUFFER_SIZE);
@@ -116,7 +116,7 @@ BufferedSink::flushBuffer() {
   }
 }
 
-size_t
+u64
 BufferedSink::write(string_view in) {
   if (not checkOpen()) {
     return error();
@@ -128,7 +128,7 @@ BufferedSink::write(string_view in) {
   while (not rest.empty()) {
     // Find out if the buffer can fulfill the request
 
-    size_t available = size_ - pos_;
+    u64 available = size_ - pos_;
     if (rest.size() <= available) {
       // Yes, it can: Store the rest in the buffer, exit loop
       memcpy(&buf_[pos_], rest.data(), rest.size());
@@ -223,13 +223,13 @@ FileSink::flush() {
   return ret;
 }
 
-size_t
+u64
 FileSink::write(string_view in) {
   if (not checkOpen()) {
     return error_;
   }
 
-  size_t ret = std::fwrite(in.data(), 1, in.size(), file_);
+  u64 ret = std::fwrite(in.data(), 1, in.size(), file_);
   LOG("fwrite=" << ret << ", in.size=" << in.size() << ", ferror=" << ferror(file_));
   error_ = ferror(file_);
   ROCKET_ASSERT(ret == in.size() || error_ != 0);
@@ -265,7 +265,7 @@ NullSink::flush() {
   return error_;
 }
 
-size_t
+u64
 NullSink::write(string_view in) {
   checkOpen();
   return 0;
@@ -293,14 +293,14 @@ SpanSink::flush() {
   return error_;
 }
 
-size_t
+u64
 SpanSink::write(string_view in) {
   if (not checkOpen()) {
     return error_;
   }
 
-  size_t available = out_.size() - pos_;
-  size_t ret = min(available, in.size());
+  u64 available = out_.size() - pos_;
+  u64 ret = min(available, in.size());
   if (ret > 0) {
     memcpy(&out_[pos_], in.data(), ret);
     pos_ += ret;
@@ -354,13 +354,13 @@ StreamSink::flush() {
   return error_;
 }
 
-size_t
+u64
 StreamSink::write(string_view in) {
   if (not checkOpen()) {
     return error_;
   }
 
-  size_t ret = os_.rdbuf()->sputn(in.data(), in.size());
+  u64 ret = os_.rdbuf()->sputn(in.data(), in.size());
   if (ret != in.size()) {
     os_.setstate(ios_base::badbit);
   }
@@ -391,7 +391,7 @@ StringSink::flush() {
   return error_;
 }
 
-size_t
+u64
 StringSink::write(string_view in) {
   if (not checkOpen()) {
     return 0;
@@ -417,7 +417,7 @@ Source::read() {
   auto buf = make_unique<char[]>(DEFAULT_BUFFER_SIZE);
   span<char> out(&buf[0], DEFAULT_BUFFER_SIZE);
   while (true) {
-    size_t n = read(out);
+    u64 n = read(out);
     if (n > 0) {
       ret.append(out.data(), n);
     }
@@ -439,7 +439,7 @@ Source::readln() {
 
   while (true) {
     char c;
-    size_t result = read(c);
+    u64 result = read(c);
     if (result == 0) {
       break;
     }
@@ -458,7 +458,7 @@ Source::readln() {
   return ret;
 }
 
-size_t
+u64
 Source::readln(span<char> out) {
   if (not checkOpen()) {
     return 0;
@@ -469,7 +469,7 @@ Source::readln(span<char> out) {
 
   while (it != out.end()) {
     char c;
-    size_t result = read(c);
+    u64 result = read(c);
     if (result == 0) {
       break;
     }
@@ -481,7 +481,7 @@ Source::readln(span<char> out) {
   }
 
   // Remove trailing `\r` if it precedes the `\n`
-  size_t ret = it - out.begin();
+  u64 ret = it - out.begin();
   if (crlf && ret > 0 && *(it - 1) == '\r') {
     --ret;
   }
@@ -490,7 +490,7 @@ Source::readln(span<char> out) {
 
 // `BufferedSource` -----------------------------------------------------------------------------------------
 
-BufferedSource::BufferedSource(Source& underlying, size_t size) :
+BufferedSource::BufferedSource(Source& underlying, u64 size) :
     underlying_(underlying),
     size_(size) {
   ROCKET_CHECK(size, size >= MIN_BUFFER_SIZE);
@@ -525,7 +525,7 @@ BufferedSource::fd() {
   return underlying_.fd();
 }
 
-size_t
+u64
 BufferedSource::read(span<char> out) {
   if (not checkOpen()) {
     return 0;
@@ -533,7 +533,7 @@ BufferedSource::read(span<char> out) {
 
   // Loop while there is data to read
 
-  size_t ret = 0;
+  u64 ret = 0;
 
   auto rest = out;
   while (not rest.empty()) {
@@ -551,7 +551,7 @@ BufferedSource::read(span<char> out) {
 
     // Find out if the buffer can fulfill the request
 
-    size_t available = end_ - pos_;
+    u64 available = end_ - pos_;
     if (rest.size() <= available) {
       // Yes, it can: Copy the buffer to the rest, exit loop
       LOG("Buffer can fulfill request, copying " << rest.size() << " bytes from buffer");
@@ -578,13 +578,13 @@ BufferedSource::read(span<char> out) {
 }
 
 int
-BufferedSource::seek(Offset offset, SeekMode mode) {
+BufferedSource::seek(i64 offset, SeekMode mode) {
   if (not checkOpen()) {
     return error_;
   }
 
   // Get the old position so we can restore it later
-  Position oldTell = underlying_.tell();
+  u64 oldTell = underlying_.tell();
   if (oldTell == NPOS) {
     LOG("Getting old position failed; invalidating buffer");
     bufPos_ = NPOS;
@@ -596,7 +596,7 @@ BufferedSource::seek(Offset offset, SeekMode mode) {
   int ret = underlying_.seek(offset, mode);
 
   // Get the new position se we can see if we have a buffer hit
-  Position newTell = underlying_.tell();
+  u64 newTell = underlying_.tell();
   if (newTell == NPOS) {
     LOG("Getting new position failed; invalidating buffer");
     bufPos_ = NPOS;
@@ -613,7 +613,7 @@ BufferedSource::seek(Offset offset, SeekMode mode) {
   }
 
   // Do we have a buffer hit?
-  Position ourPos = newTell - bufPos_;
+  u64 ourPos = newTell - bufPos_;
   if (ourPos <= end_) {
     // Yes, we do: Update our position and restore the underlying position
     LOG("Going from " << pos_ << " to " << ourPos);
@@ -628,7 +628,7 @@ BufferedSource::seek(Offset offset, SeekMode mode) {
   return ret;
 }
 
-Io::Position
+u64
 BufferedSource::tell() {
   if (bufPos_ == NPOS) {
     return NPOS;
@@ -691,20 +691,20 @@ FileSource::fd() {
   return fileno(file_);
 }
 
-size_t
+u64
 FileSource::read(span<char> out) {
   if (not checkOpen()) {
     return 0;
   }
 
-  size_t ret = std::fread(out.data(), 1, out.size(), file_);
+  u64 ret = std::fread(out.data(), 1, out.size(), file_);
   LOG("fread=" << ret << ", out.size=" << out.size() << ", ferror=" << ferror(file_));
   error_ = ferror(file_);
   return ret;
 }
 
 int
-FileSource::seek(Offset offset, SeekMode mode) {
+FileSource::seek(i64 offset, SeekMode mode) {
   if (not checkOpen()) {
     return error_;
   }
@@ -726,8 +726,8 @@ FileSource::seek(Offset offset, SeekMode mode) {
 
 
   // The type of the `offset` parameter is `long`, se we can directly pass `offset`
-  static_assert(is_same_v<Offset, long>);
-  size_t ret = std::fseek(file_, offset, origin);
+  static_assert(is_same_v<i64, long>);
+  u64 ret = std::fseek(file_, offset, origin);
   LOG("fseek=" << ret << ", ferror=" << ferror(file_));
   if (ret != 0) {
     error_ = ferror(file_);
@@ -735,7 +735,7 @@ FileSource::seek(Offset offset, SeekMode mode) {
   return ret;
 }
 
-Io::Position
+u64
 FileSource::tell() {
   if (not checkOpen()) {
     return NPOS;
@@ -750,7 +750,7 @@ FileSource::tell() {
     return NPOS;
   }
   ROCKET_ASSERT(ret >= 0);
-  // Convert nonnegative `long` to `Position`
+  // Convert nonnegative `long` to `u64`
   return ret;
 }
 
@@ -771,19 +771,19 @@ NullSource::close()
   return 0;
 }
 
-size_t
+u64
 NullSource::read(span<char> out) {
   checkOpen();
   return 0;
 }
 
 int
-NullSource::seek(Offset offset, SeekMode mode) {
+NullSource::seek(i64 offset, SeekMode mode) {
   checkOpen();
   return EINVAL;
 }
 
-Io::Position
+u64
 NullSource::tell() {
   checkOpen();
   return NPOS;
@@ -819,21 +819,21 @@ StreamSource::fd() {
   }
 }
 
-size_t
+u64
 StreamSource::read(span<char> out) {
   if (not checkOpen()) {
     return 0;
   }
 
   // If less bytes than `out.size()` are read, `bad`, `fail`, and `eof` all remain `false``
-  size_t ret = is_.readsome(out.data(), out.size());
+  u64 ret = is_.readsome(out.data(), out.size());
   LOG("readsome=" << ret << ", out.size=" << out.size() << ", bad=" << is_.bad() << ", fail=" << is_.fail() << ", eof=" << is_.eof());
   error_ = is_.rdstate();
   return ret;
 }
 
 int
-StreamSource::seek(Offset offset, SeekMode mode) {
+StreamSource::seek(i64 offset, SeekMode mode) {
   if (not checkOpen()) {
     return error_;
   }
@@ -860,7 +860,7 @@ StreamSource::seek(Offset offset, SeekMode mode) {
   return error_;
 }
 
-Io::Position
+u64
 StreamSource::tell() {
   if (not checkOpen()) {
     return NPOS;
@@ -873,7 +873,7 @@ StreamSource::tell() {
   if (result < 0) {
     return NPOS;
   }
-  return static_cast<Position>(result);
+  return static_cast<u64>(result);
 }
 
 // `StringSource` -------------------------------------------------------------------------------------------
@@ -894,13 +894,13 @@ StringSource::close()
   return 0;
 }
 
-size_t
+u64
 StringSource::read(span<char> out) {
   if (not checkOpen()) {
     return 0;
   }
 
-  size_t ret = min(out.size(), in_.size() - pos_);
+  u64 ret = min(out.size(), in_.size() - pos_);
   if (ret > 0) {
     memcpy(out.data(), in_.data() + pos_, ret);
     pos_ += ret;
@@ -909,33 +909,33 @@ StringSource::read(span<char> out) {
 }
 
 int
-StringSource::seek(Offset offset, SeekMode mode) {
+StringSource::seek(i64 offset, SeekMode mode) {
   if (not checkOpen()) {
     return error_;
   }
 
-  int128_t newPos;
+  i128 newPos;
   switch (mode) {
   case SeekMode::beg:
-    newPos = to<int128_t>(offset);
+    newPos = to<i128>(offset);
     break;
   case SeekMode::cur:
-    newPos = add<int128_t>(pos_, offset);
+    newPos = add<i128>(pos_, offset);
     break;
   case SeekMode::end:
-    newPos = add<int128_t>(in_.size(), offset);
+    newPos = add<i128>(in_.size(), offset);
     break;
   default:
     ROCKET_FAIL_UNREACHABLE_CODE();
   }
 
-  newPos = max<int128_t>(0, newPos);
-  newPos = min<int128_t>(in_.size(), newPos);
-  pos_ = static_cast<size_t>(newPos);
+  newPos = max<i128>(0, newPos);
+  newPos = min<i128>(in_.size(), newPos);
+  pos_ = static_cast<u64>(newPos);
   return 0;
 }
 
-Io::Position
+u64
 StringSource::tell() {
   if (not checkOpen()) {
     return NPOS;

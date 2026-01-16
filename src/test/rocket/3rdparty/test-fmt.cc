@@ -7,7 +7,6 @@
 #include "rocket/format/format.h"
 
 #include <limits>
-#include <type_traits>
 
 // `TEST` ---------------------------------------------------------------------------------------------------
 
@@ -35,80 +34,69 @@ TEST(fmt, char32Format) {
   EXPECT_EQ(fmt::format(U"{:?}", U'€'), U"'€'");
 }
 
-TEST(fmt, int8Format) {
-  EXPECT_EQ(fmt::format("{:+}", static_cast<int8_t>(42)), "+42");
+TEST(fmt, i8Format) {
+  EXPECT_EQ(fmt::format("{:+}", static_cast<i8>(42)), "+42");
 }
 
-TEST(fmt, uint8Format) {
-  EXPECT_EQ(fmt::format("{}", static_cast<uint8_t>(-1)), "255");
+TEST(fmt, u8Format) {
+  EXPECT_EQ(fmt::format("{}", static_cast<u8>(-1)), "255");
 }
 
-TEST(fmt, int16Format) {
-  EXPECT_EQ(fmt::format("{:+}", static_cast<int16_t>(42)), "+42");
+TEST(fmt, i16Format) {
+  EXPECT_EQ(fmt::format("{:+}", static_cast<i16>(42)), "+42");
 }
 
-TEST(fmt, uint16Format) {
-  EXPECT_EQ(fmt::format("{}", static_cast<uint16_t>(-1)), "65535");
+TEST(fmt, u16Format) {
+  EXPECT_EQ(fmt::format("{}", static_cast<u16>(-1)), "65535");
 }
 
-TEST(fmt, int32Format) {
-  EXPECT_EQ(fmt::format("{:+}", static_cast<int32_t>(42)), "+42");
+TEST(fmt, i32Format) {
+  EXPECT_EQ(fmt::format("{:+}", static_cast<i32>(42)), "+42");
 }
 
-TEST(fmt, uint32Format) {
-  EXPECT_EQ(fmt::format("{}", static_cast<uint32_t>(-1)), "4294967295");
+TEST(fmt, u32Format) {
+  EXPECT_EQ(fmt::format("{}", static_cast<u32>(-1)), "4294967295");
 }
 
-TEST(fmt, int64Format) {
-  EXPECT_EQ(fmt::format("{:+}", static_cast<int64_t>(42)), "+42");
+TEST(fmt, i64Format) {
+  EXPECT_EQ(fmt::format("{:+}", static_cast<i64>(42)), "+42");
 }
 
-TEST(fmt, uint64Format) {
-  EXPECT_EQ(fmt::format("{}", static_cast<uint64_t>(-1)), "18446744073709551615");
+TEST(fmt, u64Format) {
+  EXPECT_EQ(fmt::format("{}", static_cast<u64>(-1)), "18446744073709551615");
 }
 
-TEST(fmt, int128Format) {
-  static_assert(sizeof(int128_t) == 16);
-  EXPECT_EQ(fmt::format("{:+}", static_cast<int128_t>(42)), "+42");
+TEST(fmt, i28Format) {
+  EXPECT_EQ(fmt::format("{:+}", static_cast<i128>(42)), "+42");
 }
 
-TEST(fmt, uint128Format) {
-  static_assert(sizeof(uint128_t) == 16);
-  EXPECT_EQ(fmt::format("{}", static_cast<uint128_t>(-1)), "340282366920938463463374607431768211455");
+TEST(fmt, u128Format) {
+  EXPECT_EQ(fmt::format("{}", static_cast<u128>(-1)), "340282366920938463463374607431768211455");
 }
 
-TEST(fmt, floatFormat) {
-  static_assert(sizeof(float) == 4);
-
-  EXPECT_EQ(fmt::format("{}", numeric_limits<float>::quiet_NaN()), "nan");
-  EXPECT_EQ(fmt::format("{}", numeric_limits<float>::signaling_NaN()), "nan");
-  EXPECT_EQ(fmt::format("{}", numeric_limits<float>::infinity()), "inf");
-  EXPECT_EQ(fmt::format("{}", -numeric_limits<float>::infinity()), "-inf");
+TEST(fmt, f32Format) {
+  EXPECT_EQ(fmt::format("{}", numeric_limits<f32>::quiet_NaN()), "nan");
+  EXPECT_EQ(fmt::format("{}", numeric_limits<f32>::signaling_NaN()), "nan");
+  EXPECT_EQ(fmt::format("{}", numeric_limits<f32>::infinity()), "inf");
+  EXPECT_EQ(fmt::format("{}", -numeric_limits<f32>::infinity()), "-inf");
 
   EXPECT_EQ(fmt::format("{:.5}", 0.999'999f), "1");
   EXPECT_EQ(fmt::format("{:.5}", 0.999'99f), "0.99999");
   EXPECT_EQ(fmt::format("{:.3f}", 12.1236f), "12.124"); // Round to 3 significant digits after the decimal point
-  static_assert(is_same_v<decltype(1.0f / 3), float> == true);
   EXPECT_EQ(fmt::format("{:.5}", 1.0f / 3), "0.33333");
 }
 
-TEST(fmt, doubleFormat) {
-  static_assert(sizeof(double) == 8);
-
+TEST(fmt, f64Format) {
   EXPECT_EQ(fmt::format("{:.5}", 0.999'999), "1");
   EXPECT_EQ(fmt::format("{:.5}", 0.999'99), "0.99999");
   EXPECT_EQ(fmt::format("{:.3f}", 12.1236), "12.124"); // Round to 3 significant digits after the decimal point
-  static_assert(is_same_v<decltype(1.0 / 3), double> == true);
   EXPECT_EQ(fmt::format("{:.5}", 1.0 / 3), "0.33333");
 }
 
-TEST(fmt, longDoubleFormat) {
-  static_assert(sizeof(long double) == 16);
-
+TEST(fmt, f128Format) {
   EXPECT_EQ(fmt::format("{:.5}", 0.999'999L), "1");
   EXPECT_EQ(fmt::format("{:.5}", 0.999'99L), "0.99999");
   EXPECT_EQ(fmt::format("{:.3f}", 12.1236L), "12.124"); // Round to 3 significant digits after the decimal point
-  static_assert(is_same_v<decltype(1.0L / 3), long double> == true);
   EXPECT_EQ(fmt::format("{:.5}", 1.0L / 3), "0.33333");
 }
 
@@ -122,6 +110,10 @@ TEST(fmt, charPtrFormat) {
   // U+01F9D1 (Adult), U+200D (ZWJ), U+01F33E (Ear of rice)
   EXPECT_EQ(fmt::format("{}", "🧑‍🌾"), "🧑‍🌾");
   EXPECT_EQ(fmt::format("{:?}", "🧑‍🌾"), "\"🧑\\u200d🌾\"");
+}
+
+TEST(fmt, char32PtrFormat) {
+  EXPECT_EQ(fmt::format(U"{}", U"hello"), U"hello");
 }
 
 // EOF

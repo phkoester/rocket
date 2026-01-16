@@ -94,7 +94,7 @@ struct IntervalSymbols<char> {
 };
 
 template<>
-struct IntervalSymbols<char32_t> {
+struct IntervalSymbols<char32> {
   static constexpr auto Empty = U"∅";
   static constexpr auto NegativeInfinity = U"-∞";
   static constexpr auto PositiveInfinity = U"+∞";

@@ -28,8 +28,8 @@ TEST(StringConvert, bool) {
       ThrowsMessage<InvalidState>(HasSubstr("Cannot scan \"falsex\" as `bool`")));
 }
 
-TEST(StringConvert, int) {
-  using type = int;
+TEST(StringConvert, i32) {
+  using type = i32;
 
   EXPECT_EQ(toType<type>("-999999"), -999'999);
   EXPECT_EQ(toType<type>("-2147483648"), numeric_limits<type>::min());
@@ -42,8 +42,8 @@ TEST(StringConvert, int) {
       ThrowsMessage<InvalidState>(HasSubstr("Cannot scan \"1x\" as `int`")));
 }
 
-TEST(StringConvert, int128) {
-  using type = int128_t;
+TEST(StringConvert, i128) {
+  using type = i128;
 
   EXPECT_EQ(toType<type>("-999999"), -999'999);
   EXPECT_EQ(toType<type>("-170141183460469231731687303715884105728"), numeric_limits<type>::min());
@@ -56,8 +56,8 @@ TEST(StringConvert, int128) {
       ThrowsMessage<InvalidState>(HasSubstr("Cannot scan \"1x\" as `__int128`")));
 }
 
-TEST(StringConvert, longDouble) {
-  using type = long double;
+TEST(StringConvert, f128) {
+  using type = f128;
 
   const numeric_limits<type> limits;
 

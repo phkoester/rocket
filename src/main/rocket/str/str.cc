@@ -20,7 +20,7 @@ capitalize(string_view s) {
     return string();
   }
 
-  size_t pos = 0;
+  u64 pos = 0;
   auto cp = nextCodePoint(s, pos);
   string ret = static_cast<string>(cp.upper());
   ret.append(s.substr(pos));
@@ -52,7 +52,7 @@ lower(u32string_view s) {
 
 void
 lowerIn(u32string& s) {
-  transform(s.begin(), s.end(), s.begin(), [](char32_t c) { return CodePoint(c).lower(); });
+  transform(s.begin(), s.end(), s.begin(), [](char32 c) { return CodePoint(c).lower(); });
 }
 
 vector<vector<string>>
@@ -127,11 +127,11 @@ upper(u32string_view s) {
 
 void
 upperIn(u32string& s) {
-  transform(s.begin(), s.end(), s.begin(), [](char32_t c) { return CodePoint(c).upper(); });
+  transform(s.begin(), s.end(), s.begin(), [](char32 c) { return CodePoint(c).upper(); });
 }
 
 string
-wrap(string_view s, size_t leftIndent, size_t width) {
+wrap(string_view s, u64 leftIndent, u64 width) {
   width -= leftIndent;
 
   // Collect paragraphs, consisting of words
@@ -146,16 +146,16 @@ wrap(string_view s, size_t leftIndent, size_t width) {
 
   for (const auto& par : pars) {
     string line; // The current line
-    size_t lineWidth = 0; // The display width of the current line
+    u64 lineWidth = 0; // The display width of the current line
 
     for (const auto& word : par) {
-      size_t wordWidth = 0;
+      u64 wordWidth = 0;
       auto iter = Iterator<char>(IteratorType::Character, word);
       auto chars = iter.nextSegments();
       for (const auto& c : chars) {
         wordWidth += Character(c).width();
       }
-      size_t newLineWidth = lineWidth + wordWidth + (lineWidth > 0 ? 1 : 0);
+      u64 newLineWidth = lineWidth + wordWidth + (lineWidth > 0 ? 1 : 0);
       if (lineWidth == 0 || newLineWidth < width) {
         if (lineWidth > 0) {
           line.push_back(' ');

@@ -58,7 +58,7 @@ TEST(Type, name) {
   EXPECT_EQ(Type::of(e2).name(), "(anonymous namespace)::Enum2");
   EXPECT_EQ(Type::of<Enum2>().name(), "(anonymous namespace)::Enum2");
 
-  using type = variant<int, tuple<string, vector<uint128_t>>>;
+  using type = variant<int, tuple<string, vector<u128>>>;
   EXPECT_EQ(
       Type::of<type>().name(),
       "std::variant<int, std::tuple<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char>>, std::vector<unsigned __int128, std::allocator<unsigned __int128>>>>");

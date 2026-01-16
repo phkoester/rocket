@@ -17,36 +17,37 @@ namespace {
  * @return pointer to the end
  */
 char*
-uint128ToStringImpl(char* dest, uint128_t v) {
-  if (v >= 10)
-    dest = uint128ToStringImpl(dest, v / 10);
+u128ToStringImpl(char* dest, u128 v) {
+  if (v >= 10) {
+    dest = u128ToStringImpl(dest, v / 10); // Recursive call
+  }
   *dest = static_cast<char>(v % 10 + '0');
   return ++dest;
 }
 
 char*
-int128ToString(char* dest, int128_t v) {
+i128ToString(char* dest, i128 v) {
   if (v < 0) {
     *dest = '-';
-    *uint128ToStringImpl(dest + 1, static_cast<uint128_t>(-1 - v) + 1) = '\0';
-  } else
-    *uint128ToStringImpl(dest, static_cast<uint128_t>(v)) = '\0';
-
+    *u128ToStringImpl(dest + 1, static_cast<u128>(-1 - v) + 1) = '\0';
+  } else {
+    *u128ToStringImpl(dest, static_cast<u128>(v)) = '\0';
+  }
   return dest;
 }
 
 char*
-uint128ToString(char* dest, uint128_t v) {
-  *uint128ToStringImpl(dest, v) = '\0';
+u128ToString(char* dest, u128 v) {
+  *u128ToStringImpl(dest, v) = '\0';
   return dest;
 }
 
 } // namespace
 
-// `int128_t` -----------------------------------------------------------------------------------------------
+// `i128` ---------------------------------------------------------------------------------------------------
 
 istream&
-operator>>(istream& lhs, int128_t& rhs) {
+operator>>(istream& lhs, i128& rhs) {
   // Read optional sign ('+' or '-')
 
   char c;
@@ -54,7 +55,7 @@ operator>>(istream& lhs, int128_t& rhs) {
   if (lhs.fail() || lhs.eof()) {
     return lhs;
   }
-  int128_t sgn = 1;
+  i128 sgn = 1;
   if (c == '-') {
     sgn = -1;
   }
@@ -96,11 +97,11 @@ operator>>(istream& lhs, int128_t& rhs) {
 
   // Convert string to value, check for overflow
 
-  int128_t val = 0;
-  int128_t factor = 1;
+  i128 val = 0;
+  i128 factor = 1;
 
   for (auto it = buf.rbegin(); it != buf.rend(); ++it) {
-    int128_t v = *it - '0';
+    i128 v = *it - '0';
     auto old = val;
     if (sgn == -1) {
       val -= v * factor;
@@ -127,16 +128,16 @@ operator>>(istream& lhs, int128_t& rhs) {
 }
 
 ostream&
-operator<<(ostream& lhs, int128_t rhs) {
+operator<<(ostream& lhs, i128 rhs) {
   char buf[41];
-  int128ToString(buf, rhs);
+  i128ToString(buf, rhs);
   return lhs << buf;
 }
 
 // `uint128_t` ----------------------------------------------------------------------------------------------
 
 istream&
-operator>>(istream& lhs, uint128_t& rhs) {
+operator>>(istream& lhs, u128& rhs) {
   // Read optional sign ('+' or '-')
 
   char c;
@@ -145,9 +146,9 @@ operator>>(istream& lhs, uint128_t& rhs) {
     return lhs;
   }
   if (c == '-') {
-    // Negative number: use the `ìnt128_t``overload
+    // Negative number: use the `ì128` overload
     lhs.seekg(-1, ios::cur);
-    return operator>>(lhs, reinterpret_cast<int128_t&>(rhs));
+    return operator>>(lhs, reinterpret_cast<i128&>(rhs));
   }
   if (c != '+') {
     // Not a sign: go back, clear EOF
@@ -187,11 +188,11 @@ operator>>(istream& lhs, uint128_t& rhs) {
 
   // Convert string to value, check for overflow
 
-  uint128_t val = 0;
-  uint128_t factor = 1;
+  u128 val = 0;
+  u128 factor = 1;
 
   for (auto it = buf.rbegin(); it != buf.rend(); ++it) {
-    uint128_t v = *it - '0';
+    u128 v = *it - '0';
     auto old = val;
     val += v * factor;
     if (val < old) {
@@ -209,9 +210,9 @@ operator>>(istream& lhs, uint128_t& rhs) {
 }
 
 ostream&
-operator<<(ostream& lhs, uint128_t rhs) {
+operator<<(ostream& lhs, u128 rhs) {
   char buf[41];
-  uint128ToString(buf, rhs);
+  u128ToString(buf, rhs);
   return lhs << buf;
 }
 

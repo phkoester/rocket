@@ -5,22 +5,21 @@
  *
  * Size in bytes of basic types on all supported target systems:
  *
- * | Type          | `linux`
- * | :------------ | ------:
- * | `char`        |       1
- * | `std::byte`   |       1
- * | `short`       |       2
- * | `wchar_t`     |       4
- * | `char32_t`    |       4
- * | `int`         |       4
- * | `float`       |       4
- * | `long`        |       8
- * | `long long`   |       8
- * | `size_t`      |       8
- * | `double`      |       8
- * | `void*`       |       8
- * | `int128_t`    |      16
- * | `long double` |      16
+ * | Type          | `linux` | Rocket alias
+ * | :------------ | ------: | :-----------
+ * | `char`        |       1 | --
+ * | `short`       |       2 | `i16`
+ * | `wchar_t`     |       4 | --
+ * | `char32_t`    |       4 | `char32`
+ * | `int`         |       4 | `i32`
+ * | `float`       |       4 | `f32`
+ * | `long`        |       8 | `i64`
+ * | `long long`   |       8 | `i64`
+ * | `size_t`      |       8 | `u64`
+ * | `__int128`    |      16 | `i128`
+ * | `double`      |       8 | `f64`
+ * | `long double` |      16 | `f128`
+ * | `void*`       |       8 | --
  *
  * In Rocket, C strings of type `char*` and instances of `std::string` or `std::string_view` are assumed to
  * be UTF-8-encoded. This is already true at compile time: A string literal like `"ä"` must expand to
@@ -37,6 +36,7 @@
 
 // No Rocket includes allowed here!
 
+#include <cstdint> // `int8_t`, `uint8_t`, ...
 #include <iosfwd>
 
 // Macros ---------------------------------------------------------------------------------------------------
@@ -53,36 +53,38 @@
   #error Unknown compiler
 #endif
 
-// `int128_t` -----------------------------------------------------------------------------------------------
+// Rocket type aliases --------------------------------------------------------------------------------------
 
-/**
- * A signed 128-bit integer type.
- *
- * - Minimum value: -170141183460469231731687303715884105728
- * - Maximum value:  170141183460469231731687303715884105727
- */
-using int128_t = __int128;
+using char32 = char32_t;
+using i8 = int8_t;
+using u8 = uint8_t;
+using i16 = int16_t;
+using u16 = uint16_t;
+using i32 = int;
+using u32 = unsigned int;
+using i64 = int64_t;
+using u64 = uint64_t;
+using i128 = __int128;
+using u128 = unsigned __int128;
+using f32 = _Float32;
+using f64 = _Float64;
+using f128 = long double;
 
-/// @op_output{#int128_t}
-std::ostream& operator<<(std::ostream& lhs, int128_t rhs);
+// `i128` ---------------------------------------------------------------------------------------------------
 
-/// @op_input{#int128_t}
-std::istream& operator>>(std::istream& lhs, int128_t& rhs);
+/// @op_input{#i128}
+std::istream& operator>>(std::istream& lhs, i128& rhs);
 
-// `uint128_t` ----------------------------------------------------------------------------------------------
+/// @op_output{#i128}
+std::ostream& operator<<(std::ostream& lhs, i128 rhs);
 
-/**
- * An unsigned 128-bit integer type.
- *
- * - Maximum value: 340282366920938463463374607431768211455
- */
-using uint128_t = unsigned __int128;
+// `u128` ---------------------------------------------------------------------------------------------------
 
-/// @op_input{#uint128_t}
-std::istream& operator>>(std::istream& lhs, uint128_t& rhs);
+/// @op_input{#u128}
+std::istream& operator>>(std::istream& lhs, u128& rhs);
 
-/// @op_output{#uint128_t}
-std::ostream& operator<<(std::ostream& lhs, uint128_t rhs);
+/// @op_output{#u128}
+std::ostream& operator<<(std::ostream& lhs, u128 rhs);
 
 namespace rocket {
 
@@ -91,7 +93,7 @@ namespace rocket {
 /**
  * A constant for "not a position".
  */
-constexpr size_t NPOS = -1L;
+constexpr u64 NPOS = -1;
 
 // Functions ------------------------------------------------------------------------------------------------
 

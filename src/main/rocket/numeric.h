@@ -22,16 +22,17 @@ namespace internal {
 
 template<typename T> struct Control;
 
-template<> struct Control<char> { using Type = int; };
-template<> struct Control<unsigned char> { using Type = int; };
-template<> struct Control<short> { using Type = int; };
-template<> struct Control<unsigned short> { using Type = int; };
-template<> struct Control<int> { using Type = long; };
-template<> struct Control<unsigned int> { using Type = long; };
-template<> struct Control<long> { using Type = int128_t; };
-template<> struct Control<unsigned long> { using Type = int128_t; };
-template<> struct Control<int128_t> { using Type = int128_t; };
-template<> struct Control<uint128_t> { using Type = uint128_t; };
+template<> struct Control<char> { using Type = i32; };
+template<> struct Control<char32> { using Type = i64; };
+
+template<> struct Control<i16> { using Type = i32; };
+template<> struct Control<u16> { using Type = i32; };
+template<> struct Control<i32> { using Type = i64; };
+template<> struct Control<u32> { using Type = i64; };
+template<> struct Control<i64> { using Type = i128; };
+template<> struct Control<u64> { using Type = i128; };
+template<> struct Control<i128> { using Type = i128; };
+template<> struct Control<u128> { using Type = u128; };
 
 } // namespace internal
 
@@ -48,25 +49,25 @@ struct NumericTraits<char> {
   static constexpr int negativeMin = static_cast<int>(std::numeric_limits<char>::max()) + 1;
 };
 
-/// @spec{#rocket::NumericTraits, `short`}
+/// @spec{#rocket::NumericTraits, #rocket::i16}
 template<>
-struct NumericTraits<short> {
+struct NumericTraits<i16> {
   /// @f$2^{15}@f$ = 32,768.
-  static constexpr int negativeMin = static_cast<int>(std::numeric_limits<short>::max()) + 1;
+  static constexpr i32 negativeMin = static_cast<i32>(std::numeric_limits<i16>::max()) + 1;
 };
 
-/// @spec{#rocket::NumericTraits, `int`}
+/// @spec{#rocket::NumericTraits, #rocket::i32}
 template<>
-struct NumericTraits<int> {
+struct NumericTraits<i32> {
   /// @f$2^{31}@f$ = 2,147,483,648.
-  static constexpr long negativeMin = static_cast<long>(std::numeric_limits<int>::max()) + 1;
+  static constexpr i64 negativeMin = static_cast<i64>(std::numeric_limits<i32>::max()) + 1;
 };
 
-/// @spec{#rocket::NumericTraits, `long`}
+/// @spec{#rocket::NumericTraits, #rocket::i64}
 template<>
-struct NumericTraits<long> {
+struct NumericTraits<i64> {
   /// @f$2^{63}@f$ = 9,223,372,036,854,775,808.
-  static constexpr int128_t negativeMin = static_cast<int128_t>(std::numeric_limits<long>::max()) + 1;
+  static constexpr i128 negativeMin = static_cast<i128>(std::numeric_limits<i64>::max()) + 1;
 };
 
 // Functions ------------------------------------------------------------------------------------------------

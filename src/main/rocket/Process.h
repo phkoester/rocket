@@ -302,9 +302,7 @@ private:
   friend Process makeProcess__();
 };
 
-/**
- * The Process singleton.
- */
+/// The Process singleton.
 extern Process process;
 
 } // namespace rocket
