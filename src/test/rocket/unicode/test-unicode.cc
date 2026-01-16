@@ -22,7 +22,7 @@ constexpr char32 MAX_PLUS_1 = static_cast<char32>(0x10FFFFU + 1);
 // Functions ------------------------------------------------------------------------------------------------
 
 auto
-positions(initializer_list<pair<size_t, size_t>> list) {
+positions(initializer_list<pair<u64, u64>> list) {
   return makeUnorderedBimap(list);
 }
 
@@ -132,7 +132,7 @@ TEST(unicode, conversions) {
 // `rocket::unicode::utf8` ..................................................................................
 
 TEST(unicode, utf8Validate) {
-  UnorderedBimap<size_t, size_t> pos;
+  UnorderedBimap<u64, u64> pos;
 
   {
     auto cow = utf8::validate("äöüß€", &pos);
@@ -179,7 +179,7 @@ TEST(unicode, utf8Validate) {
 // `rocket::unicode::utf32` ---------------------------------------------------------------------------------
 
 TEST(unicode, utf32Validate) {
-  UnorderedBimap<size_t, size_t> pos;
+  UnorderedBimap<u64, u64> pos;
 
   {
     u32string_view sv = U"abc";

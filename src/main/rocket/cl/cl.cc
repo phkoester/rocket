@@ -107,7 +107,7 @@ CommandLine::help(nio::Sink& out, bool exit) {
   ROCKET_EXPECT(help_);
 
   auto size = system::terminal::size(out);
-  size_t width = max(40UL, size ? size->first : 80UL);
+  u64 width = max(40UL, size ? size->first : 80UL);
   bool output = params_.otherOutput;
 
   // Usage
@@ -159,7 +159,7 @@ CommandLine::help(nio::Sink& out, bool exit) {
  * first. Within the groups, options appear in the order they are seen.
  */
 void
-CommandLine::helpOpts(nio::Sink& out, size_t width) const {
+CommandLine::helpOpts(nio::Sink& out, u64 width) const {
   // Collect groups and options therein
 
   unordered_map<const OptionGroup*, vector<const Option*>> options;
@@ -354,7 +354,7 @@ CommandLine::printUsage(nio::Sink& out) const {
   ROCKET_EXPECT(usage_);
 
   out.println("Usage: {} {}", params_.command, params_.usages[0]);
-  for (size_t i = 1; i < params_.usages.size(); ++i) {
+  for (u64 i = 1; i < params_.usages.size(); ++i) {
     out.println("  or   {} {}", params_.command, params_.usages[i]);
   }
 }

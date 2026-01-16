@@ -26,7 +26,7 @@ struct InputFailure : InvalidState {
    * @param st the stack trace
    */
   InputFailure(
-      size_t position,
+      u64 position,
       std::string_view msg,
       std::optional<std::source_location>&& sl = ROCKET_EXCEPTION_SL,
       std::optional<std::stacktrace>&& st = ROCKET_EXCEPTION_ST) :
@@ -42,7 +42,7 @@ struct InputFailure : InvalidState {
    * @param st the stack trace
    */
   InputFailure(
-      size_t position,
+      u64 position,
       str::Range range,
       std::string_view msg,
       std::optional<std::source_location>&& sl = ROCKET_EXCEPTION_SL,
@@ -59,7 +59,7 @@ struct InputFailure : InvalidState {
    * @param st the stack trace
    */
   InputFailure(
-      size_t position,
+      u64 position,
       std::initializer_list<str::Range> ranges,
       std::string_view msg,
       std::optional<std::source_location>&& sl = ROCKET_EXCEPTION_SL,
@@ -75,7 +75,7 @@ struct InputFailure : InvalidState {
    *
    * @return the stored position
    */
-  size_t position() const { return position_; }
+  u64 position() const { return position_; }
 
   /**
    * Returns the stored position ranges.
@@ -86,7 +86,7 @@ struct InputFailure : InvalidState {
 
 private:
 
-  const size_t position_;
+  const u64 position_;
   const str::Ranges ranges_;
 };
 

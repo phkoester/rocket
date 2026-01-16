@@ -6,10 +6,12 @@
 
 #include <scn/scan.h>
 
+using namespace scn;
+
 // `TEST` ---------------------------------------------------------------------------------------------------
 
 TEST(scnlib, intScan) {
-  auto result = scn::scan<int>("123", "{}");
+  auto result = scan<i32>("123", "{}");
   auto i = result->value();
   EXPECT_EQ(i, 123);
 }

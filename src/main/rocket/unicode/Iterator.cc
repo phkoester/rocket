@@ -33,13 +33,13 @@ Iterator<C>::Iterator(IteratorType type, basic_string_view<C> input, const local
   int32_t u16Index = 0;
   UChar32 u16cp;
 
-  size_t inputLength = input.size();
-  size_t inputIndex = 0;
+  u64 inputLength = input.size();
+  u64 inputIndex = 0;
   UChar32 inputCp;
 
   while (u16Index < u16length) {
     // Add a mapping for this input position
-    usToInput_.insert({ static_cast<size_t>(u16Index), inputIndex });
+    usToInput_.insert({ static_cast<u64>(u16Index), inputIndex });
 
     // Get next U16 code point
     U16_NEXT(u16Buf, u16Index, u16length, u16cp);
@@ -65,7 +65,7 @@ Iterator<C>::Iterator(IteratorType type, basic_string_view<C> input, const local
   }
 
   // Add a mapping for EOI
-  usToInput_.insert({ static_cast<size_t>(u16Index), inputIndex });
+  usToInput_.insert({ static_cast<u64>(u16Index), inputIndex });
 
   // 3. Create the `BreakIterator`
 

@@ -45,11 +45,11 @@ TEST(std, exceptionFormat) {
 }
 
 TEST(std, initializerListFormat) {
-  EXPECT_EQ(fmt::format("{}", initializer_list<int> { 1, 2, 3 }), "[1, 2, 3]");
+  EXPECT_EQ(fmt::format("{}", initializer_list<i32> { 1, 2, 3 }), "[1, 2, 3]");
 }
 
 TEST(std, mapFormat) {
-  EXPECT_EQ(fmt::format("{}", map<int, string> { { 1, "one" }, { 2, "two" }, { 3, "three" } }), "{1: \"one\", 2: \"two\", 3: \"three\"}");
+  EXPECT_EQ(fmt::format("{}", map<i32, string> { { 1, "one" }, { 2, "two" }, { 3, "three" } }), "{1: \"one\", 2: \"two\", 3: \"three\"}");
 }
 
 TEST(std, monostateFormat) {
@@ -58,11 +58,11 @@ TEST(std, monostateFormat) {
 }
 
 TEST(std, optionalFormat) {
-  EXPECT_EQ(fmt::format("{:0>5d}", optional<int>()), "<none>");
-  EXPECT_EQ(fmt::format("{:0>5d}", optional<int>(3)), "00003");
+  EXPECT_EQ(fmt::format("{:0>5d}", optional<i32>()), "<none>");
+  EXPECT_EQ(fmt::format("{:0>5d}", optional<i32>(3)), "00003");
 
-  EXPECT_EQ(fmt::format(U"{:0>5d}", optional<int>()), U"<none>");
-  EXPECT_EQ(fmt::format(U"{:0>5d}", optional<int>(3)), U"00003");
+  EXPECT_EQ(fmt::format(U"{:0>5d}", optional<i32>()), U"<none>");
+  EXPECT_EQ(fmt::format(U"{:0>5d}", optional<i32>(3)), U"00003");
 
   optional<string> opt = "hello";
   EXPECT_EQ(fmt::format("{}", opt), "hello");
@@ -75,15 +75,15 @@ TEST(std, optionalFormat) {
 }
 
 TEST(std, optionalAndVectorInTypeLoopFormat) {
-  using type = optional<vector<optional<int>>>;
+  using type = optional<vector<optional<i32>>>;
   type v1 = nullopt;
   EXPECT_EQ(fmt::format("{:}", v1), "<none>");
-  type v2 = vector<optional<int>> { optional<int>(1), nullopt, optional<int>(3) };
+  type v2 = vector<optional<i32>> { optional<i32>(1), nullopt, optional<i32>(3) };
   EXPECT_EQ(fmt::format("{}", v2), "[1, <none>, 3]");
 }
 
 TEST(std, pairFormat) {
-  EXPECT_EQ(fmt::format("{}", pair<int, string> { 1, "one" }), "(1, \"one\")");
+  EXPECT_EQ(fmt::format("{}", pair<i32, string> { 1, "one" }), "(1, \"one\")");
 }
 
 TEST(std, pathFormat) {
@@ -110,25 +110,25 @@ TEST(std, pathFormat) {
 
 TEST(std, setFormat) {
   EXPECT_EQ(fmt::format("{}", set<string> { "one", "two", "three" }), "{\"one\", \"three\", \"two\"}");
-  EXPECT_EQ(fmt::format("{}", set<int> { 1, 2, 3 }), "{1, 2, 3}");
+  EXPECT_EQ(fmt::format("{}", set<i32> { 1, 2, 3 }), "{1, 2, 3}");
   EXPECT_EQ(fmt::format("{::}", set<string> { "one", "two", "three" }), "{one, three, two}");
 }
 
 TEST(std, spanFormat) {
-  auto v = vector<int> { 1, 2, 3 };
-  EXPECT_EQ(fmt::format("{}", span<int>(v.begin(), v.end())), "[1, 2, 3]");
+  auto v = vector<i32> { 1, 2, 3 };
+  EXPECT_EQ(fmt::format("{}", span<i32>(v.begin(), v.end())), "[1, 2, 3]");
 }
 
 TEST(std, tupleFormat) {
-  EXPECT_EQ(fmt::format("{}", tuple<int, string, long> { 1, "one", -1L }), "(1, \"one\", -1)");
+  EXPECT_EQ(fmt::format("{}", tuple<i32, string, i64> { 1, "one", -1L }), "(1, \"one\", -1)");
 }
 
 TEST(std, unorderedMapFormat) {
-  EXPECT_EQ(fmt::format("{}", unordered_map<int, string> { { 3, "three" }, { 2, "two" }, { 1, "one" } }), "{1: \"one\", 2: \"two\", 3: \"three\"}");
+  EXPECT_EQ(fmt::format("{}", unordered_map<i32, string> { { 3, "three" }, { 2, "two" }, { 1, "one" } }), "{1: \"one\", 2: \"two\", 3: \"three\"}");
 }
 
 TEST(std, unorderedSetFormat) {
-  EXPECT_THAT(fmt::format("{}", unordered_set<int> { 1, 2, 3 }), matchesRegex("\\{\\d, \\d, \\d\\}"));
+  EXPECT_THAT(fmt::format("{}", unordered_set<i32> { 1, 2, 3 }), matchesRegex("\\{\\d, \\d, \\d\\}"));
 }
 
 TEST(std, stringFormat) {
@@ -158,26 +158,26 @@ TEST(std, stringViewFormat) {
 }
 
 TEST(std, variantFormat) {
-  EXPECT_EQ(fmt::format("{}", variant<int, string, long> { 1 }), "0:1");
-  EXPECT_EQ(fmt::format("{}", variant<int, string, long> { "one" }), "1:one");
-  EXPECT_EQ(fmt::format("{:?}", variant<int, string, long> { "one" }), "1:\"one\"");
-  EXPECT_EQ(fmt::format("{}", variant<int, string, long> { -1L }), "2:-1");
-  EXPECT_EQ(fmt::format(U"{}", variant<int, u32string, long> { -1L }), U"2:-1");
-  EXPECT_EQ(fmt::format(U"{}", variant<int, u32string, long> { U"hello" }), U"1:hello");
-  EXPECT_EQ(fmt::format(U"{:?}", variant<int, u32string, long> { U"hello" }), U"1:\"hello\"");
+  EXPECT_EQ(fmt::format("{}", variant<i32, string, i64> { 1 }), "0:1");
+  EXPECT_EQ(fmt::format("{}", variant<i32, string, i64> { "one" }), "1:one");
+  EXPECT_EQ(fmt::format("{:?}", variant<i32, string, i64> { "one" }), "1:\"one\"");
+  EXPECT_EQ(fmt::format("{}", variant<i32, string, i64> { -1L }), "2:-1");
+  EXPECT_EQ(fmt::format(U"{}", variant<i32, u32string, i64> { -1L }), U"2:-1");
+  EXPECT_EQ(fmt::format(U"{}", variant<i32, u32string, i64> { U"hello" }), U"1:hello");
+  EXPECT_EQ(fmt::format(U"{:?}", variant<i32, u32string, i64> { U"hello" }), U"1:\"hello\"");
 }
 
 TEST(std, vectorFormat) {
-  EXPECT_EQ(fmt::format("{::0>5}", vector<int> { 1, 2, 3 }), "[00001, 00002, 00003]");
+  EXPECT_EQ(fmt::format("{::0>5}", vector<i32> { 1, 2, 3 }), "[00001, 00002, 00003]");
   EXPECT_EQ(fmt::format("{}", vector<string> { "one", "two", "three" }), "[\"one\", \"two\", \"three\"]");
   EXPECT_EQ(fmt::format("{::}", vector<string> { "one", "two", "three" }), "[one, two, three]");
 }
 
 TEST(std, vectorAndOptionalInTypeLoopFormat) {
-  using type = vector<optional<vector<int>>>;
+  using type = vector<optional<vector<i32>>>;
   type v1 = {};
   EXPECT_EQ(fmt::format("{}", v1), "[]");
-  type v2 = type { vector<int> { vector<int> { 1, 2 } } };
+  type v2 = type { vector<i32> { vector<i32> { 1, 2 } } };
   EXPECT_EQ(fmt::format("{}", v2), "[[1, 2]]");
 }
 

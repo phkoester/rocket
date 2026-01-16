@@ -56,14 +56,14 @@ struct Iterator {
    *
    * @return the current position
    */
-  size_t current() const { return usToInput_.left.at(iter_->current()); }
+  u64 current() const { return usToInput_.left.at(iter_->current()); }
 
   /**
    * Sets the iterator to the first position in the input string.
    *
    * @return the first position
    */
-  size_t first() { auto v = iter_->first(); return usToInput_.left.at(v); }
+  u64 first() { auto v = iter_->first(); return usToInput_.left.at(v); }
 
   /**
    * Returns the input string.
@@ -77,14 +77,14 @@ struct Iterator {
    *
    * @return the last position
    */
-  size_t last() { auto v = iter_->last(); return usToInput_.left.at(v); }
+  u64 last() { auto v = iter_->last(); return usToInput_.left.at(v); }
 
   /**
    * Advances the iterator to the next position in the input string.
    *
    * @return the next position
    */
-  size_t
+  u64
   next() {
     auto pos = iter_->next();
     if (pos == icu::BreakIterator::DONE) {
@@ -127,7 +127,7 @@ struct Iterator {
    *
    * @return the previous position
    */
-  size_t
+  u64
   previous() {
     auto pos = iter_->previous();
     if (pos == icu::BreakIterator::DONE) {
@@ -169,7 +169,7 @@ private:
 
   std::basic_string_view<C> input_;
   icu::UnicodeString us_;
-  UnorderedBimap<size_t, size_t> usToInput_;
+  UnorderedBimap<u64, u64> usToInput_;
   std::unique_ptr<icu::BreakIterator> iter_;
 };
 
@@ -185,11 +185,11 @@ private:
  */
 template<typename C> requires IsChar<C>
 std::basic_string<C>
-concat(const std::vector<std::basic_string_view<C>>& segments, size_t pos = 0, size_t n = NPOS) {
+concat(const std::vector<std::basic_string_view<C>>& segments, u64 pos = 0, u64 n = NPOS) {
   std::basic_string<C> ret;
   pos = std::min(pos, segments.size());
   n = std::min(n, segments.size() - pos);
-  for (size_t i = pos, end = pos + n; i < end; ++i) {
+  for (u64 i = pos, end = pos + n; i < end; ++i) {
     ret.append(segments[i]);
   }
   return ret;

@@ -35,7 +35,7 @@ struct Position {
    * There must be a character bondary at this position. The position is highlighted with a caret (`^`)
    * underneath.
    */
-  size_t position;
+  u64 position;
   /**
    * The ranges associated with this position.
    *
@@ -71,10 +71,10 @@ namespace rocket::str::location {
  */
 struct Location {
   Position::Type type; ///< Copied from the input position.
-  size_t position; ///< Copied from the input position.
+  u64 position; ///< Copied from the input position.
   Ranges ranges; ///< Copied from the input position.
-  size_t line; ///< The line number, starting with 1.
-  size_t column; ///< The column number (counting character widths), starting with 1.
+  u64 line; ///< The line number, starting with 1.
+  u64 column; ///< The column number (counting character widths), starting with 1.
   Range lineRange; ///< The range of the line containing #position.
   /**
     * This member is only initialized if #LocationsParams#setLineString was set to `true`.
@@ -105,7 +105,7 @@ struct LocationsParams {
    * Configures the handling of tab characters. If this is null, then there is no special treatment for tab
    * characters---they are displayed as `\t`. Otherwise, a tab expands to at most #tabSize spaces.
    */
-  std::optional<size_t> tabSize = 8;
+  std::optional<u64> tabSize = 8;
 };
 
 // `LocationsResult` ----------------------------------------------------------------------------------------
@@ -137,7 +137,7 @@ struct LocationsResult {
  */
 struct PrintLocationsParams {
   bool colored = true; ///< Use colors when printing to a terminal?
-  size_t minLineNumberWidth = 5; ///< The minimum width to use when displaying line numbers.
+  u64 minLineNumberWidth = 5; ///< The minimum width to use when displaying line numbers.
 };
 
 // Functions ------------------------------------------------------------------------------------------------

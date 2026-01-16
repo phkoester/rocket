@@ -726,8 +726,8 @@ FileSource::seek(i64 offset, SeekMode mode) {
 
 
   // The type of the `offset` parameter is `long`, se we can directly pass `offset`
-  static_assert(is_same_v<i64, long>);
-  u64 ret = std::fseek(file_, offset, origin);
+  static_assert(is_same_v<long, decltype(offset)>);
+  i32 ret = std::fseek(file_, offset, origin);
   LOG("fseek=" << ret << ", ferror=" << ferror(file_));
   if (ret != 0) {
     error_ = ferror(file_);
@@ -742,16 +742,15 @@ FileSource::tell() {
   }
 
   using ftell_t = decltype(std::ftell(file_));
-  static_assert(is_same_v<ftell_t, long>);
-  long ret = std::ftell(file_);
-  LOG("ftell=" << ret << ", ferror=" << ferror(file_));
-  if (ret == -1) {
+  static_assert(is_same_v<ftell_t, i64>);
+  i64 result = std::ftell(file_);
+  LOG("ftell=" << result << ", ferror=" << ferror(file_));
+  if (result == -1) {
     error_ = ferror(file_);
     return NPOS;
   }
-  ROCKET_ASSERT(ret >= 0);
-  // Convert nonnegative `long` to `u64`
-  return ret;
+  ROCKET_ASSERT(result >= 0);
+  return static_cast<u64>(result); // We know `result` >= 0
 }
 
 // `NullSource` ---------------------------------------------------------------------------------------------
@@ -853,8 +852,8 @@ StreamSource::seek(i64 offset, SeekMode mode) {
     ROCKET_FAIL_UNREACHABLE_CODE();
   }
 
-  // `istream::off_type` is `long`, so we can directly pass `offset`
-  static_assert(is_same_v<istream::off_type, long>);
+  // `istream::off_type` is `i64`, so we can directly pass `offset`
+  static_assert(is_same_v<istream::off_type, i64>);
   is_.seekg(offset, dir);
   error_ = is_.rdstate();
   return error_;

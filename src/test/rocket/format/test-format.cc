@@ -12,7 +12,7 @@ using namespace rocket::format;
 // `TEST` ---------------------------------------------------------------------------------------------------
 
 TEST(format, FormatChar) {
-  auto lambda = [](int n) -> string {
+  auto lambda = [](i32 n) -> string {
     nio::StringSink buf;
     buf.print("n is {}.{}", n, Format<char>([&] {
       if (n == 11) {
@@ -32,7 +32,7 @@ TEST(format, FormatChar) {
 }
 
 TEST(format, FormatCharWithTagged) {
-  auto lambda = [](int n) -> string {
+  auto lambda = [](i32 n) -> string {
     nio::StringSink buf;
     buf.print("{}:{}{}", __FILE__, __LINE__, Format<char>([&] {
       if (n == 1) {

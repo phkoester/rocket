@@ -109,25 +109,25 @@ utf32To8(u32string_view s) {
 namespace utf8 {
 
 CodePoint
-nextCodePoint(string_view s, size_t& pos) {
+nextCodePoint(string_view s, u64& pos) {
   const auto size = s.size();
   ROCKET_CHECK(pos, pos < size);
   UChar32 cp;
   int32_t i = to<int32_t>(pos);
   U8_NEXT(s.data(), i, size, cp);
-  pos = to<size_t>(i);
+  pos = to<u64>(i);
   return static_cast<char32>(cp);
 }
 
 Cow<string_view, string>
-validate(string_view s, UnorderedBimap<size_t, size_t>* positions) {
+validate(string_view s, UnorderedBimap<u64, u64>* positions) {
   Cow<string_view, string> ret(s);
 
   if (positions) {
     positions->clear();
   }
 
-  auto addPosition = [&](size_t i) {
+  auto addPosition = [&](u64 i) {
     if (positions) {
       if (not ret.modified()) {
         positions->insert({ i, i });
@@ -137,7 +137,7 @@ validate(string_view s, UnorderedBimap<size_t, size_t>* positions) {
     }
   };
 
-  size_t i = 0, size  = s.size();
+  u64 i = 0, size  = s.size();
   while (i < size) {
     addPosition(i);
 
@@ -170,27 +170,27 @@ validate(string_view s, UnorderedBimap<size_t, size_t>* positions) {
 namespace utf32 {
 
 CodePoint
-nextCodePoint(u32string_view s, size_t& pos) {
+nextCodePoint(u32string_view s, u64& pos) {
   const auto size = s.size();
   ROCKET_CHECK(pos, pos < size);
   return s[pos++];
 }
 
 Cow<u32string_view, u32string>
-validate(u32string_view s, UnorderedBimap<size_t, size_t>* positions) {
+validate(u32string_view s, UnorderedBimap<u64, u64>* positions) {
   Cow<u32string_view, u32string> ret(s);
 
   if (positions) {
     positions->clear();
   }
 
-  auto addPosition = [&](size_t i) {
+  auto addPosition = [&](u64 i) {
     if (positions) {
       positions->insert({ i, i });
     }
   };
 
-  for (size_t i = 0, size = s.size(); i < size; ++i ) {
+  for (u64 i = 0, size = s.size(); i < size; ++i ) {
     addPosition(i);
 
     char32 c = s[i];

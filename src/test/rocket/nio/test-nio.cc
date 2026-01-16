@@ -15,9 +15,9 @@ using namespace rocket::nio;
 
 /// Returns "01234567890123...".
 string
-testString(size_t n, int add = 0) {
+testString(u64 n, i32 add = 0) {
   string ret;
-  for (size_t i = 0; i < n; ++i) {
+  for (u64 i = 0; i < n; ++i) {
     ret += static_cast<char>('0' + add);
     add = (add + 1) % 10;
   }
@@ -264,7 +264,7 @@ TEST(nio, StringSourceReadlnSpan) {
   StringSource in("First line\r\nSecond line\n");
   string s11 = string(11, ' ');
   span<char> span11 = span<char>(s11);
-  size_t n = in.readln(span11);
+  u64 n = in.readln(span11);
   EXPECT_EQ(n, 11);
   EXPECT_EQ(string_view(span11.data(), n), "First line\r");
 

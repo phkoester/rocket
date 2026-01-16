@@ -56,7 +56,7 @@ struct CodePoint {
   bool ascii() const { return v_ < 0x80; }
 
   /// @member_fn_hash
-  inline size_t hash() const { return std::hash<char32>()(v_); }
+  inline u64 hash() const { return std::hash<char32>()(v_); }
 
   /**
    * Checks if the code point is the specified ASCII character.
@@ -195,7 +195,7 @@ struct std::hash<rocket::unicode::CodePoint> {
    * @param v the value to hash
    * @return a hash value
    */
-  inline size_t operator()(rocket::unicode::CodePoint v) const { return v.hash(); }
+  inline u64 operator()(rocket::unicode::CodePoint v) const { return v.hash(); }
 };
 
 // `std::numeric_limits<CodePoint>` -------------------------------------------------------------------------
@@ -250,7 +250,7 @@ namespace utf8 {
  *     position is updated to the position of the next code point
  * @return the next code point
  */
- CodePoint nextCodePoint(std::string_view s, size_t& pos);
+ CodePoint nextCodePoint(std::string_view s, u64& pos);
 
 /**
  * Validates the UTF-8 string @p s.
@@ -268,7 +268,7 @@ namespace utf8 {
  * @return a #rocket::Cow result
  */
 Cow<std::string_view, std::string>
-validate(std::string_view s, UnorderedBimap<size_t, size_t>* positions = nullptr);
+validate(std::string_view s, UnorderedBimap<u64, u64>* positions = nullptr);
 
 } // namespace utf8
 
@@ -284,7 +284,7 @@ namespace utf32 {
  *     position is updated to the position of the next code point
  * @return the next code point
  */
-CodePoint nextCodePoint(std::u32string_view s, size_t& pos);
+CodePoint nextCodePoint(std::u32string_view s, u64& pos);
 
 /**
  * Validates the UTF-32 string @p s.
@@ -302,7 +302,7 @@ CodePoint nextCodePoint(std::u32string_view s, size_t& pos);
  * @return a #rocket::Cow result
  */
 Cow<std::u32string_view, std::u32string>
-validate(std::u32string_view s, UnorderedBimap<size_t, size_t>* positions = nullptr);
+validate(std::u32string_view s, UnorderedBimap<u64, u64>* positions = nullptr);
 
 } // namespace utf32
 

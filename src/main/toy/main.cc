@@ -34,7 +34,7 @@ myTerminate() {
   // out.println("myTerminate");
 }
 
-void zz(int level) {
+void zz(i32 level) {
   ROCKET_LOG(thisIsARatherLongLogId);
   ROCKET_LOG_INFO("zz at level {}", level);
 
@@ -64,8 +64,8 @@ toy() {
 
 // `main` ---------------------------------------------------------------------------------------------------
 
-int
-main(int argc, char **argv) {
+i32
+main(i32 argc, char **argv) {
   ROCKET_PROCESS_ERROR("Testing error before `process.init` ...");
 
   process.atExit(myExit);

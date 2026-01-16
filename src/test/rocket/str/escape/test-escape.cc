@@ -11,7 +11,7 @@ using namespace rocket::str::escape;
 // Functions ------------------------------------------------------------------------------------------------
 
 auto
-positions(initializer_list<pair<size_t, size_t>> list) {
+positions(initializer_list<pair<u64, u64>> list) {
   return makeUnorderedBimap(list);
 }
 

@@ -31,7 +31,7 @@ struct CStringParams {
     * If this is null, then tab characters are escaped as `"\\t"`. Otherwise, a tab expands to at most
     * #tabSize spaces.
     */
-  std::optional<size_t> tabSize;
+  std::optional<u64> tabSize;
 
   /**
     * Checks if the escaped string is to be quoted.
@@ -53,7 +53,7 @@ struct Result {
    * For each character in the input string and for EOI, its `char` offset is mapped to a `char` offset in
    * the output string.
    */
-  UnorderedBimap<size_t, size_t> positions;
+  UnorderedBimap<u64, u64> positions;
 };
 
 // Functions ------------------------------------------------------------------------------------------------

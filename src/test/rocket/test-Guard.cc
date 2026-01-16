@@ -18,7 +18,7 @@ TEST(Guard, Guard) {
 }
 
 TEST(Guard, ValueGuard) {
-  int n = 1;
+  i32 n = 1;
   {
     ROCKET_VALUE_GUARD(n, 2);
     EXPECT_EQ(n, 2);

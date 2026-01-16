@@ -21,8 +21,8 @@ TEST(Cow, differentTypes) {
 }
 
 TEST(Cow, sameTypes) {
-  int n = 3;
-  Cow<int> cow(n);
+  i32 n = 3;
+  Cow<i32> cow(n);
   n = 4;
   EXPECT_EQ(cow.get(), 4);
   EXPECT_FALSE(cow.modified());

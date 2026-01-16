@@ -131,7 +131,7 @@ Ansi::up(i32 n) const {
 
 // Functions ------------------------------------------------------------------------------------------------
 
-optional<pair<size_t, size_t>>
+optional<pair<u64, u64>>
 position(nio::Sink& out) {
   if (not isatty(out.fd())) {
     return nullopt;
@@ -153,7 +153,7 @@ position(nio::Sink& out) {
   return make_pair(x, y);
 }
 
-optional<pair<size_t, size_t>>
+optional<pair<u64, u64>>
 size(nio::Sink& out) {
   i32 fd = out.fd();
   if (not isatty(fd)) {

@@ -37,8 +37,8 @@ locations(string_view input, const vector<Position>& positions, const LocationsP
 
   // Map input position -> location
 
-  size_t maxPos = 0;
-  unordered_map<size_t, Location> locations;
+  u64 maxPos = 0;
+  unordered_map<u64, Location> locations;
   for (const auto& pos : positions) {
     ROCKET_CHECK(positions, not pos.message.empty());
     ROCKET_CHECK(positions, not (pos.caption && pos.caption->empty()));
@@ -57,10 +57,10 @@ locations(string_view input, const vector<Position>& positions, const LocationsP
 
   // Iterate through input
 
-  size_t line = 0, column = 0, beginLine = 0;
+  u64 line = 0, column = 0, beginLine = 0;
   string lineString;
 
-  vector<size_t> pois; // "Positions of interest" in the current line
+  vector<u64> pois; // "Positions of interest" in the current line
   bool finish = false; // Finish on next line feed?
 
   unicode::Iterator<char> iter(unicode::IteratorType::Character, input);
@@ -114,8 +114,8 @@ locations(string_view input, const vector<Position>& positions, const LocationsP
     } else if (c->tab() && params.tabSize) {
       // Handle tab
 
-      size_t mod = column % *params.tabSize;
-      size_t n = *params.tabSize - mod;
+      u64 mod = column % *params.tabSize;
+      u64 n = *params.tabSize - mod;
       column += n;
       lineString.push_back('\t');
     } else {
@@ -151,13 +151,13 @@ printLocations(
 
   // Find out line-number width and format
   const auto& locations = locationsResult.locations;
-  size_t maxLine = accumulate(
+  u64 maxLine = accumulate(
       locations.begin(),
       locations.end(),
       0UL,
-      [](size_t max, const auto& loc) { return std::max(loc.line, max); });
+      [](u64 max, const auto& loc) { return std::max(loc.line, max); });
   string maxLineStr =  fmt::format("{}", maxLine);
-  size_t lineNumberWidth = max(params.minLineNumberWidth, maxLineStr.size());
+  u64 lineNumberWidth = max(params.minLineNumberWidth, maxLineStr.size());
   string blankPrefix = string(lineNumberWidth, ' ') + " | ";
 
   using namespace system::terminal;
@@ -192,10 +192,10 @@ printLocations(
     // For `escapedLine`, map `Char` index -> byte offset
     unicode::Iterator<char> iter(unicode::IteratorType::Character, escapedLine);
     auto chars = iter.nextSegments();
-    UnorderedBimap<size_t, size_t> escapedLinePositions;
-    size_t escapedLineWidth = 0;
-    size_t offset = 0;
-    for (size_t i = 0; i < chars.size(); ++i) {
+    UnorderedBimap<u64, u64> escapedLinePositions;
+    u64 escapedLineWidth = 0;
+    u64 offset = 0;
+    for (u64 i = 0; i < chars.size(); ++i) {
       escapedLinePositions.insert({ i, offset });
       unicode::Character c(chars[i]);
       offset += c.size();
@@ -216,13 +216,13 @@ printLocations(
 
     // Prepare the indicators string. `indicators` is in "`Char`-width coordinates"
 
-    size_t width = escapedLineWidth;
+    u64 width = escapedLineWidth;
     string indicators(width, ' ');
 
     // Make up a lambda that translates an input `char` position to an `indicators` position. This requires
     // several steps
 
-    auto indicatorPos = [&](size_t pos) -> size_t {
+    auto indicatorPos = [&](u64 pos) -> u64 {
       // 1. Translate input position to line position
       pos -= loc.lineRange.lower;
 
@@ -237,8 +237,8 @@ printLocations(
       pos = rightIt->second;
 
       // 4. Translate escaped-line character position to `indicators` position
-      size_t ret = 0;
-      for (size_t i = 0; i < pos; ++i) {
+      u64 ret = 0;
+      for (u64 i = 0; i < pos; ++i) {
         ret += unicode::Character(chars[i]).width();
       }
       return ret;
@@ -250,8 +250,8 @@ printLocations(
       // Obtain the intersection between range and printed line
       if (auto inter = range & loc.lineRange; not inter.empty()) {
         // Translate intersection into `indicators` positions
-        size_t lower = indicatorPos(inter.lower);
-        size_t upper = indicatorPos(*inter.upper);
+        u64 lower = indicatorPos(inter.lower);
+        u64 upper = indicatorPos(*inter.upper);
         // Place the range
         indicators.replace(indicators.begin() + lower, indicators.begin() + upper, upper - lower, '~');
       }
@@ -259,7 +259,7 @@ printLocations(
 
     // Place the caret in `indicators`
 
-    size_t caretPos = indicatorPos(loc.position);
+    u64 caretPos = indicatorPos(loc.position);
     if (caretPos < indicators.size()) {
       indicators[caretPos] = '^';
     } else {

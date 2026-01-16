@@ -333,13 +333,13 @@ logImpl(
     nio::Sink& out,
     LogLevel* logId,
     LogLevel level,
-    size_t stackLevel,
+    u64 stackLevel,
     const TimePoint& time,
     string_view msg) {
   // Item: time point
   string s = formatTimePoint(time); // Formats with a trailing space
   out.write(s);
-  size_t indent = s.size();
+  u64 indent = s.size();
 
   // Item: thread ID/name
   if (logFmt.threadIds) {
@@ -371,7 +371,7 @@ logImpl(
     id = id.substr(0, LOG_ID_WIDTH - 1) + "…"; // Cut ID on the right side
   }
   out.print("{: <{}} ", id, LOG_ID_WIDTH);
-  size_t idIndent = indent; // We need this for multi-line messages later
+  u64 idIndent = indent; // We need this for multi-line messages later
   indent += LOG_ID_WIDTH + 1;
 
   // Item: log level

@@ -235,7 +235,7 @@ TEST(cl, parseOptBool) {
 }
 
 TEST(cl, parseOptInt) {
-  int num;
+  i32 num;
 
   CommandLine cl( {
     Option::of(nullptr, "num", "n"_c, "NUM", nullopt, num)

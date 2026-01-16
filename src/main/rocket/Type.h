@@ -79,7 +79,7 @@ struct Type {
   std::strong_ordering operator<=>(const Type& rhs) const { return index_ <=> rhs.index_; }
 
   /// @member_fn_hash
-  inline size_t hash() const { return hash_.get(); }
+  inline u64 hash() const { return hash_.get(); }
 
   /**
    * Returns a pretty type name.
@@ -93,7 +93,7 @@ private:
   const std::type_info& info_;
   const Lazy<std::string> name_;
   const std::type_index index_;
-  const Lazy<size_t> hash_;
+  const Lazy<u64> hash_;
 };
 
 /// @op_output{#rocket::Type}
@@ -142,7 +142,7 @@ template<>
 struct std::hash<rocket::Type> {
   /// @cond undocumented
 
-  inline size_t operator()(const rocket::Type& v) const { return v.hash(); }
+  inline u64 operator()(const rocket::Type& v) const { return v.hash(); }
 
   /// @endcond
 };

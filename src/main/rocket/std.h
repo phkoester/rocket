@@ -155,10 +155,10 @@ template<typename... T>
 struct std::hash<std::tuple<T...>> {
   /// @cond undocumented
 
-  size_t
+  u64
   operator()(const tuple<T...>& v) const {
     using TupleType = rocket::PurgeType<decltype(v)>;
-    size_t ret = tuple_size<TupleType>::value;
+    u64 ret = tuple_size<TupleType>::value;
     apply([&](const auto&... arg) { (rocket::combineHash(ret, arg), ...); }, v);
     return ret;
   }

@@ -33,7 +33,7 @@ makeCl(const vector<string_view>& args) {
     if (not ret.empty())
       ret.push_back(' ');
 
-    for (size_t i = 0, size = arg.size(); i < size; ++i) {
+    for (u64 i = 0, size = arg.size(); i < size; ++i) {
       char c = arg[i];
       optional<char> next;
       if (i < size - 1)
@@ -107,7 +107,7 @@ exec(const string& cl) {
   if (not pipe) {
     throw InvalidState(fmt::format("Cannot open pipe for command `{}`", cl));
   }
-  size_t n;
+  u64 n;
   while ((n = fread(buf.data(), 1, buf.size(), pipe.get())) > 0) {
     ret.insert(ret.end(), buf.begin(), buf.begin() + n);
   }

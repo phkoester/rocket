@@ -6,6 +6,7 @@
 
 #pragma once
 
+#include "rocket/rocket.h"
 #include "rocket/nio/nio-fwd.h"
 
 #include <optional>
@@ -136,7 +137,7 @@ private:
  *     returned
  * @return the cursor position, or null if not available
  */
-std::optional<std::pair<size_t, size_t>> position(nio::Sink& out);
+std::optional<std::pair<u64, u64>> position(nio::Sink& out);
 
 /**
  * Returns the terminal's current size, if available. The pair' s `first` is the width in columns, `second`
@@ -146,7 +147,7 @@ std::optional<std::pair<size_t, size_t>> position(nio::Sink& out);
  *     returned
  * @return the terminal size, or null if not available
  */
-std::optional<std::pair<size_t, size_t>> size(nio::Sink& out);
+std::optional<std::pair<u64, u64>> size(nio::Sink& out);
 
 } // namespace rocket::system::terminal
 

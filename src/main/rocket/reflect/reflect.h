@@ -173,7 +173,7 @@
 #define ROCKET_REFLECT_MEMBERS_DECLARE_STD_HASH__(ns, cls) \
     template<> \
     struct std::hash<ns::cls> { \
-      size_t operator()(const ns::cls& v) const; \
+      u64 operator()(const ns::cls& v) const; \
     }
 
 #define ROCKET_REFLECT_MEMBERS_DECLARE__(ns, cls, name) \
@@ -188,7 +188,7 @@
     ROCKET_REFLECT_MEMBERS_DECLARE_STD_HASH__(ns, cls)
 
 #define ROCKET_REFLECT_MEMBERS_DEFINE_STD_HASH__(ns, cls, name) \
-    size_t \
+    u64 \
     std::hash<ns::cls>::operator()(const ns::cls& v) const { \
       return ::rocket::reflect::hash(v, ns::cls::name()); \
     }
@@ -322,7 +322,7 @@ struct VarRef {
    *
    * @return the hash value of the variable
    */
-  size_t hash() const { return std::hash<T>()(ref_); }
+  u64 hash() const { return std::hash<T>()(ref_); }
 
   /**
    * Returns the name of the variable.
@@ -348,7 +348,7 @@ namespace internal {
 
 // Internal -------------------------------------------------------------------------------------------------
 
-template<typename T, typename C, size_t Index, typename FormatContext, typename Tuple>
+template<typename T, typename C, u64 Index, typename FormatContext, typename Tuple>
 constexpr FormatContext::iterator
 formatElemImpl(const T& v, FormatContext& ctx, bool debug, const Tuple& refs) {
   using namespace fmt;
@@ -378,7 +378,7 @@ formatElemImpl(const T& v, FormatContext& ctx, bool debug, const Tuple& refs) {
   return out;
 }
 
-template<typename T, typename C, typename FormatContext, typename Tuple, size_t... Index>
+template<typename T, typename C, typename FormatContext, typename Tuple, u64... Index>
 constexpr FormatContext::iterator
 formatImpl(const T& v, FormatContext& ctx, bool debug, const Tuple& refs, std::index_sequence<Index...>) {
   using namespace fmt;
@@ -397,7 +397,7 @@ format(const T& v, FormatContext& ctx, bool debug, const std::tuple<Ref...>& ref
   return internal::formatImpl<T, C>(v, ctx, debug, refs, std::make_index_sequence<sizeof...(Ref)>());
 }
 
-template<size_t Index, typename T, typename Tuple>
+template<u64 Index, typename T, typename Tuple>
 constexpr auto&
 refGet(T& v, const Tuple& refs) noexcept {
   auto& ref = std::get<Index>(refs);
@@ -405,7 +405,7 @@ refGet(T& v, const Tuple& refs) noexcept {
   return ref.get(v);
 }
 
-template<typename T, typename Tuple, size_t... Index>
+template<typename T, typename Tuple, u64... Index>
 bool
 eqImpl(
     const T& lhs,
@@ -415,7 +415,7 @@ eqImpl(
   return (... && std::equal_to()(refGet<Index>(lhs, refs), refGet<Index>(rhs, refs)));
 }
 
-template<typename T, typename Tuple, size_t... Index>
+template<typename T, typename Tuple, u64... Index>
 bool
 neImpl(
     const T& lhs,
@@ -425,7 +425,7 @@ neImpl(
   return (... || std::not_equal_to()(refGet<Index>(lhs, refs), refGet<Index>(rhs, refs)));
 }
 
-template<typename T, typename Tuple, size_t... Index>
+template<typename T, typename Tuple, u64... Index>
 bool
 ltImpl(
     const T& lhs,
@@ -441,7 +441,7 @@ ltImpl(
   return ret;
 }
 
-template<typename T, typename Tuple, size_t... Index>
+template<typename T, typename Tuple, u64... Index>
 bool
 gtImpl(
     const T& lhs,
@@ -458,19 +458,19 @@ gtImpl(
 }
 
 template<typename T, typename... Ref>
-size_t
+u64
 hashImpl(const T& v, const std::tuple<Ref...>& refs) {
   using TupleType = PurgeType<decltype(refs)>;
-  size_t ret = std::tuple_size<TupleType>::value;
+  u64 ret = std::tuple_size<TupleType>::value;
   apply([&](const auto&... arg) { (combineHash(ret, arg.get(v)), ...); }, refs);
   return ret;
 }
 
-template<typename T, size_t Index, typename Tuple>
-size_t
+template<typename T, u64 Index, typename Tuple>
+u64
 writeElemImpl(nio::Sink& out, const T& v, const Tuple& refs) {
   // Write separator
-  size_t ret = 0;
+  u64 ret = 0;
   if constexpr (Index > 0) {
     ret += out.write(", ");
   }
@@ -489,10 +489,10 @@ writeElemImpl(nio::Sink& out, const T& v, const Tuple& refs) {
   return ret;
 }
 
-template<typename T, typename Tuple, size_t... Index>
-size_t
+template<typename T, typename Tuple, u64... Index>
+u64
 writeImpl(nio::Sink& out, const T& v, const Tuple& refs, std::index_sequence<Index...> indices) {
-  size_t ret = out.write('(');
+  u64 ret = out.write('(');
   (..., (ret += writeElemImpl<T, Index>(out, v, refs)));
   ret += out.write(')');
   return ret;
@@ -566,7 +566,7 @@ gt(const T& lhs, const T& rhs, const std::tuple<Ref...>& refs) {
  * @return a hash value
  */
 template<typename T, typename... Ref> requires (... && IsMemberRef<Ref>::value)
-inline size_t
+inline u64
 hash(const T& v, const std::tuple<Ref...>& refs) {
   return internal::hashImpl(v, refs);
 }
@@ -576,7 +576,7 @@ hash(const T& v, const std::tuple<Ref...>& refs) {
  * @param refs the references
  */
 template<typename T, typename... Ref> requires (... && IsMemberRef<Ref>::value)
-inline size_t
+inline u64
 write(nio::Sink& out, const T& v, const std::tuple<Ref...>& refs) {
   return internal::writeImpl(out, v, refs, std::make_index_sequence<sizeof...(Ref)>());
 }
@@ -631,7 +631,7 @@ template<typename T>
 struct hash<rocket::reflect::VarRef<T>> {
   /// @cond undocumented
 
-  size_t operator()(const rocket::reflect::VarRef<T>& v) const { return v.hash(); }
+  u64 operator()(const rocket::reflect::VarRef<T>& v) const { return v.hash(); }
 
   /// @endcond
 };

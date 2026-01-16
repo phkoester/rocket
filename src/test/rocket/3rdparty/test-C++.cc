@@ -33,8 +33,8 @@ protected:
     Member m;
   };
 
-  size_t fooLvalue;
-  size_t fooRvalue;
+  u64 fooLvalue;
+  u64 fooRvalue;
 
   void
   SetUp() override {
@@ -42,12 +42,12 @@ protected:
   }
 
   void
-  foo(const int&) {
+  foo(const i32&) {
     ++fooLvalue;
   }
 
   void
-  foo(int&&) {
+  foo(i32&&) {
     ++fooRvalue;
   }
 
@@ -103,8 +103,8 @@ TEST_F(Cxx, assignLvalueToOptionalWithMove) {
       "2.dtor: a\n");
 }
 
-TEST_F(Cxx, divideByZero_double) {
-  using type = double;
+TEST_F(Cxx, divideByZeroF64) {
+  using type = f64;
   type zero = 0;
 
   type n = 4.2;
@@ -128,16 +128,16 @@ TEST_F(Cxx, optionalEmplace) {
 
 TEST_F(Cxx, utf8Identifier) {
   // German
-  int _blöße; nop(_blöße);
+  i32 _blöße; nop(_blöße);
 
   // French
-  int _ça; nop(_ça);
+  i32 _ça; nop(_ça);
 
   // Japanese
-  int _こんにちわ; nop(_こんにちわ);
+  i32 _こんにちわ; nop(_こんにちわ);
 
   // Chinese (traditional)
-  int _你好; nop(_你好);
+  i32 _你好; nop(_你好);
 }
 
 TEST_F(Cxx, utf8StringLiteral) {
@@ -188,7 +188,7 @@ TEST_F(Cxx, vectorEmplaceBack) {
 }
 
 TEST_F(Cxx, forwardWithBar) {
-  int lvalue;
+  i32 lvalue;
   bar(lvalue);
   EXPECT_EQ(fooLvalue, 1);
 
@@ -197,7 +197,7 @@ TEST_F(Cxx, forwardWithBar) {
 }
 
 TEST_F(Cxx, forwardWithBaz) {
-  int lvalue;
+  i32 lvalue;
   baz(lvalue);
   EXPECT_EQ(fooLvalue, 1);
 

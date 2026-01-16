@@ -239,7 +239,7 @@ private:
   std::unordered_map<std::string_view, const Option*> byName_;
   std::unordered_map<std::string_view, const Option*> byShortName_;
 
-  void helpOpts(nio::Sink& out, size_t width) const;
+  void helpOpts(nio::Sink& out, u64 width) const;
 
   void printHelp(nio::Sink& out) const;
 

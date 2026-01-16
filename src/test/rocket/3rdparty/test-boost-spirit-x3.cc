@@ -14,7 +14,7 @@ namespace x3 = boost::spirit::x3;
 // `TEST` ---------------------------------------------------------------------------------------------------
 
 TEST(boost_spirit_x3, parseComplex) {
-  using Attr = pair<double, double>;
+  using Attr = pair<f64, f64>;
 
   auto parse = [] (string_view in, Attr& attr) {
     return x3::phrase_parse(

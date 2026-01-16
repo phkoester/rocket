@@ -6,6 +6,8 @@
 
 #pragma once
 
+#include "rocket/rocket.h"
+
 #include <string>
 
 namespace rocket::gtest {
@@ -19,7 +21,7 @@ namespace rocket::gtest {
  */
 struct TracingString {
   /// The number of currently existing instances.
-  static size_t NUM_INSTANCES;
+  static u64 NUM_INSTANCES;
 
   /**
    * Resets the ID counter. This may be called on test setup.
@@ -30,20 +32,20 @@ struct TracingString {
   }
 
   /// Counts how often the default constructor was called for this instance.
-  size_t ctor = 0;
+  u64 ctor = 0;
   /// Counts how often the copy constructor was called for this instance.
-  size_t ctorCopy = 0;
+  u64 ctorCopy = 0;
   /// Counts how often the move constructor was called for this instance.
-  size_t ctorMove = 0;
+  u64 ctorMove = 0;
   /// Counts how often the constructor taking a pointer was called for this instance.
-  size_t ctorP = 0;
+  u64 ctorP = 0;
   /// Counts how often the destructor was called for this instance.
-  size_t dtor = 0;
+  u64 dtor = 0;
 
   /// Counts how often the copy-assignment operator was called for this instance.
-  size_t opAsgmtCopy = 0;
+  u64 opAsgmtCopy = 0;
   /// Counts how often the move-assignment operator was called for this instance.
-  size_t opAsgmtMove = 0;
+  u64 opAsgmtMove = 0;
 
   /**
    * @ctor
@@ -133,10 +135,10 @@ struct TracingString {
 
 private:
 
-  static size_t ID_COUNTER;
+  static u64 ID_COUNTER;
 
   std::string* trace_;
-  size_t id_;
+  u64 id_;
   std::string v_;
 
   void

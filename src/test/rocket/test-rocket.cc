@@ -31,7 +31,7 @@ static_assert(is_same_v<decltype(0.0L), f128>);
 // `TEST` ---------------------------------------------------------------------------------------------------
 
 TEST(rocket, i128OpInput) {
-  using compareType = int;
+  using compareType = i32;
   compareType compare;
   auto compareLimits = numeric_limits<compareType>();
 
@@ -223,7 +223,7 @@ TEST(base, i128OpOutput) {
 }
 
 TEST(base, u128OpInput) {
-  using compareType = uint;
+  using compareType = u32;
   compareType compare;
   auto compareLimits = numeric_limits<compareType>();
 

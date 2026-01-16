@@ -103,8 +103,8 @@ TEST(std, istreamChar) {
   EXPECT_EQ(c, 'a');
 }
 
-TEST(std, istreamInt) {
-  using type = int;
+TEST(std, istreamI32) {
+  using type = i32;
 
   {
     auto is = io::is();
@@ -127,7 +127,7 @@ TEST(std, istreamInt) {
     type v = 0;
     is >> v;
     EXPECT_EQ(v, 0);
-    // After reading an incomplete 'int', there is a failure and an EOF
+    // After reading an incomplete 'i32', there is a failure and an EOF
     EXPECT_ISTREAM(is, true, true, 1);
   }
 
@@ -136,26 +136,26 @@ TEST(std, istreamInt) {
     type v = 0;
     is >> v;
     EXPECT_EQ(v, -12);
-    // After reading a complete 'int', there is no failure but an EOF
+    // After reading a complete 'i32', there is no failure but an EOF
     EXPECT_ISTREAM(is, false, true, 3);
     EXPECT_EQ(is.tellg(), -1);
   }
 
   {
     nio::StringSink buf;
-    buf.print("{}", numeric_limits<int>::max() + 1L);
+    buf.print("{}", numeric_limits<i32>::max() + 1L);
     auto is = io::is(buf.str());
     type v = 0;
     is >> v;
     // If the value is greater than the maximum value, then the result is capped!
-    EXPECT_EQ(v, numeric_limits<int>::max());
+    EXPECT_EQ(v, numeric_limits<i32>::max());
     EXPECT_ISTREAM(is, true, true, 10);
     EXPECT_EQ(is.tellg(), -1);
   }
 }
 
-TEST(std, istreamDouble) {
-  using type = double;
+TEST(std, istreamF64) {
+  using type = f64;
 
   ostringstream os;
   os << -numeric_limits<type>::infinity();
@@ -170,8 +170,8 @@ TEST(std, istreamDouble) {
   }
 }
 
-TEST(std, istreamLongDouble) {
-  using type = long double;
+TEST(std, istreamF128) {
+  using type = f128;
 
   {
     auto is = io::is("1.2");

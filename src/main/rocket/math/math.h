@@ -41,9 +41,9 @@ mean(It begin, It end) {
 
   // Calculating CMA = Cumulative Moving Average
   T ret = 0;
-  size_t n = 1;
+  u64 n = 0;
   for (auto it = begin; it != end; ++it) {
-    ret += (*it - ret) / n++;
+    ret += (*it - ret) / ++n;
   }
   return ret;
 }

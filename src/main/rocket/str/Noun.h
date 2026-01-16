@@ -33,7 +33,7 @@ struct Noun {
    *     plural otherwise
    */
   std::string
-  operator()(size_t count) const {
+  operator()(u64 count) const {
     if (count == 1) {
       return fmt::format("{} {}", count, singular);
     } else {

@@ -11,8 +11,8 @@ using namespace rocket;
 using namespace rocket::unicode;
 using namespace std;
 
-GTEST_API_ int
-main(int argc, char** argv) {
+GTEST_API_ i32
+main(i32 argc, char** argv) {
   testing::InitGoogleMock(&argc, argv);
   process.init(argc, argv, nullopt, process.codeLocale());
 
@@ -33,7 +33,7 @@ main(int argc, char** argv) {
     cl.handleException(ex, nio::stderr);
   }
 
-  int status = RUN_ALL_TESTS();
+  i32 status = RUN_ALL_TESTS();
   process.exit(status);
 }
 

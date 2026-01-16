@@ -55,7 +55,7 @@ template<typename Generator>
 char
 randomChar(Generator& gen, std::string_view chars) {
   ROCKET_CHECK(chars, chars.size() > 1);
-  size_t index = random(gen, 0UL, chars.size() - 1);
+  u64 index = random(gen, 0UL, chars.size() - 1);
   return chars[index];
 }
 
@@ -70,9 +70,9 @@ randomChar(Generator& gen, std::string_view chars) {
  */
 template<typename Generator>
 std::string
-randomChars(Generator& gen, size_t n, std::string_view chars) {
+randomChars(Generator& gen, u64 n, std::string_view chars) {
   std::string ret;
-  for (size_t i = 0; i < n; ++i) {
+  for (u64 i = 0; i < n; ++i) {
     ret.push_back(randomChar(gen, chars));
   }
   return ret;
@@ -88,7 +88,7 @@ randomChars(Generator& gen, size_t n, std::string_view chars) {
  */
 template<typename Generator>
 std::string
-randomHex(Generator& gen, size_t n) {
+randomHex(Generator& gen, u64 n) {
   return randomChars(gen, n, "0123456789abcdef");
 }
 

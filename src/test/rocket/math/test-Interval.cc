@@ -11,7 +11,7 @@ using namespace rocket::math;
 // `TEST` ---------------------------------------------------------------------------------------------------
 
 TEST(math, RightOpenIntervalFormat) {
-  using type = RightOpenInterval<int>;
+  using type = RightOpenInterval<i32>;
 
   EXPECT_EQ(fmt::format("{}", type {}), "∅");
   EXPECT_EQ(fmt::format("{}", type { 1'000, 2'000 }), "[1000,2000)");

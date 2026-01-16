@@ -40,10 +40,10 @@ TEST(system, envBool) {
   EXPECT_EQ(env::get<type>(name), nullopt);
 }
 
-TEST(system, envDouble) {
-  using type = double;
+TEST(system, envF64) {
+  using type = f64;
 
-  const char* name = "MY_DOUBLE";
+  const char* name = "MY_F64";
 
   EXPECT_EQ(env::get<type>(name), nullopt);
 

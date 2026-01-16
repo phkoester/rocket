@@ -26,15 +26,15 @@ enum Enum2 { Four, Five, Six };
 // `TEST` ---------------------------------------------------------------------------------------------------
 
 TEST(Type, opEq) {
-  EXPECT_EQ(Type::of<int>(), Type::of<int>());
+  EXPECT_EQ(Type::of<i32>(), Type::of<i32>());
 }
 
 TEST(Type, opNe) {
-  EXPECT_NE(Type::of<int>(), Type::of<long>());
+  EXPECT_NE(Type::of<i32>(), Type::of<i64>());
 }
 
 TEST(Type, format) {
-  EXPECT_EQ(fmt::format("{}", Type::of<int>()), "int");
+  EXPECT_EQ(fmt::format("{}", Type::of<i32>()), "i32");
   EXPECT_EQ(fmt::format("{}", Type::of<Type>()), "rocket::Type");
   EXPECT_EQ(fmt::format("{:?}", Type::of<Type>()), "\"rocket::Type\"");
   EXPECT_EQ(fmt::format(U"{:?}", Type::of<Type>()), U"\"rocket::Type\"");
@@ -45,7 +45,7 @@ TEST(Type, format) {
  */
 TEST(Type, map) {
   map<Type, string> map;
-  map.emplace(Type::of<int>(), "int");
+  map.emplace(Type::of<i32>(), "i32");
   map.emplace(Type::of<string>(), "string");
 }
 
@@ -58,10 +58,10 @@ TEST(Type, name) {
   EXPECT_EQ(Type::of(e2).name(), "(anonymous namespace)::Enum2");
   EXPECT_EQ(Type::of<Enum2>().name(), "(anonymous namespace)::Enum2");
 
-  using type = variant<int, tuple<string, vector<u128>>>;
+  using type = variant<i32, tuple<string, vector<u128>>>;
   EXPECT_EQ(
       Type::of<type>().name(),
-      "std::variant<int, std::tuple<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char>>, std::vector<unsigned __int128, std::allocator<unsigned __int128>>>>");
+      "std::variant<i32, std::tuple<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char>>, std::vector<unsigned __int128, std::allocator<unsigned __int128>>>>");
 }
 
 /**
@@ -69,7 +69,7 @@ TEST(Type, name) {
  */
 TEST(Type, unorderedMap) {
   unordered_map<Type, string> map;
-  map.emplace(Type::of<int>(), "int");
+  map.emplace(Type::of<i32>(), "i32");
   map.emplace(Type::of<string>(), "string");
 }
 

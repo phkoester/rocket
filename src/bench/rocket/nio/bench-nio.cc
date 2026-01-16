@@ -12,10 +12,10 @@ using namespace rocket::nio;
 
 // Constants ------------------------------------------------------------------------------------------------
 
-constexpr size_t FILE_SIZE = 32 * 1'204 * 1'024; // 256 MiB
-constexpr size_t CHUNK_SIZE = 1'024;
-constexpr size_t N = 10;
-constexpr size_t ITERATIONS = FILE_SIZE / CHUNK_SIZE;
+constexpr u64 FILE_SIZE = 32 * 1'204 * 1'024; // 256 MiB
+constexpr u64 CHUNK_SIZE = 1'024;
+constexpr u64 N = 10;
+constexpr u64 ITERATIONS = FILE_SIZE / CHUNK_SIZE;
 
 // `TEST` ---------------------------------------------------------------------------------------------------
 
@@ -26,7 +26,7 @@ TEST(nio, FileSink) {
   ROCKET_BENCH(N, [&] {
     {
       FileSink out(tmp);
-      for (size_t i = 0; i < ITERATIONS; ++i) {
+      for (u64 i = 0; i < ITERATIONS; ++i) {
         out.write(chunk);
       }
     }
@@ -43,7 +43,7 @@ TEST(nio, BufferedFileSink) {
       FileSink out(tmp);
       std::setbuf(out.file_, nullptr); // Disable buffering
       BufferedSink buffered(out);
-      for (size_t i = 0; i < ITERATIONS; ++i) {
+      for (u64 i = 0; i < ITERATIONS; ++i) {
         buffered.write(chunk);
       }
     }
@@ -59,7 +59,7 @@ TEST(nio, StreamSink) {
     {
       ofstream os(tmp.c_str());
       StreamSink out(os);
-      for (size_t i = 0; i < ITERATIONS; ++i) {
+      for (u64 i = 0; i < ITERATIONS; ++i) {
         out.write(chunk);
       }
     }
@@ -77,7 +77,7 @@ TEST(nio, BufferedStreamSink) {
       os.rdbuf()->pubsetbuf(nullptr, 0); // Disable buffering
       StreamSink out(os);
       BufferedSink buffered(out);
-      for (size_t i = 0; i < ITERATIONS; ++i) {
+      for (u64 i = 0; i < ITERATIONS; ++i) {
         buffered.write(chunk);
       }
     }

@@ -206,7 +206,7 @@ throwsInputFailure(PositionMatcher&& positionMatcher, WhatMatcher&& whatMatcher)
  */
 template<typename WhatMatcher>
 inline testing::PolymorphicMatcher<testing::internal::ExceptionMatcherImpl<InputFailure>>
-throwsInputFailure(size_t position, WhatMatcher&& whatMatcher) {
+throwsInputFailure(u64 position, WhatMatcher&& whatMatcher) {
   return throwsInputFailure(
       testing::Eq(position),
       std::forward<WhatMatcher>(whatMatcher));
@@ -255,7 +255,7 @@ throwsInputFailure(
  */
 template<typename WhatMatcher>
 inline testing::PolymorphicMatcher<testing::internal::ExceptionMatcherImpl<InputFailure>>
-throwsInputFailure(size_t position, str::Range range, WhatMatcher&& whatMatcher) {
+throwsInputFailure(u64 position, str::Range range, WhatMatcher&& whatMatcher) {
   return throwsInputFailure(
       testing::Eq(position),
       testing::Eq(str::Ranges { range }),
@@ -274,7 +274,7 @@ throwsInputFailure(size_t position, str::Range range, WhatMatcher&& whatMatcher)
  */
 template<typename WhatMatcher>
 inline testing::PolymorphicMatcher<testing::internal::ExceptionMatcherImpl<InputFailure>>
-throwsInputFailure(size_t position, const str::Ranges& ranges, WhatMatcher&& whatMatcher) {
+throwsInputFailure(u64 position, const str::Ranges& ranges, WhatMatcher&& whatMatcher) {
   return throwsInputFailure(
       testing::Eq(position),
       testing::Eq(ranges),

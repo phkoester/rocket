@@ -8,15 +8,15 @@
  * | Type          | `linux` | Rocket alias
  * | :------------ | ------: | :-----------
  * | `char`        |       1 | --
- * | `short`       |       2 | `i16`
  * | `wchar_t`     |       4 | --
  * | `char32_t`    |       4 | `char32`
+ * | `short`       |       2 | `i16`
  * | `int`         |       4 | `i32`
- * | `float`       |       4 | `f32`
  * | `long`        |       8 | `i64`
  * | `long long`   |       8 | `i64`
  * | `size_t`      |       8 | `u64`
  * | `__int128`    |      16 | `i128`
+ * | `float`       |       4 | `f32`
  * | `double`      |       8 | `f64`
  * | `long double` |      16 | `f128`
  * | `void*`       |       8 | --
@@ -68,7 +68,8 @@ using i128 = __int128;
 using u128 = unsigned __int128;
 using f32 = _Float32;
 using f64 = _Float64;
-using f128 = long double;
+using f128 = long double; // @todo Find a portable way to define this
+static_assert(sizeof(f128) == 16);
 
 // `i128` ---------------------------------------------------------------------------------------------------
 

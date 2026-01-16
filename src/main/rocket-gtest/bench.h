@@ -24,7 +24,7 @@
   using namespace std::chrono; \
   \
   auto t1 = steady_clock::now(); \
-  for (size_t i__ = 0; i__ < n; ++i__) { \
+  for (u64 i__ = 0; i__ < n; ++i__) { \
     fn(); \
   } \
   auto t2 = steady_clock::now(); \

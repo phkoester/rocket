@@ -11,12 +11,12 @@ using namespace rocket::reflect;
 // `MyStruct` -----------------------------------------------------------------------------------------------
 
 struct MyStruct {
-  int ä = 0;
+  i32 ä = 0;
   string b;
 
   MyStruct() {}
 
-  MyStruct(int ä, string_view b, bool c) : ä(ä), b(b), c(c) {}
+  MyStruct(i32 ä, string_view b, bool c) : ä(ä), b(b), c(c) {}
 
   bool getC() const { return c; }
 
@@ -55,7 +55,7 @@ TEST(reflect, MyStruct) {
  */
 TEST(reflect, MyStructSizeof) {
   struct BareStruct {
-    int ä;
+    i32 ä;
     string b;
     bool c;
   };
@@ -142,9 +142,9 @@ TEST(reflect, MyStructIndex2Hash) {
   MyStruct m2(42, "rocket", false);
   MyStruct m3(43, "rocket", true);
 
-  size_t hash1 = reflect::hash(m1, MyStruct::index2());
-  size_t hash2 = reflect::hash(m2, MyStruct::index2());
-  size_t hash3 = reflect::hash(m3, MyStruct::index2());
+  u64 hash1 = reflect::hash(m1, MyStruct::index2());
+  u64 hash2 = reflect::hash(m2, MyStruct::index2());
+  u64 hash3 = reflect::hash(m3, MyStruct::index2());
 
   EXPECT_EQ(hash1, hash2);
   EXPECT_NE(hash1, hash3);
@@ -158,23 +158,23 @@ TEST(reflect, MyStructIndex2Write) {
 }
 
 TEST(reflect, VarRef) {
-  int ä1 = 2;
+  i32 ä1 = 2;
   string b1 = "hi";
-  float f1 = .5f;
+  f32 f1 = .5f;
 
   auto vars1 = ROCKET_REFLECT_VARS((ä1)(b1)(f1));
   EXPECT_EQ(fmt::format("{}", vars1), "(ä1=2, b1=\"hi\", f1=0.5)");
 
-  int ä2 = 2;
+  i32 ä2 = 2;
   string b2 = "hi";
-  float f2 = .5f;
+  f32 f2 = .5f;
   auto vars2 = ROCKET_REFLECT_VARS((ä2)(b2)(f2));
   EXPECT_EQ(vars2, vars1); // Only the values are compared, not the names
   EXPECT_EQ(fmt::format("{}", vars2), "(ä2=2, b2=\"hi\", f2=0.5)");
 
-  int ä3 = 2;
+  i32 ä3 = 2;
   string b3 = "hi";
-  float f3 = .6f;
+  f32 f3 = .6f;
 
   auto vars3 = ROCKET_REFLECT_VARS((ä3)(b3)(f3));
   EXPECT_EQ(fmt::format("{}", vars3), "(ä3=2, b3=\"hi\", f3=0.6)");
@@ -188,8 +188,8 @@ TEST(reflect, VarRef) {
 }
 
 TEST(reflect, VarRefOpOutput) {
-  int i = 2;
-  long l = 3;
+  i32 i = 2;
+  i64 l = 3;
   auto vars = ROCKET_REFLECT_VARS((i)(l));
 
   auto v0 = get<0>(vars);
@@ -199,15 +199,15 @@ TEST(reflect, VarRefOpOutput) {
 }
 
 TEST(reflect, VarRefHash) {
-  int i1 = 2;
-  long l1 = 3;
+  i32 i1 = 2;
+  i64 l1 = 3;
   auto vars1 = ROCKET_REFLECT_VARS((i1)(l1));
-  size_t hash1 = std::hash<decltype(vars1)>()(vars1);
+  u64 hash1 = std::hash<decltype(vars1)>()(vars1);
 
-  int i2 = 2;
-  long l2 = 3;
+  i32 i2 = 2;
+  i64 l2 = 3;
   auto vars2 = ROCKET_REFLECT_VARS((i2)(l2));
-  size_t hash2 = std::hash<decltype(vars2)>()(vars2);
+  u64 hash2 = std::hash<decltype(vars2)>()(vars2);
 
   EXPECT_NE(hash1, 0);
   EXPECT_EQ(hash2, hash1);
