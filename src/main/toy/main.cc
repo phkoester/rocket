@@ -7,8 +7,6 @@
 #include "rocket/log/log.h"
 #include "rocket/unicode/Character.h"
 
-#include <thread>
-
 using namespace rocket;
 using namespace rocket::unicode;
 using namespace std;
@@ -19,6 +17,7 @@ ROCKET_LOG_DEFINE(toy);
 // Variables -----------------------------------------------------------------------------------------------
 
 auto& out = nio::stdout;
+auto& err = nio::stderr;
 
 // Functions -----------------------------------------------------------------------------------------------
 
@@ -86,10 +85,10 @@ main(int argc, char **argv) {
   try {
     args = cl.parse(process.args());
     if (help) {
-      cl.help(nio::stdout, true);
+      cl.help(out, true);
     }
   } catch (const exception& ex) {
-    cl.handleException(ex, nio::stderr);
+    cl.handleException(ex, err);
   }
 
   {
