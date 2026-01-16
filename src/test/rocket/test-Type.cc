@@ -34,7 +34,7 @@ TEST(Type, opNe) {
 }
 
 TEST(Type, format) {
-  EXPECT_EQ(fmt::format("{}", Type::of<i32>()), "i32");
+  EXPECT_EQ(fmt::format("{}", Type::of<i32>()), "int");
   EXPECT_EQ(fmt::format("{}", Type::of<Type>()), "rocket::Type");
   EXPECT_EQ(fmt::format("{:?}", Type::of<Type>()), "\"rocket::Type\"");
   EXPECT_EQ(fmt::format(U"{:?}", Type::of<Type>()), U"\"rocket::Type\"");
@@ -61,7 +61,7 @@ TEST(Type, name) {
   using type = variant<i32, tuple<string, vector<u128>>>;
   EXPECT_EQ(
       Type::of<type>().name(),
-      "std::variant<i32, std::tuple<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char>>, std::vector<unsigned __int128, std::allocator<unsigned __int128>>>>");
+      "std::variant<int, std::tuple<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char>>, std::vector<unsigned __int128, std::allocator<unsigned __int128>>>>");
 }
 
 /**
