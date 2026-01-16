@@ -8,6 +8,8 @@
 #include "rocket/enum.h"
 #include "rocket/macro.h"
 
+#include <boost/tokenizer.hpp>
+
 #include <chrono>
 
 using namespace rocket;
@@ -59,15 +61,12 @@ struct Entry {
 // `Format` -------------------------------------------------------------------------------------------------
 
 struct Format {
-  bool measureTimes = true; // "t": `false`, "T": `true`
-  bool prettyFunction = true; // "f": `false`, "F": `true`
-  int secondsRez = 6; // "s3": 3 (milliseconds), "s6": 6 (microseconds), "s9": 9 (nanoseconds)
-  bool sourceLocation = true; // "l": `false`, "L": `true`
-  bool utc = false; // "z": `false`, "Z": `true`
-
-  Format(string_view s) {
-    apply(s);
-  }
+  bool execTimes = true; // x, X
+  bool prettyFunction = true; // f, F
+  uint8_t secondsRez = 6; // s3, s6, s9
+  bool sourceLocation = true; // l, L
+  bool threadIds = true; // t, T
+  bool utc = false; // z, Z
 
   void apply(string_view s) {
     for (auto it = s.begin(), end = s.end(); it != end; ++it) {
@@ -84,21 +83,23 @@ struct Format {
         case '3': secondsRez = 3; break;
         case '6': secondsRez = 6; break;
         case '9': secondsRez = 9; break;
-        default: ROCKET_FAIL("Invalid seconds resolution: {:?}", *it);
+        default: ROCKET_FAIL("Invalid seconds resolution {:?}", *it);
         }
         break;
       }
-      case 't': measureTimes = false; break;
-      case 'T': measureTimes = true; break;
+      case 't': threadIds = false; break;
+      case 'T': threadIds = true; break;
+      case 'x': execTimes = false; break;
+      case 'X': execTimes = true; break;
       case 'z': utc = false; break;
       case 'Z': utc = true; break;
-      default: ROCKET_FAIL("Invalid format specifier: {:?}", *it);
+      default: ROCKET_FAIL("Invalid format specifier {:?}", *it);
       }
     }
   }
 };
 
-Format logFmt("");
+Format logFmt;
 
 // `Out` ----------------------------------------------------------------------------------------------------
 
@@ -106,14 +107,16 @@ Format logFmt("");
 struct Out {
   inline nio::Sink& get() { return out_ ? *out_ : *fileOut_; }
 
-  void set(nio::Sink& v) {
+  void
+  set(nio::Sink& v) {
     out_ = &v;
     fileOut_ = nullptr;
   }
 
-  void set(string_view v) {
+  void
+  set(string_view v) {
     out_ = nullptr;
-    // Append to avoid data loss
+    // Always append to avoid data loss
     fileOut_ = make_unique<nio::FileSink>(string(v), nio::FileSink::Params { .append=true });
     if (not fileOut_->good()) {
       process.error(nio::stderr, EXIT_SUCCESS, "Cannot open log file `{}`; logging to standard output instead", v);
@@ -138,8 +141,22 @@ vector<cl::Option> clOpts {
     "set logging for identifier ID to level LEVEL. ID is a known log identifier or `all`. LEVEL is `none`, "
     "`error`, `warn`, `info`, `debug`, or `trace`. If LEVEL is not supplied, `info` is assumed",
     applyLog },
-  { &clGroup, "log-fmt", nullopt, true, "[f][F][l][L][s3][s6][s9][t][T][z][Z]",
-    "set log-format options",
+  { &clGroup, "log-fmt", nullopt, true, "FMT",
+    "set log format. FMT is a string of format specifiers, e.g. `fs3Z`. Valid specifiers are:\n"
+    "- f : display function names\n"
+    "- F : display pretty function names (*)\n"
+    "- l : do not display source location\n"
+    "- L : display source location (*)\n"
+    "- s3: display time with milliseconds\n"
+    "- s6: display time with microseconds (*)\n"
+    "- s9: display time with nanoseconds\n"
+    "- t : do not display thread IDs\n"
+    "- T : display thread IDs (*)\n"
+    "- x : do not display function execution times\n"
+    "- X : display function execution times (*)\n"
+    "- z : display local time (*)\n"
+    "- Z : display UTC time\n"
+    "An asterisk (*) indicates that the setting is enabled by default",
     applyLogFmt },
   { &clGroup, "log-out", nullopt, true, "OUT",
     "log to OUT. OUT is `stdout`, `stderr`, a file path, or a URL beginning with `file://`",
@@ -155,13 +172,17 @@ auto definedIds = rocket::makeUnorderedBimap<LogLevel*, string_view>();
 // The `Out` instance
 Out out;
 
-// The function stack
+/**
+ * The function stack.
+ *
+ * @ThreadSafe
+ */
 thread_local vector<Entry> stack;
 
 // Local functions ------------------------------------------------------------------------------------------
 
 /**
- * This function handles the `--log` option.
+ * Handles the `--log` option.
  *
  * @ThreadSafe
  */
@@ -182,7 +203,7 @@ applyLog(optional<string_view> v) {
 }
 
 /**
- * This function handles the `--log-fmt` option.
+ * Handles the `--log-fmt` option.
  *
  * @ThreadSafe
  */
@@ -196,7 +217,7 @@ applyLogFmt(optional<string_view> v) {
 }
 
 /**
- * This function handles the `--log-out` option.
+ * Handles the `--log-out` option.
  *
  * @ThreadSafe
  */
@@ -220,31 +241,43 @@ applyLogOut(optional<string_view> v) {
 
 /// @NotThreadSafe
 string
-formatTimePoint(const TimePoint& tp) {
-  if (logFmt.secondsRez == 3) {
-    chrono::time_point ctp = time_point_cast<chrono::milliseconds>(tp);
-    if (logFmt.utc) {
-      return std::format("{:%FT%TZ} ", ctp);
-    } else {
-      chrono::zoned_time zt { chrono::current_zone(), ctp };
-      return std::format("{:%FT%T%Ez} ", zt);
-    }
-  } else if (logFmt.secondsRez == 6) {
-    chrono::time_point ctp = time_point_cast<chrono::microseconds>(tp);
-    if (logFmt.utc) {
-      return std::format("{:%FT%TZ} ", ctp);
-    } else {
-      chrono::zoned_time zt { chrono::current_zone(), ctp };
-      return std::format("{:%FT%T%Ez} ", zt);
-    }
+formatExecTime(const TimePoint& t1, const TimePoint& t2) {
+  auto ns = chrono::duration_cast<chrono::nanoseconds>(t2 - t1).count();
+  if (ns < 1'000) {
+    // Display in nanoseconds
+    return fmt::format("{} ns", ns);
+  } else if (ns < 1'000'000) {
+    // Display in microseconds
+    return fmt::format("{}.{:0>3} µs", ns / 1'000, ns % 1'000);
+  } else if (ns < 1'000'000'000) {
+    // Display in milliseconds
+    auto µs = ns / 1'000;
+    return fmt::format("{}.{:0>3} ms", µs / 1'000, µs % 1'000);
   } else {
-    chrono::time_point ctp = time_point_cast<chrono::nanoseconds>(tp);
+    // Display in seconds
+    auto ms = ns / 1'000'000;
+    return fmt::format("{}.{:0>3} s", ms / 1'000, ms % 1'000);
+  }
+}
+
+/// @NotThreadSafe
+string
+formatTimePoint(const TimePoint& tp) {
+  auto formatImpl = [](const auto& ctp) {
     if (logFmt.utc) {
       return std::format("{:%FT%TZ} ", ctp);
     } else {
       chrono::zoned_time zt { chrono::current_zone(), ctp };
       return std::format("{:%FT%T%Ez} ", zt);
     }
+  };
+
+  if (logFmt.secondsRez == 3) {
+    return formatImpl(time_point_cast<chrono::milliseconds>(tp));
+  } else if (logFmt.secondsRez == 6) {
+    return formatImpl(time_point_cast<chrono::microseconds>(tp));
+  } else {
+    return formatImpl(time_point_cast<chrono::nanoseconds>(tp));
   }
 }
 
@@ -273,9 +306,7 @@ logFlush(nio::Sink& out) {
   }
 }
 
-/**
- * @NotThreadSafe
- */
+/// @NotThreadSafe
 void
 logImpl(
     nio::Sink& out,
@@ -287,18 +318,18 @@ logImpl(
   // Item: time point
   string s = formatTimePoint(time);
   out.write(s);
-  size_t indentSize = s.size();
+  size_t indent = s.size();
 
   // Item: log ID
   auto it = definedIds.left.find(logId);
   ROCKET_ASSERT(it != definedIds.left.end());
-  auto id = it->second;
-  if (id.size() <= 16) {
-    out.print("{: <16} ", id);
-  } else {
-    out.print("{}… ", id.substr(0, 15));
+  auto id = string(it->second);
+  if (id.size() > 16) {
+    id = id.substr(0, 15) + "…";
   }
-  indentSize += 17; // 16 chars + 1 space
+  out.print("{: <16} ", id);
+  size_t idIndent = indent; // We need this for multi-line messages later
+  indent += 17; // 16 chars + 1 space
 
   // Item: log level
   if (level > LogLevel::none) {
@@ -306,30 +337,33 @@ logImpl(
   } else {
     out.write("        "); // 8 spaces
   }
-  indentSize += 8;
+  indent += 8;
 
   // Item: Indent by stack level
-  string indent(2 * stackLevel, ' ');
-  out.write(indent);
-  indentSize += indent.size();
+  out.print("{: <{}}", "", 2 * stackLevel);
+  indent += 2 * stackLevel;
 
   // Item: message
   if (auto lf = msg.find('\n'); lf == string::npos) {
     // Single-line message: just print it
-    out.write(msg);
+    out.print("{}\n", msg);
   } else {
-    // Multi-line message: left-adjust
-    string localMsg(msg);
-    string to = "\n" + string(indentSize, ' ');
-    str::replaceIn<char>(localMsg, "\n", to);
-    out.write(localMsg);
+    // Multi-line message: left-adjust, repeat the log ID for each line
+    // XXX str::split
+    boost::char_separator<char> sep("\n", nullptr, boost::keep_empty_tokens);
+    bool first = true;
+    for (const auto& line : boost::tokenizer(msg, sep)) {
+      if (first) {
+        out.print("{}\n", line);
+        first = false;
+      } else {
+        out.print("{: <{}}{: <{}}{}\n", "", idIndent, id, indent - idIndent, line);
+      }
+    }
   }
-
-  // Print line feed
-  out.write('\n');
 }
 
-// @ThreadSafe
+/// @ThreadSafe
 void
 setLogLevel(string_view id, string_view value) {
   bool all = id == "all";
@@ -391,7 +425,11 @@ logBegin(LogLevel* logId, const char* function, const char* prettyFunction, cons
   ROCKET_MUTEX_LOCK(logMutex);
 
   // Begin log entry will be flushed later if necessary
-  string msg = string(prettyFunction) + " {";
+  string msg = logFmt.prettyFunction ? prettyFunction : function;
+  if (logFmt.sourceLocation) {
+    msg += fmt::format(" {}:{}", file, line);
+  }
+  msg += " {";
   nio::StringSink buf;
   auto time = chrono::system_clock::now();
   logImpl(buf, logId, LogLevel::none, stack.size(), time, msg);
@@ -407,9 +445,17 @@ logEnd() noexcept {
     const Entry& entry = stack.back();
     if (not entry.begin_) {
       ROCKET_MUTEX_LOCK(logMutex);
-      string msg = "} " + string(entry.prettyFunction_);
+      string msg = "} ";
+      msg += logFmt.prettyFunction ? entry.prettyFunction_ : entry.function_;
+      if (logFmt.sourceLocation) {
+        msg += fmt::format(" {}:{}", entry.file_, entry.line_);
+      }
       auto time = chrono::system_clock::now();
-      // XXX Hier measure
+      if (logFmt.execTimes) {
+        msg += " [";
+        msg += formatExecTime(entry.time_, time);
+        msg += ']';
+      }
       logImpl(out.get(), entry.logId_, LogLevel::none, stack.size() - 1, time, msg);
     }
   } catch (const exception& ex) {

@@ -5,20 +5,18 @@
 #include "rocket/Process.h"
 #include "rocket/cl/cl.h"
 #include "rocket/log/log.h"
+#include "rocket/unicode/Character.h"
 
 using namespace rocket;
+using namespace rocket::unicode;
 using namespace std;
 
-ROCKET_LOG_DEFINE(thisIsARatherLongName);
+ROCKET_LOG_DEFINE(thisIsARatherLongLogId);
 ROCKET_LOG_DEFINE(toy);
 
 // Variables -----------------------------------------------------------------------------------------------
 
 auto& out = nio::stdout;
-
-ROCKET_INIT(([&] {
-  out.println("ROCKET_INIT: {}, {}", __FUNCTION__, __PRETTY_FUNCTION__);
-}));
 
 // Functions -----------------------------------------------------------------------------------------------
 
@@ -26,17 +24,24 @@ extern const char* generated();
 
 void
 myExit() {
-  out.println("myExit");
+  // out.println("myExit");
   // throw InvalidState("Oopsers!");
 }
 
 void
 myTerminate() {
-  out.println("myTerminate");
+  // out.println("myTerminate");
+}
+
+void zz() {
+  ROCKET_LOG(thisIsARatherLongLogId);
+  ROCKET_LOG_INFO("zz");
 }
 
 void tox() {
-  ROCKET_LOG(thisIsARatherLongName);
+  ROCKET_LOG(thisIsARatherLongLogId);
+
+  zz();
 
   ROCKET_LOG_INFO("Hello from tox!\nWe're going multi-line ...\nAnd again.");
 }
@@ -61,10 +66,20 @@ main(int argc, char **argv) {
 
   process.init(argc, argv, "toy");
 
-  cl::CommandLine cl;
+  bool help = false;
+
+  cl::OptionGroup general("General control");
+  cl::CommandLineParams params { .usages={ "[OPTION]..." }} ;
+  cl::CommandLine cl({
+    cl::Option::of(&general, "help", "?"_c, nullopt, "display this help text and exit", help)
+  }, params);
+
   vector<string> args;
   try {
     args = cl.parse(process.args());
+    if (help) {
+      cl.help(nio::stdout, true);
+    }
   } catch (const exception& ex) {
     cl.handleException(ex, nio::stderr);
   }
