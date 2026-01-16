@@ -42,21 +42,21 @@ struct Io {
    *
    * @return 0 if successful, an error code otherwise
    */
-  virtual int close() = 0;
+  virtual i32 close() = 0;
 
   /**
    * Returns the file descriptor.
    *
    * @return the file descriptor, or -1 if the file descriptor cannot be determined
    */
-  virtual int fd() = 0;
+  virtual i32 fd() = 0;
 
   /**
    * Returns the error status.
    *
    * @return the error status
    */
-   virtual int error() const { return error_; }
+   virtual i32 error() const { return error_; }
 
   /**
    * Checks if the instance is open and the error status is 0.
@@ -79,7 +79,7 @@ protected:
 
   Io(const Io& rhs) = delete;
 
-  int error_ = 0; ///< The error status.
+  i32 error_ = 0; ///< The error status.
   bool open_ = true; ///< Open flag.
 
   /**
@@ -103,7 +103,7 @@ struct Sink : Io {
    *
    * @return 0 if successful, an error code otherwise
    */
-  virtual int flush() = 0;
+  virtual i32 flush() = 0;
 
   /**
    * Prints a formatted message to the sink.
@@ -244,13 +244,13 @@ protected:
 
   ~BufferedSink() override;
 
-  int close() override;
+  i32 close() override;
 
-  int error() const override { return underlying_.error(); } // cppcheck-suppress uselessOverride
+  i32 error() const override { return underlying_.error(); } // cppcheck-suppress uselessOverride
 
-  int fd() override;
+  i32 fd() override;
 
-  int flush() override;
+  i32 flush() override;
 
   bool good() const override { return underlying_.good(); } // cppcheck-suppress uselessOverride
 
@@ -316,11 +316,11 @@ struct FileSink : Sink {
 
   ~FileSink() override;
 
-  int close() override;
+  i32 close() override;
 
-  int fd() override;
+  i32 fd() override;
 
-  int flush() override;
+  i32 flush() override;
 
   u64 write(std::string_view in) override;
 
@@ -338,11 +338,11 @@ ROCKET_TESTING_PRIVATE:
 struct NullSink : Sink {
   ~NullSink() override;
 
-  int close() override;
+  i32 close() override;
 
-  int fd() override;
+  i32 fd() override;
 
-  int flush() override;
+  i32 flush() override;
 
   u64 write(std::string_view in) override;
 };
@@ -362,11 +362,11 @@ struct SpanSink : Sink {
 
   ~SpanSink() override;
 
-  int close() override;
+  i32 close() override;
 
-  int fd() override { return -1; }
+  i32 fd() override { return -1; }
 
-  int flush() override;
+  i32 flush() override;
 
   u64 write(std::string_view in) override;
 
@@ -394,11 +394,11 @@ struct StreamSink : Sink {
 
   ~StreamSink() override;
 
-  int close() override;
+  i32 close() override;
 
-  int fd() override;
+  i32 fd() override;
 
-  int flush() override;
+  i32 flush() override;
 
   u64 write(std::string_view in) override;
 
@@ -430,11 +430,11 @@ struct StringSink : Sink {
 
   ~StringSink() override;
 
-  int close() override;
+  i32 close() override;
 
-  int fd() override { return -1; }
+  i32 fd() override { return -1; }
 
-  int flush() override;
+  i32 flush() override;
 
   /**
    * Returns the referenced or the owned string.
@@ -517,7 +517,7 @@ struct Source : Io {
    * @param mode the seek mode
    * @return 0 if successful, an error code otherwise
    */
-  virtual int seek(i64 offset, SeekMode mode = SeekMode::beg) = 0;
+  virtual i32 seek(i64 offset, SeekMode mode = SeekMode::beg) = 0;
 
   /**
    * Returns the current input position
@@ -550,11 +550,11 @@ struct BufferedSource : Source {
 
   ~BufferedSource() override;
 
-  int close() override;
+  i32 close() override;
 
-  int error() const override { return underlying_.error(); } // cppcheck-suppress uselessOverride
+  i32 error() const override { return underlying_.error(); } // cppcheck-suppress uselessOverride
 
-  int fd() override;
+  i32 fd() override;
 
   bool good() const override { return underlying_.good(); } // cppcheck-suppress uselessOverride
 
@@ -562,7 +562,7 @@ struct BufferedSource : Source {
 
   u64 read(std::span<char> out) override;
 
-  int seek(i64 offset, SeekMode mode = SeekMode::beg) override;
+  i32 seek(i64 offset, SeekMode mode = SeekMode::beg) override;
 
   u64 tell() override;
 
@@ -624,13 +624,13 @@ struct FileSource : Source {
 
   ~FileSource() override;
 
-  int close() override;
+  i32 close() override;
 
-  int fd() override;
+  i32 fd() override;
 
   u64 read(std::span<char> out) override;
 
-  int seek(i64 offset, SeekMode mode = SeekMode::beg) override;
+  i32 seek(i64 offset, SeekMode mode = SeekMode::beg) override;
 
   u64 tell() override;
 
@@ -648,13 +648,13 @@ ROCKET_TESTING_PRIVATE:
  struct NullSource : Source {
   ~NullSource() override;
 
-  int close() override;
+  i32 close() override;
 
-  int fd() override { return -1; }
+  i32 fd() override { return -1; }
 
   u64 read(std::span<char> out) override;
 
-  int seek(i64 offset, SeekMode mode = SeekMode::beg) override;
+  i32 seek(i64 offset, SeekMode mode = SeekMode::beg) override;
 
   u64 tell() override;
 };
@@ -677,13 +677,13 @@ struct StreamSource : Source {
 
   ~StreamSource() override;
 
-  int close() override;
+  i32 close() override;
 
-  int fd() override;
+  i32 fd() override;
 
   u64 read(std::span<char> out) override;
 
-  int seek(i64 offset, SeekMode mode = SeekMode::beg) override;
+  i32 seek(i64 offset, SeekMode mode = SeekMode::beg) override;
 
   u64 tell() override;
 
@@ -709,13 +709,13 @@ struct StringSource : Source {
 
   ~StringSource() override;
 
-  int close() override;
+  i32 close() override;
 
-  int fd() override { return -1; }
+  i32 fd() override { return -1; }
 
   u64 read(std::span<char> out) override;
 
-  int seek(i64 offset, SeekMode mode = SeekMode::beg) override;
+  i32 seek(i64 offset, SeekMode mode = SeekMode::beg) override;
 
   u64 tell() override;
 

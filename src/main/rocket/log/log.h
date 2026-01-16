@@ -60,12 +60,12 @@ void init();
 
 LogLevel logDefine(LogLevel* logId, std::string_view id);
 
-void logBegin(LogLevel* logId, const char* function, const char* prettyFunction, const char* file, int line);
+void logBegin(LogLevel* logId, const char* function, const char* prettyFunction, const char* file, i32 line);
 
 void logEnd() noexcept;
 
 struct Log {
-  inline Log(LogLevel* logId, const char* function, const char* prettyFunction, const char* file, int line) :
+  inline Log(LogLevel* logId, const char* function, const char* prettyFunction, const char* file, i32 line) :
       level_(*logId) {
     logBegin(logId, function, prettyFunction, file, line);
   }

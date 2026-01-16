@@ -78,7 +78,7 @@ CommandLine::apply(const Option& opt, bool nameFlag, optional<string_view> value
 }
 
 void
-CommandLine::error(nio::Sink& out, int status) const {
+CommandLine::error(nio::Sink& out, i32 status) const {
   if (usage_)
     printUsage(out);
   if (help_)
@@ -88,7 +88,7 @@ CommandLine::error(nio::Sink& out, int status) const {
 }
 
 void
-CommandLine::handleException(const exception& ex, nio::Sink& out, int status) const {
+CommandLine::handleException(const exception& ex, nio::Sink& out, i32 status) const {
   if (auto p = dynamic_cast<const Exception*>(&ex))
     process.error(out, EXIT_SUCCESS, "{}", p->message());
   else

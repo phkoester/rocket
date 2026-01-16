@@ -78,7 +78,7 @@ const std::string& setThreadName(std::string_view name = "");
  *
  * Once the program started operating properly, `EXIT_FAILURE` (1) should be used to indicate a problem.
  */
-constexpr int EXIT_SERIOUS_FAILURE = 2;
+constexpr i32 EXIT_SERIOUS_FAILURE = 2;
 
 /// The ID of the main thread.
 extern const std::thread::id MAIN_THREAD_ID;
@@ -103,8 +103,8 @@ extern const std::thread::id MAIN_THREAD_ID;
  *
  * using namespace rocket;
  *
- * int
- * main(int argc, char** argv) {
+ * i32
+ * main(i32 argc, char** argv) {
  *   process.init(argc, argv, "my-program");
  *   cl::CommandLine cl;
  *   try {
@@ -175,7 +175,7 @@ struct Process {
    */
   template<typename... T>
   void
-  error(nio::Sink& out, int status, fmt::format_string<T...> fmt, T&&... args) {
+  error(nio::Sink& out, i32 status, fmt::format_string<T...> fmt, T&&... args) {
     out.print("{}: error: ", autoName());
     out.println(fmt, std::forward<T>(args)...);
 
@@ -193,7 +193,7 @@ struct Process {
    *
    * @param status the exit status
    */
-  [[noreturn]] void exit(int status) const;
+  [[noreturn]] void exit(i32 status) const;
 
   /**
    * Initializes the process.
@@ -212,7 +212,7 @@ struct Process {
    * @param quickExit if `true`, #exit calls `std::quick_exit`, otherwise it calls `std::exit`
    */
   void init(
-      int argc,
+      i32 argc,
       char** argv,
       std::optional<std::string_view> name = std::nullopt,
       std::optional<std::locale> locale = std::nullopt,
@@ -282,7 +282,7 @@ struct Process {
 
 private:
 
-  int argc_ = 0;
+  i32 argc_ = 0;
   char** argv_ = nullptr;
   std::string name_;
   bool quickExit_ = true;

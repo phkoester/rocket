@@ -72,7 +72,7 @@ BufferedSink::~BufferedSink() {
   close();
 }
 
-int
+i32
 BufferedSink::close() {
   if (not checkOpen()) {
     return error();
@@ -86,7 +86,7 @@ BufferedSink::close() {
   return underlying_.close();
 }
 
-int
+i32
 BufferedSink::fd() {
   if (not checkOpen()) {
     return -1;
@@ -95,7 +95,7 @@ BufferedSink::fd() {
   return underlying_.fd();
 }
 
-int
+i32
 BufferedSink::flush() {
   if (not checkOpen()) {
     return error();
@@ -155,7 +155,7 @@ FileSink::FileSink(FILE* file, const Params& params) :
     file_(file),
     params_(params) {
   ROCKET_CHECK(file, file != nullptr);
-  if (int fd = this->fd(); fd == STDOUT_FILENO || fd == STDERR_FILENO) {
+  if (i32 fd = this->fd(); fd == STDOUT_FILENO || fd == STDERR_FILENO) {
     params_.closeOnDestroy = false;
   }
 }
@@ -181,7 +181,7 @@ FileSink::~FileSink() {
   }
 }
 
-int
+i32
 FileSink::close()
 {
   if (not checkOpen()) {
@@ -190,7 +190,7 @@ FileSink::close()
 
   flush();
 
-  int ret = std::fclose(file_);
+  i32 ret = std::fclose(file_);
   LOG("fclose=" << ret << ", ferror=" << ferror(file_));
   if (ret != 0) {
     error_ = ferror(file_);
@@ -200,7 +200,7 @@ FileSink::close()
   return ret;
 }
 
-int
+i32
 FileSink::fd() {
   if (not checkOpen()) {
     return -1;
@@ -209,13 +209,13 @@ FileSink::fd() {
   return fileno(file_);
 }
 
-int
+i32
 FileSink::flush() {
   if (not checkOpen()) {
     return error_;
   }
 
-  int ret = std::fflush(file_);
+  i32 ret = std::fflush(file_);
   LOG("fflush=" << ret << ", ferror=" << ferror(file_));
   if (ret != 0) {
     error_ = ferror(file_);
@@ -242,7 +242,7 @@ NullSink::~NullSink() {
   close();
 }
 
-int
+i32
 NullSink::close()
 {
   if (not checkOpen()) {
@@ -253,13 +253,13 @@ NullSink::close()
   return 0;
 }
 
-int
+i32
 NullSink::fd() {
   checkOpen();
   return -1;
 }
 
-int
+i32
 NullSink::flush() {
   checkOpen();
   return error_;
@@ -277,7 +277,7 @@ SpanSink::~SpanSink() {
   close();
 }
 
-int
+i32
 SpanSink::close() {
   if (not checkOpen()) {
     return error_;
@@ -287,7 +287,7 @@ SpanSink::close() {
   return 0;
 }
 
-int
+i32
 SpanSink::flush() {
   checkOpen();
   return error_;
@@ -314,7 +314,7 @@ StreamSink::~StreamSink() {
   close();
 }
 
-int
+i32
 StreamSink::close() {
   if (not checkOpen()) {
     return error_;
@@ -327,7 +327,7 @@ StreamSink::close() {
   return 0;
 }
 
-int
+i32
 StreamSink::fd() {
   if (not checkOpen()) {
     return -1;
@@ -342,7 +342,7 @@ StreamSink::fd() {
   }
 }
 
-int
+i32
 StreamSink::flush() {
   if (not checkOpen()) {
     return error_;
@@ -375,7 +375,7 @@ StringSink::~StringSink() {
   close();
 }
 
-int
+i32
 StringSink::close() {
   if (not checkOpen()) {
     return error_;
@@ -385,7 +385,7 @@ StringSink::close() {
   return 0;
 }
 
-int
+i32
 StringSink::flush() {
   checkOpen();
   return error_;
@@ -502,7 +502,7 @@ BufferedSource::~BufferedSource() {
   close();
 }
 
-int
+i32
 BufferedSource::close() {
   if (not checkOpen()) {
     return error();
@@ -516,7 +516,7 @@ BufferedSource::close() {
   return underlying_.close();
 }
 
-int
+i32
 BufferedSource::fd() {
   if (not checkOpen()) {
     return -1;
@@ -577,7 +577,7 @@ BufferedSource::read(span<char> out) {
   return ret;
 }
 
-int
+i32
 BufferedSource::seek(i64 offset, SeekMode mode) {
   if (not checkOpen()) {
     return error_;
@@ -593,7 +593,7 @@ BufferedSource::seek(i64 offset, SeekMode mode) {
   }
 
   // Do the job
-  int ret = underlying_.seek(offset, mode);
+  i32 ret = underlying_.seek(offset, mode);
 
   // Get the new position se we can see if we have a buffer hit
   u64 newTell = underlying_.tell();
@@ -642,7 +642,7 @@ FileSource::FileSource(FILE* file, const Params& params) :
     file_(file),
     params_(params) {
   ROCKET_CHECK(file, file != nullptr);
-  if (int fd = this->fd(); fd == STDIN_FILENO) {
+  if (i32 fd = this->fd(); fd == STDIN_FILENO) {
     params_.closeOnDestroy = false;
   }
 }
@@ -667,14 +667,14 @@ FileSource::~FileSource() {
   }
 }
 
-int
+i32
 FileSource::close()
 {
   if (not checkOpen()) {
     return error_;
   }
 
-  int ret = std::fclose(file_);
+  i32 ret = std::fclose(file_);
   LOG("fclose=" << ret);
   error_ = ret;
   open_ = false;
@@ -682,7 +682,7 @@ FileSource::close()
   return ret;
 }
 
-int
+i32
 FileSource::fd() {
   if (not checkOpen()) {
     return -1;
@@ -703,13 +703,13 @@ FileSource::read(span<char> out) {
   return ret;
 }
 
-int
+i32
 FileSource::seek(i64 offset, SeekMode mode) {
   if (not checkOpen()) {
     return error_;
   }
 
-  int origin;
+  i32 origin;
   switch (mode) {
   case SeekMode::beg:
     origin = SEEK_SET;
@@ -760,7 +760,7 @@ NullSource::~NullSource() {
   close();
 }
 
-int
+i32
 NullSource::close()
 {
   if (not checkOpen()) {
@@ -777,7 +777,7 @@ NullSource::read(span<char> out) {
   return 0;
 }
 
-int
+i32
 NullSource::seek(i64 offset, SeekMode mode) {
   checkOpen();
   return EINVAL;
@@ -795,7 +795,7 @@ StreamSource::~StreamSource() {
   close();
 }
 
-int
+i32
 StreamSource::close() {
   if (not checkOpen()) {
     return error_;
@@ -806,7 +806,7 @@ StreamSource::close() {
   return 0;
 }
 
-int
+i32
 StreamSource::fd() {
   if (not checkOpen()) {
     return -1;
@@ -832,7 +832,7 @@ StreamSource::read(span<char> out) {
   return ret;
 }
 
-int
+i32
 StreamSource::seek(i64 offset, SeekMode mode) {
   if (not checkOpen()) {
     return error_;
@@ -882,7 +882,7 @@ StringSource::~StringSource() {
   close();
 }
 
-int
+i32
 StringSource::close()
 {
   if (not checkOpen()) {
@@ -908,7 +908,7 @@ StringSource::read(span<char> out) {
   return ret;
 }
 
-int
+i32
 StringSource::seek(i64 offset, SeekMode mode) {
   if (not checkOpen()) {
     return error_;

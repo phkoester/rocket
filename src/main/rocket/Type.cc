@@ -16,7 +16,7 @@ namespace {
 
 string
 typeInfoName(const type_info& info) {
-  int status = 0;
+  i32 status = 0;
   unique_ptr<char, decltype(free)*> p(abi::__cxa_demangle(info.name(), nullptr, nullptr, &status), free);
   if (p && status == 0) {
     string ret = p.get();

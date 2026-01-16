@@ -49,7 +49,7 @@ TEST(Iterator, charMultiCodePoint) {
 }
 
 TEST(Iterator, char32) {
-  using type = char32_t;
+  using type = char32;
 
   u32string_view s = U"ä€";
 
@@ -69,7 +69,7 @@ TEST(Iterator, char32) {
 }
 
 TEST(Iterator, char32MultiCodePoint) {
-  using type = char32_t;
+  using type = char32;
 
   u32string_view s = U"🧑‍🌾\r\n👨‍👩‍👦";
   auto it = Iterator<type>(IteratorType::Character, s);

@@ -51,7 +51,7 @@ struct Entry {
   const char* function_;
   const char* prettyFunction_;
   const char* file_;
-  int line_;
+  i32 line_;
   optional<string> begin_; // Log entry from `logBegin` that is flushed only if necessary
   const TimePoint time_;
 
@@ -60,7 +60,7 @@ struct Entry {
       const char* function,
       const char* prettyFunction,
       const char* file,
-      int line,
+      i32 line,
       const string& begin,
       const TimePoint& time) :
       logId_(logId),
@@ -465,7 +465,7 @@ logDefine(LogLevel* logId, string_view id) {
 
 /// @ThreadSafe
 void
-logBegin(LogLevel* logId, const char* function, const char* prettyFunction, const char* file, int line) {
+logBegin(LogLevel* logId, const char* function, const char* prettyFunction, const char* file, i32 line) {
   ROCKET_MUTEX_LOCK(logMutex);
 
   // Begin log entry will be flushed later if necessary

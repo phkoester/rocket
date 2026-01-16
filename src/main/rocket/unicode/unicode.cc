@@ -41,12 +41,12 @@ CodePoint::isWhitespace() const {
 
 CodePoint
 CodePoint::lower() const {
-  return static_cast<char32_t>(u_tolower(v_));
+  return static_cast<char32>(u_tolower(v_));
 }
 
 CodePoint
 CodePoint::upper() const {
-  return static_cast<char32_t>(u_toupper(v_));
+  return static_cast<char32>(u_toupper(v_));
 }
 
 uint8_t
@@ -116,7 +116,7 @@ nextCodePoint(string_view s, size_t& pos) {
   int32_t i = to<int32_t>(pos);
   U8_NEXT(s.data(), i, size, cp);
   pos = to<size_t>(i);
-  return static_cast<char32_t>(cp);
+  return static_cast<char32>(cp);
 }
 
 Cow<string_view, string>
@@ -193,7 +193,7 @@ validate(u32string_view s, UnorderedBimap<size_t, size_t>* positions) {
   for (size_t i = 0, size = s.size(); i < size; ++i ) {
     addPosition(i);
 
-    char32_t c = s[i];
+    char32 c = s[i];
     if (CodePoint(c).valid()) {
       // Valid code point
       if (ret.modified()) {

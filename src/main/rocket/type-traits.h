@@ -26,7 +26,7 @@ static_assert(std::is_same_v<PurgeType<const std::true_type&>, std::true_type>);
 
 // `Char` ---------------------------------------------------------------------------------------------------
 
-template<int N> struct Char;
+template<u32 N> struct Char;
 
 /**
  * 1-byte character: `char`.
@@ -46,7 +46,7 @@ struct Char<4> {
 
 // `Int` ----------------------------------------------------------------------------------------------------
 
-template<int N> struct Int;
+template<u32 N> struct Int;
 
 /**
  * 1-byte signed integer: `i8`.
@@ -90,7 +90,7 @@ struct Int<16> {
 
 // `Uint` ---------------------------------------------------------------------------------------------------
 
-template<int N> struct Uint;
+template<u32 N> struct Uint;
 
 /**
  * 1-byte unsigned integer: `u8`.
@@ -134,7 +134,7 @@ struct Uint<16> {
 
 // `Float` --------------------------------------------------------------------------------------------------
 
-template<int N> struct Float;
+template<u32 N> struct Float;
 
 /**
  * 4-byte floating point: `f32`.
@@ -187,7 +187,7 @@ concept IsFloat = std::is_same_v<PurgeType<T>, typename Float<sizeof(PurgeType<T
  * ## Examples
  *
  * ```
- * static_assert(std::is_same_v<LargestType<char, int>::Type, int>);
+ * static_assert(std::is_same_v<LargestType<char, i32>::Type, i32>);
  * ```
  */
 template <typename... Ts>

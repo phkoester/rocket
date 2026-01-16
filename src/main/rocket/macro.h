@@ -34,7 +34,7 @@
  * ## Examples
  *
  * ```
- * int x = 0;
+ * i32 x = 0;
  * ROCKET_INIT(([&] { x = 1; }));
  * ```
  */

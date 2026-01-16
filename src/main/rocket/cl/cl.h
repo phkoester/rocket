@@ -186,7 +186,7 @@ struct CommandLine {
    * @param out the sink to write to
    * @param status program exit status. If this is not `EXIT_SUCCESS` (0), the program exits with this status
    */
-  void error(nio::Sink& out, int status = EXIT_SERIOUS_FAILURE) const;
+  void error(nio::Sink& out, i32 status = EXIT_SERIOUS_FAILURE) const;
 
   /**
    * To be called when #parse threw an exception.
@@ -198,7 +198,7 @@ struct CommandLine {
   void handleException(
       const std::exception& ex,
       nio::Sink& out,
-      int status = EXIT_SERIOUS_FAILURE) const;
+      i32 status = EXIT_SERIOUS_FAILURE) const;
 
   /**
    * To be called when the `--help` option appeared on the command line.

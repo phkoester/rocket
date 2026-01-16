@@ -16,8 +16,8 @@ constexpr char THREE_BYTES  = 0b1110'1111;
 constexpr char FOUR_BYTES   = 0b1111'0111;
 constexpr char CONT         = 0b1011'1111;
 
-constexpr char32_t D800       = static_cast<char32_t>(0xD800U);
-constexpr char32_t MAX_PLUS_1 = static_cast<char32_t>(0x10FFFFU + 1);
+constexpr char32 D800       = static_cast<char32>(0xD800U);
+constexpr char32 MAX_PLUS_1 = static_cast<char32>(0x10FFFFU + 1);
 
 // Functions ------------------------------------------------------------------------------------------------
 
@@ -107,10 +107,10 @@ TEST(unicode, conversions) {
 
   const char* s1 = "a€b";
 
-  vector<char32_t> v;
+  vector<char32> v;
   u32string s = utf8To32(s1);
   copy(s.begin(), s.end(), back_inserter(v));
-  EXPECT_EQ(v, (vector<char32_t>{ 97, 0x20ac, 98 }));
+  EXPECT_EQ(v, (vector<char32>{ 97, 0x20ac, 98 }));
 
   u32string s2 = utf8To32(s1);
   EXPECT_EQ(s2, U"a€b");

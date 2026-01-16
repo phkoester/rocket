@@ -20,11 +20,11 @@ namespace {
 
 // Local functions ------------------------------------------------------------------------------------------
 
-string escapeCStringCodePointHex(unicode::CodePoint, size_t&);
-string escapeCStringTab(size_t&, const CStringParams&);
+string escapeCStringCodePointHex(unicode::CodePoint, u64&);
+string escapeCStringTab(u64&, const CStringParams&);
 
 string
-escapeCStringCodePoint(unicode::CodePoint cp, size_t& column, const CStringParams& params) {
+escapeCStringCodePoint(unicode::CodePoint cp, u64& column, const CStringParams& params) {
   // Escapable characters
   string ret;
   if (cp >= '\a' && cp <= '\\') {
@@ -79,7 +79,7 @@ escapeCStringCodePoint(unicode::CodePoint cp, size_t& column, const CStringParam
 }
 
 string
-escapeCStringCodePointHex(unicode::CodePoint cp, size_t& column) {
+escapeCStringCodePointHex(unicode::CodePoint cp, u64& column) {
   string ret;
   if (cp > 0xffffU)
     ret = fmt::format("\\U{:0>8X}", static_cast<uint32_t>(cp));
@@ -92,14 +92,14 @@ escapeCStringCodePointHex(unicode::CodePoint cp, size_t& column) {
 }
 
 string
-escapeCStringTab(size_t& column, const CStringParams& params) {
+escapeCStringTab(u64& column, const CStringParams& params) {
   if (not params.tabSize) {
     string ret { '\\', 't' };
     column += ret.size();
     return ret;
   }
   else {
-    size_t mod = column % *params.tabSize;
+    u64 mod = column % *params.tabSize;
     string ret(*params.tabSize - mod, ' ');
     column += ret.size();
     return ret;
@@ -107,7 +107,7 @@ escapeCStringTab(size_t& column, const CStringParams& params) {
 }
 
 string
-escapeRegexCodePoint(unicode::CodePoint cp, size_t& column) {
+escapeRegexCodePoint(unicode::CodePoint cp, u64& column) {
   // Escapable characters
   string ret;
   if (cp >= '\t' && cp <= '}') {
@@ -171,7 +171,7 @@ getChar(unicode::Iterator<char>& iter) {
 
 void
 getChar(unicode::Iterator<char>& iter, char expected) {
-  size_t pos = iter.current();
+  u64 pos = iter.current();
   auto seg = iter.nextSegment();
   if (seg.empty()) {
     throw InputFailure(pos, fmt::format("Expected character {:?}, got EOI", expected));
@@ -182,12 +182,12 @@ getChar(unicode::Iterator<char>& iter, char expected) {
   }
 }
 
-uint32_t
-getHex(unicode::Iterator<char>& iter, size_t n) {
-  size_t pos0 = iter.current();
+u32
+getHex(unicode::Iterator<char>& iter, u64 n) {
+  u64 pos0 = iter.current();
 
   string input;
-  for (size_t i = 0; i < n; ++i) {
+  for (u64 i = 0; i < n; ++i) {
     auto pos = iter.current();
     auto seg = iter.nextSegment();
     if (seg.empty()) {
@@ -202,7 +202,7 @@ getHex(unicode::Iterator<char>& iter, size_t n) {
     input.append(c);
   }
 
-  uint32_t ret = 0;
+  u32 ret = 0;
   std::sscanf(input.c_str(), "%" SCNx32, &ret);
   return ret;
 }
@@ -230,7 +230,7 @@ escapeCString(string_view input, const CStringParams& params, Result* result) {
   if (result) {
     result->positions.clear();
   }
-  size_t to = 0;
+  u64 to = 0;
 
   // If needed, add quote
 
@@ -242,7 +242,7 @@ escapeCString(string_view input, const CStringParams& params, Result* result) {
   // Loop through characters
 
   auto iter = unicode::Iterator<char>(unicode::IteratorType::Character, input);
-  size_t column = 0;
+  u64 column = 0;
   while (true) {
     // Obtain character
 
@@ -314,7 +314,7 @@ unescapeCString(string_view input, const CStringParams& params, Result* result) 
   while (true) {
     // Read character
 
-    size_t pos = iter.current();
+    u64 pos = iter.current();
     auto c1 = getOptionalChar(iter);
     if (result) {
       result->positions.insert({ pos, ret.size() });
@@ -377,17 +377,17 @@ unescapeCString(string_view input, const CStringParams& params, Result* result) 
           ret.push_back(static_cast<char>(*cp2));
           break;
         case 'x': {
-          char32_t i = getHex(iter, 2);
+          char32 i = getHex(iter, 2);
           ret.append(static_cast<string>(unicode::CodePoint(i)));
           break;
         }
         case 'u': {
-          char32_t i = getHex(iter, 4);
+          char32 i = getHex(iter, 4);
           ret.append(static_cast<string>(unicode::CodePoint(i)));
           break;
         }
         case 'U': {
-          char32_t i = getHex(iter, 8);
+          char32 i = getHex(iter, 8);
           ret.append(static_cast<string>(unicode::CodePoint(i)));
           break;
         }
@@ -414,12 +414,12 @@ escapeRegex(string_view input, Result* result) {
   if (result) {
     result->positions.clear();
   }
-  size_t to = 0;
+  u64 to = 0;
 
   // Loop through characters
 
   auto iter = unicode::Iterator<char>(unicode::IteratorType::Character, input);
-  size_t column = 0;
+  u64 column = 0;
   while (true) {
     // Obtain character
 
@@ -477,7 +477,7 @@ unescapeRegex(string_view input, Result* result) {
   while (true) {
     // Read character
 
-    size_t pos = iter.current();
+    u64 pos = iter.current();
     auto c1 = getOptionalChar(iter);
     if (result) {
       result->positions.insert({ pos, ret.size() });
@@ -535,12 +535,12 @@ unescapeRegex(string_view input, Result* result) {
           ret.push_back(static_cast<char>(*cp2));
           break;
         case 'x': {
-          char32_t i = getHex(iter, 2);
+          char32 i = getHex(iter, 2);
           ret.append(static_cast<string>(unicode::CodePoint(i)));
           break;
         }
         case 'u': {
-          char32_t i = getHex(iter, 4);
+          char32 i = getHex(iter, 4);
           ret.append(static_cast<string>(unicode::CodePoint(i)));
           break;
         }

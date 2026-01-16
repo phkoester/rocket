@@ -128,7 +128,7 @@ TEST(boost_spirit_x3, parseWchar) {
 }
 
 TEST(boost_spirit_x3, parseChar32) {
-  using Char = char32_t;
+  using Char = char32;
   using Attr = basic_string<Char>;
 
   auto parse = [](basic_string_view<Char> in, Attr& attr) {

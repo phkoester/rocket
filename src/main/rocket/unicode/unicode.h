@@ -34,13 +34,13 @@ struct CodePoint {
   /**
    * @ctor
    *
-   * @param v a `char32_t` value
+   * @param v a `char32` value
    */
   // cppcheck-suppress noExplicitConstructor
-  constexpr CodePoint(char32_t v) : v_(v) {}
+  constexpr CodePoint(char32 v) : v_(v) {}
 
-  /// @member_op_cast{`char32_t`}
-  operator char32_t() const { return v_; }
+  /// @member_op_cast{`char32`}
+  operator char32() const { return v_; }
 
   /// @member_op_cast{`std::string`}
   explicit operator std::string() const;
@@ -56,7 +56,7 @@ struct CodePoint {
   bool ascii() const { return v_ < 0x80; }
 
   /// @member_fn_hash
-  inline size_t hash() const { return std::hash<char32_t>()(v_); }
+  inline size_t hash() const { return std::hash<char32>()(v_); }
 
   /**
    * Checks if the code point is the specified ASCII character.
@@ -66,7 +66,7 @@ struct CodePoint {
    */
   bool
   is(char c) const {
-    return ascii() && v_ == static_cast<char32_t>(c);
+    return ascii() && v_ == static_cast<char32>(c);
   }
 
   /**
@@ -116,7 +116,7 @@ struct CodePoint {
 
 private:
 
-  char32_t v_; ///< The code-point value.
+  char32 v_; ///< The code-point value.
 };
 
 /**
@@ -133,11 +133,11 @@ operator""_cp(char v) {
 /**
  * Literal operator for #rocket::unicode::CodePoint.
  *
- * @param v the `char32_t` value
+ * @param v the `char32` value
  * @return a #rocket::unicode::CodePoint
  */
 constexpr CodePoint
-operator""_cp(char32_t v) {
+operator""_cp(char32 v) {
   return CodePoint(v) ;
 }
 
@@ -296,8 +296,8 @@ CodePoint nextCodePoint(std::u32string_view s, size_t& pos);
  *
  * @param s the string to validate. The string must remain valid for the lifetime of the returned
  *     #rocket::Cow
- * @param positions if nonnull, then the left index of this map translates `char32_t` offsets from @p s to
- *   char32_t` offsets in the result for each code point and the end of string (trivial, but provided for
+ * @param positions if nonnull, then the left index of this map translates `char32` offsets from @p s to
+ *   `char32` offsets in the result for each code point and the end of string (trivial, but provided for
  *   completeness)
  * @return a #rocket::Cow result
  */

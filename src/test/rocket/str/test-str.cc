@@ -56,7 +56,7 @@ TEST(str, removeLeadingChar) {
 }
 
 TEST(str, removeLeadingChar32) {
-  using type = char32_t;
+  using type = char32;
 
   u32string s = U"";
   EXPECT_EQ(removeLeading<type>(s, U"hello"), U"");
@@ -94,7 +94,7 @@ TEST(str, removeTrailingChar) {
 }
 
 TEST(str, removeTrailingChar32) {
-  using type = char32_t;
+  using type = char32;
 
   u32string s = U"";
   EXPECT_EQ(removeTrailing<type>(s, U"hello"), U"");
@@ -118,7 +118,7 @@ TEST(str, replaceInChar) {
 }
 
 TEST(str, replaceInChar32) {
-  using type = char32_t;
+  using type = char32;
 
   u32string s = U"(abc)(abc)(abc)";
   replaceIn<type>(s, U"(abc)", U"(a)");

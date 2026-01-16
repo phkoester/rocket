@@ -45,10 +45,10 @@ struct ConvertTo<char> {
 };
 
 /**
- * Specialization for `char32_t`.
+ * Specialization for `char32`.
  */
 template<>
-struct ConvertTo<char32_t> {
+struct ConvertTo<char32> {
   /**
    * Applies this converter to a string.
    *

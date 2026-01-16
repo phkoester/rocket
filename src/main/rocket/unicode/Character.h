@@ -22,7 +22,7 @@ namespace rocket::unicode {
  * A string suitable for a `Char` can be obtained as a segment from a #rocket::unicode::Iterator with the
  * iterator type #rocket::unicode::IteratorType::Character.
  *
- * Think of this as a basic text-processing element that is superior to `char`, `char32_t`, or even
+ * Think of this as a basic text-processing element that is superior to `char`, `char32`, or even
  * #rocket::unicode::CodePoint. Use it whenever you can, and make your code Unicode-ready.
  *
  * @note Internally, this class is backed by a string view. It does not copy the string passed to its
@@ -82,10 +82,10 @@ struct Character {
    *
    * @return the number of code points in the character
    */
-  size_t
+  u64
   countCodePoints() const {
-    size_t ret = 0;
-    for (size_t pos = 0; pos < s_.size(); /* Empty */) {
+    u64 ret = 0;
+    for (u64 pos = 0; pos < s_.size(); /* Empty */) {
       nextCodePoint(s_, pos);
       ++ret;
     }
@@ -130,7 +130,7 @@ struct Character {
    */
   bool
   isWhitespace() const {
-    for (size_t pos = 0; pos < s_.size(); /* Empty */) {
+    for (u64 pos = 0; pos < s_.size(); /* Empty */) {
       auto cp = nextCodePoint(s_, pos);
       if (not CodePoint(cp).isWhitespace()) {
         return false;
@@ -166,7 +166,7 @@ struct Character {
    */
   bool
   nbsp() const {
-    size_t pos = 0;
+    u64 pos = 0;
     auto cp = nextCodePoint(s_, pos);
     if (cp != U'\u00A0') { // U+00A0 (NO-BREAK SPACE)
       return false;
@@ -175,11 +175,11 @@ struct Character {
   }
 
   /**
-   * Returns the size of the underlying string, in code units (`char` or `char32_t`)
+   * Returns the size of the underlying string, in code units (`char` or `char32`)
    *
    * @return the size of the underlying string
    */
-  size_t size() const { return s_.size(); }
+  u64 size() const { return s_.size(); }
 
   /**
    * Checks if the character is a tab.
@@ -198,7 +198,7 @@ struct Character {
    */
   std::optional<CodePoint>
   toCodePoint() const {
-    size_t pos = 0;
+    u64 pos = 0;
     auto cp = nextCodePoint(s_, pos);
     if (pos == s_.size()) {
       return CodePoint(cp);
@@ -214,7 +214,7 @@ struct Character {
   uint8_t
   width() const {
     uint8_t ret = 0;
-    for (size_t pos = 0; pos < s_.size(); /* Empty */) {
+    for (u64 pos = 0; pos < s_.size(); /* Empty */) {
       auto cp = nextCodePoint(s_, pos);
       ret = std::max(ret, CodePoint(cp).width());
       if (ret == 2) {
@@ -244,7 +244,7 @@ private:
  * @return a #rocket::unicode::Character
  */
 constexpr inline Character<char>
-operator""_c(const char* p, size_t len) {
+operator""_c(const char* p, u64 len) {
   return Character(std::string_view(p, len));
 }
 
@@ -255,8 +255,8 @@ operator""_c(const char* p, size_t len) {
  * @param len the length of the string literal
  * @return a #rocket::unicode::Character
 */
-constexpr inline Character<char32_t>
-operator""_c(const char32_t* p, size_t len) {
+constexpr inline Character<char32>
+operator""_c(const char32* p, u64 len) {
   return Character(std::u32string_view(p, len));
 }
 

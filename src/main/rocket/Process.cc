@@ -131,7 +131,7 @@ Process::autoName() {
 }
 
 void
-Process::exit(int status) const {
+Process::exit(i32 status) const {
   ROCKET_MUTEX_LOCK(processMutex);
 
   ROCKET_ASSERT(inited_, "Process not initialized");
@@ -153,7 +153,7 @@ Process::exit(int status) const {
 
 void
 Process::init(
-    int argc,
+    i32 argc,
     char** argv,
     optional<string_view> name,
     optional<std::locale> locale,
@@ -191,7 +191,7 @@ Process::init(
 
   quickExit_ = quickExit;
 
-  for (int i = 1; i < argc; ++i)
+  for (i32 i = 1; i < argc; ++i)
     args_.emplace_back(argv[i]);
 
   // Register `onExit` both for `std::exit` and `std::quick_exit`

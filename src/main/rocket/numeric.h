@@ -46,7 +46,7 @@ struct NumericTraits;
 template<>
 struct NumericTraits<char> {
   /// @f$2^{7}@f$ = 128.
-  static constexpr int negativeMin = static_cast<int>(std::numeric_limits<char>::max()) + 1;
+  static constexpr i32 negativeMin = static_cast<i32>(std::numeric_limits<char>::max()) + 1;
 };
 
 /// @spec{#rocket::NumericTraits, #rocket::i16}

@@ -19,7 +19,7 @@ using namespace std;
 namespace {
 
 string
-styleCode(int i, bool fg) {
+styleCode(i32 i, bool fg) {
   bool bold = (i & Style::bold) != 0;
   bool high = (i & Style::high) != 0;
   bool underline = (i & Style::underline) != 0;
@@ -55,17 +55,17 @@ Ansi::clear() const {
 }
 
 string
-Ansi::down(int n) const {
+Ansi::down(i32 n) const {
   return active_ ? fmt::format("\e[{}B", n) : string();
 }
 
 string
-Ansi::left(int n) const {
+Ansi::left(i32 n) const {
   return active_ ? fmt::format("\e[{}D", n) : string();
 }
 
 string
-Ansi::move(int column, int line) const {
+Ansi::move(i32 column, i32 line) const {
   return active_ ? fmt::format("\e[{};{}H", line, column) : string();
 }
 
@@ -110,22 +110,22 @@ Ansi::request(nio::Sink& out, string_view sequence) const {
 }
 
 string
-Ansi::right(int n) const {
+Ansi::right(i32 n) const {
   return active_ ? fmt::format("\e[{}C", n) : string();
 }
 
 string
-Ansi::style(int fg) const {
+Ansi::style(i32 fg) const {
   return active_ ? styleCode(fg, true) : string();
 }
 
 string
-Ansi::style(int fg, int bg) const {
+Ansi::style(i32 fg, i32 bg) const {
   return active_ ? styleCode(fg, true) + styleCode(bg, false) : string();
 }
 
 string
-Ansi::up(int n) const {
+Ansi::up(i32 n) const {
   return active_ ? fmt::format("\e[{}A", n) : string();
 }
 
@@ -144,7 +144,7 @@ position(nio::Sink& out) {
 
   // Parse the response
 
-  int x, y;
+  i32 x, y;
   auto sscanfResult = sscanf(response.c_str(), "\e[%d;%dR", &y, &x);
   ROCKET_EXPECT(sscanfResult == 2);
 
@@ -155,13 +155,13 @@ position(nio::Sink& out) {
 
 optional<pair<size_t, size_t>>
 size(nio::Sink& out) {
-  int fd = out.fd();
+  i32 fd = out.fd();
   if (not isatty(fd)) {
     return nullopt;
   }
 
   winsize ws;
-  int res = ioctl(fd, TIOCGWINSZ, &ws);
+  i32 res = ioctl(fd, TIOCGWINSZ, &ws);
   if (res != 0) {
     return nullopt;
   }

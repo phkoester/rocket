@@ -90,7 +90,7 @@ Iterator<C>::Iterator(IteratorType type, basic_string_view<C> input, const local
     iter_.reset(icu::BreakIterator::createWordInstance(icuLoc, status));
     break;
   default:
-    ROCKET_FAIL("Invalid iterator type: {}", static_cast<int>(type));
+    ROCKET_FAIL("Invalid iterator type: {}", static_cast<i32>(type));
   }
   ROCKET_EXPECT(U_SUCCESS(status));
 
@@ -101,7 +101,7 @@ Iterator<C>::Iterator(IteratorType type, basic_string_view<C> input, const local
 // Template instantiations ----------------------------------------------------------------------------------
 
 template struct Iterator<char>;
-template struct Iterator<char32_t>;
+template struct Iterator<char32>;
 
 } // namespace rocket::unicode
 

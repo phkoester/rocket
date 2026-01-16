@@ -59,7 +59,7 @@ struct Ansi {
    * @param n the number of lines to move
    * @return an ANSI escape sequence if this instance is active, otherwise an empty string
    */
-  std::string down(int n) const;
+  std::string down(i32 n) const;
 
   /**
    * Moves the cursor left by @p n columns.
@@ -67,7 +67,7 @@ struct Ansi {
    * @param n the number of columns to move
    * @return an ANSI escape sequence if this instance is active, otherwise an empty string
    */
-  std::string left(int n) const;
+  std::string left(i32 n) const;
 
   /**
    * Moves the cursor to line @p line and column @p column.
@@ -76,7 +76,7 @@ struct Ansi {
    * @param line the line to move to, starting with 1
    * @return an ANSI escape sequence if this instance is active, otherwise an empty string
    */
-  std::string move(int column, int line) const;
+  std::string move(i32 column, i32 line) const;
 
   /**
    * Sends an ANSI escape sequence to the sink, and returns the response from `stdin`.
@@ -94,7 +94,7 @@ struct Ansi {
    * @param n the number of columns to move
    * @return an ANSI escape sequence if this instance is active, otherwise an empty string
    */
-  std::string right(int n) const;
+  std::string right(i32 n) const;
 
   /**
    * Sets the foreground style.
@@ -102,7 +102,7 @@ struct Ansi {
    * @param fg a bit mask for the foreground style
    * @return an ANSI escape sequence if this instance is active, otherwise an empty string
    */
-  std::string style(int fg = 0) const;
+  std::string style(i32 fg = 0) const;
 
   /**
    * Sets the foreground and background style.
@@ -111,7 +111,7 @@ struct Ansi {
    * @param bg a bit mask for the background style
    * @return an ANSI escape sequence if this instance is active, otherwise an empty string
    */
-  std::string style(int fg, int bg) const;
+  std::string style(i32 fg, i32 bg) const;
 
   /**
    * Moves the cursor down by @p n lines.
@@ -119,7 +119,7 @@ struct Ansi {
    * @param n the number of lines to move
    * @return an ANSI escape sequence if this instance is active, otherwise an empty string
    */
-  std::string up(int n) const;
+  std::string up(i32 n) const;
 
 private:
 

@@ -15,15 +15,15 @@ namespace {
 // Local functions ------------------------------------------------------------------------------------------
 
 void printThrown(
-  nio::Sink&, size_t, const optional<Type>&, const optional<string>&, const optional<stacktrace>&);
+  nio::Sink&, u64, const optional<Type>&, const optional<string>&, const optional<stacktrace>&);
 
 string
-getWhat(int v) {
+getWhat(i32 v) {
   return fmt::format("{}", v);
 }
 
 string
-getWhat(long v) {
+getWhat(i64 v) {
   return fmt::format("{}", v);
 }
 
@@ -56,7 +56,7 @@ getWhat(const exception& v) {
 }
 
 void
-printExceptionPtr(nio::Sink& out, size_t level, const exception_ptr& ptr) {
+printExceptionPtr(nio::Sink& out, u64 level, const exception_ptr& ptr) {
   try {
     rethrow_exception(ptr);
   } catch (const exception& ex) {
@@ -67,9 +67,9 @@ printExceptionPtr(nio::Sink& out, size_t level, const exception_ptr& ptr) {
     } catch (...) {
       printExceptionPtr(out, level + 1, current_exception());
     }
-  } catch (int v) {
+  } catch (i32 v) {
     printThrown(out, level, Type::of(v), getWhat(v), nullopt);
-  } catch (long v) {
+  } catch (i64 v) {
     printThrown(out, level, Type::of(v), getWhat(v), nullopt);
   } catch (const char* v) {
     printThrown(out, level, Type::of(v), getWhat(v), nullopt);
@@ -89,7 +89,7 @@ printExceptionPtr(nio::Sink& out, size_t level, const exception_ptr& ptr) {
 void
 printThrown(
     nio::Sink& out,
-    size_t level,
+    u64 level,
     const optional<Type>& type,
     const optional<string>& what,
     const optional<stacktrace>& st) {
@@ -119,7 +119,7 @@ printThrown(
 }
 
 void
-whatExceptionPtr(nio::Sink& out, size_t level, const exception_ptr& ptr) {
+whatExceptionPtr(nio::Sink& out, u64 level, const exception_ptr& ptr) {
   if (level > 0) {
     out.write(" (Because: ");
   }
@@ -133,9 +133,9 @@ whatExceptionPtr(nio::Sink& out, size_t level, const exception_ptr& ptr) {
     } catch (...) {
       whatExceptionPtr(out, level + 1, current_exception());
     }
-  } catch (int v) {
+  } catch (i32 v) {
     out.write(getWhat(v));
-  } catch (long v) {
+  } catch (i64 v) {
     out.write(getWhat(v));
   } catch (const char* v) {
     out.write(getWhat(v));
