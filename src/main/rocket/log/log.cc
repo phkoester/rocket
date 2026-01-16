@@ -7,10 +7,11 @@
 #include "rocket/Process.h"
 #include "rocket/enum.h"
 #include "rocket/macro.h"
+#include "rocket/chrono/chrono.h"
+#include "rocket/str/str.h"
+#include "rocket/system/system.h"
 
-#include <boost/tokenizer.hpp>
-
-#include <chrono>
+#include <iostream>
 
 using namespace rocket;
 using namespace rocket::log;
@@ -40,11 +41,9 @@ const unordered_map<LogLevel, string_view> LEVEL_DISPLAY {
   { LogLevel::trace, "TRACE"sv },
 };
 
-// `TimePoint ` ---------------------------------------------------------------------------------------------
-
-using TimePoint = chrono::time_point<chrono::system_clock>;
-
 // `Entry` --------------------------------------------------------------------------------------------------
+
+using TimePoint = rocket::chrono::SystemClockTimePoint;
 
 struct Entry {
   LogLevel* logId_;
@@ -120,7 +119,7 @@ Format logFmt;
 
 /// @NotThreadSafe
 struct Out {
-  inline nio::Sink& get() { return out_ ? *out_ : *fileOut_; }
+  nio::Sink& get(const TimePoint& time);
 
   void
   set(nio::Sink& v) {
@@ -128,22 +127,135 @@ struct Out {
     fileOut_ = nullptr;
   }
 
-  void
-  set(string_view v) {
-    out_ = nullptr;
-    // Always append to avoid data loss
-    fileOut_ = make_unique<nio::FileSink>(string(v), nio::FileSink::Params { .append=true });
-    if (not fileOut_->good()) {
-      process.error(nio::stderr, EXIT_SUCCESS, "Cannot open log file `{}`; logging to standard output instead", v);
-      set(nio::stdout);
-    }
-  }
+  void setPattern(string_view pattern, const TimePoint& time);
 
 private:
 
   nio::Sink* out_ = &nio::stdout; // `stdout` or `stderr`
   unique_ptr<nio::FileSink> fileOut_; // A file sink
+
+  string pattern_;
+  optional<std::chrono::year_month_day> localYmd_;
+  optional<std::chrono::year_month_day> utcYmd_;
+  bool zip_ = false;
+
+  void checkYesterday(const TimePoint& time);
+
+  string expand(string_view pattern, const TimePoint& time, bool update);
+
+  std::chrono::year_month_day
+  localYmd(const TimePoint& time) const {
+    auto localTime = std::chrono::zoned_time { std::chrono::current_zone(), time };
+    auto localDays = std::chrono::floor<std::chrono::days>(localTime.get_local_time());
+    return std::chrono::year_month_day { localDays };
+  }
+
+  std::chrono::year_month_day
+  utcYmd(const TimePoint& time) const {
+    auto utcDays = std::chrono::floor<std::chrono::days>(time);
+    return std::chrono::year_month_day { utcDays };
+  }
 };
+
+void
+Out::checkYesterday(const TimePoint& time) {
+  string expanded = expand(pattern_, time - 24h, false);
+  filesystem::path path(expanded);
+  if (filesystem::exists(path)) {
+    system::exec( { "gzip", "-5f", path.string() } );
+  }
+}
+
+nio::Sink&
+Out::get(const TimePoint& time) {
+  if (fileOut_) {
+    // Writing to a file: has the date in the pattern changed?
+    if (localYmd_) {
+      auto newLocalYmd = localYmd(time);
+      if (newLocalYmd != *localYmd_) {
+        // Local date has changed: reassign the pattern, open new log file
+        setPattern(pattern_, time);
+      }
+    }
+    if (utcYmd_) {
+      auto newUtcYmd = utcYmd(time);
+      if (newUtcYmd != *utcYmd_) {
+        // UTC date has changed: reassign the pattern, open new log file
+        setPattern(pattern_, time);
+      }
+    }
+  }
+
+  return out_ ? *out_ : *fileOut_;
+}
+
+string
+Out::expand(string_view pattern, const TimePoint& time, bool update) {
+  // Prepare the values
+
+  auto localYmd = this->localYmd(time);
+  auto date = std::format("{}", localYmd);
+
+  auto dir = filesystem::path(process.invocationName()).parent_path().string();
+  auto pid = fmt::format("{}", getpid());
+  const auto& name = process.name();
+
+  auto utcYmd = this->utcYmd(time);
+  auto udate = std::format("{}", utcYmd);
+
+  // Expand the pattern
+
+  string ret(pattern);
+  auto dateCount = str::replaceIn<char>(ret, "@(date)", date);
+  str::replaceIn<char>(ret, "@(dir)", dir);
+  str::replaceIn<char>(ret, "@(name)", name);
+  str::replaceIn<char>(ret, "@(pid)", pid);
+  auto udateCount = str::replaceIn<char>(ret, "@(udate)", udate);
+  auto zipCount = str::replaceIn<char>(ret, "@(zip)", "");
+
+  // Do sanity checks
+
+  if (dateCount + udateCount > 1) {
+    ROCKET_FAIL("Multiple dates are present in the pattern {:?}; only one is allowed", pattern);
+  }
+  if (ret.find("@(") != NPOS) {
+    ROCKET_FAIL("Invalid pattern {:?}", pattern);
+  }
+
+  // If requested, update members
+
+  if (update) {
+    pattern_ = pattern;
+    localYmd_ = nullopt;
+    if (dateCount > 0) {
+      localYmd_ = localYmd;
+    }
+    utcYmd_ = nullopt;
+    if (udateCount > 0) {
+      utcYmd_ = utcYmd;
+    }
+    zip_ = zipCount > 0;
+  }
+  return ret;
+}
+
+void
+Out::setPattern(string_view pattern, const TimePoint& time) {
+  out_ = nullptr;
+
+  auto path = expand(pattern, time, true);
+  // Always append to avoid data loss
+  fileOut_ = make_unique<nio::FileSink>(path, nio::FileSink::Params { .append=true });
+  if (not fileOut_->good()) {
+    process.error(nio::stderr, EXIT_SUCCESS, "Cannot open log file `{}`; logging to standard output instead", path);
+    set(nio::stdout);
+  }
+
+  // If zipping, check if yesterday's log file exists and zip it
+  if (zip_) {
+    checkYesterday(time);
+  }
+}
 
 // Local variables ------------------------------------------------------------------------------------------
 
@@ -177,7 +289,16 @@ vector<cl::Option> clOpts {
     "An asterisk (*) indicates that the setting is enabled by default",
     applyLogFmt },
   { &clGroup, "log-out", nullopt, true, "OUT",
-    "log to OUT. OUT is `stdout`, `stderr`, a file path, or a URL beginning with `file://`",
+    "log to system device or file. If OUT is `-` or `stdout`, log messages are written to standard output, "
+    "which is the default. If OUT is `stderr`, log messages are written to standard error. Otherwise, OUT "
+    "is a PATTERN. Examples: `@(name).log`, `@(name)-@(date).log@(zip)`. Inside PATTERN, some placeholders "
+    "are automatically expanded:\n"
+    NBSP NBSP "@(date)"     NBSP NBSP NBSP "expands to the current local date\n"
+    NBSP NBSP "@(dir)" NBSP NBSP NBSP NBSP "expands to the parent directory of the executable\n"
+    NBSP NBSP "@(name)"     NBSP NBSP NBSP "expands to the name of the process\n"
+    NBSP NBSP "@(pid)" NBSP NBSP NBSP NBSP "expands to the process ID (PID)\n"
+    NBSP NBSP "@(udate)"         NBSP NBSP "expands to the current UTC date\n"
+    NBSP NBSP "@(zip)" NBSP NBSP NBSP NBSP "expands to nothing and zips yesterday's log file",
     applyLogOut },
 };
 
@@ -245,22 +366,19 @@ applyLogOut(optional<string_view> v) {
 
   ROCKET_MUTEX_LOCK(logMutex);
 
-  if (v == "stdout") {
+  if (v == "-" || v == "stdout") {
     out.set(nio::stdout);
   } else if (v == "stderr") {
     out.set(nio::stderr);
   } else {
-    if (str::beginsWith<char>(*v, "file://")) {
-      *v = v->substr(7);
-    }
-    out.set(*v);
+    out.setPattern(*v, rocket::chrono::systemClockNow());
   }
 }
 
 /// @NotThreadSafe
 string
 formatExecTime(const TimePoint& t1, const TimePoint& t2) {
-  auto ns = chrono::duration_cast<chrono::nanoseconds>(t2 - t1).count();
+  auto ns = std::chrono::duration_cast<std::chrono::nanoseconds>(t2 - t1).count();
   if (ns < 1'000) {
     // Display in nanoseconds
     return fmt::format("{} ns", ns);
@@ -286,19 +404,19 @@ formatTimePoint(const TimePoint& tp) {
     if (logFmt.utc) {
       return std::format("{:%FT%TZ} ", ctp);
     } else {
-      chrono::zoned_time zt { chrono::current_zone(), ctp };
+      std::chrono::zoned_time zt { std::chrono::current_zone(), ctp };
       return std::format("{:%FT%T%Ez} ", zt);
     }
   };
 
   if (logFmt.secondsRez == 0) {
-    return formatImpl(time_point_cast<chrono::seconds>(tp));
+    return formatImpl(time_point_cast<std::chrono::seconds>(tp));
   } else if (logFmt.secondsRez == 3) {
-    return formatImpl(time_point_cast<chrono::milliseconds>(tp));
+    return formatImpl(time_point_cast<std::chrono::milliseconds>(tp));
   } else if (logFmt.secondsRez == 6) {
-    return formatImpl(time_point_cast<chrono::microseconds>(tp));
+    return formatImpl(time_point_cast<std::chrono::microseconds>(tp));
   } else {
-    return formatImpl(time_point_cast<chrono::nanoseconds>(tp));
+    return formatImpl(time_point_cast<std::chrono::nanoseconds>(tp));
   }
 }
 
@@ -393,10 +511,8 @@ logImpl(
     out.print("{}\n", msg);
   } else {
     // Multi-line message: left-adjust, repeat the log ID for each line
-    // XXX str::split
-    boost::char_separator<char> sep("\n", nullptr, boost::keep_empty_tokens);
     bool first = true;
-    for (const auto& line : boost::tokenizer(msg, sep)) {
+    for (const auto& line : str::split<char>(msg, "\n")) {
       if (first) {
         out.print("{}\n", line);
         first = false;
@@ -418,7 +534,7 @@ setLogLevel(string_view id, string_view value) {
   if (not all) {
     it = definedIds.right.find(id);
     if (it == definedIds.right.end()) {
-      throw InvalidState(fmt::format("Invalid log ID `{}`", id));
+      ROCKET_FAIL("Invalid log ID `{}`", id);
     }
   }
 
@@ -451,13 +567,13 @@ init() {
   // We need this in case of quick exit
   process.atExit([] {
     ROCKET_MUTEX_LOCK(logMutex);
-    out.get().flush();
+    out.get(chrono::systemClockNow()).flush();
   }, true);
 }
 
 LogLevel
 logDefine(LogLevel* logId, string_view id) {
-  ROCKET_CHECK(id, id != "all", "Invalid log ID: \"all\"; this ID is reserved");
+  ROCKET_CHECK(id, id != "all", "Invalid log ID \"all\"; this ID is reserved");
   ROCKET_MUTEX_LOCK(logMutex);
   definedIds.left.insert({ logId, id });
   return LogLevel::none;
@@ -475,7 +591,7 @@ logBegin(LogLevel* logId, const char* function, const char* prettyFunction, cons
   }
   msg += " {";
   nio::StringSink buf;
-  auto time = chrono::system_clock::now();
+  auto time = chrono::systemClockNow();
   logImpl(buf, logId, LogLevel::none, stack.size(), time, msg);
   stack.emplace_back(logId, function, prettyFunction, file, line, buf.str(), time);
 }
@@ -494,13 +610,13 @@ logEnd() noexcept {
       if (logFmt.sourceLocation) {
         msg += fmt::format(" {}:{}", entry.file_, entry.line_);
       }
-      auto time = chrono::system_clock::now();
+      auto time = chrono::systemClockNow();
       if (logFmt.execTimes) {
         msg += " [";
         msg += formatExecTime(entry.time_, time);
         msg += ']';
       }
-      logImpl(out.get(), entry.logId_, LogLevel::none, stack.size() - 1, time, msg);
+      logImpl(out.get(time), entry.logId_, LogLevel::none, stack.size() - 1, time, msg);
     }
   } catch (const exception& ex) {
     ROCKET_PROCESS_ERROR("Cannot log message: {}", what(ex));
@@ -516,9 +632,9 @@ void
 log(LogLevel level, string_view msg) {
   ROCKET_MUTEX_LOCK(logMutex);
 
-  auto& out = ::out.get();
+  auto time = chrono::systemClockNow();
+  auto& out = ::out.get(time);
   logFlush(out);
-  auto time = chrono::system_clock::now();
   logImpl(out, stack.back().logId_, level, stack.size(), time, msg);
 }
 

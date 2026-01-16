@@ -4,6 +4,8 @@
 
 #include "system.h"
 
+#include "rocket/assert.h"
+
 #include <array>
 #include <memory>
 
@@ -105,14 +107,14 @@ exec(const string& cl) {
 
   unique_ptr<FILE, decltype(&pclose)> pipe(popen(cl.c_str(), "r"), pclose);
   if (not pipe) {
-    throw InvalidState(fmt::format("Cannot open pipe for command `{}`", cl));
+    ROCKET_FAIL("Cannot open pipe for command `{}`", cl);
   }
   u64 n;
   while ((n = fread(buf.data(), 1, buf.size(), pipe.get())) > 0) {
     ret.insert(ret.end(), buf.begin(), buf.begin() + n);
   }
   if (ferror(pipe.get()) != 0) {
-    throw InvalidState(fmt::format("Cannot read from pipe for command `{}`", cl));
+    ROCKET_FAIL("Cannot read from pipe for command `{}`", cl);
   }
 
   return ret;

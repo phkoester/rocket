@@ -4,6 +4,7 @@
 
 #include "rocket-gtest/rocket-gtest.h"
 
+#include "rocket/assert.h"
 #include "rocket/format/std.h"
 #include "rocket/nio/nio.h"
 
@@ -21,7 +22,7 @@ TEST(std, byteFormat) {
 
 TEST(std, exceptionFormat) {
   try  {
-    throw InvalidState("oops1");
+    ROCKET_FAIL("oops1");
   } catch (const exception& ex1) {
     EXPECT_THAT(fmt::format("{}", ex1), matchesRegex(".*\\.cc:\\d+: oops1"));
     EXPECT_THAT(fmt::format("{:t}", ex1), matchesRegex("`rocket::InvalidState`: .*\\.cc:\\d+: oops1"));

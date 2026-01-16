@@ -50,14 +50,14 @@ CommandLine::CommandLine(const vector<Option>& opts, const CommandLineParams& pa
 void
 CommandLine::apply(const Option& opt, bool nameFlag, optional<string_view> value) {
   if (opt.takesValue && not value) {
-    throw InvalidState(fmt::format("Missing value for option `{}`", name(opt, nameFlag)));
+    ROCKET_FAIL("Missing value for option `{}`", name(opt, nameFlag));
   }
 
   // Usually, options not taking a value may not be assigned a value. There is one exception to this rule:
   // boolean values are allowed
   static const set<string_view> BOOL_VALUES { "0", "false", "1", "true" };
   if (not opt.takesValue && value && not BOOL_VALUES.contains(*value)) {
-    throw InvalidState(fmt::format("Option `{}` cannot take a value", name(opt, nameFlag)));
+    ROCKET_FAIL("Option `{}` cannot take a value", name(opt, nameFlag));
   }
 
   try {
@@ -67,13 +67,13 @@ CommandLine::apply(const Option& opt, bool nameFlag, optional<string_view> value
     if (opt.format) {
       expected = fmt::format("; expected {}", *opt.format);
     }
-    throw InvalidState(fmt::format("Option `{}`: {}{}", name(opt, nameFlag), ex.message(), expected));
+    ROCKET_FAIL("Option `{}`: {}{}", name(opt, nameFlag), ex.message(), expected);
   } catch (const exception& ex) {
     string expected;
     if (opt.format) {
       expected = fmt::format("; expected {}", *opt.format);
     }
-    throw InvalidState(fmt::format("Option `{}`: Invalid value {:?}{}", name(opt, nameFlag), *value, expected));
+    ROCKET_FAIL("Option `{}`: Invalid value {:?}{}", name(opt, nameFlag), *value, expected);
   }
 }
 
@@ -245,7 +245,7 @@ CommandLine::parse(const vector<string>& args, const Take& take) const {
       string_view name = eq == string::npos ? arg : arg.substr(0, eq);
       auto mapIt = byName_.find(name);
       if (mapIt == byName_.end()) {
-        throw InvalidState(fmt::format("Unknown option `--{}`", name));
+        ROCKET_FAIL("Unknown option `--{}`", name);
       }
       const Option& opt = *mapIt->second;
 
@@ -275,7 +275,7 @@ CommandLine::parse(const vector<string>& args, const Take& take) const {
         auto c = *charIt;
         auto mapIt = byShortName_.find(c);
         if (mapIt == byShortName_.end()) {
-          throw InvalidState(fmt::format("Unknown option `-{}`", c));
+          ROCKET_FAIL("Unknown option `-{}`", c);
         }
         const Option& opt = *mapIt->second;
 
@@ -363,9 +363,9 @@ void
 CommandLine::validate(string_view name, bool nameFlag) {
   const char* what = nameFlag ? "option name" : "option short name";
   if (name.empty())
-    throw InvalidState(fmt::format("{} may not be empty", str::capitalize(what)));
+    ROCKET_FAIL("{} may not be empty", str::capitalize(what));
   if (str::beginsWith<char>(name, "-") || name.find_first_of(" =") != string::npos)
-    throw InvalidState(fmt::format("Invalid {} {:?}", what, name));
+    ROCKET_FAIL("Invalid {} {:?}", what, name);
 }
 
 } // namespace rocket::cl

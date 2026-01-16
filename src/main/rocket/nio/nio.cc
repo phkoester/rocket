@@ -191,9 +191,10 @@ FileSink::close()
   flush();
 
   i32 ret = std::fclose(file_);
-  LOG("fclose=" << ret << ", ferror=" << ferror(file_));
+  // `file_` is probably invalid now, so we don't call `ferror` on it
+  LOG("fclose=" << ret);
   if (ret != 0) {
-    error_ = ferror(file_);
+    error_ = EIO;
   }
   open_ = false;
   file_ = nullptr;

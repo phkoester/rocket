@@ -6,4 +6,7 @@
 /compile_commands.json
 /target/
 
+**/*.log
+**/*.log.gz
+
 # EOF

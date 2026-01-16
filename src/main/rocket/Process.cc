@@ -97,7 +97,9 @@ thread_local string threadName;
 
 ROCKET_INIT([&] { threadName = "main"; });
 
-const string& setThreadName(std::string_view name) {
+/// @ThreadSafe
+const string&
+setThreadName(std::string_view name) {
   if (not name.empty()) {
     threadName = name;
   }

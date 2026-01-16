@@ -2,8 +2,11 @@
  * main.cc
  */
 
+#define ROCKET_TESTING
+
 #include "rocket/Process.h"
 #include "rocket/cl/cl.h"
+#include "rocket/chrono/chrono.h"
 #include "rocket/log/log.h"
 #include "rocket/unicode/Character.h"
 
@@ -25,13 +28,13 @@ extern const char* generated();
 
 void
 myExit() {
-  // out.println("myExit");
-  // throw InvalidState("Oopsers!");
+  out.println("myExit");
+  // ROCKET_FAIL("Oopsers!");
 }
 
 void
 myTerminate() {
-  // out.println("myTerminate");
+  out.println("myTerminate");
 }
 
 void zz(i32 level) {
@@ -41,7 +44,7 @@ void zz(i32 level) {
   if (level == 4) {
     return;
   }
-  this_thread::sleep_for(chrono::milliseconds(100));
+  // this_thread::sleep_for(std::chrono::milliseconds(100));
   zz(level + 1);
 }
 
@@ -49,9 +52,14 @@ void tox() {
   ROCKET_LOG(thisIsARatherLongLogId);
   ROCKET_LOG_INFO("in tox(), threadName={}, id={}", ROCKET_THREAD_NAME(), this_thread::get_id());
 
-  zz(0);
+  for (i32 i = 0; i < 10; ++i) {
+    if (i == 5) {
+      rocket::chrono::internal::setClockOffset(24h);
+    }
+    zz(0);
+  }
 
-  ROCKET_LOG_INFO("Hello from tox!\nWe're going multi-line ...\nAnd again.");
+  ROCKET_LOG_INFO("Hello from tox!\nWe're going multi-line ...\nAnd again.\n");
 }
 
 void
@@ -101,6 +109,7 @@ main(i32 argc, char **argv) {
     toy();
   }
 
+  out.println("Exiting ...");
   process.exit(EXIT_SUCCESS);
 }
 

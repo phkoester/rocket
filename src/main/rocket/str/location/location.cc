@@ -133,7 +133,7 @@ locations(string_view input, const vector<Position>& positions, const LocationsP
     if (loc.line != NPOS) {
       ret.locations.push_back(loc);
     } else {
-      throw InvalidState(fmt::format("Position {} not found in source", loc.position));
+      ROCKET_FAIL("Position {} not found in source", loc.position);
     }
   }
 

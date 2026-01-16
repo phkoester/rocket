@@ -6,6 +6,7 @@
 
 #include "rocket/type-traits.h"
 
+#include <algorithm>
 #include <limits>
 #include <string>
 #include <vector>
@@ -13,6 +14,98 @@
 #pragma once
 
 namespace rocket::str {
+
+// `SplitIterator` ------------------------------------------------------------------------------------------
+
+template<typename C> requires IsChar<C>
+struct SplitIterator {
+  SplitIterator(std::basic_string_view<C> s, size_t pos, std::basic_string_view<C> sep) :
+      s_(s), pos_(pos), sep_(sep) {
+    if (pos == NPOS) {
+      // The end
+      pos_ = s_.size();
+      end_ = NPOS;
+      return;
+    }
+
+    pos_ = std::min(pos_, s_.size());
+    if (pos_ == s_.size()) {
+      // Empty token at the end
+      end_ = pos_;
+    } else {
+      // A token
+      end_ = s_.find(sep_, pos_);
+      if (end_ == NPOS) {
+        end_ = s_.size();
+      }
+    }
+  }
+
+  bool operator==(const SplitIterator& rhs) const { return pos_ == rhs.pos_ && end_ == rhs.end_; }
+
+  bool operator!=(const SplitIterator& rhs) const { return not operator==(rhs); }
+
+  SplitIterator&
+  operator++() {
+    if (end_ == s_.size()) {
+      // The end
+      pos_ = end_;
+      end_ = NPOS;
+      return *this;
+    }
+
+    pos_ = end_ + sep_.size();
+    if (pos_ == s_.size()) {
+      // Empty token at the end
+      end_ = pos_;
+    } else {
+      // A token
+      end_ = s_.find(sep_, pos_);
+      if (end_ == NPOS) {
+        end_ = s_.size();
+      }
+    }
+
+    return *this;
+  }
+
+  std::basic_string_view<C> operator*() const { return s_.substr(pos_, end_ - pos_); }
+
+private:
+
+  /// The input string to split.
+  std::basic_string_view<C> s_;
+  size_t pos_; ///< The current position in the string.
+  /**
+   * The end of the current token.
+   *
+   * If this is #rocket::NPOS, the iterator is exhausted.
+   */
+  size_t end_;
+  /// The separator.
+  std::basic_string<C> sep_;
+};
+
+// `SplitResult` --------------------------------------------------------------------------------------------
+
+/**
+ * An object returned by #split that can be used to iterate over the string-view tokens.
+ *
+ * @tparam C the character type
+ */
+template<typename C> requires IsChar<C>
+struct SplitResult {
+  SplitResult(std::basic_string_view<C> s, std::basic_string_view<C> sep) : s_(s), sep_(sep) {}
+
+  SplitIterator<C> begin() const { return SplitIterator<C>(s_, 0, sep_); }
+
+  SplitIterator<C> end() const { return SplitIterator<C>(s_, NPOS, sep_); }
+
+private:
+
+  std::basic_string_view<C> s_;
+  std::basic_string<C> sep_;
+};
 
 // Functions ------------------------------------------------------------------------------------------------
 
@@ -216,6 +309,22 @@ replaceIn(
     pos += to.size();
   }
   return ret;
+}
+
+/**
+ * Splits a string into tokens.
+ *
+ * No strings are ever allocated, so this is a very efficient way to split a string into tokens.
+ *
+ * @tparam C the character type
+ * @param s the string to split
+ * @param sep the separator to use
+ * @return a result object that can be used to iterate over the string-view tokens
+ */
+template<typename C> requires IsChar<C>
+SplitResult<C>
+split(std::basic_string_view<C> s, std::basic_string_view<C> sep) {
+  return SplitResult<C>(s, sep);
 }
 
 /**

@@ -4,6 +4,7 @@
 
 #include "rocket-gtest/rocket-gtest.h"
 
+#include "rocket/assert.h"
 #include "rocket/str/str.h"
 
 using namespace rocket::str;
@@ -20,6 +21,53 @@ pars(const vector<vector<string>>& v) {
 } // namespace
 
 // `TEST` ---------------------------------------------------------------------------------------------------
+
+TEST(str, split) {
+  int n = 0;
+  for (const auto& token : split<char>("", ",")) {
+    if (n == 0) EXPECT_EQ(token, "");
+    ++n;
+  }
+  EXPECT_EQ(n, 1);
+
+  n = 0;
+  for (const auto& token : split<char>(" ", ",")) {
+    if (n == 0) EXPECT_EQ(token, " ");
+    ++n;
+  }
+  EXPECT_EQ(n, 1);
+
+  n = 0;
+  for (const auto& token : split<char>(",", ",")) {
+    if (n == 0) EXPECT_EQ(token, "");
+    if (n == 1) EXPECT_EQ(token, "");
+    ++n;
+  }
+  EXPECT_EQ(n, 2);
+
+  n = 0;
+  for (const auto& token : split<char>(",,", ",")) {
+    if (n == 0) EXPECT_EQ(token, "");
+    if (n == 1) EXPECT_EQ(token, "");
+    if (n == 2) EXPECT_EQ(token, "");
+    ++n;
+  }
+  EXPECT_EQ(n, 3);
+
+
+  n = 0;
+  for (const auto& token : split<char>("||a||b c||||d||||", "||")) {
+    if (n == 0) EXPECT_EQ(token, "");
+    if (n == 1) EXPECT_EQ(token, "a");
+    if (n == 2) EXPECT_EQ(token, "b c");
+    if (n == 3) EXPECT_EQ(token, "");
+    if (n == 4) EXPECT_EQ(token, "d");
+    if (n == 5) EXPECT_EQ(token, "");
+    if (n == 6) EXPECT_EQ(token, "");
+    ++n;
+  }
+  EXPECT_EQ(n, 7);
+}
 
 #define NBSP "\u00A0"
 
