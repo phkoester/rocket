@@ -28,9 +28,9 @@ Iterator<C>::Iterator(IteratorType type, basic_string_view<C> input, const local
 
   // 2. Loop through the `UnicodeString` and populate `usToTxt_`
 
-  int32_t u16length = us_.length();
+  i32 u16length = us_.length();
   const UChar* u16Buf = us_.getBuffer();
-  int32_t u16Index = 0;
+  i32 u16Index = 0;
   UChar32 u16cp;
 
   u64 inputLength = input.size();

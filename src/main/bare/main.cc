@@ -2,6 +2,8 @@
  * main.cc
  */
 
+#include "rocket/rocket.h"
+
 #include <cstdio>
 
 // Functions ------------------------------------------------------------------------------------------------
@@ -12,8 +14,8 @@ bare() {
 
 // `main` ---------------------------------------------------------------------------------------------------
 
-int
-main(int argc, char **argv) {
+i32
+main(i32 argc, char **argv) {
   puts("This is bare");
   bare();
   return 0;

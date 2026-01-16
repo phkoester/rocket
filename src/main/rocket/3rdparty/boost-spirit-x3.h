@@ -1,8 +1,10 @@
 /**
  * @file boost-spirit-x3.h
  *
- * Adds `char32_t` support to Boost Spirit X3.
+ * Adds `char32` support to Boost Spirit X3.
  */
+
+#include "rocket/rocket.h"
 
 #include <boost/spirit/home/support/char_encoding/unicode.hpp>
 #include <boost/spirit/home/x3/char/any_char.hpp>
@@ -39,7 +41,7 @@ namespace unicode {
    * @return a literal character
    */
   inline literal_char<boost::spirit::char_encoding::unicode, unused_type>
-  lit(char32_t ch) {
+  lit(char32 ch) {
     return { ch };
   }
 
@@ -58,8 +60,8 @@ namespace unicode {
    * @param s a string
    * @return a literal string
    */
-  inline literal_string<const char32_t*, char_encoding::unicode>
-  string(const char32_t* s) {
+  inline literal_string<const char32*, char_encoding::unicode>
+  string(const char32* s) {
     return { s };
   }
 
@@ -69,8 +71,8 @@ namespace unicode {
    * @param s a string
    * @return a literal string
    */
-  inline literal_string<std::basic_string<char32_t>, char_encoding::unicode>
-  string(const std::basic_string<char32_t>& s) {
+  inline literal_string<std::basic_string<char32>, char_encoding::unicode>
+  string(const std::basic_string<char32>& s) {
     return { s };
   }
 
@@ -80,8 +82,8 @@ namespace unicode {
    * @param s a string
    * @return a literal string
    */
-  inline literal_string<const char32_t*, char_encoding::unicode, unused_type>
-  lit(const char32_t* s) {
+  inline literal_string<const char32*, char_encoding::unicode, unused_type>
+  lit(const char32* s) {
     return { s };
   }
 
@@ -91,8 +93,8 @@ namespace unicode {
    * @param s a string
    * @return a literal string
    */
-  inline literal_string<std::basic_string<char32_t>, char_encoding::unicode, unused_type>
-  lit(const std::basic_string<char32_t>& s) {
+  inline literal_string<std::basic_string<char32>, char_encoding::unicode, unused_type>
+  lit(const std::basic_string<char32>& s) {
     return { s };
   }
 

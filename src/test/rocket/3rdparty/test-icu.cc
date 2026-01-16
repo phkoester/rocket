@@ -12,7 +12,7 @@
 
 TEST(icu, U8_NEXT) {
   auto s = "hällo"sv;
-  int32_t i = 0;
+  i32 i = 0;
   UChar32 cp;
   U8_NEXT(s.data(), i, s.size(), cp);
   EXPECT_EQ(cp, 'h');

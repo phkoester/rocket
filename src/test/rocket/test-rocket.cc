@@ -19,7 +19,7 @@ static_assert(sizeof(i32) == 4);
 static_assert(sizeof(i64) == 8);
 static_assert(sizeof(i128) == 16);
 
-static_assert(is_same_v<u64, size_t>);
+static_assert(is_same_v<u64, std_size_t>);
 
 static_assert(sizeof(f32) == 4);
 static_assert(is_same_v<decltype(1.0F), f32>);

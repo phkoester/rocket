@@ -77,7 +77,7 @@ struct Entry {
 struct Format {
   bool execTimes = true; // x, X
   bool prettyFunction = true; // f, F
-  uint8_t secondsRez = 6; // s0, s3, s6, s9
+  u8 secondsRez = 6; // s0, s3, s6, s9
   bool sourceLocation = true; // l, L
   bool threadIds = false; // t, T
   bool utc = false; // z, Z

@@ -49,7 +49,7 @@ CodePoint::upper() const {
   return static_cast<char32>(u_toupper(v_));
 }
 
-uint8_t
+u8
 CodePoint::width() const {
   if (not isPrint()) {
     return 0;
@@ -113,7 +113,7 @@ nextCodePoint(string_view s, u64& pos) {
   const auto size = s.size();
   ROCKET_CHECK(pos, pos < size);
   UChar32 cp;
-  int32_t i = to<int32_t>(pos);
+  i32 i = to<i32>(pos);
   U8_NEXT(s.data(), i, size, cp);
   pos = to<u64>(i);
   return static_cast<char32>(cp);

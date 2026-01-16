@@ -29,7 +29,7 @@ positions(initializer_list<pair<u64, u64>> list) {
 // `TEST` ---------------------------------------------------------------------------------------------------
 
 TEST(unicode, CodePointCtorChar) {
-  EXPECT_EQ(static_cast<uint32_t>('\x7f'_cp), 127);
+  EXPECT_EQ(static_cast<u32>('\x7f'_cp), 127);
 
   EXPECT_THAT(
       [&] { '\x80'_cp; },

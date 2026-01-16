@@ -26,8 +26,8 @@
  * `"\xc3\xa4"`. Therefore, the `char8_t` from C++20 is never in use.
  *
  * The size of `wchar_t` is platform-dependent. On Linux, a `wchar_t` is usually 4 bytes wide, whereas on
- * Windows, it is only 2 bytes wide. So there is no guarantee a `wchar_t` can hold a Unicode code point. For
- * UTF-32 encoding, Rocket uses the `char32_t` type from C++11.
+ * Windows, it is only 2 bytes wide. So there is no guarantee a `wchar_t` can hold any Unicode code point.
+ * For UTF-32 encoding, Rocket uses the `char32_t` type from C++11.
  *
  * The only Unicode encodings that Rocket supports are UTF-8 and UTF-32.
  */
@@ -55,20 +55,48 @@
 
 // Rocket type aliases --------------------------------------------------------------------------------------
 
-using char32 = char32_t;
+/// @cond undocumented
+
+using std_char32_t = char32_t;
+using std_long = long;
+using std_long_double = long double;
+using std_size_t = size_t;
+using std_wchar_t = wchar_t;
+
+/// @endcond
+
+/// An unsigned 32-bit character.
+using char32 = std_char32_t;
+/// A signed 8-bit integer.
 using i8 = int8_t;
+/// An unsigned 8-bit integer.
 using u8 = uint8_t;
+/// A signed 16-bit integer.
 using i16 = int16_t;
+/// An unsigned 16-bit integer.
 using u16 = uint16_t;
-using i32 = int;
-using u32 = unsigned int;
+/// A signed 32-bit integer.
+using i32 = int32_t;
+/// An unsigned 32-bit integer.
+using u32 = uint32_t;
+/// A signed 64-bit integer.
 using i64 = int64_t;
+/// An unsigned 64-bit integer.
 using u64 = uint64_t;
+/// A signed 128-bit integer.
 using i128 = __int128;
+/// An unsigned 128-bit integer.
 using u128 = unsigned __int128;
+/// A 32-bit floating point.
 using f32 = _Float32;
+/// A 64-bit floating point.
 using f64 = _Float64;
-using f128 = long double; // @todo Find a portable way to define this
+/**
+ * A 128-bit floating point.
+ *
+ * @todo Find a portable way to define this.
+ */
+using f128 = std_long_double;
 static_assert(sizeof(f128) == 16);
 
 // `i128` ---------------------------------------------------------------------------------------------------

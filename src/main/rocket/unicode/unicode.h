@@ -112,7 +112,7 @@ struct CodePoint {
    *
    * @return the code point's display width, in the range @f$[0,2]@f$
    */
-  uint8_t width() const;
+  u8 width() const;
 
 private:
 
@@ -161,9 +161,9 @@ struct fmt::formatter<rocket::unicode::CodePoint, C> {
   constexpr FormatContext::iterator
   format(const rocket::unicode::CodePoint& v, FormatContext& ctx) const {
     if constexpr (std::is_same_v<C, char>) {
-      return underlying_.format(fmt::format("U+{:0>4X}", static_cast<uint32_t>(v)), ctx);
+      return underlying_.format(fmt::format("U+{:0>4X}", static_cast<u32>(v)), ctx);
     } else {
-      return underlying_.format(fmt::format(U"U+{:0>4X}", static_cast<uint32_t>(v)), ctx);
+      return underlying_.format(fmt::format(U"U+{:0>4X}", static_cast<u32>(v)), ctx);
     }
   }
 

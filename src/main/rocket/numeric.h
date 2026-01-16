@@ -49,21 +49,21 @@ struct NumericTraits<char> {
   static constexpr i32 negativeMin = static_cast<i32>(std::numeric_limits<char>::max()) + 1;
 };
 
-/// @spec{#rocket::NumericTraits, #rocket::i16}
+/// @spec{#rocket::NumericTraits, `i16`}
 template<>
 struct NumericTraits<i16> {
   /// @f$2^{15}@f$ = 32,768.
   static constexpr i32 negativeMin = static_cast<i32>(std::numeric_limits<i16>::max()) + 1;
 };
 
-/// @spec{#rocket::NumericTraits, #rocket::i32}
+/// @spec{#rocket::NumericTraits, `i32`}
 template<>
 struct NumericTraits<i32> {
   /// @f$2^{31}@f$ = 2,147,483,648.
   static constexpr i64 negativeMin = static_cast<i64>(std::numeric_limits<i32>::max()) + 1;
 };
 
-/// @spec{#rocket::NumericTraits, #rocket::i64}
+/// @spec{#rocket::NumericTraits, `i64`}
 template<>
 struct NumericTraits<i64> {
   /// @f$2^{63}@f$ = 9,223,372,036,854,775,808.
@@ -92,7 +92,7 @@ add(Lhs lhs, Rhs rhs) {
   Control controlRet = controlLhs + controlRhs;
 
   if constexpr (sizeof(Control) == sizeof(Result)) {
-    // Mixing `int128_t` and `uint128_t` is not implemented yet
+    // Mixing `i128` and `u128` is not implemented yet
     static_assert(std::is_signed_v<Control> == std::is_signed_v<Result>);
     if ((controlRhs > 0 && controlRet <= controlLhs) || (controlRhs < 0 && controlRet >= controlLhs)) {
       throw Overflow(Type::of<Result>(), fmt::format("{} + {}", controlLhs, controlRhs));
@@ -154,7 +154,7 @@ sub(Lhs lhs, Rhs rhs) {
   Control controlRet = controlLhs - controlRhs;
 
   if constexpr (sizeof(Control) == sizeof(Result)) {
-    // Mixing `int128_t` and `uint128_t` is not implemented yet
+    // Mixing `i128` and `u128` is not implemented yet
     static_assert(std::is_signed_v<Control> == std::is_signed_v<Result>);
     if ((controlRhs > 0 && controlRet >= controlLhs) || (controlRhs < 0 && controlRet <= controlLhs)) {
       throw Overflow(Type::of<Result>(), fmt::format("{} - {}", controlLhs, controlRhs));
@@ -218,7 +218,7 @@ tryAdd(Lhs lhs, Rhs rhs) {
   Control controlRet = controlLhs + controlRhs;
 
   if constexpr (sizeof(Control) == sizeof(Result)) {
-    // Mixing `int128_t` and `uint128_t` is not implemented yet
+    // Mixing `i128` and `u128` is not implemented yet
     static_assert(std::is_signed_v<Control> == std::is_signed_v<Result>);
     if ((controlRhs > 0 && controlRet <= controlLhs) || (controlRhs < 0 && controlRet >= controlLhs)) {
       return std::nullopt;
@@ -253,7 +253,7 @@ trySub(Lhs lhs, Rhs rhs) {
   Control controlRet = controlLhs - controlRhs;
 
   if constexpr (sizeof(Control) == sizeof(Result)) {
-    // Mixing `int128_t` and `uint128_t` is not implemented yet
+    // Mixing `i128` and `u128` is not implemented yet
     static_assert(std::is_signed_v<Control> == std::is_signed_v<Result>);
     if ((controlRhs > 0 && controlRet >= controlLhs) || (controlRhs < 0 && controlRet <= controlLhs)) {
       return std::nullopt;

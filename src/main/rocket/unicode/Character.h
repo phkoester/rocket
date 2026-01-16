@@ -71,7 +71,7 @@ struct Character {
    */
   bool
   ascii() const {
-    return s_.size() == 1 && static_cast<uint32_t>(s_[0]) < 0x80;
+    return s_.size() == 1 && static_cast<u32>(s_[0]) < 0x80;
   }
 
   /**
@@ -211,9 +211,9 @@ struct Character {
    *
    * @return the character's display width, in the range @f$[0,2]@f$
    */
-  uint8_t
+  u8
   width() const {
-    uint8_t ret = 0;
+    u8 ret = 0;
     for (u64 pos = 0; pos < s_.size(); /* Empty */) {
       auto cp = nextCodePoint(s_, pos);
       ret = std::max(ret, CodePoint(cp).width());

@@ -38,8 +38,9 @@ void zz(i32 level) {
   ROCKET_LOG(thisIsARatherLongLogId);
   ROCKET_LOG_INFO("zz at level {}", level);
 
-  if (level == 4)
+  if (level == 4) {
     return;
+  }
   this_thread::sleep_for(chrono::milliseconds(100));
   zz(level + 1);
 }

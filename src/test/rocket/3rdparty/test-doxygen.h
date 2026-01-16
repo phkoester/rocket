@@ -41,6 +41,8 @@
 
 #pragma once
 
+#include "rocket/rocket.h"
+
 #include <iosfwd>
 
 // Global namespace -----------------------------------------------------------------------------------------
@@ -70,7 +72,7 @@ struct C : B {};
  * - #MyClassTemplate
  * - #MyClassTemplate#a
  * - #myFunc
- * - #myFunc(int)
+ * - #myFunc(i32)
  * - #myFuncTemplate(T)
  * - #myFuncTemplate(T, T)
  */
@@ -89,7 +91,7 @@ constexpr auto MY_CONSTANT = 0;
 /**
  * A simple type.
  */
-using MyType = int;
+using MyType = i32;
 
 /**
  * A simple enum.
@@ -114,9 +116,9 @@ enum class MyEnumClass {
  */
 struct MyClass {
   /// Not the same as #b.
-  int a;
+  i32 a;
   /// Not the same as #a.
-  int b;
+  i32 b;
 };
 
 /// @op_output{#MyClass}
@@ -137,11 +139,11 @@ struct MyClassTemplate {
 void myFunc();
 
 /**
- * #myFunc(int) with one argument.
+ * #myFunc(i32) with one argument.
  *
  * @param n text
  */
-void myFunc(int n);
+void myFunc(i32 n);
 
 /**
  * #myFuncTemplate(T) with one argument.
@@ -178,7 +180,7 @@ namespace foo::bar {
  * - #foo::bar::FooMyClassTemplate
  * - #foo::bar::FooMyClassTemplate#a
  * - #foo::bar::fooMyFunc
- * - #foo::bar::fooMyFunc(int)
+ * - #foo::bar::fooMyFunc(i32)
  * - #foo::bar::fooMyFuncTemplate(T)
  * - #foo::bar::fooMyFuncTemplate(T, T)
  */
@@ -192,7 +194,7 @@ constexpr auto FOO_MY_CONSTANT = 0;
 /**
  * A simple type.
  */
-using FooMyType = int;
+using FooMyType = i32;
 
 /**
  * A simple enum.
@@ -217,9 +219,9 @@ enum class FooMyEnumClass {
  */
 struct FooMyClass {
   /// Not the same as #b.
-  int a;
+  i32 a;
   /// Not the same as #a.
-  int b;
+  i32 b;
 };
 
 /// @op_output{#foo::bar::FooMyClass}
@@ -240,11 +242,11 @@ struct FooMyClassTemplate {
 void fooMyFunc();
 
 /**
- * #foo::bar::fooMyFunc(int) with one argument.
+ * #foo::bar::fooMyFunc(i32) with one argument.
  *
  * @param n text
  */
-void fooMyFunc(int n);
+void fooMyFunc(i32 n);
 
 /**
  * #foo::bar::fooMyFuncTemplate(T) with one argument.
