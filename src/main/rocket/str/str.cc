@@ -65,9 +65,9 @@ paragraphs(string_view s) {
   while (true) {
     // Get next character from iterator, if any
     auto seg = iter.nextSegment();
-    optional<Character<char>> c;
+    optional<CharacterView<char>> c;
     if (not seg.empty()) {
-      c = Character(seg);
+      c = CharacterView<char>(seg);
     }
 
     if (seg.empty() || c->eol()) {
@@ -90,7 +90,7 @@ paragraphs(string_view s) {
 
     // Replace tab by space
     if (c->tab()) {
-      c = " "_c;
+      c = " "_cv;
     }
 
     if (c->nbsp()) {
@@ -151,9 +151,9 @@ wrap(string_view s, u64 leftIndent, u64 width) {
     for (const auto& word : par) {
       u64 wordWidth = 0;
       auto iter = Iterator<char>(IteratorType::Character, word);
-      auto chars = iter.nextSegments();
-      for (const auto& c : chars) {
-        wordWidth += Character(c).width();
+      auto segs = iter.nextSegments();
+      for (const auto& seg : segs) {
+        wordWidth += CharacterView<char>(seg).width();
       }
       u64 newLineWidth = lineWidth + wordWidth + (lineWidth > 0 ? 1 : 0);
       if (lineWidth == 0 || newLineWidth < width) {

@@ -267,31 +267,31 @@ CommandLine::parse(const vector<string>& args, const Take& take) const {
 
       arg = arg.substr(1);
       auto iter = unicode::Iterator<char>(unicode::IteratorType::Character, arg);
-      auto chars = iter.nextSegments();
-      auto charBegin = chars.begin();
-      auto charEnd = chars.end();
-      for (auto charIt = charBegin; charIt != charEnd; ++charIt) {
+      auto segs = iter.nextSegments();
+      auto segsBegin = segs.begin();
+      auto segsEnd = segs.end();
+      for (auto segIt = segsBegin; segIt != segsEnd; ++segIt) {
         // Extract short name, look it up in map
-        auto c = *charIt;
-        auto mapIt = byShortName_.find(c);
+        auto seg = *segIt;
+        auto mapIt = byShortName_.find(seg);
         if (mapIt == byShortName_.end()) {
-          ROCKET_FAIL("Unknown option `-{}`", c);
+          ROCKET_FAIL("Unknown option `-{}`", seg);
         }
         const Option& opt = *mapIt->second;
 
         // Obtain value, if any, apply option
         optional<string> value;
-        auto charNext = charIt + 1;
-        if (charNext != charEnd && *charNext == "=") {
+        auto segNext = segIt + 1;
+        if (segNext != segsEnd && *segNext == "=") {
           // Option is followed by `=`: Take everything after the `=` and break the character loop
-          value = unicode::concat(chars, ++charNext - charBegin);
+          value = unicode::concat(segs, ++segNext - segsBegin);
           apply(opt, false, value);
           break;
         } else if (opt.takesValue) {
           // Option takes value: break the character loop
-          if (charNext != charEnd) {
+          if (segNext != segsEnd) {
             // Take the rest of the argument
-            value = unicode::concat(chars, charNext - charBegin);
+            value = unicode::concat(segs, segNext - segsBegin);
             apply(opt, false, value);
           }
           else {

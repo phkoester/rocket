@@ -65,8 +65,8 @@ parseCommand(const vector<string>& args, nio::Sink& out = nio::stdout, nio::Sink
   };
 
   CommandLine cl({
-    Option::of(&general, "omit", "o"_c, nullopt, "omit what is not important", parseCommandOmit),
-    Option::of(&misc, "help", "h"_c, nullopt, "display this help text", parseCommandHelp)
+    Option::of(&general, "omit", "o"_cv, nullopt, "omit what is not important", parseCommandOmit),
+    Option::of(&misc, "help", "h"_cv, nullopt, "display this help text", parseCommandHelp)
   }, params);
 
   auto take = [](string_view arg) -> CommandLine::Took {
@@ -103,8 +103,8 @@ parseCommand(const vector<string>& args, nio::Sink& out = nio::stdout, nio::Sink
     };
 
     CommandLine listCl({
-      Option::of(&list, "help", "h"_c, nullopt, "display this help text", parseCommandListHelp),
-      Option::of(&list, "list", "l"_c, nullopt, "a list option that is good for nothing", parseCommandList)
+      Option::of(&list, "help", "h"_cv, nullopt, "display this help text", parseCommandListHelp),
+      Option::of(&list, "list", "l"_cv, nullopt, "a list option that is good for nothing", parseCommandList)
     }, listParams);
 
     try {
@@ -136,9 +136,9 @@ parseCommand(const vector<string>& args, nio::Sink& out = nio::stdout, nio::Sink
     };
 
     CommandLine showCl({
-      Option::of(&show, "help", "h"_c, nullopt, "display this help text", parseCommandShowHelp),
-      Option::of(&show, "show", "s"_c, nullopt, "a show option that is good for nothing", parseCommandShow),
-      Option::of(&show, "test", "t"_c, nullopt, "test something, or don't", parseCommandShowTest)
+      Option::of(&show, "help", "h"_cv, nullopt, "display this help text", parseCommandShowHelp),
+      Option::of(&show, "show", "s"_cv, nullopt, "a show option that is good for nothing", parseCommandShow),
+      Option::of(&show, "test", "t"_cv, nullopt, "test something, or don't", parseCommandShowTest)
     }, showParams);
 
     try {
@@ -172,7 +172,7 @@ TEST(cl, parseOptBool) {
 
   CommandLine cl( {
     // 🧑‍🌾: U+1F9D1 (ADULT), U+200D (ZERO WIDTH JOINER), U+1F33E (EAR OF RICE)
-    Option::of(nullptr, "flag", "🧑‍🌾"_c, nullopt, nullopt, flag)
+    Option::of(nullptr, "flag", "🧑‍🌾"_cv, nullopt, nullopt, flag)
   });
 
   // Test no options
@@ -238,7 +238,7 @@ TEST(cl, parseOptInt) {
   i32 num;
 
   CommandLine cl( {
-    Option::of(nullptr, "num", "n"_c, "NUM", nullopt, num)
+    Option::of(nullptr, "num", "n"_cv, "NUM", nullopt, num)
   });
 
   // Test mixed order
@@ -282,7 +282,7 @@ TEST(cl, parseOptEnum) {
   log::LogLevel level;
 
   CommandLine cl( {
-    Option::of(nullptr, "level", "l"_c, "LEVEL", nullopt, level)
+    Option::of(nullptr, "level", "l"_cv, "LEVEL", nullopt, level)
   });
 
   // Test mixed order
@@ -308,7 +308,7 @@ TEST(cl, parseOptVector) {
   vector<string> names;
 
   CommandLine cl( {
-    Option::of(nullptr, "name", "n"_c, "NAME", nullopt, names)
+    Option::of(nullptr, "name", "n"_cv, "NAME", nullopt, names)
   });
 
   // Test multiple values
@@ -326,9 +326,9 @@ TEST(cl, parseShortOptions) {
   string name;
 
   CommandLine cl( {
-    Option::of(nullptr, "ignore", "i"_c, nullopt, nullopt, ignore),
-    Option::of(nullptr, "verbose", "v"_c, nullopt, nullopt, verbose),
-    Option::of(nullptr, "name", "n"_c, "NAME", nullopt, name)
+    Option::of(nullptr, "ignore", "i"_cv, nullopt, nullopt, ignore),
+    Option::of(nullptr, "verbose", "v"_cv, nullopt, nullopt, verbose),
+    Option::of(nullptr, "name", "n"_cv, "NAME", nullopt, name)
   });
 
   // Test without '='

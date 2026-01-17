@@ -83,9 +83,9 @@ locations(string_view input, const vector<Position>& positions, const LocationsP
 
     // Get next character from iterator, if any
     auto seg = iter.nextSegment();
-    optional<unicode::Character<char>> c;
+    optional<unicode::CharacterView<char>> c;
     if (not seg.empty()) {
-      c = unicode::Character(seg);
+      c = unicode::CharacterView<char>(seg);
     }
 
     if (seg.empty() || c->eol()) {
@@ -189,32 +189,32 @@ printLocations(
     escape::Result result;
     string escapedLine = escape::escapeCString(line, { .tabSize=locationsResult.params.tabSize }, &result);
 
-    // For `escapedLine`, map `Char` index -> byte offset
-    unicode::Iterator<char> iter(unicode::IteratorType::Character, escapedLine);
-    auto chars = iter.nextSegments();
+    // For `escapedLine`, map `Character` index -> byte offset
+    auto iter = unicode::Iterator<char>(unicode::IteratorType::Character, escapedLine);
+    auto segs = iter.nextSegments();
     UnorderedBimap<u64, u64> escapedLinePositions;
     u64 escapedLineWidth = 0;
     u64 offset = 0;
-    for (u64 i = 0; i < chars.size(); ++i) {
+    for (u64 i = 0; i < segs.size(); ++i) {
       escapedLinePositions.insert({ i, offset });
-      unicode::Character c(chars[i]);
+      auto c = unicode::CharacterView<char>(segs[i]);
       offset += c.size();
       escapedLineWidth += c.width();
     }
-    escapedLinePositions.insert({ chars.size(), offset });
+    escapedLinePositions.insert({ segs.size(), offset });
 
     // Print characters one by one, skip zero-width characters
-    for (const auto& c : chars) {
-      if (unicode::Character(c).width() > 0) {
+    for (const auto& c : segs) {
+      if (unicode::CharacterView<char>(c).width() > 0) {
         out.write(c);
       }
     }
     out.write('\n');
 
     // Print the ranges, the caret, and the caption. This is harder than it looks at first sight, because we
-    // need to consider C-string escaping, tabs, UTF-8, and `Char` widths---all at the same time
+    // need to consider C-string escaping, tabs, UTF-8, and `Character` widths---all at the same time
 
-    // Prepare the indicators string. `indicators` is in "`Char`-width coordinates"
+    // Prepare the indicators string. `indicators` is in `Character`-width coordinates
 
     u64 width = escapedLineWidth;
     string indicators(width, ' ');
@@ -239,7 +239,7 @@ printLocations(
       // 4. Translate escaped-line character position to `indicators` position
       u64 ret = 0;
       for (u64 i = 0; i < pos; ++i) {
-        ret += unicode::Character(chars[i]).width();
+        ret += unicode::CharacterView<char>(segs[i]).width();
       }
       return ret;
     };

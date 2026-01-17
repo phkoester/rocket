@@ -68,19 +68,19 @@ struct CodePoint {
    */
   constexpr bool ascii() const noexcept { return v_ < 0x80; }
 
-  /// @member_fn_hash
-  constexpr u64 hash() const noexcept { return std::hash<char32>()(v_); }
-
   /**
-   * Checks if the code point is the specified ASCII character.
+   * Checks if the code point equals the specified ASCII character.
    *
    * @param c the ASCII character to check
-   * @return whether the code point is the specified ASCII character
+   * @return whether the code point equals the specified ASCII character
    */
   constexpr bool
-  is(char c) const noexcept {
+  eq(char c) const noexcept {
     return ascii() && v_ == static_cast<char32>(c);
   }
+
+  /// @member_fn_hash
+  constexpr u64 hash() const noexcept { return std::hash<char32>()(v_); }
 
   /**
    * Checks if the code point is printable.

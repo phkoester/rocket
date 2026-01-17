@@ -36,16 +36,16 @@ TEST(Iterator, charMultiCodePoint) {
 
   string_view s = "🧑‍🌾\r\n👨‍👩‍👦"sv;
   auto it = Iterator<type>(IteratorType::Character, s);
-  auto chars = it.nextSegments();
-  EXPECT_EQ(chars.size(), 3);
-  EXPECT_EQ(chars[0], "🧑‍🌾");
-  EXPECT_EQ(unicode::Character(chars[0]).countCodePoints(), 3);
-  EXPECT_EQ(chars[1], "\r\n");
-  EXPECT_TRUE(unicode::Character(chars[1]).crLf());
-  EXPECT_TRUE(unicode::Character(chars[1]).eol());
-  EXPECT_EQ(unicode::Character(chars[1]).countCodePoints(), 2);
-  EXPECT_EQ(chars[2], "👨‍👩‍👦");
-  EXPECT_EQ(unicode::Character(chars[2]).countCodePoints(), 5);
+  auto segs = it.nextSegments();
+  EXPECT_EQ(segs.size(), 3);
+  EXPECT_EQ(segs[0], "🧑‍🌾");
+  EXPECT_EQ(unicode::CharacterView<char>(segs[0]).countCodePoints(), 3);
+  EXPECT_EQ(segs[1], "\r\n");
+  EXPECT_TRUE(unicode::CharacterView<char>(segs[1]).crLf());
+  EXPECT_TRUE(unicode::CharacterView<char>(segs[1]).eol());
+  EXPECT_EQ(unicode::CharacterView<char>(segs[1]).countCodePoints(), 2);
+  EXPECT_EQ(segs[2], "👨‍👩‍👦");
+  EXPECT_EQ(unicode::CharacterView<char>(segs[2]).countCodePoints(), 5);
 }
 
 TEST(Iterator, char32) {
@@ -73,16 +73,16 @@ TEST(Iterator, char32MultiCodePoint) {
 
   u32string_view s = U"🧑‍🌾\r\n👨‍👩‍👦";
   auto it = Iterator<type>(IteratorType::Character, s);
-  auto chars = it.nextSegments();
-  EXPECT_EQ(chars.size(), 3);
-  EXPECT_EQ(chars[0], U"🧑‍🌾");
-  EXPECT_EQ(unicode::Character(chars[0]).countCodePoints(), 3);
-  EXPECT_EQ(chars[1], U"\r\n");
-  EXPECT_TRUE(unicode::Character(chars[1]).crLf());
-  EXPECT_TRUE(unicode::Character(chars[1]).eol());
-  EXPECT_EQ(unicode::Character(chars[1]).countCodePoints(), 2);
-  EXPECT_EQ(chars[2], U"👨‍👩‍👦");
-  EXPECT_EQ(unicode::Character(chars[2]).countCodePoints(), 5);
+  auto segs = it.nextSegments();
+  EXPECT_EQ(segs.size(), 3);
+  EXPECT_EQ(segs[0], U"🧑‍🌾");
+  EXPECT_EQ(unicode::CharacterView<char32>(segs[0]).countCodePoints(), 3);
+  EXPECT_EQ(segs[1], U"\r\n");
+  EXPECT_TRUE(unicode::CharacterView<char32>(segs[1]).crLf());
+  EXPECT_TRUE(unicode::CharacterView<char32>(segs[1]).eol());
+  EXPECT_EQ(unicode::CharacterView<char32>(segs[1]).countCodePoints(), 2);
+  EXPECT_EQ(segs[2], U"👨‍👩‍👦");
+  EXPECT_EQ(unicode::CharacterView<char32>(segs[2]).countCodePoints(), 5);
 }
 
 // EOF

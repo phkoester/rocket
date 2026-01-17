@@ -34,6 +34,22 @@
 }
 
 /**
+ * Calls #rocket::Process::info.
+ *
+ * This may be used even if the process isn't initialized yet.
+ *
+ * Usage: `ROCKET_PROCESS_INFO(fmt, [args]...])`
+ */
+ #define ROCKET_PROCESS_INFO(fmt, ...) { \
+  ::rocket::nio::StringSink msg; \
+  msg.print("{}:{}: ", __FILE__, __LINE__); \
+  msg.print( \
+      fmt \
+      __VA_OPT__(,) __VA_ARGS__); \
+  ::rocket::process.info(::rocket::nio::stdout, "{}", msg.str()); \
+}
+
+/**
  * Calls #rocket::Process::warn.
  *
  * This may be used even if the process isn't initialized yet.
@@ -194,6 +210,22 @@ struct Process {
    * @param status the exit status
    */
   [[noreturn]] void exit(i32 status) const;
+
+  /**
+   * Outputs an information message.
+   *
+   * May be called before #init.
+   *
+   * @param out the sink to write to, usually `rocket::nio::stderr`
+   * @param fmt the format string
+   * @param args the format arguments
+   */
+  template<typename... T>
+  void
+  info(nio::Sink& out, fmt::format_string<T...> fmt, T&&... args) {
+    out.print("{}: note: ", autoName());
+    out.println(fmt, std::forward<T>(args)...);
+  }
 
   /**
    * Initializes the process.

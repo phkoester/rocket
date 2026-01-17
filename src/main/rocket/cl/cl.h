@@ -90,15 +90,15 @@ struct Option {
   of(
       const OptionGroup* group,
       const std::string& name,
-      const std::optional<unicode::Character<char>>& shortName,
+      const std::optional<unicode::CharacterView<char>>& shortName,
       const std::optional<std::string>& format,
       const std::optional<std::string>& help,
       T& dest) {
     return {
       group,
       name,
-      shortName,
-      std::is_same_v<T, bool> ? false : true, // `takesValue` is `false` for `bool`, otherwise it is true
+      shortName.transform([](auto v) { return unicode::Character<char>(v); }),
+      std::is_same_v<T, bool> ? false : true, // `takesValue` is `false` for `bool`, otherwise it is `true`
       format,
       help,
       [&](std::optional<std::string_view> arg) { internal::applyTo(dest, arg); }

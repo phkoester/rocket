@@ -14,51 +14,42 @@
 
 namespace rocket::unicode {
 
-// `Character` ----------------------------------------------------------------------------------------------
+// `BasicCharacter` -----------------------------------------------------------------------------------------
 
 /**
- * A Unicode character, or a grapheme cluster, consisting of one or more code points.
- *
- * A string suitable for a `Char` can be obtained as a segment from a #rocket::unicode::Iterator with the
- * iterator type #rocket::unicode::IteratorType::Character.
- *
- * Think of this as a basic text-processing element that is superior to `char`, `char32`, or even
- * #rocket::unicode::CodePoint. Use it whenever you can, and make your code Unicode-ready.
- *
- * @note Internally, this class is backed by a string view. It does not copy the string passed to its
- *     constructor. Therefore, the string must remain valid for the lifetime of the character.
+ * The implementation of both #rocket::unicode::Character and #rocket::unicode::CharacterView.
  *
  * @tparam C the character type
- *
- * ## Examples
- *
- * ```
- * auto c1 = "a"_c; // ASCII character 'a'
- * assert(c1.width() == 1);
- * auto c2 = "€"_c; // U+20AC (EURO SIGN)
- * assert(c2.width() == 1);
- * auto c3 = "👨"_c; // U+1F468 (MAN)
- * assert(c3.width() == 2);
- * // U+1F468 (MAN), U+200D (ZERO WIDTH JOINER), U+1F469 (WOMAN), U+200D (ZERO WIDTH JOINER), U+1F466 (BOY)
- * auto c4 = "👨‍👩‍👦"_c;
- * assert(c4.countCodePoints() == 5);
- * assert(c4.width() == 2);
- * ```
  */
-template<typename C> requires IsChar<C>
-struct Character {
+template<typename C, typename String> requires IsChar<C>
+struct BasicCharacter {
+  /// A compile-time constant that is `true` if the character is a view, `false` otherwise.
+  static constexpr bool IS_VIEW = std::is_same_v<String, std::basic_string_view<C>>;
+
   /**
    * @ctor
    *
    * This constructor does not check that @p s describes a valid Unicode character. If the character is
    * invalid, its behavior is undefined. Use #rocket::unicode::Iterator to obtain segments suitable for a
-   * `Character`.
+   * character.
    *
-   * @param s a string. The string must not be empty and must remain valid for the lifetime of the character.
+   * @param s a string. The string must not be empty. If the instance is a character view, the string must
+   *     remain valid for the lifetime of the instance
    */
-  explicit constexpr Character(std::basic_string_view<C> s) : s_(s) {
+  explicit constexpr BasicCharacter(std::basic_string_view<C> s) : s_(s) {
     ROCKET_CHECK(s, not s.empty());
   }
+
+  /**
+   * @ctor
+   *
+   * Implicitly constructs a view from a string.
+   *
+   * @param rhs the right-hand side, which holds a string
+   */
+  template<typename Char> requires std::is_same_v<Char, C> && IS_VIEW
+  constexpr BasicCharacter(const BasicCharacter<Char, std::basic_string<Char>>& rhs ) :
+      s_(static_cast<std::basic_string_view<C>>(rhs)) {}
 
   /// @member_op_cast{`std::basic_string_view<C>`}
   constexpr operator std::basic_string_view<C>() const noexcept { return s_; }
@@ -112,13 +103,13 @@ struct Character {
   }
 
   /**
-   * Checks if the character is the specified ASCII character.
+   * Checks if the character equals the specified ASCII character.
    *
    * @param c the ASCII character to check
-   * @return whether the character is the specified ASCII character
+   * @return whether the character equals the specified ASCII character
    */
   constexpr bool
-  is(char c) const noexcept {
+  eq(char c) const noexcept {
     return ascii() && s_[0] == c;
   }
 
@@ -220,7 +211,7 @@ struct Character {
         return 2;
       }
       /*
-       * In the rust crate `unicode-display-width`, the following code is used to handle U+FEOF:
+       * In the rust crate `unicode-display-width`, the following code is used to handle U+FE0F:
        *
        *  // emoji style variation selector
        *  if scalar_value == '\u{FE0F}' {
@@ -232,8 +223,58 @@ struct Character {
 
 private:
 
-  std::basic_string_view<C> s_; ///< The string, not empty.
+  /**
+   * The string, which is either a `basic_string` or a `basic_string_view`.
+   *
+   * The string must not be empty.
+   */
+  String s_;
 };
+
+/// @op_output{#rocket::unicode::BasicCharacter}
+template<typename C, typename String> requires IsChar<C>
+inline std::ostream&
+operator<<(std::ostream& lhs, const BasicCharacter<C, String>& rhs) {
+  return lhs << static_cast<std::basic_string_view<C>>(rhs);
+}
+
+/// @fn_format_as{#rocket::unicode::BasicCharacter}
+template<typename C, typename String> requires IsChar<C>
+constexpr auto
+format_as(const BasicCharacter<C, String>& v) {
+  return static_cast<std::basic_string_view<C>>(v);
+}
+
+// `Character` ----------------------------------------------------------------------------------------------
+
+/**
+ * A Unicode character, or a grapheme cluster, consisting of one or more code points.
+ *
+ * A string suitable for a `Character` can be obtained as a segment from a #rocket::unicode::Iterator with
+ * the iterator type #rocket::unicode::IteratorType::Character.
+ *
+ * Think of this as a basic text-processing element that is superior to `char`, `char32`, or even
+ * #rocket::unicode::CodePoint. Use it whenever you can, and make your code Unicode-ready.
+ *
+ * @tparam C the character type
+ *
+ * ## Examples
+ *
+ * ```
+ * auto c1 = "a"_c; // ASCII character 'a'
+ * assert(c1.width() == 1);
+ * auto c2 = "€"_c; // U+20AC (EURO SIGN)
+ * assert(c2.width() == 1);
+ * auto c3 = "👨"_c; // U+1F468 (MAN)
+ * assert(c3.width() == 2);
+ * // U+1F468 (MAN), U+200D (ZERO WIDTH JOINER), U+1F469 (WOMAN), U+200D (ZERO WIDTH JOINER), U+1F466 (BOY)
+ * auto c4 = "👨‍👩‍👦"_c;
+ * assert(c4.countCodePoints() == 5);
+ * assert(c4.width() == 2);
+ * ```
+ */
+template<typename C> requires IsChar<C>
+using Character = BasicCharacter<C, std::basic_string<C>>;
 
 /**
  * Literal operator for #rocket::unicode::Character.
@@ -244,7 +285,7 @@ private:
  */
 constexpr inline Character<char>
 operator""_c(const char* p, u64 len) {
-  return Character(std::string_view(p, len));
+  return Character<char>(std::string_view(p, len));
 }
 
 /**
@@ -256,21 +297,49 @@ operator""_c(const char* p, u64 len) {
 */
 constexpr inline Character<char32>
 operator""_c(const char32* p, u64 len) {
-  return Character(std::u32string_view(p, len));
+  return Character<char32>(std::u32string_view(p, len));
 }
 
-/// @op_output{#rocket::unicode::Character}
+// `CharacterView` ------------------------------------------------------------------------------------------
+
+/**
+ * This is very much the same as #rocket::unicode::Character, except that it is a view into a string, not a
+ * string itself.
+ *
+ * @tparam C the character type
+ *
+ * ## Examples
+ *
+ * ```
+ * auto c = "a"_cv; // ASCII character 'a'
+ * assert(c1.width() == 1);
+ * ```
+ */
 template<typename C> requires IsChar<C>
-inline std::ostream&
-operator<<(std::ostream& lhs, Character<C> rhs) {
-  return lhs << static_cast<std::basic_string_view<C>>(rhs);
+using CharacterView = BasicCharacter<C, std::basic_string_view<C>>;
+
+/**
+ * Literal operator for #rocket::unicode::CharacterView.
+ *
+ * @param p the string literal
+ * @param len the length of the string literal
+ * @return a #rocket::unicode::CharacterView
+ */
+constexpr inline CharacterView<char>
+operator""_cv(const char* p, u64 len) {
+  return CharacterView<char>(std::string_view(p, len));
 }
 
-/// @fn_format_as{#rocket::unicode::Character}
-template<typename C> requires IsChar<C>
-constexpr auto
-format_as(Character<C> v) {
-  return static_cast<std::basic_string_view<C>>(v);
+/**
+ * Literal operator for #rocket::unicode::CharacterView.
+ *
+ * @param p the string literal
+ * @param len the length of the string literal
+ * @return a #rocket::unicode::CharacterView
+*/
+constexpr inline CharacterView<char32>
+operator""_cv(const char32* p, u64 len) {
+  return CharacterView<char32>(std::u32string_view(p, len));
 }
 
 } // namespace rocket::unicode

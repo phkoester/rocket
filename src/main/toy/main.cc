@@ -42,8 +42,6 @@ myTerminate() {
 void
 toy() {
   ROCKET_LOG(toy);
-
-  rocket::chrono::internal::setClockOffset(100ms);
   ROCKET_LOG_TRACE("Hey {}", "there");
 }
 
@@ -63,7 +61,7 @@ main(i32 argc, char **argv) {
   cl::OptionGroup general("General control");
   cl::CommandLineParams params { .usages={ "[OPTION]..." }} ;
   cl::CommandLine cl({
-    cl::Option::of(&general, "help", "?"_c, nullopt, "display this help text and exit", help)
+    cl::Option::of(&general, "help", "?"_cv, nullopt, "display this help text and exit", help)
   }, params);
 
   vector<string> args;

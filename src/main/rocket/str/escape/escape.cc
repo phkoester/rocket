@@ -160,13 +160,13 @@ escapeRegexCodePoint(unicode::CodePoint cp, u64& column) {
   return escapeCStringCodePointHex(cp, column);
 }
 
-unicode::Character<char>
+unicode::CharacterView<char>
 getChar(unicode::Iterator<char>& iter) {
   auto seg = iter.nextSegment();
   if (seg.empty()) {
     throw InputFailure(iter.current(), "Expected character, got EOI");
   }
-  return unicode::Character(seg);
+  return unicode::CharacterView<char>(seg);
 }
 
 void
@@ -176,8 +176,8 @@ getChar(unicode::Iterator<char>& iter, char expected) {
   if (seg.empty()) {
     throw InputFailure(pos, fmt::format("Expected character {:?}, got EOI", expected));
   }
-  unicode::Character c(seg);
-  if (not c.is(expected)) {
+  unicode::CharacterView<char> c(seg);
+  if (not c.eq(expected)) {
     throw InputFailure(pos, fmt::format("Expected character {:?}, got {:?}", expected, c));
   }
 }
@@ -194,7 +194,7 @@ getHex(unicode::Iterator<char>& iter, u64 n) {
       throw InputFailure(pos, { pos0, iter.current() },
           fmt::format("Expected {} hexadecimal digits, got EOI", n, input));
     }
-    unicode::Character c(seg);
+    auto c = unicode::CharacterView<char>(seg);
     if (not c.isXdigit()) {
       throw InputFailure(pos, { pos0, iter.current() },
           fmt::format("Expected a hexadecimal digit, got {:?}", c));
@@ -207,13 +207,13 @@ getHex(unicode::Iterator<char>& iter, u64 n) {
   return ret;
 }
 
-optional<unicode::Character<char>>
+optional<unicode::CharacterView<char>>
 getOptionalChar(unicode::Iterator<char>& iter) {
   auto seg = iter.nextSegment();
   if (seg.empty()) {
     return nullopt;
   }
-  return unicode::Character(seg);
+  return unicode::CharacterView<char>(seg);
 }
 
 } // namespace
@@ -252,7 +252,7 @@ escapeCString(string_view input, const CStringParams& params, Result* result) {
       // EOI
       break;
     }
-    auto c = unicode::Character(seg);
+    auto c = unicode::CharacterView<char>(seg);
 
     if (result) {
       result->positions.insert({ current, to });
@@ -330,7 +330,7 @@ unescapeCString(string_view input, const CStringParams& params, Result* result) 
     if (auto cp1 = c1->toCodePoint(); cp1) {
       // Single-code-point character
 
-      if (params.quoted() && cp1->is(params.quote)) {
+      if (params.quoted() && cp1->eq(params.quote)) {
         // Terminating quote: EOI
 
         return ret;
@@ -340,7 +340,7 @@ unescapeCString(string_view input, const CStringParams& params, Result* result) 
 
         // Read another character following the backslash
 
-        unicode::Character c2 = getChar(iter);
+        auto c2 = getChar(iter);
         auto cp2 = c2.toCodePoint();
         if (not cp2) {
           throw InputFailure(pos, { pos, iter.current() }, "Invalid escape sequence");
@@ -429,7 +429,7 @@ escapeRegex(string_view input, Result* result) {
       // EOI
       break;
     }
-    auto c = unicode::Character(seg);
+    auto c = unicode::CharacterView<char>(seg);
 
     if (result) {
       result->positions.insert({ current, to });
@@ -496,7 +496,7 @@ unescapeRegex(string_view input, Result* result) {
 
         // Read another character following the backslash
 
-        unicode::Character c2 = getChar(iter);
+        auto c2 = getChar(iter);
         auto cp2 = c2.toCodePoint();
         if (not cp2) {
           throw InputFailure(pos, { pos, iter.current() }, "Invalid escape sequence");

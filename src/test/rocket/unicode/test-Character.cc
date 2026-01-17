@@ -14,11 +14,15 @@ using namespace rocket::unicode;
 
 template<typename C> requires IsChar<C>
 void
-testCharacter(const Character<C>& c) {
+testCharacter(const CharacterView<C>& c) {
   auto& out = nio::stdout;
 
   if (not TEST_TERMINAL) {
-    out.println("Not testing character because `" ROCKET_TEST_TERMINAL "` is not set");
+    static bool info = false;
+    if (not info) {
+      ROCKET_PROCESS_INFO("Not testing character because `" ROCKET_TEST_TERMINAL "` is not set");
+      info = true;
+    }
     return;
   }
 
@@ -40,7 +44,7 @@ TEST(Character, charWidth) {
     // ề: LATIN SMALL LETTER E, COMBINING CIRCUMFLEX ACCENT, COMBINING GRAVE ACCENT
     auto c = "\u0065\u0302\u0300"_c;
     EXPECT_EQ(c.width(), 1);
-    testCharacter(c);
+    testCharacter<char>(c);
   }
 
   {
@@ -49,7 +53,7 @@ TEST(Character, charWidth) {
     static_assert("🧑‍🌾"sv == "\U0001F9D1\u200D\U0001F33E"sv);
     auto c = "🧑‍🌾"_c;
     EXPECT_EQ(c.width(), 2);
-    testCharacter(c);
+    testCharacter<char>(c);
   }
 
   {
@@ -59,7 +63,7 @@ TEST(Character, charWidth) {
     auto c = "👨‍👩‍👦"_c;
     EXPECT_EQ(c.countCodePoints(), 5);
     EXPECT_EQ(c.width(), 2);
-    testCharacter(c);
+    testCharacter<char>(c);
   }
 }
 
@@ -71,7 +75,7 @@ TEST(Character, char32Width) {
     auto c = U"👨‍👩‍👦"_c;
     EXPECT_EQ(c.countCodePoints(), 5);
     EXPECT_EQ(c.width(), 2);
-    testCharacter(c);
+    testCharacter<char32>(c);
   }
 }
 
