@@ -241,7 +241,7 @@ escapeCString(string_view input, const CStringParams& params, Result* result) {
 
   // Loop through characters
 
-  auto iter = unicode::Iterator<char>(unicode::IteratorType::Character, input);
+  auto iter = unicode::Iterator(unicode::IteratorType::Character, input);
   u64 column = 0;
   while (true) {
     // Obtain character
@@ -306,7 +306,7 @@ unescapeCString(string_view input, const CStringParams& params, Result* result) 
 
   // If needed, read quote
 
-  auto iter = unicode::Iterator<char>(unicode::IteratorType::Character, input);
+  auto iter = unicode::Iterator(unicode::IteratorType::Character, input);
   if (params.quoted()) {
     getChar(iter, params.quote);
   }
@@ -418,7 +418,7 @@ escapeRegex(string_view input, Result* result) {
 
   // Loop through characters
 
-  auto iter = unicode::Iterator<char>(unicode::IteratorType::Character, input);
+  auto iter = unicode::Iterator(unicode::IteratorType::Character, input);
   u64 column = 0;
   while (true) {
     // Obtain character
@@ -473,7 +473,7 @@ unescapeRegex(string_view input, Result* result) {
     result->positions.clear();
   }
 
-  auto iter = unicode::Iterator<char>(unicode::IteratorType::Character, input);
+  auto iter = unicode::Iterator(unicode::IteratorType::Character, input);
   while (true) {
     // Read character
 

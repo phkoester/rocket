@@ -61,7 +61,7 @@ paragraphs(string_view s) {
   vector<string> par; // The current paragraph
   string word; // The current word
 
-  auto iter = Iterator<char>(IteratorType::Character, s);
+  auto iter = Iterator(IteratorType::Character, s);
   while (true) {
     // Get next character from iterator, if any
     auto seg = iter.nextSegment();

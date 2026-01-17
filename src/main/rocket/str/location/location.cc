@@ -63,7 +63,7 @@ locations(string_view input, const vector<Position>& positions, const LocationsP
   vector<u64> pois; // "Positions of interest" in the current line
   bool finish = false; // Finish on next line feed?
 
-  unicode::Iterator<char> iter(unicode::IteratorType::Character, input);
+  auto iter = unicode::Iterator(unicode::IteratorType::Character, input);
   while (true) {
     auto pos = iter.current();
 
