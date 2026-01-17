@@ -58,6 +58,8 @@
 /// @cond undocumented
 
 using std_char32_t = char32_t;
+using std_float = float;
+using std_double = double;
 using std_long = long;
 using std_long_double = long double;
 using std_size_t = size_t;
@@ -68,6 +70,7 @@ using std_wchar_t = wchar_t;
 /// An unsigned 32-bit character.
 using char32 = std_char32_t;
 /// A signed 8-bit integer.
+
 using i8 = int8_t;
 /// An unsigned 8-bit integer.
 using u8 = uint8_t;
@@ -87,10 +90,21 @@ using u64 = uint64_t;
 using i128 = __int128;
 /// An unsigned 128-bit integer.
 using u128 = unsigned __int128;
-/// A 32-bit floating point.
-using f32 = _Float32;
-/// A 64-bit floating point.
-using f64 = _Float64;
+
+/**
+ * A 32-bit floating point.
+ *
+ * @todo Find a portable way to define this.
+ */
+using f32 = std_float;
+static_assert(sizeof(f32) == 4);
+/**
+ * A 64-bit floating point.
+ *
+ * @todo Find a portable way to define this.
+ */
+using f64 = std_double;
+static_assert(sizeof(f64) == 8);
 /**
  * A 128-bit floating point.
  *
