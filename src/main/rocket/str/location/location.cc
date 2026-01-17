@@ -8,7 +8,6 @@
 #include "rocket/enum.h"
 #include "rocket/str/str.h"
 #include "rocket/str/escape/escape.h"
-#include "rocket/system/terminal/terminal.h"
 #include "rocket/unicode/Character.h"
 #include "rocket/unicode/Iterator.h"
 
@@ -160,20 +159,23 @@ printLocations(
   u64 lineNumberWidth = max(params.minLineNumberWidth, maxLineStr.size());
   string blankPrefix = string(lineNumberWidth, ' ') + " | ";
 
-  using namespace system::terminal;
-  Ansi ansi(params.colored && ::isatty(out.fd()));
-
   for (const auto& loc : locations) {
     // Print source, line number, column column number, type, and message
 
     ROCKET_CHECK(locationsResult, not loc.message.empty());
     out.print("{}:{}:{}: ", locationsResult.params.source, loc.line, loc.column);
-    switch (loc.type) {
-    case Position::note: out.write(ansi.style(bold | green)); break;
-    case Position::warning: out.write(ansi.style(bold | yellow)); break;
-    case Position::error: out.write(ansi.style(bold | red)); break;
+    if (params.styled) {
+      fmt::text_style style;
+      switch (loc.type) {
+      case Position::note: style = fg(fmt::color::cyan); break;
+      case Position::warning: style = fg(fmt::color::yellow); break;
+      case Position::error: style = fg(fmt::color::red); break;
+      }
+      out.print(style | fmt::emphasis::bold, "{}: ", loc.type);
+    } else {
+      out.print("{}: ", loc.type);
     }
-    out.println("{}: {}{}", loc.type, ansi.style(), loc.message);
+    out.writeln(loc.message);
 
     // Print the line prefix
 
@@ -270,14 +272,24 @@ printLocations(
     // Right-trim, print the indicators
 
     indicators = str::removeTrailing<char>(indicators, " ");
-    out.println("{}{}{}{}", blankPrefix, ansi.style(bold | green), indicators, ansi.style());
+    out.write(blankPrefix);
+    if (params.styled) {
+      out.print(fg(fmt::color::green) | fmt::emphasis::bold, "{}\n", indicators);
+    } else {
+      out.writeln(indicators);
+    }
 
     // If supplied, print caption
 
     if (loc.caption) {
       string caption = string(caretPos, ' ') + *loc.caption;
       string escapedCaption = escape::escapeCString(caption, { .tabSize=locationsResult.params.tabSize });
-      out.println("{}{}{}{}", blankPrefix, ansi.style(green), escapedCaption, ansi.style());
+      out.write(blankPrefix);
+      if (params.styled) {
+        out.print(fg(fmt::color::green) | fmt::emphasis::bold, "{}\n", escapedCaption);
+      } else {
+        out.writeln(escapedCaption);
+      }
     }
   }
 }

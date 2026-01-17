@@ -136,7 +136,7 @@ struct LocationsResult {
  * Parameters for the #printLocations function.
  */
 struct PrintLocationsParams {
-  bool colored = true; ///< Use colors when printing to a terminal?
+  bool styled = false; ///< Print styled text?
   u64 minLineNumberWidth = 5; ///< The minimum width to use when displaying line numbers.
 };
 

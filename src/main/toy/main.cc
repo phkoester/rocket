@@ -5,12 +5,9 @@
 #define ROCKET_TESTING
 
 #include "rocket/Process.h"
-#include "rocket/chrono/chrono.h"
 #include "rocket/cl/cl.h"
 #include "rocket/log/log.h"
 #include "rocket/unicode/Character.h"
-
-#include <iostream>
 
 using namespace rocket;
 using namespace rocket::unicode;

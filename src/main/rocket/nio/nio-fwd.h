@@ -8,6 +8,7 @@
 
 namespace rocket::nio {
 
+struct Io;
 struct Sink;
 struct Source;
 

@@ -192,7 +192,13 @@ struct Process {
   template<typename... T>
   void
   error(nio::Sink& out, i32 status, fmt::format_string<T...> fmt, T&&... args) {
-    out.print("{}: error: ", autoName());
+    out.write(autoName());
+    out.write(": ");
+    if (out.terminal()) {
+      out.print(fg(fmt::color::red) | fmt::emphasis::bold, "error: ");
+    } else {
+      out.write("error: ");
+    }
     out.println(fmt, std::forward<T>(args)...);
 
     if (status != EXIT_SUCCESS) {
@@ -223,7 +229,14 @@ struct Process {
   template<typename... T>
   void
   info(nio::Sink& out, fmt::format_string<T...> fmt, T&&... args) {
-    out.print("{}: note: ", autoName());
+    out.write(autoName());
+    out.write(": ");
+    if (out.terminal()) {
+      out.print(fg(fmt::color::cyan) | fmt::emphasis::bold, "note: ");
+    } else {
+      out.write("note: ");
+    }
+    // out.print("{}: note: ", autoName());
     out.println(fmt, std::forward<T>(args)...);
   }
 
@@ -308,7 +321,13 @@ struct Process {
   template<typename... T>
   void
   warn(nio::Sink& out, fmt::format_string<T...> fmt, T&&... args) {
-    out.print("{}: warning: ", autoName());
+    out.write(autoName());
+    out.write(": ");
+    if (out.terminal()) {
+      out.print(fg(fmt::color::yellow) | fmt::emphasis::bold, "warning: ");
+    } else {
+      out.write("warning: ");
+    }
     out.println(fmt, std::forward<T>(args)...);
   }
 

@@ -9,6 +9,7 @@
 #include "rocket/rocket.h"
 
 #include <type_traits>
+
 namespace rocket {
 
 // `Purge` --------------------------------------------------------------------------------------------------

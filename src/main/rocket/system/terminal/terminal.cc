@@ -14,37 +14,6 @@
 using namespace rocket::system::terminal;
 using namespace std;
 
-// Local functions ------------------------------------------------------------------------------------------
-
-namespace {
-
-string
-styleCode(i32 i, bool fg) {
-  bool bold = (i & Style::bold) != 0;
-  bool high = (i & Style::high) != 0;
-  bool underline = (i & Style::underline) != 0;
-  i &= ~(Style::bold | Style::high | Style::underline);
-
-  if (not fg) {
-    i += 10;
-  }
-  if (high) {
-    i += 60;
-  }
-
-  string ret = fmt::format("\e[{}", i);
-  if (bold) {
-    ret += ";1";
-  }
-  if (underline) {
-    ret += ";4";
-  }
-  ret.push_back('m');
-  return ret;
-}
-
-} // namespace
-
 namespace rocket::system::terminal {
 
 // `Ansi` ---------------------------------------------------------------------------------------------------
@@ -71,8 +40,6 @@ Ansi::move(i32 column, i32 line) const {
 
 string
 Ansi::request(nio::Sink& out, string_view sequence) const {
-  ROCKET_CHECK(sink, out.fd() == STDOUT_FILENO || out.fd() == STDERR_FILENO);
-
   if (not active_)
     return string();
 
@@ -115,16 +82,6 @@ Ansi::right(i32 n) const {
 }
 
 string
-Ansi::style(i32 fg) const {
-  return active_ ? styleCode(fg, true) : string();
-}
-
-string
-Ansi::style(i32 fg, i32 bg) const {
-  return active_ ? styleCode(fg, true) + styleCode(bg, false) : string();
-}
-
-string
 Ansi::up(i32 n) const {
   return active_ ? fmt::format("\e[{}A", n) : string();
 }
@@ -133,7 +90,8 @@ Ansi::up(i32 n) const {
 
 optional<pair<u64, u64>>
 position(nio::Sink& out) {
-  if (not isatty(out.fd())) {
+  i32 fd;
+  if (not out.terminal(&fd)) {
     return nullopt;
   }
 
@@ -154,9 +112,9 @@ position(nio::Sink& out) {
 }
 
 optional<pair<u64, u64>>
-size(nio::Sink& out) {
-  i32 fd = out.fd();
-  if (not isatty(fd)) {
+size(nio::Io& io) {
+  i32 fd;
+  if (not io.terminal(&fd)) {
     return nullopt;
   }
 

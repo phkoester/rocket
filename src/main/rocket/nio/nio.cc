@@ -87,15 +87,6 @@ BufferedSink::close() {
 }
 
 i32
-BufferedSink::fd() {
-  if (not checkOpen()) {
-    return -1;
-  }
-
-  return underlying_.fd();
-}
-
-i32
 BufferedSink::flush() {
   if (not checkOpen()) {
     return error();
@@ -114,6 +105,14 @@ BufferedSink::flushBuffer() {
     underlying_.write(string_view(&buf_[0], pos_));
     pos_ = 0;
   }
+}
+
+bool
+BufferedSink::terminal(i32* fd) {
+  if (not checkOpen()) {
+    return false;
+  }
+  return underlying_.terminal(fd);
 }
 
 u64
@@ -155,7 +154,7 @@ FileSink::FileSink(FILE* file, const Params& params) :
     file_(file),
     params_(params) {
   ROCKET_CHECK(file, file != nullptr);
-  if (i32 fd = this->fd(); fd == STDOUT_FILENO || fd == STDERR_FILENO) {
+  if (file == ::stdout || file == ::stderr) {
     params_.closeOnDestroy = false;
   }
 }
@@ -202,15 +201,6 @@ FileSink::close()
 }
 
 i32
-FileSink::fd() {
-  if (not checkOpen()) {
-    return -1;
-  }
-
-  return fileno(file_);
-}
-
-i32
 FileSink::flush() {
   if (not checkOpen()) {
     return error_;
@@ -220,6 +210,23 @@ FileSink::flush() {
   LOG("fflush=" << ret << ", ferror=" << ferror(file_));
   if (ret != 0) {
     error_ = ferror(file_);
+  }
+  return ret;
+}
+
+bool
+FileSink::terminal(i32* fd) {
+  if (not checkOpen()) {
+    return false;
+  }
+
+  auto handle = fileno(file_);
+  if (handle == -1) {
+    return false;
+  }
+  bool ret = isatty(handle);
+  if (ret && fd) {
+    *fd = handle;
   }
   return ret;
 }
@@ -255,15 +262,15 @@ NullSink::close()
 }
 
 i32
-NullSink::fd() {
-  checkOpen();
-  return -1;
-}
-
-i32
 NullSink::flush() {
   checkOpen();
   return error_;
+}
+
+bool
+NullSink::terminal(i32*) {
+  checkOpen();
+  return false;
 }
 
 u64
@@ -292,6 +299,12 @@ i32
 SpanSink::flush() {
   checkOpen();
   return error_;
+}
+
+bool
+SpanSink::terminal(i32*) {
+  checkOpen();
+  return false;
 }
 
 u64
@@ -329,21 +342,6 @@ StreamSink::close() {
 }
 
 i32
-StreamSink::fd() {
-  if (not checkOpen()) {
-    return -1;
-  }
-
-  if (&os_ == &cout) {
-    return STDOUT_FILENO;
-  } else if (&os_ == &cerr) {
-    return STDERR_FILENO;
-  } else {
-    return -1;
-  }
-}
-
-i32
 StreamSink::flush() {
   if (not checkOpen()) {
     return error_;
@@ -353,6 +351,30 @@ StreamSink::flush() {
   LOG("bad=" << os_.bad() << ", fail=" << os_.fail() << ", eof=" << os_.eof());
   error_ = os_.rdstate();
   return error_;
+}
+
+bool
+StreamSink::terminal(i32* fd) {
+  if (not checkOpen()) {
+    return false;
+  }
+
+  if (&os_ == &cout) {
+    if (isatty(STDOUT_FILENO)) {
+      if (fd) {
+        *fd = STDOUT_FILENO;
+      }
+      return true;
+    }
+  } else if (&os_ == &cerr) {
+    if (isatty(STDERR_FILENO)) {
+      if (fd) {
+        *fd = STDERR_FILENO;
+      }
+      return true;
+    }
+  }
+  return false;
 }
 
 u64
@@ -390,6 +412,12 @@ i32
 StringSink::flush() {
   checkOpen();
   return error_;
+}
+
+bool
+StringSink::terminal(i32*) {
+  checkOpen();
+  return false;
 }
 
 u64
@@ -517,15 +545,6 @@ BufferedSource::close() {
   return underlying_.close();
 }
 
-i32
-BufferedSource::fd() {
-  if (not checkOpen()) {
-    return -1;
-  }
-
-  return underlying_.fd();
-}
-
 u64
 BufferedSource::read(span<char> out) {
   if (not checkOpen()) {
@@ -637,13 +656,20 @@ BufferedSource::tell() {
   return bufPos_ + pos_;
 }
 
+bool
+BufferedSource::terminal(i32* fd) {
+  if (not checkOpen()) {
+    return false;
+  }
+  return underlying_.terminal(fd);
+}
+
 // `FileSource` ---------------------------------------------------------------------------------------------
 
 FileSource::FileSource(FILE* file, const Params& params) :
     file_(file),
     params_(params) {
-  ROCKET_CHECK(file, file != nullptr);
-  if (i32 fd = this->fd(); fd == STDIN_FILENO) {
+  if (file == ::stdin) {
     params_.closeOnDestroy = false;
   }
 }
@@ -681,15 +707,6 @@ FileSource::close()
   open_ = false;
   file_ = nullptr;
   return ret;
-}
-
-i32
-FileSource::fd() {
-  if (not checkOpen()) {
-    return -1;
-  }
-
-  return fileno(file_);
 }
 
 u64
@@ -754,6 +771,23 @@ FileSource::tell() {
   return static_cast<u64>(result); // We know `result` >= 0
 }
 
+bool
+FileSource::terminal(i32* fd) {
+  if (not checkOpen()) {
+    return false;
+  }
+
+  auto handle = fileno(file_);
+  if (handle == -1) {
+    return false;
+  }
+  bool ret = isatty(handle);
+  if (ret && fd) {
+    *fd = handle;
+  }
+  return ret;
+}
+
 // `NullSource` ---------------------------------------------------------------------------------------------
 
 NullSource::~NullSource() {
@@ -789,6 +823,12 @@ NullSource::tell() {
   return NPOS;
 }
 
+bool
+NullSource::terminal(i32*) {
+  checkOpen();
+  return false;
+}
+
 // `StreamSource` -------------------------------------------------------------------------------------------
 
 StreamSource::~StreamSource() {
@@ -804,19 +844,6 @@ StreamSource::close() {
   open_ = false;
   // An `istream` can't close, it can only be destroyed
   return 0;
-}
-
-i32
-StreamSource::fd() {
-  if (not checkOpen()) {
-    return -1;
-  }
-
-  if (&is_ == &cin) {
-    return STDIN_FILENO;
-  } else {
-    return -1;
-  }
 }
 
 u64
@@ -874,6 +901,23 @@ StreamSource::tell() {
     return NPOS;
   }
   return static_cast<u64>(result);
+}
+
+bool
+StreamSource::terminal(i32* fd) {
+  if (not checkOpen()) {
+    return false;
+  }
+
+  if (&is_ == &cin) {
+    if (isatty(STDIN_FILENO)) {
+      if (fd) {
+        *fd = STDIN_FILENO;
+      }
+      return true;
+    }
+  }
+  return false;
 }
 
 // `StringSource` -------------------------------------------------------------------------------------------
@@ -942,6 +986,12 @@ StringSource::tell() {
   }
 
   return pos_;
+}
+
+bool
+StringSource::terminal(i32*) {
+  checkOpen();
+  return false;
 }
 
 } // namespace rocket::nio
