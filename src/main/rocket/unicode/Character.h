@@ -51,18 +51,17 @@ struct Character {
    * @ctor
    *
    * This constructor does not check that @p s describes a valid Unicode character. If the character is
-   * invalid, its behavior is undefined. Use #rocket::unicode::Iterator to obtain segments suitable for
+   * invalid, its behavior is undefined. Use #rocket::unicode::Iterator to obtain segments suitable for a
    * `Character`.
    *
    * @param s a string. The string must not be empty and must remain valid for the lifetime of the character.
    */
-  explicit constexpr Character(std::basic_string_view<C> s) :
-      s_(s) {
+  explicit constexpr Character(std::basic_string_view<C> s) : s_(s) {
     ROCKET_CHECK(s, not s.empty());
   }
 
   /// @member_op_cast{`std::basic_string_view<C>`}
-  constexpr operator std::basic_string_view<C>() const { return s_; }
+  constexpr operator std::basic_string_view<C>() const noexcept { return s_; }
 
   /**
    * Checks if the character is an ASCII character.
@@ -70,7 +69,7 @@ struct Character {
    * @return whether the character is an ASCII character
    */
   bool
-  ascii() const {
+  constexpr ascii() const noexcept {
     return s_.size() == 1 && static_cast<u32>(s_[0]) < 0x80;
   }
 
@@ -97,8 +96,8 @@ struct Character {
    *
    * @return whether the character is a carriage return / line feed sequence
    */
-  bool
-  crLf() const {
+  constexpr bool
+  crLf() const noexcept {
     return s_.size() == 2 && s_[0] == '\r' && s_[1] == '\n';
   }
 
@@ -107,8 +106,8 @@ struct Character {
    *
    * @return whether the character is an end of line
    */
-  bool
-  eol() const {
+  constexpr bool
+  eol() const noexcept {
     return lf() || crLf();
   }
 
@@ -118,8 +117,8 @@ struct Character {
    * @param c the ASCII character to check
    * @return whether the character is the specified ASCII character
    */
-  bool
-  is(char c) const {
+  constexpr bool
+  is(char c) const noexcept {
     return ascii() && s_[0] == c;
   }
 
@@ -145,7 +144,7 @@ struct Character {
    * @return whether the character is a hexadecimal digit
    */
   bool
-  isXdigit() const {
+  isXdigit() const noexcept {
     return s_.size() == 1 && std::isxdigit(s_[0]);
   }
 
@@ -154,8 +153,8 @@ struct Character {
    *
    * @return whether the character is a line feed
    */
-  bool
-  lf() const {
+  constexpr bool
+  lf() const noexcept {
     return s_.size() == 1 && s_[0] == '\n';
   }
 
@@ -179,15 +178,15 @@ struct Character {
    *
    * @return the size of the underlying string
    */
-  u64 size() const { return s_.size(); }
+  constexpr u64 size() const noexcept { return s_.size(); }
 
   /**
    * Checks if the character is a tab.
    *
    * @return whether the character is a tab
    */
-  bool
-  tab() const {
+  constexpr bool
+  tab() const noexcept {
     return s_.size() == 1 && s_[0] == '\t';
   }
 

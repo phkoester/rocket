@@ -5,10 +5,12 @@
 #define ROCKET_TESTING
 
 #include "rocket/Process.h"
-#include "rocket/cl/cl.h"
 #include "rocket/chrono/chrono.h"
+#include "rocket/cl/cl.h"
 #include "rocket/log/log.h"
 #include "rocket/unicode/Character.h"
+
+#include <iostream>
 
 using namespace rocket;
 using namespace rocket::unicode;
@@ -28,46 +30,20 @@ extern const char* generated();
 
 void
 myExit() {
-  out.println("myExit");
+  // out.println("myExit");
   // ROCKET_FAIL("Oopsers!");
 }
 
 void
 myTerminate() {
-  out.println("myTerminate");
-}
-
-void zz(i32 level) {
-  ROCKET_LOG(thisIsARatherLongLogId);
-  ROCKET_LOG_INFO("zz at level {}", level);
-
-  if (level == 4) {
-    return;
-  }
-  // this_thread::sleep_for(std::chrono::milliseconds(100));
-  zz(level + 1);
-}
-
-void tox() {
-  ROCKET_LOG(thisIsARatherLongLogId);
-  ROCKET_LOG_INFO("in tox(), threadName={}, id={}", ROCKET_THREAD_NAME(), this_thread::get_id());
-
-  for (i32 i = 0; i < 10; ++i) {
-    if (i == 5) {
-      rocket::chrono::internal::setClockOffset(24h);
-    }
-    zz(0);
-  }
-
-  ROCKET_LOG_INFO("Hello from tox!\nWe're going multi-line ...\nAnd again.\n");
+  // out.println("myTerminate");
 }
 
 void
 toy() {
   ROCKET_LOG(toy);
 
-  tox();
-
+  rocket::chrono::internal::setClockOffset(100ms);
   ROCKET_LOG_TRACE("Hey {}", "there");
 }
 

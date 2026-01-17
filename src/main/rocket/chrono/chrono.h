@@ -6,6 +6,8 @@
 
 #pragma once
 
+#include "rocket/macro.h"
+
 #include <chrono>
 
 namespace rocket::chrono {
@@ -14,32 +16,50 @@ namespace rocket::chrono {
 
 namespace internal {
 
+extern std::recursive_mutex clockMutex;
+
+extern std::chrono::milliseconds clockOffset;
+
 #ifdef ROCKET_TESTING
 
-/// @ThreadSafe
-void setClockOffset(std::chrono::hours offset);
+/**
+ * Sets the clock offset.
+ *
+ * Useful for testing.
+ *
+ * @ThreadSafe
+ *
+ * @param offset the clock offset
+ */
+template<typename Duration>
+void
+setClockOffset(Duration offset) {
+  ROCKET_MUTEX_LOCK(clockMutex);
+  clockOffset = offset;
+}
 
 #endif
 
 } // namespace internal
 
-// `SystemClockTimePoint` -----------------------------------------------------------------------------------
-
-/// @type_alias
-using SystemClockTimePoint = std::chrono::time_point<std::chrono::system_clock>;
-
 // Functions -----------------------------------------------------------------------------------------------
 
 /**
- * Returns the current time, as returned by `std::chrono::system_clock`.
+ * Returns the current time of the clock.
  *
- * Code to be unit-tested should use this function instead of `std::chrono::system_clock::now()`.
+ * Testable code should use this function.
  *
  * @ThreadSafe
  *
+ * @tparam Clock the clock to use
  * @return the current time
  */
-SystemClockTimePoint systemClockNow();
+template<typename Clock>
+std::chrono::time_point<Clock>
+now() {
+  ROCKET_MUTEX_LOCK(internal::clockMutex);
+  return Clock::now() + internal::clockOffset;
+}
 
 } // namespace rocket::chrono
 

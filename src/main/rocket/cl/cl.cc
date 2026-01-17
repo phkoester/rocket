@@ -24,7 +24,7 @@ CommandLine::CommandLine(const vector<Option>& opts, const CommandLineParams& pa
   // If requested, prepend Rocket options
 
   if (params.rocketOpts) {
-    const auto& logOpts = log::internal::opts();
+    const auto& logOpts = log::internal::logOptions();
     opts_.insert(opts_.begin(), logOpts.begin(), logOpts.end());
   }
 

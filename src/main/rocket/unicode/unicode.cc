@@ -10,6 +10,7 @@
 #include <unicode/uchar.h>
 #include <unicode/unistr.h>
 #include <unicode/utf8.h>
+#include <unicode/utypes.h>
 
 using namespace icu;
 using namespace rocket;
@@ -20,37 +21,37 @@ namespace rocket::unicode {
 
 // `CodePoint` ----------------------------------------------------------------------------------------------
 
-CodePoint::CodePoint(char v) :
-    v_(static_cast<unsigned char>(v)) {
-  ROCKET_CHECK(v, ascii());
-}
-
 CodePoint::operator string() const {
-  return utf32To8(operator u32string());
+  char buf[4];
+  i32 i = 0;
+  UBool error = false;
+  U8_APPEND(buf, i, 4, v_, error);
+  ROCKET_EXPECT(not error, "Invalid code point {:0>4X}", static_cast<u32>(v_));
+  return string(buf, i);
 }
 
 bool
-CodePoint::isPrint() const {
+CodePoint::isPrint() const noexcept {
   return u_isprint(v_) != 0;
 }
 
 bool
-CodePoint::isWhitespace() const {
+CodePoint::isWhitespace() const noexcept {
   return u_isWhitespace(v_) != 0;
 }
 
 CodePoint
-CodePoint::lower() const {
+CodePoint::lower() const noexcept {
   return static_cast<char32>(u_tolower(v_));
 }
 
 CodePoint
-CodePoint::upper() const {
+CodePoint::upper() const noexcept {
   return static_cast<char32>(u_toupper(v_));
 }
 
 u8
-CodePoint::width() const {
+CodePoint::width() const noexcept {
   if (not isPrint()) {
     return 0;
   }

@@ -24,21 +24,22 @@ pars(const vector<vector<string>>& v) {
 
 TEST(str, split) {
   int n = 0;
-  for (const auto& token : split<char>("", ",")) {
+  for (auto token : split<char>("", ",")) {
+    static_assert(is_same_v<decltype(token), string_view>);
     if (n == 0) EXPECT_EQ(token, "");
     ++n;
   }
   EXPECT_EQ(n, 1);
 
   n = 0;
-  for (const auto& token : split<char>(" ", ",")) {
+  for (auto token : split<char>(" ", ",")) {
     if (n == 0) EXPECT_EQ(token, " ");
     ++n;
   }
   EXPECT_EQ(n, 1);
 
   n = 0;
-  for (const auto& token : split<char>(",", ",")) {
+  for (auto token : split<char>(",", ",")) {
     if (n == 0) EXPECT_EQ(token, "");
     if (n == 1) EXPECT_EQ(token, "");
     ++n;
@@ -46,7 +47,7 @@ TEST(str, split) {
   EXPECT_EQ(n, 2);
 
   n = 0;
-  for (const auto& token : split<char>(",,", ",")) {
+  for (auto token : split<char>(",,", ",")) {
     if (n == 0) EXPECT_EQ(token, "");
     if (n == 1) EXPECT_EQ(token, "");
     if (n == 2) EXPECT_EQ(token, "");
@@ -56,7 +57,7 @@ TEST(str, split) {
 
 
   n = 0;
-  for (const auto& token : split<char>("||a||b c||||d||||", "||")) {
+  for (auto token : split<char>("||a||b c||||d||||", "||")) {
     if (n == 0) EXPECT_EQ(token, "");
     if (n == 1) EXPECT_EQ(token, "a");
     if (n == 2) EXPECT_EQ(token, "b c");

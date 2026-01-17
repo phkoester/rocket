@@ -209,7 +209,7 @@ Process::init(
 
   // Init the logging module
 
-  log::internal::init();
+  log::internal::logInit();
 }
 
 const string&

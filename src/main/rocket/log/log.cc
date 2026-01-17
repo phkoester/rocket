@@ -17,15 +17,9 @@ using namespace std;
 
 namespace {
 
-void applyLog(optional<string_view>);
-
-void applyLogFmt(optional<string_view>);
-
-void applyLogOut(optional<string_view>);
-
-void setLogLevel(string_view, string_view);
-
 // Local constants ------------------------------------------------------------------------------------------
+
+const string ROCKET_LOG_FMT = system::env::get<string>("ROCKET_LOG_FMT").value_or("");
 
 constexpr auto THREAD_WIDTH = 12;
 constexpr auto LOG_ID_WIDTH = 16;
@@ -41,7 +35,8 @@ const unordered_map<LogLevel, string_view> LEVEL_DISPLAY {
 
 // `Entry` --------------------------------------------------------------------------------------------------
 
-using TimePoint = rocket::chrono::SystemClockTimePoint;
+using Clock = std::chrono::system_clock;
+using TimePoint = std::chrono::time_point<Clock>;
 
 struct Entry {
   LogLevel* logId_;
@@ -79,8 +74,13 @@ struct Format {
   bool threadIds = false; // t, T
   bool utc = false; // z, Z
 
-  void apply(string_view s) {
-    for (auto it = s.begin(), end = s.end(); it != end; ++it) {
+  constexpr Format(string_view fmt) {
+    set(fmt);
+  }
+
+  void
+  set(string_view fmt) {
+    for (auto it = fmt.begin(), end = fmt.end(); it != end; ++it) {
       switch (*it) {
       case 'f': prettyFunction = false; break;
       case 'F': prettyFunction = true; break;
@@ -111,7 +111,7 @@ struct Format {
   }
 };
 
-Format logFmt;
+Format logFmt(ROCKET_LOG_FMT);
 
 // `Out` ----------------------------------------------------------------------------------------------------
 
@@ -137,32 +137,23 @@ private:
   optional<std::chrono::year_month_day> utcYmd_;
   bool zip_ = false;
 
-  void checkYesterday(const TimePoint& time);
-
   string expand(string_view pattern, const TimePoint& time, bool update);
 
   std::chrono::year_month_day
   localYmd(const TimePoint& time) const {
-    auto localTime = std::chrono::zoned_time { std::chrono::current_zone(), time };
+    auto localTime = std::chrono::zoned_time(std::chrono::current_zone(), time);
     auto localDays = std::chrono::floor<std::chrono::days>(localTime.get_local_time());
-    return std::chrono::year_month_day { localDays };
+    return std::chrono::year_month_day(localDays);
   }
 
   std::chrono::year_month_day
   utcYmd(const TimePoint& time) const {
     auto utcDays = std::chrono::floor<std::chrono::days>(time);
-    return std::chrono::year_month_day { utcDays };
+    return std::chrono::year_month_day(utcDays);
   }
-};
 
-void
-Out::checkYesterday(const TimePoint& time) {
-  string expanded = expand(pattern_, time - 24h, false);
-  filesystem::path path(expanded);
-  if (filesystem::exists(path)) {
-    system::exec( { "gzip", "-5f", path.string() } );
-  }
-}
+  void zipYesterday(const TimePoint& time);
+};
 
 nio::Sink&
 Out::get(const TimePoint& time) {
@@ -251,24 +242,37 @@ Out::setPattern(string_view pattern, const TimePoint& time) {
 
   // If zipping, check if yesterday's log file exists and zip it
   if (zip_) {
-    checkYesterday(time);
+    zipYesterday(time);
   }
 }
 
-// Local variables ------------------------------------------------------------------------------------------
+void
+Out::zipYesterday(const TimePoint& time) {
+  string expanded = expand(pattern_, time - 24h, false);
+  filesystem::path path(expanded);
+  if (filesystem::exists(path)) {
+    system::exec( { "gzip", "-5f", path.string() } );
+  }
+}
 
-// Command-line-option group
-cl::OptionGroup clGroup { "Logging control" };
+// Local constants ------------------------------------------------------------------------------------------
+
+/// Command-line-option group.
+const cl::OptionGroup CL_GROUP { "Logging control" };
+
+void applyLog(optional<string_view>);
+void applyLogFmt(optional<string_view>);
+void applyLogOut(optional<string_view>);
 
 #define NBSP "\u00A0"
 
-// Command-line options
-vector<cl::Option> clOpts {
-  { &clGroup, "log", nullopt, true, "ID[=LEVEL]",
+/// Command-line options.
+const vector<cl::Option> CL_OPTIONS {
+  { &CL_GROUP, "log", nullopt, true, "ID[=LEVEL]",
     "set logging for identifier ID to level LEVEL. ID is a known log identifier or `all`. LEVEL is `none`, "
     "`error`, `warn`, `info`, `debug`, or `trace`. If LEVEL is not supplied, `info` is assumed",
     applyLog },
-  { &clGroup, "log-fmt", nullopt, true, "FMT",
+  { &CL_GROUP, "log-fmt", nullopt, true, "FMT",
     "set log format. FMT is a string of format specifiers, e.g. `fs3Z`. Valid specifiers are:\n"
     NBSP NBSP "f" NBSP NBSP NBSP "display function names\n"
     NBSP NBSP "F" NBSP NBSP NBSP "display pretty function names (*)\n"
@@ -286,7 +290,7 @@ vector<cl::Option> clOpts {
     NBSP NBSP "Z" NBSP NBSP NBSP "display UTC time\n"
     "An asterisk (*) indicates that the setting is enabled by default",
     applyLogFmt },
-  { &clGroup, "log-out", nullopt, true, "OUT",
+  { &CL_GROUP, "log-out", nullopt, true, "OUT",
     "log to system device or file. If OUT is `-` or `stdout`, log messages are written to standard output, "
     "which is the default. If OUT is `stderr`, log messages are written to standard error. Otherwise, OUT "
     "is a PATTERN. Examples: `@(name).log`, `@(name)-@(date).log@(zip)`. Inside PATTERN, some placeholders "
@@ -299,6 +303,8 @@ vector<cl::Option> clOpts {
     NBSP NBSP "@(zip)" NBSP NBSP NBSP NBSP "expands to nothing and zips yesterday's log file",
     applyLogOut },
 };
+
+// Local variables ------------------------------------------------------------------------------------------
 
 // The log mutex
 recursive_mutex logMutex;
@@ -336,6 +342,7 @@ applyLog(optional<string_view> v) {
     rhs = v->substr(eq + 1);
   }
 
+  // Use public API from here
   setLogLevel(lhs, rhs);
 }
 
@@ -348,9 +355,8 @@ void
 applyLogFmt(optional<string_view> v) {
   ROCKET_EXPECT(v);
 
-  ROCKET_MUTEX_LOCK(logMutex);
-
-  logFmt.apply(*v);
+  // Use public API from here
+  setLogFmt(*v);
 }
 
 /**
@@ -362,18 +368,11 @@ void
 applyLogOut(optional<string_view> v) {
   ROCKET_EXPECT(v);
 
-  ROCKET_MUTEX_LOCK(logMutex);
-
-  if (v == "-" || v == "stdout") {
-    out.set(nio::stdout);
-  } else if (v == "stderr") {
-    out.set(nio::stderr);
-  } else {
-    out.setPattern(*v, rocket::chrono::systemClockNow());
-  }
+  // Use public API from here
+  setLogOut(*v);
 }
 
-/// @NotThreadSafe
+/// @ThreadSafe
 string
 formatExecTime(const TimePoint& t1, const TimePoint& t2) {
   auto ns = std::chrono::duration_cast<std::chrono::nanoseconds>(t2 - t1).count();
@@ -510,15 +509,124 @@ logImpl(
   } else {
     // Multi-line message: left-adjust, repeat the log ID for each line
     bool first = true;
-    for (const auto& line : str::split<char>(msg, "\n")) {
+    for (auto line : str::split<char>(msg, "\n")) {
       if (first) {
+        // Print first line, just like above
         out.print("{}\n", line);
         first = false;
       } else {
+        // Print continuing lines, repeat the log ID for each line
         out.print("{: <{}}{: <{}}{}\n", "", idIndent, id, indent - idIndent, line);
       }
     }
   }
+}
+
+} // namespace
+
+// `LogLevel` -----------------------------------------------------------------------------------------------
+
+ROCKET_ENUM_DEFINE(rocket::log, LogLevel, LogLevel, (none)(error)(warn)(info)(debug)(trace));
+
+namespace rocket::log {
+
+// Internal -------------------------------------------------------------------------------------------------
+
+namespace internal {
+
+/// @ThreadSafe
+void
+log(LogLevel level, string_view msg) {
+  ROCKET_MUTEX_LOCK(logMutex);
+
+  auto time = chrono::now<Clock>();
+  auto& out = ::out.get(time);
+  logFlush(out);
+  logImpl(out, stack.back().logId_, level, stack.size(), time, msg);
+}
+
+/// @ThreadSafe
+void
+logBegin(LogLevel* logId, const char* function, const char* prettyFunction, const char* file, i32 line) {
+  ROCKET_MUTEX_LOCK(logMutex);
+
+  // Begin log entry will be flushed later if necessary
+  string msg = logFmt.prettyFunction ? prettyFunction : function;
+  if (logFmt.sourceLocation) {
+    msg += fmt::format(" {}:{}", file, line);
+  }
+  msg += " {";
+  nio::StringSink buf;
+  auto time = chrono::now<Clock>();
+  logImpl(buf, logId, LogLevel::none, stack.size(), time, msg);
+  stack.emplace_back(logId, function, prettyFunction, file, line, buf.str(), time);
+}
+
+/// @ThreadSafe
+LogLevel
+logDefine(LogLevel* logId, string_view id) {
+  ROCKET_CHECK(id, id != "all", "Invalid log ID \"all\"; this ID is reserved");
+
+  ROCKET_MUTEX_LOCK(logMutex);
+
+  definedIds.left.insert({ logId, id });
+  return LogLevel::none;
+}
+
+/// @ThreadSafe
+void
+logEnd() noexcept {
+  // We need to catch anything here to keep the `noexcept` promise
+  try {
+    // Print end log entry only if begin log entry was flushed
+    const Entry& entry = stack.back();
+    if (not entry.begin_) {
+      ROCKET_MUTEX_LOCK(logMutex);
+      string msg = "} ";
+      msg += logFmt.prettyFunction ? entry.prettyFunction_ : entry.function_;
+      if (logFmt.sourceLocation) {
+        msg += fmt::format(" {}:{}", entry.file_, entry.line_);
+      }
+      auto time = chrono::now<Clock>();
+      if (logFmt.execTimes) {
+        msg += " [";
+        msg += formatExecTime(entry.time_, time);
+        msg += ']';
+      }
+      logImpl(out.get(time), entry.logId_, LogLevel::none, stack.size() - 1, time, msg);
+    }
+  } catch (const exception& ex) {
+    ROCKET_PROCESS_ERROR("Cannot log message: {}", what(ex));
+  } catch (...) {
+    ROCKET_PROCESS_ERROR("Cannot log message");
+  }
+  // After catching anything, we can safely pop from the stack
+  stack.pop_back();
+}
+
+/// @ThreadSafe
+void
+logInit() {
+  // We need this in case of quick exit
+  process.atExit([] {
+    ROCKET_MUTEX_LOCK(logMutex);
+    out.get(chrono::now<Clock>()).flush();
+  }, true);
+}
+
+/// @ThreadSafe
+const vector<cl::Option>& logOptions() { return CL_OPTIONS; }
+
+} // namespace internal
+
+// Functions ------------------------------------------------------------------------------------------------
+
+/// @ThreadSafe
+void
+setLogFmt(string_view value) {
+  ROCKET_MUTEX_LOCK(logMutex);
+
+  logFmt.set(value);
 }
 
 /// @ThreadSafe
@@ -548,97 +656,19 @@ setLogLevel(string_view id, string_view value) {
   }
 }
 
-} // namespace
-
-// `LogLevel` -----------------------------------------------------------------------------------------------
-
-ROCKET_ENUM_DEFINE(rocket::log, LogLevel, LogLevel, (none)(error)(warn)(info)(debug)(trace));
-
-namespace rocket::log {
-
-// Internal -------------------------------------------------------------------------------------------------
-
-namespace internal {
-
-void
-init() {
-  // We need this in case of quick exit
-  process.atExit([] {
-    ROCKET_MUTEX_LOCK(logMutex);
-    out.get(chrono::systemClockNow()).flush();
-  }, true);
-}
-
-LogLevel
-logDefine(LogLevel* logId, string_view id) {
-  ROCKET_CHECK(id, id != "all", "Invalid log ID \"all\"; this ID is reserved");
-  ROCKET_MUTEX_LOCK(logMutex);
-  definedIds.left.insert({ logId, id });
-  return LogLevel::none;
-}
-
 /// @ThreadSafe
 void
-logBegin(LogLevel* logId, const char* function, const char* prettyFunction, const char* file, i32 line) {
+setLogOut(string_view value) {
   ROCKET_MUTEX_LOCK(logMutex);
 
-  // Begin log entry will be flushed later if necessary
-  string msg = logFmt.prettyFunction ? prettyFunction : function;
-  if (logFmt.sourceLocation) {
-    msg += fmt::format(" {}:{}", file, line);
+  if (value == "-" || value == "stdout") {
+    out.set(nio::stdout);
+  } else if (value == "stderr") {
+    out.set(nio::stderr);
+  } else {
+    out.setPattern(value, chrono::now<Clock>());
   }
-  msg += " {";
-  nio::StringSink buf;
-  auto time = chrono::systemClockNow();
-  logImpl(buf, logId, LogLevel::none, stack.size(), time, msg);
-  stack.emplace_back(logId, function, prettyFunction, file, line, buf.str(), time);
 }
-
-/// @ThreadSafe
-void
-logEnd() noexcept {
-  // We need to catch everything here to keep the `noexcept` promise
-  try {
-    // Print end log entry only if begin log entry was flushed
-    const Entry& entry = stack.back();
-    if (not entry.begin_) {
-      ROCKET_MUTEX_LOCK(logMutex);
-      string msg = "} ";
-      msg += logFmt.prettyFunction ? entry.prettyFunction_ : entry.function_;
-      if (logFmt.sourceLocation) {
-        msg += fmt::format(" {}:{}", entry.file_, entry.line_);
-      }
-      auto time = chrono::systemClockNow();
-      if (logFmt.execTimes) {
-        msg += " [";
-        msg += formatExecTime(entry.time_, time);
-        msg += ']';
-      }
-      logImpl(out.get(time), entry.logId_, LogLevel::none, stack.size() - 1, time, msg);
-    }
-  } catch (const exception& ex) {
-    ROCKET_PROCESS_ERROR("Cannot log message: {}", what(ex));
-  } catch (...) {
-    ROCKET_PROCESS_ERROR("Cannot log message");
-  }
-  // After catching `...`, we can safely pop from the stack
-  stack.pop_back();
-}
-
-/// @ThreadSafe
-void
-log(LogLevel level, string_view msg) {
-  ROCKET_MUTEX_LOCK(logMutex);
-
-  auto time = chrono::systemClockNow();
-  auto& out = ::out.get(time);
-  logFlush(out);
-  logImpl(out, stack.back().logId_, level, stack.size(), time, msg);
-}
-
-const vector<cl::Option>& opts() { return clOpts; }
-
-} // namespace internal
 
 } // namespace rocket::log
 

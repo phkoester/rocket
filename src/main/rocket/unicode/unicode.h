@@ -8,6 +8,7 @@
 
 #include "rocket/Cow.h"
 #include "rocket/UnorderedBimap.h"
+#include "rocket/assert.h"
 #include "rocket/format/format.h"
 
 #include <limits>
@@ -18,10 +19,18 @@ namespace rocket::unicode {
 
 /**
  * A code-point type.
+ *
+ * Note there is a literal operator for it:
+ *
+ * ```
+ * use namespace rocket::unicode;
+ * auto cp = 'a'_cp;
+ * assert(cp.upper() == 'A'_cp);
+ * ```
  */
 struct CodePoint {
   /// @ctor_default
-  constexpr CodePoint() : v_(0) {}
+  constexpr CodePoint() noexcept : v_(0) {}
 
   /**
    * @ctor
@@ -29,34 +38,38 @@ struct CodePoint {
    * @param v a `char` value. This must be an ASCII character in the range @f$[0,127]@f$
    */
   // cppcheck-suppress noExplicitConstructor
-  CodePoint(char v);
+  constexpr CodePoint(char v) : v_(v) {
+    ROCKET_CHECK(v, ascii(), "ASCII character expected");
+  }
 
   /**
    * @ctor
    *
+   * This constructor does not check that @p v is a valid code point.
+   *
    * @param v a `char32` value
    */
   // cppcheck-suppress noExplicitConstructor
-  constexpr CodePoint(char32 v) : v_(v) {}
+  constexpr CodePoint(char32 v) noexcept : v_(v) {}
 
   /// @member_op_cast{`char32`}
-  operator char32() const { return v_; }
+  constexpr operator char32() const noexcept { return v_; }
 
   /// @member_op_cast{`std::string`}
   explicit operator std::string() const;
 
   /// @member_op_cast{`std::u32string`}
-  inline explicit operator std::u32string() const { return { v_ }; }
+  constexpr explicit operator std::u32string() const noexcept { return { v_ }; }
 
   /**
    * Checks if the code point is an ASCII character.
    *
    * @return whether the code point is an ASCII character
    */
-  bool ascii() const { return v_ < 0x80; }
+  constexpr bool ascii() const noexcept { return v_ < 0x80; }
 
   /// @member_fn_hash
-  inline u64 hash() const { return std::hash<char32>()(v_); }
+  constexpr u64 hash() const noexcept { return std::hash<char32>()(v_); }
 
   /**
    * Checks if the code point is the specified ASCII character.
@@ -64,8 +77,8 @@ struct CodePoint {
    * @param c the ASCII character to check
    * @return whether the code point is the specified ASCII character
    */
-  bool
-  is(char c) const {
+  constexpr bool
+  is(char c) const noexcept {
     return ascii() && v_ == static_cast<char32>(c);
   }
 
@@ -74,28 +87,28 @@ struct CodePoint {
    *
    * @return whether the code point is printable
    */
-  bool isPrint() const;
+  bool isPrint() const noexcept;
 
   /**
    * Checks if the code point is whitespace.
    *
    * @return whether the code point is whitespace
    */
-  bool isWhitespace() const;
+  bool isWhitespace() const noexcept;
 
   /**
    * Returns a lower-case code point for this code point.
    *
    * @return a code point in lower case
    */
-  CodePoint lower() const;
+  CodePoint lower() const noexcept;
 
   /**
    * Returns an upper-case code point for this code point.
    *
    * @return a code point in upper case
    */
-  CodePoint upper() const;
+  CodePoint upper() const noexcept;
 
   /**
    * Checks if the code point is valid.
@@ -105,14 +118,14 @@ struct CodePoint {
    *
    * @return whether the code point is valid
    */
-  bool valid() const { return v_ <= 0x10FFFFU && not (v_ >= 0xD800U && v_ <= 0xDFFFU); }
+  constexpr bool valid() const noexcept { return v_ <= 0x10FFFFU && not (v_ >= 0xD800U && v_ <= 0xDFFFU); }
 
   /**
    * Calculates the display width for a code point.
    *
    * @return the code point's display width, in the range @f$[0,2]@f$
    */
-  u8 width() const;
+  u8 width() const noexcept;
 
 private:
 
@@ -125,7 +138,7 @@ private:
  * @param v the `char` value
  * @return a #rocket::unicode::CodePoint
  */
-inline CodePoint
+constexpr CodePoint
 operator""_cp(char v) {
   return CodePoint(v);
 }
@@ -195,7 +208,7 @@ struct std::hash<rocket::unicode::CodePoint> {
    * @param v the value to hash
    * @return a hash value
    */
-  inline u64 operator()(rocket::unicode::CodePoint v) const { return v.hash(); }
+  constexpr u64 operator()(rocket::unicode::CodePoint v) const noexcept { return v.hash(); }
 };
 
 // `std::numeric_limits<CodePoint>` -------------------------------------------------------------------------

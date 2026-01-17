@@ -4,46 +4,17 @@
 
 #include "chrono.h"
 
-#include "rocket/macro.h"
-
-#include <mutex>
-
 using namespace std;
 using namespace std::chrono;
-using namespace std::chrono_literals;
 
-// Local variables ------------------------------------------------------------------------------------------
-
-namespace {
-
-recursive_mutex clockMutex;
-
-hours clockOffset = 0h;
-
-} // namespace
-
-namespace rocket::chrono {
-
-namespace internal {
+namespace rocket::chrono::internal {
 
 // Internal -------------------------------------------------------------------------------------------------
 
-void
-setClockOffset(hours offset) {
-  ROCKET_MUTEX_LOCK(clockMutex);
-  clockOffset = offset;
-}
+recursive_mutex clockMutex;
 
-} // namespace internal
+milliseconds clockOffset = 0ms;
 
-// Functions -----------------------------------------------------------------------------------------------
-
-SystemClockTimePoint
-systemClockNow() {
-  ROCKET_MUTEX_LOCK(clockMutex);
-  return system_clock::now() + clockOffset;
-}
-
-} // namespace rocket::chrono
+} // namespace rocket::chrono::internal
 
 // EOF

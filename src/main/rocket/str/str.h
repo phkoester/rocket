@@ -30,7 +30,6 @@ struct SplitIterator {
       s_(s), pos_(pos), sep_(sep) {
     if (pos == NPOS) {
       // The end
-      pos_ = s_.size();
       end_ = NPOS;
       return;
     }
@@ -48,16 +47,13 @@ struct SplitIterator {
     }
   }
 
-  bool operator==(const SplitIterator& rhs) const { return pos_ == rhs.pos_ && end_ == rhs.end_; }
-
-  bool operator!=(const SplitIterator& rhs) const { return not operator==(rhs); }
+  bool operator!=(const SplitIterator& rhs) const { return pos_ != rhs.pos_ || end_ != rhs.end_; }
 
   SplitIterator&
   operator++() {
     if (end_ == s_.size()) {
       // The end
-      pos_ = end_;
-      end_ = NPOS;
+      pos_ = end_ = NPOS;
       return *this;
     }
 
@@ -84,12 +80,16 @@ private:
 
   /// The input string to split.
   std::basic_string_view<C> s_;
-  /// The current position in the string.
+  /**
+   * The current position in the string.
+   *
+   * If this is #rocket::NPOS, the iterator is exhausted.
+   */
   size_t pos_;
   /**
    * The end of the current token.
    *
-   * If this is #rocket::NPOS, the iterator is exhausted.
+   * If #pos_ is #rocket::NPOS, this is also #rocket::NPOS.
    */
   size_t end_;
   /// The separator.
@@ -330,7 +330,8 @@ replaceIn(
 /**
  * Splits a string into tokens.
  *
- * No strings are ever allocated, so this is a very efficient way to split a string into tokens.
+ * No strings are ever allocated, except for the separator, so this is a very efficient way to split a string
+ * into tokens.
  *
  * @tparam C the character type
  * @param s the string to split

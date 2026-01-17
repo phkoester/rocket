@@ -56,35 +56,67 @@ namespace rocket::log {
 
 namespace internal {
 
-void init();
-
-LogLevel logDefine(LogLevel* logId, std::string_view id);
+void log(LogLevel level, std::string_view msg);
 
 void logBegin(LogLevel* logId, const char* function, const char* prettyFunction, const char* file, i32 line);
 
+LogLevel logDefine(LogLevel* logId, std::string_view id);
+
 void logEnd() noexcept;
 
-struct Log {
-  inline Log(LogLevel* logId, const char* function, const char* prettyFunction, const char* file, i32 line) :
-      level_(*logId) {
-    logBegin(logId, function, prettyFunction, file, line);
-  }
-
-  inline ~Log() noexcept { logEnd(); }
-
-  const LogLevel level_;
-};
-
-void log(LogLevel level, std::string_view msg);
+void logInit();
 
 template<typename... T>
 void logMessage(LogLevel level, fmt::format_string<T...> fmt, T&&... args) {
   log(level, fmt::format(fmt, std::forward<T>(args)...));
 }
 
-const std::vector<cl::Option>& opts();
+const std::vector<cl::Option>& logOptions();
+
+struct Log {
+  const LogLevel level_;
+
+  inline Log(LogLevel* logId, const char* function, const char* prettyFunction, const char* file, i32 line) :
+      level_(*logId) {
+    logBegin(logId, function, prettyFunction, file, line);
+  }
+
+  inline ~Log() noexcept { logEnd(); }
+};
 
 } // namespace internal
+
+// Functions ------------------------------------------------------------------------------------------------
+
+/**
+ * Sets the log format.
+ *
+ * @ThreadSafe
+ *
+ * @param value the log format
+ */
+void setLogFmt(std::string_view value);
+
+/**
+ * Sets the log level for the log ID @p id to @p value.
+ *
+ * If @p id is `"all"`, the log level is set for all log IDs.
+ *
+ * @ThreadSafe
+ *
+ * @param id the log ID, or `"all"`
+ * @param value the log level
+ */
+void setLogLevel(std::string_view id, std::string_view value);
+
+/**
+ * Set the log output.
+ *
+ * @ThreadSafe
+ *
+ * @param value `"-"`, `"stdout"`, or `"stderr"`, or a pattern.
+ */
+void setLogOut(std::string_view value);
 
 } // namespace rocket::log
 
