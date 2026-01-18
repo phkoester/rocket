@@ -6,10 +6,9 @@
 
 #include "rocket/InputFailure.h"
 #include "rocket/assert.h"
+#include "rocket/scan/scan.h"
 #include "rocket/unicode/Character.h"
 #include "rocket/unicode/Iterator.h"
-
-#include <inttypes.h> // `SCNx32`
 
 using namespace rocket;
 using namespace rocket::str;
@@ -202,9 +201,9 @@ getHex(unicode::Iterator<char>& iter, u64 n) {
     input.append(c);
   }
 
-  u32 ret = 0;
-  std::sscanf(input.c_str(), "%" SCNx32, &ret);
-  return ret;
+  auto result = scn::scan<u32>(input, "{:x}");
+  // We know the input string is valid
+  return result->value();
 }
 
 optional<unicode::CharacterView<char>>

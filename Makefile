@@ -26,6 +26,8 @@ ifeq ($(ROCKET_VERSION),)
 endif
 export ROCKET_SHARED_LIB := $(call shared-lib-name,rocket,$(ROCKET_VERSION),$(G))
 
+export SCN_LIB := $(INSTALL_LIB_DIR)/libscn$(G).a
+
 # Targets ---------------------------------------------------------------------------------------------------
 
 all: check doc test bench

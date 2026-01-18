@@ -6,7 +6,6 @@
 
 #pragma once
 
-#include "rocket/macro.h"
 #include "rocket/nio/nio.h"
 
 #include <locale>
@@ -209,9 +208,10 @@ struct Process {
   /**
    * Exits the program.
    *
-   * Must be called after #init. Depending on how #init was parametrized, this function either calls
-   * `std::exit` or `std::quick_exit`. It doesn't do much else, so clients are free to use this function or
-   * not.
+   * Must be called after #init.
+   *
+   * Depending on how #init was parametrized, this function either calls `std::exit` or `std::quick_exit`.
+   * The environment variables `ROCKET_EXIT` and `ROCKET_QUICK_EXIT` overrule the parametrized setting.
    *
    * @param status the exit status
    */

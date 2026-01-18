@@ -2,15 +2,25 @@
 # Makefile
 #
 
-COMPILE_DEPS := src/main/rocket/version.h
+COMPILE_DEPS := \
+    $(BUILD_DIR)/main/rocket/version.h \
+    $(BUILD_DIR)/main/rocket/scan/impl.h
 
 include $(GAIA_DIR)/src/main/make/Makefile.mk
 
 # `version.h` -----------------------------------------------------------------------------------------------
 
-src/main/rocket/version.h: gaia-project.json
+$(BUILD_DIR)/main/rocket/version.h: gaia-project.json
 	@echo ">" $@
+	@mkdir -p $(dir $@)
 	@$(call write-version-header,$@,ROCKET_VERSION,$(ROCKET_VERSION))
+
+# `impl.h` --------------------------------------------------------------------------------------------------
+
+$(BUILD_DIR)/main/rocket/scan/impl.h: $(GAIA_SCNLIB_DIR)/src/scn/impl.h
+	@echo ">" $@
+	@mkdir -p $(dir $@)
+	@cp $< "$@"
 
 # `bare` ----------------------------------------------------------------------------------------------------
 
@@ -22,6 +32,7 @@ include $(GAIA_DIR)/src/main/make/executable.mk
 
 $(BUILD_DIR)/print\ args$(EXECUTABLE_SUFFIX): $(BUILD_DIR)/print-args$(EXECUTABLE_SUFFIX)
 	@echo ">" $@
+	@mkdir -p $(dir $@)
 	@cp $< "$@"
 
 printArgsWithSpace: $(BUILD_DIR)/print\ args$(EXECUTABLE_SUFFIX)
@@ -43,6 +54,7 @@ SRC_DIR        := main/rocket
 # Move `Process.cc` to front so the global `process` instance is available early
 # Move `log.cc` to front so Rocket can use its own logging API
 SRC_MOVE_FRONT := Process.cc log/log.cc
+LIB_FILES      := $(SCN_LIB)
 SHARED_LIBS    := $(ICU_UC_SHARED_LIB)
 INSTALL        := 1
 include $(GAIA_DIR)/src/main/make/shared-lib.mk

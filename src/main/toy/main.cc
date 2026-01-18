@@ -37,9 +37,23 @@ myTerminate() {
 }
 
 void
+yyy() {
+  ROCKET_LOG(thisIsARatherLongLogId);
+}
+
+void
+zzz() {
+  ROCKET_LOG(thisIsARatherLongLogId);
+  for (int i = 0; i < 10; ++i) {
+    yyy();
+  }
+}
+
+void
 toy() {
   ROCKET_LOG(toy);
   ROCKET_LOG_TRACE("Hey {}", "there");
+  zzz();
 }
 
 // `main` ---------------------------------------------------------------------------------------------------

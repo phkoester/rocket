@@ -7,6 +7,8 @@
 #include "rocket/Guard.h"
 #include "rocket/InputFailure.h"
 #include "rocket/assert.h"
+#include "rocket/numeric.h"
+#include "rocket/scan/scan.h"
 
 #include <termios.h>
 #include <sys/ioctl.h>
@@ -100,11 +102,11 @@ position(nio::Sink& out) {
   Ansi ansi(true); // We know the sink is connected to a terminal
   string response = ansi.request(out, "\e[6n");
 
-  // Parse the response
+  // Scan the response
 
-  i32 x, y;
-  auto sscanfResult = sscanf(response.c_str(), "\e[%d;%dR", &y, &x);
-  ROCKET_EXPECT(sscanfResult == 2);
+  auto result = scn::scan<u64, u64>(response, "\e[{};{}R");
+  ROCKET_EXPECT(result, "Cannot scan response {:?}", response);
+  auto[y, x] = result->values();
 
   // Done
 
@@ -123,7 +125,7 @@ size(nio::Io& io) {
   if (res != 0) {
     return nullopt;
   }
-  return make_pair(ws.ws_col, ws.ws_row);
+  return make_pair(to<u64>(ws.ws_col), to<u64>(ws.ws_row));
 }
 
 } // namespace rocket::system::terminal

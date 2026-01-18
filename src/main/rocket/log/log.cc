@@ -38,6 +38,9 @@ const unordered_map<LogLevel, string_view> LEVEL_DISPLAY {
 using Clock = std::chrono::system_clock;
 using TimePoint = std::chrono::time_point<Clock>;
 
+/**
+ * A stack entry.
+ */
 struct Entry {
   LogLevel* logId_;
   const char* function_;
@@ -68,6 +71,7 @@ struct Entry {
 
 struct Format {
   bool execTimes = true; // x, X
+  bool immediate = false; // i, I
   bool prettyFunction = true; // f, F
   u8 secondsRez = 6; // s0, s3, s6, s9
   bool sourceLocation = true; // l, L
@@ -84,6 +88,8 @@ struct Format {
       switch (*it) {
       case 'f': prettyFunction = false; break;
       case 'F': prettyFunction = true; break;
+      case 'i': immediate = false; break;
+      case 'I': immediate = true; break;
       case 'l': sourceLocation = false; break;
       case 'L': sourceLocation = true; break;
       case 's': {
@@ -117,6 +123,14 @@ Format logFmt(ROCKET_LOG_FMT);
 
 /// @NotThreadSafe
 struct Out {
+  void flushOnExit() {
+    if (out_) {
+      out_->flush();
+    } else if (fileOut_) {
+      fileOut_->flush();
+    }
+  }
+
   nio::Sink& get(const TimePoint& time);
 
   void
@@ -195,19 +209,22 @@ Out::expand(string_view pattern, const TimePoint& time, bool update) {
   // Expand the pattern
 
   string ret(pattern);
-  auto dateCount = str::replaceIn<char>(ret, "@(date)", date);
-  str::replaceIn<char>(ret, "@(dir)", dir);
-  str::replaceIn<char>(ret, "@(name)", name);
-  str::replaceIn<char>(ret, "@(pid)", pid);
-  auto udateCount = str::replaceIn<char>(ret, "@(udate)", udate);
-  auto zipCount = str::replaceIn<char>(ret, "@(zip)", "");
+  auto dateCount = str::replaceIn<char>(ret, "@[date]", date);
+  str::replaceIn<char>(ret, "@[dir]", dir);
+  str::replaceIn<char>(ret, "@[name]", name);
+  str::replaceIn<char>(ret, "@[pid]", pid);
+  auto udateCount = str::replaceIn<char>(ret, "@[udate]", udate);
+  auto zipCount = str::replaceIn<char>(ret, "@[zip]", "");
 
   // Do sanity checks
 
   if (dateCount + udateCount > 1) {
     ROCKET_FAIL("Multiple dates are present in the pattern {:?}; only one is allowed", pattern);
   }
-  if (ret.find("@(") != NPOS) {
+  if (zipCount > 0 && dateCount + udateCount == 0) {
+    ROCKET_FAIL("Can only zip yesterday’s log file if a date is present in the pattern {:?}", pattern);
+  }
+  if (ret.find("@[") != NPOS) {
     ROCKET_FAIL("Invalid pattern {:?}", pattern);
   }
 
@@ -276,6 +293,8 @@ const vector<cl::Option> CL_OPTIONS {
     "set log format. FMT is a string of format specifiers, e.g. `fs3Z`. Valid specifiers are:\n"
     NBSP NBSP "f" NBSP NBSP NBSP "display function names\n"
     NBSP NBSP "F" NBSP NBSP NBSP "display pretty function names (*)\n"
+    NBSP NBSP "i" NBSP NBSP NBSP "do not log function stack immediately (*)\n"
+    NBSP NBSP "I" NBSP NBSP NBSP "log function stack immediately\n"
     NBSP NBSP "l" NBSP NBSP NBSP "do not display source location\n"
     NBSP NBSP "L" NBSP NBSP NBSP "display source location (*)\n"
     NBSP NBSP "s0"     NBSP NBSP "display time with seconds\n"
@@ -293,14 +312,14 @@ const vector<cl::Option> CL_OPTIONS {
   { &CL_GROUP, "log-out", nullopt, true, "OUT",
     "log to system device or file. If OUT is `-` or `stdout`, log messages are written to standard output, "
     "which is the default. If OUT is `stderr`, log messages are written to standard error. Otherwise, OUT "
-    "is a PATTERN. Examples: `@(name).log`, `@(name)-@(date).log@(zip)`. Inside PATTERN, some placeholders "
-    "are automatically expanded:\n"
-    NBSP NBSP "@(date)"     NBSP NBSP NBSP "expands to the current local date\n"
-    NBSP NBSP "@(dir)" NBSP NBSP NBSP NBSP "expands to the parent directory of the executable\n"
-    NBSP NBSP "@(name)"     NBSP NBSP NBSP "expands to the name of the process\n"
-    NBSP NBSP "@(pid)" NBSP NBSP NBSP NBSP "expands to the process ID (PID)\n"
-    NBSP NBSP "@(udate)"         NBSP NBSP "expands to the current UTC date\n"
-    NBSP NBSP "@(zip)" NBSP NBSP NBSP NBSP "expands to nothing and zips yesterday's log file",
+    "is a PATTERN. Examples: `@(name).log`, `@(name)-@(date).log@(zip)`. Inside PATTERN, these placeholders "
+    "are available:\n"
+    NBSP NBSP "@[date]"     NBSP NBSP NBSP "expands to the current local date\n"
+    NBSP NBSP "@[dir]" NBSP NBSP NBSP NBSP "expands to the parent directory of the executable\n"
+    NBSP NBSP "@[name]"     NBSP NBSP NBSP "expands to the name of the process\n"
+    NBSP NBSP "@[pid]" NBSP NBSP NBSP NBSP "expands to the process ID (PID)\n"
+    NBSP NBSP "@[udate]"         NBSP NBSP "expands to the current UTC date\n"
+    NBSP NBSP "@[zip]" NBSP NBSP NBSP NBSP "expands to nothing and zips yesterday’s log file",
     applyLogOut },
 };
 
@@ -313,14 +332,14 @@ recursive_mutex logMutex;
 auto definedIds = rocket::makeUnorderedBimap<LogLevel*, string_view>();
 
 // The `Out` instance
-Out out;
+Out logOut;
 
 /**
  * The function stack.
  *
  * @ThreadSafe
  */
-thread_local vector<Entry> stack;
+thread_local vector<Entry> logStack;
 
 // Local functions ------------------------------------------------------------------------------------------
 
@@ -424,10 +443,10 @@ formatTimePoint(const TimePoint& tp) {
  */
 void
 logFlush(nio::Sink& out) {
-  auto begin = stack.end();
+  auto begin = logStack.end();
 
   // Look for pending begin log entries
-  for (auto it = stack.rbegin(); it != stack.rend(); ++it) {
+  for (auto it = logStack.rbegin(); it != logStack.rend(); ++it) {
     if (it->begin_) {
       begin = it.base() - 1; // `base()` is confusing ...
     } else {
@@ -436,7 +455,7 @@ logFlush(nio::Sink& out) {
   }
 
   // Flush them, if any
-  for (auto it = begin; it != stack.end(); ++it) {
+  for (auto it = begin; it != logStack.end(); ++it) {
     out.write(*it->begin_);
     it->begin_= nullopt;
   }
@@ -540,9 +559,9 @@ log(LogLevel level, string_view msg) {
   ROCKET_MUTEX_LOCK(logMutex);
 
   auto time = chrono::now<Clock>();
-  auto& out = ::out.get(time);
+  auto& out = logOut.get(time);
   logFlush(out);
-  logImpl(out, stack.back().logId_, level, stack.size(), time, msg);
+  logImpl(out, logStack.back().logId_, level, logStack.size(), time, msg);
 }
 
 /// @ThreadSafe
@@ -558,8 +577,13 @@ logBegin(LogLevel* logId, const char* function, const char* prettyFunction, cons
   msg += " {";
   nio::StringSink buf;
   auto time = chrono::now<Clock>();
-  logImpl(buf, logId, LogLevel::none, stack.size(), time, msg);
-  stack.emplace_back(logId, function, prettyFunction, file, line, buf.str(), time);
+  logImpl(buf, logId, LogLevel::none, logStack.size(), time, msg);
+  logStack.emplace_back(logId, function, prettyFunction, file, line, buf.str(), time);
+
+  // If requested, log function stack immediately
+  if (logFmt.immediate) {
+    logFlush(logOut.get(time));
+  }
 }
 
 /// @ThreadSafe
@@ -579,7 +603,7 @@ logEnd() noexcept {
   // We need to catch anything here to keep the `noexcept` promise
   try {
     // Print end log entry only if begin log entry was flushed
-    const Entry& entry = stack.back();
+    const Entry& entry = logStack.back();
     if (not entry.begin_) {
       ROCKET_MUTEX_LOCK(logMutex);
       string msg = "} ";
@@ -593,7 +617,7 @@ logEnd() noexcept {
         msg += formatExecTime(entry.time_, time);
         msg += ']';
       }
-      logImpl(out.get(time), entry.logId_, LogLevel::none, stack.size() - 1, time, msg);
+      logImpl(logOut.get(time), entry.logId_, LogLevel::none, logStack.size() - 1, time, msg);
     }
   } catch (const exception& ex) {
     ROCKET_PROCESS_ERROR("Cannot log message: {}", what(ex));
@@ -601,7 +625,7 @@ logEnd() noexcept {
     ROCKET_PROCESS_ERROR("Cannot log message");
   }
   // After catching anything, we can safely pop from the stack
-  stack.pop_back();
+  logStack.pop_back();
 }
 
 /// @ThreadSafe
@@ -610,7 +634,7 @@ logInit() {
   // We need this in case of quick exit
   process.atExit([] {
     ROCKET_MUTEX_LOCK(logMutex);
-    out.get(chrono::now<Clock>()).flush();
+    logOut.flushOnExit();
   }, true);
 }
 
@@ -662,11 +686,11 @@ setLogOut(string_view value) {
   ROCKET_MUTEX_LOCK(logMutex);
 
   if (value == "-" || value == "stdout") {
-    out.set(nio::stdout);
+    logOut.set(nio::stdout);
   } else if (value == "stderr") {
-    out.set(nio::stderr);
+    logOut.set(nio::stderr);
   } else {
-    out.setPattern(value, chrono::now<Clock>());
+    logOut.setPattern(value, chrono::now<Clock>());
   }
 }
 

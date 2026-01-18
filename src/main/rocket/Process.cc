@@ -185,16 +185,18 @@ Process::init(
   else {
     string_view name(argv[0]);
     auto lastFileSep = name.find_last_of(system::fileSeparator());
-    if (lastFileSep != string::npos)
+    if (lastFileSep != string::npos) {
       name = name.substr(lastFileSep + 1);
+    }
     name = str::removeTrailing(name, system::executableSuffix());
     name_ = name;
   }
 
   quickExit_ = quickExit;
 
-  for (i32 i = 1; i < argc; ++i)
+  for (i32 i = 1; i < argc; ++i) {
     args_.emplace_back(argv[i]);
+  }
 
   // Register `onExit` both for `std::exit` and `std::quick_exit`
 

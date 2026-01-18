@@ -138,7 +138,7 @@ struct CommandLineParams {
    */
   bool otherOutput = false;
   /**
-   * Include Rocket's standard options, such as logging?
+   * Include Rocket's standard options, such as for logging control?
    */
   bool rocketOpts = true;
 };
