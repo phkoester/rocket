@@ -7,7 +7,7 @@
 #include "rocket/scan/impl.h"
 
 /*
- * The original file is `scnlib/src/scn/impl.cpp`
+ * The original file is `scnlib/src/scn/impl.cpp`.
  */
 
 namespace scn {
@@ -41,8 +41,11 @@ scan_expected<ranges::iterator_t<Range>> internal_skip_classic_whitespace(
     template SCN_PUBLIC scan_expected<Context::iterator> \
     scanner_scan_for_builtin_type(T&, Context&, const format_specs&);
 
+// Manually added `bool`
+
 #define SCN_DEFINE_SCANNER_SCAN_FOR_CTX(Context)                               \
     SCN_DEFINE_SCANNER_SCAN_FOR_TYPE(Context::char_type, Context)              \
+    SCN_DEFINE_SCANNER_SCAN_FOR_TYPE(bool, Context)                            \
     SCN_DEFINE_SCANNER_SCAN_FOR_TYPE(signed char, Context)                     \
     SCN_DEFINE_SCANNER_SCAN_FOR_TYPE(short, Context)                           \
     SCN_DEFINE_SCANNER_SCAN_FOR_TYPE(int, Context)                             \
