@@ -157,6 +157,7 @@ TEST(scnlib, scanSet) {
   EXPECT_EQ(result->begin() - input.begin(), 9);
 }
 
+// XXX
 TEST(scnlib, scanTimePoint) {
   // system::env::set("TZ", "America/Godthab");
 
@@ -170,34 +171,35 @@ TEST(scnlib, scanTimePoint) {
   auto result = scn::scan<TimePointType>(input, "{:%Y-%m-%d %H:%M:%.S}");
   ASSERT_TRUE(result);
   auto v2 = result->value();
-  fmt::println("v2: {}", v2); // XXX
   EXPECT_EQ(result->begin() - input.begin(), 29);
 
   // @bug in scnlib: Adjust the time point
-  /*
   auto* tz = std::chrono::current_zone();
   std::chrono::sys_info info = tz->get_info(v1);
-  cout << "info.offset: " << info.offset << endl;
   v2 += info.offset;
-  */
-  v2 += 1h;
+  fmt::println("v2: {}", v2); // XXX
+  cout << "TZ offset: " << info.offset << endl;
 
   EXPECT_EQ(v2, v1);
 }
 
-// XXX Why does this work?
+// XXX
 TEST(scnlib, ChronoTimePoint)
 {
   string input = "2024-09-10 23:11:10";
   fmt::println("tp1: {}", input); // XXX
-  auto result = scn::scan<std::chrono::system_clock::time_point>(
-      input, "{:%Y-%m-%d %H:%M:%S}");
+  auto result = scn::scan<std::chrono::system_clock::time_point>(input, "{:%Y-%m-%d %H:%M:%S}");
   ASSERT_TRUE(result);
   auto tp = result->value();
-  fmt::println("tp2: {}", tp); // "2024-09-10 21:11:10.000000000"
+
+  // @bug in scnlib: Adjust the time point
+  auto* tz = std::chrono::current_zone();
+  std::chrono::sys_info info = tz->get_info(tp);
+  auto tp2 = tp + info.offset;
+  fmt::println("tp2: {}", tp2); // "2024-09-10 21:11:10.000000000"
+  cout << "TZ offset: " << info.offset << endl;
 
   auto val = std::chrono::duration_cast<std::chrono::seconds>(tp.time_since_epoch());
-
 
   std::tm expected_tm {};
   expected_tm.tm_sec = 10;
