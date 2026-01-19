@@ -105,7 +105,7 @@ std::optional<std::pair<u64, u64>> position(nio::Sink& out);
  * Returns the terminal's current size, if available. The pair' s `first` is the width in columns, `second`
  * is the height in lines.
  *
- * @param fd a file descriptor, e.g. `STDOUT_FILENO`, `STDERR_FILENO`, or `STDIN_FILENO`
+ * @param io #rocket::nio::Io object
  * @return the terminal size, or null if not available
  */
 std::optional<std::pair<u64, u64>> size(nio::Io& io);

@@ -378,7 +378,7 @@ void upperIn(std::u32string& str);
  * @param str the string to wrap
  * @param leftIndent the left indentation
  * @param width the width to wrap to
- * @return a new string, containing the wrapped lines separated by @c '\n'
+ * @return a new string, containing the wrapped lines separated by @c '\\n'
  */
 std::string wrap(std::string_view str, u64 leftIndent = 0, u64 width = 80);
 
