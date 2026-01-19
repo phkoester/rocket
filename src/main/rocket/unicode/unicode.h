@@ -30,43 +30,43 @@ namespace rocket::unicode {
  */
 struct CodePoint {
   /// @ctor_default
-  constexpr CodePoint() noexcept : v_(0) {}
+  constexpr CodePoint() noexcept : val_(0) {}
 
   /**
    * @ctor
    *
-   * @param v a `char` value. This must be an ASCII character in the range @f$[0,127]@f$
+   * @param val a `char` value. This must be an ASCII character in the range @f$[0,127]@f$
    */
   // cppcheck-suppress noExplicitConstructor
-  constexpr CodePoint(char v) : v_(v) {
-    ROCKET_CHECK(v, ascii(), "ASCII character expected");
+  constexpr CodePoint(char val) : val_(val) {
+    ROCKET_CHECK(val, ascii(), "ASCII character expected");
   }
 
   /**
    * @ctor
    *
-   * This constructor does not check that @p v is a valid code point.
+   * This constructor does not check that @p val is a valid code point.
    *
-   * @param v a `char32` value
+   * @param val a `char32` value
    */
   // cppcheck-suppress noExplicitConstructor
-  constexpr CodePoint(char32 v) noexcept : v_(v) {}
+  constexpr CodePoint(char32 val) noexcept : val_(val) {}
 
   /// @member_op_cast{`char32`}
-  constexpr operator char32() const noexcept { return v_; }
+  constexpr operator char32() const noexcept { return val_; }
 
   /// @member_op_cast{`std::string`}
   explicit operator std::string() const;
 
   /// @member_op_cast{`std::u32string`}
-  constexpr explicit operator std::u32string() const noexcept { return { v_ }; }
+  constexpr explicit operator std::u32string() const noexcept { return { val_ }; }
 
   /**
    * Checks if the code point is an ASCII character.
    *
    * @return whether the code point is an ASCII character
    */
-  constexpr bool ascii() const noexcept { return v_ < 0x80; }
+  constexpr bool ascii() const noexcept { return val_ < 0x80; }
 
   /**
    * Checks if the code point equals the specified ASCII character.
@@ -76,11 +76,11 @@ struct CodePoint {
    */
   constexpr bool
   eq(char c) const noexcept {
-    return ascii() && v_ == static_cast<char32>(c);
+    return ascii() && val_ == static_cast<char32>(c);
   }
 
   /// @member_fn_hash
-  constexpr u64 hash() const noexcept { return std::hash<char32>()(v_); }
+  constexpr u64 hash() const noexcept { return std::hash<char32>()(val_); }
 
   /**
    * Checks if the code point is printable.
@@ -118,7 +118,7 @@ struct CodePoint {
    *
    * @return whether the code point is valid
    */
-  constexpr bool valid() const noexcept { return v_ <= 0x10FFFFU && not (v_ >= 0xD800U && v_ <= 0xDFFFU); }
+  constexpr bool valid() const noexcept { return val_ <= 0x10FFFFU && not (val_ >= 0xD800U && val_ <= 0xDFFFU); }
 
   /**
    * Calculates the display width for a code point.
@@ -129,29 +129,29 @@ struct CodePoint {
 
 private:
 
-  char32 v_; ///< The code-point value.
+  char32 val_; ///< The code-point value.
 };
 
 /**
  * Literal operator for #rocket::unicode::CodePoint.
  *
- * @param v the `char` value
+ * @param val the `char` value
  * @return a #rocket::unicode::CodePoint
  */
 constexpr CodePoint
-operator""_cp(char v) {
-  return CodePoint(v);
+operator""_cp(char val) {
+  return CodePoint(val);
 }
 
 /**
  * Literal operator for #rocket::unicode::CodePoint.
  *
- * @param v the `char32` value
+ * @param val the `char32` value
  * @return a #rocket::unicode::CodePoint
  */
 constexpr CodePoint
-operator""_cp(char32 v) {
-  return CodePoint(v) ;
+operator""_cp(char32 val) {
+  return CodePoint(val) ;
 }
 
 /// @op_output{#rocket::unicode::CodePoint}
@@ -172,11 +172,11 @@ struct fmt::formatter<rocket::unicode::CodePoint, C> {
 
   template<typename FormatContext>
   constexpr FormatContext::iterator
-  format(const rocket::unicode::CodePoint& v, FormatContext& ctx) const {
+  format(const rocket::unicode::CodePoint& val, FormatContext& ctx) const {
     if constexpr (std::is_same_v<C, char>) {
-      return underlying_.format(fmt::format("U+{:0>4X}", static_cast<u32>(v)), ctx);
+      return underlying_.format(fmt::format("U+{:0>4X}", static_cast<u32>(val)), ctx);
     } else {
-      return underlying_.format(fmt::format(U"U+{:0>4X}", static_cast<u32>(v)), ctx);
+      return underlying_.format(fmt::format(U"U+{:0>4X}", static_cast<u32>(val)), ctx);
     }
   }
 
@@ -186,8 +186,8 @@ struct fmt::formatter<rocket::unicode::CodePoint, C> {
   }
 
   constexpr void
-  set_debug_format(bool v = true) {
-    underlying_.set_debug_format(v);
+  set_debug_format(bool val = true) {
+    underlying_.set_debug_format(val);
   }
 
   /// @endcond
@@ -203,12 +203,12 @@ private:
 template<>
 struct std::hash<rocket::unicode::CodePoint> {
   /**
-   * Returns a hash value for @p v.
+   * Returns a hash value for @p val.
    *
-   * @param v the value to hash
+   * @param val the value to hash
    * @return a hash value
    */
-  constexpr u64 operator()(rocket::unicode::CodePoint v) const noexcept { return v.hash(); }
+  constexpr u64 operator()(rocket::unicode::CodePoint val) const noexcept { return val.hash(); }
 };
 
 // `std::numeric_limits<CodePoint>` -------------------------------------------------------------------------
@@ -236,52 +236,52 @@ namespace rocket::unicode {
 // Functions ------------------------------------------------------------------------------------------------
 
 /**
- * Converts the UTF-8 string @p s to a UTF-32 string.
+ * Converts the UTF-8 string @p str to a UTF-32 string.
  *
- * @param s a UTF-8 string
+ * @param str a UTF-8 string
  * @return a UTF-32 string
  */
-std::u32string utf8To32(std::string_view s);
+std::u32string utf8To32(std::string_view str);
 
 /**
- * Converts the UTF-32 string @p s to a UTF-8 string.
+ * Converts the UTF-32 string @p str to a UTF-8 string.
  *
- * @param s a UTF-32 string
+ * @param str a UTF-32 string
  * @return a UTF-8 string
  */
-std::string utf32To8(std::u32string_view s);
+std::string utf32To8(std::u32string_view str);
 
 // UTF8 .....................................................................................................
 
 namespace utf8 {
 
 /**
- * Returns the next code point from the UTF-8 string @p s at the position @p pos.
+ * Returns the next code point from the UTF-8 string @p str at the position @p pos.
  *
- * @param s a UTF-8 string
- * @param pos the position to get the next code point from. This must be less than the size of @p s. The
+ * @param str a UTF-8 string
+ * @param pos the position to get the next code point from. This must be less than the size of @p str. The
  *     position is updated to the position of the next code point
  * @return the next code point
  */
- CodePoint nextCodePoint(std::string_view s, u64& pos);
+ CodePoint nextCodePoint(std::string_view str, u64& pos);
 
 /**
- * Validates the UTF-8 string @p s.
+ * Validates the UTF-8 string @p str.
  *
- * If the string @p s is found to be valid, the result contains a reference to the original string @p s.
+ * If the string @p str is found to be valid, the result contains a reference to the original string @p str.
  *
- * If the string @p s is found to be invalid, the result contains a modified, corrected version of the
+ * If the string @p str is found to be invalid, the result contains a modified, corrected version of the
  * string. Invalid or incomplete UTF-8 byte sequences, as well as invalid code points, are replaced by the
  * replacement character `�` (U+FFFD).
  *
- * @param s the string to validate. The string must remain valid for the lifetime of the returned
- *    #rocket::Cow
- * @param positions if nonnull, then the left index of this map translates `char` offsets from @p s to `char`
- *   offsets in the result for each code point and the end of the string
+ * @param str the string to validate. The string must remain valid for the lifetime of the returned
+ *     #rocket::Cow
+ * @param positions if nonnull, then the left index of this map translates `char` offsets from @p str to
+ *     `char` offsets in the result for each code point and the end of the string
  * @return a #rocket::Cow result
  */
 Cow<std::string_view, std::string>
-validate(std::string_view s, UnorderedBimap<u64, u64>* positions = nullptr);
+validate(std::string_view str, UnorderedBimap<u64, u64>* positions = nullptr);
 
 } // namespace utf8
 
@@ -290,32 +290,32 @@ validate(std::string_view s, UnorderedBimap<u64, u64>* positions = nullptr);
 namespace utf32 {
 
 /**
- * Returns the next code point from the UTF-32 string @p s at the position @p pos.
+ * Returns the next code point from the UTF-32 string @p str at the position @p pos.
  *
- * @param s a UTF-32 string
- * @param pos the position to get the next code point from. This must be less than the size of @p s. The
+ * @param str a UTF-32 string
+ * @param pos the position to get the next code point from. This must be less than the size of @p str. The
  *     position is updated to the position of the next code point
  * @return the next code point
  */
-CodePoint nextCodePoint(std::u32string_view s, u64& pos);
+CodePoint nextCodePoint(std::u32string_view str, u64& pos);
 
 /**
- * Validates the UTF-32 string @p s.
+ * Validates the UTF-32 string @p str.
  *
- * If the string @p s is found to be valid, the result contains a reference to the original string @p s.
+ * If the string @p str is found to be valid, the result contains a reference to the original string @p str.
  *
- * If the string @p s is found to be invalid, the result contains a modified, corrected version of the
+ * If the string @p str is found to be invalid, the result contains a modified, corrected version of the
  * string. Invalid code points are replaced by the replacement character `�` (U+FFFD).
  *
- * @param s the string to validate. The string must remain valid for the lifetime of the returned
+ * @param str the string to validate. The string must remain valid for the lifetime of the returned
  *     #rocket::Cow
- * @param positions if nonnull, then the left index of this map translates `char32` offsets from @p s to
- *   `char32` offsets in the result for each code point and the end of string (trivial, but provided for
- *   completeness)
+ * @param positions if nonnull, then the left index of this map translates `char32` offsets from @p str to
+ *     `char32` offsets in the result for each code point and the end of string (trivial, but provided for
+ *     completeness)
  * @return a #rocket::Cow result
  */
 Cow<std::u32string_view, std::u32string>
-validate(std::u32string_view s, UnorderedBimap<u64, u64>* positions = nullptr);
+validate(std::u32string_view str, UnorderedBimap<u64, u64>* positions = nullptr);
 
 } // namespace utf32
 

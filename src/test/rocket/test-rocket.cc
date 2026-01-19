@@ -36,7 +36,7 @@ TEST(rocket, i128OpInput) {
   auto compareLimits = numeric_limits<compareType>();
 
   using type = i128;
-  type v;
+  type val;
   auto limits = numeric_limits<type>();
 
   // Empty input
@@ -48,7 +48,7 @@ TEST(rocket, i128OpInput) {
     EXPECT_ISTREAM(isCompare, true, true, 0);
 
     auto is = io::is(input);
-    is >> v;
+    is >> val;
     EXPECT_ISTREAM(is, true, true, 0);
   }
 
@@ -61,7 +61,7 @@ TEST(rocket, i128OpInput) {
     EXPECT_ISTREAM(isCompare, true, false, 0);
 
     auto is = io::is(input);
-    is >> v;
+    is >> val;
     EXPECT_ISTREAM(is, true, false, 0);
   }
 
@@ -74,7 +74,7 @@ TEST(rocket, i128OpInput) {
     EXPECT_ISTREAM(isCompare, true, true, 1);
 
     auto is = io::is(input);
-    is >> v;
+    is >> val;
     EXPECT_ISTREAM(is, true, true, 1);
   }
 
@@ -87,7 +87,7 @@ TEST(rocket, i128OpInput) {
     EXPECT_ISTREAM(isCompare, true, false, 1);
 
     auto is = io::is(input);
-    is >> v;
+    is >> val;
     EXPECT_ISTREAM(is, true, false, 1);
   }
 
@@ -101,9 +101,9 @@ TEST(rocket, i128OpInput) {
     EXPECT_EQ(compare, -1);
 
     auto is = io::is(input);
-    is >> v;
+    is >> val;
     EXPECT_ISTREAM(is, false, true, 2);
-    EXPECT_EQ(v, -1);
+    EXPECT_EQ(val, -1);
   }
 
   // Valid input, no EOF
@@ -116,9 +116,9 @@ TEST(rocket, i128OpInput) {
     EXPECT_EQ(compare, -999999);
 
     auto is = io::is(input);
-    is >> v;
+    is >> val;
     EXPECT_ISTREAM(is, false, false, 7);
-    EXPECT_EQ(v, -999999);
+    EXPECT_EQ(val, -999999);
   }
 
   // MIN
@@ -131,9 +131,9 @@ TEST(rocket, i128OpInput) {
 
     string input = "-170141183460469231731687303715884105728";
     auto is = io::is(input);
-    is >> v;
+    is >> val;
     EXPECT_ISTREAM(is, false, true, 40);
-    EXPECT_EQ(v, limits.min());
+    EXPECT_EQ(val, limits.min());
   }
 
   // MIN - 1, overflow
@@ -145,7 +145,7 @@ TEST(rocket, i128OpInput) {
 
     string input = "-170141183460469231731687303715884105729";
     auto is = io::is(input);
-    is >> v;
+    is >> val;
     EXPECT_ISTREAM(is, true, true, 40);
   }
 
@@ -159,9 +159,9 @@ TEST(rocket, i128OpInput) {
 
     string input = "170141183460469231731687303715884105727";
     auto is = io::is(input);
-    is >> v;
+    is >> val;
     EXPECT_ISTREAM(is, false, true, 39);
-    EXPECT_EQ(v, limits.max());
+    EXPECT_EQ(val, limits.max());
   }
 
   // MAX + 1, overflow
@@ -173,7 +173,7 @@ TEST(rocket, i128OpInput) {
 
     string input = "170141183460469231731687303715884105728";
     auto is = io::is(input);
-    is >> v;
+    is >> val;
     EXPECT_ISTREAM(is, true, true, 39);
   }
 
@@ -186,7 +186,7 @@ TEST(rocket, i128OpInput) {
 
     string input = "1701411834604692317316873037158841057280";
     auto is = io::is(input);
-    is >> v;
+    is >> val;
     EXPECT_ISTREAM(is, true, true, 40);
   }
 
@@ -199,7 +199,7 @@ TEST(rocket, i128OpInput) {
 
     string input = "17014118346046923173168730371588410572800";
     auto is = io::is(input);
-    is >> v;
+    is >> val;
     EXPECT_ISTREAM(is, true, true, 41);
   }
 }
@@ -228,7 +228,7 @@ TEST(base, u128OpInput) {
   auto compareLimits = numeric_limits<compareType>();
 
   using type = u128;
-  type v;
+  type val;
   auto limits = numeric_limits<type>();
 
   // Empty input
@@ -240,7 +240,7 @@ TEST(base, u128OpInput) {
     EXPECT_ISTREAM(isCompare, true, true, 0);
 
     auto is = io::is(input);
-    is >> v;
+    is >> val;
     EXPECT_ISTREAM(is, true, true, 0);
   }
 
@@ -253,7 +253,7 @@ TEST(base, u128OpInput) {
     EXPECT_ISTREAM(isCompare, true, false, 0);
 
     auto is = io::is(input);
-    is >> v;
+    is >> val;
     EXPECT_ISTREAM(is, true, false, 0);
   }
 
@@ -266,7 +266,7 @@ TEST(base, u128OpInput) {
     EXPECT_ISTREAM(isCompare, true, true, 1);
 
     auto is = io::is(input);
-    is >> v;
+    is >> val;
     EXPECT_ISTREAM(is, true, true, 1);
   }
 
@@ -279,7 +279,7 @@ TEST(base, u128OpInput) {
     EXPECT_ISTREAM(isCompare, true, false, 1);
 
     auto is = io::is(input);
-    is >> v;
+    is >> val;
     EXPECT_ISTREAM(is, true, false, 1);
   }
 
@@ -293,9 +293,9 @@ TEST(base, u128OpInput) {
     EXPECT_EQ(compare, 1);
 
     auto is = io::is(input);
-    is >> v;
+    is >> val;
     EXPECT_ISTREAM(is, false, true, 1);
-    EXPECT_EQ(v, 1);
+    EXPECT_EQ(val, 1);
   }
 
   // Valid input, no EOF
@@ -308,9 +308,9 @@ TEST(base, u128OpInput) {
     EXPECT_EQ(compare, 999999);
 
     auto is = io::is(input);
-    is >> v;
+    is >> val;
     EXPECT_ISTREAM(is, false, false, 6);
-    EXPECT_EQ(v, 999999);
+    EXPECT_EQ(val, 999999);
   }
 
   // MIN
@@ -323,9 +323,9 @@ TEST(base, u128OpInput) {
     EXPECT_EQ(compare, compareLimits.min());
 
     auto is = io::is(input);
-    is >> v;
+    is >> val;
     EXPECT_ISTREAM(is, false, true, 1);
-    EXPECT_EQ(v, limits.min());
+    EXPECT_EQ(val, limits.min());
   }
 
   // MIN - 1, e.g "-1", which is accepted
@@ -338,9 +338,9 @@ TEST(base, u128OpInput) {
     EXPECT_EQ(compare, compareLimits.max());
 
     auto is = io::is(input);
-    is >> v;
+    is >> val;
     EXPECT_ISTREAM(is, false, true, 2);
-    EXPECT_EQ(v, limits.max());
+    EXPECT_EQ(val, limits.max());
   }
 
   // MAX
@@ -353,9 +353,9 @@ TEST(base, u128OpInput) {
 
     string input = "340282366920938463463374607431768211455";
     auto is = io::is(input);
-    is >> v;
+    is >> val;
     EXPECT_ISTREAM(is, false, true, 39);
-    EXPECT_EQ(v, limits.max());
+    EXPECT_EQ(val, limits.max());
   }
 
   // MAX + 1, overflow
@@ -367,7 +367,7 @@ TEST(base, u128OpInput) {
 
     string input = "340282366920938463463374607431768211456";
     auto is = io::is(input);
-    is >> v;
+    is >> val;
     EXPECT_ISTREAM(is, true, true, 39);
   }
 
@@ -380,7 +380,7 @@ TEST(base, u128OpInput) {
 
     string input = "3402823669209384634633746074317682114560";
     auto is = io::is(input);
-    is >> v;
+    is >> val;
     EXPECT_ISTREAM(is, true, true, 40);
   }
 
@@ -393,7 +393,7 @@ TEST(base, u128OpInput) {
 
     string input = "34028236692093846346337460743176821145600";
     auto is = io::is(input);
-    is >> v;
+    is >> val;
     EXPECT_ISTREAM(is, true, true, 41);
   }
 }

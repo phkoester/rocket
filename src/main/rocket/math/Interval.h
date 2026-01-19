@@ -31,19 +31,19 @@ struct BoundTraits {
   static constexpr char Symbol = Symbol_;
 
   static constexpr bool
-  matches(BoundType bound, Type v) {
+  matches(BoundType bound, Type val) {
     if constexpr (Left) {
       // Left
       if constexpr (Closed)
-        return bound <= v;
+        return bound <= val;
       else
-        return not bound ? true : *bound < v;
+        return not bound ? true : *bound < val;
     } else {
       // Right
      if constexpr (Closed)
-       return bound >= v;
+       return bound >= val;
      else
-       return not bound ? true : *bound > v;
+       return not bound ? true : *bound > val;
     }
   }
 
@@ -310,12 +310,12 @@ struct IntervalImpl {
   inline bool operator!=(const IntervalImpl& rhs) const { return not operator==(rhs); }
 
   /**
-   * Tests if @p v is contained in this interval.
+   * Tests if @p val is contained in this interval.
    *
-   * @param v a value of type @p T
-   * @return whether @p v is contained in this interval
+   * @param val a value of type @p T
+   * @return whether @p val is contained in this interval
    */
-  constexpr bool contains(T v) const { return Left::matches(lower, v) && Right::matches(upper, v); }
+  constexpr bool contains(T val) const { return Left::matches(lower, val) && Right::matches(upper, val); }
 
   /**
    * Tests if this interval is empty.
@@ -424,11 +424,11 @@ struct fmt::formatter<rocket::math::IntervalImpl<T, Left, Right>, C> {
 
   template<typename FormatContext>
   constexpr FormatContext::iterator
-  format(const rocket::math::IntervalImpl<T, Left, Right>& v, FormatContext& ctx) const {
+  format(const rocket::math::IntervalImpl<T, Left, Right>& val, FormatContext& ctx) const {
     using namespace rocket::math::internal;
 
     auto out = ctx.out();
-    if (v.empty()) {
+    if (val.empty()) {
       // Empty: Use a neat mathematical symbol
 
       out = detail::write<C>(out, IntervalSymbols<C>::Empty);
@@ -436,7 +436,7 @@ struct fmt::formatter<rocket::math::IntervalImpl<T, Left, Right>, C> {
       // Nonempty
 
       out = detail::write<C>(out, static_cast<C>(Left::Symbol));
-      auto opt = rocket::option(v.lower);
+      auto opt = rocket::option(val.lower);
       if (not opt) {
         out = detail::write<C>(out, IntervalSymbols<C>::NegativeInfinity);
       } else {
@@ -444,7 +444,7 @@ struct fmt::formatter<rocket::math::IntervalImpl<T, Left, Right>, C> {
         out = underlying_.format(*opt, ctx);
       }
       out = detail::write<C>(out, static_cast<C>(','));
-      opt = rocket::option(v.upper);
+      opt = rocket::option(val.upper);
       if (not opt) {
         // In interval notation, we prefer `+∞` over `∞`
         out = detail::write<C>(out, IntervalSymbols<C>::PositiveInfinity);
@@ -463,8 +463,8 @@ struct fmt::formatter<rocket::math::IntervalImpl<T, Left, Right>, C> {
   }
 
   constexpr void
-  set_debug_format(bool v = true) {
-    detail::maybe_set_debug_format(underlying_, v);
+  set_debug_format(bool val = true) {
+    detail::maybe_set_debug_format(underlying_, val);
   }
 
   /// @endcond

@@ -40,12 +40,12 @@ struct formatter<Exception, C> {
 
   template<typename FormatContext>
   FormatContext::iterator
-  format(const Exception& v, FormatContext& ctx) const{
+  format(const Exception& val, FormatContext& ctx) const{
     // If requested, append type
 
     auto out = ctx.out();
     if (withType_) {
-      auto type = rocket::Type::of(v);
+      auto type = rocket::Type::of(val);
       if constexpr (std::is_same_v<C, char>) {
         out = format_to(out, "`{}`: ", rocket::unicode::ConvertTo<C>().apply(type.name()));
       } else {
@@ -55,19 +55,19 @@ struct formatter<Exception, C> {
 
     // Append message
 
-    out = detail::write<C>(out, rocket::unicode::ConvertTo<C>().apply(rocket::what(v)));
+    out = detail::write<C>(out, rocket::unicode::ConvertTo<C>().apply(rocket::what(val)));
 
     // If debug, append stack trace
 
     if (debug_) {
-      const rocket::Exception* p = dynamic_cast<const rocket::Exception*>(&v);
+      const rocket::Exception* p = dynamic_cast<const rocket::Exception*>(&val);
       if (p && p->stackTrace()) {
         out = detail::write<C>(out, static_cast<C>('\n'));
         std::ostringstream os;
         os << *p->stackTrace();
-        std::string s = os.str();
-        s.pop_back(); // Remove trailing '\n'
-        out = detail::write<C>(out, rocket::unicode::ConvertTo<C>().apply(s));
+        std::string str = os.str();
+        str.pop_back(); // Remove trailing '\n'
+        out = detail::write<C>(out, rocket::unicode::ConvertTo<C>().apply(str));
       }
     }
     return out;
@@ -88,8 +88,8 @@ struct formatter<Exception, C> {
   }
 
   constexpr void
-  set_debug_format(bool v = true) {
-    debug_ = v;
+  set_debug_format(bool val = true) {
+    debug_ = val;
   }
 
   /// @endcond
@@ -113,11 +113,11 @@ struct formatter<std::optional<T>, C> {
 
   template <typename FormatContext>
   constexpr FormatContext::iterator
-  format(const std::optional<T>& v, FormatContext& ctx) const {
-    if (not v) {
+  format(const std::optional<T>& val, FormatContext& ctx) const {
+    if (not val) {
       return detail::write<C>(ctx.out(), NONE);
     }
-    return underlying_.format(*v, ctx);
+    return underlying_.format(*val, ctx);
   }
 
   constexpr const C*
@@ -126,8 +126,8 @@ struct formatter<std::optional<T>, C> {
   }
 
   constexpr void
-  set_debug_format(bool v = true) {
-    detail::maybe_set_debug_format(underlying_, v);
+  set_debug_format(bool val = true) {
+    detail::maybe_set_debug_format(underlying_, val);
   }
 
   /// @endcond
@@ -184,7 +184,7 @@ struct formatter<Variant, C> {
   format(const Variant& value, FormatContext& ctx) const {
     auto out = ctx.out();
     try {
-      std::visit([&](const auto& v) {
+      std::visit([&](const auto& val) {
         // We need the index to be able to parse the variant back
         if constexpr (std::is_same_v<C, char>) {
           out = format_to(out, "{}:", value.index());
@@ -192,10 +192,10 @@ struct formatter<Variant, C> {
           out = format_to(out, U"{}:", value.index());
         }
 
-        formatter<rocket::PurgeType<decltype(v)>, C> underlying;
+        formatter<rocket::PurgeType<decltype(val)>, C> underlying;
         detail::maybe_set_debug_format(underlying, debug_);
         ctx.advance_to(out);
-        out = underlying.format(v, ctx);
+        out = underlying.format(val, ctx);
       }, value);
       return out;
     }
@@ -215,8 +215,8 @@ struct formatter<Variant, C> {
   }
 
   constexpr void
-  set_debug_format(bool v = true) {
-    debug_ = v;
+  set_debug_format(bool val = true) {
+    debug_ = val;
   }
 
   /// @endcond

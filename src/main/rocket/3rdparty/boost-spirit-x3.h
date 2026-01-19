@@ -57,45 +57,45 @@ namespace unicode {
   /**
    * `string` overload.
    *
-   * @param s a string
+   * @param str a string
    * @return a literal string
    */
   inline literal_string<const char32*, char_encoding::unicode>
-  string(const char32* s) {
-    return { s };
+  string(const char32* str) {
+    return { str };
   }
 
   /**
    * `string` overload.
    *
-   * @param s a string
+   * @param str a string
    * @return a literal string
    */
   inline literal_string<std::basic_string<char32>, char_encoding::unicode>
-  string(const std::basic_string<char32>& s) {
-    return { s };
+  string(const std::basic_string<char32>& str) {
+    return { str };
   }
 
   /**
    * `lit` overload.
    *
-   * @param s a string
+   * @param str a string
    * @return a literal string
    */
   inline literal_string<const char32*, char_encoding::unicode, unused_type>
-  lit(const char32* s) {
-    return { s };
+  lit(const char32* str) {
+    return { str };
   }
 
   /**
    * `lit` overload.
    *
-   * @param s a string
+   * @param str a string
    * @return a literal string
    */
   inline literal_string<std::basic_string<char32>, char_encoding::unicode, unused_type>
-  lit(const std::basic_string<char32>& s) {
-    return { s };
+  lit(const std::basic_string<char32>& str) {
+    return { str };
   }
 
   ///@}

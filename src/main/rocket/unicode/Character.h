@@ -29,15 +29,15 @@ struct BasicCharacter {
   /**
    * @ctor
    *
-   * This constructor does not check that @p s describes a valid Unicode character. If the character is
+   * This constructor does not check that @p str describes a valid Unicode character. If the character is
    * invalid, its behavior is undefined. Use #rocket::unicode::Iterator to obtain segments suitable for a
    * character.
    *
-   * @param s a string. The string must not be empty. If the instance is a character view, the string must
+   * @param str a string. The string must not be empty. If the instance is a character view, the string must
    *     remain valid for the lifetime of the instance
    */
-  explicit constexpr BasicCharacter(std::basic_string_view<C> s) : s_(s) {
-    ROCKET_CHECK(s, not s.empty());
+  explicit constexpr BasicCharacter(std::basic_string_view<C> str) : str_(str) {
+    ROCKET_CHECK(str, not str.empty());
   }
 
   /**
@@ -49,10 +49,10 @@ struct BasicCharacter {
    */
   template<typename Char> requires std::is_same_v<Char, C> && IS_VIEW
   constexpr BasicCharacter(const BasicCharacter<Char, std::basic_string<Char>>& rhs ) :
-      s_(static_cast<std::basic_string_view<C>>(rhs)) {}
+      str_(static_cast<std::basic_string_view<C>>(rhs)) {}
 
   /// @member_op_cast{`std::basic_string_view<C>`}
-  constexpr operator std::basic_string_view<C>() const noexcept { return s_; }
+  constexpr operator std::basic_string_view<C>() const noexcept { return str_; }
 
   /**
    * Checks if the character is an ASCII character.
@@ -61,7 +61,7 @@ struct BasicCharacter {
    */
   bool
   constexpr ascii() const noexcept {
-    return s_.size() == 1 && static_cast<u32>(s_[0]) < 0x80;
+    return str_.size() == 1 && static_cast<u32>(str_[0]) < 0x80;
   }
 
   /**
@@ -75,8 +75,8 @@ struct BasicCharacter {
   u64
   countCodePoints() const {
     u64 ret = 0;
-    for (u64 pos = 0; pos < s_.size(); /* Empty */) {
-      nextCodePoint(s_, pos);
+    for (u64 pos = 0; pos < str_.size(); /* Empty */) {
+      nextCodePoint(str_, pos);
       ++ret;
     }
     return ret;
@@ -89,7 +89,7 @@ struct BasicCharacter {
    */
   constexpr bool
   crLf() const noexcept {
-    return s_.size() == 2 && s_[0] == '\r' && s_[1] == '\n';
+    return str_.size() == 2 && str_[0] == '\r' && str_[1] == '\n';
   }
 
   /**
@@ -110,7 +110,7 @@ struct BasicCharacter {
    */
   constexpr bool
   eq(char c) const noexcept {
-    return ascii() && s_[0] == c;
+    return ascii() && str_[0] == c;
   }
 
   /**
@@ -120,8 +120,8 @@ struct BasicCharacter {
    */
   bool
   isWhitespace() const {
-    for (u64 pos = 0; pos < s_.size(); /* Empty */) {
-      auto cp = nextCodePoint(s_, pos);
+    for (u64 pos = 0; pos < str_.size(); /* Empty */) {
+      auto cp = nextCodePoint(str_, pos);
       if (not CodePoint(cp).isWhitespace()) {
         return false;
       }
@@ -136,7 +136,7 @@ struct BasicCharacter {
    */
   bool
   isXdigit() const noexcept {
-    return s_.size() == 1 && std::isxdigit(s_[0]);
+    return str_.size() == 1 && std::isxdigit(str_[0]);
   }
 
   /**
@@ -146,7 +146,7 @@ struct BasicCharacter {
    */
   constexpr bool
   lf() const noexcept {
-    return s_.size() == 1 && s_[0] == '\n';
+    return str_.size() == 1 && str_[0] == '\n';
   }
 
   /**
@@ -157,11 +157,11 @@ struct BasicCharacter {
   bool
   nbsp() const {
     u64 pos = 0;
-    auto cp = nextCodePoint(s_, pos);
+    auto cp = nextCodePoint(str_, pos);
     if (cp != U'\u00A0') { // U+00A0 (NO-BREAK SPACE)
       return false;
     }
-    return pos == s_.size();
+    return pos == str_.size();
   }
 
   /**
@@ -169,7 +169,7 @@ struct BasicCharacter {
    *
    * @return the size of the underlying string
    */
-  constexpr u64 size() const noexcept { return s_.size(); }
+  constexpr u64 size() const noexcept { return str_.size(); }
 
   /**
    * Checks if the character is a tab.
@@ -178,7 +178,7 @@ struct BasicCharacter {
    */
   constexpr bool
   tab() const noexcept {
-    return s_.size() == 1 && s_[0] == '\t';
+    return str_.size() == 1 && str_[0] == '\t';
   }
 
   /**
@@ -189,8 +189,8 @@ struct BasicCharacter {
   std::optional<CodePoint>
   toCodePoint() const {
     u64 pos = 0;
-    auto cp = nextCodePoint(s_, pos);
-    if (pos == s_.size()) {
+    auto cp = nextCodePoint(str_, pos);
+    if (pos == str_.size()) {
       return CodePoint(cp);
     }
     return std::nullopt;
@@ -204,8 +204,8 @@ struct BasicCharacter {
   u8
   width() const {
     u8 ret = 0;
-    for (u64 pos = 0; pos < s_.size(); /* Empty */) {
-      auto cp = nextCodePoint(s_, pos);
+    for (u64 pos = 0; pos < str_.size(); /* Empty */) {
+      auto cp = nextCodePoint(str_, pos);
       ret = std::max(ret, CodePoint(cp).width());
       if (ret == 2) {
         return 2;
@@ -228,7 +228,7 @@ private:
    *
    * The string must not be empty.
    */
-  String s_;
+  String str_;
 };
 
 /// @op_output{#rocket::unicode::BasicCharacter}
@@ -241,8 +241,8 @@ operator<<(std::ostream& lhs, const BasicCharacter<C, String>& rhs) {
 /// @fn_format_as{#rocket::unicode::BasicCharacter}
 template<typename C, typename String> requires IsChar<C>
 constexpr auto
-format_as(const BasicCharacter<C, String>& v) {
-  return static_cast<std::basic_string_view<C>>(v);
+format_as(const BasicCharacter<C, String>& val) {
+  return static_cast<std::basic_string_view<C>>(val);
 }
 
 // `Character` ----------------------------------------------------------------------------------------------

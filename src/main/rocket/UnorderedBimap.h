@@ -53,12 +53,12 @@ bool
 operator==(const bimap<A, B>& lhs, const bimap<A, B>& rhs) {
   if (lhs.size() != rhs.size())
     return false;
-  for (const auto& [k, v] : lhs.left) {
-    auto it = rhs.left.find(k);
+  for (const auto& [key, val] : lhs.left) {
+    auto it = rhs.left.find(key);
     if (it == rhs.left.end()) {
       return false;
     }
-    if (it->second != v) {
+    if (it->second != val) {
       return false;
     }
   }
@@ -86,8 +86,8 @@ operator<<(std::ostream& lhs, const bimap<A, B>& rhs) {
  */
 template<typename A, typename B>
 inline void
-PrintTo(const bimap<A, B>& v, std::ostream* os) {
-  *os << v;
+PrintTo(const bimap<A, B>& val, std::ostream* os) {
+  *os << val;
 }
 
 } // namespace boost::bimaps
@@ -106,10 +106,10 @@ struct fmt::formatter<boost::bimaps::bimap<A, B>, C> {
 
   template<typename FormatContext>
   constexpr FormatContext::iterator
-  format(const boost::bimaps::bimap<A, B>& v, FormatContext& ctx) const {
+  format(const boost::bimaps::bimap<A, B>& val, FormatContext& ctx) const {
     // @todo Don't copy the whole map here
     std::map<K, V> map;
-    for (const auto& [k, v] : v.left) { // cppcheck-suppress shadowArgument
+    for (const auto& [k, v] : val.left) { // cppcheck-suppress shadowArgument
       map.emplace(k, v);
     }
     return underlying_.format(map, ctx);
@@ -121,8 +121,8 @@ struct fmt::formatter<boost::bimaps::bimap<A, B>, C> {
   }
 
   constexpr void
-  set_debug_format(bool v = true) {
-    underlying_.set_debug_format(v);
+  set_debug_format(bool val = true) {
+    underlying_.set_debug_format(val);
   }
 
   /// @endcond

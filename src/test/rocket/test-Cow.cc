@@ -9,9 +9,9 @@
 // `TEST` ---------------------------------------------------------------------------------------------------
 
 TEST(Cow, differentTypes) {
-  string s = "hi";
-  Cow<string_view, string> cow(s);
-  s = "hey";
+  string str = "hi";
+  Cow<string_view, string> cow(str);
+  str = "hey";
   EXPECT_EQ(cow.get(), "he");
   EXPECT_FALSE(cow.modified());
 

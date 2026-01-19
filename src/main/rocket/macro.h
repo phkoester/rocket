@@ -20,9 +20,9 @@
 #define ROCKET_ID() BOOST_PP_SEQ_CAT((rocketId)(__LINE__)(__))
 
 /**
- * If @p v is empty, expands to @p _true, otherwise to @p _false.
+ * If @p val is empty, expands to @p _true, otherwise to @p _false.
  */
-#define ROCKET_IF_EMPTY(v, _true, _false) BOOST_PP_IF(BOOST_PP_CHECK_EMPTY(v), _true, _false)
+#define ROCKET_IF_EMPTY(val, _true, _false) BOOST_PP_IF(BOOST_PP_CHECK_EMPTY(val), _true, _false)
 
 /**
  * This macro executes a given function as a static initializer.
@@ -49,9 +49,9 @@
 /**
  * Generates a scoped mutex lock.
  *
- * @param v the mutex to lock
+ * @param val the mutex to lock
  */
-#define ROCKET_MUTEX_LOCK(v) auto BOOST_PP_SEQ_CAT((rocketLock)(__LINE__)(__)) = ::std::scoped_lock(v)
+#define ROCKET_MUTEX_LOCK(val) auto BOOST_PP_SEQ_CAT((rocketLock)(__LINE__)(__)) = ::std::scoped_lock(val)
 
 /**
  * If `ns` is empty, expands to nothing. Otherwise, expands to `namespace ns {`.

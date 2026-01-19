@@ -22,18 +22,19 @@ namespace internal {
 
 path
 tempPath(const char* file) {
-  string s = file;
-  str::replaceIn<char>(s, "src/test/", "", 1);
-  str::replaceIn<char>(s, "test-", "", 1);
-  str::replaceIn<char>(s, "src/bench/", "", 1);
-  str::replaceIn<char>(s, "bench-", "", 1);
-  str::replaceIn<char>(s, ".cc", "", 1);
-  str::replaceIn<char>(s, "/", "_");
+  string str = file;
+  str::replaceIn<char>(str, "src/test/", "", 1);
+  str::replaceIn<char>(str, "test-", "", 1);
+  str::replaceIn<char>(str, "src/bench/", "", 1);
+  str::replaceIn<char>(str, "bench-", "", 1);
+  str::replaceIn<char>(str, ".cc", "", 1);
+  str::replaceIn<char>(str, "/", "_");
 
   auto info = ::testing::UnitTest::GetInstance()->current_test_info(); \
   auto gen = math::gen();
-  path name = fmt::format("rocket-gtest-{}-{}-{}-{}.tmp",
-      s, info->test_suite_name(), info->name(), math::randomHex(gen, 16));
+  path name = fmt::format(
+      "rocket-gtest-{}-{}-{}-{}.tmp",
+      str, info->test_suite_name(), info->name(), math::randomHex(gen, 16));
   path ret = temp_directory_path() / name;
 
   process.atExit([=] { remove(ret); }, true);

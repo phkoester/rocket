@@ -192,8 +192,8 @@ template<typename C>
 struct fmt::formatter<rocket::format::Format<C>, C> {
   template<typename FormatContext>
   constexpr FormatContext::iterator
-  format(const rocket::format::Format<C>& v, FormatContext& ctx) const {
-    const auto& params = v.get();
+  format(const rocket::format::Format<C>& val, FormatContext& ctx) const {
+    const auto& params = val.get();
     auto formatted = params.formatted_;
     for (const auto& [tag, value] : params.tagged_) {
       rocket::str::replaceIn<C>(formatted, tag, value);

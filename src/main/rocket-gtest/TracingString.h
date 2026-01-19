@@ -64,7 +64,7 @@ struct TracingString {
   TracingString(const TracingString& rhs) noexcept :
       trace_(rhs.trace_),
       id_(++ID_COUNTER),
-      v_(rhs.v_) {
+      val_(rhs.val_) {
     ++NUM_INSTANCES;
     trace("ctorCopy");
     ++ctorCopy;
@@ -74,7 +74,7 @@ struct TracingString {
   TracingString(TracingString&& rhs) noexcept :
       trace_(rhs.trace_),
       id_(++ID_COUNTER),
-      v_(rhs.v_) {
+      val_(rhs.val_) {
     ++NUM_INSTANCES;
     rhs.invalidate();
     trace("ctorMove");
@@ -90,7 +90,7 @@ struct TracingString {
   explicit TracingString(std::string& trace, const char* p) noexcept :
       trace_(&trace),
       id_(++ID_COUNTER),
-      v_(p) {
+      val_(p) {
     ++NUM_INSTANCES;
     this->trace("ctorP");
     ++ctorP;
@@ -107,7 +107,7 @@ struct TracingString {
 
   TracingString&
   operator=(const TracingString& rhs) noexcept { // cppcheck-suppress operatorEqVarError
-    v_ = rhs.v_;
+    val_ = rhs.val_;
     trace("opAsgmtCopy");
     ++opAsgmtCopy;
     return *this;
@@ -116,7 +116,7 @@ struct TracingString {
   /// @member_op_asgmt_move
   TracingString&
   operator=(TracingString&& rhs) noexcept { // cppcheck-suppress operatorEqVarError
-    v_ = rhs.v_;
+    val_ = rhs.val_;
     rhs.invalidate();
     trace("opAsgmtMove");
     ++opAsgmtMove;
@@ -125,12 +125,12 @@ struct TracingString {
 
   /// @member_op_cast{`std::string`}
   operator std::string() const noexcept {
-    return v_;
+    return val_;
   }
 
   /// @member_op_cast{`std::string_view`}
   operator std::string_view() const noexcept {
-    return v_;
+    return val_;
   }
 
 private:
@@ -139,11 +139,11 @@ private:
 
   std::string* trace_;
   u64 id_;
-  std::string v_;
+  std::string val_;
 
   void
   invalidate() {
-    v_ = "invalid";
+    val_ = "invalid";
   }
 
   void trace(std::string_view what) const;

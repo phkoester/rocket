@@ -29,18 +29,18 @@ testString(u64 n, i32 add = 0) {
 // `Sink` ...................................................................................................
 
 TEST(nio, BufferedSink) {
-  StringSink s;
-  BufferedSink buffered(s, 64);
+  StringSink out;
+  BufferedSink buffered(out, 64);
   EXPECT_EQ(buffered.size_, 64);
 
   buffered.write(string(testString(32)));
   EXPECT_EQ(buffered.pos_, 32);
-  EXPECT_EQ(s.str(), "");
+  EXPECT_EQ(out.str(), "");
   buffered.write(testString(33, 2));
   EXPECT_EQ(buffered.pos_, 1);
-  EXPECT_EQ(s.str(), testString(64));
+  EXPECT_EQ(out.str(), testString(64));
   buffered.flush();
-  EXPECT_EQ(s.str(), testString(65));
+  EXPECT_EQ(out.str(), testString(65));
   EXPECT_EQ(buffered.pos_, 0);
 }
 
@@ -64,11 +64,11 @@ TEST(nio, FileSinkDoesNotExist) {
 }
 
 TEST(nio, SpanSink) {
-  string s = "---[abcd]---";
-  span<char> span(&s[4], 4);
+  string str = "---[abcd]---";
+  span<char> span(&str[4], 4);
   SpanSink out(span);
   EXPECT_EQ(out.write("ABCDEF"), 4); // 6 times `Y`, but only 4 fit
-  EXPECT_EQ(s, "---[ABCD]---");
+  EXPECT_EQ(str, "---[ABCD]---");
 }
 
 TEST(nio, StreamSink) {
@@ -206,17 +206,17 @@ TEST(nio, FileSourceRead) {
   out.close();
 
   FileSource in(tmp);
-  string s = in.Source::read();
+  string str = in.Source::read();
   EXPECT_EQ(in.error(), 0);
-  EXPECT_EQ(s, "Hey there\n");
-  s = in.Source::read();
-  EXPECT_EQ(s, "");
+  EXPECT_EQ(str, "Hey there\n");
+  str = in.Source::read();
+  EXPECT_EQ(str, "");
   EXPECT_EQ(in.error(), 0);
 
   in.seek(-6, SeekMode::end);
   EXPECT_EQ(in.tell(), 4);
-  s = in.Source::read();
-  EXPECT_EQ(s, "there\n");
+  str = in.Source::read();
+  EXPECT_EQ(str, "there\n");
   EXPECT_EQ(in.tell(), 10);
 }
 
@@ -229,25 +229,25 @@ TEST(nio, StreamSourceRead) {
 
   ifstream is(tmp.c_str());
   StreamSource in(is);
-  string s = in.Source::read();
+  string str = in.Source::read();
   EXPECT_EQ(in.error(), 0);
   EXPECT_EQ(in.tell(), 10);
-  EXPECT_EQ(s, "Hey there\n");
-  s = in.Source::read();
-  EXPECT_EQ(s, "");
+  EXPECT_EQ(str, "Hey there\n");
+  str = in.Source::read();
+  EXPECT_EQ(str, "");
   EXPECT_EQ(in.error(), 0);
 
   in.seek(-6, SeekMode::end);
   EXPECT_EQ(in.tell(), 4);
-  s = in.Source::read();
-  EXPECT_EQ(s, "there\n");
+  str = in.Source::read();
+  EXPECT_EQ(str, "there\n");
   EXPECT_EQ(in.tell(), 10);
 }
 
 TEST(nio, StringSource) {
   StringSource in("Hello, world!");
-  string s = in.Source::read();
-  EXPECT_EQ(s, "Hello, world!");
+  string str = in.Source::read();
+  EXPECT_EQ(str, "Hello, world!");
 }
 
 TEST(nio, StringSourceReadln) {

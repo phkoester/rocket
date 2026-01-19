@@ -12,8 +12,8 @@ using namespace rocket::str;
 // Functions ------------------------------------------------------------------------------------------------
 
 vector<vector<string>>
-pars(const vector<vector<string>>& v) {
-  return v;
+pars(const vector<vector<string>>& vec) {
+  return vec;
 }
 
 // `TEST` ---------------------------------------------------------------------------------------------------
@@ -84,90 +84,90 @@ TEST(str, paragraphs) {
 TEST(str, removeLeadingChar) {
   using type = char;
 
-  string s = "";
-  EXPECT_EQ(removeLeading<type>(s, "hello"), "");
+  string str = "";
+  EXPECT_EQ(removeLeading<type>(str, "hello"), "");
 
-  s = "hello";
-  EXPECT_EQ(removeLeading<type>(s, ""), "hello");
+  str = "hello";
+  EXPECT_EQ(removeLeading<type>(str, ""), "hello");
 
-  s = "/dir";
-  EXPECT_EQ(removeLeading<type>(s, "/"), "dir");
+  str = "/dir";
+  EXPECT_EQ(removeLeading<type>(str, "/"), "dir");
 
-  s = "//dir";
-  EXPECT_EQ(removeLeading<type>(s, "/", 1), "/dir");
+  str = "//dir";
+  EXPECT_EQ(removeLeading<type>(str, "/", 1), "/dir");
 
-  s = "///dir";
-  EXPECT_EQ(removeLeading<type>(s, "/"), "dir");
+  str = "///dir";
+  EXPECT_EQ(removeLeading<type>(str, "/"), "dir");
 }
 
 TEST(str, removeLeadingChar32) {
   using type = char32;
 
-  u32string s = U"";
-  EXPECT_EQ(removeLeading<type>(s, U"hello"), U"");
+  u32string str = U"";
+  EXPECT_EQ(removeLeading<type>(str, U"hello"), U"");
 
-  s = U"hello";
-  EXPECT_EQ(removeLeading<type>(s, U""), U"hello");
+  str = U"hello";
+  EXPECT_EQ(removeLeading<type>(str, U""), U"hello");
 
-  s = U"/dir";
-  EXPECT_EQ(removeLeading<type>(s, U"/"), U"dir");
+  str = U"/dir";
+  EXPECT_EQ(removeLeading<type>(str, U"/"), U"dir");
 
-  s = U"//dir";
-  EXPECT_EQ(removeLeading<type>(s, U"/", 1), U"/dir");
+  str = U"//dir";
+  EXPECT_EQ(removeLeading<type>(str, U"/", 1), U"/dir");
 
-  s = U"///dir";
-  EXPECT_EQ(removeLeading<type>(s, U"/"), U"dir");
+  str = U"///dir";
+  EXPECT_EQ(removeLeading<type>(str, U"/"), U"dir");
 }
 
 TEST(str, removeTrailingChar) {
   using type = char;
 
-  string s = "";
-  EXPECT_EQ(removeTrailing<type>(s, "hello"), "");
+  string str = "";
+  EXPECT_EQ(removeTrailing<type>(str, "hello"), "");
 
-  s = "hello";
-  EXPECT_EQ(removeTrailing<type>(s, ""), "hello");
+  str = "hello";
+  EXPECT_EQ(removeTrailing<type>(str, ""), "hello");
 
-  s = "dir/";
-  EXPECT_EQ(removeTrailing<type>(s, "/"), "dir");
+  str = "dir/";
+  EXPECT_EQ(removeTrailing<type>(str, "/"), "dir");
 
-  s = "dir//";
-  EXPECT_EQ(removeTrailing<type>(s, "/", 1), "dir/");
+  str = "dir//";
+  EXPECT_EQ(removeTrailing<type>(str, "/", 1), "dir/");
 
-  s = "dir///";
-  EXPECT_EQ(removeTrailing<type>(s, "/"), "dir");
+  str = "dir///";
+  EXPECT_EQ(removeTrailing<type>(str, "/"), "dir");
 }
 
 TEST(str, removeTrailingChar32) {
   using type = char32;
 
-  u32string s = U"";
-  EXPECT_EQ(removeTrailing<type>(s, U"hello"), U"");
+  u32string str = U"";
+  EXPECT_EQ(removeTrailing<type>(str, U"hello"), U"");
 
-  s = U"hello";
-  EXPECT_EQ(removeTrailing<type>(s, U""), U"hello");
+  str = U"hello";
+  EXPECT_EQ(removeTrailing<type>(str, U""), U"hello");
 
-  s = U"dir//";
-  EXPECT_EQ(removeTrailing<type>(s, U"/", 1), U"dir/");
+  str = U"dir//";
+  EXPECT_EQ(removeTrailing<type>(str, U"/", 1), U"dir/");
 
-  s = U"dir///";
-  EXPECT_EQ(removeTrailing<type>(s, U"/"), U"dir");
+  str = U"dir///";
+  EXPECT_EQ(removeTrailing<type>(str, U"/"), U"dir");
 }
 
 TEST(str, replaceInChar) {
   using type = char;
 
-  string s = "(abc)(abc)(abc)";
-  replaceIn<type>(s, "(abc)", "(a)");
-  EXPECT_EQ(s, "(a)(a)(a)");
+  string str = "(abc)(abc)(abc)";
+  replaceIn<type>(str, "(abc)", "(a)");
+  EXPECT_EQ(str, "(a)(a)(a)");
 }
 
 TEST(str, replaceInChar32) {
   using type = char32;
 
-  u32string s = U"(abc)(abc)(abc)";
-  replaceIn<type>(s, U"(abc)", U"(a)");
-  EXPECT_EQ(s, U"(a)(a)(a)");
+  u32string str = U"(abc)(abc)(abc)";
+  replaceIn<type>(str, U"(abc)", U"(a)");
+  EXPECT_EQ(str, U"(a)(a)(a)");
 }
 
 TEST(str, upperChar) {

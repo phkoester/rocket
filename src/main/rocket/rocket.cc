@@ -17,28 +17,28 @@ namespace {
  * @return pointer to the end
  */
 char*
-u128ToStringImpl(char* dest, u128 v) {
-  if (v >= 10) {
-    dest = u128ToStringImpl(dest, v / 10); // Recursive call
+u128ToStringImpl(char* dest, u128 val) {
+  if (val >= 10) {
+    dest = u128ToStringImpl(dest, val / 10); // Recursive call
   }
-  *dest = static_cast<char>(v % 10 + '0');
+  *dest = static_cast<char>(val % 10 + '0');
   return ++dest;
 }
 
 char*
-i128ToString(char* dest, i128 v) {
-  if (v < 0) {
+i128ToString(char* dest, i128 val) {
+  if (val < 0) {
     *dest = '-';
-    *u128ToStringImpl(dest + 1, static_cast<u128>(-1 - v) + 1) = '\0';
+    *u128ToStringImpl(dest + 1, static_cast<u128>(-1 - val) + 1) = '\0';
   } else {
-    *u128ToStringImpl(dest, static_cast<u128>(v)) = '\0';
+    *u128ToStringImpl(dest, static_cast<u128>(val)) = '\0';
   }
   return dest;
 }
 
 char*
-u128ToString(char* dest, u128 v) {
-  *u128ToStringImpl(dest, v) = '\0';
+u128ToString(char* dest, u128 val) {
+  *u128ToStringImpl(dest, val) = '\0';
   return dest;
 }
 

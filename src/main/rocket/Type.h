@@ -37,14 +37,14 @@ struct Type {
   static inline Type of() { return typeid(T); }
 
   /**
-   * Makes a #rocket::Type of value @p v.
+   * Makes a #rocket::Type of value @p val.
    *
-   * @tparam T the type of @p v
-   * @param v a value of type @p T
+   * @tparam T the type of @p val
+   * @param val a value of type @p T
    * @return a new #rocket::Type
    */
   template<typename T>
-  static inline Type of(const T& v) { return typeid(v); }
+  static inline Type of(const T& val) { return typeid(val); }
 
   /**
    * @ctor
@@ -114,8 +114,8 @@ struct fmt::formatter<rocket::Type, C> {
 
   template<typename FormatContext>
   constexpr FormatContext::iterator
-  format(const rocket::Type& v, FormatContext& ctx) const {
-    return underlying_.format(rocket::unicode::ConvertTo<C>().apply(v.name()), ctx);
+  format(const rocket::Type& val, FormatContext& ctx) const {
+    return underlying_.format(rocket::unicode::ConvertTo<C>().apply(val.name()), ctx);
   }
 
   constexpr const C*
@@ -124,8 +124,8 @@ struct fmt::formatter<rocket::Type, C> {
   }
 
   constexpr void
-  set_debug_format(bool v = true) {
-    underlying_.set_debug_format(v);
+  set_debug_format(bool val = true) {
+    underlying_.set_debug_format(val);
   }
 
   /// @endcond
@@ -142,7 +142,7 @@ template<>
 struct std::hash<rocket::Type> {
   /// @cond undocumented
 
-  inline u64 operator()(const rocket::Type& v) const { return v.hash(); }
+  inline u64 operator()(const rocket::Type& val) const { return val.hash(); }
 
   /// @endcond
 };

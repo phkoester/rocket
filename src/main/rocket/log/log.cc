@@ -134,8 +134,8 @@ struct Out {
   nio::Sink& get(const TimePoint& time);
 
   void
-  set(nio::Sink& v) {
-    out_ = &v;
+  set(nio::Sink& out) {
+    out_ = &out;
     fileOut_ = nullptr;
   }
 
@@ -349,16 +349,16 @@ thread_local vector<Entry> logStack;
  * @ThreadSafe
  */
 void
-applyLog(optional<string_view> v) {
-  ROCKET_EXPECT(v);
+applyLog(optional<string_view> val) {
+  ROCKET_EXPECT(val);
 
   string_view lhs, rhs;
-  if (auto eq = v->find('='); eq == string::npos) {
-    lhs = *v;
+  if (auto eq = val->find('='); eq == string::npos) {
+    lhs = *val;
     rhs = "info";
   } else {
-    lhs = v->substr(0, eq);
-    rhs = v->substr(eq + 1);
+    lhs = val->substr(0, eq);
+    rhs = val->substr(eq + 1);
   }
 
   // Use public API from here
@@ -371,11 +371,11 @@ applyLog(optional<string_view> v) {
  * @ThreadSafe
  */
 void
-applyLogFmt(optional<string_view> v) {
-  ROCKET_EXPECT(v);
+applyLogFmt(optional<string_view> val) {
+  ROCKET_EXPECT(val);
 
   // Use public API from here
-  setLogFmt(*v);
+  setLogFmt(*val);
 }
 
 /**
@@ -384,11 +384,11 @@ applyLogFmt(optional<string_view> v) {
  * @ThreadSafe
  */
 void
-applyLogOut(optional<string_view> v) {
-  ROCKET_EXPECT(v);
+applyLogOut(optional<string_view> val) {
+  ROCKET_EXPECT(val);
 
   // Use public API from here
-  setLogOut(*v);
+  setLogOut(*val);
 }
 
 /// @ThreadSafe
@@ -471,29 +471,29 @@ logImpl(
     const TimePoint& time,
     string_view msg) {
   // Item: time point
-  string s = formatTimePoint(time); // Formats with a trailing space
-  out.write(s);
-  u64 indent = s.size();
+  string str = formatTimePoint(time); // Formats with a trailing space
+  out.write(str);
+  u64 indent = str.size();
 
   // Item: thread ID/name
   if (logFmt.threadIds) {
     auto threadId = this_thread::get_id();
-    string s;
+    string str;
     auto name = ROCKET_THREAD_NAME();
     if (not name.empty()) {
       // Use thread name
-      s = name;
-      if (s.size() > THREAD_WIDTH) {
-        s = s.substr(0, THREAD_WIDTH - 1) + "…"; // Cut name on the right side
+      str = name;
+      if (str.size() > THREAD_WIDTH) {
+        str = str.substr(0, THREAD_WIDTH - 1) + "…"; // Cut name on the right side
       }
     } else {
       // Use thread ID
-      s = fmt::format("{}", threadId);
-      if (s.size() > THREAD_WIDTH) {
-        s = "…" + s.substr(s.size() - THREAD_WIDTH + 1); // Cut ID on the left side
+      str = fmt::format("{}", threadId);
+      if (str.size() > THREAD_WIDTH) {
+        str = "…" + str.substr(str.size() - THREAD_WIDTH + 1); // Cut ID on the left side
       }
     }
-    out.print("{: <{}} ", s, THREAD_WIDTH);
+    out.print("{: <{}} ", str, THREAD_WIDTH);
     indent += THREAD_WIDTH + 1;
   }
 
@@ -647,15 +647,15 @@ const vector<cl::Option>& logOptions() { return CL_OPTIONS; }
 
 /// @ThreadSafe
 void
-setLogFmt(string_view value) {
+setLogFmt(string_view val) {
   ROCKET_MUTEX_LOCK(logMutex);
 
-  logFmt.set(value);
+  logFmt.set(val);
 }
 
 /// @ThreadSafe
 void
-setLogLevel(string_view id, string_view value) {
+setLogLevel(string_view id, string_view val) {
   bool all = id == "all";
 
   ROCKET_MUTEX_LOCK(logMutex);
@@ -668,7 +668,7 @@ setLogLevel(string_view id, string_view value) {
     }
   }
 
-  LogLevel level = Enum<LogLevel>::toType(value);
+  LogLevel level = Enum<LogLevel>::toType(val);
 
   if (not all) {
     *it->second = level;
@@ -682,15 +682,15 @@ setLogLevel(string_view id, string_view value) {
 
 /// @ThreadSafe
 void
-setLogOut(string_view value) {
+setLogOut(string_view val) {
   ROCKET_MUTEX_LOCK(logMutex);
 
-  if (value == "-" || value == "stdout") {
+  if (val == "-" || val == "stdout") {
     logOut.set(nio::stdout);
-  } else if (value == "stderr") {
+  } else if (val == "stderr") {
     logOut.set(nio::stderr);
   } else {
-    logOut.setPattern(value, chrono::now<Clock>());
+    logOut.setPattern(val, chrono::now<Clock>());
   }
 }
 

@@ -14,7 +14,7 @@ u64 TracingString::ID_COUNTER = 0;
 u64 TracingString::NUM_INSTANCES = 0;
 
 void TracingString::trace(std::string_view what) const {
-  string msg = fmt::format("{}.{}: {}\n", id_, what, v_);
+  string msg = fmt::format("{}.{}: {}\n", id_, what, val_);
   trace_->append(msg);
 }
 

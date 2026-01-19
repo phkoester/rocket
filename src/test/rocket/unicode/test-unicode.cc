@@ -33,7 +33,7 @@ TEST(unicode, CodePointCtorChar) {
 
   EXPECT_THAT(
       [&] { '\x80'_cp; },
-      ThrowsMessage<InvalidArgument>(HasSubstr("Parameter `v`: ")));
+      ThrowsMessage<InvalidArgument>(HasSubstr("Parameter `val`: ")));
 }
 
 TEST(unicode, CodePointOpCasString) {
@@ -105,28 +105,28 @@ TEST(unicode, conversions) {
   EXPECT_EQ(utf8To32("äöü€"), U"äöü€");
   EXPECT_EQ(utf32To8(U"äöü€"), "äöü€");
 
-  const char* s1 = "a€b";
+  const char* str1 = "a€b";
 
-  vector<char32> v;
-  u32string s = utf8To32(s1);
-  copy(s.begin(), s.end(), back_inserter(v));
-  EXPECT_EQ(v, (vector<char32>{ 97, 0x20ac, 98 }));
+  vector<char32> vec;
+  u32string str = utf8To32(str1);
+  copy(str.begin(), str.end(), back_inserter(vec));
+  EXPECT_EQ(vec, (vector<char32> { 97, 0x20ac, 98 }));
 
-  u32string s2 = utf8To32(s1);
-  EXPECT_EQ(s2, U"a€b");
-  EXPECT_EQ(s2.size(), 3);
+  u32string str2 = utf8To32(str1);
+  EXPECT_EQ(str2, U"a€b");
+  EXPECT_EQ(str2.size(), 3);
 
-  string s3 = utf32To8(s2);
-  EXPECT_EQ(s3, s1);
+  string str3 = utf32To8(str2);
+  EXPECT_EQ(str3, str1);
 
   // U+1F9D1 (ADULT), U+200D (ZERO WIDTH JOINER), U+1F33E (EAR OF RICE)
   EXPECT_EQ(utf8To32("a🧑‍🌾b"), U"a🧑‍🌾b");
 
-  auto s32 = utf8To32("🧑‍🌾");
-  ASSERT_EQ(s32.size(), 3);
-  EXPECT_EQ(s32[0], 0x1F9D1);
-  EXPECT_EQ(s32[1], 0x200D);
-  EXPECT_EQ(s32[2], 0x1F33E);
+  auto str32 = utf8To32("🧑‍🌾");
+  ASSERT_EQ(str32.size(), 3);
+  EXPECT_EQ(str32[0], 0x1F9D1);
+  EXPECT_EQ(str32[1], 0x200D);
+  EXPECT_EQ(str32[2], 0x1F33E);
 }
 
 // `rocket::unicode::utf8` ..................................................................................
@@ -144,32 +144,32 @@ TEST(unicode, utf8Validate) {
   static_assert("�"sv.size() == 3);
 
   {
-    string s = { 'a', CONT, 'b' };
-    auto cow = utf8::validate(s, &pos);
+    string str = { 'a', CONT, 'b' };
+    auto cow = utf8::validate(str, &pos);
     EXPECT_TRUE(cow.modified());
     EXPECT_EQ(cow.get(), "a�b");
     EXPECT_EQ(pos, positions({ { 0, 0 }, { 1, 1 }, { 2, 4 }, { 3, 5 } }));
   }
 
   {
-    string s = { 'a', TWO_BYTES, 'b', 'c' };
-    auto cow = utf8::validate(s, &pos);
+    string str = { 'a', TWO_BYTES, 'b', 'c' };
+    auto cow = utf8::validate(str, &pos);
     EXPECT_TRUE(cow.modified());
     EXPECT_EQ(cow.get(), "a�bc");
     EXPECT_EQ(pos, positions({ { 0, 0 }, { 1, 1 }, { 2, 4 }, { 3, 5 }, { 4, 6 } }));
   }
 
   {
-    string s = { 'a', THREE_BYTES, CONT };
-    auto cow = utf8::validate(s, &pos);
+    string str = { 'a', THREE_BYTES, CONT };
+    auto cow = utf8::validate(str, &pos);
     EXPECT_TRUE(cow.modified());
     EXPECT_EQ(cow.get(), "a�");
     EXPECT_EQ(pos, positions({ { 0, 0 }, { 1, 1 }, { 3, 4 } }));
   }
 
   {
-    string s = { 'a', FOUR_BYTES, CONT, 'b' };
-    auto cow = utf8::validate(s, &pos);
+    string str = { 'a', FOUR_BYTES, CONT, 'b' };
+    auto cow = utf8::validate(str, &pos);
     EXPECT_TRUE(cow.modified());
     EXPECT_EQ(cow.get(), "a��b");
     EXPECT_EQ(pos, positions({ { 0, 0 }, { 1, 1 }, { 2, 4 }, { 3, 7 }, { 4, 8 } }));
@@ -190,8 +190,8 @@ TEST(unicode, utf32Validate) {
   }
 
   {
-    u32string s = { 'a', D800, 'b', MAX_PLUS_1 };
-    u32string_view sv = s;
+    u32string str = { 'a', D800, 'b', MAX_PLUS_1 };
+    u32string_view sv = str;
     auto cow = utf32::validate(sv, &pos);
     EXPECT_TRUE(cow.modified());
     EXPECT_EQ(cow.get(), U"a�b�");

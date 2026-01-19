@@ -84,8 +84,8 @@ TEST(scnlib, scanU32Hex) {
 
 TEST(scnlib, scanI128) {
   auto result = scn::scan<i128>("12345678901234567890", "{}");
-  auto v = result->value();
-  EXPECT_EQ(fmt::format("{}", v), "12345678901234567890");
+  auto val = result->value();
+  EXPECT_EQ(fmt::format("{}", val), "12345678901234567890");
 }
 
 TEST(scnlib, scanString) {
@@ -180,24 +180,24 @@ TEST(scnlib, scanTimePoint) {
 TEST(scnlib, scanTuple) {
   using type = tuple<bool, int, double>;
 
-  auto v1 = type { true, 1, 2.22 };
-  string input = fmt::format("{}", v1); // "(true, 1, 2.22)", 15 chars
+  auto val1 = type { true, 1, 2.22 };
+  string input = fmt::format("{}", val1); // "(true, 1, 2.22)", 15 chars
   auto result = scn::scan<type>(input, "{}");
   ASSERT_TRUE(result);
-  auto v2 = result->value();
-  EXPECT_EQ(v2, v1);
+  auto val2 = result->value();
+  EXPECT_EQ(val2, val1);
   EXPECT_EQ(result->begin() - input.begin(), 15);
 }
 
 TEST(scnlib, scanVector) {
   using type = vector<int>;
 
-  auto v1 = type { 1, 2, 3 };
-  string input = fmt::format("{}", v1); // "[1, 2, 3]", 9 chars
+  auto val1 = type { 1, 2, 3 };
+  string input = fmt::format("{}", val1); // "[1, 2, 3]", 9 chars
   auto result = scn::scan<type>(input, "{}");
   ASSERT_TRUE(result);
-  auto v2 = result->value();
-  EXPECT_EQ(v2, v1);
+  auto val2 = result->value();
+  EXPECT_EQ(val2, val1);
   EXPECT_EQ(result->begin() - input.begin(), 9);
 }
 

@@ -68,8 +68,8 @@
     struct fmt::formatter<ns::type, C> { \
       template<typename FormatContext> \
       constexpr FormatContext::iterator \
-      format(ns::type v, FormatContext& ctx) const { \
-        if (auto it = ns::name##Map__.left.find(v); it != ns::name##Map__.left.end()) { \
+      format(ns::type val, FormatContext& ctx) const { \
+        if (auto it = ns::name##Map__.left.find(val); it != ns::name##Map__.left.end()) { \
           return underlying_.format(::rocket::unicode::ConvertTo<C>().apply(it->second), ctx); \
         } else { \
           return detail::write<C>(ctx.out(), INVALID); \
@@ -82,8 +82,8 @@
       } \
       \
       constexpr void \
-      set_debug_format(bool v = true) { \
-        underlying_.set_debug_format(v); \
+      set_debug_format(bool val = true) { \
+        underlying_.set_debug_format(val); \
       } \
     \
     private: \
@@ -97,7 +97,7 @@
 #define ROCKET_ENUM_DECLARE_ROCKET_ENUM__(type) \
     template<> \
     struct rocket::Enum<type> : ::std::true_type { \
-      static type toType(::std::string_view s); \
+      static type toType(::std::string_view str); \
     }
 
 #define ROCKET_ENUM_DECLARE__(ns, type, name) \
@@ -127,12 +127,12 @@
 
 #define ROCKET_ENUM_DEFINE_ROCKET_ENUM__(ns, type, name) \
     ns::type \
-    rocket::Enum<ns::type>::toType(::std::string_view s) { \
-      auto it = ns::name##Map__.right.find(s); \
+    rocket::Enum<ns::type>::toType(::std::string_view str) { \
+      auto it = ns::name##Map__.right.find(str); \
       if (it != ns::name##Map__.right.end()) { \
         return it->second; \
       } else { \
-        throw ::rocket::InvalidState(::rocket::str::message::cannotScanAs(s, ::rocket::Type::of<ns::type>())); \
+        throw ::rocket::InvalidState(::rocket::str::message::cannotScanAs(str, ::rocket::Type::of<ns::type>())); \
       } \
     }
 

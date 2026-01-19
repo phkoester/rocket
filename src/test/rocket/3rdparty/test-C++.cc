@@ -53,13 +53,13 @@ protected:
 
   template<typename T>
   void
-  bar(T&& v) {
-    foo(std::forward<T>(v));
+  bar(T&& val) {
+    foo(std::forward<T>(val));
   }
 
   void
-  baz(auto&& v) {
-    foo(std::forward<decltype(v)>(v));
+  baz(auto&& val) {
+    foo(std::forward<decltype(val)>(val));
   }
 
   void
@@ -148,9 +148,9 @@ TEST_F(Cxx, utf8StringLiteral) {
 TEST_F(Cxx, vectorPushBackLvalue) {
   string trace;
   {
-    vector<TracingString> v;
+    vector<TracingString> vec;
     TracingString lvalue(trace, "a");
-    v.push_back(lvalue);
+    vec.push_back(lvalue);
   }
   EXPECT_EQ(TracingString::NUM_INSTANCES, 0);
   EXPECT_EQ(trace,
@@ -163,9 +163,9 @@ TEST_F(Cxx, vectorPushBackLvalue) {
 TEST_F(Cxx, vectorPushBackLvalueWithMove) {
   string trace;
   {
-    vector<TracingString> v;
+    vector<TracingString> vec;
     TracingString lvalue(trace, "a");
-    v.push_back(std::move(lvalue));
+    vec.push_back(std::move(lvalue));
   }
   EXPECT_EQ(TracingString::NUM_INSTANCES, 0);
   EXPECT_EQ(trace,
@@ -178,8 +178,8 @@ TEST_F(Cxx, vectorPushBackLvalueWithMove) {
 TEST_F(Cxx, vectorEmplaceBack) {
   string trace;
   {
-    vector<TracingString> v;
-    v.emplace_back(trace, "a");
+    vector<TracingString> vec;
+    vec.emplace_back(trace, "a");
   }
   EXPECT_EQ(TracingString::NUM_INSTANCES, 0);
   EXPECT_EQ(trace,

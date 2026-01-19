@@ -93,30 +93,30 @@ struct Log {
  *
  * @ThreadSafe
  *
- * @param value the log format
+ * @param val the log format
  */
-void setLogFmt(std::string_view value);
+void setLogFmt(std::string_view val);
 
 /**
- * Sets the log level for the log ID @p id to @p value.
+ * Sets the log level for the log ID @p id to @p val.
  *
  * If @p id is `"all"`, the log level is set for all log IDs.
  *
  * @ThreadSafe
  *
  * @param id the log ID, or `"all"`
- * @param value the log level
+ * @param val the log level
  */
-void setLogLevel(std::string_view id, std::string_view value);
+void setLogLevel(std::string_view id, std::string_view val);
 
 /**
  * Set the log output.
  *
  * @ThreadSafe
  *
- * @param value `"-"`, `"stdout"`, or `"stderr"`, or a pattern.
+ * @param val `"-"`, `"stdout"`, or `"stderr"`, or a pattern.
  */
-void setLogOut(std::string_view value);
+void setLogOut(std::string_view val);
 
 } // namespace rocket::log
 
@@ -142,11 +142,11 @@ void setLogOut(std::string_view value);
 
 #define ROCKET_LOG(id) ::rocket::nop()
 
-#define ROCKET_LOG_ERROR(v) ::rocket::nop()
-#define ROCKET_LOG_WARN(v) ::rocket::nop()
-#define ROCKET_LOG_INFO(v) ::rocket::nop()
-#define ROCKET_LOG_DEBUG(v) ::rocket::nop()
-#define ROCKET_LOG_TRACE(v) ::rocket::nop()
+#define ROCKET_LOG_ERROR(fmt, ...) ::rocket::nop()
+#define ROCKET_LOG_WARN(fmt, ...) ::rocket::nop()
+#define ROCKET_LOG_INFO(fmt, ...) ::rocket::nop()
+#define ROCKET_LOG_DEBUG(fmt, ...) ::rocket::nop()
+#define ROCKET_LOG_TRACE(fmt, ...) ::rocket::nop()
 
 #else
 

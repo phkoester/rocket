@@ -18,41 +18,43 @@ void printThrown(
   nio::Sink&, u64, const optional<Type>&, const optional<string>&, const optional<stacktrace>&);
 
 string
-getWhat(i32 v) {
-  return fmt::format("{}", v);
+getWhat(i32 val) {
+  return fmt::format("{}", val);
 }
 
 string
-getWhat(i64 v) {
-  return fmt::format("{}", v);
+getWhat(i64 val) {
+  return fmt::format("{}", val);
 }
 
 string
-getWhat(const char* v) {
-  if (not v)
-    return "null";
-  return fmt::format("{:?}", v); // With quotation marks
-}
-
-string
-getWhat(const string& v) {
-  return fmt::format("{:?}", v); // With quotation marks
-}
-
-string
-getWhat(string_view v) {
-  return fmt::format("{:?}", v); // With quotation marks
-}
-
-string
-getWhat(const exception& v) {
-  const char* p = v.what();
-  if (not p)
+getWhat(const char* val) {
+  if (not val) {
     return "<null>";
-  string_view s(p);
-  if (s.empty())
+  }
+  return fmt::format("{:?}", val); // With quotation marks
+}
+
+string
+getWhat(const string& val) {
+  return fmt::format("{:?}", val); // With quotation marks
+}
+
+string
+getWhat(string_view val) {
+  return fmt::format("{:?}", val); // With quotation marks
+}
+
+string
+getWhat(const exception& val) {
+  const char* p = val.what();
+  if (not p) {
+    return "<null>";
+  }
+  string_view str(p);
+  if (str.empty())
     return "<none>";
-  return fmt::format("{}", s);
+  return fmt::format("{}", str);
 }
 
 void
@@ -67,16 +69,16 @@ printExceptionPtr(nio::Sink& out, u64 level, const exception_ptr& ptr) {
     } catch (...) {
       printExceptionPtr(out, level + 1, current_exception());
     }
-  } catch (i32 v) {
-    printThrown(out, level, Type::of(v), getWhat(v), nullopt);
-  } catch (i64 v) {
-    printThrown(out, level, Type::of(v), getWhat(v), nullopt);
-  } catch (const char* v) {
-    printThrown(out, level, Type::of(v), getWhat(v), nullopt);
-  } catch (const string& v) {
-    printThrown(out, level, Type::of(v), getWhat(v), nullopt);
-  } catch (string_view v) { // cppcheck-suppress catchExceptionByValue
-    printThrown(out, level, Type::of(v), getWhat(v), nullopt);
+  } catch (i32 val) {
+    printThrown(out, level, Type::of(val), getWhat(val), nullopt);
+  } catch (i64 val) {
+    printThrown(out, level, Type::of(val), getWhat(val), nullopt);
+  } catch (const char* val) {
+    printThrown(out, level, Type::of(val), getWhat(val), nullopt);
+  } catch (const string& val) {
+    printThrown(out, level, Type::of(val), getWhat(val), nullopt);
+  } catch (string_view val) { // cppcheck-suppress catchExceptionByValue
+    printThrown(out, level, Type::of(val), getWhat(val), nullopt);
   } catch (...) {
     const type_info* info = current_exception().__cxa_exception_type();
     if (info)
@@ -133,16 +135,16 @@ whatExceptionPtr(nio::Sink& out, u64 level, const exception_ptr& ptr) {
     } catch (...) {
       whatExceptionPtr(out, level + 1, current_exception());
     }
-  } catch (i32 v) {
-    out.write(getWhat(v));
-  } catch (i64 v) {
-    out.write(getWhat(v));
-  } catch (const char* v) {
-    out.write(getWhat(v));
-  } catch (const string& v) {
-    out.write(getWhat(v));
-  } catch (string_view v) { // cppcheck-suppress catchExceptionByValue
-    out.write(getWhat(v));
+  } catch (i32 val) {
+    out.write(getWhat(val));
+  } catch (i64 val) {
+    out.write(getWhat(val));
+  } catch (const char* val) {
+    out.write(getWhat(val));
+  } catch (const string& val) {
+    out.write(getWhat(val));
+  } catch (string_view val) { // cppcheck-suppress catchExceptionByValue
+    out.write(getWhat(val));
   } catch (...) {}
 
   if (level > 0) {

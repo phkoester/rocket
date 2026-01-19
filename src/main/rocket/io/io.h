@@ -21,12 +21,12 @@ namespace rocket::io {
 inline std::istringstream is() { return std::istringstream(); }
 
 /**
- * Makes an input stream that reads from the string @p s.
+ * Makes an input stream that reads from the string @p str.
  *
- * @param s the string to read from
- * @return an input stream that reads from the string @p s
+ * @param str the string to read from
+ * @return an input stream that reads from the string @p str
  */
-inline std::ispanstream is(std::string_view s) { return std::ispanstream(s); }
+inline std::ispanstream is(std::string_view str) { return std::ispanstream(str); }
 
 /**
  * Similar to `std::istream::tellg`, but leaves @p is unchanged and returns the actual current position

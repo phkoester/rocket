@@ -26,23 +26,23 @@ template<typename C> requires IsChar<C>
 struct SplitIterator {
   /// @cond undocumented
 
-  SplitIterator(std::basic_string_view<C> s, size_t pos, std::basic_string_view<C> sep) :
-      s_(s), pos_(pos), sep_(sep) {
+  SplitIterator(std::basic_string_view<C> str, size_t pos, std::basic_string_view<C> sep) :
+      str_(str), pos_(pos), sep_(sep) {
     if (pos == NPOS) {
       // The end
       end_ = NPOS;
       return;
     }
 
-    pos_ = std::min(pos_, s_.size());
-    if (pos_ == s_.size()) {
+    pos_ = std::min(pos_, str_.size());
+    if (pos_ == str_.size()) {
       // Empty token at the end
       end_ = pos_;
     } else {
       // A token
-      end_ = s_.find(sep_, pos_);
+      end_ = str_.find(sep_, pos_);
       if (end_ == NPOS) {
-        end_ = s_.size();
+        end_ = str_.size();
       }
     }
   }
@@ -51,35 +51,35 @@ struct SplitIterator {
 
   SplitIterator&
   operator++() {
-    if (end_ == s_.size()) {
+    if (end_ == str_.size()) {
       // The end
       pos_ = end_ = NPOS;
       return *this;
     }
 
     pos_ = end_ + sep_.size();
-    if (pos_ == s_.size()) {
+    if (pos_ == str_.size()) {
       // Empty token at the end
       end_ = pos_;
     } else {
       // A token
-      end_ = s_.find(sep_, pos_);
+      end_ = str_.find(sep_, pos_);
       if (end_ == NPOS) {
-        end_ = s_.size();
+        end_ = str_.size();
       }
     }
 
     return *this;
   }
 
-  std::basic_string_view<C> operator*() const { return s_.substr(pos_, end_ - pos_); }
+  std::basic_string_view<C> operator*() const { return str_.substr(pos_, end_ - pos_); }
 
   /// @endcond
 
 private:
 
   /// The input string to split.
-  std::basic_string_view<C> s_;
+  std::basic_string_view<C> str_;
   /**
    * The current position in the string.
    *
@@ -107,18 +107,18 @@ template<typename C> requires IsChar<C>
 struct SplitResult {
   /// @cond undocumented
 
-  SplitResult(std::basic_string_view<C> s, std::basic_string_view<C> sep) : s_(s), sep_(sep) {}
+  SplitResult(std::basic_string_view<C> str, std::basic_string_view<C> sep) : str_(str), sep_(sep) {}
 
-  SplitIterator<C> begin() const { return SplitIterator<C>(s_, 0, sep_); }
+  SplitIterator<C> begin() const { return SplitIterator<C>(str_, 0, sep_); }
 
-  SplitIterator<C> end() const { return SplitIterator<C>(s_, NPOS, sep_); }
+  SplitIterator<C> end() const { return SplitIterator<C>(str_, NPOS, sep_); }
 
   /// @endcond
 
 private:
 
   /// The input string to split.
-  std::basic_string_view<C> s_;
+  std::basic_string_view<C> str_;
   /// The separator.
   std::basic_string<C> sep_;
 };
@@ -126,96 +126,96 @@ private:
 // Functions ------------------------------------------------------------------------------------------------
 
 /**
- * Checks if string @p s begins with substring @p sub.
+ * Checks if string @p str begins with substring @p sub.
  *
  * @tparam C the character type
- * @param s a string
+ * @param str a string
  * @param sub the substring to look for
- * @return whether @p s begins with substring @p sub
+ * @return whether @p str begins with substring @p sub
  */
 template<typename C> requires IsChar<C>
 bool
-beginsWith(std::basic_string_view<C> s, std::basic_string_view<C> sub) {
+beginsWith(std::basic_string_view<C> str, std::basic_string_view<C> sub) {
   if (sub.empty())
     return true;
-  if (sub.size() > s.size())
+  if (sub.size() > str.size())
     return false;
-  return s.substr(0, sub.size()) == sub;
+  return str.substr(0, sub.size()) == sub;
 }
 
 /**
- * Makes a new string from @p s that has its first letter capitalized
+ * Makes a new string from @p str that has its first letter capitalized
  *
- * @param s a UTF-8 string
+ * @param str a UTF-8 string
  * @return a new string
  */
-std::string capitalize(std::string_view s);
+std::string capitalize(std::string_view str);
 
 /**
- * Makes a new string from @p s that has its first letter capitalized
+ * Makes a new string from @p str that has its first letter capitalized
  *
- * @param s a UTF-32 string
+ * @param str a UTF-32 string
  * @return a new string
  */
-std::u32string capitalize(std::u32string_view s);
+std::u32string capitalize(std::u32string_view str);
 
 /**
- * Checks if string @p s ends with substring @p sub.
+ * Checks if string @p str ends with substring @p sub.
  *
  * @tparam C the character type
- * @param s a string
+ * @param str a string
  * @param sub the substring to look for
- * @return whether @p s ends with substring @p sub
+ * @return whether @p str ends with substring @p sub
  */
 template<typename C> requires IsChar<C>
 bool
-endsWith(std::basic_string_view<C> s, std::basic_string_view<C> sub) {
+endsWith(std::basic_string_view<C> str, std::basic_string_view<C> sub) {
   if (sub.empty())
     return true;
-  if (sub.size() > s.size())
+  if (sub.size() > str.size())
     return false;
-  return s.substr(s.size() - sub.size()) == sub;
+  return str.substr(str.size() - sub.size()) == sub;
 }
 
 /**
  * Converts a UTF-8 string to lower case, handling Unicode characters correctly.
  *
- * @param s the string to convert
+ * @param str the string to convert
  * @return a new string
  */
-[[nodiscard]] std::string lower(std::string_view s);
+[[nodiscard]] std::string lower(std::string_view str);
 
 /**
  * Converts a UTF-32 string to lower case, handling Unicode characters correctly.
  *
- * @param s the string to convert
+ * @param str the string to convert
  * @return a new string
  */
-[[nodiscard]] std::u32string lower(std::u32string_view s);
+[[nodiscard]] std::u32string lower(std::u32string_view str);
 
 /**
  * Converts a UTF-32 string to lower case, handling Unicode characters correctly.
  *
- * @param s the string to convert
+ * @param str the string to convert
  */
-void lowerIn(std::u32string& s);
+void lowerIn(std::u32string& str);
 
 /**
  * Converts a UTF-32 string to lower case, handling Unicode characters correctly.
  *
- * @param s the string to convert
+ * @param str the string to convert
  */
-void lowerIn(std::u32string& s);
+void lowerIn(std::u32string& str);
 
 /**
  * Splits a string into paragraphs.
  *
- * @param s the string to split. The string must be UTF-8-encoded, using LF (`"\n"`) or CRLF (`"\r\n"`) as
- *     line breaks. Non-breaking spaces (U+00A0) are recognized. Tabs are replaced by spaces. Consecutive
- *     whitespace is collapsed.
- * @return a vector of paragraphs. Each paragraph is a vector of words. Each word is a UTF-8 string.
+ * @param str the string to split. The string must be UTF-8-encoded, using LF (`"\n"`) or CRLF (`"\r\n"`) as
+ *     line breaks. No-break spaces (U+00A0) are recognized. Tabs are replaced by spaces. Consecutive
+ *     whitespace is collapsed
+ * @return a vector of paragraphs. Each paragraph is a vector of words. Each word is a UTF-8 string
  */
-std::vector<std::vector<std::string>> paragraphs(std::string_view s);
+std::vector<std::vector<std::string>> paragraphs(std::string_view str);
 
 /**
  * Makes a string view such that it has up to @p max leading occurrencies of @p sub removed.
@@ -223,7 +223,7 @@ std::vector<std::vector<std::string>> paragraphs(std::string_view s);
  * This is a function template that works both with UTF-8 and UTF-32 strings.
  *
  * @tparam C the character type
- * @param s a string view
+ * @param str a string view
  * @param sub the substring to look for
  * @param max maximum amount of removals
  * @return a string view
@@ -231,13 +231,13 @@ std::vector<std::vector<std::string>> paragraphs(std::string_view s);
 template<typename C> requires IsChar<C>
 std::basic_string_view<C>
 removeLeading(
-    std::basic_string_view<C> s,
+    std::basic_string_view<C> str,
     std::basic_string_view<C> sub,
     u64 max = std::numeric_limits<u64>::max()) {
-  if (sub.empty() || sub.size() > s.size())
-    return s;
+  if (sub.empty() || sub.size() > str.size())
+    return str;
 
-  std::basic_string_view<C> ret(s);
+  std::basic_string_view<C> ret(str);
   for (u64 i = 0; i < max; ++i) {
     std::basic_string_view<C> leading(ret.begin(), sub.size());
     if (leading == sub)
@@ -254,7 +254,7 @@ removeLeading(
  * This is a function template that works both with UTF-8 and UTF-32 strings.
  *
  * @tparam C the character type
- * @param s a string view
+ * @param str a string view
  * @param sub the substring to look for
  * @param max maximum amount of removals
  * @return a string view
@@ -262,13 +262,13 @@ removeLeading(
 template<typename C> requires IsChar<C>
 std::basic_string_view<C>
 removeTrailing(
-    std::basic_string_view<C> s,
+    std::basic_string_view<C> str,
     std::basic_string_view<C> sub,
     u64 max = std::numeric_limits<u64>::max()) {
-  if (sub.empty() || sub.size() > s.size())
-    return s;
+  if (sub.empty() || sub.size() > str.size())
+    return str;
 
-  std::basic_string_view<C> ret(s);
+  std::basic_string_view<C> ret(str);
   for (u64 i = 0; i < max; ++i) {
     auto begin = ret.end() - sub.size();
     std::basic_string_view<C> trailing(begin, ret.end());
@@ -281,30 +281,30 @@ removeTrailing(
 }
 
 /**
- * Repeats the string @p s @p n times.
+ * Repeats the string @p str @p n times.
  *
  * @tparam C the character type
- * @param s a string
+ * @param str a string
  * @param n a number
  * @return a new string
  */
 template<typename C> requires IsChar<C>
 [[nodiscard]] std::basic_string<C>
-repeat(const std::basic_string_view<C> s, u64 n) {
+repeat(const std::basic_string_view<C> str, u64 n) {
   std::basic_string<C> ret;
-  ret.reserve(n * s.size());
+  ret.reserve(n * str.size());
   for (u64 i = 0; i < n; ++i)
-    ret.append(s);
+    ret.append(str);
   return ret;
 }
 
 /**
- * Modifies the string @p s such that it has up to @p max occurrencies of @p from replaced by @p to.
+ * Modifies the string @p str such that it has up to @p max occurrencies of @p from replaced by @p to.
  *
  * This is a function template that works both with UTF-8 and UTF-32 strings.
  *
  * @tparam C the character type
- * @param s the string to modify
+ * @param str the string to modify
  * @param from the substring to look for
  * @param to the new substring to replace the old substring
  * @param max maximum amount of replacements
@@ -313,13 +313,13 @@ repeat(const std::basic_string_view<C> s, u64 n) {
 template<typename C> requires IsChar<C>
 u64
 replaceIn(
-    std::basic_string<C>& s,
+    std::basic_string<C>& str,
     std::basic_string_view<C> from,
     std::basic_string_view<C> to,
     u64 max = std::numeric_limits<u64>::max()) {
   u64 pos = 0, ret = 0;
-  while ((pos = s.find(from, pos)) != std::string::npos) {
-    s.replace(pos, from.size(), to);
+  while ((pos = str.find(from, pos)) != std::string::npos) {
+    str.replace(pos, from.size(), to);
     if (++ret >= max)
       break;
     pos += to.size();
@@ -334,53 +334,53 @@ replaceIn(
  * into tokens.
  *
  * @tparam C the character type
- * @param s the string to split
+ * @param str the string to split
  * @param sep the separator to use
  * @return a result object that can be used to iterate over the string-view tokens
  */
 template<typename C> requires IsChar<C>
 SplitResult<C>
-split(std::basic_string_view<C> s, std::basic_string_view<C> sep) {
-  return SplitResult<C>(s, sep);
+split(std::basic_string_view<C> str, std::basic_string_view<C> sep) {
+  return SplitResult<C>(str, sep);
 }
 
 /**
  * Converts a UTF-8 string to upper case, handling Unicode characters correctly.
  *
- * @param s the string to convert
+ * @param str the string to convert
  * @return a new string
  */
-[[nodiscard]] std::string upper(std::string_view s);
+[[nodiscard]] std::string upper(std::string_view str);
 
 /**
  * Converts a UTF-32 string to upper case, handling Unicode characters correctly.
  *
- * @param s the string to convert
+ * @param str the string to convert
  * @return a new string
  */
-[[nodiscard]] std::u32string upper(std::u32string_view s);
+[[nodiscard]] std::u32string upper(std::u32string_view str);
 
 /**
  * Converts a UTF-32 string to upper case, handling Unicode characters correctly.
  *
- * @param s the string to convert
+ * @param str the string to convert
  */
-void upperIn(std::u32string& s);
+void upperIn(std::u32string& str);
 
 /**
- * Wraps the string @p s to fit the width specified by @p params.
+ * Wraps the string @p str to fit the width specified by @p params.
  *
  * - Line breaks (`"\n"`, `"\r\n"`) are recognized.
- * - Non-breaking spaces (U+00A0) are recognized.
+ * - No-break spaces (U+00A0) are recognized.
  * - Tabs are replaced by spaces.
  * - Consecutive whitespace is collapsed.
  *
- * @param s the string to wrap
+ * @param str the string to wrap
  * @param leftIndent the left indentation
  * @param width the width to wrap to
- * @return a new string, containing the wrapped lines separated by `'\n'`.
+ * @return a new string, containing the wrapped lines separated by @c '\n'
  */
-std::string wrap(std::string_view s, u64 leftIndent = 0, u64 width = 80);
+std::string wrap(std::string_view str, u64 leftIndent = 0, u64 width = 80);
 
 } // namespace rocket::str
 

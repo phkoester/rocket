@@ -77,10 +77,10 @@ TEST(std, optionalFormat) {
 
 TEST(std, optionalAndVectorInTypeLoopFormat) {
   using type = optional<vector<optional<i32>>>;
-  type v1 = nullopt;
-  EXPECT_EQ(fmt::format("{:}", v1), "<none>");
-  type v2 = vector<optional<i32>> { optional<i32>(1), nullopt, optional<i32>(3) };
-  EXPECT_EQ(fmt::format("{}", v2), "[1, <none>, 3]");
+  type val1 = nullopt;
+  EXPECT_EQ(fmt::format("{:}", val1), "<none>");
+  type val2 = vector<optional<i32>> { optional<i32>(1), nullopt, optional<i32>(3) };
+  EXPECT_EQ(fmt::format("{}", val2), "[1, <none>, 3]");
 }
 
 TEST(std, pairFormat) {
@@ -102,11 +102,11 @@ TEST(std, pathFormat) {
   EXPECT_EQ(fmt::format("{: >10?}", p), "    \"file\"");
   EXPECT_EQ(fmt::format("{: >10?g}", p), "    \"file\"");
 
-  vector<path> v = { path("file1"), path("file2") };
-  EXPECT_EQ(fmt::format("{}", v), "[\"file1\", \"file2\"]");
-  EXPECT_EQ(fmt::format("{::}", v), "[file1, file2]");
-  EXPECT_EQ(fmt::format("{::~>10}", v), "[~~~~~file1, ~~~~~file2]");
-  EXPECT_EQ(fmt::format("{::~>10?}", v), "[~~~\"file1\", ~~~\"file2\"]");
+  vector<path> vec = { path("file1"), path("file2") };
+  EXPECT_EQ(fmt::format("{}", vec), "[\"file1\", \"file2\"]");
+  EXPECT_EQ(fmt::format("{::}", vec), "[file1, file2]");
+  EXPECT_EQ(fmt::format("{::~>10}", vec), "[~~~~~file1, ~~~~~file2]");
+  EXPECT_EQ(fmt::format("{::~>10?}", vec), "[~~~\"file1\", ~~~\"file2\"]");
 }
 
 TEST(std, setFormat) {
@@ -116,8 +116,8 @@ TEST(std, setFormat) {
 }
 
 TEST(std, spanFormat) {
-  auto v = vector<i32> { 1, 2, 3 };
-  EXPECT_EQ(fmt::format("{}", span<i32>(v.begin(), v.end())), "[1, 2, 3]");
+  auto vec = vector<i32> { 1, 2, 3 };
+  EXPECT_EQ(fmt::format("{}", span<i32>(vec.begin(), vec.end())), "[1, 2, 3]");
 }
 
 TEST(std, tupleFormat) {
@@ -176,10 +176,10 @@ TEST(std, vectorFormat) {
 
 TEST(std, vectorAndOptionalInTypeLoopFormat) {
   using type = vector<optional<vector<i32>>>;
-  type v1 = {};
-  EXPECT_EQ(fmt::format("{}", v1), "[]");
-  type v2 = type { vector<i32> { vector<i32> { 1, 2 } } };
-  EXPECT_EQ(fmt::format("{}", v2), "[[1, 2]]");
+  type val1 = {};
+  EXPECT_EQ(fmt::format("{}", val1), "[]");
+  type val2 = type { vector<i32> { vector<i32> { 1, 2 } } };
+  EXPECT_EQ(fmt::format("{}", val2), "[[1, 2]]");
 }
 
 // EOF

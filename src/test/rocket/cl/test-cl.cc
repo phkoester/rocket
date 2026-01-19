@@ -389,10 +389,10 @@ TEST(cl, parseCommand) {
   {
     nio::StringSink buf;
     parseCommand({ "--help" }, buf, buf);
-    string s = buf.str();
-    str::replaceIn<char>(s, "\n", "~");
+    string str = buf.str();
+    str::replaceIn<char>(str, "\n", "~");
 
-    EXPECT_THAT(s, matchesRegex(
+    EXPECT_THAT(str, matchesRegex(
         "Usage: test-rocket-cl \\[OPTION\\]\\.\\.\\. list \\[OPTION\\]\\.\\.\\. FILE\\.\\.\\.~"
         "  or   test-rocket-cl \\[OPTION\\]\\.\\.\\. show \\[OPTION\\]\\.\\.\\. \\[ARG\\]\\.\\.\\.~"
         "~"

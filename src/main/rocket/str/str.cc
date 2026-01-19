@@ -15,53 +15,53 @@ namespace rocket::str {
 // Functions ------------------------------------------------------------------------------------------------
 
 string
-capitalize(string_view s) {
-  if (s.empty()) {
+capitalize(string_view str) {
+  if (str.empty()) {
     return string();
   }
 
   u64 pos = 0;
-  auto cp = nextCodePoint(s, pos);
+  auto cp = nextCodePoint(str, pos);
   string ret = static_cast<string>(cp.upper());
-  ret.append(s.substr(pos));
+  ret.append(str.substr(pos));
   return ret;
 }
 
 u32string
-capitalize(u32string_view s) {
-  if (s.empty())
+capitalize(u32string_view str) {
+  if (str.empty())
     return u32string();
-  u32string ret(s);
-  ret[0] = CodePoint(s[0]).upper();
+  u32string ret(str);
+  ret[0] = CodePoint(str[0]).upper();
   return ret;
 }
 
 string
-lower(string_view s) {
-  u32string localS = utf8To32(s);
+lower(string_view str) {
+  u32string localS = utf8To32(str);
   lowerIn(localS);
   return utf32To8(localS);
 }
 
 u32string
-lower(u32string_view s) {
-  u32string ret(s);
+lower(u32string_view str) {
+  u32string ret(str);
   lowerIn(ret);
   return ret;
 }
 
 void
-lowerIn(u32string& s) {
-  transform(s.begin(), s.end(), s.begin(), [](char32 c) { return CodePoint(c).lower(); });
+lowerIn(u32string& str) {
+  transform(str.begin(), str.end(), str.begin(), [](char32 c) { return CodePoint(c).lower(); });
 }
 
 vector<vector<string>>
-paragraphs(string_view s) {
+paragraphs(string_view str) {
   vector<vector<string>> pars; // The paragraphs we collect
   vector<string> par; // The current paragraph
   string word; // The current word
 
-  auto iter = Iterator(IteratorType::Character, s);
+  auto iter = Iterator(IteratorType::Character, str);
   while (true) {
     // Get next character from iterator, if any
     auto seg = iter.nextSegment();
@@ -112,31 +112,31 @@ paragraphs(string_view s) {
 }
 
 string
-upper(string_view s) {
-  u32string localS = utf8To32(s);
+upper(string_view str) {
+  u32string localS = utf8To32(str);
   upperIn(localS);
   return utf32To8(localS);
 }
 
 u32string
-upper(u32string_view s) {
-  u32string ret(s);
+upper(u32string_view str) {
+  u32string ret(str);
   upperIn(ret);
   return ret;
 }
 
 void
-upperIn(u32string& s) {
-  transform(s.begin(), s.end(), s.begin(), [](char32 c) { return CodePoint(c).upper(); });
+upperIn(u32string& str) {
+  transform(str.begin(), str.end(), str.begin(), [](char32 c) { return CodePoint(c).upper(); });
 }
 
 string
-wrap(string_view s, u64 leftIndent, u64 width) {
+wrap(string_view str, u64 leftIndent, u64 width) {
   width -= leftIndent;
 
   // Collect paragraphs, consisting of words
 
-  vector<vector<string>> pars = paragraphs(s);
+  vector<vector<string>> pars = paragraphs(str);
 
   // Turn paragraphs into lines
 

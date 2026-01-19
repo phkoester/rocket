@@ -13,9 +13,9 @@
 
 namespace rocket::unicode {
 
-std::u32string utf8To32(std::string_view s);
+std::u32string utf8To32(std::string_view str);
 
-std::string utf32To8(std::u32string_view s);
+std::string utf32To8(std::u32string_view str);
 
 // `ConvertTo` ----------------------------------------------------------------------------------------------
 
@@ -30,18 +30,18 @@ struct ConvertTo<char> {
   /**
    * Applies this converter to a string.
    *
-   * @param s the string to convert
+   * @param str the string to convert
    * @return the converted string
    */
-  inline std::string_view apply(std::string_view s) const { return s; }
+  inline std::string_view apply(std::string_view str) const { return str; }
 
   /**
    * Applies this converter to a string.
    *
-   * @param s the string to convert
+   * @param str the string to convert
    * @return the converted string
    */
-  inline std::string apply(std::u32string_view s) const { return utf32To8(s); }
+  inline std::string apply(std::u32string_view str) const { return utf32To8(str); }
 };
 
 /**
@@ -52,18 +52,18 @@ struct ConvertTo<char32> {
   /**
    * Applies this converter to a string.
    *
-   * @param s the string to convert
+   * @param str the string to convert
    * @return the converted string
    */
-  inline std::u32string_view apply(std::u32string_view s) const { return s; }
+  inline std::u32string_view apply(std::u32string_view str) const { return str; }
 
   /**
    * Applies this converter to a string.
    *
-   * @param s the string to convert
+   * @param str the string to convert
    * @return the converted string
    */
-  inline std::u32string apply(std::string_view s) const { return utf8To32(s); }
+  inline std::u32string apply(std::string_view str) const { return utf8To32(str); }
 };
 
 } // namespace rocket::unicode

@@ -72,8 +72,8 @@ get(const std::string& name) {
   const char* p = getenv(name.c_str());
   if (not p)
     return std::nullopt;
-  std::string_view s(p);
-  return str::tryToType<T>(s);
+  std::string_view str(p);
+  return str::tryToType<T>(str);
 }
 
 /**

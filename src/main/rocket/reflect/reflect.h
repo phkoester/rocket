@@ -105,13 +105,13 @@
     struct fmt::formatter<ns::cls, C> { \
       template<typename FormatContext> \
       constexpr FormatContext::iterator \
-      format(const ns::cls& v, FormatContext& ctx) const{ \
+      format(const ns::cls& val, FormatContext& ctx) const{ \
         auto out = ctx.out(); \
         if (withType_) { \
-          auto type = ::rocket::Type::of(v); \
+          auto type = ::rocket::Type::of(val); \
           out = ::fmt::detail::write<C>(out, ::rocket::unicode::ConvertTo<C>().apply(type.name())); \
         } \
-        out = ::rocket::reflect::internal::format<ns::cls, C>(v, ctx, debug_, ns::cls::_name()); \
+        out = ::rocket::reflect::internal::format<ns::cls, C>(val, ctx, debug_, ns::cls::_name()); \
         return out; \
       } \
       \
@@ -130,8 +130,8 @@
       } \
       \
       constexpr void \
-      set_debug_format(bool v = true) { \
-        debug_ = v; \
+      set_debug_format(bool val = true) { \
+        debug_ = val; \
       } \
       \
     private: \
@@ -173,7 +173,7 @@
 #define ROCKET_REFLECT_MEMBERS_DECLARE_STD_HASH__(ns, cls) \
     template<> \
     struct std::hash<ns::cls> { \
-      u64 operator()(const ns::cls& v) const; \
+      u64 operator()(const ns::cls& val) const; \
     }
 
 #define ROCKET_REFLECT_MEMBERS_DECLARE__(ns, cls, name) \
@@ -189,8 +189,8 @@
 
 #define ROCKET_REFLECT_MEMBERS_DEFINE_STD_HASH__(ns, cls, name) \
     u64 \
-    std::hash<ns::cls>::operator()(const ns::cls& v) const { \
-      return ::rocket::reflect::hash(v, ns::cls::name()); \
+    std::hash<ns::cls>::operator()(const ns::cls& val) const { \
+      return ::rocket::reflect::hash(val, ns::cls::name()); \
     }
 
 #define ROCKET_REFLECT_MEMBERS_DEFINE__(ns, cls, name) \
@@ -230,18 +230,18 @@ struct MemberRef {
   /**
    * Returns the value of the member.
    *
-   * @param v the instance
+   * @param val the instance
    * @return the value of the member
    */
-  constexpr T& get(C& v) const { return v.*p_; }
+  constexpr T& get(C& val) const { return val.*p_; }
 
   /**
    * Returns the value of the member.
    *
-   * @param v the instance
+   * @param val the instance
    * @return the value of the member
    */
-  constexpr const T& get(const C& v) const { return v.*p_; }
+  constexpr const T& get(const C& val) const { return val.*p_; }
 
   /**
    * Returns the name of the member.
@@ -350,7 +350,7 @@ namespace internal {
 
 template<typename T, typename C, u64 Index, typename FormatContext, typename Tuple>
 constexpr FormatContext::iterator
-formatElemImpl(const T& v, FormatContext& ctx, bool debug, const Tuple& refs) {
+formatElemImpl(const T& val, FormatContext& ctx, bool debug, const Tuple& refs) {
   using namespace fmt;
 
   // Write separator
@@ -369,7 +369,7 @@ formatElemImpl(const T& v, FormatContext& ctx, bool debug, const Tuple& refs) {
   out = detail::write<C>(out, static_cast<C>('='));
 
   // Write value
-  const auto& value = ref.get(v);
+  const auto& value = ref.get(val);
   using ValueType = decltype(value);
   fmt::formatter<rocket::PurgeType<ValueType>, C> underlying;
   detail::maybe_set_debug_format(underlying, debug);
@@ -380,29 +380,29 @@ formatElemImpl(const T& v, FormatContext& ctx, bool debug, const Tuple& refs) {
 
 template<typename T, typename C, typename FormatContext, typename Tuple, u64... Index>
 constexpr FormatContext::iterator
-formatImpl(const T& v, FormatContext& ctx, bool debug, const Tuple& refs, std::index_sequence<Index...>) {
+formatImpl(const T& val, FormatContext& ctx, bool debug, const Tuple& refs, std::index_sequence<Index...>) {
   using namespace fmt;
 
   // Write outer parentheses, inner members
   auto out = ctx.out();
   out = detail::write<C>(out, static_cast<C>('('));
-  (..., (out = formatElemImpl<T, C, Index>(v, ctx, debug, refs)));
+  (..., (out = formatElemImpl<T, C, Index>(val, ctx, debug, refs)));
   return detail::write<C>(out, static_cast<C>(')'));
 }
 
 template<typename T, typename C, typename FormatContext, typename... Ref> requires
     (... && IsMemberRef<Ref>::value)
 constexpr FormatContext::iterator
-format(const T& v, FormatContext& ctx, bool debug, const std::tuple<Ref...>& refs) {
-  return internal::formatImpl<T, C>(v, ctx, debug, refs, std::make_index_sequence<sizeof...(Ref)>());
+format(const T& val, FormatContext& ctx, bool debug, const std::tuple<Ref...>& refs) {
+  return internal::formatImpl<T, C>(val, ctx, debug, refs, std::make_index_sequence<sizeof...(Ref)>());
 }
 
 template<u64 Index, typename T, typename Tuple>
 constexpr auto&
-refGet(T& v, const Tuple& refs) noexcept {
+refGet(T& val, const Tuple& refs) noexcept {
   auto& ref = std::get<Index>(refs);
   static_assert(IsMemberRef<decltype(ref)>::value);
-  return ref.get(v);
+  return ref.get(val);
 }
 
 template<typename T, typename Tuple, u64... Index>
@@ -459,16 +459,16 @@ gtImpl(
 
 template<typename T, typename... Ref>
 u64
-hashImpl(const T& v, const std::tuple<Ref...>& refs) {
+hashImpl(const T& val, const std::tuple<Ref...>& refs) {
   using TupleType = PurgeType<decltype(refs)>;
   u64 ret = std::tuple_size<TupleType>::value;
-  apply([&](const auto&... arg) { (combineHash(ret, arg.get(v)), ...); }, refs);
+  apply([&](const auto&... arg) { (combineHash(ret, arg.get(val)), ...); }, refs);
   return ret;
 }
 
 template<typename T, u64 Index, typename Tuple>
 u64
-writeElemImpl(nio::Sink& out, const T& v, const Tuple& refs) {
+writeElemImpl(nio::Sink& out, const T& val, const Tuple& refs) {
   // Write separator
   u64 ret = 0;
   if constexpr (Index > 0) {
@@ -484,16 +484,16 @@ writeElemImpl(nio::Sink& out, const T& v, const Tuple& refs) {
   ret += out.write('=');
 
   // Write value
-  const auto& value = ref.get(v);
+  const auto& value = ref.get(val);
   ret += out.print("{}", value);
   return ret;
 }
 
 template<typename T, typename Tuple, u64... Index>
 u64
-writeImpl(nio::Sink& out, const T& v, const Tuple& refs, std::index_sequence<Index...> indices) {
+writeImpl(nio::Sink& out, const T& val, const Tuple& refs, std::index_sequence<Index...> indices) {
   u64 ret = out.write('(');
-  (..., (ret += writeElemImpl<T, Index>(out, v, refs)));
+  (..., (ret += writeElemImpl<T, Index>(out, val, refs)));
   ret += out.write(')');
   return ret;
 }
@@ -561,14 +561,14 @@ gt(const T& lhs, const T& rhs, const std::tuple<Ref...>& refs) {
 /**
  * `hash` function for member references.
  *
- * @param v the instance
+ * @param val the instance
  * @param refs the references
  * @return a hash value
  */
 template<typename T, typename... Ref> requires (... && IsMemberRef<Ref>::value)
 inline u64
-hash(const T& v, const std::tuple<Ref...>& refs) {
-  return internal::hashImpl(v, refs);
+hash(const T& val, const std::tuple<Ref...>& refs) {
+  return internal::hashImpl(val, refs);
 }
 
 /**
@@ -577,8 +577,8 @@ hash(const T& v, const std::tuple<Ref...>& refs) {
  */
 template<typename T, typename... Ref> requires (... && IsMemberRef<Ref>::value)
 inline u64
-write(nio::Sink& out, const T& v, const std::tuple<Ref...>& refs) {
-  return internal::writeImpl(out, v, refs, std::make_index_sequence<sizeof...(Ref)>());
+write(nio::Sink& out, const T& val, const std::tuple<Ref...>& refs) {
+  return internal::writeImpl(out, val, refs, std::make_index_sequence<sizeof...(Ref)>());
 }
 
 } // namespace rocket::reflect
@@ -596,12 +596,12 @@ struct fmt::formatter<rocket::reflect::VarRef<T>, C> {
 
   template<typename FormatContext>
   constexpr FormatContext::iterator
-  format(const rocket::reflect::VarRef<T>& v, FormatContext& ctx) const{
+  format(const rocket::reflect::VarRef<T>& val, FormatContext& ctx) const{
     auto out = ctx.out();
-    out = detail::write<C>(out, rocket::unicode::ConvertTo<C>().apply(v.name()));
+    out = detail::write<C>(out, rocket::unicode::ConvertTo<C>().apply(val.name()));
     out = detail::write<C>(out, static_cast<C>('='));
     ctx.advance_to(out);
-    out = underlying_.format(v.get(), ctx);
+    out = underlying_.format(val.get(), ctx);
     return out;
   }
 
@@ -611,8 +611,8 @@ struct fmt::formatter<rocket::reflect::VarRef<T>, C> {
   }
 
   constexpr void
-  set_debug_format(bool v = true) {
-    detail::maybe_set_debug_format(underlying_, v);
+  set_debug_format(bool val = true) {
+    detail::maybe_set_debug_format(underlying_, val);
   }
 
   /// @endcond
@@ -631,7 +631,7 @@ template<typename T>
 struct hash<rocket::reflect::VarRef<T>> {
   /// @cond undocumented
 
-  u64 operator()(const rocket::reflect::VarRef<T>& v) const { return v.hash(); }
+  u64 operator()(const rocket::reflect::VarRef<T>& val) const { return val.hash(); }
 
   /// @endcond
 };

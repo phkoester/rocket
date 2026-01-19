@@ -39,20 +39,21 @@ struct Lazy {
    */
   inline const T&
   get() const {
-    if (not v_)
-      v_ = fn_();
-    return *v_;
+    if (not val_) {
+      val_ = fn_();
+    }
+    return *val_;
   }
 
   /**
    * Removes the evaluated value, if any, so that the next call of #get results in a fresh evaluation.
    */
-  inline void reset() { v_ = std::nullopt; }
+  inline void reset() { val_ = std::nullopt; }
 
 private:
 
   const std::function<T()> fn_;
-  mutable std::optional<T> v_;
+  mutable std::optional<T> val_;
 };
 
 // `ThreadSafeLazy` -----------------------------------------------------------------------------------------
@@ -81,9 +82,10 @@ struct ThreadSafeLazy {
   const T&
   get() const {
     ROCKET_MUTEX_LOCK(mutex_);
-    if (not v_)
-      v_ = fn_();
-    return *v_;
+    if (not val_) {
+      val_ = fn_();
+    }
+    return *val_;
   }
 
   /**
@@ -92,14 +94,14 @@ struct ThreadSafeLazy {
   void
   reset() {
     ROCKET_MUTEX_LOCK(mutex_);
-    v_ = std::nullopt;
+    val_ = std::nullopt;
   }
 
 private:
 
   const std::function<T()> fn_;
-  mutable std::optional<T> v_;
-  mutable std::mutex mutex_; // Guards `v_`
+  mutable std::optional<T> val_;
+  mutable std::mutex mutex_; // Guards `val_`
 };
 
 } // namespace rocket

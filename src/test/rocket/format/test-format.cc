@@ -54,10 +54,10 @@ TEST(format, FormatCharWithTagged) {
 }
 
 TEST(format, FormatChar32) {
-  auto s = fmt::format(U"a {} d", Format<char32>([&] {
+  auto str = fmt::format(U"a {} d", Format<char32>([&] {
     return Format<char32>::params(fmt::format(U"{} {}", U'b', U'c'));
   }));
-  EXPECT_EQ(s, U"a b c d");
+  EXPECT_EQ(str, U"a b c d");
 }
 
 // EOF

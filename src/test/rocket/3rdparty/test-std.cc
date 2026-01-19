@@ -20,15 +20,15 @@ TEST(std, chronoFormat) {
     chrono::time_point tp = time_point_cast<chrono::microseconds>(chrono::system_clock::now());
     // const auto zt { chrono::zoned_time{ chrono::current_zone(), tp } };
     chrono::zoned_time zt { chrono::current_zone(), tp };
-    string s = std::format("{:%FT%T%Ez}", zt);
-    EXPECT_THAT(s, matchesRegex("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{6}[+-]\\d{2}:\\d{2}"));
+    string str = std::format("{:%FT%T%Ez}", zt);
+    EXPECT_THAT(str, matchesRegex("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{6}[+-]\\d{2}:\\d{2}"));
   }
 
   {
     // UTC time in ISO-8601, with microseconds
     chrono::time_point tp = time_point_cast<chrono::microseconds>(chrono::utc_clock::now());
-    string s = std::format("{:%FT%TZ}", tp);
-    EXPECT_THAT(s, matchesRegex("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{6}Z"));
+    string str = std::format("{:%FT%TZ}", tp);
+    EXPECT_THAT(str, matchesRegex("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{6}Z"));
   }
 }
 
@@ -77,9 +77,9 @@ TEST(std, istreamBool) {
 
   {
     auto is = io::is("tru");
-    type v = false;
-    is >> boolalpha >> v;
-    EXPECT_EQ(v, false);
+    type val = false;
+    is >> boolalpha >> val;
+    EXPECT_EQ(val, false);
     // After reading an incomplete 'bool', there is a failure and an EOF
     EXPECT_ISTREAM(is, true, true, 3);
     EXPECT_EQ(is.tellg(), -1);
@@ -87,9 +87,9 @@ TEST(std, istreamBool) {
 
   {
     auto is = io::is("true");
-    type v = false;
-    is >> boolalpha >> v;
-    EXPECT_EQ(v, true);
+    type val = false;
+    is >> boolalpha >> val;
+    EXPECT_EQ(val, true);
     // After reading a complete 'bool', there is no failure and no EOF
     EXPECT_ISTREAM(is, false, false, 4);
     EXPECT_EQ(is.tellg(), 4);
@@ -108,34 +108,34 @@ TEST(std, istreamI32) {
 
   {
     auto is = io::is();
-    type v = 0;
-    is >> v;
-    EXPECT_EQ(v, 0);
+    type val = 0;
+    is >> val;
+    EXPECT_EQ(val, 0);
     EXPECT_ISTREAM(is, true, true, 0);
   }
 
   {
     auto is = io::is("a");
-    type v = 0;
-    is >> v;
-    EXPECT_EQ(v, 0);
+    type val = 0;
+    is >> val;
+    EXPECT_EQ(val, 0);
     EXPECT_ISTREAM(is, true, false, 0);
   }
 
   {
     auto is = io::is("-");
-    type v = 0;
-    is >> v;
-    EXPECT_EQ(v, 0);
+    type val = 0;
+    is >> val;
+    EXPECT_EQ(val, 0);
     // After reading an incomplete 'i32', there is a failure and an EOF
     EXPECT_ISTREAM(is, true, true, 1);
   }
 
   {
     auto is = io::is("-12");
-    type v = 0;
-    is >> v;
-    EXPECT_EQ(v, -12);
+    type val = 0;
+    is >> val;
+    EXPECT_EQ(val, -12);
     // After reading a complete 'i32', there is no failure but an EOF
     EXPECT_ISTREAM(is, false, true, 3);
     EXPECT_EQ(is.tellg(), -1);
@@ -145,10 +145,10 @@ TEST(std, istreamI32) {
     nio::StringSink buf;
     buf.print("{}", numeric_limits<i32>::max() + 1L);
     auto is = io::is(buf.str());
-    type v = 0;
-    is >> v;
+    type val = 0;
+    is >> val;
     // If the value is greater than the maximum value, then the result is capped!
-    EXPECT_EQ(v, numeric_limits<i32>::max());
+    EXPECT_EQ(val, numeric_limits<i32>::max());
     EXPECT_ISTREAM(is, true, true, 10);
     EXPECT_EQ(is.tellg(), -1);
   }
@@ -164,9 +164,9 @@ TEST(std, istreamF64) {
   {
     // Reading symbols doesn't work
     auto is = io::is("-inf");
-    type v = 0;
-    is >> v;
-    EXPECT_EQ(v, 0);
+    type val = 0;
+    is >> val;
+    EXPECT_EQ(val, 0);
   }
 }
 
@@ -175,40 +175,40 @@ TEST(std, istreamF128) {
 
   {
     auto is = io::is("1.2");
-    type v;
-    is >> v;
-    EXPECT_EQ(v, 1.2L);
+    type val;
+    is >> val;
+    EXPECT_EQ(val, 1.2L);
     EXPECT_ISTREAM(is, false, true, 3);
   }
 }
 
 TEST(std, regexGreedy) {
-  string s = "1: 2: 3: 4";
+  string str = "1: 2: 3: 4";
   regex re(".*: ");
   vector<string> matches;
-  for (smatch match; regex_search(s, match, re);) {
+  for (smatch match; regex_search(str, match, re);) {
     matches.push_back(match.str());
-    s = match.suffix();
+    str = match.suffix();
   }
   EXPECT_EQ(matches, vector<string> { "1: 2: 3: " });
 }
 
 TEST(std, regexNongreedy) {
-  string s = "1: 2: 3: 4";
+  string str = "1: 2: 3: 4";
   regex re(".*?: ");
   vector<string> matches;
-  for (smatch match; regex_search(s, match, re);) {
+  for (smatch match; regex_search(str, match, re);) {
     matches.push_back(match.str());
-    s = match.suffix();
+    str = match.suffix();
   }
   EXPECT_EQ(matches, (vector<string> { "1: ", "2: ", "3: " }));
 }
 
 TEST(std, regexLineFeed) {
-  string s = "aaa\nbbb";
-  EXPECT_TRUE(regex_match(s, regex("a+\nb+")));
-  EXPECT_FALSE(regex_match(s, regex("a.*b"))); // '.' does not match line feed
-  EXPECT_TRUE(regex_match(s, regex("a[^]*b"))); // '[^]' (not nothing) matches line feed
+  string str = "aaa\nbbb";
+  EXPECT_TRUE(regex_match(str, regex("a+\nb+")));
+  EXPECT_FALSE(regex_match(str, regex("a.*b"))); // '.' does not match line feed
+  EXPECT_TRUE(regex_match(str, regex("a[^]*b"))); // '[^]' (not nothing) matches line feed
 }
 
 // EOF

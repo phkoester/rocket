@@ -63,7 +63,7 @@ struct Iterator {
    *
    * @return the first position
    */
-  u64 first() { auto v = iter_->first(); return usToInput_.left.at(v); }
+  u64 first() { auto val = iter_->first(); return usToInput_.left.at(val); }
 
   /**
    * Returns the input string.
@@ -77,7 +77,7 @@ struct Iterator {
    *
    * @return the last position
    */
-  u64 last() { auto v = iter_->last(); return usToInput_.left.at(v); }
+  u64 last() { auto val = iter_->last(); return usToInput_.left.at(val); }
 
   /**
    * Advances the iterator to the next position in the input string.

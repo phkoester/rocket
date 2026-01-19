@@ -63,10 +63,10 @@ struct OptionGroup {
  */
 struct Option {
   /**
-   * Type for a function that is called to apply an option value. For `bool` values, @p v may be null. The
+   * Type for a function that is called to apply an option value. For `bool` values, @p val may be null. The
    * #of convenience function takes care of this all.
    */
-  using Apply = std::function<void(std::optional<std::string_view> v)>;
+  using Apply = std::function<void(std::optional<std::string_view> val)>;
 
   /**
    * Makes a new option and binds it to a destination reference.
@@ -97,7 +97,7 @@ struct Option {
     return {
       group,
       name,
-      shortName.transform([](auto v) { return unicode::Character<char>(v); }),
+      shortName.transform([](auto val) { return unicode::Character<char>(val); }),
       std::is_same_v<T, bool> ? false : true, // `takesValue` is `false` for `bool`, otherwise it is `true`
       format,
       help,

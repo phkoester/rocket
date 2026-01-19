@@ -109,29 +109,29 @@ add(Lhs lhs, Rhs rhs) {
 }
 
 /**
- * Checks if @p v is a quiet not-a-number.
+ * Checks if @p val is a quiet not-a-number.
  *
  * @tparam F the floating-point type
- * @param v a floating-point value
- * @return whether @p v is a quiet not-a-number
+ * @param val a floating-point value
+ * @return whether @p val is a quiet not-a-number
  */
 template<typename F> requires IsFloat<F>
 constexpr bool
-quietNan(F v) {
-  return std::isnan(v) && not issignaling(v);
+quietNan(F val) {
+  return std::isnan(val) && not issignaling(val);
 }
 
 /**
- * Checks if @p v is a signaling not-a-number.
+ * Checks if @p val is a signaling not-a-number.
  *
  * @tparam F the floating-point type
- * @param v a floating-point value
- * @return whether @p v is a signaling not-a-number
+ * @param val a floating-point value
+ * @return whether @p val is a signaling not-a-number
  */
 template<typename F> requires IsFloat<F>
 constexpr bool
-signalingNan(F v) {
-  return std::isnan(v) && issignaling(v);
+signalingNan(F val) {
+  return std::isnan(val) && issignaling(val);
 }
 
 /**
@@ -175,15 +175,15 @@ sub(Lhs lhs, Rhs rhs) {
  *
  * @tparam Result the result type
  * @tparam T the value type
- * @param v the value to convert
+ * @param val the value to convert
  * @return the result
  * @throws #rocket::Overflow if the result is out of range
  */
 template<typename Result, typename T>
 constexpr Result
-to(T v) {
+to(T val) {
   using Control = internal::Control<typename LargestType<Result, T>::Type>::Type;
-  Control controlRet = static_cast<Control>(v);
+  Control controlRet = static_cast<Control>(val);
 
   if constexpr (sizeof(Control) > sizeof(Result)) {
     constexpr Control min = std::numeric_limits<Result>::min();
@@ -193,8 +193,8 @@ to(T v) {
     }
   }
 
-  if (v < 0 && std::is_unsigned_v<Result>) {
-    throw Overflow(Type::of<Result>(), fmt::format("{}", v));
+  if (val < 0 && std::is_unsigned_v<Result>) {
+    throw Overflow(Type::of<Result>(), fmt::format("{}", val));
   }
   return static_cast<Result>(controlRet);
 }
@@ -274,14 +274,14 @@ trySub(Lhs lhs, Rhs rhs) {
  *
  * @tparam Result the result type
  * @tparam T the value type
- * @param v the value to convert
+ * @param val the value to convert
  * @return the result, or null if the result is out of range
  */
 template<typename Result, typename T>
 constexpr std::optional<Result>
-tryTo(T v) {
+tryTo(T val) {
   using Control = internal::Control<typename LargestType<Result, T>::Type>::Type;
-  Control controlRet = static_cast<Control>(v);
+  Control controlRet = static_cast<Control>(val);
 
   if constexpr (sizeof(Control) > sizeof(Result)) {
     constexpr Control min = std::numeric_limits<Result>::min();
@@ -291,7 +291,7 @@ tryTo(T v) {
     }
   }
 
-  if (v < 0 && std::is_unsigned_v<Result>) {
+  if (val < 0 && std::is_unsigned_v<Result>) {
     return std::nullopt;
   }
   return static_cast<Result>(controlRet);

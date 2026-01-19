@@ -50,8 +50,8 @@ struct MatchesRegexMatcher {
 
 #if GTEST_INTERNAL_HAS_STRING_VIEW
   bool
-  MatchAndExplain(const testing::internal::StringView& s, testing::MatchResultListener* listener) const {
-    return MatchAndExplain(std::string(s), listener);
+  MatchAndExplain(const testing::internal::StringView& str, testing::MatchResultListener* listener) const {
+    return MatchAndExplain(std::string(str), listener);
   }
 #endif // GTEST_INTERNAL_HAS_STRING_VIEW
 
@@ -67,8 +67,8 @@ struct MatchesRegexMatcher {
    */
   template<typename C>
   bool
-  MatchAndExplain(C* s, testing::MatchResultListener* listener) const {
-    return s != nullptr && MatchAndExplain(std::string(s), listener);
+  MatchAndExplain(C* str, testing::MatchResultListener* listener) const {
+    return str != nullptr && MatchAndExplain(std::string(str), listener);
   }
 
   /**
@@ -81,9 +81,9 @@ struct MatchesRegexMatcher {
    */
   template<class MatcheeStringType>
   bool
-  MatchAndExplain(const MatcheeStringType& s, testing::MatchResultListener*) const {
-    const std::string s2(s);
-    return fullMatch_ ? std::regex_match(s2, regex_->regex) : std::regex_search(s2, regex_->regex);
+  MatchAndExplain(const MatcheeStringType& str, testing::MatchResultListener*) const {
+    const std::string str2(str);
+    return fullMatch_ ? std::regex_match(str2, regex_->regex) : std::regex_search(str2, regex_->regex);
   }
 
 private:

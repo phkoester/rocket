@@ -148,19 +148,19 @@ void myFunc(i32 n);
 /**
  * #myFuncTemplate(T) with one argument.
  *
- * @param v text
+ * @param val text
  */
 template<typename T>
-void myFuncTemplate(T v);
+void myFuncTemplate(T val);
 
 /**
  * #myFuncTemplate(T, T) with two arguments.
  *
- * @param v text
- * @param w text
+ * @param val text
+ * @param wal text
  */
 template<typename T>
-void myFuncTemplate(T v, T w);
+void myFuncTemplate(T val, T wal);
 
 // Namespace `foo::bar` -------------------------------------------------------------------------------------
 
@@ -251,19 +251,19 @@ void fooMyFunc(i32 n);
 /**
  * #foo::bar::fooMyFuncTemplate(T) with one argument.
  *
- * @param v text
+ * @param val text
  */
 template<typename T>
-void fooMyFuncTemplate(T v);
+void fooMyFuncTemplate(T val);
 
 /**
  * #foo::bar::fooMyFuncTemplate(T, T) with two arguments.
  *
- * @param v text
- * @param w text
+ * @param val text
+ * @param wal text
  */
 template<typename T>
-void fooMyFuncTemplate(T v, T w);
+void fooMyFuncTemplate(T val, T wal);
 
 } // namespace foo::bar
 
