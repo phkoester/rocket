@@ -274,7 +274,7 @@ NullSink::terminal(i32*) {
 }
 
 u64
-NullSink::write(string_view in) {
+NullSink::write(string_view) {
   checkOpen();
   return 0;
 }
@@ -806,13 +806,13 @@ NullSource::close()
 }
 
 u64
-NullSource::read(span<char> out) {
+NullSource::read(span<char>) {
   checkOpen();
   return 0;
 }
 
 i32
-NullSource::seek(i64 offset, SeekMode mode) {
+NullSource::seek(i64, SeekMode) {
   checkOpen();
   return EINVAL;
 }

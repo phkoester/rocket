@@ -22,22 +22,22 @@ namespace rocket::system::terminal {
 
 string
 Ansi::clear() const {
-  return active_ ? "\ec" : string();
+  return active_ ? "\x1b" "c" : string();
 }
 
 string
 Ansi::down(i32 n) const {
-  return active_ ? fmt::format("\e[{}B", n) : string();
+  return active_ ? fmt::format("\x1b[{}B", n) : string();
 }
 
 string
 Ansi::left(i32 n) const {
-  return active_ ? fmt::format("\e[{}D", n) : string();
+  return active_ ? fmt::format("\x1b[{}D", n) : string();
 }
 
 string
 Ansi::move(i32 column, i32 line) const {
-  return active_ ? fmt::format("\e[{};{}H", line, column) : string();
+  return active_ ? fmt::format("\x1b[{};{}H", line, column) : string();
 }
 
 string
@@ -80,12 +80,12 @@ Ansi::request(nio::Sink& out, string_view sequence) const {
 
 string
 Ansi::right(i32 n) const {
-  return active_ ? fmt::format("\e[{}C", n) : string();
+  return active_ ? fmt::format("\x1b[{}C", n) : string();
 }
 
 string
 Ansi::up(i32 n) const {
-  return active_ ? fmt::format("\e[{}A", n) : string();
+  return active_ ? fmt::format("\x1b[{}A", n) : string();
 }
 
 // Functions ------------------------------------------------------------------------------------------------
@@ -100,11 +100,11 @@ position(nio::Sink& out) {
   // Send the ANSI code requesting cursor position
 
   Ansi ansi(true); // We know the sink is connected to a terminal
-  string response = ansi.request(out, "\e[6n");
+  string response = ansi.request(out, "\x1b[6n");
 
   // Scan the response
 
-  auto result = scn::scan<u64, u64>(response, "\e[{};{}R");
+  auto result = scn::scan<u64, u64>(response, "\x1b[{};{}R");
   ROCKET_EXPECT(result, "Cannot scan response {:?}", response);
   auto[y, x] = result->values();
 

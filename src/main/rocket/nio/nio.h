@@ -275,7 +275,7 @@ protected:
 
   u64 write(std::string_view in) override;
 
-ROCKET_TESTING_PRIVATE:
+ROCKET_TEST_PRIVATE:
 
   Sink& underlying_; ///< The underlying sink.
   u64 size_; ///< The size of the buffer.
@@ -341,7 +341,7 @@ struct FileSink : Sink {
 
   u64 write(std::string_view in) override;
 
-ROCKET_TESTING_PRIVATE:
+ROCKET_TEST_PRIVATE:
 
   FILE* file_; ///< The `FILE` pointer.
   Params params_; ///< The parameters.
@@ -583,7 +583,7 @@ struct BufferedSource : Source {
 
   bool terminal(i32* fd = nullptr) override;
 
-ROCKET_TESTING_PRIVATE:
+ROCKET_TEST_PRIVATE:
 
   Source& underlying_; ///< The underlying source.
   u64 size_; ///< The size of the buffer.
@@ -651,7 +651,7 @@ struct FileSource : Source {
 
   bool terminal(i32* fd = nullptr) override;
 
-ROCKET_TESTING_PRIVATE:
+ROCKET_TEST_PRIVATE:
 
   FILE* file_; ///< The `FILE` pointer.
   Params params_; ///< The parameters.

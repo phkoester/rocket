@@ -47,7 +47,7 @@ callExitFns(bool onTerminate) {
   }
 }
 
-#ifdef GAIA_TARGET_OS_LINUX
+#ifdef ROCKET_OS_LINUX
 
 const string&
 invocationName() {

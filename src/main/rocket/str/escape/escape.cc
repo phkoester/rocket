@@ -48,7 +48,7 @@ escapeCStringCodePoint(unicode::CodePoint cp, u64& column, const CStringParams& 
     case '\r': // Carriage return = 13
       ret = string { '\\', 'r' };
       break;
-    case '\e': // Escape = 27
+    case '\x1b': // Escape = 27
       ret = string { '\\', 'e' };
       break;
     case '"': // Quotation mark = 34
@@ -368,7 +368,7 @@ unescapeCString(string_view input, const CStringParams& params, Result* result) 
           ret.push_back('\r');
           break;
         case 'e': // Escape = 27
-          ret.push_back('\e');
+          ret.push_back('\x1b');
           break;
         case '"' : // Quotation mark = 34
         case '\'': // Apostrophe = 39

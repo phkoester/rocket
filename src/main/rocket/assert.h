@@ -18,6 +18,7 @@
 #include "rocket/rocket.h" // `rocket::nop()`
 #endif
 #include "rocket/format/format.h"
+#include "rocket/str/message/message.h"
 
 #include <boost/preprocessor/stringize.hpp>
 
@@ -101,11 +102,9 @@ terminate(
     std::source_location&& sl,
     fmt::format_string<T...> fmt,
     T&&... args) {
-  process.error(
-      nio::stderr,
-      EXIT_SUCCESS,
-      fmt,
-      std::forward<T>(args)...);
+  std::string msg = fmt::format(fmt, std::forward<T>(args)...);
+  msg = str::message::withSourceLocation(msg, sl);
+  process.error(nio::stderr, EXIT_SUCCESS, "{}", msg);
   std::terminate();
 }
 

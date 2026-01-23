@@ -4,7 +4,7 @@
  * This fixes a linker error related to scnlib.
  */
 
-#include "rocket/scan/impl.h"
+#include "impl.h"
 
 /*
  * The original file is `scnlib/src/scn/impl.cpp`.

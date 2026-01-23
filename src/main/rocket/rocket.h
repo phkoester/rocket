@@ -39,18 +39,16 @@
 #include <cstdint> // `int8_t`, `uint8_t`, ...
 #include <iosfwd>
 
-// Macros ---------------------------------------------------------------------------------------------------
+// Check prerequisites --------------------------------------------------------------------------------------
 
-#ifdef GAIA_CXX_TOOLCHAIN_GNU
-  #define ROCKET_COMPILER_GNU 1
+#if not defined(ROCKET_OS_LINUX) && not defined(ROCKET_OS_WINDOWS)
+  #error Unsupported OS
 #endif
 
-#ifdef GAIA_CXX_TOOLCHAIN_LLVM
-  #define ROCKET_COMPILER_LLVM 1
-#endif
-
-#if not defined(ROCKET_COMPILER_GNU) && not defined(ROCKET_COMPILER_LLVM)
-  #error Unknown compiler
+#if not defined(ROCKET_CXX_COMPILER_GNU) && \
+    not defined(ROCKET_CXX_COMPILER_CLANG) && \
+    not defined(ROCKET_CXX_COMPILER_MSVC)
+  #error Unsupported compiler
 #endif
 
 // Rocket type aliases --------------------------------------------------------------------------------------
@@ -143,11 +141,10 @@ constexpr u64 NPOS = -1;
 /**
  * A NOP function that helps to suppress warnings about unused variables.
  *
- * @tparam T the types of @p args
- * @param args the variables to suprress warnings for
+ * @tparam T... the types of @p args
  */
 template<typename... T>
-constexpr void nop(T&&... args) {}
+constexpr void nop(T&&...) {}
 
 } // namespace rocket
 

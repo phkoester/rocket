@@ -19,8 +19,7 @@
 /// @attention This requires modifying `<fmt/std.h>`!
 #define FMT_STD_NO_VARIANT_FORMATTER
 
-#include <fmt/ranges.h>
-#include <fmt/std.h>
+#include "rocket/3rdparty/fmt/std.h"
 
 #include <optional>
 

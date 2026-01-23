@@ -20,7 +20,7 @@ extern std::recursive_mutex clockMutex;
 
 extern std::chrono::milliseconds clockOffset;
 
-#ifdef ROCKET_TESTING
+#ifdef ROCKET_TEST
 
 /**
  * Sets the clock offset.
