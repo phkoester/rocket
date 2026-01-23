@@ -2,8 +2,6 @@
  * main.cc
  */
 
-#define ROCKET_TESTING
-
 #include "rocket/Process.h"
 #include "rocket/cl/cl.h"
 #include "rocket/log/log.h"
@@ -89,7 +87,7 @@ main(i32 argc, char **argv) {
     ROCKET_LOG(toy);
     ROCKET_LOG_INFO("Hey {}", "there");
     out.println("This is {}", process.name());
-    out.println("{}", generated());
+    // XXX out.println("{}", generated());
     out.println("args: {}", args);
     toy();
   }

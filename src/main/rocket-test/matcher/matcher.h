@@ -12,7 +12,7 @@
 
 #include <regex>
 
-namespace rocket::gtest::matcher {
+namespace rocket::test::matcher {
 
 // Internal -------------------------------------------------------------------------------------------------
 
@@ -281,6 +281,6 @@ throwsInputFailure(u64 position, const str::Ranges& ranges, WhatMatcher&& whatMa
       std::forward<WhatMatcher>(whatMatcher));
 }
 
-} // namespace rocket::gtest::matcher
+} // namespace rocket::test::matcher
 
 // EOF

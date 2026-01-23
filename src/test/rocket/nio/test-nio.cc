@@ -2,7 +2,7 @@
  * test-nio.cc
  */
 
-#include "rocket-gtest/rocket-gtest.h"
+#include "rocket-test/rocket-test.h"
 
 #include "rocket/Exception.h"
 #include "rocket/nio/nio.h"
@@ -199,7 +199,7 @@ TEST(nio, FileSourceDoesNotExist) {
 }
 
 TEST(nio, FileSourceRead) {
-  auto tmp = ROCKET_GTEST_TEMP_PATH();
+  auto tmp = ROCKET_TEST_TEMP_PATH();
 
   FileSink out(tmp);
   out.writeln("Hey there");
@@ -221,7 +221,7 @@ TEST(nio, FileSourceRead) {
 }
 
 TEST(nio, StreamSourceRead) {
-  auto tmp = ROCKET_GTEST_TEMP_PATH();
+  auto tmp = ROCKET_TEST_TEMP_PATH();
 
   ofstream os(tmp.c_str());
   StreamSink out(os);

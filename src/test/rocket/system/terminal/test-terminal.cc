@@ -2,7 +2,7 @@
  * test-terminal.cc
  */
 
-#include "rocket-gtest/rocket-gtest.h"
+#include "rocket-test/rocket-test.h"
 
 #include "rocket/nio/nio.h"
 #include "rocket/system/terminal/terminal.h"

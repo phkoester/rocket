@@ -8,7 +8,7 @@
 
 using namespace std;
 
-namespace rocket::gtest {
+namespace rocket::test {
 
 u64 TracingString::ID_COUNTER = 0;
 u64 TracingString::NUM_INSTANCES = 0;
@@ -18,6 +18,6 @@ void TracingString::trace(std::string_view what) const {
   trace_->append(msg);
 }
 
-} // namespace rocket::gtest
+} // namespace rocket::test
 
 // EOF

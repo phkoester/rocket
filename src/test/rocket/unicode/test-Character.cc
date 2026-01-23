@@ -2,7 +2,7 @@
  * test-Character.cc
  */
 
-#include "rocket-gtest/rocket-gtest.h"
+#include "rocket-test/rocket-test.h"
 
 #include "rocket/system/terminal/terminal.h"
 #include "rocket/unicode/Character.h"

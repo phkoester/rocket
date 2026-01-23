@@ -1,8 +1,8 @@
 /*
- * rocket-gtest.cc
+ * rocket-test.cc
  */
 
-#include "rocket-gtest.h"
+#include "rocket-test.h"
 
 #include "rocket/math/random.h"
 #include "rocket/str/str.h"
@@ -10,7 +10,7 @@
 
 using namespace std::filesystem;
 
-namespace rocket::gtest {
+namespace rocket::test {
 
 // Constants ------------------------------------------------------------------------------------------------
 
@@ -33,7 +33,7 @@ tempPath(const char* file) {
   auto info = ::testing::UnitTest::GetInstance()->current_test_info(); \
   auto gen = math::gen();
   path name = fmt::format(
-      "rocket-gtest-{}-{}-{}-{}.tmp",
+      "rocket-test-{}-{}-{}-{}.tmp",
       str, info->test_suite_name(), info->name(), math::randomHex(gen, 16));
   path ret = temp_directory_path() / name;
 
@@ -44,6 +44,6 @@ tempPath(const char* file) {
 
 } // namespace internal
 
-} // namespace rocket::gtest
+} // namespace rocket::test
 
 // EOF

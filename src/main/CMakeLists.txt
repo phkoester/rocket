@@ -33,18 +33,21 @@ endif()
 # Add the library ...........................................................................................
 
 add_library(rocket)
+# Move `Process.cc` to front so the global `process` instance is available early
+# Move `log.cc` to front so Rocket can use its own logging API
 target_sources(rocket
   PRIVATE
-    rocket/Exception.cc
     rocket/Process.cc
+    rocket/log/log.cc
+
+    rocket/Exception.cc
     rocket/rocket.cc
     rocket/Type.cc
+    rocket/3rdparty/scanlib/impl.cc
     rocket/chrono/chrono.cc
     rocket/cl/cl.cc
     rocket/io/io.cc
-    rocket/log/log.cc
     rocket/nio/nio.cc
-    rocket/scan/impl.cc
     rocket/str/escape/escape.cc
     rocket/str/location/location.cc
     rocket/str/message/message.cc
@@ -113,20 +116,20 @@ target_compile_definitions(rocket
 )
 target_compile_features(rocket PUBLIC ${COMPILE_FEATURES})
 target_compile_options(rocket PUBLIC ${COMPILE_FLAGS})
-target_link_libraries(
-  rocket
-    PUBLIC scn::scn
-    INTERFACE ${ROCKET_BOOST_LINK_TARGETS} fmt::fmt-header-only
-    PRIVATE ICU::uc)
+target_link_libraries(rocket
+  PUBLIC fmt::fmt-header-only scn::scn
+  INTERFACE ${ROCKET_BOOST_LINK_TARGETS} # XXX
+  PRIVATE ICU::uc stdc++_libbacktrace
+)
 
 # Rocket Test -----------------------------------------------------------------------------------------------
 
-add_library(rocket-test STATIC)
+add_library(rocket-test STATIC) # XXX
 target_sources(rocket-test
   PRIVATE
     rocket-test/main.cc
     rocket-test/rocket-test.cc
-    rocket-test/3rdparty/TracingString.cc
+    rocket-test/TracingString.cc
   PUBLIC
     FILE_SET HEADERS
     FILES
@@ -142,25 +145,22 @@ target_compile_definitions(rocket-test
 )
 target_compile_features(rocket-test PUBLIC ${COMPILE_FEATURES})
 target_compile_options(rocket-test PUBLIC ${COMPILE_FLAGS})
-target_link_libraries(rocket-test PUBLIC GTest::gmock GTest::gtest)
+target_link_libraries(rocket-test
+  PUBLIC GTest::gmock GTest::gtest rocket # XXX Mit rocket???
+)
 
 # `bare` ----------------------------------------------------------------------------------------------------
 
-AddExecutable(bare rocket/bare/main.cc)
-
-# `print args` ----------------------------------------------------------------------------------------------
-
-AddExecutable("print args" rocket/print-args/main.cc)
-target_link_libraries("print args" PRIVATE rocket)
+AddExecutable(bare bare/main.cc)
 
 # `print-args` ----------------------------------------------------------------------------------------------
 
-AddExecutable(print-args)
+AddExecutable(print-args print-args/main.cc)
 target_link_libraries(print-args PRIVATE rocket)
 
 # `toy` -----------------------------------------------------------------------------------------------------
 
-AddExecutable(toy)
+AddExecutable(toy toy/main.cc)
 target_link_libraries(toy PRIVATE rocket)
 
 # EOF

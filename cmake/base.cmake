@@ -2,7 +2,7 @@
 # base.cmake
 #
 
-# Check preconditions ---------------------------------------------------------------------------------------
+# Check prerequisites ---------------------------------------------------------------------------------------
 
 if(NOT(LINUX) AND NOT(WIN32))
   message(FATAL_ERROR "Unsupported OS ${CMAKE_SYSTEM_NAME}")
@@ -21,6 +21,7 @@ endif()
 # General settings ------------------------------------------------------------------------------------------
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 set(FETCHCONTENT_QUIET FALSE)
 
@@ -37,8 +38,9 @@ endif()
 
 # Set general compiler definitions, features, and options ---------------------------------------------------
 
+set(CMAKE_CXX_STANDARD 23) # XXX
 set(COMPILE_DEFS)
-set(COMPILE_FEATURES cxx_std_20)
+set(COMPILE_FEATURES cxx_std_23)
 set(COMPILE_FLAGS)
 
 # Set OS-specific compiler options --------------------------------------------------------------------------
@@ -179,17 +181,17 @@ endfunction()
 # AddBench(NAME SRC_FILE...)
 function(AddBench name)
   AddExecutable(${name} ${ARGN})
-  target_link_libraries(${name} PRIVATE rocket rocket-test)
+  target_link_libraries(${name} PRIVATE rocket-test)
   # XXX add_test(NAME ${name} COMMAND ${name})
-  gtest_discover_tests(${name})
+  gtest_discover_tests(${name} WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/src/test)
 endfunction()
 
 # AddTest(NAME SRC_FILE...)
 function(AddTest name)
   AddExecutable(${name} ${ARGN})
-  target_link_libraries(${name} PRIVATE rocket rocket-test)
+  target_link_libraries(${name} PRIVATE rocket-test)
   # XXX add_test(NAME ${name} COMMAND ${name})
-  gtest_discover_tests(${name})
+  gtest_discover_tests(${name} WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/src/bench)
 endfunction()
 
 # EOF

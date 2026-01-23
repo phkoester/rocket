@@ -6,6 +6,7 @@ cmake_minimum_required(VERSION 3.28)
 
 # Project ---------------------------------------------------------------------------------------------------
 
+# Is this the master project?
 if(NOT DEFINED ROCKET_MASTER_PROJECT)
   set(ROCKET_MASTER_PROJECT OFF)
   if(NOT DEFINED PROJECT_NAME)
@@ -15,7 +16,7 @@ endif()
 
 project(rocket VERSION 0.3.0)
 
-# Project options -------------------------------------------------------------------------------------------
+# Options ---------------------------------------------------------------------------------------------------
 
 option(BUILD_SHARED_LIBS "Build shared libraries"                   OFF)
 option(BUILD_TESTING     "Enable testing and build tests"           ON)
@@ -48,8 +49,11 @@ set(ROCKET_EXPORT_TARGETS
   ${ROCKET_BOOST_EXPORT_TARGETS}
   fast_float
   fmt-header-only
+  gmock
+  gtest
   rocket
   rocket-test
+  scn
 )
 
 # XXX

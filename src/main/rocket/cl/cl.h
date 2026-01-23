@@ -128,9 +128,9 @@ struct CommandLineParams {
    */
   std::vector<std::string> usages;
   /// Prolog text to be displayed when #CommandLine#help() is called.
-  std::optional<std::string> prolog;
+  std::optional<std::string> prolog = std::nullopt;
   /// Epilog text to be displayed when #CommandLine#help() is called.
-  std::optional<std::string> epilog;
+  std::optional<std::string> epilog = std::nullopt;
 
   /**
    * Did another module process the command line and output something? If this is `true`, an extra empty line

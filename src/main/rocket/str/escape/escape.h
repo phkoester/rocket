@@ -31,7 +31,7 @@ struct CStringParams {
     * If this is null, then tab characters are escaped as `"\\t"`. Otherwise, a tab expands to at most
     * #tabSize spaces.
     */
-  std::optional<u64> tabSize;
+  std::optional<u64> tabSize = std::nullopt;
 
   /**
     * Checks if the escaped string is to be quoted.

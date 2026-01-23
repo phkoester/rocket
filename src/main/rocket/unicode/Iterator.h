@@ -8,8 +8,6 @@
 
 #include "rocket/UnorderedBimap.h"
 
-#include <unicode/brkiter.h>
-
 #include <algorithm> // `std::min`
 
 namespace rocket::unicode {
@@ -26,6 +24,8 @@ enum class IteratorType {
 };
 
 // `Iterator` -----------------------------------------------------------------------------------------------
+
+struct IteratorImpl;
 
 /**
  * A Unicode-aware string iterator.
@@ -51,19 +51,22 @@ struct Iterator {
    */
   Iterator(IteratorType type, std::basic_string_view<C> input, const std::locale& loc);
 
+  /// @dtor
+  ~Iterator() = default;
+
   /**
    * Returns the current position in the input string.
    *
    * @return the current position
    */
-  u64 current() const { return usToInput_.left.at(iter_->current()); }
+  u64 current() const;
 
   /**
    * Sets the iterator to the first position in the input string.
    *
    * @return the first position
    */
-  u64 first() { auto val = iter_->first(); return usToInput_.left.at(val); }
+  u64 first();
 
   /**
    * Returns the input string.
@@ -77,21 +80,14 @@ struct Iterator {
    *
    * @return the last position
    */
-  u64 last() { auto val = iter_->last(); return usToInput_.left.at(val); }
+  u64 last();
 
   /**
    * Advances the iterator to the next position in the input string.
    *
    * @return the next position
    */
-  u64
-  next() {
-    auto pos = iter_->next();
-    if (pos == icu::BreakIterator::DONE) {
-      return NPOS;
-    }
-    return usToInput_.left.at(pos);
-  }
+  u64 next();
 
   /**
    * Returns the next segment in the input string
@@ -127,14 +123,7 @@ struct Iterator {
    *
    * @return the previous position
    */
-  u64
-  previous() {
-    auto pos = iter_->previous();
-    if (pos == icu::BreakIterator::DONE) {
-      return NPOS;
-    }
-    return usToInput_.left.at(pos);
-  }
+  u64 previous();
 
   /**
    * Returns the previous segment in the input string
@@ -168,9 +157,8 @@ struct Iterator {
 private:
 
   std::basic_string_view<C> input_;
-  icu::UnicodeString us_;
+  std::unique_ptr<IteratorImpl, void(*)(IteratorImpl*)> impl_;
   UnorderedBimap<u64, u64> usToInput_;
-  std::unique_ptr<icu::BreakIterator> iter_;
 };
 
 // Functions ------------------------------------------------------------------------------------------------

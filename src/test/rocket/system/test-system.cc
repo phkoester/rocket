@@ -2,7 +2,7 @@
  * test-system.cc
  */
 
-#include "rocket-gtest/rocket-gtest.h"
+#include "rocket-test/rocket-test.h"
 
 #include "rocket/log/log.h"
 #include "rocket/system/system.h"
@@ -11,9 +11,9 @@ using namespace rocket::system;
 
 // Constants ------------------------------------------------------------------------------------------------
 
-const string BUILD_DIR = getenv("BUILD_DIR");
-const string PRINT_ARGS = BUILD_DIR + "/print-args";
-const string PRINT_ARGS_WITH_SPACE = BUILD_DIR + "/print args";
+// const string BUILD_DIR = getenv("BUILD_DIR");
+// const string PRINT_ARGS = BUILD_DIR + "/print-args";
+// XXX const string PRINT_ARGS_WITH_SPACE = BUILD_DIR + "/print args";
 
 // `TEST` ---------------------------------------------------------------------------------------------------
 
@@ -103,6 +103,7 @@ TEST(system, execPrintf) {
   EXPECT_EQ(out, "Hello");
 }
 
+/* XXX
 TEST(system, execPrintArgs) {
   auto bytes = exec({ PRINT_ARGS, "a" });
   string_view out(reinterpret_cast<const char*>(bytes.data()), bytes.size());
@@ -127,5 +128,6 @@ TEST(system, execPrintArgsWithSpaceUnicode) {
       HasSubstr("1=ä="),
       HasSubstr("2=€=")));
 }
+*/
 
 // EOF

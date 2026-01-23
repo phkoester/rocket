@@ -2,7 +2,7 @@
  * test-Process.cc
  */
 
-#include "rocket-gtest/rocket-gtest.h"
+#include "rocket-test/rocket-test.h"
 
 #include "rocket/Process.h"
 #include "rocket/nio/nio.h"

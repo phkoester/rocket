@@ -42,7 +42,7 @@ struct Position {
    * There must be character bondaries at the ranges' lower and upper positions. The ranges are underlined
    * with the tilde (`~`).
    */
-  Ranges ranges;
+  Ranges ranges = Ranges();
   /**
    * The message associated with this position.
    *
@@ -54,7 +54,7 @@ struct Position {
    *
    * The caption may be null, bot not empty. It is displayed underneath the caret (`^`).
    */
-  std::optional<std::string> caption;
+  std::optional<std::string> caption = std::nullopt;
 };
 
 } // namespace rocket::str::location
@@ -74,12 +74,12 @@ struct Location {
   u64 position; ///< Copied from the input position.
   Ranges ranges; ///< Copied from the input position.
   u64 line; ///< The line number, starting with 1.
-  u64 column; ///< The column number (counting character widths), starting with 1.
-  Range lineRange; ///< The range of the line containing #position.
+  u64 column = 0; ///< The column number (counting character widths), starting with 1.
+  Range lineRange = Range(); ///< The range of the line containing #position.
   /**
     * This member is only initialized if #LocationsParams#setLineString was set to `true`.
     */
-  std::optional<std::string> lineString;
+  std::optional<std::string> lineString = std::nullopt;
   std::string message; ///< Copied from the input position.
   std::optional<std::string> caption; ///< Copied from the input position.
 };
@@ -100,7 +100,7 @@ struct LocationsParams {
    * If a source is known, such as a file or an URL, it should be assigned here. If #source is empty, then
    * the #locations function sets this to `"-"` if the source is `stdin`, to `"(input)"` otherwise.
    */
-  std::string source;
+  std::string source = std::string();
   /**
    * Configures the handling of tab characters. If this is null, then there is no special treatment for tab
    * characters---they are displayed as `\t`. Otherwise, a tab expands to at most #tabSize spaces.

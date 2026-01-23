@@ -2,7 +2,7 @@
  * test-enum.cc
  */
 
-#include "rocket-gtest/rocket-gtest.h"
+#include "rocket-test/rocket-test.h"
 
 #include "rocket/enum.h"
 

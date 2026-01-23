@@ -2,7 +2,7 @@
  * test-format.cc
  */
 
-#include "rocket-gtest/rocket-gtest.h"
+#include "rocket-test/rocket-test.h"
 
 #include "rocket/format/format.h"
 #include "rocket/nio/nio.h"

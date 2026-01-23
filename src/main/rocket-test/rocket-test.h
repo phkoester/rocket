@@ -1,50 +1,43 @@
 /**
- * @file rocket-gtest.h
+ * @file rocket-test.h
  *
  * This header must always be the first included file in a test.
  *
  * Parameters:
  *
- * - `ROCKET_GTEST_NO_USING_NAMESPACE`: If defined, the `using namespace` directives are not included.
+ * - `ROCKET_TEST_NO_USING_NAMESPACE`: If defined, the `using namespace` directives are not included.
  */
 
 #pragma once
 
-/**
- * A macro indicating we are in a test.
- *
- * This must be defined before including any other header file.
- */
-#define ROCKET_TESTING
-
 #include "rocket/rocket.h"
 #include "rocket/io/io.h"
 
-#include "rocket-gtest/matcher/matcher.h"
+#include "rocket-test/matcher/matcher.h"
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 #include <filesystem>
 
-#ifndef ROCKET_GTEST_NO_USING_NAMESPACE
+#ifndef ROCKET_TEST_NO_USING_NAMESPACE
 
 using namespace rocket;
-using namespace rocket::gtest;
-using namespace rocket::gtest::matcher;
+using namespace rocket::test;
+using namespace rocket::test::matcher;
 using namespace std;
 using namespace testing;
 
-#endif // ROCKET_GTEST_NO_USING_NAMESPACE
+#endif // ROCKET_TEST_NO_USING_NAMESPACE
 
 // Macros ---------------------------------------------------------------------------------------------------
 
-#undef ROCKET_TESTING_PROTECTED
+#undef ROCKET_TEST_PROTECTED
 /// Use this macro instead of `protected` to allow access to protected members of a class when testing.
-#define ROCKET_TESTING_PROTECTED public
-#undef ROCKET_TESTING_PRIVATE
+#define ROCKET_TEST_PROTECTED public
+#undef ROCKET_TEST_PRIVATE
 /// Use this macro instead of `private` to allow access to private members of a class when testing.
-#define ROCKET_TESTING_PRIVATE public
+#define ROCKET_TEST_PRIVATE public
 
 /// An environment variable indicating whether terminal output is tested.
 #define ROCKET_TEST_TERMINAL "ROCKET_TEST_TERMINAL"
@@ -79,9 +72,9 @@ using namespace testing;
  *
  * When the test process finishes, the file is automatically removed.
  */
-#define ROCKET_GTEST_TEMP_PATH() ::rocket::gtest::internal::tempPath(__FILE__)
+#define ROCKET_TEST_TEMP_PATH() ::rocket::test::internal::tempPath(__FILE__)
 
-namespace rocket::gtest {
+namespace rocket::test {
 
 // Constants ------------------------------------------------------------------------------------------------
 
@@ -96,6 +89,6 @@ std::filesystem::path tempPath(const char* file);
 
 } // namespace internal
 
-} // namespace rocket::gtest
+} // namespace rocket::test
 
 // EOF

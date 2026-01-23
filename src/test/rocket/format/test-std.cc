@@ -2,7 +2,7 @@
  * test-std.cc
  */
 
-#include "rocket-gtest/rocket-gtest.h"
+#include "rocket-test/rocket-test.h"
 
 #include "rocket/assert.h"
 #include "rocket/format/std.h"

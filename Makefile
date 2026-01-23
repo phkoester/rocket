@@ -20,7 +20,7 @@
 # To build the project using CMake, see `README.md`.
 #
 
-BUILD_DIR := build/$(GAIA_BUILD_TYPE)
+export BUILD_DIR := build/$(GAIA_BUILD_TYPE)
 PRESET := linux-$(GAIA_BUILD_TYPE)
 
 ifeq ($(GAIA_CXX_TOOLCHAIN),llvm)
@@ -31,14 +31,14 @@ endif
 export MAKEFLAGS := --no-print-directory -j$(($(nproc) / 3 * 2)) -l$(nproc)
 # XXX
 ifneq ($(VERBOSE),)
-  CMAKE_FLAGS += -v
+  CMAKE_TRAILING_FLAGS += -v
   MAKEFLAGS += --trace
 endif
 
 # XXX -v, make --trace, jobs, --no-print-directory
 .PHONY: build
 build: $(BUILD_DIR)/Makefile
-	cmake $(CMAKE_FLAGS) --build --preset $(PRESET)
+	cmake $(CMAKE_FLAGS) --build --preset $(PRESET) $(CMAKE_TRAILING_FLAGS)
 
 $(BUILD_DIR)/Makefile: $(shell find -name CMakeLists.txt) $(shell find cmake -name "*.cmake")
 	cmake $(CMAKE_FLAGS) --preset $(PRESET)

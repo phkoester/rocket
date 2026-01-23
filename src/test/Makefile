@@ -205,7 +205,7 @@ include $(GAIA_DIR)/src/main/make/test-executable.mk
 # `rocket-gtest` --------------------------------------------------------------------------------------------
 
 NAME        := test-rocket-gtest-matcher
-CC_FILES    := test/rocket-gtest/matcher/test-matcher.cc
+CC_FILES    := test/rocket-test/matcher/test-matcher.cc
 SHARED_LIBS := $(ROCKET_SHARED_LIB)
 include $(GAIA_DIR)/src/main/make/test-executable.mk
 

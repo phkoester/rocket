@@ -491,7 +491,7 @@ writeElemImpl(nio::Sink& out, const T& val, const Tuple& refs) {
 
 template<typename T, typename Tuple, u64... Index>
 u64
-writeImpl(nio::Sink& out, const T& val, const Tuple& refs, std::index_sequence<Index...> indices) {
+writeImpl(nio::Sink& out, const T& val, const Tuple& refs, std::index_sequence<Index...>) {
   u64 ret = out.write('(');
   (..., (ret += writeElemImpl<T, Index>(out, val, refs)));
   ret += out.write(')');

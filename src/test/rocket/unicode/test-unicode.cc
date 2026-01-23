@@ -2,7 +2,7 @@
  * test-unicode.cc
  */
 
-#include "rocket-gtest/rocket-gtest.h"
+#include "rocket-test/rocket-test.h"
 
 #include "rocket/format/std.h"
 #include "rocket/unicode/unicode.h"

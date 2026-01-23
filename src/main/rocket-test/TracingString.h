@@ -10,7 +10,7 @@
 
 #include <string>
 
-namespace rocket::gtest {
+namespace rocket::test {
 
 /**
  * A string that exactly traces which member functions were called.
@@ -149,6 +149,6 @@ private:
   void trace(std::string_view what) const;
 };
 
-} // namespace rocket::gtest
+} // namespace rocket::test
 
 // EOF

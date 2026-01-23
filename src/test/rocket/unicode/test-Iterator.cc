@@ -2,7 +2,7 @@
  * test-Iterator.cc
  */
 
-#include "rocket-gtest/rocket-gtest.h"
+#include "rocket-test/rocket-test.h"
 
 #include "rocket/unicode/Character.h"
 #include "rocket/unicode/Iterator.h"

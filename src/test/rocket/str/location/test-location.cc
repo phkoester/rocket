@@ -2,7 +2,7 @@
  * test-location.cc
  */
 
-#include "rocket-gtest/rocket-gtest.h"
+#include "rocket-test/rocket-test.h"
 
 #include "rocket/nio/nio.h"
 #include "rocket/str/location/location.h"
@@ -110,7 +110,7 @@ TEST(location, locationsMultiByteCharactersAndLineBreak) {
 }
 
 TEST(location, locationsKafkaTxt) {
-  string source = "src/test/rocket/str/location/test-location-Kafka.txt";
+  string source = "rocket/str/location/test-location-Kafka.txt";
   nio::FileSource in(source);
   string input = in.Source::read();
 

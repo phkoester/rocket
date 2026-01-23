@@ -115,7 +115,7 @@ nextCodePoint(string_view str, u64& pos) {
   ROCKET_CHECK(pos, pos < size);
   UChar32 cp;
   i32 i = to<i32>(pos);
-  U8_NEXT(str.data(), i, size, cp);
+  U8_NEXT(str.data(), i, to<i32>(size), cp);
   pos = to<u64>(i);
   return static_cast<char32>(cp);
 }

@@ -6,7 +6,7 @@
  *   TESTS="rocket-log-log" make tests ARGS="--log test_log=info"
  */
 
-#include "rocket-gtest/rocket-gtest.h"
+#include "rocket-test/rocket-test.h"
 
 #include "rocket/log/log.h"
 

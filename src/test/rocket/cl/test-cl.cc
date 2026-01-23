@@ -2,7 +2,7 @@
  * test-cl.cc
  */
 
-#include "rocket-gtest/rocket-gtest.h"
+#include "rocket-test/rocket-test.h"
 
 #include "rocket/cl/cl.h"
 #include "rocket/log/log.h"

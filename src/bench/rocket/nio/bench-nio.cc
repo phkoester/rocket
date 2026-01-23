@@ -2,7 +2,7 @@
  * bench-nio.cc
  */
 
-#include "rocket-gtest/bench.h"
+#include "rocket-test/bench.h"
 
 #include "rocket/nio/nio.h"
 
@@ -21,7 +21,7 @@ constexpr u64 ITERATIONS = FILE_SIZE / CHUNK_SIZE;
 
 TEST(nio, FileSink) {
   string chunk(CHUNK_SIZE, ' '); // cppcheck-suppress variableScope
-  auto tmp = ROCKET_GTEST_TEMP_PATH();
+  auto tmp = ROCKET_TEST_TEMP_PATH();
 
   ROCKET_BENCH(N, [&] {
     {
@@ -36,7 +36,7 @@ TEST(nio, FileSink) {
 
 TEST(nio, BufferedFileSink) {
   string chunk(CHUNK_SIZE, ' '); // cppcheck-suppress variableScope
-  auto tmp = ROCKET_GTEST_TEMP_PATH();
+  auto tmp = ROCKET_TEST_TEMP_PATH();
 
   ROCKET_BENCH(N, [&] {
     {
@@ -53,7 +53,7 @@ TEST(nio, BufferedFileSink) {
 
 TEST(nio, StreamSink) {
   string chunk(CHUNK_SIZE, ' '); // cppcheck-suppress variableScope
-  auto tmp = ROCKET_GTEST_TEMP_PATH();
+  auto tmp = ROCKET_TEST_TEMP_PATH();
 
   ROCKET_BENCH(N, [&] {
     {
@@ -69,7 +69,7 @@ TEST(nio, StreamSink) {
 
 TEST(nio, BufferedStreamSink) {
   string chunk(CHUNK_SIZE, ' '); // cppcheck-suppress variableScope
-  auto tmp = ROCKET_GTEST_TEMP_PATH();
+  auto tmp = ROCKET_TEST_TEMP_PATH();
 
   ROCKET_BENCH(N, [&] {
     {

@@ -2,7 +2,7 @@
  * test-escape.cc
  */
 
-#include "rocket-gtest/rocket-gtest.h"
+#include "rocket-test/rocket-test.h"
 
 #include "rocket/str/escape/escape.h"
 

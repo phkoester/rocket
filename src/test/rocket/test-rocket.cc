@@ -2,7 +2,7 @@
  * test-rocket.cc
  */
 
-#include "rocket-gtest/rocket-gtest.h"
+#include "rocket-test/rocket-test.h"
 
 // `static_assert` ------------------------------------------------------------------------------------------
 
