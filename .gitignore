@@ -2,9 +2,11 @@
 # .gitignore
 #
 
-/.cache/
 /compile_commands.json
-/target/
+
+/.cache/
+/build/
+/install/
 
 **/*.log
 **/*.log.gz

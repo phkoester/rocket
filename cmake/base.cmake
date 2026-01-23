@@ -1,0 +1,195 @@
+#
+# base.cmake
+#
+
+# Check preconditions ---------------------------------------------------------------------------------------
+
+if(NOT(LINUX) AND NOT(WIN32))
+  message(FATAL_ERROR "Unsupported OS ${CMAKE_SYSTEM_NAME}")
+endif()
+if (NOT(CMAKE_C_COMPILER_ID STREQUAL "Clang") AND
+    NOT(CMAKE_C_COMPILER_ID STREQUAL "GNU") AND
+    NOT(CMAKE_C_COMPILER_ID STREQUAL "MSVC"))
+  message(FATAL_ERROR "Unsupported C compiler ${CMAKE_C_COMPILER_ID}")
+endif()
+if (NOT(CMAKE_CXX_COMPILER_ID STREQUAL "Clang") AND
+    NOT(CMAKE_CXX_COMPILER_ID STREQUAL "GNU") AND
+    NOT(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC"))
+  message(FATAL_ERROR "Unsupported C++ compiler ${CMAKE_CXX_COMPILER_ID}")
+endif()
+
+# General settings ------------------------------------------------------------------------------------------
+
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
+set(FETCHCONTENT_QUIET FALSE)
+
+set(BUILD_SHARED_LIBS_DEFAULT ${BUILD_SHARED_LIBS})
+
+# Select build type -----------------------------------------------------------------------------------------
+
+if(NOT DEFINED CMAKE_CONFIGURATION_TYPES)
+  if(NOT DEFINED CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Release)
+  endif()
+  message(STATUS "Using build type ${CMAKE_BUILD_TYPE}")
+endif()
+
+# Set general compiler definitions, features, and options ---------------------------------------------------
+
+set(COMPILE_DEFS)
+set(COMPILE_FEATURES cxx_std_20)
+set(COMPILE_FLAGS)
+
+# Set OS-specific compiler options --------------------------------------------------------------------------
+
+if(LINUX)
+  list(APPEND COMPILE_FLAGS -pedantic -Wall -Wextra)
+elseif(WIN32)
+  # XXX list(APPEND COMPILE_FLAGS -Wall)
+endif()
+
+# Fetch dependencies ----------------------------------------------------------------------------------------
+
+include(FetchContent)
+
+# Boost .....................................................................................................
+
+find_package(Boost 1.83)
+if(Boost_FOUND)
+  set(ROCKET_BOOST_LINK_TARGETS Boost::headers)
+  set(ROCKET_BOOST_EXPORT_TARGETS)
+else()
+  FetchContent_Declare(
+    Boost
+    URL https://github.com/boostorg/boost/releases/download/boost-1.84.0/boost-1.84.0.7z
+    USES_TERMINAL_DOWNLOAD TRUE
+    DOWNLOAD_NO_EXTRACT FALSE
+    SYSTEM
+    EXCLUDE_FROM_ALL
+  )
+
+  set(BOOST_ENABLE_CMAKE ON)
+  # set(BOOST_INCLUDE_LIBRARIES filesystem math program_options system)
+  # Build static libraries
+  set(BUILD_SHARED_LIBS OFF)
+  FetchContent_MakeAvailable(Boost)
+  set(BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS_DEFAULT})
+
+  set(ROCKET_BOOST_LINK_TARGETS Boost::bimap Boost::headers)
+  set(ROCKET_BOOST_EXPORT_TARGETS
+    boost_assert
+    boost_bimap
+    boost_bind
+    boost_concept_check
+    boost_config
+    boost_container_hash
+    boost_core
+    boost_describe
+    boost_detail
+    boost_function
+    boost_functional
+    boost_fusion
+    boost_headers
+    boost_function_types
+    boost_io
+    boost_integer
+    boost_iterator
+    boost_lambda
+    boost_move
+    boost_mp11
+    boost_mpl
+    boost_multi_index
+    boost_optional
+    boost_predef
+    boost_preprocessor
+    boost_smart_ptr
+    boost_static_assert
+    boost_tuple
+    boost_type_traits
+    boost_typeof
+    boost_throw_exception
+    boost_utility
+  )
+endif()
+
+# fmt .......................................................................................................
+
+# XXX EXCLUDE_FROM_ALL?
+FetchContent_Declare(
+  fmt
+  GIT_REPOSITORY https://github.com/fmtlib/fmt.git
+  GIT_TAG        12.1.0
+  GIT_PROGRESS   TRUE
+  SYSTEM
+  EXCLUDE_FROM_ALL
+)
+
+FetchContent_MakeAvailable(fmt)
+
+# googletest ................................................................................................
+
+FetchContent_Declare(
+  googletest
+  GIT_REPOSITORY https://github.com/google/googletest.git
+  GIT_TAG        v1.17.0
+  GIT_PROGRESS   TRUE
+  SYSTEM
+  EXCLUDE_FROM_ALL
+)
+
+# For Windows: Prevent overriding the parent project's compiler/linker settings
+set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+# Build static libraries
+set(BUILD_SHARED_LIBS OFF)
+FetchContent_MakeAvailable(googletest)
+set(BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS_DEFAULT})
+
+# ICU -------------------------------------------------------------------------------------------------------
+
+find_package(ICU 74.2 REQUIRED uc) # data i18n io
+
+# scn .......................................................................................................
+
+FetchContent_Declare(
+  scn
+  GIT_REPOSITORY https://github.com/eliaskosunen/scnlib.git
+  GIT_TAG        master
+  GIT_PROGRESS   TRUE
+  SYSTEM
+  EXCLUDE_FROM_ALL
+)
+
+# Build static libraries
+set(BUILD_SHARED_LIBS OFF)
+FetchContent_MakeAvailable(scn)
+set(BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS_DEFAULT})
+
+# Functions -------------------------------------------------------------------------------------------------
+
+# AddExecutable(NAME SRC_FILE...)
+function(AddExecutable name)
+  add_executable(${name})
+  target_sources(${name} PRIVATE ${ARGN})
+  target_compile_definitions(${name} PRIVATE ${COMPILE_DEFS})
+  target_compile_features(${name} PRIVATE ${COMPILE_FEATURES})
+  target_compile_options(${name} PRIVATE ${COMPILE_FLAGS})
+endfunction()
+
+# AddBench(NAME SRC_FILE...)
+function(AddBench name)
+  AddExecutable(${name} ${ARGN})
+  target_link_libraries(${name} PRIVATE rocket rocket-test)
+  # XXX add_test(NAME ${name} COMMAND ${name})
+  gtest_discover_tests(${name})
+endfunction()
+
+# AddTest(NAME SRC_FILE...)
+function(AddTest name)
+  AddExecutable(${name} ${ARGN})
+  target_link_libraries(${name} PRIVATE rocket rocket-test)
+  # XXX add_test(NAME ${name} COMMAND ${name})
+  gtest_discover_tests(${name})
+endfunction()
+
+# EOF

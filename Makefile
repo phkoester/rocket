@@ -1,89 +1,95 @@
 #
 # Makefile
 #
+# Parameters:
+#
+# - ARGS
+#     Arguments to pass to executables
+# - GAIA_BUILD_TYPE
+#     The build type: `debug` or `release`
+# - GAIA_CXX_TOOLCHAIN
+#     The C++ toolchain: `gnu` or `llvm`
+# - TEST
+#     Run tests matching the pattern
+# - VERBOSE
+#     Produce verbose output
+#
+# This Makefile will only work in Linux, with Gaia installed and properly configured. It's for active
+# development purposes only.
+#
+# To build the project using CMake, see `README.md`.
+#
 
-export INCLUDE_DIRS := main test
-export SYSTEM_INCLUDE_DIRS := \
-    $(GAIA_BOOST_DIR) \
-    $(GAIA_FMT_DIR)/include \
-    $(GAIA_GOOGLETEST_DIR)/googlemock/include \
-    $(GAIA_GOOGLETEST_DIR)/googletest/include \
-    $(GAIA_SCNLIB_DIR)/include
+BUILD_DIR := build/$(GAIA_BUILD_TYPE)
+PRESET := linux-$(GAIA_BUILD_TYPE)
 
-# `build` must be the first target and build everything, including benches and tests
-build: buildBench buildTest
-
-include $(GAIA_DIR)/src/main/make/Makefile.mk
-
-# Constants -------------------------------------------------------------------------------------------------
-
-export ICU_VERSION := 74.2
-export ICU_UC_SHARED_LIB := libicuuc.so.$(ICU_VERSION)
-
-export ROCKET_VERSION := $(call print-version,.)
-ifeq ($(ROCKET_VERSION),)
-  $(error Cannot set `ROCKET_VERSION`)
+ifeq ($(GAIA_CXX_TOOLCHAIN),llvm)
+  export CC := clang
+  export CXX := clang++
 endif
-export ROCKET_SHARED_LIB := $(call shared-lib-name,rocket,$(ROCKET_VERSION),$(G))
 
-export SCN_LIB := $(INSTALL_LIB_DIR)/libscn$(G).a
+export MAKEFLAGS := --no-print-directory -j$(($(nproc) / 3 * 2)) -l$(nproc)
+# XXX
+ifneq ($(VERBOSE),)
+  CMAKE_FLAGS += -v
+  MAKEFLAGS += --trace
+endif
 
-# Targets ---------------------------------------------------------------------------------------------------
+# XXX -v, make --trace, jobs, --no-print-directory
+.PHONY: build
+build: $(BUILD_DIR)/Makefile
+	cmake $(CMAKE_FLAGS) --build --preset $(PRESET)
 
-all: check doc test bench
+$(BUILD_DIR)/Makefile: $(shell find -name CMakeLists.txt) $(shell find cmake -name "*.cmake")
+	cmake $(CMAKE_FLAGS) --preset $(PRESET)
 
-bench: buildMain
-	@$(call print-info,$@)
-	@+$(MAKE) $(MAKE_FLAGS) -f src/bench/Makefile bench
+$(BUILD_DIR)/compile_commands.json: build
 
-benches: buildMain
-	@$(call print-info,$@)
-	@+$(MAKE) $(MAKE_FLAGS) -f src/bench/Makefile benches
+compile_commands.json: $(BUILD_DIR)/compile_commands.json
+	@echo ">" $@
+	@cp $< $@
 
-buildBench: buildMain
-	@$(call print-info,$@)
-	@+$(MAKE) $(MAKE_FLAGS) -f src/bench/Makefile build
+.PHONY: clean
+clean:
+	rm -rf build install
 
-buildMain:
-	@$(call print-info,$@)
-	@+$(MAKE) $(MAKE_FLAGS) -f src/main/Makefile build
+.PHONY: bare
+bare: build
+	LD_LIBRARY_PATH=$(BUILD_DIR)/src/main:$(LD_LIBRARY_PATH) \
+	$(BUILD_DIR)/src/main/bare $(ARGS)
 
-buildTest: buildMain
-	@$(call print-info,$@)
-	@+$(MAKE) $(MAKE_FLAGS) -f src/test/Makefile build
+.PHONY: print-args
+print-args: build
+	LD_LIBRARY_PATH=$(BUILD_DIR)/src/main:$(LD_LIBRARY_PATH) \
+	$(BUILD_DIR)/src/main/print-args $(ARGS)
 
-doc: docMain docTest
+.PHONY: print-args-with-space
+print-args-with-space: build
+	LD_LIBRARY_PATH=$(BUILD_DIR)/src/main:$(LD_LIBRARY_PATH) \
+	"$(BUILD_DIR)/src/main/print args" $(ARGS)
 
-docMain:
-	@$(call print-info,$@)
-	@+$(MAKE) $(MAKE_FLAGS) -f src/main/Makefile doc
+.PHONY: toy
+toy: build
+	LD_LIBRARY_PATH=$(BUILD_DIR)/src/main:$(LD_LIBRARY_PATH) \
+	$(BUILD_DIR)/src/main/toy $(ARGS)
 
-docTest:
-	@$(call print-info,$@)
-	@+$(MAKE) $(MAKE_FLAGS) -f src/test/Makefile doc
+CTEST_FLAGS := --output-on-failure
+ifneq ($(TEST),)
+  CTEST_FLAGS += -R $(TEST)
+endif
+ifneq ($(VERBOSE),)
+  CTEST_FLAGS += -V
+endif
 
-test: buildMain
-	@$(call print-info,$@)
-	@+$(MAKE) $(MAKE_FLAGS) -f src/test/Makefile test
+.PHONY: test
+test: build
+	ctest $(CTEST_FLAGS) --preset $(PRESET)
 
-tests: buildMain
-	@$(call print-info,$@)
-	@+$(MAKE) $(MAKE_FLAGS) -f src/test/Makefile tests
-
-# -----------------------------------------------------------------------------------------------------------
-
-bare: buildMain
-	@$(BUILD_DIR)/bare $(ARGS)
-
-print-args: buildMain
-	@$(BUILD_DIR)/print-args $(ARGS)
-
-print\ args: buildMain
-	@"$(BUILD_DIR)/print args" $(ARGS)
-
-toy: buildMain
-	@$(BUILD_DIR)/toy $(ARGS)
-
-.PHONY: crank
+# Manual install to `/usr/local`:
+#
+#   sudo cmake --install build/$GAIA_BUILD_TYPE
+.PHONY: install
+install: build
+	cmake --install $(BUILD_DIR) --prefix install
 
 # EOF
