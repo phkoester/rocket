@@ -18,6 +18,13 @@ if (NOT(CMAKE_CXX_COMPILER_ID STREQUAL "Clang") AND
   message(FATAL_ERROR "Unsupported C++ compiler ${CMAKE_CXX_COMPILER_ID}")
 endif()
 
+# CMPs ------------------------------------------------------------------------------------------------------
+
+# Suppress "The FindBoost module is removed."
+if(POLICY CMP0167)
+  cmake_policy(SET CMP0167 NEW)
+endif()
+
 # Configuration ---------------------------------------------------------------------------------------------
 #
 # - Defined variables take precedence over environment variables.

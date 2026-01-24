@@ -1,6 +1,6 @@
-rem
-rem build.cmd
-rem
+::
+:: build.cmd
+::
 
 @echo off
 
@@ -13,4 +13,4 @@ if %errorlevel% neq 0 exit /b %errorlevel%
 cmake --install build --config Release --prefix install
 if %errorlevel% neq 0 exit /b %errorlevel%
 
-rem EOF
+:: EOF
