@@ -71,7 +71,7 @@ set(ROCKET_COMPILE_DEFS)
 
 if(LINUX)
   # gcc will not accept `__int128` with `-pedantic`
-  list(APPEND COMPILE_FLAGS -Wall -Wextra)
+  list(APPEND COMPILE_FLAGS -Wall -Wextra -Wno-ignored-attributes)
 elseif(WIN32)
   # list(APPEND COMPILE_FLAGS -Wall)
 endif()

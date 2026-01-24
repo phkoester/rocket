@@ -23,6 +23,7 @@
 # - clean
 # - compile-commands.json (inherited)
 # - doc
+# - patch
 # - test
 # - test-terminal
 # - install
@@ -81,5 +82,20 @@ print-args: build
 toy: build
 	@LD_LIBRARY_PATH=$(BUILD_DIR)/src/main:$(LD_LIBRARY_PATH) \
 	    $(BUILD_DIR)/src/main/toy $(ARGS)
+
+# Patch -----------------------------------------------------------------------------------------------------
+
+.PHONY: patch
+patch: build src/main/rocket/3rdparty/fmt/std.h src/main/rocket/3rdparty/scnlib/impl.h
+
+src/main/rocket/3rdparty/fmt/std.h: $(BUILD_DIR)/_deps/fmt-src/include/fmt/std.h
+	@echo $< is newer than $@!
+	@echo This must be patched manually if version is \> 12.1.0!
+	@echo Current version:
+	@git -C $(BUILD_DIR)/_deps/fmt-src describe --tags --abbrev=0
+
+src/main/rocket/3rdparty/scnlib/impl.h: $(BUILD_DIR)/_deps/scn-src/src/scn/impl.h
+	@echo ">" $@
+	@cp $< "$@"
 
 # EOF

@@ -54,8 +54,6 @@
   #define ROCKET_HAS_128
 #endif
 
-#pragma GCC diagnostic ignored "-Wignored-attributes"
-
 // Rocket type aliases --------------------------------------------------------------------------------------
 
 /// @cond undocumented

@@ -9,6 +9,6 @@ INPUT            = src/main
 FILE_PATTERNS    = *.h
 OUTPUT_DIRECTORY = $(BUILD_DIR)/src/main/doc
 
-EXCLUDE          = src/main/rocket/3rdparty/fmt/std.h src/main/rocket/3rdparty/scanlib/impl.h
+EXCLUDE          = src/main/rocket/3rdparty/fmt/std.h src/main/rocket/3rdparty/scnlib/impl.h
 
 # EOF

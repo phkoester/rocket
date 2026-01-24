@@ -40,7 +40,7 @@ target_sources(rocket
 
     rocket/Exception.cc
     rocket/rocket.cc
-    rocket/3rdparty/scanlib/impl.cc
+    rocket/3rdparty/scnlib/impl.cc
     rocket/chrono/chrono.cc
     rocket/cl/cl.cc
     rocket/io/io.cc
