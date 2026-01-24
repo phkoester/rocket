@@ -44,6 +44,8 @@ ctest --preset windows-release
 cmake --install build --config Release --prefix install
 ```
 
+Alternatively, run `build.cmd`.
+
 ## Environment Variables
 
 | Name                   | Type     | Stage   | Description
