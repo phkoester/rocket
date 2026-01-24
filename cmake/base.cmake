@@ -183,8 +183,11 @@ function(AddBench name dir)
   list(TRANSFORM ARGN PREPEND "${dir}/")
   AddExecutable(${name} ${ARGN})
   target_link_libraries(${name} PRIVATE rocket-test)
-  # XXX add_test(NAME ${name} COMMAND ${name})
-  gtest_discover_tests(${name} WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/src/bench/${dir})
+  # add_test(NAME ${name} COMMAND ${name} WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/src/bench/${dir})
+  gtest_discover_tests(${name}
+    DISCOVERY_MODE POST_BUILD
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/src/bench/${dir}
+  )
 endfunction()
 
 # AddTest(name dir srcFile...)
@@ -192,8 +195,11 @@ function(AddTest name dir)
   list(TRANSFORM ARGN PREPEND "${dir}/")
   AddExecutable(${name} ${ARGN})
   target_link_libraries(${name} PRIVATE rocket-test)
-  # XXX add_test(NAME ${name} COMMAND ${name})
-  gtest_discover_tests(${name} WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/src/test/${dir})
+  # add_test(NAME ${name} COMMAND ${name} WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/src/test/${dir})
+  gtest_discover_tests(${name}
+    DISCOVERY_MODE POST_BUILD
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/src/test/${dir}
+  )
 endfunction()
 
 # EOF
