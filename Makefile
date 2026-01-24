@@ -16,6 +16,20 @@
 # - VERBOSE
 #     Produce verbose output
 #
+# Targets:
+#
+# - build (default)
+# - check (inherited)
+# - clean
+# - compile-commands.json (inherited)
+# - doc
+# - test
+# - test-terminal
+# - install
+# - bare
+# - print-args
+# - toy
+#
 # This Makefile will only work in Linux, with Gaia installed and properly configured. It's for active
 # development purposes only.
 #
@@ -30,6 +44,28 @@ include $(GAIA_DIR)/src/main/make/Makefile.mk
 .PHONY: clean
 clean:
 	@rm -rfv build install
+
+.PHONY: doc
+doc:
+	@mkdir -p $(BUILD_DIR)/src/main/doc
+	@doxygen $(DOXYGEN_FLAGS) src/main/Doxyfile
+	@mkdir -p $(BUILD_DIR)/src/test/doc
+	@doxygen $(DOXYGEN_FLAGS) src/test/Doxyfile
+
+.PHONY: test
+test: cmake-test
+
+.PHONY: test-terminal
+test-terminal: build
+	@ROCKET_TEST_TERMINAL=1 $(BUILD_DIR)/src/test/test-rocket-system-terminal
+	@ROCKET_TEST_TERMINAL=1 $(BUILD_DIR)/src/test/test-rocket-unicode-Character
+
+# Manual install to `/usr/local`:
+#
+#   sudo cmake --install build/$GAIA_BUILD_TYPE
+.PHONY: install
+install: build
+	cmake --install $(BUILD_DIR) --prefix install
 
 .PHONY: bare
 bare: build
@@ -46,30 +82,4 @@ toy: build
 	@LD_LIBRARY_PATH=$(BUILD_DIR)/src/main:$(LD_LIBRARY_PATH) \
 	    $(BUILD_DIR)/src/main/toy $(ARGS)
 
-.PHONY: test
-test: cmake-test
-
-.PHONY: test-terminal
-test-terminal: build
-	@ROCKET_TEST_TERMINAL=1 $(BUILD_DIR)/src/test/test-rocket-system-terminal
-	@ROCKET_TEST_TERMINAL=1 $(BUILD_DIR)/src/test/test-rocket-unicode-Character
-
-.PHONY: doc
-doc:
-	@mkdir -p $(BUILD_DIR)/src/main/doc
-	@doxygen $(DOXYGEN_FLAGS) src/main/Doxyfile
-	@mkdir -p $(BUILD_DIR)/src/test/doc
-	@doxygen $(DOXYGEN_FLAGS) src/test/Doxyfile
-
-# Manual install to `/usr/local`:
-#
-#   sudo cmake --install build/$GAIA_BUILD_TYPE
-.PHONY: install
-install: build
-	cmake --install $(BUILD_DIR) --prefix install
-
-.PHONY: dummy
-dummy:
-	@echo "Dummy target"
-	@echo $(notdir $(CURDIR))
 # EOF
