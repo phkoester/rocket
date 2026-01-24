@@ -8,6 +8,7 @@
 
 #include <array>
 #include <memory>
+#include <unistd.h>
 
 using namespace rocket;
 using namespace std;
@@ -96,9 +97,17 @@ makeCl(const vector<string_view>& args) {
 
 } // namespace
 
-// Functions ------------------------------------------------------------------------------------------------
-
 namespace rocket::system {
+
+namespace internal {
+
+// Internal -------------------------------------------------------------------------------------------------
+
+recursive_mutex envMutex;
+
+} // namespace internal
+
+// Functions ------------------------------------------------------------------------------------------------
 
 vector<byte>
 exec(const string& cl) {
@@ -156,8 +165,32 @@ namespace env {
 
 // Environment ----------------------------------------------------------------------------------------------
 
+unordered_map<string_view, string_view>
+get() {
+  ROCKET_MUTEX_LOCK(internal::envMutex);
+
+  unordered_map<string_view, string_view> ret;
+  char** p = __environ;
+  while(*p) {
+    string_view entry(*p);
+    auto eq = entry.find('=');
+    string_view name, value;
+    if (eq == string_view::npos) {
+      name = entry;
+    } else {
+      name = entry.substr(0, eq);
+      value = entry.substr(eq + 1);
+    }
+    ret.emplace(name, value);
+    ++p;
+  }
+  return ret;
+}
+
 void
 unset(const string& name) {
+  ROCKET_MUTEX_LOCK(internal::envMutex);
+
   putenv(const_cast<char*>(name.c_str()));
 }
 

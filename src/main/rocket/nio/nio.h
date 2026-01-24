@@ -454,11 +454,18 @@ struct StringSink : Sink {
   i32 flush() override;
 
   /**
-   * Returns the referenced or the owned string.
+   * Returns a reference to the string (either referenced or owned).
    *
    * @return the referenced or the owned string
    */
-  const std::string& str() const { return ptr_ ? *ptr_ : owned_; }
+  const std::string& ref() const { return ptr_ ? *ptr_ : owned_; }
+
+  /**
+   * Returns a copy of the string (either referenced or owned).
+   *
+   * @return the referenced or the owned string
+   */
+  const std::string str() const { return ref(); }
 
   bool terminal(i32* fd = nullptr) override;
 

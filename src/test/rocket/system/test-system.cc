@@ -91,6 +91,14 @@ TEST(system, envStringView) {
   EXPECT_EQ(env::get<type>(name), nullopt);
 }
 
+TEST(system, envGet) {
+  env::set("MY_ENV1", "");
+  env::set("MY_ENV2", "value");
+  auto env = env::get();
+  EXPECT_EQ(env.at("MY_ENV1"), "");
+  EXPECT_EQ(env.at("MY_ENV2"), "value");
+}
+
 TEST(system, execEcho) {
   auto bytes = exec("echo Hello");
   string_view out(reinterpret_cast<const char*>(bytes.data()), bytes.size());

@@ -21,7 +21,7 @@ TEST(StringConvert, bool) {
   EXPECT_EQ(toType<type>("NONE"), false);
   EXPECT_EQ(toType<type>("NULL"), false);
   EXPECT_EQ(toType<type>("oFF"), false);
-  EXPECT_EQ(toType<type>("true"), true);
+  EXPECT_EQ(toType<type>("falsch"), true);
   EXPECT_EQ(toType<type>("1"), true);
   EXPECT_EQ(toType<type>("42"), true);
 }

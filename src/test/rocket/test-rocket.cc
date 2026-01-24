@@ -9,19 +9,19 @@
 static_assert(is_signed_v<char>);
 static_assert(is_unsigned_v<char32>);
 static_assert(is_same_v<u64, std_size_t>);
-#ifdef ROCKET_HAVE_128
+#ifdef ROCKET_HAS_128
 static_assert(is_signed_v<i128>);
 static_assert(is_unsigned_v<u128>);
 #endif
 static_assert(is_same_v<decltype(1.0F), f32>);
 static_assert(is_same_v<decltype(1.0), f64>);
-#ifdef ROCKET_HAVE_128
+#ifdef ROCKET_HAS_128
 static_assert(is_signed_v<f128>);
 #endif
 
 // `TEST` ---------------------------------------------------------------------------------------------------
 
-#ifdef ROCKET_HAVE_128
+#ifdef ROCKET_HAS_128
 
 TEST(rocket, i128OpInput) {
   using compareType = i32;
@@ -409,6 +409,6 @@ TEST(base, u128OpOutput) {
   }
 }
 
-#endif // ROCKET_HAVE_128
+#endif // ROCKET_HAS_128
 
 // EOF

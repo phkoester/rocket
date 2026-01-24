@@ -3,7 +3,7 @@
  *
  * Rocket base header.
  *
- * Contains very basic types declarations.
+ * Contains very basic types and declarations.
  *
  * Basic data types used in Rocket:
  *
@@ -51,7 +51,7 @@
 #endif
 
 #ifndef ROCKET_CXX_COMPILER_MSVC
-#define ROCKET_HAVE_128
+  #define ROCKET_HAS_128
 #endif
 
 #pragma GCC diagnostic ignored "-Wignored-attributes"
@@ -79,13 +79,13 @@ using i32 = int32_t; ///< A signed 32-bit integer.
 using u32 = uint32_t; ///< An unsigned 32-bit integer.
 using i64 = int64_t; ///< A signed 64-bit integer.
 using u64 = uint64_t; ///< An unsigned 64-bit integer.
-
-using f32 = std_float; ///< A 32-bit floating point.
-using f64 = std_double; ///< A 64-bit floating point.
-
-#ifdef ROCKET_HAVE_128
+#ifdef ROCKET_HAS_128
 using i128 = __int128; ///< A signed 128-bit integer.
 using u128 = unsigned __int128; ///< An unsigned 128-bit integer.
+#endif
+using f32 = std_float; ///< A 32-bit floating point.
+using f64 = std_double; ///< A 64-bit floating point.
+#ifdef ROCKET_HAS_128
 using f128 = std_long_double; ///< A 128-bit floating point.
 #endif
 
@@ -100,20 +100,20 @@ static_assert(sizeof(i32) == 4);
 static_assert(sizeof(u32) == 4);
 static_assert(sizeof(i64) == 8);
 static_assert(sizeof(u64) == 8);
-#ifdef ROCKET_HAVE_128
+#ifdef ROCKET_HAS_128
 static_assert(sizeof(i128) == 16);
 static_assert(sizeof(i128) == 16);
 #endif
 static_assert(sizeof(f32) == 4);
 static_assert(sizeof(f64) == 8);
-#ifdef ROCKET_HAVE_128
+#ifdef ROCKET_HAS_128
 static_assert(sizeof(f128) == 16);
 #endif
 static_assert(sizeof(void*) == 8);
 
 // I/O stream support for 128-bit data types ----------------------------------------------------------------
 
-#ifdef ROCKET_HAVE_128
+#ifdef ROCKET_HAS_128
 
 /// @op_input{#i128}
 std::istream& operator>>(std::istream& lhs, i128& rhs);
@@ -127,7 +127,7 @@ std::istream& operator>>(std::istream& lhs, u128& rhs);
 /// @op_output{#u128}
 std::ostream& operator<<(std::ostream& lhs, u128 rhs);
 
-#endif // ROCKET_HAVE_128
+#endif // ROCKET_HAS_128
 
 namespace rocket {
 
@@ -143,7 +143,7 @@ constexpr u64 NPOS = -1;
 /**
  * A NOP function that helps to suppress warnings about unused variables.
  *
- * @tparam T... the types of @p args
+ * @tparam T... the types of the arguments
  */
 template<typename... T>
 constexpr void nop(T&&...) {}

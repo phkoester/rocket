@@ -6,14 +6,24 @@
 
 #pragma once
 
+#include "rocket/macro.h"
 #include "rocket/str/StringConvert.h"
 
 #include <cstdlib>
 #include <optional>
 #include <string_view>
+#include <unordered_map>
 #include <vector>
 
 namespace rocket::system {
+
+namespace internal {
+
+// Internal -------------------------------------------------------------------------------------------------
+
+extern std::recursive_mutex envMutex;
+
+} // namespace internal
 
 // Functions ------------------------------------------------------------------------------------------------
 
@@ -59,6 +69,14 @@ namespace env {
 // Environment ----------------------------------------------------------------------------------------------
 
 /**
+ * Returns all environment variables as a set of name-value pairs.
+ *
+ * @return a set of name-value pairs
+ */
+std::unordered_map<std::string_view, std::string_view>
+get();
+
+/**
  * Returns the value of an environment variable. If the string conversion fails, this function returns null.
  *
  * @tparam T the type to convert a string value to
@@ -69,6 +87,8 @@ namespace env {
 template<typename T>
 std::optional<T>
 get(const std::string& name) {
+  ROCKET_MUTEX_LOCK(internal::envMutex);
+
   const char* p = getenv(name.c_str());
   if (not p)
     return std::nullopt;
@@ -87,6 +107,8 @@ get(const std::string& name) {
 template<typename T>
 inline void
 set(const std::string& name, T&& value, bool replace = true) {
+  ROCKET_MUTEX_LOCK(internal::envMutex);
+
   setenv(name.c_str(), fmt::format("{}", std::forward<T>(value)).c_str(), replace ? 1 : 0);
 }
 

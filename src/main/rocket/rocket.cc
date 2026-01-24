@@ -4,7 +4,7 @@
 
 #include "rocket.h"
 
-#ifdef ROCKET_HAVE_128
+#ifdef ROCKET_HAS_128
 
 #include <iostream>
 
@@ -218,6 +218,6 @@ operator<<(ostream& lhs, u128 rhs) {
   return lhs << buf;
 }
 
-#endif // ROCKET_HAVE_128
+#endif // ROCKET_HAS_128
 
 // EOF

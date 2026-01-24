@@ -92,6 +92,11 @@ endif
 test: build
 	ctest $(CTEST_FLAGS) --preset $(PRESET)
 
+.PHONY: test-terminal
+test-terminal: build
+	ROCKET_TEST_TERMINAL=1 $(BUILD_DIR)/src/test/test-rocket-system-terminal
+	ROCKET_TEST_TERMINAL=1 $(BUILD_DIR)/src/test/test-rocket-unicode-Character
+
 # Manual install to `/usr/local`:
 #
 #   sudo cmake --install build/$GAIA_BUILD_TYPE
