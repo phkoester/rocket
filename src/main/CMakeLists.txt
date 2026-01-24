@@ -117,7 +117,7 @@ target_compile_definitions(rocket
 target_compile_features(rocket PUBLIC ${COMPILE_FEATURES})
 target_compile_options(rocket PUBLIC ${COMPILE_FLAGS})
 target_link_libraries(rocket
-  PUBLIC ${ROCKET_BOOST_LINK_TARGETS} fmt::fmt-header-only scn::scn
+  PUBLIC ${ROCKET_BOOST_LINK_TARGETS} Boost::int128 fmt::fmt-header-only scn::scn
   PRIVATE ICU::uc stdc++_libbacktrace
 )
 

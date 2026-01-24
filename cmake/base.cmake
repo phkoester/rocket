@@ -72,13 +72,18 @@ else()
   )
 
   set(BOOST_ENABLE_CMAKE ON)
-  set(BOOST_INCLUDE_LIBRARIES bimap headers preprocessor)
+  set(BOOST_INCLUDE_LIBRARIES bimap headers multiprecision preprocessor)
   # Build static libraries
   set(BUILD_SHARED_LIBS OFF)
   FetchContent_MakeAvailable(Boost)
   set(BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS_DEFAULT})
 
-  set(ROCKET_BOOST_LINK_TARGETS Boost::bimap Boost::headers Boost::preprocessor)
+  set(ROCKET_BOOST_LINK_TARGETS
+    Boost::bimap
+    Boost::headers
+    Boost::multiprecision
+    Boost::preprocessor
+  )
   set(ROCKET_BOOST_EXPORT_TARGETS
     boost_assert
     boost_bimap
@@ -102,6 +107,7 @@ else()
     boost_mp11
     boost_mpl
     boost_multi_index
+    boost_multiprecision
     boost_optional
     boost_predef
     boost_preprocessor
@@ -114,6 +120,22 @@ else()
     boost_utility
   )
 endif()
+
+# Boost.int128 ..............................................................................................
+
+# if(WIN32) # XXX
+FetchContent_Declare(
+  int128
+  GIT_REPOSITORY   https://github.com/cppalliance/int128.git
+  GIT_TAG          v1.5.1
+  GIT_PROGRESS   TRUE
+  SYSTEM
+  EXCLUDE_FROM_ALL
+)
+FetchContent_MakeAvailable(int128)
+list(APPEND ROCKET_BOOST_LINK_TARGETS Boost::int128)
+list(APPEND ROCKET_BOOST_EXPORT_TARGETS boost_int128)
+# endif()
 
 # fmt .......................................................................................................
 
