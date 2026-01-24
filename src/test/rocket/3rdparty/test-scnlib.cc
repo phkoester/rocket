@@ -5,6 +5,7 @@
 #include "rocket-test/rocket-test.h"
 
 #include "rocket/format/std.h"
+#include "rocket/scan/scan.h"
 #include "rocket/system/system.h"
 
 #include <scn/chrono.h>

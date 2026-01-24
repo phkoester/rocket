@@ -9,8 +9,8 @@
 #pragma once
 
 #include "rocket/Exception.h"
-#include "rocket/Type.h"
 #include "rocket/format/format.h"
+#include "rocket/unicode/ConvertTo.h"
 
 /// @attention This requires modifying `<fmt/std.h>`!
 #define FMT_STD_NO_EXCEPTION_FORMATTER
@@ -18,7 +18,6 @@
 #define FMT_STD_NO_OPTIONAL_FORMATTER
 /// @attention This requires modifying `<fmt/std.h>`!
 #define FMT_STD_NO_VARIANT_FORMATTER
-
 #include "rocket/3rdparty/fmt/std.h"
 
 #include <optional>
@@ -44,11 +43,11 @@ struct formatter<Exception, C> {
 
     auto out = ctx.out();
     if (withType_) {
-      auto type = rocket::Type::of(val);
+      std::string typeName = fmt::format("{}", typeid(val));
       if constexpr (std::is_same_v<C, char>) {
-        out = format_to(out, "`{}`: ", rocket::unicode::ConvertTo<C>().apply(type.name()));
+        out = format_to(out, "`{}`: ", rocket::unicode::ConvertTo<C>().apply(typeName));
       } else {
-        out = format_to(out, U"`{}`: ", rocket::unicode::ConvertTo<C>().apply(type.name()));
+        out = format_to(out, U"`{}`: ", rocket::unicode::ConvertTo<C>().apply(typeName));
       }
     }
 

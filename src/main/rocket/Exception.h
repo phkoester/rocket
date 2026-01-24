@@ -6,7 +6,6 @@
 
 #pragma once
 
-#include "rocket/Type.h"
 #include "rocket/nio/nio-fwd.h"
 
 #include <optional>
@@ -159,7 +158,7 @@ struct Overflow : Exception, std::overflow_error {
    * @param st the stack trace
    */
   explicit Overflow(
-      const Type& type,
+      const std::type_info& type,
       std::optional<std::source_location>&& sl = ROCKET_EXCEPTION_SL,
       std::optional<std::stacktrace>&& st = ROCKET_EXCEPTION_ST) :
       Overflow(type, "", std::move(sl), std::move(st)) {}
@@ -173,7 +172,7 @@ struct Overflow : Exception, std::overflow_error {
    * @param st the stack trace
    */
   Overflow(
-    const Type& type,
+    const std::type_info& type,
     std::string_view msg,
     std::optional<std::source_location>&& sl = ROCKET_EXCEPTION_SL,
     std::optional<std::stacktrace>&& st = ROCKET_EXCEPTION_ST);

@@ -5,12 +5,15 @@
 #include "unicode.h"
 
 #include "rocket/assert.h"
-#include "rocket/numeric.h"
+
+#include <boost/safe_numerics/safe_integer.hpp>
 
 #include <unicode/uchar.h>
 #include <unicode/unistr.h>
 #include <unicode/utf8.h>
 #include <unicode/utypes.h>
+
+using boost::safe_numerics::safe;
 
 using namespace icu;
 using namespace rocket;
@@ -114,9 +117,9 @@ nextCodePoint(string_view str, u64& pos) {
   const auto size = str.size();
   ROCKET_CHECK(pos, pos < size);
   UChar32 cp;
-  i32 i = to<i32>(pos);
-  U8_NEXT(str.data(), i, to<i32>(size), cp);
-  pos = to<u64>(i);
+  i32 i = safe<i32>(pos);
+  U8_NEXT(str.data(), i, safe<i32>(size), cp);
+  pos = safe<u64>(i);
   return static_cast<char32>(cp);
 }
 

@@ -17,15 +17,13 @@ TEST(StringConvert, bool) {
 
   EXPECT_EQ(toType<type>("false"), false);
   EXPECT_EQ(toType<type>("0"), false);
+  EXPECT_EQ(toType<type>("NIL"), false);
+  EXPECT_EQ(toType<type>("NONE"), false);
+  EXPECT_EQ(toType<type>("NULL"), false);
+  EXPECT_EQ(toType<type>("oFF"), false);
   EXPECT_EQ(toType<type>("true"), true);
   EXPECT_EQ(toType<type>("1"), true);
-
-  EXPECT_THAT(
-      [] { toType<type>("foo"); },
-      ThrowsMessage<InvalidState>(HasSubstr("Cannot scan \"foo\" as `bool`")));
-  EXPECT_THAT(
-      [] { toType<type>("falsex"); },
-      ThrowsMessage<InvalidState>(HasSubstr("Cannot scan \"falsex\" as `bool`")));
+  EXPECT_EQ(toType<type>("42"), true);
 }
 
 TEST(StringConvert, i32) {

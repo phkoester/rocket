@@ -4,6 +4,8 @@
 
 #include "rocket.h"
 
+#ifdef ROCKET_HAVE_128
+
 #include <iostream>
 
 using namespace rocket;
@@ -215,5 +217,7 @@ operator<<(ostream& lhs, u128 rhs) {
   u128ToString(buf, rhs);
   return lhs << buf;
 }
+
+#endif // ROCKET_HAVE_128
 
 // EOF

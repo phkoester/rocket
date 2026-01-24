@@ -13,6 +13,7 @@
 #include <optional>
 #include <span>
 #include <tuple>
+#include <type_traits>
 
 namespace rocket {
 

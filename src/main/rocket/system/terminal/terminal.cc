@@ -7,14 +7,17 @@
 #include "rocket/Guard.h"
 #include "rocket/InputFailure.h"
 #include "rocket/assert.h"
-#include "rocket/numeric.h"
 #include "rocket/scan/scan.h"
+
+#include <boost/safe_numerics/safe_integer.hpp>
 
 #include <termios.h>
 #include <sys/ioctl.h>
 
 using namespace rocket::system::terminal;
 using namespace std;
+
+using boost::safe_numerics::safe;
 
 namespace rocket::system::terminal {
 
@@ -125,7 +128,7 @@ size(nio::Io& io) {
   if (res != 0) {
     return nullopt;
   }
-  return make_pair(to<u64>(ws.ws_col), to<u64>(ws.ws_row));
+  return make_pair(safe<u64>(ws.ws_col), safe<u64>(ws.ws_row));
 }
 
 } // namespace rocket::system::terminal

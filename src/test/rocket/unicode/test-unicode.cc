@@ -11,10 +11,10 @@ using namespace rocket::unicode;
 
 // Constants ------------------------------------------------------------------------------------------------
 
-constexpr char TWO_BYTES    = 0b1101'1111;
-constexpr char THREE_BYTES  = 0b1110'1111;
-constexpr char FOUR_BYTES   = 0b1111'0111;
-constexpr char CONT         = 0b1011'1111;
+constexpr char TWO_BYTES    = static_cast<char>(0b1101'1111);
+constexpr char THREE_BYTES  = static_cast<char>(0b1110'1111);
+constexpr char FOUR_BYTES   = static_cast<char>(0b1111'0111);
+constexpr char CONT         = static_cast<char>(0b1011'1111);
 
 constexpr char32 D800       = static_cast<char32>(0xD800U);
 constexpr char32 MAX_PLUS_1 = static_cast<char32>(0x10FFFFU + 1);

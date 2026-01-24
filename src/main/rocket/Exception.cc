@@ -5,6 +5,7 @@
 #include "Exception.h"
 
 #include "rocket/assert.h"
+#include "rocket/format/std.h"
 #include "rocket/str/message/message.h"
 
 using namespace rocket;
@@ -15,7 +16,7 @@ namespace {
 // Local functions ------------------------------------------------------------------------------------------
 
 void printThrown(
-  nio::Sink&, u64, const optional<Type>&, const optional<string>&, const optional<stacktrace>&);
+  nio::Sink&, u64, const type_info*, const optional<string>&, const optional<stacktrace>&);
 
 string
 getWhat(i32 val) {
@@ -63,28 +64,29 @@ printExceptionPtr(nio::Sink& out, u64 level, const exception_ptr& ptr) {
     rethrow_exception(ptr);
   } catch (const exception& ex) {
     const Exception* p = dynamic_cast<const Exception*>(&ex);
-    printThrown(out, level, Type::of(ex), getWhat(ex), p ? p->stackTrace() : nullopt);
+    printThrown(out, level, &typeid(ex), getWhat(ex), p ? p->stackTrace() : nullopt);
     try {
       rethrow_if_nested(ex);
     } catch (...) {
       printExceptionPtr(out, level + 1, current_exception());
     }
   } catch (i32 val) {
-    printThrown(out, level, Type::of(val), getWhat(val), nullopt);
+    printThrown(out, level, &typeid(val), getWhat(val), nullopt);
   } catch (i64 val) {
-    printThrown(out, level, Type::of(val), getWhat(val), nullopt);
+    printThrown(out, level, &typeid(val), getWhat(val), nullopt);
   } catch (const char* val) {
-    printThrown(out, level, Type::of(val), getWhat(val), nullopt);
+    printThrown(out, level, &typeid(val), getWhat(val), nullopt);
   } catch (const string& val) {
-    printThrown(out, level, Type::of(val), getWhat(val), nullopt);
+    printThrown(out, level, &typeid(val), getWhat(val), nullopt);
   } catch (string_view val) { // cppcheck-suppress catchExceptionByValue
-    printThrown(out, level, Type::of(val), getWhat(val), nullopt);
+    printThrown(out, level, &typeid(val), getWhat(val), nullopt);
   } catch (...) {
-    const type_info* info = current_exception().__cxa_exception_type();
-    if (info)
-      printThrown(out, level, Type(*info), nullopt, nullopt);
-    else
-      printThrown(out, level, nullopt, nullopt, nullopt);
+    const type_info* type = current_exception().__cxa_exception_type();
+    if (type) {
+      printThrown(out, level, type, nullopt, nullopt);
+    } else {
+      printThrown(out, level, nullptr, nullopt, nullopt);
+    }
   }
 }
 
@@ -92,7 +94,7 @@ void
 printThrown(
     nio::Sink& out,
     u64 level,
-    const optional<Type>& type,
+    const type_info* type,
     const optional<string>& what,
     const optional<stacktrace>& st) {
   nio::StringSink instanceOf;
@@ -178,7 +180,7 @@ InvalidState::InvalidState(
 // `Overflow` -----------------------------------------------------------------------------------------------
 
 Overflow::Overflow(
-  const Type& type,
+  const type_info& type,
   string_view msg,
   optional<source_location>&& sl,
   optional<stacktrace>&& st) :
@@ -190,7 +192,7 @@ Overflow::Overflow(
 void
 printException(nio::Sink& out, const exception& ex) {
   const Exception* p = dynamic_cast<const Exception*>(&ex);
-  printThrown(out, 0, Type::of(ex), getWhat(ex), p ? p->stackTrace() : nullopt);
+  printThrown(out, 0, &typeid(ex), getWhat(ex), p ? p->stackTrace() : nullopt);
 
   try {
      rethrow_if_nested(ex);

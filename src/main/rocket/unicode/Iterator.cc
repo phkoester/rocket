@@ -25,6 +25,10 @@ struct IteratorImpl {
   unique_ptr<icu::BreakIterator> iter;
 };
 
+struct IteratorImplDelete {
+  void operator()(IteratorImpl* val) { delete val; }
+};
+
 // `Iterator` -----------------------------------------------------------------------------------------------
 
 template<typename C> requires IsChar<C>

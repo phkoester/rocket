@@ -6,9 +6,11 @@
 
 #include "rocket-test/rocket-test.h"
 
-#include "rocket/numeric.h"
+#include <boost/safe_numerics/safe_integer.hpp>
 
 #include <unicode/utf8.h>
+
+using boost::safe_numerics::safe;
 
 // TEST -----------------------------------------------------------------------------------------------------
 
@@ -16,9 +18,9 @@ TEST(icu, U8_NEXT) {
   auto str = "hällo"sv;
   i32 i = 0;
   UChar32 cp;
-  U8_NEXT(str.data(), i, to<i32>(str.size()), cp);
+  U8_NEXT(str.data(), i, safe<i32>(str.size()), cp);
   EXPECT_EQ(cp, 'h');
-  U8_NEXT(str.data(), i, to<i32>(str.size()), cp);
+  U8_NEXT(str.data(), i, safe<i32>(str.size()), cp);
   EXPECT_EQ(cp, 0xE4); // U+00E4 (LATIN SMALL LETTER A WITH DIAERESIS)
 }
 

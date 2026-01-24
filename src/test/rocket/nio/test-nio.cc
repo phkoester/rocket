@@ -305,8 +305,7 @@ TEST(nio, StringSourceSeek) {
   in.seek(-11, SeekMode::cur);
   EXPECT_EQ(in.tell(), 117);
 
-  in.seek(-1);
-  EXPECT_EQ(in.tell(), 0);
+  EXPECT_THAT([&] { in.seek(-1); }, Throws<system_error>());
 
   in.seek(0, SeekMode::end);
   EXPECT_EQ(in.tell(), 128);
@@ -317,8 +316,7 @@ TEST(nio, StringSourceSeek) {
   in.seek(3, SeekMode::end);
   EXPECT_EQ(in.tell(), 128);
 
-  in.seek(-200, SeekMode::end);
-  EXPECT_EQ(in.tell(), 0);
+  EXPECT_THAT([&] { in.seek(-200, SeekMode::end); }, Throws<system_error>());
 }
 
 // EOF

@@ -5,7 +5,6 @@
 #include "nio.h"
 
 #include "rocket/assert.h"
-#include "rocket/numeric.h"
 
 #include <cstdio>
 #include <iostream>
@@ -14,6 +13,8 @@
 using namespace rocket;
 using namespace rocket::nio;
 using namespace std;
+
+using boost::safe_numerics::safe;
 
 /* Logging --------------------------------------------------------------------------------------------------
 
@@ -744,7 +745,7 @@ FileSource::seek(i64 offset, SeekMode mode) {
 
 
   // The type of the `offset` parameter is `std_long`, se we can directly pass `offset`
-  static_assert(is_same_v<std_long, decltype(offset)>);
+  static_assert(is_same_v<decltype(offset), std_long>);
   i32 ret = std::fseek(file_, offset, origin);
   LOG("fseek=" << ret << ", ferror=" << ferror(file_));
   if (ret != 0) {
@@ -944,9 +945,9 @@ StringSource::read(span<char> out) {
     return 0;
   }
 
-  u64 ret = min(out.size(), in_.size() - pos_);
+  u64 ret = min(out.size(), in_.size() - static_cast<u64>(pos_));
   if (ret > 0) {
-    memcpy(out.data(), in_.data() + pos_, ret);
+    memcpy(out.data(), in_.data() + static_cast<u64>(pos_), ret);
     pos_ += ret;
   }
   return ret;
@@ -958,24 +959,26 @@ StringSource::seek(i64 offset, SeekMode mode) {
     return error_;
   }
 
-  i128 newPos;
   switch (mode) {
   case SeekMode::beg:
-    newPos = to<i128>(offset);
+    pos_ = offset;
     break;
   case SeekMode::cur:
-    newPos = add<i128>(pos_, offset);
+    if (offset >= 0) {
+      pos_ += offset;
+    } else {
+      pos_ -= (-offset);
+    }
     break;
   case SeekMode::end:
-    newPos = add<i128>(in_.size(), offset);
+    if (offset >= 0) {
+      pos_ = safe<u64>(in_.size()) + offset;
+    } else {
+      pos_ = safe<u64>(in_.size()) - (-offset);
+    }
     break;
-  default:
-    ROCKET_FAIL_UNREACHABLE_CODE();
   }
-
-  newPos = max<i128>(0, newPos);
-  newPos = min<i128>(in_.size(), newPos);
-  pos_ = static_cast<u64>(newPos);
+  pos_ = min(static_cast<u64>(pos_), in_.size());
   return 0;
 }
 

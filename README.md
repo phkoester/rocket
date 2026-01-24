@@ -17,21 +17,22 @@ Some notable environment variables respected by CMake:
 
 CMake variables:
 
-| Name                | Type     | Default                           | Description
-| :------------------ | :------- | :-------------------------------- | :----------
-| `BUILD_SHARED_LIBS` | `BOOL`   | `OFF`                             | Build shared libraries
-| `BUILD_TESTING`     | `BOOL`   | `ON`                              | Enable testing and build tests
-| `CMAKE_BUILD_TYPE`  | `STRING` | `Release` if single configuration | The build type (`Debug` or `Release`)
-| `ROCKET_BENCH`      | `BOOL`   | `OFF`                             | Enable benchmarking and build benchmarks
-| `ROCKET_TEST`       | `BOOL`   | `ON` if master project            | Enable testing and build tests
+| Name                        | Type     | Default                           | Description
+| :-------------------------- | :------- | :-------------------------------- | :----------
+| `BUILD_SHARED_LIBS`         | `BOOL`   | `OFF`                             | Build shared libraries
+| `BUILD_TESTING`             | `BOOL`   | `ON`                              | Enable testing and build tests
+| `CMAKE_BUILD_TYPE`          | `STRING` | `Release` if single configuration | The build type (`Debug` or `Release`)
+| `ROCKET_BENCH`              | `BOOL`   | `OFF`                             | Enable benchmarking and build benchmarks
+| `ROCKET_TEST`               | `BOOL`   | `ON` if master project            | Enable testing and build tests
+| `ROCKET_USE_EXTERNAL_BOOST` | `BOOL`   | `ON`                              | Use external Boost library
 
 ### Linux
 
 ```bash
-cmake -B build
-cmake --build build
-ctest --test-dir build
-cmake --install build --prefix install
+cmake --preset linux-release
+cmake --build --preset linux-release
+ctest --preset linux-release
+cmake --install build/release --prefix install
 ```
 
 ### Windows
@@ -39,15 +40,15 @@ cmake --install build --prefix install
 ```bash
 cmake --preset windows
 cmake --build --preset windows-release
-ctest --test-dir build -C Release
+ctest --preset windows-release
 cmake --install build --config Release --prefix install
 ```
 
 ## Environment Variables
 
-| Name                   | Type     | Description
-| :--------------------- | :------- | :----------
-| `ROCKET_EXIT`          | `bool`   | If truthy, `std::exit` is called rather than `std::quick_exit`.
-| `ROCKET_LOG_FMT`       | `string` | Default log format.
-| `ROCKET_QUICK_EXIT`    | `bool`   | If truthy, `std::quick_exit` is called rather than `std::exit`.
-| `ROCKET_TEST_TERMINAL` | `bool`   | If truthy, some tests and benchmarks may perform additional terminal tests and produce more terminal output.
+| Name                   | Type     | Stage   | Description
+| :--------------------- | :------- | :------ | :----------
+| `ROCKET_EXIT`          | `bool`   | Runtime | If truthy, `std::exit` is called rather than `std::quick_exit`.
+| `ROCKET_LOG_FMT`       | `string` | Runtime | Default log format.
+| `ROCKET_QUICK_EXIT`    | `bool`   | Runtime | If truthy, `std::quick_exit` is called rather than `std::exit`.
+| `ROCKET_TEST_TERMINAL` | `bool`   | Test    | If truthy, some tests and benchmarks may perform additional terminal tests and produce more terminal output.

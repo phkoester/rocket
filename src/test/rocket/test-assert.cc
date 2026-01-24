@@ -16,7 +16,6 @@ const char* oops() { oopsCalled = true; return "oops"; }
 // `TEST` ---------------------------------------------------------------------------------------------------
 
 TEST(assert, RocketAssertTrue) {
-  EXPECT_EQ(2, 3);
   EXPECT_NO_THROW({ ROCKET_ASSERT(true); });
 
   oopsCalled = false;

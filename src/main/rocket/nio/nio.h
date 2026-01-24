@@ -8,6 +8,8 @@
 
 #include "rocket/format/format.h"
 
+#include <boost/safe_numerics/safe_integer.hpp>
+
 #include <iosfwd>
 #include <memory>
 #include <span>
@@ -739,7 +741,7 @@ struct StringSource : Source {
 private:
 
   std::string_view in_;
-  u64 pos_ = 0;
+  boost::safe_numerics::safe<u64> pos_ = 0;
 };
 
 // Variables ------------------------------------------------------------------------------------------------

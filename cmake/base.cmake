@@ -4,6 +4,12 @@
 
 # Check prerequisites ---------------------------------------------------------------------------------------
 
+if(WIN32)
+  set(IS_WINDOWS TRUE)
+else()
+  set(IS_WINDOWS FALSE)
+endif()
+
 if(NOT(LINUX) AND NOT(WIN32))
   message(FATAL_ERROR "Unsupported OS ${CMAKE_SYSTEM_NAME}")
 endif()
@@ -18,8 +24,41 @@ if (NOT(CMAKE_CXX_COMPILER_ID STREQUAL "Clang") AND
   message(FATAL_ERROR "Unsupported C++ compiler ${CMAKE_CXX_COMPILER_ID}")
 endif()
 
+# Configuration ---------------------------------------------------------------------------------------------
+#
+# - Defined variables take precedence over environment variables.
+# - Environment variables take precedence over defaults.
+#
+# -----------------------------------------------------------------------------------------------------------
+
+function(AddVar name type default doc)
+  if(NOT DEFINED ${name})
+    if(NOT $ENV{${name}} STREQUAL "")
+      set(${name} $ENV{${name}} CACHE ${type} "${doc}")
+      message(STATUS "Setting ${name} by environment: ${${name}}")
+    else()
+      set(${name} ${default} CACHE ${type} "${doc}")
+      message(STATUS "Setting ${name} to default: ${${name}}")
+    endif()
+  else()
+    message(STATUS "Found ${name}: ${${name}}")
+  endif()
+endfunction()
+
+AddVar(BUILD_SHARED_LIBS         BOOL OFF                      "Build shared libraries")
+AddVar(BUILD_TESTING             BOOL ON                       "Enable testing and build tests")
+AddVar(ROCKET_BENCH              BOOL OFF                      "Enable benchmarking and build benchmarks")
+AddVar(ROCKET_TEST               BOOL ${ROCKET_MASTER_PROJECT} "Enable testing and build tests")
+AddVar(ROCKET_USE_EXTERNAL_BOOST BOOL ON                       "Use external Boost library")
+
+if(NOT DEFINED CMAKE_CONFIGURATION_TYPES)
+  AddVar(CMAKE_BUILD_TYPE STRING Release "The build type")
+endif()
+
 # General settings ------------------------------------------------------------------------------------------
 
+set(CMAKE_CXX_EXTENSIONS ON) # XXX
+set(CMAKE_CXX_STANDARD 23) # XXX
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
@@ -27,26 +66,17 @@ set(FETCHCONTENT_QUIET FALSE)
 
 set(BUILD_SHARED_LIBS_DEFAULT ${BUILD_SHARED_LIBS})
 
-# Select build type -----------------------------------------------------------------------------------------
+# Set compiler definitions, features, and options -----------------------------------------------------------
 
-if(NOT DEFINED CMAKE_CONFIGURATION_TYPES)
-  if(NOT DEFINED CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE Release)
-  endif()
-  message(STATUS "Using build type ${CMAKE_BUILD_TYPE}")
-endif()
-
-# Set general compiler definitions, features, and options ---------------------------------------------------
-
-set(CMAKE_CXX_STANDARD 23) # XXX
 set(COMPILE_DEFS)
 set(COMPILE_FEATURES cxx_std_23)
 set(COMPILE_FLAGS)
+set(ROCKET_COMPILE_DEFS)
 
 # Set OS-specific compiler options --------------------------------------------------------------------------
 
 if(LINUX)
-  list(APPEND COMPILE_FLAGS -pedantic -Wall -Wextra)
+  list(APPEND COMPILE_FLAGS -Wall -Wextra)
 elseif(WIN32)
   # XXX list(APPEND COMPILE_FLAGS -Wall)
 endif()
@@ -57,99 +87,43 @@ include(FetchContent)
 
 # Boost .....................................................................................................
 
-find_package(Boost 1.83)
+if(ROCKET_USE_EXTERNAL_BOOST)
+  find_package(Boost 1.83)
+endif()
 if(Boost_FOUND)
   set(ROCKET_BOOST_LINK_TARGETS Boost::headers)
   set(ROCKET_BOOST_EXPORT_TARGETS)
 else()
+  # XXX USES_TERMINAL_DOWNLOAD TRUE
+  # XXX DOWNLOAD_NO_EXTRACT FALSE
   FetchContent_Declare(
     Boost
     URL https://github.com/boostorg/boost/releases/download/boost-1.84.0/boost-1.84.0.7z
-    USES_TERMINAL_DOWNLOAD TRUE
-    DOWNLOAD_NO_EXTRACT FALSE
     SYSTEM
     EXCLUDE_FROM_ALL
   )
 
+  set(ROCKET_BOOST_LIBS bimap headers preprocessor safe_numerics)
+  set(ROCKET_BOOST_NS_LIBS ${ROCKET_BOOST_LIBS})
+  list(TRANSFORM ROCKET_BOOST_NS_LIBS PREPEND Boost::)
+
   set(BOOST_ENABLE_CMAKE ON)
-  set(BOOST_INCLUDE_LIBRARIES bimap headers multiprecision preprocessor)
+  set(BOOST_INCLUDE_LIBRARIES ${ROCKET_BOOST_LIBS})
   # Build static libraries
   set(BUILD_SHARED_LIBS OFF)
   FetchContent_MakeAvailable(Boost)
   set(BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS_DEFAULT})
 
-  set(ROCKET_BOOST_LINK_TARGETS
-    Boost::bimap
-    Boost::headers
-    Boost::multiprecision
-    Boost::preprocessor
-  )
+  set(ROCKET_BOOST_LINK_TARGETS ${ROCKET_BOOST_NS_LIBS})
   set(ROCKET_BOOST_EXPORT_TARGETS
-    boost_array
-    boost_assert
-    boost_bimap
-    boost_bind
-    boost_concept_check
-    boost_config
-    boost_container
-    boost_container_hash
-    boost_conversion
-    boost_core
-    boost_describe
-    boost_detail
-    boost_dynamic_bitset
-    boost_function
-    boost_functional
-    boost_fusion
-    boost_headers
-    boost_intrusive
-    boost_function_types
-    boost_io
-    boost_integer
-    boost_iterator
-    boost_lambda
-    boost_math
-    boost_numeric_conversion
-    boost_lexical_cast
-    boost_move
-    boost_mp11
-    boost_mpl
-    boost_multi_index
-    boost_multiprecision
-    boost_optional
-    boost_predef
-    boost_preprocessor
-    boost_random
-    boost_range
-    boost_regex
-    boost_smart_ptr
-    boost_static_assert
-    boost_system
-    boost_tuple
-    boost_type_traits
-    boost_typeof
-    boost_throw_exception
-    boost_utility
-    boost_variant2
-    boost_winapi
+    boost_assert boost_bimap boost_bind boost_concept_check boost_config boost_container_hash boost_core
+    boost_describe boost_detail boost_function boost_functional boost_fusion boost_headers
+    boost_function_types boost_io boost_integer boost_iterator boost_lambda boost_logic
+    boost_move boost_mp11 boost_mpl boost_multi_index boost_optional boost_predef boost_preprocessor
+    boost_safe_numerics boost_smart_ptr boost_static_assert boost_tuple boost_type_traits
+    boost_throw_exception boost_typeof boost_utility
   )
 endif()
-
-# Boost.int128 ..............................................................................................
-
-# if(WIN32) # XXX
-FetchContent_Declare(
-  int128
-  GIT_REPOSITORY   https://github.com/cppalliance/int128.git
-  GIT_TAG          v1.5.1
-  GIT_PROGRESS   TRUE
-  SYSTEM
-  EXCLUDE_FROM_ALL
-)
-FetchContent_MakeAvailable(int128)
-list(APPEND ROCKET_BOOST_LINK_TARGETS Boost::int128)
-list(APPEND ROCKET_BOOST_EXPORT_TARGETS boost_int128)
-# endif()
 
 # fmt .......................................................................................................
 
@@ -222,6 +196,7 @@ function(AddBench name dir)
   # add_test(NAME ${name} COMMAND ${name} WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/src/bench/${dir})
   gtest_discover_tests(${name}
     DISCOVERY_MODE POST_BUILD
+    EXTRA_ARGS --gtest_catch_exceptions=0
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/src/bench/${dir}
   )
 endfunction()
@@ -234,6 +209,7 @@ function(AddTest name dir)
   # add_test(NAME ${name} COMMAND ${name} WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/src/test/${dir})
   gtest_discover_tests(${name}
     DISCOVERY_MODE POST_BUILD
+    EXTRA_ARGS --gtest_catch_exceptions=0
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/src/test/${dir}
   )
 endfunction()

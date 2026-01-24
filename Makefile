@@ -9,6 +9,8 @@
 #     The build type: `debug` or `release`
 # - GAIA_CXX_TOOLCHAIN
 #     The C++ toolchain: `gnu` or `llvm`
+# - JOBS
+#     Number of jobs for gmake
 # - TEST
 #     Run tests matching the pattern
 # - VERBOSE
@@ -28,17 +30,22 @@ ifeq ($(GAIA_CXX_TOOLCHAIN),llvm)
   export CXX := clang++
 endif
 
-export MAKEFLAGS := --no-print-directory -j$(($(nproc) / 3 * 2)) -l$(nproc)
-# XXX
 ifneq ($(VERBOSE),)
   CMAKE_TRAILING_FLAGS += -v
-  MAKEFLAGS += --trace
 endif
 
-# XXX -v, make --trace, jobs, --no-print-directory
+GMAKE_FLAGS := --no-print-directory
+ifneq ($(JOBS),)
+  ifneq ($(JOBS),0)
+    GMAKE_FLAGS += -j$(JOBS)
+  endif
+else
+  GMAKE_FLAGS += -j$(GAIA_NPROC_2_3) -l$(GAIA_NPROC)
+endif
+
 .PHONY: build
 build: $(BUILD_DIR)/Makefile
-	cmake $(CMAKE_FLAGS) --build --preset $(PRESET) $(CMAKE_TRAILING_FLAGS)
+	cmake $(CMAKE_FLAGS) --build --preset $(PRESET) $(CMAKE_TRAILING_FLAGS) -- $(GMAKE_FLAGS)
 
 $(BUILD_DIR)/Makefile: $(shell find -name CMakeLists.txt) $(shell find cmake -name "*.cmake")
 	cmake $(CMAKE_FLAGS) --preset $(PRESET)

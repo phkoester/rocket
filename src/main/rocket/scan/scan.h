@@ -8,6 +8,8 @@
 
 #pragma once
 
+#include "rocket/type-traits.h"
+
 #include <scn/scan.h>
 
 // EOF

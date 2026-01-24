@@ -37,7 +37,7 @@ TEST(system, envBool) {
   env::set(name, "1");
   EXPECT_EQ(env::get<type>(name), true);
   env::set(name, "foo");
-  EXPECT_EQ(env::get<type>(name), nullopt);
+  EXPECT_EQ(env::get<type>(name), true);
 }
 
 TEST(system, envF64) {

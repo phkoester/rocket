@@ -6,8 +6,6 @@
 
 # Propressor definitions ....................................................................................
 
-set(ROCKET_COMPILE_DEFS)
-
 if(CMAKE_C_COMPILER_ID STREQUAL "Clang")
   list(APPEND ROCKET_COMPILE_DEFS ROCKET_C_COMPILER_CLANG)
 elseif(CMAKE_C_COMPILER_ID STREQUAL "GNU")
@@ -42,17 +40,17 @@ target_sources(rocket
 
     rocket/Exception.cc
     rocket/rocket.cc
-    rocket/Type.cc
     rocket/3rdparty/scanlib/impl.cc
     rocket/chrono/chrono.cc
     rocket/cl/cl.cc
     rocket/io/io.cc
     rocket/nio/nio.cc
+    rocket/str/Noun.cc
+    rocket/str/str.cc
+    rocket/str/StringConvert.cc
     rocket/str/escape/escape.cc
     rocket/str/location/location.cc
     rocket/str/message/message.cc
-    rocket/str/Noun.cc
-    rocket/str/str.cc
     rocket/system/system.cc
     rocket/system/terminal/terminal.cc
     rocket/unicode/Iterator.cc
@@ -69,14 +67,11 @@ target_sources(rocket
       rocket/InputFailure.h
       rocket/Lazy.h
       rocket/macro.h
-      rocket/numeric.h
       rocket/Process.h
       rocket/rocket.h
-      rocket/Type.h
       rocket/type-traits.h
       rocket/UnorderedBimap.h
       rocket/version.h
-      rocket/3rdparty/boost-spirit-x3.h
       rocket/3rdparty/std.h
       rocket/chrono/chrono.h
       rocket/cl/cl.h
@@ -110,14 +105,13 @@ target_compile_definitions(rocket
   PUBLIC
     ${COMPILE_DEFS}
     ${ROCKET_COMPILE_DEFS}
-    BOOST_SPIRIT_UNICODE
     ROCKET_TEST_PRIVATE=private
     ROCKET_TEST_PROTECTED=protected
 )
 target_compile_features(rocket PUBLIC ${COMPILE_FEATURES})
 target_compile_options(rocket PUBLIC ${COMPILE_FLAGS})
 target_link_libraries(rocket
-  PUBLIC ${ROCKET_BOOST_LINK_TARGETS} Boost::int128 fmt::fmt-header-only scn::scn
+  PUBLIC ${ROCKET_BOOST_LINK_TARGETS} fmt::fmt-header-only scn::scn
   PRIVATE ICU::uc stdc++_libbacktrace
 )
 

@@ -42,19 +42,16 @@ struct StringConvert<bool> {
    *
    * @param str the string to convert
    * @return a `bool` value
-   *
-   * @throw #rocket::InvalidState if @p str cannot be scanned
    */
   Type
   toType(std::string_view str) const {
-    if (str == "false" || str == "0") {
-      return false;
-    } else if (str == "true" || str == "1") {
-      return true;
-    } else {
-      throw InvalidState(message::cannotScanAs(str, rocket::Type::of<Type>()));
-    }
+    // Anything that is not false is true, e.g. "42"!
+    return not isFalse(str);
   }
+
+private:
+
+  static bool isFalse(std::string_view str);
 };
 
 /// @spec_rocket_StringConvert{`char`}
@@ -81,7 +78,7 @@ struct StringConvert<char> {
   Type
   toType(std::string_view str) const {
     if (str.size() != 1) {
-      throw InvalidState(message::cannotScanAs(str, rocket::Type::of<Type>()));
+      throw InvalidState(message::cannotScanAs(str, typeid(Type)));
     }
     return str[0];
   }
@@ -113,7 +110,7 @@ struct StringConvert<I> {
     Type ret;
     is >> ret;
     if (is.fail() || not is.eof()) {
-      throw InvalidState(message::cannotScanAs(str, rocket::Type::of<Type>()));
+      throw InvalidState(message::cannotScanAs(str, typeid(Type)));
     }
     return ret;
   }
@@ -183,7 +180,7 @@ struct StringConvert<F> {
     Type ret;
     is >> ret;
     if (is.fail() || not is.eof()) {
-      throw InvalidState(message::cannotScanAs(str, rocket::Type::of<Type>()));
+      throw InvalidState(message::cannotScanAs(str, typeid(Type)));
     }
     return ret;
   }

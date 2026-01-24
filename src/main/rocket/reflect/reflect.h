@@ -8,6 +8,7 @@
 
 #include "rocket/hash.h"
 #include "rocket/rocket.h"
+#include "rocket/macro.h"
 #include "rocket/format/std.h"
 #include "rocket/nio/nio.h"
 #include "rocket/unicode/ConvertTo.h"
@@ -108,8 +109,8 @@
       format(const ns::cls& val, FormatContext& ctx) const{ \
         auto out = ctx.out(); \
         if (withType_) { \
-          auto type = ::rocket::Type::of(val); \
-          out = ::fmt::detail::write<C>(out, ::rocket::unicode::ConvertTo<C>().apply(type.name())); \
+          std::string typeName = fmt::format("{}", typeid(val)); \
+          out = ::fmt::detail::write<C>(out, ::rocket::unicode::ConvertTo<C>().apply(typeName)); \
         } \
         out = ::rocket::reflect::internal::format<ns::cls, C>(val, ctx, debug_, ns::cls::_name()); \
         return out; \

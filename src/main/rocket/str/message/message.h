@@ -6,11 +6,10 @@
 
 #pragma once
 
-#include "rocket/Type.h"
-
 #include <optional>
 #include <source_location>
 #include <string>
+#include <typeinfo>
 
 namespace rocket::str::message {
 
@@ -23,7 +22,7 @@ namespace rocket::str::message {
  * @param type a #rocket::Type value
  * @return a message
  */
-std::string cannotScanAs(std::string_view input, const Type& type);
+std::string cannotScanAs(std::string_view input, const std::type_info& type);
 
 /**
  * Makes a message saying there is an overflow of type @p type.
@@ -32,7 +31,7 @@ std::string cannotScanAs(std::string_view input, const Type& type);
  * @param msg additional message
  * @return a message
  */
-std::string overflow(const Type& type, std::string_view msg = "");
+std::string overflow(const std::type_info& type, std::string_view msg = "");
 
 /**
  * If available, prepends a source location to a message.

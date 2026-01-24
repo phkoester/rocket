@@ -16,13 +16,6 @@ endif()
 
 project(rocket VERSION 0.3.0)
 
-# Options ---------------------------------------------------------------------------------------------------
-
-option(BUILD_SHARED_LIBS "Build shared libraries"                   OFF)
-option(BUILD_TESTING     "Enable testing and build tests"           ON)
-option(ROCKET_BENCH      "Enable benchmarking and build benchmarks" OFF)
-option(ROCKET_TEST       "Enable testing and build tests"           ${ROCKET_MASTER_PROJECT})
-
 # Include helper file ---------------------------------------------------------------------------------------
 
 include(cmake/base.cmake)
@@ -46,14 +39,7 @@ endif()
 
 # XXX
 set(ROCKET_EXPORT_TARGETS
-  ${ROCKET_BOOST_EXPORT_TARGETS}
-  fast_float
-  fmt-header-only
-  gmock
-  gtest
-  rocket
-  rocket-test
-  scn
+  ${ROCKET_BOOST_EXPORT_TARGETS} fast_float fmt-header-only gmock gtest rocket rocket-test scn
 )
 
 # XXX

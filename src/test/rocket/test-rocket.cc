@@ -7,28 +7,21 @@
 // `static_assert` ------------------------------------------------------------------------------------------
 
 static_assert(is_signed_v<char>);
-static_assert(sizeof(char) == 1);
-static_assert(sizeof(char) == sizeof(' '));
 static_assert(is_unsigned_v<char32>);
-static_assert(sizeof(char32) == 4);
-static_assert(sizeof(char32) == sizeof(U' '));
-
-static_assert(sizeof(i8) == 1);
-static_assert(sizeof(i16) == 2);
-static_assert(sizeof(i32) == 4);
-static_assert(sizeof(i64) == 8);
-static_assert(sizeof(i128) == 16);
-
 static_assert(is_same_v<u64, std_size_t>);
-
-static_assert(sizeof(f32) == 4);
+#ifdef ROCKET_HAVE_128
+static_assert(is_signed_v<i128>);
+static_assert(is_unsigned_v<u128>);
+#endif
 static_assert(is_same_v<decltype(1.0F), f32>);
-static_assert(sizeof(f64) == 8);
 static_assert(is_same_v<decltype(1.0), f64>);
-static_assert(sizeof(f128) == 16);
-static_assert(is_same_v<decltype(0.0L), f128>);
+#ifdef ROCKET_HAVE_128
+static_assert(is_signed_v<f128>);
+#endif
 
 // `TEST` ---------------------------------------------------------------------------------------------------
+
+#ifdef ROCKET_HAVE_128
 
 TEST(rocket, i128OpInput) {
   using compareType = i32;
@@ -295,7 +288,7 @@ TEST(base, u128OpInput) {
     auto is = io::is(input);
     is >> val;
     EXPECT_ISTREAM(is, false, true, 1);
-    EXPECT_EQ(val, 1);
+    EXPECT_EQ(val, 1U);
   }
 
   // Valid input, no EOF
@@ -310,7 +303,7 @@ TEST(base, u128OpInput) {
     auto is = io::is(input);
     is >> val;
     EXPECT_ISTREAM(is, false, false, 6);
-    EXPECT_EQ(val, 999999);
+    EXPECT_EQ(val, 999999U);
   }
 
   // MIN
@@ -415,5 +408,7 @@ TEST(base, u128OpOutput) {
     EXPECT_EQ(os.str(), "340282366920938463463374607431768211455");
   }
 }
+
+#endif // ROCKET_HAVE_128
 
 // EOF

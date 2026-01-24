@@ -7,8 +7,8 @@
 #pragma once
 
 #include "rocket/Exception.h"
-#include "rocket/Type.h"
 #include "rocket/UnorderedBimap.h"
+#include "rocket/macro.h"
 #include "rocket/format/format.h"
 #include "rocket/str/message/message.h"
 #include "rocket/unicode/ConvertTo.h"
@@ -132,7 +132,7 @@
       if (it != ns::name##Map__.right.end()) { \
         return it->second; \
       } else { \
-        throw ::rocket::InvalidState(::rocket::str::message::cannotScanAs(str, ::rocket::Type::of<ns::type>())); \
+        throw ::rocket::InvalidState(::rocket::str::message::cannotScanAs(str, typeid(ns::type))); \
       } \
     }
 
