@@ -187,7 +187,7 @@ endfunction()
 function(AddBench name dir)
   list(TRANSFORM ARGN PREPEND "${dir}/")
   AddExecutable(${name} ${ARGN})
-  target_link_libraries(${name} PRIVATE rocket-test)
+  target_link_libraries(${name} PRIVATE Rocket::rocket-test)
   # add_test(NAME ${name} COMMAND ${name} WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/src/bench/${dir})
   gtest_discover_tests(${name}
     DISCOVERY_MODE POST_BUILD
@@ -200,7 +200,7 @@ endfunction()
 function(AddTest name dir)
   list(TRANSFORM ARGN PREPEND "${dir}/")
   AddExecutable(${name} ${ARGN})
-  target_link_libraries(${name} PRIVATE rocket-test)
+  target_link_libraries(${name} PRIVATE Rocket::rocket-test)
   # add_test(NAME ${name} COMMAND ${name} WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/src/test/${dir})
   gtest_discover_tests(${name}
     DISCOVERY_MODE POST_BUILD

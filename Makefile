@@ -70,11 +70,6 @@ print-args: build
 	LD_LIBRARY_PATH=$(BUILD_DIR)/src/main:$(LD_LIBRARY_PATH) \
 	$(BUILD_DIR)/src/main/print-args $(ARGS)
 
-.PHONY: print-args-with-space
-print-args-with-space: build
-	LD_LIBRARY_PATH=$(BUILD_DIR)/src/main:$(LD_LIBRARY_PATH) \
-	"$(BUILD_DIR)/src/main/print args" $(ARGS)
-
 .PHONY: toy
 toy: build
 	LD_LIBRARY_PATH=$(BUILD_DIR)/src/main:$(LD_LIBRARY_PATH) \

@@ -115,9 +115,11 @@ target_link_libraries(rocket
   PRIVATE ICU::uc stdc++_libbacktrace
 )
 
+add_library(Rocket::rocket ALIAS rocket)
+
 # Rocket Test -----------------------------------------------------------------------------------------------
 
-add_library(rocket-test STATIC) # XXX
+add_library(rocket-test STATIC)
 target_sources(rocket-test
   PRIVATE
     rocket-test/main.cc
@@ -139,8 +141,10 @@ target_compile_definitions(rocket-test
 target_compile_features(rocket-test PUBLIC ${COMPILE_FEATURES})
 target_compile_options(rocket-test PUBLIC ${COMPILE_FLAGS})
 target_link_libraries(rocket-test
-  PUBLIC GTest::gmock GTest::gtest rocket # XXX Mit rocket???
+  PUBLIC GTest::gmock GTest::gtest Rocket::rocket
 )
+
+add_library(Rocket::rocket-test ALIAS rocket-test)
 
 # `bare` ----------------------------------------------------------------------------------------------------
 
@@ -149,11 +153,11 @@ AddExecutable(bare bare/main.cc)
 # `print-args` ----------------------------------------------------------------------------------------------
 
 AddExecutable(print-args print-args/main.cc)
-target_link_libraries(print-args PRIVATE rocket)
+target_link_libraries(print-args PRIVATE Rocket::rocket)
 
 # `toy` -----------------------------------------------------------------------------------------------------
 
 AddExecutable(toy toy/main.cc)
-target_link_libraries(toy PRIVATE rocket)
+target_link_libraries(toy PRIVATE Rocket::rocket)
 
 # EOF
