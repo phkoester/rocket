@@ -93,6 +93,7 @@ else()
     boost_config
     boost_container
     boost_container_hash
+    boost_conversion
     boost_core
     boost_describe
     boost_detail
@@ -101,6 +102,7 @@ else()
     boost_functional
     boost_fusion
     boost_headers
+    boost_intrusive
     boost_function_types
     boost_io
     boost_integer
@@ -119,6 +121,7 @@ else()
     boost_preprocessor
     boost_random
     boost_range
+    boost_regex
     boost_smart_ptr
     boost_static_assert
     boost_system
@@ -127,6 +130,8 @@ else()
     boost_typeof
     boost_throw_exception
     boost_utility
+    boost_variant2
+    boost_winapi
   )
 endif()
 
