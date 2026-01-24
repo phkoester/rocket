@@ -103,6 +103,8 @@ else()
     boost_integer
     boost_iterator
     boost_lambda
+    boost_math
+    boost_lexical_cast
     boost_move
     boost_mp11
     boost_mpl
@@ -111,6 +113,7 @@ else()
     boost_optional
     boost_predef
     boost_preprocessor
+    boost_random
     boost_smart_ptr
     boost_static_assert
     boost_tuple
