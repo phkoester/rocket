@@ -51,8 +51,8 @@ endif()
 
 # General settings ------------------------------------------------------------------------------------------
 
-set(CMAKE_CXX_EXTENSIONS ON) # XXX
-set(CMAKE_CXX_STANDARD 23) # XXX
+set(CMAKE_CXX_EXTENSIONS ON)
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
@@ -89,8 +89,6 @@ if(Boost_FOUND)
   set(ROCKET_BOOST_LINK_TARGETS Boost::headers)
   set(ROCKET_BOOST_EXPORT_TARGETS)
 else()
-  # XXX USES_TERMINAL_DOWNLOAD TRUE
-  # XXX DOWNLOAD_NO_EXTRACT FALSE
   FetchContent_Declare(
     Boost
     URL https://github.com/boostorg/boost/releases/download/boost-1.84.0/boost-1.84.0.7z
@@ -122,7 +120,6 @@ endif()
 
 # fmt .......................................................................................................
 
-# XXX EXCLUDE_FROM_ALL?
 FetchContent_Declare(
   fmt
   GIT_REPOSITORY https://github.com/fmtlib/fmt.git
