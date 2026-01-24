@@ -40,6 +40,8 @@ TEST(StringConvert, i32) {
       ThrowsMessage<InvalidState>(HasSubstr("Cannot scan \"1x\" as `int`")));
 }
 
+#ifdef ROCKET_HAS_128
+
 TEST(StringConvert, i128) {
   using type = i128;
 
@@ -73,6 +75,8 @@ TEST(StringConvert, f128) {
       [] { toType<type>("1x"); },
       ThrowsMessage<InvalidState>(HasSubstr("Cannot scan \"1x\" as `long double`")));
 }
+
+#endif // ROCKET_HAS_128
 
 TEST(StringConvert, enum) {
   using type = log::LogLevel;

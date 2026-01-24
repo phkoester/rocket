@@ -66,6 +66,8 @@ TEST(fmt, u64Format) {
   EXPECT_EQ(fmt::format("{}", static_cast<u64>(-1)), "18446744073709551615");
 }
 
+#ifdef ROCKET_HAS_128
+
 TEST(fmt, i28Format) {
   EXPECT_EQ(fmt::format("{}", static_cast<i128>(42)), "42"); // XXX
 }
@@ -73,6 +75,8 @@ TEST(fmt, i28Format) {
 TEST(fmt, u128Format) {
   EXPECT_EQ(fmt::format("{}", static_cast<u128>(-1)), "340282366920938463463374607431768211455");
 }
+
+#endif // ROCKET_HAS_128
 
 TEST(fmt, f32Format) {
   EXPECT_EQ(fmt::format("{}", numeric_limits<f32>::quiet_NaN()), "nan");
@@ -93,12 +97,16 @@ TEST(fmt, f64Format) {
   EXPECT_EQ(fmt::format("{:.5}", 1.0 / 3), "0.33333");
 }
 
+#ifdef ROCKET_HAS_128
+
 TEST(fmt, f128Format) {
   EXPECT_EQ(fmt::format("{:.5}", 0.999'999L), "1");
   EXPECT_EQ(fmt::format("{:.5}", 0.999'99L), "0.99999");
   EXPECT_EQ(fmt::format("{:.3f}", 12.1236L), "12.124"); // Round to 3 significant digits after the decimal point
   EXPECT_EQ(fmt::format("{:.5}", 1.0L / 3), "0.33333");
 }
+
+#endif // ROCKET_HAS_128
 
 TEST(fmt, charPtrFormat) {
   EXPECT_EQ(fmt::format("{}", "hello"), "hello");
