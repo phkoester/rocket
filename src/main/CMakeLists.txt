@@ -100,7 +100,7 @@ target_sources(rocket
       rocket/unicode/Iterator.h
       rocket/unicode/unicode.h
 )
-set_target_properties(rocket PROPERTIES VERSION ${PROJECT_VERSION}) # XXX 0.1.0 SOVERSION 0.1)
+set_target_properties(rocket PROPERTIES VERSION ${PROJECT_VERSION}) # SOVERSION 0
 target_compile_definitions(rocket
   PUBLIC
     ${COMPILE_DEFS}
