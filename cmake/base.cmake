@@ -78,7 +78,7 @@ else()
   FetchContent_MakeAvailable(Boost)
   set(BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS_DEFAULT})
 
-  set(ROCKET_BOOST_LINK_TARGETS Boost::bimap Boost::headers)
+  set(ROCKET_BOOST_LINK_TARGETS Boost::bimap Boost::headers Boost::preprocessor)
   set(ROCKET_BOOST_EXPORT_TARGETS
     boost_assert
     boost_bimap
