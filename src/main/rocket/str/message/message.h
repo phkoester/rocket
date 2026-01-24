@@ -19,7 +19,7 @@ namespace rocket::str::message {
  * Makes a message saying the input @p input cannot be scanned as a value of type @p type.
  *
  * @param input the input
- * @param type a #rocket::Type value
+ * @param type the type
  * @return a message
  */
 std::string cannotScanAs(std::string_view input, const std::type_info& type);

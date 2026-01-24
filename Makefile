@@ -10,7 +10,7 @@
 # - GAIA_CXX_TOOLCHAIN
 #     The C++ toolchain: `gnu` or `llvm`
 # - JOBS
-#     Number of jobs for gmake
+#     Number of jobs for GNU Make (0: none, N: N jobs, default: 2/3 nproc)
 # - TEST
 #     Run tests matching the pattern
 # - VERBOSE
@@ -22,75 +22,44 @@
 # To build the project using CMake, see `README.md`.
 #
 
-export BUILD_DIR := build/$(GAIA_BUILD_TYPE)
-PRESET := linux-$(GAIA_BUILD_TYPE)
-
-ifeq ($(GAIA_CXX_TOOLCHAIN),llvm)
-  export CC := clang
-  export CXX := clang++
-endif
-
-ifneq ($(VERBOSE),)
-  CMAKE_TRAILING_FLAGS += -v
-endif
-
-GMAKE_FLAGS := --no-print-directory
-ifneq ($(JOBS),)
-  ifneq ($(JOBS),0)
-    GMAKE_FLAGS += -j$(JOBS)
-  endif
-else
-  GMAKE_FLAGS += -j$(GAIA_NPROC_2_3) -l$(GAIA_NPROC)
-endif
-
 .PHONY: build
-build: $(BUILD_DIR)/Makefile
-	cmake $(CMAKE_FLAGS) --build --preset $(PRESET) $(CMAKE_TRAILING_FLAGS) -- $(GMAKE_FLAGS)
+build: cmake-build
 
-$(BUILD_DIR)/Makefile: $(shell find -name CMakeLists.txt) $(shell find cmake -name "*.cmake")
-	cmake $(CMAKE_FLAGS) --preset $(PRESET)
-
-$(BUILD_DIR)/compile_commands.json: build
-
-compile_commands.json: $(BUILD_DIR)/compile_commands.json
-	@echo ">" $@
-	@cp $< $@
+include $(GAIA_DIR)/src/main/make/Makefile.mk
 
 .PHONY: clean
 clean:
-	rm -rf build install
+	@rm -rfv build install
 
 .PHONY: bare
 bare: build
-	LD_LIBRARY_PATH=$(BUILD_DIR)/src/main:$(LD_LIBRARY_PATH) \
-	$(BUILD_DIR)/src/main/bare $(ARGS)
+	@LD_LIBRARY_PATH=$(BUILD_DIR)/src/main:$(LD_LIBRARY_PATH) \
+	    $(BUILD_DIR)/src/main/bare $(ARGS)
 
 .PHONY: print-args
 print-args: build
-	LD_LIBRARY_PATH=$(BUILD_DIR)/src/main:$(LD_LIBRARY_PATH) \
-	$(BUILD_DIR)/src/main/print-args $(ARGS)
+	@LD_LIBRARY_PATH=$(BUILD_DIR)/src/main:$(LD_LIBRARY_PATH) \
+	   $(BUILD_DIR)/src/main/print-args $(ARGS)
 
 .PHONY: toy
 toy: build
-	LD_LIBRARY_PATH=$(BUILD_DIR)/src/main:$(LD_LIBRARY_PATH) \
-	$(BUILD_DIR)/src/main/toy $(ARGS)
-
-CTEST_FLAGS := --output-on-failure
-ifneq ($(TEST),)
-  CTEST_FLAGS += -R $(TEST)
-endif
-ifneq ($(VERBOSE),)
-  CTEST_FLAGS += -V
-endif
+	@LD_LIBRARY_PATH=$(BUILD_DIR)/src/main:$(LD_LIBRARY_PATH) \
+	    $(BUILD_DIR)/src/main/toy $(ARGS)
 
 .PHONY: test
-test: build
-	ctest $(CTEST_FLAGS) --preset $(PRESET)
+test: cmake-test
 
 .PHONY: test-terminal
 test-terminal: build
-	ROCKET_TEST_TERMINAL=1 $(BUILD_DIR)/src/test/test-rocket-system-terminal
-	ROCKET_TEST_TERMINAL=1 $(BUILD_DIR)/src/test/test-rocket-unicode-Character
+	@ROCKET_TEST_TERMINAL=1 $(BUILD_DIR)/src/test/test-rocket-system-terminal
+	@ROCKET_TEST_TERMINAL=1 $(BUILD_DIR)/src/test/test-rocket-unicode-Character
+
+.PHONY: doc
+doc:
+	@mkdir -p $(BUILD_DIR)/src/main/doc
+	@doxygen $(DOXYGEN_FLAGS) src/main/Doxyfile
+	@mkdir -p $(BUILD_DIR)/src/test/doc
+	@doxygen $(DOXYGEN_FLAGS) src/test/Doxyfile
 
 # Manual install to `/usr/local`:
 #
@@ -99,4 +68,8 @@ test-terminal: build
 install: build
 	cmake --install $(BUILD_DIR) --prefix install
 
+.PHONY: dummy
+dummy:
+	@echo "Dummy target"
+	@echo $(notdir $(CURDIR))
 # EOF

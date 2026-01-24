@@ -4,6 +4,8 @@
 
 #pragma once
 
+/// @cond undocumented
+
 #define ROCKET_VERSION_NAME "0.3.0" ///< SemVer string.
 
 #define ROCKET_VERSION_MAJOR 0 ///< Major.
@@ -15,5 +17,7 @@
     ROCKET_VERSION_MAJOR * 1'000'000 + \
     ROCKET_VERSION_MINOR * 1'000 + \
     ROCKET_VERSION_PATCH)
+
+/// @endcond
 
 // EOF
