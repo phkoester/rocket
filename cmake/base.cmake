@@ -169,7 +169,7 @@ set(BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS_DEFAULT})
 
 # Functions -------------------------------------------------------------------------------------------------
 
-# AddExecutable(NAME SRC_FILE...)
+# AddExecutable(name srcFile...)
 function(AddExecutable name)
   add_executable(${name})
   target_sources(${name} PRIVATE ${ARGN})
@@ -178,20 +178,22 @@ function(AddExecutable name)
   target_compile_options(${name} PRIVATE ${COMPILE_FLAGS})
 endfunction()
 
-# AddBench(NAME SRC_FILE...)
-function(AddBench name)
+# AddBench(name dir srcFile...)
+function(AddBench name dir)
+  list(TRANSFORM ARGN PREPEND "${dir}/")
   AddExecutable(${name} ${ARGN})
   target_link_libraries(${name} PRIVATE rocket-test)
   # XXX add_test(NAME ${name} COMMAND ${name})
-  gtest_discover_tests(${name} WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/src/test)
+  gtest_discover_tests(${name} WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/src/bench/${dir})
 endfunction()
 
-# AddTest(NAME SRC_FILE...)
-function(AddTest name)
+# AddTest(name dir srcFile...)
+function(AddTest name dir)
+  list(TRANSFORM ARGN PREPEND "${dir}/")
   AddExecutable(${name} ${ARGN})
   target_link_libraries(${name} PRIVATE rocket-test)
   # XXX add_test(NAME ${name} COMMAND ${name})
-  gtest_discover_tests(${name} WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/src/bench)
+  gtest_discover_tests(${name} WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/src/test/${dir})
 endfunction()
 
 # EOF

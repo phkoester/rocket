@@ -6,6 +6,6 @@
 
 include(GoogleTest)
 
-AddBench(bench-nio rocket/nio/bench-nio.cc)
+AddBench(bench-nio rocket/nio bench-nio.cc)
 
 # EOF

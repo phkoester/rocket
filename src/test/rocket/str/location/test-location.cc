@@ -110,7 +110,7 @@ TEST(location, locationsMultiByteCharactersAndLineBreak) {
 }
 
 TEST(location, locationsKafkaTxt) {
-  string source = "rocket/str/location/test-location-Kafka.txt";
+  string source = "test-location-Kafka.txt";
   nio::FileSource in(source);
   string input = in.Source::read();
 
