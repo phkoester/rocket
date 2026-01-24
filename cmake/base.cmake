@@ -72,7 +72,7 @@ else()
   )
 
   set(BOOST_ENABLE_CMAKE ON)
-  # set(BOOST_INCLUDE_LIBRARIES filesystem math program_options system)
+  set(BOOST_INCLUDE_LIBRARIES bimap headers preprocessor)
   # Build static libraries
   set(BUILD_SHARED_LIBS OFF)
   FetchContent_MakeAvailable(Boost)
