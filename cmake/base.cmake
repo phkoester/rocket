@@ -4,12 +4,6 @@
 
 # Check prerequisites ---------------------------------------------------------------------------------------
 
-if(WIN32)
-  set(IS_WINDOWS TRUE)
-else()
-  set(IS_WINDOWS FALSE)
-endif()
-
 if(NOT(LINUX) AND NOT(WIN32))
   message(FATAL_ERROR "Unsupported OS ${CMAKE_SYSTEM_NAME}")
 endif()
@@ -76,9 +70,10 @@ set(ROCKET_COMPILE_DEFS)
 # Set OS-specific compiler options --------------------------------------------------------------------------
 
 if(LINUX)
+  # gcc will not accept `__int128` with `-pedantic`
   list(APPEND COMPILE_FLAGS -Wall -Wextra)
 elseif(WIN32)
-  # XXX list(APPEND COMPILE_FLAGS -Wall)
+  # list(APPEND COMPILE_FLAGS -Wall)
 endif()
 
 # Fetch dependencies ----------------------------------------------------------------------------------------

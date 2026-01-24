@@ -12,7 +12,7 @@
       "cacheVariables": {
         "BUILD_SHARED_LIBS": "ON",
         "CMAKE_BUILD_TYPE": "Debug",
-        "ROCKET_BENCH": "ON"
+        "ROCKET_BENCH": "OFF"
       }
     },
     {
@@ -21,7 +21,7 @@
       "cacheVariables": {
         "BUILD_SHARED_LIBS": "ON",
         "CMAKE_BUILD_TYPE": "Release",
-        "ROCKET_BENCH": "ON"
+        "ROCKET_BENCH": "OFF"
       }
     },
     {
@@ -29,7 +29,7 @@
       "binaryDir": "${sourceDir}/build",
       "cacheVariables": {
         "BUILD_SHARED_LIBS": "ON",
-        "ROCKET_BENCH": "ON"
+        "ROCKET_BENCH": "OFF"
       }
     }
   ],

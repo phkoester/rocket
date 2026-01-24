@@ -11,8 +11,8 @@ using namespace boost::safe_numerics;
 // `TEST` ---------------------------------------------------------------------------------------------------
 
 TEST(boost_safe_numerics, safe) {
-  EXPECT_THAT([] { safe<u8> val = 256; }, Throws<system_error>());
-  EXPECT_THAT([] { safe<u8> val = -1; }, Throws<system_error>());
+  EXPECT_THAT([] { safe<u8>(256); }, Throws<system_error>());
+  EXPECT_THAT([] { safe<u8>(-1); }, Throws<system_error>());
   EXPECT_THAT([] { safe<u8> val = 100; val *= 3; }, Throws<system_error>());
 
   // Mixing signed and unsigned is not allowed!

@@ -55,7 +55,7 @@ install(
 install(
   EXPORT ${PROJECT_NAME}-targets
   DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}
-  NAMESPACE ${PROJECT_NAME}::
+  NAMESPACE Rocket::
 )
 
 include(CMakePackageConfigHelpers)
@@ -78,7 +78,7 @@ endif()
 # XXX
 export(
   TARGETS   ${ROCKET_EXPORT_TARGETS}
-  NAMESPACE ${PROJECT_NAME}::
+  NAMESPACE Rocket::
   FILE      ${PROJECT_BINARY_DIR}/${PROJECT_NAME}-config.cmake
 )
 

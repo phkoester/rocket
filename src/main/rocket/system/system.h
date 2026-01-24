@@ -71,6 +71,8 @@ namespace env {
 /**
  * Returns all environment variables as a set of name-value pairs.
  *
+ * This function is thread-safe as long as all callers use the API from this header file exclusively.
+ *
  * @return a set of name-value pairs
  */
 std::unordered_map<std::string_view, std::string_view>
@@ -78,6 +80,8 @@ get();
 
 /**
  * Returns the value of an environment variable. If the string conversion fails, this function returns null.
+ *
+ * This function is thread-safe as long as all callers use the API from this header file exclusively.
  *
  * @tparam T the type to convert a string value to
  * @param name the name of the environment variable
@@ -99,6 +103,8 @@ get(const std::string& name) {
 /**
  * Sets an environment variable.
  *
+ * This function is thread-safe as long as all callers use the API from this header file exclusively.
+ *
  * @tparam T the type of the new value
  * @param name the name of the environment variable
  * @param value the new value
@@ -114,6 +120,8 @@ set(const std::string& name, T&& value, bool replace = true) {
 
 /**
  * Unsets an environment variable.
+ *
+ * This function is thread-safe as long as all callers use the API from this header file exclusively.
  *
  * @param name the name of the environment variable
  */
