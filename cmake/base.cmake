@@ -85,15 +85,18 @@ else()
     Boost::preprocessor
   )
   set(ROCKET_BOOST_EXPORT_TARGETS
+    boost_array
     boost_assert
     boost_bimap
     boost_bind
     boost_concept_check
     boost_config
+    boost_container
     boost_container_hash
     boost_core
     boost_describe
     boost_detail
+    boost_dynamic_bitset
     boost_function
     boost_functional
     boost_fusion
@@ -104,6 +107,7 @@ else()
     boost_iterator
     boost_lambda
     boost_math
+    boost_numeric_conversion
     boost_lexical_cast
     boost_move
     boost_mp11
@@ -114,8 +118,10 @@ else()
     boost_predef
     boost_preprocessor
     boost_random
+    boost_range
     boost_smart_ptr
     boost_static_assert
+    boost_system
     boost_tuple
     boost_type_traits
     boost_typeof
