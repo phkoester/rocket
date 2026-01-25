@@ -6,6 +6,8 @@
 import argparse
 import sys
 
+from pathlib import Path
+
 def main():
   # Parse arguments
   parser = argparse.ArgumentParser()
@@ -17,6 +19,10 @@ def main():
     required=True,
   )
   args = parser.parse_args()
+
+  # Make directories as needed
+  path = Path(args.output_file)
+  path.parent.mkdir(parents=True, exist_ok=True)
 
   # Write output file
   with open(args.output_file, 'w') as f:

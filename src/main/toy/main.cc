@@ -5,7 +5,8 @@
 #include "rocket/Process.h"
 #include "rocket/cl/cl.h"
 #include "rocket/log/log.h"
-#include "rocket/unicode/Character.h"
+
+#include "rocket/version.h"
 
 using namespace rocket;
 using namespace rocket::unicode;

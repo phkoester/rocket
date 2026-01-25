@@ -7,6 +7,8 @@ import argparse
 import semver
 import sys
 
+from pathlib import Path
+
 # Functions -------------------------------------------------------------------------------------------------
 
 def write_header(f, name, version_string):
@@ -55,6 +57,10 @@ def main():
     help="Version string",
   )
   args = parser.parse_args()
+
+  # Make directories as needed
+  path = Path(args.output_file)
+  path.parent.mkdir(parents=True, exist_ok=True)
 
   # Write output file
   with open(args.output_file, 'w') as f:

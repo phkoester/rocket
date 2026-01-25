@@ -92,7 +92,9 @@ toy: build
 patch: build src/main/rocket/3rdparty/fmt/std.h src/main/rocket/3rdparty/scnlib/impl.h
 
 FMT_VERSION_EXPECTED := 12.1.0
-FMT_VERSION = $(shell git -C $(BUILD_DIR)/_deps/fmt-src describe --tags --abbrev=0)
+ifneq ($(wildcard $(BUILD_DIR)/_deps/fmt-src),)
+  FMT_VERSION = $(shell git -C $(BUILD_DIR)/_deps/fmt-src describe --tags --abbrev=0)
+endif
 
 src/main/rocket/3rdparty/fmt/std.h: $(BUILD_DIR)/_deps/fmt-src/include/fmt/std.h
 ifneq ($(FMT_VERSION), $(FMT_VERSION_EXPECTED))

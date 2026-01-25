@@ -2,6 +2,8 @@
 # CMakeLists.txt
 #
 
+set(GENERATED_DIR ${CMAKE_CURRENT_BINARY_DIR}/generated)
+
 # Rocket ----------------------------------------------------------------------------------------------------
 
 # Propressor definitions ....................................................................................
@@ -30,26 +32,19 @@ endif()
 
 # `version.h` -----------------------------------------------------------------------------------------------
 
+set(VERSION_H ${GENERATED_DIR}/rocket/version.h)
+
 add_custom_command(
-  OUTPUT  rocket/version.h
-  COMMAND python3 ${PROJECT_SOURCE_DIR}/cmake/generate-version.py ROCKET ${PROJECT_VERSION} -o version.h
+  OUTPUT  ${VERSION_H}
+  COMMAND python3 ${PROJECT_SOURCE_DIR}/cmake/generate-version.py ROCKET ${PROJECT_VERSION} -o ${VERSION_H}
+  DEPENDS ${PROJECT_SOURCE_DIR}/CMakeLists.txt
   VERBATIM
 )
-add_custom_target(VersionGenerator DEPENDS rocket/version.h)
-add_library(rocket-version INTERFACE)
-target_sources(rocket-version
-  INTERFACE
-    FILE_SET HEADERS
-    BASE_DIRS
-      ${CMAKE_CURRENT_BINARY_DIR}
-    FILES
-      rocket/version.h
-)
-add_dependencies(rocket-version VersionGenerator)
 
 # Add the library ...........................................................................................
 
-add_library(rocket)
+add_library(rocket ${VERSION_H})
+target_include_directories(rocket PUBLIC ${GENERATED_DIR})
 # Move `Process.cc` to front so the global `process` instance is available early
 # Move `log.cc` to front so Rocket can use its own logging API
 target_sources(rocket
@@ -76,6 +71,9 @@ target_sources(rocket
     rocket/unicode/unicode.cc
   PUBLIC
     FILE_SET HEADERS
+    BASE_DIRS
+      ${CMAKE_CURRENT_SOURCE_DIR}
+      ${GENERATED_DIR}
     FILES
       rocket/assert.h
       rocket/Cow.h
@@ -129,7 +127,7 @@ target_compile_definitions(rocket
 target_compile_features(rocket PUBLIC ${COMPILE_FEATURES})
 target_compile_options(rocket PUBLIC ${COMPILE_FLAGS})
 target_link_libraries(rocket
-  PUBLIC ${ROCKET_BOOST_LINK_TARGETS} rocket-version fmt::fmt-header-only scn::scn
+  PUBLIC ${ROCKET_BOOST_LINK_TARGETS} fmt::fmt-header-only scn::scn
   PRIVATE ICU::uc stdc++_libbacktrace
 )
 
@@ -175,12 +173,14 @@ target_link_libraries(print-args PRIVATE Rocket::rocket)
 
 # `toy` -----------------------------------------------------------------------------------------------------
 
+set(GENERATED_CC ${GENERATED_DIR}/toy/generated.cc)
+
 add_custom_command(
-  OUTPUT  toy/generated.cc
-  COMMAND python3 ${PROJECT_SOURCE_DIR}/cmake/generate.py -o toy/generated.cc
+  OUTPUT  ${GENERATED_CC}
+  COMMAND python3 ${PROJECT_SOURCE_DIR}/cmake/generate.py -o ${GENERATED_CC}
   VERBATIM
 )
-AddExecutable(toy toy/main.cc generated.cc)
+AddExecutable(toy toy/main.cc ${GENERATED_CC})
 target_link_libraries(toy PRIVATE Rocket::rocket)
 
 # EOF
