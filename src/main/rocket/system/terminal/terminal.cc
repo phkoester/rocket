@@ -127,7 +127,7 @@ position(nio::Sink& out) {
   // Use CSBI
 
   CONSOLE_SCREEN_BUFFER_INFO csbi;
-  if (not GetConsoleScreenBufferInfo(GetStdHandle(fd), &csbi)) {
+  if (not GetConsoleScreenBufferInfo(fd, &csbi)) {
     return nullopt;
   }
   cout << "csbi.dwCursorPosition.X=" << csbi.dwCursorPosition.X << ", csbi.dwCursorPosition.Y=" << csbi.dwCursorPosition.Y << endl;
@@ -159,7 +159,7 @@ size(nio::Io& io) {
 
 #ifdef ROCKET_OS_WINDOWS
   CONSOLE_SCREEN_BUFFER_INFO csbi;
-  if (not GetConsoleScreenBufferInfo(GetStdHandle(fd), &csbi)) {
+  if (not GetConsoleScreenBufferInfo(fd, &csbi)) {
     return nullopt;
   }
   cout << "csbi.dwSize.X=" << csbi.dwSize.X << ", csbi.dwSize.Y=" << csbi.dwSize.Y << endl;

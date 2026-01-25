@@ -1005,15 +1005,9 @@ StringSource::terminal(i32*) {
 
 namespace {
 
-#ifdef ROCKET_OS_WINDOWS
-FileSink fileSinkOut = FileSink(STD_OUTPUT_HANDLE);
-FileSink fileSinkErr = FileSink(STD_ERROR_HANDLE);
-FileSource fileSourceIn = FileSource(STD_INPUT_HANDLE);
-#else
 FileSink fileSinkOut = FileSink(::stdout);
 FileSink fileSinkErr = FileSink(::stderr);
 FileSource fileSourceIn = FileSource(::stdin);
-#endif
 
 } // namespace
 
