@@ -28,6 +28,25 @@ elseif(WIN32)
   list(APPEND ROCKET_COMPILE_DEFS ROCKET_OS_WINDOWS)
 endif()
 
+# `version.h` -----------------------------------------------------------------------------------------------
+
+add_custom_command(
+  OUTPUT  rocket/version.h
+  COMMAND python3 ${PROJECT_SOURCE_DIR}/cmake/generate-version.py ROCKET ${PROJECT_VERSION} -o version.h
+  VERBATIM
+)
+add_custom_target(VersionGenerator DEPENDS rocket/version.h)
+add_library(rocket-version INTERFACE)
+target_sources(rocket-version
+  INTERFACE
+    FILE_SET HEADERS
+    BASE_DIRS
+      ${CMAKE_CURRENT_BINARY_DIR}
+    FILES
+      rocket/version.h
+)
+add_dependencies(rocket-version VersionGenerator)
+
 # Add the library ...........................................................................................
 
 add_library(rocket)
@@ -71,7 +90,6 @@ target_sources(rocket
       rocket/rocket.h
       rocket/type-traits.h
       rocket/UnorderedBimap.h
-      rocket/version.h
       rocket/3rdparty/std.h
       rocket/chrono/chrono.h
       rocket/cl/cl.h
@@ -111,7 +129,7 @@ target_compile_definitions(rocket
 target_compile_features(rocket PUBLIC ${COMPILE_FEATURES})
 target_compile_options(rocket PUBLIC ${COMPILE_FLAGS})
 target_link_libraries(rocket
-  PUBLIC ${ROCKET_BOOST_LINK_TARGETS} fmt::fmt-header-only scn::scn
+  PUBLIC ${ROCKET_BOOST_LINK_TARGETS} rocket-version fmt::fmt-header-only scn::scn
   PRIVATE ICU::uc stdc++_libbacktrace
 )
 
@@ -158,8 +176,8 @@ target_link_libraries(print-args PRIVATE Rocket::rocket)
 # `toy` -----------------------------------------------------------------------------------------------------
 
 add_custom_command(
-  OUTPUT generated.cc
-  COMMAND python3 ${PROJECT_SOURCE_DIR}/cmake/generate.py -o generated.cc
+  OUTPUT  toy/generated.cc
+  COMMAND python3 ${PROJECT_SOURCE_DIR}/cmake/generate.py -o toy/generated.cc
   VERBATIM
 )
 AddExecutable(toy toy/main.cc generated.cc)

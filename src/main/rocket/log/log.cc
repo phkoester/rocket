@@ -94,14 +94,14 @@ struct Format {
       case 'L': sourceLocation = true; break;
       case 's': {
         if (it == end - 1) {
-          ROCKET_FLOP(fmt, "Missing seconds resolution");
+          ROCKET_FAIL("Missing seconds resolution");
         }
         switch (*++it) {
         case '0': secondsRez = 0; break;
         case '3': secondsRez = 3; break;
         case '6': secondsRez = 6; break;
         case '9': secondsRez = 9; break;
-        default: ROCKET_FLOP(fmt, "Invalid seconds resolution {:?}", *it);
+        default: ROCKET_FAIL("Invalid seconds resolution {:?}", *it);
         }
         break;
       }
@@ -111,7 +111,7 @@ struct Format {
       case 'X': execTimes = true; break;
       case 'z': utc = false; break;
       case 'Z': utc = true; break;
-      default: ROCKET_FLOP(fmt,"Invalid format specifier {:?}", *it);
+      default: ROCKET_FAIL("Invalid format specifier {:?}", *it);
       }
     }
   }
@@ -219,10 +219,10 @@ Out::expand(string_view pattern, const TimePoint& time, bool update) {
   // Do sanity checks
 
   if (zipCount > 0 && dateCount == 0) {
-    ROCKET_FLOP(pattern, "Can only zip yesterday’s log file if a date is present in the pattern");
+    ROCKET_FAIL("Can only zip yesterday’s log file if a date is present in the pattern");
   }
   if (ret.find("@[") != NPOS) {
-    ROCKET_FLOP(pattern, "Invalid pattern");
+    ROCKET_FAIL("Invalid pattern");
   }
 
   // If requested, update members
@@ -307,13 +307,13 @@ const vector<cl::Option> CL_OPTIONS {
   { &CL_GROUP, "log-out", nullopt, true, "OUT",
     "log to system device or file. If OUT is `-` or `stdout`, log messages are written to standard output, "
     "which is the default. If OUT is `stderr`, log messages are written to standard error. Otherwise, OUT "
-    "is a PATTERN. Examples: `@(name).log`, `@(name)-@(date).log@(zip)`. Inside PATTERN, these placeholders "
+    "is a PATTERN. Examples: `@[name].log`, `@[name]-@[date].log@[zip]`. Inside PATTERN, these placeholders "
     "are available:\n"
-    NBSP NBSP "@[date]"     NBSP NBSP NBSP "expands to the current local date\n"
+    NBSP NBSP "@[date]"     NBSP NBSP NBSP "expands to the current date\n"
     NBSP NBSP "@[dir]" NBSP NBSP NBSP NBSP "expands to the parent directory of the executable\n"
     NBSP NBSP "@[name]"     NBSP NBSP NBSP "expands to the name of the process\n"
     NBSP NBSP "@[pid]" NBSP NBSP NBSP NBSP "expands to the process ID (PID)\n"
-    NBSP NBSP "@[udate]"         NBSP NBSP "expands to the current UTC date\n"
+    NBSP NBSP "@[utc]"           NBSP NBSP "expands to nothing and uses UTC date rather than local date\n"
     NBSP NBSP "@[zip]" NBSP NBSP NBSP NBSP "expands to nothing and zips yesterday’s log file",
     applyLogOut },
 };
@@ -659,7 +659,7 @@ setLogLevel(string_view id, string_view val) {
   if (not all) {
     it = definedIds.right.find(id);
     if (it == definedIds.right.end()) {
-      ROCKET_FLOP(id, "Invalid log ID `{}`", id);
+      ROCKET_FAIL("Invalid log ID `{}`", id);
     }
   }
 
