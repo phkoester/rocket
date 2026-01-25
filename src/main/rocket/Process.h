@@ -29,7 +29,7 @@
   msg.print( \
       fmt \
       __VA_OPT__(,) __VA_ARGS__); \
-  ::rocket::process.error(::rocket::nio::stderr, status, "{}", msg.str()); \
+  ::rocket::process.error(::rocket::nio::err, status, "{}", msg.str()); \
 }
 
 /**
@@ -45,7 +45,7 @@
   msg.print( \
       fmt \
       __VA_OPT__(,) __VA_ARGS__); \
-  ::rocket::process.info(::rocket::nio::stdout, "{}", msg.str()); \
+  ::rocket::process.info(::rocket::nio::out, "{}", msg.str()); \
 }
 
 /**
@@ -61,7 +61,7 @@
   msg.print( \
       fmt \
       __VA_OPT__(,) __VA_ARGS__); \
-  ::rocket::process.warn(::rocket::nio::stderr, "{}", msg.str()); \
+  ::rocket::process.warn(::rocket::nio::err, "{}", msg.str()); \
 }
 
 /**
@@ -125,9 +125,9 @@ extern const std::thread::id MAIN_THREAD_ID;
  *   try {
  *     cl.parse(process.args());
  *   } catch (const exception& ex) {
- *     cl.handleException(ex, nio::stderr);
+ *     cl.handleException(ex, nio::err);
  *   }
- *   nio::stdout.println("This is {}", process.name());
+ *   nio::out.println("This is {}", process.name());
  *   process.exit(EXIT_SUCCESS);
  * }
  * ```
@@ -183,7 +183,7 @@ struct Process {
    *
    * May be called before #init.
    *
-   * @param out the sink to write to, usually `rocket::nio::stderr`
+   * @param out the sink to write to, usually `rocket::nio::err`
    * @param status the exit status. If not 0, a fatal error is issued and #exit is called
    * @param fmt the format string
    * @param args the format arguments
@@ -223,7 +223,7 @@ struct Process {
    *
    * May be called before #init.
    *
-   * @param out the sink to write to, usually `rocket::nio::stderr`
+   * @param out the sink to write to, usually `rocket::nio::err`
    * @param fmt the format string
    * @param args the format arguments
    */
@@ -315,7 +315,7 @@ struct Process {
    *
    * May be called before #init.
    *
-   * @param out the sink to write to, usually `rocket::nio::stderr`
+   * @param out the sink to write to, usually `rocket::nio::err`
    * @param fmt the format string
    * @param args the format arguments
    */

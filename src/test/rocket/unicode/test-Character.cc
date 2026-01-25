@@ -15,7 +15,7 @@ using namespace rocket::unicode;
 template<typename C> requires IsChar<C>
 void
 testCharacter(const CharacterView<C>& c) {
-  auto& out = nio::stdout;
+  auto& out = nio::out;
 
   if (not TEST_TERMINAL) {
     static bool info = false;

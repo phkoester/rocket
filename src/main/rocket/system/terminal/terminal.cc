@@ -18,7 +18,7 @@
 #include <sys/ioctl.h>
 #endif
 
-#include <iostream>
+#include <iostream> // XXX
 
 using namespace rocket;
 using namespace rocket::system::terminal;

@@ -12,9 +12,9 @@ struct Io;
 struct Sink;
 struct Source;
 
-extern Source& stdin;
-extern Sink& stdout;
-extern Sink& stderr;
+extern Source& in;
+extern Sink& out;
+extern Sink& err;
 
 } // namespace rocket::nio
 

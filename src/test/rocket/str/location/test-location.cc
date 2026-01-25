@@ -229,7 +229,7 @@ TEST(location, printLocations) {
         "Watch out!");
     nio::StringSink out;
     if (TEST_TERMINAL) {
-      printLocations(nio::stdout, nullopt, result, { .styled=true });
+      printLocations(nio::out, nullopt, result, { .styled=true });
     }
     printLocations(out, nullopt, result, {});
     EXPECT_EQ(out.str(),
@@ -257,7 +257,7 @@ TEST(location, printLocations) {
     EXPECT_EQ(line, input);
     nio::StringSink out;
     if (TEST_TERMINAL) {
-      printLocations(nio::stdout, input, result, { .styled=true });
+      printLocations(nio::out, input, result, { .styled=true });
     }
     printLocations(out, input, result, {});
     EXPECT_EQ(out.str(),
@@ -277,7 +277,7 @@ TEST(location, printLocations) {
     EXPECT_LOCATION(loc, Position::note, 16, ({ { 0, 16 } }), 1, 12, ({ 0, 16 }), nullopt, "Oops", nullopt);
     nio::StringSink out;
     if (TEST_TERMINAL) {
-      printLocations(nio::stdout, input, result, { .styled=true });
+      printLocations(nio::out, input, result, { .styled=true });
     }
     printLocations(out, input, result, {});
     EXPECT_EQ(out.str(),

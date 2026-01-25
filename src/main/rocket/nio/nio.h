@@ -747,11 +747,11 @@ private:
 // Variables ------------------------------------------------------------------------------------------------
 
 /// The standard input source.
-extern Source& stdin;
+extern Source& in;
 /// The standard output sink.
-extern Sink& stdout;
+extern Sink& out;
 /// The standard error sink.
-extern Sink& stderr;
+extern Sink& err;
 
 } // namespace rocket::nio
 

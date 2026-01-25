@@ -145,7 +145,7 @@ struct Out {
 
 private:
 
-  nio::Sink* out_ = &nio::stdout; // `stdout` or `stderr`
+  nio::Sink* out_ = &nio::out; // `stdout` or `stderr`
   unique_ptr<nio::FileSink> fileOut_; // A file sink
 
   string pattern_;
@@ -257,8 +257,8 @@ Out::setPattern(string_view pattern, const TimePoint& time) {
   // Always append to avoid data loss
   fileOut_ = make_unique<nio::FileSink>(path, nio::FileSink::Params { .append=true });
   if (not fileOut_->good()) {
-    process.error(nio::stderr, 0, "Cannot open log file `{}`; logging to standard output instead", path);
-    set(nio::stdout);
+    process.error(nio::err, 0, "Cannot open log file `{}`; logging to standard output instead", path);
+    set(nio::out);
   }
 
   // If zipping, check if yesterday's log file exists and zip it
@@ -690,9 +690,9 @@ setLogOut(string_view val) {
   ROCKET_MUTEX_LOCK(logMutex);
 
   if (val == "-" || val == "stdout") {
-    logOut.set(nio::stdout);
+    logOut.set(nio::out);
   } else if (val == "stderr") {
-    logOut.set(nio::stderr);
+    logOut.set(nio::err);
   } else {
     logOut.setPattern(val, chrono::now<Clock>());
   }

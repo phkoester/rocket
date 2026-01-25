@@ -8,6 +8,9 @@
 
 #include <cstdio>
 #include <iostream>
+#ifdef ROCKET_OS_WINDOWS
+#include <windows.h>
+#endif
 
 using namespace rocket;
 using namespace rocket::nio;
@@ -1002,17 +1005,23 @@ StringSource::terminal(i32*) {
 
 namespace {
 
-FileSink fileSinkStdout = FileSink(::stdout);
-FileSink fileSinkStderr = FileSink(::stderr);
-FileSource fileSourceStdin = FileSource(::stdin);
+#ifdef ROCKET_OS_WINDOWS
+FileSink fileSinkOut = FileSink(STD_OUTPUT_HANDLE);
+FileSink fileSinkErr = FileSink(STD_ERROR_HANDLE);
+FileSource fileSourceIn = FileSource(STD_INPUT_HANDLE);
+#else
+FileSink fileSinkOut = FileSink(::stdout);
+FileSink fileSinkErr = FileSink(::stderr);
+FileSource fileSourceIn = FileSource(::stdin);
+#endif
 
 } // namespace
 
 namespace rocket::nio {
 
-Sink& stdout = fileSinkStdout;
-Sink& stderr = fileSinkStderr;
-Source& stdin = fileSourceStdin;
+Sink& out = fileSinkOut;
+Sink& err = fileSinkErr;
+Source& in = fileSourceIn;
 
 } // namespace rocket::nio
 

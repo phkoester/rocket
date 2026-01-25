@@ -27,10 +27,10 @@ main(i32 argc, char** argv) {
   try {
     cl.parse(process.args());
     if (help) {
-      cl.help(nio::stdout, true);
+      cl.help(nio::out, true);
     }
   } catch (const exception& ex) {
-    cl.handleException(ex, nio::stderr);
+    cl.handleException(ex, nio::err);
   }
 
   i32 status = RUN_ALL_TESTS();

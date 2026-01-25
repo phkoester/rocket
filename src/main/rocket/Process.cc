@@ -40,8 +40,8 @@ callExitFns(bool onTerminate) {
       try {
         fn();
       } catch (...) {
-        nio::stderr.write("While running at-exit function: ");
-        printException(nio::stderr, current_exception());
+        nio::err.write("While running at-exit function: ");
+        printException(nio::err, current_exception());
       }
     }
   }
@@ -73,11 +73,11 @@ onTerminate() {
   callExitFns(true);
 
   try {
-    nio::stderr.println("{}: fatal error: Terminate handler called", process.name());
+    nio::err.println("{}: fatal error: Terminate handler called", process.name());
     if (auto ptr = current_exception()) {
-      printException(nio::stderr, ptr);
+      printException(nio::err, ptr);
     }
-    nio::stderr.writeln("Aborting");
+    nio::err.writeln("Aborting");
   } catch (...) {
     ROCKET_PROCESS_ERROR(0, "`onTerminate` failed");
   }

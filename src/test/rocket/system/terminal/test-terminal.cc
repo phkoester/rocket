@@ -19,7 +19,7 @@ TEST(terminal, position) {
 
   Ansi ansi(true);
 
-  auto& out = nio::stdout;
+  auto& out = nio::out;
 
   out.write(ansi.clear());
   EXPECT_EQ(position(out), make_pair(1UL, 1UL));
@@ -40,12 +40,12 @@ TEST(terminal, position) {
 TEST(terminal, size) {
   EXPECT_ENV(ROCKET_TEST_TERMINAL);
 
-  auto size = system::terminal::size(nio::stdout);
+  auto size = system::terminal::size(nio::out);
   EXPECT_EQ(static_cast<bool>(size), true);
   EXPECT_GT(size->first, 0UL);
   EXPECT_GT(size->second, 0UL);
 
-  size = system::terminal::size(nio::stderr);
+  size = system::terminal::size(nio::err);
   EXPECT_EQ(static_cast<bool>(size), true);
   EXPECT_GT(size->first, 0UL);
   EXPECT_GT(size->second, 0UL);

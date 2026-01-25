@@ -25,7 +25,7 @@ bool parseCommandShowTest; // CL 2 "-t"
 vector<string> parseCommandArgs; // CL 2 args
 
 vector<string>
-parse(const CommandLine& cl, const vector<string>& args, nio::Sink& err = nio::stderr) {
+parse(const CommandLine& cl, const vector<string>& args, nio::Sink& err = nio::err) {
   try {
     return cl.parse(args);
   } catch (const exception& ex) {
@@ -39,7 +39,7 @@ parse(const CommandLine& cl, const vector<string>& args, nio::Sink& err = nio::s
  *   or   cmd [-o | -h] show [-h | -s | -t] [ARG]...
  */
 void
-parseCommand(const vector<string>& args, nio::Sink& out = nio::stdout, nio::Sink& err = nio::stderr) {
+parseCommand(const vector<string>& args, nio::Sink& out = nio::out, nio::Sink& err = nio::err) {
   // Reset
 
   parseCommandOmit = false;

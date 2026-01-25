@@ -17,7 +17,7 @@ main(i32 argc, char **argv) {
     vector<byte> bytes;
     bytes.reserve(arg.size());
     for_each(arg.begin(), arg.end(), [&](char c) { bytes.push_back(byte(c)); });
-    auto& out = nio::stdout;
+    auto& out = nio::out;
     out.println("{}: {}", i, bytes);
     out.println("{}={}=", i, arg);
   }

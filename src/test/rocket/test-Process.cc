@@ -18,14 +18,14 @@ TEST(Process, error0) {
 TEST(ProcessDeathTest, error2) {
   GTEST_FLAG_SET(death_test_style, "threadsafe");
   EXPECT_EXIT(
-      { process.error(nio::stderr, 2, "Test error"); },
+      { process.error(nio::err, 2, "Test error"); },
       ExitedWithCode(2), "test-rocket-Process: fatal error: Test error\n");
 }
 
 TEST(ProcessDeathTest, exit) {
   GTEST_FLAG_SET(death_test_style, "threadsafe");
   EXPECT_EXIT(
-      { nio::stderr.println("Exiting ..."); process.exit(7); },
+      { nio::err.println("Exiting ..."); process.exit(7); },
       ExitedWithCode(7), "Exiting \\.\\.\\.");
 }
 
