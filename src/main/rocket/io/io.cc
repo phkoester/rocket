@@ -21,7 +21,6 @@ tellg(std::istream& is) noexcept {
   is.clear();
   // This is expected to never throw, otherwise this implementation is flawed
   auto ret = is.tellg();
-  static_assert(sizeof(decltype(ret)) == 16);
   static_assert(is_same_v<decltype(ret), std::ios::pos_type>);
   ROCKET_ASSERT(ret >= 0);
 

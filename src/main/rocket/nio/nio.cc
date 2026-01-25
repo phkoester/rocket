@@ -157,7 +157,7 @@ FileSink::FileSink(FILE* file, const Params& params) :
     file_(file),
     params_(params) {
   ROCKET_CHECK(file, file != nullptr);
-  if (file == ::stdout || file == ::stderr) {
+  if (file == stdout || file == stderr) {
     params_.closeOnDestroy = false;
   }
 }
@@ -672,7 +672,7 @@ BufferedSource::terminal(i32* fd) {
 FileSource::FileSource(FILE* file, const Params& params) :
     file_(file),
     params_(params) {
-  if (file == ::stdin) {
+  if (file == stdin) {
     params_.closeOnDestroy = false;
   }
 }
@@ -1005,17 +1005,17 @@ StringSource::terminal(i32*) {
 
 namespace {
 
-FileSink fileSinkOut = FileSink(::stdout);
-FileSink fileSinkErr = FileSink(::stderr);
-FileSource fileSourceIn = FileSource(::stdin);
+FileSource fileSourceIn = FileSource(stdin);
+FileSink fileSinkOut = FileSink(stdout);
+FileSink fileSinkErr = FileSink(stderr);
 
 } // namespace
 
 namespace rocket::nio {
 
+Source& in = fileSourceIn;
 Sink& out = fileSinkOut;
 Sink& err = fileSinkErr;
-Source& in = fileSourceIn;
 
 } // namespace rocket::nio
 
