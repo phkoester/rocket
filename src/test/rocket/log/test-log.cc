@@ -21,15 +21,6 @@ TEST(log, log) {
   ROCKET_LOG_INFO("Some info");
 }
 
-#define NDEBUG 1
-#include "rocket/log/log.h"
-TEST(log, logNDEBUG) {
-  ROCKET_LOG(test_log);
-  ROCKET_LOG_INFO("This must not log anything");
-}
-#undef NDEBUG
-#include "rocket/log/log.h"
-
 TEST(log, LogLevelFormat) {
   EXPECT_EQ(fmt::format("{}", LogLevel::none), "none");
   EXPECT_EQ(fmt::format(U"{}", LogLevel::none), U"none");

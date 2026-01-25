@@ -21,15 +21,15 @@
  *
  * This may be used even if the process isn't initialized yet.
  *
- * Usage: `ROCKET_PROCESS_ERROR(fmt, [args]...])`
+ * Usage: `ROCKET_PROCESS_ERROR(status, fmt, [args]...])`
  */
-#define ROCKET_PROCESS_ERROR(fmt, ...) { \
+#define ROCKET_PROCESS_ERROR(status, fmt, ...) { \
   ::rocket::nio::StringSink msg; \
   msg.print("{}:{}: ", __FILE__, __LINE__); \
   msg.print( \
       fmt \
       __VA_OPT__(,) __VA_ARGS__); \
-  ::rocket::process.error(::rocket::nio::stderr, EXIT_SUCCESS, "{}", msg.str()); \
+  ::rocket::process.error(::rocket::nio::stderr, status, "{}", msg.str()); \
 }
 
 /**
@@ -184,7 +184,7 @@ struct Process {
    * May be called before #init.
    *
    * @param out the sink to write to, usually `rocket::nio::stderr`
-   * @param status the exit status. If not `EXIT_SUCCESS` (0), then #exit is called
+   * @param status the exit status. If not 0, a fatal error is issued and #exit is called
    * @param fmt the format string
    * @param args the format arguments
    */
@@ -193,14 +193,15 @@ struct Process {
   error(nio::Sink& out, i32 status, fmt::format_string<T...> fmt, T&&... args) {
     out.write(autoName());
     out.write(": ");
+    const char* label = status != 0 ? "fatal error: " : "error: ";
     if (out.terminal()) {
-      out.print(fg(fmt::color::red) | fmt::emphasis::bold, "error: ");
+      out.print(fg(fmt::color::red) | fmt::emphasis::bold, "{}", label);
     } else {
-      out.write("error: ");
+      out.write(label);
     }
     out.println(fmt, std::forward<T>(args)...);
 
-    if (status != EXIT_SUCCESS) {
+    if (status != 0) {
       exit(status);
     }
   }

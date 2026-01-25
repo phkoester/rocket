@@ -79,7 +79,7 @@ onTerminate() {
     }
     nio::stderr.writeln("Aborting");
   } catch (...) {
-    ROCKET_PROCESS_ERROR("`onTerminate` failed");
+    ROCKET_PROCESS_ERROR(0, "`onTerminate` failed");
   }
 
   abort();

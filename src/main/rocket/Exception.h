@@ -15,18 +15,28 @@
 
 // Macros ---------------------------------------------------------------------------------------------------
 
+/// The current source location.
+#define ROCKET_EXCEPTION_SL ::std::source_location::current()
+
+/// The current stack trace.
+#define ROCKET_EXCEPTION_ST ::std::stacktrace::current()
+
 #ifdef NDEBUG
-  #define ROCKET_EXCEPTION_SL ::std::nullopt
-  #define ROCKET_EXCEPTION_ST ::std::nullopt
+
+/// The current source location, or null if `NDEBUG` is defined.
+#define ROCKET_DEBUG_EXCEPTION_SL ::std::nullopt
+
+/// The current source location, or null if `NDEBUG` is defined.
+#define ROCKET_DEBUG_EXCEPTION_ST ::std::nullopt
+
 #else
-  /**
-   * Yields null if `NDEBUG` is defined, the current source location otherwise.
-   */
-  #define ROCKET_EXCEPTION_SL ::std::source_location::current()
-  /**
-   * Yields null if `NDEBUG` is defined, the current stack trace otherwise.
-   */
-  #define ROCKET_EXCEPTION_ST ::std::stacktrace::current()
+
+/// The current source location, or null if `NDEBUG` is defined.
+#define ROCKET_DEBUG_EXCEPTION_SL ROCKET_EXCEPTION_SL
+
+/// The current source location, or null if `NDEBUG` is defined.
+#define ROCKET_DEBUG_EXCEPTION_ST ROCKET_EXCEPTION_ST
+
 #endif // NDEBUG
 
 namespace rocket {

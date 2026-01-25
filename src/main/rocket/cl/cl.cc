@@ -49,6 +49,8 @@ CommandLine::CommandLine(const vector<Option>& opts, const CommandLineParams& pa
 
 void
 CommandLine::apply(const Option& opt, bool nameFlag, optional<string_view> value) {
+  // Don't use `ROCKET_CHECK` here for cleaner exception messages
+
   if (opt.takesValue && not value) {
     ROCKET_FAIL("Missing value for option `{}`", name(opt, nameFlag));
   }
@@ -90,9 +92,9 @@ CommandLine::error(nio::Sink& out, i32 status) const {
 void
 CommandLine::handleException(const exception& ex, nio::Sink& out, i32 status) const {
   if (auto p = dynamic_cast<const Exception*>(&ex))
-    process.error(out, EXIT_SUCCESS, "{}", p->message());
+    process.error(out, 0, "{}", p->message());
   else
-    process.error(out, EXIT_SUCCESS, "{}", ex.what());
+    process.error(out, 0, "{}", ex.what());
 
   if (usage_)
     printUsage(out);
@@ -361,11 +363,15 @@ CommandLine::printUsage(nio::Sink& out) const {
 
 void
 CommandLine::validate(string_view name, bool nameFlag) {
+  // Don't use `ROCKET_CHECK` here for cleaner exception messages
+
   const char* what = nameFlag ? "option name" : "option short name";
-  if (name.empty())
+  if (name.empty()) {
     ROCKET_FAIL("{} may not be empty", str::capitalize(what));
-  if (str::beginsWith<char>(name, "-") || name.find_first_of(" =") != string::npos)
+  }
+  if (name.starts_with("-") || name.find_first_of(" =") != string::npos) {
     ROCKET_FAIL("Invalid {} {:?}", what, name);
+  }
 }
 
 } // namespace rocket::cl

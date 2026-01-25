@@ -5,7 +5,6 @@
 #include "rocket/str/message/message.h"
 
 #include "rocket/format/std.h"
-#include "rocket/nio/nio.h"
 
 using namespace std;
 
@@ -29,12 +28,11 @@ overflow(const type_info& type, string_view msg) {
 
 string
 withSourceLocation(string_view msg, const optional<source_location>& sl) {
-  nio::StringSink out;
   if (sl) {
-    out.print("{}:{}: ", sl->file_name(), sl->line());
+    return fmt::format("{}:{}: {}", sl->file_name(), sl->line(), msg);
+  } else {
+    return string(msg);
   }
-  out.write(msg);
-  return out.str();
 }
 
 } // namespace rocket::str::message

@@ -740,7 +740,7 @@ FileSource::seek(i64 offset, SeekMode mode) {
     origin = SEEK_END;
     break;
   default:
-    ROCKET_FAIL_UNREACHABLE_CODE();
+    ROCKET_FLOP(mode, "Invalid seek mode {}", static_cast<i32>(mode));
   }
 
 
@@ -878,7 +878,7 @@ StreamSource::seek(i64 offset, SeekMode mode) {
     dir = ios::end;
     break;
   default:
-    ROCKET_FAIL_UNREACHABLE_CODE();
+    ROCKET_FLOP(mode, "Invalid seek mode {}", static_cast<i32>(mode));
   }
 
   // `istream::off_type` is `i64`, so we can directly pass `offset`

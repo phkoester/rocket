@@ -30,14 +30,6 @@ TEST(assertDeathTest, RocketAssertFalse) {
       KilledBySignal(SIGABRT), "Assertion `false` failed: My message: 42");
 }
 
-#define NDEBUG 1
-#include "rocket/assert.h"
-TEST(assert, RocketAssertFalseNdebug) {
-  ROCKET_ASSERT(false, "This must have no effect");
-}
-#undef NDEBUG
-#include "rocket/assert.h"
-
 TEST(assert, RocketCheck) {
   char c = 'a';
 

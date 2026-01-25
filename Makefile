@@ -27,6 +27,9 @@
 # - test
 # - test-terminal
 # - install
+#
+# Targets for executables:
+#
 # - bare
 # - print-args
 # - toy
@@ -88,14 +91,26 @@ toy: build
 .PHONY: patch
 patch: build src/main/rocket/3rdparty/fmt/std.h src/main/rocket/3rdparty/scnlib/impl.h
 
-src/main/rocket/3rdparty/fmt/std.h: $(BUILD_DIR)/_deps/fmt-src/include/fmt/std.h
-	@echo $< is newer than $@!
-	@echo This must be patched manually if version is \> 12.1.0!
-	@echo Current version:
-	@git -C $(BUILD_DIR)/_deps/fmt-src describe --tags --abbrev=0
+FMT_VERSION_EXPECTED := 12.1.0
+FMT_VERSION = $(shell git -C $(BUILD_DIR)/_deps/fmt-src describe --tags --abbrev=0)
 
+src/main/rocket/3rdparty/fmt/std.h: $(BUILD_DIR)/_deps/fmt-src/include/fmt/std.h
+ifneq ($(FMT_VERSION), $(FMT_VERSION_EXPECTED))
+	@echo fmt version has changed from $(FMT_VERSION_EXPECTED) to $(FMT_VERSION)!
+	@echo You have to copy and patch std.h manually!
+	@echo
+	@echo "  cp $< $@"
+endif
+
+.PHONY: src/main/rocket/3rdparty/scnlib/impl.h
 src/main/rocket/3rdparty/scnlib/impl.h: $(BUILD_DIR)/_deps/scn-src/src/scn/impl.h
-	@echo ">" $@
-	@cp $< "$@"
+	@diff $< $@ >/dev/null || ( \
+           echo The file impl.h in scnlib has changed!; \
+	   echo You have to copy impl.h manually!; \
+	   echo; \
+	   echo "  cp $< $@"; \
+	   echo; \
+	   echo You have to patch src/main/rocket/3rdparty/scnlib/impl.cc manually! \
+	)
 
 # EOF

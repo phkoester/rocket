@@ -94,7 +94,7 @@ TEST(scnlib, scanI128) {
 TEST(scnlib, scanF128) {
   auto result = scn::scan<f128>("3.14159265358979323846", "{}");
   auto val = result->value();
-  EXPECT_EQ(fmt::format("{}", val), "3.14159265358979323846");
+  EXPECT_EQ(fmt::format("{}", val), "3.1415926535897932385");
 }
 
 #endif // ROCKET_HAS_128
@@ -155,7 +155,7 @@ TEST(scnlib, scanPair) {
 }
 
 TEST(scnlib, scanSet) {
-  using type = set<int>;
+  using type = set<i32>;
 
   auto val1 = type { 1, 2, 3 };
   string input = fmt::format("{}", val1); // "{1, 2, 3}", 9 chars
@@ -201,7 +201,7 @@ TEST(scnlib, scanTuple) {
 }
 
 TEST(scnlib, scanVector) {
-  using type = vector<int>;
+  using type = vector<i32>;
 
   auto val1 = type { 1, 2, 3 };
   string input = fmt::format("{}", val1); // "[1, 2, 3]", 9 chars

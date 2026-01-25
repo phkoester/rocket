@@ -2,21 +2,12 @@
  * @file assert.h
  *
  * Assertions, argument checks, and expectations.
- *
- * This file may be included several times. If `NDEBUG` is not defined, the assertion macros are active.
- * Otherwise, they expand to a call of #rocket::nop.
  */
 
-// No `#pragma once` here!
-
-#ifndef ROCKET_ASSERT_H
-#define ROCKET_ASSERT_H
+# pragma once
 
 #include "rocket/Exception.h"
 #include "rocket/Process.h"
-#ifdef NDEBUG
-#include "rocket/rocket.h" // `rocket::nop()`
-#endif
 #include "rocket/format/format.h"
 #include "rocket/str/message/message.h"
 
@@ -26,7 +17,23 @@
 
 // Internal -------------------------------------------------------------------------------------------------
 
-namespace rocket::assert::internal {
+namespace rocket::internal {
+
+// Assertions ...............................................................................................
+
+template<typename... T>
+[[noreturn]] void
+terminate(
+    std::source_location&& sl,
+    fmt::format_string<T...> fmt,
+    T&&... args) {
+  process.error(nio::stderr, 0, "{}:{}: {}", sl.file_name(), sl.line(), format::Format<char>([&] {
+    auto params = format::Format<char>::params("\\\x01");
+    params.tag("\\\x01", fmt, std::forward<T>(args)...);
+    return params;
+  }));
+  std::terminate();
+}
 
 template<typename... T>
 [[noreturn]] void
@@ -35,19 +42,27 @@ assertFailed(
     const char* expr,
     fmt::format_string<T...> fmt = "",
     T&&... args) {
-  process.error(
-      nio::stderr,
-      EXIT_SUCCESS,
-      "{}:{}: Assertion `{}` failed{}", sl.file_name(), sl.line(), expr, format::Format<char>([&] {
+  terminate(std::move(sl), "Assertion `{}` failed{}", expr, format::Format<char>([&] {
     if (fmt.get().size() > 0) {
-      auto params = format::Format<char>::params(": \\@0");
-      params.tag("\\@0", fmt, std::forward<T>(args)...);
+      auto params = format::Format<char>::params(": \\\x01");
+      params.tag("\\\x01", fmt, std::forward<T>(args)...);
       return params;
     } else {
       return format::Format<char>::params();
     }
   }));
-  std::terminate();
+}
+
+// Argument checks ..........................................................................................
+
+template<typename... T>
+[[noreturn]] void
+flop(
+    std::source_location&& sl,
+    const char* name,
+    fmt::format_string<T...> fmt,
+    T&&... args) {
+  throw InvalidArgument(name, fmt::format(fmt, std::forward<T>(args)...), std::move(sl));
 }
 
 template<typename... T>
@@ -58,15 +73,26 @@ checkFailed(
     const char* expr,
     fmt::format_string<T...> fmt = "",
     T&&... args) {
-  throw InvalidArgument(name, fmt::format("Check `{}` failed{}", expr, format::Format<char>([&] {
+  flop(std::move(sl), name, "Check `{}` failed{}", expr, format::Format<char>([&] {
     if (fmt.get().size() > 0) {
-      auto params = format::Format<char>::params(": \\@0");
-      params.tag("\\@0", fmt, std::forward<T>(args)...);
+      auto params = format::Format<char>::params(": \\\x01");
+      params.tag("\\\x01", fmt, std::forward<T>(args)...);
       return params;
     } else {
       return format::Format<char>::params();
     }
-  })), sl);
+  }));
+}
+
+// Expectations .............................................................................................
+
+template<typename... T>
+[[noreturn]] void
+fail(
+    std::source_location&& sl,
+    fmt::format_string<T...> fmt,
+    T&&... args) {
+  throw InvalidState(fmt::format(fmt, std::forward<T>(args)...), std::move(sl));
 }
 
 template<typename... T>
@@ -76,7 +102,7 @@ expectFailed(
     const char* expr,
     fmt::format_string<T...> fmt = "",
     T&&... args) {
-  throw InvalidState(fmt::format("Expectation `{}` failed{}", expr, format::Format<char>([&] {
+  fail(std::move(sl), "Expectation `{}` failed{}", expr, format::Format<char>([&] {
     if (fmt.get().size() > 0) {
       auto params = format::Format<char>::params(": \\@0");
       params.tag("\\@0", fmt, std::forward<T>(args)...);
@@ -84,54 +110,22 @@ expectFailed(
     } else {
       return format::Format<char>::params();
     }
-  })), sl);
+  }));
 }
 
-template<typename... T>
-[[noreturn]] void
-fail(
-    std::source_location&& sl,
-    fmt::format_string<T...> fmt,
-    T&&... args) {
-  throw InvalidState(fmt::format(fmt, std::forward<T>(args)...), sl);
-}
-
-template<typename... T>
-[[noreturn]] void
-terminate(
-    std::source_location&& sl,
-    fmt::format_string<T...> fmt,
-    T&&... args) {
-  std::string msg = fmt::format(fmt, std::forward<T>(args)...);
-  msg = str::message::withSourceLocation(msg, sl);
-  process.error(nio::stderr, EXIT_SUCCESS, "{}", msg);
-  std::terminate();
-}
-
-} // namespace rocket::assert::internal
+} // namespace rocket::internal
 
 // Macros ---------------------------------------------------------------------------------------------------
 
-/**
- * Throws #rocket::InvalidState.
- *
- * @throw #rocket::InvalidState
- */
-#define ROCKET_FAIL_INVALID_CALL() ROCKET_FAIL("Invalid call of function `{}`", __PRETTY_FUNCTION__)
+// Assertions ...............................................................................................
 
 /**
- * Throws #rocket::InvalidState.
+ * Terminates with a message.
  *
- * @throw #rocket::InvalidState
+ * Usage: `ROCKET_TERMINATE(fmt, [args]...)`
  */
-#define ROCKET_FAIL_NOT_IMPLEMENTED() ROCKET_FAIL("Not implemented")
-
-/**
- * Throws #rocket::InvalidState.
- *
- * @throw #rocket::InvalidState
- */
-#define ROCKET_FAIL_UNREACHABLE_CODE() ROCKET_FAIL("Unreachable code")
+#define ROCKET_TERMINATE(fmt, ...) \
+    ::rocket::internal::terminate(ROCKET_EXCEPTION_SL, fmt __VA_OPT__(,) __VA_ARGS__)
 
 /**
  * Terminates because of an invalid function call.
@@ -148,107 +142,146 @@ terminate(
  */
 #define ROCKET_TERMINATE_UNREACHABLE_CODE() ROCKET_TERMINATE("Unreachable code")
 
-#endif // ROCKET_ASSERT_H
-
-// End of header guard --------------------------------------------------------------------------------------
-
-#undef ROCKET_ASSERT
-#undef ROCKET_CHECK
-#undef ROCKET_EXPECT
-#undef ROCKET_FAIL
-#undef ROCKET_TERMINATE
-
-#ifdef NDEBUG
-
-#define ROCKET_ASSERT(expr, ...) ::rocket::nop()
-#define ROCKET_CHECK(name, expr, ...) ::rocket::nop()
-#define ROCKET_EXPECT(expr, ...) ::rocket::nop()
-#define ROCKET_FAIL(fmt, ...) ::rocket::nop()
-#define ROCKET_TERMINATL(fmt, ...) ::rocket::nop()
-
-#else
-
 /**
  * Terminates if @p expr evaluates to `false`.
  *
  * Usage: `ROCKET_ASSERT(expr, [fmt, [args]...])`
- *
- * Use this macro in order to handle invalid program states that make further execution impossible or
- * dangerous. If an assertion fails, possibly code needs to be fixed.
  */
 #define ROCKET_ASSERT(expr, ...) \
-    if (not (expr)) { \
-      ::rocket::assert::internal::assertFailed( \
-          ROCKET_EXCEPTION_SL, \
-          BOOST_PP_STRINGIZE(expr) \
-          __VA_OPT__(,) __VA_ARGS__); \
-    }
+if (not (expr)) { \
+  ::rocket::internal::assertFailed( \
+      ROCKET_EXCEPTION_SL, \
+      BOOST_PP_STRINGIZE(expr) \
+      __VA_OPT__(,) __VA_ARGS__); \
+}
+
+#ifdef NDEBUG
+/**
+ * Only in debug code, where `NDEBUG` is not defined, terminates if @p expr evaluates to `false`.
+ *
+ * Usage: `ROCKET_DEBUG_ASSERT(expr, [fmt, [args]...])`
+ */
+#define ROCKET_DEBUG_ASSERT(expr, ...)
+#else
+/**
+ * Only in debug code, where `NDEBUG` is not defined, terminates if @p expr evaluates to `false`.
+ *
+ * Usage: `ROCKET_DEBUG_ASSERT(expr, [fmt, [args]...])`
+ */
+#define ROCKET_DEBUG_ASSERT(expr, ...) ROCKET_ASSERT(expr __VA_OPT__(,) __VA_ARGS__)
+#endif // NDEBUG
+
+// Argument checks ..........................................................................................
+
+/**
+ * Throws #rocket::InvalidArgument with a message.
+ *
+ * Usage: `ROCKET_FLOP(name, fmt, [args]...)`
+ */
+#define ROCKET_FLOP(name, fmt, ...) \
+    ::rocket::internal::flop(ROCKET_EXCEPTION_SL, BOOST_PP_STRINGIZE(name), fmt __VA_OPT__(,) __VA_ARGS__)
 
 /**
  * Throws #rocket::InvalidArgument if @p expr evaluates to `false`.
  *
  * Usage: `ROCKET_CHECK(name, expr, [fmt, [args]...])`
- *
- * @throw #rocket::InvalidArgument if @p expr evaluates to `false`
- *
- * Use this macro in order to check function arguments. The first parameter @p name is always the name of the
- * function parameter the argument of which is to be checked.
  */
 #define ROCKET_CHECK(name, expr, ...) \
     if (not (expr)) { \
-      ::rocket::assert::internal::checkFailed( \
+      ::rocket::internal::checkFailed( \
           ROCKET_EXCEPTION_SL, \
           BOOST_PP_STRINGIZE(name), \
           BOOST_PP_STRINGIZE(expr) \
           __VA_OPT__(,) __VA_ARGS__); \
     }
 
+#ifdef NDEBUG
+/**
+ * Only in debug code, where `NDEBUG` is not defined, throws #rocket::InvalidArgument if @p expr evaluates to
+ * `false`.
+ *
+ * Usage: `ROCKET_DEBUG_CHECK(name, expr, [fmt, [args]...])`
+ */
+#define ROCKET_DEBUG_CHECK(name, expr, ...)
+#else
+/**
+ * Only in debug code, where `NDEBUG` is not defined, throws #rocket::InvalidArgument if @p expr evaluates to
+ * `false`.
+ *
+ * Usage: `ROCKET_DEBUG_CHECK(name, expr, [fmt, [args]...])`
+ */
+#define ROCKET_DEBUG_CHECK(name, expr, ...) ROCKET_CHECK(name, expr __VA_OPT__(,) __VA_ARGS__)
+#endif
+
+// Expectations .............................................................................................
+
+/**
+ * Throws #rocket::InvalidState with a message.
+ *
+ * Usage: `ROCKET_FAIL(fmt, [args]...)`
+ */
+#define ROCKET_FAIL(fmt, ...) ::rocket::internal::fail(ROCKET_EXCEPTION_SL, fmt __VA_OPT__(,) __VA_ARGS__)
+
+#ifdef NDEBUG
+/**
+ * Only in debug code, where `NDEBUG` is not defined, throws #rocket::InvalidState with a message.
+ *
+ * Usage: `ROCKET_DEBUG_FAIL(fmt, [args]...)`
+ */
+#define ROCKET_DEBUG_FAIL(fmt, ...)
+#else
+/**
+ * Only in debug code, where `NDEBUG` is not defined, throws #rocket::InvalidState with a message.
+
+ * Usage: `ROCKET_DEBUG_FAIL(fmt, [args]...)`
+ */
+#define ROCKET_DEBUG_FAIL(fmt, ...) ROCKET_FAIL(fmt __VA_OPT__(,) __VA_ARGS__)
+#endif
+
+/**
+ * Throws #rocket::InvalidState because of an invalid function call.
+ */
+#define ROCKET_FAIL_INVALID_CALL() ROCKET_FAIL("Invalid call of function `{}`", __PRETTY_FUNCTION__)
+
+/**
+ * Throws #rocket::InvalidState because of a missing implementation.
+ */
+#define ROCKET_FAIL_NOT_IMPLEMENTED() ROCKET_FAIL("Not implemented")
+
+/**
+ * Throws #rocket::InvalidState because code was reached that was supposed to be unreachable.
+ */
+#define ROCKET_FAIL_UNREACHABLE_CODE() ROCKET_FAIL("Unreachable code")
+
 /**
  * Throws #rocket::InvalidState if @p expr evaluates to `false`.
  *
  * Usage: `ROCKET_EXPECT(expr, [fmt, [args]...])`
- *
- * @throw #rocket::InvalidState if @p expr evaluates to `false`
- *
- * Use this macro in order to handle invalid program states that may be dealt with by throwing an exception.
  */
 #define ROCKET_EXPECT(expr, ...) \
     if (not (expr)) { \
-      ::rocket::assert::internal::expectFailed( \
+      ::rocket::internal::expectFailed( \
           ROCKET_EXCEPTION_SL, \
           BOOST_PP_STRINGIZE(expr) \
           __VA_OPT__(,) __VA_ARGS__); \
     }
 
+#ifdef NDEBUG
 /**
- * Throws #rocket::InvalidState.
+ * Only in debug code, where `NDEBUG` is not defined, throws #rocket::InvalidState if @p expr evaluates to
+ * `false`.
  *
- * Usage: `ROCKET_FAIL(fmt, [args]...)`
- *
- * @throw #rocket::InvalidState
- *
- * Use this macro in order to handle invalid program states that may be dealt with by throwing an exception.
+ * Usage: `ROCKET_DEBUG_EXPECT(expr, [fmt, [args]...])`
  */
-#define ROCKET_FAIL(fmt, ...) \
-    ::rocket::assert::internal::fail( \
-        ROCKET_EXCEPTION_SL, \
-        fmt \
-        __VA_OPT__(,) __VA_ARGS__)
-
+#define ROCKET_DEBUG_EXPECT(expr, ...)
+#else
 /**
- * Terminates.
+ * Only in debug code, where `NDEBUG` is not defined, throws #rocket::InvalidState if @p expr evaluates to
+ * `false`.
  *
- * Usage: `ROCKET_TERMINATE(fmt, [args]...)`
- *
- * Use this macro in order to handle invalid program states that make further execution impossible or
- * dangerous.
+ * Usage: `ROCKET_DEBUG_EXPECT(expr, [fmt, [args]...])`
  */
-#define ROCKET_TERMINATE(fmt, ...) \
-    ::rocket::assert::internal::terminate( \
-        ROCKET_EXCEPTION_SL, \
-        fmt \
-        __VA_OPT__(,) __VA_ARGS__)
-
-#endif // NDEBUG
+#define ROCKET_DEBUG_EXPECT(expr, ...) ROCKET_EXPECT(expr __VA_OPT__(,) __VA_ARGS__)
+#endif
 
 // EOF

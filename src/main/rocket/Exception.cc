@@ -97,6 +97,8 @@ printThrown(
     const type_info* type,
     const optional<string>& what,
     const optional<stacktrace>& st) {
+  // Print information about the instance
+
   nio::StringSink instanceOf;
   if (type) {
     instanceOf.print("instance of `{}`", *type);
@@ -110,15 +112,20 @@ printThrown(
   } else {
     msg.print("Caused by an {}", instanceOf.str());
   }
+
+  // Print the message
+
   if (what) {
     msg.print(": {}", *what);
   }
   out.writeln(msg.str());
 
+  // Print the stack trace
+
   if (st) {
-    ostringstream os;
-    os << *st; // This prints a '\n' at the end
-    out.write(os.str());
+    ostringstream buf;
+    buf << *st; // This prints a '\n' at the end
+    out.write(buf.str());
   }
 }
 

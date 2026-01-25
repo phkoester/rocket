@@ -94,14 +94,14 @@ struct Format {
       case 'L': sourceLocation = true; break;
       case 's': {
         if (it == end - 1) {
-          ROCKET_FAIL("Missing seconds resolution");
+          ROCKET_FLOP(fmt, "Missing seconds resolution");
         }
         switch (*++it) {
         case '0': secondsRez = 0; break;
         case '3': secondsRez = 3; break;
         case '6': secondsRez = 6; break;
         case '9': secondsRez = 9; break;
-        default: ROCKET_FAIL("Invalid seconds resolution {:?}", *it);
+        default: ROCKET_FLOP(fmt, "Invalid seconds resolution {:?}", *it);
         }
         break;
       }
@@ -111,7 +111,7 @@ struct Format {
       case 'X': execTimes = true; break;
       case 'z': utc = false; break;
       case 'Z': utc = true; break;
-      default: ROCKET_FAIL("Invalid format specifier {:?}", *it);
+      default: ROCKET_FLOP(fmt,"Invalid format specifier {:?}", *it);
       }
     }
   }
@@ -147,8 +147,8 @@ private:
   unique_ptr<nio::FileSink> fileOut_; // A file sink
 
   string pattern_;
-  optional<std::chrono::year_month_day> localYmd_;
-  optional<std::chrono::year_month_day> utcYmd_;
+  bool utc_ = false;
+  optional<std::chrono::year_month_day> ymd_;
   bool zip_ = false;
 
   string expand(string_view pattern, const TimePoint& time, bool update);
@@ -171,21 +171,12 @@ private:
 
 nio::Sink&
 Out::get(const TimePoint& time) {
-  if (fileOut_) {
+  if (fileOut_ && ymd_) {
     // Writing to a file: has the date in the pattern changed?
-    if (localYmd_) {
-      auto newLocalYmd = localYmd(time);
-      if (newLocalYmd != *localYmd_) {
-        // Local date has changed: reassign the pattern, open new log file
-        setPattern(pattern_, time);
-      }
-    }
-    if (utcYmd_) {
-      auto newUtcYmd = utcYmd(time);
-      if (newUtcYmd != *utcYmd_) {
-        // UTC date has changed: reassign the pattern, open new log file
-        setPattern(pattern_, time);
-      }
+    auto newYmd = utc_ ? utcYmd(time) : localYmd(time);
+    if (newYmd != *ymd_) {
+      // Date has changed: reassign the pattern, open new log file
+      setPattern(pattern_, time);
     }
   }
 
@@ -197,51 +188,55 @@ Out::expand(string_view pattern, const TimePoint& time, bool update) {
   // Prepare the values
 
   auto localYmd = this->localYmd(time);
-  auto date = std::format("{}", localYmd);
+  auto localDate = std::format("{}", localYmd);
+  auto utcYmd = this->utcYmd(time);
+  auto utcDate = std::format("{}", utcYmd);
 
   auto dir = filesystem::path(process.invocationName()).parent_path().string();
   auto pid = fmt::format("{}", getpid());
   const auto& name = process.name();
 
-  auto utcYmd = this->utcYmd(time);
-  auto udate = std::format("{}", utcYmd);
-
   // Expand the pattern
 
   string ret(pattern);
+
+  // Start with `@[utc]`
+  string_view date;
+  auto utcCount = str::replaceIn<char>(ret, "@[utc]", "");
+  if (utcCount > 0) {
+    date = utcDate;
+  } else {
+    date = localDate;
+  }
+
+  // Now do the rest
   auto dateCount = str::replaceIn<char>(ret, "@[date]", date);
   str::replaceIn<char>(ret, "@[dir]", dir);
   str::replaceIn<char>(ret, "@[name]", name);
   str::replaceIn<char>(ret, "@[pid]", pid);
-  auto udateCount = str::replaceIn<char>(ret, "@[udate]", udate);
   auto zipCount = str::replaceIn<char>(ret, "@[zip]", "");
 
   // Do sanity checks
 
-  if (dateCount + udateCount > 1) {
-    ROCKET_FAIL("Multiple dates are present in the pattern {:?}; only one is allowed", pattern);
-  }
-  if (zipCount > 0 && dateCount + udateCount == 0) {
-    ROCKET_FAIL("Can only zip yesterday’s log file if a date is present in the pattern {:?}", pattern);
+  if (zipCount > 0 && dateCount == 0) {
+    ROCKET_FLOP(pattern, "Can only zip yesterday’s log file if a date is present in the pattern");
   }
   if (ret.find("@[") != NPOS) {
-    ROCKET_FAIL("Invalid pattern {:?}", pattern);
+    ROCKET_FLOP(pattern, "Invalid pattern");
   }
 
   // If requested, update members
 
   if (update) {
     pattern_ = pattern;
-    localYmd_ = nullopt;
+    utc_ = utcCount > 0;
+    ymd_ = nullopt;
     if (dateCount > 0) {
-      localYmd_ = localYmd;
-    }
-    utcYmd_ = nullopt;
-    if (udateCount > 0) {
-      utcYmd_ = utcYmd;
+      ymd_ = utc_ ? utcYmd : localYmd;
     }
     zip_ = zipCount > 0;
   }
+
   return ret;
 }
 
@@ -253,7 +248,7 @@ Out::setPattern(string_view pattern, const TimePoint& time) {
   // Always append to avoid data loss
   fileOut_ = make_unique<nio::FileSink>(path, nio::FileSink::Params { .append=true });
   if (not fileOut_->good()) {
-    process.error(nio::stderr, EXIT_SUCCESS, "Cannot open log file `{}`; logging to standard output instead", path);
+    process.error(nio::stderr, 0, "Cannot open log file `{}`; logging to standard output instead", path);
     set(nio::stdout);
   }
 
@@ -620,9 +615,9 @@ logEnd() noexcept {
       logImpl(logOut.get(time), entry.logId_, LogLevel::none, logStack.size() - 1, time, msg);
     }
   } catch (const exception& ex) {
-    ROCKET_PROCESS_ERROR("Cannot log message: {}", what(ex));
+    ROCKET_PROCESS_ERROR(0, "Cannot log message: {}", what(ex));
   } catch (...) {
-    ROCKET_PROCESS_ERROR("Cannot log message");
+    ROCKET_PROCESS_ERROR(0, "Cannot log message");
   }
   // After catching anything, we can safely pop from the stack
   logStack.pop_back();
@@ -664,7 +659,7 @@ setLogLevel(string_view id, string_view val) {
   if (not all) {
     it = definedIds.right.find(id);
     if (it == definedIds.right.end()) {
-      ROCKET_FAIL("Invalid log ID `{}`", id);
+      ROCKET_FLOP(id, "Invalid log ID `{}`", id);
     }
   }
 

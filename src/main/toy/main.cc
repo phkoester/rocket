@@ -25,8 +25,8 @@ extern const char* generated();
 
 void
 myExit() {
-  // out.println("myExit");
-  // ROCKET_FAIL("Oopsers!");
+  out.println("myExit");
+  ROCKET_DEBUG_FAIL("Oopsers!");
 }
 
 void
@@ -36,7 +36,8 @@ myTerminate() {
 
 void
 yyy() {
-  ROCKET_LOG(thisIsARatherLongLogId);
+  ROCKET_DEBUG_LOG(thisIsARatherLongLogId);
+  ROCKET_LOG_TRACE("Hey {}", "there");
 }
 
 void
@@ -58,7 +59,7 @@ toy() {
 
 i32
 main(i32 argc, char **argv) {
-  ROCKET_PROCESS_ERROR("Testing error before `process.init` ...");
+  ROCKET_PROCESS_ERROR(0, "Testing error before `process.init` ...");
 
   process.atExit(myExit);
   process.atExit(myTerminate, true);

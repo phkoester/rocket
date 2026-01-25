@@ -36,7 +36,7 @@ tellg(std::istream& is) noexcept {
     } catch (const std::ios::failure&) {
       // Nothing to do, we want to catch this silently
     } catch (...) {
-      ROCKET_PROCESS_ERROR("`is.clear()` failed");
+      ROCKET_TERMINATE("`is.clear()` failed");
     }
   }
 

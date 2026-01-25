@@ -20,7 +20,7 @@ namespace rocket::math {
 /**
  * Calculates the average mean for the values in the half-open interval @f$[begin,end)@f$.
  *
- * To avoid overflow, this function calculates a <em>cumulative moving average</em>. Let the values be
+ * To avoid overflow, this function calculates a *cumulative moving average*. Let the values be
  * @f$(x_{1},...,x_{N})@f$, this functions returns
  *
  * @f[
@@ -31,7 +31,6 @@ namespace rocket::math {
  * @tparam It the iterator type
  * @param begin the beginning of the range, inclusive
  * @param end the end of the range, exclusive
- * @throws #rocket::Overflow if the result is out of range
  * @return the mean
  */
 template<typename T, typename It> requires IsFloat<T>

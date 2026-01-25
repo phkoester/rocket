@@ -111,7 +111,7 @@ Iterator<C>::Iterator(IteratorType type, basic_string_view<C> input, const local
     iter.reset(icu::BreakIterator::createWordInstance(icuLoc, status));
     break;
   default:
-    ROCKET_FAIL("Invalid iterator type {}", static_cast<i32>(type));
+    ROCKET_FLOP(type, "Invalid iterator type {}", static_cast<i32>(type));
   }
   ROCKET_EXPECT(U_SUCCESS(status));
 

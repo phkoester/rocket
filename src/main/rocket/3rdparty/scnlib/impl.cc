@@ -41,8 +41,6 @@ scan_expected<ranges::iterator_t<Range>> internal_skip_classic_whitespace(
     template SCN_PUBLIC scan_expected<Context::iterator> \
     scanner_scan_for_builtin_type(T&, Context&, const format_specs&);
 
-// Manually added `bool`
-
 #define SCN_DEFINE_SCANNER_SCAN_FOR_CTX(Context)                               \
     SCN_DEFINE_SCANNER_SCAN_FOR_TYPE(Context::char_type, Context)              \
     SCN_DEFINE_SCANNER_SCAN_FOR_TYPE(bool, Context)                            \
@@ -66,7 +64,7 @@ scan_expected<ranges::iterator_t<Range>> internal_skip_classic_whitespace(
     SCN_DEFINE_SCANNER_SCAN_FOR_TYPE(regex_matches, Context)                   \
     SCN_DEFINE_SCANNER_SCAN_FOR_TYPE(wregex_matches, Context)                  \
     template SCN_PUBLIC scan_expected<ranges::iterator_t<Context::range_type>> \
-    internal_skip_classic_whitespace(Context::range_type, bool);
+    internal_skip_classic_whitespace(Context::range_type, bool); // Patched!
 
 SCN_DEFINE_SCANNER_SCAN_FOR_CTX(scan_context)
 SCN_DEFINE_SCANNER_SCAN_FOR_CTX(wscan_context)

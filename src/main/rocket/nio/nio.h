@@ -458,14 +458,7 @@ struct StringSink : Sink {
    *
    * @return the referenced or the owned string
    */
-  const std::string& ref() const { return ptr_ ? *ptr_ : owned_; }
-
-  /**
-   * Returns a copy of the string (either referenced or owned).
-   *
-   * @return the referenced or the owned string
-   */
-  const std::string str() const { return ref(); }
+  const std::string& str() const { return ptr_ ? *ptr_ : owned_; }
 
   bool terminal(i32* fd = nullptr) override;
 
