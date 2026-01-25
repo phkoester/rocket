@@ -11,6 +11,8 @@
 #include "rocket/str/str.h"
 #include "rocket/system/system.h"
 
+#include <boost/algorithm/string.hpp>
+
 using namespace rocket;
 using namespace rocket::log;
 using namespace std;
@@ -200,25 +202,32 @@ Out::expand(string_view pattern, const TimePoint& time, bool update) {
 
   string ret(pattern);
 
+  auto replaceAll = [](string& str, string_view from, string_view to) -> bool {
+    string old(str);
+    boost::replace_all(str, from, to);
+    return str != old;
+  };
+
   // Start with `@[utc]`
   string_view date;
-  auto utcCount = str::replaceIn<char>(ret, "@[utc]", "");
-  if (utcCount > 0) {
+  boost::replace_all(ret, "@[utc]", "");
+  bool utcFound = replaceAll(ret, "@[utc]", "");
+  if (utcFound) {
     date = utcDate;
   } else {
     date = localDate;
   }
 
   // Now do the rest
-  auto dateCount = str::replaceIn<char>(ret, "@[date]", date);
-  str::replaceIn<char>(ret, "@[dir]", dir);
-  str::replaceIn<char>(ret, "@[name]", name);
-  str::replaceIn<char>(ret, "@[pid]", pid);
-  auto zipCount = str::replaceIn<char>(ret, "@[zip]", "");
+  bool dateFound = replaceAll(ret, "@[date]", date);
+  replaceAll(ret, "@[dir]", dir);
+  replaceAll(ret, "@[name]", name);
+  replaceAll(ret, "@[pid]", pid);
+  bool zipFound = replaceAll(ret, "@[zip]", "");
 
   // Do sanity checks
 
-  if (zipCount > 0 && dateCount == 0) {
+  if (zipFound && not dateFound) {
     ROCKET_FAIL("Can only zip yesterday’s log file if a date is present in the pattern");
   }
   if (ret.find("@[") != NPOS) {
@@ -229,12 +238,12 @@ Out::expand(string_view pattern, const TimePoint& time, bool update) {
 
   if (update) {
     pattern_ = pattern;
-    utc_ = utcCount > 0;
+    utc_ = utcFound;
     ymd_ = nullopt;
-    if (dateCount > 0) {
+    if (dateFound) {
       ymd_ = utc_ ? utcYmd : localYmd;
     }
-    zip_ = zipCount > 0;
+    zip_ = zipFound;
   }
 
   return ret;

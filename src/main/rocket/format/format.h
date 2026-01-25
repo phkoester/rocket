@@ -10,6 +10,8 @@
 
 #include "rocket/str/str.h"
 
+#include <boost/algorithm/string.hpp>
+
 #include <fmt/format.h>
 #include <fmt/xchar.h>
 
@@ -196,7 +198,7 @@ struct fmt::formatter<rocket::format::Format<C>, C> {
     const auto& params = val.get();
     auto formatted = params.formatted_;
     for (const auto& [tag, value] : params.tagged_) {
-      rocket::str::replaceIn<C>(formatted, tag, value);
+      boost::replace_all(formatted, tag, value);
     }
     return detail::write<C>(ctx.out(), formatted);
   }

@@ -103,7 +103,7 @@ else()
     EXCLUDE_FROM_ALL
   )
 
-  set(ROCKET_BOOST_LIBS bimap headers preprocessor safe_numerics)
+  set(ROCKET_BOOST_LIBS algorithm bimap headers preprocessor safe_numerics)
   set(ROCKET_BOOST_NS_LIBS ${ROCKET_BOOST_LIBS})
   list(TRANSFORM ROCKET_BOOST_NS_LIBS PREPEND Boost::)
 
@@ -209,6 +209,7 @@ function(AddTest name dir)
   gtest_discover_tests(${name}
     DISCOVERY_MODE POST_BUILD
     EXTRA_ARGS --gtest_catch_exceptions=0
+    PROPERTIES ENVIRONMENT "CURRENT_BINARY_DIR=${CMAKE_CURRENT_BINARY_DIR}"
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/src/test/${dir}
   )
 endfunction()

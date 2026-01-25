@@ -154,22 +154,6 @@ TEST(str, removeTrailingChar32) {
   EXPECT_EQ(removeTrailing<type>(str, U"/"), U"dir");
 }
 
-TEST(str, replaceInChar) {
-  using type = char;
-
-  string str = "(abc)(abc)(abc)";
-  replaceIn<type>(str, "(abc)", "(a)");
-  EXPECT_EQ(str, "(a)(a)(a)");
-}
-
-TEST(str, replaceInChar32) {
-  using type = char32;
-
-  u32string str = U"(abc)(abc)(abc)";
-  replaceIn<type>(str, U"(abc)", U"(a)");
-  EXPECT_EQ(str, U"(a)(a)(a)");
-}
-
 TEST(str, upperChar) {
   EXPECT_EQ(str::upper("debug"), "DEBUG");
   EXPECT_EQ(str::upper("DEBUG"), "DEBUG");

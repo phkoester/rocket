@@ -21,20 +21,13 @@ namespace internal {
 // Internal -------------------------------------------------------------------------------------------------
 
 path
-tempPath(const char* file) {
-  string str = file;
-  str::replaceIn<char>(str, "src/test/", "", 1);
-  str::replaceIn<char>(str, "test-", "", 1);
-  str::replaceIn<char>(str, "src/bench/", "", 1);
-  str::replaceIn<char>(str, "bench-", "", 1);
-  str::replaceIn<char>(str, ".cc", "", 1);
-  str::replaceIn<char>(str, "/", "_");
-
-  auto info = ::testing::UnitTest::GetInstance()->current_test_info(); \
+tempPath() {
+  auto info = ::testing::UnitTest::GetInstance()->current_test_info();
+  ROCKET_ASSERT(info);
   auto gen = math::gen();
   path name = fmt::format(
-      "rocket-test-{}-{}-{}-{}.tmp",
-      str, info->test_suite_name(), info->name(), math::randomHex(gen, 16));
+      "rocket-test-{}-{}-{}.tmp",
+      info->test_suite_name(), info->name(), math::randomHex(gen, 16));
   path ret = temp_directory_path() / name;
 
   process.atExit([=] { remove(ret); }, true);

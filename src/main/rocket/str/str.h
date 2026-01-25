@@ -263,35 +263,6 @@ repeat(const std::basic_string_view<C> str, u64 n) {
 }
 
 /**
- * Modifies the string @p str such that it has up to @p max occurrencies of @p from replaced by @p to.
- *
- * This is a function template that works both with UTF-8 and UTF-32 strings.
- *
- * @tparam C the character type
- * @param str the string to modify
- * @param from the substring to look for
- * @param to the new substring to replace the old substring
- * @param max maximum amount of replacements
- * @return the number of replacements made
- */
-template<typename C> requires IsChar<C>
-u64
-replaceIn(
-    std::basic_string<C>& str,
-    std::basic_string_view<C> from,
-    std::basic_string_view<C> to,
-    u64 max = std::numeric_limits<u64>::max()) {
-  u64 pos = 0, ret = 0;
-  while ((pos = str.find(from, pos)) != std::string::npos) {
-    str.replace(pos, from.size(), to);
-    if (++ret >= max)
-      break;
-    pos += to.size();
-  }
-  return ret;
-}
-
-/**
  * Splits a string into tokens.
  *
  * No strings are ever allocated, except for the separator, so this is a very efficient way to split a string

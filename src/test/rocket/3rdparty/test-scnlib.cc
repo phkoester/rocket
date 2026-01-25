@@ -166,7 +166,7 @@ TEST(scnlib, scanSet) {
   EXPECT_EQ(result->begin() - input.begin(), 9);
 }
 
-// XXX
+/// @todo Wait for a fix in scnlib
 TEST(scnlib, scanTimePoint) {
   // This interferes somehow ...
   // system::env::set("TZ", "America/Godthab");

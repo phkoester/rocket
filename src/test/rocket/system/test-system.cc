@@ -8,12 +8,11 @@
 #include "rocket/system/system.h"
 
 using namespace rocket::system;
+using namespace std::filesystem;
 
 // Constants ------------------------------------------------------------------------------------------------
 
-// const string BUILD_DIR = getenv("BUILD_DIR");
-// const string PRINT_ARGS = BUILD_DIR + "/print-args";
-// XXX const string PRINT_ARGS_WITH_SPACE = BUILD_DIR + "/print args";
+const auto CURRENT_BINARY_DIR = env::get<string>("CURRENT_BINARY_DIR");
 
 // `TEST` ---------------------------------------------------------------------------------------------------
 
@@ -111,31 +110,46 @@ TEST(system, execPrintf) {
   EXPECT_EQ(out, "Hello");
 }
 
-/* XXX
 TEST(system, execPrintArgs) {
-  auto bytes = exec({ PRINT_ARGS, "a" });
+  path mainBinaryDir = path(*CURRENT_BINARY_DIR).parent_path() / "main";
+  path printArgs = mainBinaryDir / fmt::format("print-args{}", executableSuffix());
+  string executable = printArgs.string();
+
+  auto bytes = exec({ executable, "a" });
   string_view out(reinterpret_cast<const char*>(bytes.data()), bytes.size());
   EXPECT_THAT(out, HasSubstr("1=a="));
 }
 
 TEST(system, execPrintArgsWithSpace) {
-  auto bytes = exec({ PRINT_ARGS_WITH_SPACE, "a", "b c", "d\\\"", "'hi'", "some\\text" });
-  string_view out(reinterpret_cast<const char*>(bytes.data()), bytes.size());
-  EXPECT_THAT(out, AllOf(
-      HasSubstr("1=a="),
-      HasSubstr("2=b c="),
-      HasSubstr("3=d\\\"="),
-      HasSubstr("4='hi'="),
-      HasSubstr("5=some\\text=")));
-}
+  // Copy `print-args` to `print args`
+  path mainBinaryDir = path(*CURRENT_BINARY_DIR).parent_path() / "main";
+  path printArgs = mainBinaryDir / fmt::format("print-args{}", executableSuffix());
+  path printArgsWithSpace = mainBinaryDir / fmt::format("print args{}", executableSuffix());
+  if (not exists(printArgsWithSpace)) {
+    copy(printArgs, printArgsWithSpace);
+  }
+  string executable = printArgsWithSpace.string();
 
-TEST(system, execPrintArgsWithSpaceUnicode) {
-  auto bytes = exec({ PRINT_ARGS_WITH_SPACE, "ä", "€" });
-  string_view out(reinterpret_cast<const char*>(bytes.data()), bytes.size());
-  EXPECT_THAT(out, AllOf(
-      HasSubstr("1=ä="),
-      HasSubstr("2=€=")));
+  {
+    // Test spaces in executable name and in arguments
+    auto bytes = exec({ executable, "a", "b c", "d\\\"", "'hi'", "some\\text" });
+    string_view out(reinterpret_cast<const char*>(bytes.data()), bytes.size());
+    EXPECT_THAT(out, AllOf(
+        HasSubstr("1=a="),
+        HasSubstr("2=b c="),
+        HasSubstr("3=d\\\"="),
+        HasSubstr("4='hi'="),
+        HasSubstr("5=some\\text=")));
+  }
+
+  {
+    // Test Unicode
+    auto bytes = exec({ executable, "ä", "€" });
+    string_view out(reinterpret_cast<const char*>(bytes.data()), bytes.size());
+    EXPECT_THAT(out, AllOf(
+        HasSubstr("1=ä="),
+        HasSubstr("2=€=")));
+    }
 }
-*/
 
 // EOF

@@ -24,9 +24,9 @@ namespace rocket::internal {
 template<typename... T>
 [[noreturn]] void
 terminate(
-    std::source_location&& sl,
-    fmt::format_string<T...> fmt,
-    T&&... args) {
+  std::source_location&& sl,
+  fmt::format_string<T...> fmt,
+  T&&... args) {
   process.error(nio::stderr, 0, "{}:{}: {}", sl.file_name(), sl.line(), format::Format<char>([&] {
     auto params = format::Format<char>::params("\\\x01");
     params.tag("\\\x01", fmt, std::forward<T>(args)...);
@@ -38,10 +38,10 @@ terminate(
 template<typename... T>
 [[noreturn]] void
 assertFailed(
-    std::source_location&& sl,
-    const char* expr,
-    fmt::format_string<T...> fmt = "",
-    T&&... args) {
+  std::source_location&& sl,
+  const char* expr,
+  fmt::format_string<T...> fmt = "",
+  T&&... args) {
   terminate(std::move(sl), "Assertion `{}` failed{}", expr, format::Format<char>([&] {
     if (fmt.get().size() > 0) {
       auto params = format::Format<char>::params(": \\\x01");
@@ -58,21 +58,21 @@ assertFailed(
 template<typename... T>
 [[noreturn]] void
 flop(
-    std::source_location&& sl,
-    const char* name,
-    fmt::format_string<T...> fmt,
-    T&&... args) {
+  std::source_location&& sl,
+  const char* name,
+  fmt::format_string<T...> fmt,
+  T&&... args) {
   throw InvalidArgument(name, fmt::format(fmt, std::forward<T>(args)...), std::move(sl));
 }
 
 template<typename... T>
 [[noreturn]] void
 checkFailed(
-    std::source_location&& sl,
-    const char* name,
-    const char* expr,
-    fmt::format_string<T...> fmt = "",
-    T&&... args) {
+  std::source_location&& sl,
+  const char* name,
+  const char* expr,
+  fmt::format_string<T...> fmt = "",
+  T&&... args) {
   flop(std::move(sl), name, "Check `{}` failed{}", expr, format::Format<char>([&] {
     if (fmt.get().size() > 0) {
       auto params = format::Format<char>::params(": \\\x01");
@@ -89,19 +89,19 @@ checkFailed(
 template<typename... T>
 [[noreturn]] void
 fail(
-    std::source_location&& sl,
-    fmt::format_string<T...> fmt,
-    T&&... args) {
+  std::source_location&& sl,
+  fmt::format_string<T...> fmt,
+  T&&... args) {
   throw InvalidState(fmt::format(fmt, std::forward<T>(args)...), std::move(sl));
 }
 
 template<typename... T>
 [[noreturn]] void
 expectFailed(
-    std::source_location&& sl,
-    const char* expr,
-    fmt::format_string<T...> fmt = "",
-    T&&... args) {
+  std::source_location&& sl,
+  const char* expr,
+  fmt::format_string<T...> fmt = "",
+  T&&... args) {
   fail(std::move(sl), "Expectation `{}` failed{}", expr, format::Format<char>([&] {
     if (fmt.get().size() > 0) {
       auto params = format::Format<char>::params(": \\@0");
@@ -125,12 +125,13 @@ expectFailed(
  * Usage: `ROCKET_TERMINATE(fmt, [args]...)`
  */
 #define ROCKET_TERMINATE(fmt, ...) \
-    ::rocket::internal::terminate(ROCKET_EXCEPTION_SL, fmt __VA_OPT__(,) __VA_ARGS__)
+  ::rocket::internal::terminate(ROCKET_EXCEPTION_SL, fmt __VA_OPT__(,) __VA_ARGS__)
 
 /**
  * Terminates because of an invalid function call.
  */
-#define ROCKET_TERMINATE_INVALID_CALL() ROCKET_TERMINATE("Invalid call of function `{}`", __PRETTY_FUNCTION__)
+#define ROCKET_TERMINATE_INVALID_CALL() \
+  ROCKET_TERMINATE("Invalid call of function `{}`", __PRETTY_FUNCTION__)
 
 /**
  * Terminates because of a missing implementation.
@@ -150,9 +151,9 @@ expectFailed(
 #define ROCKET_ASSERT(expr, ...) \
 if (not (expr)) { \
   ::rocket::internal::assertFailed( \
-      ROCKET_EXCEPTION_SL, \
-      BOOST_PP_STRINGIZE(expr) \
-      __VA_OPT__(,) __VA_ARGS__); \
+    ROCKET_EXCEPTION_SL, \
+    BOOST_PP_STRINGIZE(expr) \
+    __VA_OPT__(,) __VA_ARGS__); \
 }
 
 #ifdef NDEBUG
@@ -179,7 +180,7 @@ if (not (expr)) { \
  * Usage: `ROCKET_FLOP(name, fmt, [args]...)`
  */
 #define ROCKET_FLOP(name, fmt, ...) \
-    ::rocket::internal::flop(ROCKET_EXCEPTION_SL, BOOST_PP_STRINGIZE(name), fmt __VA_OPT__(,) __VA_ARGS__)
+  ::rocket::internal::flop(ROCKET_EXCEPTION_SL, BOOST_PP_STRINGIZE(name), fmt __VA_OPT__(,) __VA_ARGS__)
 
 /**
  * Throws #rocket::InvalidArgument if @p expr evaluates to `false`.
@@ -187,13 +188,13 @@ if (not (expr)) { \
  * Usage: `ROCKET_CHECK(name, expr, [fmt, [args]...])`
  */
 #define ROCKET_CHECK(name, expr, ...) \
-    if (not (expr)) { \
-      ::rocket::internal::checkFailed( \
-          ROCKET_EXCEPTION_SL, \
-          BOOST_PP_STRINGIZE(name), \
-          BOOST_PP_STRINGIZE(expr) \
-          __VA_OPT__(,) __VA_ARGS__); \
-    }
+  if (not (expr)) { \
+    ::rocket::internal::checkFailed( \
+      ROCKET_EXCEPTION_SL, \
+      BOOST_PP_STRINGIZE(name), \
+      BOOST_PP_STRINGIZE(expr) \
+      __VA_OPT__(,) __VA_ARGS__); \
+  }
 
 #ifdef NDEBUG
 /**
@@ -259,12 +260,12 @@ if (not (expr)) { \
  * Usage: `ROCKET_EXPECT(expr, [fmt, [args]...])`
  */
 #define ROCKET_EXPECT(expr, ...) \
-    if (not (expr)) { \
-      ::rocket::internal::expectFailed( \
-          ROCKET_EXCEPTION_SL, \
-          BOOST_PP_STRINGIZE(expr) \
-          __VA_OPT__(,) __VA_ARGS__); \
-    }
+  if (not (expr)) { \
+    ::rocket::internal::expectFailed( \
+      ROCKET_EXCEPTION_SL, \
+      BOOST_PP_STRINGIZE(expr) \
+      __VA_OPT__(,) __VA_ARGS__); \
+  }
 
 #ifdef NDEBUG
 /**

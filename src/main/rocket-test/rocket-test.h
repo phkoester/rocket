@@ -63,16 +63,16 @@ using namespace testing;
  * @param _tell the expected value of `rocket::io::tellg(is)`
  */
 #define EXPECT_ISTREAM(is, _fail, _eof, _tell) \
-    EXPECT_EQ(is.fail(), _fail); \
-    EXPECT_EQ(is.eof(), _eof); \
-    EXPECT_EQ(::rocket::io::tellg(is), _tell)
+  EXPECT_EQ(is.fail(), _fail); \
+  EXPECT_EQ(is.eof(), _eof); \
+  EXPECT_EQ(::rocket::io::tellg(is), _tell)
 
 /**
  * Makes a new unique `filesystem::path` that points to a temporary test file.
  *
  * When the test process finishes, the file is automatically removed.
  */
-#define ROCKET_TEST_TEMP_PATH() ::rocket::test::internal::tempPath(__FILE__)
+#define ROCKET_TEST_TEMP_PATH() ::rocket::test::internal::tempPath()
 
 namespace rocket::test {
 
@@ -85,7 +85,7 @@ namespace internal {
 
 // Internal -------------------------------------------------------------------------------------------------
 
-std::filesystem::path tempPath(const char* file);
+std::filesystem::path tempPath();
 
 } // namespace internal
 
