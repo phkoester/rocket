@@ -126,24 +126,6 @@ private:
 // Functions ------------------------------------------------------------------------------------------------
 
 /**
- * Checks if string @p str begins with substring @p sub.
- *
- * @tparam C the character type
- * @param str a string
- * @param sub the substring to look for
- * @return whether @p str begins with substring @p sub
- */
-template<typename C> requires IsChar<C>
-bool
-beginsWith(std::basic_string_view<C> str, std::basic_string_view<C> sub) {
-  if (sub.empty())
-    return true;
-  if (sub.size() > str.size())
-    return false;
-  return str.substr(0, sub.size()) == sub;
-}
-
-/**
  * Makes a new string from @p str that has its first letter capitalized
  *
  * @param str a UTF-8 string
@@ -158,24 +140,6 @@ std::string capitalize(std::string_view str);
  * @return a new string
  */
 std::u32string capitalize(std::u32string_view str);
-
-/**
- * Checks if string @p str ends with substring @p sub.
- *
- * @tparam C the character type
- * @param str a string
- * @param sub the substring to look for
- * @return whether @p str ends with substring @p sub
- */
-template<typename C> requires IsChar<C>
-bool
-endsWith(std::basic_string_view<C> str, std::basic_string_view<C> sub) {
-  if (sub.empty())
-    return true;
-  if (sub.size() > str.size())
-    return false;
-  return str.substr(str.size() - sub.size()) == sub;
-}
 
 /**
  * Converts a UTF-8 string to lower case, handling Unicode characters correctly.

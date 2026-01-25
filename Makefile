@@ -21,7 +21,6 @@
 # - build (default)
 # - check (inherited)
 # - clean
-# - compile-commands.json (inherited)
 # - doc
 # - patch
 # - test
@@ -40,8 +39,9 @@
 # To build the project using CMake, see `README.md`.
 #
 
+# The default target
 .PHONY: build
-build: cmake-build
+build: compile_commands.json
 
 include $(GAIA_DIR)/src/main/make/Makefile.mk
 
@@ -74,17 +74,17 @@ install: build
 .PHONY: bare
 bare: build
 	@LD_LIBRARY_PATH=$(BUILD_DIR)/src/main:$(LD_LIBRARY_PATH) \
-	    $(BUILD_DIR)/src/main/bare $(ARGS)
+	  $(BUILD_DIR)/src/main/bare $(ARGS)
 
 .PHONY: print-args
 print-args: build
 	@LD_LIBRARY_PATH=$(BUILD_DIR)/src/main:$(LD_LIBRARY_PATH) \
-	   $(BUILD_DIR)/src/main/print-args $(ARGS)
+	  $(BUILD_DIR)/src/main/print-args $(ARGS)
 
 .PHONY: toy
 toy: build
 	@LD_LIBRARY_PATH=$(BUILD_DIR)/src/main:$(LD_LIBRARY_PATH) \
-	    $(BUILD_DIR)/src/main/toy $(ARGS)
+	  $(BUILD_DIR)/src/main/toy $(ARGS)
 
 # Patch -----------------------------------------------------------------------------------------------------
 
@@ -105,12 +105,12 @@ endif
 .PHONY: src/main/rocket/3rdparty/scnlib/impl.h
 src/main/rocket/3rdparty/scnlib/impl.h: $(BUILD_DIR)/_deps/scn-src/src/scn/impl.h
 	@diff $< $@ >/dev/null || ( \
-           echo The file impl.h in scnlib has changed!; \
-	   echo You have to copy impl.h manually!; \
-	   echo; \
-	   echo "  cp $< $@"; \
-	   echo; \
-	   echo You have to patch src/main/rocket/3rdparty/scnlib/impl.cc manually! \
+          echo The file impl.h in scnlib has changed!; \
+	  echo You have to copy impl.h manually!; \
+	  echo; \
+	  echo "  cp $< $@"; \
+	  echo; \
+	  echo You have to patch src/main/rocket/3rdparty/scnlib/impl.cc manually! \
 	)
 
 # EOF

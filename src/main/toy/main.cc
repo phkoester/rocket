@@ -26,7 +26,7 @@ extern const char* generated();
 void
 myExit() {
   out.println("myExit");
-  ROCKET_DEBUG_FAIL("Oopsers!");
+  // ROCKET_FAIL("Oopsers!");
 }
 
 void
@@ -36,7 +36,7 @@ myTerminate() {
 
 void
 yyy() {
-  ROCKET_DEBUG_LOG(thisIsARatherLongLogId);
+  ROCKET_LOG(thisIsARatherLongLogId);
   ROCKET_LOG_TRACE("Hey {}", "there");
 }
 
@@ -88,7 +88,7 @@ main(i32 argc, char **argv) {
     ROCKET_LOG(toy);
     ROCKET_LOG_INFO("Hey {}", "there");
     out.println("This is {}", process.name());
-    // XXX out.println("{}", generated());
+    out.println("{}", generated());
     out.println("args: {}", args);
     toy();
   }

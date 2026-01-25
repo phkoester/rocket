@@ -237,7 +237,7 @@ CommandLine::parse(const vector<string>& args, const Take& take) const {
 
       ret.insert(ret.end(), it + 1, args.end());
       break;
-    } else if (str::beginsWith<char>(arg, "--")) {
+    } else if (arg.starts_with("--")) {
       // 2. `--...` seen: Parse option by name
 
       arg = arg.substr(2);
@@ -264,7 +264,7 @@ CommandLine::parse(const vector<string>& args, const Take& take) const {
 
       // Apply option
       apply(opt, true, value);
-    } else if (str::beginsWith<char>(arg, "-") && arg != "-") {
+    } else if (arg.starts_with("-") && arg != "-") {
       // 3. "-..." seen: Parse options by short name; the last one may take a value
 
       arg = arg.substr(1);

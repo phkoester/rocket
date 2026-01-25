@@ -157,7 +157,12 @@ target_link_libraries(print-args PRIVATE Rocket::rocket)
 
 # `toy` -----------------------------------------------------------------------------------------------------
 
-AddExecutable(toy toy/main.cc)
+add_custom_command(
+  OUTPUT generated.cc
+  COMMAND python3 ${PROJECT_SOURCE_DIR}/cmake/generate.py -o generated.cc
+  VERBATIM
+)
+AddExecutable(toy toy/main.cc generated.cc)
 target_link_libraries(toy PRIVATE Rocket::rocket)
 
 # EOF
