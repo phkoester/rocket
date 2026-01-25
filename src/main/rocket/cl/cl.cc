@@ -17,10 +17,10 @@ namespace rocket::cl {
 // `CommandLine` --------------------------------------------------------------------------------------------
 
 CommandLine::CommandLine(const vector<Option>& opts, const CommandLineParams& params) :
-    opts_(opts),
-    params_(params),
-    usage_(not params.usages.empty()),
-    help_(false) {
+  opts_(opts),
+  params_(params),
+  usage_(not params.usages.empty()),
+  help_(false) {
   // If requested, prepend Rocket options
 
   if (params.rocketOpts) {

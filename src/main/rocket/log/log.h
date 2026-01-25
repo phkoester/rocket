@@ -69,7 +69,7 @@ struct Log {
   const LogLevel level_;
 
   inline Log(LogLevel* logId, const char* function, const char* prettyFunction, const char* file, i32 line) :
-      level_(*logId) {
+    level_(*logId) {
     logBegin(logId, function, prettyFunction, file, line);
   }
 
@@ -120,9 +120,9 @@ void setLogOut(std::string_view val);
  * @param id the log ID
  */
 #define ROCKET_LOG_DECLARE(id) \
-    namespace rocket::log::internal { \
-      extern LogLevel ROCKET_LOG_ID__(id); \
-    }
+  namespace rocket::log::internal { \
+    extern LogLevel ROCKET_LOG_ID__(id); \
+  }
 
 /**
  * Defines the log ID @p id.
@@ -130,9 +130,9 @@ void setLogOut(std::string_view val);
  * @param id the log ID
  */
 #define ROCKET_LOG_DEFINE(id) \
-    namespace rocket::log::internal { \
-      LogLevel ROCKET_LOG_ID__(id) = logDefine(&ROCKET_LOG_ID__(id), #id); \
-    }
+  namespace rocket::log::internal { \
+    LogLevel ROCKET_LOG_ID__(id) = logDefine(&ROCKET_LOG_ID__(id), #id); \
+  }
 
 /**
  * Enables logging in a function, using log ID @p id.
@@ -140,15 +140,15 @@ void setLogOut(std::string_view val);
  * @param id the log ID
  */
 #define ROCKET_LOG(id) \
-    ::std::unique_ptr<::rocket::log::internal::Log> rocketLog__; \
-    if (::rocket::log::internal::ROCKET_LOG_ID__(id) > ::rocket::log::LogLevel::none) { \
-      rocketLog__ = ::std::make_unique<::rocket::log::internal::Log>( \
-          &::rocket::log::internal::ROCKET_LOG_ID__(id), \
-          __FUNCTION__, \
-          __PRETTY_FUNCTION__, \
-          __FILE__, \
-          __LINE__); \
-    }
+  ::std::unique_ptr<::rocket::log::internal::Log> rocketLog__; \
+  if (::rocket::log::internal::ROCKET_LOG_ID__(id) > ::rocket::log::LogLevel::none) { \
+    rocketLog__ = ::std::make_unique<::rocket::log::internal::Log>( \
+      &::rocket::log::internal::ROCKET_LOG_ID__(id), \
+      __FUNCTION__, \
+      __PRETTY_FUNCTION__, \
+      __FILE__, \
+      __LINE__); \
+  }
 
 #ifdef NDEBUG
 /**
@@ -172,12 +172,12 @@ void setLogOut(std::string_view val);
  * Usage: `ROCKET_LOG_ERROR(fmt, [args]...])`
  */
 #define ROCKET_LOG_ERROR(fmt, ...) \
-    if (rocketLog__ && rocketLog__->level_ >= ::rocket::log::LogLevel::error) { \
-      ::rocket::log::internal::logMessage( \
-          ::rocket::log::LogLevel::error, \
-          fmt \
-          __VA_OPT__(,) __VA_ARGS__); \
-    }
+  if (rocketLog__ && rocketLog__->level_ >= ::rocket::log::LogLevel::error) { \
+    ::rocket::log::internal::logMessage( \
+      ::rocket::log::LogLevel::error, \
+      fmt \
+      __VA_OPT__(,) __VA_ARGS__); \
+  }
 
 #ifdef NDEBUG
 /**
@@ -201,12 +201,12 @@ void setLogOut(std::string_view val);
  * Usage: `ROCKET_LOG_WARN(fmt, [args]...])`
  */
 #define ROCKET_LOG_WARN(fmt, ...) \
-    if (rocketLog__ && rocketLog__->level_ >= ::rocket::log::LogLevel::warn) { \
-      ::rocket::log::internal::logMessag( \
-          ::rocket::log::LogLevel::warn, \
-          fmt \
-          __VA_OPT__(,) __VA_ARGS__); \
-    }
+  if (rocketLog__ && rocketLog__->level_ >= ::rocket::log::LogLevel::warn) { \
+    ::rocket::log::internal::logMessag( \
+      ::rocket::log::LogLevel::warn, \
+      fmt \
+      __VA_OPT__(,) __VA_ARGS__); \
+  }
 
 #ifdef NDEBUG
 /**
@@ -230,12 +230,12 @@ void setLogOut(std::string_view val);
  * Usage: `ROCKET_LOG_INFO(fmt, [args]...])`
  */
 #define ROCKET_LOG_INFO(fmt, ...) \
-    if (rocketLog__ && rocketLog__->level_ >= ::rocket::log::LogLevel::info) { \
-      ::rocket::log::internal::logMessage( \
-          ::rocket::log::LogLevel::info, \
-          fmt \
-          __VA_OPT__(,) __VA_ARGS__); \
-    }
+  if (rocketLog__ && rocketLog__->level_ >= ::rocket::log::LogLevel::info) { \
+    ::rocket::log::internal::logMessage( \
+      ::rocket::log::LogLevel::info, \
+      fmt \
+      __VA_OPT__(,) __VA_ARGS__); \
+  }
 
 #ifdef NDEBUG
 /**
@@ -259,12 +259,12 @@ void setLogOut(std::string_view val);
  * Usage: `ROCKET_LOG_DEBUG(fmt, [args]...])`
  */
 #define ROCKET_LOG_DEBUG(fmt, ...) \
-    if (rocketLog__ && rocketLog__->level_ >= ::rocket::log::LogLevel::debug) { \
-      ::rocket::log::internal::logMessage( \
-          ::rocket::log::LogLevel::debug, \
-          fmt \
-          __VA_OPT__(,) __VA_ARGS__); \
-    }
+  if (rocketLog__ && rocketLog__->level_ >= ::rocket::log::LogLevel::debug) { \
+    ::rocket::log::internal::logMessage( \
+      ::rocket::log::LogLevel::debug, \
+      fmt \
+      __VA_OPT__(,) __VA_ARGS__); \
+  }
 
 #ifdef NDEBUG
 /**
@@ -288,12 +288,12 @@ void setLogOut(std::string_view val);
  * Usage: `ROCKET_LOG_TRACE(fmt, [args]...])`
  */
 #define ROCKET_LOG_TRACE(fmt, ...) \
-    if (rocketLog__ && rocketLog__->level_ >= ::rocket::log::LogLevel::trace) { \
-      ::rocket::log::internal::logMessage( \
-          ::rocket::log::LogLevel::trace, \
-          fmt \
-          __VA_OPT__(,) __VA_ARGS__); \
-    }
+  if (rocketLog__ && rocketLog__->level_ >= ::rocket::log::LogLevel::trace) { \
+    ::rocket::log::internal::logMessage( \
+      ::rocket::log::LogLevel::trace, \
+      fmt \
+      __VA_OPT__(,) __VA_ARGS__); \
+  }
 
 #ifdef NDEBUG
 /**

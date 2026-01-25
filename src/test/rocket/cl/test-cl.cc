@@ -6,7 +6,6 @@
 
 #include "rocket/cl/cl.h"
 #include "rocket/log/log.h"
-#include "rocket/str/str.h"
 
 using namespace rocket::cl;
 using namespace rocket::unicode;

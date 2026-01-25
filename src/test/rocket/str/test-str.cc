@@ -4,7 +4,6 @@
 
 #include "rocket-test/rocket-test.h"
 
-#include "rocket/assert.h"
 #include "rocket/str/str.h"
 
 using namespace rocket::str;

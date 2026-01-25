@@ -53,20 +53,20 @@ struct Entry {
   const TimePoint time_;
 
   inline Entry(
-      LogLevel* logId,
-      const char* function,
-      const char* prettyFunction,
-      const char* file,
-      i32 line,
-      const string& begin,
-      const TimePoint& time) :
-      logId_(logId),
-      function_(function),
-      prettyFunction_(prettyFunction),
-      file_(file),
-      line_(line),
-      begin_(begin),
-      time_(time) {}
+    LogLevel* logId,
+    const char* function,
+    const char* prettyFunction,
+    const char* file,
+    i32 line,
+    const string& begin,
+    const TimePoint& time) :
+    logId_(logId),
+    function_(function),
+    prettyFunction_(prettyFunction),
+    file_(file),
+    line_(line),
+    begin_(begin),
+    time_(time) {}
 };
 
 // `Format` -------------------------------------------------------------------------------------------------
@@ -468,12 +468,12 @@ logFlush(nio::Sink& out) {
 /// @NotThreadSafe
 void
 logImpl(
-    nio::Sink& out,
-    LogLevel* logId,
-    LogLevel level,
-    u64 stackLevel,
-    const TimePoint& time,
-    string_view msg) {
+  nio::Sink& out,
+  LogLevel* logId,
+  LogLevel level,
+  u64 stackLevel,
+  const TimePoint& time,
+  string_view msg) {
   // Item: time point
   string str = formatTimePoint(time); // Formats with a trailing space
   out.write(str);

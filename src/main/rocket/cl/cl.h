@@ -88,12 +88,12 @@ struct Option {
   template<typename T>
   static inline Option
   of(
-      const OptionGroup* group,
-      const std::string& name,
-      const std::optional<unicode::CharacterView<char>>& shortName,
-      const std::optional<std::string>& format,
-      const std::optional<std::string>& help,
-      T& dest) {
+    const OptionGroup* group,
+    const std::string& name,
+    const std::optional<unicode::CharacterView<char>>& shortName,
+    const std::optional<std::string>& format,
+    const std::optional<std::string>& help,
+    T& dest) {
     return {
       group,
       name,
@@ -196,9 +196,9 @@ struct CommandLine {
    * @param status program exit status. If this is not `EXIT_SUCCESS` (0), the program exits with this status
    */
   void handleException(
-      const std::exception& ex,
-      nio::Sink& out,
-      i32 status = EXIT_SERIOUS_FAILURE) const;
+    const std::exception& ex,
+    nio::Sink& out,
+    i32 status = EXIT_SERIOUS_FAILURE) const;
 
   /**
    * To be called when the `--help` option appeared on the command line.
