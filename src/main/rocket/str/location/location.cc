@@ -16,9 +16,9 @@
 using namespace rocket;
 using namespace std;
 
-// `Position::Type` -----------------------------------------------------------------------------------------
+// `PositionType` -------------------------------------------------------------------------------------------
 
-ROCKET_ENUM_DEFINE(rocket::str::location, Position::Type, Position_Type, (note)(warning)(error));
+ROCKET_ENUM_DEFINE(rocket::str::location, PositionType, PositionType, (note)(warning)(error));
 
 namespace rocket::str::location {
 
@@ -167,9 +167,9 @@ printLocations(
     if (params.styled) {
       fmt::text_style style;
       switch (loc.type) {
-      case Position::note: style = fg(fmt::color::cyan); break;
-      case Position::warning: style = fg(fmt::color::yellow); break;
-      case Position::error: style = fg(fmt::color::red); break;
+      case note   : style = fg(fmt::color::cyan); break;
+      case warning: style = fg(fmt::color::yellow); break;
+      case error  : style = fg(fmt::color::red); break;
       }
       out.print(style | fmt::emphasis::bold, "{}: ", loc.type);
     } else {

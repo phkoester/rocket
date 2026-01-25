@@ -14,6 +14,24 @@
 
 namespace rocket::str::location {
 
+// `PositionType` -------------------------------------------------------------------------------------------
+
+/**
+ * An enum describing the position type.
+ */
+enum PositionType {
+  note,    ///< A note.
+  warning, ///< A warning.
+  error    ///< An error.
+};
+
+} // namespace rocket::str::location
+
+/// @enum_declare{#rocket::str::location::Position::Type}
+ROCKET_ENUM_DECLARE(rocket::str::location, PositionType, PositionType);
+
+namespace rocket::str::location {
+
 // `Position` -----------------------------------------------------------------------------------------------
 
 /**
@@ -21,14 +39,9 @@ namespace rocket::str::location {
  */
 struct Position {
   /**
-   * An enum describing the position type.
-   */
-  enum Type { note, warning, error };
-
-  /**
    * The position type.
    */
-  Type type;
+  PositionType type;
   /**
    * The position to look for.
    *
@@ -57,20 +70,13 @@ struct Position {
   std::optional<std::string> caption = std::nullopt;
 };
 
-} // namespace rocket::str::location
-
-/// @enum_declare{#rocket::str::location::Position::Type}
-ROCKET_ENUM_DECLARE(rocket::str::location, Position::Type, Position_Type);
-
-namespace rocket::str::location {
-
 // `Location` -----------------------------------------------------------------------------------------------
 
 /**
  * Location information.
  */
 struct Location {
-  Position::Type type; ///< Copied from the input position.
+  PositionType type; ///< Copied from the input position.
   u64 position; ///< Copied from the input position.
   Ranges ranges; ///< Copied from the input position.
   u64 line; ///< The line number, starting with 1.

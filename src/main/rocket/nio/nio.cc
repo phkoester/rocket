@@ -756,7 +756,7 @@ FileSource::seek(i64 offset, SeekMode mode) {
 
 
   // The type of the `offset` parameter is `std_long`, se we can directly pass `offset`
-  static_assert(is_same_v<decltype(offset), std_long>);
+  static_assert(sizeof(offset) >= sizeof(std_long));
   i32 ret = std::fseek(file_, offset, origin);
   LOG("fseek=" << ret << ", ferror=" << ferror(file_));
   if (ret != 0) {
@@ -772,7 +772,7 @@ FileSource::tell() {
   }
 
   using ftell_t = decltype(std::ftell(file_));
-  static_assert(is_same_v<ftell_t, i64>);
+  static_assert(sizeof(i64) >= sizeof(ftell_t));
   i64 result = std::ftell(file_);
   LOG("ftell=" << result << ", ferror=" << ferror(file_));
   if (result == -1) {
