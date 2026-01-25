@@ -81,12 +81,16 @@ printExceptionPtr(nio::Sink& out, u64 level, const exception_ptr& ptr) {
   } catch (string_view val) { // cppcheck-suppress catchExceptionByValue
     printThrown(out, level, &typeid(val), getWhat(val), nullopt);
   } catch (...) {
+#ifdef ROCKET_OS_WINDOWS
+    printThrown(out, level, nullptr, nullopt, nullopt);
+#else
     const type_info* type = current_exception().__cxa_exception_type();
     if (type) {
       printThrown(out, level, type, nullopt, nullopt);
     } else {
       printThrown(out, level, nullptr, nullopt, nullopt);
     }
+#endif
   }
 }
 
