@@ -8,7 +8,6 @@
 
 #include <cstdio>
 #include <iostream>
-#include <unistd.h>
 
 using namespace rocket;
 using namespace rocket::nio;

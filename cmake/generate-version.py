@@ -16,7 +16,7 @@ def write_header(f, name, version_string):
   value = version.major * 1_000_000 + version.minor * 1_000 + version.patch
 
   f.write(
-f"""/*
+f"""/**
  * @file version.h
  *
  * GENERATED FILE. DO NOT EDIT.
@@ -28,7 +28,7 @@ f"""/*
 #define {name}_VERSION_MINOR {version.minor} ///< Minor.
 #define {name}_VERSION_PATCH {version.patch} ///< Patch.
 
-/// Comparable version value (major * 1'000'000 + minor * 1'000 + patch)
+/// Comparable version value (major * 1,000,000 + minor * 1,000 + patch)
 #define {name}_VERSION {value}
 
 // EOF

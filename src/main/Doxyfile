@@ -5,7 +5,7 @@
 @INCLUDE = $(GAIA_DIR)/include/doxygen/Doxyfile.gaia
 
 PROJECT_NAME     = Rocket
-INPUT            = src/main
+INPUT            = src/main $(BUILD_DIR)/src/main/generated
 FILE_PATTERNS    = *.h
 OUTPUT_DIRECTORY = $(BUILD_DIR)/src/main/doc
 

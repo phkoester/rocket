@@ -8,7 +8,6 @@
 
 #include <array>
 #include <memory>
-#include <unistd.h>
 
 using namespace rocket;
 using namespace std;
