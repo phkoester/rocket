@@ -40,6 +40,7 @@
 #include <iosfwd>
 
 // Check prerequisites --------------------------------------------------------------------------------------
+
 #if not defined(ROCKET_OS_LINUX) && not defined(ROCKET_OS_WINDOWS)
   #error Unsupported OS
 #endif
@@ -53,6 +54,20 @@
 #ifndef ROCKET_CXX_COMPILER_MSVC
   #define ROCKET_HAS_128
 #endif
+
+// `type_info` for MSVC -------------------------------------------------------------------------------------
+
+#ifdef ROCKET_CXX_COMPILER_MSVC
+
+#include <typeinfo>
+
+namespace std {
+
+using type_info = ::type_info;
+
+} // namespace std
+
+#endif // ROCKET_CXX_COMPILER_MSVC
 
 // Rocket type aliases --------------------------------------------------------------------------------------
 

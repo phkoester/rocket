@@ -11,7 +11,9 @@
 
 #include <boost/safe_numerics/safe_integer.hpp>
 
+#ifndef ROCKET_OS_WINDOWS
 #include <termios.h>
+#endif
 #include <sys/ioctl.h>
 
 using namespace rocket::system::terminal;
