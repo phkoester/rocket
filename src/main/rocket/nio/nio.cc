@@ -33,6 +33,15 @@ tiny logging facility here.
 #define LOG(args)
 #endif
 
+// Macros ---------------------------------------------------------------------------------------------------
+
+#ifdef ROCKET_OS_WINDOWS
+// XXX Alternativ GetStdHandle(STD_INPUT_HANDLE), GetStdHandle(STD_OUTPUT_HANDLE), GetStdHandle(STD_ERROR_HANDLE)
+#define	STDIN_FILENO  0
+#define	STDOUT_FILENO 1
+#define	STDERR_FILENO 2
+#endif
+
 namespace rocket::nio {
 
 // `Io` -----------------------------------------------------------------------------------------------------
