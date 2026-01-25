@@ -11,45 +11,37 @@
 
 #include <boost/safe_numerics/safe_integer.hpp>
 
-#ifndef ROCKET_OS_WINDOWS
+#ifdef ROCKET_OS_WINDOWS
+#include <windows.h>
+#else
 #include <termios.h>
-#endif
 #include <sys/ioctl.h>
+#endif
 
+#include <iostream>
+
+using namespace rocket;
 using namespace rocket::system::terminal;
 using namespace std;
 
 using boost::safe_numerics::safe;
 
-namespace rocket::system::terminal {
+namespace {
 
-// `Ansi` ---------------------------------------------------------------------------------------------------
+// Local functions ------------------------------------------------------------------------------------------
 
+#ifndef ROCKET_OS_WINDOWS
+
+/**
+ * Writes an ANSI escape sequence to a device and returns the response from `stdin`.
+ *
+ * @param out the sink to write to
+ * @param sequence the ANSI escape sequence to write
+ * @return the response from `stdin` if this instance is active, otherwise an empty string
+ * @throw #rocket::InputFailure if the response from `stdin` cannot be read
+ */
 string
-Ansi::clear() const {
-  return active_ ? "\x1b" "c" : string();
-}
-
-string
-Ansi::down(i32 n) const {
-  return active_ ? fmt::format("\x1b[{}B", n) : string();
-}
-
-string
-Ansi::left(i32 n) const {
-  return active_ ? fmt::format("\x1b[{}D", n) : string();
-}
-
-string
-Ansi::move(i32 column, i32 line) const {
-  return active_ ? fmt::format("\x1b[{};{}H", line, column) : string();
-}
-
-string
-Ansi::request(nio::Sink& out, string_view sequence) const {
-  if (not active_)
-    return string();
-
+sendAnsiRequest(nio::Sink& out, std::string_view sequence) {
   // Save current `STDIN` settings
 
   termios oldT, newT;
@@ -83,6 +75,35 @@ Ansi::request(nio::Sink& out, string_view sequence) const {
   return ret;
 }
 
+#endif
+
+} // namespace
+
+
+namespace rocket::system::terminal {
+
+// `Ansi` ---------------------------------------------------------------------------------------------------
+
+string
+Ansi::clear() const {
+  return active_ ? "\x1b" "c" : string();
+}
+
+string
+Ansi::down(i32 n) const {
+  return active_ ? fmt::format("\x1b[{}B", n) : string();
+}
+
+string
+Ansi::left(i32 n) const {
+  return active_ ? fmt::format("\x1b[{}D", n) : string();
+}
+
+string
+Ansi::move(i32 column, i32 line) const {
+  return active_ ? fmt::format("\x1b[{};{}H", line, column) : string();
+}
+
 string
 Ansi::right(i32 n) const {
   return active_ ? fmt::format("\x1b[{}C", n) : string();
@@ -102,10 +123,20 @@ position(nio::Sink& out) {
     return nullopt;
   }
 
+#ifdef ROCKET_OS_WINDOWS
+  // Use CSBI
+
+  CONSOLE_SCREEN_BUFFER_INFO csbi;
+  if (not GetConsoleScreenBufferInfo(GetStdHandle(fd), &csbi)) {
+    return nullopt;
+  }
+  cout << "csbi.dwCursorPosition.X=" << csbi.dwCursorPosition.X << ", csbi.dwCursorPosition.Y=" << csbi.dwCursorPosition.Y << endl;
+  return make_pair(safe<u64>(csbi.dwCursorPosition.X), safe<u64>(csbi.dwCursorPosition.Y));
+#else
   // Send the ANSI code requesting cursor position
 
   Ansi ansi(true); // We know the sink is connected to a terminal
-  string response = ansi.request(out, "\x1b[6n");
+  string response = sendAnsiRequest(out, "\x1b[6n");
 
   // Scan the response
 
@@ -116,6 +147,7 @@ position(nio::Sink& out) {
   // Done
 
   return make_pair(x, y);
+#endif
 }
 
 optional<pair<u64, u64>>
@@ -125,12 +157,21 @@ size(nio::Io& io) {
     return nullopt;
   }
 
+#ifdef ROCKET_OS_WINDOWS
+  CONSOLE_SCREEN_BUFFER_INFO csbi;
+  if (not GetConsoleScreenBufferInfo(GetStdHandle(fd), &csbi)) {
+    return nullopt;
+  }
+  cout << "csbi.dwSize.X=" << csbi.dwSize.X << ", csbi.dwSize.Y=" << csbi.dwSize.Y << endl;
+  return make_pair(safe<u64>(csbi.dwSize.X), safe<u64>(csbi.dwSize.Y));
+#else
   winsize ws;
   i32 res = ioctl(fd, TIOCGWINSZ, &ws);
   if (res != 0) {
     return nullopt;
   }
   return make_pair(safe<u64>(ws.ws_col), safe<u64>(ws.ws_row));
+#endif
 }
 
 } // namespace rocket::system::terminal

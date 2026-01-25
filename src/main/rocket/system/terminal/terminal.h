@@ -59,17 +59,7 @@ struct Ansi {
    */
   std::string move(i32 column, i32 line) const;
 
-  /**
-   * Writes an ANSI escape sequence to a device and returns the response from `stdin`.
-   *
-   * @param out the sink to write to
-   * @param sequence the ANSI escape sequence to write
-   * @return the response from `stdin` if this instance is active, otherwise an empty string
-   * @throw #rocket::InputFailure if the response from `stdin` cannot be read
-   */
-  std::string request(nio::Sink& out, std::string_view sequence) const;
-
-  /**
+ /**
    * Moves the cursor right by @p n columns.
    *
    * @param n the number of columns to move
