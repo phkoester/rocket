@@ -62,6 +62,15 @@
  */
 #define ROCKET_NAMESPACE_END(ns) ROCKET_NAMESPACE_END__(ns)
 
+/**
+ * Cross-compiler support for pretty functions signatures.
+ */
+#ifdef ROCKET_CXX_COMPILER_MSVC
+  #define ROCKET_PRETTY_FUNCTION __FUNCSIG__
+#else
+  #define ROCKET_PRETTY_FUNCTION __PRETTY_FUNCTION__
+#endif
+
 /// @cond undocumented
 
 #define ROCKET_NAMESPACE_BEGIN__(...) __VA_OPT__(namespace) __VA_ARGS__ __VA_OPT__({)

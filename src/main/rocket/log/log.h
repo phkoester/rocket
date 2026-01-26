@@ -9,6 +9,7 @@
 #pragma once
 
 #include "rocket/enum.h"
+#include "rocket/macro.h"
 #include "rocket/cl/cl.h"
 
 #include <boost/preprocessor/seq/cat.hpp>
@@ -145,7 +146,7 @@ void setLogOut(std::string_view val);
     rocketLog__ = ::std::make_unique<::rocket::log::internal::Log>( \
       &::rocket::log::internal::ROCKET_LOG_ID__(id), \
       __FUNCTION__, \
-      __PRETTY_FUNCTION__, \
+      ROCKET_PRETTY_FUNCTION, \
       __FILE__, \
       __LINE__); \
   }

@@ -8,6 +8,7 @@
 
 #include "rocket/Exception.h"
 #include "rocket/Process.h"
+#include "rocket/macro.h"
 #include "rocket/format/format.h"
 #include "rocket/str/message/message.h"
 
@@ -131,7 +132,7 @@ expectFailed(
  * Terminates because of an invalid function call.
  */
 #define ROCKET_TERMINATE_INVALID_CALL() \
-  ROCKET_TERMINATE("Invalid call of function `{}`", __PRETTY_FUNCTION__)
+  ROCKET_TERMINATE("Invalid call of function `{}`", ROCKET_PRETTY_FUNCTION)
 
 /**
  * Terminates because of a missing implementation.
@@ -242,7 +243,7 @@ if (not (expr)) { \
 /**
  * Throws #rocket::InvalidState because of an invalid function call.
  */
-#define ROCKET_FAIL_INVALID_CALL() ROCKET_FAIL("Invalid call of function `{}`", __PRETTY_FUNCTION__)
+#define ROCKET_FAIL_INVALID_CALL() ROCKET_FAIL("Invalid call of function `{}`", ROCKET_PRETTY_FUNCTION)
 
 /**
  * Throws #rocket::InvalidState because of a missing implementation.

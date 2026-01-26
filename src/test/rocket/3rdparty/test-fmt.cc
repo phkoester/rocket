@@ -66,6 +66,8 @@ TEST(fmt, u64Format) {
   EXPECT_EQ(fmt::format("{}", static_cast<u64>(-1)), "18446744073709551615");
 }
 
+#ifdef ROCKET_HAS_128
+
 TEST(fmt, i28Format) {
   EXPECT_EQ(fmt::format("{:+}", static_cast<i128>(42)), "+42");
 }
@@ -73,6 +75,8 @@ TEST(fmt, i28Format) {
 TEST(fmt, u128Format) {
   EXPECT_EQ(fmt::format("{}", static_cast<u128>(-1)), "340282366920938463463374607431768211455");
 }
+
+#endif // ROCKET_HAS_128
 
 TEST(fmt, f32Format) {
   EXPECT_EQ(fmt::format("{}", numeric_limits<f32>::quiet_NaN()), "nan");
