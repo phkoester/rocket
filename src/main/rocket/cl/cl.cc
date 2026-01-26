@@ -10,8 +10,6 @@
 #include "rocket/system/terminal/terminal.h"
 #include "rocket/unicode/Iterator.h"
 
-#include <algorithm> // XXX
-
 using namespace std;
 
 namespace rocket::cl {
@@ -111,7 +109,8 @@ CommandLine::help(nio::Sink& out, bool exit) {
   ROCKET_EXPECT(help_);
 
   auto size = system::terminal::size(out);
-  u64 width = max(40UL, size ? size->first : 80UL);
+  // In Windows, a `UL` isn't a `u64`
+  u64 width = max(static_cast<u64>(40), size ? size->first : static_cast<u64>(80));
   bool output = params_.otherOutput;
 
   // Usage
