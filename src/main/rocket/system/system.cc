@@ -204,7 +204,7 @@ get() {
   unique_ptr<LPCH, function<void(LPCH)>> env(GetEnvironmentStrings(), [](LPCH p) {
     ROCKET_ASSERT(FreeEnvironmentStrings(p));
   });
-  auto p = env.get();
+  LPSTR p = reinterpret_cast<LPSTR>(env.get());
   while (p != nullptr && *p != '\0') {
     string_view entry(p);
     auto eq = entry.find('=');
