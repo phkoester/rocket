@@ -58,7 +58,7 @@
 // Declarations .............................................................................................
 
 #define ROCKET_ENUM_DECLARE_MAP__(type, name) \
-    extern const ::rocket::UnorderedBimap<type, ::std::string_view> name##Map__;
+    ROCKET_PUBLIC extern const ::rocket::UnorderedBimap<type, ::std::string_view> name##Map__;
 
 #define ROCKET_ENUM_DECLARE_OP_OUTPUT__(type) \
     ::std::ostream& operator<<(::std::ostream&, type);
@@ -114,7 +114,7 @@
 
 #define ROCKET_ENUM_DEFINE_MAP__(type, name, seq) \
   /* gcc accepts no `auto` here*/ \
-  const ::rocket::UnorderedBimap<type, ::std::string_view> name##Map__ = \
+  ROCKET_PUBLIC const ::rocket::UnorderedBimap<type, ::std::string_view> name##Map__ = \
     ::rocket::makeUnorderedBimap<type, ::std::string_view>({ \
     BOOST_PP_SEQ_FOR_EACH(ROCKET_ENUM_DEFINE_MAP_ELEM__, type, seq) \
   })

@@ -43,6 +43,8 @@
 .PHONY: build
 build: compile_commands.json
 
+COMPILE_DEPS := build.cmd cmake/base.cmake
+
 include $(GAIA_DIR)/src/main/make/Makefile.mk
 
 .PHONY: clean

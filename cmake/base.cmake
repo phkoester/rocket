@@ -4,19 +4,43 @@
 
 # Check prerequisites ---------------------------------------------------------------------------------------
 
-if(NOT(LINUX) AND NOT(WIN32))
+if(LINUX)
+  set(GAIA_OS_LINUX ON)
+else()
+  set(GAIA_OS_LINUX OFF)
+endif()
+if(WIN32)
+  set(GAIA_OS_WINDOWS ON)
+else()
+  set(GAIA_OS_WINDOWS OFF)
+endif()
+if(NOT(GAIA_OS_LINUX) AND NOT(GAIA_OS_WINDOWS))
   message(FATAL_ERROR "Unsupported OS ${CMAKE_SYSTEM_NAME}")
 endif()
-if(
-  NOT(CMAKE_C_COMPILER_ID STREQUAL "Clang") AND
-  NOT(CMAKE_C_COMPILER_ID STREQUAL "GNU") AND
-  NOT(CMAKE_C_COMPILER_ID STREQUAL "MSVC"))
+
+if(CMAKE_C_COMPILER_ID STREQUAL "Clang")
+  set(GAIA_C_COMPILER_CLANG ON)
+endif()
+if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
+  set(GAIA_C_COMPILER_GNU ON)
+endif()
+if(CMAKE_C_COMPILER_ID STREQUAL "MSVC")
+  set(GAIA_C_COMPILER_MSVC ON)
+endif()
+if(NOT(GAIA_C_COMPILER_CLANG) AND NOT(GAIA_C_COMPILER_GNU) AND NOT(GAIA_C_COMPILER_MSVC))
   message(FATAL_ERROR "Unsupported C compiler ${CMAKE_C_COMPILER_ID}")
 endif()
-if(
-  NOT(CMAKE_CXX_COMPILER_ID STREQUAL "Clang") AND
-  NOT(CMAKE_CXX_COMPILER_ID STREQUAL "GNU") AND
-  NOT(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC"))
+
+if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+  set(GAIA_CXX_COMPILER_CLANG ON)
+endif()
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+  set(GAIA_CXX_COMPILER_GNU ON)
+endif()
+if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+  set(GAIA_CXX_COMPILER_MSVC ON)
+endif()
+if(NOT(GAIA_CXX_COMPILER_CLANG) AND NOT(GAIA_CXX_COMPILER_GNU) AND NOT(GAIA_CXX_COMPILER_MSVC))
   message(FATAL_ERROR "Unsupported C++ compiler ${CMAKE_CXX_COMPILER_ID}")
 endif()
 
@@ -48,11 +72,8 @@ function(AddVar name type default doc)
   endif()
 endfunction()
 
-AddVar(BUILD_SHARED_LIBS         BOOL OFF                      "Build shared libraries")
-AddVar(BUILD_TESTING             BOOL ON                       "Enable testing and build tests")
-AddVar(ROCKET_BENCH              BOOL OFF                      "Enable benchmarking and build benchmarks")
-AddVar(ROCKET_TEST               BOOL ${ROCKET_MASTER_PROJECT} "Enable testing and build tests")
-AddVar(ROCKET_USE_EXTERNAL_BOOST BOOL ON                       "Use external Boost library")
+AddVar(BUILD_SHARED_LIBS BOOL OFF "Build shared libraries")
+AddVar(BUILD_TESTING     BOOL ON  "Enable testing and build tests")
 
 if(NOT DEFINED CMAKE_CONFIGURATION_TYPES)
   AddVar(CMAKE_BUILD_TYPE STRING Release "The build type")
@@ -74,7 +95,6 @@ set(BUILD_SHARED_LIBS_DEFAULT ${BUILD_SHARED_LIBS})
 set(COMPILE_DEFS)
 set(COMPILE_FEATURES cxx_std_23)
 set(COMPILE_FLAGS)
-set(ROCKET_COMPILE_DEFS)
 
 # Set OS-specific compiler options --------------------------------------------------------------------------
 
@@ -84,107 +104,6 @@ if(LINUX)
 elseif(WIN32)
   list(APPEND COMPILE_FLAGS /Zc:preprocessor) # /Wall
 endif()
-
-# Fetch dependencies ----------------------------------------------------------------------------------------
-
-include(FetchContent)
-
-# Boost .....................................................................................................
-
-if(ROCKET_USE_EXTERNAL_BOOST)
-  find_package(Boost 1.83)
-endif()
-if(Boost_FOUND)
-  set(ROCKET_BOOST_LINK_TARGETS Boost::headers)
-  set(ROCKET_BOOST_EXPORT_TARGETS)
-else()
-  FetchContent_Declare(
-    Boost
-    URL https://github.com/boostorg/boost/releases/download/boost-1.84.0/boost-1.84.0.7z
-    SYSTEM
-    EXCLUDE_FROM_ALL
-  )
-
-  set(ROCKET_BOOST_LIBS algorithm bimap headers preprocessor safe_numerics)
-  set(ROCKET_BOOST_NS_LIBS ${ROCKET_BOOST_LIBS})
-  list(TRANSFORM ROCKET_BOOST_NS_LIBS PREPEND Boost::)
-
-  set(BOOST_ENABLE_CMAKE ON)
-  set(BOOST_INCLUDE_LIBRARIES ${ROCKET_BOOST_LIBS})
-  # Build static libraries
-  set(BUILD_SHARED_LIBS OFF)
-  FetchContent_MakeAvailable(Boost)
-  set(BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS_DEFAULT})
-
-  set(ROCKET_BOOST_LINK_TARGETS ${ROCKET_BOOST_NS_LIBS})
-  set(ROCKET_BOOST_EXPORT_TARGETS
-    boost_assert boost_bimap boost_bind boost_concept_check boost_config boost_container_hash boost_core
-    boost_describe boost_detail boost_function boost_functional boost_fusion boost_headers
-    boost_function_types boost_io boost_integer boost_iterator boost_lambda boost_logic
-    boost_move boost_mp11 boost_mpl boost_multi_index boost_optional boost_predef boost_preprocessor
-    boost_safe_numerics boost_smart_ptr boost_static_assert boost_tuple boost_type_traits
-    boost_throw_exception boost_typeof boost_utility
-  )
-endif()
-
-# fmt .......................................................................................................
-
-FetchContent_Declare(
-  fmt
-  GIT_REPOSITORY https://github.com/fmtlib/fmt.git
-  GIT_TAG        12.1.0
-  GIT_PROGRESS   TRUE
-  SYSTEM
-  EXCLUDE_FROM_ALL
-)
-
-FetchContent_MakeAvailable(fmt)
-
-# googletest ................................................................................................
-
-FetchContent_Declare(
-  googletest
-  GIT_REPOSITORY https://github.com/google/googletest.git
-  GIT_TAG        v1.17.0
-  GIT_PROGRESS   TRUE
-  SYSTEM
-  EXCLUDE_FROM_ALL
-)
-
-# For Windows: Prevent overriding the parent project's compiler/linker settings
-set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-# Build static libraries
-set(BUILD_SHARED_LIBS OFF)
-FetchContent_MakeAvailable(googletest)
-set(BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS_DEFAULT})
-
-# ICU -------------------------------------------------------------------------------------------------------
-
-find_package(ICU 74.2 REQUIRED uc) # data i18n io
-if(false)
-if(WIN32)
-  set(ICU_ROOT $ENV{ICU_ROOT})
-  if(NOT ICU_ROOT)
-    message(FATAL_ERROR "ICU_ROOT is not set")
-  endif()
-endif()
-endif()
-
-# scn .......................................................................................................
-
-FetchContent_Declare(
-  scn
-  GIT_REPOSITORY https://github.com/eliaskosunen/scnlib.git
-  GIT_TAG        master
-  GIT_PROGRESS   TRUE
-  SYSTEM
-  EXCLUDE_FROM_ALL
-)
-
-# Build static libraries
-set(BUILD_SHARED_LIBS OFF)
-FetchContent_MakeAvailable(scn)
-set(BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS_DEFAULT})
 
 # Functions -------------------------------------------------------------------------------------------------
 
@@ -204,8 +123,9 @@ function(AddBench name dir)
   target_link_libraries(${name} PRIVATE Rocket::rocket-test)
   # add_test(NAME ${name} COMMAND ${name} WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/src/bench/${dir})
   gtest_discover_tests(${name}
-    DISCOVERY_MODE PRE_TEST # XXX POST_BUILD
+    DISCOVERY_MODE PRE_TEST
     EXTRA_ARGS --gtest_catch_exceptions=0
+    PROPERTIES ENVIRONMENT "CURRENT_BINARY_DIR=${CMAKE_CURRENT_BINARY_DIR}"
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/src/bench/${dir}
   )
 endfunction()
@@ -217,7 +137,7 @@ function(AddTest name dir)
   target_link_libraries(${name} PRIVATE Rocket::rocket-test)
   # add_test(NAME ${name} COMMAND ${name} WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/src/test/${dir})
   gtest_discover_tests(${name}
-    DISCOVERY_MODE PRE_TEST # XXX POST_BUILD
+    DISCOVERY_MODE PRE_TEST
     EXTRA_ARGS --gtest_catch_exceptions=0
     PROPERTIES ENVIRONMENT "CURRENT_BINARY_DIR=${CMAKE_CURRENT_BINARY_DIR}"
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/src/test/${dir}

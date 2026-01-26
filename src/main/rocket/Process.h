@@ -356,7 +356,7 @@ private:
 };
 
 /// The Process singleton.
-ROCKET_PUBLIC_SYMBOL extern Process process;
+ROCKET_PUBLIC extern Process process;
 
 } // namespace rocket
 

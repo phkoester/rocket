@@ -61,12 +61,12 @@
 
 #ifdef ROCKET_OS_WINDOWS
   #ifdef ROCKET_EXPORTING
-    #define ROCKET_PUBLIC_SYMBOL __declspec(dllexport) ///< Specifier for global data symbols.
+    #define ROCKET_PUBLIC __declspec(dllexport) ///< Specifier for global data symbols.
   #else
-    #define ROCKET_PUBLIC_SYMBOL  __declspec(dllimport) ///< Specifier for global data symbols.
+    #define ROCKET_PUBLIC  __declspec(dllimport) ///< Specifier for global data symbols.
   #endif
 #else
-  #define ROCKET_PUBLIC_SYMBOL ///< Specifier for global data symbols.
+  #define ROCKET_PUBLIC ///< Specifier for global data symbols.
 #endif
 
 #ifdef ROCKET_CXX_COMPILER_MSVC

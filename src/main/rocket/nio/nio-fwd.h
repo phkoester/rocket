@@ -14,9 +14,9 @@ struct Io;
 struct Sink;
 struct Source;
 
-ROCKET_PUBLIC_SYMBOL extern Source& in;
-ROCKET_PUBLIC_SYMBOL extern Sink& out;
-ROCKET_PUBLIC_SYMBOL extern Sink& err;
+ROCKET_PUBLIC extern Source& in;
+ROCKET_PUBLIC extern Sink& out;
+ROCKET_PUBLIC extern Sink& err;
 
 } // namespace rocket::nio
 

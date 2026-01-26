@@ -7,6 +7,8 @@
 #include "rocket/Exception.h"
 #include "rocket/assert.h"
 
+#include <signal.h>
+
 // Local functions ------------------------------------------------------------------------------------------
 
 bool oopsCalled = false;

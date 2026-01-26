@@ -748,11 +748,11 @@ private:
 // Variables ------------------------------------------------------------------------------------------------
 
 /// The standard input source.
-ROCKET_PUBLIC_SYMBOL extern Source& in;
+ROCKET_PUBLIC extern Source& in;
 /// The standard output sink.
-ROCKET_PUBLIC_SYMBOL extern Sink& out;
+ROCKET_PUBLIC extern Sink& out;
 /// The standard error sink.
-ROCKET_PUBLIC_SYMBOL extern Sink& err;
+ROCKET_PUBLIC extern Sink& err;
 
 } // namespace rocket::nio
 

@@ -16,9 +16,21 @@ endif()
 
 project(rocket VERSION 0.3.0)
 
-# Include helper file ---------------------------------------------------------------------------------------
+# Configuration ---------------------------------------------------------------------------------------------
 
 include(cmake/base.cmake)
+
+AddVar(ROCKET_BENCH              BOOL OFF                      "Enable benchmarking and build benchmarks")
+AddVar(ROCKET_TEST               BOOL ${ROCKET_MASTER_PROJECT} "Enable testing and build tests")
+AddVar(ROCKET_USE_EXTERNAL_BOOST BOOL ON                       "Use external Boost library")
+
+# Set project-specific compiler definitions, features, and options ------------------------------------------
+
+set(ROCKET_COMPILE_DEFS)
+
+# Manage dependencies ---------------------------------------------------------------------------------------
+
+include(cmake/deps.cmake)
 
 # Add subdirectories ----------------------------------------------------------------------------------------
 
