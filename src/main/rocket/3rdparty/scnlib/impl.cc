@@ -70,8 +70,7 @@ scan_expected<ranges::iterator_t<Range>> internal_skip_classic_whitespace(
 #else
 // Windows
 #define SCN_DEFINE_SCANNER_SCAN_FOR_CTX(Context)                             \
-  template SCN_PUBLIC scan_expected<ranges::iterator_t<Context::range_type>> \
-  internal_skip_classic_whitespace(Context::range_type, bool); // Patched!
+  SCN_DEFINE_SCANNER_SCAN_FOR_TYPE(bool, Context)
 #endif // ROCKET_OS_WINDOWS
 
 SCN_DEFINE_SCANNER_SCAN_FOR_CTX(scan_context)
