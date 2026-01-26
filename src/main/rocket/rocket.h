@@ -60,8 +60,10 @@
 // Macros ---------------------------------------------------------------------------------------------------
 
 #ifdef ROCKET_OS_WINDOWS
-#define ROCKET_EXPORT __declspec(dllimport)
+#define ROCKET_IMPORT __declspec(dllimport)
+#define ROCKET_EXPORT __declspec(dllexport)
 #else
+#define ROCKET_IMPORT
 #define ROCKET_EXPORT
 #endif
 
