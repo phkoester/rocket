@@ -201,7 +201,9 @@ get() {
   }
 #else
   // Windows
-  unique_ptr<LPCH, decltype(FreeEnvironmentStrings)> env(GetEnvironmentStrings(), FreeEnvironmentStrings);
+  unique_ptr<LPCH, function<void(LPCH)>> env(GetEnvironmentStrings(), [](LPCH p) {
+    FreeEnvironmentStrings(p);
+  });
   auto p = env.get();
   while (p != nullptr && *p != '\0') {
     string_view entry(p);
