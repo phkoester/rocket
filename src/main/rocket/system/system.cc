@@ -12,6 +12,16 @@
 using namespace rocket;
 using namespace std;
 
+// Macros ---------------------------------------------------------------------------------------------------
+
+#ifdef ROCKET_OS_WINDOWS
+  #define PCLOSE _pclose
+  #define POPEN _popen
+#else
+  #define PCLOSE pclose
+  #define POPEN popen
+#endif
+
 namespace {
 
 // Local functions ------------------------------------------------------------------------------------------
@@ -113,7 +123,7 @@ exec(const string& cl) {
   vector<byte> ret;
   array<byte, 128> buf;
 
-  unique_ptr<FILE, decltype(&pclose)> pipe(popen(cl.c_str(), "r"), pclose);
+  unique_ptr<FILE, decltype(&PCLOSE)> pipe(POPEN(cl.c_str(), "r"), pclose);
   if (not pipe) {
     ROCKET_FAIL("Cannot open pipe for command `{}`", cl);
   }

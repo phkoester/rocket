@@ -79,16 +79,12 @@ sendAnsiRequest(nio::Sink& out, std::string_view sequence) {
 
 HANDLE
 getHandle(i32 fd) {
-  if (fd == STDIN_FILENO) {
-    return GetStdHandle(STD_INPUT_HANDLE);
+  switch (fd) {
+  case STDIN_FILENO: return GetStdHandle(STD_INPUT_HANDLE);
+  case STDOUT_FILENO: return GetStdHandle(STD_OUTPUT_HANDLE);
+  case STDERR_FILENO: return GetStdHandle(STD_ERROR_HANDLE);
+  default: return INVALID_HANDLE_VALUE;
   }
-  if (fd == STDOUT_FILENO) {
-    return GetStdHandle(STD_OUTPUT_HANDLE);
-  }
-  if (fd == STDERR_FILENO) {
-    return GetStdHandle(STD_ERROR_HANDLE);
-  }
-  return INVALID_HANDLE_VALUE;
 }
 
 #endif // ROCKET_OS_WINDOWS
@@ -175,6 +171,8 @@ size(nio::Io& io) {
   }
 
 #ifdef ROCKET_OS_WINDOWS
+  // Use CSBI
+
   auto handle = getHandle(fd);
   ROCKET_ASSERT(handle != INVALID_HANDLE_VALUE);
   CONSOLE_SCREEN_BUFFER_INFO csbi;
@@ -184,6 +182,8 @@ size(nio::Io& io) {
   cout << "csbi.dwSize.X=" << csbi.dwSize.X << ", csbi.dwSize.Y=" << csbi.dwSize.Y << endl; // XXX
   return make_pair(safe<u64>(csbi.dwSize.X), safe<u64>(csbi.dwSize.Y));
 #else
+  // Use `ioctl`
+
   winsize ws;
   i32 res = ioctl(fd, TIOCGWINSZ, &ws);
   if (res != 0) {
