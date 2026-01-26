@@ -153,7 +153,7 @@ printLocations(
   u64 maxLine = accumulate(
       locations.begin(),
       locations.end(),
-      0UL,
+      static_cast<u64>(0),
       [](u64 max, const auto& loc) { return std::max(loc.line, max); });
   string maxLineStr =  fmt::format("{}", maxLine);
   u64 lineNumberWidth = max(params.minLineNumberWidth, maxLineStr.size());

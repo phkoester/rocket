@@ -43,6 +43,14 @@ add_custom_command(
 
 # Add the library ...........................................................................................
 
+set(ROCKET_PRIVATE_LINK_TARGETS)
+if(LINUX)
+  list(APPEND ROCKET_PRIVATE_LINK_TARGETS stdc++_libbacktrace)
+endif()
+if(WIN32)
+  # XXX list(APPEND ROCKET_PRIVATE_LINK_TARGETS ucrt)
+endif()
+
 add_library(rocket ${VERSION_H})
 target_include_directories(rocket PUBLIC ${GENERATED_DIR})
 # Move `Process.cc` to front so the global `process` instance is available early
@@ -128,7 +136,7 @@ target_compile_features(rocket PUBLIC ${COMPILE_FEATURES})
 target_compile_options(rocket PUBLIC ${COMPILE_FLAGS})
 target_link_libraries(rocket
   PUBLIC ${ROCKET_BOOST_LINK_TARGETS} fmt::fmt-header-only scn::scn
-  PRIVATE ICU::uc stdc++_libbacktrace
+  PRIVATE ${ROCKET_PRIVATE_LINK_TARGETS} ICU::uc
 )
 
 add_library(Rocket::rocket ALIAS rocket)
