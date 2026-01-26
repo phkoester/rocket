@@ -206,7 +206,9 @@ get() {
       ROCKET_ASSERT(FreeEnvironmentStrings(p));
     }
   };
-  unique_ptr<LPCH, Deleter> env(GetEnvironmentStrings());
+  unique_ptr<CHAR, function<void(LPCH)>> env(GetEnvironmentStrings(), [](LPCH p) {
+    FreeEnvironmentStrings(p);
+  });
   LPSTR p = reinterpret_cast<LPSTR>(env.get());
   while (p != nullptr && *p != '\0') {
     string_view entry(p);
