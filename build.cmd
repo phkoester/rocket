@@ -1,6 +1,10 @@
 ::
 :: build.cmd
 ::
+:: To run a single test with detailed output:
+::
+::   ctest --preset windows-release -R PATTERN --output-on-failure
+::
 
 @echo off
 
