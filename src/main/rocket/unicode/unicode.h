@@ -80,7 +80,7 @@ struct CodePoint {
   }
 
   /// @member_fn_hash
-  constexpr u64 hash() const noexcept { return std::hash<char32>()(val_); }
+  inline u64 hash() const noexcept { return std::hash<char32>()(val_); }
 
   /**
    * Checks if the code point is printable.
