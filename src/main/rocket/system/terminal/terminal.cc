@@ -12,7 +12,7 @@
 #include <boost/safe_numerics/safe_integer.hpp>
 
 #ifdef ROCKET_OS_WINDOWS
-#include <windows.h>
+#include <Windows.h>
 #else
 #include <termios.h>
 #include <sys/ioctl.h>

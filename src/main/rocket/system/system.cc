@@ -9,7 +9,7 @@
 #include <array>
 #include <memory>
 #ifdef ROCKET_OS_WINDOWS
-#include <windows.h>
+#include <Windows.h>
 #endif
 
 using namespace rocket;
@@ -151,7 +151,7 @@ executableSuffix() {
 #ifdef ROCKET_OS_WINDOWS
   return ".exe";
 #else
-  return "";
+  return string_view();
 #endif
 }
 
@@ -201,13 +201,8 @@ get() {
   }
 #else
   // Windows
-  struct Deleter {
-    inline void operator()(LPCH p) const {
-      ROCKET_ASSERT(FreeEnvironmentStrings(p));
-    }
-  };
   unique_ptr<CHAR, function<void(LPCH)>> env(GetEnvironmentStrings(), [](LPCH p) {
-    FreeEnvironmentStrings(p);
+    ROCKET_ASSERT(FreeEnvironmentStrings(p));
   });
   LPSTR p = reinterpret_cast<LPSTR>(env.get());
   while (p != nullptr && *p != '\0') {

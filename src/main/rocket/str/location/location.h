@@ -81,7 +81,7 @@ struct Location {
   Ranges ranges; ///< Copied from the input position.
   u64 line; ///< The line number, starting with 1.
   u64 column = 0; ///< The column number (counting character widths), starting with 1.
-  Range lineRange = {}; ///< The range of the line containing #position.
+  Range lineRange = Range(); ///< The range of the line containing #position.
   /**
     * This member is only initialized if #LocationsParams#setLineString was set to `true`.
     */
