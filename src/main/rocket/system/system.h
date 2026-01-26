@@ -6,12 +6,11 @@
 
 #pragma once
 
-#include "rocket/macro.h"
+#include "rocket/format/format.h"
 #include "rocket/str/StringConvert.h"
 
-#include <cstdlib>
 #include <optional>
-#include <string_view>
+#include <string>
 #include <unordered_map>
 #include <vector>
 
@@ -21,7 +20,9 @@ namespace internal {
 
 // Internal -------------------------------------------------------------------------------------------------
 
-ROCKET_PUBLIC extern std::recursive_mutex envMutex;
+std::optional<std::string> getImpl(std::string_view name);
+
+void setImpl(std::string_view name, const std::optional<std::string>& value, bool replace);
 
 } // namespace internal
 
@@ -71,7 +72,7 @@ namespace env {
 /**
  * Returns all environment variables as a set of name-value pairs.
  *
- * This function is thread-safe as long as all callers use the API from this header file exclusively.
+ * This function is thread-safe as long as all callers use this API exclusively.
  *
  * @return a set of name-value pairs
  */
@@ -81,7 +82,7 @@ get();
 /**
  * Returns the value of an environment variable. If the string conversion fails, this function returns null.
  *
- * This function is thread-safe as long as all callers use the API from this header file exclusively.
+ * This function is thread-safe as long as all callers use this API exclusively.
  *
  * @tparam T the type to convert a string value to
  * @param name the name of the environment variable
@@ -90,20 +91,18 @@ get();
  */
 template<typename T>
 std::optional<T>
-get(const std::string& name) {
-  ROCKET_MUTEX_LOCK(internal::envMutex);
-
-  const char* p = getenv(name.c_str());
-  if (not p)
+get(std::string_view name) {
+  auto v = internal::getImpl(name);
+  if (not v) {
     return std::nullopt;
-  std::string_view str(p);
-  return str::tryToType<T>(str);
+  }
+  return str::tryToType<T>(*v);
 }
 
 /**
  * Sets an environment variable.
  *
- * This function is thread-safe as long as all callers use the API from this header file exclusively.
+ * This function is thread-safe as long as all callers use this API exclusively.
  *
  * @tparam T the type of the new value
  * @param name the name of the environment variable
@@ -112,20 +111,21 @@ get(const std::string& name) {
  */
 template<typename T>
 inline void
-set(const std::string& name, T&& value, bool replace = true) {
-  ROCKET_MUTEX_LOCK(internal::envMutex);
-
-  setenv(name.c_str(), fmt::format("{}", std::forward<T>(value)).c_str(), replace ? 1 : 0);
+set(std::string_view name, T&& value, bool replace = true) {
+  internal::setImpl(name, fmt::format("{}", std::forward<T>(value)), replace);
 }
 
 /**
  * Unsets an environment variable.
  *
- * This function is thread-safe as long as all callers use the API from this header file exclusively.
+ * This function is thread-safe as long as all callers use this API exclusively.
  *
  * @param name the name of the environment variable
  */
-void unset(const std::string& name);
+inline void
+unset(std::string_view name) {
+  internal::setImpl(name, std::nullopt, true);
+}
 
 } // namespace env
 

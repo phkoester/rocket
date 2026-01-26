@@ -8,6 +8,7 @@
 #include "rocket/system/system.h"
 
 using namespace rocket::system;
+using namespace std;
 using namespace std::filesystem;
 
 // Constants ------------------------------------------------------------------------------------------------
@@ -133,11 +134,11 @@ TEST(system, execPrintArgsWithSpace) {
     auto bytes = exec({ executable, "a", "b c", "d\\\"", "'hi'", "some\\text" });
     string_view out(reinterpret_cast<const char*>(bytes.data()), bytes.size());
     EXPECT_THAT(out, AllOf(
-        HasSubstr("1=a="),
-        HasSubstr("2=b c="),
-        HasSubstr("3=d\\\"="),
-        HasSubstr("4='hi'="),
-        HasSubstr("5=some\\text=")));
+      HasSubstr("1=a="),
+      HasSubstr("2=b c="),
+      HasSubstr("3=d\\\"="),
+      HasSubstr("4='hi'="),
+      HasSubstr("5=some\\text=")));
   }
 
   {
@@ -145,8 +146,8 @@ TEST(system, execPrintArgsWithSpace) {
     auto bytes = exec({ executable, "ä", "€" });
     string_view out(reinterpret_cast<const char*>(bytes.data()), bytes.size());
     EXPECT_THAT(out, AllOf(
-        HasSubstr("1=ä="),
-        HasSubstr("2=€=")));
+      HasSubstr("1=ä="),
+      HasSubstr("2=€=")));
     }
 }
 

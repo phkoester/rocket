@@ -7,6 +7,8 @@
 #include "rocket/assert.h"
 
 #include <array>
+#include <cstdlib>
+#include <cstdio>
 #include <memory>
 #ifdef ROCKET_OS_WINDOWS
 #include <Windows.h>
@@ -27,6 +29,10 @@ using namespace std;
 
 namespace {
 
+// Local variables ------------------------------------------------------------------------------------------
+
+recursive_mutex envMutex;
+
 // Local functions ------------------------------------------------------------------------------------------
 
 #ifdef ROCKET_OS_WINDOWS
@@ -45,23 +51,26 @@ makeCl(const vector<string_view>& args) {
   string ret;
 
   for (const auto& arg : args) {
-    if (not ret.empty())
+    if (not ret.empty()) {
       ret.push_back(' ');
+    }
 
     for (u64 i = 0, size = arg.size(); i < size; ++i) {
       char c = arg[i];
       optional<char> next;
-      if (i < size - 1)
+      if (i < size - 1) {
         next = arg[i + 1];
+      }
 
-      if (c == ' ')
+      if (c == ' ') {
         ret.append("\" \"");
-      else if (c == '"')
+      } else if (c == '"') {
         ret.append("\\\"");
-      else if (c == '\\' && next && *next == '"')
+      } else if (c == '\\' && next && *next == '"') {
         ret.append("\"\\\\\"");
-      else
+      } else {
         ret.push_back(c);
+      }
     }
   }
 
@@ -85,20 +94,22 @@ makeCl(const vector<string_view>& args) {
   string ret;
 
   for (const auto& arg : args) {
-    if (not ret.empty())
+    if (not ret.empty()) {
       ret.push_back(' ');
+    }
 
     for (char c : arg) {
-      if (c == ' ')
+      if (c == ' ') {
         ret.append("\\ ");
-      else if (c == '"')
+      } else if (c == '"') {
         ret.append("\\\"");
-      else if (c == '\'')
+      } else if (c == '\'') {
         ret.append("\\'");
-      else if (c == '\\')
+      } else if (c == '\\') {
         ret.append("\\\\");
-      else
+      } else {
         ret.push_back(c);
+      }
     }
   }
 
@@ -115,13 +126,39 @@ namespace internal {
 
 // Internal -------------------------------------------------------------------------------------------------
 
-ROCKET_PUBLIC recursive_mutex envMutex;
+optional<string>
+getImpl(std::string_view name) {
+  ROCKET_MUTEX_LOCK(envMutex);
+
+  string nameStr(name);
+  const char* p = getenv(nameStr.c_str());
+  if (not p) {
+    return nullopt;
+  }
+  return p;
+}
+
+void
+setImpl(std::string_view name, const optional<string>& value, bool replace) {
+  ROCKET_CHECK(value, value || replace);
+
+  ROCKET_MUTEX_LOCK(envMutex);
+
+  string nameStr(name);
+  if (value) {
+    // Set
+    setenv(nameStr.c_str(), value->c_str(), replace ? 1 : 0);
+  } else {
+    // Unset
+    unsetenv(const_cast<char*>(nameStr.c_str()));
+  }
+}
 
 } // namespace internal
 
 // Functions ------------------------------------------------------------------------------------------------
 
-vector<std::byte> // MSVC needs `std::` prefix
+vector<std::byte> // MSVC needs `std::byte`
 exec(const string& cl) {
   vector<std::byte> ret;
   array<std::byte, 128> buf;
@@ -141,7 +178,7 @@ exec(const string& cl) {
   return ret;
 }
 
-vector<std::byte>
+vector<std::byte> // MSVC needs `std::byte`
 exec(const vector<string_view>& args) {
   return exec(makeCl(args));
 }
@@ -179,7 +216,7 @@ namespace env {
 
 unordered_map<string, string>
 get() {
-  ROCKET_MUTEX_LOCK(internal::envMutex);
+  ROCKET_MUTEX_LOCK(envMutex);
 
   unordered_map<string, string> ret;
 
@@ -219,14 +256,8 @@ get() {
     p += entry.size() + 1;
   }
 #endif
+
   return ret;
-}
-
-void
-unset(const string& name) {
-  ROCKET_MUTEX_LOCK(internal::envMutex);
-
-  putenv(const_cast<char*>(name.c_str()));
 }
 
 } // namespace env
