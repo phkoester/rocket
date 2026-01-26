@@ -8,6 +8,9 @@
 
 #include <array>
 #include <memory>
+#ifdef ROCKET_OS_WINDOWS
+#include <windows.h>
+#endif
 
 using namespace rocket;
 using namespace std;
@@ -174,11 +177,11 @@ namespace env {
 
 // Environment ----------------------------------------------------------------------------------------------
 
-unordered_map<string_view, string_view>
+unordered_map<string, string>
 get() {
   ROCKET_MUTEX_LOCK(internal::envMutex);
 
-  unordered_map<string_view, string_view> ret;
+  unordered_map<string, string> ret;
 
 #ifndef ROCKET_OS_WINDOWS
   // GNU C
