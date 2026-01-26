@@ -6,15 +6,17 @@
 
 #pragma once
 
+#include "rocket/rocket.h"
+
 namespace rocket::nio {
 
 struct Io;
 struct Sink;
 struct Source;
 
-extern Source& in;
-extern Sink& out;
-extern Sink& err;
+ROCKET_EXPORT extern Source& in;
+ROCKET_EXPORT extern Sink& out;
+ROCKET_EXPORT extern Sink& err;
 
 } // namespace rocket::nio
 
