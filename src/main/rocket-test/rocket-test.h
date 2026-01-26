@@ -32,6 +32,8 @@ using namespace testing;
 
 // Macros ---------------------------------------------------------------------------------------------------
 
+// `ROCKET_...` .............................................................................................
+
 #undef ROCKET_TEST_PROTECTED
 /// Use this macro instead of `protected` to allow access to protected members of a class when testing.
 #define ROCKET_TEST_PROTECTED public
@@ -39,8 +41,29 @@ using namespace testing;
 /// Use this macro instead of `private` to allow access to private members of a class when testing.
 #define ROCKET_TEST_PRIVATE public
 
+/**
+ * Makes a new unique `filesystem::path` that points to a temporary test file.
+ *
+ * When the test process finishes, the file is automatically removed.
+ */
+#define ROCKET_TEST_TEMP_PATH() ::rocket::test::internal::tempPath()
+
 /// An environment variable indicating whether terminal output is tested.
 #define ROCKET_TEST_TERMINAL "ROCKET_TEST_TERMINAL"
+
+// Others ...................................................................................................
+
+#ifdef ROCKET_OS_WINDOWS
+/// To use with `EXPECT_EXIT`.
+#define ABORTED() ExitedWithCode(-1073740791)
+ /// To use with `EXPECT_EXIT`.
+#define ABORTED_MSG(msg) ""
+#else
+/// To use with `EXPECT_EXIT`.
+#define ABORTED() KilledBySignal(SIGABRT)
+/// To use with `EXPECT_EXIT`.
+#define ABORTED_MSG(msg) msg
+#endif
 
 /**
  * Checks if an environment variable is set to `true`. If it is not, the test is skipped.
@@ -66,13 +89,6 @@ using namespace testing;
   EXPECT_EQ(is.fail(), _fail); \
   EXPECT_EQ(is.eof(), _eof); \
   EXPECT_EQ(::rocket::io::tellg(is), _tell)
-
-/**
- * Makes a new unique `filesystem::path` that points to a temporary test file.
- *
- * When the test process finishes, the file is automatically removed.
- */
-#define ROCKET_TEST_TEMP_PATH() ::rocket::test::internal::tempPath()
 
 namespace rocket::test {
 

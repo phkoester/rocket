@@ -9,16 +9,6 @@
 
 #include <signal.h>
 
-// Macros ---------------------------------------------------------------------------------------------------
-
-#ifdef ROCKET_OS_WINDOWS
-#define ABORTED() ExitedWithCode(-1073740791)
-#define ABORTED_MSG(msg) ""
-#else
-#define ABORTED() KilledBySignal(SIGABRT)
-#define ABORTED_MSG(msg) msg
-#endif
-
 // Functions ------------------------------------------------------------------------------------------------
 
 bool oopsCalled = false;
