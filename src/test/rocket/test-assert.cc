@@ -9,7 +9,15 @@
 
 #include <signal.h>
 
-// Local functions ------------------------------------------------------------------------------------------
+// Macros ---------------------------------------------------------------------------------------------------
+
+#ifdef ROCKET_OS_WINDOWS
+#define ABORTED() ExitedWithCode(12)
+#else
+#define ABORTED() KilledBySignal(SIGABRT)
+#endif
+
+// Functions ------------------------------------------------------------------------------------------------
 
 bool oopsCalled = false;
 
@@ -29,7 +37,7 @@ TEST(assertDeathTest, RocketAssertFalse) {
   GTEST_FLAG_SET(death_test_style, "threadsafe");
   EXPECT_EXIT(
       { ROCKET_ASSERT(false, "My message: {}", 42); },
-      KilledBySignal(SIGABRT), "Assertion `false` failed: My message: 42");
+      ABORTED(), "Assertion `false` failed: My message: 42");
 }
 
 TEST(assert, RocketCheck) {
@@ -64,7 +72,7 @@ TEST(assertDeathTest, RocketTerminate) {
   GTEST_FLAG_SET(death_test_style, "threadsafe");
   EXPECT_EXIT(
       { ROCKET_TERMINATE("My message: {}", 42); },
-      KilledBySignal(SIGABRT), "My message: 42");
+      ABORTED(), "My message: 42");
 }
 
 // EOF
