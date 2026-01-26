@@ -145,7 +145,7 @@ const thread::id MAIN_THREAD_ID = this_thread::get_id();
 
 // Some trickery to keep the ctor private
 inline Process makeProcess__() { return Process(); }
-ROCKET_EXPORT Process process = makeProcess__();
+Process process = makeProcess__();
 
 void
 Process::atExit(std::function<void()> fn, bool callOnTerminate) {
