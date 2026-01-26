@@ -56,7 +56,7 @@ template<typename Generator>
 char
 randomChar(Generator& gen, std::string_view chars) {
   ROCKET_CHECK(chars, chars.size() > 1);
-  u64 index = random(gen, 0UL, chars.size() - 1);
+  u64 index = random<u64>(gen, 0, chars.size() - 1);
   return chars[index];
 }
 
