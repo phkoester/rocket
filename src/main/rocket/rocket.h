@@ -59,6 +59,12 @@
 
 // Macros ---------------------------------------------------------------------------------------------------
 
+#ifdef ROCKET_OS_WINDOWS
+#define ROCKET_EXPORT __declspec(dllexport)
+#else
+#define ROCKET_EXPORT
+#endif
+
 #ifdef ROCKET_CXX_COMPILER_MSVC
 
 #define STDIN_FILENO  0 ///< Standard input file number.

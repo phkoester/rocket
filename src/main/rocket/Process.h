@@ -6,6 +6,7 @@
 
 #pragma once
 
+#include "rocket/rocket.h"
 #include "rocket/nio/nio.h"
 
 #include <locale>
@@ -355,7 +356,7 @@ private:
 };
 
 /// The Process singleton.
-extern Process process;
+ROCKET_EXPORT extern Process process;
 
 } // namespace rocket
 
