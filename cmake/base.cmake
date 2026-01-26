@@ -115,7 +115,7 @@ function(AddExecutable name)
   target_compile_features(${name} PRIVATE ${COMPILE_FEATURES})
   target_compile_options(${name} PRIVATE ${COMPILE_FLAGS})
 
-  if (WIN32)
+  if (WIN32 AND $<TARGET_RUNTIME_DLLS:${name}>)
     add_custom_command(
       TARGET  ${name} POST_BUILD
       COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_RUNTIME_DLLS:${name}> $<TARGET_FILE_DIR:${name}>
