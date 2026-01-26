@@ -115,7 +115,7 @@ namespace internal {
 
 // Internal -------------------------------------------------------------------------------------------------
 
-recursive_mutex envMutex;
+ROCKET_PUBLIC recursive_mutex envMutex;
 
 } // namespace internal
 

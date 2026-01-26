@@ -21,7 +21,7 @@ namespace internal {
 
 // Internal -------------------------------------------------------------------------------------------------
 
-extern std::recursive_mutex envMutex;
+ROCKET_PUBLIC extern std::recursive_mutex envMutex;
 
 } // namespace internal
 
