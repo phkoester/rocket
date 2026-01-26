@@ -121,10 +121,10 @@ recursive_mutex envMutex;
 
 // Functions ------------------------------------------------------------------------------------------------
 
-vector<byte>
+vector<std::byte> // MSVC needs `std::` prefix
 exec(const string& cl) {
-  vector<byte> ret;
-  array<byte, 128> buf;
+  vector<std::byte> ret;
+  array<std::byte, 128> buf;
 
   unique_ptr<FILE, decltype(&PCLOSE)> pipe(POPEN(cl.c_str(), "r"), PCLOSE);
   if (not pipe) {
@@ -141,7 +141,7 @@ exec(const string& cl) {
   return ret;
 }
 
-vector<byte>
+vector<std::byte>
 exec(const vector<string_view>& args) {
   return exec(makeCl(args));
 }
