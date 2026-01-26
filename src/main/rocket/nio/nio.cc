@@ -1002,9 +1002,9 @@ FileSink fileSinkErr = FileSink(stderr);
 
 namespace rocket::nio {
 
-ROCKET_EXPORT Source& in = fileSourceIn;
-ROCKET_EXPORT Sink& out = fileSinkOut;
-ROCKET_EXPORT Sink& err = fileSinkErr;
+Source& in = fileSourceIn;
+Sink& out = fileSinkOut;
+Sink& err = fileSinkErr;
 
 } // namespace rocket::nio
 
