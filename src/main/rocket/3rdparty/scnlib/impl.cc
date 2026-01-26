@@ -6,6 +6,8 @@
 
 #include "impl.h"
 
+#ifndef ROCKET_OS_WINDOWS
+
 /*
  * The original file is `scnlib/src/scn/impl.cpp`.
  */
@@ -73,5 +75,7 @@ SCN_DEFINE_SCANNER_SCAN_FOR_CTX(wscan_context)
 
 SCN_END_NAMESPACE
 } // namespace scn
+
+#endif // ROCKET_OS_WINDOWS
 
 // EOF

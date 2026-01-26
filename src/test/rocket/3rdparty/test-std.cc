@@ -170,6 +170,8 @@ TEST(std, istreamF64) {
   }
 }
 
+#ifdef ROCKET_HAS_128
+
 TEST(std, istreamF128) {
   using type = f128;
 
@@ -181,6 +183,8 @@ TEST(std, istreamF128) {
     EXPECT_ISTREAM(is, false, true, 3);
   }
 }
+
+#endif // ROCKET_HAS_128
 
 TEST(std, regexGreedy) {
   string str = "1: 2: 3: 4";
