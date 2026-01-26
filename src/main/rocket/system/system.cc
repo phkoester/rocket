@@ -201,9 +201,12 @@ get() {
   }
 #else
   // Windows
-  unique_ptr<LPCH, function<void(LPCH)>> env(GetEnvironmentStrings(), [](LPCH p) {
-    ROCKET_ASSERT(FreeEnvironmentStrings(p));
-  });
+  struct Deleter {
+    inline void operator()(LPCH p) {
+      ROCKET_ASSERT(FreeEnvironmentStrings(p));
+    }
+  };
+  unique_ptr<LPCH, Deleter> env(GetEnvironmentStrings());
   LPSTR p = reinterpret_cast<LPSTR>(env.get());
   while (p != nullptr && *p != '\0') {
     string_view entry(p);
