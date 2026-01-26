@@ -123,7 +123,7 @@ exec(const string& cl) {
   vector<byte> ret;
   array<byte, 128> buf;
 
-  unique_ptr<FILE, decltype(&PCLOSE)> pipe(POPEN(cl.c_str(), "r"), pclose);
+  unique_ptr<FILE, decltype(&PCLOSE)> pipe(POPEN(cl.c_str(), "r"), PCLOSE);
   if (not pipe) {
     ROCKET_FAIL("Cannot open pipe for command `{}`", cl);
   }
