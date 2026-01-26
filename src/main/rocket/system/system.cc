@@ -179,8 +179,11 @@ get() {
   ROCKET_MUTEX_LOCK(internal::envMutex);
 
   unordered_map<string_view, string_view> ret;
+
+#ifndef ROCKET_OS_WINDOWS
+  // GNU C
   char** p = __environ;
-  while(*p) {
+  while(*p != nullptr) {
     string_view entry(*p);
     auto eq = entry.find('=');
     string_view name, value;
@@ -193,6 +196,24 @@ get() {
     ret.emplace(name, value);
     ++p;
   }
+#else
+  // Windows
+  unique_ptr<LPCH, decltype(FreeEnvironmentStrings)> env(GetEnvironmentStrings(), FreeEnvironmentStrings);
+  auto p = env.get();
+  while (p != nullptr && *p != '\0') {
+    string_view entry(p);
+    auto eq = entry.find('=');
+    string_view name, value;
+    if (eq == string_view::npos) {
+      name = entry;
+    } else {
+      name = entry.substr(0, eq);
+      value = entry.substr(eq + 1);
+    }
+    ret.emplace(name, value);
+    p += entry.size() + 1;
+  }
+#endif
   return ret;
 }
 
