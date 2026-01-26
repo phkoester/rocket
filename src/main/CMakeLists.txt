@@ -53,9 +53,6 @@ endif()
 
 add_library(rocket ${VERSION_H})
 target_include_directories(rocket PUBLIC ${GENERATED_DIR})
-if(WIN32)
-  target_include_directories(rocket PUBLIC ${ICU_ROOT}/include)
-endif()
 # Move `Process.cc` to front so the global `process` instance is available early
 # Move `log.cc` to front so Rocket can use its own logging API
 target_sources(rocket
@@ -140,8 +137,8 @@ target_compile_definitions(rocket
 target_compile_features(rocket PUBLIC ${COMPILE_FEATURES})
 target_compile_options(rocket PUBLIC ${COMPILE_FLAGS})
 target_link_libraries(rocket
-  PUBLIC ${ROCKET_BOOST_LINK_TARGETS} fmt::fmt-header-only scn::scn
-  PRIVATE ${ROCKET_PRIVATE_LINK_TARGETS} ICU::uc
+  PUBLIC ${ROCKET_BOOST_LINK_TARGETS} fmt::fmt-header-only ICU::uc scn::scn
+  PRIVATE ${ROCKET_PRIVATE_LINK_TARGETS}
 )
 
 add_library(Rocket::rocket ALIAS rocket)
