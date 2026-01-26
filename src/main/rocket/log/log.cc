@@ -80,7 +80,7 @@ struct Format {
   bool threadIds = false; // t, T
   bool utc = false; // z, Z
 
-  constexpr Format(string_view fmt) {
+  explicit Format(string_view fmt) {
     set(fmt);
   }
 
