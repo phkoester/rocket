@@ -141,7 +141,7 @@ getImpl(std::string_view name) {
     return nullopt;
   }
   string ret(size - 1, '\0');
-  _getenv_s(&size, ret.data(), size, nameStr.c_str());
+  getenv_s(&size, ret.data(), size, nameStr.c_str());
   return ret;
 #else
   const char* p = getenv(nameStr.c_str());
