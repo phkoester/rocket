@@ -201,11 +201,11 @@ TEST(nio, FileSourceDoesNotExist) {
 TEST(nio, FileSourceRead) {
   auto tmp = ROCKET_TEST_TEMP_PATH();
 
-  FileSink out(tmp);
+  FileSink out(tmp.string());
   out.writeln("Hey there");
   out.close();
 
-  FileSource in(tmp);
+  FileSource in(tmp.string());
   string str = in.Source::read();
   EXPECT_EQ(in.error(), 0);
   EXPECT_EQ(str, "Hey there\n");
