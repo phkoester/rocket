@@ -58,7 +58,8 @@
 // Declarations .............................................................................................
 
 #define ROCKET_ENUM_DECLARE_MAP__(type, name) \
-    extern const ::rocket::UnorderedBimap<type, ::std::string_view> name##Map__;
+    extern const ::rocket::UnorderedBimap<type, ::std::string_view> name##Map__; \
+    const ::rocket::UnorderedBimap<type, ::std::string_view>& get##name##Map__();
 
 #define ROCKET_ENUM_DECLARE_OP_OUTPUT__(type) \
     ::std::ostream& operator<<(::std::ostream&, type);
@@ -69,7 +70,7 @@
     template<typename FormatContext> \
     constexpr FormatContext::iterator \
     format(ns::type val, FormatContext& ctx) const { \
-      if (auto it = ns::name##Map__.left.find(val); it != ns::name##Map__.left.end()) { \
+      if (auto it = ns::get##name##Map__().left.find(val); it != ns::get##name##Map__().left.end()) { \
         return underlying_.format(::rocket::unicode::ConvertTo<C>().apply(it->second), ctx); \
       } else { \
         return detail::write<C>(ctx.out(), INVALID); \
@@ -117,7 +118,12 @@
   const ::rocket::UnorderedBimap<type, ::std::string_view> name##Map__ = \
     ::rocket::makeUnorderedBimap<type, ::std::string_view>({ \
     BOOST_PP_SEQ_FOR_EACH(ROCKET_ENUM_DEFINE_MAP_ELEM__, type, seq) \
-  })
+  }); \
+  \
+  const ::rocket::UnorderedBimap<type, ::std::string_view>& \
+  get##name##Map__() { \
+    return name##Map__; \
+  }
 
 #define ROCKET_ENUM_DEFINE_OP_OUTPUT__(type, name) \
   ::std::ostream& \
@@ -128,8 +134,8 @@
 #define ROCKET_ENUM_DEFINE_ROCKET_ENUM__(ns, type, name) \
   ns::type \
   rocket::Enum<ns::type>::toType(::std::string_view str) { \
-    auto it = ns::name##Map__.right.find(str); \
-    if (it != ns::name##Map__.right.end()) { \
+    auto it = ns::get##name##Map__().right.find(str); \
+    if (it != ns::get##name##Map__().right.end()) { \
       return it->second; \
     } else { \
       throw ::rocket::InvalidState(::rocket::str::message::cannotScanAs(str, typeid(ns::type))); \
