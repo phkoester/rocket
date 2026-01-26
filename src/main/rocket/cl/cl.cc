@@ -10,6 +10,8 @@
 #include "rocket/system/terminal/terminal.h"
 #include "rocket/unicode/Iterator.h"
 
+#include <algorithm> // XXX
+
 using namespace std;
 
 namespace rocket::cl {
