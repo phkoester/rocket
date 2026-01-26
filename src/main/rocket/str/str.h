@@ -203,6 +203,7 @@ removeLeading(
 
   std::basic_string_view<C> ret(str);
   for (u64 i = 0; i < max; ++i) {
+    // MSVC doesn't like the ctor with pointer and size here
     std::basic_string_view<C> leading(ret.begin(), ret.begin() + sub.size());
     if (leading == sub)
       ret.remove_prefix(sub.size());

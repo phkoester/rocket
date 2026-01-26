@@ -10,11 +10,6 @@
 #include <cstdlib>
 #include <cstdio>
 #include <memory>
-/* XXX
-#ifdef ROCKET_OS_WINDOWS
-#include <Windows.h>
-#endif
-*/
 
 using namespace rocket;
 using namespace std;

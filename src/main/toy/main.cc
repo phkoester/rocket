@@ -62,9 +62,6 @@ i32
 main(i32 argc, char **argv) {
   ROCKET_PROCESS_ERROR(0, "Testing error before `process.init` ...");
 
-  out.println("Aborting ...");
-  abort();
-
   process.atExit(myExit);
   process.atExit(myTerminate, true);
 

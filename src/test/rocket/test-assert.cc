@@ -12,7 +12,7 @@
 // Macros ---------------------------------------------------------------------------------------------------
 
 #ifdef ROCKET_OS_WINDOWS
-#define ABORTED() ExitedWithCode(12)
+#define ABORTED() ExitedWithCode(-1073740791)
 #else
 #define ABORTED() KilledBySignal(SIGABRT)
 #endif
