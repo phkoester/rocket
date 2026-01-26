@@ -88,122 +88,122 @@
 #define ROCKET_REFLECT_MEMBERS_STRUCT__(name) BOOST_PP_SEQ_CAT((RocketReflect)(name)(__))
 
 #define ROCKET_REFLECT_MEMBERS_REFS_ELEM__(r, data, elem) \
-    (::rocket::reflect::MemberRef(BOOST_PP_STRINGIZE(elem), &data::elem))
+  (::rocket::reflect::MemberRef(BOOST_PP_STRINGIZE(elem), &data::elem))
 
 #define ROCKET_REFLECT_MEMBERS_REFS__(cls, seq) \
-    ::std::make_tuple( \
-        BOOST_PP_SEQ_ENUM(BOOST_PP_SEQ_FOR_EACH(ROCKET_REFLECT_MEMBERS_REFS_ELEM__, cls, seq)))
+  ::std::make_tuple( \
+    BOOST_PP_SEQ_ENUM(BOOST_PP_SEQ_FOR_EACH(ROCKET_REFLECT_MEMBERS_REFS_ELEM__, cls, seq)))
 
 #define ROCKET_REFLECT_MEMBERS__(cls, name, seq) \
-    struct ROCKET_REFLECT_MEMBERS_STRUCT__(name) { \
-      static constexpr auto refs = ROCKET_REFLECT_MEMBERS_REFS__(cls, seq); \
-    }; \
-    \
-    static consteval auto& name() { return ROCKET_REFLECT_MEMBERS_STRUCT__(name)::refs; } \
+  struct ROCKET_REFLECT_MEMBERS_STRUCT__(name) { \
+    static constexpr auto refs = ROCKET_REFLECT_MEMBERS_REFS__(cls, seq); \
+  }; \
+  \
+  static consteval auto& name() { return ROCKET_REFLECT_MEMBERS_STRUCT__(name)::refs; } \
 
 #define ROCKET_REFLECT_MEMBERS_DECLARE_FMT_FORMATTER__(ns, cls, _name) \
-    template<typename C> \
-    struct fmt::formatter<ns::cls, C> { \
-      template<typename FormatContext> \
-      constexpr FormatContext::iterator \
-      format(const ns::cls& val, FormatContext& ctx) const{ \
-        auto out = ctx.out(); \
-        if (withType_) { \
-          std::string typeName = fmt::format("{}", typeid(val)); \
-          out = ::fmt::detail::write<C>(out, ::rocket::unicode::ConvertTo<C>().apply(typeName)); \
-        } \
-        out = ::rocket::reflect::internal::format<ns::cls, C>(val, ctx, debug_, ns::cls::_name()); \
-        return out; \
+  template<typename C> \
+  struct fmt::formatter<ns::cls, C> { \
+    template<typename FormatContext> \
+    constexpr FormatContext::iterator \
+    format(const ns::cls& val, FormatContext& ctx) const{ \
+      auto out = ctx.out(); \
+      if (withType_) { \
+        std::string typeName = fmt::format("{}", typeid(val)); \
+        out = ::fmt::detail::write<C>(out, ::rocket::unicode::ConvertTo<C>().apply(typeName)); \
       } \
-      \
-      constexpr const C* \
-      parse(parse_context<C>& ctx) { \
-        auto it = ctx.begin(), end = ctx.end(); \
-        if (it != end && *it == '?') { \
-          debug_ = true; \
-          ++it; \
-        } \
-        if (it != end && *it == 't') { \
-          withType_ = true; \
-          ++it; \
-        } \
-        return it; \
-      } \
-      \
-      constexpr void \
-      set_debug_format(bool val = true) { \
-        debug_ = val; \
-      } \
-      \
-    private: \
+      out = ::rocket::reflect::internal::format<ns::cls, C>(val, ctx, debug_, ns::cls::_name()); \
+      return out; \
+    } \
     \
-      bool debug_ = false; \
-      bool withType_ = false; \
-    };
+    constexpr const C* \
+    parse(parse_context<C>& ctx) { \
+      auto it = ctx.begin(), end = ctx.end(); \
+      if (it != end && *it == '?') { \
+        debug_ = true; \
+        ++it; \
+      } \
+      if (it != end && *it == 't') { \
+        withType_ = true; \
+        ++it; \
+      } \
+      return it; \
+    } \
+    \
+    constexpr void \
+    set_debug_format(bool val = true) { \
+      debug_ = val; \
+    } \
+    \
+  private: \
+  \
+    bool debug_ = false; \
+    bool withType_ = false; \
+  };
 
 #define ROCKET_REFLECT_MEMBERS_DECLARE_OP_EQ__(cls, name) \
-    inline bool \
-    operator==(const cls& lhs, const cls& rhs) { \
-      return ::rocket::reflect::eq(lhs, rhs, cls::name()); \
-    }
+  inline bool \
+  operator==(const cls& lhs, const cls& rhs) { \
+    return ::rocket::reflect::eq(lhs, rhs, cls::name()); \
+  }
 
 #define ROCKET_REFLECT_MEMBERS_DECLARE_OP_NE__(cls, name) \
-    inline bool \
-    operator!=(const cls& lhs, const cls& rhs) { \
-      return ::rocket::reflect::ne(lhs, rhs, cls::name()); \
-    }
+  inline bool \
+  operator!=(const cls& lhs, const cls& rhs) { \
+    return ::rocket::reflect::ne(lhs, rhs, cls::name()); \
+  }
 
 #define ROCKET_REFLECT_MEMBERS_DECLARE_OP_LT__(cls, name) \
-    inline bool \
-    operator<(const cls& lhs, const cls& rhs) { \
-      return ::rocket::reflect::lt(lhs, rhs, cls::name()); \
-    }
+  inline bool \
+  operator<(const cls& lhs, const cls& rhs) { \
+    return ::rocket::reflect::lt(lhs, rhs, cls::name()); \
+  }
 
 #define ROCKET_REFLECT_MEMBERS_DECLARE_OP_GT__(cls, name) \
-    inline bool \
-    operator>(const cls& lhs, const cls& rhs) { \
-      return ::rocket::reflect::gt(lhs, rhs, cls::name()); \
-    }
+  inline bool \
+  operator>(const cls& lhs, const cls& rhs) { \
+    return ::rocket::reflect::gt(lhs, rhs, cls::name()); \
+  }
 
 #define ROCKET_REFLECT_MEMBERS_DECLARE_OP_OUTPUT__(cls) \
-    inline ::std::ostream& \
-    operator<<(::std::ostream& lhs, const cls& rhs) { \
-      return lhs << ::fmt::format("{}", rhs); \
-    }
+  inline ::std::ostream& \
+  operator<<(::std::ostream& lhs, const cls& rhs) { \
+    return lhs << ::fmt::format("{}", rhs); \
+  }
 
 #define ROCKET_REFLECT_MEMBERS_DECLARE_STD_HASH__(ns, cls) \
-    template<> \
-    struct std::hash<ns::cls> { \
-      u64 operator()(const ns::cls& val) const; \
-    }
+  template<> \
+  struct std::hash<ns::cls> { \
+    u64 operator()(const ns::cls& val) const; \
+  }
 
 #define ROCKET_REFLECT_MEMBERS_DECLARE__(ns, cls, name) \
-    ROCKET_REFLECT_MEMBERS_DECLARE_FMT_FORMATTER__(ns, cls, name); \
-    ROCKET_NAMESPACE_BEGIN(ns); \
-    ROCKET_REFLECT_MEMBERS_DECLARE_OP_EQ__(cls, name); \
-    ROCKET_REFLECT_MEMBERS_DECLARE_OP_NE__(cls, name); \
-    ROCKET_REFLECT_MEMBERS_DECLARE_OP_LT__(cls, name); \
-    ROCKET_REFLECT_MEMBERS_DECLARE_OP_GT__(cls, name); \
-    ROCKET_REFLECT_MEMBERS_DECLARE_OP_OUTPUT__(cls); \
-    ROCKET_NAMESPACE_END(ns); \
-    ROCKET_REFLECT_MEMBERS_DECLARE_STD_HASH__(ns, cls)
+  ROCKET_REFLECT_MEMBERS_DECLARE_FMT_FORMATTER__(ns, cls, name); \
+  ROCKET_NAMESPACE_BEGIN(ns); \
+  ROCKET_REFLECT_MEMBERS_DECLARE_OP_EQ__(cls, name); \
+  ROCKET_REFLECT_MEMBERS_DECLARE_OP_NE__(cls, name); \
+  ROCKET_REFLECT_MEMBERS_DECLARE_OP_LT__(cls, name); \
+  ROCKET_REFLECT_MEMBERS_DECLARE_OP_GT__(cls, name); \
+  ROCKET_REFLECT_MEMBERS_DECLARE_OP_OUTPUT__(cls); \
+  ROCKET_NAMESPACE_END(ns); \
+  ROCKET_REFLECT_MEMBERS_DECLARE_STD_HASH__(ns, cls)
 
 #define ROCKET_REFLECT_MEMBERS_DEFINE_STD_HASH__(ns, cls, name) \
-    u64 \
-    std::hash<ns::cls>::operator()(const ns::cls& val) const { \
-      return ::rocket::reflect::hash(val, ns::cls::name()); \
-    }
+  u64 \
+  std::hash<ns::cls>::operator()(const ns::cls& val) const { \
+    return ::rocket::reflect::hash(val, ns::cls::name()); \
+  }
 
 #define ROCKET_REFLECT_MEMBERS_DEFINE__(ns, cls, name) \
-    ROCKET_REFLECT_MEMBERS_DEFINE_STD_HASH__(ns, cls, name)
+  ROCKET_REFLECT_MEMBERS_DEFINE_STD_HASH__(ns, cls, name)
 
 // Variables ................................................................................................
 
 #define ROCKET_REFLECT_VARS_ELEM__(r, data, elem) \
-    (::rocket::reflect::VarRef(BOOST_PP_STRINGIZE(elem), elem))
+  (::rocket::reflect::VarRef(BOOST_PP_STRINGIZE(elem), elem))
 
 #define ROCKET_REFLECT_VARS__(seq) \
-    ::std::make_tuple(BOOST_PP_SEQ_ENUM(BOOST_PP_SEQ_FOR_EACH(ROCKET_REFLECT_VARS_ELEM__, ~, seq)))
+  ::std::make_tuple(BOOST_PP_SEQ_ENUM(BOOST_PP_SEQ_FOR_EACH(ROCKET_REFLECT_VARS_ELEM__, ~, seq)))
 
 /// @endcond
 
@@ -409,35 +409,35 @@ refGet(T& val, const Tuple& refs) noexcept {
 template<typename T, typename Tuple, u64... Index>
 bool
 eqImpl(
-    const T& lhs,
-    const T& rhs,
-    const Tuple& refs,
-    std::index_sequence<Index...>) {
+  const T& lhs,
+  const T& rhs,
+  const Tuple& refs,
+  std::index_sequence<Index...>) {
   return (... && std::equal_to()(refGet<Index>(lhs, refs), refGet<Index>(rhs, refs)));
 }
 
 template<typename T, typename Tuple, u64... Index>
 bool
 neImpl(
-    const T& lhs,
-    const T& rhs,
-    const Tuple& refs,
-    std::index_sequence<Index...>) {
+  const T& lhs,
+  const T& rhs,
+  const Tuple& refs,
+  std::index_sequence<Index...>) {
   return (... || std::not_equal_to()(refGet<Index>(lhs, refs), refGet<Index>(rhs, refs)));
 }
 
 template<typename T, typename Tuple, u64... Index>
 bool
 ltImpl(
-    const T& lhs,
-    const T& rhs,
-    const Tuple& refs,
-    std::index_sequence<Index...> indices) {
+  const T& lhs,
+  const T& rhs,
+  const Tuple& refs,
+  std::index_sequence<Index...> indices) {
   bool ret = false;
   auto _unused = (... ||
-      ((ret = std::less()(refGet<Index>(lhs, refs), refGet<Index>(rhs, refs))) == true ||
-       ((Index + 1 < indices.size()) &&
-        std::less()(refGet<Index>(rhs, refs), refGet<Index>(lhs, refs)))));
+    ((ret = std::less()(refGet<Index>(lhs, refs), refGet<Index>(rhs, refs))) == true ||
+      ((Index + 1 < indices.size()) &&
+      std::less()(refGet<Index>(rhs, refs), refGet<Index>(lhs, refs)))));
   nop(_unused);
   return ret;
 }
@@ -445,15 +445,15 @@ ltImpl(
 template<typename T, typename Tuple, u64... Index>
 bool
 gtImpl(
-    const T& lhs,
-    const T& rhs,
-    const Tuple& refs,
-    std::index_sequence<Index...> indices) {
+  const T& lhs,
+  const T& rhs,
+  const Tuple& refs,
+  std::index_sequence<Index...> indices) {
   bool ret = false;
   auto _unused = (... ||
-      ((ret = std::greater()(refGet<Index>(lhs, refs), refGet<Index>(rhs, refs))) == true ||
-       ((Index + 1 < indices.size()) &&
-        std::greater()(refGet<Index>(rhs, refs), refGet<Index>(lhs, refs)))));
+    ((ret = std::greater()(refGet<Index>(lhs, refs), refGet<Index>(rhs, refs))) == true ||
+      ((Index + 1 < indices.size()) &&
+      std::greater()(refGet<Index>(rhs, refs), refGet<Index>(lhs, refs)))));
   nop(_unused);
   return ret;
 }
