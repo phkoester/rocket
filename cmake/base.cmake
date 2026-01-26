@@ -122,6 +122,15 @@ function(AddBench name dir)
   AddExecutable(${name} ${ARGN})
   target_link_libraries(${name} PRIVATE Rocket::rocket-test)
   # add_test(NAME ${name} COMMAND ${name} WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/src/bench/${dir})
+
+  if (WIN32)
+    add_custom_command(
+      TARGET  ${name} POST_BUILD
+      COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_RUNTIME_DLLS:${name}> $<TARGET_FILE_DIR:${name}>
+      COMMAND_EXPAND_LISTS
+    )
+  endif ()
+
   gtest_discover_tests(${name}
     DISCOVERY_MODE PRE_TEST
     EXTRA_ARGS --gtest_catch_exceptions=0
@@ -136,6 +145,15 @@ function(AddTest name dir)
   AddExecutable(${name} ${ARGN})
   target_link_libraries(${name} PRIVATE Rocket::rocket-test)
   # add_test(NAME ${name} COMMAND ${name} WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/src/test/${dir})
+
+  if (WIN32)
+    add_custom_command(
+      TARGET  ${name} POST_BUILD
+      COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_RUNTIME_DLLS:${name}> $<TARGET_FILE_DIR:${name}>
+      COMMAND_EXPAND_LISTS
+    )
+  endif ()
+
   gtest_discover_tests(${name}
     DISCOVERY_MODE PRE_TEST
     EXTRA_ARGS --gtest_catch_exceptions=0
