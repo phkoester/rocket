@@ -202,7 +202,7 @@ get() {
 #else
   // Windows
   unique_ptr<LPCH, function<void(LPCH)>> env(GetEnvironmentStrings(), [](LPCH p) {
-    FreeEnvironmentStrings(p);
+    ROCKET_ASSERT(FreeEnvironmentStrings(p));
   });
   auto p = env.get();
   while (p != nullptr && *p != '\0') {
