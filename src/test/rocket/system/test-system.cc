@@ -75,8 +75,8 @@ TEST(system, envLogLevel) {
   EXPECT_EQ(env::get<type>(name), nullopt);
 }
 
-TEST(system, envStringView) {
-  using type = string_view;
+TEST(system, envString) {
+  using type = string;
 
   const char* name = "MY_STRING_VIEW";
 

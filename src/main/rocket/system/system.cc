@@ -10,9 +10,11 @@
 #include <cstdlib>
 #include <cstdio>
 #include <memory>
+/* XXX
 #ifdef ROCKET_OS_WINDOWS
 #include <Windows.h>
 #endif
+*/
 
 using namespace rocket;
 using namespace std;
@@ -131,11 +133,23 @@ getImpl(std::string_view name) {
   ROCKET_MUTEX_LOCK(envMutex);
 
   string nameStr(name);
+
+#ifdef ROCKET_OS_WINDOWS
+  size_t size = 0;
+  getenv_s(&size, nullptr, 0, nameStr.c_str());
+  if (size == 0) {
+    return nullopt;
+  }
+  string ret(size - 1, '\0');
+  _getenv_s(&size, ret.data(), size, nameStr.c_str());
+  return ret;
+#else
   const char* p = getenv(nameStr.c_str());
   if (not p) {
     return nullopt;
   }
   return p;
+#endif
 }
 
 void
@@ -145,6 +159,14 @@ setImpl(std::string_view name, const optional<string>& value, bool replace) {
   ROCKET_MUTEX_LOCK(envMutex);
 
   string nameStr(name);
+
+#ifdef ROCKET_OS_WINDOWS
+  if (value && not replace && env::get<string>(name)) {
+    return;
+  }
+  // Set/unset
+  _putenv_s(nameStr.c_str(), value ? value->c_str() : "");
+#else
   if (value) {
     // Set
     setenv(nameStr.c_str(), value->c_str(), replace ? 1 : 0);
@@ -152,6 +174,7 @@ setImpl(std::string_view name, const optional<string>& value, bool replace) {
     // Unset
     unsetenv(const_cast<char*>(nameStr.c_str()));
   }
+#endif
 }
 
 } // namespace internal
@@ -220,9 +243,11 @@ get() {
 
   unordered_map<string, string> ret;
 
-#ifndef ROCKET_OS_WINDOWS
-  // GNU C
+#ifdef ROCKET_OS_WINDOWS
+  char** p = _environ;
+#else
   char** p = __environ;
+#endif
   while(*p != nullptr) {
     string_view entry(*p);
     auto eq = entry.find('=');
@@ -236,7 +261,8 @@ get() {
     ret.emplace(name, value);
     ++p;
   }
-#else
+
+#if 0 // XXX
   // Windows
   unique_ptr<CHAR, function<void(LPCH)>> env(GetEnvironmentStrings(), [](LPCH p) {
     ROCKET_ASSERT(FreeEnvironmentStrings(p));
