@@ -202,7 +202,7 @@ get() {
 #else
   // Windows
   struct Deleter {
-    inline void operator()(LPCH p) {
+    inline void operator()(LPCH p) const {
       ROCKET_ASSERT(FreeEnvironmentStrings(p));
     }
   };
