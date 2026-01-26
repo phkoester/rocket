@@ -196,7 +196,7 @@ function(AddBench name dir)
   target_link_libraries(${name} PRIVATE Rocket::rocket-test)
   # add_test(NAME ${name} COMMAND ${name} WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/src/bench/${dir})
   gtest_discover_tests(${name}
-    DISCOVERY_MODE POST_BUILD
+    DISCOVERY_MODE PRE_TEST # XXX POST_BUILD
     EXTRA_ARGS --gtest_catch_exceptions=0
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/src/bench/${dir}
   )
@@ -209,7 +209,7 @@ function(AddTest name dir)
   target_link_libraries(${name} PRIVATE Rocket::rocket-test)
   # add_test(NAME ${name} COMMAND ${name} WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/src/test/${dir})
   gtest_discover_tests(${name}
-    DISCOVERY_MODE POST_BUILD
+    DISCOVERY_MODE PRE_TEST # XXX POST_BUILD
     EXTRA_ARGS --gtest_catch_exceptions=0
     PROPERTIES ENVIRONMENT "CURRENT_BINARY_DIR=${CMAKE_CURRENT_BINARY_DIR}"
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/src/test/${dir}
