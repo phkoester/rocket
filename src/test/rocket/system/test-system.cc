@@ -125,9 +125,7 @@ TEST(system, execPrintArgsWithSpace) {
   path mainBinaryDir = path(*CURRENT_BINARY_DIR).parent_path() / "main";
   path printArgs = mainBinaryDir / fmt::format("print-args{}", executableSuffix());
   path printArgsWithSpace = mainBinaryDir / fmt::format("print args{}", executableSuffix());
-  if (not exists(printArgsWithSpace)) {
-    copy(printArgs, printArgsWithSpace);
-  }
+  copy_file(printArgs, printArgsWithSpace, copy_options::overwrite_existing);
   string executable = printArgsWithSpace.string();
 
   {

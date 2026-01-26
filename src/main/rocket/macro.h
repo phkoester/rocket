@@ -20,11 +20,6 @@
 #define ROCKET_ID() BOOST_PP_SEQ_CAT((rocketId)(__LINE__)(__))
 
 /**
- * If @p val is empty, expands to @p _true, otherwise to @p _false.
- */
-#define ROCKET_IF_EMPTY(val, _true, _false) BOOST_PP_IF(BOOST_PP_CHECK_EMPTY(val), _true, _false)
-
-/**
  * This macro executes a given function as a static initializer.
  *
  * If curly braces pose a problem, enclose the parameter in parentheses.
@@ -39,12 +34,12 @@
  * ```
  */
 #define ROCKET_INIT(fn) \
-    namespace { \
-      struct BOOST_PP_SEQ_CAT((RocketInit)(__LINE__)(__)) { \
-        BOOST_PP_SEQ_CAT((RocketInit)(__LINE__)(__))() { fn(); } \
-      }; \
-      BOOST_PP_SEQ_CAT((RocketInit)(__LINE__)(__)) BOOST_PP_SEQ_CAT((rocketInit)(__LINE__)(__)); \
-    }
+  namespace { \
+    struct BOOST_PP_SEQ_CAT((RocketInit)(__LINE__)(__)) { \
+      BOOST_PP_SEQ_CAT((RocketInit)(__LINE__)(__))() { fn(); } \
+    }; \
+    BOOST_PP_SEQ_CAT((RocketInit)(__LINE__)(__)) BOOST_PP_SEQ_CAT((rocketInit)(__LINE__)(__)); \
+  }
 
 /**
  * Generates a scoped mutex lock.
@@ -58,13 +53,20 @@
  *
  * @param ns the namespace to begin, or empty if there is no namespace
  */
-#define ROCKET_NS_BEGIN(ns) ROCKET_IF_EMPTY(ns, , namespace ns {)
+#define ROCKET_NAMESPACE_BEGIN(ns) ROCKET_NAMESPACE_BEGIN__(ns)
 
 /**
  * If `ns` is empty, expands to nothing. Otherwise, expands to `}`.
  *
  * @param ns the namespace to end, or empty if there is no namespace
  */
-#define ROCKET_NS_END(ns) ROCKET_IF_EMPTY(ns, , })
+#define ROCKET_NAMESPACE_END(ns) ROCKET_NAMESPACE_END__(ns)
+
+/// @cond undocumented
+
+#define ROCKET_NAMESPACE_BEGIN__(...) __VA_OPT__(namespace) __VA_ARGS__ __VA_OPT__({)
+#define ROCKET_NAMESPACE_END__(...) __VA_OPT__(})
+
+/// @endcond
 
 // EOF

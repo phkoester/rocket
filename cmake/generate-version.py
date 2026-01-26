@@ -1,7 +1,11 @@
 #!/usr/bin/env python3
 #
-# generate.py
+# generate-version.py
 #
+
+"""
+Usage: generate-version.py -o OUTPUT_FILE NAME VERSION
+"""
 
 import argparse
 import semver
@@ -21,6 +25,8 @@ f"""/**
  *
  * GENERATED FILE. DO NOT EDIT.
  */
+
+#pragma once
 
 #define {name}_VERSION_NAME "{version_string}" ///< SemVer string.
 
