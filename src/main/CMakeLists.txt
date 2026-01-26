@@ -53,6 +53,9 @@ endif()
 
 add_library(rocket ${VERSION_H})
 target_include_directories(rocket PUBLIC ${GENERATED_DIR})
+if(WIN32)
+  target_include_directories(rocket PUBLIC ${ICU_ROOT}/include)
+endif()
 # Move `Process.cc` to front so the global `process` instance is available early
 # Move `log.cc` to front so Rocket can use its own logging API
 target_sources(rocket

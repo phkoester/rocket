@@ -161,6 +161,12 @@ set(BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS_DEFAULT})
 # ICU -------------------------------------------------------------------------------------------------------
 
 find_package(ICU 74.2 REQUIRED uc) # data i18n io
+if(WIN32)
+  set(ICU_ROOT $ENV{ICU_ROOT})
+  if(not ICU_ROOT)
+    message(FATAL_ERROR "ICU_ROOT is not set")
+  endif()
+endif()
 
 # scn .......................................................................................................
 
