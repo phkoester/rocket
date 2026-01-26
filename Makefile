@@ -107,7 +107,7 @@ ifneq ($(FMT_VERSION), $(FMT_VERSION_EXPECTED))
 endif
 
 .PHONY: src/main/rocket/3rdparty/scnlib/impl.h
-src/main/rocket/3rdparty/scnlib/impl.h: $(BUILD_DIR)/_deps/scn-src/src/scn/impl.h
+src/main/rocket/3rdparty/scnlib/impl.h: $(BUILD_DIR)/_deps/scnlib-src/src/scn/impl.h
 	@diff $< $@ >/dev/null || ( \
           echo The file impl.h in scnlib has changed!; \
 	  echo You have to copy impl.h manually!; \
