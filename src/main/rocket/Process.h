@@ -349,7 +349,7 @@ private:
 
   Process() {}
 
-  std::string autoName();
+  const std::string& autoName() const;
 
   friend Process makeProcess__();
 };

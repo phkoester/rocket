@@ -10,6 +10,8 @@
 #include "rocket/str/str.h"
 #include "rocket/system/system.h"
 
+#include <cstdlib>
+
 using namespace rocket;
 using namespace std;
 
@@ -27,6 +29,8 @@ recursive_mutex processMutex;
 vector<pair<function<void()>, bool>> onExitFns;
 
 // Local functions ------------------------------------------------------------------------------------------
+
+string_view shortName(string_view);
 
 void
 callExitFns(bool onTerminate) {
@@ -47,7 +51,21 @@ callExitFns(bool onTerminate) {
   }
 }
 
-#ifdef ROCKET_OS_LINUX
+#ifdef ROCKET_OS_WINDOWS
+
+const string&
+invocationName() {
+  static string ret(__argv[0]);
+  return ret;
+}
+
+const string&
+invocationShortName() {
+  static string ret(shortName(__argv[0]));
+  return ret;
+}
+
+#else
 
 const string&
 invocationName() {
@@ -61,7 +79,7 @@ invocationShortName() {
   return ret;
 }
 
-#endif
+#endif // ROCKET_OS_WINDOWS
 
 void
 onExit() {
@@ -83,6 +101,17 @@ onTerminate() {
   }
 
   abort();
+}
+
+string_view
+shortName(string_view argv0) {
+  string_view ret = argv0;
+  auto lastFileSep = ret.find_last_of(system::fileSeparator());
+  if (lastFileSep != string_view::npos) {
+    ret = ret.substr(lastFileSep + 1);
+  }
+  ret = str::removeTrailing(ret, system::executableSuffix());
+  return ret;
 }
 
 } // namespace
@@ -125,8 +154,8 @@ Process::atExit(std::function<void()> fn, bool callOnTerminate) {
   onExitFns.push_back({ fn, callOnTerminate });
 }
 
-string
-Process::autoName() {
+const string&
+Process::autoName() const{
   ROCKET_MUTEX_LOCK(processMutex);
 
   return inited_ ? name() : invocationShortName();
@@ -180,17 +209,7 @@ Process::init(
   argc_ = argc;
   argv_ = argv;
 
-  if (name)
-    name_ = *name;
-  else {
-    string_view name(argv[0]);
-    auto lastFileSep = name.find_last_of(system::fileSeparator());
-    if (lastFileSep != string::npos) {
-      name = name.substr(lastFileSep + 1);
-    }
-    name = str::removeTrailing(name, system::executableSuffix());
-    name_ = name;
-  }
+  name_ = name ? *name : shortName(argv[0]);
 
   quickExit_ = quickExit;
 
