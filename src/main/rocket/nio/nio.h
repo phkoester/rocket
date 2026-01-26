@@ -6,6 +6,7 @@
 
 #pragma once
 
+#include "rocket/rocket.h"
 #include "rocket/format/format.h"
 
 #include <boost/safe_numerics/safe_integer.hpp>

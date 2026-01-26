@@ -6,10 +6,11 @@
 
 #pragma once
 
+#include "rocket/rocket.h"
+
 #include <optional>
 #include <source_location>
 #include <string>
-#include <typeinfo>
 
 namespace rocket::str::message {
 

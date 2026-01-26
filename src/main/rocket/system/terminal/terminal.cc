@@ -75,10 +75,25 @@ sendAnsiRequest(nio::Sink& out, std::string_view sequence) {
   return ret;
 }
 
-#endif
+#else
+
+HANDLE
+getHandle(i32 fd) {
+  if (fd == STDIN_FILENO) {
+    return GetStdHandle(STD_INPUT_HANDLE);
+  }
+  if (fd == STDOUT_FILENO) {
+    return GetStdHandle(STD_OUTPUT_HANDLE);
+  }
+  if (fd == STDERR_FILENO) {
+    return GetStdHandle(STD_ERROR_HANDLE);
+  }
+  return INVALID_HANDLE_VALUE;
+}
+
+#endif // ROCKET_OS_WINDOWS
 
 } // namespace
-
 
 namespace rocket::system::terminal {
 
@@ -126,11 +141,13 @@ position(nio::Sink& out) {
 #ifdef ROCKET_OS_WINDOWS
   // Use CSBI
 
+  auto handle = getHandle(fd);
+  ROCKET_ASSERT(handle != INVALID_HANDLE_VALUE);
   CONSOLE_SCREEN_BUFFER_INFO csbi;
-  if (not GetConsoleScreenBufferInfo(fd, &csbi)) {
+  if (not GetConsoleScreenBufferInfo(handle, &csbi)) {
     return nullopt;
   }
-  cout << "csbi.dwCursorPosition.X=" << csbi.dwCursorPosition.X << ", csbi.dwCursorPosition.Y=" << csbi.dwCursorPosition.Y << endl;
+  cout << "csbi.dwCursorPosition.X=" << csbi.dwCursorPosition.X << ", csbi.dwCursorPosition.Y=" << csbi.dwCursorPosition.Y << endl; // XXX
   return make_pair(safe<u64>(csbi.dwCursorPosition.X), safe<u64>(csbi.dwCursorPosition.Y));
 #else
   // Send the ANSI code requesting cursor position
@@ -158,11 +175,13 @@ size(nio::Io& io) {
   }
 
 #ifdef ROCKET_OS_WINDOWS
+  auto handle = getHandle(fd);
+  ROCKET_ASSERT(handle != INVALID_HANDLE_VALUE);
   CONSOLE_SCREEN_BUFFER_INFO csbi;
-  if (not GetConsoleScreenBufferInfo(fd, &csbi)) {
+  if (not GetConsoleScreenBufferInfo(handle, &csbi)) {
     return nullopt;
   }
-  cout << "csbi.dwSize.X=" << csbi.dwSize.X << ", csbi.dwSize.Y=" << csbi.dwSize.Y << endl;
+  cout << "csbi.dwSize.X=" << csbi.dwSize.X << ", csbi.dwSize.Y=" << csbi.dwSize.Y << endl; // XXX
   return make_pair(safe<u64>(csbi.dwSize.X), safe<u64>(csbi.dwSize.Y));
 #else
   winsize ws;

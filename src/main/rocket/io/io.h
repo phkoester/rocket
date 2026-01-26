@@ -6,6 +6,8 @@
 
 #pragma once
 
+#include "rocket/rocket.h"
+
 #include <spanstream>
 #include <sstream>
 

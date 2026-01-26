@@ -6,11 +6,7 @@
 
 #include "rocket/assert.h"
 
-#include <cstdio>
 #include <iostream>
-#ifdef ROCKET_OS_WINDOWS
-#include <windows.h>
-#endif
 
 using namespace rocket;
 using namespace rocket::nio;
@@ -21,7 +17,7 @@ using boost::safe_numerics::safe;
 /* Logging --------------------------------------------------------------------------------------------------
 
 Because the logging framework utilizes `nio`, we can't use it to log `nio` itself. So we need to make up a
-tiny logging facility here.
+quick and dirty logging facility here.
 
 ---------------------------------------------------------------------------------------------------------- */
 
@@ -31,15 +27,6 @@ tiny logging facility here.
 #define LOG(args) cout << "# " << __FILE__ << ':' << __LINE__ << ' ' << __FUNCTION__ << ": " << args << endl;
 #else
 #define LOG(args)
-#endif
-
-// Macros ---------------------------------------------------------------------------------------------------
-
-#ifdef ROCKET_OS_WINDOWS
-// XXX Alternativ GetStdHandle(STD_INPUT_HANDLE), GetStdHandle(STD_OUTPUT_HANDLE), GetStdHandle(STD_ERROR_HANDLE)
-#define	STDIN_FILENO  0
-#define	STDOUT_FILENO 1
-#define	STDERR_FILENO 2
 #endif
 
 namespace rocket::nio {
@@ -754,15 +741,12 @@ FileSource::seek(i64 offset, SeekMode mode) {
     ROCKET_FLOP(mode, "Invalid seek mode {}", static_cast<i32>(mode));
   }
 
-
-  // The type of the `offset` parameter is `std_long`, se we can directly pass `offset`
-  static_assert(sizeof(offset) >= sizeof(std_long));
-  i32 ret = std::fseek(file_, offset, origin);
-  LOG("fseek=" << ret << ", ferror=" << ferror(file_));
-  if (ret != 0) {
+  auto result = std::fseek(file_, safe<std_long>(offset), origin);
+  LOG("fseek=" << result << ", ferror=" << ferror(file_));
+  if (result != 0) {
     error_ = ferror(file_);
   }
-  return ret;
+  return safe<i32>(result);
 }
 
 u64
@@ -771,16 +755,14 @@ FileSource::tell() {
     return NPOS;
   }
 
-  using ftell_t = decltype(std::ftell(file_));
-  static_assert(sizeof(i64) >= sizeof(ftell_t));
-  i64 result = std::ftell(file_);
+  auto result = std::ftell(file_);
   LOG("ftell=" << result << ", ferror=" << ferror(file_));
   if (result == -1) {
     error_ = ferror(file_);
     return NPOS;
   }
   ROCKET_ASSERT(result >= 0);
-  return static_cast<u64>(result); // We know `result` >= 0
+  return safe<u64>(result);
 }
 
 bool
@@ -892,9 +874,7 @@ StreamSource::seek(i64 offset, SeekMode mode) {
     ROCKET_FLOP(mode, "Invalid seek mode {}", static_cast<i32>(mode));
   }
 
-  // `istream::off_type` is `i64`, so we can directly pass `offset`
-  static_assert(is_same_v<istream::off_type, i64>);
-  is_.seekg(offset, dir);
+  is_.seekg(safe<istream::off_type>(offset), dir);
   error_ = is_.rdstate();
   return error_;
 }
@@ -912,7 +892,7 @@ StreamSource::tell() {
   if (result < 0) {
     return NPOS;
   }
-  return static_cast<u64>(result);
+  return static_cast<u64>(result); // `safe` doesn't work here
 }
 
 bool

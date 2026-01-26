@@ -37,7 +37,9 @@
 #pragma once
 
 #include <cstdint> // `int8_t`, `uint8_t`, ...
+#include <cstdio> // Make this generally availabe
 #include <iosfwd>
+#include <typeinfo> // Make this generally available
 
 // Check prerequisites --------------------------------------------------------------------------------------
 
@@ -52,17 +54,26 @@
 #endif
 
 #ifndef ROCKET_CXX_COMPILER_MSVC
-  #define ROCKET_HAS_128
+  #define ROCKET_HAS_128 ///< Do we have 128-bit data types?
 #endif
+
+// Macros ---------------------------------------------------------------------------------------------------
+
+#ifdef ROCKET_CXX_COMPILER_MSVC
+
+#define STDIN_FILENO  0 ///< Standard input file number.
+#define STDOUT_FILENO 1 ///< Standard output file number.
+#define STDERR_FILENO 2 ///< Standard error file number.
+
+#endif // ROCKET_CXX_COMPILER_MSVC
 
 // `type_info` for MSVC -------------------------------------------------------------------------------------
 
 #ifdef ROCKET_CXX_COMPILER_MSVC
 
-#include <typeinfo>
-
 namespace std {
 
+/// Microsoft has `type_info` in the global namespace, so we need to alias it here.
 using type_info = ::type_info;
 
 } // namespace std

@@ -208,7 +208,7 @@ struct std::hash<rocket::unicode::CodePoint> {
    * @param val the value to hash
    * @return a hash value
    */
-  constexpr u64 operator()(rocket::unicode::CodePoint val) const noexcept { return val.hash(); }
+  inline u64 operator()(rocket::unicode::CodePoint val) const noexcept { return val.hash(); }
 };
 
 // `std::numeric_limits<CodePoint>` -------------------------------------------------------------------------
