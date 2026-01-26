@@ -83,7 +83,7 @@ TEST(str, paragraphs) {
 TEST(str, removeLeadingChar) {
   using type = char;
 
-  string str = "";
+  string_view str = "";
   EXPECT_EQ(removeLeading<type>(str, "hello"sv), "");
 
   str = "hello";
@@ -102,7 +102,7 @@ TEST(str, removeLeadingChar) {
 TEST(str, removeLeadingChar32) {
   using type = char32;
 
-  u32string str = U"";
+  u32string_view str = U"";
   EXPECT_EQ(removeLeading<type>(str, U"hello"sv), U"");
 
   str = U"hello";
