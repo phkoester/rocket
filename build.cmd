@@ -15,19 +15,19 @@
 
 @echo off
 
-if %1 == configure (
+if "%1" == "configure" (
   call :configure
   goto :eof
 )
-if %1 == build (
+if "%1" == "build" (
   call :build
   goto :eof
 )
-if %1 == test (
+if "%1" == "test" (
   call :test
   goto :eof
 )
-if %1 == test-terminal (
+if "%1" == "test-terminal" (
   call :test-terminal
   goto :eof
 )
