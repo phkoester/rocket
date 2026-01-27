@@ -18,7 +18,7 @@
 
 @echo off
 
-if %1 == test-terminal call :test-terminal
+if %1 == test-terminal goto :test-terminal
 
 :: main ----------------------------------------------------------------------------------------------------
 
