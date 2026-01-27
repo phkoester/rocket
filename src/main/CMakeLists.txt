@@ -125,7 +125,7 @@ target_sources(rocket
 set_target_properties(rocket PROPERTIES VERSION ${PROJECT_VERSION}) # SOVERSION 0
 target_compile_definitions(rocket
   PRIVATE
-    ROCKET_EXPORTING
+    ROCKET_EXPORTING__
   PUBLIC
     ${COMPILE_DEFS}
     ${ROCKET_COMPILE_DEFS}

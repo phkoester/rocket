@@ -4,6 +4,8 @@
 
 #include "literal.h"
 
+#include <stdexcept>
+
 namespace rocket {
 
 f32

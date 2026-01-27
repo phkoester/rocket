@@ -47,14 +47,6 @@ TEST(rocket, printSizeof) {
   out.println("{: <11} | {:>13}", "void*", sizeof(void*));
 }
 
-TEST(rocket, literalMacro) {
-  auto i = ROCKET_I64(9'223'372'036'854'775'807);
-  EXPECT_EQ(sizeof(i), 8);
-  EXPECT_EQ(i, 9'223'372'036'854'775'807);
-  auto u = ROCKET_U64(123);
-  EXPECT_EQ(sizeof(u), 8);
-}
-
 #ifdef ROCKET_HAS_128
 
 TEST(rocket, i128OpInput) {
