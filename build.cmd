@@ -9,6 +9,7 @@
 :: To run specific tests:
 ::
 ::   > ctest --preset windows-release -R PATTERN --output-on-failure
+::   > ctest --preset windows-release -R PATTERN -V
 ::   > build\src\test\Release\test-NAME.exe
 ::
 

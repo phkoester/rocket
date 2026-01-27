@@ -55,14 +55,18 @@ using namespace testing;
 
 #ifdef ROCKET_OS_WINDOWS
 /// To use with `EXPECT_EXIT`.
-#define ABORTED() ExitedWithCode(-1073740791)
- /// To use with `EXPECT_EXIT`.
-#define ABORTED_MSG(msg) ""
+#define EXIT_MESSAGE(msg) ""
+/// To use with `EXPECT_EXIT`.
+#define EXITED_WITH_CODE(code) ExitedWithCode(-1073740791)
+/// To use with `EXPECT_EXIT`.
+#define KILLED_BY_SIGNAL(signal) ExitedWithCode(-1073740791)
 #else
 /// To use with `EXPECT_EXIT`.
-#define ABORTED() KilledBySignal(SIGABRT)
+#define EXIT_MESSAGE(msg) msg
 /// To use with `EXPECT_EXIT`.
-#define ABORTED_MSG(msg) msg
+#define EXITED_WITH_CODE(code) ExitedWithCode(code)
+/// To use with `EXPECT_EXIT`.
+#define KILLED_BY_SIGNAL(signal) KilledBySignal(signal)
 #endif
 
 /**

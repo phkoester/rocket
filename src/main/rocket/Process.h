@@ -352,12 +352,12 @@ private:
 
   const std::string& autoName() const;
 
-  [[noreturn]] void exit(i32 status, bool allowUninitialized) const;
+  [[noreturn]] void exit(i32 status, bool allowUninited) const;
 
   friend Process makeProcess__();
 };
 
-/// The Process singleton.
+/// The #rocket::Process singleton.
 ROCKET_PUBLIC extern Process process;
 
 } // namespace rocket

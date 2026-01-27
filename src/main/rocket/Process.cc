@@ -162,10 +162,10 @@ Process::autoName() const{
 }
 
 void
-Process::exit(i32 status, bool allowUninitialized) const {
+Process::exit(i32 status, bool allowUninited) const {
   ROCKET_MUTEX_LOCK(processMutex);
 
-  ROCKET_ASSERT(allowUninitialized || inited_, "Process not initialized");
+  ROCKET_ASSERT(allowUninited || inited_, "Process not initialized");
 
   if (ROCKET_EXIT) {
     std::exit(status);
