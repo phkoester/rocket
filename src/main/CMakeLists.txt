@@ -58,6 +58,7 @@ target_sources(rocket
     rocket/log/log.cc
 
     rocket/Exception.cc
+    rocket/literal.cc
     rocket/rocket.cc
     rocket/3rdparty/scnlib/impl.cc
     rocket/chrono/chrono.cc
