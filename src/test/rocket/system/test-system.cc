@@ -118,7 +118,7 @@ TEST(system, execPrintf) {
 TEST(system, execPrintArgs) {
   path mainBinaryDir = path(*MAIN_BINARY_DIR);
   path printArgs = mainBinaryDir / fmt::format("print-args{}", executableSuffix());
-  string executable = printArgs.native();
+  const string& executable = printArgs.native();
 
   {
     // Test spaces and quotes
@@ -145,7 +145,7 @@ TEST(system, execPrintArgsWithSpace) {
   path printArgs = mainBinaryDir / fmt::format("print-args{}", executableSuffix());
   path printArgsWithSpace = mainBinaryDir / fmt::format("print args{}", executableSuffix());
   copy_file(printArgs, printArgsWithSpace, copy_options::overwrite_existing);
-  string executable = printArgsWithSpace.native();
+  const string& executable = printArgsWithSpace.native();
 
   {
     // Test spaces and quotes
