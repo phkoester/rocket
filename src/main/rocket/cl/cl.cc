@@ -5,6 +5,7 @@
  #include "cl.h"
 
 #include "rocket/assert.h"
+#include "rocket/literal.h"
 #include "rocket/log/log.h"
 #include "rocket/str/str.h"
 #include "rocket/system/terminal/terminal.h"
@@ -110,7 +111,7 @@ CommandLine::help(nio::Sink& out, bool exit) {
 
   auto size = system::terminal::size(out);
   // In Windows, a `UL` isn't a `u64`
-  u64 width = max(static_cast<u64>(40), size ? size->first : static_cast<u64>(80));
+  u64 width = max(40_u64, size ? size->first : 80_u64);
   bool output = params_.otherOutput;
 
   // Usage

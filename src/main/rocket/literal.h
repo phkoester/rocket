@@ -2,182 +2,337 @@
  * @file literal.h
  *
  * Literal operators.
+ *
+ * This integer implementation is based on https://github.com/jbapple/128-bit-literals.
  */
 
 #pragma once
 
 #include "rocket/rocket.h"
 
+#include <cmath>
 #include <limits>
+#include <stdexcept>
 #include <type_traits>
 
 namespace rocket {
 
 namespace internal {
 
-template<typename T>
+template<typename T, typename U>
 struct SignedLimit {
   static_assert(std::is_signed_v<T>);
-  static constexpr T value = std::numeric_limits<T>::max();
+  static_assert(std::is_unsigned_v<U>);
+
+  static constexpr U value = std::numeric_limits<T>::max();
 };
 
 template<typename T>
 struct UnsignedLimit {
   static_assert(std::is_unsigned_v<T>);
+
   static constexpr T value = std::numeric_limits<T>::max();
 };
 
-// Returns the value of the hexadecimal character
-constexpr unsigned __int128 CharValue(char c) {
-  return (c >= '0' && c <= '9')
-              ? (c - '0')
-              : ((c >= 'a' && c <= 'f') ? (10 + (c - 'a')) : (10 + (c - 'A')));
+/// Returns the value of the hexadecimal character @p c.
+template<typename T>
+constexpr T
+charValue(char c) {
+  return c >= '0' && c <= '9' ?
+    (c - '0') :
+    ((c >= 'a' && c <= 'f') ? (10 + (c - 'a')) : (10 + (c - 'A')));
 }
 
-// ValidateU128Helper<BASE, c1, c2, ... , cn>(v) returns true iff cn + ... + c2
-// * BASE^(n-2) + c1 * BASE^(n-1) + v * BASE^n is a valid 128-bit unsigned
-// number when interpreted in base BASE.
-template <int BASE>
-constexpr bool ValidateU128Helper(unsigned __int128) {
+/// Checks whether c_n + ... + c_2 * BASE^(n-2) + c_1 * BASE^(n-1) + v * BASE^n is a valid number when
+// interpreted in base @p BASE.
+template<typename T, int BASE>
+constexpr bool
+validateUnsignedImpl(T) {
   return true;
 }
 
-template <int BASE, char C, char... CS>
-constexpr bool ValidateU128Helper(unsigned __int128 accumulate) {
-  return (C == '\'') ? ValidateU128Helper<BASE, CS...>(accumulate)
-                      : ((accumulate <= UnsignedLimit<u128>::value / BASE) &&
-                        (BASE * accumulate <= UnsignedLimit<u128>::value - CharValue(C)) &&
-                        ValidateU128Helper<BASE, CS...>(accumulate * BASE +
-                                                        CharValue(C)));
+template<typename T, int BASE, char C, char... Chars>
+constexpr bool
+validateUnsignedImpl(T accumulate) {
+  return C == '\'' ?
+    validateUnsignedImpl<T, BASE, Chars...>(accumulate) :
+    (accumulate <= UnsignedLimit<T>::value / BASE) &&
+      (BASE * accumulate <= UnsignedLimit<T>::value - charValue<T>(C)) &&
+      validateUnsignedImpl<T, BASE, Chars...>(accumulate * BASE + charValue<T>(C));
 }
 
-// ValidateU128<BASE, c1, c2, ... , cn>(v) returns true iff cn + ... + c2 *
-// BASE^(n-2) + c1 * BASE^(n-1) is a valid 128-bit unsigned number when
-// interpreted in base BASE.
-template <int BASE, char... CS>
-constexpr bool ValidateU128() {
-  return ValidateU128Helper<BASE, CS...>(0);
+/// Checks whether c_n + ... + c_2 * BASE^(n-2) + c_1 * BASE^(n-1) is a valid unsigned number when
+// interpreted in base @p BASE.
+template<typename T,int BASE, char... Chars>
+constexpr bool validateUnsigned() {
+  static_assert(std::is_unsigned_v<T>);
+  return validateUnsignedImpl<T, BASE, Chars...>(0);
 }
 
-// MakeU128Helper<BASE, c1, c2, ... , cn>(v) returns cn + ... + c2 *
-// BASE^(n-2) + c1 * BASE^(n-1) + result * BASE^n.
-template <int BASE>
-constexpr unsigned __int128 MakeU128Helper(unsigned __int128 result) {
+/// Returns c_n + ... + c_2 * BASE^(n-2) + c_1 * BASE^(n-1) + result * BASE^n.
+template<typename T, int BASE>
+constexpr T
+makeUnsignedImpl(T result) {
   return result;
 }
 
-template <int BASE, char C, char... CS>
-constexpr unsigned __int128 MakeU128Helper(unsigned __int128 result) {
-  return MakeU128Helper<BASE, CS...>(
-      (C == '\'') ? result : (result * BASE + CharValue(C)));
+template<typename T, int BASE, char C, char... Chars>
+constexpr T
+makeUnsignedImpl(T result) {
+  return makeUnsignedImpl<T, BASE, Chars...>(C == '\'' ? result : (result * BASE + charValue<T>(C)));
 }
 
-// MakeU128<BASE, c1, c2, ... , cn>(v) returns cn + ... + c2 * BASE^(n-2) + c1 *
-// BASE^(n-1).
-template <int BASE, char... CS>
-constexpr unsigned __int128 MakeU128() {
-  return MakeU128Helper<BASE, CS...>(0);
+/// Returns c_n + ... + c_2 * BASE^(n-2) + c_1 * BASE^(n-1).
+template<typename T, int BASE, char... Chars>
+constexpr T
+makeUnsigned() {
+  static_assert(std::is_unsigned_v<T>);
+  return makeUnsignedImpl<T, BASE, Chars...>(0);
 }
 
-template <char... CS>
-struct StaticUnsigned128 {
-  static constexpr bool IS_VALID = ValidateU128<10, CS...>();
-  static constexpr unsigned __int128 PAYLOAD = MakeU128<10, CS...>();
+// `StaticSigned` -------------------------------------------------------------------------------------------
+
+template<typename T, typename U, char... Chars>
+struct StaticSigned {
+  static_assert(std::is_signed_v<T>);
+  static_assert(std::is_unsigned_v<U>);
+
+  static constexpr bool valid =
+    validateUnsigned<U, 10, Chars...>() && (makeUnsigned<U, 10, Chars...>() <= SignedLimit<T, U>::value);
+
+  static constexpr T payload = static_cast<T>(makeUnsigned<U, 10, Chars...>());
 };
 
-template <char... CS>
-struct StaticUnsigned128<'0', 'x', CS...> {
-  static constexpr bool IS_VALID = ValidateU128<16, CS...>();
-  static constexpr unsigned __int128 PAYLOAD = MakeU128<16, CS...>();
+template<typename T, typename U, char... Chars>
+struct StaticSigned<T, U, '0', 'x', Chars...> {
+  static_assert(std::is_signed_v<T>);
+  static_assert(std::is_unsigned_v<U>);
+
+  static constexpr bool valid =
+      validateUnsigned<U, 16, Chars...>() && (makeUnsigned<U, 16, Chars...>() <= SignedLimit<T, U>::value);
+
+  static constexpr T payload = static_cast<T>(makeUnsigned<U, 16, Chars...>());
 };
 
-template <char... CS>
-struct StaticUnsigned128<'0', 'X', CS...> {
-  static constexpr bool IS_VALID = ValidateU128<16, CS...>();
-  static constexpr unsigned __int128 PAYLOAD = MakeU128<16, CS...>();
+template<typename T, typename U, char... Chars>
+struct StaticSigned<T, U, '0', 'X', Chars...> {
+  static_assert(std::is_signed_v<T>);
+  static_assert(std::is_unsigned_v<U>);
+
+  static constexpr bool valid =
+      validateUnsigned<T, 16, Chars...>() && (makeUnsigned<U, 16, Chars...>() <= SignedLimit<T, U>::value);
+
+  static constexpr T payload = static_cast<T>(makeUnsigned<U,16, Chars...>());
 };
 
-template <char... CS>
-struct StaticUnsigned128<'0', 'b', CS...> {
-  static constexpr bool IS_VALID = ValidateU128<2, CS...>();
-  static constexpr unsigned __int128 PAYLOAD = MakeU128<2, CS...>();
+template<typename T, typename U, char... Chars>
+struct StaticSigned<T, U, '0', 'b', Chars...> {
+  static_assert(std::is_signed_v<T>);
+  static_assert(std::is_unsigned_v<U>);
+
+  static constexpr bool valid =
+    validateUnsigned<T, 2, Chars...>() && (makeUnsigned<U, 2, Chars...>() <= SignedLimit<T, U>::value);
+
+  static constexpr T payload = static_cast<T>(makeUnsigned<U, 2, Chars...>());
 };
 
-template <char... CS>
-struct StaticUnsigned128<'0', 'B', CS...> {
-  static constexpr bool IS_VALID = ValidateU128<2, CS...>();
-  static constexpr unsigned __int128 PAYLOAD = MakeU128<2, CS...>();
+template<typename T, typename U, char... Chars>
+struct StaticSigned<T, U, '0', 'B', Chars...> {
+  static_assert(std::is_signed_v<T>);
+  static_assert(std::is_unsigned_v<U>);
+
+  static constexpr bool valid =
+      validateUnsigned<U, 2, Chars...>() && (makeUnsigned<U, 2, Chars...>() <= SignedLimit<T, U>::value);
+
+  static constexpr T payload = static_cast<T>(makeUnsigned<U, 2, Chars...>());
 };
 
-template <char... CS>
-struct StaticUnsigned128<'0', CS...> {
-  static constexpr bool IS_VALID = ValidateU128<8, CS...>();
-  static constexpr unsigned __int128 PAYLOAD = MakeU128<8, CS...>();
+template<typename T, typename U, char... Chars>
+struct StaticSigned<T, U, '0', Chars...> {
+  static_assert(std::is_signed_v<T>);
+  static_assert(std::is_unsigned_v<U>);
+
+  static constexpr bool valid =
+      validateUnsigned<U, 8, Chars...>() && (makeUnsigned<U, 8, Chars...>() <= SignedLimit<T, U>::value);
+
+  static constexpr T payload = static_cast<T>(makeUnsigned<U, 8, Chars...>());
 };
 
-template <char... CS>
-struct StaticSigned128 {
-  static constexpr bool IS_VALID =
-      ValidateU128<10, CS...>() && (MakeU128<10, CS...>() <= SignedLimit<__int128>::value);
-  static constexpr __int128 PAYLOAD =
-      static_cast<__int128>(MakeU128<10, CS...>());
+// `StaticUnsigned` -----------------------------------------------------------------------------------------
+
+template<typename T, char... Chars>
+struct StaticUnsigned {
+  static_assert(std::is_unsigned_v<T>);
+
+  static constexpr bool valid = validateUnsigned<T, 10, Chars...>();
+  static constexpr T payload = makeUnsigned<T,10, Chars...>();
 };
 
-template <char... CS>
-struct StaticSigned128<'0', 'x', CS...> {
-  static constexpr bool IS_VALID =
-      ValidateU128<16, CS...>() && (MakeU128<16, CS...>() <= SignedLimit<__int128>::value);
-  static constexpr __int128 PAYLOAD =
-      static_cast<__int128>(MakeU128<16, CS...>());
+template<typename T, char... Chars>
+struct StaticUnsigned<T, '0', 'x', Chars...> {
+  static_assert(std::is_unsigned_v<T>);
+
+  static constexpr bool valid = validateUnsigned<T,16, Chars...>();
+  static constexpr T payload = makeUnsigned<T,16, Chars...>();
 };
 
-template <char... CS>
-struct StaticSigned128<'0', 'X', CS...> {
-  static constexpr bool IS_VALID =
-      ValidateU128<16, CS...>() && (MakeU128<16, CS...>() <= SignedLimit<__int128>::value);
-  static constexpr __int128 PAYLOAD =
-      static_cast<__int128>(MakeU128<16, CS...>());
+template<typename T, char... Chars>
+struct StaticUnsigned<T, '0', 'X', Chars...> {
+  static_assert(std::is_unsigned_v<T>);
+
+  static constexpr bool valid = validateUnsigned<T, 16, Chars...>();
+  static constexpr T payload = makeUnsigned<T, 16, Chars...>();
 };
 
-template <char... CS>
-struct StaticSigned128<'0', 'b', CS...> {
-  static constexpr bool IS_VALID =
-      ValidateU128<2, CS...>() && (MakeU128<2, CS...>() <= SignedLimit<__int128>::value);
-  static constexpr __int128 PAYLOAD =
-      static_cast<__int128>(MakeU128<2, CS...>());
+template<typename T, char... Chars>
+struct StaticUnsigned<T, '0', 'b', Chars...> {
+  static_assert(std::is_unsigned_v<T>);
+
+  static constexpr bool valid = validateUnsigned<T, 2, Chars...>();
+  static constexpr T payload = makeUnsigned<T, 2, Chars...>();
 };
 
-template <char... CS>
-struct StaticSigned128<'0', 'B', CS...> {
-  static constexpr bool IS_VALID =
-      ValidateU128<2, CS...>() && (MakeU128<2, CS...>() <= SignedLimit<__int128>::value);
-  static constexpr __int128 PAYLOAD =
-      static_cast<__int128>(MakeU128<2, CS...>());
+template<typename T, char... Chars>
+struct StaticUnsigned<T, '0', 'B', Chars...> {
+  static_assert(std::is_unsigned_v<T>);
+
+  static constexpr bool valid = validateUnsigned<T, 2, Chars...>();
+  static constexpr T payload = makeUnsigned<T,2, Chars...>();
 };
 
-template <char... CS>
-struct StaticSigned128<'0', CS...> {
-  static constexpr bool IS_VALID =
-      ValidateU128<8, CS...>() && (MakeU128<8, CS...>() <= SignedLimit<__int128>::value);
-  static constexpr __int128 PAYLOAD =
-      static_cast<__int128>(MakeU128<8, CS...>());
+template<typename T, char... Chars>
+struct StaticUnsigned<T, '0', Chars...> {
+  static_assert(std::is_unsigned_v<T>);
+
+  static constexpr bool valid = validateUnsigned<T, 8, Chars...>();
+  static constexpr T payload = makeUnsigned<T, 8, Chars...>();
 };
 
 } // namespace internal
 
-template <char... CS>
-constexpr i128 operator""_i128() {
-  static_assert(internal::StaticSigned128<CS...>::IS_VALID,
-                "Invalid characters or number too large");
-  return internal::StaticSigned128<CS...>::PAYLOAD;
+/// 8-bit signed integer literal.
+template<char... Chars>
+constexpr i8 operator""_i8() {
+  using type = internal::StaticSigned<i8, u8, Chars...>;
+  static_assert(type::valid, "Invalid characters or number too large");
+  return type::payload;
 }
 
-template <char... CS>
-constexpr u128 operator""_u128() {
-  static_assert(internal::StaticUnsigned128<CS...>::IS_VALID,
-                "Invalid characters or number too large");
-  return internal::StaticUnsigned128<CS...>::PAYLOAD;
+/// 8-bit unsigned integer literal.
+template<char... Chars>
+constexpr u8 operator""_u8() {
+  using type = internal::StaticUnsigned<u8, Chars...>;
+  static_assert(type::valid, "Invalid characters or number too large");
+  return type::payload;
 }
+
+/// 16-bit signed integer literal.
+template<char... Chars>
+constexpr i16 operator""_i16() {
+  using type = internal::StaticSigned<i16, u16, Chars...>;
+  static_assert(type::valid, "Invalid characters or number too large");
+  return type::payload;
+}
+
+/// 16-bit unsigned integer literal.
+template<char... Chars>
+constexpr u16 operator""_u16() {
+  using type = internal::StaticUnsigned<u16, Chars...>;
+  static_assert(type::valid, "Invalid characters or number too large");
+  return type::payload;
+}
+
+/// 32-bit signed integer literal.
+template<char... Chars>
+constexpr i32 operator""_i32() {
+  using type = internal::StaticSigned<i32, u32, Chars...>;
+  static_assert(type::valid, "Invalid characters or number too large");
+  return type::payload;
+}
+
+/// 32-bit unsigned integer literal.
+template<char... Chars>
+constexpr u32 operator""_u32() {
+  using type = internal::StaticUnsigned<u32, Chars...>;
+  static_assert(type::valid, "Invalid characters or number too large");
+  return type::payload;
+}
+
+/// 64-bit signed integer literal.
+template<char... Chars>
+constexpr i64 operator""_i64() {
+  using type = internal::StaticSigned<i64, u64, Chars...>;
+  static_assert(type::valid, "Invalid characters or number too large");
+  return type::payload;
+}
+
+/// 64-bit unsigned integer literal.
+template<char... Chars>
+constexpr u64 operator""_u64() {
+  using type = internal::StaticUnsigned<u64, Chars...>;
+  static_assert(type::valid, "Invalid characters or number too large");
+  return type::payload;
+}
+
+#ifdef ROCKET_HAS_128
+
+/// 128-bit signed integer literal.
+template<char... Chars>
+constexpr i128 operator""_i128() {
+  using type = internal::StaticSigned<i128, u128, Chars...>;
+  static_assert(type::valid, "Invalid characters or number too large");
+  return type::payload;
+}
+
+/// 128-bit unsigned integer literal.
+template<char... Chars>
+constexpr u128 operator""_u128() {
+  using type = internal::StaticUnsigned<u128, Chars...>;
+  static_assert(type::valid, "Invalid characters or number too large");
+  return type::payload;
+}
+
+#endif // ROCKET_HAS_128
+
+/// 32-bit floating point literal.
+constexpr f32
+operator""_f32(std_long_double val) {
+  using type = f32;
+  using limits = std::numeric_limits<type>;
+  if (std::fabs(val) < limits::min()) {
+    throw std::underflow_error("`f32` underflow");
+  }
+  if (val < limits::lowest() || val > limits::max()) {
+    throw std::overflow_error("`f32` overflow`");
+  }
+  return static_cast<type>(val);
+}
+
+/// 64-bit floating point literal.
+constexpr f64
+operator""_f64(std_long_double val) {
+  using type = f64;
+  using limits = std::numeric_limits<type>;
+  if (std::fabs(val) < limits::min()) {
+    throw std::underflow_error("`f64` underflow");
+  }
+  if (val < limits::lowest() || val > limits::max()) {
+    throw std::overflow_error("`f64` overflow`");
+  }
+  return static_cast<type>(val);
+}
+
+#ifdef ROCKET_HAS_128
+
+/// 128-bit floating point literal.
+constexpr f128
+operator""_f128(std_long_double val) {
+  using type = f128;
+  static_assert(sizeof(type) == sizeof(std_long_double));
+  return static_cast<type>(val);
+}
+
+#endif // ROCKET_HAS_128
 
 } // namespace rocket
 

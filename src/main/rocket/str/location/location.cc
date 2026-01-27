@@ -6,6 +6,7 @@
 
 #include "rocket/assert.h"
 #include "rocket/enum.h"
+#include "rocket/literal.h"
 #include "rocket/str/str.h"
 #include "rocket/str/escape/escape.h"
 #include "rocket/unicode/Character.h"
@@ -153,7 +154,7 @@ printLocations(
   u64 maxLine = accumulate(
       locations.begin(),
       locations.end(),
-      static_cast<u64>(0),
+      0_u64,
       [](u64 max, const auto& loc) { return std::max(loc.line, max); });
   string maxLineStr =  fmt::format("{}", maxLine);
   u64 lineNumberWidth = max(params.minLineNumberWidth, maxLineStr.size());
