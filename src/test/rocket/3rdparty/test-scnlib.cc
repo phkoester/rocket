@@ -171,19 +171,23 @@ TEST(scnlib, scanTimePoint) {
   // This interferes somehow ...
   // system::env::set("TZ", "America/Godthab");
 
-  using TimePoint = chrono::system_clock::time_point;
-  TimePoint val1 = chrono::system_clock::now();
-  string input = std::format("{:%Y-%m-%d %H:%M:%S}", val1); // "2026-01-19 15:46:10.049025520", 29 chars
+  // Windows doesn't have nanoseconds
+  using TimePoint = chrono::time_point<chrono::system_clock, chrono::microseconds>;
+  TimePoint val1 = chrono::time_point_cast<chrono::microseconds>(chrono::system_clock::now());
+  string input = std::format("{:%Y-%m-%d %H:%M:%S}", val1); // "2026-01-19 15:46:10.049025", 26 chars
+  cout << "input: [" << input << "]" << endl; // XXX
   auto result = scn::scan<TimePoint>(input, "{:%Y-%m-%d %H:%M:%.S}");
   ASSERT_TRUE(result);
   auto val2 = result->value();
-  EXPECT_EQ(result->begin() - input.begin(), 29);
+  cout << "val2: [" << fmt::format("{}", val2) << "]" << endl; // XXX
+  EXPECT_EQ(result->begin() - input.begin(), 26);
 
   // The time zone of the scanned time point is unclear. The following adjustment seems to convert the
   // time point to UTC
   const auto* tz = std::chrono::current_zone();
   auto info = tz->get_info(val1);
   val2 += info.offset;
+  cout << "val2: [" << fmt::format("{}", val2) << "]" << endl; // XXX
 
   EXPECT_EQ(val2, val1);
 }
