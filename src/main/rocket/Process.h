@@ -203,7 +203,7 @@ struct Process {
     out.println(fmt, std::forward<T>(args)...);
 
     if (status != 0) {
-      exit(status);
+      exit(status, true);
     }
   }
 
@@ -217,7 +217,7 @@ struct Process {
    *
    * @param status the exit status
    */
-  [[noreturn]] void exit(i32 status) const;
+  [[noreturn]] void exit(i32 status) const { exit(status, false); }
 
   /**
    * Outputs an information message.
@@ -351,6 +351,8 @@ private:
   Process() {}
 
   const std::string& autoName() const;
+
+  [[noreturn]] void exit(i32 status, bool allowUninitialized) const;
 
   friend Process makeProcess__();
 };
