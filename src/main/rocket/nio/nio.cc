@@ -5,6 +5,7 @@
 #include "nio.h"
 
 #include "rocket/assert.h"
+#include "rocket/io/io.h"
 
 #include <iostream>
 
@@ -21,7 +22,7 @@ quick and dirty logging facility here.
 
 ---------------------------------------------------------------------------------------------------------- */
 
-#define NIO_LOG // Use this to activate logging
+// #define NIO_LOG // Use this to activate logging
 
 #ifdef NIO_LOG
 #define LOG(args) cout << "# " << __FILE__ << ':' << __LINE__ << ' ' << __FUNCTION__ << ": " << args << endl;
@@ -847,10 +848,13 @@ StreamSource::read(span<char> out) {
   }
 
   // If less bytes than `out.size()` are read, `bad`, `fail`, and `eof` all remain `false``
-  u64 ret = is_.readsome(out.data(), out.size());
-  LOG("readsome=" << ret << ", out.size=" << out.size() << ", bad=" << is_.bad() << ", fail=" << is_.fail() << ", eof=" << is_.eof());
+  is_.read(out.data(), out.size());
+  auto count = is_.gcount();
+  // `readsome` didn't work in Windows with in `ifstream`
+  // u64 ret = is_.readsome(out.data(), out.size());
+  LOG("count=" << count << ", out.size=" << out.size() << ", bad=" << is_.bad() << ", fail=" << is_.fail() << ", eof=" << is_.eof());
   error_ = is_.rdstate();
-  return ret;
+  return safe<u64>(count);
 }
 
 i32
@@ -874,7 +878,12 @@ StreamSource::seek(i64 offset, SeekMode mode) {
     ROCKET_FLOP(mode, "Invalid seek mode {}", static_cast<i32>(mode));
   }
 
+  LOG("before clear failbit, bad=" << is_.bad() << ", fail=" << is_.fail() << ", eof=" << is_.eof() << ", tellg=" << io::tellg(is_));
+  // We need to clear the fail bit, otherwise the seek will fail
+  is_.clear(is_.rdstate() & ~ios_base::failbit);
+  LOG("after clear failbit, bad=" << is_.bad() << ", fail=" << is_.fail() << ", eof=" << is_.eof() << ", tellg=" << io::tellg(is_));
   is_.seekg(safe<istream::off_type>(offset), dir);
+  LOG("after seekg, bad=" << is_.bad() << ", fail=" << is_.fail() << ", eof=" << is_.eof() << ", tellg=" << io::tellg(is_));
   error_ = is_.rdstate();
   return error_;
 }
@@ -885,14 +894,15 @@ StreamSource::tell() {
     return NPOS;
   }
 
-  auto result = is_.tellg();
+  // Use the impl. from `io`
+  auto result = io::tellg(is_);
   LOG("tellg=" << result << ", bad=" << is_.bad() << ", fail=" << is_.fail() << ", eof=" << is_.eof());
   error_ = is_.rdstate();
 
   if (result < 0) {
     return NPOS;
   }
-  return static_cast<u64>(result); // `safe` doesn't work here
+  return static_cast<u64>(result); // `safe` doesn't work with `std::ios::pos_type`
 }
 
 bool

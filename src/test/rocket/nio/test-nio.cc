@@ -223,28 +223,20 @@ TEST(nio, FileSourceRead) {
 
 TEST(nio, StreamSourceRead) {
   auto tmp = ROCKET_TEST_TEMP_PATH();
-  cout << "tmp=" << tmp << endl; // XXX
 
   {
     ofstream os(tmp.c_str());
     StreamSink out(os);
     out.writeln("Hey there");
-    os.close();
   }
-
-  path p = tmp;
-  cout << "p.exists=" << exists(p) << endl; // XXX
-  cout << "p.size=" << file_size(p) << endl; // XXX
 
   ifstream is(tmp.c_str());
   StreamSource in(is);
   string str = in.Source::read();
-  EXPECT_EQ(in.error(), 0);
   EXPECT_EQ(in.tell(), 10);
   EXPECT_EQ(str, "Hey there\n");
   str = in.Source::read();
   EXPECT_EQ(str, "");
-  EXPECT_EQ(in.error(), 0);
 
   in.seek(-6, SeekMode::end);
   EXPECT_EQ(in.tell(), 4);
