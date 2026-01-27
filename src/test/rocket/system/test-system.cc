@@ -15,6 +15,25 @@ using namespace std::filesystem;
 
 const auto MAIN_BINARY_DIR = env::get<string>("MAIN_BINARY_DIR");
 
+// Functions ------------------------------------------------------------------------------------------------
+
+path
+findPrintArgs() {
+  path mainBinaryDir = path(*MAIN_BINARY_DIR);
+  string name = fmt::format("print-args{}", executableSuffix());
+  path test = mainBinaryDir / name;
+  if (is_regular_file(test)) {
+    return test;
+  }
+  for (const auto config : { "Release", "Debug" }) {
+    test = mainBinaryDir / config / name;
+    if (is_regular_file(test)) {
+      return test;
+    }
+  }
+  ROCKET_FAIL("Cannot find `print-args`");
+}
+
 // `TEST` ---------------------------------------------------------------------------------------------------
 
 TEST(system, envBool) {
@@ -116,8 +135,7 @@ TEST(system, execPrintf) {
 }
 
 TEST(system, execPrintArgs) {
-  path mainBinaryDir = path(*MAIN_BINARY_DIR);
-  path printArgs = mainBinaryDir / fmt::format("print-args{}", executableSuffix());
+  path printArgs = findPrintArgs();
   string executable = printArgs.string();
 
   {
@@ -141,9 +159,8 @@ TEST(system, execPrintArgs) {
 
 TEST(system, execPrintArgsWithSpace) {
   // Copy `print-args` to `print args`, se we have a space in the executable name
-  path mainBinaryDir = path(*MAIN_BINARY_DIR);
-  path printArgs = mainBinaryDir / fmt::format("print-args{}", executableSuffix());
-  path printArgsWithSpace = mainBinaryDir / fmt::format("print args{}", executableSuffix());
+  path printArgs = findPrintArgs();
+  path printArgsWithSpace = printArgs.parent_path() / fmt::format("print args{}", executableSuffix());
   copy_file(printArgs, printArgsWithSpace, copy_options::overwrite_existing);
   string executable = printArgsWithSpace.string();
 
