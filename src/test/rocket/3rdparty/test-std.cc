@@ -149,14 +149,21 @@ TEST(std, istreamI32) {
 
   {
     nio::StringSink buf;
-    buf.print("{}", numeric_limits<i32>::max() + 1L);
+    buf.print("{}", numeric_limits<i32>::max() + static_cast<i64>(1));
     auto is = io::is(buf.str());
     type val = 0;
     is >> val;
-    // If the value is greater than the maximum value, then the result is capped!
+#ifdef ROCKET_OS_WINDOWS
+    // If the value is greater than the maximum value, then the result is not capped
+    EXPECT_EQ(val, numeric_limits<i32>::min());
+    EXPECT_ISTREAM(is, false, true, 11);
+    EXPECT_EQ(is.tellg(), -1);
+#else
+    // If the value is greater than the maximum value, then the result is capped
     EXPECT_EQ(val, numeric_limits<i32>::max());
     EXPECT_ISTREAM(is, true, true, 10);
     EXPECT_EQ(is.tellg(), -1);
+#endif
   }
 }
 
