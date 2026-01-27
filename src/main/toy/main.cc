@@ -27,7 +27,7 @@ extern const char* generated();
 void
 myExit() {
   out.println("myExit");
-  // ROCKET_FAIL("Oopsers!");
+  ROCKET_FAIL("Oopsers!");
 }
 
 void
