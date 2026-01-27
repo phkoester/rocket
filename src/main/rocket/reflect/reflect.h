@@ -101,7 +101,7 @@
   \
   static consteval auto& name() { return ROCKET_REFLECT_MEMBERS_STRUCT__(name)::refs; } \
 
-#define ROCKET_REFLECT_MEMBERS_DECLARE_FMT_FORMATTER__(ns, cls, _name) \
+#define ROCKET_REFLECT_MEMBERS_DECLARE_FMT_FORMATTER__(ns, cls, name) \
   template<typename C> \
   struct fmt::formatter<ns::cls, C> { \
     template<typename FormatContext> \
@@ -112,7 +112,7 @@
         std::string typeName = fmt::format("{}", typeid(val)); \
         out = ::fmt::detail::write<C>(out, ::rocket::unicode::ConvertTo<C>().apply(typeName)); \
       } \
-      out = ::rocket::reflect::internal::format<ns::cls, C>(val, ctx, debug_, ns::cls::_name()); \
+      out = ::rocket::reflect::internal::format<ns::cls, C>(val, ctx, debug_, ns::cls::name()); \
       return out; \
     } \
     \

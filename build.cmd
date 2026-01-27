@@ -6,10 +6,9 @@
 ::   > cmake --preset windows
 ::   > cmake --build --preset windows-release --target TARGET
 ::
-:: To run a single test:
+:: To run specific tests:
 ::
 ::   > ctest --preset windows-release -R PATTERN --output-on-failure
-::   > ctest --preset windows-release -R PATTERN -v
 ::   > build\src\test\Release\test-NAME.exe
 ::
 

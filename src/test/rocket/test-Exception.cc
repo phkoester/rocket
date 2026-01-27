@@ -22,9 +22,11 @@ TEST(Exception, printException1) {
         nio::StringSink str1;
         printException(str1, ex3);
         EXPECT_THAT(str1.str(), AllOf(
-            containsRegex("An instance of `std::_Nested_exception<rocket::InvalidState>` was thrown: .*\\.cc:\\d+: oops3\n"),
-            containsRegex("Caused by an instance of `std::_Nested_exception<rocket::InvalidArgument>`: .*\\.cc:\\d+: Parameter `name`: oops2\n"),
-            containsRegex("Caused by an instance of `char const\\*`: \"oops1\"\n")));
+            // Linux: `std::_Nested_exception`, Windows: `std::_With_nested_v2`
+            containsRegex("An instance of `std::_.*ested.*<rocket::InvalidState>` was thrown: .*\\.cc:\\d+: oops3\n"),
+            containsRegex("Caused by an instance of `std::_.*ested.*<rocket::InvalidArgument>`: .*\\.cc:\\d+: Parameter `name`: oops2\n"),
+            // Linux: `char const*`, Windows: `charconst*__ptr64`
+            containsRegex("Caused by an instance of `char.*const\\*.*`: \"oops1\"\n")));
 
         nio::StringSink str2;
         printException(str2, current_exception());
@@ -40,7 +42,8 @@ TEST(Exception, printException2) {
   } catch (...) {
     nio::StringSink str;
     printException(str, current_exception());
-    EXPECT_EQ(str.str(), "An instance of `char const*` was thrown: \"oops\"\n");
+    // Linux: `char const*`, Windows: `charconst*__ptr64`
+    EXPECT_THAT(str.str(), matchesRegex("An instance of `char.*const\\*.*` was thrown: \"oops\"\n"));
   }
 }
 
