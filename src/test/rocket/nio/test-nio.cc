@@ -10,6 +10,7 @@
 #include <fstream>
 
 using namespace rocket::nio;
+using namespace std::filesystem;
 
 // Local functions ------------------------------------------------------------------------------------------
 
@@ -222,6 +223,7 @@ TEST(nio, FileSourceRead) {
 
 TEST(nio, StreamSourceRead) {
   auto tmp = ROCKET_TEST_TEMP_PATH();
+  cout << "tmp=" << tmp << endl; // XXX
 
   {
     ofstream os(tmp.c_str());
@@ -229,6 +231,10 @@ TEST(nio, StreamSourceRead) {
     out.writeln("Hey there");
     os.close();
   }
+
+  path p = tmp;
+  cout << "p.exists=" << exists(p) << endl; // XXX
+  cout << "p.size=" << file_size(p) << endl; // XXX
 
   ifstream is(tmp.c_str());
   StreamSource in(is);
