@@ -272,8 +272,8 @@ get() {
     if (entry.empty()) {
       break;
     }
-    auto eq = entry.find('=');
     string_view name, value;
+    auto eq = entry.find('=');
     if (eq == string_view::npos) {
       name = entry;
     } else {

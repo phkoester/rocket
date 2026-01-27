@@ -95,7 +95,11 @@ TEST(system, envGet) {
   env::set("MY_ENV1", "");
   env::set("MY_ENV2", "value");
   auto env = env::get();
+#ifdef ROCKET_OS_WINDOWS
+  EXPECT_FALSE(env.contains("MY_ENV1"));
+#else
   EXPECT_EQ(env.at("MY_ENV1"), "");
+#endif
   EXPECT_EQ(env.at("MY_ENV2"), "value");
 }
 

@@ -104,6 +104,8 @@ get(std::string_view name) {
  *
  * This function is thread-safe as long as all callers use this API exclusively.
  *
+ * @attention In Windows, setting an environment variable to an empty string unsets the variable.
+ *
  * @tparam T the type of the new value
  * @param name the name of the environment variable
  * @param value the new value
