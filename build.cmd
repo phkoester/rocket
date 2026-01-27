@@ -18,7 +18,7 @@
 
 @echo off
 
-if "%1" == "test-terminal" goto test-terminal
+if %1 == test-terminal goto test-terminal
 
 :: main ----------------------------------------------------------------------------------------------------
 
@@ -33,7 +33,7 @@ if exist src\test (
    if %errorlevel% neq 0 exit /b %errorlevel%
 )
 
-goto :EOF
+goto:EOF
 
 :: test-terminal --------------------------------------------------------------------------------------------
 
