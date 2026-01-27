@@ -6,7 +6,9 @@
 
 #pragma once
 
-#include "rocket/format/format.h"
+#include "rocket/rocket.h"
+
+#include <string_view>
 
 namespace rocket::str {
 
@@ -29,16 +31,11 @@ struct Noun {
    * Text expansion function.
    *
    * @param count the amount
-   * @return a string containing the amount, followed by the singular if @p count is 1, followed by the
-   *     plural otherwise
+   * @return if @p count is 1, the singular, otherwise the plural
    */
-  std::string
+  std::string_view
   operator()(u64 count) const {
-    if (count == 1) {
-      return fmt::format("{} {}", count, singular);
-    } else {
-      return fmt::format("{} {}", count, plural);
-    }
+    return count == 1 ? singular : plural;
   }
 };
 
@@ -47,7 +44,7 @@ struct Noun {
 /**
  * A noun.
  */
-extern const Noun character;
+ROCKET_PUBLIC extern const Noun character;
 
 } // namespace rocket::str
 
