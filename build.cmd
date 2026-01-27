@@ -10,7 +10,7 @@
 ::
 ::   > ctest --preset windows-release -R PATTERN --output-on-failure
 ::   > ctest --preset windows-release -R PATTERN -v
-::   > build\release\debug\src\test\test-NAME.exe
+::   > build\src\test\Release\test-NAME.exe
 ::
 
 @echo off

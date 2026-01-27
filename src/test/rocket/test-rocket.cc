@@ -44,6 +44,7 @@ TEST(rocket, printSizeof) {
   out.println("{: <11} | {:>13}", "float", sizeof(float));
   out.println("{: <11} | {:>13}", "double", sizeof(double));
   out.println("{: <11} | {:>13}", "long double", sizeof(long double));
+  out.println("{: <11} | {:>13}", "void*", sizeof(void*));
 }
 
 #ifdef ROCKET_HAS_128
