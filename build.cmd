@@ -1,9 +1,16 @@
 ::
 :: build.cmd
 ::
-:: To run a single test with detailed output:
+:: To build a specific target:
 ::
-::   ctest --preset windows-release -R PATTERN --output-on-failure
+::   > cmake --preset windows
+::   > cmake --build --preset windows-release --target TARGET
+::
+:: To run a single test:
+::
+::   > ctest --preset windows-release -R PATTERN --output-on-failure
+::   > ctest --preset windows-release -R PATTERN -v
+::   > build\release\debug\src\test\test-NAME.exe
 ::
 
 @echo off
@@ -16,7 +23,9 @@ if %errorlevel% neq 0 exit /b %errorlevel%
 cmake --build --preset windows-release
 if %errorlevel% neq 0 exit /b %errorlevel%
 
-ctest --preset windows-release
-if %errorlevel% neq 0 exit /b %errorlevel%
+if exist src\test (
+   ctest --preset windows-release
+   if %errorlevel% neq 0 exit /b %errorlevel%
+)
 
 :: EOF
