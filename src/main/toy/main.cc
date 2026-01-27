@@ -6,6 +6,7 @@
 #include "rocket/cl/cl.h"
 #include "rocket/log/log.h"
 
+#include "rocket/literal.h"
 #include "rocket/version.h"
 
 using namespace rocket;
@@ -54,13 +55,17 @@ toy() {
   ROCKET_LOG(toy);
   ROCKET_LOG_TRACE("Hey {}", "there");
   zzz();
+
+  auto i = 170'141'183'460'469'231'731'687'303'715'884'105'727_i128;
+  auto u = 340'282'366'920'938'463'463'374'607'431'768'211'455_u128;
+  out.println("i={}", i);
 }
 
 // `main` ---------------------------------------------------------------------------------------------------
 
 i32
 main(i32 argc, char **argv) {
-  ROCKET_PROCESS_ERROR(3, "Testing error before `process.init` ...");
+  ROCKET_PROCESS_ERROR(0, "Testing error before `process.init` ...");
 
   process.atExit(myExit);
   process.atExit(myTerminate, true);
