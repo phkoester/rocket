@@ -18,8 +18,6 @@
 #include <sys/ioctl.h>
 #endif
 
-#include <iostream> // XXX
-
 using namespace rocket;
 using namespace rocket::system::terminal;
 using namespace std;
@@ -143,7 +141,6 @@ position(nio::Sink& out) {
   if (not GetConsoleScreenBufferInfo(handle, &csbi)) {
     return nullopt;
   }
-  cout << "csbi.dwCursorPosition.X=" << csbi.dwCursorPosition.X << ", csbi.dwCursorPosition.Y=" << csbi.dwCursorPosition.Y << endl; // XXX
   return make_pair(safe<u64>(csbi.dwCursorPosition.X + 1), safe<u64>(csbi.dwCursorPosition.Y + 1));
 #else
   // Send the ANSI code requesting cursor position
@@ -179,7 +176,6 @@ size(nio::Io& io) {
   if (not GetConsoleScreenBufferInfo(handle, &csbi)) {
     return nullopt;
   }
-  cout << "csbi.dwSize.X=" << csbi.dwSize.X << ", csbi.dwSize.Y=" << csbi.dwSize.Y << endl; // XXX
   return make_pair(safe<u64>(csbi.dwSize.X), safe<u64>(csbi.dwSize.Y));
 #else
   // Use `ioctl`

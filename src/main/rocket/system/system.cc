@@ -11,8 +11,6 @@
 #include <cstdio>
 #include <memory>
 
-#include <iostream> // XXX
-
 using namespace rocket;
 using namespace std;
 
@@ -42,8 +40,6 @@ recursive_mutex envMutex;
  * - Replace a space by `" "`
  * - Replace a quotation mark by `\"`
  * - Replace a backslash followed by quotation mark by `"\\"`
- *
- * @todo Use a generalized escaping mechanism
  */
 string
 makeCl(const vector<string_view>& args) {
@@ -85,8 +81,6 @@ makeCl(const vector<string_view>& args) {
  * - Escape a quotation mark with a backslash
  * - Escape an apostrophe with a backslash
  * - Escape a backslash with a backslash
- *
- * @todo Use a generalized escaping mechanism
  */
 string
 makeCl(const vector<string_view>& args) {
@@ -268,10 +262,6 @@ get() {
 #endif
   while(*p != nullptr) {
     string_view entry(*p);
-    cout << "entry=[" << entry << "]" << endl; // XXX
-    if (entry.empty()) {
-      break;
-    }
     string_view name, value;
     auto eq = entry.find('=');
     if (eq == string_view::npos) {
@@ -280,7 +270,6 @@ get() {
       name = entry.substr(0, eq);
       value = entry.substr(eq + 1);
     }
-    cout << "name=[" << name << "], value=[" << value << "]" << endl; // XXX
     ret.emplace(name, value);
     ++p;
   }
