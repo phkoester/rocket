@@ -39,9 +39,14 @@ goto :EOF
 
 :test-terminal
 
-set ROCKET_TEST_TERMINAL=1
-build\src\test\Release\test-rocket-system-terminal-exe
+setlocal
+
+setROCKET_TEST_TERMINAL=1
+
+build\src\test\Release\test-rocket-system-terminal.exe
 build\src\test\Release\test-rocket-unicode-Character.exe
+
+endlocal
 
 goto :EOF
 
