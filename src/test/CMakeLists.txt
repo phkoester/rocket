@@ -38,6 +38,7 @@ AddTest(test-rocket-str-Range rocket/str test-Range.cc)
 AddTest(test-rocket-str-StringConvert rocket/str test-StringConvert.cc)
 AddTest(test-rocket-str-escape rocket/str/escape test-escape.cc)
 AddTest(test-rocket-str-location rocket/str/location test-location.cc)
+message(STATUS "CMAKE_CONFIGURATION_TYPES=[${CMAKE_CONFIGURATION_TYPES}]")
 AddTest(test-rocket-system rocket/system test-system.cc
   ENVIRONMENT "MAIN_BINARY_DIR=${ROCKET_MAIN_BINARY_DIR}"
 )
