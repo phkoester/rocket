@@ -225,10 +225,13 @@ TEST(nio, StreamSourceRead) {
   auto tmp = ROCKET_TEST_TEMP_PATH();
 
   {
-    ofstream os(tmp.c_str());
+    ofstream os(tmp.c_str(), ios::binary);
     StreamSink out(os);
     out.writeln("Hey there");
   }
+
+  path p = tmp;
+  cout << "p.size=" << file_size(p) << endl; // XXX
 
   ifstream is(tmp.c_str());
   StreamSource in(is);
