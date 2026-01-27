@@ -10,9 +10,6 @@
 #include <cstdlib>
 #include <cstdio>
 #include <memory>
-#ifdef ROCKET_OS_WINDOWS
-#include <Windows.h>
-#endif
 
 using namespace rocket;
 using namespace std;
@@ -241,7 +238,7 @@ get() {
 
   unordered_map<string, string> ret;
 
-#ifdef ROCKET_OS_WINDOWS
+#if 0
   // Windows
   unique_ptr<CHAR, function<void(LPCH)>> env(GetEnvironmentStrings(), [](LPCH p) {
     ROCKET_ASSERT(FreeEnvironmentStrings(p));
@@ -260,11 +257,18 @@ get() {
     ret.emplace(name, value);
     p += entry.size() + 1;
   }
+#endif
+
+#ifdef ROCKET_OS_WINDOWS
+  char** p = _environ;
 #else
-  //  GNU C
   char** p = __environ;
+#endif
   while(*p != nullptr) {
     string_view entry(*p);
+    if (entry.empty()) {
+      break;
+    }
     auto eq = entry.find('=');
     string_view name, value;
     if (eq == string_view::npos) {
@@ -276,7 +280,6 @@ get() {
     ret.emplace(name, value);
     ++p;
   }
-#endif
 
   return ret;
 }
