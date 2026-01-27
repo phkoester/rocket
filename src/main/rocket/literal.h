@@ -89,10 +89,10 @@ makeUnsigned() {
   return makeUnsignedImpl<T, BASE, Chars...>(0);
 }
 
-// `StaticSigned` -------------------------------------------------------------------------------------------
+// `SignedInteger` ------------------------------------------------------------------------------------------
 
 template<typename T, typename U, char... Chars>
-struct StaticSigned {
+struct SignedInteger {
   static_assert(std::is_signed_v<T>);
   static_assert(std::is_unsigned_v<U>);
 
@@ -102,7 +102,7 @@ struct StaticSigned {
 };
 
 template<typename T, typename U, char... Chars>
-struct StaticSigned<T, U, '0', 'x', Chars...> {
+struct SignedInteger<T, U, '0', 'x', Chars...> {
   static_assert(std::is_signed_v<T>);
   static_assert(std::is_unsigned_v<U>);
 
@@ -112,7 +112,7 @@ struct StaticSigned<T, U, '0', 'x', Chars...> {
 };
 
 template<typename T, typename U, char... Chars>
-struct StaticSigned<T, U, '0', 'X', Chars...> {
+struct SignedInteger<T, U, '0', 'X', Chars...> {
   static_assert(std::is_signed_v<T>);
   static_assert(std::is_unsigned_v<U>);
 
@@ -122,7 +122,7 @@ struct StaticSigned<T, U, '0', 'X', Chars...> {
 };
 
 template<typename T, typename U, char... Chars>
-struct StaticSigned<T, U, '0', 'b', Chars...> {
+struct SignedInteger<T, U, '0', 'b', Chars...> {
   static_assert(std::is_signed_v<T>);
   static_assert(std::is_unsigned_v<U>);
 
@@ -132,7 +132,7 @@ struct StaticSigned<T, U, '0', 'b', Chars...> {
 };
 
 template<typename T, typename U, char... Chars>
-struct StaticSigned<T, U, '0', 'B', Chars...> {
+struct SignedInteger<T, U, '0', 'B', Chars...> {
   static_assert(std::is_signed_v<T>);
   static_assert(std::is_unsigned_v<U>);
 
@@ -142,7 +142,7 @@ struct StaticSigned<T, U, '0', 'B', Chars...> {
 };
 
 template<typename T, typename U, char... Chars>
-struct StaticSigned<T, U, '0', Chars...> {
+struct SignedInteger<T, U, '0', Chars...> {
   static_assert(std::is_signed_v<T>);
   static_assert(std::is_unsigned_v<U>);
 
@@ -151,10 +151,10 @@ struct StaticSigned<T, U, '0', Chars...> {
       validateUnsigned<U, 8, Chars...>() && (makeUnsigned<U, 8, Chars...>() <= SignedLimit<T, U>::value);
 };
 
-// `StaticUnsigned` -----------------------------------------------------------------------------------------
+// `UnsignedInteger` ----------------------------------------------------------------------------------------
 
 template<typename T, char... Chars>
-struct StaticUnsigned {
+struct UnsignedInteger {
   static_assert(std::is_unsigned_v<T>);
 
   static constexpr T payload = makeUnsigned<T,10, Chars...>();
@@ -162,7 +162,7 @@ struct StaticUnsigned {
 };
 
 template<typename T, char... Chars>
-struct StaticUnsigned<T, '0', 'x', Chars...> {
+struct UnsignedInteger<T, '0', 'x', Chars...> {
   static_assert(std::is_unsigned_v<T>);
 
   static constexpr T payload = makeUnsigned<T,16, Chars...>();
@@ -170,7 +170,7 @@ struct StaticUnsigned<T, '0', 'x', Chars...> {
 };
 
 template<typename T, char... Chars>
-struct StaticUnsigned<T, '0', 'X', Chars...> {
+struct UnsignedInteger<T, '0', 'X', Chars...> {
   static_assert(std::is_unsigned_v<T>);
 
   static constexpr T payload = makeUnsigned<T, 16, Chars...>();
@@ -178,7 +178,7 @@ struct StaticUnsigned<T, '0', 'X', Chars...> {
 };
 
 template<typename T, char... Chars>
-struct StaticUnsigned<T, '0', 'b', Chars...> {
+struct UnsignedInteger<T, '0', 'b', Chars...> {
   static_assert(std::is_unsigned_v<T>);
 
   static constexpr T payload = makeUnsigned<T, 2, Chars...>();
@@ -186,7 +186,7 @@ struct StaticUnsigned<T, '0', 'b', Chars...> {
 };
 
 template<typename T, char... Chars>
-struct StaticUnsigned<T, '0', 'B', Chars...> {
+struct UnsignedInteger<T, '0', 'B', Chars...> {
   static_assert(std::is_unsigned_v<T>);
 
   static constexpr T payload = makeUnsigned<T,2, Chars...>();
@@ -194,7 +194,7 @@ struct StaticUnsigned<T, '0', 'B', Chars...> {
 };
 
 template<typename T, char... Chars>
-struct StaticUnsigned<T, '0', Chars...> {
+struct UnsignedInteger<T, '0', Chars...> {
   static_assert(std::is_unsigned_v<T>);
 
   static constexpr T payload = makeUnsigned<T, 8, Chars...>();
@@ -207,7 +207,7 @@ struct StaticUnsigned<T, '0', Chars...> {
 template<char... Chars>
 constexpr i8
 operator""_i8() {
-  using type = internal::StaticSigned<i8, u8, Chars...>;
+  using type = internal::SignedInteger<i8, u8, Chars...>;
   static_assert(type::valid, "Invalid characters or number too large");
   return type::payload;
 }
@@ -216,7 +216,7 @@ operator""_i8() {
 template<char... Chars>
 constexpr u8
 operator""_u8() {
-  using type = internal::StaticUnsigned<u8, Chars...>;
+  using type = internal::UnsignedInteger<u8, Chars...>;
   static_assert(type::valid, "Invalid characters or number too large");
   return type::payload;
 }
@@ -225,7 +225,7 @@ operator""_u8() {
 template<char... Chars>
 constexpr i16
 operator""_i16() {
-  using type = internal::StaticSigned<i16, u16, Chars...>;
+  using type = internal::SignedInteger<i16, u16, Chars...>;
   static_assert(type::valid, "Invalid characters or number too large");
   return type::payload;
 }
@@ -234,7 +234,7 @@ operator""_i16() {
 template<char... Chars>
 constexpr u16
 operator""_u16() {
-  using type = internal::StaticUnsigned<u16, Chars...>;
+  using type = internal::UnsignedInteger<u16, Chars...>;
   static_assert(type::valid, "Invalid characters or number too large");
   return type::payload;
 }
@@ -243,7 +243,7 @@ operator""_u16() {
 template<char... Chars>
 constexpr i32
 operator""_i32() {
-  using type = internal::StaticSigned<i32, u32, Chars...>;
+  using type = internal::SignedInteger<i32, u32, Chars...>;
   static_assert(type::valid, "Invalid characters or number too large");
   return type::payload;
 }
@@ -252,7 +252,7 @@ operator""_i32() {
 template<char... Chars>
 constexpr u32
 operator""_u32() {
-  using type = internal::StaticUnsigned<u32, Chars...>;
+  using type = internal::UnsignedInteger<u32, Chars...>;
   static_assert(type::valid, "Invalid characters or number too large");
   return type::payload;
 }
@@ -261,7 +261,7 @@ operator""_u32() {
 template<char... Chars>
 constexpr i64
 operator""_i64() {
-  using type = internal::StaticSigned<i64, u64, Chars...>;
+  using type = internal::SignedInteger<i64, u64, Chars...>;
   static_assert(type::valid, "Invalid characters or number too large");
   return type::payload;
 }
@@ -270,7 +270,7 @@ operator""_i64() {
 template<char... Chars>
 constexpr u64
 operator""_u64() {
-  using type = internal::StaticUnsigned<u64, Chars...>;
+  using type = internal::UnsignedInteger<u64, Chars...>;
   static_assert(type::valid, "Invalid characters or number too large");
   return type::payload;
 }
@@ -281,7 +281,7 @@ operator""_u64() {
 template<char... Chars>
 constexpr i128
 operator""_i128() {
-  using type = internal::StaticSigned<i128, u128, Chars...>;
+  using type = internal::SignedInteger<i128, u128, Chars...>;
   static_assert(type::valid, "Invalid characters or number too large");
   return type::payload;
 }
@@ -290,7 +290,7 @@ operator""_i128() {
 template<char... Chars>
 constexpr u128
 operator""_u128() {
-  using type = internal::StaticUnsigned<u128, Chars...>;
+  using type = internal::UnsignedInteger<u128, Chars...>;
   static_assert(type::valid, "Invalid characters or number too large");
   return type::payload;
 }
