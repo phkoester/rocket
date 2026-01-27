@@ -27,7 +27,7 @@ extern const char* generated();
 void
 myExit() {
   out.println("myExit");
-  ROCKET_FAIL("Oopsers!");
+  // ROCKET_FAIL("Oopsers!");
 }
 
 void
@@ -60,7 +60,7 @@ toy() {
 
 i32
 main(i32 argc, char **argv) {
-  ROCKET_PROCESS_ERROR(0, "Testing error before `process.init` ...");
+  ROCKET_PROCESS_ERROR(3, "Testing error before `process.init` ...");
 
   process.atExit(myExit);
   process.atExit(myTerminate, true);
