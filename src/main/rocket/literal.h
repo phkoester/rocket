@@ -205,7 +205,8 @@ struct StaticUnsigned<T, '0', Chars...> {
 
 /// 8-bit signed integer literal.
 template<char... Chars>
-constexpr i8 operator""_i8() {
+constexpr i8
+operator""_i8() {
   using type = internal::StaticSigned<i8, u8, Chars...>;
   static_assert(type::valid, "Invalid characters or number too large");
   return type::payload;
@@ -213,7 +214,8 @@ constexpr i8 operator""_i8() {
 
 /// 8-bit unsigned integer literal.
 template<char... Chars>
-constexpr u8 operator""_u8() {
+constexpr u8
+operator""_u8() {
   using type = internal::StaticUnsigned<u8, Chars...>;
   static_assert(type::valid, "Invalid characters or number too large");
   return type::payload;
@@ -221,7 +223,8 @@ constexpr u8 operator""_u8() {
 
 /// 16-bit signed integer literal.
 template<char... Chars>
-constexpr i16 operator""_i16() {
+constexpr i16
+operator""_i16() {
   using type = internal::StaticSigned<i16, u16, Chars...>;
   static_assert(type::valid, "Invalid characters or number too large");
   return type::payload;
@@ -229,7 +232,8 @@ constexpr i16 operator""_i16() {
 
 /// 16-bit unsigned integer literal.
 template<char... Chars>
-constexpr u16 operator""_u16() {
+constexpr u16
+operator""_u16() {
   using type = internal::StaticUnsigned<u16, Chars...>;
   static_assert(type::valid, "Invalid characters or number too large");
   return type::payload;
@@ -237,7 +241,8 @@ constexpr u16 operator""_u16() {
 
 /// 32-bit signed integer literal.
 template<char... Chars>
-constexpr i32 operator""_i32() {
+constexpr i32
+operator""_i32() {
   using type = internal::StaticSigned<i32, u32, Chars...>;
   static_assert(type::valid, "Invalid characters or number too large");
   return type::payload;
@@ -245,7 +250,8 @@ constexpr i32 operator""_i32() {
 
 /// 32-bit unsigned integer literal.
 template<char... Chars>
-constexpr u32 operator""_u32() {
+constexpr u32
+operator""_u32() {
   using type = internal::StaticUnsigned<u32, Chars...>;
   static_assert(type::valid, "Invalid characters or number too large");
   return type::payload;
@@ -253,7 +259,8 @@ constexpr u32 operator""_u32() {
 
 /// 64-bit signed integer literal.
 template<char... Chars>
-constexpr i64 operator""_i64() {
+constexpr i64
+operator""_i64() {
   using type = internal::StaticSigned<i64, u64, Chars...>;
   static_assert(type::valid, "Invalid characters or number too large");
   return type::payload;
@@ -261,7 +268,8 @@ constexpr i64 operator""_i64() {
 
 /// 64-bit unsigned integer literal.
 template<char... Chars>
-constexpr u64 operator""_u64() {
+constexpr u64
+operator""_u64() {
   using type = internal::StaticUnsigned<u64, Chars...>;
   static_assert(type::valid, "Invalid characters or number too large");
   return type::payload;
@@ -271,7 +279,8 @@ constexpr u64 operator""_u64() {
 
 /// 128-bit signed integer literal.
 template<char... Chars>
-constexpr i128 operator""_i128() {
+constexpr i128
+operator""_i128() {
   using type = internal::StaticSigned<i128, u128, Chars...>;
   static_assert(type::valid, "Invalid characters or number too large");
   return type::payload;
@@ -279,7 +288,8 @@ constexpr i128 operator""_i128() {
 
 /// 128-bit unsigned integer literal.
 template<char... Chars>
-constexpr u128 operator""_u128() {
+constexpr u128
+operator""_u128() {
   using type = internal::StaticUnsigned<u128, Chars...>;
   static_assert(type::valid, "Invalid characters or number too large");
   return type::payload;

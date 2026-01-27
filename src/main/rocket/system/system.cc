@@ -175,7 +175,7 @@ setImpl(std::string_view name, const optional<string>& value, bool replace) {
 vector<std::byte> // MSVC needs `std::byte`
 exec(const string& cl) {
   vector<std::byte> ret;
-  array<std::byte, 128> buf;
+  vector<std::byte> buf(1'024);
 
   unique_ptr<FILE, decltype(&PCLOSE)> pipe(POPEN(cl.c_str(), "r"), PCLOSE);
   if (not pipe) {
