@@ -226,6 +226,7 @@ TEST(nio, StreamSourceRead) {
   ofstream os(tmp.c_str());
   StreamSink out(os);
   out.writeln("Hey there");
+  out.close();
 
   ifstream is(tmp.c_str());
   StreamSource in(is);
