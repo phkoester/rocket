@@ -68,6 +68,14 @@
 
 // Macros ---------------------------------------------------------------------------------------------------
 
+#ifdef ROCKET_CXX_COMPILER_MSVC
+  #define ROCKET_I64(n) n##LL ///< Signed 64-bit integer literal
+  #define ROCKET_U64(n) n##ULL ///< Unsigned 64-bit integer literal
+#else
+  #define ROCKET_I64(n) n##L ///< Signed 64-bit integer literal
+  #define ROCKET_U64(n) n##UL ///< Unsigned 64-bit integer literal
+#endif
+
 #ifdef ROCKET_OS_WINDOWS
   #ifdef ROCKET_EXPORTING
     #define ROCKET_PUBLIC __declspec(dllexport) ///< Specifier for global data symbols.
