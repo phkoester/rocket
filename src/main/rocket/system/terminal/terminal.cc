@@ -144,7 +144,7 @@ position(nio::Sink& out) {
     return nullopt;
   }
   cout << "csbi.dwCursorPosition.X=" << csbi.dwCursorPosition.X << ", csbi.dwCursorPosition.Y=" << csbi.dwCursorPosition.Y << endl; // XXX
-  return make_pair(safe<u64>(csbi.dwCursorPosition.X), safe<u64>(csbi.dwCursorPosition.Y));
+  return make_pair(safe<u64>(csbi.dwCursorPosition.X + 1), safe<u64>(csbi.dwCursorPosition.Y + 1));
 #else
   // Send the ANSI code requesting cursor position
 
