@@ -11,8 +11,7 @@
       "binaryDir": "${sourceDir}/build/debug",
       "cacheVariables": {
         "BUILD_SHARED_LIBS": "ON",
-        "CMAKE_BUILD_TYPE": "Debug",
-        "ROCKET_BENCH": "OFF"
+        "CMAKE_BUILD_TYPE": "Debug"
       }
     },
     {
@@ -20,16 +19,14 @@
       "binaryDir": "${sourceDir}/build/release",
       "cacheVariables": {
         "BUILD_SHARED_LIBS": "ON",
-        "CMAKE_BUILD_TYPE": "Release",
-        "ROCKET_BENCH": "OFF"
+        "CMAKE_BUILD_TYPE": "Release"
       }
     },
     {
       "name": "windows",
       "binaryDir": "${sourceDir}/build",
       "cacheVariables": {
-        "BUILD_SHARED_LIBS": "ON",
-        "ROCKET_BENCH": "OFF"
+        "BUILD_SHARED_LIBS": "ON"
       }
     }
   ],
