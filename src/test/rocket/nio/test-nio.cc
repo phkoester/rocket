@@ -230,9 +230,6 @@ TEST(nio, StreamSourceRead) {
     out.writeln("Hey there");
   }
 
-  path p = tmp;
-  cout << "p.size=" << file_size(p) << endl; // XXX
-
   ifstream is(tmp.c_str());
   StreamSource in(is);
   string str = in.Source::read();
