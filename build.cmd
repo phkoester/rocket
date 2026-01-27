@@ -18,7 +18,7 @@
 
 @echo off
 
-if %1 == test-terminal goto test-terminal
+if %1 == test-terminal call :test-terminal
 
 :: main ----------------------------------------------------------------------------------------------------
 
@@ -33,14 +33,16 @@ if exist src\test (
    if %errorlevel% neq 0 exit /b %errorlevel%
 )
 
-goto:EOF
+goto :EOF
 
 :: test-terminal --------------------------------------------------------------------------------------------
 
-test-terminal:
+:test-terminal
 
 set ROCKET_TEST_TERMINAL=1
 build\src\test\Release\test-rocket-system-terminal-exe
 build\src\test\Release\test-rocket-unicode-Character.exe
+
+goto :EOF
 
 :: EOF
