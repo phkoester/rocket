@@ -11,6 +11,8 @@
 #include <cstdio>
 #include <memory>
 
+#include <iostream> // XXX
+
 using namespace rocket;
 using namespace std;
 
@@ -266,6 +268,7 @@ get() {
 #endif
   while(*p != nullptr) {
     string_view entry(*p);
+    cout << "entry=[" << entry << "]" << endl; // XXX
     if (entry.empty()) {
       break;
     }
@@ -277,6 +280,7 @@ get() {
       name = entry.substr(0, eq);
       value = entry.substr(eq + 1);
     }
+    cout << "name=[" << name << "], value=[" << value << "]" << endl; // XXX
     ret.emplace(name, value);
     ++p;
   }
