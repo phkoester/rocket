@@ -11,9 +11,11 @@
 #include "rocket/system/system.h"
 
 #include <cstdlib>
+#include <filesystem>
 
 using namespace rocket;
 using namespace std;
+using namespace std::filesystem;
 
 namespace {
 
@@ -105,9 +107,13 @@ onTerminate() {
 
 string_view
 shortName(string_view argv0) {
-  string_view ret = argv0;
-  auto lastFileSep = ret.find_last_of(system::fileSeparator());
-  if (lastFileSep != string_view::npos) {
+  string_view ret(argv0);
+#ifdef ROCKET_OS_WINDOWS
+  auto lastFileSep = ret.find_last_of("/\\");
+#else
+  auto lastFileSep = ret.find_last_of('/');
+#endif
+if (lastFileSep != string_view::npos) {
     ret = ret.substr(lastFileSep + 1);
   }
   ret = str::removeTrailing(ret, system::executableSuffix());

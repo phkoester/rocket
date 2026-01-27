@@ -15,8 +15,6 @@
 
 @echo off
 
-set BUILD_DIR=build\release
-
 cmake --preset windows
 if %errorlevel% neq 0 exit /b %errorlevel%
 
