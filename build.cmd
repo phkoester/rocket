@@ -19,11 +19,13 @@ if %1 == configure call :configure
 if %1 == build call :build
 if %1 == test call :test
 if %1 == test-terminal call :test-terminal
-if [%1] == [] call :main
+if "%~1" == "" call :main
 
 goto :eof
 
 :: main ----------------------------------------------------------------------------------------------------
+
+:main
 
 call :configure
 call :build
@@ -65,7 +67,7 @@ goto :eof
 :test-terminal
 
 setlocal
-setROCKET_TEST_TERMINAL=1
+set ROCKET_TEST_TERMINAL=1
 build\src\test\Release\test-rocket-system-terminal.exe
 build\src\test\Release\test-rocket-unicode-Character.exe
 endlocal
