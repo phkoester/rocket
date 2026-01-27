@@ -107,11 +107,13 @@ endif()
 
 # Functions -------------------------------------------------------------------------------------------------
 
-function(CopyRuntimeDlls name)
+function(AddRuntimeDlls name)
   if(WIN32) # AND $<TARGET_RUNTIME_DLLS:${name}>
     add_custom_command(
       TARGET  ${name} POST_BUILD
-      COMMAND ${CMAKE_COMMAND} -E copy_if_newer $<TARGET_RUNTIME_DLLS:${name}> $<TARGET_FILE_DIR:${name}>
+      # Since CMake 4.2, there is `copy_if_newer`. If that is available, we can add this to `AddBench` and
+      # `AddTest`. For the time being, VS comes with CMake 4.1.1
+      COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_RUNTIME_DLLS:${name}> $<TARGET_FILE_DIR:${name}>
       COMMAND_EXPAND_LISTS
     )
   endif()
@@ -133,8 +135,6 @@ function(AddBench name dir)
   target_link_libraries(${name} PRIVATE Rocket::rocket-test)
   # add_test(NAME ${name} COMMAND ${name} WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/src/bench/${dir})
 
-  CopyRuntimeDlls(${name})
-
   gtest_discover_tests(${name}
     DISCOVERY_MODE PRE_TEST
     EXTRA_ARGS --gtest_catch_exceptions=0
@@ -149,8 +149,6 @@ function(AddTest name dir)
   AddExecutable(${name} ${ARGN})
   target_link_libraries(${name} PRIVATE Rocket::rocket-test)
   # add_test(NAME ${name} COMMAND ${name} WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/src/test/${dir})
-
-  CopyRuntimeDlls(${name})
 
   gtest_discover_tests(${name}
     DISCOVERY_MODE PRE_TEST
