@@ -223,10 +223,11 @@ TEST(nio, FileSourceRead) {
 TEST(nio, StreamSourceRead) {
   auto tmp = ROCKET_TEST_TEMP_PATH();
 
-  ofstream os(tmp.c_str());
-  StreamSink out(os);
-  out.writeln("Hey there");
-  out.close();
+  {
+    ofstream os(tmp.c_str());
+    StreamSink out(os);
+    out.writeln("Hey there");
+  }
 
   ifstream is(tmp.c_str());
   StreamSource in(is);
