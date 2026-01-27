@@ -21,7 +21,7 @@ quick and dirty logging facility here.
 
 ---------------------------------------------------------------------------------------------------------- */
 
-// #define NIO_LOG // Use this to activate logging
+#define NIO_LOG // Use this to activate logging
 
 #ifdef NIO_LOG
 #define LOG(args) cout << "# " << __FILE__ << ':' << __LINE__ << ' ' << __FUNCTION__ << ": " << args << endl;
