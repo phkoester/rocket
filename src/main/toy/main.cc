@@ -7,6 +7,7 @@
 #include "rocket/log/log.h"
 
 #include "rocket/literal.h"
+#include "rocket/unicode/unicode.h"
 #include "rocket/version.h"
 
 using namespace rocket;
@@ -50,15 +51,25 @@ zzz() {
   }
 }
 
+template<char... CS>
+constexpr CodePoint
+operator""_foo() {
+  static_assert(sizeof...(CS) == 1, "Only one char");
+  return CodePoint('\0');
+}
+
 void
 toy() {
   ROCKET_LOG(toy);
   ROCKET_LOG_TRACE("Hey {}", "there");
   zzz();
 
-  auto i = 170'141'183'460'469'231'731'687'303'715'884'105'727_i128;
+  auto negI = -170'141'183'460'469'231'731'687'303'715'884'105'727_i128;
+  auto posI =  170'141'183'460'469'231'731'687'303'715'884'105'727_i128;
   auto u = 340'282'366'920'938'463'463'374'607'431'768'211'455_u128;
-  out.println("i={}", i);
+  out.println("negI={}", negI);
+  out.println("posI={}", posI);
+  out.println("u={}", u);
 }
 
 // `main` ---------------------------------------------------------------------------------------------------
