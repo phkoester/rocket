@@ -13,7 +13,7 @@ using namespace std::filesystem;
 
 // Constants ------------------------------------------------------------------------------------------------
 
-const auto CURRENT_BINARY_DIR = env::get<string>("CURRENT_BINARY_DIR");
+const auto MAIN_BINARY_DIR = env::get<string>("MAIN_BINARY_DIR");
 
 // `TEST` ---------------------------------------------------------------------------------------------------
 
@@ -116,43 +116,54 @@ TEST(system, execPrintf) {
 }
 
 TEST(system, execPrintArgs) {
-  path mainBinaryDir = path(*CURRENT_BINARY_DIR).parent_path() / "main";
+  path mainBinaryDir = path(*MAIN_BINARY_DIR);
   path printArgs = mainBinaryDir / fmt::format("print-args{}", executableSuffix());
-  string executable = printArgs.string();
-
-  auto bytes = exec({ executable, "a" });
-  string_view out(reinterpret_cast<const char*>(bytes.data()), bytes.size());
-  EXPECT_THAT(out, HasSubstr("1=a="));
-}
-
-TEST(system, execPrintArgsWithSpace) {
-  // Copy `print-args` to `print args`
-  path mainBinaryDir = path(*CURRENT_BINARY_DIR).parent_path() / "main";
-  path printArgs = mainBinaryDir / fmt::format("print-args{}", executableSuffix());
-  path printArgsWithSpace = mainBinaryDir / fmt::format("print args{}", executableSuffix());
-  copy_file(printArgs, printArgsWithSpace, copy_options::overwrite_existing);
-  string executable = printArgsWithSpace.string();
+  string executable = printArgs.native();
 
   {
-    // Test spaces in executable name and in arguments
-    auto bytes = exec({ executable, "a", "b c", "d\\\"", "'hi'", "some\\text" });
+    // Test spaces and quotes
+    auto bytes = exec({ executable, "a", "b c", " d ", "'", "\"" });
     string_view out(reinterpret_cast<const char*>(bytes.data()), bytes.size());
-    EXPECT_THAT(out, AllOf(
-      HasSubstr("1=a="),
-      HasSubstr("2=b c="),
-      HasSubstr("3=d\\\"="),
-      HasSubstr("4='hi'="),
-      HasSubstr("5=some\\text=")));
+    EXPECT_THAT(out, HasSubstr("1=a="));
+    EXPECT_THAT(out, HasSubstr("2=b c="));
+    EXPECT_THAT(out, HasSubstr("3= d ="));
+    EXPECT_THAT(out, HasSubstr("4='="));
+    EXPECT_THAT(out, HasSubstr("5=\"="));
   }
 
   {
     // Test Unicode
-    auto bytes = exec({ executable, "ä", "€" });
+    auto bytes = exec({ executable, "€ ÄÖÜ € 🧑‍🌾" });
     string_view out(reinterpret_cast<const char*>(bytes.data()), bytes.size());
-    EXPECT_THAT(out, AllOf(
-      HasSubstr("1=ä="),
-      HasSubstr("2=€=")));
-    }
+    EXPECT_THAT(out, HasSubstr("1=€ ÄÖÜ € 🧑‍🌾="));
+  }
+}
+
+TEST(system, execPrintArgsWithSpace) {
+  // Copy `print-args` to `print args`, se we have a space in the executable name
+  path mainBinaryDir = path(*MAIN_BINARY_DIR);
+  path printArgs = mainBinaryDir / fmt::format("print-args{}", executableSuffix());
+  path printArgsWithSpace = mainBinaryDir / fmt::format("print args{}", executableSuffix());
+  copy_file(printArgs, printArgsWithSpace, copy_options::overwrite_existing);
+  string executable = printArgsWithSpace.native();
+
+  {
+    // Test spaces and quotes
+    auto bytes = exec({ executable, "a", "b c", " d ", "'", "\"" });
+    string_view out(reinterpret_cast<const char*>(bytes.data()), bytes.size());
+    EXPECT_THAT(out, HasSubstr("1=a="));
+    EXPECT_THAT(out, HasSubstr("2=b c="));
+    EXPECT_THAT(out, HasSubstr("3= d ="));
+    EXPECT_THAT(out, HasSubstr("4='="));
+    EXPECT_THAT(out, HasSubstr("5=\"="));
+  }
+
+  {
+    // Test Unicode
+    auto bytes = exec({ executable, "€ ÄÖÜ € 🧑‍🌾" });
+    string_view out(reinterpret_cast<const char*>(bytes.data()), bytes.size());
+    EXPECT_THAT(out, HasSubstr("1=€ ÄÖÜ € 🧑‍🌾="));
+  }
 }
 
 // EOF

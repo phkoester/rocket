@@ -128,9 +128,25 @@ function(AddExecutable name)
   target_compile_options(${name} PRIVATE ${COMPILE_FLAGS})
 endfunction()
 
-# AddBench(name dir srcFile...)
+# AddBench(name dir srcFile...  [ENVIRONMENT name=value...])
 function(AddBench name dir)
-  list(TRANSFORM ARGN PREPEND "${dir}/")
+  set(srcFiles)
+  set(env "BINARY_DIR=${CMAKE_CURRENT_BINARY_DIR}")
+  set(appendTo srcFiles)
+  foreach(it IN LISTS ARGN)
+    if(it STREQUAL "ENVIRONMENT")
+      set(appendTo env)
+    else()
+      list(APPEND ${appendTo} ${it})
+    endif()
+  endforeach()
+
+  set(props)
+  foreach(it IN LISTS env)
+    list(APPEND props PROPERTIES ENVIRONMENT "${it}")
+  endforeach()
+
+  list(TRANSFORM srcFiles PREPEND "${dir}/")
   AddExecutable(${name} ${ARGN})
   target_link_libraries(${name} PRIVATE Rocket::rocket-test)
   # add_test(NAME ${name} COMMAND ${name} WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/src/bench/${dir})
@@ -138,22 +154,38 @@ function(AddBench name dir)
   gtest_discover_tests(${name}
     DISCOVERY_MODE PRE_TEST
     EXTRA_ARGS --gtest_catch_exceptions=0
-    PROPERTIES ENVIRONMENT "CURRENT_BINARY_DIR=${CMAKE_CURRENT_BINARY_DIR}"
+    ${props}
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/src/bench/${dir}
   )
 endfunction()
 
-# AddTest(name dir srcFile...)
+# AddTest(name dir srcFile... [ENVIRONMENT name=value...])
 function(AddTest name dir)
-  list(TRANSFORM ARGN PREPEND "${dir}/")
-  AddExecutable(${name} ${ARGN})
+  set(srcFiles)
+  set(env "BINARY_DIR=${CMAKE_CURRENT_BINARY_DIR}")
+  set(appendTo srcFiles)
+  foreach(it IN LISTS ARGN)
+    if(it STREQUAL "ENVIRONMENT")
+      set(appendTo env)
+    else()
+      list(APPEND ${appendTo} ${it})
+    endif()
+  endforeach()
+
+  set(props)
+  foreach(it IN LISTS env)
+    list(APPEND props PROPERTIES ENVIRONMENT "${it}")
+  endforeach()
+
+  list(TRANSFORM srcFiles PREPEND "${dir}/")
+  AddExecutable(${name} ${srcFiles})
   target_link_libraries(${name} PRIVATE Rocket::rocket-test)
   # add_test(NAME ${name} COMMAND ${name} WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/src/test/${dir})
 
   gtest_discover_tests(${name}
     DISCOVERY_MODE PRE_TEST
     EXTRA_ARGS --gtest_catch_exceptions=0
-    PROPERTIES ENVIRONMENT "CURRENT_BINARY_DIR=${CMAKE_CURRENT_BINARY_DIR}"
+    ${props}
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/src/test/${dir}
   )
 endfunction()

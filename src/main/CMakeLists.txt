@@ -178,6 +178,8 @@ AddExecutable(bare bare/main.cc)
 
 AddExecutable(print-args print-args/main.cc)
 target_link_libraries(print-args PRIVATE Rocket::rocket)
+set(ROCKET_MAIN_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR} PARENT_SCOPE)
+message(STATUS "src/main: ROCKET_MAIN_BINARY_DIR=[${ROCKET_MAIN_BINARY_DIR}]")
 
 # `toy` -----------------------------------------------------------------------------------------------------
 
