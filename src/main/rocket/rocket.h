@@ -5,27 +5,36 @@
  *
  * Contains very basic types and declarations.
  *
+ * OS-specific data types, sizes in bytes:
+ *
+ * | Type         | Linux | Windows
+ * | :----------- | ----: | ------:
+ * | `wchar_t`    |     4 |       2
+ * | `long`       |     8 |       4
+ * | `__int128`   |    16 |     N/A
+ * | `long double`|    16 |       8
+ *
  * Basic data types used in Rocket:
  *
- * | Type             | Size in bytes | Availability
- * | :--------------- | ------------: | ------------
- * | `bool`           |             1 | Always
- * | `char`           |             1 | Always
- * | `rocket::char32` |             4 | Always
- * | `rocket::i8`     |             1 | Always
- * | `rocket::u8`     |             1 | Always
- * | `rocket::i16`    |             2 | Always
- * | `rocket::u16`    |             2 | Always
- * | `rocket::i32`    |             4 | Always
- * | `rocket::u32`    |             4 | Always
- * | `rocket::i64`    |             8 | Always
- * | `rocket::u64`    |             8 | Always
- * | `rocket::i128`   |            16 | Not with MSVC
- * | `rocket::u128`   |            16 | Not with MSVC
- * | `rocket::f32`    |             4 | Always
- * | `rocket::f64`    |             8 | Always
- * | `rocket::f128`   |            16 | Not with MSVC
- * | `void*`          |             8 | Always
+ * | Type             | Size | Availability
+ * | :--------------- | ---: | ------------
+ * | `bool`           |    1 | Always
+ * | `char`           |    1 | Always
+ * | `rocket::char32` |    4 | Always
+ * | `rocket::i8`     |    1 | Always
+ * | `rocket::u8`     |    1 | Always
+ * | `rocket::i16`    |    2 | Always
+ * | `rocket::u16`    |    2 | Always
+ * | `rocket::i32`    |    4 | Always
+ * | `rocket::u32`    |    4 | Always
+ * | `rocket::i64`    |    8 | Always
+ * | `rocket::u64`    |    8 | Always
+ * | `rocket::i128`   |   16 | Not with MSVC
+ * | `rocket::u128`   |   16 | Not with MSVC
+ * | `rocket::f32`    |    4 | Always
+ * | `rocket::f64`    |    8 | Always
+ * | `rocket::f128`   |   16 | Not with MSVC
+ * | `void*`          |    8 | Always
  *
  * In Rocket, C strings of type `char*` and instances of `std::string` or `std::string_view` are assumed to
  * be UTF-8-encoded. This is already true at compile time: A string literal like `"ä"` must expand to
@@ -94,13 +103,13 @@ using type_info = ::type_info;
 
 /// @cond undocumented
 
+using std_wchar_t = wchar_t;
 using std_char32_t = char32_t;
+using std_long = long;
+using std_size_t = size_t;
 using std_float = float;
 using std_double = double;
-using std_long = long;
 using std_long_double = long double;
-using std_size_t = size_t;
-using std_wchar_t = wchar_t;
 
 /// @endcond
 
