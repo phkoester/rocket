@@ -155,7 +155,7 @@ TEST(std, istreamI32) {
     is >> val;
 #ifdef ROCKET_OS_WINDOWS
     // If the value is greater than the maximum value, there is a failure
-    EXPECT_ISTREAM(is, true, true, 11);
+    EXPECT_ISTREAM(is, true, true, 10);
     EXPECT_EQ(is.tellg(), -1);
 #else
     // If the value is greater than the maximum value, then the result is capped
