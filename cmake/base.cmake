@@ -111,7 +111,7 @@ function(CopyRuntimeDlls name)
   if(WIN32) # AND $<TARGET_RUNTIME_DLLS:${name}>
     add_custom_command(
       TARGET  ${name} POST_BUILD
-      COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_RUNTIME_DLLS:${name}> $<TARGET_FILE_DIR:${name}>
+      COMMAND ${CMAKE_COMMAND} -E copy_if_newer $<TARGET_RUNTIME_DLLS:${name}> $<TARGET_FILE_DIR:${name}>
       COMMAND_EXPAND_LISTS
     )
   endif()
