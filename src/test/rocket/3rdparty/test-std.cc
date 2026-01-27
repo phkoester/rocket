@@ -90,9 +90,15 @@ TEST(std, istreamBool) {
     type val = false;
     is >> boolalpha >> val;
     EXPECT_EQ(val, true);
+#ifdef ROCKET_OS_WINDOWS
+    // After reading a complete 'bool', there is no failure, but an EOF
+    EXPECT_ISTREAM(is, false, true, 4);
+    EXPECT_EQ(is.tellg(), -1);
+#else
     // After reading a complete 'bool', there is no failure and no EOF
     EXPECT_ISTREAM(is, false, false, 4);
     EXPECT_EQ(is.tellg(), 4);
+#endif
   }
 }
 

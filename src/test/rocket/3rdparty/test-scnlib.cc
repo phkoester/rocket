@@ -174,12 +174,10 @@ TEST(scnlib, scanTimePoint) {
   // Windows doesn't have nanoseconds
   using TimePoint = chrono::time_point<chrono::system_clock, chrono::microseconds>;
   TimePoint val1 = chrono::time_point_cast<chrono::microseconds>(chrono::system_clock::now());
-  string input = std::format("{:%Y-%m-%d %H:%M:%S}", val1); // "2026-01-19 15:46:10.049025", 26 chars
-  cout << "input: [" << input << "]" << endl; // XXX
+  string input = std::format("{:%Y-%m-%d %H:%M:%S}", val1); // "2026-01-27 05:51:13.396968", 26 chars
   auto result = scn::scan<TimePoint>(input, "{:%Y-%m-%d %H:%M:%.S}");
   ASSERT_TRUE(result);
   auto val2 = result->value();
-  cout << "val2: [" << fmt::format("{}", val2) << "]" << endl; // XXX
   EXPECT_EQ(result->begin() - input.begin(), 26);
 
   // The time zone of the scanned time point is unclear. The following adjustment seems to convert the
@@ -187,7 +185,6 @@ TEST(scnlib, scanTimePoint) {
   const auto* tz = std::chrono::current_zone();
   auto info = tz->get_info(val1);
   val2 += info.offset;
-  cout << "val2: [" << fmt::format("{}", val2) << "]" << endl; // XXX
 
   EXPECT_EQ(val2, val1);
 }
