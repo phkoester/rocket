@@ -15,30 +15,28 @@
 
 @echo off
 
-if %1 == configure call :configure
-if %1 == build call :build
-if %1 == test call :test
-if %1 == test-terminal call :test-terminal
-if "%~1" == "" call :main
-
-goto :eof
+if %1 == configure (
+  call :configure
+  goto :eof
+)
+if %1 == build (
+  call :build
+  goto :eof
+)
+if %1 == test (
+  call :test
+  goto :eof
+)
+if %1 == test-terminal (
+  call :test-terminal
+  goto :eof
+)
 
 :: main ----------------------------------------------------------------------------------------------------
-
-:main
 
 call :configure
 call :build
 call :test
-
-goto :eof
-
-:: build ----------------------------------------------------------------------------------------------------
-
-:build
-
-cmake --build --preset windows-release
-if %errorlevel% neq 0 exit /b %errorlevel%
 
 goto :eof
 
@@ -47,6 +45,15 @@ goto :eof
 :configure
 
 cmake --preset windows
+if %errorlevel% neq 0 exit /b %errorlevel%
+
+goto :eof
+
+:: build ----------------------------------------------------------------------------------------------------
+
+:build
+
+cmake --build --preset windows-release
 if %errorlevel% neq 0 exit /b %errorlevel%
 
 goto :eof
