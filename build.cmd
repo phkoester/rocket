@@ -1,6 +1,8 @@
 ::
 :: build.cmd
 ::
+:: THIS FILE IS AUTOMATICALLY COPIED. ONLY EDIT THE SOURCE FILE, WHICH IS `gaia-build.cmd`.
+::
 :: Usage: build [configure | build | test | test-terminal]
 ::
 :: To build a specific target:

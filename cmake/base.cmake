@@ -1,6 +1,8 @@
 #
 # base.cmake
 #
+# THIS FILE IS AUTOMATICALLY COPIED. ONLY EDIT THE SOURCE FILE, WHICH IS `gaia-base.cmake`.
+#
 
 # Check prerequisites ---------------------------------------------------------------------------------------
 

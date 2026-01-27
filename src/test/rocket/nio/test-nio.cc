@@ -4,7 +4,6 @@
 
 #include "rocket-test/rocket-test.h"
 
-#include "rocket/Exception.h"
 #include "rocket/nio/nio.h"
 
 #include <fstream>
