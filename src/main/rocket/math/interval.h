@@ -1,5 +1,5 @@
 /**
- * @file Interval.h
+ * @file interval.h
  *
  * Mathematical intervals.
  */

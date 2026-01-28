@@ -1,10 +1,10 @@
 /*
- * test-Interval.cc
+ * test-interval.cc
  */
 
 #include "rocket-test/rocket-test.h"
 
-#include "rocket/math/Interval.h"
+#include "rocket/math/interval.h"
 
 using namespace rocket::math;
 
