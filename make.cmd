@@ -3,7 +3,11 @@
 ::
 :: ONLY EDIT THE ORIGINAL FILE, WHICH IS `gaia-make.cmd`.
 ::
-:: Usage: build [configure | build | test | test-terminal]
+:: Usage:
+::   make configure
+::   make build [TARGET]
+::   make test
+::   make test-terminal (for Rocket only)
 ::
 :: To build a specific target:
 ::
@@ -55,7 +59,11 @@ goto :eof
 
 :build
 
-cmake --build --preset windows-release
+if "%2" == "" (
+  cmake --build --preset windows-release
+) else (
+  cmake --build --preset windows-release --target %2
+)
 if %errorlevel% neq 0 exit /b %errorlevel%
 
 goto :eof
