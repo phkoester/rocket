@@ -336,7 +336,7 @@ struct IntervalImpl {
    * @f$[2,2]@f$ has a size of 0 and is nonempty. On the other hand, an empty interval always has a size of
    * 0. To check if an interval is empty, use the #empty member function.
    *
-   * @return the size of this interval
+   * @return the size of this interval, or null if the interval size is infinite
    */
   constexpr Traits::SizeType size() const { return Traits::size(lower, upper); }
 };
@@ -479,7 +479,7 @@ namespace rocket::math {
 // Interval types -------------------------------------------------------------------------------------------
 
 /**
- * A closed interval [*lower*,*upper*] contains all elements *x* such that *lower* <= *x* <= *upper*.
+ * A closed interval @f$[lower,upper]@f$ contains all elements @f$x@f$ such that @f$lower <= x <= upper@f$.
  *
  * @tparam T the element type
  */
@@ -487,7 +487,7 @@ template<typename T>
 using Interval = IntervalImpl<T, internal::LeftClosed<T>, internal::RightClosed<T>>;
 
 /**
- * An open interval (*lower*,*upper*) contains all elements *x* such that *lower* < *x* < *upper*.
+ * An open interval @f$(lower,upper)@f$ contains all elements @f$x@f$ such that @f$lower < x < upper@f$.
  *
  * @tparam T the element type
  */
@@ -495,7 +495,7 @@ template<typename T>
 using OpenInterval = IntervalImpl<T, internal::LeftOpen<T>, internal::RightOpen<T>>;
 
 /**
- * A left-open interval (*lower*,*upper*] contains all elements *x* such that *lower* < *x* <= *upper*.
+ * A left-open interval @f$(lower,upper]@f$ contains all elements @f$x@f$ such that @f$lower < x <= upper@f$.
  *
  * @tparam T the element type
  */
@@ -503,7 +503,8 @@ template<typename T>
 using LeftOpenInterval = IntervalImpl<T, internal::LeftOpen<T>, internal::RightClosed<T>>;
 
 /**
- * A right-open interval [*lower*,*upper*) contains all elements *x* such that *lower* <= *x* < *upper*.
+ * A right-open interval @f$[lower,upper)@f$ contains all elements @f$x@f$ such that
+ * @f$lower <= x < upper@f$.
  *
  * @tparam T the element type
  */
