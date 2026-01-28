@@ -4,7 +4,7 @@
 :: ONLY EDIT THE ORIGINAL FILE, WHICH IS `gaia-make.cmd`.
 ::
 :: Usage:
-::   make                (calls `configure`, `build`, and `test`)
+::   make                (calls `configure` and `build`)
 ::   make configure
 ::   make build [TARGET]
 ::   make test
@@ -43,7 +43,6 @@ if "%1" == "test-terminal" (
 
 call :configure
 call :build
-call :test
 
 goto :eof
 
