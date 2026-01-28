@@ -101,7 +101,7 @@ target_sources(rocket
       rocket/format/std.h
       rocket/io/io.h
       rocket/log/log.h
-      rocket/math/Interval.h
+      rocket/math/interval.h
       rocket/math/math.h
       rocket/math/random.h
       rocket/nio/nio.h
