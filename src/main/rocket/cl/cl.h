@@ -81,7 +81,7 @@ struct Option {
    * @param help a short help text. By convention, this starts with a lower-case verb and does not end with
    *     a period, e.g. "print NUM lines of leading context"
    * @param dest the destination reference that is assigned the option's value. If this is a `bool`
-   *     reference, the option takes no argument, otherwise it does. If this is a `std::vector` reference,
+   *     reference, the option takes no argument, otherwise it does. If this is a #std::vector reference,
    *     multiple values may be supplied on the command line
    * @return a new option
    */

@@ -345,8 +345,8 @@ operator""_u128() {
  *
  * @param val the value
  * @return a value of the desired type
- * @throw `std::underflow_error` on type underflow
- * @throw `std::overflow_error` on type overflow
+ * @throw #rocket::Underflow on type underflow
+ * @throw #rocket::Overflow on type overflow
  */
 f32 operator""_f32(std_long_double val);
 
@@ -355,8 +355,8 @@ f32 operator""_f32(std_long_double val);
  *
  * @param val the value
  * @return a value of the desired type
- * @throw `std::underflow_error` on type underflow
- * @throw `std::overflow_error` on type overflow
+ * @throw #rocket::Underflow on type underflow
+ * @throw #rocket::Overflow on type overflow
  */
 f64 operator""_f64(std_long_double val);
 

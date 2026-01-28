@@ -154,7 +154,7 @@ struct Process {
   void atExit(std::function<void()> fn, bool callOnTerminate = false);
 
   /**
-   * Returns the classic locale. This is the locale as returned by `std::locale::classic`.
+   * Returns the classic locale. This is the locale as returned by #std::locale::classic.
    *
    * Must be called after #init.
    *
@@ -212,7 +212,7 @@ struct Process {
    *
    * Must be called after #init.
    *
-   * Depending on how #init was parametrized, this function either calls `std::exit` or `std::quick_exit`.
+   * Depending on how #init was parametrized, this function either calls #std::exit or #std::quick_exit.
    * The environment variables `ROCKET_EXIT` and `ROCKET_QUICK_EXIT` overrule the parametrized setting.
    *
    * @param status the exit status
@@ -256,7 +256,7 @@ struct Process {
    *    recommended to give the program a proper name independent from `argv[0]`
    * @param locale the locale to use for the process. If this is null, the locale from the environment is
    *    used
-   * @param quickExit if `true`, #exit calls `std::quick_exit`, otherwise it calls `std::exit`
+   * @param quickExit if `true`, #exit calls #std::quick_exit, otherwise it calls #std::exit
    */
   void init(
       i32 argc,
@@ -303,7 +303,7 @@ struct Process {
 
   /**
    * Returns the system locale. This is the locale that was returned by the first call of
-   * `std::locale::global`.
+   * #std::locale::global.
    *
    * Must be called after #init.
    *

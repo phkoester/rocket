@@ -35,6 +35,15 @@ std::string cannotScanAs(std::string_view input, const std::type_info& type);
 std::string overflow(const std::type_info& type, std::string_view msg = "");
 
 /**
+ * Makes a message saying there is an underflow of type @p type.
+ *
+ * @param type the type
+ * @param msg additional message
+ * @return a message
+ */
+std::string underflow(const std::type_info& type, std::string_view msg = "");
+
+ /**
  * If available, prepends a source location to a message.
  *
  * @param msg a message

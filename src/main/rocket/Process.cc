@@ -223,14 +223,14 @@ Process::init(
     args_.emplace_back(argv[i]);
   }
 
-  // Register `onExit` both for `std::exit` and `std::quick_exit`
+  // Register #onExit both for #std::exit and #std::quick_exit
 
   std::atexit(onExit);
   std::at_quick_exit(onExit);
 
   inited_ = true;
 
-  // Set the terminate handler. This must be done AFTER setting `inited_` to `true`
+  // Set the terminate handler. This must be done AFTER setting #inited_ to `true`
 
   set_terminate(onTerminate);
 

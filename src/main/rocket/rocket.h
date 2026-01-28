@@ -36,7 +36,7 @@
  * | `rocket::f128`   |   16 | Not with MSVC
  * | `void*`          |    8 | Always
  *
- * In Rocket, C strings of type `char*` and instances of `std::string` or `std::string_view` are assumed to
+ * In Rocket, C strings of type `char*` and instances of #std::string or #std::string_view are assumed to
  * be UTF-8-encoded. This is already true at compile time: A string literal like `"ä"` must expand to
  * `"\xc3\xa4"`.
  *
@@ -45,7 +45,7 @@
 
 #pragma once
 
-#include <cstdint> // `int8_t`, `uint8_t`, ...
+#include <cstdint> // #int8_t, #uint8_t, ...
 #include <cstdio> // Make this generally availabe
 #include <iosfwd>
 #include <typeinfo> // Make this generally available

@@ -4,7 +4,7 @@
 
 #include "literal.h"
 
-#include <stdexcept>
+#include "rocket/Exception.h"
 
 namespace rocket {
 
@@ -13,10 +13,10 @@ operator""_f32(std_long_double val) {
   using type = f32;
   using limits = std::numeric_limits<type>;
   if (std::fabs(val) < limits::min()) {
-    throw std::underflow_error("`f32` underflow");
+    throw Underflow(typeid(type));
   }
   if (val < limits::lowest() || val > limits::max()) {
-    throw std::overflow_error("`f32` overflow`");
+    throw Overflow(typeid(type));
   }
   return static_cast<type>(val);
 }
@@ -26,10 +26,10 @@ operator""_f64(std_long_double val) {
   using type = f64;
   using limits = std::numeric_limits<type>;
   if (std::fabs(val) < limits::min()) {
-    throw std::underflow_error("`f64` underflow");
+    throw Underflow(typeid(type));
   }
   if (val < limits::lowest() || val > limits::max()) {
-    throw std::overflow_error("`f64` overflow`");
+    throw Overflow(typeid(type));
   }
   return static_cast<type>(val);
 }

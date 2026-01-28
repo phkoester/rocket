@@ -149,9 +149,9 @@ value(const std::optional<T>& val) {
 
 } // namespace rocket
 
-// `std::hash<tuple>` ---------------------------------------------------------------------------------------
+// `std::hash<std::tuple>` ----------------------------------------------------------------------------------
 
-/// @spec_std_hash{`std::tuple`}
+/// @spec_std_hash{#std::tuple}
 template<typename... T>
 struct std::hash<std::tuple<T...>> {
   /// @cond undocumented

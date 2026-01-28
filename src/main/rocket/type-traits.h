@@ -14,7 +14,7 @@ namespace rocket {
 
 // `Purge` --------------------------------------------------------------------------------------------------
 
-/// An alias for `std::remove_cvref<T>`.
+/// An alias for #std::remove_cvref.
 template<typename T>
 using Purge = std::remove_cvref<T>;
 
@@ -50,7 +50,7 @@ struct Char<4> {
 template<u32 N> struct Int;
 
 /**
- * 1-byte signed integer: `i8`.
+ * 1-byte signed integer: #i8.
  */
 template<>
 struct Int<1> {

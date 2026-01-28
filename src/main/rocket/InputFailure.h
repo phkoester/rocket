@@ -1,7 +1,7 @@
 /**
  * @file InputFailure.h
  *
- * An `InputFailure` exception.
+ * An input-failure exception carrying a position and, optionally, ranges.
  */
 
 #pragma once
@@ -11,7 +11,7 @@
 
 namespace rocket {
 
-// `InputFailure` -------------------------------------------------------------------------------------------
+// #InputFailure --------------------------------------------------------------------------------------------
 
 /**
  * Instances of this class are thrown when reading a string input fails.

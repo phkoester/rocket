@@ -8,6 +8,7 @@ PROJECT_NAME     = Rocket
 INPUT            = src/main $(BUILD_DIR)/src/main/generated
 FILE_PATTERNS    = *.h
 OUTPUT_DIRECTORY = $(BUILD_DIR)/src/main/doc
+PREDEFINED       = ROCKET_HAS_128
 
 EXCLUDE          = src/main/rocket/3rdparty/fmt/std.h src/main/rocket/3rdparty/scnlib/impl.h
 

@@ -10,14 +10,14 @@
 
 namespace rocket {
 
-// `Cow` ----------------------------------------------------------------------------------------------------
+// #Cow -----------------------------------------------------------------------------------------------------
 
 /**
  * A copy-on-write value.
  *
  * @tparam T the type of value
  * @tparam U the type of the owned value. If this is different from @p T, then @p T is assumed to be an
- *     efficiently copyable view type, such as `std::span` or `std::string_view`.
+ *     efficiently copyable view type, such as #std::span or #std::string_view.
  */
 template<typename T, typename U = T>
 struct Cow {
@@ -25,7 +25,7 @@ struct Cow {
    * @ctor
    *
    * @param ref the value to reference. If the types @p T and @p U are the same, The reference must remain
-   *   valid for the lifetime of the `Cow`.
+   *   valid for the lifetime of the #Cow.
    */
   Cow(const T& ref) :
       modified_(false) {
@@ -79,9 +79,9 @@ struct Cow {
   }
 
   /**
-   * Assigns an owned value to the `Cow`, rendering the instance as "modified".
+   * Assigns an owned value to the #Cow, rendering the instance as "modified".
    *
-   * The value is copied into the `Cow` as an owned value.
+   * The value is copied into the #Cow as an owned value.
    *
    * @param value the value to assign
    * @return_this
@@ -102,9 +102,9 @@ struct Cow {
   }
 
   /**
-   * Assigns an owned value to the `Cow`, rendering the instance as "modified".
+   * Assigns an owned value to the #Cow, rendering the instance as "modified".
    *
-   * The value is moved into the `Cow` as an owned value.
+   * The value is moved into the #Cow as an owned value.
    *
    * @param value the value to assign
    * @return_this
@@ -153,16 +153,16 @@ struct Cow {
   }
 
   /**
-   * Checks if the `Cow` has been assigned an owned value.
+   * Checks if the #Cow has been assigned an owned value.
    *
-   * @return whether the `Cow` has been assigned an owned value
+   * @return whether the #Cow has been assigned an owned value
    */
   bool modified() const { return modified_; }
 
   /**
    * Returns a nonconst reference to the owned value.
    *
-   * @note This requires that the `Cow` is "modified", i.e. it has been assigned an owned value.
+   * @note This requires that the #Cow is "modified", i.e. it has been assigned an owned value.
    *
    * @return a nonconst reference to the owned value
    */

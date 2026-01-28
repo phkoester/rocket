@@ -101,9 +101,11 @@ goto :eof
 
 :clean
 
-echo Removing build directory. This may take a while ...
-rmdir /q /s build
-if %errorlevel% neq 0 exit /b %errorlevel%
+if exist build\ (
+  echo Removing build directory. This may take a while ...
+  rmdir /q /s build
+  if %errorlevel% neq 0 exit /b %errorlevel%
+)
 
 goto :eof
 

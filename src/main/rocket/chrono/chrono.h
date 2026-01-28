@@ -1,7 +1,7 @@
 /**
  * @file chrono.h
  *
- * Utilities around `std::chrono`.
+ * Utilities around #std::chrono.
  */
 
 #pragma once

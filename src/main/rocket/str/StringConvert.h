@@ -212,7 +212,7 @@ private:
   mutable std::string data_;
 };
 
-/// @spec_rocket_StringConvert{`std::string`}
+/// @spec_rocket_StringConvert{#std::string}
 template<>
 struct StringConvert<std::string> {
   using Type = std::string; ///< @type_alias
@@ -226,15 +226,15 @@ struct StringConvert<std::string> {
   std::string toString(const Type& val) const noexcept { return val; }
 
   /**
-   * Converts @p str to a `std::string`.
+   * Converts @p str to a #std::string.
    *
    * @param str the string to convert
-   * @return a `std::string` value
+   * @return a #std::string value
    */
   Type toType(std::string_view str) const { return std::string(str); }
 };
 
-/// @spec_rocket_StringConvert{`std::string_view`}
+/// @spec_rocket_StringConvert{#std::string_view}
 template<>
 struct StringConvert<std::string_view> {
   using Type = std::string_view; ///< @type_alias
@@ -248,10 +248,10 @@ struct StringConvert<std::string_view> {
   std::string toString(Type val) const noexcept { return std::string(val); }
 
   /**
-   * Converts @p str to a `std::string_view`.
+   * Converts @p str to a #std::string_view.
    *
    * @param str the string to convert
-   * @return a `std::string_view` value
+   * @return a #std::string_view value
    */
   Type toType(std::string_view str) const { return str; }
 };

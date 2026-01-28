@@ -45,8 +45,8 @@
  *
  * - a `fmt::formatter` specialization so the class can be formatted using `fmt::format()`;
  * - `operator==`, `operator!=`, `operator<`, `operator>`;
- * - an `operator<<` for `std::ostream;
- * - a `std::hash` specialization for the class.
+ * - an `operator<<` for #std::ostream;
+ * - a #std::hash specialization for the class.
  *
  * @note This macro must be called in the global namespace.
  *
@@ -72,7 +72,7 @@
 // Variables ................................................................................................
 
 /**
- * Makes a variable-reference container, which is in fact a `std::tuple` of #rocket::reflect::VarRef
+ * Makes a variable-reference container, which is in fact a #std::tuple of #rocket::reflect::VarRef
  * instances.
  *
  * @param seq a sequence of variable names
@@ -509,7 +509,7 @@ writeImpl(nio::Sink& out, const T& val, const Tuple& refs, std::index_sequence<I
  * @param lhs the left-hand side
  * @param rhs the right-hand side
  * @param refs the references
- * @return whether @p lhs is equal to @p rhs as defined by `std::equal_to`
+ * @return whether @p lhs is equal to @p rhs as defined by #std::equal_to
  */
 template<typename T, typename... Ref> requires (... && IsMemberRef<Ref>::value)
 inline bool
@@ -518,12 +518,12 @@ eq(const T& lhs, const T& rhs, const std::tuple<Ref...>& refs) {
 }
 
 /**
- * `ne` function for member references.
+ * `ne`function for member references.
  *
  * @param lhs the left-hand side
  * @param rhs the right-hand side
  * @param refs the references
- * @return whether @p lhs is not equal to @p rhs as defined by `std::not_equal_to`
+ * @return whether @p lhs is not equal to @p rhs as defined by #std::not_equal_to
  */
 template<typename T, typename... Ref> requires (... && IsMemberRef<Ref>::value)
 inline bool
@@ -537,7 +537,7 @@ ne(const T& lhs, const T& rhs, const std::tuple<Ref...>& refs) {
  * @param lhs the left-hand side
  * @param rhs the right-hand side
  * @param refs the references
- * @return whether @p lhs is less than @p rhs as defined by `std::less`
+ * @return whether @p lhs is less than @p rhs as defined by #std::less
  */
 template<typename T, typename... Ref> requires (... && IsMemberRef<Ref>::value)
 inline bool
@@ -551,7 +551,7 @@ lt(const T& lhs, const T& rhs, const std::tuple<Ref...>& refs) {
  * @param lhs the left-hand side
  * @param rhs the right-hand side
  * @param refs the references
- * @return whether @p lhs is greater than @p rhs as defined by `std::greater`
+ * @return whether @p lhs is greater than @p rhs as defined by #std::greater
  */
 template<typename T, typename... Ref> requires (... && IsMemberRef<Ref>::value)
 inline bool
@@ -573,7 +573,7 @@ hash(const T& val, const std::tuple<Ref...>& refs) {
 }
 
 /**
- * @fn_write{`std::tuple<MemberRef...>`}
+ * @fn_write{`T MemberRef...`}
  * @param refs the references
  */
 template<typename T, typename... Ref> requires (... && IsMemberRef<Ref>::value)
@@ -584,7 +584,7 @@ write(nio::Sink& out, const T& val, const std::tuple<Ref...>& refs) {
 
 } // namespace rocket::reflect
 
-// `fmt::formatter<VarRef>` ---------------------------------------------------------------------------------
+// #fmt::formatter<#VarRef> ---------------------------------------------------------------------------------
 
 /**
  * @spec_fmt_formatter{#rocket::reflect::VarRef}
@@ -623,7 +623,7 @@ private:
   formatter<rocket::PurgeType<T>, C> underlying_;
 };
 
-// `std::hash<VarRef>` --------------------------------------------------------------------------------------
+// #std::hash<#VarRef> --------------------------------------------------------------------------------------
 
 namespace std { // Doxygen demands this
 

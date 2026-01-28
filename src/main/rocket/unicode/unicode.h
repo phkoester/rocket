@@ -52,13 +52,13 @@ struct CodePoint {
   // cppcheck-suppress noExplicitConstructor
   constexpr CodePoint(char32 val) noexcept : val_(val) {}
 
-  /// @member_op_cast{`char32`}
+  /// @member_op_cast{#char32}
   constexpr operator char32() const noexcept { return val_; }
 
-  /// @member_op_cast{`std::string`}
+  /// @member_op_cast{#std::string}
   explicit operator std::string() const;
 
-  /// @member_op_cast{`std::u32string`}
+  /// @member_op_cast{#std::u32string}
   constexpr explicit operator std::u32string() const noexcept { return { val_ }; }
 
   /**
@@ -164,7 +164,7 @@ std::ostream& operator<<(std::ostream& lhs, CodePoint rhs);
 /**
  * @spec_fmt_formatter{#rocket::unicode::CodePoint}
  *
- * This formatter uses the same format specifiers as the underlying formatter for type `std::string`.
+ * This formatter uses the same format specifiers as the underlying formatter for type #std::string.
  */
 template<typename C>
 struct fmt::formatter<rocket::unicode::CodePoint, C> {
@@ -197,7 +197,7 @@ private:
   fmt::formatter<basic_string_view<C>, C> underlying_;
 };
 
-// `std::hash<CodePoint>` -----------------------------------------------------------------------------------
+// #std::hash<#CodePoint> -----------------------------------------------------------------------------------
 
 /// @spec_std_hash{#rocket::unicode::CodePoint}
 template<>
@@ -211,7 +211,7 @@ struct std::hash<rocket::unicode::CodePoint> {
   inline u64 operator()(rocket::unicode::CodePoint val) const noexcept { return val.hash(); }
 };
 
-// `std::numeric_limits<CodePoint>` -------------------------------------------------------------------------
+// #std::numeric_limits<#CodePoint>` ------------------------------------------------------------------------
 
 /// @spec_std_numeric_limits{#rocket::unicode::CodePoint}
 template<>

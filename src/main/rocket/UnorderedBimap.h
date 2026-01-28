@@ -24,7 +24,7 @@ using UnorderedBimap =
     boost::bimaps::bimap<boost::bimaps::unordered_set_of<K>, boost::bimaps::unordered_set_of<V>>;
 
 /**
- * Convenience function to make an #rocket::UnorderedBimap of a `std::initializer_list`.
+ * Convenience function to make an #rocket::UnorderedBimap of a #std::initializer_list.
  *
  * @tparam K the map's left key type
  * @tparam V the map's left value type
@@ -98,7 +98,7 @@ PrintTo(const bimap<A, B>& val, std::ostream* os) {
  * @spec_fmt_formatter{`boost::bimaps::bimap`}
  *
  * This formatter formats the left map of a #rocket::UnorderedBimap. It uses the same format specifiers as
- * the underlying formatter for type `std::map`.
+ * the underlying formatter for type #std::map.
  */
 template<typename A, typename B, typename C>
 struct fmt::formatter<boost::bimaps::bimap<A, B>, C> {

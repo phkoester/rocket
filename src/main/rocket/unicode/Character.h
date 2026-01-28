@@ -51,7 +51,7 @@ struct BasicCharacter {
   constexpr BasicCharacter(const BasicCharacter<Char, std::basic_string<Char>>& rhs ) :
       str_(static_cast<std::basic_string_view<C>>(rhs)) {}
 
-  /// @member_op_cast{`std::basic_string_view<C>`}
+  /// @member_op_cast{#std::basic_string_view}
   constexpr operator std::basic_string_view<C>() const noexcept { return str_; }
 
   /**

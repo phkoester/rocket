@@ -22,7 +22,7 @@ TEST(Exception, printException1) {
         nio::StringSink str1;
         printException(str1, ex3);
         EXPECT_THAT(str1.str(), AllOf(
-            // Linux: `std::_Nested_exception`, Windows: `std::_With_nested_v2`
+            // Linux: #std::_Nested_exception, Windows: #std::_With_nested_v2
             containsRegex("An instance of `std::_.*ested.*<rocket::InvalidState>` was thrown: .*\\.cc:\\d+: oops3\n"),
             containsRegex("Caused by an instance of `std::_.*ested.*<rocket::InvalidArgument>`: .*\\.cc:\\d+: Parameter `name`: oops2\n"),
             // Linux: `char const*`, Windows: `charconst*__ptr64`

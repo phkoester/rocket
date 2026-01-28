@@ -101,7 +101,7 @@ private:
 // `fmt::formatter<std::optional>` --------------------------------------------------------------------------
 
 /**
- * @spec_fmt_formatter{`std::optional`}
+ * @spec_fmt_formatter{#std::optional}
  *
  * This formatter uses the same format specifiers as the underlying formatter for type @p T.
  */
@@ -140,7 +140,7 @@ private:
 
 // `fmt::formatter<std::monostate>` -------------------------------------------------------------------------
 
-/// @spec_fmt_formatter{`std::monostate`}
+/// @spec_fmt_formatter{#std::monostate}
 template<typename C>
 struct formatter<std::monostate, C> {
   /// @cond undocumented

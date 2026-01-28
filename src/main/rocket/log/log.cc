@@ -420,7 +420,7 @@ formatExecTime(const TimePoint& t1, const TimePoint& t2) {
 string
 formatTimePoint(const TimePoint& tp) {
   auto formatImpl = [](const auto& ctp) {
-    // Note we're using `std::format` here because `fmt::format` doesn't support `chrono::zoned_time`
+    // Note we're using #std::format here because #fmt::format doesn't support #chrono::zoned_time
     if (logFmt.utc) {
       return std::format("{:%FT%TZ} ", ctp);
     } else {

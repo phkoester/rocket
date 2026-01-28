@@ -82,7 +82,7 @@ using namespace testing;
 }
 
 /**
- * Checks the state of a `std::istream`.
+ * Checks the state of a #std::istream.
  *
  * @param is the input stream
  * @param _fail the expected value of `is.fail()`

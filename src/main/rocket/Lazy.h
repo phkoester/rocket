@@ -14,10 +14,10 @@
 
 namespace rocket {
 
-// `Lazy` ---------------------------------------------------------------------------------------------------
+// #Lazy ----------------------------------------------------------------------------------------------------
 
 /**
- * A lazy value that is evaluated on demand using a `std::function`.
+ * A lazy value that is evaluated on demand using a #std::function.
  *
  * @tparam T the type of the lazy value
  *
@@ -56,10 +56,10 @@ private:
   mutable std::optional<T> val_;
 };
 
-// `ThreadSafeLazy` -----------------------------------------------------------------------------------------
+// #ThreadSafeLazy ------------------------------------------------------------------------------------------
 
 /**
- * A lazy value that is evaluated on demand using a `std::function`.
+ * A lazy value that is evaluated on demand using a #std::function.
  *
  * @tparam T the type of the lazy value
  *
@@ -101,7 +101,7 @@ private:
 
   const std::function<T()> fn_;
   mutable std::optional<T> val_;
-  mutable std::mutex mutex_; // Guards `val_`
+  mutable std::mutex mutex_; // Guards #val_
 };
 
 } // namespace rocket

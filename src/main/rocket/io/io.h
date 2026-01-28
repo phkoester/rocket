@@ -31,7 +31,7 @@ inline std::istringstream is() { return std::istringstream(); }
 inline std::ispanstream is(std::string_view str) { return std::ispanstream(str); }
 
 /**
- * Similar to `std::istream::tellg`, but leaves @p is unchanged and returns the actual current position
+ * Similar to #std::istream::tellg, but leaves @p is unchanged and returns the actual current position
  * rather than -1 if `is.fail()` returns `true`.
  *
  * @param is the input stream

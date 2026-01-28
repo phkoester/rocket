@@ -172,7 +172,7 @@ setImpl(std::string_view name, const optional<string>& value, bool replace) {
 
 // Functions ------------------------------------------------------------------------------------------------
 
-vector<std::byte> // MSVC needs `std::byte`
+vector<std::byte> // MSVC needs #std::byte
 exec(const string& cl) {
   vector<std::byte> ret;
   vector<std::byte> buf(1'024);
@@ -192,7 +192,7 @@ exec(const string& cl) {
   return ret;
 }
 
-vector<std::byte> // MSVC needs `std::byte`
+vector<std::byte> // MSVC needs #std::byte
 exec(const vector<string_view>& args) {
   return exec(makeCl(args));
 }

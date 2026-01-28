@@ -29,7 +29,7 @@ struct Regex {
 
 /**
  * Implements polymorphic matchers for #matchesRegex and #containsRegex, which can be used as a `Matcher<T>`
- * as long as @p T can be converted to `std::string`.
+ * as long as @p T can be converted to #std::string.
  */
 struct MatchesRegexMatcher {
   MatchesRegexMatcher(std::shared_ptr<const Regex> regex, bool fullMatch) :
@@ -72,7 +72,7 @@ struct MatchesRegexMatcher {
   }
 
   /**
-   * Matches anything that can convert to `std::string`.
+   * Matches anything that can convert to #std::string.
    *
    * This is a template, not just a plain function with `const std::string&`, because `absl::string_view` has
    * some interfering nonexplicit constructors.
@@ -99,7 +99,7 @@ private:
 /**
  * Matches a string that contains regular expression @p regex.
  *
- * The implementation is backed by `std::regex`.
+ * The implementation is backed by #std::regex.
  *
  * @param regex a pointer to an `internal::Regex`
  * @return a matcher
@@ -112,7 +112,7 @@ containsRegex(std::shared_ptr<const internal::Regex> regex) {
 /**
  * Matches a string that contains regular expression @p pattern.
  *
- * The implementation is backed by `std::regex`.
+ * The implementation is backed by #std::regex.
  *
  * @tparam T the pattern's string type
  * @param pattern a regular expression
@@ -127,7 +127,7 @@ containsRegex(const testing::internal::StringLike<T>& pattern) {
 /**
  * Matches a string that fully matches regular expression @p regex.
  *
- * The implementation is backed by `std::regex`.
+ * The implementation is backed by #std::regex.
  *
  * @param regex a pointer to an `internal::Regex`
  * @return a matcher
@@ -140,7 +140,7 @@ matchesRegex(std::shared_ptr<const internal::Regex> regex) {
 /**
  * Matches a string that fully matches regular expression @p pattern.
  *
- * The implementation is backed by `std::regex`.
+ * The implementation is backed by #std::regex.
  *
  * @tparam T the pattern's string type
  * @param pattern a regular expression
@@ -168,7 +168,7 @@ throws(const Matchers&... matchers) {
       testing::internal::ExceptionMatcherImpl<Exception>(AllOf(matchers...)));
 }
 
-// `rocket::InputFailure` ...................................................................................
+// #rocket::InputFailure ....................................................................................
 
 /**
  * Matches a #rocket::InputFailure that matches @p positionMatcher and @p whatMatcher.

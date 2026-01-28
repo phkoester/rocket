@@ -902,7 +902,7 @@ StreamSource::tell() {
   if (result < 0) {
     return NPOS;
   }
-  return static_cast<u64>(result); // `safe` doesn't work with `std::ios::pos_type`
+  return static_cast<u64>(result); // #boost::safe_numerics::safe doesn't work with #std::ios::pos_type
 }
 
 bool

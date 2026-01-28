@@ -17,7 +17,7 @@ constexpr u64 CHUNK_SIZE = 1'024;
 constexpr u64 N = 10;
 constexpr u64 ITERATIONS = FILE_SIZE / CHUNK_SIZE;
 
-// `TEST` ---------------------------------------------------------------------------------------------------
+// #TEST ----------------------------------------------------------------------------------------------------
 
 TEST(nio, FileSink) {
   string chunk(CHUNK_SIZE, ' '); // cppcheck-suppress variableScope

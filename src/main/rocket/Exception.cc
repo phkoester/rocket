@@ -169,7 +169,7 @@ whatExceptionPtr(nio::Sink& out, u64 level, const exception_ptr& ptr) {
 
 namespace rocket {
 
-// `InvalidArgument` ----------------------------------------------------------------------------------------
+// #InvalidArgument -----------------------------------------------------------------------------------------
 
 InvalidArgument::InvalidArgument(
     string_view name,
@@ -179,7 +179,7 @@ InvalidArgument::InvalidArgument(
     Exception(fmt::format("Parameter `{}`: {}", name, msg), std::move(sl), std::move(st)),
     Base(str::message::withSourceLocation(Exception::message(), Exception::sourceLocation())) {}
 
-// `InvalidState` -------------------------------------------------------------------------------------------
+// #InvalidState --------------------------------------------------------------------------------------------
 
 InvalidState::InvalidState(
     string_view msg,
@@ -188,7 +188,7 @@ InvalidState::InvalidState(
     Exception(msg, std::move(sl), std::move(st)),
     Base(str::message::withSourceLocation(Exception::message(), Exception::sourceLocation())) {}
 
-// `Overflow` -----------------------------------------------------------------------------------------------
+// #Overflow ------------------------------------------------------------------------------------------------
 
 Overflow::Overflow(
   const type_info& type,
@@ -196,6 +196,16 @@ Overflow::Overflow(
   optional<source_location>&& sl,
   optional<stacktrace>&& st) :
   Exception(str::message::overflow(type, msg), std::move(sl), std::move(st)),
+  Base(str::message::withSourceLocation(Exception::message(), Exception::sourceLocation())) {}
+
+// #Underflow ------------------------------------------------------------------------------------------------
+
+Underflow::Underflow(
+  const type_info& type,
+  string_view msg,
+  optional<source_location>&& sl,
+  optional<stacktrace>&& st) :
+  Exception(str::message::underflow(type, msg), std::move(sl), std::move(st)),
   Base(str::message::withSourceLocation(Exception::message(), Exception::sourceLocation())) {}
 
 // Functions ------------------------------------------------------------------------------------------------

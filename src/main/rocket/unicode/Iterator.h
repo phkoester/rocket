@@ -8,7 +8,7 @@
 
 #include "rocket/UnorderedBimap.h"
 
-#include <algorithm> // `std::min`
+#include <algorithm> // #std::min
 
 namespace rocket::unicode {
 

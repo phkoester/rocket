@@ -8,7 +8,6 @@ PROJECT_NAME     = Rocket Test
 INPUT            = src/test
 FILE_PATTERNS    = *.h
 OUTPUT_DIRECTORY = $(BUILD_DIR)/src/test/doc
-
 EXCLUDE          =
 
 # EOF

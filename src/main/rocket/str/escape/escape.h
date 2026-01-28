@@ -1,7 +1,7 @@
 /**
  * @file escape.h
  *
- * Escaped strings, offering an interface similar to `std::quoted`.
+ * Escaped strings, offering an interface similar to #std::quoted.
  */
 
 #pragma once

@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include "rocket/rocket.h" // `type_info` for MSVC
+#include "rocket/rocket.h" // #std::type_info for MSVC
 #include "rocket/nio/nio-fwd.h"
 
 #include <optional>
@@ -42,7 +42,7 @@
 
 namespace rocket {
 
-// `Exception` ----------------------------------------------------------------------------------------------
+// #Exception -----------------------------------------------------------------------------------------------
 
 /**
  * A simple class that all Rocket exceptions derive from in addition to their base classes.
@@ -102,7 +102,7 @@ private:
   const std::optional<std::stacktrace> st_;
 };
 
-// `InvalidArgument` ----------------------------------------------------------------------------------------
+// #InvalidArgument -----------------------------------------------------------------------------------------
 
 /**
  * An exception indicating an invalid argument.
@@ -128,7 +128,7 @@ struct InvalidArgument : Exception, std::invalid_argument {
   ~InvalidArgument() override {}
 };
 
-// `InvalidState` -------------------------------------------------------------------------------------------
+// #InvalidState --------------------------------------------------------------------------------------------
 
 /**
  * An exception indicating an invalid state.
@@ -152,7 +152,7 @@ struct InvalidState : Exception, std::runtime_error {
   ~InvalidState() override {}
 };
 
-// `Overflow` -----------------------------------------------------------------------------------------------
+// #Overflow ------------------------------------------------------------------------------------------------
 
 /**
  * An exception indicating a type overflow.
@@ -188,7 +188,46 @@ struct Overflow : Exception, std::overflow_error {
     std::optional<std::source_location>&& sl = ROCKET_EXCEPTION_SL,
     std::optional<std::stacktrace>&& st = ROCKET_EXCEPTION_ST);
 
-    ~Overflow() override {}
+  ~Overflow() override {}
+};
+
+// #Underflow ------------------------------------------------------------------------------------------------
+
+/**
+ * An exception indicating a type underflow.
+ */
+ struct Underflow : Exception, std::underflow_error {
+  /// @type_base
+  using Base = std::underflow_error;
+
+  /**
+   * @ctor
+   *
+   * @param type the type
+   * @param sl the source location
+   * @param st the stack trace
+   */
+  explicit Underflow(
+      const std::type_info& type,
+      std::optional<std::source_location>&& sl = ROCKET_EXCEPTION_SL,
+      std::optional<std::stacktrace>&& st = ROCKET_EXCEPTION_ST) :
+      Underflow(type, "", std::move(sl), std::move(st)) {}
+
+  /**
+   * @ctor
+   *
+   * @param type the type
+   * @param msg additional message
+   * @param sl the source location
+   * @param st the stack trace
+   */
+  Underflow(
+    const std::type_info& type,
+    std::string_view msg,
+    std::optional<std::source_location>&& sl = ROCKET_EXCEPTION_SL,
+    std::optional<std::stacktrace>&& st = ROCKET_EXCEPTION_ST);
+
+  ~Underflow() override {}
 };
 
 // Functions ------------------------------------------------------------------------------------------------

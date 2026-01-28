@@ -29,7 +29,7 @@ static constexpr u64 DEFAULT_BUFFER_SIZE = 64 * 1'024; // 64 KiB
   */
 static constexpr u64 MIN_BUFFER_SIZE = 64;
 
-// `Io` -----------------------------------------------------------------------------------------------------
+// #Io ------------------------------------------------------------------------------------------------------
 
 /**
  * The base class for #rocket::nio::Sink and #rocket::nio::Source.
@@ -97,7 +97,7 @@ protected:
   bool checkOpen();
 };
 
-// `Sink` ---------------------------------------------------------------------------------------------------
+// #Sink ----------------------------------------------------------------------------------------------------
 
 /**
  * Sink base class.
@@ -396,10 +396,10 @@ private:
   u64 pos_ = 0;
 };
 
-// `StreamSink` ---------------------------------------------------------------------------------------------
+// #StreamSink ----------------------------------------------------------------------------------------------
 
 /**
- * The class `StreamSink` provides support for `std::ostream`.
+ * The class #StreamSink provides support for #std::ostream.
  *
  * Using I/O streams is generally discouraged, because it’s not partable and not efficient. Wherever
  * possible, use #rocket::nio::FileSink instead.
@@ -679,10 +679,10 @@ ROCKET_TEST_PRIVATE:
   bool terminal(i32* fd = nullptr) override;
 };
 
-// `StreamSource` -------------------------------------------------------------------------------------------
+// #StreamSource --------------------------------------------------------------------------------------------
 
 /**
- * The class `StreamSource` provides support for `std::istream`.
+ * The class #StreamSource provides support for #std::istream.
  *
  * Using I/O streams is generally discouraged, because it’s not partable and not efficient. Wherever
  * possible, use #rocket::nio::FileSource instead.
@@ -712,7 +712,7 @@ private:
   std::istream& is_;
 };
 
-// `StringSource` -------------------------------------------------------------------------------------------
+// #StringSource --------------------------------------------------------------------------------------------
 
 /**
  * A sourcde that reads from a string.

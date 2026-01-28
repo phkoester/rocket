@@ -25,7 +25,7 @@
  *
  * In particular, it provides
  *
- * - an `operator<<` for `std::ostream`;
+ * - an `operator<<` for #std::ostream;
  * - a `fmt::formatter` specialization so the enum can be formatted using `fmt::format()`;
  * - a #rocket::Enum specialization so #rocket::str::StringConvert may be used with the enum.
  *
@@ -153,7 +153,7 @@
 
 namespace rocket {
 
-// `Enum` ---------------------------------------------------------------------------------------------------
+// #Enum ----------------------------------------------------------------------------------------------------
 
 /**
  * A class template for Rocket enums, providing some additional information about an enum.
