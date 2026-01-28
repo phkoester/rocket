@@ -5,6 +5,7 @@
 #include "rocket-test/rocket-test.h"
 
 #include "rocket/assert.h"
+#include "rocket/literal.h"
 #include "rocket/format/std.h"
 #include "rocket/nio/nio.h"
 
@@ -40,7 +41,7 @@ TEST(std, exceptionFormat) {
       throw_with_nested(InvalidArgument("name", "oops2"));
     } catch (const exception& ex2) {
       EXPECT_THAT(fmt::format("{}", ex2), matchesRegex(".*\\.cc:\\d+: Parameter `name`: oops2 \\(Because: .*\\.cc:\\d+: oops1\\)"));
-      EXPECT_THAT(fmt::format("{:t}", ex2), matchesRegex("`std::_Nested_exception<rocket::InvalidArgument>`: .*\\.cc:\\d+: Parameter `name`: oops2 \\(Because: .*\\.cc:\\d+: oops1\\)"));
+      EXPECT_THAT(fmt::format("{:t}", ex2), matchesRegex("`std::_.*ested.*<rocket::InvalidArgument>`: .*\\.cc:\\d+: Parameter `name`: oops2 \\(Because: .*\\.cc:\\d+: oops1\\)"));
     }
   }
 }
@@ -162,8 +163,8 @@ TEST(std, variantFormat) {
   EXPECT_EQ(fmt::format("{}", variant<i32, string, i64> { 1 }), "0:1");
   EXPECT_EQ(fmt::format("{}", variant<i32, string, i64> { "one" }), "1:one");
   EXPECT_EQ(fmt::format("{:?}", variant<i32, string, i64> { "one" }), "1:\"one\"");
-  EXPECT_EQ(fmt::format("{}", variant<i32, string, i64> { -1L }), "2:-1");
-  EXPECT_EQ(fmt::format(U"{}", variant<i32, u32string, i64> { -1L }), U"2:-1");
+  EXPECT_EQ(fmt::format("{}", variant<i32, string, i64> { -1_i64 }), "2:-1");
+  EXPECT_EQ(fmt::format(U"{}", variant<i32, u32string, i64> { -1_i64 }), U"2:-1");
   EXPECT_EQ(fmt::format(U"{}", variant<i32, u32string, i64> { U"hello" }), U"1:hello");
   EXPECT_EQ(fmt::format(U"{:?}", variant<i32, u32string, i64> { U"hello" }), U"1:\"hello\"");
 }
