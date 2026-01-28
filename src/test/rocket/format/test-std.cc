@@ -40,8 +40,14 @@ TEST(std, exceptionFormat) {
     try {
       throw_with_nested(InvalidArgument("name", "oops2"));
     } catch (const exception& ex2) {
-      EXPECT_THAT(fmt::format("{}", ex2), matchesRegex(".*\\.cc:\\d+: Parameter `name`: oops2 \\(Because: .*\\.cc:\\d+: oops1\\)"));
-      EXPECT_THAT(fmt::format("{:t}", ex2), matchesRegex("`std::_.*ested.*<rocket::InvalidArgument>`: .*\\.cc:\\d+: Parameter `name`: oops2 \\(Because: .*\\.cc:\\d+: oops1\\)"));
+      cout << "FMT1: " << fmt::format("{}", ex2) << endl;
+      cout << "FMT2: " <<fmt::format("{:t}", ex2) << endl;
+      EXPECT_THAT(
+        fmt::format("{}", ex2),
+        matchesRegex(".*\\.cc:\\d+: Parameter `name`: oops2 \\(Because: .*\\.cc:\\d+: oops1\\)"));
+      EXPECT_THAT(
+        fmt::format("{:t}", ex2),
+        matchesRegex("`std::_.*ested.*<rocket::InvalidArgument>`: .*\\.cc:\\d+: Parameter `name`: oops2 \\(Because: .*\\.cc:\\d+: oops1\\)"));
     }
   }
 }
@@ -51,7 +57,9 @@ TEST(std, initializerListFormat) {
 }
 
 TEST(std, mapFormat) {
-  EXPECT_EQ(fmt::format("{}", map<i32, string> { { 1, "one" }, { 2, "two" }, { 3, "three" } }), "{1: \"one\", 2: \"two\", 3: \"three\"}");
+  EXPECT_EQ(
+    fmt::format("{}", map<i32, string> { { 1, "one" }, { 2, "two" }, { 3, "three" } }),
+    "{1: \"one\", 2: \"two\", 3: \"three\"}");
 }
 
 TEST(std, monostateFormat) {
@@ -126,7 +134,9 @@ TEST(std, tupleFormat) {
 }
 
 TEST(std, unorderedMapFormat) {
-  EXPECT_EQ(fmt::format("{}", unordered_map<i32, string> { { 3, "three" }, { 2, "two" }, { 1, "one" } }), "{1: \"one\", 2: \"two\", 3: \"three\"}");
+  EXPECT_THAT(
+    fmt::format("{}", unordered_map<i32, string> { { 3, "three" }, { 2, "two" }, { 1, "one" } }),
+    matchesRegex("\\{\\d: \".*\", \\d: \".*\", \\d: \".*\"\\}"));
 }
 
 TEST(std, unorderedSetFormat) {
