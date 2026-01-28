@@ -31,17 +31,17 @@ TEST(std, exceptionFormat) {
     u32string s32 = fmt::format(U"{}", ex1);
     EXPECT_NE(s32.find(U"oops1"), u32string::npos);
 
+    cout << "FMT1: " << fmt::format("{:?}", ex1) << endl; // XXX
     auto msg = regex_replace(fmt::format("{:?}", ex1), regex("\\n"), "|");
     EXPECT_THAT(msg, matchesRegex(".*\\.cc:\\d+: oops1\\|   0# .*.*# "));
 
+    cout << "FMT2: " <<fmt::format("{:?t}", ex1) << endl; // XXX
     msg = regex_replace(fmt::format("{:?t}", ex1), regex("\\n"), "|");
     EXPECT_THAT(msg, matchesRegex("`rocket::InvalidState`: .*\\.cc:\\d+: oops1\\|   0# .*.*# "));
 
     try {
       throw_with_nested(InvalidArgument("name", "oops2"));
     } catch (const exception& ex2) {
-      cout << "FMT1: " << fmt::format("{}", ex2) << endl;
-      cout << "FMT2: " <<fmt::format("{:t}", ex2) << endl;
       EXPECT_THAT(
         fmt::format("{}", ex2),
         matchesRegex(".*\\.cc:\\d+: Parameter `name`: oops2 \\(Because: .*\\.cc:\\d+: oops1\\)"));
