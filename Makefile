@@ -1,6 +1,11 @@
 #
 # Makefile
 #
+# This Makefile will only work in Linux, with Gaia installed and properly configured. It's for active
+# development purposes only.
+#
+# To build the project using CMake, see `README.md`.
+#
 # Parameters:
 #
 # - ARGS
@@ -16,16 +21,20 @@
 # - VERBOSE
 #     Produce verbose output
 #
-# Targets:
+# Some inherited targets:
+#
+# - check
+# - doc
+# - info
+#
+# Build-related targets:
 #
 # - build (default)
-# - check (inherited)
-# - clean
-# - doc
-# - patch
+# - configure
 # - test
 # - test-terminal
-# - install
+# - clean
+# - patch
 #
 # Targets for executables:
 #
@@ -33,30 +42,19 @@
 # - print-args
 # - toy
 #
-# This Makefile will only work in Linux, with Gaia installed and properly configured. It's for active
-# development purposes only.
-#
-# To build the project using CMake, see `README.md`.
-#
 
 # The default target
 .PHONY: build
-build: compile_commands.json
+build: cmake-build
 
-COMPILE_DEPS := build.cmd cmake/base.cmake
+COMPILE_DEPS := make.cmd cmake/base.cmake
 
 include $(GAIA_DIR)/src/main/make/Makefile.mk
 
-.PHONY: clean
-clean:
-	@rm -rfv build install
+# Build-related targets -------------------------------------------------------------------------------------
 
-.PHONY: doc
-doc:
-	@mkdir -p $(BUILD_DIR)/src/main/doc
-	@doxygen $(DOXYGEN_FLAGS) src/main/Doxyfile
-	@mkdir -p $(BUILD_DIR)/src/test/doc
-	@doxygen $(DOXYGEN_FLAGS) src/test/Doxyfile
+.PHONY: configure
+configure: cmake-configure
 
 .PHONY: test
 test: cmake-test
@@ -66,29 +64,11 @@ test-terminal: build
 	@ROCKET_TEST_TERMINAL=1 $(BUILD_DIR)/src/test/test-rocket-system-terminal
 	@ROCKET_TEST_TERMINAL=1 $(BUILD_DIR)/src/test/test-rocket-unicode-Character
 
-# Manual install to `/usr/local`:
-#
-#   sudo cmake --install build/$GAIA_BUILD_TYPE
-.PHONY: install
-install: build
-	cmake --install $(BUILD_DIR) --prefix install
+.PHONY: clean
+clean:
+	@rm -rfv build install
 
-.PHONY: bare
-bare: build
-	@LD_LIBRARY_PATH=$(BUILD_DIR)/src/main:$(LD_LIBRARY_PATH) \
-	  $(BUILD_DIR)/src/main/bare $(ARGS)
-
-.PHONY: print-args
-print-args: build
-	@LD_LIBRARY_PATH=$(BUILD_DIR)/src/main:$(LD_LIBRARY_PATH) \
-	  $(BUILD_DIR)/src/main/print-args $(ARGS)
-
-.PHONY: toy
-toy: build
-	@LD_LIBRARY_PATH=$(BUILD_DIR)/src/main:$(LD_LIBRARY_PATH) \
-	  $(BUILD_DIR)/src/main/toy $(ARGS)
-
-# Patch -----------------------------------------------------------------------------------------------------
+# `patch` ...................................................................................................
 
 .PHONY: patch
 patch: build src/main/rocket/3rdparty/fmt/std.h src/main/rocket/3rdparty/scnlib/impl.h
@@ -116,5 +96,23 @@ src/main/rocket/3rdparty/scnlib/impl.h: $(BUILD_DIR)/_deps/scnlib-src/src/scn/im
 	  echo; \
 	  echo You have to patch src/main/rocket/3rdparty/scnlib/impl.cc manually! \
 	)
+
+
+# Executables -----------------------------------------------------------------------------------------------
+
+.PHONY: bare
+bare: build
+	@LD_LIBRARY_PATH=$(BUILD_DIR)/src/main:$(LD_LIBRARY_PATH) \
+	  $(BUILD_DIR)/src/main/bare $(ARGS)
+
+.PHONY: print-args
+print-args: build
+	@LD_LIBRARY_PATH=$(BUILD_DIR)/src/main:$(LD_LIBRARY_PATH) \
+	  $(BUILD_DIR)/src/main/print-args $(ARGS)
+
+.PHONY: toy
+toy: build
+	@LD_LIBRARY_PATH=$(BUILD_DIR)/src/main:$(LD_LIBRARY_PATH) \
+	  $(BUILD_DIR)/src/main/toy $(ARGS)
 
 # EOF

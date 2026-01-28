@@ -1,7 +1,7 @@
 ::
-:: build.cmd
+:: make.cmd
 ::
-:: THIS FILE IS AUTOMATICALLY COPIED. ONLY EDIT THE SOURCE FILE, WHICH IS `gaia-build.cmd`.
+:: ONLY EDIT THE ORIGINAL FILE, WHICH IS `gaia-make.cmd`.
 ::
 :: Usage: build [configure | build | test | test-terminal]
 ::

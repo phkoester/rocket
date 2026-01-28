@@ -1,7 +1,7 @@
 #
 # base.cmake
 #
-# THIS FILE IS AUTOMATICALLY COPIED. ONLY EDIT THE SOURCE FILE, WHICH IS `gaia-base.cmake`.
+# ONLY EDIT THE ORIGINAL FILE, WHICH IS `gaia-base.cmake`.
 #
 
 # Check prerequisites ---------------------------------------------------------------------------------------
@@ -95,7 +95,7 @@ set(BUILD_SHARED_LIBS_DEFAULT ${BUILD_SHARED_LIBS})
 # Set compiler definitions, features, and options -----------------------------------------------------------
 
 set(COMPILE_DEFS)
-set(COMPILE_FEATURES cxx_std_23)
+set(COMPILE_FEATURES cxx_std_23) # XXX
 set(COMPILE_FLAGS)
 
 # Set OS-specific compiler options --------------------------------------------------------------------------
