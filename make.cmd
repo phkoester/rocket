@@ -22,6 +22,8 @@
 
 @echo off
 
+setlocal
+
 if "%1" == "configure" (
   call :configure
   goto :eof
@@ -62,6 +64,7 @@ goto :eof
 if "%2" == "" (
   cmake --build --preset windows-release
 ) else (
+  echo Building target %2
   cmake --build --preset windows-release --target %2
 )
 if %errorlevel% neq 0 exit /b %errorlevel%
@@ -72,10 +75,23 @@ goto :eof
 
 :test
 
-if exist src\test (
+set TEST=%2
+if "%TEST%" == "" set TEST=test
+
+if "%TEST%" == "all" (
+   echo ALL
    ctest --preset windows-release
-   if %errorlevel% neq 0 exit /b %errorlevel%
+) else if "%TEST%" == "test" (
+   echo TEST
+   ctest --test-dir build\src\test --preset windows-release
+) else if "%TEST%" == "bench" (
+   echo BENCH
+   ctest --test-dir build\src\bench --preset windows-release
+) else (
+   echo PATTERN
+   ctest --preset windows-release -R %2
 )
+if %errorlevel% neq 0 exit /b %errorlevel%
 
 goto :eof
 
@@ -83,11 +99,10 @@ goto :eof
 
 :test-terminal
 
-setlocal
 set ROCKET_TEST_TERMINAL=1
+
 build\src\test\Release\test-rocket-system-terminal.exe
 build\src\test\Release\test-rocket-unicode-Character.exe
-endlocal
 
 goto :eof
 
