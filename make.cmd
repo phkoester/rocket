@@ -4,20 +4,11 @@
 :: ONLY EDIT THE ORIGINAL FILE, WHICH IS `gaia-make.cmd`.
 ::
 :: Usage:
-::   make                (calls `configure` and `build`)
+::   make                                                (calls `configure` and `build`)
 ::   make configure
 ::   make build [TARGET]
-::   make test
-::   make test-terminal  (for Rocket only)
-::
-:: To build a specific target:
-::
-::   > cmake --build --preset windows-release --target TARGET
-::
-:: To run specific tests:
-::
-::   > ctest --preset windows-release -R PATTERN -V
-::   > build\src\test\Release\test-NAME.exe
+::   make test  [all | bench | test (default) | PATTERN]
+::   make test-terminal                                  (for Rocket only)
 ::
 
 @echo off
@@ -62,10 +53,8 @@ goto :eof
 :build
 
 if [%1] == [] (
-  echo NO TARGET
   cmake --build --preset windows-release
 ) else (
-  echo TARGET %2
   cmake --build --preset windows-release --target %1
 )
 if %errorlevel% neq 0 exit /b %errorlevel%
@@ -80,17 +69,13 @@ set TEST=%1
 if not defined TEST set TEST=test
 
 if %TEST% == all (
-   echo ALL
    ctest --preset windows-release
 ) else if %TEST% == test (
-   echo TEST
    ctest --test-dir build\src\test --preset windows-release
 ) else if %TEST% == bench (
-   echo BENCH
    ctest --test-dir build\src\bench --preset windows-release
 ) else (
-   echo PATTERN
-   ctest --preset windows-release -R %2
+   ctest --preset windows-release -R %TEST% -V
 )
 if %errorlevel% neq 0 exit /b %errorlevel%
 

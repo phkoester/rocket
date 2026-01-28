@@ -17,7 +17,7 @@
 # - JOBS
 #     Number of jobs for GNU Make (0: none, N: N jobs, default: 2/3 nproc)
 # - TEST
-#     `all` , `test` (default), `bench`, or PATTERN
+#     `all` , `bench`, `test` (default), or PATTERN
 # - VERBOSE
 #     Produce verbose output
 #
