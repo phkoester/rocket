@@ -13,7 +13,6 @@
 #include <optional>
 #include <span>
 #include <tuple>
-#include <type_traits>
 
 namespace rocket {
 
@@ -149,7 +148,7 @@ value(const std::optional<T>& val) {
 
 } // namespace rocket
 
-// `std::hash<std::tuple>` ----------------------------------------------------------------------------------
+// #std::hash<#std::tuple> ----------------------------------------------------------------------------------
 
 /// @spec_std_hash{#std::tuple}
 template<typename... T>

@@ -246,7 +246,7 @@ protected:
   Sink() {}
 };
 
-// `BufferedSink` -------------------------------------------------------------------------------------------
+// #BufferedSink --------------------------------------------------------------------------------------------
 
 /**
  * A buffered sink that may be attached to another sink.
@@ -289,7 +289,7 @@ ROCKET_TEST_PRIVATE:
   void flushBuffer();
 };
 
-// `FileSink` -----------------------------------------------------------------------------------------------
+// #FileSink ------------------------------------------------------------------------------------------------
 
 /**
  * A file sink, backed by a `FILE` pointer.
@@ -350,7 +350,7 @@ ROCKET_TEST_PRIVATE:
   Params params_; ///< The parameters.
 };
 
-// `NullSink` -----------------------------------------------------------------------------------------------
+// #NullSink ------------------------------------------------------------------------------------------------
 
 /**
  * A null sink that never writes anything.
@@ -367,7 +367,7 @@ struct NullSink : Sink {
   u64 write(std::string_view in) override;
 };
 
-// `SpanSink` -----------------------------------------------------------------------------------------------
+// #SpanSink ------------------------------------------------------------------------------------------------
 
 /**
  * A sink that writes to a span, i.e. into preallocated memory.
@@ -427,7 +427,7 @@ private:
   std::ostream& os_;
 };
 
-// `StringSink` ---------------------------------------------------------------------------------------------
+// #StringSink ----------------------------------------------------------------------------------------------
 
 /**
  * A sink that appends to a string.
@@ -437,14 +437,14 @@ private:
  */
 struct StringSink : Sink {
   /**
-   * Makes a new `StringSink` with an owned string.
+   * Makes a new #StringSink with an owned string.
    */
   explicit StringSink() {}
 
   /**
-   * Makes a new `StringSink` with a string reference and no owned string.
+   * Makes a new #StringSink with a string reference and no owned string.
    *
-   * @param ref the string to write to. The reference must remain valid for the lifetime of the `StringSink`
+   * @param ref the string to write to. The reference must remain valid for the lifetime of the #StringSink
    */
   explicit StringSink(std::string& ref) : ptr_(&ref) {}
 
@@ -471,7 +471,7 @@ private:
   std::string owned_;
 };
 
-// `SeekMode` -----------------------------------------------------------------------------------------------
+// #SeekMode ------------------------------------------------------------------------------------------------
 
 /**
  * The seek mode for #rocket::nio::Source#seek.
@@ -482,7 +482,7 @@ enum class SeekMode {
   end ///< Seek relative to the end of the source
 };
 
-// `Source` -------------------------------------------------------------------------------------------------
+// #Source --------------------------------------------------------------------------------------------------
 
 /**
  * Source base class.
@@ -552,7 +552,7 @@ protected:
   Source() {}
 };
 
-// `BufferedSource` -----------------------------------------------------------------------------------------
+// #BufferedSource ------------------------------------------------------------------------------------------
 
 /**
  * A buffered source that may be attached to another source.
@@ -601,7 +601,7 @@ ROCKET_TEST_PRIVATE:
   u64 end_ = 0;
 };
 
-// `FileSource` ---------------------------------------------------------------------------------------------
+// #FileSource ----------------------------------------------------------------------------------------------
 
 /**
  * A file source, backed by a `FILE` pointer.
@@ -660,7 +660,7 @@ ROCKET_TEST_PRIVATE:
   Params params_; ///< The parameters.
 };
 
-// `NullSource` ---------------------------------------------------------------------------------------------
+// #NullSource ----------------------------------------------------------------------------------------------
 
 /**
  * A null source that never reads anything.

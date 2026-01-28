@@ -19,7 +19,7 @@ namespace rocket::math {
 
 namespace internal {
 
-// `BoundTraits` ............................................................................................
+// #BoundTraits .............................................................................................
 
 template<typename T, typename BoundType_, bool Left_, char Symbol_>
 struct BoundTraits {
@@ -81,7 +81,7 @@ template<typename T> using LeftOpen = BoundTraits<T, std::optional<T>, true, '('
 template<typename T> using RightClosed = BoundTraits<T, T, false, ']'>;
 template<typename T> using RightOpen = BoundTraits<T, std::optional<T>, false, ')'>;
 
-// `IntervalSymbols` ........................................................................................
+// #IntervalSymbols .........................................................................................
 
 template<typename C> requires IsChar<C>
 struct IntervalSymbols;
@@ -100,7 +100,7 @@ struct IntervalSymbols<char32> {
   static constexpr auto PositiveInfinity = U"+∞";
 };
 
-// `IntervalTraits` .........................................................................................
+// #IntervalTraits ..........................................................................................
 
 template<typename T, typename Left, typename Right>
 struct IntervalTraits;
@@ -236,7 +236,7 @@ unionImpl(
 
 } // namespace internal
 
-// `IntervalImpl` -------------------------------------------------------------------------------------------
+// #IntervalImpl --------------------------------------------------------------------------------------------
 
 /**
  * A mathematical interval for either integer or noninteger types.
@@ -411,7 +411,7 @@ operator|=(const IntervalImpl<T, Left, Right>& lhs, const IntervalImpl<T, Left, 
 
 } // namespace rocket::math
 
-// `fmt::formatter<IntervalImpl>` ---------------------------------------------------------------------------
+// #fmt::formatter<#IntervalImpl> ---------------------------------------------------------------------------
 
 /**
  * @spec_fmt_formatter{#rocket::math::IntervalImpl}

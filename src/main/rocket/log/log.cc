@@ -35,7 +35,7 @@ const unordered_map<LogLevel, string_view> LEVEL_DISPLAY {
   { LogLevel::trace, "TRACE"sv },
 };
 
-// `Entry` --------------------------------------------------------------------------------------------------
+// #Entry ---------------------------------------------------------------------------------------------------
 
 using Clock = std::chrono::system_clock;
 using TimePoint = std::chrono::time_point<Clock>;
@@ -49,7 +49,7 @@ struct Entry {
   const char* prettyFunction_;
   const char* file_;
   i32 line_;
-  optional<string> begin_; // Log entry from `logBegin` that is flushed only if necessary
+  optional<string> begin_; // Log entry from #logBegin that is flushed only if necessary
   const TimePoint time_;
 
   inline Entry(
@@ -69,7 +69,7 @@ struct Entry {
     time_(time) {}
 };
 
-// `Format` -------------------------------------------------------------------------------------------------
+// #Format --------------------------------------------------------------------------------------------------
 
 struct Format {
   bool execTimes = true; // x, X
@@ -121,7 +121,7 @@ struct Format {
 
 Format logFmt(ROCKET_LOG_FMT);
 
-// `Out` ----------------------------------------------------------------------------------------------------
+// #Out -----------------------------------------------------------------------------------------------------
 
 /// @NotThreadSafe
 struct Out {
@@ -335,7 +335,7 @@ recursive_mutex logMutex;
 // Defined log IDs
 auto definedIds = rocket::makeUnorderedBimap<LogLevel*, string_view>();
 
-// The `Out` instance
+// The #Out instance
 Out logOut;
 
 /**
@@ -547,7 +547,7 @@ logImpl(
 
 } // namespace
 
-// `LogLevel` -----------------------------------------------------------------------------------------------
+// #LogLevel -------------------------------------------------------------------------------------------------
 
 ROCKET_ENUM_DEFINE(rocket::log, LogLevel, LogLevel, (none)(error)(warn)(info)(debug)(trace));
 

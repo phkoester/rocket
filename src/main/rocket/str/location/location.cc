@@ -17,7 +17,7 @@
 using namespace rocket;
 using namespace std;
 
-// `PositionType` -------------------------------------------------------------------------------------------
+// #PositionType -------------------------------------------------------------------------------------------
 
 ROCKET_ENUM_DEFINE(rocket::str::location, PositionType, PositionType, (note)(warning)(error));
 
@@ -142,10 +142,10 @@ locations(string_view input, const vector<Position>& positions, const LocationsP
 
 void
 printLocations(
-    nio::Sink& out,
-    optional<string_view> input,
-    const LocationsResult& locationsResult,
-    const PrintLocationsParams& params) {
+  nio::Sink& out,
+  optional<string_view> input,
+  const LocationsResult& locationsResult,
+  const PrintLocationsParams& params) {
   ROCKET_CHECK(input, not (input && input->empty()), "May not be empty");
   ROCKET_CHECK(locationsResult, not locationsResult.params.source.empty());
 
@@ -182,7 +182,7 @@ printLocations(
 
     out.print("{: >{}d} | ", loc.line, lineNumberWidth);
 
-    // Escape the line as C-string, take tab setting from `locationsResult`, print the line as characers
+    // Escape the line as C-string, take tab setting from #locationsResult, print the line as characers
     // (skip zero-width characters)
 
     ROCKET_CHECK(input, input || loc.lineString, "Either `input` or `lineString` must be supplied");
@@ -192,7 +192,7 @@ printLocations(
     escape::Result result;
     string escapedLine = escape::escapeCString(line, { .tabSize=locationsResult.params.tabSize }, &result);
 
-    // For `escapedLine`, map `Character` index -> byte offset
+    // For #escapedLine, map #Character index -> byte offset
     auto iter = unicode::Iterator<char>(unicode::IteratorType::Character, escapedLine);
     auto segs = iter.nextSegments();
     UnorderedBimap<u64, u64> escapedLinePositions;
@@ -215,14 +215,14 @@ printLocations(
     out.write('\n');
 
     // Print the ranges, the caret, and the caption. This is harder than it looks at first sight, because we
-    // need to consider C-string escaping, tabs, UTF-8, and `Character` widths---all at the same time
+    // need to consider C-string escaping, tabs, UTF-8, and #Character widths---all at the same time
 
-    // Prepare the indicators string. `indicators` is in `Character`-width coordinates
+    // Prepare the indicators string. #indicators is in #Character-width coordinates
 
     u64 width = escapedLineWidth;
     string indicators(width, ' ');
 
-    // Make up a lambda that translates an input `char` position to an `indicators` position. This requires
+    // Make up a lambda that translates an input `char` position to an #indicators position. This requires
     // several steps
 
     auto indicatorPos = [&](u64 pos) -> u64 {
@@ -239,7 +239,7 @@ printLocations(
       ROCKET_EXPECT(rightIt != escapedLinePositions.right.end());
       pos = rightIt->second;
 
-      // 4. Translate escaped-line character position to `indicators` position
+      // 4. Translate escaped-line character position to #indicators position
       u64 ret = 0;
       for (u64 i = 0; i < pos; ++i) {
         ret += unicode::CharacterView<char>(segs[i]).width();
@@ -247,12 +247,12 @@ printLocations(
       return ret;
     };
 
-    // Place the ranges in `indicators`
+    // Place the ranges in #indicators
 
     for (auto range : loc.ranges) {
       // Obtain the intersection between range and printed line
       if (auto inter = range & loc.lineRange; not inter.empty()) {
-        // Translate intersection into `indicators` positions
+        // Translate intersection into #indicators positions
         u64 lower = indicatorPos(inter.lower);
         u64 upper = indicatorPos(*inter.upper);
         // Place the range
@@ -260,7 +260,7 @@ printLocations(
       }
     }
 
-    // Place the caret in `indicators`
+    // Place the caret in #indicators
 
     u64 caretPos = indicatorPos(loc.position);
     if (caretPos < indicators.size()) {

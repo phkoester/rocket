@@ -209,7 +209,7 @@
 
 namespace rocket::reflect {
 
-// `MemberRef` ..............................................................................................
+// #MemberRef ...............................................................................................
 
 /**
  * References on members that need an instance to evaluate.
@@ -265,7 +265,7 @@ struct IsMemberRefImpl<MemberRef<C, T>> : std::true_type {};
 
 template<typename T> struct IsMemberRef : IsMemberRefImpl<PurgeType<T>>::type {};
 
-// `VarRef` .................................................................................................
+// #VarRef ..................................................................................................
 
 /**
  * References on variables that need need no instance to evaluate.

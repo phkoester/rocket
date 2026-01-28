@@ -42,7 +42,7 @@ using namespace testing;
 #define ROCKET_TEST_PRIVATE public
 
 /**
- * Makes a new unique `filesystem::path` that points to a temporary test file.
+ * Makes a new unique #std::filesystem::path that points to a temporary test file.
  *
  * When the test process finishes, the file is automatically removed.
  */

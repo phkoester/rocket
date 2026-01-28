@@ -30,7 +30,7 @@ applyTo(T& dest, std::optional<std::string_view> arg) {
 template<>
 inline void
 applyTo(bool& dest, std::optional<std::string_view> arg) {
-  // For `bool` only, `arg` may be null
+  // For `bool` only, #arg may be null
   dest = arg ? str::toType<bool>(*arg) : true;
 }
 
@@ -44,7 +44,7 @@ applyTo(std::vector<T>& dest, std::optional<std::string_view> arg) {
 
 } // namespace internal
 
-// `OptionGroup` --------------------------------------------------------------------------------------------
+// #OptionGroup ---------------------------------------------------------------------------------------------
 
 /**
  * An option group with a title. Command-line options may be assigned a pointer to an option group. When
@@ -54,7 +54,7 @@ struct OptionGroup {
   std::string title; ///< The title.
 };
 
-// `Option` -------------------------------------------------------------------------------------------------
+// #Option --------------------------------------------------------------------------------------------------
 
 /**
  * A command-line option. Use the #of factory function to obtain an option and bind it to a destination. If
@@ -98,7 +98,7 @@ struct Option {
       group,
       name,
       shortName.transform([](auto val) { return unicode::Character<char>(val); }),
-      std::is_same_v<T, bool> ? false : true, // `takesValue` is `false` for `bool`, otherwise it is `true`
+      std::is_same_v<T, bool> ? false : true, // #takesValue is `false` for `bool`, otherwise it is `true`
       format,
       help,
       [&](std::optional<std::string_view> arg) { internal::applyTo(dest, arg); }
@@ -114,7 +114,7 @@ struct Option {
   Apply apply; ///< Callback function that applies the option's value.
 };
 
-// `CommandLineParams` --------------------------------------------------------------------------------------
+// #CommandLineParams ---------------------------------------------------------------------------------------
 
 /**
  * Parameters that configure the behavior of a #rocket::cl::CommandLine.
@@ -143,7 +143,7 @@ struct CommandLineParams {
   bool rocketOpts = true;
 };
 
-// `CommandLine` --------------------------------------------------------------------------------------------
+// #CommandLine ---------------------------------------------------------------------------------------------
 
 /**
  * A command-line parser and help-text formatter.
@@ -184,7 +184,7 @@ struct CommandLine {
    * rules.
    *
    * @param out the sink to write to
-   * @param status program exit status. If this is not `EXIT_SUCCESS` (0), the program exits with this status
+   * @param status program exit status. If this is not 0, the program exits with this status
    */
   void error(nio::Sink& out, i32 status = EXIT_SERIOUS_FAILURE) const;
 
@@ -193,7 +193,7 @@ struct CommandLine {
    *
    * @param ex the exception that was caught
    * @param out the sink to write to
-   * @param status program exit status. If this is not `EXIT_SUCCESS` (0), the program exits with this status
+   * @param status program exit status. If this is not 0, the program exits with this status
    */
   void handleException(
     const std::exception& ex,

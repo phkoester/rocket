@@ -49,14 +49,14 @@
 #define ROCKET_MUTEX_LOCK(val) auto BOOST_PP_SEQ_CAT((rocketLock)(__LINE__)(__)) = ::std::scoped_lock(val)
 
 /**
- * If `ns` is empty, expands to nothing. Otherwise, expands to `namespace ns {`.
+ * If @p ns is empty, expands to nothing. Otherwise, expands to `namespace ns {`.
  *
  * @param ns the namespace to begin, or empty if there is no namespace
  */
 #define ROCKET_NAMESPACE_BEGIN(ns) ROCKET_NAMESPACE_BEGIN__(ns)
 
 /**
- * If `ns` is empty, expands to nothing. Otherwise, expands to `}`.
+ * If @p ns is empty, expands to nothing. Otherwise, expands to `}`.
  *
  * @param ns the namespace to end, or empty if there is no namespace
  */

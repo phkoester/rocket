@@ -1,7 +1,7 @@
 /**
  * @file nio-fwd.h
  *
- * `nio` forward declations.
+ * `nio` forward declarations.
  */
 
 #pragma once

@@ -12,11 +12,11 @@
 #include "rocket/format/format.h"
 #include "rocket/unicode/ConvertTo.h"
 
-/// @attention This requires modifying `<fmt/std.h>`!
+/// @attention This requires modifying `fmt/std.h`!
 #define FMT_STD_NO_EXCEPTION_FORMATTER
-/// @attention This requires modifying `<fmt/std.h>`!
+/// @attention This requires modifying `fmt/std.h`!
 #define FMT_STD_NO_OPTIONAL_FORMATTER
-/// @attention This requires modifying `<fmt/std.h>`!
+/// @attention This requires modifying `fmt/std.h`!
 #define FMT_STD_NO_VARIANT_FORMATTER
 #include "rocket/3rdparty/fmt/std.h"
 
@@ -24,7 +24,7 @@
 
 namespace fmt {
 
-// `fmt::formatter<Exception>` ------------------------------------------------------------------------------
+// #fmt::formatter<#Exception> ------------------------------------------------------------------------------
 
 /**
  * @spec_fmt_formatter{`Exception`}
@@ -98,7 +98,7 @@ private:
   bool withType_ = false;
 };
 
-// `fmt::formatter<std::optional>` --------------------------------------------------------------------------
+// #fmt::formatter<#std::optional> --------------------------------------------------------------------------
 
 /**
  * @spec_fmt_formatter{#std::optional}
@@ -138,7 +138,7 @@ private:
   formatter<rocket::PurgeType<T>, C> underlying_;
 };
 
-// `fmt::formatter<std::monostate>` -------------------------------------------------------------------------
+// #fmt::formatter<#std::monostate> -------------------------------------------------------------------------
 
 /// @spec_fmt_formatter{#std::monostate}
 template<typename C>
@@ -164,7 +164,7 @@ private:
       detail::string_literal<C, '<', 'm', 'o', 'n', 'o', 's', 't', 'a', 't', 'e', '>'> {};
 };
 
-// `fmt::formatter<Variant>` --------------------------------------------------------------------------------
+// #fmt::formatter<#Variant> --------------------------------------------------------------------------------
 
 /**
  * @spec_fmt_formatter{`Variant`}

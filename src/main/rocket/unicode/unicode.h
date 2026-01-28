@@ -15,7 +15,7 @@
 
 namespace rocket::unicode {
 
-// `CodePoint` ----------------------------------------------------------------------------------------------
+// #CodePoint -----------------------------------------------------------------------------------------------
 
 /**
  * A code-point type.
@@ -159,7 +159,7 @@ std::ostream& operator<<(std::ostream& lhs, CodePoint rhs);
 
 } // namespace rocket::unicode
 
-// `fmt::formatter<CodePoint>` ------------------------------------------------------------------------------
+// #fmt::formatter<#CodePoint> ------------------------------------------------------------------------------
 
 /**
  * @spec_fmt_formatter{#rocket::unicode::CodePoint}
@@ -211,7 +211,7 @@ struct std::hash<rocket::unicode::CodePoint> {
   inline u64 operator()(rocket::unicode::CodePoint val) const noexcept { return val.hash(); }
 };
 
-// #std::numeric_limits<#CodePoint>` ------------------------------------------------------------------------
+// #std::numeric_limits<#CodePoint> -------------------------------------------------------------------------
 
 /// @spec_std_numeric_limits{#rocket::unicode::CodePoint}
 template<>
@@ -319,7 +319,7 @@ validate(std::u32string_view str, UnorderedBimap<u64, u64>* positions = nullptr)
 
 } // namespace utf32
 
-// Merge functions from `utf8` and `utf32` so they can be used as overloads ---------------------------------
+// Merge functions from #utf8 and #utf32 so they can be used as overloads -----------------------------------
 
 using utf8::nextCodePoint;
 using utf32::nextCodePoint;

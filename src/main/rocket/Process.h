@@ -92,19 +92,19 @@ const std::string& setThreadName(std::string_view name = "");
  * An exit value that may be used when the program cannot start, e.g. due to a a bad command line, a bad
  * environment or missing ressources.
  *
- * Once the program started operating properly, `EXIT_FAILURE` (1) should be used to indicate a problem.
+ * Once the program started operating properly, `EXIT_FAILURE` (1) may be used to indicate a problem.
  */
 constexpr i32 EXIT_SERIOUS_FAILURE = 2;
 
 /// The ID of the main thread.
 extern const std::thread::id MAIN_THREAD_ID;
 
-// `Process` ------------------------------------------------------------------------------------------------
+// #Process -------------------------------------------------------------------------------------------------
 
 /**
  * A central Rocket class to be used in `main`.
  *
- * You don't ever create a `Process` object. To access the singleton, use #rocket::process.
+ * You don't ever create a #Process object. To access the singleton, use #rocket::process.
  *
  * @ThreadSafe
  *

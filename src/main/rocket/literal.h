@@ -18,6 +18,8 @@ namespace rocket {
 
 namespace internal {
 
+// Internal -------------------------------------------------------------------------------------------------
+
 template<typename T, typename U>
 struct SignedLimit {
   static_assert(std::is_signed_v<T>);
@@ -92,7 +94,7 @@ makeUnsigned() {
   return makeUnsignedImpl<T, BASE, Chars...>(0);
 }
 
-// `SignedInteger` ------------------------------------------------------------------------------------------
+// #SignedInteger ...........................................................................................
 
 template<typename T, typename U, char... Chars>
 struct SignedInteger {
@@ -154,7 +156,7 @@ struct SignedInteger<T, U, '0', Chars...> {
       validateUnsigned<U, 8, Chars...>() && (makeUnsigned<U, 8, Chars...>() <= SignedLimit<T, U>::value);
 };
 
-// `UnsignedInteger` ----------------------------------------------------------------------------------------
+// #UnsignedInteger .........................................................................................
 
 template<typename T, char... Chars>
 struct UnsignedInteger {

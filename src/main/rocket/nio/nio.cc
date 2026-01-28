@@ -17,8 +17,8 @@ using boost::safe_numerics::safe;
 
 /* Logging --------------------------------------------------------------------------------------------------
 
-Because the logging framework utilizes `nio`, we can't use it to log `nio` itself. So we need to make up a
-quick and dirty logging facility here.
+Because the logging framework utilizes #rocket::nio, we can't use it to log #rocket::nio itself. So we need
+to make up a quick and dirty logging facility here.
 
 ---------------------------------------------------------------------------------------------------------- */
 
@@ -32,7 +32,7 @@ quick and dirty logging facility here.
 
 namespace rocket::nio {
 
-// `Io` -----------------------------------------------------------------------------------------------------
+// #Io ------------------------------------------------------------------------------------------------------
 
 bool
 Io::checkOpen() {
@@ -45,7 +45,7 @@ Io::checkOpen() {
   return true;
 }
 
-// `Sink` ---------------------------------------------------------------------------------------------------
+// #Sink ----------------------------------------------------------------------------------------------------
 
 u64
 Sink::writeln(std::string_view in) {
@@ -59,7 +59,7 @@ Sink::writeln(std::string_view in) {
   return ret;
 }
 
-// `BufferedSink` -------------------------------------------------------------------------------------------
+// #BufferedSink --------------------------------------------------------------------------------------------
 
 BufferedSink::BufferedSink(Sink& underlying, u64 size) :
     underlying_(underlying),
@@ -148,7 +148,7 @@ BufferedSink::write(string_view in) {
   return in.size();
 }
 
-// `FileSink` -----------------------------------------------------------------------------------------------
+// #FileSink ------------------------------------------------------------------------------------------------
 
 FileSink::FileSink(FILE* file, const Params& params) :
     file_(file),
@@ -190,7 +190,7 @@ FileSink::close()
   flush();
 
   i32 ret = std::fclose(file_);
-  // `file_` is probably invalid now, so we don't call `ferror` on it
+  // #file_ is probably invalid now, so we don't call #ferror on it
   LOG("fclose=" << ret);
   if (ret != 0) {
     error_ = EIO;
@@ -244,7 +244,7 @@ FileSink::write(string_view in) {
   return ret;
 }
 
-// `NullSink` -----------------------------------------------------------------------------------------------
+// #NullSink ------------------------------------------------------------------------------------------------
 
 NullSink::~NullSink() {
   close();
@@ -279,7 +279,7 @@ NullSink::write(string_view) {
   return 0;
 }
 
-// `SpanSink` -----------------------------------------------------------------------------------------------
+// #SpanSink ------------------------------------------------------------------------------------------------
 
 SpanSink::~SpanSink() {
   close();
@@ -322,7 +322,7 @@ SpanSink::write(string_view in) {
   return ret;
 }
 
-// `StreamSink` ---------------------------------------------------------------------------------------------
+// #StreamSink ----------------------------------------------------------------------------------------------
 
 StreamSink::~StreamSink() {
   close();
@@ -337,7 +337,7 @@ StreamSink::close() {
   flush();
 
   open_ = false;
-  // An `ostream` can't close, it can only be destroyed
+  // A #std::ostream can't close, it can only be destroyed
   return 0;
 }
 
@@ -392,7 +392,7 @@ StreamSink::write(string_view in) {
   return ret;
 }
 
-// `StringSink` ---------------------------------------------------------------------------------------------
+// #StringSink ----------------------------------------------------------------------------------------------
 
 StringSink::~StringSink() {
   close();
@@ -434,7 +434,7 @@ StringSink::write(string_view in) {
   return in.size();
 }
 
-// `Source` -------------------------------------------------------------------------------------------------
+// #Source --------------------------------------------------------------------------------------------------
 
 string
 Source::read() {
@@ -517,7 +517,7 @@ Source::readln(span<char> out) {
   return ret;
 }
 
-// `BufferedSource` -----------------------------------------------------------------------------------------
+// #BufferedSource ------------------------------------------------------------------------------------------
 
 BufferedSource::BufferedSource(Source& underlying, u64 size) :
     underlying_(underlying),
@@ -664,7 +664,7 @@ BufferedSource::terminal(i32* fd) {
   return underlying_.terminal(fd);
 }
 
-// `FileSource` ---------------------------------------------------------------------------------------------
+// #FileSource ----------------------------------------------------------------------------------------------
 
 FileSource::FileSource(FILE* file, const Params& params) :
     file_(file),
@@ -783,7 +783,7 @@ FileSource::terminal(i32* fd) {
   return ret;
 }
 
-// `NullSource` ---------------------------------------------------------------------------------------------
+// #NullSource ----------------------------------------------------------------------------------------------
 
 NullSource::~NullSource() {
   close();
@@ -824,7 +824,7 @@ NullSource::terminal(i32*) {
   return false;
 }
 
-// `StreamSource` -------------------------------------------------------------------------------------------
+// #StreamSource --------------------------------------------------------------------------------------------
 
 StreamSource::~StreamSource() {
   close();
@@ -837,7 +837,7 @@ StreamSource::close() {
   }
 
   open_ = false;
-  // An `istream` can't close, it can only be destroyed
+  // A #std::istream can't close, it can only be destroyed
   return 0;
 }
 
@@ -847,10 +847,10 @@ StreamSource::read(span<char> out) {
     return 0;
   }
 
-  // If less bytes than `out.size()` are read, `bad`, `fail`, and `eof` all remain `false``
+  // If less bytes than `out.size()` are read, `bad`, `fail`, and `eof` all remain `false`
   is_.read(out.data(), out.size());
   auto count = is_.gcount();
-  // `readsome` didn't work in Windows with in `ifstream`
+  // #std::istream::readsome didn't work in Windows with a #std::ifstream
   // u64 ret = is_.readsome(out.data(), out.size());
   LOG("count=" << count << ", out.size=" << out.size() << ", bad=" << is_.bad() << ", fail=" << is_.fail() << ", eof=" << is_.eof());
   error_ = is_.rdstate();
@@ -894,7 +894,7 @@ StreamSource::tell() {
     return NPOS;
   }
 
-  // Use the impl. from `io`
+  // Use the impl. from #rocket::io
   auto result = io::tellg(is_);
   LOG("tellg=" << result << ", bad=" << is_.bad() << ", fail=" << is_.fail() << ", eof=" << is_.eof());
   error_ = is_.rdstate();
@@ -922,7 +922,7 @@ StreamSource::terminal(i32* fd) {
   return false;
 }
 
-// `StringSource` -------------------------------------------------------------------------------------------
+// #StringSource --------------------------------------------------------------------------------------------
 
 StringSource::~StringSource() {
   close();

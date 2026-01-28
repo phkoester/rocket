@@ -8,7 +8,7 @@
 
 #include "rocket-test/TracingString.h"
 
-// `Cxx` ----------------------------------------------------------------------------------------------------
+// #Cxx -----------------------------------------------------------------------------------------------------
 
 struct Cxx : public Test {
   Cxx() {
@@ -209,7 +209,7 @@ TEST_F(Cxx, implicitVirtualDtor) {
   A* p = new B;
   EXPECT_FALSE(Member::dtorCalled);
   delete p;
-  // Class `B` needs not declare an overriding destructor---it is there implicitly
+  // Class #B needs not declare an overriding destructor---it is there implicitly
   EXPECT_TRUE(Member::dtorCalled);
 }
 

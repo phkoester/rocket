@@ -15,7 +15,7 @@
 
 namespace rocket::str {
 
-// `SplitIterator` ------------------------------------------------------------------------------------------
+// #SplitIterator -------------------------------------------------------------------------------------------
 
 /**
  * The iterator used by #rocket::str::SplitResult.
@@ -96,7 +96,7 @@ private:
   std::basic_string<C> sep_;
 };
 
-// `SplitResult` --------------------------------------------------------------------------------------------
+// #SplitResult ---------------------------------------------------------------------------------------------
 
 /**
  * An object returned by #split that can be used to iterate over the string-view tokens.

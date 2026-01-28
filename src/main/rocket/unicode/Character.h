@@ -14,7 +14,7 @@
 
 namespace rocket::unicode {
 
-// `BasicCharacter` -----------------------------------------------------------------------------------------
+// #BasicCharacter ------------------------------------------------------------------------------------------
 
 /**
  * The implementation of both #rocket::unicode::Character and #rocket::unicode::CharacterView.
@@ -224,7 +224,7 @@ struct BasicCharacter {
 private:
 
   /**
-   * The string, which is either a `basic_string` or a `basic_string_view`.
+   * The string, which is either a #std::basic_string or a #std::basic_string_view.
    *
    * The string must not be empty.
    */
@@ -245,12 +245,12 @@ format_as(const BasicCharacter<C, String>& val) {
   return static_cast<std::basic_string_view<C>>(val);
 }
 
-// `Character` ----------------------------------------------------------------------------------------------
+// #Character -----------------------------------------------------------------------------------------------
 
 /**
  * A Unicode character, or a grapheme cluster, consisting of one or more code points.
  *
- * A string suitable for a `Character` can be obtained as a segment from a #rocket::unicode::Iterator with
+ * A string suitable for a #Character can be obtained as a segment from a #rocket::unicode::Iterator with
  * the iterator type #rocket::unicode::IteratorType::Character.
  *
  * Think of this as a basic text-processing element that is superior to `char`, `char32`, or even
@@ -300,7 +300,7 @@ operator""_c(const char32* p, u64 len) {
   return Character<char32>(std::u32string_view(p, len));
 }
 
-// `CharacterView` ------------------------------------------------------------------------------------------
+// #CharacterView -------------------------------------------------------------------------------------------
 
 /**
  * This is very much the same as #rocket::unicode::Character, except that it is a view into a string, not a

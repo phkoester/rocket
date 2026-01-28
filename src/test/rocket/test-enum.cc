@@ -6,21 +6,21 @@
 
 #include "rocket/enum.h"
 
-// `MyEnum` -------------------------------------------------------------------------------------------------
+// #MyEnum --------------------------------------------------------------------------------------------------
 
 enum MyEnum { fröb, fröber, fröberer, pörk, pörker, pörkerer };
 
 ROCKET_ENUM_DECLARE(, MyEnum, MyEnum);
 ROCKET_ENUM_DEFINE(, MyEnum, MyEnum, (fröb)(fröber)(fröberer)(pörk)(pörker)(pörkerer));
 
-// `MyEnumClass` --------------------------------------------------------------------------------------------
+// #MyEnumClass ---------------------------------------------------------------------------------------------
 
 enum class MyEnumClass { hürx, hürxer, hürxerer };
 
 ROCKET_ENUM_DECLARE(, MyEnumClass, MyEnumClass);
 ROCKET_ENUM_DEFINE(, MyEnumClass, MyEnumClass, (hürx)(hürxer)(hürxerer));
 
-// `MyEnumInNamespace` --------------------------------------------------------------------------------------
+// #MyEnumInNamespace ---------------------------------------------------------------------------------------
 
 namespace mynamespace {
 
@@ -31,7 +31,7 @@ enum MyEnumInNamespace { red, green, blue };
 ROCKET_ENUM_DECLARE(mynamespace, MyEnumInNamespace, MyEnumInNamespace);
 ROCKET_ENUM_DEFINE(mynamespace, MyEnumInNamespace, MyEnumInNamespace, (red)(green)(blue));
 
-// `TEST` ---------------------------------------------------------------------------------------------------
+// #TEST ----------------------------------------------------------------------------------------------------
 
 TEST(enum, MyEnumOpOutput) {
   ostringstream os;

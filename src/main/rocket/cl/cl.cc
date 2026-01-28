@@ -15,7 +15,7 @@ using namespace std;
 
 namespace rocket::cl {
 
-// `CommandLine` --------------------------------------------------------------------------------------------
+// #CommandLine ---------------------------------------------------------------------------------------------
 
 CommandLine::CommandLine(const vector<Option>& opts, const CommandLineParams& params) :
   opts_(opts),
@@ -29,7 +29,7 @@ CommandLine::CommandLine(const vector<Option>& opts, const CommandLineParams& pa
     opts_.insert(opts_.begin(), logOpts.begin(), logOpts.end());
   }
 
-  // NOTE: Because we use string views and pointers in the maps, `opts_` may never be changed from this point
+  // NOTE: Because we use string views and pointers in the maps, #opts_ may never be changed from this point
 
   // Validate options, populate maps
 
@@ -50,7 +50,7 @@ CommandLine::CommandLine(const vector<Option>& opts, const CommandLineParams& pa
 
 void
 CommandLine::apply(const Option& opt, bool nameFlag, optional<string_view> value) {
-  // Don't use `ROCKET_CHECK` here for cleaner exception messages
+  // Don't use #ROCKET_CHECK here for cleaner exception messages
 
   if (opt.takesValue && not value) {
     ROCKET_FAIL("Missing value for option `{}`", name(opt, nameFlag));
@@ -110,7 +110,6 @@ CommandLine::help(nio::Sink& out, bool exit) {
   ROCKET_EXPECT(help_);
 
   auto size = system::terminal::size(out);
-  // In Windows, a `UL` isn't a `u64`
   u64 width = max(40_u64, size ? size->first : 80_u64);
   bool output = params_.otherOutput;
 
@@ -230,7 +229,7 @@ CommandLine::parse(const vector<string>& args, const Take& take) const {
   vector<string> ret;
 
   for (auto it = args.begin(), end = args.end(); it != end; ++it) {
-    const auto& elem = *it; // `string`
+    const auto& elem = *it; // #std::string
     string_view arg = elem; // This makes `substr()` more efficient
 
     if (arg == "--") {
@@ -365,7 +364,7 @@ CommandLine::printUsage(nio::Sink& out) const {
 
 void
 CommandLine::validate(string_view name, bool nameFlag) {
-  // Don't use `ROCKET_CHECK` here for cleaner exception messages
+  // Don't use #ROCKET_CHECK here for cleaner exception messages
 
   const char* what = nameFlag ? "option name" : "option short name";
   if (name.empty()) {

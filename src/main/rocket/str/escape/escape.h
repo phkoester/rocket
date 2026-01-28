@@ -13,7 +13,7 @@
 
 namespace rocket::str::escape {
 
-// `CStringParams` ------------------------------------------------------------------------------------------
+// #CStringParams -------------------------------------------------------------------------------------------
 
 /**
  * Parameters for the #escapeCString and #unescapeCString functions.
@@ -41,7 +41,7 @@ struct CStringParams {
   inline bool quoted() const { return quote != '\0'; }
 };
 
-// `Result` -------------------------------------------------------------------------------------------------
+// #Result --------------------------------------------------------------------------------------------------
 
 /**
  * The result of an escape/unescape operation.

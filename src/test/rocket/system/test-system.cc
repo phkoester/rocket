@@ -34,7 +34,7 @@ findPrintArgs() {
   ROCKET_FAIL("Cannot find `print-args`");
 }
 
-// `TEST` ---------------------------------------------------------------------------------------------------
+// #TEST ----------------------------------------------------------------------------------------------------
 
 TEST(system, envBool) {
   using type = bool;
@@ -44,7 +44,7 @@ TEST(system, envBool) {
   EXPECT_EQ(env::get<log::LogLevel>(name), nullopt);
 
   env::set(name, true);
-  // Check twice, there was a bad surprise with `putenv()` ...
+  // Check twice, there was a bad surprise with #std::putenv ...
   EXPECT_EQ(env::get<type>(name), true);
   EXPECT_EQ(env::get<type>(name), true);
 
@@ -67,7 +67,7 @@ TEST(system, envF64) {
   EXPECT_EQ(env::get<type>(name), nullopt);
 
   env::set(name, -1.2);
-  // Check twice, there was a bad surprise with `putenv()` ...
+  // Check twice, there was a bad surprise with #std::putenv ...
   EXPECT_EQ(env::get<type>(name), -1.2);
   EXPECT_EQ(env::get<type>(name), -1.2);
 
@@ -86,7 +86,7 @@ TEST(system, envLogLevel) {
   EXPECT_EQ(env::get<type>(name), nullopt);
 
   env::set(name, type::debug);
-  // Check twice, there was a bad surprise with `putenv()` ...
+  // Check twice, there was a bad surprise with #std::putenv ...
   EXPECT_EQ(env::get<type>(name), type::debug);
   EXPECT_EQ(env::get<type>(name), type::debug);
 
@@ -102,7 +102,7 @@ TEST(system, envString) {
   EXPECT_EQ(env::get<type>(name), nullopt);
 
   env::set(name, "some text"sv);
-  // Check twice, there was a bad surprise with `putenv()` ...
+  // Check twice, there was a bad surprise with #std::putenv ...
   EXPECT_EQ(env::get<type>(name), "some text");
   EXPECT_EQ(env::get<type>(name), "some text");
 

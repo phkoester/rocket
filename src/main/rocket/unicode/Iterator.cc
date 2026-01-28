@@ -15,7 +15,7 @@ using namespace std;
 
 namespace rocket::unicode {
 
-// `IteratorImpl` -------------------------------------------------------------------------------------------
+// #IteratorImpl --------------------------------------------------------------------------------------------
 
 /**
  * Nothing from the `icu` namespace may surface in the public API, so we wrap it here.
@@ -29,13 +29,13 @@ struct IteratorImplDelete {
   void operator()(IteratorImpl* val) { delete val; }
 };
 
-// `Iterator` -----------------------------------------------------------------------------------------------
+// #Iterator ------------------------------------------------------------------------------------------------
 
 template<typename C> requires IsChar<C>
 Iterator<C>::Iterator(IteratorType type, basic_string_view<C> input, const locale& loc) :
     input_(input),
     impl_(new IteratorImpl(), [](IteratorImpl* val) { delete val; }) {
-  // 1. Make the `UnicodeString`
+  // 1. Make the #UnicodeString
 
   auto& str = impl_->str;
   if constexpr (is_same_v<C, char>) {
@@ -45,7 +45,7 @@ Iterator<C>::Iterator(IteratorType type, basic_string_view<C> input, const local
   }
   ROCKET_CHECK(input, not str.isBogus());
 
-  // 2. Loop through the `UnicodeString` and populate `usToTxt_`
+  // 2. Loop through the #UnicodeString and populate #usToInput_
 
   i32 u16length = str.length();
   const UChar* u16Buf = str.getBuffer();
@@ -66,7 +66,7 @@ Iterator<C>::Iterator(IteratorType type, basic_string_view<C> input, const local
     // Get next input code point (UTF-8 or UTF-32)
     ROCKET_CHECK(input, inputIndex < inputLength);
     if constexpr (is_same_v<C, char>) {
-      // UTF-8: Use `U8_NEXT` to loop through `input`
+      // UTF-8: Use #U8_NEXT to loop through #input
       U8_NEXT(input.data(), inputIndex, inputLength, inputCp);
     } else {
       // UTF-32: Easy
@@ -86,7 +86,7 @@ Iterator<C>::Iterator(IteratorType type, basic_string_view<C> input, const local
   // Add a mapping for EOI
   usToInput_.insert({ static_cast<u64>(u16Index), inputIndex });
 
-  // 3. Create the `BreakIterator`
+  // 3. Create the #BreakIterator
 
   icu::Locale icuLoc(loc.name().c_str());
   ROCKET_CHECK(loc, not icuLoc.isBogus());
@@ -115,7 +115,7 @@ Iterator<C>::Iterator(IteratorType type, basic_string_view<C> input, const local
   }
   ROCKET_EXPECT(U_SUCCESS(status));
 
-  // Assign the `UnicodeString`
+  // Assign the #UnicodeString to the #BreakIterator
   iter->setText(str);
 }
 

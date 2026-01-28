@@ -40,13 +40,13 @@ namespace {
  */
 string
 sendAnsiRequest(nio::Sink& out, std::string_view sequence) {
-  // Save current `STDIN` settings
+  // Save current `stdin` settings
 
   termios oldT, newT;
   tcgetattr(STDIN_FILENO, &oldT);
   newT = oldT;
 
-  // Disable echo and canonical input on `STDIN`
+  // Disable echo and canonical input on `stdin`
 
   newT.c_lflag &= ~(ECHO | ICANON);
   tcsetattr(STDIN_FILENO, TCSANOW, &newT);
@@ -91,7 +91,7 @@ getHandle(i32 fd) {
 
 namespace rocket::system::terminal {
 
-// `Ansi` ---------------------------------------------------------------------------------------------------
+// #Ansi ----------------------------------------------------------------------------------------------------
 
 string
 Ansi::clear() const {
@@ -178,7 +178,7 @@ size(nio::Io& io) {
   }
   return make_pair(safe<u64>(csbi.dwSize.X), safe<u64>(csbi.dwSize.Y));
 #else
-  // Use `ioctl`
+  // Use #ioctl
 
   winsize ws;
   i32 res = ioctl(fd, TIOCGWINSZ, &ws);

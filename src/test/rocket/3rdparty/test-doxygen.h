@@ -162,7 +162,7 @@ void myFuncTemplate(T val);
 template<typename T>
 void myFuncTemplate(T val, T wal);
 
-// Namespace `foo::bar` -------------------------------------------------------------------------------------
+// #foo::bar ------------------------------------------------------------------------------------------------
 
 namespace foo::bar {
 

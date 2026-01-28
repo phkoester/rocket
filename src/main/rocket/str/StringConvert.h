@@ -16,10 +16,10 @@
 
 namespace rocket::str {
 
-// `StringConvert` ------------------------------------------------------------------------------------------
+// #StringConvert -------------------------------------------------------------------------------------------
 
 /**
- * A general `StringConvert` class template.
+ * A general #StringConvert class template.
  */
 template<typename T>
 struct StringConvert;
@@ -84,7 +84,7 @@ struct StringConvert<char> {
   }
 };
 
-/// @spec_rocket_StringConvert{#rocket::IsInteger<I>}
+/// @spec_rocket_StringConvert{integer types}
 template<typename I> requires IsInteger<I>
 struct StringConvert<I> {
   using Type = I; ///< @type_alias
@@ -142,7 +142,7 @@ struct StringConvert<E> {
   }
 };
 
-/// @spec_rocket_StringConvert{#rocket::IsFloat<F>}
+/// @spec_rocket_StringConvert{floating-point types}
 template<typename F> requires IsFloat<F>
 struct StringConvert<F> {
   using Type = F; ///< @type_alias

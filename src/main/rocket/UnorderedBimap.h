@@ -16,15 +16,15 @@
 
 namespace rocket {
 
-// `UnorderedBimap` -----------------------------------------------------------------------------------------
+// #UnorderedBimap ------------------------------------------------------------------------------------------
 
-/// The `UnorderedBimap` type.
+/// The #UnorderedBimap type alias.
 template<typename K, typename V>
 using UnorderedBimap =
     boost::bimaps::bimap<boost::bimaps::unordered_set_of<K>, boost::bimaps::unordered_set_of<V>>;
 
 /**
- * Convenience function to make an #rocket::UnorderedBimap of a #std::initializer_list.
+ * Convenience function to make a #rocket::UnorderedBimap of a #std::initializer_list.
  *
  * @tparam K the map's left key type
  * @tparam V the map's left value type
@@ -43,7 +43,7 @@ makeUnorderedBimap(std::initializer_list<std::pair<K, V>> list = {}) {
 
 } // namespace rocket
 
-// Namespace `boost::bimaps` --------------------------------------------------------------------------------
+// #boost::bimaps -------------------------------------------------------------------------------------------
 
 namespace boost::bimaps {
 
@@ -92,7 +92,7 @@ PrintTo(const bimap<A, B>& val, std::ostream* os) {
 
 } // namespace boost::bimaps
 
-// `fmt::formatter<boost::bimaps::bimap>`--------------------------------------------------------------------
+// #fmt::formatter<#boost::bimaps::bimap>--------------------------------------------------------------------
 
 /**
  * @spec_fmt_formatter{`boost::bimaps::bimap`}

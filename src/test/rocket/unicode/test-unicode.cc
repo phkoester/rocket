@@ -26,7 +26,7 @@ positions(initializer_list<pair<u64, u64>> list) {
   return makeUnorderedBimap(list);
 }
 
-// `TEST` ---------------------------------------------------------------------------------------------------
+// #TEST ----------------------------------------------------------------------------------------------------
 
 TEST(unicode, CodePointCtorChar) {
   EXPECT_EQ(static_cast<u32>('\x7f'_cp), 127);
@@ -129,7 +129,7 @@ TEST(unicode, conversions) {
   EXPECT_EQ(str32[2], 0x1F33E);
 }
 
-// `rocket::unicode::utf8` ..................................................................................
+// #rocket::unicode::utf8 ...................................................................................
 
 TEST(unicode, utf8Validate) {
   UnorderedBimap<u64, u64> pos;
@@ -176,7 +176,7 @@ TEST(unicode, utf8Validate) {
   }
 }
 
-// `rocket::unicode::utf32` ---------------------------------------------------------------------------------
+// #rocket::unicode::utf32 ----------------------------------------------------------------------------------
 
 TEST(unicode, utf32Validate) {
   UnorderedBimap<u64, u64> pos;
