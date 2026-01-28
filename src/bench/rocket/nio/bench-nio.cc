@@ -25,7 +25,7 @@ TEST(nio, FileSink) {
 
   ROCKET_BENCH(N, [&] {
     {
-      FileSink out(tmp);
+      FileSink out(tmp.string());
       for (u64 i = 0; i < ITERATIONS; ++i) {
         out.write(chunk);
       }
