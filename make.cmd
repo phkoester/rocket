@@ -4,11 +4,12 @@
 :: ONLY EDIT THE ORIGINAL FILE, WHICH IS `gaia-make.cmd`.
 ::
 :: Usage:
-::   make                                                (calls `configure` and `build`)
+::   make                                      (calls `configure` and `build`)
 ::   make configure
 ::   make build [TARGET]
-::   make test  [all | bench | test (default) | PATTERN]
-::   make test-terminal                                  (for Rocket only)
+::   make test  [all | bench | test | PATTERN] (default: test)
+::   make test-terminal                        (for Rocket only)
+::   make clean
 ::
 
 @echo off
@@ -29,6 +30,10 @@ if "%1" == "test" (
 )
 if "%1" == "test-terminal" (
   call :test-terminal
+  goto :eof
+)
+if "%1" == "clean" (
+  call :clean
   goto :eof
 )
 
@@ -89,6 +94,16 @@ set ROCKET_TEST_TERMINAL=1
 
 build\src\test\Release\test-rocket-system-terminal.exe
 build\src\test\Release\test-rocket-unicode-Character.exe
+
+goto :eof
+
+:: clean ----------------------------------------------------------------------------------------------------
+
+:clean
+
+echo Removing build directory. This may take a while ...
+rmdir /q /s build
+if %errorlevel% neq 0 exit /b %errorlevel%
 
 goto :eof
 
