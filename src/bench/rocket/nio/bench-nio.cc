@@ -40,7 +40,7 @@ TEST(nio, BufferedFileSink) {
 
   ROCKET_BENCH(N, [&] {
     {
-      FileSink out(tmp);
+      FileSink out(tmp.string());
       std::setbuf(out.file_, nullptr); // Disable buffering
       BufferedSink buffered(out);
       for (u64 i = 0; i < ITERATIONS; ++i) {
