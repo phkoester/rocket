@@ -61,10 +61,11 @@ goto :eof
 
 :build
 
-if "%2" == "" (
+if [%2] == [] (
+  echo NO TARGET
   cmake --build --preset windows-release
 ) else (
-  echo Building target %2
+  echo TARGET %2
   cmake --build --preset windows-release --target %2
 )
 if %errorlevel% neq 0 exit /b %errorlevel%
@@ -76,15 +77,15 @@ goto :eof
 :test
 
 set TEST=%2
-if "%TEST%" == "" set TEST=test
+if not defined TEST set TEST=test
 
-if "%TEST%" == "all" (
+if %TEST% == all (
    echo ALL
    ctest --preset windows-release
-) else if "%TEST%" == "test" (
+) else if %TEST% == test (
    echo TEST
    ctest --test-dir build\src\test --preset windows-release
-) else if "%TEST%" == "bench" (
+) else if %TEST% == bench (
    echo BENCH
    ctest --test-dir build\src\bench --preset windows-release
 ) else (
