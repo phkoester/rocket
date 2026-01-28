@@ -250,8 +250,8 @@ format_as(const BasicCharacter<C, String>& val) {
 /**
  * A Unicode character, or a grapheme cluster, consisting of one or more code points.
  *
- * A string suitable for a #Character can be obtained as a segment from a #rocket::unicode::Iterator with
- * the iterator type #rocket::unicode::IteratorType::Character.
+ * A string suitable for a #rocket::unicode::Character can be obtained as a segment from a
+ * #rocket::unicode::Iterator with the iterator type #rocket::unicode::IteratorType::Character.
  *
  * Think of this as a basic text-processing element that is superior to `char`, `char32`, or even
  * #rocket::unicode::CodePoint. Use it whenever you can, and make your code Unicode-ready.

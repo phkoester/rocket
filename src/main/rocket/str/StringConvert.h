@@ -19,7 +19,7 @@ namespace rocket::str {
 // #StringConvert -------------------------------------------------------------------------------------------
 
 /**
- * A general #StringConvert class template.
+ * A string-conversion class template.
  */
 template<typename T>
 struct StringConvert;
