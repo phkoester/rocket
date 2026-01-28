@@ -17,7 +17,7 @@
 # - JOBS
 #     Number of jobs for GNU Make (0: none, N: N jobs, default: 2/3 nproc)
 # - TEST
-#     Run tests matching the pattern
+#     `all` , `test` (default), `bench`, or PATTERN
 # - VERBOSE
 #     Produce verbose output
 #
@@ -47,7 +47,7 @@
 .PHONY: build
 build: cmake-build
 
-COMPILE_DEPS := make.cmd cmake/base.cmake
+COMPILE_DEPS := make.cmd cmake/base.cmake cmake/generate-version.py
 
 include $(GAIA_DIR)/src/main/make/Makefile.mk
 
@@ -101,18 +101,18 @@ src/main/rocket/3rdparty/scnlib/impl.h: $(BUILD_DIR)/_deps/scnlib-src/src/scn/im
 # Executables -----------------------------------------------------------------------------------------------
 
 .PHONY: bare
+bare: TARGET := bare
 bare: build
-	@LD_LIBRARY_PATH=$(BUILD_DIR)/src/main:$(LD_LIBRARY_PATH) \
-	  $(BUILD_DIR)/src/main/bare $(ARGS)
+	@$(BUILD_DIR)/src/main/bare $(ARGS)
 
 .PHONY: print-args
+print-args: TARGET := print-args
 print-args: build
-	@LD_LIBRARY_PATH=$(BUILD_DIR)/src/main:$(LD_LIBRARY_PATH) \
-	  $(BUILD_DIR)/src/main/print-args $(ARGS)
+	@$(BUILD_DIR)/src/main/print-args $(ARGS)
 
 .PHONY: toy
+toy: TARGET := toy
 toy: build
-	@LD_LIBRARY_PATH=$(BUILD_DIR)/src/main:$(LD_LIBRARY_PATH) \
-	  $(BUILD_DIR)/src/main/toy $(ARGS)
+	@$(BUILD_DIR)/src/main/toy $(ARGS)
 
 # EOF

@@ -2,6 +2,8 @@
 #
 # generate-version.py
 #
+# ONLY EDIT THE ORIGINAL FILE, WHICH IS `gaia-generate-version.py`.
+#
 
 """
 Usage: generate-version.py -o OUTPUT_FILE NAME VERSION

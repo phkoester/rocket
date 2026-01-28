@@ -20,8 +20,8 @@ project(rocket VERSION 0.3.0)
 
 include(cmake/base.cmake)
 
-AddVar(ROCKET_BENCH              BOOL OFF                      "Enable benchmarking and build benchmarks")
-AddVar(ROCKET_TEST               BOOL ${ROCKET_MASTER_PROJECT} "Enable testing and build tests")
+AddVar(ROCKET_BUILD_BENCH        BOOL ${ROCKET_MASTER_PROJECT} "Enable benchmarking and build benchmarks")
+AddVar(ROCKET_BUILD_TEST         BOOL ${ROCKET_MASTER_PROJECT} "Enable testing and build tests")
 AddVar(ROCKET_USE_EXTERNAL_BOOST BOOL ON                       "Use external Boost library")
 
 # Set project-specific compiler definitions, features, and options ------------------------------------------
@@ -36,12 +36,12 @@ include(cmake/deps.cmake)
 
 add_subdirectory(src/main)
 
-if(ROCKET_BENCH)
+if(BUILD_TESTING AND ROCKET_BUILD_BENCH)
   enable_testing()
   add_subdirectory(src/bench)
 endif()
 
-if(BUILD_TESTING AND ROCKET_TEST)
+if(BUILD_TESTING AND ROCKET_BUILD_TEST)
   enable_testing()
   add_subdirectory(src/test)
 endif()

@@ -1,7 +1,7 @@
 /**
  * @file literal.h
  *
- * Literal operators for all Rocket data types.
+ * Literal operators for all basic Rocket data types.
  *
  * The integer implementation is based on https://github.com/jbapple/128-bit-literals.
  */
@@ -50,6 +50,8 @@ validateUnsignedImpl(T) {
   return true;
 }
 
+/// Checks whether c_n + ... + c_2 * BASE^(n-2) + c_1 * BASE^(n-1) + v * BASE^n is a valid number when
+// interpreted in base @p BASE.
 template<typename T, int BASE, char C, char... Chars>
 constexpr bool
 validateUnsignedImpl(T acc) {
@@ -75,6 +77,7 @@ makeUnsignedImpl(T result) {
   return result;
 }
 
+/// Returns c_n + ... + c_2 * BASE^(n-2) + c_1 * BASE^(n-1) + result * BASE^n.
 template<typename T, int BASE, char C, char... Chars>
 constexpr T
 makeUnsignedImpl(T result) {
@@ -203,7 +206,11 @@ struct UnsignedInteger<T, '0', Chars...> {
 
 } // namespace internal
 
-/// 8-bit signed integer literal.
+/**
+ * 8-bit signed integer literal.
+ *
+ * @return the parsed value
+ */
 template<char... Chars>
 constexpr i8
 operator""_i8() {
@@ -212,7 +219,11 @@ operator""_i8() {
   return type::payload;
 }
 
-/// 8-bit unsigned integer literal.
+/**
+ * 8-bit unsigned integer literal.
+ *
+ * @return the parsed value
+ */
 template<char... Chars>
 constexpr u8
 operator""_u8() {
@@ -221,7 +232,11 @@ operator""_u8() {
   return type::payload;
 }
 
-/// 16-bit signed integer literal.
+/**
+ * 16-bit signed integer literal.
+ *
+ * @return the parsed value
+ */
 template<char... Chars>
 constexpr i16
 operator""_i16() {
@@ -230,7 +245,11 @@ operator""_i16() {
   return type::payload;
 }
 
-/// 16-bit unsigned integer literal.
+/**
+ * 16-bit unsigned integer literal.
+ *
+ * @return the parsed value
+ */
 template<char... Chars>
 constexpr u16
 operator""_u16() {
@@ -239,7 +258,11 @@ operator""_u16() {
   return type::payload;
 }
 
-/// 32-bit signed integer literal.
+/**
+ * 32-bit signed integer literal.
+ *
+ * @return the parsed value
+ */
 template<char... Chars>
 constexpr i32
 operator""_i32() {
@@ -248,7 +271,11 @@ operator""_i32() {
   return type::payload;
 }
 
-/// 32-bit unsigned integer literal.
+/**
+ * 32-bit unsigned integer literal.
+ *
+ * @return the parsed value
+ */
 template<char... Chars>
 constexpr u32
 operator""_u32() {
@@ -257,7 +284,11 @@ operator""_u32() {
   return type::payload;
 }
 
-/// 64-bit signed integer literal.
+/**
+ * 64-bit signed integer literal.
+ *
+ * @return the parsed value
+ */
 template<char... Chars>
 constexpr i64
 operator""_i64() {
@@ -266,7 +297,11 @@ operator""_i64() {
   return type::payload;
 }
 
-/// 64-bit unsigned integer literal.
+/**
+ * 64-bit unsigned integer literal.
+ *
+ * @return the parsed value
+ */
 template<char... Chars>
 constexpr u64
 operator""_u64() {
@@ -277,7 +312,11 @@ operator""_u64() {
 
 #ifdef ROCKET_HAS_128
 
-/// 128-bit signed integer literal.
+/**
+ * 128-bit signed integer literal.
+ *
+ * @return the parsed value
+ */
 template<char... Chars>
 constexpr i128
 operator""_i128() {
@@ -286,7 +325,11 @@ operator""_i128() {
   return type::payload;
 }
 
-/// 128-bit unsigned integer literal.
+/**
+ * 128-bit unsigned integer literal.
+ *
+ * @return the parsed value
+ */
 template<char... Chars>
 constexpr u128
 operator""_u128() {
@@ -297,15 +340,34 @@ operator""_u128() {
 
 #endif // ROCKET_HAS_128
 
-/// 32-bit floating point literal.
+/**
+ * 32-bit floating point literal.
+ *
+ * @param val the value
+ * @return a value of the desired type
+ * @throw `std::underflow_error` on type underflow
+ * @throw `std::overflow_error` on type overflow
+ */
 f32 operator""_f32(std_long_double val);
 
-/// 64-bit floating point literal.
+/**
+ * 64-bit floating point literal.
+ *
+ * @param val the value
+ * @return a value of the desired type
+ * @throw `std::underflow_error` on type underflow
+ * @throw `std::overflow_error` on type overflow
+ */
 f64 operator""_f64(std_long_double val);
 
 #ifdef ROCKET_HAS_128
 
-/// 128-bit floating point literal.
+/**
+ * 128-bit floating point literal.
+ *
+ * @param val the value
+ * @return a value of the desired type
+ */
 f128 operator""_f128(std_long_double val);
 
 #endif // ROCKET_HAS_128
