@@ -29,11 +29,11 @@ if "%1" == "configure" (
   goto :eof
 )
 if "%1" == "build" (
-  call :build
+  call :build %2
   goto :eof
 )
 if "%1" == "test" (
-  call :test
+  call :test %2
   goto :eof
 )
 if "%1" == "test-terminal" (
@@ -61,12 +61,12 @@ goto :eof
 
 :build
 
-if [%2] == [] (
+if [%1] == [] (
   echo NO TARGET
   cmake --build --preset windows-release
 ) else (
   echo TARGET %2
-  cmake --build --preset windows-release --target %2
+  cmake --build --preset windows-release --target %1
 )
 if %errorlevel% neq 0 exit /b %errorlevel%
 
@@ -76,7 +76,7 @@ goto :eof
 
 :test
 
-set TEST=%2
+set TEST=%1
 if not defined TEST set TEST=test
 
 if %TEST% == all (
