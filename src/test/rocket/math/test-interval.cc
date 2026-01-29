@@ -26,17 +26,32 @@ TEST(interval, ClosedIntervalI32) {
   EXPECT_EQ(val.cardinality(), 1);
   EXPECT_EQ(val.size(), 0);
 
+  EXPECT_FALSE(val.contains(-1));
+  EXPECT_TRUE(val.contains(0));
+  EXPECT_FALSE(val.contains(1));
+
   val = type(0, 1);
   EXPECT_FALSE(val.empty());
   EXPECT_EQ(val.cardinality(), 2);
   EXPECT_EQ(val.size(), 1);
+
+  EXPECT_FALSE(val.contains(-1));
+  EXPECT_TRUE(val.contains(0));
+  EXPECT_TRUE(val.contains(1));
+  EXPECT_FALSE(val.contains(2));
 
   val = type(0, 2);
   EXPECT_FALSE(val.empty());
   EXPECT_EQ(val.cardinality(), 3);
   EXPECT_EQ(val.size(), 2);
 
-  EXPECT_THAT([&] { val = type(1, 0); }, Throws<rocket::InvalidArgument>() );
+  EXPECT_FALSE(val.contains(-1));
+  EXPECT_TRUE(val.contains(0));
+  EXPECT_TRUE(val.contains(1));
+  EXPECT_TRUE(val.contains(2));
+  EXPECT_FALSE(val.contains(3));
+
+  EXPECT_EQ(type(1, 0), type());
 }
 
 TEST(interval, ClosedIntervalU32) {
@@ -52,17 +67,29 @@ TEST(interval, ClosedIntervalU32) {
   EXPECT_EQ(val.cardinality(), 1);
   EXPECT_EQ(val.size(), 0);
 
+  EXPECT_TRUE(val.contains(0));
+  EXPECT_FALSE(val.contains(1));
+
   val = type(0, 1);
   EXPECT_FALSE(val.empty());
   EXPECT_EQ(val.cardinality(), 2);
   EXPECT_EQ(val.size(), 1);
+
+  EXPECT_TRUE(val.contains(0));
+  EXPECT_TRUE(val.contains(1));
+  EXPECT_FALSE(val.contains(2));
 
   val = type(0, 2);
   EXPECT_FALSE(val.empty());
   EXPECT_EQ(val.cardinality(), 3);
   EXPECT_EQ(val.size(), 2);
 
-  EXPECT_THAT([&] { val = type(1, 0); }, Throws<rocket::InvalidArgument>() );
+  EXPECT_TRUE(val.contains(0));
+  EXPECT_TRUE(val.contains(1));
+  EXPECT_TRUE(val.contains(2));
+  EXPECT_FALSE(val.contains(3));
+
+  EXPECT_EQ(type(1, 0), type());
 }
 
 TEST(interval, LeftOpenIntervalI32) {
@@ -78,22 +105,42 @@ TEST(interval, LeftOpenIntervalI32) {
   EXPECT_EQ(val.cardinality(), 0);
   EXPECT_EQ(val.size(), 0);
 
+  EXPECT_FALSE(val.contains(-1));
+  EXPECT_FALSE(val.contains(0));
+  EXPECT_FALSE(val.contains(1));
+
   val = type(0, 1);
   EXPECT_FALSE(val.empty());
   EXPECT_EQ(val.cardinality(), 1);
   EXPECT_EQ(val.size(), 1);
+
+  EXPECT_FALSE(val.contains(-1));
+  EXPECT_FALSE(val.contains(0));
+  EXPECT_TRUE(val.contains(1));
+  EXPECT_FALSE(val.contains(2));
 
   val = type(0, 2);
   EXPECT_FALSE(val.empty());
   EXPECT_EQ(val.cardinality(), 2);
   EXPECT_EQ(val.size(), 2);
 
+  EXPECT_FALSE(val.contains(-1));
+  EXPECT_FALSE(val.contains(0));
+  EXPECT_TRUE(val.contains(1));
+  EXPECT_TRUE(val.contains(2));
+  EXPECT_FALSE(val.contains(3));
+
   val = type(nullopt, 1);
   EXPECT_FALSE(val.empty());
   EXPECT_EQ(val.cardinality(), nullopt);
   EXPECT_EQ(val.size(), nullopt);
 
-  EXPECT_THAT([&] { val = type(1, 0); }, Throws<rocket::InvalidArgument>() );
+  EXPECT_TRUE(val.contains(-1));
+  EXPECT_TRUE(val.contains(0));
+  EXPECT_TRUE(val.contains(1));
+  EXPECT_FALSE(val.contains(2));
+
+  EXPECT_EQ(type(1, 0), type());
 }
 
 TEST(interval, LeftOpenIntervalU32) {
@@ -109,22 +156,38 @@ TEST(interval, LeftOpenIntervalU32) {
   EXPECT_EQ(val.cardinality(), 0);
   EXPECT_EQ(val.size(), 0);
 
+  EXPECT_FALSE(val.contains(0));
+  EXPECT_FALSE(val.contains(1));
+
   val = type(0, 1);
   EXPECT_FALSE(val.empty());
   EXPECT_EQ(val.cardinality(), 1);
   EXPECT_EQ(val.size(), 1);
+
+  EXPECT_FALSE(val.contains(0));
+  EXPECT_TRUE(val.contains(1));
+  EXPECT_FALSE(val.contains(2));
 
   val = type(0, 2);
   EXPECT_FALSE(val.empty());
   EXPECT_EQ(val.cardinality(), 2);
   EXPECT_EQ(val.size(), 2);
 
+  EXPECT_FALSE(val.contains(0));
+  EXPECT_TRUE(val.contains(1));
+  EXPECT_TRUE(val.contains(2));
+  EXPECT_FALSE(val.contains(3));
+
   val = type(nullopt, 1);
   EXPECT_FALSE(val.empty());
   EXPECT_EQ(val.cardinality(), nullopt);
   EXPECT_EQ(val.size(), nullopt);
 
-  EXPECT_THAT([&] { val = type(1, 0); }, Throws<rocket::InvalidArgument>() );
+  EXPECT_TRUE(val.contains(0));
+  EXPECT_TRUE(val.contains(1));
+  EXPECT_FALSE(val.contains(2));
+
+  EXPECT_EQ(type(1, 0), type());
 }
 
 TEST(interval, RightOpenIntervalI32) {
@@ -140,22 +203,40 @@ TEST(interval, RightOpenIntervalI32) {
   EXPECT_EQ(val.cardinality(), 0);
   EXPECT_EQ(val.size(), 0);
 
+  EXPECT_FALSE(val.contains(-1));
+  EXPECT_FALSE(val.contains(0));
+  EXPECT_FALSE(val.contains(1));
+
   val = type(0, 1);
   EXPECT_FALSE(val.empty());
   EXPECT_EQ(val.cardinality(), 1);
   EXPECT_EQ(val.size(), 1);
+
+  EXPECT_FALSE(val.contains(-1));
+  EXPECT_TRUE(val.contains(0));
+  EXPECT_FALSE(val.contains(1));
 
   val = type(0, 2);
   EXPECT_FALSE(val.empty());
   EXPECT_EQ(val.cardinality(), 2);
   EXPECT_EQ(val.size(), 2);
 
+  EXPECT_FALSE(val.contains(-1));
+  EXPECT_TRUE(val.contains(0));
+  EXPECT_TRUE(val.contains(1));
+  EXPECT_FALSE(val.contains(2));
+
   val = type(0, nullopt);
   EXPECT_FALSE(val.empty());
   EXPECT_EQ(val.cardinality(), nullopt);
   EXPECT_EQ(val.size(), nullopt);
 
-  EXPECT_THAT([&] { val = type(1, 0); }, Throws<rocket::InvalidArgument>() );
+  EXPECT_FALSE(val.contains(-1));
+  EXPECT_TRUE(val.contains(0));
+  EXPECT_TRUE(val.contains(1));
+  EXPECT_TRUE(val.contains(2));
+
+  EXPECT_EQ(type(1, 0), type());
 }
 
 TEST(interval, RightOpenIntervalU32) {
@@ -171,22 +252,36 @@ TEST(interval, RightOpenIntervalU32) {
   EXPECT_EQ(val.cardinality(), 0);
   EXPECT_EQ(val.size(), 0);
 
+  EXPECT_FALSE(val.contains(0));
+  EXPECT_FALSE(val.contains(1));
+
   val = type(0, 1);
   EXPECT_FALSE(val.empty());
   EXPECT_EQ(val.cardinality(), 1);
   EXPECT_EQ(val.size(), 1);
+
+  EXPECT_TRUE(val.contains(0));
+  EXPECT_FALSE(val.contains(1));
 
   val = type(0, 2);
   EXPECT_FALSE(val.empty());
   EXPECT_EQ(val.cardinality(), 2);
   EXPECT_EQ(val.size(), 2);
 
+  EXPECT_TRUE(val.contains(0));
+  EXPECT_TRUE(val.contains(1));
+  EXPECT_FALSE(val.contains(2));
+
   val = type(0, nullopt);
   EXPECT_FALSE(val.empty());
   EXPECT_EQ(val.cardinality(), nullopt);
   EXPECT_EQ(val.size(), nullopt);
 
-  EXPECT_THAT([&] { val = type(1, 0); }, Throws<rocket::InvalidArgument>() );
+  EXPECT_TRUE(val.contains(0));
+  EXPECT_TRUE(val.contains(1));
+  EXPECT_TRUE(val.contains(2));
+
+  EXPECT_EQ(type(1, 0), type());
 }
 
 TEST(interval, OpenIntervalI32) {
@@ -202,32 +297,60 @@ TEST(interval, OpenIntervalI32) {
   EXPECT_EQ(val.cardinality(), 0);
   EXPECT_EQ(val.size(), 0);
 
+  EXPECT_FALSE(val.contains(-1));
+  EXPECT_FALSE(val.contains(0));
+  EXPECT_FALSE(val.contains(1));
+
   val = type(0, 1);
   EXPECT_TRUE(val.empty());
   EXPECT_EQ(val.cardinality(), 0);
   EXPECT_EQ(val.size(), 0);
+
+  EXPECT_FALSE(val.contains(-1));
+  EXPECT_FALSE(val.contains(0));
+  EXPECT_FALSE(val.contains(1));
+  EXPECT_FALSE(val.contains(2));
 
   val = type(0, 2);
   EXPECT_FALSE(val.empty());
   EXPECT_EQ(val.cardinality(), 1);
   EXPECT_EQ(val.size(), 2);
 
+  EXPECT_FALSE(val.contains(-1));
+  EXPECT_FALSE(val.contains(0));
+  EXPECT_TRUE(val.contains(1));
+  EXPECT_FALSE(val.contains(2));
+
   val = type(0, nullopt);
   EXPECT_FALSE(val.empty());
   EXPECT_EQ(val.cardinality(), nullopt);
   EXPECT_EQ(val.size(), nullopt);
+
+  EXPECT_FALSE(val.contains(-1));
+  EXPECT_FALSE(val.contains(0));
+  EXPECT_TRUE(val.contains(1));
+  EXPECT_TRUE(val.contains(2));
 
   val = type(nullopt, 1);
   EXPECT_FALSE(val.empty());
   EXPECT_EQ(val.cardinality(), nullopt);
   EXPECT_EQ(val.size(), nullopt);
 
+  EXPECT_TRUE(val.contains(-1));
+  EXPECT_TRUE(val.contains(0));
+  EXPECT_FALSE(val.contains(1));
+  EXPECT_FALSE(val.contains(2));
+
   val = type(nullopt, nullopt);
   EXPECT_FALSE(val.empty());
   EXPECT_EQ(val.cardinality(), nullopt);
   EXPECT_EQ(val.size(), nullopt);
 
-  EXPECT_THAT([&] { val = type(1, 0); }, Throws<rocket::InvalidArgument>() );
+  EXPECT_TRUE(val.contains(-1));
+  EXPECT_TRUE(val.contains(0));
+  EXPECT_TRUE(val.contains(1));
+
+  EXPECT_EQ(type(1, 0), type());
 }
 
 TEST(interval, OpenIntervalU32) {
@@ -243,32 +366,54 @@ TEST(interval, OpenIntervalU32) {
   EXPECT_EQ(val.cardinality(), 0);
   EXPECT_EQ(val.size(), 0);
 
+  EXPECT_FALSE(val.contains(0));
+  EXPECT_FALSE(val.contains(1));
+
   val = type(0, 1);
   EXPECT_TRUE(val.empty());
   EXPECT_EQ(val.cardinality(), 0);
   EXPECT_EQ(val.size(), 0);
+
+  EXPECT_FALSE(val.contains(0));
+  EXPECT_FALSE(val.contains(1));
+  EXPECT_FALSE(val.contains(2));
 
   val = type(0, 2);
   EXPECT_FALSE(val.empty());
   EXPECT_EQ(val.cardinality(), 1);
   EXPECT_EQ(val.size(), 2);
 
+  EXPECT_FALSE(val.contains(0));
+  EXPECT_TRUE(val.contains(1));
+  EXPECT_FALSE(val.contains(2));
+
   val = type(0, nullopt);
   EXPECT_FALSE(val.empty());
   EXPECT_EQ(val.cardinality(), nullopt);
   EXPECT_EQ(val.size(), nullopt);
+
+  EXPECT_FALSE(val.contains(0));
+  EXPECT_TRUE(val.contains(1));
+  EXPECT_TRUE(val.contains(2));
 
   val = type(nullopt, 1);
   EXPECT_FALSE(val.empty());
   EXPECT_EQ(val.cardinality(), nullopt);
   EXPECT_EQ(val.size(), nullopt);
 
+  EXPECT_TRUE(val.contains(0));
+  EXPECT_FALSE(val.contains(1));
+  EXPECT_FALSE(val.contains(2));
+
   val = type(nullopt, nullopt);
   EXPECT_FALSE(val.empty());
   EXPECT_EQ(val.cardinality(), nullopt);
   EXPECT_EQ(val.size(), nullopt);
 
-  EXPECT_THAT([&] { val = type(1, 0); }, Throws<rocket::InvalidArgument>() );
+  EXPECT_TRUE(val.contains(0));
+  EXPECT_TRUE(val.contains(1));
+
+  EXPECT_EQ(type(1, 0), type());
 }
 
 // Floating-point ...........................................................................................
@@ -297,7 +442,7 @@ TEST(interval, ClosedIntervalF32) {
   EXPECT_EQ(val.cardinality(), nullopt);
   EXPECT_EQ(val.size(), 2);
 
-  EXPECT_THAT([&] { val = type(1, 0); }, Throws<rocket::InvalidArgument>() );
+  EXPECT_EQ(type(1, 0), type());
 }
 
 TEST(interval, LeftOpenIntervalF32) {
@@ -328,7 +473,7 @@ TEST(interval, LeftOpenIntervalF32) {
   EXPECT_EQ(val.cardinality(), nullopt);
   EXPECT_EQ(val.size(), nullopt);
 
-  EXPECT_THAT([&] { val = type(1, 0); }, Throws<rocket::InvalidArgument>() );
+  EXPECT_EQ(type(1, 0), type());
 }
 
 TEST(interval, RightOpenIntervalF32) {
@@ -359,7 +504,7 @@ TEST(interval, RightOpenIntervalF32) {
   EXPECT_EQ(val.cardinality(), nullopt);
   EXPECT_EQ(val.size(), nullopt);
 
-  EXPECT_THAT([&] { val = type(1, 0); }, Throws<rocket::InvalidArgument>() );
+  EXPECT_EQ(type(1, 0), type());
 }
 
 TEST(interval, OpenIntervalF32) {
@@ -400,7 +545,47 @@ TEST(interval, OpenIntervalF32) {
   EXPECT_EQ(val.cardinality(), nullopt);
   EXPECT_EQ(val.size(), nullopt);
 
-  EXPECT_THAT([&] { val = type(1, 0); }, Throws<rocket::InvalidArgument>() );
+  EXPECT_EQ(type(1, 0), type());
+}
+
+// Operators ................................................................................................
+
+TEST(interval, intersection) {
+  {
+    using type = ClosedInterval<i32>;
+    EXPECT_EQ(type() & type(), type());
+    EXPECT_EQ(type(0, 1) & type(2, 3), type());
+    EXPECT_EQ(type(2, 3) & type(0, 1), type());
+    EXPECT_EQ(type(0, 2) & type(1, 3), type(1, 2));
+    EXPECT_EQ(type(1, 3) & type(0, 2), type(1, 2));
+  }
+
+  {
+    using type = OpenInterval<f64>;
+    EXPECT_EQ(type() & type(), type());
+    EXPECT_EQ(type(nullopt, nullopt) & type(), type());
+    EXPECT_EQ(type(0_f64, 1_f64) & type(2_f64, 3_f64), type());
+    EXPECT_EQ(type(0_f64, 2_f64) & type(1_f64, 3_f64), type(1_f64, 2_f64));
+  }
+}
+
+TEST(interval, union) {
+  {
+    using type = ClosedInterval<i32>;
+    EXPECT_EQ(type() | type(), type());
+    EXPECT_EQ(type(0, 1) | type(2, 3), type(0, 3));
+    EXPECT_EQ(type(2, 3) | type(0, 1), type(0, 3));
+    EXPECT_EQ(type(0, 2) | type(1, 3), type(0, 3));
+    EXPECT_EQ(type(1, 3) | type(0, 2), type(0, 3));
+  }
+
+  {
+    using type = OpenInterval<f64>;
+    EXPECT_EQ(type() | type(), type());
+    EXPECT_EQ(type(nullopt, nullopt) | type(), type(nullopt, nullopt));
+    EXPECT_EQ(type(0_f64, 1_f64) | type(2_f64, 3_f64), type(0_f64, 3_f64));
+    EXPECT_EQ(type(0_f64, 2_f64) | type(1_f64, 3_f64), type(0_f64, 3_f64));
+  }
 }
 
 // Format ...................................................................................................

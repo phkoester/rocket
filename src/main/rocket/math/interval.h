@@ -6,13 +6,13 @@
 
 #pragma once
 
-#include "rocket/assert.h"
 #include "rocket/type-traits.h"
 #include "rocket/3rdparty/std.h"
 #include "rocket/format/format.h"
 
 #include <algorithm>
 #include <optional>
+#include <ostream>
 #include <type_traits>
 
 namespace rocket::math {
@@ -36,44 +36,82 @@ struct BoundTraits {
   matches(BoundType bound, Type val) {
     if constexpr (Left) {
       // Left
-      if constexpr (Closed)
+      if constexpr (Closed) {
         return bound <= val;
-      else
+      } else {
         return not bound ? true : *bound < val;
+      }
     } else {
       // Right
-     if constexpr (Closed)
+     if constexpr (Closed) {
        return bound >= val;
-     else
+     } else {
        return not bound ? true : *bound > val;
+     }
     }
   }
 
   static constexpr BoundType
-  max(BoundType a, BoundType b) {
-    if constexpr (Closed)
+  leftMax(BoundType a, BoundType b) {
+    if constexpr (Closed) {
       return std::max(a, b);
-    else {
-      if (a && b)
-        return std::max(*a, *b);
-      else if (a)
+    } else {
+      // null < anything
+      if (not a) {
         return b;
-      else
-        return std::nullopt;
+      }
+      if (not b) {
+        return a;
+      }
+      return std::max(*a, *b);
     }
   }
 
   static constexpr BoundType
-  min(BoundType a, BoundType b) {
-    if constexpr (Closed)
+  leftMin(BoundType a, BoundType b) {
+    if constexpr (Closed) {
       return std::min(a, b);
-    else {
-      if (a && b)
-        return std::min(*a, *b);
-      else if (a)
+    } else {
+      // null < anything
+      if (not a) {
+        return a;
+      }
+      if (not b) {
         return b;
-      else
-        return std::nullopt;
+      }
+      return std::min(*a, *b);
+    }
+  }
+
+  static constexpr BoundType
+  rightMax(BoundType a, BoundType b) {
+    if constexpr (Closed) {
+      return std::max(a, b);
+    } else {
+      // null > anything
+      if (not a) {
+        return a;
+      }
+      if (not b) {
+        return b;
+      }
+      return std::max(*a, *b);
+    }
+  }
+
+  static constexpr BoundType
+  rightMin(BoundType a, BoundType b) {
+    if constexpr (Closed) {
+      return std::min(a, b);
+    } else {
+      // null > anything
+      if (not a) {
+        return b;
+      }
+      if (not b) {
+        return a;
+      }
+      return std::min(*a, *b);
     }
   }
 };
@@ -335,7 +373,7 @@ constexpr std::pair<typename Left::BoundType, typename Right::BoundType>
 intersectionImpl(
     typename Left::BoundType lhsA, typename Right::BoundType lhsB,
     typename Left::BoundType rhsA, typename Right::BoundType rhsB) {
-  return { Left::max(lhsA, rhsA), Right::min(lhsB, rhsB) };
+  return { Left::leftMax(lhsA, rhsA), Right::rightMin(lhsB, rhsB) };
 }
 
 template<typename Left, typename Right>
@@ -343,7 +381,7 @@ constexpr std::pair<typename Left::BoundType, typename Right::BoundType>
 unionImpl(
     typename Left::BoundType lhsA, typename Right::BoundType lhsB,
     typename Left::BoundType rhsA, typename Right::BoundType rhsB) {
-  return { Left::min(lhsA, rhsA), Right::max(lhsB, rhsB) };
+  return { Left::leftMin(lhsA, rhsA), Right::rightMax(lhsB, rhsB) };
 }
 
 } // namespace internal
@@ -405,20 +443,19 @@ struct IntervalImpl {
    *
    * Makes an interval.
    *
-   * If both #a and #b are not null, then #b must be greater than or equal to #a.
+   * If #b is less than #a, then the interval is empty.
    *
    * @param a the lower bound. If null, then there is no lower bound
    * @param b the upper bound. If null, then there is no upper bound
    */
-  constexpr IntervalImpl(A a, B b) : a(a), b(b) {
-    ROCKET_CHECK(b, (not option(a) || not option(b)) || value(b) >= value(a));
-  }
+  constexpr IntervalImpl(A a, B b) : a(a), b(b) {}
 
   /// @member_op_eq
   bool
   operator==(const IntervalImpl& rhs) const {
-    if (empty() && rhs.empty())
+    if (empty() && rhs.empty()) {
       return true;
+    }
     return a == rhs.a && b == rhs.b;
   }
 
@@ -433,8 +470,8 @@ struct IntervalImpl {
    *
    * Empty intervals have a cardinality of 0.
    *
-   * A floating-point interval has a cardinality of 1 if, and only if, it is a closed interval and if
-   * #a equals #b.
+   * A floating-point interval has a cardinality of 1 if, and only if, it is a closed interval and #a equals
+   * #b.
    *
    * @return the cardinality of the interval, or null if the cardinality is infinite
    */
@@ -508,6 +545,10 @@ operator&=(const IntervalImpl<T, Left, Right>& lhs, const IntervalImpl<T, Left, 
 
 /**
  * Returns the union of the intervals @p lhs and @p rhs.
+ *
+ * Two disjoint intervals are merged into one interval, e.g. @f$[5,7] \cup [1,3] = [1,7]@f$. This is not
+ * mathematically correct, but useful in many cases. To handle disjoint intervals specifically, test for an
+ * intersection beforehands using `operator&`.
  *
  * @tparam T the element type
  * @tparam Left the type of the lower-bound traits
@@ -606,6 +647,13 @@ private:
 };
 
 namespace rocket::math {
+
+// @op_output{#rocket::math::IntervalImpl}
+template<typename T, typename Left, typename Right>
+std::ostream&
+operator<<(std::ostream& os, const IntervalImpl<T, Left, Right>& val) {
+  return os << fmt::format("{}", val);
+}
 
 // Interval types -------------------------------------------------------------------------------------------
 

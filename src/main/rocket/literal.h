@@ -348,7 +348,7 @@ operator""_u128() {
  * @param val the value
  * @return a value of the desired type
  */
-f32 operator""_f32(std_unsigned_long_long_int);
+f32 operator""_f32(std_unsigned_long_long_int val);
 
  /**
  * 32-bit floating point literal.
@@ -366,7 +366,7 @@ f32 operator""_f32(std_long_double val);
  * @param val the value
  * @return a value of the desired type
  */
-f64 operator""_f64(std_unsigned_long_long_int);
+f64 operator""_f64(std_unsigned_long_long_int val);
 
 /**
  * 64-bit floating point literal.
@@ -386,7 +386,7 @@ f64 operator""_f64(std_long_double val);
  * @param val the value
  * @return a value of the desired type
  */
-f128 operator""_f128(std_unsigned_long_long_int);
+f128 operator""_f128(std_unsigned_long_long_int val);
 
 /**
  * 128-bit floating point literal.
