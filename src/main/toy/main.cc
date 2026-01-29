@@ -51,13 +51,6 @@ zzz() {
   }
 }
 
-template<char... CS>
-constexpr CodePoint
-operator""_foo() {
-  static_assert(sizeof...(CS) == 1, "Only one char");
-  return CodePoint('\0');
-}
-
 void
 toy() {
   ROCKET_LOG(toy);

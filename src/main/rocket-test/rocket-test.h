@@ -10,6 +10,17 @@
 
 #pragma once
 
+// Early macros ---------------------------------------------------------------------------------------------
+
+#undef ROCKET_TEST_PROTECTED
+/// Use this macro instead of `protected` to allow access to protected members of a class when testing.
+#define ROCKET_TEST_PROTECTED public
+#undef ROCKET_TEST_PRIVATE
+/// Use this macro instead of `private` to allow access to private members of a class when testing.
+#define ROCKET_TEST_PRIVATE public
+
+// Includes -------------------------------------------------------------------------------------------------
+
 #include "rocket/rocket.h"
 #include "rocket/io/io.h"
 
@@ -32,14 +43,7 @@ using namespace testing;
 
 // Macros ---------------------------------------------------------------------------------------------------
 
-// `ROCKET_...` .............................................................................................
-
-#undef ROCKET_TEST_PROTECTED
-/// Use this macro instead of `protected` to allow access to protected members of a class when testing.
-#define ROCKET_TEST_PROTECTED public
-#undef ROCKET_TEST_PRIVATE
-/// Use this macro instead of `private` to allow access to private members of a class when testing.
-#define ROCKET_TEST_PRIVATE public
+// `ROCKET_TEST_...` ........................................................................................
 
 /**
  * Makes a new unique #std::filesystem::path that points to a temporary test file.
@@ -48,7 +52,7 @@ using namespace testing;
  */
 #define ROCKET_TEST_TEMP_PATH() ::rocket::test::internal::tempPath()
 
-/// An environment variable indicating whether terminal output is tested.
+/// An environment variable indicating whether terminal functionality is tested.
 #define ROCKET_TEST_TERMINAL "ROCKET_TEST_TERMINAL"
 
 // Others ...................................................................................................
@@ -57,16 +61,16 @@ using namespace testing;
 /// To use with `EXPECT_EXIT`.
 #define EXIT_MESSAGE(msg) ""
 /// To use with `EXPECT_EXIT`.
-#define EXITED_WITH_CODE(code) ExitedWithCode(-1073740791)
+#define EXITED_WITH_CODE(code) ::testing::ExitedWithCode(-1073740791)
 /// To use with `EXPECT_EXIT`.
-#define KILLED_BY_SIGNAL(signal) ExitedWithCode(-1073740791)
+#define KILLED_BY_SIGNAL(signal) ::testing::ExitedWithCode(-1073740791)
 #else
 /// To use with `EXPECT_EXIT`.
 #define EXIT_MESSAGE(msg) msg
 /// To use with `EXPECT_EXIT`.
-#define EXITED_WITH_CODE(code) ExitedWithCode(code)
+#define EXITED_WITH_CODE(code) ::testing::ExitedWithCode(code)
 /// To use with `EXPECT_EXIT`.
-#define KILLED_BY_SIGNAL(signal) KilledBySignal(signal)
+#define KILLED_BY_SIGNAL(signal) ::testing::KilledBySignal(signal)
 #endif
 
 /**
@@ -74,7 +78,7 @@ using namespace testing;
  *
  * @param name the name of the environment variable
  */
-#define EXPECT_ENV(name) { \
+#define ASSERT_ENV(name) { \
   const char* p = getenv(name); \
   if (not p || (strcmp(p, "1") != 0 && strcmp(p, "true") != 0)) { \
     GTEST_SKIP_("Skipping test because `" name "` is not set\n"); \

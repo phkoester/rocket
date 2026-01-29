@@ -78,7 +78,7 @@ locations(string_view input, const vector<Position>& positions, const LocationsP
       auto& loc = it->second;
       loc.line = line + 1; // Marks this location as processed
       loc.column = column + 1;
-      loc.lineRange.lower = beginLine;
+      loc.lineRange.a = beginLine;
     }
 
     // Get next character from iterator, if any
@@ -94,7 +94,7 @@ locations(string_view input, const vector<Position>& positions, const LocationsP
       // Exit current line
       for (const auto& poi : pois) {
         auto& loi = locations.find(poi)->second; // "Location of interest"
-        loi.lineRange.upper = pos;
+        loi.lineRange.b = pos;
         if (params.setLineString) {
           loi.lineString = lineString;
         }
@@ -188,7 +188,7 @@ printLocations(
     ROCKET_CHECK(input, input || loc.lineString, "Either `input` or `lineString` must be supplied");
     string line = loc.lineString ?
       *loc.lineString :
-      string(input->substr(loc.lineRange.lower, *loc.lineRange.size()));
+      string(input->substr(loc.lineRange.a, *loc.lineRange.size()));
     escape::Result result;
     string escapedLine = escape::escapeCString(line, { .tabSize=locationsResult.params.tabSize }, &result);
 
@@ -227,7 +227,7 @@ printLocations(
 
     auto indicatorPos = [&](u64 pos) -> u64 {
       // 1. Translate input position to line position
-      pos -= loc.lineRange.lower;
+      pos -= loc.lineRange.a;
 
       // 2. Translate line position to escaped-line position
       auto leftIt = result.positions.left.find(pos);
@@ -253,8 +253,8 @@ printLocations(
       // Obtain the intersection between range and printed line
       if (auto inter = range & loc.lineRange; not inter.empty()) {
         // Translate intersection into #indicators positions
-        u64 lower = indicatorPos(inter.lower);
-        u64 upper = indicatorPos(*inter.upper);
+        u64 lower = indicatorPos(inter.a);
+        u64 upper = indicatorPos(*inter.b);
         // Place the range
         indicators.replace(indicators.begin() + lower, indicators.begin() + upper, upper - lower, '~');
       }

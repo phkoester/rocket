@@ -128,7 +128,7 @@ TEST(location, locationsKafkaTxt) {
       "Oops",
       nullopt);
 
-  string_view line(input.begin() + loc.lineRange.lower, input.begin() + *loc.lineRange.upper);
+  string_view line(input.begin() + loc.lineRange.a, input.begin() + *loc.lineRange.b);
   EXPECT_EQ(line, loc.lineString);
 }
 
@@ -252,7 +252,7 @@ TEST(location, printLocations) {
     EXPECT_EQ(result.locations.size(), 1);
     auto& loc = result.locations[0];
     EXPECT_LOCATION(loc, note, 13, ({}), 1, 9, ({ 0, 16 }), nullopt, "Oops", nullopt);
-    string line = input.substr(loc.lineRange.lower, *loc.lineRange.upper - loc.lineRange.lower);
+    string line = input.substr(loc.lineRange.a, *loc.lineRange.b - loc.lineRange.a);
     EXPECT_EQ(line, input);
     nio::StringSink out;
     if (TEST_TERMINAL) {

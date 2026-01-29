@@ -15,7 +15,7 @@ using namespace rocket::system::terminal;
  * This test requires `ROCKET_TEST_TERMINAL=1`.
  */
 TEST(terminal, position) {
-  EXPECT_ENV(ROCKET_TEST_TERMINAL);
+  ASSERT_ENV(ROCKET_TEST_TERMINAL);
 
   Ansi ansi(true);
 
@@ -38,7 +38,7 @@ TEST(terminal, position) {
  * This test requires `ROCKET_TEST_TERMINAL=1`.
  */
 TEST(terminal, size) {
-  EXPECT_ENV(ROCKET_TEST_TERMINAL);
+  ASSERT_ENV(ROCKET_TEST_TERMINAL);
 
   auto size = system::terminal::size(nio::out);
   EXPECT_EQ(static_cast<bool>(size), true);

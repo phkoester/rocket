@@ -6,6 +6,8 @@
 
 #pragma once
 
+#include "rocket/assert.h"
+#include "rocket/type-traits.h"
 #include "rocket/3rdparty/std.h"
 #include "rocket/format/format.h"
 
@@ -81,6 +83,35 @@ template<typename T> using LeftOpen = BoundTraits<T, std::optional<T>, true, '('
 template<typename T> using RightClosed = BoundTraits<T, T, false, ']'>;
 template<typename T> using RightOpen = BoundTraits<T, std::optional<T>, false, ')'>;
 
+// #Cardinality .............................................................................................
+
+template<typename T, bool LeftClosed, bool RightClosed>
+struct Cardinality;
+
+template<typename I> requires IsInteger<I>
+struct Cardinality<I, false, false> { using Type = std::optional<Uint<sizeof(I)>>; };
+
+template<typename I> requires IsInteger<I>
+struct Cardinality<I, false, true> { using Type = std::optional<Uint<sizeof(I)>>; };
+
+template<typename I> requires IsInteger<I>
+struct Cardinality<I, true, false> { using Type = std::optional<Uint<sizeof(I)>>; };
+
+template<typename I> requires IsInteger<I>
+struct Cardinality<I, true, true> { using Type = Uint<sizeof(I)>; };
+
+template<typename F> requires IsFloat<F>
+struct Cardinality<F, false, false> { using Type = std::optional<u32>; };
+
+template<typename F> requires IsFloat<F>
+struct Cardinality<F, false, true> { using Type = std::optional<u32>; };
+
+template<typename F> requires IsFloat<F>
+struct Cardinality<F, true, false> { using Type = std::optional<u32>; };
+
+template<typename F> requires IsFloat<F>
+struct Cardinality<F, true, true> { using Type = std::optional<u32>; };
+
 // #IntervalSymbols .........................................................................................
 
 template<typename C> requires IsChar<C>
@@ -105,24 +136,38 @@ struct IntervalSymbols<char32> {
 template<typename T, typename Left, typename Right>
 struct IntervalTraits;
 
-// Interval (closed interval)
+// Closed interval
 template<typename T>
 struct IntervalTraits<T, LeftClosed<T>, RightClosed<T>> {
   using LeftType = LeftClosed<T>;
   using RightType = RightClosed<T>;
 
+  using CardinalityType = Cardinality<T, true, true>::Type;
   using SizeType = T;
 
+  static constexpr CardinalityType
+  cardinality(LeftType::BoundType a, RightType::BoundType b) {
+    if (empty(a, b)) {
+      return 0;
+    }
+    if constexpr (IsInteger<T>) {
+      return b - a + 1;
+    } else {
+      return b == a ? 1 : std::nullopt;
+    }
+  }
+
   static constexpr bool
-  empty(LeftType::BoundType lower, RightType::BoundType upper) {
-    return upper < lower;
+  empty(LeftType::BoundType a, RightType::BoundType b) {
+    return b < a;
   }
 
   static constexpr SizeType
-  size(LeftType::BoundType lower, RightType::BoundType upper) {
-    if (empty(lower, upper))
+  size(LeftType::BoundType a, RightType::BoundType b) {
+    if (empty(a, b)) {
       return 0;
-    return upper - lower;
+    }
+    return b - a;
   }
 };
 
@@ -132,27 +177,46 @@ struct IntervalTraits<T, LeftOpen<T>, RightOpen<T>> {
   using LeftType = LeftOpen<T>;
   using RightType = RightOpen<T>;
 
+  using CardinalityType = Cardinality<T, false, false>::Type;
   using SizeType = std::optional<T>;
 
+  static constexpr CardinalityType
+  cardinality(LeftType::BoundType a, RightType::BoundType b) {
+    if (empty(a, b)) {
+      return 0;
+    }
+    if (not a || not b) {
+      return std::nullopt;
+    }
+    if constexpr (IsInteger<T>) {
+      return *b - *a - 2;
+    } else {
+      return std::nullopt;
+    }
+  }
+
   static constexpr bool
-  empty(LeftType::BoundType lower, RightType::BoundType upper) {
-    if (not lower || not upper)
+  empty(LeftType::BoundType a, RightType::BoundType b) {
+    if (not a || not b) {
       return false;
-    if (*upper < *lower)
+    }
+    if (*b < *a) {
       return true;
-    if constexpr (std::is_integral_v<T>)
-      return *upper - *lower < 2;
-    else
-      return *upper == *lower;
+    }
+    if constexpr (IsInteger<T>) {
+      return *b - *a < 2;
+    } else {
+      return *b == *a;
+    }
   }
 
   static constexpr SizeType
-  size(LeftType::BoundType lower, RightType::BoundType upper) {
-    if (empty(lower, upper))
+  size(LeftType::BoundType a, RightType::BoundType b) {
+    if (empty(a, b))
       return 0;
-    if (not upper || not lower)
+    if (not b || not a)
       return std::nullopt;
-    return *upper - *lower;
+    return *b - *a;
   }
 };
 
@@ -162,27 +226,43 @@ struct IntervalTraits<T, LeftOpen<T>, RightClosed<T>> {
   using LeftType = LeftOpen<T>;
   using RightType = RightClosed<T>;
 
+  using CardinalityType = Cardinality<T, false, true>::Type;
   using SizeType = std::optional<T>;
 
+  static constexpr CardinalityType
+  cardinality(LeftType::BoundType a, RightType::BoundType b) {
+    if (empty(a, b)) {
+      return 0;
+    }
+    if (not a) {
+      return std::nullopt;
+    }
+    if constexpr (IsInteger<T>) {
+      return b - *a - 1;
+    } else {
+      return std::nullopt;
+    }
+  }
+
   static constexpr bool
-  empty(LeftType::BoundType lower, RightType::BoundType upper) {
-    if (not lower)
+  empty(LeftType::BoundType a, RightType::BoundType b) {
+    if (not a)
       return false;
-    if (upper < *lower)
+    if (b < *a)
       return true;
     if constexpr (std::is_integral_v<T>)
-      return upper - *lower < 1;
+      return b - *a < 1;
     else
-      return upper == *lower;
+      return b == *a;
   }
 
   static constexpr SizeType
-  size(LeftType::BoundType lower, RightType::BoundType upper) {
-    if (empty(lower, upper))
+  size(LeftType::BoundType a, RightType::BoundType b) {
+    if (empty(a, b))
       return 0;
-    if (not lower)
+    if (not a)
       return std::nullopt;
-    return upper - *lower;
+    return b - *a;
   }
 };
 
@@ -192,27 +272,43 @@ struct IntervalTraits<T, LeftClosed<T>, RightOpen<T>> {
   using LeftType = LeftClosed<T>;
   using RightType = RightOpen<T>;
 
+  using CardinalityType = Cardinality<T, true, false>::Type;
   using SizeType = std::optional<T>;
 
+  static constexpr CardinalityType
+  cardinality(LeftType::BoundType a, RightType::BoundType b) {
+    if (empty(a, b)) {
+      return 0;
+    }
+    if (not b) {
+      return std::nullopt;
+    }
+    if constexpr (IsInteger<T>) {
+      return *b - a - 1;
+    } else {
+      return std::nullopt;
+    }
+  }
+
   static constexpr bool
-  empty(LeftType::BoundType lower, RightType::BoundType upper) {
-    if (not upper)
+  empty(LeftType::BoundType a, RightType::BoundType b) {
+    if (not b)
       return false;
-    if (*upper < lower)
+    if (*b < a)
       return true;
     if constexpr (std::is_integral_v<T>)
-      return *upper - lower < 1;
+      return *b - a < 1;
     else
-      return *upper <= lower;
+      return *b <= a;
   }
 
   static constexpr SizeType
-  size(LeftType::BoundType lower, RightType::BoundType upper) {
-    if (empty(lower, upper))
+  size(LeftType::BoundType a, RightType::BoundType b) {
+    if (empty(a, b))
       return 0;
-    if (not upper)
+    if (not b)
       return std::nullopt;
-    return *upper - lower;
+    return *b - a;
   }
 };
 
@@ -221,17 +317,17 @@ struct IntervalTraits<T, LeftClosed<T>, RightOpen<T>> {
 template<typename Left, typename Right>
 constexpr std::pair<typename Left::BoundType, typename Right::BoundType>
 intersectionImpl(
-    typename Left::BoundType lhsLower, typename Right::BoundType lhsUpper,
-    typename Left::BoundType rhsLower, typename Right::BoundType rhsUpper) {
-  return { Left::max(lhsLower, rhsLower), Right::min(lhsUpper, rhsUpper) };
+    typename Left::BoundType lhsA, typename Right::BoundType lhsB,
+    typename Left::BoundType rhsA, typename Right::BoundType rhsB) {
+  return { Left::max(lhsA, rhsA), Right::min(lhsB, rhsB) };
 }
 
 template<typename Left, typename Right>
 constexpr std::pair<typename Left::BoundType, typename Right::BoundType>
 unionImpl(
-    typename Left::BoundType lhsLower, typename Right::BoundType lhsUpper,
-    typename Left::BoundType rhsLower, typename Right::BoundType rhsUpper) {
-  return { Left::min(lhsLower, rhsLower), Right::max(lhsUpper, rhsUpper) };
+    typename Left::BoundType lhsA, typename Right::BoundType lhsB,
+    typename Left::BoundType rhsA, typename Right::BoundType rhsB) {
+  return { Left::min(lhsA, rhsA), Right::max(lhsB, rhsB) };
 }
 
 } // namespace internal
@@ -252,6 +348,9 @@ struct IntervalImpl {
   static_assert(
        std::is_same_v<Right, internal::RightClosed<T>> || std::is_same_v<Right, internal::RightOpen<T>>);
 
+  /// The interval traits.
+  using Traits = internal::IntervalTraits<T, Left, Right>;
+
   /// The element type.
   using Type = T;
 
@@ -261,84 +360,90 @@ struct IntervalImpl {
   using RightType = Right;
 
   /// The type of the lower bound.
-  using LowerType = Left::BoundType;
+  using A = Left::BoundType;
   /// The type of the upper bound.
-  using UpperType = Right::BoundType;
-
-  /// The interval traits.
-  using Traits = internal::IntervalTraits<T, Left, Right>;
+  using B = Right::BoundType;
 
   /**
-    * The interval's lower bound.
-    *
-    * If this is null, then the interval has no lower bound and no size and is nonempty.
-    */
-  LowerType lower;
+   * The interval's lower bound.
+   *
+   * If this is null, then the interval has no lower bound and no size and is nonempty.
+   */
+  A a;
   /**
-    * The interval's upper bound.
-    *
-    * If this is null, then the interval has no upper bound and no size and is nonempty.
-    */
-  UpperType upper;
+   * The interval's upper bound.
+   *
+   * If this is null, then the interval has no upper bound and no size and is nonempty.
+   */
+  B b;
 
   /**
    * @ctor_default
    *
    * Makes an empty interval.
    */
-  constexpr IntervalImpl() : lower(static_cast<T>(1)), upper(static_cast<T>(0)) {}
+  constexpr IntervalImpl() : a(static_cast<T>(1)), b(static_cast<T>(0)) {}
 
   /**
    * @ctor
    *
    * Makes an interval.
    *
-   * @param lower the lower bound. If null, then there is no lower bound
-   * @param upper the upper bound. If null, then there is no upper bound
+   * @param a the lower bound. If null, then there is no lower bound
+   * @param b the upper bound. If null, then there is no upper bound
    */
-  constexpr IntervalImpl(LowerType lower, UpperType upper) : lower(lower), upper(upper) {}
+  constexpr IntervalImpl(A a, B b) : a(a), b(b) {
+    ROCKET_CHECK(b, not (option(a) || not option(b)) || value(b) >= value(a));
+  }
 
   /// @member_op_eq
   bool
   operator==(const IntervalImpl& rhs) const {
     if (empty() && rhs.empty())
       return true;
-    return lower == rhs.lower && upper == rhs.upper;
+    return a == rhs.a && b == rhs.b;
   }
 
   /// @member_op_ne
   inline bool operator!=(const IntervalImpl& rhs) const { return not operator==(rhs); }
 
   /**
-   * Tests if @p val is contained in this interval.
+   * Returns the cardinality of the interval.
+   *
+   * @return the cardinality of the interval, or null if the cardinality is infinite
+   */
+  constexpr Traits::CardinalityType cardinality() const { return Traits::cardinality(a, b); }
+
+  /**
+   * Tests if @p val is contained in the interval.
    *
    * @param val a value of type @p T
-   * @return whether @p val is contained in this interval
+   * @return whether @p val is contained in the interval
    */
-  constexpr bool contains(T val) const { return Left::matches(lower, val) && Right::matches(upper, val); }
+  constexpr bool contains(T val) const { return Left::matches(a, val) && Right::matches(b, val); }
 
   /**
-   * Tests if this interval is empty.
+   * Tests if the interval is empty.
    *
-   * If either #lower or #upper are null, meaning "infinite", then this interval is nonempty.
+   * If either #a or #b are null, meaning "infinite", then the interval is nonempty.
    *
-   * @return whether this interval is empty
+   * @return whether the interval is empty
    */
-  constexpr bool empty() const { return Traits::empty(lower, upper); }
+  constexpr bool empty() const { return Traits::empty(a, b); }
 
   /**
-   * Returns the size of this interval.
+   * Returns the size of the interval.
    *
-   * If either #lower or #upper are null, then the size of the interval is null, meaning "infinite".
-   * Otherwise, the size is calculated as @f$upper -lower@f$.
+   * If either #a or #b are null, then the size of the interval is null, meaning "infinite". Otherwise, the
+   * size is calculated as @f$b -a@f$.
    *
    * @attention A size of 0 doesn't necessarily mean an interval is empty. For instance, the closed interval
-   * @f$[2,2]@f$ has a size of 0 and is nonempty. On the other hand, an empty interval always has a size of
-   * 0. To check if an interval is empty, use the #empty member function.
+   * @f$[2,2]@f$ has a size of 0, but a cardinality of 1, hence it is nonempty. To check if an interval is
+   * empty, use #empty instead.
    *
-   * @return the size of this interval, or null if the interval size is infinite
+   * @return the size of the interval, or null if the interval size is infinite
    */
-  constexpr Traits::SizeType size() const { return Traits::size(lower, upper); }
+  constexpr Traits::SizeType size() const { return Traits::size(a, b); }
 };
 
 /**
@@ -355,7 +460,7 @@ struct IntervalImpl {
 template<typename T, typename Left, typename Right>
 IntervalImpl<T, Left, Right>
 operator&(const IntervalImpl<T, Left, Right>& lhs, const IntervalImpl<T, Left, Right>& rhs) {
-  auto pair = internal::intersectionImpl<Left, Right>(lhs.lower, lhs.upper, rhs.lower, rhs.upper);
+  auto pair = internal::intersectionImpl<Left, Right>(lhs.a, lhs.b, rhs.a, rhs.b);
   return IntervalImpl<T, Left, Right>(pair.first, pair.second);
 }
 
@@ -389,7 +494,7 @@ operator&=(const IntervalImpl<T, Left, Right>& lhs, const IntervalImpl<T, Left, 
 template<typename T, typename Left, typename Right>
 IntervalImpl<T, Left, Right>
 operator|(const IntervalImpl<T, Left, Right>& lhs, const IntervalImpl<T, Left, Right>& rhs) {
-  auto pair = internal::unionImpl<Left, Right>(lhs.lower, lhs.upper, rhs.lower, rhs.upper);
+  auto pair = internal::unionImpl<Left, Right>(lhs.a, lhs.b, rhs.a, rhs.b);
   return IntervalImpl<T, Left, Right>(pair.first, pair.second);
 }
 
@@ -436,7 +541,7 @@ struct fmt::formatter<rocket::math::IntervalImpl<T, Left, Right>, C> {
       // Nonempty
 
       out = detail::write<C>(out, static_cast<C>(Left::Symbol));
-      auto opt = rocket::option(val.lower);
+      auto opt = rocket::option(val.a);
       if (not opt) {
         out = detail::write<C>(out, IntervalSymbols<C>::NegativeInfinity);
       } else {
@@ -444,7 +549,7 @@ struct fmt::formatter<rocket::math::IntervalImpl<T, Left, Right>, C> {
         out = underlying_.format(*opt, ctx);
       }
       out = detail::write<C>(out, static_cast<C>(','));
-      opt = rocket::option(val.upper);
+      opt = rocket::option(val.b);
       if (not opt) {
         // In interval notation, we prefer `+∞` over `∞`
         out = detail::write<C>(out, IntervalSymbols<C>::PositiveInfinity);
@@ -479,15 +584,15 @@ namespace rocket::math {
 // Interval types -------------------------------------------------------------------------------------------
 
 /**
- * A closed interval @f$[lower,upper]@f$ contains all elements @f$x@f$ such that @f$lower <= x <= upper@f$.
+ * A closed interval @f$[a,b]@f$ contains all elements @f$x@f$ such that @f$a <= x <= b@f$.
  *
  * @tparam T the element type
  */
 template<typename T>
-using Interval = IntervalImpl<T, internal::LeftClosed<T>, internal::RightClosed<T>>;
+using ClosedInterval = IntervalImpl<T, internal::LeftClosed<T>, internal::RightClosed<T>>;
 
 /**
- * An open interval @f$(lower,upper)@f$ contains all elements @f$x@f$ such that @f$lower < x < upper@f$.
+ * An open interval @f$(a,b)@f$ contains all elements @f$x@f$ such that @f$a < x < b@f$.
  *
  * @tparam T the element type
  */
@@ -495,7 +600,7 @@ template<typename T>
 using OpenInterval = IntervalImpl<T, internal::LeftOpen<T>, internal::RightOpen<T>>;
 
 /**
- * A left-open interval @f$(lower,upper]@f$ contains all elements @f$x@f$ such that @f$lower < x <= upper@f$.
+ * A left-open interval @f$(a,b]@f$ contains all elements @f$x@f$ such that @f$a < x <= b@f$.
  *
  * @tparam T the element type
  */
@@ -503,8 +608,7 @@ template<typename T>
 using LeftOpenInterval = IntervalImpl<T, internal::LeftOpen<T>, internal::RightClosed<T>>;
 
 /**
- * A right-open interval @f$[lower,upper)@f$ contains all elements @f$x@f$ such that
- * @f$lower <= x < upper@f$.
+ * A right-open interval @f$[a,b)@f$ contains all elements @f$x@f$ such that @f$a <= x < b@f$.
  *
  * @tparam T the element type
  */

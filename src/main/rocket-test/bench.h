@@ -2,6 +2,8 @@
  * @file bench.h
  *
  * Benchmarks with GoogleTest.
+ *
+ * This header must always be the first included file in a benchmark.
  */
 
 #pragma once
