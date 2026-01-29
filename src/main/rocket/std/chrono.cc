@@ -11,9 +11,9 @@ namespace rocket::chrono::internal {
 
 // Internal -------------------------------------------------------------------------------------------------
 
-recursive_mutex clockMutex;
+ROCKET_PUBLIC recursive_mutex clockMutex;
 
-milliseconds clockOffset = 0ms;
+ROCKET_PUBLIC milliseconds clockOffset = 0ms;
 
 } // namespace rocket::chrono::internal
 

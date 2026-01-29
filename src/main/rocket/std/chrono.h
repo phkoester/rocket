@@ -18,9 +18,9 @@ namespace rocket::chrono {
 
 namespace internal {
 
-extern std::recursive_mutex clockMutex;
+ROCKET_PUBLIC extern std::recursive_mutex clockMutex;
 
-extern std::chrono::milliseconds clockOffset;
+ROCKET_PUBLIC extern std::chrono::milliseconds clockOffset;
 
 #ifdef ROCKET_TEST
 
