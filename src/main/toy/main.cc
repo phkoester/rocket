@@ -10,6 +10,8 @@
 #include "rocket/unicode/unicode.h"
 #include "rocket/version.h"
 
+#include <cstring>
+
 using namespace rocket;
 using namespace rocket::unicode;
 using namespace std;
@@ -55,7 +57,7 @@ void
 toy() {
   ROCKET_LOG(toy);
   ROCKET_LOG_TRACE("Hey {}", "there");
-  out.println("__FILE__: {}", __FILE__);
+  out.println("src file name: {}", ROCKET_SRC_FILE);
   zzz();
 }
 

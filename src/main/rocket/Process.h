@@ -26,7 +26,7 @@
  */
 #define ROCKET_PROCESS_ERROR(status, fmt, ...) { \
   ::rocket::nio::StringSink msg; \
-  msg.print("{}:{}: ", __FILE__, __LINE__); \
+  msg.print("{}:{}: ", ::rocket::srcFile(), __LINE__); \
   msg.print( \
       fmt \
       __VA_OPT__(,) __VA_ARGS__); \
@@ -42,7 +42,7 @@
  */
  #define ROCKET_PROCESS_INFO(fmt, ...) { \
   ::rocket::nio::StringSink msg; \
-  msg.print("{}:{}: ", __FILE__, __LINE__); \
+  msg.print("{}:{}: ", ::rocket::srcFile(), __LINE__); \
   msg.print( \
       fmt \
       __VA_OPT__(,) __VA_ARGS__); \
@@ -58,7 +58,7 @@
  */
  #define ROCKET_PROCESS_WARN(fmt, ...) { \
   ::rocket::nio::StringSink msg; \
-  msg.print("{}:{}: ", __FILE__, __LINE__); \
+  msg.print("{}:{}: ", ::rocket::srcFile(), __LINE__); \
   msg.print( \
       fmt \
       __VA_OPT__(,) __VA_ARGS__); \
