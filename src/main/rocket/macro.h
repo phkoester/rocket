@@ -16,6 +16,15 @@
 // Macros ---------------------------------------------------------------------------------------------------
 
 /**
+ * The OS-specific file separator.
+ */
+#ifdef ROCKET_OS_WINDOWS
+  #define ROCKET_FILE_SEP "\\"
+#else
+  #define ROCKET_FILE_SEP "/"
+#endif
+
+/**
  * Generates a file-unique identifier.
  */
 #define ROCKET_ID() BOOST_PP_SEQ_CAT((rocketId)(__LINE__)(__))
@@ -97,7 +106,7 @@ namespace rocket::internal {
  */
 consteval const char*
 srcFile(const char* file) {
-   auto pos = std::string_view(file).find("src/");
+   auto pos = std::string_view(file).find("src" ROCKET_FILE_SEP);
    return &file[pos + 4];
  }
 
