@@ -135,6 +135,7 @@ function(AddBench name dir)
   set(srcFiles)
   set(env
     "BINARY_DIR=${CMAKE_CURRENT_BINARY_DIR}"
+    "CONFIG=$<CONFIG>"
     "CONFIGURATION_TYPES=${CMAKE_CONFIGURATION_TYPES}"
   )
   set(appendTo srcFiles)
@@ -169,6 +170,7 @@ function(AddTest name dir)
   set(srcFiles)
   set(env
     "BINARY_DIR=${CMAKE_CURRENT_BINARY_DIR}"
+    "CONFIG=$<CONFIG>"
     "CONFIGURATION_TYPES=${CMAKE_CONFIGURATION_TYPES}"
   )
   set(appendTo srcFiles)
