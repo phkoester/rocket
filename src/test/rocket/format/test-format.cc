@@ -4,6 +4,7 @@
 
 #include "rocket-test/rocket-test.h"
 
+#include "rocket/macro.h"
 #include "rocket/format/format.h"
 #include "rocket/nio/nio.h"
 
@@ -34,7 +35,7 @@ TEST(format, FormatChar) {
 TEST(format, FormatCharWithTagged) {
   auto lambda = [](i32 n) -> string {
     nio::StringSink buf;
-    buf.print("{}:{}{}", ::rocket::srcFile(), __LINE__, Format<char>([&] {
+    buf.print("{}:{}{}", ROCKET_SRC_FILE, __LINE__, Format<char>([&] {
       if (n == 1) {
         auto params = Format<char>::params(": First case: The {0} is `@@`{1} Again, the {0} is `@@`{1} But here comes another one: `⊕`{1}", "command line", ".");
         params.tag("@@", "grep {} {} {}", "-i", "foo", "bar");

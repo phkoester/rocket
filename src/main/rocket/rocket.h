@@ -49,7 +49,6 @@
 #include <cstdio> // Make this generally availabe
 #include <iosfwd>
 #include <typeinfo> // Make this generally available
-#include <string>
 
 // Check prerequisites --------------------------------------------------------------------------------------
 
@@ -193,21 +192,6 @@ constexpr u64 NPOS = -1;
  */
 template<typename... T>
 constexpr void nop(T&&...) {}
-
-/**
- * Returns the source file name, relative to the `src/` directory.
- *
- * This is evaluated at compile time.
- *
- * @return the source file name, relative to the `src/` directory
- */
-consteval const char*
-srcFile() {
-  constexpr const char* p = __FILE__;
-  constexpr auto pos = std::string_view(p).find("src/");
-  static_assert(pos != std::string_view::npos, "`src/` not found");
-  return &p[pos];
-}
 
 } // namespace rocket
 

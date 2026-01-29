@@ -11,6 +11,7 @@
 #include <boost/preprocessor/seq/cat.hpp>
 
 #include <mutex>
+#include <string_view>
 
 // Macros ---------------------------------------------------------------------------------------------------
 
@@ -71,11 +72,35 @@
   #define ROCKET_PRETTY_FUNCTION __PRETTY_FUNCTION__
 #endif
 
+/**
+ * Returns the source file name, relative to the `src/` directory.
+ *
+ * @return the source file name, relative to the `src/` directory
+ */
+#define ROCKET_SRC_FILE ::rocket::internal::srcFile(__FILE__)
+
 /// @cond undocumented
 
 #define ROCKET_NAMESPACE_BEGIN__(...) __VA_OPT__(namespace) __VA_ARGS__ __VA_OPT__({)
 #define ROCKET_NAMESPACE_END__(...) __VA_OPT__(})
 
 /// @endcond
+
+namespace rocket::internal {
+
+// Internal -------------------------------------------------------------------------------------------------
+
+/**
+ * Returns the source file name, relative to the `src/` directory.
+ *
+ * @return the source file name, relative to the `src/` directory
+ */
+consteval const char*
+srcFile(const char* file) {
+   auto pos = std::string_view(file).find("src/");
+   return &file[pos + 4];
+ }
+
+} // namespace rocket::internal
 
 // EOF

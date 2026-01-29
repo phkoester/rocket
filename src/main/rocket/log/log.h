@@ -153,7 +153,7 @@ void setLogOut(std::string_view val);
       &::rocket::log::internal::ROCKET_LOG_ID__(id), \
       __FUNCTION__, \
       ROCKET_PRETTY_FUNCTION, \
-      ::rocket::srcFile(), \
+      ROCKET_SRC_FILE, \
       __LINE__); \
   }
 
