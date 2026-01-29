@@ -55,6 +55,7 @@ void
 toy() {
   ROCKET_LOG(toy);
   ROCKET_LOG_TRACE("Hey {}", "there");
+  out.println("__FILE__: {}", __FILE__);
   zzz();
 }
 
