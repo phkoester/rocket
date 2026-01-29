@@ -39,8 +39,8 @@
 # Targets for executables:
 #
 # - bare
-# - print-args
 # - toy
+# - print-args
 #
 
 # The default target
@@ -105,14 +105,14 @@ bare: TARGET := bare
 bare: build
 	@$(BUILD_DIR)/src/main/bare $(ARGS)
 
-.PHONY: print-args
-print-args: TARGET := print-args
-print-args: build
-	@$(BUILD_DIR)/src/main/print-args $(ARGS)
-
 .PHONY: toy
 toy: TARGET := toy
 toy: build
 	@$(BUILD_DIR)/src/main/toy $(ARGS)
+
+.PHONY: print-args
+print-args: TARGET := print-args
+print-args: build
+	@$(BUILD_DIR)/src/test/print-args $(ARGS)
 
 # EOF

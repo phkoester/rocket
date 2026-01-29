@@ -170,16 +170,9 @@ target_link_libraries(rocket-test
 
 add_library(Rocket::rocket-test ALIAS rocket-test)
 
-set(ROCKET_MAIN_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR} PARENT_SCOPE)
-
 # `bare` ----------------------------------------------------------------------------------------------------
 
 AddExecutable(bare bare/main.cc)
-
-# `print-args` ----------------------------------------------------------------------------------------------
-
-AddExecutable(print-args print-args/main.cc)
-target_link_libraries(print-args PRIVATE Rocket::rocket)
 
 # `toy` -----------------------------------------------------------------------------------------------------
 

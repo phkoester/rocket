@@ -13,20 +13,20 @@ using namespace std::filesystem;
 
 // Constants ------------------------------------------------------------------------------------------------
 
-const auto MAIN_BINARY_DIR = env::get<string>("MAIN_BINARY_DIR");
+const auto BINARY_DIR = env::get<string>("BINARY_DIR");
 
 // Functions ------------------------------------------------------------------------------------------------
 
 path
 findPrintArgs() {
-  path mainBinaryDir = path(*MAIN_BINARY_DIR);
+  path binaryDir = path(*BINARY_DIR);
   string name = fmt::format("print-args{}", executableSuffix());
-  path test = mainBinaryDir / name;
+  path test = binaryDir / name;
   if (is_regular_file(test)) {
     return test;
   }
   for (const auto config : { "Release", "Debug" }) {
-    test = mainBinaryDir / config / name;
+    test = binaryDir / config / name;
     if (is_regular_file(test)) {
       return test;
     }

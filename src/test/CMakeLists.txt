@@ -2,6 +2,11 @@
 # CMakeLists.txt
 #
 
+# Auxiliary executables -------------------------------------------------------------------------------------
+
+AddExecutable(print-args print-args/main.cc)
+target_link_libraries(print-args PRIVATE Rocket::rocket)
+
 # Tests -----------------------------------------------------------------------------------------------------
 
 include(GoogleTest)
@@ -38,9 +43,7 @@ AddTest(test-rocket-str-Range rocket/str test-Range.cc)
 AddTest(test-rocket-str-StringConvert rocket/str test-StringConvert.cc)
 AddTest(test-rocket-str-escape rocket/str/escape test-escape.cc)
 AddTest(test-rocket-str-location rocket/str/location test-location.cc)
-AddTest(test-rocket-system rocket/system test-system.cc
-  ENVIRONMENT "MAIN_BINARY_DIR=${ROCKET_MAIN_BINARY_DIR}"
-)
+AddTest(test-rocket-system rocket/system test-system.cc)
 AddTest(test-rocket-system-terminal rocket/system/terminal test-terminal.cc)
 AddTest(test-rocket-unicode rocket/unicode test-unicode.cc)
 AddTest(test-rocket-unicode-Character rocket/unicode test-Character.cc)

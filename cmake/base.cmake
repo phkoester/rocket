@@ -133,7 +133,10 @@ endfunction()
 # AddBench(name dir srcFile...  [ENVIRONMENT name=value...])
 function(AddBench name dir)
   set(srcFiles)
-  set(env "BINARY_DIR=${CMAKE_CURRENT_BINARY_DIR}")
+  set(env
+    "BINARY_DIR=${CMAKE_CURRENT_BINARY_DIR}"
+    "CONFIGURATION_TYPES=${CMAKE_CONFIGURATION_TYPES}"
+  )
   set(appendTo srcFiles)
   foreach(it IN LISTS ARGN)
     if(it STREQUAL "ENVIRONMENT")
@@ -164,7 +167,10 @@ endfunction()
 # AddTest(name dir srcFile... [ENVIRONMENT name=value...])
 function(AddTest name dir)
   set(srcFiles)
-  set(env "BINARY_DIR=${CMAKE_CURRENT_BINARY_DIR}")
+  set(env
+    "BINARY_DIR=${CMAKE_CURRENT_BINARY_DIR}"
+    "CONFIGURATION_TYPES=${CMAKE_CONFIGURATION_TYPES}"
+  )
   set(appendTo srcFiles)
   foreach(it IN LISTS ARGN)
     if(it STREQUAL "ENVIRONMENT")
