@@ -105,20 +105,20 @@ extern const bool TEST_TERMINAL;
 // Functions ------------------------------------------------------------------------------------------------
 
 /**
- * Finds an auxiliary executable by its name.
- *
- * @param name the name of the executable (without the extension)
- * @return the path to the executable
- * @throws #rocket::InvalidState if the executable is not found
- */
-std::filesystem::path findExcecutable(std::string_view name);
-
-/**
  * Makes a new unique #std::filesystem::path that points to a temporary test file.
  *
  * When the test process finishes, the file is automatically removed.
  */
 std::filesystem::path tempFile();
+
+/**
+ * Returns the path to a test executable.
+ *
+ * @param name the name of the executable (without the extension)
+ * @return the path to the executable
+ * @throws #rocket::InvalidState if the executable is not found
+ */
+std::filesystem::path testExcecutable(std::string_view name);
 
 }
 

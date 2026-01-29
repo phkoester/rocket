@@ -69,6 +69,26 @@ struct Option {
   using Apply = std::function<void(std::optional<std::string_view> val)>;
 
   /**
+   * Convenience function that makes a new help option.
+   *
+   * @param group a pointer to an option group. May be null
+   * @param dest a reference to a `bool` value that will be set to `true` if the help option is present
+   * @return a new help option
+   */
+  static inline Option
+  helpOf(
+    const OptionGroup* group,
+    bool& dest) {
+    return of(
+      group,
+      "help",
+      unicode::CharacterView<char>("?"),
+      std::nullopt,
+      "display this help text and exit",
+      dest);
+  }
+
+  /**
    * Makes a new option and binds it to a destination reference.
    *
    * @param group a pointer to an option group. May be null

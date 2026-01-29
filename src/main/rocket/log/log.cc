@@ -7,7 +7,7 @@
 #include "rocket/Process.h"
 #include "rocket/enum.h"
 #include "rocket/macro.h"
-#include "rocket/chrono/chrono.h"
+#include "rocket/std/chrono.h"
 #include "rocket/str/str.h"
 #include "rocket/system/system.h"
 
@@ -18,6 +18,9 @@ using namespace rocket::log;
 using namespace std;
 
 namespace {
+
+using rocket::log::internal::Clock;
+using rocket::log::internal::TimePoint;
 
 // Local constants ------------------------------------------------------------------------------------------
 
@@ -36,9 +39,6 @@ const unordered_map<LogLevel, string_view> LEVEL_DISPLAY {
 };
 
 // #Entry ---------------------------------------------------------------------------------------------------
-
-using Clock = std::chrono::system_clock;
-using TimePoint = std::chrono::time_point<Clock>;
 
 /**
  * A stack entry.
@@ -125,6 +125,12 @@ Format logFmt(ROCKET_LOG_FMT);
 
 /// @NotThreadSafe
 struct Out {
+  /// This one is publicly available; tests may need this.
+  string
+  expand(string_view pattern, const TimePoint& time) {
+    return expand(pattern, time, false);
+  }
+
   void flushOnExit() {
     if (out_) {
       out_->flush();
@@ -145,6 +151,19 @@ struct Out {
 
 private:
 
+  static std::chrono::year_month_day
+  localYmd(const TimePoint& time) {
+    auto localTime = std::chrono::zoned_time(std::chrono::current_zone(), time);
+    auto localDays = std::chrono::floor<std::chrono::days>(localTime.get_local_time());
+    return std::chrono::year_month_day(localDays);
+  }
+
+  static std::chrono::year_month_day
+  utcYmd(const TimePoint& time) {
+    auto utcDays = std::chrono::floor<std::chrono::days>(time);
+    return std::chrono::year_month_day(utcDays);
+  }
+
   nio::Sink* out_ = &nio::out; // `stdout` or `stderr`
   unique_ptr<nio::FileSink> fileOut_; // A file sink
 
@@ -154,19 +173,6 @@ private:
   bool zip_ = false;
 
   string expand(string_view pattern, const TimePoint& time, bool update);
-
-  std::chrono::year_month_day
-  localYmd(const TimePoint& time) const {
-    auto localTime = std::chrono::zoned_time(std::chrono::current_zone(), time);
-    auto localDays = std::chrono::floor<std::chrono::days>(localTime.get_local_time());
-    return std::chrono::year_month_day(localDays);
-  }
-
-  std::chrono::year_month_day
-  utcYmd(const TimePoint& time) const {
-    auto utcDays = std::chrono::floor<std::chrono::days>(time);
-    return std::chrono::year_month_day(utcDays);
-  }
 
   void zipYesterday(const TimePoint& time);
 };
@@ -551,7 +557,7 @@ logImpl(
 
 } // namespace
 
-// #LogLevel -------------------------------------------------------------------------------------------------
+// #LogLevel ------------------------------------------------------------------------------------------------
 
 ROCKET_ENUM_DEFINE(rocket::log, LogLevel, LogLevel, (none)(error)(warn)(info)(debug)(trace));
 
@@ -560,6 +566,13 @@ namespace rocket::log {
 // Internal -------------------------------------------------------------------------------------------------
 
 namespace internal {
+
+/// @ThreadSafe
+string
+expandLogFilePattern(string_view pattern, const TimePoint& time) {
+  ROCKET_MUTEX_LOCK(logMutex);
+  return logOut.expand(pattern, time);
+}
 
 /// @ThreadSafe
 void

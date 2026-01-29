@@ -21,7 +21,7 @@ main(i32 argc, char** argv) {
   cl::OptionGroup general("General control");
   cl::CommandLineParams params { .usages={ "[OPTION]..." }, .otherOutput=true };
   cl::CommandLine cl({
-    cl::Option::of(&general, "help", "h"_cv, nullopt, "display this help text and exit", help)
+    cl::Option::helpOf(&general, help)
   }, params);
 
   try {

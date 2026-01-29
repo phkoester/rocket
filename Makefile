@@ -40,6 +40,10 @@
 #
 # - bare
 # - toy
+#
+# - Targets for test executables:
+#
+# - logger
 # - print-args
 #
 
@@ -109,6 +113,13 @@ bare: build
 toy: TARGET := toy
 toy: build
 	@$(BUILD_DIR)/src/main/toy $(ARGS)
+
+# Test executables ------------------------------------------------------------------------------------------
+
+.PHONY: logger
+logger: TARGET := logger
+logger: build
+	@$(BUILD_DIR)/src/test/logger $(ARGS)
 
 .PHONY: print-args
 print-args: TARGET := print-args

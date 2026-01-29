@@ -185,6 +185,7 @@ TEST(scnlib, scanTimePoint) {
   auto info = tz->get_info(val1);
   val2 += info.offset;
 
+  // Cast to microseconds, because there might be a rounding issue
   auto val1Micros = chrono::time_point_cast<chrono::microseconds>(val1);
   auto val2Micros = chrono::time_point_cast<chrono::microseconds>(val2);
 

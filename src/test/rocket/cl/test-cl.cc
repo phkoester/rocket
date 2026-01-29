@@ -15,12 +15,12 @@ using namespace rocket::unicode;
 namespace {
 
 bool parseCommandOmit; // CL 1 "-o"
-bool parseCommandHelp; // CL 1 "-h"
+bool parseCommandHelp; // CL 1 "-?"
 string parseCommandCommand; // CL 1 command
 bool parseCommandList; // CL 2 "-l"
-bool parseCommandListHelp; // CL 2 "-h"
+bool parseCommandListHelp; // CL 2 "-?"
 bool parseCommandShow; // CL 2 "-s"
-bool parseCommandShowHelp; // CL 2 "-h"
+bool parseCommandShowHelp; // CL 2 "-?"
 bool parseCommandShowTest; // CL 2 "-t"
 vector<string> parseCommandArgs; // CL 2 args
 
@@ -35,8 +35,8 @@ parse(const CommandLine& cl, const vector<string>& args, nio::Sink& err = nio::e
 }
 
 /**
- * Usage: cmd [-o | -h] list [-h | -l] FILE...
- *   or   cmd [-o | -h] show [-h | -s | -t] [ARG]...
+ * Usage: cmd [-o | -?] list [-? | -l] FILE...
+ *   or   cmd [-o | -?] show [-? | -s | -t] [ARG]...
  */
 void
 parseCommand(const vector<string>& args, nio::Sink& out = nio::out, nio::Sink& err = nio::err) {
@@ -65,7 +65,7 @@ parseCommand(const vector<string>& args, nio::Sink& out = nio::out, nio::Sink& e
 
   CommandLine cl({
     Option::of(&general, "omit", "o"_cv, nullopt, "omit what is not important", parseCommandOmit),
-    Option::of(&misc, "help", "h"_cv, nullopt, "display this help text", parseCommandHelp)
+    Option::helpOf(&misc, parseCommandHelp)
   }, params);
 
   auto take = [](string_view arg) -> CommandLine::Took {
@@ -102,7 +102,7 @@ parseCommand(const vector<string>& args, nio::Sink& out = nio::out, nio::Sink& e
     };
 
     CommandLine listCl({
-      Option::of(&list, "help", "h"_cv, nullopt, "display this help text", parseCommandListHelp),
+      Option::helpOf(&list, parseCommandListHelp),
       Option::of(&list, "list", "l"_cv, nullopt, "a list option that is good for nothing", parseCommandList)
     }, listParams);
 
@@ -135,7 +135,7 @@ parseCommand(const vector<string>& args, nio::Sink& out = nio::out, nio::Sink& e
     };
 
     CommandLine showCl({
-      Option::of(&show, "help", "h"_cv, nullopt, "display this help text", parseCommandShowHelp),
+      Option::helpOf(&show, parseCommandShowHelp),
       Option::of(&show, "show", "s"_cv, nullopt, "a show option that is good for nothing", parseCommandShow),
       Option::of(&show, "test", "t"_cv, nullopt, "test something, or don't", parseCommandShowTest)
     }, showParams);
@@ -356,8 +356,8 @@ TEST(cl, parseShortOptions) {
 }
 
 /**
- * Usage: cmd [-o | -h] list [-h | -l] FILE...
- *   or   cmd [-o | -h] show [-h | -s | -t] [ARG]...
+ * Usage: cmd [-o | -?] list [-? | -l] FILE...
+ *   or   cmd [-o | -?] show [-? | -s | -t] [ARG]...
  */
 TEST(cl, parseCommand) {
   // Test invalid option
@@ -410,8 +410,8 @@ TEST(cl, parseCommand) {
         "~"
         "Miscellaneous:~"
         "~"
-        "  -h, --help~"
-        "          display this help text~"
+        "  -\\?, --help~"
+        "          display this help text and exit~"
         "~"
         "Gallia est omnis divisa in partes tres, quarum unam incolunt Belgae, aliam~"
         "Aquitani, tertiam qui ipsorum lingua Celtae, nostra Galli appellantur. Hi omnes~"
@@ -430,8 +430,8 @@ TEST(cl, parseCommand) {
       "\n"
       "List control:\n"
       "\n"
-      "  -h, --help\n"
-      "          display this help text\n"
+      "  -?, --help\n"
+      "          display this help text and exit\n"
       "  -l, --list\n"
       "          a list option that is good for nothing\n");
   }
@@ -477,8 +477,8 @@ TEST(cl, parseCommand) {
       "\n"
       "Show control:\n"
       "\n"
-      "  -h, --help\n"
-      "          display this help text\n"
+      "  -?, --help\n"
+      "          display this help text and exit\n"
       "  -s, --show\n"
       "          a show option that is good for nothing\n"
       "  -t, --test\n"

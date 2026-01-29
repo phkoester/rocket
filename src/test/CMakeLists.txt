@@ -4,6 +4,9 @@
 
 # Auxiliary executables -------------------------------------------------------------------------------------
 
+AddExecutable(logger logger/main.cc)
+target_link_libraries(logger PRIVATE Rocket::rocket)
+
 AddExecutable(print-args print-args/main.cc)
 target_link_libraries(print-args PRIVATE Rocket::rocket)
 

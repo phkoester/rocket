@@ -74,7 +74,7 @@ main(i32 argc, char **argv) {
   cl::OptionGroup general("General control");
   cl::CommandLineParams params { .usages={ "[OPTION]..." }} ;
   cl::CommandLine cl({
-    cl::Option::of(&general, "help", "?"_cv, nullopt, "display this help text and exit", help)
+    cl::Option::helpOf(&general, help)
   }, params);
 
   vector<string> args;

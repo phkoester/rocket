@@ -7,8 +7,10 @@
 #pragma once
 
 #include "rocket/macro.h"
+#include "rocket/rocket.h"
 
 #include <chrono>
+#include <mutex>
 
 namespace rocket::chrono {
 

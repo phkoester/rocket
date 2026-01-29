@@ -9,8 +9,11 @@
 #include "rocket-test/rocket-test.h"
 
 #include "rocket/log/log.h"
+#include "rocket/std/chrono.h"
+#include "rocket/system/system.h"
 
 using namespace rocket::log;
+using namespace std::filesystem;
 
 ROCKET_LOG_DEFINE(test_log);
 
@@ -24,6 +27,42 @@ TEST(log, log) {
 TEST(log, LogLevelFormat) {
   EXPECT_EQ(fmt::format("{}", LogLevel::none), "none");
   EXPECT_EQ(fmt::format(U"{}", LogLevel::none), U"none");
+}
+
+TEST(log, loggerZip) {
+  auto path = testExcecutable("logger");
+  string executable = path.string();
+
+  auto logFilePattern = temp_directory_path() / "logger-@[date].log@[zip]";
+
+  // Run `logger`, check log file
+
+  system::exec( { executable,
+    "--log", "all=trace", "--log-out", logFilePattern.string(), "Hi", "folks!" } );
+
+  auto time = rocket::chrono::now<log::internal::Clock>();
+  string logFile1 = log::internal::expandLogFilePattern(logFilePattern.string(), time);
+  EXPECT_TRUE(is_regular_file(logFile1));
+
+  // Run `logger` again, with 24 hours offset, check zip file and new log file
+
+  system::exec( { executable,
+    "--log", "all=trace", "--log-out", logFilePattern.string(), "--offset", "24", "Hi", "again!" } );
+
+  EXPECT_FALSE(is_regular_file(logFile1));
+  logFile1 += ".gz";
+  EXPECT_TRUE(is_regular_file(logFile1));
+
+  time += 24h;
+  string logFile2 = log::internal::expandLogFilePattern(logFilePattern.string(), time);
+  EXPECT_TRUE(is_regular_file(logFile2));
+
+  // Clean up
+
+  process.atExit([=] {
+    remove(logFile1);
+    remove(logFile2);
+  }, true);
 }
 
 // EOF

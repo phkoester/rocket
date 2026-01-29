@@ -49,6 +49,12 @@ namespace rocket::log {
 
 namespace internal {
 
+using Clock = std::chrono::system_clock;
+
+using TimePoint = std::chrono::time_point<Clock>;
+
+std::string expandLogFilePattern(std::string_view pattern, const TimePoint& time);
+
 void log(LogLevel level, std::string_view msg);
 
 void logBegin(LogLevel* logId, const char* function, const char* prettyFunction, const char* file, i32 line);

@@ -112,7 +112,7 @@ TEST(system, execPrintf) {
 }
 
 TEST(system, execPrintArgs) {
-  path printArgs = findExcecutable("print-args");
+  path printArgs = testExcecutable("print-args");
   string executable = printArgs.string();
 
   {
@@ -136,7 +136,7 @@ TEST(system, execPrintArgs) {
 
 TEST(system, execPrintArgsWithSpace) {
   // Copy `print-args` to `print args`, se we have a space in the executable name
-  path printArgs = findExcecutable("print-args");
+  path printArgs = testExcecutable("print-args");
   path printArgsWithSpace = printArgs.parent_path() / fmt::format("print args{}", executableSuffix());
   copy_file(printArgs, printArgsWithSpace, copy_options::overwrite_existing);
   string executable = printArgsWithSpace.string();
