@@ -89,16 +89,16 @@ template<typename T, bool LeftClosed, bool RightClosed>
 struct Cardinality;
 
 template<typename I> requires IsInteger<I>
-struct Cardinality<I, false, false> { using Type = std::optional<Uint<sizeof(I)>>; };
+struct Cardinality<I, false, false> { using Type = std::optional<typename Uint<sizeof(I)>::Type>; };
 
 template<typename I> requires IsInteger<I>
-struct Cardinality<I, false, true> { using Type = std::optional<Uint<sizeof(I)>>; };
+struct Cardinality<I, false, true> { using Type = std::optional<typename Uint<sizeof(I)>::Type>; };
 
 template<typename I> requires IsInteger<I>
-struct Cardinality<I, true, false> { using Type = std::optional<Uint<sizeof(I)>>; };
+struct Cardinality<I, true, false> { using Type = std::optional<typename Uint<sizeof(I)>::Type>; };
 
 template<typename I> requires IsInteger<I>
-struct Cardinality<I, true, true> { using Type = Uint<sizeof(I)>; };
+struct Cardinality<I, true, true> { using Type = typename Uint<sizeof(I)>::Type; };
 
 template<typename F> requires IsFloat<F>
 struct Cardinality<F, false, false> { using Type = std::optional<u32>; };
@@ -142,7 +142,7 @@ struct IntervalTraits<T, LeftClosed<T>, RightClosed<T>> {
   using LeftType = LeftClosed<T>;
   using RightType = RightClosed<T>;
 
-  using CardinalityType = Cardinality<T, true, true>::Type;
+  using CardinalityType = Cardinality<T, LeftType::Closed, RightType::Closed>::Type;
   using SizeType = T;
 
   static constexpr CardinalityType
@@ -153,7 +153,11 @@ struct IntervalTraits<T, LeftClosed<T>, RightClosed<T>> {
     if constexpr (IsInteger<T>) {
       return b - a + 1;
     } else {
-      return b == a ? 1 : std::nullopt;
+      // This is the only case where a floating-point interval has a cardinality of 1
+      if (b == a) {
+        return 1;
+      }
+      return std::nullopt;
     }
   }
 
@@ -177,7 +181,7 @@ struct IntervalTraits<T, LeftOpen<T>, RightOpen<T>> {
   using LeftType = LeftOpen<T>;
   using RightType = RightOpen<T>;
 
-  using CardinalityType = Cardinality<T, false, false>::Type;
+  using CardinalityType = Cardinality<T, LeftType::Closed, RightType::Closed>::Type;
   using SizeType = std::optional<T>;
 
   static constexpr CardinalityType
@@ -189,7 +193,7 @@ struct IntervalTraits<T, LeftOpen<T>, RightOpen<T>> {
       return std::nullopt;
     }
     if constexpr (IsInteger<T>) {
-      return *b - *a - 2;
+      return *b - *a - 1;
     } else {
       return std::nullopt;
     }
@@ -212,10 +216,12 @@ struct IntervalTraits<T, LeftOpen<T>, RightOpen<T>> {
 
   static constexpr SizeType
   size(LeftType::BoundType a, RightType::BoundType b) {
-    if (empty(a, b))
+    if (empty(a, b)) {
       return 0;
-    if (not b || not a)
+    }
+    if (not b || not a) {
       return std::nullopt;
+    }
     return *b - *a;
   }
 };
@@ -226,7 +232,7 @@ struct IntervalTraits<T, LeftOpen<T>, RightClosed<T>> {
   using LeftType = LeftOpen<T>;
   using RightType = RightClosed<T>;
 
-  using CardinalityType = Cardinality<T, false, true>::Type;
+  using CardinalityType = Cardinality<T, LeftType::Closed, RightType::Closed>::Type;
   using SizeType = std::optional<T>;
 
   static constexpr CardinalityType
@@ -238,7 +244,7 @@ struct IntervalTraits<T, LeftOpen<T>, RightClosed<T>> {
       return std::nullopt;
     }
     if constexpr (IsInteger<T>) {
-      return b - *a - 1;
+      return b - *a;
     } else {
       return std::nullopt;
     }
@@ -246,22 +252,27 @@ struct IntervalTraits<T, LeftOpen<T>, RightClosed<T>> {
 
   static constexpr bool
   empty(LeftType::BoundType a, RightType::BoundType b) {
-    if (not a)
+    if (not a) {
       return false;
-    if (b < *a)
+    }
+    if (b < *a) {
       return true;
-    if constexpr (std::is_integral_v<T>)
+    }
+    if constexpr (IsInteger<T>) {
       return b - *a < 1;
-    else
+    } else {
       return b == *a;
+    }
   }
 
   static constexpr SizeType
   size(LeftType::BoundType a, RightType::BoundType b) {
-    if (empty(a, b))
+    if (empty(a, b)) {
       return 0;
-    if (not a)
+    }
+    if (not a) {
       return std::nullopt;
+    }
     return b - *a;
   }
 };
@@ -272,7 +283,7 @@ struct IntervalTraits<T, LeftClosed<T>, RightOpen<T>> {
   using LeftType = LeftClosed<T>;
   using RightType = RightOpen<T>;
 
-  using CardinalityType = Cardinality<T, true, false>::Type;
+  using CardinalityType = Cardinality<T, LeftType::Closed, RightType::Closed>::Type;
   using SizeType = std::optional<T>;
 
   static constexpr CardinalityType
@@ -284,7 +295,7 @@ struct IntervalTraits<T, LeftClosed<T>, RightOpen<T>> {
       return std::nullopt;
     }
     if constexpr (IsInteger<T>) {
-      return *b - a - 1;
+      return *b - a;
     } else {
       return std::nullopt;
     }
@@ -292,22 +303,27 @@ struct IntervalTraits<T, LeftClosed<T>, RightOpen<T>> {
 
   static constexpr bool
   empty(LeftType::BoundType a, RightType::BoundType b) {
-    if (not b)
+    if (not b) {
       return false;
-    if (*b < a)
+    }
+    if (*b < a) {
       return true;
-    if constexpr (std::is_integral_v<T>)
+    }
+    if constexpr (IsInteger<T>) {
       return *b - a < 1;
-    else
+    } else {
       return *b <= a;
+    }
   }
 
   static constexpr SizeType
   size(LeftType::BoundType a, RightType::BoundType b) {
-    if (empty(a, b))
+    if (empty(a, b)) {
       return 0;
-    if (not b)
+    }
+    if (not b) {
       return std::nullopt;
+    }
     return *b - a;
   }
 };
@@ -389,11 +405,13 @@ struct IntervalImpl {
    *
    * Makes an interval.
    *
+   * If both #a and #b are not null, then #b must be greater than or equal to #a.
+   *
    * @param a the lower bound. If null, then there is no lower bound
    * @param b the upper bound. If null, then there is no upper bound
    */
   constexpr IntervalImpl(A a, B b) : a(a), b(b) {
-    ROCKET_CHECK(b, not (option(a) || not option(b)) || value(b) >= value(a));
+    ROCKET_CHECK(b, (not option(a) || not option(b)) || value(b) >= value(a));
   }
 
   /// @member_op_eq
@@ -409,6 +427,14 @@ struct IntervalImpl {
 
   /**
    * Returns the cardinality of the interval.
+   *
+   * If either #a or #b are null, then the cardinality is null, meaning "infinite". Otherwise, the
+   * cardinality is calculated as appropriate.
+   *
+   * Empty intervals have a cardinality of 0.
+   *
+   * A floating-point interval has a cardinality of 1 if, and only if, it is a closed interval and if
+   * #a equals #b.
    *
    * @return the cardinality of the interval, or null if the cardinality is infinite
    */
