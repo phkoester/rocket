@@ -197,6 +197,8 @@ constexpr void nop(T&&...) {}
 /**
  * Returns the source file name, relative to the `src/` directory.
  *
+ * This is evaluated at compile time.
+ *
  * @return the source file name, relative to the `src/` directory
  */
 consteval const char*
