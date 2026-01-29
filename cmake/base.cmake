@@ -133,10 +133,11 @@ endfunction()
 # AddBench(name dir srcFile...  [ENVIRONMENT name=value...])
 function(AddBench name dir)
   set(srcFiles)
+  string(JOIN " " types ${CMAKE_CONFIGURATION_TYPES})
   set(env
     "BINARY_DIR=${CMAKE_CURRENT_BINARY_DIR}"
     "CONFIG=$<CONFIG>"
-    "CONFIGURATION_TYPES=${CMAKE_CONFIGURATION_TYPES}"
+    "CONFIGURATION_TYPES=${types}"
   )
   set(appendTo srcFiles)
   foreach(it IN LISTS ARGN)
@@ -168,10 +169,11 @@ endfunction()
 # AddTest(name dir srcFile... [ENVIRONMENT name=value...])
 function(AddTest name dir)
   set(srcFiles)
+  string(JOIN " " types ${CMAKE_CONFIGURATION_TYPES})
   set(env
     "BINARY_DIR=${CMAKE_CURRENT_BINARY_DIR}"
     "CONFIG=$<CONFIG>"
-    "CONFIGURATION_TYPES=${CMAKE_CONFIGURATION_TYPES}"
+    "CONFIGURATION_TYPES=${types}"
   )
   set(appendTo srcFiles)
   foreach(it IN LISTS ARGN)
