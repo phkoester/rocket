@@ -21,59 +21,59 @@ constexpr u64 ITERATIONS = FILE_SIZE / CHUNK_SIZE;
 
 TEST(nio, FileSink) {
   string chunk(CHUNK_SIZE, ' '); // cppcheck-suppress variableScope
-  auto tmp = ROCKET_TEST_TEMP_PATH();
+  auto temp = tempFile();
 
   ROCKET_BENCH(N, [&] {
     {
-      FileSink out(tmp.string());
+      FileSink out(temp.string());
       for (u64 i = 0; i < ITERATIONS; ++i) {
         out.write(chunk);
       }
     }
-    EXPECT_EQ(file_size(tmp), FILE_SIZE);
+    EXPECT_EQ(file_size(temp), FILE_SIZE);
   });
 }
 
 TEST(nio, BufferedFileSink) {
   string chunk(CHUNK_SIZE, ' '); // cppcheck-suppress variableScope
-  auto tmp = ROCKET_TEST_TEMP_PATH();
+  auto temp = tempFile();
 
   ROCKET_BENCH(N, [&] {
     {
-      FileSink out(tmp.string());
+      FileSink out(temp.string());
       std::setbuf(out.file_, nullptr); // Disable buffering
       BufferedSink buffered(out);
       for (u64 i = 0; i < ITERATIONS; ++i) {
         buffered.write(chunk);
       }
     }
-    EXPECT_EQ(file_size(tmp), FILE_SIZE);
+    EXPECT_EQ(file_size(temp), FILE_SIZE);
   });
 }
 
 TEST(nio, StreamSink) {
   string chunk(CHUNK_SIZE, ' '); // cppcheck-suppress variableScope
-  auto tmp = ROCKET_TEST_TEMP_PATH();
+  auto temp = tempFile();
 
   ROCKET_BENCH(N, [&] {
     {
-      ofstream os(tmp.c_str());
+      ofstream os(temp.c_str());
       StreamSink out(os);
       for (u64 i = 0; i < ITERATIONS; ++i) {
         out.write(chunk);
       }
     }
-    EXPECT_EQ(file_size(tmp), FILE_SIZE);
+    EXPECT_EQ(file_size(temp), FILE_SIZE);
   });
 }
 
 TEST(nio, BufferedStreamSink) {
   string chunk(CHUNK_SIZE, ' '); // cppcheck-suppress variableScope
-  auto tmp = ROCKET_TEST_TEMP_PATH();
+  auto temp = tempFile();
 
   ROCKET_BENCH(N, [&] {
     {
-      ofstream os(tmp.c_str());
+      ofstream os(temp.c_str());
       os.rdbuf()->pubsetbuf(nullptr, 0); // Disable buffering
       StreamSink out(os);
       BufferedSink buffered(out);
@@ -81,7 +81,7 @@ TEST(nio, BufferedStreamSink) {
         buffered.write(chunk);
       }
     }
-    EXPECT_EQ(file_size(tmp), FILE_SIZE);
+    EXPECT_EQ(file_size(temp), FILE_SIZE);
   });
 }
 

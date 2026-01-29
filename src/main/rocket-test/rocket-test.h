@@ -45,13 +45,6 @@ using namespace testing;
 
 // `ROCKET_TEST_...` ........................................................................................
 
-/**
- * Makes a new unique #std::filesystem::path that points to a temporary test file.
- *
- * When the test process finishes, the file is automatically removed.
- */
-#define ROCKET_TEST_TEMP_PATH() ::rocket::test::internal::tempPath()
-
 /// An environment variable indicating whether terminal functionality is tested.
 #define ROCKET_TEST_TERMINAL "ROCKET_TEST_TERMINAL"
 
@@ -102,17 +95,31 @@ namespace rocket::test {
 
 // Constants ------------------------------------------------------------------------------------------------
 
-/// Reflects the environment variable `ROCKET_TEST_TERMINAL`.
+/// Value of the environment variable.
+extern const std::string BINARY_DIR;
+/// Value of the environment variable.
+extern const std::string CONFIG;
+/// Value of the environment variable.
 extern const bool TEST_TERMINAL;
 
-namespace internal {
+// Functions ------------------------------------------------------------------------------------------------
 
-// Internal -------------------------------------------------------------------------------------------------
+/**
+ * Finds an auxiliary executable by its name.
+ *
+ * @param name the name of the executable (without the extension)
+ * @return the path to the executable
+ * @throws #rocket::InvalidState if the executable is not found
+ */
+std::filesystem::path findExcecutable(std::string_view name);
 
-std::filesystem::path tempPath();
+/**
+ * Makes a new unique #std::filesystem::path that points to a temporary test file.
+ *
+ * When the test process finishes, the file is automatically removed.
+ */
+std::filesystem::path tempFile();
 
-} // namespace internal
-
-} // namespace rocket::test
+}
 
 // EOF

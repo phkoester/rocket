@@ -130,14 +130,14 @@ function(AddExecutable name)
   target_compile_options(${name} PRIVATE ${COMPILE_FLAGS})
 endfunction()
 
-# AddBench(name dir srcFile...  [ENVIRONMENT name=value...])
-function(AddBench name dir)
+# ParseArgs__(srcFiles envProps ...)
+function(ParseArgs__ srcFiles__ envProps__)
   set(srcFiles)
-  string(JOIN " " types ${CMAKE_CONFIGURATION_TYPES})
+  string(JOIN " " configs ${CMAKE_CONFIGURATION_TYPES})
   set(env
     "BINARY_DIR=${CMAKE_CURRENT_BINARY_DIR}"
     "CONFIG=$<CONFIG>"
-    "CONFIGURATION_TYPES=${types}"
+    "CONFIGS=${configs}"
   )
   set(appendTo srcFiles)
   foreach(it IN LISTS ARGN)
@@ -148,10 +148,18 @@ function(AddBench name dir)
     endif()
   endforeach()
 
-  set(props)
+  set(envProps)
   foreach(it IN LISTS env)
-    list(APPEND props PROPERTIES ENVIRONMENT "${it}")
+    list(APPEND envProps PROPERTIES ENVIRONMENT "${it}")
   endforeach()
+
+  set(${srcFiles__} ${srcFiles} PARENT_SCOPE)
+  set(${envProps__} ${envProps} PARENT_SCOPE)
+endfunction()
+
+# AddBench(name dir srcFile... [ENVIRONMENT name=value...])
+function(AddBench name dir)
+  ParseArgs__(srcFiles envProps ${ARGN})
 
   list(TRANSFORM srcFiles PREPEND "${dir}/")
   AddExecutable(${name} ${srcFiles})
@@ -161,33 +169,14 @@ function(AddBench name dir)
   gtest_discover_tests(${name}
     DISCOVERY_MODE PRE_TEST
     EXTRA_ARGS --gtest_catch_exceptions=0
-    ${props}
+    ${envProps}
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/src/bench/${dir}
   )
 endfunction()
 
 # AddTest(name dir srcFile... [ENVIRONMENT name=value...])
 function(AddTest name dir)
-  set(srcFiles)
-  string(JOIN " " types ${CMAKE_CONFIGURATION_TYPES})
-  set(env
-    "BINARY_DIR=${CMAKE_CURRENT_BINARY_DIR}"
-    "CONFIG=$<CONFIG>"
-    "CONFIGURATION_TYPES=${types}"
-  )
-  set(appendTo srcFiles)
-  foreach(it IN LISTS ARGN)
-    if(it STREQUAL "ENVIRONMENT")
-      set(appendTo env)
-    else()
-      list(APPEND ${appendTo} ${it})
-    endif()
-  endforeach()
-
-  set(props)
-  foreach(it IN LISTS env)
-    list(APPEND props PROPERTIES ENVIRONMENT "${it}")
-  endforeach()
+  ParseArgs__(srcFiles envProps ${ARGN})
 
   list(TRANSFORM srcFiles PREPEND "${dir}/")
   AddExecutable(${name} ${srcFiles})
@@ -197,7 +186,7 @@ function(AddTest name dir)
   gtest_discover_tests(${name}
     DISCOVERY_MODE PRE_TEST
     EXTRA_ARGS --gtest_catch_exceptions=0
-    ${props}
+    ${envProps}
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/src/test/${dir}
   )
 endfunction()

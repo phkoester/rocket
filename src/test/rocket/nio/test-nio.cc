@@ -199,13 +199,13 @@ TEST(nio, FileSourceDoesNotExist) {
 }
 
 TEST(nio, FileSourceRead) {
-  auto tmp = ROCKET_TEST_TEMP_PATH();
+  auto temp = tempFile();
 
-  FileSink out(tmp.string());
+  FileSink out(temp.string());
   out.writeln("Hey there");
   out.close();
 
-  FileSource in(tmp.string());
+  FileSource in(temp.string());
   string str = in.Source::read();
   EXPECT_EQ(in.error(), 0);
   EXPECT_EQ(str, "Hey there\n");
@@ -221,15 +221,15 @@ TEST(nio, FileSourceRead) {
 }
 
 TEST(nio, StreamSourceRead) {
-  auto tmp = ROCKET_TEST_TEMP_PATH();
+  auto temp = tempFile();
 
   {
-    ofstream os(tmp.c_str(), ios::binary);
+    ofstream os(temp.c_str(), ios::binary);
     StreamSink out(os);
     out.writeln("Hey there");
   }
 
-  ifstream is(tmp.c_str());
+  ifstream is(temp.c_str());
   StreamSource in(is);
   string str = in.Source::read();
   EXPECT_EQ(in.tell(), 10);
