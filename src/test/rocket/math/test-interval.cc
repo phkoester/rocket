@@ -473,7 +473,7 @@ TEST(interval, LeftOpenIntervalF32) {
   EXPECT_EQ(val.cardinality(), nullopt);
   EXPECT_EQ(val.size(), nullopt);
 
-  EXPECT_EQ(type(1, 0), type());
+  EXPECT_EQ(type(1_f32, 0), type());
 }
 
 TEST(interval, RightOpenIntervalF32) {
@@ -484,17 +484,17 @@ TEST(interval, RightOpenIntervalF32) {
   EXPECT_EQ(val.cardinality(), 0);
   EXPECT_EQ(val.size(), 0);
 
-  val = type(0, 0);
+  val = type(0, 0_f32);
   EXPECT_TRUE(val.empty());
   EXPECT_EQ(val.cardinality(), 0);
   EXPECT_EQ(val.size(), 0);
 
-  val = type(0, 1);
+  val = type(0, 1_f32);
   EXPECT_FALSE(val.empty());
   EXPECT_EQ(val.cardinality(), nullopt);
   EXPECT_EQ(val.size(), 1);
 
-  val = type(0, 2);
+  val = type(0, 2_f32);
   EXPECT_FALSE(val.empty());
   EXPECT_EQ(val.cardinality(), nullopt);
   EXPECT_EQ(val.size(), 2);
@@ -504,7 +504,7 @@ TEST(interval, RightOpenIntervalF32) {
   EXPECT_EQ(val.cardinality(), nullopt);
   EXPECT_EQ(val.size(), nullopt);
 
-  EXPECT_EQ(type(1, 0), type());
+  EXPECT_EQ(type(1, 0_f32), type());
 }
 
 TEST(interval, OpenIntervalF32) {
@@ -512,30 +512,30 @@ TEST(interval, OpenIntervalF32) {
 
   type val = type();
   EXPECT_TRUE(val.empty());
-  EXPECT_EQ(val.cardinality(), 0);
-  EXPECT_EQ(val.size(), 0);
+  EXPECT_EQ(val.cardinality(), 0_f32);
+  EXPECT_EQ(val.size(), 0_f32);
 
-  val = type(0, 0);
+  val = type(0_f32, 0_f32);
   EXPECT_TRUE(val.empty());
-  EXPECT_EQ(val.cardinality(), 0);
-  EXPECT_EQ(val.size(), 0);
+  EXPECT_EQ(val.cardinality(), 0_f32);
+  EXPECT_EQ(val.size(), 0_f32);
 
-  val = type(0, 1);
+  val = type(0_f32, 1_f32);
   EXPECT_FALSE(val.empty());
   EXPECT_EQ(val.cardinality(), nullopt);
   EXPECT_EQ(val.size(), 1);
 
-  val = type(0, 2);
+  val = type(0_f32, 2_f32);
   EXPECT_FALSE(val.empty());
   EXPECT_EQ(val.cardinality(), nullopt);
   EXPECT_EQ(val.size(), 2);
 
-  val = type(0, nullopt);
+  val = type(0_f32, nullopt);
   EXPECT_FALSE(val.empty());
   EXPECT_EQ(val.cardinality(), nullopt);
   EXPECT_EQ(val.size(), nullopt);
 
-  val = type(nullopt, 1);
+  val = type(nullopt, 1_f32);
   EXPECT_FALSE(val.empty());
   EXPECT_EQ(val.cardinality(), nullopt);
   EXPECT_EQ(val.size(), nullopt);
@@ -545,7 +545,7 @@ TEST(interval, OpenIntervalF32) {
   EXPECT_EQ(val.cardinality(), nullopt);
   EXPECT_EQ(val.size(), nullopt);
 
-  EXPECT_EQ(type(1, 0), type());
+  EXPECT_EQ(type(1_f32, 0_f32), type());
 }
 
 // Operators ................................................................................................
