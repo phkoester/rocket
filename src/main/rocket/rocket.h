@@ -107,6 +107,7 @@ using std_wchar_t = wchar_t;
 using std_char32_t = char32_t;
 using std_long = long;
 using std_size_t = size_t;
+using std_unsigned_long_long_int = unsigned long long int;
 using std_float = float;
 using std_double = double;
 using std_long_double = long double;

@@ -4,6 +4,7 @@
 
 #include "rocket-test/rocket-test.h"
 
+#include "rocket/literal.h"
 #include "rocket/math/interval.h"
 
 using namespace rocket::math;
@@ -307,17 +308,17 @@ TEST(interval, LeftOpenIntervalF32) {
   EXPECT_EQ(val.cardinality(), 0);
   EXPECT_EQ(val.size(), 0);
 
-  val = type(0, 0);
+  val = type(0_f32, 0);
   EXPECT_TRUE(val.empty());
   EXPECT_EQ(val.cardinality(), 0);
   EXPECT_EQ(val.size(), 0);
 
-  val = type(0, 1);
+  val = type(0_f32, 1);
   EXPECT_FALSE(val.empty());
   EXPECT_EQ(val.cardinality(), nullopt);
   EXPECT_EQ(val.size(), 1);
 
-  val = type(0, 2);
+  val = type(0_f32, 2);
   EXPECT_FALSE(val.empty());
   EXPECT_EQ(val.cardinality(), nullopt);
   EXPECT_EQ(val.size(), 2);
