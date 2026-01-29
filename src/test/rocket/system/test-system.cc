@@ -14,6 +14,8 @@ using namespace std::filesystem;
 // Constants ------------------------------------------------------------------------------------------------
 
 const auto BINARY_DIR = env::get<string>("BINARY_DIR");
+const auto CONFIG = env::get<string>("CONFIG");
+const auto CONFIGURATION_TYPES = env::get<string>("CONFIGURATION_TYPES");
 
 // Functions ------------------------------------------------------------------------------------------------
 
@@ -22,14 +24,16 @@ findPrintArgs() {
   path binaryDir = path(*BINARY_DIR);
   string name = fmt::format("print-args{}", executableSuffix());
   path test = binaryDir / name;
+  cout << "test: " << test << endl;
   if (is_regular_file(test)) {
     return test;
   }
-  for (const auto config : { "Release", "Debug" }) {
-    test = binaryDir / config / name;
-    if (is_regular_file(test)) {
-      return test;
-    }
+  cout << "CONFIGURATION_TYPES:  " << *CONFIGURATION_TYPES << "]" << endl;
+  cout << "CONFIG: [" << *CONFIG << "]" << endl;
+  test = binaryDir / *CONFIG / name;
+  cout << "test: " << test << endl;
+  if (is_regular_file(test)) {
+    return test;
   }
   ROCKET_FAIL("Cannot find `print-args`");
 }
