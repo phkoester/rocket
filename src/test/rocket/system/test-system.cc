@@ -101,13 +101,13 @@ TEST(system, envGet) {
 
 TEST(system, execEcho) {
   auto bytes = exec("echo Hello");
-  string_view out(reinterpret_cast<const char*>(bytes.data()), bytes.size());
+  string_view out(bytes.data(), bytes.size());
   EXPECT_EQ(out, "Hello\n");
 }
 
 TEST(system, execPrintf) {
   auto bytes = exec("printf \"%s\" Hello");
-  string_view out(reinterpret_cast<const char*>(bytes.data()), bytes.size());
+  string_view out(bytes.data(), bytes.size());
   EXPECT_EQ(out, "Hello");
 }
 
@@ -118,7 +118,7 @@ TEST(system, execPrintArgs) {
   {
     // Test spaces and quotes
     auto bytes = exec({ executable, "a", "b c", " d ", "'", "\"" });
-    string_view out(reinterpret_cast<const char*>(bytes.data()), bytes.size());
+    string_view out(bytes.data(), bytes.size());
     EXPECT_THAT(out, HasSubstr("1=a="));
     EXPECT_THAT(out, HasSubstr("2=b c="));
     EXPECT_THAT(out, HasSubstr("3= d ="));
@@ -129,7 +129,7 @@ TEST(system, execPrintArgs) {
   {
     // Test Unicode
     auto bytes = exec({ executable, "€ ÄÖÜ € 🧑‍🌾" });
-    string_view out(reinterpret_cast<const char*>(bytes.data()), bytes.size());
+    string_view out(bytes.data(), bytes.size());
     EXPECT_THAT(out, HasSubstr("1=€ ÄÖÜ € 🧑‍🌾="));
   }
 }
@@ -144,7 +144,7 @@ TEST(system, execPrintArgsWithSpace) {
   {
     // Test spaces and quotes
     auto bytes = exec({ executable, "a", "b c", " d ", "'", "\"" });
-    string_view out(reinterpret_cast<const char*>(bytes.data()), bytes.size());
+    string_view out(bytes.data(), bytes.size());
     EXPECT_THAT(out, HasSubstr("1=a="));
     EXPECT_THAT(out, HasSubstr("2=b c="));
     EXPECT_THAT(out, HasSubstr("3= d ="));
@@ -155,7 +155,7 @@ TEST(system, execPrintArgsWithSpace) {
   {
     // Test Unicode
     auto bytes = exec({ executable, "€ ÄÖÜ € 🧑‍🌾" });
-    string_view out(reinterpret_cast<const char*>(bytes.data()), bytes.size());
+    string_view out(bytes.data(), bytes.size());
     EXPECT_THAT(out, HasSubstr("1=€ ÄÖÜ € 🧑‍🌾="));
   }
 }

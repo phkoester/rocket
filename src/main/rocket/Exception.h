@@ -274,6 +274,6 @@ std::string what(const std::exception& ex);
  */
 std::string what(std::exception_ptr ptr);
 
-} // namespace rocke
+} // namespace rocket
 
 // EOF

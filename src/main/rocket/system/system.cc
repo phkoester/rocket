@@ -6,7 +6,6 @@
 
 #include "rocket/assert.h"
 
-#include <array>
 #include <cstdlib>
 #include <cstdio>
 #include <memory>
@@ -172,10 +171,10 @@ setImpl(std::string_view name, const optional<string>& value, bool replace) {
 
 // Functions ------------------------------------------------------------------------------------------------
 
-vector<std::byte> // MSVC needs #std::byte
+vector<char>
 exec(const string& cl) {
-  vector<std::byte> ret;
-  vector<std::byte> buf(1'024);
+  vector<char> ret;
+  vector<char> buf(1'024);
 
   unique_ptr<FILE, decltype(&PCLOSE)> pipe(POPEN(cl.c_str(), "r"), PCLOSE);
   if (not pipe) {
@@ -192,7 +191,7 @@ exec(const string& cl) {
   return ret;
 }
 
-vector<std::byte> // MSVC needs #std::byte
+vector<char>
 exec(const vector<string_view>& args) {
   return exec(makeCl(args));
 }
@@ -233,27 +232,6 @@ get() {
   ROCKET_MUTEX_LOCK(envMutex);
 
   unordered_map<string, string> ret;
-
-#if 0
-  // Windows
-  unique_ptr<CHAR, function<void(LPCH)>> env(GetEnvironmentStrings(), [](LPCH p) {
-    ROCKET_ASSERT(FreeEnvironmentStrings(p));
-  });
-  LPSTR p = reinterpret_cast<LPSTR>(env.get());
-  while (p != nullptr && *p != '\0') {
-    string_view entry(p);
-    auto eq = entry.find('=');
-    string_view name, value;
-    if (eq == string_view::npos) {
-      name = entry;
-    } else {
-      name = entry.substr(0, eq);
-      value = entry.substr(eq + 1);
-    }
-    ret.emplace(name, value);
-    p += entry.size() + 1;
-  }
-#endif
 
 #ifdef ROCKET_OS_WINDOWS
   char** p = _environ;

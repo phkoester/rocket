@@ -272,7 +272,11 @@ Out::zipYesterday(const TimePoint& time) {
   string expanded = expand(pattern_, time - 24h, false);
   filesystem::path path(expanded);
   if (filesystem::exists(path)) {
-    system::exec( { "gzip", "-5f", path.string() } );
+    try {
+      system::exec( { "gzip", "-5f", path.string() } );
+    } catch (const exception& ex) {
+      process.error(nio::err, 0, "Cannot zip yesterday’s log file `{}`: {}", path.string(), what(ex));
+    }
   }
 }
 
@@ -323,7 +327,7 @@ const vector<cl::Option> CL_OPTIONS {
     NBSP NBSP "@[name]"     NBSP NBSP NBSP "expands to the name of the process\n"
     NBSP NBSP "@[pid]" NBSP NBSP NBSP NBSP "expands to the process ID (PID)\n"
     NBSP NBSP "@[utc]"           NBSP NBSP "expands to nothing and uses UTC date rather than local date\n"
-    NBSP NBSP "@[zip]" NBSP NBSP NBSP NBSP "expands to nothing and zips yesterday’s log file",
+    NBSP NBSP "@[zip]" NBSP NBSP NBSP NBSP "expands to nothing and zips yesterday’s log file (requires `gzip`)",
     applyLogOut },
 };
 

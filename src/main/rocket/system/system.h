@@ -33,16 +33,18 @@ void setImpl(std::string_view name, const std::optional<std::string>& value, boo
  *
  * @param cl the command line to execute
  * @return the captured output
+ * @throws #rocket::InvalidState if the command cannot be executed
  */
-std::vector<std::byte> exec(const std::string& cl);
+std::vector<char> exec(const std::string& cl);
 
 /**
  * Executes a command and captures the output to standard out.
  *
  * @param args the command line to execute
  * @return the captured output
+ * @throws #rocket::InvalidState if the command cannot be executed
  */
-std::vector<std::byte> exec(const std::vector<std::string_view>& args);
+std::vector<char> exec(const std::vector<std::string_view>& args);
 
 /**
  * Returns the system-dependent executable suffix.

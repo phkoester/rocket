@@ -171,14 +171,13 @@ TEST(scnlib, scanTimePoint) {
   // This interferes somehow ...
   // system::env::set("TZ", "America/Godthab");
 
-  // Windows doesn't have nanoseconds
-  using TimePoint = chrono::time_point<chrono::system_clock, chrono::microseconds>;
-  TimePoint val1 = chrono::time_point_cast<chrono::microseconds>(chrono::system_clock::now());
-  string input = std::format("{:%Y-%m-%d %H:%M:%S}", val1); // "2026-01-27 05:51:13.396968", 26 chars
+  using TimePoint = chrono::time_point<chrono::system_clock, chrono::nanoseconds>;
+  TimePoint val1 = chrono::system_clock::now();
+  string input = std::format("{:%Y-%m-%d %H:%M:%S}", val1); // "2026-01-27 05:51:13.396968455", 29 chars
   auto result = scn::scan<TimePoint>(input, "{:%Y-%m-%d %H:%M:%.S}");
   ASSERT_TRUE(result);
   auto val2 = result->value();
-  EXPECT_EQ(result->begin() - input.begin(), 26);
+  EXPECT_EQ(result->begin() - input.begin(), 29);
 
   // The time zone of the scanned time point is unclear. The following adjustment seems to convert the
   // time point to UTC
@@ -186,7 +185,10 @@ TEST(scnlib, scanTimePoint) {
   auto info = tz->get_info(val1);
   val2 += info.offset;
 
-  EXPECT_EQ(val2, val1);
+  auto val1Micros = chrono::time_point_cast<chrono::microseconds>(val1);
+  auto val2Micros = chrono::time_point_cast<chrono::microseconds>(val2);
+
+  EXPECT_EQ(val2Micros, val1Micros);
 }
 
 TEST(scnlib, scanTuple) {
