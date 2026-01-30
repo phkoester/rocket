@@ -85,15 +85,6 @@ struct BoundTraits {
   }
 
   static constexpr BoundType
-  of(i32 val) {
-    if constexpr (std::is_same_v<T, BoundType>) {
-      return static_cast<T>(val);
-    } else {
-      return std::optional<T>(static_cast<T>(val));
-    }
-  }
-
-  static constexpr BoundType
   rightMax(BoundType a, BoundType b) {
     if constexpr (Closed) {
       return std::max(a, b);
@@ -446,7 +437,7 @@ struct IntervalImpl {
    *
    * Makes an empty interval.
    */
-  constexpr IntervalImpl() : a(Left::of(1_i32)), b(Right::of(0_i32)) {}
+  constexpr IntervalImpl() : a(1), b(0) {}
 
   /**
    * @ctor
