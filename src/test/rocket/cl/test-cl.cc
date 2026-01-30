@@ -57,7 +57,7 @@ parseCommand(const vector<string>& args, nio::Sink& out = nio::out, nio::Sink& e
     .epilog="Gallia est omnis divisa in partes tres, quarum unam incolunt Belgae, aliam Aquitani, tertiam qui ipsorum lingua Celtae, nostra Galli appellantur. Hi omnes lingua, institutis, legibus inter se differunt. Gallos ab Aquitanis Garunna flumen, a Belgis Matrona et Sequana dividit."
   };
 
-  auto command = Parameter::of("COMMAND", { "list", "show" }, "COMMAND", "command", parseCommandCommand);
+  auto command = Parameter::of("COMMAND", { "list", "show" }, "`list` or `show`", "a command", parseCommandCommand);
   command.consumeOptions = true;
 
   CommandLine cl({
@@ -381,7 +381,7 @@ TEST(cl, parseCommand) {
     parseCommand({ "-o", "walk", "dog" }, buf, buf);
     EXPECT_EQ(
         buf.str(),
-        "test-rocket-cl: error: Parameter COMMAND: Invalid value `walk`; expected COMMAND\n"
+        "test-rocket-cl: error: Parameter COMMAND: Invalid value `walk`; expected `list` or `show`\n"
         "Usage: test-rocket-cl [OPTION]... list [OPTION]... FILE...\n"
         "  or   test-rocket-cl [OPTION]... show [OPTION]... [ARG]...\n"
         "Try `test-rocket-cl --help` for more information.\n");

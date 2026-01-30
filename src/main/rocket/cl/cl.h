@@ -147,14 +147,14 @@ struct Parameter {
     return ret;
   }
 
-  std::string name;
-  std::optional<std::set<std::string>> allowedValues;
-  u64 maxOccurs = 1;
-  bool consumeOptions = false;
-  bool required = false;
-  std::optional<std::string> format;
-  std::optional<std::string> help;
-  Apply apply;
+  std::string name; ///< The parameter name.
+  std::optional<std::set<std::string>> allowedValues; ///< Allowed values.
+  u64 maxOccurs = 1; ///< Maximum number of occurrences.
+  bool consumeOptions = false; ///< Whether options shall be consumed after this parameter.
+  bool required = false; ///< Required?
+  std::optional<std::string> format; ///< Format text.
+  std::optional<std::string> help; ///< Help text.
+  Apply apply; ///< Callback function that applies the argument.
 };
 
 // #OptionGroup ---------------------------------------------------------------------------------------------
@@ -242,7 +242,7 @@ struct Option {
   std::string name; ///< The option name.
   std::optional<unicode::Character<char>> shortName; ///< The option short name.
   bool takesValue = false; ///< Option takes value?
-  bool required = false; ///< Is the option required?
+  bool required = false; ///< Required?
   std::optional<std::string> format; ///< Format text.
   std::optional<std::string> help; ///< Help text.
   Apply apply; ///< Callback function that applies the argument.
