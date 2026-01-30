@@ -510,14 +510,12 @@ TEST(interval, RightOpenIntervalF32) {
 TEST(interval, OpenIntervalF32) {
   using type = OpenInterval<f32>;
 
-#if 0
-  auto val = type(1_f32, 0_f32);
+  auto val = type();
   EXPECT_TRUE(val.empty());
   EXPECT_EQ(val.cardinality(), 0);
   EXPECT_EQ(val.size(), 0_f32);
-#endif
 
-  auto val = type(0_f32, 0_f32);
+  val = type(0_f32, 0_f32);
   EXPECT_TRUE(val.empty());
   EXPECT_EQ(val.cardinality(), 0);
   EXPECT_EQ(val.size(), 0_f32);

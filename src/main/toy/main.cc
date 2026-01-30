@@ -53,12 +53,21 @@ zzz() {
   }
 }
 
+optional<f32>
+makeOpt(int val) {
+  f32 f = (f32) val;
+  return optional<f32>(f);
+}
+
 void
 toy() {
   ROCKET_LOG(toy);
   ROCKET_LOG_TRACE("Hey {}", "there");
   out.println("src file name: {}", ROCKET_SRC_FILE);
   zzz();
+
+  auto opt = makeOpt(0);
+  out.println("opt: {}", opt);
 }
 
 // #main ----------------------------------------------------------------------------------------------------
@@ -73,8 +82,8 @@ main(i32 argc, char **argv) {
   process.init(argc, argv, "toy");
 
   optional<bool> help;
-  bool foo; // required!
-  optional<vector<string>> files; // required!
+  optional<bool> foo;
+  optional<vector<string>> files;
 
   cl::OptionGroup general("General control");
   cl::CommandLineConfig config { .usages={ "[OPTION]... [FILE]..." }} ;
