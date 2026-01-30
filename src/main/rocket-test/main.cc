@@ -24,7 +24,7 @@ main(i32 argc, char** argv) {
     cl::Option::helpOf(&general, help)
   }, {}, params);
 
-  cl.parseNew(process.args());
+  cl.parse(process.args());
 
   i32 status = RUN_ALL_TESTS();
   process.exit(status);

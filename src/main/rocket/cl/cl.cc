@@ -19,16 +19,16 @@ namespace rocket::cl {
 
 CommandLine::CommandLine(
   const vector<Option>& opts,
-  const vector<Argument>& args,
-  const CommandLineParams& params) :
+  const vector<Parameter>& params,
+  const CommandLineParams& config) :
   opts_(opts),
-  args_(args),
   params_(params),
-  hasUsage_(not params.usages.empty()),
+  config_(config),
+  hasUsage_(not config.usages.empty()),
   hasHelpOpt_(false) {
   // If requested, prepend Rocket options
 
-  if (params.rocketOpts) {
+  if (config.rocketOpts) {
     const auto& logOpts = log::internal::logOptions();
     opts_.insert(opts_.begin(), logOpts.begin(), logOpts.end());
   }
@@ -54,27 +54,7 @@ CommandLine::CommandLine(
 }
 
 void
-CommandLine::applyArg(const Argument& arg, std::string_view value) {
-  try {
-    arg.apply(value);
-    parserState_.seenArgs.insert(&arg);
-  } catch (const Exception& ex) {
-    string expected;
-    if (arg.format) {
-      expected = fmt::format("; expected {}", *arg.format);
-    }
-    ROCKET_FAIL("Argument {}: {}{}", arg.name, ex.message(), expected);
-  } catch (const exception& ex) {
-    string expected;
-    if (arg.format) {
-      expected = fmt::format("; expected {}", *arg.format);
-    }
-    ROCKET_FAIL("Argument {}: Invalid value {:?}{}", arg.name, value, expected);
-  }
-}
-
-void
-CommandLine::applyOpt(const Option& opt, bool nameFlag, std::optional<std::string_view> value) {
+CommandLine::applyOpt(const Option& opt, bool nameFlag, const optional<string>& value) {
   // Don't use #ROCKET_CHECK here for cleaner exception messages
 
   if (opt.takesValue && not value) {
@@ -86,13 +66,10 @@ CommandLine::applyOpt(const Option& opt, bool nameFlag, std::optional<std::strin
   if (not opt.takesValue && value && not BOOL_VALUES.contains(*value)) {
     ROCKET_FAIL("Option `{}` cannot take a value", name(opt, nameFlag));
   }
-  if (not opt.takesValue && not value) {
-    value = "true"sv;
-  }
-  ROCKET_ASSERT(value);
+  string useValue = value.value_or("true");
 
   try {
-    opt.apply(*value);
+    opt.apply(useValue);
     if (opt.name == "help") {
       parserState_.seenHelp = true;
     }
@@ -108,7 +85,30 @@ CommandLine::applyOpt(const Option& opt, bool nameFlag, std::optional<std::strin
     if (opt.format) {
       expected = fmt::format("; expected {}", *opt.format);
     }
-    ROCKET_FAIL("Option `{}`: Invalid value {:?}{}", name(opt, nameFlag), *value, expected);
+    ROCKET_FAIL("Option `{}`: Invalid value {:?}{}", name(opt, nameFlag), useValue, expected);
+  }
+}
+
+void
+CommandLine::applyParam(const Parameter& param, const string& value) {
+  try {
+    if (param.allowedValues && not param.allowedValues->contains(value)) {
+      ROCKET_FAIL("Invalid value `{}`", value);
+    }
+    param.apply(value);
+    parserState_.seenParams.insert(&param);
+  } catch (const Exception& ex) {
+    string expected;
+    if (param.format) {
+      expected = fmt::format("; expected {}", *param.format);
+    }
+    ROCKET_FAIL("Parameter {}: {}{}", param.name, ex.message(), expected);
+  } catch (const exception& ex) {
+    string expected;
+    if (param.format) {
+      expected = fmt::format("; expected {}", *param.format);
+    }
+    ROCKET_FAIL("Parameter {}: Invalid value {:?}{}", param.name, value, expected);
   }
 }
 
@@ -149,7 +149,7 @@ CommandLine::help(nio::Sink& out, bool exit) {
 
   auto size = system::terminal::size(out);
   u64 width = max(40_u64, size ? size->first : 80_u64);
-  bool output = params_.otherOutput;
+  bool output = config_.otherOutput;
 
   // Usage
 
@@ -163,11 +163,11 @@ CommandLine::help(nio::Sink& out, bool exit) {
 
   // Prolog
 
-  if (params_.prolog) {
+  if (config_.prolog) {
     if (output) {
       out.write('\n');
     }
-    out.writeln(str::wrap(*params_.prolog, 0, width));
+    out.writeln(str::wrap(*config_.prolog, 0, width));
     output = true;
   }
 
@@ -183,11 +183,11 @@ CommandLine::help(nio::Sink& out, bool exit) {
 
   // Epilog
 
-  if (params_.epilog) {
+  if (config_.epilog) {
     if (output) {
       out.write('\n');
     }
-    out.writeln(str::wrap(*params_.epilog, 0, width));
+    out.writeln(str::wrap(*config_.epilog, 0, width));
   }
 
   if (exit) {
@@ -246,15 +246,14 @@ CommandLine::helpOpts(nio::Sink& out, u64 width) const {
         out.write("    ");
       }
       out.print("--{}", opt->name);
+      if (opt->required) {
+        out.print(" (required)");
+      }
       if (opt->format) {
         out.print(" {}", *opt->format);
       }
       out.write('\n');
       if (opt->help) {
-        string help = *opt->help;
-        if (opt->required) {
-          help += ". This is a required option";
-        }
         out.writeln(str::wrap(*opt->help, 10, width));
       }
     }
@@ -266,158 +265,32 @@ CommandLine::name(const Option& opt, bool nameFlag) {
   return nameFlag ? "--" + opt.name : "-" + static_cast<string>(*opt.shortName);
 }
 
-// XXX Weg
-vector<string>
-CommandLine::parse(const vector<string>& args, const Take& take) {
-  vector<string> ret;
-
-  parserState_ = ParserState();
-
-  for (auto it = args.begin(), end = args.end(); it != end; ++it) {
-    const auto& elem = *it; // #std::string
-    string_view arg = elem; // This makes `substr()` more efficient
-
-    if (arg == "--") {
-      // 1. `--` seen: Pass the rest, excluding the option-end tag, to the program and break the argument
-      // loop
-
-      ret.insert(ret.end(), it + 1, args.end());
-      break;
-    } else if (arg.starts_with("--")) {
-      // 2. `--...` seen: Parse option by name
-
-      arg = arg.substr(2);
-      auto eq = arg.find('=');
-
-      // Extract name, look it up in map
-      string_view name = eq == string::npos ? arg : arg.substr(0, eq);
-      auto mapIt = byName_.find(name);
-      if (mapIt == byName_.end()) {
-        ROCKET_FAIL("Unknown option `--{}`", name);
-      }
-      const Option& opt = *mapIt->second;
-
-      // Obtain value, if any
-      optional<string_view> value;
-      if (eq != string::npos) {
-        // Take everything after the `=`
-        value = arg.substr(eq + 1);
-      } else if (opt.takesValue) {
-        // Take the next argument
-        if (it + 1 != args.end())
-          value = *++it;
-      }
-
-      // Apply option
-      applyOpt(opt, true, value);
-    } else if (arg.starts_with("-") && arg != "-") {
-      // 3. "-..." seen: Parse options by short name; the last one may take a value
-
-      arg = arg.substr(1);
-      auto iter = unicode::Iterator(unicode::IteratorType::Character, arg);
-      auto segs = iter.nextSegments();
-      auto segsBegin = segs.begin();
-      auto segsEnd = segs.end();
-      for (auto segIt = segsBegin; segIt != segsEnd; ++segIt) {
-        // Extract short name, look it up in map
-        auto seg = *segIt;
-        auto mapIt = byShortName_.find(seg);
-        if (mapIt == byShortName_.end()) {
-          ROCKET_FAIL("Unknown option `-{}`", seg);
-        }
-        const Option& opt = *mapIt->second;
-
-        // Obtain value, if any, apply option
-        optional<string> value;
-        auto segNext = segIt + 1;
-        if (segNext != segsEnd && *segNext == "=") {
-          // Option is followed by `=`: Take everything after the `=` and break the character loop
-          value = unicode::concat(segs, ++segNext - segsBegin);
-          applyOpt(opt, false, value);
-          break;
-        } else if (opt.takesValue) {
-          // Option takes value: break the character loop
-          if (segNext != segsEnd) {
-            // Take the rest of the argument
-            value = unicode::concat(segs, segNext - segsBegin);
-            applyOpt(opt, false, value);
-          }
-          else {
-            // Take the next argument
-            if (it + 1 != args.end()) {
-              value = *++it;
-            }
-            applyOpt(opt, false, value);
-          }
-          break;
-        } else {
-          // No value: Apply, continue in code-point loop
-          applyOpt(opt, false, value);
-        }
-      }
-    } else {
-      // 4. Not an option, but a positional argument: Let the program take the argument
-
-      bool finish = false;
-      auto took = take ? take(arg) : Store;
-      switch (took) {
-      case Accept:
-        // Argument was accepted and consumed: nothing to do, continue in argument loop
-        break;
-      case Stop:
-        // Argument was accepted and consumed, but a stop was requested: Pass the rest, excluding the current
-        // argument, to the program and break the argument loop
-        ret.insert(ret.end(), it + 1, args.end());
-        finish = true;
-        break;
-      case Store:
-        // Argument was not processed, but a store was requested: Pass it to the program and continue in the
-        // argument loop
-        ret.push_back(elem);
-        break;
-      case Reject:
-        // Argument was rejected: Pass the rest, including the current argument, to the program and break the
-        // argument loop
-        ret.insert(ret.end(), it, args.end());
-        finish = true;
-        break;
-      }
-      if (finish) {
-        break;
-      }
-    }
-  }
-
-  return ret;
-}
-
-void
-CommandLine::parseNew(const vector<string>& args, nio::Sink& out, nio::Sink& err, bool exit) {
+bool
+CommandLine::parse(const vector<string>& args, nio::Sink& out, nio::Sink& err, bool exit) {
   try {
     parserState_ = ParserState();
 
-    u64 argIndex = 0;
-    u64 argOccurs = 0;
-    bool argsOnly = false;
+    u64 paramIndex = 0;
+    u64 paramOccurs = 0;
+    bool consumeOpts = false;
 
     for (auto it = args.begin(), end = args.end(); it != end; ++it) {
-      const auto& elem = *it; // #std::string
-      string_view arg = elem; // This makes `substr()` more efficient
+      string arg = *it;
 
-      if (not argsOnly && arg == "--") {
+      if (not consumeOpts && arg == "--") {
         // 1. `--` seen: Recognize all remaining arguments as positional arguments, continue in loop
         // loop
 
-        argsOnly = true;
+        consumeOpts = true;
         continue;
-      } else if (not argsOnly && arg.starts_with("--")) {
+      } else if (not consumeOpts && arg.starts_with("--")) {
         // 2. `--...` seen: Parse option by name
 
         arg = arg.substr(2);
         auto eq = arg.find('=');
 
         // Extract name, look it up in map
-        string_view name = eq == string::npos ? arg : arg.substr(0, eq);
+        string name = eq == string::npos ? arg : arg.substr(0, eq);
         auto mapIt = byName_.find(name);
         if (mapIt == byName_.end()) {
           ROCKET_FAIL("Unknown option `--{}`", name);
@@ -425,7 +298,7 @@ CommandLine::parseNew(const vector<string>& args, nio::Sink& out, nio::Sink& err
         const Option& opt = *mapIt->second;
 
         // Obtain value, if any
-        optional<string_view> value;
+        optional<string> value;
         if (eq != string::npos) {
           // Take everything after the `=`
           value = arg.substr(eq + 1);
@@ -437,11 +310,11 @@ CommandLine::parseNew(const vector<string>& args, nio::Sink& out, nio::Sink& err
 
         // Apply option
         applyOpt(opt, true, value);
-      } else if (not argsOnly && arg.starts_with("-") && arg != "-") {
+      } else if (not consumeOpts && arg.starts_with("-") && arg != "-") {
         // 3. "-..." seen: Parse options by short name; the last one may take a value
 
         arg = arg.substr(1);
-        auto iter = unicode::Iterator(unicode::IteratorType::Character, arg);
+        auto iter = unicode::Iterator<char>(unicode::IteratorType::Character, arg);
         auto segs = iter.nextSegments();
         auto segsBegin = segs.begin();
         auto segsEnd = segs.end();
@@ -485,27 +358,31 @@ CommandLine::parseNew(const vector<string>& args, nio::Sink& out, nio::Sink& err
       } else {
         // 4. Not an option, but a positional argument: assign
 
-        if (argIndex >= args_.size()) {
+        if (paramIndex >= params_.size()) {
           ROCKET_FAIL("Extraneous argument `{}`", arg);
         }
-        const Argument* argument = &args_[argIndex];
-        if (argOccurs == argument->maxOccurs) {
+        const Parameter* param = &params_[paramIndex];
+        if (paramOccurs == param->maxOccurs) {
           // Argument has reached its maximum number of occurrences: advance to next argument
-          ++argIndex;
-          argOccurs = 0;
-          if (argIndex >= args_.size()) {
+          ++paramIndex;
+          paramOccurs = 0;
+          if (paramIndex >= params_.size()) {
             ROCKET_FAIL("Extraneous argument `{}`", arg);
           }
-          argument = &args_[argIndex];
+          param = &params_[paramIndex];
         }
-        applyArg(*argument, arg);
-        ++argOccurs;
+        applyParam(*param, arg);
+        ++paramOccurs;
+        if (param->consumeOptions) {
+          consumeOpts = true;
+        }
       }
     }
 
     // Help?
     if (parserState_.seenHelp) {
       help(out, exit);
+      return false;
     }
 
     // Have we seen all required options?
@@ -515,16 +392,19 @@ CommandLine::parseNew(const vector<string>& args, nio::Sink& out, nio::Sink& err
       }
     }
 
-    // Have we seen all required arguments?
-    for (const auto& arg : args_) {
-      if (arg.required && not parserState_.seenArgs.contains(&arg)) {
-        ROCKET_FAIL("Missing required argument {}", arg.name);
+    // Have we seen all required parameters?
+    for (const auto& param : params_) {
+      if (param.required && not parserState_.seenParams.contains(&param)) {
+        ROCKET_FAIL("Missing required argument for parameter {}", param.name);
       }
     }
+
+    return true;
   }
   catch (const exception& ex) {
     // XXX Kann alles hier rein
     handleException(ex, err, exit ? EXIT_SERIOUS_FAILURE : 0);
+    return false;
   }
 }
 
@@ -532,16 +412,16 @@ void
 CommandLine::printHelp(nio::Sink& out) const {
   ROCKET_EXPECT(hasHelpOpt_);
 
-  out.println("Try `{} --help` for more information.", params_.command);
+  out.println("Try `{} --help` for more information.", config_.command);
 }
 
 void
 CommandLine::printUsage(nio::Sink& out) const {
   ROCKET_EXPECT(hasUsage_);
 
-  out.println("Usage: {} {}", params_.command, params_.usages[0]);
-  for (u64 i = 1; i < params_.usages.size(); ++i) {
-    out.println("  or   {} {}", params_.command, params_.usages[i]);
+  out.println("Usage: {} {}", config_.command, config_.usages[0]);
+  for (u64 i = 1; i < config_.usages.size(); ++i) {
+    out.println("  or   {} {}", config_.command, config_.usages[i]);
   }
 }
 

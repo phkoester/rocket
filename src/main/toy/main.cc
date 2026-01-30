@@ -82,10 +82,10 @@ main(i32 argc, char **argv) {
     cl::Option::helpOf(&general, help),
     cl::Option::of(&general, "foo", "f"_cv, nullopt, "delve into foo mode", foo),
   }, {
-    cl::Argument::of("FILE", "PATH", "path to the input file", files)
+    cl::Parameter::of("FILE", "PATH", "path to the input file", files)
   }, params);
 
-  cl.parseNew(process.args());
+  cl.parse(process.args());
 
   {
     ROCKET_LOG(toy);

@@ -12,6 +12,7 @@
 #include "rocket/str/StringConvert.h"
 #include "rocket/unicode/Character.h"
 
+#include <set>
 #include <unordered_map>
 
 namespace rocket::cl {
@@ -36,63 +37,57 @@ struct ValueType<std::optional<T>> {
 
 template<typename T>
 inline void
-applyTo(T& dest, std::string_view arg) {
-  dest = str::toType<T>(arg);
+applyTo(T& dest, std::string_view val) {
+  dest = str::toType<T>(val);
 }
 
 template<typename T>
 inline void
-applyTo(std::vector<T>& dest, std::string_view arg) {
-  dest.push_back(str::toType<T>(arg));
+applyTo(std::vector<T>& dest, std::string_view val) {
+  dest.push_back(str::toType<T>(val));
 }
 
 template<typename T>
 inline void
-applyTo(std::optional<T>& dest, std::string_view arg) {
-  dest = str::toType<T>(arg);
+applyTo(std::optional<T>& dest, std::string_view val) {
+  dest = str::toType<T>(val);
 }
 
 template<typename T>
 inline void
-applyTo(std::optional<std::vector<T>>& dest, std::string_view arg) {
+applyTo(std::optional<std::vector<T>>& dest, std::string_view val) {
   if (not dest) {
     dest = std::vector<T>();
   }
-  dest->push_back(str::toType<T>(arg));
+  dest->push_back(str::toType<T>(val));
 }
 
 } // namespace internal
 
-// #Argument ------------------------------------------------------------------------------------------------
+// #Parameter -----------------------------------------------------------------------------------------------
 
-/**
- * Positional command-line arguments.
- *
- * If the destination is a #std::optional, then the argument is optional, otherwise it is required.
- *
- * If the destination is a #std::vector, the argument can consume multiple command-line arguments.
- */
-struct Argument {
-  /// Type for a function that is called to apply an argument value.
+/// Positional command-line parameters.
+struct Parameter {
+  /// Type for a function that is called to apply an argument.
   using Apply = std::function<void(std::string_view val)>;
 
   /**
-   * Convenience function that makes a new argument and binds it to a destination reference.
+   * Convenience function that makes a new parameter and binds it to a destination reference.
    *
-   * @tparam T the type of the destination reference. If this is a #std::optional reference, the argument is
-   *   optional, otherwise it is required. If this is a #std::vector reference, the argument can consume
+   * @tparam T the type of the destination reference. If this is a #std::optional reference, the parameter
+   *   is optional, otherwise it is required. If this is a #std::vector reference, the parameter can consume
    *   multiple arguments from the command line
-   * @param name the name of the argument, e.g. `"FILE"`. By conention, this is in all-caps and matches
+   * @param name the name of the parameter, e.g. `"FILE"`. By conention, this is in all-caps and matches
    *   the usage line
    * @param format this parameter should briefly describe the format, e.g.
    *   `"FILE"`, `"NUMBER"` etc.
    * @param help a short help text. By convention, this starts with a lower-case letter and does not end with
    *   a period, e.g. `"path to input file"`
-   * @param dest the destination reference that is assigned the argument's value
-   * @return a new argument
+   * @param dest the destination reference that is assigned the argument
+   * @return a new parameter
    */
   template<typename T>
-  static inline Argument
+  static inline Parameter
   of(
     const std::string& name,
     const std::optional<std::string>& format,
@@ -100,20 +95,66 @@ struct Argument {
     T& dest) {
     return {
       name,
+      std::nullopt,
       IsVector<typename internal::ValueType<T>::Type> ? NPOS : 1, // #maxOccurs
+      false, // #consumeOptions
       not IsOptional<T>, // #required
       format,
       help,
-      [&](std::string_view arg) { internal::applyTo(dest, arg); }
+      [&](std::string_view val) { internal::applyTo(dest, val); }
     };
   }
 
-  std::string name; ///< The argument name.
-  u64 maxOccurs = 1; ///< The maximum number of elements
-  bool required = false; ///< Is the argument required?
-  std::optional<std::string> format; ///< Format text.
-  std::optional<std::string> help; ///< Help text.
-  Apply apply; ///< Callback function that applies the argument's value.
+  /**
+   * Convenience function that makes a new parameter and binds it to a destination reference.
+   *
+   * @tparam T the type of the destination reference. If this is a #std::optional reference, the parameter
+   *   is optional, otherwise it is required. If this is a #std::vector reference, the parameter can consume
+   *   multiple arguments from the command line
+   * @param name the name of the parameter, e.g. `"FILE"`. By conention, this is in all-caps and matches
+   *   the usage line
+   * @param allowedValues a set of allowed values
+   * @param format this parameter should briefly describe the format, e.g.
+   *   `"FILE"`, `"NUMBER"` etc.
+   * @param help a short help text. By convention, this starts with a lower-case letter and does not end with
+   *   a period, e.g. `"path to input file"`
+   * @param dest the destination reference that is assigned the argument
+   * @return a new parameter
+   */
+  template<typename T>
+  static inline Parameter
+  of(
+    const std::string& name,
+    const std::set<typename internal::ValueType<T>::Type>& allowedValues,
+    const std::optional<std::string>& format,
+    const std::optional<std::string>& help,
+    T& dest) {
+    Parameter ret {
+      name,
+      std::nullopt,
+      IsVector<typename internal::ValueType<T>::Type> ? NPOS : 1, // #maxOccurs
+      false, // #consumeOptions
+      not IsOptional<T>, // #required
+      format,
+      help,
+      [&](std::string_view val) { internal::applyTo(dest, val); }
+    };
+    std::set<std::string> strings;
+    for (const auto& val : allowedValues) {
+      strings.insert(str::toString(val));
+    }
+    ret.allowedValues = strings;
+    return ret;
+  }
+
+  std::string name;
+  std::optional<std::set<std::string>> allowedValues;
+  u64 maxOccurs = 1;
+  bool consumeOptions = false;
+  bool required = false;
+  std::optional<std::string> format;
+  std::optional<std::string> help;
+  Apply apply;
 };
 
 // #OptionGroup ---------------------------------------------------------------------------------------------
@@ -193,7 +234,7 @@ struct Option {
       not IsOptional<T>, // #required
       format,
       help,
-      [&](std::string_view arg) { internal::applyTo(dest, arg); }
+      [&](std::string_view val) { internal::applyTo(dest, val); }
     };
   }
 
@@ -204,7 +245,7 @@ struct Option {
   bool required = false; ///< Is the option required?
   std::optional<std::string> format; ///< Format text.
   std::optional<std::string> help; ///< Help text.
-  Apply apply; ///< Callback function that applies the option's value.
+  Apply apply; ///< Callback function that applies the argument.
 };
 
 // #CommandLineParams ---------------------------------------------------------------------------------------
@@ -243,28 +284,6 @@ struct CommandLineParams {
  */
 struct CommandLine {
   /**
-   * An enum for the result of the function that takes a positional argument.
-   */
-  enum Took {
-    /// Tells the parser to do nothing and go on with the next argument.
-    Accept,
-    /// Tells the parser to stop and return the rest, exluding the current argument.
-    Stop,
-    /// Tells the parser to store the current argument for later returnal and go on with the next argument.
-    Store,
-    /// Tells the parser to stop and return the rest, including the current argument.
-    Reject
-  };
-
-  /**
-   * The function that is called as a callback when the parser sees a positional argument.
-   *
-   * @param arg the positional argument
-   * @return a value telling the parser what to do next
-   */
-  using Take = std::function<Took(std::string_view arg)>;
-
-  /**
    * @ctor
    *
    * @param opts the command-line options
@@ -272,16 +291,16 @@ struct CommandLine {
    */
   CommandLine(
     const std::vector<Option>& opts = {},
-    const std::vector<Argument>& args = {},
+    const std::vector<Parameter>& args = {},
     const CommandLineParams& params = {});
 
   /**
-   * To be called when the command line, in particular its positional arguments, did not satisfy the usage
-   * rules.
+   * To be called when the command line did not satisfy the usage rules.
    *
    * @param out the sink to write to
    * @param status program exit status. If this is not 0, the program exits with this status
    */
+  // XXX private
   void error(nio::Sink& out, i32 status = EXIT_SERIOUS_FAILURE) const;
 
   /**
@@ -309,20 +328,13 @@ struct CommandLine {
   /**
    * Parses the command-line arguments @p args, assigns values to bound destination references.
    *
-   * Call this function in a try/catch block. If an exception is thrown, call #handleException.
-   *
    * @param args the command-line arguments, e.g. `process.args()`
-   * @param take a take function, may be null. This allows customizing how positional arguments are
-   *     processed
-   * @return the command-line arguments left for further processing
-   * @throw std::exception if a problem arises in an option's `apply` function
-   * @see #Take
-   * @see #Took
+   * @param out the sink to write standard output to
+   * @param err the sink to write error output to
+   * @param exit if `true`, the program exits if the command line cannot be parsed successfully
+   * @return whether the application should continue after parsing
    */
-  // XXX Weg
-  std::vector<std::string> parse(const std::vector<std::string>& args, const Take& take = {});
-
-  void parseNew(
+  bool parse(
     const std::vector<std::string>& args,
     nio::Sink& out = nio::out,
     nio::Sink& err = nio::err,
@@ -333,7 +345,7 @@ private:
   struct ParserState {
     bool seenHelp = false;
     std::set<const Option*> seenOpts;
-    std::set<const Argument*> seenArgs;
+    std::set<const Parameter*> seenParams;
   };
 
   static std::string name(const Option& opt, bool nameFlag);
@@ -341,8 +353,8 @@ private:
   static void validate(std::string_view name, bool nameFlag);
 
   std::vector<Option> opts_;
-  std::vector<Argument> args_;
-  CommandLineParams params_;
+  std::vector<Parameter> params_;
+  CommandLineParams config_;
   bool hasUsage_;
   bool hasHelpOpt_;
   std::unordered_map<std::string_view, const Option*> byName_;
@@ -350,9 +362,9 @@ private:
 
   ParserState parserState_;
 
-  void applyArg(const Argument& arg, std::string_view value);
+  void applyOpt(const Option& opt, bool nameFlag, const std::optional<std::string>& value);
 
-  void applyOpt(const Option& opt, bool nameFlag, std::optional<std::string_view> value);
+  void applyParam(const Parameter& param, const std::string& value);
 
   void helpOpts(nio::Sink& out, u64 width) const;
 

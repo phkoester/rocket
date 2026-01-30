@@ -22,7 +22,7 @@ ROCKET_LOG_DEFINE(logger);
 // Functions ------------------------------------------------------------------------------------------------
 
 int
-run(const vector<string>& args) {
+run(const optional<vector<string>>& args) {
   ROCKET_LOG(logger);
   ROCKET_LOG_INFO("args: {}", args);
   return EXIT_SUCCESS;
@@ -38,23 +38,17 @@ main(i32 argc, char **argv) {
 
   optional<bool> help;
   optional<i32> hours;
+  optional<vector<string>> args;
 
   cl::OptionGroup general("General control");
   cl::CommandLineParams params { .usages={ "[OPTION]... [ARG]..." }} ;
   cl::CommandLine cl({
     cl::Option::helpOf(&general, help),
     cl::Option::of(&general, "offset", nullopt, "HOURS", "hour offset", hours)
-  }, {}, params);
-
-  vector<string> args;
-  try {
-    args = cl.parse(process.args());
-    if (help.value_or(false)) {
-      cl.help(out, true);
-    }
-  } catch (const exception& ex) {
-    cl.handleException(ex, err);
-  }
+  }, {
+    cl::Parameter::of("ARG", "ARG", "command-line argument", args)
+  }, params);
+  cl.parse(process.args());
 
   // Apply hour offset
 

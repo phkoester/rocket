@@ -23,17 +23,9 @@ optional<bool> parseCommandShowHelp; // CL 2 "-?"
 optional<bool> parseCommandShowTest; // CL 2 "-t"
 
 string parseCommandCommand; // CL 1 command
-vector<string> parseCommandArgs; // CL 2 args
-
-vector<string>
-parse(CommandLine& cl, const vector<string>& args, nio::Sink& err = nio::err) {
-  try {
-    return cl.parse(args);
-  } catch (const exception& ex) {
-    cl.handleException(ex, err, EXIT_SUCCESS);
-    return {};
-  }
-}
+vector<string> parseCommandArgs; // Remaining arguments after the command
+vector<string> parseCommandListFiles; // CL 2 files
+optional<vector<string>> parseCommandShowArgs; // CL 2 args
 
 /**
  * Usage: cmd [-o | -?] list [-? | -l] FILE...
@@ -59,35 +51,25 @@ parseCommand(const vector<string>& args, nio::Sink& out = nio::out, nio::Sink& e
   OptionGroup general { "General control" };
   OptionGroup misc { "Miscellaneous" };
 
-  CommandLineParams params {
+  CommandLineParams config {
     .usages={ "[OPTION]... list [OPTION]... FILE...", "[OPTION]... show [OPTION]... [ARG]..." },
     .prolog="List FILEs or show ARGs.\n\nThis is yet another paragraph.",
     .epilog="Gallia est omnis divisa in partes tres, quarum unam incolunt Belgae, aliam Aquitani, tertiam qui ipsorum lingua Celtae, nostra Galli appellantur. Hi omnes lingua, institutis, legibus inter se differunt. Gallos ab Aquitanis Garunna flumen, a Belgis Matrona et Sequana dividit."
   };
 
+  auto command = Parameter::of("COMMAND", { "list", "show" }, "COMMAND", "command", parseCommandCommand);
+  command.consumeOptions = true;
+
   CommandLine cl({
     // The group order matters!
     Option::of(&general, "omit", "o"_cv, nullopt, "omit what is not important", parseCommandOmit),
     Option::helpOf(&misc, parseCommandHelp)
-  }, {}, params);
+  }, {
+    command,
+    Parameter::of("ARG", "ARG", "command-line argument", parseCommandArgs)
+  }, config);
 
-  auto take = [](string_view arg) -> CommandLine::Took {
-    if (arg == "list" || arg == "show") {
-      parseCommandCommand = arg;
-      return CommandLine::Stop;
-    }
-    ROCKET_FAIL("Invalid command `{}`", arg);
-  };
-
-  vector<string> localArgs;
-  try {
-    localArgs = cl.parse(args, take);
-    if (parseCommandHelp.value_or(false)) {
-      cl.help(out, false);
-      return;
-    }
-  } catch (const exception& ex) {
-    cl.handleException(ex, err, EXIT_SUCCESS);
+  if (not cl.parse(args, out, err, false)) {
     return;
   }
 
@@ -99,7 +81,7 @@ parseCommand(const vector<string>& args, nio::Sink& out = nio::out, nio::Sink& e
     OptionGroup list { "List control" };
 
     CommandLineParams listParams {
-      .command = params.command + " list",
+      .command = config.command + " list",
       .usages={ "[OPTION]... FILE..." },
       .rocketOpts=false
     };
@@ -107,21 +89,11 @@ parseCommand(const vector<string>& args, nio::Sink& out = nio::out, nio::Sink& e
     CommandLine listCl({
       Option::helpOf(&list, parseCommandListHelp),
       Option::of(&list, "list", "l"_cv, nullopt, "a list option that is good for nothing", parseCommandList)
-    }, {}, listParams);
+    }, {
+      Parameter::of("FILE", "FILE", "a file to list", parseCommandListFiles)
+    }, listParams);
 
-    try {
-      parseCommandArgs = listCl.parse(localArgs);
-      if (parseCommandListHelp.value_or(false)) {
-        listCl.help(out, false);
-        return;
-      }
-    } catch (const exception& ex) {
-      listCl.handleException(ex, err, EXIT_SUCCESS);
-      return;
-    }
-
-    if (parseCommandArgs.empty()) {
-      listCl.error(err, EXIT_SUCCESS);
+    if (not listCl.parse(parseCommandArgs, out, err, false)) {
       return;
     }
 
@@ -132,7 +104,7 @@ parseCommand(const vector<string>& args, nio::Sink& out = nio::out, nio::Sink& e
     OptionGroup show { "Show control" };
 
     CommandLineParams showParams {
-      .command = params.command + " show",
+      .command = config.command + " show",
       .usages={ "[OPTION]... [ARG]..." },
       .rocketOpts=false
     };
@@ -141,16 +113,11 @@ parseCommand(const vector<string>& args, nio::Sink& out = nio::out, nio::Sink& e
       Option::helpOf(&show, parseCommandShowHelp),
       Option::of(&show, "show", "s"_cv, nullopt, "a show option that is good for nothing", parseCommandShow),
       Option::of(&show, "test", "t"_cv, nullopt, "test something, or don't", parseCommandShowTest)
-    }, {}, showParams);
+    }, {
+      Parameter::of("ARG", "ARG", "a thing to show", parseCommandShowArgs)
+    }, showParams);
 
-    try {
-      parseCommandArgs = showCl.parse(localArgs);
-      if (parseCommandShowHelp.value_or(false)) {
-        showCl.help(out, false);
-        return;
-      }
-    } catch (const exception& ex) {
-      showCl.handleException(ex, err, EXIT_SUCCESS);
+    if (not showCl.parse(parseCommandArgs, out, err, false)) {
       return;
     }
 
@@ -163,24 +130,33 @@ parseCommand(const vector<string>& args, nio::Sink& out = nio::out, nio::Sink& e
 // #TEST ----------------------------------------------------------------------------------------------------
 
 TEST(cl, parseNoOpts) {
-  CommandLine cl;
+  vector<string> args;
+  CommandLine cl {
+    {}, {
+      Parameter::of("ARG", "ARG", "command-line argument", args)
+    }
+  };
   nio::StringSink buf;
-  auto args = parse(cl, { "a", "b", "c" }, buf);
+  EXPECT_TRUE(cl.parse({ "a", "b", "c" }, buf, buf, false));
   EXPECT_EQ(args, (vector<string> { "a", "b", "c" }));
 }
 
 TEST(cl, parseOptBool) {
   optional<bool> flag;
+  optional<vector<string>> args;
 
   CommandLine cl( {
     // 🧑‍🌾: U+1F9D1 (ADULT), U+200D (ZERO WIDTH JOINER), U+1F33E (EAR OF RICE)
     Option::of(nullptr, "flag", "🧑‍🌾"_cv, nullopt, nullopt, flag)
+  }, {
+    Parameter::of("ARG", "ARG", "command-line argument", args)
   });
 
   // Test no options
   {
     flag = nullopt;
-    auto args = parse(cl, { "a", "b", "c" });
+    args = nullopt;
+    EXPECT_TRUE(cl.parse({ "a", "b", "c" }, nio::out, nio::err, false));
     EXPECT_EQ(args, (vector<string> { "a", "b", "c" }));
     EXPECT_FALSE(flag.value_or(false));
   }
@@ -188,7 +164,8 @@ TEST(cl, parseOptBool) {
   // Test mixed order
   {
     flag = nullopt;
-    auto args = parse(cl, { "a", "--flag", "b", "c" });
+    args = nullopt;
+    EXPECT_TRUE(cl.parse({ "a", "--flag", "b", "c" }, nio::out, nio::err, false));
     EXPECT_EQ(args, (vector<string> { "a", "b", "c" }));
     EXPECT_TRUE(flag);
   }
@@ -196,7 +173,8 @@ TEST(cl, parseOptBool) {
   // Test Unicode code point
   {
     flag = nullopt;
-    auto args = parse(cl, { "a", "-🧑‍🌾", "b", "c" });
+    args = nullopt;
+    EXPECT_TRUE(cl.parse({ "a", "-🧑‍🌾", "b", "c" }, nio::out, nio::err, false));
     EXPECT_EQ(args, (vector<string> { "a", "b", "c" }));
     EXPECT_TRUE(flag);
   }
@@ -204,7 +182,8 @@ TEST(cl, parseOptBool) {
   // Test option-end tag
   {
     flag = nullopt;
-    auto args = parse(cl, { "a", "--", "--flag", "b", "c" });
+    args = nullopt;
+    EXPECT_TRUE(cl.parse({ "a", "--", "--flag", "b", "c" }, nio::out, nio::err, false));
     EXPECT_EQ(args, (vector<string> { "a", "--flag", "b", "c" }));
     EXPECT_FALSE(flag.value_or(false));
   }
@@ -212,7 +191,8 @@ TEST(cl, parseOptBool) {
   // Test assignment for flag option, by name
   {
     flag = nullopt;
-    auto args = parse(cl, { "a", "--flag=false", "b", "c" });
+    args = nullopt;
+    EXPECT_TRUE(cl.parse({ "a", "--flag=false", "b", "c" }, nio::out, nio::err, false));
     EXPECT_EQ(args, (vector<string> { "a", "b", "c" }));
     EXPECT_FALSE(flag.value_or(false));
   }
@@ -220,7 +200,8 @@ TEST(cl, parseOptBool) {
   // Test assignment for flag option, by short name
   {
     flag = true;
-    auto args = parse(cl, { "a", "-🧑‍🌾=0", "b", "c" });
+    args = nullopt;
+    EXPECT_TRUE(cl.parse({ "a", "-🧑‍🌾=0", "b", "c" }, nio::out, nio::err, false));
     EXPECT_EQ(args, (vector<string> { "a", "b", "c" }));
     EXPECT_FALSE(flag.value_or(false));
   }
@@ -228,24 +209,28 @@ TEST(cl, parseOptBool) {
   // Test error when assigning a value
   {
     flag = false;
+    args = nullopt;
     nio::StringSink buf;
-    auto args = parse(cl, { "a", "-🧑‍🌾=hello", "b", "c" }, buf);
-    EXPECT_FALSE(flag.value_or(false));
+    EXPECT_FALSE(cl.parse({ "a", "-🧑‍🌾=hello", "b", "c" }, buf, buf, false));
     EXPECT_EQ(buf.str(), "test-rocket-cl: error: Option `-🧑‍🌾` cannot take a value\n");
   }
 }
 
 TEST(cl, parseOptInt) {
   i32 num;
+  optional<vector<string>> args;
 
   CommandLine cl( {
     Option::of(nullptr, "num", "n"_cv, "NUM", nullopt, num)
+  }, {
+    Parameter::of("ARG", "ARG", "command-line argument", args)
   });
 
   // Test mixed order
   {
     num = 0;
-    auto args = parse(cl, { "a", "--num", "12", "b", "c" });
+    args = nullopt;
+    EXPECT_TRUE(cl.parse({ "a", "--num", "12", "b", "c" }, nio::out, nio::err, false));
     EXPECT_EQ(args, (vector<string> { "a", "b", "c" }));
     EXPECT_EQ(num, 12);
   }
@@ -253,7 +238,8 @@ TEST(cl, parseOptInt) {
   // Test assignment via '='
   {
     num = 0;
-    auto args = parse(cl, { "a", "--num=12", "b", "c" });
+    args = nullopt;
+    EXPECT_TRUE(cl.parse({ "a", "--num=12", "b", "c" }, nio::out, nio::err, false));
     EXPECT_EQ(args, (vector<string> { "a", "b", "c" }));
     EXPECT_EQ(num, 12);
   }
@@ -261,35 +247,36 @@ TEST(cl, parseOptInt) {
   // Test error when missing value
   {
     num = 0;
+    args = nullopt;
     nio::StringSink buf;
-    auto args = parse(cl, { "a", "-n" }, buf);
-    EXPECT_EQ(args, vector<string>());
-    EXPECT_EQ(num, 0);
+    EXPECT_FALSE(cl.parse({ "a", "-n" }, buf, buf, false));
     EXPECT_EQ(buf.str(), "test-rocket-cl: error: Missing value for option `-n`\n");
   }
 
   // Test error when conversion fails
   {
     num = 0;
+    args = nullopt;
     nio::StringSink buf;
-    auto args = parse(cl, { "a", "-n", "hello" }, buf);
-    EXPECT_EQ(args, vector<string>());
-    EXPECT_EQ(num, 0);
+    EXPECT_FALSE(cl.parse({ "a", "-n", "hello" }, buf, buf, false));
     EXPECT_EQ(buf.str(), "test-rocket-cl: error: Option `-n`: Cannot scan \"hello\" as `int`; expected NUM\n");
   }
 }
 
 TEST(cl, parseOptEnum) {
   log::LogLevel level;
+  vector<string> args;
 
   CommandLine cl( {
     Option::of(nullptr, "level", "l"_cv, "LEVEL", nullopt, level)
+  }, {
+    Parameter::of("ARG", "ARG", "command-line argument", args)
   });
 
   // Test mixed order
   {
     level = log::LogLevel::none;
-    auto args = parse(cl, { "a", "--level", "info", "b", "c" });
+    EXPECT_TRUE(cl.parse({ "a", "--level", "info", "b", "c" }, nio::out, nio::err, false));
     EXPECT_EQ(args, (vector<string> { "a", "b", "c" }));
     EXPECT_EQ(level, log::LogLevel::info);
   }
@@ -298,63 +285,77 @@ TEST(cl, parseOptEnum) {
   {
     level = log::LogLevel::none;
     nio::StringSink buf;
-    auto args = parse(cl, { "a", "-l", "nonsense" }, buf);
-    EXPECT_EQ(args, vector<string>());
-    EXPECT_EQ(level, log::LogLevel::none);
+    EXPECT_FALSE(cl.parse({ "a", "-l", "nonsense" }, buf, buf, false));
     EXPECT_EQ(buf.str(), "test-rocket-cl: error: Option `-l`: Cannot scan \"nonsense\" as `rocket::log::LogLevel`; expected LEVEL\n");
   }
 }
 
 TEST(cl, parseOptVector) {
   vector<string> names;
+  vector<string> args;
 
   CommandLine cl( {
     Option::of(nullptr, "name", "n"_cv, "NAME", nullopt, names)
+  }, {
+    Parameter::of("ARG", "ARG", "a command-line argument", args)
   });
 
   // Test multiple values
   {
     names.clear();
-    auto args = parse(cl, { "a", "--name", "Shirley", "-n", "Deborah", "--name=Julie", "-n=Jane", "b" });
-    EXPECT_EQ(args, (vector<string> { "a", "b" }));
+    args.clear();
+    EXPECT_TRUE(cl.parse({ "a", "--name", "Shirley", "-n", "Deborah", "--name=Julie", "-n=Jane", "b" }, nio::out, nio::err, false));
     EXPECT_EQ(names, (vector<string> { "Shirley", "Deborah", "Julie", "Jane" }));
+    EXPECT_EQ(args, (vector<string> { "a", "b" }));
   }
 }
 
 TEST(cl, parseShortOptions) {
   bool ignore;
-  bool verbose;
   string name;
+  bool verbose;
+  vector<string> args;
 
   CommandLine cl( {
     Option::of(nullptr, "ignore", "i"_cv, nullopt, nullopt, ignore),
-    Option::of(nullptr, "verbose", "v"_cv, nullopt, nullopt, verbose),
-    Option::of(nullptr, "name", "n"_cv, "NAME", nullopt, name)
+    Option::of(nullptr, "name", "n"_cv, "NAME", nullopt, name),
+    Option::of(nullptr, "verbose", "v"_cv, nullopt, nullopt, verbose)
+  }, {
+    Parameter::of("ARG", "ARG", "a command-line argument", args)
   });
 
   // Test without '='
-  ignore = false; verbose = false; name.clear();
-  auto args = parse(cl, { "a", "-ivnSue", "b" });
-  EXPECT_EQ(args, (vector<string> { "a", "b" }));
+  ignore = false;
+  name.clear();
+  verbose = false;
+  args.clear();
+  EXPECT_TRUE(cl.parse({ "a", "-ivnSue", "b" }, nio::out, nio::err, false));
   EXPECT_TRUE(ignore);
   EXPECT_TRUE(verbose);
   EXPECT_EQ(name, "Sue");
+  EXPECT_EQ(args, (vector<string> { "a", "b" }));
 
   // Test with '='
-  ignore = false; verbose = false; name.clear();
-  args = parse(cl, { "a", "-ivn=Sue", "b" });
-  EXPECT_EQ(args, (vector<string> { "a", "b" }));
+  ignore = false;
+  name.clear();
+  verbose = false;
+  args.clear();
+  EXPECT_TRUE(cl.parse({ "a", "-ivn=Sue", "b" }, nio::out, nio::err, false));
   EXPECT_TRUE(ignore);
   EXPECT_TRUE(verbose);
   EXPECT_EQ(name, "Sue");
+  EXPECT_EQ(args, (vector<string> { "a", "b" }));
 
   // Test with ' '
-  ignore = false; verbose = false; name.clear();
-  args = parse(cl, { "a", "-ivn", "Sue", "b" });
-  EXPECT_EQ(args, (vector<string> { "a", "b" }));
+  ignore = false;
+  name.clear();
+  verbose = false;
+  args.clear();
+  EXPECT_TRUE(cl.parse({ "a", "-ivn", "Sue", "b" }, nio::out, nio::err, false));
   EXPECT_TRUE(ignore);
   EXPECT_TRUE(verbose);
   EXPECT_EQ(name, "Sue");
+  EXPECT_EQ(args, (vector<string> { "a", "b" }));
 }
 
 /**
@@ -380,7 +381,7 @@ TEST(cl, parseCommand) {
     parseCommand({ "-o", "walk", "dog" }, buf, buf);
     EXPECT_EQ(
         buf.str(),
-        "test-rocket-cl: error: Invalid command `walk`\n"
+        "test-rocket-cl: error: Parameter COMMAND: Invalid value `walk`; expected COMMAND\n"
         "Usage: test-rocket-cl [OPTION]... list [OPTION]... FILE...\n"
         "  or   test-rocket-cl [OPTION]... show [OPTION]... [ARG]...\n"
         "Try `test-rocket-cl --help` for more information.\n");
@@ -455,6 +456,7 @@ TEST(cl, parseCommand) {
     parseCommand({ "list", "-l" }, buf, buf);
     EXPECT_EQ(
         buf.str(),
+        "test-rocket-cl: error: Missing required argument for parameter FILE\n"
         "Usage: test-rocket-cl list [OPTION]... FILE...\n"
         "Try `test-rocket-cl list --help` for more information.\n");
   }
@@ -465,7 +467,7 @@ TEST(cl, parseCommand) {
     parseCommand({ "list", "-l", "a", "b" }, buf, buf);
     EXPECT_EQ(parseCommandCommand, "list");
     EXPECT_TRUE(parseCommandList);
-    EXPECT_EQ(parseCommandArgs, (vector<string> { "a", "b" }));
+    EXPECT_EQ(parseCommandListFiles, (vector<string> { "a", "b" }));
     EXPECT_EQ(buf.str(), "Listing ...\n");
   }
 
@@ -505,7 +507,7 @@ TEST(cl, parseCommand) {
     EXPECT_EQ(parseCommandCommand, "show");
     EXPECT_TRUE(parseCommandShow);
     EXPECT_TRUE(parseCommandShowTest);
-    EXPECT_EQ(parseCommandArgs, (vector<string> { "a", "b" }));
+    EXPECT_EQ(parseCommandListFiles, (vector<string> { "a", "b" }));
     EXPECT_EQ(buf.str(), "Showing ...\n");
   }
 }
