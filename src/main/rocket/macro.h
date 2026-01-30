@@ -82,9 +82,9 @@
 #endif
 
 /**
- * Returns the source file name, relative to the `src/` directory.
+ * Returns the source file name, relative to the `src` directory.
  *
- * @return the source file name, relative to the `src/` directory
+ * @return the source file name, relative to the `src` directory
  */
 #define ROCKET_SRC_FILE ::rocket::internal::srcFile(__FILE__)
 
@@ -106,8 +106,9 @@ namespace rocket::internal {
  */
 consteval const char*
 srcFile(const char* file) {
-   auto pos = std::string_view(file).find("src" ROCKET_FILE_SEP);
-   return &file[pos + 4];
+   const std::string_view sub = "src" ROCKET_FILE_SEP;
+   const auto pos = std::string_view(file).find(sub);
+   return pos == std::string_view::npos ? file : &file[pos + sub.size()];
  }
 
 } // namespace rocket::internal
