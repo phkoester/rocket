@@ -82,7 +82,8 @@ struct Argument {
    * @tparam T the type of the destination reference. If this is a #std::optional reference, the argument is
    *   optional, otherwise it is required. If this is a #std::vector reference, the argument can consume
    *   multiple arguments from the command line
-   * @param name the name of the argument, e.g. `"FILE"`
+   * @param name the name of the argument, e.g. `"FILE"`. By conention, this is in all-caps and matches
+   *   the usage line
    * @param format this parameter should briefly describe the format, e.g.
    *   `"FILE"`, `"NUMBER"` etc.
    * @param help a short help text. By convention, this starts with a lower-case letter and does not end with
@@ -99,7 +100,7 @@ struct Argument {
     T& dest) {
     return {
       name,
-      IsVector<T> ? NPOS : 1, // #maxOccurs
+      IsVector<typename internal::ValueType<T>::Type> ? NPOS : 1, // #maxOccurs
       not IsOptional<T>, // #required
       format,
       help,
@@ -108,7 +109,7 @@ struct Argument {
   }
 
   std::string name; ///< The argument name.
-  u64 maxOccurs = NPOS; ///< The maximum number of elements
+  u64 maxOccurs = 1; ///< The maximum number of elements
   bool required = false; ///< Is the argument required?
   std::optional<std::string> format; ///< Format text.
   std::optional<std::string> help; ///< Help text.
@@ -348,6 +349,8 @@ private:
   std::unordered_map<std::string_view, const Option*> byShortName_;
 
   ParserState parserState_;
+
+  void applyArg(const Argument& arg, std::string_view value);
 
   void applyOpt(const Option& opt, bool nameFlag, std::optional<std::string_view> value);
 

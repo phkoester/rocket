@@ -122,13 +122,12 @@ extern const std::thread::id MAIN_THREAD_ID;
  * i32
  * main(i32 argc, char** argv) {
  *   process.init(argc, argv, "my-program");
+ *
  *   cl::CommandLine cl;
- *   try {
- *     cl.parse(process.args());
- *   } catch (const exception& ex) {
- *     cl.handleException(ex, nio::err);
- *   }
+ *   cl.parse(process.args());
+ *
  *   nio::out.println("This is {}", process.name());
+ *
  *   process.exit(EXIT_SUCCESS);
  * }
  * ```

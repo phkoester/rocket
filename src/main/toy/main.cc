@@ -74,24 +74,25 @@ main(i32 argc, char **argv) {
 
   optional<bool> help;
   bool foo; // required!
-  vector<string> args; // required!
+  optional<vector<string>> files; // required!
 
   cl::OptionGroup general("General control");
   cl::CommandLineParams params { .usages={ "[OPTION]... [FILE]..." }} ;
   cl::CommandLine cl({
     cl::Option::helpOf(&general, help),
     cl::Option::of(&general, "foo", "f"_cv, nullopt, "delve into foo mode", foo),
-    // XXX args
-  }, {}, params);
+  }, {
+    cl::Argument::of("FILE", "PATH", "path to the input file", files)
+  }, params);
 
-  cl.parseNew(process.args()); // XXX Beispiel in Process.h akt.
+  cl.parseNew(process.args());
 
   {
     ROCKET_LOG(toy);
     ROCKET_LOG_INFO("Hey {}", "there");
     out.println("This is {}", process.name());
     out.println("{}", generated());
-    out.println("args: {}", args);
+    out.println("files: {}", files);
     toy();
   }
 

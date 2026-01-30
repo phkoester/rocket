@@ -54,6 +54,26 @@ CommandLine::CommandLine(
 }
 
 void
+CommandLine::applyArg(const Argument& arg, std::string_view value) {
+  try {
+    arg.apply(value);
+    parserState_.seenArgs.insert(&arg);
+  } catch (const Exception& ex) {
+    string expected;
+    if (arg.format) {
+      expected = fmt::format("; expected {}", *arg.format);
+    }
+    ROCKET_FAIL("Argument {}: {}{}", arg.name, ex.message(), expected);
+  } catch (const exception& ex) {
+    string expected;
+    if (arg.format) {
+      expected = fmt::format("; expected {}", *arg.format);
+    }
+    ROCKET_FAIL("Argument {}: Invalid value {:?}{}", arg.name, value, expected);
+  }
+}
+
+void
 CommandLine::applyOpt(const Option& opt, bool nameFlag, std::optional<std::string_view> value) {
   // Don't use #ROCKET_CHECK here for cleaner exception messages
 
@@ -231,6 +251,10 @@ CommandLine::helpOpts(nio::Sink& out, u64 width) const {
       }
       out.write('\n');
       if (opt->help) {
+        string help = *opt->help;
+        if (opt->required) {
+          help += ". This is a required option";
+        }
         out.writeln(str::wrap(*opt->help, 10, width));
       }
     }
@@ -370,21 +394,23 @@ CommandLine::parse(const vector<string>& args, const Take& take) {
 void
 CommandLine::parseNew(const vector<string>& args, nio::Sink& out, nio::Sink& err, bool exit) {
   try {
-    vector<string> ret; // XXX
-
     parserState_ = ParserState();
+
+    u64 argIndex = 0;
+    u64 argOccurs = 0;
+    bool argsOnly = false;
 
     for (auto it = args.begin(), end = args.end(); it != end; ++it) {
       const auto& elem = *it; // #std::string
       string_view arg = elem; // This makes `substr()` more efficient
 
-      if (arg == "--") {
-        // 1. `--` seen: Pass the rest, excluding the option-end tag, to the program and break the argument
+      if (not argsOnly && arg == "--") {
+        // 1. `--` seen: Recognize all remaining arguments as positional arguments, continue in loop
         // loop
 
-        ret.insert(ret.end(), it + 1, args.end());
-        break;
-      } else if (arg.starts_with("--")) {
+        argsOnly = true;
+        continue;
+      } else if (not argsOnly && arg.starts_with("--")) {
         // 2. `--...` seen: Parse option by name
 
         arg = arg.substr(2);
@@ -411,7 +437,7 @@ CommandLine::parseNew(const vector<string>& args, nio::Sink& out, nio::Sink& err
 
         // Apply option
         applyOpt(opt, true, value);
-      } else if (arg.starts_with("-") && arg != "-") {
+      } else if (not argsOnly && arg.starts_with("-") && arg != "-") {
         // 3. "-..." seen: Parse options by short name; the last one may take a value
 
         arg = arg.substr(1);
@@ -429,22 +455,22 @@ CommandLine::parseNew(const vector<string>& args, nio::Sink& out, nio::Sink& err
           const Option& opt = *mapIt->second;
 
           // Obtain value, if any, apply option
-          optional<string> value;
           auto segNext = segIt + 1;
           if (segNext != segsEnd && *segNext == "=") {
             // Option is followed by `=`: Take everything after the `=` and break the character loop
-            value = unicode::concat(segs, ++segNext - segsBegin);
+            string value = unicode::concat(segs, ++segNext - segsBegin);
             applyOpt(opt, false, value);
             break;
           } else if (opt.takesValue) {
             // Option takes value: break the character loop
             if (segNext != segsEnd) {
               // Take the rest of the argument
-              value = unicode::concat(segs, segNext - segsBegin);
+              string value = unicode::concat(segs, segNext - segsBegin);
               applyOpt(opt, false, value);
             }
             else {
-              // Take the next argument
+              optional<string> value;
+              // Take the next argument, if any
               if (it + 1 != args.end()) {
                 value = *++it;
               }
@@ -453,42 +479,27 @@ CommandLine::parseNew(const vector<string>& args, nio::Sink& out, nio::Sink& err
             break;
           } else {
             // No value: Apply, continue in code-point loop
-            applyOpt(opt, false, value);
+            applyOpt(opt, false, nullopt);
           }
         }
       } else {
-        // 4. Not an option, but a positional argument: Let the program take the argument
+        // 4. Not an option, but a positional argument: assign
 
-        ret.push_back(elem);
-  #if 0
-        bool finish = false;
-        auto took = take ? take(arg) : Store;
-        switch (took) {
-        case Accept:
-          // Argument was accepted and consumed: nothing to do, continue in argument loop
-          break;
-        case Stop:
-          // Argument was accepted and consumed, but a stop was requested: Pass the rest, excluding the current
-          // argument, to the program and break the argument loop
-          ret.insert(ret.end(), it + 1, args.end());
-          finish = true;
-          break;
-        case Store:
-          // Argument was not processed, but a store was requested: Pass it to the program and continue in the
-          // argument loop
-          ret.push_back(elem);
-          break;
-        case Reject:
-          // Argument was rejected: Pass the rest, including the current argument, to the program and break the
-          // argument loop
-          ret.insert(ret.end(), it, args.end());
-          finish = true;
-          break;
+        if (argIndex >= args_.size()) {
+          ROCKET_FAIL("Extraneous argument `{}`", arg);
         }
-        if (finish) {
-          break;
+        const Argument* argument = &args_[argIndex];
+        if (argOccurs == argument->maxOccurs) {
+          // Argument has reached its maximum number of occurrences: advance to next argument
+          ++argIndex;
+          argOccurs = 0;
+          if (argIndex >= args_.size()) {
+            ROCKET_FAIL("Extraneous argument `{}`", arg);
+          }
+          argument = &args_[argIndex];
         }
-  #endif
+        applyArg(*argument, arg);
+        ++argOccurs;
       }
     }
 
@@ -504,7 +515,12 @@ CommandLine::parseNew(const vector<string>& args, nio::Sink& out, nio::Sink& err
       }
     }
 
-    // XXX return ret;
+    // Have we seen all required arguments?
+    for (const auto& arg : args_) {
+      if (arg.required && not parserState_.seenArgs.contains(&arg)) {
+        ROCKET_FAIL("Missing required argument {}", arg.name);
+      }
+    }
   }
   catch (const exception& ex) {
     // XXX Kann alles hier rein
