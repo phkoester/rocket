@@ -436,7 +436,7 @@ struct IntervalImpl {
    *
    * Makes an empty interval.
    */
-  constexpr IntervalImpl() : a(1), b(0) {}
+  constexpr IntervalImpl() : a(T(1)), b(T(0)) {}
 
   /**
    * @ctor
