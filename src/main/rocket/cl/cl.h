@@ -116,8 +116,6 @@ struct Parameter {
    * @param name the name of the parameter, e.g. `"FILE"`. By conention, this is in all-caps and matches
    *   the usage line
    * @param allowedValues a set of allowed values
-   * @param format this parameter should briefly describe the format, e.g. `"file"`, `"number"`, or
-   *   "\`red\`, `\green\`, or `\blue\`"`
    * @param help a short help text. By convention, this starts with a lower-case letter and does not end with
    *   a period, e.g. `"path to input file"`
    * @param dest the destination reference that is assigned the argument
@@ -219,7 +217,7 @@ struct Option {
    * @param shortName an optional short name. For example, if this is <code>"€"</code>, the option may be
    *   chosen via `-€` on the command line
    * @param format if the option takes an argument, this parameter should briefly describe the format, e.g.
-   *   `"FILE"`, `"NUM"` etc.
+   *   `"file"`, or `"number"` etc.
    * @param help a short help text. By convention, this starts with a lower-case verb and does not end with
    *   a period, e.g. `"print NUM lines of leading context"`
    * @param dest the destination reference that is assigned the option's value
