@@ -141,6 +141,31 @@ std::string capitalize(std::string_view str);
  */
 std::u32string capitalize(std::u32string_view str);
 
+template<typename Iterator>
+std::string join(
+  Iterator begin,
+  Iterator end,
+  std::string_view sep,
+  std::string_view lastSepIfTwo,
+  std::string_view lastSepIfMore) {
+  std::string ret;
+
+  u64 count = 0;
+  u64 n = std::distance(begin, end);
+  for (Iterator it = begin; it != end; ++it) {
+    if (++count > 1) {
+      if (count == n) {
+        ret.append(count == 2 ? lastSepIfTwo : lastSepIfMore);
+      } else {
+        ret.append(sep);
+      }
+    }
+    ret.append(*it);
+  }
+
+  return ret;
+}
+
 /**
  * Converts a UTF-8 string to lower case, handling Unicode characters correctly.
  *

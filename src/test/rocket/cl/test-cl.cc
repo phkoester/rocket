@@ -57,16 +57,16 @@ parseCommand(const vector<string>& args, nio::Sink& out = nio::out, nio::Sink& e
     .epilog="Gallia est omnis divisa in partes tres, quarum unam incolunt Belgae, aliam Aquitani, tertiam qui ipsorum lingua Celtae, nostra Galli appellantur. Hi omnes lingua, institutis, legibus inter se differunt. Gallos ab Aquitanis Garunna flumen, a Belgis Matrona et Sequana dividit."
   };
 
-  auto command = Parameter::of("COMMAND", { "list", "show" }, "`list` or `show`", "a command", parseCommandCommand);
+  auto command = Parameter::of("COMMAND", { "list", "show" }, "a command", parseCommandCommand);
   command.consumeOptions = true;
 
   CommandLine cl({
     // The group order matters!
-    Option::of(&general, "omit", "o"_cv, nullopt, "omit what is not important", parseCommandOmit),
+    Option::of(&general, "omit", "o"_c, nullopt, "omit what is not important", parseCommandOmit),
     Option::helpOf(&misc, parseCommandHelp)
   }, {
     command,
-    Parameter::of("ARG", "ARG", "command-line argument", parseCommandArgs)
+    Parameter::of("ARG", nullopt, "a command-line argument", parseCommandArgs)
   }, config);
 
   if (not cl.parse(args, out, err, false)) {
@@ -88,9 +88,9 @@ parseCommand(const vector<string>& args, nio::Sink& out = nio::out, nio::Sink& e
 
     CommandLine listCl({
       Option::helpOf(&list, parseCommandListHelp),
-      Option::of(&list, "list", "l"_cv, nullopt, "a list option that is good for nothing", parseCommandList)
+      Option::of(&list, "list", "l"_c, nullopt, "a list option that is good for nothing", parseCommandList)
     }, {
-      Parameter::of("FILE", "FILE", "a file to list", parseCommandListFiles)
+      Parameter::of("FILE", "file", "a file to list", parseCommandListFiles)
     }, listParams);
 
     if (not listCl.parse(parseCommandArgs, out, err, false)) {
@@ -111,10 +111,10 @@ parseCommand(const vector<string>& args, nio::Sink& out = nio::out, nio::Sink& e
 
     CommandLine showCl({
       Option::helpOf(&show, parseCommandShowHelp),
-      Option::of(&show, "show", "s"_cv, nullopt, "a show option that is good for nothing", parseCommandShow),
-      Option::of(&show, "test", "t"_cv, nullopt, "test something, or don't", parseCommandShowTest)
+      Option::of(&show, "show", "s"_c, nullopt, "a show option that is good for nothing", parseCommandShow),
+      Option::of(&show, "test", "t"_c, nullopt, "test something, or don't", parseCommandShowTest)
     }, {
-      Parameter::of("ARG", "ARG", "a thing to show", parseCommandShowArgs)
+      Parameter::of("ARG", nullopt, "a thing to show", parseCommandShowArgs)
     }, showParams);
 
     if (not showCl.parse(parseCommandArgs, out, err, false)) {
@@ -133,7 +133,7 @@ TEST(cl, parseNoOpts) {
   vector<string> args;
   CommandLine cl {
     {}, {
-      Parameter::of("ARG", "ARG", "command-line argument", args)
+      Parameter::of("ARG", nullopt, "a command-line argument", args)
     }
   };
   nio::StringSink buf;
@@ -147,9 +147,9 @@ TEST(cl, parseOptBool) {
 
   CommandLine cl( {
     // 🧑‍🌾: U+1F9D1 (ADULT), U+200D (ZERO WIDTH JOINER), U+1F33E (EAR OF RICE)
-    Option::of(nullptr, "flag", "🧑‍🌾"_cv, nullopt, nullopt, flag)
+    Option::of(nullptr, "flag", "🧑‍🌾"_c, nullopt, nullopt, flag)
   }, {
-    Parameter::of("ARG", "ARG", "command-line argument", args)
+    Parameter::of("ARG", nullopt, "a command-line argument", args)
   });
 
   // Test no options
@@ -221,9 +221,9 @@ TEST(cl, parseOptInt) {
   optional<vector<string>> args;
 
   CommandLine cl( {
-    Option::of(nullptr, "num", "n"_cv, "NUM", nullopt, num)
+    Option::of(nullptr, "num", "n"_c, "number", "a number", num)
   }, {
-    Parameter::of("ARG", "ARG", "command-line argument", args)
+    Parameter::of("ARG", nullopt, "a command-line argument", args)
   });
 
   // Test mixed order
@@ -259,7 +259,7 @@ TEST(cl, parseOptInt) {
     args = nullopt;
     nio::StringSink buf;
     EXPECT_FALSE(cl.parse({ "a", "-n", "hello" }, buf, buf, false));
-    EXPECT_EQ(buf.str(), "test-rocket-cl: error: Option `-n`: Cannot scan \"hello\" as `int`; expected NUM\n");
+    EXPECT_EQ(buf.str(), "test-rocket-cl: error: Option `-n`: Cannot scan \"hello\" as `int`; expected number\n");
   }
 }
 
@@ -268,9 +268,9 @@ TEST(cl, parseOptEnum) {
   vector<string> args;
 
   CommandLine cl( {
-    Option::of(nullptr, "level", "l"_cv, "LEVEL", nullopt, level)
+    Option::of(nullptr, "level", "l"_c, nullopt, nullopt, level)
   }, {
-    Parameter::of("ARG", "ARG", "command-line argument", args)
+    Parameter::of("ARG", nullopt, "a command-line argument", args)
   });
 
   // Test mixed order
@@ -286,7 +286,7 @@ TEST(cl, parseOptEnum) {
     level = log::LogLevel::none;
     nio::StringSink buf;
     EXPECT_FALSE(cl.parse({ "a", "-l", "nonsense" }, buf, buf, false));
-    EXPECT_EQ(buf.str(), "test-rocket-cl: error: Option `-l`: Cannot scan \"nonsense\" as `rocket::log::LogLevel`; expected LEVEL\n");
+    EXPECT_EQ(buf.str(), "test-rocket-cl: error: Option `-l`: Cannot scan \"nonsense\" as `rocket::log::LogLevel`\n");
   }
 }
 
@@ -295,9 +295,9 @@ TEST(cl, parseOptVector) {
   vector<string> args;
 
   CommandLine cl( {
-    Option::of(nullptr, "name", "n"_cv, "NAME", nullopt, names)
+    Option::of(nullptr, "name", "n"_c, nullopt, nullopt, names)
   }, {
-    Parameter::of("ARG", "ARG", "a command-line argument", args)
+    Parameter::of("ARG", nullopt, "a command-line argument", args)
   });
 
   // Test multiple values
@@ -317,11 +317,11 @@ TEST(cl, parseShortOptions) {
   vector<string> args;
 
   CommandLine cl( {
-    Option::of(nullptr, "ignore", "i"_cv, nullopt, nullopt, ignore),
-    Option::of(nullptr, "name", "n"_cv, "NAME", nullopt, name),
-    Option::of(nullptr, "verbose", "v"_cv, nullopt, nullopt, verbose)
+    Option::of(nullptr, "ignore", "i"_c, nullopt, nullopt, ignore),
+    Option::of(nullptr, "name", "n"_c, nullopt, nullopt, name),
+    Option::of(nullptr, "verbose", "v"_c, nullopt, nullopt, verbose)
   }, {
-    Parameter::of("ARG", "ARG", "a command-line argument", args)
+    Parameter::of("ARG", nullopt, "a command-line argument", args)
   });
 
   // Test without '='

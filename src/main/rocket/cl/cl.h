@@ -7,8 +7,10 @@
 #pragma once
 
 #include "rocket/Process.h"
+#include "rocket/format/std.h"
 #include "rocket/type-traits.h"
 #include "rocket/nio/nio-fwd.h"
+#include "rocket/str/str.h"
 #include "rocket/str/StringConvert.h"
 #include "rocket/unicode/Character.h"
 
@@ -77,12 +79,12 @@ struct Parameter {
    * @tparam T the type of the destination reference. If this is a #std::optional reference, the parameter
    *   is optional, otherwise it is required. If this is a #std::vector reference, the parameter can consume
    *   multiple arguments from the command line
-   * @param name the name of the parameter, e.g. `"FILE"`. By conention, this is in all-caps and matches
+   * @param name the name of the parameter, e.g. `"FILE"`. By convention, this is in all-caps and matches
    *   the usage line
-   * @param format this parameter should briefly describe the format, e.g.
-   *   `"FILE"`, `"NUMBER"` etc.
+   * @param format this parameter should briefly describe the format, e.g. `"file"`, `"number"`, or
+   *   "\`red\`, `\green\`, or `\blue\`"`
    * @param help a short help text. By convention, this starts with a lower-case letter and does not end with
-   *   a period, e.g. `"path to input file"`
+   *   a period, e.g. `"the input file"`
    * @param dest the destination reference that is assigned the argument
    * @return a new parameter
    */
@@ -95,7 +97,7 @@ struct Parameter {
     T& dest) {
     return {
       name,
-      std::nullopt,
+      std::nullopt, // #allowedValues
       IsVector<typename internal::ValueType<T>::Type> ? NPOS : 1, // #maxOccurs
       false, // #consumeOptions
       not IsOptional<T>, // #required
@@ -114,8 +116,8 @@ struct Parameter {
    * @param name the name of the parameter, e.g. `"FILE"`. By conention, this is in all-caps and matches
    *   the usage line
    * @param allowedValues a set of allowed values
-   * @param format this parameter should briefly describe the format, e.g.
-   *   `"FILE"`, `"NUMBER"` etc.
+   * @param format this parameter should briefly describe the format, e.g. `"file"`, `"number"`, or
+   *   "\`red\`, `\green\`, or `\blue\`"`
    * @param help a short help text. By convention, this starts with a lower-case letter and does not end with
    *   a period, e.g. `"path to input file"`
    * @param dest the destination reference that is assigned the argument
@@ -126,24 +128,31 @@ struct Parameter {
   of(
     const std::string& name,
     const std::set<typename internal::ValueType<T>::Type>& allowedValues,
-    const std::optional<std::string>& format,
     const std::optional<std::string>& help,
     T& dest) {
     Parameter ret {
       name,
-      std::nullopt,
+      std::nullopt, // #allowedValues
       IsVector<typename internal::ValueType<T>::Type> ? NPOS : 1, // #maxOccurs
       false, // #consumeOptions
       not IsOptional<T>, // #required
-      format,
+      std::nullopt, // #format
       help,
       [&](std::string_view val) { internal::applyTo(dest, val); }
     };
+
     std::set<std::string> strings;
     for (const auto& val : allowedValues) {
       strings.insert(str::toString(val));
     }
     ret.allowedValues = strings;
+
+    std::set<std::string> quotedStrings;
+    for (const auto& val : strings) {
+      quotedStrings.insert(fmt::format("`{}`", val));
+    }
+    ret.format = str::join(quotedStrings.begin(), quotedStrings.end(), ", ", " or ", ", or");
+
     return ret;
   }
 
@@ -191,7 +200,7 @@ struct Option {
     return of(
       group,
       "help",
-      unicode::CharacterView<char>("?"),
+      unicode::Character<char>("?"),
       std::nullopt,
       "display this help text and exit",
       dest);
@@ -221,14 +230,14 @@ struct Option {
   of(
     const OptionGroup* group,
     const std::string& name,
-    const std::optional<unicode::CharacterView<char>>& shortName,
+    const std::optional<unicode::Character<char>>& shortName,
     const std::optional<std::string>& format,
     const std::optional<std::string>& help,
     T& dest) {
     return {
       group,
       name,
-      shortName.transform([](auto val) { return unicode::Character<char>(val); }),
+      shortName,
       // #takesValue is `false` for `bool`, otherwise it is `true`
       std::is_same_v<typename internal::ValueType<T>::Type, bool> ? false : true,
       not IsOptional<T>, // #required
@@ -240,7 +249,7 @@ struct Option {
 
   const OptionGroup* group = nullptr; ///< The option group.
   std::string name; ///< The option name.
-  std::optional<unicode::Character<char>> shortName; ///< The option short name.
+  std::optional<unicode::Character<char>> shortName = std::nullopt; ///< The option short name.
   bool takesValue = false; ///< Option takes value?
   bool required = false; ///< Required?
   std::optional<std::string> format; ///< Format text.

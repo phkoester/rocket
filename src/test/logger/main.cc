@@ -44,9 +44,9 @@ main(i32 argc, char **argv) {
   cl::CommandLineParams params { .usages={ "[OPTION]... [ARG]..." }} ;
   cl::CommandLine cl({
     cl::Option::helpOf(&general, help),
-    cl::Option::of(&general, "offset", nullopt, "HOURS", "hour offset", hours)
+    cl::Option::of(&general, "offset", "o"_c, "number", "hour offset", hours)
   }, {
-    cl::Parameter::of("ARG", "ARG", "command-line argument", args)
+    cl::Parameter::of("ARG", nullopt, "a command-line argument", args)
   }, params);
   cl.parse(process.args());
 

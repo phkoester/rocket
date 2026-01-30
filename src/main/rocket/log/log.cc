@@ -299,42 +299,59 @@ void applyLogOut(optional<string_view>);
 
 /// Command-line options.
 const vector<cl::Option> CL_OPTIONS {
-  { &CL_GROUP, "log", nullopt, true, false, "ID[=LEVEL]",
-    "set logging for identifier ID to level LEVEL. ID is a known log identifier or `all`. LEVEL is `none`, "
-    "`error`, `warn`, `info`, `debug`, or `trace`. If LEVEL is not supplied, `info` is assumed",
-    applyLog },
-  { &CL_GROUP, "log-fmt", nullopt, true, false, "FMT",
-    "set log format. FMT is a string of format specifiers, e.g. `fs3Z`. Valid specifiers are:\n"
-    NBSP NBSP "f" NBSP NBSP NBSP "display function names\n"
-    NBSP NBSP "F" NBSP NBSP NBSP "display pretty function names (*)\n"
-    NBSP NBSP "i" NBSP NBSP NBSP "do not log function stack immediately (*)\n"
-    NBSP NBSP "I" NBSP NBSP NBSP "log function stack immediately\n"
-    NBSP NBSP "l" NBSP NBSP NBSP "do not display source location\n"
-    NBSP NBSP "L" NBSP NBSP NBSP "display source location (*)\n"
-    NBSP NBSP "s0"     NBSP NBSP "display time with seconds\n"
-    NBSP NBSP "s3"     NBSP NBSP "display time with milliseconds\n"
-    NBSP NBSP "s6"     NBSP NBSP "display time with microseconds (*)\n"
-    NBSP NBSP "s9"     NBSP NBSP "display time with nanoseconds\n"
-    NBSP NBSP "t" NBSP NBSP NBSP "do not display thread IDs/names (*)\n"
-    NBSP NBSP "T" NBSP NBSP NBSP "display thread IDs/names\n"
-    NBSP NBSP "x" NBSP NBSP NBSP "do not display function execution times\n"
-    NBSP NBSP "X" NBSP NBSP NBSP "display function execution times (*)\n"
-    NBSP NBSP "z" NBSP NBSP NBSP "display local time (*)\n"
-    NBSP NBSP "Z" NBSP NBSP NBSP "display UTC time\n"
-    "An asterisk (*) indicates that the setting is enabled by default",
-    applyLogFmt },
-  { &CL_GROUP, "log-out", nullopt, true, false, "OUT",
-    "log to system device or file. If OUT is `-` or `stdout`, log messages are written to standard output, "
-    "which is the default. If OUT is `stderr`, log messages are written to standard error. Otherwise, OUT "
-    "is a PATTERN. Examples: `@[name].log`, `@[name]-@[date].log@[zip]`. Inside PATTERN, these placeholders "
-    "are available:\n"
-    NBSP NBSP "@[date]"     NBSP NBSP "expands to the current date\n"
-    NBSP NBSP "@[dir]" NBSP NBSP NBSP "expands to the parent directory of the executable\n"
-    NBSP NBSP "@[name]"     NBSP NBSP "expands to the name of the process\n"
-    NBSP NBSP "@[pid]" NBSP NBSP NBSP "expands to the process ID (PID)\n"
-    NBSP NBSP "@[utc]" NBSP NBSP NBSP "serves as a hint to use UTC date rather than local date\n"
-    NBSP NBSP "@[zip]" NBSP NBSP NBSP "serves as a hint to zip yesterday’s log file (requires `gzip`)",
-    applyLogOut },
+  {
+    .group=&CL_GROUP,
+    .name="log",
+    .takesValue=true,
+    .format="ID[=LEVEL]",
+    .help=
+      "set logging for identifier ID to level LEVEL. ID is a known log identifier or `all`. LEVEL is `none`, "
+      "`error`, `warn`, `info`, `debug`, or `trace`. If LEVEL is not supplied, `info` is assumed",
+    .apply=applyLog
+  },
+  {
+    .group=&CL_GROUP,
+    .name="log-fmt",
+    .takesValue=true,
+    .format="FMT",
+    .help=
+      "set log format. FMT is a string of format specifiers, e.g. `fs3Z`. Valid specifiers are:\n"
+      NBSP NBSP "f" NBSP NBSP NBSP "display function names\n"
+      NBSP NBSP "F" NBSP NBSP NBSP "display pretty function names (*)\n"
+      NBSP NBSP "i" NBSP NBSP NBSP "do not log function stack immediately (*)\n"
+      NBSP NBSP "I" NBSP NBSP NBSP "log function stack immediately\n"
+      NBSP NBSP "l" NBSP NBSP NBSP "do not display source location\n"
+      NBSP NBSP "L" NBSP NBSP NBSP "display source location (*)\n"
+      NBSP NBSP "s0"     NBSP NBSP "display time with seconds\n"
+      NBSP NBSP "s3"     NBSP NBSP "display time with milliseconds\n"
+      NBSP NBSP "s6"     NBSP NBSP "display time with microseconds (*)\n"
+      NBSP NBSP "s9"     NBSP NBSP "display time with nanoseconds\n"
+      NBSP NBSP "t" NBSP NBSP NBSP "do not display thread IDs/names (*)\n"
+      NBSP NBSP "T" NBSP NBSP NBSP "display thread IDs/names\n"
+      NBSP NBSP "x" NBSP NBSP NBSP "do not display function execution times\n"
+      NBSP NBSP "X" NBSP NBSP NBSP "display function execution times (*)\n"
+      NBSP NBSP "z" NBSP NBSP NBSP "display local time (*)\n"
+      NBSP NBSP "Z" NBSP NBSP NBSP "display UTC time\n"
+      "An asterisk (*) indicates that the setting is enabled by default",
+    .apply=applyLogFmt
+  },
+  {
+    .group=&CL_GROUP,
+    .name="log-out",
+    .takesValue=true,
+    .format="OUT",
+    .help=
+      "log to system device or file. If OUT is `-` or `stdout`, log messages are written to standard "
+      "output, which is the default. If OUT is `stderr`, log messages are written to standard error. "
+      "Otherwise, OUT is a PATTERN. Examples: `@[name].log`, `@[name]-@[date].log@[zip]`. Inside PATTERN, "
+      "these placeholders are available:\n"
+      NBSP NBSP "@[date]"     NBSP NBSP "expands to the current date\n"
+      NBSP NBSP "@[dir]" NBSP NBSP NBSP "expands to the parent directory of the executable\n"
+      NBSP NBSP "@[name]"     NBSP NBSP "expands to the name of the process\n"
+      NBSP NBSP "@[pid]" NBSP NBSP NBSP "expands to the process ID (PID)\n"
+      NBSP NBSP "@[utc]" NBSP NBSP NBSP "serves as a hint to use UTC date rather than local date\n"
+      NBSP NBSP "@[zip]" NBSP NBSP NBSP "serves as a hint to zip yesterday’s log file (requires `gzip`)",
+    .apply=applyLogOut },
 };
 
 // Local variables ------------------------------------------------------------------------------------------
