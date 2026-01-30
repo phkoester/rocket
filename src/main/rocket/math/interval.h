@@ -436,7 +436,7 @@ struct IntervalImpl {
    *
    * Makes an empty interval.
    */
-  constexpr IntervalImpl() : a(static_cast<T>(1)), b(static_cast<T>(0)) {}
+  constexpr IntervalImpl() : a(1), b(0) {}
 
   /**
    * @ctor
