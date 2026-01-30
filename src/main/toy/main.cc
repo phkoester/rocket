@@ -59,6 +59,9 @@ toy() {
   ROCKET_LOG_TRACE("Hey {}", "there");
   out.println("src file name: {}", ROCKET_SRC_FILE);
   zzz();
+
+  optional<f32> opt = 0;
+  out.println("opt: {}", opt);
 }
 
 // #main ----------------------------------------------------------------------------------------------------
