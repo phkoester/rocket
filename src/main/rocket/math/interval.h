@@ -389,6 +389,18 @@ unionImpl(
 
 // #IntervalImpl --------------------------------------------------------------------------------------------
 
+template<typename Type, typename BoundType>
+BoundType
+make(Type val) {
+  if constexpr (std::is_same_v<BoundType, std::optional<Type>>) {
+    Type tval = (Type) val;
+    return std::optional<Type>(tval);
+  } else {
+    static_assert(std::is_same_v<BoundType, Type>);
+    return (BoundType) val;
+  }
+}
+
 /**
  * A mathematical interval for either integer or noninteger types.
  *
@@ -437,7 +449,7 @@ struct IntervalImpl {
    *
    * Makes an empty interval.
    */
-  constexpr IntervalImpl() : a(1), b(0) {}
+  constexpr IntervalImpl() : a(make<T, A>(1)), b(make<T, B>(0)) {}
 
   /**
    * @ctor

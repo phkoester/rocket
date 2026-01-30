@@ -53,33 +53,12 @@ zzz() {
   }
 }
 
-template<typename T, typename U>
-U
-make(T val) {
-  if constexpr (std::is_same_v<U, std::optional<T>>) {
-    T tval = (T) val;
-    return std::optional<T>(tval);
-  } else {
-    static_assert(std::is_same_v<U, T>);
-    return (U) val;
-  }
-}
-
 void
 toy() {
   ROCKET_LOG(toy);
   ROCKET_LOG_TRACE("Hey {}", "there");
   out.println("src file name: {}", ROCKET_SRC_FILE);
   zzz();
-
-  auto m1 = make<f32, optional<f32>>(0);
-  out.println("m1: {}", m1);
-  auto m2 = make<f32, f32>(1_f32);
-  out.println("m2: {}", m2);
-
-  optional<f32> opt;
-  opt = 12_f32;
-  out.println("opt: {}", opt);
 }
 
 // #main ----------------------------------------------------------------------------------------------------
