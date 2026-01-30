@@ -141,6 +141,28 @@ std::string capitalize(std::string_view str);
  */
 std::u32string capitalize(std::u32string_view str);
 
+/**
+ * Joins elements of a range into a string, using a a set of different separators.
+ *
+ *
+ * ## Examples
+ *
+ * To enumerate a list with an Oxford comma:
+ *
+ * ```
+ * set<string> s = { "red", "green", "blue" };
+ * string str = str::join(s.begin(), s.end(), ", ", " and ", ", and");
+ * nio::out.println("The colors are {}.", str); // "The colors are red, green, and blue."
+ * ```
+ *
+ *
+ * @param begin the beginning of the range
+ * @param end the end of the range
+ * @param sep the separator to use between elements
+ * @param lastSepIfTwo the last separator to use if there are two elements
+ * @param lastSepIfMore the last sseparator to use if there are more than two elements
+ * @return a new string
+ */
 template<typename Iterator>
 std::string join(
   Iterator begin,
@@ -329,7 +351,7 @@ split(std::basic_string_view<C> str, std::basic_string_view<C> sep) {
 void upperIn(std::u32string& str);
 
 /**
- * Wraps the string @p str to fit the width specified by @p params.
+ * Wraps the string @p str to fit the width specified by @p width.
  *
  * - Line breaks (`"\n"`, `"\r\n"`) are recognized.
  * - No-break spaces (U+00A0) are recognized.

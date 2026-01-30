@@ -20,7 +20,7 @@ namespace rocket::cl {
 CommandLine::CommandLine(
   const vector<Option>& opts,
   const vector<Parameter>& params,
-  const CommandLineParams& config) :
+  const CommandLineConfig& config) :
   opts_(opts),
   params_(params),
   config_(config),
@@ -69,6 +69,9 @@ CommandLine::applyOpt(const Option& opt, bool nameFlag, const optional<string>& 
   string useValue = value.value_or("true");
 
   try {
+    if (opt.allowedValues && not opt.allowedValues->contains(useValue)) {
+      ROCKET_FAIL("Invalid value `{}`", value);
+    }
     opt.apply(useValue);
     if (opt.name == "help") {
       parserState_.seenHelp = true;
@@ -118,7 +121,7 @@ CommandLine::error(nio::Sink& out, i32 status) const {
     printUsage(out);
   }
   if (hasHelpOpt_) {
-    printHelp(out);
+    printTryHelp(out);
   }
   if (status != EXIT_SUCCESS) {
     process.exit(status);
@@ -127,136 +130,20 @@ CommandLine::error(nio::Sink& out, i32 status) const {
 
 void
 CommandLine::handleException(const exception& ex, nio::Sink& out, i32 status) const {
-  if (auto p = dynamic_cast<const Exception*>(&ex))
+  if (auto p = dynamic_cast<const Exception*>(&ex)) {
     process.error(out, 0, "{}", p->message());
-  else
+  } else {
     process.error(out, 0, "{}", ex.what());
+  }
 
   if (hasUsage_) {
     printUsage(out);
   }
   if (hasHelpOpt_) {
-    printHelp(out);
+    printTryHelp(out);
   }
   if (status != 0) {
     process.exit(status);
-  }
-}
-
-void
-CommandLine::help(nio::Sink& out, bool exit) {
-  ROCKET_EXPECT(hasHelpOpt_);
-
-  auto size = system::terminal::size(out);
-  u64 width = max(40_u64, size ? size->first : 80_u64);
-  bool output = config_.otherOutput;
-
-  // Usage
-
-  if (hasUsage_) {
-    if (output) {
-      out.write('\n');
-    }
-    printUsage(out);
-    output = true;
-  }
-
-  // Prolog
-
-  if (config_.prolog) {
-    if (output) {
-      out.write('\n');
-    }
-    out.writeln(str::wrap(*config_.prolog, 0, width));
-    output = true;
-  }
-
-  // Options
-
-  if (not opts_.empty()) {
-    if (output) {
-      out.write('\n');
-    }
-    helpOpts(out, width);
-    output = true;
-  }
-
-  // Epilog
-
-  if (config_.epilog) {
-    if (output) {
-      out.write('\n');
-    }
-    out.writeln(str::wrap(*config_.epilog, 0, width));
-  }
-
-  if (exit) {
-    process.exit(EXIT_SUCCESS);
-  }
-}
-
-/**
- * Option groups appear in the order they are seen. However, no group or group with an empty title comes
- * first. Within the groups, options appear in the order they are seen.
- */
-void
-CommandLine::helpOpts(nio::Sink& out, u64 width) const {
-  // Collect groups and options therein
-
-  unordered_map<const OptionGroup*, vector<const Option*>> options;
-  vector<const OptionGroup*> groups;
-
-  OptionGroup null;
-  options.emplace(&null, vector<const Option*>());
-  groups.push_back(&null);
-
-  for (const auto& opt : opts_) {
-    if (not opt.group || opt.group->title.empty())
-      options.find(&null)->second.push_back(&opt);
-    else {
-      if (auto it = options.find(opt.group); it == options.end()) {
-        options.emplace(opt.group, vector<const Option*> { &opt });
-        groups.push_back(opt.group);
-      } else
-        it->second.push_back(&opt);
-    }
-  }
-
-  // Loop though groups
-
-  bool output = false;
-
-  for (const auto* group : groups) {
-    const auto& opts = options.find(group)->second;
-    if (opts.empty())
-      continue;
-    if (output) {
-      out.write('\n');
-    }
-    out.println("{}:\n", group->title);
-    output = true;
-
-    // Loop through options
-
-    for (const auto* opt : opts) {
-      out.write("  ");
-      if (opt->shortName) {
-        out.print("-{}, ", static_cast<string>(*opt->shortName));
-      } else {
-        out.write("    ");
-      }
-      out.print("--{}", opt->name);
-      if (opt->required) {
-        out.print(" (required)");
-      }
-      if (opt->format) {
-        out.print(" {}", *opt->format);
-      }
-      out.write('\n');
-      if (opt->help) {
-        out.writeln(str::wrap(*opt->help, 10, width));
-      }
-    }
   }
 }
 
@@ -373,7 +260,7 @@ CommandLine::parse(const vector<string>& args, nio::Sink& out, nio::Sink& err, b
         }
         applyParam(*param, arg);
         ++paramOccurs;
-        if (param->consumeOptions) {
+        if (param->consumeOpts) {
           consumeOpts = true;
         }
       }
@@ -381,7 +268,7 @@ CommandLine::parse(const vector<string>& args, nio::Sink& out, nio::Sink& err, b
 
     // Help?
     if (parserState_.seenHelp) {
-      help(out, exit);
+      printHelp(out, exit);
       return false;
     }
 
@@ -409,7 +296,159 @@ CommandLine::parse(const vector<string>& args, nio::Sink& out, nio::Sink& err, b
 }
 
 void
-CommandLine::printHelp(nio::Sink& out) const {
+CommandLine::printHelp(nio::Sink& out, bool exit) {
+  ROCKET_EXPECT(hasHelpOpt_);
+
+  auto size = system::terminal::size(out);
+  u64 width = max(40_u64, size ? size->first : 80_u64);
+  bool output = config_.otherOutput;
+
+  // Usage
+
+  if (hasUsage_) {
+    if (output) {
+      out.write('\n');
+    }
+    printUsage(out);
+    output = true;
+  }
+
+  // Prolog
+
+  if (config_.prolog) {
+    if (output) {
+      out.write('\n');
+    }
+    out.writeln(str::wrap(*config_.prolog, 0, width));
+    output = true;
+  }
+
+  // Parameters
+
+  if (not params_.empty()) {
+    if (output) {
+      out.write('\n');
+    }
+    printHelpParams(out, width);
+    output = true;
+  }
+
+  // Options
+
+  if (not opts_.empty()) {
+    if (output) {
+      out.write('\n');
+    }
+    printHelpOpts(out, width);
+    output = true;
+  }
+
+  // Epilog
+
+  if (config_.epilog) {
+    if (output) {
+      out.write('\n');
+    }
+    out.writeln(str::wrap(*config_.epilog, 0, width));
+  }
+
+  if (exit) {
+    process.exit(EXIT_SUCCESS);
+  }
+}
+
+/**
+ * Option groups appear in the order they are seen. However, no group or group with an empty title comes
+ * first. Within the groups, options appear in the order they are seen.
+ */
+void
+CommandLine::printHelpOpts(nio::Sink& out, u64 width) const {
+  // Collect groups and options therein
+
+  unordered_map<const OptionGroup*, vector<const Option*>> options;
+  vector<const OptionGroup*> groups;
+
+  OptionGroup null;
+  options.emplace(&null, vector<const Option*>());
+  groups.push_back(&null);
+
+  for (const auto& opt : opts_) {
+    if (not opt.group || opt.group->title.empty())
+      options.find(&null)->second.push_back(&opt);
+    else {
+      if (auto it = options.find(opt.group); it == options.end()) {
+        options.emplace(opt.group, vector<const Option*> { &opt });
+        groups.push_back(opt.group);
+      } else
+        it->second.push_back(&opt);
+    }
+  }
+
+  // Loop though groups
+
+  bool output = false;
+
+  for (const auto* group : groups) {
+    const auto& opts = options.find(group)->second;
+    if (opts.empty())
+      continue;
+    if (output) {
+      out.write('\n');
+    }
+    out.println("{}:\n", group->title);
+    output = true;
+
+    // Loop through options
+
+    for (const auto* opt : opts) {
+      out.write("  ");
+      if (opt->shortName) {
+        out.print("-{}, ", static_cast<string>(*opt->shortName));
+      } else {
+        out.write("    ");
+      }
+      out.print("--{}", opt->name);
+      if (opt->required) {
+        out.write(" (required)");
+      }
+      if (opt->format) {
+        out.print(" {}", *opt->format);
+      }
+      out.write('\n');
+      if (opt->help) {
+        out.writeln(str::wrap(*opt->help, 10, width));
+      }
+    }
+  }
+}
+
+/**
+ * Parameters appear in the order they are declared.
+ */
+void
+CommandLine::printHelpParams(nio::Sink& out, u64 width) const {
+  // Loop though parameters
+
+  out.writeln("Parameters:\n");
+
+  for (const auto& param : params_) {
+    out.write("  ");
+    out.write(param.name);
+    if (param.required) {
+      out.write(" (required)");
+    }
+    if (param.format) {
+      out.print(" {}", *param.format);
+    }
+    out.write('\n');
+    if (param.help) {
+      out.writeln(str::wrap(*param.help, 10, width));
+    }
+  }
+}
+
+void
+CommandLine::printTryHelp(nio::Sink& out) const {
   ROCKET_EXPECT(hasHelpOpt_);
 
   out.println("Try `{} --help` for more information.", config_.command);

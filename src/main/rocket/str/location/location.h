@@ -83,19 +83,19 @@ struct Location {
   u64 column = 0; ///< The column number (counting character widths), starting with 1.
   Range lineRange = Range(); ///< The range of the line containing #position.
   /**
-    * This member is only initialized if #LocationsParams#setLineString was set to `true`.
+    * This member is only initialized if #LocationsConfig#setLineString was set to `true`.
     */
   std::optional<std::string> lineString = std::nullopt;
   std::string message; ///< Copied from the input position.
   std::optional<std::string> caption; ///< Copied from the input position.
 };
 
-// #LocationsParams -----------------------------------------------------------------------------------------
+// #LocationsConfig -----------------------------------------------------------------------------------------
 
 /**
- * Parameters for the #locations function.
+ * Configuration for the #locations function.
  */
-struct LocationsParams {
+struct LocationsConfig {
   /**
    * If this is set to `true`, then lines are copied to the #rocket::str::location::LocationsResult.
    */
@@ -123,11 +123,11 @@ struct LocationsParams {
  */
 struct LocationsResult {
   /**
-   * A copy of the parameters that were passed to #locations.
+   * A copy of the configuration that was passed to #locations.
    *
-   * The #LocationsParams#source member is possibly assigned a new value.
+   * The #LocationsConfig#source member is possibly assigned a new value.
    */
-  LocationsParams params;
+  LocationsConfig config;
   /**
    * For each #rocket::str::location::Position passed to #locations, a #rocket::str::location::Location is
    * added to the result. The order of the positions is preserved in the
@@ -136,12 +136,12 @@ struct LocationsResult {
   std::vector<Location> locations;
 };
 
-// #PrintLocationsParams ------------------------------------------------------------------------------------
+// #PrintLocationsConfig ------------------------------------------------------------------------------------
 
 /**
- * Parameters for the #printLocations function.
+ * Configuration for the #printLocations function.
  */
-struct PrintLocationsParams {
+struct PrintLocationsConfig {
   bool styled = false; ///< Print styled text?
   u64 minLineNumberWidth = 5; ///< The minimum width to use when displaying line numbers.
 };
@@ -157,13 +157,13 @@ struct PrintLocationsParams {
  * @param positions the positions to look for. They needn't be sorted in any way. The order of the positions
  *     is preserved in the #rocket::str::location::LocationsResult. The only restriction is that all
  *     #rocket::str::location::Position#position values have to be unique
- * @param params parameters to configure the operation
+ * @param config configuration
  * @return a #rocket::str::location::LocationsResult
  */
 LocationsResult locations(
     std::string_view input,
     const std::vector<Position>& positions,
-    const LocationsParams& params = {});
+    const LocationsConfig& config = {});
 
 /**
  * Prints Clang-style messages for all locations in @p locations to the sink @p out.
@@ -173,13 +173,13 @@ LocationsResult locations(
  *     @p locationsResult must be available
  * @param locationsResult the #rocket::str::location::LocationsResult instance that was returned by the
  *     #rocket::str::location::locations function
- * @param params parameters to configure the operation
+ * @param config configuration
  */
 void printLocations(
     nio::Sink& out,
     std::optional<std::string_view> input,
     const LocationsResult& locationsResult,
-    const PrintLocationsParams& params = {});
+    const PrintLocationsConfig& config = {});
 
 } // namespace rocket::str::location
 

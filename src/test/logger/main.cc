@@ -41,13 +41,13 @@ main(i32 argc, char **argv) {
   optional<vector<string>> args;
 
   cl::OptionGroup general("General control");
-  cl::CommandLineParams params { .usages={ "[OPTION]... [ARG]..." }} ;
+  cl::CommandLineConfig config { .usages={ "[OPTION]... [ARG]..." }} ;
   cl::CommandLine cl({
     cl::Option::helpOf(&general, help),
     cl::Option::of(&general, "offset", "o"_c, "number", "hour offset", hours)
   }, {
     cl::Parameter::of("ARG", nullopt, "a command-line argument", args)
-  }, params);
+  }, config);
   cl.parse(process.args());
 
   // Apply hour offset

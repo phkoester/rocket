@@ -23,12 +23,12 @@ TEST(escape, CString) {
   // Double quotes, escaping, UTF-8 'ä'
   {
     string in = "\\ä\"b";
-    CStringParams params { .quote='"' };
-    string escaped = escapeCString(in, params, &result);
+    CStringConfig config { .quote='"' };
+    string escaped = escapeCString(in, config, &result);
     EXPECT_EQ(escaped, "\"\\\\ä\\\"b\"");
     EXPECT_EQ(result.positions, positions({ { 0, 1 }, { 1, 3 }, { 3, 5 }, { 4, 7 }, { 5, 8 } }));
 
-    string out = unescapeCString(escaped, params, &result);
+    string out = unescapeCString(escaped, config, &result);
     EXPECT_EQ(out, in);
     EXPECT_EQ(result.positions, positions({ { 1, 0 }, { 3, 1 }, { 5, 3 }, { 7, 4 }, { 8, 5 } }));
   }
@@ -36,11 +36,11 @@ TEST(escape, CString) {
   // Apostrophes
   {
     string in = "a'b";
-    CStringParams params { .quote='\'' };
-    string escaped = escapeCString(in, params, &result);
+    CStringConfig config { .quote='\'' };
+    string escaped = escapeCString(in, config, &result);
     EXPECT_EQ(escaped, "'a\\'b'");
     EXPECT_EQ(result.positions, positions({ { 0, 1 }, { 1, 2 }, { 2, 4 }, { 3, 5 } }));
-    string out = unescapeCString(escaped, params, &result);
+    string out = unescapeCString(escaped, config, &result);
     EXPECT_EQ(out, in);
     EXPECT_EQ(result.positions, positions({ { 1, 0 }, { 2, 1 }, { 4, 2 }, { 5, 3 } }));
   }
@@ -49,11 +49,11 @@ TEST(escape, CString) {
   {
     string in = "a\x00" "b"s;
     EXPECT_EQ(in.size(), 3);
-    CStringParams params;
-    auto escaped = escapeCString(in, params, &result);
+    CStringConfig config;
+    auto escaped = escapeCString(in, config, &result);
     EXPECT_EQ(escaped, "a\\x00b");
     EXPECT_EQ(result.positions, positions({ { 0, 0 }, { 1, 1 }, { 2, 5 }, { 3, 6 } }));
-    string out = unescapeCString(escaped, params, &result);
+    string out = unescapeCString(escaped, config, &result);
     EXPECT_EQ(out, in);
     EXPECT_EQ(result.positions, positions({ { 0, 0 }, { 1, 1 }, { 5, 2 }, { 6, 3 } }));
   }
@@ -64,13 +64,13 @@ TEST(escape, CString) {
     // 🧑‍🌾: 11 bytes, 3 code points
     string in = "a☢️b🧑‍🌾c";
     EXPECT_EQ(in.size(), 20);
-    CStringParams params;
-    auto escaped = escapeCString(in, params, &result);
+    CStringConfig config;
+    auto escaped = escapeCString(in, config, &result);
     EXPECT_EQ(escaped, in);
     EXPECT_EQ(
         result.positions,
         positions({ { 0, 0 }, { 1, 1 }, { 7, 7 }, { 8, 8 }, { 19, 19 }, { 20, 20 } }));
-    string out = unescapeCString(escaped, params, &result);
+    string out = unescapeCString(escaped, config, &result);
     EXPECT_EQ(out, in);
     EXPECT_EQ(
         result.positions,
@@ -86,24 +86,24 @@ TEST(escape, CString) {
   // Tab
   {
     string in = "a\tb";
-    CStringParams params;
-    auto escaped = escapeCString(in, params, &result);
+    CStringConfig config;
+    auto escaped = escapeCString(in, config, &result);
     EXPECT_EQ(escaped, "a\\tb");
     EXPECT_EQ(result.positions, positions({ { 0, 0 }, { 1, 1 }, { 2, 3 }, { 3, 4 } }));
 
-    params = { .tabSize=8 };
-    escaped = escapeCString(in, params, &result);
+    config = { .tabSize=8 };
+    escaped = escapeCString(in, config, &result);
     EXPECT_EQ(escaped, "a       b");
     EXPECT_EQ(result.positions, positions({ { 0, 0 }, { 1, 1 }, { 2, 8 }, { 3, 9 } }));
 
     in = "a\r\n\tb";
-    escaped = escapeCString(in, params, &result);
+    escaped = escapeCString(in, config, &result);
     EXPECT_EQ(escaped, "a\\r\\n   b");
     // CR/LF is one character
     EXPECT_EQ(result.positions, positions({ { 0, 0 }, { 1, 1 }, { 3, 5 }, { 4, 8 }, { 5, 9 } }));
 
     in = "\b🧑‍🌾\tb";
-    escaped = escapeCString(in, params, &result);
+    escaped = escapeCString(in, config, &result);
     EXPECT_EQ(escaped, "\\b🧑‍🌾    b");
     EXPECT_EQ(result.positions, positions({ { 0, 0 }, { 1, 2 }, { 12, 13 }, { 13, 17 }, { 14, 18 } }));
   }

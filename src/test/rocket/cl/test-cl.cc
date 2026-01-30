@@ -51,14 +51,14 @@ parseCommand(const vector<string>& args, nio::Sink& out = nio::out, nio::Sink& e
   OptionGroup general { "General control" };
   OptionGroup misc { "Miscellaneous" };
 
-  CommandLineParams config {
+  CommandLineConfig config {
     .usages={ "[OPTION]... list [OPTION]... FILE...", "[OPTION]... show [OPTION]... [ARG]..." },
     .prolog="List FILEs or show ARGs.\n\nThis is yet another paragraph.",
     .epilog="Gallia est omnis divisa in partes tres, quarum unam incolunt Belgae, aliam Aquitani, tertiam qui ipsorum lingua Celtae, nostra Galli appellantur. Hi omnes lingua, institutis, legibus inter se differunt. Gallos ab Aquitanis Garunna flumen, a Belgis Matrona et Sequana dividit."
   };
 
   auto command = Parameter::of("COMMAND", { "list", "show" }, "a command", parseCommandCommand);
-  command.consumeOptions = true;
+  command.consumeOpts = true;
 
   CommandLine cl({
     // The group order matters!
@@ -80,7 +80,7 @@ parseCommand(const vector<string>& args, nio::Sink& out = nio::out, nio::Sink& e
 
     OptionGroup list { "List control" };
 
-    CommandLineParams listParams {
+    CommandLineConfig listConfig {
       .command = config.command + " list",
       .usages={ "[OPTION]... FILE..." },
       .rocketOpts=false
@@ -91,7 +91,7 @@ parseCommand(const vector<string>& args, nio::Sink& out = nio::out, nio::Sink& e
       Option::of(&list, "list", "l"_c, nullopt, "a list option that is good for nothing", parseCommandList)
     }, {
       Parameter::of("FILE", "file", "a file to list", parseCommandListFiles)
-    }, listParams);
+    }, listConfig);
 
     if (not listCl.parse(parseCommandArgs, out, err, false)) {
       return;
@@ -103,7 +103,7 @@ parseCommand(const vector<string>& args, nio::Sink& out = nio::out, nio::Sink& e
 
     OptionGroup show { "Show control" };
 
-    CommandLineParams showParams {
+    CommandLineConfig showConfig {
       .command = config.command + " show",
       .usages={ "[OPTION]... [ARG]..." },
       .rocketOpts=false
@@ -115,7 +115,7 @@ parseCommand(const vector<string>& args, nio::Sink& out = nio::out, nio::Sink& e
       Option::of(&show, "test", "t"_c, nullopt, "test something, or don't", parseCommandShowTest)
     }, {
       Parameter::of("ARG", nullopt, "a thing to show", parseCommandShowArgs)
-    }, showParams);
+    }, showConfig);
 
     if (not showCl.parse(parseCommandArgs, out, err, false)) {
       return;
@@ -402,6 +402,13 @@ TEST(cl, parseCommand) {
         "~"
         "This is yet another paragraph\\.~"
         "~"
+        "Parameters:~"
+        "~"
+        "  COMMAND \\(required\\) `list` or `show`~"
+        "          a command~"
+        "  ARG \\(required\\)~"
+        "          a command-line argument~"
+        "~"
         "Logging control:~"
         "~"
         ".*"
@@ -430,6 +437,11 @@ TEST(cl, parseCommand) {
     EXPECT_EQ(
       buf.str(),
       "Usage: test-rocket-cl list [OPTION]... FILE...\n"
+      "\n"
+      "Parameters:\n"
+      "\n"
+      "  FILE (required) file\n"
+      "          a file to list\n"
       "\n"
       "List control:\n"
       "\n"
@@ -478,6 +490,11 @@ TEST(cl, parseCommand) {
     EXPECT_EQ(
       buf.str(),
       "Usage: test-rocket-cl show [OPTION]... [ARG]...\n"
+      "\n"
+      "Parameters:\n"
+      "\n"
+      "  ARG\n"
+      "          a thing to show\n"
       "\n"
       "Show control:\n"
       "\n"

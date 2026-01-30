@@ -19,10 +19,10 @@ main(i32 argc, char** argv) {
   optional<bool> help;
 
   cl::OptionGroup general("General control");
-  cl::CommandLineParams params { .usages={ "[OPTION]..." }, .otherOutput=true };
+  cl::CommandLineConfig config { .usages={ "[OPTION]..." }, .otherOutput=true };
   cl::CommandLine cl({
     cl::Option::helpOf(&general, help)
-  }, {}, params);
+  }, {}, config);
 
   cl.parse(process.args());
 

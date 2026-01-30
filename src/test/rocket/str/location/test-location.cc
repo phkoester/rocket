@@ -28,7 +28,7 @@ using namespace rocket::str::location;
 TEST(location, locationsEmptyInput) {
   Position pos { .type=note, .position=0, .message="Oops" };
   auto result = locations("", { pos });
-  EXPECT_EQ(result.params.source, "(input)");
+  EXPECT_EQ(result.config.source, "(input)");
   EXPECT_EQ(result.locations.size(), 1);
   auto& loc = result.locations[0];
   EXPECT_LOCATION(loc, note, 0, ({}), 1, 1, ({ 0, 0 }), nullopt, "Oops", nullopt);
@@ -38,7 +38,7 @@ TEST(location, locationsEoi) {
   string input = "a line without a line break at the end";
   Position pos { .type=error, .position=10, .message="Oops" };
   auto result = locations(input, { pos }, { .setLineString=true });
-  EXPECT_EQ(result.params.source, "(input)");
+  EXPECT_EQ(result.config.source, "(input)");
   EXPECT_EQ(result.locations.size(), 1);
   auto& loc = result.locations[0];
   EXPECT_LOCATION(loc, error, 10, ({}), 1, 11, ({ 0, input.size() }), input, "Oops", nullopt);
@@ -115,7 +115,7 @@ TEST(location, locationsKafkaTxt) {
 
   Position pos { .type=error, .position=3'000, .message="Oops" };
   auto result = locations(input, { pos }, { .setLineString=true, .source=source });
-  EXPECT_EQ(result.params.source, source);
+  EXPECT_EQ(result.config.source, source);
   EXPECT_EQ(result.locations.size(), 1);
   auto& loc = result.locations[0];
   EXPECT_LOCATION(
@@ -194,7 +194,7 @@ TEST(location, printLocations) {
     Position pos1 { .type=warning, .position=13, .message="Oops2" };
     Position pos2 { .type=error, .position=19, .message="Oops3", .caption="Watch out!" };
     auto result = locations(input, { pos0, pos1, pos2 }, { .setLineString=true, .source="foo" });
-    EXPECT_EQ(result.params.source, "foo");
+    EXPECT_EQ(result.config.source, "foo");
     EXPECT_EQ(result.locations.size(), 3);
     auto& loc0 = result.locations[0];
     EXPECT_LOCATION(

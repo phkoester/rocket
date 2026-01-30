@@ -99,7 +99,7 @@ struct Parameter {
       name,
       std::nullopt, // #allowedValues
       IsVector<typename internal::ValueType<T>::Type> ? NPOS : 1, // #maxOccurs
-      false, // #consumeOptions
+      false, // #consumeOpts
       not IsOptional<T>, // #required
       format,
       help,
@@ -132,7 +132,7 @@ struct Parameter {
       name,
       std::nullopt, // #allowedValues
       IsVector<typename internal::ValueType<T>::Type> ? NPOS : 1, // #maxOccurs
-      false, // #consumeOptions
+      false, // #consumeOpts
       not IsOptional<T>, // #required
       std::nullopt, // #format
       help,
@@ -157,7 +157,7 @@ struct Parameter {
   std::string name; ///< The parameter name.
   std::optional<std::set<std::string>> allowedValues; ///< Allowed values.
   u64 maxOccurs = 1; ///< Maximum number of occurrences.
-  bool consumeOptions = false; ///< Whether options shall be consumed after this parameter.
+  bool consumeOpts = false; ///< Whether options shall be consumed after this parameter.
   bool required = false; ///< Required?
   std::optional<std::string> format; ///< Format text.
   std::optional<std::string> help; ///< Help text.
@@ -236,6 +236,7 @@ struct Option {
       group,
       name,
       shortName,
+      std::nullopt, // #allowedValues
       // #takesValue is `false` for `bool`, otherwise it is `true`
       std::is_same_v<typename internal::ValueType<T>::Type, bool> ? false : true,
       not IsOptional<T>, // #required
@@ -245,9 +246,65 @@ struct Option {
     };
   }
 
+  /**
+   * Convenience function that makes a new option and binds it to a destination reference.
+   *
+   * @tparam T the type of the destination reference. If this is a #std::optional reference, this option is
+   *   optional, otherwise it is required. If this is a `bool` reference, the option takes no argument,
+   *   otherwise it does. If this is a #std::vector reference, multiple values may be supplied on the command
+   *   line
+   * @param group a pointer to an option group. May be null
+   * @param name the name of the option. For example, if this is `"verbose"`, the option may be chosen via
+   *   `--verbose` on the command line
+   * @param shortName an optional short name. For example, if this is <code>"€"</code>, the option may be
+   *   chosen via `-€` on the command line
+   * @param allowedValues a set of allowed values
+   * @param help a short help text. By convention, this starts with a lower-case verb and does not end with
+   *   a period, e.g. `"print NUM lines of leading context"`
+   * @param dest the destination reference that is assigned the option's value
+   * @return a new option
+   */
+  template<typename T>
+  static inline Option
+  of(
+    const OptionGroup* group,
+    const std::string& name,
+    const std::optional<unicode::Character<char>>& shortName,
+    const std::set<typename internal::ValueType<T>::Type>& allowedValues,
+    const std::optional<std::string>& help,
+    T& dest) {
+    auto ret = Option {
+      group,
+      name,
+      shortName,
+      std::nullopt, // #allowedValues
+      // #takesValue is `false` for `bool`, otherwise it is `true`
+      std::is_same_v<typename internal::ValueType<T>::Type, bool> ? false : true,
+      not IsOptional<T>, // #required
+      std::nullopt, // #format
+      help,
+      [&](std::string_view val) { internal::applyTo(dest, val); }
+    };
+
+    std::set<std::string> strings;
+    for (const auto& val : allowedValues) {
+      strings.insert(str::toString(val));
+    }
+    ret.allowedValues = strings;
+
+    std::set<std::string> quotedStrings;
+    for (const auto& val : strings) {
+      quotedStrings.insert(fmt::format("`{}`", val));
+    }
+    ret.format = str::join(quotedStrings.begin(), quotedStrings.end(), ", ", " or ", ", or");
+
+    return ret;
+  }
+
   const OptionGroup* group = nullptr; ///< The option group.
   std::string name; ///< The option name.
   std::optional<unicode::Character<char>> shortName = std::nullopt; ///< The option short name.
+  std::optional<std::set<std::string>> allowedValues = std::nullopt; ///< Allowed values.
   bool takesValue = false; ///< Option takes value?
   bool required = false; ///< Required?
   std::optional<std::string> format; ///< Format text.
@@ -255,12 +312,12 @@ struct Option {
   Apply apply; ///< Callback function that applies the argument.
 };
 
-// #CommandLineParams ---------------------------------------------------------------------------------------
+// #CommandLineConfig ---------------------------------------------------------------------------------------
 
 /**
  * Parameters that configure the behavior of a #rocket::cl::CommandLine.
  */
-struct CommandLineParams {
+struct CommandLineConfig {
   /// The name of the command. Needed to display the usage. By default, this is the process name.
   std::string command = process.name();
   /**
@@ -294,43 +351,12 @@ struct CommandLine {
    * @ctor
    *
    * @param opts the command-line options
-   * @param params parameters that configure the parser
+   * @param config configuration
    */
   CommandLine(
     const std::vector<Option>& opts = {},
     const std::vector<Parameter>& args = {},
-    const CommandLineParams& params = {});
-
-  /**
-   * To be called when the command line did not satisfy the usage rules.
-   *
-   * @param out the sink to write to
-   * @param status program exit status. If this is not 0, the program exits with this status
-   */
-  // XXX private
-  void error(nio::Sink& out, i32 status = EXIT_SERIOUS_FAILURE) const;
-
-  /**
-   * To be called when #parse threw an exception.
-   *
-   * @param ex the exception that was caught
-   * @param out the sink to write to
-   * @param status program exit status. If this is not 0, the program exits with this status
-   */
-  // XXX private
-  void handleException(
-    const std::exception& ex,
-    nio::Sink& out,
-    i32 status = EXIT_SERIOUS_FAILURE) const;
-
-  /**
-   * To be called when the `--help` option appeared on the command line.
-   *
-   * @param out the sink to write to
-   * @param exit if `true`, the program exits with `EXIT_SUCCESS`, otherwise it continues to run
-   */
-  // XXX private
-  void help(nio::Sink& out, bool exit);
+    const CommandLineConfig& config = {});
 
   /**
    * Parses the command-line arguments @p args, assigns values to bound destination references.
@@ -338,8 +364,9 @@ struct CommandLine {
    * @param args the command-line arguments, e.g. `process.args()`
    * @param out the sink to write standard output to
    * @param err the sink to write error output to
-   * @param exit if `true`, the program exits if the command line cannot be parsed successfully
-   * @return whether the application should continue after parsing
+   * @param exit if `true`, the program exits on help or parse failure
+   * @return whether the application should continue after parsing. On help or parse failure, the function
+   *   returns `false`. If @p exit is `true`, the return value may be ignored
    */
   bool parse(
     const std::vector<std::string>& args,
@@ -361,7 +388,7 @@ private:
 
   std::vector<Option> opts_;
   std::vector<Parameter> params_;
-  CommandLineParams config_;
+  CommandLineConfig config_;
   bool hasUsage_;
   bool hasHelpOpt_;
   std::unordered_map<std::string_view, const Option*> byName_;
@@ -373,9 +400,17 @@ private:
 
   void applyParam(const Parameter& param, const std::string& value);
 
-  void helpOpts(nio::Sink& out, u64 width) const;
+  void error(nio::Sink& out, i32 status) const;
 
-  void printHelp(nio::Sink& out) const;
+  void handleException(const std::exception& ex, nio::Sink& out, i32 status) const;
+
+  void printHelp(nio::Sink& out, bool exit);
+
+  void printHelpOpts(nio::Sink& out, u64 width) const;
+
+  void printHelpParams(nio::Sink& out, u64 width) const;
+
+  void printTryHelp(nio::Sink& out) const;
 
   void printUsage(nio::Sink& out) const;
 };

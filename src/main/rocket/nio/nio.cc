@@ -150,19 +150,19 @@ BufferedSink::write(string_view in) {
 
 // #FileSink ------------------------------------------------------------------------------------------------
 
-FileSink::FileSink(FILE* file, const Params& params) :
+FileSink::FileSink(FILE* file, const Config& config) :
     file_(file),
-    params_(params) {
+    config_(config) {
   ROCKET_CHECK(file, file != nullptr);
   if (file == stdout || file == stderr) {
-    params_.closeOnDestroy = false;
+    config_.closeOnDestroy = false;
   }
 }
 
-FileSink::FileSink(const string& path, const Params& params) :
+FileSink::FileSink(const string& path, const Config& config) :
     file_(nullptr),
-    params_(params) {
-  const char* modes = params.append ? "ab" : "wb"; // `b` is for non-Linux only
+    config_(config) {
+  const char* modes = config.append ? "ab" : "wb"; // `b` is for non-Linux only
   file_ = std::fopen(path.c_str(), modes);
   LOG("fopen=" << file_ << ", ferror=" << (file_ ? ferror(file_) : -1));
 
@@ -175,7 +175,7 @@ FileSink::FileSink(const string& path, const Params& params) :
 }
 
 FileSink::~FileSink() {
-  if (params_.closeOnDestroy) {
+  if (config_.closeOnDestroy) {
     close();
   }
 }
@@ -666,17 +666,17 @@ BufferedSource::terminal(i32* fd) {
 
 // #FileSource ----------------------------------------------------------------------------------------------
 
-FileSource::FileSource(FILE* file, const Params& params) :
+FileSource::FileSource(FILE* file, const Config& config) :
     file_(file),
-    params_(params) {
+    config_(config) {
   if (file == stdin) {
-    params_.closeOnDestroy = false;
+    config_.closeOnDestroy = false;
   }
 }
 
-FileSource::FileSource(const string& path, const Params& params) :
+FileSource::FileSource(const string& path, const Config& config) :
     file_(nullptr),
-    params_(params) {
+    config_(config) {
   file_ = std::fopen(path.c_str(), "rb");  // `b` is for non-Linux only
   LOG("fopen=" << file_ << ", ferror=" << (file_ ? ferror(file_) : -1));
 
@@ -689,7 +689,7 @@ FileSource::FileSource(const string& path, const Params& params) :
 }
 
 FileSource::~FileSource() {
-  if (params_.closeOnDestroy) {
+  if (config_.closeOnDestroy) {
     close();
   }
 }

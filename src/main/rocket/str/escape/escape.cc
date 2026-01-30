@@ -20,10 +20,10 @@ namespace {
 // Local functions ------------------------------------------------------------------------------------------
 
 string escapeCStringCodePointHex(unicode::CodePoint, u64&);
-string escapeCStringTab(u64&, const CStringParams&);
+string escapeCStringTab(u64&, const CStringConfig&);
 
 string
-escapeCStringCodePoint(unicode::CodePoint cp, u64& column, const CStringParams& params) {
+escapeCStringCodePoint(unicode::CodePoint cp, u64& column, const CStringConfig& config) {
   // Escapable characters
   string ret;
   if (cp >= '\a' && cp <= '\\') {
@@ -35,7 +35,7 @@ escapeCStringCodePoint(unicode::CodePoint cp, u64& column, const CStringParams& 
       ret = string { '\\', 'b' };
       break;
     case '\t':// Horizontal tab = 9
-      return escapeCStringTab(column, params);
+      return escapeCStringTab(column, config);
     case '\n': // Line feed = 10
       ret = string { '\\', 'n' };
       break;
@@ -52,10 +52,10 @@ escapeCStringCodePoint(unicode::CodePoint cp, u64& column, const CStringParams& 
       ret = string { '\\', 'e' };
       break;
     case '"': // Quotation mark = 34
-      ret = params.quote == '"' ? string { '\\', '"' } : string { '"' };
+      ret = config.quote == '"' ? string { '\\', '"' } : string { '"' };
       break;
     case '\'': // Apostrophe = 39
-      ret = params.quote == '\'' ? string { '\\', '\'' } : string { '\'' };
+      ret = config.quote == '\'' ? string { '\\', '\'' } : string { '\'' };
       break;
     case '\\': // Backslash = 92
       ret = string { '\\', '\\' };
@@ -91,15 +91,15 @@ escapeCStringCodePointHex(unicode::CodePoint cp, u64& column) {
 }
 
 string
-escapeCStringTab(u64& column, const CStringParams& params) {
-  if (not params.tabSize) {
+escapeCStringTab(u64& column, const CStringConfig& config) {
+  if (not config.tabSize) {
     string ret { '\\', 't' };
     column += ret.size();
     return ret;
   }
   else {
-    u64 mod = column % *params.tabSize;
-    string ret(*params.tabSize - mod, ' ');
+    u64 mod = column % *config.tabSize;
+    string ret(*config.tabSize - mod, ' ');
     column += ret.size();
     return ret;
   }
@@ -222,8 +222,8 @@ getOptionalChar(unicode::Iterator<char>& iter) {
 namespace rocket::str::escape {
 
 string
-escapeCString(string_view input, const CStringParams& params, Result* result) {
-  ROCKET_CHECK(params, params.quote == '\0' || params.quote == '"' || params.quote == '\'');
+escapeCString(string_view input, const CStringConfig& config, Result* result) {
+  ROCKET_CHECK(config, config.quote == '\0' || config.quote == '"' || config.quote == '\'');
 
   string ret;
   if (result) {
@@ -233,8 +233,8 @@ escapeCString(string_view input, const CStringParams& params, Result* result) {
 
   // If needed, add quote
 
-  if (params.quoted()) {
-    ret.push_back(params.quote);
+  if (config.quoted()) {
+    ret.push_back(config.quote);
     ++to;
   }
 
@@ -260,7 +260,7 @@ escapeCString(string_view input, const CStringParams& params, Result* result) {
     if (auto cp = c.toCodePoint(); cp) {
       // Single-code-point character
 
-      auto escaped = escapeCStringCodePoint(*cp, column, params);
+      auto escaped = escapeCStringCodePoint(*cp, column, config);
       ret.append(escaped);
       to += escaped.size();
     } else if (c.crLf()) {
@@ -286,16 +286,16 @@ escapeCString(string_view input, const CStringParams& params, Result* result) {
 
   // If needed, add quote
 
-  if (params.quoted()) {
-    ret.push_back(params.quote);
+  if (config.quoted()) {
+    ret.push_back(config.quote);
   }
 
   return ret;
 }
 
 string
-unescapeCString(string_view input, const CStringParams& params, Result* result) {
-  ROCKET_CHECK(params, params.quote == '\0' || params.quote == '"' || params.quote == '\'');
+unescapeCString(string_view input, const CStringConfig& config, Result* result) {
+  ROCKET_CHECK(config, config.quote == '\0' || config.quote == '"' || config.quote == '\'');
 
   string ret;
 
@@ -306,8 +306,8 @@ unescapeCString(string_view input, const CStringParams& params, Result* result) 
   // If needed, read quote
 
   auto iter = unicode::Iterator(unicode::IteratorType::Character, input);
-  if (params.quoted()) {
-    getChar(iter, params.quote);
+  if (config.quoted()) {
+    getChar(iter, config.quote);
   }
 
   while (true) {
@@ -320,8 +320,8 @@ unescapeCString(string_view input, const CStringParams& params, Result* result) 
     }
     if (not c1) {
       // EOI
-      if (params.quoted()) {
-        throw InputFailure(pos, { 0, pos }, fmt::format("Missing terminating {:?} character", params.quote));
+      if (config.quoted()) {
+        throw InputFailure(pos, { 0, pos }, fmt::format("Missing terminating {:?} character", config.quote));
       }
       return ret;
     }
@@ -329,7 +329,7 @@ unescapeCString(string_view input, const CStringParams& params, Result* result) 
     if (auto cp1 = c1->toCodePoint(); cp1) {
       // Single-code-point character
 
-      if (params.quoted() && cp1->eq(params.quote)) {
+      if (config.quoted() && cp1->eq(config.quote)) {
         // Terminating quote: EOI
 
         return ret;

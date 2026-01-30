@@ -26,13 +26,13 @@ namespace rocket::str::location {
 // Functions ------------------------------------------------------------------------------------------------
 
 LocationsResult
-locations(string_view input, const vector<Position>& positions, const LocationsParams& params) {
+locations(string_view input, const vector<Position>& positions, const LocationsConfig& config) {
   // Prepare result
 
   LocationsResult ret;
-  ret.params = params;
-  if (ret.params.source.empty()) {
-    ret.params.source = "(input)";
+  ret.config = config;
+  if (ret.config.source.empty()) {
+    ret.config.source = "(input)";
   }
 
   // Map input position -> location
@@ -95,7 +95,7 @@ locations(string_view input, const vector<Position>& positions, const LocationsP
       for (const auto& poi : pois) {
         auto& loi = locations.find(poi)->second; // "Location of interest"
         loi.lineRange.b = pos;
-        if (params.setLineString) {
+        if (config.setLineString) {
           loi.lineString = lineString;
         }
       }
@@ -111,11 +111,11 @@ locations(string_view input, const vector<Position>& positions, const LocationsP
       beginLine = iter.current();
       lineString.clear();
       pois.clear();
-    } else if (c->tab() && params.tabSize) {
+    } else if (c->tab() && config.tabSize) {
       // Handle tab
 
-      u64 mod = column % *params.tabSize;
-      u64 n = *params.tabSize - mod;
+      u64 mod = column % *config.tabSize;
+      u64 n = *config.tabSize - mod;
       column += n;
       lineString.push_back('\t');
     } else {
@@ -145,9 +145,9 @@ printLocations(
   nio::Sink& out,
   optional<string_view> input,
   const LocationsResult& locationsResult,
-  const PrintLocationsParams& params) {
+  const PrintLocationsConfig& config) {
   ROCKET_CHECK(input, not (input && input->empty()), "May not be empty");
-  ROCKET_CHECK(locationsResult, not locationsResult.params.source.empty());
+  ROCKET_CHECK(locationsResult, not locationsResult.config.source.empty());
 
   // Find out line-number width and format
   const auto& locations = locationsResult.locations;
@@ -157,15 +157,15 @@ printLocations(
       0_u64,
       [](u64 max, const auto& loc) { return std::max(loc.line, max); });
   string maxLineStr =  fmt::format("{}", maxLine);
-  u64 lineNumberWidth = max(params.minLineNumberWidth, maxLineStr.size());
+  u64 lineNumberWidth = max(config.minLineNumberWidth, maxLineStr.size());
   string blankPrefix = string(lineNumberWidth, ' ') + " | ";
 
   for (const auto& loc : locations) {
     // Print source, line number, column column number, type, and message
 
     ROCKET_CHECK(locationsResult, not loc.message.empty());
-    out.print("{}:{}:{}: ", locationsResult.params.source, loc.line, loc.column);
-    if (params.styled) {
+    out.print("{}:{}:{}: ", locationsResult.config.source, loc.line, loc.column);
+    if (config.styled) {
       fmt::text_style style;
       switch (loc.type) {
       case note   : style = fg(fmt::color::cyan); break;
@@ -190,7 +190,7 @@ printLocations(
       *loc.lineString :
       string(input->substr(loc.lineRange.a, *loc.lineRange.size()));
     escape::Result result;
-    string escapedLine = escape::escapeCString(line, { .tabSize=locationsResult.params.tabSize }, &result);
+    string escapedLine = escape::escapeCString(line, { .tabSize=locationsResult.config.tabSize }, &result);
 
     // For #escapedLine, map #Character index -> byte offset
     auto iter = unicode::Iterator<char>(unicode::IteratorType::Character, escapedLine);
@@ -274,7 +274,7 @@ printLocations(
 
     indicators = str::removeTrailing<char>(indicators, " ");
     out.write(blankPrefix);
-    if (params.styled) {
+    if (config.styled) {
       out.print(fg(fmt::color::green) | fmt::emphasis::bold, "{}\n", indicators);
     } else {
       out.writeln(indicators);
@@ -284,9 +284,9 @@ printLocations(
 
     if (loc.caption) {
       string caption = string(caretPos, ' ') + *loc.caption;
-      string escapedCaption = escape::escapeCString(caption, { .tabSize=locationsResult.params.tabSize });
+      string escapedCaption = escape::escapeCString(caption, { .tabSize=locationsResult.config.tabSize });
       out.write(blankPrefix);
-      if (params.styled) {
+      if (config.styled) {
         out.print(fg(fmt::color::green) | fmt::emphasis::bold, "{}\n", escapedCaption);
       } else {
         out.writeln(escapedCaption);

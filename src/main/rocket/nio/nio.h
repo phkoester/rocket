@@ -296,9 +296,9 @@ ROCKET_TEST_PRIVATE:
  */
 struct FileSink : Sink {
   /**
-   * Parameters for the #FileSink constructor.
+   * Configuration for the #FileSink constructor.
    */
-  struct Params {
+  struct Config {
     /**
      * Whether to append to the file instead of overwriting it.
      */
@@ -312,27 +312,27 @@ struct FileSink : Sink {
   };
 
   /**
-   * Returns default parameters.
+   * Returns a default configuration.
    *
-   * @return the default parameters
+   * @return a default configuration
    */
-  static consteval Params defaultParams() { return {}; }
+  static consteval Config defaultConfig() { return {}; }
 
   /**
    * @ctor
    *
    * @param file a `FILE` pointer to use
-   * @param params the parameters
+   * @param config configuration
    */
-  explicit FileSink(FILE* file, const Params& params = defaultParams());
+  explicit FileSink(FILE* file, const Config& config = defaultConfig());
 
   /**
    * @ctor
    *
    * @param path a path to a file
-   * @param params the parameters
+   * @param config configuration
    */
-  explicit FileSink(const std::string& path, const Params& params = { .append=false, .closeOnDestroy=true });
+  explicit FileSink(const std::string& path, const Config& config = defaultConfig());
 
   ~FileSink() override;
 
@@ -347,7 +347,7 @@ struct FileSink : Sink {
 ROCKET_TEST_PRIVATE:
 
   FILE* file_; ///< The `FILE` pointer.
-  Params params_; ///< The parameters.
+  Config config_; ///< The configuration.
 };
 
 // #NullSink ------------------------------------------------------------------------------------------------
@@ -608,9 +608,9 @@ ROCKET_TEST_PRIVATE:
  */
 struct FileSource : Source {
   /**
-   * Parameters for the #FileSource constructor.
+   * Configuration for the #FileSource constructor.
    */
-   struct Params {
+   struct Config {
     /**
      * Whether to close the file on destruction.
      *
@@ -620,27 +620,27 @@ struct FileSource : Source {
   };
 
   /**
-   * Returns default parameters.
+   * Returns a default configuration.
    *
-   * @return the default parameters
+   * @return a default configuration
    */
-  static consteval Params defaultParams() { return {}; }
+  static consteval Config defaultConfig() { return {}; }
 
   /**
    * @ctor
    *
    * @param file a `FILE` pointer to use
-   * @param params the parameters
+   * @param config configuration
    */
-  explicit FileSource(FILE* file, const Params& params = defaultParams());
+  explicit FileSource(FILE* file, const Config& config = defaultConfig());
 
   /**
    * @ctor
    *
    * @param path a path to a file
-   * @param params the parameters
+   * @param config configuration
    */
-  explicit FileSource(const std::string& path, const Params& params = { .closeOnDestroy=true });
+  explicit FileSource(const std::string& path, const Config& config = defaultConfig());
 
   ~FileSource() override;
 
@@ -657,7 +657,7 @@ struct FileSource : Source {
 ROCKET_TEST_PRIVATE:
 
   FILE* file_; ///< The `FILE` pointer.
-  Params params_; ///< The parameters.
+  Config config_; ///< The configuration.
 };
 
 // #NullSource ----------------------------------------------------------------------------------------------

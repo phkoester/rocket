@@ -77,13 +77,13 @@ main(i32 argc, char **argv) {
   optional<vector<string>> files; // required!
 
   cl::OptionGroup general("General control");
-  cl::CommandLineParams params { .usages={ "[OPTION]... [FILE]..." }} ;
+  cl::CommandLineConfig config { .usages={ "[OPTION]... [FILE]..." }} ;
   cl::CommandLine cl({
     cl::Option::helpOf(&general, help),
     cl::Option::of(&general, "foo", "f"_c, nullopt, "delve into foo mode", foo),
   }, {
     cl::Parameter::of("FILE", "file", "an input file", files)
-  }, params);
+  }, config);
 
   cl.parse(process.args());
 
