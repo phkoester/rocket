@@ -72,23 +72,19 @@ main(i32 argc, char **argv) {
 
   process.init(argc, argv, "toy");
 
-  bool help = false;
+  optional<bool> help;
+  bool foo; // required!
+  vector<string> args; // required!
 
   cl::OptionGroup general("General control");
-  cl::CommandLineParams params { .usages={ "[OPTION]..." }} ;
+  cl::CommandLineParams params { .usages={ "[OPTION]... [FILE]..." }} ;
   cl::CommandLine cl({
-    cl::Option::helpOf(&general, help)
-  }, params);
+    cl::Option::helpOf(&general, help),
+    cl::Option::of(&general, "foo", "f"_cv, nullopt, "delve into foo mode", foo),
+    // XXX args
+  }, {}, params);
 
-  vector<string> args;
-  try {
-    args = cl.parse(process.args());
-    if (help) {
-      cl.help(out, true);
-    }
-  } catch (const exception& ex) {
-    cl.handleException(ex, err);
-  }
+  cl.parseNew(process.args()); // XXX Beispiel in Process.h akt.
 
   {
     ROCKET_LOG(toy);

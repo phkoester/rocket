@@ -17,11 +17,15 @@ namespace rocket::cl {
 
 // #CommandLine ---------------------------------------------------------------------------------------------
 
-CommandLine::CommandLine(const vector<Option>& opts, const CommandLineParams& params) :
+CommandLine::CommandLine(
+  const vector<Option>& opts,
+  const vector<Argument>& args,
+  const CommandLineParams& params) :
   opts_(opts),
+  args_(args),
   params_(params),
-  usage_(not params.usages.empty()),
-  help_(false) {
+  hasUsage_(not params.usages.empty()),
+  hasHelpOpt_(false) {
   // If requested, prepend Rocket options
 
   if (params.rocketOpts) {
@@ -34,8 +38,9 @@ CommandLine::CommandLine(const vector<Option>& opts, const CommandLineParams& pa
   // Validate options, populate maps
 
   for (const auto& opt : opts_) {
-    if (opt.name == "help")
-      help_ = true;
+    if (opt.name == "help") {
+      hasHelpOpt_ = true;
+    }
     validate(opt.name, true);
     auto pair = byName_.emplace(opt.name, &opt);
     ROCKET_CHECK(opts, pair.second, "Duplicate option `{}`", name(opt, true));
@@ -49,22 +54,29 @@ CommandLine::CommandLine(const vector<Option>& opts, const CommandLineParams& pa
 }
 
 void
-CommandLine::apply(const Option& opt, bool nameFlag, optional<string_view> value) {
+CommandLine::applyOpt(const Option& opt, bool nameFlag, std::optional<std::string_view> value) {
   // Don't use #ROCKET_CHECK here for cleaner exception messages
 
   if (opt.takesValue && not value) {
     ROCKET_FAIL("Missing value for option `{}`", name(opt, nameFlag));
   }
-
   // Usually, options not taking a value may not be assigned a value. There is one exception to this rule:
   // boolean values are allowed
   static const set<string_view> BOOL_VALUES { "0", "false", "1", "true" };
   if (not opt.takesValue && value && not BOOL_VALUES.contains(*value)) {
     ROCKET_FAIL("Option `{}` cannot take a value", name(opt, nameFlag));
   }
+  if (not opt.takesValue && not value) {
+    value = "true"sv;
+  }
+  ROCKET_ASSERT(value);
 
   try {
-    opt.apply(value);
+    opt.apply(*value);
+    if (opt.name == "help") {
+      parserState_.seenHelp = true;
+    }
+    parserState_.seenOpts.insert(&opt);
   } catch (const Exception& ex) {
     string expected;
     if (opt.format) {
@@ -82,12 +94,15 @@ CommandLine::apply(const Option& opt, bool nameFlag, optional<string_view> value
 
 void
 CommandLine::error(nio::Sink& out, i32 status) const {
-  if (usage_)
+  if (hasUsage_) {
     printUsage(out);
-  if (help_)
+  }
+  if (hasHelpOpt_) {
     printHelp(out);
-  if (status != EXIT_SUCCESS)
+  }
+  if (status != EXIT_SUCCESS) {
     process.exit(status);
+  }
 }
 
 void
@@ -97,17 +112,20 @@ CommandLine::handleException(const exception& ex, nio::Sink& out, i32 status) co
   else
     process.error(out, 0, "{}", ex.what());
 
-  if (usage_)
+  if (hasUsage_) {
     printUsage(out);
-  if (help_)
+  }
+  if (hasHelpOpt_) {
     printHelp(out);
-  if (status != EXIT_SUCCESS)
+  }
+  if (status != 0) {
     process.exit(status);
+  }
 }
 
 void
 CommandLine::help(nio::Sink& out, bool exit) {
-  ROCKET_EXPECT(help_);
+  ROCKET_EXPECT(hasHelpOpt_);
 
   auto size = system::terminal::size(out);
   u64 width = max(40_u64, size ? size->first : 80_u64);
@@ -115,7 +133,7 @@ CommandLine::help(nio::Sink& out, bool exit) {
 
   // Usage
 
-  if (usage_) {
+  if (hasUsage_) {
     if (output) {
       out.write('\n');
     }
@@ -224,9 +242,12 @@ CommandLine::name(const Option& opt, bool nameFlag) {
   return nameFlag ? "--" + opt.name : "-" + static_cast<string>(*opt.shortName);
 }
 
+// XXX Weg
 vector<string>
-CommandLine::parse(const vector<string>& args, const Take& take) const {
+CommandLine::parse(const vector<string>& args, const Take& take) {
   vector<string> ret;
+
+  parserState_ = ParserState();
 
   for (auto it = args.begin(), end = args.end(); it != end; ++it) {
     const auto& elem = *it; // #std::string
@@ -264,7 +285,7 @@ CommandLine::parse(const vector<string>& args, const Take& take) const {
       }
 
       // Apply option
-      apply(opt, true, value);
+      applyOpt(opt, true, value);
     } else if (arg.starts_with("-") && arg != "-") {
       // 3. "-..." seen: Parse options by short name; the last one may take a value
 
@@ -288,26 +309,26 @@ CommandLine::parse(const vector<string>& args, const Take& take) const {
         if (segNext != segsEnd && *segNext == "=") {
           // Option is followed by `=`: Take everything after the `=` and break the character loop
           value = unicode::concat(segs, ++segNext - segsBegin);
-          apply(opt, false, value);
+          applyOpt(opt, false, value);
           break;
         } else if (opt.takesValue) {
           // Option takes value: break the character loop
           if (segNext != segsEnd) {
             // Take the rest of the argument
             value = unicode::concat(segs, segNext - segsBegin);
-            apply(opt, false, value);
+            applyOpt(opt, false, value);
           }
           else {
             // Take the next argument
             if (it + 1 != args.end()) {
               value = *++it;
             }
-            apply(opt, false, value);
+            applyOpt(opt, false, value);
           }
           break;
         } else {
           // No value: Apply, continue in code-point loop
-          apply(opt, false, value);
+          applyOpt(opt, false, value);
         }
       }
     } else {
@@ -337,8 +358,9 @@ CommandLine::parse(const vector<string>& args, const Take& take) const {
         finish = true;
         break;
       }
-      if (finish)
+      if (finish) {
         break;
+      }
     }
   }
 
@@ -346,15 +368,160 @@ CommandLine::parse(const vector<string>& args, const Take& take) const {
 }
 
 void
+CommandLine::parseNew(const vector<string>& args, nio::Sink& out, nio::Sink& err, bool exit) {
+  try {
+    vector<string> ret; // XXX
+
+    parserState_ = ParserState();
+
+    for (auto it = args.begin(), end = args.end(); it != end; ++it) {
+      const auto& elem = *it; // #std::string
+      string_view arg = elem; // This makes `substr()` more efficient
+
+      if (arg == "--") {
+        // 1. `--` seen: Pass the rest, excluding the option-end tag, to the program and break the argument
+        // loop
+
+        ret.insert(ret.end(), it + 1, args.end());
+        break;
+      } else if (arg.starts_with("--")) {
+        // 2. `--...` seen: Parse option by name
+
+        arg = arg.substr(2);
+        auto eq = arg.find('=');
+
+        // Extract name, look it up in map
+        string_view name = eq == string::npos ? arg : arg.substr(0, eq);
+        auto mapIt = byName_.find(name);
+        if (mapIt == byName_.end()) {
+          ROCKET_FAIL("Unknown option `--{}`", name);
+        }
+        const Option& opt = *mapIt->second;
+
+        // Obtain value, if any
+        optional<string_view> value;
+        if (eq != string::npos) {
+          // Take everything after the `=`
+          value = arg.substr(eq + 1);
+        } else if (opt.takesValue) {
+          // Take the next argument
+          if (it + 1 != args.end())
+            value = *++it;
+        }
+
+        // Apply option
+        applyOpt(opt, true, value);
+      } else if (arg.starts_with("-") && arg != "-") {
+        // 3. "-..." seen: Parse options by short name; the last one may take a value
+
+        arg = arg.substr(1);
+        auto iter = unicode::Iterator(unicode::IteratorType::Character, arg);
+        auto segs = iter.nextSegments();
+        auto segsBegin = segs.begin();
+        auto segsEnd = segs.end();
+        for (auto segIt = segsBegin; segIt != segsEnd; ++segIt) {
+          // Extract short name, look it up in map
+          auto seg = *segIt;
+          auto mapIt = byShortName_.find(seg);
+          if (mapIt == byShortName_.end()) {
+            ROCKET_FAIL("Unknown option `-{}`", seg);
+          }
+          const Option& opt = *mapIt->second;
+
+          // Obtain value, if any, apply option
+          optional<string> value;
+          auto segNext = segIt + 1;
+          if (segNext != segsEnd && *segNext == "=") {
+            // Option is followed by `=`: Take everything after the `=` and break the character loop
+            value = unicode::concat(segs, ++segNext - segsBegin);
+            applyOpt(opt, false, value);
+            break;
+          } else if (opt.takesValue) {
+            // Option takes value: break the character loop
+            if (segNext != segsEnd) {
+              // Take the rest of the argument
+              value = unicode::concat(segs, segNext - segsBegin);
+              applyOpt(opt, false, value);
+            }
+            else {
+              // Take the next argument
+              if (it + 1 != args.end()) {
+                value = *++it;
+              }
+              applyOpt(opt, false, value);
+            }
+            break;
+          } else {
+            // No value: Apply, continue in code-point loop
+            applyOpt(opt, false, value);
+          }
+        }
+      } else {
+        // 4. Not an option, but a positional argument: Let the program take the argument
+
+        ret.push_back(elem);
+  #if 0
+        bool finish = false;
+        auto took = take ? take(arg) : Store;
+        switch (took) {
+        case Accept:
+          // Argument was accepted and consumed: nothing to do, continue in argument loop
+          break;
+        case Stop:
+          // Argument was accepted and consumed, but a stop was requested: Pass the rest, excluding the current
+          // argument, to the program and break the argument loop
+          ret.insert(ret.end(), it + 1, args.end());
+          finish = true;
+          break;
+        case Store:
+          // Argument was not processed, but a store was requested: Pass it to the program and continue in the
+          // argument loop
+          ret.push_back(elem);
+          break;
+        case Reject:
+          // Argument was rejected: Pass the rest, including the current argument, to the program and break the
+          // argument loop
+          ret.insert(ret.end(), it, args.end());
+          finish = true;
+          break;
+        }
+        if (finish) {
+          break;
+        }
+  #endif
+      }
+    }
+
+    // Help?
+    if (parserState_.seenHelp) {
+      help(out, exit);
+    }
+
+    // Have we seen all required options?
+    for (const auto& opt : opts_) {
+      if (opt.required && not parserState_.seenOpts.contains(&opt)) {
+        ROCKET_FAIL("Missing required option `{}`", name(opt, true));
+      }
+    }
+
+    // XXX return ret;
+  }
+  catch (const exception& ex) {
+    // XXX Kann alles hier rein
+    handleException(ex, err, exit ? EXIT_SERIOUS_FAILURE : 0);
+  }
+}
+
+void
 CommandLine::printHelp(nio::Sink& out) const {
-  ROCKET_EXPECT(help_);
+  ROCKET_EXPECT(hasHelpOpt_);
 
   out.println("Try `{} --help` for more information.", params_.command);
 }
 
 void
 CommandLine::printUsage(nio::Sink& out) const {
-  ROCKET_EXPECT(usage_);
+  ROCKET_EXPECT(hasUsage_);
 
   out.println("Usage: {} {}", params_.command, params_.usages[0]);
   for (u64 i = 1; i < params_.usages.size(); ++i) {

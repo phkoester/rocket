@@ -7,7 +7,7 @@
 #pragma once
 
 #include "rocket/Process.h"
-#include "rocket/assert.h"
+#include "rocket/type-traits.h"
 #include "rocket/nio/nio-fwd.h"
 #include "rocket/str/StringConvert.h"
 #include "rocket/unicode/Character.h"
@@ -20,35 +20,108 @@ namespace rocket::cl {
 
 namespace internal {
 
-template<typename T>
-void
-applyTo(T& dest, std::optional<std::string_view> arg) {
-  ROCKET_CHECK(arg, arg);
-  dest = str::toType<T>(*arg);
-}
+// #ValueType ...............................................................................................
 
-template<>
+template<typename T>
+struct ValueType {
+  using Type = T;
+};
+
+template<typename T>
+struct ValueType<std::optional<T>> {
+  using Type = T;
+};
+
+// #applyTo .................................................................................................
+
+template<typename T>
 inline void
-applyTo(bool& dest, std::optional<std::string_view> arg) {
-  // For `bool` only, #arg may be null
-  dest = arg ? str::toType<bool>(*arg) : true;
+applyTo(T& dest, std::string_view arg) {
+  dest = str::toType<T>(arg);
 }
 
 template<typename T>
-void
-applyTo(std::vector<T>& dest, std::optional<std::string_view> arg) {
-  ROCKET_CHECK(arg, arg);
-  T val = str::toType<T>(*arg);
-  dest.push_back(val);
+inline void
+applyTo(std::vector<T>& dest, std::string_view arg) {
+  dest.push_back(str::toType<T>(arg));
+}
+
+template<typename T>
+inline void
+applyTo(std::optional<T>& dest, std::string_view arg) {
+  dest = str::toType<T>(arg);
+}
+
+template<typename T>
+inline void
+applyTo(std::optional<std::vector<T>>& dest, std::string_view arg) {
+  if (not dest) {
+    dest = std::vector<T>();
+  }
+  dest->push_back(str::toType<T>(arg));
 }
 
 } // namespace internal
 
+// #Argument ------------------------------------------------------------------------------------------------
+
+/**
+ * Positional command-line arguments.
+ *
+ * If the destination is a #std::optional, then the argument is optional, otherwise it is required.
+ *
+ * If the destination is a #std::vector, the argument can consume multiple command-line arguments.
+ */
+struct Argument {
+  /// Type for a function that is called to apply an argument value.
+  using Apply = std::function<void(std::string_view val)>;
+
+  /**
+   * Convenience function that makes a new argument and binds it to a destination reference.
+   *
+   * @tparam T the type of the destination reference. If this is a #std::optional reference, the argument is
+   *   optional, otherwise it is required. If this is a #std::vector reference, the argument can consume
+   *   multiple arguments from the command line
+   * @param name the name of the argument, e.g. `"FILE"`
+   * @param format this parameter should briefly describe the format, e.g.
+   *   `"FILE"`, `"NUMBER"` etc.
+   * @param help a short help text. By convention, this starts with a lower-case letter and does not end with
+   *   a period, e.g. `"path to input file"`
+   * @param dest the destination reference that is assigned the argument's value
+   * @return a new argument
+   */
+  template<typename T>
+  static inline Argument
+  of(
+    const std::string& name,
+    const std::optional<std::string>& format,
+    const std::optional<std::string>& help,
+    T& dest) {
+    return {
+      name,
+      IsVector<T> ? NPOS : 1, // #maxOccurs
+      not IsOptional<T>, // #required
+      format,
+      help,
+      [&](std::string_view arg) { internal::applyTo(dest, arg); }
+    };
+  }
+
+  std::string name; ///< The argument name.
+  u64 maxOccurs = NPOS; ///< The maximum number of elements
+  bool required = false; ///< Is the argument required?
+  std::optional<std::string> format; ///< Format text.
+  std::optional<std::string> help; ///< Help text.
+  Apply apply; ///< Callback function that applies the argument's value.
+};
+
 // #OptionGroup ---------------------------------------------------------------------------------------------
 
 /**
- * An option group with a title. Command-line options may be assigned a pointer to an option group. When
- * displaying the help text, options appear grouped by their groups.
+ * An option group with a title.
+ *
+ * Command-line options may be assigned a pointer to an option group. When displaying the help text, options
+ * appear grouped by their groups.
  */
 struct OptionGroup {
   std::string title; ///< The title.
@@ -56,29 +129,23 @@ struct OptionGroup {
 
 // #Option --------------------------------------------------------------------------------------------------
 
-/**
- * A command-line option. Use the #of factory function to obtain an option and bind it to a destination. If
- * the destination is a `bool` value, the option takes no value, otherwise it does. If the destination is a
- * vector, multiple values may be supplied on the command line.
- */
+/// Command-line options.
 struct Option {
-  /**
-   * Type for a function that is called to apply an option value. For `bool` values, @p val may be null. The
-   * #of convenience function takes care of this all.
-   */
-  using Apply = std::function<void(std::optional<std::string_view> val)>;
+  /// Type for a function that is called to apply an option value.
+  using Apply = std::function<void(std::string_view val)>;
 
   /**
    * Convenience function that makes a new help option.
    *
    * @param group a pointer to an option group. May be null
-   * @param dest a reference to a `bool` value that will be set to `true` if the help option is present
+   * @param dest a reference to an optional `bool` value that will be set to `true` if the help option is
+   *   supplied
    * @return a new help option
    */
   static inline Option
   helpOf(
     const OptionGroup* group,
-    bool& dest) {
+    std::optional<bool>& dest) {
     return of(
       group,
       "help",
@@ -89,20 +156,22 @@ struct Option {
   }
 
   /**
-   * Makes a new option and binds it to a destination reference.
+   * Convenience function that makes a new option and binds it to a destination reference.
    *
+   * @tparam T the type of the destination reference. If this is a #std::optional reference, this option is
+   *   optional, otherwise it is required. If this is a `bool` reference, the option takes no argument,
+   *   otherwise it does. If this is a #std::vector reference, multiple values may be supplied on the command
+   *   line
    * @param group a pointer to an option group. May be null
    * @param name the name of the option. For example, if this is `"verbose"`, the option may be chosen via
-   *     `--verbose` on the command line
+   *   `--verbose` on the command line
    * @param shortName an optional short name. For example, if this is <code>"€"</code>, the option may be
-   *     chosen via `-€` on the command line
+   *   chosen via `-€` on the command line
    * @param format if the option takes an argument, this parameter should briefly describe the format, e.g.
-   *     `"FILE"`, `"NUM"` etc.
+   *   `"FILE"`, `"NUM"` etc.
    * @param help a short help text. By convention, this starts with a lower-case verb and does not end with
-   *     a period, e.g. "print NUM lines of leading context"
-   * @param dest the destination reference that is assigned the option's value. If this is a `bool`
-   *     reference, the option takes no argument, otherwise it does. If this is a #std::vector reference,
-   *     multiple values may be supplied on the command line
+   *   a period, e.g. `"print NUM lines of leading context"`
+   * @param dest the destination reference that is assigned the option's value
    * @return a new option
    */
   template<typename T>
@@ -118,10 +187,12 @@ struct Option {
       group,
       name,
       shortName.transform([](auto val) { return unicode::Character<char>(val); }),
-      std::is_same_v<T, bool> ? false : true, // #takesValue is `false` for `bool`, otherwise it is `true`
+      // #takesValue is `false` for `bool`, otherwise it is `true`
+      std::is_same_v<typename internal::ValueType<T>::Type, bool> ? false : true,
+      not IsOptional<T>, // #required
       format,
       help,
-      [&](std::optional<std::string_view> arg) { internal::applyTo(dest, arg); }
+      [&](std::string_view arg) { internal::applyTo(dest, arg); }
     };
   }
 
@@ -129,6 +200,7 @@ struct Option {
   std::string name; ///< The option name.
   std::optional<unicode::Character<char>> shortName; ///< The option short name.
   bool takesValue = false; ///< Option takes value?
+  bool required = false; ///< Is the option required?
   std::optional<std::string> format; ///< Format text.
   std::optional<std::string> help; ///< Help text.
   Apply apply; ///< Callback function that applies the option's value.
@@ -147,9 +219,9 @@ struct CommandLineParams {
    * usage hint is ever printed.
    */
   std::vector<std::string> usages;
-  /// Prolog text to be displayed when #CommandLine#help() is called.
+  /// Prolog text to be displayed when the `--help` option is supplied.
   std::optional<std::string> prolog = std::nullopt;
-  /// Epilog text to be displayed when #CommandLine#help() is called.
+  /// Epilog text to be displayed when the `--help` option is supplied.
   std::optional<std::string> epilog = std::nullopt;
 
   /**
@@ -197,7 +269,10 @@ struct CommandLine {
    * @param opts the command-line options
    * @param params parameters that configure the parser
    */
-  explicit CommandLine(const std::vector<Option>& opts = {}, const CommandLineParams& params = {});
+  CommandLine(
+    const std::vector<Option>& opts = {},
+    const std::vector<Argument>& args = {},
+    const CommandLineParams& params = {});
 
   /**
    * To be called when the command line, in particular its positional arguments, did not satisfy the usage
@@ -215,6 +290,7 @@ struct CommandLine {
    * @param out the sink to write to
    * @param status program exit status. If this is not 0, the program exits with this status
    */
+  // XXX private
   void handleException(
     const std::exception& ex,
     nio::Sink& out,
@@ -226,6 +302,7 @@ struct CommandLine {
    * @param out the sink to write to
    * @param exit if `true`, the program exits with `EXIT_SUCCESS`, otherwise it continues to run
    */
+  // XXX private
   void help(nio::Sink& out, bool exit);
 
   /**
@@ -241,23 +318,38 @@ struct CommandLine {
    * @see #Take
    * @see #Took
    */
-  std::vector<std::string> parse(const std::vector<std::string>& args, const Take& take = {}) const;
+  // XXX Weg
+  std::vector<std::string> parse(const std::vector<std::string>& args, const Take& take = {});
+
+  void parseNew(
+    const std::vector<std::string>& args,
+    nio::Sink& out = nio::out,
+    nio::Sink& err = nio::err,
+    bool exit = true);
 
 private:
 
-  static void apply(const Option& opt, bool nameFlag, std::optional<std::string_view> value);
+  struct ParserState {
+    bool seenHelp = false;
+    std::set<const Option*> seenOpts;
+    std::set<const Argument*> seenArgs;
+  };
 
   static std::string name(const Option& opt, bool nameFlag);
 
   static void validate(std::string_view name, bool nameFlag);
 
   std::vector<Option> opts_;
+  std::vector<Argument> args_;
   CommandLineParams params_;
-  bool usage_;
-  bool help_;
-
+  bool hasUsage_;
+  bool hasHelpOpt_;
   std::unordered_map<std::string_view, const Option*> byName_;
   std::unordered_map<std::string_view, const Option*> byShortName_;
+
+  ParserState parserState_;
+
+  void applyOpt(const Option& opt, bool nameFlag, std::optional<std::string_view> value);
 
   void helpOpts(nio::Sink& out, u64 width) const;
 

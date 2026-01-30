@@ -36,20 +36,20 @@ main(i32 argc, char **argv) {
 
   // Parse command line
 
-  bool help = false;
-  i32 hours = 0;
+  optional<bool> help;
+  optional<i32> hours;
 
   cl::OptionGroup general("General control");
   cl::CommandLineParams params { .usages={ "[OPTION]... [ARG]..." }} ;
   cl::CommandLine cl({
     cl::Option::helpOf(&general, help),
     cl::Option::of(&general, "offset", nullopt, "HOURS", "hour offset", hours)
-  }, params);
+  }, {}, params);
 
   vector<string> args;
   try {
     args = cl.parse(process.args());
-    if (help) {
+    if (help.value_or(false)) {
       cl.help(out, true);
     }
   } catch (const exception& ex) {
@@ -58,11 +58,14 @@ main(i32 argc, char **argv) {
 
   // Apply hour offset
 
-  rocket::chrono::internal::setClockOffset(std::chrono::hours(hours));
+  if (hours) {
+    rocket::chrono::internal::setClockOffset(std::chrono::hours(*hours));
+  }
 
   // Run
 
   ROCKET_LOG(logger);
+  out.println("This is {}", process.name());
   return run(args);
 }
 

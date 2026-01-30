@@ -8,8 +8,9 @@
 
 #include "rocket/rocket.h"
 
+#include <optional>
 #include <type_traits>
-
+#include <vector>
 namespace rocket {
 
 // #Purge ---------------------------------------------------------------------------------------------------
@@ -167,7 +168,7 @@ struct Float<16> {
 };
 #endif
 
-// Concepts -------------------------------------------------------------------------------------------------
+// Concepts for basic data types ----------------------------------------------------------------------------
 
 template<typename T>
 concept IsChar = std::is_same_v<PurgeType<T>, typename Char<sizeof(PurgeType<T>)>::Type>;
@@ -183,6 +184,29 @@ concept IsInteger = IsInt<T> || IsUint<T>;
 
 template<typename T>
 concept IsFloat = std::is_same_v<PurgeType<T>, typename Float<sizeof(PurgeType<T>)>::Type>;
+
+// #IsOptional ----------------------------------------------------------------------------------------------
+
+
+template<typename T>
+struct Optional : std::false_type {};
+
+template<typename T>
+struct Optional<std::optional<T>> : std::true_type {};
+
+template<typename T>
+concept IsOptional = Optional<T>::value;
+
+// #IsVector ------------------------------------------------------------------------------------------------
+
+template<typename T>
+struct Vector : std::false_type {};
+
+template<typename T>
+struct Vector<std::vector<T>> : std::true_type {};
+
+template<typename T>
+concept IsVector = Vector<T>::value;
 
 // #LargestType ---------------------------------------------------------------------------------------------
 

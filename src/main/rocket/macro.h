@@ -73,7 +73,7 @@
 #define ROCKET_NAMESPACE_END(ns) ROCKET_NAMESPACE_END__(ns)
 
 /**
- * Cross-compiler support for pretty functions signatures.
+ * Compiler-specific pretty function signatures.
  */
 #ifdef ROCKET_CXX_COMPILER_MSVC
   #define ROCKET_PRETTY_FUNCTION __FUNCSIG__
