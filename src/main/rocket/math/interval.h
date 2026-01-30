@@ -6,6 +6,7 @@
 
 #pragma once
 
+#include "rocket/literal.h"
 #include "rocket/type-traits.h"
 #include "rocket/format/format.h"
 #include "rocket/std/std.h"
@@ -80,6 +81,15 @@ struct BoundTraits {
         return b;
       }
       return std::min(*a, *b);
+    }
+  }
+
+  static constexpr BoundType
+  of(i32 val) {
+    if constexpr (std::is_same_v<T, BoundType>) {
+      return static_cast<T>(val);
+    } else {
+      return std::optional<T>(static_cast<T>(val));
     }
   }
 
@@ -436,7 +446,7 @@ struct IntervalImpl {
    *
    * Makes an empty interval.
    */
-  constexpr IntervalImpl() : a(T(1)), b(T(0)) {} // MSVC wants it this way
+  constexpr IntervalImpl() : a(Left::of(1_i32)), b(Right::of(0_i32)) {}
 
   /**
    * @ctor
