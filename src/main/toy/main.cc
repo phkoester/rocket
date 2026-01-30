@@ -53,10 +53,16 @@ zzz() {
   }
 }
 
-optional<f32>
-makeOpt(int val) {
-  f32 f = (f32) val;
-  return optional<f32>(f);
+template<typename T, typename U>
+U
+make(i32 val) {
+  if constexpr (std::is_same_v<U, std::optional<T>>) {
+    T tval = (T) val;
+    return std::optional<T>(tval);
+  } else {
+    static_assert(std::is_same_v<U, T>);
+    return (U) val;
+  }
 }
 
 void
@@ -66,8 +72,10 @@ toy() {
   out.println("src file name: {}", ROCKET_SRC_FILE);
   zzz();
 
-  auto opt = makeOpt(0);
-  out.println("opt: {}", opt);
+  auto m1 = make<f32, optional<f32>>(0);
+  out.println("m1: {}", m1);
+  auto m2 = make<f32, f32>(0);
+  out.println("m2: {}", m2);
 }
 
 // #main ----------------------------------------------------------------------------------------------------
