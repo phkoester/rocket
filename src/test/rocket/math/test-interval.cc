@@ -510,7 +510,7 @@ TEST(interval, RightOpenIntervalF32) {
 TEST(interval, OpenIntervalF32) {
   using type = OpenInterval<f32>;
 
-  type val = type(1_f32, 0_f32); // MSVC doesn't compile the default ctor
+  type val = type(optional<f32>(1_f32), optional<f32>(0_f32)); // MSVC
   EXPECT_TRUE(val.empty());
   EXPECT_EQ(val.cardinality(), 0);
   EXPECT_EQ(val.size(), 0_f32);
