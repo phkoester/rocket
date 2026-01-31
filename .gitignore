@@ -8,6 +8,7 @@
 /.vs/
 /build/
 /install/
+/Testing/
 
 **/*.log
 **/*.log.gz
