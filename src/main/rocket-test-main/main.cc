@@ -23,7 +23,6 @@ main(i32 argc, char** argv) {
   cl::CommandLine cl({
     cl::Option::helpOf(&general, help)
   }, {}, config);
-
   cl.parse(process.args());
 
   i32 status = RUN_ALL_TESTS();

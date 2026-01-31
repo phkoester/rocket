@@ -4,9 +4,9 @@
 
 # Benchmarks ------------------------------------------------------------------------------------------------
 
-include(GoogleTest)
+# XXX include(GoogleTest)
 
-AddBench(bench-nio rocket/nio bench-nio.cc)
+AddBench(bench-rocket-nio rocket/nio bench-nio.cc)
 AddRuntimeDlls(bench-nio)
 
 # EOF

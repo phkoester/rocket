@@ -163,15 +163,15 @@ function(AddBench name dir)
 
   list(TRANSFORM srcFiles PREPEND "${dir}/")
   AddExecutable(${name} ${srcFiles})
-  target_link_libraries(${name} PRIVATE Rocket::rocket-test)
-  # add_test(NAME ${name} COMMAND ${name} WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/src/bench/${dir})
+  target_link_libraries(${name} PRIVATE benchmark::benchmark benchmark::benchmark_main Rocket::rocket)
+  add_test(NAME ${name} COMMAND ${name} WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/src/bench/${dir})
 
-  gtest_discover_tests(${name}
-    DISCOVERY_MODE PRE_TEST
-    EXTRA_ARGS --gtest_catch_exceptions=0
-    ${envProps}
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/src/bench/${dir}
-  )
+  #gtest_discover_tests(${name}
+  #  DISCOVERY_MODE PRE_TEST
+  #  EXTRA_ARGS --gtest_catch_exceptions=0
+  #  ${envProps}
+  #  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/src/bench/${dir}
+  #)
 endfunction()
 
 # AddTest(name dir srcFile... [ENVIRONMENT name=value...])
@@ -180,7 +180,7 @@ function(AddTest name dir)
 
   list(TRANSFORM srcFiles PREPEND "${dir}/")
   AddExecutable(${name} ${srcFiles})
-  target_link_libraries(${name} PRIVATE Rocket::rocket-test)
+  target_link_libraries(${name} PRIVATE Rocket::rocket-test-main Rocket::rocket-test)
   # add_test(NAME ${name} COMMAND ${name} WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/src/test/${dir})
 
   gtest_discover_tests(${name}

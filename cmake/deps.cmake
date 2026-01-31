@@ -73,6 +73,23 @@ set(BUILD_SHARED_LIBS OFF)
 FetchContent_MakeAvailable(googletest)
 set(BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS_DEFAULT})
 
+# benchmark -------------------------------------------------------------------------------------------------
+
+FetchContent_Declare(
+  benchmark
+  GIT_REPOSITORY https://github.com/google/benchmark.git
+  GIT_TAG        v1.9.5
+  GIT_PROGRESS   TRUE
+  SYSTEM
+  EXCLUDE_FROM_ALL
+)
+
+set(BENCHMARK_DOWNLOAD_DEPENDENCIES OFF)
+# Build static libraries
+set(BUILD_SHARED_LIBS OFF)
+FetchContent_MakeAvailable(benchmark)
+set(BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS_DEFAULT})
+
 # ICU -------------------------------------------------------------------------------------------------------
 
 find_package(ICU 74.2 REQUIRED uc) # data i18n io

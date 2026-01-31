@@ -4,7 +4,7 @@
 
 set(GENERATED_DIR ${CMAKE_CURRENT_BINARY_DIR}/generated)
 
-# Rocket ----------------------------------------------------------------------------------------------------
+# `rocket` --------------------------------------------------------------------------------------------------
 
 # Propressor definitions ....................................................................................
 
@@ -30,7 +30,7 @@ elseif(WIN32)
   list(APPEND ROCKET_COMPILE_DEFS ROCKET_OS_WINDOWS)
 endif()
 
-# `version.h` -----------------------------------------------------------------------------------------------
+# `version.h` ...............................................................................................
 
 set(VERSION_H ${GENERATED_DIR}/rocket/version.h)
 
@@ -141,12 +141,11 @@ target_link_libraries(rocket
 
 add_library(Rocket::rocket ALIAS rocket)
 
-# Rocket Test -----------------------------------------------------------------------------------------------
+# `rocket-test` ---------------------------------------------------------------------------------------------
 
 add_library(rocket-test STATIC)
 target_sources(rocket-test
   PRIVATE
-    rocket-test/main.cc
     rocket-test/rocket-test.cc
     rocket-test/TracingString.cc
   PUBLIC
@@ -169,6 +168,24 @@ target_link_libraries(rocket-test
 )
 
 add_library(Rocket::rocket-test ALIAS rocket-test)
+
+# `rocket-test-main` ----------------------------------------------------------------------------------------
+
+add_library(rocket-test-main STATIC)
+target_sources(rocket-test-main
+  PRIVATE
+    rocket-test-main/main.cc
+)
+target_compile_definitions(rocket-test-main
+  PRIVATE
+    ${COMPILE_DEFS}
+    ROCKET_TEST
+)
+target_compile_features(rocket-test-main PRIVATE ${COMPILE_FEATURES})
+target_compile_options(rocket-test-main PRIVATE ${COMPILE_FLAGS})
+target_link_libraries(rocket-test-main PRIVATE GTest::gmock GTest::gtest Rocket::rocket)
+
+add_library(Rocket::rocket-test-main ALIAS rocket-test-main)
 
 # `bare` ----------------------------------------------------------------------------------------------------
 
