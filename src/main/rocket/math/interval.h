@@ -437,7 +437,7 @@ struct IntervalImpl {
    *
    * Makes an empty interval.
    */
-  ROCKET_CONSTEXPR IntervalImpl() : a(1), b(0) {}
+  ROCKET_CONSTEXPR IntervalImpl() : a(static_cast<Type>(1)), b(static_cast<Type>(0)) {}
 
   /**
    * @ctor
