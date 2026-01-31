@@ -25,11 +25,17 @@ setlocal
 if not defined BUILD_TYPE set BUILD_TYPE=release
 if %BUILD_TYPE% neq debug if %BUILD_TYPE% neq release (
  echo BUILD_TYPE: Invalid value `%BUILD_TYPE%`; expected `debug` or `release`
- exit /b 1
+ exit /b 2
 )
 
 if %BUILD_TYPE% == debug set CONFIG=Debug
 if %BUILD_TYPE% == release set CONFIG=Release
+
+echo ################################################################################
+echo #
+echo # BUILD_TYPE: %BUILD_TYPE%
+echo #
+echo ################################################################################
 
 :: Parse command --------------------------------------------------------------------------------------------
 
