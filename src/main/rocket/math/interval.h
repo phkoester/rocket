@@ -160,14 +160,14 @@ template<>
 struct IntervalSymbols<char> {
   static constexpr auto Empty = "∅";
   static constexpr auto NegativeInfinity = "-∞";
-  static constexpr auto PositiveInfinity = "+∞";
+  static constexpr auto PositiveInfinity = "∞";
 };
 
 template<>
 struct IntervalSymbols<char32> {
   static constexpr auto Empty = U"∅";
   static constexpr auto NegativeInfinity = U"-∞";
-  static constexpr auto PositiveInfinity = U"+∞";
+  static constexpr auto PositiveInfinity = U"∞";
 };
 
 // #IntervalTraits ..........................................................................................
@@ -444,7 +444,7 @@ struct IntervalImpl {
    *
    * Makes an interval.
    *
-   * If #b is less than #a, then the interval is empty.
+   * If @p b is less than @p a, then the interval is empty.
    *
    * @param a the lower bound. If null, then there is no lower bound
    * @param b the upper bound. If null, then there is no upper bound
@@ -618,7 +618,6 @@ struct fmt::formatter<rocket::math::IntervalImpl<Left, Right>, C> {
       out = detail::write<C>(out, static_cast<C>(','));
       opt = rocket::option(val.b);
       if (not opt) {
-        // In interval notation, we prefer `+∞` over `∞`
         out = detail::write<C>(out, IntervalSymbols<C>::PositiveInfinity);
       } else {
         ctx.advance_to(out);
