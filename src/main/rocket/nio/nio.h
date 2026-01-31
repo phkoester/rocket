@@ -260,7 +260,7 @@ protected:
    * @param underlying the underlying sink
    * @param size the size of the buffer
    */
-  explicit BufferedSink(Sink& underlying, u64 size = DEFAULT_BUFFER_SIZE);
+  BufferedSink(Sink& underlying, u64 size = DEFAULT_BUFFER_SIZE);
 
   ~BufferedSink() override;
 

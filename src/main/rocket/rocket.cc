@@ -6,7 +6,9 @@
 
 #ifdef ROCKET_HAS_128
 
+#include <array>
 #include <iostream>
+#include <ranges>
 
 using namespace rocket;
 using namespace std;
@@ -19,7 +21,7 @@ namespace {
  * @return pointer to the end
  */
 char*
-u128ToStringImpl(char* dest, u128 val) {
+u128ToStringImpl(char* dest, u128 val) { // NOLINT(misc-no-recursion)
   if (val >= 10) {
     dest = u128ToStringImpl(dest, val / 10); // Recursive call
   }
@@ -52,7 +54,7 @@ istream&
 operator>>(istream& lhs, i128& rhs) {
   // Read optional sign ('+' or '-')
 
-  char c;
+  char c = '\0';
   lhs >> c;
   if (lhs.fail() || lhs.eof()) {
     return lhs;
@@ -102,9 +104,9 @@ operator>>(istream& lhs, i128& rhs) {
   i128 val = 0;
   i128 factor = 1;
 
-  for (auto it = buf.rbegin(); it != buf.rend(); ++it) {
-    i128 v = *it - '0';
-    auto old = val;
+  for (const char c : ranges::reverse_view(buf)) {
+    const i128 v = c - '0';
+    const auto old = val;
     if (sgn == -1) {
       val -= v * factor;
       if (val > old) {
@@ -131,9 +133,9 @@ operator>>(istream& lhs, i128& rhs) {
 
 ostream&
 operator<<(ostream& lhs, i128 rhs) {
-  char buf[41];
-  i128ToString(buf, rhs);
-  return lhs << buf;
+  array<char, 41> buf; // NOLINT(*-member-init)
+  i128ToString(buf.data(), rhs);
+  return lhs << buf.data();
 }
 
 // #u128 ----------------------------------------------------------------------------------------------------
@@ -142,7 +144,7 @@ istream&
 operator>>(istream& lhs, u128& rhs) {
   // Read optional sign ('+' or '-')
 
-  char c;
+  char c = '\0';
   lhs >> c;
   if (lhs.fail() || lhs.eof()) {
     return lhs;
@@ -193,9 +195,9 @@ operator>>(istream& lhs, u128& rhs) {
   u128 val = 0;
   u128 factor = 1;
 
-  for (auto it = buf.rbegin(); it != buf.rend(); ++it) {
-    u128 v = *it - '0';
-    auto old = val;
+  for (const char c : ranges::reverse_view(buf)) {
+    const u128 v = c - '0';
+    const auto old = val;
     val += v * factor;
     if (val < old) {
       // Overflow
@@ -213,9 +215,9 @@ operator>>(istream& lhs, u128& rhs) {
 
 ostream&
 operator<<(ostream& lhs, u128 rhs) {
-  char buf[41];
-  u128ToString(buf, rhs);
-  return lhs << buf;
+  array<char, 41> buf; // NOLINT(*-member-init)
+  u128ToString(buf.data(), rhs);
+  return lhs << buf.data();
 }
 
 #endif // ROCKET_HAS_128

@@ -69,16 +69,16 @@ BufferedSink::BufferedSink(Sink& underlying, u64 size) :
 }
 
 BufferedSink::~BufferedSink() {
-  close();
+  close(); // NOLINT
 }
 
 i32
 BufferedSink::close() {
   if (not checkOpen()) {
-    return error();
+    return error(); // NOLINT
   }
 
-  flush();
+  flush(); // NOLINT
 
   size_ = 0;
   buf_ = nullptr;
@@ -176,7 +176,7 @@ FileSink::FileSink(const string& path, const Config& config) :
 
 FileSink::~FileSink() {
   if (config_.closeOnDestroy) {
-    close();
+    close(); // NOLINT
   }
 }
 
@@ -187,7 +187,7 @@ FileSink::close()
     return error_;
   }
 
-  flush();
+  flush(); // NOLINT
 
   i32 ret = std::fclose(file_);
   // #file_ is probably invalid now, so we don't call #ferror on it
@@ -247,7 +247,7 @@ FileSink::write(string_view in) {
 // #NullSink ------------------------------------------------------------------------------------------------
 
 NullSink::~NullSink() {
-  close();
+  close(); // NOLINT
 }
 
 i32
@@ -282,7 +282,7 @@ NullSink::write(string_view) {
 // #SpanSink ------------------------------------------------------------------------------------------------
 
 SpanSink::~SpanSink() {
-  close();
+  close(); // NOLINT
 }
 
 i32
@@ -325,7 +325,7 @@ SpanSink::write(string_view in) {
 // #StreamSink ----------------------------------------------------------------------------------------------
 
 StreamSink::~StreamSink() {
-  close();
+  close(); // NOLINT
 }
 
 i32
@@ -334,7 +334,7 @@ StreamSink::close() {
     return error_;
   }
 
-  flush();
+  flush(); // NOLINT
 
   open_ = false;
   // A #std::ostream can't close, it can only be destroyed
@@ -395,7 +395,7 @@ StreamSink::write(string_view in) {
 // #StringSink ----------------------------------------------------------------------------------------------
 
 StringSink::~StringSink() {
-  close();
+  close(); // NOLINT
 }
 
 i32
@@ -528,13 +528,13 @@ BufferedSource::BufferedSource(Source& underlying, u64 size) :
 }
 
 BufferedSource::~BufferedSource() {
-  close();
+  close(); // NOLINT
 }
 
 i32
 BufferedSource::close() {
   if (not checkOpen()) {
-    return error();
+    return error(); // NOLINT
   }
 
   size_ = 0;
@@ -677,7 +677,7 @@ FileSource::FileSource(FILE* file, const Config& config) :
 FileSource::FileSource(const string& path, const Config& config) :
     file_(nullptr),
     config_(config) {
-  file_ = std::fopen(path.c_str(), "rb");  // `b` is for non-Linux only
+  file_ = std::fopen(path.c_str(), "rb"); // `b` is for non-Linux only
   LOG("fopen=" << file_ << ", ferror=" << (file_ ? ferror(file_) : -1));
 
   if (file_ == nullptr) {
@@ -690,7 +690,7 @@ FileSource::FileSource(const string& path, const Config& config) :
 
 FileSource::~FileSource() {
   if (config_.closeOnDestroy) {
-    close();
+    close(); // NOLINT
   }
 }
 
@@ -786,7 +786,7 @@ FileSource::terminal(i32* fd) {
 // #NullSource ----------------------------------------------------------------------------------------------
 
 NullSource::~NullSource() {
-  close();
+  close(); // NOLINT
 }
 
 i32
@@ -827,7 +827,7 @@ NullSource::terminal(i32*) {
 // #StreamSource --------------------------------------------------------------------------------------------
 
 StreamSource::~StreamSource() {
-  close();
+  close(); // NOLINT
 }
 
 i32
@@ -925,7 +925,7 @@ StreamSource::terminal(i32* fd) {
 // #StringSource --------------------------------------------------------------------------------------------
 
 StringSource::~StringSource() {
-  close();
+  close(); // NOLINT
 }
 
 i32
