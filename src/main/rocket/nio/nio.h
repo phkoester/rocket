@@ -37,6 +37,9 @@ static constexpr u64 MIN_BUFFER_SIZE = 64;
  * An I/O instance, either a sink or a source.
  */
 struct Io {
+  /// @ctor_copy
+  Io(const Io& rhs) = delete;
+
   /// @dtor
   virtual ~Io() = default;
 
@@ -78,9 +81,7 @@ struct Io {
 protected:
 
   /// @ctor_default
-  Io() {}
-
-  Io(const Io& rhs) = delete;
+  Io() = default;
 
   mutable i32 error_ = 0; ///< The error status.
   bool open_ = true; ///< Open flag.
@@ -241,7 +242,7 @@ struct Sink : Io {
 protected:
 
   /// @ctor_default
-  Sink() {}
+  Sink() = default;
 };
 
 // #BufferedSink --------------------------------------------------------------------------------------------
@@ -258,7 +259,7 @@ protected:
    * @param underlying the underlying sink
    * @param size the size of the buffer
    */
-  BufferedSink(Sink& underlying, u64 size = DEFAULT_BUFFER_SIZE);
+  explicit BufferedSink(Sink& underlying, u64 size = DEFAULT_BUFFER_SIZE);
 
   ~BufferedSink() override;
 
@@ -280,7 +281,8 @@ ROCKET_TEST_PRIVATE:
 
   Sink& underlying_; ///< The underlying sink.
   u64 size_; ///< The size of the buffer.
-  std::unique_ptr<char[]> buf_; ///< The buffer.
+  /// The buffer.
+  std::unique_ptr<char[]> buf_; // NOLINT
   u64 pos_ = 0; ///< The current position in the buffer.
 
   /// Flushes the buffer to the underlying sink.
@@ -437,7 +439,7 @@ struct StringSink : Sink {
   /**
    * Makes a new #StringSink with an owned string.
    */
-  explicit StringSink() {}
+  explicit StringSink() = default;
 
   /**
    * Makes a new #StringSink with a string reference and no owned string.
@@ -446,7 +448,7 @@ struct StringSink : Sink {
    */
   explicit StringSink(std::string& ref) : ptr_(&ref) {}
 
-  ~StringSink() = default;
+  ~StringSink() override = default;
 
   i32 close() override { return EIO; }
 
@@ -459,7 +461,7 @@ struct StringSink : Sink {
    *
    * @return the referenced or the owned string
    */
-  const std::string& str() const { return ptr_ ? *ptr_ : owned_; }
+  const std::string& str() const { return ptr_ != nullptr ? *ptr_ : owned_; }
 
   u64 write(std::string_view in) override;
 
@@ -474,7 +476,7 @@ private:
 /**
  * The seek mode for #rocket::nio::Source#seek.
  */
-enum class SeekMode {
+enum class SeekMode : u8 {
   beg, ///< Seek relative to the beginning of the source
   cur, ///< Seek relative to the current position of the source
   end ///< Seek relative to the end of the source
@@ -535,7 +537,7 @@ struct Source : Io {
    * @param mode the seek mode
    * @return 0 if successful, an error code otherwise
    */
-  virtual i32 seek(i64 offset, SeekMode mode = SeekMode::beg) = 0;
+  virtual i32 seek(i64 offset, SeekMode mode = SeekMode::beg) = 0; // NOLINT(google-default-arguments)
 
   /**
    * Returns the current input position
@@ -588,7 +590,8 @@ ROCKET_TEST_PRIVATE:
 
   Source& underlying_; ///< The underlying source.
   u64 size_; ///< The size of the buffer.
-  std::unique_ptr<char[]> buf_; ///< The buffer.
+  /// The buffer.
+  std::unique_ptr<char[]> buf_; // NOLINT
   u64 bufPos_ = NPOS; ///< Where buffer position 0 maps to in the underlying source.
   u64 pos_ = 0; ///< The current position in the buffer.
   /**
