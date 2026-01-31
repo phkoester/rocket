@@ -7,6 +7,6 @@
 # XXX include(GoogleTest)
 
 AddBench(bench-rocket-nio rocket/nio bench-nio.cc)
-AddRuntimeDlls(bench-nio)
+# XXX AddRuntimeDlls(bench-rocket-nio)
 
 # EOF
