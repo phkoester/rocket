@@ -24,27 +24,27 @@ namespace internal {
 
 // #BoundTraits .............................................................................................
 
-template<typename T, typename BoundType_, bool Left_, char Symbol_>
+template<typename T, typename _BoundType, bool _IsLeft, char _Symbol>
 struct BoundTraits {
   using Type = T;
-  using BoundType = BoundType_;
+  using BoundType = _BoundType; ///< Either `T` or `std::optional<T>`
 
-  static constexpr bool Left = Left_;
-  static constexpr bool Closed = std::is_same_v<BoundType, T>;
-  static constexpr char Symbol = Symbol_;
+  static constexpr bool IsClosed = std::is_same_v<BoundType, Type>;
+  static constexpr bool IsLeft = _IsLeft;
+  static constexpr char Symbol = _Symbol;
 
   static constexpr bool
   matches(BoundType bound, Type val) {
-    if constexpr (Left) {
+    if constexpr (IsLeft) {
       // Left
-      if constexpr (Closed) {
+      if constexpr (IsClosed) {
         return bound <= val;
       } else {
         return not bound ? true : *bound < val;
       }
     } else {
       // Right
-     if constexpr (Closed) {
+     if constexpr (IsClosed) {
        return bound >= val;
      } else {
        return not bound ? true : *bound > val;
@@ -53,66 +53,66 @@ struct BoundTraits {
   }
 
   static constexpr BoundType
-  leftMax(BoundType a, BoundType b) {
-    if constexpr (Closed) {
-      return std::max(a, b);
+  leftMax(BoundType lhs, BoundType rhs) {
+    if constexpr (IsClosed) {
+      return std::max(lhs, rhs);
     } else {
       // null < anything
-      if (not a) {
-        return b;
+      if (not lhs) {
+        return rhs;
       }
-      if (not b) {
-        return a;
+      if (not rhs) {
+        return lhs;
       }
-      return std::max(*a, *b);
+      return std::max(*lhs, *rhs);
     }
   }
 
   static constexpr BoundType
-  leftMin(BoundType a, BoundType b) {
-    if constexpr (Closed) {
-      return std::min(a, b);
+  leftMin(BoundType lhs, BoundType rhs) {
+    if constexpr (IsClosed) {
+      return std::min(lhs, rhs);
     } else {
       // null < anything
-      if (not a) {
-        return a;
+      if (not lhs) {
+        return lhs;
       }
-      if (not b) {
-        return b;
+      if (not rhs) {
+        return rhs;
       }
-      return std::min(*a, *b);
+      return std::min(*lhs, *rhs);
     }
   }
 
   static constexpr BoundType
-  rightMax(BoundType a, BoundType b) {
-    if constexpr (Closed) {
-      return std::max(a, b);
+  rightMax(BoundType lhs, BoundType rhs) {
+    if constexpr (IsClosed) {
+      return std::max(lhs, rhs);
     } else {
       // null > anything
-      if (not a) {
-        return a;
+      if (not lhs) {
+        return lhs;
       }
-      if (not b) {
-        return b;
+      if (not rhs) {
+        return rhs;
       }
-      return std::max(*a, *b);
+      return std::max(*lhs, *rhs);
     }
   }
 
   static constexpr BoundType
-  rightMin(BoundType a, BoundType b) {
-    if constexpr (Closed) {
-      return std::min(a, b);
+  rightMin(BoundType lhs, BoundType rhs) {
+    if constexpr (IsClosed) {
+      return std::min(lhs, rhs);
     } else {
       // null > anything
-      if (not a) {
-        return b;
+      if (not lhs) {
+        return rhs;
       }
-      if (not b) {
-        return a;
+      if (not rhs) {
+        return lhs;
       }
-      return std::min(*a, *b);
+      return std::min(*lhs, *rhs);
     }
   }
 };
@@ -172,16 +172,16 @@ struct IntervalSymbols<char32> {
 
 // #IntervalTraits ..........................................................................................
 
-template<typename T, typename Left, typename Right>
+template<typename Left, typename Right>
 struct IntervalTraits;
 
 // Closed interval
 template<typename T>
-struct IntervalTraits<T, LeftClosed<T>, RightClosed<T>> {
+struct IntervalTraits<LeftClosed<T>, RightClosed<T>> {
   using LeftType = LeftClosed<T>;
   using RightType = RightClosed<T>;
 
-  using CardinalityType = Cardinality<T, LeftType::Closed, RightType::Closed>::Type;
+  using CardinalityType = Cardinality<T, LeftType::IsClosed, RightType::IsClosed>::Type;
   using SizeType = T;
 
   static constexpr CardinalityType
@@ -216,11 +216,11 @@ struct IntervalTraits<T, LeftClosed<T>, RightClosed<T>> {
 
 // Open interval
 template<typename T>
-struct IntervalTraits<T, LeftOpen<T>, RightOpen<T>> {
+struct IntervalTraits<LeftOpen<T>, RightOpen<T>> {
   using LeftType = LeftOpen<T>;
   using RightType = RightOpen<T>;
 
-  using CardinalityType = Cardinality<T, LeftType::Closed, RightType::Closed>::Type;
+  using CardinalityType = Cardinality<T, LeftType::IsClosed, RightType::IsClosed>::Type;
   using SizeType = std::optional<T>;
 
   static constexpr CardinalityType
@@ -267,11 +267,11 @@ struct IntervalTraits<T, LeftOpen<T>, RightOpen<T>> {
 
 // Left-open interval
 template<typename T>
-struct IntervalTraits<T, LeftOpen<T>, RightClosed<T>> {
+struct IntervalTraits<LeftOpen<T>, RightClosed<T>> {
   using LeftType = LeftOpen<T>;
   using RightType = RightClosed<T>;
 
-  using CardinalityType = Cardinality<T, LeftType::Closed, RightType::Closed>::Type;
+  using CardinalityType = Cardinality<T, LeftType::IsClosed, RightType::IsClosed>::Type;
   using SizeType = std::optional<T>;
 
   static constexpr CardinalityType
@@ -318,11 +318,11 @@ struct IntervalTraits<T, LeftOpen<T>, RightClosed<T>> {
 
 // Right-open interval
 template<typename T>
-struct IntervalTraits<T, LeftClosed<T>, RightOpen<T>> {
+struct IntervalTraits<LeftClosed<T>, RightOpen<T>> {
   using LeftType = LeftClosed<T>;
   using RightType = RightOpen<T>;
 
-  using CardinalityType = Cardinality<T, LeftType::Closed, RightType::Closed>::Type;
+  using CardinalityType = Cardinality<T, LeftType::IsClosed, RightType::IsClosed>::Type;
   using SizeType = std::optional<T>;
 
   static constexpr CardinalityType
@@ -389,37 +389,25 @@ unionImpl(
 
 // #IntervalImpl --------------------------------------------------------------------------------------------
 
-template<typename Type, typename BoundType>
-BoundType
-make(Type val) {
-  if constexpr (std::is_same_v<BoundType, std::optional<Type>>) {
-    Type tval = (Type) val;
-    return std::optional<Type>(tval);
-  } else {
-    static_assert(std::is_same_v<BoundType, Type>);
-    return (BoundType) val;
-  }
-}
-
 /**
  * A mathematical interval for either integer or noninteger types.
  *
- * @tparam T the element type
  * @tparam Left the type of the lower-bound traits
  * @tparam Right the type of the upper-bound traits
  */
-template<typename T, typename Left, typename Right>
+template<typename Left, typename Right>
 struct IntervalImpl {
+  static_assert(std::is_same_v<typename Left::Type, typename Right::Type>);
+  /// The element type.
+  using Type = typename Left::Type;
+
   static_assert(
-       std::is_same_v<Left, internal::LeftClosed<T>> || std::is_same_v<Left, internal::LeftOpen<T>>);
+       std::is_same_v<Left, internal::LeftClosed<Type>> || std::is_same_v<Left, internal::LeftOpen<Type>>);
   static_assert(
-       std::is_same_v<Right, internal::RightClosed<T>> || std::is_same_v<Right, internal::RightOpen<T>>);
+       std::is_same_v<Right, internal::RightClosed<Type>> || std::is_same_v<Right, internal::RightOpen<Type>>);
 
   /// The interval traits.
-  using Traits = internal::IntervalTraits<T, Left, Right>;
-
-  /// The element type.
-  using Type = T;
+  using Traits = internal::IntervalTraits<Left, Right>;
 
   /// The type of the lower-bound traits.
   using LeftType = Left;
@@ -449,7 +437,7 @@ struct IntervalImpl {
    *
    * Makes an empty interval.
    */
-  constexpr IntervalImpl() : a(1), b(0) {}
+  ROCKET_CONSTEXPR IntervalImpl() : a(1), b(0) {}
 
   /**
    * @ctor
@@ -461,7 +449,7 @@ struct IntervalImpl {
    * @param a the lower bound. If null, then there is no lower bound
    * @param b the upper bound. If null, then there is no upper bound
    */
-  constexpr IntervalImpl(A a, B b) : a(a), b(b) {}
+  ROCKET_CONSTEXPR IntervalImpl(A a, B b) : a(a), b(b) {}
 
   /// @member_op_eq
   bool
@@ -493,10 +481,10 @@ struct IntervalImpl {
   /**
    * Tests if @p val is contained in the interval.
    *
-   * @param val a value of type @p T
+   * @param val a value of type #Type
    * @return whether @p val is contained in the interval
    */
-  constexpr bool contains(T val) const { return Left::matches(a, val) && Right::matches(b, val); }
+  constexpr bool contains(Type val) const { return Left::matches(a, val) && Right::matches(b, val); }
 
   /**
    * Tests if the interval is empty.
@@ -525,7 +513,6 @@ struct IntervalImpl {
 /**
  * Returns the intersection of the intervals @p lhs and @p rhs.
  *
- * @tparam T the element type
  * @tparam Left the type of the lower-bound traits
  * @tparam Right the type of the upper-bound traits
  * @param_lhs
@@ -533,26 +520,25 @@ struct IntervalImpl {
  * @return a #rocket::math::IntervalImpl representing the intersection of @p lhs and @p rhs if such
  *     intersection exists, otherwise an empty interval
  */
-template<typename T, typename Left, typename Right>
-IntervalImpl<T, Left, Right>
-operator&(const IntervalImpl<T, Left, Right>& lhs, const IntervalImpl<T, Left, Right>& rhs) {
+template<typename Left, typename Right>
+IntervalImpl<Left, Right>
+operator&(const IntervalImpl<Left, Right>& lhs, const IntervalImpl<Left, Right>& rhs) {
   auto pair = internal::intersectionImpl<Left, Right>(lhs.a, lhs.b, rhs.a, rhs.b);
-  return IntervalImpl<T, Left, Right>(pair.first, pair.second);
+  return IntervalImpl<Left, Right>(pair.first, pair.second);
 }
 
 /**
  * `operator&=` for type #rocket::math::IntervalImpl.
  *
- * @tparam T the element type
  * @tparam Left the type of the lower-bound traits
  * @tparam Right the type of the upper-bound traits
  * @param_lhs
  * @param_rhs
  * @return @p lhs
  */
-template<typename T, typename Left, typename Right>
-inline IntervalImpl<T, Left, Right>&
-operator&=(const IntervalImpl<T, Left, Right>& lhs, const IntervalImpl<T, Left, Right>& rhs) {
+template<typename Left, typename Right>
+inline IntervalImpl<Left, Right>&
+operator&=(const IntervalImpl<Left, Right>& lhs, const IntervalImpl<Left, Right>& rhs) {
   return lhs = lhs & rhs;
 }
 
@@ -563,7 +549,6 @@ operator&=(const IntervalImpl<T, Left, Right>& lhs, const IntervalImpl<T, Left, 
  * mathematically correct, but useful in many cases. To handle disjoint intervals specifically, test for an
  * intersection beforehands using `operator&`.
  *
- * @tparam T the element type
  * @tparam Left the type of the lower-bound traits
  * @tparam Right the type of the upper-bound traits
  * @param_lhs
@@ -571,26 +556,25 @@ operator&=(const IntervalImpl<T, Left, Right>& lhs, const IntervalImpl<T, Left, 
  * @return a #rocket::math::IntervalImpl representing the union of @p lhs and @p rhs if such union exists,
  *     otherwise an empty interval
  */
-template<typename T, typename Left, typename Right>
-IntervalImpl<T, Left, Right>
-operator|(const IntervalImpl<T, Left, Right>& lhs, const IntervalImpl<T, Left, Right>& rhs) {
+template<typename Left, typename Right>
+IntervalImpl<Left, Right>
+operator|(const IntervalImpl<Left, Right>& lhs, const IntervalImpl<Left, Right>& rhs) {
   auto pair = internal::unionImpl<Left, Right>(lhs.a, lhs.b, rhs.a, rhs.b);
-  return IntervalImpl<T, Left, Right>(pair.first, pair.second);
+  return IntervalImpl<Left, Right>(pair.first, pair.second);
 }
 
 /**
  * `operator|=` for type #rocket::math::IntervalImpl.
  *
- * @tparam T the element type
  * @tparam Left the type of the lower-bound traits
  * @tparam Right the type of the upper-bound traits
  * @param_lhs
  * @param_rhs
  * @return @p lhs
  */
-template<typename T, typename Left, typename Right>
-inline IntervalImpl<T, Left, Right>&
-operator|=(const IntervalImpl<T, Left, Right>& lhs, const IntervalImpl<T, Left, Right>& rhs) {
+template<typename Left, typename Right>
+inline IntervalImpl<Left, Right>&
+operator|=(const IntervalImpl<Left, Right>& lhs, const IntervalImpl<Left, Right>& rhs) {
   return lhs = lhs | rhs;
 }
 
@@ -603,13 +587,16 @@ operator|=(const IntervalImpl<T, Left, Right>& lhs, const IntervalImpl<T, Left, 
  *
  * This formatter uses the same format specifiers as the underlying formatter for type @p T.
  */
-template<typename T, typename Left, typename Right, typename C>
-struct fmt::formatter<rocket::math::IntervalImpl<T, Left, Right>, C> {
+template<typename Left, typename Right, typename C>
+struct fmt::formatter<rocket::math::IntervalImpl<Left, Right>, C> {
   /// @cond undocumented
 
+  static_assert(std::is_same_v<typename Left::Type, typename Right::Type>);
+  using Type = typename Left::Type;
+
   template<typename FormatContext>
-  constexpr FormatContext::iterator
-  format(const rocket::math::IntervalImpl<T, Left, Right>& val, FormatContext& ctx) const {
+  ROCKET_CONSTEXPR FormatContext::iterator
+  format(const rocket::math::IntervalImpl<Left, Right>& val, FormatContext& ctx) const {
     using namespace rocket::math::internal;
 
     auto out = ctx.out();
@@ -656,15 +643,15 @@ struct fmt::formatter<rocket::math::IntervalImpl<T, Left, Right>, C> {
 
 private:
 
-  fmt::formatter<rocket::PurgeType<T>, C> underlying_;
+  fmt::formatter<rocket::PurgeType<Type>, C> underlying_;
 };
 
 namespace rocket::math {
 
 // @op_output{#rocket::math::IntervalImpl}
-template<typename T, typename Left, typename Right>
+template<typename Left, typename Right>
 std::ostream&
-operator<<(std::ostream& os, const IntervalImpl<T, Left, Right>& val) {
+operator<<(std::ostream& os, const IntervalImpl<Left, Right>& val) {
   return os << fmt::format("{}", val);
 }
 
@@ -676,7 +663,7 @@ operator<<(std::ostream& os, const IntervalImpl<T, Left, Right>& val) {
  * @tparam T the element type
  */
 template<typename T>
-using ClosedInterval = IntervalImpl<T, internal::LeftClosed<T>, internal::RightClosed<T>>;
+using ClosedInterval = IntervalImpl<internal::LeftClosed<T>, internal::RightClosed<T>>;
 
 /**
  * An open interval @f$(a,b)@f$ contains all elements @f$x@f$ such that @f$a < x < b@f$.
@@ -684,7 +671,7 @@ using ClosedInterval = IntervalImpl<T, internal::LeftClosed<T>, internal::RightC
  * @tparam T the element type
  */
 template<typename T>
-using OpenInterval = IntervalImpl<T, internal::LeftOpen<T>, internal::RightOpen<T>>;
+using OpenInterval = IntervalImpl<internal::LeftOpen<T>, internal::RightOpen<T>>;
 
 /**
  * A left-open interval @f$(a,b]@f$ contains all elements @f$x@f$ such that @f$a < x <= b@f$.
@@ -692,7 +679,7 @@ using OpenInterval = IntervalImpl<T, internal::LeftOpen<T>, internal::RightOpen<
  * @tparam T the element type
  */
 template<typename T>
-using LeftOpenInterval = IntervalImpl<T, internal::LeftOpen<T>, internal::RightClosed<T>>;
+using LeftOpenInterval = IntervalImpl<internal::LeftOpen<T>, internal::RightClosed<T>>;
 
 /**
  * A right-open interval @f$[a,b)@f$ contains all elements @f$x@f$ such that @f$a <= x < b@f$.
@@ -700,7 +687,7 @@ using LeftOpenInterval = IntervalImpl<T, internal::LeftOpen<T>, internal::RightC
  * @tparam T the element type
  */
 template<typename T>
-using RightOpenInterval = IntervalImpl<T, internal::LeftClosed<T>, internal::RightOpen<T>>;
+using RightOpenInterval = IntervalImpl<internal::LeftClosed<T>, internal::RightOpen<T>>;
 
 } // namespace rocket::math
 

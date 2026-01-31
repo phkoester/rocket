@@ -29,7 +29,7 @@ struct Cow {
    */
   Cow(const T& ref) :
       modified_(false) {
-    if constexpr (HAS_VIEW) {
+    if constexpr (HasView) {
       new(choice_.view) T(ref);
     } else {
       choice_.ptr = &ref;
@@ -44,7 +44,7 @@ struct Cow {
       modified_(rhs.modified_) {
     if (modified_) {
       new(choice_.owned) U(std::move(*rhs.ownedPtr()));
-    } else if constexpr (HAS_VIEW) {
+    } else if constexpr (HasView) {
       new(choice_.view) T(std::move(*rhs.viewPtr()));
     } else {
       choice_.ptr = rhs.choice_.ptr;
@@ -60,7 +60,7 @@ struct Cow {
     modified_ = rhs.modified_;
     if (modified_) {
       new(choice_.owned) U(std::move(*rhs.ownedPtr()));
-    } else if constexpr (HAS_VIEW) {
+    } else if constexpr (HasView) {
       new(choice_.view) T(std::move(*rhs.viewPtr()));
     } else {
       choice_.ptr = rhs.choice_.ptr;
@@ -73,7 +73,7 @@ struct Cow {
   ~Cow() {
     if (modified_) {
       destroyOwned();
-    } else if constexpr (HAS_VIEW) {
+    } else if constexpr (HasView) {
       destroyView();
     }
   }
@@ -92,7 +92,7 @@ struct Cow {
       destroyOwned();
       new(choice_.owned) U(value);
     } else {
-      if constexpr (HAS_VIEW) {
+      if constexpr (HasView) {
         destroyView();
       }
       modified_ = true;
@@ -115,7 +115,7 @@ struct Cow {
       destroyOwned();
       new(choice_.owned) U(std::forward<U>(value));
     } else {
-      if constexpr (HAS_VIEW) {
+      if constexpr (HasView) {
         destroyView();
       }
       modified_ = true;
@@ -134,7 +134,7 @@ struct Cow {
   template<typename V = T> requires std::is_same_v<V, T> && std::is_same_v<T, U>
   const V&
   get() const {
-    static_assert(not HAS_VIEW);
+    static_assert(not HasView);
     return not modified_ ? *choice_.ptr : *ownedPtr();
   }
 
@@ -148,7 +148,7 @@ struct Cow {
   template<typename V = T> requires std::is_same_v<V, T> && (not std::is_same_v<T, U>)
   V
   get() const {
-    static_assert(HAS_VIEW);
+    static_assert(HasView);
     return not modified_ ? *viewPtr() : V(*ownedPtr());
   }
 
@@ -170,7 +170,7 @@ struct Cow {
 
 private:
 
-  static constexpr bool HAS_VIEW = not std::is_same_v<T, U>;
+  static constexpr bool HasView = not std::is_same_v<T, U>;
 
   inline void destroyOwned() { ownedPtr()->~U(); }
 

@@ -7,6 +7,7 @@
 #include "rocket/log/log.h"
 
 #include "rocket/literal.h"
+#include "rocket/math/interval.h"
 #include "rocket/unicode/unicode.h"
 #include "rocket/version.h"
 
@@ -59,6 +60,9 @@ toy() {
   ROCKET_LOG_TRACE("Hey {}", "there");
   out.println("src file name: {}", ROCKET_SRC_FILE);
   zzz();
+
+  auto val = math::OpenInterval<float>();
+  out.println("val: {}", val);
 }
 
 // #main ----------------------------------------------------------------------------------------------------

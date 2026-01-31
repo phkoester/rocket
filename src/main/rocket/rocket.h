@@ -80,9 +80,17 @@
 
 #ifdef ROCKET_CXX_COMPILER_MSVC
 
+/// To be used where not all compilers support `constexpr`.
+#define ROCKET_CONSTEXPR
+
 #define STDIN_FILENO  0 ///< Standard input file number.
 #define STDOUT_FILENO 1 ///< Standard output file number.
 #define STDERR_FILENO 2 ///< Standard error file number.
+
+#else
+
+/// To be used where not all compilers support `constexpr`.
+#define ROCKET_CONSTEXPR constexpr
 
 #endif // ROCKET_CXX_COMPILER_MSVC
 
