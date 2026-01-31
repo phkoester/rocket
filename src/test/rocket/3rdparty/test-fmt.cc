@@ -4,7 +4,6 @@
 
 #include "rocket-test/rocket-test.h"
 
-#include "rocket/literal.h"
 #include "rocket/format/format.h"
 
 #include <limits>

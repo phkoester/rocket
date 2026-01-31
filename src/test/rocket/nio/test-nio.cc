@@ -4,6 +4,7 @@
 
 #include "rocket-test/rocket-test.h"
 
+#include "rocket/std/filesystem/filesystem.h"
 #include "rocket/nio/nio.h"
 
 #include <fstream>
@@ -199,7 +200,7 @@ TEST(nio, FileSourceDoesNotExist) {
 }
 
 TEST(nio, FileSourceRead) {
-  auto temp = tempFile();
+  auto temp = rocket::filesystem::tempFile();
 
   FileSink out(temp.string());
   out.writeln("Hey there");
@@ -221,7 +222,7 @@ TEST(nio, FileSourceRead) {
 }
 
 TEST(nio, StreamSourceRead) {
-  auto temp = tempFile();
+  auto temp = rocket::filesystem::tempFile();
 
   {
     ofstream os(temp.c_str(), ios::binary);

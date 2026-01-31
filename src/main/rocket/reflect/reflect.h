@@ -434,11 +434,10 @@ ltImpl(
   const Tuple& refs,
   std::index_sequence<Index...> indices) {
   bool ret = false;
-  auto _unused = (... ||
+  (... ||
     ((ret = std::less()(refGet<Index>(lhs, refs), refGet<Index>(rhs, refs))) == true ||
       ((Index + 1 < indices.size()) &&
       std::less()(refGet<Index>(rhs, refs), refGet<Index>(lhs, refs)))));
-  nop(_unused);
   return ret;
 }
 
@@ -450,11 +449,10 @@ gtImpl(
   const Tuple& refs,
   std::index_sequence<Index...> indices) {
   bool ret = false;
-  auto _unused = (... ||
+  (... ||
     ((ret = std::greater()(refGet<Index>(lhs, refs), refGet<Index>(rhs, refs))) == true ||
       ((Index + 1 < indices.size()) &&
       std::greater()(refGet<Index>(rhs, refs), refGet<Index>(lhs, refs)))));
-  nop(_unused);
   return ret;
 }
 

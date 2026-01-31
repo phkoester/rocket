@@ -65,6 +65,7 @@ target_sources(rocket
     rocket/io/io.cc
     rocket/nio/nio.cc
     rocket/std/chrono.cc
+    rocket/std/filesystem/filesystem.cc
     rocket/str/Noun.cc
     rocket/str/str.cc
     rocket/str/StringConvert.cc
@@ -108,6 +109,7 @@ target_sources(rocket
       rocket/scan/scan.h
       rocket/std/chrono.h
       rocket/std/std.h
+      rocket/std/filesystem/filesystem.h
       rocket/str/Noun.h
       rocket/str/Range.h
       rocket/str/str.h
@@ -140,6 +142,23 @@ target_link_libraries(rocket
 )
 
 add_library(Rocket::rocket ALIAS rocket)
+
+# `rocket-bench` --------------------------------------------------------------------------------------------
+
+add_library(rocket-bench INTERFACE)
+target_sources(rocket-bench
+  PUBLIC
+    FILE_SET HEADERS
+    FILES
+      rocket-bench/rocket-bench.h
+)
+target_compile_definitions(rocket-bench
+  INTERFACE
+    ${COMPILE_DEFS}
+    ROCKET_TEST
+)
+
+add_library(Rocket::rocket-bench ALIAS rocket-bench)
 
 # `rocket-test` ---------------------------------------------------------------------------------------------
 

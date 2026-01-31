@@ -190,17 +190,6 @@ namespace rocket {
  */
 constexpr u64 NPOS = -1;
 
-// Functions ------------------------------------------------------------------------------------------------
-
-/**
- * A NOP function that helps to suppress warnings about unused variables.
- *
- * @tparam T... the types of the arguments
- * @param ... the arguments to be ignored
- */
-template<typename... T>
-constexpr void nop(T&&...) {}
-
 } // namespace rocket
 
 // EOF

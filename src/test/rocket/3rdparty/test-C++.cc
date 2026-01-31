@@ -128,16 +128,16 @@ TEST_F(Cxx, optionalEmplace) {
 
 TEST_F(Cxx, utf8Identifier) {
   // German
-  i32 _blöße; nop(_blöße);
+  [[maybe_unused]] i32 _blöße;
 
   // French
-  i32 _ça; nop(_ça);
+  [[maybe_unused]] i32 _ça;
 
   // Japanese
-  i32 _こんにちわ; nop(_こんにちわ);
+  [[maybe_unused]] i32 _こんにちわ;
 
   // Chinese (traditional)
-  i32 _你好; nop(_你好);
+  [[maybe_unused]] i32 _你好;
 }
 
 TEST_F(Cxx, utf8StringLiteral) {

@@ -130,15 +130,10 @@ function(AddExecutable name)
   target_compile_options(${name} PRIVATE ${COMPILE_FLAGS})
 endfunction()
 
-# ParseArgs__(srcFiles envProps ...)
+# ParseArgs__(srcFiles envProps  srcFile... [ENVIRONMENT name=value...])
 function(ParseArgs__ srcFiles__ envProps__)
   set(srcFiles)
-  string(JOIN " " configs ${CMAKE_CONFIGURATION_TYPES})
-  set(env
-    "BINARY_DIR=${CMAKE_CURRENT_BINARY_DIR}"
-    "CONFIG=$<CONFIG>"
-    "CONFIGS=${configs}"
-  )
+  set(env)
   set(appendTo srcFiles)
   foreach(it IN LISTS ARGN)
     if(it STREQUAL "ENVIRONMENT")
@@ -163,15 +158,26 @@ function(AddBench name dir)
 
   list(TRANSFORM srcFiles PREPEND "${dir}/")
   AddExecutable(${name} ${srcFiles})
-  target_link_libraries(${name} PRIVATE benchmark::benchmark benchmark::benchmark_main Rocket::rocket)
-  add_test(NAME ${name} COMMAND ${name} WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/src/bench/${dir})
+  target_link_libraries(${name}
+    PRIVATE
+      benchmark::benchmark benchmark::benchmark_main Rocket::rocket Rocket::rocket-bench
+  )
 
-  #gtest_discover_tests(${name}
-  #  DISCOVERY_MODE PRE_TEST
-  #  EXTRA_ARGS --gtest_catch_exceptions=0
-  #  ${envProps}
-  #  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/src/bench/${dir}
-  #)
+  add_test(
+    NAME              ${name}
+    COMMAND           ${name}
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/src/bench/${dir}
+  )
+
+  string(JOIN " " configs ${CMAKE_CONFIGURATION_TYPES})
+
+  set_target_properties(${name}
+    PROPERTIES
+      BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}"
+      CONFIG "$<CONFIG>"
+      CONFIGS "${configs}"
+  )
+  # @todo Consider #envProps
 endfunction()
 
 # AddTest(name dir srcFile... [ENVIRONMENT name=value...])
@@ -180,12 +186,18 @@ function(AddTest name dir)
 
   list(TRANSFORM srcFiles PREPEND "${dir}/")
   AddExecutable(${name} ${srcFiles})
-  target_link_libraries(${name} PRIVATE Rocket::rocket-test-main Rocket::rocket-test)
-  # add_test(NAME ${name} COMMAND ${name} WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/src/test/${dir})
+  target_link_libraries(${name}
+    PRIVATE
+      Rocket::rocket-test-main Rocket::rocket-test)
+
+  string(JOIN " " configs ${CMAKE_CONFIGURATION_TYPES})
 
   gtest_discover_tests(${name}
     DISCOVERY_MODE PRE_TEST
     EXTRA_ARGS --gtest_catch_exceptions=0
+    PROPERTIES ENVIRONMENT "BINARY_DIR=${CMAKE_CURRENT_BINARY_DIR}"
+    PROPERTIES ENVIRONMENT "CONFIG=$<CONFIG>"
+    PROPERTIES ENVIRONMENT "CONFIGS=${configs}"
     ${envProps}
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/src/test/${dir}
   )

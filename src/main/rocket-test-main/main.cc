@@ -2,16 +2,18 @@
  * main.cc
  */
 
-#include "rocket/Process.h"
-#include "rocket/cl/cl.h"
-
 #include <gmock/gmock.h>
+
+#include <rocket/Process.h>
+#include <rocket/cl/cl.h>
 
 using namespace rocket;
 using namespace rocket::unicode;
 using namespace std;
 
-GTEST_API_ i32
+// #main ----------------------------------------------------------------------------------------------------
+
+i32
 main(i32 argc, char** argv) {
   testing::InitGoogleMock(&argc, argv);
   process.init(argc, argv, nullopt, process.codeLocale());

@@ -21,6 +21,7 @@
 
 // Includes -------------------------------------------------------------------------------------------------
 
+#include "rocket/literal.h"
 #include "rocket/rocket.h"
 #include "rocket/io/io.h"
 
@@ -103,13 +104,6 @@ extern const std::string CONFIG;
 extern const bool TEST_TERMINAL;
 
 // Functions ------------------------------------------------------------------------------------------------
-
-/**
- * Makes a new unique #std::filesystem::path that points to a temporary test file.
- *
- * When the test process finishes, the file is automatically removed.
- */
-std::filesystem::path tempFile();
 
 /**
  * Returns the path to a test executable.

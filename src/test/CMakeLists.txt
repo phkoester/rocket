@@ -39,7 +39,10 @@ add_custom_command(
   COMMAND python3 ${PROJECT_SOURCE_DIR}/cmake/generate.py -o ${GENERATED_CC}
   VERBATIM
 )
-AddTest(test-rocket-3rdparty-CMake rocket/3rdparty test-CMake.cc)
+AddTest(test-rocket-3rdparty-CMake rocket/3rdparty test-CMake.cc
+  ENVIRONMENT
+    "A=A A"
+    "B=B B")
 target_sources(test-rocket-3rdparty-CMake PRIVATE ${GENERATED_CC})
 
 AddTest(test-rocket-3rdparty-fmt rocket/3rdparty test-fmt.cc)

@@ -20,21 +20,6 @@ const bool TEST_TERMINAL = system::env::get<bool>(ROCKET_TEST_TERMINAL).value_or
 // Functions ------------------------------------------------------------------------------------------------
 
 path
-tempFile() {
-  auto info = ::testing::UnitTest::GetInstance()->current_test_info();
-  ROCKET_ASSERT(info);
-  auto gen = math::gen();
-  path name = fmt::format(
-      "rocket-test-{}-{}-{}.tmp",
-      info->test_suite_name(), info->name(), math::randomHex(gen, 16));
-  path ret = temp_directory_path() / name;
-
-  process.atExit([=] { remove(ret); }, true);
-
-  return ret;
-}
-
-path
 testExcecutable(string_view name) {
   string fileName = fmt::format("{}{}", name, system::executableSuffix());
   path ret = path(BINARY_DIR) / fileName;

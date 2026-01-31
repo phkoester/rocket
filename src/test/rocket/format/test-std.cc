@@ -5,7 +5,6 @@
 #include "rocket-test/rocket-test.h"
 
 #include "rocket/assert.h"
-#include "rocket/literal.h"
 #include "rocket/format/std.h"
 #include "rocket/nio/nio.h"
 

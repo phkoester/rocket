@@ -75,10 +75,10 @@ if not defined TEST set TEST=test
 
 if %TEST% == all (
    ctest --preset windows-release
-) else if %TEST% == test (
-   ctest --test-dir build\src\test --preset windows-release
 ) else if %TEST% == bench (
    ctest --test-dir build\src\bench --preset windows-release -V
+) else if %TEST% == test (
+   ctest --test-dir build\src\test --preset windows-release
 ) else (
    ctest --preset windows-release -R %TEST% -V
 )
