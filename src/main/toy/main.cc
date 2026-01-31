@@ -27,8 +27,6 @@ auto& err = nio::err;
 
 // Functions -----------------------------------------------------------------------------------------------
 
-extern const char* generated();
-
 void
 myExit() {
   out.println("myExit");
@@ -95,7 +93,6 @@ main(i32 argc, char **argv) {
     ROCKET_LOG(toy);
     ROCKET_LOG_INFO("Hey {}", "there");
     out.println("This is {}", process.name());
-    out.println("{}", generated());
     out.println("files: {}", files);
     toy();
   }

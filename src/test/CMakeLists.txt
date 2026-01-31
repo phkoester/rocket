@@ -2,6 +2,8 @@
 # CMakeLists.txt
 #
 
+set(GENERATED_DIR ${CMAKE_CURRENT_BINARY_DIR}/generated)
+
 # Auxiliary executables -------------------------------------------------------------------------------------
 
 AddExecutable(logger logger/main.cc)
@@ -18,6 +20,7 @@ include(GoogleTest)
 
 AddTest(test-rocket rocket test-rocket.cc)
 AddRuntimeDlls(test-rocket)
+
 AddTest(test-rocket-assert rocket test-assert.cc)
 AddTest(test-rocket-Cow rocket test-Cow.cc)
 AddTest(test-rocket-enum rocket test-enum.cc)
@@ -29,6 +32,16 @@ AddTest(test-rocket-Process rocket test-Process.cc)
 AddTest(test-rocket-UnorderedBimap rocket test-UnorderedBimap.cc)
 AddTest(test-rocket-3rdparty-boost-safe-numerics rocket/3rdparty test-boost-safe-numerics.cc)
 AddTest(test-rocket-3rdparty-C++ rocket/3rdparty test-C++.cc)
+
+set(GENERATED_CC ${GENERATED_DIR}/generated.cc)
+add_custom_command(
+  OUTPUT  ${GENERATED_CC}
+  COMMAND python3 ${PROJECT_SOURCE_DIR}/cmake/generate.py -o ${GENERATED_CC}
+  VERBATIM
+)
+AddTest(test-rocket-3rdparty-CMake rocket/3rdparty test-CMake.cc)
+target_sources(test-rocket-3rdparty-CMake PRIVATE ${GENERATED_CC})
+
 AddTest(test-rocket-3rdparty-fmt rocket/3rdparty test-fmt.cc)
 AddTest(test-rocket-3rdparty-icu rocket/3rdparty test-icu.cc)
 AddTest(test-rocket-3rdparty-scnlib rocket/3rdparty test-scnlib.cc)

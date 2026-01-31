@@ -193,14 +193,7 @@ AddExecutable(bare bare/main.cc)
 
 # `toy` -----------------------------------------------------------------------------------------------------
 
-set(GENERATED_CC ${GENERATED_DIR}/toy/generated.cc)
-
-add_custom_command(
-  OUTPUT  ${GENERATED_CC}
-  COMMAND python3 ${PROJECT_SOURCE_DIR}/cmake/generate.py -o ${GENERATED_CC}
-  VERBATIM
-)
-AddExecutable(toy toy/main.cc ${GENERATED_CC})
+AddExecutable(toy toy/main.cc)
 target_link_libraries(toy PRIVATE Rocket::rocket)
 
 # EOF
