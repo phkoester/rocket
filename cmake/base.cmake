@@ -95,7 +95,7 @@ set(BUILD_SHARED_LIBS_DEFAULT ${BUILD_SHARED_LIBS})
 # Set compiler definitions, features, and options -----------------------------------------------------------
 
 set(COMPILE_DEFS)
-set(COMPILE_FEATURES cxx_std_23) # XXX
+set(COMPILE_FEATURES cxx_std_23)
 set(COMPILE_FLAGS)
 
 # Set OS-specific compiler options --------------------------------------------------------------------------

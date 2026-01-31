@@ -116,19 +116,6 @@ CommandLine::applyParam(const Parameter& param, const string& value) {
 }
 
 void
-CommandLine::error(nio::Sink& out, i32 status) const {
-  if (hasUsage_) {
-    printUsage(out);
-  }
-  if (hasHelpOpt_) {
-    printTryHelp(out);
-  }
-  if (status != EXIT_SUCCESS) {
-    process.exit(status);
-  }
-}
-
-void
 CommandLine::handleException(const exception& ex, nio::Sink& out, i32 status) const {
   if (auto p = dynamic_cast<const Exception*>(&ex)) {
     process.error(out, 0, "{}", p->message());
@@ -289,7 +276,6 @@ CommandLine::parse(const vector<string>& args, nio::Sink& out, nio::Sink& err, b
     return true;
   }
   catch (const exception& ex) {
-    // XXX Kann alles hier rein
     handleException(ex, err, exit ? EXIT_SERIOUS_FAILURE : 0);
     return false;
   }

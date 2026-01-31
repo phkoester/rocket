@@ -400,8 +400,6 @@ private:
 
   void applyParam(const Parameter& param, const std::string& value);
 
-  void error(nio::Sink& out, i32 status) const;
-
   void handleException(const std::exception& ex, nio::Sink& out, i32 status) const;
 
   void printHelp(nio::Sink& out, bool exit);
