@@ -45,7 +45,7 @@
 
 #pragma once
 
-#include <cstdint> // #int8_t, #uint8_t, ...
+#include <cstdint> // #std::int8_t, #std::uint8_t, ...
 #include <cstdio> // Make this generally availabe
 #include <iosfwd>
 #include <typeinfo> // Make this generally available
@@ -123,14 +123,14 @@ using std_long_double = long double;
 /// @endcond
 
 using char32 = std_char32_t; ///< An unsigned 32-bit character.
-using i8 = int8_t; ///< A signed 8-bit integer.
-using u8 = uint8_t; ///< An unsigned 8-bit integer.
-using i16 = int16_t; ///< A signed 16-bit integer.
-using u16 = uint16_t; ///< An unsigned 16-bit integer.
-using i32 = int32_t; ///< A signed 32-bit integer.
-using u32 = uint32_t; ///< An unsigned 32-bit integer.
-using i64 = int64_t; ///< A signed 64-bit integer.
-using u64 = uint64_t; ///< An unsigned 64-bit integer.
+using i8 = std::int8_t; ///< A signed 8-bit integer.
+using u8 = std::uint8_t; ///< An unsigned 8-bit integer.
+using i16 = std::int16_t; ///< A signed 16-bit integer.
+using u16 = std::uint16_t; ///< An unsigned 16-bit integer.
+using i32 = std::int32_t; ///< A signed 32-bit integer.
+using u32 = std::uint32_t; ///< An unsigned 32-bit integer.
+using i64 = std::int64_t; ///< A signed 64-bit integer.
+using u64 = std::uint64_t; ///< An unsigned 64-bit integer.
 #ifdef ROCKET_HAS_128
 using i128 = __int128; ///< A signed 128-bit integer.
 using u128 = unsigned __int128; ///< An unsigned 128-bit integer.

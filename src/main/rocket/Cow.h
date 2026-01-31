@@ -111,7 +111,7 @@ struct Cow {
    * @return_this
    */
   Cow&
-  operator=(U&& value) {
+  operator=(U&& value) { // NOLINT(*-param-not-moved)
     if (modified_) {
       destroyOwned();
       new(ownedPtr()) U(std::forward<U>(value));

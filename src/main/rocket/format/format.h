@@ -171,7 +171,7 @@ struct Format {
    *
    * @param fn a function that produces #rocket::format::FormatParams
    */
-  explicit Format(FormatParamsProducer&& fn) : params_(fn()) {}
+  explicit Format(const FormatParamsProducer& fn) : params_(fn()) {}
 
   /**
    * Returns the format's parameters.

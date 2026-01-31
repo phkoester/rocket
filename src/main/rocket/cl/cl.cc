@@ -24,8 +24,7 @@ CommandLine::CommandLine(
   opts_(opts),
   params_(params),
   config_(config),
-  hasUsage_(not config.usages.empty()),
-  hasHelpOpt_(false) {
+  hasUsage_(not config.usages.empty()) {
   // If requested, prepend Rocket options
 
   if (config.rocketOpts) {
@@ -45,7 +44,7 @@ CommandLine::CommandLine(
     auto pair = byName_.emplace(opt.name, &opt);
     ROCKET_CHECK(opts, pair.second, "Duplicate option `{}`", name(opt, true));
     if (opt.shortName) {
-      string shortName = static_cast<string>(*opt.shortName);
+      const string shortName = static_cast<string>(*opt.shortName);
       validate(shortName, false);
       auto pair = byShortName_.emplace(*opt.shortName, &opt); // cppcheck-suppress shadowVariable
       ROCKET_CHECK(opts, pair.second, "Duplicate option `{}`", name(opt, false));
@@ -117,7 +116,7 @@ CommandLine::applyParam(const Parameter& param, const string& value) {
 
 void
 CommandLine::handleException(const exception& ex, nio::Sink& out, i32 status) const {
-  if (auto p = dynamic_cast<const Exception*>(&ex)) {
+  if (const auto* const p = dynamic_cast<const Exception*>(&ex)) {
     process.error(out, 0, "{}", p->message());
   } else {
     process.error(out, 0, "{}", ex.what());
@@ -140,7 +139,7 @@ CommandLine::name(const Option& opt, bool nameFlag) {
 }
 
 bool
-CommandLine::parse(const vector<string>& args, nio::Sink& out, nio::Sink& err, bool exit) {
+CommandLine::parse(const vector<string>& args, nio::Sink& out, nio::Sink& err, bool exit) { // NOLINT(*-complexity)
   try {
     parserState_ = ParserState();
 
@@ -157,7 +156,7 @@ CommandLine::parse(const vector<string>& args, nio::Sink& out, nio::Sink& err, b
 
         consumeOpts = true;
         continue;
-      } else if (not consumeOpts && arg.starts_with("--")) {
+      } else if (not consumeOpts && arg.starts_with("--")) { // NOLINT(*-else-after-return)
         // 2. `--...` seen: Parse option by name
 
         arg = arg.substr(2);
@@ -178,8 +177,9 @@ CommandLine::parse(const vector<string>& args, nio::Sink& out, nio::Sink& err, b
           value = arg.substr(eq + 1);
         } else if (opt.takesValue) {
           // Take the next argument
-          if (it + 1 != args.end())
+          if (it + 1 != args.end()) {
             value = *++it;
+          }
         }
 
         // Apply option
@@ -208,7 +208,7 @@ CommandLine::parse(const vector<string>& args, nio::Sink& out, nio::Sink& err, b
             string value = unicode::concat(segs, ++segNext - segsBegin);
             applyOpt(opt, false, value);
             break;
-          } else if (opt.takesValue) {
+          } else if (opt.takesValue) { // NOLINT(*-else-after-return)
             // Option takes value: break the character loop
             if (segNext != segsEnd) {
               // Take the rest of the argument
@@ -285,8 +285,8 @@ void
 CommandLine::printHelp(nio::Sink& out, bool exit) {
   ROCKET_EXPECT(hasHelpOpt_);
 
-  auto size = system::terminal::size(out);
-  u64 width = max(40_u64, size ? size->first : 80_u64);
+  const auto size = system::terminal::size(out);
+  const u64 width = max(40_u64, size ? size->first : 80_u64);
   bool output = config_.otherOutput;
 
   // Usage
@@ -348,7 +348,7 @@ CommandLine::printHelp(nio::Sink& out, bool exit) {
  * first. Within the groups, options appear in the order they are seen.
  */
 void
-CommandLine::printHelpOpts(nio::Sink& out, u64 width) const {
+CommandLine::printHelpOpts(nio::Sink& out, u64 width) const { // NOLINT(*-complexity)
   // Collect groups and options therein
 
   unordered_map<const OptionGroup*, vector<const Option*>> options;
@@ -359,14 +359,15 @@ CommandLine::printHelpOpts(nio::Sink& out, u64 width) const {
   groups.push_back(&null);
 
   for (const auto& opt : opts_) {
-    if (not opt.group || opt.group->title.empty())
+    if (opt.group == nullptr || opt.group->title.empty()) {
       options.find(&null)->second.push_back(&opt);
-    else {
+    } else {
       if (auto it = options.find(opt.group); it == options.end()) {
         options.emplace(opt.group, vector<const Option*> { &opt });
         groups.push_back(opt.group);
-      } else
+      } else {
         it->second.push_back(&opt);
+      }
     }
   }
 
@@ -376,8 +377,9 @@ CommandLine::printHelpOpts(nio::Sink& out, u64 width) const {
 
   for (const auto* group : groups) {
     const auto& opts = options.find(group)->second;
-    if (opts.empty())
+    if (opts.empty()) {
       continue;
+    }
     if (output) {
       out.write('\n');
     }

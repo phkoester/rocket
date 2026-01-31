@@ -32,7 +32,7 @@ namespace fmt {
  * - If the `?` format specifier is used, then the stack trace is included.
  * - If the `t` format specifier is used, then the type of the exception is included.
  */
-template<typename Exception, typename C> requires std::is_base_of<std::exception, Exception>::value
+template<typename Exception, typename C> requires std::is_base_of_v<std::exception, Exception>
 struct formatter<Exception, C> {
   /// @cond undocumented
 
@@ -58,7 +58,7 @@ struct formatter<Exception, C> {
     // If debug, append stack trace
 
     if (debug_) {
-      const rocket::Exception* p = dynamic_cast<const rocket::Exception*>(&val);
+      const auto* const p = dynamic_cast<const rocket::Exception*>(&val);
       if (p && p->stackTrace()) {
         out = detail::write<C>(out, static_cast<C>('\n'));
         std::ostringstream os;
@@ -73,7 +73,8 @@ struct formatter<Exception, C> {
 
   constexpr const C*
   parse(parse_context<C>& ctx) {
-    auto it = ctx.begin(), end = ctx.end();
+    auto it = ctx.begin();
+    auto end = ctx.end();
     if (it != end && *it == '?') {
       debug_ = true;
       ++it;
@@ -147,7 +148,7 @@ struct formatter<std::monostate, C> {
 
   template<typename FormatContext>
   constexpr FormatContext::iterator
-  format(const std::monostate&, FormatContext& ctx) const {
+  format([[maybe_unused]] const std::monostate& val, FormatContext& ctx) const {
     return detail::write<C>(ctx.out(), MONOSTATE);
   }
 
@@ -204,7 +205,8 @@ struct formatter<Variant, C> {
 
   constexpr const C*
   parse(parse_context<C>& ctx) {
-    auto it = ctx.begin(), end = ctx.end();
+    auto it = ctx.begin();
+    auto end = ctx.end();
     if (it != end && *it == '?') {
       debug_ = true;
       ++it;

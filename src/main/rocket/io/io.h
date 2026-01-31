@@ -20,7 +20,7 @@ namespace rocket::io {
  *
  * @return an empty input stream
  */
-inline std::istringstream is() { return std::istringstream(); }
+inline std::istringstream is() { return {}; }
 
 /**
  * Makes an input stream that reads from the string @p str.

@@ -41,14 +41,14 @@ constexpr T
 charValue(char c) {
   return c >= '0' && c <= '9' ?
     c - '0' :
-    ((c >= 'a' && c <= 'f') ? (10 + (c - 'a')) : (10 + (c - 'A')));
+    ((c >= 'a' && c <= 'f') ? (10 + (c - 'a')) : (10 + (c - 'A'))); // NOLINT(readability-*)
 }
 
 /// Checks whether c_n + ... + c_2 * BASE^(n-2) + c_1 * BASE^(n-1) + v * BASE^n is a valid number when
 // interpreted in base @p BASE.
 template<typename T, int BASE>
 constexpr bool
-validateUnsignedImpl(T) {
+validateUnsignedImpl([[maybe_unused]] T val) {
   return true;
 }
 

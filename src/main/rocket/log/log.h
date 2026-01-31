@@ -23,7 +23,7 @@ namespace rocket::log {
 /**
  * A log-level enum, sorted from lowest to highest level.
  */
-enum class LogLevel {
+enum class LogLevel : u8 {
   none = 0, ///< Log level `none`.
   error = 1, ///< Log level `error`.
   warn = 2, ///< Log level `warn`.
@@ -73,14 +73,14 @@ void logMessage(LogLevel level, fmt::format_string<T...> fmt, T&&... args) {
 const std::vector<cl::Option>& logOptions();
 
 struct Log {
-  const LogLevel level_;
+  LogLevel level_;
 
-  inline Log(LogLevel* logId, const char* function, const char* prettyFunction, const char* file, i32 line) :
+  Log(LogLevel* logId, const char* function, const char* prettyFunction, const char* file, i32 line) :
     level_(*logId) {
     logBegin(logId, function, prettyFunction, file, line);
   }
 
-  inline ~Log() noexcept { logEnd(); }
+  ~Log() noexcept { logEnd(); }
 };
 
 } // namespace internal

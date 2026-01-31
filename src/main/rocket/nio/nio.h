@@ -38,7 +38,7 @@ static constexpr u64 MIN_BUFFER_SIZE = 64;
  */
 struct Io {
   /// @dtor
-  virtual ~Io() {}
+  virtual ~Io() = default;
 
   /**
    * Closes the instance.
@@ -52,30 +52,28 @@ struct Io {
    *
    * @return the error status
    */
-   virtual i32 error() const { return error_; }
+  [[nodiscard]] virtual i32 error() const { return error_; }
 
   /**
    * Checks if the instance is open and the error status is 0.
    *
    * @return whether the instance is open and the error status is 0
    */
-   virtual bool good() const { return open_ && error_ == 0; }
+  [[nodiscard]] virtual bool good() const { return open_ && error_ == 0; }
+
+  /**
+   * Returns the handle of the instance.
+   *
+   * @return the handle of the instance, or -1 if the handle cannot be determined
+   */
+  [[nodiscard]] virtual i32 handle() const = 0;
 
   /**
    * Checks if the instance is open.
    *
    * @return whether the instance is open
    */
-  virtual bool open() const { return open_; }
-
-  /**
-   * Checks if the instance refers to a terminal.
-   *
-   * @param fd if nonnull, then this file descriptor is set to the device if the instance refers to a
-   *     terminal, otherwise it is not set
-   * @return whether the instance refers to a terminal
-   */
-  virtual bool terminal(i32* fd = nullptr) = 0;
+  [[nodiscard]] virtual bool open() const { return open_; }
 
 protected:
 
@@ -84,7 +82,7 @@ protected:
 
   Io(const Io& rhs) = delete;
 
-  i32 error_ = 0; ///< The error status.
+  mutable i32 error_ = 0; ///< The error status.
   bool open_ = true; ///< Open flag.
 
   /**
@@ -94,7 +92,7 @@ protected:
    *
    * @return whether the instance is open
    */
-  bool checkOpen();
+  bool checkOpen() const;
 };
 
 // #Sink ----------------------------------------------------------------------------------------------------
@@ -266,15 +264,15 @@ protected:
 
   i32 close() override;
 
-  i32 error() const override { return underlying_.error(); } // cppcheck-suppress uselessOverride
+  i32 error() const override { return underlying_.error(); }
 
   i32 flush() override;
 
-  bool good() const override { return underlying_.good(); } // cppcheck-suppress uselessOverride
+  bool good() const override { return underlying_.good(); }
 
-  bool open() const override { return underlying_.open(); } // cppcheck-suppress uselessOverride
+  i32 handle() const override { return underlying_.handle(); }
 
-  bool terminal(i32* fd = nullptr) override;
+  bool open() const override { return underlying_.open(); }
 
   u64 write(std::string_view in) override;
 
@@ -340,7 +338,7 @@ struct FileSink : Sink {
 
   i32 flush() override;
 
-  bool terminal(i32* fd = nullptr) override;
+  i32 handle() const override;
 
   u64 write(std::string_view in) override;
 
@@ -358,13 +356,13 @@ ROCKET_TEST_PRIVATE:
 struct NullSink : Sink {
   ~NullSink() override;
 
-  i32 close() override;
+  i32 close() override { return EIO; }
 
-  i32 flush() override;
+  i32 flush() override { return EIO; }
 
-  bool terminal(i32* fd = nullptr) override;
+  i32 handle() const override { return -1; }
 
-  u64 write(std::string_view in) override;
+  u64 write([[maybe_unused]] std::string_view in) override { return 0; }
 };
 
 // #SpanSink ------------------------------------------------------------------------------------------------
@@ -380,13 +378,13 @@ struct SpanSink : Sink {
    */
   explicit SpanSink(std::span<char> out) : out_(out) {}
 
-  ~SpanSink() override;
+  ~SpanSink() override = default;
 
-  i32 close() override;
+  i32 close() override { return EIO; }
 
-  i32 flush() override;
+  i32 flush() override { return 0; }
 
-  bool terminal(i32* fd = nullptr) override;
+  i32 handle() const override { return -1; }
 
   u64 write(std::string_view in) override;
 
@@ -418,7 +416,7 @@ struct StreamSink : Sink {
 
   i32 flush() override;
 
-  bool terminal(i32* fd = nullptr) override;
+  i32 handle() const override;
 
   u64 write(std::string_view in) override;
 
@@ -448,11 +446,13 @@ struct StringSink : Sink {
    */
   explicit StringSink(std::string& ref) : ptr_(&ref) {}
 
-  ~StringSink() override;
+  ~StringSink() = default;
 
-  i32 close() override;
+  i32 close() override { return EIO; }
 
-  i32 flush() override;
+  i32 flush() override { return EIO; }
+
+  i32 handle() const override { return -1; }
 
   /**
    * Returns a reference to the string (either referenced or owned).
@@ -460,8 +460,6 @@ struct StringSink : Sink {
    * @return the referenced or the owned string
    */
   const std::string& str() const { return ptr_ ? *ptr_ : owned_; }
-
-  bool terminal(i32* fd = nullptr) override;
 
   u64 write(std::string_view in) override;
 
@@ -549,7 +547,7 @@ struct Source : Io {
 protected:
 
   /// @ctor_default
-  Source() {}
+  Source() = default;
 };
 
 // #BufferedSource ------------------------------------------------------------------------------------------
@@ -566,7 +564,7 @@ struct BufferedSource : Source {
    * @param underlying the underlying source
    * @param size the size of the buffer
    */
-   explicit BufferedSource(Source& underlying, u64 size = DEFAULT_BUFFER_SIZE);
+  explicit BufferedSource(Source& underlying, u64 size = DEFAULT_BUFFER_SIZE);
 
   ~BufferedSource() override;
 
@@ -576,6 +574,8 @@ struct BufferedSource : Source {
 
   bool good() const override { return underlying_.good(); } // cppcheck-suppress uselessOverride
 
+  i32 handle() const override { return underlying_.handle(); }
+
   bool open() const override { return underlying_.open(); } // cppcheck-suppress uselessOverride
 
   u64 read(std::span<char> out) override;
@@ -583,8 +583,6 @@ struct BufferedSource : Source {
   i32 seek(i64 offset, SeekMode mode = SeekMode::beg) override;
 
   u64 tell() override;
-
-  bool terminal(i32* fd = nullptr) override;
 
 ROCKET_TEST_PRIVATE:
 
@@ -646,13 +644,13 @@ struct FileSource : Source {
 
   i32 close() override;
 
+  i32 handle() const override;
+
   u64 read(std::span<char> out) override;
 
   i32 seek(i64 offset, SeekMode mode = SeekMode::beg) override;
 
   u64 tell() override;
-
-  bool terminal(i32* fd = nullptr) override;
 
 ROCKET_TEST_PRIVATE:
 
@@ -668,15 +666,18 @@ ROCKET_TEST_PRIVATE:
  struct NullSource : Source {
   ~NullSource() override;
 
-  i32 close() override;
+  i32 close() override { return EIO; }
 
-  u64 read(std::span<char> out) override;
+  i32 handle() const override { return -1; }
 
-  i32 seek(i64 offset, SeekMode mode = SeekMode::beg) override;
+  u64 read([[maybe_unused]] std::span<char> out) override { return 0; }
 
-  u64 tell() override;
+  i32
+  seek([[maybe_unused]] i64 offset, [[maybe_unused]] SeekMode mode = SeekMode::beg) override {
+    return EINVAL;
+  }
 
-  bool terminal(i32* fd = nullptr) override;
+  u64 tell() override { return NPOS; }
 };
 
 // #StreamSource --------------------------------------------------------------------------------------------
@@ -699,13 +700,13 @@ struct StreamSource : Source {
 
   i32 close() override;
 
+  i32 handle() const override;
+
   u64 read(std::span<char> out) override;
 
   i32 seek(i64 offset, SeekMode mode = SeekMode::beg) override;
 
   u64 tell() override;
-
-  bool terminal(i32* fd = nullptr) override;
 
 private:
 
@@ -727,17 +728,17 @@ struct StringSource : Source {
    */
   explicit StringSource(std::string_view in) : in_(in) {}
 
-  ~StringSource() override;
+  ~StringSource() = default;
 
-  i32 close() override;
+  i32 close() override { return EIO; }
+
+  i32 handle() const override { return -1; }
 
   u64 read(std::span<char> out) override;
 
   i32 seek(i64 offset, SeekMode mode = SeekMode::beg) override;
 
-  u64 tell() override;
-
-  bool terminal(i32* fd = nullptr) override;
+  u64 tell() override { return pos_; }
 
 private:
 

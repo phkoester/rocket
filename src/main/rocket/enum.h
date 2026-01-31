@@ -72,9 +72,8 @@
     format(ns::type val, FormatContext& ctx) const { \
       if (auto it = ns::get##name##Map__().left.find(val); it != ns::get##name##Map__().left.end()) { \
         return underlying_.format(::rocket::unicode::ConvertTo<C>().apply(it->second), ctx); \
-      } else { \
-        return detail::write<C>(ctx.out(), INVALID); \
       } \
+      return detail::write<C>(ctx.out(), INVALID); \
     } \
     \
     constexpr const C* \
@@ -137,9 +136,8 @@
     auto it = ns::get##name##Map__().right.find(str); \
     if (it != ns::get##name##Map__().right.end()) { \
       return it->second; \
-    } else { \
-      throw ::rocket::InvalidState(::rocket::str::message::cannotScanAs(str, typeid(ns::type))); \
     } \
+    throw ::rocket::InvalidState(::rocket::str::message::cannotScanAs(str, typeid(ns::type))); \
   }
 
 #define ROCKET_ENUM_DEFINE__(ns, type, name, seq) \

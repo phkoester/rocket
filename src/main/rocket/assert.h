@@ -10,7 +10,6 @@
 #include "rocket/Process.h"
 #include "rocket/macro.h"
 #include "rocket/format/format.h"
-#include "rocket/str/message/message.h"
 
 #include <boost/preprocessor/stringize.hpp>
 
@@ -25,7 +24,7 @@ namespace rocket::internal {
 template<typename... T>
 [[noreturn]] void
 terminate(
-  std::source_location&& sl,
+  const std::source_location& sl,
   fmt::format_string<T...> fmt,
   T&&... args) {
   process.error(nio::err, 0, "{}:{}: {}", sl.file_name(), sl.line(), format::Format<char>([&] {
@@ -39,18 +38,17 @@ terminate(
 template<typename... T>
 [[noreturn]] void
 assertFailed(
-  std::source_location&& sl,
+  const std::source_location& sl,
   const char* expr,
   fmt::format_string<T...> fmt = "",
   T&&... args) {
-  terminate(std::move(sl), "Assertion `{}` failed{}", expr, format::Format<char>([&] {
+  terminate(sl, "Assertion `{}` failed{}", expr, format::Format<char>([&] {
     if (fmt.get().size() > 0) {
       auto params = format::Format<char>::params(": \\\x01");
       params.tag("\\\x01", fmt, std::forward<T>(args)...);
       return params;
-    } else {
-      return format::Format<char>::params();
     }
+    return format::Format<char>::params();
   }));
 }
 
@@ -59,29 +57,28 @@ assertFailed(
 template<typename... T>
 [[noreturn]] void
 flop(
-  std::source_location&& sl,
+  const std::source_location& sl,
   const char* name,
   fmt::format_string<T...> fmt,
   T&&... args) {
-  throw InvalidArgument(name, fmt::format(fmt, std::forward<T>(args)...), std::move(sl));
+  throw InvalidArgument(name, fmt::format(fmt, std::forward<T>(args)...), sl);
 }
 
 template<typename... T>
 [[noreturn]] void
 checkFailed(
-  std::source_location&& sl,
+  const std::source_location& sl,
   const char* name,
   const char* expr,
   fmt::format_string<T...> fmt = "",
   T&&... args) {
-  flop(std::move(sl), name, "Check `{}` failed{}", expr, format::Format<char>([&] {
+  flop(sl, name, "Check `{}` failed{}", expr, format::Format<char>([&] {
     if (fmt.get().size() > 0) {
       auto params = format::Format<char>::params(": \\\x01");
       params.tag("\\\x01", fmt, std::forward<T>(args)...);
       return params;
-    } else {
-      return format::Format<char>::params();
     }
+    return format::Format<char>::params();
   }));
 }
 
@@ -90,27 +87,26 @@ checkFailed(
 template<typename... T>
 [[noreturn]] void
 fail(
-  std::source_location&& sl,
+  const std::source_location& sl,
   fmt::format_string<T...> fmt,
   T&&... args) {
-  throw InvalidState(fmt::format(fmt, std::forward<T>(args)...), std::move(sl));
+  throw InvalidState(fmt::format(fmt, std::forward<T>(args)...), sl);
 }
 
 template<typename... T>
 [[noreturn]] void
 expectFailed(
-  std::source_location&& sl,
+  const std::source_location& sl,
   const char* expr,
   fmt::format_string<T...> fmt = "",
   T&&... args) {
-  fail(std::move(sl), "Expectation `{}` failed{}", expr, format::Format<char>([&] {
+  fail(sl, "Expectation `{}` failed{}", expr, format::Format<char>([&] {
     if (fmt.get().size() > 0) {
       auto params = format::Format<char>::params(": \\@0");
       params.tag("\\@0", fmt, std::forward<T>(args)...);
       return params;
-    } else {
-      return format::Format<char>::params();
     }
+    return format::Format<char>::params();
   }));
 }
 

@@ -92,7 +92,7 @@ struct Parameter {
    * @return a new parameter
    */
   template<typename T>
-  static inline Parameter
+  static Parameter
   of(
     const std::string& name,
     const std::optional<std::string>& format,
@@ -125,7 +125,7 @@ struct Parameter {
    * @return a new parameter
    */
   template<typename T>
-  static inline Parameter
+  static Parameter
   of(
     const std::string& name,
     const std::set<typename internal::ValueType<T>>& allowedValues,
@@ -194,7 +194,7 @@ struct Option {
    *   supplied
    * @return a new help option
    */
-  static inline Option
+  static Option
   helpOf(
     const OptionGroup* group,
     std::optional<bool>& dest) {
@@ -227,7 +227,7 @@ struct Option {
    * @return a new option
    */
   template<typename T>
-  static inline Option
+  static Option
   of(
     const OptionGroup* group,
     const std::string& name,
@@ -241,7 +241,7 @@ struct Option {
       shortName,
       std::nullopt, // #allowedValues
       // #takesValue is `false` for `bool`, otherwise it is `true`
-      std::is_same_v<typename internal::ValueType<T>, bool> ? false : true,
+      not(std::is_same_v<typename internal::ValueType<T>, bool>),
       not IsOptional<T>, // #required
       format,
       help,
@@ -268,7 +268,7 @@ struct Option {
    * @return a new option
    */
   template<typename T>
-  static inline Option
+  static Option
   of(
     const OptionGroup* group,
     const std::string& name,
@@ -282,7 +282,7 @@ struct Option {
       shortName,
       std::nullopt, // #allowedValues
       // #takesValue is `false` for `bool`, otherwise it is `true`
-      std::is_same_v<typename internal::ValueType<T>, bool> ? false : true,
+      not(std::is_same_v<typename internal::ValueType<T>, bool>),
       not IsOptional<T>, // #required
       std::nullopt, // #format
       help,
@@ -357,7 +357,7 @@ struct CommandLine {
    * @param params the command-line parameters
    * @param config the configuration
    */
-  CommandLine(
+  explicit CommandLine(
     const std::vector<Option>& opts = {},
     const std::vector<Parameter>& params = {},
     const CommandLineConfig& config = {});
@@ -393,8 +393,8 @@ private:
   std::vector<Option> opts_;
   std::vector<Parameter> params_;
   CommandLineConfig config_;
-  bool hasUsage_;
-  bool hasHelpOpt_;
+  bool hasUsage_ = false;
+  bool hasHelpOpt_ = false;
   std::unordered_map<std::string_view, const Option*> byName_;
   std::unordered_map<std::string_view, const Option*> byShortName_;
 
@@ -417,6 +417,6 @@ private:
   void printUsage(nio::Sink& out) const;
 };
 
-} // namespace cl
+} // namespace rocket::cl
 
 // EOF

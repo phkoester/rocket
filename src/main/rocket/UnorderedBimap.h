@@ -51,8 +51,9 @@ namespace boost::bimaps {
 template<typename A, typename B>
 bool
 operator==(const bimap<A, B>& lhs, const bimap<A, B>& rhs) {
-  if (lhs.size() != rhs.size())
+  if (lhs.size() != rhs.size()) {
     return false;
+  }
   for (const auto& [key, val] : lhs.left) {
     auto it = rhs.left.find(key);
     if (it == rhs.left.end()) {

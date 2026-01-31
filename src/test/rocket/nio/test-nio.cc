@@ -51,7 +51,7 @@ TEST(nio, FileSinkDoesNotExist) {
   EXPECT_EQ(out.error(), ENOENT);
   EXPECT_EQ(out.good(), false);
   EXPECT_EQ(out.open(), false);
-  EXPECT_EQ(out.terminal(), false);
+  EXPECT_FALSE(isatty(out.handle()));
   EXPECT_EQ(out.file_, nullptr);
 
   out.write("a");
@@ -185,7 +185,7 @@ TEST(nio, FileSourceDoesNotExist) {
   EXPECT_EQ(in.error(), ENOENT);
   EXPECT_EQ(in.good(), false);
   EXPECT_EQ(in.open(), false);
-  EXPECT_EQ(in.terminal(), false);
+  EXPECT_FALSE(isatty(in.handle()));
   EXPECT_EQ(in.file_, nullptr);
 
   auto out = in.Source::read();

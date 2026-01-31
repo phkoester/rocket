@@ -35,7 +35,7 @@ namespace rocket::nio {
 // #Io ------------------------------------------------------------------------------------------------------
 
 bool
-Io::checkOpen() {
+Io::checkOpen() const{
   if (not open_) {
     if (error_ == 0) {
       error_ = EBADF;
@@ -105,14 +105,6 @@ BufferedSink::flushBuffer() {
     underlying_.write(string_view(&buf_[0], pos_));
     pos_ = 0;
   }
-}
-
-bool
-BufferedSink::terminal(i32* fd) {
-  if (not checkOpen()) {
-    return false;
-  }
-  return underlying_.terminal(fd);
 }
 
 u64
@@ -214,21 +206,13 @@ FileSink::flush() {
   return ret;
 }
 
-bool
-FileSink::terminal(i32* fd) {
+i32
+FileSink::handle() const {
   if (not checkOpen()) {
-    return false;
+    return -1;
   }
 
-  auto handle = fileno(file_);
-  if (handle == -1) {
-    return false;
-  }
-  bool ret = isatty(handle);
-  if (ret && fd) {
-    *fd = handle;
-  }
-  return ret;
+  return fileno(file_);
 }
 
 u64
@@ -244,75 +228,10 @@ FileSink::write(string_view in) {
   return ret;
 }
 
-// #NullSink ------------------------------------------------------------------------------------------------
-
-NullSink::~NullSink() {
-  close(); // NOLINT
-}
-
-i32
-NullSink::close()
-{
-  if (not checkOpen()) {
-    return error_;
-  }
-
-  open_ = false;
-  return 0;
-}
-
-i32
-NullSink::flush() {
-  checkOpen();
-  return error_;
-}
-
-bool
-NullSink::terminal(i32*) {
-  checkOpen();
-  return false;
-}
-
-u64
-NullSink::write(string_view) {
-  checkOpen();
-  return 0;
-}
-
 // #SpanSink ------------------------------------------------------------------------------------------------
-
-SpanSink::~SpanSink() {
-  close(); // NOLINT
-}
-
-i32
-SpanSink::close() {
-  if (not checkOpen()) {
-    return error_;
-  }
-
-  open_ = false;
-  return 0;
-}
-
-i32
-SpanSink::flush() {
-  checkOpen();
-  return error_;
-}
-
-bool
-SpanSink::terminal(i32*) {
-  checkOpen();
-  return false;
-}
 
 u64
 SpanSink::write(string_view in) {
-  if (not checkOpen()) {
-    return error_;
-  }
-
   u64 available = out_.size() - pos_;
   u64 ret = min(available, in.size());
   if (ret > 0) {
@@ -353,28 +272,19 @@ StreamSink::flush() {
   return error_;
 }
 
-bool
-StreamSink::terminal(i32* fd) {
+i32
+StreamSink::handle() const {
   if (not checkOpen()) {
-    return false;
+    return -1;
   }
 
   if (&os_ == &cout) {
-    if (isatty(STDOUT_FILENO)) {
-      if (fd) {
-        *fd = STDOUT_FILENO;
-      }
-      return true;
-    }
-  } else if (&os_ == &cerr) {
-    if (isatty(STDERR_FILENO)) {
-      if (fd) {
-        *fd = STDERR_FILENO;
-      }
-      return true;
-    }
+    return STDOUT_FILENO;
   }
-  return false;
+  if (&os_ == &cerr) {
+    return STDERR_FILENO;
+  }
+  return -1;
 }
 
 u64
@@ -393,32 +303,6 @@ StreamSink::write(string_view in) {
 }
 
 // #StringSink ----------------------------------------------------------------------------------------------
-
-StringSink::~StringSink() {
-  close(); // NOLINT
-}
-
-i32
-StringSink::close() {
-  if (not checkOpen()) {
-    return error_;
-  }
-
-  open_ = false;
-  return 0;
-}
-
-i32
-StringSink::flush() {
-  checkOpen();
-  return error_;
-}
-
-bool
-StringSink::terminal(i32*) {
-  checkOpen();
-  return false;
-}
 
 u64
 StringSink::write(string_view in) {
@@ -439,7 +323,7 @@ StringSink::write(string_view in) {
 string
 Source::read() {
   if (not checkOpen()) {
-    return string();
+    return {};
   }
 
   string ret;
@@ -460,12 +344,12 @@ Source::read() {
 string
 Source::readln() {
   if (not checkOpen()) {
-    return string();
+    return {};
   }
 
   string ret;
-  bool crlf = false;
 
+  bool crlf = false;
   while (true) {
     char c;
     u64 result = read(c);
@@ -479,7 +363,7 @@ Source::readln() {
     ret.push_back(c);
   }
 
-  // Remove trailing `\r` if it precedes the `\n`
+  // Remove trailing '\r' if it precedes the '\n'
   if (crlf && not ret.empty() && *ret.rbegin() == '\r') {
     ret.pop_back();
   }
@@ -509,7 +393,7 @@ Source::readln(span<char> out) {
     *(it++) = c;
   }
 
-  // Remove trailing `\r` if it precedes the `\n`
+  // Remove trailing '\r' if it precedes the '\n'
   u64 ret = it - out.begin();
   if (crlf && ret > 0 && *(it - 1) == '\r') {
     --ret;
@@ -656,14 +540,6 @@ BufferedSource::tell() {
   return bufPos_ + pos_;
 }
 
-bool
-BufferedSource::terminal(i32* fd) {
-  if (not checkOpen()) {
-    return false;
-  }
-  return underlying_.terminal(fd);
-}
-
 // #FileSource ----------------------------------------------------------------------------------------------
 
 FileSource::FileSource(FILE* file, const Config& config) :
@@ -707,6 +583,15 @@ FileSource::close()
   open_ = false;
   file_ = nullptr;
   return ret;
+}
+
+i32
+FileSource::handle() const {
+  if (not checkOpen()) {
+    return -1;
+  }
+
+  return fileno(file_);
 }
 
 u64
@@ -766,64 +651,6 @@ FileSource::tell() {
   return safe<u64>(result);
 }
 
-bool
-FileSource::terminal(i32* fd) {
-  if (not checkOpen()) {
-    return false;
-  }
-
-  auto handle = fileno(file_);
-  if (handle == -1) {
-    return false;
-  }
-  bool ret = isatty(handle);
-  if (ret && fd) {
-    *fd = handle;
-  }
-  return ret;
-}
-
-// #NullSource ----------------------------------------------------------------------------------------------
-
-NullSource::~NullSource() {
-  close(); // NOLINT
-}
-
-i32
-NullSource::close()
-{
-  if (not checkOpen()) {
-    return error_;
-  }
-
-  open_ = false;
-  return 0;
-}
-
-u64
-NullSource::read(span<char>) {
-  checkOpen();
-  return 0;
-}
-
-i32
-NullSource::seek(i64, SeekMode) {
-  checkOpen();
-  return EINVAL;
-}
-
-u64
-NullSource::tell() {
-  checkOpen();
-  return NPOS;
-}
-
-bool
-NullSource::terminal(i32*) {
-  checkOpen();
-  return false;
-}
-
 // #StreamSource --------------------------------------------------------------------------------------------
 
 StreamSource::~StreamSource() {
@@ -839,6 +666,18 @@ StreamSource::close() {
   open_ = false;
   // A #std::istream can't close, it can only be destroyed
   return 0;
+}
+
+i32
+StreamSource::handle() const {
+  if (not checkOpen()) {
+    return -1;
+  }
+
+  if (&is_ == &cin) {
+    return STDIN_FILENO;
+  }
+  return -1;
 }
 
 u64
@@ -905,40 +744,7 @@ StreamSource::tell() {
   return static_cast<u64>(result); // #boost::safe_numerics::safe doesn't work with #std::ios::pos_type
 }
 
-bool
-StreamSource::terminal(i32* fd) {
-  if (not checkOpen()) {
-    return false;
-  }
-
-  if (&is_ == &cin) {
-    if (isatty(STDIN_FILENO)) {
-      if (fd) {
-        *fd = STDIN_FILENO;
-      }
-      return true;
-    }
-  }
-  return false;
-}
-
 // #StringSource --------------------------------------------------------------------------------------------
-
-StringSource::~StringSource() {
-  close(); // NOLINT
-}
-
-i32
-StringSource::close()
-{
-  if (not checkOpen()) {
-    return error_;
-  }
-
-  open_ = false;
-  pos_ = 0;
-  return 0;
-}
 
 u64
 StringSource::read(span<char> out) {
@@ -981,21 +787,6 @@ StringSource::seek(i64 offset, SeekMode mode) {
   }
   pos_ = min(static_cast<u64>(pos_), in_.size());
   return 0;
-}
-
-u64
-StringSource::tell() {
-  if (not checkOpen()) {
-    return NPOS;
-  }
-
-  return pos_;
-}
-
-bool
-StringSource::terminal(i32*) {
-  checkOpen();
-  return false;
 }
 
 } // namespace rocket::nio
