@@ -17,7 +17,6 @@ else()
 
   FetchContent_Declare(
     Boost
-    # URL https://github.com/boostorg/boost/releases/download/boost-1.84.0/boost-1.84.0.7z
     URL https://github.com/boostorg/boost/releases/download/boost-${BOOST_VERSION}/boost-${BOOST_VERSION}-cmake.tar.xz
     SYSTEM
     EXCLUDE_FROM_ALL
