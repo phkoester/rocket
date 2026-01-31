@@ -157,7 +157,7 @@ struct PrintLocationsConfig {
  * @param positions the positions to look for. They needn't be sorted in any way. The order of the positions
  *     is preserved in the #rocket::str::location::LocationsResult. The only restriction is that all
  *     #rocket::str::location::Position#position values have to be unique
- * @param config configuration
+ * @param config the configuration
  * @return a #rocket::str::location::LocationsResult
  */
 LocationsResult locations(
@@ -173,7 +173,7 @@ LocationsResult locations(
  *     @p locationsResult must be available
  * @param locationsResult the #rocket::str::location::LocationsResult instance that was returned by the
  *     #rocket::str::location::locations function
- * @param config configuration
+ * @param config the configuration
  */
 void printLocations(
     nio::Sink& out,

@@ -351,11 +351,12 @@ struct CommandLine {
    * @ctor
    *
    * @param opts the command-line options
-   * @param config configuration
+   * @param params the command-line parameters
+   * @param config the configuration
    */
   CommandLine(
     const std::vector<Option>& opts = {},
-    const std::vector<Parameter>& args = {},
+    const std::vector<Parameter>& params = {},
     const CommandLineConfig& config = {});
 
   /**

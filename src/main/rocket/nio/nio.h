@@ -322,7 +322,7 @@ struct FileSink : Sink {
    * @ctor
    *
    * @param file a `FILE` pointer to use
-   * @param config configuration
+   * @param config the configuration
    */
   explicit FileSink(FILE* file, const Config& config = defaultConfig());
 
@@ -330,7 +330,7 @@ struct FileSink : Sink {
    * @ctor
    *
    * @param path a path to a file
-   * @param config configuration
+   * @param config the configuration
    */
   explicit FileSink(const std::string& path, const Config& config = defaultConfig());
 
@@ -630,7 +630,7 @@ struct FileSource : Source {
    * @ctor
    *
    * @param file a `FILE` pointer to use
-   * @param config configuration
+   * @param config the configuration
    */
   explicit FileSource(FILE* file, const Config& config = defaultConfig());
 
@@ -638,7 +638,7 @@ struct FileSource : Source {
    * @ctor
    *
    * @param path a path to a file
-   * @param config configuration
+   * @param config the configuration
    */
   explicit FileSource(const std::string& path, const Config& config = defaultConfig());
 
