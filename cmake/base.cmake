@@ -48,7 +48,11 @@ endif()
 
 # CMPs ------------------------------------------------------------------------------------------------------
 
-# Suppress "The FindBoost module is removed."
+# "More read-only target properties now error when trying to set them."
+if(POLICY CMP0160)
+  cmake_policy(SET CMP0160 NEW)
+endif()
+# "The FindBoost module is removed."
 if(POLICY CMP0167)
   cmake_policy(SET CMP0167 NEW)
 endif()
