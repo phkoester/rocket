@@ -24,7 +24,7 @@ setlocal
 
 if not defined BUILD_TYPE set BUILD_TYPE=release
 if %BUILD_TYPE% neq debug if %BUILD_TYPE% neq release (
- echo make.cmd: BUILD_TYPE: Invalid value `%BUILD_TYPE%`; expected `debug` or `release` >stderr
+ echo make.cmd: Invalid value `%BUILD_TYPE%` for BUILD_TYPE; expected `debug` or `release` 1>&2
  exit /b 2
 )
 
