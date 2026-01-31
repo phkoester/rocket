@@ -151,17 +151,17 @@ const thread::id MAIN_THREAD_ID = this_thread::get_id();
 
 // Some trickery to keep the ctor private
 inline Process makeProcess__() { return Process(); }
-ROCKET_PUBLIC Process process = makeProcess__();
+ROCKET_PUBLIC const Process process = makeProcess__();
 
 void
-Process::atExit(std::function<void()> fn, bool callOnTerminate) {
+Process::atExit(std::function<void()> fn, bool callOnTerminate) const {
   ROCKET_MUTEX_LOCK(processMutex);
 
   onExitFns.push_back({ fn, callOnTerminate });
 }
 
 const string&
-Process::autoName() const{
+Process::autoName() const {
   ROCKET_MUTEX_LOCK(processMutex);
 
   return inited_ ? name() : invocationShortName();
@@ -194,7 +194,7 @@ Process::init(
     char** argv,
     optional<string_view> name,
     optional<std::locale> locale,
-    bool quickExit) {
+    bool quickExit) const {
   ROCKET_MUTEX_LOCK(processMutex);
 
   ROCKET_ASSERT(this_thread::get_id() == MAIN_THREAD_ID, "`Process::init` must be called in the main thread");

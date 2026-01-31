@@ -140,7 +140,7 @@ struct Process {
    *
    * @return the command line, as separate strings. `argv[0]` is not included
    */
-  const std::vector<std::string>& args() const { return args_; }
+  [[nodiscard]] const std::vector<std::string>& args() const { return args_; }
 
   /**
    * Registers a function to be called upon exit and quick exit, and even possibly on abnormal termination.
@@ -150,7 +150,7 @@ struct Process {
    * @param fn the function to register
    * @param callOnTerminate whether to call the function even on abnormal termination
    */
-  void atExit(std::function<void()> fn, bool callOnTerminate = false);
+  void atExit(std::function<void()> fn, bool callOnTerminate = false) const;
 
   /**
    * Returns the classic locale. This is the locale as returned by #std::locale::classic.
@@ -159,7 +159,7 @@ struct Process {
    *
    * @return a locale
    */
-  const std::locale& classicLocale() const { return classicLocale_; }
+  [[nodiscard]] const std::locale& classicLocale() const { return classicLocale_; }
 
   /**
    * Returns the code locale used for logging and error messages, which is `en_US.UTF-8`.
@@ -176,7 +176,7 @@ struct Process {
    *
    * @return a locale
    */
-  const std::locale& codeLocale() const { return codeLocale_; }
+  [[nodiscard]] const std::locale& codeLocale() const { return codeLocale_; }
 
   /**
    * Outputs an error message.
@@ -190,7 +190,7 @@ struct Process {
    */
   template<typename... T>
   void
-  error(nio::Sink& out, i32 status, fmt::format_string<T...> fmt, T&&... args) {
+  error(nio::Sink& out, i32 status, fmt::format_string<T...> fmt, T&&... args) const {
     out.write(autoName());
     out.write(": ");
     const char* label = status != 0 ? "fatal error: " : "error: ";
@@ -229,7 +229,7 @@ struct Process {
    */
   template<typename... T>
   void
-  info(nio::Sink& out, fmt::format_string<T...> fmt, T&&... args) {
+  info(nio::Sink& out, fmt::format_string<T...> fmt, T&&... args) const {
     out.write(autoName());
     out.write(": ");
     if (out.terminal()) {
@@ -262,7 +262,7 @@ struct Process {
       char** argv,
       std::optional<std::string_view> name = std::nullopt,
       std::optional<std::locale> locale = std::nullopt,
-      bool quickExit = true);
+      bool quickExit = true) const;
 
   /**
    * Returns the locale this process picked in #init.
@@ -271,7 +271,7 @@ struct Process {
    *
    * @return a locale
    */
-  const std::locale& initLocale() const { return initLocale_; }
+  [[nodiscard]] const std::locale& initLocale() const { return initLocale_; }
 
   /**
    * Returns the name of the process.
@@ -280,7 +280,7 @@ struct Process {
    *
    * @return the name of the process
    */
-  const std::string& name() const;
+  [[nodiscard]] const std::string& name() const;
 
   /**
    * Returns the command this program was started with.
@@ -289,7 +289,7 @@ struct Process {
    *
    * @return the invocation name
    */
-  const std::string& invocationName() const;
+  [[nodiscard]] const std::string& invocationName() const;
 
   /**
    * Returns the file-name portion of the command this program was started with.
@@ -298,7 +298,7 @@ struct Process {
    *
    * @return the invocation short name
    */
-  const std::string& invocationShortName() const;
+  [[nodiscard]] const std::string& invocationShortName() const;
 
   /**
    * Returns the system locale. This is the locale that was returned by the first call of
@@ -308,7 +308,7 @@ struct Process {
    *
    * @return a locale
    */
-  const std::locale& systemLocale() const { return systemLocale_; }
+  [[nodiscard]] const std::locale& systemLocale() const { return systemLocale_; }
 
   /**
    * Outputs a warning.
@@ -321,7 +321,7 @@ struct Process {
    */
   template<typename... T>
   void
-  warn(nio::Sink& out, fmt::format_string<T...> fmt, T&&... args) {
+  warn(nio::Sink& out, fmt::format_string<T...> fmt, T&&... args) const {
     out.write(autoName());
     out.write(": ");
     if (out.terminal()) {
@@ -334,22 +334,22 @@ struct Process {
 
 private:
 
-  i32 argc_ = 0;
-  char** argv_ = nullptr;
-  std::string name_;
-  bool quickExit_ = true;
+  mutable i32 argc_ = 0;
+  mutable char** argv_ = nullptr;
+  mutable std::string name_;
+  mutable bool quickExit_ = true;
 
-  std::vector<std::string> args_;
-  bool inited_ = false;
+  mutable std::vector<std::string> args_;
+  mutable bool inited_ = false;
 
-  const std::locale classicLocale_ = std::locale::classic();
-  const std::locale codeLocale_ = std::locale("en_US.UTF-8");
-  std::locale initLocale_;
-  std::locale systemLocale_;
+  std::locale classicLocale_ = std::locale::classic();
+  std::locale codeLocale_ = std::locale("en_US.UTF-8");
+  mutable std::locale initLocale_;
+  mutable std::locale systemLocale_;
 
-  Process() {}
+  Process() = default;
 
-  const std::string& autoName() const;
+  [[nodiscard]] const std::string& autoName() const;
 
   [[noreturn]] void exit(i32 status, bool allowUninited) const;
 
@@ -357,7 +357,7 @@ private:
 };
 
 /// The #rocket::Process singleton.
-ROCKET_PUBLIC extern Process process;
+ROCKET_PUBLIC extern const Process process;
 
 } // namespace rocket
 

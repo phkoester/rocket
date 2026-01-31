@@ -1,3 +1,5 @@
+// NOLINTBEGIN
+
 // Formatting library for C++ - formatters for standard library types
 //
 // Copyright (c) 2012 - present, Victor Zverovich
@@ -739,3 +741,5 @@ struct formatter<std::reference_wrapper<T>, Char,
 FMT_END_NAMESPACE
 
 #endif  // FMT_STD_H_
+
+// NOLINTEND

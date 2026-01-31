@@ -53,30 +53,30 @@ namespace rocket {
  * - an optional source location,
  * - and an optional stack trace.
  */
-struct Exception {
+struct Exception { // NOLINT(*-special-member-functions)
   /// @dtor
-  virtual ~Exception() {}
+  virtual ~Exception() = default;
 
   /**
    * Returns the plain message of this exception, not including any source-location information.
    *
    * @return a message
    */
-  const std::string& message() const { return msg_; }
+  [[nodiscard]] const std::string& message() const { return msg_; }
 
   /**
    * Returns the source location from which this exception was thrown.
    *
    * @return a source location, if present, or null otherwise
    */
-  const std::optional<std::source_location>& sourceLocation() const { return sl_; }
+  [[nodiscard]] const std::optional<std::source_location>& sourceLocation() const { return sl_; }
 
   /**
    * Returns the stack trace of this exception.
    *
    * @return a stack trace, if present, or null otherwise
    */
-  const std::optional<std::stacktrace>& stackTrace() const { return st_; }
+  [[nodiscard]] const std::optional<std::stacktrace>& stackTrace() const { return st_; }
 
 protected:
 
@@ -92,14 +92,14 @@ protected:
       std::optional<std::source_location>&& sl,
       std::optional<std::stacktrace>&& st) :
       msg_(msg),
-      sl_(std::move(sl)),
-      st_(std::move(st)) {}
+      sl_(std::move(sl)), // NOLINT
+      st_(std::move(st)) {} // NOLINT
 
 private:
 
-  const std::string msg_;
-  const std::optional<std::source_location> sl_;
-  const std::optional<std::stacktrace> st_;
+  std::string msg_;
+  std::optional<std::source_location> sl_;
+  std::optional<std::stacktrace> st_;
 };
 
 // #InvalidArgument -----------------------------------------------------------------------------------------
@@ -107,7 +107,7 @@ private:
 /**
  * An exception indicating an invalid argument.
  */
-struct InvalidArgument : Exception, std::invalid_argument {
+struct InvalidArgument : Exception, std::invalid_argument { // NOLINT(*-special-member-functions)
   /// @type_base
   using Base = std::invalid_argument;
 
@@ -125,7 +125,7 @@ struct InvalidArgument : Exception, std::invalid_argument {
       std::optional<std::source_location>&& sl = ROCKET_EXCEPTION_SL,
       std::optional<std::stacktrace>&& st = ROCKET_EXCEPTION_ST);
 
-  ~InvalidArgument() override {}
+  ~InvalidArgument() override = default;
 };
 
 // #InvalidState --------------------------------------------------------------------------------------------
@@ -133,7 +133,7 @@ struct InvalidArgument : Exception, std::invalid_argument {
 /**
  * An exception indicating an invalid state.
  */
-struct InvalidState : Exception, std::runtime_error {
+struct InvalidState : Exception, std::runtime_error { // NOLINT(*-special-member-functions)
   /// @type_base
   using Base = std::runtime_error;
 
@@ -149,7 +149,7 @@ struct InvalidState : Exception, std::runtime_error {
       std::optional<std::source_location>&& sl = ROCKET_EXCEPTION_SL,
       std::optional<std::stacktrace>&& st = ROCKET_EXCEPTION_ST);
 
-  ~InvalidState() override {}
+  ~InvalidState() override = default;
 };
 
 // #Overflow ------------------------------------------------------------------------------------------------
@@ -157,7 +157,7 @@ struct InvalidState : Exception, std::runtime_error {
 /**
  * An exception indicating a type overflow.
  */
-struct Overflow : Exception, std::overflow_error {
+struct Overflow : Exception, std::overflow_error { // NOLINT(*-special-member-functions)
   /// @type_base
   using Base = std::overflow_error;
 
@@ -172,7 +172,7 @@ struct Overflow : Exception, std::overflow_error {
       const std::type_info& type,
       std::optional<std::source_location>&& sl = ROCKET_EXCEPTION_SL,
       std::optional<std::stacktrace>&& st = ROCKET_EXCEPTION_ST) :
-      Overflow(type, "", std::move(sl), std::move(st)) {}
+      Overflow(type, "", std::move(sl), std::move(st)) {} // NOLINT
 
   /**
    * @ctor
@@ -188,7 +188,7 @@ struct Overflow : Exception, std::overflow_error {
     std::optional<std::source_location>&& sl = ROCKET_EXCEPTION_SL,
     std::optional<std::stacktrace>&& st = ROCKET_EXCEPTION_ST);
 
-  ~Overflow() override {}
+  ~Overflow() override = default;
 };
 
 // #Underflow ------------------------------------------------------------------------------------------------
@@ -196,7 +196,7 @@ struct Overflow : Exception, std::overflow_error {
 /**
  * An exception indicating a type underflow.
  */
- struct Underflow : Exception, std::underflow_error {
+struct Underflow : Exception, std::underflow_error { // NOLINT(*-special-member-functions)
   /// @type_base
   using Base = std::underflow_error;
 
@@ -211,7 +211,7 @@ struct Overflow : Exception, std::overflow_error {
       const std::type_info& type,
       std::optional<std::source_location>&& sl = ROCKET_EXCEPTION_SL,
       std::optional<std::stacktrace>&& st = ROCKET_EXCEPTION_ST) :
-      Underflow(type, "", std::move(sl), std::move(st)) {}
+      Underflow(type, "", std::move(sl), std::move(st)) {} // NOLINT
 
   /**
    * @ctor
@@ -227,7 +227,7 @@ struct Overflow : Exception, std::overflow_error {
     std::optional<std::source_location>&& sl = ROCKET_EXCEPTION_SL,
     std::optional<std::stacktrace>&& st = ROCKET_EXCEPTION_ST);
 
-  ~Underflow() override {}
+  ~Underflow() override = default;
 };
 
 // Functions ------------------------------------------------------------------------------------------------

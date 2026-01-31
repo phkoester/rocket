@@ -8,6 +8,8 @@
 
 #include "rocket/assert.h"
 
+#include <array>
+
 namespace rocket {
 
 // #Cow -----------------------------------------------------------------------------------------------------
@@ -17,7 +19,7 @@ namespace rocket {
  *
  * @tparam T the type of value
  * @tparam U the type of the owned value. If this is different from @p T, then @p T is assumed to be an
- *     efficiently copyable view type, such as #std::span or #std::string_view.
+ *   efficiently copyable view type, such as #std::span or #std::string_view.
  */
 template<typename T, typename U = T>
 struct Cow {
@@ -27,10 +29,9 @@ struct Cow {
    * @param ref the value to reference. If the types @p T and @p U are the same, The reference must remain
    *   valid for the lifetime of the #Cow.
    */
-  Cow(const T& ref) :
-      modified_(false) {
+  explicit Cow(const T& ref) {
     if constexpr (HasView) {
-      new(choice_.view) T(ref);
+      new(viewPtr()) T(ref);
     } else {
       choice_.ptr = &ref;
     }
@@ -40,12 +41,12 @@ struct Cow {
   Cow(const Cow& rhs) = delete;
 
   /// @ctor_move
-  Cow(Cow&& rhs) :
-      modified_(rhs.modified_) {
+  Cow(Cow&& rhs) noexcept :
+    modified_(rhs.modified_) {
     if (modified_) {
-      new(choice_.owned) U(std::move(*rhs.ownedPtr()));
+      new(ownedPtr()) U(std::move(*rhs.ownedPtr()));
     } else if constexpr (HasView) {
-      new(choice_.view) T(std::move(*rhs.viewPtr()));
+      new(viewPtr()) T(std::move(*rhs.viewPtr()));
     } else {
       choice_.ptr = rhs.choice_.ptr;
     }
@@ -56,12 +57,12 @@ struct Cow {
   Cow& operator=(const Cow& rhs) = delete;
 
   /// @member_op_asgmt_move
-  Cow& operator=(Cow&& rhs) {
+  Cow& operator=(Cow&& rhs) noexcept {
     modified_ = rhs.modified_;
     if (modified_) {
-      new(choice_.owned) U(std::move(*rhs.ownedPtr()));
+      new(ownedPtr()) U(std::move(*rhs.ownedPtr()));
     } else if constexpr (HasView) {
-      new(choice_.view) T(std::move(*rhs.viewPtr()));
+      new(viewPtr()) T(std::move(*rhs.viewPtr()));
     } else {
       choice_.ptr = rhs.choice_.ptr;
     }
@@ -90,13 +91,13 @@ struct Cow {
   operator=(const U& value) {
     if (modified_) {
       destroyOwned();
-      new(choice_.owned) U(value);
+      new(ownedPtr()) U(value);
     } else {
       if constexpr (HasView) {
         destroyView();
       }
       modified_ = true;
-      new(choice_.owned) U(value);
+      new(ownedPtr()) U(value);
     }
     return *this;
   }
@@ -113,13 +114,13 @@ struct Cow {
   operator=(U&& value) {
     if (modified_) {
       destroyOwned();
-      new(choice_.owned) U(std::forward<U>(value));
+      new(ownedPtr()) U(std::forward<U>(value));
     } else {
       if constexpr (HasView) {
         destroyView();
       }
       modified_ = true;
-      new(choice_.owned) U(std::forward<U>(value));
+      new(ownedPtr()) U(std::forward<U>(value));
     }
     return *this;
   }
@@ -157,7 +158,7 @@ struct Cow {
    *
    * @return whether the #Cow has been assigned an owned value
    */
-  bool modified() const { return modified_; }
+  [[nodiscard]] bool modified() const { return modified_; }
 
   /**
    * Returns a nonconst reference to the owned value.
@@ -172,23 +173,23 @@ private:
 
   static constexpr bool HasView = not std::is_same_v<T, U>;
 
-  inline void destroyOwned() { ownedPtr()->~U(); }
+  void destroyOwned() { ownedPtr()->~U(); }
 
-  inline void destroyView() { viewPtr()->~T(); }
+  void destroyView() { viewPtr()->~T(); }
 
-  constexpr U* ownedPtr() { return reinterpret_cast<U*>(choice_.owned); }
+  constexpr U* ownedPtr() { return reinterpret_cast<U*>(choice_.owned.data()); }
 
-  constexpr const U* ownedPtr() const { return reinterpret_cast<const U*>(choice_.owned); }
+  constexpr const U* ownedPtr() const { return reinterpret_cast<const U*>(choice_.owned.data()); }
 
-  constexpr T* viewPtr() { return reinterpret_cast<T*>(choice_.view); }
+  constexpr T* viewPtr() { return reinterpret_cast<T*>(choice_.view.data()); }
 
-  constexpr const T* viewPtr() const { return reinterpret_cast<const T*>(choice_.view); }
+  constexpr const T* viewPtr() const { return reinterpret_cast<const T*>(choice_.view.data()); }
 
-  bool modified_; ///< Whether there is an owned value
+  bool modified_ = false; ///< Whether there is an owned value
   union {
     const T* ptr; ///< A reference if not #HasView.
-    char view[sizeof(T)]; ///< A copyable view if #HasView.
-    char owned[sizeof(U)]; ///< An owned value if #modified_.
+    std::array<char, sizeof(T)> view; ///< A copyable view if #HasView.
+    std::array<char, sizeof(U)> owned; ///< An owned value if #modified_.
   } choice_;
 };
 

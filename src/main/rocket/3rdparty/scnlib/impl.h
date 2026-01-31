@@ -1,3 +1,5 @@
+// NOLINTBEGIN
+
 // Copyright 2017 Elias Kosunen
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -7012,3 +7014,5 @@ struct custom_reader {
 
 SCN_END_NAMESPACE
 }  // namespace scn
+
+// NOLINTEND

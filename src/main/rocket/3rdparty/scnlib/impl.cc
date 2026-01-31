@@ -10,7 +10,7 @@
  * The original file is `scnlib/src/scn/impl.cpp`.
  */
 
-namespace scn {
+namespace scn { // NOLINT
 SCN_BEGIN_NAMESPACE
 
 namespace detail {
