@@ -134,8 +134,8 @@ function(AddExecutable name)
   target_compile_options(${name} PRIVATE ${COMPILE_FLAGS})
 endfunction()
 
-# ParseArgs__(srcFiles envProps  srcFile... [ENVIRONMENT name=value...])
-function(ParseArgs__ srcFiles__ envProps__)
+# ParseArgs__(srcFiles env  srcFile... [ENVIRONMENT name=value...])
+function(ParseArgs__ srcFiles__ env__)
   set(srcFiles)
   set(env)
   set(appendTo srcFiles)
@@ -147,18 +147,13 @@ function(ParseArgs__ srcFiles__ envProps__)
     endif()
   endforeach()
 
-  set(envProps)
-  foreach(it IN LISTS env)
-    list(APPEND envProps PROPERTIES ENVIRONMENT "${it}")
-  endforeach()
-
   set(${srcFiles__} ${srcFiles} PARENT_SCOPE)
-  set(${envProps__} ${envProps} PARENT_SCOPE)
+  set(${env__} ${env} PARENT_SCOPE)
 endfunction()
 
 # AddBench(name dir srcFile... [ENVIRONMENT name=value...])
 function(AddBench name dir)
-  ParseArgs__(srcFiles envProps ${ARGN})
+  ParseArgs__(srcFiles env ${ARGN})
 
   list(TRANSFORM srcFiles PREPEND "${dir}/")
   AddExecutable(${name} ${srcFiles})
@@ -175,18 +170,18 @@ function(AddBench name dir)
 
   string(JOIN " " configs ${CMAKE_CONFIGURATION_TYPES})
 
-  set_target_properties(${name}
-    PROPERTIES
-      BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}"
-      CONFIG "$<CONFIG>"
-      CONFIGS "${configs}"
+  set_property(TEST ${name}
+    PROPERTY ENVIRONMENT
+      "BINARY_DIR=${CMAKE_CURRENT_BINARY_DIR}"
+      "CONFIG=$<CONFIG>"
+      "CONFIGS=${configs}"
+      ${env}
   )
-  # @todo Consider #envProps
 endfunction()
 
 # AddTest(name dir srcFile... [ENVIRONMENT name=value...])
 function(AddTest name dir)
-  ParseArgs__(srcFiles envProps ${ARGN})
+  ParseArgs__(srcFiles env ${ARGN})
 
   list(TRANSFORM srcFiles PREPEND "${dir}/")
   AddExecutable(${name} ${srcFiles})
@@ -195,6 +190,11 @@ function(AddTest name dir)
       Rocket::rocket-test-main Rocket::rocket-test)
 
   string(JOIN " " configs ${CMAKE_CONFIGURATION_TYPES})
+
+  set(envProps)
+  foreach(it IN LISTS env)
+    list(APPEND envProps PROPERTIES ENVIRONMENT "${it}")
+  endforeach()
 
   gtest_discover_tests(${name}
     DISCOVERY_MODE PRE_TEST
