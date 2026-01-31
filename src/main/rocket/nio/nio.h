@@ -537,7 +537,7 @@ struct Source : Io {
    * @param mode the seek mode
    * @return 0 if successful, an error code otherwise
    */
-  virtual i32 seek(i64 offset, SeekMode mode = SeekMode::beg) = 0; // NOLINT(google-default-arguments)
+  virtual i32 seek(i64 offset, SeekMode mode = SeekMode::beg) = 0; // NOLINT
 
   /**
    * Returns the current input position
@@ -582,7 +582,7 @@ struct BufferedSource : Source {
 
   u64 read(std::span<char> out) override;
 
-  i32 seek(i64 offset, SeekMode mode = SeekMode::beg) override;
+  i32 seek(i64 offset, SeekMode mode = SeekMode::beg) override; // NOLINT
 
   u64 tell() override;
 
@@ -651,7 +651,7 @@ struct FileSource : Source {
 
   u64 read(std::span<char> out) override;
 
-  i32 seek(i64 offset, SeekMode mode = SeekMode::beg) override;
+  i32 seek(i64 offset, SeekMode mode = SeekMode::beg) override; // NOLINT
 
   u64 tell() override;
 
@@ -676,7 +676,7 @@ ROCKET_TEST_PRIVATE:
   u64 read([[maybe_unused]] std::span<char> out) override { return 0; }
 
   i32
-  seek([[maybe_unused]] i64 offset, [[maybe_unused]] SeekMode mode = SeekMode::beg) override {
+  seek([[maybe_unused]] i64 offset, [[maybe_unused]] SeekMode mode = SeekMode::beg) override { // NOLINT
     return EINVAL;
   }
 
@@ -707,7 +707,7 @@ struct StreamSource : Source {
 
   u64 read(std::span<char> out) override;
 
-  i32 seek(i64 offset, SeekMode mode = SeekMode::beg) override;
+  i32 seek(i64 offset, SeekMode mode = SeekMode::beg) override; // NOLINT
 
   u64 tell() override;
 
@@ -722,7 +722,7 @@ private:
  * A sourcde that reads from a string.
  */
 struct StringSource : Source {
-  StringSource() {}
+  StringSource() = default;
 
   /**
    * @ctor
@@ -731,7 +731,7 @@ struct StringSource : Source {
    */
   explicit StringSource(std::string_view in) : in_(in) {}
 
-  ~StringSource() = default;
+  ~StringSource() override = default;
 
   i32 close() override { return EIO; }
 
@@ -739,7 +739,7 @@ struct StringSource : Source {
 
   u64 read(std::span<char> out) override;
 
-  i32 seek(i64 offset, SeekMode mode = SeekMode::beg) override;
+  i32 seek(i64 offset, SeekMode mode = SeekMode::beg) override; // NOLINT
 
   u64 tell() override { return pos_; }
 
@@ -752,11 +752,11 @@ private:
 // Variables ------------------------------------------------------------------------------------------------
 
 /// The standard input source.
-ROCKET_PUBLIC extern Source& in;
+ROCKET_PUBLIC extern Source& in; // NOLINT
 /// The standard output sink.
-ROCKET_PUBLIC extern Sink& out;
+ROCKET_PUBLIC extern Sink& out; // NOLINT
 /// The standard error sink.
-ROCKET_PUBLIC extern Sink& err;
+ROCKET_PUBLIC extern Sink& err; // NOLINT
 
 } // namespace rocket::nio
 

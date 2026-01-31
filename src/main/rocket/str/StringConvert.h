@@ -6,13 +6,11 @@
 
 #pragma once
 
-#include "rocket/Exception.h"
 #include "rocket/enum.h"
+#include "rocket/Exception.h"
 #include "rocket/type-traits.h"
-#include "rocket/io/io.h"
+#include "rocket/scan/scan.h"
 #include "rocket/str/message/message.h"
-
-#include <limits>
 
 namespace rocket::str {
 
@@ -35,7 +33,7 @@ struct StringConvert<bool> {
    * @param val the value to convert
    * @return a string
    */
-  std::string toString(Type val) const noexcept { return val ? "true" : "false"; }
+  [[nodiscard]] std::string toString(Type val) const noexcept { return val ? "true" : "false"; }
 
   /**
    * Converts @p str to a `bool` value.
@@ -43,7 +41,7 @@ struct StringConvert<bool> {
    * @param str the string to convert
    * @return a `bool` value
    */
-  Type
+  [[nodiscard]] Type
   toType(std::string_view str) const {
     // Anything that is not false is true, e.g. "42"!
     return not isFalse(str);
@@ -65,7 +63,7 @@ struct StringConvert<char> {
    * @param val the value to convert
    * @return a string
    */
-  std::string toString(Type val) const noexcept { return { val }; }
+  [[nodiscard]] std::string toString(Type val) const noexcept { return { val }; }
 
   /**
    * Converts @p str to a `char` value.
@@ -75,7 +73,7 @@ struct StringConvert<char> {
    *
    * @throw #rocket::InvalidState if @p str cannot be scanned
    */
-  Type
+  [[nodiscard]] Type
   toType(std::string_view str) const {
     if (str.size() != 1) {
       throw InvalidState(message::cannotScanAs(str, typeid(Type)));
@@ -95,7 +93,7 @@ struct StringConvert<I> {
    * @param val the value to convert
    * @return a string
    */
-  std::string toString(Type val) const noexcept{ return fmt::format("{}", val); }
+  [[nodiscard]] std::string toString(Type val) const noexcept{ return fmt::format("{}", val); }
 
   /**
    * Converts @p str to an integer value.
@@ -104,15 +102,13 @@ struct StringConvert<I> {
    * @return an integer value
    * @throw #rocket::InvalidState if @p str cannot be scanned
    */
-  Type
+  [[nodiscard]] Type
   toType(std::string_view str) const {
-    auto is = io::is(str);
-    Type ret;
-    is >> ret;
-    if (is.fail() || not is.eof()) {
+    auto result = scn::scan<I>(str, "{}");
+    if (not result || result->begin() != str.end()) {
       throw InvalidState(message::cannotScanAs(str, typeid(Type)));
     }
-    return ret;
+    return result->value();
   }
 };
 
@@ -127,7 +123,7 @@ struct StringConvert<E> {
    * @param val the value to convert
    * @return a string
    */
-  std::string toString(Type val) const noexcept { return fmt::format("{}", val); }
+  [[nodiscard]] std::string toString(Type val) const noexcept { return fmt::format("{}", val); }
 
   /**
    * Converts @p str to an enum value.
@@ -136,7 +132,7 @@ struct StringConvert<E> {
    * @return an enum value
    * @throw #rocket::InvalidState if @p str cannot be scanned
    */
-  Type
+  [[nodiscard]] Type
   toType(std::string_view str) const {
     return Enum<Type>::toType(str);
   }
@@ -153,7 +149,7 @@ struct StringConvert<F> {
    * @param val the value to convert
    * @return a string
    */
-  std::string toString(Type val) const noexcept { return fmt::format("{}", val); }
+  [[nodiscard]] std::string toString(Type val) const noexcept { return fmt::format("{}", val); }
 
   /**
    * Converts @p str to a floating-point value.
@@ -162,27 +158,13 @@ struct StringConvert<F> {
    * @return a floating-point value
    * @throw #rocket::InvalidState if @p str cannot be scanned
    */
-  Type
+  [[nodiscard]] Type
   toType(std::string_view str) const {
-    auto limits = std::numeric_limits<Type>();
-
-    if (str == "inf" || str == "+inf") {
-      return limits.infinity();
-    } else if (str == "-inf") {
-      return -limits.infinity();
-    } else if (str == "nan") {
-      return limits.quiet_NaN();
-    } else if (str == "snan") {
-      return limits.signaling_NaN();
-    }
-
-    auto is = io::is(str);
-    Type ret;
-    is >> ret;
-    if (is.fail() || not is.eof()) {
+    auto result = scn::scan<F>(str, "{}");
+    if (not result || result->begin() != str.end()) {
       throw InvalidState(message::cannotScanAs(str, typeid(Type)));
     }
-    return ret;
+    return result->value();
   }
 };
 
@@ -197,7 +179,7 @@ struct StringConvert<const char*> {
    * @param val the value to convert
    * @return a string
    */
-  std::string toString(Type val) const noexcept { return val; }
+  [[nodiscard]] std::string toString(Type val) const noexcept { return val; }
 
   /**
    * Converts @p str to a `const char*` value.
@@ -205,7 +187,7 @@ struct StringConvert<const char*> {
    * @param str the string to convert
    * @return a `const char*` value
    */
-  Type toType(std::string_view str) const { data_ = str; return data_.c_str(); }
+  [[nodiscard]] Type toType(std::string_view str) const { data_ = str; return data_.c_str(); }
 
 private:
 
@@ -223,7 +205,7 @@ struct StringConvert<std::string> {
    * @param val the value to convert
    * @return a string
    */
-  std::string toString(const Type& val) const noexcept { return val; }
+  [[nodiscard]] std::string toString(const Type& val) const noexcept { return val; }
 
   /**
    * Converts @p str to a #std::string.
@@ -231,7 +213,7 @@ struct StringConvert<std::string> {
    * @param str the string to convert
    * @return a #std::string value
    */
-  Type toType(std::string_view str) const { return std::string(str); }
+  [[nodiscard]] Type toType(std::string_view str) const { return std::string(str); }
 };
 
 /// @spec_rocket_StringConvert{#std::string_view}
@@ -245,7 +227,7 @@ struct StringConvert<std::string_view> {
    * @param val the value to convert
    * @return a string
    */
-  std::string toString(Type val) const noexcept { return std::string(val); }
+  [[nodiscard]] std::string toString(Type val) const noexcept { return std::string(val); }
 
   /**
    * Converts @p str to a #std::string_view.
@@ -253,7 +235,7 @@ struct StringConvert<std::string_view> {
    * @param str the string to convert
    * @return a #std::string_view value
    */
-  Type toType(std::string_view str) const { return str; }
+  [[nodiscard]] Type toType(std::string_view str) const { return str; }
 };
 
 // Functions ------------------------------------------------------------------------------------------------
@@ -267,7 +249,7 @@ struct StringConvert<std::string_view> {
  * @throw #rocket::InvalidState if @p str cannot be scanned
  */
 template<typename T>
-T
+[[nodiscard]] T
 toType(std::string_view str) {
   return StringConvert<T>().toType(str);
 }
@@ -280,7 +262,7 @@ toType(std::string_view str) {
  * @return a value of type @p T, or null if @p str cannot be scanned
  */
 template<typename T>
-std::optional<T>
+[[nodiscard]] std::optional<T>
 tryToType(std::string_view str) {
   try {
     return StringConvert<T>().toType(str);
@@ -297,7 +279,7 @@ tryToType(std::string_view str) {
  * @return a string
  */
 template<typename T>
-std::string
+[[nodiscard]] std::string
 toString(T val) noexcept {
   return StringConvert<T>().toString(val);
 }
