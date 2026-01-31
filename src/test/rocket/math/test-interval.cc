@@ -601,7 +601,7 @@ TEST(interval, ClosedIntervalFormat) {
   EXPECT_EQ(fmt::format("{}", type(1, 2)), "[1,2]");
 }
 
-TEST(interval, RightOpenIntervalFormat) {
+TEST(interval, RightOpenIntervalI32Format) {
   using type = RightOpenInterval<i32>;
 
   EXPECT_EQ(fmt::format("{}", type()), "∅");
@@ -612,6 +612,13 @@ TEST(interval, RightOpenIntervalFormat) {
   EXPECT_EQ(fmt::format("{}", type(5, nullopt)), "[5,∞)");
 
   EXPECT_EQ(fmt::format(U"{}", type(1'000, 2'000)), U"[1000,2000)");
+}
+
+TEST(interval, RightOpenIntervalF64Format) {
+  using type = RightOpenInterval<f64>;
+
+  EXPECT_EQ(fmt::format("{}", type()), "∅");
+  EXPECT_EQ(fmt::format("{}", type(1, 1)), "∅");
 }
 
 // EOF
