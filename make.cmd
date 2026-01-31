@@ -78,7 +78,7 @@ if %TEST% == all (
 ) else if %TEST% == test (
    ctest --test-dir build\src\test --preset windows-release
 ) else if %TEST% == bench (
-   ctest --test-dir build\src\bench --preset windows-release
+   ctest --test-dir build\src\bench --preset windows-release -V
 ) else (
    ctest --preset windows-release -R %TEST% -V
 )
