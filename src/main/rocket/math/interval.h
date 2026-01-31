@@ -437,7 +437,7 @@ struct IntervalImpl {
    *
    * Makes an empty interval.
    */
-  ROCKET_CONSTEXPR IntervalImpl() : a(static_cast<Type>(1)), b(static_cast<Type>(0)) {}
+  constexpr IntervalImpl() : a(static_cast<Type>(1)), b(static_cast<Type>(0)) {}
 
   /**
    * @ctor
@@ -449,7 +449,7 @@ struct IntervalImpl {
    * @param a the lower bound. If null, then there is no lower bound
    * @param b the upper bound. If null, then there is no upper bound
    */
-  ROCKET_CONSTEXPR IntervalImpl(A a, B b) : a(a), b(b) {}
+  constexpr IntervalImpl(A a, B b) : a(a), b(b) {}
 
   /// @member_op_eq
   bool
@@ -595,7 +595,7 @@ struct fmt::formatter<rocket::math::IntervalImpl<Left, Right>, C> {
   using Type = typename Left::Type;
 
   template<typename FormatContext>
-  ROCKET_CONSTEXPR FormatContext::iterator
+  constexpr FormatContext::iterator
   format(const rocket::math::IntervalImpl<Left, Right>& val, FormatContext& ctx) const {
     using namespace rocket::math::internal;
 
