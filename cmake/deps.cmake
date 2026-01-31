@@ -13,9 +13,12 @@ if(Boost_FOUND)
   set(ROCKET_BOOST_LINK_TARGETS Boost::headers)
   set(ROCKET_BOOST_EXPORT_TARGETS)
 else()
+  set(BOOST_VERSION 1.87.0)
+
   FetchContent_Declare(
     Boost
-    URL https://github.com/boostorg/boost/releases/download/boost-1.84.0/boost-1.84.0.7z
+    # URL https://github.com/boostorg/boost/releases/download/boost-1.84.0/boost-1.84.0.7z
+    URL https://github.com/boostorg/boost/releases/download/boost-${BOOST_VERSION}/boost-${BOOST_VERSION}-cmake.tar.xz
     SYSTEM
     EXCLUDE_FROM_ALL
   )
