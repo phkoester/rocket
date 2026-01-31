@@ -26,14 +26,17 @@ namespace internal {
 // #ValueType ...............................................................................................
 
 template<typename T>
-struct ValueType {
+struct Value {
   using Type = T;
 };
 
 template<typename T>
-struct ValueType<std::optional<T>> {
+struct Value<std::optional<T>> {
   using Type = T;
 };
+
+template<typename T>
+using ValueType = Value<T>::Type;
 
 // #applyTo .................................................................................................
 
@@ -81,8 +84,8 @@ struct Parameter {
    *   multiple arguments from the command line
    * @param name the name of the parameter, e.g. `"FILE"`. By convention, this is in all-caps and matches
    *   the usage line
-   * @param format this parameter should briefly describe the format, e.g. `"file"`, `"number"`, or
-   *   "\`red\`, `\green\`, or `\blue\`"`
+   * @param format this parameter should briefly describe the format, e.g. <code>"file"</code>,
+   *   <code>"number"</code>, or <code>"`red`, `green`, or `blue`"</code>
    * @param help a short help text. By convention, this starts with a lower-case letter and does not end with
    *   a period, e.g. `"the input file"`
    * @param dest the destination reference that is assigned the argument
@@ -98,7 +101,7 @@ struct Parameter {
     return {
       name,
       std::nullopt, // #allowedValues
-      IsVector<typename internal::ValueType<T>::Type> ? NPOS : 1, // #maxOccurs
+      IsVector<typename internal::ValueType<T>> ? NPOS : 1, // #maxOccurs
       false, // #consumeOpts
       not IsOptional<T>, // #required
       format,
@@ -125,13 +128,13 @@ struct Parameter {
   static inline Parameter
   of(
     const std::string& name,
-    const std::set<typename internal::ValueType<T>::Type>& allowedValues,
+    const std::set<typename internal::ValueType<T>>& allowedValues,
     const std::optional<std::string>& help,
     T& dest) {
     Parameter ret {
       name,
       std::nullopt, // #allowedValues
-      IsVector<typename internal::ValueType<T>::Type> ? NPOS : 1, // #maxOccurs
+      IsVector<typename internal::ValueType<T>> ? NPOS : 1, // #maxOccurs
       false, // #consumeOpts
       not IsOptional<T>, // #required
       std::nullopt, // #format
@@ -208,7 +211,7 @@ struct Option {
    * Convenience function that makes a new option and binds it to a destination reference.
    *
    * @tparam T the type of the destination reference. If this is a #std::optional reference, this option is
-   *   optional, otherwise it is required. If this is a `bool` reference, the option takes no argument,
+   *   optional, otherwise it is required. If this is a `bool` reference, the option takes no value,
    *   otherwise it does. If this is a #std::vector reference, multiple values may be supplied on the command
    *   line
    * @param group a pointer to an option group. May be null
@@ -216,8 +219,8 @@ struct Option {
    *   `--verbose` on the command line
    * @param shortName an optional short name. For example, if this is <code>"€"</code>, the option may be
    *   chosen via `-€` on the command line
-   * @param format if the option takes an argument, this parameter should briefly describe the format, e.g.
-   *   `"file"`, or `"number"` etc.
+   * @param format if the option takes a value, this parameter should briefly describe the format, e.g.
+   *   <code>"file"</code>, <code>"number"</code>, or <code>"`red`, `green`, or `blue`"</code>
    * @param help a short help text. By convention, this starts with a lower-case verb and does not end with
    *   a period, e.g. `"print NUM lines of leading context"`
    * @param dest the destination reference that is assigned the option's value
@@ -238,7 +241,7 @@ struct Option {
       shortName,
       std::nullopt, // #allowedValues
       // #takesValue is `false` for `bool`, otherwise it is `true`
-      std::is_same_v<typename internal::ValueType<T>::Type, bool> ? false : true,
+      std::is_same_v<typename internal::ValueType<T>, bool> ? false : true,
       not IsOptional<T>, // #required
       format,
       help,
@@ -250,7 +253,7 @@ struct Option {
    * Convenience function that makes a new option and binds it to a destination reference.
    *
    * @tparam T the type of the destination reference. If this is a #std::optional reference, this option is
-   *   optional, otherwise it is required. If this is a `bool` reference, the option takes no argument,
+   *   optional, otherwise it is required. If this is a `bool` reference, the option takes no value,
    *   otherwise it does. If this is a #std::vector reference, multiple values may be supplied on the command
    *   line
    * @param group a pointer to an option group. May be null
@@ -270,7 +273,7 @@ struct Option {
     const OptionGroup* group,
     const std::string& name,
     const std::optional<unicode::Character<char>>& shortName,
-    const std::set<typename internal::ValueType<T>::Type>& allowedValues,
+    const std::set<typename internal::ValueType<T>>& allowedValues,
     const std::optional<std::string>& help,
     T& dest) {
     auto ret = Option {
@@ -279,7 +282,7 @@ struct Option {
       shortName,
       std::nullopt, // #allowedValues
       // #takesValue is `false` for `bool`, otherwise it is `true`
-      std::is_same_v<typename internal::ValueType<T>::Type, bool> ? false : true,
+      std::is_same_v<typename internal::ValueType<T>, bool> ? false : true,
       not IsOptional<T>, // #required
       std::nullopt, // #format
       help,
@@ -332,7 +335,7 @@ struct CommandLineConfig {
 
   /**
    * Did another module process the command line and output something? If this is `true`, an extra empty line
-   * is printed when calling #CommandLine#help.
+   * is printed before the help text.
    */
   bool otherOutput = false;
   /**

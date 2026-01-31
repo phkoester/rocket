@@ -37,7 +37,6 @@ struct CodePoint {
    *
    * @param val a `char` value. This must be an ASCII character in the range @f$[0,127]@f$
    */
-  // cppcheck-suppress noExplicitConstructor
   constexpr CodePoint(char val) : val_(val) {
     ROCKET_CHECK(val, ascii(), "ASCII character expected");
   }
