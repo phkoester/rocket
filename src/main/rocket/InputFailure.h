@@ -68,26 +68,26 @@ struct InputFailure : InvalidState {
       position_(position),
       ranges_(ranges) {}
 
-  ~InputFailure() override {}
+  ~InputFailure() override = default;
 
   /**
    * Returns the stored position.
    *
    * @return the stored position
    */
-  u64 position() const { return position_; }
+  [[nodiscard]] u64 position() const { return position_; }
 
   /**
    * Returns the stored position ranges.
    *
    * @return the stored position ranges
    */
-  const str::Ranges& ranges() const { return ranges_; }
+  [[nodiscard]] const str::Ranges& ranges() const { return ranges_; }
 
 private:
 
-  const u64 position_;
-  const str::Ranges ranges_;
+  u64 position_;
+  str::Ranges ranges_;
 };
 
 } // namespace rocket

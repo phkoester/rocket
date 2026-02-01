@@ -36,8 +36,8 @@ tempDir() {
 path
 tempFile() {
   auto gen = math::gen();
-  path name = fmt::format("rocket-{}.tmp", math::randomHex(gen, 32));
-  path dir = temp_directory_path();
+  const path name = fmt::format("rocket-{}.tmp", math::randomHex(gen, 32));
+  const path dir = temp_directory_path();
   if (not is_directory(dir)) {
     ROCKET_FAIL("Temporary directory `{}` is not a directory", dir.string());
   }

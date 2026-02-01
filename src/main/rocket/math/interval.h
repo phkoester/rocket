@@ -461,7 +461,7 @@ struct IntervalImpl {
   }
 
   /// @member_op_ne
-  inline bool operator!=(const IntervalImpl& rhs) const { return not operator==(rhs); }
+  bool operator!=(const IntervalImpl& rhs) const { return not operator==(rhs); }
 
   /**
    * Returns the cardinality of the interval.
@@ -476,7 +476,7 @@ struct IntervalImpl {
    *
    * @return the cardinality of the interval, or null if the cardinality is infinite
    */
-  constexpr Traits::CardinalityType cardinality() const { return Traits::cardinality(a, b); }
+  [[nodiscard]] constexpr Traits::CardinalityType cardinality() const { return Traits::cardinality(a, b); }
 
   /**
    * Tests if @p val is contained in the interval.
@@ -484,7 +484,10 @@ struct IntervalImpl {
    * @param val a value of type #Type
    * @return whether @p val is contained in the interval
    */
-  constexpr bool contains(Type val) const { return Left::matches(a, val) && Right::matches(b, val); }
+  [[nodiscard]] constexpr bool
+  contains(Type val) const {
+    return Left::matches(a, val) && Right::matches(b, val);
+  }
 
   /**
    * Tests if the interval is empty.
@@ -493,7 +496,7 @@ struct IntervalImpl {
    *
    * @return whether the interval is empty
    */
-  constexpr bool empty() const { return Traits::empty(a, b); }
+  [[nodiscard]] constexpr bool empty() const { return Traits::empty(a, b); }
 
   /**
    * Returns the size of the interval.
@@ -507,7 +510,7 @@ struct IntervalImpl {
    *
    * @return the size of the interval, or null if the interval size is infinite
    */
-  constexpr Traits::SizeType size() const { return Traits::size(a, b); }
+  [[nodiscard]] constexpr Traits::SizeType size() const { return Traits::size(a, b); }
 };
 
 /**

@@ -19,8 +19,8 @@ namespace {
 
 // Local functions ------------------------------------------------------------------------------------------
 
-string escapeCStringCodePointHex(unicode::CodePoint, u64&);
-string escapeCStringTab(u64&, const CStringConfig&);
+string escapeCStringCodePointHex(unicode::CodePoint cp, u64& column);
+string escapeCStringTab(u64& column, const CStringConfig& config);
 
 string
 escapeCStringCodePoint(unicode::CodePoint cp, u64& column, const CStringConfig& config) {
@@ -80,12 +80,13 @@ escapeCStringCodePoint(unicode::CodePoint cp, u64& column, const CStringConfig& 
 string
 escapeCStringCodePointHex(unicode::CodePoint cp, u64& column) {
   string ret;
-  if (cp > 0xffffU)
+  if (cp > 0xffffU) {
     ret = fmt::format("\\U{:0>8X}", static_cast<u32>(cp));
-  else if (cp > 0x00ffU)
+  }else if (cp > 0x00ffU) {
     ret = fmt::format("\\u{:0>4X}", static_cast<u32>(cp));
-  else
+  } else {
     ret = fmt::format("\\x{:0>2X}", static_cast<u32>(cp));
+  }
   column += ret.size();
   return ret;
 }
@@ -97,12 +98,11 @@ escapeCStringTab(u64& column, const CStringConfig& config) {
     column += ret.size();
     return ret;
   }
-  else {
-    u64 mod = column % *config.tabSize;
-    string ret(*config.tabSize - mod, ' ');
-    column += ret.size();
-    return ret;
-  }
+
+  const u64 mod = column % *config.tabSize;
+  string ret(*config.tabSize - mod, ' ');
+  column += ret.size();
+  return ret;
 }
 
 string
@@ -170,7 +170,7 @@ getChar(unicode::Iterator<char>& iter) {
 
 void
 getChar(unicode::Iterator<char>& iter, char expected) {
-  u64 pos = iter.current();
+  const u64 pos = iter.current();
   auto seg = iter.nextSegment();
   if (seg.empty()) {
     throw InputFailure(pos, fmt::format("Expected character {:?}, got EOI", expected));
@@ -183,7 +183,7 @@ getChar(unicode::Iterator<char>& iter, char expected) {
 
 u32
 getHex(unicode::Iterator<char>& iter, u64 n) {
-  u64 pos0 = iter.current();
+  const u64 pos0 = iter.current();
 
   string input;
   for (u64 i = 0; i < n; ++i) {
@@ -223,10 +223,10 @@ namespace rocket::str::escape {
 
 string
 escapeCString(string_view input, const CStringConfig& config, Result* result) {
-  ROCKET_CHECK(config, config.quote == '\0' || config.quote == '"' || config.quote == '\'');
+  ROCKET_CHECK(config, config.quote == '\0' || config.quote == '"' || config.quote == '\''); // NOLINT
 
   string ret;
-  if (result) {
+  if (result != nullptr) {
     result->positions.clear();
   }
   u64 to = 0;
@@ -253,7 +253,7 @@ escapeCString(string_view input, const CStringConfig& config, Result* result) {
     }
     auto c = unicode::CharacterView<char>(seg);
 
-    if (result) {
+    if (result != nullptr) {
       result->positions.insert({ current, to });
     }
 
@@ -280,7 +280,7 @@ escapeCString(string_view input, const CStringConfig& config, Result* result) {
 
   // Add EOI position
 
-  if (result) {
+  if (result != nullptr) {
     result->positions.insert({ iter.current(), to });
   }
 
@@ -294,12 +294,12 @@ escapeCString(string_view input, const CStringConfig& config, Result* result) {
 }
 
 string
-unescapeCString(string_view input, const CStringConfig& config, Result* result) {
-  ROCKET_CHECK(config, config.quote == '\0' || config.quote == '"' || config.quote == '\'');
+unescapeCString(string_view input, const CStringConfig& config, Result* result) { // NOLINT(*-complexity)
+  ROCKET_CHECK(config, config.quote == '\0' || config.quote == '"' || config.quote == '\''); // NOLINT
 
   string ret;
 
-  if (result) {
+  if (result != nullptr) {
     result->positions.clear();
   }
 
@@ -315,7 +315,7 @@ unescapeCString(string_view input, const CStringConfig& config, Result* result) 
 
     u64 pos = iter.current();
     auto c1 = getOptionalChar(iter);
-    if (result) {
+    if (result != nullptr) {
       result->positions.insert({ pos, ret.size() });
     }
     if (not c1) {
@@ -333,7 +333,7 @@ unescapeCString(string_view input, const CStringConfig& config, Result* result) 
         // Terminating quote: EOI
 
         return ret;
-      } else if (*cp1 == '\\') {
+      } else if (*cp1 == '\\') { // NOLINT
         // Backslash: this may either be a C-string-escaped character or a hexadecimal sequence starting with
         // "\\x", "\\u", or "\\U"
 
@@ -376,17 +376,17 @@ unescapeCString(string_view input, const CStringConfig& config, Result* result) 
           ret.push_back(static_cast<char>(*cp2));
           break;
         case 'x': {
-          char32 i = getHex(iter, 2);
+          const char32 i = getHex(iter, 2);
           ret.append(static_cast<string>(unicode::CodePoint(i)));
           break;
         }
         case 'u': {
-          char32 i = getHex(iter, 4);
+          const char32 i = getHex(iter, 4);
           ret.append(static_cast<string>(unicode::CodePoint(i)));
           break;
         }
         case 'U': {
-          char32 i = getHex(iter, 8);
+          const char32 i = getHex(iter, 8);
           ret.append(static_cast<string>(unicode::CodePoint(i)));
           break;
         }
@@ -410,7 +410,7 @@ unescapeCString(string_view input, const CStringConfig& config, Result* result) 
 string
 escapeRegex(string_view input, Result* result) {
   string ret;
-  if (result) {
+  if (result != nullptr) {
     result->positions.clear();
   }
   u64 to = 0;
@@ -430,7 +430,7 @@ escapeRegex(string_view input, Result* result) {
     }
     auto c = unicode::CharacterView<char>(seg);
 
-    if (result) {
+    if (result != nullptr) {
       result->positions.insert({ current, to });
     }
 
@@ -457,7 +457,7 @@ escapeRegex(string_view input, Result* result) {
 
   // Add EOI position
 
-  if (result) {
+  if (result != nullptr) {
     result->positions.insert({ iter.current(), to });
   }
 
@@ -468,7 +468,7 @@ string
 unescapeRegex(string_view input, Result* result) {
   string ret;
 
-  if (result) {
+  if (result != nullptr) {
     result->positions.clear();
   }
 
@@ -476,9 +476,9 @@ unescapeRegex(string_view input, Result* result) {
   while (true) {
     // Read character
 
-    u64 pos = iter.current();
+    const u64 pos = iter.current();
     auto c1 = getOptionalChar(iter);
-    if (result) {
+    if (result != nullptr) {
       result->positions.insert({ pos, ret.size() });
     }
     if (not c1) {
@@ -534,12 +534,12 @@ unescapeRegex(string_view input, Result* result) {
           ret.push_back(static_cast<char>(*cp2));
           break;
         case 'x': {
-          char32 i = getHex(iter, 2);
+          const char32 i = getHex(iter, 2);
           ret.append(static_cast<string>(unicode::CodePoint(i)));
           break;
         }
         case 'u': {
-          char32 i = getHex(iter, 4);
+          const char32 i = getHex(iter, 4);
           ret.append(static_cast<string>(unicode::CodePoint(i)));
           break;
         }

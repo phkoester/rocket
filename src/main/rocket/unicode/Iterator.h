@@ -73,7 +73,7 @@ struct Iterator {
    *
    * @return the input string
    */
-  std::basic_string_view<C> input() const { return input_; }
+  [[nodiscard]] std::basic_string_view<C> input() const { return input_; }
 
   /**
    * Sets the iterator to the last position in the input string.

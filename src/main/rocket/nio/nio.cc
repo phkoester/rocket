@@ -224,7 +224,7 @@ FileSink::write(string_view in) {
   const u64 ret = std::fwrite(in.data(), 1, in.size(), file_);
   LOG("fwrite=" << ret << ", in.size=" << in.size() << ", ferror=" << ferror(file_));
   error_ = ferror(file_);
-  ROCKET_ASSERT(ret == in.size() || error_ != 0); // NOLINT(readability-*)
+  ROCKET_ASSERT(ret == in.size() || error_ != 0); // NOLINT
   return ret;
 }
 
