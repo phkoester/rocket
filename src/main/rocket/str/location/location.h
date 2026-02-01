@@ -153,10 +153,10 @@ struct PrintLocationsConfig {
  * #rocket::str::location::LocationsResult.
  *
  * @param input the input string. It must be UTF-8-encoded, using LF (`"\n"`) or CRLF (`"\r\n"`) as line
- *     breaks
+ *   breaks
  * @param positions the positions to look for. They needn't be sorted in any way. The order of the positions
- *     is preserved in the #rocket::str::location::LocationsResult. The only restriction is that all
- *     #rocket::str::location::Position#position values have to be unique
+ *   is preserved in the #rocket::str::location::LocationsResult. The only restriction is that all
+ *   #rocket::str::location::Position#position values have to be unique
  * @param config the configuration
  * @return a #rocket::str::location::LocationsResult
  */
@@ -170,9 +170,9 @@ LocationsResult locations(
  *
  * @param out the sink to print to
  * @param input the entire input as a string view. This may be null, but then, the line strings in
- *     @p locationsResult must be available
+ *   @p locationsResult must be available
  * @param locationsResult the #rocket::str::location::LocationsResult instance that was returned by the
- *     #rocket::str::location::locations function
+ *   #rocket::str::location::locations function
  * @param config the configuration
  */
 void printLocations(

@@ -259,7 +259,7 @@ namespace utf8 {
  *
  * @param str a UTF-8 string
  * @param pos the position to get the next code point from. This must be less than the size of @p str. The
- *     position is updated to the position of the next code point
+ *   position is updated to the position of the next code point
  * @return the next code point
  */
  CodePoint nextCodePoint(std::string_view str, u64& pos);
@@ -274,9 +274,9 @@ namespace utf8 {
  * replacement character `�` (U+FFFD).
  *
  * @param str the string to validate. The string must remain valid for the lifetime of the returned
- *     #rocket::Cow
+ *   #rocket::Cow
  * @param positions if nonnull, then the left index of this map translates `char` offsets from @p str to
- *     `char` offsets in the result for each code point and the end of the string
+ *   `char` offsets in the result for each code point and the end of the string
  * @return a #rocket::Cow result
  */
 Cow<std::string_view, std::string>
@@ -293,7 +293,7 @@ namespace utf32 {
  *
  * @param str a UTF-32 string
  * @param pos the position to get the next code point from. This must be less than the size of @p str. The
- *     position is updated to the position of the next code point
+ *   position is updated to the position of the next code point
  * @return the next code point
  */
 CodePoint nextCodePoint(std::u32string_view str, u64& pos);
@@ -307,10 +307,10 @@ CodePoint nextCodePoint(std::u32string_view str, u64& pos);
  * string. Invalid code points are replaced by the replacement character `�` (U+FFFD).
  *
  * @param str the string to validate. The string must remain valid for the lifetime of the returned
- *     #rocket::Cow
+ *   #rocket::Cow
  * @param positions if nonnull, then the left index of this map translates `char32` offsets from @p str to
- *     `char32` offsets in the result for each code point and the end of string (trivial, but provided for
- *     completeness)
+ *   `char32` offsets in the result for each code point and the end of string (trivial, but provided for
+ *   completeness)
  * @return a #rocket::Cow result
  */
 Cow<std::u32string_view, std::u32string>

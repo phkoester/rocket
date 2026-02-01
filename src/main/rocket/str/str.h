@@ -215,8 +215,8 @@ void lowerIn(std::u32string& str);
  * Splits a string into paragraphs.
  *
  * @param str the string to split. The string must be UTF-8-encoded, using LF (`"\n"`) or CRLF (`"\r\n"`) as
- *     line breaks. No-break spaces (U+00A0) are recognized. Tabs are replaced by spaces. Consecutive
- *     whitespace is collapsed
+ *   line breaks. No-break spaces (U+00A0) are recognized. Tabs are replaced by spaces. Consecutive
+ *   whitespace is collapsed
  * @return a vector of paragraphs. Each paragraph is a vector of words. Each word is a UTF-8 string
  */
 std::vector<std::vector<std::string>> paragraphs(std::string_view str);

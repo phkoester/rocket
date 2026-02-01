@@ -34,7 +34,7 @@ struct BasicCharacter {
    * character.
    *
    * @param str a string. The string must not be empty. If the instance is a character view, the string must
-   *     remain valid for the lifetime of the instance
+   *   remain valid for the lifetime of the instance
    */
   constexpr explicit BasicCharacter(std::basic_string_view<C> str) : str_(str) {
     ROCKET_CHECK(str, not str.empty());
@@ -68,7 +68,7 @@ struct BasicCharacter {
    * Returns the number of code points in the character.
    *
    * @note You usually don't need this function. If you do, something might be wrong with your code. Using
-   *     this function on a segment returned by #rocket::unicode::Iterator is redundant and inefficient.
+   *   this function on a segment returned by #rocket::unicode::Iterator is redundant and inefficient.
    *
    * @return the number of code points in the character
    */

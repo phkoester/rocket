@@ -518,7 +518,7 @@ struct IntervalImpl {
  * @param_lhs
  * @param_rhs
  * @return a #rocket::math::IntervalImpl representing the intersection of @p lhs and @p rhs if such
- *     intersection exists, otherwise an empty interval
+ *   intersection exists, otherwise an empty interval
  */
 template<typename Left, typename Right>
 IntervalImpl<Left, Right>
@@ -554,7 +554,7 @@ operator&=(const IntervalImpl<Left, Right>& lhs, const IntervalImpl<Left, Right>
  * @param_lhs
  * @param_rhs
  * @return a #rocket::math::IntervalImpl representing the union of @p lhs and @p rhs if such union exists,
- *     otherwise an empty interval
+ *   otherwise an empty interval
  */
 template<typename Left, typename Right>
 IntervalImpl<Left, Right>

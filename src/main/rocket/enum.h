@@ -32,7 +32,7 @@
  * @note This macro must be called in the global namespace.
  *
  * @param ns the namespace of the enum, e.g. `mynamespace`. May be left empty if the enum is in the global
- *     namespace
+ *   namespace
  * @param type the type of the enum, without namespace, e.g. `MyClass::MyEnum`
  * @param name the name to use for generated identifiers, e.g. `MyClass_MyEnum`
  */
@@ -44,7 +44,7 @@
  * This macro must be called in the enum's local namespace.
  *
  * @param ns the namespace of the enum, e.g. `mynamespace`. May be left empty if the enum is in the global
- *     namespace
+ *   namespace
  * @param type the type of the enum, without namespace, e.g. `MyClass::MyEnum`
  * @param name the name to use for generated identifiers, e.g. `MyClass_MyEnum`
  * @param seq a sequence for the enum values, e.g. `(red)(green)(blue)`

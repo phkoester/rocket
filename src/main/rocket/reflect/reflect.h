@@ -51,7 +51,7 @@
  * @note This macro must be called in the global namespace.
  *
  * @param ns the namespace of the class, e.g. `mynamespace`. May be left empty if the class is in the global
- *     namespace
+ *   namespace
  * @param cls the type of the class without namespace, e.g. `MyClass`
  * @param name the name of the member-reference container to use
 */
@@ -63,7 +63,7 @@
  * @note This macro must be called in the global namespace.
  *
  * @param ns the namespace of the class, e.g. `mynamespace`. May be left empty if the class is in the global
- *     namespace
+ *   namespace
  * @param cls the type of the class without namespace, e.g. `MyClass`
  * @param name the name of the member-reference container to use
 */

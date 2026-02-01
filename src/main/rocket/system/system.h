@@ -89,7 +89,7 @@ get();
  * @tparam T the type to convert a string value to
  * @param name the name of the environment variable
  * @return null if the environment variable does not exist or if the string conversion fails, otherwise a
- *     value of type @p T
+ *   value of type @p T
  */
 template<typename T> requires (not std::is_same_v<T, std::string_view>)
 std::optional<T>

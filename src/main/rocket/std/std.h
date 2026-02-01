@@ -96,7 +96,7 @@ option(const std::optional<T>& val) {
  * @tparam T the value type
  * @param val a value; either of type @p T or `std::optional<T>`
  * @return a value. If the value is to be taken from a `std::optional<T>`, that optional is dereferenced,
- *     otherwise the value is returned directly
+ *   otherwise the value is returned directly
  */
 template<typename T>
 constexpr T&
@@ -110,7 +110,7 @@ value(T& val) {
  * @tparam T the value type
  * @param val a value; either of type @p T or `std::optional<T>`
  * @return a value. If the value is to be taken from a `std::optional<T>`, that optional is dereferenced,
- *     otherwise the value is returned directly
+ *   otherwise the value is returned directly
  */
 template<typename T>
 constexpr const T&
@@ -124,7 +124,7 @@ value(const T& val) {
  * @tparam T the value type
  * @param val a value; either of type @p T or `std::optional<T>`
  * @return a value. If the value is to be taken from a `std::optional<T>`, that optional is dereferenced,
- *     otherwise the value is returned directly
+ *   otherwise the value is returned directly
  */
 template<typename T>
 constexpr T&
@@ -138,7 +138,7 @@ value(std::optional<T>& val) {
  * @tparam T the value type
  * @param val a value; either of type @p T or `std::optional<T>`
  * @return a value. If the value is to be taken from a `std::optional<T>`, that optional is dereferenced,
- *     otherwise the value is returned directly
+ *   otherwise the value is returned directly
  */
 template<typename T>
 constexpr const T&
