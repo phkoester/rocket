@@ -26,7 +26,7 @@ testCharacter(const CharacterView<C>& c) {
     return;
   }
 
-  out.print("[{}]", ConvertTo<char>().apply(c));
+  out.print("[{}]", ConvertTo<char>::apply(c));
   auto pos = system::terminal::position(out);
   EXPECT_TRUE(pos);
   EXPECT_EQ(pos->first, c.width() + 3); // Check terminal's cursor position
@@ -44,7 +44,7 @@ TEST(Character, charWidth) {
     // ề: LATIN SMALL LETTER E, COMBINING CIRCUMFLEX ACCENT, COMBINING GRAVE ACCENT
     auto c = "\u0065\u0302\u0300"_c;
     EXPECT_EQ(c.width(), 1);
-    testCharacter<char>(c);
+    testCharacter<char>(CharacterView<char>(c));
   }
 
   {
@@ -53,7 +53,7 @@ TEST(Character, charWidth) {
     static_assert("🧑‍🌾"sv == "\U0001F9D1\u200D\U0001F33E"sv);
     auto c = "🧑‍🌾"_c;
     EXPECT_EQ(c.width(), 2);
-    testCharacter<char>(c);
+    testCharacter<char>(CharacterView<char>(c));
   }
 
   {
@@ -63,7 +63,7 @@ TEST(Character, charWidth) {
     auto c = "👨‍👩‍👦"_c;
     EXPECT_EQ(c.countCodePoints(), 5);
     EXPECT_EQ(c.width(), 2);
-    testCharacter<char>(c);
+    testCharacter<char>(CharacterView<char>(c));
   }
 }
 
@@ -75,7 +75,7 @@ TEST(Character, char32Width) {
     auto c = U"👨‍👩‍👦"_c;
     EXPECT_EQ(c.countCodePoints(), 5);
     EXPECT_EQ(c.width(), 2);
-    testCharacter<char32>(c);
+    testCharacter<char32>(CharacterView<char32>(c));
   }
 }
 

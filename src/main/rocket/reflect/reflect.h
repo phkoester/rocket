@@ -110,7 +110,7 @@
       auto out = ctx.out(); \
       if (withType_) { \
         std::string typeName = fmt::format("{}", typeid(val)); \
-        out = ::fmt::detail::write<C>(out, ::rocket::unicode::ConvertTo<C>().apply(typeName)); \
+        out = ::fmt::detail::write<C>(out, ::rocket::unicode::ConvertTo<C>::apply(typeName)); \
       } \
       out = ::rocket::reflect::internal::format<ns::cls, C>(val, ctx, debug_, ns::cls::name()); \
       return out; \
@@ -366,7 +366,7 @@ formatElemImpl(const T& val, FormatContext& ctx, bool debug, const Tuple& refs) 
   static_assert(IsMemberRef<decltype(ref)>::value);
 
   // Write name
-  out = detail::write<C>(out, rocket::unicode::ConvertTo<C>().apply(ref.name()));
+  out = detail::write<C>(out, rocket::unicode::ConvertTo<C>::apply(ref.name()));
   out = detail::write<C>(out, static_cast<C>('='));
 
   // Write value
@@ -597,7 +597,7 @@ struct fmt::formatter<rocket::reflect::VarRef<T>, C> {
   constexpr FormatContext::iterator
   format(const rocket::reflect::VarRef<T>& val, FormatContext& ctx) const{
     auto out = ctx.out();
-    out = detail::write<C>(out, rocket::unicode::ConvertTo<C>().apply(val.name()));
+    out = detail::write<C>(out, rocket::unicode::ConvertTo<C>::apply(val.name()));
     out = detail::write<C>(out, static_cast<C>('='));
     ctx.advance_to(out);
     out = underlying_.format(val.get(), ctx);

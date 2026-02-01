@@ -234,7 +234,7 @@ struct LargestType<T> {
 template<typename T, typename U, typename... Ts>
 struct LargestType<T, U, Ts...> {
   using Type = typename LargestType<
-      typename std::conditional<(sizeof(T) >= sizeof(U)), T, U>::type, Ts...>::Type; ///< @type_alias
+      typename std::conditional_t<(sizeof(T) >= sizeof(U)), T, U>, Ts...>::Type; ///< @type_alias
 };
 
 } // namespace rocket

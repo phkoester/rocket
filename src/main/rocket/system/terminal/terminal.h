@@ -32,7 +32,7 @@ struct Ansi {
    *
    * @return an ANSI escape sequence if this instance is active, otherwise an empty string
    */
-  std::string clear() const;
+  [[nodiscard]] std::string clear() const;
 
   /**
    * Moves the cursor down by @p n lines.
@@ -40,7 +40,7 @@ struct Ansi {
    * @param n the number of lines to move
    * @return an ANSI escape sequence if this instance is active, otherwise an empty string
    */
-  std::string down(i32 n) const;
+  [[nodiscard]] std::string down(i32 n) const;
 
   /**
    * Moves the cursor left by @p n columns.
@@ -48,7 +48,7 @@ struct Ansi {
    * @param n the number of columns to move
    * @return an ANSI escape sequence if this instance is active, otherwise an empty string
    */
-  std::string left(i32 n) const;
+  [[nodiscard]] std::string left(i32 n) const;
 
   /**
    * Moves the cursor to line @p line and column @p column.
@@ -57,15 +57,15 @@ struct Ansi {
    * @param line the line to move to, starting with 1
    * @return an ANSI escape sequence if this instance is active, otherwise an empty string
    */
-  std::string move(i32 column, i32 line) const;
+  [[nodiscard]] std::string move(i32 column, i32 line) const;
 
- /**
+  /**
    * Moves the cursor right by @p n columns.
    *
    * @param n the number of columns to move
    * @return an ANSI escape sequence if this instance is active, otherwise an empty string
    */
-  std::string right(i32 n) const;
+  [[nodiscard]] std::string right(i32 n) const;
 
   /**
    * Moves the cursor down by @p n lines.
@@ -73,7 +73,7 @@ struct Ansi {
    * @param n the number of lines to move
    * @return an ANSI escape sequence if this instance is active, otherwise an empty string
    */
-  std::string up(i32 n) const;
+  [[nodiscard]] std::string up(i32 n) const;
 
 private:
 

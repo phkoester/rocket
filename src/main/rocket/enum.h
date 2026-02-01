@@ -71,7 +71,7 @@
     constexpr FormatContext::iterator \
     format(ns::type val, FormatContext& ctx) const { \
       if (auto it = ns::get##name##Map__().left.find(val); it != ns::get##name##Map__().left.end()) { \
-        return underlying_.format(::rocket::unicode::ConvertTo<C>().apply(it->second), ctx); \
+        return underlying_.format(::rocket::unicode::ConvertTo<C>::apply(it->second), ctx); \
       } \
       return detail::write<C>(ctx.out(), INVALID); \
     } \

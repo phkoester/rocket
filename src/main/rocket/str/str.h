@@ -212,13 +212,6 @@ std::string join(
 void lowerIn(std::u32string& str);
 
 /**
- * Converts a UTF-32 string to lower case, handling Unicode characters correctly.
- *
- * @param str the string to convert
- */
-void lowerIn(std::u32string& str);
-
-/**
  * Splits a string into paragraphs.
  *
  * @param str the string to split. The string must be UTF-8-encoded, using LF (`"\n"`) or CRLF (`"\r\n"`) as
@@ -245,17 +238,19 @@ removeLeading(
     std::basic_string_view<C> str,
     std::basic_string_view<C> sub,
     u64 max = std::numeric_limits<u64>::max()) {
-  if (sub.empty() || sub.size() > str.size())
+  if (sub.empty() || sub.size() > str.size()) {
     return str;
+  }
 
   std::basic_string_view<C> ret(str);
   for (u64 i = 0; i < max; ++i) {
     // MSVC doesn't like the ctor with pointer and size here
     std::basic_string_view<C> leading(ret.begin(), ret.begin() + sub.size());
-    if (leading == sub)
+    if (leading == sub) {
       ret.remove_prefix(sub.size());
-    else
+    } else {
       return ret;
+    }
   }
   return ret;
 }
@@ -277,17 +272,19 @@ removeTrailing(
     std::basic_string_view<C> str,
     std::basic_string_view<C> sub,
     u64 max = std::numeric_limits<u64>::max()) {
-  if (sub.empty() || sub.size() > str.size())
+  if (sub.empty() || sub.size() > str.size()) {
     return str;
+  }
 
   std::basic_string_view<C> ret(str);
   for (u64 i = 0; i < max; ++i) {
     auto begin = ret.end() - sub.size();
     std::basic_string_view<C> trailing(begin, ret.end());
-    if (trailing == sub)
+    if (trailing == sub) {
       ret.remove_suffix(sub.size());
-    else
+    } else {
       return ret;
+    }
   }
   return ret;
 }
@@ -305,8 +302,9 @@ template<typename C> requires IsChar<C>
 repeat(const std::basic_string_view<C> str, u64 n) {
   std::basic_string<C> ret;
   ret.reserve(n * str.size());
-  for (u64 i = 0; i < n; ++i)
+  for (u64 i = 0; i < n; ++i) {
     ret.append(str);
+  }
   return ret;
 }
 

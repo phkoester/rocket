@@ -33,7 +33,7 @@ struct ConvertTo<char> {
    * @param str the string to convert
    * @return the converted string
    */
-  inline std::string_view apply(std::string_view str) const { return str; }
+  [[nodiscard]] static std::string_view apply(std::string_view str) { return str; }
 
   /**
    * Applies this converter to a string.
@@ -41,7 +41,7 @@ struct ConvertTo<char> {
    * @param str the string to convert
    * @return the converted string
    */
-  inline std::string apply(std::u32string_view str) const { return utf32To8(str); }
+  [[nodiscard]] static std::string apply(std::u32string_view str) { return utf32To8(str); }
 };
 
 /**
@@ -55,7 +55,7 @@ struct ConvertTo<char32> {
    * @param str the string to convert
    * @return the converted string
    */
-  inline std::u32string_view apply(std::u32string_view str) const { return str; }
+  [[nodiscard]] static std::u32string_view apply(std::u32string_view str) { return str; }
 
   /**
    * Applies this converter to a string.
@@ -63,7 +63,7 @@ struct ConvertTo<char32> {
    * @param str the string to convert
    * @return the converted string
    */
-  inline std::u32string apply(std::string_view str) const { return utf8To32(str); }
+  [[nodiscard]] static std::u32string apply(std::string_view str) { return utf8To32(str); }
 };
 
 } // namespace rocket::unicode

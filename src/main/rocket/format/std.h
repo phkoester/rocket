@@ -45,15 +45,15 @@ struct formatter<Exception, C> {
     if (withType_) {
       std::string typeName = fmt::format("{}", typeid(val));
       if constexpr (std::is_same_v<C, char>) {
-        out = format_to(out, "`{}`: ", rocket::unicode::ConvertTo<C>().apply(typeName));
+        out = format_to(out, "`{}`: ", rocket::unicode::ConvertTo<C>::apply(typeName));
       } else {
-        out = format_to(out, U"`{}`: ", rocket::unicode::ConvertTo<C>().apply(typeName));
+        out = format_to(out, U"`{}`: ", rocket::unicode::ConvertTo<C>::apply(typeName));
       }
     }
 
     // Append message
 
-    out = detail::write<C>(out, rocket::unicode::ConvertTo<C>().apply(rocket::what(val)));
+    out = detail::write<C>(out, rocket::unicode::ConvertTo<C>::apply(rocket::what(val)));
 
     // If debug, append stack trace
 
@@ -65,7 +65,7 @@ struct formatter<Exception, C> {
         os << *p->stackTrace();
         std::string str = os.str();
         str.pop_back(); // Remove trailing '\n'
-        out = detail::write<C>(out, rocket::unicode::ConvertTo<C>().apply(str));
+        out = detail::write<C>(out, rocket::unicode::ConvertTo<C>::apply(str));
       }
     }
     return out;
