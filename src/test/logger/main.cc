@@ -40,8 +40,8 @@ main(i32 argc, char **argv) {
   optional<i32> hours;
   optional<vector<string>> args;
 
-  cl::OptionGroup general("General control");
-  cl::CommandLineConfig config { .usages={ "[OPTION]... [ARG]..." }} ;
+  const cl::OptionGroup general("General control");
+  const cl::CommandLineConfig config { .usages={ "[OPTION]... [ARG]..." }} ;
   cl::CommandLine cl({
     cl::Option::helpOf(&general, help),
     cl::Option::of(&general, "offset", "o"_c, "number", "hour offset", hours)

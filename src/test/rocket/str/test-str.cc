@@ -17,24 +17,24 @@ pars(const vector<vector<string>>& vec) {
 
 // #TEST ----------------------------------------------------------------------------------------------------
 
-TEST(str, split) {
+TEST(str, split) { // NOLINT(*-complexity)
   int n = 0;
-  for (auto token : split<char>("", ",")) {
-    static_assert(is_same_v<decltype(token), string_view>);
+  for (const auto token : split<char>("", ",")) {
+    static_assert(is_same_v<decltype(token), const string_view>);
     if (n == 0) { EXPECT_EQ(token, ""); }
     ++n;
   }
   EXPECT_EQ(n, 1);
 
   n = 0;
-  for (auto token : split<char>(" ", ",")) {
+  for (const auto token : split<char>(" ", ",")) {
     if (n == 0) { EXPECT_EQ(token, " "); }
     ++n;
   }
   EXPECT_EQ(n, 1);
 
   n = 0;
-  for (auto token : split<char>(",", ",")) {
+  for (const auto token : split<char>(",", ",")) {
     if (n == 0) { EXPECT_EQ(token, ""); }
     if (n == 1) { EXPECT_EQ(token, ""); }
     ++n;
@@ -42,7 +42,7 @@ TEST(str, split) {
   EXPECT_EQ(n, 2);
 
   n = 0;
-  for (auto token : split<char>(",,", ",")) {
+  for (const auto token : split<char>(",,", ",")) {
     if (n == 0) { EXPECT_EQ(token, ""); }
     if (n == 1) { EXPECT_EQ(token, ""); }
     if (n == 2) { EXPECT_EQ(token, ""); }
@@ -52,7 +52,7 @@ TEST(str, split) {
 
 
   n = 0;
-  for (auto token : split<char>("||a||b c||||d||||", "||")) {
+  for (const auto token : split<char>("||a||b c||||d||||", "||")) {
     if (n == 0) { EXPECT_EQ(token, ""); }
     if (n == 1) { EXPECT_EQ(token, "a"); }
     if (n == 2) { EXPECT_EQ(token, "b c"); }
@@ -83,7 +83,7 @@ TEST(str, paragraphs) {
 TEST(str, removeLeadingChar) {
   using type = char;
 
-  string_view str = "";
+  string_view str;
   EXPECT_EQ(removeLeading<type>(str, "hello"sv), "");
 
   str = "hello";
@@ -102,7 +102,7 @@ TEST(str, removeLeadingChar) {
 TEST(str, removeLeadingChar32) {
   using type = char32;
 
-  u32string_view str = U"";
+  u32string_view str;
   EXPECT_EQ(removeLeading<type>(str, U"hello"sv), U"");
 
   str = U"hello";

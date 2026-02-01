@@ -248,7 +248,7 @@ removeLeading(
       return ret;
     }
     // MSVC doesn't like the ctor with pointer and size here
-    std::basic_string_view<C> leading(ret.begin(), ret.begin() + sub.size());
+    const std::basic_string_view<C> leading(ret.begin(), ret.begin() + sub.size());
     if (leading == sub) {
       ret.remove_prefix(sub.size());
     } else {
