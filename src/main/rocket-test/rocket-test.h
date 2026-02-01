@@ -97,11 +97,11 @@ namespace rocket::test {
 // Constants ------------------------------------------------------------------------------------------------
 
 /// Value of the environment variable.
-extern const std::string BINARY_DIR;
+ROCKET_PUBLIC extern const std::optional<std::string> BINARY_DIR;
 /// Value of the environment variable.
-extern const std::string CONFIG;
+ROCKET_PUBLIC extern const std::optional<std::string> CONFIG;
 /// Value of the environment variable.
-extern const bool TEST_TERMINAL;
+ROCKET_PUBLIC extern const bool TEST_TERMINAL;
 
 // Functions ------------------------------------------------------------------------------------------------
 
