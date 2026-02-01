@@ -46,8 +46,6 @@ using namespace testing;
 
 // `ROCKET_TEST_...` ........................................................................................
 
-// Macros ---------------------------------------------------------------------------------------------------
-
 #ifdef ROCKET_OS_WINDOWS
   #ifdef ROCKET_TEST_EXPORTING__
     #define ROCKET_TEST_PUBLIC __declspec(dllexport) ///< Specifier for global data symbols.
@@ -113,7 +111,7 @@ ROCKET_TEST_PUBLIC extern const std::optional<std::string> BINARY_DIR;
 /// Value of the environment variable.
 ROCKET_TEST_PUBLIC extern const std::optional<std::string> CONFIG;
 /// Value of the environment variable.
-ROCKET_TEST_PUBLIC extern const bool TEST_TERMINAL;
+extern const bool TEST_TERMINAL;
 
 // Functions ------------------------------------------------------------------------------------------------
 
