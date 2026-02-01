@@ -238,12 +238,15 @@ removeLeading(
     std::basic_string_view<C> str,
     std::basic_string_view<C> sub,
     u64 max = std::numeric_limits<u64>::max()) {
-  if (sub.empty() || sub.size() > str.size()) {
+  if (sub.empty()) {
     return str;
   }
 
   std::basic_string_view<C> ret(str);
   for (u64 i = 0; i < max; ++i) {
+    if (sub.size() > ret.size()) {
+      return ret;
+    }
     // MSVC doesn't like the ctor with pointer and size here
     std::basic_string_view<C> leading(ret.begin(), ret.begin() + sub.size());
     if (leading == sub) {
@@ -272,12 +275,15 @@ removeTrailing(
     std::basic_string_view<C> str,
     std::basic_string_view<C> sub,
     u64 max = std::numeric_limits<u64>::max()) {
-  if (sub.empty() || sub.size() > str.size()) {
+  if (sub.empty()) {
     return str;
   }
 
   std::basic_string_view<C> ret(str);
   for (u64 i = 0; i < max; ++i) {
+    if (sub.size() > ret.size()) {
+      return ret;
+    }
     auto begin = ret.end() - sub.size();
     const std::basic_string_view<C> trailing(begin, ret.end());
     if (trailing == sub) {
