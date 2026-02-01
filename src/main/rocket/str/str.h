@@ -349,6 +349,27 @@ split(std::basic_string_view<C> str, std::basic_string_view<C> sep) {
 void upperIn(std::u32string& str);
 
 /**
+ * Splits a string into tokens, returns tokens a vector of #std::string_view.
+ *
+ * No strings are ever allocated, except for the separator, so this is a very efficient way to split a string
+ * into tokens.
+ *
+ * @tparam C the character type
+ * @param str the string to split
+ * @param sep the separator to use
+ * @return a vector containing the tokens
+ */
+template<typename C> requires IsChar<C>
+[[nodiscard]] std::vector<std::basic_string_view<C>>
+vectorize(std::basic_string_view<C> str, std::basic_string_view<C> sep) {
+  std::vector<std::basic_string_view<C>> ret;
+  for (auto token : split<C>(str, sep)) {
+    ret.push_back(token);
+  }
+  return ret;
+}
+
+/**
  * Wraps the string @p str to fit the width specified by @p width.
  *
  * - Line breaks (`"\n"`, `"\r\n"`) are recognized.

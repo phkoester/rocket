@@ -381,7 +381,7 @@ TEST(cl, parseCommand) {
     parseCommand({ "-o", "walk", "dog" }, buf, buf);
     EXPECT_EQ(
         buf.str(),
-        "test-rocket-cl: error: Parameter COMMAND: Invalid value `walk`; expected `list` or `show`\n"
+        "test-rocket-cl: error: Parameter `COMMAND`: Invalid value `walk`; expected `list` or `show`\n"
         "Usage: test-rocket-cl [OPTION]... list [OPTION]... FILE...\n"
         "  or   test-rocket-cl [OPTION]... show [OPTION]... [ARG]...\n"
         "Try `test-rocket-cl --help` for more information.\n");
@@ -468,7 +468,7 @@ TEST(cl, parseCommand) {
     parseCommand({ "list", "-l" }, buf, buf);
     EXPECT_EQ(
         buf.str(),
-        "test-rocket-cl: error: Missing required argument for parameter FILE\n"
+        "test-rocket-cl: error: Missing required argument for parameter `FILE`\n"
         "Usage: test-rocket-cl list [OPTION]... FILE...\n"
         "Try `test-rocket-cl list --help` for more information.\n");
   }

@@ -7,11 +7,62 @@
 #include "rocket/assert.h"
 #include "rocket/literal.h"
 #include "rocket/log/log.h"
+#include "rocket/nio/nio.h"
 #include "rocket/str/str.h"
 #include "rocket/system/terminal/terminal.h"
 #include "rocket/unicode/Iterator.h"
 
+using namespace rocket;
 using namespace std;
+
+namespace {
+
+// Local functions ------------------------------------------------------------------------------------------
+
+void
+addArg(vector<string>& out, const string& arg) { // NOLINT(*-recursion)
+  if (arg.starts_with("@")) {
+    if (arg.size() == 1) {
+      // "@" is just a regular argument
+      out.push_back(arg);
+    } else if (arg.starts_with("@@")) {
+      // "@@" escapes the "@"
+      out.push_back(arg.substr(1));
+    } else {
+      // Read the argument file, add arguments
+      string path = arg.substr(1);
+      auto in = nio::FileSource(path);
+      if (not in.good()) {
+        ROCKET_FAIL("Cannot read argument file `{}`", path);
+      }
+      const string contents = in.Source::read();
+      auto lines = str::vectorize<char>(contents, "\n");
+      ROCKET_ASSERT(not lines.empty());
+      if (lines.back().empty()) {
+        // Ignore empty last line
+        lines.pop_back();
+      }
+      for (const auto& line : lines) {
+        addArg(out, static_cast<string>(line)); // Recursive call
+      }
+    }
+  } else {
+    // Regular argument
+    out.push_back(arg);
+  }
+}
+
+/// Expands argument files, if any, recursively.
+vector<string>
+expandArgs(const vector<string>& args) {
+  vector<string> ret;
+  for (const auto& arg : args) {
+    addArg(ret, arg);
+  }
+  return ret;
+}
+
+} // namespace
 
 namespace rocket::cl {
 
@@ -104,13 +155,13 @@ CommandLine::applyParam(const Parameter& param, const string& value) {
     if (param.format) {
       expected = fmt::format("; expected {}", *param.format);
     }
-    ROCKET_FAIL("Parameter {}: {}{}", param.name, ex.message(), expected);
+    ROCKET_FAIL("Parameter `{}`: {}{}", param.name, ex.message(), expected);
   } catch (const exception& ex) {
     string expected;
     if (param.format) {
       expected = fmt::format("; expected {}", *param.format);
     }
-    ROCKET_FAIL("Parameter {}: Invalid value {:?}{}", param.name, value, expected);
+    ROCKET_FAIL("Parameter `{}`: Invalid value {:?}{}", param.name, value, expected);
   }
 }
 
@@ -147,7 +198,8 @@ CommandLine::parse(const vector<string>& args, nio::Sink& out, nio::Sink& err, b
     u64 paramOccurs = 0;
     bool consumeOpts = false;
 
-    for (auto it = args.begin(), end = args.end(); it != end; ++it) {
+    auto useArgs = expandArgs(args); // Read argument files, if any, recursively
+    for (auto it = useArgs.begin(), end = useArgs.end(); it != end; ++it) {
       string arg = *it;
 
       if (not consumeOpts && arg == "--") {
@@ -177,7 +229,7 @@ CommandLine::parse(const vector<string>& args, nio::Sink& out, nio::Sink& err, b
           value = arg.substr(eq + 1);
         } else if (opt.takesValue) {
           // Take the next argument
-          if (it + 1 != args.end()) {
+          if (it + 1 != useArgs.end()) {
             value = *++it;
           }
         }
@@ -218,7 +270,7 @@ CommandLine::parse(const vector<string>& args, nio::Sink& out, nio::Sink& err, b
             else {
               optional<string> value;
               // Take the next argument, if any
-              if (it + 1 != args.end()) {
+              if (it + 1 != useArgs.end()) {
                 value = *++it;
               }
               applyOpt(opt, false, value);
@@ -269,7 +321,7 @@ CommandLine::parse(const vector<string>& args, nio::Sink& out, nio::Sink& err, b
     // Have we seen all required parameters?
     for (const auto& param : params_) {
       if (param.required && not parserState_.seenParams.contains(&param)) {
-        ROCKET_FAIL("Missing required argument for parameter {}", param.name);
+        ROCKET_FAIL("Missing required argument for parameter `{}`", param.name);
       }
     }
 

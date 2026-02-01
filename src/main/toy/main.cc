@@ -74,17 +74,17 @@ main(i32 argc, char **argv) {
 
   process.init(argc, argv, "toy");
 
-  optional<bool> help;
   optional<bool> foo;
-  optional<vector<string>> files;
+  optional<bool> help;
+  optional<vector<string>> args;
 
   cl::OptionGroup general("General control");
-  cl::CommandLineConfig config { .usages={ "[OPTION]... [FILE]..." }} ;
+  cl::CommandLineConfig config { .usages={ "[OPTION]... [ARG]..." }} ;
   cl::CommandLine cl({
     cl::Option::helpOf(&general, help),
     cl::Option::of(&general, "foo", "f"_c, nullopt, "delve into foo mode", foo),
   }, {
-    cl::Parameter::of("FILE", "file", "an input file", files)
+    cl::Parameter::of("ARG", nullopt, "a command-line argument", args)
   }, config);
 
   cl.parse(process.args());
@@ -93,7 +93,7 @@ main(i32 argc, char **argv) {
     ROCKET_LOG(toy);
     ROCKET_LOG_INFO("Hey {}", "there");
     out.println("This is {}", process.name());
-    out.println("files: {}", files);
+    out.println("args: {}", args);
     toy();
   }
 
