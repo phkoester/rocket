@@ -109,9 +109,9 @@ struct SplitResult {
 
   SplitResult(std::basic_string_view<C> str, std::basic_string_view<C> sep) : str_(str), sep_(sep) {}
 
-  SplitIterator<C> begin() const { return SplitIterator<C>(str_, 0, sep_); }
+  [[nodiscard]] SplitIterator<C> begin() const { return SplitIterator<C>(str_, 0, sep_); }
 
-  SplitIterator<C> end() const { return SplitIterator<C>(str_, NPOS, sep_); }
+  [[nodiscard]] SplitIterator<C> end() const { return SplitIterator<C>(str_, NPOS, sep_); }
 
   /// @endcond
 
@@ -279,7 +279,7 @@ removeTrailing(
   std::basic_string_view<C> ret(str);
   for (u64 i = 0; i < max; ++i) {
     auto begin = ret.end() - sub.size();
-    std::basic_string_view<C> trailing(begin, ret.end());
+    const std::basic_string_view<C> trailing(begin, ret.end());
     if (trailing == sub) {
       ret.remove_suffix(sub.size());
     } else {

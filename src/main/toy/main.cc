@@ -69,8 +69,8 @@ i32
 main(i32 argc, char **argv) {
   ROCKET_PROCESS_ERROR(0, "Testing error before `process.init` ...");
 
-  process.atExit(myExit);
-  process.atExit(myTerminate, true);
+  Process::atExit(myExit);
+  Process::atExit(myTerminate, true);
 
   process.init(argc, argv, "toy");
 

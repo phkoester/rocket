@@ -25,14 +25,14 @@ struct Guard {
    *
    * @param fn the function to execute upon scope exit
    */
-  inline explicit Guard(const std::function<void()>& fn) : fn_(fn) {}
+  explicit Guard(std::function<void()>&& fn) : fn_(std::move(fn)) {}
 
   /**
    * @dtor
    *
    * This destructor executes the function that was passed to the constructor.
    */
-  inline ~Guard() noexcept { fn_(); }
+  ~Guard() { fn_(); }
 
 private:
 
@@ -44,7 +44,7 @@ private:
  *
  * @param fn the function to execute upon scope exit
  */
-#define ROCKET_GUARD(fn) ::rocket::Guard ROCKET_ID()(fn)
+#define ROCKET_GUARD(fn) const ::rocket::Guard ROCKET_ID()(fn)
 
 // #ValueGuard ----------------------------------------------------------------------------------------------
 
@@ -64,7 +64,7 @@ struct ValueGuard {
    * @param ref a reference to the variable that is to be assigned
    * @param newValue the new value to assign immediately
    */
-  inline ValueGuard(T& ref, T&& newValue) :
+  ValueGuard(T& ref, T&& newValue) : // NOLINT(*-param-not-moved)
       ref_(ref),
       oldValue_(ref) {
     ref = std::forward<T>(newValue);
@@ -75,11 +75,11 @@ struct ValueGuard {
    *
    * This destructor reassigns the old value to `ref` that was passed to the constructor.
    */
-  inline ~ValueGuard() noexcept { ref_ = oldValue_; }
+  ~ValueGuard() { ref_ = oldValue_; }
 
 private:
 
-  T& ref_;
+  T& ref_; // NOLINT
   T oldValue_;
 };
 
@@ -89,7 +89,7 @@ private:
  * @param ref a reference to the variable that is to be assigned
  * @param newValue the new value to assign immediately
  */
-#define ROCKET_VALUE_GUARD(ref, newValue) ::rocket::ValueGuard ROCKET_ID()(ref, newValue)
+#define ROCKET_VALUE_GUARD(ref, newValue) const ::rocket::ValueGuard ROCKET_ID()(ref, newValue)
 
 } // namespace rocket
 

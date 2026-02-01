@@ -12,6 +12,7 @@
 
 #include <cstdlib>
 #include <filesystem>
+#include <ranges>
 
 using namespace rocket;
 using namespace std;
@@ -32,7 +33,7 @@ vector<pair<function<void()>, bool>> onExitFns;
 
 // Local functions ------------------------------------------------------------------------------------------
 
-string_view shortName(string_view);
+string_view shortName(string_view argv0);
 
 void
 callExitFns(bool onTerminate) {
@@ -40,8 +41,7 @@ callExitFns(bool onTerminate) {
 
   ROCKET_GUARD([] { onExitFns.clear(); });
 
-  for (auto it = onExitFns.rbegin(); it != onExitFns.rend(); ++it) {
-    const auto& [fn, callOnTerminate] = *it;
+  for (const auto& [fn, callOnTerminate] : ranges::reverse_view(onExitFns)) {
     if (not onTerminate || callOnTerminate) {
       try {
         fn();
@@ -71,13 +71,13 @@ invocationShortName() {
 
 const string&
 invocationName() {
-  static string ret(::program_invocation_name);
+  static const string ret(::program_invocation_name);
   return ret;
 }
 
 const string&
 invocationShortName() {
-  static string ret(::program_invocation_short_name);
+  static const string ret(::program_invocation_short_name);
   return ret;
 }
 
@@ -150,31 +150,31 @@ const thread::id MAIN_THREAD_ID = this_thread::get_id();
 // #Process -------------------------------------------------------------------------------------------------
 
 // Some trickery to keep the ctor private
-inline Process makeProcess__() { return Process(); }
+inline Process makeProcess__() { return {}; }
 ROCKET_PUBLIC const Process process = makeProcess__();
 
 void
-Process::atExit(std::function<void()> fn, bool callOnTerminate) const {
+Process::atExit(std::function<void()>&& fn, bool callOnTerminate) {
   ROCKET_MUTEX_LOCK(processMutex);
 
-  onExitFns.push_back({ fn, callOnTerminate });
+  onExitFns.emplace_back(std::move(fn), callOnTerminate);
 }
 
 const string&
-Process::autoName() const {
+Process::autoName() const { // NOLINT(*-recursion)
   ROCKET_MUTEX_LOCK(processMutex);
 
   return inited_ ? name() : invocationShortName();
 }
 
 void
-Process::exit(i32 status, bool allowUninited) const {
+Process::exit(i32 status, bool allowUninited) const { // NOLINT(*-recursion)
   ROCKET_MUTEX_LOCK(processMutex);
 
   ROCKET_ASSERT(allowUninited || inited_, "Process not initialized");
 
   if (ROCKET_EXIT) {
-    std::exit(status);
+    std::exit(status); // NOLINT(concurrency-mt-unsafe)
   }
   if (ROCKET_QUICK_EXIT) {
     std::quick_exit(status);
@@ -184,7 +184,7 @@ Process::exit(i32 status, bool allowUninited) const {
     std::quick_exit(status);
   }
   else {
-    std::exit(status);
+    std::exit(status); // NOLINT(concurrency-mt-unsafe)
   }
 }
 
@@ -202,8 +202,8 @@ Process::init(
 
   // Set the C locale from the environment
 
-  string localeName = locale ? locale->name() : "";
-  setlocale(LC_ALL, localeName.c_str());
+  const string localeName = locale ? locale->name() : "";
+  setlocale(LC_ALL, localeName.c_str()); // NOLINT(concurrency-mt-unsafe)
 
   // Set the C++ locale from the environment
 
@@ -240,17 +240,17 @@ Process::init(
 }
 
 const string&
-Process::invocationName() const {
+Process::invocationName() {
   return ::invocationName();
 }
 
 const string&
-Process::invocationShortName() const {
+Process::invocationShortName() {
   return ::invocationShortName();
 }
 
 const string&
-Process::name() const {
+Process::name() const { // NOLINT(*-recursion)
   ROCKET_MUTEX_LOCK(processMutex);
 
   ROCKET_ASSERT(inited_, "Process not initialized");

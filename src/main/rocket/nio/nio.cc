@@ -65,7 +65,7 @@ BufferedSink::BufferedSink(Sink& underlying, u64 size) :
     underlying_(underlying),
     size_(size) {
   ROCKET_CHECK(size, size >= MIN_BUFFER_SIZE);
-  buf_ = make_unique<char[]>(size);
+  buf_ = make_unique<char[]>(size); // NOLINT
 }
 
 BufferedSink::~BufferedSink() {
@@ -119,7 +119,7 @@ BufferedSink::write(string_view in) {
   while (not rest.empty()) {
     // Find out if the buffer can fulfill the request
 
-    u64 available = size_ - pos_;
+    const u64 available = size_ - pos_;
     if (rest.size() <= available) {
       // Yes, it can: Store the rest in the buffer, exit loop
       memcpy(&buf_[pos_], rest.data(), rest.size());
@@ -154,8 +154,8 @@ FileSink::FileSink(FILE* file, const Config& config) :
 FileSink::FileSink(const string& path, const Config& config) :
     file_(nullptr),
     config_(config) {
-  const char* modes = config.append ? "ab" : "wb"; // `b` is for non-Linux only
-  file_ = std::fopen(path.c_str(), modes);
+  const char* modes = config.append ? "ab" : "wb"; // "b" is for non-Linux only
+  file_ = std::fopen(path.c_str(), modes); // NOLINT(*-owning-memory)
   LOG("fopen=" << file_ << ", ferror=" << (file_ ? ferror(file_) : -1));
 
   if (file_ == nullptr) {
@@ -181,8 +181,8 @@ FileSink::close()
 
   flush(); // NOLINT
 
-  i32 ret = std::fclose(file_);
-  // #file_ is probably invalid now, so we don't call #ferror on it
+  const i32 ret = std::fclose(file_); // NOLINT(*-owning-memory)
+  // #file_ is invalid now, so we don't call #ferror on it
   LOG("fclose=" << ret);
   if (ret != 0) {
     error_ = EIO;
@@ -198,7 +198,7 @@ FileSink::flush() {
     return error_;
   }
 
-  i32 ret = std::fflush(file_);
+  const i32 ret = std::fflush(file_);
   LOG("fflush=" << ret << ", ferror=" << ferror(file_));
   if (ret != 0) {
     error_ = ferror(file_);
@@ -221,10 +221,10 @@ FileSink::write(string_view in) {
     return error_;
   }
 
-  u64 ret = std::fwrite(in.data(), 1, in.size(), file_);
+  const u64 ret = std::fwrite(in.data(), 1, in.size(), file_);
   LOG("fwrite=" << ret << ", in.size=" << in.size() << ", ferror=" << ferror(file_));
   error_ = ferror(file_);
-  ROCKET_ASSERT(ret == in.size() || error_ != 0);
+  ROCKET_ASSERT(ret == in.size() || error_ != 0); // NOLINT(readability-*)
   return ret;
 }
 
@@ -232,8 +232,8 @@ FileSink::write(string_view in) {
 
 u64
 SpanSink::write(string_view in) {
-  u64 available = out_.size() - pos_;
-  u64 ret = min(available, in.size());
+  const u64 available = out_.size() - pos_;
+  const u64 ret = min(available, in.size());
   if (ret > 0) {
     memcpy(&out_[pos_], in.data(), ret);
     pos_ += ret;
@@ -293,7 +293,7 @@ StreamSink::write(string_view in) {
     return error_;
   }
 
-  u64 ret = os_.rdbuf()->sputn(in.data(), in.size());
+  const u64 ret = os_.rdbuf()->sputn(in.data(), safe<streamsize>(in.size()));
   if (ret != in.size()) {
     os_.setstate(ios_base::badbit);
   }
@@ -310,7 +310,7 @@ StringSink::write(string_view in) {
     return 0;
   }
 
-  if (ptr_) {
+  if (ptr_ != nullptr) {
     ptr_->append(in);
   } else {
     owned_.append(in);
@@ -327,10 +327,10 @@ Source::read() {
   }
 
   string ret;
-  auto buf = make_unique<char[]>(DEFAULT_BUFFER_SIZE);
-  span<char> out(&buf[0], DEFAULT_BUFFER_SIZE);
+  auto buf = make_unique<char[]>(DEFAULT_BUFFER_SIZE); // NOLINT
+  const span<char> out(&buf[0], DEFAULT_BUFFER_SIZE);
   while (true) {
-    u64 n = read(out);
+    const u64 n = read(out);
     if (n > 0) {
       ret.append(out.data(), n);
     }
@@ -351,8 +351,8 @@ Source::readln() {
 
   bool crlf = false;
   while (true) {
-    char c;
-    u64 result = read(c);
+    char c = '\0';
+    const u64 result = read(c);
     if (result == 0) {
       break;
     }
@@ -381,8 +381,8 @@ Source::readln(span<char> out) {
   bool crlf = false;
 
   while (it != out.end()) {
-    char c;
-    u64 result = read(c);
+    char c = '\0';
+    const u64 result = read(c);
     if (result == 0) {
       break;
     }
@@ -407,7 +407,7 @@ BufferedSource::BufferedSource(Source& underlying, u64 size) :
     underlying_(underlying),
     size_(size) {
   ROCKET_CHECK(size, size >= MIN_BUFFER_SIZE);
-  buf_ = make_unique<char[]>(size);
+  buf_ = make_unique<char[]>(size); // NOLINT
   bufPos_ = underlying.tell();
 }
 
@@ -455,7 +455,7 @@ BufferedSource::read(span<char> out) {
 
     // Find out if the buffer can fulfill the request
 
-    u64 available = end_ - pos_;
+    const u64 available = end_ - pos_;
     if (rest.size() <= available) {
       // Yes, it can: Copy the buffer to the rest, exit loop
       LOG("Buffer can fulfill request, copying " << rest.size() << " bytes from buffer");
@@ -482,13 +482,13 @@ BufferedSource::read(span<char> out) {
 }
 
 i32
-BufferedSource::seek(i64 offset, SeekMode mode) {
+BufferedSource::seek(i64 offset, SeekMode mode) { // NOLINT
   if (not checkOpen()) {
     return error_;
   }
 
   // Get the old position so we can restore it later
-  u64 oldTell = underlying_.tell();
+  const u64 oldTell = underlying_.tell();
   if (oldTell == NPOS) {
     LOG("Getting old position failed; invalidating buffer");
     bufPos_ = NPOS;
@@ -497,10 +497,10 @@ BufferedSource::seek(i64 offset, SeekMode mode) {
   }
 
   // Do the job
-  i32 ret = underlying_.seek(offset, mode);
+  const i32 ret = underlying_.seek(offset, mode);
 
   // Get the new position se we can see if we have a buffer hit
-  u64 newTell = underlying_.tell();
+  const u64 newTell = underlying_.tell();
   if (newTell == NPOS) {
     LOG("Getting new position failed; invalidating buffer");
     bufPos_ = NPOS;
@@ -517,12 +517,12 @@ BufferedSource::seek(i64 offset, SeekMode mode) {
   }
 
   // Do we have a buffer hit?
-  u64 ourPos = newTell - bufPos_;
+  const u64 ourPos = newTell - bufPos_;
   if (ourPos <= end_) {
     // Yes, we do: Update our position and restore the underlying position
     LOG("Going from " << pos_ << " to " << ourPos);
     pos_ = ourPos;
-    return underlying_.seek(oldTell);
+    return underlying_.seek(safe<i64>(oldTell));
   }
 
   // No buffer hit
@@ -551,9 +551,8 @@ FileSource::FileSource(FILE* file, const Config& config) :
 }
 
 FileSource::FileSource(const string& path, const Config& config) :
-    file_(nullptr),
+    file_(std::fopen(path.c_str(), "rb")), // "b" is for non-Linux only NOLINT(*-owning-memory)
     config_(config) {
-  file_ = std::fopen(path.c_str(), "rb"); // `b` is for non-Linux only
   LOG("fopen=" << file_ << ", ferror=" << (file_ ? ferror(file_) : -1));
 
   if (file_ == nullptr) {
@@ -577,7 +576,7 @@ FileSource::close()
     return error_;
   }
 
-  i32 ret = std::fclose(file_);
+  const i32 ret = std::fclose(file_); // NOLINT(*-owning-memory)
   LOG("fclose=" << ret);
   error_ = ret;
   open_ = false;
@@ -600,19 +599,19 @@ FileSource::read(span<char> out) {
     return 0;
   }
 
-  u64 ret = std::fread(out.data(), 1, out.size(), file_);
+  const u64 ret = std::fread(out.data(), 1, out.size(), file_);
   LOG("fread=" << ret << ", out.size=" << out.size() << ", ferror=" << ferror(file_));
   error_ = ferror(file_);
   return ret;
 }
 
 i32
-FileSource::seek(i64 offset, SeekMode mode) {
+FileSource::seek(i64 offset, SeekMode mode) { // NOLINT
   if (not checkOpen()) {
     return error_;
   }
 
-  i32 origin;
+  i32 origin = -1;
   switch (mode) {
   case SeekMode::beg:
     origin = SEEK_SET;
@@ -687,7 +686,7 @@ StreamSource::read(span<char> out) {
   }
 
   // If less bytes than `out.size()` are read, `bad`, `fail`, and `eof` all remain `false`
-  is_.read(out.data(), out.size());
+  is_.read(out.data(), safe<streamsize>(out.size()));
   auto count = is_.gcount();
   // #std::istream::readsome didn't work in Windows with a #std::ifstream
   // u64 ret = is_.readsome(out.data(), out.size());
@@ -697,12 +696,12 @@ StreamSource::read(span<char> out) {
 }
 
 i32
-StreamSource::seek(i64 offset, SeekMode mode) {
+StreamSource::seek(i64 offset, SeekMode mode) { // NOLINT
   if (not checkOpen()) {
     return error_;
   }
 
-  ios::seekdir dir;
+  ios::seekdir dir = ios::beg;
   switch (mode) {
   case SeekMode::beg:
     dir = ios::beg;
@@ -752,7 +751,7 @@ StringSource::read(span<char> out) {
     return 0;
   }
 
-  u64 ret = min(out.size(), in_.size() - static_cast<u64>(pos_));
+  const u64 ret = min(out.size(), in_.size() - static_cast<u64>(pos_));
   if (ret > 0) {
     memcpy(out.data(), in_.data() + static_cast<u64>(pos_), ret);
     pos_ += ret;
@@ -761,7 +760,7 @@ StringSource::read(span<char> out) {
 }
 
 i32
-StringSource::seek(i64 offset, SeekMode mode) {
+StringSource::seek(i64 offset, SeekMode mode) { // NOLINT
   if (not checkOpen()) {
     return error_;
   }
@@ -803,9 +802,9 @@ FileSink fileSinkErr = FileSink(stderr);
 
 namespace rocket::nio {
 
-ROCKET_PUBLIC Source& in = fileSourceIn;
-ROCKET_PUBLIC Sink& out = fileSinkOut;
-ROCKET_PUBLIC Sink& err = fileSinkErr;
+ROCKET_PUBLIC Source& in = fileSourceIn; // NOLINT
+ROCKET_PUBLIC Sink& out = fileSinkOut; // NOLINT
+ROCKET_PUBLIC Sink& err = fileSinkErr; // NOLINT
 
 } // namespace rocket::nio
 

@@ -15,6 +15,9 @@ TEST(boost_safe_numerics, safe) {
   EXPECT_THAT([] { safe<u8>(-1); }, Throws<system_error>());
   EXPECT_THAT([] { safe<u8> val = 100; val *= 3; }, Throws<system_error>());
 
+  EXPECT_THAT([] { safe<i16>(32'768_u16); }, Throws<system_error>());
+  EXPECT_THAT([] { safe<u64>(-1'000_i64); }, Throws<system_error>());
+
   // Mixing signed and unsigned is not allowed!
   EXPECT_THAT([] { safe<u64>(10) + -1; }, Throws<system_error>());
   EXPECT_THAT([] { auto val = safe<u64>(10); val += -1; }, Throws<system_error>());

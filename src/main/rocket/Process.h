@@ -134,6 +134,28 @@ extern const std::thread::id MAIN_THREAD_ID;
  */
 struct Process {
   /**
+   * Registers a function to be called upon exit and quick exit, and even possibly on abnormal termination.
+   *
+   * @param fn the function to register
+   * @param callOnTerminate whether to call the function even on abnormal termination
+   */
+  static void atExit(std::function<void()>&& fn, bool callOnTerminate = false);
+
+  /**
+   * Returns the command this program was started with.
+   *
+   * @return the invocation name
+   */
+  [[nodiscard]] static const std::string& invocationName();
+
+  /**
+   * Returns the file-name portion of the command this program was started with.
+   *
+   * @return the invocation short name
+   */
+  [[nodiscard]] static const std::string& invocationShortName();
+
+  /**
    * Returns the command line.
    *
    * Must be called after #init.
@@ -141,16 +163,6 @@ struct Process {
    * @return the command line, as separate strings. `argv[0]` is not included
    */
   [[nodiscard]] const std::vector<std::string>& args() const { return args_; }
-
-  /**
-   * Registers a function to be called upon exit and quick exit, and even possibly on abnormal termination.
-   *
-   * May be called before #init.
-   *
-   * @param fn the function to register
-   * @param callOnTerminate whether to call the function even on abnormal termination
-   */
-  void atExit(std::function<void()> fn, bool callOnTerminate = false) const;
 
   /**
    * Returns the classic locale. This is the locale as returned by #std::locale::classic.
@@ -190,7 +202,7 @@ struct Process {
    */
   template<typename... T>
   void
-  error(nio::Sink& out, i32 status, fmt::format_string<T...> fmt, T&&... args) const {
+  error(nio::Sink& out, i32 status, fmt::format_string<T...> fmt, T&&... args) const { // NOLINT(*-recursion)
     out.write(autoName());
     out.write(": ");
     const char* label = status != 0 ? "fatal error: " : "error: ";
@@ -237,7 +249,6 @@ struct Process {
     } else {
       out.write("note: ");
     }
-    // out.print("{}: note: ", autoName());
     out.println(fmt, std::forward<T>(args)...);
   }
 
@@ -281,24 +292,6 @@ struct Process {
    * @return the name of the process
    */
   [[nodiscard]] const std::string& name() const;
-
-  /**
-   * Returns the command this program was started with.
-   *
-   * May be called before #init.
-   *
-   * @return the invocation name
-   */
-  [[nodiscard]] const std::string& invocationName() const;
-
-  /**
-   * Returns the file-name portion of the command this program was started with.
-   *
-   * May be called before #init.
-   *
-   * @return the invocation short name
-   */
-  [[nodiscard]] const std::string& invocationShortName() const;
 
   /**
    * Returns the system locale. This is the locale that was returned by the first call of

@@ -50,9 +50,9 @@ struct Entry {
   const char* file_;
   i32 line_;
   optional<string> begin_; // Log entry from #logBegin that is flushed only if necessary
-  const TimePoint time_;
+  TimePoint time_;
 
-  inline Entry(
+  Entry(
     LogLevel* logId,
     const char* function,
     const char* prettyFunction,
@@ -132,7 +132,7 @@ struct Out {
   }
 
   void flushOnExit() {
-    if (out_) {
+    if (out_ != nullptr) {
       out_->flush();
     } else if (fileOut_) {
       fileOut_->flush();
@@ -155,17 +155,17 @@ private:
   localYmd(const TimePoint& time) {
     auto localTime = std::chrono::zoned_time(std::chrono::current_zone(), time);
     auto localDays = std::chrono::floor<std::chrono::days>(localTime.get_local_time());
-    return std::chrono::year_month_day(localDays);
+    return std::chrono::year_month_day(localDays); // NOLINT
   }
 
   static std::chrono::year_month_day
   utcYmd(const TimePoint& time) {
     auto utcDays = std::chrono::floor<std::chrono::days>(time);
-    return std::chrono::year_month_day(utcDays);
+    return std::chrono::year_month_day(utcDays); // NOLINT
   }
 
   nio::Sink* out_ = &nio::out; // `stdout` or `stderr`
-  unique_ptr<nio::FileSink> fileOut_; // A file sink
+  unique_ptr<nio::FileSink> fileOut_; // a file sink
 
   string pattern_;
   bool utc_ = false;
@@ -188,19 +188,19 @@ Out::get(const TimePoint& time) {
     }
   }
 
-  return out_ ? *out_ : *fileOut_;
+  return out_ != nullptr ? *out_ : *fileOut_;
 }
 
 string
 Out::expand(string_view pattern, const TimePoint& time, bool update) {
   // Prepare the values
 
-  auto localYmd = this->localYmd(time);
+  auto localYmd = Out::localYmd(time);
   auto localDate = std::format("{}", localYmd);
-  auto utcYmd = this->utcYmd(time);
+  auto utcYmd = Out::utcYmd(time);
   auto utcDate = std::format("{}", utcYmd);
 
-  auto dir = filesystem::path(process.invocationName()).parent_path().string();
+  auto dir = filesystem::path(Process::invocationName()).parent_path().string();
   auto pid = fmt::format("{}", getpid());
   const auto& name = process.name();
 
@@ -209,7 +209,7 @@ Out::expand(string_view pattern, const TimePoint& time, bool update) {
   string ret(pattern);
 
   auto replaceAll = [](string& str, string_view from, string_view to) -> bool {
-    string old(str);
+    const string old(str);
     boost::replace_all(str, from, to);
     return str != old;
   };
@@ -217,7 +217,7 @@ Out::expand(string_view pattern, const TimePoint& time, bool update) {
   // Start with `@[utc]`
   string_view date;
   boost::replace_all(ret, "@[utc]", "");
-  bool utcFound = replaceAll(ret, "@[utc]", "");
+  const bool utcFound = replaceAll(ret, "@[utc]", "");
   if (utcFound) {
     date = utcDate;
   } else {
@@ -225,11 +225,11 @@ Out::expand(string_view pattern, const TimePoint& time, bool update) {
   }
 
   // Now do the rest
-  bool dateFound = replaceAll(ret, "@[date]", date);
+  const bool dateFound = replaceAll(ret, "@[date]", date);
   replaceAll(ret, "@[dir]", dir);
   replaceAll(ret, "@[name]", name);
   replaceAll(ret, "@[pid]", pid);
-  bool zipFound = replaceAll(ret, "@[zip]", "");
+  const bool zipFound = replaceAll(ret, "@[zip]", "");
 
   // Do sanity checks
 
@@ -275,8 +275,8 @@ Out::setPattern(string_view pattern, const TimePoint& time) {
 
 void
 Out::zipYesterday(const TimePoint& time) {
-  string expanded = expand(pattern_, time - 24h, false);
-  filesystem::path path(expanded);
+  const string expanded = expand(pattern_, time - 24h, false);
+  const filesystem::path path(expanded);
   if (filesystem::is_regular_file(path)) {
     try {
       system::exec( { "gzip", "-5f", path.string() } );
@@ -291,9 +291,9 @@ Out::zipYesterday(const TimePoint& time) {
 /// Command-line-option group.
 const cl::OptionGroup CL_GROUP { "Logging control" };
 
-void applyLog(optional<string_view>);
-void applyLogFmt(optional<string_view>);
-void applyLogOut(optional<string_view>);
+void applyLog(optional<string_view> val);
+void applyLogFmt(optional<string_view> val);
+void applyLogOut(optional<string_view> val);
 
 #define NBSP "\u00A0"
 
@@ -429,18 +429,19 @@ formatExecTime(const TimePoint& t1, const TimePoint& t2) {
   if (ns < 1'000) {
     // Display in nanoseconds
     return fmt::format("{} ns", ns);
-  } else if (ns < 1'000'000) {
+  }
+  if (ns < 1'000'000) {
     // Display in microseconds
     return fmt::format("{}.{:0>3} µs", ns / 1'000, ns % 1'000);
-  } else if (ns < 1'000'000'000) {
+  }
+  if (ns < 1'000'000'000) {
     // Display in milliseconds
     auto µs = ns / 1'000;
     return fmt::format("{}.{:0>3} ms", µs / 1'000, µs % 1'000);
-  } else {
-    // Display in seconds
-    auto ms = ns / 1'000'000;
-    return fmt::format("{}.{:0>3} s", ms / 1'000, ms % 1'000);
   }
+  // Display in seconds
+  auto ms = ns / 1'000'000;
+  return fmt::format("{}.{:0>3} s", ms / 1'000, ms % 1'000);
 }
 
 /// @NotThreadSafe
@@ -450,21 +451,21 @@ formatTimePoint(const TimePoint& tp) {
     // Note we're using #std::format here because #fmt::format doesn't support #chrono::zoned_time
     if (logFmt.utc) {
       return std::format("{:%FT%TZ} ", ctp);
-    } else {
-      std::chrono::zoned_time zt { std::chrono::current_zone(), ctp };
-      return std::format("{:%FT%T%Ez} ", zt);
     }
+    std::chrono::zoned_time zt { std::chrono::current_zone(), ctp };
+    return std::format("{:%FT%T%Ez} ", zt);
   };
 
   if (logFmt.secondsRez == 0) {
     return formatImpl(time_point_cast<std::chrono::seconds>(tp));
-  } else if (logFmt.secondsRez == 3) {
-    return formatImpl(time_point_cast<std::chrono::milliseconds>(tp));
-  } else if (logFmt.secondsRez == 6) {
-    return formatImpl(time_point_cast<std::chrono::microseconds>(tp));
-  } else {
-    return formatImpl(time_point_cast<std::chrono::nanoseconds>(tp));
   }
+  if (logFmt.secondsRez == 3) {
+    return formatImpl(time_point_cast<std::chrono::milliseconds>(tp));
+  }
+  if (logFmt.secondsRez == 6) {
+    return formatImpl(time_point_cast<std::chrono::microseconds>(tp));
+  }
+  return formatImpl(time_point_cast<std::chrono::nanoseconds>(tp));
 }
 
 /**
@@ -502,7 +503,7 @@ logImpl(
   const TimePoint& time,
   string_view msg) {
   // Item: time point
-  string str = formatTimePoint(time); // Formats with a trailing space
+  const string str = formatTimePoint(time); // Formats with a trailing space
   out.write(str);
   u64 indent = str.size();
 
@@ -670,7 +671,7 @@ logEnd() noexcept {
 void
 logInit() {
   // We need this in case of quick exit
-  process.atExit([] {
+  Process::atExit([] {
     ROCKET_MUTEX_LOCK(logMutex);
     logOut.flushOnExit();
   }, true);
@@ -694,7 +695,7 @@ setLogFmt(string_view val) {
 /// @ThreadSafe
 void
 setLogLevel(string_view id, string_view val) {
-  bool all = id == "all";
+  const bool all = id == "all";
 
   ROCKET_MUTEX_LOCK(logMutex);
 
@@ -706,7 +707,7 @@ setLogLevel(string_view id, string_view val) {
     }
   }
 
-  LogLevel level = Enum<LogLevel>::toType(val);
+  const LogLevel level = Enum<LogLevel>::toType(val);
 
   if (not all) {
     *it->second = level;

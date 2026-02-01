@@ -23,7 +23,7 @@ namespace rocket::internal {
 
 template<typename... T>
 [[noreturn]] void
-terminate(
+terminate( // NOLINT(*-recursion)
   const std::source_location& sl,
   fmt::format_string<T...> fmt,
   T&&... args) {
@@ -37,7 +37,7 @@ terminate(
 
 template<typename... T>
 [[noreturn]] void
-assertFailed(
+assertFailed( // NOLINT(*-recursion)
   const std::source_location& sl,
   const char* expr,
   fmt::format_string<T...> fmt = "",
