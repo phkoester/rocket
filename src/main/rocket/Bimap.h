@@ -139,7 +139,7 @@ struct fmt::formatter<boost::bimaps::bimap<A, B>, C> {
   format(const boost::bimaps::bimap<A, B>& val, FormatContext& ctx) const {
     // @todo Don't copy the whole map here
     std::map<K, V> map;
-    for (const auto& [k, v] : val.left) { // cppcheck-suppress shadowArgument
+    for (const auto& [k, v] : val.left) {
       map.emplace(k, v);
     }
     return underlying_.format(map, ctx);

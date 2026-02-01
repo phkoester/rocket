@@ -19,7 +19,7 @@ TEST(CMake, env) {
 }
 
 TEST(CMake, generated) {
-  EXPECT_EQ(generated(), "Hello from `generated.cc`!");
+  EXPECT_EQ(string_view(generated()), "Hello from `generated.cc`!"sv);
 }
 
 // EOF

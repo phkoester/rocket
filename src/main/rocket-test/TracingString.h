@@ -106,7 +106,7 @@ struct TracingString {
   /// @member_op_asgmt_copy
 
   TracingString&
-  operator=(const TracingString& rhs) noexcept { // cppcheck-suppress operatorEqVarError
+  operator=(const TracingString& rhs) noexcept {
     val_ = rhs.val_;
     trace("opAsgmtCopy");
     ++opAsgmtCopy;
@@ -115,7 +115,7 @@ struct TracingString {
 
   /// @member_op_asgmt_move
   TracingString&
-  operator=(TracingString&& rhs) noexcept { // cppcheck-suppress operatorEqVarError
+  operator=(TracingString&& rhs) noexcept {
     val_ = rhs.val_;
     rhs.invalidate();
     trace("opAsgmtMove");

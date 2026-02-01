@@ -572,13 +572,13 @@ struct BufferedSource : Source {
 
   i32 close() override;
 
-  i32 error() const override { return underlying_.error(); } // cppcheck-suppress uselessOverride
+  i32 error() const override { return underlying_.error(); }
 
-  bool good() const override { return underlying_.good(); } // cppcheck-suppress uselessOverride
+  bool good() const override { return underlying_.good(); }
 
   i32 handle() const override { return underlying_.handle(); }
 
-  bool open() const override { return underlying_.open(); } // cppcheck-suppress uselessOverride
+  bool open() const override { return underlying_.open(); }
 
   u64 read(std::span<char> out) override;
 

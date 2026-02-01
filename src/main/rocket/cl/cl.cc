@@ -46,7 +46,7 @@ CommandLine::CommandLine(
     if (opt.shortName) {
       const string shortName = static_cast<string>(*opt.shortName);
       validate(shortName, false);
-      auto pair = byShortName_.emplace(*opt.shortName, &opt); // cppcheck-suppress shadowVariable
+      auto pair = byShortName_.emplace(*opt.shortName, &opt);
       ROCKET_CHECK(opts, pair.second, "Duplicate option `{}`", name(opt, false));
     }
   }
