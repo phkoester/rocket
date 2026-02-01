@@ -46,16 +46,6 @@ using namespace testing;
 
 // `ROCKET_TEST_...` ........................................................................................
 
-#ifdef ROCKET_OS_WINDOWS
-  #ifdef ROCKET_TEST_EXPORTING__
-    #define ROCKET_TEST_PUBLIC __declspec(dllexport) ///< Specifier for global data symbols.
-  #else
-    #define ROCKET_TEST_PUBLIC  __declspec(dllimport) ///< Specifier for global data symbols.
-  #endif
-#else
-  #define ROCKET_TEST_PUBLIC ///< Specifier for global data symbols.
-#endif
-
 /// An environment variable indicating whether terminal functionality is tested.
 #define ROCKET_TEST_TERMINAL "ROCKET_TEST_TERMINAL"
 
@@ -107,9 +97,9 @@ namespace rocket::test {
 // Constants ------------------------------------------------------------------------------------------------
 
 /// Value of the environment variable.
-ROCKET_TEST_PUBLIC extern const std::optional<std::string> BINARY_DIR;
+extern const std::optional<std::string> BINARY_DIR;
 /// Value of the environment variable.
-ROCKET_TEST_PUBLIC extern const std::optional<std::string> CONFIG;
+extern const std::optional<std::string> CONFIG;
 /// Value of the environment variable.
 extern const bool TEST_TERMINAL;
 

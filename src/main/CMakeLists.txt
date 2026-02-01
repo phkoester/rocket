@@ -176,8 +176,6 @@ target_sources(rocket-test
       rocket-test/matcher/matcher.h
 )
 target_compile_definitions(rocket-test
-  PRIVATE
-    ROCKET_TEST_EXPORTING__
   PUBLIC
     ${COMPILE_DEFS}
     ROCKET_TEST
@@ -201,7 +199,6 @@ target_compile_definitions(rocket-test-main
   PRIVATE
     ${COMPILE_DEFS}
     ROCKET_TEST
-    ROCKET_TEST_MAIN_EXPORTING__
 )
 target_compile_features(rocket-test-main PRIVATE ${COMPILE_FEATURES})
 target_compile_options(rocket-test-main PRIVATE ${COMPILE_FLAGS})

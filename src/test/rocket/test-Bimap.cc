@@ -1,5 +1,5 @@
 /*
- * test-UnorderedBimap.cc
+ * test-Bimap.cc
  */
 
 #include "rocket-test/rocket-test.h"
@@ -8,21 +8,21 @@
 
 // #TEST ----------------------------------------------------------------------------------------------------
 
-TEST(UnorderedBimap, opEq) {
+TEST(Bimap, UnorderedBimapopEq) {
   auto map1 = makeUnorderedBimap<i32, i32>({ { 1, 2 }, { 3, 4 } });
   auto map2 = makeUnorderedBimap<i32, i32>({ { 1, 2 }, { 3, 4 } });
   EXPECT_EQ(map1, map2);
   EXPECT_EQ(map2, map1);
 }
 
-TEST(UnorderedBimap, opNe) {
+TEST(Bimap, UnorderedBimapopNe) {
   auto map1 = makeUnorderedBimap<i32, i32>({ { 1, 2 } });
   auto map2 = makeUnorderedBimap<i32, i32>({ { 1, 2 }, { 3, 4 } });
   EXPECT_NE(map1, map2);
   EXPECT_NE(map2, map1);
 }
 
-TEST(UnorderedBimap, format) {
+TEST(Bimap, UnorderedBimapformat) {
   {
     auto map = makeUnorderedBimap<i32, i32>({ { 1, 2 }, { 3, 4 } });
     EXPECT_EQ(fmt::format("{}", map), "{1: 2, 3: 4}");

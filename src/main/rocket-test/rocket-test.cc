@@ -13,8 +13,8 @@ namespace rocket::test {
 
 // Constants ------------------------------------------------------------------------------------------------
 
-ROCKET_TEST_PUBLIC const auto BINARY_DIR = system::env::get<string>("BINARY_DIR");
-ROCKET_TEST_PUBLIC const auto CONFIG = system::env::get<string>("CONFIG");
+const auto BINARY_DIR = system::env::get<string>("BINARY_DIR");
+const auto CONFIG = system::env::get<string>("CONFIG");
 const bool TEST_TERMINAL = system::env::get<bool>(ROCKET_TEST_TERMINAL).value_or(false);
 
 // Functions ------------------------------------------------------------------------------------------------
