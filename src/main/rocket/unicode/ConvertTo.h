@@ -13,9 +13,9 @@
 
 namespace rocket::unicode {
 
-std::u32string utf8To32(std::string_view str);
+std::u32string utf8To32(std::string_view str); // NOLINT
 
-std::string utf32To8(std::u32string_view str);
+std::string utf32To8(std::u32string_view str); // NOLINT
 
 // #ConvertTo -----------------------------------------------------------------------------------------------
 

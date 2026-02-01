@@ -15,7 +15,7 @@ namespace rocket::unicode {
 // #IteratorType --------------------------------------------------------------------------------------------
 
 /// Iterator types.
-enum class IteratorType {
+enum class IteratorType : u8 {
   Character, ///< Iterate over characters
   Line, ///< Iterate over lines
   Sentence, ///< Iterate over sentences
@@ -59,14 +59,14 @@ struct Iterator {
    *
    * @return the current position
    */
-  u64 current() const;
+  u64 current() const; // NOLINT
 
   /**
    * Sets the iterator to the first position in the input string.
    *
    * @return the first position
    */
-  u64 first();
+  u64 first(); // NOLINT
 
   /**
    * Returns the input string.
@@ -80,21 +80,21 @@ struct Iterator {
    *
    * @return the last position
    */
-  u64 last();
+  u64 last(); // NOLINT
 
   /**
    * Advances the iterator to the next position in the input string.
    *
    * @return the next position
    */
-  u64 next();
+  u64 next(); // NOLINT
 
   /**
    * Returns the next segment in the input string
    *
    * @return the next segment. If it is empty, the iterator is exhausted
    */
-  std::basic_string_view<C>
+  [[nodiscard]] std::basic_string_view<C>
   nextSegment()  {
     auto current = this->current();
     auto next = this->next();
@@ -109,7 +109,7 @@ struct Iterator {
    *
    * @return the next segments
    */
-  std::vector<std::basic_string_view<C>>
+  [[nodiscard]] std::vector<std::basic_string_view<C>>
   nextSegments() {
     std::vector<std::basic_string_view<C>> ret;
     for (auto seg = nextSegment(); not seg.empty(); seg = nextSegment()) {
@@ -123,14 +123,14 @@ struct Iterator {
    *
    * @return the previous position
    */
-  u64 previous();
+  u64 previous(); // NOLINT
 
   /**
    * Returns the previous segment in the input string
    *
    * @return the previous segment. If it is empty, the iterator is exhausted
    */
-  std::basic_string_view<C>
+  [[nodiscard]] std::basic_string_view<C>
   previousSegment() {
     auto current = this->current();
     auto previous = this->previous();
@@ -145,7 +145,7 @@ struct Iterator {
    *
    * @return the previous segments
    */
-  std::vector<std::basic_string_view<C>>
+  [[nodiscard]] std::vector<std::basic_string_view<C>>
   previousSegments() {
     std::vector<std::basic_string_view<C>> ret;
     for (auto seg = previousSegment(); not seg.empty(); seg = previousSegment()) {

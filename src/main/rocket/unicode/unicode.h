@@ -37,7 +37,7 @@ struct CodePoint {
    *
    * @param val a `char` value. This must be an ASCII character in the range @f$[0,127]@f$
    */
-  constexpr CodePoint(char val) : val_(val) {
+  constexpr CodePoint(char val) : val_(val) { // NOLINT
     ROCKET_CHECK(val, ascii(), "ASCII character expected");
   }
 
@@ -48,11 +48,10 @@ struct CodePoint {
    *
    * @param val a `char32` value
    */
-  // cppcheck-suppress noExplicitConstructor
-  constexpr CodePoint(char32 val) noexcept : val_(val) {}
+  constexpr CodePoint(char32 val) noexcept : val_(val) {} // NOLINT
 
   /// @member_op_cast{#char32}
-  constexpr operator char32() const noexcept { return val_; }
+  constexpr operator char32() const noexcept { return val_; } // NOLINT
 
   /// @member_op_cast{#std::string}
   explicit operator std::string() const;
@@ -65,7 +64,7 @@ struct CodePoint {
    *
    * @return whether the code point is an ASCII character
    */
-  constexpr bool ascii() const noexcept { return val_ < 0x80; }
+  [[nodiscard]] constexpr bool ascii() const noexcept { return val_ < 0x80; }
 
   /**
    * Checks if the code point equals the specified ASCII character.
@@ -73,41 +72,41 @@ struct CodePoint {
    * @param c the ASCII character to check
    * @return whether the code point equals the specified ASCII character
    */
-  constexpr bool
+  [[nodiscard]] constexpr bool
   eq(char c) const noexcept {
     return ascii() && val_ == static_cast<char32>(c);
   }
 
   /// @member_fn_hash
-  inline u64 hash() const noexcept { return std::hash<char32>()(val_); }
+  [[nodiscard]] u64 hash() const noexcept { return std::hash<char32>()(val_); }
 
   /**
    * Checks if the code point is printable.
    *
    * @return whether the code point is printable
    */
-  bool isPrint() const noexcept;
+  [[nodiscard]] bool isPrint() const noexcept;
 
   /**
    * Checks if the code point is whitespace.
    *
    * @return whether the code point is whitespace
    */
-  bool isWhitespace() const noexcept;
+  [[nodiscard]] bool isWhitespace() const noexcept;
 
   /**
    * Returns a lower-case code point for this code point.
    *
    * @return a code point in lower case
    */
-  CodePoint lower() const noexcept;
+  [[nodiscard]] CodePoint lower() const noexcept;
 
   /**
    * Returns an upper-case code point for this code point.
    *
    * @return a code point in upper case
    */
-  CodePoint upper() const noexcept;
+  [[nodiscard]] CodePoint upper() const noexcept;
 
   /**
    * Checks if the code point is valid.
@@ -117,14 +116,17 @@ struct CodePoint {
    *
    * @return whether the code point is valid
    */
-  constexpr bool valid() const noexcept { return val_ <= 0x10FFFFU && not (val_ >= 0xD800U && val_ <= 0xDFFFU); }
+  [[nodiscard]] constexpr bool
+  valid() const noexcept {
+    return val_ <= 0x10FFFFU && (val_ < 0xD800U || val_ > 0xDFFFU);
+  }
 
   /**
    * Calculates the display width for a code point.
    *
    * @return the code point's display width, in the range @f$[0,2]@f$
    */
-  u8 width() const noexcept;
+  [[nodiscard]] u8 width() const noexcept;
 
 private:
 
@@ -139,7 +141,7 @@ private:
  */
 constexpr CodePoint
 operator""_cp(char val) {
-  return CodePoint(val);
+  return { val };
 }
 
 /**
@@ -150,7 +152,7 @@ operator""_cp(char val) {
  */
 constexpr CodePoint
 operator""_cp(char32 val) {
-  return CodePoint(val) ;
+  return { val };
 }
 
 /// @op_output{#rocket::unicode::CodePoint}
@@ -207,7 +209,7 @@ struct std::hash<rocket::unicode::CodePoint> {
    * @param val the value to hash
    * @return a hash value
    */
-  inline u64 operator()(rocket::unicode::CodePoint val) const noexcept { return val.hash(); }
+  u64 operator()(rocket::unicode::CodePoint val) const noexcept { return val.hash(); }
 };
 
 // #std::numeric_limits<#CodePoint> -------------------------------------------------------------------------
@@ -240,7 +242,7 @@ namespace rocket::unicode {
  * @param str a UTF-8 string
  * @return a UTF-32 string
  */
-std::u32string utf8To32(std::string_view str);
+std::u32string utf8To32(std::string_view str); // NOLINT
 
 /**
  * Converts the UTF-32 string @p str to a UTF-8 string.
@@ -248,7 +250,7 @@ std::u32string utf8To32(std::string_view str);
  * @param str a UTF-32 string
  * @return a UTF-8 string
  */
-std::string utf32To8(std::u32string_view str);
+std::string utf32To8(std::u32string_view str); // NOLINT
 
 // UTF8 .....................................................................................................
 
