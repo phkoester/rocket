@@ -123,7 +123,7 @@ containsRegex(std::shared_ptr<const internal::Regex> regex) {
 template <typename T = std::string>
 inline testing::PolymorphicMatcher<internal::MatchesRegexMatcher>
 containsRegex(const testing::internal::StringLike<T>& pattern) {
-  return containsRegex(std::make_shared<const internal::Regex>(std::string(pattern)));
+  return containsRegex(std::make_shared<const internal::Regex>(std::string(pattern))); // NOLINT
 }
 
 /**
@@ -151,7 +151,7 @@ matchesRegex(std::shared_ptr<const internal::Regex> regex) {
 template<typename T = std::string>
 inline testing::PolymorphicMatcher<internal::MatchesRegexMatcher>
 matchesRegex(const testing::internal::StringLike<T>& pattern) {
-  return matchesRegex(std::make_shared<const internal::Regex>(std::string(pattern)));
+  return matchesRegex(std::make_shared<const internal::Regex>(std::string(pattern))); // NOLINT
 }
 
 /**

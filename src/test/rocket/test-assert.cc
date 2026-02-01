@@ -7,7 +7,7 @@
 #include "rocket/Exception.h"
 #include "rocket/assert.h"
 
-#include <signal.h>
+#include <csignal>
 
 // Functions ------------------------------------------------------------------------------------------------
 
@@ -25,7 +25,7 @@ TEST(assert, RocketAssertTrue) {
   EXPECT_FALSE(oopsCalled);
 }
 
-TEST(assertDeathTest, RocketAssertFalse) {
+TEST(assertDeathTest, RocketAssertFalse) { // NOLINT
   GTEST_FLAG_SET(death_test_style, "threadsafe");
   EXPECT_EXIT(
       { ROCKET_ASSERT(false, "My message: {}", 42); },

@@ -48,10 +48,10 @@ parseCommand(const vector<string>& args, nio::Sink& out = nio::out, nio::Sink& e
 
   // Parse, step 1
 
-  OptionGroup general { "General control" };
-  OptionGroup misc { "Miscellaneous" };
+  const OptionGroup general { "General control" };
+  const OptionGroup misc { "Miscellaneous" };
 
-  CommandLineConfig config {
+  const CommandLineConfig config {
     .usages={ "[OPTION]... list [OPTION]... FILE...", "[OPTION]... show [OPTION]... [ARG]..." },
     .prolog="List FILEs or show ARGs.\n\nThis is yet another paragraph.",
     .epilog="Gallia est omnis divisa in partes tres, quarum unam incolunt Belgae, aliam Aquitani, tertiam qui ipsorum lingua Celtae, nostra Galli appellantur. Hi omnes lingua, institutis, legibus inter se differunt. Gallos ab Aquitanis Garunna flumen, a Belgis Matrona et Sequana dividit."
@@ -78,9 +78,9 @@ parseCommand(const vector<string>& args, nio::Sink& out = nio::out, nio::Sink& e
   if (parseCommandCommand == "list") {
     // 1. "list" with "FILE..." (mandatory)
 
-    OptionGroup list { "List control" };
+    const OptionGroup list { "List control" };
 
-    CommandLineConfig listConfig {
+    const CommandLineConfig listConfig {
       .command = config.command + " list",
       .usages={ "[OPTION]... FILE..." },
       .rocketOpts=false
@@ -101,9 +101,9 @@ parseCommand(const vector<string>& args, nio::Sink& out = nio::out, nio::Sink& e
   } else {
     // 2. "show" with "[ARG]..." (optional)
 
-    OptionGroup show { "Show control" };
+    const OptionGroup show { "Show control" };
 
-    CommandLineConfig showConfig {
+    const CommandLineConfig showConfig {
       .command = config.command + " show",
       .usages={ "[OPTION]... [ARG]..." },
       .rocketOpts=false
@@ -217,7 +217,7 @@ TEST(cl, parseOptBool) {
 }
 
 TEST(cl, parseOptInt) {
-  i32 num;
+  i32 num = 0;
   optional<vector<string>> args;
 
   CommandLine cl( {
@@ -228,7 +228,7 @@ TEST(cl, parseOptInt) {
 
   // Test mixed order
   {
-    num = 0;
+    num = 0; // NOLINT
     args = nullopt;
     EXPECT_TRUE(cl.parse({ "a", "--num", "12", "b", "c" }, nio::out, nio::err, false));
     EXPECT_EQ(args, (vector<string> { "a", "b", "c" }));
@@ -237,7 +237,7 @@ TEST(cl, parseOptInt) {
 
   // Test assignment via '='
   {
-    num = 0;
+    num = 0; // NOLINT
     args = nullopt;
     EXPECT_TRUE(cl.parse({ "a", "--num=12", "b", "c" }, nio::out, nio::err, false));
     EXPECT_EQ(args, (vector<string> { "a", "b", "c" }));
@@ -246,7 +246,7 @@ TEST(cl, parseOptInt) {
 
   // Test error when missing value
   {
-    num = 0;
+    num = 0; // NOLINT
     args = nullopt;
     nio::StringSink buf;
     EXPECT_FALSE(cl.parse({ "a", "-n" }, buf, buf, false));
@@ -255,7 +255,7 @@ TEST(cl, parseOptInt) {
 
   // Test error when conversion fails
   {
-    num = 0;
+    num = 0; // NOLINT
     args = nullopt;
     nio::StringSink buf;
     EXPECT_FALSE(cl.parse({ "a", "-n", "hello" }, buf, buf, false));
@@ -264,7 +264,7 @@ TEST(cl, parseOptInt) {
 }
 
 TEST(cl, parseOptEnum) {
-  log::LogLevel level;
+  log::LogLevel level; // NOLINT
   vector<string> args;
 
   CommandLine cl( {
@@ -275,7 +275,7 @@ TEST(cl, parseOptEnum) {
 
   // Test mixed order
   {
-    level = log::LogLevel::none;
+    level = log::LogLevel::none; // NOLINT
     EXPECT_TRUE(cl.parse({ "a", "--level", "info", "b", "c" }, nio::out, nio::err, false));
     EXPECT_EQ(args, (vector<string> { "a", "b", "c" }));
     EXPECT_EQ(level, log::LogLevel::info);
@@ -283,7 +283,7 @@ TEST(cl, parseOptEnum) {
 
   // Test error when conversion fails
   {
-    level = log::LogLevel::none;
+    level = log::LogLevel::none; // NOLINT
     nio::StringSink buf;
     EXPECT_FALSE(cl.parse({ "a", "-l", "nonsense" }, buf, buf, false));
     EXPECT_EQ(buf.str(), "test-rocket-cl: error: Option `-l`: Cannot scan \"nonsense\" as `rocket::log::LogLevel`\n");
@@ -311,9 +311,9 @@ TEST(cl, parseOptVector) {
 }
 
 TEST(cl, parseShortOptions) {
-  bool ignore;
+  bool ignore = false;
   string name;
-  bool verbose;
+  bool verbose = false;
   vector<string> args;
 
   CommandLine cl( {

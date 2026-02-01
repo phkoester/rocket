@@ -23,7 +23,7 @@ TEST(Cow, differentTypes) {
 TEST(Cow, sameTypes) {
   i32 n = 3;
   Cow<i32> cow(n);
-  n = 4;
+  n = 4; // NOLINT
   EXPECT_EQ(cow.get(), 4);
   EXPECT_FALSE(cow.modified());
 

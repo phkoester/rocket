@@ -173,7 +173,7 @@ std::string join(
   std::string ret;
 
   u64 count = 0;
-  u64 n = std::distance(begin, end);
+  const u64 n = std::distance(begin, end);
   for (Iterator it = begin; it != end; ++it) {
     if (++count > 1) {
       if (count == n) {

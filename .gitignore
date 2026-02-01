@@ -2,6 +2,7 @@
 # .gitignore
 #
 
+/clang-tidy-report.txt
 /compile_commands.json
 
 /.cache/

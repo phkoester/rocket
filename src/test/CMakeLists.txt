@@ -32,7 +32,6 @@ AddTest(test-rocket-macro rocket test-macro.cc)
 AddTest(test-rocket-Process rocket test-Process.cc)
 AddTest(test-rocket-cl rocket/cl test-cl.cc)
 AddTest(test-rocket-external-boost-safe-numerics rocket/external test-boost-safe-numerics.cc)
-AddTest(test-rocket-external-C++ rocket/external test-C++.cc)
 
 set(GENERATED_CC ${GENERATED_DIR}/generated.cc)
 add_custom_command(
@@ -46,6 +45,7 @@ AddTest(test-rocket-external-CMake rocket/external test-CMake.cc
     "B=B B")
 target_sources(test-rocket-external-CMake PRIVATE ${GENERATED_CC})
 
+AddTest(test-rocket-external-Cxx rocket/external test-Cxx.cc)
 AddTest(test-rocket-external-fmt rocket/external test-fmt.cc)
 AddTest(test-rocket-external-icu rocket/external test-icu.cc)
 AddTest(test-rocket-external-scnlib rocket/external test-scnlib.cc)

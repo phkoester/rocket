@@ -8,14 +8,14 @@
 
 // #MyEnum --------------------------------------------------------------------------------------------------
 
-enum MyEnum { fröb, fröber, fröberer, pörk, pörker, pörkerer };
+enum MyEnum : u8 { fröb, fröber, fröberer, pörk, pörker, pörkerer };
 
 ROCKET_ENUM_DECLARE(, MyEnum, MyEnum);
 ROCKET_ENUM_DEFINE(, MyEnum, MyEnum, (fröb)(fröber)(fröberer)(pörk)(pörker)(pörkerer));
 
 // #MyEnumClass ---------------------------------------------------------------------------------------------
 
-enum class MyEnumClass { hürx, hürxer, hürxerer };
+enum class MyEnumClass : u8 { hürx, hürxer, hürxerer };
 
 ROCKET_ENUM_DECLARE(, MyEnumClass, MyEnumClass);
 ROCKET_ENUM_DEFINE(, MyEnumClass, MyEnumClass, (hürx)(hürxer)(hürxerer));
@@ -24,7 +24,7 @@ ROCKET_ENUM_DEFINE(, MyEnumClass, MyEnumClass, (hürx)(hürxer)(hürxerer));
 
 namespace mynamespace {
 
-enum MyEnumInNamespace { red, green, blue };
+enum MyEnumInNamespace : u8 { red, green, blue };
 
 } // namespace my_namespace
 
@@ -45,11 +45,11 @@ TEST(enum, MyEnumFormat) {
   EXPECT_EQ(fmt::format("{}", pörk), "pörk");
   EXPECT_EQ(fmt::format("{}", pörker), "pörker");
   EXPECT_EQ(fmt::format("{}", pörkerer), "pörkerer");
-  EXPECT_EQ(fmt::format("{}", static_cast<MyEnum>(10)), "<invalid>");
+  EXPECT_EQ(fmt::format("{}", static_cast<MyEnum>(10)), "<invalid>"); // NOLINT
   EXPECT_EQ(fmt::format("{: >10}", fröber), "    fröber"); // Tests UTF-8 alignment; 4 spaces expected
 
   EXPECT_EQ(fmt::format(U"{}", fröb), U"fröb");
-  EXPECT_EQ(fmt::format(U"{}", static_cast<MyEnum>(10)), U"<invalid>");
+  EXPECT_EQ(fmt::format(U"{}", static_cast<MyEnum>(10)), U"<invalid>"); // NOLINT
 }
 
 TEST(enum, MyEnumToType) {

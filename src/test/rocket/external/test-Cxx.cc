@@ -1,5 +1,5 @@
 /*
- * test-C++.cc
+ * test-Cxx.cc
  *
  * Tests related to the C++ language itself.
  */
@@ -11,11 +11,11 @@
 // #Cxx -----------------------------------------------------------------------------------------------------
 
 struct Cxx : public Test {
-  Cxx() {
+  Cxx() { // NOLINT
     reset();
   }
 
-  ~Cxx() override {}
+  ~Cxx() override = default;
 
 protected:
 
@@ -26,7 +26,7 @@ protected:
   };
 
   struct A {
-    virtual ~A() {}
+    virtual ~A() = default;
   };
 
   struct B : A {
@@ -42,12 +42,12 @@ protected:
   }
 
   void
-  foo(const i32&) {
+  foo(const i32&) { // NOLINT
     ++fooLvalue;
   }
 
   void
-  foo(i32&&) {
+  foo(i32&&) { // NOLINT
     ++fooRvalue;
   }
 
@@ -77,7 +77,7 @@ TEST_F(Cxx, assignLvalueToOptional) {
   string trace;
   {
     optional<TracingString> dest;
-    TracingString lvalue(trace, "a");
+    const TracingString lvalue(trace, "a");
     dest = lvalue;
   }
   EXPECT_EQ(TracingString::NUM_INSTANCES, 0);
@@ -105,7 +105,7 @@ TEST_F(Cxx, assignLvalueToOptionalWithMove) {
 
 TEST_F(Cxx, divideByZeroF64) {
   using type = f64;
-  type zero = 0;
+  const type zero = 0;
 
   type n = 4.2;
   EXPECT_EQ(n / zero, numeric_limits<type>::infinity());
@@ -128,16 +128,16 @@ TEST_F(Cxx, optionalEmplace) {
 
 TEST_F(Cxx, utf8Identifier) {
   // German
-  [[maybe_unused]] i32 _blöße;
+  [[maybe_unused]] i32 _blöße; // NOLINT
 
   // French
-  [[maybe_unused]] i32 _ça;
+  [[maybe_unused]] i32 _ça; // NOLINT
 
   // Japanese
-  [[maybe_unused]] i32 _こんにちわ;
+ [[maybe_unused]] i32 _こんにちわ; // NOLINT
 
   // Chinese (traditional)
-  [[maybe_unused]] i32 _你好;
+  [[maybe_unused]] i32 _你好; // NOLINT
 }
 
 TEST_F(Cxx, utf8StringLiteral) {
@@ -152,7 +152,7 @@ TEST_F(Cxx, vectorPushBackLvalue) {
   string trace;
   {
     vector<TracingString> vec;
-    TracingString lvalue(trace, "a");
+    const TracingString lvalue(trace, "a");
     vec.push_back(lvalue);
   }
   EXPECT_EQ(TracingString::NUM_INSTANCES, 0);
@@ -191,7 +191,7 @@ TEST_F(Cxx, vectorEmplaceBack) {
 }
 
 TEST_F(Cxx, forwardWithBar) {
-  i32 lvalue;
+  const i32 lvalue = 0;
   bar(lvalue);
   EXPECT_EQ(fooLvalue, 1);
 
@@ -200,7 +200,7 @@ TEST_F(Cxx, forwardWithBar) {
 }
 
 TEST_F(Cxx, forwardWithBaz) {
-  i32 lvalue;
+  const i32 lvalue = 0;
   baz(lvalue);
   EXPECT_EQ(fooLvalue, 1);
 
@@ -211,7 +211,7 @@ TEST_F(Cxx, forwardWithBaz) {
 TEST_F(Cxx, implicitVirtualDtor) {
   A* p = new B;
   EXPECT_FALSE(Member::dtorCalled);
-  delete p;
+  delete p; // NOLINT
   // Class #B needs not declare an overriding destructor---it is there implicitly
   EXPECT_TRUE(Member::dtorCalled);
 }

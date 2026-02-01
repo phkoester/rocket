@@ -9,7 +9,7 @@
 
 // #TEST ----------------------------------------------------------------------------------------------------
 
-TEST(Exception, printException1) {
+TEST(Exception, printException1) { // NOLINT(*-complexity)
   try {
     throw "oops1";
   } catch (...) {
@@ -47,7 +47,7 @@ TEST(Exception, printException2) {
   }
 }
 
-TEST(Exception, what1) {
+TEST(Exception, what1) { // NOLINT(*-complexity)
   try {
     throw "oops1";
   } catch (...) {
@@ -57,10 +57,10 @@ TEST(Exception, what1) {
       try {
         throw_with_nested(InvalidState("oops3"));
       } catch (const InvalidState& ex3) {
-        string str1 = what(ex3);
+        const string str1 = what(ex3);
         EXPECT_THAT(str1, matchesRegex(".*\\.cc:\\d+: oops3 \\(Because: .*\\.cc:\\d+: Parameter `name`: oops2 \\(Because: \"oops1\"\\)\\)"));
 
-        string str2 = what(current_exception());
+        const string str2 = what(current_exception());
         EXPECT_EQ(str2, str1);
       }
     }
