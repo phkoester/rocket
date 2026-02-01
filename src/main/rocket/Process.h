@@ -206,7 +206,7 @@ struct Process {
     out.write(autoName());
     out.write(": ");
     const char* label = status != 0 ? "fatal error: " : "error: ";
-    if (isatty(out.handle())) {
+    if (auto handle  = out.handle(); handle != -1 && isatty(handle)) {
       out.print(fg(fmt::color::red) | fmt::emphasis::bold, "{}", label);
     } else {
       out.write(label);
@@ -244,7 +244,7 @@ struct Process {
   info(nio::Sink& out, fmt::format_string<T...> fmt, T&&... args) const {
     out.write(autoName());
     out.write(": ");
-    if (isatty(out.handle())) {
+    if (auto handle = out.handle(); handle != -1 && isatty(handle)) {
       out.print(fg(fmt::color::cyan) | fmt::emphasis::bold, "note: ");
     } else {
       out.write("note: ");
@@ -317,7 +317,7 @@ struct Process {
   warn(nio::Sink& out, fmt::format_string<T...> fmt, T&&... args) const {
     out.write(autoName());
     out.write(": ");
-    if (isatty(out.handle())) {
+    if (auto handle = out.handle(); handle != -1 && isatty(handle)) {
       out.print(fg(fmt::color::yellow) | fmt::emphasis::bold, "warning: ");
     } else {
       out.write("warning: ");

@@ -65,7 +65,7 @@ struct ValueGuard {
    * @param newValue the new value to assign immediately
    */
   ValueGuard(T& ref, T&& newValue) : // NOLINT(*-param-not-moved)
-      ref_(ref),
+      ptr_(&ref),
       oldValue_(ref) {
     ref = std::forward<T>(newValue);
   }
@@ -75,11 +75,11 @@ struct ValueGuard {
    *
    * This destructor reassigns the old value to `ref` that was passed to the constructor.
    */
-  ~ValueGuard() { ref_ = oldValue_; }
+  ~ValueGuard() { *ptr_ = oldValue_; }
 
 private:
 
-  T& ref_; // NOLINT
+  T* ptr_;
   T oldValue_;
 };
 

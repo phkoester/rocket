@@ -128,7 +128,7 @@ Ansi::up(i32 n) const {
 optional<pair<u64, u64>>
 position(nio::Sink& out) {
   i32 fd = out.handle();
-  if (not isatty(fd)) {
+  if (fd == -1 || not isatty(fd)) {
     return nullopt;
   }
 
@@ -163,7 +163,7 @@ position(nio::Sink& out) {
 optional<pair<u64, u64>>
 size(nio::Io& io) {
   i32 fd = io.handle();
-  if (not isatty(fd)) {
+  if (fd == -1 || not isatty(fd)) {
     return nullopt;
   }
 
