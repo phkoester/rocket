@@ -7,8 +7,9 @@
 #include "rocket/log/log.h"
 #include "rocket/system/system.h"
 
+#include <filesystem>
+
 using namespace rocket::system;
-using namespace std;
 using namespace std::filesystem;
 
 // #TEST ----------------------------------------------------------------------------------------------------

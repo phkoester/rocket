@@ -41,8 +41,9 @@ using namespace std;
  */
 #define BENCH(_group, _name, _body) \
   static void \
-  _group##_##_name(benchmark::State& state) \
+  _group##_##_name(benchmark::State& state) { \
     _body \
+  } \
   BENCHMARK(_group##_##_name);
 
 // EOF

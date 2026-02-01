@@ -4,7 +4,7 @@
 
 #include "rocket-test/rocket-test.h"
 
-#include "rocket/UnorderedBimap.h"
+#include "rocket/Bimap.h"
 
 // #TEST ----------------------------------------------------------------------------------------------------
 

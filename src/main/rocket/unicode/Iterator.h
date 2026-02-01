@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include "rocket/UnorderedBimap.h"
+#include "rocket/Bimap.h"
 
 #include <algorithm> // #std::min
 

@@ -19,7 +19,7 @@ namespace rocket::str::location {
 /**
  * An enum describing the position type.
  */
-enum PositionType {
+enum PositionType : u8 {
   note,    ///< A note.
   warning, ///< A warning.
   error    ///< An error.

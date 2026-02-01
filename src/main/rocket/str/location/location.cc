@@ -26,7 +26,7 @@ namespace rocket::str::location {
 // Functions ------------------------------------------------------------------------------------------------
 
 LocationsResult
-locations(string_view input, const vector<Position>& positions, const LocationsConfig& config) {
+locations(string_view input, const vector<Position>& positions, const LocationsConfig& config) { // NOLINT(*-complexity)
   // Prepare result
 
   LocationsResult ret;
@@ -114,8 +114,8 @@ locations(string_view input, const vector<Position>& positions, const LocationsC
     } else if (c->tab() && config.tabSize) {
       // Handle tab
 
-      u64 mod = column % *config.tabSize;
-      u64 n = *config.tabSize - mod;
+      const u64 mod = column % *config.tabSize;
+      const u64 n = *config.tabSize - mod;
       column += n;
       lineString.push_back('\t');
     } else {
@@ -141,7 +141,7 @@ locations(string_view input, const vector<Position>& positions, const LocationsC
 }
 
 void
-printLocations(
+printLocations( // NOLINT(*-complexity)
   nio::Sink& out,
   optional<string_view> input,
   const LocationsResult& locationsResult,
@@ -156,9 +156,9 @@ printLocations(
       locations.end(),
       0_u64,
       [](u64 max, const auto& loc) { return std::max(loc.line, max); });
-  string maxLineStr =  fmt::format("{}", maxLine);
-  u64 lineNumberWidth = max(config.minLineNumberWidth, maxLineStr.size());
-  string blankPrefix = string(lineNumberWidth, ' ') + " | ";
+  const string maxLineStr =  fmt::format("{}", maxLine);
+  const u64 lineNumberWidth = max(config.minLineNumberWidth, maxLineStr.size());
+  const string blankPrefix = string(lineNumberWidth, ' ') + " | ";
 
   for (const auto& loc : locations) {
     // Print source, line number, column column number, type, and message
@@ -186,11 +186,12 @@ printLocations(
     // (skip zero-width characters)
 
     ROCKET_CHECK(input, input || loc.lineString, "Either `input` or `lineString` must be supplied");
-    string line = loc.lineString ?
+    const string line = loc.lineString ?
       *loc.lineString :
       string(input->substr(loc.lineRange.a, *loc.lineRange.size()));
     escape::Result result;
-    string escapedLine = escape::escapeCString(line, { .tabSize=locationsResult.config.tabSize }, &result);
+    const string escapedLine = escape::escapeCString(
+      line, { .tabSize=locationsResult.config.tabSize }, &result);
 
     // For #escapedLine, map #Character index -> byte offset
     auto iter = unicode::Iterator<char>(unicode::IteratorType::Character, escapedLine);
@@ -219,7 +220,7 @@ printLocations(
 
     // Prepare the indicators string. #indicators is in #Character-width coordinates
 
-    u64 width = escapedLineWidth;
+    const u64 width = escapedLineWidth;
     string indicators(width, ' ');
 
     // Make up a lambda that translates an input `char` position to an #indicators position. This requires
@@ -253,16 +254,16 @@ printLocations(
       // Obtain the intersection between range and printed line
       if (auto inter = range & loc.lineRange; not inter.empty()) {
         // Translate intersection into #indicators positions
-        u64 lower = indicatorPos(inter.a);
-        u64 upper = indicatorPos(*inter.b);
+        const u64 lower = indicatorPos(inter.a);
+        const u64 upper = indicatorPos(*inter.b);
         // Place the range
-        indicators.replace(indicators.begin() + lower, indicators.begin() + upper, upper - lower, '~');
+        indicators.replace(indicators.begin() + lower, indicators.begin() + upper, upper - lower, '~'); // NOLINT
       }
     }
 
     // Place the caret in #indicators
 
-    u64 caretPos = indicatorPos(loc.position);
+    const u64 caretPos = indicatorPos(loc.position);
     if (caretPos < indicators.size()) {
       indicators[caretPos] = '^';
     } else {
@@ -283,8 +284,9 @@ printLocations(
     // If supplied, print caption
 
     if (loc.caption) {
-      string caption = string(caretPos, ' ') + *loc.caption;
-      string escapedCaption = escape::escapeCString(caption, { .tabSize=locationsResult.config.tabSize });
+      const string caption = string(caretPos, ' ') + *loc.caption;
+      const string escapedCaption = escape::escapeCString(
+        caption, { .tabSize=locationsResult.config.tabSize });
       out.write(blankPrefix);
       if (config.styled) {
         out.print(fg(fmt::color::green) | fmt::emphasis::bold, "{}\n", escapedCaption);

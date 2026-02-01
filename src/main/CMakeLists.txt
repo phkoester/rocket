@@ -61,11 +61,11 @@ target_sources(rocket
     rocket/literal.cc
     rocket/rocket.cc
     rocket/3rdparty/scnlib/impl.cc
+    rocket/chrono/chrono.cc
     rocket/cl/cl.cc
+    rocket/filesystem/filesystem.cc
     rocket/io/io.cc
     rocket/nio/nio.cc
-    rocket/std/chrono.cc
-    rocket/std/filesystem/filesystem.cc
     rocket/str/Noun.cc
     rocket/str/str.cc
     rocket/str/StringConvert.cc
@@ -83,6 +83,7 @@ target_sources(rocket
       ${GENERATED_DIR}
     FILES
       rocket/assert.h
+      rocket/Bimap.h
       rocket/Cow.h
       rocket/enum.h
       rocket/Exception.h
@@ -93,9 +94,11 @@ target_sources(rocket
       rocket/macro.h
       rocket/Process.h
       rocket/rocket.h
+      rocket/std.h
       rocket/type-traits.h
-      rocket/UnorderedBimap.h
+      rocket/chrono/chrono.h
       rocket/cl/cl.h
+      rocket/filesystem/filesystem.h
       rocket/format/format.h
       rocket/format/std.h
       rocket/io/io.h
@@ -107,9 +110,6 @@ target_sources(rocket
       rocket/nio/nio-fwd.h
       rocket/reflect/reflect.h
       rocket/scan/scan.h
-      rocket/std/chrono.h
-      rocket/std/std.h
-      rocket/std/filesystem/filesystem.h
       rocket/str/Noun.h
       rocket/str/Range.h
       rocket/str/str.h

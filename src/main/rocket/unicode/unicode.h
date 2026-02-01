@@ -7,7 +7,7 @@
 #pragma once
 
 #include "rocket/Cow.h"
-#include "rocket/UnorderedBimap.h"
+#include "rocket/Bimap.h"
 #include "rocket/assert.h"
 #include "rocket/format/format.h"
 

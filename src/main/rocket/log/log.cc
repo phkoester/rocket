@@ -7,7 +7,7 @@
 #include "rocket/Process.h"
 #include "rocket/enum.h"
 #include "rocket/macro.h"
-#include "rocket/std/chrono.h"
+#include "rocket/chrono/chrono.h"
 #include "rocket/str/str.h"
 #include "rocket/system/system.h"
 

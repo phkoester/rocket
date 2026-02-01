@@ -396,11 +396,11 @@ CommandLine::printHelpOpts(nio::Sink& out, u64 width) const { // NOLINT(*-comple
         out.write("    ");
       }
       out.print("--{}", opt->name);
-      if (opt->required) {
-        out.write(" (required)");
-      }
       if (opt->format) {
         out.print(" {}", *opt->format);
+      }
+      if (opt->required) {
+        out.write(" (required)");
       }
       out.write('\n');
       if (opt->help) {
@@ -422,11 +422,11 @@ CommandLine::printHelpParams(nio::Sink& out, u64 width) const {
   for (const auto& param : params_) {
     out.write("  ");
     out.write(param.name);
-    if (param.required) {
-      out.write(" (required)");
-    }
     if (param.format) {
       out.print(" {}", *param.format);
+    }
+    if (param.required) {
+      out.write(" (required)");
     }
     out.write('\n');
     if (param.help) {

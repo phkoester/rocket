@@ -8,8 +8,8 @@
 
 #include "rocket-test/rocket-test.h"
 
+#include "rocket/chrono/chrono.h"
 #include "rocket/log/log.h"
-#include "rocket/std/chrono.h"
 #include "rocket/system/system.h"
 
 using namespace rocket::log;

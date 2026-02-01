@@ -7,9 +7,9 @@
 #pragma once
 
 #include "rocket/literal.h"
+#include "rocket/std.h"
 #include "rocket/type-traits.h"
 #include "rocket/format/format.h"
-#include "rocket/std/std.h"
 
 #include <algorithm>
 #include <optional>

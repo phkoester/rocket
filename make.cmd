@@ -14,7 +14,7 @@
 :: Parameters:
 ::
 :: - BUILD_TYPE
-::     The build type: `debug` or `release`
+::     The build type: `debug` (default) or `release`
 
 @echo off
 
@@ -22,7 +22,7 @@ setlocal
 
 :: Configure build type -------------------------------------------------------------------------------------
 
-if not defined BUILD_TYPE set BUILD_TYPE=release
+if not defined BUILD_TYPE set BUILD_TYPE=debug
 if %BUILD_TYPE% neq debug if %BUILD_TYPE% neq release (
  echo make.cmd: Invalid value `%BUILD_TYPE%` for BUILD_TYPE; expected `debug` or `release` 1>&2
  exit /b 2

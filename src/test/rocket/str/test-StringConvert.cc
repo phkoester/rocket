@@ -33,10 +33,10 @@ TEST(StringConvert, i32) {
   EXPECT_EQ(toType<type>("-2147483648"), numeric_limits<type>::min());
 
   EXPECT_THAT(
-      [] { auto _ = toType<type>("foo"); },
+      [] { [[maybe_unused]] auto _ = toType<type>("foo"); },
       ThrowsMessage<InvalidState>(HasSubstr("Cannot scan \"foo\" as `int`")));
   EXPECT_THAT(
-      [] { auto _ = toType<type>("1x"); },
+      [] { [[maybe_unused]] auto _ = toType<type>("1x"); },
       ThrowsMessage<InvalidState>(HasSubstr("Cannot scan \"1x\" as `int`")));
 }
 
@@ -49,10 +49,10 @@ TEST(StringConvert, i128) {
   EXPECT_EQ(toType<type>("-170141183460469231731687303715884105728"), numeric_limits<type>::min());
 
   EXPECT_THAT(
-      [] { auto _ = toType<type>("foo"); },
+      [] { [[maybe_unused]] auto _ = toType<type>("foo"); },
       ThrowsMessage<InvalidState>(HasSubstr("Cannot scan \"foo\" as `__int128`")));
   EXPECT_THAT(
-      [] { auto _ = toType<type>("1x"); },
+      [] { [[maybe_unused]] auto _ = toType<type>("1x"); },
       ThrowsMessage<InvalidState>(HasSubstr("Cannot scan \"1x\" as `__int128`")));
 }
 
@@ -68,10 +68,10 @@ TEST(StringConvert, f128) {
   EXPECT_EQ(toType<type>("-12.34"), -12.34L);
 
   EXPECT_THAT(
-      [] { auto _ = toType<type>("foo"); },
+      [] { [[maybe_unused]] auto _ = toType<type>("foo"); },
       ThrowsMessage<InvalidState>(HasSubstr("Cannot scan \"foo\" as `long double`")));
   EXPECT_THAT(
-      [] { auto _ = toType<type>("1x"); },
+      [] { [[maybe_unused]] auto _ = toType<type>("1x"); },
       ThrowsMessage<InvalidState>(HasSubstr("Cannot scan \"1x\" as `long double`")));
 }
 
@@ -83,10 +83,10 @@ TEST(StringConvert, enum) {
   EXPECT_EQ(toType<type>("trace"), log::LogLevel::trace);
 
   EXPECT_THAT(
-      [] { auto _ = toType<type>("foo"); },
+      [] { [[maybe_unused]] auto _ = toType<type>("foo"); },
       ThrowsMessage<InvalidState>(HasSubstr("Cannot scan \"foo\" as `rocket::log::LogLevel`")));
   EXPECT_THAT(
-      [] { auto _ = toType<type>("tracex"); },
+      [] { [[maybe_unused]] auto _ = toType<type>("tracex"); },
       ThrowsMessage<InvalidState>(HasSubstr("Cannot scan \"tracex\" as `rocket::log::LogLevel`")));
 }
 

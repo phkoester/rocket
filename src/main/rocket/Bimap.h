@@ -1,7 +1,7 @@
 /**
- * @file UnorderedBimap.h
+ * @file Bimap.h
  *
- * An unordered bimap, based on `boost::bimaps::bimap`.
+ * Bimaps, effectively `boost::bimaps::bimap`.
  */
 
 #pragma once
@@ -9,19 +9,48 @@
 #include "rocket/format/std.h"
 
 #include <boost/bimap.hpp>
+#include <boost/bimap/set_of.hpp>
 #include <boost/bimap/unordered_set_of.hpp>
 
 #include <map>
-#include <set>
 
 namespace rocket {
+
+// #Bimap ---------------------------------------------------------------------------------------------------
+
+/// The #Bimap type alias.
+template<typename K, typename V>
+using Bimap = boost::bimaps::bimap<
+  boost::bimaps::set_of<K>,
+  boost::bimaps::set_of<V>
+>;
+
+/**
+ * Convenience function to make a #rocket::Bimap of a #std::initializer_list.
+ *
+ * @tparam K the map's left key type
+ * @tparam V the map's left value type
+ * @param list the map elements, as seen from the map's left index
+ * @return a new #rocket::Bimap containing the elements of @p list in its left index
+ */
+ template<typename K, typename V>
+ Bimap<K, V>
+ makeBimap(std::initializer_list<std::pair<K, V>> list = {}) {
+   Bimap<K, V> ret;
+   for (const auto& elem : list) {
+     ret.insert({ std::move(elem.first), std::move(elem.second) }); // `bimap` has no `emplace`
+   }
+   return ret;
+ }
 
 // #UnorderedBimap ------------------------------------------------------------------------------------------
 
 /// The #UnorderedBimap type alias.
 template<typename K, typename V>
-using UnorderedBimap =
-    boost::bimaps::bimap<boost::bimaps::unordered_set_of<K>, boost::bimaps::unordered_set_of<V>>;
+using UnorderedBimap = boost::bimaps::bimap<
+  boost::bimaps::unordered_set_of<K>,
+  boost::bimaps::unordered_set_of<V>
+>;
 
 /**
  * Convenience function to make a #rocket::UnorderedBimap of a #std::initializer_list.

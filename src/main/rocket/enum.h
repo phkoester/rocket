@@ -7,7 +7,7 @@
 #pragma once
 
 #include "rocket/Exception.h"
-#include "rocket/UnorderedBimap.h"
+#include "rocket/Bimap.h"
 #include "rocket/macro.h"
 #include "rocket/format/format.h"
 #include "rocket/str/message/message.h"
@@ -58,8 +58,8 @@
 // Declarations .............................................................................................
 
 #define ROCKET_ENUM_DECLARE_MAP__(type, name) \
-    extern const ::rocket::UnorderedBimap<type, ::std::string_view> name##Map__; \
-    const ::rocket::UnorderedBimap<type, ::std::string_view>& get##name##Map__();
+    extern const ::rocket::Bimap<type, ::std::string_view> name##Map__; \
+    const ::rocket::Bimap<type, ::std::string_view>& get##name##Map__();
 
 #define ROCKET_ENUM_DECLARE_OP_OUTPUT__(type) \
     ::std::ostream& operator<<(::std::ostream&, type);
@@ -114,12 +114,12 @@
 
 #define ROCKET_ENUM_DEFINE_MAP__(type, name, seq) \
   /* gcc accepts no `auto` here*/ \
-  const ::rocket::UnorderedBimap<type, ::std::string_view> name##Map__ = \
-    ::rocket::makeUnorderedBimap<type, ::std::string_view>({ \
+  const ::rocket::Bimap<type, ::std::string_view> name##Map__ = \
+    ::rocket::makeBimap<type, ::std::string_view>({ \
     BOOST_PP_SEQ_FOR_EACH(ROCKET_ENUM_DEFINE_MAP_ELEM__, type, seq) \
   }); \
   \
-  const ::rocket::UnorderedBimap<type, ::std::string_view>& \
+  const ::rocket::Bimap<type, ::std::string_view>& \
   get##name##Map__() { \
     return name##Map__; \
   }

@@ -5,9 +5,9 @@
 #define ROCKET_TEST
 
 #include "rocket/Process.h"
+#include "rocket/chrono/chrono.h"
 #include "rocket/cl/cl.h"
 #include "rocket/format/std.h"
-#include "rocket/std/chrono.h"
 #include "rocket/log/log.h"
 
 using namespace rocket;
