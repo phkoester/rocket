@@ -51,21 +51,42 @@ std::vector<char> exec(const std::vector<std::string_view>& args);
  *
  * @return the executable suffix
  */
-std::string_view executableSuffix();
+consteval std::string_view
+executableSuffix() {
+#ifdef ROCKET_OS_WINDOWS
+  return ".exe"sv;
+#else
+  return {};
+#endif
+}
 
 /**
  * Returns the system-dependent file separator.
  *
  * @return the file separator
  */
-char fileSeparator();
+consteval char
+fileSeparator() {
+#ifdef ROCKET_OS_WINDOWS
+  return '\\';
+#else
+  return '/';
+#endif
+}
 
 /**
  * Returns the system-dependent path separator.
  *
  * @return the path
  */
-char pathSeparator();
+consteval char
+pathSeparator() {
+#ifdef ROCKET_OS_WINDOWS
+  return ';';
+#else
+  return ':';
+#endif
+}
 
 namespace env {
 

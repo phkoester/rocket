@@ -196,33 +196,6 @@ exec(const vector<string_view>& args) {
   return exec(makeCl(args));
 }
 
-string_view
-executableSuffix() {
-#ifdef ROCKET_OS_WINDOWS
-  return ".exe";
-#else
-  return string_view();
-#endif
-}
-
-char
-fileSeparator() {
-#ifdef ROCKET_OS_WINDOWS
-  return '\\';
-#else
-  return '/';
-#endif
-}
-
-char
-pathSeparator() {
-#ifdef ROCKET_OS_WINDOWS
-  return ';';
-#else
-  return ':';
-#endif
-}
-
 namespace env {
 
 // Environment ----------------------------------------------------------------------------------------------
