@@ -60,9 +60,9 @@ target_sources(rocket
     rocket/Exception.cc
     rocket/literal.cc
     rocket/rocket.cc
-    rocket/3rdparty/scnlib/impl.cc
     rocket/chrono/chrono.cc
     rocket/cl/cl.cc
+    rocket/external/scnlib/impl.cc
     rocket/filesystem/filesystem.cc
     rocket/io/io.cc
     rocket/nio/nio.cc

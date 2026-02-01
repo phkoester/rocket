@@ -18,7 +18,7 @@
 #define FMT_STD_NO_OPTIONAL_FORMATTER
 /// @attention This requires modifying `fmt/std.h`!
 #define FMT_STD_NO_VARIANT_FORMATTER
-#include "rocket/3rdparty/fmt/std.h"
+#include "rocket/external/fmt/std.h"
 
 #include <optional>
 

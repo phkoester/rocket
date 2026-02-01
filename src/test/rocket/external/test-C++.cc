@@ -141,8 +141,11 @@ TEST_F(Cxx, utf8Identifier) {
 }
 
 TEST_F(Cxx, utf8StringLiteral) {
-  EXPECT_EQ("ä", "\xc3\xa4");
-  EXPECT_EQ("ä"sv.size(), 2);
+  const auto sv = "ä"sv;
+  EXPECT_EQ(sv, "\xc3\xa4");
+  ASSERT_EQ(sv.size(), 2);
+  EXPECT_EQ(sv[0], '\xc3');
+  EXPECT_EQ(sv[1], '\xa4');
 }
 
 TEST_F(Cxx, vectorPushBackLvalue) {

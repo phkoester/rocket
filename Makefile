@@ -75,14 +75,14 @@ clean:
 # `patch` ...................................................................................................
 
 .PHONY: patch
-patch: build src/main/rocket/3rdparty/fmt/std.h src/main/rocket/3rdparty/scnlib/impl.h
+patch: build src/main/rocket/external/fmt/std.h src/main/rocket/external/scnlib/impl.h
 
 FMT_VERSION_EXPECTED := 12.1.0
 ifneq ($(wildcard $(BUILD_DIR)/_deps/fmt-src),)
   FMT_VERSION = $(shell git -C $(BUILD_DIR)/_deps/fmt-src describe --tags --abbrev=0)
 endif
 
-src/main/rocket/3rdparty/fmt/std.h: $(BUILD_DIR)/_deps/fmt-src/include/fmt/std.h
+src/main/rocket/external/fmt/std.h: $(BUILD_DIR)/_deps/fmt-src/include/fmt/std.h
 ifneq ($(FMT_VERSION), $(FMT_VERSION_EXPECTED))
 	@echo fmt version has changed from $(FMT_VERSION_EXPECTED) to $(FMT_VERSION)!
 	@echo You have to copy and patch std.h manually!
@@ -90,15 +90,15 @@ ifneq ($(FMT_VERSION), $(FMT_VERSION_EXPECTED))
 	@echo "  cp $< $@"
 endif
 
-.PHONY: src/main/rocket/3rdparty/scnlib/impl.h
-src/main/rocket/3rdparty/scnlib/impl.h: $(BUILD_DIR)/_deps/scnlib-src/src/scn/impl.h
+.PHONY: src/main/rocket/external/scnlib/impl.h
+src/main/rocket/external/scnlib/impl.h: $(BUILD_DIR)/_deps/scnlib-src/src/scn/impl.h
 	@diff $< $@ >/dev/null || ( \
           echo The file impl.h in scnlib has changed!; \
 	  echo You have to copy impl.h manually!; \
 	  echo; \
 	  echo "  cp $< $@"; \
 	  echo; \
-	  echo You have to patch src/main/rocket/3rdparty/scnlib/impl.cc manually! \
+	  echo You have to patch src/main/rocket/external/scnlib/impl.cc manually! \
 	)
 
 

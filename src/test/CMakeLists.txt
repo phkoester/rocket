@@ -30,8 +30,9 @@ AddTest(test-rocket-Guard rocket test-Guard.cc)
 AddTest(test-rocket-hash rocket test-hash.cc)
 AddTest(test-rocket-macro rocket test-macro.cc)
 AddTest(test-rocket-Process rocket test-Process.cc)
-AddTest(test-rocket-3rdparty-boost-safe-numerics rocket/3rdparty test-boost-safe-numerics.cc)
-AddTest(test-rocket-3rdparty-C++ rocket/3rdparty test-C++.cc)
+AddTest(test-rocket-cl rocket/cl test-cl.cc)
+AddTest(test-rocket-external-boost-safe-numerics rocket/external test-boost-safe-numerics.cc)
+AddTest(test-rocket-external-C++ rocket/external test-C++.cc)
 
 set(GENERATED_CC ${GENERATED_DIR}/generated.cc)
 add_custom_command(
@@ -39,17 +40,16 @@ add_custom_command(
   COMMAND python3 ${PROJECT_SOURCE_DIR}/cmake/generate.py -o ${GENERATED_CC}
   VERBATIM
 )
-AddTest(test-rocket-3rdparty-CMake rocket/3rdparty test-CMake.cc
+AddTest(test-rocket-external-CMake rocket/external test-CMake.cc
   ENVIRONMENT
     "A=A A"
     "B=B B")
-target_sources(test-rocket-3rdparty-CMake PRIVATE ${GENERATED_CC})
+target_sources(test-rocket-external-CMake PRIVATE ${GENERATED_CC})
 
-AddTest(test-rocket-3rdparty-fmt rocket/3rdparty test-fmt.cc)
-AddTest(test-rocket-3rdparty-icu rocket/3rdparty test-icu.cc)
-AddTest(test-rocket-3rdparty-scnlib rocket/3rdparty test-scnlib.cc)
-AddTest(test-rocket-3rdparty-std rocket/3rdparty test-std.cc)
-AddTest(test-rocket-cl rocket/cl test-cl.cc)
+AddTest(test-rocket-external-fmt rocket/external test-fmt.cc)
+AddTest(test-rocket-external-icu rocket/external test-icu.cc)
+AddTest(test-rocket-external-scnlib rocket/external test-scnlib.cc)
+AddTest(test-rocket-external-std rocket/external test-std.cc)
 AddTest(test-rocket-format rocket/format test-format.cc)
 AddTest(test-rocket-format-std rocket/format test-std.cc)
 AddTest(test-rocket-log rocket/log test-log.cc)

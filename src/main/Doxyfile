@@ -10,6 +10,6 @@ FILE_PATTERNS    = *.h
 OUTPUT_DIRECTORY = $(BUILD_DIR)/src/main/doc
 PREDEFINED       = ROCKET_HAS_128
 
-EXCLUDE          = src/main/rocket/3rdparty/fmt/std.h src/main/rocket/3rdparty/scnlib/impl.h
+EXCLUDE          = src/main/rocket/external/fmt/std.h src/main/rocket/external/scnlib/impl.h
 
 # EOF
