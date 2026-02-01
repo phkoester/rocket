@@ -29,8 +29,10 @@
 
 #ifndef ROCKET_BENCH_NO_USING_NAMESPACE
 
+// NOLINTBEGIN
 using namespace rocket;
 using namespace std;
+// NOLINTEND
 
 #endif // ROCKET_BENCH_NO_USING_NAMESPACE
 
@@ -40,7 +42,7 @@ using namespace std;
  * Defines a benchmark function.
  */
 #define BENCH(_group, _name, _body) \
-  static void \
+  void \
   _group##_##_name(benchmark::State& state) { \
     _body \
   } \

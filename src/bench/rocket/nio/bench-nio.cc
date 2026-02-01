@@ -21,8 +21,8 @@ constexpr u64 N = FILE_SIZE / CHUNK_SIZE;
 // #BENCH ---------------------------------------------------------------------------------------------------
 
 BENCH(nio, FileSink, {
-  string chunk(CHUNK_SIZE, ' ');
-  auto temp = rocket::filesystem::tempFile();
+  const string chunk(CHUNK_SIZE, ' ');
+  const auto temp = rocket::filesystem::tempFile();
 
   for (auto _ : state) {
     FileSink out(temp.string());
@@ -35,8 +35,8 @@ BENCH(nio, FileSink, {
 })
 
 BENCH(nio, BufferedFileSink, {
-  string chunk(CHUNK_SIZE, ' ');
-  auto temp = rocket::filesystem::tempFile();
+  const string chunk(CHUNK_SIZE, ' ');
+  const auto temp = rocket::filesystem::tempFile();
 
   for (auto _ : state) {
     FileSink out(temp.string());
@@ -50,8 +50,8 @@ BENCH(nio, BufferedFileSink, {
 })
 
 BENCH(nio, StreamSink, {
-  string chunk(CHUNK_SIZE, ' ');
-  auto temp = rocket::filesystem::tempFile();
+  const string chunk(CHUNK_SIZE, ' ');
+  const auto temp = rocket::filesystem::tempFile();
 
   for (auto _ : state) {
     ofstream os(temp.c_str());
@@ -64,8 +64,8 @@ BENCH(nio, StreamSink, {
 })
 
 BENCH(nio, BufferedStreamSink, {
-  string chunk(CHUNK_SIZE, ' ');
-  auto temp = rocket::filesystem::tempFile();
+  const string chunk(CHUNK_SIZE, ' ');
+  const auto temp = rocket::filesystem::tempFile();
 
   for (auto _ : state) {
     ofstream os(temp.c_str());

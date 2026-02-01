@@ -133,7 +133,7 @@ struct Cow {
    * @return a const reference to either the referenced or the owned value
    */
   template<typename V = T> requires std::is_same_v<V, T> && std::is_same_v<T, U>
-  const V&
+  [[nodiscard]] const V&
   get() const {
     static_assert(not HasView);
     return not modified_ ? *choice_.ptr : *ownedPtr();
@@ -147,7 +147,7 @@ struct Cow {
    * @return a view to either the referenced or the owned value
    */
   template<typename V = T> requires std::is_same_v<V, T> && (not std::is_same_v<T, U>)
-  V
+  [[nodiscard]] V
   get() const {
     static_assert(HasView);
     return not modified_ ? *viewPtr() : V(*ownedPtr());
@@ -167,7 +167,7 @@ struct Cow {
    *
    * @return a nonconst reference to the owned value
    */
-  U& owned() { ROCKET_EXPECT(modified_); return *ownedPtr(); }
+  [[nodiscard]] U& owned() { ROCKET_EXPECT(modified_); return *ownedPtr(); }
 
 private:
 
@@ -177,13 +177,19 @@ private:
 
   void destroyView() { viewPtr()->~T(); }
 
-  constexpr U* ownedPtr() { return reinterpret_cast<U*>(choice_.owned.data()); }
+  [[nodiscard]] constexpr U* ownedPtr() { return reinterpret_cast<U*>(choice_.owned.data()); }
 
-  constexpr const U* ownedPtr() const { return reinterpret_cast<const U*>(choice_.owned.data()); }
+  [[nodiscard]] constexpr const U*
+  ownedPtr() const {
+    return reinterpret_cast<const U*>(choice_.owned.data());
+  }
 
-  constexpr T* viewPtr() { return reinterpret_cast<T*>(choice_.view.data()); }
+  [[nodiscard]] constexpr T* viewPtr() { return reinterpret_cast<T*>(choice_.view.data()); }
 
-  constexpr const T* viewPtr() const { return reinterpret_cast<const T*>(choice_.view.data()); }
+  [[nodiscard]] constexpr const T*
+  viewPtr() const {
+    return reinterpret_cast<const T*>(choice_.view.data());
+  }
 
   bool modified_ = false; ///< Whether there is an owned value
   union {

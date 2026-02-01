@@ -30,6 +30,8 @@ f"""/**
 
 #pragma once
 
+// NOLINTBEGIN
+
 #define {name}_VERSION_NAME "{version_string}" ///< SemVer string.
 
 #define {name}_VERSION_MAJOR {version.major} ///< Major.
@@ -38,6 +40,8 @@ f"""/**
 
 /// Comparable version value (major * 1,000,000 + minor * 1,000 + patch)
 #define {name}_VERSION {value}
+
+// NOLINTEND
 
 // EOF
 """)

@@ -28,8 +28,8 @@ map_map(benchmark::State& state) {
 
   auto gen = math::gen();
 
-  for (auto _ : state) {
-    u64 index = math::random(gen, 0_u64, KEYS.size() - 1);
+  for (auto _ : state) { // NOLINT
+    const u64 index = math::random(gen, 0_u64, KEYS.size() - 1);
     const auto& key = KEYS[index];
     [[maybe_unused]] auto _val = map.find(key);
   }
@@ -46,8 +46,8 @@ map_unorderedMap(benchmark::State& state) {
 
   auto gen = math::gen();
 
-  for (auto _ : state) {
-    u64 index = math::random(gen, 0_u64, KEYS.size() - 1);
+  for (auto _ : state) { // NOLINT
+    const u64 index = math::random(gen, 0_u64, KEYS.size() - 1);
     const auto& key = KEYS[index];
     [[maybe_unused]] auto _val = map.find(key);
   }
@@ -64,8 +64,8 @@ map_bimap(benchmark::State& state) {
 
   auto gen = math::gen();
 
-  for (auto _ : state) {
-    u64 index = math::random(gen, 0_u64, KEYS.size() - 1);
+  for (auto _ : state) { // NOLINT
+    const u64 index = math::random(gen, 0_u64, KEYS.size() - 1);
     const auto& key = KEYS[index];
     [[maybe_unused]] auto _val = map.left.find(key);
   }
@@ -82,8 +82,8 @@ map_unorderedBimap(benchmark::State& state) {
 
   auto gen = math::gen();
 
-  for (auto _ : state) {
-    u64 index = math::random(gen, 0_u64, KEYS.size() - 1);
+  for (auto _ : state) { // NOLINT
+    const u64 index = math::random(gen, 0_u64, KEYS.size() - 1);
     const auto& key = KEYS[index];
     [[maybe_unused]] auto _val = map.left.find(key);
   }

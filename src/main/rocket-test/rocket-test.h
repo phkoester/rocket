@@ -34,11 +34,13 @@
 
 #ifndef ROCKET_TEST_NO_USING_NAMESPACE
 
+// NOLINTBEGIN
 using namespace rocket;
 using namespace rocket::test;
 using namespace rocket::test::matcher;
 using namespace std;
 using namespace testing;
+// NOLINTEND
 
 #endif // ROCKET_TEST_NO_USING_NAMESPACE
 
@@ -114,6 +116,6 @@ extern const bool TEST_TERMINAL;
  */
 std::filesystem::path testExcecutable(std::string_view name);
 
-}
+} // namespace rocket::test
 
 // EOF

@@ -13,6 +13,8 @@
 #include <unicode/utf8.h>
 #include <unicode/utypes.h>
 
+#include <array>
+
 using boost::safe_numerics::safe;
 
 using namespace icu;
@@ -25,32 +27,32 @@ namespace rocket::unicode {
 // #CodePoint -----------------------------------------------------------------------------------------------
 
 CodePoint::operator string() const {
-  char buf[4];
+  array<char, 4> buf; // NOLINT
   i32 i = 0;
-  UBool error = false;
-  U8_APPEND(buf, i, 4, val_, error);
-  ROCKET_EXPECT(not error, "Invalid code point {:0>4X}", static_cast<u32>(val_));
-  return string(buf, i);
+  UBool error = 0;
+  U8_APPEND(buf.data(), i, 4, val_, error); // NOLINT
+  ROCKET_EXPECT(error == 0, "Invalid code point {:0>4X}", static_cast<u32>(val_));
+  return string(buf.data(), i); // NOLINT
 }
 
 bool
 CodePoint::isPrint() const noexcept {
-  return u_isprint(val_) != 0;
+  return u_isprint(val_) != 0; // NOLINT
 }
 
 bool
 CodePoint::isWhitespace() const noexcept {
-  return u_isWhitespace(val_) != 0;
+  return u_isWhitespace(val_) != 0; // NOLINT
 }
 
 CodePoint
 CodePoint::lower() const noexcept {
-  return static_cast<char32>(u_tolower(val_));
+  return static_cast<char32>(u_tolower(val_)); // NOLINT
 }
 
 CodePoint
 CodePoint::upper() const noexcept {
-  return static_cast<char32>(u_toupper(val_));
+  return static_cast<char32>(u_toupper(val_)); // NOLINT
 }
 
 u8
@@ -59,21 +61,21 @@ CodePoint::width() const noexcept {
     return 0;
   }
 
-  auto generalCategory = u_getIntPropertyValue(val_, UCHAR_GENERAL_CATEGORY);
+  const auto generalCategory = u_getIntPropertyValue(val_, UCHAR_GENERAL_CATEGORY); // NOLINT
   switch (generalCategory) {
   case U_ENCLOSING_MARK:
   case U_NON_SPACING_MARK:
     return 0;
   }
 
-  auto eastAsianWidth = u_getIntPropertyValue(val_, UCHAR_EAST_ASIAN_WIDTH);
+  const auto eastAsianWidth = u_getIntPropertyValue(val_, UCHAR_EAST_ASIAN_WIDTH); // NOLINT
   switch (eastAsianWidth) {
   case U_EA_FULLWIDTH:
   case U_EA_WIDE:
     return 2;
   }
 
-  if (u_hasBinaryProperty(val_, UCHAR_EMOJI_PRESENTATION)) {
+  if (u_hasBinaryProperty(val_, UCHAR_EMOJI_PRESENTATION)) { // NOLINT
     return 2;
   }
 
@@ -101,7 +103,7 @@ utf8To32(string_view str) {
 
 string
 utf32To8(u32string_view str) {
-  auto us = UnicodeString::fromUTF32(reinterpret_cast<const UChar32*>(str.data()), str.size());
+  auto us = UnicodeString::fromUTF32(reinterpret_cast<const UChar32*>(str.data()), str.size()); // NOLINT
   ROCKET_CHECK(str, not us.isBogus());
   string ret;
   us.toUTF8String(ret);
@@ -116,23 +118,23 @@ CodePoint
 nextCodePoint(string_view str, u64& pos) {
   const auto size = str.size();
   ROCKET_CHECK(pos, pos < size);
-  UChar32 cp;
+  UChar32 cp; // NOLINT
   i32 i = safe<i32>(pos);
-  U8_NEXT(str.data(), i, safe<i32>(size), cp);
+  U8_NEXT(str.data(), i, safe<i32>(size), cp); // NOLINT
   pos = safe<u64>(i);
   return static_cast<char32>(cp);
 }
 
 Cow<string_view, string>
-validate(string_view str, UnorderedBimap<u64, u64>* positions) {
+validate(string_view str, UnorderedBimap<u64, u64>* positions) { // NOLINT(*-complexity)
   Cow<string_view, string> ret(str);
 
-  if (positions) {
+  if (positions != nullptr) {
     positions->clear();
   }
 
   auto addPosition = [&](u64 i) {
-    if (positions) {
+    if (positions != nullptr) {
       if (not ret.modified()) {
         positions->insert({ i, i });
       } else {
@@ -145,9 +147,9 @@ validate(string_view str, UnorderedBimap<u64, u64>* positions) {
   while (i < size) {
     addPosition(i);
 
-    UChar32 cp;
+    UChar32 cp; // NOLINT
     auto oldI = i;
-    U8_NEXT(str.data(), i, size, cp);
+    U8_NEXT(str.data(), i, size, cp); // NOLINT
     if (cp >= 0) {
       // Valid code point
       if (ret.modified()) {
@@ -184,12 +186,12 @@ Cow<u32string_view, u32string>
 validate(u32string_view str, UnorderedBimap<u64, u64>* positions) {
   Cow<u32string_view, u32string> ret(str);
 
-  if (positions) {
+  if (positions != nullptr) {
     positions->clear();
   }
 
   auto addPosition = [&](u64 i) {
-    if (positions) {
+    if (positions != nullptr) {
       positions->insert({ i, i });
     }
   };
@@ -197,7 +199,7 @@ validate(u32string_view str, UnorderedBimap<u64, u64>* positions) {
   for (u64 i = 0, size = str.size(); i < size; ++i ) {
     addPosition(i);
 
-    char32 c = str[i];
+    const char32 c = str[i];
     if (CodePoint(c).valid()) {
       // Valid code point
       if (ret.modified()) {

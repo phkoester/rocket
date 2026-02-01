@@ -42,7 +42,7 @@ string
 sendAnsiRequest(nio::Sink& out, std::string_view sequence) {
   // Save current `stdin` settings
 
-  termios oldT, newT;
+  termios oldT, newT; // NOLINT
   tcgetattr(STDIN_FILENO, &oldT);
   newT = oldT;
 
@@ -61,7 +61,7 @@ sendAnsiRequest(nio::Sink& out, std::string_view sequence) {
 
   string ret;
   while (true) {
-    char c;
+    char c = '\0';
     if (::read(STDIN_FILENO, &c, 1) != 1) {
       throw InputFailure(ret.size(), "Failed to read response");
     }
@@ -127,9 +127,9 @@ Ansi::up(i32 n) const {
 
 optional<pair<u64, u64>>
 position(nio::Sink& out) {
-  i32 fd = out.handle();
-  if (fd == -1 || not isatty(fd)) {
-    return nullopt;
+  const i32 fd = out.handle();
+  if (fd == -1 || isatty(fd) == 0) {
+    return {};
   }
 
 #ifdef ROCKET_OS_WINDOWS
@@ -139,20 +139,20 @@ position(nio::Sink& out) {
   ROCKET_ASSERT(handle != INVALID_HANDLE_VALUE);
   CONSOLE_SCREEN_BUFFER_INFO csbi;
   if (not GetConsoleScreenBufferInfo(handle, &csbi)) {
-    return nullopt;
+    return {};
   }
   return make_pair(safe<u64>(csbi.dwCursorPosition.X + 1), safe<u64>(csbi.dwCursorPosition.Y + 1));
 #else
   // Send the ANSI code requesting cursor position
 
-  Ansi ansi(true); // We know the sink is connected to a terminal
-  string response = sendAnsiRequest(out, "\x1b[6n");
+  const Ansi ansi(true); // We know the sink is connected to a terminal
+  const string response = sendAnsiRequest(out, "\x1b[6n");
 
   // Scan the response
 
-  auto result = scn::scan<u64, u64>(response, "\x1b[{};{}R");
+  const auto result = scn::scan<u64, u64>(response, "\x1b[{};{}R");
   ROCKET_EXPECT(result, "Cannot scan response {:?}", response);
-  auto[y, x] = result->values();
+  const auto[y, x] = result->values();
 
   // Done
 
@@ -162,9 +162,9 @@ position(nio::Sink& out) {
 
 optional<pair<u64, u64>>
 size(nio::Io& io) {
-  i32 fd = io.handle();
-  if (fd == -1 || not isatty(fd)) {
-    return nullopt;
+  const i32 fd = io.handle();
+  if (fd == -1 || isatty(fd) == 0) {
+    return {};
   }
 
 #ifdef ROCKET_OS_WINDOWS
@@ -174,16 +174,16 @@ size(nio::Io& io) {
   ROCKET_ASSERT(handle != INVALID_HANDLE_VALUE);
   CONSOLE_SCREEN_BUFFER_INFO csbi;
   if (not GetConsoleScreenBufferInfo(handle, &csbi)) {
-    return nullopt;
+    return {};
   }
   return make_pair(safe<u64>(csbi.dwSize.X), safe<u64>(csbi.dwSize.Y));
 #else
   // Use #ioctl
 
-  winsize ws;
-  i32 res = ioctl(fd, TIOCGWINSZ, &ws);
+  winsize ws; // NOLINT;
+  const i32 res = ioctl(fd, TIOCGWINSZ, &ws); // NOLINT
   if (res != 0) {
-    return nullopt;
+    return {};
   }
   return make_pair(safe<u64>(ws.ws_col), safe<u64>(ws.ws_row));
 #endif

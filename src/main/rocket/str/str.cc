@@ -17,7 +17,7 @@ namespace rocket::str {
 string
 capitalize(string_view str) {
   if (str.empty()) {
-    return string();
+    return {};
   }
 
   u64 pos = 0;
@@ -29,8 +29,9 @@ capitalize(string_view str) {
 
 u32string
 capitalize(u32string_view str) {
-  if (str.empty())
-    return u32string();
+  if (str.empty()) {
+    return {};
+  }
   u32string ret(str);
   ret[0] = CodePoint(str[0]).upper();
   return ret;
@@ -136,7 +137,7 @@ wrap(string_view str, u64 leftIndent, u64 width) {
 
   // Collect paragraphs, consisting of words
 
-  vector<vector<string>> pars = paragraphs(str);
+  const vector<vector<string>> pars = paragraphs(str);
 
   // Turn paragraphs into lines
 
@@ -155,7 +156,7 @@ wrap(string_view str, u64 leftIndent, u64 width) {
       for (const auto& seg : segs) {
         wordWidth += CharacterView<char>(seg).width();
       }
-      u64 newLineWidth = lineWidth + wordWidth + (lineWidth > 0 ? 1 : 0);
+      const u64 newLineWidth = lineWidth + wordWidth + (lineWidth > 0 ? 1 : 0);
       if (lineWidth == 0 || newLineWidth < width) {
         if (lineWidth > 0) {
           line.push_back(' ');
@@ -175,7 +176,7 @@ wrap(string_view str, u64 leftIndent, u64 width) {
   // Concatenate lines, consider left indent
 
   string ret;
-  string indent(leftIndent, ' ');
+  const string indent(leftIndent, ' ');
   bool first = true;
   for (const auto& line : lines) {
     if (first) {

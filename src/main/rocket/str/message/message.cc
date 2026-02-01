@@ -21,27 +21,24 @@ string
 overflow(const type_info& type, string_view msg) {
   if (msg.empty()) {
     return fmt::format("`{}` overflow", type);
-  } else {
-    return fmt::format("`{}` overflow: {}", type, msg);
   }
+  return fmt::format("`{}` overflow: {}", type, msg);
 }
 
 string
 underflow(const type_info& type, string_view msg) {
   if (msg.empty()) {
     return fmt::format("`{}` underflow", type);
-  } else {
-    return fmt::format("`{}` underflow: {}", type, msg);
   }
+  return fmt::format("`{}` underflow: {}", type, msg);
 }
 
 string
 withSourceLocation(string_view msg, const optional<source_location>& sl) {
   if (sl) {
     return fmt::format("{}:{}: {}", sl->file_name(), sl->line(), msg);
-  } else {
-    return string(msg);
   }
+  return string(msg);
 }
 
 } // namespace rocket::str::message

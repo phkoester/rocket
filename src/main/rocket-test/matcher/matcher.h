@@ -19,12 +19,12 @@ namespace rocket::test::matcher {
 namespace internal {
 
 struct Regex {
-  const std::string pattern;
-  const std::regex regex;
+  std::string pattern;
+  std::regex regex;
 
   explicit Regex(const std::string& pattern) :
-      pattern(pattern),
-      regex(pattern) {}
+    pattern(pattern),
+    regex(pattern) {}
 };
 
 /**
@@ -33,8 +33,8 @@ struct Regex {
  */
 struct MatchesRegexMatcher {
   MatchesRegexMatcher(std::shared_ptr<const Regex> regex, bool fullMatch) :
-      regex_(regex),
-      fullMatch_(fullMatch) {}
+    regex_(std::move(regex)),
+    fullMatch_(fullMatch) {}
 
   void
   DescribeTo(std::ostream* os) const {
@@ -81,15 +81,17 @@ struct MatchesRegexMatcher {
    */
   template<class MatcheeStringType>
   bool
-  MatchAndExplain(const MatcheeStringType& str, testing::MatchResultListener*) const {
-    const std::string str2(str);
+  MatchAndExplain(
+    const MatcheeStringType& str,
+    [[maybe_unused]] testing::MatchResultListener* listener) const {
+    const std::string str2(str); // NOLINT
     return fullMatch_ ? std::regex_match(str2, regex_->regex) : std::regex_search(str2, regex_->regex);
   }
 
 private:
 
-  const std::shared_ptr<const Regex> regex_;
-  const bool fullMatch_;
+  std::shared_ptr<const Regex> regex_;
+  bool fullMatch_;
 };
 
 } // namespace internal
@@ -106,7 +108,7 @@ private:
  */
 inline testing::PolymorphicMatcher<internal::MatchesRegexMatcher>
 containsRegex(std::shared_ptr<const internal::Regex> regex) {
-  return testing::MakePolymorphicMatcher(internal::MatchesRegexMatcher(regex, false));
+  return testing::MakePolymorphicMatcher(internal::MatchesRegexMatcher(std::move(regex), false));
 }
 
 /**
@@ -134,7 +136,7 @@ containsRegex(const testing::internal::StringLike<T>& pattern) {
  */
 inline testing::PolymorphicMatcher<internal::MatchesRegexMatcher>
 matchesRegex(std::shared_ptr<const internal::Regex> regex) {
-  return testing::MakePolymorphicMatcher(internal::MatchesRegexMatcher(regex, true));
+  return testing::MakePolymorphicMatcher(internal::MatchesRegexMatcher(std::move(regex), true));
 }
 
 /**
@@ -185,13 +187,13 @@ inline testing::PolymorphicMatcher<testing::internal::ExceptionMatcherImpl<Input
 throwsInputFailure(PositionMatcher&& positionMatcher, WhatMatcher&& whatMatcher) {
   return throws<InputFailure>(
     testing::Property(
-        ".position()",
-        &InputFailure::position,
-        std::forward<PositionMatcher>(positionMatcher)),
+      ".position()",
+      &InputFailure::position,
+      std::forward<PositionMatcher>(positionMatcher)),
     testing::Property(
-        ".ranges()",
-        &InputFailure::ranges,
-        testing::Eq(str::Ranges {})),
+      ".ranges()",
+      &InputFailure::ranges,
+      testing::Eq(str::Ranges {})),
     testing::internal::WithWhat(MatcherCast<std::string>(std::forward<WhatMatcher>(whatMatcher))));
 }
 
@@ -208,8 +210,8 @@ template<typename WhatMatcher>
 inline testing::PolymorphicMatcher<testing::internal::ExceptionMatcherImpl<InputFailure>>
 throwsInputFailure(u64 position, WhatMatcher&& whatMatcher) {
   return throwsInputFailure(
-      testing::Eq(position),
-      std::forward<WhatMatcher>(whatMatcher));
+    testing::Eq(position),
+    std::forward<WhatMatcher>(whatMatcher));
 }
 
 /**
@@ -228,18 +230,18 @@ throwsInputFailure(u64 position, WhatMatcher&& whatMatcher) {
 template<typename PositionMatcher, typename RangesMatcher, typename WhatMatcher>
 inline testing::PolymorphicMatcher<testing::internal::ExceptionMatcherImpl<InputFailure>>
 throwsInputFailure(
-    PositionMatcher&& positionMatcher,
-    RangesMatcher&& rangesMatcher,
-    WhatMatcher&& whatMatcher) {
+  PositionMatcher&& positionMatcher,
+  RangesMatcher&& rangesMatcher,
+  WhatMatcher&& whatMatcher) {
   return throws<InputFailure>(
     testing::Property(
-        ".position()",
-        &InputFailure::position,
-        std::forward<PositionMatcher>(positionMatcher)),
+      ".position()",
+      &InputFailure::position,
+      std::forward<PositionMatcher>(positionMatcher)),
     testing::Property(
-        ".ranges()",
-        &InputFailure::ranges,
-        std::forward<RangesMatcher>(rangesMatcher)),
+      ".ranges()",
+      &InputFailure::ranges,
+      std::forward<RangesMatcher>(rangesMatcher)),
     testing::internal::WithWhat(MatcherCast<std::string>(std::forward<WhatMatcher>(whatMatcher))));
 }
 
@@ -257,9 +259,9 @@ template<typename WhatMatcher>
 inline testing::PolymorphicMatcher<testing::internal::ExceptionMatcherImpl<InputFailure>>
 throwsInputFailure(u64 position, str::Range range, WhatMatcher&& whatMatcher) {
   return throwsInputFailure(
-      testing::Eq(position),
-      testing::Eq(str::Ranges { range }),
-      std::forward<WhatMatcher>(whatMatcher));
+    testing::Eq(position),
+    testing::Eq(str::Ranges { range }),
+    std::forward<WhatMatcher>(whatMatcher));
 }
 
 /**
@@ -276,9 +278,9 @@ template<typename WhatMatcher>
 inline testing::PolymorphicMatcher<testing::internal::ExceptionMatcherImpl<InputFailure>>
 throwsInputFailure(u64 position, const str::Ranges& ranges, WhatMatcher&& whatMatcher) {
   return throwsInputFailure(
-      testing::Eq(position),
-      testing::Eq(ranges),
-      std::forward<WhatMatcher>(whatMatcher));
+    testing::Eq(position),
+    testing::Eq(ranges),
+    std::forward<WhatMatcher>(whatMatcher));
 }
 
 } // namespace rocket::test::matcher

@@ -37,7 +37,7 @@ set(VERSION_H ${GENERATED_DIR}/rocket/version.h)
 add_custom_command(
   OUTPUT  ${VERSION_H}
   COMMAND python3 ${PROJECT_SOURCE_DIR}/cmake/generate-version.py ROCKET ${PROJECT_VERSION} -o ${VERSION_H}
-  DEPENDS ${PROJECT_SOURCE_DIR}/CMakeLists.txt
+  DEPENDS ${PROJECT_SOURCE_DIR}/CMakeLists.txt ${PROJECT_SOURCE_DIR}/cmake/generate-version.py
   VERBATIM
 )
 

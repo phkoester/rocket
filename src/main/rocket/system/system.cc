@@ -90,7 +90,7 @@ makeCl(const vector<string_view>& args) {
       ret.push_back(' ');
     }
 
-    for (char c : arg) {
+    for (const char c : arg) {
       if (c == ' ') {
         ret.append("\\ ");
       } else if (c == '"') {
@@ -122,7 +122,7 @@ optional<string>
 getImpl(std::string_view name) {
   ROCKET_MUTEX_LOCK(envMutex);
 
-  string nameStr(name);
+  const string nameStr(name);
 
 #ifdef ROCKET_OS_WINDOWS
   size_t size = 0;
@@ -134,8 +134,8 @@ getImpl(std::string_view name) {
   getenv_s(&size, ret.data(), size, nameStr.c_str());
   return ret;
 #else
-  const char* p = getenv(nameStr.c_str());
-  if (not p) {
+  const char* p = getenv(nameStr.c_str()); // NOLINT(concurrency-*)
+  if (p == nullptr) {
     return nullopt;
   }
   return p;
@@ -148,7 +148,7 @@ setImpl(std::string_view name, const optional<string>& value, bool replace) {
 
   ROCKET_MUTEX_LOCK(envMutex);
 
-  string nameStr(name);
+  const string nameStr(name);
 
 #ifdef ROCKET_OS_WINDOWS
   if (value && not replace && env::get<string>(name)) {
@@ -159,10 +159,10 @@ setImpl(std::string_view name, const optional<string>& value, bool replace) {
 #else
   if (value) {
     // Set
-    setenv(nameStr.c_str(), value->c_str(), replace ? 1 : 0);
+    setenv(nameStr.c_str(), value->c_str(), replace ? 1 : 0); // NOLINT(concurrency-*)
   } else {
     // Unset
-    unsetenv(const_cast<char*>(nameStr.c_str()));
+    unsetenv(const_cast<char*>(nameStr.c_str())); // NOLINT(concurrency-*)
   }
 #endif
 }
@@ -176,13 +176,13 @@ exec(const string& cl) {
   vector<char> ret;
   vector<char> buf(1'024);
 
-  unique_ptr<FILE, decltype(&PCLOSE)> pipe(POPEN(cl.c_str(), "r"), PCLOSE);
+  const unique_ptr<FILE, decltype(&PCLOSE)> pipe(POPEN(cl.c_str(), "r"), PCLOSE);
   if (not pipe) {
     ROCKET_FAIL("Cannot open pipe for command `{}`", cl);
   }
-  u64 n;
+  u64 n; // NOLINT
   while ((n = fread(buf.data(), 1, buf.size(), pipe.get())) > 0) {
-    ret.insert(ret.end(), buf.begin(), buf.begin() + n);
+    ret.insert(ret.end(), buf.begin(), buf.begin() + n); // NOLINT
   }
   if (ferror(pipe.get()) != 0) {
     ROCKET_FAIL("Cannot read from pipe for command `{}`", cl);
@@ -212,7 +212,7 @@ get() {
   char** p = __environ;
 #endif
   while(*p != nullptr) {
-    string_view entry(*p);
+    const string_view entry(*p);
     string_view name, value;
     auto eq = entry.find('=');
     if (eq == string_view::npos) {

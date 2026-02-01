@@ -14,7 +14,7 @@ using namespace std;
 
 namespace {
 
-static const set<string> FALSE_VALUES = {
+const set<string> FALSE_VALUES = {
   "false", "nan", "nil", "no", "null", "none", "off", "undefined"
 };
 

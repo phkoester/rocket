@@ -26,15 +26,15 @@ struct IteratorImpl {
 };
 
 struct IteratorImplDelete {
-  void operator()(IteratorImpl* val) { delete val; }
+  void operator()(IteratorImpl* val) { delete val; } // NOLINT
 };
 
 // #Iterator ------------------------------------------------------------------------------------------------
 
 template<typename C> requires IsChar<C>
-Iterator<C>::Iterator(IteratorType type, basic_string_view<C> input, const locale& loc) :
+Iterator<C>::Iterator(IteratorType type, basic_string_view<C> input, const locale& loc) : // NOLINT(*-complexity)
     input_(input),
-    impl_(new IteratorImpl(), [](IteratorImpl* val) { delete val; }) {
+    impl_(new IteratorImpl(), [](IteratorImpl* val) { delete val; }) { // NOLINT
   // 1. Make the #UnicodeString
 
   auto& str = impl_->str;
@@ -47,14 +47,14 @@ Iterator<C>::Iterator(IteratorType type, basic_string_view<C> input, const local
 
   // 2. Loop through the #UnicodeString and populate #usToInput_
 
-  i32 u16length = str.length();
+  const i32 u16length = str.length();
   const UChar* u16Buf = str.getBuffer();
   i32 u16Index = 0;
-  UChar32 u16cp;
+  UChar32 u16cp; // NOLINT
 
-  u64 inputLength = input.size();
+  const u64 inputLength = input.size();
   u64 inputIndex = 0;
-  UChar32 inputCp;
+  UChar32 inputCp; // NOLINT
 
   while (u16Index < u16length) {
     // Add a mapping for this input position
@@ -74,7 +74,7 @@ Iterator<C>::Iterator(IteratorType type, basic_string_view<C> input, const local
     }
 
     // Verify the code points match
-    const char* msg;
+    const char* msg; // NOLINT
     if constexpr (is_same_v<C, char>) {
       msg = "Invalid UTF-8 input";
     } else {
@@ -88,7 +88,7 @@ Iterator<C>::Iterator(IteratorType type, basic_string_view<C> input, const local
 
   // 3. Create the #BreakIterator
 
-  icu::Locale icuLoc(loc.name().c_str());
+  const icu::Locale icuLoc(loc.name().c_str());
   ROCKET_CHECK(loc, not icuLoc.isBogus());
 
   auto& iter = impl_->iter;

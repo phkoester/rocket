@@ -24,7 +24,7 @@ testExcecutable(string_view name) {
   if (not BINARY_DIR) {
     ROCKET_FAIL("`BINARY_DIR` is not set");
   }
-  string fileName = fmt::format("{}{}", name, system::executableSuffix());
+  const string fileName = fmt::format("{}{}", name, system::executableSuffix());
   path ret = path(*BINARY_DIR) / fileName;
   if (is_regular_file(ret)) {
     return ret;

@@ -20,14 +20,14 @@ main(i32 argc, char** argv) {
 
   optional<bool> help;
 
-  cl::OptionGroup general("General control");
-  cl::CommandLineConfig config { .usages={ "[OPTION]..." }, .otherOutput=true };
+  const cl::OptionGroup general("General control");
+  const cl::CommandLineConfig config { .usages={ "[OPTION]..." }, .otherOutput=true };
   cl::CommandLine cl({
     cl::Option::helpOf(&general, help)
   }, {}, config);
   cl.parse(process.args());
 
-  i32 status = RUN_ALL_TESTS();
+  const i32 status = RUN_ALL_TESTS();
   process.exit(status);
 }
 

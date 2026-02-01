@@ -74,7 +74,7 @@ struct TracingString {
   TracingString(TracingString&& rhs) noexcept :
       trace_(rhs.trace_),
       id_(++ID_COUNTER),
-      val_(rhs.val_) {
+      val_(std::move(rhs.val_)) {
     ++NUM_INSTANCES;
     rhs.invalidate();
     trace("ctorMove");
@@ -124,12 +124,12 @@ struct TracingString {
   }
 
   /// @member_op_cast{#std::string}
-  operator std::string() const noexcept {
+  operator std::string() const noexcept { // NOLINT(google-explicit-*)
     return val_;
   }
 
   /// @member_op_cast{#std::string_view}
-  operator std::string_view() const noexcept {
+  operator std::string_view() const noexcept { // NOLINT(google-explicit-*)
     return val_;
   }
 
