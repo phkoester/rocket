@@ -15,7 +15,7 @@ if(Boost_FOUND)
 else()
   FetchContent_Declare(
     Boost
-    URL https://github.com/boostorg/boost/releases/download/boost-${ROCKET_BOOST_VERSION}/boost-${ROCKET_BOOST_VERSION}-cmake.tar.xz
+    URL https://github.com/boostorg/boost/releases/download/boost-${ROCKET_BOOST_VERSION}/boost-${ROCKET_BOOST_VERSION}.7z
     SYSTEM
     EXCLUDE_FROM_ALL
   )
