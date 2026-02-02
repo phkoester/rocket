@@ -11,7 +11,7 @@ using namespace rocket::str;
 // #TEST ----------------------------------------------------------------------------------------------------
 
 TEST(Range, initializerList) {
-  str::Range val {};
+  const str::Range val {};
   EXPECT_EQ(val.a, 1);
   EXPECT_EQ(val.b, 0);
   EXPECT_TRUE(val.empty());

@@ -17,17 +17,17 @@
 TEST(std, chronoFormat) {
   {
     // Local time in ISO-8601, with microseconds
-    chrono::time_point tp = time_point_cast<chrono::microseconds>(chrono::system_clock::now());
+    const chrono::time_point tp = time_point_cast<chrono::microseconds>(chrono::system_clock::now());
     // const auto zt { chrono::zoned_time{ chrono::current_zone(), tp } };
-    chrono::zoned_time zt { chrono::current_zone(), tp };
-    string str = std::format("{:%FT%T%Ez}", zt);
+    const chrono::zoned_time zt { chrono::current_zone(), tp };
+    const string str = std::format("{:%FT%T%Ez}", zt);
     EXPECT_THAT(str, matchesRegex("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{6}[+-]\\d{2}:\\d{2}"));
   }
 
   {
     // UTC time in ISO-8601, with microseconds
-    chrono::time_point tp = time_point_cast<chrono::microseconds>(chrono::utc_clock::now());
-    string str = std::format("{:%FT%TZ}", tp);
+    const chrono::time_point tp = time_point_cast<chrono::microseconds>(chrono::utc_clock::now());
+    const string str = std::format("{:%FT%TZ}", tp);
     EXPECT_THAT(str, matchesRegex("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{6}Z"));
   }
 }
@@ -104,7 +104,7 @@ TEST(std, istreamBool) {
 
 TEST(std, istreamChar) {
   auto is = io::is("a");
-  char c;
+  char c = '\0';
   is >> c;
   EXPECT_EQ(c, 'a');
 }
@@ -189,7 +189,7 @@ TEST(std, istreamF128) {
 
   {
     auto is = io::is("1.2");
-    type val;
+    type val = 0;
     is >> val;
     EXPECT_EQ(val, 1.2L);
     EXPECT_ISTREAM(is, false, true, 3);
@@ -200,7 +200,7 @@ TEST(std, istreamF128) {
 
 TEST(std, regexGreedy) {
   string str = "1: 2: 3: 4";
-  regex re(".*: ");
+  const regex re(".*: ");
   vector<string> matches;
   for (smatch match; regex_search(str, match, re);) {
     matches.push_back(match.str());
@@ -211,7 +211,7 @@ TEST(std, regexGreedy) {
 
 TEST(std, regexNongreedy) {
   string str = "1: 2: 3: 4";
-  regex re(".*?: ");
+  const regex re(".*?: ");
   vector<string> matches;
   for (smatch match; regex_search(str, match, re);) {
     matches.push_back(match.str());
@@ -221,7 +221,7 @@ TEST(std, regexNongreedy) {
 }
 
 TEST(std, regexLineFeed) {
-  string str = "aaa\nbbb";
+  const string str = "aaa\nbbb";
   EXPECT_TRUE(regex_match(str, regex("a+\nb+")));
   EXPECT_FALSE(regex_match(str, regex("a.*b"))); // '.' does not match line feed
   EXPECT_TRUE(regex_match(str, regex("a[^]*b"))); // '[^]' (not nothing) matches line feed

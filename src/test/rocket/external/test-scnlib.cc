@@ -16,23 +16,23 @@
 
 TEST(scnlib, scanI32) {
   {
-    auto input = "123"sv;
-    auto result = scn::scan<i32>(input, "{}");
+    const string_view input = "123"sv;
+    const auto result = scn::scan<i32>(input, "{}");
     ASSERT_TRUE(result);
-    auto val = result->value();
-    static_assert(is_same_v<decltype(val), i32>);
+    const auto val = result->value();
+    static_assert(is_same_v<decltype(val), const i32>);
     EXPECT_EQ(val, 123);
     EXPECT_EQ(result->begin() - input.begin(), 3);
   }
 
   {
-    auto input = "123, 456"sv;
-    auto result = scn::scan<i32, i32>(input, "{}, {}");
+    const string_view input = "123, 456"sv;
+    const auto result = scn::scan<i32, i32>(input, "{}, {}");
     ASSERT_TRUE(result);
-    auto [val1, val2] = result->values();
-    static_assert(is_same_v<decltype(val1), i32>);
+    const auto [val1, val2] = result->values();
+    static_assert(is_same_v<decltype(val1), const i32>);
     EXPECT_EQ(val1, 123);
-    static_assert(is_same_v<decltype(val2), i32>);
+    static_assert(is_same_v<decltype(val2), const i32>);
     EXPECT_EQ(val2, 456);
     EXPECT_EQ(result->begin() - input.begin(), 8);
   }
@@ -42,42 +42,42 @@ TEST(scnlib, scanU32Hex) {
   {
     auto result = scn::scan<u32>("1234abCD", "{:x}");
     ASSERT_TRUE(result);
-    auto [val] = result->values();
+    const auto [val] = result->values();
     EXPECT_EQ(val, 0x1234ABCD);
     // `result.error()` may not be called here!
   }
 
   {
-    auto input = "abCDXXXX"sv;
-    auto result = scn::scan<u32>(input, "{:x}");
+    const auto input = "abCDXXXX"sv;
+    const auto result = scn::scan<u32>(input, "{:x}");
     ASSERT_TRUE(result);
-    auto [val] = result->values();
-    static_assert(is_same_v<decltype(val), u32>);
+    const auto [val] = result->values();
+    static_assert(is_same_v<decltype(val), const u32>);
     EXPECT_EQ(val, 0xABCD);
     EXPECT_EQ(result->begin() - input.begin(), 4);
   }
 
   {
-    auto input = "abCDeXXX"sv;
-    string fmt = "{:x}";
-    auto result = scn::scan<u32>(input, scn::runtime_format(fmt));
+    const auto input = "abCDeXXX"sv;
+    const string fmt = "{:x}";
+    const auto result = scn::scan<u32>(input, scn::runtime_format(fmt));
     ASSERT_TRUE(result);
-    auto [val] = result->values();
-    static_assert(is_same_v<decltype(val), u32>);
+    const auto [val] = result->values();
+    static_assert(is_same_v<decltype(val), const u32>);
     EXPECT_EQ(val, 0xABCDE);
     EXPECT_EQ(result->begin() - input.begin(), 5);
   }
 
   {
-    auto input = "abCDXXXX"sv;
-    auto result = scn::scan<u32>(input, "{:8x}");
+    const auto input = "abCDXXXX"sv;
+    const auto result = scn::scan<u32>(input, "{:8x}");
     ASSERT_FALSE(result);
     // `result->begin()` may not be called here!
   }
 
   {
-    auto input = "12345678"sv;
-    auto result = scn::scan<u32>(input, "{:8x}");
+    const auto input = "12345678"sv;
+    const auto result = scn::scan<u32>(input, "{:8x}");
     ASSERT_TRUE(result);
     EXPECT_EQ(result->value(), 0x12345678);
   }
@@ -86,14 +86,14 @@ TEST(scnlib, scanU32Hex) {
 #ifdef ROCKET_HAS_128
 
 TEST(scnlib, scanI128) {
-  auto result = scn::scan<i128>("12345678901234567890", "{}");
-  auto val = result->value();
+  const auto result = scn::scan<i128>("12345678901234567890", "{}");
+  const auto val = result->value();
   EXPECT_EQ(fmt::format("{}", val), "12345678901234567890");
 }
 
 TEST(scnlib, scanF128) {
-  auto result = scn::scan<f128>("3.14159265358979323846", "{}");
-  auto val = result->value();
+  const auto result = scn::scan<f128>("3.14159265358979323846", "{}");
+  const auto val = result->value();
   EXPECT_EQ(fmt::format("{}", val), "3.1415926535897932385");
 }
 
@@ -101,17 +101,17 @@ TEST(scnlib, scanF128) {
 
 TEST(scnlib, scanString) {
   {
-    auto result = scn::scan<string, string>("[a    ][bbb  ]", "[{: <5}][{: <5}]");
+    const auto result = scn::scan<string, string>("[a    ][bbb  ]", "[{: <5}][{: <5}]");
     ASSERT_TRUE(result);
-    auto [val1, val2] = result->values();
+    const auto [val1, val2] = result->values();
     EXPECT_EQ(val1, "a");
     EXPECT_EQ(val2, "bbb");
   }
 
   {
-    auto result = scn::scan<string_view>("\"hi\"", "{}");
+    const auto result = scn::scan<string_view>("\"hi\"", "{}");
     ASSERT_TRUE(result);
-    auto val = result->value();
+    const auto val = result->value();
     EXPECT_EQ(val, "\"hi\"");
   }
 }
@@ -119,11 +119,11 @@ TEST(scnlib, scanString) {
 TEST(scnlib, scanMap) {
   using type = map<int, double>;
 
-  auto val1 = type { { 1, 1.11 }, { 2, 2.22 }, { 3, 3.33 } };
-  string input = fmt::format("{}", val1); // "{1: 1.11, 2: 2.22, 3: 3.33}", 27 chars
-  auto result = scn::scan<type>(input, "{}");
+  const auto val1 = type { { 1, 1.11 }, { 2, 2.22 }, { 3, 3.33 } };
+  const string input = fmt::format("{}", val1); // "{1: 1.11, 2: 2.22, 3: 3.33}", 27 chars
+  const auto result = scn::scan<type>(input, "{}");
   ASSERT_TRUE(result);
-  auto val2 = result->value();
+  const auto val2 = result->value();
   EXPECT_EQ(val2, val1);
   EXPECT_EQ(result->begin() - input.begin(), 27);
 }
@@ -145,11 +145,11 @@ TEST(scnlib, scanRegex) {
 TEST(scnlib, scanPair) {
   using type = pair<bool, int>;
 
-  auto val1 = type { true, 12 };
-  string input = fmt::format("{}", val1); // "(true, 12)", 10 chars
-  auto result = scn::scan<type>(input, "{}");
+  const auto val1 = type { true, 12 };
+  const string input = fmt::format("{}", val1); // "(true, 12)", 10 chars
+  const auto result = scn::scan<type>(input, "{}");
   ASSERT_TRUE(result);
-  auto val2 = result->value();
+  const auto val2 = result->value();
   EXPECT_EQ(val2, val1);
   EXPECT_EQ(result->begin() - input.begin(), 10);
 }
@@ -157,11 +157,11 @@ TEST(scnlib, scanPair) {
 TEST(scnlib, scanSet) {
   using type = set<i32>;
 
-  auto val1 = type { 1, 2, 3 };
-  string input = fmt::format("{}", val1); // "{1, 2, 3}", 9 chars
-  auto result = scn::scan<type>(input, "{}");
+  const auto val1 = type { 1, 2, 3 };
+  const string input = fmt::format("{}", val1); // "{1, 2, 3}", 9 chars
+  const auto result = scn::scan<type>(input, "{}");
   ASSERT_TRUE(result);
-  auto val2 = result->value();
+  const auto val2 = result->value();
   EXPECT_EQ(val2, val1);
   EXPECT_EQ(result->begin() - input.begin(), 9);
 }
@@ -172,9 +172,9 @@ TEST(scnlib, scanTimePoint) {
   // system::env::set("TZ", "America/Godthab");
 
   using TimePoint = chrono::time_point<chrono::system_clock, chrono::nanoseconds>;
-  TimePoint val1 = chrono::system_clock::now();
-  string input = std::format("{:%Y-%m-%d %H:%M:%S}", val1); // "2026-01-27 05:51:13.396968455", 29 chars
-  auto result = scn::scan<TimePoint>(input, "{:%Y-%m-%d %H:%M:%.S}");
+  const TimePoint val1 = chrono::system_clock::now();
+  const string input = std::format("{:%Y-%m-%d %H:%M:%S}", val1); // "2026-01-27 05:51:13.396968455", 29 chars
+  const auto result = scn::scan<TimePoint>(input, "{:%Y-%m-%d %H:%M:%.S}");
   ASSERT_TRUE(result);
   auto val2 = result->value();
   EXPECT_EQ(result->begin() - input.begin(), 29);
@@ -182,12 +182,12 @@ TEST(scnlib, scanTimePoint) {
   // The time zone of the scanned time point is unclear. The following adjustment seems to convert the
   // time point to UTC
   const auto* tz = std::chrono::current_zone();
-  auto info = tz->get_info(val1);
+  const auto info = tz->get_info(val1);
   val2 += info.offset;
 
   // Cast to microseconds, because there might be a rounding issue
-  auto val1Micros = chrono::time_point_cast<chrono::microseconds>(val1);
-  auto val2Micros = chrono::time_point_cast<chrono::microseconds>(val2);
+  const auto val1Micros = chrono::time_point_cast<chrono::microseconds>(val1);
+  const auto val2Micros = chrono::time_point_cast<chrono::microseconds>(val2);
 
   EXPECT_EQ(val2Micros, val1Micros);
 }
@@ -195,11 +195,11 @@ TEST(scnlib, scanTimePoint) {
 TEST(scnlib, scanTuple) {
   using type = tuple<bool, int, double>;
 
-  auto val1 = type { true, 1, 2.22 };
-  string input = fmt::format("{}", val1); // "(true, 1, 2.22)", 15 chars
-  auto result = scn::scan<type>(input, "{}");
+  const auto val1 = type { true, 1, 2.22 };
+  const string input = fmt::format("{}", val1); // "(true, 1, 2.22)", 15 chars
+  const auto result = scn::scan<type>(input, "{}");
   ASSERT_TRUE(result);
-  auto val2 = result->value();
+  const auto val2 = result->value();
   EXPECT_EQ(val2, val1);
   EXPECT_EQ(result->begin() - input.begin(), 15);
 }
@@ -207,11 +207,11 @@ TEST(scnlib, scanTuple) {
 TEST(scnlib, scanVector) {
   using type = vector<i32>;
 
-  auto val1 = type { 1, 2, 3 };
-  string input = fmt::format("{}", val1); // "[1, 2, 3]", 9 chars
-  auto result = scn::scan<type>(input, "{}");
+  const auto val1 = type { 1, 2, 3 };
+  const string input = fmt::format("{}", val1); // "[1, 2, 3]", 9 chars
+  const auto result = scn::scan<type>(input, "{}");
   ASSERT_TRUE(result);
-  auto val2 = result->value();
+  const auto val2 = result->value();
   EXPECT_EQ(val2, val1);
   EXPECT_EQ(result->begin() - input.begin(), 9);
 }

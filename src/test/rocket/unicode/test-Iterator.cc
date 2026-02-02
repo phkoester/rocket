@@ -14,7 +14,7 @@ using namespace rocket::unicode;
 TEST(Iterator, char) {
   using type = char;
 
-  string_view str = "ä€"; // 2 + 3 bytes
+  const string_view str = "ä€"; // 2 + 3 bytes
 
   auto it = Iterator<type>(IteratorType::Character, str);
   EXPECT_EQ(it.previous(), NPOS);
@@ -24,7 +24,6 @@ TEST(Iterator, char) {
   it.first();
   EXPECT_EQ(it.nextSegment(), "ä");
   EXPECT_EQ(it.current(), 2);
-
   EXPECT_EQ(it.nextSegment(), "€");
   EXPECT_EQ(it.current(), 5);
   EXPECT_EQ(it.next(), NPOS);
@@ -34,7 +33,8 @@ TEST(Iterator, char) {
 TEST(Iterator, charMultiCodePoint) {
   using type = char;
 
-  string_view str = "🧑‍🌾\r\n👨‍👩‍👦"sv;
+  const string_view str = "🧑‍🌾\r\n👨‍👩‍👦"sv;
+
   auto it = Iterator<type>(IteratorType::Character, str);
   auto segs = it.nextSegments();
   EXPECT_EQ(segs.size(), 3);
@@ -51,7 +51,7 @@ TEST(Iterator, charMultiCodePoint) {
 TEST(Iterator, char32) {
   using type = char32;
 
-  u32string_view str = U"ä€";
+  const u32string_view str = U"ä€";
 
   auto it = Iterator<type>(IteratorType::Character, str);
   EXPECT_EQ(it.previous(), NPOS);
@@ -61,7 +61,6 @@ TEST(Iterator, char32) {
   it.first();
   EXPECT_EQ(it.nextSegment(), U"ä");
   EXPECT_EQ(it.current(), 1);
-
   EXPECT_EQ(it.nextSegment(), U"€");
   EXPECT_EQ(it.current(), 2);
   EXPECT_EQ(it.next(), NPOS);
@@ -71,7 +70,8 @@ TEST(Iterator, char32) {
 TEST(Iterator, char32MultiCodePoint) {
   using type = char32;
 
-  u32string_view str = U"🧑‍🌾\r\n👨‍👩‍👦";
+  const u32string_view str = U"🧑‍🌾\r\n👨‍👩‍👦";
+
   auto it = Iterator<type>(IteratorType::Character, str);
   auto segs = it.nextSegments();
   EXPECT_EQ(segs.size(), 3);

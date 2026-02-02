@@ -101,14 +101,14 @@ TEST(system, envGet) {
 }
 
 TEST(system, execEcho) {
-  auto bytes = exec("echo Hello");
-  string_view out(bytes.data(), bytes.size());
+  const auto bytes = exec("echo Hello");
+  const string_view out(bytes.data(), bytes.size());
   EXPECT_EQ(out, "Hello\n");
 }
 
 TEST(system, execPrintf) {
-  auto bytes = exec("printf \"%s\" Hello");
-  string_view out(bytes.data(), bytes.size());
+  const auto bytes = exec("printf \"%s\" Hello");
+  const string_view out(bytes.data(), bytes.size());
   EXPECT_EQ(out, "Hello");
 }
 
@@ -118,8 +118,8 @@ TEST(system, execPrintArgs) {
 
   {
     // Test spaces and quotes
-    auto bytes = exec({ executable, "a", "b c", " d ", "'", "\"" });
-    string_view out(bytes.data(), bytes.size());
+    const auto bytes = exec({ executable, "a", "b c", " d ", "'", "\"" });
+    const string_view out(bytes.data(), bytes.size());
     EXPECT_THAT(out, HasSubstr("1=a="));
     EXPECT_THAT(out, HasSubstr("2=b c="));
     EXPECT_THAT(out, HasSubstr("3= d ="));
@@ -129,23 +129,23 @@ TEST(system, execPrintArgs) {
 
   {
     // Test Unicode
-    auto bytes = exec({ executable, "€ ÄÖÜ € 🧑‍🌾" });
-    string_view out(bytes.data(), bytes.size());
+    const auto bytes = exec({ executable, "€ ÄÖÜ € 🧑‍🌾" });
+    const string_view out(bytes.data(), bytes.size());
     EXPECT_THAT(out, HasSubstr("1=€ ÄÖÜ € 🧑‍🌾="));
   }
 }
 
 TEST(system, execPrintArgsWithSpace) {
   // Copy `print-args` to `print args`, se we have a space in the executable name
-  path printArgs = testExcecutable("print-args");
-  path printArgsWithSpace = printArgs.parent_path() / fmt::format("print args{}", executableSuffix());
+  const path printArgs = testExcecutable("print-args");
+  const path printArgsWithSpace = printArgs.parent_path() / fmt::format("print args{}", executableSuffix());
   copy_file(printArgs, printArgsWithSpace, copy_options::overwrite_existing);
-  string executable = printArgsWithSpace.string();
+  const string executable = printArgsWithSpace.string();
 
   {
     // Test spaces and quotes
-    auto bytes = exec({ executable, "a", "b c", " d ", "'", "\"" });
-    string_view out(bytes.data(), bytes.size());
+    const auto bytes = exec({ executable, "a", "b c", " d ", "'", "\"" });
+    const string_view out(bytes.data(), bytes.size());
     EXPECT_THAT(out, HasSubstr("1=a="));
     EXPECT_THAT(out, HasSubstr("2=b c="));
     EXPECT_THAT(out, HasSubstr("3= d ="));
@@ -155,8 +155,8 @@ TEST(system, execPrintArgsWithSpace) {
 
   {
     // Test Unicode
-    auto bytes = exec({ executable, "€ ÄÖÜ € 🧑‍🌾" });
-    string_view out(bytes.data(), bytes.size());
+    const auto bytes = exec({ executable, "€ ÄÖÜ € 🧑‍🌾" });
+    const string_view out(bytes.data(), bytes.size());
     EXPECT_THAT(out, HasSubstr("1=€ ÄÖÜ € 🧑‍🌾="));
   }
 }

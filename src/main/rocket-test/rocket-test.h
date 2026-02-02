@@ -24,6 +24,7 @@
 #include "rocket/literal.h"
 #include "rocket/rocket.h"
 #include "rocket/io/io.h"
+#include "rocket/system/system.h"
 
 #include "rocket-test/matcher/matcher.h"
 
@@ -75,8 +76,7 @@ using namespace testing;
  * @param name the name of the environment variable
  */
 #define ASSERT_ENV(name) { \
-  const char* p = getenv(name); \
-  if (not p || (strcmp(p, "1") != 0 && strcmp(p, "true") != 0)) { \
+  if (not ::rocket::system::env::get<bool>(name).value_or(false)) { \
     GTEST_SKIP_("Skipping test because `" name "` is not set\n"); \
   } \
 }
