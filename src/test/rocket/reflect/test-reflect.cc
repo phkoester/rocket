@@ -37,7 +37,7 @@ ROCKET_REFLECT_MEMBERS_DEFINE(, MyStruct, index);
 // #TEST ----------------------------------------------------------------------------------------------------
 
 TEST(reflect, MyStruct) {
-  const MyStruct m1(12, "here", true);
+  MyStruct m1(12, "here", true);
   EXPECT_EQ(m1.b, "here");
   get<1>(MyStruct::index()).get(m1) = "everywhere";
   EXPECT_EQ(m1.b, "everywhere");
@@ -159,22 +159,22 @@ TEST(reflect, MyStructIndex2Write) {
 
 TEST(reflect, VarRef) {
   i32 ä1 = 2;
-  const string b1 = "hi";
-  const f32 f1 = .5f;
+  string b1 = "hi";
+  f32 f1 = .5f;
 
   auto vars1 = ROCKET_REFLECT_VARS((ä1)(b1)(f1));
   EXPECT_EQ(fmt::format("{}", vars1), "(ä1=2, b1=\"hi\", f1=0.5)");
 
-  const i32 ä2 = 2;
-  const string b2 = "hi";
-  const f32 f2 = .5f;
+  i32 ä2 = 2;
+  string b2 = "hi";
+  f32 f2 = .5f;
   auto vars2 = ROCKET_REFLECT_VARS((ä2)(b2)(f2));
   EXPECT_EQ(vars2, vars1); // Only the values are compared, not the names
   EXPECT_EQ(fmt::format("{}", vars2), "(ä2=2, b2=\"hi\", f2=0.5)");
 
-  const i32 ä3 = 2;
-  const string b3 = "hi";
-  const f32 f3 = .6f;
+  i32 ä3 = 2;
+  string b3 = "hi";
+  f32 f3 = .6f;
 
   const auto vars3 = ROCKET_REFLECT_VARS((ä3)(b3)(f3));
   EXPECT_EQ(fmt::format("{}", vars3), "(ä3=2, b3=\"hi\", f3=0.6)");
@@ -188,8 +188,8 @@ TEST(reflect, VarRef) {
 }
 
 TEST(reflect, VarRefOpOutput) {
-  const i32 i = 2;
-  const i64 l = 3;
+  i32 i = 2;
+  i64 l = 3;
   const auto vars = ROCKET_REFLECT_VARS((i)(l));
 
   const auto v0 = get<0>(vars);
@@ -199,13 +199,13 @@ TEST(reflect, VarRefOpOutput) {
 }
 
 TEST(reflect, VarRefHash) {
-  const i32 i1 = 2;
-  const i64 l1 = 3;
+  i32 i1 = 2;
+  i64 l1 = 3;
   auto vars1 = ROCKET_REFLECT_VARS((i1)(l1));
   const u64 hash1 = std::hash<decltype(vars1)>()(vars1);
 
-  const i32 i2 = 2;
-  const i64 l2 = 3;
+  i32 i2 = 2;
+  i64 l2 = 3;
   auto vars2 = ROCKET_REFLECT_VARS((i2)(l2));
   const u64 hash2 = std::hash<decltype(vars2)>()(vars2);
 
