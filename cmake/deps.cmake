@@ -7,17 +7,15 @@ include(FetchContent)
 # Boost -----------------------------------------------------------------------------------------------------
 
 if(ROCKET_USE_EXTERNAL_BOOST)
-  find_package(Boost 1.83 CONFIG)
+  find_package(Boost ${ROCKET_BOOST_VERSION} CONFIG)
 endif()
 if(Boost_FOUND)
   set(ROCKET_BOOST_LINK_TARGETS Boost::headers)
   set(ROCKET_BOOST_EXPORT_TARGETS)
 else()
-  set(BOOST_VERSION 1.87.0)
-
   FetchContent_Declare(
     Boost
-    URL https://github.com/boostorg/boost/releases/download/boost-${BOOST_VERSION}/boost-${BOOST_VERSION}-cmake.tar.xz
+    URL https://github.com/boostorg/boost/releases/download/boost-${ROCKET_BOOST_VERSION}/boost-${ROCKET_BOOST_VERSION}-cmake.tar.xz
     SYSTEM
     EXCLUDE_FROM_ALL
   )

@@ -52,10 +52,6 @@ endif()
 if(POLICY CMP0160)
   cmake_policy(SET CMP0160 NEW)
 endif()
-# "The FindBoost module is removed."
-if(POLICY CMP0167)
-  cmake_policy(SET CMP0167 NEW)
-endif()
 
 # Configuration ---------------------------------------------------------------------------------------------
 #
