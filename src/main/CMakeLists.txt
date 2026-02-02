@@ -170,7 +170,6 @@ target_sources(rocket-test
   PUBLIC
     FILE_SET HEADERS
     FILES
-      rocket-test/bench.h
       rocket-test/rocket-test.h
       rocket-test/TracingString.h
       rocket-test/matcher/matcher.h
