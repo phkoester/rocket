@@ -253,7 +253,7 @@ struct MemberRef {
 
 private:
 
-  const std::string_view name_; ///< The name of the member.
+  std::string_view name_; ///< The name of the member.
   T C::*p_; ///< The pointer to the member.
 };
 
@@ -309,28 +309,28 @@ struct VarRef {
    *
    * @return the value of the variable
    */
-  constexpr T& get() { return *ptr_; }
+  [[nodiscard]] constexpr T& get() { return *ptr_; }
 
   /**
    * Returns the value of the variable.
    *
    * @return the value of the variable
    */
-  constexpr const T& get() const { return *ptr_; }
+  [[nodiscard]] constexpr const T& get() const { return *ptr_; }
 
   /**
    * Returns the hash value of the variable.
    *
    * @return the hash value of the variable
    */
-  u64 hash() const { return std::hash<T>()(*ptr_); }
+  [[nodiscard]] u64 hash() const { return std::hash<T>()(*ptr_); }
 
   /**
    * Returns the name of the variable.
    *
    * @return the name of the variable
    */
-  constexpr std::string_view name() const { return name_; }
+  [[nodiscard]] constexpr std::string_view name() const { return name_; }
 
 private:
 
@@ -373,7 +373,7 @@ formatElemImpl(const T& val, FormatContext& ctx, bool debug, const Tuple& refs) 
   const auto& value = ref.get(val);
   using ValueType = decltype(value);
   fmt::formatter<rocket::PurgeType<ValueType>, C> underlying;
-  detail::maybe_set_debug_format(underlying, debug);
+  detail::maybe_set_debug_format(underlying, debug); // NOLINT
   ctx.advance_to(out);
   out = underlying.format(value, ctx);
   return out;
@@ -495,7 +495,11 @@ writeElemImpl(nio::Sink& out, const T& val, const Tuple& refs) {
 
 template<typename T, typename Tuple, u64... Index>
 u64
-writeImpl(nio::Sink& out, const T& val, const Tuple& refs, std::index_sequence<Index...>) {
+writeImpl(
+  nio::Sink& out,
+  const T& val,
+  const Tuple& refs,
+  std::index_sequence<Index...>) { // NOLINT
   u64 ret = out.write('(');
   (..., (ret += writeElemImpl<T, Index>(out, val, refs)));
   ret += out.write(')');
@@ -616,7 +620,7 @@ struct fmt::formatter<rocket::reflect::VarRef<T>, C> {
 
   constexpr void
   set_debug_format(bool val = true) {
-    detail::maybe_set_debug_format(underlying_, val);
+    detail::maybe_set_debug_format(underlying_, val); // NOLINT
   }
 
   /// @endcond

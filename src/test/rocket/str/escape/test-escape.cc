@@ -47,7 +47,7 @@ TEST(escape, CString) {
 
   // Null char
   {
-    string in = "a\x00" "b"s;
+    const string in = "a\x00" "b"s;
     EXPECT_EQ(in.size(), 3);
     const CStringConfig config;
     const string escaped = escapeCString(in, config, &result);

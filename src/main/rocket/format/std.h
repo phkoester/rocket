@@ -126,7 +126,7 @@ struct formatter<std::optional<T>, C> {
 
   constexpr void
   set_debug_format(bool val = true) {
-    detail::maybe_set_debug_format(underlying_, val);
+    detail::maybe_set_debug_format(underlying_, val); // NOLINT
   }
 
   /// @endcond
@@ -192,7 +192,7 @@ struct formatter<Variant, C> {
         }
 
         formatter<rocket::PurgeType<decltype(val)>, C> underlying;
-        detail::maybe_set_debug_format(underlying, debug_);
+        detail::maybe_set_debug_format(underlying, debug_); // NOLINT
         ctx.advance_to(out);
         out = underlying.format(val, ctx);
       }, value);

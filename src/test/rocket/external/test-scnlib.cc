@@ -128,7 +128,7 @@ TEST(scnlib, scanMap) {
   EXPECT_EQ(result->begin() - input.begin(), 27);
 }
 
-#if 0
+#if 0 // NOLINT
 TEST(scnlib, scanRegex) {
   auto result = scn::scan<scn::regex_matches>("abc123", "{:/([a-z]+)([0-9]+)/}");
   const scn::regex_matches& matches = result->value();

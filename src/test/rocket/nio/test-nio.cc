@@ -65,7 +65,7 @@ TEST(nio, FileSinkDoesNotExist) {
 
 TEST(nio, SpanSink) {
   string str = "---[abcd]---";
-  span<char> span(&str[4], 4);
+  const span<char> span(&str[4], 4);
   SpanSink out(span);
   EXPECT_EQ(out.write("ABCDEF"), 4); // Writing 6 chars, but only 4 fit
   EXPECT_EQ(str, "---[ABCD]---");
