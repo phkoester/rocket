@@ -45,9 +45,9 @@ TEST(std, filesystemPath) {
 TEST(std, filesystemPathWindows) {
   using filesystem::path;
 
-  const path winPath("C:\\path\\to\\file");
-  EXPECT_EQ(winPath.filename(), path("file"));
-  EXPECT_EQ(winPath.parent_path(), path("C:\\path\\to"));
+  const path windowsPath("C:\\path\\to\\file");
+  EXPECT_EQ(windowsPath.filename(), path("file"));
+  EXPECT_EQ(windowsPath.parent_path(), path("C:\\path\\to"));
 
   const path mixedPath("a/b\\c/d\\e");
   EXPECT_EQ(mixedPath.filename(), path("e"));

@@ -102,7 +102,7 @@ set(COMPILE_FLAGS)
 
 if(LINUX)
   # gcc will not accept `__int128` with `-pedantic`
-  list(APPEND COMPILE_FLAGS -Wall -Wextra -Wno-c++26-extensions -Wno-ignored-attributes)
+  list(APPEND COMPILE_FLAGS -fmodules-ts -Wall -Wextra -Wno-c++26-extensions -Wno-ignored-attributes)
 elseif(WIN32)
   list(APPEND COMPILE_FLAGS /Zc:preprocessor) # /Wall
 endif()

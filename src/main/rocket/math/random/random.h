@@ -10,7 +10,6 @@
 #include "rocket/type-traits.h"
 
 #include <random>
-#include <string_view>
 
 namespace rocket::math::random {
 
