@@ -121,7 +121,7 @@ TEST(str, removeLeadingChar32) {
 TEST(str, removeTrailingChar) {
   using type = char;
 
-  string_view str = "";
+  string_view str;
   EXPECT_EQ(removeTrailing<type>(str, "hello"sv), "");
 
   str = "hello";
@@ -140,7 +140,7 @@ TEST(str, removeTrailingChar) {
 TEST(str, removeTrailingChar32) {
   using type = char32;
 
-  u32string_view str = U"";
+  u32string_view str;
   EXPECT_EQ(removeTrailing<type>(str, U"hello"sv), U"");
 
   str = U"hello";

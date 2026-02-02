@@ -22,25 +22,25 @@ TEST(escape, CString) {
 
   // Double quotes, escaping, UTF-8 'ä'
   {
-    string in = "\\ä\"b";
-    CStringConfig config { .quote='"' };
-    string escaped = escapeCString(in, config, &result);
+    const string in = "\\ä\"b";
+    const CStringConfig config { .quote='"' };
+    const string escaped = escapeCString(in, config, &result);
     EXPECT_EQ(escaped, "\"\\\\ä\\\"b\"");
     EXPECT_EQ(result.positions, positions({ { 0, 1 }, { 1, 3 }, { 3, 5 }, { 4, 7 }, { 5, 8 } }));
 
-    string out = unescapeCString(escaped, config, &result);
+    const string out = unescapeCString(escaped, config, &result);
     EXPECT_EQ(out, in);
     EXPECT_EQ(result.positions, positions({ { 1, 0 }, { 3, 1 }, { 5, 3 }, { 7, 4 }, { 8, 5 } }));
   }
 
   // Apostrophes
   {
-    string in = "a'b";
-    CStringConfig config { .quote='\'' };
-    string escaped = escapeCString(in, config, &result);
+    const string in = "a'b";
+    const CStringConfig config { .quote='\'' };
+    const string escaped = escapeCString(in, config, &result);
     EXPECT_EQ(escaped, "'a\\'b'");
     EXPECT_EQ(result.positions, positions({ { 0, 1 }, { 1, 2 }, { 2, 4 }, { 3, 5 } }));
-    string out = unescapeCString(escaped, config, &result);
+    const string out = unescapeCString(escaped, config, &result);
     EXPECT_EQ(out, in);
     EXPECT_EQ(result.positions, positions({ { 1, 0 }, { 2, 1 }, { 4, 2 }, { 5, 3 } }));
   }
@@ -49,11 +49,11 @@ TEST(escape, CString) {
   {
     string in = "a\x00" "b"s;
     EXPECT_EQ(in.size(), 3);
-    CStringConfig config;
-    auto escaped = escapeCString(in, config, &result);
+    const CStringConfig config;
+    const string escaped = escapeCString(in, config, &result);
     EXPECT_EQ(escaped, "a\\x00b");
     EXPECT_EQ(result.positions, positions({ { 0, 0 }, { 1, 1 }, { 2, 5 }, { 3, 6 } }));
-    string out = unescapeCString(escaped, config, &result);
+    const string out = unescapeCString(escaped, config, &result);
     EXPECT_EQ(out, in);
     EXPECT_EQ(result.positions, positions({ { 0, 0 }, { 1, 1 }, { 5, 2 }, { 6, 3 } }));
   }
@@ -62,15 +62,15 @@ TEST(escape, CString) {
   {
     // ☢️:  6 bytes, 2 code points
     // 🧑‍🌾: 11 bytes, 3 code points
-    string in = "a☢️b🧑‍🌾c";
+    const string in = "a☢️b🧑‍🌾c";
     EXPECT_EQ(in.size(), 20);
-    CStringConfig config;
-    auto escaped = escapeCString(in, config, &result);
+    const CStringConfig config;
+    const auto escaped = escapeCString(in, config, &result);
     EXPECT_EQ(escaped, in);
     EXPECT_EQ(
         result.positions,
         positions({ { 0, 0 }, { 1, 1 }, { 7, 7 }, { 8, 8 }, { 19, 19 }, { 20, 20 } }));
-    string out = unescapeCString(escaped, config, &result);
+    const string out = unescapeCString(escaped, config, &result);
     EXPECT_EQ(out, in);
     EXPECT_EQ(
         result.positions,
@@ -142,13 +142,13 @@ TEST(escape, Regex) {
   Result result;
 
   {
-    string in = "\r\t\uFFFF()[a-z]";
-    auto escaped = escapeRegex(in, &result);
+    const string in = "\r\t\uFFFF()[a-z]";
+    const auto escaped = escapeRegex(in, &result);
     EXPECT_EQ(escaped, "\\r\\t\\uFFFF\\(\\)\\[a-z\\]");
     EXPECT_EQ(
         result.positions,
         positions({ { 0, 0 }, { 1, 2 }, { 2, 4 }, { 5, 10 }, { 6, 12 }, { 7, 14 }, { 8, 16 }, { 9, 17 }, { 10, 18 }, { 11, 19 }, { 12, 21 } }));
-    auto out = unescapeRegex(escaped, &result);
+    const auto out = unescapeRegex(escaped, &result);
     EXPECT_EQ(out, in);
     EXPECT_EQ(
         result.positions,

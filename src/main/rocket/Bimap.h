@@ -83,7 +83,7 @@ operator==(const bimap<A, B>& lhs, const bimap<A, B>& rhs) {
   if (lhs.size() != rhs.size()) {
     return false;
   }
-  for (const auto& [key, val] : lhs.left) {
+  for (const auto& [key, val] : lhs.left) { // NOLINT
     auto it = rhs.left.find(key);
     if (it == rhs.left.end()) {
       return false;
@@ -139,7 +139,7 @@ struct fmt::formatter<boost::bimaps::bimap<A, B>, C> {
   format(const boost::bimaps::bimap<A, B>& val, FormatContext& ctx) const {
     // @todo Don't copy the whole map here
     std::map<K, V> map;
-    for (const auto& [k, v] : val.left) { // NOLINT(readability-*)
+    for (const auto& [k, v] : val.left) { // NOLINT
       map.emplace(k, v);
     }
     return underlying_.format(map, ctx);

@@ -109,7 +109,7 @@
     format(const ns::cls& val, FormatContext& ctx) const{ \
       auto out = ctx.out(); \
       if (withType_) { \
-        std::string typeName = fmt::format("{}", typeid(val)); \
+        const std::string typeName = fmt::format("{}", typeid(val)); \
         out = ::fmt::detail::write<C>(out, ::rocket::unicode::ConvertTo<C>::apply(typeName)); \
       } \
       out = ::rocket::reflect::internal::format<ns::cls, C>(val, ctx, debug_, ns::cls::name()); \
@@ -234,7 +234,7 @@ struct MemberRef {
    * @param val the instance
    * @return the value of the member
    */
-  constexpr T& get(C& val) const { return val.*p_; }
+  [[nodiscard]] constexpr T& get(C& val) const { return val.*p_; }
 
   /**
    * Returns the value of the member.
@@ -242,14 +242,14 @@ struct MemberRef {
    * @param val the instance
    * @return the value of the member
    */
-  constexpr const T& get(const C& val) const { return val.*p_; }
+  [[nodiscard]] constexpr const T& get(const C& val) const { return val.*p_; }
 
   /**
    * Returns the name of the member.
    *
    * @return the name of the member
    */
-  constexpr std::string_view name() const { return name_; }
+  [[nodiscard]] constexpr std::string_view name() const { return name_; }
 
 private:
 
@@ -284,46 +284,46 @@ struct VarRef {
    * @param name the name of the variable
    * @param ref the reference to the variable
    */
-  constexpr VarRef(const char* name, T& ref) : name_(name), ref_(ref) {}
+  constexpr VarRef(const char* name, T& ref) : name_(name), ptr_(&ref) {}
 
   /// @member_op_eq
-  bool operator==(const VarRef& rhs) const { return ref_ == rhs.ref_; }
+  bool operator==(const VarRef& rhs) const { return *ptr_ == *rhs.ptr_; }
 
   /// @member_op_ne
-  bool operator!=(const VarRef& rhs) const { return ref_ != rhs.ref_; }
+  bool operator!=(const VarRef& rhs) const { return *ptr_ != *rhs.ptr_; }
 
   /// @member_op_lt
-  bool operator<(const VarRef& rhs) const { return ref_ < rhs.ref_; }
+  bool operator<(const VarRef& rhs) const { return *ptr_ < *rhs.ptr_; }
 
   /// @member_op_le
-  bool operator<=(const VarRef& rhs) const { return ref_ <= rhs.ref_; }
+  bool operator<=(const VarRef& rhs) const { return *ptr_ <= *rhs.ptr_; }
 
   /// @member_op_gt
-  bool operator>(const VarRef& rhs) const { return ref_ > rhs.ref_; }
+  bool operator>(const VarRef& rhs) const { return *ptr_ > rhs.*ptr_; }
 
   /// @member_op_ge
-  bool operator>=(const VarRef& rhs) const { return ref_ >= rhs.ref_; }
+  bool operator>=(const VarRef& rhs) const { return *ptr_ >= *rhs.ptr_; }
 
   /**
    * Returns the value of the variable.
    *
    * @return the value of the variable
    */
-  constexpr T& get() { return ref_; }
+  constexpr T& get() { return *ptr_; }
 
   /**
    * Returns the value of the variable.
    *
    * @return the value of the variable
    */
-  constexpr const T& get() const { return ref_; }
+  constexpr const T& get() const { return *ptr_; }
 
   /**
    * Returns the hash value of the variable.
    *
    * @return the hash value of the variable
    */
-  u64 hash() const { return std::hash<T>()(ref_); }
+  u64 hash() const { return std::hash<T>()(*ptr_); }
 
   /**
    * Returns the name of the variable.
@@ -334,8 +334,8 @@ struct VarRef {
 
 private:
 
-  const std::string_view name_;
-  T& ref_;
+  std::string_view name_;
+  T* ptr_;
 };
 
 /// @op_output{#rocket::reflect::VarRef}
@@ -381,7 +381,12 @@ formatElemImpl(const T& val, FormatContext& ctx, bool debug, const Tuple& refs) 
 
 template<typename T, typename C, typename FormatContext, typename Tuple, u64... Index>
 constexpr FormatContext::iterator
-formatImpl(const T& val, FormatContext& ctx, bool debug, const Tuple& refs, std::index_sequence<Index...>) {
+formatImpl(
+  const T& val,
+  FormatContext& ctx,
+  bool debug,
+  const Tuple& refs,
+  std::index_sequence<Index...>) { // NOLINT
   using namespace fmt;
 
   // Write outer parentheses, inner members
@@ -412,7 +417,7 @@ eqImpl(
   const T& lhs,
   const T& rhs,
   const Tuple& refs,
-  std::index_sequence<Index...>) {
+  std::index_sequence<Index...>) { // NOLINT
   return (... && std::equal_to()(refGet<Index>(lhs, refs), refGet<Index>(rhs, refs)));
 }
 
@@ -422,7 +427,7 @@ neImpl(
   const T& lhs,
   const T& rhs,
   const Tuple& refs,
-  std::index_sequence<Index...>) {
+  std::index_sequence<Index...>) { // NOLINT
   return (... || std::not_equal_to()(refGet<Index>(lhs, refs), refGet<Index>(rhs, refs)));
 }
 
@@ -432,7 +437,7 @@ ltImpl(
   const T& lhs,
   const T& rhs,
   const Tuple& refs,
-  std::index_sequence<Index...> indices) {
+  std::index_sequence<Index...> indices) { // NOLINT
   bool ret = false;
   (... ||
     ((ret = std::less()(refGet<Index>(lhs, refs), refGet<Index>(rhs, refs))) == true ||
@@ -447,7 +452,7 @@ gtImpl(
   const T& lhs,
   const T& rhs,
   const Tuple& refs,
-  std::index_sequence<Index...> indices) {
+  std::index_sequence<Index...> indices) { // NOLINT
   bool ret = false;
   (... ||
     ((ret = std::greater()(refGet<Index>(lhs, refs), refGet<Index>(rhs, refs))) == true ||
@@ -606,7 +611,7 @@ struct fmt::formatter<rocket::reflect::VarRef<T>, C> {
 
   constexpr const C*
   parse(parse_context<C>& ctx) {
-    return underlying_.parse(ctx);
+    return underlying_.parse(ctx); // NOLINT
   }
 
   constexpr void

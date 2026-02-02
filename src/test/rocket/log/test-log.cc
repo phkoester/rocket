@@ -30,10 +30,10 @@ TEST(log, LogLevelFormat) {
 }
 
 TEST(log, loggerZip) {
-  auto path = testExcecutable("logger");
-  string executable = path.string();
+  const auto path = testExcecutable("logger");
+  const string executable = path.string();
 
-  auto logFilePattern = temp_directory_path() / "logger-@[date].log@[zip]";
+  const auto logFilePattern = temp_directory_path() / "logger-@[date].log@[zip]";
 
   // Run `logger`, check log file
 
@@ -54,7 +54,7 @@ TEST(log, loggerZip) {
   EXPECT_TRUE(is_regular_file(logFile1));
 
   time += 24h;
-  string logFile2 = log::internal::expandLogFilePattern(logFilePattern.string(), time);
+  const string logFile2 = log::internal::expandLogFilePattern(logFilePattern.string(), time);
   EXPECT_TRUE(is_regular_file(logFile2));
 
   // Clean up

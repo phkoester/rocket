@@ -112,11 +112,11 @@ TEST(unicode, conversions) {
   copy(str.begin(), str.end(), back_inserter(vec));
   EXPECT_EQ(vec, (vector<char32> { 97, 0x20ac, 98 }));
 
-  u32string str2 = utf8To32(str1);
+  const u32string str2 = utf8To32(str1);
   EXPECT_EQ(str2, U"a€b");
   EXPECT_EQ(str2.size(), 3);
 
-  string str3 = utf32To8(str2);
+  const string str3 = utf32To8(str2);
   EXPECT_EQ(str3, str1);
 
   // U+1F9D1 (ADULT), U+200D (ZERO WIDTH JOINER), U+1F33E (EAR OF RICE)
@@ -144,7 +144,7 @@ TEST(unicode, utf8Validate) {
   static_assert("�"sv.size() == 3);
 
   {
-    string str = { 'a', CONT, 'b' };
+    const string str = { 'a', CONT, 'b' };
     auto cow = utf8::validate(str, &pos);
     EXPECT_TRUE(cow.modified());
     EXPECT_EQ(cow.get(), "a�b");
@@ -152,7 +152,7 @@ TEST(unicode, utf8Validate) {
   }
 
   {
-    string str = { 'a', TWO_BYTES, 'b', 'c' };
+    const string str = { 'a', TWO_BYTES, 'b', 'c' };
     auto cow = utf8::validate(str, &pos);
     EXPECT_TRUE(cow.modified());
     EXPECT_EQ(cow.get(), "a�bc");
@@ -160,7 +160,7 @@ TEST(unicode, utf8Validate) {
   }
 
   {
-    string str = { 'a', THREE_BYTES, CONT };
+    const string str = { 'a', THREE_BYTES, CONT };
     auto cow = utf8::validate(str, &pos);
     EXPECT_TRUE(cow.modified());
     EXPECT_EQ(cow.get(), "a�");
@@ -168,7 +168,7 @@ TEST(unicode, utf8Validate) {
   }
 
   {
-    string str = { 'a', FOUR_BYTES, CONT, 'b' };
+    const string str = { 'a', FOUR_BYTES, CONT, 'b' };
     auto cow = utf8::validate(str, &pos);
     EXPECT_TRUE(cow.modified());
     EXPECT_EQ(cow.get(), "a��b");
@@ -182,7 +182,7 @@ TEST(unicode, utf32Validate) {
   UnorderedBimap<u64, u64> pos;
 
   {
-    u32string_view sv = U"abc";
+    const u32string_view sv = U"abc";
     auto cow = utf32::validate(sv, &pos);
     EXPECT_FALSE(cow.modified());
     EXPECT_EQ(cow.get(), U"abc");
@@ -190,8 +190,8 @@ TEST(unicode, utf32Validate) {
   }
 
   {
-    u32string str = { 'a', D800, 'b', MAX_PLUS_1 };
-    u32string_view sv = str;
+    const u32string str = { 'a', D800, 'b', MAX_PLUS_1 };
+    const u32string_view sv = str;
     auto cow = utf32::validate(sv, &pos);
     EXPECT_TRUE(cow.modified());
     EXPECT_EQ(cow.get(), U"a�b�");

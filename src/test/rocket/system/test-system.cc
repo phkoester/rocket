@@ -113,8 +113,8 @@ TEST(system, execPrintf) {
 }
 
 TEST(system, execPrintArgs) {
-  path printArgs = testExcecutable("print-args");
-  string executable = printArgs.string();
+  const path printArgs = testExcecutable("print-args");
+  const string executable = printArgs.string();
 
   {
     // Test spaces and quotes

@@ -128,7 +128,7 @@ TEST(location, locationsKafkaTxt) {
       "Oops",
       nullopt);
 
-  const string_view line(input.begin() + loc.lineRange.a, input.begin() + *loc.lineRange.b);
+  const string_view line(input.begin() + loc.lineRange.a, input.begin() + *loc.lineRange.b); // NOLINT
   EXPECT_EQ(line, loc.lineString);
 }
 
@@ -140,7 +140,7 @@ TEST(location, locationsMultiByteCharacter) {
   // No character boundary at position 4
   EXPECT_THAT(
     ([&] {
-      Position pos { .type=error, .position=4, .message="Oops" };
+      const Position pos { .type=error, .position=4, .message="Oops" };
       locations(input, { pos }, {});
     }),
     ThrowsMessage<InvalidState>(HasSubstr("Position 4 not found in source")));
@@ -148,7 +148,7 @@ TEST(location, locationsMultiByteCharacter) {
   // No character boundary at position 7
   EXPECT_THAT(
     ([&] {
-      Position pos { .type=error, .position=7, .message="Oops" };
+      const Position pos { .type=error, .position=7, .message="Oops" };
       locations(input, { pos }, {});
     }),
     ThrowsMessage<InvalidState>(HasSubstr("Position 7 not found in source")));
@@ -185,11 +185,11 @@ TEST(location, locationsTabSize8) {
   EXPECT_LOCATION(loc, note, 4, ({}), 2, 9, ({ 2, 5 }), "b\tc", "Oops", nullopt);
 }
 
-TEST(location, printLocations) {
+TEST(location, printLocations) { // NOLINT(*-complexity)
   // Test multi-line input, more than one position per line
   {
     const string input = "a multi-line\ntext, where the second line is somewhat longer";
-    nio::StringSource in(input);
+    const nio::StringSource in(input);
     const Position pos0 { .type=note, .position=2, .message="Oops1" };
     const Position pos1 { .type=warning, .position=13, .message="Oops2" };
     const Position pos2 { .type=error, .position=19, .message="Oops3", .caption="Watch out!" };

@@ -20,14 +20,14 @@ TEST(std, byteFormat) {
   EXPECT_EQ(fmt::format("{:#x}", byte { 255 }), "0xff");
 }
 
-TEST(std, exceptionFormat) {
+TEST(std, exceptionFormat) { // NOLINT(*-complexity)
   try  {
     ROCKET_FAIL("oops1");
   } catch (const exception& ex1) {
     EXPECT_THAT(fmt::format("{}", ex1), matchesRegex(".*\\.cc:\\d+: oops1"));
     EXPECT_THAT(fmt::format("{:t}", ex1), matchesRegex("`rocket::InvalidState`: .*\\.cc:\\d+: oops1"));
 
-    u32string s32 = fmt::format(U"{}", ex1);
+    const u32string s32 = fmt::format(U"{}", ex1);
     EXPECT_NE(s32.find(U"oops1"), u32string::npos);
 
     auto msg = fmt::format("{:?}", ex1);
@@ -143,7 +143,7 @@ TEST(std, unorderedSetFormat) {
 }
 
 TEST(std, stringFormat) {
-  static_assert(is_same_v<decltype("hello"s), string> == true);
+  static_assert(is_same_v<decltype("hello"s), string>);
   EXPECT_EQ(fmt::format("{}", "hello"s), "hello");
   EXPECT_EQ(fmt::format("{:?}", "hello"s), "\"hello\"");
   EXPECT_EQ(fmt::format("{}", "a\bc"s), "a\bc");
@@ -156,7 +156,7 @@ TEST(std, stringFormat) {
 }
 
 TEST(std, stringViewFormat) {
-  static_assert(is_same_v<decltype("hello"sv), string_view> == true);
+  static_assert(is_same_v<decltype("hello"sv), string_view>);
   EXPECT_EQ(fmt::format("{}", "hello"sv), "hello");
   EXPECT_EQ(fmt::format("{:?}", "hello"sv), "\"hello\"");
   EXPECT_EQ(fmt::format("{}", "a\bc"sv), "a\bc");

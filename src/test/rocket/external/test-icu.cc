@@ -14,13 +14,13 @@ using boost::safe_numerics::safe;
 
 // TEST -----------------------------------------------------------------------------------------------------
 
-TEST(icu, U8_NEXT) {
+TEST(icu, u8Next) {
   auto str = "hällo"sv;
   i32 i = 0;
-  UChar32 cp;
-  U8_NEXT(str.data(), i, safe<i32>(str.size()), cp);
+  UChar32 cp = 0;
+  U8_NEXT(str.data(), i, safe<i32>(str.size()), cp); // NOLINT
   EXPECT_EQ(cp, 'h');
-  U8_NEXT(str.data(), i, safe<i32>(str.size()), cp);
+  U8_NEXT(str.data(), i, safe<i32>(str.size()), cp); // NOLINT
   EXPECT_EQ(cp, 0xE4); // U+00E4 (LATIN SMALL LETTER A WITH DIAERESIS)
 }
 

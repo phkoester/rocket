@@ -18,11 +18,11 @@ TEST(format, FormatChar) {
     buf.print("n is {}.{}", n, Format<char>([&] {
       if (n == 11) {
         return Format<char>::params();
-      } if (n < 6) {
-        return Format<char>::params(" This {} it is less than {:d}.", "means", 6);
-      } else {
-        return Format<char>::params(" This means it is greater {} {:d}.", "than", 5);
       }
+      if (n < 6) {
+        return Format<char>::params(" This {} it is less than {:d}.", "means", 6);
+      }
+      return Format<char>::params(" This means it is greater {} {:d}.", "than", 5);
     }));
     return buf.str();
   };
@@ -41,11 +41,10 @@ TEST(format, FormatCharWithTagged) {
         params.tag("@@", "grep {} {} {}", "-i", "foo", "bar");
         params.tag("⊕", "{} -l", "ls");
         return params;
-      } else {
-        auto params = Format<char>::params(": Second {}: \\1.", "case");
-        params.tag("\\1", "This {} doesn't mean much", "sentence");
-        return params;
       }
+      auto params = Format<char>::params(": Second {}: \\1.", "case");
+      params.tag("\\1", "This {} doesn't mean much", "sentence");
+      return params;
     }));
     return buf.str();
   };

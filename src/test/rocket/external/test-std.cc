@@ -59,7 +59,7 @@ TEST(std, istreamEof) {
 
   {
     auto is = io::is();
-    char c;
+    char c = '\0';
     is >> c;
     EXPECT_TRUE(is.eof());
     // 'eof()' implies 'fail()'

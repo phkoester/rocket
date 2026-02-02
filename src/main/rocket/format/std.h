@@ -43,7 +43,7 @@ struct formatter<Exception, C> {
 
     auto out = ctx.out();
     if (withType_) {
-      std::string typeName = fmt::format("{}", typeid(val));
+      const std::string typeName = fmt::format("{}", typeid(val));
       if constexpr (std::is_same_v<C, char>) {
         out = format_to(out, "`{}`: ", rocket::unicode::ConvertTo<C>::apply(typeName));
       } else {
