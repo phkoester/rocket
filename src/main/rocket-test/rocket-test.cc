@@ -4,7 +4,7 @@
 
 #include "rocket-test.h"
 
-#include "rocket/math/random.h"
+#include "rocket/assert.h"
 #include "rocket/system/system.h"
 
 using namespace std::filesystem;
