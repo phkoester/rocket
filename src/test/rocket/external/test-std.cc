@@ -33,25 +33,28 @@ TEST(std, chronoFormat) {
   }
 }
 
+/// This is expected to work on all platforms.
 TEST(std, filesystemPath) {
   using filesystem::path;
+  const path unixPath("/path/to/file");
+  EXPECT_EQ(unixPath.filename(), path("file"));
+  EXPECT_EQ(unixPath.parent_path(), path("/path/to"));
+}
 
-  // Does this work in Windows?
-  const path linuxPath("/path/to/file");
-  EXPECT_EQ(linuxPath.filename(), path("file"));
-  EXPECT_EQ(linuxPath.parent_path(), path("/path/to"));
+#ifdef ROCKET_OS_WINDOWS
+TEST(std, filesystemPathWindows) {
+  using filesystem::path;
 
-  // Does this work in Linux?
-  const filesystem::path winPath("C:\\path\\to\\file");
+  const path winPath("C:\\path\\to\\file");
   EXPECT_EQ(winPath.filename(), path("file"));
   EXPECT_EQ(winPath.parent_path(), path("C:\\path\\to"));
 
-  // Can we mix file separators?
-  const filesystem::path mixedPath("a/b\\c/d\\e");
+  const path mixedPath("a/b\\c/d\\e");
   EXPECT_EQ(mixedPath.filename(), path("e"));
   EXPECT_EQ(mixedPath.parent_path(), path("a/b/c/d"));
   EXPECT_EQ(mixedPath.parent_path(), path("a\\b\\c\\d"));
 }
+#endif // ROCKET_OS_WINDOWS
 
 TEST(std, formatLocale) {
   EXPECT_EQ(std::format("{:L}", 123'456), "123,456");
