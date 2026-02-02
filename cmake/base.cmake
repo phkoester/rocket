@@ -102,7 +102,7 @@ set(COMPILE_FLAGS)
 
 if(LINUX)
   # gcc will not accept `__int128` with `-pedantic`
-  list(APPEND COMPILE_FLAGS -fmodules-ts -Wall -Wextra -Wno-c++26-extensions -Wno-ignored-attributes)
+  list(APPEND COMPILE_FLAGS -Wall -Wextra -Wno-c++26-extensions -Wno-ignored-attributes)
 elseif(WIN32)
   list(APPEND COMPILE_FLAGS /Zc:preprocessor) # /Wall
 endif()
@@ -114,7 +114,7 @@ function(AddRuntimeDlls name)
     add_custom_command(
       TARGET  ${name} POST_BUILD
       # Since CMake 4.2, there is `copy_if_newer`. If that is available, we can add this to `AddBench` and
-      # `AddTest`. For the time being, VS comes with CMake 4.1.1
+      # `AddTest`. For the time being, Visual Studio comes with CMake 4.1.1
       COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_RUNTIME_DLLS:${name}> $<TARGET_FILE_DIR:${name}>
       COMMAND_EXPAND_LISTS
     )
