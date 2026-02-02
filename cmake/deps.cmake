@@ -7,7 +7,7 @@ include(FetchContent)
 # Boost -----------------------------------------------------------------------------------------------------
 
 if(ROCKET_USE_EXTERNAL_BOOST)
-  find_package(Boost 1.83)
+  find_package(Boost 1.83 CONFIG)
 endif()
 if(Boost_FOUND)
   set(ROCKET_BOOST_LINK_TARGETS Boost::headers)

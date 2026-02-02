@@ -1,19 +1,12 @@
 /*
  * main.cc
  *
- * A playground for quick and dirty experiments.
+ * The `toy` test executable links to Rocket and is a playground for quick and dirty experiments.
  */
 
 #include "rocket/Process.h"
 #include "rocket/cl/cl.h"
 #include "rocket/log/log.h"
-
-#include "rocket/literal.h"
-#include "rocket/math/interval.h"
-#include "rocket/unicode/unicode.h"
-#include "rocket/version.h"
-
-#include <cstring>
 
 using namespace rocket;
 using namespace rocket::unicode;
@@ -41,28 +34,10 @@ myTerminate() {
 }
 
 void
-yyy() {
-  ROCKET_LOG(thisIsARatherLongLogId);
-  ROCKET_LOG_TRACE("Hey {}", "there");
-}
-
-void
-zzz() {
-  ROCKET_LOG(thisIsARatherLongLogId);
-  for (int i = 0; i < 10; ++i) {
-    yyy();
-  }
-}
-
-void
 toy() {
   ROCKET_LOG(toy);
-  ROCKET_LOG_TRACE("Hey {}", "there");
-  out.println("src file name: {}", ROCKET_SRC_FILE);
-  zzz();
 
-  auto val = math::OpenInterval<float>();
-  out.println("val: {}", val);
+  ROCKET_LOG_TRACE("Hey {}", "there");
 }
 
 // #main ----------------------------------------------------------------------------------------------------

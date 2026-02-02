@@ -4,13 +4,18 @@
 
 set(GENERATED_DIR ${CMAKE_CURRENT_BINARY_DIR}/generated)
 
-# Auxiliary executables -------------------------------------------------------------------------------------
+# Auxiliary text executables --------------------------------------------------------------------------------
+
+AddExecutable(bare bare/main.cc)
 
 AddExecutable(logger logger/main.cc)
 target_link_libraries(logger PRIVATE Rocket::rocket)
 
 AddExecutable(print-args print-args/main.cc)
 target_link_libraries(print-args PRIVATE Rocket::rocket)
+
+AddExecutable(toy toy/main.cc)
+target_link_libraries(toy PRIVATE Rocket::rocket)
 
 # Tests -----------------------------------------------------------------------------------------------------
 

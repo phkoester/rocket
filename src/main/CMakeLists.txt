@@ -206,13 +206,4 @@ target_link_libraries(rocket-test-main PRIVATE GTest::gmock GTest::gtest Rocket:
 
 add_library(Rocket::rocket-test-main ALIAS rocket-test-main)
 
-# `bare` ----------------------------------------------------------------------------------------------------
-
-AddExecutable(bare bare/main.cc)
-
-# `toy` -----------------------------------------------------------------------------------------------------
-
-AddExecutable(toy toy/main.cc)
-target_link_libraries(toy PRIVATE Rocket::rocket)
-
 # EOF

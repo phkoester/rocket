@@ -36,15 +36,12 @@
 # - clean
 # - patch
 #
-# Targets for executables:
-#
-# - bare
-# - toy
-#
 # - Targets for test executables:
 #
+# - bare
 # - logger
 # - print-args
+# - toy
 #
 
 # The default target
@@ -105,19 +102,12 @@ ifneq ($(SCNLIB_VERSION), $(SCNLIB_VERSION_EXPECTED))
 	@echo "  cp $< $@"
 endif
 
-# Executables -----------------------------------------------------------------------------------------------
+# Test executables ------------------------------------------------------------------------------------------
 
 .PHONY: bare
 bare: TARGET := bare
 bare: build
-	@$(BUILD_DIR)/src/main/bare $(ARGS)
-
-.PHONY: toy
-toy: TARGET := toy
-toy: build
-	@$(BUILD_DIR)/src/main/toy $(ARGS)
-
-# Test executables ------------------------------------------------------------------------------------------
+	@$(BUILD_DIR)/src/test/bare $(ARGS)
 
 .PHONY: logger
 logger: TARGET := logger
@@ -128,5 +118,10 @@ logger: build
 print-args: TARGET := print-args
 print-args: build
 	@$(BUILD_DIR)/src/test/print-args $(ARGS)
+
+.PHONY: toy
+toy: TARGET := toy
+toy: build
+	@$(BUILD_DIR)/src/test/toy $(ARGS)
 
 # EOF
