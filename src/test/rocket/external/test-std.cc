@@ -44,7 +44,7 @@ TEST(std, filesystemPath) {
   // Does this work in Linux?
   const filesystem::path winPath("C:\\path\\to\\file");
   EXPECT_EQ(winPath.filename(), path("file"));
-  EXPECT_EQ(winPath.parent_path(), path("C:\\path\\path\\to"));
+  EXPECT_EQ(winPath.parent_path(), path("C:\\path\\to"));
 
   // Can we mix file separators?
   const filesystem::path mixedPath("a/b\\c/d\\e");
