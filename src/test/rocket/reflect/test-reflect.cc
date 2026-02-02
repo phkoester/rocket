@@ -123,7 +123,7 @@ TEST(reflect, MyStructIndex2Eq) {
   const MyStruct m1(42, "rocket", true);
   const MyStruct m2(42, "rocket", false);
   const MyStruct m3(43, "rocket", true);
-  auto& index2 = MyStruct::index2();
+  const auto& index2 = MyStruct::index2();
   EXPECT_EQ(eq(m1, m2, index2), true);
   EXPECT_EQ(eq(m1, m3, index2), false);
 }
@@ -132,7 +132,7 @@ TEST(reflect, MyStructIndex2Ne) {
   const MyStruct m1(42, "rocket", true);
   const MyStruct m2(42, "rocket", false);
   const MyStruct m3(43, "rocket", true);
-  auto& index2 = MyStruct::index2();
+  const auto& index2 = MyStruct::index2();
   EXPECT_EQ(ne(m1, m2, index2), false);
   EXPECT_EQ(ne(m1, m3, index2), true);
 }
