@@ -25,7 +25,6 @@ CMake variables:
 | `ROCKET_BOOST_VERSION`      | `STRING` | `1.90.0`                          | Boost version
 | `ROCKET_BUILD_BENCH`        | `BOOL`   | `ON` if master project            | Enable benchmarking and build benchmarks
 | `ROCKET_BUILD_TEST`         | `BOOL`   | `ON` if master project            | Enable testing and build tests
-| `ROCKET_USE_EXTERNAL_BOOST` | `BOOL`   | `ON`                              | Use external Boost library
 
 ### Linux
 
