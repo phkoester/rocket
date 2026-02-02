@@ -11,12 +11,10 @@
 #include "rocket/system/system.h"
 
 #include <cstdlib>
-#include <filesystem>
 #include <ranges>
 
 using namespace rocket;
 using namespace std;
-using namespace std::filesystem;
 
 namespace {
 
@@ -106,14 +104,15 @@ onTerminate() {
 }
 
 string_view
-shortName(string_view argv0) {
-  string_view ret(argv0);
+shortName(string_view str) {
+  string_view ret(str);
 #ifdef ROCKET_OS_WINDOWS
-  auto lastFileSep = ret.find_last_of("/\\");
+  string seps { '/', system::fileSeparator() };
+  auto lastFileSep = ret.find_last_of(seps);
 #else
-  auto lastFileSep = ret.find_last_of('/');
+  auto lastFileSep = ret.find_last_of(system::fileSeparator());
 #endif
-if (lastFileSep != string_view::npos) {
+  if (lastFileSep != string_view::npos) {
     ret = ret.substr(lastFileSep + 1);
   }
   ret = str::removeTrailing(ret, system::executableSuffix());

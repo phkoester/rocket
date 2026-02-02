@@ -15,7 +15,6 @@
 // Constants ------------------------------------------------------------------------------------------------
 
 constexpr array<const char*, 7> KEYS = { "alpha", "bravo", "charlie", "delta", "echo", "foxtrot", "golf" };
-constexpr array<i32, 7> VALS = { 0, 1, 2, 3, 4, 5, 6 };
 
 // Variables ------------------------------------------------------------------------------------------------
 
@@ -27,7 +26,7 @@ void
 map_smallConstMap(benchmark::State& state) {
   map<string_view, i32> map;
   for (u64 i = 0; i < KEYS.size(); ++i) {
-    map.emplace(KEYS[i], VALS[i]);
+    map.emplace(KEYS[i], i);
   }
 
   for (auto _ : state) { // NOLINT
@@ -43,7 +42,7 @@ void
 map_smallConstUnorderedMap(benchmark::State& state) {
   unordered_map<string_view, i32> map;
   for (u64 i = 0; i < KEYS.size(); ++i) {
-    map.emplace(KEYS[i], VALS[i]);
+    map.emplace(KEYS[i], i);
   }
 
   for (auto _ : state) { // NOLINT
@@ -59,7 +58,7 @@ void
 map_smallConstBimap(benchmark::State& state) {
   rocket::Bimap<string_view, i32> map;
   for (u64 i = 0; i < KEYS.size(); ++i) {
-    map.insert({ KEYS[i], VALS[i] });
+    map.insert({ KEYS[i], static_cast<i32>(i) });
   }
 
   for (auto _ : state) { // NOLINT
@@ -75,7 +74,7 @@ void
 map_smallConstUnorderedBimap(benchmark::State& state) {
   rocket::UnorderedBimap<string_view, i32> map;
   for (u64 i = 0; i < KEYS.size(); ++i) {
-    map.insert({ KEYS[i], VALS[i] });
+    map.insert({ KEYS[i], static_cast<i32>(i) });
   }
 
   for (auto _ : state) { // NOLINT

@@ -10,6 +10,7 @@
 #include "rocket/nio/nio.h"
 
 #include <chrono>
+#include <filesystem>
 #include <regex>
 
 // TEST -----------------------------------------------------------------------------------------------------
@@ -30,6 +31,26 @@ TEST(std, chronoFormat) {
     const string str = std::format("{:%FT%TZ}", tp);
     EXPECT_THAT(str, matchesRegex("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{6}Z"));
   }
+}
+
+TEST(std, filesystemPath) {
+  using filesystem::path;
+
+  // Does this work in Windows?
+  const path linuxPath("/path/to/file");
+  EXPECT_EQ(linuxPath.filename(), path("file"));
+  EXPECT_EQ(linuxPath.parent_path(), path("/path/to"));
+
+  // Does this work in Linux?
+  const filesystem::path winPath("C:\\path\\to\\file");
+  EXPECT_EQ(winPath.filename(), path("file"));
+  EXPECT_EQ(winPath.parent_path(), path("C:\\path\\path\\to"));
+
+  // Can we mix file separators?
+  const filesystem::path mixedPath("a/b\\c/d\\e");
+  EXPECT_EQ(mixedPath.filename(), path("e"));
+  EXPECT_EQ(mixedPath.parent_path(), path("a/b/c/d"));
+  EXPECT_EQ(mixedPath.parent_path(), path("a\\b\\c\\d"));
 }
 
 TEST(std, formatLocale) {
