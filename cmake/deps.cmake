@@ -81,6 +81,21 @@ FetchContent_MakeAvailable(Benchmark)
 set(BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS_DEFAULT})
 
 # ICU -------------------------------------------------------------------------------------------------------
+#
+# ICU is not fully CMake-ready, so it must be installed manually.
+#
+# On Ubuntu, say
+#
+#   $ sudo apt install libicu-dev
+#
+# On Windows,
+#
+# - download https://github.com/unicode-org/icu/releases/download/release-77-1/icu4c-77_1-Win64-MSVC2022.zip
+# - unpack, copy to C:\icu4c-77_1-Win64-MSVC2022
+# - set system variable ICU_ROOT to C:\icu4c-77_1-Win64-MSVC2022
+# - add C:\icu4c-77_1-Win64-MSVC2022\bin64 to the system variable PATH
+#
+# -----------------------------------------------------------------------------------------------------------
 
 find_package(ICU ${ROCKET_ICU_VERSION} COMPONENTS uc) # data i18n io
 
