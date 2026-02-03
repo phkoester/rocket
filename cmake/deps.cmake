@@ -63,22 +63,25 @@ if(NOT GTest_FOUND)
   set(BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS_DEFAULT})
 endif()
 
-# Benchmark (must follow GTest) -----------------------------------------------------------------------------
+# benchmark (must follow GTest) -----------------------------------------------------------------------------
 
-FetchContent_Declare(
-  Benchmark
-  GIT_REPOSITORY https://github.com/google/benchmark.git
-  GIT_TAG        v${ROCKET_BENCHMARK_VERSION}
-  GIT_PROGRESS   TRUE
-  SYSTEM
-  EXCLUDE_FROM_ALL
-)
+find_package(benchmark ${ROCKET_BENCHMARK_VERSION})
+if(NOT benchmark_FOUND)
+  FetchContent_Declare(
+    benchmark
+    GIT_REPOSITORY https://github.com/google/benchmark.git
+    GIT_TAG        v${ROCKET_BENCHMARK_VERSION}
+    GIT_PROGRESS   TRUE
+    SYSTEM
+    EXCLUDE_FROM_ALL
+  )
 
-set(BENCHMARK_DOWNLOAD_DEPENDENCIES OFF)
-# Build static libraries
-set(BUILD_SHARED_LIBS OFF)
-FetchContent_MakeAvailable(Benchmark)
-set(BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS_DEFAULT})
+  set(BENCHMARK_DOWNLOAD_DEPENDENCIES OFF)
+  # Build static libraries
+  set(BUILD_SHARED_LIBS OFF)
+  FetchContent_MakeAvailable(benchmark)
+  set(BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS_DEFAULT})
+endif()
 
 # ICU -------------------------------------------------------------------------------------------------------
 #
