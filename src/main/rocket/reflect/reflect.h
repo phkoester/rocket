@@ -580,7 +580,7 @@ hash(const T& val, const std::tuple<Ref...>& refs) {
 }
 
 /**
- * @fn_write{`T MemberRef...`}
+ * @fn_write{...}
  * @param refs the references
  */
 template<typename T, typename... Ref> requires (... && IsMemberRef<Ref>::value)

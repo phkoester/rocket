@@ -28,7 +28,7 @@ struct LiteralString {
   /// The value.
   static constexpr std::array<C, sizeof...(Chars)> value = { Chars... };
 
-  /// @member_op_cast{#std::basic_string_view<Char>}
+  /// @member_op_cast{#std::basic_string_view}
   constexpr operator std::basic_string_view<C>() const { // NOLINT(*-explicit-constructor)
     return { value.data(), value.size() };
   }
@@ -209,7 +209,7 @@ std::string join(
   return ret;
 }
 
-/*
+/**
  * Splits a string into lines.
  *
  * No strings are ever allocated, except for the separator, so this is a very efficient way to split a string
@@ -263,9 +263,12 @@ void lowerIn(std::u32string& str);
 /**
  * Splits a string into paragraphs.
  *
- * @param str the string to split. The string must be UTF-8-encoded, using LF (`"\n"`) or CRLF (`"\r\n"`) as
- *   line breaks. No-break spaces (U+00A0) are recognized. Tabs are replaced by spaces. Consecutive
- *   whitespace is collapsed
+ * - Line breaks (`"\n"` or `"\r\n"`) are recognized.
+ * - No-break spaces (U+00A0) are recognized.
+ * - Tabs are replaced by spaces.
+ * - Consecutive whitespace is collapsed.
+ *
+ * @param str the string to split into paragraphs
  * @return a vector of paragraphs. Each paragraph is a vector of words. Each word is a UTF-8 string
  */
 [[nodiscard]] std::vector<std::vector<std::string>> paragraphs(std::string_view str);
@@ -408,7 +411,7 @@ void upperIn(std::u32string& str);
 /**
  * Wraps the string @p str to fit the width specified by @p width.
  *
- * - Line breaks (`"\n"`, `"\r\n"`) are recognized.
+ * - Line breaks (`"\n"` or `"\r\n"`) are recognized.
  * - No-break spaces (U+00A0) are recognized.
  * - Tabs are replaced by spaces.
  * - Consecutive whitespace is collapsed.

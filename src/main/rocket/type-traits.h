@@ -230,7 +230,7 @@ struct LargestType<T> {
   using Type = T; ///< @type_alias
 };
 
-/// @spec{#rocket::LargestType, T U Ts...}
+/// @spec{#rocket::LargestType, ...}
 template<typename T, typename U, typename... Ts>
 struct LargestType<T, U, Ts...> {
   using Type = typename LargestType<
