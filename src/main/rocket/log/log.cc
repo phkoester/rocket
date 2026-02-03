@@ -560,7 +560,7 @@ logImpl(
   } else {
     // Multi-line message: left-adjust, repeat the log ID for each line
     bool first = true;
-    for (auto line : str::split<char>(msg, "\n")) {
+    for (auto line : str::lines(msg)) {
       if (first) {
         // Print first line, just like above
         out.print("{}\n", line);

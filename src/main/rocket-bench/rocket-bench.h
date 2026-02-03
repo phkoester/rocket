@@ -38,14 +38,12 @@ using namespace std;
 
 // Macros ---------------------------------------------------------------------------------------------------
 
-/**
- * Defines a benchmark function.
- */
-#define BENCH(_group, _name, _body) \
+/// Defines and registers a benchmark function.
+#define BENCH(group, name, body) \
   void \
-  _group##_##_name(benchmark::State& state) { \
-    _body \
+  group##_##name(benchmark::State& state) { \
+    body \
   } \
-  BENCHMARK(_group##_##_name);
+  BENCHMARK(group##_##name);
 
 // EOF

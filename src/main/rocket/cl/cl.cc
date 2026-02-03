@@ -36,7 +36,7 @@ addArg(vector<string>& out, const string& arg) { // NOLINT(*-recursion)
         ROCKET_FAIL("Cannot read argument file `{}`", path);
       }
       const string contents = in.Source::read();
-      auto lines = str::vectorize<char>(contents, "\n");
+      auto lines = str::lines<char>(contents);
       ROCKET_ASSERT(not lines.empty());
       if (lines.back().empty()) {
         // Ignore empty last line

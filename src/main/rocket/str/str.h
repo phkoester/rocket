@@ -7,13 +7,32 @@
 #include "rocket/type-traits.h"
 
 #include <algorithm>
-#include <limits>
+#include <array>
 #include <string>
 #include <vector>
 
 #pragma once
 
 namespace rocket::str {
+
+// #LiteralString -------------------------------------------------------------------------------------------
+
+/**
+ * A literal string.
+ *
+ * @tparam C the character type
+ * @tparam Chars the characters
+ */
+template<typename C, C... Chars>
+struct LiteralString {
+  /// The value.
+  static constexpr std::array<C, sizeof...(Chars)> value = { Chars... };
+
+  /// @member_op_cast{#std::basic_string_view<Char>}
+  constexpr operator std::basic_string_view<C>() const {
+    return { value.data(), value.size() };
+  }
+};
 
 // #SplitIterator -------------------------------------------------------------------------------------------
 
@@ -144,7 +163,6 @@ std::u32string capitalize(std::u32string_view str);
 /**
  * Joins elements of a range into a string, using a a set of different separators.
  *
- *
  * ## Examples
  *
  * To enumerate a list with an Oxford comma:
@@ -159,7 +177,7 @@ std::u32string capitalize(std::u32string_view str);
  * @param begin the beginning of the range
  * @param end the end of the range
  * @param sep the separator to use between elements
- * @param lastSepIfTwo the last separator to use if there are two elements
+ * @param lastSepIfTwo the last separator to use if there are exactly two elements
  * @param lastSepIfMore the last sseparator to use if there are more than two elements
  * @return a new string
  */
@@ -185,6 +203,34 @@ std::string join(
     ret.append(*it);
   }
 
+  return ret;
+}
+
+/*
+ * Splits a string into lines.
+ *
+ * No strings are ever allocated, except for the separator, so this is a very efficient way to split a string
+ * into lines.
+ *
+ * The underlying string of @p str must remain valid for the lifetime of the returned vector.
+ *
+ * @tparam C the character type
+ * @param str the string to split
+ * @return a vector of lines
+ */
+template<typename C> requires IsChar<C>
+[[nodiscard]] std::vector<std::basic_string_view<C>>
+lines(std::basic_string_view<C> str) {
+  std::vector<std::basic_string_view<C>> ret;
+  // Handle LF and CR/LF
+  constexpr auto CR = LiteralString<C, '\r'>();
+  constexpr auto LF = LiteralString<C, '\n'>();
+  for (auto line : split<C>(str, LF)) {
+    if (line.ends_with(CR)) {
+      line = line.substr(0, line.size() - 1);
+    }
+    ret.push_back(line);
+  }
   return ret;
 }
 
@@ -219,7 +265,7 @@ void lowerIn(std::u32string& str);
  *   whitespace is collapsed
  * @return a vector of paragraphs. Each paragraph is a vector of words. Each word is a UTF-8 string
  */
-std::vector<std::vector<std::string>> paragraphs(std::string_view str);
+[[nodiscard]] std::vector<std::vector<std::string>> paragraphs(std::string_view str);
 
 /**
  * Makes a string view such that it has up to @p max leading occurrencies of @p sub removed.
@@ -233,11 +279,11 @@ std::vector<std::vector<std::string>> paragraphs(std::string_view str);
  * @return a string view
  */
 template<typename C> requires IsChar<C>
-std::basic_string_view<C>
+[[nodiscard]] std::basic_string_view<C>
 removeLeading(
     std::basic_string_view<C> str,
     std::basic_string_view<C> sub,
-    u64 max = std::numeric_limits<u64>::max()) {
+    u64 max = NPOS) {
   if (sub.empty()) {
     return str;
   }
@@ -270,11 +316,11 @@ removeLeading(
  * @return a string view
  */
 template<typename C> requires IsChar<C>
-std::basic_string_view<C>
+[[nodiscard]] std::basic_string_view<C>
 removeTrailing(
     std::basic_string_view<C> str,
     std::basic_string_view<C> sub,
-    u64 max = std::numeric_limits<u64>::max()) {
+    u64 max = NPOS) {
   if (sub.empty()) {
     return str;
   }
@@ -320,13 +366,15 @@ repeat(const std::basic_string_view<C> str, u64 n) {
  * No strings are ever allocated, except for the separator, so this is a very efficient way to split a string
  * into tokens.
  *
+ * The underlying string of @p str must remain valid for the lifetime of the returned result.
+ *
  * @tparam C the character type
  * @param str the string to split
  * @param sep the separator to use
- * @return a result object that can be used to iterate over the string-view tokens
+ * @return a result object that can be used to iterate over the tokens
  */
 template<typename C> requires IsChar<C>
-SplitResult<C>
+[[nodiscard]] SplitResult<C>
 split(std::basic_string_view<C> str, std::basic_string_view<C> sep) {
   return SplitResult<C>(str, sep);
 }
@@ -355,27 +403,6 @@ split(std::basic_string_view<C> str, std::basic_string_view<C> sep) {
 void upperIn(std::u32string& str);
 
 /**
- * Splits a string into tokens, returns tokens a vector of #std::string_view.
- *
- * No strings are ever allocated, except for the separator, so this is a very efficient way to split a string
- * into tokens.
- *
- * @tparam C the character type
- * @param str the string to split
- * @param sep the separator to use
- * @return a vector containing the tokens
- */
-template<typename C> requires IsChar<C>
-[[nodiscard]] std::vector<std::basic_string_view<C>>
-vectorize(std::basic_string_view<C> str, std::basic_string_view<C> sep) {
-  std::vector<std::basic_string_view<C>> ret;
-  for (auto token : split<C>(str, sep)) {
-    ret.push_back(token);
-  }
-  return ret;
-}
-
-/**
  * Wraps the string @p str to fit the width specified by @p width.
  *
  * - Line breaks (`"\n"`, `"\r\n"`) are recognized.
@@ -388,7 +415,7 @@ vectorize(std::basic_string_view<C> str, std::basic_string_view<C> sep) {
  * @param width the width to wrap to
  * @return a new string, containing the wrapped lines separated by @c '\\n'
  */
-std::string wrap(std::string_view str, u64 leftIndent = 0, u64 width = 80);
+[[nodiscard]] std::string wrap(std::string_view str, u64 leftIndent = 0, u64 width = 80);
 
 } // namespace rocket::str
 

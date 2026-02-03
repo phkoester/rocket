@@ -349,7 +349,7 @@ Source::readln() {
 
   string ret;
 
-  bool crlf = false;
+  bool lf = false;
   while (true) {
     char c = '\0';
     const u64 result = read(c);
@@ -357,14 +357,14 @@ Source::readln() {
       break;
     }
     if (c == '\n') {
-      crlf = true;
+      lf = true;
       break;
     }
     ret.push_back(c);
   }
 
   // Remove trailing '\r' if it precedes the '\n'
-  if (crlf && not ret.empty() && *ret.rbegin() == '\r') {
+  if (lf && not ret.empty() && *ret.rbegin() == '\r') {
     ret.pop_back();
   }
 
@@ -378,7 +378,7 @@ Source::readln(span<char> out) {
   }
 
   auto it = out.begin();
-  bool crlf = false;
+  bool lf = false;
 
   while (it != out.end()) {
     char c = '\0';
@@ -387,7 +387,7 @@ Source::readln(span<char> out) {
       break;
     }
     if (c == '\n') {
-      crlf = true;
+      lf = true;
       break;
     }
     *(it++) = c;
@@ -395,7 +395,7 @@ Source::readln(span<char> out) {
 
   // Remove trailing '\r' if it precedes the '\n'
   u64 ret = it - out.begin();
-  if (crlf && ret > 0 && *(it - 1) == '\r') {
+  if (lf && ret > 0 && *(it - 1) == '\r') {
     --ret;
   }
   return ret;
