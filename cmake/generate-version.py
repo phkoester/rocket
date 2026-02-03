@@ -30,8 +30,6 @@ f"""/**
 
 #pragma once
 
-// NOLINTBEGIN
-
 #define {name}_VERSION_NAME "{version_string}" ///< SemVer string.
 
 #define {name}_VERSION_MAJOR {version.major} ///< Major.
@@ -40,8 +38,6 @@ f"""/**
 
 /// Comparable version value (major * 1,000,000 + minor * 1,000 + patch)
 #define {name}_VERSION {value}
-
-// NOLINTEND
 
 // EOF
 """)
@@ -55,18 +51,18 @@ def main():
     "-o", "--output",
     dest="output_file",
     type=str,
-    help="Output file path",
+    help="output file path (required)",
     required=True,
   )
   parser.add_argument(
     "name",
     type=str,
-    help="Name",
+    help="name",
   )
   parser.add_argument(
     "version",
     type=str,
-    help="Version string",
+    help="version string",
   )
   args = parser.parse_args()
 
