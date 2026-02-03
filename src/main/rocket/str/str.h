@@ -168,6 +168,9 @@ std::u32string capitalize(std::u32string_view str);
  * To enumerate a list with an Oxford comma:
  *
  * ```
+ * using namespace rocket;
+ * using namespace std;
+ *
  * set<string> s = { "red", "green", "blue" };
  * string str = str::join(s.begin(), s.end(), ", ", " and ", ", and");
  * nio::out.println("The colors are {}.", str); // "The colors are red, green, and blue."
@@ -268,14 +271,14 @@ void lowerIn(std::u32string& str);
 [[nodiscard]] std::vector<std::vector<std::string>> paragraphs(std::string_view str);
 
 /**
- * Makes a string view such that it has up to @p max leading occurrencies of @p sub removed.
+ * Makes a string view such that it has up to @p count leading occurrencies of @p sub removed.
  *
  * This is a function template that works both with UTF-8 and UTF-32 strings.
  *
  * @tparam C the character type
  * @param str a string view
  * @param sub the substring to look for
- * @param max maximum amount of removals
+ * @param count the maximum amount of removals
  * @return a string view
  */
 template<typename C> requires IsChar<C>
@@ -283,13 +286,13 @@ template<typename C> requires IsChar<C>
 removeLeading(
     std::basic_string_view<C> str,
     std::basic_string_view<C> sub,
-    u64 max = NPOS) {
+    u64 count = NPOS) {
   if (sub.empty()) {
     return str;
   }
 
   std::basic_string_view<C> ret(str);
-  for (u64 i = 0; i < max; ++i) {
+  for (u64 i = 0; i < count; ++i) {
     if (sub.size() > ret.size()) {
       return ret;
     }
@@ -305,14 +308,14 @@ removeLeading(
 }
 
 /**
- * Makes a string view such that it has up to @p max trailing occurrencies of @p sub removed.
+ * Makes a string view such that it has up to @p count trailing occurrencies of @p sub removed.
  *
  * This is a function template that works both with UTF-8 and UTF-32 strings.
  *
  * @tparam C the character type
  * @param str a string view
  * @param sub the substring to look for
- * @param max maximum amount of removals
+ * @param count the maximum amount of removals
  * @return a string view
  */
 template<typename C> requires IsChar<C>
@@ -320,13 +323,13 @@ template<typename C> requires IsChar<C>
 removeTrailing(
     std::basic_string_view<C> str,
     std::basic_string_view<C> sub,
-    u64 max = NPOS) {
+    u64 count = NPOS) {
   if (sub.empty()) {
     return str;
   }
 
   std::basic_string_view<C> ret(str);
-  for (u64 i = 0; i < max; ++i) {
+  for (u64 i = 0; i < count; ++i) {
     if (sub.size() > ret.size()) {
       return ret;
     }
@@ -342,19 +345,19 @@ removeTrailing(
 }
 
 /**
- * Repeats the string @p str @p n times.
+ * Repeats the string @p str @p count times.
  *
  * @tparam C the character type
  * @param str a string
- * @param n a number
+ * @param count the number of repetitions
  * @return a new string
  */
 template<typename C> requires IsChar<C>
 [[nodiscard]] std::basic_string<C>
-repeat(const std::basic_string_view<C> str, u64 n) {
+repeat(const std::basic_string_view<C> str, u64 count) {
   std::basic_string<C> ret;
-  ret.reserve(n * str.size());
-  for (u64 i = 0; i < n; ++i) {
+  ret.reserve(count * str.size());
+  for (u64 i = 0; i < count; ++i) {
     ret.append(str);
   }
   return ret;

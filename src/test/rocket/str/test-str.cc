@@ -45,73 +45,73 @@ TEST(str, removeLeadingChar) {
   using type = char;
 
   string_view str;
-  EXPECT_EQ(removeLeading<type>(str, "hello"sv), "");
+  EXPECT_EQ(removeLeading<type>(str, "hello"), "");
 
   str = "hello";
-  EXPECT_EQ(removeLeading<type>(str, ""sv), "hello");
+  EXPECT_EQ(removeLeading<type>(str, ""), "hello");
 
   str = "/dir";
-  EXPECT_EQ(removeLeading<type>(str, "/"sv), "dir");
+  EXPECT_EQ(removeLeading<type>(str, "/"), "dir");
 
   str = "//dir";
-  EXPECT_EQ(removeLeading<type>(str, "/"sv, 1), "/dir");
+  EXPECT_EQ(removeLeading<type>(str, "/", 1), "/dir");
 
   str = "///dir";
-  EXPECT_EQ(removeLeading<type>(str, "/"sv), "dir");
+  EXPECT_EQ(removeLeading<type>(str, "/"), "dir");
 }
 
 TEST(str, removeLeadingChar32) {
   using type = char32;
 
   u32string_view str;
-  EXPECT_EQ(removeLeading<type>(str, U"hello"sv), U"");
+  EXPECT_EQ(removeLeading<type>(str, U"hello"), U"");
 
   str = U"hello";
-  EXPECT_EQ(removeLeading<type>(str, U""sv), U"hello");
+  EXPECT_EQ(removeLeading<type>(str, U""), U"hello");
 
   str = U"/dir";
-  EXPECT_EQ(removeLeading<type>(str, U"/"sv), U"dir");
+  EXPECT_EQ(removeLeading<type>(str, U"/"), U"dir");
 
   str = U"//dir";
-  EXPECT_EQ(removeLeading<type>(str, U"/"sv, 1), U"/dir");
+  EXPECT_EQ(removeLeading<type>(str, U"/", 1), U"/dir");
 
   str = U"///dir";
-  EXPECT_EQ(removeLeading<type>(str, U"/"sv), U"dir");
+  EXPECT_EQ(removeLeading<type>(str, U"/"), U"dir");
 }
 
 TEST(str, removeTrailingChar) {
   using type = char;
 
   string_view str;
-  EXPECT_EQ(removeTrailing<type>(str, "hello"sv), "");
+  EXPECT_EQ(removeTrailing<type>(str, "hello"), "");
 
   str = "hello";
-  EXPECT_EQ(removeTrailing<type>(str, ""sv), "hello");
+  EXPECT_EQ(removeTrailing<type>(str, ""), "hello");
 
   str = "dir/";
-  EXPECT_EQ(removeTrailing<type>(str, "/"sv), "dir");
+  EXPECT_EQ(removeTrailing<type>(str, "/"), "dir");
 
   str = "dir//";
-  EXPECT_EQ(removeTrailing<type>(str, "/"sv, 1), "dir/");
+  EXPECT_EQ(removeTrailing<type>(str, "/", 1), "dir/");
 
   str = "dir///";
-  EXPECT_EQ(removeTrailing<type>(str, "/"sv), "dir");
+  EXPECT_EQ(removeTrailing<type>(str, "/"), "dir");
 }
 
 TEST(str, removeTrailingChar32) {
   using type = char32;
 
   u32string_view str;
-  EXPECT_EQ(removeTrailing<type>(str, U"hello"sv), U"");
+  EXPECT_EQ(removeTrailing<type>(str, U"hello"), U"");
 
   str = U"hello";
-  EXPECT_EQ(removeTrailing<type>(str, U""sv), U"hello");
+  EXPECT_EQ(removeTrailing<type>(str, U""), U"hello");
 
   str = U"dir//";
-  EXPECT_EQ(removeTrailing<type>(str, U"/"sv, 1), U"dir/");
+  EXPECT_EQ(removeTrailing<type>(str, U"/", 1), U"dir/");
 
   str = U"dir///";
-  EXPECT_EQ(removeTrailing<type>(str, U"/"sv), U"dir");
+  EXPECT_EQ(removeTrailing<type>(str, U"/"), U"dir");
 }
 
 TEST(str, split) { // NOLINT(*-complexity)
