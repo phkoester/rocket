@@ -69,18 +69,18 @@ struct Entry {
     time_(time) {}
 };
 
-// #Format --------------------------------------------------------------------------------------------------
+// #Fmt -----------------------------------------------------------------------------------------------------
 
-struct Format {
-  bool execTimes = true; // x, X
-  bool immediate = false; // i, I
-  bool prettyFunction = true; // f, F
+struct Fmt {
+  bool usePrettyFunction = true; // f, F
+  bool logStackImmediately = false; // i, I
+  bool withSourceLocation = true; // l, L
   u8 secondsRez = 6; // s0, s3, s6, s9
-  bool sourceLocation = true; // l, L
-  bool threadIds = false; // t, T
-  bool utc = false; // z, Z
+  bool withThreadIds = false; // t, T
+  bool withExecTimes = true; // x, X
+  bool useUtc = false; // z, Z
 
-  explicit Format(string_view fmt) {
+  explicit Fmt(string_view fmt) {
     set(fmt);
   }
 
@@ -88,12 +88,12 @@ struct Format {
   set(string_view fmt) {
     for (auto it = fmt.begin(), end = fmt.end(); it != end; ++it) {
       switch (*it) {
-      case 'f': prettyFunction = false; break;
-      case 'F': prettyFunction = true; break;
-      case 'i': immediate = false; break;
-      case 'I': immediate = true; break;
-      case 'l': sourceLocation = false; break;
-      case 'L': sourceLocation = true; break;
+      case 'f': usePrettyFunction = false; break;
+      case 'F': usePrettyFunction = true; break;
+      case 'i': logStackImmediately = false; break;
+      case 'I': logStackImmediately = true; break;
+      case 'l': withSourceLocation = false; break;
+      case 'L': withSourceLocation = true; break;
       case 's': {
         if (it == end - 1) {
           ROCKET_FAIL("Missing seconds resolution");
@@ -107,19 +107,19 @@ struct Format {
         }
         break;
       }
-      case 't': threadIds = false; break;
-      case 'T': threadIds = true; break;
-      case 'x': execTimes = false; break;
-      case 'X': execTimes = true; break;
-      case 'z': utc = false; break;
-      case 'Z': utc = true; break;
+      case 't': withThreadIds = false; break;
+      case 'T': withThreadIds = true; break;
+      case 'x': withExecTimes = false; break;
+      case 'X': withExecTimes = true; break;
+      case 'z': useUtc = false; break;
+      case 'Z': useUtc = true; break;
       default: ROCKET_FAIL("Invalid format specifier {:?}", *it);
       }
     }
   }
 };
 
-Format logFmt(ROCKET_LOG_FMT);
+Fmt logFmt(ROCKET_LOG_FMT);
 
 // #Out -----------------------------------------------------------------------------------------------------
 
@@ -449,7 +449,7 @@ string
 formatTimePoint(const TimePoint& tp) {
   auto formatImpl = [](const auto& ctp) {
     // Note we're using #std::format here because #fmt::format doesn't support #chrono::zoned_time
-    if (logFmt.utc) {
+    if (logFmt.useUtc) {
       return std::format("{:%FT%TZ} ", ctp);
     }
     std::chrono::zoned_time zt { std::chrono::current_zone(), ctp };
@@ -508,7 +508,7 @@ logImpl(
   u64 indent = str.size();
 
   // Item: thread ID/name
-  if (logFmt.threadIds) {
+  if (logFmt.withThreadIds) {
     auto threadId = this_thread::get_id();
     string str;
     auto name = ROCKET_THREAD_NAME();
@@ -609,8 +609,8 @@ logBegin(LogLevel* logId, const char* function, const char* prettyFunction, cons
   ROCKET_MUTEX_LOCK(logMutex);
 
   // Begin log entry will be flushed later if necessary
-  string msg = logFmt.prettyFunction ? prettyFunction : function;
-  if (logFmt.sourceLocation) {
+  string msg = logFmt.usePrettyFunction ? prettyFunction : function;
+  if (logFmt.withSourceLocation) {
     msg += fmt::format(" {}:{}", file, line);
   }
   msg += " {";
@@ -620,7 +620,7 @@ logBegin(LogLevel* logId, const char* function, const char* prettyFunction, cons
   logStack.emplace_back(logId, function, prettyFunction, file, line, buf.str(), time);
 
   // If requested, log function stack immediately
-  if (logFmt.immediate) {
+  if (logFmt.logStackImmediately) {
     logFlush(logOut.get(time));
   }
 }
@@ -646,12 +646,12 @@ logEnd() noexcept {
     if (not entry.begin_) {
       ROCKET_MUTEX_LOCK(logMutex);
       string msg = "} ";
-      msg += logFmt.prettyFunction ? entry.prettyFunction_ : entry.function_;
-      if (logFmt.sourceLocation) {
+      msg += logFmt.usePrettyFunction ? entry.prettyFunction_ : entry.function_;
+      if (logFmt.withSourceLocation) {
         msg += fmt::format(" {}:{}", entry.file_, entry.line_);
       }
       auto time = chrono::now<Clock>();
-      if (logFmt.execTimes) {
+      if (logFmt.withExecTimes) {
         msg += " [";
         msg += formatExecTime(entry.time_, time);
         msg += ']';

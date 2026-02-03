@@ -34,7 +34,7 @@ endif()
 FetchContent_Declare(
   fmt
   GIT_REPOSITORY https://github.com/fmtlib/fmt.git
-  GIT_TAG        12.1.0
+  GIT_TAG        ${ROCKET_FMT_VERSION}
   GIT_PROGRESS   TRUE
   SYSTEM
   EXCLUDE_FROM_ALL
@@ -42,30 +42,33 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(fmt)
 
-# googletest ------------------------------------------------------------------------------------------------
+# GTest -----------------------------------------------------------------------------------------------------
+
+find_package(GTest ${ROCKET_GTEST_VERSION})
+if(NOT GTest_FOUND)
+  FetchContent_Declare(
+    GTest
+    GIT_REPOSITORY https://github.com/google/googletest.git
+    GIT_TAG        v${ROCKET_GTEST_VERSION}
+    GIT_PROGRESS   TRUE
+    SYSTEM
+    EXCLUDE_FROM_ALL
+  )
+
+  # For Windows: Prevent overriding the parent project's compiler/linker settings
+  set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+  # Build static libraries
+  set(BUILD_SHARED_LIBS OFF)
+  FetchContent_MakeAvailable(GTest)
+  set(BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS_DEFAULT})
+endif()
+
+# Benchmark (must follow GTest) -----------------------------------------------------------------------------
 
 FetchContent_Declare(
-  googletest
-  GIT_REPOSITORY https://github.com/google/googletest.git
-  GIT_TAG        v1.17.0
-  GIT_PROGRESS   TRUE
-  SYSTEM
-  EXCLUDE_FROM_ALL
-)
-
-# For Windows: Prevent overriding the parent project's compiler/linker settings
-set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-# Build static libraries
-set(BUILD_SHARED_LIBS OFF)
-FetchContent_MakeAvailable(googletest)
-set(BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS_DEFAULT})
-
-# benchmark -------------------------------------------------------------------------------------------------
-
-FetchContent_Declare(
-  benchmark
+  Benchmark
   GIT_REPOSITORY https://github.com/google/benchmark.git
-  GIT_TAG        v1.9.5
+  GIT_TAG        v${ROCKET_BENCHMARK_VERSION}
   GIT_PROGRESS   TRUE
   SYSTEM
   EXCLUDE_FROM_ALL
@@ -74,19 +77,19 @@ FetchContent_Declare(
 set(BENCHMARK_DOWNLOAD_DEPENDENCIES OFF)
 # Build static libraries
 set(BUILD_SHARED_LIBS OFF)
-FetchContent_MakeAvailable(benchmark)
+FetchContent_MakeAvailable(Benchmark)
 set(BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS_DEFAULT})
 
 # ICU -------------------------------------------------------------------------------------------------------
 
-find_package(ICU 74.2 REQUIRED uc) # data i18n io
+find_package(ICU ${ROCKET_ICU_VERSION} COMPONENTS uc) # data i18n io
 
 # scnlib ----------------------------------------------------------------------------------------------------
 
 FetchContent_Declare(
   scnlib
   GIT_REPOSITORY https://github.com/eliaskosunen/scnlib.git
-  GIT_TAG        master
+  GIT_TAG        ${ROCKET_SCN_VERSION}
   GIT_PROGRESS   TRUE
   SYSTEM
   EXCLUDE_FROM_ALL

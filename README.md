@@ -17,14 +17,13 @@ Some notable environment variables respected by CMake:
 
 CMake variables:
 
-| Name                        | Type     | Default                           | Description
-| :-------------------------- | :------- | :-------------------------------- | :----------
-| `BUILD_SHARED_LIBS`         | `BOOL`   | `OFF`                             | Build shared libraries
-| `BUILD_TESTING`             | `BOOL`   | `ON`                              | Enable testing and build tests
-| `CMAKE_BUILD_TYPE`          | `STRING` | `Release` if single configuration | The build type (`Debug` or `Release`)
-| `ROCKET_BOOST_VERSION`      | `STRING` | `1.85.0`                          | Boost version
-| `ROCKET_BUILD_BENCH`        | `BOOL`   | `ON` if master project            | Enable benchmarking and build benchmarks
-| `ROCKET_BUILD_TEST`         | `BOOL`   | `ON` if master project            | Enable testing and build tests
+| Name                 | Type     | Default                           | Description
+| :------------------- | :------- | :-------------------------------- | :----------
+| `BUILD_SHARED_LIBS`  | `BOOL`   | `OFF`                             | Build shared libraries
+| `BUILD_TESTING`      | `BOOL`   | `ON`                              | Enable testing and build tests
+| `CMAKE_BUILD_TYPE`   | `STRING` | `Release` if single configuration | The build type (`Debug` or `Release`)
+| `ROCKET_BUILD_BENCH` | `BOOL`   | `ON` if master project            | Enable benchmarking and build benchmarks
+| `ROCKET_BUILD_TEST`  | `BOOL`   | `ON` if master project            | Enable testing and build tests
 
 ### Linux
 
