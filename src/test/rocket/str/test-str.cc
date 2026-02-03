@@ -17,52 +17,13 @@ pars(const vector<vector<string>>& vec) {
 
 // #TEST ----------------------------------------------------------------------------------------------------
 
-TEST(str, split) { // NOLINT(*-complexity)
-  int n = 0;
-  for (const auto token : split<char>("", ",")) {
-    static_assert(is_same_v<decltype(token), const string_view>);
-    if (n == 0) { EXPECT_EQ(token, ""); }
-    ++n;
-  }
-  EXPECT_EQ(n, 1);
-
-  n = 0;
-  for (const auto token : split<char>(" ", ",")) {
-    if (n == 0) { EXPECT_EQ(token, " "); }
-    ++n;
-  }
-  EXPECT_EQ(n, 1);
-
-  n = 0;
-  for (const auto token : split<char>(",", ",")) {
-    if (n == 0) { EXPECT_EQ(token, ""); }
-    if (n == 1) { EXPECT_EQ(token, ""); }
-    ++n;
-  }
-  EXPECT_EQ(n, 2);
-
-  n = 0;
-  for (const auto token : split<char>(",,", ",")) {
-    if (n == 0) { EXPECT_EQ(token, ""); }
-    if (n == 1) { EXPECT_EQ(token, ""); }
-    if (n == 2) { EXPECT_EQ(token, ""); }
-    ++n;
-  }
-  EXPECT_EQ(n, 3);
-
-
-  n = 0;
-  for (const auto token : split<char>("||a||b c||||d||||", "||")) {
-    if (n == 0) { EXPECT_EQ(token, ""); }
-    if (n == 1) { EXPECT_EQ(token, "a"); }
-    if (n == 2) { EXPECT_EQ(token, "b c"); }
-    if (n == 3) { EXPECT_EQ(token, ""); }
-    if (n == 4) { EXPECT_EQ(token, "d"); }
-    if (n == 5) { EXPECT_EQ(token, ""); }
-    if (n == 6) { EXPECT_EQ(token, ""); }
-    ++n;
-  }
-  EXPECT_EQ(n, 7);
+TEST(str, lines) {
+  EXPECT_EQ(lines<char>(""), (vector<string_view>{}));
+  EXPECT_EQ(lines<char>("a b"), (vector<string_view>{ "a b" }));
+  EXPECT_EQ(lines<char>("a\nb"), (vector<string_view>{ "a", "b" }));
+  EXPECT_EQ(lines<char>("a\r\nb"), (vector<string_view>{ "a", "b" }));
+  EXPECT_EQ(lines<char>("a\n\nb"), (vector<string_view>{ "a", "", "b" }));
+  EXPECT_EQ(lines<char>("\na"), (vector<string_view>{ "", "a" }));
 }
 
 #define NBSP "\u00A0"
@@ -151,6 +112,54 @@ TEST(str, removeTrailingChar32) {
 
   str = U"dir///";
   EXPECT_EQ(removeTrailing<type>(str, U"/"sv), U"dir");
+}
+
+TEST(str, split) { // NOLINT(*-complexity)
+  int n = 0;
+  for (const auto token : split<char>("", ",")) {
+    static_assert(is_same_v<decltype(token), const string_view>);
+    if (n == 0) { EXPECT_EQ(token, ""); }
+    ++n;
+  }
+  EXPECT_EQ(n, 1);
+
+  n = 0;
+  for (const auto token : split<char>(" ", ",")) {
+    if (n == 0) { EXPECT_EQ(token, " "); }
+    ++n;
+  }
+  EXPECT_EQ(n, 1);
+
+  n = 0;
+  for (const auto token : split<char>(",", ",")) {
+    if (n == 0) { EXPECT_EQ(token, ""); }
+    if (n == 1) { EXPECT_EQ(token, ""); }
+    ++n;
+  }
+  EXPECT_EQ(n, 2);
+
+  n = 0;
+  for (const auto token : split<char>(",,", ",")) {
+    if (n == 0) { EXPECT_EQ(token, ""); }
+    if (n == 1) { EXPECT_EQ(token, ""); }
+    if (n == 2) { EXPECT_EQ(token, ""); }
+    ++n;
+  }
+  EXPECT_EQ(n, 3);
+
+
+  n = 0;
+  for (const auto token : split<char>("||a||b c||||d||||", "||")) {
+    if (n == 0) { EXPECT_EQ(token, ""); }
+    if (n == 1) { EXPECT_EQ(token, "a"); }
+    if (n == 2) { EXPECT_EQ(token, "b c"); }
+    if (n == 3) { EXPECT_EQ(token, ""); }
+    if (n == 4) { EXPECT_EQ(token, "d"); }
+    if (n == 5) { EXPECT_EQ(token, ""); }
+    if (n == 6) { EXPECT_EQ(token, ""); }
+    ++n;
+  }
+  EXPECT_EQ(n, 7);
 }
 
 TEST(str, upperChar) {

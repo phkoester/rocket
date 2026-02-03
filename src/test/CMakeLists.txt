@@ -24,7 +24,7 @@ include(GoogleTest)
 # Rocket ....................................................................................................
 
 AddTest(test-rocket rocket test-rocket.cc)
-AddRuntimeDlls(test-rocket)
+CopyRuntimeDlls(test-rocket)
 
 AddTest(test-rocket-assert rocket test-assert.cc)
 AddTest(test-rocket-Bimap rocket test-Bimap.cc)

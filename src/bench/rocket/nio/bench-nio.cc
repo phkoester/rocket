@@ -20,7 +20,7 @@ constexpr u64 N = FILE_SIZE / CHUNK_SIZE;
 
 // #BENCH ---------------------------------------------------------------------------------------------------
 
-BENCH(nio, FileSink, {
+BENCH(nio, FileSink, [](benchmark::State& state) {
   const string chunk(CHUNK_SIZE, ' ');
   const auto temp = rocket::filesystem::tempFile();
 
@@ -34,7 +34,7 @@ BENCH(nio, FileSink, {
   ROCKET_EXPECT(file_size(temp) == FILE_SIZE);
 })
 
-BENCH(nio, BufferedFileSink, {
+BENCH(nio, BufferedFileSink, [](benchmark::State& state) {
   const string chunk(CHUNK_SIZE, ' ');
   const auto temp = rocket::filesystem::tempFile();
 
@@ -49,7 +49,7 @@ BENCH(nio, BufferedFileSink, {
   ROCKET_EXPECT(file_size(temp) == FILE_SIZE);
 })
 
-BENCH(nio, StreamSink, {
+BENCH(nio, StreamSink, [](benchmark::State& state) {
   const string chunk(CHUNK_SIZE, ' ');
   const auto temp = rocket::filesystem::tempFile();
 
@@ -63,7 +63,7 @@ BENCH(nio, StreamSink, {
   ROCKET_EXPECT(file_size(temp) == FILE_SIZE);
 })
 
-BENCH(nio, BufferedStreamSink, {
+BENCH(nio, BufferedStreamSink, [](benchmark::State& state) {
   const string chunk(CHUNK_SIZE, ' ');
   const auto temp = rocket::filesystem::tempFile();
 

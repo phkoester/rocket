@@ -109,7 +109,7 @@ endif()
 
 # Functions -------------------------------------------------------------------------------------------------
 
-function(AddRuntimeDlls name)
+function(CopyRuntimeDlls name)
   if(WIN32) # AND $<TARGET_RUNTIME_DLLS:${name}>
     add_custom_command(
       TARGET  ${name} POST_BUILD

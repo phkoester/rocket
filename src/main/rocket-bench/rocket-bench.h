@@ -39,10 +39,10 @@ using namespace std;
 // Macros ---------------------------------------------------------------------------------------------------
 
 /// Defines and registers a benchmark function.
-#define BENCH(group, name, body) \
+#define BENCH(group, name, fn) \
   void \
   group##_##name(benchmark::State& state) { \
-    body \
+    fn(state); \
   } \
   BENCHMARK(group##_##name);
 
