@@ -18,7 +18,7 @@ pars(const vector<vector<string>>& vec) {
 // #TEST ----------------------------------------------------------------------------------------------------
 
 TEST(str, lines) {
-  EXPECT_EQ(lines<char>(""), (vector<string_view>{}));
+  EXPECT_EQ(lines<char>(""), (vector<string_view>{ "" }));
   EXPECT_EQ(lines<char>("a b"), (vector<string_view>{ "a b" }));
   EXPECT_EQ(lines<char>("a\nb"), (vector<string_view>{ "a", "b" }));
   EXPECT_EQ(lines<char>("a\r\nb"), (vector<string_view>{ "a", "b" }));
