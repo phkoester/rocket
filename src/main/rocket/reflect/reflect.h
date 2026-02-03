@@ -580,8 +580,11 @@ hash(const T& val, const std::tuple<Ref...>& refs) {
 }
 
 /**
- * @fn_write{...}
+ * `write` function for member references.
+ *
+ * @param val the instance
  * @param refs the references
+ * @return the number of bytes written
  */
 template<typename T, typename... Ref> requires (... && IsMemberRef<Ref>::value)
 inline u64
