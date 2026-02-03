@@ -31,7 +31,7 @@ map_smallConstMap(benchmark::State& state) {
     map.emplace(SMALL_CONST_MAP_KEYS[i], i);
   }
 
-  for (auto _ : state) {
+  for (auto _ : state) { // NOLINT
     const u64 index = math::random::uniformInteger<u64>(gen, 0, SMALL_CONST_MAP_KEYS.size() - 1);
     const auto& key = SMALL_CONST_MAP_KEYS[index];
     [[maybe_unused]] auto _val = map.find(key);
@@ -47,7 +47,7 @@ map_smallConstUnorderedMap(benchmark::State& state) {
     map.emplace(SMALL_CONST_MAP_KEYS[i], i);
   }
 
-  for (auto _ : state) {
+  for (auto _ : state) { // NOLINT
     const u64 index = math::random::uniformInteger<u64>(gen, 0, SMALL_CONST_MAP_KEYS.size() - 1);
     const auto& key = SMALL_CONST_MAP_KEYS[index];
     [[maybe_unused]] auto _val = map.find(key);
@@ -63,7 +63,7 @@ map_smallConstBimap(benchmark::State& state) {
     map.insert({ SMALL_CONST_MAP_KEYS[i], static_cast<i32>(i) });
   }
 
-  for (auto _ : state) {
+  for (auto _ : state) { // NOLINT
     const u64 index = math::random::uniformInteger<u64>(gen, 0, SMALL_CONST_MAP_KEYS.size() - 1);
     const auto& key = SMALL_CONST_MAP_KEYS[index];
     [[maybe_unused]] auto _val = map.left.find(key);
@@ -79,7 +79,7 @@ map_smallConstUnorderedBimap(benchmark::State& state) {
     map.insert({ SMALL_CONST_MAP_KEYS[i], static_cast<i32>(i) });
   }
 
-  for (auto _ : state) {
+  for (auto _ : state) { // NOLINT
     const u64 index = math::random::uniformInteger<u64>(gen, 0, SMALL_CONST_MAP_KEYS.size() - 1);
     const auto& key = SMALL_CONST_MAP_KEYS[index];
     [[maybe_unused]] auto _val = map.left.find(key);

@@ -20,7 +20,7 @@ project(rocket VERSION 0.3.0)
 
 include(cmake/base.cmake)
 
-AddVar(ROCKET_BOOST_VERSION STRING 1.90.0                   "Boost version")
+AddVar(ROCKET_BOOST_VERSION STRING 1.85.0                   "Boost version")
 AddVar(ROCKET_BUILD_BENCH   BOOL   ${ROCKET_MASTER_PROJECT} "Enable benchmarking and build benchmarks")
 AddVar(ROCKET_BUILD_TEST    BOOL   ${ROCKET_MASTER_PROJECT} "Enable testing and build tests")
 
