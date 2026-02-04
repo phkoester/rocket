@@ -225,6 +225,7 @@ template<typename C> requires IsChar<C>
 [[nodiscard]] std::vector<std::basic_string_view<C>>
 lines(std::basic_string_view<C> str) {
   std::vector<std::basic_string_view<C>> ret;
+
   // Handle LF and CR/LF
   constexpr auto CR = LiteralString<C, '\r'>();
   constexpr auto LF = LiteralString<C, '\n'>();
@@ -234,6 +235,7 @@ lines(std::basic_string_view<C> str) {
     }
     ret.push_back(line);
   }
+
   return ret;
 }
 

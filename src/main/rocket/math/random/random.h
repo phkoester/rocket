@@ -65,15 +65,16 @@ charOf(Gen& gen, std::string_view chars) {
  *
  * @tparam Gen the generator type
  * @param gen the generator
- * @param n the length of the string
+ * @param count the length of the string
  * @param chars the characters to choose from
  * @return a random string of length @p n, consisting of characters from the string @p chars
  */
 template<typename Gen>
 std::string
-charsOf(Gen& gen, u64 n, std::string_view chars) {
+charsOf(Gen& gen, u64 count, std::string_view chars) {
   std::string ret;
-  for (u64 i = 0; i < n; ++i) {
+  ret.reserve(count);
+  for (u64 i = 0; i < count; ++i) {
     ret.push_back(charOf(gen, chars));
   }
   return ret;
@@ -84,13 +85,13 @@ charsOf(Gen& gen, u64 n, std::string_view chars) {
  *
  * @tparam Gen the generator type
  * @param gen the generator
- * @param n the length of the string
+ * @param count the length of the string
  * @return a random hexadecimal string of length @p n
  */
 template<typename Gen>
 std::string
-hex(Gen& gen, u64 n) {
-  return charsOf(gen, n, "0123456789abcdef");
+hex(Gen& gen, u64 count) {
+  return charsOf(gen, count, "0123456789abcdef");
 }
 
 } // namespace rocket::math::random

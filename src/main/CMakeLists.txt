@@ -6,7 +6,7 @@ set(GENERATED_DIR ${CMAKE_CURRENT_BINARY_DIR}/generated)
 
 # `rocket` --------------------------------------------------------------------------------------------------
 
-# Propressor definitions ....................................................................................
+# Preprocessor definitions ..................................................................................
 
 if(CMAKE_C_COMPILER_ID STREQUAL "Clang")
   list(APPEND ROCKET_COMPILE_DEFS ROCKET_C_COMPILER_CLANG)
@@ -50,12 +50,11 @@ endif()
 
 add_library(rocket ${VERSION_H})
 target_include_directories(rocket PUBLIC ${GENERATED_DIR})
-# Move `Process.cc` to front so the global `process` instance is available early
-# Move `log.cc` to front so Rocket can use its own logging API
+
 target_sources(rocket
   PRIVATE
-    rocket/Process.cc
-    rocket/log/log.cc
+    rocket/Process.cc # Move this to front so the global `process` instance is available early
+    rocket/log/log.cc # Move this to front so Rocket can use its own logging API
 
     rocket/Exception.cc
     rocket/literal.cc
