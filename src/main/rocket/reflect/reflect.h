@@ -69,6 +69,20 @@
 */
 #define ROCKET_REFLECT_MEMBERS_DEFINE(ns, cls, name) ROCKET_REFLECT_MEMBERS_DEFINE__(ns, cls, name)
 
+/**
+ * Provides access to a named member-reference container for a derived class.
+ *
+ * @note This macro must be called inside the class declaration, in a public section.
+ *
+ * @param baseCls the name of the base class
+ * @param baseName the name of the member-reference container of the base class
+ * @param cls the name of the derived class that holds the members (without namespace)
+ * @param name the name for this member-reference container. e.g. `index`
+ * @param seq a sequence of member names
+ */
+#define ROCKET_REFLECT_MEMBERS_DERIVED(baseCls, baseName, cls, name, seq) \
+  ROCKET_REFLECT_MEMBERS_DERIVED__(baseCls, baseName, cls, name, seq)
+
 // Variables ................................................................................................
 
 /**
@@ -99,7 +113,18 @@
     static constexpr auto refs = ROCKET_REFLECT_MEMBERS_REFS__(cls, seq); \
   }; \
   \
-  static consteval auto& name() { return ROCKET_REFLECT_MEMBERS_STRUCT__(name)::refs; } \
+  static consteval auto& name() { return ROCKET_REFLECT_MEMBERS_STRUCT__(name)::refs; }
+
+#define ROCKET_REFLECT_MEMBERS_DERIVED__(baseCls, baseName, cls, name, seq) \
+  struct ROCKET_REFLECT_MEMBERS_STRUCT__(name) { \
+    static constexpr auto refs = ::std::tuple_cat( \
+      baseCls::ROCKET_REFLECT_MEMBERS_STRUCT__(baseName)::refs, \
+      ROCKET_REFLECT_MEMBERS_REFS__(cls, seq)); \
+  }; \
+  \
+  static consteval auto& name() { \
+    return ROCKET_REFLECT_MEMBERS_STRUCT__(name)::refs; \
+  }
 
 #define ROCKET_REFLECT_MEMBERS_DECLARE_FMT_FORMATTER__(ns, cls, name) \
   template<typename C> \
@@ -582,6 +607,7 @@ hash(const T& val, const std::tuple<Ref...>& refs) {
 /**
  * `write` function for member references.
  *
+ * @param out the sink to write to
  * @param val the instance
  * @param refs the references
  * @return the number of bytes written

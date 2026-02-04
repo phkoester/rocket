@@ -18,14 +18,14 @@ namespace rocket::str {
 // #LiteralString -------------------------------------------------------------------------------------------
 
 /**
- * A literal string.
+ * A literal string for both `char` and `char32`.
  *
  * @tparam C the character type
  * @tparam Chars the characters
  */
-template<typename C, C... Chars>
+template<typename C, C... Chars> requires IsChar<C>
 struct LiteralString {
-  /// The value.
+  /// The value, as an array of characters.
   static constexpr std::array<C, sizeof...(Chars)> value = { Chars... };
 
   /// @member_op_cast{#std::basic_string_view}
@@ -278,7 +278,7 @@ void lowerIn(std::u32string& str);
 /**
  * Makes a string view such that it has up to @p count leading occurrencies of @p sub removed.
  *
- * This is a function template that works both with UTF-8 and UTF-32 strings.
+ * The underlying string of @p str must remain valid for the lifetime of the returned string view.
  *
  * @tparam C the character type
  * @param str a string view
@@ -315,7 +315,7 @@ removeLeading(
 /**
  * Makes a string view such that it has up to @p count trailing occurrencies of @p sub removed.
  *
- * This is a function template that works both with UTF-8 and UTF-32 strings.
+ * The underlying string of @p str must remain valid for the lifetime of the returned string view.
  *
  * @tparam C the character type
  * @param str a string view

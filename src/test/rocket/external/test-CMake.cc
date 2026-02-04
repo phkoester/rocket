@@ -5,6 +5,7 @@
 #include "rocket-test/rocket-test.h"
 
 #include "rocket/system/system.h"
+#include "rocket/version.h" // Test that the version header is available
 
 using namespace rocket::system;
 using namespace std;

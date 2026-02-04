@@ -34,6 +34,25 @@ public:
 ROCKET_REFLECT_MEMBERS_DECLARE(, MyStruct, index);
 ROCKET_REFLECT_MEMBERS_DEFINE(, MyStruct, index);
 
+// #MyDerivedStruct -----------------------------------------------------------------------------------------
+
+struct MyDerivedStruct : MyStruct {
+  string d;
+
+  MyDerivedStruct(i32 ä, string_view b, bool c, string_view d, u64 e) : MyStruct(ä, b, c), d(d), e(e) {}
+
+private:
+
+  u64 e = 0;
+
+public:
+
+  ROCKET_REFLECT_MEMBERS_DERIVED(MyStruct, index, MyDerivedStruct, index, (d)(e));
+};
+
+ROCKET_REFLECT_MEMBERS_DECLARE(, MyDerivedStruct, index);
+ROCKET_REFLECT_MEMBERS_DEFINE(, MyDerivedStruct, index);
+
 // #TEST ----------------------------------------------------------------------------------------------------
 
 TEST(reflect, MyStruct) {
@@ -155,6 +174,13 @@ TEST(reflect, MyStructIndex2Write) {
   nio::StringSink out;
   write(out, m, MyStruct::index2());
   EXPECT_EQ(out.str(), "(ä=42, b=rocket)");
+}
+
+TEST(reflect, MyDerivedStructWrite) {
+  const MyDerivedStruct m(41, "rocket", true, "everywhere", 42_u64);
+  nio::StringSink out;
+  write(out, m, MyDerivedStruct::index());
+  EXPECT_EQ(out.str(), "(ä=41, b=rocket, c=true, d=everywhere, e=42)");
 }
 
 TEST(reflect, VarRef) {

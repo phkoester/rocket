@@ -25,10 +25,12 @@ def write_header(f, name, version_string):
 f"""/**
  * @file version.h
  *
- * GENERATED FILE. DO NOT EDIT.
+ * This is a generated file.
  */
 
 #pragma once
+
+// NOLINTBEGIN
 
 #define {name}_VERSION_NAME "{version_string}" ///< SemVer string.
 
@@ -38,6 +40,8 @@ f"""/**
 
 /// Comparable version value (major * 1,000,000 + minor * 1,000 + patch)
 #define {name}_VERSION {value}
+
+// NOLINTEND
 
 // EOF
 """)

@@ -113,7 +113,6 @@
 #define ROCKET_ENUM_DEFINE_MAP_ELEM__(r, data, elem) { data::elem, BOOST_PP_STRINGIZE(elem) },
 
 #define ROCKET_ENUM_DEFINE_MAP__(type, name, seq) \
-  /* gcc accepts no `auto` here*/ \
   const ::rocket::Bimap<type, ::std::string_view> name##Map__ = \
     ::rocket::makeBimap<type, ::std::string_view>({ \
     BOOST_PP_SEQ_FOR_EACH(ROCKET_ENUM_DEFINE_MAP_ELEM__, type, seq) \

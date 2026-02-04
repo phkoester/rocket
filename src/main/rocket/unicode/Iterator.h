@@ -168,16 +168,16 @@ private:
  *
  * @param segments the segments to concatenate
  * @param pos the position to start concatenating from
- * @param n the number of segments to concatenate
+ * @param count the number of segments to concatenate
  * @return the concatenated string
  */
 template<typename C> requires IsChar<C>
-std::basic_string<C>
-concat(const std::vector<std::basic_string_view<C>>& segments, u64 pos = 0, u64 n = NPOS) {
+[[nodiscard]] std::basic_string<C>
+concat(const std::vector<std::basic_string_view<C>>& segments, u64 pos = 0, u64 count = NPOS) {
   std::basic_string<C> ret;
   pos = std::min(pos, segments.size());
-  n = std::min(n, segments.size() - pos);
-  for (u64 i = pos, end = pos + n; i < end; ++i) {
+  count = std::min(count, segments.size() - pos);
+  for (u64 i = pos, end = pos + count; i < end; ++i) {
     ret.append(segments[i]);
   }
   return ret;

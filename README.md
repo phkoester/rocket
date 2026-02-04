@@ -4,6 +4,18 @@ Rocket is an all-purpose library written in C++.
 
 It is pre-alpha, a hobby project of mine, and possibly dangerous. **Do not use it**.
 
+## Third-Party Components
+
+Rocket stands on the shoulders of these giants:
+
+- [128-bit-literals](https://github.com/jbapple/128-bit-literals) ([license](license/128-bit-literals/LICENSE.txt))
+- [benchmark](https://github.com/google/benchmark) ([license](license/benchmark/LICENSE))
+- [Boost](https://github.com/boostorg/boost) ([license](license/Boost/LICENSE_1_0.txt))
+- [{fmt}](https://github.com/fmtlib/fmt) ([license](license/fmt/LICENSE))
+- [GoogleTest](https://github.com/google/googletest) ([license](license/GTest/LICENSE))
+- [ICU](https://github.com/unicode-org/icu)  ([license](license/ICU/LICENSE))
+- [scnlib](https://github.com/eliaskosunen/scnlib) ([license](license/scnlib/LICENSE))
+
 ## Build with CMake
 
 Some notable environment variables respected by CMake:
