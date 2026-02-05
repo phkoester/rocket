@@ -21,6 +21,7 @@ namespace {
 
 using rocket::log::internal::Clock;
 using rocket::log::internal::TimePoint;
+using rocket::log::internal::LogSettings;
 
 // Local constants ------------------------------------------------------------------------------------------
 
@@ -44,7 +45,7 @@ const unordered_map<LogLevel, string_view> LEVEL_DISPLAY {
  * A stack entry.
  */
 struct Entry {
-  LogLevel* logId_;
+  LogSettings* logId_;
   const char* function_;
   const char* prettyFunction_;
   const char* file_;
@@ -53,7 +54,7 @@ struct Entry {
   TimePoint time_;
 
   Entry(
-    LogLevel* logId,
+    LogSettings* logId,
     const char* function,
     const char* prettyFunction,
     const char* file,
@@ -303,10 +304,13 @@ const vector<cl::Option> CL_OPTIONS {
     .group=&CL_GROUP,
     .name="log",
     .takesValue=true,
-    .format="ID[=LEVEL]",
+    .format="ID[.SUBSTRING][=LEVEL]",
     .help=
-      "set logging for identifier ID to level LEVEL. ID is a known log identifier or `all`. LEVEL is `none`, "
-      "`error`, `warn`, `info`, `debug`, or `trace`. If LEVEL is not supplied, `info` is assumed",
+      "set logging for identifier ID to level LEVEL. ID is a known log ID or `all`.\n"
+      NBSP NBSP "If an optional substring is supplied, the log level is only applied to functions that "
+      "contain the substring.\n"
+      NBSP NBSP "LEVEL is `none`, `error`, `warn`, `info`, `debug`, or `trace`. If LEVEL is not supplied, "
+      "`info` is assumed",
     .apply=applyLog
   },
   {
@@ -343,7 +347,7 @@ const vector<cl::Option> CL_OPTIONS {
     .help=
       "log to system device or file. If OUT is `-` or `stdout`, log messages are written to standard "
       "output, which is the default. If OUT is `stderr`, log messages are written to standard error. "
-      "Otherwise, OUT is a PATTERN. Examples: `@[name].log`, `@[name]-@[date].log@[zip]`. Inside PATTERN, "
+      "Otherwise, OUT is a PATTERN. Examples: `@[name].log` or `@[name]-@[date].log@[zip]`. Inside PATTERN, "
       "these placeholders are available:\n"
       NBSP NBSP "@[date]"     NBSP NBSP "expands to the current date\n"
       NBSP NBSP "@[dir]" NBSP NBSP NBSP "expands to the parent directory of the executable\n"
@@ -360,7 +364,7 @@ const vector<cl::Option> CL_OPTIONS {
 recursive_mutex logMutex;
 
 // Defined log IDs
-auto definedIds = rocket::makeUnorderedBimap<LogLevel*, string_view>();
+auto definedIds = rocket::makeUnorderedBimap<LogSettings*, string_view>();
 
 // The #Out instance
 Out logOut;
@@ -497,7 +501,7 @@ logFlush(nio::Sink& out) {
 void
 logImpl(
   nio::Sink& out,
-  LogLevel* logId,
+  LogSettings* logId,
   LogLevel level,
   u64 stackLevel,
   const TimePoint& time,
@@ -585,6 +589,53 @@ namespace rocket::log {
 
 namespace internal {
 
+// #Log .....................................................................................................
+
+/// @ThreadSafe
+unique_ptr<Log>
+makeLog(
+  LogSettings* logId,
+  const char* function,
+  const char* prettyFunction,
+  const char* file,
+  i32 line) {
+  ROCKET_MUTEX_LOCK(logMutex);
+  if (not logId->active()) {
+    return {};
+  }
+  return make_unique<Log>(logId, function, prettyFunction, file, line);
+}
+
+// #LogSettings .............................................................................................
+
+LogLevel
+LogSettings::level(const char* function, const char* prettyFunction) const {
+  if (substringLevels_.empty()) {
+    return level_;
+  }
+  for (const auto& [substring, level] : substringLevels_) {
+    if (strstr(function, substring.c_str()) != nullptr ||
+        strstr(prettyFunction, substring.c_str()) != nullptr) {
+      return level;
+    }
+  }
+  return level_;
+}
+
+void
+LogSettings::setSubstringLevel(const string& substring, LogLevel level) {
+  const auto it = substringLevels_.find(substring);
+  if (it != substringLevels_.end()) {
+    substringLevels_.erase(it);
+  }
+  if (level <= LogLevel::none) {
+    return;
+  }
+  substringLevels_.emplace(substring, level);
+}
+
+// Functions ................................................................................................
+
 /// @ThreadSafe
 string
 expandLogFilePattern(string_view pattern, const TimePoint& time) {
@@ -605,7 +656,7 @@ log(LogLevel level, string_view msg) {
 
 /// @ThreadSafe
 void
-logBegin(LogLevel* logId, const char* function, const char* prettyFunction, const char* file, i32 line) {
+logBegin(LogSettings* logId, const char* function, const char* prettyFunction, const char* file, i32 line) {
   ROCKET_MUTEX_LOCK(logMutex);
 
   // Begin log entry will be flushed later if necessary
@@ -625,15 +676,15 @@ logBegin(LogLevel* logId, const char* function, const char* prettyFunction, cons
   }
 }
 
-/// @ThreadSafe
-LogLevel
-logDefine(LogLevel* logId, string_view id) {
-  ROCKET_CHECK(id, id != "all", "Invalid log ID \"all\"; this ID is reserved");
+/// Threadsafe
+LogSettings
+logDefine(LogSettings* logId, string_view id) {
+  ROCKET_CHECK(id, id != "all", "Invalid log ID `all`; this ID is reserved");
 
   ROCKET_MUTEX_LOCK(logMutex);
 
   definedIds.left.insert({ logId, id });
-  return LogLevel::none;
+  return {};
 }
 
 /// @ThreadSafe
@@ -692,29 +743,41 @@ setLogFmt(string_view val) {
   logFmt.set(val);
 }
 
-/// @ThreadSafe
 void
 setLogLevel(string_view id, string_view val) {
-  const bool all = id == "all";
-
   ROCKET_MUTEX_LOCK(logMutex);
 
-  auto it = definedIds.right.end();
-  if (not all) {
-    it = definedIds.right.find(id);
-    if (it == definedIds.right.end()) {
-      ROCKET_FAIL("Invalid log ID `{}`", id);
-    }
+  string substring;
+  const auto dot = id.find('.');
+  if (dot != string::npos) {
+    substring = id.substr(dot + 1);
+    id = id.substr(0, dot);
+  }
+
+  if (id.empty()) {
+    ROCKET_FAIL("Missing log ID", id);
+  }
+  const bool all = id == "all";
+  if (all && not substring.empty()) {
+    ROCKET_FAIL("Log ID `all` cannot be used with a substring", id);
   }
 
   const LogLevel level = Enum<LogLevel>::toType(val);
 
   if (not all) {
-    *it->second = level;
+    auto it = definedIds.right.find(id);
+    if (it == definedIds.right.end()) {
+      ROCKET_FAIL("Unknown log ID `{}`", id);
+    }
+    if (substring.empty()) {
+      it->second->level_ = level;
+    } else {
+      it->second->setSubstringLevel(substring, level);
+    }
   } else {
     // "all"
     for (const auto& pair : definedIds.right) {
-      *pair.second = level;
+      pair.second->level_ = level;
     }
   }
 }

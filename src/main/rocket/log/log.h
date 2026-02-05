@@ -14,6 +14,7 @@
 
 #include <boost/preprocessor/seq/cat.hpp>
 
+#include <map>
 #include <vector>
 
 namespace rocket::log {
@@ -50,18 +51,59 @@ namespace rocket::log {
 namespace internal {
 
 using Clock = std::chrono::system_clock;
-
 using TimePoint = std::chrono::time_point<Clock>;
+
+// #LogSettings .............................................................................................
+
+/// @NotThreadSafe
+struct LogSettings {
+  LogLevel level_ = LogLevel::none;
+  /// This is typically a small, constant map.
+  std::map<std::string, LogLevel> substringLevels_;
+
+  bool active() const { return level_ > LogLevel::none || not substringLevels_.empty(); }
+
+  LogLevel level(const char* function, const char* prettyFunction) const;
+
+  void setSubstringLevel(const std::string& substring, LogLevel level);
+};
+
+// #Log .....................................................................................................
+
+void logBegin(
+  LogSettings* logId,
+  const char* function,
+  const char* prettyFunction,
+  const char* file,
+  i32 line);
+
+void logEnd() noexcept;
+
+struct Log {
+  LogLevel level_;
+
+  Log(LogSettings* logId, const char* function, const char* prettyFunction, const char* file, i32 line) :
+    level_(logId->level(function, prettyFunction)) {
+    logBegin(logId, function, prettyFunction, file, line);
+  }
+
+  ~Log() noexcept { logEnd(); }
+};
+
+std::unique_ptr<Log> makeLog(
+  LogSettings* logId,
+  const char* function,
+  const char* prettyFunction,
+  const char* file,
+  i32 line);
+
+// Functions ................................................................................................
 
 std::string expandLogFilePattern(std::string_view pattern, const TimePoint& time);
 
 void log(LogLevel level, std::string_view msg);
 
-void logBegin(LogLevel* logId, const char* function, const char* prettyFunction, const char* file, i32 line);
-
-LogLevel logDefine(LogLevel* logId, std::string_view id);
-
-void logEnd() noexcept;
+LogSettings logDefine(LogSettings* logId, std::string_view id);
 
 void logInit();
 
@@ -71,17 +113,6 @@ void logMessage(LogLevel level, fmt::format_string<T...> fmt, T&&... args) {
 }
 
 const std::vector<cl::Option>& logOptions();
-
-struct Log {
-  LogLevel level_;
-
-  Log(LogLevel* logId, const char* function, const char* prettyFunction, const char* file, i32 line) :
-    level_(*logId) {
-    logBegin(logId, function, prettyFunction, file, line);
-  }
-
-  ~Log() noexcept { logEnd(); }
-};
 
 } // namespace internal
 
@@ -103,7 +134,7 @@ void setLogFmt(std::string_view val);
  *
  * @ThreadSafe
  *
- * @param id the log ID, or `"all"`
+ * @param id the log ID with an optional substring in the form `ID[.SUBSTRING]`, or `"all"`
  * @param val the log level
  */
 void setLogLevel(std::string_view id, std::string_view val);
@@ -128,7 +159,7 @@ void setLogOut(std::string_view val);
  */
 #define ROCKET_LOG_DECLARE(id) \
   namespace rocket::log::internal { \
-    extern LogLevel ROCKET_LOG_ID__(id); \
+    extern LogSettings ROCKET_LOG_ID__(id); \
   }
 
 /**
@@ -138,7 +169,7 @@ void setLogOut(std::string_view val);
  */
 #define ROCKET_LOG_DEFINE(id) \
   namespace rocket::log::internal { \
-    LogLevel ROCKET_LOG_ID__(id) = logDefine(&ROCKET_LOG_ID__(id), #id); \
+    LogSettings ROCKET_LOG_ID__(id) = logDefine(&ROCKET_LOG_ID__(id), #id); \
   }
 
 /**
@@ -146,16 +177,13 @@ void setLogOut(std::string_view val);
  *
  * @param id the log ID
  */
-#define ROCKET_LOG(id) \
-  ::std::unique_ptr<::rocket::log::internal::Log> rocketLog__; \
-  if (::rocket::log::internal::ROCKET_LOG_ID__(id) > ::rocket::log::LogLevel::none) { \
-    rocketLog__ = ::std::make_unique<::rocket::log::internal::Log>( \
-      &::rocket::log::internal::ROCKET_LOG_ID__(id), \
-      __FUNCTION__, \
-      ROCKET_PRETTY_FUNCTION, \
-      ROCKET_SRC_FILE, \
-      __LINE__); \
-  }
+#define ROCKET_LOG(id) ::std::unique_ptr<::rocket::log::internal::Log> rocketLog__ = \
+  ::rocket::log::internal::makeLog( \
+    &::rocket::log::internal::ROCKET_LOG_ID__(id), \
+    __FUNCTION__, \
+    ROCKET_PRETTY_FUNCTION, \
+    ROCKET_SRC_FILE, \
+    __LINE__)
 
 #ifdef NDEBUG
 /**
