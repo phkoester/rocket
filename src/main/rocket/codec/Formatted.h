@@ -45,23 +45,24 @@ template<typename T>
 struct FormattedCodec<std::optional<T>> {
   using Type = std::optional<T>;
 
+  static constexpr std::string_view NONE = "<none>";
+
   static std::pair<Type, u64>
   decode(std::string_view in, u64 offset) {
     const std::string_view input = in.substr(offset);
-    if (input.starts_with("<none>")) {
-      return { {}, 6 };
+    if (input.starts_with(NONE)) {
+      return { {}, NONE.size() };
     }
-    const auto result = scn::scan<T>(input, "{}");
-    if (not result) {
-      throw InputFailure(offset, fmt::format("Cannot scan as `{}`", typeid(T)));
-    }
-    const u64 len = result->begin() - input.begin();
-    return { result->value(), len };
+    return FormattedCodec<T>::decode(in, offset);
   }
 
   static void
   encode(std::string& out, const Type& val) {
-    out.append(fmt::format("{}", val));
+    if (not val) {
+      out.append(NONE);
+    } else {
+      FormattedCodec<T>::encode(out, *val);
+    }
   }
 };
 
