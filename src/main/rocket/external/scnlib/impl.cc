@@ -4,7 +4,7 @@
  * This fixes a linker error related to scnlib.
  */
 
-#include "impl.h"
+#include <scn/impl.h>
 
 /*
  * The original file is `scnlib/src/scn/impl.cpp`.

@@ -34,7 +34,6 @@
 # - test
 # - test-terminal
 # - clean
-# - patch
 #
 # - Targets for test executables:
 #
@@ -68,25 +67,6 @@ test-terminal: build
 .PHONY: clean
 clean:
 	@rm -rfv build install
-
-# `patch` ...................................................................................................
-
-.PHONY: patch
-patch: src/main/rocket/external/scnlib/impl.h
-
-SCNLIB_VERSION_EXPECTED := v4.0.1
-ifneq ($(wildcard $(BUILD_DIR)/_deps/scnlib-src),)
-  SCNLIB_VERSION := $(shell git -C $(BUILD_DIR)/_deps/scnlib-src describe --tags --abbrev=0)
-endif
-
-.PHONY: src/main/rocket/external/scnlib/impl.h
-src/main/rocket/external/scnlib/impl.h: $(BUILD_DIR)/_deps/scnlib-src/src/scn/impl.h
-ifneq ($(SCNLIB_VERSION), $(SCNLIB_VERSION_EXPECTED))
-	@echo scnlib version has changed from $(SCNLIB_VERSION_EXPECTED) to $(SCNLIB_VERSION)!
-	@echo You have to copy and patch impl.h manually!
-	@echo
-	@echo "  cp $< $@"
-endif
 
 # Test executables ------------------------------------------------------------------------------------------
 
