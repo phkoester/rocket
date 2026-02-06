@@ -6,13 +6,16 @@
 
 #pragma once
 
+#include "rocket/format/format.h"
 #include "rocket/rocket.h" // #std::type_info for MSVC
 #include "rocket/nio/nio-fwd.h"
+#include "rocket/unicode/ConvertTo.h"
 
 #include <optional>
 #include <source_location>
 #include <stacktrace>
 #include <stdexcept>
+#include <typeinfo>
 
 // Macros ---------------------------------------------------------------------------------------------------
 
@@ -230,6 +233,26 @@ struct Underflow : Exception, std::underflow_error {
   ~Underflow() override = default;
 };
 
+// #WrappedException ----------------------------------------------------------------------------------------
+
+/**
+ * An exception wrapper which has its own #fmt::formatter specialization.
+ */
+struct WrappedException {
+  explicit WrappedException(const std::exception& ex) : ex_(&ex) {}
+
+  explicit WrappedException(std::exception_ptr ptr) : ptr_(ptr) {}
+
+  const std::exception* exception() const { return ex_; }
+
+  std::exception_ptr ptr() const { return ptr_; }
+
+private:
+
+  const std::exception* ex_ = nullptr;
+  std::exception_ptr ptr_;
+};
+
 // Functions ------------------------------------------------------------------------------------------------
 
 /**
@@ -275,5 +298,99 @@ std::string what(const std::exception& ex);
 std::string what(std::exception_ptr ptr);
 
 } // namespace rocket
+
+// #fmt::formatter<#rocket::WrappedException> ---------------------------------------------------------------
+
+/**
+ * @spec_fmt_formatter{#rocket::WrappedException}
+ *
+ * - If the `?` format specifier is used, then the stack trace is included.
+ * - If the `t` format specifier is used, then the type of the exception is included.
+ */
+template<typename C>
+struct fmt::formatter<rocket::WrappedException, C> {
+  /// @cond undocumented
+
+  template<typename FormatContext>
+  FormatContext::iterator
+  format(const rocket::WrappedException& val, FormatContext& ctx) const{
+    // If requested, append type
+
+    auto out = ctx.out();
+    if (withType_) {
+      const std::type_info* type; // NOLINT
+      if (val.exception()) {
+        type = &typeid(*val.exception());
+      } else {
+#ifdef ROCKET_COMPILER_MSVC
+        type = nullptr;
+#else
+        type = val.ptr().__cxa_exception_type();
+#endif
+      }
+
+      if (type != nullptr) {
+        const std::string typeName = fmt::format("{}", *type);
+        if constexpr (std::is_same_v<C, char>) {
+          out = format_to(out, "`{}`: ", rocket::unicode::ConvertTo<C>::apply(typeName));
+        } else {
+          out = format_to(out, U"`{}`: ", rocket::unicode::ConvertTo<C>::apply(typeName));
+        }
+      }
+    }
+
+    // Append message
+
+    std::string what;
+    if (val.exception()) {
+      what = rocket::what(*val.exception());
+    } else {
+      what = rocket::what(val.ptr());
+    }
+    out = detail::write<C>(out, rocket::unicode::ConvertTo<C>::apply(what));
+
+    // If debug, append stack trace
+
+    if (debug_) {
+      const auto* const p = dynamic_cast<const rocket::Exception*>(val.exception());
+      if (p && p->stackTrace()) {
+        out = detail::write<C>(out, static_cast<C>('\n'));
+        std::ostringstream os;
+        os << *p->stackTrace();
+        std::string str = os.str();
+        str.pop_back(); // Remove trailing '\n'
+        out = detail::write<C>(out, rocket::unicode::ConvertTo<C>::apply(str));
+      }
+    }
+    return out;
+  }
+
+  constexpr const C*
+  parse(parse_context<C>& ctx) {
+    auto it = ctx.begin();
+    auto end = ctx.end();
+    if (it != end && *it == '?') {
+      debug_ = true;
+      ++it;
+    }
+    if (it != end && *it == 't') {
+      withType_ = true;
+      ++it;
+    }
+    return it;
+  }
+
+  constexpr void
+  set_debug_format(bool val = true) {
+    debug_ = val;
+  }
+
+  /// @endcond
+
+private:
+
+  bool debug_ = false;
+  bool withType_ = false;
+};
 
 // EOF

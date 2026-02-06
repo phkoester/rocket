@@ -1,9 +1,5 @@
 /**
  * @file Formatted.h
- *
- * Formatted encoding/decoding.
- *
- * This is based on {fmt} and scnlib.
  */
 
 #pragma once
@@ -20,6 +16,13 @@ namespace rocket::codec {
 
 // Default implementation ...................................................................................
 
+/**
+ * A codec implementation for formatted string representations.
+ *
+ * This default implementation uses {fmt} to encode and scnlib to decode.
+ *
+ * @tparam T the type to encode/decode
+ */
 template<typename T>
 struct FormattedCodec {
   static std::pair<T, u64>
@@ -41,6 +44,7 @@ struct FormattedCodec {
 
 // #std::optional ...........................................................................................
 
+/// @spec{#rocket::codec::FormattedCodec, #std::optional}
 template<typename T>
 struct FormattedCodec<std::optional<T>> {
   using Type = std::optional<T>;
@@ -68,6 +72,9 @@ struct FormattedCodec<std::optional<T>> {
 
 // #Formatted -----------------------------------------------------------------------------------------------
 
+/**
+ * A codec for formatted string representations.
+ */
 struct Formatted {
   using EncodedType = std::string;
   using EncodedViewType = std::string_view;

@@ -379,8 +379,6 @@ struct formatter<std::thread::id, Char> : basic_ostream_formatter<Char> {};
 
 #ifdef __cpp_lib_optional
 
-#ifndef FMT_STD_NO_OPTIONAL_FORMATTER
-
 template <typename T, typename Char>
 struct formatter<std::optional<T>, Char,
                  std::enable_if_t<is_formattable<T, Char>::value>> {
@@ -410,8 +408,6 @@ struct formatter<std::optional<T>, Char,
     return detail::write(out, ')');
   }
 };
-
-#endif
 
 #endif  // __cpp_lib_optional
 
