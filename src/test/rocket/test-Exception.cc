@@ -4,10 +4,44 @@
 
 #include "rocket-test/rocket-test.h"
 
+#include "rocket/assert.h"
 #include "rocket/Exception.h"
 #include "rocket/nio/nio.h"
 
+#include <fmt/xchar.h>
+
 // #TEST ----------------------------------------------------------------------------------------------------
+
+TEST(Exception, WrappedExceptionFormat) {
+  try  {
+    ROCKET_FAIL("oops1");
+  } catch (const exception& ex1) {
+    EXPECT_THAT(fmt::format("{}", WrappedException(ex1)), matchesRegex(".*\\.cc:\\d+: oops1"));
+    EXPECT_THAT(fmt::format("{:t}", WrappedException(ex1)), matchesRegex("`rocket::InvalidState`: .*\\.cc:\\d+: oops1"));
+
+    const u32string s32 = fmt::format(U"{}", WrappedException(ex1));
+    EXPECT_NE(s32.find(U"oops1"), u32string::npos);
+
+    auto msg = fmt::format("{:?}", WrappedException(ex1));
+    std::replace(msg.begin(), msg.end(), '\n', '|');
+    EXPECT_THAT(msg, matchesRegex(".*\\.cc:\\d+: oops1\\|.*|.*|.*"));
+
+    msg = fmt::format("{:?t}", WrappedException(ex1));
+    std::replace(msg.begin(), msg.end(), '\n', '|');
+    EXPECT_THAT(msg, matchesRegex("`rocket::InvalidState`: .*\\.cc:\\d+: oops1\\|.*|.*|.*"));
+
+    try {
+      throw_with_nested(InvalidArgument("name", "oops2"));
+    } catch (const exception& ex2) {
+      EXPECT_THAT(
+        fmt::format("{}", WrappedException(ex2)),
+        matchesRegex(".*\\.cc:\\d+: Parameter `name`: oops2 \\(Because: .*\\.cc:\\d+: oops1\\)"));
+      EXPECT_THAT(
+        fmt::format("{:t}", WrappedException(ex2)),
+        matchesRegex("`std::_.*ested.*<rocket::InvalidArgument>`: .*\\.cc:\\d+: Parameter `name`: oops2 \\(Because: .*\\.cc:\\d+: oops1\\)"));
+    }
+  }
+}
 
 TEST(Exception, printException1) { // NOLINT(*-complexity)
   try {

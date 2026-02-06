@@ -3,7 +3,8 @@
  *
  * Literal operators for all basic Rocket data types.
  *
- * The integer implementation is based on Jim Apple's work, see `README.md`.
+ * The generalized integer implementation is based on Jim Apple's wonderful work from `128-bit-literals` on
+ * GitHub, see `README.md`.
  */
 
 #pragma once
@@ -25,6 +26,7 @@ struct SignedLimit {
   static_assert(std::is_signed_v<T>);
   static_assert(std::is_unsigned_v<U>);
 
+  /// The signed maximum, as unsigned.
   static constexpr U value = std::numeric_limits<T>::max();
 };
 
@@ -44,16 +46,20 @@ charValue(char c) {
     ((c >= 'a' && c <= 'f') ? (10 + (c - 'a')) : (10 + (c - 'A'))); // NOLINT
 }
 
-/// Checks whether c_n + ... + c_2 * BASE^(n-2) + c_1 * BASE^(n-1) + v * BASE^n is a valid number when
-// interpreted in base @p BASE.
+/**
+ * Checks whether c_n + ... + c_2 * BASE^(n-2) + c_1 * BASE^(n-1) + v * BASE^n is a valid number when
+ * interpreted in base @p BASE.
+ */
 template<typename T, int BASE>
 constexpr bool
 validateUnsignedImpl([[maybe_unused]] T val) {
   return true;
 }
 
-/// Checks whether c_n + ... + c_2 * BASE^(n-2) + c_1 * BASE^(n-1) + v * BASE^n is a valid number when
-// interpreted in base @p BASE.
+/**
+ * Checks whether c_n + ... + c_2 * BASE^(n-2) + c_1 * BASE^(n-1) + v * BASE^n is a valid number when
+ * interpreted in base @p BASE.
+ */
 template<typename T, int BASE, char C, char... Chars>
 constexpr bool
 validateUnsignedImpl(T acc) {
@@ -64,8 +70,10 @@ validateUnsignedImpl(T acc) {
       validateUnsignedImpl<T, BASE, Chars...>(acc * BASE + charValue<T>(C));
 }
 
-/// Checks whether c_n + ... + c_2 * BASE^(n-2) + c_1 * BASE^(n-1) is a valid unsigned number when
-// interpreted in base @p BASE.
+/**
+ * Checks whether c_n + ... + c_2 * BASE^(n-2) + c_1 * BASE^(n-1) is a valid unsigned number when interpreted
+ * in base @p BASE.
+ */
 template<typename T,int BASE, char... Chars>
 constexpr bool validateUnsigned() {
   static_assert(std::is_unsigned_v<T>);

@@ -21,39 +21,6 @@ TEST(std, byteFormat) {
   EXPECT_EQ(fmt::format("{:#x}", byte { 255 }), "0xff");
 }
 
-#if 0 // XXX
-TEST(std, exceptionFormat) { // NOLINT(*-complexity)
-  try  {
-    ROCKET_FAIL("oops1");
-  } catch (const exception& ex1) {
-    EXPECT_THAT(fmt::format("{}", ex1), matchesRegex(".*\\.cc:\\d+: oops1"));
-    EXPECT_THAT(fmt::format("{:t}", ex1), matchesRegex("`rocket::InvalidState`: .*\\.cc:\\d+: oops1"));
-
-    const u32string s32 = fmt::format(U"{}", ex1);
-    EXPECT_NE(s32.find(U"oops1"), u32string::npos);
-
-    auto msg = fmt::format("{:?}", ex1);
-    std::replace(msg.begin(), msg.end(), '\n', '|');
-    EXPECT_THAT(msg, matchesRegex(".*\\.cc:\\d+: oops1\\|.*|.*|.*"));
-
-    msg = fmt::format("{:?t}", ex1);
-    std::replace(msg.begin(), msg.end(), '\n', '|');
-    EXPECT_THAT(msg, matchesRegex("`rocket::InvalidState`: .*\\.cc:\\d+: oops1\\|.*|.*|.*"));
-
-    try {
-      throw_with_nested(InvalidArgument("name", "oops2"));
-    } catch (const exception& ex2) {
-      EXPECT_THAT(
-        fmt::format("{}", ex2),
-        matchesRegex(".*\\.cc:\\d+: Parameter `name`: oops2 \\(Because: .*\\.cc:\\d+: oops1\\)"));
-      EXPECT_THAT(
-        fmt::format("{:t}", ex2),
-        matchesRegex("`std::_.*ested.*<rocket::InvalidArgument>`: .*\\.cc:\\d+: Parameter `name`: oops2 \\(Because: .*\\.cc:\\d+: oops1\\)"));
-    }
-  }
-}
-#endif
-
 TEST(std, initializerListFormat) {
   EXPECT_EQ(fmt::format("{}", initializer_list<i32> { 1, 2, 3 }), "[1, 2, 3]");
 }
@@ -63,16 +30,6 @@ TEST(std, mapFormat) {
     fmt::format("{}", map<i32, string> { { 1, "one" }, { 2, "two" }, { 3, "three" } }),
     "{1: \"one\", 2: \"two\", 3: \"three\"}");
 }
-
-#if 0 // XXX
-TEST(std, optionalAndVectorInTypeLoopFormat) {
-  using type = optional<vector<optional<i32>>>;
-  type val1 = nullopt;
-  EXPECT_EQ(fmt::format("{:}", val1), "<none>");
-  type val2 = vector<optional<i32>> { optional<i32>(1), nullopt, optional<i32>(3) };
-  EXPECT_EQ(fmt::format("{}", val2), "[1, <none>, 3]");
-}
-#endif
 
 TEST(std, pairFormat) {
   EXPECT_EQ(fmt::format("{}", pair<i32, string> { 1, "one" }), "(1, \"one\")");
@@ -156,15 +113,5 @@ TEST(std, vectorFormat) {
   EXPECT_EQ(fmt::format("{}", vector<string> { "one", "two", "three" }), "[\"one\", \"two\", \"three\"]");
   EXPECT_EQ(fmt::format("{::}", vector<string> { "one", "two", "three" }), "[one, two, three]");
 }
-
-#if 0 // XXX
-TEST(std, vectorAndOptionalInTypeLoopFormat) {
-  using type = vector<optional<vector<i32>>>;
-  type val1 = {};
-  EXPECT_EQ(fmt::format("{}", val1), "[]");
-  type val2 = type { vector<i32> { vector<i32> { 1, 2 } } };
-  EXPECT_EQ(fmt::format("{}", val2), "[[1, 2]]");
-}
-#endif
 
 // EOF
