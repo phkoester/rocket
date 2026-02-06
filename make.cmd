@@ -46,29 +46,26 @@ if "%~1" == "" (
   call :configure
   call :build
   goto :eof
-)
-if "%1" == "info" (
+) else if "%1" == "info" (
   goto :eof
-)
-if "%1" == "configure" (
+) else if "%1" == "configure" (
   call :configure
   goto :eof
-)
-if "%1" == "build" (
+) else if "%1" == "build" (
   call :build %2
   goto :eof
-)
-if "%1" == "test" (
+) else if "%1" == "test" (
   call :test %2
   goto :eof
-)
-if "%1" == "test-terminal" (
+) else if "%1" == "test-terminal" (
   call :test-terminal
   goto :eof
-)
-if "%1" == "clean" (
+) else if "%1" == "clean" (
   call :clean
   goto :eof
+) else (
+  echo make.cmd: Invalid command `%1` 1>&2
+  exit /b 2
 )
 
 goto :eof
