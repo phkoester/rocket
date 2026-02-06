@@ -20,7 +20,9 @@ namespace {
 // Local functions ------------------------------------------------------------------------------------------
 
 void
-addArg(vector<string>& out, const string& arg) { // NOLINT(*-recursion)
+addArg(vector<string>& out, const string& arg, set<string>& seenFiles) { // NOLINT(*-recursion)
+  using namespace std::filesystem;
+
   if (arg.starts_with("@")) {
     if (arg.size() == 1) {
       // "@" is just a regular argument
@@ -29,11 +31,23 @@ addArg(vector<string>& out, const string& arg) { // NOLINT(*-recursion)
       // "@@" escapes the "@"
       out.push_back(arg.substr(1));
     } else {
+      // Check argument file
+      string file = arg.substr(1);
+      path absPath;
+      try {
+        absPath = canonical(file);
+      } catch (const exception& ex) {
+        ROCKET_FAIL("Cannot resolve argument file `{}`", file);
+      }
+      string absFile = absPath.string();
+      if (not seenFiles.insert(absFile).second) {
+        ROCKET_FAIL("Argument file `{}` causes an infinite loop", file);
+      }
+
       // Read the argument file, add arguments
-      string path = arg.substr(1);
-      auto in = nio::FileSource(path);
+      auto in = nio::FileSource(file);
       if (not in.good()) {
-        ROCKET_FAIL("Cannot read argument file `{}`", path);
+        ROCKET_FAIL("Cannot read argument file `{}`", file);
       }
       const string contents = in.Source::read();
       auto lines = str::lines<char>(contents);
@@ -43,7 +57,7 @@ addArg(vector<string>& out, const string& arg) { // NOLINT(*-recursion)
         lines.pop_back();
       }
       for (const auto& line : lines) {
-        addArg(out, static_cast<string>(line)); // Recursive call
+        addArg(out, static_cast<string>(line), seenFiles); // Recursive call
       }
     }
   } else {
@@ -56,8 +70,9 @@ addArg(vector<string>& out, const string& arg) { // NOLINT(*-recursion)
 vector<string>
 expandArgs(const vector<string>& args) {
   vector<string> ret;
+  set<string> seenFiles;
   for (const auto& arg : args) {
-    addArg(ret, arg);
+    addArg(ret, arg, seenFiles);
   }
   return ret;
 }

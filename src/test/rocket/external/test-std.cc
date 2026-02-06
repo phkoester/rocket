@@ -36,6 +36,7 @@ TEST(std, chronoFormat) {
 /// This is expected to work on all platforms.
 TEST(std, filesystemPath) {
   using filesystem::path;
+
   const path unixPath("/path/to/file");
   EXPECT_EQ(unixPath.filename(), path("file"));
   EXPECT_EQ(unixPath.parent_path(), path("/path/to"));
