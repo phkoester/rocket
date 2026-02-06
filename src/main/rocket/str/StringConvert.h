@@ -9,8 +9,9 @@
 #include "rocket/enum.h"
 #include "rocket/Exception.h"
 #include "rocket/type-traits.h"
-#include "rocket/scan/scan.h"
 #include "rocket/str/message/message.h"
+
+#include <scn/scan.h>
 
 namespace rocket::str {
 

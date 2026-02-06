@@ -98,8 +98,7 @@ target_sources(rocket
       rocket/chrono/chrono.h
       rocket/cl/cl.h
       rocket/filesystem/filesystem.h
-      rocket/format/format.h
-      rocket/format/std.h
+      rocket/format/Subformat.h
       rocket/io/io.h
       rocket/log/log.h
       rocket/math/interval.h
@@ -108,7 +107,6 @@ target_sources(rocket
       rocket/nio/nio.h
       rocket/nio/nio-fwd.h
       rocket/reflect/reflect.h
-      rocket/scan/scan.h
       rocket/str/Noun.h
       rocket/str/Range.h
       rocket/str/str.h

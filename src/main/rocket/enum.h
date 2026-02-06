@@ -9,14 +9,13 @@
 #include "rocket/Exception.h"
 #include "rocket/Bimap.h"
 #include "rocket/macro.h"
-#include "rocket/format/format.h"
 #include "rocket/str/message/message.h"
 #include "rocket/unicode/ConvertTo.h"
 
-#include <ostream>
-
 #include <boost/preprocessor/stringize.hpp>
 #include <boost/preprocessor/seq/for_each.hpp>
+
+#include <ostream>
 
 // Macros ---------------------------------------------------------------------------------------------------
 

@@ -7,8 +7,9 @@
 #include "rocket/Process.h"
 #include "rocket/chrono/chrono.h"
 #include "rocket/cl/cl.h"
-#include "rocket/format/std.h"
 #include "rocket/log/log.h"
+
+#include <fmt/std.h>
 
 using namespace rocket;
 using namespace rocket::unicode;

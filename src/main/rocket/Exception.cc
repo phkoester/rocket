@@ -5,7 +5,6 @@
 #include "Exception.h"
 
 #include "rocket/assert.h"
-#include "rocket/format/std.h"
 #include "rocket/str/message/message.h"
 
 using namespace rocket;

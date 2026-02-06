@@ -7,8 +7,9 @@
 #pragma once
 
 #include "rocket/Bimap.h"
+#include "rocket/type-traits.h"
 
-#include <algorithm> // #std::min
+#include <algorithm>
 
 namespace rocket::unicode {
 

@@ -7,15 +7,16 @@
 #pragma once
 
 #include "rocket/Process.h"
-#include "rocket/format/std.h"
 #include "rocket/type-traits.h"
 #include "rocket/nio/nio-fwd.h"
 #include "rocket/str/str.h"
 #include "rocket/str/StringConvert.h"
 #include "rocket/unicode/Character.h"
 
+#include <fmt/std.h>
+
+#include <map>
 #include <set>
-#include <unordered_map>
 
 namespace rocket::cl {
 
@@ -395,8 +396,8 @@ private:
   CommandLineConfig config_;
   bool hasUsage_ = false;
   bool hasHelpOpt_ = false;
-  std::unordered_map<std::string_view, const Option*> byName_;
-  std::unordered_map<std::string_view, const Option*> byShortName_;
+  std::map<std::string_view, const Option*> byName_;
+  std::map<std::string_view, const Option*> byShortName_;
 
   ParserState parserState_;
 

@@ -7,6 +7,7 @@
 #pragma once
 
 #include "rocket/Bimap.h"
+#include "rocket/rocket.h"
 
 #include <optional>
 #include <string>

@@ -4,8 +4,10 @@
 
 #include "rocket-test/rocket-test.h"
 
-#include "rocket/format/std.h"
 #include "rocket/unicode/unicode.h"
+
+#include <fmt/ranges.h>
+#include <fmt/xchar.h>
 
 using namespace rocket::unicode;
 

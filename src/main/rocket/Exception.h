@@ -6,10 +6,11 @@
 
 #pragma once
 
-#include "rocket/format/format.h"
 #include "rocket/rocket.h" // #std::type_info for MSVC
 #include "rocket/nio/nio-fwd.h"
 #include "rocket/unicode/ConvertTo.h"
+
+#include <fmt/std.h>
 
 #include <optional>
 #include <source_location>

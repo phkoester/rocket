@@ -9,7 +9,6 @@
 #include "rocket/hash.h"
 #include "rocket/rocket.h"
 #include "rocket/macro.h"
-#include "rocket/format/std.h"
 #include "rocket/nio/nio.h"
 #include "rocket/unicode/ConvertTo.h"
 
@@ -17,6 +16,8 @@
 #include <boost/preprocessor/seq/cat.hpp>
 #include <boost/preprocessor/seq/enum.hpp>
 #include <boost/preprocessor/seq/for_each.hpp>
+
+#include <fmt/std.h>
 
 #include <ostream>
 #include <tuple>

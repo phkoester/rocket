@@ -9,6 +9,7 @@
 #include "rocket/rocket.h"
 #include "rocket/nio/nio.h"
 
+#include <functional>
 #include <locale>
 #include <optional>
 #include <string>

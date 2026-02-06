@@ -6,9 +6,10 @@
 
 #include "rocket/InputFailure.h"
 #include "rocket/assert.h"
-#include "rocket/scan/scan.h"
 #include "rocket/unicode/Character.h"
 #include "rocket/unicode/Iterator.h"
+
+#include <scn/scan.h>
 
 using namespace rocket;
 using namespace rocket::str;

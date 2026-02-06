@@ -1,7 +1,7 @@
 /**
  * @file std.h
  *
- * Additional standard library support.
+ * Additional standard-library support.
  */
 
 #pragma once

@@ -72,21 +72,7 @@ clean:
 # `patch` ...................................................................................................
 
 .PHONY: patch
-patch: src/main/rocket/external/fmt/std.h src/main/rocket/external/scnlib/impl.h
-
-FMT_VERSION_EXPECTED := 12.1.0
-ifneq ($(wildcard $(BUILD_DIR)/_deps/fmt-src),)
-  FMT_VERSION := $(shell git -C $(BUILD_DIR)/_deps/fmt-src describe --tags --abbrev=0)
-endif
-
-.PHONY: src/main/rocket/external/fmt/std.h
-src/main/rocket/external/fmt/std.h: $(BUILD_DIR)/_deps/fmt-src/include/fmt/std.h
-ifneq ($(FMT_VERSION), $(FMT_VERSION_EXPECTED))
-	@echo fmt version has changed from $(FMT_VERSION_EXPECTED) to $(FMT_VERSION)!
-	@echo You have to copy and patch std.h manually!
-	@echo
-	@echo "  cp $< $@"
-endif
+patch: src/main/rocket/external/scnlib/impl.h
 
 SCNLIB_VERSION_EXPECTED := v4.0.1
 ifneq ($(wildcard $(BUILD_DIR)/_deps/scnlib-src),)

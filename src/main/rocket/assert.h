@@ -7,9 +7,9 @@
 # pragma once
 
 #include "rocket/Exception.h"
-#include "rocket/Process.h"
 #include "rocket/macro.h"
-#include "rocket/format/format.h"
+#include "rocket/Process.h"
+#include "rocket/format/Subformat.h"
 
 #include <boost/preprocessor/stringize.hpp>
 
@@ -27,8 +27,8 @@ terminate( // NOLINT(*-recursion)
   const std::source_location& sl,
   fmt::format_string<T...> fmt,
   T&&... args) {
-  process.error(nio::err, 0, "{}:{}: {}", sl.file_name(), sl.line(), format::Format<char>([&] {
-    auto params = format::Format<char>::params("\\\x01");
+  process.error(nio::err, 0, "{}:{}: {}", sl.file_name(), sl.line(), format::Subformat<char>([&] {
+    auto params = format::Subformat<char>::params("\\\x01");
     params.tag("\\\x01", fmt, std::forward<T>(args)...);
     return params;
   }));
@@ -42,13 +42,13 @@ assertFailed( // NOLINT(*-recursion)
   const char* expr,
   fmt::format_string<T...> fmt = "",
   T&&... args) {
-  terminate(sl, "Assertion `{}` failed{}", expr, format::Format<char>([&] {
+  terminate(sl, "Assertion `{}` failed{}", expr, format::Subformat<char>([&] {
     if (fmt.get().size() > 0) {
-      auto params = format::Format<char>::params(": \\\x01");
+      auto params = format::Subformat<char>::params(": \\\x01");
       params.tag("\\\x01", fmt, std::forward<T>(args)...);
       return params;
     }
-    return format::Format<char>::params();
+    return format::Subformat<char>::params();
   }));
 }
 
@@ -72,13 +72,13 @@ checkFailed(
   const char* expr,
   fmt::format_string<T...> fmt = "",
   T&&... args) {
-  flop(sl, name, "Check `{}` failed{}", expr, format::Format<char>([&] {
+  flop(sl, name, "Check `{}` failed{}", expr, format::Subformat<char>([&] {
     if (fmt.get().size() > 0) {
-      auto params = format::Format<char>::params(": \\\x01");
+      auto params = format::Subformat<char>::params(": \\\x01");
       params.tag("\\\x01", fmt, std::forward<T>(args)...);
       return params;
     }
-    return format::Format<char>::params();
+    return format::Subformat<char>::params();
   }));
 }
 
@@ -100,13 +100,13 @@ expectFailed(
   const char* expr,
   fmt::format_string<T...> fmt = "",
   T&&... args) {
-  fail(sl, "Expectation `{}` failed{}", expr, format::Format<char>([&] {
+  fail(sl, "Expectation `{}` failed{}", expr, format::Subformat<char>([&] {
     if (fmt.get().size() > 0) {
-      auto params = format::Format<char>::params(": \\@0");
+      auto params = format::Subformat<char>::params(": \\@0");
       params.tag("\\@0", fmt, std::forward<T>(args)...);
       return params;
     }
-    return format::Format<char>::params();
+    return format::Subformat<char>::params();
   }));
 }
 

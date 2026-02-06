@@ -6,6 +6,8 @@
 
 #include "rocket/Bimap.h"
 
+#include <fmt/xchar.h>
+
 // #TEST ----------------------------------------------------------------------------------------------------
 
 TEST(Bimap, UnorderedBimapopEq) {

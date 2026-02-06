@@ -7,8 +7,10 @@
 #include "rocket/assert.h"
 #include "rocket/InputFailure.h"
 #include "rocket/rocket.h"
-#include "rocket/format/std.h"
-#include "rocket/scan/scan.h"
+
+#include <fmt/ranges.h>
+
+#include <scn/ranges.h>
 
 namespace rocket::codec {
 

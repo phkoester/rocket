@@ -1,39 +1,34 @@
 /**
- * @file format.h
- *
- * Formatting, built on top of {fmt}.
- *
- * Include this file rather than `fmt/format.h` or `fmt/xchar.h` directly.
+ * @file Subformat.h
  */
 
 #pragma once
 
-#include "rocket/str/str.h"
+#include "rocket/type-traits.h"
 
 #include <boost/algorithm/string.hpp>
 
 #include <fmt/format.h>
-#include <fmt/xchar.h>
 
 #include <functional>
+#include <map>
 #include <string>
-#include <unordered_map>
 
 namespace rocket::format {
 
-// #FormatParams --------------------------------------------------------------------------------------------
+// #SubformatParams ------------------------------------------------------------------------------------------
 
 /**
-  * Parameters for the #rocket::format::Format class.
-  *
-  * @tparam C the character type
-  */
+ * Parameters for the #rocket::format::Format class.
+ *
+ * @tparam C the character type
+ */
 template<typename C> requires IsChar<C>
-struct FormatParams {
+struct SubformatParams {
   /// The formatted string.
   std::basic_string<C> formatted_;
   /// The tagged values.
-  std::unordered_map<std::basic_string_view<C>, std::basic_string<C>> tagged_;
+  std::map<std::basic_string_view<C>, std::basic_string<C>> tagged_;
 
   /**
    * Sets the formatted string.
@@ -103,25 +98,25 @@ struct FormatParams {
   }
 };
 
-// #Format --------------------------------------------------------------------------------------------------
+// #Subformat -----------------------------------------------------------------------------------------------
 
 /**
- * A subformat that may be passed as an argumentto `fmt::format`.
+ * A subformat that may be passed as an argument to `fmt::format`.
  *
  * @tparam C the character type
  */
 template<typename C> requires IsChar<C>
-struct Format {
+struct Subformat {
 
   /// A function that produces #rocket::format::FormatParams.
-  using FormatParamsProducer = std::function<FormatParams<C>()>;
+  using SubformatParamsProducer = std::function<SubformatParams<C>()>;
 
   /**
    * Makes empty parameters, resulting in an empty string.
    *
    * @return parameters
    */
-  static FormatParams<C> params() {
+  static SubformatParams<C> params() {
     return {};
   }
 
@@ -131,8 +126,8 @@ struct Format {
    * @param formatted the formatted string
    * @return parameters
    */
-  static FormatParams<C> params(const std::basic_string<C>& formatted) {
-    FormatParams<C> ret;
+  static SubformatParams<C> params(const std::basic_string<C>& formatted) {
+    SubformatParams<C> ret;
     ret.set(formatted);
     return ret;
   }
@@ -145,8 +140,8 @@ struct Format {
    * @return parameters
    */
   template<typename... T>
-  static FormatParams<C> params(fmt::format_string<T...> fmt, T&&... args) {
-    FormatParams<C> ret;
+  static SubformatParams<C> params(fmt::format_string<T...> fmt, T&&... args) {
+    SubformatParams<C> ret;
     ret.set(fmt, std::forward<T>(args)...);
     return ret;
   }
@@ -160,8 +155,8 @@ struct Format {
    * @return parameters
    */
   template<typename... T>
-  static FormatParams<C> params(const std::locale& locale, fmt::format_string<T...> fmt, T&&... args) {
-    FormatParams<C> ret;
+  static SubformatParams<C> params(const std::locale& locale, fmt::format_string<T...> fmt, T&&... args) {
+    SubformatParams<C> ret;
     ret.set(locale, fmt, std::forward<T>(args)...);
     return ret;
   }
@@ -171,30 +166,30 @@ struct Format {
    *
    * @param fn a function that produces #rocket::format::FormatParams
    */
-  explicit Format(const FormatParamsProducer& fn) : params_(fn()) {}
+  explicit Subformat(const SubformatParamsProducer& fn) : params_(fn()) {}
 
   /**
    * Returns the format's parameters.
    *
    * @return the format's parameters
    */
-  const FormatParams<C>& get() const { return params_; }
+  const SubformatParams<C>& get() const { return params_; }
 
 private:
 
-  FormatParams<C> params_;
+  SubformatParams<C> params_;
 };
 
 } // namespace rocket::format
 
-// #fmt::formatter<#Format> ---------------------------------------------------------------------------------
+// #fmt::formatter<#rocket::format::Subformat> --------------------------------------------------------------
 
 /// @spec_fmt_formatter{#rocket::format::Format)
 template<typename C>
-struct fmt::formatter<rocket::format::Format<C>, C> {
+struct fmt::formatter<rocket::format::Subformat<C>, C> {
   template<typename FormatContext>
   constexpr FormatContext::iterator
-  format(const rocket::format::Format<C>& val, FormatContext& ctx) const {
+  format(const rocket::format::Subformat<C>& val, FormatContext& ctx) const {
     const auto& params = val.get();
     auto formatted = params.formatted_;
     for (const auto& [tag, value] : params.tagged_) {

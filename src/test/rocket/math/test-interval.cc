@@ -7,6 +7,8 @@
 #include "rocket/literal.h"
 #include "rocket/math/interval.h"
 
+#include <fmt/xchar.h>
+
 using namespace rocket::math;
 
 // #TEST ----------------------------------------------------------------------------------------------------

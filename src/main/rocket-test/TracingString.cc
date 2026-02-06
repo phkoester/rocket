@@ -4,7 +4,7 @@
 
 #include "TracingString.h"
 
-#include "rocket/format/format.h"
+#include <fmt/format.h>
 
 using namespace std;
 

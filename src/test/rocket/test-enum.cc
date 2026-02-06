@@ -6,6 +6,8 @@
 
 #include "rocket/enum.h"
 
+#include <fmt/xchar.h>
+
 // #MyEnum --------------------------------------------------------------------------------------------------
 
 enum MyEnum : u8 { fröb, fröber, fröberer, pörk, pörker, pörkerer };
