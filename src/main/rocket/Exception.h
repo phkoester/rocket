@@ -324,7 +324,7 @@ struct fmt::formatter<rocket::WrappedException, C> {
       if (val.exception()) {
         type = &typeid(*val.exception());
       } else {
-#ifdef ROCKET_COMPILER_MSVC
+#ifdef ROCKET_CXX_COMPILER_MSVC
         type = nullptr;
 #else
         type = val.ptr().__cxa_exception_type();
