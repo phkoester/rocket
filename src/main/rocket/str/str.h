@@ -32,6 +32,8 @@ struct LiteralString {
   constexpr operator std::basic_string_view<C>() const { // NOLINT(*-explicit-constructor)
     return { value.data(), value.size() };
   }
+
+  consteval u64 size() const { return value.size(); }
 };
 
 // #SplitIterator -------------------------------------------------------------------------------------------
@@ -231,7 +233,7 @@ lines(std::basic_string_view<C> str) {
   constexpr auto LF = LiteralString<C, '\n'>();
   for (auto line : split<C>(str, LF)) {
     if (line.ends_with(CR)) {
-      line = line.substr(0, line.size() - 1);
+      line.remove_suffix(CR.size());
     }
     ret.push_back(line);
   }
@@ -298,12 +300,7 @@ removeLeading(
 
   std::basic_string_view<C> ret(str);
   for (u64 i = 0; i < count; ++i) {
-    if (sub.size() > ret.size()) {
-      return ret;
-    }
-    // MSVC doesn't like the ctor with pointer and size here
-    const std::basic_string_view<C> leading(ret.begin(), ret.begin() + sub.size());
-    if (leading == sub) {
+    if (ret.starts_with(sub)) {
       ret.remove_prefix(sub.size());
     } else {
       return ret;
@@ -335,18 +332,38 @@ removeTrailing(
 
   std::basic_string_view<C> ret(str);
   for (u64 i = 0; i < count; ++i) {
-    if (sub.size() > ret.size()) {
-      return ret;
-    }
-    auto begin = ret.end() - sub.size();
-    const std::basic_string_view<C> trailing(begin, ret.end());
-    if (trailing == sub) {
+    if (ret.ends_with(sub)) {
       ret.remove_suffix(sub.size());
     } else {
       return ret;
     }
   }
   return ret;
+}
+
+/**
+ * Makes a string view such that it has a trailing end-of-line, if any, removed.
+ *
+ * The underlying string of @p str must remain valid for the lifetime of the returned string view.
+ *
+ * @tparam C the character type
+ * @param str a string view
+ * @return a string view
+ */
+template<typename C> requires IsChar<C>
+[[nodiscard]] std::basic_string_view<C>
+removeTrailingEol(std::basic_string_view<C> str) {
+  constexpr auto CRLF = LiteralString<C, '\r', '\n'>();
+  if (str.ends_with(CRLF)) {
+    str.remove_suffix(CRLF.size());
+    return str;
+  }
+  constexpr auto LF = LiteralString<C, '\n'>();
+  if (str.ends_with(LF)) {
+    str.remove_suffix(LF.size());
+    return str;
+  }
+  return str;
 }
 
 /**

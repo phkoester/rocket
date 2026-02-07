@@ -8,6 +8,7 @@
 
 #include "rocket/rocket.h" // #std::type_info for MSVC
 #include "rocket/nio/nio-fwd.h"
+#include "rocket/str/str.h"
 #include "rocket/unicode/ConvertTo.h"
 
 #include <fmt/std.h>
@@ -359,8 +360,9 @@ struct fmt::formatter<rocket::WrappedException, C> {
         std::ostringstream os;
         os << *p->stackTrace();
         std::string str = os.str();
-        str.pop_back(); // Remove trailing '\n'
-        out = detail::write<C>(out, rocket::unicode::ConvertTo<C>::apply(str));
+
+        auto withoutEol = rocket::str::removeTrailingEol<char>(str);
+        out = detail::write<C>(out, rocket::unicode::ConvertTo<C>::apply(withoutEol));
       }
     }
     return out;
