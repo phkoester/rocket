@@ -86,15 +86,15 @@ printExceptionPtr(nio::Sink& out, u64 level, exception_ptr ptr) { // NOLINT(*-re
     printThrown(out, level, &typeid(val), getWhat(val), nullopt);
   } catch (...) {
 #ifdef ROCKET_OS_WINDOWS
-    printThrown(out, level, nullptr, nullopt, nullopt);
+    const type_info* type = nullptr;
 #else
     const type_info* type = current_exception().__cxa_exception_type();
+#endif
     if (type != nullptr) {
       printThrown(out, level, type, nullopt, nullopt);
     } else {
       printThrown(out, level, nullptr, nullopt, nullopt);
     }
-#endif
   }
 }
 

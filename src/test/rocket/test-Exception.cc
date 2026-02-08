@@ -45,10 +45,12 @@ TEST(Exception, WrappedExceptionFormat) {
       EXPECT_THAT(
         fmt::format("{}", WrappedException(current_exception())),
         matchesRegex(".*\\.cc:\\d+: Parameter `name`: oops2 \\(Because: .*\\.cc:\\d+: oops1\\)"));
-      EXPECT_THAT(
+#ifndef ROCKET_OS_WINDOWS
+        EXPECT_THAT(
         fmt::format("{:t}", WrappedException(current_exception())),
         matchesRegex("`std::_.*ested.*<rocket::InvalidArgument>`: .*\\.cc:\\d+: Parameter `name`: oops2 \\(Because: .*\\.cc:\\d+: oops1\\)"));
-    }
+#endif
+      }
   }
 }
 
