@@ -111,7 +111,7 @@ TEST(location, locationsMultiByteCharactersAndLineBreak) {
 TEST(location, locationsKafkaTxt) {
   const string source = "test-location-Kafka.txt";
   nio::FileSource in(source);
-  const string input = in.Source::read();
+  const auto input = in.readString();
 
   const Position pos { .type=error, .position=3'000, .message="Oops" };
   const auto result = locations(input, { pos }, { .setLineString=true, .source=source });

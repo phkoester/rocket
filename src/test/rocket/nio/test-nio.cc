@@ -34,10 +34,10 @@ TEST(nio, BufferedSink) {
   BufferedSink buffered(out, 64);
   EXPECT_EQ(buffered.size_, 64);
 
-  buffered.write(string(testString(32)));
+  buffered.Sink::write(string(testString(32)));
   EXPECT_EQ(buffered.pos_, 32);
   EXPECT_EQ(out.str(), "");
-  buffered.write(testString(33, 2));
+  buffered.Sink::write(testString(33, 2));
   EXPECT_EQ(buffered.pos_, 1);
   EXPECT_EQ(out.str(), testString(64));
   buffered.flush();
@@ -53,13 +53,13 @@ TEST(nio, FileSinkDoesNotExist) {
   EXPECT_EQ(out.open(), false);
   EXPECT_EQ(out.file_, nullptr);
 
-  out.write("a");
+  out.Sink::write("a");
   EXPECT_EQ(out.error(), ENOENT);
 
   out.close();
   EXPECT_EQ(out.error(), ENOENT);
 
-  out.write("b");
+  out.Sink::write("b");
   EXPECT_EQ(out.error(), ENOENT);
 }
 
@@ -67,7 +67,7 @@ TEST(nio, SpanSink) {
   string str = "---[abcd]---";
   const span<char> span(&str[4], 4);
   SpanSink out(span);
-  EXPECT_EQ(out.write("ABCDEF"), 4); // Writing 6 chars, but only 4 fit
+  EXPECT_EQ(out.Sink::write("ABCDEF"), 4); // Writing 6 chars, but only 4 fit
   EXPECT_EQ(str, "---[ABCD]---");
 }
 
@@ -100,14 +100,14 @@ TEST(nio, BufferedSource) {
   EXPECT_EQ(buffered.end_, 0);
 
   string str32(32, ' ');
-  const span<char> span32(str32);
+  const span<u8> span32(reinterpret_cast<u8*>(str32.data()), str32.size());
   EXPECT_EQ(buffered.read(span32), 32);
   EXPECT_EQ(string_view(str32), testString(32));
   EXPECT_EQ(buffered.pos_, 32);
   EXPECT_EQ(buffered.end_, 64);
 
   string str40 = string(40, ' ');
-  const span<char> span40 = str40;
+  const span<u8> span40(reinterpret_cast<u8*>(str40.data()), str40.size());
   EXPECT_EQ(buffered.read(span40), 33);
   EXPECT_EQ(buffered.pos_, 1);
   EXPECT_EQ(buffered.end_, 1);
@@ -121,7 +121,7 @@ TEST(nio, BufferedSourceExactMatch) {
   BufferedSource buffered(in, 64);
 
   string out20(20, ' ');
-  const span<char> outSpan20(out20);
+  const span<u8> outSpan20(reinterpret_cast<u8*>(out20.data()), out20.size());
   EXPECT_EQ(buffered.read(outSpan20), 20);
   EXPECT_EQ(buffered.pos_, 20);
   EXPECT_EQ(buffered.end_, 20);
@@ -186,18 +186,36 @@ TEST(nio, FileSourceDoesNotExist) {
   EXPECT_EQ(in.open(), false);
   EXPECT_EQ(in.file_, nullptr);
 
-  auto out = in.Source::read();
+  auto out = in.readString();
   EXPECT_TRUE(out.empty());
   EXPECT_EQ(in.error(), ENOENT);
 
   in.close();
   EXPECT_EQ(in.error(), ENOENT);
 
-  out = in.Source::read();
+  out = in.readString();
   EXPECT_EQ(in.error(), ENOENT);
 }
 
-TEST(nio, FileSourceRead) {
+TEST(nio, FileSourceReadAll) {
+  const auto temp = rocket::filesystem::tempFile();
+
+  FileSink out(temp.string());
+  const vector<u8> data = { 0, 0, 0, 0 };
+  out.write(data);
+  out.close();
+
+  FileSource in(temp.string());
+  auto bytes = in.readAll();
+  EXPECT_EQ(in.error(), 0);
+  EXPECT_EQ(in.tell(), 4);
+  EXPECT_EQ(bytes, data);
+
+  bytes = in.readAll();
+  EXPECT_TRUE(bytes.empty());
+}
+
+TEST(nio, FileSourceReadString) {
   const auto temp = rocket::filesystem::tempFile();
 
   FileSink out(temp.string());
@@ -205,21 +223,42 @@ TEST(nio, FileSourceRead) {
   out.close();
 
   FileSource in(temp.string());
-  string str = in.Source::read();
+  auto str = in.readString();
   EXPECT_EQ(in.error(), 0);
   EXPECT_EQ(str, "Hey there\n");
-  str = in.Source::read();
+  str = in.readString();
   EXPECT_EQ(str, "");
   EXPECT_EQ(in.error(), 0);
 
   in.seek(-6, SeekMode::end);
   EXPECT_EQ(in.tell(), 4);
-  str = in.Source::read();
+  str = in.readString();
   EXPECT_EQ(str, "there\n");
   EXPECT_EQ(in.tell(), 10);
 }
 
-TEST(nio, StreamSourceRead) {
+TEST(nio, StreamSourceReadAll) {
+  auto temp = rocket::filesystem::tempFile();
+
+  const vector<u8> data = { 0, 0, 0, 0 };
+
+  {
+    ofstream os(temp.c_str(), ios::binary);
+    StreamSink out(os);
+    out.write(data);
+  }
+
+  ifstream is(temp.c_str());
+  StreamSource in(is);
+  auto bytes = in.readAll();
+  EXPECT_EQ(in.tell(), 4);
+  EXPECT_EQ(bytes, data);
+
+  bytes = in.readAll();
+  EXPECT_TRUE(bytes.empty());
+}
+
+TEST(nio, StreamSourceReadString) {
   auto temp = rocket::filesystem::tempFile();
 
   {
@@ -230,22 +269,22 @@ TEST(nio, StreamSourceRead) {
 
   ifstream is(temp.c_str());
   StreamSource in(is);
-  string str = in.Source::read();
+  auto str = in.readString();
   EXPECT_EQ(in.tell(), 10);
   EXPECT_EQ(str, "Hey there\n");
-  str = in.Source::read();
+  str = in.readString();
   EXPECT_EQ(str, "");
 
   in.seek(-6, SeekMode::end);
   EXPECT_EQ(in.tell(), 4);
-  str = in.Source::read();
+  str = in.readString();
   EXPECT_EQ(str, "there\n");
   EXPECT_EQ(in.tell(), 10);
 }
 
 TEST(nio, StringSource) {
   StringSource in("Hello, world!");
-  const string str = in.Source::read();
+  const auto str = in.readString();
   EXPECT_EQ(str, "Hello, world!");
 }
 

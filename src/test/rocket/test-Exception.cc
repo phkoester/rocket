@@ -33,11 +33,20 @@ TEST(Exception, WrappedExceptionFormat) {
     try {
       throw_with_nested(InvalidArgument("name", "oops2"));
     } catch (const exception& ex2) {
+      // Test #WrappedException with #std::exception
       EXPECT_THAT(
         fmt::format("{}", WrappedException(ex2)),
         matchesRegex(".*\\.cc:\\d+: Parameter `name`: oops2 \\(Because: .*\\.cc:\\d+: oops1\\)"));
       EXPECT_THAT(
         fmt::format("{:t}", WrappedException(ex2)),
+        matchesRegex("`std::_.*ested.*<rocket::InvalidArgument>`: .*\\.cc:\\d+: Parameter `name`: oops2 \\(Because: .*\\.cc:\\d+: oops1\\)"));
+
+      // Test #WrappedException with #std::exception_ptr
+      EXPECT_THAT(
+        fmt::format("{}", WrappedException(current_exception())),
+        matchesRegex(".*\\.cc:\\d+: Parameter `name`: oops2 \\(Because: .*\\.cc:\\d+: oops1\\)"));
+      EXPECT_THAT(
+        fmt::format("{:t}", WrappedException(current_exception())),
         matchesRegex("`std::_.*ested.*<rocket::InvalidArgument>`: .*\\.cc:\\d+: Parameter `name`: oops2 \\(Because: .*\\.cc:\\d+: oops1\\)"));
     }
   }

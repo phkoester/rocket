@@ -27,7 +27,7 @@ BENCH(nio, FileSink, [](benchmark::State& state) {
   for (auto _ : state) {
     FileSink out(temp.string());
     for (u64 i = 0; i < N; ++i) {
-      out.write(chunk);
+      out.Sink::write(chunk);
     }
   }
 
@@ -43,7 +43,7 @@ BENCH(nio, BufferedFileSink, [](benchmark::State& state) {
     std::setbuf(out.file_, nullptr); // Disable buffering
     BufferedSink buffered(out);
     for (u64 i = 0; i < N; ++i) {
-      buffered.write(chunk);
+      buffered.Sink::write(chunk);
     }
   }
   ROCKET_EXPECT(file_size(temp) == FILE_SIZE);
@@ -57,7 +57,7 @@ BENCH(nio, StreamSink, [](benchmark::State& state) {
     ofstream os(temp.c_str());
     StreamSink out(os);
     for (u64 i = 0; i < N; ++i) {
-      out.write(chunk);
+      out.Sink::write(chunk);
     }
   }
   ROCKET_EXPECT(file_size(temp) == FILE_SIZE);
@@ -73,7 +73,7 @@ BENCH(nio, BufferedStreamSink, [](benchmark::State& state) {
     StreamSink out(os);
     BufferedSink buffered(out);
     for (u64 i = 0; i < N; ++i) {
-      buffered.write(chunk);
+      buffered.Sink::write(chunk);
     }
   }
   ROCKET_EXPECT(file_size(temp) == FILE_SIZE);

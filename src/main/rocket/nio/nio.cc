@@ -22,9 +22,9 @@ to make up a quick and dirty logging facility here.
 
 ---------------------------------------------------------------------------------------------------------- */
 
-// #define NIO_LOG // Use this to activate logging
+// #define ROCKET_LOG_NIO // Use this to activate logging
 
-#ifdef NIO_LOG
+#ifdef ROCKET_LOG_NIO
 #define LOG(args) cout << "# " << ROCKET_SRC_FILE << ':' << __LINE__ << ' ' << __FUNCTION__ << ": " << args << endl;
 #else
 #define LOG(args)
@@ -65,7 +65,7 @@ BufferedSink::BufferedSink(Sink& underlying, u64 size) :
     underlying_(underlying),
     size_(size) {
   ROCKET_CHECK(size, size >= MIN_BUFFER_SIZE);
-  buf_ = make_unique<char[]>(size); // NOLINT
+  buf_ = make_unique<u8[]>(size); // NOLINT
 }
 
 BufferedSink::~BufferedSink() {
@@ -102,13 +102,13 @@ BufferedSink::flushBuffer() {
 
   if (pos_ > 0) {
     LOG("Flushing " << pos_ << " bytes from buffer to underlying")
-    underlying_.write(string_view(&buf_[0], pos_));
+    underlying_.write(std::span<const u8>(&buf_[0], pos_));
     pos_ = 0;
   }
 }
 
 u64
-BufferedSink::write(string_view in) {
+BufferedSink::write(std::span<const u8> in) {
   if (not checkOpen()) {
     return error();
   }
@@ -133,7 +133,7 @@ BufferedSink::write(string_view in) {
     memcpy(&buf_[pos_], rest.data(), available);
     LOG("Storing " << available << " available bytes in buffer");
     pos_ += available;
-    rest = rest.substr(available);
+    rest = rest.subspan(available);
     flushBuffer();
   }
 
@@ -216,7 +216,7 @@ FileSink::handle() const {
 }
 
 u64
-FileSink::write(string_view in) {
+FileSink::write(std::span<const u8> in) {
   if (not checkOpen()) {
     return error_;
   }
@@ -231,7 +231,7 @@ FileSink::write(string_view in) {
 // #SpanSink ------------------------------------------------------------------------------------------------
 
 u64
-SpanSink::write(string_view in) {
+SpanSink::write(std::span<const u8> in) {
   const u64 available = out_.size() - pos_;
   const u64 ret = min(available, in.size());
   if (ret > 0) {
@@ -288,12 +288,12 @@ StreamSink::handle() const {
 }
 
 u64
-StreamSink::write(string_view in) {
+StreamSink::write(std::span<const u8> in) {
   if (not checkOpen()) {
     return error_;
   }
 
-  const u64 ret = os_.rdbuf()->sputn(in.data(), safe<streamsize>(in.size()));
+  const u64 ret = os_.rdbuf()->sputn(reinterpret_cast<const char*>(in.data()), safe<streamsize>(in.size()));
   if (ret != in.size()) {
     os_.setstate(ios_base::badbit);
   }
@@ -305,34 +305,57 @@ StreamSink::write(string_view in) {
 // #StringSink ----------------------------------------------------------------------------------------------
 
 u64
-StringSink::write(string_view in) {
+StringSink::write(std::span<const u8> in) {
   if (not checkOpen()) {
     return 0;
   }
 
+  std::string_view view(reinterpret_cast<const char*>(in.data()), in.size());
   if (ptr_ != nullptr) {
-    ptr_->append(in);
+    ptr_->append(view);
   } else {
-    owned_.append(in);
+    owned_.append(view);
   }
   return in.size();
 }
 
 // #Source --------------------------------------------------------------------------------------------------
 
+vector<u8>
+Source::readAll() {
+  if (not checkOpen()) {
+    return {};
+  }
+
+  vector<u8> ret;
+  auto buf = make_unique<u8[]>(DEFAULT_BUFFER_SIZE); // NOLINT
+  const span<u8> out(&buf[0], DEFAULT_BUFFER_SIZE);
+  while (true) {
+    const u64 n = read(out);
+    if (n > 0) {
+      ret.insert(ret.end(), out.data(), out.data() + n);
+    }
+    if (n != out.size()) {
+      break;
+    }
+  }
+  return ret;
+}
+
 string
-Source::read() {
+Source::readString() {
   if (not checkOpen()) {
     return {};
   }
 
   string ret;
-  auto buf = make_unique<char[]>(DEFAULT_BUFFER_SIZE); // NOLINT
-  const span<char> out(&buf[0], DEFAULT_BUFFER_SIZE);
+  auto buf = make_unique<u8[]>(DEFAULT_BUFFER_SIZE); // NOLINT
+  const span<u8> out(&buf[0], DEFAULT_BUFFER_SIZE);
   while (true) {
     const u64 n = read(out);
     if (n > 0) {
-      ret.append(out.data(), n);
+      string_view view(reinterpret_cast<const char*>(out.data()), n);
+      ret.append(view.data(), n);
     }
     if (n != out.size()) {
       break;
@@ -407,7 +430,7 @@ BufferedSource::BufferedSource(Source& underlying, u64 size) :
     underlying_(underlying),
     size_(size) {
   ROCKET_CHECK(size, size >= MIN_BUFFER_SIZE);
-  buf_ = make_unique<char[]>(size); // NOLINT
+  buf_ = make_unique<u8[]>(size); // NOLINT
   bufPos_ = underlying.tell();
 }
 
@@ -430,7 +453,7 @@ BufferedSource::close() {
 }
 
 u64
-BufferedSource::read(span<char> out) {
+BufferedSource::read(span<u8> out) {
   if (not checkOpen()) {
     return 0;
   }
@@ -446,7 +469,7 @@ BufferedSource::read(span<char> out) {
     if (pos_ == end_) {
       bufPos_ = underlying_.tell();
       pos_ = 0;
-      end_ = underlying_.read(span<char>(&buf_[0], size_));
+      end_ = underlying_.read(span<u8>(&buf_[0], size_));
       LOG("Initialized buffer with " << end_ << " bytes from underlying; bufPos=" << bufPos_ << ", pos=" << pos_ << ", end=" << end_);
       if (end_ == 0) {
         break;
@@ -594,7 +617,7 @@ FileSource::handle() const {
 }
 
 u64
-FileSource::read(span<char> out) {
+FileSource::read(span<u8> out) {
   if (not checkOpen()) {
     return 0;
   }
@@ -680,13 +703,13 @@ StreamSource::handle() const {
 }
 
 u64
-StreamSource::read(span<char> out) {
+StreamSource::read(span<u8> out) {
   if (not checkOpen()) {
     return 0;
   }
 
   // If less bytes than `out.size()` are read, `bad`, `fail`, and `eof` all remain `false`
-  is_.read(out.data(), safe<streamsize>(out.size()));
+  is_.read(reinterpret_cast<char*>(out.data()), safe<streamsize>(out.size()));
   auto count = is_.gcount();
   // #std::istream::readsome didn't work in Windows with a #std::ifstream
   // u64 ret = is_.readsome(out.data(), out.size());
@@ -746,7 +769,7 @@ StreamSource::tell() {
 // #StringSource --------------------------------------------------------------------------------------------
 
 u64
-StringSource::read(span<char> out) {
+StringSource::read(span<u8> out) {
   if (not checkOpen()) {
     return 0;
   }

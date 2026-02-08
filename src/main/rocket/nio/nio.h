@@ -17,6 +17,7 @@
 #include <memory>
 #include <span>
 #include <string>
+#include <vector>
 
 namespace rocket::nio {
 
@@ -191,12 +192,44 @@ struct Sink : Io {
   /**
    * Writes a single character to the sink.
    *
-   * @param c the character
+   * @param val the character
    * @return the number of bytes written
    */
   u64
-  write(char c) {
-    return write(std::string_view(&c, 1));
+  write(char val) {
+    return write(std::span<const u8>(reinterpret_cast<const u8*>(&val), 1));
+  }
+
+  /**
+   * Writes a single byte to the sink.
+   *
+   * @param val the byte
+   * @return the number of bytes written
+   */
+  u64
+  write(u8 val) {
+    return write(std::span<const u8>(reinterpret_cast<const u8*>(&val), 1));
+  }
+
+  /**
+   * Writes bytes to the sink.
+   *
+   * @param in the bytes to write
+   * @return the number of bytes written
+   */
+  virtual u64 write(std::span<const u8> in) = 0;
+
+  /**
+   * Writes bytes to the sink
+   *
+   * @param in the bytes to write
+   * @param offset the offset at which to start writing
+   * @param n the number of bytes to write
+   * @return the number of bytes written
+   */
+  u64
+  write(std::span<const u8> in, u64 offset, u64 n = NPOS) {
+    return write(in.subspan(offset, n));
   }
 
   /**
@@ -205,7 +238,11 @@ struct Sink : Io {
    * @param in the string to write
    * @return the number of bytes written
    */
-  virtual u64 write(std::string_view in) = 0;
+  u64
+  write(std::string_view in) {
+    std::span<const u8> span(reinterpret_cast<const u8*>(in.data()), in.size());
+    return write(span);
+  }
 
   /**
    * Writes a string to the sink.
@@ -277,14 +314,14 @@ protected:
 
   bool open() const override { return underlying_.open(); }
 
-  u64 write(std::string_view in) override;
+  u64 write(std::span<const u8> in) override;
 
 ROCKET_TEST_PRIVATE:
 
   Sink& underlying_; ///< The underlying sink.
   u64 size_; ///< The size of the buffer.
   /// The buffer.
-  std::unique_ptr<char[]> buf_; // NOLINT
+  std::unique_ptr<u8[]> buf_; // NOLINT
   u64 pos_ = 0; ///< The current position in the buffer.
 
   /// Flushes the buffer to the underlying sink.
@@ -344,7 +381,7 @@ struct FileSink : Sink {
 
   i32 handle() const override;
 
-  u64 write(std::string_view in) override;
+  u64 write(std::span<const u8> in) override;
 
 ROCKET_TEST_PRIVATE:
 
@@ -366,7 +403,7 @@ struct NullSink : Sink {
 
   i32 handle() const override { return -1; }
 
-  u64 write([[maybe_unused]] std::string_view in) override { return 0; }
+  u64 write([[maybe_unused]] std::span<const u8> in) override { return 0; }
 };
 
 // #SpanSink ------------------------------------------------------------------------------------------------
@@ -390,7 +427,7 @@ struct SpanSink : Sink {
 
   i32 handle() const override { return -1; }
 
-  u64 write(std::string_view in) override;
+  u64 write(std::span<const u8> in) override;
 
 private:
 
@@ -422,7 +459,7 @@ struct StreamSink : Sink {
 
   i32 handle() const override;
 
-  u64 write(std::string_view in) override;
+  u64 write(std::span<const u8> in) override;
 
 private:
 
@@ -465,7 +502,7 @@ struct StringSink : Sink {
    */
   const std::string& str() const { return ptr_ != nullptr ? *ptr_ : owned_; }
 
-  u64 write(std::string_view in) override;
+  u64 write(std::span<const u8> in) override;
 
 private:
 
@@ -491,11 +528,18 @@ enum class SeekMode : u8 {
  */
 struct Source : Io {
   /**
-   * Reads all characters from a source into string.
+   * Reads all available bytes from a source into a vector.
+   *
+   * @return the bytes read
+   */
+  std::vector<u8> readAll();
+
+  /**
+   * Reads all available characters from a source into a string.
    *
    * @return the string read
    */
-  std::string read();
+  std::string readString();
 
   /**
    * Reads a single character from a source.
@@ -503,15 +547,15 @@ struct Source : Io {
    * @param out the character to read
    * @return the number of bytes read
    */
-  u64 read(char& out) { return read({ &out, 1 }); }
+  u64 read(char& out) { return read(std::span<u8>(reinterpret_cast<u8*>(&out), 1)); }
 
   /**
-   * Reads as many characters as available into a span.
+   * Reads as many bytes as available into a span.
    *
    * @param out the span to read into
    * @return the number of bytes read
    */
-  virtual u64 read(std::span<char> out) = 0;
+  virtual u64 read(std::span<u8> out) = 0;
 
   /**
    * Reads a line from a source into a string.
@@ -582,7 +626,7 @@ struct BufferedSource : Source {
 
   bool open() const override { return underlying_.open(); }
 
-  u64 read(std::span<char> out) override;
+  u64 read(std::span<u8> out) override;
 
   i32 seek(i64 offset, SeekMode mode = SeekMode::beg) override; // NOLINT
 
@@ -593,7 +637,7 @@ ROCKET_TEST_PRIVATE:
   Source& underlying_; ///< The underlying source.
   u64 size_; ///< The size of the buffer.
   /// The buffer.
-  std::unique_ptr<char[]> buf_; // NOLINT
+  std::unique_ptr<u8[]> buf_; // NOLINT
   u64 bufPos_ = NPOS; ///< Where buffer position 0 maps to in the underlying source.
   u64 pos_ = 0; ///< The current position in the buffer.
   /**
@@ -651,7 +695,7 @@ struct FileSource : Source {
 
   i32 handle() const override;
 
-  u64 read(std::span<char> out) override;
+  u64 read(std::span<u8> out) override;
 
   i32 seek(i64 offset, SeekMode mode = SeekMode::beg) override; // NOLINT
 
@@ -675,7 +719,7 @@ ROCKET_TEST_PRIVATE:
 
   i32 handle() const override { return -1; }
 
-  u64 read([[maybe_unused]] std::span<char> out) override { return 0; }
+  u64 read([[maybe_unused]] std::span<u8> out) override { return 0; }
 
   i32
   seek([[maybe_unused]] i64 offset, [[maybe_unused]] SeekMode mode = SeekMode::beg) override { // NOLINT
@@ -707,7 +751,7 @@ struct StreamSource : Source {
 
   i32 handle() const override;
 
-  u64 read(std::span<char> out) override;
+  u64 read(std::span<u8> out) override;
 
   i32 seek(i64 offset, SeekMode mode = SeekMode::beg) override; // NOLINT
 
@@ -739,7 +783,7 @@ struct StringSource : Source {
 
   i32 handle() const override { return -1; }
 
-  u64 read(std::span<char> out) override;
+  u64 read(std::span<u8> out) override;
 
   i32 seek(i64 offset, SeekMode mode = SeekMode::beg) override; // NOLINT
 

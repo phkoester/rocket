@@ -49,7 +49,7 @@ addArg(vector<string>& out, const string& arg, set<string>& seenFiles) { // NOLI
       if (not in.good()) {
         ROCKET_FAIL("Cannot read argument file `{}`", file);
       }
-      const string contents = in.Source::read();
+      const string contents = in.readString();
       auto lines = str::lines<char>(contents);
       ROCKET_ASSERT(not lines.empty());
       if (lines.back().empty()) {
