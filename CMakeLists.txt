@@ -25,6 +25,7 @@ AddVar(ROCKET_BUILD_TEST  BOOL ${ROCKET_MASTER_PROJECT} "Enable testing and buil
 
 AddVar(ROCKET_BENCHMARK_VERSION STRING 1.9.5  "benchmark version")
 AddVar(ROCKET_BOOST_VERSION     STRING 1.85.0 "Boost version")
+AddVar(ROCKET_LOG_NIO           BOOL   OFF    "Enable logging of `rocket::nio`")
 AddVar(ROCKET_FMT_VERSION       STRING 12.1.0 "{fmt} version")
 AddVar(ROCKET_GTEST_VERSION     STRING 1.17.0 "GTest version")
 AddVar(ROCKET_ICU_VERSION       STRING 74.2   "ICU version")

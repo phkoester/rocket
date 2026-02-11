@@ -122,6 +122,7 @@ target_sources(rocket
       rocket/unicode/unicode.h
 )
 set_target_properties(rocket PROPERTIES VERSION ${PROJECT_VERSION}) # SOVERSION 0
+
 target_compile_definitions(rocket
   PRIVATE
     ROCKET_EXPORTING__
@@ -131,6 +132,10 @@ target_compile_definitions(rocket
     ROCKET_TEST_PRIVATE=private
     ROCKET_TEST_PROTECTED=protected
 )
+if(ROCKET_LOG_NIO)
+  target_compile_definitions(rocket PRIVATE ROCKET_LOG_NIO)
+endif()
+
 target_compile_features(rocket PUBLIC ${COMPILE_FEATURES})
 target_compile_options(rocket PUBLIC ${COMPILE_FLAGS})
 # Make `scn/impl.h` available

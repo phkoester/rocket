@@ -36,7 +36,7 @@ AddTest(test-rocket-hash rocket test-hash.cc)
 AddTest(test-rocket-macro rocket test-macro.cc)
 AddTest(test-rocket-Process rocket test-Process.cc)
 AddTest(test-rocket-cl rocket/cl test-cl.cc)
-AddTest(test-rocket-codec rocket/codec test-codec.cc)
+AddTest(test-rocket-codec rocket/codec test-Formatted.cc)
 AddTest(test-rocket-external-boost-safe-numerics rocket/external test-boost-safe-numerics.cc)
 
 set(GENERATED_CC ${GENERATED_DIR}/generated.cc)

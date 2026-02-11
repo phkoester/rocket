@@ -209,6 +209,7 @@ TEST(nio, FileSourceReadAll) {
   auto bytes = in.readAll();
   EXPECT_EQ(in.error(), 0);
   EXPECT_EQ(in.tell(), 4);
+  EXPECT_TRUE(in.good());
   EXPECT_EQ(bytes, data);
 
   bytes = in.readAll();
@@ -252,6 +253,7 @@ TEST(nio, StreamSourceReadAll) {
   StreamSource in(is);
   auto bytes = in.readAll();
   EXPECT_EQ(in.tell(), 4);
+  EXPECT_TRUE(in.good());
   EXPECT_EQ(bytes, data);
 
   bytes = in.readAll();

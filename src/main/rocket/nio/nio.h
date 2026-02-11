@@ -28,9 +28,26 @@ namespace rocket::nio {
  */
 static constexpr u64 DEFAULT_BUFFER_SIZE = 64 * 1'024; // 64 KiB
 /**
-  * The minimum buffer size in bytes.
-  */
+ * The minimum buffer size in bytes.
+ */
 static constexpr u64 MIN_BUFFER_SIZE = 64;
+
+// #Status --------------------------------------------------------------------------------------------------
+
+struct Status {
+  /**
+   * If #bad is set, the I/O is in an unusable state.
+   */
+  unsigned bad : 1;
+  /**
+   * If #eof is set, the I/O is exhausted.
+   *
+   * Subsequent operations, such as repositioning, may clear this bit.
+   */
+  unsigned eof : 1;
+};
+
+static_assert(sizeof(Status) == sizeof(i32));
 
 // #Io ------------------------------------------------------------------------------------------------------
 
@@ -47,25 +64,25 @@ struct Io {
   virtual ~Io() = default;
 
   /**
+   * Checks if the bad bit is set.
+   *
+   * @return whether the bad bit is set
+   */
+  [[nodiscard]] bool bad() const { return status_.bad; }
+
+  /**
    * Closes the instance.
    *
-   * @return 0 if successful, an error code otherwise
+   * @return whether the operation succeeded
    */
-  virtual i32 close() = 0;
+  virtual bool close() = 0;
 
   /**
-   * Returns the error status.
+   * Checks if the EOF bit is set.
    *
-   * @return the error status
+   * @return whether the EOF bit is set
    */
-  [[nodiscard]] virtual i32 error() const { return error_; }
-
-  /**
-   * Checks if the instance is open and the error status is 0.
-   *
-   * @return whether the instance is open and the error status is 0
-   */
-  [[nodiscard]] virtual bool good() const { return open_ && error_ == 0; }
+  [[nodiscard]] bool eof() const { return status_.eof; }
 
   /**
    * Returns the handle of the instance.
@@ -75,28 +92,18 @@ struct Io {
   [[nodiscard]] virtual i32 handle() const = 0;
 
   /**
-   * Checks if the instance is open.
+   * Returns the status.
    *
-   * @return whether the instance is open
+   * @return the status
    */
-  [[nodiscard]] virtual bool open() const { return open_; }
+  [[nodiscard]] Status status() const { return status_; }
 
 protected:
 
+  Status status_ = { .bad = true, .eof = false };
+
   /// @ctor_default
   Io() = default;
-
-  mutable i32 error_ = 0; ///< The error status.
-  bool open_ = true; ///< Open flag.
-
-  /**
-   * Checks if the instance is open.
-   *
-   * If it is not and if the error status is 0, sets the error status to `EBADF`.
-   *
-   * @return whether the instance is open
-   */
-  bool checkOpen() const;
 };
 
 // #Sink ----------------------------------------------------------------------------------------------------
@@ -108,9 +115,9 @@ struct Sink : Io {
   /**
    * Flushes the sink.
    *
-   * @return 0 if successful, an error code otherwise
+   * @return whether the operation succeeded
    */
-  virtual i32 flush() = 0;
+  virtual bool flush() = 0;
 
   /**
    * Prints a formatted message to the sink.
@@ -280,7 +287,7 @@ struct Sink : Io {
 
 protected:
 
-  /// @ctor_default
+  /// @ctor
   Sink() = default;
 };
 
@@ -302,17 +309,11 @@ protected:
 
   ~BufferedSink() override;
 
-  i32 close() override;
+  bool close() override;
 
-  i32 error() const override { return underlying_.error(); }
-
-  i32 flush() override;
-
-  bool good() const override { return underlying_.good(); }
+  bool flush() override;
 
   i32 handle() const override { return underlying_.handle(); }
-
-  bool open() const override { return underlying_.open(); }
 
   u64 write(std::span<const u8> in) override;
 
@@ -360,7 +361,7 @@ struct FileSink : Sink {
   /**
    * @ctor
    *
-   * @param file a `FILE` pointer to use
+   * @param file a `FILE` pointer to use, nonnull
    * @param config the configuration
    */
   explicit FileSink(FILE* file, const Config& config = defaultConfig());
@@ -375,9 +376,9 @@ struct FileSink : Sink {
 
   ~FileSink() override;
 
-  i32 close() override;
+  bool close() override;
 
-  i32 flush() override;
+  bool flush() override;
 
   i32 handle() const override;
 
@@ -395,11 +396,13 @@ ROCKET_TEST_PRIVATE:
  * A null sink that never writes anything.
  */
 struct NullSink : Sink {
-  ~NullSink() override;
+  NullSink() { status_.eof = true; }
 
-  i32 close() override { return EIO; }
+  ~NullSink() override = default;
 
-  i32 flush() override { return EIO; }
+  bool close() override { return false; }
+
+  bool flush() override { return false; }
 
   i32 handle() const override { return -1; }
 
@@ -417,13 +420,13 @@ struct SpanSink : Sink {
    *
    * @param out the span to write to
    */
-  explicit SpanSink(std::span<char> out) : out_(out) {}
+  explicit SpanSink(std::span<char> out);
 
   ~SpanSink() override = default;
 
-  i32 close() override { return EIO; }
+  bool close() override;
 
-  i32 flush() override { return 0; }
+  bool flush() override { return false; }
 
   i32 handle() const override { return -1; }
 
@@ -449,13 +452,13 @@ struct StreamSink : Sink {
    *
    * @param os the output stream to write to
    */
-  explicit StreamSink(std::ostream& os) : os_(os) {}
+  explicit StreamSink(std::ostream& os);
 
   ~StreamSink() override;
 
-  i32 close() override;
+  bool close() override;
 
-  i32 flush() override;
+  bool flush() override;
 
   i32 handle() const override;
 
@@ -478,20 +481,20 @@ struct StringSink : Sink {
   /**
    * Makes a new #StringSink with an owned string.
    */
-  explicit StringSink() = default;
+  explicit StringSink();
 
   /**
    * Makes a new #StringSink with a string reference and no owned string.
    *
    * @param ref the string to write to. The reference must remain valid for the lifetime of the #StringSink
    */
-  explicit StringSink(std::string& ref) : ptr_(&ref) {}
+  explicit StringSink(std::string& ref);
 
   ~StringSink() override = default;
 
-  i32 close() override { return EIO; }
+  bool close() override;
 
-  i32 flush() override { return EIO; }
+  bool flush() override { return false; }
 
   i32 handle() const override { return -1; }
 
@@ -581,14 +584,14 @@ struct Source : Io {
    *
    * @param offset the offset to seek to
    * @param mode the seek mode
-   * @return 0 if successful, an error code otherwise
+   * @return whether the operation succeeded
    */
-  virtual i32 seek(i64 offset, SeekMode mode = SeekMode::beg) = 0; // NOLINT
+  virtual bool seek(i64 offset, SeekMode mode = SeekMode::beg) = 0; // NOLINT
 
   /**
    * Returns the current input position
    *
-   * @return the current input position, or #rocket::NPOS if that position cannot be determined
+   * @return the current input position, or #rocket::NPOS if the position cannot be determined
    */
   virtual u64 tell() = 0;
 
@@ -616,19 +619,13 @@ struct BufferedSource : Source {
 
   ~BufferedSource() override;
 
-  i32 close() override;
-
-  i32 error() const override { return underlying_.error(); }
-
-  bool good() const override { return underlying_.good(); }
+  bool close() override;
 
   i32 handle() const override { return underlying_.handle(); }
 
-  bool open() const override { return underlying_.open(); }
-
   u64 read(std::span<u8> out) override;
 
-  i32 seek(i64 offset, SeekMode mode = SeekMode::beg) override; // NOLINT
+  bool seek(i64 offset, SeekMode mode = SeekMode::beg) override; // NOLINT
 
   u64 tell() override;
 
@@ -691,13 +688,13 @@ struct FileSource : Source {
 
   ~FileSource() override;
 
-  i32 close() override;
+  bool close() override;
 
   i32 handle() const override;
 
   u64 read(std::span<u8> out) override;
 
-  i32 seek(i64 offset, SeekMode mode = SeekMode::beg) override; // NOLINT
+  bool seek(i64 offset, SeekMode mode = SeekMode::beg) override; // NOLINT
 
   u64 tell() override;
 
@@ -713,17 +710,19 @@ ROCKET_TEST_PRIVATE:
  * A null source that never reads anything.
  */
  struct NullSource : Source {
-  ~NullSource() override;
+  NullSource() { status_.eof = true; }
 
-  i32 close() override { return EIO; }
+  ~NullSource() override = default;
+
+  bool close() override { return false; }
 
   i32 handle() const override { return -1; }
 
   u64 read([[maybe_unused]] std::span<u8> out) override { return 0; }
 
-  i32
+  bool
   seek([[maybe_unused]] i64 offset, [[maybe_unused]] SeekMode mode = SeekMode::beg) override { // NOLINT
-    return EINVAL;
+    return false;
   }
 
   u64 tell() override { return NPOS; }
@@ -743,17 +742,17 @@ struct StreamSource : Source {
    *
    * @param is the input stream to read from
    */
-  explicit StreamSource(std::istream& is) : is_(is) {}
+  explicit StreamSource(std::istream& is);
 
   ~StreamSource() override;
 
-  i32 close() override;
+  bool close() override;
 
   i32 handle() const override;
 
   u64 read(std::span<u8> out) override;
 
-  i32 seek(i64 offset, SeekMode mode = SeekMode::beg) override; // NOLINT
+  bool seek(i64 offset, SeekMode mode = SeekMode::beg) override; // NOLINT
 
   u64 tell() override;
 
@@ -765,29 +764,30 @@ private:
 // #StringSource --------------------------------------------------------------------------------------------
 
 /**
- * A sourcde that reads from a string.
+ * A source that reads from a string.
  */
 struct StringSource : Source {
-  StringSource() = default;
+  /// @default_ctor
+  StringSource() : StringSource(std::string_view()) {}
 
   /**
    * @ctor
    *
    * @param in the string to read from
    */
-  explicit StringSource(std::string_view in) : in_(in) {}
+  explicit StringSource(std::string_view in);
 
   ~StringSource() override = default;
 
-  i32 close() override { return EIO; }
+  bool close() override;
 
   i32 handle() const override { return -1; }
 
   u64 read(std::span<u8> out) override;
 
-  i32 seek(i64 offset, SeekMode mode = SeekMode::beg) override; // NOLINT
+  bool seek(i64 offset, SeekMode mode = SeekMode::beg) override; // NOLINT
 
-  u64 tell() override { return pos_; }
+  u64 tell() override { return bad() ? NPOS : static_cast<u64>(pos_); }
 
 private:
 

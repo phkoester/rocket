@@ -11,6 +11,7 @@
 #include <optional>
 #include <type_traits>
 #include <vector>
+
 namespace rocket {
 
 // #Purge ---------------------------------------------------------------------------------------------------
@@ -187,7 +188,6 @@ concept IsFloat = std::is_same_v<PurgeType<T>, typename Float<sizeof(PurgeType<T
 
 // #IsOptional ----------------------------------------------------------------------------------------------
 
-
 template<typename T>
 struct Optional : std::false_type {};
 
@@ -234,7 +234,7 @@ struct LargestType<T> {
 template<typename T, typename U, typename... Ts>
 struct LargestType<T, U, Ts...> {
   using Type = typename LargestType<
-      typename std::conditional_t<(sizeof(T) >= sizeof(U)), T, U>, Ts...>::Type; ///< @type_alias
+    typename std::conditional_t<(sizeof(T) >= sizeof(U)), T, U>, Ts...>::Type; ///< @type_alias
 };
 
 } // namespace rocket
