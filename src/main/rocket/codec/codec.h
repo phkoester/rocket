@@ -55,7 +55,7 @@ enum class ValueType {
   floatingPoint,
   /// Pointers.
   pointer,
-  /// Strings.
+  /// Strings, either #std::string or #std::string_view.
   string,
   /// #std::optional values.
   optional,
