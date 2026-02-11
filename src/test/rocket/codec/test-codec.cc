@@ -13,6 +13,7 @@ using namespace rocket::codec;
 
 // Functions ------------------------------------------------------------------------------------------------
 
+// Tests if #str is available in #in
 bool
 read(nio::Source& in, std::string_view str) {
   auto pos = in.tell();
@@ -38,20 +39,20 @@ readI32(nio::Source& in) {
   throw InputFailure(in.tell(), "expected integer");
 }
 
-// #LoggingConsumerImpl -------------------------------------------------------------------------------------
+// #TracingConsumerImpl -------------------------------------------------------------------------------------
 
 template<ValueType, typename T>
-struct LoggingConsumerImpl;
+struct TracingConsumerImpl;
 
 template<>
-struct LoggingConsumerImpl<ValueType::boolean, bool> {
+struct TracingConsumerImpl<ValueType::boolean, bool> {
   i64 consume(bool val, nio::StringSink& out) {
     return out.println("consuming boolean: {}", val);
   }
 };
 
 template<typename C>
-struct LoggingConsumerImpl<ValueType::character, C> {
+struct TracingConsumerImpl<ValueType::character, C> {
   i64 consume(C val, nio::StringSink& out) {
     std::basic_string<C> str = { val };
     return out.println("consuming character: '{}'", unicode::ConvertTo<char>::apply(str));
@@ -59,34 +60,34 @@ struct LoggingConsumerImpl<ValueType::character, C> {
 };
 
 template<typename I>
-struct LoggingConsumerImpl<ValueType::integer, I> {
+struct TracingConsumerImpl<ValueType::integer, I> {
   u64 consume(I val, nio::StringSink& out) {
     return out.println("consuming integer: {}", val);
   }
 };
 
 template<typename T>
-struct LoggingConsumerImpl<ValueType::string, T> {
+struct TracingConsumerImpl<ValueType::string, T> {
   u64 consume(const T& val, nio::StringSink& out) {
     return out.println("consuming string: {:?}", unicode::ConvertTo<char>::apply(val));
   }
 };
 
 template<typename T>
-struct LoggingConsumerImpl<ValueType::optional, T> {
+struct TracingConsumerImpl<ValueType::optional, T> {
   u64 consume(const T& val, nio::StringSink& out) {
     auto ret = out.println("consuming optional: {}", val);
     if (val) {
       using Elem = typename T::value_type;
       constexpr auto elemValueType = ValueTypes<Elem>::value;
-      ret += LoggingConsumerImpl<elemValueType, Elem>().consume(*val, out);
+      ret += TracingConsumerImpl<elemValueType, Elem>().consume(*val, out);
     }
     return ret;
   }
 };
 
 template<typename T>
-struct LoggingConsumerImpl<ValueType::tuple, T> {
+struct TracingConsumerImpl<ValueType::tuple, T> {
   u64 consume(const T& val, nio::StringSink& out) {
     const auto size = std::tuple_size<T>::value;
     auto ret = out.println("consuming tuple: {}", size);
@@ -102,39 +103,39 @@ private:
   u64 consumeElem(u64& result, const Elem& elem, nio::StringSink& out) {
     result += out.println("consuming tuple elem: {}", elem);
     constexpr auto elemValueType = ValueTypes<Elem>::value;
-    result += LoggingConsumerImpl<elemValueType, Elem>().consume(elem, out);
+    result += TracingConsumerImpl<elemValueType, Elem>().consume(elem, out);
     return result;
   }
 };
 
 template<typename T>
-struct LoggingConsumerImpl<ValueType::array, T> {
+struct TracingConsumerImpl<ValueType::array, T> {
   u64 consume(const T& val, nio::StringSink& out) {
     const auto size = val.size();
     auto ret = out.println("consuming array: {}", size);
     for (auto it = val.begin(), end = val.end(); it != end; ++it) {
       using Elem = typename T::value_type;
       constexpr auto elemValueType = ValueTypes<Elem>::value;
-      ret += LoggingConsumerImpl<elemValueType, Elem>().consume(*it, out);
+      ret += TracingConsumerImpl<elemValueType, Elem>().consume(*it, out);
     }
     return ret;
   }
 };
 
-// #LoggingConsumer -----------------------------------------------------------------------------------------
+// #TracingConsumer -----------------------------------------------------------------------------------------
 
-struct LoggingConsumer {
+struct TracingConsumer {
   template<ValueType ValueType, typename T>
-  using Type = LoggingConsumerImpl<ValueType, T>;
+  using Type = TracingConsumerImpl<ValueType, T>;
 };
 
-// #LoggingProducerImpl -------------------------------------------------------------------------------------
+// #TracingProducerImpl -------------------------------------------------------------------------------------
 
 template<ValueType, typename T>
-struct LoggingProducerImpl;
+struct TracingProducerImpl;
 
 template<>
-struct LoggingProducerImpl<ValueType::boolean, bool> {
+struct TracingProducerImpl<ValueType::boolean, bool> {
   bool produce(nio::Source& in, nio::Sink& out) {
     out.println("producing boolean");
     if (read(in, "false")) {
@@ -148,7 +149,7 @@ struct LoggingProducerImpl<ValueType::boolean, bool> {
 };
 
 template<typename I>
-struct LoggingProducerImpl<ValueType::integer, I> {
+struct TracingProducerImpl<ValueType::integer, I> {
   I produce(nio::Source& in, nio::Sink& out) {
     out.println("producing integer");
     i32 val = readI32(in);
@@ -157,7 +158,7 @@ struct LoggingProducerImpl<ValueType::integer, I> {
 };
 
 template<typename T>
-struct LoggingProducerImpl<ValueType::string, T> {
+struct TracingProducerImpl<ValueType::string, T> {
   using C = typename T::value_type;
   static_assert(std::is_same_v<C, char>, "Cannot decode UTF-32 string<");
 
@@ -177,7 +178,7 @@ struct LoggingProducerImpl<ValueType::string, T> {
 };
 
 template<typename T>
-struct LoggingProducerImpl<ValueType::optional, T> {
+struct TracingProducerImpl<ValueType::optional, T> {
   T produce(nio::Source& in, nio::Sink& out) {
     out.println("producing optional");
     if (read(in, "none")) {
@@ -185,12 +186,12 @@ struct LoggingProducerImpl<ValueType::optional, T> {
     }
     using Elem = typename T::value_type;
     constexpr auto elemValueType = ValueTypes<Elem>::value;
-    return LoggingProducerImpl<elemValueType, Elem>().produce(in, out);
+    return TracingProducerImpl<elemValueType, Elem>().produce(in, out);
   }
 };
 
 template<typename T>
-struct LoggingProducerImpl<ValueType::array, T> {
+struct TracingProducerImpl<ValueType::array, T> {
   T produce(nio::Source& in, nio::Sink& out) {
     using Elem = typename T::value_type;
     constexpr auto elemValueType = ValueTypes<Elem>::value;
@@ -200,32 +201,32 @@ struct LoggingProducerImpl<ValueType::array, T> {
     if constexpr (IsArray<T>) {
       out.println("producing array.array");
       for (u64 i = 0; i < size; ++i) {
-        ret[i] = LoggingProducerImpl<elemValueType, Elem>().produce(in, out);
+        ret[i] = TracingProducerImpl<elemValueType, Elem>().produce(in, out);
       }
     } else {
       out.println("producing array.vector");
       ret.reserve(size);
       for (u64 i = 0; i < size; ++i) {
-        ret.emplace_back(LoggingProducerImpl<elemValueType, Elem>().produce(in, out));
+        ret.emplace_back(TracingProducerImpl<elemValueType, Elem>().produce(in, out));
       }
     }
     return ret;
   }
 };
 
-// #LoggingProducer -----------------------------------------------------------------------------------------
+// #TracingProducer -----------------------------------------------------------------------------------------
 
-struct LoggingProducer {
+struct TracingProducer {
   template<ValueType ValueType, typename T>
-  using Type = LoggingProducerImpl<ValueType, T>;
+  using Type = TracingProducerImpl<ValueType, T>;
 };
 
 // #TEST ----------------------------------------------------------------------------------------------------
 
-// #LoggingConsumer .........................................................................................
+// #TracingConsumer .........................................................................................
 
-TEST(codec, LoggingConsumerBool) {
-  Encoder<LoggingConsumer> encoder;
+TEST(codec, TracingConsumerBool) {
+  Encoder<TracingConsumer> encoder;
   nio::StringSink out;
   encoder.encode(true, out);
   encoder.encode(false, out);
@@ -234,8 +235,8 @@ TEST(codec, LoggingConsumerBool) {
     "consuming boolean: false\n");
 }
 
-TEST(codec, LoggingConsumerCharacter) {
-  Encoder<LoggingConsumer> encoder;
+TEST(codec, TracingConsumerCharacter) {
+  Encoder<TracingConsumer> encoder;
   nio::StringSink out;
   encoder.encode('a', out);
   encoder.encode(U'€', out);
@@ -244,8 +245,8 @@ TEST(codec, LoggingConsumerCharacter) {
     "consuming character: '€'\n");
 }
 
-TEST(codec, LoggingConsumerString) {
-  Encoder<LoggingConsumer> encoder;
+TEST(codec, TracingConsumerString) {
+  Encoder<TracingConsumer> encoder;
   nio::StringSink out;
   encoder.encode("hello"sv, out);
   encoder.encode(U"world"sv, out);
@@ -254,10 +255,10 @@ TEST(codec, LoggingConsumerString) {
     "consuming string: \"world\"\n");
 }
 
-TEST(codec, LoggingConsumerOptionalI32) {
+TEST(codec, TracingConsumerOptionalI32) {
   using type = std::optional<i32>;
 
-  Encoder<LoggingConsumer> encoder;
+  Encoder<TracingConsumer> encoder;
   nio::StringSink out;
   type val;
   encoder.encode(val, out);
@@ -269,8 +270,8 @@ TEST(codec, LoggingConsumerOptionalI32) {
     "consuming integer: 42\n");
 }
 
-TEST(codec, LoggingConsumerTuplePair) {
-  Encoder<LoggingConsumer> encoder;
+TEST(codec, TracingConsumerTuplePair) {
+  Encoder<TracingConsumer> encoder;
   nio::StringSink out;
   encoder.encode(make_pair("answer"sv, 42), out);
   EXPECT_EQ((out.str()),
@@ -281,8 +282,8 @@ TEST(codec, LoggingConsumerTuplePair) {
     "consuming integer: 42\n");
 }
 
-TEST(codec, LoggingConsumerTupleTuple) {
-  Encoder<LoggingConsumer> encoder;
+TEST(codec, TracingConsumerTupleTuple) {
+  Encoder<TracingConsumer> encoder;
   nio::StringSink out;
   encoder.encode(make_tuple("answer"sv, 42, true), out);
   EXPECT_EQ((out.str()),
@@ -295,8 +296,8 @@ TEST(codec, LoggingConsumerTupleTuple) {
     "consuming boolean: true\n");
 }
 
-TEST(codec, LoggingConsumerArrayArray) {
-  Encoder<LoggingConsumer> encoder;
+TEST(codec, TracingConsumerArrayArray) {
+  Encoder<TracingConsumer> encoder;
   nio::StringSink out;
   encoder.encode(array { 1, 2, 3 }, out);
   EXPECT_EQ((out.str()),
@@ -306,8 +307,8 @@ TEST(codec, LoggingConsumerArrayArray) {
     "consuming integer: 3\n");
 }
 
-TEST(codec, LoggingConsumerArrayVector) {
-  Encoder<LoggingConsumer> encoder;
+TEST(codec, TracingConsumerArrayVector) {
+  Encoder<TracingConsumer> encoder;
   nio::StringSink out;
   encoder.encode(vector { 1, 2, 3, 4 }, out);
   EXPECT_EQ((out.str()),
@@ -318,10 +319,10 @@ TEST(codec, LoggingConsumerArrayVector) {
     "consuming integer: 4\n");
 }
 
-TEST(codec, LoggingConsumerOptionalAndVectorInTypeLoop) {
+TEST(codec, TracingConsumerOptionalAndVectorInTypeLoop) {
   using type = optional<vector<optional<i32>>>;
 
-  Encoder<LoggingConsumer> encoder;
+  Encoder<TracingConsumer> encoder;
 
   {
     nio::StringSink out;
@@ -345,10 +346,10 @@ TEST(codec, LoggingConsumerOptionalAndVectorInTypeLoop) {
   }
 }
 
-TEST(codec, LoggingConsumerVectorAndOptionalInTypeLoop) {
+TEST(codec, TracingConsumerVectorAndOptionalInTypeLoop) {
   using type = vector<optional<vector<i32>>>;
 
-  Encoder<LoggingConsumer> encoder;
+  Encoder<TracingConsumer> encoder;
 
   {
     nio::StringSink out;
@@ -370,12 +371,11 @@ TEST(codec, LoggingConsumerVectorAndOptionalInTypeLoop) {
   }
 }
 
-// #LoggingProducer .........................................................................................
+// #TracingProducer .........................................................................................
 
-TEST(codec, LoggingProducerBool) {
+TEST(codec, TracingProducerBool) {
   using type = bool;
-
-  Decoder<LoggingProducer> decoder;
+  Decoder<TracingProducer> decoder;
   nio::StringSource in("true");
   nio::StringSink out;
   auto val = decoder.decode<type>(in, out);
@@ -383,9 +383,9 @@ TEST(codec, LoggingProducerBool) {
   EXPECT_EQ(out.str(), "producing boolean\n");
 }
 
-TEST(codec, LoggingProducerString) {
+TEST(codec, TracingProducerString) {
   using type = string;
-  Decoder<LoggingProducer> decoder;
+  Decoder<TracingProducer> decoder;
   nio::StringSource in("5Hello6Rocket");
   nio::StringSink out;
   auto val = decoder.decode<type>(in, out);
@@ -397,9 +397,9 @@ TEST(codec, LoggingProducerString) {
     "producing string\n");
 }
 
-TEST(codec, LoggingProducerStringView) {
+TEST(codec, TracingProducerStringView) {
   using type = string_view;
-  Decoder<LoggingProducer> decoder;
+  Decoder<TracingProducer> decoder;
   nio::StringSource in("5Hello6Rocket");
   nio::StringSink out;
   auto val = decoder.decode<type>(in, out);
@@ -407,6 +407,7 @@ TEST(codec, LoggingProducerStringView) {
   static_assert(std::is_same_v<decltype(val), string>);
   EXPECT_EQ(val, "Hello"sv);
   auto optVal = decoder.tryDecode<type>(in, out);
+  // The decoder must return an optional string, not an optional string view
   static_assert(std::is_same_v<decltype(optVal), std::optional<string>>);
   EXPECT_EQ(*optVal, "Rocket"sv);
   EXPECT_EQ(out.str(),
@@ -414,10 +415,9 @@ TEST(codec, LoggingProducerStringView) {
     "producing string\n");
 }
 
-TEST(codec, LoggingProducerOptionalBool) {
+TEST(codec, TracingProducerOptionalBool) {
   using type = optional<bool>;
-
-  Decoder<LoggingProducer> decoder;
+  Decoder<TracingProducer> decoder;
 
   {
     nio::StringSource in("none");
@@ -438,10 +438,9 @@ TEST(codec, LoggingProducerOptionalBool) {
   }
 }
 
-TEST(codec, LoggingProducerArrayArray) {
+TEST(codec, TracingProducerArrayArray) {
   using type = array<i32, 3>;
-
-  Decoder<LoggingProducer> decoder;
+  Decoder<TracingProducer> decoder;
   nio::StringSource in("3012");
   nio::StringSink out;
   type val = decoder.decode<type>(in, out);
@@ -453,10 +452,9 @@ TEST(codec, LoggingProducerArrayArray) {
     "producing integer\n");
 }
 
-TEST(codec, LoggingProducerArrayVector) {
+TEST(codec, TracingProducerArrayVector) {
   using type = vector<i32>;
-
-  Decoder<LoggingProducer> decoder;
+  Decoder<TracingProducer> decoder;
   nio::StringSource in("43210");
   nio::StringSink out;
   type val = decoder.decode<type>(in, out);
