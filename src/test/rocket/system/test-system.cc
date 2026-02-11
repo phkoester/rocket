@@ -117,14 +117,15 @@ TEST(system, execPrintArgs) {
   const string executable = printArgs.string();
 
   {
-    // Test spaces and quotes
-    const auto bytes = exec({ executable, "a", "b c", " d ", "'", "\"" });
+    // Test spaces, quotes and backslash
+    const auto bytes = exec({ executable, "a", "b c", " d ", "'", "\"", "\\" });
     const string_view out(bytes.data(), bytes.size());
     EXPECT_THAT(out, HasSubstr("1=a="));
     EXPECT_THAT(out, HasSubstr("2=b c="));
     EXPECT_THAT(out, HasSubstr("3= d ="));
     EXPECT_THAT(out, HasSubstr("4='="));
     EXPECT_THAT(out, HasSubstr("5=\"="));
+    EXPECT_THAT(out, HasSubstr("6=\\="));
   }
 
   {
@@ -143,14 +144,15 @@ TEST(system, execPrintArgsWithSpace) {
   const string executable = printArgsWithSpace.string();
 
   {
-    // Test spaces and quotes
-    const auto bytes = exec({ executable, "a", "b c", " d ", "'", "\"" });
+    // Test spaces and quotes, and backslash
+    const auto bytes = exec({ executable, "a", "b c", " d ", "'", "\"", "\\" });
     const string_view out(bytes.data(), bytes.size());
     EXPECT_THAT(out, HasSubstr("1=a="));
     EXPECT_THAT(out, HasSubstr("2=b c="));
     EXPECT_THAT(out, HasSubstr("3= d ="));
     EXPECT_THAT(out, HasSubstr("4='="));
     EXPECT_THAT(out, HasSubstr("5=\"="));
+    EXPECT_THAT(out, HasSubstr("6=\\="));
   }
 
   {
