@@ -8,6 +8,7 @@
 
 #include "rocket/rocket.h"
 
+#include <array>
 #include <optional>
 #include <type_traits>
 #include <vector>
@@ -185,6 +186,17 @@ concept IsInteger = IsInt<T> || IsUint<T>;
 
 template<typename T>
 concept IsFloat = std::is_same_v<PurgeType<T>, typename Float<sizeof(PurgeType<T>)>::Type>;
+
+// #IsArray -------------------------------------------------------------------------------------------------
+
+template<typename T>
+struct Array : std::false_type {};
+
+template<typename T, u64 N> // XXX Klappt das? Oder muss es U heißen?
+struct Array<std::array<T, N>> : std::true_type {};
+
+template<typename T>
+concept IsArray = Array<T>::value;
 
 // #IsOptional ----------------------------------------------------------------------------------------------
 

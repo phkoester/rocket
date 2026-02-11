@@ -1,12 +1,12 @@
 /**
- * @file Formatted.h
+ * @file FormattedCodec.h
  */
 
 #pragma once
 
 #include "rocket/assert.h"
 #include "rocket/InputFailure.h"
-#include "rocket/rocket.h"
+#include "rocket/codec/codec.h"
 
 #include <fmt/ranges.h>
 

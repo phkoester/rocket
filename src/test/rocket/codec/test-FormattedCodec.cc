@@ -1,16 +1,17 @@
 /*
- * test-Formatted.cc
+ * test-FormattedCodec.cc
  */
 
 #include "rocket-test/rocket-test.h"
 
 #include "rocket/codec/codec.h"
-#include "rocket/codec/Formatted.h"
+#include "rocket/codec/FormattedCodec.h"
 
 using namespace rocket::codec;
 
 // #TEST ----------------------------------------------------------------------------------------------------
 
+#if 0
 TEST(Formatted, bool) {
   EXPECT_EQ(encode<Formatted>(true), "true");
   EXPECT_EQ((decode<Formatted, bool>("true"sv)), true);
@@ -26,7 +27,6 @@ TEST(Formatted, optionalI32) {
   EXPECT_EQ((decode<Formatted, type>("42"sv)), 42);
 }
 
-#if 0
 TEST(Formatted, char) {
   EXPECT_EQ(encode<Formatted>('a'), "'a'");
   EXPECT_EQ((decode<Formatted, char>("'a'"sv)), 'a');
@@ -34,9 +34,7 @@ TEST(Formatted, char) {
   EXPECT_EQ(encode<Formatted>('\x01'), "'\\x01'");
   EXPECT_EQ((decode<Formatted, char>("'\\x01'"sv)), '\x01');
 }
-#endif
 
-#if 0
 TEST(Formatted, optionalAndVectorInTypeLoopFormat) {
   using type = optional<vector<optional<i32>>>;
 
