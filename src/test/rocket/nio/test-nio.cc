@@ -48,19 +48,17 @@ TEST(nio, BufferedSink) {
 TEST(nio, FileSinkDoesNotExist) {
   FileSink out("/does/not/exist");
 
-  EXPECT_EQ(out.error(), ENOENT);
-  EXPECT_EQ(out.good(), false);
-  EXPECT_EQ(out.open(), false);
+  EXPECT_TRUE(out.bad());
   EXPECT_EQ(out.file_, nullptr);
 
-  out.Sink::write("a");
-  EXPECT_EQ(out.error(), ENOENT);
+  EXPECT_EQ(out.Sink::write("a"), 0);
+  EXPECT_TRUE(out.bad());
 
   out.close();
-  EXPECT_EQ(out.error(), ENOENT);
+  EXPECT_TRUE(out.bad());
 
-  out.Sink::write("b");
-  EXPECT_EQ(out.error(), ENOENT);
+  EXPECT_EQ(out.Sink::write("b"), 0);
+  EXPECT_TRUE(out.bad());
 }
 
 TEST(nio, SpanSink) {
@@ -181,20 +179,18 @@ TEST(nio, BufferedSourceSeek) {
 TEST(nio, FileSourceDoesNotExist) {
   FileSource in("/does/not/exist");
 
-  EXPECT_EQ(in.error(), ENOENT);
-  EXPECT_EQ(in.good(), false);
-  EXPECT_EQ(in.open(), false);
+  EXPECT_TRUE(in.bad());
   EXPECT_EQ(in.file_, nullptr);
 
   auto out = in.readString();
   EXPECT_TRUE(out.empty());
-  EXPECT_EQ(in.error(), ENOENT);
+  EXPECT_TRUE(in.bad());
 
   in.close();
-  EXPECT_EQ(in.error(), ENOENT);
+  EXPECT_TRUE(in.bad());
 
   out = in.readString();
-  EXPECT_EQ(in.error(), ENOENT);
+  EXPECT_TRUE(in.bad());
 }
 
 TEST(nio, FileSourceReadAll) {
@@ -207,9 +203,10 @@ TEST(nio, FileSourceReadAll) {
 
   FileSource in(temp.string());
   auto bytes = in.readAll();
-  EXPECT_EQ(in.error(), 0);
+  EXPECT_FALSE(in.bad());
+  EXPECT_TRUE(in.eof());
   EXPECT_EQ(in.tell(), 4);
-  EXPECT_TRUE(in.good());
+  EXPECT_FALSE(in.bad());
   EXPECT_EQ(bytes, data);
 
   bytes = in.readAll();
@@ -225,11 +222,12 @@ TEST(nio, FileSourceReadString) {
 
   FileSource in(temp.string());
   auto str = in.readString();
-  EXPECT_EQ(in.error(), 0);
+  EXPECT_FALSE(in.bad());
+  EXPECT_TRUE(in.eof());
   EXPECT_EQ(str, "Hey there\n");
   str = in.readString();
   EXPECT_EQ(str, "");
-  EXPECT_EQ(in.error(), 0);
+  EXPECT_FALSE(in.bad());
 
   in.seek(-6, SeekMode::end);
   EXPECT_EQ(in.tell(), 4);
@@ -252,8 +250,9 @@ TEST(nio, StreamSourceReadAll) {
   ifstream is(temp.c_str());
   StreamSource in(is);
   auto bytes = in.readAll();
+  EXPECT_FALSE(in.bad());
+  EXPECT_TRUE(in.eof());
   EXPECT_EQ(in.tell(), 4);
-  EXPECT_TRUE(in.good());
   EXPECT_EQ(bytes, data);
 
   bytes = in.readAll();
@@ -272,6 +271,8 @@ TEST(nio, StreamSourceReadString) {
   ifstream is(temp.c_str());
   StreamSource in(is);
   auto str = in.readString();
+  EXPECT_FALSE(in.bad());
+  EXPECT_TRUE(in.eof());
   EXPECT_EQ(in.tell(), 10);
   EXPECT_EQ(str, "Hey there\n");
   str = in.readString();

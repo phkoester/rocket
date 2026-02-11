@@ -132,8 +132,8 @@ target_compile_definitions(rocket
     ROCKET_TEST_PRIVATE=private
     ROCKET_TEST_PROTECTED=protected
 )
-if(ROCKET_LOG_NIO)
-  target_compile_definitions(rocket PRIVATE ROCKET_LOG_NIO)
+if(ROCKET_NIO_LOG)
+  target_compile_definitions(rocket PRIVATE ROCKET_NIO_LOG)
 endif()
 
 target_compile_features(rocket PUBLIC ${COMPILE_FEATURES})

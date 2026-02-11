@@ -46,7 +46,7 @@ addArg(vector<string>& out, const string& arg, set<string>& seenFiles) { // NOLI
 
       // Read the argument file, add arguments
       auto in = nio::FileSource(file);
-      if (not in.good()) {
+      if (in.bad()) {
         ROCKET_FAIL("Cannot read argument file `{}`", file);
       }
       const string contents = in.readString();

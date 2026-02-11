@@ -263,7 +263,7 @@ Out::setPattern(string_view pattern, const TimePoint& time) {
   auto path = expand(pattern, time, true);
   // Always append to avoid data loss
   fileOut_ = make_unique<nio::FileSink>(path, nio::FileSink::Config { .append=true });
-  if (not fileOut_->good()) {
+  if (fileOut_->bad()) {
     process.error(nio::err, 0, "Cannot open log file `{}`; logging to standard output instead", path);
     set(nio::out);
   }

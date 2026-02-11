@@ -22,9 +22,9 @@ to make up a quick and dirty logging facility here.
 
 ---------------------------------------------------------------------------------------------------------- */
 
-// #define ROCKET_LOG_NIO // Use this to activate logging
+// #define ROCKET_NIO_LOG // Use this to activate logging
 
-#ifdef ROCKET_LOG_NIO
+#ifdef ROCKET_NIO_LOG
 #define LOG(args) cout << "# " << ROCKET_SRC_FILE << ':' << __LINE__ << ' ' << __FUNCTION__ << ": " << args << endl;
 #else
 #define LOG(args)
@@ -661,9 +661,7 @@ FileSource::read(span<u8> out) {
   }
 
   const auto result = std::fread(out.data(), 1, out.size(), file_);
-  auto error = ferror(file_);
-  LOG("fread=" << result << ", out.size=" << out.size() << ", ferror=" << error);
-  ROCKET_ASSERT(result == out.size() || error != 0); // XXX Ist das so?
+  LOG("fread=" << result << ", out.size=" << out.size() << ", ferror=" << ferror(file_));
   status_.eof = result < out.size();
   return result;
 }
