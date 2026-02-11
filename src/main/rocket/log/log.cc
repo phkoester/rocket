@@ -30,7 +30,7 @@ const string ROCKET_LOG_FMT = system::env::get<string>("ROCKET_LOG_FMT").value_o
 constexpr auto THREAD_WIDTH = 12;
 constexpr auto LOG_ID_WIDTH = 16;
 
-const unordered_map<LogLevel, string_view> LEVEL_DISPLAY {
+const map<LogLevel, string_view> LEVEL_DISPLAY {
   { LogLevel::none,  "NONE "sv },
   { LogLevel::error, "ERROR"sv },
   { LogLevel::warn,  "WARN "sv },

@@ -418,7 +418,7 @@ void
 CommandLine::printHelpOpts(nio::Sink& out, u64 width) const { // NOLINT(*-complexity)
   // Collect groups and options therein
 
-  unordered_map<const OptionGroup*, vector<const Option*>> options;
+  map<const OptionGroup*, vector<const Option*>> options;
   vector<const OptionGroup*> groups;
 
   OptionGroup null;
