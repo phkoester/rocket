@@ -238,16 +238,36 @@ struct Underflow : Exception, std::underflow_error {
 // #WrappedException ----------------------------------------------------------------------------------------
 
 /**
- * An exception wrapper which has its own #fmt::formatter specialization.
+ * An exception wrapper which has its own `fmt::formatter` specialization.
  */
 struct WrappedException {
+  /**
+   * @ctor
+   *
+   * @param ex the exception
+   */
   explicit WrappedException(const std::exception& ex) : ex_(&ex) {}
 
+  /**
+   * @ctor
+   *
+   * @param ptr the exception pointer
+   */
   explicit WrappedException(std::exception_ptr ptr) : ptr_(ptr) {}
 
-  const std::exception* exception() const { return ex_; }
+  /**
+   * Returns the exception the instance was constructed with.
+   *
+   * @return the exception, or null if the instance was not constructed with an exception
+   */
+  [[nodiscard]] const std::exception* exception() const { return ex_; }
 
-  std::exception_ptr ptr() const { return ptr_; }
+  /**
+   * Returns the exception pointer the instance was constructed with.
+   *
+   * @return the exception pointer, or null if the instance was not constructed with an exception pointer
+   */
+  [[nodiscard]] std::exception_ptr ptr() const { return ptr_; }
 
 private:
 

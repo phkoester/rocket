@@ -19,7 +19,7 @@ namespace rocket::format {
 // #SubformatParams ------------------------------------------------------------------------------------------
 
 /**
- * Parameters for the #rocket::format::Format class.
+ * Parameters for the #rocket::format::Subformat class.
  *
  * @tparam C the character type
  */
@@ -108,7 +108,7 @@ struct SubformatParams {
 template<typename C> requires IsChar<C>
 struct Subformat {
 
-  /// A function that produces #rocket::format::FormatParams.
+  /// A function that produces #rocket::format::SubformatParams.
   using SubformatParamsProducer = std::function<SubformatParams<C>()>;
 
   /**
@@ -164,7 +164,7 @@ struct Subformat {
   /**
    * @ctor
    *
-   * @param fn a function that produces #rocket::format::FormatParams
+   * @param fn a function that produces #rocket::format::SubformatParams
    */
   explicit Subformat(const SubformatParamsProducer& fn) : params_(fn()) {}
 

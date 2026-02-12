@@ -4,16 +4,27 @@
 
 #pragma once
 
-#include "rocket/assert.h"
-#include "rocket/InputFailure.h"
+// XXX #include "rocket/InputFailure.h"
 #include "rocket/codec/codec.h"
+#include "rocket/nio/nio.h"
 
-#include <fmt/ranges.h>
+#include <fmt/std.h>
 
 #include <scn/ranges.h>
 
 namespace rocket::codec {
 
+// #FormattedConsumerConfig ---------------------------------------------------------------------------------
+
+/// Configuration for the #FormattedConsumer.
+struct FormattedConsumerConfig {
+  /// Whether to indent the output and format a tree.
+  bool indent = false;
+};
+
+namespace internal {
+
+#if 0
 // #FormattedCodec ------------------------------------------------------------------------------------------
 
 // Default implementation ...................................................................................
@@ -71,26 +82,68 @@ struct FormattedCodec<std::optional<T>> {
     }
   }
 };
+#endif
 
-// #Formatted -----------------------------------------------------------------------------------------------
+// #FormattedConsumerImpl -----------------------------------------------------------------------------------
+
+#define CONFIG__ [[maybe_unused]] const FormattedConsumerConfig& config
+
+template<ValueType ValueType, typename T>
+struct FormattedConsumerImpl;
+
+template<>
+struct FormattedConsumerImpl<ValueType::Bool, bool> {
+  void
+  consume(bool val, nio::Sink& out, CONFIG__) {
+    out.print("{}", val);
+  }
+};
+
+#undef CONFIG__
+
+// #FormattedProducerImpl -----------------------------------------------------------------------------------
+
+template<ValueType ValueType, typename T>
+struct FormattedProducerImpl;
+
+} // namespace internal
+
+// #FormattedConsumer ---------------------------------------------------------------------------------------
+
+/// The consumer for the #FormmatedCodec.
+struct FormattedConsumer {
+  /// @type_alias
+  template<ValueType ValueType, typename T>
+  using Type = internal::FormattedConsumerImpl<ValueType, T>;
+};
+
+// #FormattedProducer ---------------------------------------------------------------------------------------
 
 /**
- * A codec for formatted string representations.
+ * The producer for the #FormmatedCodec.
  */
-struct Formatted {
-  using EncodedType = std::string;
-  using EncodedViewType = std::string_view;
+struct FormattedProducer {
+  /// @type_alias
+  template<ValueType ValueType, typename T>
+  using Type = internal::FormattedProducerImpl<ValueType, T>;
+};
+
+// #FormattedCodec ------------------------------------------------------------------------------------------
+
+/// The codec for formatted string I/O.
+struct FormattedCodec : Codec<FormattedConsumer, FormattedProducer> {
+  using Base = Codec<FormattedConsumer, FormattedProducer>; ///< @type_base
 
   template<typename T>
-  static std::pair<T, u64>
-  decode(EncodedViewType in, u64 offset) {
-    return FormattedCodec<T>::decode(in, offset);
+  auto
+  encode(const T& val, nio::Sink& out) const {
+    return Base::encode(val, out, FormattedConsumerConfig());
   }
 
   template<typename T>
-  static void
-  encode(EncodedType& out, const T& val) {
-    FormattedCodec<T>::encode(out, val);
+  auto
+  encode(const T& val, nio::Sink& out, const FormattedConsumerConfig& config) const {
+    return Base::encode(val, out, config);
   }
 };
 

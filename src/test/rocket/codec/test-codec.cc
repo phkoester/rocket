@@ -4,12 +4,26 @@
 
 #include "rocket-test/rocket-test.h"
 
-#include "rocket/codec/codec.h"
 #include "rocket/nio/nio.h"
+#include "rocket/reflect/reflect.h"
 #include "rocket/unicode/ConvertTo.h"
 
 using namespace rocket;
 using namespace rocket::codec;
+
+// #MyStruct ------------------------------------------------------------------------------------------------
+
+struct MyStruct {
+  int ärger;
+  bool ökonom;
+  string übermut;
+  vector<int> vec;
+
+  ROCKET_REFLECT_MEMBERS(MyStruct, index, (ärger)(ökonom)(übermut)(vec));
+};
+
+ROCKET_REFLECT_MEMBERS_DECLARE(, MyStruct, index);
+ROCKET_REFLECT_MEMBERS_DEFINE(, MyStruct, index);
 
 // Functions ------------------------------------------------------------------------------------------------
 
@@ -18,9 +32,8 @@ bool
 read(nio::Source& in, std::string_view str) {
   auto pos = in.tell();
   string buf(str.size(), ' ');
-  const span<u8> span(reinterpret_cast<u8*>(buf.data()), buf.size());
-  const auto n = in.read(span);
-  bool ret = n == span.size() && buf == str;
+  const auto n = in.read(buf);
+  bool ret = n == buf.size() && buf == str;
   if (not ret) {
     in.seek(pos);
   }
@@ -46,14 +59,16 @@ struct TracingConsumerImpl;
 
 template<>
 struct TracingConsumerImpl<ValueType::Bool, bool> {
-  i64 consume(bool val, nio::StringSink& out) {
+  u64
+  consume(bool val, nio::StringSink& out) {
     return out.println("consuming boolean: {}", val);
   }
 };
 
 template<typename C>
 struct TracingConsumerImpl<ValueType::Char, C> {
-  i64 consume(C val, nio::StringSink& out) {
+  u64
+  consume(C val, nio::StringSink& out) {
     std::basic_string<C> str = { val };
     return out.println("consuming character: '{}'", unicode::ConvertTo<char>::apply(str));
   }
@@ -61,21 +76,24 @@ struct TracingConsumerImpl<ValueType::Char, C> {
 
 template<typename I>
 struct TracingConsumerImpl<ValueType::Integer, I> {
-  u64 consume(I val, nio::StringSink& out) {
+  u64
+  consume(I val, nio::StringSink& out) {
     return out.println("consuming integer: {}", val);
   }
 };
 
 template<typename T>
 struct TracingConsumerImpl<ValueType::String, T> {
-  u64 consume(const T& val, nio::StringSink& out) {
+  u64
+  consume(const T& val, nio::StringSink& out) {
     return out.println("consuming string: {:?}", unicode::ConvertTo<char>::apply(val));
   }
 };
 
 template<typename T>
 struct TracingConsumerImpl<ValueType::Optional, T> {
-  u64 consume(const T& val, nio::StringSink& out) {
+  u64
+  consume(const T& val, nio::StringSink& out) {
     auto ret = out.println("consuming optional: {}", val);
     if (val) {
       using Elem = typename T::value_type;
@@ -86,38 +104,91 @@ struct TracingConsumerImpl<ValueType::Optional, T> {
   }
 };
 
+// For #MemberRef, the tuple consumer must be able to pass additional arguments to the element consumer
 template<typename T>
 struct TracingConsumerImpl<ValueType::Tuple, T> {
-  u64 consume(const T& val, nio::StringSink& out) {
+  template<typename... Args>
+  u64
+  consume(const T& val, nio::StringSink& out, Args&&... args) {
     const auto size = std::tuple_size<T>::value;
     auto ret = out.println("consuming tuple: {}", size);
     std::apply([&](auto&&... arg) {
-      (consumeElem(ret, std::forward<decltype(arg)>(arg), out), ...);
+      (consumeElem(ret, std::forward<decltype(arg)>(arg), out, std::forward<Args>(args)...), ...);
     }, val);
     return ret;
   }
 
 private:
 
-  template<typename Elem>
-  u64 consumeElem(u64& result, const Elem& elem, nio::StringSink& out) {
-    result += out.println("consuming tuple elem: {}", elem);
+  template<typename Elem, typename... Args>
+  u64
+  consumeElem(u64& result, const Elem& elem, nio::StringSink& out, Args&&... args) {
+    if constexpr (fmt::is_formattable<Elem>::value) {
+      result += out.println("consuming tuple elem: {}", elem);
+    } else {
+      result += out.println("consuming tuple elem");
+    }
     constexpr auto elemValueType = ValueTypes<Elem>::value;
-    result += TracingConsumerImpl<elemValueType, Elem>().consume(elem, out);
+    result += TracingConsumerImpl<elemValueType, Elem>().consume(elem, out, std::forward<Args>(args)...);
     return result;
   }
 };
 
 template<typename T>
 struct TracingConsumerImpl<ValueType::Array, T> {
-  u64 consume(const T& val, nio::StringSink& out) {
+  u64
+  consume(const T& val, nio::StringSink& out) {
+    using Elem = typename T::value_type;
+    constexpr auto elemValueType = ValueTypes<Elem>::value;
+
     const auto size = val.size();
     auto ret = out.println("consuming array: {}", size);
-    for (auto it = val.begin(), end = val.end(); it != end; ++it) {
-      using Elem = typename T::value_type;
-      constexpr auto elemValueType = ValueTypes<Elem>::value;
-      ret += TracingConsumerImpl<elemValueType, Elem>().consume(*it, out);
+    for (const auto& elem : val) {
+      ret += TracingConsumerImpl<elemValueType, Elem>().consume(elem, out);
     }
+    return ret;
+  }
+};
+
+template<typename T>
+struct TracingConsumerImpl<ValueType::MemberRefProvider, T> {
+  u64
+  consume(const T& val, nio::StringSink& out) {
+    auto ret = out.println("consuming memberrefprovider");
+
+    constexpr auto& refs = rocket::reflect::MemberRefProvider<T>::refs;
+    using Elem = PurgeType<decltype(refs)>;
+    constexpr auto elemValueType = ValueTypes<Elem>::value;
+    static_assert(elemValueType == ValueType::Tuple);
+    // Here we have to pass an additional argument, the instance, to the tuple consumer
+    ret += TracingConsumerImpl<elemValueType, Elem>().consume(refs, out, val);
+    return ret;
+  }
+};
+
+template<typename T>
+struct TracingConsumerImpl<ValueType::MemberRef, T> {
+  template<typename C>
+  u64
+  consume(const T& val, nio::StringSink& out, const C& instance) {
+    auto ret = out.println("consuming memberref: \"{}\"", val.name());
+
+    using Elem = typename T::ValueType;
+    constexpr auto elemValueType = ValueTypes<Elem>::value;
+    ret += TracingConsumerImpl<elemValueType, Elem>().consume(val.get(instance), out);
+    return ret;
+  }
+};
+
+template<typename T>
+struct TracingConsumerImpl<ValueType::VarRef, T> {
+  u64
+  consume(const T& val, nio::StringSink& out) {
+    auto ret = out.println("consuming varref: \"{}\"", val.name());
+
+    using Elem = typename T::ValueType;
+    constexpr auto elemValueType = ValueTypes<Elem>::value;
+    ret += TracingConsumerImpl<elemValueType, Elem>().consume(val.get(), out);
     return ret;
   }
 };
@@ -171,9 +242,8 @@ struct TracingProducerImpl<ValueType::String, T> {
     out.println("producing string");
     i32 size = readI32(in);
     val = T(size, ' ');
-    const span<u8> span(reinterpret_cast<u8*>(val.data()), val.size());
-    const auto n = in.read(span);
-    if (n != span.size()) {
+    const auto n = in.read(val);
+    if (n != val.size()) {
       throw InputFailure(in.tell(), "expected string");
     }
   }
@@ -232,9 +302,10 @@ struct TracingProducer {
 TEST(codec, TracingConsumerBool) {
   Encoder<TracingConsumer> encoder;
   nio::StringSink out;
-  encoder.encode(true, out);
+  auto result = encoder.encode(true, out);
+  static_assert(is_same_v<decltype(result), u64>);
   encoder.encode(false, out);
-  EXPECT_EQ((out.str()),
+  EXPECT_EQ(out.str(),
     "consuming boolean: true\n"
     "consuming boolean: false\n");
 }
@@ -244,7 +315,7 @@ TEST(codec, TracingConsumerCharacter) {
   nio::StringSink out;
   encoder.encode('a', out);
   encoder.encode(U'€', out);
-  EXPECT_EQ((out.str()),
+  EXPECT_EQ(out.str(),
     "consuming character: 'a'\n"
     "consuming character: '€'\n");
 }
@@ -254,7 +325,7 @@ TEST(codec, TracingConsumerString) {
   nio::StringSink out;
   encoder.encode("hello"sv, out);
   encoder.encode(U"world"sv, out);
-  EXPECT_EQ((out.str()),
+  EXPECT_EQ(out.str(),
     "consuming string: \"hello\"\n"
     "consuming string: \"world\"\n");
 }
@@ -268,7 +339,7 @@ TEST(codec, TracingConsumerOptionalI32) {
   encoder.encode(val, out);
   val = 42;
   encoder.encode(val, out);
-  EXPECT_EQ((out.str()),
+  EXPECT_EQ(out.str(),
     "consuming optional: none\n"
     "consuming optional: optional(42)\n"
     "consuming integer: 42\n");
@@ -278,7 +349,7 @@ TEST(codec, TracingConsumerTuplePair) {
   Encoder<TracingConsumer> encoder;
   nio::StringSink out;
   encoder.encode(make_pair("answer"sv, 42), out);
-  EXPECT_EQ((out.str()),
+  EXPECT_EQ(out.str(),
     "consuming tuple: 2\n"
     "consuming tuple elem: answer\n"
     "consuming string: \"answer\"\n"
@@ -290,7 +361,7 @@ TEST(codec, TracingConsumerTupleTuple) {
   Encoder<TracingConsumer> encoder;
   nio::StringSink out;
   encoder.encode(make_tuple("answer"sv, 42, true), out);
-  EXPECT_EQ((out.str()),
+  EXPECT_EQ(out.str(),
     "consuming tuple: 3\n"
     "consuming tuple elem: answer\n"
     "consuming string: \"answer\"\n"
@@ -304,7 +375,7 @@ TEST(codec, TracingConsumerArrayArray) {
   Encoder<TracingConsumer> encoder;
   nio::StringSink out;
   encoder.encode(array { 1, 2, 3 }, out);
-  EXPECT_EQ((out.str()),
+  EXPECT_EQ(out.str(),
     "consuming array: 3\n"
     "consuming integer: 1\n"
     "consuming integer: 2\n"
@@ -315,12 +386,58 @@ TEST(codec, TracingConsumerArrayVector) {
   Encoder<TracingConsumer> encoder;
   nio::StringSink out;
   encoder.encode(vector { 1, 2, 3, 4 }, out);
-  EXPECT_EQ((out.str()),
+  EXPECT_EQ(out.str(),
     "consuming array: 4\n"
     "consuming integer: 1\n"
     "consuming integer: 2\n"
     "consuming integer: 3\n"
     "consuming integer: 4\n");
+}
+
+TEST(codec, TracingConsumerMemberRef) {
+  Encoder<TracingConsumer> encoder;
+  nio::StringSink out;
+  MyStruct val { 42, true, "hello", { 1, 2, 3 } };
+  encoder.encode(val, out);
+  EXPECT_EQ(out.str(),
+    "consuming memberrefprovider\n"
+    "consuming tuple: 4\n"
+    "consuming tuple elem\n"
+    "consuming memberref: \"ärger\"\n"
+    "consuming integer: 42\n"
+    "consuming tuple elem\n"
+    "consuming memberref: \"ökonom\"\n"
+    "consuming boolean: true\n"
+    "consuming tuple elem\n"
+    "consuming memberref: \"übermut\"\n"
+    "consuming string: \"hello\"\n"
+    "consuming tuple elem\n"
+    "consuming memberref: \"vec\"\n"
+    "consuming array: 3\n"
+    "consuming integer: 1\n"
+    "consuming integer: 2\n"
+    "consuming integer: 3\n");
+}
+
+TEST(codec, TracingConsumerVarRef) {
+  Encoder<TracingConsumer> encoder;
+  nio::StringSink out;
+  int a = 42;
+  bool b = true;
+  string c = "hello";
+  auto vars = ROCKET_REFLECT_VARS((a)(b)(c));
+  encoder.encode(vars, out);
+  EXPECT_EQ(out.str(),
+    "consuming tuple: 3\n"
+    "consuming tuple elem: a=42\n"
+    "consuming varref: \"a\"\n"
+    "consuming integer: 42\n"
+    "consuming tuple elem: b=true\n"
+    "consuming varref: \"b\"\n"
+    "consuming boolean: true\n"
+    "consuming tuple elem: c=hello\n"
+    "consuming varref: \"c\"\n"
+    "consuming string: \"hello\"\n");
 }
 
 TEST(codec, TracingConsumerOptionalAndVectorInTypeLoop) {

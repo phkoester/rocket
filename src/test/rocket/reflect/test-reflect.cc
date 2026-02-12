@@ -228,12 +228,10 @@ TEST(reflect, VarRefHash) {
   i32 i1 = 2;
   i64 l1 = 3;
   auto vars1 = ROCKET_REFLECT_VARS((i1)(l1));
-  const u64 hash1 = std::hash<decltype(vars1)>()(vars1);
+  const u64 hash1 = codec::HashEncoder().encode(vars1);
 
-  i32 i2 = 2;
-  i64 l2 = 3;
-  auto vars2 = ROCKET_REFLECT_VARS((i2)(l2));
-  const u64 hash2 = std::hash<decltype(vars2)>()(vars2);
+  auto vars2 = ROCKET_REFLECT_VARS((i1)(l1));
+  const u64 hash2 = codec::HashEncoder().encode(vars2);
 
   EXPECT_NE(hash1, 0);
   EXPECT_EQ(hash2, hash1);

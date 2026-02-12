@@ -12,14 +12,27 @@
 
 #include <functional>
 
-namespace rocket {
+namespace rocket::hash {
 
 /**
  * Combines two hash values.
  *
  * Taken from `boost::hash_combine`.
  *
- * @tparam T the type of the value
+ * @param seed the seed value, which is modified
+ * @param hash the hash value to combine
+ */
+inline void
+combine(u64& seed, u64 hash) {
+  seed = boost::hash_detail::hash_mix(seed + 0x9e3779b9 + hash);
+}
+
+/**
+ * Combines two hash values.
+ *
+ * Taken from `boost::hash_combine`.
+ *
+ * @tparam T the type of the value to hash
  * @tparam Hash the hasher class
  * @param seed the seed value, which is modified
  * @param val the value to hash
@@ -27,9 +40,9 @@ namespace rocket {
 template<typename T, typename Hash = std::hash<T>>
 void
 combineHash(u64& seed, const T& val) {
-  seed = boost::hash_detail::hash_mix(seed + 0x9e3779b9 + Hash()(val));
+  combine(seed, Hash()(val));
 }
 
-} // namespace rocket
+} // namespace rocket::hash
 
 // EOF

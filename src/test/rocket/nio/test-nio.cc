@@ -98,15 +98,13 @@ TEST(nio, BufferedSource) {
   EXPECT_EQ(buffered.end_, 0);
 
   string str32(32, ' ');
-  const span<u8> span32(reinterpret_cast<u8*>(str32.data()), str32.size());
-  EXPECT_EQ(buffered.read(span32), 32);
+  EXPECT_EQ(buffered.Source::read(str32), 32);
   EXPECT_EQ(string_view(str32), testString(32));
   EXPECT_EQ(buffered.pos_, 32);
   EXPECT_EQ(buffered.end_, 64);
 
   string str40 = string(40, ' ');
-  const span<u8> span40(reinterpret_cast<u8*>(str40.data()), str40.size());
-  EXPECT_EQ(buffered.read(span40), 33);
+  EXPECT_EQ(buffered.Source::read(str40), 33);
   EXPECT_EQ(buffered.pos_, 1);
   EXPECT_EQ(buffered.end_, 1);
   const span<char> span33(str40.data(), 33);
@@ -119,8 +117,7 @@ TEST(nio, BufferedSourceExactMatch) {
   BufferedSource buffered(in, 64);
 
   string out20(20, ' ');
-  const span<u8> outSpan20(reinterpret_cast<u8*>(out20.data()), out20.size());
-  EXPECT_EQ(buffered.read(outSpan20), 20);
+  EXPECT_EQ(buffered.Source::read(out20), 20);
   EXPECT_EQ(buffered.pos_, 20);
   EXPECT_EQ(buffered.end_, 20);
 }

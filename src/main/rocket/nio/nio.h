@@ -34,6 +34,7 @@ static constexpr u64 MIN_BUFFER_SIZE = 64;
 
 // #Status --------------------------------------------------------------------------------------------------
 
+/// The status of an I/O instance.
 struct Status {
   /**
    * If #bad is set, the I/O is in an unusable state.
@@ -100,6 +101,11 @@ struct Io {
 
 protected:
 
+  /**
+   * The status of the instance.
+   *
+   * Derived classes must set the #bad bit to `false` to mark the instance as usable.
+   */
   Status status_ = { .bad = true, .eof = false };
 
   /// @ctor_default
@@ -561,6 +567,14 @@ struct Source : Io {
   virtual u64 read(std::span<u8> out) = 0;
 
   /**
+   * Reads as many characters as available into a string.
+   *
+   * @param out the string to read into
+   * @return the number of bytes read
+   */
+  u64 read(std::string& out) { return read(std::span<u8>(reinterpret_cast<u8*>(out.data()), out.size())); }
+
+  /**
    * Reads a line from a source into a string.
    *
    * A trailing @c '\\r' is removed if it precedes a @c '\\n'.
@@ -767,7 +781,7 @@ private:
  * A source that reads from a string.
  */
 struct StringSource : Source {
-  /// @default_ctor
+  /// @ctor_default
   StringSource() : StringSource(std::string_view()) {}
 
   /**

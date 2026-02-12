@@ -4,18 +4,20 @@
 
 #include "rocket-test/rocket-test.h"
 
-#include "rocket/codec/codec.h"
 #include "rocket/codec/FormattedCodec.h"
 
 using namespace rocket::codec;
 
 // #TEST ----------------------------------------------------------------------------------------------------
 
-#if 0
-TEST(Formatted, bool) {
-  EXPECT_EQ(encode<Formatted>(true), "true");
-  EXPECT_EQ((decode<Formatted, bool>("true"sv)), true);
+TEST(FormattedCodec, FormattedConsumerBool) {
+  FormattedCodec codec;
+  nio::StringSink out;
+  codec.encode(true, out);
+  EXPECT_EQ(out.str(), "true");
 }
+
+#if 0
 
 TEST(Formatted, optionalI32) {
   using type = std::optional<i32>;

@@ -25,37 +25,6 @@ ROCKET_LOG_DEFINE(toy);
 auto& out = nio::out;
 auto& err = nio::err;
 
-// Bla ------------------------------------------------------------------------------------------------------
-
-namespace rocket::reflect {
-
-template<typename T>
-struct MemberRefProvider : false_type {};
-
-} // namespace rocket::reflect
-
-struct MyType {
-  i32 a;
-  string b;
-  bool c;
-
-  ROCKET_REFLECT_MEMBERS(MyType, index, (a)(b)(c));
-};
-
-ROCKET_REFLECT_MEMBERS_DECLARE(, MyType, index);
-ROCKET_REFLECT_MEMBERS_DEFINE(, MyType, index);
-
-namespace rocket::reflect {
-
-template<>
-struct MemberRefProvider<MyType> : true_type {
-  static constexpr auto& refs = MyType::index();
-};
-
-} // namespace rocket::reflect
-
-static_assert(rocket::reflect::MemberRefProvider<MyType>::value, "MyType must provide a member-reference container");
-
 // Functions ------------------------------------------------------------------------------------------------
 
 void

@@ -676,7 +676,7 @@ logBegin(LogSettings* logId, const char* function, const char* prettyFunction, c
   }
 }
 
-/// Threadsafe
+/// @ThreadSafe
 LogSettings
 logDefine(LogSettings* logId, string_view id) {
   ROCKET_CHECK(id, id != "all", "Invalid log ID `all`; this ID is reserved");

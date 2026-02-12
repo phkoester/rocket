@@ -6,13 +6,8 @@
 
 #pragma once
 
-#include "rocket/hash.h"
-#include "rocket/type-traits.h"
-
-#include <functional>
 #include <optional>
 #include <span>
-#include <tuple>
 
 namespace rocket {
 
@@ -147,23 +142,5 @@ value(const std::optional<T>& val) {
 }
 
 } // namespace rocket
-
-// #std::hash<#std::tuple> ----------------------------------------------------------------------------------
-
-/// @spec_std_hash{#std::tuple}
-template<typename... T>
-struct std::hash<std::tuple<T...>> {
-  /// @cond undocumented
-
-  u64
-  operator()(const tuple<T...>& val) const {
-    using TupleType = rocket::PurgeType<decltype(val)>;
-    u64 ret = tuple_size<TupleType>::value;
-    apply([&](const auto&... arg) { (rocket::combineHash(ret, arg), ...); }, val);
-    return ret;
-  }
-
-  /// @endcond
-};
 
 // EOF

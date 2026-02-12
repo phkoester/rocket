@@ -4,7 +4,6 @@
 
 #include "rocket-test/rocket-test.h"
 
-#include "rocket/std.h"
 #include "rocket/nio/nio.h"
 
 // `static_assert` ------------------------------------------------------------------------------------------
@@ -23,18 +22,6 @@ static_assert(is_signed_v<f128>);
 #endif
 
 // #TEST ----------------------------------------------------------------------------------------------------
-
-TEST(rocket, printEndianness) {
-  u16 val = 1;
-  u8 left = reinterpret_cast<u8*>(&val)[0];
-  u8 right = reinterpret_cast<u8*>(&val)[1];
-  nio::out.println("left={}, right={}", left, right);
-  // left == 1 -> little endian
-
-  i32 val2 = 0x12345678;
-  auto bytes = asSpan<unsigned char>(val2);
-  nio::out.println("bytes={::#02x}", bytes);
-}
 
 TEST(rocket, printSizeof) {
   auto& out = nio::out;

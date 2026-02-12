@@ -33,6 +33,11 @@ struct LiteralString {
     return { value.data(), value.size() };
   }
 
+  /**
+   * Returns the size of the string.
+   *
+   * @return the size of the string
+   */
   consteval u64 size() const { return value.size(); }
 };
 

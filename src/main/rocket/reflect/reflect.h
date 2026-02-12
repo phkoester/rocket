@@ -6,9 +6,8 @@
 
 #pragma once
 
-#include "rocket/hash.h"
-#include "rocket/rocket.h"
 #include "rocket/macro.h"
+#include "rocket/codec/HashEncoder.h"
 #include "rocket/nio/nio.h"
 #include "rocket/unicode/ConvertTo.h"
 
@@ -19,9 +18,7 @@
 
 #include <fmt/std.h>
 
-#include <ostream>
 #include <tuple>
-#include <type_traits>
 #include <utility>
 
 // Macros ---------------------------------------------------------------------------------------------------
@@ -45,9 +42,9 @@
  * In particular, it provides
  *
  * - a `fmt::formatter` specialization so the class can be formatted using `fmt::format()`;
+ * - a #std::hash specialization for the class;
  * - `operator==`, `operator!=`, `operator<`, `operator>`;
  * - an `operator<<` for #std::ostream;
- * - a #std::hash specialization for the class.
  *
  * @note This macro must be called in the global namespace.
  *
@@ -197,6 +194,12 @@
     return lhs << ::fmt::format("{}", rhs); \
   }
 
+#define ROCKET_REFLECT_MEMBERS_DECLARE_MEMBER_REF_PROVIDER__(ns, cls, name) \
+  template<> \
+  struct rocket::reflect::MemberRefProvider<ns::cls> : ::std::true_type{ \
+    static constexpr auto& refs = ns::cls::name(); \
+  }
+
 #define ROCKET_REFLECT_MEMBERS_DECLARE_STD_HASH__(ns, cls) \
   template<> \
   struct std::hash<ns::cls> { \
@@ -212,12 +215,13 @@
   ROCKET_REFLECT_MEMBERS_DECLARE_OP_GT__(cls, name); \
   ROCKET_REFLECT_MEMBERS_DECLARE_OP_OUTPUT__(cls); \
   ROCKET_NAMESPACE_END(ns); \
+  ROCKET_REFLECT_MEMBERS_DECLARE_MEMBER_REF_PROVIDER__(ns, cls, name); \
   ROCKET_REFLECT_MEMBERS_DECLARE_STD_HASH__(ns, cls)
 
 #define ROCKET_REFLECT_MEMBERS_DEFINE_STD_HASH__(ns, cls, name) \
   u64 \
   std::hash<ns::cls>::operator()(const ns::cls& val) const { \
-    return ::rocket::reflect::hash(val, ns::cls::name()); \
+    return ::rocket::codec::HashEncoder().encode(val); \
   }
 
 #define ROCKET_REFLECT_MEMBERS_DEFINE__(ns, cls, name) \
@@ -234,142 +238,6 @@
 /// @endcond
 
 namespace rocket::reflect {
-
-// #MemberRef ...............................................................................................
-
-/**
- * References on members that need an instance to evaluate.
- *
- * Instances of this class are returned by #ROCKET_REFLECT_MEMBERS.
- */
-template<typename C, typename T>
-struct MemberRef {
-  using ValueType = T; ///< @type_alias
-
-  /**
-   * @ctor
-   *
-   * @param name the name of the member
-   * @param p the pointer to the member
-   */
-  consteval MemberRef(const char* name, T C::* p) : name_(name), p_(p) {}
-
-  /**
-   * Returns the value of the member.
-   *
-   * @param val the instance
-   * @return the value of the member
-   */
-  [[nodiscard]] constexpr T& get(C& val) const { return val.*p_; }
-
-  /**
-   * Returns the value of the member.
-   *
-   * @param val the instance
-   * @return the value of the member
-   */
-  [[nodiscard]] constexpr const T& get(const C& val) const { return val.*p_; }
-
-  /**
-   * Returns the name of the member.
-   *
-   * @return the name of the member
-   */
-  [[nodiscard]] constexpr std::string_view name() const { return name_; }
-
-private:
-
-  std::string_view name_; ///< The name of the member.
-  T C::*p_; ///< The pointer to the member.
-};
-
-template<typename T>
-struct IsMemberRefImpl : std::false_type {};
-
-template<typename C, typename T>
-struct IsMemberRefImpl<MemberRef<C, T>> : std::true_type {};
-
-template<typename T> struct IsMemberRef : IsMemberRefImpl<PurgeType<T>>::type {};
-
-// #VarRef ..................................................................................................
-
-/**
- * References on variables that need need no instance to evaluate.
- *
- * Instances of this class are returned by #ROCKET_REFLECT_VARS.
- *
- * @param T the type of the variable
- */
-template<typename T>
-struct VarRef {
-  using ValueType = T; ///< @type_alias
-
-  /**
-   * @ctor
-   *
-   * @param name the name of the variable
-   * @param ref the reference to the variable
-   */
-  constexpr VarRef(const char* name, T& ref) : name_(name), ptr_(&ref) {}
-
-  /// @member_op_eq
-  bool operator==(const VarRef& rhs) const { return *ptr_ == *rhs.ptr_; }
-
-  /// @member_op_ne
-  bool operator!=(const VarRef& rhs) const { return *ptr_ != *rhs.ptr_; }
-
-  /// @member_op_lt
-  bool operator<(const VarRef& rhs) const { return *ptr_ < *rhs.ptr_; }
-
-  /// @member_op_le
-  bool operator<=(const VarRef& rhs) const { return *ptr_ <= *rhs.ptr_; }
-
-  /// @member_op_gt
-  bool operator>(const VarRef& rhs) const { return *ptr_ > rhs.*ptr_; }
-
-  /// @member_op_ge
-  bool operator>=(const VarRef& rhs) const { return *ptr_ >= *rhs.ptr_; }
-
-  /**
-   * Returns the value of the variable.
-   *
-   * @return the value of the variable
-   */
-  [[nodiscard]] constexpr T& get() { return *ptr_; }
-
-  /**
-   * Returns the value of the variable.
-   *
-   * @return the value of the variable
-   */
-  [[nodiscard]] constexpr const T& get() const { return *ptr_; }
-
-  /**
-   * Returns the hash value of the variable.
-   *
-   * @return the hash value of the variable
-   */
-  [[nodiscard]] u64 hash() const { return std::hash<T>()(*ptr_); }
-
-  /**
-   * Returns the name of the variable.
-   *
-   * @return the name of the variable
-   */
-  [[nodiscard]] constexpr std::string_view name() const { return name_; }
-
-private:
-
-  std::string_view name_;
-  T* ptr_;
-};
-
-/// @op_output{#rocket::reflect::VarRef}
-template<typename T>
-inline std::ostream&
-operator<<(std::ostream& lhs, const VarRef<T>& rhs) {
-  return lhs << fmt::format("{}", rhs);
-}
 
 namespace internal {
 
@@ -487,15 +355,6 @@ gtImpl(
   return ret;
 }
 
-template<typename T, typename... Ref>
-u64
-hashImpl(const T& val, const std::tuple<Ref...>& refs) {
-  using TupleType = PurgeType<decltype(refs)>;
-  u64 ret = std::tuple_size<TupleType>::value;
-  apply([&](const auto&... arg) { (combineHash(ret, arg.get(val)), ...); }, refs);
-  return ret;
-}
-
 template<typename T, u64 Index, typename Tuple>
 u64
 writeElemImpl(nio::Sink& out, const T& val, const Tuple& refs) {
@@ -551,6 +410,23 @@ eq(const T& lhs, const T& rhs, const std::tuple<Ref...>& refs) {
 }
 
 /**
+ * `hash` function for member references.
+ *
+ * @param val the instance
+ * @param refs the references
+ * @return a hash value
+ */
+template<typename T, typename... Ref> requires (... && IsMemberRef<Ref>::value)
+inline u64
+hash(const T& val, const std::tuple<Ref...>& refs) {
+  u64 ret = std::tuple_size<PurgeType<decltype(refs)>>::value;
+  std::apply([&](auto&&... arg) {
+    (..., (hash::combine(ret, rocket::codec::HashEncoder().encode(arg.get(val)))));
+  }, refs);
+  return ret;
+}
+
+/**
  * `ne`function for member references.
  *
  * @param lhs the left-hand side
@@ -593,19 +469,6 @@ gt(const T& lhs, const T& rhs, const std::tuple<Ref...>& refs) {
 }
 
 /**
- * `hash` function for member references.
- *
- * @param val the instance
- * @param refs the references
- * @return a hash value
- */
-template<typename T, typename... Ref> requires (... && IsMemberRef<Ref>::value)
-inline u64
-hash(const T& val, const std::tuple<Ref...>& refs) {
-  return internal::hashImpl(val, refs);
-}
-
-/**
  * `write` function for member references.
  *
  * @param out the sink to write to
@@ -620,60 +483,5 @@ write(nio::Sink& out, const T& val, const std::tuple<Ref...>& refs) {
 }
 
 } // namespace rocket::reflect
-
-// #fmt::formatter<#VarRef> ---------------------------------------------------------------------------------
-
-/**
- * @spec_fmt_formatter{#rocket::reflect::VarRef}
- *
- * This formatter uses the same format specifiers as the underlying formatter for type @ T.
- */
-template<typename T, typename C> requires fmt::is_formattable<T, C>::value
-struct fmt::formatter<rocket::reflect::VarRef<T>, C> {
-  /// @cond undocumented
-
-  template<typename FormatContext>
-  constexpr FormatContext::iterator
-  format(const rocket::reflect::VarRef<T>& val, FormatContext& ctx) const{
-    auto out = ctx.out();
-    out = detail::write<C>(out, rocket::unicode::ConvertTo<C>::apply(val.name()));
-    out = detail::write<C>(out, static_cast<C>('='));
-    ctx.advance_to(out);
-    out = underlying_.format(val.get(), ctx);
-    return out;
-  }
-
-  constexpr const C*
-  parse(parse_context<C>& ctx) {
-    return underlying_.parse(ctx); // NOLINT
-  }
-
-  constexpr void
-  set_debug_format(bool val = true) {
-    detail::maybe_set_debug_format(underlying_, val); // NOLINT
-  }
-
-  /// @endcond
-
-private:
-
-  formatter<rocket::PurgeType<T>, C> underlying_;
-};
-
-// #std::hash<#VarRef> --------------------------------------------------------------------------------------
-
-namespace std { // Doxygen demands this
-
-/// @spec_std_hash{#rocket::reflect::VarRef}
-template<typename T>
-struct hash<rocket::reflect::VarRef<T>> {
-  /// @cond undocumented
-
-  u64 operator()(const rocket::reflect::VarRef<T>& val) const { return val.hash(); }
-
-  /// @endcond
-};
-
-} // namespace std
 
 // EOF

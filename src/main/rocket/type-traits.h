@@ -192,7 +192,7 @@ concept IsFloat = std::is_same_v<PurgeType<T>, typename Float<sizeof(PurgeType<T
 template<typename T>
 struct Array : std::false_type {};
 
-template<typename T, u64 N> // XXX Klappt das? Oder muss es U heißen?
+template<typename T, u64 N>
 struct Array<std::array<T, N>> : std::true_type {};
 
 template<typename T>
