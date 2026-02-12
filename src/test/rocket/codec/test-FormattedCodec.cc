@@ -5,10 +5,28 @@
 #include "rocket-test/rocket-test.h"
 
 #include "rocket/codec/FormattedCodec.h"
+#include "rocket/log/log.h"
+#include "rocket/reflect/reflect.h"
 
 using namespace rocket::codec;
 
+// #MyStruct ------------------------------------------------------------------------------------------------
+
+struct MyStruct {
+  i32 ärger;
+  bool ökonom;
+  string übermut;
+  vector<i32> vec;
+
+  ROCKET_REFLECT_MEMBERS(MyStruct, index, (ärger)(ökonom)(übermut)(vec));
+};
+
+ROCKET_REFLECT_MEMBERS_DECLARE(, MyStruct, index);
+ROCKET_REFLECT_MEMBERS_DEFINE(, MyStruct, index);
+
 // #TEST ----------------------------------------------------------------------------------------------------
+
+// #FormattedConsumer .......................................................................................
 
 TEST(FormattedCodec, FormattedConsumerBool) {
   FormattedCodec codec;
@@ -17,73 +35,178 @@ TEST(FormattedCodec, FormattedConsumerBool) {
   EXPECT_EQ(out.str(), "true");
 }
 
-#if 0
-
-TEST(Formatted, optionalI32) {
-  using type = std::optional<i32>;
-
-  EXPECT_EQ(encode<Formatted>(type()), "<none>");
-  EXPECT_EQ(encode<Formatted>(type(42)), "42");
-
-  EXPECT_EQ((decode<Formatted, type>("<none>"sv)), nullopt);
-  EXPECT_EQ((decode<Formatted, type>("42"sv)), 42);
+TEST(FormattedCodec, FormattedConsumerChar) {
+  FormattedCodec codec;
+  nio::StringSink out;
+  codec.encode('\t', out);
+  EXPECT_EQ(out.str(), "'\\t'");
+  codec.encode(U'€', out);
+  EXPECT_EQ(out.str(), "'\\t''€'");
 }
 
-TEST(Formatted, char) {
-  EXPECT_EQ(encode<Formatted>('a'), "'a'");
-  EXPECT_EQ((decode<Formatted, char>("'a'"sv)), 'a');
-
-  EXPECT_EQ(encode<Formatted>('\x01'), "'\\x01'");
-  EXPECT_EQ((decode<Formatted, char>("'\\x01'"sv)), '\x01');
+TEST(FormattedCodec, FormattedConsumerEnum) {
+  enum Color { Red, Green, Blue };
+  FormattedCodec codec;
+  nio::StringSink out;
+  codec.encode(Blue, out);
+  EXPECT_EQ(out.str(), "2");
+  codec.encode(log::LogLevel::info, out);
+  EXPECT_EQ(out.str(), "2info");
 }
 
-TEST(Formatted, optionalAndVectorInTypeLoopFormat) {
-  using type = optional<vector<optional<i32>>>;
-
-  type val1 = nullopt;
-  EXPECT_EQ(encode<Formatted>(val1), "<none>");
-  type val2 = vector<optional<i32>> { optional<i32>(1), nullopt, optional<i32>(3) };
-  EXPECT_EQ(encode<Formatted>(val2), "[1, <none>, 3]");
-
-  EXPECT_EQ((decode<Formatted, type>("<none>"sv)), nullopt);
-  EXPECT_EQ((decode<Formatted, type>("[1, <none>, 3]"sv)), (type { 1, nullopt, 3 }));
+TEST(FormattedCodec, FormattedConsumerIntegerI64) {
+  FormattedCodec codec;
+  nio::StringSink out;
+  codec.encode(-42_i64, out);
+  EXPECT_EQ(out.str(), "-42");
 }
 
-TEST(Formatted, pair) {
-  using type = std::pair<i32, bool>;
-
-  EXPECT_EQ(encode<Formatted>(type { 1, true }), "(1, true)");
-  EXPECT_EQ((decode<Formatted, type>("(1, true)"sv)), (type { 1, true }));
+TEST(FormattedCodec, FormattedConsumerFloatF64) {
+  FormattedCodec codec;
+  nio::StringSink out;
+  codec.encode(-123.456_f64, out);
+  EXPECT_EQ(out.str(), "-123.456");
 }
 
-TEST(Formatted, tuple) {
-  using type = std::tuple<i32, bool, u64>;
+TEST(FormattedCodec, FormattedConsumerPointer) {
+  FormattedCodec codec;
 
-  EXPECT_EQ(encode<Formatted>(type { 1, true, 42 }), "(1, true, 42)");
-  EXPECT_EQ((decode<Formatted, type>("(1, true, 42)"sv)), (type { 1, true, 42 }));
+  {
+    nio::StringSink out;
+    nio::StringSink* val = nullptr;
+    codec.encode(val, out);
+    EXPECT_EQ(out.str(), "<null>");
+  }
+
+  {
+    nio::StringSink out;
+    codec.encode(&codec, out);
+    EXPECT_THAT(out.str(), matchesRegex("0x[0-9a-f]+"));
+  }
 }
 
-TEST(Formatted, vectoru8) {
-  using type = std::vector<u8>;
+TEST(FormattedCodec, FormattedConsumerString) {
+  FormattedCodec codec;
 
-  EXPECT_EQ(encode<Formatted>(type()), "[]");
-  EXPECT_EQ(encode<Formatted>(type({ 1, 2, 3 })), "[1, 2, 3]");
+  {
+    nio::StringSink out;
+    codec.encode("Hello"sv, out);
+    EXPECT_EQ(out.str(), "\"Hello\"");
+  }
 
-  EXPECT_EQ((decode<Formatted, type>("[]"sv)), type());
-  EXPECT_EQ((decode<Formatted, type>("[1, 2, 3]"sv)), (type { 1, 2, 3 }));
+  {
+    nio::StringSink out;
+    codec.encode(U"Hello"sv, out);
+    EXPECT_EQ(out.str(), "\"Hello\"");
+  }
+
+  {
+    nio::StringSink out;
+    codec.encode("\x7f"sv, out);
+    EXPECT_EQ(out.str(), "\"\\x7F\"");
+  }
 }
 
-TEST(Formatted, vectorAndOptionalInTypeLoopFormat) {
-  using type = vector<optional<vector<i32>>>;
+TEST(FormattedCodec, FormattedConsumerOptional) {
+  FormattedCodec codec;
 
-  type val1 = {};
-  EXPECT_EQ(encode<Formatted>(val1), "[]");
-  type val2 = type { vector<i32> { vector<i32> { 1, 2 } } };
-  EXPECT_EQ(encode<Formatted>(val2), "[[1, 2]]");
+  {
+    nio::StringSink out;
+    optional<string> val;
+    codec.encode(val, out);
+    EXPECT_EQ(out.str(), "<none>");
+  }
 
-  EXPECT_EQ((decode<Formatted, type>("[]"sv)), (type {}));
-  EXPECT_EQ((decode<Formatted, type>("[[1, 2]]"sv)), (type { vector<i32> { 1, 2 } }));
+  {
+    nio::StringSink out;
+    optional<string> val = "Hello";
+    codec.encode(val, out);
+    EXPECT_EQ(out.str(), "\"Hello\"");
+  }
 }
-#endif
+
+TEST(FormattedCodec, FormattedConsumerTuplePair) {
+  FormattedCodec codec;
+
+  {
+    nio::StringSink out;
+    codec.encode(make_pair("answer"sv, 42), out);
+    EXPECT_EQ(out.str(), "(\"answer\", 42)");
+  }
+
+  {
+    nio::StringSink out;
+    codec.encode(make_pair("answer"sv, 42), out, { .indent=true });
+    EXPECT_EQ(out.str(),
+      "(\n"
+      "  \"answer\",\n"
+      "  42\n"
+      ")");
+  }
+}
+
+TEST(FormattedCodec, FormattedConsumerArray) {
+  FormattedCodec codec;
+
+  {
+    vector<vector<i32>> val = { { 1, 2, 3 }, { 4, 5, 6 } };
+    nio::StringSink out;
+    codec.encode(val, out);
+    EXPECT_EQ(out.str(), "[[1, 2, 3], [4, 5, 6]]");
+  }
+
+  {
+    vector<vector<i32>> val = { { 1, 2, 3 }, { 4, 5, 6 } };
+    nio::StringSink out;
+    codec.encode(val, out, { .indent=true });
+    EXPECT_EQ(out.str(),
+      "[\n"
+      "  [\n"
+      "    1,\n"
+      "    2,\n"
+      "    3\n"
+      "  ],\n"
+      "  [\n"
+      "    4,\n"
+      "    5,\n"
+      "    6\n"
+      "  ]\n"
+      "]");
+  }
+}
+
+TEST(FormattedCodec, FormattedConsumerSet) {
+  FormattedCodec codec;
+
+  {
+    nio::StringSink out;
+    set<i32> val = { 1, 2, 3 };
+    codec.encode(val, out);
+    EXPECT_EQ(out.str(), "{1, 2, 3}");
+  }
+
+  {
+    nio::StringSink out;
+    set<i32> val;
+    codec.encode(val, out);
+    EXPECT_EQ(out.str(), "{}");
+  }
+}
+
+TEST(FormattedCodec, FormattedConsumerMap) {
+  FormattedCodec codec;
+  nio::StringSink out;
+  map<string, i32> val = { { "alpha", 1 }, { "beta", 2 }, { "gamma", 3 } };
+  codec.encode(val, out);
+  EXPECT_EQ(out.str(), "{\"alpha\": 1, \"beta\": 2, \"gamma\": 3}");
+}
+
+TEST(FormattedCodec, FormattedConsumerMemberRefProvider) {
+  FormattedCodec codec;
+  nio::StringSink out;
+  MyStruct val { 42, true, "hello", { 1, 2, 3 } };
+  codec.encode(val, out);
+  EXPECT_EQ(out.str(), "(ärger=42, ökonom=true, übermut=\"hello\", vec=[1, 2, 3])");
+}
 
 // EOF

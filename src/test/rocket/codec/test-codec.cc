@@ -14,10 +14,10 @@ using namespace rocket::codec;
 // #MyStruct ------------------------------------------------------------------------------------------------
 
 struct MyStruct {
-  int ärger;
+  i32 ärger;
   bool ökonom;
   string übermut;
-  vector<int> vec;
+  vector<i32> vec;
 
   ROCKET_REFLECT_MEMBERS(MyStruct, index, (ärger)(ökonom)(übermut)(vec));
 };
@@ -422,7 +422,7 @@ TEST(codec, TracingConsumerMemberRef) {
 TEST(codec, TracingConsumerVarRef) {
   Encoder<TracingConsumer> encoder;
   nio::StringSink out;
-  int a = 42;
+  i32 a = 42;
   bool b = true;
   string c = "hello";
   auto vars = ROCKET_REFLECT_VARS((a)(b)(c));

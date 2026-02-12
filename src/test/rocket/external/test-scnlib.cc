@@ -48,7 +48,7 @@ TEST(scnlib, scanU32Hex) {
   }
 
   {
-    const auto input = "abCDXXXX"sv;
+    const auto input = "abCDZZZZ"sv;
     const auto result = scn::scan<u32>(input, "{:x}");
     ASSERT_TRUE(result);
     const auto [val] = result->values();
@@ -58,7 +58,7 @@ TEST(scnlib, scanU32Hex) {
   }
 
   {
-    const auto input = "abCDeXXX"sv;
+    const auto input = "abCDeZZZ"sv;
     const string fmt = "{:x}";
     const auto result = scn::scan<u32>(input, scn::runtime_format(fmt));
     ASSERT_TRUE(result);
@@ -69,7 +69,7 @@ TEST(scnlib, scanU32Hex) {
   }
 
   {
-    const auto input = "abCDXXXX"sv;
+    const auto input = "abCDZZZZ"sv;
     const auto result = scn::scan<u32>(input, "{:8x}");
     ASSERT_FALSE(result);
     // `result->begin()` may not be called here!
