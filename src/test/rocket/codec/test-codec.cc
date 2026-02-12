@@ -45,14 +45,14 @@ template<ValueType, typename T>
 struct TracingConsumerImpl;
 
 template<>
-struct TracingConsumerImpl<ValueType::boolean, bool> {
+struct TracingConsumerImpl<ValueType::Bool, bool> {
   i64 consume(bool val, nio::StringSink& out) {
     return out.println("consuming boolean: {}", val);
   }
 };
 
 template<typename C>
-struct TracingConsumerImpl<ValueType::character, C> {
+struct TracingConsumerImpl<ValueType::Char, C> {
   i64 consume(C val, nio::StringSink& out) {
     std::basic_string<C> str = { val };
     return out.println("consuming character: '{}'", unicode::ConvertTo<char>::apply(str));
@@ -60,21 +60,21 @@ struct TracingConsumerImpl<ValueType::character, C> {
 };
 
 template<typename I>
-struct TracingConsumerImpl<ValueType::integer, I> {
+struct TracingConsumerImpl<ValueType::Integer, I> {
   u64 consume(I val, nio::StringSink& out) {
     return out.println("consuming integer: {}", val);
   }
 };
 
 template<typename T>
-struct TracingConsumerImpl<ValueType::string, T> {
+struct TracingConsumerImpl<ValueType::String, T> {
   u64 consume(const T& val, nio::StringSink& out) {
     return out.println("consuming string: {:?}", unicode::ConvertTo<char>::apply(val));
   }
 };
 
 template<typename T>
-struct TracingConsumerImpl<ValueType::optional, T> {
+struct TracingConsumerImpl<ValueType::Optional, T> {
   u64 consume(const T& val, nio::StringSink& out) {
     auto ret = out.println("consuming optional: {}", val);
     if (val) {
@@ -87,7 +87,7 @@ struct TracingConsumerImpl<ValueType::optional, T> {
 };
 
 template<typename T>
-struct TracingConsumerImpl<ValueType::tuple, T> {
+struct TracingConsumerImpl<ValueType::Tuple, T> {
   u64 consume(const T& val, nio::StringSink& out) {
     const auto size = std::tuple_size<T>::value;
     auto ret = out.println("consuming tuple: {}", size);
@@ -109,7 +109,7 @@ private:
 };
 
 template<typename T>
-struct TracingConsumerImpl<ValueType::array, T> {
+struct TracingConsumerImpl<ValueType::Array, T> {
   u64 consume(const T& val, nio::StringSink& out) {
     const auto size = val.size();
     auto ret = out.println("consuming array: {}", size);
@@ -135,82 +135,86 @@ template<ValueType, typename T>
 struct TracingProducerImpl;
 
 template<>
-struct TracingProducerImpl<ValueType::boolean, bool> {
-  bool produce(nio::Source& in, nio::Sink& out) {
+struct TracingProducerImpl<ValueType::Bool, bool> {
+  void
+  produce(bool& val, nio::Source& in, nio::Sink& out) {
     out.println("producing boolean");
     if (read(in, "false")) {
-      return false;
+      val = false;
+      return;
     }
     if (read(in, "true")) {
-      return true;
+      val = true;
+      return;
     }
     throw InputFailure(in.tell(), "expected boolean");
   }
 };
 
 template<typename I>
-struct TracingProducerImpl<ValueType::integer, I> {
-  I produce(nio::Source& in, nio::Sink& out) {
+struct TracingProducerImpl<ValueType::Integer, I> {
+  void
+  produce(I& val, nio::Source& in, nio::Sink& out) {
     out.println("producing integer");
-    i32 val = readI32(in);
-    return static_cast<I>(val);
+    val = readI32(in);
   }
 };
 
 template<typename T>
-struct TracingProducerImpl<ValueType::string, T> {
+struct TracingProducerImpl<ValueType::String, T> {
   using C = typename T::value_type;
-  static_assert(std::is_same_v<C, char>, "Cannot decode UTF-32 string<");
+  static_assert(std::is_same_v<C, char>, "Cannot decode UTF-32 string");
+  static_assert(std::is_same_v<T, std::basic_string<C>>, "Cannot decode string view");
 
-  // Always produce a string here, even if #T is a string view
-  basic_string<C>
-  produce(nio::Source& in, nio::Sink& out) {
+  void
+  produce(T& val, nio::Source& in, nio::Sink& out) {
     out.println("producing string");
     i32 size = readI32(in);
-    basic_string<C> ret(size, ' ');
-    const span<u8> span(reinterpret_cast<u8*>(ret.data()), ret.size());
+    val = T(size, ' ');
+    const span<u8> span(reinterpret_cast<u8*>(val.data()), val.size());
     const auto n = in.read(span);
     if (n != span.size()) {
       throw InputFailure(in.tell(), "expected string");
     }
-    return ret;
   }
 };
 
 template<typename T>
-struct TracingProducerImpl<ValueType::optional, T> {
-  T produce(nio::Source& in, nio::Sink& out) {
+struct TracingProducerImpl<ValueType::Optional, T> {
+  void
+  produce(T& val, nio::Source& in, nio::Sink& out) {
     out.println("producing optional");
     if (read(in, "none")) {
-      return nullopt;
+      val = nullopt;
+      return;
     }
     using Elem = typename T::value_type;
     constexpr auto elemValueType = ValueTypes<Elem>::value;
-    return TracingProducerImpl<elemValueType, Elem>().produce(in, out);
+    val = Elem();
+    TracingProducerImpl<elemValueType, Elem>().produce(*val, in, out);
   }
 };
 
 template<typename T>
-struct TracingProducerImpl<ValueType::array, T> {
-  T produce(nio::Source& in, nio::Sink& out) {
+struct TracingProducerImpl<ValueType::Array, T> {
+  void
+  produce(T& val, nio::Source& in, nio::Sink& out) {
     using Elem = typename T::value_type;
     constexpr auto elemValueType = ValueTypes<Elem>::value;
 
-    T ret;
     u64 size = readI32(in);
     if constexpr (IsArray<T>) {
       out.println("producing array.array");
       for (u64 i = 0; i < size; ++i) {
-        ret[i] = TracingProducerImpl<elemValueType, Elem>().produce(in, out);
+        TracingProducerImpl<elemValueType, Elem>().produce(val[i], in, out);
       }
     } else {
       out.println("producing array.vector");
-      ret.reserve(size);
+      val = T(size);
       for (u64 i = 0; i < size; ++i) {
-        ret.emplace_back(TracingProducerImpl<elemValueType, Elem>().produce(in, out));
+        TracingProducerImpl<elemValueType, Elem>().produce(val[i], in, out);
       }
     }
-    return ret;
   }
 };
 
@@ -378,7 +382,8 @@ TEST(codec, TracingProducerBool) {
   Decoder<TracingProducer> decoder;
   nio::StringSource in("true");
   nio::StringSink out;
-  auto val = decoder.decode<type>(in, out);
+  type val = false;
+  EXPECT_TRUE(decoder.decode<type>(val, in, out));
   EXPECT_EQ(val, true);
   EXPECT_EQ(out.str(), "producing boolean\n");
 }
@@ -388,28 +393,11 @@ TEST(codec, TracingProducerString) {
   Decoder<TracingProducer> decoder;
   nio::StringSource in("5Hello6Rocket");
   nio::StringSink out;
-  auto val = decoder.decode<type>(in, out);
+  type val;
+  EXPECT_TRUE(decoder.decode<type>(val, in, out));
   EXPECT_EQ(val, "Hello"sv);
-  val = decoder.decode<type>(in, out);
+  EXPECT_TRUE(decoder.decode<type>(val, in, out));
   EXPECT_EQ(val, "Rocket"sv);
-  EXPECT_EQ(out.str(),
-    "producing string\n"
-    "producing string\n");
-}
-
-TEST(codec, TracingProducerStringView) {
-  using type = string_view;
-  Decoder<TracingProducer> decoder;
-  nio::StringSource in("5Hello6Rocket");
-  nio::StringSink out;
-  auto val = decoder.decode<type>(in, out);
-  // The decoder must return a string, not a string view
-  static_assert(std::is_same_v<decltype(val), string>);
-  EXPECT_EQ(val, "Hello"sv);
-  auto optVal = decoder.tryDecode<type>(in, out);
-  // The decoder must return an optional string, not an optional string view
-  static_assert(std::is_same_v<decltype(optVal), std::optional<string>>);
-  EXPECT_EQ(*optVal, "Rocket"sv);
   EXPECT_EQ(out.str(),
     "producing string\n"
     "producing string\n");
@@ -422,7 +410,8 @@ TEST(codec, TracingProducerOptionalBool) {
   {
     nio::StringSource in("none");
     nio::StringSink out;
-    type val = decoder.decode<type>(in, out);
+    type val;
+    EXPECT_TRUE(decoder.decode<type>(val, in, out));
     EXPECT_EQ(val, nullopt);
     EXPECT_EQ(out.str(), "producing optional\n");
   }
@@ -430,7 +419,8 @@ TEST(codec, TracingProducerOptionalBool) {
   {
     nio::StringSource in("false");
     nio::StringSink out;
-    type val = decoder.decode<type>(in, out);
+    type val;
+    EXPECT_TRUE(decoder.decode<type>(val, in, out));
     EXPECT_EQ(val, false);
     EXPECT_EQ(out.str(),
       "producing optional\n"
@@ -443,7 +433,8 @@ TEST(codec, TracingProducerArrayArray) {
   Decoder<TracingProducer> decoder;
   nio::StringSource in("3012");
   nio::StringSink out;
-  type val = decoder.decode<type>(in, out);
+  type val;
+  EXPECT_TRUE(decoder.decode<type>(val, in, out));
   EXPECT_EQ(val, (array<i32, 3> { 0, 1, 2 }));
   EXPECT_EQ(out.str(),
     "producing array.array\n"
@@ -457,7 +448,8 @@ TEST(codec, TracingProducerArrayVector) {
   Decoder<TracingProducer> decoder;
   nio::StringSource in("43210");
   nio::StringSink out;
-  type val = decoder.decode<type>(in, out);
+  type val;
+  EXPECT_TRUE(decoder.decode<type>(val, in, out));
   EXPECT_EQ(val, (vector<i32> { 3, 2, 1, 0 }));
   EXPECT_EQ(out.str(),
     "producing array.vector\n"

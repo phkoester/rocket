@@ -43,32 +43,44 @@ constexpr bool HAS_LITTLE_ENDIAN = std::endian::native == std::endian::little;
  * Not all value types are supported by all consumers and producers.
  */
 enum class ValueType {
+  // Basic types ............................................................................................
+
   /// `bool` values.
-  boolean,
+  Bool,
   /// Character values conforming to #rocket::IsChar.
-  character,
+  Char,
   /// Enums.
-  enumeration,
+  Enum,
   /// Integer values conforming to #rocket::IsInteger.
-  integer,
+  Integer,
   /// Floating point-values conforming to #rocket::IsFloat.
-  floatingPoint,
+  Float,
   /// Pointers.
-  pointer,
+  Pointer,
+
+  // Container types ........................................................................................
+
   /// Strings, either #std::string or #std::string_view.
-  string,
+  String,
   /// #std::optional values.
-  optional,
+  Optional,
   /// Tuples, either #std::pair or #std::tuple.
-  tuple,
+  Tuple,
   /// Arrays, either #std::array or #std::vector.
-  array,
+  Array,
   /// Sets.
-  set,
+  Set,
   /// Maps.
-  map,
+  Map,
   /// Bimaps.
-  bimap
+  Bimap,
+
+  // Rocket reflection ......................................................................................
+
+  /// Member references.
+  MemberRef,
+  /// Variable references.
+  VarRef,
 };
 
 // #ValueTypes ----------------------------------------------------------------------------------------------
@@ -84,92 +96,92 @@ struct ValueTypes;
 
 template<>
 struct ValueTypes<bool> {
-  static constexpr auto value = ValueType::boolean;
+  static constexpr auto value = ValueType::Bool;
 };
 
 template<typename C> requires IsChar<C>
 struct ValueTypes<C> {
-  static constexpr auto value = ValueType::character;
+  static constexpr auto value = ValueType::Char;
 };
 
 template<typename E> requires std::is_enum_v<E>
 struct ValueTypes<E> {
-  static constexpr auto value = ValueType::enumeration;
+  static constexpr auto value = ValueType::Enum;
 };
 
 template<typename I> requires IsInteger<I>
 struct ValueTypes<I> {
-  static constexpr auto value = ValueType::integer;
+  static constexpr auto value = ValueType::Integer;
 };
 
 template<typename F> requires IsFloat<F>
 struct ValueTypes<F> {
-  static constexpr auto value = ValueType::floatingPoint;
+  static constexpr auto value = ValueType::Float;
 };
 
 template<typename T> requires std::is_pointer_v<T>
 struct ValueTypes<T> {
-  static constexpr auto value = ValueType::pointer;
+  static constexpr auto value = ValueType::Pointer;
 };
 
 template<typename C> requires IsChar<C>
 struct ValueTypes<std::basic_string<C>> {
-  static constexpr auto value = ValueType::string;
+  static constexpr auto value = ValueType::String;
 };
 
 template<typename C> requires IsChar<C>
 struct ValueTypes<std::basic_string_view<C>> {
-  static constexpr auto value = ValueType::string;
+  static constexpr auto value = ValueType::String;
 };
 
 template<typename T>
 struct ValueTypes<std::optional<T>> {
-  static constexpr auto value = ValueType::optional;
+  static constexpr auto value = ValueType::Optional;
 };
 
 template<typename A, typename B>
 struct ValueTypes<std::pair<A, B>> {
-  static constexpr auto value = ValueType::tuple;
+  static constexpr auto value = ValueType::Tuple;
 };
 
 template<typename... T>
 struct ValueTypes<std::tuple<T...>> {
-  static constexpr auto value = ValueType::tuple;
+  static constexpr auto value = ValueType::Tuple;
 };
 
 template<typename T, u64 N>
 struct ValueTypes<std::array<T, N>> {
-  static constexpr auto value = ValueType::array;
+  static constexpr auto value = ValueType::Array;
 };
 
 template<typename T>
 struct ValueTypes<std::vector<T>> {
-  static constexpr auto value = ValueType::array;
+  static constexpr auto value = ValueType::Array;
 };
 
 template<typename T>
 struct ValueTypes<std::set<T>> {
-  static constexpr auto value = ValueType::set;
+  static constexpr auto value = ValueType::Set;
 };
 
 template<typename T>
 struct ValueTypes<std::unordered_set<T>> {
-  static constexpr auto value = ValueType::set;
+  static constexpr auto value = ValueType::Set;
 };
 
 template<typename K, typename V>
 struct ValueTypes<std::map<K, V>> {
-  static constexpr auto value = ValueType::map;
+  static constexpr auto value = ValueType::Map;
 };
 
 template<typename K, typename V>
 struct ValueTypes<std::unordered_map<K, V>> {
-  static constexpr auto value = ValueType::map;
+  static constexpr auto value = ValueType::Map;
 };
 
 template<typename A, typename B>
 struct ValueTypes<boost::bimaps::bimap<A, B>> {
-  static constexpr auto value = ValueType::bimap;
+  static constexpr auto value = ValueType::Bimap;
 };
 
 // #Encoder -------------------------------------------------------------------------------------------------
@@ -181,12 +193,13 @@ struct ValueTypes<boost::bimaps::bimap<A, B>> {
  */
 template<typename Consumer>
 struct Encoder {
-  template<typename T, typename... Arg>
-  auto encode(const T& val, auto&& args){
+  template<typename T, typename... Args>
+  auto
+  encode(const T& val, Args&&... args){
     constexpr auto valueType = ValueTypes<T>::value;
     using ConsumerType = Consumer::template Type<valueType, T>;
     ConsumerType consumer;
-    return consumer.consume(val, std::forward<decltype(args)>(args));
+    return consumer.consume(val, std::forward<Args>(args)...);
   }
 };
 
@@ -199,23 +212,17 @@ struct Encoder {
 */
 template<typename Producer>
 struct Decoder {
-  template<typename T, typename... Arg>
-  auto
-  decode(nio::Source& in, Arg&&... args) {
+  template<typename T, typename... Args>
+  bool
+  decode(T& val, nio::Source& in, Args&&... args) {
     constexpr auto valueType = ValueTypes<T>::value;
     using ProducerType = Producer::template Type<valueType, T>;
     ProducerType producer;
-    return producer.produce(in, std::forward<Arg>(args)...);
-  }
-
-  template<typename T, typename... Arg>
-  auto
-  tryDecode(nio::Source& in, Arg&&... args) ->
-    std::optional<decltype(decode<T>(in, std::forward<Arg>(args)...))> {
     try {
-      return decode<T>(in, std::forward<Arg>(args)...);
+      producer.produce(val, in, std::forward<Args>(args)...);
+      return true;
     } catch (const std::exception&) {
-      return {};
+      return false;
     }
   }
 };
