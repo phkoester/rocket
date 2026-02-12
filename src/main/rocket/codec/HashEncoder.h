@@ -189,10 +189,8 @@ struct HashConsumerImpl<ValueType::MemberRef, T, Hash> {
     using Elem = typename T::ValueType;
     constexpr auto elemValueType = ValueTypes<Elem>::value;
 
-    u64 ret = Hash()(val.name());
-    u64 elemHash = HashConsumerImpl<elemValueType, Elem, Hash>().consume(val.get(instance));
-    hash::combine(ret, elemHash);
-    return ret;
+    // We don't include the name in the hash, because it's not part of the value
+    return HashConsumerImpl<elemValueType, Elem, Hash>().consume(val.get(instance));
   }
 };
 
@@ -203,10 +201,8 @@ struct HashConsumerImpl<ValueType::VarRef, T, Hash> {
     using Elem = typename T::ValueType;
     constexpr auto elemValueType = ValueTypes<Elem>::value;
 
-    u64 ret = Hash()(val.name());
-    u64 elemHash = HashConsumerImpl<elemValueType, Elem, Hash>().consume(val.get());
-    hash::combine(ret, elemHash);
-    return ret;
+    // We don't include the name in the hash, because it's not part of the value
+    return HashConsumerImpl<elemValueType, Elem, Hash>().consume(val.get());
   }
 };
 
