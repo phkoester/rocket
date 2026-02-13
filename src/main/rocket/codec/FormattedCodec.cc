@@ -12,7 +12,7 @@ namespace rocket::codec::internal {
 
 // Utilities for encoding -----------------------------------------------------------------------------------
 
-thread_local u64 level = 0;
+ROCKET_PUBLIC thread_local u64 level = 0;
 
 void
 beginContainer(nio::Sink& out, const FormattedConsumerConfig& config, char c) {

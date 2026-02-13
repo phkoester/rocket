@@ -41,7 +41,7 @@ namespace internal {
 // Utilities for encoding -----------------------------------------------------------------------------------
 
 // The current level of indentation
-extern thread_local u64 level;
+ROCKET_PUBLIC extern thread_local u64 level;
 
 // Takes care of indentation
 void beginContainer(nio::Sink& out, const FormattedConsumerConfig& config, char c);
