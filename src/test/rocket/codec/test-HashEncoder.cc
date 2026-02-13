@@ -6,7 +6,6 @@
 
 #include "rocket/Bimap.h"
 #include "rocket/codec/HashEncoder.h"
-#include "rocket/reflect/reflect.h"
 #include "rocket/reflect/reflect-codec.h"
 
 #include <fmt/ranges.h>

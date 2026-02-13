@@ -4,7 +4,6 @@
 
 #include "rocket-test/rocket-test.h"
 
-#include "rocket/reflect/reflect.h"
 #include "rocket/reflect/reflect-codec.h"
 
 #include <fmt/ranges.h>

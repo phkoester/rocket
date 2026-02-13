@@ -49,6 +49,20 @@ nextElem(nio::Sink& out, const FormattedConsumerConfig& config, u64 index) {
 
 // Utilities for encoding -----------------------------------------------------------------------------------
 
+void
+expectColon(nio::StringSource& in) {
+  if (not read(in, ':')) {
+    throw InputFailure(in.tell(), "Missing colon");
+  }
+}
+
+void
+expectComma(nio::StringSource& in) {
+  if (not read(in, ',')) {
+    throw InputFailure(in.tell(), "Missing comma");
+  }
+}
+
 u64
 findUnescaped(std::string_view str, char c) {
   u64 pos = 0;
@@ -111,10 +125,10 @@ read(
 
 void
 skip(nio::StringSource& in, const FormattedProducerConfig& config) {
-  auto available = in.available();
+  const auto available = in.available();
   u64 pos = 0; // Position relative to current position of the source
   while (pos < available.size()) {
-    char c = available[pos];
+    const char c = available[pos];
 
     // Skip all ASCII characters 0--32
     if (static_cast<u8>(c) <= 32) {
@@ -124,7 +138,7 @@ skip(nio::StringSource& in, const FormattedProducerConfig& config) {
 
     // Skip shell-style "#" comments until EOL
     if (config.shellComments && c == '#') {
-      auto lf = available.find('\n', pos + 1);
+      const auto lf = available.find('\n', pos + 1);
       if (lf == NPOS) {
         pos = available.size();
         break;
@@ -135,11 +149,11 @@ skip(nio::StringSource& in, const FormattedProducerConfig& config) {
       }
     }
 
-    string_view twoChars = available.substr(pos, 2);
+    const string_view twoChars = available.substr(pos, 2);
 
     // Skip C-style "//" comments until EOL
     if (config.cComments && twoChars == "//") {
-      auto lf = available.find('\n', pos + 2);
+      const auto lf = available.find('\n', pos + 2);
       if (lf == NPOS) {
         pos = available.size();
         break;
@@ -152,7 +166,7 @@ skip(nio::StringSource& in, const FormattedProducerConfig& config) {
 
     // Skip C-style "/*" comments until "*/"
     if (config.cComments && twoChars == "/*") {
-      auto eoc = available.find("*/", pos + 2);
+      const auto eoc = available.find("*/", pos + 2);
       if (eoc == NPOS) {
         throw InputFailure(in.tell() + pos, "Unterminated C-style comment");
       }
@@ -164,7 +178,7 @@ skip(nio::StringSource& in, const FormattedProducerConfig& config) {
 
     // Skip whitespace code points
     u64 newPos = 0;
-    auto cp = unicode::nextCodePoint(available.substr(pos), newPos);
+    const auto cp = unicode::nextCodePoint(available.substr(pos), newPos);
     if (cp.isWhitespace()) {
       pos += newPos;
       continue;
@@ -173,6 +187,7 @@ skip(nio::StringSource& in, const FormattedProducerConfig& config) {
     // Otherwise, stop skipping
     break;
   }
+  // Advance the source
   in.seek(pos, nio::SeekMode::cur);
 }
 

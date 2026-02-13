@@ -12,7 +12,7 @@
 #include "rocket/str/escape/escape.h"
 #include "rocket/unicode/ConvertTo.h"
 
-#include <fmt/format.h>
+#include <fmt/std.h>
 
 #include <scn/scan.h>
 
@@ -40,25 +40,39 @@ namespace internal {
 
 // Utilities for encoding -----------------------------------------------------------------------------------
 
+// The current level of indentation
 extern thread_local u64 level;
 
+// Takes care of indentation
 void beginContainer(nio::Sink& out, const FormattedConsumerConfig& config, char c);
 
+// Takes care of indentation
 void endContainer(nio::Sink& out, const FormattedConsumerConfig& config, u64 size, char c);
 
+// Takes care of indentation
 void nextElem(nio::Sink& out, const FormattedConsumerConfig& config, u64 index);
 
 // Utilities for decoding -----------------------------------------------------------------------------------
 
+// Throws if there is no colon
+void expectColon(nio::StringSource& in);
+
+// Throws if there is no comma
+void expectComma(nio::StringSource& in);
+
+// Finds a character not preceded by an escaping backslash
 [[nodiscard]] u64 findUnescaped(std::string_view str, char c);
 
+// Reads a single expected character, advances the source only on success
 [[nodiscard]] bool read(nio::StringSource& in, char c);
 
+// Reads any of a set of expected strings, advances the source only on success
 [[nodiscard]] std::optional<std::string_view> read(
   nio::StringSource& in,
   const std::set<std::string_view>& values,
   bool ignoreCase = false);
 
+/// Skips whitespace and comments
 void skip(nio::StringSource& in, const FormattedProducerConfig& config);
 
 // #FormattedConsumerImpl -----------------------------------------------------------------------------------
@@ -391,6 +405,7 @@ struct FormattedProducerImpl<ValueType::Integer, I> {
     const auto pos = in.tell();
 
     auto available = in.available();
+    // Setting `base` to 0 detects the base from the input
     auto result = scn::scan_int<I>(available, 0);
     if (result) {
       in.seek(result->begin() - available.begin(), nio::SeekMode::cur);
@@ -529,9 +544,7 @@ private:
   produceElem(Elem& elem, nio::StringSource& in, CONFIG__, u64 index, Args&&... args) {
     skip(in, config);
     if (index > 0) {
-      if (not read(in, ',')) {
-        throw InputFailure(in.tell(), "Missing comma");
-      }
+      expectComma(in);
       skip(in, config);
     }
     constexpr auto elemValueType = ValueTypes<Elem>::value;
@@ -570,9 +583,7 @@ private:
     for (u64 index = 0; index < size; ++index) {
       skip(in, config);
       if (index > 0) {
-        if (not read(in, ',')) {
-          throw InputFailure(in.tell(), "Missing comma");
-        }
+        expectComma(in);
         skip(in, config);
       }
       FormattedProducerImpl<elemValueType, Elem>().produce(val[index], in, config);
@@ -599,9 +610,7 @@ private:
         return;
       }
       if (index++ > 0) {
-        if (not read(in, ',')) {
-          throw InputFailure(in.tell(), "Missing comma");
-        }
+        expectComma(in);
         skip(in, config);
         if (read(in, ']')) { // Allow trailing comma if nonempty
           return;
@@ -634,9 +643,7 @@ struct FormattedProducerImpl<ValueType::Set, T> {
         return;
       }
       if (index++ > 0) {
-        if (not read(in, ',')) {
-          throw InputFailure(in.tell(), "Missing comma");
-        }
+        expectComma(in);
         skip(in, config);
         if (read(in, '}')) { // Allow trailing comma if nonempty
           return;
@@ -672,9 +679,7 @@ struct FormattedProducerImpl<ValueType::Map, T> {
         return;
       }
       if (index++ > 0) {
-        if (not read(in, ',')) {
-          throw InputFailure(in.tell(), "Missing comma");
-        }
+        expectComma(in);
         if (read(in, '}')) { // Allow trailing comma if nonempty
           return;
         }
@@ -685,9 +690,7 @@ struct FormattedProducerImpl<ValueType::Map, T> {
       FormattedProducerImpl<keyValueType, Key>().produce(key, in, config);
       skip(in, config);
 
-      if (not read(in, ':')) {
-        throw InputFailure(in.tell(), "Missing colon");
-      }
+      expectColon(in);
       skip(in, config);
 
       Elem elem;
@@ -720,9 +723,7 @@ struct FormattedProducerImpl<ValueType::Bimap, T> {
         return;
       }
       if (index++ > 0) {
-        if (not read(in, ',')) {
-          throw InputFailure(in.tell(), "Missing comma");
-        }
+        expectComma(in);
         skip(in, config);
         if (read(in, '}')) { // Allow trailing comma if nonempty
           return;
@@ -733,9 +734,7 @@ struct FormattedProducerImpl<ValueType::Bimap, T> {
       FormattedProducerImpl<keyValueType, Key>().produce(key, in, config);
       skip(in, config);
 
-      if (not read(in, ':')) {
-        throw InputFailure(in.tell(), "Missing colon");
-      }
+      expectColon(in);
       skip(in, config);
 
       Elem elem;
@@ -775,6 +774,7 @@ struct FormattedProducerImpl<ValueType::MemberRef, T> {
     }
     in.seek(eq + 1, nio::SeekMode::cur);
 
+    // For `MemberRef`, we demand the name to match
     std::string_view name = available.substr(0, eq);
     name = str::removeTrailing<char>(name, " "); // @todo Trim all trailing whitespace
     if (name != val.name()) {
@@ -798,15 +798,11 @@ struct FormattedProducerImpl<ValueType::VarRef, T> {
     auto available = in.available();
     auto eq = available.find('=');
     if (eq == NPOS) {
-      throw InputFailure(pos, "Expected a member reference");
+      throw InputFailure(pos, "Expected a variable reference");
     }
     in.seek(eq + 1, nio::SeekMode::cur);
 
-    std::string_view name = available.substr(0, eq);
-    name = str::removeTrailing<char>(name, " "); // @todo Trim all trailing whitespace
-    if (name != val.name()) {
-      throw InputFailure(pos, fmt::format("Expected name `{}`, got `{}`", val.name(), name));
-    }
+    // For `VarRef`, we ignore the name altogether and do not demand it to match
     skip(in, config);
 
     using Elem = T::ValueType;
