@@ -42,31 +42,31 @@ TEST(HashEncoder, Pointer) {
 
 TEST(HashEncoder, Set) {
   const set<string> val = { "one", "two", "three" };
-  HashEncoder encoder;
+  HashEncoder<> encoder;
   EXPECT_NE(encoder.encode(val), 0);
 }
 
 TEST(HashEncoder, Map) {
   const map<string, int> val = { { "a", 1 }, { "b", 2 }, { "c", 3 } };
-  HashEncoder encoder;
+  HashEncoder<> encoder;
   EXPECT_NE(encoder.encode(val), 0);
 }
 
 TEST(HashEncoder, Bimap) {
   const auto val = makeBimap<string, i32>({ { "a", 1 }, { "b", 2 }, { "c", 3 } });
-  HashEncoder encoder;
+  HashEncoder<> encoder;
   EXPECT_NE(encoder.encode(val), 0);
 }
 
 TEST(HashEncoder, BimapUnordered) {
   const auto val = makeUnorderedBimap<string, i32>({ { "a", 1 }, { "b", 2 }, { "c", 3 } });
-  HashEncoder encoder;
+  HashEncoder<> encoder;
   EXPECT_NE(encoder.encode(val), 0);
 }
 
 TEST(HashEncoder, MemberRefProviderMyStruct) {
   const MyStruct val { 42, true, "hello", { 1, 2, 3 } };
-  HashEncoder encoder;
+  HashEncoder<> encoder;
   EXPECT_NE(encoder.encode(val), 0);
 }
 
