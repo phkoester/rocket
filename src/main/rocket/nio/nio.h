@@ -791,15 +791,17 @@ struct StringSource : Source {
 
   ~StringSource() override = default;
 
+  std::string_view available() const { return in_.substr(pos_); }
+
   bool close() override;
 
   i32 handle() const override { return -1; }
 
+  std::string_view in() const { return in_; }
+
   u64 read(std::span<u8> out) override;
 
   bool seek(i64 offset, SeekMode mode = SeekMode::beg) override; // NOLINT
-
-  std::string_view str() const { return in_; }
 
   u64 tell() override { return bad() ? NPOS : static_cast<u64>(pos_); }
 

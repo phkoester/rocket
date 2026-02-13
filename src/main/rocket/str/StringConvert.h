@@ -135,7 +135,8 @@ struct StringConvert<E> {
    */
   [[nodiscard]] static Type
   toType(std::string_view str) {
-    return Enum<Type>::toType(str);
+    const auto [_, val] = Enum<Type>::toType(str, true);
+    return val;
   }
 };
 
@@ -242,7 +243,7 @@ tryToType(std::string_view str) {
   try {
     return StringConvert<T>::toType(str);
   } catch (const std::exception&) {
-    return std::nullopt;
+    return {};
   }
 }
 

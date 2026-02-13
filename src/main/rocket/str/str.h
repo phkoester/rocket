@@ -4,42 +4,16 @@
  * A string library, ready for `char` (UTF-8) and `char32` (UTF-32).
  */
 
+#include "rocket/literal.h"
 #include "rocket/type-traits.h"
 
 #include <algorithm>
-#include <array>
 #include <string>
 #include <vector>
 
 #pragma once
 
 namespace rocket::str {
-
-// #LiteralString -------------------------------------------------------------------------------------------
-
-/**
- * A literal string for both `char` and `char32`.
- *
- * @tparam C the character type
- * @tparam Chars the characters
- */
-template<typename C, C... Chars> requires IsChar<C>
-struct LiteralString {
-  /// The value, as an array of characters.
-  static constexpr std::array<C, sizeof...(Chars)> value = { Chars... };
-
-  /// @member_op_cast{#std::basic_string_view}
-  constexpr operator std::basic_string_view<C>() const { // NOLINT(*-explicit-constructor)
-    return { value.data(), value.size() };
-  }
-
-  /**
-   * Returns the size of the string.
-   *
-   * @return the size of the string
-   */
-  consteval u64 size() const { return value.size(); }
-};
 
 // #SplitIterator -------------------------------------------------------------------------------------------
 
@@ -148,6 +122,27 @@ private:
   /// The separator.
   std::basic_string<C> sep_;
 };
+
+// #split ---------------------------------------------------------------------------------------------------
+
+/**
+ * Splits a string into tokens.
+ *
+ * No strings are ever allocated, except for the separator, so this is a very efficient way to split a string
+ * into tokens.
+ *
+ * The underlying string of @p str must remain valid for the lifetime of the returned result.
+ *
+ * @tparam C the character type
+ * @param str the string to split
+ * @param sep the separator to use
+ * @return a result object that can be used to iterate over the tokens
+ */
+template<typename C> requires IsChar<C>
+[[nodiscard]] SplitResult<C>
+split(std::basic_string_view<C> str, std::basic_string_view<C> sep) {
+  return SplitResult<C>(str, sep);
+}
 
 // Functions ------------------------------------------------------------------------------------------------
 
@@ -388,25 +383,6 @@ repeat(const std::basic_string_view<C> str, u64 count) {
     ret.append(str);
   }
   return ret;
-}
-
-/**
- * Splits a string into tokens.
- *
- * No strings are ever allocated, except for the separator, so this is a very efficient way to split a string
- * into tokens.
- *
- * The underlying string of @p str must remain valid for the lifetime of the returned result.
- *
- * @tparam C the character type
- * @param str the string to split
- * @param sep the separator to use
- * @return a result object that can be used to iterate over the tokens
- */
-template<typename C> requires IsChar<C>
-[[nodiscard]] SplitResult<C>
-split(std::basic_string_view<C> str, std::basic_string_view<C> sep) {
-  return SplitResult<C>(str, sep);
 }
 
 /**

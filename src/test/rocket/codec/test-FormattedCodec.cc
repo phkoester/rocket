@@ -7,8 +7,10 @@
 #include "rocket/codec/FormattedCodec.h"
 #include "rocket/log/log.h"
 #include "rocket/reflect/reflect.h"
+#include "rocket/reflect/reflect-codec.h"
 
 using namespace rocket::codec;
+using namespace std;
 
 // #MyStruct ------------------------------------------------------------------------------------------------
 
@@ -213,7 +215,7 @@ TEST(FormattedCodec, FormattedConsumerMemberRefProvider) {
 
 TEST(FormattedCodec, FormattedProducerBool) {
   FormattedCodec codec;
-  FormattedProducerConfig config { .cComments=true, .shellCommments=true };
+  FormattedProducerConfig config { .cComments=true, .shellComments=true };
 
   {
     nio::StringSource in("  /* comment\nanother line in the comment */\r\n# comment\n\ttRUe");
@@ -223,9 +225,219 @@ TEST(FormattedCodec, FormattedProducerBool) {
 
   {
     nio::StringSource in("\r\n  1");
+    bool val = codec.decode<bool>(in, config);
+    EXPECT_EQ(val, true);
+  }
+
+  {
+    nio::StringSource in("\r\nx");
     EXPECT_THAT(
-      [&] { codec.decode<bool>(in, config); },
-      throwsInputFailure(4, HasSubstr("Expected `Bool`")));
+      [&] { in.seek(0); codec.decode<bool>(in, config); },
+      throwsInputFailure(2, HasSubstr("Expected a boolean value")));
+  }
+}
+
+TEST(FormattedCodec, FormattedProducerChar) {
+  FormattedCodec codec;
+
+  {
+    nio::StringSource in("'a'");
+    EXPECT_EQ(codec.decode<char>(in), 'a');
+  }
+
+  {
+    nio::StringSource in("'\\''");
+    EXPECT_EQ(codec.decode<char>(in), '\'');
+  }
+
+  {
+    nio::StringSource in("'\\t'");
+    EXPECT_EQ(codec.decode<char>(in), '\t');
+  }
+
+  {
+    nio::StringSource in("  'ä'");
+    EXPECT_THAT(
+      [&] { in.seek(0); codec.decode<char>(in); },
+      throwsInputFailure(2, HasSubstr("Invalid character literal")));
+  }
+
+  {
+    nio::StringSource in("'ä'");
+    EXPECT_EQ(codec.decode<char32>(in), U'ä');
+  }
+
+  {
+    nio::StringSource in("'\u20ac'");
+    EXPECT_EQ(codec.decode<char32>(in), U'€');
+  }
+}
+
+TEST(FormattedCodec, FormattedProducerEnum) {
+  FormattedCodec codec;
+
+  {
+    enum Color { Red, Green, Blue };
+    nio::StringSource in("2");
+    EXPECT_EQ(codec.decode<Color>(in), Blue);
+  }
+
+  {
+    nio::StringSource in("  info  ");
+    EXPECT_EQ(codec.decode<log::LogLevel>(in), log::LogLevel::info);
+    EXPECT_EQ(in.tell(), 6);
+  }
+}
+
+TEST(FormattedCodec, FormattedProducerInteger) {
+  FormattedCodec codec;
+
+  {
+    nio::StringSource in("-42");
+    EXPECT_EQ(codec.decode<i32>(in), -42);
+  }
+
+  {
+    nio::StringSource in("0xABcd");
+    EXPECT_EQ(codec.decode<i32>(in), 0xABCD);
+  }
+
+  {
+    nio::StringSource in("  x");
+    EXPECT_THAT(
+      [&] { in.seek(0); codec.decode<i32>(in); },
+      throwsInputFailure(2, HasSubstr("Expected an integer value")));
+  }
+}
+
+TEST(FormattedCodec, FormattedProducerFloat) {
+  FormattedCodec codec;
+
+  {
+    nio::StringSource in("  -123.456  ");
+    EXPECT_EQ(codec.decode<f64>(in), -123.456);
+    EXPECT_EQ(in.tell(), 10);
+  }
+}
+
+TEST(FormattedCodec, FormattedProducerPointer) {
+  FormattedCodec codec;
+
+  {
+    nio::StringSource in("<null>");
+    EXPECT_EQ(codec.decode<void*>(in), nullptr);
+  }
+
+  {
+    nio::StringSource in("0x12345678");
+    EXPECT_EQ(codec.decode<void*>(in), reinterpret_cast<void*>(0x12345678));
+  }
+}
+
+TEST(FormattedCodec, FormattedProducerOptionalString) {
+  FormattedCodec codec;
+
+  {
+    nio::StringSource in("<none>");
+    EXPECT_EQ(codec.decode<optional<string>>(in), nullopt);
+  }
+
+  {
+    nio::StringSource in("\"Hello\"");
+    EXPECT_EQ(codec.decode<optional<string>>(in), "Hello");
+  }
+}
+
+TEST(FormattedCodec, FormattedProducerTuple) {
+  FormattedCodec codec;
+  FormattedProducerConfig config { .cComments=true, .shellComments=true };
+
+  {
+    nio::StringSource in("  (  \"answer\"   , 42   )");
+    EXPECT_EQ((codec.decode<pair<string, i32>>(in, config)), make_pair("answer"s, 42_i32));
+  }
+
+  {
+    nio::StringSource in("  (  # comment\n \"answer\"   , 42  /* comment */  , // comment\n  )");
+    EXPECT_EQ((codec.decode<pair<string, i32>>(in, config)), make_pair("answer"s, 42_i32));
+  }
+
+  {
+    nio::StringSource in("()");
+    EXPECT_EQ((codec.decode<tuple<>>(in, config)), make_tuple());
+  }
+
+  {
+    nio::StringSource in("(1, 2, true)");
+    EXPECT_EQ((codec.decode<tuple<i32, i32, bool>>(in, config)), make_tuple(1_i32, 2_i32, true));
+  }
+}
+
+TEST(FormattedCodec, FormattedProducerArray) {
+  FormattedCodec codec;
+  FormattedProducerConfig config { .cComments=true, .shellComments=true };
+
+  {
+    nio::StringSource in("  [ 1, 2, 3   ]");
+    EXPECT_EQ((codec.decode<array<i32, 3>>(in, config)), (array<i32, 3> { 1, 2, 3 }));
+  }
+
+  {
+    nio::StringSource in("  [ 1, 2, 3   , ]");
+    EXPECT_EQ((codec.decode<array<i32, 3>>(in, config)), (array<i32, 3> { 1, 2, 3 }));
+  }
+
+  {
+    nio::StringSource in("[]");
+    EXPECT_EQ((codec.decode<vector<i32>>(in, config)), (vector<i32> { }));
+  }
+
+  {
+    nio::StringSource in("[1, 2, 3]");
+    EXPECT_EQ((codec.decode<vector<i32>>(in, config)), (vector<i32> { 1, 2, 3 }));
+  }
+
+  {
+    nio::StringSource in("[1, 2, 3,]");
+    EXPECT_EQ((codec.decode<vector<i32>>(in, config)), (vector<i32> { 1, 2, 3 }));
+  }
+
+  {
+    nio::StringSource in("  [ 1, 2, 3   , ]");
+    EXPECT_EQ((codec.decode<vector<i32>>(in, config)), (vector<i32> { 1, 2, 3 }));
+  }
+}
+
+TEST(FormattedCodec, FormattedProducerSet) {
+  FormattedCodec codec;
+  FormattedProducerConfig config { .cComments=true, .shellComments=true };
+
+  {
+    nio::StringSource in("  { 1, 2, 3  ,  }   ");
+    EXPECT_EQ((codec.decode<set<i32>>(in, config)), (set<i32> { 1, 2, 3 }));
+  }
+}
+
+TEST(FormattedCodec, FormattedProducerBimap) {
+  FormattedCodec codec;
+  FormattedProducerConfig config { .cComments=true, .shellComments=true };
+
+  {
+    nio::StringSource in("  { \"alpha\"\t: 1, \"beta\"  :/* comment */ 2, \"gamma\": 3  ,  }   ");
+    using type = Bimap<string, i32>;
+    type val = makeBimap<string, i32>({ { "alpha", 1 }, { "beta", 2 }, { "gamma", 3 } });
+    EXPECT_EQ(codec.decode<type>(in, config), val);
+  }
+}
+
+TEST(FormattedCodec, FormattedProducerMemberRefProvider) {
+  FormattedCodec codec;
+  FormattedProducerConfig config { .cComments=true, .shellComments=true };
+
+  {
+    nio::StringSource in("  ( ärger  =  42, ökonom=true, übermut=\"hello\", vec=[1, 2, 3] )   ");
+    MyStruct val { 42, true, "hello", { 1, 2, 3 } };
+    EXPECT_EQ(codec.decode<MyStruct>(in, config), val);
   }
 }
 

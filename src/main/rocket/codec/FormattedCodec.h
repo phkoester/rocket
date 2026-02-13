@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "rocket/enum.h"
 #include "rocket/Guard.h"
 #include "rocket/InputFailure.h"
 #include "rocket/codec/codec.h"
@@ -32,7 +33,7 @@ struct FormattedProducerConfig {
   /// Whether to allow C-style comments starting with @c // or @c /*.
   bool cComments = false;
   /// Whether to allow shell-style comments starting with @c #.
-  bool shellCommments = false;
+  bool shellComments = false;
 };
 
 namespace internal {
@@ -49,12 +50,14 @@ void nextElem(nio::Sink& out, const FormattedConsumerConfig& config, u64 index);
 
 // Utilities for decoding -----------------------------------------------------------------------------------
 
-std::string_view available(nio::StringSource& in);
+[[nodiscard]] u64 findUnescaped(std::string_view str, char c);
+
+[[nodiscard]] bool read(nio::StringSource& in, char c);
 
 [[nodiscard]] std::optional<std::string_view> read(
   nio::StringSource& in,
   const std::set<std::string_view>& values,
-  bool caseInsensitive = false);
+  bool ignoreCase = false);
 
 void skip(nio::StringSource& in, const FormattedProducerConfig& config);
 
@@ -310,6 +313,8 @@ struct FormattedProducerImpl<ValueType::Bool, bool> {
   void
   produce(bool& val, nio::StringSource& in, CONFIG__) {
     skip(in, config);
+    const auto pos = in.tell();
+
     if (read(in, { "0", "false" }, true)) {
       val = false;
       return;
@@ -318,7 +323,495 @@ struct FormattedProducerImpl<ValueType::Bool, bool> {
       val = true;
       return;
     }
-    throw InputFailure(in.tell(), "Expected `Bool`");
+    throw InputFailure(pos, "Expected a boolean value");
+  }
+};
+
+template<typename C>
+struct FormattedProducerImpl<ValueType::Char, C> {
+  void
+  produce(C& val, nio::StringSource& in, CONFIG__) {
+    using namespace rocket::str::escape;
+
+    skip(in, config);
+    const auto pos = in.tell();
+
+    if (not read(in, '\'')) {
+      throw InputFailure(pos, "Expected a character");
+    }
+
+    auto available = in.available();
+    auto closing = findUnescaped(available, '\'');
+    if (closing == NPOS) {
+      throw InputFailure(pos, "Unterminated character literal");
+    }
+    in.seek(closing + 1, nio::SeekMode::cur);
+
+    std::string_view input = available.substr(0, closing);
+    std::string unescaped = unescapeCString(input);
+    std::basic_string<C> str(unicode::ConvertTo<C>::apply(unescaped));
+    if (str.size() != 1) {
+      throw InputFailure(pos, "Invalid character literal");
+    }
+    val = str[0];
+  }
+};
+
+template<typename E>
+struct FormattedProducerImpl<ValueType::Enum, E> {
+  void
+  produce(E& val, nio::StringSource& in, CONFIG__) {
+    skip(in, config);
+    const auto pos = in.tell();
+
+    if constexpr (rocket::Enum<E>::value) { // @todo Use `scan::is_scannable`
+      try {
+        auto available = in.available();
+        const auto [size, enumVal] = rocket::Enum<E>::toType(available, false);
+        in.seek(size, nio::SeekMode::cur);
+        val = enumVal;
+      } catch (const std::exception&) {
+        throw InputFailure(pos, fmt::format("Invalid value for enumeration `{}`", typeid(E)));
+      }
+    } else {
+      using Underlying = decltype(std::to_underlying(val));
+      constexpr auto underlyingValueType = ValueTypes<Underlying>::value;
+      Underlying underlying;
+      FormattedProducerImpl<underlyingValueType, Underlying>().produce(underlying, in, config);
+      val = static_cast<E>(underlying);
+    }
+  }
+};
+
+template<typename I>
+struct FormattedProducerImpl<ValueType::Integer, I> {
+  void
+  produce(I& val, nio::StringSource& in, CONFIG__) {
+    skip(in, config);
+    const auto pos = in.tell();
+
+    auto available = in.available();
+    auto result = scn::scan_int<I>(available, 0);
+    if (result) {
+      in.seek(result->begin() - available.begin(), nio::SeekMode::cur);
+      val = result->value();
+      return;
+    }
+
+    throw InputFailure(pos, "Expected an integer value");
+  }
+};
+
+template<typename F>
+struct FormattedProducerImpl<ValueType::Float, F> {
+  void
+  produce(F& val, nio::StringSource& in, CONFIG__) {
+    skip(in, config);
+    const auto pos = in.tell();
+
+    auto available = in.available();
+    auto result = scn::scan<F>(available, "{}");
+    if (result) {
+      in.seek(result->begin() - available.begin(), nio::SeekMode::cur);
+      val = result->value();
+      return;
+    }
+
+    throw InputFailure(pos, "Expected a floating-point value");
+  }
+};
+
+// It doesn't make much sense to reconstruct a pointer value from a string, but for the sake of symmetry,
+// the functionality is provided here
+template<typename T>
+struct FormattedProducerImpl<ValueType::Pointer, T> {
+  void
+  produce(T& val, nio::StringSource& in, CONFIG__) {
+    skip(in, config);
+    const auto pos = in.tell();
+
+    if (read(in, { "<null>" })) {
+      val = nullptr;
+      return;
+    }
+
+    auto available = in.available();
+    auto result = scn::scan<T>(available, "{}");
+    if (result) {
+      in.seek(result->begin() - available.begin(), nio::SeekMode::cur);
+      val = result->value();
+      return;
+    }
+
+    throw InputFailure(pos, "Expected a pointer value");
+  }
+};
+
+template<typename T>
+struct FormattedProducerImpl<ValueType::String, T> {
+  void
+  produce(T& val, nio::StringSource& in, CONFIG__) {
+    using C = typename T::value_type;
+    static_assert(std::is_same_v<T, std::basic_string<C>>, "Cannot decode string view");
+
+    using namespace rocket::str::escape;
+
+    skip(in, config);
+    const auto pos = in.tell();
+
+    if (not read(in, '"')) {
+      throw InputFailure(pos, "Expected a string");
+    }
+
+    auto available = in.available();
+    auto closing = findUnescaped(available, '"');
+    if (closing == NPOS) {
+      throw InputFailure(pos, "Unterminated string literal");
+    }
+    in.seek(closing + 1, nio::SeekMode::cur);
+
+    std::string_view input = available.substr(0, closing);
+    std::string unescaped = unescapeCString(input);
+    std::basic_string<C> str(unicode::ConvertTo<C>::apply(unescaped));
+    val = std::move(str);
+  }
+};
+
+template<typename T>
+struct FormattedProducerImpl<ValueType::Optional, T> {
+  void
+  produce(T& val, nio::StringSource& in, CONFIG__) {
+    skip(in, config);
+
+    if (read(in, { "<none>" })) {
+      val = std::nullopt;
+      return;
+    }
+
+    using Elem = typename T::value_type;
+    constexpr auto elemValueType = ValueTypes<Elem>::value;
+    val = Elem();
+    FormattedProducerImpl<elemValueType, Elem>().produce(*val, in, config);
+  }
+};
+
+// For #MemberRef, the tuple producer must be able to pass additional arguments to the element producer
+template<typename T>
+struct FormattedProducerImpl<ValueType::Tuple, T> {
+  template<typename... Args>
+  void
+  produce(T& val, nio::StringSource& in, CONFIG__, Args&&... args) {
+    skip(in, config);
+    const auto pos = in.tell();
+
+    if (not read(in, '(')) {
+      throw InputFailure(pos, "Expected a tuple");
+    }
+
+    u64 index = 0;
+    std::apply([&](auto&&... arg) {
+      (produceElem(std::forward<decltype(arg)>(arg), in, config, index++, std::forward<Args>(args)...), ...);
+    }, val);
+
+    skip(in, config);
+    if (std::tuple_size<T>::value > 0 && read(in, ',')) { // Allow trailing comma if nonempty
+      skip(in, config);
+    }
+    if (not read(in, ')')) {
+      throw InputFailure(in.tell(), { pos, in.tell() }, "Unterminated tuple");
+    }
+  }
+
+private:
+
+  template<typename Elem, typename... Args>
+  void
+  produceElem(Elem& elem, nio::StringSource& in, CONFIG__, u64 index, Args&&... args) {
+    skip(in, config);
+    if (index > 0) {
+      if (not read(in, ',')) {
+        throw InputFailure(in.tell(), "Missing comma");
+      }
+      skip(in, config);
+    }
+    constexpr auto elemValueType = ValueTypes<Elem>::value;
+    FormattedProducerImpl<elemValueType, Elem>().produce(elem, in, config, std::forward<Args>(args)...);
+  }
+};
+
+template<typename T>
+struct FormattedProducerImpl<ValueType::Array, T> {
+  void
+  produce(T& val, nio::StringSource& in, CONFIG__) {
+    skip(in, config);
+    const auto pos = in.tell();
+
+    if (not read(in, '[')) {
+      throw InputFailure(pos, "Expected an array");
+    }
+
+    if constexpr (IsArray<T>) {
+      // Fixed-size array
+      produceArray(val, in, config, pos);
+    } else {
+      // Dynamic-size vector
+      produceVector(val, in, config);
+    }
+  }
+
+private:
+
+  void
+  produceArray(T& val, nio::StringSource& in, CONFIG__, u64 pos)  {
+    using Elem = typename T::value_type;
+    constexpr auto elemValueType = ValueTypes<Elem>::value;
+
+    const auto size = val.size();
+    for (u64 index = 0; index < size; ++index) {
+      skip(in, config);
+      if (index > 0) {
+        if (not read(in, ',')) {
+          throw InputFailure(in.tell(), "Missing comma");
+        }
+        skip(in, config);
+      }
+      FormattedProducerImpl<elemValueType, Elem>().produce(val[index], in, config);
+    }
+
+    skip(in, config);
+    if (size > 0 && read(in, ',')) { // Allow trailing comma if nonempty
+      skip(in, config);
+    }
+    if (not read(in, ']')) {
+      throw InputFailure(in.tell(), { pos, in.tell() }, "Unterminated array");
+    }
+  }
+
+  void
+  produceVector(T& val, nio::StringSource& in, CONFIG__)  {
+    using Elem = typename T::value_type;
+    constexpr auto elemValueType = ValueTypes<Elem>::value;
+
+    u64 index = 0;
+    while (true) {
+      skip(in, config);
+      if (read(in, ']')) {
+        return;
+      }
+      if (index++ > 0) {
+        if (not read(in, ',')) {
+          throw InputFailure(in.tell(), "Missing comma");
+        }
+        skip(in, config);
+        if (read(in, ']')) { // Allow trailing comma if nonempty
+          return;
+        }
+      }
+      val.push_back(Elem());
+      FormattedProducerImpl<elemValueType, Elem>().produce(val.back(), in, config);
+    }
+  }
+};
+
+template<typename T>
+struct FormattedProducerImpl<ValueType::Set, T> {
+  void
+  produce(T& val, nio::StringSource& in, CONFIG__) {
+    using Elem = typename T::value_type;
+    constexpr auto elemValueType = ValueTypes<Elem>::value;
+
+    skip(in, config);
+    const auto pos = in.tell();
+
+    if (not read(in, '{')) {
+      throw InputFailure(pos, "Expected a set");
+    }
+
+    u64 index = 0;
+    while (true) {
+      skip(in, config);
+      if (read(in, '}')) {
+        return;
+      }
+      if (index++ > 0) {
+        if (not read(in, ',')) {
+          throw InputFailure(in.tell(), "Missing comma");
+        }
+        skip(in, config);
+        if (read(in, '}')) { // Allow trailing comma if nonempty
+          return;
+        }
+      }
+      Elem elem;
+      FormattedProducerImpl<elemValueType, Elem>().produce(elem, in, config);
+      val.insert(std::move(elem));
+    }
+  }
+};
+
+template<typename T>
+struct FormattedProducerImpl<ValueType::Map, T> {
+  void
+  produce(T& val, nio::StringSource& in, CONFIG__) {
+    using Key = typename T::key_type;
+    constexpr auto keyValueType = ValueTypes<Key>::value;
+    using Elem = typename T::mapped_type;
+    constexpr auto elemValueType = ValueTypes<Elem>::value;
+
+    skip(in, config);
+    const auto pos = in.tell();
+
+    if (not read(in, '{')) {
+      throw InputFailure(pos, "Expected a map");
+    }
+
+    u64 index = 0;
+    while (true) {
+      skip(in, config);
+      if (read(in, '}')) {
+        return;
+      }
+      if (index++ > 0) {
+        if (not read(in, ',')) {
+          throw InputFailure(in.tell(), "Missing comma");
+        }
+        if (read(in, '}')) { // Allow trailing comma if nonempty
+          return;
+        }
+        skip(in, config);
+      }
+
+      Key key;
+      FormattedProducerImpl<keyValueType, Key>().produce(key, in, config);
+      skip(in, config);
+
+      if (not read(in, ':')) {
+        throw InputFailure(in.tell(), "Missing colon");
+      }
+      skip(in, config);
+
+      Elem elem;
+      FormattedProducerImpl<elemValueType, Elem>().produce(elem, in, config);
+      val.emplace(std::move(key), std::move(elem));
+    }
+  }
+};
+
+template<typename T>
+struct FormattedProducerImpl<ValueType::Bimap, T> {
+  void
+  produce(T& val, nio::StringSource& in, CONFIG__) {
+    using Key = PurgeType<typename T::left_value_type::first_type>;
+    constexpr auto keyValueType = ValueTypes<Key>::value;
+    using Elem = PurgeType<typename T::left_value_type::second_type>;
+    constexpr auto elemValueType = ValueTypes<Elem>::value;
+
+    skip(in, config);
+    const auto pos = in.tell();
+
+    if (not read(in, '{')) {
+      throw InputFailure(pos, "Expected a map");
+    }
+
+    u64 index = 0;
+    while (true) {
+      skip(in, config);
+      if (read(in, '}')) {
+        return;
+      }
+      if (index++ > 0) {
+        if (not read(in, ',')) {
+          throw InputFailure(in.tell(), "Missing comma");
+        }
+        skip(in, config);
+        if (read(in, '}')) { // Allow trailing comma if nonempty
+          return;
+        }
+      }
+
+      Key key;
+      FormattedProducerImpl<keyValueType, Key>().produce(key, in, config);
+      skip(in, config);
+
+      if (not read(in, ':')) {
+        throw InputFailure(in.tell(), "Missing colon");
+      }
+      skip(in, config);
+
+      Elem elem;
+      FormattedProducerImpl<elemValueType, Elem>().produce(elem, in, config);
+      val.left.insert({ std::move(key), std::move(elem) });
+    }
+  }
+};
+
+template<typename T>
+struct FormattedProducerImpl<ValueType::MemberRefProvider, T> {
+  void
+  produce(T& val, nio::StringSource& in, CONFIG__) {
+    const auto& refs = rocket::reflect::MemberRefProvider<T>::refs;
+    using Elem = PurgeType<decltype(refs)>;
+    constexpr auto elemValueType = ValueTypes<Elem>::value;
+    static_assert(elemValueType == ValueType::Tuple);
+
+    // Here we have to pass an additional argument, the instance, to the tuple producer. The tuple producer
+    // will pass it on to the member-reference producer
+    FormattedProducerImpl<elemValueType, Elem>().produce(const_cast<Elem&>(refs), in, config, val);
+  }
+};
+
+template<typename T>
+struct FormattedProducerImpl<ValueType::MemberRef, T> {
+  template<typename C>
+  void
+  produce(T& val, nio::StringSource& in, CONFIG__, C& instance) {
+    skip(in, config);
+    const auto pos = in.tell();
+
+    auto available = in.available();
+    auto eq = available.find('=');
+    if (eq == NPOS) {
+      throw InputFailure(pos, "Expected a member reference");
+    }
+    in.seek(eq + 1, nio::SeekMode::cur);
+
+    std::string_view name = available.substr(0, eq);
+    name = str::removeTrailing<char>(name, " "); // @todo Trim all trailing whitespace
+    if (name != val.name()) {
+      throw InputFailure(pos, fmt::format("Expected name `{}`, got `{}`", val.name(), name));
+    }
+    skip(in, config);
+
+    using Elem = T::ValueType;
+    constexpr auto elemValueType = ValueTypes<Elem>::value;
+    FormattedProducerImpl<elemValueType, Elem>().produce(val.get(instance), in, config);
+  }
+};
+
+template<typename T>
+struct FormattedProducerImpl<ValueType::VarRef, T> {
+  void
+  produce(T& val, nio::StringSource& in, CONFIG__) {
+    skip(in, config);
+    const auto pos = in.tell();
+
+    auto available = in.available();
+    auto eq = available.find('=');
+    if (eq == NPOS) {
+      throw InputFailure(pos, "Expected a member reference");
+    }
+    in.seek(eq + 1, nio::SeekMode::cur);
+
+    std::string_view name = available.substr(0, eq);
+    name = str::removeTrailing<char>(name, " "); // @todo Trim all trailing whitespace
+    if (name != val.name()) {
+      throw InputFailure(pos, fmt::format("Expected name `{}`, got `{}`", val.name(), name));
+    }
+    skip(in, config);
+
+    using Elem = T::ValueType;
+    constexpr auto elemValueType = ValueTypes<Elem>::value;
+    FormattedProducerImpl<elemValueType, Elem>().produce(val.get(), in, config);
   }
 };
 
@@ -369,7 +862,7 @@ struct FormattedCodec : Codec<FormattedConsumer, FormattedProducer> {
   template<typename T>
   T
   decode(nio::StringSource& in) const {
-    return Base::decode<T>(in);
+    return Base::decode<T>(in, FormattedProducerConfig());
   }
 
   template<typename T>
@@ -381,7 +874,7 @@ struct FormattedCodec : Codec<FormattedConsumer, FormattedProducer> {
   template<typename T>
   [[nodiscard]] std::optional<T>
   tryDecode(nio::StringSource& in) const {
-    return Base::tryDecode<T>(in);
+    return Base::tryDecode<T>(in, FormattedProducerConfig());
   }
 
   template<typename T>

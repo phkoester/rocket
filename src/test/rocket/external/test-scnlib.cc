@@ -7,6 +7,7 @@
 #include "rocket/system/system.h"
 
 #include <fmt/format.h>
+#include <fmt/ranges.h>
 
 #include <scn/chrono.h>
 #include <scn/ranges.h>

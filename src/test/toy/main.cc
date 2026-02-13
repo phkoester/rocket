@@ -4,18 +4,13 @@
  * The `toy` test executable links to Rocket and is a playground for quick and dirty experiments.
  */
 
-#include "rocket/codec/codec.h"
 #include "rocket/Process.h"
 #include "rocket/cl/cl.h"
 #include "rocket/log/log.h"
-#include "rocket/reflect/reflect.h"
 
 using namespace rocket;
 using namespace rocket::unicode;
 using namespace std;
-
-using rocket::codec::ValueType;
-using rocket::codec::ValueTypes;
 
 ROCKET_LOG_DEFINE(thisIsARatherLongLogId);
 ROCKET_LOG_DEFINE(toy);

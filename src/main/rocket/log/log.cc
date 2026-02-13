@@ -762,7 +762,7 @@ setLogLevel(string_view id, string_view val) {
     ROCKET_FAIL("Log ID `all` cannot be used with a substring", id);
   }
 
-  const LogLevel level = Enum<LogLevel>::toType(val);
+  const auto [_, level] = Enum<LogLevel>::toType(val, true);
 
   if (not all) {
     auto it = definedIds.right.find(id);

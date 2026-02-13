@@ -10,10 +10,6 @@
 #include <boost/bimap/set_of.hpp>
 #include <boost/bimap/unordered_set_of.hpp>
 
-#include <fmt/ranges.h>
-
-#include <map>
-
 namespace rocket {
 
 // #Bimap ---------------------------------------------------------------------------------------------------
@@ -77,6 +73,7 @@ makeUnorderedBimap(std::initializer_list<std::pair<K, V>> list = {}) {
 namespace boost::bimaps {
 
 /// @op_eq{`boost::bimaps::bimap`}
+/// XXX Mit codec, dann -> Bimap-codec.h
 template<typename A, typename B>
 bool
 operator==(const bimap<A, B>& lhs, const bimap<A, B>& rhs) {
@@ -96,73 +93,13 @@ operator==(const bimap<A, B>& lhs, const bimap<A, B>& rhs) {
 }
 
 /// @op_ne{`boost::bimaps::bimap`}
+/// XXX Mit codec, dann -> Bimap-codec.h
 template<typename A, typename B>
 inline bool
 operator!=(const bimap<A, B>& lhs, const bimap<A, B>& rhs) {
   return not operator==(lhs, rhs);
 }
 
-/// @op_output{`boost::bimaps::bimap`}
-template<typename A, typename B>
-inline std::ostream&
-operator<<(std::ostream& lhs, const bimap<A, B>& rhs) {
-  return lhs << fmt::format("{}", rhs);
-}
-
-/**
- * @fn_PrintTo{`boost::bimaps::bimap`}
- *
- * @todo Why do we need this? For some reason, GoogleTest doesn find `operator<<` ...
- */
-template<typename A, typename B>
-inline void
-PrintTo(const bimap<A, B>& val, std::ostream* os) {
-  *os << val;
-}
-
 } // namespace boost::bimaps
-
-// #fmt::formatter<#boost::bimaps::bimap>--------------------------------------------------------------------
-
-/**
- * @spec_fmt_formatter{`boost::bimaps::bimap`}
- *
- * This formatter formats the left map of a #rocket::UnorderedBimap. It uses the same format specifiers as
- * the underlying formatter for type #std::map.
- */
-template<typename A, typename B, typename C>
-struct fmt::formatter<boost::bimaps::bimap<A, B>, C> {
-  /// @cond undocumented
-
-  template<typename FormatContext>
-  constexpr FormatContext::iterator
-  format(const boost::bimaps::bimap<A, B>& val, FormatContext& ctx) const {
-    // @todo Don't copy the whole map here
-    std::map<K, V> map;
-    for (const auto& [k, v] : val.left) { // NOLINT
-      map.emplace(k, v);
-    }
-    return underlying_.format(map, ctx);
-  }
-
-  constexpr const C*
-  parse(parse_context<C>& ctx) {
-    return underlying_.parse(ctx);
-  }
-
-  constexpr void
-  set_debug_format(bool val = true) {
-    underlying_.set_debug_format(val);
-  }
-
-  /// @endcond
-
-private:
-
-  using K = boost::bimaps::bimap<A, B>::left_value_type::first_type;
-  using V = boost::bimaps::bimap<A, B>::left_value_type::second_type;
-
-  fmt::formatter<std::map<K, V>, C> underlying_;
-};
 
 // EOF

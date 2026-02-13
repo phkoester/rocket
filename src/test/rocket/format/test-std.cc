@@ -7,6 +7,7 @@
 #include "rocket/assert.h"
 #include "rocket/nio/nio.h"
 
+#include <fmt/ranges.h>
 #include <fmt/std.h>
 
 #include <span>

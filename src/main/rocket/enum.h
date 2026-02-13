@@ -6,9 +6,10 @@
 
 #pragma once
 
-#include "rocket/Exception.h"
+#include "rocket/assert.h"
 #include "rocket/Bimap.h"
-#include "rocket/macro.h"
+#include "rocket/Exception.h"
+#include "rocket/literal.h"
 #include "rocket/str/message/message.h"
 #include "rocket/unicode/ConvertTo.h"
 
@@ -63,16 +64,26 @@
 #define ROCKET_ENUM_DECLARE_OP_OUTPUT__(type) \
     ::std::ostream& operator<<(::std::ostream&, type);
 
+#define ROCKET_ENUM_DECLARE_ROCKET_ENUM__(ns, type) \
+  template<> \
+  struct rocket::Enum<ns::type> : ::std::true_type { \
+    static ::std::string_view toString(ns::type val); \
+    \
+    static ::std::pair<u64, ns::type> toType(::std::string_view str, bool strict); \
+  }
+
 #define ROCKET_ENUM_DECLARE_FMT_FORMATTER__(ns, type, name) \
   template<typename C> \
   struct fmt::formatter<ns::type, C> { \
     template<typename FormatContext> \
     constexpr FormatContext::iterator \
     format(ns::type val, FormatContext& ctx) const { \
-      if (auto it = ns::get##name##Map__().left.find(val); it != ns::get##name##Map__().left.end()) { \
-        return underlying_.format(::rocket::unicode::ConvertTo<C>::apply(it->second), ctx); \
+      try { \
+        auto str = ::rocket::Enum<ns::type>::toString(val); \
+        return underlying_.format(::rocket::unicode::ConvertTo<C>::apply(str), ctx); \
+      } catch (const std::exception&) { \
+        return detail::write<C>(ctx.out(), INVALID); \
       } \
-      return detail::write<C>(ctx.out(), INVALID); \
     } \
     \
     constexpr const C* \
@@ -87,16 +98,10 @@
   \
   private: \
     \
-    static constexpr basic_string_view<C> INVALID = \
-      detail::string_literal<C, '<', 'i', 'n', 'v', 'a', 'l', 'i', 'd', '>'> {}; \
+    static constexpr ::std::basic_string_view<C> INVALID = \
+      rocket::LiteralString<C, '<', 'i', 'n', 'v', 'a', 'l', 'i', 'd', '>'> {}; \
     \
     ::fmt::formatter<basic_string_view<C>, C> underlying_; \
-  }
-
-#define ROCKET_ENUM_DECLARE_ROCKET_ENUM__(type) \
-  template<> \
-  struct rocket::Enum<type> : ::std::true_type { \
-    static type toType(::std::string_view str); \
   }
 
 #define ROCKET_ENUM_DECLARE__(ns, type, name) \
@@ -104,8 +109,8 @@
   ROCKET_ENUM_DECLARE_MAP__(type, name); \
   ROCKET_ENUM_DECLARE_OP_OUTPUT__(type); \
   ROCKET_NAMESPACE_END(ns); \
-  ROCKET_ENUM_DECLARE_FMT_FORMATTER__(ns, type, name); \
-  ROCKET_ENUM_DECLARE_ROCKET_ENUM__(ns::type)
+  ROCKET_ENUM_DECLARE_ROCKET_ENUM__(ns, type); \
+  ROCKET_ENUM_DECLARE_FMT_FORMATTER__(ns, type, name)
 
 // Definitions ..............................................................................................
 
@@ -129,13 +134,39 @@
   }
 
 #define ROCKET_ENUM_DEFINE_ROCKET_ENUM__(ns, type, name) \
-  ns::type \
-  rocket::Enum<ns::type>::toType(::std::string_view str) { \
-    auto it = ns::get##name##Map__().right.find(str); \
-    if (it != ns::get##name##Map__().right.end()) { \
-      return it->second; \
+  ::std::string_view \
+  rocket::Enum<ns::type>::toString(ns::type val) { \
+    auto it = ns::get##name##Map__().left.find(val); \
+    if (it == ns::get##name##Map__().left.end()) { \
+      ROCKET_FAIL("Invalid `{}` value: {}", typeid(ns::type), ::std::to_underlying(val)); \
     } \
-    throw ::rocket::InvalidState(::rocket::str::message::cannotScanAs(str, typeid(ns::type))); \
+    return it->second; \
+  } \
+  \
+  ::std::pair<u64, ns::type> \
+  rocket::Enum<ns::type>::toType(::std::string_view str, bool strict) { \
+    if (strict) { \
+      /* Strict */ \
+      auto it = ns::get##name##Map__().right.find(str); \
+      if (it == ns::get##name##Map__().right.end()) { \
+        throw ::rocket::InvalidState(::rocket::str::message::cannotScanAs(str, typeid(ns::type))); \
+      } \
+      return { it->first.size(), it->second }; \
+    } else { \
+      /* Relaxed */ \
+      u64 maxValueSize = 0; \
+      ns::type maxKey; \
+      for (const auto& [key, value] : ns::get##name##Map__().left) { \
+        if (str.starts_with(value) && value.size() > maxValueSize) { \
+          maxValueSize = value.size(); \
+          maxKey = key; \
+        } \
+      } \
+      if (maxValueSize > 0) { \
+        return { maxValueSize, maxKey }; \
+      } \
+      throw ::rocket::InvalidState(::rocket::str::message::cannotScanAs(str, typeid(ns::type))); \
+    } \
   }
 
 #define ROCKET_ENUM_DEFINE__(ns, type, name, seq) \
@@ -155,7 +186,27 @@ namespace rocket {
  * A class template for Rocket enums, providing some additional information about an enum.
  */
 template<typename E> requires std::is_enum_v<E>
-struct Enum : std::false_type {};
+struct Enum : std::false_type {
+  /**
+   * Converts an enum value to a string.
+   *
+   * @param val the enum value
+   * @return a string
+   * @throw #std::exception if the operation fails
+   */
+  static std::string_view toString(E val);
+
+  /**
+   * Scans a string to an enum value.
+   *
+   * @param str the string to scan
+   * @param strict whether the string must strictly match in its entirety. If this value is `true`, the
+   *   string can be scanned in a more efficient way
+   * @return a pair of the size of the scanned portion of the string and the enum value
+   * @throw #std::exception if the operation fails
+   */
+  static std::pair<u64, E> toType(std::string_view str, bool strict);
+};
 
 } // namespace rocket
 

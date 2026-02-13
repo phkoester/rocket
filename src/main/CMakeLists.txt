@@ -84,6 +84,7 @@ target_sources(rocket
     FILES
       rocket/assert.h
       rocket/Bimap.h
+      rocket/Bimap-codec.h
       rocket/Cow.h
       rocket/enum.h
       rocket/Exception.h
@@ -109,6 +110,7 @@ target_sources(rocket
       rocket/nio/nio-fwd.h
       rocket/reflect/MemberRef.h
       rocket/reflect/reflect.h
+      rocket/reflect/reflect-codec.h
       rocket/reflect/VarRef.h
       rocket/str/Noun.h
       rocket/str/Range.h

@@ -10,9 +10,12 @@
 #pragma once
 
 #include "rocket/rocket.h"
+#include "rocket/type-traits.h"
 
+#include <array>
 #include <cmath>
 #include <limits>
+#include <string_view>
 #include <type_traits>
 
 namespace rocket {
@@ -405,6 +408,32 @@ f128 operator""_f128(std_unsigned_long_long_int val);
 f128 operator""_f128(std_long_double val);
 
 #endif // ROCKET_HAS_128
+
+// #LiteralString -------------------------------------------------------------------------------------------
+
+/**
+ * A literal string for both `char` and `char32`.
+ *
+ * @tparam C the character type
+ * @tparam Chars the characters
+ */
+template<typename C, C... Chars> requires IsChar<C>
+struct LiteralString {
+  /// The value, as an array of characters.
+  static constexpr std::array<C, sizeof...(Chars)> value = { Chars... };
+
+  /// @member_op_cast{#std::basic_string_view}
+  constexpr operator std::basic_string_view<C>() const { // NOLINT(*-explicit-constructor)
+    return { value.data(), value.size() };
+  }
+
+  /**
+   * Returns the size of the string.
+   *
+   * @return the size of the string
+   */
+  consteval u64 size() const { return value.size(); }
+};
 
 } // namespace rocket
 

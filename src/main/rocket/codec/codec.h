@@ -208,7 +208,7 @@ struct ValueTypes<boost::bimaps::bimap<A, B>> {
 };
 
 /// @spec{#rocket::codec::ValueTypes, #rocket::reflect::MemberRefProvider}
-template<typename T> requires rocket::reflect::MemberRefProvider<T>::value
+template< typename T> requires rocket::reflect::MemberRefProvider<T>::value
 struct ValueTypes<T> {
   static constexpr auto value = ValueType::MemberRefProvider; ///< The value type.
 };

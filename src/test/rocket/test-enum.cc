@@ -55,19 +55,21 @@ TEST(enum, MyEnumFormat) {
 }
 
 TEST(enum, MyEnumToType) {
-  EXPECT_EQ(Enum<MyEnum>::toType("fröb"), fröb);
-  EXPECT_EQ(Enum<MyEnum>::toType("fröber"), fröber);
-  EXPECT_EQ(Enum<MyEnum>::toType("fröberer"), fröberer);
-  EXPECT_EQ(Enum<MyEnum>::toType("pörk"), pörk);
-  EXPECT_EQ(Enum<MyEnum>::toType("pörker"), pörker);
-  EXPECT_EQ(Enum<MyEnum>::toType("pörkerer"), pörkerer);
+  EXPECT_EQ(Enum<MyEnum>::toType("fröb", true), make_pair(5_u64, fröb ));
+  EXPECT_EQ(Enum<MyEnum>::toType("fröbx", false), make_pair(5_u64, fröb ));
+  EXPECT_EQ(Enum<MyEnum>::toType("fröber", true), make_pair(7_u64, fröber));
+  EXPECT_EQ(Enum<MyEnum>::toType("fröberer", true), make_pair(9_u64, fröberer));
+  EXPECT_EQ(Enum<MyEnum>::toType("pörk", true), make_pair(5_u64, pörk));
+  EXPECT_EQ(Enum<MyEnum>::toType("pörker", true), make_pair(7_u64, pörker));
+  EXPECT_EQ(Enum<MyEnum>::toType("pörkerer", true), make_pair(9_u64, pörkerer));
 
   EXPECT_THAT(
-    [] { Enum<MyEnum>::toType("foo"); },
+    [] { Enum<MyEnum>::toType("foo", true); },
     ThrowsMessage<InvalidState>(HasSubstr("Cannot scan \"foo\" as `MyEnum`"))
   );
+
   EXPECT_THAT(
-    [] { Enum<MyEnum>::toType("fröbx"); },
+    [] { Enum<MyEnum>::toType("fröbx", true); },
     ThrowsMessage<InvalidState>(HasSubstr("Cannot scan \"fröbx\" as `MyEnum`"))
   );
 }
@@ -83,13 +85,13 @@ TEST(enum, MyEnumFClassFormat) {
 }
 
 TEST(enum, MyEnumClassToType) {
-  EXPECT_EQ(Enum<MyEnumClass>::toType("hürxer"), MyEnumClass::hürxer);
+  EXPECT_EQ(Enum<MyEnumClass>::toType("hürxer", true), make_pair(7_u64, MyEnumClass::hürxer));
 
   EXPECT_THAT(
-    [] { Enum<MyEnumClass>::toType("foo"); },
+    [] { Enum<MyEnumClass>::toType("foo", true); },
     ThrowsMessage<InvalidState>(HasSubstr("Cannot scan \"foo\" as `MyEnumClass`")));
   EXPECT_THAT(
-    [] { Enum<MyEnumClass>::toType("hürxerx"); },
+    [] { Enum<MyEnumClass>::toType("hürxerx", true); },
     ThrowsMessage<InvalidState>(HasSubstr("Cannot scan \"hürxerx\" as `MyEnumClass`")));
 }
 

@@ -4,9 +4,14 @@
 
 #include "rocket-test/rocket-test.h"
 
+#include "rocket/codec/codec.h"
 #include "rocket/nio/nio.h"
 #include "rocket/reflect/reflect.h"
+#include "rocket/reflect/reflect-codec.h"
 #include "rocket/unicode/ConvertTo.h"
+
+#include <fmt/ranges.h>
+#include <fmt/std.h>
 
 using namespace rocket;
 using namespace rocket::codec;
