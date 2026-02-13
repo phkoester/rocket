@@ -266,7 +266,7 @@ namespace utf8 {
  *   position is updated to the position of the next code point
  * @return the next code point
  */
- CodePoint nextCodePoint(std::string_view str, u64& pos);
+CodePoint nextCodePoint(std::string_view str, u64& pos);
 
 /**
  * Validates the UTF-8 string @p str.

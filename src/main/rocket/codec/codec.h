@@ -11,7 +11,6 @@
 #pragma once
 
 #include "rocket/type-traits.h"
-#include "rocket/nio/nio-fwd.h"
 #include "rocket/reflect/MemberRef.h"
 #include "rocket/reflect/VarRef.h"
 
@@ -268,22 +267,35 @@ struct Decoder {
    *
    * @tparam T the type to decode
    * @tparam Args types of additional arguments to pass to the producer
-   * @param val the value to decode
-   * @param in the source to read from
    * @param args additional arguments to pass to the producer
-   * @return_success
+   * @return the decoded value
    */
   template<typename T, typename... Args>
-  [[nodiscard]] bool
-  decode(T& val, nio::Source& in, Args&&... args) const {
+  T
+  decode(Args&&... args) const {
     constexpr auto valueType = ValueTypes<T>::value;
     using ProducerType = Producer::template Type<valueType, T>;
     ProducerType producer;
+    T val;
+    producer.produce(val, std::forward<Args>(args)...);
+    return val;
+  }
+
+  /**
+   * Tries to decode a value from a source.
+   *
+   * @tparam T the type to decode
+   * @tparam Args types of additional arguments to pass to the producer
+   * @param args additional arguments to pass to the producer
+   * @return the decoded value, or null if the value cannot be decoded
+   */
+  template<typename T, typename... Args>
+  [[nodiscard]] std::optional<T>
+  tryDecode(Args&&... args) const {
     try {
-      producer.produce(val, in, std::forward<Args>(args)...);
-      return true;
+      return decode(std::forward<Args>(args)...);
     } catch (const std::exception&) {
-      return false;
+      return {};
     }
   }
 };
@@ -298,8 +310,8 @@ struct Decoder {
  */
 template<typename Consumer, typename Producer>
 struct Codec : Encoder<Consumer>, Decoder<Producer> {
-  using ConsumerType = Consumer;
-  using ProducerType = Producer;
+  using ConsumerType = Consumer; ///< @type_alias
+  using ProducerType = Producer; ///< @type_alias
 };
 
 } // namespace rocket::codec

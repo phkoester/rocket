@@ -499,8 +499,7 @@ TEST(codec, TracingProducerBool) {
   Decoder<TracingProducer> decoder;
   nio::StringSource in("true");
   nio::StringSink out;
-  type val = false;
-  EXPECT_TRUE(decoder.decode<type>(val, in, out));
+  type val = decoder.decode<type>(in, out);
   EXPECT_EQ(val, true);
   EXPECT_EQ(out.str(), "producing boolean\n");
 }
@@ -510,10 +509,9 @@ TEST(codec, TracingProducerString) {
   Decoder<TracingProducer> decoder;
   nio::StringSource in("5Hello6Rocket");
   nio::StringSink out;
-  type val;
-  EXPECT_TRUE(decoder.decode<type>(val, in, out));
+  type val = decoder.decode<type>(in, out);
   EXPECT_EQ(val, "Hello"sv);
-  EXPECT_TRUE(decoder.decode<type>(val, in, out));
+  val = decoder.decode<type>(in, out);
   EXPECT_EQ(val, "Rocket"sv);
   EXPECT_EQ(out.str(),
     "producing string\n"
@@ -527,8 +525,7 @@ TEST(codec, TracingProducerOptionalBool) {
   {
     nio::StringSource in("none");
     nio::StringSink out;
-    type val;
-    EXPECT_TRUE(decoder.decode<type>(val, in, out));
+    type val = decoder.decode<type>(in, out);
     EXPECT_EQ(val, nullopt);
     EXPECT_EQ(out.str(), "producing optional\n");
   }
@@ -536,8 +533,7 @@ TEST(codec, TracingProducerOptionalBool) {
   {
     nio::StringSource in("false");
     nio::StringSink out;
-    type val;
-    EXPECT_TRUE(decoder.decode<type>(val, in, out));
+    type val = decoder.decode<type>(in, out);
     EXPECT_EQ(val, false);
     EXPECT_EQ(out.str(),
       "producing optional\n"
@@ -550,8 +546,7 @@ TEST(codec, TracingProducerArrayArray) {
   Decoder<TracingProducer> decoder;
   nio::StringSource in("3012");
   nio::StringSink out;
-  type val;
-  EXPECT_TRUE(decoder.decode<type>(val, in, out));
+  type val = decoder.decode<type>(in, out);
   EXPECT_EQ(val, (array<i32, 3> { 0, 1, 2 }));
   EXPECT_EQ(out.str(),
     "producing array.array\n"
@@ -565,8 +560,7 @@ TEST(codec, TracingProducerArrayVector) {
   Decoder<TracingProducer> decoder;
   nio::StringSource in("43210");
   nio::StringSink out;
-  type val;
-  EXPECT_TRUE(decoder.decode<type>(val, in, out));
+  type val = decoder.decode<type>(in, out);
   EXPECT_EQ(val, (vector<i32> { 3, 2, 1, 0 }));
   EXPECT_EQ(out.str(),
     "producing array.vector\n"

@@ -48,8 +48,6 @@ struct Status {
   unsigned eof : 1;
 };
 
-static_assert(sizeof(Status) == sizeof(i32));
-
 // #Io ------------------------------------------------------------------------------------------------------
 
 /**
@@ -800,6 +798,8 @@ struct StringSource : Source {
   u64 read(std::span<u8> out) override;
 
   bool seek(i64 offset, SeekMode mode = SeekMode::beg) override; // NOLINT
+
+  std::string_view str() const { return in_; }
 
   u64 tell() override { return bad() ? NPOS : static_cast<u64>(pos_); }
 

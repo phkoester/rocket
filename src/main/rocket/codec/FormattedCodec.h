@@ -5,6 +5,7 @@
 #pragma once
 
 #include "rocket/Guard.h"
+#include "rocket/InputFailure.h"
 #include "rocket/codec/codec.h"
 #include "rocket/nio/nio.h"
 #include "rocket/str/escape/escape.h"
@@ -24,9 +25,19 @@ struct FormattedConsumerConfig {
   bool indent = false;
 };
 
+// #FormattedProducerConfig ---------------------------------------------------------------------------------
+
+/// Configuration for the #FormattedProducer.
+struct FormattedProducerConfig {
+  /// Whether to allow C-style comments starting with @c // or @c /*.
+  bool cComments = false;
+  /// Whether to allow shell-style comments starting with @c #.
+  bool shellCommments = false;
+};
+
 namespace internal {
 
-// Container  management (encoding) -------------------------------------------------------------------------
+// Utilities for encoding -----------------------------------------------------------------------------------
 
 extern thread_local u64 level;
 
@@ -35,6 +46,17 @@ void beginContainer(nio::Sink& out, const FormattedConsumerConfig& config, char 
 void endContainer(nio::Sink& out, const FormattedConsumerConfig& config, u64 size, char c);
 
 void nextElem(nio::Sink& out, const FormattedConsumerConfig& config, u64 index);
+
+// Utilities for decoding -----------------------------------------------------------------------------------
+
+std::string_view available(nio::StringSource& in);
+
+[[nodiscard]] std::optional<std::string_view> read(
+  nio::StringSource& in,
+  const std::set<std::string_view>& values,
+  bool caseInsensitive = false);
+
+void skip(nio::StringSource& in, const FormattedProducerConfig& config);
 
 // #FormattedConsumerImpl -----------------------------------------------------------------------------------
 
@@ -278,8 +300,29 @@ struct FormattedConsumerImpl<ValueType::VarRef, T> {
 
 // #FormattedProducerImpl -----------------------------------------------------------------------------------
 
+#define CONFIG__ [[maybe_unused]] const FormattedProducerConfig& config
+
 template<ValueType ValueType, typename T>
 struct FormattedProducerImpl;
+
+template<>
+struct FormattedProducerImpl<ValueType::Bool, bool> {
+  void
+  produce(bool& val, nio::StringSource& in, CONFIG__) {
+    skip(in, config);
+    if (read(in, { "0", "false" }, true)) {
+      val = false;
+      return;
+    }
+    if (read(in, { "1", "true" }, true)) {
+      val = true;
+      return;
+    }
+    throw InputFailure(in.tell(), "Expected `Bool`");
+  }
+};
+
+#undef CONFIG__
 
 } // namespace internal
 
@@ -321,6 +364,30 @@ struct FormattedCodec : Codec<FormattedConsumer, FormattedProducer> {
   encode(const T& val, nio::Sink& out, const FormattedConsumerConfig& config) const {
     ROCKET_GUARD([&] { internal::level = 0; });
     return Base::encode(val, out, config);
+  }
+
+  template<typename T>
+  T
+  decode(nio::StringSource& in) const {
+    return Base::decode<T>(in);
+  }
+
+  template<typename T>
+  T
+  decode(nio::StringSource& in, const FormattedProducerConfig& config) const {
+    return Base::decode<T>(in, config);
+  }
+
+  template<typename T>
+  [[nodiscard]] std::optional<T>
+  tryDecode(nio::StringSource& in) const {
+    return Base::tryDecode<T>(in);
+  }
+
+  template<typename T>
+  [[nodiscard]] std::optional<T>
+  tryDecode(nio::StringSource& in, const FormattedProducerConfig& config) const {
+    return Base::tryDecode<T>(in, config);
   }
 };
 

@@ -209,4 +209,24 @@ TEST(FormattedCodec, FormattedConsumerMemberRefProvider) {
   EXPECT_EQ(out.str(), "(ärger=42, ökonom=true, übermut=\"hello\", vec=[1, 2, 3])");
 }
 
+// #FormattedProducer .......................................................................................
+
+TEST(FormattedCodec, FormattedProducerBool) {
+  FormattedCodec codec;
+  FormattedProducerConfig config { .cComments=true, .shellCommments=true };
+
+  {
+    nio::StringSource in("  /* comment\nanother line in the comment */\r\n# comment\n\ttRUe");
+    bool val = codec.decode<bool>(in, config);
+    EXPECT_EQ(val, true);
+  }
+
+  {
+    nio::StringSource in("\r\n  1");
+    EXPECT_THAT(
+      [&] { codec.decode<bool>(in, config); },
+      throwsInputFailure(4, HasSubstr("Expected `Bool`")));
+  }
+}
+
 // EOF
