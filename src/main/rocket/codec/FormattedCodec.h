@@ -54,10 +54,10 @@ void nextElem(nio::Sink& out, const FormattedConsumerConfig& config, u64 index);
 
 // Utilities for decoding -----------------------------------------------------------------------------------
 
-// Throws if there is no colon
+// Throws if there is no colon, advances the source only on success
 void expectColon(nio::StringSource& in);
 
-// Throws if there is no comma
+// Throws if there is no comma, advances the source only on success
 void expectComma(nio::StringSource& in);
 
 // Finds a character not preceded by an escaping backslash
@@ -164,7 +164,7 @@ struct FormattedConsumerImpl<ValueType::Optional, T> {
       return;
     }
 
-    using Elem = typename T::value_type;
+    using Elem = T::value_type;
     constexpr auto elemValueType = ValueTypes<Elem>::value;
     FormattedConsumerImpl<elemValueType, Elem>().consume(*val, out, config);
   }
@@ -199,7 +199,7 @@ template<typename T>
 struct FormattedConsumerImpl<ValueType::Array, T> {
   void
   consume(const T& val, nio::Sink& out, CONFIG__) {
-    using Elem = typename T::value_type;
+    using Elem = T::value_type;
     constexpr auto elemValueType = ValueTypes<Elem>::value;
 
     beginContainer(out, config, '[');
@@ -216,7 +216,7 @@ template<typename T>
 struct FormattedConsumerImpl<ValueType::Set, T> {
   void
   consume(const T& val, nio::Sink& out, CONFIG__) {
-    using Elem = typename T::value_type;
+    using Elem = T::value_type;
     constexpr auto elemValueType = ValueTypes<Elem>::value;
 
     beginContainer(out, config, '{');
@@ -233,9 +233,9 @@ template<typename T>
 struct FormattedConsumerImpl<ValueType::Map, T> {
   void
   consume(const T& val, nio::Sink& out, CONFIG__) {
-    using Key = typename T::key_type;
+    using Key = T::key_type;
     constexpr auto keyValueType = ValueTypes<Key>::value;
-    using Elem = typename T::mapped_type;
+    using Elem = T::mapped_type;
     constexpr auto elemValueType = ValueTypes<Elem>::value;
 
     beginContainer(out, config, '{');
@@ -466,7 +466,7 @@ template<typename T>
 struct FormattedProducerImpl<ValueType::String, T> {
   void
   produce(T& val, nio::StringSource& in, CONFIG__) {
-    using C = typename T::value_type;
+    using C = T::value_type;
     static_assert(std::is_same_v<T, std::basic_string<C>>, "Cannot decode string view");
 
     using namespace rocket::str::escape;
@@ -503,7 +503,7 @@ struct FormattedProducerImpl<ValueType::Optional, T> {
       return;
     }
 
-    using Elem = typename T::value_type;
+    using Elem = T::value_type;
     constexpr auto elemValueType = ValueTypes<Elem>::value;
     val = Elem();
     FormattedProducerImpl<elemValueType, Elem>().produce(*val, in, config);
@@ -576,7 +576,7 @@ private:
 
   void
   produceArray(T& val, nio::StringSource& in, CONFIG__, u64 pos)  {
-    using Elem = typename T::value_type;
+    using Elem = T::value_type;
     constexpr auto elemValueType = ValueTypes<Elem>::value;
 
     const auto size = val.size();
@@ -600,7 +600,7 @@ private:
 
   void
   produceVector(T& val, nio::StringSource& in, CONFIG__)  {
-    using Elem = typename T::value_type;
+    using Elem = T::value_type;
     constexpr auto elemValueType = ValueTypes<Elem>::value;
 
     u64 index = 0;
@@ -626,7 +626,7 @@ template<typename T>
 struct FormattedProducerImpl<ValueType::Set, T> {
   void
   produce(T& val, nio::StringSource& in, CONFIG__) {
-    using Elem = typename T::value_type;
+    using Elem = T::value_type;
     constexpr auto elemValueType = ValueTypes<Elem>::value;
 
     skip(in, config);
@@ -660,9 +660,9 @@ template<typename T>
 struct FormattedProducerImpl<ValueType::Map, T> {
   void
   produce(T& val, nio::StringSource& in, CONFIG__) {
-    using Key = typename T::key_type;
+    using Key = T::key_type;
     constexpr auto keyValueType = ValueTypes<Key>::value;
-    using Elem = typename T::mapped_type;
+    using Elem = T::mapped_type;
     constexpr auto elemValueType = ValueTypes<Elem>::value;
 
     skip(in, config);

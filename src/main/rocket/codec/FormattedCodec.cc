@@ -80,9 +80,7 @@ findUnescaped(std::string_view str, char c) {
 }
 
 bool
-read(
-  nio::StringSource& in,
-  char c) {
+read(nio::StringSource& in, char c) {
   auto available = in.available();
   if (available.starts_with(c)) {
     in.seek(1, nio::SeekMode::cur);
@@ -92,10 +90,7 @@ read(
 }
 
 optional<string_view>
-read(
-  nio::StringSource& in,
-  const std::set<std::string_view>& values,
-  bool ignoreCase) {
+read(nio::StringSource& in, const std::set<std::string_view>& values, bool ignoreCase) {
   auto available = in.available();
   for (const auto& value : values) {
     if (not ignoreCase) {

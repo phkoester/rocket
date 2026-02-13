@@ -61,7 +61,7 @@ struct HashConsumerImpl<ValueType::Optional, T, Hash> {
       return Hash()(0);
     }
 
-    using Elem = typename T::value_type;
+    using Elem = T::value_type;
     constexpr auto elemValueType = ValueTypes<Elem>::value;
 
     u64 ret = 1;
@@ -98,7 +98,7 @@ private:
 template<typename T, typename Hash>
 struct HashConsumerImpl<ValueType::Array, T, Hash> {
   u64 consume(const T& val) {
-    using Elem = typename T::value_type;
+    using Elem = T::value_type;
     constexpr auto elemValueType = ValueTypes<Elem>::value;
 
     u64 ret = val.size();
@@ -114,7 +114,7 @@ template<typename T, typename Hash>
 struct HashConsumerImpl<ValueType::Set, T, Hash> {
   u64
   consume(const T& val) {
-    using Elem = typename T::value_type;
+    using Elem = T::value_type;
     constexpr auto elemValueType = ValueTypes<Elem>::value;
 
     u64 ret = val.size();
@@ -130,9 +130,9 @@ template<typename T, typename Hash>
 struct HashConsumerImpl<ValueType::Map, T, Hash> {
   u64
   consume(const T& val) {
-    using Key = typename T::key_type;
+    using Key = T::key_type;
     constexpr auto keyValueType = ValueTypes<Key>::value;
-    using Elem = typename T::mapped_type;
+    using Elem = T::mapped_type;
     constexpr auto elemValueType = ValueTypes<Elem>::value;
 
     u64 ret = val.size();
@@ -186,7 +186,7 @@ struct HashConsumerImpl<ValueType::MemberRef, T, Hash> {
   template<typename C>
   u64
   consume(const T& val, const C& instance) {
-    using Elem = typename T::ValueType;
+    using Elem = T::ValueType;
     constexpr auto elemValueType = ValueTypes<Elem>::value;
 
     // We don't include the name in the hash, because it's not part of the value
@@ -198,7 +198,7 @@ template<typename T, typename Hash>
 struct HashConsumerImpl<ValueType::VarRef, T, Hash> {
   u64
   consume(const T& val) {
-    using Elem = typename T::ValueType;
+    using Elem = T::ValueType;
     constexpr auto elemValueType = ValueTypes<Elem>::value;
 
     // We don't include the name in the hash, because it's not part of the value
