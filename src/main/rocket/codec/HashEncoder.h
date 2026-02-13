@@ -30,7 +30,11 @@ struct HashConsumerImpl<ValueType::Char, C, Hash> {
 
 template<typename E, typename Hash>
 struct HashConsumerImpl<ValueType::Enum, E, Hash> {
-  u64 consume(E val) { return Hash()(val); }
+  u64 consume(E val) {
+    // Needed by MSVC
+    const auto underlying = std::to_underlying(val);
+    return Hash()(underlying);
+  }
 };
 
 template<typename I, typename Hash>
@@ -45,7 +49,12 @@ struct HashConsumerImpl<ValueType::Float, F, Hash> {
 
 template<typename T, typename Hash>
 struct HashConsumerImpl<ValueType::Pointer, T, Hash> {
-  u64 consume(T val) { return Hash()(val); }
+  u64 consume(T val) {
+    // Needed by MSVC
+    const u64 integer = reinterpret_cast<u64>(val);
+    static_assert(sizeof(integer) == sizeof(T));
+    return Hash()(integer);
+  }
 };
 
 template<typename T, typename Hash>
