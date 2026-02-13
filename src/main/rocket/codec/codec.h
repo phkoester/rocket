@@ -309,10 +309,7 @@ struct Decoder {
  * @tparam Producer the producer to use
  */
 template<typename Consumer, typename Producer>
-struct Codec : Encoder<Consumer>, Decoder<Producer> {
-  using ConsumerType = Consumer; ///< @type_alias
-  using ProducerType = Producer; ///< @type_alias
-};
+struct Codec : Encoder<Consumer>, Decoder<Producer> {};
 
 } // namespace rocket::codec
 
