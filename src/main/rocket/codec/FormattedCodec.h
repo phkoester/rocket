@@ -40,9 +40,6 @@ namespace internal {
 
 // Utilities for encoding -----------------------------------------------------------------------------------
 
-// The current level of indentation
-ROCKET_PUBLIC extern thread_local u64 level;
-
 // Takes care of indentation
 void beginContainer(nio::Sink& out, const FormattedConsumerConfig& config, char c);
 
@@ -51,6 +48,9 @@ void endContainer(nio::Sink& out, const FormattedConsumerConfig& config, u64 siz
 
 // Takes care of indentation
 void nextElem(nio::Sink& out, const FormattedConsumerConfig& config, u64 index);
+
+// Resets the current level of indentation
+void resetLevel();
 
 // Utilities for decoding -----------------------------------------------------------------------------------
 
@@ -844,14 +844,14 @@ struct FormattedCodec : Codec<FormattedConsumer, FormattedProducer> {
   template<typename T>
   auto
   encode(const T& val, nio::Sink& out) const {
-    ROCKET_GUARD([&] { internal::level = 0; });
+    ROCKET_GUARD([&] { internal::resetLevel(); });
     return Base::encode(val, out, FormattedConsumerConfig());
   }
 
   template<typename T>
   auto
   encode(const T& val, nio::Sink& out, const FormattedConsumerConfig& config) const {
-    ROCKET_GUARD([&] { internal::level = 0; });
+    ROCKET_GUARD([&] { internal::resetLevel(); });
     return Base::encode(val, out, config);
   }
 
