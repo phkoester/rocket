@@ -231,7 +231,7 @@ struct HashConsumer {
  *
  * @tparam Hash the hasher to use
  */
-template<typename Hash = hash::StdHash>
+template<typename Hash = hash::BoostHash>
 using HashEncoder = Encoder<HashConsumer<Hash>>;
 
 } // namespace rocket::codec
