@@ -198,6 +198,17 @@ struct Array<std::array<T, N>> : std::true_type {};
 template<typename T>
 concept IsArray = Array<T>::value;
 
+// #IsHashed ------------------------------------------------------------------------------------------------
+
+template<typename T, typename = void>
+struct Hashed : std::false_type {};
+
+template<typename T>
+struct Hashed<T, std::void_t<typename T::hasher>> : std::true_type {};
+
+template<typename T>
+concept IsHashed = Hashed<T>::value;
+
 // #IsOptional ----------------------------------------------------------------------------------------------
 
 template<typename T>

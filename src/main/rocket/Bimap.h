@@ -6,6 +6,8 @@
 
 #pragma once
 
+#include "rocket/type-traits.h"
+
 #include <boost/bimap.hpp>
 #include <boost/bimap/set_of.hpp>
 #include <boost/bimap/unordered_set_of.hpp>
@@ -29,15 +31,15 @@ using Bimap = boost::bimaps::bimap<
  * @param list the map elements, as seen from the map's left index
  * @return a new #rocket::Bimap containing the elements of @p list in its left index
  */
- template<typename K, typename V>
- Bimap<K, V>
- makeBimap(std::initializer_list<std::pair<K, V>> list = {}) {
-   Bimap<K, V> ret;
-   for (const auto& elem : list) {
-     ret.insert({ std::move(elem.first), std::move(elem.second) }); // `bimap` has no `emplace`
-   }
-   return ret;
- }
+template<typename K, typename V>
+Bimap<K, V>
+makeBimap(std::initializer_list<std::pair<K, V>> list = {}) {
+  Bimap<K, V> ret;
+  for (const auto& elem : list) {
+    ret.insert({ std::move(elem.first), std::move(elem.second) }); // `bimap` has no `emplace`
+  }
+  return ret;
+}
 
 // #UnorderedBimap ------------------------------------------------------------------------------------------
 

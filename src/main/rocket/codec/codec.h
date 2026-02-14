@@ -10,11 +10,11 @@
 
 #pragma once
 
+#include "rocket/Bimap.h"
 #include "rocket/type-traits.h"
 #include "rocket/reflect/MemberRef.h"
 #include "rocket/reflect/VarRef.h"
 
-#include <boost/bimap/bimap.hpp>
 
 #include <array>
 #include <bit>
@@ -37,6 +37,14 @@ static_assert(
 
 /// Whether the native architecture is little-endian.
 constexpr bool HAS_LITTLE_ENDIAN = std::endian::native == std::endian::little;
+
+// Test #rocket::IsHashed
+static_assert(not IsHashed<std::set<int>>);
+static_assert(IsHashed<std::unordered_set<int>>);
+static_assert(not IsHashed<std::map<int, int>>);
+static_assert(IsHashed<std::unordered_map<int, int>>);
+static_assert(not IsHashed<rocket::Bimap<int, int>>);
+static_assert(IsHashed<rocket::UnorderedBimap<int, int>>);
 
 // #ValueType -----------------------------------------------------------------------------------------------
 

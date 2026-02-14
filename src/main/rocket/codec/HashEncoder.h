@@ -15,6 +15,18 @@ namespace rocket::codec {
 
 namespace internal {
 
+// Functions ------------------------------------------------------------------------------------------------
+
+template<bool Unordered>
+void
+combine(u64& seed, u64 hash) {
+  if constexpr (Unordered) {
+    seed += hash;
+  } else {
+    hash::combine(seed, hash);
+  }
+}
+
 // #HashConsumerImpl ----------------------------------------------------------------------------------------
 
 template<ValueType ValueType, typename T, typename Hash>
@@ -68,7 +80,7 @@ struct HashConsumerImpl<ValueType::Optional, T, Hash> {
 
     u64 ret = 1;
     const u64 elemHash = HashConsumerImpl<ElemEncode, Elem, Hash>().consume(*val);
-    hash::combine(ret, elemHash);
+    combine<false>(ret, elemHash);
     return ret;
   }
 };
@@ -93,7 +105,7 @@ private:
   consumeElem(u64& seed, const Elem& elem, Args&&... args) {
     constexpr auto ElemEncode = ValueTypes<Elem>::Encode;
     auto elemHash = HashConsumerImpl<ElemEncode, Elem, Hash>().consume(elem, std::forward<Args>(args)...);
-    hash::combine(seed, elemHash);
+    combine<false>(seed, elemHash);
   }
 };
 
@@ -106,7 +118,7 @@ struct HashConsumerImpl<ValueType::Array, T, Hash> {
     u64 ret = val.size();
     for (const auto& elem : val) {
       auto elemHash = HashConsumerImpl<ElemEncode, Elem, Hash>().consume(elem);
-      hash::combine(ret, elemHash);
+      combine<false>(ret, elemHash);
     }
     return ret;
   }
@@ -119,10 +131,12 @@ struct HashConsumerImpl<ValueType::Set, T, Hash> {
     using Elem = T::value_type;
     constexpr auto ElemEncode = ValueTypes<Elem>::Encode;
 
+    constexpr auto Unordered = IsHashed<T>;
+
     u64 ret = val.size();
     for (const auto& elem : val) {
       auto elemHash = HashConsumerImpl<ElemEncode, Elem, Hash>().consume(elem);
-      hash::combine(ret, elemHash);
+      combine<Unordered>(ret, elemHash);
     }
     return ret;
   }
@@ -137,12 +151,14 @@ struct HashConsumerImpl<ValueType::Map, T, Hash> {
     using Elem = T::mapped_type;
     constexpr auto ElemEncode = ValueTypes<Elem>::Encode;
 
+    constexpr auto Unordered = IsHashed<T>;
+
     u64 ret = val.size();
     for (const auto& [key, elem] : val) {
       const auto keyHash = HashConsumerImpl<KeyEncode, Key, Hash>().consume(key);
-      hash::combine(ret, keyHash);
+      combine<Unordered>(ret, keyHash);
       const auto elemHash = HashConsumerImpl<ElemEncode, Elem, Hash>().consume(elem);
-      hash::combine(ret, elemHash);
+      combine<Unordered>(ret, elemHash);
     }
     return ret;
   }
@@ -157,12 +173,14 @@ struct HashConsumerImpl<ValueType::Bimap, T, Hash> {
     using Elem = PurgeType<typename T::left_value_type::second_type>;
     constexpr auto ElemEncode = ValueTypes<Elem>::Encode;
 
+    constexpr auto Unordered = IsHashed<T>;
+
     u64 ret = val.size();
     for (const auto& [key, elem] : val.left) {
       const auto keyHash = HashConsumerImpl<KeyEncode, Key, Hash>().consume(key);
-      hash::combine(ret, keyHash);
+      combine<Unordered>(ret, keyHash);
       const auto elemHash = HashConsumerImpl<ElemEncode, Elem, Hash>().consume(elem);
-      hash::combine(ret, elemHash);
+      combine<Unordered>(ret, elemHash);
     }
     return ret;
   }
