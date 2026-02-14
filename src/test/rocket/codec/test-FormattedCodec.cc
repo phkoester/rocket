@@ -319,20 +319,6 @@ TEST(FormattedCodec, FormattedProducerFloat) {
   }
 }
 
-TEST(FormattedCodec, FormattedProducerPointer) {
-  FormattedCodec codec;
-
-  {
-    nio::StringSource in("<null>");
-    EXPECT_EQ(codec.decode<void*>(in), nullptr);
-  }
-
-  {
-    nio::StringSource in("0x12345678");
-    EXPECT_EQ(codec.decode<void*>(in), reinterpret_cast<void*>(0x12345678));
-  }
-}
-
 TEST(FormattedCodec, FormattedProducerOptionalString) {
   FormattedCodec codec;
 

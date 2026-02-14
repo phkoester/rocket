@@ -14,6 +14,48 @@
 
 namespace rocket::hash {
 
+// #BoostHash -----------------------------------------------------------------------------------------------
+
+/**
+ * A hasher using `boost::hash`.
+ */
+ struct BoostHash {
+  /**
+    * Hash function.
+    *
+    * @tparam T the type of the value to hash
+    * @param val the value to hash
+    * @return the hash value
+    */
+  template<typename T>
+  [[nodiscard]] u64
+  operator()(const T& val) const {
+    return boost::hash<T>()(val);
+  }
+};
+
+// #StdHash -------------------------------------------------------------------------------------------------
+
+/**
+ * A hasher using #std::hash.
+ */
+struct StdHash {
+  /**
+   * Hash function.
+   *
+   * @tparam T the type of the value to hash
+   * @param val the value to hash
+   * @return the hash value
+   */
+  template<typename T>
+  [[nodiscard]] u64
+  operator()(const T& val) const {
+    return std::hash<T>()(val);
+  }
+};
+
+// Functions ------------------------------------------------------------------------------------------------
+
 /**
  * Combines two hash values.
  *
@@ -37,7 +79,7 @@ combine(u64& seed, u64 hash) {
  * @param seed the seed value, which is modified
  * @param val the value to hash
  */
-template<typename T, typename Hash = std::hash<T>>
+template<typename T, typename Hash = StdHash>
 void
 combineHash(u64& seed, const T& val) {
   combine(seed, Hash()(val));
