@@ -791,12 +791,22 @@ struct StringSource : Source {
 
   ~StringSource() override = default;
 
+  /**
+   * Returns the available string of the source.
+   *
+   * @return the available string of the source
+   */
   std::string_view available() const { return in_.substr(pos_); }
 
   bool close() override;
 
   i32 handle() const override { return -1; }
 
+  /**
+   * Returns the input string th source was constructed with.
+   *
+   * @return the input string that the source was constructed with
+   */
   std::string_view in() const { return in_; }
 
   u64 read(std::span<u8> out) override;

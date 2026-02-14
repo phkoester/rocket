@@ -21,8 +21,11 @@ template<bool Unordered>
 void
 combine(u64& seed, u64 hash) {
   if constexpr (Unordered) {
+    // For unordered containers, use a permutative hashing scheme so that the element order does not
+    // affect the hash value
     seed += hash;
   } else {
+    // Otherwise, do it like the Boost guys do it
     hash::combine(seed, hash);
   }
 }

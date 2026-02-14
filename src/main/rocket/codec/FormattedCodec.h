@@ -20,7 +20,7 @@ namespace rocket::codec {
 
 // #FormattedConsumerConfig ---------------------------------------------------------------------------------
 
-/// Configuration for the #FormattedConsumer.
+/// Configuration for #rocket::codec::FormattedConsumer.
 struct FormattedConsumerConfig {
   /// Whether to indent the output and format a tree.
   bool indent = false;
@@ -28,7 +28,7 @@ struct FormattedConsumerConfig {
 
 // #FormattedProducerConfig ---------------------------------------------------------------------------------
 
-/// Configuration for the #FormattedProducer.
+/// Configuration for #rocket::codec::FormattedProducer.
 struct FormattedProducerConfig {
   /// Whether to allow C-style comments starting with @c // or @c /*.
   bool cComments = false;
@@ -77,7 +77,9 @@ void skip(nio::StringSource& in, const FormattedProducerConfig& config);
 
 // #FormattedConsumerImpl -----------------------------------------------------------------------------------
 
+/// @cond undocumented
 #define CONFIG__ [[maybe_unused]] const FormattedConsumerConfig& config
+/// @endcond
 
 template<ValueType ValueType, typename T>
 struct FormattedConsumerImpl;
@@ -313,7 +315,9 @@ struct FormattedConsumerImpl<ValueType::VarRef, T> {
 
 // #FormattedProducerImpl -----------------------------------------------------------------------------------
 
+/// @cond undocumented
 #define CONFIG__ [[maybe_unused]] const FormattedProducerConfig& config
+/// @endcond
 
 template<ValueType ValueType, typename T>
 struct FormattedProducerImpl;
@@ -781,7 +785,7 @@ struct FormattedProducerImpl<ValueType::VarRef, T> {
 
 // #FormattedConsumer ---------------------------------------------------------------------------------------
 
-/// The consumer for the #FormmatedCodec.
+/// The consumer for #rocket::codec::FormattedCodec.
 struct FormattedConsumer {
   /// @type_alias
   template<ValueType ValueType, typename T>
@@ -790,9 +794,7 @@ struct FormattedConsumer {
 
 // #FormattedProducer ---------------------------------------------------------------------------------------
 
-/**
- * The producer for the #FormmatedCodec.
- */
+/// The producer for #rocket::codec::FormattedCodec.
 struct FormattedProducer {
   /// @type_alias
   template<ValueType ValueType, typename T>
@@ -805,6 +807,14 @@ struct FormattedProducer {
 struct FormattedCodec : Codec<FormattedConsumer, FormattedProducer> {
   using Base = Codec<FormattedConsumer, FormattedProducer>; ///< @type_base
 
+  /**
+   * Encodes a value.
+   *
+   * @tparam T the type to encode
+   * @param val the value to encode
+   * @param out the output sink
+   * @return whatever the consumer returns
+   */
   template<typename T>
   auto
   encode(const T& val, nio::Sink& out) const {
@@ -812,6 +822,15 @@ struct FormattedCodec : Codec<FormattedConsumer, FormattedProducer> {
     return Base::encode(val, out, FormattedConsumerConfig());
   }
 
+  /**
+   * Encodes a value.
+   *
+   * @tparam T the type to encode
+   * @param val the value to encode
+   * @param out the output sink
+   * @param config the configuration
+   * @return whatever the consumer returns
+   */
   template<typename T>
   auto
   encode(const T& val, nio::Sink& out, const FormattedConsumerConfig& config) const {
@@ -819,24 +838,56 @@ struct FormattedCodec : Codec<FormattedConsumer, FormattedProducer> {
     return Base::encode(val, out, config);
   }
 
+  /**
+   * Decodes a value from a source.
+   *
+   * @tparam T the type to decode
+   * @param in the input source
+   * @return the decoded value
+   * @throw #std::exception if the value cannot be decoded
+   */
   template<typename T>
   T
   decode(nio::StringSource& in) const {
     return Base::decode<T>(in, FormattedProducerConfig());
   }
 
+  /**
+   * Decodes a value from a source.
+   *
+   * @tparam T the type to decode
+   * @param in the input source
+   * @param config the configuration
+   * @return the decoded value
+   * @throw #std::exception if the value cannot be decoded
+   */
   template<typename T>
   T
   decode(nio::StringSource& in, const FormattedProducerConfig& config) const {
     return Base::decode<T>(in, config);
   }
 
+  /**
+   * Tries to decode a value from a source.
+   *
+   * @tparam T the type to decode
+   * @param in the input source
+   * @return the decoded value, or null if the value cannot be decoded
+   */
   template<typename T>
   [[nodiscard]] std::optional<T>
   tryDecode(nio::StringSource& in) const {
     return Base::tryDecode<T>(in, FormattedProducerConfig());
   }
 
+  /**
+   * Tries to decode a value from a source.
+   *
+   * @tparam T the type to decode
+   * @param in the input source
+   * @param config the configuration
+   * @return the decoded value, or null if the value cannot be decoded
+   */
   template<typename T>
   [[nodiscard]] std::optional<T>
   tryDecode(nio::StringSource& in, const FormattedProducerConfig& config) const {
