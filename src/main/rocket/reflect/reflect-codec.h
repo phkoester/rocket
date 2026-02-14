@@ -200,7 +200,7 @@ inline u64
 hash(const T& val, const std::tuple<Ref...>& refs) {
   u64 ret = std::tuple_size<PurgeType<decltype(refs)>>::value;
   std::apply([&](auto&&... arg) {
-    (..., (hash::combine(ret, rocket::codec::HashEncoder().encode(arg.get(val)))));
+    (..., (hash::combine(ret, rocket::codec::HashEncoder<>().encode(arg.get(val)))));
   }, refs);
   return ret;
 }

@@ -342,7 +342,8 @@ struct fmt::formatter<rocket::WrappedException, C> {
     if (withType_) {
       const std::type_info* type; // NOLINT
       if (val.exception()) {
-        type = &typeid(*val.exception());
+        const auto& ex = *val.exception(); // Clang wants this in two lines
+        type = &typeid(ex);
       } else {
 #ifdef ROCKET_CXX_COMPILER_MSVC
         type = nullptr;

@@ -221,7 +221,7 @@
 #define ROCKET_REFLECT_MEMBERS_DEFINE_STD_HASH__(ns, cls, name) \
   u64 \
   std::hash<ns::cls>::operator()(const ns::cls& val) const { \
-    return ::rocket::codec::HashEncoder().encode(val); \
+    return ::rocket::codec::HashEncoder<>().encode(val); \
   }
 
 #define ROCKET_REFLECT_MEMBERS_DEFINE__(ns, cls, name) \

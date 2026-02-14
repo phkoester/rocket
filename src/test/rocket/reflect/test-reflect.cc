@@ -230,10 +230,10 @@ TEST(reflect, VarRefHash) {
   i32 i1 = 2;
   i64 l1 = 3;
   auto vars1 = ROCKET_REFLECT_VARS((i1)(l1));
-  const u64 hash1 = codec::HashEncoder().encode(vars1);
+  const u64 hash1 = codec::HashEncoder<>().encode(vars1);
 
   auto vars2 = ROCKET_REFLECT_VARS((i1)(l1));
-  const u64 hash2 = codec::HashEncoder().encode(vars2);
+  const u64 hash2 = codec::HashEncoder<>().encode(vars2);
 
   EXPECT_NE(hash1, 0);
   EXPECT_EQ(hash2, hash1);
