@@ -30,14 +30,15 @@ ROCKET_REFLECT_MEMBERS_DEFINE(, MyStruct, index);
 // #TEST ----------------------------------------------------------------------------------------------------
 
 TEST(HashEncoder, Enum) {
-  HashEncoder<> encoder;
+  HashEncoder<rocket::hash::BoostHash> encoder;
   enum Color : u8 { red = 0, green, blue };
   EXPECT_EQ(encoder.encode(blue), 2);
 }
 
 TEST(HashEncoder, Pointer) {
-  HashEncoder<> encoder;
-  EXPECT_EQ(encoder.encode(&encoder), reinterpret_cast<u64>(&encoder));
+  HashEncoder<rocket::hash::BoostHash> encoder;
+  void* ptr = nullptr;
+  EXPECT_EQ(encoder.encode(ptr), 0);
 }
 
 TEST(HashEncoder, Set) {
