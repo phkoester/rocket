@@ -15,7 +15,6 @@
 #include "rocket/reflect/MemberRef.h"
 #include "rocket/reflect/VarRef.h"
 
-
 #include <array>
 #include <bit>
 #include <map>
@@ -38,22 +37,14 @@ static_assert(
 /// Whether the native architecture is little-endian.
 constexpr bool HAS_LITTLE_ENDIAN = std::endian::native == std::endian::little;
 
-// Test #rocket::IsHashed
-static_assert(not IsHashed<std::set<int>>);
-static_assert(IsHashed<std::unordered_set<int>>);
-static_assert(not IsHashed<std::map<int, int>>);
-static_assert(IsHashed<std::unordered_map<int, int>>);
-static_assert(not IsHashed<rocket::Bimap<int, int>>);
-static_assert(IsHashed<rocket::UnorderedBimap<int, int>>);
-
-// #ValueType -----------------------------------------------------------------------------------------------
+// #DataType ------------------------------------------------------------------------------------------------
 
 /**
- * Value types that consumers and producers may handle.
+ * Data types that consumers and producers may handle.
  *
  * Not all value types are supported by all consumers and producers.
  */
-enum class ValueType {
+enum class DataType {
   // Basic types ............................................................................................
 
   /// `bool` values.
@@ -77,7 +68,7 @@ enum class ValueType {
   Optional,
   /// Tuples, either #std::pair or #std::tuple.
   Tuple,
-  /// Arrays, either #std::array or #std::vector.
+  /// Arrays, either #std::array, #std::span, or #std::vector.
   Array,
   /// Sets.
   Set,
@@ -96,166 +87,148 @@ enum class ValueType {
   VarRef,
 };
 
-// #ValueTypes ----------------------------------------------------------------------------------------------
+// #DataTypes -----------------------------------------------------------------------------------------------
 
 /**
- * The #rocket::codec::ValueTypes template maps a C++ type to a #rocket::codec::ValueType, both for encoding
- * and decoding, at compile time.
+ * The #rocket::codec::DataTypes template maps a C++ type to a #rocket::codec::DataType enum value, both for
+ * encoding and decoding, at compile time.
  *
- * This is the central logic for the codec system and for traversing C++ data structures of any kind. The
- * encoders and decoders all rely on the value types provided here.
- *
- * There is no strict symmetry between encoding and decoding value types. For instance, string views and
- * pointers may be encoded, but not decoded.
+ * This is the central logic of the codec type system. The encoders and decoders all rely on the data types
+ * provided here.
  */
 template<typename T>
-struct ValueTypes;
+struct DataTypes;
 
-/// @spec{#rocket::codec::ValueTypes, bool}
+/// @spec{#rocket::codec::DataTypes, bool}
 template<>
-struct ValueTypes<bool> {
-  static constexpr auto Encode = ValueType::Bool; ///< The value type.
-  static constexpr auto Decode = ValueType::Bool; ///< The value type.
+struct DataTypes<bool> {
+  static constexpr auto Value = DataType::Bool; ///< The value type.
 };
 
-/// @spec{#rocket::codec::ValueTypes, C}
+/// @spec{#rocket::codec::DataTypes, C}
 template<typename C> requires IsChar<C>
-struct ValueTypes<C> {
-  static constexpr auto Encode = ValueType::Char; ///< The value type.
-  static constexpr auto Decode = ValueType::Char; ///< The value type.
+struct DataTypes<C> {
+  static constexpr auto Value = DataType::Char; ///< The data type.
 };
 
-/// @spec{#rocket::codec::ValueTypes, E}
+/// @spec{#rocket::codec::DataTypes, E}
 template<typename E> requires std::is_enum_v<E>
-struct ValueTypes<E> {
-  static constexpr auto Encode = ValueType::Enum; ///< The value type.
-  static constexpr auto Decode = ValueType::Enum; ///< The value type.
+struct DataTypes<E> {
+  static constexpr auto Value = DataType::Enum; ///< The data type.
 };
 
-/// @spec{#rocket::codec::ValueTypes, I}
+/// @spec{#rocket::codec::DataTypes, I}
 template<typename I> requires IsInteger<I>
-struct ValueTypes<I> {
-  static constexpr auto Encode = ValueType::Integer; ///< The value type.
-  static constexpr auto Decode = ValueType::Integer; ///< The value type.
+struct DataTypes<I> {
+  static constexpr auto Value = DataType::Integer; ///< The data type.
 };
 
-/// @spec{#rocket::codec::ValueTypes, F}
+/// @spec{#rocket::codec::DataTypes, F}
 template<typename F> requires IsFloat<F>
-struct ValueTypes<F> {
-  static constexpr auto Encode = ValueType::Float; ///< The value type.
-  static constexpr auto Decode = ValueType::Float; ///< The value type.
+struct DataTypes<F> {
+  static constexpr auto Value = DataType::Float; ///< The data type.
 };
 
-/// @spec{#rocket::codec::ValueTypes, T}
+/// @spec{#rocket::codec::DataTypes, T}
 template<typename T> requires std::is_pointer_v<T>
-struct ValueTypes<T> {
-  static constexpr auto Encode = ValueType::Pointer; ///< The value type.
-  // No decoding of pointers
+struct DataTypes<T> {
+  static constexpr auto Value = DataType::Pointer; ///< The data type.
 };
 
-/// @spec{#rocket::codec::ValueTypes, #std::basic_string}
+/// @spec{#rocket::codec::DataTypes, #std::basic_string}
 template<typename C> requires IsChar<C>
-struct ValueTypes<std::basic_string<C>> {
-  static constexpr auto Encode = ValueType::String; ///< The value type.
-  static constexpr auto Decode = ValueType::String; ///< The value type.
+struct DataTypes<std::basic_string<C>> {
+  static constexpr auto Value = DataType::String; ///< The data type.
 };
 
-/// @spec{#rocket::codec::ValueTypes, #std::basic_string_view}
+/// @spec{#rocket::codec::DataTypes, #std::basic_string_view}
 template<typename C> requires IsChar<C>
-struct ValueTypes<std::basic_string_view<C>> {
-  static constexpr auto Encode = ValueType::String; ///< The value type.
-  // No decoding of string views
+struct DataTypes<std::basic_string_view<C>> {
+  static constexpr auto Value = DataType::String; ///< The data type.
 };
 
-/// @spec{#rocket::codec::ValueTypes, #std::optional}
+/// @spec{#rocket::codec::DataTypes, #std::optional}
 template<typename T>
-struct ValueTypes<std::optional<T>> {
-  static constexpr auto Encode = ValueType::Optional; ///< The value type.
-  static constexpr auto Decode = ValueType::Optional; ///< The value type.
+struct DataTypes<std::optional<T>> {
+  static constexpr auto Value = DataType::Optional; ///< The data type.
 };
 
-/// @spec{#rocket::codec::ValueTypes, #std::pair}
+/// @spec{#rocket::codec::DataTypes, #std::pair}
 template<typename A, typename B>
-struct ValueTypes<std::pair<A, B>> {
-  static constexpr auto Encode = ValueType::Tuple; ///< The value type.
-  static constexpr auto Decode = ValueType::Tuple; ///< The value type.
+struct DataTypes<std::pair<A, B>> {
+  static constexpr auto Value = DataType::Tuple; ///< The data type.
 };
 
-/// @spec{#rocket::codec::ValueTypes, #std::tuple}
+/// @spec{#rocket::codec::DataTypes, #std::tuple}
 template<typename... T>
-struct ValueTypes<std::tuple<T...>> {
-  static constexpr auto Encode = ValueType::Tuple; ///< The value type.
-  static constexpr auto Decode = ValueType::Tuple; ///< The value type.
+struct DataTypes<std::tuple<T...>> {
+  static constexpr auto Value = DataType::Tuple; ///< The value type.
 };
 
-/// @spec{#rocket::codec::ValueTypes, #std::array}
+/// @spec{#rocket::codec::DataTypes, #std::array}
 template<typename T, u64 N>
-struct ValueTypes<std::array<T, N>> {
-  static constexpr auto Encode = ValueType::Array; ///< The value type.
-  static constexpr auto Decode = ValueType::Array; ///< The value type.
+struct DataTypes<std::array<T, N>> {
+  static constexpr auto Value = DataType::Array; ///< The data type.
 };
 
-/// @spec{#rocket::codec::ValueTypes, #std::vector}
+/// @spec{#rocket::codec::DataTypes, #std::span}
 template<typename T>
-struct ValueTypes<std::vector<T>> {
-  static constexpr auto Encode = ValueType::Array; ///< The value type.
-  static constexpr auto Decode = ValueType::Array; ///< The value type.
+struct DataTypes<std::span<T>> {
+  static constexpr auto Value = DataType::Array; ///< The data type.
 };
 
-/// @spec{#rocket::codec::ValueTypes, #std::set}
+/// @spec{#rocket::codec::DataTypes, #std::vector}
 template<typename T>
-struct ValueTypes<std::set<T>> {
-  static constexpr auto Encode = ValueType::Set; ///< The value type.
-  static constexpr auto Decode = ValueType::Set; ///< The value type.
+struct DataTypes<std::vector<T>> {
+  static constexpr auto Value = DataType::Array; ///< The data type.
 };
 
-/// @spec{#rocket::codec::ValueTypes, #std::unordered_set}
+/// @spec{#rocket::codec::DataTypes, #std::set}
 template<typename T>
-struct ValueTypes<std::unordered_set<T>> {
-  static constexpr auto Encode = ValueType::Set; ///< The value type.
-  static constexpr auto Decode = ValueType::Set; ///< The value type.
+struct DataTypes<std::set<T>> {
+  static constexpr auto Value = DataType::Set; ///< The data type.
 };
 
-/// @spec{#rocket::codec::ValueTypes, #std::map}
+/// @spec{#rocket::codec::DataTypes, #std::unordered_set}
+template<typename T>
+struct DataTypes<std::unordered_set<T>> {
+  static constexpr auto Value = DataType::Set; ///< The data type.
+};
+
+/// @spec{#rocket::codec::DataTypes, #std::map}
 template<typename K, typename V>
-struct ValueTypes<std::map<K, V>> {
-  static constexpr auto Encode = ValueType::Map; ///< The value type.
-  static constexpr auto Decode = ValueType::Map; ///< The value type.
+struct DataTypes<std::map<K, V>> {
+  static constexpr auto Value = DataType::Map; ///< The value type.
 };
 
-/// @spec{#rocket::codec::ValueTypes, #std::unordered_map}
+/// @spec{#rocket::codec::DataTypes, #std::unordered_map}
 template<typename K, typename V>
-struct ValueTypes<std::unordered_map<K, V>> {
-  static constexpr auto Encode = ValueType::Map; ///< The value type.
-  static constexpr auto Decode = ValueType::Map; ///< The value type.
+struct DataTypes<std::unordered_map<K, V>> {
+  static constexpr auto Value = DataType::Map; ///< The data type.
 };
 
-/// @spec{#rocket::codec::ValueTypes, boost::bimaps::bimap}
+/// @spec{#rocket::codec::DataTypes, boost::bimaps::bimap}
 template<typename A, typename B>
-struct ValueTypes<boost::bimaps::bimap<A, B>> {
-  static constexpr auto Encode = ValueType::Bimap; ///< The value type.
-  static constexpr auto Decode = ValueType::Bimap; ///< The value type.
+struct DataTypes<boost::bimaps::bimap<A, B>> {
+  static constexpr auto Value = DataType::Bimap; ///< The data type.
 };
 
-/// @spec{#rocket::codec::ValueTypes, #rocket::reflect::MemberRefProvider}
+/// @spec{#rocket::codec::DataTypes, #rocket::reflect::MemberRefProvider}
 template< typename T> requires rocket::reflect::MemberRefProvider<T>::value
-struct ValueTypes<T> {
-  static constexpr auto Encode = ValueType::MemberRefProvider; ///< The value type.
-  static constexpr auto Decode = ValueType::MemberRefProvider; ///< The value type.
+struct DataTypes<T> {
+  static constexpr auto Value = DataType::MemberRefProvider; ///< The data type.
 };
 
-/// @spec{#rocket::codec::ValueTypes, #rocket::reflect::MemberRef}
+/// @spec{#rocket::codec::DataTypes, #rocket::reflect::MemberRef}
 template<typename C, typename T>
-struct ValueTypes<rocket::reflect::MemberRef<C, T>> {
-  static constexpr auto Encode = ValueType::MemberRef; ///< The value type.
-  static constexpr auto Decode = ValueType::MemberRef; ///< The value type.
+struct DataTypes<rocket::reflect::MemberRef<C, T>> {
+  static constexpr auto Value = DataType::MemberRef; ///< The data type.
 };
 
-/// @spec{#rocket::codec::ValueTypes, #rocket::reflect::VarRef}
+/// @spec{#rocket::codec::DataTypes, #rocket::reflect::VarRef}
 template<typename T>
-struct ValueTypes<rocket::reflect::VarRef<T>> {
-  static constexpr auto Encode = ValueType::VarRef; ///< The value type.
-  static constexpr auto Decode = ValueType::VarRef; ///< The value type.
+struct DataTypes<rocket::reflect::VarRef<T>> {
+  static constexpr auto Value = DataType::VarRef; ///< The data type.
 };
 
 // #Encoder -------------------------------------------------------------------------------------------------
@@ -279,8 +252,8 @@ struct Encoder {
   template<typename T, typename... Args>
   auto
   encode(const T& val, Args&&... args) const {
-    constexpr auto Encode = ValueTypes<T>::Encode;
-    using ConsumerType = Consumer::template Type<Encode, T>;
+    constexpr auto Value = DataTypes<T>::Value;
+    using ConsumerType = Consumer::template Type<Value, T>;
     ConsumerType consumer;
     return consumer.consume(val, std::forward<Args>(args)...);
   }
@@ -296,7 +269,7 @@ struct Encoder {
 template<typename Producer>
 struct Decoder {
   /**
-   * Decodes a value from a source.
+   * Decodes a value.
    *
    * @tparam T the type to decode
    * @tparam Args types of additional arguments to pass to the producer
@@ -306,8 +279,8 @@ struct Decoder {
   template<typename T, typename... Args>
   T
   decode(Args&&... args) const {
-    constexpr auto Decode = ValueTypes<T>::Decode;
-    using ProducerType = Producer::template Type<Decode, T>;
+    constexpr auto Value = DataTypes<T>::Value;
+    using ProducerType = Producer::template Type<Value, T>;
     ProducerType producer;
     T val;
     producer.produce(val, std::forward<Args>(args)...);
@@ -315,7 +288,7 @@ struct Decoder {
   }
 
   /**
-   * Tries to decode a value from a source.
+   * Tries to decode a value.
    *
    * @tparam T the type to decode
    * @tparam Args types of additional arguments to pass to the producer

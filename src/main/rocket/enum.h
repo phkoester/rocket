@@ -16,6 +16,10 @@
 #include <boost/preprocessor/stringize.hpp>
 #include <boost/preprocessor/seq/for_each.hpp>
 
+#include <fmt/format.h>
+
+#include <scn/scan.h>
+
 #include <ostream>
 
 // Macros ---------------------------------------------------------------------------------------------------
@@ -26,8 +30,9 @@
  * In particular, it provides
  *
  * - an `operator<<` for #std::ostream;
+ * - a #rocket::Enum specialization for the enum;
  * - a `fmt::formatter` specialization so the enum can be formatted using `fmt::format()`;
- * - a #rocket::Enum specialization so #rocket::str::StringConvert may be used with the enum.
+ * - a `scn::scanner` specialization so the enum can be scanned using `scn::scan()`.
  *
  * @note This macro must be called in the global namespace.
  *
@@ -72,7 +77,7 @@
     static ::std::pair<u64, ns::type> toType(::std::string_view str, bool strict); \
   }
 
-#define ROCKET_ENUM_DECLARE_FMT_FORMATTER__(ns, type, name) \
+#define ROCKET_ENUM_DECLARE_FMT_FORMATTER__(ns, type) \
   template<typename C> \
   struct fmt::formatter<ns::type, C> { \
     template<typename FormatContext> \
@@ -104,13 +109,42 @@
     ::fmt::formatter<basic_string_view<C>, C> underlying_; \
   }
 
+#define ROCKET_ENUM_DECLARE_SCN_SCANNER__(ns, type) \
+  template<> \
+  struct scn::scanner<ns::type, char> : scn::scanner<::std::string_view, char> { \
+    using Base = scn::scanner<::std::string_view, char>; \
+    \
+    template<typename Context> \
+    scan_expected<typename Context::iterator> \
+    scan(ns::type& val, Context& ctx) const { \
+      ::std::string_view str; \
+      auto result = Base::scan(str, ctx); \
+      if (result) { \
+        try { \
+          const auto [size, enumVal] = ::rocket::Enum<ns::type>::toType(str, false); \
+          /* If the consumed string is longer than the scanned portion, we need to correct the iterator */ \
+          const i64 correction = size - str.size(); /* Zero or negative */ \
+          val = enumVal; \
+          auto it = result.value(); \
+          std::advance(it, correction); \
+          return it; \
+        } catch (const ::std::exception&) { \
+          return unexpected(scan_error(scan_error::invalid_scanned_value, "Invalid enum value")); \
+        } \
+      } else { \
+        return unexpected(result.error()); \
+      } \
+    } \
+  }
+
 #define ROCKET_ENUM_DECLARE__(ns, type, name) \
   ROCKET_NAMESPACE_BEGIN(ns); \
   ROCKET_ENUM_DECLARE_MAP__(type, name); \
   ROCKET_ENUM_DECLARE_OP_OUTPUT__(type); \
   ROCKET_NAMESPACE_END(ns); \
   ROCKET_ENUM_DECLARE_ROCKET_ENUM__(ns, type); \
-  ROCKET_ENUM_DECLARE_FMT_FORMATTER__(ns, type, name)
+  ROCKET_ENUM_DECLARE_FMT_FORMATTER__(ns, type); \
+  ROCKET_ENUM_DECLARE_SCN_SCANNER__(ns, type)
 
 // Definitions ..............................................................................................
 

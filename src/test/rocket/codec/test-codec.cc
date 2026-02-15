@@ -58,11 +58,11 @@ readI32(nio::Source& in) {
 
 // #TracingConsumerImpl -------------------------------------------------------------------------------------
 
-template<ValueType, typename T>
+template<DataType, typename T>
 struct TracingConsumerImpl;
 
 template<>
-struct TracingConsumerImpl<ValueType::Bool, bool> {
+struct TracingConsumerImpl<DataType::Bool, bool> {
   u64
   consume(bool val, nio::StringSink& out) {
     return out.println("consuming boolean: {}", val);
@@ -70,7 +70,7 @@ struct TracingConsumerImpl<ValueType::Bool, bool> {
 };
 
 template<typename C>
-struct TracingConsumerImpl<ValueType::Char, C> {
+struct TracingConsumerImpl<DataType::Char, C> {
   u64
   consume(C val, nio::StringSink& out) {
     std::basic_string<C> str = { val };
@@ -79,7 +79,7 @@ struct TracingConsumerImpl<ValueType::Char, C> {
 };
 
 template<typename I>
-struct TracingConsumerImpl<ValueType::Integer, I> {
+struct TracingConsumerImpl<DataType::Integer, I> {
   u64
   consume(I val, nio::StringSink& out) {
     return out.println("consuming integer: {}", val);
@@ -87,7 +87,7 @@ struct TracingConsumerImpl<ValueType::Integer, I> {
 };
 
 template<typename T>
-struct TracingConsumerImpl<ValueType::String, T> {
+struct TracingConsumerImpl<DataType::String, T> {
   u64
   consume(const T& val, nio::StringSink& out) {
     return out.println("consuming string: {:?}", unicode::ConvertTo<char>::apply(val));
@@ -95,14 +95,14 @@ struct TracingConsumerImpl<ValueType::String, T> {
 };
 
 template<typename T>
-struct TracingConsumerImpl<ValueType::Optional, T> {
+struct TracingConsumerImpl<DataType::Optional, T> {
   u64
   consume(const T& val, nio::StringSink& out) {
     auto ret = out.println("consuming optional: {}", val);
     if (val) {
       using Elem = typename T::value_type;
-      constexpr auto ElemEncode = ValueTypes<Elem>::Encode;
-      ret += TracingConsumerImpl<ElemEncode, Elem>().consume(*val, out);
+      constexpr auto ElemDataType = DataTypes<Elem>::Value;
+      ret += TracingConsumerImpl<ElemDataType, Elem>().consume(*val, out);
     }
     return ret;
   }
@@ -110,7 +110,7 @@ struct TracingConsumerImpl<ValueType::Optional, T> {
 
 // For #MemberRef, the tuple consumer must be able to pass additional arguments to the element consumer
 template<typename T>
-struct TracingConsumerImpl<ValueType::Tuple, T> {
+struct TracingConsumerImpl<DataType::Tuple, T> {
   template<typename... Args>
   u64
   consume(const T& val, nio::StringSink& out, Args&&... args) {
@@ -132,67 +132,67 @@ private:
     } else {
       result += out.println("consuming tuple elem");
     }
-    constexpr auto ElemEncode = ValueTypes<Elem>::Encode;
-    result += TracingConsumerImpl<ElemEncode, Elem>().consume(elem, out, std::forward<Args>(args)...);
+    constexpr auto ElemDataType = DataTypes<Elem>::Value;
+    result += TracingConsumerImpl<ElemDataType, Elem>().consume(elem, out, std::forward<Args>(args)...);
     return result;
   }
 };
 
 template<typename T>
-struct TracingConsumerImpl<ValueType::Array, T> {
+struct TracingConsumerImpl<DataType::Array, T> {
   u64
   consume(const T& val, nio::StringSink& out) {
     using Elem = typename T::value_type;
-    constexpr auto ElemEncode = ValueTypes<Elem>::Encode;
+    constexpr auto ElemDataType = DataTypes<Elem>::Value;
 
     const auto size = val.size();
     auto ret = out.println("consuming array: {}", size);
     for (const auto& elem : val) {
-      ret += TracingConsumerImpl<ElemEncode, Elem>().consume(elem, out);
+      ret += TracingConsumerImpl<ElemDataType, Elem>().consume(elem, out);
     }
     return ret;
   }
 };
 
 template<typename T>
-struct TracingConsumerImpl<ValueType::MemberRefProvider, T> {
+struct TracingConsumerImpl<DataType::MemberRefProvider, T> {
   u64
   consume(const T& val, nio::StringSink& out) {
     auto ret = out.println("consuming memberrefprovider");
 
     constexpr auto& refs = rocket::reflect::MemberRefProvider<T>::refs;
     using Elem = PurgeType<decltype(refs)>;
-    constexpr auto ElemEncode = ValueTypes<Elem>::Encode;
-    static_assert(ElemEncode == ValueType::Tuple);
+    constexpr auto ElemDataType = DataTypes<Elem>::Value;
+    static_assert(ElemDataType == DataType::Tuple);
     // Here we have to pass an additional argument, the instance, to the tuple consumer
-    ret += TracingConsumerImpl<ElemEncode, Elem>().consume(refs, out, val);
+    ret += TracingConsumerImpl<ElemDataType, Elem>().consume(refs, out, val);
     return ret;
   }
 };
 
 template<typename T>
-struct TracingConsumerImpl<ValueType::MemberRef, T> {
+struct TracingConsumerImpl<DataType::MemberRef, T> {
   template<typename C>
   u64
   consume(const T& val, nio::StringSink& out, const C& instance) {
     auto ret = out.println("consuming memberref: \"{}\"", val.name());
 
     using Elem = typename T::ValueType;
-    constexpr auto ElemEncode = ValueTypes<Elem>::Encode;
-    ret += TracingConsumerImpl<ElemEncode, Elem>().consume(val.get(instance), out);
+    constexpr auto ElemDataType = DataTypes<Elem>::Value;
+    ret += TracingConsumerImpl<ElemDataType, Elem>().consume(val.get(instance), out);
     return ret;
   }
 };
 
 template<typename T>
-struct TracingConsumerImpl<ValueType::VarRef, T> {
+struct TracingConsumerImpl<DataType::VarRef, T> {
   u64
   consume(const T& val, nio::StringSink& out) {
     auto ret = out.println("consuming varref: \"{}\"", val.name());
 
     using Elem = typename T::ValueType;
-    constexpr auto ElemEncode = ValueTypes<Elem>::Encode;
-    ret += TracingConsumerImpl<ElemEncode, Elem>().consume(val.get(), out);
+    constexpr auto ElemDataType = DataTypes<Elem>::Value;
+    ret += TracingConsumerImpl<ElemDataType, Elem>().consume(val.get(), out);
     return ret;
   }
 };
@@ -200,17 +200,17 @@ struct TracingConsumerImpl<ValueType::VarRef, T> {
 // #TracingConsumer -----------------------------------------------------------------------------------------
 
 struct TracingConsumer {
-  template<ValueType ValueType, typename T>
-  using Type = TracingConsumerImpl<ValueType, T>;
+  template<DataType DataType, typename T>
+  using Type = TracingConsumerImpl<DataType, T>;
 };
 
 // #TracingProducerImpl -------------------------------------------------------------------------------------
 
-template<ValueType, typename T>
+template<DataType, typename T>
 struct TracingProducerImpl;
 
 template<>
-struct TracingProducerImpl<ValueType::Bool, bool> {
+struct TracingProducerImpl<DataType::Bool, bool> {
   void
   produce(bool& val, nio::Source& in, nio::Sink& out) {
     out.println("producing boolean");
@@ -227,7 +227,7 @@ struct TracingProducerImpl<ValueType::Bool, bool> {
 };
 
 template<typename I>
-struct TracingProducerImpl<ValueType::Integer, I> {
+struct TracingProducerImpl<DataType::Integer, I> {
   void
   produce(I& val, nio::Source& in, nio::Sink& out) {
     out.println("producing integer");
@@ -236,9 +236,10 @@ struct TracingProducerImpl<ValueType::Integer, I> {
 };
 
 template<typename T>
-struct TracingProducerImpl<ValueType::String, T> {
+struct TracingProducerImpl<DataType::String, T> {
   using C = typename T::value_type;
   static_assert(std::is_same_v<C, char>, "Cannot decode UTF-32 string");
+  static_assert(not std::is_same_v<T, std::basic_string_view<C>>, "Cannot decode string view");
 
   void
   produce(T& val, nio::Source& in, nio::Sink& out) {
@@ -253,7 +254,7 @@ struct TracingProducerImpl<ValueType::String, T> {
 };
 
 template<typename T>
-struct TracingProducerImpl<ValueType::Optional, T> {
+struct TracingProducerImpl<DataType::Optional, T> {
   void
   produce(T& val, nio::Source& in, nio::Sink& out) {
     out.println("producing optional");
@@ -262,30 +263,30 @@ struct TracingProducerImpl<ValueType::Optional, T> {
       return;
     }
     using Elem = typename T::value_type;
-    constexpr auto ElemDecode = ValueTypes<Elem>::Decode;
+    constexpr auto ElemDataType = DataTypes<Elem>::Value;
     val = Elem();
-    TracingProducerImpl<ElemDecode, Elem>().produce(*val, in, out);
+    TracingProducerImpl<ElemDataType, Elem>().produce(*val, in, out);
   }
 };
 
 template<typename T>
-struct TracingProducerImpl<ValueType::Array, T> {
+struct TracingProducerImpl<DataType::Array, T> {
   void
   produce(T& val, nio::Source& in, nio::Sink& out) {
     using Elem = typename T::value_type;
-    constexpr auto ElemDecode = ValueTypes<Elem>::Decode;
+    constexpr auto ElemDataType = DataTypes<Elem>::Value;
 
     u64 size = readI32(in);
     if constexpr (IsArray<T>) {
       out.println("producing array.array");
       for (u64 i = 0; i < size; ++i) {
-        TracingProducerImpl<ElemDecode, Elem>().produce(val[i], in, out);
+        TracingProducerImpl<ElemDataType, Elem>().produce(val[i], in, out);
       }
     } else {
       out.println("producing array.vector");
       val = T(size);
       for (u64 i = 0; i < size; ++i) {
-        TracingProducerImpl<ElemDecode, Elem>().produce(val[i], in, out);
+        TracingProducerImpl<ElemDataType, Elem>().produce(val[i], in, out);
       }
     }
   }
@@ -294,8 +295,8 @@ struct TracingProducerImpl<ValueType::Array, T> {
 // #TracingProducer -----------------------------------------------------------------------------------------
 
 struct TracingProducer {
-  template<ValueType ValueType, typename T>
-  using Type = TracingProducerImpl<ValueType, T>;
+  template<DataType DataType, typename T>
+  using Type = TracingProducerImpl<DataType, T>;
 };
 
 // #TEST ----------------------------------------------------------------------------------------------------

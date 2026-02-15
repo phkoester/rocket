@@ -81,11 +81,11 @@ void skip(nio::StringSource& in, const FormattedProducerConfig& config);
 #define CONFIG__ [[maybe_unused]] const FormattedConsumerConfig& config
 /// @endcond
 
-template<ValueType ValueType, typename T>
+template<DataType DataType, typename T>
 struct FormattedConsumerImpl;
 
 template<>
-struct FormattedConsumerImpl<ValueType::Bool, bool> {
+struct FormattedConsumerImpl<DataType::Bool, bool> {
   void
   consume(bool val, nio::Sink& out, CONFIG__) {
     out.print("{}", val);
@@ -93,7 +93,7 @@ struct FormattedConsumerImpl<ValueType::Bool, bool> {
 };
 
 template<typename C>
-struct FormattedConsumerImpl<ValueType::Char, C> {
+struct FormattedConsumerImpl<DataType::Char, C> {
   void
   consume(C val, nio::Sink& out, CONFIG__) {
     std::basic_string<C> str = { val };
@@ -104,19 +104,22 @@ struct FormattedConsumerImpl<ValueType::Char, C> {
 };
 
 template<typename E>
-struct FormattedConsumerImpl<ValueType::Enum, E> {
+struct FormattedConsumerImpl<DataType::Enum, E> {
   void
   consume(E val, nio::Sink& out, CONFIG__) {
     if constexpr (fmt::is_formattable<E>::value) {
       out.print("{}", val);
     } else {
-      out.print("{}", std::to_underlying(val));
+      auto underlying = std::to_underlying(val);
+      using Underlying = decltype(underlying);
+      constexpr auto UnderlyingDataType = DataTypes<Underlying>::Value;
+      FormattedConsumerImpl<UnderlyingDataType, Underlying>().consume(underlying, out, config);
     }
   }
 };
 
 template<typename I>
-struct FormattedConsumerImpl<ValueType::Integer, I> {
+struct FormattedConsumerImpl<DataType::Integer, I> {
   void
   consume(I val, nio::Sink& out, CONFIG__) {
     out.print("{}", val);
@@ -124,7 +127,7 @@ struct FormattedConsumerImpl<ValueType::Integer, I> {
 };
 
 template<typename F>
-struct FormattedConsumerImpl<ValueType::Float, F> {
+struct FormattedConsumerImpl<DataType::Float, F> {
   void
   consume(F val, nio::Sink& out, CONFIG__) {
     out.print("{}", val);
@@ -132,7 +135,7 @@ struct FormattedConsumerImpl<ValueType::Float, F> {
 };
 
 template<typename T>
-struct FormattedConsumerImpl<ValueType::Pointer, T> {
+struct FormattedConsumerImpl<DataType::Pointer, T> {
   void
   consume(T val, nio::Sink& out, CONFIG__) {
     if (val == nullptr) {
@@ -144,7 +147,7 @@ struct FormattedConsumerImpl<ValueType::Pointer, T> {
 };
 
 template<typename T>
-struct FormattedConsumerImpl<ValueType::String, T> {
+struct FormattedConsumerImpl<DataType::String, T> {
   void
   consume(const T& val, nio::Sink& out, CONFIG__) {
     std::string utf8(unicode::ConvertTo<char>::apply(val));
@@ -154,7 +157,7 @@ struct FormattedConsumerImpl<ValueType::String, T> {
 };
 
 template<typename T>
-struct FormattedConsumerImpl<ValueType::Optional, T> {
+struct FormattedConsumerImpl<DataType::Optional, T> {
   void
   consume(const T& val, nio::Sink& out, CONFIG__) {
     if (not val) {
@@ -163,14 +166,14 @@ struct FormattedConsumerImpl<ValueType::Optional, T> {
     }
 
     using Elem = T::value_type;
-    constexpr auto ElemEncode = ValueTypes<Elem>::Encode;
-    FormattedConsumerImpl<ElemEncode, Elem>().consume(*val, out, config);
+    constexpr auto ElemDataType = DataTypes<Elem>::Value;
+    FormattedConsumerImpl<ElemDataType, Elem>().consume(*val, out, config);
   }
 };
 
 // For #MemberRef, the tuple consumer must be able to pass additional arguments to the element consumer
 template<typename T>
-struct FormattedConsumerImpl<ValueType::Tuple, T> {
+struct FormattedConsumerImpl<DataType::Tuple, T> {
   template<typename... Args>
   void
   consume(const T& val, nio::Sink& out, CONFIG__, Args&&... args) {
@@ -188,126 +191,126 @@ private:
   void
   consumeElem(const Elem& elem, nio::Sink& out, CONFIG__, u64 index, Args&&... args) {
     nextElem(out, config, index);
-    constexpr auto ElemEncode = ValueTypes<Elem>::Encode;
-    FormattedConsumerImpl<ElemEncode, Elem>().consume(elem, out, config, std::forward<Args>(args)...);
+    constexpr auto ElemDataType = DataTypes<Elem>::Value;
+      FormattedConsumerImpl<ElemDataType, Elem>().consume(elem, out, config, std::forward<Args>(args)...);
   }
 };
 
 template<typename T>
-struct FormattedConsumerImpl<ValueType::Array, T> {
+struct FormattedConsumerImpl<DataType::Array, T> {
   void
   consume(const T& val, nio::Sink& out, CONFIG__) {
     using Elem = T::value_type;
-    constexpr auto ElemEncode = ValueTypes<Elem>::Encode;
+    constexpr auto ElemDataType = DataTypes<Elem>::Value;
 
     beginContainer(out, config, '[');
     u64 index = 0;
     for (const auto& elem : val) {
       nextElem(out, config, index++);
-      FormattedConsumerImpl<ElemEncode, Elem>().consume(elem, out, config);
+      FormattedConsumerImpl<ElemDataType, Elem>().consume(elem, out, config);
     }
     endContainer(out, config, val.size(), ']');
   }
 };
 
 template<typename T>
-struct FormattedConsumerImpl<ValueType::Set, T> {
+struct FormattedConsumerImpl<DataType::Set, T> {
   void
   consume(const T& val, nio::Sink& out, CONFIG__) {
     using Elem = T::value_type;
-    constexpr auto ElemEncode = ValueTypes<Elem>::Encode;
+    constexpr auto ElemDataType = DataTypes<Elem>::Value;
 
     beginContainer(out, config, '{');
     u64 index = 0;
     for (const auto& elem : val) {
       nextElem(out, config, index++);
-      FormattedConsumerImpl<ElemEncode, Elem>().consume(elem, out, config);
+      FormattedConsumerImpl<ElemDataType, Elem>().consume(elem, out, config);
     }
     endContainer(out, config, val.size(), '}');
   }
 };
 
 template<typename T>
-struct FormattedConsumerImpl<ValueType::Map, T> {
+struct FormattedConsumerImpl<DataType::Map, T> {
   void
   consume(const T& val, nio::Sink& out, CONFIG__) {
     using Key = T::key_type;
-    constexpr auto KeyEncode = ValueTypes<Key>::Encode;
+    constexpr auto KeyDataType = DataTypes<Key>::Value;
     using Elem = T::mapped_type;
-    constexpr auto ElemEncode = ValueTypes<Elem>::Encode;
+    constexpr auto ElemDataType = DataTypes<Elem>::Value;
 
     beginContainer(out, config, '{');
     u64 index = 0;
     for (const auto& [key, elem] : val) {
       nextElem(out, config, index++);
-      FormattedConsumerImpl<KeyEncode, Key>().consume(key, out, config);
+      FormattedConsumerImpl<KeyDataType, Key>().consume(key, out, config);
       out.write(": ");
-      FormattedConsumerImpl<ElemEncode, Elem>().consume(elem, out, config);
+      FormattedConsumerImpl<ElemDataType, Elem>().consume(elem, out, config);
     }
     endContainer(out, config, val.size(), '}');
   }
 };
 
 template<typename T>
-struct FormattedConsumerImpl<ValueType::Bimap, T> {
+struct FormattedConsumerImpl<DataType::Bimap, T> {
   void
   consume(const T& val, nio::Sink& out, CONFIG__) {
     using Key = PurgeType<typename T::left_value_type::first_type>;
-    constexpr auto KeyEncode = ValueTypes<Key>::Encode;
+    constexpr auto KeyDataType = DataTypes<Key>::Value;
     using Elem = PurgeType<typename T::left_value_type::second_type>;
-    constexpr auto ElemEncode = ValueTypes<Elem>::Encode;
+    constexpr auto ElemDataType = DataTypes<Elem>::Value;
 
     beginContainer(out, config, '{');
     u64 index = 0;
     for (const auto& [key, elem] : val.left) {
       nextElem(out, config, index++);
-      FormattedConsumerImpl<KeyEncode, Key>().consume(key, out, config);
+      FormattedConsumerImpl<KeyDataType, Key>().consume(key, out, config);
       out.write(": ");
-      FormattedConsumerImpl<ElemEncode, Elem>().consume(elem, out, config);
+      FormattedConsumerImpl<ElemDataType, Elem>().consume(elem, out, config);
     }
     endContainer(out, config, val.size(), '}');
   }
 };
 
 template<typename T>
-struct FormattedConsumerImpl<ValueType::MemberRefProvider, T> {
+struct FormattedConsumerImpl<DataType::MemberRefProvider, T> {
   void
   consume(const T& val, nio::Sink& out, CONFIG__) {
     constexpr auto& refs = rocket::reflect::MemberRefProvider<T>::refs;
     using Elem = PurgeType<decltype(refs)>;
-    constexpr auto ElemEncode = ValueTypes<Elem>::Encode;
-    static_assert(ElemEncode == ValueType::Tuple);
+    constexpr auto ElemDataType = DataTypes<Elem>::Value;
+    static_assert(ElemDataType == DataType::Tuple);
 
     // Here we have to pass an additional argument, the instance, to the tuple consumer. The tuple consumer
     // will pass it on to the member-reference consumer
-    FormattedConsumerImpl<ElemEncode, Elem>().consume(refs, out, config, val);
+    FormattedConsumerImpl<ElemDataType, Elem>().consume(refs, out, config, val);
   }
 };
 
 template<typename T>
-struct FormattedConsumerImpl<ValueType::MemberRef, T> {
+struct FormattedConsumerImpl<DataType::MemberRef, T> {
   template<typename C>
   void
   consume(const T& val, nio::Sink& out, CONFIG__, const C& instance) {
     using Elem = T::ValueType;
-    constexpr auto ElemEncode = ValueTypes<Elem>::Encode;
+    constexpr auto ElemDataType = DataTypes<Elem>::Value;
 
     out.write(val.name());
     out.write('=');
-    FormattedConsumerImpl<ElemEncode, Elem>().consume(val.get(instance), out, config);
+    FormattedConsumerImpl<ElemDataType, Elem>().consume(val.get(instance), out, config);
   }
 };
 
 template<typename T>
-struct FormattedConsumerImpl<ValueType::VarRef, T> {
+struct FormattedConsumerImpl<DataType::VarRef, T> {
   void
   consume(const T& val, nio::Sink& out, CONFIG__) {
     using Elem = T::ValueType;
-    constexpr auto ElemEncode = ValueTypes<Elem>::Encode;
+    constexpr auto ElemDataType = DataTypes<Elem>::Value;
 
     out.write(val.name());
     out.write('=');
-    FormattedConsumerImpl<ElemEncode, Elem>().consume(val.get(), out, config);
+    FormattedConsumerImpl<ElemDataType, Elem>().consume(val.get(), out, config);
   }
 };
 
@@ -319,11 +322,11 @@ struct FormattedConsumerImpl<ValueType::VarRef, T> {
 #define CONFIG__ [[maybe_unused]] const FormattedProducerConfig& config
 /// @endcond
 
-template<ValueType ValueType, typename T>
+template<DataType DataType, typename T>
 struct FormattedProducerImpl;
 
 template<>
-struct FormattedProducerImpl<ValueType::Bool, bool> {
+struct FormattedProducerImpl<DataType::Bool, bool> {
   void
   produce(bool& val, nio::StringSource& in, CONFIG__) {
     skip(in, config);
@@ -342,7 +345,7 @@ struct FormattedProducerImpl<ValueType::Bool, bool> {
 };
 
 template<typename C>
-struct FormattedProducerImpl<ValueType::Char, C> {
+struct FormattedProducerImpl<DataType::Char, C> {
   void
   produce(C& val, nio::StringSource& in, CONFIG__) {
     skip(in, config);
@@ -370,33 +373,34 @@ struct FormattedProducerImpl<ValueType::Char, C> {
 };
 
 template<typename E>
-struct FormattedProducerImpl<ValueType::Enum, E> {
+struct FormattedProducerImpl<DataType::Enum, E> {
   void
   produce(E& val, nio::StringSource& in, CONFIG__) {
     skip(in, config);
     const auto pos = in.tell();
 
-    if constexpr (rocket::Enum<E>::value) { // @todo Use `scan::is_scannable`
-      try {
-        auto available = in.available();
-        const auto [size, enumVal] = rocket::Enum<E>::toType(available, false);
-        in.seek(size, nio::SeekMode::cur);
-        val = enumVal;
-      } catch (const std::exception&) {
+    if constexpr (scn::detail::is_scannable<E, char>::value) {
+      const auto available = in.available();
+      auto result = scn::scan<E>(available, "{}");
+      if (result) {
+        in.seek(result->begin() - available.begin(), nio::SeekMode::cur);
+        val = result->value();
+        return;
+      } else {
         throw InputFailure(pos, fmt::format("Invalid value for enumeration `{}`", typeid(E)));
       }
     } else {
       using Underlying = decltype(std::to_underlying(val));
-      constexpr auto UnderlyingDecode = ValueTypes<Underlying>::Decode;
+      constexpr auto UnderlyingDataType = DataTypes<Underlying>::Value;
       Underlying underlying;
-      FormattedProducerImpl<UnderlyingDecode, Underlying>().produce(underlying, in, config);
+      FormattedProducerImpl<UnderlyingDataType, Underlying>().produce(underlying, in, config);
       val = static_cast<E>(underlying);
     }
   }
 };
 
 template<typename I>
-struct FormattedProducerImpl<ValueType::Integer, I> {
+struct FormattedProducerImpl<DataType::Integer, I> {
   void
   produce(I& val, nio::StringSource& in, CONFIG__) {
     skip(in, config);
@@ -416,7 +420,7 @@ struct FormattedProducerImpl<ValueType::Integer, I> {
 };
 
 template<typename F>
-struct FormattedProducerImpl<ValueType::Float, F> {
+struct FormattedProducerImpl<DataType::Float, F> {
   void
   produce(F& val, nio::StringSource& in, CONFIG__) {
     skip(in, config);
@@ -435,7 +439,31 @@ struct FormattedProducerImpl<ValueType::Float, F> {
 };
 
 template<typename T>
-struct FormattedProducerImpl<ValueType::String, T> {
+struct FormattedProducerImpl<DataType::Pointer, T> {
+  void
+  produce(T& val, nio::StringSource& in, CONFIG__) {
+    skip(in, config);
+    const auto pos = in.tell();
+
+    if (read(in, { "<null>" })) {
+      val = nullptr;
+      return;
+    }
+
+    auto available = in.available();
+    auto result = scn::scan<T>(available, "{}");
+    if (result) {
+      in.seek(result->begin() - available.begin(), nio::SeekMode::cur);
+      val = result->value();
+      return;
+    }
+
+    throw InputFailure(pos, "Expected a pointer value");
+  }
+};
+
+template<typename T>
+struct FormattedProducerImpl<DataType::String, T> {
   void
   produce(T& val, nio::StringSource& in, CONFIG__) {
     skip(in, config);
@@ -456,12 +484,21 @@ struct FormattedProducerImpl<ValueType::String, T> {
     std::string unescaped = str::escape::unescapeCString(input);
     using C = T::value_type;
     std::basic_string<C> str(unicode::ConvertTo<C>::apply(unescaped));
-    val = std::move(str);
+    if constexpr (std::is_same_v<T, std::basic_string_view<C>>) {
+      // Because both unescaping and Unicode-converting produce intermediate strings local to this function,
+      // decoding to #std::basic_string_view is a bit more involved. To make this possible, we store the
+      // intermediate string in the source so the decoded string view is valid for the lifetime of the source
+      const auto& ref = in.store(std::move(str));
+      val = ref;
+    } else {
+      // #std::basic_string
+      val = std::move(str);
+    }
   }
 };
 
 template<typename T>
-struct FormattedProducerImpl<ValueType::Optional, T> {
+struct FormattedProducerImpl<DataType::Optional, T> {
   void
   produce(T& val, nio::StringSource& in, CONFIG__) {
     skip(in, config);
@@ -472,15 +509,15 @@ struct FormattedProducerImpl<ValueType::Optional, T> {
     }
 
     using Elem = T::value_type;
-    constexpr auto ElemDecode = ValueTypes<Elem>::Decode;
+    constexpr auto ElemDataType = DataTypes<Elem>::Value;
     val = Elem();
-    FormattedProducerImpl<ElemDecode, Elem>().produce(*val, in, config);
+    FormattedProducerImpl<ElemDataType, Elem>().produce(*val, in, config);
   }
 };
 
 // For #MemberRef, the tuple producer must be able to pass additional arguments to the element producer
 template<typename T>
-struct FormattedProducerImpl<ValueType::Tuple, T> {
+struct FormattedProducerImpl<DataType::Tuple, T> {
   template<typename... Args>
   void
   produce(T& val, nio::StringSource& in, CONFIG__, Args&&... args) {
@@ -515,15 +552,17 @@ private:
       expectComma(in);
       skip(in, config);
     }
-    constexpr auto ElemDecode = ValueTypes<Elem>::Decode;
-    FormattedProducerImpl<ElemDecode, Elem>().produce(elem, in, config, std::forward<Args>(args)...);
+    constexpr auto ElemDataType = DataTypes<Elem>::Value;
+    FormattedProducerImpl<ElemDataType, Elem>().produce(elem, in, config, std::forward<Args>(args)...);
   }
 };
 
 template<typename T>
-struct FormattedProducerImpl<ValueType::Array, T> {
+struct FormattedProducerImpl<DataType::Array, T> {
   void
   produce(T& val, nio::StringSource& in, CONFIG__) {
+    static_assert(not IsView<T>, "Cannot decode array view");
+
     skip(in, config);
     const auto pos = in.tell();
 
@@ -545,7 +584,7 @@ private:
   void
   produceArray(T& val, nio::StringSource& in, CONFIG__, u64 pos)  {
     using Elem = T::value_type;
-    constexpr auto ElemDecode = ValueTypes<Elem>::Decode;
+    constexpr auto ElemDataType = DataTypes<Elem>::Value;
 
     const auto size = val.size();
     for (u64 index = 0; index < size; ++index) {
@@ -554,7 +593,7 @@ private:
         expectComma(in);
         skip(in, config);
       }
-      FormattedProducerImpl<ElemDecode, Elem>().produce(val[index], in, config);
+      FormattedProducerImpl<ElemDataType, Elem>().produce(val[index], in, config);
     }
 
     skip(in, config);
@@ -569,7 +608,7 @@ private:
   void
   produceVector(T& val, nio::StringSource& in, CONFIG__)  {
     using Elem = T::value_type;
-    constexpr auto ElemDecode = ValueTypes<Elem>::Decode;
+    constexpr auto ElemDataType = DataTypes<Elem>::Value;
 
     u64 index = 0;
     while (true) {
@@ -585,17 +624,17 @@ private:
         }
       }
       val.push_back(Elem());
-      FormattedProducerImpl<ElemDecode, Elem>().produce(val.back(), in, config);
+      FormattedProducerImpl<ElemDataType, Elem>().produce(val.back(), in, config);
     }
   }
 };
 
 template<typename T>
-struct FormattedProducerImpl<ValueType::Set, T> {
+struct FormattedProducerImpl<DataType::Set, T> {
   void
   produce(T& val, nio::StringSource& in, CONFIG__) {
     using Elem = T::value_type;
-    constexpr auto ElemDecode = ValueTypes<Elem>::Decode;
+    constexpr auto ElemDataType = DataTypes<Elem>::Value;
 
     skip(in, config);
     const auto pos = in.tell();
@@ -618,20 +657,20 @@ struct FormattedProducerImpl<ValueType::Set, T> {
         }
       }
       Elem elem;
-      FormattedProducerImpl<ElemDecode, Elem>().produce(elem, in, config);
+      FormattedProducerImpl<ElemDataType, Elem>().produce(elem, in, config);
       val.insert(std::move(elem));
     }
   }
 };
 
 template<typename T>
-struct FormattedProducerImpl<ValueType::Map, T> {
+struct FormattedProducerImpl<DataType::Map, T> {
   void
   produce(T& val, nio::StringSource& in, CONFIG__) {
     using Key = T::key_type;
-    constexpr auto KeyDecode = ValueTypes<Key>::Decode;
+    constexpr auto KeyDataType = DataTypes<Key>::Value;
     using Elem = T::mapped_type;
-    constexpr auto ElemDecode = ValueTypes<Elem>::Decode;
+    constexpr auto ElemDataType = DataTypes<Elem>::Value;
 
     skip(in, config);
     const auto pos = in.tell();
@@ -655,27 +694,27 @@ struct FormattedProducerImpl<ValueType::Map, T> {
       }
 
       Key key;
-      FormattedProducerImpl<KeyDecode, Key>().produce(key, in, config);
+      FormattedProducerImpl<KeyDataType, Key>().produce(key, in, config);
       skip(in, config);
 
       expectColon(in);
       skip(in, config);
 
       Elem elem;
-      FormattedProducerImpl<ElemDecode, Elem>().produce(elem, in, config);
+      FormattedProducerImpl<ElemDataType, Elem>().produce(elem, in, config);
       val.emplace(std::move(key), std::move(elem));
     }
   }
 };
 
 template<typename T>
-struct FormattedProducerImpl<ValueType::Bimap, T> {
+struct FormattedProducerImpl<DataType::Bimap, T> {
   void
   produce(T& val, nio::StringSource& in, CONFIG__) {
     using Key = PurgeType<typename T::left_value_type::first_type>;
-    constexpr auto KeyDecode = ValueTypes<Key>::Decode;
+    constexpr auto KeyDataType = DataTypes<Key>::Value;
     using Elem = PurgeType<typename T::left_value_type::second_type>;
-    constexpr auto ElemDecode = ValueTypes<Elem>::Decode;
+    constexpr auto ElemDataType = DataTypes<Elem>::Value;
 
     skip(in, config);
     const auto pos = in.tell();
@@ -699,36 +738,36 @@ struct FormattedProducerImpl<ValueType::Bimap, T> {
       }
 
       Key key;
-      FormattedProducerImpl<KeyDecode, Key>().produce(key, in, config);
+      FormattedProducerImpl<KeyDataType, Key>().produce(key, in, config);
       skip(in, config);
 
       expectColon(in);
       skip(in, config);
 
       Elem elem;
-      FormattedProducerImpl<ElemDecode, Elem>().produce(elem, in, config);
+      FormattedProducerImpl<ElemDataType, Elem>().produce(elem, in, config);
       val.left.insert({ std::move(key), std::move(elem) });
     }
   }
 };
 
 template<typename T>
-struct FormattedProducerImpl<ValueType::MemberRefProvider, T> {
+struct FormattedProducerImpl<DataType::MemberRefProvider, T> {
   void
   produce(T& val, nio::StringSource& in, CONFIG__) {
     const auto& refs = rocket::reflect::MemberRefProvider<T>::refs;
     using Elem = PurgeType<decltype(refs)>;
-    constexpr auto ElemDecode = ValueTypes<Elem>::Decode;
-    static_assert(ElemDecode == ValueType::Tuple);
+    constexpr auto ElemDataType = DataTypes<Elem>::Value;
+    static_assert(ElemDataType == DataType::Tuple);
 
     // Here we have to pass an additional argument, the instance, to the tuple producer. The tuple producer
     // will pass it on to the member-reference producer
-    FormattedProducerImpl<ElemDecode, Elem>().produce(const_cast<Elem&>(refs), in, config, val);
+    FormattedProducerImpl<ElemDataType, Elem>().produce(const_cast<Elem&>(refs), in, config, val);
   }
 };
 
 template<typename T>
-struct FormattedProducerImpl<ValueType::MemberRef, T> {
+struct FormattedProducerImpl<DataType::MemberRef, T> {
   template<typename C>
   void
   produce(T& val, nio::StringSource& in, CONFIG__, C& instance) {
@@ -751,13 +790,13 @@ struct FormattedProducerImpl<ValueType::MemberRef, T> {
     skip(in, config);
 
     using Elem = T::ValueType;
-    constexpr auto ElemDecode = ValueTypes<Elem>::Decode;
-    FormattedProducerImpl<ElemDecode, Elem>().produce(val.get(instance), in, config);
+    constexpr auto ElemDataType = DataTypes<Elem>::Value;
+    FormattedProducerImpl<ElemDataType, Elem>().produce(val.get(instance), in, config);
   }
 };
 
 template<typename T>
-struct FormattedProducerImpl<ValueType::VarRef, T> {
+struct FormattedProducerImpl<DataType::VarRef, T> {
   void
   produce(T& val, nio::StringSource& in, CONFIG__) {
     skip(in, config);
@@ -774,8 +813,8 @@ struct FormattedProducerImpl<ValueType::VarRef, T> {
     skip(in, config);
 
     using Elem = T::ValueType;
-    constexpr auto ElemDecode = ValueTypes<Elem>::Decode;
-    FormattedProducerImpl<ElemDecode, Elem>().produce(val.get(), in, config);
+    constexpr auto ElemDataType = DataTypes<Elem>::Value;
+    FormattedProducerImpl<ElemDataType, Elem>().produce(val.get(), in, config);
   }
 };
 
@@ -788,8 +827,8 @@ struct FormattedProducerImpl<ValueType::VarRef, T> {
 /// The consumer for #rocket::codec::FormattedCodec.
 struct FormattedConsumer {
   /// @type_alias
-  template<ValueType ValueType, typename T>
-  using Type = internal::FormattedConsumerImpl<ValueType, T>;
+  template<DataType DataType, typename T>
+  using Type = internal::FormattedConsumerImpl<DataType, T>;
 };
 
 // #FormattedProducer ---------------------------------------------------------------------------------------
@@ -797,13 +836,19 @@ struct FormattedConsumer {
 /// The producer for #rocket::codec::FormattedCodec.
 struct FormattedProducer {
   /// @type_alias
-  template<ValueType ValueType, typename T>
-  using Type = internal::FormattedProducerImpl<ValueType, T>;
+  template<DataType DataType, typename T>
+  using Type = internal::FormattedProducerImpl<DataType, T>;
 };
 
 // #FormattedCodec ------------------------------------------------------------------------------------------
 
-/// The codec for formatted string I/O.
+/**
+ * The codec for formatted string I/O.
+ *
+ * Decoding to array views is not supported. String views, however, are allowed. This is made possible by
+ * storing intermediate strings in the source. Hence, decoded string views are valid for the lifetime of the
+ * source.
+ */
 struct FormattedCodec : Codec<FormattedConsumer, FormattedProducer> {
   using Base = Codec<FormattedConsumer, FormattedProducer>; ///< @type_base
 

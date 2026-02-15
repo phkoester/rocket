@@ -21,8 +21,8 @@ template<bool Unordered>
 void
 combine(u64& seed, u64 hash) {
   if constexpr (Unordered) {
-    // For unordered containers, use a permutative hashing scheme so that the element order does not
-    // affect the hash value
+    // For unordered containers, use a permutative hashing scheme so that the element order does not affect
+    // the hash value
     seed += hash;
   } else {
     // Otherwise, do it like the Boost guys do it
@@ -32,46 +32,46 @@ combine(u64& seed, u64 hash) {
 
 // #HashConsumerImpl ----------------------------------------------------------------------------------------
 
-template<ValueType ValueType, typename T, typename Hash>
+template<DataType DataType, typename T, typename Hash>
 struct HashConsumerImpl;
 
 template<typename Hash>
-struct HashConsumerImpl<ValueType::Bool, bool, Hash> {
+struct HashConsumerImpl<DataType::Bool, bool, Hash> {
   u64 consume(bool val) { return Hash()(val); }
 };
 
 template<typename C, typename Hash>
-struct HashConsumerImpl<ValueType::Char, C, Hash> {
+struct HashConsumerImpl<DataType::Char, C, Hash> {
   u64 consume(C val) { return Hash()(val); }
 };
 
 template<typename E, typename Hash>
-struct HashConsumerImpl<ValueType::Enum, E, Hash> {
+struct HashConsumerImpl<DataType::Enum, E, Hash> {
   u64 consume(E val) { return Hash()(val); }
 };
 
 template<typename I, typename Hash>
-struct HashConsumerImpl<ValueType::Integer, I, Hash> {
+struct HashConsumerImpl<DataType::Integer, I, Hash> {
   u64 consume(I val) { return Hash()(val); }
 };
 
 template<typename F, typename Hash>
-struct HashConsumerImpl<ValueType::Float, F, Hash> {
+struct HashConsumerImpl<DataType::Float, F, Hash> {
   u64 consume(F val) { return Hash()(val); }
 };
 
 template<typename T, typename Hash>
-struct HashConsumerImpl<ValueType::Pointer, T, Hash> {
+struct HashConsumerImpl<DataType::Pointer, T, Hash> {
   u64 consume(T val) { return Hash()(val); }
 };
 
 template<typename T, typename Hash>
-struct HashConsumerImpl<ValueType::String, T, Hash> {
+struct HashConsumerImpl<DataType::String, T, Hash> {
   u64 consume(const T& val) { return Hash()(val); }
 };
 
 template<typename T, typename Hash>
-struct HashConsumerImpl<ValueType::Optional, T, Hash> {
+struct HashConsumerImpl<DataType::Optional, T, Hash> {
   u64
   consume(const T& val) {
     if (not val) {
@@ -79,10 +79,10 @@ struct HashConsumerImpl<ValueType::Optional, T, Hash> {
     }
 
     using Elem = T::value_type;
-    constexpr auto ElemEncode = ValueTypes<Elem>::Encode;
+    constexpr auto ElemDataType = DataTypes<Elem>::Value;
 
     u64 ret = 1;
-    const u64 elemHash = HashConsumerImpl<ElemEncode, Elem, Hash>().consume(*val);
+    const u64 elemHash = HashConsumerImpl<ElemDataType, Elem, Hash>().consume(*val);
     combine<false>(ret, elemHash);
     return ret;
   }
@@ -90,7 +90,7 @@ struct HashConsumerImpl<ValueType::Optional, T, Hash> {
 
 // For #MemberRef, the tuple consumer must be able to pass additional arguments to the element consumer
 template<typename T, typename Hash>
-struct HashConsumerImpl<ValueType::Tuple, T, Hash> {
+struct HashConsumerImpl<DataType::Tuple, T, Hash> {
   template<typename... Args>
   u64
   consume(const T& val, Args&&... args) {
@@ -106,21 +106,21 @@ private:
   template<typename Elem, typename... Args>
   void
   consumeElem(u64& seed, const Elem& elem, Args&&... args) {
-    constexpr auto ElemEncode = ValueTypes<Elem>::Encode;
-    auto elemHash = HashConsumerImpl<ElemEncode, Elem, Hash>().consume(elem, std::forward<Args>(args)...);
+    constexpr auto ElemDataType = DataTypes<Elem>::Value;
+    auto elemHash = HashConsumerImpl<ElemDataType, Elem, Hash>().consume(elem, std::forward<Args>(args)...);
     combine<false>(seed, elemHash);
   }
 };
 
 template<typename T, typename Hash>
-struct HashConsumerImpl<ValueType::Array, T, Hash> {
+struct HashConsumerImpl<DataType::Array, T, Hash> {
   u64 consume(const T& val) {
     using Elem = T::value_type;
-    constexpr auto ElemEncode = ValueTypes<Elem>::Encode;
+    constexpr auto ElemDataType = DataTypes<Elem>::Value;
 
     u64 ret = val.size();
     for (const auto& elem : val) {
-      auto elemHash = HashConsumerImpl<ElemEncode, Elem, Hash>().consume(elem);
+      auto elemHash = HashConsumerImpl<ElemDataType, Elem, Hash>().consume(elem);
       combine<false>(ret, elemHash);
     }
     return ret;
@@ -128,17 +128,17 @@ struct HashConsumerImpl<ValueType::Array, T, Hash> {
 };
 
 template<typename T, typename Hash>
-struct HashConsumerImpl<ValueType::Set, T, Hash> {
+struct HashConsumerImpl<DataType::Set, T, Hash> {
   u64
   consume(const T& val) {
     using Elem = T::value_type;
-    constexpr auto ElemEncode = ValueTypes<Elem>::Encode;
+    constexpr auto ElemDataType = DataTypes<Elem>::Value;
 
     constexpr auto Unordered = IsHashed<T>;
 
     u64 ret = val.size();
     for (const auto& elem : val) {
-      auto elemHash = HashConsumerImpl<ElemEncode, Elem, Hash>().consume(elem);
+      auto elemHash = HashConsumerImpl<ElemDataType, Elem, Hash>().consume(elem);
       combine<Unordered>(ret, elemHash);
     }
     return ret;
@@ -146,21 +146,21 @@ struct HashConsumerImpl<ValueType::Set, T, Hash> {
 };
 
 template<typename T, typename Hash>
-struct HashConsumerImpl<ValueType::Map, T, Hash> {
+struct HashConsumerImpl<DataType::Map, T, Hash> {
   u64
   consume(const T& val) {
     using Key = T::key_type;
-    constexpr auto KeyEncode = ValueTypes<Key>::Encode;
+    constexpr auto KeyDataType = DataTypes<Key>::Value;
     using Elem = T::mapped_type;
-    constexpr auto ElemEncode = ValueTypes<Elem>::Encode;
+    constexpr auto ElemDataType = DataTypes<Elem>::Value;
 
     constexpr auto Unordered = IsHashed<T>;
 
     u64 ret = val.size();
     for (const auto& [key, elem] : val) {
-      const auto keyHash = HashConsumerImpl<KeyEncode, Key, Hash>().consume(key);
+      const auto keyHash = HashConsumerImpl<KeyDataType, Key, Hash>().consume(key);
       combine<Unordered>(ret, keyHash);
-      const auto elemHash = HashConsumerImpl<ElemEncode, Elem, Hash>().consume(elem);
+      const auto elemHash = HashConsumerImpl<ElemDataType, Elem, Hash>().consume(elem);
       combine<Unordered>(ret, elemHash);
     }
     return ret;
@@ -168,21 +168,21 @@ struct HashConsumerImpl<ValueType::Map, T, Hash> {
 };
 
 template<typename T, typename Hash>
-struct HashConsumerImpl<ValueType::Bimap, T, Hash> {
+struct HashConsumerImpl<DataType::Bimap, T, Hash> {
   u64
   consume(const T& val) {
     using Key = PurgeType<typename T::left_value_type::first_type>;
-    constexpr auto KeyEncode = ValueTypes<Key>::Encode;
+    constexpr auto KeyDataType = DataTypes<Key>::Value;
     using Elem = PurgeType<typename T::left_value_type::second_type>;
-    constexpr auto ElemEncode = ValueTypes<Elem>::Encode;
+    constexpr auto ElemDataType = DataTypes<Elem>::Value;
 
     constexpr auto Unordered = IsHashed<T>;
 
     u64 ret = val.size();
     for (const auto& [key, elem] : val.left) {
-      const auto keyHash = HashConsumerImpl<KeyEncode, Key, Hash>().consume(key);
+      const auto keyHash = HashConsumerImpl<KeyDataType, Key, Hash>().consume(key);
       combine<Unordered>(ret, keyHash);
-      const auto elemHash = HashConsumerImpl<ElemEncode, Elem, Hash>().consume(elem);
+      const auto elemHash = HashConsumerImpl<ElemDataType, Elem, Hash>().consume(elem);
       combine<Unordered>(ret, elemHash);
     }
     return ret;
@@ -190,42 +190,42 @@ struct HashConsumerImpl<ValueType::Bimap, T, Hash> {
 };
 
 template<typename T, typename Hash>
-struct HashConsumerImpl<ValueType::MemberRefProvider, T, Hash> {
+struct HashConsumerImpl<DataType::MemberRefProvider, T, Hash> {
   u64
   consume(const T& val) {
     constexpr auto& refs = rocket::reflect::MemberRefProvider<T>::refs;
     using Elem = PurgeType<decltype(refs)>;
-    constexpr auto ElemEncode = ValueTypes<Elem>::Encode;
-    static_assert(ElemEncode == ValueType::Tuple);
+    constexpr auto ElemDataType = DataTypes<Elem>::Value;
+    static_assert(ElemDataType == DataType::Tuple);
 
     // Here we have to pass an additional argument, the instance, to the tuple consumer. The tuple consumer
     // will pass it on to the member-reference consumer
-    return HashConsumerImpl<ElemEncode, Elem, Hash>().consume(refs, val);
+    return HashConsumerImpl<ElemDataType, Elem, Hash>().consume(refs, val);
   }
 };
 
 template<typename T, typename Hash>
-struct HashConsumerImpl<ValueType::MemberRef, T, Hash> {
+struct HashConsumerImpl<DataType::MemberRef, T, Hash> {
   template<typename C>
   u64
   consume(const T& val, const C& instance) {
     using Elem = T::ValueType;
-    constexpr auto ElemEncode = ValueTypes<Elem>::Encode;
+    constexpr auto ElemDataType = DataTypes<Elem>::Value;
 
     // We don't include the name in the hash, because it's not part of the value
-    return HashConsumerImpl<ElemEncode, Elem, Hash>().consume(val.get(instance));
+    return HashConsumerImpl<ElemDataType, Elem, Hash>().consume(val.get(instance));
   }
 };
 
 template<typename T, typename Hash>
-struct HashConsumerImpl<ValueType::VarRef, T, Hash> {
+struct HashConsumerImpl<DataType::VarRef, T, Hash> {
   u64
   consume(const T& val) {
     using Elem = T::ValueType;
-    constexpr auto ElemEncode = ValueTypes<Elem>::Encode;
+    constexpr auto ElemDataType = DataTypes<Elem>::Value;
 
     // We don't include the name in the hash, because it's not part of the value
-    return HashConsumerImpl<ElemEncode, Elem, Hash>().consume(val.get());
+    return HashConsumerImpl<ElemDataType, Elem, Hash>().consume(val.get());
   }
 };
 
@@ -241,8 +241,8 @@ struct HashConsumerImpl<ValueType::VarRef, T, Hash> {
 template<typename Hash>
 struct HashConsumer {
   /// @type_alias
-  template<ValueType ValueType, typename T>
-  using Type = internal::HashConsumerImpl<ValueType, T, Hash>;
+  template<DataType DataType, typename T>
+  using Type = internal::HashConsumerImpl<DataType, T, Hash>;
 };
 
 // #HashEncoder ---------------------------------------------------------------------------------------------
@@ -250,7 +250,8 @@ struct HashConsumer {
 /**
  * The hash encoder.
  *
- * @tparam Hash the hasher to use
+ * @tparam Hash the hasher to use. The hasher must be able to provide hash values for all primitive data
+ *   types, including 128-bit data types, and strings
  */
 template<typename Hash = hash::BoostHash>
 using HashEncoder = Encoder<HashConsumer<Hash>>;

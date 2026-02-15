@@ -150,6 +150,14 @@ TEST(FormattedCodec, FormattedConsumerArray) {
   FormattedCodec codec;
 
   {
+    vector<i32> vec = { 1, 2, 3 };
+    span<i32> val = vec;
+    nio::StringSink out;
+    codec.encode(val, out);
+    EXPECT_EQ(out.str(), "[1, 2, 3]");
+  }
+
+  {
     vector<vector<i32>> val = { { 1, 2, 3 }, { 4, 5, 6 } };
     nio::StringSink out;
     codec.encode(val, out);
@@ -319,6 +327,22 @@ TEST(FormattedCodec, FormattedProducerFloat) {
   }
 }
 
+TEST(FormattedCodec, FormattedProducerPointer) {
+  FormattedCodec codec;
+
+  {
+    nio::StringSource in("  <null>  ");
+    EXPECT_EQ(codec.decode<void*>(in), nullptr);
+    EXPECT_EQ(in.tell(), 8);
+  }
+
+  {
+    nio::StringSource in("  0x12345678  ");
+    EXPECT_EQ(codec.decode<void*>(in), reinterpret_cast<void*>(0x12345678));
+    EXPECT_EQ(in.tell(), 12);
+  }
+}
+
 TEST(FormattedCodec, FormattedProducerOptionalString) {
   FormattedCodec codec;
 
@@ -329,7 +353,7 @@ TEST(FormattedCodec, FormattedProducerOptionalString) {
 
   {
     nio::StringSource in("\"Hello\"");
-    EXPECT_EQ(codec.decode<optional<string>>(in), "Hello");
+    EXPECT_EQ(codec.decode<optional<basic_string_view<char32>>>(in), U"Hello"sv);
   }
 }
 

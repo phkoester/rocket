@@ -61,6 +61,7 @@ target_sources(rocket
     rocket/rocket.cc
     rocket/chrono/chrono.cc
     rocket/cl/cl.cc
+    rocket/codec/codec.cc
     rocket/codec/FormattedCodec.cc
     rocket/external/scnlib/impl.cc
     rocket/filesystem/filesystem.cc
@@ -98,6 +99,9 @@ target_sources(rocket
       rocket/type-traits.h
       rocket/chrono/chrono.h
       rocket/cl/cl.h
+      rocket/codec/codec.h
+      rocket/codec/FormattedCodec.h
+      rocket/codec/HashEncoder.h
       rocket/filesystem/filesystem.h
       rocket/format/Subformat.h
       rocket/hash/hash.h

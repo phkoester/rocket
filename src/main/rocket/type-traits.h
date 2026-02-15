@@ -10,6 +10,8 @@
 
 #include <array>
 #include <optional>
+#include <span>
+#include <string_view>
 #include <type_traits>
 #include <vector>
 
@@ -230,6 +232,20 @@ struct Vector<std::vector<T>> : std::true_type {};
 
 template<typename T>
 concept IsVector = Vector<T>::value;
+
+// #IsView --------------------------------------------------------------------------------------------------
+
+template<typename T>
+struct View : std::false_type {};
+
+template<typename T>
+struct View<std::span<T>> : std::true_type {};
+
+template<typename C>
+struct View<std::basic_string_view<C>> : std::true_type {};
+
+template<typename T>
+concept IsView = View<T>::value;
 
 // #LargestType ---------------------------------------------------------------------------------------------
 

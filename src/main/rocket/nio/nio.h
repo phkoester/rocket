@@ -17,6 +17,7 @@
 #include <memory>
 #include <span>
 #include <string>
+#include <unordered_set>
 #include <vector>
 
 namespace rocket::nio {
@@ -813,12 +814,39 @@ struct StringSource : Source {
 
   bool seek(i64 offset, SeekMode mode = SeekMode::beg) override; // NOLINT
 
+  /**
+   * Stores a value in the source.
+   *
+   * @param val the value to store
+   * @return a reference to the stored value, which remains valid for the lifetime of the source
+   */
+  const std::string&
+  store(std::string&& val) {
+    return *storeString_.insert(std::move(val)).first;
+  }
+
+  /**
+   * Stores a value in the source.
+   *
+   * @param val the value to store
+   * @return a reference to the stored value, which remains valid for the lifetime of the source
+   */
+  const std::u32string&
+  store(std::u32string&& val) {
+    return *storeU32String_.insert(std::move(val)).first;
+  }
+
   u64 tell() override { return bad() ? NPOS : static_cast<u64>(pos_); }
 
 private:
 
   std::string_view in_;
   boost::safe_numerics::safe<u64> pos_ = 0;
+
+  /// We need pointer stability, which #std::unordered_set guarantees.
+  std::unordered_set<std::string> storeString_;
+  /// We need pointer stability, which #std::unordered_set guarantees.
+  std::unordered_set<std::u32string> storeU32String_;
 };
 
 // Variables ------------------------------------------------------------------------------------------------

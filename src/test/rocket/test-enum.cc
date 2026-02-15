@@ -15,33 +15,6 @@ enum MyEnum : u8 { fröb, fröber, fröberer, pörk, pörker, pörkerer };
 ROCKET_ENUM_DECLARE(, MyEnum, MyEnum);
 ROCKET_ENUM_DEFINE(, MyEnum, MyEnum, (fröb)(fröber)(fröberer)(pörk)(pörker)(pörkerer));
 
-template<>
-struct scn::scanner<MyEnum, char> : scn::scanner<string_view, char> {
-  using Base = scn::scanner<string_view, char>;
-
-  template<typename Context>
-  scan_expected<typename Context::iterator>
-  scan(MyEnum& val, Context& ctx) const {
-    string_view str;
-    auto result = Base::scan(str, ctx);
-    if (result) {
-      try {
-        const auto [size, enumVal] = Enum<MyEnum>::toType(str, false);
-        /* If the consumed string is longer than the scanned portion, we need to correct the iterator */
-        const i64 correction = size - str.size(); /* Zero or negative */
-        val = enumVal;
-        auto it = result.value();
-        std::advance(it, correction);
-        return it;
-      } catch (const exception&) {
-        return unexpected(scan_error(scan_error::invalid_scanned_value, "Invalid enum value"));
-      }
-    } else {
-      return unexpected(result.error());
-    }
-  }
-};
-
 // #MyEnumClass ---------------------------------------------------------------------------------------------
 
 enum class MyEnumClass : u8 { hürx, hürxer, hürxerer };
