@@ -87,7 +87,7 @@
         auto str = ::rocket::Enum<ns::type>::toString(val); \
         return underlying_.format(::rocket::unicode::ConvertTo<C>::apply(str), ctx); \
       } catch (const std::exception&) { \
-        return detail::write<C>(ctx.out(), INVALID); \
+        return underlying_.format(INVALID, ctx); \
       } \
     } \
     \

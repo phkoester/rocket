@@ -51,7 +51,7 @@
  * @param ns the namespace of the class, e.g. `mynamespace`. May be left empty if the class is in the global
  *   namespace
  * @param cls the type of the class without namespace, e.g. `MyClass`
- * @param name the name of the member-reference container to use
+ * @param name the name of the member-reference container to use, e.g. `index`
 */
 #define ROCKET_REFLECT_MEMBERS_DECLARE(ns, cls, name) ROCKET_REFLECT_MEMBERS_DECLARE__(ns, cls, name)
 
@@ -63,7 +63,7 @@
  * @param ns the namespace of the class, e.g. `mynamespace`. May be left empty if the class is in the global
  *   namespace
  * @param cls the type of the class without namespace, e.g. `MyClass`
- * @param name the name of the member-reference container to use
+ * @param name the name of the member-reference container to use, e.g. `index`
 */
 #define ROCKET_REFLECT_MEMBERS_DEFINE(ns, cls, name) ROCKET_REFLECT_MEMBERS_DEFINE__(ns, cls, name)
 

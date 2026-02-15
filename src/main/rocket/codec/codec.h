@@ -130,8 +130,8 @@ struct DataTypes<F> {
 };
 
 /// @spec{#rocket::codec::DataTypes, T}
-template<typename T> requires std::is_pointer_v<T>
-struct DataTypes<T> {
+template<typename P> requires std::is_pointer_v<P>
+struct DataTypes<P> {
   static constexpr auto Value = DataType::Pointer; ///< The data type.
 };
 

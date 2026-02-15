@@ -60,9 +60,9 @@ struct HashConsumerImpl<DataType::Float, F, Hash> {
   u64 consume(F val) { return Hash()(val); }
 };
 
-template<typename T, typename Hash>
-struct HashConsumerImpl<DataType::Pointer, T, Hash> {
-  u64 consume(T val) { return Hash()(val); }
+template<typename P, typename Hash>
+struct HashConsumerImpl<DataType::Pointer, P, Hash> {
+  u64 consume(P val) { return Hash()(val); }
 };
 
 template<typename T, typename Hash>

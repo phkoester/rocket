@@ -134,10 +134,10 @@ struct FormattedConsumerImpl<DataType::Float, F> {
   }
 };
 
-template<typename T>
-struct FormattedConsumerImpl<DataType::Pointer, T> {
+template<typename P>
+struct FormattedConsumerImpl<DataType::Pointer, P> {
   void
-  consume(T val, nio::Sink& out, CONFIG__) {
+  consume(P val, nio::Sink& out, CONFIG__) {
     if (val == nullptr) {
       out.write("<null>");
       return;
@@ -438,10 +438,10 @@ struct FormattedProducerImpl<DataType::Float, F> {
   }
 };
 
-template<typename T>
-struct FormattedProducerImpl<DataType::Pointer, T> {
+template<typename P>
+struct FormattedProducerImpl<DataType::Pointer, P> {
   void
-  produce(T& val, nio::StringSource& in, CONFIG__) {
+  produce(P& val, nio::StringSource& in, CONFIG__) {
     skip(in, config);
     const auto pos = in.tell();
 
@@ -451,7 +451,7 @@ struct FormattedProducerImpl<DataType::Pointer, T> {
     }
 
     auto available = in.available();
-    auto result = scn::scan<T>(available, "{}");
+    auto result = scn::scan<P>(available, "{}");
     if (result) {
       in.seek(result->begin() - available.begin(), nio::SeekMode::cur);
       val = result->value();
