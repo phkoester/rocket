@@ -36,7 +36,7 @@ formatElemImpl(const T& val, FormatContext& ctx, bool debug, const Tuple& refs) 
 
   // Get ref at index
   const auto& ref = std::get<Index>(refs);
-  static_assert(IsMemberRef<decltype(ref)>::value);
+  static_assert(IsMemberRef<decltype(ref)>);
 
   // Write name
   out = detail::write<C>(out, rocket::unicode::ConvertTo<C>::apply(ref.name()));
@@ -69,8 +69,7 @@ formatImpl(
   return detail::write<C>(out, static_cast<C>(')'));
 }
 
-template<typename T, typename C, typename FormatContext, typename... Ref> requires
-    (... && IsMemberRef<Ref>::value)
+template<typename T, typename C, typename FormatContext, typename... Ref> requires (... && IsMemberRef<Ref>)
 constexpr FormatContext::iterator
 format(const T& val, FormatContext& ctx, bool debug, const std::tuple<Ref...>& refs) {
   return internal::formatImpl<T, C>(val, ctx, debug, refs, std::make_index_sequence<sizeof...(Ref)>());
@@ -80,7 +79,7 @@ template<u64 Index, typename T, typename Tuple>
 constexpr auto&
 refGet(T& val, const Tuple& refs) noexcept {
   auto& ref = std::get<Index>(refs);
-  static_assert(IsMemberRef<decltype(ref)>::value);
+  static_assert(IsMemberRef<decltype(ref)>);
   return ref.get(val);
 }
 
@@ -145,7 +144,7 @@ writeElemImpl(nio::Sink& out, const T& val, const Tuple& refs) {
 
   // Get ref at index
   const auto& ref = std::get<Index>(refs);
-  static_assert(IsMemberRef<decltype(ref)>::value);
+  static_assert(IsMemberRef<decltype(ref)>);
 
   // Write name
   ret += out.write(ref.name());
@@ -182,7 +181,7 @@ writeImpl(
  * @param refs the references
  * @return whether @p lhs is equal to @p rhs as defined by #std::equal_to
  */
-template<typename T, typename... Ref> requires (... && IsMemberRef<Ref>::value)
+template<typename T, typename... Ref> requires (... && IsMemberRef<Ref>)
 inline bool
 eq(const T& lhs, const T& rhs, const std::tuple<Ref...>& refs) {
   return internal::eqImpl(lhs, rhs, refs, std::make_index_sequence<sizeof...(Ref)>());
@@ -195,7 +194,7 @@ eq(const T& lhs, const T& rhs, const std::tuple<Ref...>& refs) {
  * @param refs the references
  * @return a hash value
  */
-template<typename T, typename... Ref> requires (... && IsMemberRef<Ref>::value)
+template<typename T, typename... Ref> requires (... && IsMemberRef<Ref>)
 inline u64
 hash(const T& val, const std::tuple<Ref...>& refs) {
   u64 ret = std::tuple_size<PurgeType<decltype(refs)>>::value;
@@ -213,7 +212,7 @@ hash(const T& val, const std::tuple<Ref...>& refs) {
  * @param refs the references
  * @return whether @p lhs is not equal to @p rhs as defined by #std::not_equal_to
  */
-template<typename T, typename... Ref> requires (... && IsMemberRef<Ref>::value)
+template<typename T, typename... Ref> requires (... && IsMemberRef<Ref>)
 inline bool
 ne(const T& lhs, const T& rhs, const std::tuple<Ref...>& refs) {
   return internal::neImpl(lhs, rhs, refs, std::make_index_sequence<sizeof...(Ref)>());
@@ -227,7 +226,7 @@ ne(const T& lhs, const T& rhs, const std::tuple<Ref...>& refs) {
  * @param refs the references
  * @return whether @p lhs is less than @p rhs as defined by #std::less
  */
-template<typename T, typename... Ref> requires (... && IsMemberRef<Ref>::value)
+template<typename T, typename... Ref> requires (... && IsMemberRef<Ref>)
 inline bool
 lt(const T& lhs, const T& rhs, const std::tuple<Ref...>& refs) {
   return internal::ltImpl(lhs, rhs, refs, std::make_index_sequence<sizeof...(Ref)>());
@@ -241,7 +240,7 @@ lt(const T& lhs, const T& rhs, const std::tuple<Ref...>& refs) {
  * @param refs the references
  * @return whether @p lhs is greater than @p rhs as defined by #std::greater
  */
-template<typename T, typename... Ref> requires (... && IsMemberRef<Ref>::value)
+template<typename T, typename... Ref> requires (... && IsMemberRef<Ref>)
 inline bool
 gt(const T& lhs, const T& rhs, const std::tuple<Ref...>& refs) {
   return internal::gtImpl(lhs, rhs, refs, std::make_index_sequence<sizeof...(Ref)>());
@@ -255,7 +254,7 @@ gt(const T& lhs, const T& rhs, const std::tuple<Ref...>& refs) {
  * @param refs the references
  * @return the number of bytes written
  */
-template<typename T, typename... Ref> requires (... && IsMemberRef<Ref>::value)
+template<typename T, typename... Ref> requires (... && IsMemberRef<Ref>)
 inline u64
 write(nio::Sink& out, const T& val, const std::tuple<Ref...>& refs) {
   return internal::writeImpl(out, val, refs, std::make_index_sequence<sizeof...(Ref)>());

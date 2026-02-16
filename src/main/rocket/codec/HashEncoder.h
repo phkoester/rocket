@@ -190,10 +190,10 @@ struct HashConsumerImpl<DataType::Bimap, T, Hash> {
 };
 
 template<typename T, typename Hash>
-struct HashConsumerImpl<DataType::MemberRefProvider, T, Hash> {
+struct HashConsumerImpl<DataType::Declared, T, Hash> {
   u64
   consume(const T& val) {
-    constexpr auto& refs = rocket::reflect::MemberRefProvider<T>::refs;
+    constexpr auto& refs = rocket::reflect::Declared<T>::refs;
     using Elem = PurgeType<decltype(refs)>;
     constexpr auto ElemDataType = DataTypes<Elem>::Value;
     static_assert(ElemDataType == DataType::Tuple);
@@ -201,6 +201,21 @@ struct HashConsumerImpl<DataType::MemberRefProvider, T, Hash> {
     // Here we have to pass an additional argument, the instance, to the tuple consumer. The tuple consumer
     // will pass it on to the member-reference consumer
     return HashConsumerImpl<ElemDataType, Elem, Hash>().consume(refs, val);
+  }
+};
+
+template<typename T, typename Hash>
+struct HashConsumerImpl<DataType::Instance, T, Hash> {
+  u64
+  consume(const T& val) {
+    constexpr auto& refs = T::InnerType::refs;
+    using Elem = PurgeType<decltype(refs)>;
+    constexpr auto ElemDataType = DataTypes<Elem>::Value;
+    static_assert(ElemDataType == DataType::Tuple);
+
+    // Here we have to pass an additional argument, the instance, to the tuple consumer. The tuple consumer
+    // will pass it on to the member-reference consumer
+    return HashConsumerImpl<ElemDataType, Elem, Hash>().consume(refs, *val.instance);
   }
 };
 

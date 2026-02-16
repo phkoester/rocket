@@ -12,8 +12,7 @@
 
 #include "rocket/Bimap.h"
 #include "rocket/type-traits.h"
-#include "rocket/reflect/MemberRef.h"
-#include "rocket/reflect/VarRef.h"
+#include "rocket/reflect/reflect.h"
 
 #include <array>
 #include <bit>
@@ -79,8 +78,10 @@ enum class DataType {
 
   // Rocket reflection ......................................................................................
 
-  /// Classes holding member references.
-  MemberRefProvider,
+  // An instance with default member references
+  Declared,
+  // An instance with specified member references
+  Instance,
   /// Member references.
   MemberRef,
   /// Variable references.
@@ -213,10 +214,16 @@ struct DataTypes<boost::bimaps::bimap<A, B>> {
   static constexpr auto Value = DataType::Bimap; ///< The data type.
 };
 
-/// @spec{#rocket::codec::DataTypes, #rocket::reflect::MemberRefProvider}
-template< typename T> requires rocket::reflect::MemberRefProvider<T>::value
+/// @spec{#rocket::codec::DataTypes, #rocket::reflect::Declared}
+template< typename T> requires rocket::reflect::Declared<T>::value
 struct DataTypes<T> {
-  static constexpr auto Value = DataType::MemberRefProvider; ///< The data type.
+  static constexpr auto Value = DataType::Declared; ///< The data type.
+};
+
+/// @spec{#rocket::codec::DataTypes, #rocket::reflect::Instance}
+template<typename T, typename Inner>
+struct DataTypes<rocket::reflect::Instance<T, Inner>> {
+  static constexpr auto Value = DataType::Instance; ///< The data type.
 };
 
 /// @spec{#rocket::codec::DataTypes, #rocket::reflect::MemberRef}

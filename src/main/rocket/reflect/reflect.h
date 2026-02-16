@@ -16,9 +16,8 @@
 #include <boost/preprocessor/seq/enum.hpp>
 #include <boost/preprocessor/seq/for_each.hpp>
 
-#include <fmt/std.h>
-
 #include <tuple>
+#include <type_traits>
 #include <utility>
 
 // Macros ---------------------------------------------------------------------------------------------------
@@ -31,7 +30,7 @@
  * @note This macro must be called inside the class declaration, in a public section.
  *
  * @param cls the name of the class that holds the members (without namespace)
- * @param name the name for this member-reference container. e.g. `index`
+ * @param name the name of the member-reference container, e.g. `Index`
  * @param seq a sequence of member names
  */
 #define ROCKET_REFLECT_MEMBERS(cls, name, seq) ROCKET_REFLECT_MEMBERS__(cls, name, seq)
@@ -51,7 +50,7 @@
  * @param ns the namespace of the class, e.g. `mynamespace`. May be left empty if the class is in the global
  *   namespace
  * @param cls the type of the class without namespace, e.g. `MyClass`
- * @param name the name of the member-reference container to use, e.g. `index`
+ * @param name the name of the member-reference container to use, e.g. `Index`
 */
 #define ROCKET_REFLECT_MEMBERS_DECLARE(ns, cls, name) ROCKET_REFLECT_MEMBERS_DECLARE__(ns, cls, name)
 
@@ -63,7 +62,7 @@
  * @param ns the namespace of the class, e.g. `mynamespace`. May be left empty if the class is in the global
  *   namespace
  * @param cls the type of the class without namespace, e.g. `MyClass`
- * @param name the name of the member-reference container to use, e.g. `index`
+ * @param name the name of the member-reference container to use, e.g. `Index`
 */
 #define ROCKET_REFLECT_MEMBERS_DEFINE(ns, cls, name) ROCKET_REFLECT_MEMBERS_DEFINE__(ns, cls, name)
 
@@ -75,7 +74,7 @@
  * @param baseCls the name of the base class
  * @param baseName the name of the member-reference container of the base class
  * @param cls the name of the derived class that holds the members (without namespace)
- * @param name the name for this member-reference container. e.g. `index`
+ * @param name the name for this member-reference container. e.g. `Index`
  * @param seq a sequence of member names
  */
 #define ROCKET_REFLECT_MEMBERS_DERIVED(baseCls, baseName, cls, name, seq) \
@@ -97,8 +96,6 @@
 
 // Members ..................................................................................................
 
-#define ROCKET_REFLECT_MEMBERS_STRUCT__(name) BOOST_PP_SEQ_CAT((RocketReflect)(name)(__))
-
 #define ROCKET_REFLECT_MEMBERS_REFS_ELEM__(r, data, elem) \
   (::rocket::reflect::MemberRef(BOOST_PP_STRINGIZE(elem), &data::elem))
 
@@ -107,21 +104,15 @@
     BOOST_PP_SEQ_ENUM(BOOST_PP_SEQ_FOR_EACH(ROCKET_REFLECT_MEMBERS_REFS_ELEM__, cls, seq)))
 
 #define ROCKET_REFLECT_MEMBERS__(cls, name, seq) \
-  struct ROCKET_REFLECT_MEMBERS_STRUCT__(name) { \
+  struct name { \
     static constexpr auto refs = ROCKET_REFLECT_MEMBERS_REFS__(cls, seq); \
-  }; \
-  \
-  static consteval auto& name() { return ROCKET_REFLECT_MEMBERS_STRUCT__(name)::refs; }
+  }
 
 #define ROCKET_REFLECT_MEMBERS_DERIVED__(baseCls, baseName, cls, name, seq) \
-  struct ROCKET_REFLECT_MEMBERS_STRUCT__(name) { \
+  struct name { \
     static constexpr auto refs = ::std::tuple_cat( \
-      baseCls::ROCKET_REFLECT_MEMBERS_STRUCT__(baseName)::refs, \
+      baseCls::baseName::refs, \
       ROCKET_REFLECT_MEMBERS_REFS__(cls, seq)); \
-  }; \
-  \
-  static consteval auto& name() { \
-    return ROCKET_REFLECT_MEMBERS_STRUCT__(name)::refs; \
   }
 
 #define ROCKET_REFLECT_MEMBERS_DECLARE_FMT_FORMATTER__(ns, cls, name) \
@@ -135,7 +126,7 @@
         const std::string typeName = fmt::format("{}", typeid(val)); \
         out = ::fmt::detail::write<C>(out, ::rocket::unicode::ConvertTo<C>::apply(typeName)); \
       } \
-      out = ::rocket::reflect::internal::format<ns::cls, C>(val, ctx, debug_, ns::cls::name()); \
+      out = ::rocket::reflect::internal::format<ns::cls, C>(val, ctx, debug_, ns::cls::name::refs); \
       return out; \
     } \
     \
@@ -167,25 +158,25 @@
 #define ROCKET_REFLECT_MEMBERS_DECLARE_OP_EQ__(cls, name) \
   inline bool \
   operator==(const cls& lhs, const cls& rhs) { \
-    return ::rocket::reflect::eq(lhs, rhs, cls::name()); \
+    return ::rocket::reflect::eq(lhs, rhs, cls::name::refs); \
   }
 
 #define ROCKET_REFLECT_MEMBERS_DECLARE_OP_NE__(cls, name) \
   inline bool \
   operator!=(const cls& lhs, const cls& rhs) { \
-    return ::rocket::reflect::ne(lhs, rhs, cls::name()); \
+    return ::rocket::reflect::ne(lhs, rhs, cls::name::refs); \
   }
 
 #define ROCKET_REFLECT_MEMBERS_DECLARE_OP_LT__(cls, name) \
   inline bool \
   operator<(const cls& lhs, const cls& rhs) { \
-    return ::rocket::reflect::lt(lhs, rhs, cls::name()); \
+    return ::rocket::reflect::lt(lhs, rhs, cls::name::refs); \
   }
 
 #define ROCKET_REFLECT_MEMBERS_DECLARE_OP_GT__(cls, name) \
   inline bool \
   operator>(const cls& lhs, const cls& rhs) { \
-    return ::rocket::reflect::gt(lhs, rhs, cls::name()); \
+    return ::rocket::reflect::gt(lhs, rhs, cls::name::refs); \
   }
 
 #define ROCKET_REFLECT_MEMBERS_DECLARE_OP_OUTPUT__(cls) \
@@ -194,10 +185,10 @@
     return lhs << ::fmt::format("{}", rhs); \
   }
 
-#define ROCKET_REFLECT_MEMBERS_DECLARE_MEMBER_REF_PROVIDER__(ns, cls, name) \
+#define ROCKET_REFLECT_MEMBERS_DECLARE_DECLARED__(ns, cls, name) \
   template<> \
-  struct rocket::reflect::MemberRefProvider<ns::cls> : ::std::true_type{ \
-    static constexpr auto& refs = ns::cls::name(); \
+  struct rocket::reflect::Declared<ns::cls> : ::std::true_type{ \
+    static constexpr auto& refs = ns::cls::name::refs; \
   }
 
 #define ROCKET_REFLECT_MEMBERS_DECLARE_STD_HASH__(ns, cls) \
@@ -215,7 +206,7 @@
   ROCKET_REFLECT_MEMBERS_DECLARE_OP_GT__(cls, name); \
   ROCKET_REFLECT_MEMBERS_DECLARE_OP_OUTPUT__(cls); \
   ROCKET_NAMESPACE_END(ns); \
-  ROCKET_REFLECT_MEMBERS_DECLARE_MEMBER_REF_PROVIDER__(ns, cls, name); \
+  ROCKET_REFLECT_MEMBERS_DECLARE_DECLARED__(ns, cls, name); \
   ROCKET_REFLECT_MEMBERS_DECLARE_STD_HASH__(ns, cls)
 
 #define ROCKET_REFLECT_MEMBERS_DEFINE_STD_HASH__(ns, cls, name) \
@@ -236,5 +227,44 @@
   ::std::make_tuple(BOOST_PP_SEQ_ENUM(BOOST_PP_SEQ_FOR_EACH(ROCKET_REFLECT_VARS_ELEM__, ~, seq)))
 
 /// @endcond
+
+namespace rocket::reflect {
+
+// #Declared ------------------------------------------------------------------------------------------------
+
+/**
+ * This template provides access to default member references of a type.
+ */
+template<typename T>
+struct Declared : std::false_type {};
+
+// #Instance ------------------------------------------------------------------------------------------------
+
+/**
+ * A #rocket::reflect::Instance is an instance together with specified member references.
+ *
+ * @tparam T the type of the instance
+ * @tparam Inner the inner type of @p T that holds the member references
+ */
+template<typename T, typename Inner>
+struct Instance {
+  using Type = T; ///< @type_alias
+  using InnerType = Inner; ///< @type_alias
+
+  /// The member references, taken from the inner type.
+  static constexpr auto& refs = Inner::refs;
+
+  /// A pointer to the instance.
+  T* instance;
+
+  /**
+  * @ctor
+  *
+  * @param instance the instance
+  */
+  Instance(T& instance) : instance(&instance) {}
+};
+
+} // namespace rocket::reflect
 
 // EOF

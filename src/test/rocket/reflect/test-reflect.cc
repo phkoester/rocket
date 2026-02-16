@@ -28,13 +28,13 @@ private:
 
 public:
 
-  ROCKET_REFLECT_MEMBERS(MyStruct, index, (ä)(b)(c));
+  ROCKET_REFLECT_MEMBERS(MyStruct, Index, (ä)(b)(c));
 
-  ROCKET_REFLECT_MEMBERS(MyStruct, index2, (ä)(b));
+  ROCKET_REFLECT_MEMBERS(MyStruct, Public, (ä)(b));
 };
 
-ROCKET_REFLECT_MEMBERS_DECLARE(, MyStruct, index);
-ROCKET_REFLECT_MEMBERS_DEFINE(, MyStruct, index);
+ROCKET_REFLECT_MEMBERS_DECLARE(, MyStruct, Index);
+ROCKET_REFLECT_MEMBERS_DEFINE(, MyStruct, Index);
 
 // #MyDerivedStruct -----------------------------------------------------------------------------------------
 
@@ -49,26 +49,26 @@ private:
 
 public:
 
-  ROCKET_REFLECT_MEMBERS_DERIVED(MyStruct, index, MyDerivedStruct, index, (d)(e));
+  ROCKET_REFLECT_MEMBERS_DERIVED(MyStruct, Index, MyDerivedStruct, Index, (d)(e));
 };
 
-ROCKET_REFLECT_MEMBERS_DECLARE(, MyDerivedStruct, index);
-ROCKET_REFLECT_MEMBERS_DEFINE(, MyDerivedStruct, index);
+ROCKET_REFLECT_MEMBERS_DECLARE(, MyDerivedStruct, Index);
+ROCKET_REFLECT_MEMBERS_DEFINE(, MyDerivedStruct, Index);
 
 // #TEST ----------------------------------------------------------------------------------------------------
 
 TEST(reflect, MyStruct) {
   MyStruct m1(12, "here", true);
   EXPECT_EQ(m1.b, "here");
-  get<1>(MyStruct::index()).get(m1) = "everywhere";
+  get<1>(MyStruct::Index::refs).get(m1) = "everywhere";
   EXPECT_EQ(m1.b, "everywhere");
   EXPECT_EQ(m1.getC(), true);
-  get<2>(MyStruct::index()).get(m1) = false;
+  get<2>(MyStruct::Index::refs).get(m1) = false;
   EXPECT_EQ(m1.getC(), false);
 
   const MyStruct m2(13, "there", true);
-  EXPECT_EQ(get<1>(MyStruct::index()).get(m2), "there");
-  EXPECT_EQ(get<2>(MyStruct::index()).get(m2), true);
+  EXPECT_EQ(get<1>(MyStruct::Index::refs).get(m2), "there");
+  EXPECT_EQ(get<2>(MyStruct::Index::refs).get(m2), true);
 }
 
 /**
@@ -132,56 +132,54 @@ TEST(reflect, MyStructHash) {
 TEST(reflect, MyStructIndex2) {
   MyStruct m1(12, "here", true);
   EXPECT_EQ(m1.b, "here");
-  get<1>(MyStruct::index()).get(m1) = "everywhere";
+  get<1>(MyStruct::Index::refs).get(m1) = "everywhere";
   EXPECT_EQ(m1.b, "everywhere");
 
   const MyStruct m2(13, "there", true);
-  EXPECT_EQ(get<0>(MyStruct::index()).get(m2), 13);
-  EXPECT_EQ(get<1>(MyStruct::index()).get(m2), "there");
+  EXPECT_EQ(get<0>(MyStruct::Index::refs).get(m2), 13);
+  EXPECT_EQ(get<1>(MyStruct::Index::refs).get(m2), "there");
 }
 
-TEST(reflect, MyStructIndex2Eq) {
+TEST(reflect, MyStructPublicEq) {
   const MyStruct m1(42, "rocket", true);
   const MyStruct m2(42, "rocket", false);
   const MyStruct m3(43, "rocket", true);
-  const auto& index2 = MyStruct::index2();
-  EXPECT_EQ(eq(m1, m2, index2), true);
-  EXPECT_EQ(eq(m1, m3, index2), false);
+  EXPECT_EQ(eq(m1, m2, MyStruct::Public::refs), true);
+  EXPECT_EQ(eq(m1, m3, MyStruct::Public::refs), false);
 }
 
-TEST(reflect, MyStructIndex2Ne) {
+TEST(reflect, MyStructPublic2Ne) {
   const MyStruct m1(42, "rocket", true);
   const MyStruct m2(42, "rocket", false);
   const MyStruct m3(43, "rocket", true);
-  const auto& index2 = MyStruct::index2();
-  EXPECT_EQ(ne(m1, m2, index2), false);
-  EXPECT_EQ(ne(m1, m3, index2), true);
+  EXPECT_EQ(ne(m1, m2, MyStruct::Public::refs), false);
+  EXPECT_EQ(ne(m1, m3, MyStruct::Public::refs), true);
 }
 
-TEST(reflect, MyStructIndex2Hash) {
+TEST(reflect, MyStructPublicHash) {
   const MyStruct m1(42, "rocket", true);
   const MyStruct m2(42, "rocket", false);
   const MyStruct m3(43, "rocket", true);
 
-  const u64 hash1 = reflect::hash(m1, MyStruct::index2());
-  const u64 hash2 = reflect::hash(m2, MyStruct::index2());
-  const u64 hash3 = reflect::hash(m3, MyStruct::index2());
+  const u64 hash1 = reflect::hash(m1, MyStruct::Public::refs);
+  const u64 hash2 = reflect::hash(m2, MyStruct::Public::refs);
+  const u64 hash3 = reflect::hash(m3, MyStruct::Public::refs);
 
   EXPECT_EQ(hash1, hash2);
   EXPECT_NE(hash1, hash3);
 }
 
-TEST(reflect, MyStructIndex2Write) {
+TEST(reflect, MyStructPublicWrite) {
   const MyStruct m(42, "rocket", true);
   nio::StringSink out;
-  write(out, m, MyStruct::index2());
+  write(out, m, MyStruct::Public::refs);
   EXPECT_EQ(out.str(), "(ä=42, b=rocket)");
 }
 
 TEST(reflect, MyDerivedStructWrite) {
   const MyDerivedStruct m(41, "rocket", true, "everywhere", 42_u64);
   nio::StringSink out;
-  write(out, m, MyDerivedStruct::index());
+  write(out, m, MyDerivedStruct::Index::refs);
   EXPECT_EQ(out.str(), "(ä=41, b=rocket, c=true, d=everywhere, e=42)");
 }
 

@@ -273,10 +273,10 @@ struct FormattedConsumerImpl<DataType::Bimap, T> {
 };
 
 template<typename T>
-struct FormattedConsumerImpl<DataType::MemberRefProvider, T> {
+struct FormattedConsumerImpl<DataType::Declared, T> {
   void
   consume(const T& val, nio::Sink& out, CONFIG__) {
-    constexpr auto& refs = rocket::reflect::MemberRefProvider<T>::refs;
+    constexpr auto& refs = rocket::reflect::Declared<T>::refs;
     using Elem = PurgeType<decltype(refs)>;
     constexpr auto ElemDataType = DataTypes<Elem>::Value;
     static_assert(ElemDataType == DataType::Tuple);
@@ -284,6 +284,21 @@ struct FormattedConsumerImpl<DataType::MemberRefProvider, T> {
     // Here we have to pass an additional argument, the instance, to the tuple consumer. The tuple consumer
     // will pass it on to the member-reference consumer
     FormattedConsumerImpl<ElemDataType, Elem>().consume(refs, out, config, val);
+  }
+};
+
+template<typename T>
+struct FormattedConsumerImpl<DataType::Instance, T> {
+  void
+  consume(const T& val, nio::Sink& out, CONFIG__) {
+    constexpr auto& refs = T::InnerType::refs;
+    using Elem = PurgeType<decltype(refs)>;
+    constexpr auto ElemDataType = DataTypes<Elem>::Value;
+    static_assert(ElemDataType == DataType::Tuple);
+
+    // Here we have to pass an additional argument, the instance, to the tuple consumer. The tuple consumer
+    // will pass it on to the member-reference consumer
+    FormattedConsumerImpl<ElemDataType, Elem>().consume(refs, out, config, *val.instance);
   }
 };
 
@@ -752,10 +767,10 @@ struct FormattedProducerImpl<DataType::Bimap, T> {
 };
 
 template<typename T>
-struct FormattedProducerImpl<DataType::MemberRefProvider, T> {
+struct FormattedProducerImpl<DataType::Declared, T> {
   void
   produce(T& val, nio::StringSource& in, CONFIG__) {
-    const auto& refs = rocket::reflect::MemberRefProvider<T>::refs;
+    const auto& refs = rocket::reflect::Declared<T>::refs;
     using Elem = PurgeType<decltype(refs)>;
     constexpr auto ElemDataType = DataTypes<Elem>::Value;
     static_assert(ElemDataType == DataType::Tuple);
@@ -763,6 +778,21 @@ struct FormattedProducerImpl<DataType::MemberRefProvider, T> {
     // Here we have to pass an additional argument, the instance, to the tuple producer. The tuple producer
     // will pass it on to the member-reference producer
     FormattedProducerImpl<ElemDataType, Elem>().produce(const_cast<Elem&>(refs), in, config, val);
+  }
+};
+
+template<typename T>
+struct FormattedProducerImpl<DataType::Instance, T> {
+  void
+  produce(T& val, nio::StringSource& in, CONFIG__) {
+    const auto& refs = T::InnerType::refs;
+    using Elem = PurgeType<decltype(refs)>;
+    constexpr auto ElemDataType = DataTypes<Elem>::Value;
+    static_assert(ElemDataType == DataType::Tuple);
+
+    // Here we have to pass an additional argument, the instance, to the tuple producer. The tuple producer
+    // will pass it on to the member-reference producer
+    FormattedProducerImpl<ElemDataType, Elem>().produce(const_cast<Elem&>(refs), in, config, *val.instance);
   }
 };
 

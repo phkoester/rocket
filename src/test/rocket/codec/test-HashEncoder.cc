@@ -4,7 +4,6 @@
 
 #include "rocket-test/rocket-test.h"
 
-#include "rocket/Bimap.h"
 #include "rocket/codec/HashEncoder.h"
 #include "rocket/reflect/reflect-codec.h"
 
@@ -21,11 +20,11 @@ struct MyStruct {
   string übermut;
   vector<int> vec;
 
-  ROCKET_REFLECT_MEMBERS(MyStruct, index, (ärger)(ökonom)(übermut)(vec));
+  ROCKET_REFLECT_MEMBERS(MyStruct, Index, (ärger)(ökonom)(übermut)(vec));
 };
 
-ROCKET_REFLECT_MEMBERS_DECLARE(, MyStruct, index);
-ROCKET_REFLECT_MEMBERS_DEFINE(, MyStruct, index);
+ROCKET_REFLECT_MEMBERS_DECLARE(, MyStruct, Index);
+ROCKET_REFLECT_MEMBERS_DEFINE(, MyStruct, Index);
 
 // #TEST ----------------------------------------------------------------------------------------------------
 
@@ -72,7 +71,7 @@ TEST(HashEncoder, BimapUnordered) {
   EXPECT_NE(encoder.encode(val), 0);
 }
 
-TEST(HashEncoder, MemberRefProviderMyStruct) {
+TEST(HashEncoder, DeclaredMyStruct) {
   const MyStruct val { 42, true, "hello", { 1, 2, 3 } };
   HashEncoder<> encoder;
   EXPECT_NE(encoder.encode(val), 0);

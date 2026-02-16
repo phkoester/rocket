@@ -19,11 +19,11 @@ struct MyStruct {
   string übermut;
   vector<i32> vec;
 
-  ROCKET_REFLECT_MEMBERS(MyStruct, index, (ärger)(ökonom)(übermut)(vec));
+  ROCKET_REFLECT_MEMBERS(MyStruct, Index, (ärger)(ökonom)(übermut)(vec));
 };
 
-ROCKET_REFLECT_MEMBERS_DECLARE(, MyStruct, index);
-ROCKET_REFLECT_MEMBERS_DEFINE(, MyStruct, index);
+ROCKET_REFLECT_MEMBERS_DECLARE(, MyStruct, Index);
+ROCKET_REFLECT_MEMBERS_DEFINE(, MyStruct, Index);
 
 // #TEST ----------------------------------------------------------------------------------------------------
 
@@ -210,7 +210,7 @@ TEST(FormattedCodec, FormattedConsumerMap) {
   EXPECT_EQ(out.str(), "{\"alpha\": 1, \"beta\": 2, \"gamma\": 3}");
 }
 
-TEST(FormattedCodec, FormattedConsumerMemberRefProvider) {
+TEST(FormattedCodec, FormattedConsumerDeclared) {
   FormattedCodec codec;
   nio::StringSink out;
   MyStruct val { 42, true, "hello", { 1, 2, 3 } };
@@ -439,7 +439,7 @@ TEST(FormattedCodec, FormattedProducerBimap) {
   }
 }
 
-TEST(FormattedCodec, FormattedProducerMemberRefProvider) {
+TEST(FormattedCodec, FormattedProducerDeclared) {
   FormattedCodec codec;
   FormattedProducerConfig config { .cComments=true, .shellComments=true };
 

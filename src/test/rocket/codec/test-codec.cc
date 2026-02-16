@@ -23,11 +23,12 @@ struct MyStruct {
   string übermut;
   vector<i32> vec;
 
-  ROCKET_REFLECT_MEMBERS(MyStruct, index, (ärger)(ökonom)(übermut)(vec));
+  ROCKET_REFLECT_MEMBERS(MyStruct, Index, (ärger)(ökonom)(übermut)(vec));
+  ROCKET_REFLECT_MEMBERS(MyStruct, Three, (ärger)(ökonom)(übermut));
 };
 
-ROCKET_REFLECT_MEMBERS_DECLARE(, MyStruct, index);
-ROCKET_REFLECT_MEMBERS_DEFINE(, MyStruct, index);
+ROCKET_REFLECT_MEMBERS_DECLARE(, MyStruct, Index);
+ROCKET_REFLECT_MEMBERS_DEFINE(, MyStruct, Index);
 
 // Functions ------------------------------------------------------------------------------------------------
 
@@ -155,17 +156,33 @@ struct TracingConsumerImpl<DataType::Array, T> {
 };
 
 template<typename T>
-struct TracingConsumerImpl<DataType::MemberRefProvider, T> {
+struct TracingConsumerImpl<DataType::Declared, T> {
   u64
   consume(const T& val, nio::StringSink& out) {
-    auto ret = out.println("consuming memberrefprovider");
+    auto ret = out.println("consuming declared");
 
-    constexpr auto& refs = rocket::reflect::MemberRefProvider<T>::refs;
+    constexpr auto& refs = rocket::reflect::Declared<T>::refs;
     using Elem = PurgeType<decltype(refs)>;
     constexpr auto ElemDataType = DataTypes<Elem>::Value;
     static_assert(ElemDataType == DataType::Tuple);
     // Here we have to pass an additional argument, the instance, to the tuple consumer
     ret += TracingConsumerImpl<ElemDataType, Elem>().consume(refs, out, val);
+    return ret;
+  }
+};
+
+template<typename T>
+struct TracingConsumerImpl<DataType::Instance, T> {
+  u64
+  consume(const T& val, nio::StringSink& out) {
+    auto ret = out.println("consuming instance");
+
+    constexpr auto& refs = T::InnerType::refs;
+    using Elem = PurgeType<decltype(refs)>;
+    constexpr auto ElemDataType = DataTypes<Elem>::Value;
+    static_assert(ElemDataType == DataType::Tuple);
+    // Here we have to pass an additional argument, the instance, to the tuple consumer
+    ret += TracingConsumerImpl<ElemDataType, Elem>().consume(refs, out, *val.instance);
     return ret;
   }
 };
@@ -398,13 +415,13 @@ TEST(codec, TracingConsumerArrayVector) {
     "consuming integer: 4\n");
 }
 
-TEST(codec, TracingConsumerMemberRef) {
+TEST(codec, TracingConsumerDeclared) {
   Encoder<TracingConsumer> encoder;
   nio::StringSink out;
   MyStruct val { 42, true, "hello", { 1, 2, 3 } };
   encoder.encode(val, out);
   EXPECT_EQ(out.str(),
-    "consuming memberrefprovider\n"
+    "consuming declared\n"
     "consuming tuple: 4\n"
     "consuming tuple elem\n"
     "consuming memberref: \"ärger\"\n"
@@ -421,6 +438,26 @@ TEST(codec, TracingConsumerMemberRef) {
     "consuming integer: 1\n"
     "consuming integer: 2\n"
     "consuming integer: 3\n");
+}
+
+TEST(codec, TracingConsumerInstance) {
+  Encoder<TracingConsumer> encoder;
+  nio::StringSink out;
+  MyStruct my { 42, true, "hello", { 1, 2, 3 } };
+  auto val = reflect::Instance<MyStruct, MyStruct::Three>(my);
+  encoder.encode(val, out);
+  EXPECT_EQ(out.str(),
+    "consuming instance\n"
+    "consuming tuple: 3\n"
+    "consuming tuple elem\n"
+    "consuming memberref: \"ärger\"\n"
+    "consuming integer: 42\n"
+    "consuming tuple elem\n"
+    "consuming memberref: \"ökonom\"\n"
+    "consuming boolean: true\n"
+    "consuming tuple elem\n"
+    "consuming memberref: \"übermut\"\n"
+    "consuming string: \"hello\"\n");
 }
 
 TEST(codec, TracingConsumerVarRef) {

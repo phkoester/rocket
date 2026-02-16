@@ -68,12 +68,7 @@ struct IsMemberRefImpl : std::false_type {};
 template<typename C, typename T>
 struct IsMemberRefImpl<MemberRef<C, T>> : std::true_type {};
 
-template<typename T> struct IsMemberRef : IsMemberRefImpl<PurgeType<T>>::type {};
-
-// #MemberRefProvider .......................................................................................
-
-template<typename T>
-struct MemberRefProvider : std::false_type {};
+template<typename T> concept IsMemberRef = IsMemberRefImpl<PurgeType<T>>::value;
 
 } // namespace rocket::reflect
 
