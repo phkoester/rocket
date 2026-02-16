@@ -476,7 +476,7 @@ TEST(codec, TracingConsumerVarRef) {
     "consuming tuple elem: b=true\n"
     "consuming varref: \"b\"\n"
     "consuming boolean: true\n"
-    "consuming tuple elem: c=hello\n"
+    "consuming tuple elem: c=\"hello\"\n"
     "consuming varref: \"c\"\n"
     "consuming string: \"hello\"\n");
 }

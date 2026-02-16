@@ -133,4 +133,10 @@ TEST(enum, MyEnumClassToType) {
     ThrowsMessage<InvalidState>(HasSubstr("Cannot scan \"hürxerx\" as `MyEnumClass`")));
 }
 
+TEST(enum, MyEnumInNamespaceOpOutput) {
+  ostringstream os;
+  os << mynamespace::red;
+  EXPECT_EQ(os.str(), "red");
+}
+
 // EOF

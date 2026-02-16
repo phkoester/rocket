@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include "rocket/enum.h"
 #include "rocket/Guard.h"
 #include "rocket/InputFailure.h"
 #include "rocket/codec/codec.h"

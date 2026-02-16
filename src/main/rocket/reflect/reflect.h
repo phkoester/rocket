@@ -1,15 +1,13 @@
 /**
  * @file reflect.h
  *
- * C++ reflection support.
+ * C++ reflection support: member and variable references.
  */
 
 #pragma once
 
 #include "rocket/macro.h"
-#include "rocket/reflect/MemberRef.h"
-#include "rocket/reflect/VarRef.h"
-#include "rocket/unicode/ConvertTo.h"
+#include "rocket/type-traits.h"
 
 #include <boost/preprocessor/stringize.hpp>
 #include <boost/preprocessor/seq/cat.hpp>
@@ -17,8 +15,6 @@
 #include <boost/preprocessor/seq/for_each.hpp>
 
 #include <tuple>
-#include <type_traits>
-#include <utility>
 
 // Macros ---------------------------------------------------------------------------------------------------
 
@@ -40,10 +36,7 @@
  *
  * In particular, it provides
  *
- * - a `fmt::formatter` specialization so the class can be formatted using `fmt::format()`;
- * - a #std::hash specialization for the class;
  * - `operator==`, `operator!=`, `operator<`, `operator>`;
- * - an `operator<<` for #std::ostream;
  *
  * @note This macro must be called in the global namespace.
  *
@@ -115,46 +108,6 @@
       ROCKET_REFLECT_MEMBERS_REFS__(cls, seq)); \
   }
 
-#define ROCKET_REFLECT_MEMBERS_DECLARE_FMT_FORMATTER__(ns, cls, name) \
-  template<typename C> \
-  struct fmt::formatter<ns::cls, C> { \
-    template<typename FormatContext> \
-    constexpr FormatContext::iterator \
-    format(const ns::cls& val, FormatContext& ctx) const{ \
-      auto out = ctx.out(); \
-      if (withType_) { \
-        const std::string typeName = fmt::format("{}", typeid(val)); \
-        out = ::fmt::detail::write<C>(out, ::rocket::unicode::ConvertTo<C>::apply(typeName)); \
-      } \
-      out = ::rocket::reflect::internal::format<ns::cls, C>(val, ctx, debug_, ns::cls::name::refs); \
-      return out; \
-    } \
-    \
-    constexpr const C* \
-    parse(parse_context<C>& ctx) { \
-      auto it = ctx.begin(), end = ctx.end(); \
-      if (it != end && *it == '?') { \
-        debug_ = true; \
-        ++it; \
-      } \
-      if (it != end && *it == 't') { \
-        withType_ = true; \
-        ++it; \
-      } \
-      return it; \
-    } \
-    \
-    constexpr void \
-    set_debug_format(bool val = true) { \
-      debug_ = val; \
-    } \
-    \
-  private: \
-  \
-    bool debug_ = false; \
-    bool withType_ = false; \
-  };
-
 #define ROCKET_REFLECT_MEMBERS_DECLARE_OP_EQ__(cls, name) \
   inline bool \
   operator==(const cls& lhs, const cls& rhs) { \
@@ -179,44 +132,24 @@
     return ::rocket::reflect::gt(lhs, rhs, cls::name::refs); \
   }
 
-#define ROCKET_REFLECT_MEMBERS_DECLARE_OP_OUTPUT__(cls) \
-  inline ::std::ostream& \
-  operator<<(::std::ostream& lhs, const cls& rhs) { \
-    return lhs << ::fmt::format("{}", rhs); \
-  }
-
 #define ROCKET_REFLECT_MEMBERS_DECLARE_DECLARED__(ns, cls, name) \
   template<> \
   struct rocket::reflect::Declared<ns::cls> : ::std::true_type{ \
     static constexpr auto& refs = ns::cls::name::refs; \
   }
 
-#define ROCKET_REFLECT_MEMBERS_DECLARE_STD_HASH__(ns, cls) \
-  template<> \
-  struct std::hash<ns::cls> { \
-    u64 operator()(const ns::cls& val) const; \
-  }
-
 #define ROCKET_REFLECT_MEMBERS_DECLARE__(ns, cls, name) \
-  ROCKET_REFLECT_MEMBERS_DECLARE_FMT_FORMATTER__(ns, cls, name); \
   ROCKET_NAMESPACE_BEGIN(ns); \
   ROCKET_REFLECT_MEMBERS_DECLARE_OP_EQ__(cls, name); \
   ROCKET_REFLECT_MEMBERS_DECLARE_OP_NE__(cls, name); \
   ROCKET_REFLECT_MEMBERS_DECLARE_OP_LT__(cls, name); \
   ROCKET_REFLECT_MEMBERS_DECLARE_OP_GT__(cls, name); \
-  ROCKET_REFLECT_MEMBERS_DECLARE_OP_OUTPUT__(cls); \
   ROCKET_NAMESPACE_END(ns); \
-  ROCKET_REFLECT_MEMBERS_DECLARE_DECLARED__(ns, cls, name); \
-  ROCKET_REFLECT_MEMBERS_DECLARE_STD_HASH__(ns, cls)
+  ROCKET_REFLECT_MEMBERS_DECLARE_DECLARED__(ns, cls, name)
 
-#define ROCKET_REFLECT_MEMBERS_DEFINE_STD_HASH__(ns, cls, name) \
-  u64 \
-  std::hash<ns::cls>::operator()(const ns::cls& val) const { \
-    return ::rocket::codec::HashEncoder<>().encode(val); \
-  }
-
+// XXX Weg?
 #define ROCKET_REFLECT_MEMBERS_DEFINE__(ns, cls, name) \
-  ROCKET_REFLECT_MEMBERS_DEFINE_STD_HASH__(ns, cls, name)
+  /* Empty */
 
 // Variables ................................................................................................
 
@@ -250,19 +183,153 @@ template<typename T, typename Inner>
 struct Instance {
   using Type = T; ///< @type_alias
   using InnerType = Inner; ///< @type_alias
+  using PointerType = PurgeType<Type>*;
 
   /// The member references, taken from the inner type.
   static constexpr auto& refs = Inner::refs;
 
   /// A pointer to the instance.
-  T* instance;
+  PointerType instance;
 
   /**
-  * @ctor
-  *
-  * @param instance the instance
-  */
+   * @ctor
+   *
+   * @param instance the instance
+   */
   Instance(T& instance) : instance(&instance) {}
+
+   /**
+   * @ctor
+   *
+   * @param instance the instance
+   */
+  Instance(const T& instance) : instance(const_cast<PointerType>(&instance)) {}
+};
+
+// #MemberRef -----------------------------------------------------------------------------------------------
+
+/**
+ * References on members that need an instance to evaluate.
+ *
+ * Instances of this class are returned by #ROCKET_REFLECT_MEMBERS.
+ */
+template<typename C, typename T>
+struct MemberRef {
+  using ValueType = T; ///< @type_alias
+
+  /**
+   * @ctor
+   *
+   * @param name the name of the member
+   * @param p the pointer to the member
+   */
+  consteval MemberRef(const char* name, T C::* p) : name_(name), p_(p) {}
+
+  /**
+   * Returns the value of the member.
+   *
+   * @param val the instance
+   * @return the value of the member
+   */
+  [[nodiscard]] constexpr T& get(C& val) const { return val.*p_; }
+
+  /**
+   * Returns the value of the member.
+   *
+   * @param val the instance
+   * @return the value of the member
+   */
+  [[nodiscard]] constexpr const T& get(const C& val) const { return val.*p_; }
+
+  /**
+   * Returns the name of the member.
+   *
+   * @return the name of the member
+   */
+  [[nodiscard]] constexpr std::string_view name() const { return name_; }
+
+private:
+
+  std::string_view name_; ///< The name of the member.
+  T C::*p_; ///< The pointer to the member.
+};
+
+// #IsMemberRef ---------------------------------------------------------------------------------------------
+
+template<typename T>
+struct IsMemberRefImpl : std::false_type {};
+
+template<typename C, typename T>
+struct IsMemberRefImpl<MemberRef<C, T>> : std::true_type {};
+
+// XXX Weg?
+template<typename T> concept IsMemberRef = IsMemberRefImpl<PurgeType<T>>::value;
+
+// #VarRef --------------------------------------------------------------------------------------------------
+
+/**
+ * References on variables that need need no instance to evaluate.
+ *
+ * Instances of this class are returned by #ROCKET_REFLECT_VARS.
+ *
+ * @param T the type of the variable
+ */
+template<typename T>
+struct VarRef {
+  using ValueType = T; ///< @type_alias
+
+  /**
+   * @ctor
+   *
+   * @param name the name of the variable
+   * @param ref the reference to the variable
+   */
+  constexpr VarRef(const char* name, T& ref) : name_(name), ptr_(&ref) {}
+
+  /// @member_op_eq
+  // XXX Alles weg?
+  bool operator==(const VarRef& rhs) const { return *ptr_ == *rhs.ptr_; }
+
+  /// @member_op_ne
+  bool operator!=(const VarRef& rhs) const { return *ptr_ != *rhs.ptr_; }
+
+  /// @member_op_lt
+  bool operator<(const VarRef& rhs) const { return *ptr_ < *rhs.ptr_; }
+
+  /// @member_op_le
+  bool operator<=(const VarRef& rhs) const { return *ptr_ <= *rhs.ptr_; }
+
+  /// @member_op_gt
+  bool operator>(const VarRef& rhs) const { return *ptr_ > rhs.*ptr_; }
+
+  /// @member_op_ge
+  bool operator>=(const VarRef& rhs) const { return *ptr_ >= *rhs.ptr_; }
+
+  /**
+   * Returns the value of the variable.
+   *
+   * @return the value of the variable
+   */
+  [[nodiscard]] constexpr T& get() { return *ptr_; }
+
+  /**
+   * Returns the value of the variable.
+   *
+   * @return the value of the variable
+   */
+  [[nodiscard]] constexpr const T& get() const { return *ptr_; }
+
+  /**
+   * Returns the name of the variable.
+   *
+   * @return the name of the variable
+   */
+  [[nodiscard]] constexpr std::string_view name() const { return name_; }
+
+private:
+
+  std::string_view name_;
+  T* ptr_;
 };
 
 } // namespace rocket::reflect

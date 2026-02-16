@@ -7,11 +7,12 @@
 #pragma once
 
 #include "rocket/codec/HashEncoder.h"
+#include "rocket/codec/FormattedCodec.h"
 #include "rocket/nio/nio.h"
 #include "rocket/reflect/reflect.h"
 #include "rocket/unicode/ConvertTo.h"
 
-#include <fmt/format.h>
+#include <fmt/std.h> // #fmt::formatter<#std::type_info>
 
 #include <tuple>
 #include <utility>
@@ -21,59 +22,7 @@ namespace rocket::reflect {
 namespace internal {
 
 // Internal -------------------------------------------------------------------------------------------------
-
-template<typename T, typename C, u64 Index, typename FormatContext, typename Tuple>
-constexpr FormatContext::iterator
-formatElemImpl(const T& val, FormatContext& ctx, bool debug, const Tuple& refs) {
-  using namespace fmt;
-
-  // Write separator
-  auto out = ctx.out();
-  if constexpr (Index > 0) {
-    out = detail::write<C>(out, static_cast<C>(','));
-    out = detail::write<C>(out, static_cast<C>(' '));
-  }
-
-  // Get ref at index
-  const auto& ref = std::get<Index>(refs);
-  static_assert(IsMemberRef<decltype(ref)>);
-
-  // Write name
-  out = detail::write<C>(out, rocket::unicode::ConvertTo<C>::apply(ref.name()));
-  out = detail::write<C>(out, static_cast<C>('='));
-
-  // Write value
-  const auto& value = ref.get(val);
-  using ValueType = decltype(value);
-  fmt::formatter<rocket::PurgeType<ValueType>, C> underlying;
-  detail::maybe_set_debug_format(underlying, debug); // NOLINT
-  ctx.advance_to(out);
-  out = underlying.format(value, ctx);
-  return out;
-}
-
-template<typename T, typename C, typename FormatContext, typename Tuple, u64... Index>
-constexpr FormatContext::iterator
-formatImpl(
-  const T& val,
-  FormatContext& ctx,
-  bool debug,
-  const Tuple& refs,
-  std::index_sequence<Index...>) { // NOLINT
-  using namespace fmt;
-
-  // Write outer parentheses, inner members
-  auto out = ctx.out();
-  out = detail::write<C>(out, static_cast<C>('('));
-  (..., (out = formatElemImpl<T, C, Index>(val, ctx, debug, refs)));
-  return detail::write<C>(out, static_cast<C>(')'));
-}
-
-template<typename T, typename C, typename FormatContext, typename... Ref> requires (... && IsMemberRef<Ref>)
-constexpr FormatContext::iterator
-format(const T& val, FormatContext& ctx, bool debug, const std::tuple<Ref...>& refs) {
-  return internal::formatImpl<T, C>(val, ctx, debug, refs, std::make_index_sequence<sizeof...(Ref)>());
-}
+// XXX Alles weg?
 
 template<u64 Index, typename T, typename Tuple>
 constexpr auto&
@@ -133,42 +82,6 @@ gtImpl(
   return ret;
 }
 
-template<typename T, u64 Index, typename Tuple>
-u64
-writeElemImpl(nio::Sink& out, const T& val, const Tuple& refs) {
-  // Write separator
-  u64 ret = 0;
-  if constexpr (Index > 0) {
-    ret += out.write(", ");
-  }
-
-  // Get ref at index
-  const auto& ref = std::get<Index>(refs);
-  static_assert(IsMemberRef<decltype(ref)>);
-
-  // Write name
-  ret += out.write(ref.name());
-  ret += out.write('=');
-
-  // Write value
-  const auto& value = ref.get(val);
-  ret += out.print("{}", value);
-  return ret;
-}
-
-template<typename T, typename Tuple, u64... Index>
-u64
-writeImpl(
-  nio::Sink& out,
-  const T& val,
-  const Tuple& refs,
-  std::index_sequence<Index...>) { // NOLINT
-  u64 ret = out.write('(');
-  (..., (ret += writeElemImpl<T, Index>(out, val, refs)));
-  ret += out.write(')');
-  return ret;
-}
-
 } // namespace internal
 
 // Functions ------------------------------------------------------------------------------------------------
@@ -185,23 +98,6 @@ template<typename T, typename... Ref> requires (... && IsMemberRef<Ref>)
 inline bool
 eq(const T& lhs, const T& rhs, const std::tuple<Ref...>& refs) {
   return internal::eqImpl(lhs, rhs, refs, std::make_index_sequence<sizeof...(Ref)>());
-}
-
-/**
- * `hash` function for member references.
- *
- * @param val the instance
- * @param refs the references
- * @return a hash value
- */
-template<typename T, typename... Ref> requires (... && IsMemberRef<Ref>)
-inline u64
-hash(const T& val, const std::tuple<Ref...>& refs) {
-  u64 ret = std::tuple_size<PurgeType<decltype(refs)>>::value;
-  std::apply([&](auto&&... arg) {
-    (..., (hash::combine(ret, rocket::codec::HashEncoder<>().encode(arg.get(val)))));
-  }, refs);
-  return ret;
 }
 
 /**
@@ -246,20 +142,198 @@ gt(const T& lhs, const T& rhs, const std::tuple<Ref...>& refs) {
   return internal::gtImpl(lhs, rhs, refs, std::make_index_sequence<sizeof...(Ref)>());
 }
 
-/**
- * `write` function for member references.
- *
- * @param out the sink to write to
- * @param val the instance
- * @param refs the references
- * @return the number of bytes written
- */
-template<typename T, typename... Ref> requires (... && IsMemberRef<Ref>)
-inline u64
-write(nio::Sink& out, const T& val, const std::tuple<Ref...>& refs) {
-  return internal::writeImpl(out, val, refs, std::make_index_sequence<sizeof...(Ref)>());
+// @op_output{#rocket::reflect::Instance}
+template<typename T, typename Inner>
+inline std::ostream&
+operator<<(std::ostream& lhs, const Instance<T, Inner>& rhs) {
+  return lhs << fmt::format("{}", rhs);
+}
+
+// @op_output{#rocket::reflect::VarRef}
+template<typename T>
+inline std::ostream&
+operator<<(std::ostream& lhs, const VarRef<T>& rhs) {
+  return lhs << fmt::format("{}", rhs);
 }
 
 } // namespace rocket::reflect
+
+// #fmt::formatter<#rocket::reflect::Declared> --------------------------------------------------------------
+
+/**
+ * @spec_fmt_formatter{#rocket::reflect::Declared}
+ *
+ * - If the `i` format specifier is used, then the output is indented.
+ * - If the `t` format specifier is used, then the type name is included.
+ */
+template<typename T, typename C> requires rocket::reflect::Declared<T>::value && rocket::IsChar<C>
+struct fmt::formatter<T, C> {
+  /// @cond undocumented
+
+  template<typename FormatContext>
+  FormatContext::iterator
+  format(const T& val, FormatContext& ctx) const {
+    auto out = ctx.out();
+    if (withType_) {
+      const std::string typeName = fmt::format("{}", typeid(val));
+      out = detail::write<C>(out, rocket::unicode::ConvertTo<C>::apply(typeName));
+    }
+    rocket::codec::FormattedCodec codec;
+    rocket::nio::StringSink sink;
+    codec.encode(val, sink, { .indent=indent_ });
+    out = detail::write<C>(out, rocket::unicode::ConvertTo<C>::apply(sink.str()));
+    return out;
+  }
+
+  constexpr const C*
+  parse(parse_context<C>& ctx) {
+    auto it = ctx.begin(), end = ctx.end();
+    if (it != end && *it == 'i') {
+      indent_ = true;
+      ++it;
+    }
+    if (it != end && *it == 't') {
+      withType_ = true;
+      ++it;
+    }
+    return it;
+  }
+
+  /// @endcond
+
+private:
+
+  bool indent_ = false;
+  bool withType_ = false;
+};
+
+// #fmt::formatter<#rocket::reflect::Instance> --------------------------------------------------------------
+
+/**
+ * @spec_fmt_formatter{#rocket::reflect::Instance}
+ *
+ * - If the `i` format specifier is used, then the output is indented.
+ * - If the `t` format specifier is used, then the type name is included.
+ */
+template<typename T, typename Inner, typename C> requires rocket::IsChar<C>
+struct fmt::formatter<rocket::reflect::Instance<T, Inner>, C> {
+  /// @cond undocumented
+
+  using Type = rocket::reflect::Instance<T, Inner>;
+
+  template<typename FormatContext>
+  FormatContext::iterator
+  format(const Type& val, FormatContext& ctx) const {
+    auto out = ctx.out();
+    if (withType_) {
+      const std::string typeName = fmt::format("{}", typeid(typename Type::Type));
+      out = detail::write<C>(out, rocket::unicode::ConvertTo<C>::apply(typeName));
+    }
+    rocket::codec::FormattedCodec codec;
+    rocket::nio::StringSink sink;
+    codec.encode(val, sink, { .indent=indent_ });
+    out = detail::write<C>(out, rocket::unicode::ConvertTo<C>::apply(sink.str()));
+    return out;
+  }
+
+  constexpr const C*
+  parse(parse_context<C>& ctx) {
+    auto it = ctx.begin(), end = ctx.end();
+    if (it != end && *it == 'i') {
+      indent_ = true;
+      ++it;
+    }
+    if (it != end && *it == 't') {
+      withType_ = true;
+      ++it;
+    }
+    return it;
+  }
+
+  /// @endcond
+
+private:
+
+  bool indent_ = false;
+  bool withType_ = false;
+};
+
+// #fmt::formatter<#rocket::reflect::VarRef> ----------------------------------------------------------------
+
+/**
+ * @spec_fmt_formatter{#rocket::reflect::VarRef}
+ *
+ * This formatter uses the same format specifiers as the underlying formatter for type @ T.
+ */
+template<typename T, typename C> requires fmt::is_formattable<T, C>::value && rocket::IsChar<C>
+struct fmt::formatter<rocket::reflect::VarRef<T>, C> {
+  /// @cond undocumented
+
+  using Type = rocket::reflect::VarRef<T>;
+
+  template<typename FormatContext>
+  FormatContext::iterator
+  format(const Type& val, FormatContext& ctx) const {
+    auto out = ctx.out();
+    rocket::codec::FormattedCodec codec;
+    rocket::nio::StringSink sink;
+    codec.encode(val, sink, { .indent=indent_ });
+    out = detail::write<C>(out, rocket::unicode::ConvertTo<C>::apply(sink.str()));
+    return out;
+  }
+
+  constexpr const C*
+  parse(parse_context<C>& ctx) {
+    auto it = ctx.begin(), end = ctx.end();
+    if (it != end && *it == 'i') {
+      indent_ = true;
+      ++it;
+    }
+    return it;
+  }
+
+  /// @endcond
+
+private:
+
+  bool indent_ = false;
+};
+
+// #std::hash<#rocket::reflect::Declared> -------------------------------------------------------------------
+
+/// @spec_std_hash{#rocket::reflect::Declared}
+template<typename T> requires rocket::reflect::Declared<T>::value
+struct std::hash<T> {
+  /// @cond undocumented
+
+  u64 operator()(const T& val) const {
+    return rocket::codec::HashEncoder<>().encode(val);
+  }
+
+  /// @endcond
+};
+
+// #std::hash<#rocket::reflect::Instance> -------------------------------------------------------------------
+
+/// @spec_std_hash{#rocket::reflect::Instance}
+template<typename T, typename Inner>
+struct std::hash<rocket::reflect::Instance<T, Inner>> {
+  /// @cond undocumented
+
+  u64 operator()(const rocket::reflect::Instance<T, Inner>& val) const {
+    return rocket::codec::HashEncoder<>().encode(val);
+  }
+
+  /// @endcond
+};
+
+// Functions ------------------------------------------------------------------------------------------------
+
+// @op_output{#rocket::reflect::Declared}
+template<typename T> requires rocket::reflect::Declared<T>::value
+inline std::ostream&
+operator<<(std::ostream& lhs, const T& rhs) {
+  return lhs << fmt::format("{}", rhs);
+}
 
 // EOF

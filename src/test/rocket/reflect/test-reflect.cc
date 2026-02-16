@@ -103,15 +103,19 @@ TEST(reflect, MyStructOpGt) {
 TEST(reflect, MyStructOpOutput) {
   ostringstream os;
   os << MyStruct(42, "rocket", true);
-  EXPECT_EQ(os.str(), "(ä=42, b=rocket, c=true)");
+  EXPECT_EQ(os.str(), "(ä=42, b=\"rocket\", c=true)");
 }
 
 TEST(reflect, MyStructFormat) {
   const MyStruct m(42, "rocket", true);
-  EXPECT_EQ(fmt::format("{}", m), "(ä=42, b=rocket, c=true)");
-  EXPECT_EQ(fmt::format("{:?}", m), "(ä=42, b=\"rocket\", c=true)");
-  EXPECT_EQ(fmt::format("{:t}", m), "MyStruct(ä=42, b=rocket, c=true)");
-  EXPECT_EQ(fmt::format("{:?t}", m), "MyStruct(ä=42, b=\"rocket\", c=true)");
+  EXPECT_EQ(fmt::format("{}", m), "(ä=42, b=\"rocket\", c=true)");
+  EXPECT_EQ(fmt::format("{:it}", m),
+    "MyStruct(\n"
+    "  ä=42,\n"
+    "  b=\"rocket\",\n"
+    "  c=true\n"
+    ")");
+  EXPECT_EQ(fmt::format("{:t}", m), "MyStruct(ä=42, b=\"rocket\", c=true)");
 }
 
 TEST(reflect, MyStructHash) {
@@ -129,15 +133,15 @@ TEST(reflect, MyStructHash) {
   EXPECT_NE(hash3, 0);
 }
 
-TEST(reflect, MyStructIndex2) {
+TEST(reflect, MyStructPublic) {
   MyStruct m1(12, "here", true);
   EXPECT_EQ(m1.b, "here");
-  get<1>(MyStruct::Index::refs).get(m1) = "everywhere";
+  get<1>(MyStruct::Public::refs).get(m1) = "everywhere";
   EXPECT_EQ(m1.b, "everywhere");
 
   const MyStruct m2(13, "there", true);
-  EXPECT_EQ(get<0>(MyStruct::Index::refs).get(m2), 13);
-  EXPECT_EQ(get<1>(MyStruct::Index::refs).get(m2), "there");
+  EXPECT_EQ(get<0>(MyStruct::Public::refs).get(m2), 13);
+  EXPECT_EQ(get<1>(MyStruct::Public::refs).get(m2), "there");
 }
 
 TEST(reflect, MyStructPublicEq) {
@@ -157,30 +161,35 @@ TEST(reflect, MyStructPublic2Ne) {
 }
 
 TEST(reflect, MyStructPublicHash) {
-  const MyStruct m1(42, "rocket", true);
-  const MyStruct m2(42, "rocket", false);
-  const MyStruct m3(43, "rocket", true);
+  using type = Instance<MyStruct, MyStruct::Public>;
 
-  const u64 hash1 = reflect::hash(m1, MyStruct::Public::refs);
-  const u64 hash2 = reflect::hash(m2, MyStruct::Public::refs);
-  const u64 hash3 = reflect::hash(m3, MyStruct::Public::refs);
+  const MyStruct m1 = MyStruct(42, "rocket", true);
+  const auto val1 = type(m1);
+  const MyStruct m2(42, "rocket", false);
+  const auto val2 = type(m2);
+  const MyStruct m3(43, "rocket", true);
+  const auto val3 = type(m3);
+
+  const u64 hash1 = std::hash<type>()(val1);
+  const u64 hash2 = std::hash<type>()(val2);
+  const u64 hash3 = std::hash<type>()(val3);
 
   EXPECT_EQ(hash1, hash2);
   EXPECT_NE(hash1, hash3);
 }
 
-TEST(reflect, MyStructPublicWrite) {
+TEST(reflect, MyStructPublicFormat) {
+  using type = Instance<MyStruct, MyStruct::Public>;
+
   const MyStruct m(42, "rocket", true);
-  nio::StringSink out;
-  write(out, m, MyStruct::Public::refs);
-  EXPECT_EQ(out.str(), "(ä=42, b=rocket)");
+  type val(m);
+  EXPECT_EQ(fmt::format("{}", val), "(ä=42, b=\"rocket\")");
+  EXPECT_EQ(fmt::format("{:t}", val), "MyStruct(ä=42, b=\"rocket\")");
 }
 
-TEST(reflect, MyDerivedStructWrite) {
+TEST(reflect, MyDerivedStructFormat) {
   const MyDerivedStruct m(41, "rocket", true, "everywhere", 42_u64);
-  nio::StringSink out;
-  write(out, m, MyDerivedStruct::Index::refs);
-  EXPECT_EQ(out.str(), "(ä=41, b=rocket, c=true, d=everywhere, e=42)");
+  EXPECT_EQ(fmt::format("{:t}", m), "MyDerivedStruct(ä=41, b=\"rocket\", c=true, d=\"everywhere\", e=42)");
 }
 
 TEST(reflect, VarRef) {

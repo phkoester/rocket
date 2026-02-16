@@ -8,8 +8,6 @@
 
 #include "rocket/assert.h"
 #include "rocket/Bimap.h"
-#include "rocket/Exception.h"
-#include "rocket/literal.h"
 #include "rocket/str/message/message.h"
 #include "rocket/unicode/ConvertTo.h"
 
@@ -27,12 +25,7 @@
 /**
  * Provides all the declarations for the enum @p type needed for full Rocket interoperability.
  *
- * In particular, it provides
- *
- * - an `operator<<` for #std::ostream;
- * - a #rocket::Enum specialization for the enum;
- * - a `fmt::formatter` specialization so the enum can be formatted using `fmt::format()`;
- * - a `scn::scanner` specialization so the enum can be scanned using `scn::scan()`.
+ * This provides a #rocket::Enum specialization for the enum.
  *
  * @note This macro must be called in the global namespace.
  *
@@ -44,7 +37,7 @@
 #define ROCKET_ENUM_DECLARE(ns, type, name) ROCKET_ENUM_DECLARE__(ns, type, name)
 
 /**
- * Provides all the definitions for the enum @p name needed for full Rocket interoperability.
+ * Provides all the definitions for the enum @p type needed for full Rocket interoperability.
  *
  * This macro must be called in the enum's local namespace.
  *
@@ -66,9 +59,6 @@
     extern const ::rocket::Bimap<type, ::std::string_view> name##Map__; \
     const ::rocket::Bimap<type, ::std::string_view>& get##name##Map__();
 
-#define ROCKET_ENUM_DECLARE_OP_OUTPUT__(type) \
-    ::std::ostream& operator<<(::std::ostream&, type);
-
 #define ROCKET_ENUM_DECLARE_ROCKET_ENUM__(ns, type) \
   template<> \
   struct rocket::Enum<ns::type> : ::std::true_type { \
@@ -77,74 +67,11 @@
     static ::std::pair<u64, ns::type> toType(::std::string_view str, bool strict); \
   }
 
-#define ROCKET_ENUM_DECLARE_FMT_FORMATTER__(ns, type) \
-  template<typename C> \
-  struct fmt::formatter<ns::type, C> { \
-    template<typename FormatContext> \
-    constexpr FormatContext::iterator \
-    format(ns::type val, FormatContext& ctx) const { \
-      try { \
-        auto str = ::rocket::Enum<ns::type>::toString(val); \
-        return underlying_.format(::rocket::unicode::ConvertTo<C>::apply(str), ctx); \
-      } catch (const std::exception&) { \
-        return underlying_.format(INVALID, ctx); \
-      } \
-    } \
-    \
-    constexpr const C* \
-    parse(parse_context<C>& ctx) { \
-      return underlying_.parse(ctx); \
-    } \
-    \
-    constexpr void \
-    set_debug_format(bool val = true) { \
-      underlying_.set_debug_format(val); \
-    } \
-  \
-  private: \
-    \
-    static constexpr ::std::basic_string_view<C> INVALID = \
-      rocket::LiteralString<C, '<', 'i', 'n', 'v', 'a', 'l', 'i', 'd', '>'> {}; \
-    \
-    ::fmt::formatter<basic_string_view<C>, C> underlying_; \
-  }
-
-#define ROCKET_ENUM_DECLARE_SCN_SCANNER__(ns, type) \
-  template<> \
-  struct scn::scanner<ns::type, char> : scn::scanner<::std::string_view, char> { \
-    using Base = scn::scanner<::std::string_view, char>; \
-    \
-    template<typename Context> \
-    scan_expected<typename Context::iterator> \
-    scan(ns::type& val, Context& ctx) const { \
-      ::std::string_view str; \
-      auto result = Base::scan(str, ctx); \
-      if (result) { \
-        try { \
-          const auto [size, enumVal] = ::rocket::Enum<ns::type>::toType(str, false); \
-          /* If the consumed string is longer than the scanned portion, we need to correct the iterator */ \
-          const i64 correction = size - str.size(); /* Zero or negative */ \
-          val = enumVal; \
-          auto it = result.value(); \
-          std::advance(it, correction); \
-          return it; \
-        } catch (const ::std::exception&) { \
-          return unexpected(scan_error(scan_error::invalid_scanned_value, "Invalid enum value")); \
-        } \
-      } else { \
-        return unexpected(result.error()); \
-      } \
-    } \
-  }
-
 #define ROCKET_ENUM_DECLARE__(ns, type, name) \
   ROCKET_NAMESPACE_BEGIN(ns); \
   ROCKET_ENUM_DECLARE_MAP__(type, name); \
-  ROCKET_ENUM_DECLARE_OP_OUTPUT__(type); \
   ROCKET_NAMESPACE_END(ns); \
-  ROCKET_ENUM_DECLARE_ROCKET_ENUM__(ns, type); \
-  ROCKET_ENUM_DECLARE_FMT_FORMATTER__(ns, type); \
-  ROCKET_ENUM_DECLARE_SCN_SCANNER__(ns, type)
+  ROCKET_ENUM_DECLARE_ROCKET_ENUM__(ns, type)
 
 // Definitions ..............................................................................................
 
@@ -159,12 +86,6 @@
   const ::rocket::Bimap<type, ::std::string_view>& \
   get##name##Map__() { \
     return name##Map__; \
-  }
-
-#define ROCKET_ENUM_DEFINE_OP_OUTPUT__(type, name) \
-  ::std::ostream& \
-  operator<<(::std::ostream& lhs, type rhs) { \
-    return lhs << ::fmt::format("{}", rhs); \
   }
 
 #define ROCKET_ENUM_DEFINE_ROCKET_ENUM__(ns, type, name) \
@@ -206,7 +127,6 @@
 #define ROCKET_ENUM_DEFINE__(ns, type, name, seq) \
   ROCKET_NAMESPACE_BEGIN(ns); \
   ROCKET_ENUM_DEFINE_MAP__(type, name, seq); \
-  ROCKET_ENUM_DEFINE_OP_OUTPUT__(type, name); \
   ROCKET_NAMESPACE_END(ns); \
   ROCKET_ENUM_DEFINE_ROCKET_ENUM__(ns, type, name)
 
@@ -243,5 +163,85 @@ struct Enum : std::false_type {
 };
 
 } // namespace rocket
+
+// #fmt::formatter<#rocket::Enum> ---------------------------------------------------------------------------
+
+/**
+ * @spec_fmt_formatter{#rocket::Enum}
+ *
+ * This formatter uses the same format specifiers as the underlying string formatter.
+ */
+template<typename E, typename C> requires rocket::Enum<E>::value && rocket::IsChar<C>
+struct fmt::formatter<E, C> {
+  template<typename FormatContext>
+  constexpr FormatContext::iterator
+  format(E val, FormatContext& ctx) const {
+    try {
+      auto str = rocket::Enum<E>::toString(val);
+      return underlying_.format(rocket::unicode::ConvertTo<C>::apply(str), ctx);
+    } catch (const std::exception&) {
+      return underlying_.format(INVALID, ctx);
+    }
+  }
+
+  constexpr const C*
+  parse(parse_context<C>& ctx) {
+    return underlying_.parse(ctx);
+  }
+
+  constexpr void
+  set_debug_format(bool val = true) {
+    underlying_.set_debug_format(val);
+  }
+
+private:
+
+  static constexpr std::basic_string_view<C> INVALID =
+    rocket::LiteralString<C, '<', 'i', 'n', 'v', 'a', 'l', 'i', 'd', '>'> {};
+
+  fmt::formatter<basic_string_view<C>, C> underlying_;
+};
+
+// #scn::scanner<#rocket::Enum> -----------------------------------------------------------------------------
+
+/**
+ * @spec_scn_scanner{#rocket::Enum}
+ *
+ * This scanner uses the same format specifiers as the underlying string scanner.
+ */
+template<typename E> requires rocket::Enum<E>::value
+struct scn::scanner<E, char> : scn::scanner<::std::string_view, char> {
+  using Base = scn::scanner<::std::string_view, char>;
+
+  template<typename Context>
+  scan_expected<typename Context::iterator>
+  scan(E& val, Context& ctx) const {
+    std::string_view str;
+    auto result = Base::scan(str, ctx);
+    if (result) {
+      try {
+        const auto [size, enumVal] = ::rocket::Enum<E>::toType(str, false);
+        // If the consumed string is longer than the scanned portion, we need to correct the iterator
+        const i64 correction = size - str.size(); // Zero or negative
+        val = enumVal;
+        auto it = result.value();
+        std::advance(it, correction);
+        return it; \
+      } catch (const ::std::exception&) {
+        return unexpected(scan_error(scan_error::invalid_scanned_value, "Invalid enum value"));
+      }
+    } else {
+      return unexpected(result.error());
+    }
+  }
+};
+
+// Functions ------------------------------------------------------------------------------------------------
+
+template<typename E> requires rocket::Enum<E>::value
+inline std::ostream&
+operator<<(std::ostream& lhs, E rhs) {
+  return lhs << fmt::format("{}", rhs);
+}
 
 // EOF
