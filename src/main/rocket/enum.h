@@ -25,7 +25,10 @@
 /**
  * Provides all the declarations for the enum @p type needed for full Rocket interoperability.
  *
- * This provides a #rocket::Enum specialization for the enum.
+ * In particular, it provides:
+ *
+ * - a #rocket::Enum specialization;
+ * - `operator<<(std::ostream&, ...)`.
  *
  * @note This macro must be called in the global namespace.
  *
@@ -59,6 +62,9 @@
     extern const ::rocket::Bimap<type, ::std::string_view> name##Map__; \
     const ::rocket::Bimap<type, ::std::string_view>& get##name##Map__();
 
+#define ROCKET_ENUM_DECLARE_OP_OUTPUT__(type) \
+  ::std::ostream& operator<<(::std::ostream& lhs, type rhs);
+
 #define ROCKET_ENUM_DECLARE_ROCKET_ENUM__(ns, type) \
   template<> \
   struct rocket::Enum<ns::type> : ::std::true_type { \
@@ -70,6 +76,7 @@
 #define ROCKET_ENUM_DECLARE__(ns, type, name) \
   ROCKET_NAMESPACE_BEGIN(ns); \
   ROCKET_ENUM_DECLARE_MAP__(type, name); \
+  ROCKET_ENUM_DECLARE_OP_OUTPUT__(type); \
   ROCKET_NAMESPACE_END(ns); \
   ROCKET_ENUM_DECLARE_ROCKET_ENUM__(ns, type)
 
@@ -86,6 +93,12 @@
   const ::rocket::Bimap<type, ::std::string_view>& \
   get##name##Map__() { \
     return name##Map__; \
+  }
+
+#define ROCKET_ENUM_DEFINE_OP_OUTPUT__(type) \
+  ::std::ostream& \
+  operator<<(::std::ostream& lhs, type rhs) { \
+    return lhs << fmt::format("{}", rhs); \
   }
 
 #define ROCKET_ENUM_DEFINE_ROCKET_ENUM__(ns, type, name) \
@@ -127,6 +140,7 @@
 #define ROCKET_ENUM_DEFINE__(ns, type, name, seq) \
   ROCKET_NAMESPACE_BEGIN(ns); \
   ROCKET_ENUM_DEFINE_MAP__(type, name, seq); \
+  ROCKET_ENUM_DEFINE_OP_OUTPUT__(type); \
   ROCKET_NAMESPACE_END(ns); \
   ROCKET_ENUM_DEFINE_ROCKET_ENUM__(ns, type, name)
 
@@ -235,13 +249,5 @@ struct scn::scanner<E, char> : scn::scanner<::std::string_view, char> {
     }
   }
 };
-
-// Functions ------------------------------------------------------------------------------------------------
-
-template<typename E> requires rocket::Enum<E>::value
-inline std::ostream&
-operator<<(std::ostream& lhs, E rhs) {
-  return lhs << fmt::format("{}", rhs);
-}
 
 // EOF

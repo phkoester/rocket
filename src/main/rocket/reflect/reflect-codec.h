@@ -329,13 +329,4 @@ struct std::hash<rocket::reflect::Instance<T, Inner>> {
   /// @endcond
 };
 
-// Functions ------------------------------------------------------------------------------------------------
-
-// @op_output{#rocket::reflect::Declared}
-template<typename T> requires rocket::reflect::Declared<T>::value
-inline std::ostream&
-operator<<(std::ostream& lhs, const T& rhs) {
-  return lhs << fmt::format("{}", rhs);
-}
-
 // EOF

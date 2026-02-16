@@ -14,6 +14,7 @@
 #include <boost/preprocessor/seq/enum.hpp>
 #include <boost/preprocessor/seq/for_each.hpp>
 
+#include <ostream>
 #include <tuple>
 
 // Macros ---------------------------------------------------------------------------------------------------
@@ -34,9 +35,10 @@
 /**
  * Provides all the declarations for the class @p cls needed for full Rocket interoperability.
  *
- * In particular, it provides
+ * In particular, it provides:
  *
  * - `operator==`, `operator!=`, `operator<`, `operator>`;
+ * - `operator<<(std::ostream&, ...)`.
  *
  * @note This macro must be called in the global namespace.
  *
@@ -132,6 +134,9 @@
     return ::rocket::reflect::gt(lhs, rhs, cls::name::refs); \
   }
 
+#define ROCKET_REFLECT_MEMBERS_DECLARE_OP_OUTPUT__(cls) \
+  ::std::ostream& operator<<(::std::ostream&, const cls& rhs)
+
 #define ROCKET_REFLECT_MEMBERS_DECLARE_DECLARED__(ns, cls, name) \
   template<> \
   struct rocket::reflect::Declared<ns::cls> : ::std::true_type{ \
@@ -144,12 +149,20 @@
   ROCKET_REFLECT_MEMBERS_DECLARE_OP_NE__(cls, name); \
   ROCKET_REFLECT_MEMBERS_DECLARE_OP_LT__(cls, name); \
   ROCKET_REFLECT_MEMBERS_DECLARE_OP_GT__(cls, name); \
+  ROCKET_REFLECT_MEMBERS_DECLARE_OP_OUTPUT__(cls); \
   ROCKET_NAMESPACE_END(ns); \
   ROCKET_REFLECT_MEMBERS_DECLARE_DECLARED__(ns, cls, name)
 
-// XXX Weg?
+#define ROCKET_REFLECT_MEMBERS_DEFINE_OP_OUTPUT__(cls) \
+  ::std::ostream& \
+  operator<<(::std::ostream& lhs, const cls& rhs) { \
+    return lhs << fmt::format("{}", rhs); \
+  }
+
 #define ROCKET_REFLECT_MEMBERS_DEFINE__(ns, cls, name) \
-  /* Empty */
+  ROCKET_NAMESPACE_BEGIN(ns); \
+  ROCKET_REFLECT_MEMBERS_DEFINE_OP_OUTPUT__(cls); \
+  ROCKET_NAMESPACE_END(ns)
 
 // Variables ................................................................................................
 
