@@ -176,17 +176,19 @@ struct fmt::formatter<T, C> {
     auto out = ctx.out();
     if (withType_) {
       const std::string typeName = fmt::format("{}", typeid(val));
-      out = detail::write<C>(out, rocket::unicode::ConvertTo<C>::apply(typeName));
+      // GCC 13.3 needs `fmt::detail` here
+      out = fmt::detail::write<C>(out, rocket::unicode::ConvertTo<C>::apply(typeName));
     }
     rocket::codec::FormattedCodec codec;
     rocket::nio::StringSink sink;
     codec.encode(val, sink, { .indent=indent_ });
-    out = detail::write<C>(out, rocket::unicode::ConvertTo<C>::apply(sink.str()));
+    // GCC 13.3 needs `fmt::detail` here
+    out = fmt::detail::write<C>(out, rocket::unicode::ConvertTo<C>::apply(sink.str()));
     return out;
   }
 
   constexpr const C*
-  parse(parse_context<C>& ctx) {
+  parse(fmt::parse_context<C>& ctx) { // GCC 13.3 needs `fmt::parse_context` here
     auto it = ctx.begin(), end = ctx.end();
     if (it != end && *it == 'i') {
       indent_ = true;

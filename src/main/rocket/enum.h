@@ -174,7 +174,7 @@ struct Enum : std::false_type {
 template<typename E, typename C> requires rocket::Enum<E>::value && rocket::IsChar<C>
 struct fmt::formatter<E, C> {
   template<typename FormatContext>
-  constexpr FormatContext::iterator
+  FormatContext::iterator
   format(E val, FormatContext& ctx) const {
     try {
       auto str = rocket::Enum<E>::toString(val);
