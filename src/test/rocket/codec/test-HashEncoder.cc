@@ -7,8 +7,6 @@
 #include "rocket/codec/HashEncoder.h"
 #include "rocket/reflect/reflect-codec.h"
 
-#include <fmt/ranges.h>
-
 using namespace rocket;
 using namespace rocket::codec;
 

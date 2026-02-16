@@ -9,7 +9,6 @@
 #include "rocket/codec/HashEncoder.h"
 #include "rocket/codec/FormattedCodec.h"
 #include "rocket/nio/nio.h"
-#include "rocket/reflect/reflect.h"
 #include "rocket/unicode/ConvertTo.h"
 
 #include <fmt/std.h> // #fmt::formatter<#std::type_info>
@@ -265,7 +264,7 @@ private:
 /**
  * @spec_fmt_formatter{#rocket::reflect::VarRef}
  *
- * This formatter uses the same format specifiers as the underlying formatter for type @ T.
+ * - If the `i` format specifier is used, then the output is indented.
  */
 template<typename T, typename C> requires fmt::is_formattable<T, C>::value && rocket::IsChar<C>
 struct fmt::formatter<rocket::reflect::VarRef<T>, C> {

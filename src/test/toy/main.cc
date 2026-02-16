@@ -8,6 +8,8 @@
 #include "rocket/cl/cl.h"
 #include "rocket/log/log.h"
 
+#include <functional>
+
 using namespace rocket;
 using namespace rocket::unicode;
 using namespace std;

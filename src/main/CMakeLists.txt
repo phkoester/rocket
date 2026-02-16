@@ -100,6 +100,7 @@ target_sources(rocket
       rocket/chrono/chrono.h
       rocket/cl/cl.h
       rocket/codec/codec.h
+      rocket/codec/EqualToEncoder.h
       rocket/codec/FormattedCodec.h
       rocket/codec/HashEncoder.h
       rocket/filesystem/filesystem.h
