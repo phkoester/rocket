@@ -89,6 +89,7 @@ target_sources(rocket
       rocket/Cow.h
       rocket/enum.h
       rocket/Exception.h
+      rocket/functional.h
       rocket/Guard.h
       rocket/InputFailure.h
       rocket/Lazy.h

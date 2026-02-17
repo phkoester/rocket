@@ -27,12 +27,20 @@ ROCKET_REFLECT_MEMBERS_DEFINE(, MyStruct, Index);
 
 // #TEST ----------------------------------------------------------------------------------------------------
 
-TEST(EqualToEncoder, bool) {
+TEST(EqualToEncoder, Bool) {
   EqualToEncoder<> encoder;
   EXPECT_EQ(encoder.encode(false, false), true);
   EXPECT_EQ(encoder.encode(false, true), false);
   EXPECT_EQ(encoder.encode(true, false), false);
   EXPECT_EQ(encoder.encode(true, true), true);
+}
+
+TEST(EqualToEncoder, String) {
+  EqualToEncoder<> encoder;
+  EXPECT_EQ(encoder.encode("a"sv, "a"sv), true);
+  EXPECT_EQ(encoder.encode("a"sv, "b"sv), false);
+  EXPECT_EQ(encoder.encode("b"sv, "a"sv), false);
+  EXPECT_EQ(encoder.encode("b"sv, "b"sv), true);
 }
 
 // EOF

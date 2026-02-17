@@ -43,6 +43,7 @@ AddTest(test-rocket-Bimap                        rocket                 test-Bim
 AddTest(test-rocket-Cow                          rocket                 test-Cow.cc)
 AddTest(test-rocket-enum                         rocket                 test-enum.cc)
 AddTest(test-rocket-Exception                    rocket                 test-Exception.cc)
+AddTest(test-rocket-functional                   rocket                 test-functional.cc)
 AddTest(test-rocket-Guard                        rocket                 test-Guard.cc)
 AddTest(test-rocket-macro                        rocket                 test-macro.cc)
 AddTest(test-rocket-Process                      rocket                 test-Process.cc)

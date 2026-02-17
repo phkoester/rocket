@@ -35,10 +35,11 @@
 /**
  * Provides all the declarations for the class @p cls needed for full Rocket interoperability.
  *
- * In particular, it provides:
+ * In particular, this provides:
  *
- * - `operator==`, `operator!=`, `operator<`, `operator>`;
- * - `operator<<(std::ostream&, ...)`.
+ * - a #rocket::reflect::Declared specialization;
+ * - comparison operators `==`, `!=`, `<`, `>`;
+ * - an output operator for #std::ostream.
  *
  * @note This macro must be called in the global namespace.
  *
@@ -110,11 +111,14 @@
       ROCKET_REFLECT_MEMBERS_REFS__(cls, seq)); \
   }
 
-#define ROCKET_REFLECT_MEMBERS_DECLARE_OP_EQ__(cls, name) \
-  inline bool \
-  operator==(const cls& lhs, const cls& rhs) { \
-    return ::rocket::reflect::eq(lhs, rhs, cls::name::refs); \
+#define ROCKET_REFLECT_MEMBERS_DECLARE_DECLARED__(ns, cls, name) \
+  template<> \
+  struct rocket::reflect::Declared<ns::cls> : ::std::true_type{ \
+    static constexpr auto& refs = ns::cls::name::refs; \
   }
+
+#define ROCKET_REFLECT_MEMBERS_DECLARE_OP_EQ__(cls) \
+  bool operator==(const cls& lhs, const cls& rhs)
 
 #define ROCKET_REFLECT_MEMBERS_DECLARE_OP_NE__(cls, name) \
   inline bool \
@@ -137,21 +141,21 @@
 #define ROCKET_REFLECT_MEMBERS_DECLARE_OP_OUTPUT__(cls) \
   ::std::ostream& operator<<(::std::ostream&, const cls& rhs)
 
-#define ROCKET_REFLECT_MEMBERS_DECLARE_DECLARED__(ns, cls, name) \
-  template<> \
-  struct rocket::reflect::Declared<ns::cls> : ::std::true_type{ \
-    static constexpr auto& refs = ns::cls::name::refs; \
-  }
-
 #define ROCKET_REFLECT_MEMBERS_DECLARE__(ns, cls, name) \
+  ROCKET_REFLECT_MEMBERS_DECLARE_DECLARED__(ns, cls, name); \
   ROCKET_NAMESPACE_BEGIN(ns); \
-  ROCKET_REFLECT_MEMBERS_DECLARE_OP_EQ__(cls, name); \
+  ROCKET_REFLECT_MEMBERS_DECLARE_OP_EQ__(cls); \
   ROCKET_REFLECT_MEMBERS_DECLARE_OP_NE__(cls, name); \
   ROCKET_REFLECT_MEMBERS_DECLARE_OP_LT__(cls, name); \
   ROCKET_REFLECT_MEMBERS_DECLARE_OP_GT__(cls, name); \
   ROCKET_REFLECT_MEMBERS_DECLARE_OP_OUTPUT__(cls); \
-  ROCKET_NAMESPACE_END(ns); \
-  ROCKET_REFLECT_MEMBERS_DECLARE_DECLARED__(ns, cls, name)
+  ROCKET_NAMESPACE_END(ns)
+
+#define ROCKET_REFLECT_MEMBERS_DEFINE_OP_EQ__(cls) \
+  bool \
+  operator==(const cls& lhs, const cls& rhs) { \
+    return ::std::equal_to<cls>()(lhs, rhs); \
+  }
 
 #define ROCKET_REFLECT_MEMBERS_DEFINE_OP_OUTPUT__(cls) \
   ::std::ostream& \
@@ -161,6 +165,7 @@
 
 #define ROCKET_REFLECT_MEMBERS_DEFINE__(ns, cls, name) \
   ROCKET_NAMESPACE_BEGIN(ns); \
+  ROCKET_REFLECT_MEMBERS_DEFINE_OP_EQ__(cls); \
   ROCKET_REFLECT_MEMBERS_DEFINE_OP_OUTPUT__(cls); \
   ROCKET_NAMESPACE_END(ns)
 

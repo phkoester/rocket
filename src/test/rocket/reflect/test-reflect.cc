@@ -85,6 +85,9 @@ TEST(reflect, MyStructSizeof) {
 
 TEST(reflect, MyStructOpEq) {
   EXPECT_EQ(MyStruct(42, "rocket", true), MyStruct(42, "rocket", true));
+}
+
+TEST(reflect, MyStructOpNe) {
   EXPECT_NE(MyStruct(42, "rocket", true), MyStruct(42, "rocket", false));
 }
 
@@ -144,12 +147,21 @@ TEST(reflect, MyStructPublic) {
   EXPECT_EQ(get<1>(MyStruct::Public::refs).get(m2), "there");
 }
 
-TEST(reflect, MyStructPublicEq) {
+TEST(reflect, MyStructPublicOpEq) {
+  using type = Instance<MyStruct, MyStruct::Public>;
+
   const MyStruct m1(42, "rocket", true);
   const MyStruct m2(42, "rocket", false);
   const MyStruct m3(43, "rocket", true);
-  EXPECT_EQ(eq(m1, m2, MyStruct::Public::refs), true);
-  EXPECT_EQ(eq(m1, m3, MyStruct::Public::refs), false);
+
+  const type val1(m1);
+  const type val2(m2);
+  const type val3(m3);
+
+  EXPECT_EQ(val1, val2);
+  EXPECT_EQ(val2, val1);
+  EXPECT_NE(val2, val3);
+  EXPECT_NE(val3, val2);
 }
 
 TEST(reflect, MyStructPublic2Ne) {

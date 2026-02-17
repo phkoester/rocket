@@ -25,10 +25,10 @@
 /**
  * Provides all the declarations for the enum @p type needed for full Rocket interoperability.
  *
- * In particular, it provides:
+ * In particular, this provides:
  *
  * - a #rocket::Enum specialization;
- * - `operator<<(std::ostream&, ...)`.
+ * - an output operator for #std::ostream.
  *
  * @note This macro must be called in the global namespace.
  *
@@ -58,13 +58,6 @@
 
 // Declarations .............................................................................................
 
-#define ROCKET_ENUM_DECLARE_MAP__(type, name) \
-    extern const ::rocket::Bimap<type, ::std::string_view> name##Map__; \
-    const ::rocket::Bimap<type, ::std::string_view>& get##name##Map__();
-
-#define ROCKET_ENUM_DECLARE_OP_OUTPUT__(type) \
-  ::std::ostream& operator<<(::std::ostream& lhs, type rhs);
-
 #define ROCKET_ENUM_DECLARE_ROCKET_ENUM__(ns, type) \
   template<> \
   struct rocket::Enum<ns::type> : ::std::true_type { \
@@ -73,33 +66,21 @@
     static ::std::pair<u64, ns::type> toType(::std::string_view str, bool strict); \
   }
 
+#define ROCKET_ENUM_DECLARE_MAP__(type, name) \
+    extern const ::rocket::Bimap<type, ::std::string_view> name##Map__; \
+    const ::rocket::Bimap<type, ::std::string_view>& get##name##Map__();
+
+#define ROCKET_ENUM_DECLARE_OP_OUTPUT__(type) \
+  ::std::ostream& operator<<(::std::ostream& lhs, type rhs);
+
 #define ROCKET_ENUM_DECLARE__(ns, type, name) \
+  ROCKET_ENUM_DECLARE_ROCKET_ENUM__(ns, type); \
   ROCKET_NAMESPACE_BEGIN(ns); \
   ROCKET_ENUM_DECLARE_MAP__(type, name); \
   ROCKET_ENUM_DECLARE_OP_OUTPUT__(type); \
-  ROCKET_NAMESPACE_END(ns); \
-  ROCKET_ENUM_DECLARE_ROCKET_ENUM__(ns, type)
+  ROCKET_NAMESPACE_END(ns)
 
 // Definitions ..............................................................................................
-
-#define ROCKET_ENUM_DEFINE_MAP_ELEM__(r, data, elem) { data::elem, BOOST_PP_STRINGIZE(elem) },
-
-#define ROCKET_ENUM_DEFINE_MAP__(type, name, seq) \
-  const ::rocket::Bimap<type, ::std::string_view> name##Map__ = \
-    ::rocket::makeBimap<type, ::std::string_view>({ \
-    BOOST_PP_SEQ_FOR_EACH(ROCKET_ENUM_DEFINE_MAP_ELEM__, type, seq) \
-  }); \
-  \
-  const ::rocket::Bimap<type, ::std::string_view>& \
-  get##name##Map__() { \
-    return name##Map__; \
-  }
-
-#define ROCKET_ENUM_DEFINE_OP_OUTPUT__(type) \
-  ::std::ostream& \
-  operator<<(::std::ostream& lhs, type rhs) { \
-    return lhs << fmt::format("{}", rhs); \
-  }
 
 #define ROCKET_ENUM_DEFINE_ROCKET_ENUM__(ns, type, name) \
   ::std::string_view \
@@ -137,12 +118,31 @@
     } \
   }
 
+#define ROCKET_ENUM_DEFINE_MAP_ELEM__(r, data, elem) { data::elem, BOOST_PP_STRINGIZE(elem) },
+
+#define ROCKET_ENUM_DEFINE_MAP__(type, name, seq) \
+  const ::rocket::Bimap<type, ::std::string_view> name##Map__ = \
+    ::rocket::makeBimap<type, ::std::string_view>({ \
+    BOOST_PP_SEQ_FOR_EACH(ROCKET_ENUM_DEFINE_MAP_ELEM__, type, seq) \
+  }); \
+  \
+  const ::rocket::Bimap<type, ::std::string_view>& \
+  get##name##Map__() { \
+    return name##Map__; \
+  }
+
+#define ROCKET_ENUM_DEFINE_OP_OUTPUT__(type) \
+  ::std::ostream& \
+  operator<<(::std::ostream& lhs, type rhs) { \
+    return lhs << fmt::format("{}", rhs); \
+  }
+
 #define ROCKET_ENUM_DEFINE__(ns, type, name, seq) \
+  ROCKET_ENUM_DEFINE_ROCKET_ENUM__(ns, type, name); \
   ROCKET_NAMESPACE_BEGIN(ns); \
   ROCKET_ENUM_DEFINE_MAP__(type, name, seq); \
   ROCKET_ENUM_DEFINE_OP_OUTPUT__(type); \
-  ROCKET_NAMESPACE_END(ns); \
-  ROCKET_ENUM_DEFINE_ROCKET_ENUM__(ns, type, name)
+  ROCKET_NAMESPACE_END(ns)
 
 /// @endcond
 

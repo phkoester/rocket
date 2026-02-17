@@ -4,9 +4,8 @@
 
 #pragma once
 
+#include "rocket/functional.h"
 #include "rocket/codec/codec.h"
-
-#include <functional>
 
 namespace rocket::codec {
 
@@ -175,7 +174,7 @@ struct EqualToConsumerImpl<DataType::Map, T, EqualTo> {
 
     constexpr auto Unordered = IsHashed<T>;
     if constexpr (Unordered) {
-      using Ordered = std::map<Key, Elem>;
+      using Ordered = std::map<Key, Elem>; // @todo Copy keys only, not the values
       constexpr auto OrderedDataType = DataTypes<Ordered>::Value;
       return EqualToConsumerImpl<OrderedDataType, Ordered, EqualTo>().consume(
         Ordered(lhs.begin(), lhs.end()),
@@ -219,7 +218,7 @@ struct EqualToConsumerImpl<DataType::Bimap, T, EqualTo> {
 
     constexpr auto Unordered = IsHashed<T>;
     if constexpr (Unordered) {
-      using Ordered = std::map<Key, Elem>;
+      using Ordered = std::map<Key, Elem>; // @todo Copy keys only, not the values
       constexpr auto OrderedDataType = DataTypes<Ordered>::Value;
       return EqualToConsumerImpl<OrderedDataType, Ordered, EqualTo>().consume(
         Ordered(lhs.left.begin(), lhs.left.end()),
@@ -322,18 +321,6 @@ struct EqualToConsumer {
   /// @type_alias
   template<DataType DataType, typename T>
   using Type = internal::EqualToConsumerImpl<DataType, T, EqualTo>;
-};
-
-// #StdEqualTo ----------------------------------------------------------------------------------------------
-
-/**
- * The standard equal-to comparator, which uses #std::equal_to.
- */
-struct StdEqualTo {
-  template<typename T>
-  bool operator()(const T& lhs, const T& rhs) const {
-    return std::equal_to<T>()(lhs, rhs);
-  }
 };
 
 // #EqualToEncoder ------------------------------------------------------------------------------------------

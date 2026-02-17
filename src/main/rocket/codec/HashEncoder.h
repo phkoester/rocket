@@ -6,8 +6,9 @@
 
 #pragma once
 
-#include "rocket/codec/codec.h"
+#include "rocket/functional.h"
 #include "rocket/hash/hash.h"
+#include "rocket/codec/codec.h"
 
 #include <boost/container_hash/hash.hpp>
 
@@ -268,7 +269,7 @@ struct HashConsumer {
  * @tparam Hash the hasher to use. The hasher must be able to provide hash values for all primitive data
  *   types, including 128-bit data types, and strings
  */
-template<typename Hash = hash::BoostHash>
+template<typename Hash = BoostHash>
 using HashEncoder = Encoder<HashConsumer<Hash>>;
 
 } // namespace rocket::codec

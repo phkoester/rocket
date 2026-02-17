@@ -6,6 +6,7 @@
 
 #pragma once
 
+#include "rocket/codec/EqualToEncoder.h"
 #include "rocket/codec/HashEncoder.h"
 #include "rocket/codec/FormattedCodec.h"
 #include "rocket/nio/nio.h"
@@ -14,14 +15,14 @@
 #include <fmt/std.h> // #fmt::formatter<#std::type_info>
 
 #include <tuple>
-#include <utility>
+#include <utility> // #std::hash
 
 namespace rocket::reflect {
 
 namespace internal {
 
 // Internal -------------------------------------------------------------------------------------------------
-// XXX Alles weg?
+// XXX Alles weg
 
 template<u64 Index, typename T, typename Tuple>
 constexpr auto&
@@ -29,16 +30,6 @@ refGet(T& val, const Tuple& refs) noexcept {
   auto& ref = std::get<Index>(refs);
   static_assert(IsMemberRef<decltype(ref)>);
   return ref.get(val);
-}
-
-template<typename T, typename Tuple, u64... Index>
-bool
-eqImpl(
-  const T& lhs,
-  const T& rhs,
-  const Tuple& refs,
-  std::index_sequence<Index...>) { // NOLINT
-  return (... && std::equal_to()(refGet<Index>(lhs, refs), refGet<Index>(rhs, refs)));
 }
 
 template<typename T, typename Tuple, u64... Index>
@@ -86,20 +77,6 @@ gtImpl(
 // Functions ------------------------------------------------------------------------------------------------
 
 /**
- * `eq` function for member references.
- *
- * @param lhs the left-hand side
- * @param rhs the right-hand side
- * @param refs the references
- * @return whether @p lhs is equal to @p rhs as defined by #std::equal_to
- */
-template<typename T, typename... Ref> requires (... && IsMemberRef<Ref>)
-inline bool
-eq(const T& lhs, const T& rhs, const std::tuple<Ref...>& refs) {
-  return internal::eqImpl(lhs, rhs, refs, std::make_index_sequence<sizeof...(Ref)>());
-}
-
-/**
  * `ne`function for member references.
  *
  * @param lhs the left-hand side
@@ -141,11 +118,29 @@ gt(const T& lhs, const T& rhs, const std::tuple<Ref...>& refs) {
   return internal::gtImpl(lhs, rhs, refs, std::make_index_sequence<sizeof...(Ref)>());
 }
 
+// #Instance ------------------------------------------------------------------------------------------------
+
+template<typename T, typename Inner>
+inline bool
+operator==(const Instance<T, Inner>& lhs, const Instance<T, Inner>& rhs) {
+  using Type = Instance<T, Inner>;
+  return std::equal_to<Type>()(lhs, rhs);
+}
+
 // @op_output{#rocket::reflect::Instance}
 template<typename T, typename Inner>
 inline std::ostream&
 operator<<(std::ostream& lhs, const Instance<T, Inner>& rhs) {
   return lhs << fmt::format("{}", rhs);
+}
+
+// #VarRef --------------------------------------------------------------------------------------------------
+
+template<typename T>
+inline bool
+operator==(const VarRef<T>& lhs, const VarRef<T>& rhs) {
+  using Type = VarRef<T>;
+  return std::equal_to<Type>()(lhs, rhs);
 }
 
 // @op_output{#rocket::reflect::VarRef}
@@ -300,6 +295,55 @@ private:
   bool indent_ = false;
 };
 
+// #std::equal_to<#rocket::reflect::Declared> ----------------------------------------------------------------
+
+/// @spec_std_equal_to<#rocket::reflect::Declared>
+template<typename T> requires rocket::reflect::Declared<T>::value
+struct std::equal_to<T> {
+  /// @cond undocumented
+
+  bool
+  operator()(const T& lhs, const T& rhs) const {
+    return rocket::codec::EqualToEncoder<>().encode(lhs, rhs);
+  }
+
+  /// @endcond
+};
+
+// #std::equal_to<#rocket::reflect::Instance> ---------------------------------------------------------------
+
+/// @spec_std_equal_to<#rocket::reflect::Instance>
+template<typename T, typename Inner>
+struct std::equal_to<rocket::reflect::Instance<T, Inner>> {
+  /// @cond undocumented
+
+  using Type = rocket::reflect::Instance<T, Inner>;
+
+  bool
+  operator()(const Type& lhs, const Type& rhs) {
+    return rocket::codec::EqualToEncoder<>().encode(lhs, rhs);
+  }
+
+  /// @endcond
+};
+
+// #std::equal_to<#rocket::reflect::VarRef> ---------------------------------------------------------------
+
+/// @spec_std_equal_to<#rocket::reflect::VarRef>
+template<typename T>
+struct std::equal_to<rocket::reflect::VarRef<T>> {
+  /// @cond undocumented
+
+  using Type = rocket::reflect::VarRef<T>;
+
+  bool
+  operator()(const Type& lhs, const Type& rhs) {
+    return rocket::codec::EqualToEncoder<>().encode(lhs, rhs);
+  }
+
+  /// @endcond
+};
+
 // #std::hash<#rocket::reflect::Declared> -------------------------------------------------------------------
 
 /// @spec_std_hash{#rocket::reflect::Declared}
@@ -307,7 +351,8 @@ template<typename T> requires rocket::reflect::Declared<T>::value
 struct std::hash<T> {
   /// @cond undocumented
 
-  u64 operator()(const T& val) const {
+  u64
+  operator()(const T& val) const {
     return rocket::codec::HashEncoder<>().encode(val);
   }
 
@@ -321,7 +366,27 @@ template<typename T, typename Inner>
 struct std::hash<rocket::reflect::Instance<T, Inner>> {
   /// @cond undocumented
 
-  u64 operator()(const rocket::reflect::Instance<T, Inner>& val) const {
+  using Type = rocket::reflect::Instance<T, Inner>;
+
+  u64
+  operator()(const Type& val) const {
+    return rocket::codec::HashEncoder<>().encode(val);
+  }
+
+  /// @endcond
+};
+
+// #std::hash<#rocket::reflect::VarRef> ---------------------------------------------------------------------
+
+/// @spec_std_hash{#rocket::reflect::VarRef}
+template<typename T>
+struct std::hash<rocket::reflect::VarRef<T>> {
+  /// @cond undocumented
+
+  using Type = rocket::reflect::VarRef<T>;
+
+  u64
+  operator()(const Type& val) const {
     return rocket::codec::HashEncoder<>().encode(val);
   }
 
