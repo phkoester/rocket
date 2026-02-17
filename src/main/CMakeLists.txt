@@ -59,9 +59,9 @@ target_sources(rocket
     rocket/Exception.cc
     rocket/literal.cc
     rocket/rocket.cc
+    rocket/type-traits.cc
     rocket/chrono/chrono.cc
     rocket/cl/cl.cc
-    rocket/codec/codec.cc
     rocket/codec/FormattedCodec.cc
     rocket/external/scnlib/impl.cc
     rocket/filesystem/filesystem.cc

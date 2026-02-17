@@ -104,14 +104,15 @@ struct FormattedConsumerImpl<DataType::Char, C> {
 
 template<typename E>
 struct FormattedConsumerImpl<DataType::Enum, E> {
+  using Underlying = std::underlying_type_t<E>;
+  static constexpr auto UnderlyingDataType = DataTypes<Underlying>::Value;
+
   void
   consume(E val, nio::Sink& out, CONFIG__) {
     if constexpr (fmt::is_formattable<E>::value) {
       out.print("{}", val);
     } else {
-      auto underlying = std::to_underlying(val);
-      using Underlying = decltype(underlying);
-      constexpr auto UnderlyingDataType = DataTypes<Underlying>::Value;
+      const auto underlying = std::to_underlying(val);
       FormattedConsumerImpl<UnderlyingDataType, Underlying>().consume(underlying, out, config);
     }
   }
@@ -254,9 +255,9 @@ template<typename T>
 struct FormattedConsumerImpl<DataType::Bimap, T> {
   void
   consume(const T& val, nio::Sink& out, CONFIG__) {
-    using Key = PurgeType<typename T::left_value_type::first_type>;
+    using Key = Purge<typename T::left_value_type::first_type>;
     constexpr auto KeyDataType = DataTypes<Key>::Value;
-    using Elem = PurgeType<typename T::left_value_type::second_type>;
+    using Elem = Purge<typename T::left_value_type::second_type>;
     constexpr auto ElemDataType = DataTypes<Elem>::Value;
 
     beginContainer(out, config, '{');
@@ -276,7 +277,7 @@ struct FormattedConsumerImpl<DataType::Declared, T> {
   void
   consume(const T& val, nio::Sink& out, CONFIG__) {
     constexpr auto& refs = rocket::reflect::Declared<T>::refs;
-    using Elem = PurgeType<decltype(refs)>;
+    using Elem = Purge<decltype(refs)>;
     constexpr auto ElemDataType = DataTypes<Elem>::Value;
     static_assert(ElemDataType == DataType::Tuple);
 
@@ -291,7 +292,7 @@ struct FormattedConsumerImpl<DataType::Instance, T> {
   void
   consume(const T& val, nio::Sink& out, CONFIG__) {
     constexpr auto& refs = T::InnerType::refs;
-    using Elem = PurgeType<decltype(refs)>;
+    using Elem = Purge<decltype(refs)>;
     constexpr auto ElemDataType = DataTypes<Elem>::Value;
     static_assert(ElemDataType == DataType::Tuple);
 
@@ -388,6 +389,9 @@ struct FormattedProducerImpl<DataType::Char, C> {
 
 template<typename E>
 struct FormattedProducerImpl<DataType::Enum, E> {
+  using Underlying = std::underlying_type_t<E>;
+  static constexpr auto UnderlyingDataType = DataTypes<Underlying>::Value;
+
   void
   produce(E& val, nio::StringSource& in, CONFIG__) {
     skip(in, config);
@@ -404,8 +408,6 @@ struct FormattedProducerImpl<DataType::Enum, E> {
         throw InputFailure(pos, fmt::format("Invalid value for enumeration `{}`", typeid(E)));
       }
     } else {
-      using Underlying = decltype(std::to_underlying(val));
-      constexpr auto UnderlyingDataType = DataTypes<Underlying>::Value;
       Underlying underlying;
       FormattedProducerImpl<UnderlyingDataType, Underlying>().produce(underlying, in, config);
       val = static_cast<E>(underlying);
@@ -725,9 +727,9 @@ template<typename T>
 struct FormattedProducerImpl<DataType::Bimap, T> {
   void
   produce(T& val, nio::StringSource& in, CONFIG__) {
-    using Key = PurgeType<typename T::left_value_type::first_type>;
+    using Key = Purge<typename T::left_value_type::first_type>;
     constexpr auto KeyDataType = DataTypes<Key>::Value;
-    using Elem = PurgeType<typename T::left_value_type::second_type>;
+    using Elem = Purge<typename T::left_value_type::second_type>;
     constexpr auto ElemDataType = DataTypes<Elem>::Value;
 
     skip(in, config);
@@ -770,7 +772,7 @@ struct FormattedProducerImpl<DataType::Declared, T> {
   void
   produce(T& val, nio::StringSource& in, CONFIG__) {
     const auto& refs = rocket::reflect::Declared<T>::refs;
-    using Elem = PurgeType<decltype(refs)>;
+    using Elem = Purge<decltype(refs)>;
     constexpr auto ElemDataType = DataTypes<Elem>::Value;
     static_assert(ElemDataType == DataType::Tuple);
 
@@ -785,7 +787,7 @@ struct FormattedProducerImpl<DataType::Instance, T> {
   void
   produce(T& val, nio::StringSource& in, CONFIG__) {
     const auto& refs = T::InnerType::refs;
-    using Elem = PurgeType<decltype(refs)>;
+    using Elem = Purge<decltype(refs)>;
     constexpr auto ElemDataType = DataTypes<Elem>::Value;
     static_assert(ElemDataType == DataType::Tuple);
 

@@ -17,18 +17,106 @@
 
 namespace rocket {
 
+// Internal -------------------------------------------------------------------------------------------------
+
+namespace internal {
+
+template<typename T>
+struct IsArrayImpl : std::false_type {};
+
+template<typename T, u64 N>
+struct IsArrayImpl<std::array<T, N>> : std::true_type {};
+
+template<typename T>
+struct IsOptionalImpl : std::false_type {};
+
+template<typename T>
+struct IsOptionalImpl<std::optional<T>> : std::true_type {};
+
+template<typename T, typename = void>
+struct IsUnorderedImpl : std::false_type {};
+
+template<typename T>
+struct IsUnorderedImpl<T, std::void_t<typename T::hasher>> : std::true_type {};
+
+template<typename T>
+struct IsVectorImpl : std::false_type {};
+
+template<typename T>
+struct IsVectorImpl<std::vector<T>> : std::true_type {};
+
+template<typename T>
+struct IsViewImpl : std::false_type {};
+
+template<typename T>
+struct IsViewImpl<std::span<T>> : std::true_type {};
+
+template<typename C>
+struct IsViewImpl<std::basic_string_view<C>> : std::true_type {};
+
+template<typename... T>
+struct LargestImpl;
+
+template<typename T>
+struct LargestImpl<T> {
+  using Type = T;
+};
+
+template<typename T, typename U, typename... Ts>
+struct LargestImpl<T, U, Ts...> {
+  using Type = LargestImpl<typename std::conditional_t<(sizeof(T) >= sizeof(U)), T, U>, Ts...>::Type;
+};
+
+template<typename T>
+using PurgeImpl = std::remove_cvref<T>;
+
+template<typename T>
+struct ViewImpl {
+  using Type = T;
+};
+
+template<typename T, u64 N>
+struct ViewImpl<std::array<T, N>> {
+  using Type = std::span<const T>;
+};
+
+template<typename C>
+struct ViewImpl<std::basic_string<C>> {
+  using Type = std::basic_string_view<C>;
+};
+
+template<typename T>
+struct ViewImpl<std::span<T>> {
+  using Type = std::span<const T>;
+};
+
+template<typename T>
+struct ViewImpl<std::vector<T>> {
+  using Type = std::span<const T>;
+};
+
+} // namespace internal
+
+// #Largest -------------------------------------------------------------------------------------------------
+
+template<typename... T>
+using Largest = typename internal::LargestImpl<T...>::Type; ///< @type_alias
+
 // #Purge ---------------------------------------------------------------------------------------------------
 
-/// An alias for #std::remove_cvref.
+/**
+ * Removes const, volatile, and reference from the type @p T.
+ */
 template<typename T>
-using Purge = std::remove_cvref<T>;
+using Purge = internal::PurgeImpl<T>::type;
 
-/// An alias for `Purge<T>::type`.
+static_assert(std::is_same_v<Purge<const volatile i32>, i32>);
+static_assert(std::is_same_v<Purge<const std::true_type&>, std::true_type>);
+
+// #View ----------------------------------------------------------------------------------------------------
+
 template<typename T>
-using PurgeType = Purge<T>::type;
-
-static_assert(std::is_same_v<PurgeType<const volatile i32>, i32>);
-static_assert(std::is_same_v<PurgeType<const std::true_type&>, std::true_type>);
+using View = typename internal::ViewImpl<T>::Type;
 
 // #Char ----------------------------------------------------------------------------------------------------
 
@@ -175,106 +263,31 @@ struct Float<16> {
 // Concepts for basic data types ----------------------------------------------------------------------------
 
 template<typename T>
-concept IsChar = std::is_same_v<PurgeType<T>, typename Char<sizeof(PurgeType<T>)>::Type>;
+concept IsChar = std::is_same_v<Purge<T>, typename Char<sizeof(Purge<T>)>::Type>;
 
 template<typename T>
-concept IsInt = std::is_same_v<PurgeType<T>, typename Int<sizeof(PurgeType<T>)>::Type>;
+concept IsInt = std::is_same_v<Purge<T>, typename Int<sizeof(Purge<T>)>::Type>;
 
 template<typename T>
-concept IsUint = std::is_same_v<PurgeType<T>, typename Uint<sizeof(PurgeType<T>)>::Type>;
+concept IsUint = std::is_same_v<Purge<T>, typename Uint<sizeof(Purge<T>)>::Type>;
 
 template<typename T>
 concept IsInteger = IsInt<T> || IsUint<T>;
 
 template<typename T>
-concept IsFloat = std::is_same_v<PurgeType<T>, typename Float<sizeof(PurgeType<T>)>::Type>;
+concept IsFloat = std::is_same_v<Purge<T>, typename Float<sizeof(Purge<T>)>::Type>;
 
-// #IsArray -------------------------------------------------------------------------------------------------
+// Miscellaneous concepts -----------------------------------------------------------------------------------
 
-template<typename T>
-struct Array : std::false_type {};
+template<typename T> concept IsArray = internal::IsArrayImpl<T>::value;
 
-template<typename T, u64 N>
-struct Array<std::array<T, N>> : std::true_type {};
+template<typename T> concept IsOptional = internal::IsOptionalImpl<T>::value;
 
-template<typename T>
-concept IsArray = Array<T>::value;
+template<typename T> concept IsUnordered = internal::IsUnorderedImpl<T>::value;
 
-// #IsHashed ------------------------------------------------------------------------------------------------
+template<typename T> concept IsVector = internal::IsVectorImpl<T>::value;
 
-template<typename T, typename = void>
-struct Hashed : std::false_type {};
-
-template<typename T>
-struct Hashed<T, std::void_t<typename T::hasher>> : std::true_type {};
-
-template<typename T>
-concept IsHashed = Hashed<T>::value;
-
-// #IsOptional ----------------------------------------------------------------------------------------------
-
-template<typename T>
-struct Optional : std::false_type {};
-
-template<typename T>
-struct Optional<std::optional<T>> : std::true_type {};
-
-template<typename T>
-concept IsOptional = Optional<T>::value;
-
-// #IsVector ------------------------------------------------------------------------------------------------
-
-template<typename T>
-struct Vector : std::false_type {};
-
-template<typename T>
-struct Vector<std::vector<T>> : std::true_type {};
-
-template<typename T>
-concept IsVector = Vector<T>::value;
-
-// #IsView --------------------------------------------------------------------------------------------------
-
-template<typename T>
-struct View : std::false_type {};
-
-template<typename T>
-struct View<std::span<T>> : std::true_type {};
-
-template<typename C>
-struct View<std::basic_string_view<C>> : std::true_type {};
-
-template<typename T>
-concept IsView = View<T>::value;
-
-// #LargestType ---------------------------------------------------------------------------------------------
-
-/**
- * The #rocket::LargestType template.
- *
- * Given a list of types, this template figures out the largest type.
- *
- * ## Examples
- *
- * ```
- * static_assert(std::is_same_v<LargestType<char, i32>::Type, i32>);
- * ```
- */
-template <typename... Ts>
-struct LargestType;
-
-/// @spec{#rocket::LargestType, T}
-template<typename T>
-struct LargestType<T> {
-  using Type = T; ///< @type_alias
-};
-
-/// @spec{#rocket::LargestType, ...}
-template<typename T, typename U, typename... Ts>
-struct LargestType<T, U, Ts...> {
-  using Type = typename LargestType<
-    typename std::conditional_t<(sizeof(T) >= sizeof(U)), T, U>, Ts...>::Type; ///< @type_alias
-};
+template<typename T> concept IsView = internal::IsViewImpl<T>::value;
 
 } // namespace rocket
 

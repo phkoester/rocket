@@ -29,18 +29,18 @@ ROCKET_REFLECT_MEMBERS_DEFINE(, MyStruct, Index);
 
 TEST(EqualToEncoder, Bool) {
   EqualToEncoder<> encoder;
-  EXPECT_EQ(encoder.encode(false, false), true);
-  EXPECT_EQ(encoder.encode(false, true), false);
-  EXPECT_EQ(encoder.encode(true, false), false);
-  EXPECT_EQ(encoder.encode(true, true), true);
+  EXPECT_TRUE(encoder.encode(false, false));
+  EXPECT_FALSE(encoder.encode(false, true));
+  EXPECT_FALSE(encoder.encode(true, false));
+  EXPECT_TRUE(encoder.encode(true, true));
 }
 
 TEST(EqualToEncoder, String) {
   EqualToEncoder<> encoder;
-  EXPECT_EQ(encoder.encode("a"sv, "a"sv), true);
-  EXPECT_EQ(encoder.encode("a"sv, "b"sv), false);
-  EXPECT_EQ(encoder.encode("b"sv, "a"sv), false);
-  EXPECT_EQ(encoder.encode("b"sv, "b"sv), true);
+  EXPECT_TRUE(encoder.encode("a"sv, "a"sv));
+  EXPECT_FALSE(encoder.encode("a"sv, "b"sv));
+  EXPECT_FALSE(encoder.encode("b"sv, "a"sv));
+  EXPECT_TRUE(encoder.encode("b"sv, "b"sv));
 }
 
 TEST(EqualToEncoder, Array) {
@@ -49,10 +49,52 @@ TEST(EqualToEncoder, Array) {
   type b = { 3, 2, 1 };
 
   EqualToEncoder<> encoder;
-  EXPECT_EQ(encoder.encode(a, a), true);
-  EXPECT_EQ(encoder.encode(a, b), false);
-  EXPECT_EQ(encoder.encode(b, a), false);
-  EXPECT_EQ(encoder.encode(b, b), true);
+  EXPECT_TRUE(encoder.encode(a, a));
+  EXPECT_FALSE(encoder.encode(a, b));
+  EXPECT_FALSE(encoder.encode(b, a));
+  EXPECT_TRUE(encoder.encode(b, b));
+}
+
+TEST(EqualToEncoder, SetUnorderedString) {
+  using type = unordered_set<string>;
+  type a = { "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten" };
+  type b = { "ten", "nine", "eight", "seven", "six", "five", "four", "three", "two", "one" };
+
+  EqualToEncoder<> encoder;
+
+  EXPECT_TRUE(encoder.encode(a, a));
+  EXPECT_TRUE(encoder.encode(a, b));
+  EXPECT_TRUE(encoder.encode(b, a));
+  EXPECT_TRUE(encoder.encode(b, b));
+
+  EXPECT_FALSE(encoder.encode(a, type {}));
+  EXPECT_FALSE(encoder.encode(a, type { "one", "two", "three" }));
+
+  type c = { "one", "two", "three", "one", "two", "three", "one", "two", "three" };
+  type d = { "one", "two", "three" };
+  EXPECT_TRUE(encoder.encode(c, d));
+}
+
+TEST(EqualToEncoder, SetUnorderedVector) {
+  using Vector = vector<i32>;
+
+  struct VectorHash {
+    u64
+    operator()(const Vector& val) const {
+      return HashEncoder<>().encode(val);
+    }
+  };
+
+  using type = unordered_set<vector<i32>, VectorHash>;
+  type a = { { 1, 2, 3 }, { 4, 5, 6 }, { 7, 8, 9 } };
+  type b = { { 7, 8, 9 }, { 4, 5, 6 }, { 1, 2, 3 } };
+
+  EqualToEncoder<> encoder;
+
+  EXPECT_TRUE(encoder.encode(a, a));
+  EXPECT_TRUE(encoder.encode(a, b));
+  EXPECT_TRUE(encoder.encode(b, a));
+  EXPECT_TRUE(encoder.encode(b, b));
 }
 
 // EOF

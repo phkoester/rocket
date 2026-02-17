@@ -588,14 +588,14 @@ operator|=(const IntervalImpl<Left, Right>& lhs, const IntervalImpl<Left, Right>
 /**
  * @spec_fmt_formatter{#rocket::math::IntervalImpl}
  *
- * This formatter uses the same format specifiers as the underlying formatter for type @p T.
+ * This formatter uses the same format specifiers as the underlying element formatter.
  */
 template<typename Left, typename Right, typename C>
 struct fmt::formatter<rocket::math::IntervalImpl<Left, Right>, C> {
   /// @cond undocumented
 
   static_assert(std::is_same_v<typename Left::Type, typename Right::Type>);
-  using Type = typename Left::Type;
+  using Elem = rocket::Purge<typename Left::Type>;
 
   template<typename FormatContext>
   constexpr FormatContext::iterator
@@ -645,7 +645,7 @@ struct fmt::formatter<rocket::math::IntervalImpl<Left, Right>, C> {
 
 private:
 
-  fmt::formatter<rocket::PurgeType<Type>, C> underlying_;
+  fmt::formatter<Elem, C> underlying_;
 };
 
 namespace rocket::math {

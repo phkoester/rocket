@@ -5,7 +5,7 @@
  * formatting, scanning, serialization, deserialization, etc.
  *
  * @note For binary transmissions, the byte order in encoded form is always **little endian**. On big-endian
- *       systems, some byte swapping is necessary while encoding and decoding.
+ *       systems, some byte swapping is necessary before encoding and after decoding.
  */
 
 #pragma once
@@ -143,8 +143,8 @@ struct DataTypes<std::basic_string<C>> {
 };
 
 /// @spec{#rocket::codec::DataTypes, #std::basic_string_view}
-template<typename C> requires IsChar<C>
-struct DataTypes<std::basic_string_view<C>> {
+template<typename C, typename Traits> requires IsChar<C>
+struct DataTypes<std::basic_string_view<C, Traits>> {
   static constexpr auto Value = DataType::String; ///< The data type.
 };
 
@@ -173,38 +173,38 @@ struct DataTypes<std::array<T, N>> {
 };
 
 /// @spec{#rocket::codec::DataTypes, #std::span}
-template<typename T>
-struct DataTypes<std::span<T>> {
+template<typename T, u64 Extent>
+struct DataTypes<std::span<T, Extent>> {
   static constexpr auto Value = DataType::Array; ///< The data type.
 };
 
 /// @spec{#rocket::codec::DataTypes, #std::vector}
-template<typename T>
-struct DataTypes<std::vector<T>> {
+template<typename T, typename Alloc>
+struct DataTypes<std::vector<T, Alloc>> {
   static constexpr auto Value = DataType::Array; ///< The data type.
 };
 
 /// @spec{#rocket::codec::DataTypes, #std::set}
-template<typename T>
-struct DataTypes<std::set<T>> {
+template<typename T, typename Compare, typename Alloc>
+struct DataTypes<std::set<T, Compare, Alloc>> {
   static constexpr auto Value = DataType::Set; ///< The data type.
 };
 
 /// @spec{#rocket::codec::DataTypes, #std::unordered_set}
-template<typename T>
-struct DataTypes<std::unordered_set<T>> {
+template<typename T, typename Hash, typename Pred, typename Alloc>
+struct DataTypes<std::unordered_set<T, Hash, Pred, Alloc>> {
   static constexpr auto Value = DataType::Set; ///< The data type.
 };
 
 /// @spec{#rocket::codec::DataTypes, #std::map}
-template<typename K, typename V>
-struct DataTypes<std::map<K, V>> {
+template<typename K, typename V, typename Compare, typename Alloc>
+struct DataTypes<std::map<K, V, Compare, Alloc>> {
   static constexpr auto Value = DataType::Map; ///< The value type.
 };
 
 /// @spec{#rocket::codec::DataTypes, #std::unordered_map}
-template<typename K, typename V>
-struct DataTypes<std::unordered_map<K, V>> {
+template<typename K, typename V, typename Hash, typename Pred, typename Alloc>
+struct DataTypes<std::unordered_map<K, V, Hash, Pred, Alloc>> {
   static constexpr auto Value = DataType::Map; ///< The data type.
 };
 

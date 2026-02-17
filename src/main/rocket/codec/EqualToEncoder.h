@@ -7,69 +7,72 @@
 #include "rocket/functional.h"
 #include "rocket/codec/codec.h"
 
+#include <iostream>
+
 namespace rocket::codec {
 
 namespace internal {
 
 // #EqualToConsumerImpl -------------------------------------------------------------------------------------
 
-template<DataType DataType, typename T, typename EqualTo>
+template<DataType DataType, typename T, typename Eq>
 struct EqualToConsumerImpl;
 
-template<typename EqualTo>
-struct EqualToConsumerImpl<DataType::Bool, bool, EqualTo> {
-  bool consume(bool lhs, bool rhs) { return EqualTo()(lhs, rhs); }
+template<typename Eq>
+struct EqualToConsumerImpl<DataType::Bool, bool, Eq> {
+  bool consume(bool lhs, bool rhs) { return Eq()(lhs, rhs); }
 };
 
-template<typename C, typename EqualTo>
-struct EqualToConsumerImpl<DataType::Char, C, EqualTo> {
-  bool consume(C lhs, C rhs) { return EqualTo()(lhs, rhs); }
+template<typename C, typename Eq>
+struct EqualToConsumerImpl<DataType::Char, C, Eq> {
+  bool consume(C lhs, C rhs) { return Eq()(lhs, rhs); }
 };
 
-template<typename E, typename EqualTo>
-struct EqualToConsumerImpl<DataType::Enum, E, EqualTo> {
-  bool consume(E lhs, E rhs) { return EqualTo()(lhs, rhs); }
+template<typename E, typename Eq>
+struct EqualToConsumerImpl<DataType::Enum, E, Eq> {
+  bool consume(E lhs, E rhs) { return Eq()(lhs, rhs); }
 };
 
-template<typename I, typename EqualTo>
-struct EqualToConsumerImpl<DataType::Integer, I, EqualTo> {
-  bool consume(I lhs, I rhs) { return EqualTo()(lhs, rhs); }
+template<typename I, typename Eq>
+struct EqualToConsumerImpl<DataType::Integer, I, Eq> {
+  bool consume(I lhs, I rhs) { return Eq()(lhs, rhs); }
 };
 
-template<typename F, typename EqualTo>
-struct EqualToConsumerImpl<DataType::Float, F, EqualTo> {
-  bool consume(F lhs, F rhs) { return EqualTo()(lhs, rhs); }
+template<typename F, typename Eq>
+struct EqualToConsumerImpl<DataType::Float, F, Eq> {
+  bool consume(F lhs, F rhs) { return Eq()(lhs, rhs); }
 };
 
-template<typename P, typename EqualTo>
-struct EqualToConsumerImpl<DataType::Pointer, P, EqualTo> {
-  bool consume(P lhs, P rhs) { return EqualTo()(lhs, rhs); }
+template<typename P, typename Eq>
+struct EqualToConsumerImpl<DataType::Pointer, P, Eq> {
+  bool consume(P lhs, P rhs) { return Eq()(lhs, rhs); }
 };
 
-template<typename T, typename EqualTo>
-struct EqualToConsumerImpl<DataType::String, T, EqualTo> {
-  bool consume(const T& lhs, const T& rhs) { return EqualTo()(lhs, rhs); }
+template<typename T, typename Eq>
+struct EqualToConsumerImpl<DataType::String, T, Eq> {
+  bool consume(const T& lhs, const T& rhs) { return Eq()(lhs, rhs); }
 };
 
-template<typename T, typename EqualTo>
-struct EqualToConsumerImpl<DataType::Optional, T, EqualTo> {
+template<typename T, typename Eq>
+struct EqualToConsumerImpl<DataType::Optional, T, Eq> {
+  using Elem = T::value_type;
+  static constexpr auto ElemDataType = DataTypes<Elem>::Value;
+
   bool
   consume(const T& lhs, const T& rhs) {
     if (not lhs && not rhs) {
       return true;
     }
     if (lhs && rhs) {
-      using Elem = T::value_type;
-      constexpr auto ElemDataType = DataTypes<Elem>::Value;
-      return EqualToConsumerImpl<ElemDataType, Elem, EqualTo>().consume(*lhs, *rhs);
+      return EqualToConsumerImpl<ElemDataType, Elem, Eq>().consume(*lhs, *rhs);
     }
     return false;
   }
 };
 
 // For #MemberRef, the tuple consumer must be able to pass additional arguments to the element consumer
-template<typename T, typename EqualTo>
-struct EqualToConsumerImpl<DataType::Tuple, T, EqualTo> {
+template<typename T, typename Eq>
+struct EqualToConsumerImpl<DataType::Tuple, T, Eq> {
   template<typename... Args>
   bool
   consume(const T& lhs, const T& rhs, Args&&... args) {
@@ -93,63 +96,28 @@ private:
   bool
   consumeElem(const Elem& lhs, const Elem& rhs, Args&&... args) {
     constexpr auto ElemDataType = DataTypes<Elem>::Value;
-    return EqualToConsumerImpl<ElemDataType, Elem, EqualTo>().consume(lhs, rhs, std::forward<Args>(args)...);
+    return EqualToConsumerImpl<ElemDataType, Elem, Eq>().consume(lhs, rhs, std::forward<Args>(args)...);
   }
 };
 
-template<typename T, typename EqualTo>
-struct EqualToConsumerImpl<DataType::Array, T, EqualTo> {
+template<typename T, typename Eq>
+struct EqualToConsumerImpl<DataType::Array, T, Eq> {
+  using Elem = T::value_type;
+  static constexpr auto ElemDataType = DataTypes<Elem>::Value;
+
   bool
   consume(const T& lhs, const T& rhs) {
     const auto size = lhs.size();
     if (size != rhs.size()) {
       return false;
-    }
-
-    using Elem = T::value_type;
-    constexpr auto ElemDataType = DataTypes<Elem>::Value;
-
-    for (u64 i = 0; i < size; ++i) {
-      const Elem& lhsElem = lhs[i];
-      const Elem& rhsElem = rhs[i];
-      const auto elemEqualTo = EqualToConsumerImpl<ElemDataType, Elem, EqualTo>().consume(lhsElem, rhsElem);
-      if (!elemEqualTo) {
-        return false;
-      }
-    }
-
-    return true;
-  }
-};
-
-template<typename T, typename EqualTo>
-struct EqualToConsumerImpl<DataType::Set, T, EqualTo> {
-  bool
-  consume(const T& lhs, const T& rhs) {
-    const auto size = lhs.size();
-    if (size != rhs.size()) {
-      return false;
-    }
-
-    using Elem = T::value_type;
-    constexpr auto ElemDataType = DataTypes<Elem>::Value;
-
-    constexpr auto Unordered = IsHashed<T>;
-    if constexpr (Unordered) {
-      using Ordered = std::set<Elem>;
-      constexpr auto OrderedDataType = DataTypes<Ordered>::Value;
-      return EqualToConsumerImpl<OrderedDataType, Ordered, EqualTo>().consume(
-        Ordered(lhs.begin(), lhs.end()),
-        Ordered(rhs.begin(), rhs.end())
-      );
     }
 
     auto lhsIt = lhs.begin(), rhsIt = rhs.begin();
     while (lhsIt != lhs.end()) {
       const Elem& lhsElem = *lhsIt;
       const Elem& rhsElem = *rhsIt;
-      const auto elemEqualTo = EqualToConsumerImpl<ElemDataType, Elem, EqualTo>().consume(lhsElem, rhsElem);
-      if (not elemEqualTo) {
+      const auto elemEq = EqualToConsumerImpl<ElemDataType, Elem, Eq>().consume(lhsElem, rhsElem);
+      if (not elemEq) {
         return false;
       }
       ++lhsIt; ++rhsIt;
@@ -158,8 +126,15 @@ struct EqualToConsumerImpl<DataType::Set, T, EqualTo> {
   }
 };
 
-template<typename T, typename EqualTo>
-struct EqualToConsumerImpl<DataType::Map, T, EqualTo> {
+template<typename T, typename Eq>
+struct EqualToConsumerImpl<DataType::Set, T, Eq> {
+  using Elem = T::value_type;
+  static constexpr auto ElemDataType = DataTypes<Elem>::Value;
+
+  static constexpr auto Unordered = IsUnordered<T>;
+  using OrderedSet = std::set<Elem>;
+  static constexpr auto OrderedSetDataType = DataTypes<OrderedSet>::Value;
+
   bool
   consume(const T& lhs, const T& rhs) {
     const auto size = lhs.size();
@@ -167,43 +142,132 @@ struct EqualToConsumerImpl<DataType::Map, T, EqualTo> {
       return false;
     }
 
-    using Key = T::key_type;
-    constexpr auto KeyDataType = DataTypes<Key>::Value;
-    using Elem = T::mapped_type;
-    constexpr auto ElemDataType = DataTypes<Elem>::Value;
-
-    constexpr auto Unordered = IsHashed<T>;
     if constexpr (Unordered) {
-      using Ordered = std::map<Key, Elem>; // @todo Copy keys only, not the values
-      constexpr auto OrderedDataType = DataTypes<Ordered>::Value;
-      return EqualToConsumerImpl<OrderedDataType, Ordered, EqualTo>().consume(
-        Ordered(lhs.begin(), lhs.end()),
-        Ordered(rhs.begin(), rhs.end())
-      );
+      return consumeUnordered(lhs, rhs);
+    }
+
+    auto lhsIt = lhs.begin(), rhsIt = rhs.begin();
+    while (lhsIt != lhs.end()) {
+      const Elem& lhsElem = *lhsIt;
+      const Elem& rhsElem = *rhsIt;
+      const auto elemEq = EqualToConsumerImpl<ElemDataType, Elem, Eq>().consume(lhsElem, rhsElem);
+      if (not elemEq) {
+        return false;
+      }
+      ++lhsIt; ++rhsIt;
+    }
+    return true;
+  }
+
+private:
+
+  /**
+   * Compares unordered sets.
+   *
+   * For unordered sets, we copy the elements to a sorted set upfront.
+   */
+  bool
+  consumeUnordered(const T& lhs, const T& rhs) {
+    return EqualToConsumerImpl<OrderedSetDataType, OrderedSet, Eq>().consume(
+      OrderedSet(lhs.begin(), lhs.end()),
+      OrderedSet(rhs.begin(), rhs.end()));
+  }
+};
+
+template<typename T, typename Eq>
+struct EqualToConsumerImpl<DataType::Map, T, Eq> {
+  using Key = T::key_type;
+  static constexpr auto KeyDataType = DataTypes<Key>::Value;
+  using Elem = T::mapped_type;
+  static constexpr auto ElemDataType = DataTypes<Elem>::Value;
+
+  static constexpr auto Unordered = IsUnordered<T>;
+  using OrderedKeys = std::set<Key>;
+
+  bool
+  consume(const T& lhs, const T& rhs) {
+    const auto size = lhs.size();
+    if (size != rhs.size()) {
+      return false;
+    }
+
+    if constexpr (Unordered) {
+      return consumeUnordered(lhs, rhs);
     }
 
     auto lhsIt = lhs.begin(), rhsIt = rhs.begin();
     while (lhsIt != lhs.end()) {
       const Key& lhsKey = lhsIt->first;
       const Key& rhsKey = rhsIt->first;
-      const auto keyEqualTo = EqualToConsumerImpl<KeyDataType, Key, EqualTo>().consume(lhsKey, rhsKey);
-      if (not keyEqualTo) {
+      const auto keyEq = EqualToConsumerImpl<KeyDataType, Key, Eq>().consume(lhsKey, rhsKey);
+      if (not keyEq) {
         return false;
       }
       const Elem& lhsElem = lhsIt->second;
       const Elem& rhsElem = rhsIt->second;
-      const auto elemEqualTo = EqualToConsumerImpl<ElemDataType, Elem, EqualTo>().consume(lhsElem, rhsElem);
-      if (not elemEqualTo) {
+      const auto elemEq = EqualToConsumerImpl<ElemDataType, Elem, Eq>().consume(lhsElem, rhsElem);
+      if (not elemEq) {
         return false;
       }
       ++lhsIt; ++rhsIt;
     }
     return true;
   }
+
+private:
+
+  /**
+   * Compares unordered maps.
+   *
+   * For unordered maps, we copy the keys to a sorted set upfront.
+   */
+  bool
+  consumeUnordered(const T& lhs, const T& rhs) {
+    const auto size = lhs.size();
+
+    OrderedKeys lhsKeys;
+    lhsKeys.reserve(size);
+    for (const auto& [key, _] : lhs) {
+      lhsKeys.insert(key);
+    }
+
+    OrderedKeys rhsKeys;
+    rhsKeys.reserve(size);
+    for (const auto& [key, _] : rhs) {
+      rhsKeys.insert(key);
+    }
+
+    auto lhsKeysIt = lhsKeys.begin(), rhsKeysIt = rhsKeys.begin();
+    while (lhsKeysIt != lhsKeys.end()) {
+      const Key& lhsKey = *lhsKeysIt;
+      const Key& rhsKey = *rhsKeysIt;
+      const auto keyEq = EqualToConsumerImpl<KeyDataType, Key, Eq>().consume(lhsKey, rhsKey);
+      if (not keyEq) {
+        return false;
+      }
+      const Elem& lhsElem = lhs.find(lhsKey)->second;
+      const Elem& rhsElem = rhs.find(rhsKey)->second;
+      const auto elemEq = EqualToConsumerImpl<ElemDataType, Elem, Eq>().consume(lhsElem, rhsElem);
+      if (not elemEq) {
+        return false;
+      }
+      ++lhsKeysIt; ++rhsKeysIt;
+    }
+
+    return true;
+  }
 };
 
-template<typename T, typename EqualTo>
-struct EqualToConsumerImpl<DataType::Bimap, T, EqualTo> {
+template<typename T, typename Eq>
+struct EqualToConsumerImpl<DataType::Bimap, T, Eq> {
+  using Key = Purge<typename T::left_value_type::first_type>;
+  static constexpr auto KeyDataType = DataTypes<Key>::Value;
+  using Elem = Purge<typename T::left_value_type::second_type>;
+  static constexpr auto ElemDataType = DataTypes<Elem>::Value;
+
+  static constexpr auto Unordered = IsUnordered<T>;
+  using OrderedKeys = std::set<Key>;
+
   bool
   consume(const T& lhs, const T& rhs) {
     const auto size = lhs.size();
@@ -211,99 +275,131 @@ struct EqualToConsumerImpl<DataType::Bimap, T, EqualTo> {
       return false;
     }
 
-    using Key = PurgeType<typename T::left_value_type::first_type>;
-    constexpr auto KeyDataType = DataTypes<Key>::Value;
-    using Elem = PurgeType<typename T::left_value_type::second_type>;
-    constexpr auto ElemDataType = DataTypes<Elem>::Value;
-
-    constexpr auto Unordered = IsHashed<T>;
     if constexpr (Unordered) {
-      using Ordered = std::map<Key, Elem>; // @todo Copy keys only, not the values
-      constexpr auto OrderedDataType = DataTypes<Ordered>::Value;
-      return EqualToConsumerImpl<OrderedDataType, Ordered, EqualTo>().consume(
-        Ordered(lhs.left.begin(), lhs.left.end()),
-        Ordered(rhs.left.begin(), rhs.left.end())
-      );
+      return consumeUnordered(lhs, rhs);
     }
 
     auto lhsIt = lhs.left.begin(), rhsIt = rhs.left.begin();
     while (lhsIt != lhs.left.end()) {
       const Key& lhsKey = lhsIt->first;
       const Key& rhsKey = rhsIt->first;
-      const auto keyEqualTo = EqualToConsumerImpl<KeyDataType, Key, EqualTo>().consume(lhsKey, rhsKey);
-      if (not keyEqualTo) {
+      const auto keyEq = EqualToConsumerImpl<KeyDataType, Key, Eq>().consume(lhsKey, rhsKey);
+      if (not keyEq) {
         return false;
       }
       const Elem& lhsElem = lhsIt->second;
       const Elem& rhsElem = rhsIt->second;
-      const auto elemEqualTo = EqualToConsumerImpl<ElemDataType, Elem, EqualTo>().consume(lhsElem, rhsElem);
-      if (not elemEqualTo) {
+      const auto elemEq = EqualToConsumerImpl<ElemDataType, Elem, Eq>().consume(lhsElem, rhsElem);
+      if (not elemEq) {
         return false;
       }
       ++lhsIt; ++rhsIt;
     }
     return true;
   }
-};
 
-template<typename T, typename EqualTo>
-struct EqualToConsumerImpl<DataType::Declared, T, EqualTo> {
+private:
+
+  /**
+   * Compares unordered bimaps.
+   *
+   * For unordered bimaps, we copy the keys to a sorted set upfront.
+   */
   bool
-  consume(const T& lhs, const T& rhs) {
-    constexpr auto& refs = rocket::reflect::Declared<T>::refs;
-    using Elem = PurgeType<decltype(refs)>;
-    constexpr auto ElemDataType = DataTypes<Elem>::Value;
-    static_assert(ElemDataType == DataType::Tuple);
+  consumeUnordered(const T& lhs, const T& rhs) {
+    const auto size = lhs.size();
 
-    // Here we have to pass two additional arguments, the left and right instances, to the tuple consumer.
-    // The tuple consumer will pass them on to the member-reference consumer
-    return EqualToConsumerImpl<ElemDataType, Elem, EqualTo>().consume(
-      refs, refs, lhs, rhs);
+    OrderedKeys lhsKeys;
+    lhsKeys.reserve(size);
+    for (const auto& [key, _] : lhs.left) {
+      lhsKeys.insert(key);
+    }
+
+    OrderedKeys rhsKeys;
+    rhsKeys.reserve(size);
+    for (const auto& [key, _] : rhs.left) {
+      rhsKeys.insert(key);
+    }
+
+    auto lhsKeysIt = lhsKeys.begin(), rhsKeysIt = rhsKeys.begin();
+    while (lhsKeysIt != lhsKeys.end()) {
+      const Key& lhsKey = *lhsKeysIt;
+      const Key& rhsKey = *rhsKeysIt;
+      const auto keyEq = EqualToConsumerImpl<KeyDataType, Key, Eq>().consume(lhsKey, rhsKey);
+      if (not keyEq) {
+        return false;
+      }
+      const Elem& lhsElem = lhs.left.find(lhsKey)->second;
+      const Elem& rhsElem = rhs.left.find(rhsKey)->second;
+      const auto elemEq = EqualToConsumerImpl<ElemDataType, Elem, Eq>().consume(lhsElem, rhsElem);
+      if (not elemEq) {
+        return false;
+      }
+      ++lhsKeysIt; ++rhsKeysIt;
+    }
+
+    return true;
   }
 };
 
-template<typename T, typename EqualTo>
-struct EqualToConsumerImpl<DataType::Instance, T, EqualTo> {
+template<typename T, typename Eq>
+struct EqualToConsumerImpl<DataType::Declared, T, Eq> {
+  static constexpr auto& refs = rocket::reflect::Declared<T>::refs;
+  using Elem = Purge<decltype(refs)>;
+  static constexpr auto ElemDataType = DataTypes<Elem>::Value;
+  static_assert(ElemDataType == DataType::Tuple);
+
   bool
   consume(const T& lhs, const T& rhs) {
-    constexpr auto& refs = T::InnerType::refs;
-    using Elem = PurgeType<decltype(refs)>;
-    constexpr auto ElemDataType = DataTypes<Elem>::Value;
-    static_assert(ElemDataType == DataType::Tuple);
-
     // Here we have to pass two additional arguments, the left and right instances, to the tuple consumer.
     // The tuple consumer will pass them on to the member-reference consumer
-    return EqualToConsumerImpl<ElemDataType, Elem, EqualTo>().consume(
+    return EqualToConsumerImpl<ElemDataType, Elem, Eq>().consume(refs, refs, lhs, rhs);
+  }
+};
+
+template<typename T, typename Eq>
+struct EqualToConsumerImpl<DataType::Instance, T, Eq> {
+  static constexpr auto& refs = T::InnerType::refs;
+  using Elem = Purge<decltype(refs)>;
+  static constexpr auto ElemDataType = DataTypes<Elem>::Value;
+  static_assert(ElemDataType == DataType::Tuple);
+
+  bool
+  consume(const T& lhs, const T& rhs) {
+    // Here we have to pass two additional arguments, the left and right instances, to the tuple consumer.
+    // The tuple consumer will pass them on to the member-reference consumer
+    return EqualToConsumerImpl<ElemDataType, Elem, Eq>().consume(
       refs, refs, *lhs.instance, *rhs.instance);
   }
 };
 
-template<typename T, typename EqualTo>
-struct EqualToConsumerImpl<DataType::MemberRef, T, EqualTo> {
+template<typename T, typename Eq>
+struct EqualToConsumerImpl<DataType::MemberRef, T, Eq> {
+  using Elem = T::ValueType;
+  static constexpr auto ElemDataType = DataTypes<Elem>::Value;
+
   template<typename C>
   bool
   consume(const T& lhs, const T& rhs, const C& lhsInstance, const C& rhsInstance) {
+    // For #MemberRef, compare the names
     if (lhs.name() != rhs.name()) {
       return false;
     }
 
-    using Elem = T::ValueType;
-    constexpr auto ElemDataType = DataTypes<Elem>::Value;
-
-    return EqualToConsumerImpl<ElemDataType, Elem, EqualTo>().consume(
+    return EqualToConsumerImpl<ElemDataType, Elem, Eq>().consume(
       lhs.get(lhsInstance), rhs.get(rhsInstance));
   }
 };
 
-template<typename T, typename EqualTo>
-struct EqualToConsumerImpl<DataType::VarRef, T, EqualTo> {
+template<typename T, typename Eq>
+struct EqualToConsumerImpl<DataType::VarRef, T, Eq> {
   bool
   consume(const T& lhs, const T& rhs) {
-    // We don't compare the names here
+    // For #VarRef, don't compare the names
 
     using Elem = T::ValueType;
     constexpr auto ElemDataType = DataTypes<Elem>::Value;
-    return EqualToConsumerImpl<ElemDataType, Elem, EqualTo>().consume(lhs.get(), rhs.get());
+    return EqualToConsumerImpl<ElemDataType, Elem, Eq>().consume(lhs.get(), rhs.get());
   }
 };
 
@@ -314,13 +410,13 @@ struct EqualToConsumerImpl<DataType::VarRef, T, EqualTo> {
 /**
  * The consumer for the #EqualToEncoder.
  *
- * @tparam EqualTo the comparator to use
+ * @tparam Eq the comparator to use
  */
-template<typename EqualTo>
+template<typename Eq>
 struct EqualToConsumer {
   /// @type_alias
   template<DataType DataType, typename T>
-  using Type = internal::EqualToConsumerImpl<DataType, T, EqualTo>;
+  using Type = internal::EqualToConsumerImpl<DataType, T, Eq>;
 };
 
 // #EqualToEncoder ------------------------------------------------------------------------------------------
@@ -328,11 +424,11 @@ struct EqualToConsumer {
 /**
  * An equal-to encoder.
  *
- * @tparam EqualTo the comparator to use. The comparator must be able to compare all primitive data types,
+ * @tparam Eq the comparator to use. The comparator must be able to compare all primitive data types,
  *   including 128-bit data types, and strings.
  */
-template<typename EqualTo = StdEqualTo>
-using EqualToEncoder = Encoder<EqualToConsumer<EqualTo>>;
+template<typename Eq = StdEqualTo>
+using EqualToEncoder = Encoder<EqualToConsumer<Eq>>;
 
 } // namespace rocket::codec
 

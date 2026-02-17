@@ -89,7 +89,6 @@ TEST(enum, MyEnumScan) {
     EXPECT_EQ(val, fröberer);
     EXPECT_EQ(string_view(result->begin()), "  xx"sv);
   }
-
 }
 
 TEST(enum, MyEnumToType) {

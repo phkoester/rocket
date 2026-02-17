@@ -201,7 +201,7 @@ template<typename T, typename Inner>
 struct Instance {
   using Type = T; ///< @type_alias
   using InnerType = Inner; ///< @type_alias
-  using PointerType = PurgeType<Type>*;
+  using PointerType = Purge<Type>*;
 
   /// The member references, taken from the inner type.
   static constexpr auto& refs = Inner::refs;
@@ -281,7 +281,7 @@ template<typename C, typename T>
 struct IsMemberRefImpl<MemberRef<C, T>> : std::true_type {};
 
 // XXX Weg?
-template<typename T> concept IsMemberRef = IsMemberRefImpl<PurgeType<T>>::value;
+template<typename T> concept IsMemberRef = IsMemberRefImpl<Purge<T>>::value;
 
 // #VarRef --------------------------------------------------------------------------------------------------
 
