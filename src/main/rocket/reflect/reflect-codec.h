@@ -163,9 +163,8 @@ operator<<(std::ostream& lhs, const VarRef<T>& rhs) {
 template<typename T, typename C> requires rocket::reflect::Declared<T>::value && rocket::IsChar<C>
 struct fmt::formatter<T, C> {
   /// @cond undocumented
-
   template<typename FormatContext>
-  FormatContext::iterator
+  constexpr FormatContext::iterator
   format(const T& val, FormatContext& ctx) const {
     auto out = ctx.out();
     if (withType_) {
@@ -194,7 +193,6 @@ struct fmt::formatter<T, C> {
     }
     return it;
   }
-
   /// @endcond
 
 private:
@@ -214,11 +212,10 @@ private:
 template<typename T, typename Inner, typename C> requires rocket::IsChar<C>
 struct fmt::formatter<rocket::reflect::Instance<T, Inner>, C> {
   /// @cond undocumented
-
   using Type = rocket::reflect::Instance<T, Inner>;
 
   template<typename FormatContext>
-  FormatContext::iterator
+  constexpr FormatContext::iterator
   format(const Type& val, FormatContext& ctx) const {
     auto out = ctx.out();
     if (withType_) {
@@ -245,7 +242,6 @@ struct fmt::formatter<rocket::reflect::Instance<T, Inner>, C> {
     }
     return it;
   }
-
   /// @endcond
 
 private:
@@ -264,11 +260,10 @@ private:
 template<typename T, typename C> requires fmt::is_formattable<T, C>::value && rocket::IsChar<C>
 struct fmt::formatter<rocket::reflect::VarRef<T>, C> {
   /// @cond undocumented
-
   using Type = rocket::reflect::VarRef<T>;
 
   template<typename FormatContext>
-  FormatContext::iterator
+  constexpr FormatContext::iterator
   format(const Type& val, FormatContext& ctx) const {
     auto out = ctx.out();
     rocket::codec::FormattedCodec codec;
@@ -287,7 +282,6 @@ struct fmt::formatter<rocket::reflect::VarRef<T>, C> {
     }
     return it;
   }
-
   /// @endcond
 
 private:
@@ -301,12 +295,10 @@ private:
 template<typename T> requires rocket::reflect::Declared<T>::value
 struct std::equal_to<T> {
   /// @cond undocumented
-
   bool
   operator()(const T& lhs, const T& rhs) const {
     return rocket::codec::EqualToEncoder<>().encode(lhs, rhs);
   }
-
   /// @endcond
 };
 
@@ -316,14 +308,12 @@ struct std::equal_to<T> {
 template<typename T, typename Inner>
 struct std::equal_to<rocket::reflect::Instance<T, Inner>> {
   /// @cond undocumented
-
   using Type = rocket::reflect::Instance<T, Inner>;
 
   bool
   operator()(const Type& lhs, const Type& rhs) {
     return rocket::codec::EqualToEncoder<>().encode(lhs, rhs);
   }
-
   /// @endcond
 };
 
@@ -333,14 +323,12 @@ struct std::equal_to<rocket::reflect::Instance<T, Inner>> {
 template<typename T>
 struct std::equal_to<rocket::reflect::VarRef<T>> {
   /// @cond undocumented
-
   using Type = rocket::reflect::VarRef<T>;
 
   bool
   operator()(const Type& lhs, const Type& rhs) {
     return rocket::codec::EqualToEncoder<>().encode(lhs, rhs);
   }
-
   /// @endcond
 };
 
@@ -350,12 +338,10 @@ struct std::equal_to<rocket::reflect::VarRef<T>> {
 template<typename T> requires rocket::reflect::Declared<T>::value
 struct std::hash<T> {
   /// @cond undocumented
-
   u64
   operator()(const T& val) const {
     return rocket::codec::HashEncoder<>().encode(val);
   }
-
   /// @endcond
 };
 
@@ -365,14 +351,12 @@ struct std::hash<T> {
 template<typename T, typename Inner>
 struct std::hash<rocket::reflect::Instance<T, Inner>> {
   /// @cond undocumented
-
   using Type = rocket::reflect::Instance<T, Inner>;
 
   u64
   operator()(const Type& val) const {
     return rocket::codec::HashEncoder<>().encode(val);
   }
-
   /// @endcond
 };
 
@@ -382,14 +366,12 @@ struct std::hash<rocket::reflect::Instance<T, Inner>> {
 template<typename T>
 struct std::hash<rocket::reflect::VarRef<T>> {
   /// @cond undocumented
-
   using Type = rocket::reflect::VarRef<T>;
 
   u64
   operator()(const Type& val) const {
     return rocket::codec::HashEncoder<>().encode(val);
   }
-
   /// @endcond
 };
 

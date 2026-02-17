@@ -304,25 +304,6 @@ struct VarRef {
    */
   constexpr VarRef(const char* name, T& ref) : name_(name), ptr_(&ref) {}
 
-  /// @member_op_eq
-  // XXX Alles weg?
-  bool operator==(const VarRef& rhs) const { return *ptr_ == *rhs.ptr_; }
-
-  /// @member_op_ne
-  bool operator!=(const VarRef& rhs) const { return *ptr_ != *rhs.ptr_; }
-
-  /// @member_op_lt
-  bool operator<(const VarRef& rhs) const { return *ptr_ < *rhs.ptr_; }
-
-  /// @member_op_le
-  bool operator<=(const VarRef& rhs) const { return *ptr_ <= *rhs.ptr_; }
-
-  /// @member_op_gt
-  bool operator>(const VarRef& rhs) const { return *ptr_ > rhs.*ptr_; }
-
-  /// @member_op_ge
-  bool operator>=(const VarRef& rhs) const { return *ptr_ >= *rhs.ptr_; }
-
   /**
    * Returns the value of the variable.
    *

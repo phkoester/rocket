@@ -298,12 +298,12 @@ struct EqualToConsumerImpl<DataType::MemberRef, T, EqualTo> {
 template<typename T, typename EqualTo>
 struct EqualToConsumerImpl<DataType::VarRef, T, EqualTo> {
   bool
-  consume(const T& val) {
+  consume(const T& lhs, const T& rhs) {
     // We don't compare the names here
 
     using Elem = T::ValueType;
     constexpr auto ElemDataType = DataTypes<Elem>::Value;
-    return EqualToConsumerImpl<ElemDataType, Elem, EqualTo>().consume(val.get());
+    return EqualToConsumerImpl<ElemDataType, Elem, EqualTo>().consume(lhs.get(), rhs.get());
   }
 };
 

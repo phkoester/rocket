@@ -43,4 +43,16 @@ TEST(EqualToEncoder, String) {
   EXPECT_EQ(encoder.encode("b"sv, "b"sv), true);
 }
 
+TEST(EqualToEncoder, Array) {
+  using type = vector<i32>;
+  type a = { 1, 2, 3 };
+  type b = { 3, 2, 1 };
+
+  EqualToEncoder<> encoder;
+  EXPECT_EQ(encoder.encode(a, a), true);
+  EXPECT_EQ(encoder.encode(a, b), false);
+  EXPECT_EQ(encoder.encode(b, a), false);
+  EXPECT_EQ(encoder.encode(b, b), true);
+}
+
 // EOF
