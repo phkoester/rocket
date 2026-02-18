@@ -91,7 +91,6 @@ TEST(reflect, MyStructOpNe) {
   EXPECT_NE(MyStruct(42, "rocket", true), MyStruct(42, "rocket", false));
 }
 
-#if 0 // XXX
 TEST(reflect, MyStructOpLt) {
   EXPECT_THAT(MyStruct(42, "rocket", false), Lt(MyStruct(43, "rocket", false)));
   EXPECT_THAT(MyStruct(42, "rocket", false), Lt(MyStruct(42, "rocket", true)));
@@ -103,7 +102,6 @@ TEST(reflect, MyStructOpGt) {
   EXPECT_THAT(MyStruct(42, "rocket", true), Gt(MyStruct(42, "rocket", false)));
   EXPECT_THAT(MyStruct(42, "rocket", false), Not(Gt(MyStruct(42, "rocket", false))));
 }
-#endif
 
 TEST(reflect, MyStructOpOutput) {
   ostringstream os;

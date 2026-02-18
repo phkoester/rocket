@@ -120,6 +120,10 @@
 #define ROCKET_REFLECT_MEMBERS_DECLARE_OP_EQ__(cls) \
   bool operator==(const cls& lhs, const cls& rhs)
 
+// XXX Rückgabetyp optimieren
+#define ROCKET_REFLECT_MEMBERS_DECLARE_OP_CMP__(cls) \
+  std::partial_ordering operator<=>(const cls& lhs, const cls& rhs)
+
 #define ROCKET_REFLECT_MEMBERS_DECLARE_OP_OUTPUT__(cls) \
   ::std::ostream& operator<<(::std::ostream&, const cls& rhs)
 
@@ -127,6 +131,7 @@
   ROCKET_REFLECT_MEMBERS_DECLARE_DECLARED__(ns, cls, name); \
   ROCKET_NAMESPACE_BEGIN(ns); \
   ROCKET_REFLECT_MEMBERS_DECLARE_OP_EQ__(cls); \
+  ROCKET_REFLECT_MEMBERS_DECLARE_OP_CMP__(cls); \
   ROCKET_REFLECT_MEMBERS_DECLARE_OP_OUTPUT__(cls); \
   ROCKET_NAMESPACE_END(ns)
 
@@ -136,7 +141,11 @@
     return ::rocket::codec::EqualToEncoder<>().encode(lhs, rhs); \
   }
 
-// XXX operator<=>
+#define ROCKET_REFLECT_MEMBERS_DEFINE_OP_CMP__(cls) \
+  std::partial_ordering \
+  operator<=>(const cls& lhs, const cls& rhs) { \
+    return ::rocket::codec::CompareEncoder<>().encode(lhs, rhs); \
+  }
 
 #define ROCKET_REFLECT_MEMBERS_DEFINE_OP_OUTPUT__(cls) \
   ::std::ostream& \
@@ -147,6 +156,7 @@
 #define ROCKET_REFLECT_MEMBERS_DEFINE__(ns, cls, name) \
   ROCKET_NAMESPACE_BEGIN(ns); \
   ROCKET_REFLECT_MEMBERS_DEFINE_OP_EQ__(cls); \
+  ROCKET_REFLECT_MEMBERS_DEFINE_OP_CMP__(cls); \
   ROCKET_REFLECT_MEMBERS_DEFINE_OP_OUTPUT__(cls); \
   ROCKET_NAMESPACE_END(ns)
 
@@ -252,17 +262,6 @@ private:
   std::string_view name_; ///< The name of the member.
   T C::*p_; ///< The pointer to the member.
 };
-
-// #IsMemberRef ---------------------------------------------------------------------------------------------
-
-template<typename T>
-struct IsMemberRefImpl : std::false_type {};
-
-template<typename C, typename T>
-struct IsMemberRefImpl<MemberRef<C, T>> : std::true_type {};
-
-// XXX Weg?
-template<typename T> concept IsMemberRef = IsMemberRefImpl<Purge<T>>::value;
 
 // #VarRef --------------------------------------------------------------------------------------------------
 

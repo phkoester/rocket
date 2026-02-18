@@ -6,6 +6,7 @@
 
 #pragma once
 
+#include "rocket/codec/CompareEncoder.h"
 #include "rocket/codec/EqualToEncoder.h"
 #include "rocket/codec/HashEncoder.h"
 #include "rocket/codec/FormattedCodec.h"
@@ -14,52 +15,7 @@
 
 #include <fmt/std.h> // #fmt::formatter<#std::type_info>
 
-#include <tuple>
-#include <utility> // #std::hash
-
 namespace rocket::reflect {
-
-#if 0 // XXX
-template<typename T, typename Tuple, u64... Index>
-bool
-neImpl(
-  const T& lhs,
-  const T& rhs,
-  const Tuple& refs,
-  std::index_sequence<Index...>) { // NOLINT
-  return (... || std::not_equal_to()(refGet<Index>(lhs, refs), refGet<Index>(rhs, refs)));
-}
-
-template<typename T, typename Tuple, u64... Index>
-bool
-ltImpl(
-  const T& lhs,
-  const T& rhs,
-  const Tuple& refs,
-  std::index_sequence<Index...> indices) { // NOLINT
-  bool ret = false;
-  (... ||
-    ((ret = std::less()(refGet<Index>(lhs, refs), refGet<Index>(rhs, refs))) == true ||
-      ((Index + 1 < indices.size()) &&
-      std::less()(refGet<Index>(rhs, refs), refGet<Index>(lhs, refs)))));
-  return ret;
-}
-
-template<typename T, typename Tuple, u64... Index>
-bool
-gtImpl(
-  const T& lhs,
-  const T& rhs,
-  const Tuple& refs,
-  std::index_sequence<Index...> indices) { // NOLINT
-  bool ret = false;
-  (... ||
-    ((ret = std::greater()(refGet<Index>(lhs, refs), refGet<Index>(rhs, refs))) == true ||
-      ((Index + 1 < indices.size()) &&
-      std::greater()(refGet<Index>(rhs, refs), refGet<Index>(lhs, refs)))));
-  return ret;
-}
-#endif
 
 // #Instance ------------------------------------------------------------------------------------------------
 
@@ -69,7 +25,11 @@ operator==(const Instance<T, Inner>& lhs, const Instance<T, Inner>& rhs) {
   return codec::EqualToEncoder<>().encode(lhs, rhs);
 }
 
-// XXX operator<=>
+template<typename T, typename Inner>
+inline auto
+operator<=>(const Instance<T, Inner>& lhs, const Instance<T, Inner>& rhs) {
+  return codec::CompareEncoder<>().encode(lhs, rhs);
+}
 
 // @op_output{#rocket::reflect::Instance}
 template<typename T, typename Inner>
@@ -80,13 +40,19 @@ operator<<(std::ostream& lhs, const Instance<T, Inner>& rhs) {
 
 // #VarRef --------------------------------------------------------------------------------------------------
 
+// @op_eq{#rocket::reflect::VarRef}
 template<typename T>
 inline bool
 operator==(const VarRef<T>& lhs, const VarRef<T>& rhs) {
   return codec::EqualToEncoder<>().encode(lhs.get(), rhs.get());
 }
 
-// XXX operator<=>
+// @op_cmp{#rocket::reflect::VarRef}
+template<typename T>
+inline auto
+operator<=>(const VarRef<T>& lhs, const VarRef<T>& rhs) {
+  return codec::CompareEncoder<>().encode(lhs, rhs);
+}
 
 // @op_output{#rocket::reflect::VarRef}
 template<typename T>
