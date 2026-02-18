@@ -12,8 +12,26 @@
 #include <chrono>
 #include <filesystem>
 #include <regex>
+#include <vector>
 
 // TEST -----------------------------------------------------------------------------------------------------
+
+TEST(std, f32OpCmp) {
+  using type = f32;
+  using limits = numeric_limits<type>;
+  constexpr auto nan = limits::quiet_NaN();
+
+  static_assert(std::is_lt(-limits::infinity() <=> 0.0f));
+  static_assert(std::is_lt(0.0f <=> limits::infinity()));
+  static_assert(std::is_lteq(0.0f <=> 0.0f));
+  static_assert(std::is_gteq(0.0f <=> 0.0f));
+  static_assert(std::is_lt(1.0f <=> 2.0f));
+  static_assert(std::is_eq(1.0f <=> 1.0f));
+  static_assert(std::is_gt(2.0f <=> 1.0f));
+  static_assert((nan <=> 0.0f) == std::partial_ordering::unordered);
+  static_assert((0.0f <=> nan) == std::partial_ordering::unordered);
+  static_assert((nan <=> nan) == std::partial_ordering::unordered);
+}
 
 TEST(std, chronoFormat) {
   {
@@ -250,6 +268,15 @@ TEST(std, regexLineFeed) {
   EXPECT_TRUE(regex_match(str, regex("a+\nb+")));
   EXPECT_FALSE(regex_match(str, regex("a.*b"))); // '.' does not match line feed
   EXPECT_TRUE(regex_match(str, regex("a[^]*b"))); // '[^]' (not nothing) matches line feed
+}
+
+TEST(std, vectorOpLt) {
+  using type = vector<i32>;
+
+  EXPECT_TRUE((type { 1, 2, 3 }) < (type { 1, 2, 4 }));
+  EXPECT_TRUE((type { 1, 2, 3 }) < (type { 1, 2, 3, 4 }));
+  EXPECT_TRUE((type { 4, 3, 2 }) > (type { 3, 2, 1, 0 }));
+  EXPECT_TRUE((type { 4, 3, 2, 1 }) > (type { 4, 3, 2 }));
 }
 
 // EOF

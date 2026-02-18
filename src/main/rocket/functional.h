@@ -29,6 +29,21 @@ struct BoostHash {
   /// @endcond
 };
 
+// #StdCompare ----------------------------------------------------------------------------------------------
+
+/**
+ * A comparator using #std::compare_three_way.
+ */
+ struct StdCompare {
+  /// @cond undocumented
+  template<typename T>
+  [[nodiscard]] auto
+  operator()(const T& lhs, const T& rhs) const {
+    return std::compare_three_way()(lhs, rhs);
+  }
+  /// @endcond
+};
+
 // #StdEqualTo ----------------------------------------------------------------------------------------------
 
 /**
@@ -37,7 +52,8 @@ struct BoostHash {
  struct StdEqualTo {
   /// @cond undocumented
   template<typename T>
-  bool operator()(const T& lhs, const T& rhs) const {
+  [[nodiscard]] bool
+  operator()(const T& lhs, const T& rhs) const {
     return std::equal_to<T>()(lhs, rhs);
   }
   /// @endcond

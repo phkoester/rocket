@@ -49,6 +49,7 @@ AddTest(test-rocket-macro                        rocket                 test-mac
 AddTest(test-rocket-Process                      rocket                 test-Process.cc)
 AddTest(test-rocket-cl                           rocket/cl              test-cl.cc)
 AddTest(test-rocket-codec                        rocket/codec           test-codec.cc)
+AddTest(test-rocket-codec-CompareEncoder         rocket/codec           test-CompareEncoder.cc)
 AddTest(test-rocket-codec-EqualToEncoder         rocket/codec           test-EqualToEncoder.cc)
 AddTest(test-rocket-codec-FormattedCodec         rocket/codec           test-FormattedCodec.cc)
 AddTest(test-rocket-codec-HashEncoder            rocket/codec           test-HashEncoder.cc)

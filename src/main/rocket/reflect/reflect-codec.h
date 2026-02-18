@@ -19,6 +19,48 @@
 
 namespace rocket::reflect {
 
+#if 0 // XXX
+template<typename T, typename Tuple, u64... Index>
+bool
+neImpl(
+  const T& lhs,
+  const T& rhs,
+  const Tuple& refs,
+  std::index_sequence<Index...>) { // NOLINT
+  return (... || std::not_equal_to()(refGet<Index>(lhs, refs), refGet<Index>(rhs, refs)));
+}
+
+template<typename T, typename Tuple, u64... Index>
+bool
+ltImpl(
+  const T& lhs,
+  const T& rhs,
+  const Tuple& refs,
+  std::index_sequence<Index...> indices) { // NOLINT
+  bool ret = false;
+  (... ||
+    ((ret = std::less()(refGet<Index>(lhs, refs), refGet<Index>(rhs, refs))) == true ||
+      ((Index + 1 < indices.size()) &&
+      std::less()(refGet<Index>(rhs, refs), refGet<Index>(lhs, refs)))));
+  return ret;
+}
+
+template<typename T, typename Tuple, u64... Index>
+bool
+gtImpl(
+  const T& lhs,
+  const T& rhs,
+  const Tuple& refs,
+  std::index_sequence<Index...> indices) { // NOLINT
+  bool ret = false;
+  (... ||
+    ((ret = std::greater()(refGet<Index>(lhs, refs), refGet<Index>(rhs, refs))) == true ||
+      ((Index + 1 < indices.size()) &&
+      std::greater()(refGet<Index>(rhs, refs), refGet<Index>(lhs, refs)))));
+  return ret;
+}
+#endif
+
 // #Instance ------------------------------------------------------------------------------------------------
 
 template<typename T, typename Inner>

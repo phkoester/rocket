@@ -75,6 +75,7 @@ TEST(EqualToEncoder, SetUnorderedString) {
   EXPECT_TRUE(encoder.encode(c, d));
 }
 
+// XXX Hier testen mit span<const i32> als Key
 TEST(EqualToEncoder, SetUnorderedVector) {
   using Vector = vector<i32>;
 
