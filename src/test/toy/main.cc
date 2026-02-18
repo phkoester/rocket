@@ -17,7 +17,24 @@ using namespace std;
 ROCKET_LOG_DEFINE(thisIsARatherLongLogId);
 ROCKET_LOG_DEFINE(toy);
 
-// Variables -----------------------------------------------------------------------------------------------
+// MyStruct ------------------------------------------------------------------------------------------------
+
+struct MyStruct {
+  int n;
+};
+
+auto
+operator<=>(const MyStruct& lhs, const MyStruct& rhs) {
+  return lhs.n <=> rhs.n;
+}
+
+bool
+operator==(const MyStruct& lhs, const MyStruct& rhs) {
+  return std::is_eq(lhs <=> rhs);
+}
+
+
+// Variables ------------------------------------------------------------------------------------------------
 
 auto& out = nio::out;
 auto& err = nio::err;
@@ -40,6 +57,21 @@ toy() {
   ROCKET_LOG(toy);
 
   ROCKET_LOG_TRACE("Hey {}", "there");
+
+  MyStruct m1 { 1 };
+  MyStruct m2 { 2 };
+
+  out.println("m1 == m2: {}", m1 == m2);
+  out.println("m1 != m2: {}", m1 != m2);
+  out.println("m1 < m2: {}", m1 < m2);
+  out.println("m1 <= m2: {}", m1 <= m2);
+  out.println("m1 >= m2: {}", m1 >= m2);
+
+  float f1 = 1.0f;
+  float f2 = 2.0f;
+
+  auto cmp = f1 <=> f2;
+  out.println("cmp.lt: {}", std::is_lt(cmp));
 }
 
 // #main ----------------------------------------------------------------------------------------------------

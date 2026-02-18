@@ -38,7 +38,7 @@
  * In particular, this provides:
  *
  * - a #rocket::reflect::Declared specialization;
- * - comparison operators `==`, `!=`, `<`, `>`;
+ * - comparison operators `==`, `<=>`;
  * - an output operator for #std::ostream.
  *
  * @note This macro must be called in the global namespace.
@@ -120,24 +120,6 @@
 #define ROCKET_REFLECT_MEMBERS_DECLARE_OP_EQ__(cls) \
   bool operator==(const cls& lhs, const cls& rhs)
 
-#define ROCKET_REFLECT_MEMBERS_DECLARE_OP_NE__(cls, name) \
-  inline bool \
-  operator!=(const cls& lhs, const cls& rhs) { \
-    return ::rocket::reflect::ne(lhs, rhs, cls::name::refs); \
-  }
-
-#define ROCKET_REFLECT_MEMBERS_DECLARE_OP_LT__(cls, name) \
-  inline bool \
-  operator<(const cls& lhs, const cls& rhs) { \
-    return ::rocket::reflect::lt(lhs, rhs, cls::name::refs); \
-  }
-
-#define ROCKET_REFLECT_MEMBERS_DECLARE_OP_GT__(cls, name) \
-  inline bool \
-  operator>(const cls& lhs, const cls& rhs) { \
-    return ::rocket::reflect::gt(lhs, rhs, cls::name::refs); \
-  }
-
 #define ROCKET_REFLECT_MEMBERS_DECLARE_OP_OUTPUT__(cls) \
   ::std::ostream& operator<<(::std::ostream&, const cls& rhs)
 
@@ -145,17 +127,16 @@
   ROCKET_REFLECT_MEMBERS_DECLARE_DECLARED__(ns, cls, name); \
   ROCKET_NAMESPACE_BEGIN(ns); \
   ROCKET_REFLECT_MEMBERS_DECLARE_OP_EQ__(cls); \
-  ROCKET_REFLECT_MEMBERS_DECLARE_OP_NE__(cls, name); \
-  ROCKET_REFLECT_MEMBERS_DECLARE_OP_LT__(cls, name); \
-  ROCKET_REFLECT_MEMBERS_DECLARE_OP_GT__(cls, name); \
   ROCKET_REFLECT_MEMBERS_DECLARE_OP_OUTPUT__(cls); \
   ROCKET_NAMESPACE_END(ns)
 
 #define ROCKET_REFLECT_MEMBERS_DEFINE_OP_EQ__(cls) \
   bool \
   operator==(const cls& lhs, const cls& rhs) { \
-    return ::std::equal_to<cls>()(lhs, rhs); \
+    return ::rocket::codec::EqualToEncoder<>().encode(lhs, rhs); \
   }
+
+// XXX operator<=>
 
 #define ROCKET_REFLECT_MEMBERS_DEFINE_OP_OUTPUT__(cls) \
   ::std::ostream& \

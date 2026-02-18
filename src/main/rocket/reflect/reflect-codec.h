@@ -19,113 +19,15 @@
 
 namespace rocket::reflect {
 
-namespace internal {
-
-// Internal -------------------------------------------------------------------------------------------------
-// XXX Alles weg
-
-template<u64 Index, typename T, typename Tuple>
-constexpr auto&
-refGet(T& val, const Tuple& refs) noexcept {
-  auto& ref = std::get<Index>(refs);
-  static_assert(IsMemberRef<decltype(ref)>);
-  return ref.get(val);
-}
-
-template<typename T, typename Tuple, u64... Index>
-bool
-neImpl(
-  const T& lhs,
-  const T& rhs,
-  const Tuple& refs,
-  std::index_sequence<Index...>) { // NOLINT
-  return (... || std::not_equal_to()(refGet<Index>(lhs, refs), refGet<Index>(rhs, refs)));
-}
-
-template<typename T, typename Tuple, u64... Index>
-bool
-ltImpl(
-  const T& lhs,
-  const T& rhs,
-  const Tuple& refs,
-  std::index_sequence<Index...> indices) { // NOLINT
-  bool ret = false;
-  (... ||
-    ((ret = std::less()(refGet<Index>(lhs, refs), refGet<Index>(rhs, refs))) == true ||
-      ((Index + 1 < indices.size()) &&
-      std::less()(refGet<Index>(rhs, refs), refGet<Index>(lhs, refs)))));
-  return ret;
-}
-
-template<typename T, typename Tuple, u64... Index>
-bool
-gtImpl(
-  const T& lhs,
-  const T& rhs,
-  const Tuple& refs,
-  std::index_sequence<Index...> indices) { // NOLINT
-  bool ret = false;
-  (... ||
-    ((ret = std::greater()(refGet<Index>(lhs, refs), refGet<Index>(rhs, refs))) == true ||
-      ((Index + 1 < indices.size()) &&
-      std::greater()(refGet<Index>(rhs, refs), refGet<Index>(lhs, refs)))));
-  return ret;
-}
-
-} // namespace internal
-
-// Functions ------------------------------------------------------------------------------------------------
-
-/**
- * `ne`function for member references.
- *
- * @param lhs the left-hand side
- * @param rhs the right-hand side
- * @param refs the references
- * @return whether @p lhs is not equal to @p rhs as defined by #std::not_equal_to
- */
-template<typename T, typename... Ref> requires (... && IsMemberRef<Ref>)
-inline bool
-ne(const T& lhs, const T& rhs, const std::tuple<Ref...>& refs) {
-  return internal::neImpl(lhs, rhs, refs, std::make_index_sequence<sizeof...(Ref)>());
-}
-
-/**
- * `le` function for member references.
- *
- * @param lhs the left-hand side
- * @param rhs the right-hand side
- * @param refs the references
- * @return whether @p lhs is less than @p rhs as defined by #std::less
- */
-template<typename T, typename... Ref> requires (... && IsMemberRef<Ref>)
-inline bool
-lt(const T& lhs, const T& rhs, const std::tuple<Ref...>& refs) {
-  return internal::ltImpl(lhs, rhs, refs, std::make_index_sequence<sizeof...(Ref)>());
-}
-
-/**
- * `gt` function for member references.
- *
- * @param lhs the left-hand side
- * @param rhs the right-hand side
- * @param refs the references
- * @return whether @p lhs is greater than @p rhs as defined by #std::greater
- */
-template<typename T, typename... Ref> requires (... && IsMemberRef<Ref>)
-inline bool
-gt(const T& lhs, const T& rhs, const std::tuple<Ref...>& refs) {
-  return internal::gtImpl(lhs, rhs, refs, std::make_index_sequence<sizeof...(Ref)>());
-}
-
 // #Instance ------------------------------------------------------------------------------------------------
 
 template<typename T, typename Inner>
 inline bool
 operator==(const Instance<T, Inner>& lhs, const Instance<T, Inner>& rhs) {
-  using Type = Instance<T, Inner>;
-  return std::equal_to<Type>()(lhs, rhs);
+  return codec::EqualToEncoder<>().encode(lhs, rhs);
 }
+
+// XXX operator<=>
 
 // @op_output{#rocket::reflect::Instance}
 template<typename T, typename Inner>
@@ -139,9 +41,10 @@ operator<<(std::ostream& lhs, const Instance<T, Inner>& rhs) {
 template<typename T>
 inline bool
 operator==(const VarRef<T>& lhs, const VarRef<T>& rhs) {
-  using Type = VarRef<T>;
-  return std::equal_to<Type>()(lhs, rhs);
+  return codec::EqualToEncoder<>().encode(lhs.get(), rhs.get());
 }
+
+// XXX operator<=>
 
 // @op_output{#rocket::reflect::VarRef}
 template<typename T>
@@ -287,49 +190,6 @@ struct fmt::formatter<rocket::reflect::VarRef<T>, C> {
 private:
 
   bool indent_ = false;
-};
-
-// #std::equal_to<#rocket::reflect::Declared> ----------------------------------------------------------------
-
-/// @spec_std_equal_to<#rocket::reflect::Declared>
-template<typename T> requires rocket::reflect::Declared<T>::value
-struct std::equal_to<T> {
-  /// @cond undocumented
-  bool
-  operator()(const T& lhs, const T& rhs) const {
-    return rocket::codec::EqualToEncoder<>().encode(lhs, rhs);
-  }
-  /// @endcond
-};
-
-// #std::equal_to<#rocket::reflect::Instance> ---------------------------------------------------------------
-
-/// @spec_std_equal_to<#rocket::reflect::Instance>
-template<typename T, typename Inner>
-struct std::equal_to<rocket::reflect::Instance<T, Inner>> {
-  /// @cond undocumented
-  using Type = rocket::reflect::Instance<T, Inner>;
-
-  bool
-  operator()(const Type& lhs, const Type& rhs) {
-    return rocket::codec::EqualToEncoder<>().encode(lhs, rhs);
-  }
-  /// @endcond
-};
-
-// #std::equal_to<#rocket::reflect::VarRef> ---------------------------------------------------------------
-
-/// @spec_std_equal_to<#rocket::reflect::VarRef>
-template<typename T>
-struct std::equal_to<rocket::reflect::VarRef<T>> {
-  /// @cond undocumented
-  using Type = rocket::reflect::VarRef<T>;
-
-  bool
-  operator()(const Type& lhs, const Type& rhs) {
-    return rocket::codec::EqualToEncoder<>().encode(lhs, rhs);
-  }
-  /// @endcond
 };
 
 // #std::hash<#rocket::reflect::Declared> -------------------------------------------------------------------
