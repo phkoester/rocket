@@ -101,7 +101,7 @@ private:
 };
 
 template<typename T, typename Eq>
-struct EqualToConsumerImpl<DataType::Array, T, Eq> {
+struct EqualToConsumerImpl<DataType::List, T, Eq> {
   using Elem = T::value_type;
   static constexpr auto ElemDataType = DataTypes<Elem>::Value;
 

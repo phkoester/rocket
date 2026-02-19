@@ -72,7 +72,7 @@ TEST(CompareEncoder, String) {
   EXPECT_TRUE(std::is_eq(encoder.encode("b"sv, "b"sv)));
 }
 
-TEST(CompareEncoder, ArraySpan) {
+TEST(CompareEncoder, ListSpan) {
   vector<i32> v = { 1, 2, 3 };
   span<i32> span = v;
 
@@ -80,7 +80,7 @@ TEST(CompareEncoder, ArraySpan) {
   EXPECT_TRUE(std::is_eq(encoder.encode(span, span)));
 }
 
-TEST(CompareEncoder, ArrayVector) {
+TEST(CompareEncoder, ListVector) {
   using type = vector<i32>;
   CompareEncoder<> encoder;
 

@@ -114,7 +114,7 @@ private:
 };
 
 template<typename T, typename Hash>
-struct HashConsumerImpl<DataType::Array, T, Hash> {
+struct HashConsumerImpl<DataType::List, T, Hash> {
   using Elem = T::value_type;
   static constexpr auto ElemDataType = DataTypes<Elem>::Value;
 

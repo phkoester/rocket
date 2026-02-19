@@ -9,6 +9,7 @@
 #include "rocket/rocket.h"
 
 #include <array>
+#include <forward_list>
 #include <optional>
 #include <span>
 #include <string_view>
@@ -29,6 +30,12 @@ template<typename T, u64 N>
 struct IsArrayImpl<std::array<T, N>> : std::true_type {};
 
 template<typename T>
+struct IsForwardListImpl : std::false_type {};
+
+template<typename T, typename Alloc>
+struct IsForwardListImpl<std::forward_list<T, Alloc>> : std::true_type {};
+
+template<typename T>
 struct IsOptionalImpl : std::false_type {};
 
 template<typename T>
@@ -43,17 +50,17 @@ struct IsUnorderedImpl<T, std::void_t<typename T::hasher>> : std::true_type {};
 template<typename T>
 struct IsVectorImpl : std::false_type {};
 
-template<typename T>
-struct IsVectorImpl<std::vector<T>> : std::true_type {};
+template<typename T, typename Alloc>
+struct IsVectorImpl<std::vector<T, Alloc>> : std::true_type {};
 
 template<typename T>
 struct IsViewImpl : std::false_type {};
 
-template<typename T>
-struct IsViewImpl<std::span<T>> : std::true_type {};
+template<typename T, u64 Extent>
+struct IsViewImpl<std::span<T, Extent>> : std::true_type {};
 
-template<typename C>
-struct IsViewImpl<std::basic_string_view<C>> : std::true_type {};
+template<typename C, typename Traits>
+struct IsViewImpl<std::basic_string_view<C, Traits>> : std::true_type {};
 
 template<typename... T>
 struct LargestImpl;
@@ -129,7 +136,7 @@ using Largest = typename internal::LargestImpl<T...>::Type; ///< @type_alias
 // #Purge ---------------------------------------------------------------------------------------------------
 
 /**
- * Removes const, volatile, and reference from the type @p T.
+ * Removes `const`, `volatile`, and reference from the type @p T.
  *
  * @tparam T the type to purge
  */
@@ -303,6 +310,8 @@ concept IsFloat = std::is_same_v<Purge<T>, typename Float<sizeof(Purge<T>)>::Typ
 // Miscellaneous concepts -----------------------------------------------------------------------------------
 
 template<typename T> concept IsArray = internal::IsArrayImpl<T>::value;
+
+template<typename T> concept IsForwardList = internal::IsForwardListImpl<T>::value;
 
 template<typename T> concept IsOptional = internal::IsOptionalImpl<T>::value;
 

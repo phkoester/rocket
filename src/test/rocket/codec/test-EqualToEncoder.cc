@@ -43,7 +43,7 @@ TEST(EqualToEncoder, String) {
   EXPECT_TRUE(encoder.encode("b"sv, "b"sv));
 }
 
-TEST(EqualToEncoder, Array) {
+TEST(EqualToEncoder, ListVector) {
   using type = vector<i32>;
   type a = { 1, 2, 3 };
   type b = { 3, 2, 1 };

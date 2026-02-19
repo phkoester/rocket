@@ -148,7 +148,7 @@ private:
 };
 
 template<typename T, typename Cmp>
-struct CompareConsumerImpl<DataType::Array, T, Cmp> {
+struct CompareConsumerImpl<DataType::List, T, Cmp> {
   using Elem = T::value_type;
   static constexpr auto ElemDataType = DataTypes<Elem>::Value;
 

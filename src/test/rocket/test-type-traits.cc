@@ -48,6 +48,11 @@ TEST(typeTraits, IsArray) {
   static_assert(not IsArray<vector<i32>>);
 }
 
+TEST(typeTraits, IsForwardList) {
+  static_assert(IsForwardList<forward_list<i32>>);
+  static_assert(not IsForwardList<list<i32>>);
+}
+
 TEST(typeTraits, IsUnordered) {
   static_assert(not IsUnordered<Bimap<i32, i32>>);
   static_assert(IsUnordered<UnorderedBimap<i32, i32>>);

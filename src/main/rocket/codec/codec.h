@@ -20,6 +20,8 @@
 
 #include <array>
 #include <bit>
+#include <forward_list>
+#include <list>
 #include <map>
 #include <optional>
 #include <set>
@@ -72,8 +74,8 @@ enum class DataType {
   Optional,
   /// Tuples, either #std::pair or #std::tuple.
   Tuple,
-  /// Arrays, either #std::array, #std::span, or #std::vector.
-  Array,
+  /// Lists: #std::array, #std::forward_list, #std::list, #std::span, or #std::vector.
+  List,
   /// Sets.
   Set,
   /// Maps.
@@ -174,19 +176,31 @@ struct DataTypes<std::tuple<T...>> {
 /// @spec{#rocket::codec::DataTypes, #std::array}
 template<typename T, u64 N>
 struct DataTypes<std::array<T, N>> {
-  static constexpr auto Value = DataType::Array; ///< The data type.
+  static constexpr auto Value = DataType::List; ///< The data type.
+};
+
+/// @spec{#rocket::codec::DataTypes, #std::forward_list}
+template<typename T, typename Alloc>
+struct DataTypes<std::forward_list<T, Alloc>> {
+  static constexpr auto Value = DataType::List; ///< The data type.
+};
+
+/// @spec{#rocket::codec::DataTypes, #std::list}
+template<typename T, typename Alloc>
+struct DataTypes<std::list<T, Alloc>> {
+  static constexpr auto Value = DataType::List; ///< The data type.
 };
 
 /// @spec{#rocket::codec::DataTypes, #std::span}
 template<typename T, u64 Extent>
 struct DataTypes<std::span<T, Extent>> {
-  static constexpr auto Value = DataType::Array; ///< The data type.
+  static constexpr auto Value = DataType::List; ///< The data type.
 };
 
 /// @spec{#rocket::codec::DataTypes, #std::vector}
 template<typename T, typename Alloc>
 struct DataTypes<std::vector<T, Alloc>> {
-  static constexpr auto Value = DataType::Array; ///< The data type.
+  static constexpr auto Value = DataType::List; ///< The data type.
 };
 
 /// @spec{#rocket::codec::DataTypes, #std::set}

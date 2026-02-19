@@ -197,7 +197,7 @@ private:
 };
 
 template<typename T>
-struct FormattedConsumerImpl<DataType::Array, T> {
+struct FormattedConsumerImpl<DataType::List, T> {
   void
   consume(const T& val, nio::Sink& out, CONFIG__) {
     using Elem = T::value_type;
@@ -209,7 +209,7 @@ struct FormattedConsumerImpl<DataType::Array, T> {
       nextElem(out, config, index++);
       FormattedConsumerImpl<ElemDataType, Elem>().consume(elem, out, config);
     }
-    endContainer(out, config, val.size(), ']');
+    endContainer(out, config, index, ']');
   }
 };
 
@@ -574,24 +574,28 @@ private:
 };
 
 template<typename T>
-struct FormattedProducerImpl<DataType::Array, T> {
+struct FormattedProducerImpl<DataType::List, T> {
+  using Elem = T::value_type;
+  static constexpr auto ElemDataType = DataTypes<Elem>::Value;
+
   void
   produce(T& val, nio::StringSource& in, CONFIG__) {
-    static_assert(not IsView<T>, "Cannot decode array view");
+    static_assert(not IsView<T>, "Cannot decode list view");
+    static_assert(not IsForwardList<T>, "Cannot decode forward list");
 
     skip(in, config);
     const auto pos = in.tell();
 
     if (not read(in, '[')) {
-      throw InputFailure(pos, "Expected an array");
+      throw InputFailure(pos, "Expected a list");
     }
 
     if constexpr (IsArray<T>) {
       // Fixed-size array
       produceArray(val, in, config, pos);
     } else {
-      // Dynamic-size vector
-      produceVector(val, in, config);
+      // Container with `push_back`
+      produceContainerWithPushBack(val, in, config);
     }
   }
 
@@ -599,9 +603,6 @@ private:
 
   void
   produceArray(T& val, nio::StringSource& in, CONFIG__, u64 pos)  {
-    using Elem = T::value_type;
-    constexpr auto ElemDataType = DataTypes<Elem>::Value;
-
     const auto size = val.size();
     for (u64 index = 0; index < size; ++index) {
       skip(in, config);
@@ -617,15 +618,12 @@ private:
       skip(in, config);
     }
     if (not read(in, ']')) {
-      throw InputFailure(in.tell(), { pos, in.tell() }, "Unterminated array");
+      throw InputFailure(in.tell(), { pos, in.tell() }, fmt::format("Unterminated array of size {}", size));
     }
   }
 
   void
-  produceVector(T& val, nio::StringSource& in, CONFIG__)  {
-    using Elem = T::value_type;
-    constexpr auto ElemDataType = DataTypes<Elem>::Value;
-
+  produceContainerWithPushBack(T& val, nio::StringSource& in, CONFIG__)  {
     u64 index = 0;
     while (true) {
       skip(in, config);
@@ -876,7 +874,7 @@ struct FormattedProducer {
 /**
  * The codec for formatted string I/O.
  *
- * Decoding to array views is not supported. String views, however, are allowed. This is made possible by
+ * Decoding to list views is not supported. String views, however, are allowed. This is made possible by
  * storing intermediate strings in the source. Hence, decoded string views are valid for the lifetime of the
  * source.
  */

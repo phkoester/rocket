@@ -146,8 +146,16 @@ TEST(FormattedCodec, FormattedConsumerTuplePair) {
   }
 }
 
-TEST(FormattedCodec, FormattedConsumerArray) {
+TEST(FormattedCodec, FormattedConsumerList) {
   FormattedCodec codec;
+
+  {
+    std::forward_list<i32> val = { 1, 2, 3 };
+    nio::StringSink out;
+    codec.encode(val, out);
+    EXPECT_EQ(out.str(), "[1, 2, 3]");
+
+  }
 
   {
     vector<i32> vec = { 1, 2, 3 };
@@ -382,7 +390,7 @@ TEST(FormattedCodec, FormattedProducerTuple) {
   }
 }
 
-TEST(FormattedCodec, FormattedProducerArray) {
+TEST(FormattedCodec, FormattedProducerList) {
   FormattedCodec codec;
   FormattedProducerConfig config { .cComments=true, .shellComments=true };
 
@@ -394,6 +402,11 @@ TEST(FormattedCodec, FormattedProducerArray) {
   {
     nio::StringSource in("  [ 1, 2, 3   , ]");
     EXPECT_EQ((codec.decode<array<i32, 3>>(in, config)), (array<i32, 3> { 1, 2, 3 }));
+  }
+
+  {
+    nio::StringSource in("  [ 1, 2, 3   , ]");
+    EXPECT_EQ((codec.decode<list<i32>>(in, config)), (list<i32> { 1, 2, 3 }));
   }
 
   {

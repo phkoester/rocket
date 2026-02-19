@@ -141,14 +141,14 @@ private:
 };
 
 template<typename T>
-struct TracingConsumerImpl<DataType::Array, T> {
+struct TracingConsumerImpl<DataType::List, T> {
   using Elem = typename T::value_type;
   static constexpr auto ElemDataType = DataTypes<Elem>::Value;
 
   u64
   consume(const T& val, nio::StringSink& out) {
     const auto size = val.size();
-    auto ret = out.println("consuming array: {}", size);
+    auto ret = out.println("consuming list: {}", size);
     for (const auto& elem : val) {
       ret += TracingConsumerImpl<ElemDataType, Elem>().consume(elem, out);
     }
@@ -289,7 +289,7 @@ struct TracingProducerImpl<DataType::Optional, T> {
 };
 
 template<typename T>
-struct TracingProducerImpl<DataType::Array, T> {
+struct TracingProducerImpl<DataType::List, T> {
   using Elem = typename T::value_type;
   static constexpr auto ElemDataType = DataTypes<Elem>::Value;
 
@@ -297,15 +297,15 @@ struct TracingProducerImpl<DataType::Array, T> {
   produce(T& val, nio::Source& in, nio::Sink& out) {
     u64 size = readI32(in);
     if constexpr (IsArray<T>) {
-      out.println("producing array.array");
+      out.println("producing list.array");
       for (u64 i = 0; i < size; ++i) {
         TracingProducerImpl<ElemDataType, Elem>().produce(val[i], in, out);
       }
     } else {
-      out.println("producing array.vector");
-      val = T(size);
+      out.println("producing list.containerWithPushBack");
       for (u64 i = 0; i < size; ++i) {
-        TracingProducerImpl<ElemDataType, Elem>().produce(val[i], in, out);
+        val.push_back(Elem());
+        TracingProducerImpl<ElemDataType, Elem>().produce(val.back(), in, out);
       }
     }
   }
@@ -394,23 +394,23 @@ TEST(codec, TracingConsumerTupleTuple) {
     "consuming boolean: true\n");
 }
 
-TEST(codec, TracingConsumerArrayArray) {
+TEST(codec, TracingConsumerListArray) {
   Encoder<TracingConsumer> encoder;
   nio::StringSink out;
   encoder.encode(array { 1, 2, 3 }, out);
   EXPECT_EQ(out.str(),
-    "consuming array: 3\n"
+    "consuming list: 3\n"
     "consuming integer: 1\n"
     "consuming integer: 2\n"
     "consuming integer: 3\n");
 }
 
-TEST(codec, TracingConsumerArrayVector) {
+TEST(codec, TracingConsumerListVector) {
   Encoder<TracingConsumer> encoder;
   nio::StringSink out;
   encoder.encode(vector { 1, 2, 3, 4 }, out);
   EXPECT_EQ(out.str(),
-    "consuming array: 4\n"
+    "consuming list: 4\n"
     "consuming integer: 1\n"
     "consuming integer: 2\n"
     "consuming integer: 3\n"
@@ -436,7 +436,7 @@ TEST(codec, TracingConsumerDeclared) {
     "consuming string: \"hello\"\n"
     "consuming tuple elem\n"
     "consuming memberref: \"vec\"\n"
-    "consuming array: 3\n"
+    "consuming list: 3\n"
     "consuming integer: 1\n"
     "consuming integer: 2\n"
     "consuming integer: 3\n");
@@ -501,7 +501,7 @@ TEST(codec, TracingConsumerOptionalAndVectorInTypeLoop) {
     encoder.encode(val, out);
     EXPECT_EQ(out.str(),
       "consuming optional: optional([optional(1), none, optional(3)])\n"
-      "consuming array: 3\n"
+      "consuming list: 3\n"
       "consuming optional: optional(1)\n"
       "consuming integer: 1\n"
       "consuming optional: none\n"
@@ -519,7 +519,7 @@ TEST(codec, TracingConsumerVectorAndOptionalInTypeLoop) {
     nio::StringSink out;
     type val = {};
     encoder.encode(val, out);
-    EXPECT_EQ(out.str(), "consuming array: 0\n");
+    EXPECT_EQ(out.str(), "consuming list: 0\n");
   }
 
   {
@@ -527,9 +527,9 @@ TEST(codec, TracingConsumerVectorAndOptionalInTypeLoop) {
     type val = { optional<vector<i32>> { vector<i32> { 1, 2 } } };
     encoder.encode(val, out);
     EXPECT_EQ(out.str(),
-      "consuming array: 1\n"
+      "consuming list: 1\n"
       "consuming optional: optional([1, 2])\n"
-      "consuming array: 2\n"
+      "consuming list: 2\n"
       "consuming integer: 1\n"
       "consuming integer: 2\n");
   }
@@ -584,7 +584,7 @@ TEST(codec, TracingProducerOptionalBool) {
   }
 }
 
-TEST(codec, TracingProducerArrayArray) {
+TEST(codec, TracingProducerListArray) {
   using type = array<i32, 3>;
   Decoder<TracingProducer> decoder;
   nio::StringSource in("3012");
@@ -592,13 +592,13 @@ TEST(codec, TracingProducerArrayArray) {
   type val = decoder.decode<type>(in, out);
   EXPECT_EQ(val, (array<i32, 3> { 0, 1, 2 }));
   EXPECT_EQ(out.str(),
-    "producing array.array\n"
+    "producing list.array\n"
     "producing integer\n"
     "producing integer\n"
     "producing integer\n");
 }
 
-TEST(codec, TracingProducerArrayVector) {
+TEST(codec, TracingProducerListVector) {
   using type = vector<i32>;
   Decoder<TracingProducer> decoder;
   nio::StringSource in("43210");
@@ -606,7 +606,7 @@ TEST(codec, TracingProducerArrayVector) {
   type val = decoder.decode<type>(in, out);
   EXPECT_EQ(val, (vector<i32> { 3, 2, 1, 0 }));
   EXPECT_EQ(out.str(),
-    "producing array.vector\n"
+    "producing list.containerWithPushBack\n"
     "producing integer\n"
     "producing integer\n"
     "producing integer\n"
