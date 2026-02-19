@@ -81,18 +81,18 @@ struct ViewImpl<std::array<T, N>> {
   using Type = std::span<const T>;
 };
 
-template<typename C>
-struct ViewImpl<std::basic_string<C>> {
-  using Type = std::basic_string_view<C>;
+template<typename C, typename Traits, typename Alloc>
+struct ViewImpl<std::basic_string<C, Traits, Alloc>> {
+  using Type = std::basic_string_view<C, Traits>;
 };
 
-template<typename T>
-struct ViewImpl<std::span<T>> {
-  using Type = std::span<const T>;
+template<typename T, u64 Extent>
+struct ViewImpl<std::span<T, Extent>> {
+  using Type = std::span<const T, Extent>;
 };
 
-template<typename T>
-struct ViewImpl<std::vector<T>> {
+template<typename T, typename Alloc>
+struct ViewImpl<std::vector<T, Alloc>> {
   using Type = std::span<const T>;
 };
 
