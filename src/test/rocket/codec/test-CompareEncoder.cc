@@ -71,7 +71,15 @@ TEST(CompareEncoder, String) {
   EXPECT_TRUE(std::is_eq(encoder.encode("b"sv, "b"sv)));
 }
 
-TEST(CompareEncoder, Array) {
+TEST(CompareEncoder, ArraySpan) {
+  vector<i32> v = { 1, 2, 3 };
+  span<i32> span = v;
+
+  CompareEncoder<> encoder;
+  EXPECT_TRUE(std::is_eq(encoder.encode(span, span)));
+}
+
+TEST(CompareEncoder, ArrayVector) {
   using type = vector<i32>;
   CompareEncoder<> encoder;
 
