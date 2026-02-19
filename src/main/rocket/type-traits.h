@@ -136,9 +136,6 @@ using Largest = typename internal::LargestImpl<T...>::Type; ///< @type_alias
 template<typename T>
 using Purge = internal::PurgeImpl<T>::type;
 
-static_assert(std::is_same_v<Purge<const volatile i32>, i32>);
-static_assert(std::is_same_v<Purge<const std::true_type&>, std::true_type>);
-
 // #View ----------------------------------------------------------------------------------------------------
 
 template<typename T>

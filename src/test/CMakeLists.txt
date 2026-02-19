@@ -47,6 +47,7 @@ AddTest(test-rocket-functional                   rocket                 test-fun
 AddTest(test-rocket-Guard                        rocket                 test-Guard.cc)
 AddTest(test-rocket-macro                        rocket                 test-macro.cc)
 AddTest(test-rocket-Process                      rocket                 test-Process.cc)
+AddTest(test-rocket-type-traits                  rocket                 test-type-traits.cc)
 AddTest(test-rocket-cl                           rocket/cl              test-cl.cc)
 AddTest(test-rocket-codec                        rocket/codec           test-codec.cc)
 AddTest(test-rocket-codec-CompareEncoder         rocket/codec           test-CompareEncoder.cc)
