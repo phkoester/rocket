@@ -298,7 +298,7 @@ struct FormattedConsumerImpl<DataType::Instance, T> {
 
     // Here we have to pass an additional argument, the instance, to the tuple consumer. The tuple consumer
     // will pass it on to the member-reference consumer
-    FormattedConsumerImpl<ElemDataType, Elem>().consume(refs, out, config, *val.instance);
+    FormattedConsumerImpl<ElemDataType, Elem>().consume(refs, out, config, val.get());
   }
 };
 

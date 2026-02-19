@@ -4,19 +4,49 @@
 
 #include "rocket-test/rocket-test.h"
 
+#include "rocket/type-traits.h"
+
 #include "rocket/codec/CompareEncoder.h"
 
 using namespace rocket::codec;
 
+// #MyStruct ------------------------------------------------------------------------------------------------
+
+struct MyStruct {
+  int a;
+  string b;
+};
+
+// #MyDervivedStruct ----------------------------------------------------------------------------------------
+
+struct MyDerivedStruct : MyStruct {
+  float c;
+};
+
 // #TEST ----------------------------------------------------------------------------------------------------
 
-TEST(CompareEncoder, TupeCmpOrdering) {
+TEST(CompareEncoder, CmpOrdering) {
   using codec::internal::CmpOrdering;
+  using reflect::MemberRef;
 
   using Cmp = StdCompare;
 
-  static_assert(std::is_same_v<CmpOrdering<Cmp, std::tuple<i32, i32, string>>::Type, std::strong_ordering>);
-  static_assert(std::is_same_v<CmpOrdering<Cmp, std::tuple<i32, f32>>::Type, std::partial_ordering>);
+  static_assert(std::is_same_v<CmpOrdering<Cmp, MemberRef<MyStruct, i32>>, CmpOrdering<Cmp, i32>>);
+}
+
+TEST(CompareEncoder, CmpCommonOrdering) {
+  using codec::internal::CmpCommonOrdering;
+  using reflect::MemberRef;
+
+  using Cmp = StdCompare;
+
+  static_assert(std::is_same_v<CmpCommonOrdering<Cmp, i32, i32, string>, std::strong_ordering>);
+  static_assert(std::is_same_v<CmpCommonOrdering<Cmp, i32, f32>, std::partial_ordering>);
+  static_assert(std::is_same_v<CmpCommonOrdering<Cmp, std::tuple<i32, i32, string>>, std::strong_ordering>);
+  static_assert(std::is_same_v<CmpCommonOrdering<Cmp, std::tuple<i32, f32>>, std::partial_ordering>);
+  static_assert(std::is_same_v<
+    CmpCommonOrdering<Cmp, MemberRef<MyStruct, i32>, MemberRef<MyDerivedStruct, float>>,
+    std::partial_ordering>);
 }
 
 TEST(CompareEncoder, Bool) {

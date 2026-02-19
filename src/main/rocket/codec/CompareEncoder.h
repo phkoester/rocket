@@ -12,24 +12,30 @@ namespace rocket::codec {
 namespace internal {
 
 template<typename Cmp, typename T>
-struct CmpOrdering {
+struct CmpOrderingImpl {
   using Type = decltype(Cmp()(std::declval<T>(), std::declval<T>()));
 };
 
 template<typename Cmp, typename C, typename T>
-struct CmpOrdering<Cmp, reflect::MemberRef<C, T>> {
-  using Type = CmpOrdering<Cmp, T>;
+struct CmpOrderingImpl<Cmp, reflect::MemberRef<C, T>> {
+  using Type = CmpOrderingImpl<Cmp, T>::Type;
 };
 
 template<typename Cmp, typename T>
-struct TupleCmpOrdering {
-  using Type = CmpOrdering<Cmp, T>;
+using CmpOrdering = CmpOrderingImpl<Cmp, T>::Type;
+
+template<typename Cmp, typename... T>
+struct CmpCommonOrderingImpl {
+  using Type = std::common_comparison_category_t<CmpOrdering<Cmp, T>...>;
 };
 
-template<typename Cmp, typename C, typename... T>
-struct TupleCmpOrdering<Cmp, std::tuple<reflect::MemberRef<C, T>...>> {
-  using Type = TupleCmpOrdering<Cmp, std::tuple<T...>>::Type;
+template<typename Cmp, typename... T>
+struct CmpCommonOrderingImpl<Cmp, std::tuple<T...>> {
+  using Type = CmpCommonOrderingImpl<Cmp, T...>::Type;
 };
+
+template<typename Cmp, typename... T>
+using CmpCommonOrdering = CmpCommonOrderingImpl<Cmp, T...>::Type;
 
 // #CompareConsumerImpl -------------------------------------------------------------------------------------
 
@@ -76,16 +82,13 @@ struct CompareConsumerImpl<DataType::Optional, T, Cmp> {
   using Elem = T::value_type;
   static constexpr auto ElemDataType = DataTypes<Elem>::Value;
 
-  using BoolOrdering = CmpOrdering<Cmp, bool>;
-  using ElemOrdering = CmpOrdering<Cmp, Elem>;
-  using Ordering = CommonOrdering<BoolOrdering, ElemOrdering>;
-  static_assert(std::is_same_v<Ordering, std::strong_ordering>); // XXX
+  using Ordering = CmpCommonOrdering<Cmp, bool, Elem>;
 
   Ordering
   consume(const T& lhs, const T& rhs) {
-    const auto boolCmp = Cmp()(lhs.has_value(), rhs.has_value());
-    if (not std::is_eq(boolCmp)) {
-      return boolCmp;
+    const auto hasValueCmp = Cmp()(lhs.has_value(), rhs.has_value());
+    if (not std::is_eq(hasValueCmp)) {
+      return hasValueCmp;
     }
 
     if (not lhs) {
@@ -101,10 +104,10 @@ struct CompareConsumerImpl<DataType::Optional, T, Cmp> {
 // For #MemberRef, the tuple consumer must be able to pass additional arguments to the element consumer
 template<typename T, typename Cmp>
 struct CompareConsumerImpl<DataType::Tuple, T, Cmp> {
-  // XXX using Ordering = typename TupleCmpOrdering<Cmp, T>::Type;
+  using Ordering = CmpCommonOrdering<Cmp, T>;
 
   template<typename... Args>
-  std::partial_ordering
+  Ordering
   consume(const T& lhs, const T& rhs, Args&&... args) {
     return consume(
       lhs,
@@ -116,16 +119,16 @@ struct CompareConsumerImpl<DataType::Tuple, T, Cmp> {
 private:
 
   template<u64... Index, typename... Args>
-  std::partial_ordering
+  Ordering
   consume(const T& lhs, const T& rhs, std::index_sequence<Index...>, Args&&... args) {
-    std::partial_ordering ret = std::strong_ordering::equal;
+    Ordering ret = std::strong_ordering::equal;
     (... && consumeElem(ret, std::get<Index>(lhs), std::get<Index>(rhs), std::forward<Args>(args)...));
     return ret;
   }
 
   template<typename Elem, typename... Args>
   bool
-  consumeElem(std::partial_ordering& result, const Elem& lhs, const Elem& rhs, Args&&... args) {
+  consumeElem(Ordering& result, const Elem& lhs, const Elem& rhs, Args&&... args) {
     if (not std::is_eq(result)) {
       return false;
     }
@@ -140,9 +143,10 @@ struct CompareConsumerImpl<DataType::Array, T, Cmp> {
   using Elem = T::value_type;
   static constexpr auto ElemDataType = DataTypes<Elem>::Value;
 
-  auto
-  consume(const T& lhs, const T& rhs) ->
-  decltype(CompareConsumerImpl<ElemDataType, Elem, Cmp>().consume(*lhs.begin(), *rhs.begin())) {
+  using Ordering = CmpOrdering<Cmp, Elem>;
+
+  Ordering
+  consume(const T& lhs, const T& rhs) {
     const auto minSize = std::min(lhs.size(), rhs.size());
 
     auto lhsIt = lhs.begin(), rhsIt = rhs.begin();
@@ -165,13 +169,14 @@ struct CompareConsumerImpl<DataType::Set, T, Cmp> {
   using Elem = T::value_type;
   static constexpr auto ElemDataType = DataTypes<Elem>::Value;
 
+  using Ordering = CmpOrdering<Cmp, Elem>;
+
   static constexpr auto Unordered = IsUnordered<T>;
   using OrderedSet = std::set<Elem>;
   static constexpr auto OrderedSetDataType = DataTypes<OrderedSet>::Value;
 
-  auto
-  consume(const T& lhs, const T& rhs) ->
-  decltype(CompareConsumerImpl<ElemDataType, Elem, Cmp>().consume(*lhs.begin(), *rhs.begin())) {
+  Ordering
+  consume(const T& lhs, const T& rhs) {
     if constexpr (Unordered) {
       return consumeUnordered(lhs, rhs);
     }
@@ -199,7 +204,7 @@ private:
    *
    * For unordered sets, we copy the elements to a sorted set upfront.
    */
-  auto
+  Ordering
   consumeUnordered(const T& lhs, const T& rhs) {
     return CompareConsumerImpl<OrderedSetDataType, OrderedSet, Cmp>().consume(
       OrderedSet(lhs.begin(), lhs.end()),
@@ -214,10 +219,12 @@ struct CompareConsumerImpl<DataType::Map, T, Cmp> {
   using Elem = T::mapped_type;
   static constexpr auto ElemDataType = DataTypes<Elem>::Value;
 
+  using Ordering = CmpCommonOrdering<Cmp, Key, Elem>;
+
   static constexpr auto Unordered = IsUnordered<T>;
   using OrderedKeys = std::set<Key>;
 
-  std::partial_ordering
+  Ordering
   consume(const T& lhs, const T& rhs) {
     if constexpr (Unordered) {
       return consumeUnordered(lhs, rhs);
@@ -252,7 +259,7 @@ private:
    *
    * For unordered maps, we copy the keys to a sorted set upfront.
    */
-  std::partial_ordering
+  Ordering
   consumeUnordered(const T& lhs, const T& rhs) {
     OrderedKeys lhsKeys;
     for (const auto& [key, _] : lhs) {
@@ -294,10 +301,12 @@ struct CompareConsumerImpl<DataType::Bimap, T, Cmp> {
   using Elem = Purge<typename T::left_value_type::second_type>;
   static constexpr auto ElemDataType = DataTypes<Elem>::Value;
 
+  using Ordering = CmpCommonOrdering<Cmp, Key, Elem>;
+
   static constexpr auto Unordered = IsUnordered<T>;
   using OrderedKeys = std::set<Key>;
 
-  std::partial_ordering
+  Ordering
   consume(const T& lhs, const T& rhs) {
     if constexpr (Unordered) {
       return consumeUnordered(lhs, rhs);
@@ -332,7 +341,7 @@ private:
    *
    * For unordered bimaps, we copy the keys to a sorted set upfront.
    */
-  std::partial_ordering
+  Ordering
   consumeUnordered(const T& lhs, const T& rhs) {
     OrderedKeys lhsKeys;
     for (const auto& [key, _] : lhs.left) {
@@ -393,8 +402,7 @@ struct CompareConsumerImpl<DataType::Instance, T, Cmp> {
   consume(const T& lhs, const T& rhs) {
     // Here we have to pass two additional arguments, the left and right instances, to the tuple consumer.
     // The tuple consumer will pass them on to the member-reference consumer
-    return CompareConsumerImpl<ElemDataType, Elem, Cmp>().consume(
-      refs, refs, *lhs.instance, *rhs.instance);
+    return CompareConsumerImpl<ElemDataType, Elem, Cmp>().consume(refs, refs, lhs.get(), rhs.get());
   }
 };
 
@@ -403,10 +411,11 @@ struct CompareConsumerImpl<DataType::MemberRef, T, Cmp> {
   using Elem = T::ValueType;
   static constexpr auto ElemDataType = DataTypes<Elem>::Value;
 
+  using Ordering = CmpCommonOrdering<Cmp, std::string_view, Elem>;
+
   template<typename C>
-  auto
-  consume(const T& lhs, const T& rhs, const C& lhsInstance, const C& rhsInstance) ->
-    decltype(CompareConsumerImpl<ElemDataType, Elem, Cmp>().consume(lhs.get(lhsInstance), rhs.get(rhsInstance))) {
+  Ordering
+  consume(const T& lhs, const T& rhs, const C& lhsInstance, const C& rhsInstance) {
     // For #MemberRef, compare the names
     const auto nameCmp = Cmp()(lhs.name(), rhs.name());
     if (not std::is_eq(nameCmp)) {
@@ -422,9 +431,10 @@ struct CompareConsumerImpl<DataType::VarRef, T, Cmp> {
   using Elem = T::ValueType;
   static constexpr auto ElemDataType = DataTypes<Elem>::Value;
 
-  auto
-  consume(const T& lhs, const T& rhs) ->
-   decltype(CompareConsumerImpl<ElemDataType, Elem, Cmp>().consume(lhs.get(), rhs.get())) {
+  using Ordering = CmpOrdering<Cmp, Elem>;
+
+  Ordering
+  consume(const T& lhs, const T& rhs) {
     // For #VarRef, don't compare the names
     return CompareConsumerImpl<ElemDataType, Elem, Cmp>().consume(lhs.get(), rhs.get());
   }
@@ -449,10 +459,11 @@ struct CompareConsumer {
 // #CompareEncoder ------------------------------------------------------------------------------------------
 
 /**
- * An three-way-compariosn encoder.
+ * A three-way-comparison encoder.
  *
  * @tparam Cmp the comparator to use. The comparator must be able to compare all primitive data types,
- *   including 128-bit data types, and strings.
+ *   including 128-bit data types, and strings. The result type must be any of #std::strong_ordering,
+ *   #std::weak_ordering, or #std::partial_ordering.
  */
 template<typename Cmp = StdCompare>
 using CompareEncoder = Encoder<CompareConsumer<Cmp>>;

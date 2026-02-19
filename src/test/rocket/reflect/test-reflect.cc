@@ -4,7 +4,7 @@
 
 #include "rocket-test/rocket-test.h"
 
-#include "rocket/reflect/reflect-codec.h"
+#include "rocket/reflect/reflect.h"
 
 #include <fmt/ranges.h>
 
@@ -41,11 +41,11 @@ ROCKET_REFLECT_MEMBERS_DEFINE(, MyStruct, Index);
 struct MyDerivedStruct : MyStruct {
   string d;
 
-  MyDerivedStruct(i32 ä, string_view b, bool c, string_view d, u64 e) : MyStruct(ä, b, c), d(d), e(e) {}
+  MyDerivedStruct(i32 ä, string_view b, bool c, string_view d, f32 e) : MyStruct(ä, b, c), d(d), e(e) {}
 
 private:
 
-  u64 e = 0;
+  f32 e = 0;
 
 public:
 
@@ -58,6 +58,9 @@ ROCKET_REFLECT_MEMBERS_DEFINE(, MyDerivedStruct, Index);
 // #TEST ----------------------------------------------------------------------------------------------------
 
 TEST(reflect, MyStruct) {
+  static_assert(is_same_v<MyStruct::Index::Ordering, strong_ordering>);
+  static_assert(is_same_v<MyStruct::Public::Ordering, strong_ordering>);
+
   MyStruct m1(12, "here", true);
   EXPECT_EQ(m1.b, "here");
   get<1>(MyStruct::Index::refs).get(m1) = "everywhere";
@@ -150,6 +153,8 @@ TEST(reflect, MyStructPublic) {
 TEST(reflect, MyStructPublicOpEqNe) {
   using type = Instance<MyStruct, MyStruct::Public>;
 
+  static_assert(is_same_v<decltype(declval<type>() <=> declval<type>()), strong_ordering>);
+
   const MyStruct m1(42, "rocket", true);
   const MyStruct m2(42, "rocket", false);
   const MyStruct m3(43, "rocket", true);
@@ -192,8 +197,11 @@ TEST(reflect, MyStructPublicFormat) {
 }
 
 TEST(reflect, MyDerivedStructFormat) {
-  const MyDerivedStruct m(41, "rocket", true, "everywhere", 42_u64);
-  EXPECT_EQ(fmt::format("{:t}", m), "MyDerivedStruct(ä=41, b=\"rocket\", c=true, d=\"everywhere\", e=42)");
+  static_assert(is_same_v<MyDerivedStruct::Index::Ordering, partial_ordering>);
+
+  const MyDerivedStruct m(41, "rocket", true, "everywhere", 4.2_f32);
+  EXPECT_EQ(fmt::format("{}", m), "(ä=41, b=\"rocket\", c=true, d=\"everywhere\", e=4.2)");
+  EXPECT_EQ(fmt::format("{:t}", m), "MyDerivedStruct(ä=41, b=\"rocket\", c=true, d=\"everywhere\", e=4.2)");
 }
 
 TEST(reflect, VarRef) {
@@ -237,6 +245,35 @@ TEST(reflect, VarRefOpEqNe) {
 
   EXPECT_EQ(get<0>(vars1), get<0>(vars2));
   EXPECT_NE(get<1>(vars1), get<1>(vars2));
+}
+
+TEST(reflect, VarRefOpCmp) {
+  static_assert(is_same_v<decltype(declval<VarRef<i32>>() <=> declval<VarRef<i32>>()), strong_ordering>);
+  static_assert(is_same_v<decltype(declval<VarRef<f32>>() <=> declval<VarRef<f32>>()), partial_ordering>);
+
+  i32 i1 = 1;
+  i32 i2 = 2;
+  i32 i3 = 3;
+  i32 i4 = 4;
+
+  const auto& vars1 = ROCKET_REFLECT_VARS((i1)(i2));
+  using type1 = decltype(vars1);
+  static_assert(is_same_v<decltype(declval<type1>() <=> declval<type1>()), strong_ordering>);
+  const auto& vars2 = ROCKET_REFLECT_VARS((i3)(i4));
+
+  EXPECT_LT(vars1, vars2);
+
+  f32 f1 = 1.0f;
+  f32 f2 = 2.0f;
+  f32 f3 = 3.0f;
+  f32 f4 = 4.0f;
+
+  const auto& vars3 = ROCKET_REFLECT_VARS((f1)(f2));
+  using type3 = decltype(vars3);
+  static_assert(is_same_v<decltype(declval<type3>() <=> declval<type3>()), partial_ordering>);
+  const auto& vars4 = ROCKET_REFLECT_VARS((f3)(f4));
+
+  EXPECT_LT(vars3, vars4);
 }
 
 TEST(reflect, VarRefOpOutput) {

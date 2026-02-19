@@ -1,21 +1,19 @@
 /**
  * @file reflect.h
  *
- * C++ reflection support: member and variable references.
+ * C++ reflection support: members and variables.
  */
 
 #pragma once
 
-#include "rocket/macro.h"
-#include "rocket/type-traits.h"
+#include "rocket/codec/CompareEncoder.h"
+#include "rocket/codec/EqualToEncoder.h"
+#include "rocket/codec/HashEncoder.h"
+#include "rocket/codec/FormattedCodec.h"
+#include "rocket/nio/nio.h"
+#include "rocket/unicode/ConvertTo.h"
 
-#include <boost/preprocessor/stringize.hpp>
-#include <boost/preprocessor/seq/cat.hpp>
-#include <boost/preprocessor/seq/enum.hpp>
-#include <boost/preprocessor/seq/for_each.hpp>
-
-#include <ostream>
-#include <tuple>
+#include <fmt/std.h> // #fmt::formatter<#std::type_info>
 
 // Macros ---------------------------------------------------------------------------------------------------
 
@@ -102,6 +100,9 @@
 #define ROCKET_REFLECT_MEMBERS__(cls, name, seq) \
   struct name { \
     static constexpr auto refs = ROCKET_REFLECT_MEMBERS_REFS__(cls, seq); \
+    \
+    using Cmp = ::rocket::StdCompare; \
+    using Ordering = ::rocket::codec::internal::CmpCommonOrdering<Cmp, Purge<decltype(refs)>>; \
   }
 
 #define ROCKET_REFLECT_MEMBERS_DERIVED__(baseCls, baseName, cls, name, seq) \
@@ -109,6 +110,9 @@
     static constexpr auto refs = ::std::tuple_cat( \
       baseCls::baseName::refs, \
       ROCKET_REFLECT_MEMBERS_REFS__(cls, seq)); \
+    \
+    using Cmp = ::rocket::StdCompare; \
+    using Ordering = ::rocket::codec::internal::CmpCommonOrdering<Cmp, Purge<decltype(refs)>>; \
   }
 
 #define ROCKET_REFLECT_MEMBERS_DECLARE_DECLARED__(ns, cls, name) \
@@ -121,7 +125,7 @@
   bool operator==(const cls& lhs, const cls& rhs)
 
 #define ROCKET_REFLECT_MEMBERS_DECLARE_OP_CMP__(cls, name) \
-  std::partial_ordering operator<=>(const cls& lhs, const cls& rhs)
+  cls::name::Ordering operator<=>(const cls& lhs, const cls& rhs)
 
 #define ROCKET_REFLECT_MEMBERS_DECLARE_OP_OUTPUT__(cls) \
   ::std::ostream& operator<<(::std::ostream&, const cls& rhs)
@@ -141,7 +145,7 @@
   }
 
 #define ROCKET_REFLECT_MEMBERS_DEFINE_OP_CMP__(cls, name) \
-  std::partial_ordering \
+  cls::name::Ordering \
   operator<=>(const cls& lhs, const cls& rhs) { \
     return ::rocket::codec::CompareEncoder<>().encode(lhs, rhs); \
   }
@@ -171,145 +175,230 @@
 
 namespace rocket::reflect {
 
-// #Declared ------------------------------------------------------------------------------------------------
-
-/**
- * This template provides access to default member references of a type.
- */
-template<typename T>
-struct Declared : std::false_type {};
-
 // #Instance ------------------------------------------------------------------------------------------------
 
-/**
- * A #rocket::reflect::Instance is an instance together with specified member references.
- *
- * @tparam T the type of the instance
- * @tparam Inner the inner type of @p T that holds the member references
- */
 template<typename T, typename Inner>
-struct Instance {
-  using Type = T; ///< @type_alias
-  using InnerType = Inner; ///< @type_alias
-  using PointerType = Purge<Type>*;
+inline bool
+operator==(const Instance<T, Inner>& lhs, const Instance<T, Inner>& rhs) {
+  return codec::EqualToEncoder<>().encode(lhs, rhs);
+}
 
-  /// The member references, taken from the inner type.
-  static constexpr auto& refs = Inner::refs;
+template<typename T, typename Inner>
+inline auto
+operator<=>(const Instance<T, Inner>& lhs, const Instance<T, Inner>& rhs) {
+  return codec::CompareEncoder<>().encode(lhs, rhs);
+}
 
-  /// A pointer to the instance.
-  PointerType instance;
-
-  /**
-   * @ctor
-   *
-   * @param instance the instance
-   */
-  Instance(T& instance) : instance(&instance) {}
-
-   /**
-   * @ctor
-   *
-   * @param instance the instance
-   */
-  Instance(const T& instance) : instance(const_cast<PointerType>(&instance)) {}
-};
-
-// #MemberRef -----------------------------------------------------------------------------------------------
-
-/**
- * References on members that need an instance to evaluate.
- *
- * Instances of this class are returned by #ROCKET_REFLECT_MEMBERS.
- */
-template<typename C, typename T>
-struct MemberRef {
-  using ValueType = T; ///< @type_alias
-
-  /**
-   * @ctor
-   *
-   * @param name the name of the member
-   * @param p the pointer to the member
-   */
-  consteval MemberRef(const char* name, T C::* p) : name_(name), p_(p) {}
-
-  /**
-   * Returns the value of the member.
-   *
-   * @param val the instance
-   * @return the value of the member
-   */
-  [[nodiscard]] constexpr T& get(C& val) const { return val.*p_; }
-
-  /**
-   * Returns the value of the member.
-   *
-   * @param val the instance
-   * @return the value of the member
-   */
-  [[nodiscard]] constexpr const T& get(const C& val) const { return val.*p_; }
-
-  /**
-   * Returns the name of the member.
-   *
-   * @return the name of the member
-   */
-  [[nodiscard]] constexpr std::string_view name() const { return name_; }
-
-private:
-
-  std::string_view name_; ///< The name of the member.
-  T C::*p_; ///< The pointer to the member.
-};
+// @op_output{#rocket::reflect::Instance}
+template<typename T, typename Inner>
+inline std::ostream&
+operator<<(std::ostream& lhs, const Instance<T, Inner>& rhs) {
+  return lhs << fmt::format("{}", rhs);
+}
 
 // #VarRef --------------------------------------------------------------------------------------------------
 
-/**
- * References on variables that need need no instance to evaluate.
- *
- * Instances of this class are returned by #ROCKET_REFLECT_VARS.
- *
- * @param T the type of the variable
- */
+// @op_eq{#rocket::reflect::VarRef}
 template<typename T>
-struct VarRef {
-  using ValueType = T; ///< @type_alias
+inline bool
+operator==(const VarRef<T>& lhs, const VarRef<T>& rhs) {
+  return codec::EqualToEncoder<>().encode(lhs.get(), rhs.get());
+}
 
-  /**
-   * @ctor
-   *
-   * @param name the name of the variable
-   * @param ref the reference to the variable
-   */
-  constexpr VarRef(const char* name, T& ref) : name_(name), ptr_(&ref) {}
+// @op_cmp{#rocket::reflect::VarRef}
+template<typename T>
+inline auto
+operator<=>(const VarRef<T>& lhs, const VarRef<T>& rhs) {
+  return codec::CompareEncoder<>().encode(lhs, rhs);
+}
 
-  /**
-   * Returns the value of the variable.
-   *
-   * @return the value of the variable
-   */
-  [[nodiscard]] constexpr T& get() { return *ptr_; }
+// @op_output{#rocket::reflect::VarRef}
+template<typename T>
+inline std::ostream&
+operator<<(std::ostream& lhs, const VarRef<T>& rhs) {
+  return lhs << fmt::format("{}", rhs);
+}
 
-  /**
-   * Returns the value of the variable.
-   *
-   * @return the value of the variable
-   */
-  [[nodiscard]] constexpr const T& get() const { return *ptr_; }
+} // namespace rocket::reflect
 
-  /**
-   * Returns the name of the variable.
-   *
-   * @return the name of the variable
-   */
-  [[nodiscard]] constexpr std::string_view name() const { return name_; }
+// #fmt::formatter<#rocket::reflect::Declared> --------------------------------------------------------------
+
+/**
+ * @spec_fmt_formatter{#rocket::reflect::Declared}
+ *
+ * - If the `i` format specifier is used, then the output is indented.
+ * - If the `t` format specifier is used, then the type name is included.
+ */
+template<typename T, typename C> requires rocket::reflect::Declared<T>::value && rocket::IsChar<C>
+struct fmt::formatter<T, C> {
+  /// @cond undocumented
+  template<typename FormatContext>
+  constexpr FormatContext::iterator
+  format(const T& val, FormatContext& ctx) const {
+    auto out = ctx.out();
+    if (withType_) {
+      const std::string typeName = fmt::format("{}", typeid(val));
+      // GCC 13.3 needs `fmt::detail` here
+      out = fmt::detail::write<C>(out, rocket::unicode::ConvertTo<C>::apply(typeName));
+    }
+    rocket::codec::FormattedCodec codec;
+    rocket::nio::StringSink sink;
+    codec.encode(val, sink, { .indent=indent_ });
+    // GCC 13.3 needs `fmt::detail` here
+    out = fmt::detail::write<C>(out, rocket::unicode::ConvertTo<C>::apply(sink.str()));
+    return out;
+  }
+
+  constexpr const C*
+  parse(fmt::parse_context<C>& ctx) { // GCC 13.3 needs `fmt::parse_context` here
+    auto it = ctx.begin(), end = ctx.end();
+    if (it != end && *it == 'i') {
+      indent_ = true;
+      ++it;
+    }
+    if (it != end && *it == 't') {
+      withType_ = true;
+      ++it;
+    }
+    return it;
+  }
+  /// @endcond
 
 private:
 
-  std::string_view name_;
-  T* ptr_;
+  bool indent_ = false;
+  bool withType_ = false;
 };
 
-} // namespace rocket::reflect
+// #fmt::formatter<#rocket::reflect::Instance> --------------------------------------------------------------
+
+/**
+ * @spec_fmt_formatter{#rocket::reflect::Instance}
+ *
+ * - If the `i` format specifier is used, then the output is indented.
+ * - If the `t` format specifier is used, then the type name is included.
+ */
+template<typename T, typename Inner, typename C> requires rocket::IsChar<C>
+struct fmt::formatter<rocket::reflect::Instance<T, Inner>, C> {
+  /// @cond undocumented
+  using Type = rocket::reflect::Instance<T, Inner>;
+
+  template<typename FormatContext>
+  constexpr FormatContext::iterator
+  format(const Type& val, FormatContext& ctx) const {
+    auto out = ctx.out();
+    if (withType_) {
+      const std::string typeName = fmt::format("{}", typeid(typename Type::Type));
+      out = detail::write<C>(out, rocket::unicode::ConvertTo<C>::apply(typeName));
+    }
+    rocket::codec::FormattedCodec codec;
+    rocket::nio::StringSink sink;
+    codec.encode(val, sink, { .indent=indent_ });
+    out = detail::write<C>(out, rocket::unicode::ConvertTo<C>::apply(sink.str()));
+    return out;
+  }
+
+  constexpr const C*
+  parse(parse_context<C>& ctx) {
+    auto it = ctx.begin(), end = ctx.end();
+    if (it != end && *it == 'i') {
+      indent_ = true;
+      ++it;
+    }
+    if (it != end && *it == 't') {
+      withType_ = true;
+      ++it;
+    }
+    return it;
+  }
+  /// @endcond
+
+private:
+
+  bool indent_ = false;
+  bool withType_ = false;
+};
+
+// #fmt::formatter<#rocket::reflect::VarRef> ----------------------------------------------------------------
+
+/**
+ * @spec_fmt_formatter{#rocket::reflect::VarRef}
+ *
+ * - If the `i` format specifier is used, then the output is indented.
+ */
+template<typename T, typename C> requires fmt::is_formattable<T, C>::value && rocket::IsChar<C>
+struct fmt::formatter<rocket::reflect::VarRef<T>, C> {
+  /// @cond undocumented
+  using Type = rocket::reflect::VarRef<T>;
+
+  template<typename FormatContext>
+  constexpr FormatContext::iterator
+  format(const Type& val, FormatContext& ctx) const {
+    auto out = ctx.out();
+    rocket::codec::FormattedCodec codec;
+    rocket::nio::StringSink sink;
+    codec.encode(val, sink, { .indent=indent_ });
+    out = detail::write<C>(out, rocket::unicode::ConvertTo<C>::apply(sink.str()));
+    return out;
+  }
+
+  constexpr const C*
+  parse(parse_context<C>& ctx) {
+    auto it = ctx.begin(), end = ctx.end();
+    if (it != end && *it == 'i') {
+      indent_ = true;
+      ++it;
+    }
+    return it;
+  }
+  /// @endcond
+
+private:
+
+  bool indent_ = false;
+};
+
+// #std::hash<#rocket::reflect::Declared> -------------------------------------------------------------------
+
+/// @spec_std_hash{#rocket::reflect::Declared}
+template<typename T> requires rocket::reflect::Declared<T>::value
+struct std::hash<T> {
+  /// @cond undocumented
+  u64
+  operator()(const T& val) const {
+    return rocket::codec::HashEncoder<>().encode(val);
+  }
+  /// @endcond
+};
+
+// #std::hash<#rocket::reflect::Instance> -------------------------------------------------------------------
+
+/// @spec_std_hash{#rocket::reflect::Instance}
+template<typename T, typename Inner>
+struct std::hash<rocket::reflect::Instance<T, Inner>> {
+  /// @cond undocumented
+  using Type = rocket::reflect::Instance<T, Inner>;
+
+  u64
+  operator()(const Type& val) const {
+    return rocket::codec::HashEncoder<>().encode(val);
+  }
+  /// @endcond
+};
+
+// #std::hash<#rocket::reflect::VarRef> ---------------------------------------------------------------------
+
+/// @spec_std_hash{#rocket::reflect::VarRef}
+template<typename T>
+struct std::hash<rocket::reflect::VarRef<T>> {
+  /// @cond undocumented
+  using Type = rocket::reflect::VarRef<T>;
+
+  u64
+  operator()(const Type& val) const {
+    return rocket::codec::HashEncoder<>().encode(val);
+  }
+  /// @endcond
+};
 
 // EOF

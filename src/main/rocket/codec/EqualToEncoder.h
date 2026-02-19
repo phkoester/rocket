@@ -368,8 +368,7 @@ struct EqualToConsumerImpl<DataType::Instance, T, Eq> {
   consume(const T& lhs, const T& rhs) {
     // Here we have to pass two additional arguments, the left and right instances, to the tuple consumer.
     // The tuple consumer will pass them on to the member-reference consumer
-    return EqualToConsumerImpl<ElemDataType, Elem, Eq>().consume(
-      refs, refs, *lhs.instance, *rhs.instance);
+    return EqualToConsumerImpl<ElemDataType, Elem, Eq>().consume(refs, refs, lhs.get(), rhs.get());
   }
 };
 

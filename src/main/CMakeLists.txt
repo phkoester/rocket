@@ -115,8 +115,11 @@ target_sources(rocket
       rocket/math/random/random.h
       rocket/nio/nio.h
       rocket/nio/nio-fwd.h
+      rocket/reflect/Declared.h
+      rocket/reflect/Instance.h
+      rocket/reflect/MemberRef.h
       rocket/reflect/reflect.h
-      rocket/reflect/reflect-codec.h
+      rocket/reflect/VarRef.h
       rocket/str/Noun.h
       rocket/str/Range.h
       rocket/str/str.h

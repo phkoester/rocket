@@ -5,7 +5,7 @@
 #include "rocket-test/rocket-test.h"
 
 #include "rocket/codec/EqualToEncoder.h"
-#include "rocket/reflect/reflect-codec.h"
+#include "rocket/reflect/reflect.h"
 
 using namespace rocket;
 using namespace rocket::codec;

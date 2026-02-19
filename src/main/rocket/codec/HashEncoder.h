@@ -217,7 +217,7 @@ struct HashConsumerImpl<DataType::Instance, T, Hash> {
   consume(const T& val) {
     // Here we have to pass an additional argument, the instance, to the tuple consumer. The tuple consumer
     // will pass it on to the member-reference consumer
-    return HashConsumerImpl<ElemDataType, Elem, Hash>().consume(refs, *val.instance);
+    return HashConsumerImpl<ElemDataType, Elem, Hash>().consume(refs, val.get());
   }
 };
 

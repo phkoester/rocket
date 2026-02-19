@@ -10,9 +10,13 @@
 
 #pragma once
 
-#include "rocket/Bimap.h"
 #include "rocket/type-traits.h"
-#include "rocket/reflect/reflect.h"
+#include "rocket/reflect/Declared.h"
+#include "rocket/reflect/Instance.h"
+#include "rocket/reflect/MemberRef.h"
+#include "rocket/reflect/VarRef.h"
+
+#include <boost/bimap/bimap.hpp>
 
 #include <array>
 #include <bit>

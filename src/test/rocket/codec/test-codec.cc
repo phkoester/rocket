@@ -6,7 +6,7 @@
 
 #include "rocket/codec/codec.h"
 #include "rocket/nio/nio.h"
-#include "rocket/reflect/reflect-codec.h"
+#include "rocket/reflect/reflect.h"
 #include "rocket/unicode/ConvertTo.h"
 
 #include <fmt/ranges.h>
@@ -183,7 +183,7 @@ struct TracingConsumerImpl<DataType::Instance, T> {
   consume(const T& val, nio::StringSink& out) {
     auto ret = out.println("consuming instance");
     // Here we have to pass an additional argument, the instance, to the tuple consumer
-    ret += TracingConsumerImpl<ElemDataType, Elem>().consume(refs, out, *val.instance);
+    ret += TracingConsumerImpl<ElemDataType, Elem>().consume(refs, out, val.get());
     return ret;
   }
 };

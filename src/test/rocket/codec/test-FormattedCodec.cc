@@ -6,7 +6,7 @@
 
 #include "rocket/codec/FormattedCodec.h"
 #include "rocket/log/log.h"
-#include "rocket/reflect/reflect-codec.h"
+#include "rocket/reflect/reflect.h"
 
 using namespace rocket::codec;
 using namespace std;
