@@ -32,7 +32,7 @@ struct MemberRef {
   /**
    * Returns the value of the member.
    *
-   * @param val the instance
+   * @param instance the instance
    * @return the value of the member
    */
   [[nodiscard]] constexpr T& get(C& instance) const { return instance.*ptr_; }
@@ -40,7 +40,7 @@ struct MemberRef {
   /**
    * Returns the value of the member.
    *
-   * @param val the instance
+   * @param instance the instance
    * @return the value of the member
    */
   [[nodiscard]] constexpr const T& get(const C& instance) const { return instance.*ptr_; }

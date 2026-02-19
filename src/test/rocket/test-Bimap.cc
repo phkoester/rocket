@@ -12,6 +12,13 @@ using namespace rocket;
 
 // #TEST ----------------------------------------------------------------------------------------------------
 
+TEST(Bimap, BimapOpLt) {
+  const auto map1 = makeBimap<i32, i32>({ { 1, 2 }, { 3, 4 } });
+  const auto map2 = makeBimap<i32, i32>({ { 1, 2 }, { 3, 5 } });
+  EXPECT_LT(map1, map2);
+  EXPECT_GT(map2, map1);
+}
+
 TEST(Bimap, UnorderedBimapopEq) {
   const auto map1 = makeUnorderedBimap<i32, i32>({ { 1, 2 }, { 3, 4 } });
   const auto map2 = makeUnorderedBimap<i32, i32>({ { 1, 2 }, { 3, 4 } });

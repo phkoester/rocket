@@ -145,6 +145,11 @@ using Purge = internal::PurgeImpl<T>::type;
 
 // #View ----------------------------------------------------------------------------------------------------
 
+/**
+ * Yields a view type for the given type @p T, or @p T itself if there is no defined view type.
+ *
+ * @tparam T the type to get a view type for
+ */
 template<typename T>
 using View = typename internal::ViewImpl<T>::Type;
 

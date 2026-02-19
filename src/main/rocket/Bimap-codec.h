@@ -6,7 +6,8 @@
 
 #pragma once
 
-#include "rocket/Bimap.h"
+#include "rocket/codec/CompareEncoder.h"
+#include "rocket/codec/EqualToEncoder.h"
 #include "rocket/codec/FormattedCodec.h"
 #include "rocket/nio/nio.h"
 #include "rocket/unicode/ConvertTo.h"
@@ -16,6 +17,20 @@
 // #boost::bimaps -------------------------------------------------------------------------------------------
 
 namespace boost::bimaps {
+
+/// @op_eq{`boost::bimaps::bimap`}
+template<typename A, typename B>
+inline bool
+operator==(const bimap<A, B>& lhs, const bimap<A, B>& rhs) {
+  return rocket::codec::EqualToEncoder<>().encode(lhs, rhs);
+}
+
+/// @op_cmp{`boost::bimaps::bimap`}
+template<typename A, typename B> requires (not rocket::IsUnordered<bimap<A, B>>)
+inline auto
+operator<=>(const bimap<A, B>& lhs, const bimap<A, B>& rhs) {
+  return rocket::codec::CompareEncoder<>().encode(lhs, rhs);
+}
 
 /// @op_output{`boost::bimaps::bimap`}
 template<typename A, typename B>

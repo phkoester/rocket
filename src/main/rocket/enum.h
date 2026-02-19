@@ -187,6 +187,8 @@ struct Enum : std::false_type {
  */
 template<typename E, typename C> requires rocket::Enum<E>::value && rocket::IsChar<C>
 struct fmt::formatter<E, C> {
+  /// @cond undocumented
+
   template<typename FormatContext>
   FormatContext::iterator
   format(E val, FormatContext& ctx) const {
@@ -208,6 +210,8 @@ struct fmt::formatter<E, C> {
     underlying_.set_debug_format(val);
   }
 
+  /// @endcond
+
 private:
 
   static constexpr std::basic_string_view<C> INVALID =
@@ -225,6 +229,8 @@ private:
  */
 template<typename E> requires rocket::Enum<E>::value
 struct scn::scanner<E, char> : scn::scanner<::std::string_view, char> {
+  /// @cond undocumented
+
   using Base = scn::scanner<::std::string_view, char>;
 
   template<typename Context>
@@ -248,6 +254,8 @@ struct scn::scanner<E, char> : scn::scanner<::std::string_view, char> {
       return unexpected(result.error());
     }
   }
+
+  /// @endcond
 };
 
 // EOF

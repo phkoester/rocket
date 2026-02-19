@@ -177,19 +177,21 @@ namespace rocket::reflect {
 
 // #Instance ------------------------------------------------------------------------------------------------
 
+/// @op_eq{#rocket::reflect::Instance}
 template<typename T, typename Inner>
 inline bool
 operator==(const Instance<T, Inner>& lhs, const Instance<T, Inner>& rhs) {
   return codec::EqualToEncoder<>().encode(lhs, rhs);
 }
 
+/// @op_cmp{#rocket::reflect::Instance}
 template<typename T, typename Inner>
 inline auto
 operator<=>(const Instance<T, Inner>& lhs, const Instance<T, Inner>& rhs) {
   return codec::CompareEncoder<>().encode(lhs, rhs);
 }
 
-// @op_output{#rocket::reflect::Instance}
+/// @op_output{#rocket::reflect::Instance}
 template<typename T, typename Inner>
 inline std::ostream&
 operator<<(std::ostream& lhs, const Instance<T, Inner>& rhs) {
@@ -198,21 +200,21 @@ operator<<(std::ostream& lhs, const Instance<T, Inner>& rhs) {
 
 // #VarRef --------------------------------------------------------------------------------------------------
 
-// @op_eq{#rocket::reflect::VarRef}
+/// @op_eq{#rocket::reflect::VarRef}
 template<typename T>
 inline bool
 operator==(const VarRef<T>& lhs, const VarRef<T>& rhs) {
   return codec::EqualToEncoder<>().encode(lhs.get(), rhs.get());
 }
 
-// @op_cmp{#rocket::reflect::VarRef}
+/// @op_cmp{#rocket::reflect::VarRef}
 template<typename T>
 inline auto
 operator<=>(const VarRef<T>& lhs, const VarRef<T>& rhs) {
   return codec::CompareEncoder<>().encode(lhs, rhs);
 }
 
-// @op_output{#rocket::reflect::VarRef}
+/// @op_output{#rocket::reflect::VarRef}
 template<typename T>
 inline std::ostream&
 operator<<(std::ostream& lhs, const VarRef<T>& rhs) {

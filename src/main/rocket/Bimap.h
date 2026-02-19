@@ -6,8 +6,6 @@
 
 #pragma once
 
-#include "rocket/type-traits.h"
-
 #include <boost/bimap.hpp>
 #include <boost/bimap/set_of.hpp>
 #include <boost/bimap/unordered_set_of.hpp>
@@ -69,39 +67,5 @@ makeUnorderedBimap(std::initializer_list<std::pair<K, V>> list = {}) {
 }
 
 } // namespace rocket
-
-// #boost::bimaps -------------------------------------------------------------------------------------------
-
-namespace boost::bimaps {
-
-/// @op_eq{`boost::bimaps::bimap`}
-/// XXX Mit codec, dann -> Bimap-codec.h
-template<typename A, typename B>
-bool
-operator==(const bimap<A, B>& lhs, const bimap<A, B>& rhs) {
-  if (lhs.size() != rhs.size()) {
-    return false;
-  }
-  for (const auto& [key, val] : lhs.left) { // NOLINT
-    auto it = rhs.left.find(key);
-    if (it == rhs.left.end()) {
-      return false;
-    }
-    if (it->second != val) {
-      return false;
-    }
-  }
-  return true;
-}
-
-/// @op_ne{`boost::bimaps::bimap`}
-/// XXX Mit codec, dann -> Bimap-codec.h
-template<typename A, typename B>
-inline bool
-operator!=(const bimap<A, B>& lhs, const bimap<A, B>& rhs) {
-  return not operator==(lhs, rhs);
-}
-
-} // namespace boost::bimaps
 
 // EOF

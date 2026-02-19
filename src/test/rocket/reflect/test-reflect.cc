@@ -227,8 +227,8 @@ TEST(reflect, VarRef) {
   EXPECT_EQ(fmt::format("{}", vars3), "(ä3=2, b3=\"hi\", f3=0.6)");
 
   EXPECT_NE(vars3, vars1);
-  // XXX EXPECT_LT(vars1, vars3);
-  // XXX EXPECT_GT(vars3, vars1);
+  EXPECT_LT(vars1, vars3);
+  EXPECT_GT(vars3, vars1);
 
   get<0>(vars1).get() = 3;
   EXPECT_EQ(ä1, 3);

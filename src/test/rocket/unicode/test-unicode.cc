@@ -4,6 +4,7 @@
 
 #include "rocket-test/rocket-test.h"
 
+#include "rocket/Bimap-codec.h"
 #include "rocket/unicode/unicode.h"
 
 #include <fmt/ranges.h>

@@ -4,6 +4,7 @@
 
 #include "rocket-test/rocket-test.h"
 
+#include "rocket/Bimap-codec.h"
 #include "rocket/str/escape/escape.h"
 
 using namespace rocket::str::escape;

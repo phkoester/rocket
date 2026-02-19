@@ -40,9 +40,19 @@ struct Instance {
    */
   Instance(const T& instance) : ptr_(const_cast<T*>(&instance)) {}
 
-  T& get() { return *ptr_; }
+  /**
+   * Returns a reference to the instance.
+   *
+   * @return a reference to the instance
+   */
+  [[nodiscard]] T& get() { return *ptr_; }
 
-  const T& get() const { return *ptr_; }
+  /**
+   * Returns a reference to the instance.
+   *
+   * @return a reference to the instance
+   */
+  [[nodiscard]] const T& get() const { return *ptr_; }
 
 private:
 
