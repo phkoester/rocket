@@ -18,10 +18,10 @@ using namespace rocket::codec;
 // #MyStruct ------------------------------------------------------------------------------------------------
 
 struct MyStruct {
-  int ärger;
+  i32 ärger;
   bool ökonom;
   string übermut;
-  vector<int> vec;
+  vector<i32> vec;
 
   ROCKET_REFLECT_MEMBERS(MyStruct, Index, (ärger)(ökonom)(übermut)(vec));
 };
@@ -105,7 +105,7 @@ TEST(HashEncoder, MapOrdered) {
 
   for (u64 i = 0; i < N; ++i) {
     ranges::shuffle(vec, gen);
-    map<int, string> map;
+    map<u64, string> map;
     for (const auto& elem : vec) {
       map.emplace(elem, fmt::format("{}", elem));
     }
@@ -129,7 +129,7 @@ TEST(HashEncoder, MapUnordered) {
 
   for (u64 i = 0; i < N; ++i) {
     ranges::shuffle(vec, gen);
-    unordered_map<int, string> map;
+    unordered_map<u64, string> map;
     for (const auto& elem : vec) {
       map.emplace(elem, fmt::format("{}", elem));
     }
