@@ -26,7 +26,7 @@ auto gen = math::random::gen();
 
 void
 map_smallConstMap(benchmark::State& state) {
-  map<string_view, i32> map;
+  map<string_view, u64> map;
   for (u64 i = 0; i < SMALL_CONST_MAP_KEYS.size(); ++i) {
     map.emplace(SMALL_CONST_MAP_KEYS[i], i);
   }
@@ -42,7 +42,7 @@ BENCHMARK(map_smallConstMap);
 
 void
 map_smallConstUnorderedMap(benchmark::State& state) {
-  unordered_map<string_view, i32> map;
+  unordered_map<string_view, u64> map;
   for (u64 i = 0; i < SMALL_CONST_MAP_KEYS.size(); ++i) {
     map.emplace(SMALL_CONST_MAP_KEYS[i], i);
   }
@@ -58,9 +58,9 @@ BENCHMARK(map_smallConstUnorderedMap);
 
 void
 map_smallConstBimap(benchmark::State& state) {
-  rocket::Bimap<string_view, i32> map;
+  rocket::Bimap<string_view, u64> map;
   for (u64 i = 0; i < SMALL_CONST_MAP_KEYS.size(); ++i) {
-    map.insert({ SMALL_CONST_MAP_KEYS[i], static_cast<i32>(i) });
+    map.insert({ SMALL_CONST_MAP_KEYS[i], i });
   }
 
   for (auto _ : state) { // NOLINT
@@ -74,9 +74,9 @@ BENCHMARK(map_smallConstBimap);
 
 void
 map_smallConstUnorderedBimap(benchmark::State& state) {
-  rocket::UnorderedBimap<string_view, i32> map;
+  rocket::UnorderedBimap<string_view, u64> map;
   for (u64 i = 0; i < SMALL_CONST_MAP_KEYS.size(); ++i) {
-    map.insert({ SMALL_CONST_MAP_KEYS[i], static_cast<i32>(i) });
+    map.insert({ SMALL_CONST_MAP_KEYS[i], i });
   }
 
   for (auto _ : state) { // NOLINT
