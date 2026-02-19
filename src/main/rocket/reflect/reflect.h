@@ -120,8 +120,7 @@
 #define ROCKET_REFLECT_MEMBERS_DECLARE_OP_EQ__(cls) \
   bool operator==(const cls& lhs, const cls& rhs)
 
-// XXX Rückgabetyp optimieren
-#define ROCKET_REFLECT_MEMBERS_DECLARE_OP_CMP__(cls) \
+#define ROCKET_REFLECT_MEMBERS_DECLARE_OP_CMP__(cls, name) \
   std::partial_ordering operator<=>(const cls& lhs, const cls& rhs)
 
 #define ROCKET_REFLECT_MEMBERS_DECLARE_OP_OUTPUT__(cls) \
@@ -131,7 +130,7 @@
   ROCKET_REFLECT_MEMBERS_DECLARE_DECLARED__(ns, cls, name); \
   ROCKET_NAMESPACE_BEGIN(ns); \
   ROCKET_REFLECT_MEMBERS_DECLARE_OP_EQ__(cls); \
-  ROCKET_REFLECT_MEMBERS_DECLARE_OP_CMP__(cls); \
+  ROCKET_REFLECT_MEMBERS_DECLARE_OP_CMP__(cls, name); \
   ROCKET_REFLECT_MEMBERS_DECLARE_OP_OUTPUT__(cls); \
   ROCKET_NAMESPACE_END(ns)
 
@@ -141,7 +140,7 @@
     return ::rocket::codec::EqualToEncoder<>().encode(lhs, rhs); \
   }
 
-#define ROCKET_REFLECT_MEMBERS_DEFINE_OP_CMP__(cls) \
+#define ROCKET_REFLECT_MEMBERS_DEFINE_OP_CMP__(cls, name) \
   std::partial_ordering \
   operator<=>(const cls& lhs, const cls& rhs) { \
     return ::rocket::codec::CompareEncoder<>().encode(lhs, rhs); \
@@ -156,7 +155,7 @@
 #define ROCKET_REFLECT_MEMBERS_DEFINE__(ns, cls, name) \
   ROCKET_NAMESPACE_BEGIN(ns); \
   ROCKET_REFLECT_MEMBERS_DEFINE_OP_EQ__(cls); \
-  ROCKET_REFLECT_MEMBERS_DEFINE_OP_CMP__(cls); \
+  ROCKET_REFLECT_MEMBERS_DEFINE_OP_CMP__(cls, name); \
   ROCKET_REFLECT_MEMBERS_DEFINE_OP_OUTPUT__(cls); \
   ROCKET_NAMESPACE_END(ns)
 

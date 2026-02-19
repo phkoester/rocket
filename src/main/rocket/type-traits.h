@@ -1,7 +1,7 @@
 /**
  * @file type-traits.h
  *
- * Template magic for types.
+ * Compile-time type information, template magic.
  */
 
 #pragma once
@@ -12,6 +12,7 @@
 #include <optional>
 #include <span>
 #include <string_view>
+#include <tuple>
 #include <type_traits>
 #include <vector>
 
@@ -97,8 +98,31 @@ struct ViewImpl<std::vector<T>> {
 
 } // namespace internal
 
+// #Ordering, #CommonOrdering -------------------------------------------------------------------------------
+
+/**
+ * Yields the ordering of the given type @p T.
+ *
+ * @tparam T the type to get the ordering of
+ */
+template<typename T>
+using Ordering = decltype(std::declval<T>() <=> std::declval<T>());
+
+/**
+ * Yields the common ordering of the given types @p T.
+ *
+ * @tparam T the types to get the common ordering of
+ */
+template<typename... T>
+using CommonOrdering = Ordering<std::tuple<T...>>;
+
 // #Largest -------------------------------------------------------------------------------------------------
 
+/**
+ * Yields the largest type from the given types @p T.
+ *
+ * @tparam T the types to compare
+ */
 template<typename... T>
 using Largest = typename internal::LargestImpl<T...>::Type; ///< @type_alias
 
@@ -106,6 +130,8 @@ using Largest = typename internal::LargestImpl<T...>::Type; ///< @type_alias
 
 /**
  * Removes const, volatile, and reference from the type @p T.
+ *
+ * @tparam T the type to purge
  */
 template<typename T>
 using Purge = internal::PurgeImpl<T>::type;

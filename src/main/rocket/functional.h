@@ -34,7 +34,7 @@ struct BoostHash {
 /**
  * A comparator using #std::compare_three_way.
  */
- struct StdCompare {
+struct StdCompare {
   /// @cond undocumented
   template<typename T>
   [[nodiscard]] auto
@@ -49,7 +49,7 @@ struct BoostHash {
 /**
  * A comparator using #std::equal_to.
  */
- struct StdEqualTo {
+struct StdEqualTo {
   /// @cond undocumented
   template<typename T>
   [[nodiscard]] bool

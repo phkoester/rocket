@@ -8,6 +8,7 @@
 #include "rocket/cl/cl.h"
 #include "rocket/log/log.h"
 
+#include <compare>
 #include <functional>
 
 using namespace rocket;
@@ -32,7 +33,6 @@ bool
 operator==(const MyStruct& lhs, const MyStruct& rhs) {
   return std::is_eq(lhs <=> rhs);
 }
-
 
 // Variables ------------------------------------------------------------------------------------------------
 

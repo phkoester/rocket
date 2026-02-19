@@ -14,6 +14,17 @@
 using namespace rocket;
 using namespace std;
 
+// #Ordering, #CommonOrdering -------------------------------------------------------------------------------
+
+static_assert(std::is_same_v<Ordering<int>, std::strong_ordering>);
+static_assert(std::is_same_v<Ordering<std::tuple<int, float>>, std::partial_ordering>);
+static_assert(std::is_same_v<Ordering<std::tuple<int, int, string>>, std::strong_ordering>);
+
+static_assert(std::is_same_v<CommonOrdering<>, std::strong_ordering>);
+static_assert(std::is_same_v<CommonOrdering<int>, std::strong_ordering>);
+static_assert(std::is_same_v<CommonOrdering<int, float>, std::partial_ordering>);
+static_assert(std::is_same_v<CommonOrdering<int, int, string>, std::strong_ordering>);
+
 // #IsArray -------------------------------------------------------------------------------------------------
 
 static_assert(IsArray<array<i32, 1>>);

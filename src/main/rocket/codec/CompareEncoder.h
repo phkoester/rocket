@@ -11,6 +11,26 @@ namespace rocket::codec {
 
 namespace internal {
 
+template<typename Cmp, typename T>
+struct CmpOrdering {
+  using Type = decltype(Cmp()(std::declval<T>(), std::declval<T>()));
+};
+
+template<typename Cmp, typename C, typename T>
+struct CmpOrdering<Cmp, reflect::MemberRef<C, T>> {
+  using Type = CmpOrdering<Cmp, T>;
+};
+
+template<typename Cmp, typename T>
+struct TupleCmpOrdering {
+  using Type = CmpOrdering<Cmp, T>;
+};
+
+template<typename Cmp, typename C, typename... T>
+struct TupleCmpOrdering<Cmp, std::tuple<reflect::MemberRef<C, T>...>> {
+  using Type = TupleCmpOrdering<Cmp, std::tuple<T...>>::Type;
+};
+
 // #CompareConsumerImpl -------------------------------------------------------------------------------------
 
 template<DataType DataType, typename T, typename Cmp>
@@ -56,12 +76,16 @@ struct CompareConsumerImpl<DataType::Optional, T, Cmp> {
   using Elem = T::value_type;
   static constexpr auto ElemDataType = DataTypes<Elem>::Value;
 
-  auto
-  consume(const T& lhs, const T& rhs) ->
-    decltype(CompareConsumerImpl<ElemDataType, Elem, Cmp>().consume(*lhs, *rhs)) {
-    const auto hasValueCmp = Cmp()(lhs.has_value(), rhs.has_value());
-    if (not std::is_eq(hasValueCmp)) {
-      return hasValueCmp;
+  using BoolOrdering = CmpOrdering<Cmp, bool>;
+  using ElemOrdering = CmpOrdering<Cmp, Elem>;
+  using Ordering = CommonOrdering<BoolOrdering, ElemOrdering>;
+  static_assert(std::is_same_v<Ordering, std::strong_ordering>); // XXX
+
+  Ordering
+  consume(const T& lhs, const T& rhs) {
+    const auto boolCmp = Cmp()(lhs.has_value(), rhs.has_value());
+    if (not std::is_eq(boolCmp)) {
+      return boolCmp;
     }
 
     if (not lhs) {
@@ -77,8 +101,10 @@ struct CompareConsumerImpl<DataType::Optional, T, Cmp> {
 // For #MemberRef, the tuple consumer must be able to pass additional arguments to the element consumer
 template<typename T, typename Cmp>
 struct CompareConsumerImpl<DataType::Tuple, T, Cmp> {
+  // XXX using Ordering = typename TupleCmpOrdering<Cmp, T>::Type;
+
   template<typename... Args>
-  auto
+  std::partial_ordering
   consume(const T& lhs, const T& rhs, Args&&... args) {
     return consume(
       lhs,
@@ -92,7 +118,7 @@ private:
   template<u64... Index, typename... Args>
   std::partial_ordering
   consume(const T& lhs, const T& rhs, std::index_sequence<Index...>, Args&&... args) {
-    auto ret = std::partial_ordering::equivalent;
+    std::partial_ordering ret = std::strong_ordering::equal;
     (... && consumeElem(ret, std::get<Index>(lhs), std::get<Index>(rhs), std::forward<Args>(args)...));
     return ret;
   }

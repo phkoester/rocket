@@ -6,10 +6,18 @@
 
 #include "rocket/codec/CompareEncoder.h"
 
-using namespace rocket;
 using namespace rocket::codec;
 
 // #TEST ----------------------------------------------------------------------------------------------------
+
+TEST(CompareEncoder, TupeCmpOrdering) {
+  using codec::internal::CmpOrdering;
+
+  using Cmp = StdCompare;
+
+  static_assert(std::is_same_v<CmpOrdering<Cmp, std::tuple<i32, i32, string>>::Type, std::strong_ordering>);
+  static_assert(std::is_same_v<CmpOrdering<Cmp, std::tuple<i32, f32>>::Type, std::partial_ordering>);
+}
 
 TEST(CompareEncoder, Bool) {
   CompareEncoder<> encoder;
