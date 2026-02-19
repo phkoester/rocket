@@ -96,6 +96,7 @@ target_sources(rocket
       rocket/Process.h
       rocket/rocket.h
       rocket/std.h
+      rocket/std-codec.h
       rocket/type-traits.h
       rocket/chrono/chrono.h
       rocket/cl/cl.h

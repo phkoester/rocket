@@ -11,6 +11,8 @@ namespace rocket::codec {
 
 namespace internal {
 
+// #CmpOrdering ---------------------------------------------------------------------------------------------
+
 template<typename Cmp, typename T>
 struct CmpOrderingImpl {
   using Type = decltype(Cmp()(std::declval<T>(), std::declval<T>()));
@@ -21,8 +23,15 @@ struct CmpOrderingImpl<Cmp, reflect::MemberRef<C, T>> {
   using Type = CmpOrderingImpl<Cmp, T>::Type;
 };
 
+template<typename Cmp, typename T, u64 Extent>
+struct CmpOrderingImpl<Cmp, std::span<T, Extent>> {
+  using Type = CmpOrderingImpl<Cmp, T>::Type;
+};
+
 template<typename Cmp, typename T>
 using CmpOrdering = CmpOrderingImpl<Cmp, T>::Type;
+
+// #CmpCommonOrdering ---------------------------------------------------------------------------------------
 
 template<typename Cmp, typename... T>
 struct CmpCommonOrderingImpl {
@@ -172,15 +181,10 @@ struct CompareConsumerImpl<DataType::Set, T, Cmp> {
   using Ordering = CmpOrdering<Cmp, Elem>;
 
   static constexpr auto Unordered = IsUnordered<T>;
-  using OrderedSet = std::set<Elem>;
-  static constexpr auto OrderedSetDataType = DataTypes<OrderedSet>::Value;
+  static_assert(not Unordered, "Cannot compare unordered sets");
 
   Ordering
   consume(const T& lhs, const T& rhs) {
-    if constexpr (Unordered) {
-      return consumeUnordered(lhs, rhs);
-    }
-
     const auto minSize = std::min(lhs.size(), rhs.size());
 
     auto lhsIt = lhs.begin(), rhsIt = rhs.begin();
@@ -196,20 +200,6 @@ struct CompareConsumerImpl<DataType::Set, T, Cmp> {
 
     return lhs.size() <=> rhs.size();
   }
-
-private:
-
-  /**
-   * Compares unordered sets.
-   *
-   * For unordered sets, we copy the elements to a sorted set upfront.
-   */
-  Ordering
-  consumeUnordered(const T& lhs, const T& rhs) {
-    return CompareConsumerImpl<OrderedSetDataType, OrderedSet, Cmp>().consume(
-      OrderedSet(lhs.begin(), lhs.end()),
-      OrderedSet(rhs.begin(), rhs.end()));
-  }
 };
 
 template<typename T, typename Cmp>
@@ -222,14 +212,10 @@ struct CompareConsumerImpl<DataType::Map, T, Cmp> {
   using Ordering = CmpCommonOrdering<Cmp, Key, Elem>;
 
   static constexpr auto Unordered = IsUnordered<T>;
-  using OrderedKeys = std::set<Key>;
+  static_assert(not Unordered, "Cannot compare unordered maps");
 
   Ordering
   consume(const T& lhs, const T& rhs) {
-    if constexpr (Unordered) {
-      return consumeUnordered(lhs, rhs);
-    }
-
     const auto minSize = std::min(lhs.size(), rhs.size());
 
     auto lhsIt = lhs.begin(), rhsIt = rhs.begin();
@@ -247,47 +233,6 @@ struct CompareConsumerImpl<DataType::Map, T, Cmp> {
         return elemCmp;
       }
       ++lhsIt; ++rhsIt;
-    }
-
-    return lhs.size() <=> rhs.size();
-  }
-
-private:
-
-  /**
-   * Compares unordered maps.
-   *
-   * For unordered maps, we copy the keys to a sorted set upfront.
-   */
-  Ordering
-  consumeUnordered(const T& lhs, const T& rhs) {
-    OrderedKeys lhsKeys;
-    for (const auto& [key, _] : lhs) {
-      lhsKeys.insert(key);
-    }
-
-    OrderedKeys rhsKeys;
-    for (const auto& [key, _] : rhs) {
-      rhsKeys.insert(key);
-    }
-
-    const auto minSize = std::min(lhs.size(), rhs.size());
-
-    auto lhsKeysIt = lhsKeys.begin(), rhsKeysIt = rhsKeys.begin();
-    for (u64 i = 0; i < minSize; ++i) {
-      const Key& lhsKey = *lhsKeysIt;
-      const Key& rhsKey = *rhsKeysIt;
-      const auto keyCmp = CompareConsumerImpl<KeyDataType, Key, Cmp>().consume(lhsKey, rhsKey);
-      if (not std::is_eq(keyCmp)) {
-        return keyCmp;
-      }
-      const Elem& lhsElem = lhs.find(lhsKey)->second;
-      const Elem& rhsElem = rhs.find(rhsKey)->second;
-      const auto elemCmp = CompareConsumerImpl<ElemDataType, Elem, Cmp>().consume(lhsElem, rhsElem);
-      if (not std::is_eq(elemCmp)) {
-        return elemCmp;
-      }
-      ++lhsKeysIt; ++rhsKeysIt;
     }
 
     return lhs.size() <=> rhs.size();
@@ -304,18 +249,14 @@ struct CompareConsumerImpl<DataType::Bimap, T, Cmp> {
   using Ordering = CmpCommonOrdering<Cmp, Key, Elem>;
 
   static constexpr auto Unordered = IsUnordered<T>;
-  using OrderedKeys = std::set<Key>;
+  static_assert(not Unordered, "Cannot compare unordered bimaps");
 
   Ordering
   consume(const T& lhs, const T& rhs) {
-    if constexpr (Unordered) {
-      return consumeUnordered(lhs, rhs);
-    }
-
     const auto minSize = std::min(lhs.size(), rhs.size());
 
     auto lhsIt = lhs.left.begin(), rhsIt = rhs.left.begin();
-    while (lhsIt != lhs.left.end()) {
+    for (u64 i = 0; i < minSize; ++i) {
       const Key& lhsKey = lhsIt->first;
       const Key& rhsKey = rhsIt->first;
       const auto keyCmp = CompareConsumerImpl<KeyDataType, Key, Cmp>().consume(lhsKey, rhsKey);
@@ -329,47 +270,6 @@ struct CompareConsumerImpl<DataType::Bimap, T, Cmp> {
         return elemCmp;
       }
       ++lhsIt; ++rhsIt;
-    }
-
-    return lhs.size() <=> rhs.size();
-  }
-
-private:
-
-  /**
-   * Compares unordered bimaps.
-   *
-   * For unordered bimaps, we copy the keys to a sorted set upfront.
-   */
-  Ordering
-  consumeUnordered(const T& lhs, const T& rhs) {
-    OrderedKeys lhsKeys;
-    for (const auto& [key, _] : lhs.left) {
-      lhsKeys.insert(key);
-    }
-
-    OrderedKeys rhsKeys;
-    for (const auto& [key, _] : rhs.left) {
-      rhsKeys.insert(key);
-    }
-
-    auto minSize = std::min(lhsKeys.size(), rhsKeys.size());
-
-    auto lhsKeysIt = lhsKeys.begin(), rhsKeysIt = rhsKeys.begin();
-    for (auto it = lhsKeysIt; it != lhsKeys.end(); ++it) {
-      const Key& lhsKey = *lhsKeysIt;
-      const Key& rhsKey = *rhsKeysIt;
-      const auto keyCmp = CompareConsumerImpl<KeyDataType, Key, Cmp>().consume(lhsKey, rhsKey);
-      if (not std::is_eq(keyCmp)) {
-        return keyCmp;
-      }
-      const Elem& lhsElem = lhs.left.find(lhsKey)->second;
-      const Elem& rhsElem = rhs.left.find(rhsKey)->second;
-      const auto elemCmp = CompareConsumerImpl<ElemDataType, Elem, Cmp>().consume(lhsElem, rhsElem);
-      if (not std::is_eq(elemCmp)) {
-        return elemCmp;
-      }
-      ++lhsKeysIt; ++rhsKeysIt;
     }
 
     return lhs.size() <=> rhs.size();
@@ -460,6 +360,9 @@ struct CompareConsumer {
 
 /**
  * A three-way-comparison encoder.
+ *
+ * Comparing unordered containers is not supported. #rocket::codec::EqualToEncoder can be used to compare
+ * unordered containers for equality.
  *
  * @tparam Cmp the comparator to use. The comparator must be able to compare all primitive data types,
  *   including 128-bit data types, and strings. The result type must be any of #std::strong_ordering,

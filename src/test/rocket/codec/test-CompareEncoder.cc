@@ -7,6 +7,7 @@
 #include "rocket/type-traits.h"
 
 #include "rocket/codec/CompareEncoder.h"
+#include "rocket/codec/HashEncoder.h"
 
 using namespace rocket::codec;
 
@@ -89,6 +90,42 @@ TEST(CompareEncoder, ArrayVector) {
   EXPECT_TRUE(std::is_lt(encoder.encode((type { 1, 2, 3 }), type( { 1, 2, 4 }))));
   EXPECT_TRUE(std::is_lt(encoder.encode((type { 1, 2, 3 }), type( { 1, 2, 3, 4 }))));
   EXPECT_TRUE(std::is_gt(encoder.encode((type { 1, 2, 3, 4 }), type( { 1, 2, 3 }))));
+}
+
+TEST(CompareEncoder, SetVector) {
+  using Elem = vector<i32>;
+
+  using Set = set<Elem>;
+  Set a = { { 1, 2, 3 }, { 4, 5, 6 } };
+  Set b = { { 4, 5, 6 }, { 1, 2, 3 } };
+
+  CompareEncoder<> encoder;
+  EXPECT_TRUE(std::is_eq(encoder.encode(a, b)));
+  EXPECT_TRUE(std::is_eq(encoder.encode(b, a)));
+}
+
+TEST(CompareEncoder, MapVector) {
+  using Elem = vector<i32>;
+
+  using Map = map<Elem, Elem>;
+  Map a = { { { 1, 2, 3 }, { 4, 5, 6 } }, { { 4, 5, 6 }, { 1, 2, 3 } } };
+  Map b = { { { 4, 5, 6 }, { 1, 2, 3 } }, { { 1, 2, 3 }, { 4, 5, 6 } } };
+
+  CompareEncoder<> encoder;
+  EXPECT_TRUE(std::is_eq(encoder.encode(a, b)));
+  EXPECT_TRUE(std::is_eq(encoder.encode(b, a)));
+}
+
+TEST(CompareEncoder, BimapString) {
+  using Elem = string;
+
+  using Map = Bimap<Elem, Elem>;
+  Map a = makeBimap<Elem, Elem>({ { "one", "two" }, { "three", "four" } });
+  Map b = makeBimap<Elem, Elem>({ { "three", "four" }, { "one", "two" } });
+
+  CompareEncoder<> encoder;
+  EXPECT_TRUE(std::is_eq(encoder.encode(a, b)));
+  EXPECT_TRUE(std::is_eq(encoder.encode(b, a)));
 }
 
 // EOF

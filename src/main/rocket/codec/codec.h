@@ -23,6 +23,7 @@
 #include <map>
 #include <optional>
 #include <set>
+#include <span>
 #include <string_view>
 #include <tuple>
 #include <unordered_map>

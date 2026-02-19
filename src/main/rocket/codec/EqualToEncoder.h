@@ -132,8 +132,6 @@ struct EqualToConsumerImpl<DataType::Set, T, Eq> {
   static constexpr auto ElemDataType = DataTypes<Elem>::Value;
 
   static constexpr auto Unordered = IsUnordered<T>;
-  using OrderedSet = std::set<Elem>;
-  static constexpr auto OrderedSetDataType = DataTypes<OrderedSet>::Value;
 
   bool
   consume(const T& lhs, const T& rhs) {
@@ -161,16 +159,15 @@ struct EqualToConsumerImpl<DataType::Set, T, Eq> {
 
 private:
 
-  /**
-   * Compares unordered sets.
-   *
-   * For unordered sets, we copy the elements to a sorted set upfront.
-   */
   bool
   consumeUnordered(const T& lhs, const T& rhs) {
-    return EqualToConsumerImpl<OrderedSetDataType, OrderedSet, Eq>().consume(
-      OrderedSet(lhs.begin(), lhs.end()),
-      OrderedSet(rhs.begin(), rhs.end()));
+    for (const auto& lhsElem : lhs) {
+      auto it = rhs.find(lhsElem);
+      if (it == rhs.end()) {
+        return false;
+      }
+    }
+    return true;
   }
 };
 
@@ -182,7 +179,6 @@ struct EqualToConsumerImpl<DataType::Map, T, Eq> {
   static constexpr auto ElemDataType = DataTypes<Elem>::Value;
 
   static constexpr auto Unordered = IsUnordered<T>;
-  using OrderedKeys = std::set<Key>;
 
   bool
   consume(const T& lhs, const T& rhs) {
@@ -216,44 +212,19 @@ struct EqualToConsumerImpl<DataType::Map, T, Eq> {
 
 private:
 
-  /**
-   * Compares unordered maps.
-   *
-   * For unordered maps, we copy the keys to a sorted set upfront.
-   */
   bool
   consumeUnordered(const T& lhs, const T& rhs) {
-    const auto size = lhs.size();
-
-    OrderedKeys lhsKeys;
-    lhsKeys.reserve(size);
-    for (const auto& [key, _] : lhs) {
-      lhsKeys.insert(key);
-    }
-
-    OrderedKeys rhsKeys;
-    rhsKeys.reserve(size);
-    for (const auto& [key, _] : rhs) {
-      rhsKeys.insert(key);
-    }
-
-    auto lhsKeysIt = lhsKeys.begin(), rhsKeysIt = rhsKeys.begin();
-    while (lhsKeysIt != lhsKeys.end()) {
-      const Key& lhsKey = *lhsKeysIt;
-      const Key& rhsKey = *rhsKeysIt;
-      const auto keyEq = EqualToConsumerImpl<KeyDataType, Key, Eq>().consume(lhsKey, rhsKey);
-      if (not keyEq) {
+    for (const auto& [lhsKey, lhsElem] : lhs) {
+      auto it = rhs.find(lhsKey);
+      if (it == rhs.end()) {
         return false;
       }
-      const Elem& lhsElem = lhs.find(lhsKey)->second;
-      const Elem& rhsElem = rhs.find(rhsKey)->second;
+      const auto& rhsElem = it->second;
       const auto elemEq = EqualToConsumerImpl<ElemDataType, Elem, Eq>().consume(lhsElem, rhsElem);
       if (not elemEq) {
         return false;
       }
-      ++lhsKeysIt; ++rhsKeysIt;
     }
-
     return true;
   }
 };
@@ -266,7 +237,6 @@ struct EqualToConsumerImpl<DataType::Bimap, T, Eq> {
   static constexpr auto ElemDataType = DataTypes<Elem>::Value;
 
   static constexpr auto Unordered = IsUnordered<T>;
-  using OrderedKeys = std::set<Key>;
 
   bool
   consume(const T& lhs, const T& rhs) {
@@ -300,44 +270,19 @@ struct EqualToConsumerImpl<DataType::Bimap, T, Eq> {
 
 private:
 
-  /**
-   * Compares unordered bimaps.
-   *
-   * For unordered bimaps, we copy the keys to a sorted set upfront.
-   */
   bool
   consumeUnordered(const T& lhs, const T& rhs) {
-    const auto size = lhs.size();
-
-    OrderedKeys lhsKeys;
-    lhsKeys.reserve(size);
-    for (const auto& [key, _] : lhs.left) {
-      lhsKeys.insert(key);
-    }
-
-    OrderedKeys rhsKeys;
-    rhsKeys.reserve(size);
-    for (const auto& [key, _] : rhs.left) {
-      rhsKeys.insert(key);
-    }
-
-    auto lhsKeysIt = lhsKeys.begin(), rhsKeysIt = rhsKeys.begin();
-    while (lhsKeysIt != lhsKeys.end()) {
-      const Key& lhsKey = *lhsKeysIt;
-      const Key& rhsKey = *rhsKeysIt;
-      const auto keyEq = EqualToConsumerImpl<KeyDataType, Key, Eq>().consume(lhsKey, rhsKey);
-      if (not keyEq) {
+    for (const auto& [lhsKey, lhsElem] : lhs.left) {
+      auto it = rhs.left.find(lhsKey);
+      if (it == rhs.left.end()) {
         return false;
       }
-      const Elem& lhsElem = lhs.left.find(lhsKey)->second;
-      const Elem& rhsElem = rhs.left.find(rhsKey)->second;
+      const auto& rhsElem = it->second;
       const auto elemEq = EqualToConsumerImpl<ElemDataType, Elem, Eq>().consume(lhsElem, rhsElem);
       if (not elemEq) {
         return false;
       }
-      ++lhsKeysIt; ++rhsKeysIt;
     }
-
     return true;
   }
 };

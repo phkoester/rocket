@@ -55,7 +55,7 @@ TEST(EqualToEncoder, Array) {
   EXPECT_TRUE(encoder.encode(b, b));
 }
 
-TEST(EqualToEncoder, SetUnorderedString) {
+TEST(EqualToEncoder, SetUnordered) {
   using type = unordered_set<string>;
   type a = { "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten" };
   type b = { "ten", "nine", "eight", "seven", "six", "five", "four", "three", "two", "one" };
@@ -75,20 +75,11 @@ TEST(EqualToEncoder, SetUnorderedString) {
   EXPECT_TRUE(encoder.encode(c, d));
 }
 
-// XXX Hier testen mit span<const i32> als Key
-TEST(EqualToEncoder, SetUnorderedVector) {
-  using Vector = vector<i32>;
-
-  struct VectorHash {
-    u64
-    operator()(const Vector& val) const {
-      return HashEncoder<>().encode(val);
-    }
-  };
-
-  using type = unordered_set<vector<i32>, VectorHash>;
-  type a = { { 1, 2, 3 }, { 4, 5, 6 }, { 7, 8, 9 } };
-  type b = { { 7, 8, 9 }, { 4, 5, 6 }, { 1, 2, 3 } };
+TEST(EqualToEncoder, MapUnordered) {
+  using type = unordered_map<i32, string>;
+  type a = { { 1, "one" }, { 2, "two" }, { 3, "three" } };
+  type b = { { 3, "three" }, { 2, "two" }, { 1, "one" } };
+  type c = { { 1, "one" }, { 2, "two" }, { 3, "free" } };
 
   EqualToEncoder<> encoder;
 
@@ -96,6 +87,40 @@ TEST(EqualToEncoder, SetUnorderedVector) {
   EXPECT_TRUE(encoder.encode(a, b));
   EXPECT_TRUE(encoder.encode(b, a));
   EXPECT_TRUE(encoder.encode(b, b));
+
+  EXPECT_FALSE(encoder.encode(a, c));
+  EXPECT_FALSE(encoder.encode(c, a));
+}
+
+TEST(EqualToEncoder, BimapUnordered) {
+  using type = UnorderedBimap<i32, string>;
+  type a = makeUnorderedBimap<i32, string>({ { 1, "one" }, { 2, "two" }, { 3, "three" } });
+  type b = makeUnorderedBimap<i32, string>({ { 3, "three" }, { 2, "two" }, { 1, "one" } });
+  type c = makeUnorderedBimap<i32, string>({ { 1, "one" }, { 2, "two" }, { 3, "free" } });
+
+  EqualToEncoder<> encoder;
+
+  EXPECT_TRUE(encoder.encode(a, a));
+  EXPECT_TRUE(encoder.encode(a, b));
+  EXPECT_TRUE(encoder.encode(b, a));
+  EXPECT_TRUE(encoder.encode(b, b));
+
+  EXPECT_FALSE(encoder.encode(a, c));
+  EXPECT_FALSE(encoder.encode(c, a));
+}
+
+TEST(EqualToEncoder, MyStruct) {
+  MyStruct a = { 1, true, "one", { 1, 2, 3 } };
+  MyStruct b = { 1, true, "one", { 1, 2, 3 } };
+  MyStruct c = { 1, true, "two", { 1, 2, 3 } };
+
+  EqualToEncoder<> encoder;
+
+  EXPECT_TRUE(encoder.encode(a, b));
+  EXPECT_TRUE(encoder.encode(b, a));
+
+  EXPECT_FALSE(encoder.encode(a, c));
+  EXPECT_FALSE(encoder.encode(c, a));
 }
 
 // EOF
