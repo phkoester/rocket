@@ -19,6 +19,7 @@ TEST(Exception, Clang) {
   } catch (const runtime_error& ex) {
     cout << "ex.what()=" << ex.what() << endl;
     cout << "what(ex)=" << what(ex) << endl;
+    cout << "what(ptr)=" << what(current_exception()) << endl;
     auto ptr = current_exception();
     cout << "ptr.bool=" << static_cast<bool>(ptr) << endl;
   }
@@ -58,7 +59,7 @@ TEST(Exception, WrappedExceptionFormat) {
         fmt::format("{}", WrappedException(current_exception())),
         matchesRegex(".*\\.cc:\\d+: Parameter `name`: oops2 \\(Because: .*\\.cc:\\d+: oops1\\)"));
 #ifndef ROCKET_OS_WINDOWS
-        EXPECT_THAT(
+      EXPECT_THAT(
         fmt::format("{:t}", WrappedException(current_exception())),
         matchesRegex("`std::_.*ested.*<rocket::InvalidArgument>`: .*\\.cc:\\d+: Parameter `name`: oops2 \\(Because: .*\\.cc:\\d+: oops1\\)"));
 #endif
@@ -79,11 +80,11 @@ TEST(Exception, printException1) { // NOLINT(*-complexity)
         nio::StringSink str1;
         printException(str1, ex3);
         EXPECT_THAT(str1.str(), AllOf(
-            // Linux: #std::_Nested_exception, Windows: #std::_With_nested_v2
-            containsRegex("An instance of `std::_.*ested.*<rocket::InvalidState>` was thrown: .*\\.cc:\\d+: oops3\n"),
-            containsRegex("Caused by an instance of `std::_.*ested.*<rocket::InvalidArgument>`: .*\\.cc:\\d+: Parameter `name`: oops2\n"),
-            // Linux: `char const*`, Windows: `charconst*__ptr64`
-            containsRegex("Caused by an instance of `char.*const\\*.*`: \"oops1\"\n")));
+          // Linux: #std::_Nested_exception, Windows: #std::_With_nested_v2
+          containsRegex("An instance of `std::_.*ested.*<rocket::InvalidState>` was thrown: .*\\.cc:\\d+: oops3\n"),
+          containsRegex("Caused by an instance of `std::_.*ested.*<rocket::InvalidArgument>`: .*\\.cc:\\d+: Parameter `name`: oops2\n"),
+          // Linux: `char const*`, Windows: `charconst*__ptr64`
+          containsRegex("Caused by an instance of `char.*const\\*.*`: \"oops1\"\n")));
 
         nio::StringSink str2;
         printException(str2, current_exception());
