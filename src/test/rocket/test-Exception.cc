@@ -18,6 +18,7 @@ TEST(Exception, Clang) {
     throw runtime_error("oops");
   } catch (const runtime_error& ex) {
     cout << "ex.what()=" << ex.what() << endl;
+    cout << "what(ex)=" << what(ex) << endl;
     auto ptr = current_exception();
     cout << "ptr.bool=" << static_cast<bool>(ptr) << endl;
   }
