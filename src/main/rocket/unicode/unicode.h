@@ -79,9 +79,6 @@ struct CodePoint {
     return ascii() && val_ == static_cast<char32>(c);
   }
 
-  /// @member_fn_hash
-  [[nodiscard]] u64 hash() const noexcept { return std::hash<char32>()(val_); }
-
   /**
    * Checks if the code point is printable.
    *
@@ -159,82 +156,6 @@ operator""_cp(char32 val) {
 
 /// @op_output{#rocket::unicode::CodePoint}
 std::ostream& operator<<(std::ostream& lhs, CodePoint rhs);
-
-} // namespace rocket::unicode
-
-// #fmt::formatter<#CodePoint> ------------------------------------------------------------------------------
-
-/**
- * @spec_fmt_formatter{#rocket::unicode::CodePoint}
- *
- * This formatter uses the same format specifiers as the underlying formatter for type #std::string.
- */
-template<typename C>
-struct fmt::formatter<rocket::unicode::CodePoint, C> {
-  /// @cond undocumented
-
-  template<typename FormatContext>
-  constexpr FormatContext::iterator
-  format(const rocket::unicode::CodePoint& val, FormatContext& ctx) const {
-    if constexpr (std::is_same_v<C, char>) {
-      return underlying_.format(fmt::format("U+{:0>4X}", static_cast<u32>(val)), ctx);
-    } else {
-      return underlying_.format(fmt::format(U"U+{:0>4X}", static_cast<u32>(val)), ctx);
-    }
-  }
-
-  constexpr const C*
-  parse(fmt::parse_context<C>& ctx) {
-    return underlying_.parse(ctx);
-  }
-
-  constexpr void
-  set_debug_format(bool val = true) {
-    underlying_.set_debug_format(val);
-  }
-
-  /// @endcond
-
-private:
-
-  fmt::formatter<basic_string_view<C>, C> underlying_;
-};
-
-// #std::hash<#CodePoint> -----------------------------------------------------------------------------------
-
-/// @spec_std_hash{#rocket::unicode::CodePoint}
-template<>
-struct std::hash<rocket::unicode::CodePoint> {
-  /**
-   * Returns a hash value for @p val.
-   *
-   * @param val the value to hash
-   * @return a hash value
-   */
-  u64 operator()(rocket::unicode::CodePoint val) const noexcept { return val.hash(); }
-};
-
-// #std::numeric_limits<#CodePoint> -------------------------------------------------------------------------
-
-/// @spec_std_numeric_limits{#rocket::unicode::CodePoint}
-template<>
-struct std::numeric_limits<rocket::unicode::CodePoint> {
-  /**
-   * Returns the minimum code-point value, which is U+0000.
-   *
-   * @return the minimum code-point value
-   */
-  static consteval rocket::unicode::CodePoint min() { return U'\u0000'; }
-
-  /**
-   * Returns the maximum code-point value, which is U+10FFFF, or decimal 1,114,111.
-   *
-   * @return the maximum code-point value
-   */
-  static consteval rocket::unicode::CodePoint max() { return U'\U0010FFFF'; }
-};
-
-namespace rocket::unicode {
 
 // Functions ------------------------------------------------------------------------------------------------
 
@@ -331,5 +252,87 @@ using utf8::validate;
 using utf32::validate;
 
 } // namespace rocket::unicode
+
+// #fmt::formatter<#CodePoint> ------------------------------------------------------------------------------
+
+/**
+ * @spec_fmt_formatter{#rocket::unicode::CodePoint}
+ *
+ * This formatter uses the same format specifiers as the underlying formatter for type #std::string.
+ */
+template<typename C>
+struct fmt::formatter<rocket::unicode::CodePoint, C> {
+  /// @cond undocumented
+
+  template<typename FormatContext>
+  constexpr FormatContext::iterator
+  format(const rocket::unicode::CodePoint& val, FormatContext& ctx) const {
+    if (val.valid()) {
+      if constexpr (std::is_same_v<C, char>) {
+        return underlying_.format(fmt::format("U+{:0>4X}", static_cast<u32>(val)), ctx);
+      } else {
+        return underlying_.format(fmt::format(U"U+{:0>4X}", static_cast<u32>(val)), ctx);
+      }
+    } else {
+      return underlying_.format(INVALID, ctx);
+    }
+  }
+
+  constexpr const C*
+  parse(fmt::parse_context<C>& ctx) {
+    return underlying_.parse(ctx);
+  }
+
+  constexpr void
+  set_debug_format(bool val = true) {
+    underlying_.set_debug_format(val);
+  }
+
+  /// @endcond
+
+private:
+
+  static constexpr std::basic_string_view<C> INVALID =
+    rocket::LiteralString<C, '<', 'i', 'n', 'v', 'a', 'l', 'i', 'd', '>'> {};
+
+  fmt::formatter<basic_string_view<C>, C> underlying_;
+};
+
+// #std::hash<#CodePoint> -----------------------------------------------------------------------------------
+
+/// @spec_std_hash{#rocket::unicode::CodePoint}
+template<>
+struct std::hash<rocket::unicode::CodePoint> {
+  /**
+   * Returns a hash value for @p val.
+   *
+   * @param val the value to hash
+   * @return a hash value
+   */
+  u64
+  operator()(rocket::unicode::CodePoint val) const noexcept {
+    return std::hash<char32>()(static_cast<char32>(val));
+  }
+};
+
+// #std::numeric_limits<#CodePoint> -------------------------------------------------------------------------
+
+/// @spec_std_numeric_limits{#rocket::unicode::CodePoint}
+template<>
+struct std::numeric_limits<rocket::unicode::CodePoint> {
+  /**
+   * Returns the minimum code-point value, which is U+0000.
+   *
+   * @return the minimum code-point value
+   */
+  static consteval rocket::unicode::CodePoint min() { return U'\u0000'; }
+
+  /**
+   * Returns the maximum code-point value, which is U+10FFFF, or decimal 1,114,111.
+   *
+   * @return the maximum code-point value
+   */
+  static consteval rocket::unicode::CodePoint max() { return U'\U0010FFFF'; }
+};
 
 // EOF

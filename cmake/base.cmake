@@ -104,7 +104,7 @@ if(LINUX)
   # gcc will not accept `__int128` with `-pedantic`
   list(APPEND COMPILE_FLAGS -Wall -Wextra -Wno-ignored-attributes)
 elseif(WIN32)
-  list(APPEND COMPILE_FLAGS /WX /Zc:preprocessor)
+  list(APPEND COMPILE_FLAGS /Zc:preprocessor) # /WX
 endif()
 
 # Functions -------------------------------------------------------------------------------------------------
