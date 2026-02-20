@@ -75,7 +75,7 @@
 /**
  * Compiler-specific pretty function signatures.
  */
-#ifdef ROCKET_CXX_COMPILER_MSVC
+#ifdef ROCKET_OS_WINDOWS
   #define ROCKET_PRETTY_FUNCTION __FUNCSIG__
 #else
   #define ROCKET_PRETTY_FUNCTION __PRETTY_FUNCTION__
