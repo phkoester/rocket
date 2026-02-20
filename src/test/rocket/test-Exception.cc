@@ -17,11 +17,21 @@ TEST(Exception, Clang) {
   try {
     throw runtime_error("oops");
   } catch (const runtime_error& ex) {
-    cout << "ex.what()=" << ex.what() << endl;
-    cout << "what(ex)=" << what(ex) << endl;
-    cout << "what(ptr)=" << what(current_exception()) << endl;
-    auto ptr = current_exception();
-    cout << "ptr.bool=" << static_cast<bool>(ptr) << endl;
+    try {
+      cout << "ex.what()=" << ex.what() << endl;
+      cout << "what(ex)=" << what(ex) << endl;
+      cout << "what(ptr)=" << what(current_exception()) << endl;
+      auto ptr = current_exception();
+      cout << "ptr.bool=" << static_cast<bool>(ptr) << endl;
+
+      throw_with_nested(runtime_error("oops2"));
+    } catch (const runtime_error& ex2) {
+      cout << "ex2.what()=" << ex2.what() << endl;
+      cout << "what(ex2)=" << what(ex2) << endl;
+      cout << "what(ptr)=" << what(current_exception()) << endl;
+      auto ptr = current_exception();
+      cout << "ptr.bool=" << static_cast<bool>(ptr) << endl;
+    }
   }
 }
 
