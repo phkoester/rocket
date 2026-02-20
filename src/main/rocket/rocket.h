@@ -29,11 +29,11 @@
  * | `rocket::u32`    |    4 | Always
  * | `rocket::i64`    |    8 | Always
  * | `rocket::u64`    |    8 | Always
- * | `rocket::i128`   |   16 | Not with MSVC
- * | `rocket::u128`   |   16 | Not with MSVC
+ * | `rocket::i128`   |   16 | Not with MSVC XXX
+ * | `rocket::u128`   |   16 | Not with MSVC XXX
  * | `rocket::f32`    |    4 | Always
  * | `rocket::f64`    |    8 | Always
- * | `rocket::f128`   |   16 | Not with MSVC
+ * | `rocket::f128`   |   16 | Not with MSVC XXX
  * | `void*`          |    8 | Always
  *
  * In Rocket, C strings of type `char*` and instances of #std::string or #std::string_view are assumed to
@@ -62,7 +62,7 @@
   #error Unsupported compiler
 #endif
 
-#ifndef ROCKET_CXX_COMPILER_MSVC
+#ifndef ROCKET_OS_WINDOWS // XXX
   #define ROCKET_HAS_128 ///< Do we have 128-bit data types?
 #endif
 

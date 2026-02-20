@@ -14,6 +14,9 @@
 ::
 :: Parameters:
 ::
+:: - CXX_TOOLCHAIN
+::     The C++ toolchain: `llvm` or `msvc` (default)
+::
 :: - BUILD_TYPE
 ::     The build type: `debug` or `release` (default)
 
@@ -21,7 +24,7 @@
 
 setlocal
 
-:: Configure toolchain --------------------------------------------------------------------------------------
+:: Configure C++ toolchain ----------------------------------------------------------------------------------
 
 if not defined CXX_TOOLCHAIN set CXX_TOOLCHAIN=msvc
 if %CXX_TOOLCHAIN% neq llvm if %CXX_TOOLCHAIN% neq msvc (
@@ -86,7 +89,7 @@ goto :eof
 
 :configure
 
-cmake --preset windows %CMAKE_FLAGS%
+cmake %CMAKE_FLAGS% --preset windows
 if %errorlevel% neq 0 exit /b %errorlevel%
 
 goto :eof
