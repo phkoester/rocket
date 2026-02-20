@@ -17,11 +17,11 @@ TEST(Exception, Clang1) {
   try {
     throw runtime_error("oops");
   } catch (const runtime_error&) {
-    auto ptr = current_exception();
     try {
-      rethrow_exception(ptr);
-    } catch (const exception& ex) {
-      cout << "ex.what()=" << ex.what() << endl;
+      cout << "rethrowing\n";
+      rethrow_exception(current_exception());
+    } catch (const runtime_error& ex) {
+      cout << "caught runtime error: " << ex.what() << endl;
     }
   }
 }
@@ -31,11 +31,15 @@ TEST(Exception, Clang2) {
   try {
     throw runtime_error("oops");
   } catch (const runtime_error&) {
-    auto ptr = current_exception();
     try {
-      rethrow_exception(ptr);
-    } catch (const exception& ex) {
-      cout << "ex.what()=" << ex.what() << endl;
+      throw_with_nested(runtime_error("oops2"));
+    } catch (const runtime_error&) {
+      try {
+        cout << "rethrowing nested\n";
+        rethrow_exception(current_exception());
+      } catch (const runtime_error& ex) {
+        cout << "caught runtime error: " << ex.what() << endl;
+      }
     }
   }
 }
