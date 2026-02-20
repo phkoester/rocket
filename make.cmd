@@ -62,6 +62,7 @@ echo ########################################
 echo #
 echo # BUILD_TYPE   : %BUILD_TYPE%
 echo # CXX_TOOLCHAIN: %CXX_TOOLCHAIN%
+echo # VERBOSE      : %VERBOSE%
 echo #
 echo ########################################
 

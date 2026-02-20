@@ -12,6 +12,16 @@
 
 // #TEST ----------------------------------------------------------------------------------------------------
 
+// XXX
+TEST(Exception, Clang) {
+  try {
+    throw "oops";
+  } catch (...) {
+    auto p = current_exception();
+    cout << "p.bool=" << static_cast<bool>(p) << endl;
+  }
+}
+
 TEST(Exception, WrappedExceptionFormat) {
   try  {
     ROCKET_FAIL("oops1");
