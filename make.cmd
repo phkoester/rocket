@@ -99,9 +99,9 @@ goto :eof
 :build
 
 if [%1] == [] (
-  cmake %CMAKE_FLAGS% --build --preset windows-%BUILD_TYPE%
+  cmake --build --preset windows-%BUILD_TYPE%
 ) else (
-  cmake %CMAKE_FLAGS% --build --preset windows-%BUILD_TYPE% --target %1
+  cmake --build --preset windows-%BUILD_TYPE% --target %1
 )
 if %errorlevel% neq 0 exit /b %errorlevel%
 
