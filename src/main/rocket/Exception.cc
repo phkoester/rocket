@@ -65,7 +65,7 @@ getWhat(const exception& val) {
 }
 
 void
-printExceptionPtr(nio::Sink& out, u64 level, exception_ptr ptr) { // NOLINT(*-recursion)
+printExceptionPtr(nio::Sink& out, u64 level, const exception_ptr& ptr) { // NOLINT(*-recursion)
   try {
     rethrow_exception(ptr);
   } catch (const exception& ex) {
@@ -140,7 +140,7 @@ printThrown(
 }
 
 void
-whatExceptionPtr(nio::Sink& out, u64 level, exception_ptr ptr) { // NOLINT(*-recursion)
+whatExceptionPtr(nio::Sink& out, u64 level, const exception_ptr& ptr) { // NOLINT(*-recursion)
   cout << "whatExceptionPtr: level=" << level << ", ptr.bool=" << static_cast<bool>(ptr) << endl;
   if (level > 0) {
     cout << "before write\n";
@@ -151,6 +151,7 @@ whatExceptionPtr(nio::Sink& out, u64 level, exception_ptr ptr) { // NOLINT(*-rec
   try {
     cout << "rethrowing" << endl;
     rethrow_exception(ptr);
+    cout << "AFTER RETHROW!" << endl;
   } catch (const exception& ex) {
     cout << "caught exception, ex.what()=" << ex.what() << endl;
     out.write(getWhat(ex));
@@ -160,16 +161,23 @@ whatExceptionPtr(nio::Sink& out, u64 level, exception_ptr ptr) { // NOLINT(*-rec
       whatExceptionPtr(out, level + 1, current_exception()); // Recursive call
     }
   } catch (i32 val) {
+    cout << "caught i32, val=" << val << endl;
     out.write(getWhat(val));
   } catch (i64 val) {
+    cout << "caught i64, val=" << val << endl;
     out.write(getWhat(val));
   } catch (const char* val) {
+    cout << "caught const char*, val=" << val << endl;
     out.write(getWhat(val));
   } catch (const string& val) {
+    cout << "caught string, val=" << val << endl;
     out.write(getWhat(val));
   } catch (string_view& val) {
+    cout << "caught string_view, val=" << val << endl;
     out.write(getWhat(val));
-  } catch (...) {}
+  } catch (...) {
+    cout << "caught ...\n";
+  }
 
   if (level > 0) {
     out.write(')');
@@ -234,7 +242,7 @@ printException(nio::Sink& out, const exception& ex) {
 }
 
 void
-printException(nio::Sink& out, exception_ptr ptr) {
+printException(nio::Sink& out, const exception_ptr& ptr) {
   ROCKET_CHECK(ptr, static_cast<bool>(ptr));
   printExceptionPtr(out, 0, ptr);
 }
@@ -252,7 +260,7 @@ what(const exception& ex) {
 }
 
 string
-what(exception_ptr ptr) {
+what(const exception_ptr& ptr) {
   cout << "what: ptr.bool=" << static_cast<bool>(ptr) << endl;
   ROCKET_CHECK(ptr, static_cast<bool>(ptr));
   nio::StringSink out;
