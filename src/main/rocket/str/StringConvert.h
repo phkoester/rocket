@@ -15,33 +15,19 @@
 
 namespace rocket::str {
 
+namespace internal {
+
 // #StringConvert -------------------------------------------------------------------------------------------
 
-/**
- * A string-conversion class template.
- */
 template<typename T>
 struct StringConvert;
 
-/// @spec_rocket_StringConvert{`bool`}
 template<>
 struct StringConvert<bool> {
-  using Type = bool; ///< @type_alias
+  using Type = bool;
 
-  /**
-   * Converts @p val to a string.
-   *
-   * @param val the value to convert
-   * @return a string
-   */
   [[nodiscard]] static std::string toString(Type val) { return val ? "true" : "false"; }
 
-  /**
-   * Converts @p str to a `bool` value.
-   *
-   * @param str the string to convert
-   * @return a `bool` value
-   */
   [[nodiscard]] static Type
   toType(std::string_view str) {
     // Anything that is not false is true, e.g. "42"!
@@ -53,27 +39,12 @@ private:
   static bool isFalse(std::string_view str);
 };
 
-/// @spec_rocket_StringConvert{`char`}
 template<>
 struct StringConvert<char> {
-  using Type = char; ///< @type_alias
+  using Type = char;
 
-  /**
-   * Converts @p val to a string.
-   *
-   * @param val the value to convert
-   * @return a string
-   */
   [[nodiscard]] static std::string toString(Type val) { return { val }; }
 
-  /**
-   * Converts @p str to a `char` value.
-   *
-   * @param str the string to convert
-   * @return a `char` value
-   *
-   * @throw #rocket::InvalidState if @p str cannot be scanned
-   */
   [[nodiscard]] static Type
   toType(std::string_view str) {
     if (str.size() != 1) {
@@ -83,26 +54,12 @@ struct StringConvert<char> {
   }
 };
 
-/// @spec_rocket_StringConvert{integer types}
 template<typename I> requires IsInteger<I>
 struct StringConvert<I> {
-  using Type = I; ///< @type_alias
+  using Type = I;
 
-  /**
-   * Converts @p val to a string.
-   *
-   * @param val the value to convert
-   * @return a string
-   */
   [[nodiscard]] static std::string toString(Type val) { return fmt::format("{}", val); }
 
-  /**
-   * Converts @p str to an integer value.
-   *
-   * @param str the string to convert
-   * @return an integer value
-   * @throw #rocket::InvalidState if @p str cannot be scanned
-   */
   [[nodiscard]] static Type
   toType(std::string_view str) {
     auto result = scn::scan<I>(str, "{}");
@@ -113,26 +70,12 @@ struct StringConvert<I> {
   }
 };
 
-/// @spec_rocket_StringConvert{enums}
 template<typename E> requires Enum<E>::value
 struct StringConvert<E> {
-  using Type = E; ///< @type_alias
+  using Type = E;
 
-  /**
-   * Converts @p val to a string.
-   *
-   * @param val the value to convert
-   * @return a string
-   */
   [[nodiscard]] static std::string toString(Type val) { return fmt::format("{}", val); }
 
-  /**
-   * Converts @p str to an enum value.
-   *
-   * @param str the string to convert
-   * @return an enum value
-   * @throw #rocket::InvalidState if @p str cannot be scanned
-   */
   [[nodiscard]] static Type
   toType(std::string_view str) {
     const auto [_, val] = Enum<Type>::toType(str, true);
@@ -140,26 +83,12 @@ struct StringConvert<E> {
   }
 };
 
-/// @spec_rocket_StringConvert{floating-point types}
 template<typename F> requires IsFloat<F>
 struct StringConvert<F> {
-  using Type = F; ///< @type_alias
+  using Type = F;
 
-  /**
-   * Converts @p val to a string.
-   *
-   * @param val the value to convert
-   * @return a string
-   */
   [[nodiscard]] static std::string toString(Type val) { return fmt::format("{}", val); }
 
-  /**
-   * Converts @p str to a floating-point value.
-   *
-   * @param str the string to convert
-   * @return a floating-point value
-   * @throw #rocket::InvalidState if @p str cannot be scanned
-   */
   [[nodiscard]] static Type
   toType(std::string_view str) {
     auto result = scn::scan<F>(str, "{}");
@@ -170,49 +99,25 @@ struct StringConvert<F> {
   }
 };
 
-/// @spec_rocket_StringConvert{#std::string}
 template<>
 struct StringConvert<std::string> {
-  using Type = std::string; ///< @type_alias
+  using Type = std::string;
 
-  /**
-   * Converts @p val to a string.
-   *
-   * @param val the value to convert
-   * @return a string
-   */
   [[nodiscard]] static std::string toString(const Type& val) { return val; }
 
-  /**
-   * Converts @p str to a #std::string.
-   *
-   * @param str the string to convert
-   * @return a #std::string value
-   */
   [[nodiscard]] static Type toType(std::string_view str) { return std::string(str); }
 };
 
-/// @spec_rocket_StringConvert{#std::string_view}
 template<>
 struct StringConvert<std::string_view> {
-  using Type = std::string_view; ///< @type_alias
+  using Type = std::string_view;
 
-  /**
-   * Converts @p val to a string.
-   *
-   * @param val the value to convert
-   * @return a string
-   */
   [[nodiscard]] static std::string toString(Type val) { return std::string(val); }
 
-  /**
-   * Converts @p str to a #std::string_view.
-   *
-   * @param str the string to convert
-   * @return a #std::string_view value
-   */
   [[nodiscard]] static Type toType(std::string_view str) { return str; }
 };
+
+} // namespace internal
 
 // Functions ------------------------------------------------------------------------------------------------
 
@@ -227,7 +132,7 @@ struct StringConvert<std::string_view> {
 template<typename T>
 [[nodiscard]] T
 toType(std::string_view str) {
-  return StringConvert<T>::toType(str);
+  return internal::StringConvert<T>::toType(str);
 }
 
 /**
@@ -241,7 +146,7 @@ template<typename T>
 [[nodiscard]] std::optional<T>
 tryToType(std::string_view str) {
   try {
-    return StringConvert<T>::toType(str);
+    return internal::StringConvert<T>::toType(str);
   } catch (const std::exception&) {
     return {};
   }
@@ -257,7 +162,7 @@ tryToType(std::string_view str) {
 template<typename T>
 [[nodiscard]] std::string
 toString(T val) {
-  return StringConvert<T>::toString(val);
+  return internal::StringConvert<T>::toString(val);
 }
 
 } // namespace rocket::str

@@ -31,6 +31,8 @@ namespace rocket::unicode {
  * ```
  */
 struct CodePoint {
+  using Type = char32; ///< The representation type of the code point.
+
   /// @ctor_default
   constexpr CodePoint() noexcept : val_(0) {}
 

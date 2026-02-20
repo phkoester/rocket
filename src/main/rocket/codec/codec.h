@@ -113,31 +113,31 @@ struct DataTypes<bool> {
   static constexpr auto Value = DataType::Bool; ///< The value type.
 };
 
-/// @spec{#rocket::codec::DataTypes, C}
+/// @spec{#rocket::codec::DataTypes, #rocket::IsChar}
 template<typename C> requires IsChar<C>
 struct DataTypes<C> {
   static constexpr auto Value = DataType::Char; ///< The data type.
 };
 
-/// @spec{#rocket::codec::DataTypes, E}
+/// @spec{#rocket::codec::DataTypes, #std::is_enum_v}
 template<typename E> requires std::is_enum_v<E>
 struct DataTypes<E> {
   static constexpr auto Value = DataType::Enum; ///< The data type.
 };
 
-/// @spec{#rocket::codec::DataTypes, I}
+/// @spec{#rocket::codec::DataTypes, #rocket::IsInteger}
 template<typename I> requires IsInteger<I>
 struct DataTypes<I> {
   static constexpr auto Value = DataType::Integer; ///< The data type.
 };
 
-/// @spec{#rocket::codec::DataTypes, F}
+/// @spec{#rocket::codec::DataTypes, #rocket::IsFloat}
 template<typename F> requires IsFloat<F>
 struct DataTypes<F> {
   static constexpr auto Value = DataType::Float; ///< The data type.
 };
 
-/// @spec{#rocket::codec::DataTypes, T}
+/// @spec{#rocket::codec::DataTypes, #std::is_pointer_v}
 template<typename P> requires std::is_pointer_v<P>
 struct DataTypes<P> {
   static constexpr auto Value = DataType::Pointer; ///< The data type.

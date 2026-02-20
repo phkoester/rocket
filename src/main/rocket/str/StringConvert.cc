@@ -2,7 +2,6 @@
  * StringConvert.cc
  */
 
-#include "str.h"
 #include "StringConvert.h"
 
 #include <algorithm>
@@ -20,7 +19,7 @@ const set<string> FALSE_VALUES = {
 
 } // namespace
 
-namespace rocket::str {
+namespace rocket::str::internal {
 
 // Functions ------------------------------------------------------------------------------------------------
 
@@ -34,6 +33,6 @@ StringConvert<bool>::isFalse(string_view str) {
   return FALSE_VALUES.contains(lower);
 }
 
-} // namespace rocket::str
+} // namespace rocket::str::internal
 
 // EOF

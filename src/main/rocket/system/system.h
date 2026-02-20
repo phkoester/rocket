@@ -120,7 +120,7 @@ get(std::string_view name) {
   if (not v) {
     return std::nullopt;
   }
-  return str::tryToType<T>(*v);
+  return rocket::str::tryToType<T>(*v);
 }
 
 /**
