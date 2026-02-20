@@ -18,7 +18,7 @@ TEST(Exception, Clang1) {
     throw runtime_error("oops");
   } catch (const runtime_error&) {
     try {
-      cout << "rethrowing\n";
+      cout << "rethrowing" << endl;
       rethrow_exception(current_exception());
     } catch (const runtime_error& ex) {
       cout << "caught runtime error: " << ex.what() << endl;
@@ -37,7 +37,7 @@ TEST(Exception, Clang2) {
     } catch (const runtime_error& ex) {
       cout << "caught runtime error: " << ex.what() << endl;
       try {
-        cout << "rethrowing nested\n";
+        cout << "rethrowing nested" << endl;
         rethrow_exception(current_exception());
       } catch (const runtime_error& ex) {
         cout << "caught runtime error: " << ex.what() << endl;

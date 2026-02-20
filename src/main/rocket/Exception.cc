@@ -7,8 +7,6 @@
 #include "rocket/assert.h"
 #include "rocket/str/message/message.h"
 
-#include <iostream> // XXX
-
 using namespace rocket;
 using namespace std;
 
@@ -141,19 +139,13 @@ printThrown(
 
 void
 whatExceptionPtr(nio::Sink& out, u64 level, const exception_ptr& ptr) { // NOLINT(*-recursion)
-  cout << "whatExceptionPtr: level=" << level << ", ptr.bool=" << static_cast<bool>(ptr) << endl;
   if (level > 0) {
-    cout << "before write\n";
     out.write(" (Because: ");
-    cout << "after write\n";
   }
 
   try {
-    cout << "rethrowing" << endl;
     rethrow_exception(ptr);
-    cout << "AFTER RETHROW!" << endl;
   } catch (const exception& ex) {
-    cout << "caught exception, ex.what()=" << ex.what() << endl;
     out.write(getWhat(ex));
     try {
       rethrow_if_nested(ex);
@@ -161,23 +153,16 @@ whatExceptionPtr(nio::Sink& out, u64 level, const exception_ptr& ptr) { // NOLIN
       whatExceptionPtr(out, level + 1, current_exception()); // Recursive call
     }
   } catch (i32 val) {
-    cout << "caught i32, val=" << val << endl;
     out.write(getWhat(val));
   } catch (i64 val) {
-    cout << "caught i64, val=" << val << endl;
     out.write(getWhat(val));
   } catch (const char* val) {
-    cout << "caught const char*, val=" << val << endl;
     out.write(getWhat(val));
   } catch (const string& val) {
-    cout << "caught string, val=" << val << endl;
     out.write(getWhat(val));
   } catch (string_view& val) {
-    cout << "caught string_view, val=" << val << endl;
     out.write(getWhat(val));
-  } catch (...) {
-    cout << "caught ...\n";
-  }
+  } catch (...) {}
 
   if (level > 0) {
     out.write(')');
@@ -261,7 +246,6 @@ what(const exception& ex) {
 
 string
 what(const exception_ptr& ptr) {
-  cout << "what: ptr.bool=" << static_cast<bool>(ptr) << endl;
   ROCKET_CHECK(ptr, static_cast<bool>(ptr));
   nio::StringSink out;
   whatExceptionPtr(out, 0, ptr);
