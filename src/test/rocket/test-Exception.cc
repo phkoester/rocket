@@ -13,24 +13,29 @@
 // #TEST ----------------------------------------------------------------------------------------------------
 
 // XXX
-TEST(Exception, Clang) {
+TEST(Exception, Clang1) {
   try {
     throw runtime_error("oops");
-  } catch (const runtime_error& ex) {
+  } catch (const runtime_error&) {
+    auto ptr = current_exception();
     try {
+      rethrow_exception(ptr);
+    } catch (const exception& ex) {
       cout << "ex.what()=" << ex.what() << endl;
-      cout << "what(ex)=" << what(ex) << endl;
-      cout << "what(ptr)=" << what(current_exception()) << endl;
-      auto ptr = current_exception();
-      cout << "ptr.bool=" << static_cast<bool>(ptr) << endl;
+    }
+  }
+}
 
-      throw_with_nested(runtime_error("oops2"));
-    } catch (const runtime_error& ex2) {
-      cout << "ex2.what()=" << ex2.what() << endl;
-      cout << "what(ex2)=" << what(ex2) << endl;
-      cout << "what(ptr)=" << what(current_exception()) << endl;
-      auto ptr = current_exception();
-      cout << "ptr.bool=" << static_cast<bool>(ptr) << endl;
+// XXX
+TEST(Exception, Clang2) {
+  try {
+    throw runtime_error("oops");
+  } catch (const runtime_error&) {
+    auto ptr = current_exception();
+    try {
+      rethrow_exception(ptr);
+    } catch (const exception& ex) {
+      cout << "ex.what()=" << ex.what() << endl;
     }
   }
 }
