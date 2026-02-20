@@ -21,6 +21,17 @@
 
 setlocal
 
+:: Configure toolchain --------------------------------------------------------------------------------------
+
+if not defined CXX_TOOLCHAIN set CXX_TOOLCHAIN=msvc
+if %CXX_TOOLCHAIN% neq llvm if %CXX_TOOLCHAIN% neq msvc (
+  echo make.cmd: `CXX_TOOLCHAIN`: Invalid value `%CXX_TOOLCHAIN%`; expected `llvm` or `msvc` 1>&2
+  exit /b 2
+)
+
+set CMAKE_FLAGS=
+if %CXX_TOOLCHAIN% == llvm set CMAKE_FLAGS=-T ClangCL
+
 :: Configure build type -------------------------------------------------------------------------------------
 
 if not defined BUILD_TYPE set BUILD_TYPE=release
@@ -34,11 +45,12 @@ if %BUILD_TYPE% == release set CONFIG=Release
 
 :: Print info -----------------------------------------------------------------------------------------------
 
-echo ####################
+echo ########################################
 echo #
-echo # BUILD_TYPE: %BUILD_TYPE%
+echo # CXX_TOOLCHAIN: %CXX_TOOLCHAIN%
+echo # BUILD_TYPE   : %BUILD_TYPE%
 echo #
-echo ####################
+echo ########################################
 
 :: Parse command --------------------------------------------------------------------------------------------
 
@@ -74,7 +86,7 @@ goto :eof
 
 :configure
 
-cmake --preset windows
+cmake --preset windows %CMAKE_FLAGS%
 if %errorlevel% neq 0 exit /b %errorlevel%
 
 goto :eof
@@ -84,9 +96,9 @@ goto :eof
 :build
 
 if [%1] == [] (
-  cmake --build --preset windows-%BUILD_TYPE%
+  cmake %CMAKE_FLAGS% --build --preset windows-%BUILD_TYPE%
 ) else (
-  cmake --build --preset windows-%BUILD_TYPE% --target %1
+  cmake %CMAKE_FLAGS% --build --preset windows-%BUILD_TYPE% --target %1
 )
 if %errorlevel% neq 0 exit /b %errorlevel%
 
