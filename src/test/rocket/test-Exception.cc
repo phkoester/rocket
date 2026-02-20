@@ -12,28 +12,6 @@
 
 // #TEST ----------------------------------------------------------------------------------------------------
 
-// This segfaults on Windows with Clang 20.1.8
-TEST(Exception, Clang) {
-  try {
-    throw runtime_error("oops");
-  } catch (const runtime_error&) {
-    try {
-      cout << "throwing nested\n";
-      throw_with_nested(runtime_error("oops2"));
-    } catch (const runtime_error& ex) {
-      cout << "caught runtime error: " << ex.what() << endl;
-      try {
-        cout << "rethrowing nested" << endl;
-        rethrow_exception(current_exception());
-      } catch (const runtime_error& ex) {
-        cout << "caught runtime error: " << ex.what() << endl;
-      } catch (...) {
-        cout << "caught ..." << endl;
-      }
-    }
-  }
-}
-
 TEST(Exception, WrappedExceptionFormat) {
   try  {
     ROCKET_FAIL("oops1");

@@ -33,6 +33,29 @@ TEST(std, f32OpCmp) {
   static_assert((nan <=> nan) == std::partial_ordering::unordered);
 }
 
+// Segfaults on Windows with Clang 20.1.8
+TEST(std, rethrowException) {
+  try {
+    throw runtime_error("oops");
+  } catch (const runtime_error&) {
+    try {
+      cout << "throwing nested\n";
+      throw_with_nested(runtime_error("oopsers"));
+    } catch (const runtime_error& ex) {
+      cout << "caught runtime error: " << ex.what() << endl;
+      try {
+        cout << "rethrowing nested" << endl;
+        // Segfaults
+        rethrow_exception(current_exception());
+      } catch (const runtime_error& ex) {
+        cout << "caught runtime error: " << ex.what() << endl;
+      } catch (...) {
+        cout << "caught ..." << endl;
+      }
+    }
+  }
+}
+
 TEST(std, chronoFormat) {
   {
     // Local time in ISO-8601, with microseconds
