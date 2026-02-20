@@ -7,6 +7,8 @@
 #include "rocket/assert.h"
 #include "rocket/str/message/message.h"
 
+#include <iostream> // XXX
+
 using namespace rocket;
 using namespace std;
 
@@ -139,13 +141,16 @@ printThrown(
 
 void
 whatExceptionPtr(nio::Sink& out, u64 level, exception_ptr ptr) { // NOLINT(*-recursion)
+  cout << "whatExceptionPtr: ptr.bool=" << static_cast<bool>(ptr) << endl;
   if (level > 0) {
     out.write(" (Because: ");
   }
 
   try {
+    cout << "rethrowing\n";
     rethrow_exception(ptr);
   } catch (const exception& ex) {
+    cout << "caught exception, ex.what()=" << ex.what() << endl;
     out.write(getWhat(ex));
     try {
       rethrow_if_nested(ex);
@@ -246,6 +251,7 @@ what(const exception& ex) {
 
 string
 what(exception_ptr ptr) {
+  cout << "what: ptr.bool=" << static_cast<bool>(ptr) << endl;
   ROCKET_CHECK(ptr, static_cast<bool>(ptr));
   nio::StringSink out;
   whatExceptionPtr(out, 0, ptr);
