@@ -15,10 +15,11 @@
 // XXX
 TEST(Exception, Clang) {
   try {
-    throw "oops";
-  } catch (...) {
-    auto p = current_exception();
-    cout << "p.bool=" << static_cast<bool>(p) << endl;
+    throw runtime_error("oops");
+  } catch (const runtime_error& ex) {
+    cout << "ex.what()=" << ex.what() << endl;
+    auto ptr = current_exception();
+    cout << "ptr.bool=" << static_cast<bool>(ptr) << endl;
   }
 }
 

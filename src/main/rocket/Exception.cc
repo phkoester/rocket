@@ -65,7 +65,7 @@ getWhat(const exception& val) {
 void
 printExceptionPtr(nio::Sink& out, u64 level, exception_ptr ptr) { // NOLINT(*-recursion)
   try {
-    rethrow_exception(std::move(ptr));
+    rethrow_exception(ptr);
   } catch (const exception& ex) {
     const auto* const p = dynamic_cast<const Exception*>(&ex);
     printThrown(out, level, &typeid(ex), getWhat(ex), p != nullptr? p->stackTrace() : nullopt);
@@ -144,7 +144,7 @@ whatExceptionPtr(nio::Sink& out, u64 level, exception_ptr ptr) { // NOLINT(*-rec
   }
 
   try {
-    rethrow_exception(std::move(ptr));
+    rethrow_exception(ptr);
   } catch (const exception& ex) {
     out.write(getWhat(ex));
     try {
@@ -229,7 +229,7 @@ printException(nio::Sink& out, const exception& ex) {
 void
 printException(nio::Sink& out, exception_ptr ptr) {
   ROCKET_CHECK(ptr, static_cast<bool>(ptr));
-  printExceptionPtr(out, 0, std::move(ptr));
+  printExceptionPtr(out, 0, ptr);
 }
 
 string
@@ -248,7 +248,7 @@ string
 what(exception_ptr ptr) {
   ROCKET_CHECK(ptr, static_cast<bool>(ptr));
   nio::StringSink out;
-  whatExceptionPtr(out, 0, std::move(ptr));
+  whatExceptionPtr(out, 0, ptr);
   return out.str();
 }
 
