@@ -391,7 +391,7 @@ struct FileSink : Sink {
 
 ROCKET_TEST_PRIVATE:
 
-  FILE* file_; ///< The `FILE` pointer.
+  FILE* file_ = nullptr; ///< The `FILE` pointer.
   Config config_; ///< The configuration.
 };
 
@@ -713,7 +713,7 @@ struct FileSource : Source {
 
 ROCKET_TEST_PRIVATE:
 
-  FILE* file_; ///< The `FILE` pointer.
+  FILE* file_ = nullptr; ///< The `FILE` pointer.
   Config config_; ///< The configuration.
 };
 

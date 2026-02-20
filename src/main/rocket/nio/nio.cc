@@ -146,9 +146,14 @@ FileSink::FileSink(FILE* file, const Config& config) :
 FileSink::FileSink(const string& path, const Config& config) :
     file_(nullptr),
     config_(config) {
-  const char* modes = config.append ? "ab" : "wb"; // "b" is for non-Linux only
-  file_ = std::fopen(path.c_str(), modes); // NOLINT(*-owning-memory)
+  const char* modes = config.append ? "ab" : "wb";
+#ifdef ROCKET_OS_WINDOWS
+  [[maybe_unused]] const auto result = fopen_s(&file_, path.c_str(), modes);
+  LOG("fopen_s=" << result << ", file=" << file_ << ", ferror=" << (file_ ? ferror(file_) : -1));
+#else
+  file_ = fopen(path.c_str(), modes); // NOLINT(*-owning-memory)
   LOG("fopen=" << file_ << ", ferror=" << (file_ ? ferror(file_) : -1));
+#endif
 
   if (file_ != nullptr) {
     status_.bad = false;
@@ -196,7 +201,7 @@ FileSink::handle() const {
   }
 
   ROCKET_ASSERT(file_ != nullptr);
-  return fileno(file_);
+  return ROCKET_FILENO(file_);
 }
 
 u64
@@ -605,8 +610,8 @@ BufferedSource::tell() {
 // #FileSource ----------------------------------------------------------------------------------------------
 
 FileSource::FileSource(FILE* file, const Config& config) :
-    file_(file),
-    config_(config) {
+  file_(file),
+  config_(config) {
   ROCKET_CHECK(file, file != nullptr);
   status_.bad = false;
   if (file == stdin) {
@@ -615,9 +620,14 @@ FileSource::FileSource(FILE* file, const Config& config) :
 }
 
 FileSource::FileSource(const string& path, const Config& config) :
-    file_(std::fopen(path.c_str(), "rb")), // "b" is for non-Linux only NOLINT(*-owning-memory)
-    config_(config) {
+  config_(config) {
+#ifdef ROCKET_OS_WINDOWS
+  [[maybe_unused]] const auto result = fopen_s(&file_, path.c_str(), "rb");
+  LOG("fopen_s=" << result << ", file=" << file_ << ", ferror=" << (file_ ? ferror(file_) : -1));
+#else
+  file_ = fopen(path.c_str(), "rb"); // NOLINT(*-owning-memory)
   LOG("fopen=" << file_ << ", ferror=" << (file_ ? ferror(file_) : -1));
+#endif
 
   if (file_ != nullptr) {
     status_.bad = false;
@@ -651,7 +661,7 @@ FileSource::handle() const {
   }
 
   ROCKET_ASSERT(file_ != nullptr);
-  return fileno(file_);
+  return ROCKET_FILENO(file_);
 }
 
 u64

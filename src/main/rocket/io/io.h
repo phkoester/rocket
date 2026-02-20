@@ -8,12 +8,15 @@
 
 #include "rocket/rocket.h"
 
+#include <cstdio>
 #include <spanstream>
 #include <sstream>
 
 #ifdef ROCKET_OS_WINDOWS
 
-#include <io.h> // _isatty
+#include <io.h>
+
+#define ROCKET_FILENO _fileno
 #define ROCKET_ISATTY _isatty
 
 #define STDIN_FILENO  0 ///< Standard input file number.
@@ -22,7 +25,9 @@
 
 #else
 
-#include <unistd.h> // isatty
+#include <unistd.h>
+
+#define ROCKET_FILENO fileno
 #define ROCKET_ISATTY isatty
 
 #endif // ROCKET_OS_WINDOWS
