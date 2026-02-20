@@ -80,7 +80,7 @@
 
 // #std::type_info for MSVC ---------------------------------------------------------------------------------
 
-#ifdef ROCKET_CXX_COMPILER_MSVC // XXX
+#ifdef ROCKET_OS_WINDOWS // XXX
 
 namespace std {
 
@@ -89,7 +89,7 @@ using type_info = ::type_info;
 
 } // namespace std
 
-#endif // ROCKET_CXX_COMPILER_MSVC
+#endif // ROCKET_OS_WINDOWS
 
 // Rocket type aliases --------------------------------------------------------------------------------------
 
