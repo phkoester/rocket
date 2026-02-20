@@ -100,7 +100,7 @@ goto :eof
 
 :configure
 
-cmake %CMAKE_TOOLCHAIN_FLAG% --preset windows %CMAKE_TRAILING_FLAGS%
+cmake %CMAKE_TOOLCHAIN_FLAG% --preset windows
 if %errorlevel% neq 0 exit /b %errorlevel%
 
 goto :eof
