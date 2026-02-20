@@ -13,6 +13,10 @@
 #include <cstdlib>
 #include <ranges>
 
+#ifdef ROCKET_OS_WINDOWS
+#include <prcoess.h>
+#endif
+
 using namespace rocket;
 using namespace std;
 
@@ -176,6 +180,15 @@ Process::exit(i32 status, bool allowUninited) const { // NOLINT(*-recursion)
   else {
     std::exit(status); // NOLINT(concurrency-mt-unsafe)
   }
+}
+
+i32
+Process::id() {
+#ifdef ROCKET_OS_WINDOWS
+  return _getpid();
+#else
+  return getpid();
+#endif
 }
 
 void

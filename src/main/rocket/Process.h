@@ -144,6 +144,13 @@ struct Process {
   static void atExit(std::function<void()>&& fn, bool callOnTerminate = false);
 
   /**
+   * Returns the process ID (PID).
+   *
+   * @return the process ID (PID)
+   */
+  [[nodiscard]] static i32 id();
+
+  /**
    * Returns the command this program was started with.
    *
    * @return the invocation name

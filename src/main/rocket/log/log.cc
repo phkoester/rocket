@@ -202,7 +202,7 @@ Out::expand(string_view pattern, const TimePoint& time, bool update) {
   auto utcDate = std::format("{}", utcYmd);
 
   auto dir = filesystem::path(Process::invocationName()).parent_path().string();
-  auto pid = fmt::format("{}", getpid());
+  auto pid = fmt::format("{}", Process::id());
   const auto& name = process.name();
 
   // Expand the pattern

@@ -14,27 +14,18 @@
 ::
 :: Parameters:
 ::
-:: - CXX_TOOLCHAIN
-::     The C++ toolchain: `llvm` or `msvc` (default)
-::
 :: - BUILD_TYPE
 ::     The build type: `debug` or `release` (default)
+:: - CXX_TOOLCHAIN
+::     The C++ toolchain: `llvm` or `msvc` (default)
+:: - VERBOSE
+::     Produce verbose output
+::
 
 @echo off
 
 setlocal enableextensions
 SET NAME=%~n0
-
-:: Configure C++ toolchain ----------------------------------------------------------------------------------
-
-if not defined CXX_TOOLCHAIN set CXX_TOOLCHAIN=msvc
-if %CXX_TOOLCHAIN% neq llvm if %CXX_TOOLCHAIN% neq msvc (
-  echo %NAME%: `CXX_TOOLCHAIN`: Invalid value `%CXX_TOOLCHAIN%`; expected `llvm` or `msvc` 1>&2
-  exit /b 2
-)
-
-set CMAKE_TOOLCHAIN_FLAG=
-if %CXX_TOOLCHAIN% == llvm set CMAKE_TOOLCHAIN_FLAG=-T ClangCL
 
 :: Configure build type -------------------------------------------------------------------------------------
 
@@ -47,12 +38,30 @@ if %BUILD_TYPE% neq debug if %BUILD_TYPE% neq release (
 if %BUILD_TYPE% == debug set CONFIG=Debug
 if %BUILD_TYPE% == release set CONFIG=Release
 
+:: Configure C++ toolchain ----------------------------------------------------------------------------------
+
+if not defined CXX_TOOLCHAIN set CXX_TOOLCHAIN=msvc
+if %CXX_TOOLCHAIN% neq llvm if %CXX_TOOLCHAIN% neq msvc (
+  echo %NAME%: `CXX_TOOLCHAIN`: Invalid value `%CXX_TOOLCHAIN%`; expected `llvm` or `msvc` 1>&2
+  exit /b 2
+)
+
+set CMAKE_TOOLCHAIN_FLAG=
+if %CXX_TOOLCHAIN% == llvm set CMAKE_TOOLCHAIN_FLAG=-T ClangCL
+
+:: Configure verbose output ---------------------------------------------------------------------------------
+
+set CMAKE_TRAILING_FLAGS=
+if defined VERBOSE (
+  set CMAKE_TRAILING_FLAGS=-v
+)
+
 :: Print info -----------------------------------------------------------------------------------------------
 
 echo ########################################
 echo #
-echo # CXX_TOOLCHAIN: %CXX_TOOLCHAIN%
 echo # BUILD_TYPE   : %BUILD_TYPE%
+echo # CXX_TOOLCHAIN: %CXX_TOOLCHAIN%
 echo #
 echo ########################################
 
@@ -90,11 +99,7 @@ goto :eof
 
 :configure
 
-if defined CMAKE_TOOLCHAIN_FLAG (
-  cmake %CMAKE_TOOLCHAIN_FLAG% --preset windows
-) else (
-  cmake --preset windows
-)
+cmake %CMAKE_TOOLCHAIN_FLAG% --preset windows %CMAKE_TRAILING_FLAGS%
 if %errorlevel% neq 0 exit /b %errorlevel%
 
 goto :eof
@@ -104,9 +109,9 @@ goto :eof
 :build
 
 if [%1] == [] (
-  cmake --build --preset windows-%BUILD_TYPE% -v
+  cmake --build --preset windows-%BUILD_TYPE% %CMAKE_TRAILING_FLAGS%
 ) else (
-  cmake --build --preset windows-%BUILD_TYPE% --target %1 -v
+  cmake --build --preset windows-%BUILD_TYPE% --target %1 %CMAKE_TRAILING_FLAGS%
 )
 if %errorlevel% neq 0 exit /b %errorlevel%
 
