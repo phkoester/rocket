@@ -141,13 +141,15 @@ printThrown(
 
 void
 whatExceptionPtr(nio::Sink& out, u64 level, exception_ptr ptr) { // NOLINT(*-recursion)
-  cout << "whatExceptionPtr: ptr.bool=" << static_cast<bool>(ptr) << endl;
+  cout << "whatExceptionPtr: level=" << level << ", ptr.bool=" << static_cast<bool>(ptr) << endl;
   if (level > 0) {
+    cout << "before write\n";
     out.write(" (Because: ");
+    cout << "after write\n";
   }
 
   try {
-    cout << "rethrowing\n";
+    cout << "rethrowing" << endl;
     rethrow_exception(ptr);
   } catch (const exception& ex) {
     cout << "caught exception, ex.what()=" << ex.what() << endl;
