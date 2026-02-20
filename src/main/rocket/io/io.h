@@ -1,7 +1,7 @@
 /**
  * @file io.h
  *
- * I/O stream utilities.
+ * I/O utilities.
  */
 
 #pragma once
@@ -10,6 +10,14 @@
 
 #include <spanstream>
 #include <sstream>
+
+#ifdef ROCKET_OS_WINDOWS
+#include <io.h> // _isatty
+#define ROCKET_ISATTY _isatty
+#else
+#include <unistd.h> // isatty
+#define ROCKET_ISATTY isatty
+#endif
 
 namespace rocket::io {
 

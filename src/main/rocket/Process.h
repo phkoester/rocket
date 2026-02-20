@@ -7,6 +7,7 @@
 #pragma once
 
 #include "rocket/rocket.h"
+#include "rocket/io/io.h"
 #include "rocket/nio/nio.h"
 
 #include <functional>
@@ -207,7 +208,7 @@ struct Process {
     out.write(autoName());
     out.write(": ");
     const char* label = status != 0 ? "fatal error: " : "error: ";
-    if (auto handle  = out.handle(); handle != -1 && isatty(handle)) {
+    if (auto handle  = out.handle(); handle != -1 && ROCKET_ISATTY(handle)) {
       out.print(fg(fmt::color::red) | fmt::emphasis::bold, "{}", label);
     } else {
       out.write(label);
@@ -245,7 +246,7 @@ struct Process {
   info(nio::Sink& out, fmt::format_string<T...> fmt, T&&... args) const {
     out.write(autoName());
     out.write(": ");
-    if (auto handle = out.handle(); handle != -1 && isatty(handle)) {
+    if (auto handle = out.handle(); handle != -1 && ROCKET_ISATTY(handle)) {
       out.print(fg(fmt::color::cyan) | fmt::emphasis::bold, "note: ");
     } else {
       out.write("note: ");
@@ -318,7 +319,7 @@ struct Process {
   warn(nio::Sink& out, fmt::format_string<T...> fmt, T&&... args) const {
     out.write(autoName());
     out.write(": ");
-    if (auto handle = out.handle(); handle != -1 && isatty(handle)) {
+    if (auto handle = out.handle(); handle != -1 && ROCKET_ISATTY(handle)) {
       out.print(fg(fmt::color::yellow) | fmt::emphasis::bold, "warning: ");
     } else {
       out.write("warning: ");

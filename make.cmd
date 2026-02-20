@@ -22,24 +22,29 @@
 
 @echo off
 
-setlocal
+:: XXX
+setlocal enableextensions
+SET NAME=%~n0
+SET parent=%~dp0
+echo name: [%name%]
+echo parent: [%parent%]
 
 :: Configure C++ toolchain ----------------------------------------------------------------------------------
 
 if not defined CXX_TOOLCHAIN set CXX_TOOLCHAIN=msvc
 if %CXX_TOOLCHAIN% neq llvm if %CXX_TOOLCHAIN% neq msvc (
-  echo make.cmd: `CXX_TOOLCHAIN`: Invalid value `%CXX_TOOLCHAIN%`; expected `llvm` or `msvc` 1>&2
+  echo %NAME%: `CXX_TOOLCHAIN`: Invalid value `%CXX_TOOLCHAIN%`; expected `llvm` or `msvc` 1>&2
   exit /b 2
 )
 
-set CMAKE_FLAGS=
-if %CXX_TOOLCHAIN% == llvm set CMAKE_FLAGS=-T ClangCL
+set CMAKE_TOOLCHAIN_FLAG=
+if %CXX_TOOLCHAIN% == llvm set CMAKE_TOOLCHAIN_FLAG=-T ClangCL
 
 :: Configure build type -------------------------------------------------------------------------------------
 
 if not defined BUILD_TYPE set BUILD_TYPE=release
 if %BUILD_TYPE% neq debug if %BUILD_TYPE% neq release (
-  echo make.cmd: `BUILD_TYPE`: Invalid value `%BUILD_TYPE%`; expected `debug` or `release` 1>&2
+  echo %NAME%: `BUILD_TYPE`: Invalid value `%BUILD_TYPE%`; expected `debug` or `release` 1>&2
   exit /b 2
 )
 
@@ -89,7 +94,11 @@ goto :eof
 
 :configure
 
-cmake %CMAKE_FLAGS% --preset windows
+if defined CMAKE_TOOLCHAIN_FLAG (
+  cmake %CMAKE_TOOLCHAIN_FLAG% --preset windows
+) else (
+  cmake --preset windows
+)
 if %errorlevel% neq 0 exit /b %errorlevel%
 
 goto :eof

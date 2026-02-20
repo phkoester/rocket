@@ -345,7 +345,7 @@ struct fmt::formatter<rocket::WrappedException, C> {
         const auto& ex = *val.exception(); // Clang wants this in two lines
         type = &typeid(ex);
       } else {
-#ifdef ROCKET_CXX_COMPILER_MSVC
+#ifdef ROCKET_OS_WINDOWS
         type = nullptr;
 #else
         type = val.ptr().__cxa_exception_type();

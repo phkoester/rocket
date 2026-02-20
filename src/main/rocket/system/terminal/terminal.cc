@@ -4,9 +4,10 @@
 
 #include "terminal.h"
 
+#include "rocket/assert.h"
 #include "rocket/Guard.h"
 #include "rocket/InputFailure.h"
-#include "rocket/assert.h"
+#include "rocket/io/io.h"
 
 #include <boost/safe_numerics/safe_integer.hpp>
 
@@ -129,7 +130,7 @@ Ansi::up(i32 n) const {
 optional<pair<u64, u64>>
 position(nio::Sink& out) {
   const i32 fd = out.handle();
-  if (fd == -1 || isatty(fd) == 0) {
+  if (fd == -1 || ROCKET_ISATTY(fd) == 0) {
     return {};
   }
 
@@ -164,7 +165,7 @@ position(nio::Sink& out) {
 optional<pair<u64, u64>>
 size(nio::Io& io) {
   const i32 fd = io.handle();
-  if (fd == -1 || isatty(fd) == 0) {
+  if (fd == -1 || ROCKET_ISATTY(fd) == 0) {
     return {};
   }
 
