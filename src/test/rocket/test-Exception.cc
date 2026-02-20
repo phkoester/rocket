@@ -32,8 +32,10 @@ TEST(Exception, Clang2) {
     throw runtime_error("oops");
   } catch (const runtime_error&) {
     try {
+      cout << "throwing nested\n";
       throw_with_nested(runtime_error("oops2"));
-    } catch (const runtime_error&) {
+    } catch (const runtime_error& ex) {
+      cout << "caught runtime error: " << ex.what() << endl;
       try {
         cout << "rethrowing nested\n";
         rethrow_exception(current_exception());
