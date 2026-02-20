@@ -23,7 +23,7 @@ main(i32 argc, char** argv) {
   const cl::OptionGroup general("General control");
   const cl::CommandLineConfig config { .usages={ "[OPTION]..." }, .otherOutput=true };
   cl::CommandLine cl({
-    cl::Option::helpOf(&general, help)
+    cl::Option::help(&general, help)
   }, {}, config);
   cl.parse(process.args());
 

@@ -87,8 +87,8 @@ struct Parameter {
    *   the usage line
    * @param format this parameter should briefly describe the format, e.g. <code>"file"</code>,
    *   <code>"number"</code>, or <code>"`red`, `green`, or `blue`"</code>
-   * @param help a short help text. By convention, this starts with a lower-case letter and does not end with
-   *   a period, e.g. `"the input file"`
+   * @param description a short description text. By convention, this starts with a lower-case letter and
+   *   does not end with a period, e.g. `"the input file"`
    * @param dest the destination reference that is assigned the argument
    * @return a new parameter
    */
@@ -97,7 +97,7 @@ struct Parameter {
   of(
     const std::string& name,
     const std::optional<std::string>& format,
-    const std::optional<std::string>& help,
+    const std::optional<std::string>& description,
     T& dest) {
     return {
       name,
@@ -106,7 +106,7 @@ struct Parameter {
       false, // #consumeOpts
       not IsOptional<T>, // #required
       format,
-      help,
+      description,
       [&](std::string_view val) { internal::applyTo(dest, val); }
     };
   }
@@ -120,8 +120,8 @@ struct Parameter {
    * @param name the name of the parameter, e.g. `"FILE"`. By conention, this is in all-caps and matches
    *   the usage line
    * @param allowedValues a set of allowed values
-   * @param help a short help text. By convention, this starts with a lower-case letter and does not end with
-   *   a period, e.g. `"path to input file"`
+   * @param description a short description text. By convention, this starts with a lower-case letter and
+   *   does not end with a period, e.g. `"the input file"`
    * @param dest the destination reference that is assigned the argument
    * @return a new parameter
    */
@@ -130,7 +130,7 @@ struct Parameter {
   of(
     const std::string& name,
     const std::set<typename internal::ValueType<T>>& allowedValues,
-    const std::optional<std::string>& help,
+    const std::optional<std::string>& description,
     T& dest) {
     Parameter ret {
       name,
@@ -139,7 +139,7 @@ struct Parameter {
       false, // #consumeOpts
       not IsOptional<T>, // #required
       std::nullopt, // #format
-      help,
+      description,
       [&](std::string_view val) { internal::applyTo(dest, val); }
     };
 
@@ -164,7 +164,7 @@ struct Parameter {
   bool consumeOpts = false; ///< Whether options shall be consumed after this parameter.
   bool required = false; ///< Required?
   std::optional<std::string> format; ///< Format text.
-  std::optional<std::string> help; ///< Help text.
+  std::optional<std::string> description; ///< Description text.
   Apply apply; ///< Callback function that applies the argument.
 };
 
@@ -188,27 +188,6 @@ struct Option {
   using Apply = std::function<void(std::string_view val)>;
 
   /**
-   * Convenience function that makes a new help option.
-   *
-   * @param group a pointer to an option group. May be null
-   * @param dest a reference to an optional `bool` value that will be set to `true` if the help option is
-   *   supplied
-   * @return a new help option
-   */
-  static Option
-  helpOf(
-    const OptionGroup* group,
-    std::optional<bool>& dest) {
-    return of(
-      group,
-      "help",
-      unicode::Character<char>("?"),
-      std::nullopt,
-      "display this help text and exit",
-      dest);
-  }
-
-  /**
    * Convenience function that makes a new option and binds it to a destination reference.
    *
    * @tparam T the type of the destination reference. If this is a #std::optional reference, this option is
@@ -222,8 +201,8 @@ struct Option {
    *   chosen via `-€` on the command line
    * @param format if the option takes a value, this parameter should briefly describe the format, e.g.
    *   <code>"file"</code>, <code>"number"</code>, or <code>"`red`, `green`, or `blue`"</code>
-   * @param help a short help text. By convention, this starts with a lower-case verb and does not end with
-   *   a period, e.g. `"print NUM lines of leading context"`
+   * @param description a short description text. By convention, this starts with a lower-case verb and does
+   *   not end with a period, e.g. `"print NUM lines of leading context"`
    * @param dest the destination reference that is assigned the option's value
    * @return a new option
    */
@@ -234,7 +213,7 @@ struct Option {
     const std::string& name,
     const std::optional<unicode::Character<char>>& shortName,
     const std::optional<std::string>& format,
-    const std::optional<std::string>& help,
+    const std::optional<std::string>& description,
     T& dest) {
     return {
       group,
@@ -245,7 +224,7 @@ struct Option {
       not(std::is_same_v<typename internal::ValueType<T>, bool>),
       not IsOptional<T>, // #required
       format,
-      help,
+      description,
       [&](std::string_view val) { internal::applyTo(dest, val); }
     };
   }
@@ -263,8 +242,8 @@ struct Option {
    * @param shortName an optional short name. For example, if this is <code>"€"</code>, the option may be
    *   chosen via `-€` on the command line
    * @param allowedValues a set of allowed values
-   * @param help a short help text. By convention, this starts with a lower-case verb and does not end with
-   *   a period, e.g. `"print NUM lines of leading context"`
+   * @param description a short description text. By convention, this starts with a lower-case verb and does
+   *   not end with a period, e.g. `"print NUM lines of leading context"`
    * @param dest the destination reference that is assigned the option's value
    * @return a new option
    */
@@ -275,7 +254,7 @@ struct Option {
     const std::string& name,
     const std::optional<unicode::Character<char>>& shortName,
     const std::set<typename internal::ValueType<T>>& allowedValues,
-    const std::optional<std::string>& help,
+    const std::optional<std::string>& description,
     T& dest) {
     auto ret = Option {
       group,
@@ -286,7 +265,7 @@ struct Option {
       not(std::is_same_v<typename internal::ValueType<T>, bool>),
       not IsOptional<T>, // #required
       std::nullopt, // #format
-      help,
+      description,
       [&](std::string_view val) { internal::applyTo(dest, val); }
     };
 
@@ -305,6 +284,66 @@ struct Option {
     return ret;
   }
 
+  /**
+   * Convenience function that makes a new help option.
+   *
+   * @param group a pointer to an option group. May be null
+   * @param dest a reference to an optional `bool` value that will be set to `true` if the option is supplied
+   * @return a new option
+   */
+  static Option
+  help(
+    const OptionGroup* group,
+    std::optional<bool>& dest) {
+    return of(
+      group,
+      "help",
+      unicode::Character<char>("?"), // #shortName
+      std::nullopt, // #format
+      "display this help text and exit",
+      dest);
+  }
+
+  /**
+   * Convenience function that makes a new version option.
+   *
+   * @param group a pointer to an option group. May be null
+   * @param dest a reference to an optional `bool` value that will be set to `true` if the option is supplied
+   * @return a new option
+   */
+  static Option
+  verbose(
+    const OptionGroup* group,
+    std::optional<bool>& dest) {
+    return of(
+      group,
+      "verbose",
+      unicode::Character<char>("v"), // #shortName
+      std::nullopt, // #format
+      "produce verbose output",
+      dest);
+  }
+
+  /**
+   * Convenience function that makes a new verbose option.
+   *
+   * @param group a pointer to an option group. May be null
+   * @param dest a reference to an optional `bool` value that will be set to `true` if the option is supplied
+   * @return a new option
+   */
+  static Option
+  version(
+    const OptionGroup* group,
+    std::optional<bool>& dest) {
+    return of(
+      group,
+      "version",
+      std::nullopt, // #shortName
+      std::nullopt, // #format
+      "display version information and exit",
+      dest);
+  }
+
   const OptionGroup* group = nullptr; ///< The option group.
   std::string name; ///< The option name.
   std::optional<unicode::Character<char>> shortName = std::nullopt; ///< The option short name.
@@ -312,7 +351,7 @@ struct Option {
   bool takesValue = false; ///< Option takes value?
   bool required = false; ///< Required?
   std::optional<std::string> format; ///< Format text.
-  std::optional<std::string> help; ///< Help text.
+  std::optional<std::string> description; ///< Description.
   Apply apply; ///< Callback function that applies the argument.
 };
 
@@ -369,9 +408,9 @@ struct CommandLine {
    * @param args the command-line arguments, e.g. `process.args()`
    * @param out the sink to write standard output to
    * @param err the sink to write error output to
-   * @param exit if `true`, the program exits on help or parse failure
-   * @return whether the application should continue after parsing. On help or parse failure, the function
-   *   returns `false`. If @p exit is `true`, the return value may be ignored
+   * @param exit if `true`, the program exits on help, version, or parse failure
+   * @return whether the application should continue after parsing. On help, version, or parse failure, the
+   *   function returns `false`. If @p exit is `true`, the return value may be ignored
    */
   bool parse(
     const std::vector<std::string>& args,
@@ -382,7 +421,9 @@ struct CommandLine {
 private:
 
   struct ParserState {
-    bool seenHelp = false;
+    bool help = false; // XXX Genauer, auf true prüfen
+    bool verbose = false;
+    bool version = false;
     std::set<const Option*> seenOpts;
     std::set<const Parameter*> seenParams;
   };
@@ -407,7 +448,7 @@ private:
 
   void handleException(const std::exception& ex, nio::Sink& out, i32 status) const;
 
-  void printHelp(nio::Sink& out, bool exit);
+  void printHelp(nio::Sink& out, bool verbose, bool exit);
 
   void printHelpOpts(nio::Sink& out, u64 width) const;
 

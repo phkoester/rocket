@@ -16,8 +16,8 @@
 
 #include <io.h>
 
-#define ROCKET_FILENO _fileno
-#define ROCKET_ISATTY _isatty
+#define ROCKET_FILENO _fileno ///< Macro for portability.
+#define ROCKET_ISATTY _isatty ///< Macro for portability.
 
 #define STDIN_FILENO  0 ///< Standard input file number.
 #define STDOUT_FILENO 1 ///< Standard output file number.
@@ -27,8 +27,8 @@
 
 #include <unistd.h>
 
-#define ROCKET_FILENO fileno
-#define ROCKET_ISATTY isatty
+#define ROCKET_FILENO fileno ///< Macro for portability.
+#define ROCKET_ISATTY isatty ///< Macro for portability.
 
 #endif // ROCKET_OS_WINDOWS
 

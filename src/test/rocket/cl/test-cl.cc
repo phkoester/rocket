@@ -63,7 +63,7 @@ parseCommand(const vector<string>& args, nio::Sink& out = nio::out, nio::Sink& e
   CommandLine cl({
     // The group order matters!
     Option::of(&general, "omit", "o"_c, nullopt, "omit what is not important", parseCommandOmit),
-    Option::helpOf(&misc, parseCommandHelp)
+    Option::help(&misc, parseCommandHelp)
   }, {
     command,
     Parameter::of("ARG", nullopt, "a command-line argument", parseCommandArgs)
@@ -87,7 +87,7 @@ parseCommand(const vector<string>& args, nio::Sink& out = nio::out, nio::Sink& e
     };
 
     CommandLine listCl({
-      Option::helpOf(&list, parseCommandListHelp),
+      Option::help(&list, parseCommandListHelp),
       Option::of(&list, "list", "l"_c, nullopt, "a list option that is good for nothing", parseCommandList)
     }, {
       Parameter::of("FILE", "file", "a file to list", parseCommandListFiles)
@@ -110,7 +110,7 @@ parseCommand(const vector<string>& args, nio::Sink& out = nio::out, nio::Sink& e
     };
 
     CommandLine showCl({
-      Option::helpOf(&show, parseCommandShowHelp),
+      Option::help(&show, parseCommandShowHelp),
       Option::of(&show, "show", "s"_c, nullopt, "a show option that is good for nothing", parseCommandShow),
       Option::of(&show, "test", "t"_c, nullopt, "test something, or don't", parseCommandShowTest)
     }, {

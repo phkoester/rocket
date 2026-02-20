@@ -139,7 +139,13 @@ CommandLine::applyOpt(const Option& opt, bool nameFlag, const optional<string>& 
     }
     opt.apply(useValue);
     if (opt.name == "help") {
-      parserState_.seenHelp = true;
+      parserState_.help = str::tryToType<bool>(useValue).value_or(false);
+    }
+    if (opt.name == "verbose") {
+      parserState_.verbose = str::tryToType<bool>(useValue).value_or(false);
+    }
+    if (opt.name == "version") {
+      parserState_.version = str::tryToType<bool>(useValue).value_or(false);
     }
     parserState_.seenOpts.insert(&opt);
   } catch (const Exception& ex) {
@@ -321,10 +327,12 @@ CommandLine::parse(const vector<string>& args, nio::Sink& out, nio::Sink& err, b
     }
 
     // Help?
-    if (parserState_.seenHelp) {
-      printHelp(out, exit);
+    if (parserState_.help) {
+      printHelp(out, parserState_.verbose, exit);
       return false;
     }
+
+    // XXX Version?
 
     // Have we seen all required options?
     for (const auto& opt : opts_) {
@@ -349,7 +357,7 @@ CommandLine::parse(const vector<string>& args, nio::Sink& out, nio::Sink& err, b
 }
 
 void
-CommandLine::printHelp(nio::Sink& out, bool exit) {
+CommandLine::printHelp(nio::Sink& out, [[maybe_unused]] bool verbose, bool exit) { // XXX
   ROCKET_EXPECT(hasHelpOpt_);
 
   const auto size = system::terminal::size(out);
@@ -470,8 +478,8 @@ CommandLine::printHelpOpts(nio::Sink& out, u64 width) const { // NOLINT(*-comple
         out.write(" (required)");
       }
       out.write('\n');
-      if (opt->help) {
-        out.writeln(str::wrap(*opt->help, 10, width));
+      if (opt->description) {
+        out.writeln(str::wrap(*opt->description, 10, width));
       }
     }
   }
@@ -496,8 +504,8 @@ CommandLine::printHelpParams(nio::Sink& out, u64 width) const {
       out.write(" (required)");
     }
     out.write('\n');
-    if (param.help) {
-      out.writeln(str::wrap(*param.help, 10, width));
+    if (param.description) {
+      out.writeln(str::wrap(*param.description, 10, width));
     }
   }
 }

@@ -44,7 +44,7 @@ main(i32 argc, char **argv) {
   const cl::OptionGroup general("General control");
   const cl::CommandLineConfig config { .usages={ "[OPTION]... [ARG]..." }} ;
   cl::CommandLine cl({
-    cl::Option::helpOf(&general, help),
+    cl::Option::help(&general, help),
     cl::Option::of(&general, "offset", "o"_c, "number", "hour offset", hours)
   }, {
     cl::Parameter::of("ARG", nullopt, "a command-line argument", args)

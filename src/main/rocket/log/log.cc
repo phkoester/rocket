@@ -305,7 +305,7 @@ const vector<cl::Option> CL_OPTIONS {
     .name="log",
     .takesValue=true,
     .format="ID[.SUBSTRING][=LEVEL]",
-    .help=
+    .description=
       "set logging for identifier ID to level LEVEL. ID is a known log ID or `all`.\n"
       NBSP NBSP "If an optional substring is supplied, the log level is only applied to functions that "
       "contain the substring.\n"
@@ -318,7 +318,7 @@ const vector<cl::Option> CL_OPTIONS {
     .name="log-fmt",
     .takesValue=true,
     .format="FMT",
-    .help=
+    .description=
       "set log format. FMT is a string of format specifiers, e.g. `fs3Z`. Valid specifiers are:\n"
       NBSP NBSP "f" NBSP NBSP NBSP "display function names\n"
       NBSP NBSP "F" NBSP NBSP NBSP "display pretty function names (*)\n"
@@ -344,7 +344,7 @@ const vector<cl::Option> CL_OPTIONS {
     .name="log-out",
     .takesValue=true,
     .format="OUT",
-    .help=
+    .description=
       "log to system device or file. If OUT is `-` or `stdout`, log messages are written to standard "
       "output, which is the default. If OUT is `stderr`, log messages are written to standard error. "
       "Otherwise, OUT is a PATTERN. Examples: `@[name].log` or `@[name]-@[date].log@[zip]`. Inside PATTERN, "
@@ -355,7 +355,8 @@ const vector<cl::Option> CL_OPTIONS {
       NBSP NBSP "@[pid]" NBSP NBSP NBSP "expands to the process ID (PID)\n"
       NBSP NBSP "@[utc]" NBSP NBSP NBSP "serves as a hint to use UTC date rather than local date\n"
       NBSP NBSP "@[zip]" NBSP NBSP NBSP "serves as a hint to zip yesterday’s log file (requires `gzip`)",
-    .apply=applyLogOut },
+    .apply=applyLogOut
+  },
 };
 
 // Local variables ------------------------------------------------------------------------------------------
