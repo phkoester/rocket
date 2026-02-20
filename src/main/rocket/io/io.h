@@ -12,12 +12,20 @@
 #include <sstream>
 
 #ifdef ROCKET_OS_WINDOWS
+
 #include <io.h> // _isatty
 #define ROCKET_ISATTY _isatty
+
+#define STDIN_FILENO  0 ///< Standard input file number.
+#define STDOUT_FILENO 1 ///< Standard output file number.
+#define STDERR_FILENO 2 ///< Standard error file number.
+
 #else
+
 #include <unistd.h> // isatty
 #define ROCKET_ISATTY isatty
-#endif
+
+#endif // ROCKET_OS_WINDOWS
 
 namespace rocket::io {
 

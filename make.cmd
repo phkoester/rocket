@@ -22,12 +22,8 @@
 
 @echo off
 
-:: XXX
 setlocal enableextensions
 SET NAME=%~n0
-SET parent=%~dp0
-echo name: [%name%]
-echo parent: [%parent%]
 
 :: Configure C++ toolchain ----------------------------------------------------------------------------------
 
@@ -84,7 +80,7 @@ if "%~1" == "" (
   call :clean
   goto :eof
 ) else (
-  echo make.cmd: Invalid command `%1` 1>&2
+  echo %NAME%: Invalid command `%1` 1>&2
   exit /b 2
 )
 
