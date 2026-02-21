@@ -133,14 +133,14 @@ struct OptionConfig {
    */
   std::optional<std::set<std::string>> choices = {};
   /**
-   * Short description.
+   * A short description text.
    *
    * By convention, this starts with a lower-case verb and does not end with a period, e.g.
    * `"print NUM lines of leading context"`.
    */
   std::optional<std::string> description = {};
   /**
-   * Short format description.
+   * A short format description.
    *
    * If the option takes a value, this parameter should briefly describe the format, e.g.
    * <code>"file"</code>, <code>"number"</code>, or <code>"`red`, `green`, or `blue`"</code>.
@@ -153,15 +153,15 @@ struct OptionConfig {
    */
   const OptionGroup* group = nullptr;
   /**
-   * Maximum number of occurrences.
-   */
-  u64 maxOccurs = NPOS;
-  /**
    * Minimum number of occurrences.
    *
    * If null, this will be auto-configured.
    */
   std::optional<u64> minOccurs = {};
+   /**
+   * Maximum number of occurrences.
+   */
+  u64 maxOccurs = NPOS;
   /**
    * The option name.
    *
@@ -213,8 +213,8 @@ struct Option {
       .description=config.description,
       .format=config.format,
       .group=config.group,
-      .maxOccurs=config.maxOccurs,
       .minOccurs=config.minOccurs.value_or(0),
+      .maxOccurs=config.maxOccurs,
       .name=config.name,
       .shortName=config.shortName,
       .takesValue=config.takesValue.value_or(false),
@@ -371,8 +371,8 @@ struct Option {
   std::optional<std::string> description;
   std::optional<std::string> format;
   const OptionGroup* group = nullptr;
-  u64 maxOccurs = NPOS;
   u64 minOccurs = 0;
+  u64 maxOccurs = NPOS;
   std::string name;
   std::optional<unicode::Character<char>> shortName;
   bool takesValue = false;
@@ -385,6 +385,53 @@ struct Option {
 
 /// Configuration for #rocket::cl::Parameter.
 struct ParameterConfig {
+  /**
+   * A set of allowed values.
+   */
+  std::optional<std::set<std::string>> choices = {};
+  /**
+   * Whether options shall be consumed as positional arguments after this parameter.
+   *
+   * Set this to `true` if the parameter is followed by a new command line that needs to be parsed in a
+   * separate pass.
+   */
+  bool consumeOpts = false;
+  /**
+   * A short description.
+   *
+   * By convention, this starts with a lower-case letter and does not end with a period, e.g.
+   * `"the input file"`.
+   */
+  std::optional<std::string> description = {};
+  /**
+   * A short format description.
+   *
+   * This parameter should briefly describe the format, e.g. <code>"file"</code>, <code>"number"</code>, or
+   * <code>"`red`, `green`, or `blue`"</code>.
+   */
+  std::optional<std::string> format = {};
+  /**
+   * Minimum number of occurrences.
+   */
+  u64 minOccurs = 1;
+  /**
+   * Maximum number of occurrences.
+   *
+   * If null, this will be auto-configured.
+   */
+  std::optional<u64> maxOccurs = {};
+  /**
+   * The parameter name.
+   *
+   * By convention, this is in all-caps, e.g. `"FILE"`, and matches the usage line.
+   */
+  std::string name;
+  /**
+   * An optional verbose description.
+   *
+   * A verbose description that is displayed when verbose help is requested.
+   */
+  std::optional<std::string> verboseDescription = {};
 };
 
 // #Parameter -----------------------------------------------------------------------------------------------
@@ -395,103 +442,73 @@ struct Parameter {
   using Apply = std::function<void(std::string_view val)>;
 
   /**
-   * Convenience function that makes a new parameter and binds it to a destination reference.
+   * Low-level factory function that makes a new parameter.
    *
-   * @tparam T the type of the destination reference. If this is a #std::optional reference, the parameter
-   *   is optional, otherwise it is required. If this is a #std::vector reference, the parameter can consume
-   *   multiple arguments from the command line
-   * @param name the name of the parameter, e.g. `"FILE"`. By convention, this is in all-caps and matches
-   *   the usage line
-   * @param format this parameter should briefly describe the format, e.g. <code>"file"</code>,
-   *   <code>"number"</code>, or <code>"`red`, `green`, or `blue`"</code>
-   * @param description a short description text. By convention, this starts with a lower-case letter and
-   *   does not end with a period, e.g. `"the input file"`
-   * @param out the destination reference that is assigned the argument
+   * Usually, you should use one of the following convenience functions instead.
+   *
+   * @param config the configuration
+   * @param apply the function that applies the argument
    * @return a new parameter
    */
-  template<typename T>
   static Parameter
-  of(
-    const std::string& name,
-    const std::optional<std::string>& format,
-    const std::optional<std::string>& description,
-    T& out) {
-    using ValueType = internal::ValueType<T>;
-
+  of(const ParameterConfig& config, Apply apply) {
     return {
-      name,
-      std::nullopt, // #choices
-      IsVector<ValueType> ? NPOS : 1, // #maxOccurs
-      IsOptional<T> ? 0 : 1, // #minOccurs
-      false, // #consumeOpts
-      format,
-      description,
-      {},
-      [&](std::string_view val) { internal::applyTo(out, val); }
+      .apply=apply,
+      .choices=config.choices,
+      .consumeOpts=config.consumeOpts,
+      .description=config.description,
+      .format=config.format,
+      .minOccurs=config.minOccurs,
+      .maxOccurs=config.maxOccurs.value_or(1),
+      .name=config.name,
+      .verboseDescription=config.verboseDescription
     };
   }
 
   /**
-   * Convenience function that makes a new parameter and binds it to a destination reference.
-   *
-   * @tparam T the type of the destination reference. If this is a #std::optional reference, the parameter
-   *   is optional, otherwise it is required. If this is a #std::vector reference, the parameter can consume
-   *   multiple arguments from the command line
-   * @param name the name of the parameter, e.g. `"FILE"`. By conention, this is in all-caps and matches
-   *   the usage line
-   * @param choices a set of allowed values
-   * @param description a short description text. By convention, this starts with a lower-case letter and
-   *   does not end with a period, e.g. `"the input file"`
-   * @param out the destination reference that is assigned the argument
-   * @return a new parameter
+   * Convenience factory function that makes a new parameter and binds it to a destination reference.
    */
   template<typename T>
   static Parameter
-  of(
-    const std::string& name,
-    const std::set<typename internal::ValueType<T>>& choices,
-    const std::optional<std::string>& description,
-    T& out) {
+  make(const ParameterConfig& config, T& out) {
     using ValueType = internal::ValueType<T>;
 
-    Parameter ret {
-      name,
-      std::nullopt, // #choices
-      IsVector<ValueType> ? NPOS : 1, // #maxOccurs
-      IsOptional<T> ? 0 : 1, // #minOccurs
-      false, // #consumeOpts
-      std::nullopt, // #format
-      description,
-      {},
-      [&](std::string_view val) { internal::applyTo(out, val); }
-    };
+    ParameterConfig configCopy(config);
 
-    std::set<std::string> strings;
-    for (const auto& val : choices) {
-      strings.insert(str::toString(val));
+    // If no format is provided, but choices are, generate a format string from the choices
+    if (config.choices && not config.format) {
+      std::set<std::string> quoted;
+      for (const auto& val : *config.choices) {
+        quoted.insert(fmt::format("`{}`", val));
+      }
+      configCopy.format = str::join(quoted.begin(), quoted.end(), ", ", " or ", ", or ");
     }
-    ret.choices = strings;
 
-    std::set<std::string> quotedStrings;
-    for (const auto& val : strings) {
-      quotedStrings.insert(fmt::format("`{}`", val));
+    // Auto-configure #minOccurs
+    if constexpr (IsOptional<T>) {
+      configCopy.minOccurs = 0;
     }
-    ret.format = str::join(quotedStrings.begin(), quotedStrings.end(), ", ", " or ", ", or");
 
-    return ret;
+    // Auto-configure #maxOccurs
+    if constexpr (IsVector<ValueType>) {
+      if (not config.maxOccurs) {
+        configCopy.maxOccurs = NPOS;
+      }
+    }
+
+    return of(configCopy, [&](std::string_view val) { internal::applyTo(out, val); });
   }
 
   /// @cond undocumented
-  // XXX alphabetisch
-  std::string name;
-  std::optional<std::set<std::string>> choices;
-  u64 maxOccurs = 1;
-  u64 minOccurs = 1;
-  bool consumeOpts = false;
-  std::optional<std::string> format;
-  std::optional<std::string> description;
-  std::optional<std::string> verboseDescription;
   Apply apply;
+  std::optional<std::set<std::string>> choices;
+  bool consumeOpts = false;
+  std::optional<std::string> description;
+  std::optional<std::string> format;
+  u64 minOccurs = 1;
+  u64 maxOccurs = 1;
+  std::string name;
+  std::optional<std::string> verboseDescription;
   /// @endcond
 };
 

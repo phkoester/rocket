@@ -67,6 +67,7 @@ main(i32 argc, char **argv) {
   optional<bool> help;
   optional<u64> verbose;
   optional<bool> version;
+  vector<string> commands;
   optional<vector<string>> args;
 
   const cl::OptionGroup general("General control");
@@ -91,7 +92,13 @@ main(i32 argc, char **argv) {
     cl::Option::verbose(&general, 3, verbose),
     cl::Option::version(&general, version),
   }, {
-    cl::Parameter::of("ARG", nullopt, "a command-line argument", args)
+    cl::Parameter::make({
+      .choices=set<string> { "add", "list", "remove", "show" },
+      .description="a command",
+      .minOccurs=2,
+      .maxOccurs=4,
+      .name="COMMAND" }, args),
+    cl::Parameter::make({ .description="a command-line argument", .name="ARG" }, args)
   }, config);
 
   cl.parse(process.args());
@@ -101,8 +108,9 @@ main(i32 argc, char **argv) {
     ROCKET_LOG_INFO("Hey {}", "there");
     out.println("This is {}", process.name());
     out.println("colors: {}", colors);
-    out.println("verbose: {}", verbose);
     out.println("foo: {}", foo);
+    out.println("verbose: {}", verbose);
+    out.println("commands: {}", commands);
     out.println("args: {}", args);
     toy();
   }

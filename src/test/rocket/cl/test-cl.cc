@@ -57,7 +57,10 @@ parseCommand(const vector<string>& args, nio::Sink& out = nio::out, nio::Sink& e
     .epilog="Gallia est omnis divisa in partes tres, quarum unam incolunt Belgae, aliam Aquitani, tertiam qui ipsorum lingua Celtae, nostra Galli appellantur. Hi omnes lingua, institutis, legibus inter se differunt. Gallos ab Aquitanis Garunna flumen, a Belgis Matrona et Sequana dividit."
   };
 
-  auto command = Parameter::of("COMMAND", { "list", "show" }, "a command", parseCommandCommand);
+  auto command = Parameter::make({
+    .choices=set<string> { "list", "show" },
+    .description="a command",
+    .name="COMMAND" }, parseCommandCommand);
   command.consumeOpts = true;
 
   CommandLine cl({
@@ -71,7 +74,7 @@ parseCommand(const vector<string>& args, nio::Sink& out = nio::out, nio::Sink& e
     Option::help(&misc, parseCommandHelp)
   }, {
     command,
-    Parameter::of("ARG", nullopt, "a command-line argument", parseCommandArgs)
+    Parameter::make({ .description="a command-line argument", .name="ARG" }, parseCommandArgs)
   }, config);
 
   if (not cl.parse(args, out, err, false)) {
@@ -100,7 +103,10 @@ parseCommand(const vector<string>& args, nio::Sink& out = nio::out, nio::Sink& e
         .shortName="l"_c
       }, parseCommandList)
     }, {
-      Parameter::of("FILE", "file", "a file to list", parseCommandListFiles)
+      Parameter::make({
+        .description="a file to list",
+        .format="file",
+        .name="FILE" }, parseCommandListFiles)
     }, listConfig);
 
     if (not listCl.parse(parseCommandArgs, out, err, false)) {
@@ -134,7 +140,7 @@ parseCommand(const vector<string>& args, nio::Sink& out = nio::out, nio::Sink& e
         .shortName="t"_c
       }, parseCommandShowTest)
     }, {
-      Parameter::of("ARG", nullopt, "a thing to show", parseCommandShowArgs)
+      Parameter::make({ .description="a thing to show", .name="ARG" }, parseCommandShowArgs)
     }, showConfig);
 
     if (not showCl.parse(parseCommandArgs, out, err, false)) {
@@ -152,9 +158,7 @@ parseCommand(const vector<string>& args, nio::Sink& out = nio::out, nio::Sink& e
 TEST(cl, parseNoOpts) {
   vector<string> args;
   CommandLine cl {
-    {}, {
-      Parameter::of("ARG", nullopt, "a command-line argument", args)
-    }
+    {}, { Parameter::make({ .description="a command-line argument", .name="ARG" }, args) }
   };
   nio::StringSink buf;
   EXPECT_TRUE(cl.parse({ "a", "b", "c" }, buf, buf, false));
@@ -173,7 +177,7 @@ TEST(cl, parseOptBool) {
       .shortName="🧑‍🌾"_c
     }, flag)
   }, {
-    Parameter::of("ARG", nullopt, "a command-line argument", args)
+    Parameter::make({ .description="a command-line argument", .name="ARG" }, args)
   });
 
   // Test no options
@@ -252,7 +256,7 @@ TEST(cl, parseOptInt) {
       .shortName="n"_c
     }, num)
   }, {
-    Parameter::of("ARG", nullopt, "a command-line argument", args)
+    Parameter::make({ .description="a command-line argument", .name="ARG" }, args)
   });
 
   // Test mixed order
@@ -299,7 +303,7 @@ TEST(cl, parseOptEnum) {
   CommandLine cl( {
     Option::custom( { .name="level", .shortName="l"_c }, level)
   }, {
-    Parameter::of("ARG", nullopt, "a command-line argument", args)
+    Parameter::make({ .description="a command-line argument", .name="ARG" }, args)
   });
 
   // Test mixed order
@@ -326,7 +330,7 @@ TEST(cl, parseOptVector) {
   CommandLine cl( {
     Option::custom({ .name="name", .shortName="n"_c }, names)
   }, {
-    Parameter::of("ARG", nullopt, "a command-line argument", args)
+    Parameter::make({ .description="a command-line argument", .name="ARG" }, args)
   });
 
   // Test multiple values
@@ -350,7 +354,7 @@ TEST(cl, parseShortOptions) {
     Option::custom({ .name="name", .shortName="n"_c }, name),
     Option::custom({ .name="verbose", .shortName="v"_c }, verbose)
   }, {
-    Parameter::of("ARG", nullopt, "a command-line argument", args)
+    Parameter::make({ .description="a command-line argument", .name="ARG" }, args)
   });
 
   // Test without '='

@@ -55,7 +55,7 @@ main(i32 argc, char **argv) {
       .shortName="o"_c
     }, hours)
   }, {
-    cl::Parameter::of("ARG", nullopt, "a command-line argument", args)
+    cl::Parameter::make({ .description="a command-line argument", .name="ARG" }, args)
   }, config);
   cl.parse(process.args());
 
