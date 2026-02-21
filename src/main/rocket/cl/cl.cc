@@ -567,7 +567,14 @@ CommandLine::printUsage(nio::Sink& out) const {
 
 void
 CommandLine::printVersion(nio::Sink& out, bool exit) {
-  out.println("XXX Here comes the version XXX"); // XXX
+  if (not config_.version) {
+    out.writeln("No version information available");
+  } else {
+    const auto size = system::terminal::size(out);
+    const u64 width = max(40_u64, size ? size->first : 80_u64);
+    out.writeln(str::wrap(*config_.version, 0, width));
+  }
+
   if (exit) {
     process.exit(EXIT_SUCCESS);
   }

@@ -67,11 +67,13 @@ main(i32 argc, char **argv) {
   optional<bool> help;
   optional<u64> verbose;
   optional<bool> version;
-  vector<string> commands;
   optional<vector<string>> args;
 
   const cl::OptionGroup general("General control");
-  const cl::CommandLineConfig config { .usages={ "[OPTION]... [ARG]..." }} ;
+  const cl::CommandLineConfig config {
+    .usages={ "[OPTION]... [ARG]..." },
+    .version=fmt::format("{} {}\n\n{}", "Rocket", ROCKET_VERSION_NAME, COPYRIGHT)
+  };
   cl::CommandLine cl({
     cl::Option::custom({
       .choices=set<string> { "Red", "Green", "Blue" },
@@ -92,12 +94,6 @@ main(i32 argc, char **argv) {
     cl::Option::verbose(&general, 3, verbose),
     cl::Option::version(&general, version),
   }, {
-    cl::Parameter::make({
-      .choices=set<string> { "add", "list", "remove", "show" },
-      .description="a command",
-      .minOccurs=2,
-      .maxOccurs=4,
-      .name="COMMAND" }, commands),
     cl::Parameter::make({ .description="a command-line argument", .name="ARG" }, args)
   }, config);
 
@@ -110,7 +106,6 @@ main(i32 argc, char **argv) {
     out.println("colors: {}", colors);
     out.println("foo: {}", foo);
     out.println("verbose: {}", verbose);
-    out.println("commands: {}", commands);
     out.println("args: {}", args);
     toy();
   }

@@ -467,6 +467,13 @@ struct Parameter {
 
   /**
    * Convenience factory function that makes a new parameter and binds it to a destination reference.
+   *
+   * @tparam T the type of the destination reference. If this is a #std::optional reference, the parameter
+   *   is optional, otherwise it is required. If this is a #std::vector reference, the parameter can consume
+   *   multiple values from the command line
+   * @param config the configuration
+   * @param out the destination reference that is assigned the argument
+   * @return a new parameter
    */
   template<typename T>
   static Parameter
@@ -526,9 +533,11 @@ struct CommandLineConfig {
    */
   std::vector<std::string> usages;
   /// Prolog text to be displayed when the `--help` option is supplied.
-  std::optional<std::string> prolog = std::nullopt;
+  std::optional<std::string> prolog = {};
   /// Epilog text to be displayed when the `--help` option is supplied.
-  std::optional<std::string> epilog = std::nullopt;
+  std::optional<std::string> epilog = {};
+  /// Version text to be displayed when the `--version` option is supplied.
+  std::optional<std::string> version = {};
 
   /**
    * Did another module process the command line and output something? If this is `true`, an extra empty line
