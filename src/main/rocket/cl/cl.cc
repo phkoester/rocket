@@ -2,7 +2,7 @@
  * cl.cc
  */
 
- #include "cl.h"
+#include "cl.h"
 
 #include "rocket/assert.h"
 #include "rocket/literal.h"
@@ -103,8 +103,11 @@ CommandLine::CommandLine(
   // Validate options, populate maps
 
   for (const auto& opt : opts_) {
-    if (opt.name == "help") {
+    if (opt.type == OptionType::Help) {
       hasHelpOpt_ = true;
+    }
+    if (opt.verboseDescription) {
+      hasVerboseDescriptions_ = true;
     }
     validate(opt.name, true);
     auto pair = byName_.emplace(opt.name, &opt);
@@ -114,6 +117,15 @@ CommandLine::CommandLine(
       validate(shortName, false);
       auto pair = byShortName_.emplace(*opt.shortName, &opt);
       ROCKET_CHECK(opts, pair.second, "Duplicate option `{}`", name(opt, false));
+    }
+  }
+
+  // Examine parameters
+
+  for (const auto& param : params_) {
+    if (param.verboseDescription) {
+      hasVerboseDescriptions_ = true;
+      break;
     }
   }
 }
@@ -138,16 +150,7 @@ CommandLine::applyOpt(const Option& opt, bool nameFlag, const optional<string>& 
       ROCKET_FAIL("Invalid value `{}`", value);
     }
     bool result = opt.apply(useValue);
-    if (opt.type == OptionType::Help) {
-      parserState_.help = result;
-    }
-    if (opt.type == OptionType::Verbose) {
-      parserState_.verbose = result;
-    }
-    if (opt.type == OptionType::Version) {
-      parserState_.version = result;
-    }
-    parserState_.seenOpts.insert(&opt);
+    parserState_.updateOpt(opt, result);
   } catch (const Exception& ex) {
     string expected;
     if (opt.format) {
@@ -326,24 +329,31 @@ CommandLine::parse(const vector<string>& args, nio::Sink& out, nio::Sink& err, b
       }
     }
 
+    // Evaluate the parser state
+    parserState_.eval();
+
     // Help?
     if (parserState_.help) {
       printHelp(out, parserState_.verbose, exit);
       return false;
     }
 
-    // XXX Version?
+    // Version?
+    if (parserState_.version) {
+      printVersion(out, exit);
+      return false;
+    }
 
     // Have we seen all required options?
     for (const auto& opt : opts_) {
-      if (opt.required && not parserState_.seenOpts.contains(&opt)) {
+      if (opt.minOccurs > 0 && not parserState_.seenOpts.contains(&opt)) {
         ROCKET_FAIL("Missing required option `{}`", name(opt, true));
       }
     }
 
     // Have we seen all required parameters?
     for (const auto& param : params_) {
-      if (param.required && not parserState_.seenParams.contains(&param)) {
+      if (param.minOccurs > 0 && not parserState_.seenParams.contains(&param)) {
         ROCKET_FAIL("Missing required argument for parameter `{}`", param.name);
       }
     }
@@ -413,6 +423,12 @@ CommandLine::printHelp(nio::Sink& out, bool verbose, bool exit) { // XXX
     out.writeln(str::wrap(*config_.epilog, 0, width));
   }
 
+  // Hint to verbose help
+
+  if (not verbose && hasVerboseDescriptions_) {
+    out.println("\nMore information is available with `{} --help --verbose`", config_.command);
+  }
+
   if (exit) {
     process.exit(EXIT_SUCCESS);
   }
@@ -474,11 +490,11 @@ CommandLine::printHelpOpts(nio::Sink& out, bool verbose, u64 width) const { // N
       if (opt->format) {
         out.print(" {}", *opt->format);
       }
-      if (opt->required) {
+      if (opt->minOccurs > 0) {
         out.write(" (required)");
       }
       out.write('\n');
-      const auto description = verbose ? opt->verboseDescription : opt->description;
+      const auto description = verbose && opt->verboseDescription ? opt->verboseDescription : opt->description;
       if (description) {
         out.writeln(str::wrap(*description, 10, width));
       }
@@ -501,7 +517,7 @@ CommandLine::printHelpParams(nio::Sink& out, u64 width) const {
     if (param.format) {
       out.print(" {}", *param.format);
     }
-    if (param.required) {
+    if (param.minOccurs > 0) {
       out.write(" (required)");
     }
     out.write('\n');
@@ -529,6 +545,14 @@ CommandLine::printUsage(nio::Sink& out) const {
 }
 
 void
+CommandLine::printVersion(nio::Sink& out, bool exit) {
+  out.println("XXX Here comes the version XXX"); // XXX
+  if (exit) {
+    process.exit(EXIT_SUCCESS);
+  }
+}
+
+void
 CommandLine::validate(string_view name, bool nameFlag) {
   // Don't use #ROCKET_CHECK here for cleaner exception messages
 
@@ -538,6 +562,46 @@ CommandLine::validate(string_view name, bool nameFlag) {
   }
   if (name.starts_with("-") || name.find_first_of(" =") != string::npos) {
     ROCKET_FAIL("Invalid {} {:?}", what, name);
+  }
+}
+
+// #CommandLine::ParserState --------------------------------------------------------------------------------
+
+void
+CommandLine::ParserState::eval() {
+  for (const auto& [opt, occurs] : seenOpts) {
+    if (opt->type == OptionType::Help && occurs > 0) {
+      help = true;
+    }
+    if (opt->type == OptionType::Verbose && occurs > 0) {
+      verbose = true;
+    }
+    if (opt->type == OptionType::Version && occurs > 0) {
+      version = true;
+    }
+
+    if (help && verbose && version) {
+      break;
+    }
+  }
+}
+
+void
+CommandLine::ParserState::updateOpt(const Option& opt, bool flag) {
+  if (flag) {
+    auto result = seenOpts.emplace(&opt, 0);
+    if (not result.second) {
+      ++result.first->second;
+    }
+  } else {
+    auto it = seenOpts.find(&opt);
+    if (it == seenOpts.end()) {
+      return;
+    }
+    auto& occurrs = it->second;
+    if (occurrs > 0) {
+      --occurrs;
+    }
   }
 }
 

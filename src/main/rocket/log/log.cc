@@ -304,6 +304,7 @@ const vector<cl::Option> CL_OPTIONS {
     .description="set logging for identifier ID to level LEVEL",
     .format="ID[.SUBSTRING][=LEVEL]",
     .group=&logging,
+    .minOccurs=0,
     .name="log",
     .verboseDescription=
       "set logging for identifier ID to level LEVEL. ID is a known log ID or `all`.\n"
@@ -316,6 +317,7 @@ const vector<cl::Option> CL_OPTIONS {
     .description="set log format",
     .format="FMT",
     .group=&logging,
+    .minOccurs=0,
     .name="log-fmt",
     .verboseDescription=
       "set log format. FMT is a string of format specifiers, e.g. `fs3Z`. Valid specifiers are:\n"
@@ -341,6 +343,7 @@ const vector<cl::Option> CL_OPTIONS {
     .description="log to system device or file",
     .format="OUT",
     .group=&logging,
+    .minOccurs=0,
     .name="log-out",
     .verboseDescription=
       "log to system device or file. If OUT is `-` or `stdout`, log messages are written to standard "

@@ -6,6 +6,7 @@
 
 #include "rocket/Process.h"
 #include "rocket/cl/cl.h"
+#include "rocket/enum.h"
 #include "rocket/log/log.h"
 #include "rocket/version.h"
 
@@ -17,6 +18,13 @@ ROCKET_LOG_DEFINE(thisIsARatherLongLogId);
 ROCKET_LOG_DEFINE(toy);
 
 #define COPYRIGHT "Copyright © 2024–2026 Philip Köster"
+
+// #Color ---------------------------------------------------------------------------------------------------
+
+enum class Color { Red, Green, Blue };
+
+ROCKET_ENUM_DECLARE(, Color, Color);
+ROCKET_ENUM_DEFINE(, Color, Color, (Red)(Green)(Blue));
 
 // Variables ------------------------------------------------------------------------------------------------
 
@@ -54,24 +62,34 @@ main(i32 argc, char **argv) {
 
   process.init(argc, argv, "toy");
 
+  optional<vector<Color>> colors;
   optional<bool> foo;
   optional<bool> help;
-  optional<i32> verbose;
+  optional<u64> verbose;
   optional<bool> version;
   optional<vector<string>> args;
 
   const cl::OptionGroup general("General control");
   const cl::CommandLineConfig config { .usages={ "[OPTION]... [ARG]..." }} ;
   cl::CommandLine cl({
-    cl::Option::help(&general, help),
-    cl::Option::verbose(&general, verbose, 3),
-    cl::Option::version(&general, version),
+    cl::Option::custom({
+      .choices=set<string> { "Red", "Green", "Blue" },
+      .description="add a color",
+      .group=&general,
+      .maxOccurs=3,
+      .name="color",
+      .shortName="c"_c
+    }, colors),
     cl::Option::custom({
       .description="delve into foo mode",
       .group=&general,
       .name="foo",
-      .shortName="f"_c
+      .shortName="f"_c,
+      .verboseDescription="delve into the fabulous furry foo mode"
     }, foo),
+    cl::Option::help(&general, help),
+    cl::Option::verbose(&general, verbose, 3),
+    cl::Option::version(&general, version),
   }, {
     cl::Parameter::of("ARG", nullopt, "a command-line argument", args)
   }, config);
@@ -82,6 +100,9 @@ main(i32 argc, char **argv) {
     ROCKET_LOG(toy);
     ROCKET_LOG_INFO("Hey {}", "there");
     out.println("This is {}", process.name());
+    out.println("colors: {}", colors);
+    out.println("verbose: {}", verbose);
+    out.println("foo: {}", foo);
     out.println("args: {}", args);
     toy();
   }

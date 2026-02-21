@@ -33,7 +33,7 @@ struct ValueTypeImpl {
 
 template<typename T>
 struct ValueTypeImpl<std::optional<T>> {
-  using Type = T;
+  using Type = ValueTypeImpl<T>::Type;
 };
 
 template<typename T>
@@ -93,7 +93,7 @@ applyToInteger(I& out, std::string_view val) {
   } else if (out > 0) {
     --out;
   }
-  return out > 0;
+  return flag;
 }
 
 template<typename I> requires IsInteger<I>
@@ -148,10 +148,14 @@ struct OptionConfig {
    * A pointer to an option group. May be null.
    */
   const OptionGroup* group = nullptr;
-  /**
+   /**
    * Maximum number of occurrences.
    */
-  u64 maxOccurs = 1;
+  u64 maxOccurs = NPOS;
+  /**
+   * Minimum number of occurrences.
+   */
+  u64 minOccurs = 0;
   /**
    * The option name.
    *
@@ -159,19 +163,15 @@ struct OptionConfig {
    */
   std::string name;
   /**
-   * Required option?
-   */
-  bool required = false;
-  /**
    * An optional short name.
    *
-   * For example, if this is <code>"€"</code>, the option may be chosen via `-€` on the command line.
+   * For instance, if this is `"€"`, the option may be chosen via `-€` on the command line.
    */
   std::optional<unicode::Character<char>> shortName = {};
   /**
-   * Verbose description.
+   * An optional verbose description.
    *
-   * An optional verbose description that is displayed when verbose help is requested.
+   * A verbose description that is displayed when verbose help is requested.
    */
   std::optional<std::string> verboseDescription = {};
 };
@@ -186,18 +186,18 @@ struct Option {
   static Option
   of(OptionType type, const OptionConfig& config, bool takesValue, Apply apply) {
     return {
-      .apply = apply,
-      .choices = config.choices,
-      .description = config.description,
-      .format = config.format,
-      .group = config.group,
-      .maxOccurs = config.maxOccurs,
-      .name = config.name,
-      .shortName = config.shortName,
-      .required = config.required,
-      .takesValue = takesValue,
-      .type = type,
-      .verboseDescription = config.verboseDescription
+      .apply=apply,
+      .choices=config.choices,
+      .description=config.description,
+      .format=config.format,
+      .group=config.group,
+      .maxOccurs=config.maxOccurs,
+      .minOccurs=config.minOccurs,
+      .name=config.name,
+      .shortName=config.shortName,
+      .takesValue=takesValue,
+      .type=type,
+      .verboseDescription=config.verboseDescription
     };
   }
 
@@ -207,7 +207,7 @@ struct Option {
     bool takesValue = true;
     Apply apply;
     using ValueType = internal::ValueType<T>;
-    if (std::is_same_v<ValueType, bool>) {
+    if constexpr (std::is_same_v<ValueType, bool>) {
       takesValue = false;
     }
     if constexpr (IsInteger<ValueType>) {
@@ -225,12 +225,14 @@ struct Option {
 
     // If no format is provided, but choices are, generate a format string from the choices
     if (config.choices && not config.format) {
-      std::set<std::string> quotedStrings;
+      std::set<std::string> quoted;
       for (const auto& val : *config.choices) {
-        quotedStrings.insert(fmt::format("`{}`", val));
+        quoted.insert(fmt::format("`{}`", val));
       }
-      configCopy.format = str::join(quotedStrings.begin(), quotedStrings.end(), ", ", " or ", ", or");
+      configCopy.format = str::join(quoted.begin(), quoted.end(), ", ", " or ", ", or ");
     }
+
+    configCopy.minOccurs = IsOptional<T> ? 0 : 1;
 
     return of(OptionType::Custom, configCopy, takesValue, apply);
   }
@@ -238,10 +240,10 @@ struct Option {
   static Option
   help(const OptionGroup* group, std::optional<bool>& out) {
     OptionConfig config {
-      .description = "display this help text and exit",
-      .group = group,
-      .name = "help",
-      .shortName = unicode::Character<char>("?")
+      .description="display this help text and exit",
+      .group=group,
+      .name="help",
+      .shortName=unicode::Character<char>("?")
     };
     Apply apply = [&](std::string_view val) { return internal::applyTo(out, val); };
     return of(OptionType::Help, config, false, apply);
@@ -250,25 +252,25 @@ struct Option {
   static Option
   verbose(const OptionGroup* group, std::optional<bool>& out) {
     OptionConfig config {
-      .description = "produce verbose output",
-      .group = group,
-      .name = "verbose",
-      .shortName = unicode::Character<char>("v")
+      .description="produce verbose output",
+      .group=group,
+      .name="verbose",
+      .shortName=unicode::Character<char>("v")
     };
     Apply apply = [&](std::string_view val) { return internal::applyTo(out, val); };
     return of(OptionType::Verbose, config, false, apply);
   }
 
   static Option
-  verbose(const OptionGroup* group, std::optional<i32>& out, u64 maxOccurs) {
+  verbose(const OptionGroup* group, std::optional<u64>& out, u64 maxOccurs) {
     ROCKET_CHECK(maxOccurs, maxOccurs > 1);
 
     OptionConfig config {
-      .description = "produce verbose output",
-      .group = group,
-      .maxOccurs = maxOccurs,
-      .name = "verbose",
-      .shortName = unicode::Character<char>("v")
+      .description="produce verbose output",
+      .group=group,
+      .maxOccurs=maxOccurs,
+      .name="verbose",
+      .shortName=unicode::Character<char>("v")
     };
     Apply apply = [&](std::string_view val) { return internal::applyToInteger(out, val); };
     return of(OptionType::Verbose, config, false, apply);
@@ -277,26 +279,28 @@ struct Option {
   static Option
   version(const OptionGroup* group, std::optional<bool>& out) {
     OptionConfig config {
-      .description = "display version information and exit",
-      .group = group,
-      .name = "version"
+      .description="display version information and exit",
+      .group=group,
+      .name="version"
     };
     Apply apply = [&](std::string_view val) { return internal::applyTo(out, val); };
     return of(OptionType::Version, config, false, apply);
   }
 
+  /// @cond undocumented
   Apply apply;
   std::optional<std::set<std::string>> choices;
   std::optional<std::string> description;
   std::optional<std::string> format;
   const OptionGroup* group = nullptr;
-  u64 maxOccurs = 1;
+  u64 maxOccurs = NPOS;
+  u64 minOccurs = 0;
   std::string name;
   std::optional<unicode::Character<char>> shortName;
-  bool required = false;
   bool takesValue = false;
   OptionType type = OptionType::Custom;
   std::optional<std::string> verboseDescription;
+  /// @endcond
 };
 
 // #Parameter -----------------------------------------------------------------------------------------------
@@ -331,11 +335,12 @@ struct Parameter {
     return {
       name,
       std::nullopt, // #choices
-      IsVector<typename internal::ValueType<T>> ? NPOS : 1, // #maxOccurs
+      1, // #maxOccurs
+      IsOptional<T> ? 0 : 1, // #minOccurs
       false, // #consumeOpts
-      not IsOptional<T>, // #required
       format,
       description,
+      {},
       [&](std::string_view val) { internal::applyTo(out, val); }
     };
   }
@@ -365,10 +370,11 @@ struct Parameter {
       name,
       std::nullopt, // #choices
       IsVector<typename internal::ValueType<T>> ? NPOS : 1, // #maxOccurs
+      IsOptional<T> ? 0 : 1, // #minOccurs
       false, // #consumeOpts
-      not IsOptional<T>, // #required
       std::nullopt, // #format
       description,
+      {},
       [&](std::string_view val) { internal::applyTo(out, val); }
     };
 
@@ -390,10 +396,11 @@ struct Parameter {
   std::string name; ///< The parameter name.
   std::optional<std::set<std::string>> choices; ///< Allowed values.
   u64 maxOccurs = 1; ///< Maximum number of occurrences.
+  u64 minOccurs = 1; ///< Minimum number of occurrences.
   bool consumeOpts = false; ///< Whether options shall be consumed after this parameter.
-  bool required = false; ///< Required?
   std::optional<std::string> format; ///< Format text.
   std::optional<std::string> description; ///< Description text.
+  std::optional<std::string> verboseDescription; ///< Verbose description text.
   Apply apply; ///< Callback function that applies the argument.
 };
 
@@ -463,11 +470,16 @@ struct CommandLine {
 private:
 
   struct ParserState {
-    bool help = false; // XXX Genauer, auf true prüfen
-    bool verbose = false;
-    bool version = false;
-    std::set<const Option*> seenOpts;
+    std::map<const Option*, u64> seenOpts;
     std::set<const Parameter*> seenParams;
+
+    bool help = false; ///< Available only after `eval()`
+    bool verbose = false; ///< Available only after `eval()`
+    bool version = false; ///< Available only after `eval()`
+
+    void eval();
+
+    void updateOpt(const Option& opt, bool flag);
   };
 
   static std::string name(const Option& opt, bool nameFlag);
@@ -479,6 +491,7 @@ private:
   CommandLineConfig config_;
   bool hasUsage_ = false;
   bool hasHelpOpt_ = false;
+  bool hasVerboseDescriptions_ = false;
   std::map<std::string_view, const Option*> byName_;
   std::map<std::string_view, const Option*> byShortName_;
 
@@ -499,6 +512,8 @@ private:
   void printTryHelp(nio::Sink& out) const;
 
   void printUsage(nio::Sink& out) const;
+
+  void printVersion(nio::Sink& out, bool exit);
 };
 
 } // namespace rocket::cl
