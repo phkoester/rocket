@@ -14,14 +14,14 @@ using namespace rocket::codec;
 // #MyStruct ------------------------------------------------------------------------------------------------
 
 struct MyStruct {
-  int a;
+  int a = 0;
   string b;
 };
 
 // #MyDervivedStruct ----------------------------------------------------------------------------------------
 
 struct MyDerivedStruct : MyStruct {
-  float c;
+  float c = 0.0F;
 };
 
 // #TEST ----------------------------------------------------------------------------------------------------
@@ -51,7 +51,7 @@ TEST(CompareEncoder, CmpCommonOrdering) {
 }
 
 TEST(CompareEncoder, Bool) {
-  CompareEncoder<> encoder;
+  const CompareEncoder<> encoder;
 
   static_assert(std::is_same_v<decltype(encoder.encode(false, false)), std::strong_ordering>);
 
@@ -62,7 +62,7 @@ TEST(CompareEncoder, Bool) {
 }
 
 TEST(CompareEncoder, String) {
-  CompareEncoder<> encoder;
+  const CompareEncoder<> encoder;
 
   static_assert(std::is_same_v<decltype(encoder.encode("a"sv, "a"sv)), std::strong_ordering>);
 
@@ -73,16 +73,16 @@ TEST(CompareEncoder, String) {
 }
 
 TEST(CompareEncoder, ListSpan) {
-  vector<i32> v = { 1, 2, 3 };
-  span<i32> span = v;
+  const vector<i32> v = { 1, 2, 3 };
+  const span<const i32> span = v;
 
-  CompareEncoder<> encoder;
+  const CompareEncoder<> encoder;
   EXPECT_TRUE(std::is_eq(encoder.encode(span, span)));
 }
 
 TEST(CompareEncoder, ListVector) {
   using type = vector<i32>;
-  CompareEncoder<> encoder;
+  const CompareEncoder<> encoder;
 
   static_assert(std::is_same_v<decltype(encoder.encode(type(), type())), std::strong_ordering>);
 
@@ -96,10 +96,10 @@ TEST(CompareEncoder, SetVector) {
   using Elem = vector<i32>;
 
   using Set = set<Elem>;
-  Set a = { { 1, 2, 3 }, { 4, 5, 6 } };
-  Set b = { { 4, 5, 6 }, { 1, 2, 3 } };
+  const Set a = { { 1, 2, 3 }, { 4, 5, 6 } };
+  const Set b = { { 4, 5, 6 }, { 1, 2, 3 } };
 
-  CompareEncoder<> encoder;
+  const CompareEncoder<> encoder;
   EXPECT_TRUE(std::is_eq(encoder.encode(a, b)));
   EXPECT_TRUE(std::is_eq(encoder.encode(b, a)));
 }
@@ -108,10 +108,10 @@ TEST(CompareEncoder, MapVector) {
   using Elem = vector<i32>;
 
   using Map = map<Elem, Elem>;
-  Map a = { { { 1, 2, 3 }, { 4, 5, 6 } }, { { 4, 5, 6 }, { 1, 2, 3 } } };
-  Map b = { { { 4, 5, 6 }, { 1, 2, 3 } }, { { 1, 2, 3 }, { 4, 5, 6 } } };
+  const Map a = { { { 1, 2, 3 }, { 4, 5, 6 } }, { { 4, 5, 6 }, { 1, 2, 3 } } };
+  const Map b = { { { 4, 5, 6 }, { 1, 2, 3 } }, { { 1, 2, 3 }, { 4, 5, 6 } } };
 
-  CompareEncoder<> encoder;
+  const CompareEncoder<> encoder;
   EXPECT_TRUE(std::is_eq(encoder.encode(a, b)));
   EXPECT_TRUE(std::is_eq(encoder.encode(b, a)));
 }
@@ -120,10 +120,10 @@ TEST(CompareEncoder, BimapString) {
   using Elem = string;
 
   using Bimap = Bimap<Elem, Elem>;
-  Bimap a = makeBimap<Elem, Elem>({ { "one", "two" }, { "three", "four" } });
-  Bimap b = makeBimap<Elem, Elem>({ { "three", "four" }, { "one", "two" } });
+  const Bimap a = makeBimap<Elem, Elem>({ { "one", "two" }, { "three", "four" } });
+  const Bimap b = makeBimap<Elem, Elem>({ { "three", "four" }, { "one", "two" } });
 
-  CompareEncoder<> encoder;
+  const CompareEncoder<> encoder;
   EXPECT_TRUE(std::is_eq(encoder.encode(a, b)));
   EXPECT_TRUE(std::is_eq(encoder.encode(b, a)));
 }

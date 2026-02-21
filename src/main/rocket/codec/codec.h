@@ -50,7 +50,7 @@ constexpr bool HAS_LITTLE_ENDIAN = std::endian::native == std::endian::little;
  *
  * Not all value types are supported by all consumers and producers.
  */
-enum class DataType {
+enum class DataType : u8 {
   // Basic types ............................................................................................
 
   /// `bool` values.

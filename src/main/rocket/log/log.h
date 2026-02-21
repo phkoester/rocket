@@ -61,9 +61,9 @@ struct LogSettings {
   /// This is typically a small, constant map.
   std::map<std::string, LogLevel> substringLevels_;
 
-  bool active() const { return level_ > LogLevel::none || not substringLevels_.empty(); }
+  [[nodiscard]] bool active() const { return level_ > LogLevel::none || not substringLevels_.empty(); }
 
-  LogLevel level(const char* function, const char* prettyFunction) const;
+  [[nodiscard]] LogLevel level(const char* function, const char* prettyFunction) const;
 
   void setSubstringLevel(const std::string& substring, LogLevel level);
 };
@@ -177,7 +177,7 @@ void setLogOut(std::string_view val);
  *
  * @param id the log ID
  */
-#define ROCKET_LOG(id) ::std::unique_ptr<::rocket::log::internal::Log> rocketLog__ = \
+#define ROCKET_LOG(id) const ::std::unique_ptr<::rocket::log::internal::Log> rocketLog__ = \
   ::rocket::log::internal::makeLog( \
     &::rocket::log::internal::ROCKET_LOG_ID__(id), \
     __FUNCTION__, \

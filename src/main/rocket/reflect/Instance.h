@@ -31,14 +31,14 @@ struct Instance {
    *
    * @param instance the instance
    */
-  Instance(T& instance) : ptr_(&instance) {}
+  explicit Instance(T& instance) : ptr_(&instance) {}
 
   /**
    * @ctor
    *
    * @param instance the instance
    */
-  Instance(const T& instance) : ptr_(const_cast<T*>(&instance)) {}
+  explicit Instance(const T& instance) : ptr_(const_cast<T*>(&instance)) {}
 
   /**
    * Returns a reference to the instance.

@@ -253,7 +253,7 @@ struct WrappedException {
    *
    * @param ptr the exception pointer
    */
-  explicit WrappedException(const std::exception_ptr& ptr) : ptr_(ptr) {}
+  explicit WrappedException(std::exception_ptr ptr) : ptr_(std::move(ptr)) {}
 
   /**
    * Returns the exception the instance was constructed with.
@@ -380,9 +380,9 @@ struct fmt::formatter<rocket::WrappedException, C> {
         out = detail::write<C>(out, static_cast<C>('\n'));
         std::ostringstream os;
         os << *p->stackTrace();
-        std::string str = os.str();
+        const std::string str = os.str();
 
-        auto withoutEol = rocket::str::removeTrailingEol<char>(str);
+        const auto withoutEol = rocket::str::removeTrailingEol<char>(str);
         out = detail::write<C>(out, rocket::unicode::ConvertTo<C>::apply(withoutEol));
       }
     }

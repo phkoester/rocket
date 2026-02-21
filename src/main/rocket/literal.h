@@ -432,7 +432,7 @@ struct LiteralString {
    *
    * @return the size of the string
    */
-  consteval u64 size() const { return value.size(); }
+  [[nodiscard]] consteval u64 size() const { return value.size(); }
 };
 
 } // namespace rocket

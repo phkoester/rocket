@@ -87,7 +87,7 @@ applyTo(std::optional<std::vector<T>>& out, std::string_view val) {
 template<typename I> requires IsInteger<I>
 inline bool
 applyToInteger(I& out, std::string_view val) {
-  bool flag = str::toType<bool>(val);
+  const bool flag = str::toType<bool>(val);
   if (flag) {
     ++out;
   } else if (out > 0) {
@@ -122,7 +122,7 @@ struct OptionGroup {
 // #OptionType ----------------------------------------------------------------------------------------------
 
 /// The type of a #rocket::cl::Option: either custom or one of the predefined types with a special meaning.
-enum class OptionType { Custom, Help, Verbose, Version };
+enum class OptionType : u8 { Custom, Help, Verbose, Version };
 
 // #OptionConfig --------------------------------------------------------------------------------------------
 
@@ -131,21 +131,21 @@ struct OptionConfig {
   /**
    * A set of allowed values.
    */
-  std::optional<std::set<std::string>> choices = {};
+  std::optional<std::set<std::string>> choices = {}; // NOLINT
   /**
    * A short description text.
    *
    * By convention, this starts with a lower-case verb and does not end with a period, e.g.
    * `"print NUM lines of leading context"`.
    */
-  std::optional<std::string> description = {};
+  std::optional<std::string> description = {}; // NOLINT
   /**
    * A short format description.
    *
    * If the option takes a value, this parameter should briefly describe the format, e.g.
    * <code>"file"</code>, <code>"number"</code>, or <code>"`red`, `green`, or `blue`"</code>.
    */
-  std::optional<std::string> format = {};
+  std::optional<std::string> format = {}; // NOLINT
   /**
    * A pointer to an option group.
    *
@@ -157,7 +157,7 @@ struct OptionConfig {
    *
    * If null, this will be auto-configured.
    */
-  std::optional<u64> minOccurs = {};
+  std::optional<u64> minOccurs = {}; // NOLINT
    /**
    * Maximum number of occurrences.
    */
@@ -173,19 +173,19 @@ struct OptionConfig {
    *
    * For instance, if this is `"⨁"`, the option may be chosen via `-⨁` on the command line.
    */
-  std::optional<unicode::Character<char>> shortName = {};
+  std::optional<unicode::Character<char>> shortName = {}; // NOLINT
   /**
    * Whether the option takes a value.
    *
    * If null, this will be auto-configured.
    */
-  std::optional<bool> takesValue = {};
+  std::optional<bool> takesValue = {}; // NOLINT
   /**
    * An optional verbose description.
    *
    * A verbose description that is displayed when verbose help is requested.
    */
-  std::optional<std::string> verboseDescription = {};
+  std::optional<std::string> verboseDescription = {}; // NOLINT
 };
 
 // #Option --------------------------------------------------------------------------------------------------
@@ -208,7 +208,7 @@ struct Option {
   static Option
   of(OptionType type, const OptionConfig& config, Apply apply) {
     return {
-      .apply=apply,
+      .apply=std::move(apply),
       .choices=config.choices,
       .description=config.description,
       .format=config.format,
@@ -290,13 +290,13 @@ struct Option {
    */
   static Option
   help(const OptionGroup* group, std::optional<bool>& out) {
-    OptionConfig config {
+    const OptionConfig config {
       .description="display this help text and exit",
       .group=group,
       .name="help",
       .shortName=unicode::Character<char>("?")
     };
-    Apply apply = [&](std::string_view val) { return internal::applyTo(out, val); };
+    const Apply apply = [&](std::string_view val) { return internal::applyTo(out, val); };
     return of(OptionType::Help, config, apply);
   }
 
@@ -309,13 +309,13 @@ struct Option {
    */
   static Option
   verbose(const OptionGroup* group, std::optional<bool>& out) {
-    OptionConfig config {
+    const OptionConfig config {
       .description="produce verbose output",
       .group=group,
       .name="verbose",
       .shortName=unicode::Character<char>("v")
     };
-    Apply apply = [&](std::string_view val) { return internal::applyTo(out, val); };
+    const Apply apply = [&](std::string_view val) { return internal::applyTo(out, val); };
     return of(OptionType::Verbose, config, apply);
   }
 
@@ -334,7 +334,7 @@ struct Option {
   verbose(const OptionGroup* group, u64 maxOccurs, std::optional<u64>& out) {
     ROCKET_CHECK(maxOccurs, maxOccurs > 1);
 
-    OptionConfig config {
+    const OptionConfig config {
       .description="increase level of verbosity",
       .group=group,
       .maxOccurs=maxOccurs,
@@ -343,7 +343,7 @@ struct Option {
       .takesValue=false,
       .verboseDescription=fmt::format("increase level of verbosity (may be supplied up to {} times)", maxOccurs)
     };
-    Apply apply = [&](std::string_view val) { return internal::applyToInteger(out, val); };
+    const Apply apply = [&](std::string_view val) { return internal::applyToInteger(out, val); };
     return of(OptionType::Verbose, config, apply);
   }
 
@@ -402,14 +402,14 @@ struct ParameterConfig {
    * By convention, this starts with a lower-case letter and does not end with a period, e.g.
    * `"the input file"`.
    */
-  std::optional<std::string> description = {};
+  std::optional<std::string> description = {}; // NOLINT
   /**
    * A short format description.
    *
    * This parameter should briefly describe the format, e.g. <code>"file"</code>, <code>"number"</code>, or
    * <code>"`red`, `green`, or `blue`"</code>.
    */
-  std::optional<std::string> format = {};
+  std::optional<std::string> format = {}; // NOLINT
   /**
    * Minimum number of occurrences.
    */
@@ -419,7 +419,7 @@ struct ParameterConfig {
    *
    * If null, this will be auto-configured.
    */
-  std::optional<u64> maxOccurs = {};
+  std::optional<u64> maxOccurs = {}; // NOLINT
   /**
    * The parameter name.
    *
@@ -431,7 +431,7 @@ struct ParameterConfig {
    *
    * A verbose description that is displayed when verbose help is requested.
    */
-  std::optional<std::string> verboseDescription = {};
+  std::optional<std::string> verboseDescription = {}; // NOLINT
 };
 
 // #Parameter -----------------------------------------------------------------------------------------------
@@ -453,7 +453,7 @@ struct Parameter {
   static Parameter
   of(const ParameterConfig& config, Apply apply) {
     return {
-      .apply=apply,
+      .apply=std::move(apply),
       .choices=config.choices,
       .consumeOpts=config.consumeOpts,
       .description=config.description,
@@ -533,11 +533,11 @@ struct CommandLineConfig {
    */
   std::vector<std::string> usages;
   /// Prolog text to be displayed when the `--help` option is supplied.
-  std::optional<std::string> prolog = {};
+  std::optional<std::string> prolog = {}; // NOLINT
   /// Epilog text to be displayed when the `--help` option is supplied.
-  std::optional<std::string> epilog = {};
+  std::optional<std::string> epilog = {}; // NOLINT
   /// Version text to be displayed when the `--version` option is supplied.
-  std::optional<std::string> version = {};
+  std::optional<std::string> version = {}; // NOLINT
 
   /**
    * Did another module process the command line and output something? If this is `true`, an extra empty line
@@ -594,9 +594,9 @@ private:
     bool verbose = false; ///< Available only after `eval()`
     bool version = false; ///< Available only after `eval()`
 
-    u64 countOpt(const Option& opt) const;
+    [[nodiscard]] u64 countOpt(const Option& opt) const;
 
-    u64 countParam(const Parameter& param) const;
+    [[nodiscard]] u64 countParam(const Parameter& param) const;
 
     /// Initializes #help, #verbose, and #version
     void eval();

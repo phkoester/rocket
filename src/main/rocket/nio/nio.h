@@ -105,7 +105,7 @@ protected:
    *
    * Derived classes must set the #bad bit to `false` to mark the instance as usable.
    */
-  Status status_ = { .bad = true, .eof = false };
+  Status status_ = { .bad=true, .eof=false }; // NOLINT
 
   /// @ctor_default
   Io() = default;
@@ -252,7 +252,7 @@ struct Sink : Io {
    */
   u64
   write(std::string_view in) {
-    std::span<const u8> span(reinterpret_cast<const u8*>(in.data()), in.size());
+    const std::span<const u8> span(reinterpret_cast<const u8*>(in.data()), in.size());
     return write(span);
   }
 
@@ -318,7 +318,7 @@ protected:
 
   bool flush() override;
 
-  i32 handle() const override { return underlying_.handle(); }
+  [[nodiscard]] i32 handle() const override { return underlying_.handle(); }
 
   u64 write(std::span<const u8> in) override;
 
@@ -385,7 +385,7 @@ struct FileSink : Sink {
 
   bool flush() override;
 
-  i32 handle() const override;
+  [[nodiscard]] i32 handle() const override;
 
   u64 write(std::span<const u8> in) override;
 
@@ -409,7 +409,7 @@ struct NullSink : Sink {
 
   bool flush() override { return false; }
 
-  i32 handle() const override { return -1; }
+  [[nodiscard]] i32 handle() const override { return -1; }
 
   u64 write([[maybe_unused]] std::span<const u8> in) override { return 0; }
 };
@@ -433,7 +433,7 @@ struct SpanSink : Sink {
 
   bool flush() override { return false; }
 
-  i32 handle() const override { return -1; }
+  [[nodiscard]] i32 handle() const override { return -1; }
 
   u64 write(std::span<const u8> in) override;
 
@@ -465,7 +465,7 @@ struct StreamSink : Sink {
 
   bool flush() override;
 
-  i32 handle() const override;
+  [[nodiscard]] i32 handle() const override;
 
   u64 write(std::span<const u8> in) override;
 
@@ -501,14 +501,14 @@ struct StringSink : Sink {
 
   bool flush() override { return false; }
 
-  i32 handle() const override { return -1; }
+  [[nodiscard]] i32 handle() const override { return -1; }
 
   /**
    * Returns a reference to the string (either referenced or owned).
    *
    * @return the referenced or the owned string
    */
-  const std::string& str() const { return ptr_ != nullptr ? *ptr_ : owned_; }
+  [[nodiscard]] const std::string& str() const { return ptr_ != nullptr ? *ptr_ : owned_; }
 
   u64 write(std::span<const u8> in) override;
 
@@ -634,7 +634,7 @@ struct BufferedSource : Source {
 
   bool close() override;
 
-  i32 handle() const override { return underlying_.handle(); }
+  [[nodiscard]] i32 handle() const override { return underlying_.handle(); }
 
   u64 read(std::span<u8> out) override;
 
@@ -703,7 +703,7 @@ struct FileSource : Source {
 
   bool close() override;
 
-  i32 handle() const override;
+  [[nodiscard]] i32 handle() const override;
 
   u64 read(std::span<u8> out) override;
 
@@ -729,7 +729,7 @@ ROCKET_TEST_PRIVATE:
 
   bool close() override { return false; }
 
-  i32 handle() const override { return -1; }
+  [[nodiscard]] i32 handle() const override { return -1; }
 
   u64 read([[maybe_unused]] std::span<u8> out) override { return 0; }
 
@@ -761,7 +761,7 @@ struct StreamSource : Source {
 
   bool close() override;
 
-  i32 handle() const override;
+  [[nodiscard]] i32 handle() const override;
 
   u64 read(std::span<u8> out) override;
 

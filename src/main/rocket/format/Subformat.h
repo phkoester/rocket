@@ -173,7 +173,7 @@ struct Subformat {
    *
    * @return the format's parameters
    */
-  const SubformatParams<C>& get() const { return params_; }
+  [[nodiscard]] const SubformatParams<C>& get() const { return params_; }
 
 private:
 

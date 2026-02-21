@@ -129,7 +129,7 @@ private:
 
   template<u64... Index, typename... Args>
   Ordering
-  consume(const T& lhs, const T& rhs, std::index_sequence<Index...>, Args&&... args) {
+  consume(const T& lhs, const T& rhs, std::index_sequence<Index...>, Args&&... args) { // NOLINT
     Ordering ret = std::strong_ordering::equal;
     (... && consumeElem(ret, std::get<Index>(lhs), std::get<Index>(rhs), std::forward<Args>(args)...));
     return ret;
