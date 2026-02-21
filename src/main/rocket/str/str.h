@@ -386,9 +386,12 @@ repeat(const std::basic_string_view<C> str, u64 count) {
 }
 
 /**
- * Returns `"once"`, `"twice"`, or `"N times"` for @p count.
+ * Returns `"once"`, `"twice"`, or `"... times"` for @p count.
+ *
+ * @param count the number of times
+ * @return `"once"`, `"twice"`, or `"... times"`
  */
-std::string times(u64 count);
+[[nodiscard]] std::string times(u64 count);
 
 /**
  * Converts a UTF-8 string to upper case, handling Unicode characters correctly.

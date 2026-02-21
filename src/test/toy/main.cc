@@ -97,7 +97,7 @@ main(i32 argc, char **argv) {
       .description="a command",
       .minOccurs=2,
       .maxOccurs=4,
-      .name="COMMAND" }, args),
+      .name="COMMAND" }, commands),
     cl::Parameter::make({ .description="a command-line argument", .name="ARG" }, args)
   }, config);
 
