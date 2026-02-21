@@ -35,13 +35,13 @@ void
 parseCommand(const vector<string>& args, nio::Sink& out = nio::out, nio::Sink& err = nio::err) {
   // Reset
 
-  parseCommandOmit = nullopt;
-  parseCommandHelp = nullopt;
-  parseCommandList = nullopt;
-  parseCommandListHelp = nullopt;
-  parseCommandShow = nullopt;
-  parseCommandShowHelp = nullopt;
-  parseCommandShowTest = nullopt;
+  parseCommandOmit = {};
+  parseCommandHelp = {};
+  parseCommandList = {};
+  parseCommandListHelp = {};
+  parseCommandShow = {};
+  parseCommandShowHelp = {};
+  parseCommandShowTest = {};
 
   parseCommandCommand.clear();
   parseCommandArgs.clear();
@@ -433,7 +433,7 @@ TEST(cl, parseCommand) {
         "~"
         "Parameters:~"
         "~"
-        "  COMMAND `list` or `show` \\(required\\)~"
+        "  COMMAND \\(`list` or `show`\\) \\(required\\)~"
         "          a command~"
         "  ARG \\(required\\)~"
         "          a command-line argument~"
@@ -456,6 +456,8 @@ TEST(cl, parseCommand) {
         "Aquitani, tertiam qui ipsorum lingua Celtae, nostra Galli appellantur. Hi omnes~"
         "lingua, institutis, legibus inter se differunt. Gallos ab Aquitanis Garunna~"
         "flumen, a Belgis Matrona et Sequana dividit.~"
+        "~"
+        "More information is available with `test-rocket-cl --help --verbose`~"
       ));
   }
 
@@ -469,7 +471,7 @@ TEST(cl, parseCommand) {
       "\n"
       "Parameters:\n"
       "\n"
-      "  FILE file (required)\n"
+      "  FILE (file) (required)\n"
       "          a file to list\n"
       "\n"
       "List control:\n"

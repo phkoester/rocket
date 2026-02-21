@@ -88,7 +88,7 @@ main(i32 argc, char **argv) {
       .verboseDescription="delve into the fabulous furry foo mode"
     }, foo),
     cl::Option::help(&general, help),
-    cl::Option::verbose(&general, verbose, 3),
+    cl::Option::verbose(&general, 3, verbose),
     cl::Option::version(&general, version),
   }, {
     cl::Parameter::of("ARG", nullopt, "a command-line argument", args)

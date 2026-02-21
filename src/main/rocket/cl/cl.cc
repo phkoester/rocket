@@ -98,7 +98,8 @@ CommandLine::CommandLine(
     opts_.insert(opts_.begin(), logOpts.begin(), logOpts.end());
   }
 
-  // NOTE: Because we use string views and pointers in the maps, #opts_ may never be changed from this point
+  // NOTE: Because we use string views and pointers in the maps, #opts_ and #params_ may never be changed
+  //       from this point
 
   // Validate options, populate maps
 
@@ -168,12 +169,14 @@ CommandLine::applyOpt(const Option& opt, bool nameFlag, const optional<string>& 
 
 void
 CommandLine::applyParam(const Parameter& param, const string& value) {
+  // Don't use #ROCKET_CHECK here for cleaner exception messages
+
   try {
     if (param.choices && not param.choices->contains(value)) {
       ROCKET_FAIL("Invalid value `{}`", value);
     }
     param.apply(value);
-    parserState_.seenParams.insert(&param);
+    parserState_.updateParam(param);
   } catch (const Exception& ex) {
     string expected;
     if (param.format) {
@@ -228,7 +231,6 @@ CommandLine::parse(const vector<string>& args, nio::Sink& out, nio::Sink& err, b
 
       if (not consumeOpts && arg == "--") {
         // 1. `--` seen: Recognize all remaining arguments as positional arguments, continue in loop
-        // loop
 
         consumeOpts = true;
         continue;
@@ -344,18 +346,32 @@ CommandLine::parse(const vector<string>& args, nio::Sink& out, nio::Sink& err, b
       return false;
     }
 
-    // Have we seen all required options?
+    // Check option occurrences
     for (const auto& opt : opts_) {
-      if (opt.minOccurs > 0 && not parserState_.seenOpts.contains(&opt)) {
-        ROCKET_FAIL("Missing required option `{}`", name(opt, true));
+      const auto count = parserState_.countOpt(opt);
+      if (count < opt.minOccurs) {
+        if (opt.minOccurs == 1) {
+          ROCKET_FAIL("Missing required option `{}`", name(opt, true));
+        } else {
+          ROCKET_FAIL("Option `{}` is required at least {}", name(opt, true), str::times(opt.minOccurs));
+        }
+      }
+      if (count > opt.maxOccurs) {
+        ROCKET_FAIL("Option `{}` may be supplied at most {}", name(opt, true), str::times(opt.maxOccurs));
       }
     }
 
-    // Have we seen all required parameters?
+    // Check parameter occurrences
     for (const auto& param : params_) {
-      if (param.minOccurs > 0 && not parserState_.seenParams.contains(&param)) {
-        ROCKET_FAIL("Missing required argument for parameter `{}`", param.name);
+      const auto count = parserState_.countParam(param);
+      if (count < param.minOccurs) {
+        if (param.minOccurs == 1) {
+          ROCKET_FAIL("Missing required argument for parameter `{}`", param.name);
+        } else {
+          ROCKET_FAIL("Parameter `{}` is required at least {}", param.name, str::times(param.minOccurs));
+        }
       }
+      // No need to check #maxOccurs here; this is handled already
     }
 
     return true;
@@ -400,7 +416,7 @@ CommandLine::printHelp(nio::Sink& out, bool verbose, bool exit) { // XXX
     if (output) {
       out.write('\n');
     }
-    printHelpParams(out, width);
+    printHelpParams(out, verbose, width);
     output = true;
   }
 
@@ -428,6 +444,8 @@ CommandLine::printHelp(nio::Sink& out, bool verbose, bool exit) { // XXX
   if (not verbose && hasVerboseDescriptions_) {
     out.println("\nMore information is available with `{} --help --verbose`", config_.command);
   }
+
+  // Exit if requested
 
   if (exit) {
     process.exit(EXIT_SUCCESS);
@@ -462,7 +480,7 @@ CommandLine::printHelpOpts(nio::Sink& out, bool verbose, u64 width) const { // N
     }
   }
 
-  // Loop though groups
+  // Loop through groups
 
   bool output = false;
 
@@ -488,13 +506,14 @@ CommandLine::printHelpOpts(nio::Sink& out, bool verbose, u64 width) const { // N
       }
       out.print("--{}", opt->name);
       if (opt->format) {
-        out.print(" {}", *opt->format);
+        out.print(" ({})", *opt->format);
       }
       if (opt->minOccurs > 0) {
         out.write(" (required)");
       }
       out.write('\n');
-      const auto description = verbose && opt->verboseDescription ? opt->verboseDescription : opt->description;
+      const auto description = verbose && opt->verboseDescription ?
+        opt->verboseDescription : opt->description;
       if (description) {
         out.writeln(str::wrap(*description, 10, width));
       }
@@ -506,7 +525,7 @@ CommandLine::printHelpOpts(nio::Sink& out, bool verbose, u64 width) const { // N
  * Parameters appear in the order they are declared.
  */
 void
-CommandLine::printHelpParams(nio::Sink& out, u64 width) const {
+CommandLine::printHelpParams(nio::Sink& out, bool verbose, u64 width) const {
   // Loop though parameters
 
   out.writeln("Parameters:\n");
@@ -515,14 +534,16 @@ CommandLine::printHelpParams(nio::Sink& out, u64 width) const {
     out.write("  ");
     out.write(param.name);
     if (param.format) {
-      out.print(" {}", *param.format);
+      out.print(" ({})", *param.format);
     }
     if (param.minOccurs > 0) {
       out.write(" (required)");
     }
     out.write('\n');
-    if (param.description) {
-      out.writeln(str::wrap(*param.description, 10, width));
+    const auto description = verbose && param.verboseDescription ?
+      param.verboseDescription : param.description;
+    if (description) {
+      out.writeln(str::wrap(*description, 10, width));
     }
   }
 }
@@ -586,10 +607,22 @@ CommandLine::ParserState::eval() {
   }
 }
 
+u64
+CommandLine::ParserState::countOpt(const Option& opt) const {
+  const auto it = seenOpts.find(&opt);
+  return it != seenOpts.end() ? it->second : 0;
+}
+
+u64
+CommandLine::ParserState::countParam(const Parameter& param) const {
+  const auto it = seenParams.find(&param);
+  return it != seenParams.end() ? it->second : 0;
+}
+
 void
 CommandLine::ParserState::updateOpt(const Option& opt, bool flag) {
   if (flag) {
-    auto result = seenOpts.emplace(&opt, 0);
+    auto result = seenOpts.emplace(&opt, 1);
     if (not result.second) {
       ++result.first->second;
     }
@@ -602,6 +635,14 @@ CommandLine::ParserState::updateOpt(const Option& opt, bool flag) {
     if (occurrs > 0) {
       --occurrs;
     }
+  }
+}
+
+void
+CommandLine::ParserState::updateParam(const Parameter& param) {
+  auto result = seenParams.emplace(&param, 1);
+  if (not result.second) {
+    ++result.first->second;
   }
 }
 

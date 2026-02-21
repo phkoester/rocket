@@ -121,10 +121,12 @@ struct OptionGroup {
 
 // #OptionType ----------------------------------------------------------------------------------------------
 
+/// The type of a #rocket::cl::Option: either custom or one of the predefined types with a special meaning.
 enum class OptionType { Custom, Help, Verbose, Version };
 
 // #OptionConfig --------------------------------------------------------------------------------------------
 
+/// Configuration for #rocket::cl::Option.
 struct OptionConfig {
   /**
    * A set of allowed values.
@@ -145,17 +147,21 @@ struct OptionConfig {
    */
   std::optional<std::string> format = {};
   /**
-   * A pointer to an option group. May be null.
+   * A pointer to an option group.
+   *
+   * May be null.
    */
   const OptionGroup* group = nullptr;
-   /**
+  /**
    * Maximum number of occurrences.
    */
   u64 maxOccurs = NPOS;
   /**
    * Minimum number of occurrences.
+   *
+   * If null, this will be auto-configured.
    */
-  u64 minOccurs = 0;
+  std::optional<u64> minOccurs = {};
   /**
    * The option name.
    *
@@ -163,11 +169,17 @@ struct OptionConfig {
    */
   std::string name;
   /**
-   * An optional short name.
+   * The option's short name.
    *
-   * For instance, if this is `"€"`, the option may be chosen via `-€` on the command line.
+   * For instance, if this is `"⨁"`, the option may be chosen via `-⨁` on the command line.
    */
   std::optional<unicode::Character<char>> shortName = {};
+  /**
+   * Whether the option takes a value.
+   *
+   * If null, this will be auto-configured.
+   */
+  std::optional<bool> takesValue = {};
   /**
    * An optional verbose description.
    *
@@ -183,8 +195,18 @@ struct Option {
   /// Type for a function that is called to apply an option value.
   using Apply = std::function<bool(std::string_view val)>;
 
+  /**
+   * Low-level factory function that makes a new option.
+   *
+   * Usually, you should use one of the following convenience functions instead.
+   *
+   * @param type the type of the option
+   * @param config the configuration
+   * @param apply the function that applies the option value
+   * @return a new option
+   */
   static Option
-  of(OptionType type, const OptionConfig& config, bool takesValue, Apply apply) {
+  of(OptionType type, const OptionConfig& config, Apply apply) {
     return {
       .apply=apply,
       .choices=config.choices,
@@ -192,27 +214,32 @@ struct Option {
       .format=config.format,
       .group=config.group,
       .maxOccurs=config.maxOccurs,
-      .minOccurs=config.minOccurs,
+      .minOccurs=config.minOccurs.value_or(0),
       .name=config.name,
       .shortName=config.shortName,
-      .takesValue=takesValue,
+      .takesValue=config.takesValue.value_or(false),
       .type=type,
       .verboseDescription=config.verboseDescription
     };
   }
 
+  /**
+   * Convenience factory function that makes a new custom option and binds it to a destination reference.
+   *
+   * @tparam T the type of the destination reference. If this is a #std::optional reference, the option
+   *   is optional, otherwise it is required. If this is a #std::vector reference, the option can consume
+   *   multiple values from the command line
+   * @param config the configuration
+   * @param out the destination reference that is assigned the option value
+   * @return a new option
+   */
   template<typename T>
   static Option
   custom(const OptionConfig& config, T& out) {
-    bool takesValue = true;
     Apply apply;
     using ValueType = internal::ValueType<T>;
-    if constexpr (std::is_same_v<ValueType, bool>) {
-      takesValue = false;
-    }
     if constexpr (IsInteger<ValueType>) {
-      if (config.maxOccurs > 1) {
-        takesValue = false;
+      if (config.takesValue == false) { // Sic!
         apply = [&](std::string_view val) { return internal::applyToInteger(out, val); };
       } else {
         apply = [&](std::string_view val) { return internal::applyTo(out, val); };
@@ -232,11 +259,35 @@ struct Option {
       configCopy.format = str::join(quoted.begin(), quoted.end(), ", ", " or ", ", or ");
     }
 
-    configCopy.minOccurs = IsOptional<T> ? 0 : 1;
+    // Auto-configure #minOccurs
+    if constexpr (not IsOptional<T>) {
+      if (not config.minOccurs) {
+        configCopy.minOccurs = 1;
+      }
+    }
 
-    return of(OptionType::Custom, configCopy, takesValue, apply);
+    // Auto-configure #takesValue
+    if constexpr (std::is_same_v<ValueType, bool>) {
+      configCopy.takesValue = false;
+    } else {
+      if (not config.takesValue) {
+        configCopy.takesValue = true;
+      }
+    }
+
+    return of(OptionType::Custom, configCopy, apply);
   }
 
+  /**
+   * Convenience factory function that makes a new help option and binds it to a destination reference.
+   *
+   * When providing a help option, consider providing a verbose option and verbose descriptions for options
+   * and parameters as well.
+   *
+   * @param group the option group, may be null
+   * @param out the destination reference that is assigned the option value
+   * @return a new option
+   */
   static Option
   help(const OptionGroup* group, std::optional<bool>& out) {
     OptionConfig config {
@@ -246,9 +297,16 @@ struct Option {
       .shortName=unicode::Character<char>("?")
     };
     Apply apply = [&](std::string_view val) { return internal::applyTo(out, val); };
-    return of(OptionType::Help, config, false, apply);
+    return of(OptionType::Help, config, apply);
   }
 
+  /**
+   * Convenience factory function that makes a new verbose option and binds it to a destination reference.
+   *
+   * @param group the option group, may be null
+   * @param out the destination reference that is assigned the option value
+   * @return a new option
+   */
   static Option
   verbose(const OptionGroup* group, std::optional<bool>& out) {
     OptionConfig config {
@@ -258,24 +316,44 @@ struct Option {
       .shortName=unicode::Character<char>("v")
     };
     Apply apply = [&](std::string_view val) { return internal::applyTo(out, val); };
-    return of(OptionType::Verbose, config, false, apply);
+    return of(OptionType::Verbose, config, apply);
   }
 
+  /**
+   * Convenience factory function that makes a new verbose option and binds it to a destination reference.
+   *
+   * Each occurrence of the option in the command line increases the level of verbosity by one. `-v` sets the
+   * level to 1, `-vv` sets it to 2, and so on.
+   *
+   * @param group the option group, may be null
+   * @param maxOccurs the maximum number of occurrences
+   * @param out the destination reference that is assigned the option value
+   * @return a new option
+   */
   static Option
-  verbose(const OptionGroup* group, std::optional<u64>& out, u64 maxOccurs) {
+  verbose(const OptionGroup* group, u64 maxOccurs, std::optional<u64>& out) {
     ROCKET_CHECK(maxOccurs, maxOccurs > 1);
 
     OptionConfig config {
-      .description="produce verbose output",
+      .description="increase level of verbosity",
       .group=group,
       .maxOccurs=maxOccurs,
       .name="verbose",
-      .shortName=unicode::Character<char>("v")
+      .shortName=unicode::Character<char>("v"),
+      .takesValue=false,
+      .verboseDescription=fmt::format("increase level of verbosity (may be supplied up to {} times)", maxOccurs)
     };
     Apply apply = [&](std::string_view val) { return internal::applyToInteger(out, val); };
-    return of(OptionType::Verbose, config, false, apply);
+    return of(OptionType::Verbose, config, apply);
   }
 
+  /**
+   * Convenience factory function that makes a new version option and binds it to a destination reference.
+   *
+   * @param group the option group, may be null
+   * @param out the destination reference that is assigned the option value
+   * @return a new option
+   */
   static Option
   version(const OptionGroup* group, std::optional<bool>& out) {
     OptionConfig config {
@@ -284,7 +362,7 @@ struct Option {
       .name="version"
     };
     Apply apply = [&](std::string_view val) { return internal::applyTo(out, val); };
-    return of(OptionType::Version, config, false, apply);
+    return of(OptionType::Version, config, apply);
   }
 
   /// @cond undocumented
@@ -301,6 +379,12 @@ struct Option {
   OptionType type = OptionType::Custom;
   std::optional<std::string> verboseDescription;
   /// @endcond
+};
+
+// #ParameterConfig -----------------------------------------------------------------------------------------
+
+/// Configuration for #rocket::cl::Parameter.
+struct ParameterConfig {
 };
 
 // #Parameter -----------------------------------------------------------------------------------------------
@@ -332,10 +416,12 @@ struct Parameter {
     const std::optional<std::string>& format,
     const std::optional<std::string>& description,
     T& out) {
+    using ValueType = internal::ValueType<T>;
+
     return {
       name,
       std::nullopt, // #choices
-      1, // #maxOccurs
+      IsVector<ValueType> ? NPOS : 1, // #maxOccurs
       IsOptional<T> ? 0 : 1, // #minOccurs
       false, // #consumeOpts
       format,
@@ -366,10 +452,12 @@ struct Parameter {
     const std::set<typename internal::ValueType<T>>& choices,
     const std::optional<std::string>& description,
     T& out) {
+    using ValueType = internal::ValueType<T>;
+
     Parameter ret {
       name,
       std::nullopt, // #choices
-      IsVector<typename internal::ValueType<T>> ? NPOS : 1, // #maxOccurs
+      IsVector<ValueType> ? NPOS : 1, // #maxOccurs
       IsOptional<T> ? 0 : 1, // #minOccurs
       false, // #consumeOpts
       std::nullopt, // #format
@@ -393,15 +481,18 @@ struct Parameter {
     return ret;
   }
 
-  std::string name; ///< The parameter name.
-  std::optional<std::set<std::string>> choices; ///< Allowed values.
-  u64 maxOccurs = 1; ///< Maximum number of occurrences.
-  u64 minOccurs = 1; ///< Minimum number of occurrences.
-  bool consumeOpts = false; ///< Whether options shall be consumed after this parameter.
-  std::optional<std::string> format; ///< Format text.
-  std::optional<std::string> description; ///< Description text.
-  std::optional<std::string> verboseDescription; ///< Verbose description text.
-  Apply apply; ///< Callback function that applies the argument.
+  /// @cond undocumented
+  // XXX alphabetisch
+  std::string name;
+  std::optional<std::set<std::string>> choices;
+  u64 maxOccurs = 1;
+  u64 minOccurs = 1;
+  bool consumeOpts = false;
+  std::optional<std::string> format;
+  std::optional<std::string> description;
+  std::optional<std::string> verboseDescription;
+  Apply apply;
+  /// @endcond
 };
 
 // #CommandLineConfig ---------------------------------------------------------------------------------------
@@ -471,15 +562,22 @@ private:
 
   struct ParserState {
     std::map<const Option*, u64> seenOpts;
-    std::set<const Parameter*> seenParams;
+    std::map<const Parameter*, u64> seenParams;
 
     bool help = false; ///< Available only after `eval()`
     bool verbose = false; ///< Available only after `eval()`
     bool version = false; ///< Available only after `eval()`
 
+    u64 countOpt(const Option& opt) const;
+
+    u64 countParam(const Parameter& param) const;
+
+    /// Initializes #help, #verbose, and #version
     void eval();
 
     void updateOpt(const Option& opt, bool flag);
+
+    void updateParam(const Parameter& param);
   };
 
   static std::string name(const Option& opt, bool nameFlag);
@@ -507,7 +605,7 @@ private:
 
   void printHelpOpts(nio::Sink& out, bool verbose, u64 width) const;
 
-  void printHelpParams(nio::Sink& out, u64 width) const;
+  void printHelpParams(nio::Sink& out, bool verbose, u64 width) const;
 
   void printTryHelp(nio::Sink& out) const;
 

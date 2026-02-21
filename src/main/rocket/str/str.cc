@@ -113,6 +113,11 @@ paragraphs(string_view str) {
 }
 
 string
+times(u64 count) {
+  return count == 1 ? "once" : (count == 2 ? "twice" : fmt::format("{} times", count));
+}
+
+string
 upper(string_view str) {
   u32string localS = utf8To32(str);
   upperIn(localS);

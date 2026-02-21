@@ -306,19 +306,21 @@ const vector<cl::Option> CL_OPTIONS {
     .group=&logging,
     .minOccurs=0,
     .name="log",
+    .takesValue=true,
     .verboseDescription=
       "set logging for identifier ID to level LEVEL. ID is a known log ID or `all`.\n"
       NBSP NBSP "If an optional substring is supplied, the log level is only applied to functions that "
       "contain the substring.\n"
       NBSP NBSP "LEVEL is `none`, `error`, `warn`, `info`, `debug`, or `trace`. If LEVEL is not supplied, "
       "`info` is assumed",
-  }, true, applyLog),
+  }, applyLog),
   cl::Option::of(cl::OptionType::Custom, {
     .description="set log format",
     .format="FMT",
     .group=&logging,
     .minOccurs=0,
     .name="log-fmt",
+    .takesValue=true,
     .verboseDescription=
       "set log format. FMT is a string of format specifiers, e.g. `fs3Z`. Valid specifiers are:\n"
       NBSP NBSP "f" NBSP NBSP NBSP "display function names\n"
@@ -338,13 +340,14 @@ const vector<cl::Option> CL_OPTIONS {
       NBSP NBSP "z" NBSP NBSP NBSP "display local time (*)\n"
       NBSP NBSP "Z" NBSP NBSP NBSP "display UTC time\n"
       "An asterisk (*) indicates that the setting is enabled by default",
-  }, true, applyLogFmt),
+  }, applyLogFmt),
   cl::Option::of(cl::OptionType::Custom, {
     .description="log to system device or file",
     .format="OUT",
     .group=&logging,
     .minOccurs=0,
     .name="log-out",
+    .takesValue=true,
     .verboseDescription=
       "log to system device or file. If OUT is `-` or `stdout`, log messages are written to standard "
       "output, which is the default. If OUT is `stderr`, log messages are written to standard error. "
@@ -356,7 +359,7 @@ const vector<cl::Option> CL_OPTIONS {
       NBSP NBSP "@[pid]" NBSP NBSP NBSP "expands to the process ID (PID)\n"
       NBSP NBSP "@[utc]" NBSP NBSP NBSP "serves as a hint to use UTC date rather than local date\n"
       NBSP NBSP "@[zip]" NBSP NBSP NBSP "serves as a hint to zip yesterday’s log file (requires `gzip`)",
-  }, true, applyLogOut),
+  }, applyLogOut),
 };
 
 // Local variables ------------------------------------------------------------------------------------------

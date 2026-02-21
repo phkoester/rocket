@@ -19,7 +19,6 @@ namespace rocket::str {
  */
 struct Noun {
   static const Noun character; ///< A predefined noun.
-  static const Noun time; ///< A predefined noun.
 
   /**
    * The singular form.
