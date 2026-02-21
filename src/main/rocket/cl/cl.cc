@@ -36,7 +36,7 @@ addArg(vector<string>& out, const string& arg, set<string>& seenFiles) { // NOLI
       path absPath;
       try {
         absPath = canonical(file);
-      } catch (const exception& ex) {
+      } catch (const exception&) {
         ROCKET_FAIL("Cannot resolve argument file `{}`", file);
       }
       string absFile = absPath.string();
