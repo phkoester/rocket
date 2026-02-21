@@ -41,7 +41,7 @@ addArg(vector<string>& out, const string& arg, set<string>& seenFiles) { // NOLI
       }
       string absFile = absPath.string();
       if (not seenFiles.insert(absFile).second) {
-        ROCKET_FAIL("Argument file `{}` causes an infinite loop", file);
+        ROCKET_FAIL("Argument file `{}` causes infinite loop", file);
       }
 
       // Read the argument file, add arguments
@@ -134,18 +134,18 @@ CommandLine::applyOpt(const Option& opt, bool nameFlag, const optional<string>& 
   string useValue = value.value_or("true");
 
   try {
-    if (opt.allowedValues && not opt.allowedValues->contains(useValue)) {
+    if (opt.choices && not opt.choices->contains(useValue)) {
       ROCKET_FAIL("Invalid value `{}`", value);
     }
-    opt.apply(useValue);
-    if (opt.name == "help") {
-      parserState_.help = str::tryToType<bool>(useValue).value_or(false);
+    bool result = opt.apply(useValue);
+    if (opt.type == OptionType::Help) {
+      parserState_.help = result;
     }
-    if (opt.name == "verbose") {
-      parserState_.verbose = str::tryToType<bool>(useValue).value_or(false);
+    if (opt.type == OptionType::Verbose) {
+      parserState_.verbose = result;
     }
-    if (opt.name == "version") {
-      parserState_.version = str::tryToType<bool>(useValue).value_or(false);
+    if (opt.type == OptionType::Version) {
+      parserState_.version = result;
     }
     parserState_.seenOpts.insert(&opt);
   } catch (const Exception& ex) {
@@ -166,7 +166,7 @@ CommandLine::applyOpt(const Option& opt, bool nameFlag, const optional<string>& 
 void
 CommandLine::applyParam(const Parameter& param, const string& value) {
   try {
-    if (param.allowedValues && not param.allowedValues->contains(value)) {
+    if (param.choices && not param.choices->contains(value)) {
       ROCKET_FAIL("Invalid value `{}`", value);
     }
     param.apply(value);
@@ -357,7 +357,7 @@ CommandLine::parse(const vector<string>& args, nio::Sink& out, nio::Sink& err, b
 }
 
 void
-CommandLine::printHelp(nio::Sink& out, [[maybe_unused]] bool verbose, bool exit) { // XXX
+CommandLine::printHelp(nio::Sink& out, bool verbose, bool exit) { // XXX
   ROCKET_EXPECT(hasHelpOpt_);
 
   const auto size = system::terminal::size(out);
@@ -400,7 +400,7 @@ CommandLine::printHelp(nio::Sink& out, [[maybe_unused]] bool verbose, bool exit)
     if (output) {
       out.write('\n');
     }
-    printHelpOpts(out, width);
+    printHelpOpts(out, verbose, width);
     output = true;
   }
 
@@ -423,7 +423,7 @@ CommandLine::printHelp(nio::Sink& out, [[maybe_unused]] bool verbose, bool exit)
  * first. Within the groups, options appear in the order they are seen.
  */
 void
-CommandLine::printHelpOpts(nio::Sink& out, u64 width) const { // NOLINT(*-complexity)
+CommandLine::printHelpOpts(nio::Sink& out, bool verbose, u64 width) const { // NOLINT(*-complexity)
   // Collect groups and options therein
 
   map<const OptionGroup*, vector<const Option*>> options;
@@ -478,8 +478,9 @@ CommandLine::printHelpOpts(nio::Sink& out, u64 width) const { // NOLINT(*-comple
         out.write(" (required)");
       }
       out.write('\n');
-      if (opt->description) {
-        out.writeln(str::wrap(*opt->description, 10, width));
+      const auto description = verbose ? opt->verboseDescription : opt->description;
+      if (description) {
+        out.writeln(str::wrap(*description, 10, width));
       }
     }
   }

@@ -18,6 +18,9 @@ namespace rocket::str {
  * A noun that knows its singular and plural form, in US English.
  */
 struct Noun {
+  static const Noun character; ///< A predefined noun.
+  static const Noun time; ///< A predefined noun.
+
   /**
    * The singular form.
    */
@@ -38,13 +41,6 @@ struct Noun {
     return count == 1 ? singular : plural;
   }
 };
-
-// Constants ------------------------------------------------------------------------------------------------
-
-/**
- * A noun.
- */
-ROCKET_PUBLIC extern const Noun character;
 
 } // namespace rocket::str
 

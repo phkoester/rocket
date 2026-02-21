@@ -7,6 +7,7 @@
 #include "rocket/Process.h"
 #include "rocket/cl/cl.h"
 #include "rocket/log/log.h"
+#include "rocket/version.h"
 
 using namespace rocket;
 using namespace rocket::unicode;
@@ -14,6 +15,8 @@ using namespace std;
 
 ROCKET_LOG_DEFINE(thisIsARatherLongLogId);
 ROCKET_LOG_DEFINE(toy);
+
+#define COPYRIGHT "Copyright © 2024–2026 Philip Köster"
 
 // Variables ------------------------------------------------------------------------------------------------
 
@@ -53,13 +56,22 @@ main(i32 argc, char **argv) {
 
   optional<bool> foo;
   optional<bool> help;
+  optional<i32> verbose;
+  optional<bool> version;
   optional<vector<string>> args;
 
   const cl::OptionGroup general("General control");
   const cl::CommandLineConfig config { .usages={ "[OPTION]... [ARG]..." }} ;
   cl::CommandLine cl({
     cl::Option::help(&general, help),
-    cl::Option::of(&general, "foo", "f"_c, nullopt, "delve into foo mode", foo),
+    cl::Option::verbose(&general, verbose, 3),
+    cl::Option::version(&general, version),
+    cl::Option::custom({
+      .description="delve into foo mode",
+      .group=&general,
+      .name="foo",
+      .shortName="f"_c
+    }, foo),
   }, {
     cl::Parameter::of("ARG", nullopt, "a command-line argument", args)
   }, config);

@@ -290,35 +290,34 @@ Out::zipYesterday(const TimePoint& time) {
 // Local constants ------------------------------------------------------------------------------------------
 
 /// Command-line-option group.
-const cl::OptionGroup CL_GROUP { "Logging control" };
+const cl::OptionGroup logging { "Logging control" };
 
-void applyLog(optional<string_view> val);
-void applyLogFmt(optional<string_view> val);
-void applyLogOut(optional<string_view> val);
+bool applyLog(optional<string_view> val);
+bool applyLogFmt(optional<string_view> val);
+bool applyLogOut(optional<string_view> val);
 
 #define NBSP "\u00A0"
 
 /// Command-line options.
 const vector<cl::Option> CL_OPTIONS {
-  {
-    .group=&CL_GROUP,
-    .name="log",
-    .takesValue=true,
+  cl::Option::of(cl::OptionType::Custom, {
+    .description="set logging for identifier ID to level LEVEL",
     .format="ID[.SUBSTRING][=LEVEL]",
-    .description=
+    .group=&logging,
+    .name="log",
+    .verboseDescription=
       "set logging for identifier ID to level LEVEL. ID is a known log ID or `all`.\n"
       NBSP NBSP "If an optional substring is supplied, the log level is only applied to functions that "
       "contain the substring.\n"
       NBSP NBSP "LEVEL is `none`, `error`, `warn`, `info`, `debug`, or `trace`. If LEVEL is not supplied, "
       "`info` is assumed",
-    .apply=applyLog
-  },
-  {
-    .group=&CL_GROUP,
-    .name="log-fmt",
-    .takesValue=true,
+  }, true, applyLog),
+  cl::Option::of(cl::OptionType::Custom, {
+    .description="set log format",
     .format="FMT",
-    .description=
+    .group=&logging,
+    .name="log-fmt",
+    .verboseDescription=
       "set log format. FMT is a string of format specifiers, e.g. `fs3Z`. Valid specifiers are:\n"
       NBSP NBSP "f" NBSP NBSP NBSP "display function names\n"
       NBSP NBSP "F" NBSP NBSP NBSP "display pretty function names (*)\n"
@@ -337,14 +336,13 @@ const vector<cl::Option> CL_OPTIONS {
       NBSP NBSP "z" NBSP NBSP NBSP "display local time (*)\n"
       NBSP NBSP "Z" NBSP NBSP NBSP "display UTC time\n"
       "An asterisk (*) indicates that the setting is enabled by default",
-    .apply=applyLogFmt
-  },
-  {
-    .group=&CL_GROUP,
-    .name="log-out",
-    .takesValue=true,
+  }, true, applyLogFmt),
+  cl::Option::of(cl::OptionType::Custom, {
+    .description="log to system device or file",
     .format="OUT",
-    .description=
+    .group=&logging,
+    .name="log-out",
+    .verboseDescription=
       "log to system device or file. If OUT is `-` or `stdout`, log messages are written to standard "
       "output, which is the default. If OUT is `stderr`, log messages are written to standard error. "
       "Otherwise, OUT is a PATTERN. Examples: `@[name].log` or `@[name]-@[date].log@[zip]`. Inside PATTERN, "
@@ -355,8 +353,7 @@ const vector<cl::Option> CL_OPTIONS {
       NBSP NBSP "@[pid]" NBSP NBSP NBSP "expands to the process ID (PID)\n"
       NBSP NBSP "@[utc]" NBSP NBSP NBSP "serves as a hint to use UTC date rather than local date\n"
       NBSP NBSP "@[zip]" NBSP NBSP NBSP "serves as a hint to zip yesterday’s log file (requires `gzip`)",
-    .apply=applyLogOut
-  },
+  }, true, applyLogOut),
 };
 
 // Local variables ------------------------------------------------------------------------------------------
@@ -384,7 +381,7 @@ thread_local vector<Entry> logStack;
  *
  * @ThreadSafe
  */
-void
+bool
 applyLog(optional<string_view> val) {
   ROCKET_EXPECT(val);
 
@@ -399,6 +396,7 @@ applyLog(optional<string_view> val) {
 
   // Use public API from here
   setLogLevel(lhs, rhs);
+  return true;
 }
 
 /**
@@ -406,12 +404,13 @@ applyLog(optional<string_view> val) {
  *
  * @ThreadSafe
  */
-void
+bool
 applyLogFmt(optional<string_view> val) {
   ROCKET_EXPECT(val);
 
   // Use public API from here
   setLogFmt(*val);
+  return true;
 }
 
 /**
@@ -419,12 +418,13 @@ applyLogFmt(optional<string_view> val) {
  *
  * @ThreadSafe
  */
-void
+bool
 applyLogOut(optional<string_view> val) {
   ROCKET_EXPECT(val);
 
   // Use public API from here
   setLogOut(*val);
+  return true;
 }
 
 /// @ThreadSafe

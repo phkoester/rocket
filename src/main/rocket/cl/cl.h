@@ -27,48 +27,277 @@ namespace internal {
 // #ValueType ...............................................................................................
 
 template<typename T>
-struct Value {
+struct ValueTypeImpl {
   using Type = T;
 };
 
 template<typename T>
-struct Value<std::optional<T>> {
+struct ValueTypeImpl<std::optional<T>> {
   using Type = T;
 };
 
 template<typename T>
-using ValueType = Value<T>::Type;
+using ValueType = ValueTypeImpl<T>::Type;
 
 // #applyTo .................................................................................................
 
-template<typename T>
-inline void
-applyTo(T& dest, std::string_view val) {
-  dest = str::toType<T>(val);
+inline bool
+applyTo(bool& out, std::string_view val) {
+  out = str::toType<bool>(val);
+  return out;
+}
+
+inline bool
+applyTo(std::optional<bool>& out, std::string_view val) {
+  out = str::toType<bool>(val);
+  return *out;
 }
 
 template<typename T>
-inline void
-applyTo(std::vector<T>& dest, std::string_view val) {
-  dest.push_back(str::toType<T>(val));
+inline bool
+applyTo(T& out, std::string_view val) {
+  out = str::toType<T>(val);
+  return true;
 }
 
 template<typename T>
-inline void
-applyTo(std::optional<T>& dest, std::string_view val) {
-  dest = str::toType<T>(val);
+inline bool
+applyTo(std::optional<T>& out, std::string_view val) {
+  out = str::toType<T>(val);
+  return true;
 }
 
 template<typename T>
-inline void
-applyTo(std::optional<std::vector<T>>& dest, std::string_view val) {
-  if (not dest) {
-    dest = std::vector<T>();
+inline bool
+applyTo(std::vector<T>& out, std::string_view val) {
+  out.push_back(str::toType<T>(val));
+  return true;
+}
+
+template<typename T>
+inline bool
+applyTo(std::optional<std::vector<T>>& out, std::string_view val) {
+  if (not out) {
+    out = std::vector<T>();
   }
-  dest->push_back(str::toType<T>(val));
+  out->push_back(str::toType<T>(val));
+  return true;
+}
+
+template<typename I> requires IsInteger<I>
+inline bool
+applyToInteger(I& out, std::string_view val) {
+  bool flag = str::toType<bool>(val);
+  if (flag) {
+    ++out;
+  } else if (out > 0) {
+    --out;
+  }
+  return out > 0;
+}
+
+template<typename I> requires IsInteger<I>
+inline bool
+applyToInteger(std::optional<I>& out, std::string_view val) {
+  if (not out) {
+    out = I();
+  }
+  return applyToInteger(*out, val);
 }
 
 } // namespace internal
+
+// #OptionGroup ---------------------------------------------------------------------------------------------
+
+/**
+ * An option group with a title.
+ *
+ * Command-line options may be assigned a pointer to an option group. When displaying the help text, options
+ * appear grouped by their groups.
+ */
+struct OptionGroup {
+  std::string title; ///< The title.
+};
+
+// #OptionType ----------------------------------------------------------------------------------------------
+
+enum class OptionType { Custom, Help, Verbose, Version };
+
+// #OptionConfig --------------------------------------------------------------------------------------------
+
+struct OptionConfig {
+  /**
+   * A set of allowed values.
+   */
+  std::optional<std::set<std::string>> choices = {};
+  /**
+   * Short description.
+   *
+   * By convention, this starts with a lower-case verb and does not end with a period, e.g.
+   * `"print NUM lines of leading context"`.
+   */
+  std::optional<std::string> description = {};
+  /**
+   * Short format description.
+   *
+   * If the option takes a value, this parameter should briefly describe the format, e.g.
+   * <code>"file"</code>, <code>"number"</code>, or <code>"`red`, `green`, or `blue`"</code>.
+   */
+  std::optional<std::string> format = {};
+  /**
+   * A pointer to an option group. May be null.
+   */
+  const OptionGroup* group = nullptr;
+  /**
+   * Maximum number of occurrences.
+   */
+  u64 maxOccurs = 1;
+  /**
+   * The option name.
+   *
+   * For example, if this is `"verbose"`, the option may be chosen via `--verbose` on the command line.
+   */
+  std::string name;
+  /**
+   * Required option?
+   */
+  bool required = false;
+  /**
+   * An optional short name.
+   *
+   * For example, if this is <code>"€"</code>, the option may be chosen via `-€` on the command line.
+   */
+  std::optional<unicode::Character<char>> shortName = {};
+  /**
+   * Verbose description.
+   *
+   * An optional verbose description that is displayed when verbose help is requested.
+   */
+  std::optional<std::string> verboseDescription = {};
+};
+
+// #Option --------------------------------------------------------------------------------------------------
+
+/// Command-line options.
+struct Option {
+  /// Type for a function that is called to apply an option value.
+  using Apply = std::function<bool(std::string_view val)>;
+
+  static Option
+  of(OptionType type, const OptionConfig& config, bool takesValue, Apply apply) {
+    return {
+      .apply = apply,
+      .choices = config.choices,
+      .description = config.description,
+      .format = config.format,
+      .group = config.group,
+      .maxOccurs = config.maxOccurs,
+      .name = config.name,
+      .shortName = config.shortName,
+      .required = config.required,
+      .takesValue = takesValue,
+      .type = type,
+      .verboseDescription = config.verboseDescription
+    };
+  }
+
+  template<typename T>
+  static Option
+  custom(const OptionConfig& config, T& out) {
+    bool takesValue = true;
+    Apply apply;
+    using ValueType = internal::ValueType<T>;
+    if (std::is_same_v<ValueType, bool>) {
+      takesValue = false;
+    }
+    if constexpr (IsInteger<ValueType>) {
+      if (config.maxOccurs > 1) {
+        takesValue = false;
+        apply = [&](std::string_view val) { return internal::applyToInteger(out, val); };
+      } else {
+        apply = [&](std::string_view val) { return internal::applyTo(out, val); };
+      }
+    } else {
+      apply = [&](std::string_view val) { return internal::applyTo(out, val); };
+    }
+
+    OptionConfig configCopy(config);
+
+    // If no format is provided, but choices are, generate a format string from the choices
+    if (config.choices && not config.format) {
+      std::set<std::string> quotedStrings;
+      for (const auto& val : *config.choices) {
+        quotedStrings.insert(fmt::format("`{}`", val));
+      }
+      configCopy.format = str::join(quotedStrings.begin(), quotedStrings.end(), ", ", " or ", ", or");
+    }
+
+    return of(OptionType::Custom, configCopy, takesValue, apply);
+  }
+
+  static Option
+  help(const OptionGroup* group, std::optional<bool>& out) {
+    OptionConfig config {
+      .description = "display this help text and exit",
+      .group = group,
+      .name = "help",
+      .shortName = unicode::Character<char>("?")
+    };
+    Apply apply = [&](std::string_view val) { return internal::applyTo(out, val); };
+    return of(OptionType::Help, config, false, apply);
+  }
+
+  static Option
+  verbose(const OptionGroup* group, std::optional<bool>& out) {
+    OptionConfig config {
+      .description = "produce verbose output",
+      .group = group,
+      .name = "verbose",
+      .shortName = unicode::Character<char>("v")
+    };
+    Apply apply = [&](std::string_view val) { return internal::applyTo(out, val); };
+    return of(OptionType::Verbose, config, false, apply);
+  }
+
+  static Option
+  verbose(const OptionGroup* group, std::optional<i32>& out, u64 maxOccurs) {
+    ROCKET_CHECK(maxOccurs, maxOccurs > 1);
+
+    OptionConfig config {
+      .description = "produce verbose output",
+      .group = group,
+      .maxOccurs = maxOccurs,
+      .name = "verbose",
+      .shortName = unicode::Character<char>("v")
+    };
+    Apply apply = [&](std::string_view val) { return internal::applyToInteger(out, val); };
+    return of(OptionType::Verbose, config, false, apply);
+  }
+
+  static Option
+  version(const OptionGroup* group, std::optional<bool>& out) {
+    OptionConfig config {
+      .description = "display version information and exit",
+      .group = group,
+      .name = "version"
+    };
+    Apply apply = [&](std::string_view val) { return internal::applyTo(out, val); };
+    return of(OptionType::Version, config, false, apply);
+  }
+
+  Apply apply;
+  std::optional<std::set<std::string>> choices;
+  std::optional<std::string> description;
+  std::optional<std::string> format;
+  const OptionGroup* group = nullptr;
+  u64 maxOccurs = 1;
+  std::string name;
+  std::optional<unicode::Character<char>> shortName;
+  bool required = false;
+  bool takesValue = false;
+  OptionType type = OptionType::Custom;
+  std::optional<std::string> verboseDescription;
+};
 
 // #Parameter -----------------------------------------------------------------------------------------------
 
@@ -89,7 +318,7 @@ struct Parameter {
    *   <code>"number"</code>, or <code>"`red`, `green`, or `blue`"</code>
    * @param description a short description text. By convention, this starts with a lower-case letter and
    *   does not end with a period, e.g. `"the input file"`
-   * @param dest the destination reference that is assigned the argument
+   * @param out the destination reference that is assigned the argument
    * @return a new parameter
    */
   template<typename T>
@@ -98,16 +327,16 @@ struct Parameter {
     const std::string& name,
     const std::optional<std::string>& format,
     const std::optional<std::string>& description,
-    T& dest) {
+    T& out) {
     return {
       name,
-      std::nullopt, // #allowedValues
+      std::nullopt, // #choices
       IsVector<typename internal::ValueType<T>> ? NPOS : 1, // #maxOccurs
       false, // #consumeOpts
       not IsOptional<T>, // #required
       format,
       description,
-      [&](std::string_view val) { internal::applyTo(dest, val); }
+      [&](std::string_view val) { internal::applyTo(out, val); }
     };
   }
 
@@ -119,35 +348,35 @@ struct Parameter {
    *   multiple arguments from the command line
    * @param name the name of the parameter, e.g. `"FILE"`. By conention, this is in all-caps and matches
    *   the usage line
-   * @param allowedValues a set of allowed values
+   * @param choices a set of allowed values
    * @param description a short description text. By convention, this starts with a lower-case letter and
    *   does not end with a period, e.g. `"the input file"`
-   * @param dest the destination reference that is assigned the argument
+   * @param out the destination reference that is assigned the argument
    * @return a new parameter
    */
   template<typename T>
   static Parameter
   of(
     const std::string& name,
-    const std::set<typename internal::ValueType<T>>& allowedValues,
+    const std::set<typename internal::ValueType<T>>& choices,
     const std::optional<std::string>& description,
-    T& dest) {
+    T& out) {
     Parameter ret {
       name,
-      std::nullopt, // #allowedValues
+      std::nullopt, // #choices
       IsVector<typename internal::ValueType<T>> ? NPOS : 1, // #maxOccurs
       false, // #consumeOpts
       not IsOptional<T>, // #required
       std::nullopt, // #format
       description,
-      [&](std::string_view val) { internal::applyTo(dest, val); }
+      [&](std::string_view val) { internal::applyTo(out, val); }
     };
 
     std::set<std::string> strings;
-    for (const auto& val : allowedValues) {
+    for (const auto& val : choices) {
       strings.insert(str::toString(val));
     }
-    ret.allowedValues = strings;
+    ret.choices = strings;
 
     std::set<std::string> quotedStrings;
     for (const auto& val : strings) {
@@ -159,199 +388,12 @@ struct Parameter {
   }
 
   std::string name; ///< The parameter name.
-  std::optional<std::set<std::string>> allowedValues; ///< Allowed values.
+  std::optional<std::set<std::string>> choices; ///< Allowed values.
   u64 maxOccurs = 1; ///< Maximum number of occurrences.
   bool consumeOpts = false; ///< Whether options shall be consumed after this parameter.
   bool required = false; ///< Required?
   std::optional<std::string> format; ///< Format text.
   std::optional<std::string> description; ///< Description text.
-  Apply apply; ///< Callback function that applies the argument.
-};
-
-// #OptionGroup ---------------------------------------------------------------------------------------------
-
-/**
- * An option group with a title.
- *
- * Command-line options may be assigned a pointer to an option group. When displaying the help text, options
- * appear grouped by their groups.
- */
-struct OptionGroup {
-  std::string title; ///< The title.
-};
-
-// #Option --------------------------------------------------------------------------------------------------
-
-/// Command-line options.
-struct Option {
-  /// Type for a function that is called to apply an option value.
-  using Apply = std::function<void(std::string_view val)>;
-
-  /**
-   * Convenience function that makes a new option and binds it to a destination reference.
-   *
-   * @tparam T the type of the destination reference. If this is a #std::optional reference, this option is
-   *   optional, otherwise it is required. If this is a `bool` reference, the option takes no value,
-   *   otherwise it does. If this is a #std::vector reference, multiple values may be supplied on the command
-   *   line
-   * @param group a pointer to an option group. May be null
-   * @param name the name of the option. For example, if this is `"verbose"`, the option may be chosen via
-   *   `--verbose` on the command line
-   * @param shortName an optional short name. For example, if this is <code>"€"</code>, the option may be
-   *   chosen via `-€` on the command line
-   * @param format if the option takes a value, this parameter should briefly describe the format, e.g.
-   *   <code>"file"</code>, <code>"number"</code>, or <code>"`red`, `green`, or `blue`"</code>
-   * @param description a short description text. By convention, this starts with a lower-case verb and does
-   *   not end with a period, e.g. `"print NUM lines of leading context"`
-   * @param dest the destination reference that is assigned the option's value
-   * @return a new option
-   */
-  template<typename T>
-  static Option
-  of(
-    const OptionGroup* group,
-    const std::string& name,
-    const std::optional<unicode::Character<char>>& shortName,
-    const std::optional<std::string>& format,
-    const std::optional<std::string>& description,
-    T& dest) {
-    return {
-      group,
-      name,
-      shortName,
-      std::nullopt, // #allowedValues
-      // #takesValue is `false` for `bool`, otherwise it is `true`
-      not(std::is_same_v<typename internal::ValueType<T>, bool>),
-      not IsOptional<T>, // #required
-      format,
-      description,
-      [&](std::string_view val) { internal::applyTo(dest, val); }
-    };
-  }
-
-  /**
-   * Convenience function that makes a new option and binds it to a destination reference.
-   *
-   * @tparam T the type of the destination reference. If this is a #std::optional reference, this option is
-   *   optional, otherwise it is required. If this is a `bool` reference, the option takes no value,
-   *   otherwise it does. If this is a #std::vector reference, multiple values may be supplied on the command
-   *   line
-   * @param group a pointer to an option group. May be null
-   * @param name the name of the option. For example, if this is `"verbose"`, the option may be chosen via
-   *   `--verbose` on the command line
-   * @param shortName an optional short name. For example, if this is <code>"€"</code>, the option may be
-   *   chosen via `-€` on the command line
-   * @param allowedValues a set of allowed values
-   * @param description a short description text. By convention, this starts with a lower-case verb and does
-   *   not end with a period, e.g. `"print NUM lines of leading context"`
-   * @param dest the destination reference that is assigned the option's value
-   * @return a new option
-   */
-  template<typename T>
-  static Option
-  of(
-    const OptionGroup* group,
-    const std::string& name,
-    const std::optional<unicode::Character<char>>& shortName,
-    const std::set<typename internal::ValueType<T>>& allowedValues,
-    const std::optional<std::string>& description,
-    T& dest) {
-    auto ret = Option {
-      group,
-      name,
-      shortName,
-      std::nullopt, // #allowedValues
-      // #takesValue is `false` for `bool`, otherwise it is `true`
-      not(std::is_same_v<typename internal::ValueType<T>, bool>),
-      not IsOptional<T>, // #required
-      std::nullopt, // #format
-      description,
-      [&](std::string_view val) { internal::applyTo(dest, val); }
-    };
-
-    std::set<std::string> strings;
-    for (const auto& val : allowedValues) {
-      strings.insert(str::toString(val));
-    }
-    ret.allowedValues = strings;
-
-    std::set<std::string> quotedStrings;
-    for (const auto& val : strings) {
-      quotedStrings.insert(fmt::format("`{}`", val));
-    }
-    ret.format = str::join(quotedStrings.begin(), quotedStrings.end(), ", ", " or ", ", or");
-
-    return ret;
-  }
-
-  /**
-   * Convenience function that makes a new help option.
-   *
-   * @param group a pointer to an option group. May be null
-   * @param dest a reference to an optional `bool` value that will be set to `true` if the option is supplied
-   * @return a new option
-   */
-  static Option
-  help(
-    const OptionGroup* group,
-    std::optional<bool>& dest) {
-    return of(
-      group,
-      "help",
-      unicode::Character<char>("?"), // #shortName
-      std::nullopt, // #format
-      "display this help text and exit",
-      dest);
-  }
-
-  /**
-   * Convenience function that makes a new version option.
-   *
-   * @param group a pointer to an option group. May be null
-   * @param dest a reference to an optional `bool` value that will be set to `true` if the option is supplied
-   * @return a new option
-   */
-  static Option
-  verbose(
-    const OptionGroup* group,
-    std::optional<bool>& dest) {
-    return of(
-      group,
-      "verbose",
-      unicode::Character<char>("v"), // #shortName
-      std::nullopt, // #format
-      "produce verbose output",
-      dest);
-  }
-
-  /**
-   * Convenience function that makes a new verbose option.
-   *
-   * @param group a pointer to an option group. May be null
-   * @param dest a reference to an optional `bool` value that will be set to `true` if the option is supplied
-   * @return a new option
-   */
-  static Option
-  version(
-    const OptionGroup* group,
-    std::optional<bool>& dest) {
-    return of(
-      group,
-      "version",
-      std::nullopt, // #shortName
-      std::nullopt, // #format
-      "display version information and exit",
-      dest);
-  }
-
-  const OptionGroup* group = nullptr; ///< The option group.
-  std::string name; ///< The option name.
-  std::optional<unicode::Character<char>> shortName = std::nullopt; ///< The option short name.
-  std::optional<std::set<std::string>> allowedValues = std::nullopt; ///< Allowed values.
-  bool takesValue = false; ///< Option takes value?
-  bool required = false; ///< Required?
-  std::optional<std::string> format; ///< Format text.
-  std::optional<std::string> description; ///< Description.
   Apply apply; ///< Callback function that applies the argument.
 };
 
@@ -450,7 +492,7 @@ private:
 
   void printHelp(nio::Sink& out, bool verbose, bool exit);
 
-  void printHelpOpts(nio::Sink& out, u64 width) const;
+  void printHelpOpts(nio::Sink& out, bool verbose, u64 width) const;
 
   void printHelpParams(nio::Sink& out, u64 width) const;
 

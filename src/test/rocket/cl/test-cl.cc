@@ -62,7 +62,12 @@ parseCommand(const vector<string>& args, nio::Sink& out = nio::out, nio::Sink& e
 
   CommandLine cl({
     // The group order matters!
-    Option::of(&general, "omit", "o"_c, nullopt, "omit what is not important", parseCommandOmit),
+    Option::custom({
+      .description="omit what is not important",
+      .group=&general,
+      .name="omit",
+      .shortName="o"_c
+    }, parseCommandOmit),
     Option::help(&misc, parseCommandHelp)
   }, {
     command,
@@ -88,7 +93,12 @@ parseCommand(const vector<string>& args, nio::Sink& out = nio::out, nio::Sink& e
 
     CommandLine listCl({
       Option::help(&list, parseCommandListHelp),
-      Option::of(&list, "list", "l"_c, nullopt, "a list option that is good for nothing", parseCommandList)
+      Option::custom({
+        .description="a list option that is good for nothing",
+        .group=&list,
+        .name="list",
+        .shortName="l"_c
+      }, parseCommandList)
     }, {
       Parameter::of("FILE", "file", "a file to list", parseCommandListFiles)
     }, listConfig);
@@ -111,8 +121,18 @@ parseCommand(const vector<string>& args, nio::Sink& out = nio::out, nio::Sink& e
 
     CommandLine showCl({
       Option::help(&show, parseCommandShowHelp),
-      Option::of(&show, "show", "s"_c, nullopt, "a show option that is good for nothing", parseCommandShow),
-      Option::of(&show, "test", "t"_c, nullopt, "test something, or don't", parseCommandShowTest)
+      Option::custom({
+        .description="a show option that is good for nothing",
+        .group=&show,
+        .name="show",
+        .shortName="s"_c
+      }, parseCommandShow),
+      Option::custom({
+        .description="test something, or don't",
+        .group=&show,
+        .name="test",
+        .shortName="t"_c
+      }, parseCommandShowTest)
     }, {
       Parameter::of("ARG", nullopt, "a thing to show", parseCommandShowArgs)
     }, showConfig);
@@ -147,7 +167,11 @@ TEST(cl, parseOptBool) {
 
   CommandLine cl( {
     // 🧑‍🌾: U+1F9D1 (ADULT), U+200D (ZERO WIDTH JOINER), U+1F33E (EAR OF RICE)
-    Option::of(nullptr, "flag", "🧑‍🌾"_c, nullopt, nullopt, flag)
+    Option::custom({
+      .description="a flag option that is good for nothing",
+      .name="flag",
+      .shortName="🧑‍🌾"_c
+    }, flag)
   }, {
     Parameter::of("ARG", nullopt, "a command-line argument", args)
   });
@@ -221,7 +245,12 @@ TEST(cl, parseOptInt) {
   optional<vector<string>> args;
 
   CommandLine cl( {
-    Option::of(nullptr, "num", "n"_c, "number", "a number", num)
+    Option::custom({
+      .description="a number",
+      .format="number",
+      .name="num",
+      .shortName="n"_c
+    }, num)
   }, {
     Parameter::of("ARG", nullopt, "a command-line argument", args)
   });
@@ -268,7 +297,7 @@ TEST(cl, parseOptEnum) {
   vector<string> args;
 
   CommandLine cl( {
-    Option::of(nullptr, "level", "l"_c, nullopt, nullopt, level)
+    Option::custom( { .name="level", .shortName="l"_c }, level)
   }, {
     Parameter::of("ARG", nullopt, "a command-line argument", args)
   });
@@ -295,7 +324,7 @@ TEST(cl, parseOptVector) {
   vector<string> args;
 
   CommandLine cl( {
-    Option::of(nullptr, "name", "n"_c, nullopt, nullopt, names)
+    Option::custom({ .name="name", .shortName="n"_c }, names)
   }, {
     Parameter::of("ARG", nullopt, "a command-line argument", args)
   });
@@ -317,9 +346,9 @@ TEST(cl, parseShortOptions) {
   vector<string> args;
 
   CommandLine cl( {
-    Option::of(nullptr, "ignore", "i"_c, nullopt, nullopt, ignore),
-    Option::of(nullptr, "name", "n"_c, nullopt, nullopt, name),
-    Option::of(nullptr, "verbose", "v"_c, nullopt, nullopt, verbose)
+    Option::custom({ .name="ignore", .shortName="i"_c }, ignore),
+    Option::custom({ .name="name", .shortName="n"_c }, name),
+    Option::custom({ .name="verbose", .shortName="v"_c }, verbose)
   }, {
     Parameter::of("ARG", nullopt, "a command-line argument", args)
   });

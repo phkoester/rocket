@@ -38,6 +38,7 @@ main(i32 argc, char **argv) {
   // Parse command line
 
   optional<bool> help;
+  optional<bool> verbose;
   optional<i32> hours;
   optional<vector<string>> args;
 
@@ -45,7 +46,14 @@ main(i32 argc, char **argv) {
   const cl::CommandLineConfig config { .usages={ "[OPTION]... [ARG]..." }} ;
   cl::CommandLine cl({
     cl::Option::help(&general, help),
-    cl::Option::of(&general, "offset", "o"_c, "number", "hour offset", hours)
+    cl::Option::verbose(&general, verbose),
+    cl::Option::custom({
+      .description="hour offset",
+      .format="number",
+      .group=&general,
+      .name="offset",
+      .shortName="o"_c
+    }, hours)
   }, {
     cl::Parameter::of("ARG", nullopt, "a command-line argument", args)
   }, config);

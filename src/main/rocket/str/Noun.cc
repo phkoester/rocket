@@ -8,7 +8,8 @@ namespace rocket::str {
 
 // Constants ------------------------------------------------------------------------------------------------
 
-ROCKET_PUBLIC const Noun character { "character", "characters" };
+const Noun Noun::character { "character", "characters" };
+const Noun Noun::time { "time", "times" };
 
 } // namespace rocket::str
 
