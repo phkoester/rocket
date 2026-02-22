@@ -277,6 +277,34 @@ struct CompareConsumerImpl<DataType::Bimap, T, Cmp> {
 };
 
 template<typename T, typename Cmp>
+struct CompareConsumerImpl<DataType::CodePoint, T, Cmp> {
+  using Elem = T::Type;
+  static constexpr auto ElemDataType = DataTypes<Elem>::Value;
+
+  auto
+  consume(const T& lhs, const T& rhs) {
+    const Elem lhsElem = static_cast<Elem>(lhs);
+    const Elem rhsElem = static_cast<Elem>(rhs);
+    return CompareConsumerImpl<ElemDataType, Elem, Cmp>().consume(lhsElem, rhsElem);
+  }
+};
+
+template<typename T, typename Cmp>
+struct CompareConsumerImpl<DataType::Interval, T, Cmp> {
+  using A = T::A;
+  using B = T::B;
+  using Pair = std::pair<A, B>;
+  static constexpr auto PairDataType = DataTypes<Pair>::Value;
+
+  auto
+  consume(const T& lhs, const T& rhs) {
+    const Pair lhsPair = { lhs.a, lhs.b };
+    const Pair rhsPair = { rhs.a, rhs.b };
+    return CompareConsumerImpl<PairDataType, Pair, Cmp>().consume(lhsPair, rhsPair);
+  }
+};
+
+template<typename T, typename Cmp>
 struct CompareConsumerImpl<DataType::Declared, T, Cmp> {
   static constexpr auto& refs = rocket::reflect::Declared<T>::refs;
   using Elem = Purge<decltype(refs)>;

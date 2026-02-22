@@ -192,6 +192,33 @@ struct HashConsumerImpl<DataType::Bimap, T, Hash> {
 };
 
 template<typename T, typename Hash>
+struct HashConsumerImpl<DataType::CodePoint, T, Hash> {
+  using Elem = T::Type;
+  static constexpr auto ElemDataType = DataTypes<Elem>::Value;
+
+  u64
+  consume(const T& val) {
+    const Elem elem = static_cast<Elem>(val);
+    return HashConsumerImpl<ElemDataType, Elem, Hash>().consume(elem);
+  }
+};
+
+template<typename T, typename Hash>
+struct HashConsumerImpl<DataType::Interval, T, Hash> {
+  using A = T::A;
+  static constexpr auto ADataType = DataTypes<A>::Value;
+  using B = T::B;
+  static constexpr auto BDataType = DataTypes<B>::Value;
+
+  u64
+  consume(const T& val) {
+    u64 ret = HashConsumerImpl<ADataType, A, Hash>().consume(val.a);
+    combine<false>(ret, HashConsumerImpl<BDataType, B, Hash>().consume(val.b));
+    return ret;
+  }
+};
+
+template<typename T, typename Hash>
 struct HashConsumerImpl<DataType::Declared, T, Hash> {
   static constexpr auto& refs = rocket::reflect::Declared<T>::refs;
   using Elem = Purge<decltype(refs)>;
@@ -230,7 +257,7 @@ struct HashConsumerImpl<DataType::MemberRef, T, Hash> {
   u64
   consume(const T& val, const C& instance) {
     // For #MemberRef, include the name in the hash
-    auto ret = Hash()(val.name());
+    u64 ret = Hash()(val.name());
     combine<false>(ret, HashConsumerImpl<ElemDataType, Elem, Hash>().consume(val.get(instance)));
     return ret;
   }

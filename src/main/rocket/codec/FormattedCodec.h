@@ -6,6 +6,7 @@
 
 #include "rocket/Guard.h"
 #include "rocket/InputFailure.h"
+#include "rocket/std.h"
 #include "rocket/codec/codec.h"
 #include "rocket/nio/nio.h"
 #include "rocket/str/escape/escape.h"
@@ -97,9 +98,9 @@ template<typename C>
 struct FormattedConsumerImpl<DataType::Char, C> {
   void
   consume(C val, nio::Sink& out, CONFIG__) const {
-    std::basic_string<C> str = { val };
-    std::string utf8(unicode::ConvertTo<char>::apply(str));
-    std::string escaped = str::escape::escapeCString(utf8, { .quote='\'' });
+    const std::basic_string<C> str = { val };
+    const std::string utf8(unicode::ConvertTo<char>::apply(str));
+    const std::string escaped = str::escape::escapeCString(utf8, { .quote='\'' });
     out.print("{}", escaped);
   }
 };
@@ -130,8 +131,18 @@ struct FormattedConsumerImpl<DataType::Integer, I> {
 
 template<typename F>
 struct FormattedConsumerImpl<DataType::Float, F> {
+  using Limits = std::numeric_limits<F>;
+
   void
   consume(F val, nio::Sink& out, CONFIG__) const {
+    if (val == -Limits::infinity()) {
+      out.write("-∞");
+      return;
+    }
+    if (val == Limits::infinity()) {
+      out.write("∞");
+      return;
+    }
     out.print("{}", val);
   }
 };
@@ -152,8 +163,8 @@ template<typename T>
 struct FormattedConsumerImpl<DataType::String, T> {
   void
   consume(const T& val, nio::Sink& out, CONFIG__) const {
-    std::string utf8(unicode::ConvertTo<char>::apply(val));
-    std::string escaped = str::escape::escapeCString(utf8, { .quote='"' });
+    const std::string utf8(unicode::ConvertTo<char>::apply(val));
+    const std::string escaped = str::escape::escapeCString(utf8, { .quote='"' });
     out.print("{}", escaped);
   }
 };
@@ -271,6 +282,53 @@ struct FormattedConsumerImpl<DataType::Bimap, T> {
       FormattedConsumerImpl<ElemDataType, Elem>().consume(elem, out, config);
     }
     endContainer(out, config, val.size(), '}');
+  }
+};
+
+template<typename T>
+struct FormattedConsumerImpl<DataType::CodePoint, T> {
+  void
+  consume(const T& val, nio::Sink& out, CONFIG__) const {
+    if (val.valid()) {
+      out.print("U+{:0>4X}", static_cast<u32>(val));
+    } else {
+      out.write("<invalid>");
+    }
+  }
+};
+
+template<typename T>
+struct FormattedConsumerImpl<DataType::Interval, T> {
+  using A = T::A;
+  static constexpr auto ADataType = DataTypes<A>::Value;
+  using B = T::B;
+  static constexpr auto BDataType = DataTypes<B>::Value;
+
+  using Left = T::LeftType;
+  using Right = T::RightType;
+
+  void
+  consume(const T& val, nio::Sink& out, CONFIG__) const {
+    if (val.empty()) {
+      out.write("∅");
+      return;
+    }
+
+    out.write(Left::Symbol);
+    const auto optA = option(val.a);
+    if (not optA) {
+      out.write("-∞");
+    } else {
+      FormattedConsumerImpl<ADataType, A>().consume(val.a, out, config);
+    }
+    out.write(',');
+    const auto optB = option(val.b);
+    if (not optB) {
+      out.write("∞");
+    } else {
+      FormattedConsumerImpl<BDataType, B>().consume(val.b, out, config);
+    }
+    out.write(Right::Symbol);
   }
 };
 
@@ -440,10 +498,21 @@ struct FormattedProducerImpl<DataType::Integer, I> {
 
 template<typename F>
 struct FormattedProducerImpl<DataType::Float, F> {
+  using Limits = std::numeric_limits<F>;
+
   void
   produce(F& val, nio::StringSource& in, CONFIG__) const {
     skip(in, config);
     const auto pos = in.tell();
+
+    if (read(in, { "-∞" })) {
+      val = -Limits::infinity();
+      return;
+    }
+    if (read(in, { "∞" })) {
+      val = Limits::infinity();
+      return;
+    }
 
     auto available = in.available();
     auto result = scn::scan<F>(available, "{}");
@@ -771,6 +840,93 @@ struct FormattedProducerImpl<DataType::Bimap, T> {
 };
 
 template<typename T>
+struct FormattedProducerImpl<DataType::CodePoint, T> {
+  using Elem = T::Type;
+  static constexpr auto ElemDataType = DataTypes<Elem>::Value;
+
+  void
+  produce(T& val, nio::StringSource& in, CONFIG__) const {
+    skip(in, config);
+    const auto pos = in.tell();
+
+    auto available = in.available();
+    if (available.starts_with('\'')) {
+      Elem elem = Elem();
+      FormattedProducerImpl<ElemDataType, Elem>().produce(elem, in, config);
+      val = T(elem);
+      return;
+    }
+
+    if (available.starts_with("U+")) {
+      auto result = scn::scan<u32>(available, "U+{:X}");
+      if (result) {
+        in.seek(result->begin() - available.begin(), nio::SeekMode::cur);
+        val = T(static_cast<Elem>(result->value()));
+        return;
+      }
+    }
+
+    throw InputFailure(pos, "Expected a code point");
+  }
+};
+
+template<typename T>
+struct FormattedProducerImpl<DataType::Interval, T> {
+  using A = T::A;
+  static constexpr auto ADataType = DataTypes<A>::Value;
+  using B = T::B;
+  static constexpr auto BDataType = DataTypes<B>::Value;
+
+  using Left = T::LeftType;
+  using Right = T::RightType;
+
+  void
+  produce(T& val, nio::StringSource& in, CONFIG__) const {
+    skip(in, config);
+    const auto pos = in.tell();
+
+    if (read(in, { "∅" })) {
+      val = T();
+      return;
+    }
+
+    if (not read(in, Left::Symbol)) {
+      throw InputFailure(pos, "Expected an interval");
+    }
+    skip(in, config);
+
+    A a = A();
+    if constexpr (IsOptional<A>) {
+      if (not read(in, { "-∞" })) {
+        FormattedProducerImpl<ADataType, A>().produce(a, in, config);
+      }
+    } else {
+      FormattedProducerImpl<ADataType, A>().produce(a, in, config);
+    }
+    val.a = a;
+
+    skip(in, config);
+    expectComma(in);
+    skip(in, config);
+
+    B b = B();
+    if constexpr (IsOptional<B>) {
+      if (not read(in, { "∞" })) {
+        FormattedProducerImpl<BDataType, B>().produce(b, in, config);
+      }
+    } else {
+      FormattedProducerImpl<BDataType, B>().produce(b, in, config);
+    }
+    val.b = b;
+
+    skip(in, config);
+    if (not read(in, Right::Symbol)) {
+      throw InputFailure(in.tell(), { pos, in.tell() }, "Unterminated interval");
+    }
+  }
+};
+
+template<typename T>
 struct FormattedProducerImpl<DataType::Declared, T> {
   void
   produce(T& val, nio::StringSource& in, CONFIG__) const {
@@ -785,26 +941,15 @@ struct FormattedProducerImpl<DataType::Declared, T> {
   }
 };
 
-template<typename T>
-struct FormattedProducerImpl<DataType::Instance, T> {
-  void
-  produce(T& val, nio::StringSource& in, CONFIG__) const {
-    const auto& refs = T::InnerType::refs;
-    using Elem = Purge<decltype(refs)>;
-    constexpr auto ElemDataType = DataTypes<Elem>::Value;
-    static_assert(ElemDataType == DataType::Tuple);
-
-    // Here we have to pass an additional argument, the instance, to the tuple producer. The tuple producer
-    // will pass it on to the member-reference producer
-    FormattedProducerImpl<ElemDataType, Elem>().produce(const_cast<Elem&>(refs), in, config, *val.instance);
-  }
-};
+// No producer for #Instance, because it only holds a pointer and cannot be decoded
 
 template<typename T>
 struct FormattedProducerImpl<DataType::MemberRef, T> {
   template<typename C>
   void
   produce(T& val, nio::StringSource& in, CONFIG__, C& instance) const {
+    using boost::safe_numerics::safe;
+
     skip(in, config);
     const auto pos = in.tell();
 
@@ -813,7 +958,7 @@ struct FormattedProducerImpl<DataType::MemberRef, T> {
     if (eq == NPOS) {
       throw InputFailure(pos, "Expected a member reference");
     }
-    in.seek(eq + 1, nio::SeekMode::cur);
+    in.seek(safe<i64>(eq + 1), nio::SeekMode::cur);
 
     // For `MemberRef`, we demand the name to match
     std::string_view name = available.substr(0, eq);
@@ -833,6 +978,8 @@ template<typename T>
 struct FormattedProducerImpl<DataType::VarRef, T> {
   void
   produce(T& val, nio::StringSource& in, CONFIG__) const {
+    using boost::safe_numerics::safe;
+
     skip(in, config);
     const auto pos = in.tell();
 
@@ -841,7 +988,7 @@ struct FormattedProducerImpl<DataType::VarRef, T> {
     if (eq == NPOS) {
       throw InputFailure(pos, "Expected a variable reference");
     }
-    in.seek(eq + 1, nio::SeekMode::cur);
+    in.seek(safe<i64>(eq + 1), nio::SeekMode::cur);
 
     // For `VarRef`, we ignore the name altogether and do not demand it to match
     skip(in, config);

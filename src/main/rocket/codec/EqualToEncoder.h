@@ -288,6 +288,34 @@ private:
 };
 
 template<typename T, typename Eq>
+struct EqualToConsumerImpl<DataType::CodePoint, T, Eq> {
+  using Elem = T::Type;
+  static constexpr auto ElemDataType = DataTypes<Elem>::Value;
+
+  bool
+  consume(const T& lhs, const T& rhs) {
+    const Elem lhsElem = static_cast<Elem>(lhs);
+    const Elem rhsElem = static_cast<Elem>(rhs);
+    return EqualToConsumerImpl<ElemDataType, Elem, Eq>().consume(lhsElem, rhsElem);
+  }
+};
+
+template<typename T, typename Eq>
+struct EqualToConsumerImpl<DataType::Interval, T, Eq> {
+  using A = T::A;
+  using B = T::B;
+  using Pair = std::pair<A, B>;
+  static constexpr auto PairDataType = DataTypes<Pair>::Value;
+
+  bool
+  consume(const T& lhs, const T& rhs) {
+    const Pair lhsPair = { lhs.a, lhs.b };
+    const Pair rhsPair = { rhs.a, rhs.b };
+    return EqualToConsumerImpl<PairDataType, Pair, Eq>().consume(lhsPair, rhsPair);
+  }
+};
+
+template<typename T, typename Eq>
 struct EqualToConsumerImpl<DataType::Declared, T, Eq> {
   static constexpr auto& refs = rocket::reflect::Declared<T>::refs;
   using Elem = Purge<decltype(refs)>;

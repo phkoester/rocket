@@ -1,11 +1,11 @@
 /*
- * test-interval.cc
+ * test-Interval.cc
  */
 
 #include "rocket-test/rocket-test.h"
 
 #include "rocket/literal.h"
-#include "rocket/math/interval.h"
+#include "rocket/math/Interval-codec.h"
 
 #include <fmt/xchar.h>
 
@@ -19,7 +19,7 @@ using namespace rocket::math;
 
 // Integer ..................................................................................................
 
-TEST(interval, ClosedIntervalI32) {
+TEST(Interval, ClosedIntervalI32) {
   using type = ClosedInterval<i32>;
 
   type val = type();
@@ -60,7 +60,7 @@ TEST(interval, ClosedIntervalI32) {
   EXPECT_EQ(type(1, 0), type());
 }
 
-TEST(interval, ClosedIntervalU32) {
+TEST(Interval, ClosedIntervalU32) {
   using type = ClosedInterval<u32>;
 
   type val = type();
@@ -98,7 +98,7 @@ TEST(interval, ClosedIntervalU32) {
   EXPECT_EQ(type(1, 0), type());
 }
 
-TEST(interval, LeftOpenIntervalI32) {
+TEST(Interval, LeftOpenIntervalI32) {
   using type = LeftOpenInterval<i32>;
 
   type val = type();
@@ -149,7 +149,7 @@ TEST(interval, LeftOpenIntervalI32) {
   EXPECT_EQ(type(1, 0), type());
 }
 
-TEST(interval, LeftOpenIntervalU32) {
+TEST(Interval, LeftOpenIntervalU32) {
   using type = LeftOpenInterval<u32>;
 
   type val = type();
@@ -196,7 +196,7 @@ TEST(interval, LeftOpenIntervalU32) {
   EXPECT_EQ(type(1, 0), type());
 }
 
-TEST(interval, RightOpenIntervalI32) {
+TEST(Interval, RightOpenIntervalI32) {
   using type = RightOpenInterval<i32>;
 
   type val = type();
@@ -245,7 +245,7 @@ TEST(interval, RightOpenIntervalI32) {
   EXPECT_EQ(type(1, 0), type());
 }
 
-TEST(interval, RightOpenIntervalU32) {
+TEST(Interval, RightOpenIntervalU32) {
   using type = RightOpenInterval<u32>;
 
   type val = type();
@@ -290,7 +290,7 @@ TEST(interval, RightOpenIntervalU32) {
   EXPECT_EQ(type(1, 0), type());
 }
 
-TEST(interval, OpenIntervalI32) {
+TEST(Interval, OpenIntervalI32) {
   using type = OpenInterval<i32>;
 
   type val = type();
@@ -359,7 +359,7 @@ TEST(interval, OpenIntervalI32) {
   EXPECT_EQ(type(1, 0), type());
 }
 
-TEST(interval, OpenIntervalU32) {
+TEST(Interval, OpenIntervalU32) {
   using type = OpenInterval<u32>;
 
   type val = type();
@@ -424,7 +424,7 @@ TEST(interval, OpenIntervalU32) {
 
 // Floating-point ...........................................................................................
 
-TEST(interval, ClosedIntervalF32) {
+TEST(Interval, ClosedIntervalF32) {
   using type = ClosedInterval<f32>;
 
   type val = type();
@@ -451,7 +451,7 @@ TEST(interval, ClosedIntervalF32) {
   EXPECT_EQ(type(1, 0), type());
 }
 
-TEST(interval, LeftOpenIntervalF32) {
+TEST(Interval, LeftOpenIntervalF32) {
   using type = LeftOpenInterval<f32>;
 
   type val = type();
@@ -482,7 +482,7 @@ TEST(interval, LeftOpenIntervalF32) {
   EXPECT_EQ(type(1_f32, 0), type());
 }
 
-TEST(interval, RightOpenIntervalF32) {
+TEST(Interval, RightOpenIntervalF32) {
   using type = RightOpenInterval<f32>;
 
   type val = type();
@@ -513,7 +513,7 @@ TEST(interval, RightOpenIntervalF32) {
   EXPECT_EQ(type(1, 0_f32), type());
 }
 
-TEST(interval, OpenIntervalF32) {
+TEST(Interval, OpenIntervalF32) {
   using type = OpenInterval<f32>;
 
   auto val = type();
@@ -556,7 +556,7 @@ TEST(interval, OpenIntervalF32) {
 
 // Operators ................................................................................................
 
-TEST(interval, intersection) {
+TEST(Interval, intersection) {
   {
     using type = ClosedInterval<i32>;
     EXPECT_EQ(type() & type(), type());
@@ -575,7 +575,7 @@ TEST(interval, intersection) {
   }
 }
 
-TEST(interval, union) {
+TEST(Interval, union) {
   {
     using type = ClosedInterval<i32>;
     EXPECT_EQ(type() | type(), type());
@@ -596,7 +596,7 @@ TEST(interval, union) {
 
 // Format ...................................................................................................
 
-TEST(interval, ClosedIntervalFormat) {
+TEST(Interval, ClosedIntervalFormat) {
   using type = ClosedInterval<i32>;
 
   EXPECT_EQ(fmt::format("{}", type()), "∅");
@@ -607,20 +607,19 @@ TEST(interval, ClosedIntervalFormat) {
   EXPECT_EQ(fmt::format("{}", type(1, 2)), "[1,2]");
 }
 
-TEST(interval, RightOpenIntervalI32Format) {
+TEST(Interval, RightOpenIntervalI32Format) {
   using type = RightOpenInterval<i32>;
 
   EXPECT_EQ(fmt::format("{}", type()), "∅");
   EXPECT_EQ(fmt::format("{}", type(1, 1)), "∅");
   EXPECT_EQ(fmt::format("{}", type(1, 2)), "[1,2)");
   EXPECT_EQ(fmt::format("{}", type(1'000, 2'000)), "[1000,2000)");
-  EXPECT_EQ(fmt::format("{:~>6d}", type(1'000, 2'000)), "[~~1000,~~2000)");
   EXPECT_EQ(fmt::format("{}", type(5, nullopt)), "[5,∞)");
 
   EXPECT_EQ(fmt::format(U"{}", type(1'000, 2'000)), U"[1000,2000)");
 }
 
-TEST(interval, RightOpenIntervalF64Format) {
+TEST(Interval, RightOpenIntervalF64Format) {
   using type = RightOpenInterval<f64>;
 
   EXPECT_EQ(fmt::format("{}", type()), "∅");

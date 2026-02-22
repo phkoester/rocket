@@ -65,7 +65,7 @@ AddTest(test-rocket-format-std                   rocket/format          test-std
 AddTest(test-rocket-hash                         rocket/hash            test-hash.cc)
 AddTest(test-rocket-log                          rocket/log             test-log.cc)
 AddTest(test-rocket-math                         rocket/math            test-math.cc)
-AddTest(test-rocket-math-interval                rocket/math            test-interval.cc)
+AddTest(test-rocket-math-interval                rocket/math            test-Interval.cc)
 AddTest(test-rocket-nio                          rocket/nio             test-nio.cc)
 AddTest(test-rocket-reflect                      rocket/reflect         test-reflect.cc)
 AddTest(test-rocket-str                          rocket/str             test-str.cc)

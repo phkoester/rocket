@@ -1,19 +1,15 @@
 /**
- * @file interval.h
+ * @file Interval.h
  *
- * Mathematical intervals.
+ * Mathematical intervals: closed, open, left-open, and right-open.
  */
 
 #pragma once
 
-#include "rocket/std.h"
 #include "rocket/type-traits.h"
-
-#include <fmt/format.h>
 
 #include <algorithm>
 #include <optional>
-#include <ostream>
 #include <type_traits>
 
 namespace rocket::math {
@@ -387,7 +383,7 @@ unionImpl(
 
 } // namespace internal
 
-// #IntervalImpl --------------------------------------------------------------------------------------------
+// #Interval ------------------------------------------------------------------------------------------------
 
 /**
  * A mathematical interval for either integer or noninteger types.
@@ -396,7 +392,7 @@ unionImpl(
  * @tparam Right the type of the upper-bound traits
  */
 template<typename Left, typename Right>
-struct IntervalImpl {
+struct Interval {
   static_assert(std::is_same_v<typename Left::Type, typename Right::Type>);
   /// The element type.
   using Type = typename Left::Type;
@@ -437,7 +433,7 @@ struct IntervalImpl {
    *
    * Makes an empty interval.
    */
-  constexpr IntervalImpl() : a(static_cast<Type>(1)), b(static_cast<Type>(0)) {}
+  constexpr Interval() : a(static_cast<Type>(1)), b(static_cast<Type>(0)) {}
 
   /**
    * @ctor
@@ -449,19 +445,7 @@ struct IntervalImpl {
    * @param a the lower bound. If null, then there is no lower bound
    * @param b the upper bound. If null, then there is no upper bound
    */
-  constexpr IntervalImpl(A a, B b) : a(a), b(b) {}
-
-  /// @member_op_eq
-  bool
-  operator==(const IntervalImpl& rhs) const {
-    if (empty() && rhs.empty()) {
-      return true;
-    }
-    return a == rhs.a && b == rhs.b;
-  }
-
-  /// @member_op_ne
-  bool operator!=(const IntervalImpl& rhs) const { return not operator==(rhs); }
+  constexpr Interval(A a, B b) : a(a), b(b) {}
 
   /**
    * Returns the cardinality of the interval.
@@ -513,6 +497,16 @@ struct IntervalImpl {
   [[nodiscard]] constexpr Traits::SizeType size() const { return Traits::size(a, b); }
 };
 
+/// @op_eq{#rocket::math::Interval}
+template<typename Left, typename Right>
+inline bool
+operator==(const Interval<Left, Right>& lhs, const Interval<Left, Right>& rhs) {
+  if (lhs.empty() && rhs.empty()) {
+    return true;
+  }
+  return lhs.a == rhs.a && lhs.b == rhs.b;
+}
+
 /**
  * Returns the intersection of the intervals @p lhs and @p rhs.
  *
@@ -520,18 +514,18 @@ struct IntervalImpl {
  * @tparam Right the type of the upper-bound traits
  * @param_lhs
  * @param_rhs
- * @return a #rocket::math::IntervalImpl representing the intersection of @p lhs and @p rhs if such
- *   intersection exists, otherwise an empty interval
+ * @return a #rocket::math::Interval representing the intersection of @p lhs and @p rhs if such intersection
+ *   exists, otherwise an empty interval
  */
 template<typename Left, typename Right>
-IntervalImpl<Left, Right>
-operator&(const IntervalImpl<Left, Right>& lhs, const IntervalImpl<Left, Right>& rhs) {
+Interval<Left, Right>
+operator&(const Interval<Left, Right>& lhs, const Interval<Left, Right>& rhs) {
   auto pair = internal::intersectionImpl<Left, Right>(lhs.a, lhs.b, rhs.a, rhs.b);
-  return IntervalImpl<Left, Right>(pair.first, pair.second);
+  return Interval<Left, Right>(pair.first, pair.second);
 }
 
 /**
- * `operator&=` for type #rocket::math::IntervalImpl.
+ * `operator&=` for type #rocket::math::Interval.
  *
  * @tparam Left the type of the lower-bound traits
  * @tparam Right the type of the upper-bound traits
@@ -540,8 +534,8 @@ operator&(const IntervalImpl<Left, Right>& lhs, const IntervalImpl<Left, Right>&
  * @return @p lhs
  */
 template<typename Left, typename Right>
-inline IntervalImpl<Left, Right>&
-operator&=(const IntervalImpl<Left, Right>& lhs, const IntervalImpl<Left, Right>& rhs) {
+inline Interval<Left, Right>&
+operator&=(const Interval<Left, Right>& lhs, const Interval<Left, Right>& rhs) {
   return lhs = lhs & rhs;
 }
 
@@ -556,18 +550,18 @@ operator&=(const IntervalImpl<Left, Right>& lhs, const IntervalImpl<Left, Right>
  * @tparam Right the type of the upper-bound traits
  * @param_lhs
  * @param_rhs
- * @return a #rocket::math::IntervalImpl representing the union of @p lhs and @p rhs if such union exists,
+ * @return a #rocket::math::Interval representing the union of @p lhs and @p rhs if such union exists,
  *   otherwise an empty interval
  */
 template<typename Left, typename Right>
-IntervalImpl<Left, Right>
-operator|(const IntervalImpl<Left, Right>& lhs, const IntervalImpl<Left, Right>& rhs) {
+Interval<Left, Right>
+operator|(const Interval<Left, Right>& lhs, const Interval<Left, Right>& rhs) {
   auto pair = internal::unionImpl<Left, Right>(lhs.a, lhs.b, rhs.a, rhs.b);
-  return IntervalImpl<Left, Right>(pair.first, pair.second);
+  return Interval<Left, Right>(pair.first, pair.second);
 }
 
 /**
- * `operator|=` for type #rocket::math::IntervalImpl.
+ * `operator|=` for type #rocket::math::Interval.
  *
  * @tparam Left the type of the lower-bound traits
  * @tparam Right the type of the upper-bound traits
@@ -576,85 +570,9 @@ operator|(const IntervalImpl<Left, Right>& lhs, const IntervalImpl<Left, Right>&
  * @return @p lhs
  */
 template<typename Left, typename Right>
-inline IntervalImpl<Left, Right>&
-operator|=(const IntervalImpl<Left, Right>& lhs, const IntervalImpl<Left, Right>& rhs) {
+inline Interval<Left, Right>&
+operator|=(const Interval<Left, Right>& lhs, const Interval<Left, Right>& rhs) {
   return lhs = lhs | rhs;
-}
-
-} // namespace rocket::math
-
-// #fmt::formatter<#IntervalImpl> ---------------------------------------------------------------------------
-
-/**
- * @spec_fmt_formatter{#rocket::math::IntervalImpl}
- *
- * This formatter uses the same format specifiers as the underlying element formatter.
- */
-template<typename Left, typename Right, typename C>
-struct fmt::formatter<rocket::math::IntervalImpl<Left, Right>, C> {
-  /// @cond undocumented
-
-  static_assert(std::is_same_v<typename Left::Type, typename Right::Type>);
-  using Elem = rocket::Purge<typename Left::Type>;
-
-  template<typename FormatContext>
-  constexpr FormatContext::iterator
-  format(const rocket::math::IntervalImpl<Left, Right>& val, FormatContext& ctx) const {
-    using namespace rocket::math::internal;
-
-    auto out = ctx.out();
-    if (val.empty()) {
-      // Empty: Use a neat mathematical symbol
-
-      out = detail::write<C>(out, IntervalSymbols<C>::Empty);
-    } else {
-      // Nonempty
-
-      out = detail::write<C>(out, static_cast<C>(Left::Symbol));
-      auto opt = rocket::option(val.a);
-      if (not opt) {
-        out = detail::write<C>(out, IntervalSymbols<C>::NegativeInfinity);
-      } else {
-        ctx.advance_to(out);
-        out = underlying_.format(*opt, ctx);
-      }
-      out = detail::write<C>(out, static_cast<C>(','));
-      opt = rocket::option(val.b);
-      if (not opt) {
-        out = detail::write<C>(out, IntervalSymbols<C>::PositiveInfinity);
-      } else {
-        ctx.advance_to(out);
-        out = underlying_.format(*opt, ctx);
-      }
-      out = detail::write<C>(out, static_cast<C>(Right::Symbol));
-    }
-    return out;
-  }
-
-  constexpr const C*
-  parse(parse_context<C>& ctx) {
-    return underlying_.parse(ctx);
-  }
-
-  constexpr void
-  set_debug_format(bool val = true) {
-    detail::maybe_set_debug_format(underlying_, val);
-  }
-
-  /// @endcond
-
-private:
-
-  fmt::formatter<Elem, C> underlying_;
-};
-
-namespace rocket::math {
-
-// @op_output{#rocket::math::IntervalImpl}
-template<typename Left, typename Right>
-std::ostream&
-operator<<(std::ostream& os, const IntervalImpl<Left, Right>& val) {
-  return os << fmt::format("{}", val);
 }
 
 // Interval types -------------------------------------------------------------------------------------------
@@ -665,7 +583,7 @@ operator<<(std::ostream& os, const IntervalImpl<Left, Right>& val) {
  * @tparam T the element type
  */
 template<typename T>
-using ClosedInterval = IntervalImpl<internal::LeftClosed<T>, internal::RightClosed<T>>;
+using ClosedInterval = Interval<internal::LeftClosed<T>, internal::RightClosed<T>>;
 
 /**
  * An open interval @f$(a,b)@f$ contains all elements @f$x@f$ such that @f$a < x < b@f$.
@@ -673,7 +591,7 @@ using ClosedInterval = IntervalImpl<internal::LeftClosed<T>, internal::RightClos
  * @tparam T the element type
  */
 template<typename T>
-using OpenInterval = IntervalImpl<internal::LeftOpen<T>, internal::RightOpen<T>>;
+using OpenInterval = Interval<internal::LeftOpen<T>, internal::RightOpen<T>>;
 
 /**
  * A left-open interval @f$(a,b]@f$ contains all elements @f$x@f$ such that @f$a < x <= b@f$.
@@ -681,7 +599,7 @@ using OpenInterval = IntervalImpl<internal::LeftOpen<T>, internal::RightOpen<T>>
  * @tparam T the element type
  */
 template<typename T>
-using LeftOpenInterval = IntervalImpl<internal::LeftOpen<T>, internal::RightClosed<T>>;
+using LeftOpenInterval = Interval<internal::LeftOpen<T>, internal::RightClosed<T>>;
 
 /**
  * A right-open interval @f$[a,b)@f$ contains all elements @f$x@f$ such that @f$a <= x < b@f$.
@@ -689,7 +607,7 @@ using LeftOpenInterval = IntervalImpl<internal::LeftOpen<T>, internal::RightClos
  * @tparam T the element type
  */
 template<typename T>
-using RightOpenInterval = IntervalImpl<internal::LeftClosed<T>, internal::RightOpen<T>>;
+using RightOpenInterval = Interval<internal::LeftClosed<T>, internal::RightOpen<T>>;
 
 } // namespace rocket::math
 

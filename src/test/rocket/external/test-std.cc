@@ -21,15 +21,15 @@ TEST(std, f32OpCmp) {
   using limits = numeric_limits<type>;
   constexpr auto nan = limits::quiet_NaN();
 
-  static_assert(std::is_lt(-limits::infinity() <=> 0.0f));
-  static_assert(std::is_lt(0.0f <=> limits::infinity()));
-  static_assert(std::is_lteq(0.0f <=> 0.0f));
-  static_assert(std::is_gteq(0.0f <=> 0.0f));
-  static_assert(std::is_lt(1.0f <=> 2.0f));
-  static_assert(std::is_eq(1.0f <=> 1.0f));
-  static_assert(std::is_gt(2.0f <=> 1.0f));
-  static_assert((nan <=> 0.0f) == std::partial_ordering::unordered);
-  static_assert((0.0f <=> nan) == std::partial_ordering::unordered);
+  static_assert(std::is_lt(-limits::infinity() <=> 0.0F));
+  static_assert(std::is_lt(0.0F <=> limits::infinity()));
+  static_assert(std::is_lteq(0.0F <=> 0.0F));
+  static_assert(std::is_gteq(0.0F <=> 0.0F));
+  static_assert(std::is_lt(1.0F <=> 2.0f));
+  static_assert(std::is_eq(1.0F <=> 1.0F));
+  static_assert(std::is_gt(2.0F <=> 1.0F));
+  static_assert((nan <=> 0.0F) == std::partial_ordering::unordered);
+  static_assert((0.0F <=> nan) == std::partial_ordering::unordered);
   static_assert((nan <=> nan) == std::partial_ordering::unordered);
 }
 
@@ -42,15 +42,15 @@ TEST(std, rethrowException) {
       cout << "throwing nested\n";
       throw_with_nested(runtime_error("oopsers"));
     } catch (const runtime_error& ex) {
-      cout << "caught runtime error: " << ex.what() << endl;
+      cout << "caught runtime error: " << ex.what() << endl; // NOLINT
       try {
-        cout << "rethrowing nested" << endl;
+        cout << "rethrowing nested" << endl; // NOLINT
         // Segfaults
         rethrow_exception(current_exception());
       } catch (const runtime_error& ex) {
-        cout << "caught runtime error: " << ex.what() << endl;
+        cout << "caught runtime error: " << ex.what() << endl; // NOLINT
       } catch (...) {
-        cout << "caught ..." << endl;
+        cout << "caught ..." << endl; // NOLINT
       }
     }
   }

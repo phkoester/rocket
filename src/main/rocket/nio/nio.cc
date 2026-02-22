@@ -134,8 +134,8 @@ BufferedSink::write(std::span<const u8> in) {
 // #FileSink ------------------------------------------------------------------------------------------------
 
 FileSink::FileSink(FILE* file, const Config& config) :
-    file_(file),
-    config_(config) {
+  file_(file),
+  config_(config) {
   ROCKET_CHECK(file, file != nullptr);
   status_.bad = false;
   if (file == stdout || file == stderr) {
@@ -144,8 +144,7 @@ FileSink::FileSink(FILE* file, const Config& config) :
 }
 
 FileSink::FileSink(const string& path, const Config& config) :
-    file_(nullptr),
-    config_(config) {
+  config_(config) {
   const char* modes = config.append ? "ab" : "wb";
 #ifdef ROCKET_OS_WINDOWS
   [[maybe_unused]] const auto result = fopen_s(&file_, path.c_str(), modes);
@@ -386,7 +385,7 @@ Source::readString() {
   while (true) {
     const u64 n = read(out);
     if (n > 0) {
-      string_view view(reinterpret_cast<const char*>(out.data()), n);
+      const string_view view(reinterpret_cast<const char*>(out.data()), n);
       ret.append(view.data(), n);
     }
     if (n != out.size()) {

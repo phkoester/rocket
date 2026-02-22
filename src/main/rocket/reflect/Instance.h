@@ -15,6 +15,11 @@ namespace rocket::reflect {
 /**
  * A #rocket::reflect::Instance is an instance together with specified member references.
  *
+ * Internally, it holds a pointer to the instance. Therefore, the instance must remain valid for the lifetime
+ * of the #rocket::reflect::Instance.
+ *
+ * This class has no default constructor, and cannot be decoded.
+ *
  * @tparam T the type of the instance
  * @tparam Inner the inner type of @p T that holds the member references
  */
@@ -56,8 +61,8 @@ struct Instance {
 
 private:
 
-  /// A pointer to the instance.
-  T* ptr_;
+  /// A pointer to the instance, if not managed.
+  T* ptr_ = nullptr;
 };
 
 } // namespace rocket::reflect

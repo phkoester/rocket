@@ -269,6 +269,7 @@ struct fmt::formatter<rocket::unicode::CodePoint, C> {
   template<typename FormatContext>
   constexpr FormatContext::iterator
   format(const rocket::unicode::CodePoint& val, FormatContext& ctx) const {
+    // This is simple enough that we don't need a #FormattedCodec for it
     if (val.valid()) {
       if constexpr (std::is_same_v<C, char>) {
         return underlying_.format(fmt::format("U+{:0>4X}", static_cast<u32>(val)), ctx);

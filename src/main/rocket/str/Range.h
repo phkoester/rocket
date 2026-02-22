@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include "rocket/math/interval.h"
+#include "rocket/math/Interval.h"
 
 #include <vector>
 

@@ -110,7 +110,8 @@ target_sources(rocket
       rocket/hash/hash.h
       rocket/io/io.h
       rocket/log/log.h
-      rocket/math/interval.h
+      rocket/math/Interval.h
+      rocket/math/Interval-codec.h
       rocket/math/math.h
       rocket/math/random/random.h
       rocket/nio/nio.h

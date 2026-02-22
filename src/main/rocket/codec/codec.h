@@ -11,10 +11,12 @@
 #pragma once
 
 #include "rocket/type-traits.h"
+#include "rocket/math/Interval.h"
 #include "rocket/reflect/Declared.h"
 #include "rocket/reflect/Instance.h"
 #include "rocket/reflect/MemberRef.h"
 #include "rocket/reflect/VarRef.h"
+#include "rocket/unicode/unicode.h"
 
 #include <boost/bimap/bimap.hpp>
 
@@ -82,6 +84,13 @@ enum class DataType : u8 {
   Map,
   /// Bimaps.
   Bimap,
+
+  // Rocket basic types .....................................................................................
+
+  /// Code points.
+  CodePoint,
+  /// Intervals.
+  Interval,
 
   // Rocket reflection ......................................................................................
 
@@ -233,6 +242,18 @@ struct DataTypes<boost::bimaps::bimap<A, B>> {
   static constexpr auto Value = DataType::Bimap; ///< The data type.
 };
 
+/// @spec{#rocket::codec::DataTypes, #rocket::unicode::CodePoint}
+template<>
+struct DataTypes<rocket::unicode::CodePoint> {
+  static constexpr auto Value = DataType::CodePoint; ///< The data type.
+};
+
+/// @spec{#rocket::codec::DataTypes, #rocket::math::Interval}
+template<typename Left, typename Right>
+struct DataTypes<rocket::math::Interval<Left, Right>> {
+  static constexpr auto Value = DataType::Interval; ///< The data type.
+};
+
 /// @spec{#rocket::codec::DataTypes, #rocket::reflect::Declared}
 template< typename T> requires rocket::reflect::Declared<T>::value
 struct DataTypes<T> {
@@ -276,11 +297,11 @@ struct Encoder {
    * @return whatever the consumer returns
    */
   template<typename T, typename... Args>
-  auto
+  auto // NOLINT
   encode(const T& val, Args&&... args) const {
     constexpr auto Value = DataTypes<T>::Value;
     using ConsumerType = Consumer::template Type<Value, T>;
-    ConsumerType consumer;
+    ConsumerType consumer; // NOLINT
     return consumer.consume(val, std::forward<Args>(args)...);
   }
 };
@@ -307,8 +328,8 @@ struct Decoder {
   decode(Args&&... args) const {
     constexpr auto Value = DataTypes<T>::Value;
     using ProducerType = Producer::template Type<Value, T>;
-    ProducerType producer;
-    T val;
+    ProducerType producer; // NOLINT
+    T val = {};
     producer.produce(val, std::forward<Args>(args)...);
     return val;
   }

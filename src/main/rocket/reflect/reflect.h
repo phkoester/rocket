@@ -243,7 +243,7 @@ struct fmt::formatter<T, C> {
       // GCC 13.3 needs `fmt::detail` here
       out = fmt::detail::write<C>(out, rocket::unicode::ConvertTo<C>::apply(typeName));
     }
-    rocket::codec::FormattedCodec codec;
+    const rocket::codec::FormattedCodec codec;
     rocket::nio::StringSink sink;
     codec.encode(val, sink, { .indent=indent_ });
     // GCC 13.3 needs `fmt::detail` here

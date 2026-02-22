@@ -12,7 +12,7 @@
 
 // #TEST ----------------------------------------------------------------------------------------------------
 
-TEST(Exception, WrappedExceptionFormat) {
+TEST(Exception, WrappedExceptionFormat) { // NOLINT(*-complexity)
   try  {
     ROCKET_FAIL("oops1");
   } catch (const exception& ex1) {
