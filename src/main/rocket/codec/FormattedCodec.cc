@@ -82,9 +82,8 @@ findUnescaped(std::string_view str, char c) {
     }
     if (pos == 0 || str[pos - 1] != '\\') {
       return pos;
-    } else {
-      ++pos;
     }
+    ++pos;
   }
 }
 

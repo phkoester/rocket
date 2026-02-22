@@ -356,12 +356,12 @@ struct Option {
    */
   static Option
   version(const OptionGroup* group, std::optional<bool>& out) {
-    OptionConfig config {
+    const OptionConfig config {
       .description="display version information and exit",
       .group=group,
       .name="version"
     };
-    Apply apply = [&](std::string_view val) { return internal::applyTo(out, val); };
+    const Apply apply = [&](std::string_view val) { return internal::applyTo(out, val); };
     return of(OptionType::Version, config, apply);
   }
 
@@ -388,7 +388,7 @@ struct ParameterConfig {
   /**
    * A set of allowed values.
    */
-  std::optional<std::set<std::string>> choices = {};
+  std::optional<std::set<std::string>> choices = {}; // NOLINT
   /**
    * Whether options shall be consumed as positional arguments after this parameter.
    *

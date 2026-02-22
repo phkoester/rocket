@@ -342,7 +342,7 @@ StringSink::write(std::span<const u8> in) {
     return 0;
   }
 
-  std::string_view view(reinterpret_cast<const char*>(in.data()), in.size());
+  const std::string_view view(reinterpret_cast<const char*>(in.data()), in.size());
   if (ptr_ != nullptr) {
     ptr_->append(view);
   } else {
@@ -625,7 +625,7 @@ FileSource::FileSource(const string& path, const Config& config) :
   [[maybe_unused]] const auto result = fopen_s(&file_, path.c_str(), "rb");
   LOG("fopen_s=" << result << ", file=" << file_ << ", ferror=" << (file_ ? ferror(file_) : -1));
 #else
-  file_ = fopen(path.c_str(), "rb"); // NOLINT(*-owning-memory)
+  file_ = fopen(path.c_str(), "rb"); // NOLINT
   LOG("fopen=" << file_ << ", ferror=" << (file_ ? ferror(file_) : -1));
 #endif
 

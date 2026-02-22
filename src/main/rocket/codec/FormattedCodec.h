@@ -15,6 +15,8 @@
 
 #include <scn/scan.h>
 
+#include <boost/safe_numerics/safe_integer.hpp>
+
 namespace rocket::codec {
 
 // #FormattedConsumerConfig ---------------------------------------------------------------------------------
@@ -363,6 +365,8 @@ template<typename C>
 struct FormattedProducerImpl<DataType::Char, C> {
   void
   produce(C& val, nio::StringSource& in, CONFIG__) const {
+    using boost::safe_numerics::safe;
+
     skip(in, config);
     const auto pos = in.tell();
 
@@ -375,11 +379,11 @@ struct FormattedProducerImpl<DataType::Char, C> {
     if (closing == NPOS) {
       throw InputFailure(pos, "Unterminated character literal");
     }
-    in.seek(closing + 1, nio::SeekMode::cur);
+    in.seek(safe<i64>(closing + 1), nio::SeekMode::cur);
 
-    std::string_view input = available.substr(0, closing);
-    std::string unescaped = str::escape::unescapeCString(input);
-    std::basic_string<C> str(unicode::ConvertTo<C>::apply(unescaped));
+    const std::string_view input = available.substr(0, closing);
+    const std::string unescaped = str::escape::unescapeCString(input);
+    const std::basic_string<C> str(unicode::ConvertTo<C>::apply(unescaped));
     if (str.size() != 1) {
       throw InputFailure(pos, "Invalid character literal");
     }
@@ -404,9 +408,8 @@ struct FormattedProducerImpl<DataType::Enum, E> {
         in.seek(result->begin() - available.begin(), nio::SeekMode::cur);
         val = result->value();
         return;
-      } else {
-        throw InputFailure(pos, fmt::format("Invalid value for enumeration `{}`", typeid(E)));
       }
+      throw InputFailure(pos, fmt::format("Invalid value for enumeration `{}`", typeid(E)));
     } else {
       Underlying underlying;
       FormattedProducerImpl<UnderlyingDataType, Underlying>().produce(underlying, in, config);
@@ -482,6 +485,8 @@ template<typename T>
 struct FormattedProducerImpl<DataType::String, T> {
   void
   produce(T& val, nio::StringSource& in, CONFIG__) const {
+    using boost::safe_numerics::safe;
+
     skip(in, config);
     const auto pos = in.tell();
 
@@ -494,10 +499,10 @@ struct FormattedProducerImpl<DataType::String, T> {
     if (closing == NPOS) {
       throw InputFailure(pos, "Unterminated string literal");
     }
-    in.seek(closing + 1, nio::SeekMode::cur);
+    in.seek(safe<i64>(closing + 1), nio::SeekMode::cur);
 
-    std::string_view input = available.substr(0, closing);
-    std::string unescaped = str::escape::unescapeCString(input);
+    const std::string_view input = available.substr(0, closing);
+    const std::string unescaped = str::escape::unescapeCString(input);
     using C = T::value_type;
     std::basic_string<C> str(unicode::ConvertTo<C>::apply(unescaped));
     if constexpr (std::is_same_v<T, std::basic_string_view<C>>) {

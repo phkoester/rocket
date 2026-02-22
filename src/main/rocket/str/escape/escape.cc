@@ -224,7 +224,7 @@ namespace rocket::str::escape {
 
 string
 escapeCString(string_view input, const CStringConfig& config, Result* result) {
-  ROCKET_CHECK(config, config.quote == '\0' || config.quote == '"' || config.quote == '\''); // NOLINT
+  ROCKET_CHECK(config, config.quote == '\0' || config.quote == '"' || config.quote == '\'');
 
   string ret;
   if (result != nullptr) {
@@ -296,7 +296,7 @@ escapeCString(string_view input, const CStringConfig& config, Result* result) {
 
 string
 unescapeCString(string_view input, const CStringConfig& config, Result* result) { // NOLINT(*-complexity)
-  ROCKET_CHECK(config, config.quote == '\0' || config.quote == '"' || config.quote == '\''); // NOLINT
+  ROCKET_CHECK(config, config.quote == '\0' || config.quote == '"' || config.quote == '\'');
 
   string ret;
 

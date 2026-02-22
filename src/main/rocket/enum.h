@@ -96,26 +96,26 @@
   rocket::Enum<ns::type>::toType(::std::string_view str, bool strict) { \
     if (strict) { \
       /* Strict */ \
-      auto it = ns::get##name##Map__().right.find(str); \
+      const auto it = ns::get##name##Map__().right.find(str); \
       if (it == ns::get##name##Map__().right.end()) { \
         throw ::rocket::InvalidState(::rocket::str::message::cannotScanAs(str, typeid(ns::type))); \
       } \
       return { it->first.size(), it->second }; \
-    } else { \
-      /* Relaxed */ \
-      u64 maxValueSize = 0; \
-      ns::type maxKey; \
-      for (const auto& [key, value] : ns::get##name##Map__().left) { \
-        if (str.starts_with(value) && value.size() > maxValueSize) { \
-          maxValueSize = value.size(); \
-          maxKey = key; \
-        } \
-      } \
-      if (maxValueSize > 0) { \
-        return { maxValueSize, maxKey }; \
-      } \
-      throw ::rocket::InvalidState(::rocket::str::message::cannotScanAs(str, typeid(ns::type))); \
     } \
+    \
+    /* Relaxed */ \
+    u64 maxValueSize = 0; \
+    ns::type maxKey; \
+    for (const auto& [key, value] : ns::get##name##Map__().left) { \
+      if (str.starts_with(value) && value.size() > maxValueSize) { \
+        maxValueSize = value.size(); \
+        maxKey = key; \
+      } \
+    } \
+    if (maxValueSize > 0) { \
+      return { maxValueSize, maxKey }; \
+    } \
+    throw ::rocket::InvalidState(::rocket::str::message::cannotScanAs(str, typeid(ns::type))); \
   }
 
 #define ROCKET_ENUM_DEFINE_MAP_ELEM__(r, data, elem) { data::elem, BOOST_PP_STRINGIZE(elem) },
