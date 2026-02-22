@@ -105,7 +105,7 @@ protected:
    *
    * Derived classes must set the #bad bit to `false` to mark the instance as usable.
    */
-  Status status_ = { .bad=true, .eof=false }; // NOLINT
+  Status status_ = { .bad=true, .eof=false };
 
   /// @ctor_default
   Io() = default;

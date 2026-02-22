@@ -6,6 +6,10 @@
 
 #include "rocket/unicode/unicode.h"
 
+#include <boost/safe_numerics/safe_integer.hpp>
+
+using boost::safe_numerics::safe;
+
 using namespace std;
 
 namespace rocket::codec::internal {
@@ -102,7 +106,7 @@ read(nio::StringSource& in, const std::set<std::string_view>& values, bool ignor
       // Case-sensitive
 
       if (available.starts_with(value)) {
-        in.seek(value.size(), nio::SeekMode::cur);
+        in.seek(safe<i64>(value.size()), nio::SeekMode::cur);
         return value;
       }
     } else {
@@ -115,7 +119,7 @@ read(nio::StringSource& in, const std::set<std::string_view>& values, bool ignor
       transform(rhs.begin(), rhs.end(), rhs.begin(), [](char c) { return tolower(c); });
 
       if (lhs == rhs) {
-        in.seek(value.size(), nio::SeekMode::cur);
+        in.seek(safe<i64>(value.size()), nio::SeekMode::cur);
         return value;
       }
     }
@@ -124,7 +128,7 @@ read(nio::StringSource& in, const std::set<std::string_view>& values, bool ignor
 }
 
 void
-skip(nio::StringSource& in, const FormattedProducerConfig& config) {
+skip(nio::StringSource& in, const FormattedProducerConfig& config) { // NOLINT
   const auto available = in.available();
   u64 pos = 0; // Position relative to current position of the source
   while (pos < available.size()) {
@@ -143,10 +147,8 @@ skip(nio::StringSource& in, const FormattedProducerConfig& config) {
         pos = available.size();
         break;
       }
-      else {
-        pos = lf + 1;
-        continue;
-      }
+      pos = lf + 1;
+      continue;
     }
 
     const string_view twoChars = available.substr(pos, 2);
@@ -158,10 +160,8 @@ skip(nio::StringSource& in, const FormattedProducerConfig& config) {
         pos = available.size();
         break;
       }
-      else {
-        pos = lf + 1;
-        continue;
-      }
+      pos = lf + 1;
+      continue;
     }
 
     // Skip C-style "/*" comments until "*/"
@@ -170,10 +170,8 @@ skip(nio::StringSource& in, const FormattedProducerConfig& config) {
       if (eoc == NPOS) {
         throw InputFailure(in.tell() + pos, "Unterminated C-style comment");
       }
-      else {
-        pos = eoc + 2;
-        continue;
-      }
+      pos = eoc + 2;
+      continue;
     }
 
     // Skip whitespace code points
@@ -188,7 +186,7 @@ skip(nio::StringSource& in, const FormattedProducerConfig& config) {
     break;
   }
   // Advance the source
-  in.seek(pos, nio::SeekMode::cur);
+  in.seek(safe<i64>(pos), nio::SeekMode::cur);
 }
 
 } // namespace rocket::codec::internal
