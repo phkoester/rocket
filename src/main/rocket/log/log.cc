@@ -436,7 +436,7 @@ applyLogOut(optional<string_view> val) {
 /// @ThreadSafe
 string
 formatExecTime(const TimePoint& t1, const TimePoint& t2) {
-  auto ns = std::chrono::duration_cast<std::chrono::nanoseconds>(t2 - t1).count();
+  const auto ns = std::chrono::duration_cast<std::chrono::nanoseconds>(t2 - t1).count();
   if (ns < 1'000) {
     // Display in nanoseconds
     return fmt::format("{} ns", ns);
@@ -447,18 +447,18 @@ formatExecTime(const TimePoint& t1, const TimePoint& t2) {
   }
   if (ns < 1'000'000'000) {
     // Display in milliseconds
-    auto µs = ns / 1'000;
+    const auto µs = ns / 1'000;
     return fmt::format("{}.{:0>3} ms", µs / 1'000, µs % 1'000);
   }
   // Display in seconds
-  auto ms = ns / 1'000'000;
+  const auto ms = ns / 1'000'000;
   return fmt::format("{}.{:0>3} s", ms / 1'000, ms % 1'000);
 }
 
 /// @NotThreadSafe
 string
 formatTimePoint(const TimePoint& tp) {
-  auto formatImpl = [](const auto& ctp) {
+  const auto formatImpl = [](const auto& ctp) { // ctp = cast time point
     // Note we're using #std::format here because #fmt::format doesn't support #chrono::zoned_time
     if (logFmt.useUtc) {
       return std::format("{:%FT%TZ} ", ctp);

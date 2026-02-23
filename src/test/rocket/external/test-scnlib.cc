@@ -167,32 +167,6 @@ TEST(scnlib, scanSet) {
   EXPECT_EQ(result->begin() - input.begin(), 9);
 }
 
-/// @todo Wait for a fix in scnlib
-TEST(scnlib, scanTimePoint) {
-  // This interferes somehow ...
-  // system::env::set("TZ", "America/Godthab");
-
-  using TimePoint = chrono::time_point<chrono::system_clock, chrono::nanoseconds>;
-  const TimePoint val1 = chrono::system_clock::now();
-  const string input = std::format("{:%Y-%m-%d %H:%M:%S}", val1); // "2026-01-27 05:51:13.396968455", 29 chars
-  const auto result = scn::scan<TimePoint>(input, "{:%Y-%m-%d %H:%M:%.S}");
-  ASSERT_TRUE(result);
-  auto val2 = result->value();
-  EXPECT_EQ(result->begin() - input.begin(), 29);
-
-  // The time zone of the scanned time point is unclear. The following adjustment seems to convert the
-  // time point to UTC
-  const auto* tz = std::chrono::current_zone();
-  const auto info = tz->get_info(val1);
-  val2 += info.offset;
-
-  // Cast to microseconds, because there might be a rounding issue
-  const auto val1Micros = chrono::time_point_cast<chrono::microseconds>(val1);
-  const auto val2Micros = chrono::time_point_cast<chrono::microseconds>(val2);
-
-  EXPECT_EQ(val2Micros, val1Micros);
-}
-
 TEST(scnlib, scanTuple) {
   using type = tuple<bool, int, double>;
 
@@ -215,6 +189,32 @@ TEST(scnlib, scanVector) {
   const auto val2 = result->value();
   EXPECT_EQ(val2, val1);
   EXPECT_EQ(result->begin() - input.begin(), 9);
+}
+
+// @todo Wait for a fix in scnlib
+TEST(scnlib, scanChronoTimePoint) {
+  // This interferes somehow ...
+  // system::env::set("TZ", "America/Godthab");
+
+  using TimePoint = chrono::time_point<chrono::system_clock, chrono::nanoseconds>;
+  const TimePoint val1 = chrono::system_clock::now();
+  const string input = std::format("{:%Y-%m-%d %H:%M:%S}", val1); // "2026-01-27 05:51:13.396968455", 29 chars
+  const auto result = scn::scan<TimePoint>(input, "{:%Y-%m-%d %H:%M:%.S}");
+  ASSERT_TRUE(result);
+  auto val2 = result->value();
+  EXPECT_EQ(result->begin() - input.begin(), 29);
+
+  // The time zone of the scanned time point is unclear. The following adjustment seems to convert the
+  // time point to UTC
+  const auto* tz = std::chrono::current_zone();
+  const auto info = tz->get_info(val1);
+  val2 += info.offset;
+
+  // Cast to microseconds, because there might be a rounding issue
+  const auto val1Micros = chrono::time_point_cast<chrono::microseconds>(val1);
+  const auto val2Micros = chrono::time_point_cast<chrono::microseconds>(val2);
+
+  EXPECT_EQ(val2Micros, val1Micros);
 }
 
 // EOF

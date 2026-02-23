@@ -4,6 +4,7 @@
 
 #include "rocket-test/rocket-test.h"
 
+#include <fmt/chrono.h>
 #include <fmt/format.h>
 #include <fmt/xchar.h>
 
@@ -125,6 +126,14 @@ TEST(fmt, charPtrFormat) {
 
 TEST(fmt, char32PtrFormat) {
   EXPECT_EQ(fmt::format(U"{}", U"hello"), U"hello");
+}
+
+TEST(fmt, chronoDuration) {
+  using namespace std::chrono;
+
+  EXPECT_EQ(fmt::format("{}", seconds(42)), "42s");
+  EXPECT_EQ(fmt::format("{}", microseconds(42)), "42µs");
+  EXPECT_EQ(fmt::format("{}", nanoseconds(42)), "42ns");
 }
 
 // EOF
