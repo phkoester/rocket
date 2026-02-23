@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include "rocket/Guard.h"
 #include "rocket/InputFailure.h"
 #include "rocket/std.h"
 #include "rocket/codec/codec.h"
@@ -26,6 +25,8 @@ namespace rocket::codec {
 struct FormattedConsumerConfig {
   /// Whether to indent the output and format a tree.
   bool indent = false;
+  /// The current level of indentation.
+  u64 level = 0;
 };
 
 // #FormattedProducerConfig ---------------------------------------------------------------------------------
@@ -43,16 +44,13 @@ namespace internal {
 // Utilities for encoding -----------------------------------------------------------------------------------
 
 // Takes care of indentation
-void beginContainer(nio::Sink& out, const FormattedConsumerConfig& config, char c);
+void beginContainer(nio::Sink& out, FormattedConsumerConfig& config, char c);
 
 // Takes care of indentation
-void endContainer(nio::Sink& out, const FormattedConsumerConfig& config, u64 size, char c);
+void endContainer(nio::Sink& out, FormattedConsumerConfig& config, u64 size, char c);
 
 // Takes care of indentation
 void nextElem(nio::Sink& out, const FormattedConsumerConfig& config, u64 index);
-
-// Resets the current level of indentation
-void resetLevel();
 
 // Utilities for decoding -----------------------------------------------------------------------------------
 
@@ -80,7 +78,7 @@ void skip(nio::StringSource& in, const FormattedProducerConfig& config);
 // #FormattedConsumerImpl -----------------------------------------------------------------------------------
 
 /// @cond undocumented
-#define CONFIG__ [[maybe_unused]] const FormattedConsumerConfig& config
+#define CONFIG__ [[maybe_unused]] FormattedConsumerConfig& config
 /// @endcond
 
 template<DataType DataType, typename T>
@@ -1058,7 +1056,6 @@ struct FormattedCodec : Codec<FormattedConsumer, FormattedProducer> {
   template<typename T>
   auto
   encode(const T& val, nio::Sink& out) const {
-    ROCKET_GUARD([&] { internal::resetLevel(); });
     return Base::encode(val, out, FormattedConsumerConfig());
   }
 
@@ -1074,8 +1071,9 @@ struct FormattedCodec : Codec<FormattedConsumer, FormattedProducer> {
   template<typename T>
   auto
   encode(const T& val, nio::Sink& out, const FormattedConsumerConfig& config) const {
-    ROCKET_GUARD([&] { internal::resetLevel(); });
-    return Base::encode(val, out, config);
+    FormattedConsumerConfig configCopy = config;
+    configCopy.level = 0;
+    return Base::encode(val, out, configCopy);
   }
 
   /**
