@@ -18,7 +18,7 @@ struct MyStruct {
   i32 ärger = 0;
   bool ökonom = false;
   string übermut;
-  vector<i32> vec = {};
+  vector<i32> vec = {}; // NOLINT
 
   ROCKET_REFLECT_MEMBERS(MyStruct, Index, (ärger)(ökonom)(übermut)(vec));
 
@@ -69,7 +69,7 @@ TEST(FormattedCodec, FormattedConsumerChar) {
 }
 
 TEST(FormattedCodec, FormattedConsumerEnum) {
-  enum Color { Red, Green, Blue };
+  enum Color : u8 { Red, Green, Blue };
   EXPECT_EQ(encode(Blue), "2");
   EXPECT_EQ(encode(log::LogLevel::info), "info");
 }
@@ -101,7 +101,7 @@ TEST(FormattedCodec, FormattedConsumerString) {
 TEST(FormattedCodec, FormattedConsumerOptional) {
   using type = optional<string>;
 
-  type val;
+  const type val;
   EXPECT_EQ(encode(val), "<none>");
   EXPECT_EQ(encode<type>("Hello"), "\"Hello\"");
 }

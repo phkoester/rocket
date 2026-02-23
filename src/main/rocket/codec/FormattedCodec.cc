@@ -127,7 +127,7 @@ read(nio::StringSource& in, const std::set<std::string_view>& values, bool ignor
 }
 
 void
-skip(nio::StringSource& in, const FormattedProducerConfig& config) { // NOLINT
+skip(nio::StringSource& in, const FormattedProducerConfig& config) { // NOLINT(*-complexity)
   const auto available = in.available();
   u64 pos = 0; // Position relative to current position of the source
   while (pos < available.size()) {

@@ -21,7 +21,7 @@ ROCKET_LOG_DEFINE(toy);
 
 // #Color ---------------------------------------------------------------------------------------------------
 
-enum class Color { Red, Green, Blue };
+enum class Color : u8 { Red, Green, Blue };
 
 ROCKET_ENUM_DECLARE(, Color, Color);
 ROCKET_ENUM_DEFINE(, Color, Color, (Red)(Green)(Blue));

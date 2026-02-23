@@ -63,8 +63,8 @@ TEST(HashEncoder, SetOrdered) {
 
   for (u64 i = 0; i < N; ++i) {
     ranges::shuffle(vec, gen);
-    set<u64> set(vec.begin(), vec.end());
-    u64 hash = encoder.encode(set);
+    const set<u64> set(vec.begin(), vec.end());
+    const u64 hash = encoder.encode(set);
     hashes.insert(hash);
   }
 
@@ -84,8 +84,8 @@ TEST(HashEncoder, SetUnordered) {
 
   for (u64 i = 0; i < N; ++i) {
     ranges::shuffle(vec, gen);
-    unordered_set<u64> set(vec.begin(), vec.end());
-    u64 hash = encoder.encode(set);
+    const unordered_set<u64> set(vec.begin(), vec.end());
+    const u64 hash = encoder.encode(set);
     hashes.insert(hash);
   }
 
@@ -109,7 +109,7 @@ TEST(HashEncoder, MapOrdered) {
     for (const auto& elem : vec) {
       map.emplace(elem, fmt::format("{}", elem));
     }
-    u64 hash = encoder.encode(map);
+    const u64 hash = encoder.encode(map);
     hashes.insert(hash);
   }
 
@@ -133,7 +133,7 @@ TEST(HashEncoder, MapUnordered) {
     for (const auto& elem : vec) {
       map.emplace(elem, fmt::format("{}", elem));
     }
-    u64 hash = encoder.encode(map);
+    const u64 hash = encoder.encode(map);
     hashes.insert(hash);
   }
 
@@ -157,7 +157,7 @@ TEST(HashEncoder, BimapOrdered) {
     for (const auto& elem : vec) {
       map.left.insert({ elem, fmt::format("{}", elem) });
     }
-    u64 hash = encoder.encode(map);
+    const u64 hash = encoder.encode(map);
     hashes.insert(hash);
   }
 
@@ -181,7 +181,7 @@ TEST(HashEncoder, BimapUnordered) {
     for (const auto& elem : vec) {
       map.left.insert({ elem, fmt::format("{}", elem) });
     }
-    u64 hash = encoder.encode(map);
+    const u64 hash = encoder.encode(map);
     hashes.insert(hash);
   }
 

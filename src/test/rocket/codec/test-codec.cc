@@ -329,7 +329,7 @@ struct TracingProducer {
 TEST(codec, TracingConsumerBool) {
   const Encoder<TracingConsumer> encoder;
   nio::StringSink out;
-  auto result = encoder.encode(true, out);
+  [[maybe_unused]] auto result = encoder.encode(true, out);
   static_assert(is_same_v<decltype(result), u64>);
   encoder.encode(false, out);
   EXPECT_EQ(out.str(),
@@ -424,7 +424,7 @@ TEST(codec, TracingConsumerListVector) {
 TEST(codec, TracingConsumerDeclared) {
   const Encoder<TracingConsumer> encoder;
   nio::StringSink out;
-  MyStruct val { 42, true, "hello", { 1, 2, 3 } };
+  const MyStruct val { 42, true, "hello", { 1, 2, 3 } };
   encoder.encode(val, out);
   EXPECT_EQ(out.str(),
     "consuming declared\n"
@@ -449,8 +449,8 @@ TEST(codec, TracingConsumerDeclared) {
 TEST(codec, TracingConsumerInstance) {
   const Encoder<TracingConsumer> encoder;
   nio::StringSink out;
-  MyStruct my { 42, true, "hello", { 1, 2, 3 } };
-  auto val = reflect::Instance<MyStruct, MyStruct::Three>(my);
+  const MyStruct my { 42, true, "hello", { 1, 2, 3 } };
+  const auto val = reflect::Instance<MyStruct, MyStruct::Three>(my);
   encoder.encode(val, out);
   EXPECT_EQ(out.str(),
     "consuming instance\n"
@@ -469,9 +469,9 @@ TEST(codec, TracingConsumerInstance) {
 TEST(codec, TracingConsumerVarRef) {
   const Encoder<TracingConsumer> encoder;
   nio::StringSink out;
-  i32 a = 42;
-  bool b = true;
-  string c = "hello";
+  const i32 a = 42;
+  const bool b = true;
+  const string c = "hello";
   auto vars = ROCKET_REFLECT_VARS((a)(b)(c));
   encoder.encode(vars, out);
   EXPECT_EQ(out.str(),

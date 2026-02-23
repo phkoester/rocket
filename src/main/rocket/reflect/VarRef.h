@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include <string_view>
+#include "rocket/type-traits.h"
 
 namespace rocket::reflect {
 
@@ -21,7 +21,7 @@ namespace rocket::reflect {
  */
 template<typename T>
 struct VarRef {
-  using ValueType = T; ///< @type_alias
+  using ValueType = Purge<T>; ///< @type_alias
 
   /**
    * @ctor
