@@ -35,8 +35,9 @@ enum class LogLevel : u8 {
 
 } // namespace rocket::log
 
-/// @enum_declare{#rocket::log::LogLevel}
+/// @cond undocumented
 ROCKET_ENUM_DECLARE(rocket::log, LogLevel, LogLevel);
+/// @endcond
 
 namespace rocket::log {
 

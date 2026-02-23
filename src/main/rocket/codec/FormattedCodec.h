@@ -1026,10 +1026,6 @@ struct FormattedProducer {
 /**
  * A codec for formatted string I/O.
  *
- * Decoding to list views and to forward lists is not supported. String views, however, are allowed. This is
- * made possible by storing intermediate strings in the source. Hence, decoded string views are valid for the
- * lifetime of the source.
- *
  * The encoder can serialize an arbirary C++ data structure to a formatted string. The result is a format
  * similar to JSON. Tuples are enclosed in parentheses. Lists are enclosed in square brackets. Sets and maps
  * are enclosed in curly braces. If a configuration is provided, the output may be indented and formatted as
@@ -1040,6 +1036,10 @@ struct FormattedProducer {
  * the decoder can skip single-line C-style comments starting with <code>//</code>, multi-line C-style
  * comments starting with <code>/</code><code>*</code>, and single-line shell-style comments starting with
  * <code>#</code>.
+ *
+ * Decoding to list views and to forward lists is not supported. String views, however, are allowed. This is
+ * made possible by storing intermediate strings in the source. Hence, decoded string views are valid for the
+ * lifetime of the source.
  *
  * @see #rocket::codec::FormattedConsumerConfig
  * @see #rocket::codec::FormattedProducerConfig

@@ -17,11 +17,11 @@ namespace rocket::math {
 
 // Functions ------------------------------------------------------------------------------------------------
 
-// @op_output{#rocket::math::Interval}
+/// @op_output{#rocket::math::Interval}
 template<typename Left, typename Right>
 std::ostream&
-operator<<(std::ostream& os, const Interval<Left, Right>& val) {
-  return os << fmt::format("{}", val);
+operator<<(std::ostream& lhs, const Interval<Left, Right>& rhs) {
+  return lhs << fmt::format("{}", rhs);
 }
 
 } // namespace rocket::math

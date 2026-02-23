@@ -27,8 +27,9 @@ enum PositionType : u8 {
 
 } // namespace rocket::str::location
 
-/// @enum_declare{#rocket::str::location::PositionType}
+/// @cond undocumented
 ROCKET_ENUM_DECLARE(rocket::str::location, PositionType, PositionType);
+/// @endcond
 
 namespace rocket::str::location {
 
