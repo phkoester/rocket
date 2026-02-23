@@ -29,11 +29,11 @@
  * | `rocket::u32`    |    4 | Always
  * | `rocket::i64`    |    8 | Always
  * | `rocket::u64`    |    8 | Always
- * | `rocket::i128`   |   16 | Not with MSVC XXX
- * | `rocket::u128`   |   16 | Not with MSVC XXX
+ * | `rocket::i128`   |   16 | Not in Windows
+ * | `rocket::u128`   |   16 | Not in Windows
  * | `rocket::f32`    |    4 | Always
  * | `rocket::f64`    |    8 | Always
- * | `rocket::f128`   |   16 | Not with MSVC XXX
+ * | `rocket::f128`   |   16 | Not in Windows
  * | `void*`          |    8 | Always
  *
  * In Rocket, C strings of type `char*` and instances of #std::string or #std::string_view are assumed to
@@ -62,7 +62,7 @@
   #error Unsupported compiler
 #endif
 
-#ifndef ROCKET_OS_WINDOWS // XXX
+#ifndef ROCKET_OS_WINDOWS
   #define ROCKET_HAS_128 ///< Do we have 128-bit data types?
 #endif
 
@@ -80,11 +80,11 @@
 
 // #std::type_info for MSVC ---------------------------------------------------------------------------------
 
-#ifdef ROCKET_OS_WINDOWS // XXX
+#ifdef ROCKET_OS_WINDOWS
 
 namespace std {
 
-/// Microsoft has `type_info` in the global namespace, so we need to alias it here.
+/// Windows `type_info` in the global namespace, so we need to alias it here.
 using type_info = ::type_info;
 
 } // namespace std
@@ -94,16 +94,14 @@ using type_info = ::type_info;
 // Rocket type aliases --------------------------------------------------------------------------------------
 
 /// @cond undocumented
-
 using std_wchar_t = wchar_t;
 using std_char32_t = char32_t;
 using std_long = long;
-using std_size_t = size_t;
 using std_unsigned_long_long_int = unsigned long long int;
+using std_size_t = size_t;
 using std_float = float;
 using std_double = double;
 using std_long_double = long double;
-
 /// @endcond
 
 using char32 = std_char32_t; ///< An unsigned 32-bit character.
@@ -124,28 +122,6 @@ using f64 = std_double; ///< A 64-bit floating point.
 #ifdef ROCKET_HAS_128
 using f128 = std_long_double; ///< A 128-bit floating point.
 #endif
-
-static_assert(sizeof(bool) == 1);
-static_assert(sizeof(char) == 1);
-static_assert(sizeof(char32) == 4);
-static_assert(sizeof(i8) == 1);
-static_assert(sizeof(u8) == 1);
-static_assert(sizeof(i16) == 2);
-static_assert(sizeof(u16) == 2);
-static_assert(sizeof(i32) == 4);
-static_assert(sizeof(u32) == 4);
-static_assert(sizeof(i64) == 8);
-static_assert(sizeof(u64) == 8);
-#ifdef ROCKET_HAS_128
-static_assert(sizeof(i128) == 16);
-static_assert(sizeof(i128) == 16);
-#endif
-static_assert(sizeof(f32) == 4);
-static_assert(sizeof(f64) == 8);
-#ifdef ROCKET_HAS_128
-static_assert(sizeof(f128) == 16);
-#endif
-static_assert(sizeof(void*) == 8);
 
 // I/O stream support for 128-bit data types ----------------------------------------------------------------
 

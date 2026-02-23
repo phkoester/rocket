@@ -131,9 +131,16 @@ TEST(fmt, char32PtrFormat) {
 TEST(fmt, chronoDuration) {
   using namespace std::chrono;
 
-  EXPECT_EQ(fmt::format("{}", seconds(42)), "42s");
-  EXPECT_EQ(fmt::format("{}", microseconds(42)), "42µs");
-  EXPECT_EQ(fmt::format("{}", nanoseconds(42)), "42ns");
+  EXPECT_EQ(fmt::format("{}", nanoseconds(1)), "1ns");
+  EXPECT_EQ(fmt::format("{}", microseconds(1)), "1µs");
+  EXPECT_EQ(fmt::format("{}", milliseconds(1)), "1ms");
+  EXPECT_EQ(fmt::format("{}", seconds(1)), "1s");
+  EXPECT_EQ(fmt::format("{}", minutes(1)), "1min");
+  EXPECT_EQ(fmt::format("{}", hours(1)), "1h");
+  EXPECT_EQ(fmt::format("{}", days(1)), "1d");
+  EXPECT_EQ(fmt::format("{}", weeks(1)), "1[604800]s");
+  EXPECT_EQ(fmt::format("{}", months(1)), "1[2629746]s");
+  EXPECT_EQ(fmt::format("{}", years(1)), "1[31556952]s");
 }
 
 // EOF

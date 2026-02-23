@@ -383,7 +383,7 @@ CommandLine::parse(const vector<string>& args, nio::Sink& out, nio::Sink& err, b
 }
 
 void
-CommandLine::printHelp(nio::Sink& out, bool verbose, bool exit) { // XXX
+CommandLine::printHelp(nio::Sink& out, bool verbose, bool exit) {
   ROCKET_EXPECT(hasHelpOpt_);
 
   const auto size = system::terminal::size(out);
