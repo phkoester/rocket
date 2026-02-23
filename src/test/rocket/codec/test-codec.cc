@@ -194,7 +194,7 @@ struct TracingConsumerImpl<DataType::Instance, T> {
 
 template<typename T>
 struct TracingConsumerImpl<DataType::MemberRef, T> {
-  using Elem = typename T::ValueType;
+  using Elem = typename T::Type;
   static constexpr auto ElemDataType = DataTypes<Elem>::Value;
 
   template<typename C>
@@ -208,7 +208,7 @@ struct TracingConsumerImpl<DataType::MemberRef, T> {
 
 template<typename T>
 struct TracingConsumerImpl<DataType::VarRef, T> {
-  using Elem = typename T::ValueType;
+  using Elem = typename T::Type;
   static constexpr auto ElemDataType = DataTypes<Elem>::Value;
 
   u64

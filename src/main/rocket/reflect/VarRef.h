@@ -21,7 +21,7 @@ namespace rocket::reflect {
  */
 template<typename T>
 struct VarRef {
-  using ValueType = Purge<T>; ///< @type_alias
+  using Type = Purge<T>; ///< @type_alias
 
   /**
    * @ctor
@@ -29,21 +29,21 @@ struct VarRef {
    * @param name the name of the variable
    * @param ref the reference to the variable
    */
-  constexpr VarRef(const char* name, T& ref) : name_(name), ptr_(&ref) {}
+  constexpr VarRef(const char* name, T& ref) : name_(name), ptr_(const_cast<Type*>(&ref)) {}
 
   /**
    * Returns the value of the variable.
    *
    * @return the value of the variable
    */
-  [[nodiscard]] constexpr T& get() { return *ptr_; }
+  [[nodiscard]] constexpr Type& get() { return *ptr_; }
 
   /**
    * Returns the value of the variable.
    *
    * @return the value of the variable
    */
-  [[nodiscard]] constexpr const T& get() const { return *ptr_; }
+  [[nodiscard]] constexpr const Type& get() const { return *ptr_; }
 
   /**
    * Returns the name of the variable.
@@ -55,7 +55,7 @@ struct VarRef {
 private:
 
   std::string_view name_;
-  T* ptr_;
+  Type* ptr_;
 };
 
 } // namespace rocket::reflect

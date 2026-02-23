@@ -337,7 +337,7 @@ struct EqualToConsumerImpl<DataType::Instance, T, Eq> {
 
 template<typename T, typename Eq>
 struct EqualToConsumerImpl<DataType::MemberRef, T, Eq> {
-  using Elem = T::ValueType;
+  using Elem = T::Type;
   static constexpr auto ElemDataType = DataTypes<Elem>::Value;
 
   template<typename C>
@@ -355,7 +355,7 @@ struct EqualToConsumerImpl<DataType::MemberRef, T, Eq> {
 
 template<typename T, typename Eq>
 struct EqualToConsumerImpl<DataType::VarRef, T, Eq> {
-  using Elem = T::ValueType;
+  using Elem = T::Type;
   static constexpr auto ElemDataType = DataTypes<Elem>::Value;
 
   bool

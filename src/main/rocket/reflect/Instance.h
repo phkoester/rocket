@@ -15,54 +15,49 @@ namespace rocket::reflect {
 /**
  * A #rocket::reflect::Instance is an instance together with specified member references.
  *
- * Internally, it holds a pointer to the instance. Therefore, the instance must remain valid for the lifetime
- * of the #rocket::reflect::Instance.
- *
- * This class has no default constructor, and cannot be decoded.
- *
  * @tparam T the type of the instance
  * @tparam Inner the inner type of @p T that holds the member references
  */
 template<typename T, typename Inner>
 struct Instance {
-  using Type = T; ///< @type_alias
+  using Type = Purge<T>; ///< @type_alias
   using InnerType = Inner; ///< @type_alias
 
-  /// The member references, taken from the inner type.
-  static constexpr auto& refs = Inner::refs;
+  /// @ctor_default
+  Instance() = default;
 
   /**
    * @ctor
    *
    * @param instance the instance
    */
-  explicit Instance(T& instance) : ptr_(&instance) {}
+  explicit Instance(const Type& instance) : instance_(instance) {}
 
   /**
    * @ctor
    *
    * @param instance the instance
    */
-  explicit Instance(const T& instance) : ptr_(const_cast<T*>(&instance)) {}
+  explicit Instance(Type&& instance) : instance_(std::move(instance)) {}
 
   /**
    * Returns a reference to the instance.
    *
    * @return a reference to the instance
    */
-  [[nodiscard]] T& get() { return *ptr_; }
+  [[nodiscard]] Type& get() { return instance_; }
 
   /**
    * Returns a reference to the instance.
    *
    * @return a reference to the instance
    */
-  [[nodiscard]] const T& get() const { return *ptr_; }
+  [[nodiscard]] const Type& get() const { return instance_; }
 
 private:
 
-  /// A pointer to the instance, if not managed.
-  T* ptr_ = nullptr;
+  /// The instance.
+  Type instance_;
 };
 
 } // namespace rocket::reflect

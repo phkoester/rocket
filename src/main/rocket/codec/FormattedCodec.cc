@@ -8,9 +8,9 @@
 
 #include <boost/safe_numerics/safe_integer.hpp>
 
-using boost::safe_numerics::safe;
-
 using namespace std;
+
+using boost::safe_numerics::safe;
 
 namespace rocket::codec::internal {
 

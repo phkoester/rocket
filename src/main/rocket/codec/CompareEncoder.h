@@ -336,7 +336,7 @@ struct CompareConsumerImpl<DataType::Instance, T, Cmp> {
 
 template<typename T, typename Cmp>
 struct CompareConsumerImpl<DataType::MemberRef, T, Cmp> {
-  using Elem = T::ValueType;
+  using Elem = T::Type;
   static constexpr auto ElemDataType = DataTypes<Elem>::Value;
 
   using Ordering = CmpCommonOrdering<Cmp, std::string_view, Elem>;
@@ -356,7 +356,7 @@ struct CompareConsumerImpl<DataType::MemberRef, T, Cmp> {
 
 template<typename T, typename Cmp>
 struct CompareConsumerImpl<DataType::VarRef, T, Cmp> {
-  using Elem = T::ValueType;
+  using Elem = T::Type;
   static constexpr auto ElemDataType = DataTypes<Elem>::Value;
 
   using Ordering = CmpOrdering<Cmp, Elem>;

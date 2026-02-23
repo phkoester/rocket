@@ -19,7 +19,7 @@ namespace rocket::reflect {
  */
 template<typename C, typename T>
 struct MemberRef {
-  using ValueType = Purge<T>; ///< @type_alias
+  using Type = Purge<T>; ///< @type_alias
 
   /**
    * @ctor
@@ -35,7 +35,7 @@ struct MemberRef {
    * @param instance the instance
    * @return the value of the member
    */
-  [[nodiscard]] constexpr T& get(C& instance) const { return instance.*ptr_; }
+  [[nodiscard]] constexpr Type& get(C& instance) const { return instance.*ptr_; }
 
   /**
    * Returns the value of the member.
@@ -43,7 +43,7 @@ struct MemberRef {
    * @param instance the instance
    * @return the value of the member
    */
-  [[nodiscard]] constexpr const T& get(const C& instance) const { return instance.*ptr_; }
+  [[nodiscard]] constexpr const Type& get(const C& instance) const { return instance.*ptr_; }
 
   /**
    * Returns the name of the member.
@@ -55,7 +55,7 @@ struct MemberRef {
 private:
 
   std::string_view name_; ///< The name of the member.
-  T C::*ptr_; ///< The pointer to the member.
+  Type C::*ptr_; ///< The pointer to the member.
 };
 
 } // namespace rocket::reflect

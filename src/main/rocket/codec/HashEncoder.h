@@ -250,7 +250,7 @@ struct HashConsumerImpl<DataType::Instance, T, Hash> {
 
 template<typename T, typename Hash>
 struct HashConsumerImpl<DataType::MemberRef, T, Hash> {
-  using Elem = T::ValueType;
+  using Elem = T::Type;
   static constexpr auto ElemDataType = DataTypes<Elem>::Value;
 
   template<typename C>
@@ -265,7 +265,7 @@ struct HashConsumerImpl<DataType::MemberRef, T, Hash> {
 
 template<typename T, typename Hash>
 struct HashConsumerImpl<DataType::VarRef, T, Hash> {
-  using Elem = T::ValueType;
+  using Elem = T::Type;
   static constexpr auto ElemDataType = DataTypes<Elem>::Value;
 
   u64

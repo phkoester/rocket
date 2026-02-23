@@ -301,4 +301,12 @@ TEST(FormattedCodec, FormattedProducerDeclared) {
     (MyStruct { 42, true, "hello", { 1, 2, 3 } }));
 }
 
+TEST(FormattedCodec, FormattedProducerInstance) {
+  using type = reflect::Instance<MyStruct, MyStruct::Three>;
+  const MyStruct val = { 42, true, "hello" };
+  EXPECT_EQ(
+    (decode<type>("  ( ärger  =  42, ökonom=true, übermut=\"hello\",  )   ")),
+    (type(val)));
+}
+
 // EOF
