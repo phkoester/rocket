@@ -39,7 +39,7 @@ addArg(vector<string>& out, const string& arg, set<string>& seenFiles) { // NOLI
       } catch (const exception&) {
         ROCKET_FAIL("Cannot resolve argument file `{}`", file);
       }
-      string absFile = absPath.string();
+      const string absFile = absPath.string();
       if (not seenFiles.insert(absFile).second) {
         ROCKET_FAIL("Argument file `{}` causes infinite loop", file);
       }
@@ -150,7 +150,7 @@ CommandLine::applyOpt(const Option& opt, bool nameFlag, const optional<string>& 
     if (opt.choices && not opt.choices->contains(useValue)) {
       ROCKET_FAIL("Invalid value `{}`", value);
     }
-    bool result = opt.apply(useValue);
+    const bool result = opt.apply(useValue);
     parserState_.updateOpt(opt, result);
   } catch (const Exception& ex) {
     string expected;

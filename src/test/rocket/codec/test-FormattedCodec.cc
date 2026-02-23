@@ -195,7 +195,7 @@ TEST(FormattedCodec, FormattedProducerChar) {
 }
 
 TEST(FormattedCodec, FormattedProducerEnum) {
-  enum Color { Red, Green, Blue };
+  enum Color : u8 { Red, Green, Blue };
   EXPECT_EQ(decode<Color>("2"), Blue);
   EXPECT_EQ(decode<log::LogLevel>("  info  "), log::LogLevel::info);
 }
@@ -219,12 +219,12 @@ TEST(FormattedCodec, FormattedProducerFloat) {
   EXPECT_EQ(decode<type>("-inf"), -limits::infinity());
   EXPECT_EQ(decode<type>("∞"), limits::infinity());
 
-  type val = decode<type>("nan");
+  const type val = decode<type>("nan");
   EXPECT_TRUE(isnan(val));
 }
 
 TEST(FormattedCodec, FormattedProducerPointer) {
-  EXPECT_EQ(decodeTell<void*>("  <null>  "), make_pair(static_cast<void*>(0), 8_u64));
+  EXPECT_EQ(decodeTell<void*>("  <null>  "), make_pair(static_cast<void*>(0), 8_u64)); // NOLINT
   EXPECT_EQ(decodeTell<void*>("  0x12345678  "), make_pair(reinterpret_cast<void*>(0x12345678), 12_u64));
 }
 

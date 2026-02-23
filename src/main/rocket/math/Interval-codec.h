@@ -43,10 +43,10 @@ struct fmt::formatter<rocket::math::Interval<Left, Right>, C> {
   constexpr FormatContext::iterator
   format(const Type& val, FormatContext& ctx) const {
     auto out = ctx.out();
-    rocket::codec::FormattedCodec codec;
-    rocket::nio::StringSink sink;
-    codec.encode(val, sink, { .indent=indent_ });
-    out = detail::write<C>(out, rocket::unicode::ConvertTo<C>::apply(sink.str()));
+    const rocket::codec::FormattedCodec codec;
+    rocket::nio::StringSink buf;
+    codec.encode(val, buf, { .indent=indent_ });
+    out = detail::write<C>(out, rocket::unicode::ConvertTo<C>::apply(buf.str()));
     return out;
   }
 

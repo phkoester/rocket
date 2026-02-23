@@ -88,7 +88,7 @@ private:
 
   template<u64... Index, typename... Args>
   bool
-  consume(const T& lhs, const T& rhs, std::index_sequence<Index...>, Args&&... args) {
+  consume(const T& lhs, const T& rhs, std::index_sequence<Index...>, Args&&... args) { // NOLINT
     return (... && consumeElem( std::get<Index>(lhs), std::get<Index>(rhs), std::forward<Args>(args)...));
   }
 
@@ -161,13 +161,9 @@ private:
 
   bool
   consumeUnordered(const T& lhs, const T& rhs) {
-    for (const auto& lhsElem : lhs) {
-      auto it = rhs.find(lhsElem);
-      if (it == rhs.end()) {
-        return false;
-      }
-    }
-    return true;
+    return std::ranges::all_of(lhs, [&](const auto& lhsElem) {
+      return rhs.find(lhsElem) != rhs.end();
+    });
   }
 };
 
@@ -214,18 +210,15 @@ private:
 
   bool
   consumeUnordered(const T& lhs, const T& rhs) {
-    for (const auto& [lhsKey, lhsElem] : lhs) {
+    return std::ranges::all_of(lhs, [&](const auto& pair) {
+      const auto& [lhsKey, lhsElem] = pair;
       auto it = rhs.find(lhsKey);
       if (it == rhs.end()) {
         return false;
       }
       const auto& rhsElem = it->second;
-      const auto elemEq = EqualToConsumerImpl<ElemDataType, Elem, Eq>().consume(lhsElem, rhsElem);
-      if (not elemEq) {
-        return false;
-      }
-    }
-    return true;
+      return EqualToConsumerImpl<ElemDataType, Elem, Eq>().consume(lhsElem, rhsElem);
+    });
   }
 };
 
@@ -272,18 +265,15 @@ private:
 
   bool
   consumeUnordered(const T& lhs, const T& rhs) {
-    for (const auto& [lhsKey, lhsElem] : lhs.left) {
+    return std::ranges::all_of(lhs.left, [&](const auto& pair) {
+      const auto& [lhsKey, lhsElem] = pair;
       auto it = rhs.left.find(lhsKey);
       if (it == rhs.left.end()) {
         return false;
       }
       const auto& rhsElem = it->second;
-      const auto elemEq = EqualToConsumerImpl<ElemDataType, Elem, Eq>().consume(lhsElem, rhsElem);
-      if (not elemEq) {
-        return false;
-      }
-    }
-    return true;
+      return EqualToConsumerImpl<ElemDataType, Elem, Eq>().consume(lhsElem, rhsElem);
+    });
   }
 };
 

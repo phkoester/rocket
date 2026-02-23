@@ -28,7 +28,7 @@ ROCKET_REFLECT_MEMBERS_DEFINE(, MyStruct, Index);
 // #TEST ----------------------------------------------------------------------------------------------------
 
 TEST(EqualToEncoder, Bool) {
-  EqualToEncoder<> encoder;
+  const EqualToEncoder<> encoder;
   EXPECT_TRUE(encoder.encode(false, false));
   EXPECT_FALSE(encoder.encode(false, true));
   EXPECT_FALSE(encoder.encode(true, false));
@@ -36,7 +36,7 @@ TEST(EqualToEncoder, Bool) {
 }
 
 TEST(EqualToEncoder, String) {
-  EqualToEncoder<> encoder;
+  const EqualToEncoder<> encoder;
   EXPECT_TRUE(encoder.encode("a"sv, "a"sv));
   EXPECT_FALSE(encoder.encode("a"sv, "b"sv));
   EXPECT_FALSE(encoder.encode("b"sv, "a"sv));
@@ -45,10 +45,10 @@ TEST(EqualToEncoder, String) {
 
 TEST(EqualToEncoder, ListVector) {
   using type = vector<i32>;
-  type a = { 1, 2, 3 };
-  type b = { 3, 2, 1 };
+  const type a = { 1, 2, 3 };
+  const type b = { 3, 2, 1 };
 
-  EqualToEncoder<> encoder;
+  const EqualToEncoder<> encoder;
   EXPECT_TRUE(encoder.encode(a, a));
   EXPECT_FALSE(encoder.encode(a, b));
   EXPECT_FALSE(encoder.encode(b, a));
@@ -57,10 +57,10 @@ TEST(EqualToEncoder, ListVector) {
 
 TEST(EqualToEncoder, SetUnordered) {
   using type = unordered_set<string>;
-  type a = { "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten" };
-  type b = { "ten", "nine", "eight", "seven", "six", "five", "four", "three", "two", "one" };
+  const type a = { "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten" };
+  const type b = { "ten", "nine", "eight", "seven", "six", "five", "four", "three", "two", "one" };
 
-  EqualToEncoder<> encoder;
+  const EqualToEncoder<> encoder;
 
   EXPECT_TRUE(encoder.encode(a, a));
   EXPECT_TRUE(encoder.encode(a, b));
@@ -70,18 +70,18 @@ TEST(EqualToEncoder, SetUnordered) {
   EXPECT_FALSE(encoder.encode(a, type {}));
   EXPECT_FALSE(encoder.encode(a, type { "one", "two", "three" }));
 
-  type c = { "one", "two", "three", "one", "two", "three", "one", "two", "three" };
-  type d = { "one", "two", "three" };
+  const type c = { "one", "two", "three", "one", "two", "three", "one", "two", "three" };
+  const type d = { "one", "two", "three" };
   EXPECT_TRUE(encoder.encode(c, d));
 }
 
 TEST(EqualToEncoder, MapUnordered) {
   using type = unordered_map<i32, string>;
-  type a = { { 1, "one" }, { 2, "two" }, { 3, "three" } };
-  type b = { { 3, "three" }, { 2, "two" }, { 1, "one" } };
-  type c = { { 1, "one" }, { 2, "two" }, { 3, "free" } };
+  const type a = { { 1, "one" }, { 2, "two" }, { 3, "three" } };
+  const type b = { { 3, "three" }, { 2, "two" }, { 1, "one" } };
+  const type c = { { 1, "one" }, { 2, "two" }, { 3, "free" } };
 
-  EqualToEncoder<> encoder;
+  const EqualToEncoder<> encoder;
 
   EXPECT_TRUE(encoder.encode(a, a));
   EXPECT_TRUE(encoder.encode(a, b));
@@ -94,11 +94,11 @@ TEST(EqualToEncoder, MapUnordered) {
 
 TEST(EqualToEncoder, BimapUnordered) {
   using type = UnorderedBimap<i32, string>;
-  type a = makeUnorderedBimap<i32, string>({ { 1, "one" }, { 2, "two" }, { 3, "three" } });
-  type b = makeUnorderedBimap<i32, string>({ { 3, "three" }, { 2, "two" }, { 1, "one" } });
-  type c = makeUnorderedBimap<i32, string>({ { 1, "one" }, { 2, "two" }, { 3, "free" } });
+  const type a = makeUnorderedBimap<i32, string>({ { 1, "one" }, { 2, "two" }, { 3, "three" } });
+  const type b = makeUnorderedBimap<i32, string>({ { 3, "three" }, { 2, "two" }, { 1, "one" } });
+  const type c = makeUnorderedBimap<i32, string>({ { 1, "one" }, { 2, "two" }, { 3, "free" } });
 
-  EqualToEncoder<> encoder;
+  const EqualToEncoder<> encoder;
 
   EXPECT_TRUE(encoder.encode(a, a));
   EXPECT_TRUE(encoder.encode(a, b));
@@ -110,11 +110,11 @@ TEST(EqualToEncoder, BimapUnordered) {
 }
 
 TEST(EqualToEncoder, MyStruct) {
-  MyStruct a = { 1, true, "one", { 1, 2, 3 } };
-  MyStruct b = { 1, true, "one", { 1, 2, 3 } };
-  MyStruct c = { 1, true, "two", { 1, 2, 3 } };
+  const MyStruct a = { 1, true, "one", { 1, 2, 3 } };
+  const MyStruct b = { 1, true, "one", { 1, 2, 3 } };
+  const MyStruct c = { 1, true, "two", { 1, 2, 3 } };
 
-  EqualToEncoder<> encoder;
+  const EqualToEncoder<> encoder;
 
   EXPECT_TRUE(encoder.encode(a, b));
   EXPECT_TRUE(encoder.encode(b, a));

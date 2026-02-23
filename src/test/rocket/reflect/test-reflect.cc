@@ -263,10 +263,10 @@ TEST(reflect, VarRefOpCmp) {
 
   EXPECT_LT(vars1, vars2);
 
-  f32 f1 = 1.0f;
-  f32 f2 = 2.0f;
-  f32 f3 = 3.0f;
-  f32 f4 = 4.0f;
+  f32 f1 = 1.0F;
+  f32 f2 = 2.0F;
+  f32 f3 = 3.0F;
+  f32 f4 = 4.0F;
 
   const auto& vars3 = ROCKET_REFLECT_VARS((f1)(f2));
   using type3 = decltype(vars3);

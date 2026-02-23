@@ -66,10 +66,10 @@ struct fmt::formatter<boost::bimaps::bimap<A, B>, C> {
   template<typename FormatContext>
   constexpr FormatContext::iterator
   format(const boost::bimaps::bimap<A, B>& val, FormatContext& ctx) const {
-    rocket::codec::FormattedCodec codec;
+    const rocket::codec::FormattedCodec codec;
     rocket::nio::StringSink buf;
     codec.encode(val, buf, { .indent=indent_ });
-    std::basic_string<C> str(rocket::unicode::ConvertTo<C>::apply(buf.str()));
+    const std::basic_string<C> str(rocket::unicode::ConvertTo<C>::apply(buf.str()));
     auto out = ctx.out();
     return detail::write<C>(out, str);
   }

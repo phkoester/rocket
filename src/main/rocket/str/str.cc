@@ -116,11 +116,11 @@ string
 times(u64 count) {
   if (count == 1) {
     return "once";
-  } else if (count == 2) {
-    return "twice";
-  } else {
-    return fmt::format("{} times", count);
   }
+  if (count == 2) {
+    return "twice";
+  }
+  return fmt::format("{} times", count);
 }
 
 string

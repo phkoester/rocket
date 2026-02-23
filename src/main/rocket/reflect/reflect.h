@@ -244,10 +244,10 @@ struct fmt::formatter<T, C> {
       out = fmt::detail::write<C>(out, rocket::unicode::ConvertTo<C>::apply(typeName));
     }
     const rocket::codec::FormattedCodec codec;
-    rocket::nio::StringSink sink;
-    codec.encode(val, sink, { .indent=indent_ });
+    rocket::nio::StringSink buf;
+    codec.encode(val, buf, { .indent=indent_ });
     // GCC 13.3 needs `fmt::detail` here
-    out = fmt::detail::write<C>(out, rocket::unicode::ConvertTo<C>::apply(sink.str()));
+    out = fmt::detail::write<C>(out, rocket::unicode::ConvertTo<C>::apply(buf.str()));
     return out;
   }
 
@@ -293,10 +293,10 @@ struct fmt::formatter<rocket::reflect::Instance<T, Inner>, C> {
       const std::string typeName = fmt::format("{}", typeid(typename Type::Type));
       out = detail::write<C>(out, rocket::unicode::ConvertTo<C>::apply(typeName));
     }
-    rocket::codec::FormattedCodec codec;
-    rocket::nio::StringSink sink;
-    codec.encode(val, sink, { .indent=indent_ });
-    out = detail::write<C>(out, rocket::unicode::ConvertTo<C>::apply(sink.str()));
+    const rocket::codec::FormattedCodec codec;
+    rocket::nio::StringSink buf;
+    codec.encode(val, buf, { .indent=indent_ });
+    out = detail::write<C>(out, rocket::unicode::ConvertTo<C>::apply(buf.str()));
     return out;
   }
 
@@ -337,10 +337,10 @@ struct fmt::formatter<rocket::reflect::VarRef<T>, C> {
   constexpr FormatContext::iterator
   format(const Type& val, FormatContext& ctx) const {
     auto out = ctx.out();
-    rocket::codec::FormattedCodec codec;
-    rocket::nio::StringSink sink;
-    codec.encode(val, sink, { .indent=indent_ });
-    out = detail::write<C>(out, rocket::unicode::ConvertTo<C>::apply(sink.str()));
+    const rocket::codec::FormattedCodec codec;
+    rocket::nio::StringSink buf;
+    codec.encode(val, buf, { .indent=indent_ });
+    out = detail::write<C>(out, rocket::unicode::ConvertTo<C>::apply(buf.str()));
     return out;
   }
 

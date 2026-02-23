@@ -25,7 +25,7 @@ TEST(std, f32OpCmp) {
   static_assert(std::is_lt(0.0F <=> limits::infinity()));
   static_assert(std::is_lteq(0.0F <=> 0.0F));
   static_assert(std::is_gteq(0.0F <=> 0.0F));
-  static_assert(std::is_lt(1.0F <=> 2.0f));
+  static_assert(std::is_lt(1.0F <=> 2.0F));
   static_assert(std::is_eq(1.0F <=> 1.0F));
   static_assert(std::is_gt(2.0F <=> 1.0F));
   static_assert((nan <=> 0.0F) == std::partial_ordering::unordered);

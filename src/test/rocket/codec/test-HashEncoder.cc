@@ -32,27 +32,27 @@ ROCKET_REFLECT_MEMBERS_DEFINE(, MyStruct, Index);
 // #TEST ----------------------------------------------------------------------------------------------------
 
 TEST(HashEncoder, Enum) {
-  HashEncoder<> encoder;
+  const HashEncoder<> encoder;
   enum Color : u8 { red = 0, green, blue };
   EXPECT_EQ(encoder.encode(blue), 2);
 }
 
 #ifdef ROCKET_HAS_128
 TEST(HashEncoder, i128) {
-  HashEncoder<> encoder;
+  const HashEncoder<> encoder;
   EXPECT_EQ(encoder.encode(1234_i128), 1234);
 }
 #endif
 
 TEST(HashEncoder, Pointer) {
-  HashEncoder<> encoder;
+  const HashEncoder<> encoder;
   void* ptr = nullptr;
   EXPECT_EQ(encoder.encode(ptr), 0);
 }
 
 /// Tests that the order of insertion does not affect the hash value for ordered sets.
 TEST(HashEncoder, SetOrdered) {
-  HashEncoder<> encoder;
+  const HashEncoder<> encoder;
 
   const u64 N = 100;
   vector<u64> vec(N);
@@ -73,7 +73,7 @@ TEST(HashEncoder, SetOrdered) {
 
 /// Tests that the order of insertion does not affect the hash value for unordered sets.
 TEST(HashEncoder, SetUnordered) {
-  HashEncoder<> encoder;
+  const HashEncoder<> encoder;
 
   const u64 N = 100;
   vector<u64> vec(N);
@@ -94,7 +94,7 @@ TEST(HashEncoder, SetUnordered) {
 
 /// Tests that the order of insertion does not affect the hash value for ordered maps.
 TEST(HashEncoder, MapOrdered) {
-  HashEncoder<> encoder;
+  const HashEncoder<> encoder;
 
   const u64 N = 100;
   vector<u64> vec(N);
@@ -118,7 +118,7 @@ TEST(HashEncoder, MapOrdered) {
 
 /// Tests that the order of insertion does not affect the hash value for unordered maps.
 TEST(HashEncoder, MapUnordered) {
-  HashEncoder<> encoder;
+  const HashEncoder<> encoder;
 
   const u64 N = 100;
   vector<u64> vec(N);
@@ -142,7 +142,7 @@ TEST(HashEncoder, MapUnordered) {
 
 /// Tests that the order of insertion does not affect the hash value for ordered bimaps.
 TEST(HashEncoder, BimapOrdered) {
-  HashEncoder<> encoder;
+  const HashEncoder<> encoder;
 
   const u64 N = 100;
   vector<u64> vec(N);
@@ -166,7 +166,7 @@ TEST(HashEncoder, BimapOrdered) {
 
 /// Tests that the order of insertion does not affect the hash value for unordered bimaps.
 TEST(HashEncoder, BimapUnordered) {
-  HashEncoder<> encoder;
+  const HashEncoder<> encoder;
 
   const u64 N = 100;
   vector<u64> vec(N);
@@ -190,7 +190,7 @@ TEST(HashEncoder, BimapUnordered) {
 
 TEST(HashEncoder, DeclaredMyStruct) {
   const MyStruct val { 42, true, "hello", { 1, 2, 3 } };
-  HashEncoder<> encoder;
+  const HashEncoder<> encoder;
   EXPECT_NE(encoder.encode(val), 0);
 }
 
