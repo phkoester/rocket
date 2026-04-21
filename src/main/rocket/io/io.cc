@@ -14,7 +14,7 @@ namespace rocket::io {
 // Functions ------------------------------------------------------------------------------------------------
 
 std::ios::pos_type
-tellg(std::istream& is) noexcept {
+tellg(std::istream& is) {
   const auto state = is.rdstate();
 
   // Clear all bits

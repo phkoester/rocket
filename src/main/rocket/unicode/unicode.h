@@ -34,7 +34,7 @@ struct CodePoint {
   using Type = char32; ///< The representation type of the code point.
 
   /// @ctor_default
-  constexpr CodePoint() noexcept : val_(0) {}
+  constexpr CodePoint() : val_(0) {}
 
   /**
    * @ctor
@@ -52,23 +52,23 @@ struct CodePoint {
    *
    * @param val a `char32` value
    */
-  constexpr CodePoint(char32 val) noexcept : val_(val) {} // NOLINT
+  constexpr CodePoint(char32 val) : val_(val) {} // NOLINT
 
   /// @member_op_cast{#char32}
-  constexpr operator char32() const noexcept { return val_; } // NOLINT
+  constexpr operator char32() const { return val_; } // NOLINT
 
   /// @member_op_cast{#std::string}
   explicit operator std::string() const;
 
   /// @member_op_cast{#std::u32string}
-  constexpr explicit operator std::u32string() const noexcept { return { val_ }; }
+  constexpr explicit operator std::u32string() const { return { val_ }; }
 
   /**
    * Checks if the code point is an ASCII character.
    *
    * @return whether the code point is an ASCII character
    */
-  [[nodiscard]] constexpr bool ascii() const noexcept { return val_ < 0x80; }
+  [[nodiscard]] constexpr bool ascii() const { return val_ < 0x80; }
 
   /**
    * Checks if the code point equals the specified ASCII character.
@@ -77,7 +77,7 @@ struct CodePoint {
    * @return whether the code point equals the specified ASCII character
    */
   [[nodiscard]] constexpr bool
-  eq(char c) const noexcept {
+  eq(char c) const {
     return ascii() && val_ == static_cast<char32>(c);
   }
 
@@ -86,28 +86,28 @@ struct CodePoint {
    *
    * @return whether the code point is printable
    */
-  [[nodiscard]] bool isPrint() const noexcept;
+  [[nodiscard]] bool isPrint() const;
 
   /**
    * Checks if the code point is whitespace.
    *
    * @return whether the code point is whitespace
    */
-  [[nodiscard]] bool isWhitespace() const noexcept;
+  [[nodiscard]] bool isWhitespace() const;
 
   /**
    * Returns a lower-case code point for this code point.
    *
    * @return a code point in lower case
    */
-  [[nodiscard]] CodePoint lower() const noexcept;
+  [[nodiscard]] CodePoint lower() const;
 
   /**
    * Returns an upper-case code point for this code point.
    *
    * @return a code point in upper case
    */
-  [[nodiscard]] CodePoint upper() const noexcept;
+  [[nodiscard]] CodePoint upper() const;
 
   /**
    * Checks if the code point is valid.
@@ -118,7 +118,7 @@ struct CodePoint {
    * @return whether the code point is valid
    */
   [[nodiscard]] constexpr bool
-  valid() const noexcept {
+  valid() const {
     return val_ <= 0x10FFFFU && (val_ < 0xD800U || val_ > 0xDFFFU);
   }
 
@@ -127,7 +127,7 @@ struct CodePoint {
    *
    * @return the code point's display width, in the range @f$[0,2]@f$
    */
-  [[nodiscard]] u8 width() const noexcept;
+  [[nodiscard]] u8 width() const;
 
 private:
 
@@ -313,7 +313,7 @@ struct std::hash<rocket::unicode::CodePoint> {
    * @return a hash value
    */
   u64
-  operator()(rocket::unicode::CodePoint val) const noexcept {
+  operator()(rocket::unicode::CodePoint val) const {
     return std::hash<char32>()(static_cast<char32>(val));
   }
 };

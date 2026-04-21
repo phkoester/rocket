@@ -52,7 +52,7 @@ struct BasicCharacter {
       str_(static_cast<std::basic_string_view<C>>(rhs)) {}
 
   /// @member_op_cast{#std::basic_string_view}
-  constexpr operator std::basic_string_view<C>() const noexcept { return str_; } // NOLINT
+  constexpr operator std::basic_string_view<C>() const { return str_; } // NOLINT
 
   /**
    * Checks if the character is an ASCII character.
@@ -60,7 +60,7 @@ struct BasicCharacter {
    * @return whether the character is an ASCII character
    */
   [[nodiscard]] bool
-  constexpr ascii() const noexcept {
+  constexpr ascii() const {
     return str_.size() == 1 && static_cast<u32>(str_[0]) < 0x80;
   }
 
@@ -88,7 +88,7 @@ struct BasicCharacter {
    * @return whether the character is a carriage return / line feed sequence
    */
   [[nodiscard]] constexpr bool
-  crLf() const noexcept {
+  crLf() const {
     return str_.size() == 2 && str_[0] == '\r' && str_[1] == '\n';
   }
 
@@ -98,7 +98,7 @@ struct BasicCharacter {
    * @return whether the character is an end of line
    */
   [[nodiscard]] constexpr bool
-  eol() const noexcept {
+  eol() const {
     return lf() || crLf();
   }
 
@@ -109,7 +109,7 @@ struct BasicCharacter {
    * @return whether the character equals the specified ASCII character
    */
   [[nodiscard]] constexpr bool
-  eq(char c) const noexcept {
+  eq(char c) const {
     return ascii() && str_[0] == c;
   }
 
@@ -135,7 +135,7 @@ struct BasicCharacter {
    * @return whether the character is a hexadecimal digit
    */
   [[nodiscard]] bool
-  isXdigit() const noexcept {
+  isXdigit() const {
     return str_.size() == 1 && std::isxdigit(str_[0]);
   }
 
@@ -145,7 +145,7 @@ struct BasicCharacter {
    * @return whether the character is a line feed
    */
   [[nodiscard]] constexpr bool
-  lf() const noexcept {
+  lf() const {
     return str_.size() == 1 && str_[0] == '\n';
   }
 
@@ -169,7 +169,7 @@ struct BasicCharacter {
    *
    * @return the size of the underlying string
    */
-  [[nodiscard]] constexpr u64 size() const noexcept { return str_.size(); }
+  [[nodiscard]] constexpr u64 size() const { return str_.size(); }
 
   /**
    * Checks if the character is a tab.
@@ -177,7 +177,7 @@ struct BasicCharacter {
    * @return whether the character is a tab
    */
   [[nodiscard]] constexpr bool
-  tab() const noexcept {
+  tab() const {
     return str_.size() == 1 && str_[0] == '\t';
   }
 

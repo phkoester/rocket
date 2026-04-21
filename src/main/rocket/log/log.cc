@@ -696,8 +696,8 @@ logDefine(LogSettings* logId, string_view id) {
 
 /// @ThreadSafe
 void
-logEnd() noexcept {
-  // We need to catch anything here to keep the `noexcept` promise
+logEnd() {
+  // We need to catch anything here, because this is called in a destructor
   try {
     // Print end log entry only if begin log entry was flushed
     const Entry& entry = logStack.back();

@@ -78,7 +78,7 @@ void logBegin(
   const char* file,
   i32 line);
 
-void logEnd() noexcept;
+void logEnd();
 
 struct Log {
   LogLevel level_;
@@ -88,7 +88,7 @@ struct Log {
     logBegin(logId, function, prettyFunction, file, line);
   }
 
-  ~Log() noexcept { logEnd(); }
+  ~Log() { logEnd(); }
 };
 
 std::unique_ptr<Log> makeLog(

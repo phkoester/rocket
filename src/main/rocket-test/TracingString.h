@@ -52,7 +52,7 @@ struct TracingString {
    *
    * @param trace the string to append tracing messages to
    */
-  explicit TracingString(std::string& trace) noexcept :
+  explicit TracingString(std::string& trace) :
       trace_(&trace),
       id_(++ID_COUNTER) {
     ++NUM_INSTANCES;
@@ -61,7 +61,7 @@ struct TracingString {
   }
 
   /// @ctor_copy
-  TracingString(const TracingString& rhs) noexcept :
+  TracingString(const TracingString& rhs) :
       trace_(rhs.trace_),
       id_(++ID_COUNTER),
       val_(rhs.val_) {
@@ -87,7 +87,7 @@ struct TracingString {
    * @param trace the string to append tracing messages to
    * @param p a pointer to a C string
    */
-  explicit TracingString(std::string& trace, const char* p) noexcept :
+  TracingString(std::string& trace, const char* p) :
       trace_(&trace),
       id_(++ID_COUNTER),
       val_(p) {
@@ -97,7 +97,7 @@ struct TracingString {
   }
 
   /// @dtor
-  ~TracingString() noexcept {
+  ~TracingString() {
     --NUM_INSTANCES;
     trace("dtor");
     ++dtor;
@@ -106,7 +106,7 @@ struct TracingString {
   /// @member_op_asgmt_copy
 
   TracingString&
-  operator=(const TracingString& rhs) noexcept {
+  operator=(const TracingString& rhs) {
     val_ = rhs.val_;
     trace("opAsgmtCopy");
     ++opAsgmtCopy;
@@ -124,12 +124,12 @@ struct TracingString {
   }
 
   /// @member_op_cast{#std::string}
-  operator std::string() const noexcept { // NOLINT(google-explicit-*)
+  operator std::string() const { // NOLINT(google-explicit-*)
     return val_;
   }
 
   /// @member_op_cast{#std::string_view}
-  operator std::string_view() const noexcept { // NOLINT(google-explicit-*)
+  operator std::string_view() const { // NOLINT(google-explicit-*)
     return val_;
   }
 

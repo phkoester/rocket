@@ -58,7 +58,7 @@ inline std::ispanstream is(std::string_view str) { return std::ispanstream(str);
  * @param is the input stream
  * @return the actual current input position, always nonnegative
  */
-std::ios::pos_type tellg(std::istream& is) noexcept;
+std::ios::pos_type tellg(std::istream& is);
 
 } // namespace rocket::io
 

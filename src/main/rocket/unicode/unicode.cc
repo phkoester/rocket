@@ -36,27 +36,27 @@ CodePoint::operator string() const {
 }
 
 bool
-CodePoint::isPrint() const noexcept {
+CodePoint::isPrint() const {
   return u_isprint(val_) != 0; // NOLINT
 }
 
 bool
-CodePoint::isWhitespace() const noexcept {
+CodePoint::isWhitespace() const {
   return u_isWhitespace(val_) != 0; // NOLINT
 }
 
 CodePoint
-CodePoint::lower() const noexcept {
+CodePoint::lower() const {
   return static_cast<char32>(u_tolower(val_)); // NOLINT
 }
 
 CodePoint
-CodePoint::upper() const noexcept {
+CodePoint::upper() const {
   return static_cast<char32>(u_toupper(val_)); // NOLINT
 }
 
 u8
-CodePoint::width() const noexcept {
+CodePoint::width() const {
   if (not isPrint()) {
     return 0;
   }
