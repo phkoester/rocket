@@ -12,6 +12,7 @@
 #include <fmt/format.h>
 
 #include <ostream>
+
 namespace rocket::unicode {
 
 // #BasicCharacter ------------------------------------------------------------------------------------------

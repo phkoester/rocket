@@ -115,7 +115,7 @@ protected:
 // #Sink ----------------------------------------------------------------------------------------------------
 
 /**
- * Sink base class.
+ * Sink base class. A device that can be written to.
  */
 struct Sink : Io {
   /**
@@ -533,7 +533,7 @@ enum class SeekMode : u8 {
 // #Source --------------------------------------------------------------------------------------------------
 
 /**
- * Source base class.
+ * Source base class. A device that can be read from.
  */
 struct Source : Io {
   /**

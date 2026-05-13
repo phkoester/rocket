@@ -301,7 +301,8 @@ struct Option {
   }
 
   /**
-   * Convenience factory function that makes a new verbose option and binds it to a destination reference.
+   * Convenience factory function that makes a new verbose option and binds it to a an optional `bool`
+   * destination reference.
    *
    * @param group the option group, may be null
    * @param out the destination reference that is assigned the option value
@@ -320,7 +321,8 @@ struct Option {
   }
 
   /**
-   * Convenience factory function that makes a new verbose option and binds it to a destination reference.
+   * Convenience factory function that makes a new verbose option and binds it to an optional `u64`
+   * destination reference.
    *
    * Each occurrence of the option in the command line increases the level of verbosity by one. `-v` sets the
    * level to 1, `-vv` sets it to 2, and so on.
