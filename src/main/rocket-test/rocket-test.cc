@@ -15,6 +15,8 @@ namespace rocket::test {
 
 const optional<string> BINARY_DIR = system::env::get<string>("BINARY_DIR");
 const optional<string> CONFIG = system::env::get<string>("CONFIG");
+const optional<string> CONFIGS = system::env::get<string>("CONFIGS");
+const optional<string> SOURCE_DIR = system::env::get<string>("SOURCE_DIR");
 const bool TEST_TERMINAL = system::env::get<bool>(ROCKET_TEST_TERMINAL).value_or(false);
 
 // Functions ------------------------------------------------------------------------------------------------
@@ -37,6 +39,19 @@ testExcecutable(string_view name) {
     return ret;
   }
   ROCKET_FAIL("Cannot find test executable `{}`", name);
+  return ret;
+}
+
+path
+testSource(string_view name) {
+  if (not SOURCE_DIR) {
+    ROCKET_FAIL("`SOURCE_DIR` is not set");
+  }
+  path ret = path(*SOURCE_DIR) / name;
+  if (is_regular_file(ret)) {
+    return ret;
+  }
+  ROCKET_FAIL("Cannot find test source `{}`", name);
   return ret;
 }
 

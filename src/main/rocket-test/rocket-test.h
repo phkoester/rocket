@@ -103,6 +103,10 @@ extern const std::optional<std::string> BINARY_DIR;
 /// Value of the environment variable.
 extern const std::optional<std::string> CONFIG;
 /// Value of the environment variable.
+extern const std::optional<std::string> CONFIGS;
+/// Value of the environment variable.
+extern const std::optional<std::string> SOURCE_DIR;
+/// Value of the environment variable.
 extern const bool TEST_TERMINAL;
 
 // Functions ------------------------------------------------------------------------------------------------
@@ -115,6 +119,15 @@ extern const bool TEST_TERMINAL;
  * @throws #rocket::InvalidState if the executable is not found
  */
 std::filesystem::path testExcecutable(std::string_view name);
+
+/**
+ * Returns the path to a test source.
+ *
+ * @param name the name of the source
+ * @return the path to the source
+ * @throws #rocket::InvalidState if the source is not found
+ */
+std::filesystem::path testSource(std::string_view name);
 
 } // namespace rocket::test
 
