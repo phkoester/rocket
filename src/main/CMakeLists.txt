@@ -45,7 +45,7 @@ add_custom_command(
 
 set(ROCKET_PRIVATE_LINK_TARGETS)
 if(LINUX)
-  list(APPEND ROCKET_PRIVATE_LINK_TARGETS stdc++_libbacktrace)
+  list(APPEND ROCKET_PRIVATE_LINK_TARGETS stdc++exp)
 endif()
 
 add_library(rocket ${VERSION_H})
