@@ -104,23 +104,10 @@ if(LINUX)
   # gcc will not accept `__int128` with `-pedantic`
   list(APPEND COMPILE_FLAGS -Wall -Wextra -Wno-ignored-attributes)
 elseif(WIN32)
-  # In Windows, Clang understands MSVC-like flags
-  list(APPEND COMPILE_FLAGS /WX /Zc:preprocessor)
+  list(APPEND COMPILE_FLAGS /Zc:preprocessor) # /Wall
 endif()
 
 # Functions -------------------------------------------------------------------------------------------------
-
-function(CopyRuntimeDlls name)
-  if(WIN32) # AND $<TARGET_RUNTIME_DLLS:${name}>
-    add_custom_command(
-      TARGET  ${name} POST_BUILD
-      # Since CMake 4.2, there is `copy_if_newer`. If that is available, we can add this to `AddBench` and
-      # `AddTest`. For the time being, Visual Studio comes with CMake 4.1.1
-      COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_RUNTIME_DLLS:${name}> $<TARGET_FILE_DIR:${name}>
-      COMMAND_EXPAND_LISTS
-    )
-  endif()
-endfunction()
 
 # AddExecutable(name srcFile...)
 function(AddExecutable name)
@@ -129,6 +116,15 @@ function(AddExecutable name)
   target_compile_definitions(${name} PRIVATE ${COMPILE_DEFS})
   target_compile_features(${name} PRIVATE ${COMPILE_FEATURES})
   target_compile_options(${name} PRIVATE ${COMPILE_FLAGS})
+
+  if($<TARGET_RUNTIME_DLLS:${name}>) # XXX if(WIN32 AND ...)
+    add_custom_command(
+      TARGET  ${name} POST_BUILD
+      # `copy_if_newer` requires CMake 4.2
+      COMMAND ${CMAKE_COMMAND} -E copy_if_newer $<TARGET_RUNTIME_DLLS:${name}> $<TARGET_FILE_DIR:${name}>
+      COMMAND_EXPAND_LISTS
+    )
+  endif()
 endfunction()
 
 # ParseArgs__(srcFiles env  srcFile... [ENVIRONMENT name=value...])
@@ -162,7 +158,7 @@ function(AddBench name dir)
   add_test(
     NAME              ${name}
     COMMAND           ${name}
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/src/bench/${dir}
+    # XXX WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/src/bench/${dir}
   )
 
   string(JOIN " " configs ${CMAKE_CONFIGURATION_TYPES})
@@ -172,6 +168,7 @@ function(AddBench name dir)
       "BINARY_DIR=${CMAKE_CURRENT_BINARY_DIR}"
       "CONFIG=$<CONFIG>"
       "CONFIGS=${configs}"
+      "SOURCE_DIR=${CMAKE_SOURCE_DIR}/src/test/${dir}"
       ${env}
   )
 endfunction()
@@ -199,8 +196,9 @@ function(AddTest name dir)
     PROPERTIES ENVIRONMENT "BINARY_DIR=${CMAKE_CURRENT_BINARY_DIR}"
     PROPERTIES ENVIRONMENT "CONFIG=$<CONFIG>"
     PROPERTIES ENVIRONMENT "CONFIGS=${configs}"
+    PROPERTIES ENVIRONMENT "SOURCE_DIR=${CMAKE_SOURCE_DIR}/src/test/${dir}"
     ${envProps}
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/src/test/${dir}
+    # XXX WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/src/test/${dir}
   )
 endfunction()
 

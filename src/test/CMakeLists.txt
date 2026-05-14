@@ -24,7 +24,6 @@ include(GoogleTest)
 # Rocket ....................................................................................................
 
 AddTest(test-rocket rocket test-rocket.cc)
-CopyRuntimeDlls(test-rocket)
 
 set(GENERATED_CC ${GENERATED_DIR}/generated.cc)
 add_custom_command(

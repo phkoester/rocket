@@ -4,12 +4,12 @@
 :: ONLY EDIT THE ORIGINAL FILE, WHICH IS `gaia-make.cmd`.
 ::
 :: Usage:
-::   make                                      (calls `configure` and `build`)
+::   make                                     (calls `configure` and `build`)
 ::   make info
 ::   make configure
 ::   make build [TARGET]
-::   make test  [all | bench | test | PATTERN] (default: test)
-::   make test-terminal                        (for Rocket only)
+::   make test [all | bench | test | PATTERN] (default: test)
+::   make test-terminal                       (for Rocket only)
 ::   make clean
 ::
 :: Parameters:
