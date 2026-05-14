@@ -124,7 +124,8 @@ TEST(location, locationsKafkaTxt) {
       3'000, ({}),
       38, 77,
       ({ 2'922, 3'033 }),
-      "blödsinnig. Der Mensch muß seinen Schlaf haben. Andere Reisende leben wie Haremsfrauen. Wenn ich zum Beispiel",
+      "blödsinnig. Der Mensch muß seinen Schlaf haben. Andere Reisende leben wie Haremsfrauen. Wenn ich zum "
+      "Beispiel",
       "Oops",
       nullopt);
 
