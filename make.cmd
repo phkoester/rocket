@@ -10,10 +10,15 @@
 ::
 
 @echo off
+
 setlocal enableextensions
+set NAME=%~n0
+
 if not defined GAIA_DIR (
-  set GAIA_DIR=..\gaia
+  echo %NAME%: Environment variable `GAIA_DIR` is not defined. 1>&2
+  exit /b 2
 )
+
 call %GAIA_DIR%\bin\gaia-make.cmd %*
 
 :: EOF
