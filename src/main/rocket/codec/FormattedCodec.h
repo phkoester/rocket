@@ -11,11 +11,11 @@
 #include "rocket/str/escape/escape.h"
 #include "rocket/unicode/ConvertTo.h"
 
+#include <boost/safe_numerics/safe_integer.hpp>
+
 #include <fmt/std.h>
 
 #include <scn/scan.h>
-
-#include <boost/safe_numerics/safe_integer.hpp>
 
 namespace rocket::codec {
 
