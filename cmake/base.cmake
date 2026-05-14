@@ -117,7 +117,7 @@ function(AddExecutable name)
   target_compile_features(${name} PRIVATE ${COMPILE_FEATURES})
   target_compile_options(${name} PRIVATE ${COMPILE_FLAGS})
 
-  if($<TARGET_RUNTIME_DLLS:${name}>) # XXX if(WIN32 AND ...)
+  if($<TARGET_RUNTIME_DLLS:${name}>)
     add_custom_command(
       TARGET  ${name} POST_BUILD
       # `copy_if_newer` requires CMake 4.2
@@ -158,7 +158,6 @@ function(AddBench name dir)
   add_test(
     NAME              ${name}
     COMMAND           ${name}
-    # XXX WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/src/bench/${dir}
   )
 
   string(JOIN " " configs ${CMAKE_CONFIGURATION_TYPES})
@@ -198,7 +197,6 @@ function(AddTest name dir)
     PROPERTIES ENVIRONMENT "CONFIGS=${configs}"
     PROPERTIES ENVIRONMENT "SOURCE_DIR=${CMAKE_SOURCE_DIR}/src/test/${dir}"
     ${envProps}
-    # XXX WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/src/test/${dir}
   )
 endfunction()
 

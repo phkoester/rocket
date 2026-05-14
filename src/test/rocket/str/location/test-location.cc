@@ -133,7 +133,6 @@ TEST(location, locationsKafkaTxt) {
   EXPECT_EQ(line, loc.lineString);
 }
 
-
 TEST(location, locationsMultiByteCharacter) {
   // 🧑‍🌾: U+1F9D1, U+200D, U+1F33E, 4 + 3 + 4 = 11 bytes
   const string input = "🧑‍🌾";
