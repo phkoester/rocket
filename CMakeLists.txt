@@ -18,7 +18,7 @@ project(rocket VERSION 0.3.0)
 
 # Configuration ---------------------------------------------------------------------------------------------
 
-include(cmake/base.cmake)
+include($ENV{GAIA_DIR}/src/main/cmake/base.cmake)
 
 AddVar(ROCKET_BUILD_BENCH BOOL ${ROCKET_MASTER_PROJECT} "Enable benchmarking and build benchmarks")
 AddVar(ROCKET_BUILD_TEST  BOOL ${ROCKET_MASTER_PROJECT} "Enable testing and build tests")

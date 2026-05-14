@@ -2,7 +2,7 @@
 # Doxyfile
 #
 
-@INCLUDE = $(GAIA_DIR)/include/doxygen/Doxyfile.gaia
+@INCLUDE = $(GAIA_DIR)/src/main/doxygen/Doxyfile.gaia
 
 PROJECT_NAME     = Rocket
 INPUT            = src/main $(BUILD_DIR)/src/main/generated

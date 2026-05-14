@@ -25,17 +25,17 @@ include(GoogleTest)
 
 AddTest(test-rocket rocket test-rocket.cc)
 
-set(GENERATED_CC ${GENERATED_DIR}/generated.cc)
+set(HELLO_CC ${GENERATED_DIR}/hello.cc)
 add_custom_command(
-  OUTPUT  ${GENERATED_CC}
-  COMMAND python3 ${PROJECT_SOURCE_DIR}/cmake/generate.py -o ${GENERATED_CC}
+  OUTPUT  ${HELLO_CC}
+  COMMAND python3 ${PROJECT_SOURCE_DIR}/bin/generate-hello -o ${HELLO_CC}
   VERBATIM
 )
 AddTest(test-rocket-external-CMake rocket/external test-CMake.cc
   ENVIRONMENT
     "A=A A"
     "B=B B")
-target_sources(test-rocket-external-CMake PRIVATE ${GENERATED_CC})
+target_sources(test-rocket-external-CMake PRIVATE ${HELLO_CC})
 
 AddTest(test-rocket-assert                       rocket                 test-assert.cc)
 AddTest(test-rocket-Bimap                        rocket                 test-Bimap.cc)
