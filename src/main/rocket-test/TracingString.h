@@ -124,12 +124,12 @@ struct TracingString {
   }
 
   /// @member_op_cast{#std::string}
-  operator std::string() const { // NOLINT(google-explicit-*)
+  operator std::string() const { // NOLINT(*-explicit-*)
     return val_;
   }
 
   /// @member_op_cast{#std::string_view}
-  operator std::string_view() const { // NOLINT(google-explicit-*)
+  operator std::string_view() const { // NOLINT(*-explicit-*)
     return val_;
   }
 

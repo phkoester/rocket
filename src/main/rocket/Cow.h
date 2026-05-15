@@ -111,16 +111,16 @@ struct Cow {
    * @return_this
    */
   Cow&
-  operator=(U&& value) { // NOLINT(*-param-not-moved)
+  operator=(U&& value) noexcept {
     if (modified_) {
       destroyOwned();
-      new(ownedPtr()) U(std::forward<U>(value));
+      new(ownedPtr()) U(std::move(value));
     } else {
       if constexpr (HasView) {
         destroyView();
       }
       modified_ = true;
-      new(ownedPtr()) U(std::forward<U>(value));
+      new(ownedPtr()) U(std::move(value));
     }
     return *this;
   }
@@ -173,9 +173,9 @@ private:
 
   static constexpr bool HasView = not std::is_same_v<T, U>;
 
-  void destroyOwned() { ownedPtr()->~U(); }
+  void destroyOwned() noexcept { ownedPtr()->~U(); }
 
-  void destroyView() { viewPtr()->~T(); }
+  void destroyView() noexcept { viewPtr()->~T(); }
 
   [[nodiscard]] constexpr U* ownedPtr() { return reinterpret_cast<U*>(choice_.owned.data()); }
 

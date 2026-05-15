@@ -64,10 +64,10 @@ struct ValueGuard {
    * @param ref a reference to the variable that is to be assigned
    * @param newValue the new value to assign immediately
    */
-  ValueGuard(T& ref, T&& newValue) : // NOLINT(*-param-not-moved)
+  ValueGuard(T& ref, T&& newValue) :
       ptr_(&ref),
       oldValue_(ref) {
-    ref = std::forward<T>(newValue);
+    ref = std::move(newValue);
   }
 
   /**

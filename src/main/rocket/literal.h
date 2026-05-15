@@ -423,7 +423,7 @@ struct LiteralString {
   static constexpr std::array<C, sizeof...(Chars)> value = { Chars... };
 
   /// @member_op_cast{#std::basic_string_view}
-  constexpr operator std::basic_string_view<C>() const { // NOLINT(*-explicit-constructor)
+  constexpr operator std::basic_string_view<C>() const { // NOLINT
     return { value.data(), value.size() };
   }
 

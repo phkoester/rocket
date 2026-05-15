@@ -168,7 +168,7 @@ Process::exit(i32 status, bool allowUninited) const { // NOLINT(*-recursion)
   ROCKET_ASSERT(allowUninited || inited_, "Process not initialized");
 
   if (ROCKET_EXIT) {
-    std::exit(status); // NOLINT(concurrency-mt-unsafe)
+    std::exit(status); // NOLINT(concurrency-*)
   }
   if (ROCKET_QUICK_EXIT) {
     std::quick_exit(status);
@@ -178,7 +178,7 @@ Process::exit(i32 status, bool allowUninited) const { // NOLINT(*-recursion)
     std::quick_exit(status);
   }
   else {
-    std::exit(status); // NOLINT(concurrency-mt-unsafe)
+    std::exit(status); // NOLINT(concurrency-*)
   }
 }
 
@@ -206,7 +206,7 @@ Process::init(
   // Set the C locale from the environment
 
   const string localeName = locale ? locale->name() : "";
-  setlocale(LC_ALL, localeName.c_str()); // NOLINT(concurrency-mt-unsafe)
+  setlocale(LC_ALL, localeName.c_str()); // NOLINT(concurrency-*)
 
   // Set the C++ locale from the environment
 

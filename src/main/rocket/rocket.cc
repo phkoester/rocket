@@ -21,7 +21,7 @@ namespace {
  * @return pointer to the end
  */
 char*
-u128ToStringImpl(char* dest, u128 val) { // NOLINT(misc-no-recursion)
+u128ToStringImpl(char* dest, u128 val) { // NOLINT(*-recursion)
   if (val >= 10) {
     dest = u128ToStringImpl(dest, val / 10); // Recursive call
   }

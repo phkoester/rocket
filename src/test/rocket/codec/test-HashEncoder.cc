@@ -26,7 +26,7 @@ struct MyStruct {
   ROCKET_REFLECT_MEMBERS(MyStruct, Index, (ärger)(ökonom)(übermut)(vec));
 };
 
-ROCKET_REFLECT_MEMBERS_DECLARE(, MyStruct, Index); // NOLINT(misc-use-internal-linkage)
+ROCKET_REFLECT_MEMBERS_DECLARE(, MyStruct, Index); // NOLINT(*-internal-linkage)
 ROCKET_REFLECT_MEMBERS_DEFINE(, MyStruct, Index);
 
 // #TEST ----------------------------------------------------------------------------------------------------
