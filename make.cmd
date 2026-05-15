@@ -1,7 +1,7 @@
 ::
 :: make.cmd
 ::
-:: Usage: See `gaia-make.cmd`.
+:: Usage: See `gaia-make.cmd`
 ::
 :: Parameters:
 ::

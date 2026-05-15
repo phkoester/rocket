@@ -55,7 +55,7 @@ std::vector<char> exec(const std::vector<std::string_view>& args);
 consteval std::string_view
 executableSuffix() {
 #ifdef ROCKET_OS_WINDOWS
-  return std::string_view(".exe");
+  return ".exe"sv;
 #else
   return {};
 #endif
@@ -96,17 +96,16 @@ namespace env {
 /**
  * Returns all environment variables as a set of name-value pairs.
  *
- * This function is thread-safe as long as all callers use this API exclusively.
+ * This function is thread-safe as long as all callers use this API from `system.h` exclusively.
  *
  * @return a set of name-value pairs
  */
-std::unordered_map<std::string, std::string>
-get();
+std::unordered_map<std::string, std::string> get();
 
 /**
  * Returns the value of an environment variable. If the string conversion fails, this function returns null.
  *
- * This function is thread-safe as long as all callers use this API exclusively.
+ * This function is thread-safe as long as all callers use this API from `system.h` exclusively.
  *
  * @tparam T the type to convert a string value to
  * @param name the name of the environment variable
@@ -126,7 +125,7 @@ get(std::string_view name) {
 /**
  * Sets an environment variable.
  *
- * This function is thread-safe as long as all callers use this API exclusively.
+ * This function is thread-safe as long as all callers use this API from `system.h` exclusively.
  *
  * @attention In Windows, setting an environment variable to an empty string unsets the variable.
  *
@@ -144,7 +143,7 @@ set(std::string_view name, T&& value, bool replace = true) {
 /**
  * Unsets an environment variable.
  *
- * This function is thread-safe as long as all callers use this API exclusively.
+ * This function is thread-safe as long as all callers use this API from `system.h` exclusively.
  *
  * @param name the name of the environment variable
  */
