@@ -14,7 +14,7 @@ namespace rocket {
 
 // #Bimap ---------------------------------------------------------------------------------------------------
 
-/// The #Bimap type alias.
+/// The #rocket::Bimap type alias.
 template<typename K, typename V>
 using Bimap = boost::bimaps::bimap<
   boost::bimaps::set_of<K>,
@@ -41,7 +41,7 @@ makeBimap(std::initializer_list<std::pair<K, V>> list = {}) {
 
 // #UnorderedBimap ------------------------------------------------------------------------------------------
 
-/// The #UnorderedBimap type alias.
+/// The #rocket::UnorderedBimap type alias.
 template<typename K, typename V>
 using UnorderedBimap = boost::bimaps::bimap<
   boost::bimaps::unordered_set_of<K>,

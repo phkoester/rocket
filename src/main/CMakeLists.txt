@@ -24,9 +24,9 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
   list(APPEND ROCKET_COMPILE_DEFS ROCKET_CXX_COMPILER_MSVC)
 endif()
 
-if(LINUX)
+if(GAIA_OS_LINUX)
   list(APPEND ROCKET_COMPILE_DEFS ROCKET_OS_LINUX)
-elseif(WIN32)
+elseif(GAIA_OS_WINDOWS)
   list(APPEND ROCKET_COMPILE_DEFS ROCKET_OS_WINDOWS)
 endif()
 
@@ -44,7 +44,7 @@ add_custom_command(
 # Add the library ...........................................................................................
 
 set(ROCKET_PRIVATE_LINK_TARGETS)
-if(LINUX)
+if(GAIA_OS_LINUX)
   list(APPEND ROCKET_PRIVATE_LINK_TARGETS stdc++exp)
 endif()
 

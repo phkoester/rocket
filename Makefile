@@ -47,8 +47,6 @@
 .PHONY: build
 build: cmake-build
 
-COMPILE_DEPS := $(wildcard $(GAIA_DIR)/bin/*) $(wildcard $(GAIA_DIR)/src/main/cmake/*)
-
 include $(GAIA_DIR)/src/main/make/Makefile.mk
 
 # Build-related targets -------------------------------------------------------------------------------------

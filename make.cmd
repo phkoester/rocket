@@ -15,7 +15,7 @@ setlocal enableextensions
 set NAME=%~n0
 
 if not defined GAIA_DIR (
-  echo %NAME%: Environment variable `GAIA_DIR` is not defined. 1>&2
+  echo %NAME%: Environment variable `GAIA_DIR` not set. 1>&2
   exit /b 2
 )
 

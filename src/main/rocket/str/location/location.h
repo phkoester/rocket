@@ -85,7 +85,8 @@ struct Location {
   /// The range of the line containing #position.
   Range lineRange = {}; // NOLINT
   /**
-   * This member is only initialized if #LocationsConfig#setLineString was set to `true`.
+   * This member is only initialized if #rocket::str::location::LocationsConfig#setLineString was set to
+   * `true`.
    */
   std::optional<std::string> lineString = {}; // NOLINT
   std::string message; ///< Copied from the input position.
@@ -127,7 +128,7 @@ struct LocationsResult {
   /**
    * A copy of the configuration that was passed to #locations.
    *
-   * The #LocationsConfig#source member is possibly assigned a new value.
+   * The #rocket::str::location::LocationsConfig#source member is possibly assigned a new value.
    */
   LocationsConfig config;
   /**

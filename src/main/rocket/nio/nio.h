@@ -481,7 +481,7 @@ private:
  * A sink that appends to a string.
  *
  * If the sink is constructed without a string reference, it holds an owned string that can be accessed via
- * #StringSink::str.
+ * #rocket::nio::StringSink::str.
  */
 struct StringSink : Sink {
   /**

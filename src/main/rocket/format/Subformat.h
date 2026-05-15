@@ -184,9 +184,11 @@ private:
 
 // #fmt::formatter<#rocket::format::Subformat> --------------------------------------------------------------
 
-/// @spec_fmt_formatter{#rocket::format::Format)
+/// @spec_fmt_formatter{#rocket::format::Subformat}
 template<typename C>
 struct fmt::formatter<rocket::format::Subformat<C>, C> {
+  /// @cond undocumented
+
   template<typename FormatContext>
   constexpr FormatContext::iterator
   format(const rocket::format::Subformat<C>& val, FormatContext& ctx) const {
@@ -202,6 +204,8 @@ struct fmt::formatter<rocket::format::Subformat<C>, C> {
   parse(parse_context<C>& ctx) {
     return ctx.begin();
   }
+
+  /// @endcond
 };
 
 // EOF

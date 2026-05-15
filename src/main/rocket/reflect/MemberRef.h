@@ -26,7 +26,7 @@ struct MemberRef {
    * @ctor
    *
    * @param name the name of the member
-   * @param p the pointer to the member
+   * @param ptr the pointer to the member
    */
   consteval MemberRef(const char* name, T C::* ptr) : name_(name), ptr_(const_cast<Type Class::*>(ptr)) {}
 
