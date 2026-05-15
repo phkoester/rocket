@@ -189,7 +189,7 @@ parseCommand(const vector<string>& args, nio::Sink& out = nio::out, nio::Sink& e
     nio::StringSink buf;
     parseCommand({ "--help" }, buf, buf);
     string str = buf.str();
-    std::replace(str.begin(), str.end(), '\n', '~');
+    ranges::replace(str, '\n', '~');
 
     EXPECT_THAT(str, matchesRegex(
         "Usage: test-rocket-cl \\[OPTION\\]\\.\\.\\. list \\[OPTION\\]\\.\\.\\. FILE\\.\\.\\.~"

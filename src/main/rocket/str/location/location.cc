@@ -11,7 +11,7 @@
 #include "rocket/unicode/Character.h"
 #include "rocket/unicode/Iterator.h"
 
-#include <numeric>
+#include <ranges>
 
 using namespace rocket;
 using namespace std;
@@ -150,11 +150,9 @@ printLocations( // NOLINT(*-complexity)
 
   // Find out line-number width and format
   const auto& locations = locationsResult.locations;
-  u64 maxLine = accumulate(
-      locations.begin(),
-      locations.end(),
-      0_u64,
-      [](u64 max, const auto& loc) { return std::max(loc.line, max); });
+  u64 maxLine = locations.empty() ?
+    0_u64 :
+    ranges::max(locations | ranges::views::transform(&Location::line));
   const string maxLineStr =  fmt::format("{}", maxLine);
   const u64 lineNumberWidth = max(config.minLineNumberWidth, maxLineStr.size());
   const string blankPrefix = string(lineNumberWidth, ' ') + " | ";

@@ -10,7 +10,9 @@
 
 using namespace rocket::unicode;
 
-// Functions ------------------------------------------------------------------------------------------------
+namespace {
+
+// Local functions ------------------------------------------------------------------------------------------
 
 template<typename C> requires IsChar<C>
 void
@@ -33,6 +35,8 @@ testCharacter(const CharacterView<C>& c) {
   out.write('\n');
   out.println("[{:~<{}}]", "", c.width());
 }
+
+} // namespace
 
 // #TEST ----------------------------------------------------------------------------------------------------
 

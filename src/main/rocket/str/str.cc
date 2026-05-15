@@ -53,7 +53,7 @@ lower(u32string_view str) {
 
 void
 lowerIn(u32string& str) {
-  transform(str.begin(), str.end(), str.begin(), [](char32 c) { return CodePoint(c).lower(); });
+  ranges::transform(str, str.begin(), [](char32 c) { return CodePoint(c).lower(); });
 }
 
 vector<vector<string>>
@@ -139,7 +139,7 @@ upper(u32string_view str) {
 
 void
 upperIn(u32string& str) {
-  transform(str.begin(), str.end(), str.begin(), [](char32 c) { return CodePoint(c).upper(); });
+  ranges::transform(str, str.begin(), [](char32 c) { return CodePoint(c).upper(); });
 }
 
 string

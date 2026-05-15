@@ -15,12 +15,15 @@ using namespace rocket;
 using namespace rocket::unicode;
 using namespace std;
 
-auto& out = nio::out;
-auto& err = nio::err;
-
 ROCKET_LOG_DEFINE(logger);
 
-// Functions ------------------------------------------------------------------------------------------------
+namespace {
+
+// Local variables ------------------------------------------------------------------------------------------
+
+auto& out = nio::out;
+
+// Local functions ------------------------------------------------------------------------------------------
 
 int
 run(const optional<vector<string>>& args) {
@@ -28,6 +31,8 @@ run(const optional<vector<string>>& args) {
   ROCKET_LOG_INFO("args: {}", args);
   return EXIT_SUCCESS;
 }
+
+} // namespace
 
 // #main ----------------------------------------------------------------------------------------------------
 

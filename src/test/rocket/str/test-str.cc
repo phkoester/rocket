@@ -8,12 +8,16 @@
 
 using namespace rocket::str;
 
-// Functions ------------------------------------------------------------------------------------------------
+namespace {
+
+// Local functions ------------------------------------------------------------------------------------------
 
 vector<vector<string>>
 pars(const vector<vector<string>>& vec) {
   return vec;
 }
+
+} // namespace
 
 // #TEST ----------------------------------------------------------------------------------------------------
 
@@ -24,6 +28,12 @@ TEST(str, lines) {
   EXPECT_EQ(lines<char>("a\r\nb"), (vector<string_view>{ "a", "b" }));
   EXPECT_EQ(lines<char>("a\n\nb"), (vector<string_view>{ "a", "", "b" }));
   EXPECT_EQ(lines<char>("\na"), (vector<string_view>{ "", "a" }));
+}
+
+TEST(str, lowerIn) {
+  u32string str = U"ÄÖÜ";
+  lowerIn(str);
+  EXPECT_EQ(str, U"äöü");
 }
 
 #define NBSP "\u00A0"
@@ -172,6 +182,12 @@ TEST(str, upperChar32) {
   EXPECT_EQ(str::upper(U"debug"), U"DEBUG");
   EXPECT_EQ(str::upper(U"DEBUG"), U"DEBUG");
   EXPECT_EQ(str::upper(U"äöü"), U"ÄÖÜ");
+}
+
+TEST(str, upperIn) {
+  u32string str = U"äöü";
+  upperIn(str);
+  EXPECT_EQ(str, U"ÄÖÜ");
 }
 
 // EOF

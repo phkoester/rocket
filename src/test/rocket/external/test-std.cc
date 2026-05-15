@@ -23,14 +23,14 @@ TEST(std, f32OpCmp) {
 
   static_assert(std::is_lt(-limits::infinity() <=> 0.0F));
   static_assert(std::is_lt(0.0F <=> limits::infinity()));
-  static_assert(std::is_lteq(0.0F <=> 0.0F));
-  static_assert(std::is_gteq(0.0F <=> 0.0F));
+  static_assert(std::is_lteq(0.0F <=> 0.0F)); // NOLINT(misc-redundant-expression)
+  static_assert(std::is_gteq(0.0F <=> 0.0F)); // NOLINT(misc-redundant-expression)
   static_assert(std::is_lt(1.0F <=> 2.0F));
-  static_assert(std::is_eq(1.0F <=> 1.0F));
+  static_assert(std::is_eq(1.0F <=> 1.0F)); // NOLINT(misc-redundant-expression)
   static_assert(std::is_gt(2.0F <=> 1.0F));
   static_assert((nan <=> 0.0F) == std::partial_ordering::unordered);
   static_assert((0.0F <=> nan) == std::partial_ordering::unordered);
-  static_assert((nan <=> nan) == std::partial_ordering::unordered);
+  static_assert((nan <=> nan) == std::partial_ordering::unordered); // NOLINT(misc-redundant-expression)
 }
 
 // Segfaults on Windows with Clang 20.1.8

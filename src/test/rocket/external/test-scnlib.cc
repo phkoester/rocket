@@ -102,7 +102,7 @@ TEST(scnlib, scanF128) {
 
 TEST(scnlib, scanString) {
   {
-    const auto result = scn::scan<string, string>("[a    ][bbb  ]", "[{: <5}][{: <5}]");
+    const auto result = scn::scan<string, string>("[a    ][bbb  ]", "[{: <5}][{: <5}]"); // NOLINT
     ASSERT_TRUE(result);
     const auto [val1, val2] = result->values();
     EXPECT_EQ(val1, "a");

@@ -13,7 +13,7 @@ using namespace std;
 
 namespace {
 
-const set<string> FALSE_VALUES = {
+const set<string> LOWER_FALSE_VALUES = {
   "false", "nan", "nil", "no", "null", "none", "off", "undefined"
 };
 
@@ -29,8 +29,8 @@ StringConvert<bool>::isFalse(string_view str) {
     return true;
   }
   string lower(str);
-  transform(lower.begin(), lower.end(), lower.begin(), [](char c) { return tolower(c); });
-  return FALSE_VALUES.contains(lower);
+  ranges::transform(lower, lower.begin(), [](char c) { return tolower(c); });
+  return LOWER_FALSE_VALUES.contains(lower);
 }
 
 } // namespace rocket::str::internal

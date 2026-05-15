@@ -12,7 +12,7 @@
 
 enum MyEnum : u8 { fröb, fröber, fröberer, pörk, pörker, pörkerer };
 
-ROCKET_ENUM_DECLARE(, MyEnum, MyEnum);
+ROCKET_ENUM_DECLARE(, MyEnum, MyEnum); // NOLINT(misc-use-internal-linkage)
 ROCKET_ENUM_DEFINE(, MyEnum, MyEnum, (fröb)(fröber)(fröberer)(pörk)(pörker)(pörkerer));
 
 // #MyEnumClass ---------------------------------------------------------------------------------------------
@@ -30,7 +30,7 @@ enum MyEnumInNamespace : u8 { red, green, blue };
 
 } // namespace my_namespace
 
-ROCKET_ENUM_DECLARE(mynamespace, MyEnumInNamespace, MyEnumInNamespace);
+ROCKET_ENUM_DECLARE(mynamespace, MyEnumInNamespace, MyEnumInNamespace); // NOLINT(misc-use-internal-linkage)
 ROCKET_ENUM_DEFINE(mynamespace, MyEnumInNamespace, MyEnumInNamespace, (red)(green)(blue));
 
 // #TEST ----------------------------------------------------------------------------------------------------

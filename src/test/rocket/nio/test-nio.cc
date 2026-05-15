@@ -12,6 +12,8 @@
 using namespace rocket::nio;
 using namespace std::filesystem;
 
+namespace {
+
 // Local functions ------------------------------------------------------------------------------------------
 
 /// Returns "01234567890123...".
@@ -24,6 +26,8 @@ testString(u64 n, i32 add = 0) {
   }
   return ret;
 }
+
+} // namespace
 
 // #TEST ----------------------------------------------------------------------------------------------------
 

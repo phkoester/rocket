@@ -18,7 +18,7 @@ struct MyStruct {
   i32 ärger = 0;
   bool ökonom = false;
   string übermut;
-  vector<i32> vec = {}; // NOLINT
+  vector<i32> vec {};
 
   ROCKET_REFLECT_MEMBERS(MyStruct, Index, (ärger)(ökonom)(übermut)(vec));
 
@@ -28,7 +28,9 @@ struct MyStruct {
 ROCKET_REFLECT_MEMBERS_DECLARE(, MyStruct, Index);
 ROCKET_REFLECT_MEMBERS_DEFINE(, MyStruct, Index);
 
-// Functions ------------------------------------------------------------------------------------------------
+namespace {
+
+// Local functions ------------------------------------------------------------------------------------------
 
 template<typename T>
 string
@@ -54,6 +56,8 @@ decodeTell(string_view str) {
   nio::StringSource in(str);
   return { codec.decode<T>(in, { .cComments=true, .shellComments=true }), in.tell() };
 }
+
+} // namespace
 
 // #TEST ----------------------------------------------------------------------------------------------------
 
@@ -118,7 +122,7 @@ TEST(FormattedCodec, FormattedConsumerTuplePair) {
 TEST(FormattedCodec, FormattedConsumerList) {
   EXPECT_EQ(encode(forward_list<i32> { 1, 2, 3 }), "[1, 2, 3]");
 
-  const vector<i32> valVectorI32 = { 1, 2, 3 };
+  const vector<i32> valVectorI32 { 1, 2, 3 };
   EXPECT_EQ(encode(span<const i32>(valVectorI32)), "[1, 2, 3]");
 
   EXPECT_EQ(encode(vector<vector<i32>> { { 1, 2, 3 }, { 4, 5, 6 } }), "[[1, 2, 3], [4, 5, 6]]");
@@ -303,7 +307,7 @@ TEST(FormattedCodec, FormattedProducerDeclared) {
 
 TEST(FormattedCodec, FormattedProducerInstance) {
   using type = reflect::Instance<MyStruct, MyStruct::Three>;
-  const MyStruct val = { 42, true, "hello" };
+  const MyStruct val { 42, true, "hello" };
   EXPECT_EQ(
     (decode<type>("  ( ärger  =  42, ökonom=true, übermut=\"hello\",  )   ")),
     (type(val)));

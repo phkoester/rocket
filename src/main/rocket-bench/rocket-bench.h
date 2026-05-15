@@ -40,7 +40,7 @@ using namespace std;
 
 /// Defines and registers a benchmark function.
 #define BENCH(group, name, fn) \
-  void \
+  static void \
   group##_##name(benchmark::State& state) { \
     fn(state); \
   } \

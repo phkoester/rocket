@@ -22,7 +22,7 @@ struct MyStruct {
   ROCKET_REFLECT_MEMBERS(MyStruct, Three, (ärger)(ökonom)(übermut));
 };
 
-ROCKET_REFLECT_MEMBERS_DECLARE(, MyStruct, Index);
+ROCKET_REFLECT_MEMBERS_DECLARE(, MyStruct, Index); // NOLINT(misc-use-internal-linkage)
 ROCKET_REFLECT_MEMBERS_DEFINE(, MyStruct, Index);
 
 // #TEST ----------------------------------------------------------------------------------------------------

@@ -121,7 +121,7 @@ struct CompareConsumerImpl<DataType::Tuple, T, Cmp> {
     return consume(
       lhs,
       rhs,
-      std::make_index_sequence<std::tuple_size<T>::value>(),
+      std::make_index_sequence<std::tuple_size_v<T>>(),
       std::forward<Args>(args)...);
   }
 

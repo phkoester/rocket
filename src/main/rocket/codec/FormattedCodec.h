@@ -194,7 +194,7 @@ struct FormattedConsumerImpl<DataType::Tuple, T> {
     std::apply([&](auto&&... arg) {
       (consumeElem(std::forward<decltype(arg)>(arg), out, config, index++, std::forward<Args>(args)...), ...);
     }, val);
-    endContainer(out, config, std::tuple_size<T>::value, ')');
+    endContainer(out, config, std::tuple_size_v<T>, ')');
   }
 
 private:
@@ -624,7 +624,7 @@ struct FormattedProducerImpl<DataType::Tuple, T> {
     }, val);
 
     skip(in, config);
-    if (std::tuple_size<T>::value > 0 && read(in, ',')) { // Allow trailing comma if nonempty
+    if (std::tuple_size_v<T> > 0 && read(in, ',')) { // Allow trailing comma if nonempty
       skip(in, config);
     }
     if (not read(in, ')')) {

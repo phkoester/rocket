@@ -95,7 +95,7 @@ struct HashConsumerImpl<DataType::Tuple, T, Hash> {
   template<typename... Args>
   u64
   consume(const T& val, Args&&... args) {
-    u64 ret = std::tuple_size<T>::value;
+    u64 ret = std::tuple_size_v<T>;
     std::apply([&](auto&&... arg) {
       (consumeElem(ret, std::forward<decltype(arg)>(arg), std::forward<Args>(args)...), ...);
     }, val);

@@ -207,9 +207,9 @@ get() {
   unordered_map<string, string> ret;
 
 #ifdef ROCKET_OS_WINDOWS
-  char** p = _environ;
+  char** p = _environ; // NOLINT
 #else
-  char** p = __environ;
+  char** p = __environ; // NOLINT
 #endif
   while(*p != nullptr) {
     const string_view entry(*p);
