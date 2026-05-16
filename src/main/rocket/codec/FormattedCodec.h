@@ -96,7 +96,7 @@ template<typename C>
 struct FormattedConsumerImpl<DataType::Char, C> {
   void
   consume(C val, nio::Sink& out, CONFIG__) const {
-    const std::basic_string<C> str = { val };
+    const std::basic_string<C> str { val };
     const std::string utf8(unicode::ConvertTo<char>::apply(str));
     const std::string escaped = str::escape::escapeCString(utf8, { .quote='\'' });
     out.print("{}", escaped);

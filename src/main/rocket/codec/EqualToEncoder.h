@@ -299,8 +299,8 @@ struct EqualToConsumerImpl<DataType::Interval, T, Eq> {
 
   bool
   consume(const T& lhs, const T& rhs) {
-    const Pair lhsPair = { lhs.a, lhs.b };
-    const Pair rhsPair = { rhs.a, rhs.b };
+    const Pair lhsPair { lhs.a, lhs.b };
+    const Pair rhsPair { rhs.a, rhs.b };
     return EqualToConsumerImpl<PairDataType, Pair, Eq>().consume(lhsPair, rhsPair);
   }
 };

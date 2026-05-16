@@ -39,7 +39,7 @@ TEST(std, pairFormat) {
 TEST(std, pathFormat) {
   using namespace filesystem;
 
-  auto p = path("file");
+  const path p("file");
 
   EXPECT_EQ(fmt::format("{}", p), "file");
   EXPECT_EQ(fmt::format("{:g}", p), "file");
@@ -51,7 +51,7 @@ TEST(std, pathFormat) {
   EXPECT_EQ(fmt::format("{: >10?}", p), "    \"file\"");
   EXPECT_EQ(fmt::format("{: >10?g}", p), "    \"file\"");
 
-  vector<path> vec = { path("file1"), path("file2") };
+  vector<path> vec { path("file1"), path("file2") };
   EXPECT_EQ(fmt::format("{}", vec), "[\"file1\", \"file2\"]");
   EXPECT_EQ(fmt::format("{::}", vec), "[file1, file2]");
   EXPECT_EQ(fmt::format("{::~>10}", vec), "[~~~~~file1, ~~~~~file2]");
@@ -65,7 +65,7 @@ TEST(std, setFormat) {
 }
 
 TEST(std, spanFormat) {
-  auto vec = vector<i32> { 1, 2, 3 };
+  vector<i32> vec { 1, 2, 3 };
   EXPECT_EQ(fmt::format("{}", span<i32>(vec.begin(), vec.end())), "[1, 2, 3]");
 }
 

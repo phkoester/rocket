@@ -298,8 +298,8 @@ struct CompareConsumerImpl<DataType::Interval, T, Cmp> {
 
   auto
   consume(const T& lhs, const T& rhs) {
-    const Pair lhsPair = { lhs.a, lhs.b };
-    const Pair rhsPair = { rhs.a, rhs.b };
+    const Pair lhsPair { lhs.a, lhs.b };
+    const Pair rhsPair { rhs.a, rhs.b };
     return CompareConsumerImpl<PairDataType, Pair, Cmp>().consume(lhsPair, rhsPair);
   }
 };

@@ -56,7 +56,7 @@ struct Position {
    * There must be character bondaries at the ranges' lower and upper positions. The ranges are underlined
    * with the tilde (`~`).
    */
-  Ranges ranges = {}; // NOLINT
+  Ranges ranges {}; // NOLINT
   /**
    * The message associated with this position.
    *
@@ -68,7 +68,7 @@ struct Position {
    *
    * The caption may be null, bot not empty. It is displayed underneath the caret (`^`).
    */
-  std::optional<std::string> caption = {}; // NOLINT
+  std::optional<std::string> caption {}; // NOLINT
 };
 
 // #Location ------------------------------------------------------------------------------------------------
@@ -83,12 +83,12 @@ struct Location {
   u64 line; ///< The line number, starting with 1.
   u64 column = 0; ///< The column number (counting character widths), starting with 1.
   /// The range of the line containing #position.
-  Range lineRange = {}; // NOLINT
+  Range lineRange {}; // NOLINT
   /**
    * This member is only initialized if #rocket::str::location::LocationsConfig#setLineString was set to
    * `true`.
    */
-  std::optional<std::string> lineString = {}; // NOLINT
+  std::optional<std::string> lineString {}; // NOLINT
   std::string message; ///< Copied from the input position.
   std::optional<std::string> caption; ///< Copied from the input position.
 };
@@ -109,7 +109,7 @@ struct LocationsConfig {
    * If a source is known, such as a file or an URL, it should be assigned here. If #source is empty, then
    * the #locations function sets this to `"-"` if the source is `stdin`, to `"(input)"` otherwise.
    */
-  std::string source = {}; // NOLINT
+  std::string source {}; // NOLINT
   /**
    * Configures the handling of tab characters. If this is null, then there is no special treatment for tab
    * characters---they are displayed as `\t`. Otherwise, a tab expands to at most #tabSize spaces.

@@ -106,7 +106,7 @@ protected:
    * When an instance is constructed, the #bad bit is set, meaning the stream hasn't been opened yet and is
    * not ready to use. Derived classes must unset the #bad bit to mark the instance as usable.
    */
-  Status status_ = { .bad=1, .eof=0 };
+  Status status_ { .bad=1, .eof=0 };
 
   /// @ctor_default
   Io() = default;

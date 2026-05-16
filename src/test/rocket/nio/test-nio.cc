@@ -198,7 +198,7 @@ TEST(nio, FileSourceReadAll) {
   const auto temp = rocket::filesystem::tempFile();
 
   FileSink out(temp.string());
-  const vector<u8> data = { 0, 0, 0, 0 };
+  const vector<u8> data { 0, 0, 0, 0 };
   out.write(data);
   out.close();
 
@@ -240,7 +240,7 @@ TEST(nio, FileSourceReadString) {
 TEST(nio, StreamSourceReadAll) {
   auto temp = rocket::filesystem::tempFile();
 
-  const vector<u8> data = { 0, 0, 0, 0 };
+  const vector<u8> data { 0, 0, 0, 0 };
 
   {
     ofstream os(temp.c_str(), ios::binary);

@@ -45,8 +45,8 @@ TEST(EqualToEncoder, String) {
 
 TEST(EqualToEncoder, ListVector) {
   using type = vector<i32>;
-  const type a = { 1, 2, 3 };
-  const type b = { 3, 2, 1 };
+  const type a { 1, 2, 3 };
+  const type b { 3, 2, 1 };
 
   const EqualToEncoder<> encoder;
   EXPECT_TRUE(encoder.encode(a, a));
@@ -57,8 +57,8 @@ TEST(EqualToEncoder, ListVector) {
 
 TEST(EqualToEncoder, SetUnordered) {
   using type = unordered_set<string>;
-  const type a = { "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten" };
-  const type b = { "ten", "nine", "eight", "seven", "six", "five", "four", "three", "two", "one" };
+  const type a { "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten" };
+  const type b { "ten", "nine", "eight", "seven", "six", "five", "four", "three", "two", "one" };
 
   const EqualToEncoder<> encoder;
 
@@ -70,16 +70,16 @@ TEST(EqualToEncoder, SetUnordered) {
   EXPECT_FALSE(encoder.encode(a, type {}));
   EXPECT_FALSE(encoder.encode(a, type { "one", "two", "three" }));
 
-  const type c = { "one", "two", "three", "one", "two", "three", "one", "two", "three" };
-  const type d = { "one", "two", "three" };
+  const type c { "one", "two", "three", "one", "two", "three", "one", "two", "three" };
+  const type d { "one", "two", "three" };
   EXPECT_TRUE(encoder.encode(c, d));
 }
 
 TEST(EqualToEncoder, MapUnordered) {
   using type = unordered_map<i32, string>;
-  const type a = { { 1, "one" }, { 2, "two" }, { 3, "three" } };
-  const type b = { { 3, "three" }, { 2, "two" }, { 1, "one" } };
-  const type c = { { 1, "one" }, { 2, "two" }, { 3, "free" } };
+  const type a { { 1, "one" }, { 2, "two" }, { 3, "three" } };
+  const type b { { 3, "three" }, { 2, "two" }, { 1, "one" } };
+  const type c { { 1, "one" }, { 2, "two" }, { 3, "free" } };
 
   const EqualToEncoder<> encoder;
 
@@ -110,9 +110,9 @@ TEST(EqualToEncoder, BimapUnordered) {
 }
 
 TEST(EqualToEncoder, MyStruct) {
-  const MyStruct a = { 1, true, "one", { 1, 2, 3 } };
-  const MyStruct b = { 1, true, "one", { 1, 2, 3 } };
-  const MyStruct c = { 1, true, "two", { 1, 2, 3 } };
+  const MyStruct a { 1, true, "one", { 1, 2, 3 } };
+  const MyStruct b { 1, true, "one", { 1, 2, 3 } };
+  const MyStruct c { 1, true, "two", { 1, 2, 3 } };
 
   const EqualToEncoder<> encoder;
 

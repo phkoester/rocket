@@ -173,11 +173,10 @@ std::u32string capitalize(std::u32string_view str);
  * using namespace rocket;
  * using namespace std;
  *
- * set<string> s = { "red", "green", "blue" };
+ * set<string> s { "red", "green", "blue" };
  * string str = str::join(s.begin(), s.end(), ", ", " and ", ", and");
  * nio::out.println("The colors are {}.", str); // "The colors are red, green, and blue."
  * ```
- *
  *
  * @param begin the beginning of the range
  * @param end the end of the range

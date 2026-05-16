@@ -131,21 +131,21 @@ struct OptionConfig {
   /**
    * A set of allowed values.
    */
-  std::optional<std::set<std::string>> choices = {}; // NOLINT
+  std::optional<std::set<std::string>> choices {}; // NOLINT
   /**
    * A short description text.
    *
    * By convention, this starts with a lower-case verb and does not end with a period, e.g.
    * `"print NUM lines of leading context"`.
    */
-  std::optional<std::string> description = {}; // NOLINT
+  std::optional<std::string> description {}; // NOLINT
   /**
    * A short format description.
    *
    * If the option takes a value, this parameter should briefly describe the format, e.g.
    * <code>"file"</code>, <code>"number"</code>, or <code>"`red`, `green`, or `blue`"</code>.
    */
-  std::optional<std::string> format = {}; // NOLINT
+  std::optional<std::string> format {}; // NOLINT
   /**
    * A pointer to an option group.
    *
@@ -157,7 +157,7 @@ struct OptionConfig {
    *
    * If null, this will be auto-configured.
    */
-  std::optional<u64> minOccurs = {}; // NOLINT
+  std::optional<u64> minOccurs {}; // NOLINT
    /**
    * Maximum number of occurrences.
    */
@@ -173,19 +173,19 @@ struct OptionConfig {
    *
    * For instance, if this is `"⨁"`, the option may be chosen via `-⨁` on the command line.
    */
-  std::optional<unicode::Character<char>> shortName = {}; // NOLINT
+  std::optional<unicode::Character<char>> shortName {}; // NOLINT
   /**
    * Whether the option takes a value.
    *
    * If null, this will be auto-configured.
    */
-  std::optional<bool> takesValue = {}; // NOLINT
+  std::optional<bool> takesValue {}; // NOLINT
   /**
    * An optional verbose description.
    *
    * A verbose description that is displayed when verbose help is requested.
    */
-  std::optional<std::string> verboseDescription = {}; // NOLINT
+  std::optional<std::string> verboseDescription {}; // NOLINT
 };
 
 // #Option --------------------------------------------------------------------------------------------------
@@ -390,7 +390,7 @@ struct ParameterConfig {
   /**
    * A set of allowed values.
    */
-  std::optional<std::set<std::string>> choices = {}; // NOLINT
+  std::optional<std::set<std::string>> choices {}; // NOLINT
   /**
    * Whether options shall be consumed as positional arguments after this parameter.
    *
@@ -404,14 +404,14 @@ struct ParameterConfig {
    * By convention, this starts with a lower-case letter and does not end with a period, e.g.
    * `"the input file"`.
    */
-  std::optional<std::string> description = {}; // NOLINT
+  std::optional<std::string> description {}; // NOLINT
   /**
    * A short format description.
    *
    * This parameter should briefly describe the format, e.g. <code>"file"</code>, <code>"number"</code>, or
    * <code>"`red`, `green`, or `blue`"</code>.
    */
-  std::optional<std::string> format = {}; // NOLINT
+  std::optional<std::string> format {}; // NOLINT
   /**
    * Minimum number of occurrences.
    */
@@ -421,7 +421,7 @@ struct ParameterConfig {
    *
    * If null, this will be auto-configured.
    */
-  std::optional<u64> maxOccurs = {}; // NOLINT
+  std::optional<u64> maxOccurs {}; // NOLINT
   /**
    * The parameter name.
    *
@@ -433,7 +433,7 @@ struct ParameterConfig {
    *
    * A verbose description that is displayed when verbose help is requested.
    */
-  std::optional<std::string> verboseDescription = {}; // NOLINT
+  std::optional<std::string> verboseDescription {}; // NOLINT
 };
 
 // #Parameter -----------------------------------------------------------------------------------------------
@@ -535,11 +535,11 @@ struct CommandLineConfig {
    */
   std::vector<std::string> usages;
   /// Prolog text to be displayed when the `--help` option is supplied.
-  std::optional<std::string> prolog = {}; // NOLINT
+  std::optional<std::string> prolog {}; // NOLINT
   /// Epilog text to be displayed when the `--help` option is supplied.
-  std::optional<std::string> epilog = {}; // NOLINT
+  std::optional<std::string> epilog {}; // NOLINT
   /// Version text to be displayed when the `--version` option is supplied.
-  std::optional<std::string> version = {}; // NOLINT
+  std::optional<std::string> version {}; // NOLINT
 
   /**
    * Did another module process the command line and output something? If this is `true`, an extra empty line

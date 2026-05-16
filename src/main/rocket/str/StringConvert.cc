@@ -13,7 +13,7 @@ using namespace std;
 
 namespace {
 
-const set<string> LOWER_FALSE_VALUES = {
+const set<string> LOWER_FALSE_VALUES {
   "false", "nan", "nil", "no", "null", "none", "off", "undefined"
 };
 

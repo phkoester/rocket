@@ -14,7 +14,7 @@
 
 // Constants ------------------------------------------------------------------------------------------------
 
-constexpr array<const char*, 7> SMALL_CONST_MAP_KEYS = {
+constexpr array<const char*, 7> SMALL_CONST_MAP_KEYS {
   "alpha", "bravo", "charlie", "delta", "echo", "foxtrot", "golf"
 };
 

@@ -151,7 +151,7 @@ TEST(unicode, utf8Validate) {
   static_assert("�"sv.size() == 3);
 
   {
-    const string str = { 'a', CONT, 'b' };
+    const string str { 'a', CONT, 'b' };
     auto cow = utf8::validate(str, &pos);
     EXPECT_TRUE(cow.modified());
     EXPECT_EQ(cow.get(), "a�b");
@@ -159,7 +159,7 @@ TEST(unicode, utf8Validate) {
   }
 
   {
-    const string str = { 'a', TWO_BYTES, 'b', 'c' };
+    const string str { 'a', TWO_BYTES, 'b', 'c' };
     auto cow = utf8::validate(str, &pos);
     EXPECT_TRUE(cow.modified());
     EXPECT_EQ(cow.get(), "a�bc");
@@ -167,7 +167,7 @@ TEST(unicode, utf8Validate) {
   }
 
   {
-    const string str = { 'a', THREE_BYTES, CONT };
+    const string str { 'a', THREE_BYTES, CONT };
     auto cow = utf8::validate(str, &pos);
     EXPECT_TRUE(cow.modified());
     EXPECT_EQ(cow.get(), "a�");
@@ -175,7 +175,7 @@ TEST(unicode, utf8Validate) {
   }
 
   {
-    const string str = { 'a', FOUR_BYTES, CONT, 'b' };
+    const string str { 'a', FOUR_BYTES, CONT, 'b' };
     auto cow = utf8::validate(str, &pos);
     EXPECT_TRUE(cow.modified());
     EXPECT_EQ(cow.get(), "a��b");
@@ -197,7 +197,7 @@ TEST(unicode, utf32Validate) {
   }
 
   {
-    const u32string str = { 'a', D800, 'b', MAX_PLUS_1 };
+    const u32string str { 'a', D800, 'b', MAX_PLUS_1 };
     const u32string_view sv = str;
     auto cow = utf32::validate(sv, &pos);
     EXPECT_TRUE(cow.modified());

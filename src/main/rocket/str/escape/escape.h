@@ -67,7 +67,10 @@ struct Result {
  * @param result a pointer to a #rocket::str::escape::Result. If it is nonnull, then the result is populated
  * @return the escaped string
  */
-std::string escapeCString(std::string_view input, const CStringConfig& config = {}, Result* result = nullptr);
+std::string escapeCString(
+  std::string_view input,
+  const CStringConfig& config = {},
+  Result* result = nullptr);
 
 /**
  * Unescapes a C string.
@@ -77,7 +80,10 @@ std::string escapeCString(std::string_view input, const CStringConfig& config = 
  * @param result a pointer to a #rocket::str::escape::Result. If it is nonnull, then the result is populated
  * @return the unescaped string
  */
-std::string unescapeCString(std::string_view input, const CStringConfig& config = {}, Result* result = nullptr);
+std::string unescapeCString(
+  std::string_view input,
+  const CStringConfig& config = {},
+  Result* result = nullptr);
 
 /**
  * Escapes an input string to a regular expression.

@@ -420,7 +420,7 @@ f128 operator""_f128(std_long_double val);
 template<typename C, C... Chars> requires IsChar<C>
 struct LiteralString {
   /// The value, as an array of characters.
-  static constexpr std::array<C, sizeof...(Chars)> value = { Chars... };
+  static constexpr std::array<C, sizeof...(Chars)> value { Chars... };
 
   /// @member_op_cast{#std::basic_string_view}
   constexpr operator std::basic_string_view<C>() const { // NOLINT

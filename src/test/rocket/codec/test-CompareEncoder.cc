@@ -73,7 +73,7 @@ TEST(CompareEncoder, String) {
 }
 
 TEST(CompareEncoder, ListSpan) {
-  const vector<i32> v = { 1, 2, 3 };
+  const vector<i32> v { 1, 2, 3 };
   const span<const i32> span = v;
 
   const CompareEncoder<> encoder;
@@ -96,8 +96,8 @@ TEST(CompareEncoder, SetVector) {
   using Elem = vector<i32>;
 
   using Set = set<Elem>;
-  const Set a = { { 1, 2, 3 }, { 4, 5, 6 } };
-  const Set b = { { 4, 5, 6 }, { 1, 2, 3 } };
+  const Set a { { 1, 2, 3 }, { 4, 5, 6 } };
+  const Set b { { 4, 5, 6 }, { 1, 2, 3 } };
 
   const CompareEncoder<> encoder;
   EXPECT_TRUE(std::is_eq(encoder.encode(a, b)));
@@ -108,8 +108,8 @@ TEST(CompareEncoder, MapVector) {
   using Elem = vector<i32>;
 
   using Map = map<Elem, Elem>;
-  const Map a = { { { 1, 2, 3 }, { 4, 5, 6 } }, { { 4, 5, 6 }, { 1, 2, 3 } } };
-  const Map b = { { { 4, 5, 6 }, { 1, 2, 3 } }, { { 1, 2, 3 }, { 4, 5, 6 } } };
+  const Map a { { { 1, 2, 3 }, { 4, 5, 6 } }, { { 4, 5, 6 }, { 1, 2, 3 } } };
+  const Map b { { { 4, 5, 6 }, { 1, 2, 3 } }, { { 1, 2, 3 }, { 4, 5, 6 } } };
 
   const CompareEncoder<> encoder;
   EXPECT_TRUE(std::is_eq(encoder.encode(a, b)));

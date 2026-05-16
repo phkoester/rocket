@@ -82,7 +82,7 @@ template<typename C>
 struct TracingConsumerImpl<DataType::Char, C> {
   u64
   consume(C val, nio::StringSink& out) {
-    const basic_string<C> str = { val };
+    const basic_string<C> str { val };
     return out.println("consuming character: '{}'", unicode::ConvertTo<char>::apply(str));
   }
 };
@@ -525,14 +525,14 @@ TEST(codec, TracingConsumerVectorAndOptionalInTypeLoop) {
 
   {
     nio::StringSink out;
-    const type val = {};
+    const type val;
     encoder.encode(val, out);
     EXPECT_EQ(out.str(), "consuming list: 0\n");
   }
 
   {
     nio::StringSink out;
-    const type val = { optional<vector<i32>> { vector<i32> { 1, 2 } } };
+    const type val { optional<vector<i32>> { vector<i32> { 1, 2 } } };
     encoder.encode(val, out);
     EXPECT_EQ(out.str(),
       "consuming list: 1\n"
