@@ -54,6 +54,7 @@ std::vector<char> exec(const std::vector<std::string_view>& args);
  */
 consteval std::string_view
 executableSuffix() {
+  using namespace std;
 #ifdef ROCKET_OS_WINDOWS
   return ".exe"sv;
 #else
