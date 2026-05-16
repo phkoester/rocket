@@ -41,6 +41,7 @@ scan_expected<ranges::iterator_t<Range>> internal_skip_classic_whitespace(
     template SCN_PUBLIC scan_expected<Context::iterator> \
     scanner_scan_for_builtin_type(T&, Context&, const format_specs&);
 
+#if 0 // XXX
 #ifndef ROCKET_OS_WINDOWS
 // Non-Windows
 #define SCN_DEFINE_SCANNER_SCAN_FOR_CTX(Context)                             \
@@ -72,6 +73,10 @@ scan_expected<ranges::iterator_t<Range>> internal_skip_classic_whitespace(
 #define SCN_DEFINE_SCANNER_SCAN_FOR_CTX(Context)                             \
   SCN_DEFINE_SCANNER_SCAN_FOR_TYPE(bool, Context)
 #endif // ROCKET_OS_WINDOWS
+#endif
+
+#define SCN_DEFINE_SCANNER_SCAN_FOR_CTX(Context)                             \
+  SCN_DEFINE_SCANNER_SCAN_FOR_TYPE(bool, Context)
 
 SCN_DEFINE_SCANNER_SCAN_FOR_CTX(scan_context)
 SCN_DEFINE_SCANNER_SCAN_FOR_CTX(wscan_context)

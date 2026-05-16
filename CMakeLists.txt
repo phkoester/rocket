@@ -24,13 +24,6 @@ AddVar(ROCKET_BUILD_BENCH BOOL ${ROCKET_MASTER_PROJECT} "Enable benchmarking and
 AddVar(ROCKET_BUILD_TEST  BOOL ${ROCKET_MASTER_PROJECT} "Enable testing and build tests")
 AddVar(ROCKET_NIO_LOG     BOOL OFF                      "Enable logging of `rocket::nio`")
 
-AddVar(ROCKET_BENCHMARK_VERSION STRING 1.9.5  "benchmark version")
-AddVar(ROCKET_BOOST_VERSION     STRING 1.85.0 "Boost version")
-AddVar(ROCKET_FMT_VERSION       STRING 12.1.0 "{fmt} version")
-AddVar(ROCKET_GTEST_VERSION     STRING 1.17.0 "GTest version")
-AddVar(ROCKET_ICU_VERSION       STRING 74.2   "ICU version")
-AddVar(ROCKET_SCN_VERSION       STRING master "scnlib version")
-
 # Set project-specific compiler definitions, features, and options ------------------------------------------
 
 set(ROCKET_COMPILE_DEFS)
