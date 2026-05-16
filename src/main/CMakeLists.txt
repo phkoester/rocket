@@ -155,8 +155,7 @@ target_compile_options(rocket PUBLIC ${COMPILE_FLAGS})
 # Make `scn/impl.h` available
 target_include_directories(rocket SYSTEM PRIVATE ${CMAKE_BINARY_DIR}/_deps/scnlib-src/src)
 target_link_libraries(rocket
-  # PUBLIC ${ROCKET_BOOST_LINK_TARGETS} fmt::fmt-header-only ICU::uc scn::scn
-  PUBLIC ${ROCKET_BOOST_LINK_TARGETS} fmt::fmt-header-only ICU::data ICU::i18n ICU::io ICU::tu ICU::uc scn::scn
+  PUBLIC ${ROCKET_BOOST_LINK_TARGETS} fmt::fmt-header-only ICU::uc scn::scn
   PRIVATE ${ROCKET_PRIVATE_LINK_TARGETS}
 )
 
