@@ -209,7 +209,7 @@ TEST_F(Cxx, forwardWithBaz) {
 }
 
 TEST_F(Cxx, implicitVirtualDtor) {
-  A* const p = new B; // XXX
+  A* p = new B; // NOLINT
   EXPECT_FALSE(Member::dtorCalled);
   delete p; // NOLINT
   // Class #B needs not declare an overriding destructor---it is there implicitly

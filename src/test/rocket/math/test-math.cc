@@ -31,7 +31,7 @@ TEST(math, meanAndStandardDeviation) {
   normal_distribution<f64> distrib(7, 3); // Mean 7, standard deviation 3
 
   vector<f64> vec(1'000'000); // 1 million
-  generate(vec.begin(), vec.end(), [&]{ return distrib(gen); });
+  ranges::generate(vec, [&]{ return distrib(gen); });
 
   const auto mu = mean<f64>(vec.begin(), vec.end());
   EXPECT_NEAR(mu, 7, 0.01);

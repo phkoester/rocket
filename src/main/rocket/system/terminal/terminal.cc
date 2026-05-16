@@ -151,7 +151,7 @@ position(nio::Sink& out) {
 
   // Scan the response
 
-  const auto result = scn::scan<u64, u64>(response, "\x1b[{};{}R");
+  const auto result = scn::scan<u64, u64>(response, "\x1b[{};{}R"); // NOLINT
   ROCKET_EXPECT(result, "Cannot scan response {:?}", response);
   const auto[y, x] = result->values();
 
