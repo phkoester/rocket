@@ -23,7 +23,7 @@ ROCKET_LOG_DEFINE(toy);
 
 enum class Color : u8 { Red, Green, Blue };
 
-ROCKET_ENUM_DECLARE(, Color, Color);
+ROCKET_ENUM_DECLARE(, Color, Color); // NOLINT(*-internal-linkage)
 ROCKET_ENUM_DEFINE(, Color, Color, (Red)(Green)(Blue));
 
 namespace {

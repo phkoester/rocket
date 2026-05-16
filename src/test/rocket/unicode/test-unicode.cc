@@ -22,12 +22,16 @@ constexpr char CONT         = static_cast<char>(0b1011'1111);
 constexpr char32 D800       = static_cast<char32>(0xD800U);
 constexpr char32 MAX_PLUS_1 = static_cast<char32>(0x10FFFFU + 1);
 
-// Functions ------------------------------------------------------------------------------------------------
+namespace {
+
+// Local functions ------------------------------------------------------------------------------------------
 
 auto
 positions(initializer_list<pair<u64, u64>> list) {
   return makeUnorderedBimap(list);
 }
+
+} // namespace
 
 // #TEST ----------------------------------------------------------------------------------------------------
 
@@ -112,7 +116,7 @@ TEST(unicode, conversions) {
 
   vector<char32> vec;
   u32string str = utf8To32(str1);
-  copy(str.begin(), str.end(), back_inserter(vec));
+  ranges::copy(str, back_inserter(vec));
   EXPECT_EQ(vec, (vector<char32> { 97, 0x20ac, 98 }));
 
   const u32string str2 = utf8To32(str1);

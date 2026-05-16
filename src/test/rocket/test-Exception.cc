@@ -10,6 +10,8 @@
 
 #include <fmt/xchar.h>
 
+using namespace std;
+
 // #TEST ----------------------------------------------------------------------------------------------------
 
 TEST(Exception, WrappedExceptionFormat) { // NOLINT(*-complexity)
@@ -23,11 +25,11 @@ TEST(Exception, WrappedExceptionFormat) { // NOLINT(*-complexity)
     EXPECT_NE(s32.find(U"oops1"), u32string::npos);
 
     auto msg = fmt::format("{:?}", WrappedException(ex1));
-    std::replace(msg.begin(), msg.end(), '\n', '|');
+    ranges::replace(msg, '\n', '|');
     EXPECT_THAT(msg, matchesRegex(".*\\.cc:\\d+: oops1\\|.*|.*|.*"));
 
     msg = fmt::format("{:?t}", WrappedException(ex1));
-    std::replace(msg.begin(), msg.end(), '\n', '|');
+    ranges::replace(msg, '\n', '|');
     EXPECT_THAT(msg, matchesRegex("`rocket::InvalidState`: .*\\.cc:\\d+: oops1\\|.*|.*|.*"));
 
     try {

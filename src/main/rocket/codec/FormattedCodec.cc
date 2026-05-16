@@ -105,10 +105,10 @@ read(nio::StringSource& in, const std::set<std::string_view>& values, bool ignor
       // Case-insensitive
 
       string lhs(available.substr(0, value.size()));
-      transform(lhs.begin(), lhs.end(), lhs.begin(), [](char c) { return tolower(c); });
+      ranges::transform(lhs, lhs.begin(), [](char c) { return tolower(c); });
 
       string rhs(value);
-      transform(rhs.begin(), rhs.end(), rhs.begin(), [](char c) { return tolower(c); });
+      ranges::transform(rhs, rhs.begin(), [](char c) { return tolower(c); });
 
       if (lhs == rhs) {
         in.seek(safe<i64>(value.size()), nio::SeekMode::cur);

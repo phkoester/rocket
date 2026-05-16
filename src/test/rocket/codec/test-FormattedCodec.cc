@@ -18,14 +18,14 @@ struct MyStruct {
   i32 ärger = 0;
   bool ökonom = false;
   string übermut;
-  vector<i32> vec {};
+  vector<i32> vec = {}; // NOLINT
 
   ROCKET_REFLECT_MEMBERS(MyStruct, Index, (ärger)(ökonom)(übermut)(vec));
 
   ROCKET_REFLECT_MEMBERS(MyStruct, Three, (ärger)(ökonom)(übermut));
 };
 
-ROCKET_REFLECT_MEMBERS_DECLARE(, MyStruct, Index);
+ROCKET_REFLECT_MEMBERS_DECLARE(, MyStruct, Index); // NOLINT(*-internal-linkage)
 ROCKET_REFLECT_MEMBERS_DEFINE(, MyStruct, Index);
 
 namespace {

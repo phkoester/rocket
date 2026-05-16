@@ -33,7 +33,7 @@ public:
   ROCKET_REFLECT_MEMBERS(MyStruct, Public, (ä)(b));
 };
 
-ROCKET_REFLECT_MEMBERS_DECLARE(, MyStruct, Index);
+ROCKET_REFLECT_MEMBERS_DECLARE(, MyStruct, Index); // NOLINT(*-internal-linkage)
 ROCKET_REFLECT_MEMBERS_DEFINE(, MyStruct, Index);
 
 // #MyDerivedStruct -----------------------------------------------------------------------------------------
@@ -52,7 +52,7 @@ public:
   ROCKET_REFLECT_MEMBERS_DERIVED(MyStruct, Index, MyDerivedStruct, Index, (d)(e));
 };
 
-ROCKET_REFLECT_MEMBERS_DECLARE(, MyDerivedStruct, Index);
+ROCKET_REFLECT_MEMBERS_DECLARE(, MyDerivedStruct, Index); // NOLINT(*-internal-linkage)
 ROCKET_REFLECT_MEMBERS_DEFINE(, MyDerivedStruct, Index);
 
 // #TEST ----------------------------------------------------------------------------------------------------

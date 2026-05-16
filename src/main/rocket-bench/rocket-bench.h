@@ -40,10 +40,12 @@ using namespace std;
 
 /// Defines and registers a benchmark function.
 #define BENCH(group, name, fn) \
-  static void \
-  group##_##name(benchmark::State& state) { \
-    fn(state); \
-  } \
-  BENCHMARK(group##_##name);
+  namespace { \
+    void \
+    group##_##name(benchmark::State& state) { \
+      fn(state); \
+    } \
+    BENCHMARK(group##_##name); \
+  }
 
 // EOF

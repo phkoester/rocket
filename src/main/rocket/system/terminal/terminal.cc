@@ -147,7 +147,6 @@ position(nio::Sink& out) {
 #else
   // Send the ANSI code requesting cursor position
 
-  const Ansi ansi(true); // We know the sink is connected to a terminal
   const string response = sendAnsiRequest(out, "\x1b[6n");
 
   // Scan the response

@@ -46,7 +46,7 @@ TEST(HashEncoder, i128) {
 
 TEST(HashEncoder, Pointer) {
   const HashEncoder<> encoder;
-  void* ptr = nullptr;
+  void* const ptr = nullptr; // XXX
   EXPECT_EQ(encoder.encode(ptr), 0);
 }
 

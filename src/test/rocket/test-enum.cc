@@ -19,7 +19,7 @@ ROCKET_ENUM_DEFINE(, MyEnum, MyEnum, (fröb)(fröber)(fröberer)(pörk)(pörker)
 
 enum class MyEnumClass : u8 { hürx, hürxer, hürxerer };
 
-ROCKET_ENUM_DECLARE(, MyEnumClass, MyEnumClass);
+ROCKET_ENUM_DECLARE(, MyEnumClass, MyEnumClass); // NOLINT(*-internal-linkage)
 ROCKET_ENUM_DEFINE(, MyEnumClass, MyEnumClass, (hürx)(hürxer)(hürxerer));
 
 // #MyEnumInNamespace ---------------------------------------------------------------------------------------

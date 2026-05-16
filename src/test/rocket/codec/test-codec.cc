@@ -31,14 +31,16 @@ struct MyStruct {
   ROCKET_REFLECT_MEMBERS(MyStruct, Three, (ärger)(ökonom)(übermut));
 };
 
-ROCKET_REFLECT_MEMBERS_DECLARE(, MyStruct, Index);
+ROCKET_REFLECT_MEMBERS_DECLARE(, MyStruct, Index); // NOLINT(*-internal-linkage)
 ROCKET_REFLECT_MEMBERS_DEFINE(, MyStruct, Index);
 
-// Functions ------------------------------------------------------------------------------------------------
+namespace {
+
+// Local functions ------------------------------------------------------------------------------------------
 
 // Tests if #str is available in #in
 bool
-read(nio::Source& in, std::string_view str) {
+read(nio::Source& in, string_view str) {
   auto pos = in.tell();
   string buf(str.size(), ' ');
   const auto n = in.read(buf);
@@ -61,6 +63,8 @@ readI32(nio::Source& in) {
   throw InputFailure(in.tell(), "expected integer");
 }
 
+} // namespace
+
 // #TracingConsumerImpl -------------------------------------------------------------------------------------
 
 template<DataType, typename T>
@@ -78,7 +82,7 @@ template<typename C>
 struct TracingConsumerImpl<DataType::Char, C> {
   u64
   consume(C val, nio::StringSink& out) {
-    const std::basic_string<C> str = { val };
+    const basic_string<C> str = { val };
     return out.println("consuming character: '{}'", unicode::ConvertTo<char>::apply(str));
   }
 };
@@ -120,7 +124,7 @@ struct TracingConsumerImpl<DataType::Tuple, T> {
   template<typename... Args>
   u64
   consume(const T& val, nio::StringSink& out, Args&&... args) {
-    const auto size = std::tuple_size<T>::value;
+    const auto size = std::tuple_size_v<T>;
     auto ret = out.println("consuming tuple: {}", size);
     std::apply([&](auto&&... arg) {
       (consumeElem(ret, std::forward<decltype(arg)>(arg), out, std::forward<Args>(args)...), ...);
