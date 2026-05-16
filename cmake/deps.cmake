@@ -49,7 +49,8 @@ endif()
 
 # ICU -------------------------------------------------------------------------------------------------------
 
-find_package(ICU ${GAIA_ICU_VERSION} COMPONENTS uc) # data i18n io
+# find_package(ICU ${GAIA_ICU_VERSION} COMPONENTS uc) # data i18n io
+find_package(ICU ${GAIA_ICU_VERSION} COMPONENTS data i18n io tu uc) # XXX
 
 # scnlib ----------------------------------------------------------------------------------------------------
 
