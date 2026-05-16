@@ -6,7 +6,7 @@ include(FetchContent)
 
 # Boost -----------------------------------------------------------------------------------------------------
 
-find_package(Boost ${ROCKET_BOOST_VERSION} CONFIG)
+find_package(Boost ${ROCKET_BOOST_VERSION} QUIET)
 if(NOT Boost_FOUND)
   FetchContent_Declare(
     Boost
@@ -44,7 +44,7 @@ FetchContent_MakeAvailable(fmt)
 
 # GTest -----------------------------------------------------------------------------------------------------
 
-find_package(GTest ${ROCKET_GTEST_VERSION})
+find_package(GTest ${ROCKET_GTEST_VERSION} QUIET)
 if(NOT GTest_FOUND)
   FetchContent_Declare(
     GTest
@@ -65,7 +65,7 @@ endif()
 
 # benchmark (must follow GTest) -----------------------------------------------------------------------------
 
-find_package(benchmark ${ROCKET_BENCHMARK_VERSION})
+find_package(benchmark ${ROCKET_BENCHMARK_VERSION} QUIET)
 if(NOT benchmark_FOUND)
   FetchContent_Declare(
     benchmark
@@ -93,10 +93,10 @@ endif()
 #
 # On Windows,
 #
-# - download https://github.com/unicode-org/icu/releases/download/release-77-1/icu4c-77_1-Win64-MSVC2022.zip
-# - unpack, copy to C:\icu4c-77_1-Win64-MSVC2022
-# - set system variable ICU_ROOT to C:\icu4c-77_1-Win64-MSVC2022
-# - add C:\icu4c-77_1-Win64-MSVC2022\bin64 to the system variable PATH
+# - download <https://github.com/unicode-org/icu/releases/download/release-78.2/icu4c-78.2-Win64-MSVC2022.zip>
+# - unpack, copy to `C:\icu4c-78.2-Win64-MSVC2022`
+# - set system variable `ICU_ROOT` to `C:\icu4c-78.2-Win64-MSVC2022`
+# - add `C:\icu4c-78.2-Win64-MSVC2022\bin64` to the system variable `PATH`
 #
 # -----------------------------------------------------------------------------------------------------------
 
