@@ -22,7 +22,7 @@ systemTempDir() {
 #ifdef ROCKET_OS_WINDOWS
   auto windir = system::env::get<string>("WINDIR");
   if (windir) {
-    ret fs::path(*windir) / "Temp";
+    ret = fs::path(*windir) / "Temp";
   } else {
     ret = fs::temp_directory_path();
   }
