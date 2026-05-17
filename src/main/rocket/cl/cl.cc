@@ -12,6 +12,8 @@
 #include "rocket/system/terminal/terminal.h"
 #include "rocket/unicode/Iterator.h"
 
+namespace fs = std::filesystem;
+
 using namespace rocket;
 using namespace std;
 
@@ -21,8 +23,6 @@ namespace {
 
 void
 addArg(vector<string>& out, const string& arg, set<string>& seenFiles) { // NOLINT(*-recursion)
-  using namespace std::filesystem;
-
   if (arg.starts_with("@")) {
     if (arg.size() == 1) {
       // "@" is just a regular argument
@@ -33,9 +33,9 @@ addArg(vector<string>& out, const string& arg, set<string>& seenFiles) { // NOLI
     } else {
       // Check argument file
       string file = arg.substr(1);
-      path absPath;
+      fs::path absPath;
       try {
-        absPath = canonical(file);
+        absPath = fs::canonical(file);
       } catch (const exception&) {
         ROCKET_FAIL("Cannot resolve argument file `{}`", file);
       }

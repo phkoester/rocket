@@ -12,8 +12,9 @@
 #include "rocket/log/log.h"
 #include "rocket/system/system.h"
 
+namespace fs = std::filesystem;
+
 using namespace rocket::log;
-using namespace std::filesystem;
 
 ROCKET_LOG_DEFINE(test_log);
 
@@ -33,7 +34,7 @@ TEST(log, loggerZip) {
   const auto path = testExcecutable("logger");
   const string executable = path.string();
 
-  const auto logFilePattern = temp_directory_path() / "logger-@[date].log@[zip]";
+  const auto logFilePattern = fs::temp_directory_path() / "logger-@[date].log@[zip]";
 
   // Run `logger`, check log file
 
@@ -42,26 +43,26 @@ TEST(log, loggerZip) {
 
   auto time = rocket::chrono::now<log::internal::Clock>();
   string logFile1 = log::internal::expandLogFilePattern(logFilePattern.string(), time);
-  EXPECT_TRUE(is_regular_file(logFile1));
+  EXPECT_TRUE(fs::is_regular_file(logFile1));
 
   // Run `logger` again, with 24 hours offset, check zip file and new log file
 
   system::exec( { executable,
     "--log", "all=trace", "--log-out", logFilePattern.string(), "--offset", "24", "Hi", "again!" } );
 
-  EXPECT_FALSE(is_regular_file(logFile1));
+  EXPECT_FALSE(fs::is_regular_file(logFile1));
   logFile1 += ".gz";
-  EXPECT_TRUE(is_regular_file(logFile1));
+  EXPECT_TRUE(fs::is_regular_file(logFile1));
 
   time += 24h;
   const string logFile2 = log::internal::expandLogFilePattern(logFilePattern.string(), time);
-  EXPECT_TRUE(is_regular_file(logFile2));
+  EXPECT_TRUE(fs::is_regular_file(logFile2));
 
   // Clean up
 
   Process::atExit([=] {
-    remove(logFile1);
-    remove(logFile2);
+    fs::remove(logFile1);
+    fs::remove(logFile2);
   }, true);
 }
 

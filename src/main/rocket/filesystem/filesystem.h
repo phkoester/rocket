@@ -11,7 +11,12 @@ namespace rocket::filesystem {
 // Functions ------------------------------------------------------------------------------------------------
 
 /**
- * Returns a unique path to atemporary directory.
+ * Returns the system-dependent temporary directory.
+ */
+std::filesystem::path systemTempDir();
+
+/**
+ * Returns a unique path to a temporary directory.
  *
  * The directory is created and removed on exit, but not on termination.
  *

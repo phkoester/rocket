@@ -4,11 +4,10 @@
 
 #include "rocket/Process.h"
 #include "rocket/cl/cl.h"
+#include "rocket/filesystem/filesystem.h"
 #include "rocket/math/random/random.h"
 
 #include <boost/asio.hpp>
-
-#include <filesystem>
 
 namespace asio = boost::asio;
 namespace fs = std::filesystem;
@@ -35,7 +34,7 @@ run(const ParsedCommandLine& pcl) {
   try {
     asio::io_context io;
     local::socket socket(io);
-    fs::path path = fs::temp_directory_path() / fmt::format("comm-local-{}.sock", pcl.port);
+    const auto path = rocket::filesystem::systemTempDir() / fmt::format("comm-local-{}.sock", pcl.port);
     socket.connect(local::endpoint(path.string()));
 
     auto gen = math::random::gen();

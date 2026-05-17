@@ -7,7 +7,7 @@
 #include "rocket/assert.h"
 #include "rocket/system/system.h"
 
-using namespace std::filesystem;
+namespace fs = std::filesystem;
 
 namespace rocket::test {
 
@@ -21,20 +21,20 @@ const bool TEST_TERMINAL = system::env::get<bool>(ROCKET_TEST_TERMINAL).value_or
 
 // Functions ------------------------------------------------------------------------------------------------
 
-path
+fs::path
 testExcecutable(string_view name) {
   if (not BINARY_DIR) {
     ROCKET_FAIL("`BINARY_DIR` is not set");
   }
   const string fileName = fmt::format("{}{}", name, system::executableSuffix());
-  path ret = path(*BINARY_DIR) / fileName;
+  fs::path ret = fs::path(*BINARY_DIR) / fileName;
   if (is_regular_file(ret)) {
     return ret;
   }
   if (not CONFIG) {
     ROCKET_FAIL("`CONFIG` is not set");
   }
-  ret = path(*BINARY_DIR) / *CONFIG / fileName;
+  ret = fs::path(*BINARY_DIR) / *CONFIG / fileName;
   if (is_regular_file(ret)) {
     return ret;
   }
@@ -42,12 +42,12 @@ testExcecutable(string_view name) {
   return ret;
 }
 
-path
+fs::path
 testSource(string_view name) {
   if (not SOURCE_DIR) {
     ROCKET_FAIL("`SOURCE_DIR` is not set");
   }
-  path ret = path(*SOURCE_DIR) / name;
+  fs::path ret = fs::path(*SOURCE_DIR) / name;
   if (is_regular_file(ret)) {
     return ret;
   }

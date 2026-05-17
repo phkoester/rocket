@@ -5,16 +5,38 @@
 #include "filesystem.h"
 
 #include "rocket/math/random/random.h"
+#include "rocket/system/system.h"
 
-using namespace std::filesystem;
+namespace fs = std::filesystem;
+
+using namespace rocket;
 
 namespace rocket::filesystem {
 
 // Functions ------------------------------------------------------------------------------------------------
 
-path
+fs::path
+systemTempDir() {
+  fs::path ret;
+#ifdef ROCKET_OS_WINDOWS
+  auto windir = system::env::get<string>("WINDIR");
+  if (windir) {
+    ret fs::path(*windir) / "Temp";
+  } else {
+    ret = fs::temp_directory_path();
+  }
+#else
+  ret = fs::temp_directory_path();
+#endif
+  if (not fs::is_directory(ret)) {
+    ROCKET_FAIL("Path `{}` does not point to a directory", ret.string());
+  }
+  return ret;
+}
+
+fs::path
 tempDir() {
-  path ret = tempFile();
+  fs::path ret = tempFile();
 
   // Create the directory
   if (not create_directory(ret)) {
@@ -33,15 +55,15 @@ tempDir() {
   return ret;
 }
 
-path
+fs::path
 tempFile() {
   auto gen = math::random::gen();
-  const path name = fmt::format("rocket-{}.tmp", math::random::hex(gen, 32));
-  const path dir = temp_directory_path();
+  const fs::path name = fmt::format("rocket-{}.tmp", math::random::hex(gen, 32));
+  const fs::path dir = fs::temp_directory_path();
   if (not is_directory(dir)) {
-    ROCKET_FAIL("Temporary directory `{}` is not a directory", dir.string());
+    ROCKET_FAIL("Path `{}` does not point to a directory", dir.string());
   }
-  path ret = dir / name;
+  fs::path ret = dir / name;
 
   // Remove the file on exit and on termination
   Process::atExit([=] { remove(ret); }, true);

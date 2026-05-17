@@ -9,8 +9,9 @@
 
 #include <filesystem>
 
+namespace fs = std::filesystem;
+
 using namespace rocket::system;
-using namespace std::filesystem;
 
 // #TEST ----------------------------------------------------------------------------------------------------
 
@@ -113,7 +114,7 @@ TEST(system, execPrintf) {
 }
 
 TEST(system, execPrintArgs) {
-  const path printArgs = testExcecutable("print-args");
+  const fs::path printArgs = testExcecutable("print-args");
   const string executable = printArgs.string();
 
   {
@@ -138,9 +139,9 @@ TEST(system, execPrintArgs) {
 
 TEST(system, execPrintArgsWithSpace) {
   // Copy `print-args` to `print args`, se we have a space in the executable name
-  const path printArgs = testExcecutable("print-args");
-  const path printArgsWithSpace = printArgs.parent_path() / fmt::format("print args{}", executableSuffix());
-  copy_file(printArgs, printArgsWithSpace, copy_options::overwrite_existing);
+  const fs::path printArgs = testExcecutable("print-args");
+  const fs::path printArgsWithSpace = printArgs.parent_path() / fmt::format("print args{}", executableSuffix());
+  fs::copy_file(printArgs, printArgsWithSpace, fs::copy_options::overwrite_existing);
   const string executable = printArgsWithSpace.string();
 
   {

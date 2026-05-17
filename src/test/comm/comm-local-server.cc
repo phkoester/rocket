@@ -4,10 +4,9 @@
 
 #include "rocket/Process.h"
 #include "rocket/cl/cl.h"
+#include "rocket/filesystem/filesystem.h"
 
 #include <boost/asio.hpp>
-
-#include <filesystem>
 
 namespace asio = boost::asio;
 namespace fs = std::filesystem;
@@ -77,7 +76,7 @@ private:
 struct Listener : enable_shared_from_this<Listener> {
   Listener(asio::io_context& io, u16 port) :
     acceptor_(io),
-    path_( filesystem::temp_directory_path() / fmt::format("comm-local-{}.sock", port)) {
+    path_( rocket::filesystem::systemTempDir() / fmt::format("comm-local-{}.sock", port)) {
     remove();
     acceptor_.open();
     acceptor_.bind(local::endpoint(path_.string()));
