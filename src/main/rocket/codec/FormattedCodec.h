@@ -431,14 +431,14 @@ struct FormattedProducerImpl<DataType::Char, C> {
       throw InputFailure(pos, "Expected a character");
     }
 
-    auto available = in.available();
-    auto closing = findUnescaped(available, '\'');
+    auto remaining = in.str();
+    auto closing = findUnescaped(remaining, '\'');
     if (closing == NPOS) {
       throw InputFailure(pos, "Unterminated character literal");
     }
     in.seek(safe<i64>(closing + 1), nio::SeekMode::cur);
 
-    const std::string_view input = available.substr(0, closing);
+    const std::string_view input = remaining.substr(0, closing);
     const std::string unescaped = str::escape::unescapeCString(input);
     const std::basic_string<C> str(unicode::ConvertTo<C>::apply(unescaped));
     if (str.size() != 1) {
@@ -459,10 +459,10 @@ struct FormattedProducerImpl<DataType::Enum, E> {
     const auto pos = in.tell();
 
     if constexpr (scn::detail::is_scannable<E, char>::value) {
-      const auto available = in.available();
-      auto result = scn::scan<E>(available, "{}");
+      const auto remaining = in.str();
+      auto result = scn::scan<E>(remaining, "{}");
       if (result) {
-        in.seek(result->begin() - available.begin(), nio::SeekMode::cur);
+        in.seek(result->begin() - remaining.begin(), nio::SeekMode::cur);
         val = result->value();
         return;
       }
@@ -482,11 +482,11 @@ struct FormattedProducerImpl<DataType::Integer, I> {
     skip(in, config);
     const auto pos = in.tell();
 
-    auto available = in.available();
+    auto remaining = in.str();
     // Setting `base` to 0 detects the base from the input
-    auto result = scn::scan_int<I>(available, 0);
+    auto result = scn::scan_int<I>(remaining, 0);
     if (result) {
-      in.seek(result->begin() - available.begin(), nio::SeekMode::cur);
+      in.seek(result->begin() - remaining.begin(), nio::SeekMode::cur);
       val = result->value();
       return;
     }
@@ -513,10 +513,10 @@ struct FormattedProducerImpl<DataType::Float, F> {
       return;
     }
 
-    auto available = in.available();
-    auto result = scn::scan<F>(available, "{}");
+    auto remaining = in.str();
+    auto result = scn::scan<F>(remaining, "{}");
     if (result) {
-      in.seek(result->begin() - available.begin(), nio::SeekMode::cur);
+      in.seek(result->begin() - remaining.begin(), nio::SeekMode::cur);
       val = result->value();
       return;
     }
@@ -537,10 +537,10 @@ struct FormattedProducerImpl<DataType::Pointer, P> {
       return;
     }
 
-    auto available = in.available();
-    auto result = scn::scan<P>(available, "{}");
+    auto remaining = in.str();
+    auto result = scn::scan<P>(remaining, "{}");
     if (result) {
-      in.seek(result->begin() - available.begin(), nio::SeekMode::cur);
+      in.seek(result->begin() - remaining.begin(), nio::SeekMode::cur);
       val = result->value();
       return;
     }
@@ -562,14 +562,14 @@ struct FormattedProducerImpl<DataType::String, T> {
       throw InputFailure(pos, "Expected a string");
     }
 
-    auto available = in.available();
-    auto closing = findUnescaped(available, '"');
+    auto remaining = in.str();
+    auto closing = findUnescaped(remaining, '"');
     if (closing == NPOS) {
       throw InputFailure(pos, "Unterminated string literal");
     }
     in.seek(safe<i64>(closing + 1), nio::SeekMode::cur);
 
-    const std::string_view input = available.substr(0, closing);
+    const std::string_view input = remaining.substr(0, closing);
     const std::string unescaped = str::escape::unescapeCString(input);
     using C = T::value_type;
     std::basic_string<C> str(unicode::ConvertTo<C>::apply(unescaped));
@@ -849,18 +849,18 @@ struct FormattedProducerImpl<DataType::CodePoint, T> {
     skip(in, config);
     const auto pos = in.tell();
 
-    auto available = in.available();
-    if (available.starts_with('\'')) {
+    auto remaining = in.str();
+    if (remaining.starts_with('\'')) {
       Elem elem = Elem();
       FormattedProducerImpl<ElemDataType, Elem>().produce(elem, in, config);
       val = T(elem);
       return;
     }
 
-    if (available.starts_with("U+")) {
-      auto result = scn::scan<u32>(available, "U+{:X}");
+    if (remaining.starts_with("U+")) {
+      auto result = scn::scan<u32>(remaining, "U+{:X}");
       if (result) {
-        in.seek(result->begin() - available.begin(), nio::SeekMode::cur);
+        in.seek(result->begin() - remaining.begin(), nio::SeekMode::cur);
         val = T(static_cast<Elem>(result->value()));
         return;
       }
@@ -969,15 +969,15 @@ struct FormattedProducerImpl<DataType::MemberRef, T> {
     skip(in, config);
     const auto pos = in.tell();
 
-    auto available = in.available();
-    auto eq = available.find('=');
+    auto remaining = in.str();
+    auto eq = remaining.find('=');
     if (eq == NPOS) {
       throw InputFailure(pos, "Expected a member reference");
     }
     in.seek(safe<i64>(eq + 1), nio::SeekMode::cur);
 
     // For `MemberRef`, we demand the name to match
-    std::string_view name = available.substr(0, eq);
+    std::string_view name = remaining.substr(0, eq);
     name = str::removeTrailing<char>(name, " "); // @todo Trim all trailing whitespace
     if (name != val.name()) {
       throw InputFailure(pos, fmt::format("Expected name `{}`, got `{}`", val.name(), name));
@@ -1000,8 +1000,8 @@ struct FormattedProducerImpl<DataType::VarRef, T> {
     skip(in, config);
     const auto pos = in.tell();
 
-    auto available = in.available();
-    auto eq = available.find('=');
+    auto remaining = in.str();
+    auto eq = remaining.find('=');
     if (eq == NPOS) {
       throw InputFailure(pos, "Expected a variable reference");
     }

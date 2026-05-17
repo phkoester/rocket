@@ -615,6 +615,17 @@ protected:
   Source() = default;
 };
 
+// #ContiguousSource ----------------------------------------------------------------------------------------
+
+/**
+ * A contiguous source.
+ */
+struct ContiguousSource {
+  virtual ~ContiguousSource() = default;
+
+  virtual std::span<const u8> available() const = 0;
+};
+
 // #BufferedSource ------------------------------------------------------------------------------------------
 
 /**
@@ -780,7 +791,7 @@ private:
 /**
  * A source that reads from a string.
  */
-struct StringSource : Source {
+struct StringSource : Source, ContiguousSource {
   /// @ctor_default
   StringSource() : StringSource(std::string_view()) {}
 
@@ -793,12 +804,11 @@ struct StringSource : Source {
 
   ~StringSource() override = default;
 
-  /**
-   * Returns the available string of the source.
-   *
-   * @return the available string of the source
-   */
-  std::string_view available() const { return in_.substr(pos_); }
+  std::span<const u8>
+  available() const override {
+    const auto str = this->str();
+    return std::span<const u8>(reinterpret_cast<const u8*>(str.data()), str.size());
+  }
 
   bool close() override;
 
@@ -836,6 +846,13 @@ struct StringSource : Source {
   store(std::u32string&& val) {
     return *storeU32String_.insert(std::move(val)).first;
   }
+
+  /**
+   * Returns the available string of the source.
+   *
+   * @return the available string of the source
+   */
+  std::string_view str() const { return in_.substr(pos_); }
 
   u64 tell() override { return bad() ? NPOS : static_cast<u64>(pos_); }
 
