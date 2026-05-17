@@ -38,6 +38,10 @@
 # - Targets for test executables:
 #
 # - bare
+# - comm-local-client
+# - comm-local-server
+# - comm-tcp-client
+# - comm-tcp-server
 # - logger
 # - print-args
 # - toy
@@ -72,6 +76,26 @@ clean:
 bare: TARGET := bare
 bare: build
 	@$(BUILD_DIR)/src/test/bare $(ARGS)
+
+.PHONY: comm-local-client
+comm-local-client: TARGET := comm-local-client
+comm-local-client: build
+	@$(BUILD_DIR)/src/test/comm-local-client $(ARGS)
+
+.PHONY: comm-local-server
+comm-local-server: TARGET := comm-local-server
+comm-local-server: build
+	@$(BUILD_DIR)/src/test/comm-local-server $(ARGS)
+
+.PHONY: comm-tcp-client
+comm-tcp-client: TARGET := comm-tcp-client
+comm-tcp-client: build
+	@$(BUILD_DIR)/src/test/comm-tcp-client $(ARGS)
+
+.PHONY: comm-tcp-server
+comm-tcp-server: TARGET := comm-tcp-server
+comm-tcp-server: build
+	@$(BUILD_DIR)/src/test/comm-tcp-server $(ARGS)
 
 .PHONY: logger
 logger: TARGET := logger

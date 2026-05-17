@@ -8,12 +8,10 @@
     {
       "type": "lldb-dap",
       "request": "launch",
-      "name": "toy (linux-x64-llvm)",
-      "program": "${workspaceRoot}/target/linux-x64-llvm-debug/toy",
+      "name": "toy (debug)",
+      "program": "${workspaceRoot}/build/debug/src/test/toy",
       "args": [],
-      "env": [
-        "LD_LIBRARY_PATH=${workspaceRoot}/target/linux-x64-llvm-debug"
-      ],
+      "env": [],
       "cwd": "${workspaceRoot}",
     },
   ]

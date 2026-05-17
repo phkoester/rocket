@@ -6,7 +6,7 @@
 
 find_package(Boost ${GAIA_BOOST_VERSION} QUIET)
 if(NOT Boost_FOUND)
-  set(ROCKET_BOOST_LIBS algorithm bimap headers preprocessor safe_numerics)
+  set(ROCKET_BOOST_LIBS algorithm asio bimap headers preprocessor safe_numerics)
   set(ROCKET_BOOST_NS_LIBS ${ROCKET_BOOST_LIBS})
   list(TRANSFORM ROCKET_BOOST_NS_LIBS PREPEND Boost::)
 

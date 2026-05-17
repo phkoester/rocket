@@ -950,7 +950,6 @@ struct FormattedProducerImpl<DataType::Instance, T> {
 
   void
   produce(T& val, nio::StringSource& in, CONFIG__) const {
-
     // Here we have to pass an additional argument, the instance, to the tuple producer. The tuple producer
     // will pass it on to the member-reference producer
     FormattedProducerImpl<ElemDataType, Elem>().produce(const_cast<Elem&>(refs), in, config, val.get());
