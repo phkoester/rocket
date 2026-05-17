@@ -76,8 +76,7 @@ private:
 struct Listener : enable_shared_from_this<Listener> {
   Listener(asio::io_context& io, u16 port) :
     acceptor_(io),
-    path_( rocket::filesystem::systemTempDir() / fmt::format("comm-local-{}.sock", port)) {
-    remove();
+    path_(rocket::filesystem::systemTempDir() / fmt::format("comm-local-{}.sock", port)) {
     acceptor_.open();
     acceptor_.bind(local::endpoint(path_.string()));
     acceptor_.listen();

@@ -10,6 +10,7 @@
 namespace fs = std::filesystem;
 
 using namespace rocket;
+using namespace std;
 
 namespace rocket::filesystem {
 
