@@ -2,8 +2,10 @@
  * codec-utils.cc
  */
 
+#include "rocket/assert.h"
 #include "rocket/InputFailure.h"
 #include "rocket/codec/codec-utils.h"
+#include "rocket/unicode/unicode.h"
 
 #include <boost/safe_numerics/safe_integer.hpp>
 
@@ -242,7 +244,7 @@ readUntilUnescaped(nio::Source& in, char c) {
 }
 
 void
-skip(nio::Source& in, const FormattedProducerConfig& config) { // NOLINT(*-complexity)
+skip(nio::Source& in, bool cComments, bool shellComments) { // NOLINT(*-complexity)
   while (true) {
     const auto pos = in.tell();
 
@@ -254,7 +256,7 @@ skip(nio::Source& in, const FormattedProducerConfig& config) { // NOLINT(*-compl
 
     // Read second code point
     optional<unicode::CodePoint> second;
-    if (config.cComments && first == '/') {
+    if (cComments && first == '/') {
       second = in.readCodePoint();
       if (not second) {
         break;
@@ -275,7 +277,7 @@ skip(nio::Source& in, const FormattedProducerConfig& config) { // NOLINT(*-compl
     }
 
     // Skip shell-style "#" comments until EOL
-    if (config.shellComments && first == '#') {
+    if (shellComments && first == '#') {
       if (not skipUntil(in, "\n")) {
         break;
       }
@@ -283,7 +285,7 @@ skip(nio::Source& in, const FormattedProducerConfig& config) { // NOLINT(*-compl
     }
 
     // Skip C-style "//" comments until EOL
-    if (config.cComments && first == '/' && second == '/') {
+    if (cComments && first == '/' && second == '/') {
       if (not skipUntil(in, "\n")) {
         break;
       }
@@ -291,7 +293,7 @@ skip(nio::Source& in, const FormattedProducerConfig& config) { // NOLINT(*-compl
     }
 
     // Skip C-style "/*" comments until "*/"
-    if (config.cComments && first == '/' && second == '*') {
+    if (cComments && first == '/' && second == '*') {
       if (not skipUntil(in, "*/")) {
         in.seek(safe<i64>(pos), nio::SeekMode::beg);
         throw InputFailure(pos, "Unterminated C-style comment");

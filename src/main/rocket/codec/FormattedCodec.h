@@ -185,7 +185,7 @@ struct FormattedConsumerImpl<DataType::Tuple, T> {
     std::apply([&](auto&&... arg) {
       (consumeElem(std::forward<decltype(arg)>(arg), out, config, index++, std::forward<Args>(args)...), ...);
     }, val);
-    endContainer(out, config, std::tuple_size_v<T>, ')');
+    internal::endContainer(out, config, std::tuple_size_v<T>, ')');
   }
 
 private:
@@ -229,7 +229,7 @@ struct FormattedConsumerImpl<DataType::Set, T> {
       internal::nextElem(out, config, index++);
       FormattedConsumerImpl<ElemDataType, Elem>().consume(elem, out, config);
     }
-    endContainer(out, config, val.size(), '}');
+    internal::endContainer(out, config, val.size(), '}');
   }
 };
 
@@ -250,7 +250,7 @@ struct FormattedConsumerImpl<DataType::Map, T> {
       out.write(": ");
       FormattedConsumerImpl<ElemDataType, Elem>().consume(elem, out, config);
     }
-    endContainer(out, config, val.size(), '}');
+    internal::endContainer(out, config, val.size(), '}');
   }
 };
 
@@ -271,7 +271,7 @@ struct FormattedConsumerImpl<DataType::Bimap, T> {
       out.write(": ");
       FormattedConsumerImpl<ElemDataType, Elem>().consume(elem, out, config);
     }
-    endContainer(out, config, val.size(), '}');
+    internal::endContainer(out, config, val.size(), '}');
   }
 };
 
