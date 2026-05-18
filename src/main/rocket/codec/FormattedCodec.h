@@ -55,16 +55,16 @@ void nextElem(nio::Sink& out, const FormattedConsumerConfig& config, u64 index);
 // Utilities for decoding -----------------------------------------------------------------------------------
 
 // Throws if there is no colon, advances the source only on success
-void expectColon(nio::StringSource& in);
+void expectColon(nio::Source& in);
 
 // Throws if there is no comma, advances the source only on success
-void expectComma(nio::StringSource& in);
+void expectComma(nio::Source& in);
 
 // Finds a character not preceded by an escaping backslash
 [[nodiscard]] u64 findUnescaped(std::string_view str, char c);
 
 // Reads a single expected character, advances the source only on success
-[[nodiscard]] bool read(nio::StringSource& in, char c);
+[[nodiscard]] bool read(nio::Source& in, char c);
 
 // Reads any of a set of expected strings, advances the source only on success
 [[nodiscard]] std::optional<std::string_view> read(

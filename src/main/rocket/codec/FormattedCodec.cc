@@ -52,14 +52,14 @@ nextElem(nio::Sink& out, const FormattedConsumerConfig& config, u64 index) {
 // Utilities for encoding -----------------------------------------------------------------------------------
 
 void
-expectColon(nio::StringSource& in) {
+expectColon(nio::Source& in) {
   if (not read(in, ':')) {
     throw InputFailure(in.tell(), "Missing colon");
   }
 }
 
 void
-expectComma(nio::StringSource& in) {
+expectComma(nio::Source& in) {
   if (not read(in, ',')) {
     throw InputFailure(in.tell(), "Missing comma");
   }
@@ -81,13 +81,16 @@ findUnescaped(std::string_view str, char c) {
 }
 
 bool
-read(nio::StringSource& in, char c) {
-  auto remaining = in.str();
-  if (remaining.starts_with(c)) {
-    in.seek(1, nio::SeekMode::cur);
-    return true;
+read(nio::Source& in, char c) {
+  char buf;
+  if (in.read(buf) != 1) {
+    return false;
   }
-  return false;
+  if (buf != c) {
+    in.seek(-1, nio::SeekMode::cur);
+    return false;
+  }
+  return true;
 }
 
 optional<string_view>
