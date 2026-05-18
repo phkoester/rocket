@@ -164,8 +164,8 @@ position(nio::Sink& out) {
 // NOLINTEND(clang-analyzer-security.ArrayBound)
 
 optional<pair<u64, u64>>
-size(nio::Io& io) {
-  const i32 fd = io.handle();
+size(nio::Device& device) {
+  const i32 fd = device.handle();
   if (fd == -1 || ROCKET_ISATTY(fd) == 0) {
     return {};
   }

@@ -49,19 +49,19 @@ struct Status {
   unsigned eof : 1;
 };
 
-// #Io ------------------------------------------------------------------------------------------------------
+// #Device --------------------------------------------------------------------------------------------------
 
 /**
  * The base class for #rocket::nio::Sink and #rocket::nio::Source.
  *
- * An I/O instance, either a sink or a source.
+ * An I/O device, either a sink for output or a source for input.
  */
-struct Io {
+struct Device {
   /// @ctor_copy
-  Io(const Io& rhs) = delete;
+  Device(const Device& rhs) = delete;
 
   /// @dtor
-  virtual ~Io() = default;
+  virtual ~Device() = default;
 
   /**
    * Checks if the bad bit is set.
@@ -109,7 +109,7 @@ protected:
   Status status_ { .bad=1, .eof=0 };
 
   /// @ctor_default
-  Io() = default;
+  Device() = default;
 };
 
 // #Sink ----------------------------------------------------------------------------------------------------
@@ -117,7 +117,7 @@ protected:
 /**
  * Sink base class. A device that can be written to.
  */
-struct Sink : Io {
+struct Sink : Device {
   /**
    * Flushes the sink.
    *
@@ -535,7 +535,7 @@ enum class SeekMode : u8 {
 /**
  * Source base class. A device that can be read from.
  */
-struct Source : Io {
+struct Source : Device {
   /**
    * Reads all available bytes from a source into a vector.
    *
@@ -603,6 +603,28 @@ struct Source : Io {
   virtual bool seek(i64 offset, SeekMode mode = SeekMode::beg) = 0; // NOLINT
 
   /**
+   * Stores a value in the source.
+   *
+   * @param val the value to store
+   * @return a reference to the stored value, which remains valid for the lifetime of the source
+   */
+  const std::string&
+  store(std::string&& val) {
+    return *strings_.insert(std::move(val)).first;
+  }
+
+  /**
+   * Stores a value in the source.
+   *
+   * @param val the value to store
+   * @return a reference to the stored value, which remains valid for the lifetime of the source
+   */
+  const std::u32string&
+  store(std::u32string&& val) {
+    return *u32strings_.insert(std::move(val)).first;
+  }
+
+  /**
    * Returns the current input position
    *
    * @return the current input position, or #rocket::NPOS if the position cannot be determined
@@ -613,6 +635,13 @@ protected:
 
   /// @ctor_default
   Source() = default;
+
+private:
+
+  /// We need pointer stability, which #std::unordered_set guarantees.
+  std::unordered_set<std::string> strings_;
+  /// We need pointer stability, which #std::unordered_set guarantees.
+  std::unordered_set<std::u32string> u32strings_;
 };
 
 // #ContiguousSource ----------------------------------------------------------------------------------------
@@ -620,10 +649,27 @@ protected:
 /**
  * A contiguous source.
  */
-struct ContiguousSource {
+struct ContiguousSource : Source {
   virtual ~ContiguousSource() = default;
 
-  virtual std::span<const u8> available() const = 0;
+  /**
+   * Returns the bytes available in the contiguous source.
+   *
+   * @return the bytes available in the contiguous source
+   */
+  virtual std::span<const u8> bytes() const = 0;
+
+  /**
+   * Returns the string available in the contiguous source.
+   *
+   * @return the string available in the contiguous source
+   */
+  virtual std::string_view str() const = 0;
+
+protected:
+
+  /// @ctor_default
+  ContiguousSource() = default;
 };
 
 // #BufferedSource ------------------------------------------------------------------------------------------
@@ -753,6 +799,55 @@ ROCKET_TEST_PRIVATE:
   u64 tell() override { return NPOS; }
 };
 
+// #SpanSource ----------------------------------------------------------------------------------------------
+
+/**
+ * A source that reads from a span.
+ */
+struct SpanSource : ContiguousSource {
+  /// @ctor_default
+  SpanSource() : SpanSource(std::span<const u8>()) {}
+
+  /**
+   * @ctor
+   *
+   * @param in the span to read from
+   */
+  explicit SpanSource(std::span<const u8> in);
+
+  ~SpanSource() override = default;
+
+  std::span<const u8> bytes() const override { return in_.subspan(pos_); }
+
+  bool close() override;
+
+  i32 handle() const override { return -1; }
+
+  /**
+   * Returns the input span the source was constructed with.
+   *
+   * @return the input span that the source was constructed with
+   */
+  std::span<const u8> in() const { return in_; }
+
+  u64 read(std::span<u8> out) override;
+
+  bool seek(i64 offset, SeekMode mode = SeekMode::beg) override; // NOLINT
+
+  std::string_view
+  str() const override {
+    const auto bytes = this->bytes();
+    return std::string_view(reinterpret_cast<const char*>(bytes.data()), bytes.size());
+  }
+
+  u64 tell() override { return bad() ? NPOS : static_cast<u64>(pos_); }
+
+private:
+
+  std::span<const u8> in_;
+  boost::safe_numerics::safe<u64> pos_ = 0;
+};
+
 // #StreamSource --------------------------------------------------------------------------------------------
 
 /**
@@ -791,7 +886,7 @@ private:
 /**
  * A source that reads from a string.
  */
-struct StringSource : Source, ContiguousSource {
+struct StringSource : ContiguousSource {
   /// @ctor_default
   StringSource() : StringSource(std::string_view()) {}
 
@@ -805,7 +900,7 @@ struct StringSource : Source, ContiguousSource {
   ~StringSource() override = default;
 
   std::span<const u8>
-  available() const override {
+  bytes() const override {
     const auto str = this->str();
     return std::span<const u8>(reinterpret_cast<const u8*>(str.data()), str.size());
   }
@@ -815,7 +910,7 @@ struct StringSource : Source, ContiguousSource {
   i32 handle() const override { return -1; }
 
   /**
-   * Returns the input string th source was constructed with.
+   * Returns the input string the source was constructed with.
    *
    * @return the input string that the source was constructed with
    */
@@ -825,34 +920,7 @@ struct StringSource : Source, ContiguousSource {
 
   bool seek(i64 offset, SeekMode mode = SeekMode::beg) override; // NOLINT
 
-  /**
-   * Stores a value in the source.
-   *
-   * @param val the value to store
-   * @return a reference to the stored value, which remains valid for the lifetime of the source
-   */
-  const std::string&
-  store(std::string&& val) {
-    return *storeString_.insert(std::move(val)).first;
-  }
-
-  /**
-   * Stores a value in the source.
-   *
-   * @param val the value to store
-   * @return a reference to the stored value, which remains valid for the lifetime of the source
-   */
-  const std::u32string&
-  store(std::u32string&& val) {
-    return *storeU32String_.insert(std::move(val)).first;
-  }
-
-  /**
-   * Returns the available string of the source.
-   *
-   * @return the available string of the source
-   */
-  std::string_view str() const { return in_.substr(pos_); }
+  std::string_view str() const override { return in_.substr(pos_); }
 
   u64 tell() override { return bad() ? NPOS : static_cast<u64>(pos_); }
 
@@ -860,11 +928,6 @@ private:
 
   std::string_view in_;
   boost::safe_numerics::safe<u64> pos_ = 0;
-
-  /// We need pointer stability, which #std::unordered_set guarantees.
-  std::unordered_set<std::string> storeString_;
-  /// We need pointer stability, which #std::unordered_set guarantees.
-  std::unordered_set<std::u32string> storeU32String_;
 };
 
 // Variables ------------------------------------------------------------------------------------------------

@@ -10,14 +10,19 @@
 
 namespace rocket::nio {
 
-struct Io;
+struct Device;
 
 struct Sink;
 struct BufferedSink;
+struct NullSink;
+struct SpanSink;
 struct StringSink;
 
 struct Source;
+struct ContiguousSource;
 struct BufferedSource;
+struct NullSource;
+struct SpanSource;
 struct StringSource;
 
 ROCKET_PUBLIC extern Source& in; // NOLINT

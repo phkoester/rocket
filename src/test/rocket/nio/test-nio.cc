@@ -236,6 +236,13 @@ TEST(nio, FileSourceReadString) {
   EXPECT_EQ(in.tell(), 10);
 }
 
+TEST(nio, SpanSource) {
+  vector<u8> vec { 'H', 'e', 'l', 'l', 'o', ',', ' ', 'w', 'o', 'r', 'l', 'd', '!', };
+  SpanSource in(vec);
+  const auto str = in.readString();
+  EXPECT_EQ(str, "Hello, world!");
+}
+
 TEST(nio, StreamSourceReadAll) {
   auto temp = rocket::filesystem::tempFile();
 

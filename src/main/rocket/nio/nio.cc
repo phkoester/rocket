@@ -718,6 +718,68 @@ FileSource::tell() {
   return safe<u64>(result);
 }
 
+// #SpanSource ----------------------------------------------------------------------------------------------
+
+SpanSource::SpanSource(std::span<const u8> in) :
+  in_(in) {
+  status_.bad = false;
+  status_.eof = in.empty();
+}
+
+bool
+SpanSource::close() {
+  if (bad()) {
+    return false;
+  }
+
+  status_.bad = true;
+  return true;
+}
+
+u64
+SpanSource::read(span<u8> out) {
+  if (bad()) {
+    return 0;
+  }
+
+  const u64 ret = min(out.size(), in_.size() - static_cast<u64>(pos_));
+  if (ret > 0) {
+    memcpy(out.data(), in_.data() + static_cast<u64>(pos_), ret);
+    pos_ += ret;
+  }
+  status_.eof = ret < out.size();
+  return ret;
+}
+
+bool
+SpanSource::seek(i64 offset, SeekMode mode) { // NOLINT
+  if (bad()) {
+    return false;
+  }
+
+  switch (mode) {
+  case SeekMode::beg:
+    pos_ = offset;
+    break;
+  case SeekMode::cur:
+    if (offset >= 0) {
+      pos_ += offset;
+    } else {
+      pos_ -= (-offset);
+    }
+    break;
+  case SeekMode::end:
+    if (offset >= 0) {
+      pos_ = safe<u64>(in_.size()) + offset;
+    } else {
+      pos_ = safe<u64>(in_.size()) - (-offset);
+    }
+    break;
+  }
+  pos_ = min(static_cast<u64>(pos_), in_.size());
+  return true;
+}
+
 // #StreamSource --------------------------------------------------------------------------------------------
 
 StreamSource::StreamSource(std::istream& is) :
