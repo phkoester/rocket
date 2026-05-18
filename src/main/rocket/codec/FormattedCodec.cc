@@ -4,7 +4,6 @@
 
 #include "rocket/codec/FormattedCodec.h"
 
-#include "rocket/nio/nio-internal.h"
 #include "rocket/unicode/unicode.h"
 
 #include <boost/safe_numerics/safe_integer.hpp>
@@ -81,7 +80,7 @@ read(nio::Source& in, char c) {
 
 optional<string_view>
 read(nio::Source& in, const std::set<std::string_view>& values, bool ignoreCase) {
-#if ROCKET_NIO_OPTIMIZE_CONTIGUOUS_SOURCE == 1
+#ifndef ROCKET_NIO_NO_CONTIGUOUS_SOURCE
   if (const auto* contiguous = dynamic_cast<nio::ContiguousSource*>(&in); contiguous != nullptr) {
     // Contiguous source
 
@@ -158,7 +157,7 @@ read(nio::Source& in, const std::set<std::string_view>& values, bool ignoreCase)
 
 optional<string>
 readUntilUnescaped(nio::Source& in, char c) {
-#if ROCKET_NIO_OPTIMIZE_CONTIGUOUS_SOURCE == 1
+#ifndef ROCKET_NIO_NO_CONTIGUOUS_SOURCE
   if (const auto* contiguous = dynamic_cast<nio::ContiguousSource*>(&in); contiguous != nullptr) {
     // Contiguous source
 
@@ -273,7 +272,7 @@ bool
 skipUntil(nio::Source& in, std::string_view s) {
   ROCKET_CHECK(s, not s.empty(), "May not be empty");
 
-#if ROCKET_NIO_OPTIMIZE_CONTIGUOUS_SOURCE == 1
+#ifndef ROCKET_NIO_NO_CONTIGUOUS_SOURCE
   if (const auto* contiguous = dynamic_cast<nio::ContiguousSource*>(&in); contiguous != nullptr) {
     // Contiguous source
 

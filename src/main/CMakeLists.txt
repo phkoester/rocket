@@ -134,6 +134,7 @@ target_sources(rocket
       rocket/unicode/ConvertTo.h
       rocket/unicode/Iterator.h
       rocket/unicode/unicode.h
+      rocket/unicode/unicode-fwd.h
 )
 set_target_properties(rocket PROPERTIES VERSION ${PROJECT_VERSION}) # SOVERSION 0
 
@@ -148,6 +149,9 @@ target_compile_definitions(rocket
 )
 if(ROCKET_NIO_LOG)
   target_compile_definitions(rocket PRIVATE ROCKET_NIO_LOG)
+endif()
+if(ROCKET_NIO_NO_CONTIGUOUS_SOURCE)
+  target_compile_definitions(rocket PRIVATE ROCKET_NIO_NO_CONTIGUOUS_SOURCE)
 endif()
 
 target_compile_features(rocket PUBLIC ${COMPILE_FEATURES})

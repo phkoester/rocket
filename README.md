@@ -36,7 +36,6 @@ CMake variables:
 | `CMAKE_BUILD_TYPE`   | `STRING` | `Release` if single configuration | The build type (`Debug` or `Release`)
 | `ROCKET_BUILD_BENCH` | `BOOL`   | `ON` if master project            | Enable benchmarking and build benchmarks
 | `ROCKET_BUILD_TEST`  | `BOOL`   | `ON` if master project            | Enable testing and build tests
-| `ROCKET_NIO_LOG`     | `BOOL`   | `OFF`                             | Enable logging of `rocket::nio`
 
 ### Linux
 

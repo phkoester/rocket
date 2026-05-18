@@ -3,7 +3,6 @@
  */
 
 #include "nio.h"
-#include "nio-internal.h"
 
 #include "rocket/assert.h"
 #include "rocket/io/io.h"
@@ -27,7 +26,7 @@ to make up a quick and dirty logging facility here.
 
 ---------------------------------------------------------------------------------------------------------- */
 
-#if ROCKET_NIO_LOG == 1
+#ifdef ROCKET_NIO_LOG
 #define LOG(args) cout << "# " << ROCKET_SRC_FILE << ':' << __LINE__ << ' ' << __FUNCTION__ << ": " << args << endl;
 #else
 #define LOG(args)
@@ -318,7 +317,7 @@ StreamSink::write(std::span<const u8> in) {
   }
 
   const auto result = os_.rdbuf()->sputn(reinterpret_cast<const char*>(in.data()), safe<streamsize>(in.size()));
-  LOG("rdbuf()->sputn=" << resulz << ", bad=" << os_.bad() << ", fail=" << os_.fail() << ", eof=" << os_.eof());
+  LOG("rdbuf()->sputn=" << result << ", bad=" << os_.bad() << ", fail=" << os_.fail() << ", eof=" << os_.eof());
   status_.bad = os_.bad();
   status_.eof = os_.eof();
   return safe<u64>(result);
@@ -472,7 +471,9 @@ Source::readln() {
 
 string
 ContiguousSource::readln() {
-#if ROCKET_NIO_OPTIMIZE_CONTIGUOUS_SOURCE == 1
+#ifdef ROCKET_NIO_NO_CONTIGUOUS_SOURCE
+  return Source::readln();
+#else
   if (bad()) {
     return {};
   }
@@ -493,14 +494,14 @@ ContiguousSource::readln() {
   }
   string ret(str);
   return ret;
-#else
-  return Source::readln();
 #endif
 }
 
 optional<unicode::CodePoint>
 ContiguousSource::readCodePoint() {
-#if ROCKET_NIO_OPTIMIZE_CONTIGUOUS_SOURCE == 1
+#ifdef ROCKET_NIO_NO_CONTIGUOUS_SOURCE
+  return Source::readCodePoint();
+#else
   if (bad()) {
     return {};
   }
@@ -514,8 +515,6 @@ ContiguousSource::readCodePoint() {
   } catch (const exception&) {
     return {};
   }
-#else
-  return Source::readCodePoint();
 #endif
 }
 
