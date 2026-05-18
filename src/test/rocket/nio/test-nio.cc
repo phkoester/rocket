@@ -64,6 +64,13 @@ TEST(nio, FileSinkDoesNotExist) {
   EXPECT_TRUE(out.bad());
 }
 
+TEST(nio, NullSink) {
+  NullSink out;
+  EXPECT_FALSE(out.bad());
+  EXPECT_TRUE(out.eof());
+  EXPECT_EQ(out.Sink::write("a"), 0);
+}
+
 TEST(nio, SpanSink) {
   string str = "---[abcd]---";
   const span<char> span(&str[4], 4);
@@ -236,6 +243,14 @@ TEST(nio, FileSourceReadString) {
   EXPECT_EQ(in.tell(), 10);
 }
 
+TEST(nio, NullSource) {
+  NullSource in;
+  EXPECT_FALSE(in.bad());
+  EXPECT_TRUE(in.eof());
+  char c;
+  EXPECT_EQ(in.Source::read(c), 0);
+}
+
 TEST(nio, SpanSource) {
   vector<u8> vec { 'H', 'e', 'l', 'l', 'o', ',', ' ', 'w', 'o', 'r', 'l', 'd', '!', };
   SpanSource in(vec);
@@ -306,28 +321,6 @@ TEST(nio, StringSourceReadln) {
   EXPECT_EQ(line, "Second line");
   line = in.Source::readln();
   EXPECT_EQ(line, "");
-}
-
-TEST(nio, StringSourceReadlnSpan) {
-  StringSource in("First line\r\nSecond line\n");
-  string str11 = string(11, ' ');
-  const span<char> span11 = span<char>(str11);
-  u64 n = in.readln(span11);
-  EXPECT_EQ(n, 11);
-  EXPECT_EQ(string_view(span11.data(), n), "First line\r");
-
-  in.seek(0);
-  string str12 = string(12, ' ');
-  const span<char> span12 = span<char>(str12);
-  n = in.readln(span12);
-  EXPECT_EQ(n, 10);
-  EXPECT_EQ(string_view(span12.data(), n), "First line");
-
-  string str20 = string(20, ' ');
-  const span<char> span20 = span<char>(str20);
-  n = in.readln(span20);
-  EXPECT_EQ(n, 11);
-  EXPECT_EQ(string_view(span20.data(), n), "Second line");
 }
 
 TEST(nio, StringSourceSeek) {

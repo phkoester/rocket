@@ -3,9 +3,14 @@
  */
 
 #include "nio.h"
+#include "nio-internal.h"
 
 #include "rocket/assert.h"
 #include "rocket/io/io.h"
+#include "rocket/unicode/unicode.h"
+
+#include <boost/iostreams/stream.hpp>
+#include <boost/iostreams/device/file_descriptor.hpp>
 
 #include <iostream>
 
@@ -22,9 +27,7 @@ to make up a quick and dirty logging facility here.
 
 ---------------------------------------------------------------------------------------------------------- */
 
-// #define ROCKET_NIO_LOG // Use this to activate logging
-
-#ifdef ROCKET_NIO_LOG
+#if ROCKET_NIO_LOG == 1
 #define LOG(args) cout << "# " << ROCKET_SRC_FILE << ':' << __LINE__ << ' ' << __FUNCTION__ << ": " << args << endl;
 #else
 #define LOG(args)
@@ -216,6 +219,13 @@ FileSink::write(std::span<const u8> in) {
   return result;
 }
 
+// #NullSink ------------------------------------------------------------------------------------------------
+
+NullSink::NullSink() {
+  status_.bad = false;
+  status_.eof = true;
+}
+
 // #SpanSink ------------------------------------------------------------------------------------------------
 
 SpanSink::SpanSink(std::span<char> out) :
@@ -373,6 +383,40 @@ Source::readAll() {
   return ret;
 }
 
+optional<unicode::CodePoint>
+Source::readCodePoint() {
+  if (bad()) {
+    return {};
+  }
+
+  // Read first byte
+  char c;
+  if (read(c) != 1) {
+    return {};
+  }
+  string s;
+  s.push_back(c);
+
+  // Read subsequent bytes
+  auto len = unicode::utf8::lengthFromByte(c);
+  for (u64 i = 0; i < len - 1; ++i) {
+    if (read(c) != 1) {
+      return {};
+    }
+    s.push_back(c);
+  }
+
+  // Decode the code point
+  try {
+    u64 pos = 0;
+    auto ret = unicode::nextCodePoint(s, pos);
+    ROCKET_EXPECT(pos == s.size(), "Invalid UTF-8 sequence");
+    return ret;
+  } catch (const exception&) {
+    return {};
+  }
+}
+
 string
 Source::readString() {
   if (bad()) {
@@ -405,9 +449,8 @@ Source::readln() {
 
   bool lf = false;
   while (true) {
-    char c = '\0';
-    const u64 result = read(c);
-    if (result == 0) {
+    char c;
+    if (read(c) != 1) {
       break;
     }
     if (c == '\n') {
@@ -418,48 +461,69 @@ Source::readln() {
   }
 
   // Remove trailing '\r' if it precedes the '\n'
-  if (lf && not ret.empty() && *ret.rbegin() == '\r') {
+  if (lf && not ret.empty() && ret.back() == '\r') {
     ret.pop_back();
   }
 
   return ret;
 }
 
-u64
-Source::readln(span<char> out) {
+// #ContiguousSource ----------------------------------------------------------------------------------------
+
+string
+ContiguousSource::readln() {
+#if ROCKET_NIO_OPTIMIZE_CONTIGUOUS_SOURCE == 1
   if (bad()) {
-    return 0;
+    return {};
   }
 
-  auto it = out.begin();
-  bool lf = false;
+  auto str = this->str();
+  auto pos = str.find('\n');
 
-  while (it != out.end()) {
-    char c = '\0';
-    const u64 result = read(c);
-    if (result == 0) {
-      break;
-    }
-    if (c == '\n') {
-      lf = true;
-      break;
-    }
-    *(it++) = c;
+  if (pos == NPOS) {
+    seek(0, SeekMode::end);
+    string ret(str);
+    return ret;
   }
 
-  // Remove trailing '\r' if it precedes the '\n'
-  u64 ret = it - out.begin();
-  if (lf && ret > 0 && *(it - 1) == '\r') {
-    --ret;
+  seek(pos + 1, SeekMode::cur);
+  str = str.substr(0, pos);
+  if (not str.empty() && str.back() == '\r') {
+    str = str.substr(0, str.size() - 1);
   }
+  string ret(str);
   return ret;
+#else
+  return Source::readln();
+#endif
+}
+
+optional<unicode::CodePoint>
+ContiguousSource::readCodePoint() {
+#if ROCKET_NIO_OPTIMIZE_CONTIGUOUS_SOURCE == 1
+  if (bad()) {
+    return {};
+  }
+
+  const auto str = this->str();
+  try {
+    u64 pos = 0;
+    auto ret = unicode::nextCodePoint(str, pos);
+    seek(safe<i64>(pos), SeekMode::cur);
+    return ret;
+  } catch (const exception&) {
+    return {};
+  }
+#else
+  return Source::readCodePoint();
+#endif
 }
 
 // #BufferedSource ------------------------------------------------------------------------------------------
 
 BufferedSource::BufferedSource(Source& underlying, u64 size) :
-    underlying_(underlying),
-    size_(size) {
+  underlying_(underlying),
+  size_(size) {
   ROCKET_CHECK(size, size >= MIN_BUFFER_SIZE);
   status_ = underlying.status();
   if (not bad()) {
@@ -485,6 +549,17 @@ BufferedSource::close() {
   pos_ = 0;
   end_ = 0;
   return underlying_.close();
+}
+
+istream&
+BufferedSource::istream() {
+  if (bad()) {
+    throw InvalidState("`BufferedSource` is bad");
+  }
+
+  auto& ret = underlying_.istream();
+  ret.seekg(safe<istream::off_type>(tell()), ios::beg);
+  return ret;
 }
 
 u64
@@ -663,6 +738,21 @@ FileSource::handle() const {
   return ROCKET_FILENO(file_);
 }
 
+istream&
+FileSource::istream() {
+  if (bad()) {
+    throw InvalidState("`FileSource` is bad");
+  }
+
+  if (istream_ == nullptr) {
+    namespace bio = boost::iostreams;
+    using FileDescriptorIstream = bio::stream<bio::file_descriptor_source>;
+    istream_ = make_unique<FileDescriptorIstream>(handle(), bio::never_close_handle);
+  }
+  istream_->seekg(safe<istream::off_type>(tell()), ios::beg);
+  return *istream_;
+}
+
 u64
 FileSource::read(span<u8> out) {
   if (bad()) {
@@ -718,6 +808,25 @@ FileSource::tell() {
   return safe<u64>(result);
 }
 
+// #NullSource ----------------------------------------------------------------------------------------------
+
+NullSource::NullSource() {
+  status_.bad = false;
+  status_.eof = true;
+}
+
+istream&
+NullSource::istream() {
+  if (bad()) {
+    throw InvalidState("`NullSource` is bad");
+  }
+
+  if (istream_ == nullptr) {
+    istream_ = make_unique<ispanstream>(span<const char>());
+  }
+  return *istream_;
+}
+
 // #SpanSource ----------------------------------------------------------------------------------------------
 
 SpanSource::SpanSource(std::span<const u8> in) :
@@ -734,6 +843,20 @@ SpanSource::close() {
 
   status_.bad = true;
   return true;
+}
+
+istream&
+SpanSource::istream() {
+  if (bad()) {
+    throw InvalidState("`SpanSource` is bad");
+  }
+
+  if (istream_ == nullptr) {
+    span<const char> chars(reinterpret_cast<const char*>(in_.data()), in_.size());
+    istream_ = make_unique<ispanstream>(chars);
+  }
+  istream_->seekg(safe<istream::off_type>(tell()), ios::beg);
+  return *istream_;
 }
 
 u64
@@ -777,6 +900,7 @@ SpanSource::seek(i64 offset, SeekMode mode) { // NOLINT
     break;
   }
   pos_ = min(static_cast<u64>(pos_), in_.size());
+  status_.eof = pos_ == in_.size();
   return true;
 }
 
@@ -900,6 +1024,20 @@ StringSource::close() {
   return true;
 }
 
+istream&
+StringSource::istream() {
+  if (bad()) {
+    throw InvalidState("`StringSource` is bad");
+  }
+
+  if (istream_ == nullptr) {
+    span<const char> chars(in_.data(), in_.size());
+    istream_ = make_unique<ispanstream>(chars);
+  }
+  istream_->seekg(safe<istream::off_type>(tell()), ios::beg);
+  return *istream_;
+}
+
 u64
 StringSource::read(span<u8> out) {
   if (bad()) {
@@ -941,6 +1079,7 @@ StringSource::seek(i64 offset, SeekMode mode) { // NOLINT
     break;
   }
   pos_ = min(static_cast<u64>(pos_), in_.size());
+  status_.eof = pos_ == in_.size();
   return true;
 }
 

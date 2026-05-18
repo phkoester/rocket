@@ -4,6 +4,7 @@
 
 #include "rocket/codec/FormattedCodec.h"
 
+#include "rocket/nio/nio-internal.h"
 #include "rocket/unicode/unicode.h"
 
 #include <boost/safe_numerics/safe_integer.hpp>
@@ -49,7 +50,7 @@ nextElem(nio::Sink& out, const FormattedConsumerConfig& config, u64 index) {
   }
 }
 
-// Utilities for encoding -----------------------------------------------------------------------------------
+// Utilities for decoding -----------------------------------------------------------------------------------
 
 void
 expectColon(nio::Source& in) {
@@ -65,28 +66,13 @@ expectComma(nio::Source& in) {
   }
 }
 
-u64
-findUnescaped(std::string_view str, char c) {
-  u64 pos = 0;
-  while (true) {
-    pos = str.find(c, pos);
-    if (pos == NPOS) {
-      return NPOS;
-    }
-    if (pos == 0 || str[pos - 1] != '\\') {
-      return pos;
-    }
-    ++pos;
-  }
-}
-
 bool
 read(nio::Source& in, char c) {
-  char buf;
-  if (in.read(buf) != 1) {
+  char current;
+  if (in.read(current) != 1) {
     return false;
   }
-  if (buf != c) {
+  if (current != c) {
     in.seek(-1, nio::SeekMode::cur);
     return false;
   }
@@ -94,94 +80,234 @@ read(nio::Source& in, char c) {
 }
 
 optional<string_view>
-read(nio::StringSource& in, const std::set<std::string_view>& values, bool ignoreCase) {
-  auto remaining = in.str();
-  for (const auto& value : values) {
-    if (not ignoreCase) {
-      // Case-sensitive
+read(nio::Source& in, const std::set<std::string_view>& values, bool ignoreCase) {
+#if ROCKET_NIO_OPTIMIZE_CONTIGUOUS_SOURCE == 1
+  if (const auto* contiguous = dynamic_cast<nio::ContiguousSource*>(&in); contiguous != nullptr) {
+    // Contiguous source
 
-      if (remaining.starts_with(value)) {
-        in.seek(safe<i64>(value.size()), nio::SeekMode::cur);
-        return value;
+    auto remaining = contiguous->str();
+    for (const auto& value : values) {
+      if (not ignoreCase) {
+        // Case-sensitive
+
+        if (remaining.starts_with(value)) {
+          in.seek(safe<i64>(value.size()), nio::SeekMode::cur);
+          return value;
+        }
+      } else {
+        // Case-insensitive
+
+        string lhs(remaining.substr(0, value.size()));
+        ranges::transform(lhs, lhs.begin(), [](char c) { return tolower(c); });
+
+        string rhs(value);
+        ranges::transform(rhs, rhs.begin(), [](char c) { return tolower(c); });
+
+        if (lhs == rhs) {
+          in.seek(safe<i64>(value.size()), nio::SeekMode::cur);
+          return value;
+        }
       }
-    } else {
-      // Case-insensitive
+    }
+    return {};
+  }
+#endif
 
-      string lhs(remaining.substr(0, value.size()));
-      ranges::transform(lhs, lhs.begin(), [](char c) { return tolower(c); });
+  // Noncontiguous source
 
-      string rhs(value);
-      ranges::transform(rhs, rhs.begin(), [](char c) { return tolower(c); });
+  const auto pos = in.tell();
 
-      if (lhs == rhs) {
-        in.seek(safe<i64>(value.size()), nio::SeekMode::cur);
-        return value;
+  string seen;
+  auto candidates(values); // A local copy of the set
+
+  const auto matches = [ignoreCase](char lhs, char rhs) {
+    if (ignoreCase) {
+      return tolower(lhs) == tolower(rhs);
+    }
+    return lhs == rhs;
+  };
+
+  while (true) {
+    if (candidates.empty()) {
+      break;
+    }
+
+    char c;
+    if (in.read(c) != 1) {
+      break;
+    }
+    u64 index = seen.size();
+    seen.push_back(c);
+
+    for (auto it = candidates.begin(), end = candidates.end(); it != end; /* Empty */) {
+      const auto candidate = *it;
+      if (candidate.size() <= index || not matches(candidate[index], c)) {
+        it = candidates.erase(it);
+      } else {
+        if (candidate.size() == seen.size()) {
+          return candidate;
+        }
+        ++it;
       }
     }
   }
+
+  in.seek(safe<i64>(pos), nio::SeekMode::beg);
+  return {};
+}
+
+optional<string>
+readUntilUnescaped(nio::Source& in, char c) {
+#if ROCKET_NIO_OPTIMIZE_CONTIGUOUS_SOURCE == 1
+  if (const auto* contiguous = dynamic_cast<nio::ContiguousSource*>(&in); contiguous != nullptr) {
+    // Contiguous source
+
+    const auto str = contiguous->str();
+    u64 pos = 0;
+
+    while (true) {
+      pos = str.find(c, pos);
+      if (pos == NPOS) {
+        return {};
+      }
+      if (pos == 0 || str[pos - 1] != '\\') {
+        in.seek(safe<i64>(pos + 1), nio::SeekMode::cur);
+        string ret(str.substr(0, pos));
+        return ret;
+      }
+      ++pos;
+    }
+
+    ROCKET_TERMINATE_UNREACHABLE_CODE();
+  }
+#endif
+
+  // Noncontiguous source
+
+  const auto pos = in.tell();
+
+  optional<char> previous;
+  char current;
+  string ret;
+
+  while (true) {
+    if (in.read(current) != 1) {
+      break;
+    }
+    if (current == c && (not previous || *previous != '\\')) {
+      return ret;
+    }
+    ret.push_back(current);
+    previous = current;
+  }
+
+  in.seek(safe<i64>(pos), nio::SeekMode::beg);
   return {};
 }
 
 void
-skip(nio::StringSource& in, const FormattedProducerConfig& config) { // NOLINT(*-complexity)
-  const auto remaining = in.str();
-  u64 pos = 0; // Position relative to current position of the source
-  while (pos < remaining.size()) {
-    const char c = remaining[pos];
+skip(nio::Source& in, const FormattedProducerConfig& config) { // NOLINT(*-complexity)
+  while (true) {
+    const auto pos = in.tell();
+
+    // Read first code point
+    auto first = in.readCodePoint();
+    if (not first) {
+      break;
+    }
+
+    // Read second code point
+    optional<unicode::CodePoint> second;
+    if (config.cComments && first == '/') {
+      second = in.readCodePoint();
+      if (not second) {
+        break;
+      }
+      if (*second != '/' && *second != '*') {
+        break;
+      }
+    }
 
     // Skip all ASCII characters 0--32
-    if (static_cast<u8>(c) <= 32) {
-      ++pos;
-      continue;
-    }
-
-    // Skip shell-style "#" comments until EOL
-    if (config.shellComments && c == '#') {
-      const auto lf = remaining.find('\n', pos + 1);
-      if (lf == NPOS) {
-        pos = remaining.size();
-        break;
-      }
-      pos = lf + 1;
-      continue;
-    }
-
-    const string_view twoChars = remaining.substr(pos, 2);
-
-    // Skip C-style "//" comments until EOL
-    if (config.cComments && twoChars == "//") {
-      const auto lf = remaining.find('\n', pos + 2);
-      if (lf == NPOS) {
-        pos = remaining.size();
-        break;
-      }
-      pos = lf + 1;
-      continue;
-    }
-
-    // Skip C-style "/*" comments until "*/"
-    if (config.cComments && twoChars == "/*") {
-      const auto eoc = remaining.find("*/", pos + 2);
-      if (eoc == NPOS) {
-        throw InputFailure(in.tell() + pos, "Unterminated C-style comment");
-      }
-      pos = eoc + 2;
+    if (*first <= 32) {
       continue;
     }
 
     // Skip whitespace code points
-    u64 newPos = 0;
-    const auto cp = unicode::nextCodePoint(remaining.substr(pos), newPos);
-    if (cp.isWhitespace()) {
-      pos += newPos;
+    if (first->isWhitespace()) {
+      continue;
+    }
+
+    // Skip shell-style "#" comments until EOL
+    if (config.shellComments && first == '#') {
+      if (not skipUntil(in, "\n")) {
+        break;
+      }
+      continue;
+    }
+
+    // Skip C-style "//" comments until EOL
+    if (config.cComments && first == '/' && second == '/') {
+      if (not skipUntil(in, "\n")) {
+        break;
+      }
+      continue;
+    }
+
+    // Skip C-style "/*" comments until "*/"
+    if (config.cComments && first == '/' && second == '*') {
+      if (not skipUntil(in, "*/")) {
+        in.seek(safe<i64>(pos), nio::SeekMode::beg);
+        throw InputFailure(pos, "Unterminated C-style comment");
+      }
       continue;
     }
 
     // Otherwise, stop skipping
+    in.seek(safe<i64>(pos), nio::SeekMode::beg);
     break;
   }
-  // Advance the source
-  in.seek(safe<i64>(pos), nio::SeekMode::cur);
+}
+
+bool
+skipUntil(nio::Source& in, std::string_view s) {
+  ROCKET_CHECK(s, not s.empty(), "May not be empty");
+
+#if ROCKET_NIO_OPTIMIZE_CONTIGUOUS_SOURCE == 1
+  if (const auto* contiguous = dynamic_cast<nio::ContiguousSource*>(&in); contiguous != nullptr) {
+    // Contiguous source
+
+    const auto str = contiguous->str();
+    const auto pos = str.find(s);
+    if (pos == NPOS) {
+      in.seek(0, nio::SeekMode::end);
+      return false;
+    }
+    in.seek(pos + s.size(), nio::SeekMode::cur);
+    return true;
+  }
+#endif
+
+  string seen;
+
+  while (true) {
+    char c;
+    if (in.read(c) != 1) {
+      break;
+    }
+
+    u64 index = seen.size();
+    if (c == s[index]) {
+      seen.push_back(c);
+      if (seen == s) {
+        return true;
+      }
+    } else {
+      seen.clear();
+    }
+  }
+
+  return false;
 }
 
 } // namespace rocket::codec::internal

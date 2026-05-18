@@ -7,6 +7,7 @@
 #pragma once
 
 #include "rocket/rocket.h"
+#include "rocket/unicode/unicode-fwd.h"
 
 #include <boost/safe_numerics/safe_integer.hpp>
 
@@ -115,7 +116,7 @@ protected:
 // #Sink ----------------------------------------------------------------------------------------------------
 
 /**
- * Sink base class. A device that can be written to.
+ * Sink base class. An output device that can be written to.
  */
 struct Sink : Device {
   /**
@@ -304,7 +305,7 @@ protected:
  *
  * @note Applying an additional buffer only makes sense if the underlying sink isn't already buffered.
  */
- struct BufferedSink : Sink {
+struct BufferedSink : Sink {
   /**
    * @ctor
    *
@@ -402,7 +403,7 @@ ROCKET_TEST_PRIVATE:
  * A null sink that never writes anything.
  */
 struct NullSink : Sink {
-  NullSink() { status_.eof = true; }
+  NullSink();
 
   ~NullSink() override = default;
 
@@ -533,22 +534,15 @@ enum class SeekMode : u8 {
 // #Source --------------------------------------------------------------------------------------------------
 
 /**
- * Source base class. A device that can be read from.
+ * Source base class. An input device that can be read from.
  */
 struct Source : Device {
   /**
-   * Reads all available bytes from a source into a vector.
+   * Provides #std::istream interoperability.
    *
-   * @return the bytes read
+   * @return a reference to an input stream
    */
-  std::vector<u8> readAll();
-
-  /**
-   * Reads all available characters from a source into a string.
-   *
-   * @return the string read
-   */
-  std::string readString();
+  virtual std::istream& istream() = 0;
 
   /**
    * Reads a single character from a source.
@@ -581,17 +575,29 @@ struct Source : Device {
    *
    * @return the line read, not containing the trailing @c '\\r' or @c '\\n'
    */
-  std::string readln();
+  virtual std::string readln();
 
   /**
-   * Reads a line from a source into a span.
+   * Reads all available bytes from a source into a vector.
    *
-   * A trailing @c '\\r' is removed if it precedes a @c '\\n'.
-   *
-   * @param out the span to read into
-   * @return the number of bytes read
+   * @return the bytes read
    */
-  u64 readln(std::span<char> out);
+  std::vector<u8> readAll();
+
+  /**
+   * Tries to read a valid code point from a source.
+   *
+   * @return a code point if one was read, null otherwise. If the return value is null, the number of bytes
+   *   read is undefined
+   */
+  virtual std::optional<unicode::CodePoint> readCodePoint();
+
+  /**
+   * Reads all available characters from a source into a string.
+   *
+   * @return the string read
+   */
+  std::string readString();
 
   /**
    * Seeks to a new position in the source.
@@ -659,6 +665,10 @@ struct ContiguousSource : Source {
    */
   virtual std::span<const u8> bytes() const = 0;
 
+  std::string readln() override;
+
+  std::optional<unicode::CodePoint> readCodePoint() override;
+
   /**
    * Returns the string available in the contiguous source.
    *
@@ -693,6 +703,8 @@ struct BufferedSource : Source {
   bool close() override;
 
   [[nodiscard]] i32 handle() const override { return underlying_.handle(); }
+
+  std::istream& istream() override;
 
   u64 read(std::span<u8> out) override;
 
@@ -763,6 +775,8 @@ struct FileSource : Source {
 
   [[nodiscard]] i32 handle() const override;
 
+  std::istream& istream() override;
+
   u64 read(std::span<u8> out) override;
 
   bool seek(i64 offset, SeekMode mode = SeekMode::beg) override; // NOLINT
@@ -773,6 +787,7 @@ ROCKET_TEST_PRIVATE:
 
   FILE* file_ = nullptr; ///< The `FILE` pointer.
   Config config_; ///< The configuration.
+  std::unique_ptr<std::istream> istream_; ///< An optional input stream.
 };
 
 // #NullSource ----------------------------------------------------------------------------------------------
@@ -781,13 +796,15 @@ ROCKET_TEST_PRIVATE:
  * A null source that never reads anything.
  */
  struct NullSource : Source {
-  NullSource() { status_.eof = true; }
+  NullSource();
 
   ~NullSource() override = default;
 
   bool close() override { return false; }
 
   [[nodiscard]] i32 handle() const override { return -1; }
+
+  std::istream& istream() override;
 
   u64 read([[maybe_unused]] std::span<u8> out) override { return 0; }
 
@@ -797,6 +814,10 @@ ROCKET_TEST_PRIVATE:
   }
 
   u64 tell() override { return NPOS; }
+
+private:
+
+  std::unique_ptr<std::istream> istream_;
 };
 
 // #SpanSource ----------------------------------------------------------------------------------------------
@@ -823,6 +844,8 @@ struct SpanSource : ContiguousSource {
 
   i32 handle() const override { return -1; }
 
+  std::istream& istream() override;
+
   /**
    * Returns the input span the source was constructed with.
    *
@@ -846,6 +869,7 @@ private:
 
   std::span<const u8> in_;
   boost::safe_numerics::safe<u64> pos_ = 0;
+  std::unique_ptr<std::istream> istream_;
 };
 
 // #StreamSource --------------------------------------------------------------------------------------------
@@ -869,6 +893,8 @@ struct StreamSource : Source {
   bool close() override;
 
   [[nodiscard]] i32 handle() const override;
+
+  std::istream& istream() override { return is_; }
 
   u64 read(std::span<u8> out) override;
 
@@ -916,6 +942,8 @@ struct StringSource : ContiguousSource {
    */
   std::string_view in() const { return in_; }
 
+  std::istream& istream() override;
+
   u64 read(std::span<u8> out) override;
 
   bool seek(i64 offset, SeekMode mode = SeekMode::beg) override; // NOLINT
@@ -928,6 +956,7 @@ private:
 
   std::string_view in_;
   boost::safe_numerics::safe<u64> pos_ = 0;
+  std::unique_ptr<std::istream> istream_;
 };
 
 // Variables ------------------------------------------------------------------------------------------------

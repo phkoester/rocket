@@ -10,6 +10,13 @@
 #include "rocket/log/log.h"
 #include "rocket/version.h"
 
+#include <scn/istream.h>
+
+#include <boost/iostreams/device/file_descriptor.hpp>
+#include <boost/iostreams/stream.hpp>
+
+#include <cstdio>
+
 using namespace rocket;
 using namespace rocket::unicode;
 using namespace std;
@@ -45,9 +52,23 @@ myTerminate() {
   // out.println("myTerminate");
 }
 
+using FileDescriptorStream = boost::iostreams::stream<boost::iostreams::file_descriptor_source>;
+
+unique_ptr<istream>
+makeIstream(FILE *f) {
+  namespace bio = boost::iostreams;
+  return make_unique<FileDescriptorStream>(bio::file_descriptor_source(fileno(f), bio::never_close_handle));
+}
+
 void
 toy() {
   ROCKET_LOG(toy);
+
+  const auto is = makeIstream(stdin);
+  string line;
+  if (getline(*is, line)) {
+    nio::out.println("LINE: {}", line);
+  }
 
   ROCKET_LOG_TRACE("Hey {}", "there");
 }

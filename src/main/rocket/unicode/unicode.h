@@ -182,12 +182,23 @@ std::string utf32To8(std::u32string_view str); // NOLINT
 namespace utf8 {
 
 /**
+ * Returns the length of the UTF-8 sequence starting with the byte @p c.
+ *
+ * @param c the first byte
+ * @return the length of the UTF-8 sequence starting with the byte @p c
+ * @throw #rocket::InvalidArgument if the byte @p c is neither a single nor a UTF-8 lead byte
+ */
+u64 lengthFromByte(char c);
+
+/**
  * Returns the next code point from the UTF-8 string @p str at the position @p pos.
  *
  * @param str a UTF-8 string
  * @param pos the position to get the next code point from. This must be less than the size of @p str. The
  *   position is updated to the position of the next code point
  * @return the next code point
+ * @throw #rocket::InvalidArgument if @p pos is out of bounds
+ * @throw #rocket::InvalidState if the UTF-8 sequence is invalid
  */
 CodePoint nextCodePoint(std::string_view str, u64& pos);
 

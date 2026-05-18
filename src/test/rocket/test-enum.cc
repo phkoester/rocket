@@ -8,6 +8,8 @@
 
 #include <fmt/xchar.h>
 
+#include <scn/istream.h>
+
 // #MyEnum --------------------------------------------------------------------------------------------------
 
 enum MyEnum : u8 { fröb, fröber, fröberer, pörk, pörker, pörkerer };
@@ -56,38 +58,49 @@ TEST(enum, MyEnumFormat) {
 
 TEST(enum, MyEnumScan) {
   {
-    auto result = scn::scan<MyEnum>("", "{}");
+    const auto result = scn::scan<MyEnum>("", "{}");
     ASSERT_FALSE(result);
     EXPECT_EQ(string_view(result.error().msg()), "EOF"sv);
   }
 
   {
-    auto result = scn::scan<MyEnum>("frö", "{}");
+    const auto result = scn::scan<MyEnum>("frö", "{}");
     ASSERT_FALSE(result);
     EXPECT_EQ(string_view(result.error().msg()), "Invalid enum value"sv);
   }
 
   {
-    auto result = scn::scan<MyEnum>("fröb", "{}");
+    const auto result = scn::scan<MyEnum>("fröb", "{}");
     ASSERT_TRUE(result);
-    auto val = result->value();
+    const auto val = result->value();
     EXPECT_EQ(val, fröb);
   }
 
   {
-    auto result = scn::scan<MyEnum>("fröbZZZ", "{}");
+    const auto result = scn::scan<MyEnum>("fröbZZZ", "{}");
     ASSERT_TRUE(result);
-    auto val = result->value();
+    const auto val = result->value();
     EXPECT_EQ(val, fröb);
     EXPECT_EQ(string_view(result->begin()), "ZZZ"sv);
   }
 
   {
-    auto result = scn::scan<MyEnum>("  fröberer  xx", "{}");
+    const auto result = scn::scan<MyEnum>("  fröberer  xx", "{}");
     ASSERT_TRUE(result);
-    auto val = result->value();
+    const auto val = result->value();
     EXPECT_EQ(val, fröberer);
     EXPECT_EQ(string_view(result->begin()), "  xx"sv);
+  }
+
+  {
+    const string input = "fröb, fröbererXXX";
+    auto is = istringstream(input);
+    const auto result = scn::scan<MyEnum, MyEnum>(is, "{}, {}");
+    ASSERT_TRUE(result);
+    const auto [val1, val2] = result->values();
+    EXPECT_EQ(val1, fröb);
+    EXPECT_EQ(val2, fröberer);
+    EXPECT_EQ(io::tellg(is), 16);
   }
 }
 

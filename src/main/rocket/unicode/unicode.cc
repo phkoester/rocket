@@ -114,6 +114,17 @@ utf32To8(u32string_view str) {
 
 namespace utf8 {
 
+u64
+lengthFromByte(char c) {
+  if (U8_IS_SINGLE(c)) {
+    return 1;
+  }
+  if (U8_IS_LEAD(c)) {
+    return U8_LENGTH_FROM_LEAD_BYTE(c);
+  }
+  ROCKET_FLOP(c, "{:0>#2x} is neither a single nor a UTF-8 lead byte", c);
+}
+
 CodePoint
 nextCodePoint(string_view str, u64& pos) {
   const auto size = str.size();
@@ -121,7 +132,10 @@ nextCodePoint(string_view str, u64& pos) {
   UChar32 cp; // NOLINT
   i32 i = safe<i32>(pos);
   U8_NEXT(str.data(), i, safe<i32>(size), cp); // NOLINT
-  pos = safe<u64>(i);
+  ROCKET_EXPECT(cp >= 0, "Invalid UTF-8 sequence");
+  u64 newPos = safe<u64>(i);
+  ROCKET_EXPECT(newPos > pos, "Invalid UTF-8 sequence");
+  pos = newPos;
   return static_cast<char32>(cp);
 }
 

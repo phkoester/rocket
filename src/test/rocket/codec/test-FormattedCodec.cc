@@ -178,6 +178,7 @@ TEST(FormattedCodec, FormattedConsumerDeclared) {
 // #FormattedProducer .......................................................................................
 
 TEST(FormattedCodec, FormattedProducerBool) {
+  EXPECT_EQ(decode<bool>("// sup\nTRue"), true);
   EXPECT_EQ(decode<bool>("  /* comment\nanother line in the comment */\r\n# comment\n\ttRUe"), true);
   EXPECT_EQ(decode<bool>("\r\n  1"), true);
 

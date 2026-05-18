@@ -19,6 +19,7 @@
 #include <scn/scan.h>
 
 #include <ostream>
+#include <iostream> // XXX
 
 // Macros ---------------------------------------------------------------------------------------------------
 
@@ -228,15 +229,19 @@ private:
  * This scanner uses the same format specifiers as the underlying string scanner.
  */
 template<typename E> requires rocket::Enum<E>::value
-struct scn::scanner<E, char> : scn::scanner<::std::string_view, char> {
+struct scn::scanner<E, char> : scn::scanner<::std::string, char> {
   /// @cond undocumented
 
-  using Base = scn::scanner<::std::string_view, char>;
+  /**
+   * This must be a scanner for #std::string, not for #std::string_view, because the latter would not work
+   * when scanning from a #std::istream.
+   */
+  using Base = scn::scanner<::std::string, char>;
 
   template<typename Context>
   scan_expected<typename Context::iterator>
   scan(E& val, Context& ctx) const {
-    std::string_view str;
+    std::string str;
     auto result = Base::scan(str, ctx);
     if (result) {
       try {

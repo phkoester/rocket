@@ -60,20 +60,26 @@ void expectColon(nio::Source& in);
 // Throws if there is no comma, advances the source only on success
 void expectComma(nio::Source& in);
 
-// Finds a character not preceded by an escaping backslash
-[[nodiscard]] u64 findUnescaped(std::string_view str, char c);
-
 // Reads a single expected character, advances the source only on success
 [[nodiscard]] bool read(nio::Source& in, char c);
 
-// Reads any of a set of expected strings, advances the source only on success
+// Reads any of a set of expected strings, advances the source only on success. There is an optimization for
+// contiguous sources.
 [[nodiscard]] std::optional<std::string_view> read(
-  nio::StringSource& in,
+  nio::Source& in,
   const std::set<std::string_view>& values,
   bool ignoreCase = false);
 
-/// Skips whitespace and comments
-void skip(nio::StringSource& in, const FormattedProducerConfig& config);
+// Reads until an expected character not preceded by an escaping backslash is found, advances the source only
+// on success. There is an optimization for contiguous sources
+[[nodiscard]] std::optional<std::string> readUntilUnescaped(nio::Source& in, char c);
+
+// Skips whitespace and comments, advances the source only if there is something to skip
+void skip(nio::Source& in, const FormattedProducerConfig& config);
+
+// Skips until an expected string is found, advances the source in any case. There is an optimization for
+// contiguous sources
+bool skipUntil(nio::Source& in, std::string_view s);
 
 // #FormattedConsumerImpl -----------------------------------------------------------------------------------
 
@@ -402,7 +408,7 @@ struct FormattedProducerImpl;
 template<>
 struct FormattedProducerImpl<DataType::Bool, bool> {
   void
-  produce(bool& val, nio::StringSource& in, CONFIG__) const {
+  produce(bool& val, nio::Source& in, CONFIG__) const {
     skip(in, config);
     const auto pos = in.tell();
 
@@ -421,7 +427,7 @@ struct FormattedProducerImpl<DataType::Bool, bool> {
 template<typename C>
 struct FormattedProducerImpl<DataType::Char, C> {
   void
-  produce(C& val, nio::StringSource& in, CONFIG__) const {
+  produce(C& val, nio::Source& in, CONFIG__) const {
     using boost::safe_numerics::safe;
 
     skip(in, config);
@@ -431,15 +437,12 @@ struct FormattedProducerImpl<DataType::Char, C> {
       throw InputFailure(pos, "Expected a character");
     }
 
-    auto remaining = in.str();
-    auto closing = findUnescaped(remaining, '\'');
-    if (closing == NPOS) {
+    auto input = readUntilUnescaped(in, '\'');
+    if (not input) {
       throw InputFailure(pos, "Unterminated character literal");
     }
-    in.seek(safe<i64>(closing + 1), nio::SeekMode::cur);
 
-    const std::string_view input = remaining.substr(0, closing);
-    const std::string unescaped = str::escape::unescapeCString(input);
+    const std::string unescaped = str::escape::unescapeCString(*input);
     const std::basic_string<C> str(unicode::ConvertTo<C>::apply(unescaped));
     if (str.size() != 1) {
       throw InputFailure(pos, "Invalid character literal");
@@ -562,15 +565,12 @@ struct FormattedProducerImpl<DataType::String, T> {
       throw InputFailure(pos, "Expected a string");
     }
 
-    auto remaining = in.str();
-    auto closing = findUnescaped(remaining, '"');
-    if (closing == NPOS) {
+    auto input = readUntilUnescaped(in, '"');
+    if (not input) {
       throw InputFailure(pos, "Unterminated string literal");
     }
-    in.seek(safe<i64>(closing + 1), nio::SeekMode::cur);
 
-    const std::string_view input = remaining.substr(0, closing);
-    const std::string unescaped = str::escape::unescapeCString(input);
+    const std::string unescaped = str::escape::unescapeCString(*input);
     using C = T::value_type;
     std::basic_string<C> str(unicode::ConvertTo<C>::apply(unescaped));
     if constexpr (std::is_same_v<T, std::basic_string_view<C>>) {
