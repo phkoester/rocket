@@ -61,7 +61,7 @@ target_sources(rocket
     rocket/rocket.cc
     rocket/chrono/chrono.cc
     rocket/cl/cl.cc
-    rocket/codec/FormattedCodec.cc
+    rocket/codec/codec-utils.cc
     rocket/external/scnlib/impl.cc
     rocket/filesystem/filesystem.cc
     rocket/io/io.cc
@@ -101,6 +101,7 @@ target_sources(rocket
       rocket/chrono/chrono.h
       rocket/cl/cl.h
       rocket/codec/codec.h
+      rocket/codec/codec-utils.h
       rocket/codec/CompareEncoder.h
       rocket/codec/EqualToEncoder.h
       rocket/codec/FormattedCodec.h

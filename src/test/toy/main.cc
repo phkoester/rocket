@@ -12,9 +12,6 @@
 
 #include <scn/istream.h>
 
-#include <boost/iostreams/device/file_descriptor.hpp>
-#include <boost/iostreams/stream.hpp>
-
 #include <cstdio>
 
 using namespace rocket;
@@ -52,23 +49,19 @@ myTerminate() {
   // out.println("myTerminate");
 }
 
-using FileDescriptorStream = boost::iostreams::stream<boost::iostreams::file_descriptor_source>;
-
-unique_ptr<istream>
-makeIstream(FILE *f) {
-  namespace bio = boost::iostreams;
-  return make_unique<FileDescriptorStream>(bio::file_descriptor_source(fileno(f), bio::never_close_handle));
+template<typename T, typename Source>
+[[nodiscard]] auto
+myScan(Source&& source, scn::scan_format_string<Source, T> format = "{}") {
+  return scn::scan<T>(source, format);
 }
 
 void
 toy() {
   ROCKET_LOG(toy);
 
-  const auto is = makeIstream(stdin);
-  string line;
-  if (getline(*is, line)) {
-    nio::out.println("LINE: {}", line);
-  }
+  string input = "123...";
+  auto result = myScan<u64>(input);
+  nio::out.println("result: {}", result->value());
 
   ROCKET_LOG_TRACE("Hey {}", "there");
 }

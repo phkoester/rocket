@@ -1,10 +1,9 @@
 /*
- * FormattedCodec.cc
+ * codec-utils.cc
  */
 
-#include "rocket/codec/FormattedCodec.h"
-
-#include "rocket/unicode/unicode.h"
+#include "rocket/InputFailure.h"
+#include "rocket/codec/codec-utils.h"
 
 #include <boost/safe_numerics/safe_integer.hpp>
 
@@ -12,40 +11,40 @@ using namespace std;
 
 using boost::safe_numerics::safe;
 
-namespace rocket::codec::internal {
+namespace rocket::codec {
 
 // Utilities for encoding -----------------------------------------------------------------------------------
 
 void
-beginContainer(nio::Sink& out, FormattedConsumerConfig& config, char c) {
-  if (config.indent) {
-    ++config.level;
+beginContainer(nio::Sink& out, bool indent, u64& level, char c) {
+  if (indent) {
+    ++level;
   }
   out.write(c);
 }
 
 void
-endContainer(nio::Sink& out, FormattedConsumerConfig& config, u64 size, char c) {
-  if (config.indent) {
-    --config.level;
+endContainer(nio::Sink& out, bool indent, u64& level, u64 size, char c) {
+  if (indent) {
+    --level;
     if (size > 0) {
-      out.print("\n{: <{}}", "", 2 * config.level);
+      out.print("\n{: <{}}", "", 2 * level);
     }
   }
   out.write(c);
 }
 
 void
-nextElem(nio::Sink& out, const FormattedConsumerConfig& config, u64 index) {
+nextElem(nio::Sink& out, bool indent, u64 level, u64 index) {
   if (index > 0) {
-    if (config.indent) {
+    if (indent) {
       out.write(',');
     } else {
       out.write(", ");
     }
   }
-  if (config.indent) {
-    out.print("\n{: <{}}", "", 2 * config.level);
+  if (indent) {
+    out.print("\n{: <{}}", "", 2 * level);
   }
 }
 
@@ -347,6 +346,6 @@ skipUntil(nio::Source& in, std::string_view s) {
   return false;
 }
 
-} // namespace rocket::codec::internal
+} // namespace rocket::codec
 
 // EOF

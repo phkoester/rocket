@@ -37,7 +37,7 @@
 
 namespace rocket::codec {
 
-// Mixed/middle endian is not supported, although the name PDP-11 sounds interesting ...
+// Mixed/middle endian is not supported
 static_assert(
   std::endian::native == std::endian::little || std::endian::native == std::endian::big,
   "Only little-endian and big-endian architectures are supported");
