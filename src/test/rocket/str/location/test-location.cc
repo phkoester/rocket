@@ -12,16 +12,16 @@ using namespace rocket::str::location;
 // Macros ---------------------------------------------------------------------------------------------------
 
 #define EXPECT_LOCATION( \
-    loc, type__, position__, ranges__, line__, column__, lineRange__, lineString__, message__, caption__) \
-    EXPECT_EQ(loc.type, type__); \
-    EXPECT_EQ(loc.position, position__); \
-    EXPECT_EQ(loc.ranges, (str::Ranges ranges__)); \
-    EXPECT_EQ(loc.line, line__); \
-    EXPECT_EQ(loc.column, column__); \
-    EXPECT_EQ(loc.lineRange, (str::Range lineRange__)); \
-    EXPECT_EQ(loc.lineString, lineString__); \
-    EXPECT_EQ(loc.message, message__); \
-    EXPECT_EQ(loc.caption, caption__)
+  loc, type__, position__, ranges__, line__, column__, lineRange__, lineString__, message__, caption__) \
+  EXPECT_EQ(loc.type, type__); \
+  EXPECT_EQ(loc.position, position__); \
+  EXPECT_EQ(loc.ranges, (str::Ranges ranges__)); \
+  EXPECT_EQ(loc.line, line__); \
+  EXPECT_EQ(loc.column, column__); \
+  EXPECT_EQ(loc.lineRange, (str::Range lineRange__)); \
+  EXPECT_EQ(loc.lineString, lineString__); \
+  EXPECT_EQ(loc.message, message__); \
+  EXPECT_EQ(loc.caption, caption__)
 
 // #TEST ----------------------------------------------------------------------------------------------------
 
@@ -51,14 +51,14 @@ TEST(location, locationsLf) {
   EXPECT_EQ(result.locations.size(), 1);
   const auto& loc = result.locations[0];
   EXPECT_LOCATION(
-      loc,
-      error,
-      10, ({}),
-      1, 11,
-      ({ 0, input.size() - 1 }),
-      input.substr(0, input.size() - 1),
-      "Oops",
-      nullopt);
+    loc,
+    error,
+    10, ({}),
+    1, 11,
+    ({ 0, input.size() - 1 }),
+    input.substr(0, input.size() - 1),
+    "Oops",
+    nullopt);
 }
 
 TEST(location, locationsCrlf) {
@@ -68,14 +68,14 @@ TEST(location, locationsCrlf) {
   EXPECT_EQ(result.locations.size(), 1);
   const auto& loc = result.locations[0];
   EXPECT_LOCATION(
-      loc,
-      error,
-      10, ({}),
-      1, 11,
-      ({ 0, input.size() - 2 }),
-      input.substr(0, input.size() - 2),
-      "Oops",
-      nullopt);
+    loc,
+    error,
+    10, ({}),
+    1, 11,
+    ({ 0, input.size() - 2 }),
+    input.substr(0, input.size() - 2),
+    "Oops",
+    nullopt);
 }
 
 TEST(location, locationsNullByte) {
@@ -119,15 +119,15 @@ TEST(location, locationsKafkaTxt) {
   EXPECT_EQ(result.locations.size(), 1);
   const auto& loc = result.locations[0];
   EXPECT_LOCATION(
-      loc,
-      error,
-      3'000, ({}),
-      38, 77,
-      ({ 2'922, 3'033 }),
-      "blödsinnig. Der Mensch muß seinen Schlaf haben. Andere Reisende leben wie Haremsfrauen. Wenn ich zum "
-      "Beispiel",
-      "Oops",
-      nullopt);
+    loc,
+    error,
+    3'000, ({}),
+    38, 77,
+    ({ 2'922, 3'033 }),
+    "blödsinnig. Der Mensch muß seinen Schlaf haben. Andere Reisende leben wie Haremsfrauen. Wenn ich zum "
+    "Beispiel",
+    "Oops",
+    nullopt);
 
   const string_view line(input.begin() + loc.lineRange.a, input.begin() + *loc.lineRange.b); // NOLINT
   EXPECT_EQ(line, loc.lineString);
@@ -198,50 +198,50 @@ TEST(location, printLocations) { // NOLINT(*-complexity)
     EXPECT_EQ(result.locations.size(), 3);
     const auto& loc0 = result.locations[0];
     EXPECT_LOCATION(
-        loc0,
-        note,
-        2, ({}),
-        1, 3,
-        ({ 0, 12 }),
-        input.substr(0, 12),
-        "Oops1",
-        nullopt);
+      loc0,
+      note,
+      2, ({}),
+      1, 3,
+      ({ 0, 12 }),
+      input.substr(0, 12),
+      "Oops1",
+      nullopt);
     const auto& loc1 = result.locations[1];
     EXPECT_LOCATION(
-        loc1,
-        warning,
-        13, ({}),
-        2, 1,
-        ({ 13, input.size() }),
-        input.substr(13),
-        "Oops2",
-        nullopt);
+      loc1,
+      warning,
+      13, ({}),
+      2, 1,
+      ({ 13, input.size() }),
+      input.substr(13),
+      "Oops2",
+      nullopt);
     const auto& loc2 = result.locations[2];
     EXPECT_LOCATION(
-        loc2,
-        error,
-        19, ({}),
-        2, 7,
-        ({ 13, input.size() }),
-        input.substr(13),
-        "Oops3",
-        "Watch out!");
+      loc2,
+      error,
+      19, ({}),
+      2, 7,
+      ({ 13, input.size() }),
+      input.substr(13),
+      "Oops3",
+      "Watch out!");
     nio::StringSink out;
     if (TEST_TERMINAL) {
       printLocations(nio::out, nullopt, result, { .styled=true });
     }
     printLocations(out, nullopt, result, {});
     EXPECT_EQ(out.str(),
-        "foo:1:3: note: Oops1\n"
-        "    1 | a multi-line\n"
-        "      |   ^\n"
-        "foo:2:1: warning: Oops2\n"
-        "    2 | text, where the second line is somewhat longer\n"
-        "      | ^\n"
-        "foo:2:7: error: Oops3\n"
-        "    2 | text, where the second line is somewhat longer\n"
-        "      |       ^\n"
-        "      |       Watch out!\n");
+      "foo:1:3: note: Oops1\n"
+      "    1 | a multi-line\n"
+      "      |   ^\n"
+      "foo:2:1: warning: Oops2\n"
+      "    2 | text, where the second line is somewhat longer\n"
+      "      | ^\n"
+      "foo:2:7: error: Oops3\n"
+      "    2 | text, where the second line is somewhat longer\n"
+      "      |       ^\n"
+      "      |       Watch out!\n");
   }
 
   // Test multi-code-point character
@@ -260,9 +260,9 @@ TEST(location, printLocations) { // NOLINT(*-complexity)
     }
     printLocations(out, input, result, {});
     EXPECT_EQ(out.str(),
-        "(input):1:9: note: Oops\n"
-        "    1 | 🧑‍🌾\\x00  abc\n"
-        "      |         ^\n");
+      "(input):1:9: note: Oops\n"
+      "    1 | 🧑‍🌾\\x00  abc\n"
+      "      |         ^\n");
   }
 
   // Test multi-code-point character, position at end of string
@@ -280,9 +280,9 @@ TEST(location, printLocations) { // NOLINT(*-complexity)
     }
     printLocations(out, input, result, {});
     EXPECT_EQ(out.str(),
-        "(input):1:12: note: Oops\n"
-        "    1 | 🧑‍🌾\\x00  abc\n"
-        "      | ~~~~~~~~~~~^\n");
+      "(input):1:12: note: Oops\n"
+      "    1 | 🧑‍🌾\\x00  abc\n"
+      "      | ~~~~~~~~~~~^\n");
   }
 }
 

@@ -156,6 +156,44 @@ read(nio::Source& in, const std::set<std::string_view>& values, bool ignoreCase)
 }
 
 optional<string>
+readUntil(nio::Source& in, char c) {
+#ifndef ROCKET_NIO_NO_CONTIGUOUS_SOURCE
+  if (const auto* contiguous = dynamic_cast<nio::ContiguousSource*>(&in); contiguous != nullptr) {
+    // Contiguous source
+
+    const auto str = contiguous->str();
+    u64 pos = str.find(c);
+    if (pos == NPOS) {
+      return {};
+    }
+    in.seek(safe<i64>(pos + 1), nio::SeekMode::cur);
+    string ret(str.substr(0, pos));
+    return ret;
+  }
+#endif
+
+  // Noncontiguous source
+
+  const auto pos = in.tell();
+
+  string ret;
+
+  while (true) {
+    char current;
+    if (in.read(current) != 1) {
+      break;
+    }
+    if (current == c) {
+      return ret;
+    }
+    ret.push_back(current);
+  }
+
+  in.seek(safe<i64>(pos), nio::SeekMode::beg);
+  return {};
+}
+
+optional<string>
 readUntilUnescaped(nio::Source& in, char c) {
 #ifndef ROCKET_NIO_NO_CONTIGUOUS_SOURCE
   if (const auto* contiguous = dynamic_cast<nio::ContiguousSource*>(&in); contiguous != nullptr) {

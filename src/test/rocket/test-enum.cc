@@ -93,7 +93,7 @@ TEST(enum, MyEnumScan) {
   }
 
   {
-    const string input = "fröb, fröbererXXX";
+    const string input = "fröb, fröberer...";
     auto is = istringstream(input);
     const auto result = scn::scan<MyEnum, MyEnum>(is, "{}, {}");
     ASSERT_TRUE(result);

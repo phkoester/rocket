@@ -5,7 +5,10 @@
 #include "rocket-test/rocket-test.h"
 
 #include "rocket/filesystem/filesystem.h"
+#include "rocket/log/log.h"
 #include "rocket/nio/nio.h"
+
+#include <scn/istream.h>
 
 #include <fstream>
 
@@ -241,6 +244,19 @@ TEST(nio, FileSourceReadString) {
   str = in.readString();
   EXPECT_EQ(str, "there\n");
   EXPECT_EQ(in.tell(), 10);
+}
+
+TEST(nio, FileSourceScanIstream) {
+  const auto path = testSource("test-nio-FileSourceScanIstream.txt");
+  FILE* file = fopen(path.c_str(), "r");
+  FileSource in(file);
+  auto& is = in.istream();
+  auto result = scn::scan<log::LogLevel, log::LogLevel>(is, "{}, {}");
+  ASSERT_TRUE(result);
+  const auto [level1, level2] = result->values();
+  EXPECT_EQ(level1, log::LogLevel::debug);
+  EXPECT_EQ(level2, log::LogLevel::info);
+  EXPECT_EQ(io::tellg(is), 11);
 }
 
 TEST(nio, NullSource) {

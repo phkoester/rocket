@@ -70,6 +70,10 @@ void expectComma(nio::Source& in);
   const std::set<std::string_view>& values,
   bool ignoreCase = false);
 
+// Reads until an expected character is found, advances the source only on success. There is an optimization
+// for contiguous sources
+[[nodiscard]] std::optional<std::string> readUntil(nio::Source& in, char c);
+
 // Reads until an expected character not preceded by an escaping backslash is found, advances the source only
 // on success. There is an optimization for contiguous sources
 [[nodiscard]] std::optional<std::string> readUntilUnescaped(nio::Source& in, char c);
@@ -96,6 +100,32 @@ scanSource(nio::Source& in) {
 
   std::istream& is = in.istream();
   auto result = scn::scan<T>(is, "{}");
+  if (result) {
+    return result->value();
+  }
+  return {};
+}
+
+// Scans an code point from a source, using `scnlib`. There is an optimization for contiguous sources
+template<typename I>
+[[nodiscard]] std::optional<I>
+scanSourceCodePoint(nio::Source& in) {
+#ifndef ROCKET_NIO_NO_CONTIGUOUS_SOURCE
+  if (const auto* contiguous = dynamic_cast<nio::ContiguousSource*>(&in); contiguous != nullptr) {
+    // Contiguous source
+
+    const auto str = contiguous->str();
+    auto result = scn::scan<I>(str, "U+{:X}");
+    if (result) {
+      in.seek(result->begin() - str.begin(), nio::SeekMode::cur);
+      return result->value();
+    }
+    return {};
+  }
+#endif
+
+  std::istream& is = in.istream();
+  auto result = scn::scan<I>(is, "U+{:X}");
   if (result) {
     return result->value();
   }
@@ -600,7 +630,7 @@ struct FormattedProducerImpl<DataType::Pointer, P> {
 template<typename T>
 struct FormattedProducerImpl<DataType::String, T> {
   void
-  produce(T& val, nio::StringSource& in, CONFIG__) const {
+  produce(T& val, nio::Source& in, CONFIG__) const {
     using boost::safe_numerics::safe;
 
     skip(in, config);
@@ -637,7 +667,7 @@ struct FormattedProducerImpl<DataType::Optional, T> {
   static constexpr auto ElemDataType = DataTypes<Elem>::Value;
 
   void
-  produce(T& val, nio::StringSource& in, CONFIG__) const {
+  produce(T& val, nio::Source& in, CONFIG__) const {
     skip(in, config);
 
     if (read(in, { "<none>" })) {
@@ -655,7 +685,7 @@ template<typename T>
 struct FormattedProducerImpl<DataType::Tuple, T> {
   template<typename... Args>
   void
-  produce(T& val, nio::StringSource& in, CONFIG__, Args&&... args) const {
+  produce(T& val, nio::Source& in, CONFIG__, Args&&... args) const {
     skip(in, config);
     const auto pos = in.tell();
 
@@ -681,7 +711,7 @@ private:
 
   template<typename Elem, typename... Args>
   void
-  produceElem(Elem& elem, nio::StringSource& in, CONFIG__, u64 index, Args&&... args) const {
+  produceElem(Elem& elem, nio::Source& in, CONFIG__, u64 index, Args&&... args) const {
     skip(in, config);
     if (index > 0) {
       expectComma(in);
@@ -698,7 +728,7 @@ struct FormattedProducerImpl<DataType::List, T> {
   static constexpr auto ElemDataType = DataTypes<Elem>::Value;
 
   void
-  produce(T& val, nio::StringSource& in, CONFIG__) const {
+  produce(T& val, nio::Source& in, CONFIG__) const {
     static_assert(not IsView<T>, "Cannot decode list view");
     static_assert(not IsForwardList<T>, "Cannot decode forward list");
 
@@ -721,7 +751,7 @@ struct FormattedProducerImpl<DataType::List, T> {
 private:
 
   void
-  produceArray(T& val, nio::StringSource& in, CONFIG__, u64 pos) const {
+  produceArray(T& val, nio::Source& in, CONFIG__, u64 pos) const {
     const auto size = val.size();
     for (u64 index = 0; index < size; ++index) {
       skip(in, config);
@@ -742,7 +772,7 @@ private:
   }
 
   void
-  produceContainerWithPushBack(T& val, nio::StringSource& in, CONFIG__) const {
+  produceContainerWithPushBack(T& val, nio::Source& in, CONFIG__) const {
     u64 index = 0;
     while (true) {
       skip(in, config);
@@ -768,7 +798,7 @@ struct FormattedProducerImpl<DataType::Set, T> {
   static constexpr auto ElemDataType = DataTypes<Elem>::Value;
 
   void
-  produce(T& val, nio::StringSource& in, CONFIG__) const {
+  produce(T& val, nio::Source& in, CONFIG__) const {
     skip(in, config);
     const auto pos = in.tell();
 
@@ -804,7 +834,7 @@ struct FormattedProducerImpl<DataType::Map, T> {
   static constexpr auto ElemDataType = DataTypes<Elem>::Value;
 
   void
-  produce(T& val, nio::StringSource& in, CONFIG__) const {
+  produce(T& val, nio::Source& in, CONFIG__) const {
     skip(in, config);
     const auto pos = in.tell();
 
@@ -848,7 +878,7 @@ struct FormattedProducerImpl<DataType::Bimap, T> {
   static constexpr auto ElemDataType = DataTypes<Elem>::Value;
 
   void
-  produce(T& val, nio::StringSource& in, CONFIG__) const {
+  produce(T& val, nio::Source& in, CONFIG__) const {
     skip(in, config);
     const auto pos = in.tell();
 
@@ -890,27 +920,23 @@ struct FormattedProducerImpl<DataType::CodePoint, T> {
   static constexpr auto ElemDataType = DataTypes<Elem>::Value;
 
   void
-  produce(T& val, nio::StringSource& in, CONFIG__) const {
+  produce(T& val, nio::Source& in, CONFIG__) const {
     skip(in, config);
     const auto pos = in.tell();
 
-    auto remaining = in.str();
-    if (remaining.starts_with('\'')) {
+    if (read(in, '\'')) {
+      in.seek(-1, nio::SeekMode::cur);
       Elem elem = Elem();
       FormattedProducerImpl<ElemDataType, Elem>().produce(elem, in, config);
       val = T(elem);
       return;
     }
 
-    if (remaining.starts_with("U+")) {
-      auto result = scn::scan<u32>(remaining, "U+{:X}");
-      if (result) {
-        in.seek(result->begin() - remaining.begin(), nio::SeekMode::cur);
-        val = T(static_cast<Elem>(result->value()));
-        return;
-      }
+    auto result = scanSourceCodePoint<u32>(in);
+    if (result) {
+      val = static_cast<Elem>(*result);
+      return;
     }
-
     throw InputFailure(pos, "Expected a code point");
   }
 };
@@ -926,7 +952,7 @@ struct FormattedProducerImpl<DataType::Interval, T> {
   using Right = T::RightType;
 
   void
-  produce(T& val, nio::StringSource& in, CONFIG__) const {
+  produce(T& val, nio::Source& in, CONFIG__) const {
     skip(in, config);
     const auto pos = in.tell();
 
@@ -979,7 +1005,7 @@ struct FormattedProducerImpl<DataType::Declared, T> {
   static_assert(ElemDataType == DataType::Tuple);
 
   void
-  produce(T& val, nio::StringSource& in, CONFIG__) const {
+  produce(T& val, nio::Source& in, CONFIG__) const {
     // Here we have to pass an additional argument, the instance, to the tuple producer. The tuple producer
     // will pass it on to the member-reference producer
     FormattedProducerImpl<ElemDataType, Elem>().produce(const_cast<Elem&>(refs), in, config, val);
@@ -994,7 +1020,7 @@ struct FormattedProducerImpl<DataType::Instance, T> {
   static_assert(ElemDataType == DataType::Tuple);
 
   void
-  produce(T& val, nio::StringSource& in, CONFIG__) const {
+  produce(T& val, nio::Source& in, CONFIG__) const {
     // Here we have to pass an additional argument, the instance, to the tuple producer. The tuple producer
     // will pass it on to the member-reference producer
     FormattedProducerImpl<ElemDataType, Elem>().produce(const_cast<Elem&>(refs), in, config, val.get());
@@ -1008,24 +1034,21 @@ struct FormattedProducerImpl<DataType::MemberRef, T> {
 
   template<typename C>
   void
-  produce(T& val, nio::StringSource& in, CONFIG__, C& instance) const {
+  produce(T& val, nio::Source& in, CONFIG__, C& instance) const {
     using boost::safe_numerics::safe;
 
     skip(in, config);
     const auto pos = in.tell();
 
-    auto remaining = in.str();
-    auto eq = remaining.find('=');
-    if (eq == NPOS) {
+    auto name = readUntil(in, '=');
+    if (not name) {
       throw InputFailure(pos, "Expected a member reference");
     }
-    in.seek(safe<i64>(eq + 1), nio::SeekMode::cur);
+    name = str::removeTrailing<char>(*name, " "); // @todo Trim all trailing whitespace
 
     // For `MemberRef`, we demand the name to match
-    std::string_view name = remaining.substr(0, eq);
-    name = str::removeTrailing<char>(name, " "); // @todo Trim all trailing whitespace
-    if (name != val.name()) {
-      throw InputFailure(pos, fmt::format("Expected name `{}`, got `{}`", val.name(), name));
+    if (*name != val.name()) {
+      throw InputFailure(pos, fmt::format("Expected name `{}`, got `{}`", val.name(), *name));
     }
     skip(in, config);
 
@@ -1039,18 +1062,16 @@ struct FormattedProducerImpl<DataType::VarRef, T> {
   static constexpr auto ElemDataType = DataTypes<Elem>::Value;
 
   void
-  produce(T& val, nio::StringSource& in, CONFIG__) const {
+  produce(T& val, nio::Source& in, CONFIG__) const {
     using boost::safe_numerics::safe;
 
     skip(in, config);
     const auto pos = in.tell();
 
-    auto remaining = in.str();
-    auto eq = remaining.find('=');
-    if (eq == NPOS) {
+    auto name = readUntil(in, '=');
+    if (not name) {
       throw InputFailure(pos, "Expected a variable reference");
     }
-    in.seek(safe<i64>(eq + 1), nio::SeekMode::cur);
 
     // For `VarRef`, we ignore the name altogether and do not demand it to match
     skip(in, config);
@@ -1101,6 +1122,8 @@ struct FormattedProducer {
  * made possible by storing intermediate strings in the source. Hence, decoded string views are valid for the
  * lifetime of the source.
  *
+ * There are various optimizations for contiguous sources.
+ *
  * @see #rocket::codec::FormattedConsumerConfig
  * @see #rocket::codec::FormattedProducerConfig
  */
@@ -1148,7 +1171,7 @@ struct FormattedCodec : Codec<FormattedConsumer, FormattedProducer> {
    */
   template<typename T>
   T
-  decode(nio::StringSource& in) const {
+  decode(nio::Source& in) const {
     return Base::decode<T>(in, FormattedProducerConfig());
   }
 
@@ -1163,7 +1186,7 @@ struct FormattedCodec : Codec<FormattedConsumer, FormattedProducer> {
    */
   template<typename T>
   T
-  decode(nio::StringSource& in, const FormattedProducerConfig& config) const {
+  decode(nio::Source& in, const FormattedProducerConfig& config) const {
     return Base::decode<T>(in, config);
   }
 
@@ -1176,7 +1199,7 @@ struct FormattedCodec : Codec<FormattedConsumer, FormattedProducer> {
    */
   template<typename T>
   [[nodiscard]] std::optional<T>
-  tryDecode(nio::StringSource& in) const {
+  tryDecode(nio::Source& in) const {
     return Base::tryDecode<T>(in, FormattedProducerConfig());
   }
 
@@ -1190,7 +1213,7 @@ struct FormattedCodec : Codec<FormattedConsumer, FormattedProducer> {
    */
   template<typename T>
   [[nodiscard]] std::optional<T>
-  tryDecode(nio::StringSource& in, const FormattedProducerConfig& config) const {
+  tryDecode(nio::Source& in, const FormattedProducerConfig& config) const {
     return Base::tryDecode<T>(in, config);
   }
 };
