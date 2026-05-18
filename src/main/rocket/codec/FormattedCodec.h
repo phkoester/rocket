@@ -15,7 +15,7 @@
 
 #include <fmt/std.h>
 
-#include <scn/scan.h>
+#include <scn/istream.h>
 
 namespace rocket::codec {
 
@@ -73,6 +73,63 @@ void expectComma(nio::Source& in);
 // Reads until an expected character not preceded by an escaping backslash is found, advances the source only
 // on success. There is an optimization for contiguous sources
 [[nodiscard]] std::optional<std::string> readUntilUnescaped(nio::Source& in, char c);
+
+// Scans from a source, using `scnlib`. There is an optimization for contiguous sources
+template<typename T>
+[[nodiscard]] std::optional<T>
+scanSource(nio::Source& in) {
+#ifndef ROCKET_NIO_NO_CONTIGUOUS_SOURCE
+  if (const auto* contiguous = dynamic_cast<nio::ContiguousSource*>(&in); contiguous != nullptr) {
+    // Contiguous source
+
+    const auto str = contiguous->str();
+    auto result = scn::scan<T>(str, "{}");
+    if (result) {
+      in.seek(result->begin() - str.begin(), nio::SeekMode::cur);
+      return result->value();
+    }
+    return {};
+  }
+#endif
+
+  // Noncontiguous source
+
+  std::istream& is = in.istream();
+  auto result = scn::scan<T>(is, "{}");
+  if (result) {
+    return result->value();
+  }
+  return {};
+}
+
+// Scans an integer value from a source, using `scnlib`. There is an optimization for contiguous sources
+template<typename I>
+[[nodiscard]] std::optional<I>
+scanSourceInteger(nio::Source& in) {
+#ifndef ROCKET_NIO_NO_CONTIGUOUS_SOURCE
+  if (const auto* contiguous = dynamic_cast<nio::ContiguousSource*>(&in); contiguous != nullptr) {
+    // Contiguous source
+
+    const auto str = contiguous->str();
+    // Setting `base` to 0 detects the base from the input
+    auto result = scn::scan_int<I>(str, 0);
+    if (result) {
+      in.seek(result->begin() - str.begin(), nio::SeekMode::cur);
+      return result->value();
+    }
+    return {};
+  }
+#endif
+
+  // Noncontiguous source
+
+  std::istream& is = in.istream();
+  auto result = scn::scan<I>(is, "{}");
+  if (result) {
+    return result->value();
+  }
+  return {};
+}
 
 // Skips whitespace and comments, advances the source only if there is something to skip
 void skip(nio::Source& in, const FormattedProducerConfig& config);
@@ -457,16 +514,14 @@ struct FormattedProducerImpl<DataType::Enum, E> {
   static constexpr auto UnderlyingDataType = DataTypes<Underlying>::Value;
 
   void
-  produce(E& val, nio::StringSource& in, CONFIG__) const {
+  produce(E& val, nio::Source& in, CONFIG__) const {
     skip(in, config);
     const auto pos = in.tell();
 
     if constexpr (scn::detail::is_scannable<E, char>::value) {
-      const auto remaining = in.str();
-      auto result = scn::scan<E>(remaining, "{}");
+      const auto result = scanSource<E>(in);
       if (result) {
-        in.seek(result->begin() - remaining.begin(), nio::SeekMode::cur);
-        val = result->value();
+        val = *result;
         return;
       }
       throw InputFailure(pos, fmt::format("Invalid value for enumeration `{}`", typeid(E)));
@@ -481,19 +536,15 @@ struct FormattedProducerImpl<DataType::Enum, E> {
 template<typename I>
 struct FormattedProducerImpl<DataType::Integer, I> {
   void
-  produce(I& val, nio::StringSource& in, CONFIG__) const {
+  produce(I& val, nio::Source& in, CONFIG__) const {
     skip(in, config);
     const auto pos = in.tell();
 
-    auto remaining = in.str();
-    // Setting `base` to 0 detects the base from the input
-    auto result = scn::scan_int<I>(remaining, 0);
+    const auto result = scanSourceInteger<I>(in);
     if (result) {
-      in.seek(result->begin() - remaining.begin(), nio::SeekMode::cur);
-      val = result->value();
+      val = *result;
       return;
     }
-
     throw InputFailure(pos, "Expected an integer value");
   }
 };
@@ -503,7 +554,7 @@ struct FormattedProducerImpl<DataType::Float, F> {
   using Limits = std::numeric_limits<F>;
 
   void
-  produce(F& val, nio::StringSource& in, CONFIG__) const {
+  produce(F& val, nio::Source& in, CONFIG__) const {
     skip(in, config);
     const auto pos = in.tell();
 
@@ -516,14 +567,11 @@ struct FormattedProducerImpl<DataType::Float, F> {
       return;
     }
 
-    auto remaining = in.str();
-    auto result = scn::scan<F>(remaining, "{}");
+    const auto result = scanSource<F>(in);
     if (result) {
-      in.seek(result->begin() - remaining.begin(), nio::SeekMode::cur);
-      val = result->value();
+      val = *result;
       return;
     }
-
     throw InputFailure(pos, "Expected a floating-point value");
   }
 };
@@ -531,7 +579,7 @@ struct FormattedProducerImpl<DataType::Float, F> {
 template<typename P>
 struct FormattedProducerImpl<DataType::Pointer, P> {
   void
-  produce(P& val, nio::StringSource& in, CONFIG__) const {
+  produce(P& val, nio::Source& in, CONFIG__) const {
     skip(in, config);
     const auto pos = in.tell();
 
@@ -540,14 +588,11 @@ struct FormattedProducerImpl<DataType::Pointer, P> {
       return;
     }
 
-    auto remaining = in.str();
-    auto result = scn::scan<P>(remaining, "{}");
+    const auto result = scanSource<P>(in);
     if (result) {
-      in.seek(result->begin() - remaining.begin(), nio::SeekMode::cur);
-      val = result->value();
+      val = *result;
       return;
     }
-
     throw InputFailure(pos, "Expected a pointer value");
   }
 };
