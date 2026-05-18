@@ -248,7 +248,7 @@ TEST(nio, FileSourceReadString) {
 
 TEST(nio, FileSourceScanIstream) {
   const auto path = testSource("test-nio-FileSourceScanIstream.txt");
-  FILE* file = fopen(path.c_str(), "r");
+  FILE* file = fopen(path.string().c_str(), "r");
   FileSource in(file);
   auto& is = in.istream();
   auto result = scn::scan<log::LogLevel, log::LogLevel>(is, "{}, {}");
