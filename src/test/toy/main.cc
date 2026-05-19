@@ -45,11 +45,19 @@ myTerminate() {
   // out.println("myTerminate");
 }
 
+struct A {
+  A(char c) : c_(c) {}
+  char c_;
+};
+
 void
 toy() {
   ROCKET_LOG(toy);
 
   ROCKET_LOG_TRACE("Hey {}", "there");
+
+  const auto a = A { 'a' };
+  out.println("a: {}", a.c_);
 }
 
 } // namespace
