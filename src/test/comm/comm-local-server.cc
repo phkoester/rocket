@@ -2,6 +2,8 @@
  * comm-local-server.cc
  */
 
+#include "Message.h"
+
 #include "rocket/Process.h"
 #include "rocket/cl/cl.h"
 #include "rocket/filesystem/filesystem.h"
@@ -49,17 +51,22 @@ private:
         if (ec) {
           return;
         }
-        istream is(&self->buffer_);
-        string msg;
-        getline(is, msg);
-        nio::out.println("Received message on {}: {:?}", self->path_, msg);
-        self->write(msg + "\n");
+        comm::Message msg;
+        {
+          istream is(&self->buffer_);
+          getline(is, msg.payload());
+        }
+        nio::out.println(
+          "Received message on {}: {:?} ({} bytes)",
+          self->path_, msg.display(), msg.size());
+        msg.payload().push_back('\n');
+        self->write(msg.payload());
       });
   }
 
-  void write(string msg) {
+  void write(const string& msg) {
     auto self = shared_from_this();
-    auto payload = make_shared<string>(std::move(msg));
+    auto payload = make_shared<string>(msg);
     asio::async_write(
       socket_, asio::buffer(*payload),
       [self, payload](const boost::system::error_code& ec, u64) {

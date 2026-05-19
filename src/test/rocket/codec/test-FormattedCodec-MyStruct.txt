@@ -1,0 +1,20 @@
+/*
+ * test-FormattedCodec-MyStruct.txt
+ */
+
+(
+  ärger   = 0x10,
+  // A C-style comment
+  ökonom =   true, # A comment
+  übermut="a test\nstring",
+  vec   =   /* A multi-line
+             * comment
+             */ [
+    10, 9, 8, 7,
+    6, 5, 4,
+    3,2,
+    1,
+  ],
+)
+
+// EOF

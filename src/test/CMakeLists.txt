@@ -17,17 +17,23 @@ target_link_libraries(print-args PRIVATE Rocket::rocket)
 AddExecutable(toy toy/main.cc)
 target_link_libraries(toy PRIVATE Rocket::rocket)
 
+# comm ......................................................................................................
+
+add_library(comm STATIC)
+target_sources(comm PRIVATE comm/Message.cc)
+target_link_libraries(comm PUBLIC Rocket::rocket)
+
 AddExecutable(comm-local-client comm/comm-local-client.cc)
-target_link_libraries(comm-local-client PRIVATE Rocket::rocket)
+target_link_libraries(comm-local-client PRIVATE comm)
 
 AddExecutable(comm-local-server comm/comm-local-server.cc)
-target_link_libraries(comm-local-server PRIVATE Rocket::rocket)
+target_link_libraries(comm-local-server PRIVATE comm)
 
 AddExecutable(comm-tcp-client comm/comm-tcp-client.cc)
-target_link_libraries(comm-tcp-client PRIVATE Rocket::rocket)
+target_link_libraries(comm-tcp-client PRIVATE comm)
 
 AddExecutable(comm-tcp-server comm/comm-tcp-server.cc)
-target_link_libraries(comm-tcp-server PRIVATE Rocket::rocket)
+target_link_libraries(comm-tcp-server PRIVATE comm)
 
 # Tests -----------------------------------------------------------------------------------------------------
 

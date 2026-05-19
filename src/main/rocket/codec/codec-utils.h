@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "rocket/io/io.h"
 #include "rocket/nio/nio.h"
 
 #include <scn/istream.h>
@@ -102,6 +103,7 @@ scan(nio::Source& in) {
   std::istream& is = in.istream();
   auto result = scn::scan<T>(is, "{}");
   if (result) {
+    in.seek(io::tellg(is), nio::SeekMode::beg);
     return result->value();
   }
   return {};
@@ -132,6 +134,7 @@ scanCodePoint(nio::Source& in) {
   std::istream& is = in.istream();
   auto result = scn::scan<I>(is, "U+{:X}");
   if (result) {
+    in.seek(io::tellg(is), nio::SeekMode::beg);
     return result->value();
   }
   return {};
@@ -163,8 +166,9 @@ scanInteger(nio::Source& in) {
   // Noncontiguous source
 
   std::istream& is = in.istream();
-  auto result = scn::scan<I>(is, "{}");
+  auto result = scn::scan<I>(is, "{:i}");
   if (result) {
+    in.seek(io::tellg(is), nio::SeekMode::beg);
     return result->value();
   }
   return {};

@@ -8,6 +8,7 @@
 #include "rocket/codec/FormattedCodec.h"
 #include "rocket/log/log.h"
 #include "rocket/reflect/reflect.h"
+#include "rocket/str/location/location.h"
 
 using namespace rocket::codec;
 using namespace std;
@@ -304,6 +305,39 @@ TEST(FormattedCodec, FormattedProducerDeclared) {
   EXPECT_EQ(
     (decode<MyStruct>("  ( ärger  =  42, ökonom=true, übermut=\"hello\", vec=[1, 2, 3] )   ")),
     (MyStruct { 42, true, "hello", { 1, 2, 3 } }));
+}
+
+TEST(FormattedCodec, FormattedProducerDeclaredFileSource) {
+  const auto path = testSource("test-FormattedCodec-MyStruct.txt");
+
+  string input;
+  {
+    FILE* file = fopen(path.string().c_str(), "r");
+    nio::FileSource in(file);
+    input = in.readString();
+  }
+
+  FILE* file = fopen(path.string().c_str(), "r");
+  nio::FileSource in(file);
+
+  MyStruct val;
+  try {
+    const FormattedCodec codec;
+    val = codec.decode<MyStruct>(in, { .cComments=true, .shellComments=true });
+  } catch (const InputFailure& ex) {
+    namespace loc = rocket::str::location;
+    const loc::Position pos {
+      .type=loc::error, .position=ex.position(), .ranges=ex.ranges(), .message=ex.message()
+    };
+    const auto result = loc::locations(input, { pos }, { .setLineString=true, .source=path.string() });
+    loc::printLocations(nio::out, input, result, { .styled=true });
+    throw;
+  }
+
+  EXPECT_EQ(val.ärger, 16);
+  EXPECT_EQ(val.ökonom, true);
+  EXPECT_EQ(val.übermut, "a test\nstring");
+  EXPECT_EQ(val.vec, (vector<i32> { 10, 9, 8, 7, 6, 5, 4, 3, 2, 1 }));
 }
 
 TEST(FormattedCodec, FormattedProducerInstance) {

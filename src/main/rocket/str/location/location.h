@@ -107,7 +107,7 @@ struct LocationsConfig {
    * A string describing the source of the data.
    *
    * If a source is known, such as a file or an URL, it should be assigned here. If #source is empty, then
-   * the #locations function sets this to `"-"` if the source is `stdin`, to `"(input)"` otherwise.
+   * the #locations function sets this to `"(input)".
    */
   std::string source {}; // NOLINT
   /**

@@ -2,9 +2,10 @@
  * comm-tcp-client.cc
  */
 
+#include "Message.h"
+
 #include "rocket/Process.h"
 #include "rocket/cl/cl.h"
-#include "rocket/math/random/random.h"
 
 #include <boost/asio.hpp>
 
@@ -24,6 +25,7 @@ struct ParsedCommandLine {
   optional<bool> help;
   optional<string> host = "localhost";
   u16 port;
+  string size;
 };
 
 // Local functions ------------------------------------------------------------------------------------------
@@ -37,11 +39,16 @@ run(const ParsedCommandLine& pcl) {
     tcp::socket socket(io);
     asio::connect(socket, endpoints);
 
-    auto gen = math::random::gen();
-    const string code = math::random::hex(gen, 8);
-    nio::out.println("Sending random code {:?} to {}:{} ...", code, pcl.host.value(), pcl.port);
-    const string payload = code + "\n";
-    asio::write(socket, asio::buffer(payload));
+    {
+      u64 size = comm::Message::parseSize(pcl.size);
+      comm::Message request(size);
+      nio::out.println(
+        "Sending request {:?} ({} bytes) to {}:{} ...",
+        request.display(), request.size(), pcl.host.value(), pcl.port);
+      request.payload().push_back('\n');
+      asio::write(socket, asio::buffer(request.payload()));
+    }
+
     asio::streambuf buffer;
     boost::system::error_code ec;
     asio::read_until(socket, buffer, '\n', ec);
@@ -49,9 +56,9 @@ run(const ParsedCommandLine& pcl) {
       throw boost::system::system_error(ec);
     }
     istream is(&buffer);
-    string reply;
-    getline(is, reply);
-    nio::out.println("Received reply: {:?}", reply);
+    comm::Message reply;
+    getline(is, reply.payload());
+    nio::out.println("Received reply: {:?} ({} bytes)", reply.display(), reply.size());
     boost::system::error_code ignored;
     socket.shutdown(tcp::socket::shutdown_both, ignored); // NOLINT
   } catch (const exception& ex) {
@@ -72,7 +79,7 @@ main(i32 argc, char **argv) {
   ParsedCommandLine pcl;
 
   const cl::OptionGroup general("General control");
-  const cl::CommandLineConfig config { .usages={ "OPTION..." } };
+  const cl::CommandLineConfig config { .usages={ "OPTION... SIZE" } };
   cl::CommandLine cl({
     cl::Option::help(&general, pcl.help),
     cl::Option::custom({
@@ -87,7 +94,12 @@ main(i32 argc, char **argv) {
       .name="port",
       .shortName="p"_c
     }, pcl.port),
-  }, {}, config);
+  }, {
+    cl::Parameter::make({
+      .description="the message size",
+      .name="SIZE"
+    }, pcl.size)
+  }, config);
 
   cl.parse(process.args());
   const i32 exitCode = run(pcl);
