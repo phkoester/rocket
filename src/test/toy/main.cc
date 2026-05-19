@@ -10,10 +10,6 @@
 #include "rocket/log/log.h"
 #include "rocket/version.h"
 
-#include <scn/istream.h>
-
-#include <cstdio>
-
 using namespace rocket;
 using namespace rocket::unicode;
 using namespace std;
@@ -49,19 +45,9 @@ myTerminate() {
   // out.println("myTerminate");
 }
 
-template<typename T, typename Source>
-[[nodiscard]] auto
-myScan(Source&& source, scn::scan_format_string<Source, T> format = "{}") {
-  return scn::scan<T>(source, format);
-}
-
 void
 toy() {
   ROCKET_LOG(toy);
-
-  string input = "123...";
-  auto result = myScan<u64>(input);
-  nio::out.println("result: {}", result->value());
 
   ROCKET_LOG_TRACE("Hey {}", "there");
 }

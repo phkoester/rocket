@@ -448,7 +448,7 @@ Source::readln() {
 
   bool lf = false;
   while (true) {
-    char c;
+    char c; // NOLINT
     if (read(c) != 1) {
       break;
     }
@@ -1030,7 +1030,7 @@ StringSource::istream() {
   }
 
   if (istream_ == nullptr) {
-    span<const char> chars(in_.data(), in_.size());
+    const span<const char> chars(in_.data(), in_.size());
     istream_ = make_unique<ispanstream>(chars);
   }
   istream_->seekg(safe<istream::off_type>(tell()), ios::beg);

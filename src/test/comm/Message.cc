@@ -23,7 +23,7 @@ Message::Message(u64 size) :
   }
 
   for (u64 i = 0; i < size; ++i) {
-    payload_[i] = '0' + (i % 10);
+    payload_[i] = '0' + static_cast<char>(i % 10);
   }
   payload_[0] = '[';
   payload_[size - 1] = ']';
@@ -39,7 +39,7 @@ Message::display() const {
 
 u64
 Message::parseSize(std::string_view input) {
-  auto result = scn::scan<u64, char>(input, "{:i}{}"); // NOLINT
+  auto result = scn::scan<u64, char>(input, "{:i}{}");
   ROCKET_EXPECT(result, "Invalid size input: {:?}", input);
   const auto [size, unit] = result->values();
   switch (unit) {

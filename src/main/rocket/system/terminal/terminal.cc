@@ -127,7 +127,6 @@ Ansi::up(i32 n) const {
 
 // Functions ------------------------------------------------------------------------------------------------
 
-// NOLINTBEGIN(clang-analyzer-security.ArrayBound)
 optional<pair<u64, u64>>
 position(nio::Sink& out) { // NOLINT
   const i32 fd = out.handle();
@@ -161,7 +160,6 @@ position(nio::Sink& out) { // NOLINT
   return make_pair(x, y);
 #endif
 }
-// NOLINTEND(clang-analyzer-security.ArrayBound)
 
 optional<pair<u64, u64>>
 size(nio::Device& device) {

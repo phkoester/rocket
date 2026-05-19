@@ -24,7 +24,7 @@ namespace {
 struct ParsedCommandLine {
   optional<bool> help;
   optional<string> host = "localhost";
-  u16 port;
+  u16 port = 0;
   string size;
 };
 
@@ -40,7 +40,7 @@ run(const ParsedCommandLine& pcl) {
     asio::connect(socket, endpoints);
 
     {
-      u64 size = comm::Message::parseSize(pcl.size);
+      const u64 size = comm::Message::parseSize(pcl.size);
       comm::Message request(size);
       nio::out.println(
         "Sending request {:?} ({} bytes) to {}:{} ...",

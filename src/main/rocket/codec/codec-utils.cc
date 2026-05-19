@@ -163,12 +163,12 @@ readUntil(nio::Source& in, char c) {
     // Contiguous source
 
     const auto str = contiguous->str();
-    u64 pos = str.find(c);
+    const u64 pos = str.find(c);
     if (pos == NPOS) {
       return {};
     }
     in.seek(safe<i64>(pos + 1), nio::SeekMode::cur);
-    string ret(str.substr(0, pos));
+    const string ret(str.substr(0, pos));
     return ret;
   }
 #endif
@@ -180,7 +180,7 @@ readUntil(nio::Source& in, char c) {
   string ret;
 
   while (true) {
-    char current;
+    char current; // NOLINT
     if (in.read(current) != 1) {
       break;
     }
@@ -321,7 +321,7 @@ skipUntil(nio::Source& in, std::string_view s) {
       in.seek(0, nio::SeekMode::end);
       return false;
     }
-    in.seek(pos + s.size(), nio::SeekMode::cur);
+    in.seek(safe<i64>(pos + s.size()), nio::SeekMode::cur);
     return true;
   }
 #endif
@@ -334,7 +334,7 @@ skipUntil(nio::Source& in, std::string_view s) {
       break;
     }
 
-    u64 index = seen.size();
+    const u64 index = seen.size();
     if (c == s[index]) {
       seen.push_back(c);
       if (seen == s) {

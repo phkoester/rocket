@@ -24,7 +24,7 @@ namespace {
 
 struct ParsedCommandLine {
   optional<bool> help;
-  u16 port;
+  u16 port = 0;
   string size;
 };
 
