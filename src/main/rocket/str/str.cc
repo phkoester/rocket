@@ -113,14 +113,14 @@ paragraphs(string_view str) {
 }
 
 string
-times(u64 count) {
-  if (count == 1) {
+times(u64 n) {
+  if (n == 1) {
     return "once";
   }
-  if (count == 2) {
+  if (n == 2) {
     return "twice";
   }
-  return fmt::format("{} times", count);
+  return fmt::format("{} times", n);
 }
 
 string

@@ -23,7 +23,7 @@ Message::Message(u64 size) :
   }
 
   for (u64 i = 0; i < size; ++i) {
-    payload_[i] = '0' + static_cast<char>(i % 10);
+    payload_[i] = '0' + (i % 10); // NOLINT
   }
   payload_[0] = '[';
   payload_[size - 1] = ']';

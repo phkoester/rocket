@@ -136,7 +136,7 @@ read(nio::Source& in, const std::set<std::string_view>& values, bool ignoreCase)
     if (in.read(c) != 1) {
       break;
     }
-    u64 index = seen.size();
+    const u64 index = seen.size();
     seen.push_back(c);
 
     for (auto it = candidates.begin(), end = candidates.end(); it != end; /* Empty */) {
@@ -168,8 +168,7 @@ readUntil(nio::Source& in, char c) {
       return {};
     }
     in.seek(safe<i64>(pos + 1), nio::SeekMode::cur);
-    const string ret(str.substr(0, pos));
-    return ret;
+    return string(str.substr(0, pos));
   }
 #endif
 
@@ -225,10 +224,10 @@ readUntilUnescaped(nio::Source& in, char c) {
   const auto pos = in.tell();
 
   optional<char> previous;
-  char current;
   string ret;
 
   while (true) {
+    char current; // NOLINT;
     if (in.read(current) != 1) {
       break;
     }
