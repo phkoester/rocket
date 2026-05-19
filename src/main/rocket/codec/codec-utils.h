@@ -17,16 +17,32 @@ namespace rocket::codec {
 
 /**
  * Takes care of indentation.
+ *
+ * @param out the sink to write to
+ * @param indent whether to indent the output
+ * @param level the current indentation level
+ * @param c the character to write
  */
 void beginContainer(nio::Sink& out, bool indent, u64& level, char c);
 
 /**
  * Takes care of indentation.
+ *
+ * @param out the sink to write to
+ * @param indent whether to indent the output
+ * @param level the current indentation level
+ * @param size the size of the container
+ * @param c the character to write
  */
 void endContainer(nio::Sink& out, bool indent, u64& level, u64 size, char c);
 
 /**
- * Takes care of indentation
+ * Takes care of indentation.
+ *
+ * @param out the sink to write to
+ * @param indent whether to indent the output
+ * @param level the current indentation level
+ * @param index the index of the element
  */
 void nextElem(nio::Sink& out, bool indent, u64 level, u64 index);
 
@@ -34,16 +50,26 @@ void nextElem(nio::Sink& out, bool indent, u64 level, u64 index);
 
 /**
  * Throws if there is no colon, advances the source only on success.
+ *
+ * @param in the source to read from
+ * @throw #rocket::InputFailure if there is no colon
  */
 void expectColon(nio::Source& in);
 
 /**
  * Throws if there is no comma, advances the source only on success
+ *
+ * @param in the source to read from
+ * @throw #rocket::InputFailure if there is no comma
  */
 void expectComma(nio::Source& in);
 
 /**
  * Reads a single expected character, advances the source only on success.
+ *
+ * @param in the source to read from
+ * @param c the character to read
+ * @return whether the character was read
  */
 [[nodiscard]] bool read(nio::Source& in, char c);
 
@@ -51,6 +77,11 @@ void expectComma(nio::Source& in);
  * Reads any of a set of expected strings, advances the source only on success.
  *
  * There is an optimization for contiguous sources.
+ *
+ * @param in the source to read from
+ * @param values the set of expected strings
+ * @param ignoreCase whether to ignore case
+ * @return the read string, or null if no string was read
  */
 [[nodiscard]] std::optional<std::string_view> read(
   nio::Source& in,
@@ -63,6 +94,10 @@ void expectComma(nio::Source& in);
  * The expected character is not included in the returned string, but is consumed from the source.
  *
  * There is an optimization for contiguous sources.
+ *
+ * @param in the source to read from
+ * @param c the character to read until
+ * @return the read string, not including @p c, or null if no string was read
  */
 [[nodiscard]] std::optional<std::string> readUntil(nio::Source& in, char c);
 
@@ -73,6 +108,10 @@ void expectComma(nio::Source& in);
  * The expected character is not included in the returned string, but is consumed from the source.
  *
  * There is an optimization for contiguous sources.
+ *
+ * @param in the source to read from
+ * @param c the character to read until
+ * @return the read string, not including @p c, or null if no string was read
  */
 [[nodiscard]] std::optional<std::string> readUntilUnescaped(nio::Source& in, char c);
 
@@ -80,6 +119,10 @@ void expectComma(nio::Source& in);
  * Scans from a source, using `scnlib`.
  *
  * There is an optimization for contiguous sources.
+ *
+ * @tparam T the type to scan
+ * @param in the source to read from
+ * @return the scanned value, or null if no value was scanned
  */
 template<typename T>
 [[nodiscard]] std::optional<T>
@@ -113,6 +156,10 @@ scan(nio::Source& in) {
  * Scans a code point from a source, using `scnlib`.
  *
  * There is an optimization for contiguous sources.
+ *
+ * @tparam I the integer type to scan
+ * @param in the source to read from
+ * @return the scanned value, or null if no value was scanned
  */
 template<typename I>
 [[nodiscard]] std::optional<I>
@@ -144,6 +191,10 @@ scanCodePoint(nio::Source& in) {
  * Scans an integer value from a source, using `scnlib`.
  *
  * There is an optimization for contiguous sources.
+ *
+ * @tparam I the integer type to scan
+ * @param in the source to read from
+ * @return the scanned value, or null if no value was scanned
  */
 template<typename I>
 [[nodiscard]] std::optional<I>
@@ -176,6 +227,10 @@ scanInteger(nio::Source& in) {
 
 /**
  * Skips whitespace and comments, advances the source only if there is something to skip.
+ *
+ * @param in the source to read from
+ * @param cComments whether to skip C-style comments
+ * @param shellComments whether to skip Shell-style comments
  */
 void skip(nio::Source& in, bool cComments, bool shellComments);
 
@@ -186,6 +241,10 @@ void skip(nio::Source& in, bool cComments, bool shellComments);
  * advanced until after the first occurrence of @p s.
  *
  * There is an optimization for contiguous sources.
+ *
+ * @param in the source to read from
+ * @param s the expected string
+ * @return whether the expected string was found
  */
 bool skipUntil(nio::Source& in, std::string_view s);
 

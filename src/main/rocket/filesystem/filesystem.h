@@ -12,6 +12,8 @@ namespace rocket::filesystem {
 
 /**
  * Returns the system-dependent temporary directory.
+ *
+ * @return the system-dependent temporary directory
  */
 std::filesystem::path systemTempDir();
 

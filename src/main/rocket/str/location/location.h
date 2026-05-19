@@ -107,7 +107,7 @@ struct LocationsConfig {
    * A string describing the source of the data.
    *
    * If a source is known, such as a file or an URL, it should be assigned here. If #source is empty, then
-   * the #locations function sets this to `"(input)".
+   * the #locations function sets this to `"(input)"`.
    */
   std::string source {}; // NOLINT
   /**
@@ -155,7 +155,7 @@ struct PrintLocationsConfig {
  * Finds information about the positions @p positions in the Source @p in and returns the gathered data in a
  * #rocket::str::location::LocationsResult.
  *
- * @param input the input string. It must be UTF-8-encoded, using LF (`"\n"`) or CRLF (`"\r\n"`) as line
+ * @param input the input string. It must be UTF-8-encoded, using LF (`"\n"`) or CR/LF (`"\r\n"`) as line
  *   breaks
  * @param positions the positions to look for. They needn't be sorted in any way. The order of the positions
  *   is preserved in the #rocket::str::location::LocationsResult. The only restriction is that all
