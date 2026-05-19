@@ -328,7 +328,7 @@ skipUntil(nio::Source& in, std::string_view s) {
   string seen;
 
   while (true) {
-    char c;
+    char c; // NOLINT
     if (in.read(c) != 1) {
       break;
     }
