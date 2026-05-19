@@ -68,7 +68,7 @@ expectComma(nio::Source& in) {
 
 bool
 read(nio::Source& in, char c) {
-  char current;
+  char current; // NOLINT
   if (in.read(current) != 1) {
     return false;
   }
@@ -80,7 +80,7 @@ read(nio::Source& in, char c) {
 }
 
 optional<string_view>
-read(nio::Source& in, const std::set<std::string_view>& values, bool ignoreCase) {
+read(nio::Source& in, const std::set<std::string_view>& values, bool ignoreCase) { // NOLINT(*-complexity)
 #ifndef ROCKET_NIO_NO_CONTIGUOUS_SOURCE
   if (const auto* contiguous = dynamic_cast<nio::ContiguousSource*>(&in); contiguous != nullptr) {
     // Contiguous source
@@ -132,7 +132,7 @@ read(nio::Source& in, const std::set<std::string_view>& values, bool ignoreCase)
       break;
     }
 
-    char c;
+    char c; // NOLINT
     if (in.read(c) != 1) {
       break;
     }

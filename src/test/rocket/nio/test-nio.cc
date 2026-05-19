@@ -251,7 +251,7 @@ TEST(nio, FileSourceScanIstream) {
   FILE* file = fopen(path.string().c_str(), "r");
   FileSource in(file);
   auto& is = in.istream();
-  auto result = scn::scan<log::LogLevel, log::LogLevel>(is, "{}, {}");
+  auto result = scn::scan<log::LogLevel, log::LogLevel>(is, "{}, {}"); // NOLINT
   ASSERT_TRUE(result);
   const auto [level1, level2] = result->values();
   EXPECT_EQ(level1, log::LogLevel::debug);
@@ -263,7 +263,7 @@ TEST(nio, NullSource) {
   NullSource in;
   EXPECT_FALSE(in.bad());
   EXPECT_TRUE(in.eof());
-  char c;
+  char c; // NOLINT
   EXPECT_EQ(in.Source::read(c), 0);
 }
 

@@ -656,7 +656,7 @@ private:
  * A contiguous source.
  */
 struct ContiguousSource : Source {
-  virtual ~ContiguousSource() = default;
+  ~ContiguousSource() override = default;
 
   /**
    * Returns the bytes available in the contiguous source.
@@ -860,7 +860,7 @@ struct SpanSource : ContiguousSource {
   std::string_view
   str() const override {
     const auto bytes = this->bytes();
-    return std::string_view(reinterpret_cast<const char*>(bytes.data()), bytes.size());
+    return { reinterpret_cast<const char*>(bytes.data()), bytes.size() };
   }
 
   u64 tell() override { return bad() ? NPOS : static_cast<u64>(pos_); }
@@ -928,7 +928,7 @@ struct StringSource : ContiguousSource {
   std::span<const u8>
   bytes() const override {
     const auto str = this->str();
-    return std::span<const u8>(reinterpret_cast<const u8*>(str.data()), str.size());
+    return { reinterpret_cast<const u8*>(str.data()), str.size() };
   }
 
   bool close() override;

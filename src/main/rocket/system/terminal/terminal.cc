@@ -127,7 +127,7 @@ Ansi::up(i32 n) const {
 
 // Functions ------------------------------------------------------------------------------------------------
 
-// NOLINTBEGIN(clang-analyzer-security.ArrayBound)
+// XXX NO LINT BEGIN(clang-analyzer-security.ArrayBound)
 optional<pair<u64, u64>>
 position(nio::Sink& out) {
   const i32 fd = out.handle();
@@ -152,7 +152,7 @@ position(nio::Sink& out) {
 
   // Scan the response
 
-  const auto result = scn::scan<u64, u64>(response, "\x1b[{};{}R");
+  const auto result = scn::scan<u64, u64>(response, "\x1b[{};{}R"); // NOLINT
   ROCKET_EXPECT(result, "Cannot scan response {:?}", response);
   const auto [y, x] = result->values();
 
@@ -161,7 +161,7 @@ position(nio::Sink& out) {
   return make_pair(x, y);
 #endif
 }
-// NOLINTEND(clang-analyzer-security.ArrayBound)
+// XXX NO LINT END(clang-analyzer-security.ArrayBound)
 
 optional<pair<u64, u64>>
 size(nio::Device& device) {

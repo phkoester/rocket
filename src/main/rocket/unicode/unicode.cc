@@ -133,7 +133,7 @@ nextCodePoint(string_view str, u64& pos) {
   i32 i = safe<i32>(pos);
   U8_NEXT(str.data(), i, safe<i32>(size), cp); // NOLINT
   ROCKET_EXPECT(cp >= 0, "Invalid UTF-8 sequence");
-  u64 newPos = safe<u64>(i);
+  const u64 newPos = safe<u64>(i);
   ROCKET_EXPECT(newPos > pos, "Invalid UTF-8 sequence");
   pos = newPos;
   return static_cast<char32>(cp);

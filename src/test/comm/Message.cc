@@ -39,7 +39,7 @@ Message::display() const {
 
 u64
 Message::parseSize(std::string_view input) {
-  auto result = scn::scan<u64, char>(input, "{:i}{}");
+  auto result = scn::scan<u64, char>(input, "{:i}{}"); // NOLINT
   ROCKET_EXPECT(result, "Invalid size input: {:?}", input);
   const auto [size, unit] = result->values();
   switch (unit) {

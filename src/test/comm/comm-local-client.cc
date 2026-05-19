@@ -39,7 +39,7 @@ run(const ParsedCommandLine& pcl) {
     socket.connect(local::endpoint(path.string()));
 
     {
-      u64 size = comm::Message::parseSize(pcl.size);
+      const u64 size = comm::Message::parseSize(pcl.size);
       comm::Message request(size);
       nio::out.println(
         "Sending request {:?} ({} bytes) to {} ...",

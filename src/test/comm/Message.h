@@ -34,42 +34,42 @@ struct Message {
    *
    * @param size the size of the payload in bytes
    */
-  Message(u64 size);
+  explicit Message(u64 size);
 
   /**
    * Makes a message with the payload @p payload.
    *
    * @param payload the payload
    */
-  Message(const std::string& payload) : payload_(payload) {}
+  explicit Message(std::string payload) : payload_(std::move(payload)) {}
 
   /**
    * Returns a string representation of the message.
    *
    * @return a string representation of the message
    */
-  std::string display() const;
+  [[nodiscard]] std::string display() const;
 
   /**
    * Returns the payload of the message.
    *
    * @return the payload of the message
    */
-  std::string& payload() { return payload_; }
+  [[nodiscard]] std::string& payload() { return payload_; }
 
   /**
    * Returns the payload of the message.
    *
    * @return the payload of the message
    */
-  const std::string& payload() const { return payload_; }
+  [[nodiscard]] const std::string& payload() const { return payload_; }
 
   /**
    * Returns the size of the payload.
    *
    * @return the size of the payload
    */
-  u64 size() const { return payload_.size(); }
+  [[nodiscard]] u64 size() const { return payload_.size(); }
 
 private:
 

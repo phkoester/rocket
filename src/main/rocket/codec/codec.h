@@ -329,7 +329,7 @@ struct Decoder {
     constexpr auto Value = DataTypes<T>::Value;
     using ProducerType = Producer::template Type<Value, T>;
     ProducerType producer; // NOLINT
-    T val;
+    T val; // NOLINT
     producer.produce(val, std::forward<Args>(args)...);
     return val;
   }

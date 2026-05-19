@@ -389,7 +389,7 @@ Source::readCodePoint() {
   }
 
   // Read first byte
-  char c;
+  char c; // NOLINT
   if (read(c) != 1) {
     return {};
   }
@@ -487,7 +487,7 @@ ContiguousSource::readln() {
     return ret;
   }
 
-  seek(pos + 1, SeekMode::cur);
+  seek(safe<i64>(pos + 1), SeekMode::cur);
   str = str.substr(0, pos);
   if (not str.empty() && str.back() == '\r') {
     str = str.substr(0, str.size() - 1);
@@ -851,7 +851,7 @@ SpanSource::istream() {
   }
 
   if (istream_ == nullptr) {
-    span<const char> chars(reinterpret_cast<const char*>(in_.data()), in_.size());
+    const span<const char> chars(reinterpret_cast<const char*>(in_.data()), in_.size());
     istream_ = make_unique<ispanstream>(chars);
   }
   istream_->seekg(safe<istream::off_type>(tell()), ios::beg);
