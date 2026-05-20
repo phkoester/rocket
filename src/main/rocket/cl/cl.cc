@@ -114,7 +114,7 @@ CommandLine::CommandLine(
     auto pair = byName_.emplace(opt.name, &opt);
     ROCKET_CHECK(opts, pair.second, "Duplicate option `{}`", name(opt, true));
     if (opt.shortName) {
-      const string shortName = static_cast<string>(*opt.shortName);
+      const string shortName(static_cast<string_view>(*opt.shortName));
       validate(shortName, false);
       auto pair = byShortName_.emplace(*opt.shortName, &opt);
       ROCKET_CHECK(opts, pair.second, "Duplicate option `{}`", name(opt, false));

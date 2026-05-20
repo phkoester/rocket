@@ -16,12 +16,13 @@
 #include "rocket/reflect/Instance.h"
 #include "rocket/reflect/MemberRef.h"
 #include "rocket/reflect/VarRef.h"
-#include "rocket/unicode/unicode.h"
+#include "rocket/unicode/Character.h"
 
 #include <boost/bimap/bimap.hpp>
 
 #include <array>
 #include <bit>
+#include <chrono>
 #include <forward_list>
 #include <list>
 #include <map>
@@ -78,21 +79,31 @@ enum class DataType : u8 {
   Tuple,
   /// Lists: #std::array, #std::forward_list, #std::list, #std::span, or #std::vector.
   List,
-  /// Sets.
+  /// Sets: either #std::set or #std::unordered_set.
   Set,
-  /// Maps.
+  /// Maps: either #std::map or #std::unordered_map.
   Map,
   /// Bimaps.
   Bimap,
 
-  // Rocket basic types .....................................................................................
+  // `std::chrono` ..........................................................................................
 
-  /// Code points.
-  CodePoint,
-  /// Intervals.
+  /// Durations.
+  Duration,
+  /// Year, month, day.
+  YearMonthDay,
+  /// Time zones.
+  TimeZone,
+  /// Time points.
+  TimePoint,
+  /// Zoned times.
+  ZonedTime,
+
+  // Rocket.Math ............................................................................................
+
   Interval,
 
-  // Rocket reflection ......................................................................................
+  // Rocket.Reflect .........................................................................................
 
   // An instance with default member references
   Declared,
@@ -102,6 +113,13 @@ enum class DataType : u8 {
   MemberRef,
   /// Variable references.
   VarRef,
+
+  // Rocket.Unicode .........................................................................................
+
+  /// Code points.
+  CodePoint,
+  /// Grapheme clusters: either #rocket::unicode::Character or #rocket::unicode::CharacterView.
+  Character,
 };
 
 // #DataTypes -----------------------------------------------------------------------------------------------
@@ -110,8 +128,8 @@ enum class DataType : u8 {
  * The #rocket::codec::DataTypes template maps a C++ type to a #rocket::codec::DataType enum value, both for
  * encoding and decoding, at compile time.
  *
- * This is the central logic of the codec type system. The encoders and decoders all rely on the data types
- * provided here.
+ * This is the central logic of the Rocket.Codec type system. The encoders and decoders all rely on the data
+ * types provided here.
  */
 template<typename T>
 struct DataTypes;
@@ -242,10 +260,34 @@ struct DataTypes<boost::bimaps::bimap<A, B>> {
   static constexpr auto Value = DataType::Bimap; ///< The data type.
 };
 
-/// @spec{#rocket::codec::DataTypes, #rocket::unicode::CodePoint}
+/// @spec{#rocket::codec::DataTypes, std::chrono::duration}
+template<typename Rep, typename Period>
+struct DataTypes<std::chrono::duration<Rep, Period>> {
+  static constexpr auto Value = DataType::Duration; ///< The data type.
+};
+
+/// @spec{#rocket::codec::DataTypes, std::chrono::year_month_day}
 template<>
-struct DataTypes<rocket::unicode::CodePoint> {
-  static constexpr auto Value = DataType::CodePoint; ///< The data type.
+struct DataTypes<std::chrono::year_month_day> {
+  static constexpr auto Value = DataType::YearMonthDay; ///< The data type.
+};
+
+/// @spec{#rocket::codec::DataTypes, std::chrono::time_zone}
+template<>
+struct DataTypes<std::chrono::time_zone> {
+  static constexpr auto Value = DataType::TimeZone; ///< The data type.
+};
+
+/// @spec{#rocket::codec::DataTypes, std::chrono::time_point}
+template<typename Clock, typename Duration>
+struct DataTypes<std::chrono::time_point<Clock, Duration>> {
+  static constexpr auto Value = DataType::TimePoint; ///< The data type.
+};
+
+/// @spec{#rocket::codec::DataTypes, std::chrono::zoned_time}
+template<typename Duration>
+struct DataTypes<std::chrono::zoned_time<Duration>> {
+  static constexpr auto Value = DataType::ZonedTime; ///< The data type.
 };
 
 /// @spec{#rocket::codec::DataTypes, #rocket::math::Interval}
@@ -276,6 +318,24 @@ struct DataTypes<rocket::reflect::MemberRef<C, T>> {
 template<typename T>
 struct DataTypes<rocket::reflect::VarRef<T>> {
   static constexpr auto Value = DataType::VarRef; ///< The data type.
+};
+
+/// @spec{#rocket::codec::DataTypes, #rocket::unicode::CodePoint}
+template<>
+struct DataTypes<rocket::unicode::CodePoint> {
+  static constexpr auto Value = DataType::CodePoint; ///< The data type.
+};
+
+/// @spec{#rocket::codec::DataTypes, #rocket::unicode::Character}
+template<typename C> requires IsChar<C>
+struct DataTypes<rocket::unicode::Character<C>> {
+  static constexpr auto Value = DataType::Character; ///< The data type.
+};
+
+/// @spec{#rocket::codec::DataTypes, #rocket::unicode::CharacterView}
+template<typename C> requires IsChar<C>
+struct DataTypes<rocket::unicode::CharacterView<C>> {
+  static constexpr auto Value = DataType::Character; ///< The data type.
 };
 
 // #Encoder -------------------------------------------------------------------------------------------------

@@ -278,19 +278,6 @@ private:
 };
 
 template<typename T, typename Eq>
-struct EqualToConsumerImpl<DataType::CodePoint, T, Eq> {
-  using Elem = T::Type;
-  static constexpr auto ElemDataType = DataTypes<Elem>::Value;
-
-  bool
-  consume(const T& lhs, const T& rhs) {
-    const Elem lhsElem = static_cast<Elem>(lhs);
-    const Elem rhsElem = static_cast<Elem>(rhs);
-    return EqualToConsumerImpl<ElemDataType, Elem, Eq>().consume(lhsElem, rhsElem);
-  }
-};
-
-template<typename T, typename Eq>
 struct EqualToConsumerImpl<DataType::Interval, T, Eq> {
   using A = T::A;
   using B = T::B;
@@ -362,6 +349,32 @@ struct EqualToConsumerImpl<DataType::VarRef, T, Eq> {
   consume(const T& lhs, const T& rhs) {
     // For #VarRef, don't compare the names
     return EqualToConsumerImpl<ElemDataType, Elem, Eq>().consume(lhs.get(), rhs.get());
+  }
+};
+
+template<typename T, typename Eq>
+struct EqualToConsumerImpl<DataType::CodePoint, T, Eq> {
+  using Elem = T::Type;
+  static constexpr auto ElemDataType = DataTypes<Elem>::Value;
+
+  bool
+  consume(const T& lhs, const T& rhs) {
+    const Elem lhsElem = static_cast<Elem>(lhs);
+    const Elem rhsElem = static_cast<Elem>(rhs);
+    return EqualToConsumerImpl<ElemDataType, Elem, Eq>().consume(lhsElem, rhsElem);
+  }
+};
+
+template<typename T, typename Eq>
+struct EqualToConsumerImpl<DataType::Character, T, Eq> {
+  using Elem = T::View;
+  static constexpr auto ElemDataType = DataTypes<Elem>::Value;
+
+  bool
+  consume(const T& lhs, const T& rhs) {
+    const Elem lhsElem = static_cast<Elem>(lhs);
+    const Elem rhsElem = static_cast<Elem>(rhs);
+    return EqualToConsumerImpl<ElemDataType, Elem, Eq>().consume(lhsElem, rhsElem);
   }
 };
 

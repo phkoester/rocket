@@ -431,14 +431,14 @@ struct Interval {
   /**
    * @ctor_default
    *
-   * Makes an empty interval.
+   * Constructs an empty interval.
    */
   constexpr Interval() : a(static_cast<Type>(1)), b(static_cast<Type>(0)) {}
 
   /**
    * @ctor
    *
-   * Makes an interval.
+   * Constructs an interval.
    *
    * If @p b is less than @p a, then the interval is empty.
    *

@@ -7,6 +7,7 @@
 #include "rocket/codec/HashEncoder.h"
 #include "rocket/math/random/random.h"
 #include "rocket/reflect/reflect.h"
+#include "rocket/unicode/Character.h"
 
 #include <fmt/ranges.h>
 
@@ -14,6 +15,7 @@
 
 using namespace rocket;
 using namespace rocket::codec;
+using namespace rocket::unicode;
 
 // #MyStruct ------------------------------------------------------------------------------------------------
 
@@ -190,6 +192,18 @@ TEST(HashEncoder, BimapUnordered) {
 
 TEST(HashEncoder, DeclaredMyStruct) {
   const MyStruct val { 42, true, "hello", { 1, 2, 3 } };
+  const HashEncoder<> encoder;
+  EXPECT_NE(encoder.encode(val), 0);
+}
+
+TEST(HashEncoder, Character) {
+  const auto val = "hello"_c;
+  const HashEncoder<> encoder;
+  EXPECT_NE(encoder.encode(val), 0);
+}
+
+TEST(HashEncoder, CharacterView) {
+  const auto val = "hello"_cv;
   const HashEncoder<> encoder;
   EXPECT_NE(encoder.encode(val), 0);
 }

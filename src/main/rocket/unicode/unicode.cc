@@ -12,6 +12,7 @@
 #include <unicode/unistr.h>
 #include <unicode/utf8.h>
 #include <unicode/utypes.h>
+#include <unicode/utfiterator.h>
 
 #include <array>
 

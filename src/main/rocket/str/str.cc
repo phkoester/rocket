@@ -99,7 +99,7 @@ paragraphs(string_view str) {
       word.push_back(' ');
     } else if (not c->isWhitespace()) {
       // Enter/continue word
-      word.append(*c);
+      word.append(static_cast<string_view>(*c));
     } else {
       // End word, if any
       if (not word.empty()) {

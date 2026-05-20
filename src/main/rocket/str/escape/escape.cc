@@ -199,7 +199,7 @@ getHex(unicode::Iterator<char>& iter, u64 n) {
       throw InputFailure(pos, { pos0, iter.current() },
           fmt::format("Expected a hexadecimal digit, got {:?}", c));
     }
-    input.append(c);
+    input.append(static_cast<string_view>(c));
   }
 
   auto result = scn::scan<u32>(input, "{:x}");
@@ -403,7 +403,7 @@ unescapeCString(string_view input, const CStringConfig& config, Result* result) 
     } else {
       // Multi-code-point character: just add it
 
-      ret.append(*c1);
+      ret.append(static_cast<string_view>(*c1));
     }
   }
 }
@@ -556,7 +556,7 @@ unescapeRegex(string_view input, Result* result) {
     } else {
       // Multi-code-point character: just add it
 
-      ret.append(*c1);
+      ret.append(static_cast<string_view>(*c1));
     }
   }
 }

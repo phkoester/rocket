@@ -30,14 +30,14 @@ struct Message {
   Message() = default;
 
   /**
-   * Makes a message with a payload of @p size bytes.
+   * Constructs a message with a payload of @p size bytes.
    *
    * @param size the size of the payload in bytes
    */
   explicit Message(u64 size);
 
   /**
-   * Makes a message with the payload @p payload.
+   * Constructs a message with the payload @p payload.
    *
    * @param payload the payload
    */

@@ -121,7 +121,7 @@ locations(string_view input, const vector<Position>& positions, const LocationsC
       // Add the character
 
       column += c->width();
-      lineString.append(*c);
+      lineString.append(static_cast<string_view>(*c));
     }
   }
 

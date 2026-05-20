@@ -248,7 +248,7 @@ struct Option {
       apply = [&](std::string_view val) { return internal::applyTo(out, val); };
     }
 
-    OptionConfig configCopy(config);
+    OptionConfig localConfig(config);
 
     // If no format is provided, but choices are, generate a format string from the choices
     if (config.choices && not config.format) {
@@ -256,26 +256,26 @@ struct Option {
       for (const auto& val : *config.choices) {
         quoted.insert(fmt::format("`{}`", val));
       }
-      configCopy.format = str::join(quoted.begin(), quoted.end(), ", ", " or ", ", or ");
+      localConfig.format = str::join(quoted.begin(), quoted.end(), ", ", " or ", ", or ");
     }
 
     // Auto-configure #minOccurs
     if constexpr (not IsOptional<T>) {
       if (not config.minOccurs) {
-        configCopy.minOccurs = 1;
+        localConfig.minOccurs = 1;
       }
     }
 
     // Auto-configure #takesValue
     if constexpr (std::is_same_v<ValueType, bool>) {
-      configCopy.takesValue = false;
+      localConfig.takesValue = false;
     } else {
       if (not config.takesValue) {
-        configCopy.takesValue = true;
+        localConfig.takesValue = true;
       }
     }
 
-    return of(OptionType::Custom, configCopy, apply);
+    return of(OptionType::Custom, localConfig, apply);
   }
 
   /**
@@ -482,7 +482,7 @@ struct Parameter {
   make(const ParameterConfig& config, T& out) {
     using ValueType = internal::ValueType<T>;
 
-    ParameterConfig configCopy(config);
+    ParameterConfig localConfig(config);
 
     // If no format is provided, but choices are, generate a format string from the choices
     if (config.choices && not config.format) {
@@ -490,22 +490,22 @@ struct Parameter {
       for (const auto& val : *config.choices) {
         quoted.insert(fmt::format("`{}`", val));
       }
-      configCopy.format = str::join(quoted.begin(), quoted.end(), ", ", " or ", ", or ");
+      localConfig.format = str::join(quoted.begin(), quoted.end(), ", ", " or ", ", or ");
     }
 
     // Auto-configure #minOccurs
     if constexpr (IsOptional<T>) {
-      configCopy.minOccurs = 0;
+      localConfig.minOccurs = 0;
     }
 
     // Auto-configure #maxOccurs
     if constexpr (IsVector<ValueType>) {
       if (not config.maxOccurs) {
-        configCopy.maxOccurs = NPOS;
+        localConfig.maxOccurs = NPOS;
       }
     }
 
-    return of(configCopy, [&](std::string_view val) { internal::applyTo(out, val); });
+    return of(localConfig, [&](std::string_view val) { internal::applyTo(out, val); });
   }
 
   /// @cond undocumented

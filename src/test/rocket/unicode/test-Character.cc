@@ -28,7 +28,7 @@ testCharacter(const CharacterView<C>& c) {
     return;
   }
 
-  out.print("[{}]", ConvertTo<char>::apply(c));
+  out.print("[{}]", ConvertTo<char>::apply(static_cast<basic_string_view<C>>(c)));
   auto pos = system::terminal::position(out);
   EXPECT_TRUE(pos);
   EXPECT_EQ(pos->first, c.width() + 3); // Check terminal's cursor position

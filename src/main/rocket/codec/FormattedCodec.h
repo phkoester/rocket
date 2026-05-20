@@ -137,7 +137,7 @@ struct FormattedConsumerImpl<DataType::Pointer, P> {
   void
   consume(P val, nio::Sink& out, CONFIG__) const {
     if (val == nullptr) {
-      out.write("<null>");
+      out.write("null");
       return;
     }
     out.print("{}", static_cast<const void*>(val));
@@ -162,7 +162,7 @@ struct FormattedConsumerImpl<DataType::Optional, T> {
   void
   consume(const T& val, nio::Sink& out, CONFIG__) const {
     if (not val) {
-      out.write("<none>");
+      out.write("null");
       return;
     }
 
@@ -272,18 +272,6 @@ struct FormattedConsumerImpl<DataType::Bimap, T> {
 };
 
 template<typename T>
-struct FormattedConsumerImpl<DataType::CodePoint, T> {
-  void
-  consume(const T& val, nio::Sink& out, CONFIG__) const {
-    if (val.valid()) {
-      out.print("U+{:0>4X}", static_cast<u32>(val));
-    } else {
-      out.write("<invalid>");
-    }
-  }
-};
-
-template<typename T>
 struct FormattedConsumerImpl<DataType::Interval, T> {
   using A = T::A;
   static constexpr auto ADataType = DataTypes<A>::Value;
@@ -372,6 +360,30 @@ struct FormattedConsumerImpl<DataType::VarRef, T> {
     out.write(val.name());
     out.write('=');
     FormattedConsumerImpl<ElemDataType, Elem>().consume(val.get(), out, config);
+  }
+};
+
+template<typename T>
+struct FormattedConsumerImpl<DataType::CodePoint, T> {
+  void
+  consume(const T& val, nio::Sink& out, CONFIG__) const {
+    if (val.valid()) {
+      out.print("U+{:0>4X}", static_cast<u32>(val));
+    } else {
+      out.write("<invalid>");
+    }
+  }
+};
+
+template<typename T>
+struct FormattedConsumerImpl<DataType::Character, T> {
+  using Elem = T::View;
+  static constexpr auto ElemDataType = DataTypes<Elem>::Value;
+
+  void
+  consume(const T& val, nio::Sink& out, CONFIG__) const {
+    const auto elem = static_cast<Elem>(val);
+    FormattedConsumerImpl<ElemDataType, Elem>().consume(elem, out, config);
   }
 };
 
@@ -507,7 +519,7 @@ struct FormattedProducerImpl<DataType::Pointer, P> {
     skip(in, config);
     const auto pos = in.tell();
 
-    if (read(in, { "<null>" })) {
+    if (read(in, { "null" })) {
       val = nullptr;
       return;
     }
@@ -564,7 +576,7 @@ struct FormattedProducerImpl<DataType::Optional, T> {
   produce(T& val, nio::Source& in, CONFIG__) const {
     skip(in, config);
 
-    if (read(in, { "<none>" })) {
+    if (read(in, { "null" })) {
       val = std::nullopt;
       return;
     }
@@ -809,33 +821,6 @@ struct FormattedProducerImpl<DataType::Bimap, T> {
 };
 
 template<typename T>
-struct FormattedProducerImpl<DataType::CodePoint, T> {
-  using Elem = T::Type;
-  static constexpr auto ElemDataType = DataTypes<Elem>::Value;
-
-  void
-  produce(T& val, nio::Source& in, CONFIG__) const {
-    skip(in, config);
-    const auto pos = in.tell();
-
-    if (read(in, '\'')) {
-      in.seek(-1, nio::SeekMode::cur);
-      Elem elem = Elem();
-      FormattedProducerImpl<ElemDataType, Elem>().produce(elem, in, config);
-      val = T(elem);
-      return;
-    }
-
-    auto result = scanCodePoint<u32>(in);
-    if (result) {
-      val = static_cast<Elem>(*result);
-      return;
-    }
-    throw InputFailure(pos, "Expected a code point");
-  }
-};
-
-template<typename T>
 struct FormattedProducerImpl<DataType::Interval, T> {
   using A = T::A;
   static constexpr auto ADataType = DataTypes<A>::Value;
@@ -974,6 +959,47 @@ struct FormattedProducerImpl<DataType::VarRef, T> {
   }
 };
 
+template<typename T>
+struct FormattedProducerImpl<DataType::CodePoint, T> {
+  using Elem = T::Type;
+  static constexpr auto ElemDataType = DataTypes<Elem>::Value;
+
+  void
+  produce(T& val, nio::Source& in, CONFIG__) const {
+    skip(in, config);
+    const auto pos = in.tell();
+
+    if (read(in, '\'')) {
+      in.seek(-1, nio::SeekMode::cur);
+      Elem elem = Elem();
+      FormattedProducerImpl<ElemDataType, Elem>().produce(elem, in, config);
+      val = T(elem);
+      return;
+    }
+
+    auto result = scanCodePoint<u32>(in);
+    if (result) {
+      val = static_cast<Elem>(*result);
+      return;
+    }
+    throw InputFailure(pos, "Expected a code point");
+  }
+};
+
+template<typename T>
+struct FormattedProducerImpl<DataType::Character, T> {
+  using Elem = T::Type;
+  static constexpr auto ElemDataType = DataTypes<Elem>::Value;
+
+  void
+  produce(T& val, nio::Source& in, CONFIG__) const {
+    Elem elem;
+    FormattedProducerImpl<ElemDataType, Elem>().produce(elem, in, config);
+    val = T(std::move(elem));
+    return;
+  }
+};
+
 #undef CONFIG__
 
 } // namespace internal
@@ -1012,9 +1038,9 @@ struct FormattedProducer {
  * comments starting with <code>/</code><code>*</code>, and single-line shell-style comments starting with
  * <code>#</code>.
  *
- * Decoding to list views and to forward lists is not supported. String views, however, are allowed. This is
- * made possible by storing intermediate strings in the source. Hence, decoded string views are valid for the
- * lifetime of the source.
+ * Decoding to list views and to forward lists is not supported. String views and character views, however,
+ * are allowed. This is made possible by storing intermediate strings in the source. Hence, decoded string
+ * views and character views are valid, and valid only, for the lifetime of the source.
  *
  * There are various optimizations for decoding from contiguous sources.
  *
@@ -1050,9 +1076,9 @@ struct FormattedCodec : Codec<FormattedConsumer, FormattedProducer> {
   template<typename T>
   auto
   encode(const T& val, nio::Sink& out, const FormattedConsumerConfig& config) const {
-    FormattedConsumerConfig configCopy = config;
-    configCopy.level = 0;
-    return Base::encode(val, out, configCopy);
+    FormattedConsumerConfig localConfig = config;
+    localConfig.level = 0;
+    return Base::encode(val, out, localConfig);
   }
 
   /**

@@ -192,18 +192,6 @@ struct HashConsumerImpl<DataType::Bimap, T, Hash> {
 };
 
 template<typename T, typename Hash>
-struct HashConsumerImpl<DataType::CodePoint, T, Hash> {
-  using Elem = T::Type;
-  static constexpr auto ElemDataType = DataTypes<Elem>::Value;
-
-  u64
-  consume(const T& val) {
-    const Elem elem = static_cast<Elem>(val);
-    return HashConsumerImpl<ElemDataType, Elem, Hash>().consume(elem);
-  }
-};
-
-template<typename T, typename Hash>
 struct HashConsumerImpl<DataType::Interval, T, Hash> {
   using A = T::A;
   static constexpr auto ADataType = DataTypes<A>::Value;
@@ -272,6 +260,30 @@ struct HashConsumerImpl<DataType::VarRef, T, Hash> {
   consume(const T& val) {
     // For #VarRef, don't include the name in the hash
     return HashConsumerImpl<ElemDataType, Elem, Hash>().consume(val.get());
+  }
+};
+
+template<typename T, typename Hash>
+struct HashConsumerImpl<DataType::CodePoint, T, Hash> {
+  using Elem = T::Type;
+  static constexpr auto ElemDataType = DataTypes<Elem>::Value;
+
+  u64
+  consume(const T& val) {
+    const Elem elem = static_cast<Elem>(val);
+    return HashConsumerImpl<ElemDataType, Elem, Hash>().consume(elem);
+  }
+};
+
+template<typename T, typename Hash>
+struct HashConsumerImpl<DataType::Character, T, Hash> {
+  using Elem = T::View;
+  static constexpr auto ElemDataType = DataTypes<Elem>::Value;
+
+  u64
+  consume(const T& val) {
+    const Elem elem = static_cast<Elem>(val);
+    return HashConsumerImpl<ElemDataType, Elem, Hash>().consume(elem);
   }
 };
 

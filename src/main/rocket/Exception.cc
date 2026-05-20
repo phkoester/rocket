@@ -57,7 +57,7 @@ getWhat(const exception& val) {
   }
   string_view str(p);
   if (str.empty()) {
-    return "<none>";
+    return "<empty>";
   }
   return fmt::format("{}", str);
 }

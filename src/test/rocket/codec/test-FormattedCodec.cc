@@ -52,7 +52,7 @@ decode(string_view str) {
 
 template<typename T>
 pair<T, u64>
-decodeTell(string_view str) {
+decodeAndTell(string_view str) {
   const FormattedCodec codec;
   nio::StringSource in(str);
   return { codec.decode<T>(in, { .cComments=true, .shellComments=true }), in.tell() };
@@ -93,7 +93,7 @@ TEST(FormattedCodec, FormattedConsumerFloatF64) {
 }
 
 TEST(FormattedCodec, FormattedConsumerPointer) {
-  EXPECT_EQ(encode(reinterpret_cast<void*>(0)), "<null>");
+  EXPECT_EQ(encode(reinterpret_cast<void*>(0)), "null");
   EXPECT_THAT(encode(reinterpret_cast<void*>(0x12345678)), matchesRegex("0x[0-9a-f]+"));
 }
 
@@ -107,7 +107,7 @@ TEST(FormattedCodec, FormattedConsumerOptional) {
   using type = optional<string>;
 
   const type val;
-  EXPECT_EQ(encode(val), "<none>");
+  EXPECT_EQ(encode(val), "null");
   EXPECT_EQ(encode<type>("Hello"), "\"Hello\"");
 }
 
@@ -154,16 +154,6 @@ TEST(FormattedCodec, FormattedConsumerMap) {
     "{\"alpha\": 1, \"beta\": 2, \"gamma\": 3}");
 }
 
-TEST(FormattedCodec, FormattedConsumerCodePoint) {
-  using type = unicode::CodePoint;
-
-  EXPECT_EQ(encode(type('a')), "U+0061");
-  EXPECT_EQ(encode(type(U'€')), "U+20AC");
-  EXPECT_EQ(encode(type(U'\U00010FFF')), "U+10FFF");
-  EXPECT_EQ(encode(type(U'\U0010FFFF')), "U+10FFFF");
-  EXPECT_EQ(encode(type(static_cast<char32>(0x10FFFF + 1))), "<invalid>");
-}
-
 TEST(FormattedCodec, FormattedConsumerInterval) {
   EXPECT_EQ(encode(math::ClosedInterval<f32>(-4.2F, 4.2F)), "[-4.2,4.2]");
   EXPECT_EQ(encode(math::OpenInterval<f32>()), "∅");
@@ -174,6 +164,16 @@ TEST(FormattedCodec, FormattedConsumerDeclared) {
   EXPECT_EQ(
     encode(MyStruct { 42, true, "hello", { 1, 2, 3 } }),
     "(ärger=42, ökonom=true, übermut=\"hello\", vec=[1, 2, 3])");
+}
+
+TEST(FormattedCodec, FormattedConsumerCodePoint) {
+  using type = unicode::CodePoint;
+
+  EXPECT_EQ(encode(type('a')), "U+0061");
+  EXPECT_EQ(encode(type(U'€')), "U+20AC");
+  EXPECT_EQ(encode(type(U'\U00010FFF')), "U+10FFF");
+  EXPECT_EQ(encode(type(U'\U0010FFFF')), "U+10FFFF");
+  EXPECT_EQ(encode(type(static_cast<char32>(0x10FFFF + 1))), "<invalid>");
 }
 
 // #FormattedProducer .......................................................................................
@@ -219,7 +219,7 @@ TEST(FormattedCodec, FormattedProducerFloat) {
   using type = f64;
   using limits = numeric_limits<type>;
 
-  EXPECT_EQ(decodeTell<type>("  -123.456  "), make_pair(-123.456_f64, 10_u64));
+  EXPECT_EQ(decodeAndTell<type>("  -123.456  "), make_pair(-123.456_f64, 10_u64));
   EXPECT_EQ(decode<type>("-inf"), -limits::infinity());
   EXPECT_EQ(decode<type>("-∞"), -limits::infinity());
   EXPECT_EQ(decode<type>("-inf"), -limits::infinity());
@@ -230,13 +230,13 @@ TEST(FormattedCodec, FormattedProducerFloat) {
 }
 
 TEST(FormattedCodec, FormattedProducerPointer) {
-  EXPECT_EQ(decodeTell<void*>("  <null>  "), make_pair(static_cast<void*>(0), 8_u64)); // NOLINT
-  EXPECT_EQ(decodeTell<void*>("  0x12345678  "), make_pair(reinterpret_cast<void*>(0x12345678), 12_u64));
+  EXPECT_EQ(decodeAndTell<void*>("  null  "), make_pair(static_cast<void*>(0), 6_u64)); // NOLINT
+  EXPECT_EQ(decodeAndTell<void*>("  0x12345678  "), make_pair(reinterpret_cast<void*>(0x12345678), 12_u64));
 }
 
 TEST(FormattedCodec, FormattedProducerOptionalString) {
   using type = optional<string>;
-  EXPECT_EQ(decode<type>("  <none>  "), nullopt);
+  EXPECT_EQ(decode<type>("  null  "), nullopt);
 }
 
 TEST(FormattedCodec, FormattedProducerOptionalStringView) {
@@ -280,16 +280,6 @@ TEST(FormattedCodec, FormattedProducerBimapUnordered) {
   EXPECT_EQ(
     (decode<type>("  { \"alpha\"\t: 1, \"beta\"  :/* comment */ 2, \"gamma\": 3  ,  }   ")),
     (makeUnorderedBimap<string, i32>({ { "alpha", 1 }, { "beta", 2 }, { "gamma", 3 } })));
-}
-
-TEST(FormattedCodec, FormattedProducerCodePoint) {
-  using type = unicode::CodePoint;
-  EXPECT_EQ(decode<type>("'a',"), type('a'));
-  EXPECT_EQ(decode<type>("'€'"), type(U'€'));
-  EXPECT_EQ(decode<type>("U+0061,"), type('a'));
-  EXPECT_EQ(decode<type>("U+20AC"), type(U'€'));
-  EXPECT_EQ(decode<type>("U+10FFF"), type(U'\U00010FFF'));
-  EXPECT_EQ(decode<type>("U+10FFFF"), type(U'\U0010FFFF'));
 }
 
 TEST(FormattedCodec, FormattedProducerInterval) {
@@ -346,6 +336,16 @@ TEST(FormattedCodec, FormattedProducerInstance) {
   EXPECT_EQ(
     (decode<type>("  ( ärger  =  42, ökonom=true, übermut=\"hello\",  )   ")),
     (type(val)));
+}
+
+TEST(FormattedCodec, FormattedProducerCodePoint) {
+  using type = unicode::CodePoint;
+  EXPECT_EQ(decode<type>("'a',"), type('a'));
+  EXPECT_EQ(decode<type>("'€'"), type(U'€'));
+  EXPECT_EQ(decode<type>("U+0061,"), type('a'));
+  EXPECT_EQ(decode<type>("U+20AC"), type(U'€'));
+  EXPECT_EQ(decode<type>("U+10FFF"), type(U'\U00010FFF'));
+  EXPECT_EQ(decode<type>("U+10FFFF"), type(U'\U0010FFFF'));
 }
 
 // EOF

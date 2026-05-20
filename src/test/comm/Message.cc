@@ -14,18 +14,17 @@ namespace rocket::comm {
 
 // #Message -------------------------------------------------------------------------------------------------
 
-Message::Message(u64 size) :
-  payload_(size, ' ') {
+Message::Message(u64 size) {
   ROCKET_CHECK(size, size == 0 || size >= 2);
 
+  payload_.reserve(size);
   if (size == 0) {
     return;
   }
-
-  for (u64 i = 0; i < size; ++i) {
+  payload_[0] = '[';
+  for (u64 i = 1; i < size - 1; ++i) {
     payload_[i] = '0' + (i % 10); // NOLINT
   }
-  payload_[0] = '[';
   payload_[size - 1] = ']';
 }
 

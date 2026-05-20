@@ -21,18 +21,45 @@ namespace rocket::unicode {
  * The implementation of both #rocket::unicode::Character and #rocket::unicode::CharacterView.
  *
  * @tparam C the character type
+ * @tparam String the string type, either #std::basic_string or #std::basic_string_view
  */
 template<typename C, typename String> requires IsChar<C>
 struct BasicCharacter {
+  using Char = C;
+  using Type = String;
+  using View = std::basic_string_view<C>;
+
   /// A compile-time constant that is `true` if the character is a view, `false` otherwise.
-  static constexpr bool IS_VIEW = std::is_same_v<String, std::basic_string_view<C>>;
+  static constexpr bool IS_VIEW = std::is_same_v<String, View>;
 
   /**
    * @ctor
    *
-   * This constructor does not check that @p str describes a valid Unicode character. If the character is
-   * invalid, its behavior is undefined. Use #rocket::unicode::Iterator to obtain segments suitable for a
-   * character.
+   * Constructs a character from a string reference.
+   *
+   * @param str a string. The string must not be empty
+   */
+  template<typename Char> requires std::is_same_v<Char, C> && (not IS_VIEW)
+  constexpr explicit BasicCharacter( const std::basic_string<Char>& str) : str_(str) {
+    ROCKET_CHECK(str, not str.empty());
+  }
+
+  /**
+   * @ctor
+   *
+   * Constructs a character from a string rvalue.
+   *
+   * @param str a string. The string must not be empty
+   */
+  template<typename Char> requires std::is_same_v<Char, C> && (not IS_VIEW)
+  constexpr explicit BasicCharacter( std::basic_string<Char>&& str) : str_(std::move(str)) {
+    ROCKET_CHECK(str, not str.empty());
+  }
+
+  /**
+   * @ctor
+   *
+   * Constructa a character or a character view from a string view.
    *
    * @param str a string. The string must not be empty. If the instance is a character view, the string must
    *   remain valid for the lifetime of the instance
@@ -44,7 +71,7 @@ struct BasicCharacter {
   /**
    * @ctor
    *
-   * Implicitly constructs a view from a string.
+   * Constructs a character view from a character.
    *
    * @param rhs the right-hand side, which holds a string
    */
@@ -52,8 +79,11 @@ struct BasicCharacter {
   constexpr explicit BasicCharacter(const BasicCharacter<Char, std::basic_string<Char>>& rhs ) :
       str_(static_cast<std::basic_string_view<C>>(rhs)) {}
 
+  /// @member_op_cast{#std::basic_string}
+  constexpr explicit operator std::basic_string<C>() const { return str_; }
+
   /// @member_op_cast{#std::basic_string_view}
-  constexpr operator std::basic_string_view<C>() const { return str_; } // NOLINT
+  constexpr explicit operator std::basic_string_view<C>() const { return str_; }
 
   /**
    * Checks if the character is an ASCII character.
@@ -194,7 +224,7 @@ struct BasicCharacter {
     if (pos == str_.size()) {
       return CodePoint(cp);
     }
-    return std::nullopt;
+    return {};
   }
 
   /**

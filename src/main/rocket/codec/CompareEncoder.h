@@ -277,19 +277,6 @@ struct CompareConsumerImpl<DataType::Bimap, T, Cmp> {
 };
 
 template<typename T, typename Cmp>
-struct CompareConsumerImpl<DataType::CodePoint, T, Cmp> {
-  using Elem = T::Type;
-  static constexpr auto ElemDataType = DataTypes<Elem>::Value;
-
-  auto
-  consume(const T& lhs, const T& rhs) {
-    const Elem lhsElem = static_cast<Elem>(lhs);
-    const Elem rhsElem = static_cast<Elem>(rhs);
-    return CompareConsumerImpl<ElemDataType, Elem, Cmp>().consume(lhsElem, rhsElem);
-  }
-};
-
-template<typename T, typename Cmp>
 struct CompareConsumerImpl<DataType::Interval, T, Cmp> {
   using A = T::A;
   using B = T::B;
@@ -365,6 +352,32 @@ struct CompareConsumerImpl<DataType::VarRef, T, Cmp> {
   consume(const T& lhs, const T& rhs) {
     // For #VarRef, don't compare the names
     return CompareConsumerImpl<ElemDataType, Elem, Cmp>().consume(lhs.get(), rhs.get());
+  }
+};
+
+template<typename T, typename Cmp>
+struct CompareConsumerImpl<DataType::CodePoint, T, Cmp> {
+  using Elem = T::Type;
+  static constexpr auto ElemDataType = DataTypes<Elem>::Value;
+
+  auto
+  consume(const T& lhs, const T& rhs) {
+    const Elem lhsElem = static_cast<Elem>(lhs);
+    const Elem rhsElem = static_cast<Elem>(rhs);
+    return CompareConsumerImpl<ElemDataType, Elem, Cmp>().consume(lhsElem, rhsElem);
+  }
+};
+
+template<typename T, typename Cmp>
+struct CompareConsumerImpl<DataType::Character, T, Cmp> {
+  using Elem = T::View;
+  static constexpr auto ElemDataType = DataTypes<Elem>::Value;
+
+  auto
+  consume(const T& lhs, const T& rhs) {
+    const Elem lhsElem = static_cast<Elem>(lhs);
+    const Elem rhsElem = static_cast<Elem>(rhs);
+    return CompareConsumerImpl<ElemDataType, Elem, Cmp>().consume(lhsElem, rhsElem);
   }
 };
 

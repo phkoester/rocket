@@ -1,7 +1,7 @@
 /**
  * @file nio.h
  *
- * New I/O: efficient sinks and sources.
+ * New I/O: efficient and convenient sinks and sources.
  */
 
 #pragma once
@@ -486,12 +486,12 @@ private:
  */
 struct StringSink : Sink {
   /**
-   * Makes a new #StringSink with an owned string.
+   * Constructs a new #StringSink with an owned string.
    */
   explicit StringSink();
 
   /**
-   * Makes a new #StringSink with a string reference and no owned string.
+   * Constructs a new #StringSink with a string reference and no owned string.
    *
    * @param ref the string to write to. The reference must remain valid for the lifetime of the #StringSink
    */
@@ -600,7 +600,7 @@ struct Source : Device {
   std::string readString();
 
   /**
-   * Seeks to a new position in the source.
+   * Seeks a new position in the source.
    *
    * @param offset the offset to seek to
    * @param mode the seek mode
