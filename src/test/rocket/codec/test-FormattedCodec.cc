@@ -6,10 +6,14 @@
 
 #include "rocket/Bimap-codec.h"
 #include "rocket/codec/FormattedCodec.h"
+#include "rocket/chrono/chrono.h"
 #include "rocket/log/log.h"
 #include "rocket/reflect/reflect.h"
 #include "rocket/str/location/location.h"
 
+#include <fmt/chrono.h>
+
+using namespace rocket;
 using namespace rocket::codec;
 using namespace std;
 
@@ -152,6 +156,60 @@ TEST(FormattedCodec, FormattedConsumerMap) {
   EXPECT_EQ(
     encode(map<string, i32> { { "alpha", 1 }, { "beta", 2 }, { "gamma", 3 } }),
     "{\"alpha\": 1, \"beta\": 2, \"gamma\": 3}");
+}
+
+TEST(FormattedCodec, FormattedConsumerDuration) {
+  EXPECT_EQ(encode(1ns), "1ns");
+  EXPECT_EQ(encode(1us), "1µs");
+  EXPECT_EQ(encode(2s), "2s");
+  EXPECT_EQ(encode(3min), "3min");
+}
+
+TEST(FormattedCodec, FormattedConsumerYearMonthDay) {
+  using namespace std::chrono;
+
+  EXPECT_EQ(encode(year_month_day { 1970y, January, 2d }), "1970-01-02");
+}
+
+TEST(FormattedCodec, FormattedConsumerHourMinuteSecond) {
+  using namespace std::chrono;
+
+  EXPECT_EQ(encode(hh_mm_ss { 1h + 2min + 3s }), "01:02:03");
+  EXPECT_EQ(encode(hh_mm_ss { 111h + 2min + 3s + 123456us }), "111:02:03.123456");
+}
+
+TEST(FormattedCodec, FormattedConsumerTimePoint) {
+  using namespace std::chrono;
+
+  const auto regexS = "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z"; // Seconds
+  const auto regexNs = "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d+Z"; // Nanoseconds
+
+  const auto now = rocket::chrono::now<system_clock>();
+  EXPECT_THAT(encode(time_point_cast<seconds>(now)), matchesRegex(regexS));
+  EXPECT_THAT(encode(now), matchesRegex(regexNs));
+}
+
+TEST(FormattedCodec, FormattedConsumerZonedTime) {
+  using namespace std::chrono;
+
+  const auto regexS = "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(Z|[+-]\\d{2}:\\d{2}) [^ ]+";
+  const auto regexNs = "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d+(Z|[+-]\\d{2}:\\d{2}) [^ ]+";
+
+  {
+    // Current time zone
+    const auto& tz = *current_zone();
+    const auto now = rocket::chrono::now<system_clock>();
+    EXPECT_THAT(encode(zoned_time(&tz, time_point_cast<seconds>(now))), matchesRegex(regexS));
+    EXPECT_THAT(encode(zoned_time(&tz, now)), matchesRegex(regexNs));
+  }
+
+  {
+    // Time zone UTC
+    const auto& tz = *locate_zone("UTC");
+    const auto now = rocket::chrono::now<system_clock>();
+    EXPECT_THAT(encode(zoned_time(&tz, time_point_cast<seconds>(now))), matchesRegex(regexS));
+    EXPECT_THAT(encode(zoned_time(&tz, now)), matchesRegex(regexNs));
+  }
 }
 
 TEST(FormattedCodec, FormattedConsumerInterval) {

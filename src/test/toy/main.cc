@@ -5,12 +5,11 @@
  */
 
 #include "rocket/Process.h"
+#include "rocket/chrono/chrono.h"
 #include "rocket/cl/cl.h"
 #include "rocket/enum.h"
 #include "rocket/log/log.h"
 #include "rocket/version.h"
-
-#include <chrono>
 
 using namespace rocket;
 using namespace rocket::unicode;
@@ -49,10 +48,12 @@ myTerminate() {
 
 void
 toy() {
+  using namespace std::chrono;
+
   ROCKET_LOG(toy);
 
-  const auto* tz = chrono::locate_zone("Europe/Berlin");
-  auto tp = chrono::system_clock::now() - chrono::days(1);
+  const auto* tz = locate_zone("Europe/Berlin");
+  auto tp = rocket::chrono::now<system_clock>() - days(100);
   auto info = tz->get_info(tp);
   nio::out.println("info.begin: {}", info.begin);
   nio::out.println("info.end: {}", info.end);

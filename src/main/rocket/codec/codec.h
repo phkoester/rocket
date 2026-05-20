@@ -358,7 +358,7 @@ struct Encoder {
   template<typename T, typename... Args>
   auto // NOLINT
   encode(const T& val, Args&&... args) const {
-    constexpr auto Value = DataTypes<T>::Value;
+    constexpr auto Value = DataTypes<Purge<T>>::Value;
     using ConsumerType = Consumer::template Type<Value, T>;
     ConsumerType consumer; // NOLINT
     return consumer.consume(val, std::forward<Args>(args)...);
@@ -385,7 +385,7 @@ struct Decoder {
   template<typename T, typename... Args>
   T
   decode(Args&&... args) const {
-    constexpr auto Value = DataTypes<T>::Value;
+    constexpr auto Value = DataTypes<Purge<T>>::Value;
     using ProducerType = Producer::template Type<Value, T>;
     ProducerType producer; // NOLINT
     T val; // NOLINT

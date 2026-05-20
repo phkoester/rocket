@@ -327,7 +327,7 @@ struct CompareConsumerImpl<DataType::TimePoint, T, Cmp> {
   static_assert(DurationDataType == DataType::Duration);
 
   bool
-  consume(const T& lhs, const T& rhs) {
+  consume(T lhs, T rhs) { // Take by value
     Duration lhsDuration = lhs.time_since_epoch();
     Duration rhsDuration = rhs.time_since_epoch();
     return CompareConsumerImpl<DurationDataType, Duration, Cmp>().consume(lhsDuration, rhsDuration);
@@ -345,13 +345,11 @@ struct CompareConsumerImpl<DataType::ZonedTime, T, Cmp> {
 
   bool
   consume(const T& lhs, const T& rhs) {
-    const auto* lhsTz = lhs.get_time_zone();
-    ROCKET_EXPECT(lhsTz != nullptr);
-    const auto* rhsTz = rhs.get_time_zone();
-    ROCKET_EXPECT(rhsTz != nullptr);
+    const auto& lhsTz = *lhs.get_time_zone();
+    const auto& rhsTz = *rhs.get_time_zone();
 
-    Pair lhsPair { *lhsTz, lhs };
-    Pair rhsPair { *rhsTz, rhs };
+    Pair lhsPair { lhsTz, lhs };
+    Pair rhsPair { rhsTz, rhs };
     return CompareConsumerImpl<PairDataType, Pair, Cmp>().consume(lhsPair, rhsPair);
   }
 };

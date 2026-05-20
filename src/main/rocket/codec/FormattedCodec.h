@@ -272,6 +272,68 @@ struct FormattedConsumerImpl<DataType::Bimap, T> {
 };
 
 template<typename T>
+struct FormattedConsumerImpl<DataType::Duration, T> {
+  void
+  consume(T val, nio::Sink& out, CONFIG__) const { // Take by value
+    if constexpr (std::is_same_v<T, std::chrono::microseconds>) {
+      out.print("{}µs", val.count());
+    } else {
+      out.write(std::format("{}", val));
+    }
+  }
+};
+
+template<typename T>
+struct FormattedConsumerImpl<DataType::YearMonthDay, T> {
+  void
+  consume(const T& val, nio::Sink& out, CONFIG__) const {
+    out.write(std::format("{}", val));
+  }
+};
+
+template<typename T>
+struct FormattedConsumerImpl<DataType::HourMinuteSecond, T> {
+  void
+  consume(const T& val, nio::Sink& out, CONFIG__) const {
+    out.write(std::format("{}", val));
+  }
+};
+
+template<typename T>
+struct FormattedConsumerImpl<DataType::TimeZone, T> {
+  void
+  consume(const T& val, nio::Sink& out, CONFIG__) const {
+    out.write(val.name());
+  }
+};
+
+template<typename T>
+struct FormattedConsumerImpl<DataType::TimePoint, T> {
+  using Clock = T::clock;
+  static_assert(std::is_same_v<Clock, std::chrono::system_clock>, "Clock must be `system_clock`");
+
+  void
+  consume(const T& val, nio::Sink& out, CONFIG__) const {
+    out.write(std::format("{:%FT%TZ}", val)); // Zulu time
+  }
+};
+
+template<typename T>
+struct FormattedConsumerImpl<DataType::ZonedTime, T> {
+  void
+  consume(const T& val, nio::Sink& out, CONFIG__) const {
+    const auto& tz = *val.get_time_zone();
+
+    const auto info = val.get_info();
+    if (info.offset == std::chrono::seconds(0)) {
+      out.write(std::format("{:%FT%TZ} {}", val, tz.name())); // Zulu time
+    } else {
+      out.write(std::format("{:%FT%T%Ez} {}", val, tz.name())); // Time with UTC offset
+    }
+  }
+};
+
+template<typename T>
 struct FormattedConsumerImpl<DataType::Interval, T> {
   using A = T::A;
   static constexpr auto ADataType = DataTypes<A>::Value;

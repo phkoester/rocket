@@ -344,13 +344,11 @@ struct EqualToConsumerImpl<DataType::ZonedTime, T, Eq> {
 
   bool
   consume(const T& lhs, const T& rhs) {
-    const auto* lhsTz = lhs.get_time_zone();
-    ROCKET_EXPECT(lhsTz != nullptr);
-    const auto* rhsTz = rhs.get_time_zone();
-    ROCKET_EXPECT(rhsTz != nullptr);
+    const auto& lhsTz = *lhs.get_time_zone();
+    const auto& rhsTz = *rhs.get_time_zone();
 
     return
-      EqualToConsumerImpl<TimeZoneDataType, TimeZone, Eq>().consume(*lhsTz, *rhsTz) &&
+      EqualToConsumerImpl<TimeZoneDataType, TimeZone, Eq>().consume(lhsTz, rhsTz) &&
       EqualToConsumerImpl<SysTimeDataType, SysTime, Eq>().consume(lhs, rhs);
   }
 };

@@ -4,6 +4,7 @@
 
 #include "rocket-test/rocket-test.h"
 
+#include "rocket/chrono/chrono.h"
 #include "rocket/system/system.h"
 
 #include <fmt/format.h>
@@ -196,16 +197,17 @@ TEST(scnlib, scanChronoTimePoint) {
 #define FORMAT      "{:%Y-%m-%d %H:%M:%S}"
 #define FORMAT_SCAN "{:%Y-%m-%d %H:%M:%.S}"
 
+  using namespace std::chrono;
+
   // The environment variable `TZ` interferes somehow ...
-  const auto* tz = chrono::current_zone();
-  ASSERT_NE(tz, nullptr);
+  const auto& tz = *current_zone();
   const auto TZ = system::env::get<string>("TZ");
   if (TZ) {
-    ASSERT_EQ(*TZ, tz->name());
+    ASSERT_EQ(*TZ, tz.name());
   }
 
-  using TimePoint = chrono::time_point<chrono::system_clock, chrono::nanoseconds>;
-  const TimePoint val1 = chrono::system_clock::now();
+  using TimePoint = time_point<system_clock, nanoseconds>;
+  const TimePoint val1 = rocket::chrono::now<system_clock>();
   const string input = std::format(FORMAT, val1); // "2026-01-27 05:51:13.396968455", 29 chars
   nio::out.println("VAL1: {}", input);
   const auto result = scn::scan<TimePoint>(input, FORMAT_SCAN);
@@ -216,22 +218,22 @@ TEST(scnlib, scanChronoTimePoint) {
 
   // The time zone of the scanned time point is unclear. The following adjustment seems to convert the time
   // point to UTC
-  const auto info = tz->get_info(val1);
+  const auto info = tz.get_info(val1);
   val2 += info.offset;
   nio::out.println("VAL3: " FORMAT, val2);
 
   // Cast to microseconds, because there might be a rounding issue
-  const auto val1Micros = chrono::time_point_cast<chrono::microseconds>(val1);
-  const auto val2Micros = chrono::time_point_cast<chrono::microseconds>(val2);
+  const auto val1Micros = time_point_cast<microseconds>(val1);
+  const auto val2Micros = time_point_cast<microseconds>(val2);
 
   EXPECT_EQ(val2Micros, val1Micros);
 
-  auto now1 = chrono::zoned_time(tz, val1);
+  auto now1 = zoned_time(&tz, val1);
   nio::out.writeln(std::format("NOW1: {:%F %T %Z}", now1));
 
-  const auto* honolulu = chrono::locate_zone("Pacific/Honolulu");
+  const auto* honolulu = locate_zone("Pacific/Honolulu");
   ASSERT_NE(honolulu, nullptr);
-  auto now2 = chrono::zoned_time(honolulu, val1);
+  auto now2 = zoned_time(honolulu, val1);
   nio::out.writeln(std::format("NOW2: {:%F %T %Z}", now2));
 
 #undef FORMAT

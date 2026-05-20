@@ -283,10 +283,8 @@ struct HashConsumerImpl<DataType::ZonedTime, T, Hash> {
 
   u64
   consume(const T& val) {
-    const auto* tz = val.get_time_zone();
-    ROCKET_EXPECT(tz != nullptr);
-
-    u64 ret = HashConsumerImpl<TimeZoneDataType, TimeZone, Hash>().consume(*tz);
+    const auto& tz = *val.get_time_zone();
+    u64 ret = HashConsumerImpl<TimeZoneDataType, TimeZone, Hash>().consume(tz);
     combine<false>(ret, HashConsumerImpl<SysTimeDataType, SysTime, Hash>().consume(val));
     return ret;
   }

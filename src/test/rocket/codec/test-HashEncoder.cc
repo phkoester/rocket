@@ -5,6 +5,7 @@
 #include "rocket-test/rocket-test.h"
 
 #include "rocket/codec/HashEncoder.h"
+#include "rocket/chrono/chrono.h"
 #include "rocket/math/random/random.h"
 #include "rocket/reflect/reflect.h"
 #include "rocket/unicode/Character.h"
@@ -191,46 +192,60 @@ TEST(HashEncoder, BimapUnordered) {
 }
 
 TEST(HashEncoder, Duration) {
+  using namespace std::chrono;
+
+  const u64 count = 1;
   const HashEncoder<> encoder;
-  const chrono::seconds s(1);
+  const seconds s(count);
   const u64 sHash = encoder.encode(s);
   EXPECT_NE(sHash, 0);
-  const chrono::milliseconds ms(1);
+  const milliseconds ms(count);
   const u64 msHash = encoder.encode(ms);
   EXPECT_NE(msHash, 0);
+  // Test that the hash value is different for same counts but different durations
   EXPECT_NE(msHash, sHash);
 }
 
 TEST(HashEncoder, YearMonthDay) {
+  using namespace std::chrono;
+
   const HashEncoder<> encoder;
-  const chrono::year_month_day val(chrono::year(1970), chrono::month(1), chrono::day(1));
+  const year_month_day val(year(1970), month(1), day(1));
   EXPECT_NE(encoder.encode(val), 0);
 }
 
 TEST(HashEncoder, HourMinuteSecond) {
+  using namespace std::chrono;
+
   const HashEncoder<> encoder;
-  const chrono::hh_mm_ss val(2h);
-  EXPECT_EQ(val.hours(), chrono::hours(2));
-  EXPECT_EQ(val.minutes(), chrono::minutes(0));
-  EXPECT_EQ(val.seconds(), chrono::seconds(0));
+  const hh_mm_ss val(2h);
+  EXPECT_EQ(val.hours(), hours(2));
+  EXPECT_EQ(val.minutes(), minutes(0));
+  EXPECT_EQ(val.seconds(), seconds(0));
   EXPECT_NE(encoder.encode(val), 0);
 }
 
 TEST(HashEncoder, TimeZone) {
-  const auto* p = chrono::current_zone();
+  using namespace std::chrono;
+
+  const auto* p = current_zone();
   ASSERT_NE(p, nullptr);
   const HashEncoder<> encoder;
   EXPECT_NE(encoder.encode(*p), 0);
 }
 
 TEST(HashEncoder, TimePoint) {
-  const auto val = chrono::system_clock::now();
+  using namespace std::chrono;
+
+  const auto val = rocket::chrono::now<system_clock>();
   const HashEncoder<> encoder;
   EXPECT_NE(encoder.encode(val), 0);
 }
 
 TEST(HashEncoder, ZonedTime) {
-  const auto val = chrono::zoned_time(chrono::current_zone(), chrono::system_clock::now());
+  using namespace std::chrono;
+
+  const auto val = zoned_time(current_zone(), rocket::chrono::now<system_clock>());
   const HashEncoder<> encoder;
   EXPECT_NE(encoder.encode(val), 0);
 }
