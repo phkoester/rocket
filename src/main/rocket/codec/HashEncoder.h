@@ -207,6 +207,92 @@ struct HashConsumerImpl<DataType::Interval, T, Hash> {
 };
 
 template<typename T, typename Hash>
+struct HashConsumerImpl<DataType::Duration, T, Hash> {
+  using Period = T::period;
+
+  u64
+  consume(T val) { // Take by value
+    u64 ret = Hash()(val.count());
+    combine<false>(ret, Hash()(Period::num));
+    combine<false>(ret, Hash()(Period::den));
+    return ret;
+  }
+};
+
+template<typename T, typename Hash>
+struct HashConsumerImpl<DataType::YearMonthDay, T, Hash> {
+  static constexpr auto I32DataType = DataTypes<i32>::Value;
+
+  u64
+  consume(const T& val) {
+    const i32 year = static_cast<std_int>(val.year());
+    const i32 month = static_cast<std_unsigned>(val.month());
+    const i32 day = static_cast<std_unsigned>(val.day());
+
+    u64 ret = Hash()(year);
+    combine<false>(ret, Hash()(month));
+    combine<false>(ret, Hash()(day));
+    return ret;
+  }
+};
+
+template<typename T, typename Hash>
+struct HashConsumerImpl<DataType::HourMinuteSecond, T, Hash> {
+  using Precision = T::precision;
+  static constexpr auto PrecisionDataType = DataTypes<Precision>::Value;
+  static_assert(PrecisionDataType == DataType::Duration);
+
+  u64
+  consume(const T& val) {
+    const Precision duration = val.to_duration();
+    return HashConsumerImpl<PrecisionDataType, Precision, Hash>().consume(duration);
+  }
+};
+
+template<typename T, typename Hash>
+struct HashConsumerImpl<DataType::TimeZone, T, Hash> {
+  u64
+  consume(const T& val) {
+    std::string_view name = val.name();
+    return Hash()(name);
+  }
+};
+
+template<typename T, typename Hash>
+struct HashConsumerImpl<DataType::TimePoint, T, Hash> {
+  using Duration = T::duration;
+  static constexpr auto DurationDataType = DataTypes<Duration>::Value;
+  static_assert(DurationDataType == DataType::Duration);
+
+  u64
+  consume(T val) { // Take by value
+    const Duration duration = val.time_since_epoch();
+    return HashConsumerImpl<DurationDataType, Duration, Hash>().consume(duration);
+  }
+};
+
+template<typename T, typename Hash>
+struct HashConsumerImpl<DataType::ZonedTime, T, Hash> {
+  using TimeZone = std::chrono::time_zone;
+  static constexpr auto TimeZoneDataType = DataTypes<TimeZone>::Value;
+  static_assert(TimeZoneDataType == DataType::TimeZone);
+  using Duration = T::duration;
+  using SysTime = std::chrono::sys_time<Duration>;
+  static constexpr auto SysTimeDataType = DataTypes<SysTime>::Value;
+  static_assert(SysTimeDataType == DataType::TimePoint);
+
+  u64
+  consume(const T& val) {
+    const auto* tz = val.get_time_zone();
+    ROCKET_EXPECT(tz != nullptr);
+
+    u64 ret = HashConsumerImpl<TimeZoneDataType, TimeZone, Hash>().consume(*tz);
+    combine<false>(ret, HashConsumerImpl<SysTimeDataType, SysTime, Hash>().consume(val));
+    return ret;
+  }
+};
+
+template<typename T, typename Hash>
 struct HashConsumerImpl<DataType::Declared, T, Hash> {
   static constexpr auto& refs = rocket::reflect::Declared<T>::refs;
   using Elem = Purge<decltype(refs)>;
@@ -289,7 +375,7 @@ struct HashConsumerImpl<DataType::Character, T, Hash> {
 
 } // namespace internal
 
-// #HashConsumer (no pun intended, I swear ...) -------------------------------------------------------------
+// #HashConsumer (giggle) -----------------------------------------------------------------------------------
 
 /**
  * The consumer for the #HashEncoder.

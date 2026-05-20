@@ -45,6 +45,7 @@
 
 #pragma once
 
+#include <bit>
 #include <cstdint> // #std::int8_t, #std::uint8_t, ...
 #include <cstdio> // Make this generally availabe
 #include <iosfwd>
@@ -65,6 +66,16 @@
 #ifndef ROCKET_OS_WINDOWS
   #define ROCKET_HAS_128 ///< Do we have 128-bit data types?
 #endif
+
+// Detect endianness ----------------------------------------------------------------------------------------
+
+// Mixed/middle endian is not supported
+static_assert(
+  std::endian::native == std::endian::little || std::endian::native == std::endian::big,
+  "Only little-endian and big-endian architectures are supported");
+
+/// Whether the native architecture is little-endian.
+constexpr bool HAS_LITTLE_ENDIAN = std::endian::native == std::endian::little;
 
 // Macros ---------------------------------------------------------------------------------------------------
 
@@ -96,6 +107,9 @@ using type_info = ::type_info;
 /// @cond undocumented
 using std_wchar_t = wchar_t;
 using std_char32_t = char32_t;
+using std_short = short;
+using std_int = int;
+using std_unsigned = unsigned;
 using std_long = long;
 using std_unsigned_long_long_int = unsigned long long int;
 using std_size_t = size_t;

@@ -25,7 +25,6 @@ namespace rocket::unicode {
  */
 template<typename C, typename String> requires IsChar<C>
 struct BasicCharacter {
-  using Char = C;
   using Type = String;
   using View = std::basic_string_view<C>;
 

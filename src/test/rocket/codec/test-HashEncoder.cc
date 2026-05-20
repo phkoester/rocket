@@ -190,6 +190,51 @@ TEST(HashEncoder, BimapUnordered) {
   EXPECT_EQ(hashes.size(), 1);
 }
 
+TEST(HashEncoder, Duration) {
+  const HashEncoder<> encoder;
+  const chrono::seconds s(1);
+  const u64 sHash = encoder.encode(s);
+  EXPECT_NE(sHash, 0);
+  const chrono::milliseconds ms(1);
+  const u64 msHash = encoder.encode(ms);
+  EXPECT_NE(msHash, 0);
+  EXPECT_NE(msHash, sHash);
+}
+
+TEST(HashEncoder, YearMonthDay) {
+  const HashEncoder<> encoder;
+  const chrono::year_month_day val(chrono::year(1970), chrono::month(1), chrono::day(1));
+  EXPECT_NE(encoder.encode(val), 0);
+}
+
+TEST(HashEncoder, HourMinuteSecond) {
+  const HashEncoder<> encoder;
+  const chrono::hh_mm_ss val(2h);
+  EXPECT_EQ(val.hours(), chrono::hours(2));
+  EXPECT_EQ(val.minutes(), chrono::minutes(0));
+  EXPECT_EQ(val.seconds(), chrono::seconds(0));
+  EXPECT_NE(encoder.encode(val), 0);
+}
+
+TEST(HashEncoder, TimeZone) {
+  const auto* p = chrono::current_zone();
+  ASSERT_NE(p, nullptr);
+  const HashEncoder<> encoder;
+  EXPECT_NE(encoder.encode(*p), 0);
+}
+
+TEST(HashEncoder, TimePoint) {
+  const auto val = chrono::system_clock::now();
+  const HashEncoder<> encoder;
+  EXPECT_NE(encoder.encode(val), 0);
+}
+
+TEST(HashEncoder, ZonedTime) {
+  const auto val = chrono::zoned_time(chrono::current_zone(), chrono::system_clock::now());
+  const HashEncoder<> encoder;
+  EXPECT_NE(encoder.encode(val), 0);
+}
+
 TEST(HashEncoder, DeclaredMyStruct) {
   const MyStruct val { 42, true, "hello", { 1, 2, 3 } };
   const HashEncoder<> encoder;

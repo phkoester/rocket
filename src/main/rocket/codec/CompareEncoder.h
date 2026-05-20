@@ -277,6 +277,86 @@ struct CompareConsumerImpl<DataType::Bimap, T, Cmp> {
 };
 
 template<typename T, typename Cmp>
+struct CompareConsumerImpl<DataType::Duration, T, Cmp> {
+  bool
+  consume(T lhs, T rhs) { // Take by value
+    return Cmp()(lhs.count(), rhs.count());
+  }
+};
+
+template<typename T, typename Cmp>
+struct CompareConsumerImpl<DataType::YearMonthDay, T, Cmp> {
+  using Tuple = std::tuple<std::chrono::year, std::chrono::month, std::chrono::day>;
+  static constexpr auto TupleDataType = DataTypes<Tuple>::Value;
+  static_assert(TupleDataType == DataType::Tuple);
+
+  bool
+  consume(const T& lhs, const T& rhs) {
+    Tuple lhsTuple { lhs.year(), lhs.month(), lhs.day() };
+    Tuple rhsTuple { rhs.year(), rhs.month(), rhs.day() };
+    return CompareConsumerImpl<TupleDataType, Tuple, Cmp>().consume(lhsTuple, rhsTuple);
+  }
+};
+
+template<typename T, typename Cmp>
+struct CompareConsumerImpl<DataType::HourMinuteSecond, T, Cmp> {
+  using Precision = T::precision;
+  static constexpr auto PrecisionDataType = DataTypes<Precision>::Value;
+  static_assert(PrecisionDataType == DataType::Duration);
+
+  bool
+  consume(const T& lhs, const T& rhs) {
+    Precision lhsDuration = lhs.to_duration();
+    Precision rhsDuration = rhs.to_duration();
+    return CompareConsumerImpl<PrecisionDataType, Precision, Cmp>().consume(lhsDuration, rhsDuration);
+  }
+};
+
+template<typename T, typename Cmp>
+struct CompareConsumerImpl<DataType::TimeZone, T, Cmp> {
+  bool
+  consume(const T& lhs, const T& rhs) {
+    return Cmp()(lhs.name(), rhs.name());
+  }
+};
+
+template<typename T, typename Cmp>
+struct CompareConsumerImpl<DataType::TimePoint, T, Cmp> {
+  using Duration = T::duration;
+  static constexpr auto DurationDataType = DataTypes<Duration>::Value;
+  static_assert(DurationDataType == DataType::Duration);
+
+  bool
+  consume(const T& lhs, const T& rhs) {
+    Duration lhsDuration = lhs.time_since_epoch();
+    Duration rhsDuration = rhs.time_since_epoch();
+    return CompareConsumerImpl<DurationDataType, Duration, Cmp>().consume(lhsDuration, rhsDuration);
+  }
+};
+
+template<typename T, typename Cmp>
+struct CompareConsumerImpl<DataType::ZonedTime, T, Cmp> {
+  using TimeZone = std::chrono::time_zone;
+  using Duration = T::duration;
+  using SysTime = std::chrono::sys_time<Duration>;
+  using Pair = std::pair<TimeZone, SysTime>;
+  static constexpr auto PairDataType = DataTypes<Pair>::Value;
+  static_assert(PairDataType == DataType::Tuple);
+
+  bool
+  consume(const T& lhs, const T& rhs) {
+    const auto* lhsTz = lhs.get_time_zone();
+    ROCKET_EXPECT(lhsTz != nullptr);
+    const auto* rhsTz = rhs.get_time_zone();
+    ROCKET_EXPECT(rhsTz != nullptr);
+
+    Pair lhsPair { *lhsTz, lhs };
+    Pair rhsPair { *rhsTz, rhs };
+    return CompareConsumerImpl<PairDataType, Pair, Cmp>().consume(lhsPair, rhsPair);
+  }
+};
+
+template<typename T, typename Cmp>
 struct CompareConsumerImpl<DataType::Interval, T, Cmp> {
   using A = T::A;
   using B = T::B;

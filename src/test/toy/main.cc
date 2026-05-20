@@ -10,6 +10,8 @@
 #include "rocket/log/log.h"
 #include "rocket/version.h"
 
+#include <chrono>
+
 using namespace rocket;
 using namespace rocket::unicode;
 using namespace std;
@@ -45,19 +47,20 @@ myTerminate() {
   // out.println("myTerminate");
 }
 
-struct A {
-  A(char c) : c_(c) {}
-  char c_;
-};
-
 void
 toy() {
   ROCKET_LOG(toy);
 
-  ROCKET_LOG_TRACE("Hey {}", "there");
+  const auto* tz = chrono::locate_zone("Europe/Berlin");
+  auto tp = chrono::system_clock::now() - chrono::days(1);
+  auto info = tz->get_info(tp);
+  nio::out.println("info.begin: {}", info.begin);
+  nio::out.println("info.end: {}", info.end);
+  nio::out.println("info.offset: {}", info.offset);
+  nio::out.println("info.save: {}", info.save);
+  nio::out.println("info.abbrev: {}", info.abbrev);
 
-  const auto a = A { 'a' };
-  out.println("a: {}", a.c_);
+  ROCKET_LOG_TRACE("Hey {}", "there");
 }
 
 } // namespace

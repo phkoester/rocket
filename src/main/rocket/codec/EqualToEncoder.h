@@ -278,6 +278,84 @@ private:
 };
 
 template<typename T, typename Eq>
+struct EqualToConsumerImpl<DataType::Duration, T, Eq> {
+  bool
+  consume(T lhs, T rhs) { // Take by value
+    return Eq()(lhs.count(), rhs.count());
+  }
+};
+
+template<typename T, typename Eq>
+struct EqualToConsumerImpl<DataType::YearMonthDay, T, Eq> {
+  bool
+  consume(const T& lhs, const T& rhs) {
+    return
+      Eq()(lhs.year(), rhs.year()) &&
+      Eq()(lhs.month(), rhs.month()) &&
+      Eq()(lhs.day(), rhs.day());
+  }
+};
+
+template<typename T, typename Eq>
+struct EqualToConsumerImpl<DataType::HourMinuteSecond, T, Eq> {
+  using Precision = T::precision;
+  static constexpr auto PrecisionDataType = DataTypes<Precision>::Value;
+  static_assert(PrecisionDataType == DataType::Duration);
+
+  bool
+  consume(const T& lhs, const T& rhs) {
+    Precision lhsDuration = lhs.to_duration();
+    Precision rhsDuration = rhs.to_duration();
+    return EqualToConsumerImpl<PrecisionDataType, Precision, Eq>().consume(lhsDuration, rhsDuration);
+  }
+};
+
+template<typename T, typename Eq>
+struct EqualToConsumerImpl<DataType::TimeZone, T, Eq> {
+  bool
+  consume(const T& lhs, const T& rhs) {
+    return Eq()(lhs.name(), rhs.name());
+  }
+};
+
+template<typename T, typename Eq>
+struct EqualToConsumerImpl<DataType::TimePoint, T, Eq> {
+  using Duration = T::duration;
+  static constexpr auto DurationDataType = DataTypes<Duration>::Value;
+  static_assert(DurationDataType == DataType::Duration);
+
+  bool
+  consume(T lhs, T rhs) { // Take by value
+    Duration lhsDuration = lhs.time_since_epoch();
+    Duration rhsDuration = rhs.time_since_epoch();
+    return EqualToConsumerImpl<DurationDataType, Duration, Eq>().consume(lhsDuration, rhsDuration);
+  }
+};
+
+template<typename T, typename Eq>
+struct EqualToConsumerImpl<DataType::ZonedTime, T, Eq> {
+  using TimeZone = std::chrono::time_zone;
+  static constexpr auto TimeZoneDataType = DataTypes<TimeZone>::Value;
+  static_assert(TimeZoneDataType == DataType::TimeZone);
+  using Duration = T::duration;
+  using SysTime = std::chrono::sys_time<Duration>;
+  static constexpr auto SysTimeDataType = DataTypes<SysTime>::Value;
+  static_assert(SysTimeDataType == DataType::TimePoint);
+
+  bool
+  consume(const T& lhs, const T& rhs) {
+    const auto* lhsTz = lhs.get_time_zone();
+    ROCKET_EXPECT(lhsTz != nullptr);
+    const auto* rhsTz = rhs.get_time_zone();
+    ROCKET_EXPECT(rhsTz != nullptr);
+
+    return
+      EqualToConsumerImpl<TimeZoneDataType, TimeZone, Eq>().consume(*lhsTz, *rhsTz) &&
+      EqualToConsumerImpl<SysTimeDataType, SysTime, Eq>().consume(lhs, rhs);
+  }
+};
+
+template<typename T, typename Eq>
 struct EqualToConsumerImpl<DataType::Interval, T, Eq> {
   using A = T::A;
   using B = T::B;

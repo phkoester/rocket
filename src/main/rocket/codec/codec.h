@@ -21,7 +21,6 @@
 #include <boost/bimap/bimap.hpp>
 
 #include <array>
-#include <bit>
 #include <chrono>
 #include <forward_list>
 #include <list>
@@ -37,14 +36,6 @@
 #include <vector>
 
 namespace rocket::codec {
-
-// Mixed/middle endian is not supported
-static_assert(
-  std::endian::native == std::endian::little || std::endian::native == std::endian::big,
-  "Only little-endian and big-endian architectures are supported");
-
-/// Whether the native architecture is little-endian.
-constexpr bool HAS_LITTLE_ENDIAN = std::endian::native == std::endian::little;
 
 // #DataType ------------------------------------------------------------------------------------------------
 
@@ -88,15 +79,17 @@ enum class DataType : u8 {
 
   // `std::chrono` ..........................................................................................
 
-  /// Durations.
+  /// #std::chrono::duration values.
   Duration,
-  /// Year, month, day.
+  /// #std::chrono::hh_mm_ss values.
+  HourMinuteSecond,
+  /// #std::chrono::year_month_day values.
   YearMonthDay,
-  /// Time zones.
+  /// #std::chrono::time_zone values.
   TimeZone,
-  /// Time points.
+  /// #std::chrono::time_point values.
   TimePoint,
-  /// Zoned times.
+  /// #std::chrono::zoned_time values.
   ZonedTime,
 
   // Rocket.Math ............................................................................................
@@ -264,6 +257,12 @@ struct DataTypes<boost::bimaps::bimap<A, B>> {
 template<typename Rep, typename Period>
 struct DataTypes<std::chrono::duration<Rep, Period>> {
   static constexpr auto Value = DataType::Duration; ///< The data type.
+};
+
+/// @spec{#rocket::codec::DataTypes, std::chrono::hh_mm_ss}
+template<typename Duration>
+struct DataTypes<std::chrono::hh_mm_ss<Duration>> {
+  static constexpr auto Value = DataType::HourMinuteSecond; ///< The data type.
 };
 
 /// @spec{#rocket::codec::DataTypes, std::chrono::year_month_day}
