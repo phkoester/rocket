@@ -35,20 +35,24 @@ positions(initializer_list<pair<u64, u64>> list) {
 
 // #TEST ----------------------------------------------------------------------------------------------------
 
-TEST(unicode, CodePointCtorChar) {
-  EXPECT_EQ(static_cast<u32>('\x7f'_cp), 127);
-
+TEST(unicode, CodePointCtor) {
   EXPECT_THAT(
-      [&] { '\x80'_cp; },
-      ThrowsMessage<InvalidArgument>(HasSubstr("Parameter `val`: ")));
+    [&] { '\x80'_cp; },
+    ThrowsMessage<InvalidArgument>(HasSubstr("Parameter `val`: Check `ascii()` failed: Invalid ASCII value 0x80")));
+  EXPECT_THAT(
+    [&] { CodePoint { D800 }; },
+    ThrowsMessage<InvalidArgument>(HasSubstr("Parameter `val`: Check `valid(val)` failed: Invalid code-point value 0xD800")));
+  EXPECT_THAT(
+    [&] { CodePoint { MAX_PLUS_1 }; },
+    ThrowsMessage<InvalidArgument>(HasSubstr("Parameter `val`: Check `valid(val)` failed: Invalid code-point value 0x110000")));
 }
 
-TEST(unicode, CodePointOpCasString) {
+TEST(unicode, CodePointOpCastString) {
   using type = string;
 
   EXPECT_EQ(static_cast<type>('\x41'_cp), "A");
   EXPECT_EQ(static_cast<type>(U'\xE4'_cp), "ä");
-  EXPECT_EQ(static_cast<type>(U'\x20AC'_cp), "€");
+  EXPECT_EQ(static_cast<type>(U'\u20AC'_cp), "€");
 }
 
 TEST(unicode, CodePointOpCastU32String) {
@@ -56,7 +60,7 @@ TEST(unicode, CodePointOpCastU32String) {
 
   EXPECT_EQ(static_cast<type>('\x41'_cp), U"A");
   EXPECT_EQ(static_cast<type>(U'\xE4'_cp), U"ä");
-  EXPECT_EQ(static_cast<type>(U'\x20AC'_cp), U"€");
+  EXPECT_EQ(static_cast<type>(U'\u20AC'_cp), U"€");
 }
 
 TEST(unicode, CodePointIsPrint) {

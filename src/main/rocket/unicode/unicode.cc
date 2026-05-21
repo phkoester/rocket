@@ -32,7 +32,7 @@ CodePoint::operator string() const {
   i32 i = 0;
   UBool error = 0;
   U8_APPEND(buf.data(), i, 4, val_, error); // NOLINT
-  ROCKET_EXPECT(error == 0, "Invalid code point {:0>4X}", static_cast<u32>(val_));
+  ROCKET_ASSERT(error == 0, "Invalid code-point value 0x{:X}", static_cast<u32>(val_));
   return string(buf.data(), i); // NOLINT
 }
 
@@ -215,7 +215,7 @@ validate(u32string_view str, UnorderedBimap<u64, u64>* positions) {
     addPosition(i);
 
     const char32 c = str[i];
-    if (CodePoint(c).valid()) {
+    if (CodePoint::valid(c)) {
       // Valid code point
       if (ret.modified()) {
         ret.owned().push_back(c);

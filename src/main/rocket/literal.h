@@ -13,7 +13,6 @@
 #include "rocket/type-traits.h"
 
 #include <array>
-#include <cmath>
 #include <limits>
 #include <string_view>
 #include <type_traits>

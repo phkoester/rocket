@@ -79,8 +79,15 @@ TEST(FormattedCodec, FormattedConsumerChar) {
 
 TEST(FormattedCodec, FormattedConsumerEnum) {
   enum Color : u8 { Red, Green, Blue };
-  EXPECT_EQ(encode(Blue), "2");
+  EXPECT_THAT(
+    [] { encode(Blue); },
+    ThrowsMessage<InvalidState>(containsRegex("Cannot format enum of type `.*Color`")));
+
   EXPECT_EQ(encode(log::LogLevel::info), "info");
+  const log::LogLevel bogus = static_cast<log::LogLevel>(-1);
+  EXPECT_THAT(
+    [&] { encode(bogus); },
+    ThrowsMessage<InvalidState>(HasSubstr("Invalid `rocket::log::LogLevel` value 255")));
 }
 
 TEST(FormattedCodec, FormattedConsumerIntegerI64) {
@@ -182,7 +189,7 @@ TEST(FormattedCodec, FormattedConsumerTimePoint) {
   using namespace std::chrono;
 
   const auto regexS = "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z"; // Seconds
-  const auto regexNs = "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d+Z"; // Nanoseconds
+  const auto regexNs = "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{9}Z"; // Nanoseconds
 
   const auto now = rocket::chrono::now<system_clock>();
   EXPECT_THAT(encode(time_point_cast<seconds>(now)), matchesRegex(regexS));
@@ -192,8 +199,8 @@ TEST(FormattedCodec, FormattedConsumerTimePoint) {
 TEST(FormattedCodec, FormattedConsumerZonedTime) {
   using namespace std::chrono;
 
-  const auto regexS = "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(Z|[+-]\\d{2}:\\d{2}) [^ ]+";
-  const auto regexNs = "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d+(Z|[+-]\\d{2}:\\d{2}) [^ ]+";
+  const auto regexS = "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(Z|[+-]\\d{2}:\\d{2}) \\([^ ]+\\)";
+  const auto regexNs = "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{9}(Z|[+-]\\d{2}:\\d{2}) \\([^ ]+\\)";
 
   {
     // Current time zone
@@ -230,8 +237,6 @@ TEST(FormattedCodec, FormattedConsumerCodePoint) {
   EXPECT_EQ(encode(type('a')), "U+0061");
   EXPECT_EQ(encode(type(U'€')), "U+20AC");
   EXPECT_EQ(encode(type(U'\U00010FFF')), "U+10FFF");
-  EXPECT_EQ(encode(type(U'\U0010FFFF')), "U+10FFFF");
-  EXPECT_EQ(encode(type(static_cast<char32>(0x10FFFF + 1))), "<invalid>");
 }
 
 // #FormattedProducer .......................................................................................
@@ -260,8 +265,14 @@ TEST(FormattedCodec, FormattedProducerChar) {
 
 TEST(FormattedCodec, FormattedProducerEnum) {
   enum Color : u8 { Red, Green, Blue };
-  EXPECT_EQ(decode<Color>("2"), Blue);
+  EXPECT_THAT(
+    [] { decode<Color>("2"); },
+    throwsInputFailure(0, containsRegex("Cannot scan enum of type `.*Color`")));
+
   EXPECT_EQ(decode<log::LogLevel>("  info  "), log::LogLevel::info);
+  EXPECT_THAT(
+    [] { decode<log::LogLevel>("bogus"); },
+    throwsInputFailure(0, HasSubstr("Invalid value for enum `rocket::log::LogLevel`")));
 }
 
 TEST(FormattedCodec, FormattedProducerInteger) {

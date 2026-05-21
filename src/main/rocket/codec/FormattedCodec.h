@@ -92,17 +92,13 @@ struct FormattedConsumerImpl<DataType::Char, C> {
 
 template<typename E>
 struct FormattedConsumerImpl<DataType::Enum, E> {
-  using Underlying = std::underlying_type_t<E>;
-  static constexpr auto UnderlyingDataType = DataTypes<Underlying>::Value;
-
   void
   consume(E val, nio::Sink& out, CONFIG__) const {
     if constexpr (fmt::is_formattable<E>::value) {
       out.print("{}", val);
-    } else {
-      const auto underlying = std::to_underlying(val);
-      FormattedConsumerImpl<UnderlyingDataType, Underlying>().consume(underlying, out, config);
+      return;
     }
+    ROCKET_FAIL("Cannot format enum of type `{}`", typeid(E));
   }
 };
 
@@ -326,9 +322,9 @@ struct FormattedConsumerImpl<DataType::ZonedTime, T> {
 
     const auto info = val.get_info();
     if (info.offset == std::chrono::seconds(0)) {
-      out.write(std::format("{:%FT%TZ} {}", val, tz.name())); // Zulu time
+      out.write(std::format("{:%FT%TZ} ({})", val, tz.name())); // Zulu time
     } else {
-      out.write(std::format("{:%FT%T%Ez} {}", val, tz.name())); // Time with UTC offset
+      out.write(std::format("{:%FT%T%Ez} ({})", val, tz.name())); // Time with UTC offset
     }
   }
 };
@@ -429,11 +425,7 @@ template<typename T>
 struct FormattedConsumerImpl<DataType::CodePoint, T> {
   void
   consume(const T& val, nio::Sink& out, CONFIG__) const {
-    if (val.valid()) {
-      out.print("U+{:0>4X}", static_cast<u32>(val));
-    } else {
-      out.write("<invalid>");
-    }
+    out.print("U+{:0>4X}", static_cast<u32>(val));
   }
 };
 
@@ -508,9 +500,6 @@ struct FormattedProducerImpl<DataType::Char, C> {
 
 template<typename E>
 struct FormattedProducerImpl<DataType::Enum, E> {
-  using Underlying = std::underlying_type_t<E>;
-  static constexpr auto UnderlyingDataType = DataTypes<Underlying>::Value;
-
   void
   produce(E& val, nio::Source& in, CONFIG__) const {
     skip(in, config);
@@ -522,12 +511,9 @@ struct FormattedProducerImpl<DataType::Enum, E> {
         val = *result;
         return;
       }
-      throw InputFailure(pos, fmt::format("Invalid value for enumeration `{}`", typeid(E)));
-    } else {
-      Underlying underlying;
-      FormattedProducerImpl<UnderlyingDataType, Underlying>().produce(underlying, in, config);
-      val = static_cast<E>(underlying);
+      throw InputFailure(pos, fmt::format("Invalid value for enum `{}`", typeid(E)));
     }
+    throw InputFailure(pos, fmt::format("Cannot scan enum of type `{}`", typeid(E)));
   }
 };
 

@@ -33,6 +33,19 @@ namespace rocket::unicode {
 struct CodePoint {
   using Type = char32; ///< The representation type of the code point.
 
+  /**
+   * Checks if a `char32_t` value is a valid code-point value.
+   *
+   * A code point is valid if it is less than or equal to U+10FFFF and not a surrogate in the range
+   * U+D800–U+DFFF.
+   *
+   * @return whether @p val is a valid code-point value
+   */
+  [[nodiscard]] static constexpr bool
+  valid(char32 val) {
+    return val <= 0x10FFFFU && (val < 0xD800U || val > 0xDFFFU);
+  }
+
   /// @ctor_default
   constexpr CodePoint() : val_(0) {}
 
@@ -40,19 +53,25 @@ struct CodePoint {
    * @ctor
    *
    * @param val a `char` value. This must be an ASCII character in the range @f$[0,127]@f$
+   * @throws #rocket::InvalidArgument if @p val is not an ASCII character in the range @f$[0,127]@f$
    */
-  constexpr CodePoint(char val) : val_(val) { // NOLINT
-    ROCKET_CHECK(val, ascii(), "ASCII character expected");
+  constexpr CodePoint(char val) : // NOLINT
+    val_(val) {
+    ROCKET_CHECK(val, ascii(), "Invalid ASCII value 0x{:X}", val);
   }
 
   /**
    * @ctor
    *
-   * This constructor does not check that @p val is a valid code point.
+   * @param val a `char32` value. This must be a valid code-point value
+   * @throws #rocket::InvalidArgument if @p val is not a valid code-point value
    *
-   * @param val a `char32` value
+   * @see #rocket::unicode::CodePoint::valid
    */
-  constexpr CodePoint(char32 val) : val_(val) {} // NOLINT
+  constexpr CodePoint(char32 val) : // NOLINT
+    val_(val) {
+    ROCKET_CHECK(val, valid(val), "Invalid code-point value 0x{:X}", static_cast<u32>(val));
+  }
 
   /// @member_op_cast{#char32}
   constexpr operator char32() const { return val_; } // NOLINT
@@ -108,19 +127,6 @@ struct CodePoint {
    * @return a code point in upper case
    */
   [[nodiscard]] CodePoint upper() const;
-
-  /**
-   * Checks if the code point is valid.
-   *
-   * A code point is valid if it is less than or equal to U+10FFFF and not a surrogate in the range
-   * U+D800–U+DFFF.
-   *
-   * @return whether the code point is valid
-   */
-  [[nodiscard]] constexpr bool
-  valid() const {
-    return val_ <= 0x10FFFFU && (val_ < 0xD800U || val_ > 0xDFFFU);
-  }
 
   /**
    * Calculates the display width for a code point.
@@ -281,14 +287,10 @@ struct fmt::formatter<rocket::unicode::CodePoint, C> {
   constexpr FormatContext::iterator
   format(const rocket::unicode::CodePoint& val, FormatContext& ctx) const {
     // This is simple enough that we don't need a #FormattedCodec for it
-    if (val.valid()) {
-      if constexpr (std::is_same_v<C, char>) {
-        return underlying_.format(fmt::format("U+{:0>4X}", static_cast<u32>(val)), ctx);
-      } else {
-        return underlying_.format(fmt::format(U"U+{:0>4X}", static_cast<u32>(val)), ctx);
-      }
+    if constexpr (std::is_same_v<C, char>) {
+      return underlying_.format(fmt::format("U+{:0>4X}", static_cast<u32>(val)), ctx);
     } else {
-      return underlying_.format(INVALID, ctx);
+      return underlying_.format(fmt::format(U"U+{:0>4X}", static_cast<u32>(val)), ctx);
     }
   }
 
@@ -305,9 +307,6 @@ struct fmt::formatter<rocket::unicode::CodePoint, C> {
   /// @endcond
 
 private:
-
-  static constexpr std::basic_string_view<C> INVALID =
-    rocket::LiteralString<C, '<', 'i', 'n', 'v', 'a', 'l', 'i', 'd', '>'> {};
 
   fmt::formatter<basic_string_view<C>, C> underlying_;
 };

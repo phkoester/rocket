@@ -49,11 +49,13 @@ TEST(enum, MyEnumFormat) {
   EXPECT_EQ(fmt::format("{}", pörk), "pörk");
   EXPECT_EQ(fmt::format("{}", pörker), "pörker");
   EXPECT_EQ(fmt::format("{}", pörkerer), "pörkerer");
-  EXPECT_EQ(fmt::format("{}", static_cast<MyEnum>(10)), "<invalid>"); // NOLINT
   EXPECT_EQ(fmt::format("{: >10}", fröber), "    fröber"); // Tests UTF-8 alignment; 4 spaces expected
 
+  EXPECT_THAT(
+    [] { static_cast<void>(fmt::format("{}", static_cast<MyEnum>(10))); },
+    ThrowsMessage<InvalidState>(HasSubstr("Invalid `MyEnum` value 10")));
+
   EXPECT_EQ(fmt::format(U"{}", fröb), U"fröb");
-  EXPECT_EQ(fmt::format(U"{}", static_cast<MyEnum>(10)), U"<invalid>"); // NOLINT
 }
 
 TEST(enum, MyEnumScan) {

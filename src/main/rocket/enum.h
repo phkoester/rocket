@@ -87,7 +87,7 @@
   rocket::Enum<ns::type>::toString(ns::type val) { \
     auto it = ns::get##name##Map__().left.find(val); \
     if (it == ns::get##name##Map__().left.end()) { \
-      ROCKET_FAIL("Invalid `{}` value: {}", typeid(ns::type), ::std::to_underlying(val)); \
+      ROCKET_FAIL("Invalid `{}` value {}", typeid(ns::type), ::std::to_underlying(val)); \
     } \
     return it->second; \
   } \
@@ -160,7 +160,7 @@ struct Enum : std::false_type {
    *
    * @param val the enum value
    * @return a string
-   * @throw #std::exception if the operation fails
+   * @throw #rocket::InvalidState if the operation fails
    */
   static std::string_view toString(E val);
 
@@ -171,7 +171,7 @@ struct Enum : std::false_type {
    * @param strict whether the string must strictly match in its entirety. If this value is `true`, the
    *   string can be scanned in a more efficient way
    * @return a pair of the size of the scanned portion of the string and the enum value
-   * @throw #std::exception if the operation fails
+   * @throw #rocket::InvalidState if the operation fails
    */
   static std::pair<u64, E> toType(std::string_view str, bool strict);
 };
@@ -192,12 +192,8 @@ struct fmt::formatter<E, C> {
   template<typename FormatContext>
   FormatContext::iterator
   format(E val, FormatContext& ctx) const {
-    try {
-      auto str = rocket::Enum<E>::toString(val);
-      return underlying_.format(rocket::unicode::ConvertTo<C>::apply(str), ctx);
-    } catch (const std::exception&) {
-      return underlying_.format(INVALID, ctx);
-    }
+    auto str = rocket::Enum<E>::toString(val); // This may throw, which is okay
+    return underlying_.format(rocket::unicode::ConvertTo<C>::apply(str), ctx);
   }
 
   constexpr const C*
@@ -213,9 +209,6 @@ struct fmt::formatter<E, C> {
   /// @endcond
 
 private:
-
-  static constexpr std::basic_string_view<C> INVALID =
-    rocket::LiteralString<C, '<', 'i', 'n', 'v', 'a', 'l', 'i', 'd', '>'> {};
 
   fmt::formatter<basic_string_view<C>, C> underlying_;
 };
