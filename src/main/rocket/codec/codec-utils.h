@@ -106,10 +106,12 @@ void expectComma(nio::Source& in);
 /**
  * If the next character in the source is `'.'`, reads a subsecond string and returns it as nanoseconds.
  *
+ * If the next character is not `'.'`, returns zero nanoseconds and leaves the source unchanged.
+ *
  * @param in the source to read from
  * @return the read subseconds as nanoseconds
  */
-std::chrono::nanoseconds readSubseconds(nio::Source& in);
+[[nodiscard]] std::chrono::nanoseconds readSubseconds(nio::Source& in);
 
 /**
  * Reads until an expected character is found, advances the source only on success.
@@ -122,7 +124,7 @@ std::chrono::nanoseconds readSubseconds(nio::Source& in);
  * @param c the character to read until
  * @return the read string, not including @p c, or null if no string was read
  */
-[[nodiscard]] std::optional<std::string> readUntil(nio::Source& in, char c);
+[[nodiscard]] std::optional<std::string> readUntilChar(nio::Source& in, char c);
 
 /**
  * Reads until an expected character not preceded by an escaping backslash is found, advances the source only
@@ -136,7 +138,7 @@ std::chrono::nanoseconds readSubseconds(nio::Source& in);
  * @param c the character to read until
  * @return the read string, not including @p c, or null if no string was read
  */
-[[nodiscard]] std::optional<std::string> readUntilUnescaped(nio::Source& in, char c);
+[[nodiscard]] std::optional<std::string> readUntilUnescapedChar(nio::Source& in, char c);
 
 /**
  * Reads characters from a source while @p predeciate yields `true`, advances the source only as long as the
@@ -279,7 +281,7 @@ void skip(nio::Source& in, bool cComments, bool shellComments);
  * @param s the expected string
  * @return whether the expected string was found
  */
-bool skipUntil(nio::Source& in, std::string_view s);
+bool skipUntilString(nio::Source& in, std::string_view s);
 
 } // namespace rocket::codec
 

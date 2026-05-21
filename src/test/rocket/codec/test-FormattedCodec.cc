@@ -417,6 +417,37 @@ TEST(FormattedCodec, FormattedProducerHourMinuteSecond) {
     throwsInputFailure(9, HasSubstr("Expected subseconds")));
 }
 
+TEST(FormattedCodec, FormattedProducerTimePoint) {
+  using namespace std::chrono;
+
+  using TimePoint = time_point<system_clock, nanoseconds>;
+
+  // Test equality on roundtrip
+  const TimePoint val1 = rocket::chrono::now<system_clock>();
+  string encoded = encode(val1);
+  nio::out.println("VAL1: {}", encoded);
+  TimePoint val2 = decode<TimePoint>(encoded);
+  nio::out.println("VAL2: {}", encode(val2));
+  EXPECT_EQ(val2, val1);
+  EXPECT_EQ(val2.time_since_epoch().count(), val1.time_since_epoch().count());
+}
+
+TEST(FormattedCodec, FormattedProducerZonedTime) {
+  using namespace std::chrono;
+
+  using ZonedTime = zoned_time<nanoseconds>;
+
+  // Test equality on roundtrip
+  const auto& tz = *current_zone();
+  const auto now = rocket::chrono::now<system_clock>();
+  const ZonedTime val1 = zoned_time(&tz, now);
+  string encoded = encode(val1);
+  nio::out.println("VAL1: {}", encoded);
+  ZonedTime val2 = decode<ZonedTime>(encoded);
+  nio::out.println("VAL2: {}", encode(val2));
+  EXPECT_EQ(val2, val1);
+}
+
 TEST(FormattedCodec, FormattedProducerInterval) {
   using namespace rocket::math;
   EXPECT_EQ(decode<ClosedInterval<f64>>("[-4.2,4.2]"), ClosedInterval<f64>(-4.2_f64, 4.2_f64));

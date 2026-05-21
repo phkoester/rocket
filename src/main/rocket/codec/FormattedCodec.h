@@ -11,11 +11,12 @@
 #include "rocket/io/io.h"
 #include "rocket/nio/nio.h"
 #include "rocket/str/escape/escape.h"
+#include "rocket/system/system.h"
 #include "rocket/unicode/ConvertTo.h"
 
-#include <boost/safe_numerics/safe_integer.hpp>
-
 #include <fmt/std.h>
+
+#include <scn/chrono.h>
 
 namespace rocket::codec {
 
@@ -482,8 +483,6 @@ template<typename C>
 struct FormattedProducerImpl<DataType::Char, C> {
   void
   produce(C& val, nio::Source& in, CONFIG__) const {
-    using boost::safe_numerics::safe;
-
     skip(in, config);
     const auto pos = in.tell();
 
@@ -491,7 +490,7 @@ struct FormattedProducerImpl<DataType::Char, C> {
       throw InputFailure(pos, "Expected a character");
     }
 
-    auto input = readUntilUnescaped(in, '\'');
+    auto input = readUntilUnescapedChar(in, '\'');
     if (not input) {
       throw InputFailure(pos, "Unterminated character literal");
     }
@@ -592,8 +591,6 @@ template<typename T>
 struct FormattedProducerImpl<DataType::String, T> {
   void
   produce(T& val, nio::Source& in, CONFIG__) const {
-    using boost::safe_numerics::safe;
-
     skip(in, config);
     const auto pos = in.tell();
 
@@ -601,7 +598,7 @@ struct FormattedProducerImpl<DataType::String, T> {
       throw InputFailure(pos, "Expected a string");
     }
 
-    auto input = readUntilUnescaped(in, '"');
+    auto input = readUntilUnescapedChar(in, '"');
     if (not input) {
       throw InputFailure(pos, "Unterminated string literal");
     }
@@ -936,8 +933,6 @@ struct FormattedProducerImpl<DataType::YearMonthDay, T> {
   produce(T& val, nio::Source& in, CONFIG__) const {
     using namespace std::chrono;
 
-    using boost::safe_numerics::safe;
-
     skip(in, config);
     const auto pos = in.tell();
 
@@ -960,8 +955,6 @@ struct FormattedProducerImpl<DataType::HourMinuteSecond, T> {
   void
   produce(T& val, nio::Source& in, CONFIG__) const {
     using namespace std::chrono;
-
-    using boost::safe_numerics::safe;
 
     skip(in, config);
     const auto pos = in.tell();
@@ -993,6 +986,147 @@ struct FormattedProducerImpl<DataType::HourMinuteSecond, T> {
       duration = -duration;
     }
     val = T(duration);
+  }
+};
+
+template<typename T>
+struct FormattedProducerImpl<DataType::TimePoint, T> {
+  using Clock = T::clock;
+  static_assert(std::is_same_v<Clock, std::chrono::system_clock>, "Clock must be `system_clock`");
+  using Duration = T::duration;
+
+  void
+  produce(T& val, nio::Source& in, CONFIG__) const {
+    using namespace std::chrono;
+
+    skip(in, config);
+    const auto pos = in.tell();
+
+    // The environment variable `TZ` interferes somehow ...
+
+    const auto& tz = *current_zone();
+    const auto TZ = system::env::get<std::string>("TZ");
+    if (TZ) {
+      ROCKET_EXPECT(*TZ == tz.name(), "If defined, the environment variable `TZ` must match the current time zone, which is {}", tz.name());
+    }
+
+    // Scan the time point, using scnlib
+
+    auto& is = in.istream();
+    const auto result = scn::scan<T>(is, "{:%FT%T}");
+    if (not result) {
+      throw InputFailure(pos, "Expected a time point");
+    }
+    in.seek(io::tellg(is), nio::SeekMode::beg);
+    val = result->value();
+
+    // Read subseconds
+
+    nanoseconds subseconds = readSubseconds(in);
+    if (subseconds.count() > 0) {
+      val += duration_cast<Duration>(subseconds);
+    }
+
+    // Read 'Z'
+
+    expectChar(in, 'Z');
+
+    // Work around a bug in scnlib where the time point is not parsed as UTC but dependent from the current
+    // time zone
+
+    const auto info = tz.get_info(val);
+    val += info.offset;
+  }
+};
+
+template<typename T>
+struct FormattedProducerImpl<DataType::ZonedTime, T> {
+  using Duration = T::duration;
+
+  void
+  produce(T& val, nio::Source& in, CONFIG__) const {
+    using namespace std::chrono;
+
+    skip(in, config);
+    const auto pos = in.tell();
+
+    // The environment variable `TZ` interferes somehow ...
+
+    const auto& current = *current_zone();
+    const auto TZ = system::env::get<std::string>("TZ");
+    if (TZ) {
+      ROCKET_EXPECT(*TZ == current.name(), "If defined, the environment variable `TZ` must match the current time zone, which is {}", current.name());
+    }
+
+    // Scan the time point, using scnlib
+
+    sys_time<Duration> tp;
+    {
+      auto& is = in.istream();
+      const auto result = scn::scan<sys_time<Duration>>(is, "{:%FT%T}");
+      if (not result) {
+        throw InputFailure(pos, "Expected a time point");
+      }
+      in.seek(io::tellg(is), nio::SeekMode::beg);
+      tp = result->value();
+    }
+
+    // Read subseconds
+
+    nanoseconds subseconds = readSubseconds(in);
+    if (subseconds.count() > 0) {
+      tp += duration_cast<Duration>(subseconds);
+    }
+
+    // Read UTC offset
+
+    const auto offsetPos = in.tell();
+
+    auto sign = readChoice(in, { "+", "-" }, false);
+    if (not sign) {
+      throw InputFailure(offsetPos, "Expected UTC offset");
+    }
+    seconds offset;
+    {
+      auto& is = in.istream();
+      const auto result = scn::scan<std_unsigned, std_unsigned>(is, "{}:{}");
+      if (not result) {
+        throw InputFailure(offsetPos, "Expected UTC offset");
+      }
+      in.seek(io::tellg(is), nio::SeekMode::beg);
+      const auto& [h, m] = result->values();
+      offset = hours(h) + minutes(m);
+      if (*sign == "-") {
+        offset = -offset;
+      }
+    }
+
+    // Apply UTC offset; convert time point to UTC
+
+    tp -= offset;
+
+    // Work around a bug in scnlib where the time point is not parsed as UTC but dependent from the current
+    // time zone
+
+    const auto info = current.get_info(tp);
+    tp += info.offset;
+
+    // Read time zone
+
+    expectChar(in, ' ');
+    const auto tzPos = in.tell();
+    expectChar(in, '(');
+
+    auto name = readUntilChar(in, ')');
+    if (not name) {
+      throw InputFailure(tzPos, "Unmatched '('");
+    }
+    // This should throw if the time zone is not found
+    const auto& tz = *locate_zone(*name);
+
+    // Finally, construct the #zoned_time
+
+    val = T(&tz, tp);
   }
 };
 
@@ -1090,12 +1224,10 @@ struct FormattedProducerImpl<DataType::MemberRef, T> {
   template<typename C>
   void
   produce(T& val, nio::Source& in, CONFIG__, C& instance) const {
-    using boost::safe_numerics::safe;
-
     skip(in, config);
     const auto pos = in.tell();
 
-    auto name = readUntil(in, '=');
+    auto name = readUntilChar(in, '=');
     if (not name) {
       throw InputFailure(pos, "Expected a member reference");
     }
@@ -1118,12 +1250,10 @@ struct FormattedProducerImpl<DataType::VarRef, T> {
 
   void
   produce(T& val, nio::Source& in, CONFIG__) const {
-    using boost::safe_numerics::safe;
-
     skip(in, config);
     const auto pos = in.tell();
 
-    auto name = readUntil(in, '=');
+    auto name = readUntilChar(in, '=');
     if (not name) {
       throw InputFailure(pos, "Expected a variable reference");
     }

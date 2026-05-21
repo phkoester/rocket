@@ -61,16 +61,12 @@ expectChar(nio::Source& in, char c) {
 
 void
 expectColon(nio::Source& in) {
-  if (not readChar(in, ':')) {
-    throw InputFailure(in.tell(), "Missing colon");
-  }
+  expectChar(in, ':');
 }
 
 void
 expectComma(nio::Source& in) {
-  if (not readChar(in, ',')) {
-    throw InputFailure(in.tell(), "Missing comma");
-  }
+  expectChar(in, ',');
 }
 
 bool
@@ -164,7 +160,7 @@ readChoice(nio::Source& in, const vector<string_view>& values, bool ignoreCase) 
     // Seek position after #ret
     in.seek(safe<i64>(pos + ret->size()), nio::SeekMode::beg);
   } else {
-    // No match found, seek back to the original position
+    // No match found: rewind
     in.seek(safe<i64>(pos), nio::SeekMode::beg);
   }
   return ret;
@@ -178,7 +174,7 @@ readSubseconds(nio::Source& in) {
 
   std::string digits;
   if (readChar(in, '.')) {
-    digits = readWhilePredicate(in, [](char c) { return std::isdigit(c); });
+    digits = readWhilePredicate(in, [](char c) { return isdigit(c); });
     if (digits.empty()) {
       throw InputFailure(in.tell(), "Expected subseconds");
     }
@@ -187,20 +183,23 @@ readSubseconds(nio::Source& in) {
     digits.push_back('0');
   }
   digits = digits.substr(0, 9);
+  // nio::out.println("DIGITS: {}", digits);
 
   // Convert string to nanoseconds
 
   nanoseconds ret; // NOLINT
   {
-    auto result = scn::scan<nanoseconds::rep>(digits, "{:i}");
+    // When we used "{:i}" here, the scanning sometimes led to false values ...
+    const auto result = scn::scan<nanoseconds::rep>(digits, "{}");
     ROCKET_ASSERT(result);
     ret = nanoseconds { result->value() };
   }
+  // nio::out.println("SUBSECONDS: {}", ret.count());
   return ret;
 }
 
 optional<string>
-readUntil(nio::Source& in, char c) {
+readUntilChar(nio::Source& in, char c) {
 #ifndef ROCKET_NIO_NO_CONTIGUOUS_SOURCE
   if (const auto* contiguous = dynamic_cast<nio::ContiguousSource*>(&in); contiguous != nullptr) {
     // Contiguous source
@@ -238,6 +237,22 @@ readUntil(nio::Source& in, char c) {
 
 string
 readWhilePredicate(nio::Source& in, std::function<bool(char)> predicate) {
+#ifndef ROCKET_NIO_NO_CONTIGUOUS_SOURCE
+  if (const auto* contiguous = dynamic_cast<nio::ContiguousSource*>(&in); contiguous != nullptr) {
+    // Contiguous source
+
+    const auto str = contiguous->str();
+    auto it = str.begin(), end = str.end();
+    while (it != end && predicate(*it)) {
+      ++it;
+    }
+    string ret(str.begin(), it);
+    in.seek(ret.size(), nio::SeekMode::cur);
+    return ret;
+  }
+#endif
+
+  // Noncontiguous source
   string ret;
   while (true) {
     char c; // NOLINT
@@ -254,7 +269,7 @@ readWhilePredicate(nio::Source& in, std::function<bool(char)> predicate) {
 }
 
 optional<string>
-readUntilUnescaped(nio::Source& in, char c) {
+readUntilUnescapedChar(nio::Source& in, char c) {
 #ifndef ROCKET_NIO_NO_CONTIGUOUS_SOURCE
   if (const auto* contiguous = dynamic_cast<nio::ContiguousSource*>(&in); contiguous != nullptr) {
     // Contiguous source
@@ -337,7 +352,7 @@ skip(nio::Source& in, bool cComments, bool shellComments) { // NOLINT(*-complexi
 
     // Skip shell-style "#" comments until EOL
     if (shellComments && first == '#') {
-      if (not skipUntil(in, "\n")) {
+      if (not skipUntilString(in, "\n")) {
         break;
       }
       continue;
@@ -345,7 +360,7 @@ skip(nio::Source& in, bool cComments, bool shellComments) { // NOLINT(*-complexi
 
     // Skip C-style "//" comments until EOL
     if (cComments && first == '/' && second == '/') {
-      if (not skipUntil(in, "\n")) {
+      if (not skipUntilString(in, "\n")) {
         break;
       }
       continue;
@@ -353,7 +368,7 @@ skip(nio::Source& in, bool cComments, bool shellComments) { // NOLINT(*-complexi
 
     // Skip C-style "/*" comments until "*/"
     if (cComments && first == '/' && second == '*') {
-      if (not skipUntil(in, "*/")) {
+      if (not skipUntilString(in, "*/")) {
         in.seek(safe<i64>(pos), nio::SeekMode::beg);
         throw InputFailure(pos, "Unterminated C-style comment");
       }
@@ -367,7 +382,7 @@ skip(nio::Source& in, bool cComments, bool shellComments) { // NOLINT(*-complexi
 }
 
 bool
-skipUntil(nio::Source& in, std::string_view s) {
+skipUntilString(nio::Source& in, std::string_view s) {
   ROCKET_CHECK(s, not s.empty(), "May not be empty");
 
 #ifndef ROCKET_NIO_NO_CONTIGUOUS_SOURCE
