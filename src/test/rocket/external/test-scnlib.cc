@@ -200,10 +200,10 @@ TEST(scnlib, scanChronoTimePoint) {
   using namespace std::chrono;
 
   // The environment variable `TZ` interferes somehow ...
-  const auto& tz = *current_zone();
+  const auto* current = current_zone();
   const auto TZ = system::env::get<string>("TZ");
   if (TZ) {
-    ASSERT_EQ(*TZ, tz.name());
+    ASSERT_EQ(*TZ, current->name());
   }
 
   using TimePoint = time_point<system_clock, nanoseconds>;
@@ -218,7 +218,7 @@ TEST(scnlib, scanChronoTimePoint) {
 
   // The time zone of the scanned time point is unclear. The following adjustment seems to convert the time
   // point to UTC
-  const auto info = tz.get_info(val1);
+  const auto info = current->get_info(val1);
   val2 += info.offset;
   nio::out.println("VAL3: " FORMAT, val2);
 
@@ -228,7 +228,7 @@ TEST(scnlib, scanChronoTimePoint) {
 
   EXPECT_EQ(val2Micros, val1Micros);
 
-  auto now1 = zoned_time(&tz, val1);
+  auto now1 = zoned_time(current, val1);
   nio::out.writeln(std::format("NOW1: {:%F %T %Z}", now1));
 
   const auto* honolulu = locate_zone("Pacific/Honolulu");

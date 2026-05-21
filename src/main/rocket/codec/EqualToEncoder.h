@@ -313,8 +313,8 @@ struct EqualToConsumerImpl<DataType::HourMinuteSecond, T, Eq> {
 template<typename T, typename Eq>
 struct EqualToConsumerImpl<DataType::TimeZone, T, Eq> {
   bool
-  consume(const T& lhs, const T& rhs) {
-    return Eq()(lhs.name(), rhs.name());
+  consume(T lhs, T rhs) {
+    return Eq()(lhs->name(), rhs->name());
   }
 };
 
@@ -334,7 +334,7 @@ struct EqualToConsumerImpl<DataType::TimePoint, T, Eq> {
 
 template<typename T, typename Eq>
 struct EqualToConsumerImpl<DataType::ZonedTime, T, Eq> {
-  using TimeZone = std::chrono::time_zone;
+  using TimeZone = const std::chrono::time_zone*;
   static constexpr auto TimeZoneDataType = DataTypes<TimeZone>::Value;
   static_assert(TimeZoneDataType == DataType::TimeZone);
   using Duration = T::duration;
@@ -344,8 +344,8 @@ struct EqualToConsumerImpl<DataType::ZonedTime, T, Eq> {
 
   bool
   consume(const T& lhs, const T& rhs) {
-    const auto& lhsTz = *lhs.get_time_zone();
-    const auto& rhsTz = *rhs.get_time_zone();
+    const auto* lhsTz = lhs.get_time_zone();
+    const auto* rhsTz = rhs.get_time_zone();
 
     return
       EqualToConsumerImpl<TimeZoneDataType, TimeZone, Eq>().consume(lhsTz, rhsTz) &&

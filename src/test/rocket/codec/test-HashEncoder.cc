@@ -228,10 +228,9 @@ TEST(HashEncoder, HourMinuteSecond) {
 TEST(HashEncoder, TimeZone) {
   using namespace std::chrono;
 
-  const auto* p = current_zone();
-  ASSERT_NE(p, nullptr);
+  const auto* current = current_zone();
   const HashEncoder<> encoder;
-  EXPECT_NE(encoder.encode(*p), 0);
+  EXPECT_NE(encoder.encode(current), 0);
 }
 
 TEST(HashEncoder, TimePoint) {

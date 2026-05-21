@@ -124,9 +124,16 @@ readChoice(nio::Source& in, const vector<string_view>& values, bool ignoreCase) 
   auto candidates(values); // A local copy of the vector
   optional<string_view> ret; // The best candidate so far
 
-  const auto matches = [ignoreCase](char lhs, char rhs) {
+  const auto matchesChar = [ignoreCase](char lhs, char rhs) {
     if (ignoreCase) {
       return tolower(lhs) == tolower(rhs);
+    }
+    return lhs == rhs;
+  };
+
+  const auto matchesString = [ignoreCase](string_view lhs, string_view rhs) {
+    if (ignoreCase) {
+      return ranges::equal(lhs, rhs, [](char lhs, char rhs) { return tolower(lhs) == tolower(rhs); });
     }
     return lhs == rhs;
   };
@@ -145,10 +152,10 @@ readChoice(nio::Source& in, const vector<string_view>& values, bool ignoreCase) 
 
     for (auto it = candidates.begin(); it != candidates.end(); /* Empty */) {
       const auto candidate = *it;
-      if (candidate.size() <= index || not matches(candidate[index], c)) {
+      if (candidate.size() <= index || not matchesChar(candidate[index], c)) {
         it = candidates.erase(it);
       } else {
-        if (seen == candidate && (not ret || ret->size() < candidate.size())) {
+        if (matchesString(seen, candidate) && (not ret || ret->size() < candidate.size())) {
           ret = candidate;
         }
         ++it;

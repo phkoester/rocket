@@ -252,8 +252,8 @@ struct HashConsumerImpl<DataType::HourMinuteSecond, T, Hash> {
 template<typename T, typename Hash>
 struct HashConsumerImpl<DataType::TimeZone, T, Hash> {
   u64
-  consume(const T& val) {
-    std::string_view name = val.name();
+  consume(T val) {
+    std::string_view name = val->name();
     return Hash()(name);
   }
 };
@@ -273,7 +273,7 @@ struct HashConsumerImpl<DataType::TimePoint, T, Hash> {
 
 template<typename T, typename Hash>
 struct HashConsumerImpl<DataType::ZonedTime, T, Hash> {
-  using TimeZone = std::chrono::time_zone;
+  using TimeZone = const std::chrono::time_zone*;
   static constexpr auto TimeZoneDataType = DataTypes<TimeZone>::Value;
   static_assert(TimeZoneDataType == DataType::TimeZone);
   using Duration = T::duration;
@@ -283,7 +283,7 @@ struct HashConsumerImpl<DataType::ZonedTime, T, Hash> {
 
   u64
   consume(const T& val) {
-    const auto& tz = *val.get_time_zone();
+    const auto* tz = val.get_time_zone();
     u64 ret = HashConsumerImpl<TimeZoneDataType, TimeZone, Hash>().consume(tz);
     combine<false>(ret, HashConsumerImpl<SysTimeDataType, SysTime, Hash>().consume(val));
     return ret;

@@ -212,18 +212,18 @@ TEST(FormattedCodec, FormattedConsumerZonedTime) {
 
   {
     // Current time zone
-    const auto& tz = *current_zone();
+    const auto* current = current_zone();
     const auto now = rocket::chrono::now<system_clock>();
-    EXPECT_THAT(encode(zoned_time(&tz, time_point_cast<seconds>(now))), matchesRegex(regexS));
-    EXPECT_THAT(encode(zoned_time(&tz, now)), matchesRegex(regexNs));
+    EXPECT_THAT(encode(zoned_time(current, time_point_cast<seconds>(now))), matchesRegex(regexS));
+    EXPECT_THAT(encode(zoned_time(current, now)), matchesRegex(regexNs));
   }
 
   {
     // Time zone UTC
-    const auto& tz = *locate_zone("UTC");
+    const auto* utc = locate_zone("UTC");
     const auto now = rocket::chrono::now<system_clock>();
-    EXPECT_THAT(encode(zoned_time(&tz, time_point_cast<seconds>(now))), matchesRegex(regexS));
-    EXPECT_THAT(encode(zoned_time(&tz, now)), matchesRegex(regexNs));
+    EXPECT_THAT(encode(zoned_time(utc, time_point_cast<seconds>(now))), matchesRegex(regexS));
+    EXPECT_THAT(encode(zoned_time(utc, now)), matchesRegex(regexNs));
   }
 }
 
@@ -438,9 +438,9 @@ TEST(FormattedCodec, FormattedProducerZonedTime) {
   using ZonedTime = zoned_time<nanoseconds>;
 
   // Test equality on roundtrip
-  const auto& tz = *current_zone();
+  const auto* current = current_zone();
   const auto now = rocket::chrono::now<system_clock>();
-  const ZonedTime val1 = zoned_time(&tz, now);
+  const ZonedTime val1 = zoned_time(current, now);
   string encoded = encode(val1);
   nio::out.println("VAL1: {}", encoded);
   ZonedTime val2 = decode<ZonedTime>(encoded);

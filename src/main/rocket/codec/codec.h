@@ -273,7 +273,7 @@ struct DataTypes<std::chrono::year_month_day> {
 
 /// @spec{#rocket::codec::DataTypes, std::chrono::time_zone}
 template<>
-struct DataTypes<std::chrono::time_zone> {
+struct DataTypes<const std::chrono::time_zone*> {
   static constexpr auto Value = DataType::TimeZone; ///< The data type.
 };
 

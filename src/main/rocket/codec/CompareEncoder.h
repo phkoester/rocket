@@ -315,8 +315,8 @@ struct CompareConsumerImpl<DataType::HourMinuteSecond, T, Cmp> {
 template<typename T, typename Cmp>
 struct CompareConsumerImpl<DataType::TimeZone, T, Cmp> {
   bool
-  consume(const T& lhs, const T& rhs) {
-    return Cmp()(lhs.name(), rhs.name());
+  consume(T lhs, T rhs) {
+    return Cmp()(lhs->name(), rhs->name());
   }
 };
 
@@ -336,20 +336,19 @@ struct CompareConsumerImpl<DataType::TimePoint, T, Cmp> {
 
 template<typename T, typename Cmp>
 struct CompareConsumerImpl<DataType::ZonedTime, T, Cmp> {
-  using TimeZone = std::chrono::time_zone;
   using Duration = T::duration;
   using SysTime = std::chrono::sys_time<Duration>;
-  using Pair = std::pair<TimeZone, SysTime>;
+  using Pair = std::pair<std::string_view, SysTime>;
   static constexpr auto PairDataType = DataTypes<Pair>::Value;
   static_assert(PairDataType == DataType::Tuple);
 
   bool
   consume(const T& lhs, const T& rhs) {
-    const auto& lhsTz = *lhs.get_time_zone();
-    const auto& rhsTz = *rhs.get_time_zone();
+    const auto* lhsTz = lhs.get_time_zone();
+    const auto* rhsTz = rhs.get_time_zone();
 
-    Pair lhsPair { lhsTz, lhs };
-    Pair rhsPair { rhsTz, rhs };
+    Pair lhsPair { lhsTz->name(), lhs };
+    Pair rhsPair { rhsTz->name(), rhs };
     return CompareConsumerImpl<PairDataType, Pair, Cmp>().consume(lhsPair, rhsPair);
   }
 };

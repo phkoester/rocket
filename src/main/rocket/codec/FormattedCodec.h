@@ -306,8 +306,8 @@ struct FormattedConsumerImpl<DataType::HourMinuteSecond, T> {
 template<typename T>
 struct FormattedConsumerImpl<DataType::TimeZone, T> {
   void
-  consume(const T& val, nio::Sink& out, CONFIG__) const {
-    out.write(val.name());
+  consume(T val, nio::Sink& out, CONFIG__) const {
+    out.print("({})", val->name());
   }
 };
 
@@ -324,16 +324,23 @@ struct FormattedConsumerImpl<DataType::TimePoint, T> {
 
 template<typename T>
 struct FormattedConsumerImpl<DataType::ZonedTime, T> {
+  using TimeZone = const std::chrono::time_zone*;
+  static constexpr auto TimeZoneDataType = DataTypes<TimeZone>::Value;
+  static_assert(TimeZoneDataType == DataType::TimeZone);
+
   void
   consume(const T& val, nio::Sink& out, CONFIG__) const {
-    const auto& tz = *val.get_time_zone();
+    const auto* tz = val.get_time_zone();
 
     const auto info = val.get_info();
     if (info.offset == std::chrono::seconds(0)) {
-      out.write(std::format("{:%FT%TZ} ({})", val, tz.name())); // Zulu time
+      out.write(std::format("{:%FT%TZ}", val)); // Zulu time
     } else {
-      out.write(std::format("{:%FT%T%Ez} ({})", val, tz.name())); // Time with UTC offset
+      out.write(std::format("{:%FT%T%Ez}", val)); // Time with UTC offset
     }
+
+    out.write(' ');
+    FormattedConsumerImpl<TimeZoneDataType, TimeZone>().consume(tz, out, config);
   }
 };
 
@@ -990,6 +997,28 @@ struct FormattedProducerImpl<DataType::HourMinuteSecond, T> {
 };
 
 template<typename T>
+struct FormattedProducerImpl<DataType::TimeZone, T> {
+  void
+  produce(T& val, nio::Source& in, CONFIG__) const {
+    using namespace std::chrono;
+
+    skip(in, config);
+    const auto pos = in.tell();
+
+    if (not readChar(in, '(')) {
+      throw InputFailure(pos, "Expected a time zone");
+    }
+
+    auto name = readUntilChar(in, ')');
+    if (not name) {
+      throw InputFailure(pos, "Unmatched opening parenthesis");
+    }
+    // This should throw if the time zone is not found
+    val = locate_zone(*name);
+  }
+};
+
+template<typename T>
 struct FormattedProducerImpl<DataType::TimePoint, T> {
   using Clock = T::clock;
   static_assert(std::is_same_v<Clock, std::chrono::system_clock>, "Clock must be `system_clock`");
@@ -1004,10 +1033,10 @@ struct FormattedProducerImpl<DataType::TimePoint, T> {
 
     // The environment variable `TZ` interferes somehow ...
 
-    const auto& tz = *current_zone();
+    const auto* current = current_zone();
     const auto TZ = system::env::get<std::string>("TZ");
     if (TZ) {
-      ROCKET_EXPECT(*TZ == tz.name(), "If defined, the environment variable `TZ` must match the current time zone, which is {}", tz.name());
+      ROCKET_EXPECT(*TZ == current->name(), "If defined, the environment variable `TZ` must match the current time zone, which is {}", current->name());
     }
 
     // Scan the time point, using scnlib
@@ -1034,7 +1063,7 @@ struct FormattedProducerImpl<DataType::TimePoint, T> {
     // Work around a bug in scnlib where the time point is not parsed as UTC but dependent from the current
     // time zone
 
-    const auto info = tz.get_info(val);
+    const auto info = current->get_info(val);
     val += info.offset;
   }
 };
@@ -1042,6 +1071,9 @@ struct FormattedProducerImpl<DataType::TimePoint, T> {
 template<typename T>
 struct FormattedProducerImpl<DataType::ZonedTime, T> {
   using Duration = T::duration;
+  using TimeZone = const std::chrono::time_zone*;
+  static constexpr auto TimeZoneDataType = DataTypes<TimeZone>::Value;
+  static_assert(TimeZoneDataType == DataType::TimeZone);
 
   void
   produce(T& val, nio::Source& in, CONFIG__) const {
@@ -1052,10 +1084,10 @@ struct FormattedProducerImpl<DataType::ZonedTime, T> {
 
     // The environment variable `TZ` interferes somehow ...
 
-    const auto& current = *current_zone();
+    const auto* current = current_zone();
     const auto TZ = system::env::get<std::string>("TZ");
     if (TZ) {
-      ROCKET_EXPECT(*TZ == current.name(), "If defined, the environment variable `TZ` must match the current time zone, which is {}", current.name());
+      ROCKET_EXPECT(*TZ == current->name(), "If defined, the environment variable `TZ` must match the current time zone, which is {}", current->name());
     }
 
     // Scan the time point, using scnlib
@@ -1108,25 +1140,18 @@ struct FormattedProducerImpl<DataType::ZonedTime, T> {
     // Work around a bug in scnlib where the time point is not parsed as UTC but dependent from the current
     // time zone
 
-    const auto info = current.get_info(tp);
+    const auto info = current->get_info(tp);
     tp += info.offset;
 
     // Read time zone
 
     expectChar(in, ' ');
-    const auto tzPos = in.tell();
-    expectChar(in, '(');
-
-    auto name = readUntilChar(in, ')');
-    if (not name) {
-      throw InputFailure(tzPos, "Unmatched '('");
-    }
-    // This should throw if the time zone is not found
-    const auto& tz = *locate_zone(*name);
+    TimeZone tz;
+    FormattedProducerImpl<TimeZoneDataType, TimeZone>().produce(tz, in, config);
 
     // Finally, construct the #zoned_time
 
-    val = T(&tz, tp);
+    val = T(tz, tp);
   }
 };
 
