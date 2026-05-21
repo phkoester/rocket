@@ -166,10 +166,18 @@ TEST(FormattedCodec, FormattedConsumerMap) {
 }
 
 TEST(FormattedCodec, FormattedConsumerDuration) {
+  using namespace std::chrono;
+
   EXPECT_EQ(encode(1ns), "1ns");
-  EXPECT_EQ(encode(1us), "1µs");
-  EXPECT_EQ(encode(2s), "2s");
-  EXPECT_EQ(encode(3min), "3min");
+  EXPECT_EQ(encode(2us), "2µs");
+  EXPECT_EQ(encode(3ms), "3ms");
+  EXPECT_EQ(encode(4s), "4s");
+  EXPECT_EQ(encode(5min), "5min");
+  EXPECT_EQ(encode(6h), "6h");
+  EXPECT_EQ(encode(days(7)), "7d");
+  EXPECT_EQ(encode(weeks(8)), "8w");
+  EXPECT_EQ(encode(months(9)), "9m");
+  EXPECT_EQ(encode(years(10)), "10y");
 }
 
 TEST(FormattedCodec, FormattedConsumerYearMonthDay) {
@@ -182,7 +190,7 @@ TEST(FormattedCodec, FormattedConsumerHourMinuteSecond) {
   using namespace std::chrono;
 
   EXPECT_EQ(encode(hh_mm_ss { 1h + 2min + 3s }), "01:02:03");
-  EXPECT_EQ(encode(hh_mm_ss { 111h + 2min + 3s + 123456us }), "111:02:03.123456");
+  EXPECT_EQ(encode(hh_mm_ss { -(111h + 2min + 3s + 123456us) }), "-111:02:03.123456");
 }
 
 TEST(FormattedCodec, FormattedConsumerTimePoint) {
@@ -349,6 +357,64 @@ TEST(FormattedCodec, FormattedProducerBimapUnordered) {
   EXPECT_EQ(
     (decode<type>("  { \"alpha\"\t: 1, \"beta\"  :/* comment */ 2, \"gamma\": 3  ,  }   ")),
     (makeUnorderedBimap<string, i32>({ { "alpha", 1 }, { "beta", 2 }, { "gamma", 3 } })));
+}
+
+TEST(FormattedCodec, FormattedProducerDuration) {
+  using namespace std::chrono;
+
+  EXPECT_EQ(decode<milliseconds>("1s"), 1000ms);
+  EXPECT_EQ(decode<milliseconds>("1s"), 1s);
+  EXPECT_EQ(decode<milliseconds>("-5s"), -5s);
+
+  EXPECT_EQ(decode<seconds>("1000ms"), 1s);
+
+  EXPECT_THAT(
+    [] { decode<seconds>("x"); },
+    throwsInputFailure(0, HasSubstr("Expected a duration")));
+  EXPECT_THAT(
+    [] { decode<seconds>("10x"); },
+    throwsInputFailure(2, HasSubstr("Expected a time unit")));
+}
+
+TEST(FormattedCodec, FormattedProducerYearMonthDay) {
+  using namespace std::chrono;
+
+  EXPECT_EQ(decode<year_month_day>("1970-01-02"), (year_month_day { 1970y, January, 2d }));
+  EXPECT_EQ(decode<year_month_day>("-100-01-02"), (year_month_day { -100y, January, 2d }));
+
+  EXPECT_THAT(
+    [] { decode<year_month_day>("x"); },
+    throwsInputFailure(0, HasSubstr("Expected a year, month, and day")));
+}
+
+TEST(FormattedCodec, FormattedProducerHourMinuteSecond) {
+  using namespace std::chrono;
+
+  EXPECT_EQ(
+    decode<hh_mm_ss<seconds>>("01:02:03").to_duration(),
+    (hh_mm_ss { 1h + 2min + 3s }).to_duration());
+  EXPECT_EQ(
+    decode<hh_mm_ss<seconds>>("01:02:03.123").to_duration(),
+    (hh_mm_ss { 1h + 2min + 3s }).to_duration());
+  EXPECT_EQ(
+    decode<hh_mm_ss<milliseconds>>("01:02:03.123456").to_duration(),
+    (hh_mm_ss { 1h + 2min + 3s + 123ms }).to_duration());
+  EXPECT_EQ(
+    decode<hh_mm_ss<microseconds>>("-111:02:03.123456789").to_duration(),
+    (hh_mm_ss { -(111h + 2min + 3s + 123456us) }).to_duration());
+  EXPECT_EQ(
+    decode<hh_mm_ss<nanoseconds>>("-111:02:03.123456789").to_duration(),
+    (hh_mm_ss { -(111h + 2min + 3s + 123456789ns) }).to_duration());
+
+  EXPECT_THAT(
+    [] { decode<hh_mm_ss<milliseconds>>("x"); },
+    throwsInputFailure(0, HasSubstr("Expected an hour, minute, and second")));
+  EXPECT_THAT(
+    [] { decode<hh_mm_ss<milliseconds>>("01:02:"); },
+    throwsInputFailure(0, HasSubstr("Expected an hour, minute, and second")));
+  EXPECT_THAT(
+    [] { decode<hh_mm_ss<milliseconds>>("01:02:03."); },
+    throwsInputFailure(9, HasSubstr("Expected subseconds")));
 }
 
 TEST(FormattedCodec, FormattedProducerInterval) {

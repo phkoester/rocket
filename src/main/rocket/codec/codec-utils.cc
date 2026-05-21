@@ -53,21 +53,28 @@ nextElem(nio::Sink& out, bool indent, u64 level, u64 index) {
 // Utilities for decoding -----------------------------------------------------------------------------------
 
 void
+expectChar(nio::Source& in, char c) {
+  if (not readChar(in, c)) {
+    throw InputFailure(in.tell(), fmt::format("Expected {}", c));
+  }
+}
+
+void
 expectColon(nio::Source& in) {
-  if (not read(in, ':')) {
+  if (not readChar(in, ':')) {
     throw InputFailure(in.tell(), "Missing colon");
   }
 }
 
 void
 expectComma(nio::Source& in) {
-  if (not read(in, ',')) {
+  if (not readChar(in, ',')) {
     throw InputFailure(in.tell(), "Missing comma");
   }
 }
 
 bool
-read(nio::Source& in, char c) {
+readChar(nio::Source& in, char c) {
   char current; // NOLINT
   if (in.read(current) != 1) {
     return false;
@@ -80,7 +87,7 @@ read(nio::Source& in, char c) {
 }
 
 optional<string_view>
-read(nio::Source& in, const std::set<std::string_view>& values, bool ignoreCase) { // NOLINT(*-complexity)
+readChoice(nio::Source& in, const vector<string_view>& values, bool ignoreCase) { // NOLINT(*-complexity)
 #ifndef ROCKET_NIO_NO_CONTIGUOUS_SOURCE
   if (const auto* contiguous = dynamic_cast<nio::ContiguousSource*>(&in); contiguous != nullptr) {
     // Contiguous source
@@ -118,7 +125,8 @@ read(nio::Source& in, const std::set<std::string_view>& values, bool ignoreCase)
   const auto pos = in.tell();
 
   string seen;
-  auto candidates(values); // A local copy of the set
+  auto candidates(values); // A local copy of the vector
+  optional<string_view> ret; // The best candidate so far
 
   const auto matches = [ignoreCase](char lhs, char rhs) {
     if (ignoreCase) {
@@ -139,21 +147,56 @@ read(nio::Source& in, const std::set<std::string_view>& values, bool ignoreCase)
     const u64 index = seen.size();
     seen.push_back(c);
 
-    for (auto it = candidates.begin(), end = candidates.end(); it != end; /* Empty */) {
+    for (auto it = candidates.begin(); it != candidates.end(); /* Empty */) {
       const auto candidate = *it;
       if (candidate.size() <= index || not matches(candidate[index], c)) {
         it = candidates.erase(it);
       } else {
-        if (candidate.size() == seen.size()) {
-          return candidate;
+        if (seen == candidate && (not ret || ret->size() < candidate.size())) {
+          ret = candidate;
         }
         ++it;
       }
     }
   }
 
-  in.seek(safe<i64>(pos), nio::SeekMode::beg);
-  return {};
+  if (ret) {
+    // Seek position after #ret
+    in.seek(safe<i64>(pos + ret->size()), nio::SeekMode::beg);
+  } else {
+    // No match found, seek back to the original position
+    in.seek(safe<i64>(pos), nio::SeekMode::beg);
+  }
+  return ret;
+}
+
+std::chrono::nanoseconds
+readSubseconds(nio::Source& in) {
+  using namespace std::chrono;
+
+  // Read subseconds as nanoseconds string
+
+  std::string digits;
+  if (readChar(in, '.')) {
+    digits = readWhilePredicate(in, [](char c) { return std::isdigit(c); });
+    if (digits.empty()) {
+      throw InputFailure(in.tell(), "Expected subseconds");
+    }
+  }
+  while (digits.size() < 9) {
+    digits.push_back('0');
+  }
+  digits = digits.substr(0, 9);
+
+  // Convert string to nanoseconds
+
+  nanoseconds ret; // NOLINT
+  {
+    auto result = scn::scan<nanoseconds::rep>(digits, "{:i}");
+    ROCKET_ASSERT(result);
+    ret = nanoseconds { result->value() };
+  }
+  return ret;
 }
 
 optional<string>
@@ -191,6 +234,23 @@ readUntil(nio::Source& in, char c) {
 
   in.seek(safe<i64>(pos), nio::SeekMode::beg);
   return {};
+}
+
+string
+readWhilePredicate(nio::Source& in, std::function<bool(char)> predicate) {
+  string ret;
+  while (true) {
+    char c; // NOLINT
+    if (in.read(c) != 1) {
+      break;
+    }
+    if (not predicate(c)) {
+      in.seek(-1, nio::SeekMode::cur);
+      break;
+    }
+    ret.push_back(c);
+  }
+  return ret;
 }
 
 optional<string>

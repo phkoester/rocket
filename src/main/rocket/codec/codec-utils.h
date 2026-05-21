@@ -9,7 +9,9 @@
 
 #include <scn/istream.h>
 
-#include <set>
+#include <chrono>
+#include <functional>
+#include <vector>
 
 namespace rocket::codec {
 
@@ -49,6 +51,16 @@ void nextElem(nio::Sink& out, bool indent, u64 level, u64 index);
 // Utilities for decoding -----------------------------------------------------------------------------------
 
 /**
+ * Throws if the next character in the source is not the expected character @p c, advances the source only
+ * on success.
+ *
+ * @param in the source to read from
+ * @param c the character to read
+ * @throw #rocket::InputFailure if the next character in the source is not @p c
+ */
+void expectChar(nio::Source& in, char c);
+
+/**
  * Throws if there is no colon, advances the source only on success.
  *
  * @param in the source to read from
@@ -71,10 +83,13 @@ void expectComma(nio::Source& in);
  * @param c the character to read
  * @return whether the character was read
  */
-[[nodiscard]] bool read(nio::Source& in, char c);
+[[nodiscard]] bool readChar(nio::Source& in, char c);
 
 /**
- * Reads any of a set of expected strings, advances the source only on success.
+ * Reads any of a vector of expected strings, advances the source only on success.
+ *
+ * The elements in the vector must be nonempty and unique, their order matters: If two elements start with
+ * the same prefix, the longer element must come first.
  *
  * There is an optimization for contiguous sources.
  *
@@ -83,10 +98,18 @@ void expectComma(nio::Source& in);
  * @param ignoreCase whether to ignore case
  * @return the read string, or null if no string was read
  */
-[[nodiscard]] std::optional<std::string_view> read(
+[[nodiscard]] std::optional<std::string_view> readChoice(
   nio::Source& in,
-  const std::set<std::string_view>& values,
+  const std::vector<std::string_view>& values,
   bool ignoreCase = false);
+
+/**
+ * If the next character in the source is `'.'`, reads a subsecond string and returns it as nanoseconds.
+ *
+ * @param in the source to read from
+ * @return the read subseconds as nanoseconds
+ */
+std::chrono::nanoseconds readSubseconds(nio::Source& in);
 
 /**
  * Reads until an expected character is found, advances the source only on success.
@@ -114,6 +137,16 @@ void expectComma(nio::Source& in);
  * @return the read string, not including @p c, or null if no string was read
  */
 [[nodiscard]] std::optional<std::string> readUntilUnescaped(nio::Source& in, char c);
+
+/**
+ * Reads characters from a source while @p predeciate yields `true`, advances the source only as long as the
+ * predicate holds.
+ *
+ * @param in the source to read from
+ * @param predicate the predicate to call
+ * @return the read string
+ */
+std::string readWhilePredicate(nio::Source& in, std::function<bool(char)> predicate);
 
 /**
  * Scans from a source, using `scnlib`.

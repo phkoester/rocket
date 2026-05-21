@@ -8,6 +8,7 @@
 #include "rocket/std.h"
 #include "rocket/codec/codec.h"
 #include "rocket/codec/codec-utils.h"
+#include "rocket/io/io.h"
 #include "rocket/nio/nio.h"
 #include "rocket/str/escape/escape.h"
 #include "rocket/unicode/ConvertTo.h"
@@ -273,6 +274,12 @@ struct FormattedConsumerImpl<DataType::Duration, T> {
   consume(T val, nio::Sink& out, CONFIG__) const { // Take by value
     if constexpr (std::is_same_v<T, std::chrono::microseconds>) {
       out.print("{}µs", val.count());
+    } else if constexpr (std::is_same_v<T, std::chrono::weeks>) {
+      out.print("{}w", val.count());
+    } else if constexpr (std::is_same_v<T, std::chrono::months>) {
+      out.print("{}m", val.count());
+    } else if constexpr (std::is_same_v<T, std::chrono::years>) {
+      out.print("{}y", val.count());
     } else {
       out.write(std::format("{}", val));
     }
@@ -459,11 +466,11 @@ struct FormattedProducerImpl<DataType::Bool, bool> {
     skip(in, config);
     const auto pos = in.tell();
 
-    if (read(in, { "0", "false" }, true)) {
+    if (readChoice(in, { "0", "false" }, true)) {
       val = false;
       return;
     }
-    if (read(in, { "1", "true" }, true)) {
+    if (readChoice(in, { "1", "true" }, true)) {
       val = true;
       return;
     }
@@ -480,7 +487,7 @@ struct FormattedProducerImpl<DataType::Char, C> {
     skip(in, config);
     const auto pos = in.tell();
 
-    if (not read(in, '\'')) {
+    if (not readChar(in, '\'')) {
       throw InputFailure(pos, "Expected a character");
     }
 
@@ -542,11 +549,11 @@ struct FormattedProducerImpl<DataType::Float, F> {
     skip(in, config);
     const auto pos = in.tell();
 
-    if (read(in, { "-∞" })) {
+    if (readChoice(in, { "-∞" })) {
       val = -Limits::infinity();
       return;
     }
-    if (read(in, { "∞" })) {
+    if (readChoice(in, { "∞" })) {
       val = Limits::infinity();
       return;
     }
@@ -567,7 +574,7 @@ struct FormattedProducerImpl<DataType::Pointer, P> {
     skip(in, config);
     const auto pos = in.tell();
 
-    if (read(in, { "null" })) {
+    if (readChoice(in, { "null" })) {
       val = nullptr;
       return;
     }
@@ -590,7 +597,7 @@ struct FormattedProducerImpl<DataType::String, T> {
     skip(in, config);
     const auto pos = in.tell();
 
-    if (not read(in, '"')) {
+    if (not readChar(in, '"')) {
       throw InputFailure(pos, "Expected a string");
     }
 
@@ -624,7 +631,7 @@ struct FormattedProducerImpl<DataType::Optional, T> {
   produce(T& val, nio::Source& in, CONFIG__) const {
     skip(in, config);
 
-    if (read(in, { "null" })) {
+    if (readChoice(in, { "null" })) {
       val = std::nullopt;
       return;
     }
@@ -643,7 +650,7 @@ struct FormattedProducerImpl<DataType::Tuple, T> {
     skip(in, config);
     const auto pos = in.tell();
 
-    if (not read(in, '(')) {
+    if (not readChar(in, '(')) {
       throw InputFailure(pos, "Expected a tuple");
     }
 
@@ -653,10 +660,10 @@ struct FormattedProducerImpl<DataType::Tuple, T> {
     }, val);
 
     skip(in, config);
-    if (std::tuple_size_v<T> > 0 && read(in, ',')) { // Allow trailing comma if nonempty
+    if (std::tuple_size_v<T> > 0 && readChar(in, ',')) { // Allow trailing comma if nonempty
       skip(in, config);
     }
-    if (not read(in, ')')) {
+    if (not readChar(in, ')')) {
       throw InputFailure(in.tell(), { pos, in.tell() }, "Unterminated tuple");
     }
   }
@@ -689,7 +696,7 @@ struct FormattedProducerImpl<DataType::List, T> {
     skip(in, config);
     const auto pos = in.tell();
 
-    if (not read(in, '[')) {
+    if (not readChar(in, '[')) {
       throw InputFailure(pos, "Expected a list");
     }
 
@@ -717,10 +724,10 @@ private:
     }
 
     skip(in, config);
-    if (size > 0 && read(in, ',')) { // Allow trailing comma if nonempty
+    if (size > 0 && readChar(in, ',')) { // Allow trailing comma if nonempty
       skip(in, config);
     }
-    if (not read(in, ']')) {
+    if (not readChar(in, ']')) {
       throw InputFailure(in.tell(), { pos, in.tell() }, fmt::format("Unterminated array of size {}", size));
     }
   }
@@ -730,13 +737,13 @@ private:
     u64 index = 0;
     while (true) {
       skip(in, config);
-      if (read(in, ']')) {
+      if (readChar(in, ']')) {
         return;
       }
       if (index++ > 0) {
         expectComma(in);
         skip(in, config);
-        if (read(in, ']')) { // Allow trailing comma if nonempty
+        if (readChar(in, ']')) { // Allow trailing comma if nonempty
           return;
         }
       }
@@ -756,20 +763,20 @@ struct FormattedProducerImpl<DataType::Set, T> {
     skip(in, config);
     const auto pos = in.tell();
 
-    if (not read(in, '{')) {
+    if (not readChar(in, '{')) {
       throw InputFailure(pos, "Expected a set");
     }
 
     u64 index = 0;
     while (true) {
       skip(in, config);
-      if (read(in, '}')) {
+      if (readChar(in, '}')) {
         return;
       }
       if (index++ > 0) {
         expectComma(in);
         skip(in, config);
-        if (read(in, '}')) { // Allow trailing comma if nonempty
+        if (readChar(in, '}')) { // Allow trailing comma if nonempty
           return;
         }
       }
@@ -792,19 +799,19 @@ struct FormattedProducerImpl<DataType::Map, T> {
     skip(in, config);
     const auto pos = in.tell();
 
-    if (not read(in, '{')) {
+    if (not readChar(in, '{')) {
       throw InputFailure(pos, "Expected a map");
     }
 
     u64 index = 0;
     while (true) {
       skip(in, config);
-      if (read(in, '}')) {
+      if (readChar(in, '}')) {
         return;
       }
       if (index++ > 0) {
         expectComma(in);
-        if (read(in, '}')) { // Allow trailing comma if nonempty
+        if (readChar(in, '}')) { // Allow trailing comma if nonempty
           return;
         }
         skip(in, config);
@@ -836,20 +843,20 @@ struct FormattedProducerImpl<DataType::Bimap, T> {
     skip(in, config);
     const auto pos = in.tell();
 
-    if (not read(in, '{')) {
+    if (not readChar(in, '{')) {
       throw InputFailure(pos, "Expected a map");
     }
 
     u64 index = 0;
     while (true) {
       skip(in, config);
-      if (read(in, '}')) {
+      if (readChar(in, '}')) {
         return;
       }
       if (index++ > 0) {
         expectComma(in);
         skip(in, config);
-        if (read(in, '}')) { // Allow trailing comma if nonempty
+        if (readChar(in, '}')) { // Allow trailing comma if nonempty
           return;
         }
       }
@@ -869,6 +876,127 @@ struct FormattedProducerImpl<DataType::Bimap, T> {
 };
 
 template<typename T>
+struct FormattedProducerImpl<DataType::Duration, T> {
+  using Rep = T::rep;
+  static constexpr auto RepDataType = DataTypes<Rep>::Value;
+
+  void
+  produce(T& val, nio::Source& in, CONFIG__) const {
+    using namespace std::chrono;
+
+    skip(in, config);
+    const auto pos = in.tell();
+
+    Rep count;
+    try {
+      FormattedProducerImpl<RepDataType, Rep>().produce(count, in, config);
+    } catch (const InputFailure& e) {
+      throw InputFailure(pos, "Expected a duration");
+    }
+
+    const std::vector<std::string_view> UNITS = {
+      // "m" must come after "min" and "ms"
+      "d", "h", "min", "ms", "m", "ns", "s", "us", "w", "y", "µs"
+    };
+
+    if (auto value = readChoice(in, UNITS, true); value) {
+      if (*value == "ns") {
+        val = duration_cast<T>(nanoseconds(count));
+      } else if (*value == "µs" || *value == "us") {
+        val = duration_cast<T>(microseconds(count));
+      } else if (*value == "ms") {
+        val = duration_cast<T>(milliseconds(count));
+      } else if (*value == "s") {
+        val = duration_cast<T>(seconds(count));
+      } else if (*value == "min") {
+        val = duration_cast<T>(minutes(count));
+      } else if (*value == "h") {
+        val = duration_cast<T>(hours(count));
+      } else if (*value == "d") {
+        val = duration_cast<T>(days(count));
+      } else if (*value == "w") {
+        val = duration_cast<T>(weeks(count));
+      } else if (*value == "m") {
+        val = duration_cast<T>(months(count));
+      } else if (*value == "y") {
+        val = duration_cast<T>(years(count));
+      } else {
+        ROCKET_TERMINATE_UNREACHABLE_CODE();
+      }
+      return;
+    }
+
+    throw InputFailure(in.tell(), "Expected a time unit");
+  }
+};
+
+template<typename T>
+struct FormattedProducerImpl<DataType::YearMonthDay, T> {
+  void
+  produce(T& val, nio::Source& in, CONFIG__) const {
+    using namespace std::chrono;
+
+    using boost::safe_numerics::safe;
+
+    skip(in, config);
+    const auto pos = in.tell();
+
+    auto& is = in.istream();
+    auto result = scn::scan<std_int, std_unsigned, std_unsigned>(is, "{}-{}-{}");
+    if (not result) {
+      throw InputFailure(pos, "Expected a year, month, and day");
+    }
+    in.seek(io::tellg(is), nio::SeekMode::beg);
+
+    const auto& [y, m, d] = result->values();
+    val = { year(y), month(m), day(d) };
+  }
+};
+
+template<typename T>
+struct FormattedProducerImpl<DataType::HourMinuteSecond, T> {
+  using Precision = T::precision;
+
+  void
+  produce(T& val, nio::Source& in, CONFIG__) const {
+    using namespace std::chrono;
+
+    using boost::safe_numerics::safe;
+
+    skip(in, config);
+    const auto pos = in.tell();
+
+    // Read hour, minute, and second
+
+    auto& is = in.istream();
+    auto result = scn::scan<hours::rep, minutes::rep, seconds::rep>(is, "{}:{}:{}");
+    if (not result) {
+      throw InputFailure(pos, "Expected an hour, minute, and second");
+    }
+    in.seek(io::tellg(is), nio::SeekMode::beg);
+
+    auto [h, m, s] = result->values();
+    bool neg = false;
+    if (h < 0) {
+      h = -h;
+      neg = true;
+    }
+
+    // Read subseconds
+
+    nanoseconds subseconds = readSubseconds(in);
+
+    // Finally, construct #hh_mm_ss
+
+    Precision duration = duration_cast<Precision>(hours(h) + minutes(m) + seconds(s) + subseconds);
+    if (neg) {
+      duration = -duration;
+    }
+    val = T(duration);
+  }
+};
+
+template<typename T>
 struct FormattedProducerImpl<DataType::Interval, T> {
   using A = T::A;
   static constexpr auto ADataType = DataTypes<A>::Value;
@@ -883,19 +1011,19 @@ struct FormattedProducerImpl<DataType::Interval, T> {
     skip(in, config);
     const auto pos = in.tell();
 
-    if (read(in, { "∅" })) {
+    if (readChoice(in, { "∅" })) {
       val = T();
       return;
     }
 
-    if (not read(in, Left::Symbol)) {
+    if (not readChar(in, Left::Symbol)) {
       throw InputFailure(pos, "Expected an interval");
     }
     skip(in, config);
 
     A a = A();
     if constexpr (IsOptional<A>) {
-      if (not read(in, { "-∞" })) {
+      if (not readChoice(in, { "-∞" })) {
         FormattedProducerImpl<ADataType, A>().produce(a, in, config);
       }
     } else {
@@ -909,7 +1037,7 @@ struct FormattedProducerImpl<DataType::Interval, T> {
 
     B b = B();
     if constexpr (IsOptional<B>) {
-      if (not read(in, { "∞" })) {
+      if (not readChoice(in, { "∞" })) {
         FormattedProducerImpl<BDataType, B>().produce(b, in, config);
       }
     } else {
@@ -918,7 +1046,7 @@ struct FormattedProducerImpl<DataType::Interval, T> {
     val.b = b;
 
     skip(in, config);
-    if (not read(in, Right::Symbol)) {
+    if (not readChar(in, Right::Symbol)) {
       throw InputFailure(in.tell(), { pos, in.tell() }, "Unterminated interval");
     }
   }
@@ -1017,7 +1145,7 @@ struct FormattedProducerImpl<DataType::CodePoint, T> {
     skip(in, config);
     const auto pos = in.tell();
 
-    if (read(in, '\'')) {
+    if (readChar(in, '\'')) {
       in.seek(-1, nio::SeekMode::cur);
       Elem elem = Elem();
       FormattedProducerImpl<ElemDataType, Elem>().produce(elem, in, config);

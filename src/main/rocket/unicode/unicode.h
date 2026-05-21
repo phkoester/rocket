@@ -22,7 +22,10 @@ namespace rocket::unicode {
 /**
  * A code-point type.
  *
- * Note there is a literal operator for it:
+ * Instances of #rocket::unicode::CodePoint are immutable and always valid. Constructing a code point with an
+ * invalid `char` or `char32` value will throw an exception.
+ *
+ * Note there is a literal operator for #rocket::unicode::CodePoint:
  *
  * ```
  * use namespace rocket::unicode;
