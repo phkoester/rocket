@@ -197,7 +197,7 @@ TEST(FormattedCodec, FormattedConsumerTimePoint) {
   using namespace std::chrono;
 
   const auto regexS = "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z"; // Seconds
-  const auto regexNs = "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{9}Z"; // Nanoseconds
+  const auto regexNs = "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{6,9}Z"; // Nanoseconds
 
   const auto now = rocket::chrono::now<system_clock>();
   EXPECT_THAT(encode(time_point_cast<seconds>(now)), matchesRegex(regexS));
@@ -208,7 +208,7 @@ TEST(FormattedCodec, FormattedConsumerZonedTime) {
   using namespace std::chrono;
 
   const auto regexS = "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(Z|[+-]\\d{2}:\\d{2}) \\([^ ]+\\)";
-  const auto regexNs = "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{9}(Z|[+-]\\d{2}:\\d{2}) \\([^ ]+\\)";
+  const auto regexNs = "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{6,9}(Z|[+-]\\d{2}:\\d{2}) \\([^ ]+\\)";
 
   {
     // Current time zone

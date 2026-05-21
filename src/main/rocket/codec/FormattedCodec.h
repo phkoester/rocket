@@ -1110,16 +1110,17 @@ struct FormattedProducerImpl<DataType::ZonedTime, T> {
       tp += duration_cast<Duration>(subseconds);
     }
 
-    // Read UTC offset
+    // Read "Z" or UTC offset
 
     const auto offsetPos = in.tell();
-
-    auto sign = readChoice(in, { "+", "-" }, false);
-    if (not sign) {
-      throw InputFailure(offsetPos, "Expected UTC offset");
-    }
     seconds offset;
-    {
+
+    if (not readChar(in, 'Z')) {
+      auto sign = readChoice(in, { "+", "-" }, false);
+      if (not sign) {
+        throw InputFailure(offsetPos, "Expected UTC offset");
+      }
+
       auto& is = in.istream();
       const auto result = scn::scan<std_unsigned, std_unsigned>(is, "{}:{}");
       if (not result) {
