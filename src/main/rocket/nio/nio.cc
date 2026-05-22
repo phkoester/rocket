@@ -37,7 +37,7 @@ namespace rocket::nio {
 // #Sink ----------------------------------------------------------------------------------------------------
 
 u64
-Sink::writeln(std::string_view in) {
+Sink::writeln(string_view in) {
   if (bad()) {
     return 0;
   }
@@ -95,13 +95,13 @@ BufferedSink::flushBuffer() {
 
   if (pos_ > 0) {
     LOG("Flushing " << pos_ << " bytes from buffer to underlying")
-    underlying_.write(std::span<const u8>(&buf_[0], pos_));
+    underlying_.write(span<const u8>(&buf_[0], pos_));
     pos_ = 0;
   }
 }
 
 u64
-BufferedSink::write(std::span<const u8> in) {
+BufferedSink::write(span<const u8> in) {
   if (bad()) {
     return 0;
   }
@@ -176,7 +176,7 @@ FileSink::close()
 
   flush(); // NOLINT
 
-  const auto result = std::fclose(file_); // NOLINT(*-owning-memory)
+  const auto result = fclose(file_); // NOLINT(*-owning-memory)
   // #file_ is invalid now, so we don't call #ferror on it
   LOG("fclose=" << result);
   status_.bad = true;
@@ -190,7 +190,7 @@ FileSink::flush() {
     return false;
   }
 
-  const auto result = std::fflush(file_);
+  const auto result = fflush(file_);
   LOG("fflush=" << result << ", ferror=" << ferror(file_));
   return result == 0;
 }
@@ -206,12 +206,12 @@ FileSink::handle() const {
 }
 
 u64
-FileSink::write(std::span<const u8> in) {
+FileSink::write(span<const u8> in) {
   if (bad()) {
     return 0;
   }
 
-  const auto result = std::fwrite(in.data(), 1, in.size(), file_);
+  const auto result = fwrite(in.data(), 1, in.size(), file_);
   auto error = ferror(file_);
   LOG("fwrite=" << result << ", in.size=" << in.size() << ", ferror=" << error);
   ROCKET_ASSERT(result == in.size() || error != 0);
@@ -227,7 +227,7 @@ NullSink::NullSink() {
 
 // #SpanSink ------------------------------------------------------------------------------------------------
 
-SpanSink::SpanSink(std::span<char> out) :
+SpanSink::SpanSink(span<char> out) :
   out_(out) {
   status_.bad = false;
   status_.eof = out.empty();
@@ -244,7 +244,7 @@ SpanSink::close() {
 }
 
 u64
-SpanSink::write(std::span<const u8> in) {
+SpanSink::write(span<const u8> in) {
   const u64 available = out_.size() - pos_;
   const u64 ret = min(available, in.size());
   if (ret > 0) {
@@ -259,7 +259,7 @@ SpanSink::write(std::span<const u8> in) {
 
 // #StreamSink ----------------------------------------------------------------------------------------------
 
-StreamSink::StreamSink(std::ostream& os) :
+StreamSink::StreamSink(ostream& os) :
     os_(os) {
   status_.bad = os.bad();
   status_.eof = os.eof();
@@ -311,7 +311,7 @@ StreamSink::handle() const {
 }
 
 u64
-StreamSink::write(std::span<const u8> in) {
+StreamSink::write(span<const u8> in) {
   if (bad()) {
     return 0;
   }
@@ -329,7 +329,7 @@ StringSink::StringSink() {
   status_.bad = false;
 }
 
-StringSink::StringSink(std::string& ref) :
+StringSink::StringSink(string& ref) :
   ptr_(&ref) {
   status_.bad = false;
 }
@@ -345,12 +345,12 @@ StringSink::close() {
 }
 
 u64
-StringSink::write(std::span<const u8> in) {
+StringSink::write(span<const u8> in) {
   if (bad()) {
     return 0;
   }
 
-  const std::string_view view(reinterpret_cast<const char*>(in.data()), in.size());
+  const string_view view(reinterpret_cast<const char*>(in.data()), in.size());
   if (ptr_ != nullptr) {
     ptr_->append(view);
   } else {
@@ -720,7 +720,7 @@ FileSource::close()
     return false;
   }
 
-  const auto result = std::fclose(file_); // NOLINT(*-owning-memory)
+  const auto result = fclose(file_); // NOLINT(*-owning-memory)
   LOG("fclose=" << result);
   status_.bad = true;
   file_ = nullptr;
@@ -758,7 +758,7 @@ FileSource::read(span<u8> out) {
     return 0;
   }
 
-  const auto result = std::fread(out.data(), 1, out.size(), file_);
+  const auto result = fread(out.data(), 1, out.size(), file_);
   LOG("fread=" << result << ", out.size=" << out.size() << ", ferror=" << ferror(file_));
   status_.eof = result < out.size();
   return result;
@@ -787,7 +787,7 @@ FileSource::seek(i64 offset, SeekMode mode) { // NOLINT
     ROCKET_FLOP(mode, "Invalid seek mode {}", static_cast<i32>(mode));
   }
 
-  auto result = std::fseek(file_, safe<std_long>(offset), origin);
+  auto result = fseek(file_, safe<std_long>(offset), origin);
   LOG("fseek=" << result << ", ferror=" << ferror(file_));
   return result == 0;
 }
@@ -798,7 +798,7 @@ FileSource::tell() {
     return NPOS;
   }
 
-  auto result = std::ftell(file_);
+  auto result = ftell(file_);
   LOG("ftell=" << result << ", ferror=" << ferror(file_));
   if (result == -1) {
     return NPOS;
@@ -828,7 +828,7 @@ NullSource::istream() {
 
 // #SpanSource ----------------------------------------------------------------------------------------------
 
-SpanSource::SpanSource(std::span<const u8> in) :
+SpanSource::SpanSource(span<const u8> in) :
   in_(in) {
   status_.bad = false;
   status_.eof = in.empty();
@@ -1007,7 +1007,7 @@ StreamSource::tell() {
 
 // #StringSource --------------------------------------------------------------------------------------------
 
-StringSource::StringSource(std::string_view in) :
+StringSource::StringSource(string_view in) :
   in_(in) {
   status_.bad = false;
   status_.eof = in.empty();
