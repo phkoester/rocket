@@ -37,11 +37,12 @@ struct CodePoint {
   using Type = char32; ///< The representation type of the code point.
 
   /**
-   * Checks if a `char32_t` value is a valid code-point value.
+   * Checks if a `char32` value is a valid code-point value.
    *
    * A code point is valid if it is less than or equal to U+10FFFF and not a surrogate in the range
    * U+D800–U+DFFF.
    *
+   * @param val the `char32` value to check
    * @return whether @p val is a valid code-point value
    */
   [[nodiscard]] static constexpr bool

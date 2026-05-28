@@ -25,11 +25,11 @@ namespace rocket::unicode {
  */
 template<typename C, typename String> requires IsChar<C>
 struct BasicCharacter {
-  using Type = String;
-  using View = std::basic_string_view<C>;
+  using Type = String; ///< @type_alias
+  using View = std::basic_string_view<C>; ///< The string-view type.
 
   /// A compile-time constant that is `true` if the character is a view, `false` otherwise.
-  static constexpr bool IS_VIEW = std::is_same_v<String, View>;
+  static constexpr bool VIEW = std::is_same_v<String, View>;
 
   /**
    * @ctor
@@ -38,7 +38,7 @@ struct BasicCharacter {
    *
    * @param str a string. The string must not be empty
    */
-  template<typename Char> requires std::is_same_v<Char, C> && (not IS_VIEW)
+  template<typename Char> requires std::is_same_v<Char, C> && (not VIEW)
   constexpr explicit BasicCharacter( const std::basic_string<Char>& str) : str_(str) {
     ROCKET_CHECK(str, not str.empty());
   }
@@ -50,7 +50,7 @@ struct BasicCharacter {
    *
    * @param str a string. The string must not be empty
    */
-  template<typename Char> requires std::is_same_v<Char, C> && (not IS_VIEW)
+  template<typename Char> requires std::is_same_v<Char, C> && (not VIEW)
   constexpr explicit BasicCharacter( std::basic_string<Char>&& str) : str_(std::move(str)) {
     ROCKET_CHECK(str, not str.empty());
   }
@@ -74,7 +74,7 @@ struct BasicCharacter {
    *
    * @param rhs the right-hand side, which holds a string
    */
-  template<typename Char> requires std::is_same_v<Char, C> && IS_VIEW
+  template<typename Char> requires std::is_same_v<Char, C> && VIEW
   constexpr explicit BasicCharacter(const BasicCharacter<Char, std::basic_string<Char>>& rhs ) :
       str_(static_cast<std::basic_string_view<C>>(rhs)) {}
 

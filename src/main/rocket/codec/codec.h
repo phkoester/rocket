@@ -92,11 +92,11 @@ enum class DataType : u8 {
   /// #std::chrono::zoned_time values.
   ZonedTime,
 
-  // Rocket.Math ............................................................................................
+  // #rocket::math ..........................................................................................
 
   Interval,
 
-  // Rocket.Reflect .........................................................................................
+  // #rocket::reflect .......................................................................................
 
   // An instance with default member references
   Declared,
@@ -107,7 +107,7 @@ enum class DataType : u8 {
   /// Variable references.
   VarRef,
 
-  // Rocket.Unicode .........................................................................................
+  // #rocket::unicode .......................................................................................
 
   /// Code points.
   CodePoint,
@@ -121,8 +121,8 @@ enum class DataType : u8 {
  * The #rocket::codec::DataTypes template maps a C++ type to a #rocket::codec::DataType enum value, both for
  * encoding and decoding, at compile time.
  *
- * This is the central logic of the Rocket.Codec type system. The encoders and decoders all rely on the data
- * types provided here.
+ * This is the central logic of the #rocket::codec type system. The encoders and decoders all rely on the
+ * data types provided here.
  */
 template<typename T>
 struct DataTypes;

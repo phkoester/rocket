@@ -21,8 +21,8 @@ using boost::safe_numerics::safe;
 
 /* Logging --------------------------------------------------------------------------------------------------
 
-Because the logging framework utilizes #rocket::nio, we can't use it to log #rocket::nio itself. So we need
-to make up a quick and dirty logging facility here.
+Because #rocket::log utilizes #rocket::nio, we can't use it to log #rocket::nio itself. So we need to make up
+a quick and dirty logging facility here.
 
 ---------------------------------------------------------------------------------------------------------- */
 
