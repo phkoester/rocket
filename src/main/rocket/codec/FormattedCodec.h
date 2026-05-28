@@ -984,7 +984,7 @@ struct FormattedProducerImpl<DataType::HourMinuteSecond, T> {
 
     // Read subseconds
 
-    nanoseconds subseconds = readSubseconds(in);
+    const nanoseconds subseconds = readSubseconds(in);
 
     // Finally, construct #hh_mm_ss
 
@@ -1147,7 +1147,7 @@ struct FormattedProducerImpl<DataType::ZonedTime, T> {
     // Read time zone
 
     expectChar(in, ' ');
-    TimeZone tz;
+    TimeZone tz; // NOLINT
     FormattedProducerImpl<TimeZoneDataType, TimeZone>().produce(tz, in, config);
 
     // Finally, construct the #zoned_time
@@ -1328,7 +1328,6 @@ struct FormattedProducerImpl<DataType::Character, T> {
     Elem elem;
     FormattedProducerImpl<ElemDataType, Elem>().produce(elem, in, config);
     val = T(std::move(elem));
-    return;
   }
 };
 

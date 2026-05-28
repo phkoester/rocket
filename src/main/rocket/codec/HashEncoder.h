@@ -253,7 +253,7 @@ template<typename T, typename Hash>
 struct HashConsumerImpl<DataType::TimeZone, T, Hash> {
   u64
   consume(T val) {
-    std::string_view name = val->name();
+    const std::string_view name = val->name();
     return Hash()(name);
   }
 };

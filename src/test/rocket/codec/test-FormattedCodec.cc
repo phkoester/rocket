@@ -196,8 +196,8 @@ TEST(FormattedCodec, FormattedConsumerHourMinuteSecond) {
 TEST(FormattedCodec, FormattedConsumerTimePoint) {
   using namespace std::chrono;
 
-  const auto regexS = "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z"; // Seconds
-  const auto regexNs = "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{6,9}Z"; // Nanoseconds
+  const auto* const regexS = R"(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z)"; // Seconds
+  const auto* const regexNs = R"(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{6,9}Z)"; // Nanoseconds
 
   const auto now = rocket::chrono::now<system_clock>();
   EXPECT_THAT(encode(time_point_cast<seconds>(now)), matchesRegex(regexS));
@@ -207,8 +207,10 @@ TEST(FormattedCodec, FormattedConsumerTimePoint) {
 TEST(FormattedCodec, FormattedConsumerZonedTime) {
   using namespace std::chrono;
 
-  const auto regexS = "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(Z|[+-]\\d{2}:\\d{2}) \\([^ ]+\\)";
-  const auto regexNs = "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{6,9}(Z|[+-]\\d{2}:\\d{2}) \\([^ ]+\\)";
+  const auto* const regexS =
+    R"(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(Z|[+-]\d{2}:\d{2}) \([^ ]+\))";
+  const auto* const regexNs =
+    R"(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{6,9}(Z|[+-]\d{2}:\d{2}) \([^ ]+\))";
 
   {
     // Current time zone
@@ -426,7 +428,7 @@ TEST(FormattedCodec, FormattedProducerTimePoint) {
   const TimePoint val1 = rocket::chrono::now<system_clock>();
   string encoded = encode(val1);
   nio::out.println("VAL1: {}", encoded);
-  TimePoint val2 = decode<TimePoint>(encoded);
+  const TimePoint val2 = decode<TimePoint>(encoded); // NOLINT
   nio::out.println("VAL2: {}", encode(val2));
   EXPECT_EQ(val2, val1);
   EXPECT_EQ(val2.time_since_epoch().count(), val1.time_since_epoch().count());
@@ -443,7 +445,7 @@ TEST(FormattedCodec, FormattedProducerZonedTime) {
   const ZonedTime val1 = zoned_time(current, now);
   string encoded = encode(val1);
   nio::out.println("VAL1: {}", encoded);
-  ZonedTime val2 = decode<ZonedTime>(encoded);
+  const ZonedTime val2 = decode<ZonedTime>(encoded); // NOLINT
   nio::out.println("VAL2: {}", encode(val2));
   EXPECT_EQ(val2, val1);
 }

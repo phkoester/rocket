@@ -148,7 +148,7 @@ void expectComma(nio::Source& in);
  * @param predicate the predicate to call
  * @return the read string
  */
-std::string readWhilePredicate(nio::Source& in, std::function<bool(char)> predicate);
+std::string readWhilePredicate(nio::Source& in, const std::function<bool(char)>& predicate);
 
 /**
  * Scans from a source, using `scnlib`.

@@ -243,7 +243,7 @@ readUntilChar(nio::Source& in, char c) {
 }
 
 string
-readWhilePredicate(nio::Source& in, std::function<bool(char)> predicate) {
+readWhilePredicate(nio::Source& in, const std::function<bool(char)>& predicate) {
 #ifndef ROCKET_NIO_NO_CONTIGUOUS_SOURCE
   if (const auto* contiguous = dynamic_cast<nio::ContiguousSource*>(&in); contiguous != nullptr) {
     // Contiguous source
@@ -254,7 +254,7 @@ readWhilePredicate(nio::Source& in, std::function<bool(char)> predicate) {
       ++it;
     }
     string ret(str.begin(), it);
-    in.seek(ret.size(), nio::SeekMode::cur);
+    in.seek(safe<i64>(ret.size()), nio::SeekMode::cur);
     return ret;
   }
 #endif
