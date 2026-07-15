@@ -84,9 +84,8 @@ TEST(FormattedCodec, FormattedConsumerEnum) {
     ThrowsMessage<InvalidState>(containsRegex("Cannot format enum of type `.*Color`")));
 
   EXPECT_EQ(encode(log::LogLevel::info), "info");
-  const log::LogLevel bogus = static_cast<log::LogLevel>(-1);
   EXPECT_THAT(
-    [&] { encode(bogus); },
+    [&] { encode(static_cast<log::LogLevel>(-1)); }, // NOLINT
     ThrowsMessage<InvalidState>(HasSubstr("Invalid `rocket::log::LogLevel` value 255")));
 }
 

@@ -1051,7 +1051,7 @@ struct FormattedProducerImpl<DataType::TimePoint, T> {
 
     // Read subseconds
 
-    nanoseconds subseconds = readSubseconds(in);
+    const nanoseconds subseconds = readSubseconds(in);
     if (subseconds.count() > 0) {
       val += duration_cast<Duration>(subseconds);
     }

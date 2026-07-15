@@ -5,7 +5,6 @@
  */
 
 #include "rocket/Process.h"
-#include "rocket/chrono/chrono.h"
 #include "rocket/cl/cl.h"
 #include "rocket/enum.h"
 #include "rocket/log/log.h"
@@ -52,14 +51,8 @@ toy() {
 
   ROCKET_LOG(toy);
 
-  const auto* tz = locate_zone("Europe/Berlin");
-  auto tp = rocket::chrono::now<system_clock>() - days(100);
-  auto info = tz->get_info(tp);
-  nio::out.println("info.begin: {}", info.begin);
-  nio::out.println("info.end: {}", info.end);
-  nio::out.println("info.offset: {}", info.offset);
-  nio::out.println("info.save: {}", info.save);
-  nio::out.println("info.abbrev: {}", info.abbrev);
+  nio::out.println("tellg signed: {}", std::is_signed_v<std::ios::pos_type>);
+  nio::out.println("tellg unsigned: {}", std::is_unsigned_v<std::ios::pos_type>);
 
   ROCKET_LOG_TRACE("Hey {}", "there");
 }
