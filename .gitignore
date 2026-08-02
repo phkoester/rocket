@@ -3,14 +3,13 @@
 #
 
 /compile_commands.json
-
 /.cache/
-/.vs/
 /build/
-/install/
-/Testing/
+/target/
 
-**/*.log
-**/*.log.gz
+*.log
+*.log.gz
+*.pyc
+__pycache__/
 
 # EOF
