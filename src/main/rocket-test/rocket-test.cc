@@ -22,7 +22,7 @@ const bool TEST_TERMINAL = system::env::get<bool>(ROCKET_TEST_TERMINAL).value_or
 // Functions ------------------------------------------------------------------------------------------------
 
 fs::path
-testExcecutable(string_view name) {
+testExecutable(string_view name) {
   if (not BINARY_DIR) {
     ROCKET_FAIL("`BINARY_DIR` is not set");
   }
