@@ -21,8 +21,7 @@ include $(GAIA_DIR)/src/main/make/Makefile-C.mk
 
 .PHONY: test-terminal
 test-terminal: build
-	@ROCKET_TEST_TERMINAL=1 $(BUILD_DIR)/src/test/test-rocket-system-terminal
-	@ROCKET_TEST_TERMINAL=1 $(BUILD_DIR)/src/test/test-rocket-unicode-Character
-
+	@ROCKET_TEST_TERMINAL=1 $(TEST_DIR)/test-rocket-system-terminal
+	@ROCKET_TEST_TERMINAL=1 $(TEST_DIR)/test-rocket-unicode-Character
 
 # EOF
