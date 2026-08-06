@@ -18,15 +18,6 @@ Rocket stands on the shoulders of these giants:
 
 ## Build with CMake
 
-Some notable environment variables respected by CMake:
-
-| Name       | Description
-| :--------- | -----------
-| `CC`       | Path to the C compiler
-| `CFLAGS`   | Additional flags for the C compiler
-| `CXX`      | Path to the C++ compiler
-| `CXXFLAGS` | Additional flags for the C++ compiler
-
 CMake variables:
 
 | Name                 | Type     | Default                           | Description
@@ -36,26 +27,6 @@ CMake variables:
 | `CMAKE_BUILD_TYPE`   | `STRING` | `Release` if single configuration | The build type (`Debug` or `Release`)
 | `ROCKET_BUILD_BENCH` | `BOOL`   | `ON` if master project            | Enable benchmarking and build benchmarks
 | `ROCKET_BUILD_TEST`  | `BOOL`   | `ON` if master project            | Enable testing and build tests
-
-### Linux
-
-```bash
-cmake --preset linux-release
-cmake --build --preset linux-release
-ctest --preset linux-release
-cmake --install build/release --prefix install
-```
-
-### Windows
-
-```bash
-cmake --preset windows
-cmake --build --preset windows-release
-ctest --preset windows-release
-cmake --install build --config Release --prefix install
-```
-
-Alternatively, run `make.cmd`. For usage information, look inside the file.
 
 ## Environment Variables
 
