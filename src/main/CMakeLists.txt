@@ -40,7 +40,6 @@ if(GAIA_OS_WINDOWS)
 else()
   set(SCRIPT $ENV{GAIA_DIR}/bin/gaia-generate-version)
 endif()
-
 add_custom_command(
   OUTPUT   ${VERSION_H}
   COMMAND  python3 ${SCRIPT} ROCKET ${PROJECT_VERSION} -o ${VERSION_H}
