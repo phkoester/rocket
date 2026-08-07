@@ -43,16 +43,12 @@ include(GoogleTest)
 
 AddTest(test-rocket rocket test-rocket.cc)
 
-if(GAIA_OS_WINDOWS)
-  execute_process(COMMAND cygpath -u ${PROJECT_SOURCE_DIR}/bin/generate-hello OUTPUT_VARIABLE SCRIPT)
-  string(STRIP ${SCRIPT} SCRIPT)
-else()
-  set(SCRIPT ${PROJECT_SOURCE_DIR}/bin/generate-hello)
-endif()
+UnixPath(${PROJECT_SOURCE_DIR} dir)
 set(HELLO_CC ${GENERATED_DIR}/hello.cc)
 add_custom_command(
   OUTPUT   ${HELLO_CC}
-  COMMAND  python3 ${SCRIPT} -o ${HELLO_CC}
+  COMMAND  python3 ${dir}/bin/generate-hello -o ${HELLO_CC}
+  DEPENDS  ${dir}/bin/generate-hello ${PROJECT_SOURCE_DIR}/CMakeLists.txt
   VERBATIM
 )
 AddTest(test-rocket-external-CMake rocket/external test-CMake.cc
