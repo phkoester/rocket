@@ -19,7 +19,7 @@ target_link_libraries(toy PRIVATE Rocket::rocket)
 
 # comm ......................................................................................................
 
-add_library(comm STATIC)
+AddLibrary(comm STATIC)
 target_sources(comm PRIVATE comm/Message.cc)
 target_link_libraries(comm PUBLIC Rocket::rocket)
 

@@ -49,7 +49,7 @@ if(GAIA_OS_LINUX)
   list(APPEND ROCKET_PRIVATE_LINK_TARGETS stdc++exp)
 endif()
 
-add_library(rocket ${VERSION_H})
+AddLibrary(rocket ${VERSION_H})
 target_include_directories(rocket PUBLIC ${GENERATED_DIR})
 
 target_sources(rocket
@@ -156,8 +156,6 @@ if(ROCKET_NIO_NO_CONTIGUOUS_SOURCE)
   target_compile_definitions(rocket PRIVATE ROCKET_NIO_NO_CONTIGUOUS_SOURCE)
 endif()
 
-target_compile_features(rocket PUBLIC ${COMPILE_FEATURES})
-target_compile_options(rocket PUBLIC ${COMPILE_FLAGS})
 # Make `scn/impl.h` available
 target_include_directories(rocket SYSTEM PRIVATE ${CMAKE_BINARY_DIR}/_deps/scnlib-src/src)
 target_link_libraries(rocket
@@ -186,7 +184,7 @@ add_library(Rocket::rocket-bench ALIAS rocket-bench)
 
 # `rocket-test` ---------------------------------------------------------------------------------------------
 
-add_library(rocket-test STATIC)
+AddLibrary(rocket-test STATIC)
 target_sources(rocket-test
   PRIVATE
     rocket-test/rocket-test.cc
@@ -203,8 +201,6 @@ target_compile_definitions(rocket-test
     ${COMPILE_DEFS}
     ROCKET_TEST
 )
-target_compile_features(rocket-test PUBLIC ${COMPILE_FEATURES})
-target_compile_options(rocket-test PUBLIC ${COMPILE_FLAGS})
 target_link_libraries(rocket-test
   PUBLIC GTest::gmock GTest::gtest Rocket::rocket
 )
@@ -213,7 +209,7 @@ add_library(Rocket::rocket-test ALIAS rocket-test)
 
 # `rocket-test-main` ----------------------------------------------------------------------------------------
 
-add_library(rocket-test-main STATIC)
+AddLibrary(rocket-test-main STATIC)
 target_sources(rocket-test-main
   PRIVATE
     rocket-test-main/main.cc
@@ -223,8 +219,6 @@ target_compile_definitions(rocket-test-main
     ${COMPILE_DEFS}
     ROCKET_TEST
 )
-target_compile_features(rocket-test-main PRIVATE ${COMPILE_FEATURES})
-target_compile_options(rocket-test-main PRIVATE ${COMPILE_FLAGS})
 target_link_libraries(rocket-test-main PRIVATE GTest::gmock GTest::gtest Rocket::rocket)
 
 add_library(Rocket::rocket-test-main ALIAS rocket-test-main)

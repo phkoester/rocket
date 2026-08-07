@@ -16,13 +16,14 @@ Rocket stands on the shoulders of these giants:
 - [ICU](https://github.com/unicode-org/icu)  ([license](license/ICU/LICENSE))
 - [scnlib](https://github.com/eliaskosunen/scnlib) ([license](license/scnlib/LICENSE))
 
-## CMake Variables:
+## CMake Variables
 
 | Name                              | Type     | Default                           | Description
 | :-------------------------------- | :------- | :-------------------------------- | :----------
 | `BUILD_SHARED_LIBS`               | `BOOL`   | `OFF`                             | Build shared libraries
 | `BUILD_TESTING`                   | `BOOL`   | `ON`                              | Enable testing and build tests
 | `CMAKE_BUILD_TYPE`                | `STRING` | `Release` if single configuration | The build type (`Debug` or `Release`)
+| `COVERAGE`                        | `BOOL`   | `OFF`                             | Enable code coverage
 | `ROCKET_BUILD_BENCH`              | `BOOL`   | `ON` if master project            | Enable benchmarking and build benchmarks
 | `ROCKET_BUILD_TEST`               | `BOOL`   | `ON` if master project            | Enable testing and build tests
 | `ROCKET_NIO_LOG`                  | `BOOL`   | `OFF`                             | Enable logging of `rocket::nio`
