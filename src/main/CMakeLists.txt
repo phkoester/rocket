@@ -34,15 +34,10 @@ endif()
 
 set(VERSION_H ${GENERATED_DIR}/rocket/version.h)
 
-if(GAIA_OS_WINDOWS)
-  execute_process(COMMAND cygpath -u $ENV{GAIA_DIR}/bin/gaia-generate-version OUTPUT_VARIABLE SCRIPT)
-  string(STRIP ${SCRIPT} SCRIPT)
-else()
-  set(SCRIPT $ENV{GAIA_DIR}/bin/gaia-generate-version)
-endif()
+UnixPath($ENV{GAIA_DIR} GAIA_DIR)
 add_custom_command(
   OUTPUT   ${VERSION_H}
-  COMMAND  python3 ${SCRIPT} ROCKET ${PROJECT_VERSION} -o ${VERSION_H}
+  COMMAND  python3 ${GAIA_DIR}/bin/gaia-generate-version ROCKET ${PROJECT_VERSION} -o ${VERSION_H}
   DEPENDS  $ENV{GAIA_DIR}/bin/gaia-generate-version ${PROJECT_SOURCE_DIR}/CMakeLists.txt
   VERBATIM
 )
