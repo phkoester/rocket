@@ -48,7 +48,7 @@ set(HELLO_CC ${GENERATED_DIR}/hello.cc)
 add_custom_command(
   OUTPUT   ${HELLO_CC}
   COMMAND  python3 ${dir}/bin/generate-hello -o ${HELLO_CC}
-  DEPENDS  ${dir}/bin/generate-hello ${PROJECT_SOURCE_DIR}/CMakeLists.txt
+  DEPENDS  ${PROJECT_SOURCE_DIR}/bin/generate-hello ${PROJECT_SOURCE_DIR}/CMakeLists.txt
   VERBATIM
 )
 AddTest(test-rocket-external-CMake rocket/external test-CMake.cc
