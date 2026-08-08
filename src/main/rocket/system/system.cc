@@ -31,16 +31,15 @@ recursive_mutex envMutex;
 
 // Local functions ------------------------------------------------------------------------------------------
 
-// #ifdef ROCKET_OS_WINDOWS
+#ifdef ROCKET_OS_WINDOWS
 
 /**
  * Windows: Convert arguments to a command-line string. The rules are:
  *
  * - Replace a space by `" "`
  * - Replace a quotation mark by `\"`
- * - Replace a backslash followed by quotation mark by `"\\"`
+ * - Replace a backslash followed by a quotation mark by `"\\"`
  */
-#if 0
 string
 makeCl(const vector<string_view>& args) {
   string ret;
@@ -71,9 +70,8 @@ makeCl(const vector<string_view>& args) {
 
   return ret;
 }
-#endif
 
-// #else
+#else
 
 /**
  * Non-Windows: Convert arguments to a command-line string. The rules are:
@@ -110,7 +108,7 @@ makeCl(const vector<string_view>& args) {
   return ret;
 }
 
-// #endif
+#endif
 
 } // namespace
 

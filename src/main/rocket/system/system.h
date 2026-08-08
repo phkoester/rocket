@@ -77,6 +77,14 @@ fileSeparator() {
 }
 
 /**
+ * Converts a command-line string to a vector of arguments.
+ *
+ * @param cl the command-line string
+ * @return a vector of arguments
+ */
+std::vector<std::string> makeArgs( std::string_view cl);
+
+/**
  * Returns the system-dependent path separator.
  *
  * @return the path
