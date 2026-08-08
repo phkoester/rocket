@@ -164,4 +164,32 @@ TEST(system, execPrintArgsWithSpace) {
   }
 }
 
+TEST(system, makeArgs) {
+  EXPECT_EQ(makeArgs(""), vector<string> {});
+  EXPECT_EQ(makeArgs(" \r\n\t   "), vector<string> {});
+  EXPECT_EQ(makeArgs(" \r\na\t   "), vector<string> { "a" });
+
+  EXPECT_EQ(makeArgs("a 'b c' d"), (vector<string> { "a", "b c", "d" }));
+  EXPECT_EQ(makeArgs("a'b c'd"), (vector<string> { "ab cd" }));
+  EXPECT_EQ(makeArgs("a'\\\"'b"), (vector<string> { "a\\\"b" }));
+
+  EXPECT_EQ(makeArgs("a \"b c\" d"), (vector<string> { "a", "b c", "d" }));
+  EXPECT_EQ(makeArgs("a\"b c\"d"), (vector<string> { "ab cd" }));
+  EXPECT_EQ(makeArgs("\"\\\"\""), (vector<string> { "\"" }));
+  EXPECT_EQ(makeArgs("\"\\\\\""), (vector<string> { "\\" }));
+
+  EXPECT_THAT(
+    [&] { makeArgs(" a'"); },
+    throwsInputFailure(3, HasSubstr("Unterminated single quote")));
+  EXPECT_THAT(
+    [&] { makeArgs(" a\""); },
+    throwsInputFailure(3, HasSubstr("Unterminated double quote")));
+  EXPECT_THAT(
+    [&] { makeArgs("\\"); },
+    throwsInputFailure(0, HasSubstr("Invalid escape sequence")));
+  EXPECT_THAT(
+    [&] { makeArgs("\"\\"); },
+    throwsInputFailure(1, HasSubstr("Invalid escape sequence")));
+}
+
 // EOF

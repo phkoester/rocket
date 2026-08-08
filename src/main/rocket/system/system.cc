@@ -4,6 +4,7 @@
 
 #include "system.h"
 
+#include "rocket/InputFailure.h"
 #include "rocket/assert.h"
 
 #include <cstdlib>
@@ -194,6 +195,79 @@ exec(const string& cl) {
 vector<char>
 exec(const vector<string_view>& args) {
   return exec(makeCl(args));
+}
+
+vector<string>
+makeArgs(string_view cl) {
+  vector<string> ret;
+
+  enum State { NORMAL, SINGLE, DOUBLE };
+  State state = NORMAL;
+  string arg;
+
+  for (size_t i = 0, size = cl.size(); i < size; ++i) {
+    char c = cl[i];
+    optional<char> next;
+    if (i < size - 1) {
+      next = cl[i + 1];
+    }
+
+    switch(state) {
+    case NORMAL:
+      if (isspace(c)) {
+        if (not arg.empty()) {
+          ret.push_back(arg);
+          arg.clear();
+        }
+      } else if (c == '\'') {
+        state = SINGLE;
+      } else if (c == '"') {
+        state = DOUBLE;
+      } else if (c == '\\') {
+        if (not next) {
+          throw InputFailure(i, "Invalid escape sequence");
+        }
+        arg.push_back(*next);
+        ++i;
+      } else {
+        arg.push_back(c);
+      }
+      break;
+    case SINGLE:
+      if (c == '\'') {
+        state = NORMAL;
+      } else {
+        arg.push_back(c);
+      }
+      break;
+    case DOUBLE:
+      if (c == '"') {
+        state = NORMAL;
+      } else if (c == '\\') {
+        if (not next) {
+          throw InputFailure(i, "Invalid escape sequence");
+        }
+        arg.push_back(*next);
+        ++i;
+      } else {
+        arg.push_back(c);
+      }
+      break;
+    }
+  }
+
+  if (state == SINGLE) {
+    throw InputFailure(cl.size(), "Unterminated single quote");
+  }
+  if (state == DOUBLE) {
+    throw InputFailure(cl.size(), "Unterminated double quote");
+  }
+
+  if (not arg.empty()) {
+    ret.push_back(arg);
+  }
+
+  return ret;
 }
 
 namespace env {

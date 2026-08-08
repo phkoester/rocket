@@ -82,7 +82,7 @@ fileSeparator() {
  * @param cl the command-line string
  * @return a vector of arguments
  */
-std::vector<std::string> makeArgs( std::string_view cl);
+std::vector<std::string> makeArgs(std::string_view cl);
 
 /**
  * Returns the system-dependent path separator.

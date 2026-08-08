@@ -25,8 +25,6 @@ using rocket::log::internal::LogSettings;
 
 // Local constants ------------------------------------------------------------------------------------------
 
-const string ROCKET_LOG_FMT = system::env::get<string>("ROCKET_LOG_FMT").value_or("");
-
 constexpr auto THREAD_WIDTH = 12;
 constexpr auto LOG_ID_WIDTH = 16;
 
@@ -81,10 +79,6 @@ struct Fmt {
   bool withExecTimes = true; // x, X
   bool useUtc = false; // z, Z
 
-  explicit Fmt(string_view fmt) {
-    set(fmt);
-  }
-
   void
   set(string_view fmt) {
     for (auto it = fmt.begin(), end = fmt.end(); it != end; ++it) {
@@ -120,7 +114,7 @@ struct Fmt {
   }
 };
 
-Fmt logFmt(ROCKET_LOG_FMT);
+Fmt logFmt;
 
 // #Out -----------------------------------------------------------------------------------------------------
 
@@ -733,6 +727,14 @@ logInit() {
     ROCKET_MUTEX_LOCK(logMutex);
     logOut.flushOnExit();
   }, true);
+
+  // Apply default log options from environment variable `ROCKET_LOG`
+  const string val = system::env::get<string>("ROCKET_LOG").value_or("");
+  const auto args = system::makeArgs(val);
+  if (not args.empty()) {
+    cl::CommandLine cl(CL_OPTIONS, {}, { .rocketOpts = false });
+    cl.parse(args);
+  }
 }
 
 /// @ThreadSafe

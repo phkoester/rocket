@@ -533,7 +533,7 @@ struct CommandLineConfig {
    * One or more usages, e.g. `{ "[OPTION]... FILE", "[OPTION]... PATTERN FILE" }`. If this is empty, no
    * usage hint is ever printed.
    */
-  std::vector<std::string> usages;
+  std::vector<std::string> usages = {};
   /// Prolog text to be displayed when the `--help` option is supplied.
   std::optional<std::string> prolog {}; // NOLINT
   /// Epilog text to be displayed when the `--help` option is supplied.
