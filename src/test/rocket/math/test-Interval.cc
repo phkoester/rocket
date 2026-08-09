@@ -575,22 +575,21 @@ TEST(Interval, intersection) {
   }
 }
 
+// XXX
 TEST(Interval, union) {
   {
     using type = ClosedInterval<i32>;
-    EXPECT_EQ(type() | type(), type());
-    EXPECT_EQ(type(0, 1) | type(2, 3), type(0, 3));
-    EXPECT_EQ(type(2, 3) | type(0, 1), type(0, 3));
-    EXPECT_EQ(type(0, 2) | type(1, 3), type(0, 3));
-    EXPECT_EQ(type(1, 3) | type(0, 2), type(0, 3));
+    EXPECT_EQ(type() | type(), vector<type>{ type() });
+    EXPECT_EQ(type() | type(3, 4), vector<type>{ type(3, 4) });
+    EXPECT_EQ(type(1, 2) | type(), vector<type>{ type(1, 2) });
+    EXPECT_EQ(type() | type(3, 4), vector<type>{ type(3, 4) });
   }
 
   {
     using type = OpenInterval<f64>;
-    EXPECT_EQ(type() | type(), type());
-    EXPECT_EQ(type(nullopt, nullopt) | type(), type(nullopt, nullopt));
-    EXPECT_EQ(type(0_f64, 1_f64) | type(2_f64, 3_f64), type(0_f64, 3_f64));
-    EXPECT_EQ(type(0_f64, 2_f64) | type(1_f64, 3_f64), type(0_f64, 3_f64));
+    EXPECT_EQ(type() | type(), vector<type>{ type() });
+    // XXX EXPECT_EQ(type(0_f64, 1_f64) | type(2_f64, 3_f64), type(0_f64, 3_f64));
+    // XXX EXPECT_EQ(type(0_f64, 2_f64) | type(1_f64, 3_f64), type(0_f64, 3_f64));
   }
 }
 

@@ -363,24 +363,6 @@ struct IntervalTraits<LeftClosed<T>, RightOpen<T>> {
   }
 };
 
-// Functions ................................................................................................
-
-template<typename Left, typename Right>
-constexpr std::pair<typename Left::BoundType, typename Right::BoundType>
-intersectionImpl(
-    typename Left::BoundType lhsA, typename Right::BoundType lhsB,
-    typename Left::BoundType rhsA, typename Right::BoundType rhsB) {
-  return { Left::leftMax(lhsA, rhsA), Right::rightMin(lhsB, rhsB) };
-}
-
-template<typename Left, typename Right>
-constexpr std::pair<typename Left::BoundType, typename Right::BoundType>
-unionImpl(
-    typename Left::BoundType lhsA, typename Right::BoundType lhsB,
-    typename Left::BoundType rhsA, typename Right::BoundType rhsB) {
-  return { Left::leftMin(lhsA, rhsA), Right::rightMax(lhsB, rhsB) };
-}
-
 } // namespace internal
 
 // #Interval ------------------------------------------------------------------------------------------------
@@ -514,14 +496,15 @@ operator==(const Interval<Left, Right>& lhs, const Interval<Left, Right>& rhs) {
  * @tparam Right the type of the upper-bound traits
  * @param_lhs
  * @param_rhs
- * @return a #rocket::math::Interval representing the intersection of @p lhs and @p rhs if such intersection
- *   exists, otherwise an empty interval
+ * @return an interval representing the intersection of @p lhs and @p rhs if such intersection exists,
+ *   otherwise an empty interval
  */
 template<typename Left, typename Right>
 Interval<Left, Right>
 operator&(const Interval<Left, Right>& lhs, const Interval<Left, Right>& rhs) {
-  auto pair = internal::intersectionImpl<Left, Right>(lhs.a, lhs.b, rhs.a, rhs.b);
-  return Interval<Left, Right>(pair.first, pair.second);
+  const auto a = Left::leftMax(lhs.a, rhs.a);
+  const auto b = Right::rightMin(lhs.b, rhs.b);
+  return Interval<Left, Right>(a, b);
 }
 
 /**
@@ -542,37 +525,30 @@ operator&=(const Interval<Left, Right>& lhs, const Interval<Left, Right>& rhs) {
 /**
  * Returns the union of the intervals @p lhs and @p rhs.
  *
- * Two disjoint intervals are merged into one interval, e.g. @f$[5,7] \cup [1,3] = [1,7]@f$. This is not
- * mathematically correct, but useful in many cases. To handle disjoint intervals specifically, test for an
- * intersection beforehands using `operator&`.
+ * If the intervals @p lhs and @p rhs are disjoint, a vector with two elements is returned. Otherwise, a
+ * vector with one element is returned.
  *
  * @tparam Left the type of the lower-bound traits
  * @tparam Right the type of the upper-bound traits
  * @param_lhs
  * @param_rhs
- * @return a #rocket::math::Interval representing the union of @p lhs and @p rhs if such union exists,
- *   otherwise an empty interval
+ * @return a vector of intervals representing the union of @p lhs and @p rhs
  */
 template<typename Left, typename Right>
-Interval<Left, Right>
+std::vector<Interval<Left, Right>>
 operator|(const Interval<Left, Right>& lhs, const Interval<Left, Right>& rhs) {
-  auto pair = internal::unionImpl<Left, Right>(lhs.a, lhs.b, rhs.a, rhs.b);
-  return Interval<Left, Right>(pair.first, pair.second);
-}
-
-/**
- * `operator|=` for type #rocket::math::Interval.
- *
- * @tparam Left the type of the lower-bound traits
- * @tparam Right the type of the upper-bound traits
- * @param_lhs
- * @param_rhs
- * @return @p lhs
- */
-template<typename Left, typename Right>
-inline Interval<Left, Right>&
-operator|=(const Interval<Left, Right>& lhs, const Interval<Left, Right>& rhs) {
-  return lhs = lhs | rhs;
+  if (lhs.empty()) {
+    return { rhs };
+  }
+  if (rhs.empty()) {
+    return { lhs };
+  }
+  if ((lhs & rhs).empty()) {
+    return { lhs, rhs };
+  }
+  const auto a = Left::leftMin(lhs.a, rhs.a);
+  const auto b = Right::rightMax(lhs.b, rhs.b);
+  return { Interval<Left, Right>(a, b) };
 }
 
 // Interval types -------------------------------------------------------------------------------------------
