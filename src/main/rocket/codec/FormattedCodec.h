@@ -362,14 +362,14 @@ struct FormattedConsumerImpl<DataType::Interval, T> {
     }
 
     out.write(Left::Symbol);
-    const auto optA = option(val.a);
+    const auto optA = optionalOf(val.a);
     if (not optA) {
       out.write("-∞");
     } else {
       FormattedConsumerImpl<ADataType, A>().consume(val.a, out, config);
     }
     out.write(',');
-    const auto optB = option(val.b);
+    const auto optB = optionalOf(val.b);
     if (not optB) {
       out.write("∞");
     } else {

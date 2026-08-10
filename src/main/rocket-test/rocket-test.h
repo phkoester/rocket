@@ -116,7 +116,7 @@ extern const bool TEST_TERMINAL;
  *
  * @param name the name of the executable (without the extension)
  * @return the path to the executable
- * @throws #rocket::InvalidState if the executable is not found
+ * @throw #rocket::InvalidState if the executable is not found
  */
 std::filesystem::path testExecutable(std::string_view name);
 
@@ -125,7 +125,7 @@ std::filesystem::path testExecutable(std::string_view name);
  *
  * @param name the name of the source
  * @return the path to the source
- * @throws #rocket::InvalidState if the source is not found
+ * @throw #rocket::InvalidState if the source is not found
  */
 std::filesystem::path testSource(std::string_view name);
 

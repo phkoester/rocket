@@ -44,7 +44,7 @@ asSpan(const T& val) {
 }
 
 /**
- * The `option` function has several overloads to work with values either of type @p T or `std::optional<T>`.
+ * The `optionalOf` function has two overloads to work with values either of type @p T or `std::optional<T>`.
  *
  * @tparam T the value type
  * @param val a value; either of type @p T or `std::optional<T>`
@@ -53,26 +53,12 @@ asSpan(const T& val) {
  */
 template<typename T>
 constexpr std::optional<T>
-option(const T& val) {
-  return std::optional<T>(val);
-}
-
-/**
- * The `option` function has several overloads to work with values either of type @p T or `std::optional<T>`.
- *
- * @tparam T the value type
- * @param val a value; either of type @p T or `std::optional<T>`
- * @return an optional value. If the value is to be taken from a `std::optional<T>`, that optional is
- *    returned directly, otherwise a nonnull optional
- */
-template<typename T>
-constexpr std::optional<T>&
-option(std::optional<T>& val) {
+optionalOf(const T& val) {
   return val;
 }
 
 /**
- * The `option` function has several overloads to work with values either of type @p T or `std::optional<T>`.
+ * The `optionalOf` function has two overloads to work with values either of type @p T or `std::optional<T>`.
  *
  * @tparam T the value type
  * @param val a value; either of type @p T or `std::optional<T>`
@@ -81,26 +67,12 @@ option(std::optional<T>& val) {
  */
 template<typename T>
 constexpr const std::optional<T>&
-option(const std::optional<T>& val) {
+optionalOf(const std::optional<T>& val) {
   return val;
 }
 
 /**
- * The `value` function has several overloads to work with values either of type @p T or `std::optional<T>`.
- *
- * @tparam T the value type
- * @param val a value; either of type @p T or `std::optional<T>`
- * @return a value. If the value is to be taken from a `std::optional<T>`, that optional is dereferenced,
- *   otherwise the value is returned directly
- */
-template<typename T>
-constexpr T&
-value(T& val) {
-  return val;
-}
-
-/**
- * The `value` function has several overloads to work with values either of type @p T or `std::optional<T>`.
+ * The `valueOf` function has two overloads to work with values either of type @p T or `std::optional<T>`.
  *
  * @tparam T the value type
  * @param val a value; either of type @p T or `std::optional<T>`
@@ -109,36 +81,23 @@ value(T& val) {
  */
 template<typename T>
 constexpr const T&
-value(const T& val) {
+valueOf(const T& val) {
   return val;
 }
 
 /**
- * The `value` function has several overloads to work with values either of type @p T or `std::optional<T>`.
+ * The `valueOf` function has two overloads to work with values either of type @p T or `std::optional<T>`.
  *
  * @tparam T the value type
  * @param val a value; either of type @p T or `std::optional<T>`
  * @return a value. If the value is to be taken from a `std::optional<T>`, that optional is dereferenced,
  *   otherwise the value is returned directly
- */
-template<typename T>
-constexpr T&
-value(std::optional<T>& val) {
-  return *val;
-}
-
-/**
- * The `value` function has several overloads to work with values either of type @p T or `std::optional<T>`.
- *
- * @tparam T the value type
- * @param val a value; either of type @p T or `std::optional<T>`
- * @return a value. If the value is to be taken from a `std::optional<T>`, that optional is dereferenced,
- *   otherwise the value is returned directly
+ * @throw std::bad_optional_access if the value is not present
  */
 template<typename T>
 constexpr const T&
-value(const std::optional<T>& val) {
-  return *val;
+valueOf(const std::optional<T>& val) {
+  return val.value();
 }
 
 } // namespace rocket

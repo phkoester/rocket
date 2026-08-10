@@ -556,7 +556,7 @@ TEST(Interval, OpenIntervalF32) {
 
 // Operators ................................................................................................
 
-TEST(Interval, intersection) {
+TEST(Interval, operatorBitWiseAnd) {
   {
     using type = ClosedInterval<i32>;
     EXPECT_EQ(type() & type(), type());
@@ -576,7 +576,7 @@ TEST(Interval, intersection) {
 }
 
 // XXX
-TEST(Interval, union) {
+TEST(Interval, operatorBitWiseOr) {
   {
     using type = ClosedInterval<i32>;
     EXPECT_EQ(type() | type(), vector<type>{ type() });

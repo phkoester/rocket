@@ -57,7 +57,7 @@ struct CodePoint {
    * @ctor
    *
    * @param val a `char` value. This must be an ASCII character in the range @f$[0,127]@f$
-   * @throws #rocket::InvalidArgument if @p val is not an ASCII character in the range @f$[0,127]@f$
+   * @throw #rocket::InvalidArgument if @p val is not an ASCII character in the range @f$[0,127]@f$
    */
   constexpr CodePoint(char val) : // NOLINT
     val_(val) {
@@ -68,7 +68,7 @@ struct CodePoint {
    * @ctor
    *
    * @param val a `char32` value. This must be a valid code-point value
-   * @throws #rocket::InvalidArgument if @p val is not a valid code-point value
+   * @throw #rocket::InvalidArgument if @p val is not a valid code-point value
    *
    * @see #rocket::unicode::CodePoint::valid
    */
