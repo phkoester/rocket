@@ -591,13 +591,50 @@ TEST(Interval, operatorBitWiseOr) {
     EXPECT_EQ(type() | type(3, 4), vector<type>{ type(3, 4) });
     EXPECT_EQ(type(1, 2) | type(), vector<type>{ type(1, 2) });
     EXPECT_EQ(type() | type(3, 4), vector<type>{ type(3, 4) });
+    EXPECT_EQ(type(1, 2) | type(4, 5), (vector<type>{ type(1, 2), type(4, 5) }));
+    EXPECT_EQ(type(4, 5) | type(1, 2), (vector<type>{ type(1, 2), type(4, 5) }));
+    EXPECT_EQ(type(1, 2) | type(3, 4), (vector<type>{ type(1, 4) }));
+    EXPECT_EQ(type(3, 4) | type(1, 2), (vector<type>{ type(1, 4) }));
   }
 
   {
     using type = OpenInterval<f64>;
     EXPECT_EQ(type() | type(), vector<type>{ type() });
-    // XXX EXPECT_EQ(type(0_f64, 1_f64) | type(2_f64, 3_f64), type(0_f64, 3_f64));
-    // XXX EXPECT_EQ(type(0_f64, 2_f64) | type(1_f64, 3_f64), type(0_f64, 3_f64));
+    EXPECT_EQ(type() | type(1_f64, 2_f64), (vector<type> { type(1_f64, 2_f64) }));
+    EXPECT_EQ(type(1_f64, 2_f64) | type(), (vector<type> { type(1_f64, 2_f64) }));
+    EXPECT_EQ(
+      type(1_f64, 2_f64) | type(2_f64, 3_f64),
+      (vector<type> { type(1_f64, 2_f64), type(2_f64, 3_f64) }));
+  }
+
+  {
+    using type = LeftOpenInterval<f64>;
+    EXPECT_EQ(type() | type(), vector<type>{ type() });
+    EXPECT_EQ(type() | type(1_f64, 2_f64), (vector<type> { type(1_f64, 2_f64) }));
+    EXPECT_EQ(type(1_f64, 2_f64) | type(), (vector<type> { type(1_f64, 2_f64) }));
+    EXPECT_EQ(
+      type(1_f64, 2_f64) | type(2_f64, 3_f64),
+      (vector<type> { type(1_f64, 3_f64) }));
+  }
+
+  {
+    using type = RightOpenInterval<f64>;
+    EXPECT_EQ(type() | type(), vector<type>{ type() });
+    EXPECT_EQ(type() | type(1_f64, 2_f64), (vector<type> { type(1_f64, 2_f64) }));
+    EXPECT_EQ(type(1_f64, 2_f64) | type(), (vector<type> { type(1_f64, 2_f64) }));
+    EXPECT_EQ(
+      type(1_f64, 2_f64) | type(2_f64, 3_f64),
+      (vector<type> { type(1_f64, 3_f64) }));
+  }
+
+  {
+    using type = ClosedInterval<f64>;
+    EXPECT_EQ(type() | type(), vector<type>{ type() });
+    EXPECT_EQ(type() | type(1_f64, 2_f64), (vector<type> { type(1_f64, 2_f64) }));
+    EXPECT_EQ(type(1_f64, 2_f64) | type(), (vector<type> { type(1_f64, 2_f64) }));
+    EXPECT_EQ(
+      type(1, 2) | type(3, 4),
+      (vector<type> { type(1, 2), type(3, 4) }));
   }
 }
 

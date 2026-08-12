@@ -537,17 +537,59 @@ operator&=(const Interval<Left, Right>& lhs, const Interval<Left, Right>& rhs) {
 template<typename Left, typename Right>
 std::vector<Interval<Left, Right>>
 operator|(const Interval<Left, Right>& lhs, const Interval<Left, Right>& rhs) {
+  // If one interval is empty, return the other one
   if (lhs.empty()) {
     return { rhs };
   }
   if (rhs.empty()) {
     return { lhs };
   }
-  if ((lhs & rhs).empty()) {
-    return { lhs, rhs };
-  }
+
+  // Sort intervals
+
   const auto a = Left::leftMin(lhs.a, rhs.a);
   const auto b = Right::rightMax(lhs.b, rhs.b);
+
+  const auto* pLhs = &lhs;
+  const auto* pRhs = &rhs;
+
+  if (a == rhs.a) {
+    std::swap(pLhs, pRhs);
+  }
+
+  // Find out if the intervals are adjacent
+
+  bool adjacent = false;
+
+  if constexpr (IsInteger<typename Right::Type>) {
+    if constexpr (Left::IsClosed && Right::IsClosed) {
+      // Integer [a,b]
+      adjacent = pRhs->a == pLhs->b + 1;
+    } else if constexpr (Left::IsClosed ^ Right::IsClosed) {
+      // Integer [a,b) or (a,b]
+      adjacent = pRhs->a == pLhs->b;
+    }
+    // Open integer intervals are never adjacent
+  } else {
+    if constexpr (Left::IsClosed ^ Right::IsClosed) {
+      // Float [a,b) or (a,b]
+      adjacent = pRhs->a == pLhs->b;
+    }
+    // Closed and open float intervals are never adjacent
+  }
+
+  if (adjacent) {
+    return { Interval<Left, Right>(a, b) };
+  }
+
+  // If there is no intersection, return two sorted intervals
+
+  if ((lhs & rhs).empty()) {
+    return { *pLhs, *pRhs };
+  }
+
+  // Done
+
   return { Interval<Left, Right>(a, b) };
 }
 
