@@ -27,6 +27,12 @@ TEST(Interval, ClosedIntervalI32) {
   EXPECT_EQ(val.cardinality(), 0);
   EXPECT_EQ(val.size(), 0);
 
+  EXPECT_FALSE(val.contains(-2));
+  EXPECT_FALSE(val.contains(-1));
+  EXPECT_FALSE(val.contains(0));
+  EXPECT_FALSE(val.contains(1));
+  EXPECT_FALSE(val.contains(2));
+
   val = type(0, 0);
   EXPECT_FALSE(val.empty());
   EXPECT_EQ(val.cardinality(), 1);
@@ -560,6 +566,8 @@ TEST(Interval, operatorBitWiseAnd) {
   {
     using type = ClosedInterval<i32>;
     EXPECT_EQ(type() & type(), type());
+    EXPECT_EQ(type(0, 1) & type(), type());
+    EXPECT_EQ(type() & type(2, 3), type());
     EXPECT_EQ(type(0, 1) & type(2, 3), type());
     EXPECT_EQ(type(2, 3) & type(0, 1), type());
     EXPECT_EQ(type(0, 2) & type(1, 3), type(1, 2));

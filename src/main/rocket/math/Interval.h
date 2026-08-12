@@ -526,7 +526,7 @@ operator&=(const Interval<Left, Right>& lhs, const Interval<Left, Right>& rhs) {
  * Returns the union of the intervals @p lhs and @p rhs.
  *
  * If the intervals @p lhs and @p rhs are disjoint, a vector with two elements is returned. Otherwise, a
- * vector with one element is returned.
+ * vector with one element is returned, which is possibly empty.
  *
  * @tparam Left the type of the lower-bound traits
  * @tparam Right the type of the upper-bound traits
