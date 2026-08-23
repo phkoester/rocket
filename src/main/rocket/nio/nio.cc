@@ -177,7 +177,7 @@ FileSink::close()
   flush(); // NOLINT
 
   const auto result = fclose(file_); // NOLINT(*-owning-memory)
-  // #file_ is invalid now, so we don't call #ferror on it
+  // `file_` is invalid now, so we don't call `ferror` on it
   LOG("fclose=" << result);
   status_.bad = true;
   file_ = nullptr;
@@ -278,7 +278,7 @@ StreamSink::close() {
   flush(); // NOLINT
 
   status_.bad = true;
-  // A #std::ostream can't close, it can only be destroyed
+  // A `std::ostream` can't close, it can only be destroyed
   return true;
 }
 
@@ -922,7 +922,7 @@ StreamSource::close() {
   }
 
   status_.bad = true;
-  // A #std::istream can't close, it can only be destroyed
+  // A `std::istream` can't close, it can only be destroyed
   return true;
 }
 
@@ -947,8 +947,6 @@ StreamSource::read(span<u8> out) {
   // If less bytes than `out.size()` are read, `bad`, `fail`, and `eof` all remain `false`
   is_.read(reinterpret_cast<char*>(out.data()), safe<streamsize>(out.size()));
   auto count = is_.gcount();
-  // #std::istream::readsome didn't work in Windows with a #std::ifstream
-  // u64 ret = is_.readsome(out.data(), out.size());
   LOG("count=" << count << ", out.size=" << out.size() << ", bad=" << is_.bad() << ", fail=" << is_.fail() << ", eof=" << is_.eof());
   status_.bad = is_.bad();
   status_.eof = is_.eof();
@@ -994,7 +992,7 @@ StreamSource::tell() {
     return NPOS;
   }
 
-  // Use the impl. from #rocket::io
+  // Use the `tellg` implementation from `rocket::io`
   auto result = io::tellg(is_);
   LOG("tellg=" << result << ", bad=" << is_.bad() << ", fail=" << is_.fail() << ", eof=" << is_.eof());
   status_.bad = is_.bad();
@@ -1002,10 +1000,10 @@ StreamSource::tell() {
   if (result < 0) {
     return NPOS;
   }
-  return static_cast<u64>(result); // #boost::safe_numerics::safe doesn't work with #std::ios::pos_type
+  return static_cast<u64>(result); // `boost::safe_numerics::safe` doesn't work with `std::ios::pos_type`
 }
 
-// #StringSource --------------------------------------------------------------------------------------------
+// `StringSource` -------------------------------------------------------------------------------------------
 
 StringSource::StringSource(string_view in) :
   in_(in) {

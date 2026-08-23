@@ -105,7 +105,7 @@ struct ViewImpl<std::vector<T, Alloc>> {
 
 } // namespace internal
 
-// #Ordering, #CommonOrdering -------------------------------------------------------------------------------
+// `Ordering`, `CommonOrdering` -----------------------------------------------------------------------------
 
 /**
  * Yields the ordering of the given type @p T.
@@ -123,7 +123,7 @@ using Ordering = decltype(std::declval<T>() <=> std::declval<T>());
 template<typename... T>
 using CommonOrdering = Ordering<std::tuple<T...>>;
 
-// #Largest -------------------------------------------------------------------------------------------------
+// `Largest` ------------------------------------------------------------------------------------------------
 
 /**
  * Yields the largest type from the given types @p T.
@@ -133,7 +133,7 @@ using CommonOrdering = Ordering<std::tuple<T...>>;
 template<typename... T>
 using Largest = typename internal::LargestImpl<T...>::Type; ///< @type_alias
 
-// #Purge ---------------------------------------------------------------------------------------------------
+// `Purge` --------------------------------------------------------------------------------------------------
 
 /**
  * Removes `const`, `volatile`, and reference from the type @p T.
@@ -143,7 +143,7 @@ using Largest = typename internal::LargestImpl<T...>::Type; ///< @type_alias
 template<typename T>
 using Purge = internal::PurgeImpl<T>::type;
 
-// #View ----------------------------------------------------------------------------------------------------
+// `View` ---------------------------------------------------------------------------------------------------
 
 /**
  * Yields a view type for the given type @p T, or @p T itself if there is no defined view type.
@@ -153,7 +153,7 @@ using Purge = internal::PurgeImpl<T>::type;
 template<typename T>
 using View = typename internal::ViewImpl<T>::Type;
 
-// #Char ----------------------------------------------------------------------------------------------------
+// `Char` ---------------------------------------------------------------------------------------------------
 
 template<u32 N> struct Char;
 
@@ -173,7 +173,7 @@ struct Char<4> {
   using Type = char32; ///< @type_alias
 };
 
-// #Int -----------------------------------------------------------------------------------------------------
+// `Int` ----------------------------------------------------------------------------------------------------
 
 template<u32 N> struct Int;
 
@@ -219,7 +219,7 @@ struct Int<16> {
 };
 #endif
 
-// #Uint ----------------------------------------------------------------------------------------------------
+// `Uint` ---------------------------------------------------------------------------------------------------
 
 template<u32 N> struct Uint;
 
@@ -265,7 +265,7 @@ struct Uint<16> {
 };
 #endif
 
-// #Float ---------------------------------------------------------------------------------------------------
+// `Float` --------------------------------------------------------------------------------------------------
 
 template<u32 N> struct Float;
 

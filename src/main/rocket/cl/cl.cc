@@ -81,7 +81,7 @@ expandArgs(const vector<string>& args) {
 
 namespace rocket::cl {
 
-// #CommandLine ---------------------------------------------------------------------------------------------
+// `CommandLine` --------------------------------------------------------------------------------------------
 
 CommandLine::CommandLine(
   const vector<Option>& opts,
@@ -98,8 +98,8 @@ CommandLine::CommandLine(
     opts_.insert(opts_.begin(), logOpts.begin(), logOpts.end());
   }
 
-  // NOTE: Because we use string views and pointers in the maps, #opts_ and #params_ may never be changed
-  //       from this point
+  // NOTE: Because we use string views and pointers in the maps, `opts_` and `params_` may never be changed
+  //       from this point on
 
   // Validate options, populate maps
 
@@ -133,7 +133,7 @@ CommandLine::CommandLine(
 
 void
 CommandLine::applyOpt(const Option& opt, bool nameFlag, const optional<string>& value) {
-  // Don't use #ROCKET_CHECK here for cleaner exception messages
+  // Don't use `ROCKET_CHECK` here for cleaner exception messages
 
   if (opt.takesValue && not value) {
     ROCKET_FAIL("Missing value for option `{}`", name(opt, nameFlag));
@@ -169,7 +169,7 @@ CommandLine::applyOpt(const Option& opt, bool nameFlag, const optional<string>& 
 
 void
 CommandLine::applyParam(const Parameter& param, const string& value) {
-  // Don't use #ROCKET_CHECK here for cleaner exception messages
+  // Don't use `ROCKET_CHECK` here for cleaner exception messages
 
   try {
     if (param.choices && not param.choices->contains(value)) {
@@ -371,7 +371,7 @@ CommandLine::parse(const vector<string>& args, nio::Sink& out, nio::Sink& err, b
           ROCKET_FAIL("Parameter `{}` is required at least {}", param.name, str::times(param.minOccurs));
         }
       }
-      // No need to check #maxOccurs here; this is handled already
+      // No need to check `maxOccurs` here; this is handled already
     }
 
     return true;
@@ -582,7 +582,7 @@ CommandLine::printVersion(nio::Sink& out, bool exit) {
 
 void
 CommandLine::validate(string_view name, bool nameFlag) {
-  // Don't use #ROCKET_CHECK here for cleaner exception messages
+  // Don't use `ROCKET_CHECK` here for cleaner exception messages
 
   const char* what = nameFlag ? "option name" : "option short name";
   if (name.empty()) {
@@ -593,7 +593,7 @@ CommandLine::validate(string_view name, bool nameFlag) {
   }
 }
 
-// #CommandLine::ParserState --------------------------------------------------------------------------------
+// `CommandLine::ParserState` -------------------------------------------------------------------------------
 
 void
 CommandLine::ParserState::eval() {

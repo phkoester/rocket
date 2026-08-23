@@ -518,7 +518,7 @@ operator&(const Interval<Left, Right>& lhs, const Interval<Left, Right>& rhs) {
  */
 template<typename Left, typename Right>
 inline Interval<Left, Right>&
-operator&=(const Interval<Left, Right>& lhs, const Interval<Left, Right>& rhs) {
+operator&=(Interval<Left, Right>& lhs, const Interval<Left, Right>& rhs) {
   return lhs = lhs & rhs;
 }
 
@@ -526,7 +526,7 @@ operator&=(const Interval<Left, Right>& lhs, const Interval<Left, Right>& rhs) {
  * Returns the union of the intervals @p lhs and @p rhs.
  *
  * If the intervals @p lhs and @p rhs are disjoint, a vector with two elements is returned. Otherwise, a
- * vector with one element is returned, which is possibly empty.
+ * vector with one element is returned, which may be empty.
  *
  * @tparam Left the type of the lower-bound traits
  * @tparam Right the type of the upper-bound traits
@@ -538,6 +538,7 @@ template<typename Left, typename Right>
 std::vector<Interval<Left, Right>>
 operator|(const Interval<Left, Right>& lhs, const Interval<Left, Right>& rhs) {
   // If one interval is empty, return the other one
+
   if (lhs.empty()) {
     return { rhs };
   }
@@ -557,7 +558,7 @@ operator|(const Interval<Left, Right>& lhs, const Interval<Left, Right>& rhs) {
     std::swap(pLhs, pRhs);
   }
 
-  // Find out if the intervals are adjacent
+  // Find out if the intervals are adjacent. If they are, collapse them into a single interval
 
   bool adjacent = false;
 
@@ -588,7 +589,7 @@ operator|(const Interval<Left, Right>& lhs, const Interval<Left, Right>& rhs) {
     return { *pLhs, *pRhs };
   }
 
-  // Done
+  // There is an intersection: collaps the two intervals into a single interval
 
   return { Interval<Left, Right>(a, b) };
 }
@@ -626,6 +627,114 @@ using LeftOpenInterval = Interval<internal::LeftOpen<T>, internal::RightClosed<T
  */
 template<typename T>
 using RightOpenInterval = Interval<internal::LeftClosed<T>, internal::RightOpen<T>>;
+
+// #Intervals -----------------------------------------------------------------------------------------------
+
+template<typename Left, typename Right>
+using Intervals = std::vector<Interval<Left, Right>>;
+
+/**
+ * Returns the intersection of the interval vector @p val.
+ *
+ * @tparam Left the type of the lower-bound traits
+ * @tparam Right the type of the upper-bound traits
+ * @param val the vector of intervals, which may contain an arbitrary number of arbitrary intervals, empty or
+ *   nonempty
+ * @return an interval representing the intersection of all elements of @p val if such intersection exists,
+ *   otherwise an empty interval
+ */
+template<typename Left, typename Right>
+Interval<Left, Right>
+intersectionOf(const Intervals<Left, Right>& val) {
+  using Type = Interval<Left, Right>;
+
+  std::optional<Type> ret;
+
+  for (const auto& elem : val) {
+    if (not ret) {
+      ret = elem;
+    } else {
+      *ret &= elem;
+    }
+    if (ret && ret->empty()) {
+      return Type();
+    }
+  }
+
+  return ret.value_or(Type());
+}
+
+/**
+ * Returns the union of the interval vector @p val.
+ *
+ * @tparam Left the type of the lower-bound traits
+ * @tparam Right the type of the upper-bound traits
+ * @param val the vector of intervals, which may contain an arbitrary number of arbitrary intervals, empty or
+ *   nonempty
+ * @return a vector of intervals representing the union of all elements of @p val. The elements in the vector
+ *   are sorted by the lower bound, adjacent intervals are collapsed into a single interval
+ */
+template<typename Left, typename Right>
+Intervals<Left, Right>
+unionOf(const Intervals<Left, Right>& val) {
+  using Type = Interval<Left, Right>;
+
+  Intervals<Left, Right> sorted;
+  sorted.reserve(val.size());
+  for (const auto& elem : val) {
+    if (not elem.empty()) {
+      sorted.push_back(elem);
+    }
+  }
+
+  std::sort(sorted.begin(), sorted.end(), [](const Type& lhs, const Type& rhs) {
+    // Return `true` iff `lhs` starts strictly left of `rhs`
+    return Left::leftMin(lhs.a, rhs.a) == lhs.a && lhs.a != rhs.a;
+  });
+
+  Intervals<Left, Right> ret;
+
+  for (const auto& elem : sorted) {
+    if (ret.empty()) {
+      ret.push_back(elem);
+      continue;
+    }
+
+    // Union with the current rightmost interval. `operator|` returns either one merged interval (overlap or
+    // adjacent) or two sorted intervals (disjoint). Replace the rightmost with that result
+    auto u = ret.back() | elem;
+    ret.pop_back();
+    ret.insert(ret.end(), u.begin(), u.end());
+  }
+
+  return ret;
+}
+
+// Intervals types ------------------------------------------------------------------------------------------
+
+/**
+ * A vector of #rocket::math::ClosedInterval%s.
+ */
+template<typename T>
+using ClosedIntervals = Intervals<internal::LeftClosed<T>, internal::RightClosed<T>>;
+
+/**
+ * A vector of #rocket::math::OpenInterval%s.
+ */
+template<typename T>
+using OpenIntervals = Intervals<internal::LeftOpen<T>, internal::RightOpen<T>>;
+
+/**
+ * A vector of #rocket::math::LeftOpenInterval%s.
+ */
+template<typename T>
+using LeftOpenIntervals = Intervals<internal::LeftOpen<T>, internal::RightClosed<T>>;
+
+/**
+ * A vector of #rocket::math::RightOpenInterval%s.
+ */
+template<typename T>
+using RightOpenIntervals = Intervals<internal::LeftClosed<T>, internal::RightOpen<T>>;
 
 } // namespace rocket::math
 

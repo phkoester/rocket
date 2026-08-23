@@ -173,7 +173,7 @@ whatExceptionPtr(nio::Sink& out, u64 level, const exception_ptr& ptr) { // NOLIN
 
 namespace rocket {
 
-// #InvalidArgument -----------------------------------------------------------------------------------------
+// `InvalidArgument` ----------------------------------------------------------------------------------------
 
 InvalidArgument::InvalidArgument(
     string_view name,
@@ -183,7 +183,7 @@ InvalidArgument::InvalidArgument(
     Exception(fmt::format("Parameter `{}`: {}", name, msg), sl, st),
     Base(str::message::withSourceLocation(Exception::message(), Exception::sourceLocation())) {}
 
-// #InvalidState --------------------------------------------------------------------------------------------
+// `InvalidState` -------------------------------------------------------------------------------------------
 
 InvalidState::InvalidState(
     string_view msg,
@@ -192,7 +192,7 @@ InvalidState::InvalidState(
     Exception(msg, sl, st),
     Base(str::message::withSourceLocation(Exception::message(), Exception::sourceLocation())) {}
 
-// #Overflow ------------------------------------------------------------------------------------------------
+// `Overflow` -----------------------------------------------------------------------------------------------
 
 Overflow::Overflow(
   const type_info& type,
@@ -202,7 +202,7 @@ Overflow::Overflow(
   Exception(str::message::overflow(type, msg), sl, st),
   Base(str::message::withSourceLocation(Exception::message(), Exception::sourceLocation())) {}
 
-// #Underflow ------------------------------------------------------------------------------------------------
+// `Underflow` ----------------------------------------------------------------------------------------------
 
 Underflow::Underflow(
   const type_info& type,

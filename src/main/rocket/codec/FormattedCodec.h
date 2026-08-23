@@ -615,12 +615,12 @@ struct FormattedProducerImpl<DataType::String, T> {
     std::basic_string<C> str(unicode::ConvertTo<C>::apply(unescaped));
     if constexpr (std::is_same_v<T, std::basic_string_view<C>>) {
       // Because both unescaping and Unicode-converting produce intermediate strings local to this function,
-      // decoding to #std::basic_string_view is a bit more involved. To make this possible, we store the
+      // decoding to `std::basic_string_view` is a bit more involved. To make this possible, we store the
       // intermediate string in the source so the decoded string view is valid for the lifetime of the source
       const auto& ref = in.store(std::move(str));
       val = ref;
     } else {
-      // #std::basic_string
+      // `std::basic_string`
       val = std::move(str);
     }
   }
@@ -986,7 +986,7 @@ struct FormattedProducerImpl<DataType::HourMinuteSecond, T> {
 
     const nanoseconds subseconds = readSubseconds(in);
 
-    // Finally, construct #hh_mm_ss
+    // Finally, construct `hh_mm_ss`
 
     Precision duration = duration_cast<Precision>(hours(h) + minutes(m) + seconds(s) + subseconds);
     if (neg) {
@@ -1150,7 +1150,7 @@ struct FormattedProducerImpl<DataType::ZonedTime, T> {
     TimeZone tz; // NOLINT
     FormattedProducerImpl<TimeZoneDataType, TimeZone>().produce(tz, in, config);
 
-    // Finally, construct the #zoned_time
+    // Finally, construct the `zoned_time`
 
     val = T(tz, tp);
   }

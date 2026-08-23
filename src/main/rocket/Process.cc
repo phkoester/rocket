@@ -141,7 +141,7 @@ setThreadName(std::string_view name) {
 
 const thread::id MAIN_THREAD_ID = this_thread::get_id();
 
-// #Process -------------------------------------------------------------------------------------------------
+// `Process` ------------------------------------------------------------------------------------------------
 
 // Some trickery to keep the ctor private
 inline Process makeProcess__() { return {}; }
@@ -226,14 +226,14 @@ Process::init(
     args_.emplace_back(argv[i]);
   }
 
-  // Register #onExit both for #std::exit and #std::quick_exit
+  // Register `onExit` both for `std::exit` and `std::quick_exit`
 
   std::atexit(onExit);
   std::at_quick_exit(onExit);
 
   inited_ = true;
 
-  // Set the terminate handler. This must be done AFTER setting #inited_ to `true`
+  // Set the terminate handler. This must be done AFTER setting `inited_` to `true`
 
   set_terminate(onTerminate);
 

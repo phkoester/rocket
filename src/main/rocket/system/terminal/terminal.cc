@@ -169,7 +169,7 @@ size(nio::Device& device) {
   }
 
 #ifdef ROCKET_OS_WINDOWS
-  // Use CSBI
+  // Windows: Use CSBI
 
   auto handle = getHandle(fd);
   ROCKET_ASSERT(handle != INVALID_HANDLE_VALUE);
@@ -179,7 +179,7 @@ size(nio::Device& device) {
   }
   return make_pair(safe<u64>(csbi.dwSize.X), safe<u64>(csbi.dwSize.Y));
 #else
-  // Use #ioctl
+  // Non-Windows: Use `ioctl`
 
   winsize ws; // NOLINT;
   const i32 res = ioctl(fd, TIOCGWINSZ, &ws); // NOLINT

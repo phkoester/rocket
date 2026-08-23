@@ -328,7 +328,7 @@ struct HashConsumerImpl<DataType::MemberRef, T, Hash> {
   template<typename C>
   u64
   consume(const T& val, const C& instance) {
-    // For #MemberRef, include the name in the hash
+    // For `MemberRef`, include the name in the hash
     u64 ret = Hash()(val.name());
     combine<false>(ret, HashConsumerImpl<ElemDataType, Elem, Hash>().consume(val.get(instance)));
     return ret;
@@ -342,7 +342,7 @@ struct HashConsumerImpl<DataType::VarRef, T, Hash> {
 
   u64
   consume(const T& val) {
-    // For #VarRef, don't include the name in the hash
+    // For `VarRef`, don't include the name in the hash
     return HashConsumerImpl<ElemDataType, Elem, Hash>().consume(val.get());
   }
 };

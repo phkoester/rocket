@@ -17,7 +17,7 @@ using namespace rocket::math;
 
 // #TEST ----------------------------------------------------------------------------------------------------
 
-// Integer ..................................................................................................
+// Interval: integer ........................................................................................
 
 TEST(Interval, ClosedIntervalI32) {
   using type = ClosedInterval<i32>;
@@ -428,7 +428,7 @@ TEST(Interval, OpenIntervalU32) {
   EXPECT_EQ(type(1, 0), type());
 }
 
-// Floating-point ...........................................................................................
+// Interval: floating-point .................................................................................
 
 TEST(Interval, ClosedIntervalF32) {
   using type = ClosedInterval<f32>;
@@ -560,7 +560,7 @@ TEST(Interval, OpenIntervalF32) {
   EXPECT_EQ(type(1_f32, 0_f32), type());
 }
 
-// Operators ................................................................................................
+// Interval: operators ......................................................................................
 
 TEST(Interval, operatorBitWiseAnd) {
   {
@@ -578,12 +578,11 @@ TEST(Interval, operatorBitWiseAnd) {
     using type = OpenInterval<f64>;
     EXPECT_EQ(type() & type(), type());
     EXPECT_EQ(type(nullopt, nullopt) & type(), type());
-    EXPECT_EQ(type(0_f64, 1_f64) & type(2_f64, 3_f64), type());
-    EXPECT_EQ(type(0_f64, 2_f64) & type(1_f64, 3_f64), type(1_f64, 2_f64));
+    EXPECT_EQ(type(0, 1) & type(2, 3), type());
+    EXPECT_EQ(type(0, 2) & type(1, 3), type(1, 2));
   }
 }
 
-// XXX
 TEST(Interval, operatorBitWiseOr) {
   {
     using type = ClosedInterval<i32>;
@@ -600,45 +599,45 @@ TEST(Interval, operatorBitWiseOr) {
   {
     using type = OpenInterval<f64>;
     EXPECT_EQ(type() | type(), vector<type>{ type() });
-    EXPECT_EQ(type() | type(1_f64, 2_f64), (vector<type> { type(1_f64, 2_f64) }));
-    EXPECT_EQ(type(1_f64, 2_f64) | type(), (vector<type> { type(1_f64, 2_f64) }));
+    EXPECT_EQ(type() | type(1, 2), (vector<type> { type(1, 2) }));
+    EXPECT_EQ(type(1, 2) | type(), (vector<type> { type(1, 2) }));
     EXPECT_EQ(
-      type(1_f64, 2_f64) | type(2_f64, 3_f64),
-      (vector<type> { type(1_f64, 2_f64), type(2_f64, 3_f64) }));
+      type(1, 2) | type(2, 3),
+      (vector<type> { type(1, 2), type(2, 3) }));
   }
 
   {
     using type = LeftOpenInterval<f64>;
     EXPECT_EQ(type() | type(), vector<type>{ type() });
-    EXPECT_EQ(type() | type(1_f64, 2_f64), (vector<type> { type(1_f64, 2_f64) }));
-    EXPECT_EQ(type(1_f64, 2_f64) | type(), (vector<type> { type(1_f64, 2_f64) }));
+    EXPECT_EQ(type() | type(1, 2), (vector<type> { type(1, 2) }));
+    EXPECT_EQ(type(1, 2) | type(), (vector<type> { type(1, 2) }));
     EXPECT_EQ(
-      type(1_f64, 2_f64) | type(2_f64, 3_f64),
-      (vector<type> { type(1_f64, 3_f64) }));
+      type(1, 2) | type(2, 3),
+      (vector<type> { type(1, 3) }));
   }
 
   {
     using type = RightOpenInterval<f64>;
     EXPECT_EQ(type() | type(), vector<type>{ type() });
-    EXPECT_EQ(type() | type(1_f64, 2_f64), (vector<type> { type(1_f64, 2_f64) }));
-    EXPECT_EQ(type(1_f64, 2_f64) | type(), (vector<type> { type(1_f64, 2_f64) }));
+    EXPECT_EQ(type() | type(1, 2), (vector<type> { type(1, 2) }));
+    EXPECT_EQ(type(1, 2) | type(), (vector<type> { type(1, 2) }));
     EXPECT_EQ(
-      type(1_f64, 2_f64) | type(2_f64, 3_f64),
-      (vector<type> { type(1_f64, 3_f64) }));
+      type(1, 2) | type(2, 3),
+      (vector<type> { type(1, 3) }));
   }
 
   {
     using type = ClosedInterval<f64>;
     EXPECT_EQ(type() | type(), vector<type>{ type() });
-    EXPECT_EQ(type() | type(1_f64, 2_f64), (vector<type> { type(1_f64, 2_f64) }));
-    EXPECT_EQ(type(1_f64, 2_f64) | type(), (vector<type> { type(1_f64, 2_f64) }));
+    EXPECT_EQ(type() | type(1, 2), (vector<type> { type(1, 2) }));
+    EXPECT_EQ(type(1, 2) | type(), (vector<type> { type(1, 2) }));
     EXPECT_EQ(
       type(1, 2) | type(3, 4),
       (vector<type> { type(1, 2), type(3, 4) }));
   }
 }
 
-// Format ...................................................................................................
+// Interval: format .........................................................................................
 
 TEST(Interval, ClosedIntervalFormat) {
   using type = ClosedInterval<i32>;
@@ -668,6 +667,59 @@ TEST(Interval, RightOpenIntervalF64Format) {
 
   EXPECT_EQ(fmt::format("{}", type()), "∅");
   EXPECT_EQ(fmt::format("{}", type(1, 1)), "∅");
+}
+
+// Intervals ................................................................................................
+
+TEST(Interval, IntervalsIntersectionOf) {
+  using type = i32;
+  using interval = OpenInterval<type>;
+  using intervals = vector<interval>;
+
+  EXPECT_EQ(
+    intersectionOf((intervals {})),
+    interval());
+  EXPECT_EQ(
+    intersectionOf((intervals { interval(), interval(1, 3) })),
+    interval());
+  EXPECT_EQ(
+    intersectionOf((intervals { interval(1, 3), interval() })),
+    interval());
+  EXPECT_EQ(
+    intersectionOf((intervals { interval(1, 3), interval(2, 4) })),
+    interval());
+  EXPECT_EQ(
+    intersectionOf((intervals { interval(1, 4), interval(2, 5) })),
+    interval(2, 4));
+  EXPECT_EQ(
+    intersectionOf((intervals { interval(1, 4), interval(2, 5), interval() })),
+    interval());
+  EXPECT_EQ(
+    intersectionOf((intervals { interval(1, 4), interval(2, 5), interval(7, 8) })),
+    interval());
+  EXPECT_EQ(
+    intersectionOf((intervals { interval(1, 10), interval(2, 9), interval(3, 8) })),
+    interval(3, 8));
+}
+
+TEST(Interval, IntervalsUnionOf) {
+  using type = i32;
+  using interval = ClosedInterval<type>;
+  using intervals = vector<interval>;
+
+  EXPECT_EQ(
+    unionOf((intervals {})),
+    (intervals {}));
+  EXPECT_EQ(
+    unionOf((intervals { interval(), interval() })),
+    (intervals {}));
+  EXPECT_EQ(
+    unionOf((intervals { interval(), interval(1, 3) })),
+    (intervals { interval(1, 3) }));
+  EXPECT_EQ(
+    unionOf((intervals { interval(1, 3), interval() })),
+    (intervals { interval(1, 3) }));
+  // XXX
 }
 
 // EOF

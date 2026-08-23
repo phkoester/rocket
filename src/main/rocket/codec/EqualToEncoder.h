@@ -406,7 +406,7 @@ struct EqualToConsumerImpl<DataType::MemberRef, T, Eq> {
   template<typename C>
   bool
   consume(const T& lhs, const T& rhs, const C& lhsInstance, const C& rhsInstance) {
-    // For #MemberRef, compare the names
+    // For `MemberRef`, compare the names
     if (lhs.name() != rhs.name()) {
       return false;
     }
@@ -423,7 +423,7 @@ struct EqualToConsumerImpl<DataType::VarRef, T, Eq> {
 
   bool
   consume(const T& lhs, const T& rhs) {
-    // For #VarRef, don't compare the names
+    // For `VarRef`, don't compare the names
     return EqualToConsumerImpl<ElemDataType, Elem, Eq>().consume(lhs.get(), rhs.get());
   }
 };

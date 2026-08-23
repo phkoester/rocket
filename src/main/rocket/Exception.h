@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include "rocket/rocket.h" // #std::type_info for MSVC
+#include "rocket/rocket.h" // `std::type_info` for MSVC
 #include "rocket/nio/nio-fwd.h"
 #include "rocket/str/str.h"
 #include "rocket/unicode/ConvertTo.h"
@@ -47,7 +47,7 @@
 
 namespace rocket {
 
-// #Exception -----------------------------------------------------------------------------------------------
+// `Exception` ----------------------------------------------------------------------------------------------
 
 /**
  * A simple class that all Rocket exceptions derive from in addition to their base classes.
@@ -93,12 +93,12 @@ protected:
    * @param st the stack trace
    */
   Exception(
-      std::string_view msg,
-      const std::optional<std::source_location>& sl,
-      const std::optional<std::stacktrace>& st) :
-      msg_(msg),
-      sl_(sl),
-      st_(st) {}
+    std::string_view msg,
+    const std::optional<std::source_location>& sl,
+    const std::optional<std::stacktrace>& st) :
+    msg_(msg),
+    sl_(sl),
+    st_(st) {}
 
 private:
 
@@ -107,7 +107,7 @@ private:
   std::optional<std::stacktrace> st_;
 };
 
-// #InvalidArgument -----------------------------------------------------------------------------------------
+// `InvalidArgument` ----------------------------------------------------------------------------------------
 
 /**
  * An exception indicating an invalid argument.
@@ -125,15 +125,15 @@ struct InvalidArgument : Exception, std::invalid_argument {
    * @param st the stack trace
    */
   InvalidArgument(
-      std::string_view name,
-      std::string_view msg,
-      const std::optional<std::source_location>& sl = ROCKET_EXCEPTION_SL,
-      const std::optional<std::stacktrace>& st = ROCKET_EXCEPTION_ST);
+    std::string_view name,
+    std::string_view msg,
+    const std::optional<std::source_location>& sl = ROCKET_EXCEPTION_SL,
+    const std::optional<std::stacktrace>& st = ROCKET_EXCEPTION_ST);
 
   ~InvalidArgument() override = default;
 };
 
-// #InvalidState --------------------------------------------------------------------------------------------
+// `InvalidState` -------------------------------------------------------------------------------------------
 
 /**
  * An exception indicating an invalid state.
@@ -150,14 +150,14 @@ struct InvalidState : Exception, std::runtime_error {
    * @param st the stack trace
    */
   explicit InvalidState(
-      std::string_view msg,
-      const std::optional<std::source_location>& sl = ROCKET_EXCEPTION_SL,
-      const std::optional<std::stacktrace>& st = ROCKET_EXCEPTION_ST);
+    std::string_view msg,
+    const std::optional<std::source_location>& sl = ROCKET_EXCEPTION_SL,
+    const std::optional<std::stacktrace>& st = ROCKET_EXCEPTION_ST);
 
   ~InvalidState() override = default;
 };
 
-// #Overflow ------------------------------------------------------------------------------------------------
+// `Overflow` -----------------------------------------------------------------------------------------------
 
 /**
  * An exception indicating a type overflow.
@@ -173,11 +173,11 @@ struct Overflow : Exception, std::overflow_error {
    * @param sl the source location
    * @param st the stack trace
    */
-  explicit Overflow(
-      const std::type_info& type,
-      const std::optional<std::source_location>& sl = ROCKET_EXCEPTION_SL,
-      const std::optional<std::stacktrace>& st = ROCKET_EXCEPTION_ST) :
-      Overflow(type, "", sl, st) {}
+  Overflow(
+    const std::type_info& type,
+    const std::optional<std::source_location>& sl = ROCKET_EXCEPTION_SL,
+    const std::optional<std::stacktrace>& st = ROCKET_EXCEPTION_ST) :
+    Overflow(type, "", sl, st) {}
 
   /**
    * @ctor
@@ -196,7 +196,7 @@ struct Overflow : Exception, std::overflow_error {
   ~Overflow() override = default;
 };
 
-// #Underflow ------------------------------------------------------------------------------------------------
+// `Underflow` ----------------------------------------------------------------------------------------------
 
 /**
  * An exception indicating a type underflow.
@@ -212,11 +212,11 @@ struct Underflow : Exception, std::underflow_error {
    * @param sl the source location
    * @param st the stack trace
    */
-  explicit Underflow(
-      const std::type_info& type,
-      const std::optional<std::source_location>& sl = ROCKET_EXCEPTION_SL,
-      const std::optional<std::stacktrace>& st = ROCKET_EXCEPTION_ST) :
-      Underflow(type, "", sl, st) {}
+  Underflow(
+    const std::type_info& type,
+    const std::optional<std::source_location>& sl = ROCKET_EXCEPTION_SL,
+    const std::optional<std::stacktrace>& st = ROCKET_EXCEPTION_ST) :
+    Underflow(type, "", sl, st) {}
 
   /**
    * @ctor
@@ -235,7 +235,7 @@ struct Underflow : Exception, std::underflow_error {
   ~Underflow() override = default;
 };
 
-// #WrappedException ----------------------------------------------------------------------------------------
+// `WrappedException` ---------------------------------------------------------------------------------------
 
 /**
  * An exception wrapper which has its own `fmt::formatter` specialization.
@@ -321,7 +321,7 @@ std::string what(const std::exception_ptr& ptr);
 
 } // namespace rocket
 
-// #fmt::formatter<#rocket::WrappedException> ---------------------------------------------------------------
+// `fmt::formatter<rocket::WrappedException>` ---------------------------------------------------------------
 
 /**
  * @spec_fmt_formatter{#rocket::WrappedException}

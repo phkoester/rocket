@@ -46,7 +46,7 @@
 #pragma once
 
 #include <bit>
-#include <cstdint> // #std::int8_t, #std::uint8_t, ...
+#include <cstdint> // `std::int8_t`, `std::uint8_t`, ...
 #include <cstdio> // Make this generally availabe
 #include <iosfwd>
 #include <typeinfo> // Make this generally available
@@ -89,7 +89,7 @@ constexpr bool HAS_LITTLE_ENDIAN = std::endian::native == std::endian::little;
   #define ROCKET_PUBLIC ///< Specifier for global data symbols.
 #endif
 
-// #std::type_info for MSVC ---------------------------------------------------------------------------------
+// `std::type_info` for MSVC --------------------------------------------------------------------------------
 
 #ifdef ROCKET_OS_WINDOWS
 

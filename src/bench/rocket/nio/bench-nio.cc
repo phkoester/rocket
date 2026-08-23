@@ -18,7 +18,7 @@ constexpr u64 FILE_SIZE = 1'204 * 1'024; // 1 MiB
 constexpr u64 CHUNK_SIZE = 1'024;
 constexpr u64 N = FILE_SIZE / CHUNK_SIZE;
 
-// #BENCH ---------------------------------------------------------------------------------------------------
+// `BENCH` --------------------------------------------------------------------------------------------------
 
 BENCH(nio, FileSink, [](benchmark::State& state) {
   const string chunk(CHUNK_SIZE, ' ');

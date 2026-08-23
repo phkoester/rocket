@@ -12,7 +12,7 @@
 
 namespace rocket {
 
-// #Bimap ---------------------------------------------------------------------------------------------------
+// `Bimap` --------------------------------------------------------------------------------------------------
 
 /// The #rocket::Bimap type alias.
 template<typename K, typename V>
@@ -39,7 +39,7 @@ makeBimap(std::initializer_list<std::pair<K, V>> list = {}) {
   return ret;
 }
 
-// #UnorderedBimap ------------------------------------------------------------------------------------------
+// `UnorderedBimap` -----------------------------------------------------------------------------------------
 
 /// The #rocket::UnorderedBimap type alias.
 template<typename K, typename V>

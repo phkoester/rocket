@@ -101,7 +101,7 @@ constexpr i32 EXIT_SERIOUS_FAILURE = 2;
 /// The ID of the main thread.
 extern const std::thread::id MAIN_THREAD_ID;
 
-// #Process -------------------------------------------------------------------------------------------------
+// `Process` ------------------------------------------------------------------------------------------------
 
 /**
  * A central Rocket class to be used in `main`.

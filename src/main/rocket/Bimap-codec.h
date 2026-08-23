@@ -14,7 +14,7 @@
 
 #include <fmt/format.h>
 
-// #boost::bimaps -------------------------------------------------------------------------------------------
+// `boost::bimaps` ------------------------------------------------------------------------------------------
 
 namespace boost::bimaps {
 
@@ -52,7 +52,7 @@ PrintTo(const bimap<A, B>& val, std::ostream* os) {
 
 } // namespace boost::bimaps
 
-// #fmt::formatter<#boost::bimaps::bimap>--------------------------------------------------------------------
+// `fmt::formatter<boost::bimaps::bimap>` -------------------------------------------------------------------
 
 /**
  * @spec_fmt_formatter{`boost::bimaps::bimap`}

@@ -24,7 +24,7 @@ namespace rocket::cl {
 
 namespace internal {
 
-// #ValueType ...............................................................................................
+// `ValueType` ----------------------------------------------------------------------------------------------
 
 template<typename T>
 struct ValueTypeImpl {
@@ -39,7 +39,7 @@ struct ValueTypeImpl<std::optional<T>> {
 template<typename T>
 using ValueType = ValueTypeImpl<T>::Type;
 
-// #applyTo .................................................................................................
+// `applyTo` ------------------------------------------------------------------------------------------------
 
 inline bool
 applyTo(bool& out, std::string_view val) {
@@ -107,7 +107,7 @@ applyToInteger(std::optional<I>& out, std::string_view val) {
 
 } // namespace internal
 
-// #OptionGroup ---------------------------------------------------------------------------------------------
+// `OptionGroup` --------------------------------------------------------------------------------------------
 
 /**
  * An option group with a title.
@@ -119,12 +119,12 @@ struct OptionGroup {
   std::string title; ///< The title.
 };
 
-// #OptionType ----------------------------------------------------------------------------------------------
+// `OptionType` ---------------------------------------------------------------------------------------------
 
 /// The type of a #rocket::cl::Option: either custom or one of the predefined types with a special meaning.
 enum class OptionType : u8 { Custom, Help, Verbose, Version };
 
-// #OptionConfig --------------------------------------------------------------------------------------------
+// `OptionConfig` -------------------------------------------------------------------------------------------
 
 /// Configuration for #rocket::cl::Option.
 struct OptionConfig {
@@ -188,7 +188,7 @@ struct OptionConfig {
   std::optional<std::string> verboseDescription {}; // NOLINT
 };
 
-// #Option --------------------------------------------------------------------------------------------------
+// `Option` -------------------------------------------------------------------------------------------------
 
 /// Command-line options.
 struct Option {
@@ -259,14 +259,14 @@ struct Option {
       localConfig.format = str::join(quoted.begin(), quoted.end(), ", ", " or ", ", or ");
     }
 
-    // Auto-configure #minOccurs
+    // Auto-configure `minOccurs`
     if constexpr (not IsOptional<T>) {
       if (not config.minOccurs) {
         localConfig.minOccurs = 1;
       }
     }
 
-    // Auto-configure #takesValue
+    // Auto-configure `takesValue`
     if constexpr (std::is_same_v<ValueType, bool>) {
       localConfig.takesValue = false;
     } else {
@@ -383,7 +383,7 @@ struct Option {
   /// @endcond
 };
 
-// #ParameterConfig -----------------------------------------------------------------------------------------
+// `ParameterConfig` ----------------------------------------------------------------------------------------
 
 /// Configuration for #rocket::cl::Parameter.
 struct ParameterConfig {
@@ -436,7 +436,7 @@ struct ParameterConfig {
   std::optional<std::string> verboseDescription {}; // NOLINT
 };
 
-// #Parameter -----------------------------------------------------------------------------------------------
+// `Parameter` ----------------------------------------------------------------------------------------------
 
 /// Positional command-line parameters.
 struct Parameter {
@@ -493,12 +493,12 @@ struct Parameter {
       localConfig.format = str::join(quoted.begin(), quoted.end(), ", ", " or ", ", or ");
     }
 
-    // Auto-configure #minOccurs
+    // Auto-configure `minOccurs`
     if constexpr (IsOptional<T>) {
       localConfig.minOccurs = 0;
     }
 
-    // Auto-configure #maxOccurs
+    // Auto-configure `maxOccurs`
     if constexpr (IsVector<ValueType>) {
       if (not config.maxOccurs) {
         localConfig.maxOccurs = NPOS;
@@ -521,7 +521,7 @@ struct Parameter {
   /// @endcond
 };
 
-// #CommandLineConfig ---------------------------------------------------------------------------------------
+// `CommandLineConfig` --------------------------------------------------------------------------------------
 
 /**
  * Parameters that configure the behavior of a #rocket::cl::CommandLine.
@@ -552,7 +552,7 @@ struct CommandLineConfig {
   bool rocketOpts = true;
 };
 
-// #CommandLine ---------------------------------------------------------------------------------------------
+// `CommandLine` --------------------------------------------------------------------------------------------
 
 /**
  * A command-line parser and help-text formatter.

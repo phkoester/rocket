@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include "rocket/rocket.h" // #std::type_info
+#include "rocket/rocket.h" // `std::type_info`
 
 #include <optional>
 #include <source_location>

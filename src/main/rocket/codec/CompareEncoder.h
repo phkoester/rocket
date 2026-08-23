@@ -11,7 +11,7 @@ namespace rocket::codec {
 
 namespace internal {
 
-// #CmpOrdering ---------------------------------------------------------------------------------------------
+// `CmpOrdering` --------------------------------------------------------------------------------------------
 
 template<typename Cmp, typename T>
 struct CmpOrderingImpl {
@@ -31,7 +31,7 @@ struct CmpOrderingImpl<Cmp, std::span<T, Extent>> {
 template<typename Cmp, typename T>
 using CmpOrdering = CmpOrderingImpl<Cmp, T>::Type;
 
-// #CmpCommonOrdering ---------------------------------------------------------------------------------------
+// `CmpCommonOrdering` --------------------------------------------------------------------------------------
 
 template<typename Cmp, typename... T>
 struct CmpCommonOrderingImpl {
@@ -46,7 +46,7 @@ struct CmpCommonOrderingImpl<Cmp, std::tuple<T...>> {
 template<typename Cmp, typename... T>
 using CmpCommonOrdering = CmpCommonOrderingImpl<Cmp, T...>::Type;
 
-// #CompareConsumerImpl -------------------------------------------------------------------------------------
+// `CompareConsumerImpl` ------------------------------------------------------------------------------------
 
 template<DataType DataType, typename T, typename Cmp>
 struct CompareConsumerImpl;
@@ -110,7 +110,7 @@ struct CompareConsumerImpl<DataType::Optional, T, Cmp> {
   }
 };
 
-// For #MemberRef, the tuple consumer must be able to pass additional arguments to the element consumer
+// For `MemberRef`, the tuple consumer must be able to pass additional arguments to the element consumer
 template<typename T, typename Cmp>
 struct CompareConsumerImpl<DataType::Tuple, T, Cmp> {
   using Ordering = CmpCommonOrdering<Cmp, T>;
@@ -408,7 +408,7 @@ struct CompareConsumerImpl<DataType::MemberRef, T, Cmp> {
   template<typename C>
   Ordering
   consume(const T& lhs, const T& rhs, const C& lhsInstance, const C& rhsInstance) {
-    // For #MemberRef, compare the names
+    // For `MemberRef`, compare the names
     const auto nameCmp = Cmp()(lhs.name(), rhs.name());
     if (not std::is_eq(nameCmp)) {
       return nameCmp;
@@ -427,7 +427,7 @@ struct CompareConsumerImpl<DataType::VarRef, T, Cmp> {
 
   Ordering
   consume(const T& lhs, const T& rhs) {
-    // For #VarRef, don't compare the names
+    // For `VarRef`, don't compare the names
     return CompareConsumerImpl<ElemDataType, Elem, Cmp>().consume(lhs.get(), rhs.get());
   }
 };
@@ -460,7 +460,7 @@ struct CompareConsumerImpl<DataType::Character, T, Cmp> {
 
 } // namespace internal
 
-// #CompareConsumer -----------------------------------------------------------------------------------------
+// `CompareConsumer` ----------------------------------------------------------------------------------------
 
 /**
  * The consumer for the #CompareEncoder.
@@ -474,7 +474,7 @@ struct CompareConsumer {
   using Type = internal::CompareConsumerImpl<DataType, T, Cmp>;
 };
 
-// #CompareEncoder ------------------------------------------------------------------------------------------
+// `CompareEncoder` -----------------------------------------------------------------------------------------
 
 /**
  * A three-way-comparison encoder.

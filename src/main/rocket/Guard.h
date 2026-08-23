@@ -12,7 +12,7 @@
 
 namespace rocket {
 
-// #Guard ---------------------------------------------------------------------------------------------------
+// `Guard` --------------------------------------------------------------------------------------------------
 
 /**
  * An object that executes a function in its destructor, i.e. when it goes out of scope.
@@ -46,7 +46,7 @@ private:
  */
 #define ROCKET_GUARD(fn) const ::rocket::Guard ROCKET_ID()(fn)
 
-// #ValueGuard ----------------------------------------------------------------------------------------------
+// `ValueGuard` ---------------------------------------------------------------------------------------------
 
 /**
  * An object that immediately assigns a new value to a variable and restores the old value in its destructor,

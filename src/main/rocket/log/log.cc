@@ -48,7 +48,7 @@ struct Entry {
   const char* prettyFunction_;
   const char* file_;
   i32 line_;
-  optional<string> begin_; // Log entry from #logBegin that is flushed only if necessary
+  optional<string> begin_; // Log entry from `logBegin` that is flushed only if necessary
   TimePoint time_;
 
   Entry(
@@ -453,7 +453,7 @@ formatExecTime(const TimePoint& t1, const TimePoint& t2) {
 string
 formatTimePoint(const TimePoint& tp) {
   const auto formatImpl = [](const auto& ctp) { // ctp = cast time point
-    // Note we're using #std::format here because #fmt::format doesn't support #chrono::zoned_time
+    // Note we're using `std::format` here because `fmt::format` doesn't support `chrono::zoned_time`
     if (logFmt.useUtc) {
       return std::format("{:%FT%TZ} ", ctp);
     }

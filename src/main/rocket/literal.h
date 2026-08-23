@@ -104,7 +104,7 @@ makeUnsigned() {
   return makeUnsignedImpl<T, BASE, Chars...>(0);
 }
 
-// #SignedInteger ...........................................................................................
+// `SignedInteger` ------------------------------------------------------------------------------------------
 
 template<typename T, typename U, char... Chars>
 struct SignedInteger {
@@ -166,7 +166,7 @@ struct SignedInteger<T, U, '0', Chars...> {
       validateUnsigned<U, 8, Chars...>() && (makeUnsigned<U, 8, Chars...>() <= SignedLimit<T, U>::value);
 };
 
-// #UnsignedInteger .........................................................................................
+// `UnsignedInteger` ----------------------------------------------------------------------------------------
 
 template<typename T, char... Chars>
 struct UnsignedInteger {
@@ -408,7 +408,7 @@ f128 operator""_f128(std_long_double val);
 
 #endif // ROCKET_HAS_128
 
-// #LiteralString -------------------------------------------------------------------------------------------
+// `LiteralString` ------------------------------------------------------------------------------------------
 
 /**
  * A literal string for both `char` and `char32`.

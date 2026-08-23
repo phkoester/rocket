@@ -164,7 +164,7 @@ readChoice(nio::Source& in, const vector<string_view>& values, bool ignoreCase) 
   }
 
   if (ret) {
-    // Seek position after #ret
+    // Seek position after `ret`
     in.seek(safe<i64>(pos + ret->size()), nio::SeekMode::beg);
   } else {
     // No match found: rewind
@@ -357,7 +357,7 @@ skip(nio::Source& in, bool cComments, bool shellComments) { // NOLINT(*-complexi
       continue;
     }
 
-    // Skip shell-style "#" comments until EOL
+    // Skip shell-style `#` comments until EOL
     if (shellComments && first == '#') {
       if (not skipUntilString(in, "\n")) {
         break;
@@ -365,7 +365,7 @@ skip(nio::Source& in, bool cComments, bool shellComments) { // NOLINT(*-complexi
       continue;
     }
 
-    // Skip C-style "//" comments until EOL
+    // Skip C-style `//` comments until EOL
     if (cComments && first == '/' && second == '/') {
       if (not skipUntilString(in, "\n")) {
         break;
@@ -373,7 +373,7 @@ skip(nio::Source& in, bool cComments, bool shellComments) { // NOLINT(*-complexi
       continue;
     }
 
-    // Skip C-style "/*" comments until "*/"
+    // Skip C-style `/*` comments until `*/`
     if (cComments && first == '/' && second == '*') {
       if (not skipUntilString(in, "*/")) {
         in.seek(safe<i64>(pos), nio::SeekMode::beg);

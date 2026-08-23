@@ -148,7 +148,7 @@
 
 namespace rocket {
 
-// #Enum ----------------------------------------------------------------------------------------------------
+// `Enum` ---------------------------------------------------------------------------------------------------
 
 /**
  * A class template for Rocket enums, providing some additional information about an enum.
@@ -178,7 +178,7 @@ struct Enum : std::false_type {
 
 } // namespace rocket
 
-// #fmt::formatter<#rocket::Enum> ---------------------------------------------------------------------------
+// `fmt::formatter<rocket::Enum>` ---------------------------------------------------------------------------
 
 /**
  * @spec_fmt_formatter{#rocket::Enum}
@@ -213,7 +213,7 @@ private:
   fmt::formatter<basic_string_view<C>, C> underlying_;
 };
 
-// #scn::scanner<#rocket::Enum> -----------------------------------------------------------------------------
+// `scn::scanner<rocket::Enum>` -----------------------------------------------------------------------------
 
 /**
  * @spec_scn_scanner{#rocket::Enum}

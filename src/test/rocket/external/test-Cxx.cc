@@ -212,7 +212,7 @@ TEST_F(Cxx, implicitVirtualDtor) {
   A* p = new B; // NOLINT
   EXPECT_FALSE(Member::dtorCalled);
   delete p; // NOLINT
-  // Class #B needs not declare an overriding destructor---it is there implicitly
+  // Class `B` needs not declare an overriding destructor---it is there implicitly
   EXPECT_TRUE(Member::dtorCalled);
 }
 

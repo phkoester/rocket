@@ -179,7 +179,7 @@ printLocations( // NOLINT(*-complexity)
 
     out.print("{: >{}d} | ", loc.line, lineNumberWidth);
 
-    // Escape the line as C-string, take tab setting from #locationsResult, print the line as characers
+    // Escape the line as C-string, take tab setting from `locationsResult`, print the line as characters
     // (skip zero-width characters)
 
     ROCKET_CHECK(input, input || loc.lineString, "Either `input` or `lineString` must be supplied");
@@ -190,7 +190,7 @@ printLocations( // NOLINT(*-complexity)
     const string escapedLine = escape::escapeCString(
       line, { .tabSize=locationsResult.config.tabSize }, &result);
 
-    // For #escapedLine, map #Character index -> byte offset
+    // For `escapedLine`, map `Character` index -> byte offset
     auto iter = unicode::Iterator<char>(unicode::IteratorType::Character, escapedLine);
     auto segs = iter.nextSegments();
     UnorderedBimap<u64, u64> escapedLinePositions;
@@ -213,14 +213,14 @@ printLocations( // NOLINT(*-complexity)
     out.write('\n');
 
     // Print the ranges, the caret, and the caption. This is harder than it looks at first sight, because we
-    // need to consider C-string escaping, tabs, UTF-8, and #Character widths---all at the same time
+    // need to consider C-string escaping, tabs, UTF-8, and `Character` widths---all at the same time
 
-    // Prepare the indicators string. #indicators is in #Character-width coordinates
+    // Prepare the indicators string. `indicators` is in `Character`-width coordinates
 
     const u64 width = escapedLineWidth;
     string indicators(width, ' ');
 
-    // Make up a lambda that translates an input `char` position to an #indicators position. This requires
+    // Make up a lambda that translates an input `char` position to an `indicators` position. This requires
     // several steps
 
     auto indicatorPos = [&](u64 pos) -> u64 {
@@ -237,7 +237,7 @@ printLocations( // NOLINT(*-complexity)
       ROCKET_EXPECT(rightIt != escapedLinePositions.right.end());
       pos = rightIt->second;
 
-      // 4. Translate escaped-line character position to #indicators position
+      // 4. Translate escaped-line character position to `indicators` position
       u64 ret = 0;
       for (u64 i = 0; i < pos; ++i) {
         ret += unicode::CharacterView<char>(segs[i]).width();
@@ -245,12 +245,12 @@ printLocations( // NOLINT(*-complexity)
       return ret;
     };
 
-    // Place the ranges in #indicators
+    // Place the ranges in `indicators`
 
     for (auto range : loc.ranges) {
       // Obtain the intersection between range and printed line
       if (auto inter = range & loc.lineRange; not inter.empty()) {
-        // Translate intersection into #indicators positions
+        // Translate intersection into `indicators` positions
         const u64 lower = indicatorPos(inter.a);
         const u64 upper = indicatorPos(*inter.b);
         // Place the range
@@ -258,7 +258,7 @@ printLocations( // NOLINT(*-complexity)
       }
     }
 
-    // Place the caret in #indicators
+    // Place the caret in `indicators`
 
     const u64 caretPos = indicatorPos(loc.position);
     if (caretPos < indicators.size()) {
