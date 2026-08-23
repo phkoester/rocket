@@ -630,6 +630,7 @@ using RightOpenInterval = Interval<internal::LeftClosed<T>, internal::RightOpen<
 
 // #Intervals -----------------------------------------------------------------------------------------------
 
+/// A vector of intervals.
 template<typename Left, typename Right>
 using Intervals = std::vector<Interval<Left, Right>>;
 
@@ -702,7 +703,7 @@ unionOf(const Intervals<Left, Right>& val) {
 
     // Union with the current rightmost interval. `operator|` returns either one merged interval (overlap or
     // adjacent) or two sorted intervals (disjoint). Replace the rightmost with that result
-    auto u = ret.back() | elem;
+    const auto u = ret.back() | elem;
     ret.pop_back();
     ret.insert(ret.end(), u.begin(), u.end());
   }
