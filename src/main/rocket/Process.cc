@@ -233,7 +233,7 @@ Process::init(
 
   inited_ = true;
 
-  // Set the terminate handler. This must be done AFTER setting `inited_` to `true`
+  // Set the terminate handler. This must be done *after* setting `inited_` to `true`
 
   set_terminate(onTerminate);
 
