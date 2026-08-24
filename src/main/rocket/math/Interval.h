@@ -18,7 +18,7 @@ namespace rocket::math {
 
 namespace internal {
 
-// #BoundTraits .............................................................................................
+// `BoundTraits` ............................................................................................
 
 template<typename T, typename _BoundType, bool _IsLeft, char _Symbol>
 struct BoundTraits {
@@ -118,7 +118,7 @@ template<typename T> using LeftOpen = BoundTraits<T, std::optional<T>, true, '('
 template<typename T> using RightClosed = BoundTraits<T, T, false, ']'>;
 template<typename T> using RightOpen = BoundTraits<T, std::optional<T>, false, ')'>;
 
-// #Cardinality .............................................................................................
+// `Cardinality` ............................................................................................
 
 template<typename T, bool LeftClosed, bool RightClosed>
 struct Cardinality;
@@ -147,7 +147,7 @@ struct Cardinality<F, true, false> { using Type = std::optional<u32>; };
 template<typename F> requires IsFloat<F>
 struct Cardinality<F, true, true> { using Type = std::optional<u32>; };
 
-// #IntervalSymbols .........................................................................................
+// `IntervalSymbols` ........................................................................................
 
 template<typename C> requires IsChar<C>
 struct IntervalSymbols;
@@ -166,7 +166,7 @@ struct IntervalSymbols<char32> {
   static constexpr auto PositiveInfinity = U"∞";
 };
 
-// #IntervalTraits ..........................................................................................
+// `IntervalTraits` .........................................................................................
 
 template<typename Left, typename Right>
 struct IntervalTraits;
@@ -365,7 +365,7 @@ struct IntervalTraits<LeftClosed<T>, RightOpen<T>> {
 
 } // namespace internal
 
-// #Interval ------------------------------------------------------------------------------------------------
+// `Interval` -----------------------------------------------------------------------------------------------
 
 /**
  * A mathematical interval for either integer or noninteger types.
@@ -594,7 +594,7 @@ operator|(const Interval<Left, Right>& lhs, const Interval<Left, Right>& rhs) {
   return { Interval<Left, Right>(a, b) };
 }
 
-// Interval types -------------------------------------------------------------------------------------------
+// `Interval` types -----------------------------------------------------------------------------------------
 
 /**
  * A closed interval @f$[a,b]@f$ contains all elements @f$x@f$ such that @f$a <= x <= b@f$.
@@ -628,7 +628,7 @@ using LeftOpenInterval = Interval<internal::LeftOpen<T>, internal::RightClosed<T
 template<typename T>
 using RightOpenInterval = Interval<internal::LeftClosed<T>, internal::RightOpen<T>>;
 
-// #Intervals -----------------------------------------------------------------------------------------------
+// `Intervals` ----------------------------------------------------------------------------------------------
 
 /// A vector of intervals.
 template<typename Left, typename Right>
@@ -711,7 +711,7 @@ unionOf(const Intervals<Left, Right>& val) {
   return ret;
 }
 
-// Intervals types ------------------------------------------------------------------------------------------
+// `Intervals` types ----------------------------------------------------------------------------------------
 
 /**
  * A vector of #rocket::math::ClosedInterval%s.
