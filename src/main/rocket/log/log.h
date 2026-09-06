@@ -19,7 +19,7 @@
 
 namespace rocket::log {
 
-// #LogLevel ------------------------------------------------------------------------------------------------
+// `LogLevel` -----------------------------------------------------------------------------------------------
 
 /**
  * A log-level enum, sorted from lowest to highest level.
@@ -54,7 +54,7 @@ namespace internal {
 using Clock = std::chrono::system_clock;
 using TimePoint = std::chrono::time_point<Clock>;
 
-// #LogSettings .............................................................................................
+// `LogSettings` ............................................................................................
 
 /// @NotThreadSafe
 struct LogSettings {
@@ -69,7 +69,7 @@ struct LogSettings {
   void setSubstringLevel(const std::string& substring, LogLevel level);
 };
 
-// #Log .....................................................................................................
+// `Log` ....................................................................................................
 
 void logBegin(
   LogSettings* logId,

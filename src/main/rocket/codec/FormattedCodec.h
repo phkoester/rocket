@@ -20,7 +20,7 @@
 
 namespace rocket::codec {
 
-// #FormattedConsumerConfig ---------------------------------------------------------------------------------
+// `FormattedConsumerConfig` --------------------------------------------------------------------------------
 
 /// Configuration for #rocket::codec::FormattedConsumer.
 struct FormattedConsumerConfig {
@@ -30,7 +30,7 @@ struct FormattedConsumerConfig {
   u64 level = 0;
 };
 
-// #FormattedProducerConfig ---------------------------------------------------------------------------------
+// `FormattedProducerConfig` --------------------------------------------------------------------------------
 
 /// Configuration for #rocket::codec::FormattedProducer.
 struct FormattedProducerConfig {
@@ -64,7 +64,7 @@ skip(nio::Source& in, const FormattedProducerConfig& config) {
   rocket::codec::skip(in, config.cComments, config.shellComments);
 }
 
-// #FormattedConsumerImpl -----------------------------------------------------------------------------------
+// `FormattedConsumerImpl` ----------------------------------------------------------------------------------
 
 /// @cond undocumented
 #define CONFIG__ [[maybe_unused]] FormattedConsumerConfig& config
@@ -168,7 +168,7 @@ struct FormattedConsumerImpl<DataType::Optional, T> {
   }
 };
 
-// For #MemberRef, the tuple consumer must be able to pass additional arguments to the element consumer
+// For `MemberRef`, the tuple consumer must be able to pass additional arguments to the element consumer
 template<typename T>
 struct FormattedConsumerImpl<DataType::Tuple, T> {
   template<typename... Args>
@@ -458,7 +458,7 @@ struct FormattedConsumerImpl<DataType::Character, T> {
 
 #undef CONFIG__
 
-// #FormattedProducerImpl -----------------------------------------------------------------------------------
+// `FormattedProducerImpl` ----------------------------------------------------------------------------------
 
 /// @cond undocumented
 #define CONFIG__ [[maybe_unused]] const FormattedProducerConfig& config
@@ -645,7 +645,7 @@ struct FormattedProducerImpl<DataType::Optional, T> {
   }
 };
 
-// For #MemberRef, the tuple producer must be able to pass additional arguments to the element producer
+// For `MemberRef`, the tuple producer must be able to pass additional arguments to the element producer
 template<typename T>
 struct FormattedProducerImpl<DataType::Tuple, T> {
   template<typename... Args>
@@ -1335,7 +1335,7 @@ struct FormattedProducerImpl<DataType::Character, T> {
 
 } // namespace internal
 
-// #FormattedConsumer ---------------------------------------------------------------------------------------
+// `FormattedConsumer` --------------------------------------------------------------------------------------
 
 /// The consumer for #rocket::codec::FormattedCodec.
 struct FormattedConsumer {
@@ -1344,7 +1344,7 @@ struct FormattedConsumer {
   using Type = internal::FormattedConsumerImpl<DataType, T>;
 };
 
-// #FormattedProducer ---------------------------------------------------------------------------------------
+// `FormattedProducer` --------------------------------------------------------------------------------------
 
 /// The producer for #rocket::codec::FormattedCodec.
 struct FormattedProducer {
@@ -1353,7 +1353,7 @@ struct FormattedProducer {
   using Type = internal::FormattedProducerImpl<DataType, T>;
 };
 
-// #FormattedCodec ------------------------------------------------------------------------------------------
+// `FormattedCodec` -----------------------------------------------------------------------------------------
 
 /**
  * A codec for formatted string I/O.

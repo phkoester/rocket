@@ -175,7 +175,7 @@
 
 namespace rocket::reflect {
 
-// #Instance ------------------------------------------------------------------------------------------------
+// `Instance` -----------------------------------------------------------------------------------------------
 
 /// @op_eq{#rocket::reflect::Instance}
 template<typename T, typename Inner>
@@ -198,7 +198,7 @@ operator<<(std::ostream& lhs, const Instance<T, Inner>& rhs) {
   return lhs << fmt::format("{}", rhs);
 }
 
-// #VarRef --------------------------------------------------------------------------------------------------
+// `VarRef` -------------------------------------------------------------------------------------------------
 
 /// @op_eq{#rocket::reflect::VarRef}
 template<typename T>
@@ -223,7 +223,7 @@ operator<<(std::ostream& lhs, const VarRef<T>& rhs) {
 
 } // namespace rocket::reflect
 
-// #fmt::formatter<#rocket::reflect::Declared> --------------------------------------------------------------
+// `fmt::formatter<rocket::reflect::Declared>` --------------------------------------------------------------
 
 /**
  * @spec_fmt_formatter{#rocket::reflect::Declared}
@@ -272,7 +272,7 @@ private:
   bool withType_ = false;
 };
 
-// #fmt::formatter<#rocket::reflect::Instance> --------------------------------------------------------------
+// `fmt::formatter<rocket::reflect::Instance>` --------------------------------------------------------------
 
 /**
  * @spec_fmt_formatter{#rocket::reflect::Instance}
@@ -321,7 +321,7 @@ private:
   bool withType_ = false;
 };
 
-// #fmt::formatter<#rocket::reflect::VarRef> ----------------------------------------------------------------
+// `fmt::formatter<rocket::reflect::VarRef>` ----------------------------------------------------------------
 
 /**
  * @spec_fmt_formatter{#rocket::reflect::VarRef}
@@ -360,7 +360,7 @@ private:
   bool indent_ = false;
 };
 
-// #std::hash<#rocket::reflect::Declared> -------------------------------------------------------------------
+// `std::hash<rocket::reflect::Declared>` -------------------------------------------------------------------
 
 /// @spec_std_hash{#rocket::reflect::Declared}
 template<typename T> requires rocket::reflect::Declared<T>::value
@@ -373,7 +373,7 @@ struct std::hash<T> {
   /// @endcond
 };
 
-// #std::hash<#rocket::reflect::Instance> -------------------------------------------------------------------
+// `std::hash<rocket::reflect::Instance>` -------------------------------------------------------------------
 
 /// @spec_std_hash{#rocket::reflect::Instance}
 template<typename T, typename Inner>
@@ -388,7 +388,7 @@ struct std::hash<rocket::reflect::Instance<T, Inner>> {
   /// @endcond
 };
 
-// #std::hash<#rocket::reflect::VarRef> ---------------------------------------------------------------------
+// `std::hash<rocket::reflect::VarRef>` ---------------------------------------------------------------------
 
 /// @spec_std_hash{#rocket::reflect::VarRef}
 template<typename T>

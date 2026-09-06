@@ -13,7 +13,7 @@ namespace rocket::codec {
 
 namespace internal {
 
-// #EqualToConsumerImpl -------------------------------------------------------------------------------------
+// `EqualToConsumerImpl` ------------------------------------------------------------------------------------
 
 template<DataType DataType, typename T, typename Eq>
 struct EqualToConsumerImpl;
@@ -70,7 +70,7 @@ struct EqualToConsumerImpl<DataType::Optional, T, Eq> {
   }
 };
 
-// For #MemberRef, the tuple consumer must be able to pass additional arguments to the element consumer
+// For `MemberRef`, the tuple consumer must be able to pass additional arguments to the element consumer
 template<typename T, typename Eq>
 struct EqualToConsumerImpl<DataType::Tuple, T, Eq> {
   template<typename... Args>
@@ -456,7 +456,7 @@ struct EqualToConsumerImpl<DataType::Character, T, Eq> {
 
 } // namespace internal
 
-// #EqualToConsumer------------------------------------------------------------------------------------------
+// `EqualToConsumer`-----------------------------------------------------------------------------------------
 
 /**
  * The consumer for the #EqualToEncoder.
@@ -470,7 +470,7 @@ struct EqualToConsumer {
   using Type = internal::EqualToConsumerImpl<DataType, T, Eq>;
 };
 
-// #EqualToEncoder ------------------------------------------------------------------------------------------
+// `EqualToEncoder` -----------------------------------------------------------------------------------------
 
 /**
  * An equal-to encoder.

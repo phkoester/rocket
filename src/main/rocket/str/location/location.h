@@ -14,7 +14,7 @@
 
 namespace rocket::str::location {
 
-// #PositionType --------------------------------------------------------------------------------------------
+// `PositionType` -------------------------------------------------------------------------------------------
 
 /**
  * An enum describing the position type.
@@ -33,7 +33,7 @@ ROCKET_ENUM_DECLARE(rocket::str::location, PositionType, PositionType);
 
 namespace rocket::str::location {
 
-// #Position ------------------------------------------------------------------------------------------------
+// `Position` -----------------------------------------------------------------------------------------------
 
 /**
  * Input positions that are passed to the #locations function.
@@ -71,7 +71,7 @@ struct Position {
   std::optional<std::string> caption {}; // NOLINT
 };
 
-// #Location ------------------------------------------------------------------------------------------------
+// `Location` -----------------------------------------------------------------------------------------------
 
 /**
  * Location information.
@@ -93,7 +93,7 @@ struct Location {
   std::optional<std::string> caption; ///< Copied from the input position.
 };
 
-// #LocationsConfig -----------------------------------------------------------------------------------------
+// `LocationsConfig` ----------------------------------------------------------------------------------------
 
 /**
  * Configuration for the #locations function.
@@ -117,7 +117,7 @@ struct LocationsConfig {
   std::optional<u64> tabSize = 8;
 };
 
-// #LocationsResult -----------------------------------------------------------------------------------------
+// `LocationsResult` ----------------------------------------------------------------------------------------
 
 /**
  * This is the result of a call to #locations.
@@ -139,7 +139,7 @@ struct LocationsResult {
   std::vector<Location> locations;
 };
 
-// #PrintLocationsConfig ------------------------------------------------------------------------------------
+// `PrintLocationsConfig` -----------------------------------------------------------------------------------
 
 /**
  * Configuration for the #printLocations function.
@@ -164,9 +164,9 @@ struct PrintLocationsConfig {
  * @return a #rocket::str::location::LocationsResult
  */
 LocationsResult locations(
-    std::string_view input,
-    const std::vector<Position>& positions,
-    const LocationsConfig& config = {});
+  std::string_view input,
+  const std::vector<Position>& positions,
+  const LocationsConfig& config = {});
 
 /**
  * Prints Clang-style messages for all locations in @p locations to the sink @p out.
@@ -179,10 +179,10 @@ LocationsResult locations(
  * @param config the configuration
  */
 void printLocations(
-    nio::Sink& out,
-    std::optional<std::string_view> input,
-    const LocationsResult& locationsResult,
-    const PrintLocationsConfig& config = {});
+  nio::Sink& out,
+  std::optional<std::string_view> input,
+  const LocationsResult& locationsResult,
+  const PrintLocationsConfig& config = {});
 
 } // namespace rocket::str::location
 

@@ -170,7 +170,7 @@ throws(const Matchers&... matchers) {
       testing::internal::ExceptionMatcherImpl<Exception>(AllOf(matchers...)));
 }
 
-// #rocket::InputFailure ....................................................................................
+// `rocket::InputFailure` ...................................................................................
 
 /**
  * Matches a #rocket::InputFailure that matches @p positionMatcher and @p whatMatcher.

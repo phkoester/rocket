@@ -10,21 +10,21 @@
 
 #include <scn/istream.h>
 
-// #MyEnum --------------------------------------------------------------------------------------------------
+// `MyEnum` -------------------------------------------------------------------------------------------------
 
 enum MyEnum : u8 { fröb, fröber, fröberer, pörk, pörker, pörkerer };
 
 ROCKET_ENUM_DECLARE(, MyEnum, MyEnum); // NOLINT(*-internal-linkage)
 ROCKET_ENUM_DEFINE(, MyEnum, MyEnum, (fröb)(fröber)(fröberer)(pörk)(pörker)(pörkerer));
 
-// #MyEnumClass ---------------------------------------------------------------------------------------------
+// `MyEnumClass` --------------------------------------------------------------------------------------------
 
 enum class MyEnumClass : u8 { hürx, hürxer, hürxerer };
 
 ROCKET_ENUM_DECLARE(, MyEnumClass, MyEnumClass); // NOLINT(*-internal-linkage)
 ROCKET_ENUM_DEFINE(, MyEnumClass, MyEnumClass, (hürx)(hürxer)(hürxerer));
 
-// #MyEnumInNamespace ---------------------------------------------------------------------------------------
+// `MyEnumInNamespace` --------------------------------------------------------------------------------------
 
 namespace mynamespace {
 
@@ -35,7 +35,7 @@ enum MyEnumInNamespace : u8 { red, green, blue };
 ROCKET_ENUM_DECLARE(mynamespace, MyEnumInNamespace, MyEnumInNamespace); // NOLINT(*-internal-linkage)
 ROCKET_ENUM_DEFINE(mynamespace, MyEnumInNamespace, MyEnumInNamespace, (red)(green)(blue));
 
-// #TEST ----------------------------------------------------------------------------------------------------
+// `TEST` ---------------------------------------------------------------------------------------------------
 
 TEST(enum, MyEnumOpOutput) {
   ostringstream os;

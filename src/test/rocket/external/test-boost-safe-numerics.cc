@@ -9,7 +9,7 @@
 using namespace boost::safe_numerics;
 using namespace std;
 
-// #TEST ----------------------------------------------------------------------------------------------------
+// `TEST` ---------------------------------------------------------------------------------------------------
 
 TEST(boostSafeNumerics, safe) {
   EXPECT_THAT([] { safe<u8>(256); }, Throws<system_error>());

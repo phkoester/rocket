@@ -15,7 +15,7 @@ using namespace std;
 
 namespace rocket::unicode {
 
-// #IteratorImpl --------------------------------------------------------------------------------------------
+// `IteratorImpl` -------------------------------------------------------------------------------------------
 
 /**
  * Nothing from the `icu` namespace may surface in the public API, so we wrap it here.
@@ -29,7 +29,7 @@ struct IteratorImplDelete {
   void operator()(IteratorImpl* val) { delete val; } // NOLINT
 };
 
-// #Iterator ------------------------------------------------------------------------------------------------
+// `Iterator` -----------------------------------------------------------------------------------------------
 
 template<typename C> requires IsChar<C>
 Iterator<C>::Iterator(IteratorType type, basic_string_view<C> input, const locale& loc) : // NOLINT(*-complexity)

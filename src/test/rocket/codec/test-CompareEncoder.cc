@@ -4,27 +4,24 @@
 
 #include "rocket-test/rocket-test.h"
 
-#include "rocket/type-traits.h"
-
 #include "rocket/codec/CompareEncoder.h"
-#include "rocket/codec/HashEncoder.h"
 
 using namespace rocket::codec;
 
-// #MyStruct ------------------------------------------------------------------------------------------------
+// `MyStruct` -----------------------------------------------------------------------------------------------
 
 struct MyStruct {
   int a = 0;
   string b;
 };
 
-// #MyDervivedStruct ----------------------------------------------------------------------------------------
+// `MyDervivedStruct` ---------------------------------------------------------------------------------------
 
 struct MyDerivedStruct : MyStruct {
   float c = 0.0F;
 };
 
-// #TEST ----------------------------------------------------------------------------------------------------
+// `TEST` ---------------------------------------------------------------------------------------------------
 
 TEST(CompareEncoder, CmpOrdering) {
   using codec::internal::CmpOrdering;

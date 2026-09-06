@@ -10,7 +10,7 @@
 
 namespace rocket::reflect {
 
-// #Declared ------------------------------------------------------------------------------------------------
+// `Declared` -----------------------------------------------------------------------------------------------
 
 /**
  * This template provides access to default member references of a declared type.

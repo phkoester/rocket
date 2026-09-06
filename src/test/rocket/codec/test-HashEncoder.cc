@@ -18,7 +18,7 @@ using namespace rocket;
 using namespace rocket::codec;
 using namespace rocket::unicode;
 
-// #MyStruct ------------------------------------------------------------------------------------------------
+// `MyStruct` -----------------------------------------------------------------------------------------------
 
 struct MyStruct {
   i32 ärger;
@@ -32,7 +32,7 @@ struct MyStruct {
 ROCKET_REFLECT_MEMBERS_DECLARE(, MyStruct, Index); // NOLINT(*-internal-linkage)
 ROCKET_REFLECT_MEMBERS_DEFINE(, MyStruct, Index);
 
-// #TEST ----------------------------------------------------------------------------------------------------
+// `TEST` ---------------------------------------------------------------------------------------------------
 
 TEST(HashEncoder, Enum) {
   const HashEncoder<> encoder;

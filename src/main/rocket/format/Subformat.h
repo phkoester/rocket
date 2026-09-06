@@ -16,7 +16,7 @@
 
 namespace rocket::format {
 
-// #SubformatParams ------------------------------------------------------------------------------------------
+// `SubformatParams` ----------------------------------------------------------------------------------------
 
 /**
  * Parameters for the #rocket::format::Subformat class.
@@ -98,7 +98,7 @@ struct SubformatParams {
   }
 };
 
-// #Subformat -----------------------------------------------------------------------------------------------
+// `Subformat` ----------------------------------------------------------------------------------------------
 
 /**
  * A subformat that may be passed as an argument to `fmt::format`.
@@ -182,7 +182,7 @@ private:
 
 } // namespace rocket::format
 
-// #fmt::formatter<#rocket::format::Subformat> --------------------------------------------------------------
+// `fmt::formatter<rocket::format::Subformat>` --------------------------------------------------------------
 
 /// @spec_fmt_formatter{#rocket::format::Subformat}
 template<typename C>

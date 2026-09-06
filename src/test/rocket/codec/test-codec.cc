@@ -19,7 +19,7 @@ using namespace rocket::codec;
 
 using boost::safe_numerics::safe;
 
-// #MyStruct ------------------------------------------------------------------------------------------------
+// `MyStruct` -----------------------------------------------------------------------------------------------
 
 struct MyStruct {
   i32 ärger;
@@ -38,7 +38,7 @@ namespace {
 
 // Local functions ------------------------------------------------------------------------------------------
 
-// Tests if #str is available in #in
+// Tests if `str` is available in `in`
 bool
 read(nio::Source& in, string_view str) {
   auto pos = in.tell();
@@ -65,7 +65,7 @@ readI32(nio::Source& in) {
 
 } // namespace
 
-// #TracingConsumerImpl -------------------------------------------------------------------------------------
+// `TracingConsumerImpl` ------------------------------------------------------------------------------------
 
 template<DataType, typename T>
 struct TracingConsumerImpl;
@@ -118,7 +118,7 @@ struct TracingConsumerImpl<DataType::Optional, T> {
   }
 };
 
-// For #MemberRef, the tuple consumer must be able to pass additional arguments to the element consumer
+// For `MemberRef`, the tuple consumer must be able to pass additional arguments to the element consumer
 template<typename T>
 struct TracingConsumerImpl<DataType::Tuple, T> {
   template<typename... Args>
@@ -223,14 +223,14 @@ struct TracingConsumerImpl<DataType::VarRef, T> {
   }
 };
 
-// #TracingConsumer -----------------------------------------------------------------------------------------
+// `TracingConsumer` ----------------------------------------------------------------------------------------
 
 struct TracingConsumer {
   template<DataType DataType, typename T>
   using Type = TracingConsumerImpl<DataType, T>;
 };
 
-// #TracingProducerImpl -------------------------------------------------------------------------------------
+// `TracingProducerImpl` ------------------------------------------------------------------------------------
 
 template<DataType, typename T>
 struct TracingProducerImpl;
@@ -319,16 +319,16 @@ struct TracingProducerImpl<DataType::List, T> {
   }
 };
 
-// #TracingProducer -----------------------------------------------------------------------------------------
+// `TracingProducer` ----------------------------------------------------------------------------------------
 
 struct TracingProducer {
   template<DataType DataType, typename T>
   using Type = TracingProducerImpl<DataType, T>;
 };
 
-// #TEST ----------------------------------------------------------------------------------------------------
+// `TEST` ---------------------------------------------------------------------------------------------------
 
-// #TracingConsumer .........................................................................................
+// `TracingConsumer` ........................................................................................
 
 TEST(codec, TracingConsumerBool) {
   const Encoder<TracingConsumer> encoder;
@@ -543,7 +543,7 @@ TEST(codec, TracingConsumerVectorAndOptionalInTypeLoop) {
   }
 }
 
-// #TracingProducer .........................................................................................
+// `TracingProducer` ........................................................................................
 
 TEST(codec, TracingProducerBool) {
   using type = bool;

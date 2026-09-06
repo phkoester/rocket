@@ -10,7 +10,7 @@
 
 using namespace rocket::reflect;
 
-// #MyStruct ------------------------------------------------------------------------------------------------
+// `MyStruct` -----------------------------------------------------------------------------------------------
 
 struct MyStruct {
   i32 ä = 0;
@@ -36,7 +36,7 @@ public:
 ROCKET_REFLECT_MEMBERS_DECLARE(, MyStruct, Index); // NOLINT(*-internal-linkage)
 ROCKET_REFLECT_MEMBERS_DEFINE(, MyStruct, Index);
 
-// #MyDerivedStruct -----------------------------------------------------------------------------------------
+// `MyDerivedStruct` ----------------------------------------------------------------------------------------
 
 struct MyDerivedStruct : MyStruct {
   string d;
@@ -55,7 +55,7 @@ public:
 ROCKET_REFLECT_MEMBERS_DECLARE(, MyDerivedStruct, Index); // NOLINT(*-internal-linkage)
 ROCKET_REFLECT_MEMBERS_DEFINE(, MyDerivedStruct, Index);
 
-// #TEST ----------------------------------------------------------------------------------------------------
+// `TEST` ---------------------------------------------------------------------------------------------------
 
 TEST(reflect, MyStruct) {
   static_assert(is_same_v<MyStruct::Index::Ordering, strong_ordering>);

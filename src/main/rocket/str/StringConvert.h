@@ -17,7 +17,7 @@ namespace rocket::str {
 
 namespace internal {
 
-// #StringConvert -------------------------------------------------------------------------------------------
+// `StringConvert` ------------------------------------------------------------------------------------------
 
 template<typename T>
 struct StringConvert;

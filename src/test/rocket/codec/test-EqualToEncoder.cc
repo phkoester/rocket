@@ -10,7 +10,7 @@
 using namespace rocket;
 using namespace rocket::codec;
 
-// #MyStruct ------------------------------------------------------------------------------------------------
+// `MyStruct` -----------------------------------------------------------------------------------------------
 
 struct MyStruct {
   int ärger;
@@ -25,7 +25,7 @@ struct MyStruct {
 ROCKET_REFLECT_MEMBERS_DECLARE(, MyStruct, Index); // NOLINT(*-internal-linkage)
 ROCKET_REFLECT_MEMBERS_DEFINE(, MyStruct, Index);
 
-// #TEST ----------------------------------------------------------------------------------------------------
+// `TEST` ---------------------------------------------------------------------------------------------------
 
 TEST(EqualToEncoder, Bool) {
   const EqualToEncoder<> encoder;

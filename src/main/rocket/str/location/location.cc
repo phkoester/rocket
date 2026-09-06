@@ -16,7 +16,7 @@
 using namespace rocket;
 using namespace std;
 
-// #PositionType -------------------------------------------------------------------------------------------
+// `PositionType` -------------------------------------------------------------------------------------------
 
 ROCKET_ENUM_DEFINE(rocket::str::location, PositionType, PositionType, (note)(warning)(error));
 

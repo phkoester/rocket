@@ -31,7 +31,7 @@ combine(u64& seed, u64 hash) {
   }
 }
 
-// #HashConsumerImpl ----------------------------------------------------------------------------------------
+// `HashConsumerImpl` ---------------------------------------------------------------------------------------
 
 template<DataType DataType, typename T, typename Hash>
 struct HashConsumerImpl;
@@ -89,7 +89,7 @@ struct HashConsumerImpl<DataType::Optional, T, Hash> {
   }
 };
 
-// For #MemberRef, the tuple consumer must be able to pass additional arguments to the element consumer
+// For `MemberRef`, the tuple consumer must be able to pass additional arguments to the element consumer
 template<typename T, typename Hash>
 struct HashConsumerImpl<DataType::Tuple, T, Hash> {
   template<typename... Args>
@@ -373,7 +373,7 @@ struct HashConsumerImpl<DataType::Character, T, Hash> {
 
 } // namespace internal
 
-// #HashConsumer (giggle) -----------------------------------------------------------------------------------
+// `HashConsumer` (no pun intended) -------------------------------------------------------------------------
 
 /**
  * The consumer for the #HashEncoder.
@@ -387,7 +387,7 @@ struct HashConsumer {
   using Type = internal::HashConsumerImpl<DataType, T, Hash>;
 };
 
-// #HashEncoder ---------------------------------------------------------------------------------------------
+// `HashEncoder` --------------------------------------------------------------------------------------------
 
 /**
  * The hash encoder.

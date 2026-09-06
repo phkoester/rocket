@@ -23,7 +23,7 @@ using namespace rocket::str::location;
   EXPECT_EQ(loc.message, message__); \
   EXPECT_EQ(loc.caption, caption__)
 
-// #TEST ----------------------------------------------------------------------------------------------------
+// `TEST` ---------------------------------------------------------------------------------------------------
 
 TEST(location, locationsEmptyInput) {
   const Position pos { .type=note, .position=0, .message="Oops" };

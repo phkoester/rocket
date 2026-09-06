@@ -34,7 +34,7 @@ a quick and dirty logging facility here.
 
 namespace rocket::nio {
 
-// #Sink ----------------------------------------------------------------------------------------------------
+// `Sink` ---------------------------------------------------------------------------------------------------
 
 u64
 Sink::writeln(string_view in) {
@@ -48,7 +48,7 @@ Sink::writeln(string_view in) {
   return ret;
 }
 
-// #BufferedSink --------------------------------------------------------------------------------------------
+// `BufferedSink` -------------------------------------------------------------------------------------------
 
 BufferedSink::BufferedSink(Sink& underlying, u64 size) :
     underlying_(underlying),
@@ -133,7 +133,7 @@ BufferedSink::write(span<const u8> in) {
   return in.size();
 }
 
-// #FileSink ------------------------------------------------------------------------------------------------
+// `FileSink` -----------------------------------------------------------------------------------------------
 
 FileSink::FileSink(FILE* file, const Config& config) :
   file_(file),
@@ -218,14 +218,14 @@ FileSink::write(span<const u8> in) {
   return result;
 }
 
-// #NullSink ------------------------------------------------------------------------------------------------
+// `NullSink` -----------------------------------------------------------------------------------------------
 
 NullSink::NullSink() {
   status_.bad = false;
   status_.eof = true;
 }
 
-// #SpanSink ------------------------------------------------------------------------------------------------
+// `SpanSink` -----------------------------------------------------------------------------------------------
 
 SpanSink::SpanSink(span<char> out) :
   out_(out) {
@@ -257,7 +257,7 @@ SpanSink::write(span<const u8> in) {
   return ret;
 }
 
-// #StreamSink ----------------------------------------------------------------------------------------------
+// `StreamSink` ---------------------------------------------------------------------------------------------
 
 StreamSink::StreamSink(ostream& os) :
     os_(os) {
@@ -323,7 +323,7 @@ StreamSink::write(span<const u8> in) {
   return safe<u64>(result);
 }
 
-// #StringSink ----------------------------------------------------------------------------------------------
+// `StringSink` ---------------------------------------------------------------------------------------------
 
 StringSink::StringSink() {
   status_.bad = false;
@@ -359,7 +359,7 @@ StringSink::write(span<const u8> in) {
   return in.size();
 }
 
-// #Source --------------------------------------------------------------------------------------------------
+// `Source` -------------------------------------------------------------------------------------------------
 
 vector<u8>
 Source::readAll() {
@@ -467,7 +467,7 @@ Source::readln() {
   return ret;
 }
 
-// #ContiguousSource ----------------------------------------------------------------------------------------
+// `ContiguousSource` ---------------------------------------------------------------------------------------
 
 string
 ContiguousSource::readln() {
@@ -518,7 +518,7 @@ ContiguousSource::readCodePoint() {
 #endif
 }
 
-// #BufferedSource ------------------------------------------------------------------------------------------
+// `BufferedSource` -----------------------------------------------------------------------------------------
 
 BufferedSource::BufferedSource(Source& underlying, u64 size) :
   underlying_(underlying),
@@ -680,7 +680,7 @@ BufferedSource::tell() {
   return bufPos_ + pos_;
 }
 
-// #FileSource ----------------------------------------------------------------------------------------------
+// `FileSource` ---------------------------------------------------------------------------------------------
 
 FileSource::FileSource(FILE* file, const Config& config) :
   file_(file),
@@ -807,7 +807,7 @@ FileSource::tell() {
   return safe<u64>(result);
 }
 
-// #NullSource ----------------------------------------------------------------------------------------------
+// `NullSource` ---------------------------------------------------------------------------------------------
 
 NullSource::NullSource() {
   status_.bad = false;
@@ -826,7 +826,7 @@ NullSource::istream() {
   return *istream_;
 }
 
-// #SpanSource ----------------------------------------------------------------------------------------------
+// `SpanSource` ---------------------------------------------------------------------------------------------
 
 SpanSource::SpanSource(span<const u8> in) :
   in_(in) {
@@ -903,7 +903,7 @@ SpanSource::seek(i64 offset, SeekMode mode) { // NOLINT
   return true;
 }
 
-// #StreamSource --------------------------------------------------------------------------------------------
+// `StreamSource` -------------------------------------------------------------------------------------------
 
 StreamSource::StreamSource(std::istream& is) :
   is_(is) {
@@ -976,12 +976,12 @@ StreamSource::seek(i64 offset, SeekMode mode) { // NOLINT
     ROCKET_FLOP(mode, "Invalid seek mode {}", static_cast<i32>(mode));
   }
 
-  LOG("before clear failbit, bad=" << is_.bad() << ", fail=" << is_.fail() << ", eof=" << is_.eof() << ", tellg=" << io::tellg(is_));
+  LOG("Before clear failbit, bad=" << is_.bad() << ", fail=" << is_.fail() << ", eof=" << is_.eof() << ", tellg=" << io::tellg(is_));
   // We need to clear the fail bit, otherwise the seek will fail
   is_.clear(is_.rdstate() & ~ios_base::failbit);
-  LOG("after clear failbit, bad=" << is_.bad() << ", fail=" << is_.fail() << ", eof=" << is_.eof() << ", tellg=" << io::tellg(is_));
+  LOG("After clear failbit, bad=" << is_.bad() << ", fail=" << is_.fail() << ", eof=" << is_.eof() << ", tellg=" << io::tellg(is_));
   is_.seekg(safe<istream::off_type>(offset), dir);
-  LOG("after seekg, bad=" << is_.bad() << ", fail=" << is_.fail() << ", eof=" << is_.eof() << ", tellg=" << io::tellg(is_));
+  LOG("After seekg, bad=" << is_.bad() << ", fail=" << is_.fail() << ", eof=" << is_.eof() << ", tellg=" << io::tellg(is_));
   status_.bad = is_.bad();
   return not bad();
 }

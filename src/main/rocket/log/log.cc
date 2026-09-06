@@ -37,7 +37,7 @@ const map<LogLevel, string_view> LEVEL_DISPLAY {
   { LogLevel::trace, "TRACE"sv },
 };
 
-// #Entry ---------------------------------------------------------------------------------------------------
+// `Entry` --------------------------------------------------------------------------------------------------
 
 /**
  * A stack entry.
@@ -68,7 +68,7 @@ struct Entry {
     time_(time) {}
 };
 
-// #Fmt -----------------------------------------------------------------------------------------------------
+// `Fmt` ----------------------------------------------------------------------------------------------------
 
 struct Fmt {
   bool usePrettyFunction = true; // f, F
@@ -116,7 +116,7 @@ struct Fmt {
 
 Fmt logFmt;
 
-// #Out -----------------------------------------------------------------------------------------------------
+// `Out` ----------------------------------------------------------------------------------------------------
 
 /// @NotThreadSafe
 struct Out {
@@ -364,7 +364,7 @@ recursive_mutex logMutex;
 // Defined log IDs
 auto definedIds = rocket::makeUnorderedBimap<LogSettings*, string_view>();
 
-// The #Out instance
+// The `Out` instance
 Out logOut;
 
 /**
@@ -580,7 +580,7 @@ logImpl(
 
 } // namespace
 
-// #LogLevel ------------------------------------------------------------------------------------------------
+// `LogLevel` -----------------------------------------------------------------------------------------------
 
 ROCKET_ENUM_DEFINE(rocket::log, LogLevel, LogLevel, (none)(error)(warn)(info)(debug)(trace));
 
@@ -590,7 +590,7 @@ namespace rocket::log {
 
 namespace internal {
 
-// #Log .....................................................................................................
+// `Log` ....................................................................................................
 
 /// @ThreadSafe
 unique_ptr<Log>
@@ -607,7 +607,7 @@ makeLog(
   return make_unique<Log>(logId, function, prettyFunction, file, line);
 }
 
-// #LogSettings .............................................................................................
+// `LogSettings` ............................................................................................
 
 LogLevel
 LogSettings::level(const char* function, const char* prettyFunction) const {

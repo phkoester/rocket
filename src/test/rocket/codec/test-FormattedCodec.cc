@@ -17,7 +17,7 @@ using namespace rocket;
 using namespace rocket::codec;
 using namespace std;
 
-// #MyStruct ------------------------------------------------------------------------------------------------
+// `MyStruct` -----------------------------------------------------------------------------------------------
 
 struct MyStruct {
   i32 ärger = 0;
@@ -64,9 +64,9 @@ decodeAndTell(string_view str) {
 
 } // namespace
 
-// #TEST ----------------------------------------------------------------------------------------------------
+// `TEST` ---------------------------------------------------------------------------------------------------
 
-// #FormattedConsumer .......................................................................................
+// `FormattedConsumer` ......................................................................................
 
 TEST(FormattedCodec, FormattedConsumerBool) {
   EXPECT_EQ(encode(true), "true");
@@ -248,7 +248,7 @@ TEST(FormattedCodec, FormattedConsumerCodePoint) {
   EXPECT_EQ(encode(type(U'\U00010FFF')), "U+10FFF");
 }
 
-// #FormattedProducer .......................................................................................
+// `FormattedProducer` ......................................................................................
 
 TEST(FormattedCodec, FormattedProducerBool) {
   EXPECT_EQ(decode<bool>("// sup\nTRue"), true);

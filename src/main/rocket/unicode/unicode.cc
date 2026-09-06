@@ -25,7 +25,7 @@ using namespace std;
 
 namespace rocket::unicode {
 
-// #CodePoint -----------------------------------------------------------------------------------------------
+// `CodePoint` ----------------------------------------------------------------------------------------------
 
 CodePoint::operator string() const {
   array<char, 4> buf; // NOLINT

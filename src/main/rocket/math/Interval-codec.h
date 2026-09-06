@@ -26,7 +26,7 @@ operator<<(std::ostream& lhs, const Interval<Left, Right>& rhs) {
 
 } // namespace rocket::math
 
-// #fmt::formatter<#rocket::math::Interval> -----------------------------------------------------------------
+// `fmt::formatter<rocket::math::Interval>` -----------------------------------------------------------------
 
 /**
  * @spec_fmt_formatter{#rocket::math::Interval}
