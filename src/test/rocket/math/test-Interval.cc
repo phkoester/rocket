@@ -671,55 +671,212 @@ TEST(Interval, RightOpenIntervalF64Format) {
 
 // Intervals ................................................................................................
 
-TEST(Interval, IntervalsIntersectionOf) {
+TEST(Interval, OpenIntervalsI32IntersectionOf) {
   using type = i32;
-  using interval = OpenInterval<type>;
-  using intervals = vector<interval>;
+  using ival = OpenInterval<type>;
+  using ivals = OpenIntervals<type>;
 
+  // An empty list of intervals yields an empty intersection
   EXPECT_EQ(
-    intersectionOf((intervals {})),
-    interval());
+    intersectionOf((ivals {})),
+    ival());
+  // A single nonempty interval yields itself
   EXPECT_EQ(
-    intersectionOf((intervals { interval(), interval(1, 3) })),
-    interval());
+    intersectionOf((ivals { ival(1, 3) })),
+    ival(1, 3));
+  // A single empty interval yields an empty intersection
   EXPECT_EQ(
-    intersectionOf((intervals { interval(1, 3), interval() })),
-    interval());
+    intersectionOf((ivals { ival() })),
+    ival());
+  // An empty interval as the first operand yields an empty intersection
   EXPECT_EQ(
-    intersectionOf((intervals { interval(1, 3), interval(2, 4) })),
-    interval());
+    intersectionOf((ivals { ival(), ival(1, 3) })),
+    ival());
+  // An empty interval as the second operand yields an empty intersection
   EXPECT_EQ(
-    intersectionOf((intervals { interval(1, 4), interval(2, 5) })),
-    interval(2, 4));
+    intersectionOf((ivals { ival(1, 3), ival() })),
+    ival());
+  // Overlapping intervals whose intersection (2,3) contains no integers yield an empty intersection
   EXPECT_EQ(
-    intersectionOf((intervals { interval(1, 4), interval(2, 5), interval() })),
-    interval());
+    intersectionOf((ivals { ival(1, 3), ival(2, 4) })),
+    ival());
+  // Overlapping intervals yield their common range
   EXPECT_EQ(
-    intersectionOf((intervals { interval(1, 4), interval(2, 5), interval(7, 8) })),
-    interval());
+    intersectionOf((ivals { ival(1, 4), ival(2, 5) })),
+    ival(2, 4));
+  // An empty interval among the operands empties the whole intersection
   EXPECT_EQ(
-    intersectionOf((intervals { interval(1, 10), interval(2, 9), interval(3, 8) })),
-    interval(3, 8));
+    intersectionOf((ivals { ival(1, 4), ival(2, 5), ival() })),
+    ival());
+  // A disjoint interval among the operands empties the whole intersection
+  EXPECT_EQ(
+    intersectionOf((ivals { ival(1, 4), ival(2, 5), ival(7, 8) })),
+    ival());
+  // Nested intervals yield the innermost interval
+  EXPECT_EQ(
+    intersectionOf((ivals { ival(1, 10), ival(2, 9), ival(3, 8) })),
+    ival(3, 8));
+  // Unbounded intervals intersect with bounded ones
+  EXPECT_EQ(
+    intersectionOf((ivals { ival(nullopt, nullopt), ival(1, 4), ival(2, nullopt) })),
+    ival(2, 4));
 }
 
-TEST(Interval, IntervalsUnionOf) {
-  using type = i32;
-  using interval = ClosedInterval<type>;
-  using intervals = vector<interval>;
+TEST(Interval, OpenIntervalsF64IntersectionOf) {
+  using type = f64;
+  using ival = OpenInterval<type>;
+  using ivals = OpenIntervals<type>;
 
+  // An empty list of intervals yields an empty intersection
   EXPECT_EQ(
-    unionOf((intervals {})),
-    (intervals {}));
+    intersectionOf((ivals {})),
+    ival());
+  // A single nonempty interval yields itself
   EXPECT_EQ(
-    unionOf((intervals { interval(), interval() })),
-    (intervals {}));
+    intersectionOf((ivals { ival(1, 3) })),
+    ival(1, 3));
+  // A single empty interval yields an empty intersection
   EXPECT_EQ(
-    unionOf((intervals { interval(), interval(1, 3) })),
-    (intervals { interval(1, 3) }));
+    intersectionOf((ivals { ival() })),
+    ival());
+  // An empty interval as the first operand yields an empty intersection
   EXPECT_EQ(
-    unionOf((intervals { interval(1, 3), interval() })),
-    (intervals { interval(1, 3) }));
-  // XXX
+    intersectionOf((ivals { ival(), ival(1, 3) })),
+    ival());
+  // An empty interval as the second operand yields an empty intersection
+  EXPECT_EQ(
+    intersectionOf((ivals { ival(1, 3), ival() })),
+    ival());
+  // Unlike the integer case, the intersection (2,3) is nonempty for floating-point intervals
+  EXPECT_EQ(
+    intersectionOf((ivals { ival(1, 3), ival(2, 4) })),
+    ival(2, 3));
+  // Intervals sharing only a bound yield an empty intersection: (1,2) and (2,3) do not contain 2
+  EXPECT_EQ(
+    intersectionOf((ivals { ival(1, 2), ival(2, 3) })),
+    ival());
+  // An empty interval among the operands empties the whole intersection
+  EXPECT_EQ(
+    intersectionOf((ivals { ival(1, 4), ival(2, 5), ival() })),
+    ival());
+  // A disjoint interval among the operands empties the whole intersection
+  EXPECT_EQ(
+    intersectionOf((ivals { ival(1, 4), ival(2, 5), ival(7, 8) })),
+    ival());
+  // Nested intervals yield the innermost interval
+  EXPECT_EQ(
+    intersectionOf((ivals { ival(1, 10), ival(2, 9), ival(3, 8) })),
+    ival(3, 8));
+  // Unbounded intervals intersect with bounded ones
+  EXPECT_EQ(
+    intersectionOf((ivals { ival(nullopt, nullopt), ival(1, 4), ival(2, nullopt) })),
+    ival(2, 4));
+}
+
+TEST(Interval, ClosedIntervalsI32UnionOf) {
+  using type = i32;
+  using ival = ClosedInterval<type>;
+  using ivals = ClosedIntervals<type>;
+
+  // An empty list of intervals yields an empty union
+  EXPECT_EQ(
+    unionOf((ivals {})),
+    (ivals {}));
+  // Empty intervals are dropped from the union
+  EXPECT_EQ(
+    unionOf((ivals { ival(), ival() })),
+    (ivals {}));
+  // An empty interval as the first operand does not affect the union
+  EXPECT_EQ(
+    unionOf((ivals { ival(), ival(1, 3) })),
+    (ivals { ival(1, 3) }));
+  // An empty interval as the second operand does not affect the union
+  EXPECT_EQ(
+    unionOf((ivals { ival(1, 3), ival() })),
+    (ivals { ival(1, 3) }));
+  // A single interval yields itself
+  EXPECT_EQ(
+    unionOf((ivals { ival(1, 3) })),
+    (ivals { ival(1, 3) }));
+  // Disjoint intervals are kept separate, sorted by their lower bounds
+  EXPECT_EQ(
+    unionOf((ivals { ival(4, 5), ival(1, 2) })),
+    (ivals { ival(1, 2), ival(4, 5) }));
+  // Overlapping intervals are merged into one
+  EXPECT_EQ(
+    unionOf((ivals { ival(1, 3), ival(2, 5) })),
+    (ivals { ival(1, 5) }));
+  // Adjacent intervals are merged: [1,2] and [3,4] cover all of [1,4] for integer
+  EXPECT_EQ(
+    unionOf((ivals { ival(1, 2), ival(3, 4) })),
+    (ivals { ival(1, 4) }));
+  // A nested interval is absorbed by the enclosing one
+  EXPECT_EQ(
+    unionOf((ivals { ival(1, 10), ival(2, 5) })),
+    (ivals { ival(1, 10) }));
+  // Mixed input: [1,2] and [2,4] merge to [1,4], [7,9] stays separate
+  EXPECT_EQ(
+    unionOf((ivals { ival(7, 9), ival(1, 2), ival(2, 4) })),
+    (ivals { ival(1, 4), ival(7, 9) }));
+  // Intervals with equal lower bounds are merged
+  EXPECT_EQ(
+    unionOf((ivals { ival(1, 5), ival(1, 2) })),
+    (ivals { ival(1, 5) }));
+}
+
+TEST(Interval, OpenIntervalsF64UnionOf) {
+  using type = f64;
+  using ival = OpenInterval<type>;
+  using ivals = OpenIntervals<type>;
+
+  // An empty list of intervals yields an empty union
+  EXPECT_EQ(
+    unionOf((ivals {})),
+    (ivals {}));
+  // Empty intervals are dropped from the union
+  EXPECT_EQ(
+    unionOf((ivals { ival(), ival() })),
+    (ivals {}));
+  // An empty interval as the first operand does not affect the union
+  EXPECT_EQ(
+    unionOf((ivals { ival(), ival(1, 3) })),
+    (ivals { ival(1, 3) }));
+  // An empty interval as the second operand does not affect the union
+  EXPECT_EQ(
+    unionOf((ivals { ival(1, 3), ival() })),
+    (ivals { ival(1, 3) }));
+  // A single interval yields itself
+  EXPECT_EQ(
+    unionOf((ivals { ival(1, 3) })),
+    (ivals { ival(1, 3) }));
+  // Disjoint intervals are kept separate, sorted by their lower bounds
+  EXPECT_EQ(
+    unionOf((ivals { ival(4, 5), ival(1, 2) })),
+    (ivals { ival(1, 2), ival(4, 5) }));
+  // Overlapping intervals are merged into one
+  EXPECT_EQ(
+    unionOf((ivals { ival(1, 3), ival(2, 5) })),
+    (ivals { ival(1, 5) }));
+  // Intervals sharing only a bound stay separate: neither (1,2) nor (2,3) contains 2
+  EXPECT_EQ(
+    unionOf((ivals { ival(1, 2), ival(2, 3) })),
+    (ivals { ival(1, 2), ival(2, 3) }));
+  // A nested interval is absorbed by the enclosing one
+  EXPECT_EQ(
+    unionOf((ivals { ival(1, 10), ival(2, 5) })),
+    (ivals { ival(1, 10) }));
+  // Mixed input: (1,3) and (2,4) merge to (1,4), (7,9) stays separate
+  EXPECT_EQ(
+    unionOf((ivals { ival(7, 9), ival(1, 3), ival(2, 4) })),
+    (ivals { ival(1, 4), ival(7, 9) }));
+  // Intervals with equal lower bounds are merged
+  EXPECT_EQ(
+    unionOf((ivals { ival(1, 5), ival(1, 2) })),
+    (ivals { ival(1, 5) }));
+  // Overlapping unbounded intervals merge into the unbounded interval
+  EXPECT_EQ(
+    unionOf((ivals { ival(1, nullopt), ival(nullopt, 2) })),
+    (ivals { ival(nullopt, nullopt) }));
 }
 
 // EOF
