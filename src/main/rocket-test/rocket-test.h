@@ -56,9 +56,9 @@ using namespace testing;
 
 #ifdef ROCKET_OS_WINDOWS
 /// To be used with `ASSERT_EXIT` or `EXPECT_EXIT`.
-#define ABORTED() ::testing::ExitedWithSignal(0)
+#define ABORTED() ::testing::AnyOf(::testing::ExitedWithCode(3), ::testing::ExitedWithCode(-2'147'483'645))
 /// To be used with `ASSERT_EXIT` or `EXPECT_EXIT`.
-#define WITH_MESSAGE(msg) msg
+#define WITH_MESSAGE(msg) ""
 #else
 /// To be used with `ASSERT_EXIT` or `EXPECT_EXIT`.
 #define ABORTED() ::testing::KilledBySignal(SIGABRT)
@@ -67,6 +67,7 @@ using namespace testing;
 /// To be used with `ASSERT_EXIT` or `EXPECT_EXIT`.
 #define WITH_MESSAGE(msg) msg
 #endif
+
 /**
  * Checks if an environment variable is set to `true`. If it is not, the test is skipped.
  *
