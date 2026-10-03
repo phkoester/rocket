@@ -4,7 +4,9 @@
 
 #ifdef ROCKET_OS_WINDOWS
 
+#include <array>
 #include <optional>
+
 #include <Windows.h>
 
 class ConsoleModeGuard {
