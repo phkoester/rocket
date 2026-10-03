@@ -2,54 +2,8 @@
  * system.cc
  */
 
-#ifdef ROCKET_OS_WINDOWS
-
 #include <array>
 #include <optional>
-
-#include <Windows.h>
-
-class ConsoleModeGuard {
-public:
-  ConsoleModeGuard() {
-    for (auto& entry : entries_) {
-      entry.handle = CreateFileA(entry.name, GENERIC_READ | GENERIC_WRITE,
-        FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr, OPEN_EXISTING, 0, nullptr);
-      if (entry.handle == INVALID_HANDLE_VALUE) {
-        continue; // no console attached
-      }
-      DWORD mode = 0;
-      if (GetConsoleMode(entry.handle, &mode) != 0) {
-        entry.mode = mode;
-      }
-    }
-  }
-  ~ConsoleModeGuard() {
-    for (const auto& entry : entries_) {
-      if (entry.handle == INVALID_HANDLE_VALUE) {
-        continue;
-      }
-      if (entry.mode) {
-        SetConsoleMode(entry.handle, *entry.mode);
-      }
-      CloseHandle(entry.handle);
-    }
-  }
-  ConsoleModeGuard(const ConsoleModeGuard&) = delete;
-  ConsoleModeGuard& operator=(const ConsoleModeGuard&) = delete;
-private:
-  struct Entry {
-    const char* name;
-    HANDLE handle = INVALID_HANDLE_VALUE;
-    std::optional<DWORD> mode;
-  };
-  std::array<Entry, 2> entries_ { {
-    { .name="CONIN$" },  // stdin
-    { .name="CONOUT$" }, // stdout and stderr (same screen buffer)
-  } };
-};
-
-#endif
 
 #include "system.h"
 #include "rocket/Guard.h"
@@ -63,16 +17,6 @@ private:
 
 using namespace rocket;
 using namespace std;
-
-// Macros ---------------------------------------------------------------------------------------------------
-
-#ifdef ROCKET_OS_WINDOWS
-  #define PCLOSE _pclose
-  #define POPEN _popen
-#else
-  #define PCLOSE pclose
-  #define POPEN popen
-#endif
 
 namespace {
 
@@ -222,16 +166,14 @@ setImpl(std::string_view name, const optional<string>& value, bool replace) {
 
 // Functions ------------------------------------------------------------------------------------------------
 
+#ifndef ROCKET_OS_WINDOWS
+
 vector<char>
 exec(const string& cl) {
   vector<char> ret;
   vector<char> buf(1'024);
 
-#ifdef ROCKET_OS_WINDOWS
-  ConsoleModeGuard cmg;
-#endif
-
-  const unique_ptr<FILE, decltype(&PCLOSE)> pipe(POPEN(cl.c_str(), "r"), PCLOSE);
+  const unique_ptr<FILE, decltype(&pclose)> pipe(popen(cl.c_str(), "r"), pclose);
   if (not pipe) {
     ROCKET_FAIL("Cannot open pipe for command `{}`", cl);
   }
@@ -245,6 +187,8 @@ exec(const string& cl) {
 
   return ret;
 }
+
+#endif
 
 vector<char>
 exec(const vector<string_view>& args) {

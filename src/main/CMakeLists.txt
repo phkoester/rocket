@@ -138,6 +138,9 @@ target_sources(rocket
       rocket/unicode/unicode.h
       rocket/unicode/unicode-fwd.h
 )
+if(GAIA_OS_WINDOWS)
+  target_sources(rocket PRIVATE rocket/system/system-windows.cc)
+endif()
 set_target_properties(rocket PROPERTIES VERSION ${PROJECT_VERSION}) # SOVERSION 0
 
 target_compile_definitions(rocket
