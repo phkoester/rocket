@@ -15,6 +15,11 @@ using namespace std;
 
 namespace {
 
+// `ConsoleModeGuard` ---------------------------------------------------------------------------------------
+
+/**
+ * A guard that restores the console mode of stdin and stdout.
+ */
 struct ConsoleModeGuard {
   ConsoleModeGuard() {
     for (auto& entry : entries_) {
@@ -30,6 +35,8 @@ struct ConsoleModeGuard {
     }
   }
 
+  ConsoleModeGuard(const ConsoleModeGuard&) = delete;
+
   ~ConsoleModeGuard() {
     for (const auto& entry : entries_) {
       if (entry.handle == INVALID_HANDLE_VALUE) {
@@ -41,8 +48,6 @@ struct ConsoleModeGuard {
       CloseHandle(entry.handle);
     }
   }
-
-  ConsoleModeGuard(const ConsoleModeGuard&) = delete;
 
   ConsoleModeGuard& operator=(const ConsoleModeGuard&) = delete;
 
@@ -64,12 +69,14 @@ private:
 
 namespace rocket::system {
 
+// Functions ------------------------------------------------------------------------------------------------
+
 vector<char>
 exec(const string& cl) {
   vector<char> ret;
   vector<char> buf(1'024);
 
-  ConsoleModeGuard cmg;
+  // XXX ConsoleModeGuard cmg;
 
   const unique_ptr<FILE, decltype(&_pclose)> pipe(_popen(cl.c_str(), "r"), _pclose);
   if (not pipe) {

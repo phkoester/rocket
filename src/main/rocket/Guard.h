@@ -27,12 +27,16 @@ struct Guard {
    */
   explicit Guard(std::function<void()>&& fn) : fn_(std::move(fn)) {}
 
+  Guard(const Guard&) = delete;
+
   /**
    * @dtor
    *
    * This destructor executes the function that was passed to the constructor.
    */
   ~Guard() { fn_(); }
+
+  Guard& operator=(const Guard&) = delete;
 
 private:
 
@@ -70,12 +74,16 @@ struct ValueGuard {
     ref = std::move(newValue);
   }
 
+  ValueGuard(const ValueGuard&) = delete;
+
   /**
    * @dtor
    *
    * This destructor reassigns the old value to `ref` that was passed to the constructor.
    */
   ~ValueGuard() { *ptr_ = oldValue_; }
+
+  ValueGuard& operator=(const ValueGuard&) = delete;
 
 private:
 
