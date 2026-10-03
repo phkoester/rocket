@@ -55,11 +55,9 @@ using namespace testing;
 // Others ...................................................................................................
 
 /// To be used with `ASSERT_EXIT` or `EXPECT_EXIT`.
-#define ABORTED() KILLED_BY_SIGNAL(SIGABRT)
+#define ABORTED() ::testing::KilledBySignal(SIGABRT)
 /// To be used with `ASSERT_EXIT` or `EXPECT_EXIT`.
 #define EXITED_WITH_CODE(code) ::testing::ExitedWithCode(code)
-/// To be used with `ASSERT_EXIT` or `EXPECT_EXIT`.
-#define KILLED_BY_SIGNAL(signal) ::testing::KilledBySignal(signal)
 /// To be used with `ASSERT_EXIT` or `EXPECT_EXIT`.
 #define WITH_MESSAGE(msg) msg
 
