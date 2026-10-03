@@ -2,6 +2,8 @@
  * system-windows.cc
  */
 
+#include "rocket/assert.h"
+
 #include <array>
 #include <memory>
 #include <optional>
