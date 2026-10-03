@@ -66,7 +66,7 @@ using namespace testing;
  *
  * @param name the name of the environment variable
  */
-#define ASSUME_ENV(name) { \
+#define REQUIRE_ENV(name) { \
   if (not ::rocket::system::env::get<bool>(name).value_or(false)) { \
     GTEST_SKIP_("Skipping test because `" name "` is not set to `true`\n"); \
   } \
