@@ -101,7 +101,7 @@ struct ExitedWithStatus {
 /// To be used with `ASSERT_EXIT` or `EXPECT_EXIT`.
 #define ABORTED() ::testing::KilledBySignal(SIGABRT)
 /// To be used with `ASSERT_EXIT` or `EXPECT_EXIT`.
-#define EXITED_WITH_STATUS(code) ::testing::ExitedWithCode(status)
+#define EXITED_WITH_STATUS(status) ::testing::ExitedWithCode(status)
 /// To be used with `ASSERT_EXIT` or `EXPECT_EXIT`.
 #define WITH_MESSAGE(msg) msg
 
