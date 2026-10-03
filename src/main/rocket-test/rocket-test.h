@@ -77,7 +77,7 @@ using namespace testing;
  */
 #define ASSERT_ENV(name) { \
   if (not ::rocket::system::env::get<bool>(name).value_or(false)) { \
-    GTEST_SKIP_("Skipping test because `" name "` is not set\n"); \
+    GTEST_SKIP_("Skipping test because `" name "` is not set to `true`\n"); \
   } \
 }
 
