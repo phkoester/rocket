@@ -55,17 +55,33 @@ using namespace testing;
 // Others ...................................................................................................
 
 #ifdef ROCKET_OS_WINDOWS
+
+namespace rocket::test {
+
+struct Aborted {
+  bool operator() const {
+    return ::testing::ExitedWithCode(3) || ::testing::ExitedWithCode(-2'147'483'645);
+  }
+};
+
+} // namespace rocket::test
+
 /// To be used with `ASSERT_EXIT` or `EXPECT_EXIT`.
-#define ABORTED() ::testing::AnyOf(::testing::ExitedWithCode(3), ::testing::ExitedWithCode(-2'147'483'645))
+#define ABORTED() ::rocket::test::Aborted()
 /// To be used with `ASSERT_EXIT` or `EXPECT_EXIT`.
+/// To be used with `ASSERT_EXIT` or `EXPECT_EXIT`.
+#define EXITED_WITH_CODE(code) ::testing::ExitedWithCode(code)
 #define WITH_MESSAGE(msg) ""
+
 #else
+
 /// To be used with `ASSERT_EXIT` or `EXPECT_EXIT`.
 #define ABORTED() ::testing::KilledBySignal(SIGABRT)
 /// To be used with `ASSERT_EXIT` or `EXPECT_EXIT`.
 #define EXITED_WITH_CODE(code) ::testing::ExitedWithCode(code)
 /// To be used with `ASSERT_EXIT` or `EXPECT_EXIT`.
 #define WITH_MESSAGE(msg) msg
+
 #endif
 
 /**
