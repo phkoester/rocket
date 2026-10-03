@@ -139,9 +139,10 @@ target_sources(rocket
       rocket/unicode/unicode-fwd.h
 )
 if(GAIA_OS_WINDOWS)
-  target_sources(rocket PRIVATE rocket/system/system-windows.cc)
+  target_sources(rocket
+    PRIVATE
+      rocket/system/system-windows.cc)
 endif()
-set_target_properties(rocket PROPERTIES VERSION ${PROJECT_VERSION}) # SOVERSION 0
 
 target_compile_definitions(rocket
   PRIVATE
@@ -165,6 +166,8 @@ target_link_libraries(rocket
   PUBLIC ${ROCKET_BOOST_LINK_TARGETS} fmt::fmt-header-only ICU::uc scn::scn
   PRIVATE ${ROCKET_PRIVATE_LINK_TARGETS}
 )
+
+set_target_properties(rocket PROPERTIES VERSION ${PROJECT_VERSION}) # SOVERSION 0
 
 add_library(Rocket::rocket ALIAS rocket)
 

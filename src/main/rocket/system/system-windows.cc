@@ -26,7 +26,7 @@ struct ConsoleModeGuard {
       entry.handle = CreateFileA(entry.name, GENERIC_READ | GENERIC_WRITE,
         FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr, OPEN_EXISTING, 0, nullptr);
       if (entry.handle == INVALID_HANDLE_VALUE) {
-        continue; // no console attached
+        continue; // No console attached
       }
       DWORD mode = 0;
       if (GetConsoleMode(entry.handle, &mode) != 0) {
@@ -60,8 +60,8 @@ private:
   };
 
   std::array<Entry, 2> entries_ { {
-    { .name="CONIN$" },  // stdin
-    { .name="CONOUT$" }, // stdout and stderr (same screen buffer)
+    { .name="CONIN$" },  // `stdin`
+    { .name="CONOUT$" }, // `stdout` and `stderr` (same screen buffer)
   } };
 };
 
