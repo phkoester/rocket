@@ -18,7 +18,7 @@ namespace {
 // `ConsoleModeGuard` ---------------------------------------------------------------------------------------
 
 /**
- * A guard that restores the console mode of stdin and stdout.
+ * A guard that restores the console mode of `stdin` and `stdout`.
  */
 struct ConsoleModeGuard {
   ConsoleModeGuard() {
@@ -76,7 +76,7 @@ exec(const string& cl) {
   vector<char> ret;
   vector<char> buf(1'024);
 
-  // XXX ConsoleModeGuard cmg;
+  ConsoleModeGuard cmg;
 
   const unique_ptr<FILE, decltype(&_pclose)> pipe(_popen(cl.c_str(), "r"), _pclose);
   if (not pipe) {
