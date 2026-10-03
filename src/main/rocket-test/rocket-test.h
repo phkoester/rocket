@@ -59,8 +59,9 @@ using namespace testing;
 namespace rocket::test {
 
 struct Aborted {
-  bool operator()() const {
-    return ::testing::ExitedWithCode(3)() || ::testing::ExitedWithCode(-2'147'483'645)();
+  [[nodiscard]] bool
+  operator()(int status) const {
+    return ::testing::ExitedWithCode(3)(status) || ::testing::ExitedWithCode(-2'147'483'645)(status);
   }
 };
 
