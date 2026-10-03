@@ -103,7 +103,7 @@
       return { it->first.size(), it->second }; \
     } \
     \
-    /* Relaxed */ \
+    /* Nonstrict */ \
     u64 maxValueSize = 0; \
     ns::type maxKey; \
     for (const auto& [key, value] : ns::get##name##Map__().left) { \

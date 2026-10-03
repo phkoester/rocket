@@ -62,11 +62,11 @@ target_sources(rocket
     rocket/rocket.cc
     rocket/chrono/chrono.cc
     rocket/cl/cl.cc
-    rocket/codec/codec-utils.cc
     rocket/external/scnlib/impl.cc
     rocket/filesystem/filesystem.cc
     rocket/io/io.cc
     rocket/nio/nio.cc
+    rocket/nio/nio-utils.cc
     rocket/str/Noun.cc
     rocket/str/str.cc
     rocket/str/StringConvert.cc
@@ -102,7 +102,6 @@ target_sources(rocket
       rocket/chrono/chrono.h
       rocket/cl/cl.h
       rocket/codec/codec.h
-      rocket/codec/codec-utils.h
       rocket/codec/CompareEncoder.h
       rocket/codec/EqualToEncoder.h
       rocket/codec/FormattedCodec.h
@@ -118,6 +117,7 @@ target_sources(rocket
       rocket/math/random/random.h
       rocket/nio/nio.h
       rocket/nio/nio-fwd.h
+      rocket/nio/nio-utils.h
       rocket/reflect/Declared.h
       rocket/reflect/Instance.h
       rocket/reflect/MemberRef.h

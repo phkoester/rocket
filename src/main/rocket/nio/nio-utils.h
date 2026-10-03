@@ -1,5 +1,5 @@
 /**
- * @file codec-utils.h
+ * @file nio-utils.h
  */
 
 #pragma once
@@ -11,11 +11,11 @@
 
 #include <chrono>
 #include <functional>
-#include <vector>
+#include <set>
 
-namespace rocket::codec {
+namespace rocket::nio {
 
-// Utilities for encoding -----------------------------------------------------------------------------------
+// Utilities for writing to a sink --------------------------------------------------------------------------
 
 /**
  * Takes care of indentation.
@@ -48,7 +48,7 @@ void endContainer(nio::Sink& out, bool indent, u64& level, u64 size, char c);
  */
 void nextElem(nio::Sink& out, bool indent, u64 level, u64 index);
 
-// Utilities for decoding -----------------------------------------------------------------------------------
+// Utilities for reading from a source ----------------------------------------------------------------------
 
 /**
  * Throws if the next character in the source is not the expected character @p c, advances the source only
@@ -86,22 +86,31 @@ void expectComma(nio::Source& in);
 [[nodiscard]] bool readChar(nio::Source& in, char c);
 
 /**
- * Reads any of a vector of expected strings, advances the source only on success.
- *
- * The elements in the vector must be nonempty and unique, their order matters: If two elements start with
- * the same prefix, the longer element must come first.
+ * Reads any of a set of expected strings, advances the source only on success.
  *
  * There is an optimization for contiguous sources.
  *
  * @param in the source to read from
- * @param values the set of expected strings
+ * @param values the set of expected strings, all elements must not be empty
  * @param ignoreCase whether to ignore case
  * @return the read string, or null if no string was read
  */
 [[nodiscard]] std::optional<std::string_view> readChoice(
   nio::Source& in,
-  const std::vector<std::string_view>& values,
+  const std::set<std::string_view>& values,
   bool ignoreCase = false);
+
+/**
+ * Reads an expected string, advances the source only on success.
+ *
+ * There is an optimization for contiguous sources.
+ *
+ * @param in the source to read from
+ * @param s the string to read, must not be empty
+ * @param ignoreCase whether to ignore case
+ * @return whether the string was read
+ */
+[[nodiscard]] bool readString(nio::Source& in, std::string_view s, bool ignoreCase = false);
 
 /**
  * If the next character in the source is `'.'`, reads a subsecond string and returns it as nanoseconds.

@@ -7,9 +7,9 @@
 #include "rocket/InputFailure.h"
 #include "rocket/std.h"
 #include "rocket/codec/codec.h"
-#include "rocket/codec/codec-utils.h"
 #include "rocket/io/io.h"
 #include "rocket/nio/nio.h"
+#include "rocket/nio/nio-utils.h"
 #include "rocket/str/escape/escape.h"
 #include "rocket/system/system.h"
 #include "rocket/unicode/ConvertTo.h"
@@ -46,22 +46,22 @@ namespace internal {
 
 inline void
 beginContainer(nio::Sink& out, FormattedConsumerConfig& config, char c) {
-  rocket::codec::beginContainer(out, config.indent, config.level, c);
+  rocket::nio::beginContainer(out, config.indent, config.level, c);
 }
 
 inline void
 endContainer(nio::Sink& out, FormattedConsumerConfig& config, u64 size, char c) {
-  rocket::codec::endContainer(out, config.indent, config.level, size, c);
+  rocket::nio::endContainer(out, config.indent, config.level, size, c);
 }
 
 inline void
 nextElem(nio::Sink& out, FormattedConsumerConfig& config, u64 index) {
-  rocket::codec::nextElem(out, config.indent, config.level, index);
+  rocket::nio::nextElem(out, config.indent, config.level, index);
 }
 
 inline void
 skip(nio::Source& in, const FormattedProducerConfig& config) {
-  rocket::codec::skip(in, config.cComments, config.shellComments);
+  rocket::nio::skip(in, config.cComments, config.shellComments);
 }
 
 // `FormattedConsumerImpl` ----------------------------------------------------------------------------------
@@ -555,11 +555,11 @@ struct FormattedProducerImpl<DataType::Float, F> {
     skip(in, config);
     const auto pos = in.tell();
 
-    if (readChoice(in, { "-∞" })) {
+    if (readString(in, "-∞")) {
       val = -Limits::infinity();
       return;
     }
-    if (readChoice(in, { "∞" })) {
+    if (readString(in, "∞")) {
       val = Limits::infinity();
       return;
     }
@@ -580,7 +580,7 @@ struct FormattedProducerImpl<DataType::Pointer, P> {
     skip(in, config);
     const auto pos = in.tell();
 
-    if (readChoice(in, { "null" })) {
+    if (readString(in, "null")) {
       val = nullptr;
       return;
     }
@@ -635,7 +635,7 @@ struct FormattedProducerImpl<DataType::Optional, T> {
   produce(T& val, nio::Source& in, CONFIG__) const {
     skip(in, config);
 
-    if (readChoice(in, { "null" })) {
+    if (readString(in, "null")) {
       val = std::nullopt;
       return;
     }
@@ -898,9 +898,8 @@ struct FormattedProducerImpl<DataType::Duration, T> {
       throw InputFailure(pos, "Expected a duration");
     }
 
-    const std::vector<std::string_view> UNITS = {
-      // "m" must come after "min" and "ms"
-      "d", "h", "min", "ms", "m", "ns", "s", "us", "w", "y", "µs"
+    const std::set<std::string_view> UNITS = {
+      "ns", "µs", "us", "ms", "s", "min", "h", "d", "w", "m", "y"
     };
 
     if (auto value = readChoice(in, UNITS, true); value) {
@@ -1171,7 +1170,7 @@ struct FormattedProducerImpl<DataType::Interval, T> {
     skip(in, config);
     const auto pos = in.tell();
 
-    if (readChoice(in, { "∅" })) {
+    if (readString(in, "∅")) {
       val = T();
       return;
     }
@@ -1183,7 +1182,7 @@ struct FormattedProducerImpl<DataType::Interval, T> {
 
     A a = A();
     if constexpr (IsOptional<A>) {
-      if (not readChoice(in, { "-∞" })) {
+      if (not readString(in, "-∞")) {
         FormattedProducerImpl<ADataType, A>().produce(a, in, config);
       }
     } else {
@@ -1197,7 +1196,7 @@ struct FormattedProducerImpl<DataType::Interval, T> {
 
     B b = B();
     if constexpr (IsOptional<B>) {
-      if (not readChoice(in, { "∞" })) {
+      if (not readString(in, "∞")) {
         FormattedProducerImpl<BDataType, B>().produce(b, in, config);
       }
     } else {

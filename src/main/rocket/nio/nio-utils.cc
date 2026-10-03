@@ -1,21 +1,105 @@
 /*
- * codec-utils.cc
+ * nio-utils.cc
  */
 
 #include "rocket/assert.h"
 #include "rocket/InputFailure.h"
-#include "rocket/codec/codec-utils.h"
+#include "rocket/nio/nio-utils.h"
 #include "rocket/unicode/unicode.h"
 
 #include <boost/safe_numerics/safe_integer.hpp>
 
+using namespace rocket;
 using namespace std;
 
 using boost::safe_numerics::safe;
 
-namespace rocket::codec {
+// Local functions ------------------------------------------------------------------------------------------
 
-// Utilities for encoding -----------------------------------------------------------------------------------
+namespace {
+
+/**
+ * Reads the longest of the given candidates from a noncontiguous source, advances the source only on
+ * success.
+ */
+optional<string_view>
+readLongestChoice(nio::Source& in, vector<string_view> candidates, bool ignoreCase) {
+  const auto pos = in.tell();
+
+  string seen;
+  optional<string_view> ret; // The best candidate so far
+
+  const auto matchesChar = [ignoreCase](char lhs, char rhs) {
+    if (ignoreCase) {
+      return tolower(lhs) == tolower(rhs);
+    }
+    return lhs == rhs;
+  };
+
+  const auto matchesString = [ignoreCase](string_view lhs, string_view rhs) {
+    if (ignoreCase) {
+      return ranges::equal(lhs, rhs, [](char lhs, char rhs) { return tolower(lhs) == tolower(rhs); });
+    }
+    return lhs == rhs;
+  };
+
+  while (true) {
+    if (candidates.empty()) {
+      break;
+    }
+
+    char c; // NOLINT
+    if (in.read(c) != 1) {
+      break;
+    }
+    const u64 index = seen.size();
+    seen.push_back(c);
+
+    for (auto it = candidates.begin(); it != candidates.end(); /* Empty */) {
+      const auto candidate = *it;
+      ROCKET_CHECK(candidates, not candidate.empty(), "May not contain empty elements");
+      if (candidate.size() <= index || not matchesChar(candidate[index], c)) {
+        it = candidates.erase(it);
+      } else {
+        if (matchesString(seen, candidate) && (not ret || ret->size() < candidate.size())) {
+          ret = candidate;
+        }
+        ++it;
+      }
+    }
+  }
+
+  if (ret) {
+    // Seek position after `ret`
+    in.seek(safe<i64>(pos + ret->size()), nio::SeekMode::beg);
+  } else {
+    // No match found: rewind
+    in.seek(safe<i64>(pos), nio::SeekMode::beg);
+  }
+  return ret;
+}
+
+/**
+ * Returns whether @p s starts with @p prefix, optionally ignoring case.
+ */
+bool
+startsWith(string_view s, string_view prefix, bool ignoreCase) {
+  if (not ignoreCase) {
+    return s.starts_with(prefix);
+  }
+  if (s.size() < prefix.size()) {
+    return false;
+  }
+  return ranges::equal(s.substr(0, prefix.size()), prefix, [](char lhs, char rhs) {
+    return tolower(lhs) == tolower(rhs);
+  });
+}
+
+} // namespace
+
+namespace rocket::nio {
+
+// Utilities for writing to a sink --------------------------------------------------------------------------
 
 void
 beginContainer(nio::Sink& out, bool indent, u64& level, char c) {
@@ -50,7 +134,7 @@ nextElem(nio::Sink& out, bool indent, u64 level, u64 index) {
   }
 }
 
-// Utilities for decoding -----------------------------------------------------------------------------------
+// Utilities for reading from a source ----------------------------------------------------------------------
 
 void
 expectChar(nio::Source& in, char c) {
@@ -83,36 +167,47 @@ readChar(nio::Source& in, char c) {
 }
 
 optional<string_view>
-readChoice(nio::Source& in, const vector<string_view>& values, bool ignoreCase) { // NOLINT(*-complexity)
+readChoice(nio::Source& in, const set<string_view>& values, bool ignoreCase) {
 #ifndef ROCKET_NIO_NO_CONTIGUOUS_SOURCE
   if (const auto* contiguous = dynamic_cast<nio::ContiguousSource*>(&in); contiguous != nullptr) {
     // Contiguous source
 
-    auto remaining = contiguous->str();
+    const auto remaining = contiguous->str();
+    optional<string_view> ret; // The longest matching value so far
     for (const auto& value : values) {
-      if (not ignoreCase) {
-        // Case-sensitive
-
-        if (remaining.starts_with(value)) {
-          in.seek(safe<i64>(value.size()), nio::SeekMode::cur);
-          return value;
-        }
-      } else {
-        // Case-insensitive
-
-        string lhs(remaining.substr(0, value.size()));
-        ranges::transform(lhs, lhs.begin(), [](char c) { return tolower(c); });
-
-        string rhs(value);
-        ranges::transform(rhs, rhs.begin(), [](char c) { return tolower(c); });
-
-        if (lhs == rhs) {
-          in.seek(safe<i64>(value.size()), nio::SeekMode::cur);
-          return value;
-        }
+      ROCKET_CHECK(values, not value.empty(), "May not contain empty elements");
+      if (ret && ret->size() >= value.size()) {
+        continue; // Cannot beat the current best
+      }
+      if (startsWith(remaining, value, ignoreCase)) {
+        ret = value;
       }
     }
-    return {};
+    if (ret) {
+      in.seek(safe<i64>(ret->size()), nio::SeekMode::cur);
+    }
+    return ret;
+  }
+#endif
+
+  // Noncontiguous source
+
+  return readLongestChoice(in, vector<string_view>(values.begin(), values.end()), ignoreCase);
+}
+
+bool
+readString(nio::Source& in, std::string_view s, bool ignoreCase) {
+  ROCKET_CHECK(s, not s.empty(), "May not be empty");
+
+#ifndef ROCKET_NIO_NO_CONTIGUOUS_SOURCE
+  if (const auto* contiguous = dynamic_cast<nio::ContiguousSource*>(&in); contiguous != nullptr) {
+    // Contiguous source
+
+    if (not startsWith(contiguous->str(), s, ignoreCase)) {
+      return false;
+    }
+    in.seek(safe<i64>(s.size()), nio::SeekMode::cur);
+    return true;
   }
 #endif
 
@@ -120,57 +215,15 @@ readChoice(nio::Source& in, const vector<string_view>& values, bool ignoreCase) 
 
   const auto pos = in.tell();
 
-  string seen;
-  auto candidates(values); // A local copy of the vector
-  optional<string_view> ret; // The best candidate so far
-
-  const auto matchesChar = [ignoreCase](char lhs, char rhs) {
-    if (ignoreCase) {
-      return tolower(lhs) == tolower(rhs);
-    }
-    return lhs == rhs;
-  };
-
-  const auto matchesString = [ignoreCase](string_view lhs, string_view rhs) {
-    if (ignoreCase) {
-      return ranges::equal(lhs, rhs, [](char lhs, char rhs) { return tolower(lhs) == tolower(rhs); });
-    }
-    return lhs == rhs;
-  };
-
-  while (true) {
-    if (candidates.empty()) {
-      break;
-    }
-
+  for (const char expected : s) {
     char c; // NOLINT
-    if (in.read(c) != 1) {
-      break;
-    }
-    const u64 index = seen.size();
-    seen.push_back(c);
-
-    for (auto it = candidates.begin(); it != candidates.end(); /* Empty */) {
-      const auto candidate = *it;
-      if (candidate.size() <= index || not matchesChar(candidate[index], c)) {
-        it = candidates.erase(it);
-      } else {
-        if (matchesString(seen, candidate) && (not ret || ret->size() < candidate.size())) {
-          ret = candidate;
-        }
-        ++it;
-      }
+    if (in.read(c) != 1 || (ignoreCase ? tolower(c) != tolower(expected) : c != expected)) {
+      // EOF or mismatch: rewind
+      in.seek(safe<i64>(pos), nio::SeekMode::beg);
+      return false;
     }
   }
-
-  if (ret) {
-    // Seek position after `ret`
-    in.seek(safe<i64>(pos + ret->size()), nio::SeekMode::beg);
-  } else {
-    // No match found: rewind
-    in.seek(safe<i64>(pos), nio::SeekMode::beg);
-  }
-  return ret;
+  return true;
 }
 
 std::chrono::nanoseconds
