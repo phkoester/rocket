@@ -3,9 +3,13 @@
  */
 
 #include <array>
+#include <memory>
 #include <optional>
+#include <vector>
 
 #include <Windows.h>
+
+using namespace std;
 
 namespace {
 
