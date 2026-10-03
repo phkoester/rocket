@@ -2,7 +2,21 @@
  * system.cc
  */
 
+#include "system.h"
+#include "rocket/Guard.h"
+#include "rocket/InputFailure.h"
+#include "rocket/assert.h"
+
+#include <cstdlib>
+#include <cstdio>
+#include <memory>
+#include <optional>
+
+using namespace rocket;
+using namespace std;
+
 #ifdef ROCKET_OS_WINDOWS
+
 #include <Windows.h>
 
 class ConsoleModeGuard {
@@ -46,18 +60,6 @@ private:
 };
 
 #endif
-
-#include "system.h"
-#include "rocket/Guard.h"
-#include "rocket/InputFailure.h"
-#include "rocket/assert.h"
-
-#include <cstdlib>
-#include <cstdio>
-#include <memory>
-
-using namespace rocket;
-using namespace std;
 
 // Macros ---------------------------------------------------------------------------------------------------
 
