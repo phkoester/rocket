@@ -54,21 +54,14 @@ using namespace testing;
 
 // Others ...................................................................................................
 
-#ifdef ROCKET_OS_WINDOWS
-/// To use with `EXPECT_EXIT`.
-#define EXIT_MESSAGE(msg) ""
-/// To use with `EXPECT_EXIT`.
-#define EXITED_WITH_CODE(code) ::testing::ExitedWithCode(-1073740791)
-/// To use with `EXPECT_EXIT`.
-#define KILLED_BY_SIGNAL(signal) ::testing::ExitedWithCode(-1073740791)
-#else
-/// To be used with `EXPECT_EXIT`.
-#define EXIT_MESSAGE(msg) msg
-/// To be used with `EXPECT_EXIT`.
+/// To be used with `ASSERT_EXIT` or `EXPECT_EXIT`.
+#define ABORTED() KILLED_BY_SIGNAL(SIGABRT)
+/// To be used with `ASSERT_EXIT` or `EXPECT_EXIT`.
 #define EXITED_WITH_CODE(code) ::testing::ExitedWithCode(code)
-/// To be used with `EXPECT_EXIT`.
+/// To be used with `ASSERT_EXIT` or `EXPECT_EXIT`.
 #define KILLED_BY_SIGNAL(signal) ::testing::KilledBySignal(signal)
-#endif
+/// To be used with `ASSERT_EXIT` or `EXPECT_EXIT`.
+#define WITH_MESSAGE(msg) msg
 
 /**
  * Checks if an environment variable is set to `true`. If it is not, the test is skipped.

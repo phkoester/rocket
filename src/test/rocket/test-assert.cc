@@ -33,7 +33,7 @@ TEST(assertDeathTest, RocketAssertFalse) { // NOLINT
   GTEST_FLAG_SET(death_test_style, "threadsafe");
   EXPECT_EXIT(
       { ROCKET_ASSERT(false, "My message: {}", 42); },
-      KILLED_BY_SIGNAL(SIGABRT), EXIT_MESSAGE("Assertion `false` failed: My message: 42"));
+      ABORTED(), WITH_MESSAGE("Assertion `false` failed: My message: 42"));
 }
 
 TEST(assert, RocketCheck) {
@@ -68,7 +68,7 @@ TEST(assertDeathTest, RocketTerminate) {
   GTEST_FLAG_SET(death_test_style, "threadsafe");
   EXPECT_EXIT(
       { ROCKET_TERMINATE("My message: {}", 42); },
-      KILLED_BY_SIGNAL(SIGABRT), EXIT_MESSAGE("My message: 42"));
+      ABORTED(), WITH_MESSAGE("My message: 42"));
 }
 
 // EOF
