@@ -69,7 +69,7 @@ void expectChar(nio::Source& in, char c);
 void expectColon(nio::Source& in);
 
 /**
- * Throws if there is no comma, advances the source only on success
+ * Throws if there is no comma, advances the source only on success.
  *
  * @param in the source to read from
  * @throw #rocket::InputFailure if there is no comma

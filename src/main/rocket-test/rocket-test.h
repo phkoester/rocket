@@ -108,17 +108,6 @@ struct ExitedWithStatus {
 #endif
 
 /**
- * Checks if an environment variable is set to `true`. If it is not, the test is skipped.
- *
- * @param name the name of the environment variable
- */
-#define REQUIRE_ENV(name) { \
-  if (not ::rocket::system::env::get<bool>(name).value_or(false)) { \
-    GTEST_SKIP_("Skipping test because `" name "` is not set to `true`\n"); \
-  } \
-}
-
-/**
  * Checks the state of a #std::istream.
  *
  * @param is the input stream
@@ -130,6 +119,17 @@ struct ExitedWithStatus {
   EXPECT_EQ(is.fail(), _fail); \
   EXPECT_EQ(is.eof(), _eof); \
   EXPECT_EQ(::rocket::io::tellg(is), _tell)
+
+/**
+ * Checks if an environment variable is set to `true`. If it is not, the test is skipped.
+ *
+ * @param name the name of the environment variable
+ */
+#define REQUIRE_ENV(name) { \
+  if (not ::rocket::system::env::get<bool>(name).value_or(false)) { \
+    GTEST_SKIP_("Skipping test because `" name "` is not set to `true`\n"); \
+  } \
+}
 
 namespace rocket::test {
 
