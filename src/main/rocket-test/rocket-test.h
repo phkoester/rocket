@@ -62,11 +62,11 @@ using namespace testing;
 /// To use with `EXPECT_EXIT`.
 #define KILLED_BY_SIGNAL(signal) ::testing::ExitedWithCode(-1073740791)
 #else
-/// To use with `EXPECT_EXIT`.
+/// To be used with `EXPECT_EXIT`.
 #define EXIT_MESSAGE(msg) msg
-/// To use with `EXPECT_EXIT`.
+/// To be used with `EXPECT_EXIT`.
 #define EXITED_WITH_CODE(code) ::testing::ExitedWithCode(code)
-/// To use with `EXPECT_EXIT`.
+/// To be used with `EXPECT_EXIT`.
 #define KILLED_BY_SIGNAL(signal) ::testing::KilledBySignal(signal)
 #endif
 
