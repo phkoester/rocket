@@ -58,20 +58,42 @@ using namespace testing;
 
 namespace rocket::test {
 
+/// @cond undocumented
+
 struct Aborted {
   [[nodiscard]] bool
-  operator()(int status) const {
-    return ::testing::ExitedWithCode(3)(status) || ::testing::ExitedWithCode(-2'147'483'645)(status);
+  operator()(i32 status) const {
+#ifdef NDEBUG
+    return status == -1'073'740'791;
+#else
+    return status == 3 || status == -2'147'483'645;
+#endif
   }
 };
+
+struct ExitedWithStatus {
+  /// On Windows, the exit status is fixed, so we ignore @p status.
+  ExitedWithStatus(i32 status) {}
+
+  [[nodiscard]] bool
+  operator()(i32 status) const {
+#ifdef NDEBUG
+    return status == -1'073'740'791;
+#else
+    return status == 3 || status == -2'147'483'645;
+#endif
+  }
+};
+
+/// @endcond
 
 } // namespace rocket::test
 
 /// To be used with `ASSERT_EXIT` or `EXPECT_EXIT`.
 #define ABORTED() ::rocket::test::Aborted()
 /// To be used with `ASSERT_EXIT` or `EXPECT_EXIT`.
+#define EXITED_WITH_STATUS(status) ::rocket::test::ExitedWithStatus(status)
 /// To be used with `ASSERT_EXIT` or `EXPECT_EXIT`.
-#define EXITED_WITH_CODE(code) ::testing::ExitedWithCode(code)
 #define WITH_MESSAGE(msg) ""
 
 #else
@@ -79,7 +101,7 @@ struct Aborted {
 /// To be used with `ASSERT_EXIT` or `EXPECT_EXIT`.
 #define ABORTED() ::testing::KilledBySignal(SIGABRT)
 /// To be used with `ASSERT_EXIT` or `EXPECT_EXIT`.
-#define EXITED_WITH_CODE(code) ::testing::ExitedWithCode(code)
+#define EXITED_WITH_STATUS(code) ::testing::ExitedWithCode(status)
 /// To be used with `ASSERT_EXIT` or `EXPECT_EXIT`.
 #define WITH_MESSAGE(msg) msg
 
