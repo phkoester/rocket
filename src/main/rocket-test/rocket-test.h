@@ -8,13 +8,6 @@
  * - `ROCKET_TEST_NO_USING_NAMESPACE`: If defined, the `using namespace` directives are not included.
  */
 
-
-
-
-
-
-
-
 #pragma once
 
 // Early macros ---------------------------------------------------------------------------------------------
