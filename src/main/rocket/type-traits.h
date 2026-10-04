@@ -285,16 +285,6 @@ struct Float<8> {
   using Type = f64; ///< @type_alias
 };
 
-#ifdef ROCKET_HAS_128
-/**
- * 16-byte floating point: `f128`.
- */
-template<>
-struct Float<16> {
-  using Type = f128; ///< @type_alias
-};
-#endif
-
 // Concepts for basic data types ----------------------------------------------------------------------------
 
 template<typename T>

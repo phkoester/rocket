@@ -14,6 +14,9 @@ target_link_libraries(logger PRIVATE Rocket::rocket)
 AddExecutable(print-args print-args/main.cc)
 target_link_libraries(print-args PRIVATE Rocket::rocket)
 
+AddExecutable(print-sizeof print-sizeof/main.cc)
+target_link_libraries(print-sizeof PRIVATE Rocket::rocket)
+
 AddExecutable(toy toy/main.cc)
 target_link_libraries(toy PRIVATE Rocket::rocket)
 
@@ -73,6 +76,7 @@ AddTest(test-rocket-codec-CompareEncoder         rocket/codec           test-Com
 AddTest(test-rocket-codec-EqualToEncoder         rocket/codec           test-EqualToEncoder.cc)
 AddTest(test-rocket-codec-FormattedCodec         rocket/codec           test-FormattedCodec.cc)
 AddTest(test-rocket-codec-HashEncoder            rocket/codec           test-HashEncoder.cc)
+AddTest(test-rocket-external-boost-int128        rocket/external        test-boost-int128.cc)
 AddTest(test-rocket-external-boost-safe-numerics rocket/external        test-boost-safe-numerics.cc)
 AddTest(test-rocket-external-Cxx                 rocket/external        test-Cxx.cc)
 AddTest(test-rocket-external-fmt                 rocket/external        test-fmt.cc)

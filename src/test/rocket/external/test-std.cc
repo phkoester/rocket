@@ -35,24 +35,24 @@ TEST(std, f32OpCmp) {
   static_assert((nan <=> nan) == std::partial_ordering::unordered); // NOLINT
 }
 
-// Segfaults on Windows with Clang 20.1.8
+// Segfaults on Windows with Clang 22.1.3
 TEST(std, rethrowException) {
   try {
     throw runtime_error("oops");
   } catch (const runtime_error&) {
     try {
-      cout << "throwing nested\n";
+      cout << "Throwing nested\n";
       throw_with_nested(runtime_error("oopsers"));
     } catch (const runtime_error& ex) {
-      cout << "caught runtime error: " << ex.what() << endl; // NOLINT
+      cout << "Caught runtime error: " << ex.what() << endl; // NOLINT
       try {
-        cout << "rethrowing nested" << endl; // NOLINT
+        cout << "Rethrowing nested" << endl; // NOLINT
         // Segfaults
         rethrow_exception(current_exception());
       } catch (const runtime_error& ex) {
-        cout << "caught runtime error: " << ex.what() << endl; // NOLINT
+        cout << "Caught runtime error: " << ex.what() << endl; // NOLINT
       } catch (...) {
-        cout << "caught ..." << endl; // NOLINT
+        cout << "Caught ..." << endl; // NOLINT
       }
     }
   }
@@ -253,22 +253,6 @@ TEST(std, istreamF64) {
     EXPECT_EQ(val, 0);
   }
 }
-
-#ifdef ROCKET_HAS_128
-
-TEST(std, istreamF128) {
-  using type = f128;
-
-  {
-    auto is = io::is("1.2");
-    type val = 0;
-    is >> val;
-    EXPECT_EQ(val, 1.2L);
-    EXPECT_ISTREAM(is, false, true, 3);
-  }
-}
-
-#endif // ROCKET_HAS_128
 
 TEST(std, regexGreedy) {
   string str = "1: 2: 3: 4";

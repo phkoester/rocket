@@ -61,6 +61,10 @@ endif()
 
 find_package(ICU ${GAIA_ICU_VERSION} COMPONENTS uc) # data i18n io
 
+# int128 ----------------------------------------------------------------------------------------------------
+
+FetchContent_MakeAvailable(int128)
+
 # scnlib ----------------------------------------------------------------------------------------------------
 
 # Build static libraries

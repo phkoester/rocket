@@ -7,34 +7,42 @@
  *
  * OS-specific data types, sizes in bytes:
  *
- * | Type         | Linux | Windows
- * | :----------- | ----: | ------:
- * | `wchar_t`    |     4 |       2
- * | `long`       |     8 |       4
- * | `__int128`   |    16 |     N/A
- * | `long double`|    16 |       8
+ * XXX
+ *
+ * | Type          | Linux | Windows Clang | Windows MSVC
+ * | :------------ | ----: | ------------: | -----------:
+ * | `bool`        |     1 |
+ * | `wchar_t`     |     4 |
+ * | `short`       |     2 |
+ * | `int`         |     4 |
+ * | `long`        |     8 |
+ * | `long long`   |     8 |
+ * | `__int128`    |    16 |
+ * | `float`       |     4 |
+ * | `double`      |     8 |
+ * | `long double` |    16 |
+ * | `void*`       |     8 |
  *
  * Basic data types used in Rocket:
  *
- * | Type             | Size | Availability
- * | :--------------- | ---: | ------------
- * | `bool`           |    1 | Always
- * | `char`           |    1 | Always
- * | `rocket::char32` |    4 | Always
- * | `rocket::i8`     |    1 | Always
- * | `rocket::u8`     |    1 | Always
- * | `rocket::i16`    |    2 | Always
- * | `rocket::u16`    |    2 | Always
- * | `rocket::i32`    |    4 | Always
- * | `rocket::u32`    |    4 | Always
- * | `rocket::i64`    |    8 | Always
- * | `rocket::u64`    |    8 | Always
- * | `rocket::i128`   |   16 | Not in Windows
- * | `rocket::u128`   |   16 | Not in Windows
- * | `rocket::f32`    |    4 | Always
- * | `rocket::f64`    |    8 | Always
- * | `rocket::f128`   |   16 | Not in Windows
- * | `void*`          |    8 | Always
+ * | Type             | Size
+ * | :--------------- | ---:
+ * | `bool`           |    1
+ * | `char`           |    1
+ * | `rocket::char32` |    4
+ * | `rocket::i8`     |    1
+ * | `rocket::u8`     |    1
+ * | `rocket::i16`    |    2
+ * | `rocket::u16`    |    2
+ * | `rocket::i32`    |    4
+ * | `rocket::u32`    |    4
+ * | `rocket::i64`    |    8
+ * | `rocket::u64`    |    8
+ * | `rocket::i128`   |   16
+ * | `rocket::u128`   |   16
+ * | `rocket::f32`    |    4
+ * | `rocket::f64`    |    8
+ * | `void*`          |    8
  *
  * In Rocket, C strings of type `char*` and instances of #std::string or #std::string_view are assumed to
  * be UTF-8-encoded. This is already true at compile time: A string literal like `"ä"` must expand to
@@ -133,9 +141,6 @@ using u128 = unsigned __int128; ///< An unsigned 128-bit integer.
 #endif
 using f32 = std_float; ///< A 32-bit floating point.
 using f64 = std_double; ///< A 64-bit floating point.
-#ifdef ROCKET_HAS_128
-using f128 = std_long_double; ///< A 128-bit floating point.
-#endif
 
 // I/O stream support for 128-bit data types ----------------------------------------------------------------
 

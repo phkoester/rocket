@@ -388,26 +388,6 @@ f64 operator""_f64(std_unsigned_long_long_int val);
  */
 f64 operator""_f64(std_long_double val);
 
-#ifdef ROCKET_HAS_128
-
-/**
- * 128-bit floating point literal.
- *
- * @param val the value
- * @return a value of the desired type
- */
-f128 operator""_f128(std_unsigned_long_long_int val);
-
-/**
- * 128-bit floating point literal.
- *
- * @param val the value
- * @return a value of the desired type
- */
-f128 operator""_f128(std_long_double val);
-
-#endif // ROCKET_HAS_128
-
 // `LiteralString` ------------------------------------------------------------------------------------------
 
 /**
