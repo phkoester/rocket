@@ -4,6 +4,8 @@
 
 #include "rocket-test/rocket-test.h"
 
+#include "rocket/type-traits.h"
+
 // `TEST` ---------------------------------------------------------------------------------------------------
 
 TEST(rocket, basicTypes) {
