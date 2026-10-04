@@ -8,7 +8,7 @@
 
 #include "rocket/rocket.h"
 
-#include <string_view>
+#include <string>
 
 namespace rocket::str {
 
