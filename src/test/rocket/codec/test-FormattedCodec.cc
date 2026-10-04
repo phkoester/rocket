@@ -469,12 +469,12 @@ TEST(FormattedCodec, FormattedProducerDeclaredFileSource) {
 
   string input;
   {
-    FILE* file = fopen(path.string().c_str(), "rb");
+    FILE* file = io::open(path, "rb");
     nio::FileSource in(file);
     input = in.readString();
   }
 
-  FILE* file = fopen(path.string().c_str(), "rb");
+  FILE* file = io::open(path, "rb");
   nio::FileSource in(file);
 
   MyStruct val;

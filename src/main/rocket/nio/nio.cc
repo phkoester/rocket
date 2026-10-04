@@ -148,13 +148,8 @@ FileSink::FileSink(FILE* file, const Config& config) :
 FileSink::FileSink(const string& path, const Config& config) :
   config_(config) {
   const char* modes = config.append ? "ab" : "wb";
-#ifdef ROCKET_OS_WINDOWS
-  [[maybe_unused]] const auto result = fopen_s(&file_, path.c_str(), modes);
-  LOG("fopen_s=" << result << ", file=" << file_ << ", ferror=" << (file_ ? ferror(file_) : -1));
-#else
-  file_ = fopen(path.c_str(), modes); // NOLINT(*-owning-memory)
-  LOG("fopen=" << file_ << ", ferror=" << (file_ ? ferror(file_) : -1));
-#endif
+  file_ = io::open(path, modes);
+  LOG("open=" << file_ << ", ferror=" << (file_ ? ferror(file_) : -1));
 
   if (file_ != nullptr) {
     status_.bad = false;
@@ -694,13 +689,8 @@ FileSource::FileSource(FILE* file, const Config& config) :
 
 FileSource::FileSource(const string& path, const Config& config) :
   config_(config) {
-#ifdef ROCKET_OS_WINDOWS
-  [[maybe_unused]] const auto result = fopen_s(&file_, path.c_str(), "rb");
-  LOG("fopen_s=" << result << ", file=" << file_ << ", ferror=" << (file_ ? ferror(file_) : -1));
-#else
-  file_ = fopen(path.c_str(), "rb"); // NOLINT
-  LOG("fopen=" << file_ << ", ferror=" << (file_ ? ferror(file_) : -1));
-#endif
+  file_ = io::open(path, "rb");
+  LOG("open=" << file_ << ", ferror=" << (file_ ? ferror(file_) : -1));
 
   if (file_ != nullptr) {
     status_.bad = false;

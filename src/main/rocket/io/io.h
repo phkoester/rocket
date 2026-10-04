@@ -9,6 +9,7 @@
 #include "rocket/rocket.h"
 
 #include <cstdio>
+#include <filesystem>
 #include <spanstream>
 #include <sstream>
 
@@ -50,6 +51,17 @@ inline std::istringstream is() { return {}; }
  * @return an input stream that reads from the string @p str
  */
 inline std::ispanstream is(std::string_view str) { return std::ispanstream(str); }
+
+/**
+ * Opens a file and returns a file pointer, or null if the file cannot be opened.
+ *
+ * This function is meant to be a replacement for #std::fopen.
+ *
+ * @param path the path to the file
+ * @param modes the modes to open the file with
+ * @return a #FILE pointer, or null if the file cannot be opened
+ */
+FILE* open(const std::filesystem::path& path, std::string_view modes);
 
 /**
  * Similar to #std::istream::tellg, but leaves @p is unchanged and returns the actual current position

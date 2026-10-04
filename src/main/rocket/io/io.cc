@@ -52,6 +52,17 @@ namespace rocket::io {
 
 // Functions ------------------------------------------------------------------------------------------------
 
+FILE*
+open(const std::filesystem::path& path, string_view modes) {
+#ifdef ROCKET_OS_WINDOWS
+  FILE* file = nullptr;
+  fopen_s(&file, path.string().c_str(), string(modes).c_str());
+  return file;
+#else
+  return fopen(path.string().c_str(), string(modes).c_str());
+#endif
+}
+
 std::ios::pos_type
 tellg(std::istream& is) noexcept {
   const auto state = is.rdstate();
