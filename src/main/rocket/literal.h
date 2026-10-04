@@ -34,7 +34,7 @@ struct SignedLimit {
 
 template<typename T>
 struct UnsignedLimit {
-  static_assert(std::is_unsigned_v<T>);
+  static_assert(not std::numeric_limits<T>::is_signed);
 
   static constexpr T value = std::numeric_limits<T>::max();
 };
@@ -78,7 +78,7 @@ validateUnsignedImpl(T acc) {
  */
 template<typename T, int BASE, char... Chars>
 constexpr bool validateUnsigned() {
-  static_assert(std::is_unsigned_v<T>);
+  static_assert(not std::numeric_limits<T>::is_signed);
   return validateUnsignedImpl<T, BASE, Chars...>(0);
 }
 
@@ -100,7 +100,7 @@ makeUnsignedImpl(T result) {
 template<typename T, int BASE, char... Chars>
 constexpr T
 makeUnsigned() {
-  static_assert(std::is_unsigned_v<T>);
+  static_assert(not std::numeric_limits<T>::is_signed);
   return makeUnsignedImpl<T, BASE, Chars...>(0);
 }
 
@@ -108,8 +108,8 @@ makeUnsigned() {
 
 template<typename T, typename U, char... Chars>
 struct SignedInteger {
-  static_assert(std::is_signed_v<T>);
-  static_assert(std::is_unsigned_v<U>);
+  static_assert(std::numeric_limits<T>::is_signed);
+  static_assert(not std::numeric_limits<U>::is_signed);
 
   static constexpr T payload = static_cast<T>(makeUnsigned<U, 10, Chars...>());
   static constexpr bool valid =
@@ -118,8 +118,8 @@ struct SignedInteger {
 
 template<typename T, typename U, char... Chars>
 struct SignedInteger<T, U, '0', 'x', Chars...> {
-  static_assert(std::is_signed_v<T>);
-  static_assert(std::is_unsigned_v<U>);
+  static_assert(std::numeric_limits<T>::is_signed);
+  static_assert(not std::numeric_limits<U>::is_signed);
 
   static constexpr T payload = static_cast<T>(makeUnsigned<U, 16, Chars...>());
   static constexpr bool valid =
@@ -128,8 +128,8 @@ struct SignedInteger<T, U, '0', 'x', Chars...> {
 
 template<typename T, typename U, char... Chars>
 struct SignedInteger<T, U, '0', 'X', Chars...> {
-  static_assert(std::is_signed_v<T>);
-  static_assert(std::is_unsigned_v<U>);
+  static_assert(std::numeric_limits<T>::is_signed);
+  static_assert(not std::numeric_limits<U>::is_signed);
 
   static constexpr T payload = static_cast<T>(makeUnsigned<U,16, Chars...>());
   static constexpr bool valid =
@@ -138,8 +138,8 @@ struct SignedInteger<T, U, '0', 'X', Chars...> {
 
 template<typename T, typename U, char... Chars>
 struct SignedInteger<T, U, '0', 'b', Chars...> {
-  static_assert(std::is_signed_v<T>);
-  static_assert(std::is_unsigned_v<U>);
+  static_assert(std::numeric_limits<T>::is_signed);
+  static_assert(not std::numeric_limits<U>::is_signed);
 
   static constexpr T payload = static_cast<T>(makeUnsigned<U, 2, Chars...>());
   static constexpr bool valid =
@@ -148,8 +148,8 @@ struct SignedInteger<T, U, '0', 'b', Chars...> {
 
 template<typename T, typename U, char... Chars>
 struct SignedInteger<T, U, '0', 'B', Chars...> {
-  static_assert(std::is_signed_v<T>);
-  static_assert(std::is_unsigned_v<U>);
+  static_assert(std::numeric_limits<T>::is_signed);
+  static_assert(not std::numeric_limits<U>::is_signed);
 
   static constexpr T payload = static_cast<T>(makeUnsigned<U, 2, Chars...>());
   static constexpr bool valid =
@@ -158,8 +158,8 @@ struct SignedInteger<T, U, '0', 'B', Chars...> {
 
 template<typename T, typename U, char... Chars>
 struct SignedInteger<T, U, '0', Chars...> {
-  static_assert(std::is_signed_v<T>);
-  static_assert(std::is_unsigned_v<U>);
+  static_assert(std::numeric_limits<T>::is_signed);
+  static_assert(not std::numeric_limits<U>::is_signed);
 
   static constexpr T payload = static_cast<T>(makeUnsigned<U, 8, Chars...>());
   static constexpr bool valid =
@@ -170,7 +170,7 @@ struct SignedInteger<T, U, '0', Chars...> {
 
 template<typename T, char... Chars>
 struct UnsignedInteger {
-  static_assert(std::is_unsigned_v<T>);
+  static_assert(not std::numeric_limits<T>::is_signed);
 
   static constexpr T payload = makeUnsigned<T,10, Chars...>();
   static constexpr bool valid = validateUnsigned<T, 10, Chars...>();
@@ -178,7 +178,7 @@ struct UnsignedInteger {
 
 template<typename T, char... Chars>
 struct UnsignedInteger<T, '0', 'x', Chars...> {
-  static_assert(std::is_unsigned_v<T>);
+  static_assert(not std::numeric_limits<T>::is_signed);
 
   static constexpr T payload = makeUnsigned<T,16, Chars...>();
   static constexpr bool valid = validateUnsigned<T,16, Chars...>();
@@ -186,7 +186,7 @@ struct UnsignedInteger<T, '0', 'x', Chars...> {
 
 template<typename T, char... Chars>
 struct UnsignedInteger<T, '0', 'X', Chars...> {
-  static_assert(std::is_unsigned_v<T>);
+  static_assert(not std::numeric_limits<T>::is_signed);
 
   static constexpr T payload = makeUnsigned<T, 16, Chars...>();
   static constexpr bool valid = validateUnsigned<T, 16, Chars...>();
@@ -194,7 +194,7 @@ struct UnsignedInteger<T, '0', 'X', Chars...> {
 
 template<typename T, char... Chars>
 struct UnsignedInteger<T, '0', 'b', Chars...> {
-  static_assert(std::is_unsigned_v<T>);
+  static_assert(not std::numeric_limits<T>::is_signed);
 
   static constexpr T payload = makeUnsigned<T, 2, Chars...>();
   static constexpr bool valid = validateUnsigned<T, 2, Chars...>();
@@ -202,7 +202,7 @@ struct UnsignedInteger<T, '0', 'b', Chars...> {
 
 template<typename T, char... Chars>
 struct UnsignedInteger<T, '0', 'B', Chars...> {
-  static_assert(std::is_unsigned_v<T>);
+  static_assert(not std::numeric_limits<T>::is_signed);
 
   static constexpr T payload = makeUnsigned<T,2, Chars...>();
   static constexpr bool valid = validateUnsigned<T, 2, Chars...>();
@@ -210,7 +210,7 @@ struct UnsignedInteger<T, '0', 'B', Chars...> {
 
 template<typename T, char... Chars>
 struct UnsignedInteger<T, '0', Chars...> {
-  static_assert(std::is_unsigned_v<T>);
+  static_assert(not std::numeric_limits<T>::is_signed);
 
   static constexpr T payload = makeUnsigned<T, 8, Chars...>();
   static constexpr bool valid = validateUnsigned<T, 8, Chars...>();
