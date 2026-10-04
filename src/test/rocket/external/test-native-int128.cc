@@ -25,6 +25,11 @@ TEST(nativeInt128, opOutput) {
   ostringstream os;
   os << value;
   EXPECT_EQ(os.str(), "1234");
+
+  value = rocket::internal::UnsignedLimit<uint128>::value;
+  os.str("");
+  os << value;
+  EXPECT_EQ(os.str(), "340282366920938463463374607431768211455");
 }
 
 #endif // ROCKET_HAS_NATIVE_INT128
