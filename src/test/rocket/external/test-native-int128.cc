@@ -47,8 +47,10 @@ TEST(nativeInt128, opOutput) {
 }
 
 TEST(nativeInt128, format) {
-  EXPECT_EQ(fmt::format("{}", -1234_i128), "-1234");
-  EXPECT_EQ(fmt::format("{}", 1234_u128), "1234");
+  i128 val1 = -1234;
+  EXPECT_EQ(fmt::format("{}", val1), "-1234");
+  u128 val2 = 1234;
+  EXPECT_EQ(fmt::format("{}", val2), "1234");
 }
 
 #endif // ROCKET_HAS_BOOST_INT128

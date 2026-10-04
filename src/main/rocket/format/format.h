@@ -4,8 +4,8 @@
 
 #pragma once
 
-#include "rocket/io/io.h"
 #include "rocket/type-traits.h"
+#include "rocket/io/io.h"
 #include "rocket/unicode/ConvertTo.h"
 
 #include <fmt/format.h>

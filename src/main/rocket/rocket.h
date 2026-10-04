@@ -11,17 +11,17 @@
  *
  * | Type          | Linux | Windows Clang | Windows MSVC
  * | :------------ | ----: | ------------: | -----------:
- * | `bool`        |     1 |
- * | `wchar_t`     |     4 |
- * | `short`       |     2 |
- * | `int`         |     4 |
- * | `long`        |     8 |
- * | `long long`   |     8 |
- * | `__int128`    |    16 |
- * | `float`       |     4 |
- * | `double`      |     8 |
- * | `long double` |    16 |
- * | `void*`       |     8 |
+ * | `bool`        |     1 |             1
+ * | `wchar_t`     |     4 |             2
+ * | `short`       |     2 |             2
+ * | `int`         |     4 |             4
+ * | `long`        |     8 |             4
+ * | `long long`   |     8 |             8
+ * | `__int128`    |    16 |            16
+ * | `float`       |     4 |             4
+ * | `double`      |     8 |             8
+ * | `long double` |    16 |             8
+ * | `void*`       |     8 |             8
  *
  * Basic data types used in Rocket:
  *
