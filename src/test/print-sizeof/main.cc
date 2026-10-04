@@ -18,7 +18,7 @@ template<typename T>
 void printSize() {
   string typeName= fmt::format("{}", typeid(T));
   i32 size = sizeof(T);
-  nio::out.println("{: <19} | {:>2} {}", typeName, size, str::noun::byte(sizeof(T)));
+  nio::out.println("{: <21} | {:>2} {}", typeName, size, str::noun::byte(sizeof(T)));
 }
 
 }
