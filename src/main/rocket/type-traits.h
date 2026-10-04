@@ -321,10 +321,14 @@ template<typename T> concept IsView = internal::IsViewImpl<T>::value;
 namespace std {
 
 template<>
-struct is_arithmetic<i128> : true_type {};
+struct is_integral<i128> : true_type {};
+
+inline constexpr bool is_integral_v<i128> = true;
 
 template<>
-struct is_arithmetic<u128> : true_type {};
+struct is_integral<u128> : true_type {};
+
+inline constexpr bool is_integral_v<u128> = true;
 
 } // namespace std
 
