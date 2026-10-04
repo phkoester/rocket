@@ -12,14 +12,19 @@
 
 #define FMT_USE_INT128 1
 
-namespace fmt::detail {
+namespace fmt {
 
 using native_int128 = __int128_t;
 using native_uint128 = __uint128_t;
+
+namespace detail {
+
 inline auto map(native_int128 x) -> native_int128 { return x; }
 inline auto map(native_uint128 x) -> native_uint128 { return x; }
 
-} // namespace fmt::detail
+} // namespace detail
+
+} // namespace fmt
 
 #endif
 
