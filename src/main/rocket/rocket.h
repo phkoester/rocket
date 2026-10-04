@@ -60,7 +60,7 @@
 
 // XXX Reihenfolge, eigentlich muss boost nach oben
 
-#if defined(ROCKET_OS_WINDOWS) && defined(ROCKET_CXX_COMPILER_MSVC)
+#if defined(ROCKET_OS_WINDOWS)
 #define ROCKET_HAS_BOOST_INT128
 #include <boost/int128/int128.hpp>
 #endif

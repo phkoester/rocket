@@ -316,7 +316,7 @@ template<typename T> concept IsView = internal::IsViewImpl<T>::value;
 
 // Support for 128-bit data types ---------------------------------------------------------------------------
 
-#if defined(ROCKET_OS_WINDOWS) && not defined(ROCKET_HAS_BOOST_INT128)
+#ifdef ROCKET_HAS_BOOST_INT128
 
 namespace std {
 

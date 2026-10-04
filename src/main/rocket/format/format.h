@@ -8,48 +8,6 @@
 #include "rocket/io/io.h"
 #include "rocket/unicode/ConvertTo.h"
 
-#if defined(ROCKET_OS_WINDOWS) && not defined(ROCKET_HAS_BOOST_INT128)
-
-#define FMT_USE_INT128 1
-
-#ifndef FMT_BEGIN_NAMESPACE
-#  define FMT_BEGIN_NAMESPACE \
-    namespace fmt {           \
-    inline namespace v12 {
-#  define FMT_END_NAMESPACE \
-    }                       \
-    }
-#endif
-
-FMT_BEGIN_NAMESPACE
-
-using native_int128 = __int128_t;
-using native_uint128 = __uint128_t;
-
-namespace detail {
-
-inline bool is_negative(native_int128 x) { return x < 0; }
-inline bool is_negative(native_uint128 x) { return false; }
-
-inline auto map(native_int128 x) -> native_int128 { return x; }
-inline auto map(native_uint128 x) -> native_uint128 { return x; }
-
-} // namespace detail
-
-FMT_END_NAMESPACE
-
-#ifdef FMT_BASE_H_
-#error "`fmt/base.h` already included"
-#endif
-
-#include <fmt/base.h>
-
-#if FMT_USE_INT128 == 0
-#error "No {fmt} support for `int128`"
-#endif
-
-#endif // defined(ROCKET_OS_WINDOWS) && not defined(ROCKET_HAS_BOOST_INT128)
-
 #include <fmt/format.h>
 
 #ifdef ROCKET_OS_WINDOWS
