@@ -71,8 +71,8 @@ TEST(fmt, u64Format) {
   EXPECT_EQ(fmt::format("{}", static_cast<u64>(-1)), "18446744073709551615");
 }
 
-TEST(fmt, i28Format) {
-  EXPECT_EQ(fmt::format("{:+}", 42_i128), "+42");
+TEST(fmt, i128Format) {
+  EXPECT_EQ(fmt::format("{}", -42_i128), "-42");
 }
 
 TEST(fmt, u128Format) {
