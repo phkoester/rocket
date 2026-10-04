@@ -4,8 +4,8 @@
 
 #pragma once
 
+#include "rocket/format.h"
 #include "rocket/type-traits.h"
-#include "rocket/format/format.h"
 
 #include <boost/algorithm/string.hpp>
 

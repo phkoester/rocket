@@ -4,8 +4,8 @@
 
 #include "rocket-test/rocket-test.h"
 
+#include "rocket/format.h"
 #include "rocket/chrono/chrono.h"
-#include "rocket/format/format.h"
 #include "rocket/system/system.h"
 
 #include <fmt/ranges.h>

@@ -9,7 +9,7 @@
 #include "rocket/Bimap.h"
 #include "rocket/Cow.h"
 #include "rocket/assert.h"
-#include "rocket/format/format.h"
+#include "rocket/format.h"
 
 #include <fmt/xchar.h>
 

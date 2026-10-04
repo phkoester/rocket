@@ -7,7 +7,7 @@
 #pragma once
 
 #include "rocket/assert.h"
-#include "rocket/format/format.h"
+#include "rocket/format.h"
 #include "rocket/unicode/unicode.h"
 
 #include <ostream>

@@ -11,7 +11,7 @@
 #include "rocket/type-traits.h"
 #include "rocket/str/message/message.h"
 
-#include <scn/scan.h>
+#include "rocket/scan.h"
 
 namespace rocket::str {
 

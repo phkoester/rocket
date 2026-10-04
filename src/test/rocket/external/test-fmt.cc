@@ -4,7 +4,7 @@
 
 #include "rocket-test/rocket-test.h"
 
-#include "rocket/format/format.h"
+#include "rocket/format.h"
 
 #include <fmt/chrono.h>
 #include <fmt/xchar.h>

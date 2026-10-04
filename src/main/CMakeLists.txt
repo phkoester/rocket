@@ -88,6 +88,7 @@ target_sources(rocket
       rocket/Cow.h
       rocket/enum.h
       rocket/Exception.h
+      rocket/format.h
       rocket/functional.h
       rocket/Guard.h
       rocket/InputFailure.h
@@ -95,6 +96,7 @@ target_sources(rocket
       rocket/macro.h
       rocket/Process.h
       rocket/rocket.h
+      rocket/scan.h
       rocket/std.h
       rocket/std-codec.h
       rocket/type-traits.h
@@ -107,7 +109,6 @@ target_sources(rocket
       rocket/codec/HashEncoder.h
       rocket/filesystem/filesystem.h
       rocket/format/Subformat.h
-      rocket/format/format.h
       rocket/hash/hash.h
       rocket/io/io.h
       rocket/log/log.h

@@ -6,8 +6,8 @@
 
 #pragma once
 
+#include "rocket/format.h"
 #include "rocket/codec/FormattedCodec.h"
-#include "rocket/format/format.h"
 #include "rocket/math/Interval.h"
 
 #include <ostream>

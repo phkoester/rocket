@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include "rocket/format/format.h"
+#include "rocket/format.h"
 #include "rocket/str/StringConvert.h"
 
 #include <optional>

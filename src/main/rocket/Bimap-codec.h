@@ -6,10 +6,10 @@
 
 #pragma once
 
+#include "rocket/format.h"
 #include "rocket/codec/CompareEncoder.h"
 #include "rocket/codec/EqualToEncoder.h"
 #include "rocket/codec/FormattedCodec.h"
-#include "rocket/format/format.h"
 #include "rocket/nio/nio.h"
 #include "rocket/unicode/ConvertTo.h"
 
