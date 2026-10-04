@@ -8,9 +8,31 @@
 #include "rocket/io/io.h"
 #include "rocket/unicode/ConvertTo.h"
 
+#if defined(ROCKET_OS_WINDOWS) && not defined(ROCKET_HAS_BOOST_INT128)
+
+#define FMT_USE_INT128 1
+
+namespace fmt {
+
+using native_int128 = __int128_t;
+using native_uint128 = __uint128_t;
+inline auto map(native_int128 x) -> native_int128 { return x; }
+inline auto map(native_uint128 x) -> native_uint128 { return x; }
+
+} // namespace fmt
+
+#endif
+
+#ifdef FMT_FMT_H
+#error "`fmt/format.h` already included"
+#endif
 #include <fmt/format.h>
 
-#if 0 // ifdef ROCKET_OS_WINDOWS
+#if FMT_USE_INT128 == 0
+#error "No {fmt} support for `int128`"
+#endif
+
+#ifdef ROCKET_OS_WINDOWS
 
 // `fmt::formatter<i128>` -----------------------------------------------------------------------------------
 
