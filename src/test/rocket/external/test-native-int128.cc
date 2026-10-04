@@ -46,6 +46,10 @@ TEST(nativeInt128, opOutput) {
   }
 }
 
+#if FMT_USE_INT128 == 0
+#error No 128-bit integer support
+#endif
+
 TEST(nativeInt128, format) {
   // int128 val1 = -1234;
   // EXPECT_EQ(fmt::format("{}", val1), "-1234");
