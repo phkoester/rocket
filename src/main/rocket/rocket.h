@@ -46,8 +46,8 @@
 
 #include "rocket/int128.h"
 
-#include <bit>
-#include <cstdint> // `std::int8_t`, `std::uint8_t`, ...
+#include <bit> // #std::endian
+#include <cstdint> // #std::int8_t, #std::uint8_t, etc.
 #include <cstdio> // Make this generally availabe
 #include <typeinfo> // Make this generally available
 

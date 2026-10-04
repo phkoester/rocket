@@ -8,12 +8,12 @@
 
 // `TEST` ---------------------------------------------------------------------------------------------------
 
-TEST(int128, i128OpInput) {
+TEST(int128, int128OpInput) {
   using compareType = i32;
   compareType compare = 0;
   auto compareLimits = numeric_limits<compareType>();
 
-  using type = i128;
+  using type = int128;
   type val = 0;
   auto limits = numeric_limits<type>();
 
@@ -182,8 +182,8 @@ TEST(int128, i128OpInput) {
   }
 }
 
-TEST(int128, i128OpOutput) {
-  using type = i128;
+TEST(int128, int128OpOutput) {
+  using type = int128;
 
   using limits = numeric_limits<type>;
 
@@ -200,12 +200,12 @@ TEST(int128, i128OpOutput) {
   }
 }
 
-TEST(int128, u128OpInput) {
+TEST(int128, uint128OpInput) {
   using compareType = u32;
   compareType compare = 0;
   auto compareLimits = numeric_limits<compareType>();
 
-  using type = u128;
+  using type = uint128;
   type val = 0;
   using limits = numeric_limits<type>;
 
@@ -376,8 +376,8 @@ TEST(int128, u128OpInput) {
   }
 }
 
-TEST(int128, u128OpOutput) {
-  using type = u128;
+TEST(int128, uint128OpOutput) {
+  using type = uint128;
 
   using limits = numeric_limits<type>;
 
