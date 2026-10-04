@@ -12,7 +12,14 @@
 
 #define FMT_USE_INT128 1
 
-#include <fmt/base.h>
+#ifndef FMT_BEGIN_NAMESPACE
+#  define FMT_BEGIN_NAMESPACE \
+    namespace fmt {           \
+    inline namespace v12 {
+#  define FMT_END_NAMESPACE \
+    }                       \
+    }
+#endif
 
 FMT_BEGIN_NAMESPACE
 
@@ -27,6 +34,12 @@ inline auto map(native_uint128 x) -> native_uint128 { return x; }
 } // namespace detail
 
 FMT_END_NAMESPACE
+
+#ifdef FMT_BASE_H_
+#error "`fmt/base.h` already included"
+#endif
+
+#include <fmt/base.h>
 
 #if FMT_USE_INT128 == 0
 #error "No {fmt} support for `int128`"
