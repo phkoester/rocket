@@ -11,10 +11,6 @@
 
 // Types ----------------------------------------------------------------------------------------------------
 
-#ifndef FMT_USE_INT128
-#error No 128-bit integer support
-#endif
-
 using int128 = __int128;
 using uint128 = unsigned __int128;
 
@@ -50,12 +46,12 @@ TEST(nativeInt128, opOutput) {
   }
 }
 
-/*
 TEST(nativeInt128, format) {
-  EXPECT_EQ(fmt::format("{}", -1234_i128), "-1234");
-  EXPECT_EQ(fmt::format("{}", 1234_u128), "1234");
+  // int128 val1 = -1234;
+  // EXPECT_EQ(fmt::format("{}", val1), "-1234");
+  // uint128 val2 = 1234;
+  // EXPECT_EQ(fmt::format("{}", val2), "1234");
 }
-*/
 
 TEST(nativeInt128, mappedTypeConstant) {
   EXPECT_EQ((fmt::detail::mapped_type_constant<bool, char>::value), fmt::detail::type::bool_type);
