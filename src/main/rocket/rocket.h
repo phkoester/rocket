@@ -58,9 +58,9 @@
 #include <cstdio> // Make this generally availabe
 #include <typeinfo> // Make this generally available
 
-// XXX
+// XXX Reihenfolge, eigentlich muss boost nach oben
 
-#if defined(ROCKET_OS_WINDOWS) && not defined(ROCKET_CXX_COMPILER_CLANG)
+#if defined(ROCKET_OS_WINDOWS) && defined(ROCKET_CXX_COMPILER_MSVC)
 #define ROCKET_HAS_BOOST_INT128
 #include <boost/int128/int128.hpp>
 #else
