@@ -17,8 +17,6 @@ namespace fmt {
 using native_int128 = __int128_t;
 using native_uint128 = __uint128_t;
 
-namespace v12::detail {
-
 inline auto map(native_int128 x) -> native_int128 { return x; }
 inline auto map(native_uint128 x) -> native_uint128 { return x; }
 
