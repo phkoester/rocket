@@ -11,6 +11,10 @@
 
 // Types ----------------------------------------------------------------------------------------------------
 
+#ifndef FMT_USE_INT128
+#error No 128-bit integer support
+#endif
+
 using int128 = __int128;
 using uint128 = unsigned __int128;
 
