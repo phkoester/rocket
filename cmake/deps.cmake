@@ -6,7 +6,8 @@
 
 find_package(Boost ${GAIA_BOOST_VERSION} QUIET)
 if(NOT Boost_FOUND)
-  set(ROCKET_BOOST_LIBS algorithm asio bimap headers iostreams preprocessor safe_numerics)
+  # With Boost 1.93, replace `multiprecision` by `int128`
+  set(ROCKET_BOOST_LIBS algorithm asio bimap headers iostreams multiprecision preprocessor safe_numerics)
   set(ROCKET_BOOST_NS_LIBS ${ROCKET_BOOST_LIBS})
   list(TRANSFORM ROCKET_BOOST_NS_LIBS PREPEND Boost::)
 

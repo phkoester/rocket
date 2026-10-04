@@ -58,8 +58,8 @@ target_sources(rocket
     rocket/log/log.cc # Move this to front so Rocket can use its own logging API
 
     rocket/Exception.cc
+    rocket/int128.cc
     rocket/literal.cc
-    rocket/rocket.cc
     rocket/chrono/chrono.cc
     rocket/cl/cl.cc
     rocket/external/scnlib/impl.cc

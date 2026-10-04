@@ -1,5 +1,5 @@
 /*
- * test-rocket.cc
+ * test-int128.cc
  */
 
 #include "rocket-test/rocket-test.h"
@@ -8,54 +8,7 @@
 
 // `TEST` ---------------------------------------------------------------------------------------------------
 
-TEST(rocket, basicTypes) {
-  static_assert(sizeof(bool) == 1);
-  static_assert(sizeof(char) == 1);
-  static_assert(sizeof(char32) == 4);
-  static_assert(sizeof(i8) == 1);
-  static_assert(sizeof(u8) == 1);
-  static_assert(sizeof(i16) == 2);
-  static_assert(sizeof(u16) == 2);
-  static_assert(sizeof(i32) == 4);
-  static_assert(sizeof(u32) == 4);
-  static_assert(sizeof(i64) == 8);
-  static_assert(sizeof(u64) == 8);
-  static_assert(sizeof(i128) == 16);
-  static_assert(sizeof(u128) == 16);
-  static_assert(sizeof(f32) == 4);
-  static_assert(sizeof(f64) == 8);
-  static_assert(sizeof(void*) == 8);
-
-  static_assert(is_signed_v<char>);
-  static_assert(is_unsigned_v<char32>);
-  static_assert(is_same_v<u64, std_size_t>);
-  static_assert(is_signed_v<i128>);
-  static_assert(is_unsigned_v<u128>);
-  static_assert(is_same_v<decltype(1.0F), f32>);
-  static_assert(is_same_v<decltype(1.0), f64>);
-}
-
-TEST(rocket, printSizeof) {
-  auto& out = nio::out;
-  out.println("{: <11} | {:>13}", "Data type", "Size in bytes");
-  out.println("{: <11} | {:>13}", "-----------", "-------------");
-  out.println("{: <11} | {:>13}", "bool", sizeof(bool));
-  out.println("{: <11} | {:>13}", "char", sizeof(char));
-  out.println("{: <11} | {:>13}", "wchar_t", sizeof(wchar_t));
-  out.println("{: <11} | {:>13}", "char32_t", sizeof(char32_t));
-  out.println("{: <11} | {:>13}", "short", sizeof(short));
-  out.println("{: <11} | {:>13}", "int", sizeof(int));
-  out.println("{: <11} | {:>13}", "long", sizeof(long));
-  out.println("{: <11} | {:>13}", "long long", sizeof(long long));
-  out.println("{: <11} | {:>13}", "size_t", sizeof(size_t));
-  out.println("{: <11} | {:>13}", "__int128", sizeof(__int128));
-  out.println("{: <11} | {:>13}", "float", sizeof(float));
-  out.println("{: <11} | {:>13}", "double", sizeof(double));
-  out.println("{: <11} | {:>13}", "long double", sizeof(long double));
-  out.println("{: <11} | {:>13}", "void*", sizeof(void*));
-}
-
-TEST(rocket, i128OpInput) {
+TEST(int128, i128OpInput) {
   using compareType = i32;
   compareType compare = 0;
   auto compareLimits = numeric_limits<compareType>();
@@ -229,7 +182,7 @@ TEST(rocket, i128OpInput) {
   }
 }
 
-TEST(base, i128OpOutput) {
+TEST(int128, i128OpOutput) {
   using type = i128;
 
   using limits = numeric_limits<type>;
@@ -247,7 +200,7 @@ TEST(base, i128OpOutput) {
   }
 }
 
-TEST(base, u128OpInput) {
+TEST(int128, u128OpInput) {
   using compareType = u32;
   compareType compare = 0;
   auto compareLimits = numeric_limits<compareType>();
@@ -423,7 +376,7 @@ TEST(base, u128OpInput) {
   }
 }
 
-TEST(base, u128OpOutput) {
+TEST(int128, u128OpOutput) {
   using type = u128;
 
   using limits = numeric_limits<type>;

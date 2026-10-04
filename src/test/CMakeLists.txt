@@ -41,26 +41,11 @@ include(GoogleTest)
 
 # Rocket ....................................................................................................
 
-AddTest(test-rocket rocket test-rocket.cc)
-
-UnixPath(${PROJECT_SOURCE_DIR} dir)
-set(HELLO_CC ${GENERATED_DIR}/hello.cc)
-add_custom_command(
-  OUTPUT   ${HELLO_CC}
-  COMMAND  python3 ${dir}/bin/generate-hello -o ${HELLO_CC}
-  DEPENDS  ${PROJECT_SOURCE_DIR}/bin/generate-hello ${PROJECT_SOURCE_DIR}/CMakeLists.txt
-  VERBATIM
-)
-AddTest(test-rocket-external-CMake rocket/external test-CMake.cc
-  ENVIRONMENT
-    "A=A A"
-    "B=B B")
-target_sources(test-rocket-external-CMake PRIVATE ${HELLO_CC})
-
-AddTest(test-rocket-assert                       rocket                 test-assert.cc)
 AddTest(test-rocket-Bimap                        rocket                 test-Bimap.cc)
 AddTest(test-rocket-Cow                          rocket                 test-Cow.cc)
+AddTest(test-rocket-assert                       rocket                 test-assert.cc)
 AddTest(test-rocket-enum                         rocket                 test-enum.cc)
+AddTest(test-rocket-int128                       rocket                 test-int128.cc)
 AddTest(test-rocket-Exception                    rocket                 test-Exception.cc)
 AddTest(test-rocket-functional                   rocket                 test-functional.cc)
 AddTest(test-rocket-Guard                        rocket                 test-Guard.cc)
@@ -97,6 +82,20 @@ AddTest(test-rocket-system-terminal              rocket/system/terminal test-ter
 AddTest(test-rocket-unicode                      rocket/unicode         test-unicode.cc)
 AddTest(test-rocket-unicode-Character            rocket/unicode         test-Character.cc)
 AddTest(test-rocket-unicode-Iterator             rocket/unicode         test-Iterator.cc)
+
+UnixPath(${PROJECT_SOURCE_DIR} dir)
+set(HELLO_CC ${GENERATED_DIR}/hello.cc)
+add_custom_command(
+  OUTPUT   ${HELLO_CC}
+  COMMAND  python3 ${dir}/bin/generate-hello -o ${HELLO_CC}
+  DEPENDS  ${PROJECT_SOURCE_DIR}/bin/generate-hello ${PROJECT_SOURCE_DIR}/CMakeLists.txt
+  VERBATIM
+)
+AddTest(test-rocket-external-CMake rocket/external test-CMake.cc
+  ENVIRONMENT
+    "A=A A"
+    "B=B B")
+target_sources(test-rocket-external-CMake PRIVATE ${HELLO_CC})
 
 # Rocket Test ...............................................................................................
 
