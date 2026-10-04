@@ -316,46 +316,18 @@ template<typename T> concept IsView = internal::IsViewImpl<T>::value;
 
 // Support for 128-bit data types ---------------------------------------------------------------------------
 
-#if 0 // XXX
 #ifdef ROCKET_HAS_BOOST_INT128
 
 namespace std {
 
 template<>
-struct is_signed<i128> : true_type {};
+struct is_arithmetic<i128> : true_type {};
 
 template<>
-inline constexpr bool is_signed_v<i128> = is_signed<i128>::value;
-
-template<>
-struct is_unsigned<u128> : true_type {};
-
-template<>
-inline constexpr bool is_unsigned_v<u128> = is_unsigned<u128>::value;
-
-inline constexpr i128 INT128_MAX = (i128)(((u128) 1 << ((sizeof(i128) * __CHAR_BIT__) - 1)) - 1);
-inline constexpr i128 INT128_MIN = (-INT128_MAX - 1);
-inline constexpr u128 UINT128_MAX = ((2 * (u128) INT128_MAX) + 1);
-
-template<>
-struct numeric_limits<i128>
-{
-  static constexpr i128 max() { return INT128_MAX; }
-
-  static constexpr i128 min() { return INT128_MIN; }
-};
-
-template<>
-struct numeric_limits<u128>
-{
-  static constexpr u128 max() { return UINT128_MAX; }
-
-  static constexpr u128 min() { return 0; }
-};
+struct is_arithmetic<u128> : true_type {};
 
 } // namespace std
 
-#endif
 #endif
 
 // EOF
