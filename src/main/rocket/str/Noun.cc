@@ -13,8 +13,8 @@ namespace rocket::str {
 // `Noun` ---------------------------------------------------------------------------------------------------
 
 string
-Noun::amount(i64 count) const {
-  return fmt::format("{} {}", count, operator()(count));
+Noun::amount(i64 val) const {
+  return fmt::format("{} {}", val, operator()(val));
 }
 
 // Predefined nouns -----------------------------------------------------------------------------------------

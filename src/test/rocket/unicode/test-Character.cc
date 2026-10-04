@@ -17,17 +17,9 @@ namespace {
 template<typename C> requires IsChar<C>
 void
 testCharacter(const CharacterView<C>& c) {
+  INQUIRE_ENV(ROCKET_TEST_TERMINAL);
+
   auto& out = nio::out;
-
-  if (not TEST_TERMINAL) {
-    static bool info = false;
-    if (not info) {
-      ROCKET_PROCESS_INFO("Not testing character because `" ROCKET_TEST_TERMINAL "` is not set");
-      info = true;
-    }
-    return;
-  }
-
   out.print("[{}]", ConvertTo<char>::apply(static_cast<basic_string_view<C>>(c)));
   auto pos = system::terminal::position(out);
   EXPECT_TRUE(pos);

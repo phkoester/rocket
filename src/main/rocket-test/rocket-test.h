@@ -131,6 +131,22 @@ struct ExitedWithStatus {
   } \
 }
 
+/**
+ * Checks if an environment variable is set to `true`. If it is not, the current function is exited.
+ *
+ * @param name the name of the environment variable
+ */
+#define INQUIRE_ENV(name) { \
+  if (not TEST_TERMINAL) { \
+    static bool info = false; \
+    if (not info) { \
+      ROCKET_PROCESS_INFO("Exiting function because `" name "` is not set to `true`"); \
+      info = true; \
+    } \
+    return; \
+  } \
+}
+
 namespace rocket::test {
 
 // Constants ------------------------------------------------------------------------------------------------

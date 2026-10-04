@@ -39,12 +39,12 @@ struct Noun {
   }
 
   /**
-   * Text expansion function, returns @p count, followed by either the singular or the plural form.
+   * Text expansion function, returns @p val, followed by either the singular or the plural form.
    *
-   * @param count the amount
+   * @param val the value
    * @return the amount, followed by either the singular or the plural
    */
-  std::string amount(i64 count) const;
+  std::string amount(i64 val) const;
 };
 
 // Predefined nouns -----------------------------------------------------------------------------------------
