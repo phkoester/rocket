@@ -23,14 +23,16 @@ inline auto map(native_uint128 x) -> native_uint128 { return x; }
 
 #endif
 
-#ifdef FMT_FMT_H
-#error "`fmt/format.h` already included"
+#ifdef FMT_BASE_H
+#error "`fmt/base.h` already included"
 #endif
-#include <fmt/format.h>
+#include <fmt/base.h>
 
 #if FMT_USE_INT128 == 0
 #error "No {fmt} support for `int128`"
 #endif
+
+#include <fmt/format.h>
 
 #ifdef ROCKET_OS_WINDOWS
 
