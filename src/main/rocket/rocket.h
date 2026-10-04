@@ -142,13 +142,8 @@ using u64 = std::uint64_t; ///< An unsigned 64-bit integer.
   using i128 = boost::int128::int128; ///< A signed 128-bit integer.
   using u128 = boost::int128::uint128; ///< An unsigned 128-bit integer.
 #else
-  #ifdef ROCKET_OS_WINDOWS
-    using i128 = __int128_t; ///< A signed 128-bit integer.
-    using u128 = __uint128_t; ///< An unsigned 128-bit integer.
-  #else
-    using i128 = __int128; ///< A signed 128-bit integer.
-    using u128 = unsigned __int128; ///< An unsigned 128-bit integer.
-  #endif
+  using i128 = __int128; ///< A signed 128-bit integer.
+  using u128 = unsigned __int128; ///< An unsigned 128-bit integer.
 #endif
 
 using f32 = std_float; ///< A 32-bit floating point.

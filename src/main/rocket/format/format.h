@@ -10,7 +10,7 @@
 
 #include <fmt/format.h>
 
-#ifdef ROCKET_OS_WINDOWS
+#if 0 // ifdef ROCKET_OS_WINDOWS
 
 // `fmt::formatter<i128>` -----------------------------------------------------------------------------------
 
