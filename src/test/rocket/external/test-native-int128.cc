@@ -15,6 +15,22 @@
 using int128 = __int128;
 using uint128 = unsigned __int128;
 
+// Format ---------------------------------------------------------------------------------------------------
+
+string
+format_as(i128 val) {
+  ostringstream os;
+  os << val;
+  return os.str();
+}
+
+string
+format_as(u128 val) {
+  ostringstream os;
+  os << val;
+  return os.str();
+}
+
 // `TEST` ---------------------------------------------------------------------------------------------------
 
 TEST(nativeInt128, literal) {
