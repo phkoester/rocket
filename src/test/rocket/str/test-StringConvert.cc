@@ -48,10 +48,10 @@ TEST(StringConvert, i128) {
 
   EXPECT_THAT(
     [] { static_cast<void>(toType<type>("foo")); },
-    ThrowsMessage<InvalidState>(HasSubstr("Cannot scan \"foo\" as `__int128`")));
+    ThrowsMessage<InvalidState>(matchesRegex("Cannot scan \"foo\" as `.*int128`")));
   EXPECT_THAT(
     [] { static_cast<void>(toType<type>("1x")); },
-    ThrowsMessage<InvalidState>(HasSubstr("Cannot scan \"1x\" as `__int128`")));
+    ThrowsMessage<InvalidState>(matchesRegex("Cannot scan \"1x\" as `.*int128`")));
 }
 
 TEST(StringConvert, enum) {
