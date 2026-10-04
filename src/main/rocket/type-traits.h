@@ -342,7 +342,7 @@ struct numeric_limits<i128>
   static constexpr i128 min() { return INT128_MIN; }
 
   static constexpr i128 max() { return INT128_MAX; }
-}
+};
 
 template<>
 struct numeric_limits<u128>
@@ -350,7 +350,7 @@ struct numeric_limits<u128>
   static constexpr u128 min() { return 0; }
 
   static constexpr u128 max() { return UINT128_MAX; }
-}
+};
 
 } // namespace std
 
