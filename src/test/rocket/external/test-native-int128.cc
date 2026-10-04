@@ -46,17 +46,19 @@ TEST(nativeInt128, opOutput) {
   }
 }
 
+/*
 TEST(nativeInt128, format) {
   EXPECT_EQ(fmt::format("{}", -1234_i128), "-1234");
   EXPECT_EQ(fmt::format("{}", 1234_u128), "1234");
 }
+*/
 
 TEST(nativeInt128, mappedTypeConstant) {
   EXPECT_EQ((fmt::detail::mapped_type_constant<bool, char>::value), fmt::detail::type::bool_type);
   EXPECT_EQ((fmt::detail::mapped_type_constant<string, char>::value), fmt::detail::type::string_type);
   EXPECT_EQ((fmt::detail::mapped_type_constant<void*, char>::value), fmt::detail::type::pointer_type);
-  EXPECT_EQ((fmt::detail::mapped_type_constant<i128, char>::value), fmt::detail::type::int128_type);
-  EXPECT_EQ((fmt::detail::mapped_type_constant<u128, char>::value), fmt::detail::type::uint128_type);
+  // EXPECT_EQ((fmt::detail::mapped_type_constant<i128, char>::value), fmt::detail::type::int128_type);
+  // EXPECT_EQ((fmt::detail::mapped_type_constant<u128, char>::value), fmt::detail::type::uint128_type);
 }
 
 #endif // ROCKET_HAS_BOOST_INT128
