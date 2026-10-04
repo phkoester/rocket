@@ -17,14 +17,14 @@ using uint128 = unsigned __int128;
 
 // Format ---------------------------------------------------------------------------------------------------
 
-string
+constexpr string
 format_as(i128 val) {
   ostringstream os;
   os << val;
   return os.str();
 }
 
-string
+constexpr string
 format_as(u128 val) {
   ostringstream os;
   os << val;
