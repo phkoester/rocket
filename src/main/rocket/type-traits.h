@@ -318,19 +318,7 @@ template<typename T> concept IsView = internal::IsViewImpl<T>::value;
 
 #ifdef ROCKET_HAS_BOOST_INT128
 
-namespace std {
-
-template<>
-struct is_integral<i128> : true_type {};
-
-inline constexpr bool is_integral_v<i128> = true;
-
-template<>
-struct is_integral<u128> : true_type {};
-
-inline constexpr bool is_integral_v<u128> = true;
-
-} // namespace std
+// XXX
 
 #endif
 
