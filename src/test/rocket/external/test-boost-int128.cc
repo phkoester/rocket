@@ -13,9 +13,9 @@ using uint128 = boost::int128::uint128;
 
 // `TEST` ---------------------------------------------------------------------------------------------------
 
-TEST(boostInt128, isSigned) {
-  EXPECT_TRUE(is_signed_v<int128>);
-  EXPECT_TRUE(is_unsigned_v<uint128>);
+TEST(boostInt128, opCompare) {
+  EXPECT_LT(int128(-1), int128(0));
+  EXPECT_GT(uint128(-1), uint128(0));
 }
 
 // EOF
