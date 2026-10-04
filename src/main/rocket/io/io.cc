@@ -82,7 +82,7 @@ tellg(std::istream& is) noexcept {
 
 } // namespace rocket::io
 
-// I/O stream support for 128-bit data types ----------------------------------------------------------------
+// Support for 128-bit data types ---------------------------------------------------------------------------
 
 istream&
 operator>>(istream& lhs, i128& rhs) {

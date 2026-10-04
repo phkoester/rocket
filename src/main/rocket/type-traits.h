@@ -314,4 +314,16 @@ template<typename T> concept IsView = internal::IsViewImpl<T>::value;
 
 } // namespace rocket
 
+// Support for 128-bit data types ---------------------------------------------------------------------------
+
+#ifdef ROCKET_OS_WINDOWS
+
+template<>
+struct std::is_signed<i128> : std::true_type {};
+
+template<>
+struct std::is_unsigned<u128> : std::true_type {};
+
+#endif
+
 // EOF

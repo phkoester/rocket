@@ -62,7 +62,7 @@ std::ios::pos_type tellg(std::istream& is) noexcept;
 
 } // namespace rocket::io
 
-// I/O stream support for 128-bit data types ----------------------------------------------------------------
+// Support for 128-bit data types ---------------------------------------------------------------------------
 
 /// @op_input{#i128}
 std::istream& operator>>(std::istream& lhs, i128& rhs);
