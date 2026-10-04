@@ -89,7 +89,7 @@ constexpr bool HAS_LITTLE_ENDIAN = std::endian::native == std::endian::little;
   #ifdef ROCKET_EXPORTING__
     #define ROCKET_PUBLIC __declspec(dllexport) ///< Specifier for global data symbols.
   #else
-    #define ROCKET_PUBLIC  __declspec(dllimport) ///< Specifier for global data symbols.
+    #define ROCKET_PUBLIC __declspec(dllimport) ///< Specifier for global data symbols.
   #endif
 #else
   #define ROCKET_PUBLIC ///< Specifier for global data symbols.
@@ -117,7 +117,7 @@ using std_short = short;
 using std_int = int;
 using std_unsigned = unsigned;
 using std_long = long;
-using std_unsigned_long_long_int = unsigned long long int; // XXX
+using std_unsigned_long_long = unsigned long long; // XXX
 using std_size_t = size_t;
 using std_float = float;
 using std_double = double;
