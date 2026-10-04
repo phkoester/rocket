@@ -138,8 +138,8 @@ using u32 = std::uint32_t; ///< An unsigned 32-bit integer.
 using i64 = std::int64_t; ///< A signed 64-bit integer.
 using u64 = std::uint64_t; ///< An unsigned 64-bit integer.
 #ifdef ROCKET_HAS_BOOST_INT128
-using i128 = boost::int128_t; ///< A signed 128-bit integer.
-using u128 = boost::uint128_t; ///< An unsigned 128-bit integer.
+using i128 = boost::int128::int128; ///< A signed 128-bit integer.
+using u128 = boost::int128::uint128; ///< An unsigned 128-bit integer.
 #else
 using i128 = __int128; ///< A signed 128-bit integer.
 using u128 = unsigned __int128; ///< An unsigned 128-bit integer.
