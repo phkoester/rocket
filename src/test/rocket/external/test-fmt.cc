@@ -4,8 +4,9 @@
 
 #include "rocket-test/rocket-test.h"
 
+#include "rocket/format/format.h"
+
 #include <fmt/chrono.h>
-#include <fmt/format.h>
 #include <fmt/xchar.h>
 
 #include <limits>

@@ -107,6 +107,7 @@ target_sources(rocket
       rocket/codec/HashEncoder.h
       rocket/filesystem/filesystem.h
       rocket/format/Subformat.h
+      rocket/format/format.h
       rocket/hash/hash.h
       rocket/io/io.h
       rocket/log/log.h

@@ -8,13 +8,12 @@
 
 #include "rocket/assert.h"
 #include "rocket/Bimap.h"
+#include "rocket/format/format.h"
 #include "rocket/str/message/message.h"
 #include "rocket/unicode/ConvertTo.h"
 
 #include <boost/preprocessor/stringize.hpp>
 #include <boost/preprocessor/seq/for_each.hpp>
-
-#include <fmt/format.h>
 
 #include <scn/scan.h>
 

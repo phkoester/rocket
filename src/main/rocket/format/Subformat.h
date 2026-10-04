@@ -5,10 +5,9 @@
 #pragma once
 
 #include "rocket/type-traits.h"
+#include "rocket/format/format.h"
 
 #include <boost/algorithm/string.hpp>
-
-#include <fmt/format.h>
 
 #include <functional>
 #include <map>

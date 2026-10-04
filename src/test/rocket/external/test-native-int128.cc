@@ -6,30 +6,13 @@
 
 #include "rocket-test/rocket-test.h"
 
+#include "rocket/format/format.h"
 #include "rocket/io/io.h"
-
-#include <limits>
 
 // Types ----------------------------------------------------------------------------------------------------
 
 using int128 = __int128;
 using uint128 = unsigned __int128;
-
-// Format ---------------------------------------------------------------------------------------------------
-
-constexpr string
-format_as(i128 val) {
-  ostringstream os;
-  os << val;
-  return os.str();
-}
-
-constexpr string
-format_as(u128 val) {
-  ostringstream os;
-  os << val;
-  return os.str();
-}
 
 // `TEST` ---------------------------------------------------------------------------------------------------
 

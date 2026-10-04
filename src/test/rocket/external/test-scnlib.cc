@@ -5,9 +5,9 @@
 #include "rocket-test/rocket-test.h"
 
 #include "rocket/chrono/chrono.h"
+#include "rocket/format/format.h"
 #include "rocket/system/system.h"
 
-#include <fmt/format.h>
 #include <fmt/ranges.h>
 
 #include <scn/chrono.h>

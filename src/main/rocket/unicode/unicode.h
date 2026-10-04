@@ -6,11 +6,11 @@
 
 #pragma once
 
-#include "rocket/Cow.h"
 #include "rocket/Bimap.h"
+#include "rocket/Cow.h"
 #include "rocket/assert.h"
+#include "rocket/format/format.h"
 
-#include <fmt/format.h>
 #include <fmt/xchar.h>
 
 #include <limits>

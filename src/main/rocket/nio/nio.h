@@ -7,12 +7,12 @@
 #pragma once
 
 #include "rocket/rocket.h"
+#include "rocket/format/format.h"
 #include "rocket/unicode/unicode-fwd.h"
 
 #include <boost/safe_numerics/safe_integer.hpp>
 
 #include <fmt/color.h>
-#include <fmt/format.h>
 
 #include <iosfwd>
 #include <memory>
