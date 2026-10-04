@@ -314,12 +314,4 @@ template<typename T> concept IsView = internal::IsViewImpl<T>::value;
 
 } // namespace rocket
 
-// Support for 128-bit data types ---------------------------------------------------------------------------
-
-#ifdef ROCKET_HAS_BOOST_INT128
-
-// XXX
-
-#endif
-
 // EOF

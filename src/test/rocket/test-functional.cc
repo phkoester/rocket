@@ -5,6 +5,7 @@
 #include "rocket-test/rocket-test.h"
 
 #include "rocket/functional.h"
+#include "rocket/hash/hash.h"
 
 using namespace rocket;
 
