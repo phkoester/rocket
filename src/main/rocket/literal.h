@@ -25,8 +25,8 @@ namespace internal {
 
 template<typename T, typename U>
 struct SignedLimit {
-  static_assert(std::is_signed_v<T>);
-  static_assert(std::is_unsigned_v<U>);
+  static_assert(std::numeric_limits<T>::is_signed);
+  static_assert(not std::numeric_limits<U>::is_signed);
 
   /// The signed maximum, as unsigned.
   static constexpr U value = std::numeric_limits<T>::max();
