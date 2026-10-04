@@ -26,6 +26,10 @@ FMT_BEGIN_NAMESPACE
 using native_int128 = __int128_t;
 using native_uint128 = __uint128_t;
 
+inline bool is_negative(native_int128 x) { return x < 0; }
+
+inline bool is_negative(native_uint128 x) { return false; }
+
 namespace detail {
 
 inline auto map(native_int128 x) -> native_int128 { return x; }
