@@ -23,7 +23,7 @@ inline auto map(native_uint128 x) -> native_uint128 { return x; }
 
 #endif
 
-#ifdef FMT_BASE_H
+#ifdef FMT_BASE_H_
 #error "`fmt/base.h` already included"
 #endif
 #include <fmt/base.h>
