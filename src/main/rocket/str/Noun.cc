@@ -12,13 +12,19 @@ namespace rocket::str {
 
 // `Noun` ---------------------------------------------------------------------------------------------------
 
-ROCKET_PUBLIC const Noun Noun::byte { "byte", "bytes" };
-ROCKET_PUBLIC const Noun Noun::character { "character", "characters" };
-
 string
 Noun::amount(i64 count) const {
   return fmt::format("{} {}", count, operator()(count));
 }
+
+// Predefined nouns -----------------------------------------------------------------------------------------
+
+namespace noun {
+
+ROCKET_PUBLIC const Noun byte { "byte", "bytes" };
+ROCKET_PUBLIC const Noun character { "character", "characters" };
+
+} // namespace noun
 
 } // namespace rocket::str
 

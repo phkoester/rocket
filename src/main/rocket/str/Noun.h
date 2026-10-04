@@ -18,9 +18,6 @@ namespace rocket::str {
  * A noun that knows its singular and plural form, in US English.
  */
 struct Noun {
-  ROCKET_PUBLIC static const Noun byte; ///< A predefined noun.
-  ROCKET_PUBLIC static const Noun character; ///< A predefined noun.
-
   /**
    * The singular form.
    */
@@ -49,6 +46,15 @@ struct Noun {
    */
   std::string amount(i64 count) const;
 };
+
+// Predefined nouns -----------------------------------------------------------------------------------------
+
+namespace noun {
+
+ROCKET_PUBLIC extern const Noun byte;
+ROCKET_PUBLIC extern const Noun character;
+
+} // namespace noun
 
 } // namespace rocket::str
 
