@@ -20,6 +20,13 @@ using native_uint128 = __uint128_t;
 inline auto map(native_int128 x) -> native_int128 { return x; }
 inline auto map(native_uint128 x) -> native_uint128 { return x; }
 
+namespace detail {
+
+inline auto map(native_int128 x) -> native_int128 { return x; }
+inline auto map(native_uint128 x) -> native_uint128 { return x; }
+
+} // namespace detail
+
 } // namespace fmt
 
 #endif
