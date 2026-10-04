@@ -18,8 +18,8 @@ namespace rocket::str {
  * A noun that knows its singular and plural form, in US English.
  */
 struct Noun {
-  static const Noun byte; ///< A predefined noun.
-  static const Noun character; ///< A predefined noun.
+  ROCKET_PUBLIC static const Noun byte; ///< A predefined noun.
+  ROCKET_PUBLIC static const Noun character; ///< A predefined noun.
 
   /**
    * The singular form.

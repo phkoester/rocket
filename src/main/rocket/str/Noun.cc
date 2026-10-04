@@ -12,8 +12,8 @@ namespace rocket::str {
 
 // `Noun` ---------------------------------------------------------------------------------------------------
 
-const Noun Noun::byte { "byte", "bytes" };
-const Noun Noun::character { "character", "characters" };
+ROCKET_PUBLIC const Noun Noun::byte { "byte", "bytes" };
+ROCKET_PUBLIC const Noun Noun::character { "character", "characters" };
 
 string
 Noun::amount(i64 count) const {
