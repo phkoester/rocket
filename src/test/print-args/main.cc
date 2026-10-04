@@ -3,8 +3,10 @@
  */
 
 #include "rocket/Process.h"
+#include "rocket/format/format.h"
 
 #include <fmt/ranges.h>
+#include <fmt/std.h>
 
 using namespace rocket;
 using namespace std;

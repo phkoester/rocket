@@ -9,6 +9,10 @@
 #include "rocket/format/format.h"
 #include "rocket/io/io.h"
 
+#if FMT_USE_INT128 == 0
+#error No `int128` support
+#endif
+
 // Types ----------------------------------------------------------------------------------------------------
 
 using int128 = __int128;
@@ -45,10 +49,6 @@ TEST(nativeInt128, opOutput) {
     EXPECT_EQ(os.str(), "340282366920938463463374607431768211455");
   }
 }
-
-#if FMT_USE_INT128 == 0
-#error No 128-bit integer support
-#endif
 
 TEST(nativeInt128, format) {
   // int128 val1 = -1234;
