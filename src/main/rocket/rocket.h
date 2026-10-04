@@ -7,21 +7,19 @@
  *
  * OS-specific data types, sizes in bytes:
  *
- * XXX
- *
- * | Type          | Linux | Windows Clang | Windows MSVC
- * | :------------ | ----: | ------------: | -----------:
- * | `bool`        |     1 |             1
- * | `wchar_t`     |     4 |             2
- * | `short`       |     2 |             2
- * | `int`         |     4 |             4
- * | `long`        |     8 |             4
- * | `long long`   |     8 |             8
- * | `i128`        |    16 |            16
- * | `float`       |     4 |             4
- * | `double`      |     8 |             8
- * | `long double` |    16 |             8
- * | `void*`       |     8 |             8
+ * | Type          | Linux | Windows
+ * | :------------ | ----: | ------:
+ * | `bool`        |     1 |       1
+ * | `wchar_t`     |     4 |       2
+ * | `short`       |     2 |       2
+ * | `int`         |     4 |       4
+ * | `long`        |     8 |       4
+ * | `long long`   |     8 |       8
+ * | `i128`        |    16 |      16
+ * | `float`       |     4 |       4
+ * | `double`      |     8 |       8
+ * | `long double` |    16 |       8
+ * | `void*`       |     8 |       8
  *
  * Basic data types used in Rocket:
  *
@@ -45,7 +43,7 @@
  * | `void*`          |    8
  *
  * In Rocket, C strings of type `char*` and instances of #std::string or #std::string_view are assumed to
- * be UTF-8-encoded. This is already true at compile time: A string literal like `"ä"` must expand to
+ * be UTF-8-encoded. This is already true at compile time: a string literal like `"ä"` must expand to
  * `"\xc3\xa4"`.
  *
  * The only Unicode encodings that Rocket supports are UTF-8 and UTF-32.
@@ -58,11 +56,9 @@
 #include <cstdio> // Make this generally availabe
 #include <typeinfo> // Make this generally available
 
-// XXX Reihenfolge, eigentlich muss boost nach oben
-
 #if defined(ROCKET_OS_WINDOWS)
-#define ROCKET_HAS_BOOST_INT128
-#include <boost/int128/int128.hpp>
+  #define ROCKET_HAS_BOOST_INT128
+  #include <boost/int128/int128.hpp>
 #endif
 
 // Check prerequisites --------------------------------------------------------------------------------------
@@ -72,8 +68,8 @@
 #endif
 
 #if not defined(ROCKET_CXX_COMPILER_GNU) && \
-    not defined(ROCKET_CXX_COMPILER_CLANG) && \
-    not defined(ROCKET_CXX_COMPILER_MSVC)
+  not defined(ROCKET_CXX_COMPILER_CLANG) && \
+  not defined(ROCKET_CXX_COMPILER_MSVC)
   #error Unsupported compiler
 #endif
 
