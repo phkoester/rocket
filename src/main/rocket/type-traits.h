@@ -209,7 +209,6 @@ struct Int<8> {
   using Type = i64; ///< @type_alias
 };
 
-#ifdef ROCKET_HAS_128
 /**
  * 16-byte signed integer: `i128`.
  */
@@ -217,7 +216,6 @@ template<>
 struct Int<16> {
   using Type = i128; ///< @type_alias
 };
-#endif
 
 // `Uint` ---------------------------------------------------------------------------------------------------
 
@@ -255,7 +253,6 @@ struct Uint<8> {
   using Type = u64; ///< @type_alias
 };
 
-#ifdef ROCKET_HAS_128
 /**
  * 16-byte unsigned integer: `u128`.
  */
@@ -263,7 +260,6 @@ template<>
 struct Uint<16> {
   using Type = u128; ///< @type_alias
 };
-#endif
 
 // `Float` --------------------------------------------------------------------------------------------------
 

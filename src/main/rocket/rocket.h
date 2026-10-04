@@ -56,8 +56,14 @@
 #include <bit>
 #include <cstdint> // `std::int8_t`, `std::uint8_t`, ...
 #include <cstdio> // Make this generally availabe
-#include <iosfwd>
 #include <typeinfo> // Make this generally available
+
+// XXX
+
+#if defined(ROCKET_OS_WINDOWS) && not defined(ROCKET_CXX_COMPILER_CLANG)
+#define ROCKET_HAS_BOOST_INT128
+#include <boost/int128/int128.hpp>
+#endif
 
 // Check prerequisites --------------------------------------------------------------------------------------
 
@@ -69,10 +75,6 @@
     not defined(ROCKET_CXX_COMPILER_CLANG) && \
     not defined(ROCKET_CXX_COMPILER_MSVC)
   #error Unsupported compiler
-#endif
-
-#ifndef ROCKET_OS_WINDOWS
-  #define ROCKET_HAS_128 ///< Do we have 128-bit data types?
 #endif
 
 // Detect endianness ----------------------------------------------------------------------------------------
@@ -135,30 +137,15 @@ using i32 = std::int32_t; ///< A signed 32-bit integer.
 using u32 = std::uint32_t; ///< An unsigned 32-bit integer.
 using i64 = std::int64_t; ///< A signed 64-bit integer.
 using u64 = std::uint64_t; ///< An unsigned 64-bit integer.
-#ifdef ROCKET_HAS_128
+#ifdef ROCKET_HAS_BOOST_INT128
+using i128 = boost::int128_t; ///< A signed 128-bit integer.
+using u128 = boost::uint128_t; ///< An unsigned 128-bit integer.
+#else
 using i128 = __int128; ///< A signed 128-bit integer.
 using u128 = unsigned __int128; ///< An unsigned 128-bit integer.
 #endif
 using f32 = std_float; ///< A 32-bit floating point.
 using f64 = std_double; ///< A 64-bit floating point.
-
-// I/O stream support for 128-bit data types ----------------------------------------------------------------
-
-#ifdef ROCKET_HAS_128
-
-/// @op_input{#i128}
-std::istream& operator>>(std::istream& lhs, i128& rhs);
-
-/// @op_output{#i128}
-std::ostream& operator<<(std::ostream& lhs, i128 rhs);
-
-/// @op_input{#u128}
-std::istream& operator>>(std::istream& lhs, u128& rhs);
-
-/// @op_output{#u128}
-std::ostream& operator<<(std::ostream& lhs, u128 rhs);
-
-#endif // ROCKET_HAS_128
 
 namespace rocket {
 

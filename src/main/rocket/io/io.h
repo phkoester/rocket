@@ -58,8 +58,22 @@ inline std::ispanstream is(std::string_view str) { return std::ispanstream(str);
  * @param is the input stream
  * @return the actual current input position, always nonnegative
  */
-std::ios::pos_type tellg(std::istream& is);
+std::ios::pos_type tellg(std::istream& is) noexcept;
 
 } // namespace rocket::io
+
+// I/O stream support for 128-bit data types ----------------------------------------------------------------
+
+/// @op_input{#i128}
+std::istream& operator>>(std::istream& lhs, i128& rhs);
+
+/// @op_output{#i128}
+std::ostream& operator<<(std::ostream& lhs, i128 rhs);
+
+/// @op_input{#u128}
+std::istream& operator>>(std::istream& lhs, u128& rhs);
+
+/// @op_output{#u128}
+std::ostream& operator<<(std::ostream& lhs, u128 rhs);
 
 // EOF

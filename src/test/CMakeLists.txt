@@ -86,6 +86,7 @@ AddTest(test-rocket-external-std                 rocket/external        test-std
 AddTest(test-rocket-format                       rocket/format          test-Subformat.cc)
 AddTest(test-rocket-format-std                   rocket/format          test-std.cc)
 AddTest(test-rocket-hash                         rocket/hash            test-hash.cc)
+AddTest(test-rocket-io                           rocket/io              test-io.cc)
 AddTest(test-rocket-log                          rocket/log             test-log.cc)
 AddTest(test-rocket-math                         rocket/math            test-math.cc)
 AddTest(test-rocket-math-interval                rocket/math            test-Interval.cc)

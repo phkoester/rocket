@@ -322,8 +322,6 @@ operator""_u64() {
   return type::payload;
 }
 
-#ifdef ROCKET_HAS_128
-
 /**
  * 128-bit signed integer literal.
  *
@@ -349,8 +347,6 @@ operator""_u128() {
   static_assert(type::valid, "Invalid character or number too large");
   return type::payload;
 }
-
-#endif // ROCKET_HAS_128
 
 /**
  * 32-bit floating point literal.
