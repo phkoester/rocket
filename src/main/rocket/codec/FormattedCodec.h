@@ -5,6 +5,7 @@
 #pragma once
 
 #include "rocket/InputFailure.h"
+#include "rocket/scan.h"
 #include "rocket/std.h"
 #include "rocket/codec/codec.h"
 #include "rocket/io/io.h"

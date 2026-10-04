@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "rocket/scan.h"
 #include "rocket/io/io.h"
 #include "rocket/nio/nio.h"
 

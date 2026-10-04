@@ -84,47 +84,58 @@ tellg(std::istream& is) noexcept {
 
 // Support for 128-bit data types ---------------------------------------------------------------------------
 
+namespace {
+
+/**
+ * Skips leading whitespace and peeks at the next character.
+ *
+ * Only `peek()` and `get()` are used for reading, never `seekg()` or `unget()`, so that this also works
+ * with non-seekable stream buffers (e.g. the one used by `scn::basic_istream_scanner`).
+ *
+ * @return the next character, or `char_traits<char>::eof()` if there is none
+ */
+int
+peekFirst(istream& is) {
+  is >> ws;
+  return is.peek();
+}
+
+/**
+ * Reads decimal digits into @p buf until a non-digit or EOF is encountered. The non-digit is not consumed.
+ */
+void
+readDigits(istream& is, string& buf) {
+  while (true) {
+    const int c = is.peek();
+    if (c == char_traits<char>::eof() || c < '0' || c > '9') {
+      break;
+    }
+    buf.push_back(static_cast<char>(is.get()));
+  }
+}
+
+} // namespace
+
 istream&
 operator>>(istream& lhs, i128& rhs) {
   // Read optional sign ('+' or '-')
 
-  char c = '\0';
-  lhs >> c;
-  if (lhs.fail() || lhs.eof()) {
+  const int c = peekFirst(lhs);
+  if (c == char_traits<char>::eof()) {
     return lhs;
   }
   i128 sgn = 1;
   if (c == '-') {
     sgn = -1;
   }
-  if (c != '+' && c != '-') {
-    // Not a sign: go back, clear EOF
-    lhs.seekg(-1, ios::cur);
+  if (c == '+' || c == '-') {
+    lhs.get();
   }
 
   // Read digits
 
   string buf;
-
-  while (true) {
-    // Read one digit
-
-    lhs >> c;
-    if (lhs.eof()) {
-      // EOF: clear fail bit, exit loop
-      lhs.clear(lhs.rdstate() & ~ios::failbit);
-      break;
-    }
-    if (lhs.fail()) {
-      return lhs;
-    }
-    if (c < '0' || c > '9') {
-      // Not a digit: go back, clear EOF
-      lhs.seekg(-1, ios::cur);
-      break;
-    }
-    buf.push_back(c);
-  }
+  readDigits(lhs, buf);
 
   // Got no digits, or too many?
 
@@ -178,44 +189,22 @@ istream&
 operator>>(istream& lhs, u128& rhs) {
   // Read optional sign ('+' or '-')
 
-  char c = '\0';
-  lhs >> c;
-  if (lhs.fail() || lhs.eof()) {
+  const int c = peekFirst(lhs);
+  if (c == char_traits<char>::eof()) {
     return lhs;
   }
   if (c == '-') {
-    // Negative number: use the `ì128` overload
-    lhs.seekg(-1, ios::cur);
+    // Negative number: use the `i128` overload, which sees the still unconsumed '-'
     return operator>>(lhs, reinterpret_cast<i128&>(rhs));
   }
-  if (c != '+') {
-    // Not a sign: go back, clear EOF
-    lhs.seekg(-1, ios::cur);
+  if (c == '+') {
+    lhs.get();
   }
 
   // Read digits
 
   string buf;
-
-  while (true) {
-    // Read one digit
-
-    lhs >> c;
-    if (lhs.eof()) {
-      // EOF: clear fail bit
-      lhs.clear(lhs.rdstate() & ~ios::failbit);
-      break;
-    }
-    if (lhs.fail()) {
-      return lhs;
-    }
-    if (c < '0' || c > '9') {
-      // Not a digit: go back, clear EOF
-      lhs.seekg(-1, ios::cur);
-      break;
-    }
-    buf.push_back(c);
-  }
+  readDigits(lhs, buf);
 
   // Got no digits, or too many?
 

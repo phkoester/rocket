@@ -4,6 +4,7 @@
 
 #include "rocket-test/rocket-test.h"
 
+#include "rocket/scan.h"
 #include "rocket/filesystem/filesystem.h"
 #include "rocket/log/log.h"
 #include "rocket/nio/nio.h"

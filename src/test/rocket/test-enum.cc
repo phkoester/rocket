@@ -5,6 +5,7 @@
 #include "rocket-test/rocket-test.h"
 
 #include "rocket/enum.h"
+#include "rocket/scan.h"
 
 #include <fmt/xchar.h>
 

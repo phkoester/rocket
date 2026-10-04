@@ -5,8 +5,7 @@
 #include "Message.h"
 
 #include "rocket/assert.h"
-
-#include <scn/scan.h>
+#include "rocket/scan.h"
 
 using namespace std;
 

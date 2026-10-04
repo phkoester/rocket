@@ -4,14 +4,13 @@
 
 #include "terminal.h"
 
-#include "rocket/assert.h"
 #include "rocket/Guard.h"
 #include "rocket/InputFailure.h"
+#include "rocket/assert.h"
+#include "rocket/scan.h"
 #include "rocket/io/io.h"
 
 #include <boost/safe_numerics/safe_integer.hpp>
-
-#include <scn/scan.h>
 
 #ifdef ROCKET_OS_WINDOWS
 #include <Windows.h>
