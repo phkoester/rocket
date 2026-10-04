@@ -17,7 +17,7 @@
  * | `int`         |     4 |             4
  * | `long`        |     8 |             4
  * | `long long`   |     8 |             8
- * | `__int128`    |    16 |            16
+ * | `i128`        |    16 |            16
  * | `float`       |     4 |             4
  * | `double`      |     8 |             8
  * | `long double` |    16 |             8
@@ -137,13 +137,20 @@ using i32 = std::int32_t; ///< A signed 32-bit integer.
 using u32 = std::uint32_t; ///< An unsigned 32-bit integer.
 using i64 = std::int64_t; ///< A signed 64-bit integer.
 using u64 = std::uint64_t; ///< An unsigned 64-bit integer.
+
 #ifdef ROCKET_HAS_BOOST_INT128
-using i128 = boost::int128::int128; ///< A signed 128-bit integer.
-using u128 = boost::int128::uint128; ///< An unsigned 128-bit integer.
+  using i128 = boost::int128::int128; ///< A signed 128-bit integer.
+  using u128 = boost::int128::uint128; ///< An unsigned 128-bit integer.
 #else
-using i128 = __int128; ///< A signed 128-bit integer.
-using u128 = unsigned __int128; ///< An unsigned 128-bit integer.
+  #ifdef ROCKET_OS_WINDOWS
+    using i128 = __int128_t; ///< A signed 128-bit integer.
+    using u128 = __uint128_t; ///< An unsigned 128-bit integer.
+  #else
+    using i128 = __int128; ///< A signed 128-bit integer.
+    using u128 = unsigned __int128; ///< An unsigned 128-bit integer.
+  #endif
 #endif
+
 using f32 = std_float; ///< A 32-bit floating point.
 using f64 = std_double; ///< A 64-bit floating point.
 
