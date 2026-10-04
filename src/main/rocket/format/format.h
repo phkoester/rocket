@@ -12,13 +12,12 @@
 
 #define FMT_USE_INT128 1
 
-namespace fmt {
+#include <fmt/base.h>
+
+FMT_BEGIN_NAMESPACE
 
 using native_int128 = __int128_t;
 using native_uint128 = __uint128_t;
-
-inline auto map(native_int128 x) -> native_int128 { return x; }
-inline auto map(native_uint128 x) -> native_uint128 { return x; }
 
 namespace detail {
 
@@ -27,18 +26,13 @@ inline auto map(native_uint128 x) -> native_uint128 { return x; }
 
 } // namespace detail
 
-} // namespace fmt
-
-#endif
-
-#ifdef FMT_BASE_H_
-#error "`fmt/base.h` already included"
-#endif
-#include <fmt/base.h>
+FMT_END_NAMESPACE
 
 #if FMT_USE_INT128 == 0
 #error "No {fmt} support for `int128`"
 #endif
+
+#endif // defined(ROCKET_OS_WINDOWS) && not defined(ROCKET_HAS_BOOST_INT128)
 
 #include <fmt/format.h>
 
