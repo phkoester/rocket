@@ -1,8 +1,10 @@
 /*
- * int128.cc
+ * rocket.cc
  */
 
-#include "int128.h"
+#include "rocket.h"
+
+#ifdef ROCKET_HAS_128
 
 #include <array>
 #include <iostream>
@@ -19,37 +21,37 @@ namespace {
  * @return pointer to the end
  */
 char*
-uint128ToStringImpl(char* dest, uint128 val) { // NOLINT(*-recursion)
+u128ToStringImpl(char* dest, u128 val) { // NOLINT(*-recursion)
   if (val >= 10) {
-    dest = uint128ToStringImpl(dest, val / 10); // Recursive call
+    dest = u128ToStringImpl(dest, val / 10); // Recursive call
   }
   *dest = static_cast<char>(val % 10 + '0');
   return ++dest;
 }
 
 char*
-int128ToString(char* dest, int128 val) {
+i128ToString(char* dest, i128 val) {
   if (val < 0) {
     *dest = '-';
-    *uint128ToStringImpl(dest + 1, static_cast<uint128>(-1 - val) + 1) = '\0';
+    *u128ToStringImpl(dest + 1, static_cast<u128>(-1 - val) + 1) = '\0';
   } else {
-    *uint128ToStringImpl(dest, static_cast<uint128>(val)) = '\0';
+    *u128ToStringImpl(dest, static_cast<u128>(val)) = '\0';
   }
   return dest;
 }
 
 char*
-uint128ToString(char* dest, uint128 val) {
-  *uint128ToStringImpl(dest, val) = '\0';
+u128ToString(char* dest, u128 val) {
+  *u128ToStringImpl(dest, val) = '\0';
   return dest;
 }
 
 } // namespace
 
-// `int128` ---------------------------------------------------------------------------------------------------
+// `i128` ---------------------------------------------------------------------------------------------------
 
 istream&
-operator>>(istream& lhs, int128& rhs) {
+operator>>(istream& lhs, i128& rhs) {
   // Read optional sign ('+' or '-')
 
   char c = '\0';
@@ -57,7 +59,7 @@ operator>>(istream& lhs, int128& rhs) {
   if (lhs.fail() || lhs.eof()) {
     return lhs;
   }
-  int128 sgn = 1;
+  i128 sgn = 1;
   if (c == '-') {
     sgn = -1;
   }
@@ -99,11 +101,11 @@ operator>>(istream& lhs, int128& rhs) {
 
   // Convert string to value, check for overflow
 
-  int128 val = 0;
-  int128 factor = 1;
+  i128 val = 0;
+  i128 factor = 1;
 
   for (const char c : ranges::reverse_view(buf)) {
-    const int128 v = c - '0';
+    const i128 v = c - '0';
     const auto old = val;
     if (sgn == -1) {
       val -= v * factor;
@@ -130,16 +132,16 @@ operator>>(istream& lhs, int128& rhs) {
 }
 
 ostream&
-operator<<(ostream& lhs, int128 rhs) {
+operator<<(ostream& lhs, i128 rhs) {
   array<char, 41> buf; // NOLINT(*-member-init)
-  int128ToString(buf.data(), rhs);
+  i128ToString(buf.data(), rhs);
   return lhs << buf.data();
 }
 
-// `uint128` ----------------------------------------------------------------------------------------------------
+// `u128` ----------------------------------------------------------------------------------------------------
 
 istream&
-operator>>(istream& lhs, uint128& rhs) {
+operator>>(istream& lhs, u128& rhs) {
   // Read optional sign ('+' or '-')
 
   char c = '\0';
@@ -150,7 +152,7 @@ operator>>(istream& lhs, uint128& rhs) {
   if (c == '-') {
     // Negative number: use the `ì128` overload
     lhs.seekg(-1, ios::cur);
-    return operator>>(lhs, reinterpret_cast<int128&>(rhs));
+    return operator>>(lhs, reinterpret_cast<i128&>(rhs));
   }
   if (c != '+') {
     // Not a sign: go back, clear EOF
@@ -190,11 +192,11 @@ operator>>(istream& lhs, uint128& rhs) {
 
   // Convert string to value, check for overflow
 
-  uint128 val = 0;
-  uint128 factor = 1;
+  u128 val = 0;
+  u128 factor = 1;
 
   for (const char c : ranges::reverse_view(buf)) {
-    const uint128 v = c - '0';
+    const u128 v = c - '0';
     const auto old = val;
     val += v * factor;
     if (val < old) {
@@ -212,10 +214,12 @@ operator>>(istream& lhs, uint128& rhs) {
 }
 
 ostream&
-operator<<(ostream& lhs, uint128 rhs) {
+operator<<(ostream& lhs, u128 rhs) {
   array<char, 41> buf; // NOLINT(*-member-init)
-  uint128ToString(buf.data(), rhs);
+  u128ToString(buf.data(), rhs);
   return lhs << buf.data();
 }
+
+#endif // ROCKET_HAS_128
 
 // EOF

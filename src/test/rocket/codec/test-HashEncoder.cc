@@ -40,10 +40,12 @@ TEST(HashEncoder, Enum) {
   EXPECT_EQ(encoder.encode(blue), 2);
 }
 
+#ifdef ROCKET_HAS_128
 TEST(HashEncoder, i128) {
   const HashEncoder<> encoder;
   EXPECT_EQ(encoder.encode(1234_i128), 1234);
 }
+#endif
 
 TEST(HashEncoder, Pointer) {
   const HashEncoder<> encoder;

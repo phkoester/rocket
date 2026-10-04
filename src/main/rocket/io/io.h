@@ -8,6 +8,7 @@
 
 #include "rocket/rocket.h"
 
+#include <cstdio>
 #include <spanstream>
 #include <sstream>
 

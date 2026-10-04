@@ -52,7 +52,7 @@ TEST(Exception, WrappedExceptionFormat) { // NOLINT(*-complexity)
         fmt::format("{:t}", WrappedException(current_exception())),
         matchesRegex("`std::_.*ested.*<rocket::InvalidArgument>`: .*\\.cc:\\d+: Parameter `name`: oops2 \\(Because: .*\\.cc:\\d+: oops1\\)"));
 #endif
-    }
+      }
   }
 }
 

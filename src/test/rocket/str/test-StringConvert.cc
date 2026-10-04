@@ -40,6 +40,8 @@ TEST(StringConvert, i32) {
     ThrowsMessage<InvalidState>(HasSubstr("Cannot scan \"1x\" as `int`")));
 }
 
+#ifdef ROCKET_HAS_128
+
 TEST(StringConvert, i128) {
   using type = i128;
 
@@ -53,6 +55,27 @@ TEST(StringConvert, i128) {
     [] { static_cast<void>(toType<type>("1x")); },
     ThrowsMessage<InvalidState>(HasSubstr("Cannot scan \"1x\" as `__int128`")));
 }
+
+TEST(StringConvert, f128) {
+  using type = f128;
+
+  const numeric_limits<type> limits;
+
+  EXPECT_EQ(toType<type>("-inf"), -limits.infinity());
+  EXPECT_EQ(toType<type>("inf"), limits.infinity());
+  EXPECT_EQ(toType<type>("+inf"), limits.infinity());
+  EXPECT_TRUE(isnan(toType<type>("nan")));
+  EXPECT_EQ(toType<type>("-12.34"), -12.34L);
+
+  EXPECT_THAT(
+    [] { static_cast<void>(toType<type>("foo")); },
+    ThrowsMessage<InvalidState>(HasSubstr("Cannot scan \"foo\" as `long double`")));
+  EXPECT_THAT(
+    [] { static_cast<void>(toType<type>("1x")); },
+    ThrowsMessage<InvalidState>(HasSubstr("Cannot scan \"1x\" as `long double`")));
+}
+
+#endif // ROCKET_HAS_128
 
 TEST(StringConvert, enum) {
   using type = log::LogLevel;

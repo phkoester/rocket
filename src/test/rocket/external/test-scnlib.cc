@@ -85,11 +85,21 @@ TEST(scnlib, scanU32Hex) {
   }
 }
 
+#ifdef ROCKET_HAS_128
+
 TEST(scnlib, scanI128) {
   const auto result = scn::scan<i128>("12345678901234567890", "{}");
   const auto val = result->value();
   EXPECT_EQ(fmt::format("{}", val), "12345678901234567890");
 }
+
+TEST(scnlib, scanF128) {
+  const auto result = scn::scan<f128>("3.14159265358979323846", "{}");
+  const auto val = result->value();
+  EXPECT_EQ(fmt::format("{}", val), "3.1415926535897932385");
+}
+
+#endif // ROCKET_HAS_128
 
 TEST(scnlib, scanString) {
   {

@@ -11,6 +11,7 @@
 #include "rocket/assert.h"
 
 #include <cstdlib>
+#include <cstdio>
 #include <memory>
 #include <optional>
 
