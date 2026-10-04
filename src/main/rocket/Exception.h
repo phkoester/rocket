@@ -267,7 +267,7 @@ struct WrappedException {
    *
    * @return the exception pointer, or null if the instance was not constructed with an exception pointer
    */
-  [[nodiscard]] const std::exception_ptr& ptr() const { return ptr_; }
+  [[nodiscard]] std::exception_ptr ptr() const { return ptr_; }
 
 private:
 
@@ -297,7 +297,7 @@ void printException(nio::Sink& out, const std::exception& ex);
  * @param out the sink to print to
  * @param ptr the exception pointer. May not be null
  */
-void printException(nio::Sink& out, const std::exception_ptr& ptr);
+void printException(nio::Sink& out, std::exception_ptr ptr);
 
 /**
  * Extracts the `what` message from an exception.
@@ -317,7 +317,7 @@ std::string what(const std::exception& ex);
  * @param ptr the exception pointer. May not be null
  * @return a string
  */
-std::string what(const std::exception_ptr& ptr);
+std::string what(std::exception_ptr ptr);
 
 } // namespace rocket
 
