@@ -63,8 +63,6 @@
 #if defined(ROCKET_OS_WINDOWS) && defined(ROCKET_CXX_COMPILER_MSVC)
 #define ROCKET_HAS_BOOST_INT128
 #include <boost/int128/int128.hpp>
-#else
-#define ROCKET_HAS_NATIVE_INT128
 #endif
 
 // Check prerequisites --------------------------------------------------------------------------------------

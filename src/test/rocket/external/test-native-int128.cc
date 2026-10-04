@@ -2,11 +2,13 @@
  * test-native-int128.cc
  */
 
+#ifndef ROCKET_HAS_BOOST_INT128
+
 #include "rocket-test/rocket-test.h"
 
 #include "rocket/io/io.h"
 
-#ifdef ROCKET_HAS_NATIVE_INT128
+#include <limits>
 
 // Types ----------------------------------------------------------------------------------------------------
 
@@ -35,6 +37,6 @@ TEST(nativeInt128, opOutput) {
   cout << "max=" << max << endl;
 }
 
-#endif // ROCKET_HAS_NATIVE_INT128
+#endif // ROCKET_HAS_BOOST_INT128
 
 // EOF
