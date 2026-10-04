@@ -30,6 +30,9 @@ TEST(nativeInt128, opOutput) {
   os.str("");
   os << value;
   EXPECT_EQ(os.str(), "340282366920938463463374607431768211455");
+
+  auto max = numeric_limits<uint128>::max();
+  cout << "max=" << max << endl;
 }
 
 #endif // ROCKET_HAS_NATIVE_INT128
