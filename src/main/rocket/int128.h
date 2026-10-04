@@ -28,15 +28,15 @@ namespace rocket {
 // I/O stream support for 128-bit data types ----------------------------------------------------------------
 
 /// @op_input{#i128}
-std::istream& operator>>(std::istream& lhs, int128& rhs);
+std::istream& operator>>(std::istream& lhs, rocket::int128& rhs);
 
 /// @op_output{#i128}
-std::ostream& operator<<(std::ostream& lhs, int128 rhs);
+std::ostream& operator<<(std::ostream& lhs, rocket::int128 rhs);
 
 /// @op_input{#u128}
-std::istream& operator>>(std::istream& lhs, uint128& rhs);
+std::istream& operator>>(std::istream& lhs, rocket::uint128& rhs);
 
 /// @op_output{#u128}
-std::ostream& operator<<(std::ostream& lhs, uint128 rhs);
+std::ostream& operator<<(std::ostream& lhs, rocket::uint128 rhs);
 
 // EOF
