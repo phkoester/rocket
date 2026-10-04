@@ -322,7 +322,13 @@ template<>
 struct std::is_signed<i128> : std::true_type {};
 
 template<>
+inline constexpr bool is_signed_v<i128> = is_signed<i128>::value;
+
+template<>
 struct std::is_unsigned<u128> : std::true_type {};
+
+template<>
+inline constexpr bool is_unsigned_v<u128> = is_unsigned<u128>::value;
 
 #endif
 
