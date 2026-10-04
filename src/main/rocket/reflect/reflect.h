@@ -13,7 +13,7 @@
 #include "rocket/nio/nio.h"
 #include "rocket/unicode/ConvertTo.h"
 
-#include <fmt/std.h> // #fmt::formatter<#std::type_info>
+#include <fmt/std.h> // `fmt::formatter<std::type_info>`
 
 // Macros ---------------------------------------------------------------------------------------------------
 

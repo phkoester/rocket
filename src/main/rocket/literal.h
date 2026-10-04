@@ -76,7 +76,7 @@ validateUnsignedImpl(T acc) {
  * Checks whether c_n + ... + c_2 * BASE^(n-2) + c_1 * BASE^(n-1) is a valid unsigned number when interpreted
  * in base @p BASE.
  */
-template<typename T,int BASE, char... Chars>
+template<typename T, int BASE, char... Chars>
 constexpr bool validateUnsigned() {
   static_assert(std::is_unsigned_v<T>);
   return validateUnsignedImpl<T, BASE, Chars...>(0);
