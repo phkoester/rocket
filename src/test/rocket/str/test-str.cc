@@ -127,7 +127,7 @@ TEST(str, removeTrailingChar32) {
 TEST(str, split) { // NOLINT(*-complexity)
   int n = 0;
   for (const auto token : split<char>("", ",")) {
-    static_assert(is_same_v<decltype(token), const string_view>);
+    static_assert(same_as<decltype(token), const string_view>);
     if (n == 0) { EXPECT_EQ(token, ""); }
     ++n;
   }

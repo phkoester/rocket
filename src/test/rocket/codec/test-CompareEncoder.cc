@@ -29,7 +29,7 @@ TEST(CompareEncoder, CmpOrdering) {
 
   using Cmp = StdCompare;
 
-  static_assert(std::is_same_v<CmpOrdering<Cmp, MemberRef<MyStruct, i32>>, CmpOrdering<Cmp, i32>>);
+  static_assert(std::same_as<CmpOrdering<Cmp, MemberRef<MyStruct, i32>>, CmpOrdering<Cmp, i32>>);
 }
 
 TEST(CompareEncoder, CmpCommonOrdering) {
@@ -38,11 +38,11 @@ TEST(CompareEncoder, CmpCommonOrdering) {
 
   using Cmp = StdCompare;
 
-  static_assert(std::is_same_v<CmpCommonOrdering<Cmp, i32, i32, string>, std::strong_ordering>);
-  static_assert(std::is_same_v<CmpCommonOrdering<Cmp, i32, f32>, std::partial_ordering>);
-  static_assert(std::is_same_v<CmpCommonOrdering<Cmp, std::tuple<i32, i32, string>>, std::strong_ordering>);
-  static_assert(std::is_same_v<CmpCommonOrdering<Cmp, std::tuple<i32, f32>>, std::partial_ordering>);
-  static_assert(std::is_same_v<
+  static_assert(std::same_as<CmpCommonOrdering<Cmp, i32, i32, string>, std::strong_ordering>);
+  static_assert(std::same_as<CmpCommonOrdering<Cmp, i32, f32>, std::partial_ordering>);
+  static_assert(std::same_as<CmpCommonOrdering<Cmp, std::tuple<i32, i32, string>>, std::strong_ordering>);
+  static_assert(std::same_as<CmpCommonOrdering<Cmp, std::tuple<i32, f32>>, std::partial_ordering>);
+  static_assert(std::same_as<
     CmpCommonOrdering<Cmp, MemberRef<MyStruct, i32>, MemberRef<MyDerivedStruct, float>>,
     std::partial_ordering>);
 }
@@ -50,7 +50,7 @@ TEST(CompareEncoder, CmpCommonOrdering) {
 TEST(CompareEncoder, Bool) {
   const CompareEncoder<> encoder;
 
-  static_assert(std::is_same_v<decltype(encoder.encode(false, false)), std::strong_ordering>);
+  static_assert(std::same_as<decltype(encoder.encode(false, false)), std::strong_ordering>);
 
   EXPECT_TRUE(std::is_eq(encoder.encode(false, false)));
   EXPECT_TRUE(std::is_lt(encoder.encode(false, true)));
@@ -61,7 +61,7 @@ TEST(CompareEncoder, Bool) {
 TEST(CompareEncoder, String) {
   const CompareEncoder<> encoder;
 
-  static_assert(std::is_same_v<decltype(encoder.encode("a"sv, "a"sv)), std::strong_ordering>);
+  static_assert(std::same_as<decltype(encoder.encode("a"sv, "a"sv)), std::strong_ordering>);
 
   EXPECT_TRUE(std::is_eq(encoder.encode("a"sv, "a"sv)));
   EXPECT_TRUE(std::is_lt(encoder.encode("a"sv, "b"sv)));
@@ -81,7 +81,7 @@ TEST(CompareEncoder, ListVector) {
   using type = vector<i32>;
   const CompareEncoder<> encoder;
 
-  static_assert(std::is_same_v<decltype(encoder.encode(type(), type())), std::strong_ordering>);
+  static_assert(std::same_as<decltype(encoder.encode(type(), type())), std::strong_ordering>);
 
   EXPECT_TRUE(std::is_eq(encoder.encode((type { 1, 2, 3 }), type( { 1, 2, 3 }))));
   EXPECT_TRUE(std::is_lt(encoder.encode((type { 1, 2, 3 }), type( { 1, 2, 4 }))));

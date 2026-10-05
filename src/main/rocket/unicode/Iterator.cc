@@ -34,7 +34,7 @@ Iterator<C>::Iterator(IteratorType type, basic_string_view<C> input, const local
   // 1. Make the `UnicodeString`
 
   auto& str = impl_->unicodeString;
-  if constexpr (is_same_v<C, char>) {
+  if constexpr (same_as<C, char>) {
     str = icu::UnicodeString::fromUTF8(input);
   } else {
     str = icu::UnicodeString::fromUTF32(reinterpret_cast<const UChar32*>(input.data()), input.size());
@@ -61,7 +61,7 @@ Iterator<C>::Iterator(IteratorType type, basic_string_view<C> input, const local
 
     // Get next input code point (UTF-8 or UTF-32)
     ROCKET_CHECK(input, inputIndex < inputLength);
-    if constexpr (is_same_v<C, char>) {
+    if constexpr (same_as<C, char>) {
       // UTF-8: Use `U8_NEXT` to loop through `input`
       U8_NEXT(input.data(), inputIndex, inputLength, inputCp);
     } else {
@@ -71,7 +71,7 @@ Iterator<C>::Iterator(IteratorType type, basic_string_view<C> input, const local
 
     // Verify the code points match
     const char* msg; // NOLINT
-    if constexpr (is_same_v<C, char>) {
+    if constexpr (same_as<C, char>) {
       msg = "Invalid UTF-8 input";
     } else {
       msg = "Invalid UTF-32 input";

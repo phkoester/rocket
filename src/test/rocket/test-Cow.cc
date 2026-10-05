@@ -11,8 +11,8 @@
 TEST(Cow, differentTypes) {
   string str = "hi";
   Cow<string_view, string> cow(str);
-  static_assert((std::is_same_v<decltype(cow.get()), const string_view>));
-  static_assert((std::is_same_v<decltype(cow.owned()), string&>));
+  static_assert((std::same_as<decltype(cow.get()), const string_view>));
+  static_assert((std::same_as<decltype(cow.owned()), string&>));
   str = "hey";
   EXPECT_EQ(cow.get(), "he");
   EXPECT_FALSE(cow.modified());
@@ -25,8 +25,8 @@ TEST(Cow, differentTypes) {
 TEST(Cow, sameTypes) {
   i32 n = 3;
   Cow<i32> cow(n);
-  static_assert((std::is_same_v<decltype(cow.get()), const i32&>));
-  static_assert((std::is_same_v<decltype(cow.owned()), i32&>));
+  static_assert((std::same_as<decltype(cow.get()), const i32&>));
+  static_assert((std::same_as<decltype(cow.owned()), i32&>));
   n = 4; // NOLINT
   EXPECT_EQ(cow.get(), 4);
   EXPECT_FALSE(cow.modified());

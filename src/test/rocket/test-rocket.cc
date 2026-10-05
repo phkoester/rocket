@@ -28,11 +28,11 @@ TEST(rocket, basicTypes) {
 
   static_assert(is_signed_v<char>);
   static_assert(is_unsigned_v<char32>);
-  static_assert(is_same_v<u64, std_size_t>);
+  static_assert(same_as<u64, std_size_t>);
   static_assert(numeric_limits<i128>::is_signed);
   static_assert(not numeric_limits<u128>::is_signed);
-  static_assert(is_same_v<decltype(1.0F), f32>);
-  static_assert(is_same_v<decltype(1.0), f64>);
+  static_assert(same_as<decltype(1.0F), f32>);
+  static_assert(same_as<decltype(1.0), f64>);
 }
 
 // EOF

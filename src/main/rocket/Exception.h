@@ -354,7 +354,7 @@ struct fmt::formatter<rocket::WrappedException, C> {
 
       if (type != nullptr) {
         const std::string typeName = fmt::format("{}", *type);
-        if constexpr (std::is_same_v<C, char>) {
+        if constexpr (std::same_as<C, char>) {
           out = format_to(out, "`{}`: ", rocket::unicode::ConvertTo<C>::apply(typeName));
         } else {
           out = format_to(out, U"`{}`: ", rocket::unicode::ConvertTo<C>::apply(typeName));

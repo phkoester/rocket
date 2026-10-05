@@ -19,9 +19,10 @@ namespace rocket {
  *
  * @tparam T the type of the value
  * @tparam U the type of the owned value. If this is different from @p T, then @p T is assumed to be an
- *   efficiently copyable view type, such as #std::span or #std::string_view.
+ *   efficiently copyable view type, such as #std::span or #std::string_view. In this case, a @p T must be
+ *   constructible from a @p U
  */
-template<typename T, typename U = T>
+template<typename T, typename U = T> requires std::same_as<T, U> || std::constructible_from<T, const U&>
 struct Cow {
   /**
    * @ctor
@@ -70,36 +71,6 @@ struct Cow {
     choice_.template emplace<U>(std::move(rhs)); // XXX
     return *this;
   }
-
-#if 0
-  /**
-   * Returns a const reference to either the referenced or the owned value.
-   *
-   * This overload only exists if the types @p T and @p U are the same.
-   *
-   * @return a const reference to either the referenced or the owned value
-   */
-  template<typename V = T> requires std::is_same_v<V, T> && std::is_same_v<T, U>
-  [[nodiscard]] const V&
-  get() const {
-    static_assert(not HasView);
-    return not modified_ ? *choice_.ptr : *ownedPtr();
-  }
-
-  /**
-   * Returns a view to either the referenced or the owned value.
-   *
-   * This overload only exists if the types @p T and @p U are different.
-   *
-   * @return a view to either the referenced or the owned value
-   */
-  template<typename V = T> requires std::is_same_v<V, T> && (not std::is_same_v<T, U>)
-  [[nodiscard]] V
-  get() const {
-    static_assert(HasView);
-    return not modified_ ? *viewPtr() : V(*ownedPtr());
-  }
-#endif
 
   /**
    * Provides access to the value.
@@ -156,7 +127,7 @@ struct Cow {
 
 private:
 
-  static constexpr bool HasView = not std::is_same_v<T, U>;
+  static constexpr bool HasView = not std::same_as<T, U>;
 
   using Ref = std::conditional_t<HasView, T, std::reference_wrapper<const T>>;
 

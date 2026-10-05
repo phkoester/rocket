@@ -264,8 +264,8 @@ struct TracingProducerImpl<DataType::Integer, I> {
 template<typename T>
 struct TracingProducerImpl<DataType::String, T> {
   using C = typename T::value_type;
-  static_assert(std::is_same_v<C, char>, "Cannot decode UTF-32 string");
-  static_assert(not std::is_same_v<T, std::basic_string_view<C>>, "Cannot decode string view");
+  static_assert(std::same_as<C, char>, "Cannot decode UTF-32 string");
+  static_assert(not std::same_as<T, std::basic_string_view<C>>, "Cannot decode string view");
 
   void
   produce(T& val, nio::Source& in, nio::Sink& out) {
@@ -334,7 +334,7 @@ TEST(codec, TracingConsumerBool) {
   const Encoder<TracingConsumer> encoder;
   nio::StringSink out;
   [[maybe_unused]] auto result = encoder.encode(true, out);
-  static_assert(is_same_v<decltype(result), u64>);
+  static_assert(same_as<decltype(result), u64>);
   encoder.encode(false, out);
   EXPECT_EQ(out.str(),
     "consuming boolean: true\n"

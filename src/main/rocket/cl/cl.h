@@ -267,7 +267,7 @@ struct Option {
     }
 
     // Auto-configure `takesValue`
-    if constexpr (std::is_same_v<ValueType, bool>) {
+    if constexpr (std::same_as<ValueType, bool>) {
       localConfig.takesValue = false;
     } else {
       if (not config.takesValue) {

@@ -23,7 +23,7 @@ TEST(scnlib, scanI32) {
     const auto result = scn::scan<i32>(input, "{}");
     ASSERT_TRUE(result);
     const auto val = result->value();
-    static_assert(is_same_v<decltype(val), const i32>);
+    static_assert(same_as<decltype(val), const i32>);
     EXPECT_EQ(val, 123);
     EXPECT_EQ(result->begin() - input.begin(), 3);
   }
@@ -33,9 +33,9 @@ TEST(scnlib, scanI32) {
     const auto result = scn::scan<i32, i32>(input, "{}, {}");
     ASSERT_TRUE(result);
     const auto [val1, val2] = result->values();
-    static_assert(is_same_v<decltype(val1), const i32>);
+    static_assert(same_as<decltype(val1), const i32>);
     EXPECT_EQ(val1, 123);
-    static_assert(is_same_v<decltype(val2), const i32>);
+    static_assert(same_as<decltype(val2), const i32>);
     EXPECT_EQ(val2, 456);
     EXPECT_EQ(result->begin() - input.begin(), 8);
   }
@@ -55,7 +55,7 @@ TEST(scnlib, scanU32Hex) {
     const auto result = scn::scan<u32>(input, "{:x}");
     ASSERT_TRUE(result);
     const auto [val] = result->values();
-    static_assert(is_same_v<decltype(val), const u32>);
+    static_assert(same_as<decltype(val), const u32>);
     EXPECT_EQ(val, 0xABCD);
     EXPECT_EQ(result->begin() - input.begin(), 4);
   }
@@ -66,7 +66,7 @@ TEST(scnlib, scanU32Hex) {
     const auto result = scn::scan<u32>(input, scn::runtime_format(fmt));
     ASSERT_TRUE(result);
     const auto [val] = result->values();
-    static_assert(is_same_v<decltype(val), const u32>);
+    static_assert(same_as<decltype(val), const u32>);
     EXPECT_EQ(val, 0xABCDE);
     EXPECT_EQ(result->begin() - input.begin(), 5);
   }

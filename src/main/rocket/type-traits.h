@@ -284,19 +284,19 @@ struct Float<8> {
 // Concepts for basic data types ----------------------------------------------------------------------------
 
 template<typename T>
-concept IsChar = std::is_same_v<Purge<T>, typename Char<sizeof(Purge<T>)>::Type>;
+concept IsChar = std::same_as<Purge<T>, typename Char<sizeof(Purge<T>)>::Type>;
 
 template<typename T>
-concept IsInt = std::is_same_v<Purge<T>, typename Int<sizeof(Purge<T>)>::Type>;
+concept IsInt = std::same_as<Purge<T>, typename Int<sizeof(Purge<T>)>::Type>;
 
 template<typename T>
-concept IsUint = std::is_same_v<Purge<T>, typename Uint<sizeof(Purge<T>)>::Type>;
+concept IsUint = std::same_as<Purge<T>, typename Uint<sizeof(Purge<T>)>::Type>;
 
 template<typename T>
 concept IsInteger = IsInt<T> || IsUint<T>;
 
 template<typename T>
-concept IsFloat = std::is_same_v<Purge<T>, typename Float<sizeof(Purge<T>)>::Type>;
+concept IsFloat = std::same_as<Purge<T>, typename Float<sizeof(Purge<T>)>::Type>;
 
 // Miscellaneous concepts -----------------------------------------------------------------------------------
 

@@ -84,7 +84,7 @@ TEST(std, unorderedSetFormat) {
 }
 
 TEST(std, stringFormat) {
-  static_assert(is_same_v<decltype("hello"s), string>);
+  static_assert(same_as<decltype("hello"s), string>);
   EXPECT_EQ(fmt::format("{}", "hello"s), "hello");
   EXPECT_EQ(fmt::format("{:?}", "hello"s), "\"hello\"");
   EXPECT_EQ(fmt::format("{}", "a\bc"s), "a\bc");
@@ -97,7 +97,7 @@ TEST(std, stringFormat) {
 }
 
 TEST(std, stringViewFormat) {
-  static_assert(is_same_v<decltype("hello"sv), string_view>);
+  static_assert(same_as<decltype("hello"sv), string_view>);
   EXPECT_EQ(fmt::format("{}", "hello"sv), "hello");
   EXPECT_EQ(fmt::format("{:?}", "hello"sv), "\"hello\"");
   EXPECT_EQ(fmt::format("{}", "a\bc"sv), "a\bc");

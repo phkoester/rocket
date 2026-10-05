@@ -28,7 +28,7 @@ struct BasicCharacter {
   using View = std::basic_string_view<C>; ///< The string-view type.
 
   /// A compile-time constant that is `true` if the character class is a view, `false` otherwise.
-  static constexpr bool VIEW = std::is_same_v<String, View>;
+  static constexpr bool VIEW = std::same_as<String, View>;
 
   /**
    * @ctor
@@ -37,7 +37,7 @@ struct BasicCharacter {
    *
    * @param str a string. The string must not be empty
    */
-  template<typename Char> requires std::is_same_v<Char, C> && (not VIEW)
+  template<typename Char> requires std::same_as<Char, C> && (not VIEW)
   constexpr explicit BasicCharacter( const std::basic_string<Char>& str) : str_(str) {
     ROCKET_CHECK(str, not str.empty());
   }
@@ -49,7 +49,7 @@ struct BasicCharacter {
    *
    * @param str a string. The string must not be empty
    */
-  template<typename Char> requires std::is_same_v<Char, C> && (not VIEW)
+  template<typename Char> requires std::same_as<Char, C> && (not VIEW)
   constexpr explicit BasicCharacter( std::basic_string<Char>&& str) : str_(std::move(str)) {
     ROCKET_CHECK(str, not str.empty());
   }
@@ -73,7 +73,7 @@ struct BasicCharacter {
    *
    * @param rhs the right-hand side, which holds a string
    */
-  template<typename Char> requires std::is_same_v<Char, C> && VIEW
+  template<typename Char> requires std::same_as<Char, C> && VIEW
   constexpr explicit BasicCharacter(const BasicCharacter<Char, std::basic_string<Char>>& rhs ) :
       str_(static_cast<std::basic_string_view<C>>(rhs)) {}
 

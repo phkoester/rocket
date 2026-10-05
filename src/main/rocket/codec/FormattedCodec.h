@@ -274,13 +274,13 @@ template<typename T>
 struct FormattedConsumerImpl<DataType::Duration, T> {
   void
   consume(T val, nio::Sink& out, CONFIG__) const { // Take by value
-    if constexpr (std::is_same_v<T, std::chrono::microseconds>) {
+    if constexpr (std::same_as<T, std::chrono::microseconds>) {
       out.print("{}µs", val.count());
-    } else if constexpr (std::is_same_v<T, std::chrono::weeks>) {
+    } else if constexpr (std::same_as<T, std::chrono::weeks>) {
       out.print("{}w", val.count());
-    } else if constexpr (std::is_same_v<T, std::chrono::months>) {
+    } else if constexpr (std::same_as<T, std::chrono::months>) {
       out.print("{}m", val.count());
-    } else if constexpr (std::is_same_v<T, std::chrono::years>) {
+    } else if constexpr (std::same_as<T, std::chrono::years>) {
       out.print("{}y", val.count());
     } else {
       out.write(std::format("{}", val));
@@ -315,7 +315,7 @@ struct FormattedConsumerImpl<DataType::TimeZone, T> {
 template<typename T>
 struct FormattedConsumerImpl<DataType::TimePoint, T> {
   using Clock = T::clock;
-  static_assert(std::is_same_v<Clock, std::chrono::system_clock>, "Clock must be `system_clock`");
+  static_assert(std::same_as<Clock, std::chrono::system_clock>, "Clock must be `system_clock`");
 
   void
   consume(const T& val, nio::Sink& out, CONFIG__) const {
@@ -614,7 +614,7 @@ struct FormattedProducerImpl<DataType::String, T> {
     const std::string unescaped = str::escape::unescapeCString(*input);
     using C = T::value_type;
     std::basic_string<C> str(unicode::ConvertTo<C>::apply(unescaped));
-    if constexpr (std::is_same_v<T, std::basic_string_view<C>>) {
+    if constexpr (std::same_as<T, std::basic_string_view<C>>) {
       // Because both unescaping and Unicode-converting produce intermediate strings local to this function,
       // decoding to `std::basic_string_view` is a bit more involved. To make this possible, we store the
       // intermediate string in the source so the decoded string view is valid for the lifetime of the source
@@ -1021,7 +1021,7 @@ struct FormattedProducerImpl<DataType::TimeZone, T> {
 template<typename T>
 struct FormattedProducerImpl<DataType::TimePoint, T> {
   using Clock = T::clock;
-  static_assert(std::is_same_v<Clock, std::chrono::system_clock>, "Clock must be `system_clock`");
+  static_assert(std::same_as<Clock, std::chrono::system_clock>, "Clock must be `system_clock`");
   using Duration = T::duration;
 
   void

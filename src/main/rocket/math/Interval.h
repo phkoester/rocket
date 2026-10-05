@@ -25,7 +25,7 @@ struct BoundTraits {
   using Type = T;
   using BoundType = _BoundType; ///< Either `T` or `std::optional<T>`
 
-  static constexpr bool IsClosed = std::is_same_v<BoundType, Type>;
+  static constexpr bool IsClosed = std::same_as<BoundType, Type>;
   static constexpr bool IsLeft = _IsLeft;
   static constexpr char Symbol = _Symbol;
 
@@ -375,14 +375,14 @@ struct IntervalTraits<LeftClosed<T>, RightOpen<T>> {
  */
 template<typename Left, typename Right>
 struct Interval {
-  static_assert(std::is_same_v<typename Left::Type, typename Right::Type>);
+  static_assert(std::same_as<typename Left::Type, typename Right::Type>);
   /// The element type.
   using Type = typename Left::Type;
 
   static_assert(
-       std::is_same_v<Left, internal::LeftClosed<Type>> || std::is_same_v<Left, internal::LeftOpen<Type>>);
+       std::same_as<Left, internal::LeftClosed<Type>> || std::same_as<Left, internal::LeftOpen<Type>>);
   static_assert(
-       std::is_same_v<Right, internal::RightClosed<Type>> || std::is_same_v<Right, internal::RightOpen<Type>>);
+       std::same_as<Right, internal::RightClosed<Type>> || std::same_as<Right, internal::RightOpen<Type>>);
 
   /// The interval traits.
   using Traits = internal::IntervalTraits<Left, Right>;

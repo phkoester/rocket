@@ -120,7 +120,7 @@ std::unordered_map<std::string, std::string> get();
  * @return null if the environment variable does not exist or if the string conversion fails, otherwise a
  *   value of type @p T
  */
-template<typename T> requires (not std::is_same_v<T, std::string_view>)
+template<typename T> requires (not std::same_as<T, std::string_view>)
 std::optional<T>
 get(std::string_view name) {
   auto v = internal::getImpl(name);
