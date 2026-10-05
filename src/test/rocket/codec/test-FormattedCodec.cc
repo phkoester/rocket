@@ -469,13 +469,11 @@ TEST(FormattedCodec, FormattedProducerDeclaredFileSource) {
 
   string input;
   {
-    FILE* file = io::open(path, "rb");
-    nio::FileSource in(file);
+    nio::FileSource in(path);
     input = in.readString();
   }
 
-  FILE* file = io::open(path, "rb");
-  nio::FileSource in(file);
+  nio::FileSource in(path);
 
   MyStruct val;
   try {

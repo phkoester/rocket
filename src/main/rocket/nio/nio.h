@@ -14,6 +14,7 @@
 
 #include <fmt/color.h>
 
+#include <filesystem>
 #include <iosfwd>
 #include <memory>
 #include <span>
@@ -346,15 +347,9 @@ struct FileSink : Sink {
    * Configuration for the #FileSink constructor.
    */
   struct Config {
-    /**
-     * Whether to append to the file instead of overwriting it.
-     */
+    /// Whether to append to the file instead of overwriting it.
     bool append = false;
-    /**
-     * Whether to close the file on destruction.
-     *
-     * The default is `true`. For `stdout` and `stderr`, this is automatically configured to be `false`.
-     */
+    /// Whether to close the file on destruction.
     bool closeOnDestroy = true;
   };
 
@@ -368,7 +363,7 @@ struct FileSink : Sink {
   /**
    * @ctor
    *
-   * @param file a `FILE` pointer to use, nonnull
+   * @param file pointer to a `FILE`
    * @param config the configuration
    */
   explicit FileSink(FILE* file, const Config& config = defaultConfig());
@@ -379,10 +374,13 @@ struct FileSink : Sink {
    * @param path a path to a file
    * @param config the configuration
    */
-  explicit FileSink(const std::string& path, const Config& config = defaultConfig());
+  explicit FileSink(const std::filesystem::path& path, const Config& config = defaultConfig());
 
-  ~FileSink() override;
-
+  /**
+   * @copydoc Sink::close
+   *
+   * `stdout` and `stderr` are never closed.
+   */
   bool close() override;
 
   bool flush() override;
@@ -393,7 +391,7 @@ struct FileSink : Sink {
 
 ROCKET_TEST_PRIVATE:
 
-  FILE* file_ = nullptr; ///< The `FILE` pointer.
+  io::FileHandle handle_;
   Config config_; ///< The configuration.
 };
 
@@ -738,11 +736,7 @@ struct FileSource : Source {
    * Configuration for the #FileSource constructor.
    */
    struct Config {
-    /**
-     * Whether to close the file on destruction.
-     *
-     * The default is `true`. For `stdin`, this is automatically configured to be `false`.
-     */
+    /// Whether to close the file on destruction.
     bool closeOnDestroy = true;
   };
 
@@ -756,7 +750,7 @@ struct FileSource : Source {
   /**
    * @ctor
    *
-   * @param file a `FILE` pointer to use
+   * @param file pointer to a `FILE`
    * @param config the configuration
    */
   explicit FileSource(FILE* file, const Config& config = defaultConfig());
@@ -767,10 +761,13 @@ struct FileSource : Source {
    * @param path a path to a file
    * @param config the configuration
    */
-  explicit FileSource(const std::string& path, const Config& config = defaultConfig());
+  explicit FileSource(const std::filesystem::path& path, const Config& config = defaultConfig());
 
-  ~FileSource() override;
-
+  /**
+   * @copydoc Source::close
+   *
+   * `stdin` is never closed.
+   */
   bool close() override;
 
   [[nodiscard]] i32 handle() const override;
@@ -785,7 +782,7 @@ struct FileSource : Source {
 
 ROCKET_TEST_PRIVATE:
 
-  FILE* file_ = nullptr; ///< The `FILE` pointer.
+  io::FileHandle handle_;
   Config config_; ///< The configuration.
   std::unique_ptr<std::istream> istream_; ///< An optional input stream.
 };

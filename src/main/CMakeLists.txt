@@ -154,8 +154,8 @@ target_compile_definitions(rocket
     ROCKET_TEST_PRIVATE=private
     ROCKET_TEST_PROTECTED=protected
 )
-if(ROCKET_NIO_LOG)
-  target_compile_definitions(rocket PRIVATE ROCKET_NIO_LOG)
+if(ROCKET_IO_LOG)
+  target_compile_definitions(rocket PRIVATE ROCKET_IO_LOG)
 endif()
 if(ROCKET_NIO_NO_CONTIGUOUS_SOURCE)
   target_compile_definitions(rocket PRIVATE ROCKET_NIO_NO_CONTIGUOUS_SOURCE)

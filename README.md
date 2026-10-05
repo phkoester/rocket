@@ -26,7 +26,7 @@ Rocket stands on the shoulders of these giants:
 | `COVERAGE`                        | `BOOL`   | `OFF`                             | Enable code coverage
 | `ROCKET_BUILD_BENCH`              | `BOOL`   | `ON` if master project            | Enable benchmarking and build benchmarks
 | `ROCKET_BUILD_TEST`               | `BOOL`   | `ON` if master project            | Enable testing and build tests
-| `ROCKET_NIO_LOG`                  | `BOOL`   | `OFF`                             | Enable logging of `rocket::nio`
+| `ROCKET_IO_LOG`                   | `BOOL`   | `OFF`                             | Enable logging of `rocket::io` and `rocket::nio`
 | `ROCKET_NIO_NO_CONTIGUOUS_SOURCE` | `BOOL`   | `OFF`                             | Disable contiguous-source optimization for `rocket::nio`
 
 ## Environment Variables

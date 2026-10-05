@@ -35,6 +35,91 @@
 
 namespace rocket::io {
 
+// `FileHandle` ---------------------------------------------------------------------------------------------
+
+struct FileHandle {
+  /**
+   * @ctor_default
+   */
+  FileHandle() : file_(nullptr), closeOnDestroy_(false) {}
+
+  /**
+   * @ctor
+   *
+   * @param file a pointer to a `FILE`, may not be null
+   * @param closeOnDestroy whether the handle should close the file on destruction. The standard devices
+   *   `stdin`, `stdout`, and `stderr` are never closed, even if this is `true`
+   */
+  FileHandle(FILE* file, bool closeOnDestroy = true);
+
+  /// @ctor_copy
+  FileHandle(const FileHandle& rhs) = delete;
+
+  /// @ctor_move
+  FileHandle(FileHandle&& rhs) noexcept :
+    file_(rhs.file_),
+    closeOnDestroy_(rhs.closeOnDestroy_) {
+    rhs.file_ = nullptr;
+    rhs.closeOnDestroy_ = false;
+  }
+
+  /// @member_op_asgmt_copy
+  FileHandle& operator=(const FileHandle& rhs) = delete;
+
+  /// @member_op_asgmt_move
+  FileHandle& operator=(FileHandle&& rhs) noexcept {
+    close(true);
+    file_ = rhs.file_;
+    closeOnDestroy_ = rhs.closeOnDestroy_;
+    rhs.file_ = nullptr;
+    rhs.closeOnDestroy_ = false;
+    return *this;
+  }
+
+  /**
+   * @dtor
+   *
+   * Closes the file if @p closeOnDestroy is `true`.
+   */
+  ~FileHandle() {
+    if (closeOnDestroy_) {
+      close(true);
+    }
+  }
+
+  /**
+   * @member_op_deref
+   *
+   * @return a pointer to the underlying `FILE`
+   * @throw #rocket::InvalidState if the file is closed already
+   */
+  FILE* operator*();
+
+  /**
+   * @member_op_deref
+   *
+   * @return a pointer to the underlying `FILE`
+   * @throw #rocket::InvalidState if the file is closed already
+   */
+  const FILE* operator*() const;
+
+  /**
+   * Closes the file.
+   *
+   * The standard devices `stdin`, `stdout`, and `stderr` are never closed.
+   *
+   * @throw #rocket::InvalidState if the file is closed already
+   */
+  void close() { close(false); }
+
+private:
+
+  FILE* file_;
+  bool closeOnDestroy_;
+
+  void close(bool safe);
+};
+
 // Functions ------------------------------------------------------------------------------------------------
 
 /**
@@ -53,15 +138,19 @@ inline std::istringstream is() { return {}; }
 inline std::ispanstream is(std::string_view str) { return std::ispanstream(str); }
 
 /**
- * Opens a file and returns a file pointer, or null if the file cannot be opened.
+ * Opens a file and returns a file handle, or null if the file cannot be opened.
  *
  * This function is meant to be a replacement for #std::fopen.
  *
  * @param path the path to the file
  * @param modes the modes to open the file with
- * @return a `FILE` pointer, or null if the file cannot be opened
+ * @param closeOnDestroy whether the handle should close the file on destruction
+ * @return a #FileHandle, or null if the file cannot be opened
  */
-FILE* open(const std::filesystem::path& path, std::string_view modes);
+std::optional<FileHandle> open(
+  const std::filesystem::path& path,
+  std::string_view modes,
+  bool closeOnDestroy = true);
 
 /**
  * Similar to #std::istream::tellg, but leaves @p is unchanged and returns the actual current position

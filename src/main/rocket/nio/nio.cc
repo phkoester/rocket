@@ -6,6 +6,7 @@
 
 #include "rocket/assert.h"
 #include "rocket/io/io.h"
+#include "rocket/io/io-log.h"
 #include "rocket/unicode/unicode.h"
 
 #include <boost/iostreams/stream.hpp>
@@ -18,19 +19,6 @@ using namespace rocket::nio;
 using namespace std;
 
 using boost::safe_numerics::safe;
-
-/* Logging --------------------------------------------------------------------------------------------------
-
-Because #rocket::log utilizes #rocket::nio, we can't use it to log #rocket::nio itself. So we need to make up
-a quick and dirty logging facility here.
-
----------------------------------------------------------------------------------------------------------- */
-
-#ifdef ROCKET_NIO_LOG
-#define LOG(args) cout << "# " << ROCKET_SRC_FILE << ':' << __LINE__ << ' ' << __FUNCTION__ << ": " << args << endl;
-#else
-#define LOG(args)
-#endif
 
 namespace rocket::nio {
 
@@ -94,7 +82,7 @@ BufferedSink::flushBuffer() {
   ROCKET_ASSERT(buf_);
 
   if (pos_ > 0) {
-    LOG("Flushing " << pos_ << " bytes from buffer to underlying")
+    IO_LOG("Flushing " << pos_ << " bytes from buffer to underlying")
     underlying_.write(span<const u8>(&buf_[0], pos_));
     pos_ = 0;
   }
@@ -116,7 +104,7 @@ BufferedSink::write(span<const u8> in) {
     if (rest.size() <= available) {
       // Yes, it can: Store the rest in the buffer, exit loop
       memcpy(&buf_[pos_], rest.data(), rest.size());
-      LOG("Buffer can fulfill request, storing " << rest.size() << " bytes in buffer");
+      IO_LOG("Buffer can fulfill request, storing " << rest.size() << " bytes in buffer");
       pos_ += rest.size();
       break;
     }
@@ -124,7 +112,7 @@ BufferedSink::write(span<const u8> in) {
     // Fill and flush the buffer, continue in loop
 
     memcpy(&buf_[pos_], rest.data(), available);
-    LOG("Storing " << available << " available bytes in buffer");
+    IO_LOG("Storing " << available << " available bytes in buffer");
     pos_ += available;
     rest = rest.subspan(available);
     flushBuffer();
@@ -136,30 +124,21 @@ BufferedSink::write(span<const u8> in) {
 // `FileSink` -----------------------------------------------------------------------------------------------
 
 FileSink::FileSink(FILE* file, const Config& config) :
-  file_(file),
+  handle_(file, config.closeOnDestroy),
   config_(config) {
-  ROCKET_CHECK(file, file != nullptr);
   status_.bad = false;
-  if (file == stdout || file == stderr) {
-    config_.closeOnDestroy = false;
-  }
 }
 
-FileSink::FileSink(const string& path, const Config& config) :
+FileSink::FileSink(const filesystem::path& path, const Config& config) :
   config_(config) {
   const char* modes = config.append ? "ab" : "wb";
-  file_ = io::open(path, modes);
-  LOG("open=" << file_ << ", ferror=" << (file_ ? ferror(file_) : -1));
-
-  if (file_ != nullptr) {
-    status_.bad = false;
+  auto handle = io::open(path, modes, config.closeOnDestroy);
+  if (not handle) {
+    throw InvalidState(fmt::format("Failed to open file `{}` for writing", path));
   }
-}
+  handle_ = std::move(*handle);
 
-FileSink::~FileSink() {
-  if (config_.closeOnDestroy) {
-    close(); // NOLINT
-  }
+  status_.bad = false;
 }
 
 bool
@@ -171,12 +150,9 @@ FileSink::close()
 
   flush(); // NOLINT
 
-  const auto result = fclose(file_); // NOLINT(*-owning-memory)
-  // `file_` is invalid now, so we don't call `ferror` on it
-  LOG("fclose=" << result);
+  handle_.close();
   status_.bad = true;
-  file_ = nullptr;
-  return result == 0;
+  return true;
 }
 
 bool
@@ -185,8 +161,8 @@ FileSink::flush() {
     return false;
   }
 
-  const auto result = fflush(file_);
-  LOG("fflush=" << result << ", ferror=" << ferror(file_));
+  const auto result = fflush(*handle_);
+  IO_LOG("fflush=" << result << ", ferror=" << ferror(file_));
   return result == 0;
 }
 
@@ -196,8 +172,8 @@ FileSink::handle() const {
     return -1;
   }
 
-  ROCKET_ASSERT(file_ != nullptr);
-  return ROCKET_FILENO(file_);
+  FILE* file = const_cast<FILE*>(*handle_);
+  return ROCKET_FILENO(file);
 }
 
 u64
@@ -206,9 +182,10 @@ FileSink::write(span<const u8> in) {
     return 0;
   }
 
-  const auto result = fwrite(in.data(), 1, in.size(), file_);
-  auto error = ferror(file_);
-  LOG("fwrite=" << result << ", in.size=" << in.size() << ", ferror=" << error);
+  FILE* file = *handle_;
+  const auto result = fwrite(in.data(), 1, in.size(), file);
+  auto error = ferror(file);
+  IO_LOG("fwrite=" << result << ", in.size=" << in.size() << ", ferror=" << error);
   ROCKET_ASSERT(result == in.size() || error != 0);
   return result;
 }
@@ -284,7 +261,7 @@ StreamSink::flush() {
   }
 
   os_.flush();
-  LOG("bad=" << os_.bad() << ", fail=" << os_.fail() << ", eof=" << os_.eof());
+  IO_LOG("bad=" << os_.bad() << ", fail=" << os_.fail() << ", eof=" << os_.eof());
   status_.bad = os_.bad();
   status_.eof = os_.eof();
   return not bad();
@@ -312,7 +289,7 @@ StreamSink::write(span<const u8> in) {
   }
 
   const auto result = os_.rdbuf()->sputn(reinterpret_cast<const char*>(in.data()), safe<streamsize>(in.size()));
-  LOG("rdbuf()->sputn=" << result << ", bad=" << os_.bad() << ", fail=" << os_.fail() << ", eof=" << os_.eof());
+  IO_LOG("rdbuf()->sputn=" << result << ", bad=" << os_.bad() << ", fail=" << os_.fail() << ", eof=" << os_.eof());
   status_.bad = os_.bad();
   status_.eof = os_.eof();
   return safe<u64>(result);
@@ -574,7 +551,7 @@ BufferedSource::read(span<u8> out) {
       bufPos_ = underlying_.tell();
       pos_ = 0;
       end_ = underlying_.read(span<u8>(&buf_[0], size_));
-      LOG("Initialized buffer with " << end_ << " bytes from underlying; bufPos=" << bufPos_ << ", pos=" << pos_ << ", end=" << end_);
+      IO_LOG("Initialized buffer with " << end_ << " bytes from underlying; bufPos=" << bufPos_ << ", pos=" << pos_ << ", end=" << end_);
       if (end_ == 0) {
         break;
       }
@@ -585,7 +562,7 @@ BufferedSource::read(span<u8> out) {
     const u64 available = end_ - pos_;
     if (rest.size() <= available) {
       // Yes, it can: Copy the buffer to the rest, exit loop
-      LOG("Buffer can fulfill request, copying " << rest.size() << " bytes from buffer");
+      IO_LOG("Buffer can fulfill request, copying " << rest.size() << " bytes from buffer");
       memcpy(rest.data(), &buf_[pos_], rest.size());
       pos_ += rest.size();
       ret += rest.size();
@@ -594,7 +571,7 @@ BufferedSource::read(span<u8> out) {
 
     // Flush the buffer, continue in loop
 
-    LOG("Copying " << available << " available bytes from buffer");
+    IO_LOG("Copying " << available << " available bytes from buffer");
     memcpy(rest.data(), &buf_[pos_], available);
     pos_ += available;
     ret += available;
@@ -621,7 +598,7 @@ BufferedSource::seek(i64 offset, SeekMode mode) { // NOLINT
   // Get the old position so we can restore it later
   const u64 oldTell = underlying_.tell();
   if (oldTell == NPOS) {
-    LOG("Getting old position failed; invalidating buffer");
+    IO_LOG("Getting old position failed; invalidating buffer");
     bufPos_ = NPOS;
     pos_ = end_ = 0;
     return false;
@@ -633,7 +610,7 @@ BufferedSource::seek(i64 offset, SeekMode mode) { // NOLINT
   // Get the new position se we can see if we have a buffer hit
   const u64 newTell = underlying_.tell();
   if (newTell == NPOS) {
-    LOG("Getting new position failed; invalidating buffer");
+    IO_LOG("Getting new position failed; invalidating buffer");
     bufPos_ = NPOS;
     pos_ = end_ = 0;
     return ret;
@@ -641,7 +618,7 @@ BufferedSource::seek(i64 offset, SeekMode mode) { // NOLINT
 
   // Do we know at all where we are?
   if (bufPos_ == NPOS) {
-    LOG("Buffer position is unknown; invalidating the buffer");
+    IO_LOG("Buffer position is unknown; invalidating the buffer");
     bufPos_ = newTell;
     pos_ = end_ = 0;
     return ret;
@@ -651,13 +628,13 @@ BufferedSource::seek(i64 offset, SeekMode mode) { // NOLINT
   const u64 ourPos = newTell - bufPos_;
   if (ourPos <= end_) {
     // Yes, we do: Update our position and restore the underlying position
-    LOG("Going from " << pos_ << " to " << ourPos);
+    IO_LOG("Going from " << pos_ << " to " << ourPos);
     pos_ = ourPos;
     return underlying_.seek(safe<i64>(oldTell));
   }
 
   // No buffer hit
-  LOG("New position is beyond the buffer; invalidating buffer");
+  IO_LOG("New position is beyond the buffer; invalidating buffer");
   bufPos_ = newTell;
   pos_ = end_ = 0;
   return ret;
@@ -678,29 +655,20 @@ BufferedSource::tell() {
 // `FileSource` ---------------------------------------------------------------------------------------------
 
 FileSource::FileSource(FILE* file, const Config& config) :
-  file_(file),
+  handle_(file, config.closeOnDestroy),
   config_(config) {
-  ROCKET_CHECK(file, file != nullptr);
   status_.bad = false;
-  if (file == stdin) {
-    config_.closeOnDestroy = false;
-  }
 }
 
-FileSource::FileSource(const string& path, const Config& config) :
+FileSource::FileSource(const filesystem::path& path, const Config& config) :
   config_(config) {
-  file_ = io::open(path, "rb");
-  LOG("open=" << file_ << ", ferror=" << (file_ ? ferror(file_) : -1));
-
-  if (file_ != nullptr) {
-    status_.bad = false;
+  auto handle = io::open(path, "rb", config.closeOnDestroy);
+  if (not handle) {
+    throw InvalidState(fmt::format("Failed to open file `{}` for reading", path));
   }
-}
+  handle_ = std::move(*handle);
 
-FileSource::~FileSource() {
-  if (config_.closeOnDestroy) {
-    close(); // NOLINT
-  }
+  status_.bad = false;
 }
 
 bool
@@ -710,11 +678,13 @@ FileSource::close()
     return false;
   }
 
-  const auto result = fclose(file_); // NOLINT(*-owning-memory)
-  LOG("fclose=" << result);
+  if (bad()) {
+    return false;
+  }
+
+  handle_.close();
   status_.bad = true;
-  file_ = nullptr;
-  return result == 0;
+  return true;
 }
 
 i32
@@ -723,8 +693,8 @@ FileSource::handle() const {
     return -1;
   }
 
-  ROCKET_ASSERT(file_ != nullptr);
-  return ROCKET_FILENO(file_);
+  FILE* file = const_cast<FILE*>(*handle_);
+  return ROCKET_FILENO(file);
 }
 
 istream&
@@ -748,8 +718,9 @@ FileSource::read(span<u8> out) {
     return 0;
   }
 
-  const auto result = fread(out.data(), 1, out.size(), file_);
-  LOG("fread=" << result << ", out.size=" << out.size() << ", ferror=" << ferror(file_));
+  FILE* file = *handle_;
+  const auto result = fread(out.data(), 1, out.size(), file);
+  IO_LOG("fread=" << result << ", out.size=" << out.size() << ", ferror=" << ferror(file_));
   status_.eof = result < out.size();
   return result;
 }
@@ -777,8 +748,9 @@ FileSource::seek(i64 offset, SeekMode mode) { // NOLINT
     ROCKET_FLOP(mode, "Invalid seek mode {}", static_cast<i32>(mode));
   }
 
-  auto result = fseek(file_, safe<std_long>(offset), origin);
-  LOG("fseek=" << result << ", ferror=" << ferror(file_));
+  FILE* file = *handle_;
+  auto result = fseek(file, safe<std_long>(offset), origin);
+  IO_LOG("fseek=" << result << ", ferror=" << ferror(file_));
   return result == 0;
 }
 
@@ -788,8 +760,9 @@ FileSource::tell() {
     return NPOS;
   }
 
-  auto result = ftell(file_);
-  LOG("ftell=" << result << ", ferror=" << ferror(file_));
+  FILE* file = *handle_;
+  auto result = ftell(file);
+  IO_LOG("ftell=" << result << ", ferror=" << ferror(file_));
   if (result == -1) {
     return NPOS;
   }
@@ -937,7 +910,7 @@ StreamSource::read(span<u8> out) {
   // If less bytes than `out.size()` are read, `bad`, `fail`, and `eof` all remain `false`
   is_.read(reinterpret_cast<char*>(out.data()), safe<streamsize>(out.size()));
   auto count = is_.gcount();
-  LOG("count=" << count << ", out.size=" << out.size() << ", bad=" << is_.bad() << ", fail=" << is_.fail() << ", eof=" << is_.eof());
+  IO_LOG("count=" << count << ", out.size=" << out.size() << ", bad=" << is_.bad() << ", fail=" << is_.fail() << ", eof=" << is_.eof());
   status_.bad = is_.bad();
   status_.eof = is_.eof();
   return safe<u64>(count);
@@ -966,12 +939,12 @@ StreamSource::seek(i64 offset, SeekMode mode) { // NOLINT
     ROCKET_FLOP(mode, "Invalid seek mode {}", static_cast<i32>(mode));
   }
 
-  LOG("Before clear failbit, bad=" << is_.bad() << ", fail=" << is_.fail() << ", eof=" << is_.eof() << ", tellg=" << io::tellg(is_));
+  IO_LOG("Before clear failbit, bad=" << is_.bad() << ", fail=" << is_.fail() << ", eof=" << is_.eof() << ", tellg=" << io::tellg(is_));
   // We need to clear the fail bit, otherwise the seek will fail
   is_.clear(is_.rdstate() & ~ios_base::failbit);
-  LOG("After clear failbit, bad=" << is_.bad() << ", fail=" << is_.fail() << ", eof=" << is_.eof() << ", tellg=" << io::tellg(is_));
+  IO_LOG("After clear failbit, bad=" << is_.bad() << ", fail=" << is_.fail() << ", eof=" << is_.eof() << ", tellg=" << io::tellg(is_));
   is_.seekg(safe<istream::off_type>(offset), dir);
-  LOG("After seekg, bad=" << is_.bad() << ", fail=" << is_.fail() << ", eof=" << is_.eof() << ", tellg=" << io::tellg(is_));
+  IO_LOG("After seekg, bad=" << is_.bad() << ", fail=" << is_.fail() << ", eof=" << is_.eof() << ", tellg=" << io::tellg(is_));
   status_.bad = is_.bad();
   return not bad();
 }
@@ -984,7 +957,7 @@ StreamSource::tell() {
 
   // Use the `tellg` implementation from `rocket::io`
   auto result = io::tellg(is_);
-  LOG("tellg=" << result << ", bad=" << is_.bad() << ", fail=" << is_.fail() << ", eof=" << is_.eof());
+  IO_LOG("tellg=" << result << ", bad=" << is_.bad() << ", fail=" << is_.fail() << ", eof=" << is_.eof());
   status_.bad = is_.bad();
 
   if (result < 0) {

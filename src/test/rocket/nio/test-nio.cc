@@ -53,19 +53,9 @@ TEST(nio, BufferedSink) {
 }
 
 TEST(nio, FileSinkDoesNotExist) {
-  FileSink out("/does/not/exist");
-
-  EXPECT_TRUE(out.bad());
-  EXPECT_EQ(out.file_, nullptr);
-
-  EXPECT_EQ(out.Sink::write("a"), 0);
-  EXPECT_TRUE(out.bad());
-
-  out.close();
-  EXPECT_TRUE(out.bad());
-
-  EXPECT_EQ(out.Sink::write("b"), 0);
-  EXPECT_TRUE(out.bad());
+  EXPECT_THAT([&] {
+    FileSink out("/file/does/not/exist"); },
+    ThrowsMessage<InvalidState>(EndsWith("Failed to open file `/file/does/not/exist` for writing")));
 }
 
 TEST(nio, NullSink) {
@@ -188,20 +178,9 @@ TEST(nio, BufferedSourceSeek) {
 }
 
 TEST(nio, FileSourceDoesNotExist) {
-  FileSource in("/does/not/exist");
-
-  EXPECT_TRUE(in.bad());
-  EXPECT_EQ(in.file_, nullptr);
-
-  auto out = in.readString();
-  EXPECT_TRUE(out.empty());
-  EXPECT_TRUE(in.bad());
-
-  in.close();
-  EXPECT_TRUE(in.bad());
-
-  out = in.readString();
-  EXPECT_TRUE(in.bad());
+  EXPECT_THAT([&] {
+    FileSource in("/file/does/not/exist"); },
+    ThrowsMessage<InvalidState>(EndsWith("Failed to open file `/file/does/not/exist` for reading")));
 }
 
 TEST(nio, FileSourceReadAll) {
@@ -249,8 +228,7 @@ TEST(nio, FileSourceReadString) {
 
 TEST(nio, FileSourceScanIstream) {
   const auto path = testSource("test-nio-FileSourceScanIstream.txt");
-  FILE* file = io::open(path, "rb");
-  FileSource in(file);
+  FileSource in(path);
   auto& is = in.istream();
   auto result = scn::scan<log::LogLevel, log::LogLevel>(is, "{}, {}");
   ASSERT_TRUE(result);

@@ -5,6 +5,7 @@
 #include "rocket/io/io.h"
 
 #include "rocket/assert.h"
+#include "rocket/io/io-log.h"
 
 #include <array>
 #include <iostream>
@@ -50,17 +51,64 @@ u128ToString(char* dest, u128 val) {
 
 namespace rocket::io {
 
-// Functions ------------------------------------------------------------------------------------------------
+// `FileHandle` ---------------------------------------------------------------------------------------------
+
+FileHandle::FileHandle(FILE* file, bool closeOnDestroy) :
+  file_(file),
+  closeOnDestroy_(closeOnDestroy) {
+  ROCKET_CHECK(file, file != nullptr);
+}
 
 FILE*
-open(const std::filesystem::path& path, string_view modes) {
+FileHandle::operator*() {
+  if (file_ == nullptr) {
+    throw InvalidState("File is closed already");
+  }
+  return file_;
+}
+
+const FILE*
+FileHandle::operator*() const {
+  if (file_ == nullptr) {
+    throw InvalidState("File is closed already");
+  }
+  return file_;
+}
+
+void
+FileHandle::close(bool safe) {
+  if (file_ == nullptr) {
+    if (not safe) {
+      throw InvalidState("File is closed already");
+    }
+    return;
+  }
+
+  if (file_ == stdin || file_ == stdout || file_ == stderr) {
+    return;
+  }
+
+  [[maybe_unused]] const auto result = fclose(file_);
+  IO_LOG("fclose=" << result << ", file=" << file_ << ", ferror=" << ferror(file_));
+  file_ = nullptr;
+}
+
+// Functions ------------------------------------------------------------------------------------------------
+
+optional<FileHandle>
+open(const std::filesystem::path& path, string_view modes, bool closeOnDestroy) {
 #ifdef ROCKET_OS_WINDOWS
   FILE* file = nullptr;
   fopen_s(&file, path.string().c_str(), string(modes).c_str());
-  return file;
+  IO_LOG("fopen_s=" << result << ", file=" << file_ << ", ferror=" << (file_ ? ferror(file_) : -1));
 #else
-  return fopen(path.string().c_str(), string(modes).c_str());
+  FILE* file = fopen(path.string().c_str(), string(modes).c_str());
+  IO_LOG("fopen=" << file_ << ", ferror=" << (file_ ? ferror(file_) : -1));
 #endif
+  if (file == nullptr) {
+    return {};
+  }
+  return FileHandle(file, closeOnDestroy);
 }
 
 std::ios::pos_type
