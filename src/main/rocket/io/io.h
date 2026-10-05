@@ -37,6 +37,11 @@ namespace rocket::io {
 
 // `FileHandle` ---------------------------------------------------------------------------------------------
 
+/**
+ * A handle to a file.
+ *
+ * Automatically closes the file on destruction if @p closeOnDestroy is `true`.
+ */
 struct FileHandle {
   /**
    * @ctor_default
@@ -145,7 +150,7 @@ inline std::ispanstream is(std::string_view str) { return std::ispanstream(str);
  * @param path the path to the file
  * @param modes the modes to open the file with
  * @param closeOnDestroy whether the handle should close the file on destruction
- * @return a #FileHandle, or null if the file cannot be opened
+ * @return a #rocket::io::FileHandle, or null if the file cannot be opened
  */
 std::optional<FileHandle> open(
   const std::filesystem::path& path,
