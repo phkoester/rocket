@@ -8,13 +8,14 @@
 
 /* Macros ---------------------------------------------------------------------------------------------------
 
-Because #rocket::log utilizes #rocket::nio and #rocket::io, we can't use it to log #rocket::nio and
-#rocket::io itself. So we make up a quick and dirty logging facility here.
+Because #rocket::log utilizes #rocket::nio, which in turn uses #rocket::io, we can't use the logging API
+to log #rocket::nio and #rocket::io itself. So we make up a quick and dirty logging facility here.
 
 ---------------------------------------------------------------------------------------------------------- */
 
 #ifdef ROCKET_IO_LOG
-#define IO_LOG(args) cout << "# " << ROCKET_SRC_FILE << ':' << __LINE__ << ' ' << __FUNCTION__ << ": " << args << endl;
+#define IO_LOG(args) ::std::cout << "io# " << ROCKET_SRC_FILE << ':' << \
+  __LINE__ << ' ' << __FUNCTION__ << ": " << args << ::std::endl;
 #else
 #define IO_LOG(args)
 #endif
