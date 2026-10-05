@@ -58,14 +58,13 @@ struct CodePoint {
    * @param policy whether to throw or replace if @p val is not an ASCII character
    * @throw #rocket::InputFailure if @p policy is #Throw and @p val is not an ASCII character
    */
-  constexpr CodePoint(char val, InvalidUnicodePolicy policy = Throw) :
+  constexpr CodePoint(char val, InvalidUnicodePolicy policy = Throw) : // NOLINT(*-explicit-constructor)
     val_(val) {
     if (not ascii()) {
       if (policy == InvalidUnicodePolicy::Throw) {
         throw InputFailure(0, fmt::format("Invalid ASCII value 0x{:X}", val));
-      } else {
-        val_ = U'�';
       }
+      val_ = U'�';
     }
   }
 
@@ -77,14 +76,13 @@ struct CodePoint {
    * @param policy whether to throw or replace if @p val is not a valid code-point value
    * @throw #rocket::InputFailure if @p policy is #Throw and @p val is not a valid code-point value
    */
-  constexpr CodePoint(char32 val, InvalidUnicodePolicy policy = Throw) :
+  constexpr CodePoint(char32 val, InvalidUnicodePolicy policy = Throw) : // NOLINT(*-explicit-constructor)
     val_(val) {
     if (not valid(val_)) {
       if (policy == InvalidUnicodePolicy::Throw) {
         throw InputFailure(0, fmt::format("Invalid code-point value 0x{:X}", static_cast<u32>(val)));
-      } else {
-        val_ = U'�';
       }
+      val_ = U'�';
     }
   }
 

@@ -8,7 +8,6 @@
 
 #include "rocket/type-traits.h"
 #include "rocket/io/io.h"
-#include "rocket/type-traits.h"
 
 #include <scn/istream.h>
 

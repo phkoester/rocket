@@ -50,7 +50,7 @@ struct FileHandle {
    * @param closeOnDestroy whether the handle should close the file on destruction. The standard devices
    *   `stdin`, `stdout`, and `stderr` are never closed, even if this is `true`
    */
-  FileHandle(FILE* file, bool closeOnDestroy = true);
+  explicit FileHandle(FILE* file, bool closeOnDestroy = true);
 
   /// @ctor_copy
   FileHandle(const FileHandle& rhs) = delete;

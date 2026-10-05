@@ -56,7 +56,7 @@
 #include <cstdio> // Make this generally availabe
 #include <typeinfo> // Make this generally available
 
-#if defined(ROCKET_OS_WINDOWS)
+#ifdef ROCKET_OS_WINDOWS
   #define ROCKET_HAS_BOOST_INT128
   #include <boost/int128/int128.hpp>
 #endif

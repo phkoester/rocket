@@ -65,7 +65,7 @@ getWhat(const exception& val) {
 void
 printExceptionPtr(nio::Sink& out, u64 level, exception_ptr ptr) { // NOLINT(*-recursion)
   try {
-    rethrow_exception(ptr);
+    rethrow_exception(ptr); // NOLINT(*-unnecessary-value-param)
   } catch (const exception& ex) {
     const auto* const p = dynamic_cast<const Exception*>(&ex);
     printThrown(out, level, &typeid(ex), getWhat(ex), p != nullptr? p->stackTrace() : nullopt);

@@ -23,7 +23,7 @@ namespace {
  * success.
  */
 optional<string_view>
-readLongestChoice(nio::Source& in, vector<string_view> candidates, bool ignoreCase) {
+readLongestChoice(nio::Source& in, vector<string_view> candidates, bool ignoreCase) { // NOLINT(*-complexity)
   const auto pos = in.tell();
 
   string seen;
@@ -482,6 +482,6 @@ skipUntilString(nio::Source& in, std::string_view s) {
   return false;
 }
 
-} // namespace rocket::codec
+} // namespace rocket::nio
 
 // EOF

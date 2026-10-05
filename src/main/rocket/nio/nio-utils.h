@@ -293,6 +293,6 @@ void skip(nio::Source& in, bool cComments, bool shellComments);
  */
 bool skipUntilString(nio::Source& in, std::string_view s);
 
-} // namespace rocket::codec
+} // namespace rocket::nio
 
 // EOF

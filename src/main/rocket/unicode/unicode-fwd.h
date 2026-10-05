@@ -6,6 +6,8 @@
 
 #pragma once
 
+#include "rocket/rocket.h"
+
 #include <string>
 
 namespace rocket::unicode {
@@ -15,7 +17,7 @@ namespace rocket::unicode {
 /**
  * A policy for handling invalid Unicode, such as invalid UTF-8 byte sequences or invalid UTF-32 code points.
  */
-enum InvalidUnicodePolicy {
+enum InvalidUnicodePolicy : u8 {
   /**
    * Throw an exception of type #rocket::InputFailure.
    *

@@ -173,7 +173,7 @@ struct Overflow : Exception, std::overflow_error {
    * @param sl the source location
    * @param st the stack trace
    */
-  Overflow(
+  explicit Overflow(
     const std::type_info& type,
     const std::optional<std::source_location>& sl = ROCKET_EXCEPTION_SL,
     const std::optional<std::stacktrace>& st = ROCKET_EXCEPTION_ST) :
@@ -212,7 +212,7 @@ struct Underflow : Exception, std::underflow_error {
    * @param sl the source location
    * @param st the stack trace
    */
-  Underflow(
+  explicit Underflow(
     const std::type_info& type,
     const std::optional<std::source_location>& sl = ROCKET_EXCEPTION_SL,
     const std::optional<std::stacktrace>& st = ROCKET_EXCEPTION_ST) :
@@ -253,7 +253,7 @@ struct WrappedException {
    *
    * @param ptr the exception pointer
    */
-  explicit WrappedException(std::exception_ptr ptr) : ptr_(std::move(ptr)) {}
+  explicit WrappedException(std::exception_ptr ptr) : ptr_(ptr) {}
 
   /**
    * Returns the exception the instance was constructed with.
