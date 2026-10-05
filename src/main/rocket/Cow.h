@@ -8,7 +8,7 @@
 
 #include "rocket/assert.h"
 
-#include <array>
+#include <variant>
 
 namespace rocket {
 
@@ -17,7 +17,7 @@ namespace rocket {
 /**
  * A copy-on-write value.
  *
- * @tparam T the type of value
+ * @tparam T the type of the value
  * @tparam U the type of the owned value. If this is different from @p T, then @p T is assumed to be an
  *   efficiently copyable view type, such as #std::span or #std::string_view.
  */
@@ -29,76 +29,31 @@ struct Cow {
    * @param ref the value to reference. If the types @p T and @p U are the same, The reference must remain
    *   valid for the lifetime of the #Cow.
    */
-  explicit Cow(const T& ref) {
-    if constexpr (HasView) {
-      new(viewPtr()) T(ref);
-    } else {
-      choice_.ptr = &ref;
-    }
-  }
+  explicit Cow(const T& ref) : choice_(Ref(ref)) {}
 
   /// @ctor_copy
   Cow(const Cow& rhs) = delete;
 
   /// @ctor_move
-  Cow(Cow&& rhs) noexcept :
-    modified_(rhs.modified_) {
-    if (modified_) {
-      new(ownedPtr()) U(std::move(*rhs.ownedPtr()));
-    } else if constexpr (HasView) {
-      new(viewPtr()) T(std::move(*rhs.viewPtr()));
-    } else {
-      choice_.ptr = rhs.choice_.ptr;
-    }
-    std::memset(static_cast<void*>(&rhs), 0, sizeof(rhs));
-  }
+  Cow(Cow&& rhs) noexcept = default;
 
   /// @member_op_asgmt_copy
   Cow& operator=(const Cow& rhs) = delete;
 
   /// @member_op_asgmt_move
-  Cow& operator=(Cow&& rhs) noexcept {
-    modified_ = rhs.modified_;
-    if (modified_) {
-      new(ownedPtr()) U(std::move(*rhs.ownedPtr()));
-    } else if constexpr (HasView) {
-      new(viewPtr()) T(std::move(*rhs.viewPtr()));
-    } else {
-      choice_.ptr = rhs.choice_.ptr;
-    }
-    std::memset(static_cast<void*>(&rhs), 0, sizeof(rhs));
-    return *this;
-  }
-
-  /// @dtor
-  ~Cow() {
-    if (modified_) {
-      destroyOwned();
-    } else if constexpr (HasView) {
-      destroyView();
-    }
-  }
+  Cow& operator=(Cow&& rhs) noexcept = default;
 
   /**
    * Assigns an owned value to the #Cow, rendering the instance as "modified".
    *
    * The value is copied into the #Cow as an owned value.
    *
-   * @param value the value to assign
+   * @param rhs the value to assign
    * @return_this
    */
   Cow&
-  operator=(const U& value) {
-    if (modified_) {
-      destroyOwned();
-      new(ownedPtr()) U(value);
-    } else {
-      if constexpr (HasView) {
-        destroyView();
-      }
-      modified_ = true;
-      new(ownedPtr()) U(value);
-    }
+  operator=(const U& rhs) {
+    choice_.template emplace<U>(rhs); // XXX
     return *this;
   }
 
@@ -107,28 +62,20 @@ struct Cow {
    *
    * The value is moved into the #Cow as an owned value.
    *
-   * @param value the value to assign
+   * @param rhs the value to assign
    * @return_this
    */
   Cow&
-  operator=(U&& value) noexcept {
-    if (modified_) {
-      destroyOwned();
-      new(ownedPtr()) U(std::move(value));
-    } else {
-      if constexpr (HasView) {
-        destroyView();
-      }
-      modified_ = true;
-      new(ownedPtr()) U(std::move(value));
-    }
+  operator=(U&& rhs) noexcept {
+    choice_.template emplace<U>(std::move(rhs)); // XXX
     return *this;
   }
 
+#if 0
   /**
    * Returns a const reference to either the referenced or the owned value.
    *
-   * This overload only exists when the types @p T and @p U are the same.
+   * This overload only exists if the types @p T and @p U are the same.
    *
    * @return a const reference to either the referenced or the owned value
    */
@@ -142,7 +89,7 @@ struct Cow {
   /**
    * Returns a view to either the referenced or the owned value.
    *
-   * This overload only exists when the types @p T and @p U are different.
+   * This overload only exists if the types @p T and @p U are different.
    *
    * @return a view to either the referenced or the owned value
    */
@@ -152,13 +99,34 @@ struct Cow {
     static_assert(HasView);
     return not modified_ ? *viewPtr() : V(*ownedPtr());
   }
+#endif
+
+  /**
+   * Provides access to the value.
+   *
+   * If @p T and @p U are the same type, then this returns a `const T&`, either referencing a referenced or
+   * an owned value.
+   *
+   * Otherwise, this returns a `const T`, which is a copy of the view type @p T, providing a view to either a
+   * referenced or an owned value.
+   *
+   * @return a reference or a view to the value, either referenced or owned
+   */
+  [[nodiscard]] decltype(auto)
+  get() const {
+    if constexpr (HasView) {
+      return modified() ? T(std::get<U>(choice_)) : std::get<T>(choice_);
+    } else {
+      return modified() ? std::get<U>(choice_) : std::get<Ref>(choice_).get();
+    }
+  }
 
   /**
    * Checks if the #Cow has been assigned an owned value.
    *
    * @return whether the #Cow has been assigned an owned value
    */
-  [[nodiscard]] bool modified() const { return modified_; }
+  [[nodiscard]] bool modified() const { return choice_.index() == 1; }
 
   /**
    * Returns a nonconst reference to the owned value.
@@ -167,36 +135,32 @@ struct Cow {
    *
    * @return a nonconst reference to the owned value
    */
-  [[nodiscard]] U& owned() { ROCKET_EXPECT(modified_); return *ownedPtr(); }
+  [[nodiscard]] U&
+  owned() {
+    ROCKET_EXPECT(modified());
+    return std::get<U>(choice_);
+  }
+
+  /**
+   * Returns a const reference to the owned value.
+   *
+   * @note This requires that the #Cow is "modified", i.e. it has been assigned an owned value.
+   *
+   * @return a const reference to the owned value
+   */
+  [[nodiscard]] const U&
+  owned() const {
+    ROCKET_EXPECT(modified());
+    return std::get<U>(choice_);
+  }
 
 private:
 
   static constexpr bool HasView = not std::is_same_v<T, U>;
 
-  void destroyOwned() noexcept { ownedPtr()->~U(); }
+  using Ref = std::conditional_t<HasView, T, std::reference_wrapper<const T>>;
 
-  void destroyView() noexcept { viewPtr()->~T(); }
-
-  [[nodiscard]] constexpr U* ownedPtr() { return reinterpret_cast<U*>(choice_.owned.data()); }
-
-  [[nodiscard]] constexpr const U*
-  ownedPtr() const {
-    return reinterpret_cast<const U*>(choice_.owned.data());
-  }
-
-  [[nodiscard]] constexpr T* viewPtr() { return reinterpret_cast<T*>(choice_.view.data()); }
-
-  [[nodiscard]] constexpr const T*
-  viewPtr() const {
-    return reinterpret_cast<const T*>(choice_.view.data());
-  }
-
-  bool modified_ = false; ///< Whether there is an owned value
-  union {
-    const T* ptr; ///< A reference if not #HasView.
-    std::array<char, sizeof(T)> view; ///< A copyable view if #HasView.
-    std::array<char, sizeof(U)> owned; ///< An owned value if #modified_.
-  } choice_;
+  std::variant<Ref, U> choice_;
 };
 
 } // namespace rocket

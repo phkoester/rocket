@@ -29,8 +29,8 @@ struct IteratorImpl {
 
 template<typename C> requires IsChar<C>
 Iterator<C>::Iterator(IteratorType type, basic_string_view<C> input, const locale& loc) : // NOLINT(*-complexity)
-    input_(input),
-    impl_(new IteratorImpl(), [](IteratorImpl* val) { delete val; }) { // NOLINT
+  input_(input),
+  impl_(new IteratorImpl(), [](IteratorImpl* val) { delete val; }) { // NOLINT
   // 1. Make the `UnicodeString`
 
   auto& str = impl_->unicodeString;
