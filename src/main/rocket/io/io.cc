@@ -88,7 +88,7 @@ FileHandle::close(bool safe) {
     return;
   }
 
-  [[maybe_unused]] const auto result = fclose(file_);
+  [[maybe_unused]] const auto result = fclose(file_); // NOLINT
   IO_LOG("fclose=" << result << ", file=" << file_ << ", ferror=" << ferror(file_));
   file_ = nullptr;
 }
@@ -165,7 +165,7 @@ peekFirst(istream& is) {
 void
 readDigits(istream& is, string& buf) {
   while (true) {
-    const int c = is.peek();
+    const auto c = is.peek();
     if (c == char_traits<char>::eof() || c < '0' || c > '9') {
       break;
     }

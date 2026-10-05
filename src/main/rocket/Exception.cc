@@ -144,7 +144,7 @@ whatExceptionPtr(nio::Sink& out, u64 level, exception_ptr ptr) { // NOLINT(*-rec
   }
 
   try {
-    rethrow_exception(ptr);
+    rethrow_exception(ptr); // NOLINT
   } catch (const exception& ex) {
     out.write(getWhat(ex));
     try {
@@ -245,7 +245,7 @@ what(const exception& ex) {
 }
 
 string
-what(exception_ptr ptr) {
+what(exception_ptr ptr) { // NOLINT
   ROCKET_CHECK(ptr, static_cast<bool>(ptr));
   nio::StringSink out;
   whatExceptionPtr(out, 0, ptr);

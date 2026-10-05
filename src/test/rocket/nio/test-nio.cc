@@ -53,8 +53,8 @@ TEST(nio, BufferedSink) {
 }
 
 TEST(nio, FileSinkDoesNotExist) {
-  EXPECT_THAT([&] {
-    FileSink out("/file/does/not/exist"); },
+  EXPECT_THAT(
+    [&] { const FileSink out("/file/does/not/exist"); },
     ThrowsMessage<InvalidState>(EndsWith("Failed to open file `/file/does/not/exist` for writing")));
 }
 
@@ -178,8 +178,8 @@ TEST(nio, BufferedSourceSeek) {
 }
 
 TEST(nio, FileSourceDoesNotExist) {
-  EXPECT_THAT([&] {
-    FileSource in("/file/does/not/exist"); },
+  EXPECT_THAT(
+    [&] { const FileSource in("/file/does/not/exist"); },
     ThrowsMessage<InvalidState>(EndsWith("Failed to open file `/file/does/not/exist` for reading")));
 }
 

@@ -44,7 +44,7 @@ struct Noun {
    * @param val the value
    * @return the amount, followed by either the singular or the plural
    */
-  std::string amount(i64 val) const;
+  [[nodiscard]] std::string amount(i64 val) const;
 };
 
 // Predefined nouns -----------------------------------------------------------------------------------------

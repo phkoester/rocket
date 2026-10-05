@@ -89,7 +89,7 @@ operator<<(ostream& lhs, CodePoint rhs) {
 // Functions ------------------------------------------------------------------------------------------------
 
 u32string
-convertUtf8To32(string_view str, InvalidUnicodePolicy policy) {
+convertUtf8To32(string_view str, InvalidUnicodePolicy policy) { // NOLINT(*-complexity)
   u32string ret;
   ret.reserve(str.size());
 
@@ -103,11 +103,11 @@ convertUtf8To32(string_view str, InvalidUnicodePolicy policy) {
       // Invalid or incomplete UTF-8 byte sequence
       if (policy == InvalidUnicodePolicy::Throw) {
         throw InputFailure(pos, "Invalid UTF-8 byte sequence");
-      } else {
-        pos += i;
-        ret.push_back(U'�');
-        continue;
       }
+
+      pos += i;
+      ret.push_back(U'�');
+      continue;
     }
 
     pos += i;
@@ -170,16 +170,16 @@ nextCodePoint(string_view str, u64& pos, InvalidUnicodePolicy policy) {
   ROCKET_CHECK(pos, pos < size);
   UChar32 cp; // NOLINT
   i32 i = safe<i32>(pos);
-  i32 oldI = i;
+  const i32 oldI = i;
   U8_NEXT(str.data(), i, safe<i32>(size), cp); // NOLINT
   ROCKET_DEBUG_ASSERT(i > oldI, "`U8_NEXT` failed");
   if (cp < 0) {
     if (policy == InvalidUnicodePolicy::Throw) {
       throw InputFailure(pos, "Invalid UTF-8 byte sequence");
-    } else {
-      pos = i;
-      return U'�';
     }
+
+    pos = i;
+    return U'�';
   }
   pos = i;
   return static_cast<char32>(cp);

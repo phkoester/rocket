@@ -20,7 +20,7 @@ void printSize() {
   nio::out.println("{: <21} | {:>2} {}", typeName, sizeof(T), str::noun::byte(sizeof(T)));
 }
 
-}
+} // namespace
 
 // `main` ---------------------------------------------------------------------------------------------------
 

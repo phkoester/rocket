@@ -253,7 +253,7 @@ struct WrappedException {
    *
    * @param ptr the exception pointer
    */
-  explicit WrappedException(std::exception_ptr ptr) : ptr_(ptr) {}
+  explicit WrappedException(std::exception_ptr ptr) : ptr_(ptr) {} // NOLINT
 
   /**
    * Returns the exception the instance was constructed with.

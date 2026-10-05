@@ -2,11 +2,9 @@
  * system.cc
  */
 
-#include <array>
 #include <optional>
 
 #include "system.h"
-#include "rocket/Guard.h"
 #include "rocket/InputFailure.h"
 #include "rocket/assert.h"
 
@@ -196,15 +194,15 @@ exec(const vector<string_view>& args) {
 }
 
 vector<string>
-makeArgs(string_view cl) {
+makeArgs(string_view cl) { // NOLINT(*-complexity)
   vector<string> ret;
 
-  enum State { NORMAL, SINGLE, DOUBLE };
+  enum State : u8 { NORMAL, SINGLE, DOUBLE };
   State state = NORMAL;
   string arg;
 
   for (size_t i = 0, size = cl.size(); i < size; ++i) {
-    char c = cl[i];
+    const char c = cl[i];
     optional<char> next;
     if (i < size - 1) {
       next = cl[i + 1];
@@ -212,7 +210,7 @@ makeArgs(string_view cl) {
 
     switch(state) {
     case NORMAL:
-      if (isspace(c)) {
+      if (isspace(c) != 0) {
         if (not arg.empty()) {
           ret.push_back(arg);
           arg.clear();
