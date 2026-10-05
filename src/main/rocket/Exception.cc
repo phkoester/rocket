@@ -227,7 +227,7 @@ printException(nio::Sink& out, const exception& ex) {
 }
 
 void
-printException(nio::Sink& out, exception_ptr ptr) {
+printException(nio::Sink& out, exception_ptr ptr) { // NOLINT
   ROCKET_CHECK(ptr, static_cast<bool>(ptr));
   printExceptionPtr(out, 0, ptr);
 }

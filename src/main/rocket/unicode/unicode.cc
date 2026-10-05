@@ -93,7 +93,7 @@ convertUtf8To32(string_view str, InvalidUnicodePolicy policy) { // NOLINT(*-comp
   u32string ret;
   ret.reserve(str.size());
 
-  for (u64 pos = 0, size = str.size(); pos < size;) {
+  for (u64 pos = 0, size = str.size(); pos < size; /* Empty */) {
     UChar32 cp; // NOLINT
     i32 i = 0;
     U8_NEXT(&str[pos], i, size - pos, cp); // NOLINT
@@ -104,12 +104,10 @@ convertUtf8To32(string_view str, InvalidUnicodePolicy policy) { // NOLINT(*-comp
       if (policy == InvalidUnicodePolicy::Throw) {
         throw InputFailure(pos, "Invalid UTF-8 byte sequence");
       }
-
       pos += i;
       ret.push_back(U'�');
       continue;
     }
-
     pos += i;
     ret.push_back(static_cast<char32>(cp));
   }
@@ -130,10 +128,9 @@ convertUtf32To8(u32string_view str, InvalidUnicodePolicy policy) {
     if (not CodePoint::valid(c)) {
       if (policy == InvalidUnicodePolicy::Throw) {
         throw InputFailure(pos, fmt::format("Invalid code-point value 0x{:X}", static_cast<u32>(c)));
-      } else {
-        ret.append("�");
-        continue;
       }
+      ret.append("�");
+      continue;
     }
 
     i32 i = 0;
@@ -177,7 +174,6 @@ nextCodePoint(string_view str, u64& pos, InvalidUnicodePolicy policy) {
     if (policy == InvalidUnicodePolicy::Throw) {
       throw InputFailure(pos, "Invalid UTF-8 byte sequence");
     }
-
     pos = i;
     return U'�';
   }
@@ -247,10 +243,9 @@ nextCodePoint(u32string_view str, u64& pos, InvalidUnicodePolicy policy) {
   if (not CodePoint::valid(c)) {
     if (policy == InvalidUnicodePolicy::Throw) {
       throw InputFailure(pos, fmt::format("Invalid code-point value 0x{:X}", static_cast<u32>(c)));
-    } else {
-      ++pos;
-      return U'�';
     }
+    ++pos;
+    return U'�';
   }
   ++pos;
   return c;

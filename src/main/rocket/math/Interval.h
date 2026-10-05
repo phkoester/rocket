@@ -560,7 +560,7 @@ operator|(const Interval<Left, Right>& lhs, const Interval<Left, Right>& rhs) {
 
   // Find out if the intervals are adjacent. If they are, collapse them into a single interval
 
-  bool adjacent = false;
+  bool adjacent = false; // NOLINT
 
   if constexpr (IsInteger<typename Right::Type>) {
     if constexpr (Left::IsClosed && Right::IsClosed) {

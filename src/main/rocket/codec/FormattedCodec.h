@@ -1105,7 +1105,7 @@ struct FormattedProducerImpl<DataType::ZonedTime, T> {
 
     // Read subseconds
 
-    nanoseconds subseconds = readSubseconds(in);
+    const nanoseconds subseconds = readSubseconds(in);
     if (subseconds.count() > 0) {
       tp += duration_cast<Duration>(subseconds);
     }

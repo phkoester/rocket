@@ -166,7 +166,7 @@ void
 readDigits(istream& is, string& buf) {
   while (true) {
     const auto c = is.peek();
-    if (c == char_traits<char>::eof() || c < '0' || c > '9') {
+    if (c == char_traits<char>::eof() || c < '0' || c > '9') { // NOLINT
       break;
     }
     buf.push_back(static_cast<char>(is.get()));

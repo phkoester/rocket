@@ -2,8 +2,6 @@
  * system.cc
  */
 
-#include <optional>
-
 #include "system.h"
 #include "rocket/InputFailure.h"
 #include "rocket/assert.h"
