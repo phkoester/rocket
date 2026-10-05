@@ -137,7 +137,7 @@ struct ExitedWithStatus {
  * @param name the name of the environment variable
  */
 #define INQUIRE_ENV(name) { \
-  if (not TEST_TERMINAL) { \
+  if (not ::rocket::system::env::get<bool>(name).value_or(false)) { \
     static bool info = false; \
     if (not info) { \
       ROCKET_PROCESS_INFO("Exiting function because `" name "` is not set to `true`"); \

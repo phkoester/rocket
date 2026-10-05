@@ -17,6 +17,10 @@ using namespace rocket;
 using namespace rocket::log;
 using namespace std;
 
+#ifndef FMT_USE_INT128
+#error "FMT_USE_INT128 is not defined"
+#endif
+
 namespace {
 
 using rocket::log::internal::Clock;
