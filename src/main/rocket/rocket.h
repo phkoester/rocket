@@ -7,21 +7,21 @@
  *
  * OS-specific data types, sizes in bytes:
  *
- * | Type          | Linux | Windows
- * | :------------ | ----: | ------:
- * | `bool`        |     1 |       1
- * | `wchar_t`     |     4 |       2
- * | `short`       |     2 |       2
- * | `int`         |     4 |       4
- * | `long`        |     8 |       4
- * | `long long`   |     8 |       8
- * | `i128`        |    16 |      16
- * | `float`       |     4 |       4
- * | `double`      |     8 |       8
- * | `long double` |    16 |       8
- * | `void*`       |     8 |       8
+ * | Type          | Linux | Windows | Different?
+ * | :------------ | ----: | ------: | :---------
+ * | `bool`        |     1 |       1 |
+ * | `wchar_t`     |     4 |       2 | Yes!
+ * | `short`       |     2 |       2 |
+ * | `int`         |     4 |       4 |
+ * | `long`        |     8 |       4 |
+ * | `long long`   |     8 |       8 |
+ * | `i128`        |    16 |      16 |
+ * | `float`       |     4 |       4 |
+ * | `double`      |     8 |       8 |
+ * | `long double` |    16 |       8 | Yes!
+ * | `void*`       |     8 |       8 |
  *
- * Basic data types used in Rocket:
+ * Basic data types used in Rocket, consistent across all platforms:
  *
  * | Type             | Size
  * | :--------------- | ---:
@@ -101,7 +101,10 @@ constexpr bool HAS_LITTLE_ENDIAN = std::endian::native == std::endian::little;
 
 namespace std {
 
-/// Windows `type_info` in the global namespace, so we need to alias it here.
+/**
+ * On Windows, `type_info` is in the global namespace, so we need to alias it here to make it available as
+ * `std::type_info`.
+ */
 using type_info = ::type_info;
 
 } // namespace std
@@ -117,7 +120,7 @@ using std_short = short;
 using std_int = int;
 using std_unsigned = unsigned;
 using std_long = long;
-using std_unsigned_long_long = unsigned long long; // XXX
+using std_unsigned_long_long = unsigned long long;
 using std_size_t = size_t;
 using std_float = float;
 using std_double = double;

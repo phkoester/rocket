@@ -9,10 +9,8 @@
 #include <boost/safe_numerics/safe_integer.hpp>
 
 #include <unicode/uchar.h>
-#include <unicode/unistr.h>
 #include <unicode/utf8.h>
 #include <unicode/utypes.h>
-#include <unicode/utfiterator.h>
 
 #include <array>
 
@@ -32,7 +30,7 @@ CodePoint::operator string() const {
   i32 i = 0;
   UBool error = 0;
   U8_APPEND(buf.data(), i, 4, val_, error); // NOLINT
-  ROCKET_ASSERT(error == 0, "Invalid code-point value 0x{:X}", static_cast<u32>(val_));
+  ROCKET_DEBUG_ASSERT(error == 0, "`U8_APPEND` failed for code-point value 0x{:X}", static_cast<u32>(val_));
   return string(buf.data(), i); // NOLINT
 }
 
@@ -91,23 +89,60 @@ operator<<(ostream& lhs, CodePoint rhs) {
 // Functions ------------------------------------------------------------------------------------------------
 
 u32string
-utf8To32(string_view str) {
-  auto us = UnicodeString::fromUTF8(str);
-  ROCKET_CHECK(str, not us.isBogus());
-  auto size = us.countChar32();
-  u32string ret(size, 0);
-  UErrorCode status = U_ZERO_ERROR;
-  us.toUTF32(reinterpret_cast<UChar32*>(ret.data()), size, status);
-  ROCKET_EXPECT(U_SUCCESS(status));
+convertUtf8To32(string_view str, InvalidUnicodePolicy policy) {
+  u32string ret;
+  ret.reserve(str.size());
+
+  for (u64 pos = 0, size = str.size(); pos < size;) {
+    UChar32 cp; // NOLINT
+    i32 i = 0;
+    U8_NEXT(&str[pos], i, size - pos, cp); // NOLINT
+    ROCKET_DEBUG_ASSERT(i > 0, "`U8_NEXT` failed");
+
+    if (cp < 0) {
+      // Invalid or incomplete UTF-8 byte sequence
+      if (policy == InvalidUnicodePolicy::Throw) {
+        throw InputFailure(pos, "Invalid UTF-8 byte sequence");
+      } else {
+        pos += i;
+        ret.push_back(U'�');
+        continue;
+      }
+    }
+
+    pos += i;
+    ret.push_back(static_cast<char32>(cp));
+  }
+
   return ret;
 }
 
 string
-utf32To8(u32string_view str) {
-  auto us = UnicodeString::fromUTF32(reinterpret_cast<const UChar32*>(str.data()), str.size()); // NOLINT
-  ROCKET_CHECK(str, not us.isBogus());
+convertUtf32To8(u32string_view str, InvalidUnicodePolicy policy) {
   string ret;
-  us.toUTF8String(ret);
+  ret.reserve(str.size());
+
+  array<char, 4> buf; // NOLINT
+
+  for (u64 pos = 0, size = str.size(); pos < size; ++pos) {
+    const auto c = str[pos];
+
+    if (not CodePoint::valid(c)) {
+      if (policy == InvalidUnicodePolicy::Throw) {
+        throw InputFailure(pos, fmt::format("Invalid code-point value 0x{:X}", static_cast<u32>(c)));
+      } else {
+        ret.append("�");
+        continue;
+      }
+    }
+
+    i32 i = 0;
+    UBool error = 0;
+    U8_APPEND(buf.data(), i, 4, c, error); // NOLINT
+    ROCKET_DEBUG_ASSERT(error == 0, "`U8_APPEND` failed for code-point value 0x{:X} at position {}", static_cast<u32>(c), pos);
+    ret.append(buf.data(), i); // NOLINT
+  }
+
   return ret;
 }
 
@@ -116,32 +151,42 @@ utf32To8(u32string_view str) {
 namespace utf8 {
 
 u64
-lengthFromByte(char c) {
+lengthFromByte(char c, InvalidUnicodePolicy policy) {
   if (U8_IS_SINGLE(c)) {
     return 1;
   }
   if (U8_IS_LEAD(c)) {
     return U8_LENGTH_FROM_LEAD_BYTE(c);
   }
-  ROCKET_FLOP(c, "{:0>#2x} is neither a single nor a UTF-8 lead byte", c);
+  if (policy == InvalidUnicodePolicy::Continue) {
+    return NPOS;
+  }
+  throw InputFailure(0, fmt::format("{:0>#2x} is neither a single nor a UTF-8 lead byte", c));
 }
 
 CodePoint
-nextCodePoint(string_view str, u64& pos) {
+nextCodePoint(string_view str, u64& pos, InvalidUnicodePolicy policy) {
   const auto size = str.size();
   ROCKET_CHECK(pos, pos < size);
   UChar32 cp; // NOLINT
   i32 i = safe<i32>(pos);
+  i32 oldI = i;
   U8_NEXT(str.data(), i, safe<i32>(size), cp); // NOLINT
-  ROCKET_EXPECT(cp >= 0, "Invalid UTF-8 sequence");
-  const u64 newPos = safe<u64>(i);
-  ROCKET_EXPECT(newPos > pos, "Invalid UTF-8 sequence");
-  pos = newPos;
+  ROCKET_DEBUG_ASSERT(i > oldI, "`U8_NEXT` failed");
+  if (cp < 0) {
+    if (policy == InvalidUnicodePolicy::Throw) {
+      throw InputFailure(pos, "Invalid UTF-8 byte sequence");
+    } else {
+      pos = i;
+      return U'�';
+    }
+  }
+  pos = i;
   return static_cast<char32>(cp);
 }
 
 Cow<string_view, string>
-validate(string_view str, UnorderedBimap<u64, u64>* positions) { // NOLINT(*-complexity)
+validate(string_view str, InvalidUnicodePolicy policy, UnorderedBimap<u64, u64>* positions) { // NOLINT(*-complexity)
   Cow<string_view, string> ret(str);
 
   if (positions != nullptr) {
@@ -158,13 +203,14 @@ validate(string_view str, UnorderedBimap<u64, u64>* positions) { // NOLINT(*-com
     }
   };
 
-  u64 i = 0, size  = str.size();
+  u64 i = 0, size = str.size();
   while (i < size) {
     addPosition(i);
 
     UChar32 cp; // NOLINT
     auto oldI = i;
     U8_NEXT(str.data(), i, size, cp); // NOLINT
+    ROCKET_DEBUG_ASSERT(i > oldI, "`U8_NEXT` failed");
     if (cp >= 0) {
       // Valid code point
       if (ret.modified()) {
@@ -172,6 +218,9 @@ validate(string_view str, UnorderedBimap<u64, u64>* positions) { // NOLINT(*-com
       }
     } else {
       // Invalid code point
+      if (policy == InvalidUnicodePolicy::Throw) {
+        throw InputFailure(oldI, "Invalid UTF-8 byte sequence");
+      }
       if (not ret.modified()) {
         ret = string(str.data(), oldI);
       }
@@ -191,14 +240,24 @@ validate(string_view str, UnorderedBimap<u64, u64>* positions) { // NOLINT(*-com
 namespace utf32 {
 
 CodePoint
-nextCodePoint(u32string_view str, u64& pos) {
+nextCodePoint(u32string_view str, u64& pos, InvalidUnicodePolicy policy) {
   const auto size = str.size();
   ROCKET_CHECK(pos, pos < size);
-  return str[pos++];
+  char32 c = str[pos];
+  if (not CodePoint::valid(c)) {
+    if (policy == InvalidUnicodePolicy::Throw) {
+      throw InputFailure(pos, fmt::format("Invalid code-point value 0x{:X}", static_cast<u32>(c)));
+    } else {
+      ++pos;
+      return U'�';
+    }
+  }
+  ++pos;
+  return c;
 }
 
 Cow<u32string_view, u32string>
-validate(u32string_view str, UnorderedBimap<u64, u64>* positions) {
+validate(u32string_view str, InvalidUnicodePolicy policy, UnorderedBimap<u64, u64>* positions) {
   Cow<u32string_view, u32string> ret(str);
 
   if (positions != nullptr) {
@@ -222,6 +281,9 @@ validate(u32string_view str, UnorderedBimap<u64, u64>* positions) {
       }
     } else {
       // Invalid code point
+      if (policy == InvalidUnicodePolicy::Throw) {
+        throw InputFailure(i, fmt::format("Invalid code-point value 0x{:X}", static_cast<u32>(c)));
+      }
       if (not ret.modified()) {
         ret = u32string(str.data(), i);
       }

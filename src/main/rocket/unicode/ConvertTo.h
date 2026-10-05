@@ -8,16 +8,13 @@
 
 #include "rocket/rocket.h"
 #include "rocket/type-traits.h"
+#include "rocket/unicode/unicode-fwd.h"
 
 #include <string>
 
 namespace rocket::unicode {
 
-std::u32string utf8To32(std::string_view str); // NOLINT
-
-std::string utf32To8(std::u32string_view str); // NOLINT
-
-// `ConvertTo` ---------------------------------------------------------------------------------------------
+// `ConvertTo` ----------------------------------------------------------------------------------------------
 
 template<typename C> requires IsChar<C>
 struct ConvertTo;
@@ -41,7 +38,7 @@ struct ConvertTo<char> {
    * @param str the string to convert
    * @return the converted string
    */
-  [[nodiscard]] static std::string apply(std::u32string_view str) { return utf32To8(str); }
+  [[nodiscard]] static std::string apply(std::u32string_view str) { return convertUtf32To8(str); }
 };
 
 /**
@@ -63,7 +60,7 @@ struct ConvertTo<char32> {
    * @param str the string to convert
    * @return the converted string
    */
-  [[nodiscard]] static std::u32string apply(std::string_view str) { return utf8To32(str); }
+  [[nodiscard]] static std::u32string apply(std::string_view str) { return convertUtf8To32(str); }
 };
 
 } // namespace rocket::unicode

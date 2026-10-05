@@ -404,7 +404,7 @@ Source::readCodePoint() {
   try {
     u64 pos = 0;
     auto ret = unicode::nextCodePoint(s, pos);
-    ROCKET_EXPECT(pos == s.size(), "Invalid UTF-8 sequence");
+    ROCKET_EXPECT(pos == s.size(), "Invalid UTF-8 byte sequence");
     return ret;
   } catch (const exception&) {
     return {};

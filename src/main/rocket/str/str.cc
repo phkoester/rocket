@@ -39,9 +39,9 @@ capitalize(u32string_view str) {
 
 string
 lower(string_view str) {
-  u32string localS = utf8To32(str);
-  lowerIn(localS);
-  return utf32To8(localS);
+  u32string localStr = convertUtf8To32(str);
+  lowerIn(localStr);
+  return convertUtf32To8(localStr);
 }
 
 u32string
@@ -125,9 +125,9 @@ times(u64 n) {
 
 string
 upper(string_view str) {
-  u32string localS = utf8To32(str);
-  upperIn(localS);
-  return utf32To8(localS);
+  u32string localStr = convertUtf8To32(str);
+  upperIn(localStr);
+  return convertUtf32To8(localStr);
 }
 
 u32string

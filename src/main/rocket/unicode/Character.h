@@ -27,7 +27,7 @@ struct BasicCharacter {
   using Type = String; ///< @type_alias
   using View = std::basic_string_view<C>; ///< The string-view type.
 
-  /// A compile-time constant that is `true` if the character is a view, `false` otherwise.
+  /// A compile-time constant that is `true` if the character class is a view, `false` otherwise.
   static constexpr bool VIEW = std::is_same_v<String, View>;
 
   /**

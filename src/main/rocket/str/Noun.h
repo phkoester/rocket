@@ -51,8 +51,8 @@ struct Noun {
 
 namespace noun {
 
-ROCKET_PUBLIC extern const Noun byte;
-ROCKET_PUBLIC extern const Noun character;
+ROCKET_PUBLIC extern const Noun byte; ///< A noun.
+ROCKET_PUBLIC extern const Noun character; ///< A noun.
 
 } // namespace noun
 

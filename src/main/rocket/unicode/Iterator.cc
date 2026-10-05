@@ -21,12 +21,8 @@ namespace rocket::unicode {
  * Nothing from the `icu` namespace may surface in the public API, so we wrap it here.
  */
 struct IteratorImpl {
-  icu::UnicodeString str;
+  icu::UnicodeString unicodeString;
   unique_ptr<icu::BreakIterator> iter;
-};
-
-struct IteratorImplDelete {
-  void operator()(IteratorImpl* val) { delete val; } // NOLINT
 };
 
 // `Iterator` -----------------------------------------------------------------------------------------------
@@ -37,7 +33,7 @@ Iterator<C>::Iterator(IteratorType type, basic_string_view<C> input, const local
     impl_(new IteratorImpl(), [](IteratorImpl* val) { delete val; }) { // NOLINT
   // 1. Make the `UnicodeString`
 
-  auto& str = impl_->str;
+  auto& str = impl_->unicodeString;
   if constexpr (is_same_v<C, char>) {
     str = icu::UnicodeString::fromUTF8(input);
   } else {
@@ -45,7 +41,7 @@ Iterator<C>::Iterator(IteratorType type, basic_string_view<C> input, const local
   }
   ROCKET_CHECK(input, not str.isBogus());
 
-  // 2. Loop through the `UnicodeString` and populate `usToInput_`
+  // 2. Loop through the `UnicodeString` and populate `unicodeStringToInput_`
 
   const i32 u16length = str.length();
   const UChar* u16Buf = str.getBuffer();
@@ -58,7 +54,7 @@ Iterator<C>::Iterator(IteratorType type, basic_string_view<C> input, const local
 
   while (u16Index < u16length) {
     // Add a mapping for this input position
-    usToInput_.insert({ static_cast<u64>(u16Index), inputIndex });
+    unicodeStringToInput_.insert({ static_cast<u64>(u16Index), inputIndex });
 
     // Get next U16 code point
     U16_NEXT(u16Buf, u16Index, u16length, u16cp);
@@ -84,7 +80,7 @@ Iterator<C>::Iterator(IteratorType type, basic_string_view<C> input, const local
   }
 
   // Add a mapping for EOI
-  usToInput_.insert({ static_cast<u64>(u16Index), inputIndex });
+  unicodeStringToInput_.insert({ static_cast<u64>(u16Index), inputIndex });
 
   // 3. Create the `BreakIterator`
 
@@ -122,21 +118,21 @@ Iterator<C>::Iterator(IteratorType type, basic_string_view<C> input, const local
 template<typename C> requires IsChar<C>
 u64
 Iterator<C>::current() const {
-  return usToInput_.left.at(impl_->iter->current());
+  return unicodeStringToInput_.left.at(impl_->iter->current());
 }
 
 template<typename C> requires IsChar<C>
 u64
 Iterator<C>::first() {
   auto val = impl_->iter->first();
-  return usToInput_.left.at(val);
+  return unicodeStringToInput_.left.at(val);
 }
 
 template<typename C> requires IsChar<C>
 u64
 Iterator<C>::last() {
   auto val = impl_->iter->last();
-  return usToInput_.left.at(val);
+  return unicodeStringToInput_.left.at(val);
 }
 
 template<typename C> requires IsChar<C>
@@ -146,7 +142,7 @@ Iterator<C>::next() {
   if (pos == icu::BreakIterator::DONE) {
     return NPOS;
   }
-  return usToInput_.left.at(pos);
+  return unicodeStringToInput_.left.at(pos);
 }
 
 template<typename C> requires IsChar<C>
@@ -156,7 +152,7 @@ Iterator<C>::previous() {
   if (pos == icu::BreakIterator::DONE) {
     return NPOS;
   }
-  return usToInput_.left.at(pos);
+  return unicodeStringToInput_.left.at(pos);
 }
 
 // Template instantiations ----------------------------------------------------------------------------------

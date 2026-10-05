@@ -159,7 +159,7 @@ private:
 
   std::basic_string_view<C> input_;
   std::unique_ptr<IteratorImpl, void(*)(IteratorImpl*)> impl_;
-  UnorderedBimap<u64, u64> usToInput_;
+  UnorderedBimap<u64, u64> unicodeStringToInput_;
 };
 
 // Functions ------------------------------------------------------------------------------------------------

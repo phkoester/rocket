@@ -59,7 +59,7 @@ inline std::ispanstream is(std::string_view str) { return std::ispanstream(str);
  *
  * @param path the path to the file
  * @param modes the modes to open the file with
- * @return a #FILE pointer, or null if the file cannot be opened
+ * @return a `FILE` pointer, or null if the file cannot be opened
  */
 FILE* open(const std::filesystem::path& path, std::string_view modes);
 

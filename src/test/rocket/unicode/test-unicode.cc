@@ -38,13 +38,13 @@ positions(initializer_list<pair<u64, u64>> list) {
 TEST(unicode, CodePointCtor) {
   EXPECT_THAT(
     [&] { '\x80'_cp; },
-    ThrowsMessage<InvalidArgument>(HasSubstr("Parameter `val`: Check `ascii()` failed: Invalid ASCII value 0x80")));
+    throwsInputFailure(0, HasSubstr("Invalid ASCII value 0x80")));
   EXPECT_THAT(
     [&] { CodePoint { D800 }; },
-    ThrowsMessage<InvalidArgument>(HasSubstr("Parameter `val`: Check `valid(val)` failed: Invalid code-point value 0xD800")));
+    throwsInputFailure(0, HasSubstr("Invalid code-point value 0xD800")));
   EXPECT_THAT(
     [&] { CodePoint { MAX_PLUS_1 }; },
-    ThrowsMessage<InvalidArgument>(HasSubstr("Parameter `val`: Check `valid(val)` failed: Invalid code-point value 0x110000")));
+    throwsInputFailure(0, HasSubstr("Invalid code-point value 0x110000")));
 }
 
 TEST(unicode, CodePointOpCastString) {
@@ -113,31 +113,54 @@ TEST(unicode, CodePointVectorFormat) {
 }
 
 TEST(unicode, conversions) {
-  EXPECT_EQ(utf8To32("äöü€"), U"äöü€");
-  EXPECT_EQ(utf32To8(U"äöü€"), "äöü€");
+  EXPECT_EQ(convertUtf8To32("äöü€"), U"äöü€");
+  EXPECT_EQ(convertUtf32To8(U"äöü€"), "äöü€");
 
   const char* str1 = "a€b";
 
   vector<char32> vec;
-  u32string str = utf8To32(str1);
+  u32string str = convertUtf8To32(str1);
   ranges::copy(str, back_inserter(vec));
   EXPECT_EQ(vec, (vector<char32> { 97, 0x20ac, 98 }));
 
-  const u32string str2 = utf8To32(str1);
+  const u32string str2 = convertUtf8To32(str1);
   EXPECT_EQ(str2, U"a€b");
   EXPECT_EQ(str2.size(), 3);
 
-  const string str3 = utf32To8(str2);
+  const string str3 = convertUtf32To8(str2);
   EXPECT_EQ(str3, str1);
 
   // U+1F9D1 (ADULT), U+200D (ZERO WIDTH JOINER), U+1F33E (EAR OF RICE)
-  EXPECT_EQ(utf8To32("a🧑‍🌾b"), U"a🧑‍🌾b");
+  EXPECT_EQ(convertUtf8To32("a🧑‍🌾b"), U"a🧑‍🌾b");
 
-  auto str32 = utf8To32("🧑‍🌾");
+  auto str32 = convertUtf8To32("🧑‍🌾");
   ASSERT_EQ(str32.size(), 3);
   EXPECT_EQ(str32[0], 0x1F9D1);
   EXPECT_EQ(str32[1], 0x200D);
   EXPECT_EQ(str32[2], 0x1F33E);
+
+  // Test invalid UTF-8
+
+  string str4 = "abc\xC8"; // Invalid ASCII: 200
+  EXPECT_THAT(
+    [&] { convertUtf8To32(str4); },
+    throwsInputFailure(3, HasSubstr("Invalid UTF-8 byte sequence")));
+  EXPECT_EQ(convertUtf8To32(str4, unicode::Continue), U"abc�");
+
+  const string str5 { 'a', CONT, 'b' };
+  EXPECT_THAT(
+    [&] { convertUtf8To32(str5); },
+    throwsInputFailure(1, HasSubstr("Invalid UTF-8 byte sequence")));
+  EXPECT_EQ(convertUtf8To32(str5, unicode::Continue), U"a�b");
+
+  // Test invalid UTF-32
+
+  u32string str6(U"abc");
+  str6[1] = static_cast<char32>(0xD800);
+  EXPECT_THAT(
+    [&] { convertUtf32To8(str6); },
+    throwsInputFailure(1, HasSubstr("Invalid code-point value 0xD800")));
+  EXPECT_EQ(convertUtf32To8(str6, unicode::Continue), "a�c");
 }
 
 // `rocket::unicode::utf8` ..................................................................................
@@ -146,7 +169,7 @@ TEST(unicode, utf8Validate) {
   UnorderedBimap<u64, u64> pos;
 
   {
-    auto cow = utf8::validate("äöüß€", &pos);
+    auto cow = utf8::validate("äöüß€", InvalidUnicodePolicy::Throw, &pos);
     EXPECT_FALSE(cow.modified());
     EXPECT_EQ(cow.get(), "äöüß€");
     EXPECT_EQ(pos, positions({ { 0, 0 }, { 2, 2 }, { 4, 4 }, { 6, 6 }, { 8, 8 }, { 11, 11 }}));
@@ -156,7 +179,7 @@ TEST(unicode, utf8Validate) {
 
   {
     const string str { 'a', CONT, 'b' };
-    auto cow = utf8::validate(str, &pos);
+    auto cow = utf8::validate(str, InvalidUnicodePolicy::Continue, &pos);
     EXPECT_TRUE(cow.modified());
     EXPECT_EQ(cow.get(), "a�b");
     EXPECT_EQ(pos, positions({ { 0, 0 }, { 1, 1 }, { 2, 4 }, { 3, 5 } }));
@@ -164,7 +187,7 @@ TEST(unicode, utf8Validate) {
 
   {
     const string str { 'a', TWO_BYTES, 'b', 'c' };
-    auto cow = utf8::validate(str, &pos);
+    auto cow = utf8::validate(str, InvalidUnicodePolicy::Continue, &pos);
     EXPECT_TRUE(cow.modified());
     EXPECT_EQ(cow.get(), "a�bc");
     EXPECT_EQ(pos, positions({ { 0, 0 }, { 1, 1 }, { 2, 4 }, { 3, 5 }, { 4, 6 } }));
@@ -172,7 +195,7 @@ TEST(unicode, utf8Validate) {
 
   {
     const string str { 'a', THREE_BYTES, CONT };
-    auto cow = utf8::validate(str, &pos);
+    auto cow = utf8::validate(str, InvalidUnicodePolicy::Continue, &pos);
     EXPECT_TRUE(cow.modified());
     EXPECT_EQ(cow.get(), "a�");
     EXPECT_EQ(pos, positions({ { 0, 0 }, { 1, 1 }, { 3, 4 } }));
@@ -180,7 +203,7 @@ TEST(unicode, utf8Validate) {
 
   {
     const string str { 'a', FOUR_BYTES, CONT, 'b' };
-    auto cow = utf8::validate(str, &pos);
+    auto cow = utf8::validate(str, InvalidUnicodePolicy::Continue, &pos);
     EXPECT_TRUE(cow.modified());
     EXPECT_EQ(cow.get(), "a��b");
     EXPECT_EQ(pos, positions({ { 0, 0 }, { 1, 1 }, { 2, 4 }, { 3, 7 }, { 4, 8 } }));
@@ -194,7 +217,7 @@ TEST(unicode, utf32Validate) {
 
   {
     const u32string_view sv = U"abc";
-    auto cow = utf32::validate(sv, &pos);
+    auto cow = utf32::validate(sv, InvalidUnicodePolicy::Throw, &pos);
     EXPECT_FALSE(cow.modified());
     EXPECT_EQ(cow.get(), U"abc");
     EXPECT_EQ(pos, positions({ { 0, 0 }, { 1, 1 }, { 2, 2 }, { 3, 3 } }));
@@ -203,7 +226,7 @@ TEST(unicode, utf32Validate) {
   {
     const u32string str { 'a', D800, 'b', MAX_PLUS_1 };
     const u32string_view sv = str;
-    auto cow = utf32::validate(sv, &pos);
+    auto cow = utf32::validate(sv, InvalidUnicodePolicy::Continue,&pos);
     EXPECT_TRUE(cow.modified());
     EXPECT_EQ(cow.get(), U"a�b�");
     EXPECT_EQ(pos, positions({ { 0, 0 }, { 1, 1 }, { 2, 2 }, { 3, 3 }, { 4, 4 } }));
