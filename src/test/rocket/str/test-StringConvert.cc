@@ -34,10 +34,10 @@ TEST(StringConvert, i32) {
 
   EXPECT_THAT(
     [] { static_cast<void>(toType<type>("foo")); },
-    ThrowsMessage<InvalidState>(HasSubstr("Cannot scan \"foo\" as `int`")));
+    ThrowsMessage<InvalidState>(EndsWith("Cannot scan \"foo\" as `int`")));
   EXPECT_THAT(
     [] { static_cast<void>(toType<type>("1x")); },
-    ThrowsMessage<InvalidState>(HasSubstr("Cannot scan \"1x\" as `int`")));
+    ThrowsMessage<InvalidState>(EndsWith("Cannot scan \"1x\" as `int`")));
 }
 
 TEST(StringConvert, i128) {
@@ -61,10 +61,10 @@ TEST(StringConvert, enum) {
 
   EXPECT_THAT(
     [] { static_cast<void>(toType<type>("foo")); },
-    ThrowsMessage<InvalidState>(HasSubstr("Cannot scan \"foo\" as `rocket::log::LogLevel`")));
+    ThrowsMessage<InvalidState>(EndsWith("Cannot scan \"foo\" as `rocket::log::LogLevel`")));
   EXPECT_THAT(
     [] { static_cast<void>(toType<type>("tracex")); },
-    ThrowsMessage<InvalidState>(HasSubstr("Cannot scan \"tracex\" as `rocket::log::LogLevel`")));
+    ThrowsMessage<InvalidState>(EndsWith("Cannot scan \"tracex\" as `rocket::log::LogLevel`")));
 }
 
 // EOF

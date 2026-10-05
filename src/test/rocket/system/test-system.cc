@@ -180,16 +180,16 @@ TEST(system, makeArgs) {
 
   EXPECT_THAT(
     [&] { makeArgs(" a'"); },
-    throwsInputFailure(3, HasSubstr("Unterminated single quote")));
+    throwsInputFailure(3, EndsWith("Unterminated single quote")));
   EXPECT_THAT(
     [&] { makeArgs(" a\""); },
-    throwsInputFailure(3, HasSubstr("Unterminated double quote")));
+    throwsInputFailure(3, EndsWith("Unterminated double quote")));
   EXPECT_THAT(
     [&] { makeArgs("\\"); },
-    throwsInputFailure(0, HasSubstr("Invalid escape sequence")));
+    throwsInputFailure(0, EndsWith("Invalid escape sequence")));
   EXPECT_THAT(
     [&] { makeArgs("\"\\"); },
-    throwsInputFailure(1, HasSubstr("Invalid escape sequence")));
+    throwsInputFailure(1, EndsWith("Invalid escape sequence")));
 }
 
 // EOF

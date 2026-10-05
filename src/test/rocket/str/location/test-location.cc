@@ -143,7 +143,7 @@ TEST(location, locationsMultiByteCharacter) {
       const Position pos { .type=error, .position=4, .message="Oops" };
       locations(input, { pos }, {});
     }),
-    ThrowsMessage<InvalidState>(HasSubstr("Position 4 not found in source")));
+    ThrowsMessage<InvalidState>(EndsWith("Position 4 not found in source")));
 
   // No character boundary at position 7
   EXPECT_THAT(
@@ -151,7 +151,7 @@ TEST(location, locationsMultiByteCharacter) {
       const Position pos { .type=error, .position=7, .message="Oops" };
       locations(input, { pos }, {});
     }),
-    ThrowsMessage<InvalidState>(HasSubstr("Position 7 not found in source")));
+    ThrowsMessage<InvalidState>(EndsWith("Position 7 not found in source")));
 
   // Position 11 is okay
   {

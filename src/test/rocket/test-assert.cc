@@ -41,18 +41,18 @@ TEST(assert, RocketCheck) {
 
   EXPECT_THAT(
       [&] { ROCKET_CHECK(c, c == 'b'); },
-      ThrowsMessage<InvalidArgument>(HasSubstr("Parameter `c`: Check `c == 'b'` failed")));
+      ThrowsMessage<InvalidArgument>(EndsWith("Parameter `c`: Check `c == 'b'` failed")));
 
   EXPECT_THAT(
       [&] { ROCKET_CHECK(c, c == 'b', "oops"); },
-      ThrowsMessage<InvalidArgument>(HasSubstr("Parameter `c`: Check `c == 'b'` failed: oops")));
+      ThrowsMessage<InvalidArgument>(EndsWith("Parameter `c`: Check `c == 'b'` failed: oops")));
 }
 
 TEST(assert, RocketExpect) {
   oopsCalled = false;
   EXPECT_THAT(
       [] { ROCKET_EXPECT(true && false, "{}", oops()); },
-      ThrowsMessage<InvalidState>(HasSubstr("Expectation `true && false` failed: oops")));
+      ThrowsMessage<InvalidState>(EndsWith("Expectation `true && false` failed: oops")));
   EXPECT_TRUE(oopsCalled);
 }
 
@@ -60,7 +60,7 @@ TEST(assert, RocketFail) {
   oopsCalled = false;
   EXPECT_THAT(
       [] { ROCKET_FAIL("{}", oops()); },
-      ThrowsMessage<InvalidState>(HasSubstr("oops")));
+      ThrowsMessage<InvalidState>(EndsWith("oops")));
   EXPECT_TRUE(oopsCalled);
 }
 

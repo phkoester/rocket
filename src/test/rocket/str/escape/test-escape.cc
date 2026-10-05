@@ -115,32 +115,32 @@ TEST(escape, CString) {
 
   EXPECT_THAT(
       [&] { unescapeCString("\"äbc", { .quote='"' }); },
-      throwsInputFailure(5, { 0, 5 }, HasSubstr("Missing terminating '\"' character")));
+      throwsInputFailure(5, { 0, 5 }, EndsWith("Missing terminating '\"' character")));
 
   EXPECT_THAT(
       [&] { unescapeCString("abc\\"); },
-      throwsInputFailure(4, HasSubstr("Expected character, got EOI")));
+      throwsInputFailure(4, EndsWith("Expected character, got EOI")));
 
   EXPECT_THAT(
       [&] { unescapeCString("abc\\Ä"); },
-      throwsInputFailure(3, { 3, 6 }, HasSubstr("Invalid escape sequence")));
+      throwsInputFailure(3, { 3, 6 }, EndsWith("Invalid escape sequence")));
 
   EXPECT_THAT(
       [&] { unescapeCString("\\x"); },
-      throwsInputFailure(2, { 2,  2 }, HasSubstr("Expected 2 hexadecimal digits, got EOI")));
+      throwsInputFailure(2, { 2,  2 }, EndsWith("Expected 2 hexadecimal digits, got EOI")));
 
   EXPECT_THAT(
       [&] { unescapeCString("\\U123456"); },
-      throwsInputFailure(8, { 2, 8 }, HasSubstr("Expected 8 hexadecimal digits, got EOI")));
+      throwsInputFailure(8, { 2, 8 }, EndsWith("Expected 8 hexadecimal digits, got EOI")));
 
   EXPECT_THAT(
       [&] { unescapeCString("\\x0X"); },
-      throwsInputFailure(3, { 2, 4 }, HasSubstr("Expected a hexadecimal digit, got \"X\"")));
+      throwsInputFailure(3, { 2, 4 }, EndsWith("Expected a hexadecimal digit, got \"X\"")));
 
   // 🧑‍🌾: 11 bytes, 3 code points
   EXPECT_THAT(
       [&] { unescapeCString("abc\\🧑‍🌾"); },
-      throwsInputFailure(3, { 3, 15 }, HasSubstr("Invalid escape sequence")));
+      throwsInputFailure(3, { 3, 15 }, EndsWith("Invalid escape sequence")));
 }
 
 TEST(escape, Regex) {

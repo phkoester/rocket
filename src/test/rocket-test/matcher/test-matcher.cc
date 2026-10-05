@@ -21,19 +21,19 @@ TEST(matcher, matchesRegex) {
 TEST(matcher, throwsInputFailure) {
   EXPECT_THAT(
     [&] { throw InputFailure(2, "oops"); },
-    throwsInputFailure(Eq(2), HasSubstr("oops")));
+    throwsInputFailure(Eq(2), EndsWith("oops")));
 
   EXPECT_THAT(
     [&] { throw InputFailure(2, "oops"); },
-    throwsInputFailure(2, HasSubstr("oops")));
+    throwsInputFailure(2, EndsWith("oops")));
 
   EXPECT_THAT(
     [&] { throw InputFailure(2, { { 1, 2 }, { 3, 4 } }, "oops"); },
-    throwsInputFailure(Eq(2), Eq(str::Ranges { { 1, 2 }, { 3, 4 } }), HasSubstr("oops")));
+    throwsInputFailure(Eq(2), Eq(str::Ranges { { 1, 2 }, { 3, 4 } }), EndsWith("oops")));
 
   EXPECT_THAT(
     [&] { throw InputFailure(2, { { 1, 2 }, { 3, 4 } }, "oops"); },
-    throwsInputFailure(2, { { 1, 2 }, { 3, 4 } }, HasSubstr("oops")));
+    throwsInputFailure(2, { { 1, 2 }, { 3, 4 } }, EndsWith("oops")));
 }
 
 // EOF

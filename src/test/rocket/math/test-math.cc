@@ -17,7 +17,7 @@ TEST(math, mean) {
     const vector<i32> vec;
     EXPECT_THAT(
         [&] { mean<f64>(vec.begin(), vec.end()); },
-        ThrowsMessage<InvalidArgument>(HasSubstr("Parameter `end`: Check `end > begin` failed: Range is empty")));
+        ThrowsMessage<InvalidArgument>(EndsWith("Parameter `end`: Check `end > begin` failed: Range is empty")));
   }
 
   {

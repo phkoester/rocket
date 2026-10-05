@@ -81,12 +81,12 @@ TEST(FormattedCodec, FormattedConsumerEnum) {
   enum Color : u8 { Red, Green, Blue };
   EXPECT_THAT(
     [] { encode(Blue); },
-    ThrowsMessage<InvalidState>(containsRegex("Cannot format enum of type `.*Color`")));
+    ThrowsMessage<InvalidState>(matchesRegex(".*Cannot format enum of type `.*Color`")));
 
   EXPECT_EQ(encode(log::LogLevel::info), "info");
   EXPECT_THAT(
     [&] { encode(static_cast<log::LogLevel>(-1)); }, // NOLINT
-    ThrowsMessage<InvalidState>(HasSubstr("Invalid `rocket::log::LogLevel` value 255")));
+    ThrowsMessage<InvalidState>(EndsWith("Invalid `rocket::log::LogLevel` value 255")));
 }
 
 TEST(FormattedCodec, FormattedConsumerIntegerI64) {
@@ -257,7 +257,7 @@ TEST(FormattedCodec, FormattedProducerBool) {
 
   EXPECT_THAT(
     [] { decode<bool>("\r\nx"); },
-    throwsInputFailure(2, HasSubstr("Expected a boolean value")));
+    throwsInputFailure(2, EndsWith("Expected a boolean value")));
 }
 
 TEST(FormattedCodec, FormattedProducerChar) {
@@ -266,7 +266,7 @@ TEST(FormattedCodec, FormattedProducerChar) {
   EXPECT_EQ(decode<char>("'\\t'"), '\t');
   EXPECT_THAT(
     [] { decode<char>("  'ä'"); },
-    throwsInputFailure(2, HasSubstr("Invalid character literal")));
+    throwsInputFailure(2, EndsWith("Invalid character literal")));
 
   EXPECT_EQ(decode<char32>("'ä'"), U'ä');
   EXPECT_EQ(decode<char32>("'\u20ac'"), U'€');
@@ -276,12 +276,12 @@ TEST(FormattedCodec, FormattedProducerEnum) {
   enum Color : u8 { Red, Green, Blue };
   EXPECT_THAT(
     [] { decode<Color>("2"); },
-    throwsInputFailure(0, containsRegex("Cannot scan enum of type `.*Color`")));
+    throwsInputFailure(0, matchesRegex(".*Cannot scan enum of type `.*Color`")));
 
   EXPECT_EQ(decode<log::LogLevel>("  info  "), log::LogLevel::info);
   EXPECT_THAT(
     [] { decode<log::LogLevel>("bogus"); },
-    throwsInputFailure(0, HasSubstr("Invalid value for enum `rocket::log::LogLevel`")));
+    throwsInputFailure(0, EndsWith("Invalid value for enum `rocket::log::LogLevel`")));
 }
 
 TEST(FormattedCodec, FormattedProducerInteger) {
@@ -290,7 +290,7 @@ TEST(FormattedCodec, FormattedProducerInteger) {
 
   EXPECT_THAT(
     [] { decode<i32>("  x"); },
-    throwsInputFailure(2, HasSubstr("Expected an integer value")));
+    throwsInputFailure(2, EndsWith("Expected an integer value")));
 }
 
 TEST(FormattedCodec, FormattedProducerFloat) {
@@ -371,10 +371,10 @@ TEST(FormattedCodec, FormattedProducerDuration) {
 
   EXPECT_THAT(
     [] { decode<seconds>("x"); },
-    throwsInputFailure(0, HasSubstr("Expected a duration")));
+    throwsInputFailure(0, EndsWith("Expected a duration")));
   EXPECT_THAT(
     [] { decode<seconds>("10x"); },
-    throwsInputFailure(2, HasSubstr("Expected a time unit")));
+    throwsInputFailure(2, EndsWith("Expected a time unit")));
 }
 
 TEST(FormattedCodec, FormattedProducerYearMonthDay) {
@@ -385,7 +385,7 @@ TEST(FormattedCodec, FormattedProducerYearMonthDay) {
 
   EXPECT_THAT(
     [] { decode<year_month_day>("x"); },
-    throwsInputFailure(0, HasSubstr("Expected a year, month, and day")));
+    throwsInputFailure(0, EndsWith("Expected a year, month, and day")));
 }
 
 TEST(FormattedCodec, FormattedProducerHourMinuteSecond) {
@@ -409,13 +409,13 @@ TEST(FormattedCodec, FormattedProducerHourMinuteSecond) {
 
   EXPECT_THAT(
     [] { decode<hh_mm_ss<milliseconds>>("x"); },
-    throwsInputFailure(0, HasSubstr("Expected an hour, minute, and second")));
+    throwsInputFailure(0, EndsWith("Expected an hour, minute, and second")));
   EXPECT_THAT(
     [] { decode<hh_mm_ss<milliseconds>>("01:02:"); },
-    throwsInputFailure(0, HasSubstr("Expected an hour, minute, and second")));
+    throwsInputFailure(0, EndsWith("Expected an hour, minute, and second")));
   EXPECT_THAT(
     [] { decode<hh_mm_ss<milliseconds>>("01:02:03."); },
-    throwsInputFailure(9, HasSubstr("Expected subseconds")));
+    throwsInputFailure(9, EndsWith("Expected subseconds")));
 }
 
 TEST(FormattedCodec, FormattedProducerTimePoint) {
