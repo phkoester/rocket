@@ -21,6 +21,8 @@ namespace rocket {
  * @tparam U the type of the owned value. If this is different from @p T, then @p T is assumed to be an
  *   efficiently copyable view type, such as #std::span or #std::string_view. In this case, a @p T must be
  *   constructible from a @p U
+ *
+ * @NotThreadSafe
  */
 template<typename T, typename U = T> requires std::same_as<T, U> || std::constructible_from<T, const U&>
 struct Cow {

@@ -13,7 +13,7 @@ using uint128 = boost::int128::uint128;
 
 // `TEST` ---------------------------------------------------------------------------------------------------
 
-TEST(boostInt128, opCompare) {
+TEST(boostInt128, opCmp) {
   EXPECT_LT(int128(-1), int128(0));
   EXPECT_GT(uint128(-1), uint128(0));
 }
