@@ -107,11 +107,11 @@ void expectComma(nio::Source& in);
  * There is an optimization for contiguous sources.
  *
  * @param in the source to read from
- * @param s the string to read, must not be empty
+ * @param str the string to read, must not be empty
  * @param ignoreCase whether to ignore case
  * @return whether the string was read
  */
-[[nodiscard]] bool readString(nio::Source& in, std::string_view s, bool ignoreCase = false);
+[[nodiscard]] bool readString(nio::Source& in, std::string_view str, bool ignoreCase = false);
 
 /**
  * If the next character in the source is `'.'`, reads a subsecond string and returns it as nanoseconds.

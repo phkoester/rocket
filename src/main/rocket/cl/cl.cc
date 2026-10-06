@@ -130,23 +130,23 @@ CommandLine::CommandLine(
 }
 
 void
-CommandLine::applyOpt(const Option& opt, bool nameFlag, const optional<string>& value) {
+CommandLine::applyOpt(const Option& opt, bool nameFlag, const optional<string>& val) {
   // Don't use `ROCKET_CHECK` here for cleaner exception messages
 
-  if (opt.takesValue && not value) {
+  if (opt.takesValue && not val) {
     ROCKET_FAIL("Missing value for option `{}`", name(opt, nameFlag));
   }
   // Usually, options not taking a value may not be assigned a value. There is one exception to this rule:
   // boolean values are allowed
   static const set<string_view> BOOL_VALUES { "0", "false", "1", "true" };
-  if (not opt.takesValue && value && not BOOL_VALUES.contains(*value)) {
+  if (not opt.takesValue && val && not BOOL_VALUES.contains(*val)) {
     ROCKET_FAIL("Option `{}` cannot take a value", name(opt, nameFlag));
   }
-  string useValue = value.value_or("true");
+  string useValue = val.value_or("true");
 
   try {
     if (opt.choices && not opt.choices->contains(useValue)) {
-      ROCKET_FAIL("Invalid value `{}`", value);
+      ROCKET_FAIL("Invalid value `{}`", val);
     }
     const bool result = opt.apply(useValue);
     parserState_.updateOpt(opt, result);
@@ -166,14 +166,14 @@ CommandLine::applyOpt(const Option& opt, bool nameFlag, const optional<string>& 
 }
 
 void
-CommandLine::applyParam(const Parameter& param, const string& value) {
+CommandLine::applyParam(const Parameter& param, const string& val) {
   // Don't use `ROCKET_CHECK` here for cleaner exception messages
 
   try {
-    if (param.choices && not param.choices->contains(value)) {
-      ROCKET_FAIL("Invalid value `{}`", value);
+    if (param.choices && not param.choices->contains(val)) {
+      ROCKET_FAIL("Invalid value `{}`", val);
     }
-    param.apply(value);
+    param.apply(val);
     parserState_.updateParam(param);
   } catch (const Exception& ex) {
     string expected;
@@ -186,7 +186,7 @@ CommandLine::applyParam(const Parameter& param, const string& value) {
     if (param.format) {
       expected = fmt::format("; expected {}", *param.format);
     }
-    ROCKET_FAIL("Parameter `{}`: Invalid value {:?}{}", param.name, value, expected);
+    ROCKET_FAIL("Parameter `{}`: Invalid value {:?}{}", param.name, val, expected);
   }
 }
 
@@ -247,19 +247,19 @@ CommandLine::parse(const vector<string>& args, nio::Sink& out, nio::Sink& err, b
         const Option& opt = *mapIt->second;
 
         // Obtain value, if any
-        optional<string> value;
+        optional<string> val;
         if (eq != string::npos) {
           // Take everything after the `=`
-          value = arg.substr(eq + 1);
+          val = arg.substr(eq + 1);
         } else if (opt.takesValue) {
           // Take the next argument
           if (it + 1 != useArgs.end()) {
-            value = *++it;
+            val = *++it;
           }
         }
 
         // Apply option
-        applyOpt(opt, true, value);
+        applyOpt(opt, true, val);
       } else if (not consumeOpts && arg.starts_with("-") && arg != "-") {
         // 3. "-..." seen: Parse options by short name; the last one may take a value
 
@@ -281,23 +281,23 @@ CommandLine::parse(const vector<string>& args, nio::Sink& out, nio::Sink& err, b
           auto segNext = segIt + 1;
           if (segNext != segsEnd && *segNext == "=") {
             // Option is followed by `=`: Take everything after the `=` and break the character loop
-            string value = unicode::concat(segs, ++segNext - segsBegin);
-            applyOpt(opt, false, value);
+            string val = unicode::concat(segs, ++segNext - segsBegin);
+            applyOpt(opt, false, val);
             break;
           } else if (opt.takesValue) { // NOLINT(*-else-after-return)
             // Option takes value: break the character loop
             if (segNext != segsEnd) {
               // Take the rest of the argument
-              string value = unicode::concat(segs, segNext - segsBegin);
-              applyOpt(opt, false, value);
+              string val = unicode::concat(segs, segNext - segsBegin);
+              applyOpt(opt, false, val);
             }
             else {
-              optional<string> value;
+              optional<string> val;
               // Take the next argument, if any
               if (it + 1 != useArgs.end()) {
-                value = *++it;
+                val = *++it;
               }
-              applyOpt(opt, false, value);
+              applyOpt(opt, false, val);
             }
             break;
           } else {

@@ -174,13 +174,13 @@ readChoice(nio::Source& in, const set<string_view>& values, bool ignoreCase) {
 
     const auto remaining = contiguous->str();
     optional<string_view> ret; // The longest matching value so far
-    for (const auto& value : values) {
-      ROCKET_CHECK(values, not value.empty(), "May not contain empty elements");
-      if (ret && ret->size() >= value.size()) {
+    for (const auto& val : values) {
+      ROCKET_CHECK(values, not val.empty(), "May not contain empty elements");
+      if (ret && ret->size() >= val.size()) {
         continue; // Cannot beat the current best
       }
-      if (startsWith(remaining, value, ignoreCase)) {
-        ret = value;
+      if (startsWith(remaining, val, ignoreCase)) {
+        ret = val;
       }
     }
     if (ret) {
@@ -196,17 +196,17 @@ readChoice(nio::Source& in, const set<string_view>& values, bool ignoreCase) {
 }
 
 bool
-readString(nio::Source& in, std::string_view s, bool ignoreCase) {
-  ROCKET_CHECK(s, not s.empty(), "May not be empty");
+readString(nio::Source& in, std::string_view str, bool ignoreCase) {
+  ROCKET_CHECK(str, not str.empty(), "May not be empty");
 
 #ifndef ROCKET_NIO_NO_CONTIGUOUS_SOURCE
   if (const auto* contiguous = dynamic_cast<nio::ContiguousSource*>(&in); contiguous != nullptr) {
     // Contiguous source
 
-    if (not startsWith(contiguous->str(), s, ignoreCase)) {
+    if (not startsWith(contiguous->str(), str, ignoreCase)) {
       return false;
     }
-    in.seek(safe<i64>(s.size()), nio::SeekMode::cur);
+    in.seek(safe<i64>(str.size()), nio::SeekMode::cur);
     return true;
   }
 #endif
@@ -215,7 +215,7 @@ readString(nio::Source& in, std::string_view s, bool ignoreCase) {
 
   const auto pos = in.tell();
 
-  for (const char expected : s) {
+  for (const char expected : str) {
     char c; // NOLINT
     if (in.read(c) != 1 || (ignoreCase ? tolower(c) != tolower(expected) : c != expected)) {
       // EOF or mismatch: rewind
@@ -442,20 +442,20 @@ skip(nio::Source& in, bool cComments, bool shellComments) { // NOLINT(*-complexi
 }
 
 bool
-skipUntilString(nio::Source& in, std::string_view s) {
-  ROCKET_CHECK(s, not s.empty(), "May not be empty");
+skipUntilString(nio::Source& in, std::string_view str) {
+  ROCKET_CHECK(str, not str.empty(), "May not be empty");
 
 #ifndef ROCKET_NIO_NO_CONTIGUOUS_SOURCE
   if (const auto* contiguous = dynamic_cast<nio::ContiguousSource*>(&in); contiguous != nullptr) {
     // Contiguous source
 
     const auto str = contiguous->str();
-    const auto pos = str.find(s);
+    const auto pos = str.find(str);
     if (pos == NPOS) {
       in.seek(0, nio::SeekMode::end);
       return false;
     }
-    in.seek(safe<i64>(pos + s.size()), nio::SeekMode::cur);
+    in.seek(safe<i64>(pos + str.size()), nio::SeekMode::cur);
     return true;
   }
 #endif
@@ -469,9 +469,9 @@ skipUntilString(nio::Source& in, std::string_view s) {
     }
 
     const u64 index = seen.size();
-    if (c == s[index]) {
+    if (c == str[index]) {
       seen.push_back(c);
-      if (seen == s) {
+      if (seen == str) {
         return true;
       }
     } else {

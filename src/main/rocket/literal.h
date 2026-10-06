@@ -46,7 +46,7 @@ charValue(char c) {
 }
 
 /**
- * Checks whether c_n + ... + c_2 * BASE^(n-2) + c_1 * BASE^(n-1) + v * BASE^n is a valid number when
+ * Checks whether c_n + ... + c_2 * BASE^(n-2) + c_1 * BASE^(n-1) + val * BASE^n is a valid number when
  * interpreted in base @p BASE.
  */
 template<typename T, int BASE>
@@ -56,7 +56,7 @@ validateUnsignedImpl([[maybe_unused]] T val) {
 }
 
 /**
- * Checks whether c_n + ... + c_2 * BASE^(n-2) + c_1 * BASE^(n-1) + v * BASE^n is a valid number when
+ * Checks whether c_n + ... + c_2 * BASE^(n-2) + c_1 * BASE^(n-1) + val * BASE^n is a valid number when
  * interpreted in base @p BASE.
  */
 template<typename T, int BASE, char C, char... Chars>

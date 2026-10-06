@@ -70,8 +70,8 @@ TEST(CompareEncoder, String) {
 }
 
 TEST(CompareEncoder, ListSpan) {
-  const vector<i32> v { 1, 2, 3 };
-  const span<const i32> span = v;
+  const vector<i32> vec { 1, 2, 3 };
+  const span<const i32> span = vec;
 
   const CompareEncoder<> encoder;
   EXPECT_TRUE(std::is_eq(encoder.encode(span, span)));

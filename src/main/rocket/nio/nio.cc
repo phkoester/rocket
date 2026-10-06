@@ -118,17 +118,17 @@ FileSink::FileSink(FILE* file) :
 FileSink::FileSink(const filesystem::path& path, bool append) :
   file_(io::open(path, append ? "ab" : "wb")),
   closeOnDestroy_(true) {
-  if (not file_) {
+  if (file_ == nullptr) {
     throw InvalidState(fmt::format("Failed to open file `{}` for writing", path));
   }
   status_.bad = false;
 }
 
 FileSink::~FileSink() {
-  flush();
+  flush(); // NOLINT
 
   if (closeOnDestroy_) {
-    [[maybe_unused]] const auto result = fclose(file_);
+    [[maybe_unused]] const auto result = fclose(file_); // NOLINT
     NIO_LOG("fclose=" << result << ", file=" << file_ << ", ferror=" << ferror(file_));
   }
 }
@@ -200,7 +200,7 @@ StreamSink::StreamSink(ostream& os) :
 }
 
 StreamSink::~StreamSink() {
-  flush();
+  flush(); // NOLINT
 }
 
 bool
@@ -582,7 +582,7 @@ FileSource::FileSource(FILE* file) :
 FileSource::FileSource(const filesystem::path& path) :
   file_(io::open(path, "rb")),
   closeOnDestroy_(true) {
-  if (not file_) {
+  if (file_ == nullptr) {
     throw InvalidState(fmt::format("Failed to open file `{}` for reading", path));
   }
   status_.bad = false;
@@ -590,7 +590,7 @@ FileSource::FileSource(const filesystem::path& path) :
 
 FileSource::~FileSource() {
   if (closeOnDestroy_) {
-    [[maybe_unused]] const auto result = fclose(file_);
+    [[maybe_unused]] const auto result = fclose(file_); // NOLINT
     NIO_LOG("fclose=" << result << ", file=" << file_ << ", ferror=" << ferror(file_));
   }
 }

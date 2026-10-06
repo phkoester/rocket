@@ -104,7 +104,7 @@ namespace env {
 // `GetError`, `GetResult` ..................................................................................
 
 /// The error type for #rocket::system::env::get(std::string_view).
-enum GetError {
+enum GetError : u8 {
   ConversionFailed, ///< The conversion to the target type failed.
   NotFound ///< The environment variable was not found.
 };
@@ -122,7 +122,7 @@ using GetResult = std::expected<T, GetError>;
  *
  * @return a set of name-value pairs
  */
-std::unordered_map<std::string, std::string> get();
+[[nodiscard]] std::unordered_map<std::string, std::string> get();
 
 /**
  * Returns the value of an environment variable.
@@ -131,8 +131,7 @@ std::unordered_map<std::string, std::string> get();
  *
  * @tparam T the type to convert a string value to
  * @param name the name of the environment variable
- * @return the value of the environment variable, converted to type @p T, a #rocket::system::env::EnvError
- *   otherwise
+ * @return the value of the environment variable, converted to type @p T, otherwise an error
  */
 template<typename T> requires (not std::same_as<T, std::string_view>)
 [[nodiscard]] GetResult<T>

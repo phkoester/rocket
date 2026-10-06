@@ -27,7 +27,7 @@ struct Error {
    *
    * @param message the error message
    */
-  Error(std::string_view message) : message(message) {}
+  explicit Error(std::string_view message) : message(message) {}
 
   /// @dtor
   virtual ~Error() = default;

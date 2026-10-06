@@ -355,7 +355,7 @@ struct FileSink : Sink {
    */
   explicit FileSink(const std::filesystem::path& path, bool append = true);
 
-  virtual ~FileSink() override;
+  ~FileSink() override;
 
   bool flush() override;
 
@@ -724,7 +724,7 @@ struct FileSource : Source {
    */
   explicit FileSource(const std::filesystem::path& path);
 
-  virtual ~FileSource() override;
+  ~FileSource() override;
 
   [[nodiscard]] i32 handle() const override;
 

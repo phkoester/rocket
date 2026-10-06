@@ -67,8 +67,8 @@ struct SubformatParams {
    * @param tag the tag
    * @param value the value
    */
-  void tag(std::basic_string_view<C> tag, const std::basic_string<C>& value) {
-    tagged_.emplace(tag, value);
+  void tag(std::basic_string_view<C> tag, const std::basic_string<C>& val) {
+    tagged_.emplace(tag, val);
   }
 
   /**
@@ -92,7 +92,10 @@ struct SubformatParams {
    * @param args the arguments
    */
   template<typename... T>
-  void tag(std::basic_string_view<C> tag, const std::locale& locale, fmt::format_string<T...> fmt, T&&... args) {
+  void tag(
+    std::basic_string_view<C> tag,
+    const std::locale& locale,
+    fmt::format_string<T...> fmt, T&&... args) {
     tagged_.emplace(tag, fmt::format(locale, fmt, std::forward<T>(args)...));
   }
 };
@@ -193,8 +196,8 @@ struct fmt::formatter<rocket::format::Subformat<C>, C> {
   format(const rocket::format::Subformat<C>& val, FormatContext& ctx) const {
     const auto& params = val.get();
     auto formatted = params.formatted_;
-    for (const auto& [tag, value] : params.tagged_) {
-      boost::replace_all(formatted, tag, value);
+    for (const auto& [tag, val] : params.tagged_) {
+      boost::replace_all(formatted, tag, val);
     }
     return detail::write<C>(ctx.out(), formatted);
   }

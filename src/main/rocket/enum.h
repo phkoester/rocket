@@ -107,9 +107,9 @@
     /* Nonstrict */ \
     u64 maxValueSize = 0; \
     ns::type maxKey; \
-    for (const auto& [key, value] : ns::get##name##Map__().left) { \
-      if (str.starts_with(value) && value.size() > maxValueSize) { \
-        maxValueSize = value.size(); \
+    for (const auto& [key, val] : ns::get##name##Map__().left) { \
+      if (str.starts_with(val) && val.size() > maxValueSize) { \
+        maxValueSize = val.size(); \
         maxKey = key; \
       } \
     } \
@@ -238,21 +238,20 @@ struct scn::scanner<E, char> : scn::scanner<::std::string, char> {
   scan(E& val, Context& ctx) const {
     std::string str;
     auto scanResult = Base::scan(str, ctx);
-    if (scanResult) {
-      const auto enumResult = ::rocket::Enum<E>::toType(str, false);
-      if (not enumResult) {
-        return unexpected(scan_error(scan_error::invalid_scanned_value, "Invalid enum value"));
-      }
-      const auto [size, enumVal] = enumResult.value();
-      // If the consumed string is longer than the scanned portion, we need to correct the iterator
-      const i64 correction = size - str.size(); // Zero or negative
-      val = enumVal;
-      auto it = scanResult.value();
-      std::advance(it, correction);
-      return it; \
-    } else {
+    if (not scanResult) {
       return unexpected(scanResult.error());
     }
+    const auto enumResult = ::rocket::Enum<E>::toType(str, false);
+    if (not enumResult) {
+      return unexpected(scan_error(scan_error::invalid_scanned_value, "Invalid enum value"));
+    }
+    const auto [size, enumVal] = enumResult.value();
+    // If the consumed string is longer than the scanned portion, we need to correct the iterator
+    const i64 correction = size - str.size(); // Zero or negative
+    val = enumVal;
+    auto it = scanResult.value();
+    std::advance(it, correction);
+    return it; \
   }
 
   /// @endcond

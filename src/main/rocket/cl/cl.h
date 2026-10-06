@@ -651,9 +651,9 @@ private:
 
   ParserState parserState_;
 
-  void applyOpt(const Option& opt, bool nameFlag, const std::optional<std::string>& value);
+  void applyOpt(const Option& opt, bool nameFlag, const std::optional<std::string>& val);
 
-  void applyParam(const Parameter& param, const std::string& value);
+  void applyParam(const Parameter& param, const std::string& val);
 
   void handleException(const std::exception& ex, nio::Sink& out, i32 status) const;
 

@@ -903,26 +903,26 @@ struct FormattedProducerImpl<DataType::Duration, T> {
       "ns", "µs", "us", "ms", "s", "min", "h", "d", "w", "m", "y"
     };
 
-    if (auto value = readChoice(in, UNITS, true); value) {
-      if (*value == "ns") {
+    if (auto val = readChoice(in, UNITS, true); val) {
+      if (*val == "ns") {
         val = duration_cast<T>(nanoseconds(count));
-      } else if (*value == "µs" || *value == "us") {
+      } else if (*val == "µs" || *val == "us") {
         val = duration_cast<T>(microseconds(count));
-      } else if (*value == "ms") {
+      } else if (*val == "ms") {
         val = duration_cast<T>(milliseconds(count));
-      } else if (*value == "s") {
+      } else if (*val == "s") {
         val = duration_cast<T>(seconds(count));
-      } else if (*value == "min") {
+      } else if (*val == "min") {
         val = duration_cast<T>(minutes(count));
-      } else if (*value == "h") {
+      } else if (*val == "h") {
         val = duration_cast<T>(hours(count));
-      } else if (*value == "d") {
+      } else if (*val == "d") {
         val = duration_cast<T>(days(count));
-      } else if (*value == "w") {
+      } else if (*val == "w") {
         val = duration_cast<T>(weeks(count));
-      } else if (*value == "m") {
+      } else if (*val == "m") {
         val = duration_cast<T>(months(count));
-      } else if (*value == "y") {
+      } else if (*val == "y") {
         val = duration_cast<T>(years(count));
       } else {
         ROCKET_TERMINATE_UNREACHABLE_CODE();

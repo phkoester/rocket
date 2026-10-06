@@ -134,23 +134,23 @@ getImpl(std::string_view name) {
 }
 
 void
-setImpl(std::string_view name, const optional<string>& value, bool replace) {
-  ROCKET_CHECK(value, value || replace);
+setImpl(std::string_view name, const optional<string>& val, bool replace) {
+  ROCKET_CHECK(val, val || replace);
 
   ROCKET_MUTEX_LOCK(envMutex);
 
   const string nameStr(name);
 
 #ifdef ROCKET_OS_WINDOWS
-  if (value && not replace && env::get<string>(name)) {
+  if (val && not replace && env::get<string>(name)) {
     return;
   }
   // Set/unset
-  _putenv_s(nameStr.c_str(), value ? value->c_str() : "");
+  _putenv_s(nameStr.c_str(), val ? val->c_str() : "");
 #else
-  if (value) {
+  if (val) {
     // Set
-    setenv(nameStr.c_str(), value->c_str(), replace ? 1 : 0); // NOLINT(concurrency-*)
+    setenv(nameStr.c_str(), val->c_str(), replace ? 1 : 0); // NOLINT(concurrency-*)
   } else {
     // Unset
     unsetenv(const_cast<char*>(nameStr.c_str())); // NOLINT(concurrency-*)
@@ -283,15 +283,15 @@ get() {
 #endif
   while(*p != nullptr) {
     const string_view entry(*p);
-    string_view name, value;
+    string_view name, val;
     auto eq = entry.find('=');
     if (eq == string_view::npos) {
       name = entry;
     } else {
       name = entry.substr(0, eq);
-      value = entry.substr(eq + 1);
+      val = entry.substr(eq + 1);
     }
-    ret.emplace(name, value);
+    ret.emplace(name, val);
     ++p;
   }
 

@@ -49,7 +49,7 @@ struct CStringConfig {
  *
  * @param input the input string
  * @param config the configuration, see #rocket::str::escape::CStringConfig
- * @param result a pointer to a #rocket::str::escape::Result. If it is nonnull, then the result is populated
+ * @param positions a pointer to a #rocket::Positions. If it is nonnull, then the positions are populated
  * @return the escaped string
  */
 std::string escapeCString(
@@ -62,7 +62,7 @@ std::string escapeCString(
  *
  * @param input the C string
  * @param config the configuration, see #rocket::str::escape::CStringConfig
- * @param result a pointer to a #rocket::str::escape::Result. If it is nonnull, then the result is populated
+ * @param positions a pointer to a #rocket::Positions. If it is nonnull, then the positions are populated
  * @return the unescaped string
  */
 std::string unescapeCString(
@@ -74,7 +74,7 @@ std::string unescapeCString(
  * Escapes an input string to a regular expression.
  *
  * @param input the input string
- * @param result a pointer to a #rocket::str::escape::Result. If it is nonnull, then the result is populated
+ * @param positions a pointer to a #rocket::Positions. If it is nonnull, then the positions are populated
  * @return the escaped string
  */
 std::string escapeRegex(std::string_view input, Positions* positions = nullptr);
@@ -83,7 +83,7 @@ std::string escapeRegex(std::string_view input, Positions* positions = nullptr);
  * Unescapes a regular expression.
  *
  * @param input the regular expression
- * @param result a pointer to a #rocket::str::escape::Result. If it is nonnull, then the result is populated
+ * @param positions a pointer to a #rocket::Positions. If it is nonnull, then the positions are populated
  * @return the unescaped string
  */
 std::string unescapeRegex(std::string_view input, Positions* positions = nullptr);

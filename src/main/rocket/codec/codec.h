@@ -3,9 +3,6 @@
  *
  * Encoding and decoding of arbitrary C++ data structures for various purposes, such as comparisons, hashing,
  * formatting, scanning, serialization, deserialization, etc.
- *
- * @note For binary transmissions, the byte order in encoded form is always **little endian**. On big-endian
- *       systems, some byte swapping is necessary before encoding and after decoding.
  */
 
 #pragma once
