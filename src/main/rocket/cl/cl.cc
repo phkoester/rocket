@@ -12,8 +12,6 @@
 #include "rocket/system/terminal/terminal.h"
 #include "rocket/unicode/Iterator.h"
 
-namespace fs = std::filesystem;
-
 using namespace rocket;
 using namespace std;
 
@@ -33,9 +31,9 @@ addArg(vector<string>& out, const string& arg, set<string>& seenFiles) { // NOLI
     } else {
       // Check argument file
       string file = arg.substr(1);
-      fs::path absPath;
+      filesystem::path absPath;
       try {
-        absPath = fs::canonical(file);
+        absPath = filesystem::canonical(file);
       } catch (const exception&) {
         ROCKET_FAIL("Cannot resolve argument file `{}`", file);
       }

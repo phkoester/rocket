@@ -10,6 +10,8 @@
 #include "rocket/log/log.h"
 #include "rocket/version.h"
 
+#include <expected>
+
 using namespace rocket;
 using namespace rocket::unicode;
 using namespace std;
@@ -34,6 +36,14 @@ auto& out = nio::out;
 
 // Local functions ------------------------------------------------------------------------------------------
 
+expected<f64, string>
+divide(f64 a, f64 b) {
+  if (b == 0) {
+    return unexpected("Division by zero");
+  }
+  return a / b;
+}
+
 void
 myExit() {
   out.println("myExit");
@@ -45,6 +55,8 @@ myTerminate() {
   // out.println("myTerminate");
 }
 
+recursive_mutex toyMutex;
+
 void
 toy() {
   using namespace std::chrono;
@@ -55,6 +67,17 @@ toy() {
   nio::out.println("tellg unsigned: {}", std::is_unsigned_v<std::ios::pos_type>);
 
   ROCKET_LOG_TRACE("Hey {}", "there");
+
+  ROCKET_MUTEX_LOCK(toyMutex);
+  ROCKET_MUTEX_LOCK(toyMutex);
+  out.println("Got lock");
+
+  auto result = divide(3, 0);
+  if (result) {
+    out.println("Result: {}", result.value());
+  } else {
+    out.println("Error: {}", result.error());
+  }
 }
 
 } // namespace

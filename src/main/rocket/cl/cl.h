@@ -41,36 +41,58 @@ using ValueType = ValueTypeImpl<T>::Type;
 
 // `applyTo` ------------------------------------------------------------------------------------------------
 
+// XXX umstellen auf expected
+
 inline bool
 applyTo(bool& out, std::string_view val) {
-  out = str::toType<bool>(val);
+  auto result = str::toType<bool>(val);
+  if (not result) {
+    throw InvalidState(result.error().message);
+  }
+  out = result.value();
   return out;
 }
 
 inline bool
 applyTo(std::optional<bool>& out, std::string_view val) {
-  out = str::toType<bool>(val);
+  auto result = str::toType<bool>(val);
+  if (not result) {
+    throw InvalidState(result.error().message);
+  }
+  out = result.value();
   return *out;
 }
 
 template<typename T>
 inline bool
 applyTo(T& out, std::string_view val) {
-  out = str::toType<T>(val);
+  auto result = str::toType<T>(val);
+  if (not result) {
+    throw InvalidState(result.error().message);
+  }
+  out = result.value();
   return true;
 }
 
 template<typename T>
 inline bool
 applyTo(std::optional<T>& out, std::string_view val) {
-  out = str::toType<T>(val);
+  auto result = str::toType<T>(val);
+  if (not result) {
+    throw InvalidState(result.error().message);
+  }
+  out = result.value();
   return true;
 }
 
 template<typename T>
 inline bool
 applyTo(std::vector<T>& out, std::string_view val) {
-  out.push_back(str::toType<T>(val));
+  auto result = str::toType<T>(val);
+  if (not result) {
+    throw InvalidState(result.error().message);
+  }
+  out.push_back(result.value());
   return true;
 }
 
@@ -80,14 +102,22 @@ applyTo(std::optional<std::vector<T>>& out, std::string_view val) {
   if (not out) {
     out = std::vector<T>();
   }
-  out->push_back(str::toType<T>(val));
+  auto result = str::toType<T>(val);
+  if (not result) {
+    throw InvalidState(result.error().message);
+  }
+  out->push_back(result.value());
   return true;
 }
 
 template<typename I> requires IsInteger<I>
 inline bool
 applyToInteger(I& out, std::string_view val) {
-  const bool flag = str::toType<bool>(val);
+  auto result = str::toType<bool>(val);
+  if (not result) {
+    throw InvalidState(result.error().message);
+  }
+  const bool flag = result.value();
   if (flag) {
     ++out;
   } else if (out > 0) {

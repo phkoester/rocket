@@ -37,14 +37,14 @@ static constexpr u64 MIN_BUFFER_SIZE = 64;
 
 // `Status` -------------------------------------------------------------------------------------------------
 
-/// The status of an I/O instance.
+/// The status of a device.
 struct Status {
   /**
-   * If #bad is set, the I/O is in an unusable state.
+   * If #bad is set, the device is in an unusable state.
    */
   unsigned bad : 1;
   /**
-   * If #eof is set, the I/O is exhausted.
+   * If #eof is set, the device is exhausted.
    *
    * Subsequent operations, such as repositioning, may clear this bit.
    */
@@ -363,7 +363,7 @@ struct FileSink : Sink {
   /**
    * @ctor
    *
-   * @param file pointer to a `FILE`
+   * @param file pointer to a `FILE`, may not be null
    * @param config the configuration
    */
   explicit FileSink(FILE* file, const Config& config = defaultConfig());
@@ -373,6 +373,7 @@ struct FileSink : Sink {
    *
    * @param path a path to a file
    * @param config the configuration
+   * @throw InvalidState if the file cannot be opened
    */
   explicit FileSink(const std::filesystem::path& path, const Config& config = defaultConfig());
 
@@ -391,7 +392,7 @@ struct FileSink : Sink {
 
 ROCKET_TEST_PRIVATE:
 
-  io::FileHandle handle_;
+  io::FileHandle handle_; ///< The file handle.
   Config config_; ///< The configuration.
 };
 
@@ -448,7 +449,7 @@ private:
 /**
  * The class #StreamSink provides support for #std::ostream.
  *
- * Using I/O streams is generally discouraged, because it’s not partable and not efficient. Wherever
+ * Using I/O streams is generally discouraged, because it’s not portable and not efficient. Wherever
  * possible, use #rocket::nio::FileSink instead.
  */
 struct StreamSink : Sink {
@@ -750,7 +751,7 @@ struct FileSource : Source {
   /**
    * @ctor
    *
-   * @param file pointer to a `FILE`
+   * @param file pointer to a `FILE`, may not be null
    * @param config the configuration
    */
   explicit FileSource(FILE* file, const Config& config = defaultConfig());
@@ -760,6 +761,7 @@ struct FileSource : Source {
    *
    * @param path a path to a file
    * @param config the configuration
+   * @throw InvalidState if the file cannot be opened
    */
   explicit FileSource(const std::filesystem::path& path, const Config& config = defaultConfig());
 
@@ -782,7 +784,7 @@ struct FileSource : Source {
 
 ROCKET_TEST_PRIVATE:
 
-  io::FileHandle handle_;
+  io::FileHandle handle_; ///< The file handle.
   Config config_; ///< The configuration.
   std::unique_ptr<std::istream> istream_; ///< An optional input stream.
 };

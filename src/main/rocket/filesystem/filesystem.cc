@@ -7,10 +7,10 @@
 #include "rocket/math/random/random.h"
 #include "rocket/system/system.h"
 
-namespace fs = std::filesystem;
-
 using namespace rocket;
 using namespace std;
+
+namespace fs = std::filesystem;
 
 namespace rocket::filesystem {
 

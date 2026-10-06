@@ -22,7 +22,7 @@ namespace internal {
 
 std::optional<std::string> getImpl(std::string_view name);
 
-void setImpl(std::string_view name, const std::optional<std::string>& value, bool replace);
+void setImpl(std::string_view name, const std::optional<std::string>& val, bool replace);
 
 } // namespace internal
 
@@ -120,14 +120,19 @@ std::unordered_map<std::string, std::string> get();
  * @return null if the environment variable does not exist or if the string conversion fails, otherwise a
  *   value of type @p T
  */
+// XXX umstellen auf expected
 template<typename T> requires (not std::same_as<T, std::string_view>)
 std::optional<T>
 get(std::string_view name) {
-  auto v = internal::getImpl(name);
-  if (not v) {
-    return std::nullopt;
+  auto val = internal::getImpl(name);
+  if (not val) {
+    return {};
   }
-  return rocket::str::tryToType<T>(*v);
+  auto result = rocket::str::toType<T>(*val);
+  if (not result) {
+    return {};
+  }
+  return result.value();
 }
 
 /**
@@ -139,13 +144,13 @@ get(std::string_view name) {
  *
  * @tparam T the type of the new value
  * @param name the name of the environment variable
- * @param value the new value
+ * @param val the new value
  * @param replace if `true`, then this function overwrites an existing value, otherwise it does not
  */
 template<typename T>
 inline void
-set(std::string_view name, T&& value, bool replace = true) {
-  internal::setImpl(name, fmt::format("{}", std::forward<T>(value)), replace);
+set(std::string_view name, T&& val, bool replace = true) {
+  internal::setImpl(name, fmt::format("{}", std::forward<T>(val)), replace);
 }
 
 /**

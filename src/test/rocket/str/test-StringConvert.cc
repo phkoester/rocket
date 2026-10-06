@@ -32,12 +32,8 @@ TEST(StringConvert, i32) {
   EXPECT_EQ(toType<type>("-999999"), -999'999);
   EXPECT_EQ(toType<type>("-2147483648"), numeric_limits<type>::min());
 
-  EXPECT_THAT(
-    [] { static_cast<void>(toType<type>("foo")); },
-    ThrowsMessage<InvalidState>(EndsWith("Cannot scan \"foo\" as `int`")));
-  EXPECT_THAT(
-    [] { static_cast<void>(toType<type>("1x")); },
-    ThrowsMessage<InvalidState>(EndsWith("Cannot scan \"1x\" as `int`")));
+  EXPECT_EQ(toType<type>("foo").error().message, "Cannot scan \"foo\" as `int`");
+  EXPECT_EQ(toType<type>("1x").error().message, "Cannot scan \"1x\" as `int`");
 }
 
 TEST(StringConvert, i128) {
@@ -47,11 +43,11 @@ TEST(StringConvert, i128) {
   EXPECT_EQ(toType<type>("-170141183460469231731687303715884105728"), numeric_limits<type>::min());
 
   EXPECT_THAT(
-    [] { static_cast<void>(toType<type>("foo")); },
-    ThrowsMessage<InvalidState>(matchesRegex(".*: Cannot scan \"foo\" as `.*int128`")));
+    toType<type>("foo").error().message,
+    matchesRegex("Cannot scan \"foo\" as `.*int128`"));
   EXPECT_THAT(
-    [] { static_cast<void>(toType<type>("1x")); },
-    ThrowsMessage<InvalidState>(matchesRegex(".*: Cannot scan \"1x\" as `.*int128`")));
+    toType<type>("1x").error().message,
+    matchesRegex("Cannot scan \"1x\" as `.*int128`"));
 }
 
 TEST(StringConvert, enum) {
@@ -59,12 +55,8 @@ TEST(StringConvert, enum) {
 
   EXPECT_EQ(toType<type>("trace"), log::LogLevel::trace);
 
-  EXPECT_THAT(
-    [] { static_cast<void>(toType<type>("foo")); },
-    ThrowsMessage<InvalidState>(EndsWith("Cannot scan \"foo\" as `rocket::log::LogLevel`")));
-  EXPECT_THAT(
-    [] { static_cast<void>(toType<type>("tracex")); },
-    ThrowsMessage<InvalidState>(EndsWith("Cannot scan \"tracex\" as `rocket::log::LogLevel`")));
+  EXPECT_EQ(toType<type>("foo").error().message, "Cannot scan \"foo\" as `rocket::log::LogLevel`");
+  EXPECT_EQ(toType<type>("tracex").error().message, "Cannot scan \"tracex\" as `rocket::log::LogLevel`");
 }
 
 // EOF

@@ -82,25 +82,25 @@ TEST(std, chronoFormat) {
 
 /// This is expected to work on all platforms.
 TEST(std, filesystemPath) {
-  using filesystem::path;
+  namespace fs = std::filesystem;
 
-  const path unixPath("/path/to/file");
-  EXPECT_EQ(unixPath.filename(), path("file"));
-  EXPECT_EQ(unixPath.parent_path(), path("/path/to"));
+  const fs::path unixPath("/path/to/file");
+  EXPECT_EQ(unixPath.filename(), fs::path("file"));
+  EXPECT_EQ(unixPath.parent_path(), fs::path("/path/to"));
 }
 
 #ifdef ROCKET_OS_WINDOWS
 TEST(std, filesystemPathWindows) {
-  using filesystem::path;
+  namespace fs = std::filesystem;
 
-  const path windowsPath("C:\\path\\to\\file");
-  EXPECT_EQ(windowsPath.filename(), path("file"));
-  EXPECT_EQ(windowsPath.parent_path(), path("C:\\path\\to"));
+  const fs::path windowsPath("C:\\path\\to\\file");
+  EXPECT_EQ(windowsPath.filename(), fs::path("file"));
+  EXPECT_EQ(windowsPath.parent_path(), fs::path("C:\\path\\to"));
 
-  const path mixedPath("a/b\\c/d\\e");
-  EXPECT_EQ(mixedPath.filename(), path("e"));
-  EXPECT_EQ(mixedPath.parent_path(), path("a/b/c/d"));
-  EXPECT_EQ(mixedPath.parent_path(), path("a\\b\\c\\d"));
+  const fs::path mixedPath("a/b\\c/d\\e");
+  EXPECT_EQ(mixedPath.filename(), fs::path("e"));
+  EXPECT_EQ(mixedPath.parent_path(), fs::path("a/b/c/d"));
+  EXPECT_EQ(mixedPath.parent_path(), fs::path("a\\b\\c\\d"));
 }
 #endif // ROCKET_OS_WINDOWS
 
@@ -283,13 +283,13 @@ TEST(std, regexLineFeed) {
   EXPECT_TRUE(regex_match(str, regex("a[^]*b"))); // '[^]' (not nothing) matches line feed
 }
 
-TEST(std, vectorOpLt) {
+TEST(std, vectorOpCmp) {
   using type = vector<i32>;
 
-  EXPECT_TRUE((type { 1, 2, 3 }) < (type { 1, 2, 4 }));
-  EXPECT_TRUE((type { 1, 2, 3 }) < (type { 1, 2, 3, 4 }));
-  EXPECT_TRUE((type { 4, 3, 2 }) > (type { 3, 2, 1, 0 }));
-  EXPECT_TRUE((type { 4, 3, 2, 1 }) > (type { 4, 3, 2 }));
+  EXPECT_LT((type { 1, 2, 3 }), (type { 1, 2, 4 }));
+  EXPECT_LT((type { 1, 2, 3 }), (type { 1, 2, 3, 4 }));
+  EXPECT_GT((type { 4, 3, 2 }), (type { 3, 2, 1, 0 }));
+  EXPECT_GT((type { 4, 3, 2, 1 }), (type { 4, 3, 2 }));
 }
 
 // EOF
