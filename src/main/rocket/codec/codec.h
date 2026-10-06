@@ -368,14 +368,14 @@ struct Encoder {
 
 // `DecodeError`, `DecodeResult` ............................................................................
 
-/// An error for #rocket::codec::Decoder::decode.
+/// The error type for #rocket::codec::Decoder::decode.
 struct DecodeError {
   u64 position; ///< The position in the input where the error occurred.
   str::Ranges ranges; ///< The ranges of interest in the input.
   std::string message; ///< The error message.
 };
 
-/// Result with #rocket::codec::DecodeError.
+/// The result type with #rocket::codec::DecodeError.
 template<typename T>
 using DecodeResult = std::expected<T, DecodeError>;
 

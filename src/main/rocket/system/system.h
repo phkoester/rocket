@@ -103,13 +103,13 @@ namespace env {
 
 // `GetError`, `GetResult` ..................................................................................
 
-/// Error for #rocket::system::env::get(std::string_view).
+/// The error type for #rocket::system::env::get(std::string_view).
 enum GetError {
   ConversionFailed, ///< The conversion to the target type failed.
   NotFound ///< The environment variable was not found.
 };
 
-/// Result with #rocket::system::env::GetError.
+/// The result type with #rocket::system::env::GetError.
 template<typename T>
 using GetResult = std::expected<T, GetError>;
 

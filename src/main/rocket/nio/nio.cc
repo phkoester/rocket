@@ -289,16 +289,16 @@ Source::readAll() {
   return ret;
 }
 
-optional<unicode::CodePoint>
+ReadCodePointResult
 Source::readCodePoint() {
   if (bad()) {
-    return {};
+    return unexpected(Bad);
   }
 
   // Read first byte
   char c; // NOLINT
   if (read(c) != 1) {
-    return {};
+    return unexpected(Eof);
   }
   string s;
   s.push_back(c);
@@ -307,7 +307,7 @@ Source::readCodePoint() {
   auto len = unicode::utf8::lengthFromByte(c);
   for (u64 i = 0; i < len - 1; ++i) {
     if (read(c) != 1) {
-      return {};
+      return unexpected(Eof);
     }
     s.push_back(c);
   }
@@ -316,10 +316,12 @@ Source::readCodePoint() {
   try {
     u64 pos = 0;
     auto ret = unicode::nextCodePoint(s, pos);
-    ROCKET_EXPECT(pos == s.size(), "Invalid UTF-8 byte sequence");
+    if (pos != s.size()) {
+      return unexpected(InvalidUtf8);
+    }
     return ret;
   } catch (const exception&) {
-    return {};
+    return unexpected(InvalidUtf8);
   }
 }
 
@@ -404,13 +406,13 @@ ContiguousSource::readln() {
 #endif
 }
 
-optional<unicode::CodePoint>
+ReadCodePointResult
 ContiguousSource::readCodePoint() {
 #ifdef ROCKET_NIO_NO_CONTIGUOUS_SOURCE
   return Source::readCodePoint();
 #else
   if (bad()) {
-    return {};
+    return unexpected(Bad);
   }
 
   const auto str = this->str();
@@ -420,7 +422,7 @@ ContiguousSource::readCodePoint() {
     seek(safe<i64>(pos), SeekMode::cur);
     return ret;
   } catch (const exception&) {
-    return {};
+    return unexpected(InvalidUtf8);
   }
 #endif
 }

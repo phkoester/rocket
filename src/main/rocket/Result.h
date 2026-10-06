@@ -38,7 +38,7 @@ struct Error {
 
 // `Result` -------------------------------------------------------------------------------------------------
 
-/// A general-purpose result, to be used with `std::expected`.
+/// The result type with #rocket::Error.
 template<typename T>
 using Result = std::expected<T, Error>;
 

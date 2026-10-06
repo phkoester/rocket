@@ -1387,26 +1387,12 @@ struct FormattedCodec : Codec<FormattedConsumer, FormattedProducer> {
    * @tparam T the type to encode
    * @param val the value to encode
    * @param out the output sink
-   * @return whatever the consumer returns
-   */
-  template<typename T>
-  auto
-  encode(const T& val, nio::Sink& out) const {
-    return Base::encode(val, out, FormattedConsumerConfig());
-  }
-
-  /**
-   * Encodes a value.
-   *
-   * @tparam T the type to encode
-   * @param val the value to encode
-   * @param out the output sink
    * @param config the configuration
    * @return whatever the consumer returns
    */
   template<typename T>
   auto
-  encode(const T& val, nio::Sink& out, const FormattedConsumerConfig& config) const {
+  encode(const T& val, nio::Sink& out, const FormattedConsumerConfig& config = {}) const {
     FormattedConsumerConfig localConfig = config;
     localConfig.level = 0;
     return Base::encode(val, out, localConfig);
@@ -1417,27 +1403,13 @@ struct FormattedCodec : Codec<FormattedConsumer, FormattedProducer> {
    *
    * @tparam T the type to decode
    * @param in the input source
-   * @return the decoded value
-   * @throw #std::exception if the value cannot be decoded
-   */
-  template<typename T>
-  [[nodiscard]] DecodeResult<T>
-  decode(nio::Source& in) const {
-    return Base::decode<T>(in, FormattedProducerConfig());
-  }
-
-  /**
-   * Decodes a value from a source.
-   *
-   * @tparam T the type to decode
-   * @param in the input source
    * @param config the configuration
    * @return the decoded value
    * @throw #std::exception if the value cannot be decoded
    */
   template<typename T>
   [[nodiscard]] DecodeResult<T>
-  decode(nio::Source& in, const FormattedProducerConfig& config) const {
+  decode(nio::Source& in, const FormattedProducerConfig& config = {}) const {
     return Base::decode<T>(in, config);
   }
 };

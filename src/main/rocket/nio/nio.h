@@ -14,6 +14,7 @@
 
 #include <fmt/color.h>
 
+#include <expected>
 #include <filesystem>
 #include <iosfwd>
 #include <memory>
@@ -483,6 +484,18 @@ private:
   std::string owned_;
 };
 
+// `ReadCodePointError`, `ReadCodePointResult` --------------------------------------------------------------
+
+/// The error type for #rocket::nio::Source#readCodePoint.
+enum ReadCodePointError : u8 {
+  Bad, ///< Bad I/O device
+  Eof, ///< End of file
+  InvalidUtf8, ///< Invalid UTF-8 byte sequence
+};
+
+/// The result type with #rocket::nio::ReadCodePointError.
+using ReadCodePointResult = std::expected<unicode::CodePoint, ReadCodePointError>;
+
 // `SeekMode` -----------------------------------------------------------------------------------------------
 
 /**
@@ -550,10 +563,9 @@ struct Source : Device {
   /**
    * Tries to read a valid code point from a source.
    *
-   * @return a code point if one was read, null otherwise. If the return value is null, the number of bytes
-   *   read is undefined
+   * @return a code point if one was read, an error otherwise
    */
-  virtual std::optional<unicode::CodePoint> readCodePoint();
+  virtual ReadCodePointResult readCodePoint();
 
   /**
    * Reads all available characters from a source into a string.
@@ -630,7 +642,7 @@ struct ContiguousSource : Source {
 
   std::string readln() override;
 
-  std::optional<unicode::CodePoint> readCodePoint() override;
+  ReadCodePointResult readCodePoint() override;
 
   /**
    * Returns the string available in the contiguous source.

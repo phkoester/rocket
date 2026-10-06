@@ -389,7 +389,7 @@ skip(nio::Source& in, bool cComments, bool shellComments) { // NOLINT(*-complexi
     }
 
     // Read second code point
-    optional<unicode::CodePoint> second;
+    ReadCodePointResult second;
     if (cComments && first == '/') {
       second = in.readCodePoint();
       if (not second) {

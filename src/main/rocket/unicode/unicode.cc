@@ -252,7 +252,7 @@ nextCodePoint(u32string_view str, u64& pos, InvalidUnicodePolicy policy) {
 }
 
 Cow<u32string_view, u32string>
-validate(u32string_view str, InvalidUnicodePolicy policy, UnorderedBimap<u64, u64>* positions) {
+validate(u32string_view str, InvalidUnicodePolicy policy, Positions* positions) {
   Cow<u32string_view, u32string> ret(str);
 
   if (positions != nullptr) {
