@@ -441,6 +441,21 @@ TEST(FormattedCodec, FormattedProducerDeclared) {
     (MyStruct { 42, true, "hello", { 1, 2, 3 } }));
 }
 
+// XXX
+TEST(FormattedCodec, FormattedProducerDeclaredUnorderedAndMissing) {
+  // Members in a different order
+  EXPECT_EQ(
+    (decode<MyStruct>("(vec=[1, 2, 3], übermut=\"hello\", ärger=42, ökonom=true)")),
+    (MyStruct { 42, true, "hello", { 1, 2, 3 } }));
+
+  // Missing members keep their default values
+  EXPECT_EQ((decode<MyStruct>("(ökonom=true, vec=[1, 2, 3])")), (MyStruct { 0, true, "", { 1, 2, 3 } }));
+  EXPECT_EQ((decode<MyStruct>("()")), (MyStruct {}));
+
+  // Unknown members are an error
+  EXPECT_EQ(decode<MyStruct>("(ärger=42, bogus=1)").error().message, "Unknown member `bogus`");
+}
+
 TEST(FormattedCodec, FormattedProducerDeclaredFileSource) {
   const auto path = testSource("test-FormattedCodec-MyStruct.txt");
 

@@ -1212,6 +1212,77 @@ struct FormattedProducerImpl<DataType::Interval, T> {
   }
 };
 
+// XXX
+// Produces a single member of `instance` if the name of the member reference `ref` matches `name`. Returns
+// whether the name matched, so callers can fold over a tuple of member references
+template<typename Ref, typename C>
+bool
+produceMember(const Ref& ref, std::string_view name, C& instance, nio::Source& in, CONFIG__) {
+  if (ref.name() != name) {
+    return false;
+  }
+  using Elem = Ref::Type;
+  constexpr auto ElemDataType = DataTypes<Elem>::Value;
+  FormattedProducerImpl<ElemDataType, Elem>().produce(ref.get(instance), in, config);
+  return true;
+}
+
+// Produces the members of `instance` from a parenthesized list of `name=value` entries, using the member
+// references in `refs` to look up each name.
+//
+// Unlike the tuple producer, the entries may appear in any order, and entries may be missing altogether, in
+// which case the corresponding members of `instance` are left untouched. An entry whose name does not match
+// any member reference is an error
+template<typename Refs, typename C>
+void
+produceMembers(const Refs& refs, C& instance, nio::Source& in, CONFIG__) {
+  skip(in, config);
+  const auto pos = in.tell();
+
+  if (not readChar(in, '(')) {
+    throw InputFailure(pos, "Expected a tuple");
+  }
+
+  u64 index = 0;
+  while (true) {
+    skip(in, config);
+    if (readChar(in, ')')) {
+      return;
+    }
+    if (index++ > 0) {
+      expectComma(in);
+      skip(in, config);
+      if (readChar(in, ')')) { // Allow trailing comma if nonempty
+        return;
+      }
+    }
+
+    // Read the member name
+
+    const auto namePos = in.tell();
+    const auto name = readUntilChar(in, '=');
+    if (not name) {
+      throw InputFailure(namePos, "Expected a member reference");
+    }
+    std::string_view trimmedName(*name);
+    if (const auto end = trimmedName.find_last_not_of(" \t\r\n\v\f"); end != std::string_view::npos) {
+      trimmedName = trimmedName.substr(0, end + 1);
+    } else {
+      trimmedName = {};
+    }
+    skip(in, config);
+
+    // Look up the member reference by name and produce the member
+
+    const bool found = std::apply([&](const auto&... ref) {
+      return (produceMember(ref, trimmedName, instance, in, config) || ...);
+    }, refs);
+    if (not found) {
+      throw InputFailure(namePos, fmt::format("Unknown member `{}`", trimmedName));
+    }
+  }
+}
+
 template<typename T>
 struct FormattedProducerImpl<DataType::Declared, T> {
   static constexpr auto& refs = rocket::reflect::Declared<T>::refs;
@@ -1221,9 +1292,7 @@ struct FormattedProducerImpl<DataType::Declared, T> {
 
   void
   produce(T& val, nio::Source& in, CONFIG__) const {
-    // Here we have to pass an additional argument, the instance, to the tuple producer. The tuple producer
-    // will pass it on to the member-reference producer
-    FormattedProducerImpl<ElemDataType, Elem>().produce(const_cast<Elem&>(refs), in, config, val);
+    produceMembers(refs, val, in, config);
   }
 };
 
@@ -1236,9 +1305,7 @@ struct FormattedProducerImpl<DataType::Instance, T> {
 
   void
   produce(T& val, nio::Source& in, CONFIG__) const {
-    // Here we have to pass an additional argument, the instance, to the tuple producer. The tuple producer
-    // will pass it on to the member-reference producer
-    FormattedProducerImpl<ElemDataType, Elem>().produce(const_cast<Elem&>(refs), in, config, val.get());
+    produceMembers(refs, val.get(), in, config);
   }
 };
 
@@ -1368,6 +1435,11 @@ struct FormattedProducer {
  * the decoder can skip single-line C-style comments starting with <code>//</code>, multi-line C-style
  * comments starting with <code>/</code><code>*</code>, and single-line shell-style comments starting with
  * <code>#</code>.
+ *
+ * XXX
+ * When decoding a declared type or a #rocket::reflect::Instance, the `name=value` entries may appear in any
+ * order, and entries may be missing altogether; missing members keep their default values. An entry whose
+ * name does not match any member is an error.
  *
  * Decoding to list views and to forward lists is not supported. String views and character views, however,
  * are allowed. This is made possible by storing intermediate strings in the source. Hence, decoded string
