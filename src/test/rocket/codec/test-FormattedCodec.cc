@@ -47,7 +47,7 @@ encode(const T& val, const FormattedConsumerConfig& config = {}) {
 }
 
 template<typename T>
-T
+[[nodiscard]] DecodeResult<T>
 decode(string_view str) {
   const FormattedCodec codec;
   nio::StringSource in(str);
@@ -55,7 +55,7 @@ decode(string_view str) {
 }
 
 template<typename T>
-pair<T, u64>
+[[nodiscard]] pair<DecodeResult<T>, u64>
 decodeAndTell(string_view str) {
   const FormattedCodec codec;
   nio::StringSource in(str);
@@ -254,43 +254,32 @@ TEST(FormattedCodec, FormattedProducerBool) {
   EXPECT_EQ(decode<bool>("// sup\nTRue"), true);
   EXPECT_EQ(decode<bool>("  /* comment\nanother line in the comment */\r\n# comment\n\ttRUe"), true);
   EXPECT_EQ(decode<bool>("\r\n  1"), true);
-
-  EXPECT_THAT(
-    [] { decode<bool>("\r\nx"); },
-    throwsInputFailure(2, EndsWith("Expected a boolean value")));
+  EXPECT_EQ(decode<bool>("\r\nx").error().message, "Expected a boolean value");
 }
 
 TEST(FormattedCodec, FormattedProducerChar) {
   EXPECT_EQ(decode<char>("'a'"), 'a');
   EXPECT_EQ(decode<char>("'\\''"), '\'');
   EXPECT_EQ(decode<char>("'\\t'"), '\t');
-  EXPECT_THAT(
-    [] { decode<char>("  'ä'"); },
-    throwsInputFailure(2, EndsWith("Invalid character literal")));
-
+  EXPECT_EQ(decode<char>("  'ä'").error().message, "Invalid character literal");
   EXPECT_EQ(decode<char32>("'ä'"), U'ä');
   EXPECT_EQ(decode<char32>("'\u20ac'"), U'€');
 }
 
 TEST(FormattedCodec, FormattedProducerEnum) {
   enum Color : u8 { Red, Green, Blue };
-  EXPECT_THAT(
-    [] { decode<Color>("2"); },
-    throwsInputFailure(0, matchesRegex(".*Cannot scan enum of type `.*Color`")));
+
+  EXPECT_THAT(decode<Color>("2").error().message, matchesRegex("Cannot scan enum of type `.*Color`"));
 
   EXPECT_EQ(decode<log::LogLevel>("  info  "), log::LogLevel::info);
-  EXPECT_THAT(
-    [] { decode<log::LogLevel>("bogus"); },
-    throwsInputFailure(0, EndsWith("Invalid value for enum `rocket::log::LogLevel`")));
+  EXPECT_EQ(decode<log::LogLevel>("bogus").error().message, "Invalid value for enum `rocket::log::LogLevel`");
 }
 
 TEST(FormattedCodec, FormattedProducerInteger) {
   EXPECT_EQ(decode<i32>("-42"), -42);
   EXPECT_EQ(decode<i32>("0xABcd"), 0xABCD);
 
-  EXPECT_THAT(
-    [] { decode<i32>("  x"); },
-    throwsInputFailure(2, EndsWith("Expected an integer value")));
+  EXPECT_EQ(decode<i32>("  x").error().message, "Expected an integer value");
 }
 
 TEST(FormattedCodec, FormattedProducerFloat) {
@@ -303,7 +292,7 @@ TEST(FormattedCodec, FormattedProducerFloat) {
   EXPECT_EQ(decode<type>("-inf"), -limits::infinity());
   EXPECT_EQ(decode<type>("∞"), limits::infinity());
 
-  const type val = decode<type>("nan");
+  const type val = decode<type>("nan").value();
   EXPECT_TRUE(isnan(val));
 }
 
@@ -369,12 +358,8 @@ TEST(FormattedCodec, FormattedProducerDuration) {
 
   EXPECT_EQ(decode<seconds>("1000ms"), 1s);
 
-  EXPECT_THAT(
-    [] { decode<seconds>("x"); },
-    throwsInputFailure(0, EndsWith("Expected a duration")));
-  EXPECT_THAT(
-    [] { decode<seconds>("10x"); },
-    throwsInputFailure(2, EndsWith("Expected a time unit")));
+  EXPECT_EQ(decode<seconds>("x").error().message, "Expected a duration");
+  EXPECT_EQ(decode<seconds>("10x").error().message, "Expected a time unit");
 }
 
 TEST(FormattedCodec, FormattedProducerYearMonthDay) {
@@ -383,39 +368,31 @@ TEST(FormattedCodec, FormattedProducerYearMonthDay) {
   EXPECT_EQ(decode<year_month_day>("1970-01-02"), (year_month_day { 1970y, January, 2d }));
   EXPECT_EQ(decode<year_month_day>("-100-01-02"), (year_month_day { -100y, January, 2d }));
 
-  EXPECT_THAT(
-    [] { decode<year_month_day>("x"); },
-    throwsInputFailure(0, EndsWith("Expected a year, month, and day")));
+  EXPECT_EQ(decode<year_month_day>("x").error().message, "Expected a year, month, and day");
 }
 
 TEST(FormattedCodec, FormattedProducerHourMinuteSecond) {
   using namespace std::chrono;
 
   EXPECT_EQ(
-    decode<hh_mm_ss<seconds>>("01:02:03").to_duration(),
+    decode<hh_mm_ss<seconds>>("01:02:03").value().to_duration(),
     (hh_mm_ss { 1h + 2min + 3s }).to_duration());
   EXPECT_EQ(
-    decode<hh_mm_ss<seconds>>("01:02:03.123").to_duration(),
+    decode<hh_mm_ss<seconds>>("01:02:03.123").value().to_duration(),
     (hh_mm_ss { 1h + 2min + 3s }).to_duration());
   EXPECT_EQ(
-    decode<hh_mm_ss<milliseconds>>("01:02:03.123456").to_duration(),
+    decode<hh_mm_ss<milliseconds>>("01:02:03.123456").value().to_duration(),
     (hh_mm_ss { 1h + 2min + 3s + 123ms }).to_duration());
   EXPECT_EQ(
-    decode<hh_mm_ss<microseconds>>("-111:02:03.123456789").to_duration(),
+    decode<hh_mm_ss<microseconds>>("-111:02:03.123456789").value().to_duration(),
     (hh_mm_ss { -(111h + 2min + 3s + 123456us) }).to_duration());
   EXPECT_EQ(
-    decode<hh_mm_ss<nanoseconds>>("-111:02:03.123456789").to_duration(),
+    decode<hh_mm_ss<nanoseconds>>("-111:02:03.123456789").value().to_duration(),
     (hh_mm_ss { -(111h + 2min + 3s + 123456789ns) }).to_duration());
 
-  EXPECT_THAT(
-    [] { decode<hh_mm_ss<milliseconds>>("x"); },
-    throwsInputFailure(0, EndsWith("Expected an hour, minute, and second")));
-  EXPECT_THAT(
-    [] { decode<hh_mm_ss<milliseconds>>("01:02:"); },
-    throwsInputFailure(0, EndsWith("Expected an hour, minute, and second")));
-  EXPECT_THAT(
-    [] { decode<hh_mm_ss<milliseconds>>("01:02:03."); },
-    throwsInputFailure(9, EndsWith("Expected subseconds")));
+  EXPECT_EQ(decode<hh_mm_ss<milliseconds>>("x").error().message, "Expected an hour, minute, and second");
+  EXPECT_EQ(decode<hh_mm_ss<milliseconds>>("01:02:").error().message, "Expected an hour, minute, and second");
+  EXPECT_EQ(decode<hh_mm_ss<milliseconds>>("01:02:03.").error().message, "Expected subseconds");
 }
 
 TEST(FormattedCodec, FormattedProducerTimePoint) {
@@ -427,7 +404,7 @@ TEST(FormattedCodec, FormattedProducerTimePoint) {
   const TimePoint val1 = rocket::chrono::now<system_clock>();
   string encoded = encode(val1);
   nio::out.println("VAL1: {}", encoded);
-  const TimePoint val2 = decode<TimePoint>(encoded); // NOLINT
+  const TimePoint val2 = decode<TimePoint>(encoded).value(); // NOLINT
   nio::out.println("VAL2: {}", encode(val2));
   EXPECT_EQ(val2, val1);
   EXPECT_EQ(val2.time_since_epoch().count(), val1.time_since_epoch().count());
@@ -444,7 +421,7 @@ TEST(FormattedCodec, FormattedProducerZonedTime) {
   const ZonedTime val1 = zoned_time(current, now);
   string encoded = encode(val1);
   nio::out.println("VAL1: {}", encoded);
-  const ZonedTime val2 = decode<ZonedTime>(encoded); // NOLINT
+  const ZonedTime val2 = decode<ZonedTime>(encoded).value(); // NOLINT
   nio::out.println("VAL2: {}", encode(val2));
   EXPECT_EQ(val2, val1);
 }
@@ -475,20 +452,20 @@ TEST(FormattedCodec, FormattedProducerDeclaredFileSource) {
 
   nio::FileSource in(path);
 
-  MyStruct val;
-  try {
-    const FormattedCodec codec;
-    val = codec.decode<MyStruct>(in, { .cComments=true, .shellComments=true });
-  } catch (const InputFailure& ex) {
+  const FormattedCodec codec;
+  const auto result = codec.decode<MyStruct>(in, { .cComments=true, .shellComments=true });
+  if (not result) {
+    const DecodeError& err = result.error();
     namespace loc = rocket::str::location;
     const loc::Position pos {
-      .type=loc::error, .position=ex.position(), .ranges=ex.ranges(), .message=ex.message()
+      .type=loc::error, .position=err.position, .ranges=err.ranges, .message=err.message
     };
     const auto result = loc::locations(input, { pos }, { .setLineString=true, .source=path.string() });
     loc::printLocations(nio::out, input, result, { .styled=true });
-    throw;
+    throw InvalidState("Failed to decode MyStruct");
   }
 
+  const MyStruct& val = result.value();
   EXPECT_EQ(val.ärger, 16);
   EXPECT_EQ(val.ökonom, true);
   EXPECT_EQ(val.übermut, "a test\nstring");

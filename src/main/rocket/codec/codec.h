@@ -16,6 +16,7 @@
 #include "rocket/reflect/Instance.h"
 #include "rocket/reflect/MemberRef.h"
 #include "rocket/reflect/VarRef.h"
+#include "rocket/str/Range.h"
 #include "rocket/unicode/Character.h"
 
 #include <boost/bimap/bimap.hpp>
@@ -365,6 +366,19 @@ struct Encoder {
   }
 };
 
+// `DecodeError`, `DecodeResult` ............................................................................
+
+/// An error for #rocket::codec::Decoder::decode.
+struct DecodeError {
+  u64 position; ///< The position in the input where the error occurred.
+  str::Ranges ranges; ///< The ranges of interest in the input.
+  std::string message; ///< The error message.
+};
+
+/// Result with #rocket::codec::DecodeError.
+template<typename T>
+using DecodeResult = std::expected<T, DecodeError>;
+
 // `Decoder` ------------------------------------------------------------------------------------------------
 
 /**
@@ -383,32 +397,18 @@ struct Decoder {
    * @return the decoded value
    */
   template<typename T, typename... Args>
-  T
+  [[nodiscard]] DecodeResult<T>
   decode(Args&&... args) const {
     constexpr auto Value = DataTypes<Purge<T>>::Value;
     using ProducerType = Producer::template Type<Value, T>;
     ProducerType producer; // NOLINT
     T val; // NOLINT
-    producer.produce(val, std::forward<Args>(args)...);
-    return val;
-  }
-
-  /**
-   * Tries to decode a value.
-   *
-   * @tparam T the type to decode
-   * @tparam Args types of additional arguments to pass to the producer
-   * @param args additional arguments to pass to the producer
-   * @return the decoded value, or null if the value cannot be decoded
-   */
-  template<typename T, typename... Args>
-  [[nodiscard]] std::optional<T>
-  tryDecode(Args&&... args) const {
     try {
-      return decode(std::forward<Args>(args)...);
-    } catch (const std::exception&) {
-      return {};
+      producer.produce(val, std::forward<Args>(args)...);
+    } catch (const InputFailure& ex) {
+      return std::unexpected(DecodeError { ex.position(), ex.ranges(), ex.message() });
     }
+    return val;
   }
 };
 
@@ -417,8 +417,8 @@ struct Decoder {
 /**
  * A codec is both an encoder and a decoder.
  *
- * @tparam Consumer the consumer to use
- * @tparam Producer the producer to use
+ * @tparam Consumer the consumer type to use
+ * @tparam Producer the producer type to use
  */
 template<typename Consumer, typename Producer>
 struct Codec : Encoder<Consumer>, Decoder<Producer> {};

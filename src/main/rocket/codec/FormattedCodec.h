@@ -1421,7 +1421,7 @@ struct FormattedCodec : Codec<FormattedConsumer, FormattedProducer> {
    * @throw #std::exception if the value cannot be decoded
    */
   template<typename T>
-  T
+  [[nodiscard]] DecodeResult<T>
   decode(nio::Source& in) const {
     return Base::decode<T>(in, FormattedProducerConfig());
   }
@@ -1436,36 +1436,9 @@ struct FormattedCodec : Codec<FormattedConsumer, FormattedProducer> {
    * @throw #std::exception if the value cannot be decoded
    */
   template<typename T>
-  T
+  [[nodiscard]] DecodeResult<T>
   decode(nio::Source& in, const FormattedProducerConfig& config) const {
     return Base::decode<T>(in, config);
-  }
-
-  /**
-   * Tries to decode a value from a source.
-   *
-   * @tparam T the type to decode
-   * @param in the input source
-   * @return the decoded value, or null if the value cannot be decoded
-   */
-  template<typename T>
-  [[nodiscard]] std::optional<T>
-  tryDecode(nio::Source& in) const {
-    return Base::tryDecode<T>(in, FormattedProducerConfig());
-  }
-
-  /**
-   * Tries to decode a value from a source.
-   *
-   * @tparam T the type to decode
-   * @param in the input source
-   * @param config the configuration
-   * @return the decoded value, or null if the value cannot be decoded
-   */
-  template<typename T>
-  [[nodiscard]] std::optional<T>
-  tryDecode(nio::Source& in, const FormattedProducerConfig& config) const {
-    return Base::tryDecode<T>(in, config);
   }
 };
 

@@ -550,8 +550,7 @@ TEST(codec, TracingProducerBool) {
   const Decoder<TracingProducer> decoder;
   nio::StringSource in("true");
   nio::StringSink out;
-  const type val = decoder.decode<type>(in, out);
-  EXPECT_EQ(val, true);
+  EXPECT_EQ(decoder.decode<type>(in, out), true);
   EXPECT_EQ(out.str(), "producing boolean\n");
 }
 
@@ -560,10 +559,8 @@ TEST(codec, TracingProducerString) {
   const Decoder<TracingProducer> decoder;
   nio::StringSource in("5Hello6Rocket");
   nio::StringSink out;
-  type val = decoder.decode<type>(in, out);
-  EXPECT_EQ(val, "Hello"sv);
-  val = decoder.decode<type>(in, out);
-  EXPECT_EQ(val, "Rocket"sv);
+  EXPECT_EQ(decoder.decode<type>(in, out), "Hello"sv);
+  EXPECT_EQ(decoder.decode<type>(in, out), "Rocket"sv);
   EXPECT_EQ(out.str(),
     "producing string\n"
     "producing string\n");
@@ -576,16 +573,14 @@ TEST(codec, TracingProducerOptionalBool) {
   {
     nio::StringSource in("none");
     nio::StringSink out;
-    const type val = decoder.decode<type>(in, out);
-    EXPECT_EQ(val, nullopt);
+    EXPECT_EQ(decoder.decode<type>(in, out), nullopt);
     EXPECT_EQ(out.str(), "producing optional\n");
   }
 
   {
     nio::StringSource in("false");
     nio::StringSink out;
-    const type val = decoder.decode<type>(in, out);
-    EXPECT_EQ(val, false);
+    EXPECT_EQ(decoder.decode<type>(in, out), false);
     EXPECT_EQ(out.str(),
       "producing optional\n"
       "producing boolean\n");
@@ -597,8 +592,7 @@ TEST(codec, TracingProducerListArray) {
   const Decoder<TracingProducer> decoder;
   nio::StringSource in("3012");
   nio::StringSink out;
-  const type val = decoder.decode<type>(in, out);
-  EXPECT_EQ(val, (array<i32, 3> { 0, 1, 2 }));
+  EXPECT_EQ(decoder.decode<type>(in, out), (array<i32, 3> { 0, 1, 2 }));
   EXPECT_EQ(out.str(),
     "producing list.array\n"
     "producing integer\n"
@@ -611,8 +605,7 @@ TEST(codec, TracingProducerListVector) {
   const Decoder<TracingProducer> decoder;
   nio::StringSource in("43210");
   nio::StringSink out;
-  const type val = decoder.decode<type>(in, out);
-  EXPECT_EQ(val, (vector<i32> { 3, 2, 1, 0 }));
+  EXPECT_EQ(decoder.decode<type>(in, out), (vector<i32> { 3, 2, 1, 0 }));
   EXPECT_EQ(out.str(),
     "producing list.containerWithPushBack\n"
     "producing integer\n"
