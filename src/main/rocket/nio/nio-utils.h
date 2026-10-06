@@ -288,10 +288,10 @@ void skip(nio::Source& in, bool cComments, bool shellComments);
  * There is an optimization for contiguous sources.
  *
  * @param in the source to read from
- * @param s the expected string
+ * @param str the expected string
  * @return whether the expected string was found
  */
-bool skipUntilString(nio::Source& in, std::string_view s);
+bool skipUntilString(nio::Source& in, std::string_view str);
 
 } // namespace rocket::nio
 
