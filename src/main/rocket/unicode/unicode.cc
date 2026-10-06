@@ -182,7 +182,7 @@ nextCodePoint(string_view str, u64& pos, InvalidUnicodePolicy policy) {
 }
 
 Cow<string_view, string>
-validate(string_view str, InvalidUnicodePolicy policy, UnorderedBimap<u64, u64>* positions) { // NOLINT(*-complexity)
+validate(string_view str, InvalidUnicodePolicy policy, Positions* positions) { // NOLINT(*-complexity)
   Cow<string_view, string> ret(str);
 
   if (positions != nullptr) {

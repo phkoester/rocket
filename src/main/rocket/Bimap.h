@@ -6,6 +6,8 @@
 
 #pragma once
 
+#include "rocket/rocket.h"
+
 #include <boost/bimap.hpp>
 #include <boost/bimap/set_of.hpp>
 #include <boost/bimap/unordered_set_of.hpp>
@@ -64,6 +66,23 @@ makeUnorderedBimap(std::initializer_list<std::pair<K, V>> list = {}) {
     ret.insert({ std::move(elem.first), std::move(elem.second) }); // `bimap` has no `emplace`
   }
   return ret;
+}
+
+// `Positions` ----------------------------------------------------------------------------------------------
+
+/**
+ * A general-purpose map that translates positions in either direction.
+ */
+using Positions = UnorderedBimap<u64, u64>;
+
+// Functions ------------------------------------------------------------------------------------------------
+
+/**
+ * Convenience function to make a #rocket::Positions of a #std::initializer_list.
+ */
+inline Positions
+makePositions(std::initializer_list<std::pair<u64, u64>> list) {
+  return makeUnorderedBimap(list);
 }
 
 } // namespace rocket

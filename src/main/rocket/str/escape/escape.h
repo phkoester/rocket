@@ -42,21 +42,6 @@ struct CStringConfig {
   [[nodiscard]] bool quoted() const { return quote != '\0'; }
 };
 
-// `Result` -------------------------------------------------------------------------------------------------
-
-/**
- * The result of an escape/unescape operation.
- */
-struct Result {
-  /**
-   * Translated positions after escaping/unescaping.
-   *
-   * For each character in the input string and for EOI, its `char` offset is mapped to a `char` offset in
-   * the output string.
-   */
-  UnorderedBimap<u64, u64> positions;
-};
-
 // Functions ------------------------------------------------------------------------------------------------
 
 /**
@@ -70,7 +55,7 @@ struct Result {
 std::string escapeCString(
   std::string_view input,
   const CStringConfig& config = {},
-  Result* result = nullptr);
+  Positions* positions = nullptr);
 
 /**
  * Unescapes a C string.
@@ -83,7 +68,7 @@ std::string escapeCString(
 std::string unescapeCString(
   std::string_view input,
   const CStringConfig& config = {},
-  Result* result = nullptr);
+  Positions* positions = nullptr);
 
 /**
  * Escapes an input string to a regular expression.
@@ -92,7 +77,7 @@ std::string unescapeCString(
  * @param result a pointer to a #rocket::str::escape::Result. If it is nonnull, then the result is populated
  * @return the escaped string
  */
-std::string escapeRegex(std::string_view input, Result* result = nullptr);
+std::string escapeRegex(std::string_view input, Positions* positions = nullptr);
 
 /**
  * Unescapes a regular expression.
@@ -101,7 +86,7 @@ std::string escapeRegex(std::string_view input, Result* result = nullptr);
  * @param result a pointer to a #rocket::str::escape::Result. If it is nonnull, then the result is populated
  * @return the unescaped string
  */
-std::string unescapeRegex(std::string_view input, Result* result = nullptr);
+std::string unescapeRegex(std::string_view input, Positions* positions = nullptr);
 
 } // namespace rocket::str::escape
 

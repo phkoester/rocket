@@ -56,7 +56,7 @@ struct Cow {
    */
   Cow&
   operator=(const U& rhs) {
-    choice_.template emplace<U>(rhs); // XXX
+    choice_.template emplace<U>(rhs);
     return *this;
   }
 
@@ -70,7 +70,7 @@ struct Cow {
    */
   Cow&
   operator=(U&& rhs) noexcept {
-    choice_.template emplace<U>(std::move(rhs)); // XXX
+    choice_.template emplace<U>(std::move(rhs));
     return *this;
   }
 

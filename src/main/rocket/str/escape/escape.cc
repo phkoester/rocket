@@ -222,12 +222,12 @@ getOptionalChar(unicode::Iterator<char>& iter) {
 namespace rocket::str::escape {
 
 string
-escapeCString(string_view input, const CStringConfig& config, Result* result) {
+escapeCString(string_view input, const CStringConfig& config, Positions* positions) {
   ROCKET_CHECK(config, config.quote == '\0' || config.quote == '"' || config.quote == '\'');
 
   string ret;
-  if (result != nullptr) {
-    result->positions.clear();
+  if (positions != nullptr) {
+    positions->clear();
   }
   u64 to = 0;
 
@@ -253,8 +253,8 @@ escapeCString(string_view input, const CStringConfig& config, Result* result) {
     }
     auto c = unicode::CharacterView<char>(seg);
 
-    if (result != nullptr) {
-      result->positions.insert({ current, to });
+    if (positions != nullptr) {
+      positions->insert({ current, to });
     }
 
     if (auto cp = c.toCodePoint(); cp) {
@@ -280,8 +280,8 @@ escapeCString(string_view input, const CStringConfig& config, Result* result) {
 
   // Add EOI position
 
-  if (result != nullptr) {
-    result->positions.insert({ iter.current(), to });
+  if (positions != nullptr) {
+    positions->insert({ iter.current(), to });
   }
 
   // If needed, add quote
@@ -294,13 +294,13 @@ escapeCString(string_view input, const CStringConfig& config, Result* result) {
 }
 
 string
-unescapeCString(string_view input, const CStringConfig& config, Result* result) { // NOLINT(*-complexity)
+unescapeCString(string_view input, const CStringConfig& config, Positions* positions) { // NOLINT(*-complexity)
   ROCKET_CHECK(config, config.quote == '\0' || config.quote == '"' || config.quote == '\'');
 
   string ret;
 
-  if (result != nullptr) {
-    result->positions.clear();
+  if (positions != nullptr) {
+    positions->clear();
   }
 
   // If needed, read quote
@@ -315,8 +315,8 @@ unescapeCString(string_view input, const CStringConfig& config, Result* result) 
 
     u64 pos = iter.current();
     auto c1 = getOptionalChar(iter);
-    if (result != nullptr) {
-      result->positions.insert({ pos, ret.size() });
+    if (positions != nullptr) {
+      positions->insert({ pos, ret.size() });
     }
     if (not c1) {
       // EOI
@@ -408,10 +408,10 @@ unescapeCString(string_view input, const CStringConfig& config, Result* result) 
 }
 
 string
-escapeRegex(string_view input, Result* result) {
+escapeRegex(string_view input, Positions* positions) {
   string ret;
-  if (result != nullptr) {
-    result->positions.clear();
+  if (positions != nullptr) {
+    positions->clear();
   }
   u64 to = 0;
 
@@ -430,8 +430,8 @@ escapeRegex(string_view input, Result* result) {
     }
     auto c = unicode::CharacterView<char>(seg);
 
-    if (result != nullptr) {
-      result->positions.insert({ current, to });
+    if (positions != nullptr) {
+      positions->insert({ current, to });
     }
 
     if (auto cp = c.toCodePoint(); cp) {
@@ -457,19 +457,19 @@ escapeRegex(string_view input, Result* result) {
 
   // Add EOI position
 
-  if (result != nullptr) {
-    result->positions.insert({ iter.current(), to });
+  if (positions != nullptr) {
+    positions->insert({ iter.current(), to });
   }
 
   return ret;
 }
 
 string
-unescapeRegex(string_view input, Result* result) {
+unescapeRegex(string_view input, Positions* positions) {
   string ret;
 
-  if (result != nullptr) {
-    result->positions.clear();
+  if (positions != nullptr) {
+    positions->clear();
   }
 
   auto iter = unicode::Iterator(unicode::IteratorType::Character, input);
@@ -478,8 +478,8 @@ unescapeRegex(string_view input, Result* result) {
 
     const u64 pos = iter.current();
     auto c1 = getOptionalChar(iter);
-    if (result != nullptr) {
-      result->positions.insert({ pos, ret.size() });
+    if (positions != nullptr) {
+      positions->insert({ pos, ret.size() });
     }
     if (not c1) {
       // EOF

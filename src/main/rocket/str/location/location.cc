@@ -186,14 +186,14 @@ printLocations( // NOLINT(*-complexity)
     const string line = loc.lineString ?
       *loc.lineString :
       string(input->substr(loc.lineRange.a, *loc.lineRange.size()));
-    escape::Result result;
+    Positions escapePositions;
     const string escapedLine = escape::escapeCString(
-      line, { .tabSize=locationsResult.config.tabSize }, &result);
+      line, { .tabSize=locationsResult.config.tabSize }, &escapePositions);
 
     // For `escapedLine`, map `Character` index -> byte offset
     auto iter = unicode::Iterator<char>(unicode::IteratorType::Character, escapedLine);
     auto segs = iter.nextSegments();
-    UnorderedBimap<u64, u64> escapedLinePositions;
+    Positions escapedLinePositions;
     u64 escapedLineWidth = 0;
     u64 offset = 0;
     for (u64 i = 0; i < segs.size(); ++i) {
@@ -228,8 +228,8 @@ printLocations( // NOLINT(*-complexity)
       pos -= loc.lineRange.a;
 
       // 2. Translate line position to escaped-line position
-      auto leftIt = result.positions.left.find(pos);
-      ROCKET_EXPECT(leftIt != result.positions.left.end());
+      auto leftIt = escapePositions.left.find(pos);
+      ROCKET_EXPECT(leftIt != escapePositions.left.end());
       pos = leftIt->second;
 
       // 3. Translate escaped-line position to escaped-line character position

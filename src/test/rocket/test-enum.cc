@@ -116,15 +116,8 @@ TEST(enum, MyEnumToType) {
   EXPECT_EQ(Enum<MyEnum>::toType("pörker", true), make_pair(7_u64, pörker));
   EXPECT_EQ(Enum<MyEnum>::toType("pörkerer", true), make_pair(9_u64, pörkerer));
 
-  EXPECT_THAT(
-    [] { Enum<MyEnum>::toType("foo", true); },
-    ThrowsMessage<InvalidState>(EndsWith("Cannot scan \"foo\" as `MyEnum`"))
-  );
-
-  EXPECT_THAT(
-    [] { Enum<MyEnum>::toType("fröbx", true); },
-    ThrowsMessage<InvalidState>(EndsWith("Cannot scan \"fröbx\" as `MyEnum`"))
-  );
+  EXPECT_EQ(Enum<MyEnum>::toType("foo", true).error().message , "Cannot scan \"foo\" as `MyEnum`");
+  EXPECT_EQ(Enum<MyEnum>::toType("fröbx", true).error().message, "Cannot scan \"fröbx\" as `MyEnum`");
 }
 
 TEST(enum, MyEnumClassOpOutput) {
@@ -140,12 +133,8 @@ TEST(enum, MyEnumFClassFormat) {
 TEST(enum, MyEnumClassToType) {
   EXPECT_EQ(Enum<MyEnumClass>::toType("hürxer", true), make_pair(7_u64, MyEnumClass::hürxer));
 
-  EXPECT_THAT(
-    [] { Enum<MyEnumClass>::toType("foo", true); },
-    ThrowsMessage<InvalidState>(EndsWith("Cannot scan \"foo\" as `MyEnumClass`")));
-  EXPECT_THAT(
-    [] { Enum<MyEnumClass>::toType("hürxerx", true); },
-    ThrowsMessage<InvalidState>(EndsWith("Cannot scan \"hürxerx\" as `MyEnumClass`")));
+  EXPECT_EQ(Enum<MyEnumClass>::toType("foo", true).error().message, "Cannot scan \"foo\" as `MyEnumClass`");
+  EXPECT_EQ(Enum<MyEnumClass>::toType("hürxerx", true).error().message, "Cannot scan \"hürxerx\" as `MyEnumClass`");
 }
 
 TEST(enum, MyEnumInNamespaceOpOutput) {

@@ -22,17 +22,6 @@ constexpr char CONT         = static_cast<char>(0b1011'1111);
 constexpr char32 D800       = static_cast<char32>(0xD800U);
 constexpr char32 MAX_PLUS_1 = static_cast<char32>(0x10FFFFU + 1);
 
-namespace {
-
-// Local functions ------------------------------------------------------------------------------------------
-
-auto
-positions(initializer_list<pair<u64, u64>> list) {
-  return makeUnorderedBimap(list);
-}
-
-} // namespace
-
 // `TEST` ---------------------------------------------------------------------------------------------------
 
 TEST(unicode, CodePointCtor) {
@@ -166,13 +155,13 @@ TEST(unicode, conversions) {
 // `rocket::unicode::utf8` ..................................................................................
 
 TEST(unicode, utf8Validate) {
-  UnorderedBimap<u64, u64> pos;
+  Positions pos;
 
   {
     auto cow = utf8::validate("äöüß€", InvalidUnicodePolicy::Throw, &pos);
     EXPECT_FALSE(cow.modified());
     EXPECT_EQ(cow.get(), "äöüß€");
-    EXPECT_EQ(pos, positions({ { 0, 0 }, { 2, 2 }, { 4, 4 }, { 6, 6 }, { 8, 8 }, { 11, 11 }}));
+    EXPECT_EQ(pos, makePositions({ { 0, 0 }, { 2, 2 }, { 4, 4 }, { 6, 6 }, { 8, 8 }, { 11, 11 }}));
   }
 
   static_assert("�"sv.size() == 3);
@@ -182,7 +171,7 @@ TEST(unicode, utf8Validate) {
     auto cow = utf8::validate(str, InvalidUnicodePolicy::Continue, &pos);
     EXPECT_TRUE(cow.modified());
     EXPECT_EQ(cow.get(), "a�b");
-    EXPECT_EQ(pos, positions({ { 0, 0 }, { 1, 1 }, { 2, 4 }, { 3, 5 } }));
+    EXPECT_EQ(pos, makePositions({ { 0, 0 }, { 1, 1 }, { 2, 4 }, { 3, 5 } }));
   }
 
   {
@@ -190,7 +179,7 @@ TEST(unicode, utf8Validate) {
     auto cow = utf8::validate(str, InvalidUnicodePolicy::Continue, &pos);
     EXPECT_TRUE(cow.modified());
     EXPECT_EQ(cow.get(), "a�bc");
-    EXPECT_EQ(pos, positions({ { 0, 0 }, { 1, 1 }, { 2, 4 }, { 3, 5 }, { 4, 6 } }));
+    EXPECT_EQ(pos, makePositions({ { 0, 0 }, { 1, 1 }, { 2, 4 }, { 3, 5 }, { 4, 6 } }));
   }
 
   {
@@ -198,7 +187,7 @@ TEST(unicode, utf8Validate) {
     auto cow = utf8::validate(str, InvalidUnicodePolicy::Continue, &pos);
     EXPECT_TRUE(cow.modified());
     EXPECT_EQ(cow.get(), "a�");
-    EXPECT_EQ(pos, positions({ { 0, 0 }, { 1, 1 }, { 3, 4 } }));
+    EXPECT_EQ(pos, makePositions({ { 0, 0 }, { 1, 1 }, { 3, 4 } }));
   }
 
   {
@@ -206,21 +195,21 @@ TEST(unicode, utf8Validate) {
     auto cow = utf8::validate(str, InvalidUnicodePolicy::Continue, &pos);
     EXPECT_TRUE(cow.modified());
     EXPECT_EQ(cow.get(), "a��b");
-    EXPECT_EQ(pos, positions({ { 0, 0 }, { 1, 1 }, { 2, 4 }, { 3, 7 }, { 4, 8 } }));
+    EXPECT_EQ(pos, makePositions({ { 0, 0 }, { 1, 1 }, { 2, 4 }, { 3, 7 }, { 4, 8 } }));
   }
 }
 
 // `rocket::unicode::utf32` .................................................................................
 
 TEST(unicode, utf32Validate) {
-  UnorderedBimap<u64, u64> pos;
+  Positions pos;
 
   {
     const u32string_view sv = U"abc";
     auto cow = utf32::validate(sv, InvalidUnicodePolicy::Throw, &pos);
     EXPECT_FALSE(cow.modified());
     EXPECT_EQ(cow.get(), U"abc");
-    EXPECT_EQ(pos, positions({ { 0, 0 }, { 1, 1 }, { 2, 2 }, { 3, 3 } }));
+    EXPECT_EQ(pos, makePositions({ { 0, 0 }, { 1, 1 }, { 2, 2 }, { 3, 3 } }));
   }
 
   {
@@ -229,7 +218,7 @@ TEST(unicode, utf32Validate) {
     auto cow = utf32::validate(sv, InvalidUnicodePolicy::Continue,&pos);
     EXPECT_TRUE(cow.modified());
     EXPECT_EQ(cow.get(), U"a�b�");
-    EXPECT_EQ(pos, positions({ { 0, 0 }, { 1, 1 }, { 2, 2 }, { 3, 3 }, { 4, 4 } }));
+    EXPECT_EQ(pos, makePositions({ { 0, 0 }, { 1, 1 }, { 2, 2 }, { 3, 3 }, { 4, 4 } }));
   }
 }
 

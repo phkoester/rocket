@@ -6,10 +6,11 @@
 
 #pragma once
 
-#include "rocket/assert.h"
-#include "rocket/scan.h"
-#include "rocket/format.h"
 #include "rocket/Bimap.h"
+#include "rocket/Result.h"
+#include "rocket/assert.h"
+#include "rocket/format.h"
+#include "rocket/scan.h"
 #include "rocket/str/message/message.h"
 #include "rocket/unicode/ConvertTo.h"
 
@@ -61,7 +62,7 @@
   struct rocket::Enum<ns::type> : ::std::true_type { \
     static ::std::string_view toString(ns::type val); \
     \
-    static ::std::pair<u64, ns::type> toType(::std::string_view str, bool strict); \
+    static ::rocket::Result<::std::pair<u64, ns::type>> toType(::std::string_view str, bool strict); \
   }
 
 #define ROCKET_ENUM_DECLARE_MAP__(type, name) \
@@ -90,15 +91,17 @@
     return it->second; \
   } \
   \
-  ::std::pair<u64, ns::type> \
+  ::rocket::Result<::std::pair<u64, ns::type>> \
   rocket::Enum<ns::type>::toType(::std::string_view str, bool strict) { \
     if (strict) { \
       /* Strict */ \
       const auto it = ns::get##name##Map__().right.find(str); \
       if (it == ns::get##name##Map__().right.end()) { \
-        throw ::rocket::InvalidState(::rocket::str::message::cannotScanAs(str, typeid(ns::type))); \
+        return ::std::unexpected(::rocket::Error { \
+          ::rocket::str::message::cannotScanAs(str, typeid(ns::type)) \
+        }); \
       } \
-      return { it->first.size(), it->second }; \
+      return ::std::pair { it->first.size(), it->second }; \
     } \
     \
     /* Nonstrict */ \
@@ -111,9 +114,11 @@
       } \
     } \
     if (maxValueSize > 0) { \
-      return { maxValueSize, maxKey }; \
+      return ::std::pair { maxValueSize, maxKey }; \
     } \
-    throw ::rocket::InvalidState(::rocket::str::message::cannotScanAs(str, typeid(ns::type))); \
+    return ::std::unexpected(::rocket::Error { \
+      ::rocket::str::message::cannotScanAs(str, typeid(ns::type)) \
+    }); \
   }
 
 #define ROCKET_ENUM_DEFINE_MAP_ELEM__(r, data, elem) { data::elem, BOOST_PP_STRINGIZE(elem) },
@@ -168,10 +173,10 @@ struct Enum : std::false_type {
    * @param str the string to scan
    * @param strict whether the string must strictly match in its entirety. If this value is `true`, the
    *   string can be scanned in a more efficient way
-   * @return a pair of the size of the scanned portion of the string and the enum value
-   * @throw #rocket::InvalidState if the operation fails
+   * @return a pair of the size of the scanned portion of the string and the enum value, or an errors if the
+   *   operation fails
    */
-  static std::pair<u64, E> toType(std::string_view str, bool strict);
+  static Result<std::pair<u64, E>> toType(std::string_view str, bool strict);
 };
 
 } // namespace rocket
@@ -232,21 +237,21 @@ struct scn::scanner<E, char> : scn::scanner<::std::string, char> {
   scan_expected<typename Context::iterator>
   scan(E& val, Context& ctx) const {
     std::string str;
-    auto result = Base::scan(str, ctx);
-    if (result) {
-      try {
-        const auto [size, enumVal] = ::rocket::Enum<E>::toType(str, false);
-        // If the consumed string is longer than the scanned portion, we need to correct the iterator
-        const i64 correction = size - str.size(); // Zero or negative
-        val = enumVal;
-        auto it = result.value();
-        std::advance(it, correction);
-        return it; \
-      } catch (const ::std::exception&) {
+    auto scanResult = Base::scan(str, ctx);
+    if (scanResult) {
+      const auto enumResult = ::rocket::Enum<E>::toType(str, false);
+      if (not enumResult) {
         return unexpected(scan_error(scan_error::invalid_scanned_value, "Invalid enum value"));
       }
+      const auto [size, enumVal] = enumResult.value();
+      // If the consumed string is longer than the scanned portion, we need to correct the iterator
+      const i64 correction = size - str.size(); // Zero or negative
+      val = enumVal;
+      auto it = scanResult.value();
+      std::advance(it, correction);
+      return it; \
     } else {
-      return unexpected(result.error());
+      return unexpected(scanResult.error());
     }
   }
 

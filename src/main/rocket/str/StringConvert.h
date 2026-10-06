@@ -15,17 +15,6 @@
 
 namespace rocket::str {
 
-// `StringConvertError` -------------------------------------------------------------------------------------
-
-struct StringConvertError {
-  std::string message;
-};
-
-// `StringConvertResult` -------------------------------------------------------------------------------------
-
-template<typename T>
-using StringConvertResult = std::expected<T, StringConvertError>;
-
 namespace internal {
 
 // `StringConvert` ------------------------------------------------------------------------------------------
@@ -39,7 +28,7 @@ struct StringConvert<bool> {
 
   [[nodiscard]] static std::string toString(Type val) { return val ? "true" : "false"; }
 
-  [[nodiscard]] static StringConvertResult<Type>
+  [[nodiscard]] static Result<Type>
   toType(std::string_view str) {
     // Anything that is not false is true, e.g. "42"!
     return not isFalse(str);
@@ -56,10 +45,10 @@ struct StringConvert<char> {
 
   [[nodiscard]] static std::string toString(Type val) { return { val }; }
 
-  [[nodiscard]] static StringConvertResult<Type>
+  [[nodiscard]] static Result<Type>
   toType(std::string_view str) {
     if (str.size() != 1) {
-      return std::unexpected(StringConvertError { message::cannotScanAs(str, typeid(Type)) });
+      return std::unexpected(Error { message::cannotScanAs(str, typeid(Type)) });
     }
     return str[0];
   }
@@ -71,16 +60,11 @@ struct StringConvert<I> {
 
   [[nodiscard]] static std::string toString(Type val) { return fmt::format("{}", val); }
 
-  [[nodiscard]] static StringConvertResult<Type>
+  [[nodiscard]] static Result<Type>
   toType(std::string_view str) {
-    auto result = scn::scan<I>(str, "{}").transform_error([&](const scn::scan_error&) {
-      return StringConvertError { message::cannotScanAs(str, typeid(Type)) };
-    });
-    if (not result) {
-      return std::unexpected(result.error());
-    }
-    if (result->begin() != str.end()) {
-      return std::unexpected(StringConvertError { message::cannotScanAs(str, typeid(Type)) });
+    auto result = scn::scan<I>(str, "{}");
+    if (not result || result->begin() != str.end()) {
+      return std::unexpected(Error { message::cannotScanAs(str, typeid(Type)) });
     }
     return result->value();
   }
@@ -92,15 +76,13 @@ struct StringConvert<E> {
 
   [[nodiscard]] static std::string toString(Type val) { return fmt::format("{}", val); }
 
-  [[nodiscard]] static StringConvertResult<Type>
+  [[nodiscard]] static Result<Type>
   toType(std::string_view str) {
-    // XXX Enum::toType umstellen, hier kein try-catch mehr
-    try {
-      const auto [_, val] = Enum<Type>::toType(str, true);
-      return val;
-    } catch (const Exception& ex) {
-      return std::unexpected(StringConvertError { ex.message() });
+    const auto result = Enum<Type>::toType(str, true);
+    if (not result) {
+      return std::unexpected(result.error());
     }
+    return result.value().second;
   }
 };
 
@@ -110,16 +92,11 @@ struct StringConvert<F> {
 
   [[nodiscard]] static std::string toString(Type val) { return fmt::format("{}", val); }
 
-  [[nodiscard]] static StringConvertResult<Type>
+  [[nodiscard]] static Result<Type>
   toType(std::string_view str) {
-    auto result = scn::scan<F>(str, "{}").transform_error([&](const scn::scan_error&) {
-      return StringConvertError { message::cannotScanAs(str, typeid(Type)) };
-    });
-    if (not result) {
-      return std::unexpected(result.error());
-    }
-    if (result->begin() != str.end()) {
-      return std::unexpected(StringConvertError { message::cannotScanAs(str, typeid(Type)) });
+    auto result = scn::scan<F>(str, "{}");
+    if (not result || result->begin() != str.end()) {
+      return std::unexpected(Error { message::cannotScanAs(str, typeid(Type)) });
     }
     return result->value();
   }
@@ -131,7 +108,7 @@ struct StringConvert<std::string> {
 
   [[nodiscard]] static std::string toString(const Type& val) { return val; }
 
-  [[nodiscard]] static StringConvertResult<Type> toType(std::string_view str) { return std::string(str); }
+  [[nodiscard]] static Result<Type> toType(std::string_view str) { return std::string(str); }
 };
 
 template<>
@@ -140,7 +117,7 @@ struct StringConvert<std::string_view> {
 
   [[nodiscard]] static std::string toString(Type val) { return std::string(val); }
 
-  [[nodiscard]] static StringConvertResult<Type> toType(std::string_view str) { return str; }
+  [[nodiscard]] static Result<Type> toType(std::string_view str) { return str; }
 };
 
 } // namespace internal
@@ -156,7 +133,7 @@ struct StringConvert<std::string_view> {
  * @throw #rocket::InvalidState if @p str cannot be scanned
  */
 template<typename T>
-[[nodiscard]] StringConvertResult<T>
+[[nodiscard]] Result<T>
 toType(std::string_view str) {
   return internal::StringConvert<T>::toType(str);
 }

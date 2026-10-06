@@ -86,15 +86,16 @@ target_sources(rocket
       rocket/Bimap.h
       rocket/Bimap-codec.h
       rocket/Cow.h
-      rocket/enum.h
       rocket/Exception.h
-      rocket/format.h
-      rocket/functional.h
       rocket/Guard.h
       rocket/InputFailure.h
       rocket/Lazy.h
-      rocket/macro.h
       rocket/Process.h
+      rocket/Result.h
+      rocket/enum.h
+      rocket/format.h
+      rocket/functional.h
+      rocket/macro.h
       rocket/rocket.h
       rocket/scan.h
       rocket/std.h
@@ -102,11 +103,11 @@ target_sources(rocket
       rocket/type-traits.h
       rocket/chrono/chrono.h
       rocket/cl/cl.h
-      rocket/codec/codec.h
       rocket/codec/CompareEncoder.h
       rocket/codec/EqualToEncoder.h
       rocket/codec/FormattedCodec.h
       rocket/codec/HashEncoder.h
+      rocket/codec/codec.h
       rocket/filesystem/filesystem.h
       rocket/format/Subformat.h
       rocket/hash/hash.h
@@ -122,8 +123,8 @@ target_sources(rocket
       rocket/reflect/Declared.h
       rocket/reflect/Instance.h
       rocket/reflect/MemberRef.h
-      rocket/reflect/reflect.h
       rocket/reflect/VarRef.h
+      rocket/reflect/reflect.h
       rocket/str/Noun.h
       rocket/str/Range.h
       rocket/str/str.h

@@ -233,7 +233,7 @@ Cow<std::string_view, std::string>
 validate(
   std::string_view str,
   InvalidUnicodePolicy policy = Throw,
-  UnorderedBimap<u64, u64>* positions = nullptr);
+  Positions* positions = nullptr);
 
 } // namespace utf8
 
@@ -277,7 +277,7 @@ Cow<std::u32string_view, std::u32string>
 validate(
   std::u32string_view str,
   InvalidUnicodePolicy policy = Throw,
-  UnorderedBimap<u64, u64>* positions = nullptr);
+  Positions* positions = nullptr);
 
 } // namespace utf32
 
