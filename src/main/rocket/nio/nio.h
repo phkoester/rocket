@@ -73,13 +73,6 @@ struct Device {
   [[nodiscard]] bool bad() const { return status_.bad; }
 
   /**
-   * Closes the instance.
-   *
-   * @return whether the operation succeeded
-   */
-  virtual bool close() = 0;
-
-  /**
    * Checks if the EOF bit is set.
    *
    * @return whether the EOF bit is set
@@ -317,8 +310,6 @@ struct BufferedSink : Sink {
 
   ~BufferedSink() override;
 
-  bool close() override;
-
   bool flush() override;
 
   [[nodiscard]] i32 handle() const override { return underlying_.handle(); }
@@ -344,45 +335,26 @@ ROCKET_TEST_PRIVATE:
  */
 struct FileSink : Sink {
   /**
-   * Configuration for the #FileSink constructor.
-   */
-  struct Config {
-    /// Whether to append to the file instead of overwriting it.
-    bool append = false;
-    /// Whether to close the file on destruction.
-    bool closeOnDestroy = true;
-  };
-
-  /**
-   * Returns a default configuration.
-   *
-   * @return a default configuration
-   */
-  static consteval Config defaultConfig() { return {}; }
-
-  /**
    * @ctor
+   *
+   * Constructs a file sink with a `FILE` pointer. The file is *not* closed on destruction.
    *
    * @param file pointer to a `FILE`, may not be null
-   * @param config the configuration
    */
-  explicit FileSink(FILE* file, const Config& config = defaultConfig());
+  explicit FileSink(FILE* file);
 
   /**
    * @ctor
    *
+   * Opens a file at path @p path for writing. The file is closed on destruction.
+   *
    * @param path a path to a file
-   * @param config the configuration
+   * @param append whether to append to the file instead of overwriting it
    * @throw InvalidState if the file cannot be opened
    */
-  explicit FileSink(const std::filesystem::path& path, const Config& config = defaultConfig());
+  explicit FileSink(const std::filesystem::path& path, bool append);
 
-  /**
-   * @copydoc Sink::close
-   *
-   * `stdout` and `stderr` are never closed.
-   */
-  bool close() override;
+  virtual ~FileSink() override;
 
   bool flush() override;
 
@@ -392,8 +364,8 @@ struct FileSink : Sink {
 
 ROCKET_TEST_PRIVATE:
 
-  io::FileHandle handle_; ///< The file handle.
-  Config config_; ///< The configuration.
+  FILE* file_; ///< The `FILE` pointer, never null.
+  bool closeOnDestroy_; ///< Whether to close the file on destruction.
 };
 
 // `NullSink` -----------------------------------------------------------------------------------------------
@@ -405,8 +377,6 @@ struct NullSink : Sink {
   NullSink();
 
   ~NullSink() override = default;
-
-  bool close() override { return false; }
 
   bool flush() override { return false; }
 
@@ -429,8 +399,6 @@ struct SpanSink : Sink {
   explicit SpanSink(std::span<char> out);
 
   ~SpanSink() override = default;
-
-  bool close() override;
 
   bool flush() override { return false; }
 
@@ -461,8 +429,6 @@ struct StreamSink : Sink {
   explicit StreamSink(std::ostream& os);
 
   ~StreamSink() override;
-
-  bool close() override;
 
   bool flush() override;
 
@@ -497,8 +463,6 @@ struct StringSink : Sink {
   explicit StringSink(std::string& ref);
 
   ~StringSink() override = default;
-
-  bool close() override;
 
   bool flush() override { return false; }
 
@@ -697,10 +661,6 @@ struct BufferedSource : Source {
    */
   explicit BufferedSource(Source& underlying, u64 size = DEFAULT_BUFFER_SIZE);
 
-  ~BufferedSource() override;
-
-  bool close() override;
-
   [[nodiscard]] i32 handle() const override { return underlying_.handle(); }
 
   std::istream& istream() override;
@@ -734,43 +694,25 @@ ROCKET_TEST_PRIVATE:
  */
 struct FileSource : Source {
   /**
-   * Configuration for the #FileSource constructor.
-   */
-   struct Config {
-    /// Whether to close the file on destruction.
-    bool closeOnDestroy = true;
-  };
-
-  /**
-   * Returns a default configuration.
-   *
-   * @return a default configuration
-   */
-  static consteval Config defaultConfig() { return {}; }
-
-  /**
    * @ctor
+   *
+   * Constructs a file source with a `FILE` pointer. The file is *not* closed on destruction.
    *
    * @param file pointer to a `FILE`, may not be null
-   * @param config the configuration
    */
-  explicit FileSource(FILE* file, const Config& config = defaultConfig());
+  explicit FileSource(FILE* file);
 
   /**
    * @ctor
    *
+   * Opens a file at path @p path for reading. The file is closed on destruction.
+   *
    * @param path a path to a file
-   * @param config the configuration
    * @throw InvalidState if the file cannot be opened
    */
-  explicit FileSource(const std::filesystem::path& path, const Config& config = defaultConfig());
+  explicit FileSource(const std::filesystem::path& path);
 
-  /**
-   * @copydoc Source::close
-   *
-   * `stdin` is never closed.
-   */
-  bool close() override;
+  virtual ~FileSource() override;
 
   [[nodiscard]] i32 handle() const override;
 
@@ -784,8 +726,8 @@ struct FileSource : Source {
 
 ROCKET_TEST_PRIVATE:
 
-  io::FileHandle handle_; ///< The file handle.
-  Config config_; ///< The configuration.
+  FILE* file_; ///< The `FILE` pointer, never null.
+  bool closeOnDestroy_; ///< Whether to close the file on destruction.
   std::unique_ptr<std::istream> istream_; ///< An optional input stream.
 };
 
@@ -798,8 +740,6 @@ ROCKET_TEST_PRIVATE:
   NullSource();
 
   ~NullSource() override = default;
-
-  bool close() override { return false; }
 
   [[nodiscard]] i32 handle() const override { return -1; }
 
@@ -838,8 +778,6 @@ struct SpanSource : ContiguousSource {
   ~SpanSource() override = default;
 
   std::span<const u8> bytes() const override { return in_.subspan(pos_); }
-
-  bool close() override;
 
   i32 handle() const override { return -1; }
 
@@ -887,10 +825,6 @@ struct StreamSource : Source {
    */
   explicit StreamSource(std::istream& is);
 
-  ~StreamSource() override;
-
-  bool close() override;
-
   [[nodiscard]] i32 handle() const override;
 
   std::istream& istream() override { return is_; }
@@ -929,8 +863,6 @@ struct StringSource : ContiguousSource {
     const auto str = this->str();
     return { reinterpret_cast<const u8*>(str.data()), str.size() };
   }
-
-  bool close() override;
 
   i32 handle() const override { return -1; }
 

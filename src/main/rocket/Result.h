@@ -1,7 +1,7 @@
 /**
  * @file Result.h
  *
- * A general-purpose result, to be used with `std::expected`.
+ * A general-purpose result.
  */
 
 #pragma once
@@ -13,9 +13,27 @@ namespace rocket {
 
 // `Error` --------------------------------------------------------------------------------------------------
 
-/// A general-purpose error, carrying a message.
+/**
+ * A general-purpose error, carrying a message.
+ *
+ * This may serve as a base class for more specific errors.
+ */
 struct Error {
-  std::string message; ///< The error message.
+  /// The error message.
+  std::string message;
+
+  /**
+   * @ctor
+   *
+   * @param message the error message
+   */
+  Error(std::string_view message) : message(message) {}
+
+  /// @dtor
+  virtual ~Error() = default;
+
+  /// @member_op_eq
+  bool operator==(const Error& rhs) const = default;
 };
 
 // `Result` -------------------------------------------------------------------------------------------------

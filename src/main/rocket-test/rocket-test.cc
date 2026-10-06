@@ -13,11 +13,22 @@ namespace rocket::test {
 
 // Constants ------------------------------------------------------------------------------------------------
 
-const optional<string> BINARY_DIR = system::env::get<string>("BINARY_DIR");
-const optional<string> CONFIG = system::env::get<string>("CONFIG");
-const optional<string> CONFIGS = system::env::get<string>("CONFIGS");
-const optional<string> SOURCE_DIR = system::env::get<string>("SOURCE_DIR");
-const bool TEST_TERMINAL = system::env::get<bool>(ROCKET_TEST_TERMINAL).value_or(false);
+const optional<string> BINARY_DIR = system::env::get<string>("BINARY_DIR").
+  transform([](string val) { return optional<string>(std::move(val)); }).
+  value_or({});
+const optional<string> CONFIG = system::env::get<string>("CONFIG").
+  transform([](string val) { return optional<string>(std::move(val)); }).
+  value_or({});
+const optional<string> CONFIGS = system::env::get<string>("CONFIGS").
+  transform([](string val) { return optional<string>(std::move(val)); }).
+  value_or({});
+const optional<string> SOURCE_DIR = system::env::get<string>("SOURCE_DIR").
+  transform([](string val) { return optional<string>(std::move(val)); }).
+  value_or({});
+
+const bool TEST_TERMINAL = system::env::get<bool>(ROCKET_TEST_TERMINAL).
+  transform([](bool val) { return val; }).
+  value_or(false);
 
 // Functions ------------------------------------------------------------------------------------------------
 

@@ -41,8 +41,6 @@ using ValueType = ValueTypeImpl<T>::Type;
 
 // `applyTo` ------------------------------------------------------------------------------------------------
 
-// XXX umstellen auf expected
-
 inline bool
 applyTo(bool& out, std::string_view val) {
   auto result = str::toType<bool>(val);

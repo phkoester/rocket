@@ -6,6 +6,7 @@
 
 #pragma once
 
+#include "rocket/Result.h"
 #include "rocket/format.h"
 #include "rocket/str/StringConvert.h"
 
@@ -101,6 +102,44 @@ namespace env {
 
 // Environment ----------------------------------------------------------------------------------------------
 
+// `EnvError` ...............................................................................................
+
+/// An error related to environment variables.
+struct EnvError : public Error {
+  /// Error codes.
+  enum Code {
+    ConversionFailed, ///< The conversion to the target type failed.
+    NotFound ///< The environment variable was not found.
+  };
+
+  /// The error code.
+  Code code;
+
+  /**
+   * @ctor
+   *
+   * @param code the error code
+   */
+  EnvError(Code code) : Error({}), code(code) {}
+
+  /**
+   * @ctor
+   *
+   * @param message the error message
+   * @param code the error code
+   */
+  EnvError(std::string_view message, Code code) : Error(message), code(code) {}
+
+  /// @member_op_eq
+  bool operator==(const EnvError& rhs) const = default;
+};
+
+/// A result related to environment variables.
+template<typename T>
+using EnvResult = std::expected<T, EnvError>;
+
+// Functions ................................................................................................
+
 /**
  * Returns all environment variables as a set of name-value pairs.
  *
@@ -111,26 +150,27 @@ namespace env {
 std::unordered_map<std::string, std::string> get();
 
 /**
- * Returns the value of an environment variable. If the string conversion fails, this function returns null.
+ * Returns the value of an environment variable.
  *
  * This function is thread-safe as long as all callers use this API from `system.h` exclusively.
  *
  * @tparam T the type to convert a string value to
  * @param name the name of the environment variable
- * @return null if the environment variable does not exist or if the string conversion fails, otherwise a
- *   value of type @p T
+ * @return the value of the environment variable, converted to type @p T, a #rocket::system::env::EnvError
+ *   otherwise
  */
-// XXX umstellen auf expected
 template<typename T> requires (not std::same_as<T, std::string_view>)
-std::optional<T>
+EnvResult<T>
 get(std::string_view name) {
   auto val = internal::getImpl(name);
   if (not val) {
-    return {};
+    return std::unexpected(EnvError(EnvError::NotFound));
   }
-  auto result = rocket::str::toType<T>(*val);
+  auto result = rocket::str::toType<T>(*val).transform_error([&](const auto& err) {
+    return EnvError(err.message, EnvError::ConversionFailed);
+  });
   if (not result) {
-    return {};
+    return std::unexpected(result.error());
   }
   return result.value();
 }

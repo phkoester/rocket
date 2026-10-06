@@ -20,7 +20,8 @@ TEST(system, envBool) {
 
   const char* name = "MY_BOOL";
 
-  EXPECT_EQ(env::get<log::LogLevel>(name), nullopt);
+  env::unset(name);
+  EXPECT_EQ(env::get<type>(name).error(), env::EnvError(env::EnvError::NotFound));
 
   env::set(name, true);
   // Check twice, there was a bad surprise with `std::putenv` ...
@@ -28,7 +29,7 @@ TEST(system, envBool) {
   EXPECT_EQ(env::get<type>(name), true);
 
   env::unset(name);
-  EXPECT_EQ(env::get<type>(name), nullopt);
+  EXPECT_EQ(env::get<type>(name).error(), env::EnvError(env::EnvError::NotFound));
 
   env::set(name, "0");
   EXPECT_EQ(env::get<type>(name), false);
@@ -43,7 +44,8 @@ TEST(system, envF64) {
 
   const char* name = "MY_F64";
 
-  EXPECT_EQ(env::get<type>(name), nullopt);
+  env::unset(name);
+  EXPECT_EQ(env::get<type>(name).error(), env::EnvError(env::EnvError::NotFound));
 
   env::set(name, -1.2);
   // Check twice, there was a bad surprise with `std::putenv` ...
@@ -51,7 +53,7 @@ TEST(system, envF64) {
   EXPECT_EQ(env::get<type>(name), -1.2);
 
   env::unset(name);
-  EXPECT_EQ(env::get<type>(name), nullopt);
+  EXPECT_EQ(env::get<type>(name).error(), env::EnvError(env::EnvError::NotFound));
 
   env::set(name, -1.3);
   EXPECT_EQ(env::get<type>(name), -1.3);
@@ -62,23 +64,38 @@ TEST(system, envLogLevel) {
 
   const char* name = "MY_LOG_LEVEL";
 
-  EXPECT_EQ(env::get<type>(name), nullopt);
+  env::unset(name);
+  EXPECT_EQ(env::get<type>(name).error(), env::EnvError(env::EnvError::NotFound));
+  // Convert to `optional<LogLevel>` and check if it is empty
+  EXPECT_EQ(
+    env::get<type>(name).transform([](log::LogLevel val) { return optional<log::LogLevel>(val); }).value_or({}),
+    optional<log::LogLevel>());
 
   env::set(name, type::debug);
   // Check twice, there was a bad surprise with `std::putenv` ...
   EXPECT_EQ(env::get<type>(name), type::debug);
   EXPECT_EQ(env::get<type>(name), type::debug);
 
+  env::set(name, "something");
+  EXPECT_EQ(
+    env::get<type>(name).error(),
+    env::EnvError("Cannot scan \"something\" as `rocket::log::LogLevel`", env::EnvError::ConversionFailed));
+  // Convert to `optional<LogLevel>` and check if it is empty
+  EXPECT_EQ(
+    env::get<type>(name).transform([](log::LogLevel val) { return optional<log::LogLevel>(val); }).value_or({}),
+    optional<log::LogLevel>());
+
   env::unset(name);
-  EXPECT_EQ(env::get<type>(name), nullopt);
+  EXPECT_EQ(env::get<type>(name).error(), env::EnvError(env::EnvError::NotFound));
 }
 
 TEST(system, envString) {
   using type = string;
 
-  const char* name = "MY_STRING_VIEW";
+  const char* name = "MY_STRING";
 
-  EXPECT_EQ(env::get<type>(name), nullopt);
+  env::unset(name);
+  EXPECT_EQ(env::get<type>(name).error(), env::EnvError(env::EnvError::NotFound));
 
   env::set(name, "some text"sv);
   // Check twice, there was a bad surprise with `std::putenv` ...
@@ -86,7 +103,7 @@ TEST(system, envString) {
   EXPECT_EQ(env::get<type>(name), "some text");
 
   env::unset(name);
-  EXPECT_EQ(env::get<type>(name), nullopt);
+  EXPECT_EQ(env::get<type>(name).error(), env::EnvError(env::EnvError::NotFound));
 }
 
 TEST(system, envGet) {
