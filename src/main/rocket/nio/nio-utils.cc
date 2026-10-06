@@ -264,13 +264,13 @@ readUntilChar(nio::Source& in, char c) {
   if (const auto* contiguous = dynamic_cast<nio::ContiguousSource*>(&in); contiguous != nullptr) {
     // Contiguous source
 
-    const auto str = contiguous->str();
-    const u64 pos = str.find(c);
+    const auto remaining = contiguous->str();
+    const u64 pos = remaining.find(c);
     if (pos == NPOS) {
       return {};
     }
     in.seek(safe<i64>(pos + 1), nio::SeekMode::cur);
-    return string(str.substr(0, pos));
+    return string(remaining.substr(0, pos));
   }
 #endif
 
@@ -301,12 +301,12 @@ readWhilePredicate(nio::Source& in, const std::function<bool(char)>& predicate) 
   if (const auto* contiguous = dynamic_cast<nio::ContiguousSource*>(&in); contiguous != nullptr) {
     // Contiguous source
 
-    const auto str = contiguous->str();
-    auto it = str.begin(), end = str.end();
+    const auto remaining = contiguous->str();
+    auto it = remaining.begin(), end = remaining.end();
     while (it != end && predicate(*it)) {
       ++it;
     }
-    string ret(str.begin(), it);
+    string ret(remaining.begin(), it);
     in.seek(safe<i64>(ret.size()), nio::SeekMode::cur);
     return ret;
   }
@@ -334,17 +334,17 @@ readUntilUnescapedChar(nio::Source& in, char c) {
   if (const auto* contiguous = dynamic_cast<nio::ContiguousSource*>(&in); contiguous != nullptr) {
     // Contiguous source
 
-    const auto str = contiguous->str();
+    const auto remaining = contiguous->str();
     u64 pos = 0;
 
     while (true) {
-      pos = str.find(c, pos);
+      pos = remaining.find(c, pos);
       if (pos == NPOS) {
         return {};
       }
-      if (pos == 0 || str[pos - 1] != '\\') {
+      if (pos == 0 || remaining[pos - 1] != '\\') {
         in.seek(safe<i64>(pos + 1), nio::SeekMode::cur);
-        string ret(str.substr(0, pos));
+        string ret(remaining.substr(0, pos));
         return ret;
       }
       ++pos;
@@ -449,8 +449,8 @@ skipUntilString(nio::Source& in, std::string_view str) {
   if (const auto* contiguous = dynamic_cast<nio::ContiguousSource*>(&in); contiguous != nullptr) {
     // Contiguous source
 
-    const auto str = contiguous->str();
-    const auto pos = str.find(str);
+    const auto remaining = contiguous->str();
+    const auto pos = remaining.find(str);
     if (pos == NPOS) {
       in.seek(0, nio::SeekMode::end);
       return false;
