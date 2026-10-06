@@ -12,31 +12,31 @@ using namespace rocket::str::escape;
 // `TEST` ---------------------------------------------------------------------------------------------------
 
 TEST(escape, CString) {
-  Positions positions;
+  Positions pos;
 
   // Double quotes, escaping, UTF-8 'ä'
   {
     const string in = "\\ä\"b";
     const CStringConfig config { .quote='"' };
-    const string escaped = escapeCString(in, config, &positions);
+    const string escaped = escapeCString(in, config, &pos);
     EXPECT_EQ(escaped, "\"\\\\ä\\\"b\"");
-    EXPECT_EQ(positions, makePositions({ { 0, 1 }, { 1, 3 }, { 3, 5 }, { 4, 7 }, { 5, 8 } }));
+    EXPECT_EQ(pos, makePositions({ { 0, 1 }, { 1, 3 }, { 3, 5 }, { 4, 7 }, { 5, 8 } }));
 
-    const string out = unescapeCString(escaped, config, &positions);
+    const string out = unescapeCString(escaped, config, &pos);
     EXPECT_EQ(out, in);
-    EXPECT_EQ(positions, makePositions({ { 1, 0 }, { 3, 1 }, { 5, 3 }, { 7, 4 }, { 8, 5 } }));
+    EXPECT_EQ(pos, makePositions({ { 1, 0 }, { 3, 1 }, { 5, 3 }, { 7, 4 }, { 8, 5 } }));
   }
 
   // Apostrophes
   {
     const string in = "a'b";
     const CStringConfig config { .quote='\'' };
-    const string escaped = escapeCString(in, config, &positions);
+    const string escaped = escapeCString(in, config, &pos);
     EXPECT_EQ(escaped, "'a\\'b'");
-    EXPECT_EQ(positions, makePositions({ { 0, 1 }, { 1, 2 }, { 2, 4 }, { 3, 5 } }));
-    const string out = unescapeCString(escaped, config, &positions);
+    EXPECT_EQ(pos, makePositions({ { 0, 1 }, { 1, 2 }, { 2, 4 }, { 3, 5 } }));
+    const string out = unescapeCString(escaped, config, &pos);
     EXPECT_EQ(out, in);
-    EXPECT_EQ(positions, makePositions({ { 1, 0 }, { 2, 1 }, { 4, 2 }, { 5, 3 } }));
+    EXPECT_EQ(pos, makePositions({ { 1, 0 }, { 2, 1 }, { 4, 2 }, { 5, 3 } }));
   }
 
   // Null char
@@ -44,12 +44,12 @@ TEST(escape, CString) {
     const string in = "a\x00" "b"s;
     EXPECT_EQ(in.size(), 3);
     const CStringConfig config;
-    const string escaped = escapeCString(in, config, &positions);
+    const string escaped = escapeCString(in, config, &pos);
     EXPECT_EQ(escaped, "a\\x00b");
-    EXPECT_EQ(positions, makePositions({ { 0, 0 }, { 1, 1 }, { 2, 5 }, { 3, 6 } }));
-    const string out = unescapeCString(escaped, config, &positions);
+    EXPECT_EQ(pos, makePositions({ { 0, 0 }, { 1, 1 }, { 2, 5 }, { 3, 6 } }));
+    const string out = unescapeCString(escaped, config, &pos);
     EXPECT_EQ(out, in);
-    EXPECT_EQ(positions, makePositions({ { 0, 0 }, { 1, 1 }, { 5, 2 }, { 6, 3 } }));
+    EXPECT_EQ(pos, makePositions({ { 0, 0 }, { 1, 1 }, { 5, 2 }, { 6, 3 } }));
   }
 
   // Multi-code-point characters
@@ -59,15 +59,15 @@ TEST(escape, CString) {
     const string in = "a☢️b🧑‍🌾c";
     EXPECT_EQ(in.size(), 20);
     const CStringConfig config;
-    const auto escaped = escapeCString(in, config, &positions);
+    const auto escaped = escapeCString(in, config, &pos);
     EXPECT_EQ(escaped, in);
     EXPECT_EQ(
-        positions,
+        pos,
         makePositions({ { 0, 0 }, { 1, 1 }, { 7, 7 }, { 8, 8 }, { 19, 19 }, { 20, 20 } }));
-    const string out = unescapeCString(escaped, config, &positions);
+    const string out = unescapeCString(escaped, config, &pos);
     EXPECT_EQ(out, in);
     EXPECT_EQ(
-        positions,
+        pos,
         makePositions({ { 0, 0 }, { 1, 1 }, { 7, 7 }, { 8, 8 }, { 19, 19 }, { 20, 20 } }));
   }
 
@@ -81,25 +81,25 @@ TEST(escape, CString) {
   {
     string in = "a\tb";
     CStringConfig config;
-    auto escaped = escapeCString(in, config, &positions);
+    auto escaped = escapeCString(in, config, &pos);
     EXPECT_EQ(escaped, "a\\tb");
-    EXPECT_EQ(positions, makePositions({ { 0, 0 }, { 1, 1 }, { 2, 3 }, { 3, 4 } }));
+    EXPECT_EQ(pos, makePositions({ { 0, 0 }, { 1, 1 }, { 2, 3 }, { 3, 4 } }));
 
     config = { .tabSize=8 };
-    escaped = escapeCString(in, config, &positions);
+    escaped = escapeCString(in, config, &pos);
     EXPECT_EQ(escaped, "a       b");
-    EXPECT_EQ(positions, makePositions({ { 0, 0 }, { 1, 1 }, { 2, 8 }, { 3, 9 } }));
+    EXPECT_EQ(pos, makePositions({ { 0, 0 }, { 1, 1 }, { 2, 8 }, { 3, 9 } }));
 
     in = "a\r\n\tb";
-    escaped = escapeCString(in, config, &positions);
+    escaped = escapeCString(in, config, &pos);
     EXPECT_EQ(escaped, "a\\r\\n   b");
     // CR/LF is one character
-    EXPECT_EQ(positions, makePositions({ { 0, 0 }, { 1, 1 }, { 3, 5 }, { 4, 8 }, { 5, 9 } }));
+    EXPECT_EQ(pos, makePositions({ { 0, 0 }, { 1, 1 }, { 3, 5 }, { 4, 8 }, { 5, 9 } }));
 
     in = "\b🧑‍🌾\tb";
-    escaped = escapeCString(in, config, &positions);
+    escaped = escapeCString(in, config, &pos);
     EXPECT_EQ(escaped, "\\b🧑‍🌾    b");
-    EXPECT_EQ(positions, makePositions({ { 0, 0 }, { 1, 2 }, { 12, 13 }, { 13, 17 }, { 14, 18 } }));
+    EXPECT_EQ(pos, makePositions({ { 0, 0 }, { 1, 2 }, { 12, 13 }, { 13, 17 }, { 14, 18 } }));
   }
 
   EXPECT_THAT(
@@ -133,19 +133,19 @@ TEST(escape, CString) {
 }
 
 TEST(escape, Regex) {
-  Positions positions;
+  Positions pos;
 
   {
     const string in = "\r\t\uFFFF()[a-z]";
-    const auto escaped = escapeRegex(in, &positions);
+    const auto escaped = escapeRegex(in, &pos);
     EXPECT_EQ(escaped, "\\r\\t\\uFFFF\\(\\)\\[a-z\\]");
     EXPECT_EQ(
-        positions,
+        pos,
         makePositions({ { 0, 0 }, { 1, 2 }, { 2, 4 }, { 5, 10 }, { 6, 12 }, { 7, 14 }, { 8, 16 }, { 9, 17 }, { 10, 18 }, { 11, 19 }, { 12, 21 } }));
-    const auto out = unescapeRegex(escaped, &positions);
+    const auto out = unescapeRegex(escaped, &pos);
     EXPECT_EQ(out, in);
     EXPECT_EQ(
-        positions,
+        pos,
         makePositions({ { 0, 0 }, { 2, 1 }, { 4, 2 }, { 10, 5 }, { 12, 6 }, { 14, 7 }, { 16, 8 }, { 17, 9 }, { 18, 10 }, { 19, 11 }, { 21, 12 } }));
   }
 }
