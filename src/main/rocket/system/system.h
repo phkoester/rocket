@@ -105,7 +105,7 @@ namespace env {
 // `EnvError` ...............................................................................................
 
 /// An error related to environment variables.
-struct EnvError : public Error {
+struct EnvError : Error {
   /// Error codes.
   enum Code {
     ConversionFailed, ///< The conversion to the target type failed.
@@ -134,9 +134,17 @@ struct EnvError : public Error {
   bool operator==(const EnvError& rhs) const = default;
 };
 
-/// A result related to environment variables.
+// `GetError`, `GetResult` ..................................................................................
+
+/// Error for #rocket::system::env::get(std::string_view).
+enum GetError {
+  ConversionFailed, ///< The conversion to the target type failed.
+  NotFound ///< The environment variable was not found.
+};
+
+/// Result with #rocket::system::env::GetError.
 template<typename T>
-using EnvResult = std::expected<T, EnvError>;
+using GetResult = std::expected<T, GetError>;
 
 // Functions ................................................................................................
 
@@ -160,14 +168,14 @@ std::unordered_map<std::string, std::string> get();
  *   otherwise
  */
 template<typename T> requires (not std::same_as<T, std::string_view>)
-EnvResult<T>
+GetResult<T>
 get(std::string_view name) {
   auto val = internal::getImpl(name);
   if (not val) {
-    return std::unexpected(EnvError(EnvError::NotFound));
+    return std::unexpected(NotFound);
   }
-  auto result = rocket::str::toType<T>(*val).transform_error([&](const auto& err) {
-    return EnvError(err.message, EnvError::ConversionFailed);
+  auto result = rocket::str::toType<T>(*val).transform_error([&](const auto&) {
+    return ConversionFailed;
   });
   if (not result) {
     return std::unexpected(result.error());

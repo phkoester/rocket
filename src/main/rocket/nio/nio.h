@@ -6,6 +6,7 @@
 
 #pragma once
 
+#include "rocket/Result.h"
 #include "rocket/format.h"
 #include "rocket/rocket.h"
 #include "rocket/unicode/unicode-fwd.h"
@@ -34,6 +35,45 @@ static constexpr u64 DEFAULT_BUFFER_SIZE = 64 * 1'024; // 64 KiB
  * The minimum buffer size in bytes.
  */
 static constexpr u64 MIN_BUFFER_SIZE = 64;
+
+// `NioError` -----------------------------------------------------------------------------------------------
+
+/// A `rocket::nio` error.
+struct NioError : Error {
+  /// Error codes.
+  enum Code {
+    Bad,
+    Eof,
+    InvalidUtf8
+  };
+
+  /// The error code.
+  Code code;
+
+  /**
+   * @ctor
+   *
+   * @param code the error code
+   */
+  NioError(Code code) : Error({}), code(code) {}
+
+  /**
+   * @ctor
+   *
+   * @param message the error message
+   * @param code the error code
+   */
+  NioError(std::string_view message, Code code) : Error(message), code(code) {}
+
+  /// @member_op_eq
+  bool operator==(const NioError& rhs) const = default;
+};
+
+// `NioResult` ----------------------------------------------------------------------------------------------
+
+/// A `rocket::nio` result.
+template<typename T>
+using NioResult = std::expected<T, NioError>;
 
 // `Status` -------------------------------------------------------------------------------------------------
 
