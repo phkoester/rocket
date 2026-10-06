@@ -178,11 +178,11 @@ scan(nio::Source& in) {
 
     const auto str = contiguous->str();
     auto result = scn::scan<T>(str, "{}");
-    if (result) {
-      in.seek(result->begin() - str.begin(), nio::SeekMode::cur);
-      return result->value();
+    if (not result) {
+      return {};
     }
-    return {};
+    in.seek(result->begin() - str.begin(), nio::SeekMode::cur);
+    return result->value();
   }
 #endif
 
@@ -190,11 +190,11 @@ scan(nio::Source& in) {
 
   std::istream& is = in.istream();
   auto result = scn::scan<T>(is, "{}");
-  if (result) {
-    in.seek(io::tellg(is), nio::SeekMode::beg);
-    return result->value();
+  if (not result) {
+    return {};
   }
-  return {};
+  in.seek(io::tellg(is), nio::SeekMode::beg);
+  return result->value();
 }
 
 /**
@@ -215,21 +215,21 @@ scanCodePoint(nio::Source& in) {
 
     const auto str = contiguous->str();
     auto result = scn::scan<I>(str, "U+{:X}");
-    if (result) {
-      in.seek(result->begin() - str.begin(), nio::SeekMode::cur);
-      return result->value();
+    if (not result) {
+      return {};
     }
-    return {};
+    in.seek(result->begin() - str.begin(), nio::SeekMode::cur);
+    return result->value();
   }
 #endif
 
   std::istream& is = in.istream();
   auto result = scn::scan<I>(is, "U+{:X}");
-  if (result) {
-    in.seek(io::tellg(is), nio::SeekMode::beg);
-    return result->value();
+  if (not result) {
+    return {};
   }
-  return {};
+  in.seek(io::tellg(is), nio::SeekMode::beg);
+  return result->value();
 }
 
 /**
@@ -251,11 +251,11 @@ scanInteger(nio::Source& in) {
     const auto str = contiguous->str();
     // Setting `base` to 0 detects the base from the input
     auto result = scn::scan_int<I>(str, 0);
-    if (result) {
-      in.seek(result->begin() - str.begin(), nio::SeekMode::cur);
-      return result->value();
+    if (not result) {
+      return {};
     }
-    return {};
+    in.seek(result->begin() - str.begin(), nio::SeekMode::cur);
+    return result->value();
   }
 #endif
 
@@ -263,11 +263,11 @@ scanInteger(nio::Source& in) {
 
   std::istream& is = in.istream();
   auto result = scn::scan<I>(is, "{:i}");
-  if (result) {
-    in.seek(io::tellg(is), nio::SeekMode::beg);
-    return result->value();
+  if (not result) {
+    return {};
   }
-  return {};
+  in.seek(io::tellg(is), nio::SeekMode::beg);
+  return result->value();
 }
 
 /**
