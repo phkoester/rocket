@@ -186,10 +186,12 @@ TEST(nio, FileSourceDoesNotExist) {
 TEST(nio, FileSourceReadAll) {
   const auto temp = rocket::filesystem::tempFile();
 
-  FileSink out(temp.string());
   const vector<u8> data { 0, 0, 0, 0 };
-  out.write(data);
-  out.close();
+
+  {
+    FileSink out(temp.string()); // Auto-close
+    out.write(data);
+  }
 
   FileSource in(temp.string());
   auto bytes = in.readAll();
@@ -206,9 +208,10 @@ TEST(nio, FileSourceReadAll) {
 TEST(nio, FileSourceReadString) {
   const auto temp = rocket::filesystem::tempFile();
 
-  FileSink out(temp.string());
-  out.writeln("Hey there");
-  out.close();
+  {
+    FileSink out(temp.string()); // Auto-close
+    out.writeln("Hey there");
+  }
 
   FileSource in(temp.string());
   auto str = in.readString();

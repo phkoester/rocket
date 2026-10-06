@@ -40,7 +40,7 @@ BENCH(nio, BufferedFileSink, [](benchmark::State& state) {
 
   for (auto _ : state) {
     FileSink out(temp.string());
-    std::setvbuf(*out.handle_, nullptr, _IONBF, 0); // Disable buffering
+    std::setvbuf(out.file_, nullptr, _IONBF, 0); // Disable buffering
     BufferedSink buffered(out);
     for (u64 i = 0; i < N; ++i) {
       buffered.Sink::write(chunk);
