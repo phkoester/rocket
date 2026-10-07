@@ -172,6 +172,30 @@ TEST(str, split) { // NOLINT(*-complexity)
   EXPECT_EQ(n, 7);
 }
 
+TEST(str, trim) {
+  EXPECT_EQ(trim(""sv), ""sv);
+  EXPECT_EQ(trim("\t\n\v\f\r "sv), ""sv);
+  EXPECT_EQ(trim("abc"sv), "abc"sv);
+  EXPECT_EQ(trim(" abc "sv), "abc"sv);
+  EXPECT_EQ(trim(" \t\na b c\v\f "sv), "a b c"sv);
+}
+
+TEST(str, trimLeading) {
+  EXPECT_EQ(trimLeading(""sv), ""sv);
+  EXPECT_EQ(trimLeading("\t\n\v\f\r "sv), ""sv);
+  EXPECT_EQ(trimLeading("abc"sv), "abc"sv);
+  EXPECT_EQ(trimLeading(" abc "sv), "abc "sv);
+  EXPECT_EQ(trimLeading(" \t\na b c\v\f "sv), "a b c\v\f "sv);
+}
+
+TEST(str, trimTrailing) {
+  EXPECT_EQ(trimTrailing(""sv), ""sv);
+  EXPECT_EQ(trimTrailing("\t\n\v\f\r "sv), ""sv);
+  EXPECT_EQ(trimTrailing("abc"sv), "abc"sv);
+  EXPECT_EQ(trimTrailing(" abc "sv), " abc"sv);
+  EXPECT_EQ(trimTrailing(" \t\na b c\v\f "sv), " \t\na b c"sv);
+}
+
 TEST(str, upperChar) {
   EXPECT_EQ(str::upper("debug"), "DEBUG");
   EXPECT_EQ(str::upper("DEBUG"), "DEBUG");

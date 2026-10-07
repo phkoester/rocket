@@ -65,7 +65,7 @@ struct SubformatParams {
    * Tags a value.
    *
    * @param tag the tag
-   * @param value the value
+   * @param val the value
    */
   void tag(std::basic_string_view<C> tag, const std::basic_string<C>& val) {
     tagged_.emplace(tag, val);

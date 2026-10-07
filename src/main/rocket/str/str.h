@@ -393,6 +393,55 @@ repeat(const std::basic_string_view<C> str, u64 count) {
 [[nodiscard]] std::string times(u64 n);
 
 /**
+ * Removes leading whitespace from a string.
+ *
+ * @tparam C the character type
+ * @param str the string to trim
+ * @return a new string view
+ */
+template<typename C> requires IsChar<C>
+[[nodiscard]] std::basic_string_view<C>
+trimLeading(std::basic_string_view<C> str) {
+  constexpr auto WS = LiteralString<C, '\t', '\n', '\v', '\f', '\r', ' '>();
+  const auto pos = str.find_first_not_of(WS);
+  if (pos == NPOS) {
+    return std::basic_string_view<C>();
+  }
+  return str.substr(pos);
+}
+
+/**
+ * Removes trailing whitespace from a string.
+ *
+ * @tparam C the character type
+ * @param str the string to trim
+ * @return a new string view
+ */
+template<typename C> requires IsChar<C>
+[[nodiscard]] std::basic_string_view<C>
+trimTrailing(std::basic_string_view<C> str) {
+  constexpr auto WS = LiteralString<C, '\t', '\n', '\v', '\f', '\r', ' '>();
+  const auto pos = str.find_last_not_of(WS);
+  if (pos == NPOS) {
+    return std::basic_string_view<C>();
+  }
+  return str.substr(0, pos + 1);
+}
+
+/**
+ * Removes leading and trailing whitespace from a string.
+ *
+ * @tparam C the character type
+ * @param str the string to trim
+ * @return a new string view
+ */
+template<typename C> requires IsChar<C>
+[[nodiscard]] std::basic_string_view<C>
+trim(std::basic_string_view<C> str) {
+  return trimLeading(trimTrailing(str));
+}
+
+/**
  * Converts a UTF-8 string to upper case, handling Unicode characters correctly.
  *
  * @param str the string to convert

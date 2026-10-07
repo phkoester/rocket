@@ -379,34 +379,28 @@ readUntilUnescapedChar(nio::Source& in, char c) {
 
 void
 skip(nio::Source& in, bool cComments, bool shellComments) { // NOLINT(*-complexity)
+  constexpr string_view WS = "\t\n\v\f\r ";
+
   while (true) {
     const auto pos = in.tell();
 
-    // Read first code point
-    auto first = in.readCodePoint();
-    if (not first) {
+    // Read first char
+    char first; // NOLINT
+    if (in.read(first) != 1) {
       break;
     }
 
-    // Read second code point
-    ReadCodePointResult second;
+    // If C comments and '/', read second char
+    optional<char> second;
     if (cComments && first == '/') {
-      second = in.readCodePoint();
-      if (not second) {
-        break;
-      }
-      if (*second != '/' && *second != '*') {
-        break;
+      char c; // NOLINT
+      if (in.read(c) == 1) {
+        second = c;
       }
     }
 
-    // Skip all ASCII characters 0--32
-    if (*first <= 32) {
-      continue;
-    }
-
-    // Skip whitespace code points
-    if (first->isWhitespace()) {
+    // Skip whitespace characters
+    if (WS.contains(first)) {
       continue;
     }
 

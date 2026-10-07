@@ -43,7 +43,7 @@ struct FormattedProducerConfig {
 
 namespace internal {
 
-// Internal utilitities -------------------------------------------------------------------------------------
+// `rocket::nio` by configuration ---------------------------------------------------------------------------
 
 inline void
 beginContainer(nio::Sink& out, FormattedConsumerConfig& config, char c) {
@@ -67,9 +67,7 @@ skip(nio::Source& in, const FormattedProducerConfig& config) {
 
 // `FormattedConsumerImpl` ----------------------------------------------------------------------------------
 
-/// @cond undocumented
 #define CONFIG__ [[maybe_unused]] FormattedConsumerConfig& config
-/// @endcond
 
 template<DataType DataType, typename T>
 struct FormattedConsumerImpl;
@@ -461,9 +459,7 @@ struct FormattedConsumerImpl<DataType::Character, T> {
 
 // `FormattedProducerImpl` ----------------------------------------------------------------------------------
 
-/// @cond undocumented
 #define CONFIG__ [[maybe_unused]] const FormattedProducerConfig& config
-/// @endcond
 
 template<DataType DataType, typename T>
 struct FormattedProducerImpl;
@@ -1264,12 +1260,7 @@ produceMembers(const Refs& refs, C& instance, nio::Source& in, CONFIG__) {
     if (not name) {
       throw InputFailure(namePos, "Expected a member reference");
     }
-    std::string_view trimmedName(*name);
-    if (const auto end = trimmedName.find_last_not_of(" \t\r\n\v\f"); end != std::string_view::npos) {
-      trimmedName = trimmedName.substr(0, end + 1);
-    } else {
-      trimmedName = {};
-    }
+    std::string_view trimmedName = str::trimTrailing<char>(*name);
     skip(in, config);
 
     // Look up the member reference by name and produce the member
@@ -1309,6 +1300,7 @@ struct FormattedProducerImpl<DataType::Instance, T> {
   }
 };
 
+// XXX Ist das überhaupt noch in Betrieb`?
 template<typename T>
 struct FormattedProducerImpl<DataType::MemberRef, T> {
   using Elem = T::Type;
@@ -1324,11 +1316,11 @@ struct FormattedProducerImpl<DataType::MemberRef, T> {
     if (not name) {
       throw InputFailure(pos, "Expected a member reference");
     }
-    name = str::removeTrailing<char>(*name, " "); // @todo Trim all trailing whitespace
+    std::string_view trimmedName = str::trimTrailing<char>(*name);
 
     // For `MemberRef`, we demand the name to match
-    if (*name != val.name()) {
-      throw InputFailure(pos, fmt::format("Expected name `{}`, got `{}`", val.name(), *name));
+    if (trimmedName != val.name()) {
+      throw InputFailure(pos, fmt::format("Expected name `{}`, got `{}`", val.name(), trimmedName));
     }
     skip(in, config);
 
