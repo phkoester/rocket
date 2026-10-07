@@ -4,12 +4,12 @@
  * Encoding and decoding of arbitrary C++ data structures for various purposes, such as comparisons, hashing,
  * formatting, scanning, serialization, deserialization, etc.
  *
- * # The Codec Type System
+ * # The Codec Type System {#codec_type_system}
  *
  * Value Class           | `DataType`  | C++ Mapping
  * :-------------------- | :---------- | :----------
  * Boolean values        | `Bool`      | `bool`
- * Single characters     | `Char`      | `char`, `char32`
+ * Characters            | `Char`      | `char`, `char32`
  * Enumerations          | `Enum`      | `enum` values
  * Integer values        | `Integer`   | `i8`, `i16`, `i32`, `i64`, `i128`, `u8`, `u16`, `u32`, `u64`, `u128`
  * Floating-point values | `Float`     | `f32`, `f64`
@@ -26,7 +26,7 @@
  * Dates                 | `Date`      | #std::chrono::year_month_day
  * Time zones            | `TimeZone`  | #std::chrono::time_zone
  * Times                 | `Time`      | #std::chrono::time_point
- * Dates and times       | `DateTime`  | #std::chrono::zoned_time
+ * Times with time zone  | `ZonedTime` | #std::chrono::zoned_time
  * Intervals             | `Interval`  | #rocket::math::Interval
  * Declared values       | `Declared`  | #rocket::reflect::Declared
  * Instances             | `Instance`  | #rocket::reflect::Instance
@@ -38,6 +38,7 @@
 
 #pragma once
 
+#include "rocket/Bimap.h"
 #include "rocket/type-traits.h"
 #include "rocket/math/Interval.h"
 #include "rocket/reflect/Declared.h"
@@ -46,8 +47,6 @@
 #include "rocket/reflect/VarRef.h"
 #include "rocket/str/Range.h"
 #include "rocket/unicode/Character.h"
-
-#include <boost/bimap/bimap.hpp>
 
 #include <array>
 #include <chrono>
@@ -119,7 +118,7 @@ enum class DataType : u8 {
   /// #std::chrono::time_point values.
   Time,
   /// #std::chrono::zoned_time values.
-  DateTime,
+  ZonedTime,
 
   // Mathematical types .....................................................................................
 
@@ -315,7 +314,7 @@ struct DataTypes<std::chrono::time_point<Clock, Duration>> {
 /// @spec{#rocket::codec::DataTypes, std::chrono::zoned_time}
 template<typename Duration>
 struct DataTypes<std::chrono::zoned_time<Duration>> {
-  static constexpr auto Value = DataType::DateTime; ///< The data type.
+  static constexpr auto Value = DataType::ZonedTime; ///< The data type.
 };
 
 /// @spec{#rocket::codec::DataTypes, #rocket::math::Interval}

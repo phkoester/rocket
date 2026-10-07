@@ -335,7 +335,7 @@ struct CompareConsumerImpl<DataType::Time, T, Cmp> {
 };
 
 template<typename T, typename Cmp>
-struct CompareConsumerImpl<DataType::DateTime, T, Cmp> {
+struct CompareConsumerImpl<DataType::ZonedTime, T, Cmp> {
   using Duration = T::duration;
   using SysTime = std::chrono::sys_time<Duration>;
   using Pair = std::pair<std::string_view, SysTime>;

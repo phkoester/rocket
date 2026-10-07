@@ -20,7 +20,7 @@ log #rocket::nio itself. So we make up a quick and dirty logging facility here.
  */
 #ifdef ROCKET_NO_LOG
 #define NIO_LOG(args) ::std::cout << "nio# " << ROCKET_SRC_FILE << ':' << \
-  __LINE__ << ' ' << __FUNCTION__ << ": " << args << ::std::endl;
+  __LINE__ << ' ' << __FUNCTION__ << ": " << args << '\n'
 #else
 #define NIO_LOG(args)
 #endif

@@ -20,7 +20,7 @@ log #rocket::io itself. So we make up a quick and dirty logging facility here.
  */
 #ifdef ROCKET_IO_LOG
 #define IO_LOG(args) ::std::cout << "io# " << ROCKET_SRC_FILE << ':' << \
-  __LINE__ << ' ' << __FUNCTION__ << ": " << args << ::std::endl;
+  __LINE__ << ' ' << __FUNCTION__ << ": " << args << '\n'
 #else
 #define IO_LOG(args)
 #endif

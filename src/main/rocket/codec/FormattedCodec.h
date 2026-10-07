@@ -5,17 +5,42 @@
  *
  * # The RON File Format
  *
+ * RON is a human-readable format that is similar to, but not quite the same as JSON. It is designed to be
+ * easy to read and write by hand. It is also designed to be easy to parse and generate programmatically.
+ *
  * This codec is generous when decoding, but strict when encoding. This means that when reading, it will
  * accept a variety of formats, but it will be canonical and consistent when writing.
  *
+ * For detailed information on the supported data types and how they map to C++, see @ref codec_type_system.
+ *
+ * ## Text-File Encoding, Line Breaks
+ *
+ * RON is a text-file format. It is always encoded in UTF-8.
+ *
+ * When reading, both Unix-style and Windows-style line breaks are accepted. When writing, Unix-style line
+ * breaks are used.
+ *
+ * ## Comments
+ *
+ * RON supports C-style single-line and multi-line comments. Single-line comments start with `//` and
+ * continue to the end of the line. Multi-line comments start with <code>/</code><code>*</code> and end with
+ * <code>*</code><code>/</code>.
+ *
+ * Shell-style comments are also accepted. They start with `#` and continue to the end of the line.
+ *
+ * ## Trailing Comma
+ *
+ * When reading, a trailing comma after the last element of a container is allowed and ignored. When writing,
+ * no trailing comma is added.
+ *
  * ## Boolean Values
  *
- * When reading, the values `0`, `1`, `true`, and `false` are valid. Case is ignored, so `False` and
+ * When reading, the values `0`, `1`, `false`, and `true` are valid. Case is ignored, so `False` and
  * `truE` are also accepted.
  *
- * Boolean values are written as `true` or `false`.
+ * Boolean values are always written as `true` or `false`.
  *
- * ## Single Characters
+ * ## Characters
  *
  * Characters start and end with a single quote (`'`). Example values: `'a'`, `'\x20'`, `'€'`, `'\u20AC'`,
  * `'\U00010FFF'`.
@@ -23,7 +48,15 @@
  * One-byte characters must be valid ASCII characters in the range [0,127]. Two-byte characters must be valid
  * Unicode code points in the ranges [U+0000,U+D7FF] and [U+E000,U+10FFFF].
  *
+ * When writing, the escape sequences `\a`, `\b`, `\t`, `\n`, `\v`, `\f`, `\r`, `\e`, `\'`, and `\\` are
+ * used. If a character is classified as printable by the Unicode standard, it appears verbatim in the
+ * output, e.g. as `'a'` or `'€'`. Otherwise, it is written in hexadecimal notation, using the prefixes
+ * `\x` (two hexadecimal digits), `\u` (four hexadecimal digits), or `\U` (eight hexadecimal digits), as
+ * needed.
+ *
  * ## Enumerations
+ *
+ * Enumerations are written as in code, with no surrounding quotes. Example values: `Red`, `Green`, `Blue`.
  *
  * ## Integer Values
  *
@@ -55,7 +88,7 @@
  *
  * ## Times
  *
- * ## Dates and Times
+ * ## Times with Time Zone
  *
  * ## Intervals
  *
@@ -384,7 +417,7 @@ struct FormattedConsumerImpl<DataType::Time, T> {
 };
 
 template<typename T>
-struct FormattedConsumerImpl<DataType::DateTime, T> {
+struct FormattedConsumerImpl<DataType::ZonedTime, T> {
   using TimeZone = const std::chrono::time_zone*;
   static constexpr auto TimeZoneDataType = DataTypes<TimeZone>::Value;
   static_assert(TimeZoneDataType == DataType::TimeZone);
@@ -1205,7 +1238,7 @@ struct FormattedProducerImpl<DataType::Time, T> {
 };
 
 template<typename T>
-struct FormattedProducerImpl<DataType::DateTime, T> {
+struct FormattedProducerImpl<DataType::ZonedTime, T> {
   using Duration = T::duration;
   using TimeZone = const std::chrono::time_zone*;
   static constexpr auto TimeZoneDataType = DataTypes<TimeZone>::Value;

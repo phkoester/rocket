@@ -44,15 +44,15 @@ TEST(std, rethrowException) {
       cout << "Throwing nested\n";
       throw_with_nested(runtime_error("oopsers"));
     } catch (const runtime_error& ex) {
-      cout << "Caught runtime error: " << ex.what() << endl; // NOLINT
+      cout << "Caught runtime error: " << ex.what() << '\n'; // NOLINT
       try {
-        cout << "Rethrowing nested" << endl; // NOLINT
+        cout << "Rethrowing nested\n"; // NOLINT
         // Segfaults
         rethrow_exception(current_exception());
       } catch (const runtime_error& ex) {
-        cout << "Caught runtime error: " << ex.what() << endl; // NOLINT
+        cout << "Caught runtime error: " << ex.what() << '\n'; // NOLINT
       } catch (...) {
-        cout << "Caught ..." << endl; // NOLINT
+        cout << "Caught ...\n"; // NOLINT
       }
     }
   }

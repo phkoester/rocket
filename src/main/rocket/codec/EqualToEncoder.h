@@ -333,7 +333,7 @@ struct EqualToConsumerImpl<DataType::Time, T, Eq> {
 };
 
 template<typename T, typename Eq>
-struct EqualToConsumerImpl<DataType::DateTime, T, Eq> {
+struct EqualToConsumerImpl<DataType::ZonedTime, T, Eq> {
   using TimeZone = const std::chrono::time_zone*;
   static constexpr auto TimeZoneDataType = DataTypes<TimeZone>::Value;
   static_assert(TimeZoneDataType == DataType::TimeZone);
