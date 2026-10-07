@@ -297,16 +297,16 @@ TEST(JsonCodec, JsonProducerChar) {
   EXPECT_EQ(decode<char>("\"\\t\""), '\t');
   EXPECT_EQ(decode<char>("  \"ä\"").error().message, "Invalid character literal");
 
-  EXPECT_EQ(decode<char>("  \"\\u00FF\"").error().message, "Invalid character literal");
+  EXPECT_EQ(decode<char>("  \"\\xFF\"").error().message, "Invalid character literal");
 }
 
 TEST(JsonCodec, JsonProducerChar32) {
   EXPECT_EQ(decode<char32>("\"ä\""), U'ä');
   EXPECT_EQ(decode<char32>("\"\\u20ac\""), U'€');
-  EXPECT_EQ(decode<char32>("\"\\uD803\\uDFFF\""), U'\U00010FFF');
+  EXPECT_EQ(decode<char32>("\"\\U0010FFFF\""), U'\U0010FFFF');
   EXPECT_EQ(decode<char32>("\"€\""), U'€');
 
-  EXPECT_EQ(decode<char32>("\"\\uXXXX\"").error().message, "Invalid Unicode escape");
+  EXPECT_EQ(decode<char32>("  \"\\x800D\"").error().message, "Invalid character literal");
 }
 
 TEST(JsonCodec, JsonProducerEnum) {
@@ -322,6 +322,10 @@ TEST(JsonCodec, JsonProducerEnum) {
 
 TEST(JsonCodec, JsonProducerInteger) {
   EXPECT_EQ(decode<i32>("-42"), -42);
+  EXPECT_EQ(decode<i32>("0xABcd"), 0xABCD);
+  EXPECT_EQ(decode<i32>("077"), 077);
+  EXPECT_EQ(decode<i32>("0o123"), 0123);
+  EXPECT_EQ(decode<i32>("0b1010101"), 0b1010101);
 
   EXPECT_EQ(decode<i32>("  x").error().message, "Expected an integer value");
 }
@@ -401,8 +405,9 @@ TEST(JsonCodec, JsonProducerBimap) {
 
 TEST(JsonCodec, JsonProducerBimapUnordered) {
   using type = UnorderedBimap<string, i32>;
+  // Test last one wins
   EXPECT_EQ(
-    (decode<type>("  { \"alpha\"\t: 1, \"beta\"  :/* comment */ 2, \"gamma\": 3  ,  }   ")),
+    (decode<type>("  { \"alpha\"\t: 1, \"beta\"  :/* comment */ 2, \"gamma\": 4, \"gamma\": 3  ,  }   ")),
     (makeUnorderedBimap<string, i32>({ { "alpha", 1 }, { "beta", 2 }, { "gamma", 3 } })));
 }
 
@@ -466,7 +471,7 @@ TEST(JsonCodec, JsonProducerTimeZone) {
     StrEq("unable to locate time_zone with given name"))); // Windows
 }
 
-TEST(JsonCodec, JsonProducerTimePoint) {
+TEST(JsonCodec, JsonProducerTime) {
   using namespace std::chrono;
 
   using TimePoint = time_point<system_clock, nanoseconds>;
@@ -569,9 +574,9 @@ TEST(JsonCodec, JsonProducerInstance) {
 
 TEST(JsonCodec, JsonProducerCodePoint) {
   using type = unicode::CodePoint;
-  EXPECT_EQ(decode<type>("\"a\","), type('a'));
+  EXPECT_EQ(decode<type>("\"a\""), type('a'));
   EXPECT_EQ(decode<type>("\"€\""), type(U'€'));
-  EXPECT_EQ(decode<type>("\"U+0061\","), type('a'));
+  EXPECT_EQ(decode<type>("\"U+0061\""), type('a'));
   EXPECT_EQ(decode<type>("\"U+20AC\""), type(U'€'));
   EXPECT_EQ(decode<type>("\"U+10FFF\""), type(U'\U00010FFF'));
   EXPECT_EQ(decode<type>("\"U+10FFFF\""), type(U'\U0010FFFF'));

@@ -45,7 +45,8 @@
  * One-byte characters must be valid ASCII characters in the range [0,127]. Two-byte characters must be valid
  * Unicode code points in the ranges [U+0000,U+D7FF] and [U+E000,U+10FFFF].
  *
- * When reading, escape sequences as well as the prefixes `\x`, `\u`, and `\U` are accepted.
+ * When reading, escape sequences as well as the prefixes `\x` (two hexadecimal digits), `\u` (four
+ * hexadecimal digits), and `\U` (eight hexadecimal digits) are accepted.
  *
  * When writing, the escape sequences `\a`, `\b`, `\t`, `\n`, `\v`, `\f`, `\r`, `\e`, `\'`, and `\\` are
  * used. If a character is classified as printable by the Unicode standard, it appears verbatim in the
@@ -200,21 +201,15 @@
 #include "rocket/InputFailure.h"
 #include "rocket/scan.h"
 #include "rocket/std.h"
-#include "rocket/codec/FormattedCodec.h"
 #include "rocket/codec/codec.h"
-#include "rocket/io/io.h"
 #include "rocket/nio/nio.h"
 #include "rocket/nio/nio-utils.h"
-#include "rocket/system/system.h"
+#include "rocket/str/escape/escape.h"
 #include "rocket/unicode/ConvertTo.h"
 
 #include <fmt/std.h>
 
 #include <scn/chrono.h>
-
-#include <cctype>
-#include <cmath>
-#include <limits>
 
 namespace rocket::codec {
 
@@ -247,12 +242,12 @@ nextElem(nio::Sink& out, JsonConsumerConfig& config, u64 index) {
   rocket::nio::nextElem(out, config.indent, config.level, index);
 }
 
-// XXX
-
 inline void
 skipJson(nio::Source& in) {
   rocket::nio::skip(in, true, false);
 }
+
+// XXX
 
 inline bool
 isIdentChar(char c) {
@@ -909,11 +904,11 @@ struct JsonProducerImpl<DataType::Bool, bool> {
     skipJson(in);
     const auto pos = in.tell();
 
-    if (readKeyword(in, "false")) {
+    if (readString(in, "false")) {
       val = false;
       return;
     }
-    if (readKeyword(in, "true")) {
+    if (readString(in, "true")) {
       val = true;
       return;
     }
@@ -931,9 +926,12 @@ struct JsonProducerImpl<DataType::Char, C> {
     if (not readChar(in, '"')) {
       throw InputFailure(pos, "Expected a character");
     }
-    in.seek(-1, nio::SeekMode::cur);
+    auto input = readUntilUnescapedChar(in, '"');
+    if (not input) {
+      throw InputFailure(pos, "Unterminated character literal");
+    }
 
-    const std::string unescaped = readJsonString(in);
+    const std::string unescaped = str::escape::unescapeCString(*input);
     const std::basic_string<C> str(unicode::ConvertTo<C>::apply(unescaped));
     if (str.size() != 1) {
       throw InputFailure(pos, "Invalid character literal");
@@ -970,7 +968,7 @@ struct JsonProducerImpl<DataType::Integer, I> {
     skipJson(in);
     const auto pos = in.tell();
 
-    const auto result = scan<I>(in);
+    const auto result = scanInteger<I>(in);
     if (result) {
       val = *result;
       return;
@@ -988,15 +986,15 @@ struct JsonProducerImpl<DataType::Float, F> {
     skipJson(in);
     const auto pos = in.tell();
 
-    if (readKeyword(in, "-Infinity")) {
+    if (readString(in, "-Infinity")) {
       val = -Limits::infinity();
       return;
     }
-    if (readKeyword(in, "+Infinity") || readKeyword(in, "Infinity")) {
+    if (readChoice(in, { "Infinity", "+Infinity" })) {
       val = Limits::infinity();
       return;
     }
-    if (readKeyword(in, "NaN")) {
+    if (readString(in, "NaN")) {
       val = Limits::quiet_NaN();
       return;
     }
@@ -1591,22 +1589,29 @@ struct JsonProducerImpl<DataType::CodePoint, T> {
     skipJson(in);
     const auto pos = in.tell();
 
-    const std::string str = readJsonString(in);
-    if (str.size() >= 2 && str[0] == 'U' && str[1] == '+') {
-      nio::StringSource inner(str);
-      auto result = scanCodePoint<u32>(inner);
-      if (result) {
-        val = static_cast<Elem>(*result);
-        return;
-      }
+    if (not readChar(in, '"')) {
       throw InputFailure(pos, "Expected a code point");
     }
 
-    const std::u32string u32(unicode::ConvertTo<char32>::apply(str));
-    if (u32.size() != 1) {
+    if (not readString(in, "U+")) {
+      // Read `char32`
+      in.seek(-1, nio::SeekMode::cur);
+      Elem elem = Elem();
+      JsonProducerImpl<ElemDataType, Elem>().produce(elem, in);
+      val = T(elem);
+      return;
+    }
+
+    // Read `U+...`
+    in.seek(-2, nio::SeekMode::cur);
+    auto result = scanCodePoint<u32>(in);
+    if (not result) {
       throw InputFailure(pos, "Expected a code point");
     }
-    val = static_cast<Elem>(u32[0]);
+    if (not readChar(in, '"')) {
+      throw InputFailure(in.tell(), { pos, in.tell() }, "Unterminated code point");
+    }
+    val = static_cast<Elem>(*result);
   }
 };
 

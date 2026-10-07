@@ -42,7 +42,7 @@
  *
  * Boolean values are always written as `true` or `false`.
  *
- * ## Characters {#ron_char}
+ * ## Characters {#formatted_char}
  *
  * Characters start and end with a single quote (`'`). Example values: `'a'`, `'\x20'`, `'€'`, `'\u20AC'`,
  * `'\U0010FFFF'`.
@@ -87,8 +87,8 @@
  * Strings always appear surrounded by double quotes (`"`). Example values: `"Hello"`, `"Hello\nWorld"`,
  * `"3 \u20AC"`. Any well-formed UTF-8 string is a valid RON string.
  *
- * When writing, the writing rules for @ref ron_char "characters" apply. Grapheme clusters are recognized and
- * written verbatim.
+ * When writing, the writing rules for @ref formatted_char "characters" apply. Grapheme clusters are
+ * recognized and written verbatim.
  *
  * ## Optional Values
  *
@@ -207,11 +207,9 @@
 #include "rocket/scan.h"
 #include "rocket/std.h"
 #include "rocket/codec/codec.h"
-#include "rocket/io/io.h"
 #include "rocket/nio/nio.h"
 #include "rocket/nio/nio-utils.h"
 #include "rocket/str/escape/escape.h"
-#include "rocket/system/system.h"
 #include "rocket/unicode/ConvertTo.h"
 
 #include <fmt/std.h>
@@ -658,7 +656,7 @@ struct FormattedProducerImpl;
  */
 template<typename Ref, typename C>
 bool
-produceMember(const Ref& ref, std::string_view name, C& instance, nio::Source& in) {
+produceFormattedMember(const Ref& ref, std::string_view name, C& instance, nio::Source& in) {
   if (ref.name() != name) {
     return false;
   }
@@ -678,7 +676,7 @@ produceMember(const Ref& ref, std::string_view name, C& instance, nio::Source& i
  */
 template<typename Refs, typename C>
 void
-produceMembers(const Refs& refs, C& instance, nio::Source& in) {
+produceFormattedMembers(const Refs& refs, C& instance, nio::Source& in) {
   skipFormatted(in);
   const auto pos = in.tell();
 
@@ -713,7 +711,7 @@ produceMembers(const Refs& refs, C& instance, nio::Source& in) {
     // Look up the member reference by name and produce the member
 
     const bool found = std::apply([&](const auto&... ref) {
-      return (produceMember(ref, trimmedName, instance, in) || ...);
+      return (produceFormattedMember(ref, trimmedName, instance, in) || ...);
     }, refs);
     if (not found) {
       throw InputFailure(namePos, fmt::format("Unknown member `{}`", trimmedName));
@@ -1488,7 +1486,7 @@ struct FormattedProducerImpl<DataType::Declared, T> {
 
   void
   produce(T& val, nio::Source& in) const {
-    produceMembers(refs, val, in);
+    produceFormattedMembers(refs, val, in);
   }
 };
 
@@ -1501,7 +1499,7 @@ struct FormattedProducerImpl<DataType::Instance, T> {
 
   void
   produce(T& val, nio::Source& in) const {
-    produceMembers(refs, val.get(), in);
+    produceFormattedMembers(refs, val.get(), in);
   }
 };
 
@@ -1534,6 +1532,7 @@ struct FormattedProducerImpl<DataType::CodePoint, T> {
       return;
     }
 
+    // Read `U+...`
     auto result = scanCodePoint<u32>(in);
     if (result) {
       val = static_cast<Elem>(*result);

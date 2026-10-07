@@ -281,6 +281,7 @@ TEST(FormattedCodec, FormattedProducerBool) {
   EXPECT_EQ(decode<bool>("// sup\nTRue"), true);
   EXPECT_EQ(decode<bool>("  /* comment\nanother line in the comment */\r\n# comment\n\ttRUe"), true);
   EXPECT_EQ(decode<bool>("\r\n  1"), true);
+  EXPECT_EQ(decode<bool>("false"), false);
   EXPECT_EQ(decode<bool>("\r\nx").error().message, "Expected a boolean value");
 }
 
@@ -308,7 +309,9 @@ TEST(FormattedCodec, FormattedProducerEnum) {
   EXPECT_THAT(decode<Color>("2").error().message, matchesRegex("Cannot scan enum of type `.*Color`"));
 
   EXPECT_EQ(decode<log::LogLevel>("  info  "), log::LogLevel::info);
-  EXPECT_EQ(decode<log::LogLevel>("bogus").error().message, "Invalid value for enum `rocket::log::LogLevel`");
+  EXPECT_EQ(
+    decode<log::LogLevel>("bogus").error().message,
+    "Invalid value for enum `rocket::log::LogLevel`");
 }
 
 TEST(FormattedCodec, FormattedProducerInteger) {
@@ -395,8 +398,9 @@ TEST(FormattedCodec, FormattedProducerBimap) {
 
 TEST(FormattedCodec, FormattedProducerBimapUnordered) {
   using type = UnorderedBimap<string, i32>;
+  // Test last one wins
   EXPECT_EQ(
-    (decode<type>("  { \"alpha\"\t: 1, \"beta\"  :/* comment */ 2, \"gamma\": 3  ,  }   ")),
+    (decode<type>("  { \"alpha\"\t: 1, \"beta\"  :/* comment */ 2, \"gamma\": 4, \"gamma\": 3  ,  }   ")),
     (makeUnorderedBimap<string, i32>({ { "alpha", 1 }, { "beta", 2 }, { "gamma", 3 } })));
 }
 
@@ -458,7 +462,7 @@ TEST(FormattedCodec, FormattedProducerTimeZone) {
     StrEq("unable to locate time_zone with given name"))); // Windows
 }
 
-TEST(FormattedCodec, FormattedProducerTimePoint) {
+TEST(FormattedCodec, FormattedProducerTime) {
   using namespace std::chrono;
 
   using TimePoint = time_point<system_clock, nanoseconds>;
