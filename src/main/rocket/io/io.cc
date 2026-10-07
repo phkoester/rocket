@@ -60,7 +60,7 @@ open(const std::filesystem::path& path, std::string_view modes) {
   fopen_s(&file, path.string().c_str(), string(modes).c_str());
   IO_LOG("path=" << path << ", fopen_s=" << result << ", file=" << file_ << ", ferror=" << (file_ ? ferror(file_) : -1));
 #else
-  FILE* const file = fopen(path.string().c_str(), string(modes).c_str());
+  FILE* file = fopen(path.string().c_str(), string(modes).c_str()); // NOLINT
   IO_LOG("path=" << path << ", fopen=" << file_ << ", ferror=" << (file_ ? ferror(file_) : -1));
 #endif
   return file;

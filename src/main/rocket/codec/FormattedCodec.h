@@ -188,7 +188,7 @@
  * ## Variables
  *
  * Variables appear like a tuple surrounded by parentheses (`(` and `)`), where each entry is a name-value
- * pair separated by an equal sign (`=`). Example: `(localX=11, localY=12, localName="A")`.
+ * pair separated by an equal sign (`=`). Example: `(x=11, y=12, name="A")`.
  *
  * When reading, a trailing comma is permitted, but it is never written.
  *
