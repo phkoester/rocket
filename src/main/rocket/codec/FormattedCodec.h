@@ -464,6 +464,72 @@ struct FormattedConsumerImpl<DataType::Character, T> {
 template<DataType DataType, typename T>
 struct FormattedProducerImpl;
 
+// XXX
+// Produces a single member of `instance` if the name of the member reference `ref` matches `name`. Returns
+// whether the name matched, so callers can fold over a tuple of member references
+template<typename Ref, typename C>
+bool
+produceMember(const Ref& ref, std::string_view name, C& instance, nio::Source& in, CONFIG__) {
+  if (ref.name() != name) {
+    return false;
+  }
+  using Elem = Ref::Type;
+  constexpr auto ElemDataType = DataTypes<Elem>::Value;
+  FormattedProducerImpl<ElemDataType, Elem>().produce(ref.get(instance), in, config);
+  return true;
+}
+
+// Produces the members of `instance` from a parenthesized list of `name=value` entries, using the member
+// references in `refs` to look up each name.
+//
+// Unlike the tuple producer, the entries may appear in any order, and entries may be missing altogether, in
+// which case the corresponding members of `instance` are left untouched. An entry whose name does not match
+// any member reference is an error
+template<typename Refs, typename C>
+void
+produceMembers(const Refs& refs, C& instance, nio::Source& in, CONFIG__) {
+  skip(in, config);
+  const auto pos = in.tell();
+
+  if (not readChar(in, '(')) {
+    throw InputFailure(pos, "Expected a tuple");
+  }
+
+  u64 index = 0;
+  while (true) {
+    skip(in, config);
+    if (readChar(in, ')')) {
+      return;
+    }
+    if (index++ > 0) {
+      expectComma(in);
+      skip(in, config);
+      if (readChar(in, ')')) { // Allow trailing comma if nonempty
+        return;
+      }
+    }
+
+    // Read the member name
+
+    const auto namePos = in.tell();
+    const auto name = readUntilChar(in, '=');
+    if (not name) {
+      throw InputFailure(namePos, "Expected a member reference");
+    }
+    std::string_view trimmedName = str::trimTrailing<char>(*name);
+    skip(in, config);
+
+    // Look up the member reference by name and produce the member
+
+    const bool found = std::apply([&](const auto&... ref) {
+      return (produceMember(ref, trimmedName, instance, in, config) || ...);
+    }, refs);
+    if (not found) {
+      throw InputFailure(namePos, fmt::format("Unknown member `{}`", trimmedName));
+    }
+  }
+}
+
 template<>
 struct FormattedProducerImpl<DataType::Bool, bool> {
   void
@@ -1207,72 +1273,6 @@ struct FormattedProducerImpl<DataType::Interval, T> {
     }
   }
 };
-
-// XXX
-// Produces a single member of `instance` if the name of the member reference `ref` matches `name`. Returns
-// whether the name matched, so callers can fold over a tuple of member references
-template<typename Ref, typename C>
-bool
-produceMember(const Ref& ref, std::string_view name, C& instance, nio::Source& in, CONFIG__) {
-  if (ref.name() != name) {
-    return false;
-  }
-  using Elem = Ref::Type;
-  constexpr auto ElemDataType = DataTypes<Elem>::Value;
-  FormattedProducerImpl<ElemDataType, Elem>().produce(ref.get(instance), in, config);
-  return true;
-}
-
-// Produces the members of `instance` from a parenthesized list of `name=value` entries, using the member
-// references in `refs` to look up each name.
-//
-// Unlike the tuple producer, the entries may appear in any order, and entries may be missing altogether, in
-// which case the corresponding members of `instance` are left untouched. An entry whose name does not match
-// any member reference is an error
-template<typename Refs, typename C>
-void
-produceMembers(const Refs& refs, C& instance, nio::Source& in, CONFIG__) {
-  skip(in, config);
-  const auto pos = in.tell();
-
-  if (not readChar(in, '(')) {
-    throw InputFailure(pos, "Expected a tuple");
-  }
-
-  u64 index = 0;
-  while (true) {
-    skip(in, config);
-    if (readChar(in, ')')) {
-      return;
-    }
-    if (index++ > 0) {
-      expectComma(in);
-      skip(in, config);
-      if (readChar(in, ')')) { // Allow trailing comma if nonempty
-        return;
-      }
-    }
-
-    // Read the member name
-
-    const auto namePos = in.tell();
-    const auto name = readUntilChar(in, '=');
-    if (not name) {
-      throw InputFailure(namePos, "Expected a member reference");
-    }
-    std::string_view trimmedName = str::trimTrailing<char>(*name);
-    skip(in, config);
-
-    // Look up the member reference by name and produce the member
-
-    const bool found = std::apply([&](const auto&... ref) {
-      return (produceMember(ref, trimmedName, instance, in, config) || ...);
-    }, refs);
-    if (not found) {
-      throw InputFailure(namePos, fmt::format("Unknown member `{}`", trimmedName));
-    }
-  }
-}
 
 template<typename T>
 struct FormattedProducerImpl<DataType::Declared, T> {
