@@ -286,7 +286,7 @@ struct EqualToConsumerImpl<DataType::Duration, T, Eq> {
 };
 
 template<typename T, typename Eq>
-struct EqualToConsumerImpl<DataType::YearMonthDay, T, Eq> {
+struct EqualToConsumerImpl<DataType::Date, T, Eq> {
   bool
   consume(const T& lhs, const T& rhs) {
     return
@@ -297,7 +297,7 @@ struct EqualToConsumerImpl<DataType::YearMonthDay, T, Eq> {
 };
 
 template<typename T, typename Eq>
-struct EqualToConsumerImpl<DataType::HourMinuteSecond, T, Eq> {
+struct EqualToConsumerImpl<DataType::ClockTime, T, Eq> {
   using Precision = T::precision;
   static constexpr auto PrecisionDataType = DataTypes<Precision>::Value;
   static_assert(PrecisionDataType == DataType::Duration);
@@ -319,7 +319,7 @@ struct EqualToConsumerImpl<DataType::TimeZone, T, Eq> {
 };
 
 template<typename T, typename Eq>
-struct EqualToConsumerImpl<DataType::TimePoint, T, Eq> {
+struct EqualToConsumerImpl<DataType::Time, T, Eq> {
   using Duration = T::duration;
   static constexpr auto DurationDataType = DataTypes<Duration>::Value;
   static_assert(DurationDataType == DataType::Duration);
@@ -333,14 +333,14 @@ struct EqualToConsumerImpl<DataType::TimePoint, T, Eq> {
 };
 
 template<typename T, typename Eq>
-struct EqualToConsumerImpl<DataType::ZonedTime, T, Eq> {
+struct EqualToConsumerImpl<DataType::DateTime, T, Eq> {
   using TimeZone = const std::chrono::time_zone*;
   static constexpr auto TimeZoneDataType = DataTypes<TimeZone>::Value;
   static_assert(TimeZoneDataType == DataType::TimeZone);
   using Duration = T::duration;
   using SysTime = std::chrono::sys_time<Duration>;
   static constexpr auto SysTimeDataType = DataTypes<SysTime>::Value;
-  static_assert(SysTimeDataType == DataType::TimePoint);
+  static_assert(SysTimeDataType == DataType::Time);
 
   bool
   consume(const T& lhs, const T& rhs) {

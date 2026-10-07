@@ -285,7 +285,7 @@ struct CompareConsumerImpl<DataType::Duration, T, Cmp> {
 };
 
 template<typename T, typename Cmp>
-struct CompareConsumerImpl<DataType::YearMonthDay, T, Cmp> {
+struct CompareConsumerImpl<DataType::Date, T, Cmp> {
   using Tuple = std::tuple<std::chrono::year, std::chrono::month, std::chrono::day>;
   static constexpr auto TupleDataType = DataTypes<Tuple>::Value;
   static_assert(TupleDataType == DataType::Tuple);
@@ -299,7 +299,7 @@ struct CompareConsumerImpl<DataType::YearMonthDay, T, Cmp> {
 };
 
 template<typename T, typename Cmp>
-struct CompareConsumerImpl<DataType::HourMinuteSecond, T, Cmp> {
+struct CompareConsumerImpl<DataType::ClockTime, T, Cmp> {
   using Precision = T::precision;
   static constexpr auto PrecisionDataType = DataTypes<Precision>::Value;
   static_assert(PrecisionDataType == DataType::Duration);
@@ -321,7 +321,7 @@ struct CompareConsumerImpl<DataType::TimeZone, T, Cmp> {
 };
 
 template<typename T, typename Cmp>
-struct CompareConsumerImpl<DataType::TimePoint, T, Cmp> {
+struct CompareConsumerImpl<DataType::Time, T, Cmp> {
   using Duration = T::duration;
   static constexpr auto DurationDataType = DataTypes<Duration>::Value;
   static_assert(DurationDataType == DataType::Duration);
@@ -335,7 +335,7 @@ struct CompareConsumerImpl<DataType::TimePoint, T, Cmp> {
 };
 
 template<typename T, typename Cmp>
-struct CompareConsumerImpl<DataType::ZonedTime, T, Cmp> {
+struct CompareConsumerImpl<DataType::DateTime, T, Cmp> {
   using Duration = T::duration;
   using SysTime = std::chrono::sys_time<Duration>;
   using Pair = std::pair<std::string_view, SysTime>;

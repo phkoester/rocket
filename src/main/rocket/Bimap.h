@@ -78,6 +78,32 @@ using Positions = UnorderedBimap<u64, u64>;
 // Functions ------------------------------------------------------------------------------------------------
 
 /**
+ * Inserts a key-value pair into a map, replacing the value if the key already exists.
+ *
+ * @tparam Map the map type
+ * @tparam K the key type
+ * @tparam V the value type
+ * @param map the map to insert into
+ * @param k the key to insert
+ * @param v the value to insert
+ * @return `true` if the key was inserted, `false` if the key was replaced
+ */
+template<typename Map, typename K, typename V>
+bool
+insertOrReplace(Map& map, const K& k, const V& v) {
+  if (auto it = map.right.find(v); it != map.right.end()) {
+    if (it->second == k) {
+      return true;
+    }
+    map.right.erase(it);
+  }
+  if (auto it = map.left.find(k); it != map.left.end()) {
+    return map.left.replace_data(it, v);
+  }
+  return map.insert({ k, v  }).second;
+}
+
+/**
  * Convenience function to make a #rocket::Positions from a #std::initializer_list.
  *
  * @param list the map elements, as seen from the map's left index

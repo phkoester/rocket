@@ -51,7 +51,7 @@ template<typename T>
 decode(string_view str) {
   const FormattedCodec codec;
   nio::StringSource in(str);
-  return codec.decode<T>(in, { .cComments=true, .shellComments=true });
+  return codec.decode<T>(in);
 }
 
 template<typename T>
@@ -59,7 +59,7 @@ template<typename T>
 decodeAndTell(string_view str) {
   const FormattedCodec codec;
   nio::StringSource in(str);
-  return { codec.decode<T>(in, { .cComments=true, .shellComments=true }), in.tell() };
+  return { codec.decode<T>(in), in.tell() };
 }
 
 } // namespace
@@ -262,8 +262,17 @@ TEST(FormattedCodec, FormattedProducerChar) {
   EXPECT_EQ(decode<char>("'\\''"), '\'');
   EXPECT_EQ(decode<char>("'\\t'"), '\t');
   EXPECT_EQ(decode<char>("  'ä'").error().message, "Invalid character literal");
+
+  EXPECT_EQ(decode<char>("  '\\xFF'").error().message, "Invalid character literal");
+}
+
+TEST(FormattedCodec, FormattedProducerChar32) {
   EXPECT_EQ(decode<char32>("'ä'"), U'ä');
   EXPECT_EQ(decode<char32>("'\u20ac'"), U'€');
+  EXPECT_EQ(decode<char32>("'\U00010FFF'"), U'\U00010FFF');
+  EXPECT_EQ(decode<char32>("'€'"), U'€');
+
+  EXPECT_EQ(decode<char32>("  '\\x800D'").error().message, "Invalid character literal");
 }
 
 TEST(FormattedCodec, FormattedProducerEnum) {
@@ -335,10 +344,20 @@ TEST(FormattedCodec, FormattedProducerSet) {
   EXPECT_EQ((decode<set<i32>>("  { 3, 2, 1  ,  }   ")), (set<i32> { 1, 2, 3 }));
 }
 
+TEST(FormattedCodec, FormattedProducerMap) {
+  using type = std::map<i32, string>;
+
+  // Test last one wins
+  EXPECT_EQ(
+    decode<type>("{ 1: \"alpha\", 2: \"beta\", 3: \"gämmä\", 3: \"gamma\" }"),
+    (type { { 1, "alpha" }, { 2, "beta" }, { 3, "gamma" } }));
+}
+
 TEST(FormattedCodec, FormattedProducerBimap) {
   using type = Bimap<string, i32>;
+  // Test last one wins
   EXPECT_EQ(
-    (decode<type>("  { \"alpha\"\t: 1, \"beta\"  :/* comment */ 2, \"gamma\": 3  ,  }   ")),
+    (decode<type>("  { \"alpha\"\t: 1, \"beta\"  :/* comment */ 2, \"gamma\": 4, \"gamma\": 3  ,  }   ")),
     (makeBimap<string, i32>({ { "alpha", 1 }, { "beta", 2 }, { "gamma", 3 } })));
 }
 
@@ -436,13 +455,11 @@ TEST(FormattedCodec, FormattedProducerInterval) {
 }
 
 TEST(FormattedCodec, FormattedProducerDeclared) {
+  // Test last one wins
   EXPECT_EQ(
-    (decode<MyStruct>("  ( ärger  =  42, ökonom=true, übermut=\"hello\", vec=[1, 2, 3] )   ")),
+    (decode<MyStruct>("  ( ärger  =  42, vec=[7, 8], ökonom=true, übermut=\"hello\", vec=[1, 2, 3] )   ")),
     (MyStruct { 42, true, "hello", { 1, 2, 3 } }));
-}
 
-// XXX
-TEST(FormattedCodec, FormattedProducerDeclaredUnorderedAndMissing) {
   // Members in a different order
   EXPECT_EQ(
     (decode<MyStruct>("(vec=[1, 2, 3], übermut=\"hello\", ärger=42, ökonom=true)")),
@@ -457,7 +474,7 @@ TEST(FormattedCodec, FormattedProducerDeclaredUnorderedAndMissing) {
 }
 
 TEST(FormattedCodec, FormattedProducerDeclaredFileSource) {
-  const auto path = testSource("test-FormattedCodec-MyStruct.txt");
+  const auto path = testSource("test-FormattedCodec-MyStruct.ron");
 
   string input;
   {
@@ -468,7 +485,7 @@ TEST(FormattedCodec, FormattedProducerDeclaredFileSource) {
   nio::FileSource in(path);
 
   const FormattedCodec codec;
-  const auto result = codec.decode<MyStruct>(in, { .cComments=true, .shellComments=true });
+  const auto result = codec.decode<MyStruct>(in);
   if (not result) {
     const DecodeError& err = result.error();
     namespace loc = rocket::str::location;

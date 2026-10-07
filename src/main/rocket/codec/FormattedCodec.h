@@ -1,5 +1,75 @@
 /**
  * @file FormattedCodec.h
+ *
+ * Reads and writes RON (Rocket Object Notation). The recommended file-name extension is `.ron`.
+ *
+ * # The RON File Format
+ *
+ * This codec is generous when decoding, but strict when encoding. This means that when reading, it will
+ * accept a variety of formats, but it will be canonical and consistent when writing.
+ *
+ * ## Boolean Values
+ *
+ * When reading, the values `0`, `1`, `true`, and `false` are valid. Case is ignored, so `False` and
+ * `truE` are also accepted.
+ *
+ * Boolean values are written as `true` or `false`.
+ *
+ * ## Single Characters
+ *
+ * Characters start and end with a single quote (`'`). Example values: `'a'`, `'\x20'`, `'€'`, `'\u20AC'`,
+ * `'\U00010FFF'`.
+ *
+ * One-byte characters must be valid ASCII characters in the range [0,127]. Two-byte characters must be valid
+ * Unicode code points in the ranges [U+0000,U+D7FF] and [U+E000,U+10FFFF].
+ *
+ * ## Enumerations
+ *
+ * ## Integer Values
+ *
+ * ## Floating-Point Values
+ *
+ * ## Pointers
+ *
+ * ## Strings
+ *
+ * ## Optional Values
+ *
+ * ## Tuples
+ *
+ * ## Lists
+ *
+ * ## Sets
+ *
+ * ## Maps
+ *
+ * ## Bidirectional Maps
+ *
+ * ## Durations
+ *
+ * ## Clock Times
+ *
+ * ## Dates
+ *
+ * ## Time Zones
+ *
+ * ## Times
+ *
+ * ## Dates and Times
+ *
+ * ## Intervals
+ *
+ * ## Declared Values
+ *
+ * ## Instances
+ *
+ * ## Members
+ *
+ * ## Variables
+ *
+ * ## Code Points
+ *
+ * ## Grapheme Clusters
  */
 
 #pragma once
@@ -31,19 +101,9 @@ struct FormattedConsumerConfig {
   u64 level = 0;
 };
 
-// `FormattedProducerConfig` --------------------------------------------------------------------------------
-
-/// Configuration for #rocket::codec::FormattedProducer.
-struct FormattedProducerConfig {
-  /// Whether to allow C-style comments starting with <code>//</code> or <code>/*</code>.
-  bool cComments = false;
-  /// Whether to allow shell-style comments starting with <code>#</code>.
-  bool shellComments = false;
-};
-
 namespace internal {
 
-// `rocket::nio` by configuration ---------------------------------------------------------------------------
+// Functions ------------------------------------------------------------------------------------------------
 
 inline void
 beginContainer(nio::Sink& out, FormattedConsumerConfig& config, char c) {
@@ -61,13 +121,15 @@ nextElem(nio::Sink& out, FormattedConsumerConfig& config, u64 index) {
 }
 
 inline void
-skip(nio::Source& in, const FormattedProducerConfig& config) {
-  rocket::nio::skip(in, config.cComments, config.shellComments);
+skip(nio::Source& in) {
+  rocket::nio::skip(in, true, true);
 }
 
 // `FormattedConsumerImpl` ----------------------------------------------------------------------------------
 
+/// @cond undocumented
 #define CONFIG__ [[maybe_unused]] FormattedConsumerConfig& config
+/// @endcond
 
 template<DataType DataType, typename T>
 struct FormattedConsumerImpl;
@@ -287,7 +349,7 @@ struct FormattedConsumerImpl<DataType::Duration, T> {
 };
 
 template<typename T>
-struct FormattedConsumerImpl<DataType::YearMonthDay, T> {
+struct FormattedConsumerImpl<DataType::Date, T> {
   void
   consume(const T& val, nio::Sink& out, CONFIG__) const {
     out.write(std::format("{}", val));
@@ -295,7 +357,7 @@ struct FormattedConsumerImpl<DataType::YearMonthDay, T> {
 };
 
 template<typename T>
-struct FormattedConsumerImpl<DataType::HourMinuteSecond, T> {
+struct FormattedConsumerImpl<DataType::ClockTime, T> {
   void
   consume(const T& val, nio::Sink& out, CONFIG__) const {
     out.write(std::format("{}", val));
@@ -311,7 +373,7 @@ struct FormattedConsumerImpl<DataType::TimeZone, T> {
 };
 
 template<typename T>
-struct FormattedConsumerImpl<DataType::TimePoint, T> {
+struct FormattedConsumerImpl<DataType::Time, T> {
   using Clock = T::clock;
   static_assert(std::same_as<Clock, std::chrono::system_clock>, "Clock must be `system_clock`");
 
@@ -322,7 +384,7 @@ struct FormattedConsumerImpl<DataType::TimePoint, T> {
 };
 
 template<typename T>
-struct FormattedConsumerImpl<DataType::ZonedTime, T> {
+struct FormattedConsumerImpl<DataType::DateTime, T> {
   using TimeZone = const std::chrono::time_zone*;
   static constexpr auto TimeZoneDataType = DataTypes<TimeZone>::Value;
   static_assert(TimeZoneDataType == DataType::TimeZone);
@@ -459,36 +521,37 @@ struct FormattedConsumerImpl<DataType::Character, T> {
 
 // `FormattedProducerImpl` ----------------------------------------------------------------------------------
 
-#define CONFIG__ [[maybe_unused]] const FormattedProducerConfig& config
-
 template<DataType DataType, typename T>
 struct FormattedProducerImpl;
 
-// XXX
-// Produces a single member of `instance` if the name of the member reference `ref` matches `name`. Returns
-// whether the name matched, so callers can fold over a tuple of member references
+/**
+ * Produces a single member of @p instance if the name of the member reference @p ref matches @p name.
+ * Returns whether the name matched, so callers can fold over a tuple of member references
+ */
 template<typename Ref, typename C>
 bool
-produceMember(const Ref& ref, std::string_view name, C& instance, nio::Source& in, CONFIG__) {
+produceMember(const Ref& ref, std::string_view name, C& instance, nio::Source& in) {
   if (ref.name() != name) {
     return false;
   }
   using Elem = Ref::Type;
   constexpr auto ElemDataType = DataTypes<Elem>::Value;
-  FormattedProducerImpl<ElemDataType, Elem>().produce(ref.get(instance), in, config);
+  FormattedProducerImpl<ElemDataType, Elem>().produce(ref.get(instance), in);
   return true;
 }
 
-// Produces the members of `instance` from a parenthesized list of `name=value` entries, using the member
-// references in `refs` to look up each name.
-//
-// Unlike the tuple producer, the entries may appear in any order, and entries may be missing altogether, in
-// which case the corresponding members of `instance` are left untouched. An entry whose name does not match
-// any member reference is an error
+/**
+ * Produces the members of @p instance from a parenthesized list of `name=value` entries, using the member
+ * references in @p refs to look up each name.
+ *
+ * Unlike the tuple producer, the entries may appear in any order, and entries may be missing altogether, in
+ * which case the corresponding members of @p instance are left untouched. An entry whose name does not match
+ * any member reference is an error.
+ */
 template<typename Refs, typename C>
 void
-produceMembers(const Refs& refs, C& instance, nio::Source& in, CONFIG__) {
-  skip(in, config);
+produceMembers(const Refs& refs, C& instance, nio::Source& in) {
+  skip(in);
   const auto pos = in.tell();
 
   if (not readChar(in, '(')) {
@@ -497,13 +560,13 @@ produceMembers(const Refs& refs, C& instance, nio::Source& in, CONFIG__) {
 
   u64 index = 0;
   while (true) {
-    skip(in, config);
+    skip(in);
     if (readChar(in, ')')) {
       return;
     }
     if (index++ > 0) {
       expectComma(in);
-      skip(in, config);
+      skip(in);
       if (readChar(in, ')')) { // Allow trailing comma if nonempty
         return;
       }
@@ -517,12 +580,12 @@ produceMembers(const Refs& refs, C& instance, nio::Source& in, CONFIG__) {
       throw InputFailure(namePos, "Expected a member reference");
     }
     std::string_view trimmedName = str::trimTrailing<char>(*name);
-    skip(in, config);
+    skip(in);
 
     // Look up the member reference by name and produce the member
 
     const bool found = std::apply([&](const auto&... ref) {
-      return (produceMember(ref, trimmedName, instance, in, config) || ...);
+      return (produceMember(ref, trimmedName, instance, in) || ...);
     }, refs);
     if (not found) {
       throw InputFailure(namePos, fmt::format("Unknown member `{}`", trimmedName));
@@ -533,8 +596,8 @@ produceMembers(const Refs& refs, C& instance, nio::Source& in, CONFIG__) {
 template<>
 struct FormattedProducerImpl<DataType::Bool, bool> {
   void
-  produce(bool& val, nio::Source& in, CONFIG__) const {
-    skip(in, config);
+  produce(bool& val, nio::Source& in) const {
+    skip(in);
     const auto pos = in.tell();
 
     if (readChoice(in, { "0", "false" }, true)) {
@@ -552,8 +615,8 @@ struct FormattedProducerImpl<DataType::Bool, bool> {
 template<typename C>
 struct FormattedProducerImpl<DataType::Char, C> {
   void
-  produce(C& val, nio::Source& in, CONFIG__) const {
-    skip(in, config);
+  produce(C& val, nio::Source& in) const {
+    skip(in);
     const auto pos = in.tell();
 
     if (not readChar(in, '\'')) {
@@ -577,8 +640,8 @@ struct FormattedProducerImpl<DataType::Char, C> {
 template<typename E>
 struct FormattedProducerImpl<DataType::Enum, E> {
   void
-  produce(E& val, nio::Source& in, CONFIG__) const {
-    skip(in, config);
+  produce(E& val, nio::Source& in) const {
+    skip(in);
     const auto pos = in.tell();
 
     if constexpr (scn::detail::is_scannable<E, char>::value) {
@@ -596,8 +659,8 @@ struct FormattedProducerImpl<DataType::Enum, E> {
 template<typename I>
 struct FormattedProducerImpl<DataType::Integer, I> {
   void
-  produce(I& val, nio::Source& in, CONFIG__) const {
-    skip(in, config);
+  produce(I& val, nio::Source& in) const {
+    skip(in);
     const auto pos = in.tell();
 
     const auto result = scanInteger<I>(in);
@@ -614,8 +677,8 @@ struct FormattedProducerImpl<DataType::Float, F> {
   using Limits = std::numeric_limits<F>;
 
   void
-  produce(F& val, nio::Source& in, CONFIG__) const {
-    skip(in, config);
+  produce(F& val, nio::Source& in) const {
+    skip(in);
     const auto pos = in.tell();
 
     if (readString(in, "-∞")) {
@@ -639,8 +702,8 @@ struct FormattedProducerImpl<DataType::Float, F> {
 template<typename P>
 struct FormattedProducerImpl<DataType::Pointer, P> {
   void
-  produce(P& val, nio::Source& in, CONFIG__) const {
-    skip(in, config);
+  produce(P& val, nio::Source& in) const {
+    skip(in);
     const auto pos = in.tell();
 
     if (readString(in, "null")) {
@@ -660,8 +723,8 @@ struct FormattedProducerImpl<DataType::Pointer, P> {
 template<typename T>
 struct FormattedProducerImpl<DataType::String, T> {
   void
-  produce(T& val, nio::Source& in, CONFIG__) const {
-    skip(in, config);
+  produce(T& val, nio::Source& in) const {
+    skip(in);
     const auto pos = in.tell();
 
     if (not readChar(in, '"')) {
@@ -695,8 +758,8 @@ struct FormattedProducerImpl<DataType::Optional, T> {
   static constexpr auto ElemDataType = DataTypes<Elem>::Value;
 
   void
-  produce(T& val, nio::Source& in, CONFIG__) const {
-    skip(in, config);
+  produce(T& val, nio::Source& in) const {
+    skip(in);
 
     if (readString(in, "null")) {
       val = std::nullopt;
@@ -704,7 +767,7 @@ struct FormattedProducerImpl<DataType::Optional, T> {
     }
 
     val = Elem();
-    FormattedProducerImpl<ElemDataType, Elem>().produce(*val, in, config);
+    FormattedProducerImpl<ElemDataType, Elem>().produce(*val, in);
   }
 };
 
@@ -713,8 +776,8 @@ template<typename T>
 struct FormattedProducerImpl<DataType::Tuple, T> {
   template<typename... Args>
   void
-  produce(T& val, nio::Source& in, CONFIG__, Args&&... args) const {
-    skip(in, config);
+  produce(T& val, nio::Source& in, Args&&... args) const {
+    skip(in);
     const auto pos = in.tell();
 
     if (not readChar(in, '(')) {
@@ -723,12 +786,12 @@ struct FormattedProducerImpl<DataType::Tuple, T> {
 
     u64 index = 0;
     std::apply([&](auto&&... arg) {
-      (produceElem(std::forward<decltype(arg)>(arg), in, config, index++, std::forward<Args>(args)...), ...);
+      (produceElem(std::forward<decltype(arg)>(arg), in, index++, std::forward<Args>(args)...), ...);
     }, val);
 
-    skip(in, config);
+    skip(in);
     if (std::tuple_size_v<T> > 0 && readChar(in, ',')) { // Allow trailing comma if nonempty
-      skip(in, config);
+      skip(in);
     }
     if (not readChar(in, ')')) {
       throw InputFailure(in.tell(), { pos, in.tell() }, "Unterminated tuple");
@@ -739,14 +802,14 @@ private:
 
   template<typename Elem, typename... Args>
   void
-  produceElem(Elem& elem, nio::Source& in, CONFIG__, u64 index, Args&&... args) const {
-    skip(in, config);
+  produceElem(Elem& elem, nio::Source& in, u64 index, Args&&... args) const {
+    skip(in);
     if (index > 0) {
       expectComma(in);
-      skip(in, config);
+      skip(in);
     }
     constexpr auto ElemDataType = DataTypes<Elem>::Value;
-    FormattedProducerImpl<ElemDataType, Elem>().produce(elem, in, config, std::forward<Args>(args)...);
+    FormattedProducerImpl<ElemDataType, Elem>().produce(elem, in, std::forward<Args>(args)...);
   }
 };
 
@@ -756,12 +819,16 @@ struct FormattedProducerImpl<DataType::List, T> {
   static constexpr auto ElemDataType = DataTypes<Elem>::Value;
 
   void
-  produce(T& val, nio::Source& in, CONFIG__) const {
+  produce(T& val, nio::Source& in) const {
     static_assert(not IsView<T>, "Cannot decode list view");
     static_assert(not IsForwardList<T>, "Cannot decode forward list");
 
-    skip(in, config);
+    skip(in);
     const auto pos = in.tell();
+
+    if constexpr (not IsArray<T>) {
+      val.clear();
+    }
 
     if (not readChar(in, '[')) {
       throw InputFailure(pos, "Expected a list");
@@ -769,30 +836,30 @@ struct FormattedProducerImpl<DataType::List, T> {
 
     if constexpr (IsArray<T>) {
       // Fixed-size array
-      produceArray(val, in, config, pos);
+      produceArray(val, in, pos);
     } else {
       // Container with `push_back`
-      produceContainerWithPushBack(val, in, config);
+      produceContainerWithPushBack(val, in);
     }
   }
 
 private:
 
   void
-  produceArray(T& val, nio::Source& in, CONFIG__, u64 pos) const {
+  produceArray(T& val, nio::Source& in, u64 pos) const {
     const auto size = val.size();
     for (u64 index = 0; index < size; ++index) {
-      skip(in, config);
+      skip(in);
       if (index > 0) {
         expectComma(in);
-        skip(in, config);
+        skip(in);
       }
-      FormattedProducerImpl<ElemDataType, Elem>().produce(val[index], in, config);
+      FormattedProducerImpl<ElemDataType, Elem>().produce(val[index], in);
     }
 
-    skip(in, config);
+    skip(in);
     if (size > 0 && readChar(in, ',')) { // Allow trailing comma if nonempty
-      skip(in, config);
+      skip(in);
     }
     if (not readChar(in, ']')) {
       throw InputFailure(in.tell(), { pos, in.tell() }, fmt::format("Unterminated array of size {}", size));
@@ -800,22 +867,22 @@ private:
   }
 
   void
-  produceContainerWithPushBack(T& val, nio::Source& in, CONFIG__) const {
+  produceContainerWithPushBack(T& val, nio::Source& in) const {
     u64 index = 0;
     while (true) {
-      skip(in, config);
+      skip(in);
       if (readChar(in, ']')) {
         return;
       }
       if (index++ > 0) {
         expectComma(in);
-        skip(in, config);
+        skip(in);
         if (readChar(in, ']')) { // Allow trailing comma if nonempty
           return;
         }
       }
       val.push_back(Elem());
-      FormattedProducerImpl<ElemDataType, Elem>().produce(val.back(), in, config);
+      FormattedProducerImpl<ElemDataType, Elem>().produce(val.back(), in);
     }
   }
 };
@@ -826,29 +893,30 @@ struct FormattedProducerImpl<DataType::Set, T> {
   static constexpr auto ElemDataType = DataTypes<Elem>::Value;
 
   void
-  produce(T& val, nio::Source& in, CONFIG__) const {
-    skip(in, config);
+  produce(T& val, nio::Source& in) const {
+    skip(in);
     const auto pos = in.tell();
 
+    val.clear();
     if (not readChar(in, '{')) {
       throw InputFailure(pos, "Expected a set");
     }
 
     u64 index = 0;
     while (true) {
-      skip(in, config);
+      skip(in);
       if (readChar(in, '}')) {
         return;
       }
       if (index++ > 0) {
         expectComma(in);
-        skip(in, config);
+        skip(in);
         if (readChar(in, '}')) { // Allow trailing comma if nonempty
           return;
         }
       }
       Elem elem;
-      FormattedProducerImpl<ElemDataType, Elem>().produce(elem, in, config);
+      FormattedProducerImpl<ElemDataType, Elem>().produce(elem, in);
       val.insert(std::move(elem));
     }
   }
@@ -862,9 +930,11 @@ struct FormattedProducerImpl<DataType::Map, T> {
   static constexpr auto ElemDataType = DataTypes<Elem>::Value;
 
   void
-  produce(T& val, nio::Source& in, CONFIG__) const {
-    skip(in, config);
+  produce(T& val, nio::Source& in) const {
+    skip(in);
     const auto pos = in.tell();
+
+    val.clear();
 
     if (not readChar(in, '{')) {
       throw InputFailure(pos, "Expected a map");
@@ -872,7 +942,7 @@ struct FormattedProducerImpl<DataType::Map, T> {
 
     u64 index = 0;
     while (true) {
-      skip(in, config);
+      skip(in);
       if (readChar(in, '}')) {
         return;
       }
@@ -881,19 +951,20 @@ struct FormattedProducerImpl<DataType::Map, T> {
         if (readChar(in, '}')) { // Allow trailing comma if nonempty
           return;
         }
-        skip(in, config);
+        skip(in);
       }
 
       Key key;
-      FormattedProducerImpl<KeyDataType, Key>().produce(key, in, config);
-      skip(in, config);
+      FormattedProducerImpl<KeyDataType, Key>().produce(key, in);
+      skip(in);
 
       expectColon(in);
-      skip(in, config);
+      skip(in);
 
       Elem elem;
-      FormattedProducerImpl<ElemDataType, Elem>().produce(elem, in, config);
-      val.emplace(std::move(key), std::move(elem));
+      FormattedProducerImpl<ElemDataType, Elem>().produce(elem, in);
+      // Make the last one win
+      val.insert_or_assign(std::move(key), std::move(elem));
     }
   }
 };
@@ -906,9 +977,11 @@ struct FormattedProducerImpl<DataType::Bimap, T> {
   static constexpr auto ElemDataType = DataTypes<Elem>::Value;
 
   void
-  produce(T& val, nio::Source& in, CONFIG__) const {
-    skip(in, config);
+  produce(T& val, nio::Source& in) const {
+    skip(in);
     const auto pos = in.tell();
+
+    val.clear();
 
     if (not readChar(in, '{')) {
       throw InputFailure(pos, "Expected a map");
@@ -916,28 +989,29 @@ struct FormattedProducerImpl<DataType::Bimap, T> {
 
     u64 index = 0;
     while (true) {
-      skip(in, config);
+      skip(in);
       if (readChar(in, '}')) {
         return;
       }
       if (index++ > 0) {
         expectComma(in);
-        skip(in, config);
+        skip(in);
         if (readChar(in, '}')) { // Allow trailing comma if nonempty
           return;
         }
       }
 
       Key key;
-      FormattedProducerImpl<KeyDataType, Key>().produce(key, in, config);
-      skip(in, config);
+      FormattedProducerImpl<KeyDataType, Key>().produce(key, in);
+      skip(in);
 
       expectColon(in);
-      skip(in, config);
+      skip(in);
 
       Elem elem;
-      FormattedProducerImpl<ElemDataType, Elem>().produce(elem, in, config);
-      val.left.insert({ std::move(key), std::move(elem) });
+      FormattedProducerImpl<ElemDataType, Elem>().produce(elem, in);
+      // Make the last one win
+      insertOrReplace(val, key, elem);
     }
   }
 };
@@ -948,15 +1022,15 @@ struct FormattedProducerImpl<DataType::Duration, T> {
   static constexpr auto RepDataType = DataTypes<Rep>::Value;
 
   void
-  produce(T& val, nio::Source& in, CONFIG__) const {
+  produce(T& val, nio::Source& in) const {
     using namespace std::chrono;
 
-    skip(in, config);
+    skip(in);
     const auto pos = in.tell();
 
     Rep count;
     try {
-      FormattedProducerImpl<RepDataType, Rep>().produce(count, in, config);
+      FormattedProducerImpl<RepDataType, Rep>().produce(count, in);
     } catch (const InputFailure& e) {
       throw InputFailure(pos, "Expected a duration");
     }
@@ -997,12 +1071,12 @@ struct FormattedProducerImpl<DataType::Duration, T> {
 };
 
 template<typename T>
-struct FormattedProducerImpl<DataType::YearMonthDay, T> {
+struct FormattedProducerImpl<DataType::Date, T> {
   void
-  produce(T& val, nio::Source& in, CONFIG__) const {
+  produce(T& val, nio::Source& in) const {
     using namespace std::chrono;
 
-    skip(in, config);
+    skip(in);
     const auto pos = in.tell();
 
     auto& is = in.istream();
@@ -1018,14 +1092,14 @@ struct FormattedProducerImpl<DataType::YearMonthDay, T> {
 };
 
 template<typename T>
-struct FormattedProducerImpl<DataType::HourMinuteSecond, T> {
+struct FormattedProducerImpl<DataType::ClockTime, T> {
   using Precision = T::precision;
 
   void
-  produce(T& val, nio::Source& in, CONFIG__) const {
+  produce(T& val, nio::Source& in) const {
     using namespace std::chrono;
 
-    skip(in, config);
+    skip(in);
     const auto pos = in.tell();
 
     // Read hour, minute, and second
@@ -1061,10 +1135,10 @@ struct FormattedProducerImpl<DataType::HourMinuteSecond, T> {
 template<typename T>
 struct FormattedProducerImpl<DataType::TimeZone, T> {
   void
-  produce(T& val, nio::Source& in, CONFIG__) const {
+  produce(T& val, nio::Source& in) const {
     using namespace std::chrono;
 
-    skip(in, config);
+    skip(in);
     const auto pos = in.tell();
 
     if (not readChar(in, '(')) {
@@ -1081,16 +1155,16 @@ struct FormattedProducerImpl<DataType::TimeZone, T> {
 };
 
 template<typename T>
-struct FormattedProducerImpl<DataType::TimePoint, T> {
+struct FormattedProducerImpl<DataType::Time, T> {
   using Clock = T::clock;
   static_assert(std::same_as<Clock, std::chrono::system_clock>, "Clock must be `system_clock`");
   using Duration = T::duration;
 
   void
-  produce(T& val, nio::Source& in, CONFIG__) const {
+  produce(T& val, nio::Source& in) const {
     using namespace std::chrono;
 
-    skip(in, config);
+    skip(in);
     const auto pos = in.tell();
 
     // The environment variable `TZ` interferes somehow ...
@@ -1131,17 +1205,17 @@ struct FormattedProducerImpl<DataType::TimePoint, T> {
 };
 
 template<typename T>
-struct FormattedProducerImpl<DataType::ZonedTime, T> {
+struct FormattedProducerImpl<DataType::DateTime, T> {
   using Duration = T::duration;
   using TimeZone = const std::chrono::time_zone*;
   static constexpr auto TimeZoneDataType = DataTypes<TimeZone>::Value;
   static_assert(TimeZoneDataType == DataType::TimeZone);
 
   void
-  produce(T& val, nio::Source& in, CONFIG__) const {
+  produce(T& val, nio::Source& in) const {
     using namespace std::chrono;
 
-    skip(in, config);
+    skip(in);
     const auto pos = in.tell();
 
     // The environment variable `TZ` interferes somehow ...
@@ -1210,7 +1284,7 @@ struct FormattedProducerImpl<DataType::ZonedTime, T> {
 
     expectChar(in, ' ');
     TimeZone tz; // NOLINT
-    FormattedProducerImpl<TimeZoneDataType, TimeZone>().produce(tz, in, config);
+    FormattedProducerImpl<TimeZoneDataType, TimeZone>().produce(tz, in);
 
     // Finally, construct the `zoned_time`
 
@@ -1229,8 +1303,8 @@ struct FormattedProducerImpl<DataType::Interval, T> {
   using Right = T::RightType;
 
   void
-  produce(T& val, nio::Source& in, CONFIG__) const {
-    skip(in, config);
+  produce(T& val, nio::Source& in) const {
+    skip(in);
     const auto pos = in.tell();
 
     if (readString(in, "∅")) {
@@ -1241,33 +1315,33 @@ struct FormattedProducerImpl<DataType::Interval, T> {
     if (not readChar(in, Left::Symbol)) {
       throw InputFailure(pos, "Expected an interval");
     }
-    skip(in, config);
+    skip(in);
 
     A a = A();
     if constexpr (IsOptional<A>) {
       if (not readString(in, "-∞")) {
-        FormattedProducerImpl<ADataType, A>().produce(a, in, config);
+        FormattedProducerImpl<ADataType, A>().produce(a, in);
       }
     } else {
-      FormattedProducerImpl<ADataType, A>().produce(a, in, config);
+      FormattedProducerImpl<ADataType, A>().produce(a, in);
     }
     val.a = a;
 
-    skip(in, config);
+    skip(in);
     expectComma(in);
-    skip(in, config);
+    skip(in);
 
     B b = B();
     if constexpr (IsOptional<B>) {
       if (not readString(in, "∞")) {
-        FormattedProducerImpl<BDataType, B>().produce(b, in, config);
+        FormattedProducerImpl<BDataType, B>().produce(b, in);
       }
     } else {
-      FormattedProducerImpl<BDataType, B>().produce(b, in, config);
+      FormattedProducerImpl<BDataType, B>().produce(b, in);
     }
     val.b = b;
 
-    skip(in, config);
+    skip(in);
     if (not readChar(in, Right::Symbol)) {
       throw InputFailure(in.tell(), { pos, in.tell() }, "Unterminated interval");
     }
@@ -1282,8 +1356,8 @@ struct FormattedProducerImpl<DataType::Declared, T> {
   static_assert(ElemDataType == DataType::Tuple);
 
   void
-  produce(T& val, nio::Source& in, CONFIG__) const {
-    produceMembers(refs, val, in, config);
+  produce(T& val, nio::Source& in) const {
+    produceMembers(refs, val, in);
   }
 };
 
@@ -1295,38 +1369,12 @@ struct FormattedProducerImpl<DataType::Instance, T> {
   static_assert(ElemDataType == DataType::Tuple);
 
   void
-  produce(T& val, nio::Source& in, CONFIG__) const {
-    produceMembers(refs, val.get(), in, config);
+  produce(T& val, nio::Source& in) const {
+    produceMembers(refs, val.get(), in);
   }
 };
 
-// XXX Ist das überhaupt noch in Betrieb`?
-template<typename T>
-struct FormattedProducerImpl<DataType::MemberRef, T> {
-  using Elem = T::Type;
-  static constexpr auto ElemDataType = DataTypes<Elem>::Value;
-
-  template<typename C>
-  void
-  produce(T& val, nio::Source& in, CONFIG__, C& instance) const {
-    skip(in, config);
-    const auto pos = in.tell();
-
-    auto name = readUntilChar(in, '=');
-    if (not name) {
-      throw InputFailure(pos, "Expected a member reference");
-    }
-    std::string_view trimmedName = str::trimTrailing<char>(*name);
-
-    // For `MemberRef`, we demand the name to match
-    if (trimmedName != val.name()) {
-      throw InputFailure(pos, fmt::format("Expected name `{}`, got `{}`", val.name(), trimmedName));
-    }
-    skip(in, config);
-
-    FormattedProducerImpl<ElemDataType, Elem>().produce(val.get(instance), in, config);
-  }
-};
+// `MemberRef` production is implemented in `produceMembers` and `produceMember`
 
 template<typename T>
 struct FormattedProducerImpl<DataType::VarRef, T> {
@@ -1334,8 +1382,8 @@ struct FormattedProducerImpl<DataType::VarRef, T> {
   static constexpr auto ElemDataType = DataTypes<Elem>::Value;
 
   void
-  produce(T& val, nio::Source& in, CONFIG__) const {
-    skip(in, config);
+  produce(T& val, nio::Source& in) const {
+    skip(in);
     const auto pos = in.tell();
 
     auto name = readUntilChar(in, '=');
@@ -1344,9 +1392,9 @@ struct FormattedProducerImpl<DataType::VarRef, T> {
     }
 
     // For `VarRef`, we ignore the name altogether and do not demand it to match
-    skip(in, config);
+    skip(in);
 
-    FormattedProducerImpl<ElemDataType, Elem>().produce(val.get(), in, config);
+    FormattedProducerImpl<ElemDataType, Elem>().produce(val.get(), in);
   }
 };
 
@@ -1356,14 +1404,14 @@ struct FormattedProducerImpl<DataType::CodePoint, T> {
   static constexpr auto ElemDataType = DataTypes<Elem>::Value;
 
   void
-  produce(T& val, nio::Source& in, CONFIG__) const {
-    skip(in, config);
+  produce(T& val, nio::Source& in) const {
+    skip(in);
     const auto pos = in.tell();
 
     if (readChar(in, '\'')) {
       in.seek(-1, nio::SeekMode::cur);
       Elem elem = Elem();
-      FormattedProducerImpl<ElemDataType, Elem>().produce(elem, in, config);
+      FormattedProducerImpl<ElemDataType, Elem>().produce(elem, in);
       val = T(elem);
       return;
     }
@@ -1383,14 +1431,12 @@ struct FormattedProducerImpl<DataType::Character, T> {
   static constexpr auto ElemDataType = DataTypes<Elem>::Value;
 
   void
-  produce(T& val, nio::Source& in, CONFIG__) const {
+  produce(T& val, nio::Source& in) const {
     Elem elem;
-    FormattedProducerImpl<ElemDataType, Elem>().produce(elem, in, config);
+    FormattedProducerImpl<ElemDataType, Elem>().produce(elem, in);
     val = T(std::move(elem));
   }
 };
-
-#undef CONFIG__
 
 } // namespace internal
 
@@ -1417,30 +1463,27 @@ struct FormattedProducer {
 /**
  * A codec for formatted string I/O.
  *
- * The encoder can serialize an arbirary C++ data structure to a formatted string. The result is a format
- * similar to JSON. Tuples are enclosed in parentheses. Lists are enclosed in square brackets. Sets and maps
- * are enclosed in curly braces. If a configuration is provided, the output may be indented and formatted as
- * a tree.
+ * The encoder can serialize an arbirary C++ data structure to a sink. The output is in a format called RON
+ * (Rocket Object Notation), which is similar to, but not quite the same as JSON. Tuples are enclosed in
+ * parentheses. Lists are enclosed in square brackets. Sets and maps are enclosed in curly braces. If a
+ * configuration is provided, the output may be indented and formatted as a tree.
  *
- * The decoder can scan such a formatted string and construct an arbitrary C++ data structure from it. While
- * scanning, any irrelevant whitespace, including line breaks, is ignored. If a configuration is provided,
- * the decoder can skip single-line C-style comments starting with <code>//</code>, multi-line C-style
- * comments starting with <code>/</code><code>*</code>, and single-line shell-style comments starting with
- * <code>#</code>.
+ * The decoder can scan such a formatted input from a source and construct an arbitrary C++ data structure
+ * from it. While scanning, any irrelevant whitespace, including line breaks, is ignored. The decoder skips
+ * single-line C-style comments starting with <code>//</code>, multi-line C-style comments starting with
+ * <code>/</code><code>*</code>, as well as single-line shell-style comments starting with `#`.
  *
- * XXX
  * When decoding a declared type or a #rocket::reflect::Instance, the `name=value` entries may appear in any
  * order, and entries may be missing altogether; missing members keep their default values. An entry whose
  * name does not match any member is an error.
  *
- * Decoding to list views and to forward lists is not supported. String views and character views, however,
- * are allowed. This is made possible by storing intermediate strings in the source. Hence, decoded string
- * views and character views are valid, and valid only, for the lifetime of the source.
+ * Decoding to list views and forward lists is not supported. String views and character views, however, are
+ * allowed. This is made possible by storing intermediate strings in the source. Hence, decoded string views
+ * and character views are valid, and valid only, for the lifetime of the source.
  *
  * There are various optimizations for decoding from contiguous sources.
  *
  * @see #rocket::codec::FormattedConsumerConfig
- * @see #rocket::codec::FormattedProducerConfig
  */
 struct FormattedCodec : Codec<FormattedConsumer, FormattedProducer> {
   using Base = Codec<FormattedConsumer, FormattedProducer>; ///< @type_base
@@ -1467,14 +1510,13 @@ struct FormattedCodec : Codec<FormattedConsumer, FormattedProducer> {
    *
    * @tparam T the type to decode
    * @param in the input source
-   * @param config the configuration
    * @return the decoded value
    * @throw #std::exception if the value cannot be decoded
    */
   template<typename T>
   [[nodiscard]] DecodeResult<T>
-  decode(nio::Source& in, const FormattedProducerConfig& config = {}) const {
-    return Base::decode<T>(in, config);
+  decode(nio::Source& in) const {
+    return Base::decode<T>(in);
   }
 };
 

@@ -3,6 +3,37 @@
  *
  * Encoding and decoding of arbitrary C++ data structures for various purposes, such as comparisons, hashing,
  * formatting, scanning, serialization, deserialization, etc.
+ *
+ * # The Codec Type System
+ *
+ * Value Class           | `DataType`  | C++ Mapping
+ * :-------------------- | :---------- | :----------
+ * Boolean values        | `Bool`      | `bool`
+ * Single characters     | `Char`      | `char`, `char32`
+ * Enumerations          | `Enum`      | `enum` values
+ * Integer values        | `Integer`   | `i8`, `i16`, `i32`, `i64`, `i128`, `u8`, `u16`, `u32`, `u64`, `u128`
+ * Floating-point values | `Float`     | `f32`, `f64`
+ * Pointers              | `Pointer`   | C++ pointers
+ * Strings               | `String`    | #std::string, #std::string_view, #std::u32string, #std::u32string_view
+ * Optional values       | `Optional`  | #std::optional
+ * Tuples                | `Tuple`     | #std::pair, #std::tuple
+ * Lists                 | `List`      | #std::array, #std::forward_list, #std::list, #std::span, #std::vector
+ * Sets                  | `Set`       | #std::set, #std::unordered_set
+ * Maps                  | `Map`       | #std::map, #std::unordered_map
+ * Bidirectional maps    | `Bimap`     | #rocket::Bimap (more specifically `boost::bimaps::bimap`)
+ * Durations             | `Duration`  | #std::chrono::duration
+ * Clock times           | `ClockTime` | #std::chrono::hh_mm_ss
+ * Dates                 | `Date`      | #std::chrono::year_month_day
+ * Time zones            | `TimeZone`  | #std::chrono::time_zone
+ * Times                 | `Time`      | #std::chrono::time_point
+ * Dates and times       | `DateTime`  | #std::chrono::zoned_time
+ * Intervals             | `Interval`  | #rocket::math::Interval
+ * Declared values       | `Declared`  | #rocket::reflect::Declared
+ * Instances             | `Instance`  | #rocket::reflect::Instance
+ * Members               | `MemberRef` | #rocket::reflect::MemberRef
+ * Variables             | `VarRef`    | #rocket::reflect::VarRef
+ * Code points           | `CodePoint` | #rocket::unicode::CodePoint
+ * Grapheme clusters     | `Character` | #rocket::unicode::Character, #rocket::unicode::CharacterView
  */
 
 #pragma once
@@ -49,7 +80,7 @@ enum class DataType : u8 {
   Bool,
   /// Character values conforming to #rocket::IsChar.
   Char,
-  /// Enums.
+  /// Enumerations.
   Enum,
   /// Integer values conforming to #rocket::IsInteger.
   Integer,
@@ -72,42 +103,42 @@ enum class DataType : u8 {
   Set,
   /// Maps: either #std::map or #std::unordered_map.
   Map,
-  /// Bimaps.
+  /// Bidirectional maps.
   Bimap,
 
-  // `std::chrono` ..........................................................................................
+  // Chronological types ....................................................................................
 
   /// #std::chrono::duration values.
   Duration,
   /// #std::chrono::hh_mm_ss values.
-  HourMinuteSecond,
+  ClockTime,
   /// #std::chrono::year_month_day values.
-  YearMonthDay,
+  Date,
   /// #std::chrono::time_zone values.
   TimeZone,
   /// #std::chrono::time_point values.
-  TimePoint,
+  Time,
   /// #std::chrono::zoned_time values.
-  ZonedTime,
+  DateTime,
 
-  // `rocket::math` .........................................................................................
+  // Mathematical types .....................................................................................
 
   Interval,
 
-  // `rocket::reflect` ......................................................................................
+  // Reflection types .......................................................................................
 
   // An instance with default member references
   Declared,
   // An instance with specified member references
   Instance,
-  /// Member references.
+  /// Member references: #rocket::reflect::MemberRef.
   MemberRef,
-  /// Variable references.
+  /// Variable references: #rocket::reflect::VarRef.
   VarRef,
 
-  // `rocket::unicode` ......................................................................................
+  // Unicode types ..........................................................................................
 
-  /// Code points.
+  /// Code points: #rocket::unicode::CodePoint.
   CodePoint,
   /// Grapheme clusters: either #rocket::unicode::Character or #rocket::unicode::CharacterView.
   Character,
@@ -260,13 +291,13 @@ struct DataTypes<std::chrono::duration<Rep, Period>> {
 /// @spec{#rocket::codec::DataTypes, std::chrono::hh_mm_ss}
 template<typename Duration>
 struct DataTypes<std::chrono::hh_mm_ss<Duration>> {
-  static constexpr auto Value = DataType::HourMinuteSecond; ///< The data type.
+  static constexpr auto Value = DataType::ClockTime; ///< The data type.
 };
 
 /// @spec{#rocket::codec::DataTypes, std::chrono::year_month_day}
 template<>
 struct DataTypes<std::chrono::year_month_day> {
-  static constexpr auto Value = DataType::YearMonthDay; ///< The data type.
+  static constexpr auto Value = DataType::Date; ///< The data type.
 };
 
 /// @spec{#rocket::codec::DataTypes, std::chrono::time_zone}
@@ -278,13 +309,13 @@ struct DataTypes<const std::chrono::time_zone*> {
 /// @spec{#rocket::codec::DataTypes, std::chrono::time_point}
 template<typename Clock, typename Duration>
 struct DataTypes<std::chrono::time_point<Clock, Duration>> {
-  static constexpr auto Value = DataType::TimePoint; ///< The data type.
+  static constexpr auto Value = DataType::Time; ///< The data type.
 };
 
 /// @spec{#rocket::codec::DataTypes, std::chrono::zoned_time}
 template<typename Duration>
 struct DataTypes<std::chrono::zoned_time<Duration>> {
-  static constexpr auto Value = DataType::ZonedTime; ///< The data type.
+  static constexpr auto Value = DataType::DateTime; ///< The data type.
 };
 
 /// @spec{#rocket::codec::DataTypes, #rocket::math::Interval}

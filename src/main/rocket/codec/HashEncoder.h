@@ -220,7 +220,7 @@ struct HashConsumerImpl<DataType::Duration, T, Hash> {
 };
 
 template<typename T, typename Hash>
-struct HashConsumerImpl<DataType::YearMonthDay, T, Hash> {
+struct HashConsumerImpl<DataType::Date, T, Hash> {
   static constexpr auto I32DataType = DataTypes<i32>::Value;
 
   u64
@@ -237,7 +237,7 @@ struct HashConsumerImpl<DataType::YearMonthDay, T, Hash> {
 };
 
 template<typename T, typename Hash>
-struct HashConsumerImpl<DataType::HourMinuteSecond, T, Hash> {
+struct HashConsumerImpl<DataType::ClockTime, T, Hash> {
   using Precision = T::precision;
   static constexpr auto PrecisionDataType = DataTypes<Precision>::Value;
   static_assert(PrecisionDataType == DataType::Duration);
@@ -259,7 +259,7 @@ struct HashConsumerImpl<DataType::TimeZone, T, Hash> {
 };
 
 template<typename T, typename Hash>
-struct HashConsumerImpl<DataType::TimePoint, T, Hash> {
+struct HashConsumerImpl<DataType::Time, T, Hash> {
   using Duration = T::duration;
   static constexpr auto DurationDataType = DataTypes<Duration>::Value;
   static_assert(DurationDataType == DataType::Duration);
@@ -272,14 +272,14 @@ struct HashConsumerImpl<DataType::TimePoint, T, Hash> {
 };
 
 template<typename T, typename Hash>
-struct HashConsumerImpl<DataType::ZonedTime, T, Hash> {
+struct HashConsumerImpl<DataType::DateTime, T, Hash> {
   using TimeZone = const std::chrono::time_zone*;
   static constexpr auto TimeZoneDataType = DataTypes<TimeZone>::Value;
   static_assert(TimeZoneDataType == DataType::TimeZone);
   using Duration = T::duration;
   using SysTime = std::chrono::sys_time<Duration>;
   static constexpr auto SysTimeDataType = DataTypes<SysTime>::Value;
-  static_assert(SysTimeDataType == DataType::TimePoint);
+  static_assert(SysTimeDataType == DataType::Time);
 
   u64
   consume(const T& val) {
