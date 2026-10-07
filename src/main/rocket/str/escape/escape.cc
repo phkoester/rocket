@@ -19,7 +19,7 @@ namespace {
 
 // Local functions ------------------------------------------------------------------------------------------
 
-string escapeCStringCodePointHex(unicode::CodePoint cp, u64& column);
+string escapeCStringCodePointHex(unicode::CodePoint cp, u64& column, const CStringConfig& config);
 string escapeCStringTab(u64& column, const CStringConfig& config);
 
 string
@@ -74,18 +74,27 @@ escapeCStringCodePoint(unicode::CodePoint cp, u64& column, const CStringConfig& 
   }
 
   // Hex otherwise
-  return escapeCStringCodePointHex(cp, column);
+  return escapeCStringCodePointHex(cp, column, config);
 }
 
 string
-escapeCStringCodePointHex(unicode::CodePoint cp, u64& column) {
+escapeCStringCodePointHex(unicode::CodePoint cp, u64& column, const CStringConfig& config) {
   string ret;
-  if (cp > 0xffffU) {
-    ret = fmt::format("\\U{:0>8X}", static_cast<u32>(cp));
-  }else if (cp > 0x00ffU) {
+  if (config.json) {
+    // JSON
+    if (cp > 0xFFFFU) {
+      ROCKET_FAIL("Cannot escape code point U+{:X} to JSON", static_cast<u32>(cp));
+    }
     ret = fmt::format("\\u{:0>4X}", static_cast<u32>(cp));
   } else {
-    ret = fmt::format("\\x{:0>2X}", static_cast<u32>(cp));
+    // C
+    if (cp > 0xFFFFU) {
+      ret = fmt::format("\\U{:0>8X}", static_cast<u32>(cp));
+    } else if (cp > 0x00ffU) {
+      ret = fmt::format("\\u{:0>4X}", static_cast<u32>(cp));
+    } else {
+      ret = fmt::format("\\x{:0>2X}", static_cast<u32>(cp));
+    }
   }
   column += ret.size();
   return ret;
@@ -156,7 +165,7 @@ escapeRegexCodePoint(unicode::CodePoint cp, u64& column) {
   }
 
   // Hex otherwise (only up to U+FFFF)
-  return escapeCStringCodePointHex(cp, column);
+  return escapeCStringCodePointHex(cp, column, {});
 }
 
 unicode::CharacterView<char>

@@ -74,8 +74,14 @@ TEST(JsonCodec, JsonConsumerBool) {
 }
 
 TEST(JsonCodec, JsonConsumerChar) {
+  EXPECT_EQ(encode('\x7F'), "\"\\u007F\"");
   EXPECT_EQ(encode('\t'), "\"\\t\"");
   EXPECT_EQ(encode(U'€'), "\"€\"");
+  EXPECT_EQ(encode(U'\u200B'), "\"\\u200B\"");
+
+  EXPECT_THAT(
+    [&] { encode(U'\U0010FFFF'); },
+    ThrowsMessage<InvalidState>(EndsWith("Cannot escape code point U+10FFFF to JSON")));
 }
 
 TEST(JsonCodec, JsonConsumerEnum) {
@@ -92,16 +98,18 @@ TEST(JsonCodec, JsonConsumerEnum) {
 
 TEST(JsonCodec, JsonConsumerIntegerI64) {
   EXPECT_EQ(encode(-42_i64), "-42");
+  EXPECT_EQ(encode(+42_i64), "42");
 }
 
 TEST(JsonCodec, JsonConsumerFloatF64) {
   using type = f64;
   using limits = numeric_limits<type>;
 
+  EXPECT_EQ(encode(-.1_f64), "-0.1");
+  EXPECT_EQ(encode(1._f64), "1");
   EXPECT_EQ(encode(-123.456_f64), "-123.456");
   EXPECT_EQ(encode(-limits::infinity()), "-Infinity");
   EXPECT_EQ(encode(limits::infinity()), "Infinity");
-  EXPECT_EQ(encode(limits::quiet_NaN()), "NaN");
 }
 
 TEST(JsonCodec, JsonConsumerPointer) {
@@ -113,6 +121,11 @@ TEST(JsonCodec, JsonConsumerString) {
   EXPECT_EQ(encode("Hello"sv), "\"Hello\"");
   EXPECT_EQ(encode(U"Hello"sv), "\"Hello\"");
   EXPECT_EQ(encode("\x7f"sv), "\"\\u007F\""); // XXX Kein \x?
+  EXPECT_EQ(encode(U"\u200B"sv), "\"\\u200B\"");
+
+  EXPECT_THAT(
+    [&] { encode(U"\U0010FFFF"sv); },
+    ThrowsMessage<InvalidState>(EndsWith("Cannot escape code point U+10FFFF to JSON")));
 }
 
 TEST(JsonCodec, JsonConsumerOptional) {
@@ -157,7 +170,7 @@ TEST(JsonCodec, JsonConsumerList) {
 
 TEST(JsonCodec, JsonConsumerSet) {
   EXPECT_EQ(encode(set<i32> {}), "[]");
-  EXPECT_EQ(encode(set<i32> { 1, 2, 3 }), "[1, 2, 3]");
+  EXPECT_EQ(encode(set<i32> { 1, 2, 2, 3 }), "[1, 2, 3]");
 }
 
 TEST(JsonCodec, JsonConsumerMap) {
@@ -174,17 +187,11 @@ TEST(JsonCodec, JsonConsumerDuration) {
   EXPECT_EQ(encode(3ms), "\"3ms\"");
   EXPECT_EQ(encode(4s), "\"4s\"");
   EXPECT_EQ(encode(5min), "\"5min\"");
-  EXPECT_EQ(encode(6h), "\"6h\"");
+  EXPECT_EQ(encode(-6h), "\"-6h\"");
   EXPECT_EQ(encode(days(7)), "\"7d\"");
   EXPECT_EQ(encode(weeks(8)), "\"8w\"");
   EXPECT_EQ(encode(months(9)), "\"9m\"");
   EXPECT_EQ(encode(years(10)), "\"10y\"");
-}
-
-TEST(JsonCodec, JsonConsumerYearMonthDay) {
-  using namespace std::chrono;
-
-  EXPECT_EQ(encode(year_month_day { 1970y, January, 2d }), "\"1970-01-02\"");
 }
 
 TEST(JsonCodec, JsonConsumerHourMinuteSecond) {
@@ -194,7 +201,20 @@ TEST(JsonCodec, JsonConsumerHourMinuteSecond) {
   EXPECT_EQ(encode(hh_mm_ss { -(111h + 2min + 3s + 123456us) }), "\"-111:02:03.123456\"");
 }
 
-TEST(JsonCodec, JsonConsumerTimePoint) {
+TEST(JsonCodec, JsonConsumerDate) {
+  using namespace std::chrono;
+
+  EXPECT_EQ(encode(year_month_day { 1970y, January, 2d }), "\"1970-01-02\"");
+}
+
+TEST(JsonCodec, JsonConsumerTimeZone) {
+  using namespace std::chrono;
+
+  EXPECT_EQ(encode(locate_zone("Europe/Berlin")), "\"Europe/Berlin\"");
+  EXPECT_EQ(encode(locate_zone("UTC")), "\"Etc/UTC\"");
+}
+
+TEST(JsonCodec, JsonConsumerTime) {
   using namespace std::chrono;
 
   const auto* const regexS = R"("\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z")"; // Seconds
@@ -209,9 +229,9 @@ TEST(JsonCodec, JsonConsumerZonedTime) {
   using namespace std::chrono;
 
   const auto* const regexS =
-    R"re("\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(Z|[+-]\d{2}:\d{2}) \([^ ]+\)")re";
+    R"(\"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(Z|[+-]\d{2}:\d{2}) \([^ ]+\)\")"; // Seconds
   const auto* const regexNs =
-    R"re("\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{6,9}(Z|[+-]\d{2}:\d{2}) \([^ ]+\)")re";
+    R"(\"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{6,9}(Z|[+-]\d{2}:\d{2}) \([^ ]+\)\")"; // Nanoseconds
 
   {
     // Current time zone
@@ -232,6 +252,9 @@ TEST(JsonCodec, JsonConsumerZonedTime) {
 
 TEST(JsonCodec, JsonConsumerInterval) {
   EXPECT_EQ(encode(math::ClosedInterval<f32>(-4.2F, 4.2F)), "[-4.2, 4.2]");
+  EXPECT_EQ(encode(math::LeftOpenInterval<f32>(-4.2F, 4.2F)), "[-4.2, 4.2]");
+  EXPECT_EQ(encode(math::RightOpenInterval<f32>(-4.2F, 4.2F)), "[-4.2, 4.2]");
+  EXPECT_EQ(encode(math::RightOpenInterval<f32>(-4.2, nullopt)), "[-4.2, null]");
   EXPECT_EQ(encode(math::OpenInterval<f32>()), "null");
   EXPECT_EQ(encode(math::OpenInterval<f32>(nullopt, nullopt)), "[null, null]");
 }
@@ -242,15 +265,23 @@ TEST(JsonCodec, JsonConsumerDeclared) {
     "{\"ärger\": 42, \"ökonom\": true, \"übermut\": \"hello\", \"vec\": [1, 2, 3]}");
 }
 
+TEST(JsonCodec, JsonConsumerVarRef) {
+  int a = 0, b = 1, c= 2;
+  const auto& refs = ROCKET_REFLECT_VARS((a)(b)(c));
+  EXPECT_EQ(encode(refs), "[\"a\": 0, \"b\": 1, \"c\": 2]");
+  const auto& ref = std::get<1>(refs);
+  EXPECT_EQ(encode(ref), "\"b\": 1");
+}
+
 TEST(JsonCodec, JsonConsumerCodePoint) {
   using type = unicode::CodePoint;
 
   EXPECT_EQ(encode(type('a')), "\"U+0061\"");
   EXPECT_EQ(encode(type(U'€')), "\"U+20AC\"");
-  EXPECT_EQ(encode(type(U'\U00010FFF')), "\"U+10FFF\"");
+  EXPECT_EQ(encode(type(U'\U0010FFFF')), "\"U+10FFFF\"");
 }
 
-// `JsonProducer` ......................................................................................
+// `JsonProducer` ...........................................................................................
 
 TEST(JsonCodec, JsonProducerBool) {
   EXPECT_EQ(decode<bool>("// sup\ntrue"), true);

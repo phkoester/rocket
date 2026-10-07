@@ -25,7 +25,9 @@
  *
  * When reading, C-style single-line and multi-line comments are accepted. Single-line comments start with
  * `//` and continue to the end of the line. Multi-line comments start with <code>/</code><code>*</code> and
- * end with <code>*</code><code>/</code>. Comments are never written.
+ * end with <code>*</code><code>/</code>.
+ *
+ * Comments are never written.
  *
  * ## Trailing Comma
  *
@@ -154,7 +156,7 @@
  *
  * ## Intervals
  *
- * Empty intervals are notated as `null`. Non-empty intervals are JSON arrays of two bounds. A missing
+ * Empty intervals are notated as `null`. Nonempty intervals are JSON arrays of two bounds. A missing
  * (infinite) bound is notated as `null`.
  *
  * Example values: `"null"`, `"[-1.2, 3.4]"`, `"[null, -12]"`, or `"[12, null]"`.
@@ -228,7 +230,6 @@ struct JsonConsumerConfig {
 
 namespace internal {
 
-// XXX
 // Functions ------------------------------------------------------------------------------------------------
 
 inline void
@@ -245,6 +246,8 @@ inline void
 nextElem(nio::Sink& out, JsonConsumerConfig& config, u64 index) {
   rocket::nio::nextElem(out, config.indent, config.level, index);
 }
+
+// XXX
 
 inline void
 skipJson(nio::Source& in) {
@@ -278,44 +281,6 @@ readKeyword(nio::Source& in, std::string_view keyword) {
   }
   in.seek(-1, nio::SeekMode::cur);
   return true;
-}
-
-inline void
-writeJsonString(nio::Sink& out, std::string_view utf8) {
-  out.write('"');
-  for (const unsigned char c : utf8) {
-    switch (c) {
-    case '"':
-      out.write("\\\"");
-      break;
-    case '\\':
-      out.write("\\\\");
-      break;
-    case '\b':
-      out.write("\\b");
-      break;
-    case '\f':
-      out.write("\\f");
-      break;
-    case '\n':
-      out.write("\\n");
-      break;
-    case '\r':
-      out.write("\\r");
-      break;
-    case '\t':
-      out.write("\\t");
-      break;
-    default:
-      if (c < 0x20 || c == 0x7F) {
-        out.print("\\u{:04X}", static_cast<u32>(c));
-      } else {
-        out.write(static_cast<char>(c));
-      }
-      break;
-    }
-  }
-  out.write('"');
 }
 
 inline u32
@@ -444,6 +409,7 @@ jsonEncodedAsString(DataType type) {
 template<DataType DataType, typename T>
 struct JsonConsumerImpl;
 
+// XXX
 template<typename Key>
 void
 writeJsonKey(const Key& key, nio::Sink& out, JsonConsumerConfig&) {
@@ -455,7 +421,7 @@ writeJsonKey(const Key& key, nio::Sink& out, JsonConsumerConfig&) {
   if (encoded.size() >= 2 && encoded.front() == '"' && encoded.back() == '"') {
     out.write(encoded);
   } else {
-    writeJsonString(out, encoded);
+    out.print("\"{}\"", encoded); // XXX
   }
 }
 
@@ -473,7 +439,8 @@ struct JsonConsumerImpl<DataType::Char, C> {
   consume(C val, nio::Sink& out, CONFIG__) const {
     const std::basic_string<C> str { val };
     const std::string utf8(unicode::ConvertTo<char>::apply(str));
-    writeJsonString(out, utf8);
+    const std::string escaped = str::escape::escapeCString(utf8, { .json=true, .quote='"' });
+    out.write(escaped);
   }
 };
 
@@ -482,7 +449,7 @@ struct JsonConsumerImpl<DataType::Enum, E> {
   void
   consume(E val, nio::Sink& out, CONFIG__) const {
     if constexpr (fmt::is_formattable<E>::value) {
-      writeJsonString(out, fmt::format("{}", val));
+      out.print("\"{}\"", val);
       return;
     }
     ROCKET_FAIL("Cannot format enum of type `{}`", typeid(E));
@@ -527,7 +494,7 @@ struct JsonConsumerImpl<DataType::Pointer, P> {
       out.write("null");
       return;
     }
-    writeJsonString(out, fmt::format("{}", static_cast<const void*>(val)));
+    out.print("\"{}\"", static_cast<const void*>(val));
   }
 };
 
@@ -536,7 +503,8 @@ struct JsonConsumerImpl<DataType::String, T> {
   void
   consume(const T& val, nio::Sink& out, CONFIG__) const {
     const std::string utf8(unicode::ConvertTo<char>::apply(val));
-    writeJsonString(out, utf8);
+    const std::string escaped = str::escape::escapeCString(utf8, { .json=true, .quote='"' });
+    out.print("{}", escaped);
   }
 };
 
@@ -657,10 +625,17 @@ template<typename T>
 struct JsonConsumerImpl<DataType::Duration, T> {
   void
   consume(T val, nio::Sink& out, CONFIG__) const { // Take by value
-    nio::StringSink tmp;
-    FormattedConsumerConfig ron {};
-    FormattedConsumerImpl<DataType::Duration, T>().consume(val, tmp, ron);
-    writeJsonString(out, tmp.str());
+    if constexpr (std::same_as<T, std::chrono::microseconds>) {
+      out.print("\"{}µs\"", val.count());
+    } else if constexpr (std::same_as<T, std::chrono::weeks>) {
+      out.print("\"{}w\"", val.count());
+    } else if constexpr (std::same_as<T, std::chrono::months>) {
+      out.print("\"{}m\"", val.count());
+    } else if constexpr (std::same_as<T, std::chrono::years>) {
+      out.print("\"{}y\"", val.count());
+    } else {
+      out.print("\"{}\"", val);
+    }
   }
 };
 
@@ -668,10 +643,7 @@ template<typename T>
 struct JsonConsumerImpl<DataType::Date, T> {
   void
   consume(const T& val, nio::Sink& out, CONFIG__) const {
-    nio::StringSink tmp;
-    FormattedConsumerConfig ron {};
-    FormattedConsumerImpl<DataType::Date, T>().consume(val, tmp, ron);
-    writeJsonString(out, tmp.str());
+    out.write(std::format("\"{}\"", val));
   }
 };
 
@@ -679,10 +651,7 @@ template<typename T>
 struct JsonConsumerImpl<DataType::HourMinuteSecond, T> {
   void
   consume(const T& val, nio::Sink& out, CONFIG__) const {
-    nio::StringSink tmp;
-    FormattedConsumerConfig ron {};
-    FormattedConsumerImpl<DataType::HourMinuteSecond, T>().consume(val, tmp, ron);
-    writeJsonString(out, tmp.str());
+    out.write(std::format("\"{}\"", val));
   }
 };
 
@@ -690,29 +659,36 @@ template<typename T>
 struct JsonConsumerImpl<DataType::TimeZone, T> {
   void
   consume(T val, nio::Sink& out, CONFIG__) const {
-    writeJsonString(out, val->name());
+    out.print("\"{}\"", val->name());
   }
 };
 
 template<typename T>
 struct JsonConsumerImpl<DataType::Time, T> {
+  using Clock = T::clock;
+  static_assert(std::same_as<Clock, std::chrono::system_clock>, "Clock must be `system_clock`");
+
   void
   consume(const T& val, nio::Sink& out, CONFIG__) const {
-    nio::StringSink tmp;
-    FormattedConsumerConfig ron {};
-    FormattedConsumerImpl<DataType::Time, T>().consume(val, tmp, ron);
-    writeJsonString(out, tmp.str());
+    out.write(std::format("\"{:%FT%TZ}\"", val)); // Zulu time
   }
 };
 
 template<typename T>
 struct JsonConsumerImpl<DataType::ZonedTime, T> {
+  static constexpr auto TimeZoneDataType = DataTypes<TimeZone>::Value;
+  static_assert(TimeZoneDataType == DataType::TimeZone);
+
   void
   consume(const T& val, nio::Sink& out, CONFIG__) const {
-    nio::StringSink tmp;
-    FormattedConsumerConfig ron {};
-    FormattedConsumerImpl<DataType::ZonedTime, T>().consume(val, tmp, ron);
-    writeJsonString(out, tmp.str());
+    const auto* tz = val.get_time_zone();
+
+    const auto info = val.get_info();
+    if (info.offset == std::chrono::seconds(0)) {
+      out.write(std::format("\"{:%FT%TZ} ({})\"", val, tz->name())); // Zulu time
+    } else {
+      out.write(std::format("\"{:%FT%T%Ez} ({})\"", val, tz->name())); // Time with UTC offset
+    }
   }
 };
 
@@ -801,8 +777,7 @@ struct JsonConsumerImpl<DataType::MemberRef, T> {
   template<typename C>
   void
   consume(const T& val, nio::Sink& out, CONFIG__, const C& instance) const {
-    writeJsonString(out, val.name());
-    out.write(": ");
+    out.print("\"{}\": ", val.name());
     JsonConsumerImpl<ElemDataType, Elem>().consume(val.get(instance), out, config);
   }
 };
@@ -814,12 +789,8 @@ struct JsonConsumerImpl<DataType::VarRef, T> {
 
   void
   consume(const T& val, nio::Sink& out, CONFIG__) const {
-    beginContainer(out, config, '{');
-    nextElem(out, config, 0);
-    writeJsonString(out, val.name());
-    out.write(": ");
+    out.print("\"{}\": ", val.name());
     JsonConsumerImpl<ElemDataType, Elem>().consume(val.get(), out, config);
-    endContainer(out, config, 1, '}');
   }
 };
 
@@ -827,7 +798,7 @@ template<typename T>
 struct JsonConsumerImpl<DataType::CodePoint, T> {
   void
   consume(const T& val, nio::Sink& out, CONFIG__) const {
-    writeJsonString(out, fmt::format("U+{:0>4X}", static_cast<u32>(val)));
+    out.print("\"U+{:0>4X}\"", static_cast<u32>(val));
   }
 };
 
@@ -855,7 +826,7 @@ readJsonKey(Key& key, nio::Source& in) {
   const std::string keyStr = readJsonString(in);
   nio::StringSink tmp;
   if constexpr (jsonEncodedAsString(KeyDataType)) {
-    writeJsonString(tmp, keyStr);
+    tmp.print("\"{}\"", keyStr); // XXX
   } else {
     static_cast<nio::Sink&>(tmp).write(keyStr);
   }

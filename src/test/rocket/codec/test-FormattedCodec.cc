@@ -78,7 +78,7 @@ TEST(FormattedCodec, FormattedConsumerChar) {
   EXPECT_EQ(encode('\t'), "'\\t'");
   EXPECT_EQ(encode(U'€'), "'€'");
   EXPECT_EQ(encode(U'\u200B'), "'\\u200B'");
-  EXPECT_EQ(encode(U'\U00010FFF'), "'\\U00010FFF'");
+  EXPECT_EQ(encode(U'\U0010FFFF'), "'\\U0010FFFF'");
 }
 
 TEST(FormattedCodec, FormattedConsumerEnum) {
@@ -164,7 +164,7 @@ TEST(FormattedCodec, FormattedConsumerList) {
 
 TEST(FormattedCodec, FormattedConsumerSet) {
   EXPECT_EQ(encode(set<i32> {}), "{}");
-  EXPECT_EQ(encode(set<i32> { 1, 2, 3 }), "{1, 2, 3}");
+  EXPECT_EQ(encode(set<i32> { 1, 2, 2, 3 }), "{1, 2, 3}");
 }
 
 TEST(FormattedCodec, FormattedConsumerMap) {
@@ -181,17 +181,11 @@ TEST(FormattedCodec, FormattedConsumerDuration) {
   EXPECT_EQ(encode(3ms), "3ms");
   EXPECT_EQ(encode(4s), "4s");
   EXPECT_EQ(encode(5min), "5min");
-  EXPECT_EQ(encode(6h), "6h");
+  EXPECT_EQ(encode(-6h), "-6h");
   EXPECT_EQ(encode(days(7)), "7d");
   EXPECT_EQ(encode(weeks(8)), "8w");
   EXPECT_EQ(encode(months(9)), "9m");
   EXPECT_EQ(encode(years(10)), "10y");
-}
-
-TEST(FormattedCodec, FormattedConsumerYearMonthDay) {
-  using namespace std::chrono;
-
-  EXPECT_EQ(encode(year_month_day { 1970y, January, 2d }), "1970-01-02");
 }
 
 TEST(FormattedCodec, FormattedConsumerHourMinuteSecond) {
@@ -201,7 +195,20 @@ TEST(FormattedCodec, FormattedConsumerHourMinuteSecond) {
   EXPECT_EQ(encode(hh_mm_ss { -(111h + 2min + 3s + 123456us) }), "-111:02:03.123456");
 }
 
-TEST(FormattedCodec, FormattedConsumerTimePoint) {
+TEST(FormattedCodec, FormattedConsumerYearDate) {
+  using namespace std::chrono;
+
+  EXPECT_EQ(encode(year_month_day { 1970y, January, 2d }), "1970-01-02");
+}
+
+TEST(FormattedCodec, FormattedConsumerTimeZone) {
+  using namespace std::chrono;
+
+  EXPECT_EQ(encode(locate_zone("Europe/Berlin")), "(Europe/Berlin)");
+  EXPECT_EQ(encode(locate_zone("UTC")), "(Etc/UTC)");
+}
+
+TEST(FormattedCodec, FormattedConsumerTime) {
   using namespace std::chrono;
 
   const auto* const regexS = R"(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z)"; // Seconds
@@ -215,25 +222,25 @@ TEST(FormattedCodec, FormattedConsumerTimePoint) {
 TEST(FormattedCodec, FormattedConsumerZonedTime) {
   using namespace std::chrono;
 
-  const auto* const regexSeconds =
-    R"(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(Z|[+-]\d{2}:\d{2}) \([^ ]+\))";
-  const auto* const regexSecondsFraction =
-    R"(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{6,9}(Z|[+-]\d{2}:\d{2}) \([^ ]+\))";
+  const auto* const regexS =
+    R"(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(Z|[+-]\d{2}:\d{2}) \([^ ]+\))"; // Seconds
+  const auto* const regexNs =
+    R"(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{6,9}(Z|[+-]\d{2}:\d{2}) \([^ ]+\))"; // Nanoseconds
 
   {
     // Current time zone
     const auto* current = current_zone();
     const auto now = rocket::chrono::now<system_clock>();
-    EXPECT_THAT(encode(zoned_time(current, time_point_cast<seconds>(now))), matchesRegex(regexSeconds));
-    EXPECT_THAT(encode(zoned_time(current, now)), matchesRegex(regexSecondsFraction));
+    EXPECT_THAT(encode(zoned_time(current, time_point_cast<seconds>(now))), matchesRegex(regexS));
+    EXPECT_THAT(encode(zoned_time(current, now)), matchesRegex(regexNs));
   }
 
   {
     // Time zone UTC
     const auto* utc = locate_zone("UTC");
     const auto now = rocket::chrono::now<system_clock>();
-    EXPECT_THAT(encode(zoned_time(utc, time_point_cast<seconds>(now))), matchesRegex(regexSeconds));
-    EXPECT_THAT(encode(zoned_time(utc, now)), matchesRegex(regexSecondsFraction));
+    EXPECT_THAT(encode(zoned_time(utc, time_point_cast<seconds>(now))), matchesRegex(regexS));
+    EXPECT_THAT(encode(zoned_time(utc, now)), matchesRegex(regexNs));
   }
 }
 
@@ -265,7 +272,7 @@ TEST(FormattedCodec, FormattedConsumerCodePoint) {
 
   EXPECT_EQ(encode(type('a')), "U+0061");
   EXPECT_EQ(encode(type(U'€')), "U+20AC");
-  EXPECT_EQ(encode(type(U'\U00010FFF')), "U+10FFF");
+  EXPECT_EQ(encode(type(U'\U0010FFFF')), "U+10FFFF");
 }
 
 // `FormattedProducer` ......................................................................................

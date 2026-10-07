@@ -21,24 +21,28 @@ namespace rocket::str::escape {
  */
 struct CStringConfig {
   /**
-    * The quote character to escape.
-    *
-    * This must be <code>'\0'</code>, <code>'"'</code>, or <code>'\''</code>, otherwise it is invalid.
-    */
+   * Whether to unescape from or escape to JSON.
+   */
+  bool json = false;
+  /**
+   * The quote character to escape.
+   *
+   * This must be <code>'\0'</code>, <code>'"'</code>, or <code>'\''</code>, otherwise it is invalid.
+   */
   char quote = '\0';
   /**
-    * Configures the handling of tab characters.
-    *
-    * If this is null, then tab characters are escaped as `"\\t"`. Otherwise, a tab expands to at most
-    * #tabSize spaces.
-    */
+   * Configures the handling of tab characters.
+   *
+   * If this is null, then tab characters are escaped as `"\\t"`. Otherwise, a tab expands to at most
+   * #tabSize spaces.
+   */
   std::optional<u64> tabSize = std::nullopt;
 
   /**
-    * Checks if the escaped string is to be quoted.
-    *
-    * @return whether the escaped string is to be quoted
-    */
+   * Checks if the escaped string is to be quoted.
+   *
+   * @return whether the escaped string is to be quoted
+   */
   [[nodiscard]] bool quoted() const { return quote != '\0'; }
 };
 
