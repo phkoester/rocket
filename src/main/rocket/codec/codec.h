@@ -28,7 +28,7 @@
  * Times                   | `Time`             | #std::chrono::time_point
  * Times with time zone    | `ZonedTime`        | #std::chrono::zoned_time
  * Intervals               | `Interval`         | #rocket::math::Interval
- * Declared values         | `Declared`         | #rocket::reflect::Declared
+ * Declared objects        | `Declared`         | #rocket::reflect::Declared
  * Instances               | `Instance`         | #rocket::reflect::Instance
  * Members                 | `MemberRef`        | #rocket::reflect::MemberRef
  * Variables               | `VarRef`           | #rocket::reflect::VarRef

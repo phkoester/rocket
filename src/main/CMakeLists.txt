@@ -107,6 +107,7 @@ target_sources(rocket
       rocket/codec/EqualToEncoder.h
       rocket/codec/FormattedCodec.h
       rocket/codec/HashEncoder.h
+      rocket/codec/JsonCodec.h
       rocket/codec/codec.h
       rocket/filesystem/filesystem.h
       rocket/format/Subformat.h

@@ -15,7 +15,7 @@
  *
  * ## Text-File Encoding, Line Breaks
  *
- * RON is a text-file format. It is always encoded in UTF-8.
+ * RON is a text format. It must always be encoded in UTF-8 to work with this codec.
  *
  * When reading, both Unix-style and Windows-style line breaks are accepted. When writing, Unix-style line
  * breaks are used.
@@ -24,7 +24,7 @@
  *
  * RON supports C-style single-line and multi-line comments. Single-line comments start with `//` and
  * continue to the end of the line. Multi-line comments start with <code>/</code><code>*</code> and end with
- * <code>*</code><code>/</code>.
+ * <code>*</code><code>/</code>. Comments are never written.
  *
  * Shell-style comments are also accepted. They start with `#` and continue to the end of the line.
  *
@@ -43,10 +43,12 @@
  * ## Characters {#ron_char}
  *
  * Characters start and end with a single quote (`'`). Example values: `'a'`, `'\x20'`, `'€'`, `'\u20AC'`,
- * `'\U00010FFF'`.
+ * `'\U0010FFFF'`.
  *
  * One-byte characters must be valid ASCII characters in the range [0,127]. Two-byte characters must be valid
  * Unicode code points in the ranges [U+0000,U+D7FF] and [U+E000,U+10FFFF].
+ *
+ * When reading, escape sequences as well as the prefixes `\x`, `\u`, and `\U` are accepted.
  *
  * When writing, the escape sequences `\a`, `\b`, `\t`, `\n`, `\v`, `\f`, `\r`, `\e`, `\'`, and `\\` are
  * used. If a character is classified as printable by the Unicode standard, it appears verbatim in the
@@ -68,8 +70,8 @@
  *
  * ## Floating-Point Values
  *
- * Example values: `.1`, `0.1`, `+2.`, `-2.0`, `1e3`, `-1e3`, `1.23e-4`, `1.23e+4`, `-inf`, `inf`, `-∞`, `∞`,
- * `nan`.
+ * Example values: `.1`, `0.1`, `+2.`, `-2.0`, `1e3`, `-1e3`, `1.23e-4`, `1.23e+4`, `-inf`, `inf`, `+inf`,
+ * `-∞`, `∞`, `nan`.
  *
  * Floating-point values are always written in their canonical form, without any leading `+`. For infinite
  * values, `-∞` and `∞` are used.
@@ -95,27 +97,21 @@
  * Tuples appear surrounded by parentheses (`(` and `)`). Example values: `(1, 2, 3)`,
  * `("Answer", 42, true)`.
  *
- * When reading, a trailing comma is permitted, but it is never written.
- *
  * ## Lists
  *
  * Lists appear surrounded by square brackets (`[` and `]`). Examples: `[1, 2, 3]`, `["one", "two" "three"]`.
- *
- * When reading, a trailing comma is permitted, but it is never written.
  *
  * ## Sets
  *
  * Sets appear surrounded by curly braces (`{` and `}`). Example values: `{1, 2, 3}`,
  * `{"one", "two", "three"}`.
  *
- * When reading, a trailing comma is permitted, but it is never written.
+ * Duplicate elements are discouraged but allowed. If an element appears multiple times, the first one wins.
  *
  * ## Maps
  *
  * Maps appear surrounded by curly braces (`{` and `}`). Key-value pairs are separated by a colon (`:`).
- * Example: `{ 1: "one", 2: "two", 3: "three" }`.
- *
- * When reading, a trailing comma is permitted, but it is never written.
+ * Example: `{1: "one", 2: "two", 3: "three"}`.
  *
  * Duplicate keys are discouraged but allowed. If a key appears multiple times, the last one wins.
  *
@@ -123,6 +119,8 @@
  *
  * Bidirectional maps appear just like normal maps. Only the left side is notated. The right side is the
  * implicit opposite.
+ *
+ * Duplicate keys are discouraged but allowed. If a key appears multiple times, the last one wins.
  *
  * ## Durations
  *
@@ -164,42 +162,43 @@
  *
  * ## Intervals
  *
- * Example values: `∅` (empty), `[-1.2,3.4]` (closed), `(-1.2,3.4)` (open),  `(-∞,-12]` (left-open).,
- * `[12,∞)` (right-open).
+ * Example values: `{}` or `∅` (empty), `[-1.2,3.4]` (closed), `(-1.2,3.4)` (open), `(-inf,-12]` or
+ * `(-∞,-12)` (left-open), `[12,inf)` or `[12,∞)` (right-open).
  *
- * ## Declared Values
+ * ## Declared Objects
  *
  * Members appear like a tuple surrounded by parentheses (`(` and `)`), where each entry is a name-value pair
  * separated by an equal sign (`=`). Example: `(x_=11, y_=12, name_="A")`.
- *
- * When reading, a trailing comma is permitted, but it is never written.
  *
  * Duplicate member names are discouraged but allowed. If a name appears multiple times, the last one wins.
  *
  * ## Instances
  *
- * Instances appear just like declared values. They only display a different set of members, most probably
- * only a subset.
+ * Instances appear just like declared objects. They only display a different set of members, most probably
+ * a subset.
  *
  * ## Members
  *
- * Example: `answer_=42`.
+ * See declared objects.
  *
  * ## Variables
  *
  * Variables appear like a tuple surrounded by parentheses (`(` and `)`), where each entry is a name-value
  * pair separated by an equal sign (`=`). Example: `(x=11, y=12, name="A")`.
  *
- * When reading, a trailing comma is permitted, but it is never written.
+ * They cannot be decoded.
  *
  * ## Code Points
  *
  * Code points appear in the typical Unicode notation, e.g. `U+0041` or `U+10FFFF`.
  *
+ * A single character is also accepted when reading.
+ *
  * ## Grapheme Clusters
  *
  * Grapheme clusters appear just like strings.
  */
+
 #pragma once
 
 #include "rocket/InputFailure.h"
@@ -942,14 +941,14 @@ private:
 
 template<typename T>
 struct FormattedProducerImpl<DataType::List, T> {
+  static_assert(not IsView<T>, "Cannot decode list view");
+  static_assert(not IsForwardList<T>, "Cannot decode forward list");
+
   using Elem = T::value_type;
   static constexpr auto ElemDataType = DataTypes<Elem>::Value;
 
   void
   produce(T& val, nio::Source& in) const {
-    static_assert(not IsView<T>, "Cannot decode list view");
-    static_assert(not IsForwardList<T>, "Cannot decode forward list");
-
     skip(in);
     const auto pos = in.tell();
 
@@ -1437,7 +1436,7 @@ struct FormattedProducerImpl<DataType::Interval, T> {
     skip(in);
     const auto pos = in.tell();
 
-    if (readString(in, "∅")) {
+    if (readChoice(in, { "{}", "∅" })) {
       val = T();
       return;
     }
@@ -1449,7 +1448,7 @@ struct FormattedProducerImpl<DataType::Interval, T> {
 
     A a = A();
     if constexpr (IsOptional<A>) {
-      if (not readString(in, "-∞")) {
+      if (not readChoice(in, { "-∞", "-inf" })) {
         FormattedProducerImpl<ADataType, A>().produce(a, in);
       }
     } else {
@@ -1463,7 +1462,7 @@ struct FormattedProducerImpl<DataType::Interval, T> {
 
     B b = B();
     if constexpr (IsOptional<B>) {
-      if (not readString(in, "∞")) {
+      if (not readChoice(in, { "∞", "inf", "+inf" })) {
         FormattedProducerImpl<BDataType, B>().produce(b, in);
       }
     } else {
@@ -1504,28 +1503,14 @@ struct FormattedProducerImpl<DataType::Instance, T> {
   }
 };
 
-// `MemberRef` production is implemented in `produceMembers` and `produceMember`
+template<typename T>
+struct FormattedProducerImpl<DataType::MemberRef, T> {
+  static_assert(false, "Cannot decode member reference");
+};
 
 template<typename T>
 struct FormattedProducerImpl<DataType::VarRef, T> {
-  using Elem = T::Type;
-  static constexpr auto ElemDataType = DataTypes<Elem>::Value;
-
-  void
-  produce(T& val, nio::Source& in) const {
-    skip(in);
-    const auto pos = in.tell();
-
-    auto name = readUntilChar(in, '=');
-    if (not name) {
-      throw InputFailure(pos, "Expected a variable reference");
-    }
-
-    // For `VarRef`, we ignore the name altogether and do not demand it to match
-    skip(in);
-
-    FormattedProducerImpl<ElemDataType, Elem>().produce(val.get(), in);
-  }
+  static_assert(false, "Cannot decode variable reference");
 };
 
 template<typename T>
@@ -1539,6 +1524,7 @@ struct FormattedProducerImpl<DataType::CodePoint, T> {
     const auto pos = in.tell();
 
     if (readChar(in, '\'')) {
+      // Read `char32`
       in.seek(-1, nio::SeekMode::cur);
       Elem elem = Elem();
       FormattedProducerImpl<ElemDataType, Elem>().produce(elem, in);
@@ -1591,7 +1577,7 @@ struct FormattedProducer {
 // `FormattedCodec` -----------------------------------------------------------------------------------------
 
 /**
- * A codec for formatted string I/O.
+ * A codec for formatted (RON) I/O.
  *
  * The encoder can serialize an arbirary C++ data structure to a sink. The output is in a format called RON
  * (Rocket Object Notation), which is similar to, but not quite the same as JSON. Tuples are enclosed in

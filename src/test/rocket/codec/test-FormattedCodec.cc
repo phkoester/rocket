@@ -69,12 +69,16 @@ decodeAndTell(string_view str) {
 // `FormattedConsumer` ......................................................................................
 
 TEST(FormattedCodec, FormattedConsumerBool) {
+  EXPECT_EQ(encode(false), "false");
   EXPECT_EQ(encode(true), "true");
 }
 
 TEST(FormattedCodec, FormattedConsumerChar) {
+  EXPECT_EQ(encode('\x7F'), "'\\x7F'");
   EXPECT_EQ(encode('\t'), "'\\t'");
   EXPECT_EQ(encode(U'€'), "'€'");
+  EXPECT_EQ(encode(U'\u200B'), "'\\u200B'");
+  EXPECT_EQ(encode(U'\U00010FFF'), "'\\U00010FFF'");
 }
 
 TEST(FormattedCodec, FormattedConsumerEnum) {
@@ -91,12 +95,15 @@ TEST(FormattedCodec, FormattedConsumerEnum) {
 
 TEST(FormattedCodec, FormattedConsumerIntegerI64) {
   EXPECT_EQ(encode(-42_i64), "-42");
+  EXPECT_EQ(encode(+42_i64), "42");
 }
 
 TEST(FormattedCodec, FormattedConsumerFloatF64) {
   using type = f64;
   using limits = numeric_limits<type>;
 
+  EXPECT_EQ(encode(-.1_f64), "-0.1");
+  EXPECT_EQ(encode(1._f64), "1");
   EXPECT_EQ(encode(-123.456_f64), "-123.456");
   EXPECT_EQ(encode(-limits::infinity()), "-∞");
   EXPECT_EQ(encode(limits::infinity()), "∞");
@@ -111,6 +118,8 @@ TEST(FormattedCodec, FormattedConsumerString) {
   EXPECT_EQ(encode("Hello"sv), "\"Hello\"");
   EXPECT_EQ(encode(U"Hello"sv), "\"Hello\"");
   EXPECT_EQ(encode("\x7f"sv), "\"\\x7F\"");
+  EXPECT_EQ(encode(U"\u200B"sv), "\"\\u200B\"");
+  EXPECT_EQ(encode(U"\U00010FFF"sv), "\"\\U00010FFF\"");
 }
 
 TEST(FormattedCodec, FormattedConsumerOptional) {
@@ -206,30 +215,33 @@ TEST(FormattedCodec, FormattedConsumerTimePoint) {
 TEST(FormattedCodec, FormattedConsumerZonedTime) {
   using namespace std::chrono;
 
-  const auto* const regexS =
+  const auto* const regexSeconds =
     R"(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(Z|[+-]\d{2}:\d{2}) \([^ ]+\))";
-  const auto* const regexNs =
+  const auto* const regexSecondsFraction =
     R"(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{6,9}(Z|[+-]\d{2}:\d{2}) \([^ ]+\))";
 
   {
     // Current time zone
     const auto* current = current_zone();
     const auto now = rocket::chrono::now<system_clock>();
-    EXPECT_THAT(encode(zoned_time(current, time_point_cast<seconds>(now))), matchesRegex(regexS));
-    EXPECT_THAT(encode(zoned_time(current, now)), matchesRegex(regexNs));
+    EXPECT_THAT(encode(zoned_time(current, time_point_cast<seconds>(now))), matchesRegex(regexSeconds));
+    EXPECT_THAT(encode(zoned_time(current, now)), matchesRegex(regexSecondsFraction));
   }
 
   {
     // Time zone UTC
     const auto* utc = locate_zone("UTC");
     const auto now = rocket::chrono::now<system_clock>();
-    EXPECT_THAT(encode(zoned_time(utc, time_point_cast<seconds>(now))), matchesRegex(regexS));
-    EXPECT_THAT(encode(zoned_time(utc, now)), matchesRegex(regexNs));
+    EXPECT_THAT(encode(zoned_time(utc, time_point_cast<seconds>(now))), matchesRegex(regexSeconds));
+    EXPECT_THAT(encode(zoned_time(utc, now)), matchesRegex(regexSecondsFraction));
   }
 }
 
 TEST(FormattedCodec, FormattedConsumerInterval) {
   EXPECT_EQ(encode(math::ClosedInterval<f32>(-4.2F, 4.2F)), "[-4.2,4.2]");
+  EXPECT_EQ(encode(math::LeftOpenInterval<f32>(-4.2F, 4.2F)), "(-4.2,4.2]");
+  EXPECT_EQ(encode(math::RightOpenInterval<f32>(-4.2F, 4.2F)), "[-4.2,4.2)");
+  EXPECT_EQ(encode(math::RightOpenInterval<f32>(-4.2, nullopt)), "[-4.2,∞)");
   EXPECT_EQ(encode(math::OpenInterval<f32>()), "∅");
   EXPECT_EQ(encode(math::OpenInterval<f32>(nullopt, nullopt)), "(-∞,∞)");
 }
@@ -238,6 +250,14 @@ TEST(FormattedCodec, FormattedConsumerDeclared) {
   EXPECT_EQ(
     encode(MyStruct { 42, true, "hello", { 1, 2, 3 } }),
     "(ärger=42, ökonom=true, übermut=\"hello\", vec=[1, 2, 3])");
+}
+
+TEST(FormattedCodec, FormattedConsumerVarRef) {
+  int a = 0, b = 1, c= 2;
+  const auto& refs = ROCKET_REFLECT_VARS((a)(b)(c));
+  EXPECT_EQ(encode(refs), "(a=0, b=1, c=2)");
+  const auto& ref = std::get<1>(refs);
+  EXPECT_EQ(encode(ref), "b=1");
 }
 
 TEST(FormattedCodec, FormattedConsumerCodePoint) {
@@ -302,7 +322,8 @@ TEST(FormattedCodec, FormattedProducerFloat) {
   EXPECT_EQ(decode<type>("  -1e3"), -1e3_f64);
   EXPECT_EQ(decode<type>("-inf"), -limits::infinity());
   EXPECT_EQ(decode<type>("-∞"), -limits::infinity());
-  EXPECT_EQ(decode<type>("-inf"), -limits::infinity());
+  EXPECT_EQ(decode<type>("inf"), limits::infinity());
+  EXPECT_EQ(decode<type>("+inf"), limits::infinity());
   EXPECT_EQ(decode<type>("∞"), limits::infinity());
 
   const type val = decode<type>("nan").value();

@@ -76,6 +76,7 @@ AddTest(test-rocket-codec-CompareEncoder         rocket/codec           test-Com
 AddTest(test-rocket-codec-EqualToEncoder         rocket/codec           test-EqualToEncoder.cc)
 AddTest(test-rocket-codec-FormattedCodec         rocket/codec           test-FormattedCodec.cc)
 AddTest(test-rocket-codec-HashEncoder            rocket/codec           test-HashEncoder.cc)
+AddTest(test-rocket-codec-JsonCodec              rocket/codec           test-JsonCodec.cc)
 AddTest(test-rocket-external-boost-int128        rocket/external        test-boost-int128.cc)
 AddTest(test-rocket-external-boost-safe-numerics rocket/external        test-boost-safe-numerics.cc)
 AddTest(test-rocket-external-Cxx                 rocket/external        test-Cxx.cc)

@@ -156,14 +156,14 @@ template<>
 struct IntervalSymbols<char> {
   static constexpr auto Empty = "∅";
   static constexpr auto NegativeInfinity = "-∞";
-  static constexpr auto PositiveInfinity = "∞";
+  static constexpr auto Infinity = "∞";
 };
 
 template<>
 struct IntervalSymbols<char32> {
   static constexpr auto Empty = U"∅";
   static constexpr auto NegativeInfinity = U"-∞";
-  static constexpr auto PositiveInfinity = U"∞";
+  static constexpr auto Infinity = U"∞";
 };
 
 // `IntervalTraits` .........................................................................................
