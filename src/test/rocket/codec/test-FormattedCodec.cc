@@ -425,7 +425,9 @@ TEST(FormattedCodec, FormattedProducerTimeZone) {
   EXPECT_EQ(decode<TimeZone>("(UTC)"), locate_zone("UTC"));
   EXPECT_EQ(decode<TimeZone>("x").error().message, "Expected a time zone");
 
-  EXPECT_THAT(decode<TimeZone>("(x)").error().message, EndsWith("cannot locate zone: x"));
+  EXPECT_THAT(decode<TimeZone>("(x)").error().message, AnyOf(
+    EndsWith("cannot locate zone: x"), // Linux
+    StrEq("unable to locate time_zone with given name"))); // Windows
 }
 
 TEST(FormattedCodec, FormattedProducerTimePoint) {

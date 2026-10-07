@@ -35,7 +35,12 @@ TEST(std, f32OpCmp) {
   static_assert((nan <=> nan) == std::partial_ordering::unordered); // NOLINT
 }
 
-// Segfaults on Windows with Clang 22.1.3
+/**
+ * Segfaults on Windows with Clang 22.1.3.
+ *
+ * - https://github.com/llvm/llvm-project/issues/158302
+ * - https://github.com/llvm/llvm-project/issues/191462
+ */
 TEST(std, rethrowException) {
   try {
     throw runtime_error("oops");

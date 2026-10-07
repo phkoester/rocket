@@ -14,6 +14,7 @@ using namespace std;
 
 // `TEST` ---------------------------------------------------------------------------------------------------
 
+// Segfaults on Windows with Clang 22.1.3
 TEST(Exception, WrappedExceptionFormat) { // NOLINT(*-complexity)
   try  {
     ROCKET_FAIL("oops1");
@@ -56,6 +57,7 @@ TEST(Exception, WrappedExceptionFormat) { // NOLINT(*-complexity)
   }
 }
 
+// Segfaults on Windows with Clang 22.1.3
 TEST(Exception, printException1) { // NOLINT(*-complexity)
   try {
     throw "oops1";
@@ -94,6 +96,7 @@ TEST(Exception, printException2) {
   }
 }
 
+// Segfaults on Windows with Clang 22.1.3
 TEST(Exception, what1) { // NOLINT(*-complexity)
   try {
     throw "oops1";
