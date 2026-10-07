@@ -237,7 +237,7 @@ struct HashConsumerImpl<DataType::Date, T, Hash> {
 };
 
 template<typename T, typename Hash>
-struct HashConsumerImpl<DataType::ClockTime, T, Hash> {
+struct HashConsumerImpl<DataType::HourMinuteSecond, T, Hash> {
   using Precision = T::precision;
   static constexpr auto PrecisionDataType = DataTypes<Precision>::Value;
   static_assert(PrecisionDataType == DataType::Duration);

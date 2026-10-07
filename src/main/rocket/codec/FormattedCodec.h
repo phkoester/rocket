@@ -40,7 +40,7 @@
  *
  * Boolean values are always written as `true` or `false`.
  *
- * ## Characters
+ * ## Characters {#ron_char}
  *
  * Characters start and end with a single quote (`'`). Example values: `'a'`, `'\x20'`, `'€'`, `'\u20AC'`,
  * `'\U00010FFF'`.
@@ -56,55 +56,150 @@
  *
  * ## Enumerations
  *
- * Enumerations are written as in code, with no surrounding quotes. Example values: `Red`, `Green`, `Blue`.
+ * Enumerations appear exactly as in code, with no surrounding quotes. Example values: `Red`, `GREEN`,
+ * `powder_blue`.
  *
  * ## Integer Values
  *
+ * Example values: `+42`, `-42`, `0xABCD` (hexadecimal), `077` (octal), `0o123` (octal), `0b1010101`
+ * (binary).
+ *
+ * Integer values are always written in decimal notation, without any leading `+`.
+ *
  * ## Floating-Point Values
+ *
+ * Example values: `.1`, `0.1`, `+2.`, `-2.0`, `1e3`, `-1e3`, `1.23e-4`, `1.23e+4`, `-inf`, `inf`, `-∞`, `∞`,
+ * `nan`.
+ *
+ * Floating-point values are always written in their canonical form, without any leading `+`. For infinite
+ * values, `-∞` and `∞` are used.
  *
  * ## Pointers
  *
+ * Pointers are always hexadecimal values, starting with `0x`. The null pointer is notated as `null`.
+ *
  * ## Strings
+ *
+ * Strings always appear surrounded by double quotes (`"`). Example values: `"Hello"`, `"Hello\nWorld"`,
+ * `"3 \u20AC"`. Any well-formed UTF-8 string is a valid RON string.
+ *
+ * When writing, the writing rules for @ref ron_char "characters" apply. Grapheme clusters are recognized and
+ * written verbatim.
  *
  * ## Optional Values
  *
+ * Optional values appear just like normal values, with one exception: null options are notated as `null`.
+ *
  * ## Tuples
+ *
+ * Tuples appear surrounded by parentheses (`(` and `)`). Example values: `(1, 2, 3)`,
+ * `("Answer", 42, true)`.
+ *
+ * When reading, a trailing comma is permitted, but it is never written.
  *
  * ## Lists
  *
+ * Lists appear surrounded by square brackets (`[` and `]`). Examples: `[1, 2, 3]`, `["one", "two" "three"]`.
+ *
+ * When reading, a trailing comma is permitted, but it is never written.
+ *
  * ## Sets
+ *
+ * Sets appear surrounded by curly braces (`{` and `}`). Example values: `{1, 2, 3}`,
+ * `{"one", "two", "three"}`.
+ *
+ * When reading, a trailing comma is permitted, but it is never written.
  *
  * ## Maps
  *
+ * Maps appear surrounded by curly braces (`{` and `}`). Key-value pairs are separated by a colon (`:`).
+ * Example: `{ 1: "one", 2: "two", 3: "three" }`.
+ *
+ * When reading, a trailing comma is permitted, but it is never written.
+ *
+ * Duplicate keys are discouraged but allowed. If a key appears multiple times, the last one wins.
+ *
  * ## Bidirectional Maps
+ *
+ * Bidirectional maps appear just like normal maps. Only the left side is notated. The right side is the
+ * implicit opposite.
  *
  * ## Durations
  *
- * ## Clock Times
+ * Durations are notated as integer values, directly followed by a unit. Example values: `5ns`, `1700µs`.
+ *
+ * Unit  | Meaning
+ * :---- | :------
+ * `ns`  | Nanoseconds
+ * `µs`  | Microseconds
+ * `us`  | Microseconds
+ * `ms`  | Milliseconds
+ * `s`   | Seconds
+ * `min` | Minutes
+ * `h`   | Hours
+ * `d`   | Days
+ * `w`   | Weeks
+ * `m`   | Months
+ * `y`   | Years
+ *
+ * ## Hours, Minutes, Seconds
+ *
+ * Example values: `01:02:03`, `01:02:03.123`, `01:02:03.123456`, `-111:02:03.123456789`.
  *
  * ## Dates
  *
+ * Example values: `1970-01-02`, `-100-01-02`.
+ *
  * ## Time Zones
+ *
+ * Time zones are notated as a parenthesized string. Example values: `(Europe/Berlin)`, `(UTC)`.
  *
  * ## Times
  *
+ * Example value: `2026-10-07T09:05:26.529594325Z`.
+ *
  * ## Times with Time Zone
+ *
+ * Example value: `2026-10-07T11:21:00.561378057+02:00 (Europe/Berlin)`.
  *
  * ## Intervals
  *
+ * Example values: `∅` (empty), `[-1.2,3.4]` (closed), `(-1.2,3.4)` (open),  `(-∞,-12]` (left-open).,
+ * `[12,∞)` (right-open).
+ *
  * ## Declared Values
+ *
+ * Members appear like a tuple surrounded by parentheses (`(` and `)`), where each entry is a name-value pair
+ * separated by an equal sign (`=`). Example: `(x_=11, y_=12, name_="A")`.
+ *
+ * When reading, a trailing comma is permitted, but it is never written.
+ *
+ * Duplicate member names are discouraged but allowed. If a name appears multiple times, the last one wins.
  *
  * ## Instances
  *
+ * Instances appear just like declared values. They only display a different set of members, most probably
+ * only a subset.
+ *
  * ## Members
+ *
+ * Example: `answer_=42`.
  *
  * ## Variables
  *
+ * Variables appear like a tuple surrounded by parentheses (`(` and `)`), where each entry is a name-value
+ * pair separated by an equal sign (`=`). Example: `(localX=11, localY=12, localName="A")`.
+ *
+ * When reading, a trailing comma is permitted, but it is never written.
+ *
  * ## Code Points
  *
+ * Code points appear in the typical Unicode notation, e.g. `U+0041` or `U+10FFFF`.
+ *
  * ## Grapheme Clusters
+ *
+ * Grapheme clusters appear just like strings.
  */
-
 #pragma once
 
 #include "rocket/InputFailure.h"
@@ -390,7 +485,7 @@ struct FormattedConsumerImpl<DataType::Date, T> {
 };
 
 template<typename T>
-struct FormattedConsumerImpl<DataType::ClockTime, T> {
+struct FormattedConsumerImpl<DataType::HourMinuteSecond, T> {
   void
   consume(const T& val, nio::Sink& out, CONFIG__) const {
     out.write(std::format("{}", val));
@@ -418,7 +513,6 @@ struct FormattedConsumerImpl<DataType::Time, T> {
 
 template<typename T>
 struct FormattedConsumerImpl<DataType::ZonedTime, T> {
-  using TimeZone = const std::chrono::time_zone*;
   static constexpr auto TimeZoneDataType = DataTypes<TimeZone>::Value;
   static_assert(TimeZoneDataType == DataType::TimeZone);
 
@@ -1115,7 +1209,7 @@ struct FormattedProducerImpl<DataType::Date, T> {
     auto& is = in.istream();
     auto result = scn::scan<std_int, std_unsigned, std_unsigned>(is, "{}-{}-{}");
     if (not result) {
-      throw InputFailure(pos, "Expected a year, month, and day");
+      throw InputFailure(pos, "Expected a date");
     }
     in.seek(io::tellg(is), nio::SeekMode::beg);
 
@@ -1125,7 +1219,7 @@ struct FormattedProducerImpl<DataType::Date, T> {
 };
 
 template<typename T>
-struct FormattedProducerImpl<DataType::ClockTime, T> {
+struct FormattedProducerImpl<DataType::HourMinuteSecond, T> {
   using Precision = T::precision;
 
   void
@@ -1182,8 +1276,12 @@ struct FormattedProducerImpl<DataType::TimeZone, T> {
     if (not name) {
       throw InputFailure(pos, "Unmatched opening parenthesis");
     }
-    // This should throw if the time zone is not found
-    val = locate_zone(*name);
+    try {
+      // This throws if the time zone is not found
+      val = locate_zone(*name);
+    } catch (const std::exception& ex) {
+      throw InputFailure(pos, ex.what());
+    }
   }
 };
 
@@ -1240,7 +1338,6 @@ struct FormattedProducerImpl<DataType::Time, T> {
 template<typename T>
 struct FormattedProducerImpl<DataType::ZonedTime, T> {
   using Duration = T::duration;
-  using TimeZone = const std::chrono::time_zone*;
   static constexpr auto TimeZoneDataType = DataTypes<TimeZone>::Value;
   static_assert(TimeZoneDataType == DataType::TimeZone);
 

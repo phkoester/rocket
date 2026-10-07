@@ -299,7 +299,7 @@ struct CompareConsumerImpl<DataType::Date, T, Cmp> {
 };
 
 template<typename T, typename Cmp>
-struct CompareConsumerImpl<DataType::ClockTime, T, Cmp> {
+struct CompareConsumerImpl<DataType::HourMinuteSecond, T, Cmp> {
   using Precision = T::precision;
   static constexpr auto PrecisionDataType = DataTypes<Precision>::Value;
   static_assert(PrecisionDataType == DataType::Duration);

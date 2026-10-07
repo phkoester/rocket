@@ -297,7 +297,7 @@ struct EqualToConsumerImpl<DataType::Date, T, Eq> {
 };
 
 template<typename T, typename Eq>
-struct EqualToConsumerImpl<DataType::ClockTime, T, Eq> {
+struct EqualToConsumerImpl<DataType::HourMinuteSecond, T, Eq> {
   using Precision = T::precision;
   static constexpr auto PrecisionDataType = DataTypes<Precision>::Value;
   static_assert(PrecisionDataType == DataType::Duration);
@@ -334,7 +334,6 @@ struct EqualToConsumerImpl<DataType::Time, T, Eq> {
 
 template<typename T, typename Eq>
 struct EqualToConsumerImpl<DataType::ZonedTime, T, Eq> {
-  using TimeZone = const std::chrono::time_zone*;
   static constexpr auto TimeZoneDataType = DataTypes<TimeZone>::Value;
   static_assert(TimeZoneDataType == DataType::TimeZone);
   using Duration = T::duration;

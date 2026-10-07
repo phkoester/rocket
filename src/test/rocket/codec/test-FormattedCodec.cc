@@ -287,6 +287,9 @@ TEST(FormattedCodec, FormattedProducerEnum) {
 TEST(FormattedCodec, FormattedProducerInteger) {
   EXPECT_EQ(decode<i32>("-42"), -42);
   EXPECT_EQ(decode<i32>("0xABcd"), 0xABCD);
+  EXPECT_EQ(decode<i32>("077"), 077);
+  EXPECT_EQ(decode<i32>("0o123"), 0123);
+  EXPECT_EQ(decode<i32>("0b1010101"), 0b1010101);
 
   EXPECT_EQ(decode<i32>("  x").error().message, "Expected an integer value");
 }
@@ -296,6 +299,7 @@ TEST(FormattedCodec, FormattedProducerFloat) {
   using limits = numeric_limits<type>;
 
   EXPECT_EQ(decodeAndTell<type>("  -123.456  "), make_pair(-123.456_f64, 10_u64));
+  EXPECT_EQ(decode<type>("  -1e3"), -1e3_f64);
   EXPECT_EQ(decode<type>("-inf"), -limits::infinity());
   EXPECT_EQ(decode<type>("-∞"), -limits::infinity());
   EXPECT_EQ(decode<type>("-inf"), -limits::infinity());
@@ -381,15 +385,6 @@ TEST(FormattedCodec, FormattedProducerDuration) {
   EXPECT_EQ(decode<seconds>("10x").error().message, "Expected a time unit");
 }
 
-TEST(FormattedCodec, FormattedProducerYearMonthDay) {
-  using namespace std::chrono;
-
-  EXPECT_EQ(decode<year_month_day>("1970-01-02"), (year_month_day { 1970y, January, 2d }));
-  EXPECT_EQ(decode<year_month_day>("-100-01-02"), (year_month_day { -100y, January, 2d }));
-
-  EXPECT_EQ(decode<year_month_day>("x").error().message, "Expected a year, month, and day");
-}
-
 TEST(FormattedCodec, FormattedProducerHourMinuteSecond) {
   using namespace std::chrono;
 
@@ -412,6 +407,25 @@ TEST(FormattedCodec, FormattedProducerHourMinuteSecond) {
   EXPECT_EQ(decode<hh_mm_ss<milliseconds>>("x").error().message, "Expected an hour, minute, and second");
   EXPECT_EQ(decode<hh_mm_ss<milliseconds>>("01:02:").error().message, "Expected an hour, minute, and second");
   EXPECT_EQ(decode<hh_mm_ss<milliseconds>>("01:02:03.").error().message, "Expected subseconds");
+}
+
+TEST(FormattedCodec, FormattedProducerDate) {
+  using namespace std::chrono;
+
+  EXPECT_EQ(decode<year_month_day>("1970-01-02"), (year_month_day { 1970y, January, 2d }));
+  EXPECT_EQ(decode<year_month_day>("-100-01-02"), (year_month_day { -100y, January, 2d }));
+
+  EXPECT_EQ(decode<year_month_day>("x").error().message, "Expected a date");
+}
+
+TEST(FormattedCodec, FormattedProducerTimeZone) {
+  using namespace std::chrono;
+
+  EXPECT_EQ(decode<TimeZone>("(Europe/Berlin)"), locate_zone("Europe/Berlin"));
+  EXPECT_EQ(decode<TimeZone>("(UTC)"), locate_zone("UTC"));
+  EXPECT_EQ(decode<TimeZone>("x").error().message, "Expected a time zone");
+
+  EXPECT_THAT(decode<TimeZone>("(x)").error().message, EndsWith("cannot locate zone: x"));
 }
 
 TEST(FormattedCodec, FormattedProducerTimePoint) {

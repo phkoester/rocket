@@ -6,34 +6,34 @@
  *
  * # The Codec Type System {#codec_type_system}
  *
- * Value Class           | `DataType`  | C++ Mapping
- * :-------------------- | :---------- | :----------
- * Boolean values        | `Bool`      | `bool`
- * Characters            | `Char`      | `char`, `char32`
- * Enumerations          | `Enum`      | `enum` values
- * Integer values        | `Integer`   | `i8`, `i16`, `i32`, `i64`, `i128`, `u8`, `u16`, `u32`, `u64`, `u128`
- * Floating-point values | `Float`     | `f32`, `f64`
- * Pointers              | `Pointer`   | C++ pointers
- * Strings               | `String`    | #std::string, #std::string_view, #std::u32string, #std::u32string_view
- * Optional values       | `Optional`  | #std::optional
- * Tuples                | `Tuple`     | #std::pair, #std::tuple
- * Lists                 | `List`      | #std::array, #std::forward_list, #std::list, #std::span, #std::vector
- * Sets                  | `Set`       | #std::set, #std::unordered_set
- * Maps                  | `Map`       | #std::map, #std::unordered_map
- * Bidirectional maps    | `Bimap`     | #rocket::Bimap (more specifically `boost::bimaps::bimap`)
- * Durations             | `Duration`  | #std::chrono::duration
- * Clock times           | `ClockTime` | #std::chrono::hh_mm_ss
- * Dates                 | `Date`      | #std::chrono::year_month_day
- * Time zones            | `TimeZone`  | #std::chrono::time_zone
- * Times                 | `Time`      | #std::chrono::time_point
- * Times with time zone  | `ZonedTime` | #std::chrono::zoned_time
- * Intervals             | `Interval`  | #rocket::math::Interval
- * Declared values       | `Declared`  | #rocket::reflect::Declared
- * Instances             | `Instance`  | #rocket::reflect::Instance
- * Members               | `MemberRef` | #rocket::reflect::MemberRef
- * Variables             | `VarRef`    | #rocket::reflect::VarRef
- * Code points           | `CodePoint` | #rocket::unicode::CodePoint
- * Grapheme clusters     | `Character` | #rocket::unicode::Character, #rocket::unicode::CharacterView
+ * Value Class             | `DataType`         | C++ Mapping
+ * :---------------------- | :----------------- | :----------
+ * Boolean values          | `Bool`             | `bool`
+ * Characters              | `Char`             | `char`, `char32`
+ * Enumerations            | `Enum`             | `enum` values
+ * Integer values          | `Integer`          | `i8`, `i16`, `i32`, `i64`, `i128`, `u8`, `u16`, `u32`, `u64`, `u128`
+ * Floating-point values   | `Float`            | `f32`, `f64`
+ * Pointers                | `Pointer`          | C++ pointers
+ * Strings                 | `String`           | #std::string, #std::string_view, #std::u32string, #std::u32string_view
+ * Optional values         | `Optional`         | #std::optional
+ * Tuples                  | `Tuple`            | #std::pair, #std::tuple
+ * Lists                   | `List`             | #std::array, #std::forward_list, #std::list, #std::span, #std::vector
+ * Sets                    | `Set`              | #std::set, #std::unordered_set
+ * Maps                    | `Map`              | #std::map, #std::unordered_map
+ * Bidirectional maps      | `Bimap`            | #rocket::Bimap (more specifically `boost::bimaps::bimap`)
+ * Durations               | `Duration`         | #std::chrono::duration
+ * Hours, minutes, seconds | `HourMinuteSecond` | #std::chrono::hh_mm_ss
+ * Dates                   | `Date`             | #std::chrono::year_month_day
+ * Time zones              | `TimeZone`         | #std::chrono::time_zone
+ * Times                   | `Time`             | #std::chrono::time_point
+ * Times with time zone    | `ZonedTime`        | #std::chrono::zoned_time
+ * Intervals               | `Interval`         | #rocket::math::Interval
+ * Declared values         | `Declared`         | #rocket::reflect::Declared
+ * Instances               | `Instance`         | #rocket::reflect::Instance
+ * Members                 | `MemberRef`        | #rocket::reflect::MemberRef
+ * Variables               | `VarRef`           | #rocket::reflect::VarRef
+ * Code points             | `CodePoint`        | #rocket::unicode::CodePoint
+ * Grapheme clusters       | `Character`        | #rocket::unicode::Character, #rocket::unicode::CharacterView
  */
 
 #pragma once
@@ -110,7 +110,7 @@ enum class DataType : u8 {
   /// #std::chrono::duration values.
   Duration,
   /// #std::chrono::hh_mm_ss values.
-  ClockTime,
+  HourMinuteSecond,
   /// #std::chrono::year_month_day values.
   Date,
   /// #std::chrono::time_zone values.
@@ -290,7 +290,7 @@ struct DataTypes<std::chrono::duration<Rep, Period>> {
 /// @spec{#rocket::codec::DataTypes, std::chrono::hh_mm_ss}
 template<typename Duration>
 struct DataTypes<std::chrono::hh_mm_ss<Duration>> {
-  static constexpr auto Value = DataType::ClockTime; ///< The data type.
+  static constexpr auto Value = DataType::HourMinuteSecond; ///< The data type.
 };
 
 /// @spec{#rocket::codec::DataTypes, std::chrono::year_month_day}
@@ -299,9 +299,17 @@ struct DataTypes<std::chrono::year_month_day> {
   static constexpr auto Value = DataType::Date; ///< The data type.
 };
 
+/**
+ * The specific time-zone type that can be encoded and decoded.
+ *
+ * This is a pointer because #std::chrono::time_zone can't be constructed. Its instances are completely
+ * managed by the STL.
+ */
+using TimeZone = const std::chrono::time_zone*;
+
 /// @spec{#rocket::codec::DataTypes, std::chrono::time_zone}
 template<>
-struct DataTypes<const std::chrono::time_zone*> {
+struct DataTypes<TimeZone> {
   static constexpr auto Value = DataType::TimeZone; ///< The data type.
 };
 
