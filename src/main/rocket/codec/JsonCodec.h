@@ -8,9 +8,9 @@
  * This codec is generous when decoding, but strict when encoding. This means that when reading, it will
  * accept a variety of formats, but it will be canonical and consistent when writing.
  *
- * The encoder writes standard JSON (not JSON5), except for the floating-point values `-Infinity`,
- * `Infinity`, and `NaN`. The decoder accepts those same floating-point literals, C-style comments, and a
- * trailing comma after the last element of an array or object.
+ * The encoder writes standard JSON, except for the floating-point values `-Infinity`, `Infinity`, and `NaN`.
+ * The decoder accepts those same floating-point literals, C-style comments, and a trailing comma after the
+ * last element of an array or object.
  *
  * For detailed information on the supported data types and how they map to C++, see @ref codec_type_system.
  *
@@ -40,7 +40,7 @@
  *
  * ## Characters {#json_char}
  *
- * Characters are JSON strings of length one. Example values: `"a"`, `"\t"`, `"€"` `"\u20AC".
+ * Characters are JSON strings of length one. Example values: `"a"`, `"\t"`, `"€"` `"\u20AC"`.
  *
  * One-byte characters must be valid ASCII characters in the range [0,127]. Two-byte characters must be valid
  * Unicode code points in the ranges [U+0000,U+D7FF] and [U+E000,U+10FFFF].
@@ -49,9 +49,9 @@
  * hexadecimal digits), and `\U` (eight hexadecimal digits) are accepted.
  *
  * When writing, the escape sequences `\a`, `\b`, `\t`, `\n`, `\v`, `\f`, `\r`, `\e`, `\'`, and `\\` are
- * used. If a character is classified as printable by the Unicode standard, it appears verbatim in the
- * output, e.g. as `"a"` or `"€"`. Otherwise, it is written in hexadecimal notation, using the prefix `\u`
- * (four hexadecimal digits).
+ * used. If a character is classified as printable by the Unicode standard or is greater than U+FFFF, it
+ * appears verbatim in the* output, e.g. as `"a"` or `"€"`. Otherwise, it is written in hexadecimal
+ * notation, using the prefix `\u` (four hexadecimal digits).
  *
  * ## Enumerations
  *
@@ -1720,7 +1720,8 @@ struct JsonProducer {
  *
  * When decoding a declared type or a #rocket::reflect::Instance, the `"name": value` entries may appear in
  * any order, and entries may be missing altogether; missing members keep their default values. An entry
- * whose name does not match any member is an error.
+ * whose
+ * name does not match any member is an error.
  *
  * Decoding to list views and forward lists is not supported. String views and character views, however, are
  * allowed. This is made possible by storing intermediate strings in the source. Hence, decoded string views
