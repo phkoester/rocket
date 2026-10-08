@@ -65,8 +65,6 @@ toy() {
   ROCKET_MUTEX_LOCK(toyMutex);
   ROCKET_MUTEX_LOCK(toyMutex);
   out.println("Got lock");
-
-  print_cbor_version();
 }
 
 } // namespace
