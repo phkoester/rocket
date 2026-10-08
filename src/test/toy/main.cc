@@ -10,6 +10,8 @@
 #include "rocket/log/log.h"
 #include "rocket/version.h"
 
+#include <cbor.h>
+
 #include <expected>
 
 using namespace rocket;
@@ -35,14 +37,6 @@ namespace {
 auto& out = nio::out;
 
 // Local functions ------------------------------------------------------------------------------------------
-
-expected<f64, string>
-divide(f64 a, f64 b) {
-  if (b == 0) {
-    return unexpected("Division by zero");
-  }
-  return a / b;
-}
 
 void
 myExit() {
@@ -72,12 +66,7 @@ toy() {
   ROCKET_MUTEX_LOCK(toyMutex);
   out.println("Got lock");
 
-  auto result = divide(3, 0);
-  if (result) {
-    out.println("Result: {}", result.value());
-  } else {
-    out.println("Error: {}", result.error());
-  }
+  print_cbor_version();
 }
 
 } // namespace

@@ -58,6 +58,15 @@ if(NOT benchmark_FOUND)
   set(BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS_DEFAULT})
 endif()
 
+# libcbor ---------------------------------------------------------------------------------------------------
+
+find_package(libcbor ${GAIA_LIBCBOR_VERSION} QUIET)
+if(NOT libcbor_FOUND)
+  set(BUILD_SHARED_LIBS OFF)
+  FetchContent_MakeAvailable(libcbor)
+  set(BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS_DEFAULT})
+endif()
+
 # ICU -------------------------------------------------------------------------------------------------------
 
 find_package(ICU ${GAIA_ICU_VERSION} COMPONENTS uc) # data i18n io

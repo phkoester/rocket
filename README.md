@@ -14,6 +14,7 @@ Rocket stands on the shoulders of these giants:
 - [{fmt}](https://github.com/fmtlib/fmt) ([license](license/fmt/LICENSE))
 - [GoogleTest](https://github.com/google/googletest) ([license](license/GTest/LICENSE))
 - [ICU](https://github.com/unicode-org/icu)  ([license](license/ICU/LICENSE))
+- [libcbor](https://github.com/PJK/libcbor) ([license](license/libcbor/LICENSE.md))
 - [scnlib](https://github.com/eliaskosunen/scnlib) ([license](license/scnlib/LICENSE))
 
 ## CMake Variables
