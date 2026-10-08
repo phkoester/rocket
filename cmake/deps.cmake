@@ -41,10 +41,11 @@ if(NOT GTest_FOUND)
   block()
     set(BUILD_SHARED_LIBS OFF)
     FetchContent_MakeAvailable(GTest)
-    if(GAIA_CXX_COMPILER_CLANG)
-      target_compile_options(gtest PRIVATE -Wno-character-conversion)
-    endif()
   endblock()
+endif()
+
+if(GAIA_CXX_COMPILER_CLANG)
+  target_compile_options(gtest PRIVATE -Wno-character-conversion)
 endif()
 
 # benchmark (must follow GTest) -----------------------------------------------------------------------------
@@ -67,10 +68,11 @@ if(NOT libcbor_FOUND)
     set(BUILD_SHARED_LIBS OFF)
     set(SANITIZE OFF)
     FetchContent_MakeAvailable(libcbor)
-    if(GAIA_CXX_COMPILER_CLANG)
-      target_compile_options(cbor PRIVATE -Wno-unused-variable)
-    endif()
   endblock()
+endif()
+
+if(GAIA_CXX_COMPILER_CLANG)
+  target_compile_options(cbor PRIVATE -Wno-unused-variable)
 endif()
 
 # ICU -------------------------------------------------------------------------------------------------------
