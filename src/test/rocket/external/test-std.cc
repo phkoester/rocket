@@ -12,6 +12,7 @@
 
 #include <filesystem>
 #include <regex>
+#include <stdfloat>
 #include <vector>
 
 using namespace rocket;
@@ -33,6 +34,15 @@ TEST(std, f32OpCmp) {
   static_assert((nan <=> 0.0F) == std::partial_ordering::unordered);
   static_assert((0.0F <=> nan) == std::partial_ordering::unordered);
   static_assert((nan <=> nan) == std::partial_ordering::unordered); // NOLINT
+}
+
+TEST(std, float32) {
+  float16_t f16 = 1.0f16;
+  EXPECT_EQ(f16, 1.0f16);
+  float32_t f32 = 1.0f32;
+  EXPECT_EQ(f32, 1.0f32);
+  std::float64_t f64 = 1.0f64;
+  EXPECT_EQ(f64, 1.0f64);
 }
 
 /**
