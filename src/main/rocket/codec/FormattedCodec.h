@@ -354,7 +354,6 @@ struct FormattedConsumerImpl<DataType::Optional, T> {
       out.write("null");
       return;
     }
-
     FormattedConsumerImpl<ElemDataType, Elem>().consume(*val, out, config);
   }
 };
@@ -380,7 +379,7 @@ private:
   consumeElem(const Elem& elem, nio::Sink& out, CONFIG__, u64 index, Args&&... args) const {
     nextElem(out, config, index);
     constexpr auto ElemDataType = DataTypes<Elem>::Value;
-      FormattedConsumerImpl<ElemDataType, Elem>().consume(elem, out, config, std::forward<Args>(args)...);
+    FormattedConsumerImpl<ElemDataType, Elem>().consume(elem, out, config, std::forward<Args>(args)...);
   }
 };
 
@@ -655,7 +654,7 @@ struct FormattedProducerImpl;
 
 /**
  * Produces a single member of @p instance if the name of the member reference @p ref matches @p name.
- * Returns whether the name matched, so callers can fold over a tuple of member references
+ * Returns whether the name matched, so callers can fold over a tuple of member references.
  */
 template<typename Ref, typename C>
 bool
@@ -1384,7 +1383,7 @@ struct FormattedProducerImpl<DataType::ZonedTime, T> {
     seconds offset;
 
     if (not readChar(in, 'Z')) {
-      auto sign = readChoice(in, { "+", "-" }, false);
+      auto sign = readChoice(in, { "+", "-" }, false, false);
       if (not sign) {
         throw InputFailure(offsetPos, "Expected UTC offset");
       }

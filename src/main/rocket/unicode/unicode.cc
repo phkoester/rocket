@@ -35,6 +35,11 @@ CodePoint::operator string() const {
 }
 
 bool
+CodePoint::isAlnum() const {
+  return u_isalnum(val_) != 0; // NOLINT
+}
+
+bool
 CodePoint::isPrint() const {
   return u_isprint(val_) != 0; // NOLINT
 }

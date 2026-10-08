@@ -114,6 +114,13 @@ struct CodePoint {
   }
 
   /**
+   * Checks if the code point is alphanumeric.
+   *
+   * @return whether the code point is alphanumeric
+   */
+  [[nodiscard]] bool isAlnum() const;
+
+  /**
    * Checks if the code point is printable.
    *
    * @return whether the code point is printable

@@ -241,8 +241,8 @@ endContainer(nio::Sink& out, JsonConsumerConfig& config, u64 size, char c) {
 }
 
 inline u64
-jsonOffset(u64 pos, u64 unescapedOffset, const Positions& positions) {
-  // Need to add 1 because of the leading '"'
+jsonStringOffset(u64 pos, u64 unescapedOffset, const Positions& positions) {
+  // Need to add 1 because of the opening quote
   return pos + 1 + positions.right.at(unescapedOffset);
 }
 
@@ -258,154 +258,6 @@ skip(nio::Source& in) {
   rocket::nio::skip(in, true, false);
 }
 
-// XXX
-
-inline bool // XXX Weg
-isIdentChar(char c) {
-  const auto u = static_cast<unsigned char>(c);
-  return std::isalnum(u) || c == '_' || c == '$';
-}
-
-/**
- * Reads an expected keyword, advances the source only on success.
- *
- * Unlike #rocket::nio::readString, the keyword must not be followed by an identifier character.
- */
-inline bool // XXX Weg
-readKeyword(nio::Source& in, std::string_view keyword) {
-  const auto pos = in.tell();
-  if (not readString(in, keyword)) {
-    return false;
-  }
-  char c; // NOLINT
-  if (in.read(c) != 1) {
-    return true;
-  }
-  if (isIdentChar(c)) {
-    in.seek(static_cast<i64>(pos), nio::SeekMode::beg);
-    return false;
-  }
-  in.seek(-1, nio::SeekMode::cur);
-  return true;
-}
-
-inline u32 // XXX Weg
-readHex4(nio::Source& in, u64 pos) {
-  u32 ret = 0;
-  for (u32 i = 0; i < 4; ++i) {
-    char c; // NOLINT
-    if (in.read(c) != 1) {
-      throw InputFailure(pos, "Invalid Unicode escape");
-    }
-    const auto u = static_cast<unsigned char>(c);
-    u32 nibble = 0;
-    if (u >= '0' && u <= '9') {
-      nibble = u - '0';
-    } else if (u >= 'A' && u <= 'F') {
-      nibble = u - 'A' + 10;
-    } else if (u >= 'a' && u <= 'f') {
-      nibble = u - 'a' + 10;
-    } else {
-      throw InputFailure(pos, "Invalid Unicode escape");
-    }
-    ret = (ret << 4) | nibble;
-  }
-  return ret;
-}
-
-inline std::string
-readJsonString(nio::Source& in) { // XXX Weg
-  const auto pos = in.tell();
-  if (not readChar(in, '"')) {
-    throw InputFailure(pos, "Expected a string");
-  }
-
-  std::string ret;
-  while (true) {
-    char c; // NOLINT
-    if (in.read(c) != 1) {
-      throw InputFailure(pos, "Unterminated string literal");
-    }
-    if (c == '"') {
-      return ret;
-    }
-    if (c == '\\') {
-      char e; // NOLINT
-      if (in.read(e) != 1) {
-        throw InputFailure(pos, "Unterminated string literal");
-      }
-      switch (e) {
-      case '"':
-      case '\\':
-      case '/':
-        ret.push_back(e);
-        break;
-      case 'b':
-        ret.push_back('\b');
-        break;
-      case 'f':
-        ret.push_back('\f');
-        break;
-      case 'n':
-        ret.push_back('\n');
-        break;
-      case 'r':
-        ret.push_back('\r');
-        break;
-      case 't':
-        ret.push_back('\t');
-        break;
-      case 'u': {
-        const u32 u = readHex4(in, pos);
-        if (u >= 0xD800 && u <= 0xDBFF) {
-          if (not readString(in, "\\u")) {
-            throw InputFailure(pos, "Invalid Unicode escape");
-          }
-          const u32 low = readHex4(in, pos);
-          if (low < 0xDC00 || low > 0xDFFF) {
-            throw InputFailure(pos, "Invalid Unicode escape");
-          }
-          const char32 cp = 0x10000 + (static_cast<char32>(u - 0xD800) << 10) + (low - 0xDC00);
-          ret.append(static_cast<std::string>(unicode::CodePoint(cp)));
-        } else if (u >= 0xDC00 && u <= 0xDFFF) {
-          throw InputFailure(pos, "Invalid Unicode escape");
-        } else {
-          ret.append(static_cast<std::string>(unicode::CodePoint(static_cast<char32>(u))));
-        }
-        break;
-      }
-      default:
-        throw InputFailure(in.tell(), "Invalid escape sequence");
-      }
-      continue;
-    }
-    if (static_cast<unsigned char>(c) < 0x20) {
-      throw InputFailure(in.tell(), "Invalid control character in string");
-    }
-    ret.push_back(c);
-  }
-}
-
-consteval bool
-jsonEncodedAsString(DataType type) {
-  switch (type) {
-  case DataType::Char:
-  case DataType::Enum:
-  case DataType::String:
-  case DataType::Duration:
-  case DataType::Date:
-  case DataType::HourMinuteSecond:
-  case DataType::TimeZone:
-  case DataType::Time:
-  case DataType::ZonedTime:
-  case DataType::CodePoint:
-  case DataType::Character:
-    return true;
-  default:
-    return false;
-  }
-}
-
 // `JsonConsumerImpl` ---------------------------------------------------------------------------------------
 
 /// @cond undocumented
@@ -415,19 +267,20 @@ jsonEncodedAsString(DataType type) {
 template<DataType DataType, typename T>
 struct JsonConsumerImpl;
 
-// XXX
-template<typename Key>
+template<typename T>
 void
-writeJsonKey(const Key& key, nio::Sink& out, JsonConsumerConfig&) {
-  constexpr auto KeyDataType = DataTypes<Key>::Value;
-  nio::StringSink tmp;
-  JsonConsumerConfig compact {};
-  JsonConsumerImpl<KeyDataType, Key>().consume(key, tmp, compact);
-  const auto& encoded = tmp.str();
-  if (encoded.size() >= 2 && encoded.front() == '"' && encoded.back() == '"') {
-    out.write(encoded);
+writeJsonString(const T& val, nio::Sink& out) {
+  using Type = Purge<T>;
+  constexpr auto DataType = DataTypes<Type>::Value;
+
+  nio::StringSink inner;
+  JsonConsumerConfig config;
+  JsonConsumerImpl<DataType, Type>().consume(val, inner, config);
+  if constexpr (DataType == DataType::String) {
+    out.write(inner.str());
   } else {
-    out.print("\"{}\"", encoded); // XXX
+    const std::string escaped = str::escape::escapeCString(inner.str(), { .json=true, .quote='"' });
+    out.write(escaped);
   }
 }
 
@@ -525,31 +378,32 @@ struct JsonConsumerImpl<DataType::Optional, T> {
       out.write("null");
       return;
     }
-
     JsonConsumerImpl<ElemDataType, Elem>().consume(*val, out, config);
   }
 };
 
+// For `MemberRef`, the tuple consumer must be able to pass additional arguments to the element consumer
 template<typename T>
 struct JsonConsumerImpl<DataType::Tuple, T> {
+  template<typename... Args>
   void
-  consume(const T& val, nio::Sink& out, CONFIG__) const {
+  consume(const T& val, nio::Sink& out, CONFIG__, Args&&... args) const {
     beginContainer(out, config, '[');
     u64 index = 0;
     std::apply([&](auto&&... arg) {
-      (consumeElem(std::forward<decltype(arg)>(arg), out, config, index++), ...);
+      (consumeElem(std::forward<decltype(arg)>(arg), out, config, index++, std::forward<Args>(args)...), ...);
     }, val);
     endContainer(out, config, std::tuple_size_v<T>, ']');
   }
 
 private:
 
-  template<typename Elem>
+  template<typename Elem, typename... Args>
   void
-  consumeElem(const Elem& elem, nio::Sink& out, CONFIG__, u64 index) const {
+  consumeElem(const Elem& elem, nio::Sink& out, CONFIG__, u64 index, Args&&... args) const {
     nextElem(out, config, index);
     constexpr auto ElemDataType = DataTypes<Elem>::Value;
-    JsonConsumerImpl<ElemDataType, Elem>().consume(elem, out, config);
+    JsonConsumerImpl<ElemDataType, Elem>().consume(elem, out, config, std::forward<Args>(args)...);
   }
 };
 
@@ -599,7 +453,7 @@ struct JsonConsumerImpl<DataType::Map, T> {
     u64 index = 0;
     for (const auto& [key, elem] : val) {
       nextElem(out, config, index++);
-      writeJsonKey(key, out, config);
+      writeJsonString(key, out);
       out.write(": ");
       JsonConsumerImpl<ElemDataType, Elem>().consume(elem, out, config);
     }
@@ -619,7 +473,7 @@ struct JsonConsumerImpl<DataType::Bimap, T> {
     u64 index = 0;
     for (const auto& [key, elem] : val.left) {
       nextElem(out, config, index++);
-      writeJsonKey(key, out, config);
+      writeJsonString(key, out);
       out.write(": ");
       JsonConsumerImpl<ElemDataType, Elem>().consume(elem, out, config);
     }
@@ -730,25 +584,6 @@ struct JsonConsumerImpl<DataType::Interval, T> {
   }
 };
 
-template<typename Ref, typename C>
-void
-consumeObjectElem(const Ref& ref, const C& instance, nio::Sink& out, JsonConsumerConfig& config, u64 index) {
-  nextElem(out, config, index);
-  using RefType = Purge<Ref>;
-  JsonConsumerImpl<DataType::MemberRef, RefType>().consume(ref, out, config, instance);
-}
-
-template<typename Refs, typename C>
-void
-consumeObject(const Refs& refs, const C& instance, nio::Sink& out, JsonConsumerConfig& config) {
-  beginContainer(out, config, '{');
-  u64 index = 0;
-  std::apply([&](const auto&... ref) {
-    (consumeObjectElem(ref, instance, out, config, index++), ...);
-  }, refs);
-  endContainer(out, config, std::tuple_size_v<Refs>, '}');
-}
-
 template<typename T>
 struct JsonConsumerImpl<DataType::Declared, T> {
   static constexpr auto& refs = rocket::reflect::Declared<T>::refs;
@@ -758,7 +593,9 @@ struct JsonConsumerImpl<DataType::Declared, T> {
 
   void
   consume(const T& val, nio::Sink& out, CONFIG__) const {
-    consumeObject(refs, val, out, config);
+    // Here we have to pass an additional argument, the instance, to the tuple consumer. The tuple consumer
+    // will pass it on to the member-reference consumer
+    JsonConsumerImpl<ElemDataType, Elem>().consume(refs, out, config, val);
   }
 };
 
@@ -771,7 +608,9 @@ struct JsonConsumerImpl<DataType::Instance, T> {
 
   void
   consume(const T& val, nio::Sink& out, CONFIG__) const {
-    consumeObject(refs, val.get(), out, config);
+    // Here we have to pass an additional argument, the instance, to the tuple consumer. The tuple consumer
+    // will pass it on to the member-reference consumer
+    JsonConsumerImpl<ElemDataType, Elem>().consume(refs, out, config, val.get());
   }
 };
 
@@ -829,20 +668,30 @@ template<typename Key>
 void
 readJsonKey(Key& key, nio::Source& in) {
   constexpr auto KeyDataType = DataTypes<Key>::Value;
-  const std::string keyStr = readJsonString(in);
-  nio::StringSink tmp;
-  if constexpr (jsonEncodedAsString(KeyDataType)) {
-    tmp.print("\"{}\"", keyStr); // XXX
+  if constexpr (KeyDataType == DataType::String) {
+    JsonProducerImpl<KeyDataType, Key>().produce(key, in);
   } else {
-    static_cast<nio::Sink&>(tmp).write(keyStr);
+    const auto pos = in.tell();
+
+    // Read JSON string and create an inner source for it
+    Positions positions;
+    const auto input = readJsonString(in, positions);
+    nio::StringSource inner(input);
+    const auto inPos = [pos, &positions](u64 innnerPos) -> u64 {
+      return jsonStringOffset(pos, innnerPos, positions);
+    };
+
+    try {
+      JsonProducerImpl<KeyDataType, Key>().produce(key, inner);
+    } catch (const InputFailure& ex) {
+      throw InputFailure(inPos(ex.position()), ex.message());
+    }
   }
-  nio::StringSource keyIn(tmp.str());
-  JsonProducerImpl<KeyDataType, Key>().produce(key, keyIn);
 }
 
 /**
  * Produces a single member of @p instance if the name of the member reference @p ref matches @p name.
- * Returns whether the name matched, so callers can fold over a tuple of member references
+ * Returns whether the name matched, so callers can fold over a tuple of member references.
  */
 template<typename Ref, typename C>
 bool
@@ -891,7 +740,8 @@ produceMembers(const Refs& refs, C& instance, nio::Source& in) {
     // Read the member name
 
     const auto namePos = in.tell();
-    const std::string name = readJsonString(in);
+    std::string name;
+    readJsonKey(name, in);
     skip(in);
 
     expectColon(in);
@@ -959,14 +809,20 @@ struct JsonProducerImpl<DataType::Enum, E> {
     const auto pos = in.tell();
 
     if constexpr (scn::detail::is_scannable<E, char>::value) {
-      const std::string str = readJsonString(in);
-      nio::StringSource inner(str);
+      // Read JSON string and create an inner source for it
+      Positions positions;
+      const auto input = readJsonString(in, positions);
+      nio::StringSource inner(input);
+      const auto inPos = [pos, &positions](u64 innnerPos) -> u64 {
+        return jsonStringOffset(pos, innnerPos, positions);
+      };
+
       const auto result = scan<E>(inner);
       if (result) {
         val = *result;
         return;
       }
-      throw InputFailure(pos, fmt::format("Invalid value for enum `{}`", typeid(E)));
+      throw InputFailure(inPos(0), fmt::format("Invalid value for enum `{}`", typeid(E)));
     }
     throw InputFailure(pos, fmt::format("Cannot scan enum of type `{}`", typeid(E)));
   }
@@ -1026,29 +882,25 @@ struct JsonProducerImpl<DataType::Pointer, P> {
     skip(in);
     const auto pos = in.tell();
 
-    if (readKeyword(in, "null")) {
+    if (readString(in, "null")) {
       val = nullptr;
       return;
     }
 
-    if (readChar(in, '"')) {
-      in.seek(-1, nio::SeekMode::cur);
-      const std::string str = readJsonString(in);
-      nio::StringSource inner(str);
-      const auto result = scan<P>(inner);
-      if (result) {
-        val = *result;
-        return;
-      }
-      throw InputFailure(pos, "Expected a pointer value");
-    }
+    // Read JSON string and create an inner source for it
+    Positions positions;
+    const auto input = readJsonString(in, positions);
+    nio::StringSource inner(input);
+    const auto inPos = [pos, &positions](u64 innnerPos) -> u64 {
+      return jsonStringOffset(pos, innnerPos, positions);
+    };
 
-    const auto result = scan<P>(in);
+    const auto result = scan<P>(inner);
     if (result) {
       val = *result;
       return;
     }
-    throw InputFailure(pos, "Expected a pointer value");
+    throw InputFailure(inPos(0), "Expected a pointer value");
   }
 };
 
@@ -1092,7 +944,7 @@ struct JsonProducerImpl<DataType::Optional, T> {
   produce(T& val, nio::Source& in) const {
     skip(in);
 
-    if (readKeyword(in, "null")) {
+    if (readString(in, "null")) {
       val = std::nullopt;
       return;
     }
@@ -1360,7 +1212,7 @@ struct JsonProducerImpl<DataType::Duration, T> {
     const auto input = readJsonString(in, positions);
     nio::StringSource inner(input);
     const auto inPos = [pos, &positions](u64 innnerPos) -> u64 {
-      return jsonOffset(pos, innnerPos, positions);
+      return jsonStringOffset(pos, innnerPos, positions);
     };
 
     Rep count;
@@ -1419,7 +1271,7 @@ struct JsonProducerImpl<DataType::Date, T> {
     const auto input = readJsonString(in, positions);
     nio::StringSource inner(input);
     const auto inPos = [pos, &positions](u64 innnerPos) -> u64 {
-      return jsonOffset(pos, innnerPos, positions);
+      return jsonStringOffset(pos, innnerPos, positions);
     };
 
     auto& is = inner.istream();
@@ -1450,7 +1302,7 @@ struct JsonProducerImpl<DataType::HourMinuteSecond, T> {
     const auto input = readJsonString(in, positions);
     nio::StringSource inner(input);
     const auto inPos = [pos, &positions](u64 innnerPos) -> u64 {
-      return jsonOffset(pos, innnerPos, positions);
+      return jsonStringOffset(pos, innnerPos, positions);
     };
 
     // Read hour, minute, and second
@@ -1497,11 +1349,11 @@ struct JsonProducerImpl<DataType::TimeZone, T> {
     skip(in);
     const auto pos = in.tell();
 
-    // Read JSON string
+    // Read JSON string (no inner source needed here because we use `input` directly)
     Positions positions;
     const auto input = readJsonString(in, positions);
     const auto inPos = [pos, &positions](u64 innnerPos) -> u64 {
-      return jsonOffset(pos, innnerPos, positions);
+      return jsonStringOffset(pos, innnerPos, positions);
     };
 
     try {
@@ -1532,7 +1384,7 @@ struct JsonProducerImpl<DataType::Time, T> {
     const auto input = readJsonString(in, positions);
     nio::StringSource inner(input);
     const auto inPos = [pos, &positions](u64 innnerPos) -> u64 {
-      return jsonOffset(pos, innnerPos, positions);
+      return jsonStringOffset(pos, innnerPos, positions);
     };
 
     // The environment variable `TZ` interferes somehow ...
@@ -1595,7 +1447,7 @@ struct JsonProducerImpl<DataType::ZonedTime, T> {
     const auto input = readJsonString(in, positions);
     nio::StringSource inner(input);
     const auto inPos = [pos, &positions](u64 innnerPos) -> u64 {
-      return jsonOffset(pos, innnerPos, positions);
+      return jsonStringOffset(pos, innnerPos, positions);
     };
 
     // The environment variable `TZ` interferes somehow ...
@@ -1633,7 +1485,7 @@ struct JsonProducerImpl<DataType::ZonedTime, T> {
       seconds offset;
 
       if (not readChar(inner, 'Z')) {
-        auto sign = readChoice(inner, { "+", "-" }, false);
+        auto sign = readChoice(inner, { "+", "-" }, false, false);
         if (not sign) {
           throw InputFailure(offsetPos, "Expected UTC offset");
         }
@@ -1700,7 +1552,7 @@ struct JsonProducerImpl<DataType::Interval, T> {
     skip(in);
     const auto pos = in.tell();
 
-    if (readKeyword(in, "null")) {
+    if (readString(in, "null")) {
       val = T();
       return;
     }
@@ -1712,7 +1564,7 @@ struct JsonProducerImpl<DataType::Interval, T> {
 
     A a = A();
     if constexpr (IsOptional<A>) {
-      if (not readKeyword(in, "null")) {
+      if (not readString(in, "null")) {
         JsonProducerImpl<ADataType, A>().produce(a, in);
       }
     } else {
@@ -1726,7 +1578,7 @@ struct JsonProducerImpl<DataType::Interval, T> {
 
     B b = B();
     if constexpr (IsOptional<B>) {
-      if (not readKeyword(in, "null")) {
+      if (not readString(in, "null")) {
         JsonProducerImpl<BDataType, B>().produce(b, in);
       }
     } else {
@@ -1770,42 +1622,14 @@ struct JsonProducerImpl<DataType::Instance, T> {
   }
 };
 
-// `MemberRef` production is implemented in `produceJsonMembers` and `produceJsonMember`
+template<typename T>
+struct JsonProducerImpl<DataType::MemberRef, T> {
+  static_assert(false, "Cannot decode member reference");
+};
 
 template<typename T>
 struct JsonProducerImpl<DataType::VarRef, T> {
-  using Elem = T::Type;
-  static constexpr auto ElemDataType = DataTypes<Elem>::Value;
-
-  void
-  produce(T& val, nio::Source& in) const {
-    skip(in);
-    const auto pos = in.tell();
-
-    if (not readChar(in, '{')) {
-      throw InputFailure(pos, "Expected an object");
-    }
-    skip(in);
-
-    if (readChar(in, '}')) {
-      return;
-    }
-
-    (void) readJsonString(in); // Ignore the name
-    skip(in);
-    expectColon(in);
-    skip(in);
-
-    JsonProducerImpl<ElemDataType, Elem>().produce(val.get(), in);
-
-    skip(in);
-    if (readChar(in, ',')) { // Allow trailing comma
-      skip(in);
-    }
-    if (not readChar(in, '}')) {
-      throw InputFailure(in.tell(), { pos, in.tell() }, "Unterminated object");
-    }
-  }
+  static_assert(false, "Cannot decode variable reference");
 };
 
 template<typename T>
@@ -1822,7 +1646,7 @@ struct JsonProducerImpl<DataType::CodePoint, T> {
       throw InputFailure(pos, "Expected a code point");
     }
 
-    if (not readString(in, "U+")) {
+    if (not readString(in, "U+", false, false)) {
       // Read `char32`
       in.seek(-1, nio::SeekMode::cur);
       Elem elem = Elem();

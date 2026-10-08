@@ -259,6 +259,13 @@ TEST(FormattedCodec, FormattedConsumerDeclared) {
     "(ärger=42, ökonom=true, übermut=\"hello\", vec=[1, 2, 3])");
 }
 
+TEST(FormattedCodec, FormattedConsumerInstance) {
+  using type = reflect::Instance<MyStruct, MyStruct::Three>;
+  EXPECT_EQ(
+    encode(type(MyStruct { 42, true, "hello", { 1, 2, 3 } })),
+    "(ärger=42, ökonom=true, übermut=\"hello\")");
+}
+
 TEST(FormattedCodec, FormattedConsumerVarRef) {
   int a = 0, b = 1, c= 2;
   const auto& refs = ROCKET_REFLECT_VARS((a)(b)(c));
@@ -336,8 +343,7 @@ TEST(FormattedCodec, FormattedProducerFloat) {
   EXPECT_EQ(decode<type>("+inf"), limits::infinity());
   EXPECT_EQ(decode<type>("∞"), limits::infinity());
 
-  const type val = decode<type>("nan").value();
-  EXPECT_TRUE(isnan(val));
+  EXPECT_TRUE(isnan(decode<type>("nan").value()));
 }
 
 TEST(FormattedCodec, FormattedProducerPointer) {

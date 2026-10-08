@@ -23,9 +23,10 @@ readJsonString(nio::Source& in, Positions& positions) {
   }
 
   const string unescaped = str::escape::unescapeCString(*input, {}, &positions);
-  // XXX positions: offset in input (größer) -> offset in unescaped (kleiner)
-  // XXX Außerdem ist Return-Wert um eins verschoben: 0 in ret ist pos + 1 in In-Source
-  // XXX in.tell() ist außerdem um 1 weiter, denn schließendes '"' wurde gelesen
+  // Post conditions:
+  // - `positions` maps offset in `input` (greater) -> offset in `unescaped` (smaller)
+  // - Position 0 in `unescaped` is `pos + 1` in `in` (because of the opening quote)
+  // - The current position of `in` is after the closing quote
   return unescaped;
 }
 

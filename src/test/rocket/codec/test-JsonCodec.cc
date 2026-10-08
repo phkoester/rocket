@@ -175,6 +175,9 @@ TEST(JsonCodec, JsonConsumerSet) {
 
 TEST(JsonCodec, JsonConsumerMap) {
   EXPECT_EQ(
+    encode(map<i32, i32> { { 1, 2 }, { 2, 3 }, { 3, 4 } }),
+    "{\"1\": 2, \"2\": 3, \"3\": 4}");
+  EXPECT_EQ(
     encode(map<string, i32> { { "alpha", 1 }, { "beta", 2 }, { "gamma", 3 } }),
     "{\"alpha\": 1, \"beta\": 2, \"gamma\": 3}");
 }
@@ -262,7 +265,14 @@ TEST(JsonCodec, JsonConsumerInterval) {
 TEST(JsonCodec, JsonConsumerDeclared) {
   EXPECT_EQ(
     encode(MyStruct { 42, true, "hello", { 1, 2, 3 } }),
-    "{\"ärger\": 42, \"ökonom\": true, \"übermut\": \"hello\", \"vec\": [1, 2, 3]}");
+    "[\"ärger\": 42, \"ökonom\": true, \"übermut\": \"hello\", \"vec\": [1, 2, 3]]");
+}
+
+TEST(JsonCodec, JsonConsumerInstance) {
+  using type = reflect::Instance<MyStruct, MyStruct::Three>;
+  EXPECT_EQ(
+    encode(type(MyStruct { 42, true, "hello", { 1, 2, 3 } })),
+    "[\"ärger\": 42, \"ökonom\": true, \"übermut\": \"hello\"]");
 }
 
 TEST(JsonCodec, JsonConsumerVarRef) {
@@ -340,8 +350,7 @@ TEST(JsonCodec, JsonProducerFloat) {
   EXPECT_EQ(decode<type>("Infinity"), limits::infinity());
   EXPECT_EQ(decode<type>("+Infinity"), limits::infinity());
 
-  const type val = decode<type>("NaN").value();
-  EXPECT_TRUE(isnan(val));
+  EXPECT_TRUE(isnan(decode<type>("NaN").value()));
 }
 
 TEST(JsonCodec, JsonProducerPointer) {

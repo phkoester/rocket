@@ -94,12 +94,14 @@ void expectComma(nio::Source& in);
  * @param in the source to read from
  * @param values the set of expected strings, all elements must not be empty
  * @param ignoreCase whether to ignore case
+ * @param endOfWord whether to check if the returned string is followed by a word boundary
  * @return the read string, or null if no string was read
  */
 [[nodiscard]] std::optional<std::string_view> readChoice(
   nio::Source& in,
   const std::set<std::string_view>& values,
-  bool ignoreCase = false);
+  bool ignoreCase = false,
+  bool endOfWord = true);
 
 /**
  * Reads an expected string, advances the source only on success.
@@ -109,9 +111,14 @@ void expectComma(nio::Source& in);
  * @param in the source to read from
  * @param str the string to read, must not be empty
  * @param ignoreCase whether to ignore case
+ * @param endOfWord whether to check if the returned string is followed by a word boundary
  * @return whether the string was read
  */
-[[nodiscard]] bool readString(nio::Source& in, std::string_view str, bool ignoreCase = false);
+[[nodiscard]] bool readString(
+  nio::Source& in,
+  std::string_view str,
+  bool ignoreCase = false,
+  bool endOfWord = true);
 
 /**
  * If the next character in the source is `'.'`, reads a subsecond string and returns it as nanoseconds.
@@ -120,6 +127,7 @@ void expectComma(nio::Source& in);
  *
  * @param in the source to read from
  * @return the read subseconds as nanoseconds
+ * @throw #rocket::InputFailure if the input is invalid
  */
 [[nodiscard]] std::chrono::nanoseconds readSubseconds(nio::Source& in);
 

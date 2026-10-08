@@ -18,12 +18,45 @@ using boost::safe_numerics::safe;
 
 namespace {
 
+bool
+isWordBoundary(string_view str, u64 pos) {
+  if (pos >= str.size()) {
+    // End of string: we have a word boundary
+    return true;
+  }
+
+  try {
+    const auto cp = unicode::nextCodePoint(str, pos);
+    // Next code point is not alphanumeric, underscore, or dollar sign: we have a word boundary
+    return not cp.isAlnum() && cp != '_' && cp != '$';
+  } catch (const exception&) {
+    // Could not read code point: we have a word boundary
+    return true;
+  }
+}
+
+bool
+isWordBoundary(nio::Source& in) {
+  const u64 pos = in.tell();
+  const auto result = in.readCodePoint();
+  in.seek(safe<i64>(pos), nio::SeekMode::beg);
+
+  if (not result) {
+    // Could not read code point: we have a word boundary
+    return true;
+  }
+
+  const auto cp = result.value();
+  // Next code point is not alphanumeric, underscore, or dollar sign: we have a word boundary
+  return not cp.isAlnum() && cp != '_' && cp != '$';
+}
+
 /**
  * Reads the longest of the given candidates from a noncontiguous source, advances the source only on
  * success.
  */
 optional<string_view>
-readLongestChoice(nio::Source& in, vector<string_view> candidates, bool ignoreCase) { // NOLINT(*-complexity)
+readLongestChoice(nio::Source& in, vector<string_view> candidates, bool ignoreCase, bool endOfWord) { // NOLINT(*-complexity)
   const auto pos = in.tell();
 
   string seen;
@@ -69,6 +102,9 @@ readLongestChoice(nio::Source& in, vector<string_view> candidates, bool ignoreCa
     }
   }
 
+  if (ret && endOfWord && not isWordBoundary(in)) {
+    ret = {};
+  }
   if (ret) {
     // Seek position after `ret`
     in.seek(safe<i64>(pos + ret->size()), nio::SeekMode::beg);
@@ -167,7 +203,7 @@ readChar(nio::Source& in, char c) {
 }
 
 optional<string_view>
-readChoice(nio::Source& in, const set<string_view>& values, bool ignoreCase) {
+readChoice(nio::Source& in, const set<string_view>& values, bool ignoreCase, bool endOfWord) {
 #ifndef ROCKET_NIO_NO_CONTIGUOUS_SOURCE
   if (const auto* contiguous = dynamic_cast<nio::ContiguousSource*>(&in); contiguous != nullptr) {
     // Contiguous source
@@ -183,6 +219,9 @@ readChoice(nio::Source& in, const set<string_view>& values, bool ignoreCase) {
         ret = val;
       }
     }
+    if (ret && endOfWord && not isWordBoundary(remaining, ret->size())) {
+      ret = {};
+    }
     if (ret) {
       in.seek(safe<i64>(ret->size()), nio::SeekMode::cur);
     }
@@ -192,11 +231,11 @@ readChoice(nio::Source& in, const set<string_view>& values, bool ignoreCase) {
 
   // Noncontiguous source
 
-  return readLongestChoice(in, vector<string_view>(values.begin(), values.end()), ignoreCase);
+  return readLongestChoice(in, vector<string_view>(values.begin(), values.end()), ignoreCase, endOfWord);
 }
 
 bool
-readString(nio::Source& in, std::string_view str, bool ignoreCase) {
+readString(nio::Source& in, std::string_view str, bool ignoreCase, bool endOfWord) {
   ROCKET_CHECK(str, not str.empty(), "May not be empty");
 
 #ifndef ROCKET_NIO_NO_CONTIGUOUS_SOURCE
@@ -204,6 +243,9 @@ readString(nio::Source& in, std::string_view str, bool ignoreCase) {
     // Contiguous source
 
     if (not startsWith(contiguous->str(), str, ignoreCase)) {
+      return false;
+    }
+    if (endOfWord && not isWordBoundary(contiguous->str(), str.size())) {
       return false;
     }
     in.seek(safe<i64>(str.size()), nio::SeekMode::cur);
@@ -222,6 +264,11 @@ readString(nio::Source& in, std::string_view str, bool ignoreCase) {
       in.seek(safe<i64>(pos), nio::SeekMode::beg);
       return false;
     }
+  }
+  if (endOfWord && not isWordBoundary(in)) {
+    // No word boundary: rewind
+    in.seek(safe<i64>(pos), nio::SeekMode::beg);
+    return false;
   }
   return true;
 }
@@ -251,7 +298,7 @@ readSubseconds(nio::Source& in) {
   {
     // When we used "{:i}" here, the scanning sometimes led to false values ...
     const auto result = scn::scan<nanoseconds::rep>(digits, "{}");
-    ROCKET_ASSERT(result);
+    ROCKET_ASSERT(result); // This *must* work
     ret = nanoseconds { result->value() };
   }
   // nio::out.println("SUBSECONDS: {}", ret.count());
