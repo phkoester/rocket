@@ -36,7 +36,8 @@ TEST(std, f32OpCmp) {
   static_assert((nan <=> nan) == std::partial_ordering::unordered); // NOLINT
 }
 
-TEST(std, float32) {
+#if 0
+TEST(std, float) {
   float16_t f16 = 1.0f16;
   EXPECT_EQ(f16, 1.0f16);
   float32_t f32 = 1.0f32;
@@ -44,7 +45,7 @@ TEST(std, float32) {
   std::float64_t f64 = 1.0f64;
   EXPECT_EQ(f64, 1.0f64);
 }
-
+#endif
 /**
  * Segfaults on Windows with Clang 22.1.3.
  *

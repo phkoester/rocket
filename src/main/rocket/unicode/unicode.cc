@@ -101,7 +101,7 @@ convertUtf8To32(string_view str, InvalidUnicodePolicy policy) { // NOLINT(*-comp
   for (u64 pos = 0, size = str.size(); pos < size; /* Empty */) {
     UChar32 cp; // NOLINT
     i32 i = 0;
-    U8_NEXT(&str[pos], i, size - pos, cp); // NOLINT
+    U8_NEXT(&str[pos], i, safe<i32>(size - pos), cp); // NOLINT
     ROCKET_DEBUG_ASSERT(i > 0, "`U8_NEXT` failed");
 
     if (cp < 0) {
