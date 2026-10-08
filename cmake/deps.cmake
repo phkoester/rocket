@@ -46,6 +46,7 @@ endif()
 
 if(GAIA_CXX_COMPILER_CLANG)
   target_compile_options(gtest PRIVATE -Wno-character-conversion)
+  target_compile_options(gmock PRIVATE -Wno-character-conversion)
 endif()
 
 # benchmark (must follow GTest) -----------------------------------------------------------------------------
