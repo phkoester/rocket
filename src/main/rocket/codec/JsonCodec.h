@@ -174,6 +174,8 @@
  * Instances appear just like declared objects. They only display a different set of members, most probably
  * a subset.
  *
+ * Duplicate member names are discouraged but allowed. If a name appears multiple times, the last one wins.
+ *
  * ## Members
  *
  * See declared objects.
@@ -205,6 +207,7 @@
 #include "rocket/nio/nio.h"
 #include "rocket/nio/nio-utils.h"
 #include "rocket/str/escape/escape.h"
+#include "rocket/system/system.h"
 #include "rocket/unicode/ConvertTo.h"
 
 #include <fmt/std.h>
@@ -223,7 +226,7 @@ struct JsonConsumerConfig {
   u64 level = 0;
 };
 
-namespace internal {
+namespace internal::json {
 
 // Functions ------------------------------------------------------------------------------------------------
 
@@ -237,19 +240,27 @@ endContainer(nio::Sink& out, JsonConsumerConfig& config, u64 size, char c) {
   rocket::nio::endContainer(out, config.indent, config.level, size, c);
 }
 
+inline u64
+jsonOffset(u64 pos, u64 unescapedOffset, const Positions& positions) {
+  // Need to add 1 because of the leading '"'
+  return pos + 1 + positions.right.at(unescapedOffset);
+}
+
 inline void
 nextElem(nio::Sink& out, JsonConsumerConfig& config, u64 index) {
   rocket::nio::nextElem(out, config.indent, config.level, index);
 }
 
+std::string readJsonString(nio::Source& in, Positions& positions);
+
 inline void
-skipJson(nio::Source& in) {
+skip(nio::Source& in) {
   rocket::nio::skip(in, true, false);
 }
 
 // XXX
 
-inline bool
+inline bool // XXX Weg
 isIdentChar(char c) {
   const auto u = static_cast<unsigned char>(c);
   return std::isalnum(u) || c == '_' || c == '$';
@@ -260,7 +271,7 @@ isIdentChar(char c) {
  *
  * Unlike #rocket::nio::readString, the keyword must not be followed by an identifier character.
  */
-inline bool
+inline bool // XXX Weg
 readKeyword(nio::Source& in, std::string_view keyword) {
   const auto pos = in.tell();
   if (not readString(in, keyword)) {
@@ -278,7 +289,7 @@ readKeyword(nio::Source& in, std::string_view keyword) {
   return true;
 }
 
-inline u32
+inline u32 // XXX Weg
 readHex4(nio::Source& in, u64 pos) {
   u32 ret = 0;
   for (u32 i = 0; i < 4; ++i) {
@@ -303,7 +314,7 @@ readHex4(nio::Source& in, u64 pos) {
 }
 
 inline std::string
-readJsonString(nio::Source& in) {
+readJsonString(nio::Source& in) { // XXX Weg
   const auto pos = in.tell();
   if (not readChar(in, '"')) {
     throw InputFailure(pos, "Expected a string");
@@ -835,7 +846,7 @@ readJsonKey(Key& key, nio::Source& in) {
  */
 template<typename Ref, typename C>
 bool
-produceJsonMember(const Ref& ref, std::string_view name, C& instance, nio::Source& in) {
+produceMember(const Ref& ref, std::string_view name, C& instance, nio::Source& in) {
   if (ref.name() != name) {
     return false;
   }
@@ -855,8 +866,8 @@ produceJsonMember(const Ref& ref, std::string_view name, C& instance, nio::Sourc
  */
 template<typename Refs, typename C>
 void
-produceJsonMembers(const Refs& refs, C& instance, nio::Source& in) {
-  skipJson(in);
+produceMembers(const Refs& refs, C& instance, nio::Source& in) {
+  skip(in);
   const auto pos = in.tell();
 
   if (not readChar(in, '{')) {
@@ -865,13 +876,13 @@ produceJsonMembers(const Refs& refs, C& instance, nio::Source& in) {
 
   u64 index = 0;
   while (true) {
-    skipJson(in);
+    skip(in);
     if (readChar(in, '}')) {
       return;
     }
     if (index++ > 0) {
       expectComma(in);
-      skipJson(in);
+      skip(in);
       if (readChar(in, '}')) { // Allow trailing comma if nonempty
         return;
       }
@@ -881,15 +892,15 @@ produceJsonMembers(const Refs& refs, C& instance, nio::Source& in) {
 
     const auto namePos = in.tell();
     const std::string name = readJsonString(in);
-    skipJson(in);
+    skip(in);
 
     expectColon(in);
-    skipJson(in);
+    skip(in);
 
     // Look up the member reference by name and produce the member
 
     const bool found = std::apply([&](const auto&... ref) {
-      return (produceJsonMember(ref, name, instance, in) || ...);
+      return (produceMember(ref, name, instance, in) || ...);
     }, refs);
     if (not found) {
       throw InputFailure(namePos, fmt::format("Unknown member `{}`", name));
@@ -901,7 +912,7 @@ template<>
 struct JsonProducerImpl<DataType::Bool, bool> {
   void
   produce(bool& val, nio::Source& in) const {
-    skipJson(in);
+    skip(in);
     const auto pos = in.tell();
 
     if (readString(in, "false")) {
@@ -920,7 +931,7 @@ template<typename C>
 struct JsonProducerImpl<DataType::Char, C> {
   void
   produce(C& val, nio::Source& in) const {
-    skipJson(in);
+    skip(in);
     const auto pos = in.tell();
 
     if (not readChar(in, '"')) {
@@ -944,7 +955,7 @@ template<typename E>
 struct JsonProducerImpl<DataType::Enum, E> {
   void
   produce(E& val, nio::Source& in) const {
-    skipJson(in);
+    skip(in);
     const auto pos = in.tell();
 
     if constexpr (scn::detail::is_scannable<E, char>::value) {
@@ -965,7 +976,7 @@ template<typename I>
 struct JsonProducerImpl<DataType::Integer, I> {
   void
   produce(I& val, nio::Source& in) const {
-    skipJson(in);
+    skip(in);
     const auto pos = in.tell();
 
     const auto result = scanInteger<I>(in);
@@ -983,7 +994,7 @@ struct JsonProducerImpl<DataType::Float, F> {
 
   void
   produce(F& val, nio::Source& in) const {
-    skipJson(in);
+    skip(in);
     const auto pos = in.tell();
 
     if (readString(in, "-Infinity")) {
@@ -1012,7 +1023,7 @@ template<typename P>
 struct JsonProducerImpl<DataType::Pointer, P> {
   void
   produce(P& val, nio::Source& in) const {
-    skipJson(in);
+    skip(in);
     const auto pos = in.tell();
 
     if (readKeyword(in, "null")) {
@@ -1045,9 +1056,18 @@ template<typename T>
 struct JsonProducerImpl<DataType::String, T> {
   void
   produce(T& val, nio::Source& in) const {
-    skipJson(in);
+    skip(in);
+    const auto pos = in.tell();
 
-    const std::string unescaped = readJsonString(in);
+    if (not readChar(in, '"')) {
+      throw InputFailure(pos, "Expected a string");
+    }
+    auto input = readUntilUnescapedChar(in, '"');
+    if (not input) {
+      throw InputFailure(pos, "Unterminated string literal");
+    }
+
+    const std::string unescaped = str::escape::unescapeCString(*input);
     using C = T::value_type;
     std::basic_string<C> str(unicode::ConvertTo<C>::apply(unescaped));
     if constexpr (std::same_as<T, std::basic_string_view<C>>) {
@@ -1070,7 +1090,7 @@ struct JsonProducerImpl<DataType::Optional, T> {
 
   void
   produce(T& val, nio::Source& in) const {
-    skipJson(in);
+    skip(in);
 
     if (readKeyword(in, "null")) {
       val = std::nullopt;
@@ -1086,7 +1106,7 @@ template<typename T>
 struct JsonProducerImpl<DataType::Tuple, T> {
   void
   produce(T& val, nio::Source& in) const {
-    skipJson(in);
+    skip(in);
     const auto pos = in.tell();
 
     if (not readChar(in, '[')) {
@@ -1098,9 +1118,9 @@ struct JsonProducerImpl<DataType::Tuple, T> {
       (produceElem(std::forward<decltype(arg)>(arg), in, index++), ...);
     }, val);
 
-    skipJson(in);
+    skip(in);
     if (std::tuple_size_v<T> > 0 && readChar(in, ',')) { // Allow trailing comma if nonempty
-      skipJson(in);
+      skip(in);
     }
     if (not readChar(in, ']')) {
       throw InputFailure(in.tell(), { pos, in.tell() }, "Unterminated array");
@@ -1112,10 +1132,10 @@ private:
   template<typename Elem>
   void
   produceElem(Elem& elem, nio::Source& in, u64 index) const {
-    skipJson(in);
+    skip(in);
     if (index > 0) {
       expectComma(in);
-      skipJson(in);
+      skip(in);
     }
     constexpr auto ElemDataType = DataTypes<Elem>::Value;
     JsonProducerImpl<ElemDataType, Elem>().produce(elem, in);
@@ -1132,7 +1152,7 @@ struct JsonProducerImpl<DataType::List, T> {
 
   void
   produce(T& val, nio::Source& in) const {
-    skipJson(in);
+    skip(in);
     const auto pos = in.tell();
 
     if constexpr (not IsArray<T>) {
@@ -1158,17 +1178,17 @@ private:
   produceArray(T& val, nio::Source& in, u64 pos) const {
     const auto size = val.size();
     for (u64 index = 0; index < size; ++index) {
-      skipJson(in);
+      skip(in);
       if (index > 0) {
         expectComma(in);
-        skipJson(in);
+        skip(in);
       }
       JsonProducerImpl<ElemDataType, Elem>().produce(val[index], in);
     }
 
-    skipJson(in);
+    skip(in);
     if (size > 0 && readChar(in, ',')) { // Allow trailing comma if nonempty
-      skipJson(in);
+      skip(in);
     }
     if (not readChar(in, ']')) {
       throw InputFailure(in.tell(), { pos, in.tell() }, fmt::format("Unterminated array of size {}", size));
@@ -1179,13 +1199,13 @@ private:
   produceContainerWithPushBack(T& val, nio::Source& in) const {
     u64 index = 0;
     while (true) {
-      skipJson(in);
+      skip(in);
       if (readChar(in, ']')) {
         return;
       }
       if (index++ > 0) {
         expectComma(in);
-        skipJson(in);
+        skip(in);
         if (readChar(in, ']')) { // Allow trailing comma if nonempty
           return;
         }
@@ -1203,7 +1223,7 @@ struct JsonProducerImpl<DataType::Set, T> {
 
   void
   produce(T& val, nio::Source& in) const {
-    skipJson(in);
+    skip(in);
     const auto pos = in.tell();
 
     val.clear();
@@ -1213,13 +1233,13 @@ struct JsonProducerImpl<DataType::Set, T> {
 
     u64 index = 0;
     while (true) {
-      skipJson(in);
+      skip(in);
       if (readChar(in, ']')) {
         return;
       }
       if (index++ > 0) {
         expectComma(in);
-        skipJson(in);
+        skip(in);
         if (readChar(in, ']')) { // Allow trailing comma if nonempty
           return;
         }
@@ -1239,7 +1259,7 @@ struct JsonProducerImpl<DataType::Map, T> {
 
   void
   produce(T& val, nio::Source& in) const {
-    skipJson(in);
+    skip(in);
     const auto pos = in.tell();
 
     val.clear();
@@ -1250,13 +1270,13 @@ struct JsonProducerImpl<DataType::Map, T> {
 
     u64 index = 0;
     while (true) {
-      skipJson(in);
+      skip(in);
       if (readChar(in, '}')) {
         return;
       }
       if (index++ > 0) {
         expectComma(in);
-        skipJson(in);
+        skip(in);
         if (readChar(in, '}')) { // Allow trailing comma if nonempty
           return;
         }
@@ -1264,10 +1284,10 @@ struct JsonProducerImpl<DataType::Map, T> {
 
       Key key;
       readJsonKey(key, in);
-      skipJson(in);
+      skip(in);
 
       expectColon(in);
-      skipJson(in);
+      skip(in);
 
       Elem elem;
       JsonProducerImpl<ElemDataType, Elem>().produce(elem, in);
@@ -1285,7 +1305,7 @@ struct JsonProducerImpl<DataType::Bimap, T> {
 
   void
   produce(T& val, nio::Source& in) const {
-    skipJson(in);
+    skip(in);
     const auto pos = in.tell();
 
     val.clear();
@@ -1296,13 +1316,13 @@ struct JsonProducerImpl<DataType::Bimap, T> {
 
     u64 index = 0;
     while (true) {
-      skipJson(in);
+      skip(in);
       if (readChar(in, '}')) {
         return;
       }
       if (index++ > 0) {
         expectComma(in);
-        skipJson(in);
+        skip(in);
         if (readChar(in, '}')) { // Allow trailing comma if nonempty
           return;
         }
@@ -1310,10 +1330,10 @@ struct JsonProducerImpl<DataType::Bimap, T> {
 
       Key key;
       readJsonKey(key, in);
-      skipJson(in);
+      skip(in);
 
       expectColon(in);
-      skipJson(in);
+      skip(in);
 
       Elem elem;
       JsonProducerImpl<ElemDataType, Elem>().produce(elem, in);
@@ -1325,23 +1345,63 @@ struct JsonProducerImpl<DataType::Bimap, T> {
 
 template<typename T>
 struct JsonProducerImpl<DataType::Duration, T> {
+  using Rep = T::rep;
+  static constexpr auto RepDataType = DataTypes<Rep>::Value;
+
   void
   produce(T& val, nio::Source& in) const {
-    skipJson(in);
+    using namespace std::chrono;
+
+    skip(in);
     const auto pos = in.tell();
 
-    if (not readChar(in, '"')) {
-      throw InputFailure(pos, "Expected a duration");
-    }
-    in.seek(-1, nio::SeekMode::cur);
+    // Read JSON string and create an inner source for it
+    Positions positions;
+    const auto input = readJsonString(in, positions);
+    nio::StringSource inner(input);
+    const auto inPos = [pos, &positions](u64 innnerPos) -> u64 {
+      return jsonOffset(pos, innnerPos, positions);
+    };
 
+    Rep count;
     try {
-      const std::string str = readJsonString(in);
-      nio::StringSource inner(str);
-      FormattedProducerImpl<DataType::Duration, T>().produce(val, inner);
-    } catch (const InputFailure& ex) {
-      throw InputFailure(pos, ex.message());
+      JsonProducerImpl<RepDataType, Rep>().produce(count, inner);
+    } catch (const InputFailure&) {
+      throw InputFailure(inPos(0), "Expected a duration");
     }
+
+    const std::set<std::string_view> UNITS = {
+      "ns", "µs", "us", "ms", "s", "min", "h", "d", "w", "m", "y"
+    };
+
+    if (auto str = readChoice(inner, UNITS, true); str) {
+      if (*str == "ns") {
+        val = duration_cast<T>(nanoseconds(count));
+      } else if (*str == "µs" || *str == "us") {
+        val = duration_cast<T>(microseconds(count));
+      } else if (*str == "ms") {
+        val = duration_cast<T>(milliseconds(count));
+      } else if (*str == "s") {
+        val = duration_cast<T>(seconds(count));
+      } else if (*str == "min") {
+        val = duration_cast<T>(minutes(count));
+      } else if (*str == "h") {
+        val = duration_cast<T>(hours(count));
+      } else if (*str == "d") {
+        val = duration_cast<T>(days(count));
+      } else if (*str == "w") {
+        val = duration_cast<T>(weeks(count));
+      } else if (*str == "m") {
+        val = duration_cast<T>(months(count));
+      } else if (*str == "y") {
+        val = duration_cast<T>(years(count));
+      } else {
+        ROCKET_TERMINATE_UNREACHABLE_CODE();
+      }
+      return;
+    }
+
+    throw InputFailure(inPos(inner.tell()), "Expected a time unit");
   }
 };
 
@@ -1349,42 +1409,81 @@ template<typename T>
 struct JsonProducerImpl<DataType::Date, T> {
   void
   produce(T& val, nio::Source& in) const {
-    skipJson(in);
+    using namespace std::chrono;
+
+    skip(in);
     const auto pos = in.tell();
 
-    if (not readChar(in, '"')) {
-      throw InputFailure(pos, "Expected a date");
-    }
-    in.seek(-1, nio::SeekMode::cur);
+    // Read JSON string and create an inner source for it
+    Positions positions;
+    const auto input = readJsonString(in, positions);
+    nio::StringSource inner(input);
+    const auto inPos = [pos, &positions](u64 innnerPos) -> u64 {
+      return jsonOffset(pos, innnerPos, positions);
+    };
 
-    try {
-      const std::string str = readJsonString(in);
-      nio::StringSource inner(str);
-      FormattedProducerImpl<DataType::Date, T>().produce(val, inner);
-    } catch (const InputFailure&) {
-      throw InputFailure(pos, "Expected a date");
+    auto& is = inner.istream();
+    auto result = scn::scan<std_int, std_unsigned, std_unsigned>(is, "{}-{}-{}");
+    if (not result) {
+      throw InputFailure(inPos(0), "Expected a date");
     }
+    inner.seek(io::tellg(is), nio::SeekMode::beg);
+
+    const auto& [y, m, d] = result->values();
+    val = { year(y), month(m), day(d) };
   }
 };
 
 template<typename T>
 struct JsonProducerImpl<DataType::HourMinuteSecond, T> {
+  using Precision = T::precision;
+
   void
   produce(T& val, nio::Source& in) const {
-    skipJson(in);
+    using namespace std::chrono;
+
+    skip(in);
     const auto pos = in.tell();
 
-    if (not readChar(in, '"')) {
-      throw InputFailure(pos, "Expected an hour, minute, and second");
-    }
-    in.seek(-1, nio::SeekMode::cur);
+    // Read JSON string and create an inner source for it
+    Positions positions;
+    const auto input = readJsonString(in, positions);
+    nio::StringSource inner(input);
+    const auto inPos = [pos, &positions](u64 innnerPos) -> u64 {
+      return jsonOffset(pos, innnerPos, positions);
+    };
 
-    try {
-      const std::string str = readJsonString(in);
-      nio::StringSource inner(str);
-      FormattedProducerImpl<DataType::HourMinuteSecond, T>().produce(val, inner);
+    // Read hour, minute, and second
+
+    auto& is = inner.istream();
+    auto result = scn::scan<hours::rep, minutes::rep, seconds::rep>(is, "{}:{}:{}");
+    if (not result) {
+      throw InputFailure(inPos(0), "Expected an hour, minute, and second");
+    }
+    inner.seek(io::tellg(is), nio::SeekMode::beg);
+
+    auto [h, m, s] = result->values();
+    bool neg = false;
+    if (h < 0) {
+      h = -h;
+      neg = true;
+    }
+
+    try
+    {
+      // Read subseconds
+
+      const nanoseconds subseconds = readSubseconds(inner);
+
+      // Finally, construct `hh_mm_ss`
+
+      Precision duration = duration_cast<Precision>(hours(h) + minutes(m) + seconds(s) + subseconds);
+      if (neg) {
+        duration = -duration;
+      }
+      val = T(duration);
     } catch (const InputFailure& ex) {
-      throw InputFailure(pos, ex.message());
+      throw InputFailure(inPos(ex.position()), ex.message());
     }
   }
 };
@@ -1395,66 +1494,196 @@ struct JsonProducerImpl<DataType::TimeZone, T> {
   produce(T& val, nio::Source& in) const {
     using namespace std::chrono;
 
-    skipJson(in);
+    skip(in);
     const auto pos = in.tell();
 
-    if (not readChar(in, '"')) {
-      throw InputFailure(pos, "Expected a time zone");
-    }
-    in.seek(-1, nio::SeekMode::cur);
+    // Read JSON string
+    Positions positions;
+    const auto input = readJsonString(in, positions);
+    const auto inPos = [pos, &positions](u64 innnerPos) -> u64 {
+      return jsonOffset(pos, innnerPos, positions);
+    };
 
     try {
-      const std::string name = readJsonString(in);
       // This throws if the time zone is not found
-      val = locate_zone(name);
-    } catch (const InputFailure&) {
-      throw InputFailure(pos, "Expected a time zone");
+      val = locate_zone(input);
     } catch (const std::exception& ex) {
-      throw InputFailure(pos, ex.what());
+      throw InputFailure(inPos(0), ex.what());
     }
   }
 };
 
 template<typename T>
 struct JsonProducerImpl<DataType::Time, T> {
+  using Clock = T::clock;
+  static_assert(std::same_as<Clock, std::chrono::system_clock>, "Clock must be `system_clock`");
+  using Duration = T::duration;
+
   void
   produce(T& val, nio::Source& in) const {
-    skipJson(in);
+    using namespace std::chrono;
+
+    skip(in);
     const auto pos = in.tell();
 
-    if (not readChar(in, '"')) {
-      throw InputFailure(pos, "Expected a time point");
+    // Read JSON string and create an inner source for it
+
+    Positions positions;
+    const auto input = readJsonString(in, positions);
+    nio::StringSource inner(input);
+    const auto inPos = [pos, &positions](u64 innnerPos) -> u64 {
+      return jsonOffset(pos, innnerPos, positions);
+    };
+
+    // The environment variable `TZ` interferes somehow ...
+
+    const auto* current = current_zone();
+    const auto TZ = system::env::get<std::string>("TZ");
+    if (TZ) {
+      ROCKET_EXPECT(*TZ == current->name(), "If defined, the environment variable `TZ` must match the current time zone, which is {}", current->name());
     }
-    in.seek(-1, nio::SeekMode::cur);
+
+    // Scan the time point, using scnlib
+
+    auto& is = inner.istream();
+    const auto result = scn::scan<T>(is, "{:%FT%T}");
+    if (not result) {
+      throw InputFailure(inPos(0), "Expected a time point");
+    }
+    inner.seek(io::tellg(is), nio::SeekMode::beg);
+    val = result->value();
 
     try {
-      const std::string str = readJsonString(in);
-      nio::StringSource inner(str);
-      FormattedProducerImpl<DataType::Time, T>().produce(val, inner);
-    } catch (const InputFailure&) {
-      throw InputFailure(pos, "Expected a time point");
+      // Read subseconds
+
+      const nanoseconds subseconds = readSubseconds(inner);
+      if (subseconds.count() > 0) {
+        val += duration_cast<Duration>(subseconds);
+      }
+
+      // Read 'Z'
+
+      expectChar(inner, 'Z');
+
+      // Work around a bug in scnlib where the time point is not parsed as UTC but dependent from the current
+      // time zone
+
+      const auto info = current->get_info(val);
+      val += info.offset;
+    } catch (const InputFailure& ex) {
+      throw InputFailure(inPos(ex.position()), ex.message());
     }
   }
 };
 
 template<typename T>
 struct JsonProducerImpl<DataType::ZonedTime, T> {
+  using Duration = T::duration;
+  static constexpr auto TimeZoneDataType = DataTypes<TimeZone>::Value;
+  static_assert(TimeZoneDataType == DataType::TimeZone);
+
   void
   produce(T& val, nio::Source& in) const {
-    skipJson(in);
+    using namespace std::chrono;
+
+    skip(in);
     const auto pos = in.tell();
 
-    if (not readChar(in, '"')) {
-      throw InputFailure(pos, "Expected a time point");
+    // Read JSON string and create an inner source for it
+
+    Positions positions;
+    const auto input = readJsonString(in, positions);
+    nio::StringSource inner(input);
+    const auto inPos = [pos, &positions](u64 innnerPos) -> u64 {
+      return jsonOffset(pos, innnerPos, positions);
+    };
+
+    // The environment variable `TZ` interferes somehow ...
+
+    const auto* current = current_zone();
+    const auto TZ = system::env::get<std::string>("TZ");
+    if (TZ) {
+      ROCKET_EXPECT(*TZ == current->name(), "If defined, the environment variable `TZ` must match the current time zone, which is {}", current->name());
     }
-    in.seek(-1, nio::SeekMode::cur);
+
+    // Scan the time point, using scnlib
+
+    sys_time<Duration> tp;
+    {
+      auto& is = inner.istream();
+      const auto result = scn::scan<sys_time<Duration>>(is, "{:%FT%T}");
+      if (not result) {
+        throw InputFailure(inPos(0), "Expected a time point");
+      }
+      inner.seek(io::tellg(is), nio::SeekMode::beg);
+      tp = result->value();
+    }
 
     try {
-      const std::string str = readJsonString(in);
-      nio::StringSource inner(str);
-      FormattedProducerImpl<DataType::ZonedTime, T>().produce(val, inner);
-    } catch (const InputFailure&) {
-      throw InputFailure(pos, "Expected a time point");
+      // Read subseconds
+
+      const nanoseconds subseconds = readSubseconds(inner);
+      if (subseconds.count() > 0) {
+        tp += duration_cast<Duration>(subseconds);
+      }
+
+      // Read "Z" or UTC offset
+
+      const auto offsetPos = inner.tell();
+      seconds offset;
+
+      if (not readChar(inner, 'Z')) {
+        auto sign = readChoice(inner, { "+", "-" }, false);
+        if (not sign) {
+          throw InputFailure(offsetPos, "Expected UTC offset");
+        }
+
+        auto& is = inner.istream();
+        const auto result = scn::scan<std_unsigned, std_unsigned>(is, "{}:{}");
+        if (not result) {
+          throw InputFailure(offsetPos, "Expected UTC offset");
+        }
+        inner.seek(io::tellg(is), nio::SeekMode::beg);
+        const auto& [h, m] = result->values();
+        offset = hours(h) + minutes(m);
+        if (*sign == "-") {
+          offset = -offset;
+        }
+      }
+
+      // Apply UTC offset; convert time point to UTC
+
+      tp -= offset;
+
+      // Work around a bug in scnlib where the time point is not parsed as UTC but dependent from the current
+      // time zone
+
+      const auto info = current->get_info(tp);
+      tp += info.offset;
+
+      // Read time zone. We need to do this by hand because the time-zone producer reads in a JSON string.
+      // Here, however, the time zone is surrounded by parentheses
+
+      expectChar(inner, ' ');
+      const u64 tzPos = inner.tell();
+      expectChar(inner, '(');
+      const auto name = readUntilChar(inner, ')');
+      if (not name) {
+        throw InputFailure(tzPos, "Unterminated time-zone name");
+      }
+      TimeZone tz; // NOLINT
+      try {
+        // This throws if the time zone is not found
+        tz = locate_zone(*name);
+      } catch (const std::exception& ex) {
+        throw InputFailure(tzPos, ex.what());
+      }
+
+      // Finally, construct the `zoned_time`
+
+      val = T(tz, tp);
+    } catch (const InputFailure& ex) {
+      throw InputFailure(inPos(ex.position()), ex.message());
     }
   }
 };
@@ -1468,7 +1697,7 @@ struct JsonProducerImpl<DataType::Interval, T> {
 
   void
   produce(T& val, nio::Source& in) const {
-    skipJson(in);
+    skip(in);
     const auto pos = in.tell();
 
     if (readKeyword(in, "null")) {
@@ -1479,7 +1708,7 @@ struct JsonProducerImpl<DataType::Interval, T> {
     if (not readChar(in, '[')) {
       throw InputFailure(pos, "Expected an interval");
     }
-    skipJson(in);
+    skip(in);
 
     A a = A();
     if constexpr (IsOptional<A>) {
@@ -1491,9 +1720,9 @@ struct JsonProducerImpl<DataType::Interval, T> {
     }
     val.a = a;
 
-    skipJson(in);
+    skip(in);
     expectComma(in);
-    skipJson(in);
+    skip(in);
 
     B b = B();
     if constexpr (IsOptional<B>) {
@@ -1505,9 +1734,9 @@ struct JsonProducerImpl<DataType::Interval, T> {
     }
     val.b = b;
 
-    skipJson(in);
+    skip(in);
     if (readChar(in, ',')) { // Allow trailing comma
-      skipJson(in);
+      skip(in);
     }
     if (not readChar(in, ']')) {
       throw InputFailure(in.tell(), { pos, in.tell() }, "Unterminated interval");
@@ -1524,7 +1753,7 @@ struct JsonProducerImpl<DataType::Declared, T> {
 
   void
   produce(T& val, nio::Source& in) const {
-    produceJsonMembers(refs, val, in);
+    produceMembers(refs, val, in);
   }
 };
 
@@ -1537,7 +1766,7 @@ struct JsonProducerImpl<DataType::Instance, T> {
 
   void
   produce(T& val, nio::Source& in) const {
-    produceJsonMembers(refs, val.get(), in);
+    produceMembers(refs, val.get(), in);
   }
 };
 
@@ -1550,28 +1779,28 @@ struct JsonProducerImpl<DataType::VarRef, T> {
 
   void
   produce(T& val, nio::Source& in) const {
-    skipJson(in);
+    skip(in);
     const auto pos = in.tell();
 
     if (not readChar(in, '{')) {
       throw InputFailure(pos, "Expected an object");
     }
-    skipJson(in);
+    skip(in);
 
     if (readChar(in, '}')) {
       return;
     }
 
     (void) readJsonString(in); // Ignore the name
-    skipJson(in);
+    skip(in);
     expectColon(in);
-    skipJson(in);
+    skip(in);
 
     JsonProducerImpl<ElemDataType, Elem>().produce(val.get(), in);
 
-    skipJson(in);
+    skip(in);
     if (readChar(in, ',')) { // Allow trailing comma
-      skipJson(in);
+      skip(in);
     }
     if (not readChar(in, '}')) {
       throw InputFailure(in.tell(), { pos, in.tell() }, "Unterminated object");
@@ -1586,7 +1815,7 @@ struct JsonProducerImpl<DataType::CodePoint, T> {
 
   void
   produce(T& val, nio::Source& in) const {
-    skipJson(in);
+    skip(in);
     const auto pos = in.tell();
 
     if (not readChar(in, '"')) {
@@ -1630,7 +1859,7 @@ struct JsonProducerImpl<DataType::Character, T> {
 
 #undef CONFIG__
 
-} // namespace internal
+} // namespace internal::json
 
 // `JsonConsumer` -------------------------------------------------------------------------------------------
 
@@ -1638,7 +1867,7 @@ struct JsonProducerImpl<DataType::Character, T> {
 struct JsonConsumer {
   /// @type_alias
   template<DataType DataType, typename T>
-  using Type = internal::JsonConsumerImpl<DataType, T>;
+  using Type = internal::json::JsonConsumerImpl<DataType, T>;
 };
 
 // `JsonProducer` -------------------------------------------------------------------------------------------
@@ -1647,7 +1876,7 @@ struct JsonConsumer {
 struct JsonProducer {
   /// @type_alias
   template<DataType DataType, typename T>
-  using Type = internal::JsonProducerImpl<DataType, T>;
+  using Type = internal::json::JsonProducerImpl<DataType, T>;
 };
 
 // `JsonCodec` ----------------------------------------------------------------------------------------------

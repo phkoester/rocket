@@ -420,7 +420,8 @@ TEST(JsonCodec, JsonProducerDuration) {
 
   EXPECT_EQ(decode<seconds>("\"1000ms\""), 1s);
 
-  EXPECT_EQ(decode<seconds>("x").error().message, "Expected a duration");
+  EXPECT_EQ(decode<seconds>("x").error().message, "Expected a string");
+  EXPECT_EQ(decode<seconds>("\"x\"").error().message, "Expected a duration");
   EXPECT_EQ(decode<seconds>("\"10x\"").error().message, "Expected a time unit");
 }
 
@@ -443,7 +444,8 @@ TEST(JsonCodec, JsonProducerHourMinuteSecond) {
     decode<hh_mm_ss<nanoseconds>>("\"-111:02:03.123456789\"").value().to_duration(),
     (hh_mm_ss { -(111h + 2min + 3s + 123456789ns) }).to_duration());
 
-  EXPECT_EQ(decode<hh_mm_ss<milliseconds>>("x").error().message, "Expected an hour, minute, and second");
+  EXPECT_EQ(decode<hh_mm_ss<milliseconds>>("x").error().message, "Expected a string");
+  EXPECT_EQ(decode<hh_mm_ss<milliseconds>>("\"x\"").error().message, "Expected an hour, minute, and second");
   EXPECT_EQ(
     decode<hh_mm_ss<milliseconds>>("\"01:02:\"").error().message,
     "Expected an hour, minute, and second");
@@ -456,7 +458,8 @@ TEST(JsonCodec, JsonProducerDate) {
   EXPECT_EQ(decode<year_month_day>("\"1970-01-02\""), (year_month_day { 1970y, January, 2d }));
   EXPECT_EQ(decode<year_month_day>("\"-100-01-02\""), (year_month_day { -100y, January, 2d }));
 
-  EXPECT_EQ(decode<year_month_day>("x").error().message, "Expected a date");
+  EXPECT_EQ(decode<year_month_day>("x").error().message, "Expected a string");
+  EXPECT_EQ(decode<year_month_day>("\"x\"").error().message, "Expected a date");
 }
 
 TEST(JsonCodec, JsonProducerTimeZone) {
@@ -464,7 +467,7 @@ TEST(JsonCodec, JsonProducerTimeZone) {
 
   EXPECT_EQ(decode<TimeZone>("\"Europe/Berlin\""), locate_zone("Europe/Berlin"));
   EXPECT_EQ(decode<TimeZone>("\"UTC\""), locate_zone("UTC"));
-  EXPECT_EQ(decode<TimeZone>("x").error().message, "Expected a time zone");
+  EXPECT_EQ(decode<TimeZone>("x").error().message, "Expected a string");
 
   EXPECT_THAT(decode<TimeZone>("\"x\"").error().message, AnyOf(
     EndsWith("cannot locate zone: x"), // Linux

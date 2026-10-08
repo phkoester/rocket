@@ -61,6 +61,7 @@ target_sources(rocket
     rocket/literal.cc
     rocket/chrono/chrono.cc
     rocket/cl/cl.cc
+    rocket/codec/JsonCodec.cc
     rocket/external/scnlib/impl.cc
     rocket/filesystem/filesystem.cc
     rocket/io/io.cc
