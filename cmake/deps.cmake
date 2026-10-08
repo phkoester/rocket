@@ -87,11 +87,11 @@ endif()
 # scnlib ----------------------------------------------------------------------------------------------------
 
 # find_package(scnlib ${GAIA_SCNLIB_VERSION} QUIET) # Commented out because version is `master`
-# if(NOT scnlib_FOUND)
+if(NOT scnlib_FOUND)
   block()
     set(BUILD_SHARED_LIBS OFF)
     FetchContent_MakeAvailable(scnlib)
   endblock()
-# endif()
+endif()
 
 # EOF
