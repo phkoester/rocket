@@ -12,6 +12,8 @@
 
 #include <cbor.h>
 
+#include <iostream>
+
 using namespace rocket;
 using namespace rocket::unicode;
 using namespace std;
@@ -38,6 +40,8 @@ auto& out = nio::out;
 
 bool
 doTheCbor() {
+  nio::out.println("Doing the CBOR ...");
+
   /* Preallocate the map structure */
   cbor_item_t* root = cbor_new_definite_map(2);
 
@@ -57,11 +61,14 @@ doTheCbor() {
   size_t buffer_size;
   cbor_serialize_alloc(root, &buffer, &buffer_size);
 
-  fwrite(buffer, 1, buffer_size, stdout);
+  cout << "Buffer size: " << buffer_size << endl;
+  cout << "Buffer: " << buffer << endl;
+
   free(buffer);
 
-  fflush(stdout);
   cbor_decref(&root);
+
+  nio::out.println("Done the CBOR");
 
   return true;
 }
