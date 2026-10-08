@@ -78,10 +78,7 @@ TEST(JsonCodec, JsonConsumerChar) {
   EXPECT_EQ(encode('\t'), "\"\\t\"");
   EXPECT_EQ(encode(U'€'), "\"€\"");
   EXPECT_EQ(encode(U'\u200B'), "\"\\u200B\"");
-
-  EXPECT_THAT(
-    [&] { encode(U'\U0010FFFF'); },
-    ThrowsMessage<InvalidState>(EndsWith("Cannot escape code point U+10FFFF to JSON")));
+  EXPECT_EQ(encode(U'\U0010FFFF'), "\"\U0010FFFF\"");
 }
 
 TEST(JsonCodec, JsonConsumerEnum) {
@@ -122,10 +119,7 @@ TEST(JsonCodec, JsonConsumerString) {
   EXPECT_EQ(encode(U"Hello"sv), "\"Hello\"");
   EXPECT_EQ(encode("\x7f"sv), "\"\\u007F\""); // XXX Kein \x?
   EXPECT_EQ(encode(U"\u200B"sv), "\"\\u200B\"");
-
-  EXPECT_THAT(
-    [&] { encode(U"\U0010FFFF"sv); },
-    ThrowsMessage<InvalidState>(EndsWith("Cannot escape code point U+10FFFF to JSON")));
+  EXPECT_EQ(encode(U"\U0010FFFF"sv), "\"\U0010FFFF\"");
 }
 
 TEST(JsonCodec, JsonConsumerOptional) {

@@ -83,9 +83,13 @@ escapeCStringCodePointHex(unicode::CodePoint cp, u64& column, const CStringConfi
   if (config.json) {
     // JSON
     if (cp > 0xFFFFU) {
-      ROCKET_FAIL("Cannot escape code point U+{:X} to JSON", static_cast<u32>(cp));
+      // We can't escape code points > U+FFFF with `\u`, so just return the string representation
+      ret = static_cast<string>(cp);
+      column += cp.width();
+      return ret;
+    } else {
+      ret = fmt::format("\\u{:0>4X}", static_cast<u32>(cp));
     }
-    ret = fmt::format("\\u{:0>4X}", static_cast<u32>(cp));
   } else {
     // C
     if (cp > 0xFFFFU) {

@@ -94,7 +94,7 @@ void expectComma(nio::Source& in);
  * @param in the source to read from
  * @param values the set of expected strings, all elements must not be empty
  * @param ignoreCase whether to ignore case
- * @param endOfWord whether to check if the returned string is followed by a word boundary
+ * @param endOfWord whether to check if the end of the returned string matches a word boundary
  * @return the read string, or null if no string was read
  */
 [[nodiscard]] std::optional<std::string_view> readChoice(
@@ -111,7 +111,7 @@ void expectComma(nio::Source& in);
  * @param in the source to read from
  * @param str the string to read, must not be empty
  * @param ignoreCase whether to ignore case
- * @param endOfWord whether to check if the returned string is followed by a word boundary
+ * @param endOfWord whether to check if the end of the returned string matches a word boundary
  * @return whether the string was read
  */
 [[nodiscard]] bool readString(

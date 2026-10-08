@@ -39,7 +39,7 @@ bool
 isWordBoundary(nio::Source& in) {
   const u64 pos = in.tell();
   const auto result = in.readCodePoint();
-  in.seek(safe<i64>(pos), nio::SeekMode::beg);
+  in.seek(safe<i64>(pos), nio::SeekMode::beg); // Rewind immediately in any case
 
   if (not result) {
     // Could not read code point: we have a word boundary
