@@ -79,10 +79,10 @@ sendAnsiRequest(nio::Sink& out, std::string_view sequence) {
 HANDLE
 getHandle(i32 fd) {
   switch (fd) {
-  case STDIN_FILENO: return GetStdHandle(STD_INPUT_HANDLE);
-  case STDOUT_FILENO: return GetStdHandle(STD_OUTPUT_HANDLE);
-  case STDERR_FILENO: return GetStdHandle(STD_ERROR_HANDLE);
-  default: return INVALID_HANDLE_VALUE;
+    case STDIN_FILENO: return GetStdHandle(STD_INPUT_HANDLE);
+    case STDOUT_FILENO: return GetStdHandle(STD_OUTPUT_HANDLE);
+    case STDERR_FILENO: return GetStdHandle(STD_ERROR_HANDLE);
+    default: return INVALID_HANDLE_VALUE;
   }
 }
 

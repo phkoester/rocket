@@ -165,9 +165,9 @@ printLocations( // NOLINT(*-complexity)
     if (config.styled) {
       fmt::text_style style;
       switch (loc.type) {
-      case note   : style = fg(fmt::color::cyan); break;
-      case warning: style = fg(fmt::color::yellow); break;
-      case error  : style = fg(fmt::color::red); break;
+        case note: style = fg(fmt::color::cyan); break;
+        case warning: style = fg(fmt::color::yellow); break;
+        case error: style = fg(fmt::color::red); break;
       }
       out.print(style | fmt::emphasis::bold, "{}: ", loc.type);
     } else {

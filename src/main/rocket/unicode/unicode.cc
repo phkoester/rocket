@@ -67,16 +67,16 @@ CodePoint::width() const {
 
   const auto generalCategory = u_getIntPropertyValue(val_, UCHAR_GENERAL_CATEGORY); // NOLINT
   switch (generalCategory) {
-  case U_ENCLOSING_MARK:
-  case U_NON_SPACING_MARK:
-    return 0;
+    case U_ENCLOSING_MARK:
+    case U_NON_SPACING_MARK:
+      return 0;
   }
 
   const auto eastAsianWidth = u_getIntPropertyValue(val_, UCHAR_EAST_ASIAN_WIDTH); // NOLINT
-  switch (eastAsianWidth) {
-  case U_EA_FULLWIDTH:
-  case U_EA_WIDE:
-    return 2;
+    switch (eastAsianWidth) {
+      case U_EA_FULLWIDTH:
+      case U_EA_WIDE:
+        return 2;
   }
 
   if (u_hasBinaryProperty(val_, UCHAR_EMOJI_PRESENTATION)) { // NOLINT
@@ -101,7 +101,8 @@ convertUtf8To32(string_view str, InvalidUnicodePolicy policy) { // NOLINT(*-comp
   for (u64 pos = 0, size = str.size(); pos < size; /* Empty */) {
     UChar32 cp; // NOLINT
     i32 i = 0;
-    U8_NEXT(&str[pos], i, safe<i32>(size - pos), cp); // NOLINT
+    const i32 len = safe<i32>(str.size() - pos);
+    U8_NEXT(&str[pos], i, len, cp); // NOLINT
     ROCKET_DEBUG_ASSERT(i > 0, "`U8_NEXT` failed");
 
     if (cp < 0) {

@@ -83,32 +83,32 @@ struct Fmt {
   set(string_view fmt) {
     for (auto it = fmt.begin(), end = fmt.end(); it != end; ++it) {
       switch (*it) {
-      case 'f': usePrettyFunction = false; break;
-      case 'F': usePrettyFunction = true; break;
-      case 'i': logStackImmediately = false; break;
-      case 'I': logStackImmediately = true; break;
-      case 'l': withSourceLocation = false; break;
-      case 'L': withSourceLocation = true; break;
-      case 's': {
-        if (it == end - 1) {
-          ROCKET_FAIL("Missing seconds resolution");
+        case 'f': usePrettyFunction = false; break;
+        case 'F': usePrettyFunction = true; break;
+        case 'i': logStackImmediately = false; break;
+        case 'I': logStackImmediately = true; break;
+        case 'l': withSourceLocation = false; break;
+        case 'L': withSourceLocation = true; break;
+        case 's': {
+          if (it == end - 1) {
+            ROCKET_FAIL("Missing seconds resolution");
+          }
+          switch (*++it) {
+            case '0': secondsRez = 0; break;
+            case '3': secondsRez = 3; break;
+            case '6': secondsRez = 6; break;
+            case '9': secondsRez = 9; break;
+            default: ROCKET_FAIL("Invalid seconds resolution {:?}", *it);
+          }
+          break;
         }
-        switch (*++it) {
-        case '0': secondsRez = 0; break;
-        case '3': secondsRez = 3; break;
-        case '6': secondsRez = 6; break;
-        case '9': secondsRez = 9; break;
-        default: ROCKET_FAIL("Invalid seconds resolution {:?}", *it);
-        }
-        break;
-      }
-      case 't': withThreadIds = false; break;
-      case 'T': withThreadIds = true; break;
-      case 'x': withExecTimes = false; break;
-      case 'X': withExecTimes = true; break;
-      case 'z': useUtc = false; break;
-      case 'Z': useUtc = true; break;
-      default: ROCKET_FAIL("Invalid format specifier {:?}", *it);
+        case 't': withThreadIds = false; break;
+        case 'T': withThreadIds = true; break;
+        case 'x': withExecTimes = false; break;
+        case 'X': withExecTimes = true; break;
+        case 'z': useUtc = false; break;
+        case 'Z': useUtc = true; break;
+        default: ROCKET_FAIL("Invalid format specifier {:?}", *it);
       }
     }
   }

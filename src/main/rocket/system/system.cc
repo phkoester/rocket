@@ -206,47 +206,47 @@ makeArgs(string_view cl) { // NOLINT(*-complexity)
       next = cl[i + 1];
     }
 
-    switch(state) {
-    case NORMAL:
-      if (isspace(c) != 0) {
-        if (not arg.empty()) {
-          ret.push_back(arg);
-          arg.clear();
+    switch (state) {
+      case NORMAL:
+        if (isspace(c) != 0) {
+          if (not arg.empty()) {
+            ret.push_back(arg);
+            arg.clear();
+          }
+        } else if (c == '\'') {
+          state = SINGLE;
+        } else if (c == '"') {
+          state = DOUBLE;
+        } else if (c == '\\') {
+          if (not next) {
+            throw InputFailure(i, "Invalid escape sequence");
+          }
+          arg.push_back(*next);
+          ++i;
+        } else {
+          arg.push_back(c);
         }
-      } else if (c == '\'') {
-        state = SINGLE;
-      } else if (c == '"') {
-        state = DOUBLE;
-      } else if (c == '\\') {
-        if (not next) {
-          throw InputFailure(i, "Invalid escape sequence");
+        break;
+      case SINGLE:
+        if (c == '\'') {
+          state = NORMAL;
+        } else {
+          arg.push_back(c);
         }
-        arg.push_back(*next);
-        ++i;
-      } else {
-        arg.push_back(c);
-      }
-      break;
-    case SINGLE:
-      if (c == '\'') {
-        state = NORMAL;
-      } else {
-        arg.push_back(c);
-      }
-      break;
-    case DOUBLE:
-      if (c == '"') {
-        state = NORMAL;
-      } else if (c == '\\') {
-        if (not next) {
-          throw InputFailure(i, "Invalid escape sequence");
+        break;
+      case DOUBLE:
+        if (c == '"') {
+          state = NORMAL;
+        } else if (c == '\\') {
+          if (not next) {
+            throw InputFailure(i, "Invalid escape sequence");
+          }
+          arg.push_back(*next);
+          ++i;
+        } else {
+          arg.push_back(c);
         }
-        arg.push_back(*next);
-        ++i;
-      } else {
-        arg.push_back(c);
-      }
-      break;
+        break;
     }
   }
 

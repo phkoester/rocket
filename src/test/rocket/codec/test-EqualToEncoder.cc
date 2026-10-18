@@ -109,7 +109,7 @@ TEST(EqualToEncoder, BimapUnordered) {
   EXPECT_FALSE(encoder.encode(c, a));
 }
 
-TEST(EqualToEncoder, MyStruct) {
+TEST(EqualToEncoder, Declared) {
   const MyStruct a { 1, true, "one", { 1, 2, 3 } };
   const MyStruct b { 1, true, "one", { 1, 2, 3 } };
   const MyStruct c { 1, true, "two", { 1, 2, 3 } };

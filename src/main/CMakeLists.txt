@@ -104,6 +104,7 @@ target_sources(rocket
       rocket/type-traits.h
       rocket/chrono/chrono.h
       rocket/cl/cl.h
+      rocket/codec/CborCodec.h
       rocket/codec/CompareEncoder.h
       rocket/codec/EqualToEncoder.h
       rocket/codec/FormattedCodec.h

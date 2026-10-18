@@ -637,17 +637,17 @@ FileSource::seek(i64 offset, SeekMode mode) { // NOLINT
 
   i32 origin = -1;
   switch (mode) {
-  case SeekMode::beg:
-    origin = SEEK_SET;
-    break;
-  case SeekMode::cur:
-    origin = SEEK_CUR;
-    break;
-  case SeekMode::end:
-    origin = SEEK_END;
-    break;
-  default:
-    ROCKET_FLOP(mode, "Invalid seek mode {}", static_cast<i32>(mode));
+    case SeekMode::beg:
+      origin = SEEK_SET;
+      break;
+    case SeekMode::cur:
+      origin = SEEK_CUR;
+      break;
+    case SeekMode::end:
+      origin = SEEK_END;
+      break;
+    default:
+      ROCKET_FLOP(mode, "Invalid seek mode {}", static_cast<i32>(mode));
   }
 
   auto result = fseek(file_, safe<std_long>(offset), origin);
@@ -733,23 +733,23 @@ SpanSource::seek(i64 offset, SeekMode mode) { // NOLINT
   }
 
   switch (mode) {
-  case SeekMode::beg:
-    pos_ = offset;
-    break;
-  case SeekMode::cur:
-    if (offset >= 0) {
-      pos_ += offset;
-    } else {
-      pos_ -= (-offset);
-    }
-    break;
-  case SeekMode::end:
-    if (offset >= 0) {
-      pos_ = safe<u64>(in_.size()) + offset;
-    } else {
-      pos_ = safe<u64>(in_.size()) - (-offset);
-    }
-    break;
+    case SeekMode::beg:
+      pos_ = offset;
+      break;
+    case SeekMode::cur:
+      if (offset >= 0) {
+        pos_ += offset;
+      } else {
+        pos_ -= (-offset);
+      }
+      break;
+    case SeekMode::end:
+      if (offset >= 0) {
+        pos_ = safe<u64>(in_.size()) + offset;
+      } else {
+        pos_ = safe<u64>(in_.size()) - (-offset);
+      }
+      break;
   }
   pos_ = min(static_cast<u64>(pos_), in_.size());
   status_.eof = pos_ == in_.size();
@@ -797,17 +797,17 @@ StreamSource::seek(i64 offset, SeekMode mode) { // NOLINT
 
   ios::seekdir dir = ios::beg;
   switch (mode) {
-  case SeekMode::beg:
-    dir = ios::beg;
-    break;
-  case SeekMode::cur:
-    dir = ios::cur;
-    break;
-  case SeekMode::end:
-    dir = ios::end;
-    break;
-  default:
-    ROCKET_FLOP(mode, "Invalid seek mode {}", static_cast<i32>(mode));
+    case SeekMode::beg:
+      dir = ios::beg;
+      break;
+    case SeekMode::cur:
+      dir = ios::cur;
+      break;
+    case SeekMode::end:
+      dir = ios::end;
+      break;
+    default:
+      ROCKET_FLOP(mode, "Invalid seek mode {}", static_cast<i32>(mode));
   }
 
   NIO_LOG("Before clear failbit, bad=" << is_.bad() << ", fail=" << is_.fail() << ", eof=" << is_.eof() << ", tellg=" << io::tellg(is_));
@@ -881,23 +881,23 @@ StringSource::seek(i64 offset, SeekMode mode) { // NOLINT
   }
 
   switch (mode) {
-  case SeekMode::beg:
-    pos_ = offset;
-    break;
-  case SeekMode::cur:
-    if (offset >= 0) {
-      pos_ += offset;
-    } else {
-      pos_ -= (-offset);
-    }
-    break;
-  case SeekMode::end:
-    if (offset >= 0) {
-      pos_ = safe<u64>(in_.size()) + offset;
-    } else {
-      pos_ = safe<u64>(in_.size()) - (-offset);
-    }
-    break;
+    case SeekMode::beg:
+      pos_ = offset;
+      break;
+    case SeekMode::cur:
+      if (offset >= 0) {
+        pos_ += offset;
+      } else {
+        pos_ -= (-offset);
+      }
+      break;
+    case SeekMode::end:
+      if (offset >= 0) {
+        pos_ = safe<u64>(in_.size()) + offset;
+      } else {
+        pos_ = safe<u64>(in_.size()) - (-offset);
+      }
+      break;
   }
   pos_ = min(static_cast<u64>(pos_), in_.size());
   status_.eof = pos_ == in_.size();

@@ -221,21 +221,32 @@ void reference_ownership() {
 // Part 5: End
 
 void mine() {
-  nio::out.println("mine");
+  nio::out.println("Doing mine ...");
 
-  cbor_item_t* array_item = cbor_new_definite_array(2);
-  ROCKET_ASSERT(cbor_array_push(array_item, cbor_move(cbor_build_float4(3.14f))));
-  ROCKET_ASSERT(cbor_array_push(array_item, cbor_move(cbor_build_float4(3.14f))));
-  cbor_decref(&array_item);
+  // encode
+  auto* item = cbor_build_bool(true);
+  unsigned char* buffer;
+  size_t buffer_size;
+  cbor_serialize_alloc(item, &buffer, &buffer_size);
+
+  // decode
+  struct cbor_load_result result;
+  cbor_item_t* decoded_item = cbor_load(buffer, buffer_size, &result);
+  assert(result.error.code == CBOR_ERR_NONE);
+  assert(cbor_is_bool(decoded_item));
+  assert(cbor_get_bool(decoded_item) == true);
+
+  free(buffer);
+
+  ROCKET_ASSERT(cbor_refcount(decoded_item) == 1);
+  cbor_decref(&decoded_item);
+  ROCKET_ASSERT(decoded_item == nullptr);
+  ROCKET_ASSERT(cbor_refcount(item) == 1);
+  cbor_decref(&item);
+  ROCKET_ASSERT(item == nullptr);
+
+  nio::out.println("done mine");
 }
-
-namespace {
-
-// Local variables ------------------------------------------------------------------------------------------
-
-auto& out = nio::out;
-
-// Local functions ------------------------------------------------------------------------------------------
 
 bool
 doTheCbor() {
@@ -248,12 +259,19 @@ doTheCbor() {
   moving_values();
   reference_ownership();
 #endif
-  mine();
 
   nio::out.println("Done the CBOR");
 
   return true;
 }
+
+namespace {
+
+// Local variables ------------------------------------------------------------------------------------------
+
+auto& out = nio::out;
+
+// Local functions ------------------------------------------------------------------------------------------
 
 void
 myExit() {
@@ -282,9 +300,6 @@ toy() {
   ROCKET_MUTEX_LOCK(toyMutex);
   ROCKET_MUTEX_LOCK(toyMutex);
   out.println("Got lock");
-
-  bool result = doTheCbor();
-  nio::out.println("doTheCbor result: {}", result);
 }
 
 } // namespace

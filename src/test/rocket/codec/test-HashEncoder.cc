@@ -204,7 +204,7 @@ TEST(HashEncoder, Duration) {
   EXPECT_NE(msHash, sHash);
 }
 
-TEST(HashEncoder, YearMonthDay) {
+TEST(HashEncoder, Date) {
   using namespace std::chrono;
 
   const HashEncoder<> encoder;
@@ -231,7 +231,7 @@ TEST(HashEncoder, TimeZone) {
   EXPECT_NE(encoder.encode(current), 0);
 }
 
-TEST(HashEncoder, TimePoint) {
+TEST(HashEncoder, Time) {
   using namespace std::chrono;
 
   const auto val = rocket::chrono::now<system_clock>();

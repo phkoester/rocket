@@ -72,6 +72,7 @@ AddTest(test-rocket-Process                      rocket                 test-Pro
 AddTest(test-rocket-type-traits                  rocket                 test-type-traits.cc)
 AddTest(test-rocket-cl                           rocket/cl              test-cl.cc)
 AddTest(test-rocket-codec                        rocket/codec           test-codec.cc)
+AddTest(test-rocket-codec-CborCodec              rocket/codec           test-CborCodec.cc)
 AddTest(test-rocket-codec-CompareEncoder         rocket/codec           test-CompareEncoder.cc)
 AddTest(test-rocket-codec-EqualToEncoder         rocket/codec           test-EqualToEncoder.cc)
 AddTest(test-rocket-codec-FormattedCodec         rocket/codec           test-FormattedCodec.cc)

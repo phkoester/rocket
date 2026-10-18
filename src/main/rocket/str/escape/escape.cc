@@ -28,38 +28,38 @@ escapeCStringCodePoint(unicode::CodePoint cp, u64& column, const CStringConfig& 
   string ret;
   if (cp >= '\a' && cp <= '\\') {
     switch (cp) {
-    case '\a': // Alert = 7
-      ret = string { '\\', 'a' };
-      break;
-    case '\b':// Backspace = 8
-      ret = string { '\\', 'b' };
-      break;
-    case '\t':// Horizontal tab = 9
-      return escapeCStringTab(column, config);
-    case '\n': // Line feed = 10
-      ret = string { '\\', 'n' };
-      break;
-    case '\v': // Vertical tab = 11
-      ret = string { '\\', 'v' };
-      break;
-    case '\f': // Form feed = 12
-      ret = string { '\\', 'f' };
-      break;
-    case '\r': // Carriage return = 13
-      ret = string { '\\', 'r' };
-      break;
-    case '\x1b': // Escape = 27
-      ret = string { '\\', 'e' };
-      break;
-    case '"': // Quotation mark = 34
-      ret = config.quote == '"' ? string { '\\', '"' } : string { '"' };
-      break;
-    case '\'': // Apostrophe = 39
-      ret = config.quote == '\'' ? string { '\\', '\'' } : string { '\'' };
-      break;
-    case '\\': // Backslash = 92
-      ret = string { '\\', '\\' };
-      break;
+      case '\a': // Alert = 7
+        ret = string { '\\', 'a' };
+        break;
+      case '\b':// Backspace = 8
+        ret = string { '\\', 'b' };
+        break;
+      case '\t':// Horizontal tab = 9
+        return escapeCStringTab(column, config);
+      case '\n': // Line feed = 10
+        ret = string { '\\', 'n' };
+        break;
+      case '\v': // Vertical tab = 11
+        ret = string { '\\', 'v' };
+        break;
+      case '\f': // Form feed = 12
+        ret = string { '\\', 'f' };
+        break;
+      case '\r': // Carriage return = 13
+        ret = string { '\\', 'r' };
+        break;
+      case '\x1b': // Escape = 27
+        ret = string { '\\', 'e' };
+        break;
+      case '"': // Quotation mark = 34
+        ret = config.quote == '"' ? string { '\\', '"' } : string { '"' };
+        break;
+      case '\'': // Apostrophe = 39
+        ret = config.quote == '\'' ? string { '\\', '\'' } : string { '\'' };
+        break;
+      case '\\': // Backslash = 92
+        ret = string { '\\', '\\' };
+        break;
     }
   }
   if (not ret.empty()) {
@@ -124,37 +124,37 @@ escapeRegexCodePoint(unicode::CodePoint cp, u64& column) {
   string ret;
   if (cp >= '\t' && cp <= '}') {
     switch (cp) {
-    case '\t': // Horizontal tab = 9
-      ret = string { '\\', 't' };
-      break;
-    case '\n': // Line feed = 10
-      ret = string { '\\', 'n' };
-      break;
-    case '\v': // Vertical tab = 11
-      ret = string { '\\', 'v' };
-      break;
-    case '\f': // Form feed = 12
-      ret = string { '\\', 'f' };
-      break;
-    case '\r': // Carriage return = 13
-      ret = string { '\\', 'r' };
-      break;
-    case '$' : // Dollar sign = 36
-    case '(' : // Left parenthesis = 40
-    case ')' : // Right parenthesis = 41
-    case '*' : // Asterisk = 42
-    case '+' : // Plus sign = 43
-    case '.' : // Dot = 46
-    case '?' : // Question mark = 63
-    case '[' : // Left bracket = 91
-    case '\\': // Backslash = 92
-    case ']' : // Right bracket = 93
-    case '^' : // Circumflex = 94
-    case '{' : // Left Brace = 123
-    case '|' : // Vertical bar = 124
-    case '}' : // Right brace = 125
-      ret = string { '\\', static_cast<char>(cp) };
-      break;
+      case '\t': // Horizontal tab = 9
+        ret = string { '\\', 't' };
+        break;
+      case '\n': // Line feed = 10
+        ret = string { '\\', 'n' };
+        break;
+      case '\v': // Vertical tab = 11
+        ret = string { '\\', 'v' };
+        break;
+      case '\f': // Form feed = 12
+        ret = string { '\\', 'f' };
+        break;
+      case '\r': // Carriage return = 13
+        ret = string { '\\', 'r' };
+        break;
+      case '$' : // Dollar sign = 36
+      case '(' : // Left parenthesis = 40
+      case ')' : // Right parenthesis = 41
+      case '*' : // Asterisk = 42
+      case '+' : // Plus sign = 43
+      case '.' : // Dot = 46
+      case '?' : // Question mark = 63
+      case '[' : // Left bracket = 91
+      case '\\': // Backslash = 92
+      case ']' : // Right bracket = 93
+      case '^' : // Circumflex = 94
+      case '{' : // Left Brace = 123
+      case '|' : // Vertical bar = 124
+      case '}' : // Right brace = 125
+        ret = string { '\\', static_cast<char>(cp) };
+        break;
     }
   }
   if (not ret.empty()) {
@@ -359,53 +359,53 @@ unescapeCString(string_view input, const CStringConfig& config, Positions* posit
         }
 
         switch (*cp2) {
-        case 'a': // Alert = 7
-          ret.push_back('\a');
-          break;
-        case 'b': // Backspace = 8
-          ret.push_back('\b');
-          break;
-        case 't': // Horzontal tab = 9
-          ret.push_back('\t');
-          break;
-        case 'n': // Line feed = 10
-          ret.push_back('\n');
-          break;
-        case 'v': // Vertical tab = 11
-          ret.push_back('\v');
-          break;
-        case 'f': // Form feed = 12
-          ret.push_back('\f');
-          break;
-        case 'r': // Carriage return = 13
-          ret.push_back('\r');
-          break;
-        case 'e': // Escape = 27
-          ret.push_back('\x1b');
-          break;
-        case '"' : // Quotation mark = 34
-        case '\'': // Apostrophe = 39
-        case '\\': // Backslash = 92
-          ret.push_back(static_cast<char>(*cp2));
-          break;
-        case 'x': {
-          const char32 i = getHex(iter, 2);
-          ret.append(static_cast<string>(unicode::CodePoint(i)));
-          break;
-        }
-        case 'u': {
-          const char32 i = getHex(iter, 4);
-          ret.append(static_cast<string>(unicode::CodePoint(i)));
-          break;
-        }
-        case 'U': {
-          const char32 i = getHex(iter, 8);
-          ret.append(static_cast<string>(unicode::CodePoint(i)));
-          break;
-        }
-        default: {
-          throw InputFailure(pos, { pos, iter.current() }, "Invalid escape sequence");
-        }
+          case 'a': // Alert = 7
+            ret.push_back('\a');
+            break;
+          case 'b': // Backspace = 8
+            ret.push_back('\b');
+            break;
+          case 't': // Horzontal tab = 9
+            ret.push_back('\t');
+            break;
+          case 'n': // Line feed = 10
+            ret.push_back('\n');
+            break;
+          case 'v': // Vertical tab = 11
+            ret.push_back('\v');
+            break;
+          case 'f': // Form feed = 12
+            ret.push_back('\f');
+            break;
+          case 'r': // Carriage return = 13
+            ret.push_back('\r');
+            break;
+          case 'e': // Escape = 27
+            ret.push_back('\x1b');
+            break;
+          case '"' : // Quotation mark = 34
+          case '\'': // Apostrophe = 39
+          case '\\': // Backslash = 92
+            ret.push_back(static_cast<char>(*cp2));
+            break;
+          case 'x': {
+            const char32 i = getHex(iter, 2);
+            ret.append(static_cast<string>(unicode::CodePoint(i)));
+            break;
+          }
+          case 'u': {
+            const char32 i = getHex(iter, 4);
+            ret.append(static_cast<string>(unicode::CodePoint(i)));
+            break;
+          }
+          case 'U': {
+            const char32 i = getHex(iter, 8);
+            ret.append(static_cast<string>(unicode::CodePoint(i)));
+            break;
+          }
+          default: {
+            throw InputFailure(pos, { pos, iter.current() }, "Invalid escape sequence");
+          }
         }
       } else {
         // No backslash: just add the code point
@@ -515,50 +515,50 @@ unescapeRegex(string_view input, Positions* positions) {
         }
 
         switch (*cp2) {
-        case 't': // Horizontal tab = 9
-          ret.push_back('\t');
-          break;
-        case 'n': // Line feed = 10
-          ret.push_back('\n');
-          break;
-        case 'v': // Vertical tab = 11
-          ret.push_back('\v');
-          break;
-        case 'f': // Form feed = 12
-          ret.push_back('\f');
-          break;
-        case 'r': // Carriage return = 13
-          ret.push_back('\r');
-          break;
-        case '$': // Dollar sign = 36
-        case '(': // Left parenthesis = 40
-        case ')': // Right parenthesis = 41
-        case '*': // Asterisk = 42
-        case '+': // Plus sign = 43
-        case '.': // Dot = 46
-        case '?': // Question mark = 63
-        case '[': // Left bracket = 91
-        case '\\': // Backslash = 92
-        case ']': // Right bracket = 93
-        case '^': // Circumflex = 94
-        case '{': // Left brace = 123
-        case '|': // Vertical bar = 124
-        case '}': // Right brace = 123
-          ret.push_back(static_cast<char>(*cp2));
-          break;
-        case 'x': {
-          const char32 i = getHex(iter, 2);
-          ret.append(static_cast<string>(unicode::CodePoint(i)));
-          break;
-        }
-        case 'u': {
-          const char32 i = getHex(iter, 4);
-          ret.append(static_cast<string>(unicode::CodePoint(i)));
-          break;
-        }
-        default: {
-          throw InputFailure(pos, { pos, iter.current() }, "Invalid escape sequence");
-        }
+          case 't': // Horizontal tab = 9
+            ret.push_back('\t');
+            break;
+          case 'n': // Line feed = 10
+            ret.push_back('\n');
+            break;
+          case 'v': // Vertical tab = 11
+            ret.push_back('\v');
+            break;
+          case 'f': // Form feed = 12
+            ret.push_back('\f');
+            break;
+          case 'r': // Carriage return = 13
+            ret.push_back('\r');
+            break;
+          case '$': // Dollar sign = 36
+          case '(': // Left parenthesis = 40
+          case ')': // Right parenthesis = 41
+          case '*': // Asterisk = 42
+          case '+': // Plus sign = 43
+          case '.': // Dot = 46
+          case '?': // Question mark = 63
+          case '[': // Left bracket = 91
+          case '\\': // Backslash = 92
+          case ']': // Right bracket = 93
+          case '^': // Circumflex = 94
+          case '{': // Left brace = 123
+          case '|': // Vertical bar = 124
+          case '}': // Right brace = 123
+            ret.push_back(static_cast<char>(*cp2));
+            break;
+          case 'x': {
+            const char32 i = getHex(iter, 2);
+            ret.append(static_cast<string>(unicode::CodePoint(i)));
+            break;
+          }
+          case 'u': {
+            const char32 i = getHex(iter, 4);
+            ret.append(static_cast<string>(unicode::CodePoint(i)));
+            break;
+          }
+          default: {
+            throw InputFailure(pos, { pos, iter.current() }, "Invalid escape sequence");
+          }
         }
       } else {
         // No backslash: just add the code point

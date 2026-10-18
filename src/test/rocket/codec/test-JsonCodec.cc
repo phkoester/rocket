@@ -68,12 +68,12 @@ decodeAndTell(string_view str) {
 
 // `JsonConsumer` ...........................................................................................
 
-TEST(JsonCodec, JsonConsumerBool) {
+TEST(JsonCodec, ConsumerBool) {
   EXPECT_EQ(encode(true), "true");
   EXPECT_EQ(encode(false), "false");
 }
 
-TEST(JsonCodec, JsonConsumerChar) {
+TEST(JsonCodec, ConsumerChar) {
   EXPECT_EQ(encode('\x7F'), "\"\\u007F\"");
   EXPECT_EQ(encode('\t'), "\"\\t\"");
   EXPECT_EQ(encode(U'€'), "\"€\"");
@@ -81,7 +81,7 @@ TEST(JsonCodec, JsonConsumerChar) {
   EXPECT_EQ(encode(U'\U0010FFFF'), "\"\U0010FFFF\"");
 }
 
-TEST(JsonCodec, JsonConsumerEnum) {
+TEST(JsonCodec, ConsumerEnum) {
   enum Color : u8 { Red, Green, Blue };
   EXPECT_THAT(
     [] { encode(Blue); },
@@ -93,12 +93,12 @@ TEST(JsonCodec, JsonConsumerEnum) {
     ThrowsMessage<InvalidState>(EndsWith("Invalid `rocket::log::LogLevel` value 255")));
 }
 
-TEST(JsonCodec, JsonConsumerIntegerI64) {
+TEST(JsonCodec, ConsumerIntegerI64) {
   EXPECT_EQ(encode(-42_i64), "-42");
   EXPECT_EQ(encode(+42_i64), "42");
 }
 
-TEST(JsonCodec, JsonConsumerFloatF64) {
+TEST(JsonCodec, ConsumerFloatF64) {
   using type = f64;
   using limits = numeric_limits<type>;
 
@@ -109,12 +109,12 @@ TEST(JsonCodec, JsonConsumerFloatF64) {
   EXPECT_EQ(encode(limits::infinity()), "Infinity");
 }
 
-TEST(JsonCodec, JsonConsumerPointer) {
+TEST(JsonCodec, ConsumerPointer) {
   EXPECT_EQ(encode(reinterpret_cast<void*>(0)), "null");
   EXPECT_THAT(encode(reinterpret_cast<void*>(0x12345678)), matchesRegex("\"0x[0-9a-f]+\""));
 }
 
-TEST(JsonCodec, JsonConsumerString) {
+TEST(JsonCodec, ConsumerString) {
   EXPECT_EQ(encode("Hello"sv), "\"Hello\"");
   EXPECT_EQ(encode(U"Hello"sv), "\"Hello\"");
   EXPECT_EQ(encode("\x7f"sv), "\"\\u007F\""); // XXX Kein \x?
@@ -122,7 +122,7 @@ TEST(JsonCodec, JsonConsumerString) {
   EXPECT_EQ(encode(U"\U0010FFFF"sv), "\"\U0010FFFF\"");
 }
 
-TEST(JsonCodec, JsonConsumerOptional) {
+TEST(JsonCodec, ConsumerOptional) {
   using type = optional<string>;
 
   const type val;
@@ -130,7 +130,7 @@ TEST(JsonCodec, JsonConsumerOptional) {
   EXPECT_EQ(encode<type>("Hello"), "\"Hello\"");
 }
 
-TEST(JsonCodec, JsonConsumerTuplePair) {
+TEST(JsonCodec, ConsumerTuplePair) {
   EXPECT_EQ(encode(make_pair("answer"sv, 42)), "[\"answer\", 42]");
   EXPECT_EQ(encode(make_pair("answer"sv, 42), { .indent=true }),
     "[\n"
@@ -139,7 +139,7 @@ TEST(JsonCodec, JsonConsumerTuplePair) {
     "]");
 }
 
-TEST(JsonCodec, JsonConsumerList) {
+TEST(JsonCodec, ConsumerList) {
   EXPECT_EQ(encode(forward_list<i32> { 1, 2, 3 }), "[1, 2, 3]");
 
   const vector<i32> valVectorI32 { 1, 2, 3 };
@@ -162,12 +162,12 @@ TEST(JsonCodec, JsonConsumerList) {
     "]");
 }
 
-TEST(JsonCodec, JsonConsumerSet) {
+TEST(JsonCodec, ConsumerSet) {
   EXPECT_EQ(encode(set<i32> {}), "[]");
   EXPECT_EQ(encode(set<i32> { 1, 2, 2, 3 }), "[1, 2, 3]");
 }
 
-TEST(JsonCodec, JsonConsumerMap) {
+TEST(JsonCodec, ConsumerMap) {
   EXPECT_EQ(
     encode(map<i32, i32> { { 1, 2 }, { 2, 3 }, { 3, 4 } }),
     "{\"1\": 2, \"2\": 3, \"3\": 4}");
@@ -176,7 +176,7 @@ TEST(JsonCodec, JsonConsumerMap) {
     "{\"alpha\": 1, \"beta\": 2, \"gamma\": 3}");
 }
 
-TEST(JsonCodec, JsonConsumerDuration) {
+TEST(JsonCodec, ConsumerDuration) {
   using namespace std::chrono;
 
   EXPECT_EQ(encode(1ns), "\"1ns\"");
@@ -191,27 +191,27 @@ TEST(JsonCodec, JsonConsumerDuration) {
   EXPECT_EQ(encode(years(10)), "\"10y\"");
 }
 
-TEST(JsonCodec, JsonConsumerHourMinuteSecond) {
+TEST(JsonCodec, ConsumerHourMinuteSecond) {
   using namespace std::chrono;
 
   EXPECT_EQ(encode(hh_mm_ss { 1h + 2min + 3s }), "\"01:02:03\"");
   EXPECT_EQ(encode(hh_mm_ss { -(111h + 2min + 3s + 123456us) }), "\"-111:02:03.123456\"");
 }
 
-TEST(JsonCodec, JsonConsumerDate) {
+TEST(JsonCodec, ConsumerDate) {
   using namespace std::chrono;
 
   EXPECT_EQ(encode(year_month_day { 1970y, January, 2d }), "\"1970-01-02\"");
 }
 
-TEST(JsonCodec, JsonConsumerTimeZone) {
+TEST(JsonCodec, ConsumerTimeZone) {
   using namespace std::chrono;
 
   EXPECT_EQ(encode(locate_zone("Europe/Berlin")), "\"Europe/Berlin\"");
   EXPECT_EQ(encode(locate_zone("UTC")), "\"Etc/UTC\"");
 }
 
-TEST(JsonCodec, JsonConsumerTime) {
+TEST(JsonCodec, ConsumerTime) {
   using namespace std::chrono;
 
   const auto* const regexS = R"("\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z")"; // Seconds
@@ -222,7 +222,7 @@ TEST(JsonCodec, JsonConsumerTime) {
   EXPECT_THAT(encode(now), matchesRegex(regexNs));
 }
 
-TEST(JsonCodec, JsonConsumerZonedTime) {
+TEST(JsonCodec, ConsumerZonedTime) {
   using namespace std::chrono;
 
   const auto* const regexS =
@@ -247,7 +247,7 @@ TEST(JsonCodec, JsonConsumerZonedTime) {
   }
 }
 
-TEST(JsonCodec, JsonConsumerInterval) {
+TEST(JsonCodec, ConsumerInterval) {
   EXPECT_EQ(encode(math::ClosedInterval<f32>(-4.2F, 4.2F)), "[-4.2, 4.2]");
   EXPECT_EQ(encode(math::LeftOpenInterval<f32>(-4.2F, 4.2F)), "[-4.2, 4.2]");
   EXPECT_EQ(encode(math::RightOpenInterval<f32>(-4.2F, 4.2F)), "[-4.2, 4.2]");
@@ -256,20 +256,20 @@ TEST(JsonCodec, JsonConsumerInterval) {
   EXPECT_EQ(encode(math::OpenInterval<f32>(nullopt, nullopt)), "[null, null]");
 }
 
-TEST(JsonCodec, JsonConsumerDeclared) {
+TEST(JsonCodec, ConsumerDeclared) {
   EXPECT_EQ(
     encode(MyStruct { 42, true, "hello", { 1, 2, 3 } }),
     "[\"ärger\": 42, \"ökonom\": true, \"übermut\": \"hello\", \"vec\": [1, 2, 3]]");
 }
 
-TEST(JsonCodec, JsonConsumerInstance) {
+TEST(JsonCodec, ConsumerInstance) {
   using type = reflect::Instance<MyStruct, MyStruct::Three>;
   EXPECT_EQ(
     encode(type(MyStruct { 42, true, "hello", { 1, 2, 3 } })),
     "[\"ärger\": 42, \"ökonom\": true, \"übermut\": \"hello\"]");
 }
 
-TEST(JsonCodec, JsonConsumerVarRef) {
+TEST(JsonCodec, ConsumerVarRef) {
   int a = 0, b = 1, c= 2;
   const auto& refs = ROCKET_REFLECT_VARS((a)(b)(c));
   EXPECT_EQ(encode(refs), "[\"a\": 0, \"b\": 1, \"c\": 2]");
@@ -277,7 +277,7 @@ TEST(JsonCodec, JsonConsumerVarRef) {
   EXPECT_EQ(encode(ref), "\"b\": 1");
 }
 
-TEST(JsonCodec, JsonConsumerCodePoint) {
+TEST(JsonCodec, ConsumerCodePoint) {
   using type = unicode::CodePoint;
 
   EXPECT_EQ(encode(type('a')), "\"U+0061\"");
@@ -287,7 +287,7 @@ TEST(JsonCodec, JsonConsumerCodePoint) {
 
 // `JsonProducer` ...........................................................................................
 
-TEST(JsonCodec, JsonProducerBool) {
+TEST(JsonCodec, ProducerBool) {
   EXPECT_EQ(decode<bool>("// sup\ntrue"), true);
   EXPECT_EQ(decode<bool>("  /* comment\nanother line in the comment */\r\n\ttrue"), true);
   EXPECT_EQ(decode<bool>("\r\n  true"), true);
@@ -295,7 +295,7 @@ TEST(JsonCodec, JsonProducerBool) {
   EXPECT_EQ(decode<bool>("\r\nx").error().message, "Expected a boolean value");
 }
 
-TEST(JsonCodec, JsonProducerChar) {
+TEST(JsonCodec, ProducerChar) {
   EXPECT_EQ(decode<char>("\"a\""), 'a');
   EXPECT_EQ(decode<char>("\"'\""), '\'');
   EXPECT_EQ(decode<char>("\"\\t\""), '\t');
@@ -304,7 +304,7 @@ TEST(JsonCodec, JsonProducerChar) {
   EXPECT_EQ(decode<char>("  \"\\xFF\"").error().message, "Invalid character literal");
 }
 
-TEST(JsonCodec, JsonProducerChar32) {
+TEST(JsonCodec, ProducerChar32) {
   EXPECT_EQ(decode<char32>("\"ä\""), U'ä');
   EXPECT_EQ(decode<char32>("\"\\u20ac\""), U'€');
   EXPECT_EQ(decode<char32>("\"\\U0010FFFF\""), U'\U0010FFFF');
@@ -313,7 +313,7 @@ TEST(JsonCodec, JsonProducerChar32) {
   EXPECT_EQ(decode<char32>("  \"\\x800D\"").error().message, "Invalid character literal");
 }
 
-TEST(JsonCodec, JsonProducerEnum) {
+TEST(JsonCodec, ProducerEnum) {
   enum Color : u8 { Red, Green, Blue };
 
   EXPECT_THAT(decode<Color>("2").error().message, matchesRegex("Cannot scan enum of type `.*Color`"));
@@ -324,7 +324,7 @@ TEST(JsonCodec, JsonProducerEnum) {
     "Invalid value for enum `rocket::log::LogLevel`");
 }
 
-TEST(JsonCodec, JsonProducerInteger) {
+TEST(JsonCodec, ProducerInteger) {
   EXPECT_EQ(decode<i32>("-42"), -42);
   EXPECT_EQ(decode<i32>("0xABcd"), 0xABCD);
   EXPECT_EQ(decode<i32>("077"), 077);
@@ -334,7 +334,7 @@ TEST(JsonCodec, JsonProducerInteger) {
   EXPECT_EQ(decode<i32>("  x").error().message, "Expected an integer value");
 }
 
-TEST(JsonCodec, JsonProducerFloat) {
+TEST(JsonCodec, ProducerFloat) {
   using type = f64;
   using limits = numeric_limits<type>;
 
@@ -347,25 +347,25 @@ TEST(JsonCodec, JsonProducerFloat) {
   EXPECT_TRUE(isnan(decode<type>("NaN").value()));
 }
 
-TEST(JsonCodec, JsonProducerPointer) {
+TEST(JsonCodec, ProducerPointer) {
   EXPECT_EQ(decodeAndTell<void*>("  null  "), make_pair(static_cast<void*>(0), 6_u64)); // NOLINT
   EXPECT_EQ(
     decodeAndTell<void*>("  \"0x12345678\"  "),
     make_pair(reinterpret_cast<void*>(0x12345678), 14_u64));
 }
 
-TEST(JsonCodec, JsonProducerOptionalString) {
+TEST(JsonCodec, ProducerOptionalString) {
   using type = optional<string>;
   EXPECT_EQ(decode<type>("  null  "), nullopt);
 }
 
-TEST(JsonCodec, JsonProducerOptionalStringView) {
+TEST(JsonCodec, ProducerOptionalStringView) {
   const JsonCodec codec;
   nio::StringSource in("\"Hello\""); // The source must remain valid for the string view
   EXPECT_EQ(codec.decode<optional<basic_string_view<char32>>>(in), U"Hello"sv);
 }
 
-TEST(JsonCodec, JsonProducerTuple) {
+TEST(JsonCodec, ProducerTuple) {
   EXPECT_EQ((decode<pair<string, i32>>("  [  \"answer\"   , 42   ]")), make_pair("answer"s, 42_i32));
   EXPECT_EQ(
     (decode<pair<string, i32>>("  [  // comment\n \"answer\"   , 42  /* comment */  , // comment\n  ]")),
@@ -374,7 +374,7 @@ TEST(JsonCodec, JsonProducerTuple) {
   EXPECT_EQ((decode<tuple<i32, i32, bool>>("[1, 2, true]")), make_tuple(1_i32, 2_i32, true));
 }
 
-TEST(JsonCodec, JsonProducerList) {
+TEST(JsonCodec, ProducerList) {
   EXPECT_EQ((decode<array<i32, 3>>("  [ 1, 2, 3   ]")), (array<i32, 3> { 1, 2, 3 }));
   EXPECT_EQ((decode<array<i32, 3>>("  [ 1, 2, 3   , ]")), (array<i32, 3> { 1, 2, 3 }));
   EXPECT_EQ((decode<list<i32>>("  [ 1, 2, 3   , ]")), (list<i32> { 1, 2, 3 }));
@@ -384,11 +384,11 @@ TEST(JsonCodec, JsonProducerList) {
   EXPECT_EQ((decode<vector<i32>>("  [ 1, 2, 3   , ]")), (vector<i32> { 1, 2, 3 }));
 }
 
-TEST(JsonCodec, JsonProducerSet) {
+TEST(JsonCodec, ProducerSet) {
   EXPECT_EQ((decode<set<i32>>("  [ 3, 2, 1  ,  ]   ")), (set<i32> { 1, 2, 3 }));
 }
 
-TEST(JsonCodec, JsonProducerMap) {
+TEST(JsonCodec, ProducerMap) {
   using type = std::map<i32, string>;
 
   // Test last one wins
@@ -397,7 +397,7 @@ TEST(JsonCodec, JsonProducerMap) {
     (type { { 1, "alpha" }, { 2, "beta" }, { 3, "gamma" } }));
 }
 
-TEST(JsonCodec, JsonProducerBimap) {
+TEST(JsonCodec, ProducerBimap) {
   using type = Bimap<string, i32>;
   // Test last one wins
   EXPECT_EQ(
@@ -406,7 +406,7 @@ TEST(JsonCodec, JsonProducerBimap) {
     (makeBimap<string, i32>({ { "alpha", 1 }, { "beta", 2 }, { "gamma", 3 } })));
 }
 
-TEST(JsonCodec, JsonProducerBimapUnordered) {
+TEST(JsonCodec, ProducerBimapUnordered) {
   using type = UnorderedBimap<string, i32>;
   // Test last one wins
   EXPECT_EQ(
@@ -414,7 +414,7 @@ TEST(JsonCodec, JsonProducerBimapUnordered) {
     (makeUnorderedBimap<string, i32>({ { "alpha", 1 }, { "beta", 2 }, { "gamma", 3 } })));
 }
 
-TEST(JsonCodec, JsonProducerDuration) {
+TEST(JsonCodec, ProducerDuration) {
   using namespace std::chrono;
 
   EXPECT_EQ(decode<milliseconds>("\"1s\""), 1000ms);
@@ -428,7 +428,7 @@ TEST(JsonCodec, JsonProducerDuration) {
   EXPECT_EQ(decode<seconds>("\"10x\"").error().message, "Expected a time unit");
 }
 
-TEST(JsonCodec, JsonProducerHourMinuteSecond) {
+TEST(JsonCodec, ProducerHourMinuteSecond) {
   using namespace std::chrono;
 
   EXPECT_EQ(
@@ -455,7 +455,7 @@ TEST(JsonCodec, JsonProducerHourMinuteSecond) {
   EXPECT_EQ(decode<hh_mm_ss<milliseconds>>("\"01:02:03.\"").error().message, "Expected subseconds");
 }
 
-TEST(JsonCodec, JsonProducerDate) {
+TEST(JsonCodec, ProducerDate) {
   using namespace std::chrono;
 
   EXPECT_EQ(decode<year_month_day>("\"1970-01-02\""), (year_month_day { 1970y, January, 2d }));
@@ -465,7 +465,7 @@ TEST(JsonCodec, JsonProducerDate) {
   EXPECT_EQ(decode<year_month_day>("\"x\"").error().message, "Expected a date");
 }
 
-TEST(JsonCodec, JsonProducerTimeZone) {
+TEST(JsonCodec, ProducerTimeZone) {
   using namespace std::chrono;
 
   EXPECT_EQ(decode<TimeZone>("\"Europe/Berlin\""), locate_zone("Europe/Berlin"));
@@ -477,7 +477,7 @@ TEST(JsonCodec, JsonProducerTimeZone) {
     StrEq("unable to locate time_zone with given name"))); // Windows
 }
 
-TEST(JsonCodec, JsonProducerTime) {
+TEST(JsonCodec, ProducerTime) {
   using namespace std::chrono;
 
   using TimePoint = time_point<system_clock, nanoseconds>;
@@ -492,7 +492,7 @@ TEST(JsonCodec, JsonProducerTime) {
   EXPECT_EQ(val2.time_since_epoch().count(), val1.time_since_epoch().count());
 }
 
-TEST(JsonCodec, JsonProducerZonedTime) {
+TEST(JsonCodec, ProducerZonedTime) {
   using namespace std::chrono;
 
   using ZonedTime = zoned_time<nanoseconds>;
@@ -508,7 +508,7 @@ TEST(JsonCodec, JsonProducerZonedTime) {
   EXPECT_EQ(val2, val1);
 }
 
-TEST(JsonCodec, JsonProducerInterval) {
+TEST(JsonCodec, ProducerInterval) {
   using namespace rocket::math;
   EXPECT_EQ(decode<ClosedInterval<f64>>("[-4.2, 4.2]"), ClosedInterval<f64>(-4.2_f64, 4.2_f64));
   EXPECT_EQ(decode<OpenInterval<f64>>("null"), OpenInterval<f64>());
@@ -517,7 +517,7 @@ TEST(JsonCodec, JsonProducerInterval) {
     OpenInterval<i64>(nullopt, nullopt));
 }
 
-TEST(JsonCodec, JsonProducerDeclared) {
+TEST(JsonCodec, ProducerDeclared) {
   // Test last one wins
   EXPECT_EQ(
     (decode<MyStruct>(
@@ -539,7 +539,7 @@ TEST(JsonCodec, JsonProducerDeclared) {
   EXPECT_EQ(decode<MyStruct>("{\"ärger\": 42, \"bogus\": 1}").error().message, "Unknown member `bogus`");
 }
 
-TEST(JsonCodec, JsonProducerDeclaredFileSource) {
+TEST(JsonCodec, ProducerDeclaredFileSource) {
   const auto path = testSource("test-JsonCodec-MyStruct.json");
 
   string input;
@@ -570,7 +570,7 @@ TEST(JsonCodec, JsonProducerDeclaredFileSource) {
   EXPECT_EQ(val.vec, (vector<i32> { 10, 9, 8, 7, 6, 5, 4, 3, 2, 1 }));
 }
 
-TEST(JsonCodec, JsonProducerInstance) {
+TEST(JsonCodec, ProducerInstance) {
   using type = reflect::Instance<MyStruct, MyStruct::Three>;
   const MyStruct val { 42, true, "hello" };
   EXPECT_EQ(
@@ -578,7 +578,7 @@ TEST(JsonCodec, JsonProducerInstance) {
     (type(val)));
 }
 
-TEST(JsonCodec, JsonProducerCodePoint) {
+TEST(JsonCodec, ProducerCodePoint) {
   using type = unicode::CodePoint;
   EXPECT_EQ(decode<type>("\"a\""), type('a'));
   EXPECT_EQ(decode<type>("\"€\""), type(U'€'));

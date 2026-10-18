@@ -91,23 +91,23 @@ Iterator<C>::Iterator(IteratorType type, basic_string_view<C> input, const local
 
   UErrorCode status = U_ZERO_ERROR;
   switch (type) {
-  case IteratorType::Character:
-    iter.reset(icu::BreakIterator::createCharacterInstance(icuLoc, status));
-    break;
-  case IteratorType::Line:
-    iter.reset(icu::BreakIterator::createLineInstance(icuLoc, status));
-    break;
-  case IteratorType::Sentence:
-    iter.reset(icu::BreakIterator::createSentenceInstance(icuLoc, status));
-    break;
-  case IteratorType::Title:
-    iter.reset(icu::BreakIterator::createTitleInstance(icuLoc, status));
-    break;
-  case IteratorType::Word:
-    iter.reset(icu::BreakIterator::createWordInstance(icuLoc, status));
-    break;
-  default:
-    ROCKET_FLOP(type, "Invalid iterator type {}", static_cast<i32>(type));
+    case IteratorType::Character:
+      iter.reset(icu::BreakIterator::createCharacterInstance(icuLoc, status));
+      break;
+    case IteratorType::Line:
+      iter.reset(icu::BreakIterator::createLineInstance(icuLoc, status));
+      break;
+    case IteratorType::Sentence:
+      iter.reset(icu::BreakIterator::createSentenceInstance(icuLoc, status));
+      break;
+    case IteratorType::Title:
+      iter.reset(icu::BreakIterator::createTitleInstance(icuLoc, status));
+      break;
+    case IteratorType::Word:
+      iter.reset(icu::BreakIterator::createWordInstance(icuLoc, status));
+      break;
+    default:
+      ROCKET_FLOP(type, "Invalid iterator type {}", static_cast<i32>(type));
   }
   ROCKET_EXPECT(U_SUCCESS(status));
 
