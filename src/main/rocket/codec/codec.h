@@ -386,12 +386,13 @@ struct Encoder {
    * Encodes a value.
    *
    * @tparam T the type to encode
+   * @tparam U the type the consumer actually consumes for `T`
    * @tparam Args types of additional arguments to pass to the consumer
    * @param val the value to encode
    * @param args additional arguments to pass to the consumer
    * @return whatever the consumer returns
    */
-  template<typename T, typename... Args>
+  template<typename T, typename U = T, typename... Args>
   auto // NOLINT
   encode(const T& val, Args&&... args) const {
     constexpr auto Value = DataTypes<Purge<T>>::Value;
@@ -427,17 +428,18 @@ struct Decoder {
    * Decodes a value.
    *
    * @tparam T the type to decode
+   * @tparam U the type the producer actually produces for `T`
    * @tparam Args types of additional arguments to pass to the producer
    * @param args additional arguments to pass to the producer
    * @return the decoded value
    */
-  template<typename T, typename... Args>
-  [[nodiscard]] DecodeResult<T>
+  template<typename T, typename U = T, typename... Args>
+  [[nodiscard]] DecodeResult<U>
   decode(Args&&... args) const {
     constexpr auto Value = DataTypes<Purge<T>>::Value;
     using ProducerType = Producer::template Type<Value, T>;
     ProducerType producer; // NOLINT
-    T val; // NOLINT
+    U val; // NOLINT
     try {
       producer.produce(val, std::forward<Args>(args)...);
     } catch (const InputFailure& ex) {

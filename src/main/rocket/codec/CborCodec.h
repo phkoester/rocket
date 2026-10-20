@@ -14,6 +14,48 @@ namespace rocket::codec {
 
 namespace internal::cbor {
 
+// `CborItem` -----------------------------------------------------------------------------------------------
+
+/**
+ * A managed CBOR item with move semantics. It helps to avoid leaks when exceptions are thrown. More
+ * generally, it serves as a bridge between a C API and the Rocket codec API that uses exceptions.
+ */
+template<typename T>
+struct CborItem {
+  cbor_item_t* ptr;
+  T val;
+
+  CborItem() : ptr(nullptr), val() {}
+
+  CborItem(cbor_item_t* ptr, const T& val) : ptr(ptr), val(std::move(val)) {
+    ROCKET_CHECK(ptr, ptr != nullptr);
+  }
+
+  CborItem(CborItem&& rhs) noexcept : ptr(rhs.ptr), val(std::move(rhs.val)) {
+    rhs.ptr = nullptr;
+  }
+
+  CborItem&
+  operator=(CborItem&& rhs) noexcept {
+    ptr = rhs.ptr;
+    val = std::move(rhs.val);
+    rhs.ptr = nullptr;
+    return *this;
+  }
+
+  ~CborItem() {
+    if (ptr != nullptr) {
+      cbor_decref(&ptr);
+      ROCKET_ASSERT(ptr == nullptr);
+    }
+  }
+};
+
+// Functions ------------------------------------------------------------------------------------------------
+
+/// Throws an `InputFailure`.
+void fail(nio::Source& in, const cbor_load_result& result, const std::optional<std::string_view>& message);
+
 // `CborConsumerImpl` ---------------------------------------------------------------------------------------
 
 template<DataType DataType, typename T>
@@ -21,20 +63,20 @@ struct CborConsumerImpl;
 
 template<>
 struct CborConsumerImpl<DataType::Bool, bool> {
-  cbor_item_t*
+  CborItem<bool>
   consume(bool val) const {
-    return cbor_build_bool(val);
+    return CborItem(cbor_build_bool(val), val);
   }
 };
 
 template<typename C>
 struct CborConsumerImpl<DataType::Char, C> {
-  cbor_item_t*
+  CborItem<C>
   consume(C val) const {
     if constexpr (std::same_as<C, char>) {
-      return cbor_build_uint8(static_cast<u8>(val));
+      return CborItem(cbor_build_uint8(static_cast<u8>(val)), val);
     } else {
-      return cbor_build_uint16(static_cast<u16>(val));
+      return CborItem(cbor_build_uint16(static_cast<u16>(val)), val);
     }
   }
 };
@@ -44,27 +86,29 @@ struct CborConsumerImpl<DataType::Enum, E> {
   using Underlying = std::underlying_type_t<E>;
   static constexpr auto UnderlyingDataType = DataTypes<Underlying>::Value;
 
-  cbor_item_t*
+  CborItem<E>
   consume(E val) const {
-    return CborConsumerImpl<UnderlyingDataType, Underlying>().consume(static_cast<Underlying>(val));
+    return CborItem(
+      CborConsumerImpl<UnderlyingDataType, Underlying>().consume(static_cast<Underlying>(val)),
+      val);
   }
 };
 
 template<typename I>
 struct CborConsumerImpl<DataType::Integer, I> {
-  cbor_item_t*
+  CborItem<I>
   consume(I val) const {
     switch (sizeof(I)) {
-      case 1: return cbor_build_uint8(static_cast<u8>(val));
-      case 2: return cbor_build_uint16(static_cast<u16>(val));
-      case 4: return cbor_build_uint32(static_cast<u32>(val));
-      case 8: return cbor_build_uint64(static_cast<u64>(val));
+      case 1: return CborItem(cbor_build_uint8(static_cast<u8>(val)), val);
+      case 2: return CborItem(cbor_build_uint16(static_cast<u16>(val)), val);
+      case 4: return CborItem(cbor_build_uint32(static_cast<u32>(val)), val);
+      case 8: return CborItem(cbor_build_uint64(static_cast<u64>(val)), val);
       case 16: {
-        auto* ret = cbor_new_definite_array(2);
-        ROCKET_ASSERT(
-          cbor_array_push(ret, cbor_move(cbor_build_uint64(static_cast<u64>(val >> 64))))); // High 8 bytes
-        ROCKET_ASSERT(
-          cbor_array_push(ret, cbor_move(cbor_build_uint64(static_cast<u64>(val))))); // Low 8 bytes
+        CborItem ret(cbor_new_definite_array(2), val);
+        CborItem hi(cbor_build_uint64(static_cast<u64>(val >> 64)), val);
+        CborItem lo(cbor_build_uint64(static_cast<u64>(val)), val);
+        ROCKET_EXPECT(cbor_array_push(ret, cbor_move(hi.ptr)), "Failed to push `hi`");
+        ROCKET_EXPECT(cbor_array_push(ret, cbor_move(lo.ptr)), "Failed to push `lo`");
         return ret;
       }
     }
@@ -74,11 +118,11 @@ struct CborConsumerImpl<DataType::Integer, I> {
 
 template<typename F>
 struct CborConsumerImpl<DataType::Float, F> {
-  cbor_item_t*
+  CborItem<F>
   consume(F val) const {
     switch (sizeof(F)) {
-      case 4: return cbor_build_float2(static_cast<f32>(val));
-      case 8: return cbor_build_float4(static_cast<f64>(val));
+      case 4: return CborItem(cbor_build_float2(static_cast<f32>(val)), val);
+      case 8: return CborItem(cbor_build_float4(static_cast<f64>(val)), val);
     }
     ROCKET_FAIL("Cannot consume float of type `{}`", typeid(F));
   }
@@ -407,116 +451,22 @@ struct CborConsumerImpl<DataType::Character, T> {
 template<DataType DataType, typename T>
 struct CborProducerImpl;
 
-template<typename Key>
-void
-readJsonKey(Key& key, nio::Source& in) {
-  constexpr auto KeyDataType = DataTypes<Key>::Value;
-  if constexpr (KeyDataType == DataType::String) {
-    CborProducerImpl<KeyDataType, Key>().produce(key, in);
-  } else {
-    const auto pos = in.tell();
-
-    // Read JSON string and create an inner source for it
-    Positions positions;
-    const auto input = readJsonString(in, positions);
-    nio::StringSource inner(input);
-    const auto inPos = [pos, &positions](u64 innnerPos) -> u64 {
-      return jsonStringOffset(pos, innnerPos, positions);
-    };
-
-    try {
-      CborProducerImpl<KeyDataType, Key>().produce(key, inner);
-    } catch (const InputFailure& ex) {
-      throw InputFailure(inPos(ex.position()), ex.message());
-    }
-  }
-}
-
-/**
- * Produces a single member of @p instance if the name of the member reference @p ref matches @p name.
- * Returns whether the name matched, so callers can fold over a tuple of member references.
- */
-template<typename Ref, typename C>
-bool
-produceMember(const Ref& ref, std::string_view name, C& instance, nio::Source& in) {
-  if (ref.name() != name) {
-    return false;
-  }
-  using Elem = Ref::Type;
-  constexpr auto ElemDataType = DataTypes<Elem>::Value;
-  CborProducerImpl<ElemDataType, Elem>().produce(ref.get(instance), in);
-  return true;
-}
-
-/**
- * Produces the members of @p instance from a JSON object of `"name": value` entries, using the member
- * references in @p refs to look up each name.
- *
- * Unlike the tuple producer, the entries may appear in any order, and entries may be missing altogether, in
- * which case the corresponding members of @p instance are left untouched. An entry whose name does not match
- * any member reference is an error.
- */
-template<typename Refs, typename C>
-void
-produceMembers(const Refs& refs, C& instance, nio::Source& in) {
-  skip(in);
-  const auto pos = in.tell();
-
-  if (not readChar(in, '{')) {
-    throw InputFailure(pos, "Expected an object");
-  }
-
-  u64 index = 0;
-  while (true) {
-    skip(in);
-    if (readChar(in, '}')) {
-      return;
-    }
-    if (index++ > 0) {
-      expectComma(in);
-      skip(in);
-      if (readChar(in, '}')) { // Allow trailing comma if nonempty
-        return;
-      }
-    }
-
-    // Read the member name
-
-    const auto namePos = in.tell();
-    std::string name;
-    readJsonKey(name, in);
-    skip(in);
-
-    expectColon(in);
-    skip(in);
-
-    // Look up the member reference by name and produce the member
-
-    const bool found = std::apply([&](const auto&... ref) {
-      return (produceMember(ref, name, instance, in) || ...);
-    }, refs);
-    if (not found) {
-      throw InputFailure(namePos, fmt::format("Unknown member `{}`", name));
-    }
-  }
-}
-
 template<>
 struct CborProducerImpl<DataType::Bool, bool> {
   void
-  produce(bool& val, nio::Source& in) const {
-    skip(in);
-    const auto pos = in.tell();
-
-    if (readString(in, "false")) {
-      val = false;
-      return;
+  produce(CborItem<bool>& val, nio::ContiguousSource& in) const {
+    auto buf = in.bytes();
+    cbor_load_result result;
+    cbor_item_t* ptr = cbor_load(buf.data(), buf.size(), &result);
+    if (result.error.code != CBOR_ERR_NONE) {
+      ROCKET_ASSERT(ptr == nullptr);
+      fail(in, result, {});
     }
-    if (readString(in, "true")) {
-      val = true;
-      return;
+    if (not cbor_is_bool(ptr)) {
+      fail(in, result, "Expected a boolean value");
     }
-    throw InputFailure(pos, "Expected a boolean value");
+    in.seek(result.read, nio::SeekMode::cur);
+    val = CborItem(ptr, cbor_get_bool(ptr));
   }
 };
 
@@ -1432,7 +1382,7 @@ struct CborProducerImpl<DataType::Character, T> {
 
 // `CborConsumer` -------------------------------------------------------------------------------------------
 
-/// The consumer for #rocket::codec::Cborodec.
+/// The consumer for #rocket::codec::CborCodec.
 struct CborConsumer {
   /// @type_alias
   template<DataType DataType, typename T>
@@ -1468,34 +1418,44 @@ struct CborCodec : Codec<CborConsumer, CborProducer> {
   template<typename T>
   std::vector<u8>
   encode(const T& val) const {
-    cbor_item_t* item = Base::encode(val);
+    using namespace internal::cbor;
 
+    // Delegate to the consumer
+    CborItem<T> item = Base::template encode<T, CborItem<T>>(val);
+
+    // Now serialize the item and create a byte vector for it
     unsigned char* buf;
     u64 bufSize;
-    cbor_serialize_alloc(item, &buf, &bufSize);
-    // @improve Don't use a vector here and avoid copying. Ideally, we would return some sort of an immutable
+    cbor_serialize_alloc(item.ptr, &buf, &bufSize);
+    // @improve Avoid copying and use the buffer directly. Ideally, we would return some sort of an immutable
     // view that calls `free` on destruction
-    vector<u8> ret(buf, buf + bufSize);
-
-    free(buf);
-    cbor_dec_ref(&item);
-    ROCKET_ASSSERT(item == nullptr);
+    std::vector<u8> ret(buf, buf + bufSize);
 
     return ret;
   }
 
   /**
-   * Decodes a value from a source.
+   * Decodes a value from a source.    using namespace internal::cbor;
    *
    * @tparam T the type to decode
-   * @param in the input source
+   * @param cbor the CBOR input byte sequence to decode
    * @return the decoded value
    * @throw #std::exception if the value cannot be decoded
    */
   template<typename T>
   [[nodiscard]] DecodeResult<T>
-  decode(nio::Source& in) const {
-    return Base::decode<T>(in);
+  decode(std::span<const u8> cbor) const {
+    using namespace internal::cbor;
+
+    // Create a source from the byte sequence
+    nio::SpanSource in(cbor);
+
+    // Delegate to the producer, and we're done
+    DecodeResult<CborItem<T>> result = Base::decode<T, CborItem<T>>(in);
+    if (not result) {
+      return std::unexpected(result.error());
+    }
+    return result.value().val;
   }
 };
 

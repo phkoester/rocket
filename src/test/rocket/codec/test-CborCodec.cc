@@ -8,14 +8,28 @@
 
 using namespace rocket::codec;
 
+namespace {
+
+// Local functions ------------------------------------------------------------------------------------------
+
+template<typename T>
+void
+testRoundtrip(const T& val) {
+  CborCodec codec;
+  vector<u8> cbor = codec.encode(val);
+  const auto result = codec.decode<T>(cbor);
+  ROCKET_EXPECT(result.has_value());
+  const T& decodedVal = result.value();
+  EXPECT_EQ(decodedVal, val);
+}
+
+} // namespace
+
 // `TEST` ---------------------------------------------------------------------------------------------------
 
 TEST(CborCodec, ConsumerBool) {
-  bool val = true;
-  nio::StringSink sink;
-  CborCodec codec;
-  codec.encode(val, sink);
-  EXPECT_EQ(sink.str(), "t");
+  testRoundtrip(false);
+  testRoundtrip(true);
 }
 
 // EOF

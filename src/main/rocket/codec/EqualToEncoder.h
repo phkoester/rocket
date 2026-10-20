@@ -478,7 +478,15 @@ struct EqualToConsumer {
  *   including 128-bit data types, and strings.
  */
 template<typename Eq = StdEqualTo>
-using EqualToEncoder = Encoder<EqualToConsumer<Eq>>;
+struct EqualToEncoder : Encoder<EqualToConsumer<Eq>> {
+  using Base = Encoder<EqualToConsumer<Eq>>;
+
+  template<typename T>
+  auto
+  encode(const T& lhs, const T& rhs) const {
+    return Base::template encode<T>(lhs, rhs);
+  }
+};
 
 } // namespace rocket::codec
 

@@ -487,7 +487,15 @@ struct CompareConsumer {
  *   #std::weak_ordering, or #std::partial_ordering.
  */
 template<typename Cmp = StdCompare>
-using CompareEncoder = Encoder<CompareConsumer<Cmp>>;
+struct CompareEncoder : Encoder<CompareConsumer<Cmp>> {
+  using Base = Encoder<CompareConsumer<Cmp>>;
+
+  template<typename T>
+  auto
+  encode(const T& lhs, const T& rhs) const {
+    return Base::template encode<T>(lhs, rhs);
+  }
+};
 
 } // namespace rocket::codec
 
