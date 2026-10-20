@@ -6,6 +6,7 @@
 
 #pragma once
 
+#include "rocket/Guard.h"
 #include "rocket/codec/codec.h"
 
 #include <cbor.h>
@@ -18,43 +19,59 @@ namespace internal::cbor {
 
 /**
  * A managed CBOR item with move semantics. It helps to avoid leaks when exceptions are thrown. More
- * generally, it serves as a bridge between a C API and the Rocket codec API that uses exceptions.
+ * generally, it serves as a bridge between a C API and the Rocket codec producers and consumers that use
+ * exceptions.
  */
 template<typename T>
 struct CborItem {
-  cbor_item_t* ptr;
-  T val;
+  cbor_item_t* ptr; ///< The managed CBOR item.
 
-  CborItem() : ptr(nullptr), val() {}
+  CborItem() : ptr(nullptr) {}
 
-  CborItem(cbor_item_t* ptr, const T& val) : ptr(ptr), val(std::move(val)) {
+  /// This is for consumers only.
+  CborItem(cbor_item_t* ptr) : ptr(ptr) {
     ROCKET_CHECK(ptr, ptr != nullptr);
   }
 
-  CborItem(CborItem&& rhs) noexcept : ptr(rhs.ptr), val(std::move(rhs.val)) {
+  CborItem(cbor_item_t* ptr, T&& val) : ptr(ptr), val_(std::move(val)) {
+    ROCKET_CHECK(ptr, ptr != nullptr);
+  }
+
+  CborItem(CborItem&& rhs) noexcept : ptr(rhs.ptr), val_(std::move(rhs.val_)) {
     rhs.ptr = nullptr;
   }
 
   CborItem&
   operator=(CborItem&& rhs) noexcept {
     ptr = rhs.ptr;
-    val = std::move(rhs.val);
+    val_ = std::move(rhs.val_);
     rhs.ptr = nullptr;
     return *this;
   }
 
   ~CborItem() {
     if (ptr != nullptr) {
+      ROCKET_ASSERT(cbor_refcount(ptr) == 1);
       cbor_decref(&ptr);
       ROCKET_ASSERT(ptr == nullptr);
     }
   }
+
+  /// This is a one-shot move operation.
+  T value() {
+    T val(std::move(val_.value()));
+    val_ = std::nullopt;
+    return val;
+  }
+
+private:
+
+  std::optional<T> val_; ///< The carried C++ value. This is only for producers.
 };
 
 // Functions ------------------------------------------------------------------------------------------------
 
-/// Throws an `InputFailure`.
-void fail(nio::Source& in, const cbor_load_result& result, const std::optional<std::string_view>& message);
+cbor_item_t* loadItem(nio::ContiguousSource& in);
 
 // `CborConsumerImpl` ---------------------------------------------------------------------------------------
 
@@ -65,7 +82,7 @@ template<>
 struct CborConsumerImpl<DataType::Bool, bool> {
   CborItem<bool>
   consume(bool val) const {
-    return CborItem(cbor_build_bool(val), val);
+    return cbor_build_bool(val);
   }
 };
 
@@ -74,9 +91,9 @@ struct CborConsumerImpl<DataType::Char, C> {
   CborItem<C>
   consume(C val) const {
     if constexpr (std::same_as<C, char>) {
-      return CborItem(cbor_build_uint8(static_cast<u8>(val)), val);
+      return cbor_build_uint8(static_cast<u8>(val));
     } else {
-      return CborItem(cbor_build_uint16(static_cast<u16>(val)), val);
+      return cbor_build_uint16(static_cast<u16>(val));
     }
   }
 };
@@ -88,9 +105,7 @@ struct CborConsumerImpl<DataType::Enum, E> {
 
   CborItem<E>
   consume(E val) const {
-    return CborItem(
-      CborConsumerImpl<UnderlyingDataType, Underlying>().consume(static_cast<Underlying>(val)),
-      val);
+    return CborConsumerImpl<UnderlyingDataType, Underlying>().consume(val);
   }
 };
 
@@ -99,14 +114,14 @@ struct CborConsumerImpl<DataType::Integer, I> {
   CborItem<I>
   consume(I val) const {
     switch (sizeof(I)) {
-      case 1: return CborItem(cbor_build_uint8(static_cast<u8>(val)), val);
-      case 2: return CborItem(cbor_build_uint16(static_cast<u16>(val)), val);
-      case 4: return CborItem(cbor_build_uint32(static_cast<u32>(val)), val);
-      case 8: return CborItem(cbor_build_uint64(static_cast<u64>(val)), val);
+      case 1: return cbor_build_uint8(static_cast<u8>(val));
+      case 2: return cbor_build_uint16(static_cast<u16>(val));
+      case 4: return cbor_build_uint32(static_cast<u32>(val));
+      case 8: return cbor_build_uint64(static_cast<u64>(val));
       case 16: {
-        CborItem ret(cbor_new_definite_array(2), val);
-        CborItem hi(cbor_build_uint64(static_cast<u64>(val >> 64)), val);
-        CborItem lo(cbor_build_uint64(static_cast<u64>(val)), val);
+        CborItem<I> ret(cbor_new_definite_array(2));
+        CborItem<I> hi(cbor_build_uint64(static_cast<u64>(val >> 64)));
+        CborItem<I> lo(cbor_build_uint64(static_cast<u64>(val)));
         ROCKET_EXPECT(cbor_array_push(ret, cbor_move(hi.ptr)), "Failed to push `hi`");
         ROCKET_EXPECT(cbor_array_push(ret, cbor_move(lo.ptr)), "Failed to push `lo`");
         return ret;
@@ -121,8 +136,8 @@ struct CborConsumerImpl<DataType::Float, F> {
   CborItem<F>
   consume(F val) const {
     switch (sizeof(F)) {
-      case 4: return CborItem(cbor_build_float2(static_cast<f32>(val)), val);
-      case 8: return CborItem(cbor_build_float4(static_cast<f64>(val)), val);
+      case 4: return cbor_build_float2(static_cast<f32>(val));
+      case 8: return cbor_build_float4(static_cast<f64>(val));
     }
     ROCKET_FAIL("Cannot consume float of type `{}`", typeid(F));
   }
@@ -455,18 +470,12 @@ template<>
 struct CborProducerImpl<DataType::Bool, bool> {
   void
   produce(CborItem<bool>& val, nio::ContiguousSource& in) const {
-    auto buf = in.bytes();
-    cbor_load_result result;
-    cbor_item_t* ptr = cbor_load(buf.data(), buf.size(), &result);
-    if (result.error.code != CBOR_ERR_NONE) {
-      ROCKET_ASSERT(ptr == nullptr);
-      fail(in, result, {});
+    const auto pos = in.tell();
+    auto* item = loadItem(in);
+    if (not cbor_is_bool(item)) {
+      throw InputFailure(pos, "Expected a boolean value");
     }
-    if (not cbor_is_bool(ptr)) {
-      fail(in, result, "Expected a boolean value");
-    }
-    in.seek(result.read, nio::SeekMode::cur);
-    val = CborItem(ptr, cbor_get_bool(ptr));
+    val = CborItem(item, cbor_get_bool(item));
   }
 };
 
@@ -1421,16 +1430,17 @@ struct CborCodec : Codec<CborConsumer, CborProducer> {
     using namespace internal::cbor;
 
     // Delegate to the consumer
-    CborItem<T> item = Base::template encode<T, CborItem<T>>(val);
+    CborItem<T> item = Base::encode<T, CborItem<T>>(val);
 
     // Now serialize the item and create a byte vector for it
     unsigned char* buf;
     u64 bufSize;
     cbor_serialize_alloc(item.ptr, &buf, &bufSize);
+    ROCKET_EXPECT(bufSize > 0, "Failed to allocate memory");
+    ROCKET_GUARD([&buf] { free(buf); });
     // @improve Avoid copying and use the buffer directly. Ideally, we would return some sort of an immutable
     // view that calls `free` on destruction
     std::vector<u8> ret(buf, buf + bufSize);
-
     return ret;
   }
 
@@ -1455,7 +1465,7 @@ struct CborCodec : Codec<CborConsumer, CborProducer> {
     if (not result) {
       return std::unexpected(result.error());
     }
-    return result.value().val;
+    return result.value().value();
   }
 };
 

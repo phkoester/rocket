@@ -484,7 +484,7 @@ struct EqualToEncoder : Encoder<EqualToConsumer<Eq>> {
   template<typename T>
   auto
   encode(const T& lhs, const T& rhs) const {
-    return Base::template encode<T>(lhs, rhs);
+    return Base::encode(lhs, rhs);
   }
 };
 
