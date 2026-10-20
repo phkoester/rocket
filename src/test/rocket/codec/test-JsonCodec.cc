@@ -117,7 +117,7 @@ TEST(JsonCodec, ConsumerPointer) {
 TEST(JsonCodec, ConsumerString) {
   EXPECT_EQ(encode("Hello"sv), "\"Hello\"");
   EXPECT_EQ(encode(U"Hello"sv), "\"Hello\"");
-  EXPECT_EQ(encode("\x7f"sv), "\"\\u007F\""); // XXX Kein \x?
+  EXPECT_EQ(encode("\x7f"sv), "\"\\u007F\"");
   EXPECT_EQ(encode(U"\u200B"sv), "\"\\u200B\"");
   EXPECT_EQ(encode(U"\U0010FFFF"sv), "\"\U0010FFFF\"");
 }

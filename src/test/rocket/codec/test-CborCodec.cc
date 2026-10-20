@@ -85,8 +85,12 @@ TEST(CborCodec, CborItemArrayAsReturnValue) {
 }
 
 TEST(CborCodec, CborItemAssigningToArray) {
-  CborItem<pair<u32, u32>> array;
-  assignToCborItemArray(array);
+  {
+    CborItem<pair<u32, u32>> array;
+    assignToCborItemArray(array);
+  }
+
+  nio::out.println("end of CborCodec.CborItemAssigningToArray");
 }
 
 // `CborCodec` ..............................................................................................

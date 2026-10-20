@@ -43,10 +43,8 @@ struct CborItem {
 
   ~CborItem() {
     if (ptr_ != nullptr) {
-      nio::out.println("dtor, refcount: {}", cbor_refcount(ptr_));
       ROCKET_ASSERT(cbor_refcount(ptr_) > 0);
       cbor_decref(&ptr_);
-      nio::out.println("end of dtor");
     }
     val_ = std::nullopt;
   }
@@ -178,15 +176,11 @@ struct CborConsumerImpl<DataType::Integer, I> {
     } else if constexpr (sizeof(I) == 8) {
       return cbor_build_uint64(static_cast<u64>(val));
     } else if constexpr (sizeof(I) == 16) {
-      nio::out.println("consuming 128");
       CborItem<I> ret(cbor_new_definite_array(2));
       CborItem<u64> hi = cbor_build_uint64(static_cast<u64>(val >> 64));
       ROCKET_EXPECT(cbor_array_push(ret.ptr(), hi.ptr()));
       CborItem<I> lo = cbor_build_uint64(static_cast<u64>(val));
       ROCKET_EXPECT(cbor_array_push(ret.ptr(), lo.ptr()));
-      nio::out.println("ret refcount: {}", cbor_refcount(ret.ptr()));
-      nio::out.println("hi refcount: {}", cbor_refcount(hi.ptr()));
-      nio::out.println("lo refcount: {}", cbor_refcount(lo.ptr()));
       return ret;
     } else {
       ROCKET_FAIL("Cannot consume integer of type `{}`", typeid(I));
@@ -605,7 +599,6 @@ struct CborProducerImpl<DataType::Integer, I> {
         return;
       }
     } else if constexpr (sizeof(I) == 16) {
-      nio::out.println("producing 128");
       if (cbor_isa_array(item.ptr()) && cbor_array_size(item.ptr()) == 2) {
         CborItem<u64> hi = cbor_array_get(item.ptr(), 0);
         CborItem<u64> lo = cbor_array_get(item.ptr(), 1);
@@ -613,7 +606,6 @@ struct CborProducerImpl<DataType::Integer, I> {
         val128 <<= 64;
         val128 |= cbor_get_uint64(lo.ptr());
         val = item.withValue(static_cast<I>(val128));
-        nio::out.println("produced 128, val refcount: {}", cbor_refcount(val.ptr()));
         return;
       }
     } else {
