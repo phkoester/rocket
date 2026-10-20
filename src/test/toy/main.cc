@@ -220,51 +220,6 @@ void reference_ownership() {
 }
 // Part 5: End
 
-void mine() {
-  nio::out.println("Doing mine ...");
-
-  // encode
-  auto* item = cbor_build_bool(true);
-  unsigned char* buffer;
-  size_t buffer_size;
-  cbor_serialize_alloc(item, &buffer, &buffer_size);
-
-  // decode
-  struct cbor_load_result result;
-  cbor_item_t* decoded_item = cbor_load(buffer, buffer_size, &result);
-  assert(result.error.code == CBOR_ERR_NONE);
-  assert(cbor_is_bool(decoded_item));
-  assert(cbor_get_bool(decoded_item) == true);
-
-  free(buffer);
-
-  ROCKET_ASSERT(cbor_refcount(decoded_item) == 1);
-  cbor_decref(&decoded_item);
-  ROCKET_ASSERT(decoded_item == nullptr);
-  ROCKET_ASSERT(cbor_refcount(item) == 1);
-  cbor_decref(&item);
-  ROCKET_ASSERT(item == nullptr);
-
-  nio::out.println("done mine");
-}
-
-bool
-doTheCbor() {
-  nio::out.println("Doing the CBOR ...");
-
-#if 0
-  item_examples();
-  encode_decode();
-  reference_counting();
-  moving_values();
-  reference_ownership();
-#endif
-
-  nio::out.println("Done the CBOR");
-
-  return true;
-}
-
 namespace {
 
 // Local variables ------------------------------------------------------------------------------------------
@@ -284,22 +239,17 @@ myTerminate() {
   // out.println("myTerminate");
 }
 
-recursive_mutex toyMutex;
-
 void
 toy() {
-  using namespace std::chrono;
+  cbor_item_t* array = cbor_new_definite_array(2);
+  cbor_item_t* item0 = cbor_build_uint8(42);
+  ROCKET_EXPECT(cbor_array_push(array, item0));
+  cbor_item_t* item1 = cbor_build_uint8(42);
+  ROCKET_EXPECT(cbor_array_push(array, item1));
 
-  ROCKET_LOG(toy);
-
-  nio::out.println("tellg signed: {}", std::is_signed_v<std::ios::pos_type>);
-  nio::out.println("tellg unsigned: {}", std::is_unsigned_v<std::ios::pos_type>);
-
-  ROCKET_LOG_TRACE("Hey {}", "there");
-
-  ROCKET_MUTEX_LOCK(toyMutex);
-  ROCKET_MUTEX_LOCK(toyMutex);
-  out.println("Got lock");
+  nio::out.println("array refcount: {}", cbor_refcount(array));
+  nio::out.println("item0 refcount: {}", cbor_refcount(item0));
+  nio::out.println("item1 refcount: {}", cbor_refcount(item1));
 }
 
 } // namespace
