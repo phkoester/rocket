@@ -1630,7 +1630,6 @@ struct FormattedCodec : Codec<FormattedConsumer, FormattedProducer> {
    * @tparam T the type to decode
    * @param in the input source
    * @return the decoded value
-   * @throw #std::exception if the value cannot be decoded
    */
   template<typename T>
   [[nodiscard]] DecodeResult<T>

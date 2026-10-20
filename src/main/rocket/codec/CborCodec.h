@@ -24,54 +24,107 @@ namespace internal::cbor {
  */
 template<typename T>
 struct CborItem {
-  cbor_item_t* ptr; ///< The managed CBOR item.
+  CborItem() : ptr_(nullptr) {}
 
-  CborItem() : ptr(nullptr) {}
-
-  /// This is for consumers only.
-  CborItem(cbor_item_t* ptr) : ptr(ptr) {
+  CborItem(cbor_item_t* ptr) : ptr_(ptr) {
     ROCKET_CHECK(ptr, ptr != nullptr);
+    ROCKET_ASSERT(cbor_refcount(ptr) == 1);
   }
 
-  CborItem(cbor_item_t* ptr, T&& val) : ptr(ptr), val_(std::move(val)) {
+  CborItem(cbor_item_t* ptr, T&& val) : ptr_(ptr), val_(std::move(val)) {
     ROCKET_CHECK(ptr, ptr != nullptr);
+    ROCKET_ASSERT(cbor_refcount(ptr) == 1);
   }
 
-  CborItem(CborItem&& rhs) noexcept : ptr(rhs.ptr), val_(std::move(rhs.val_)) {
-    rhs.ptr = nullptr;
+  CborItem(CborItem&& rhs) noexcept : ptr_(rhs.ptr_), val_(std::move(rhs.val_)) {
+    rhs.ptr_ = nullptr;
+    rhs.val_ = std::nullopt;
+  }
+
+  ~CborItem() {
+    if (ptr_ != nullptr) {
+      ROCKET_ASSERT(cbor_refcount(ptr_) == 1);
+      cbor_decref(&ptr_);
+      ROCKET_ASSERT(ptr_ == nullptr);
+    }
+    val_ = std::nullopt;
   }
 
   CborItem&
   operator=(CborItem&& rhs) noexcept {
-    ptr = rhs.ptr;
+    ptr_ = rhs.ptr_;
+    rhs.ptr_ = nullptr;
     val_ = std::move(rhs.val_);
-    rhs.ptr = nullptr;
+    rhs.val_ = std::nullopt;
     return *this;
   }
 
-  ~CborItem() {
-    if (ptr != nullptr) {
-      ROCKET_ASSERT(cbor_refcount(ptr) == 1);
-      cbor_decref(&ptr);
-      ROCKET_ASSERT(ptr == nullptr);
+  /// This is a one-shot move operation.
+  template<typename U>
+  CborItem<U>
+  cast() {
+    cbor_item_t* ptr = ptr_;
+    ptr_ = nullptr;
+    if (val_.has_value()) {
+      U converted = static_cast<U>(std::move(*val_));
+      val_ = std::nullopt;
+      return CborItem<U>(ptr, std::move(converted));
     }
+    return CborItem<U>(ptr);
+  }
+
+  [[nodiscard]] cbor_item_t*
+  ptr() {
+    ROCKET_EXPECT(ptr_ != nullptr);
+    return ptr_;
   }
 
   /// This is a one-shot move operation.
-  T value() {
-    T val(std::move(val_.value()));
+  [[nodiscard]] T
+  value() {
+    ROCKET_EXPECT(val_.has_value());
+    T val = std::move(*val_);
     val_ = std::nullopt;
     return val;
   }
 
+  /// This is a one-shot move operation.
+  [[nodiscard]] CborItem<T>
+  withValue(T&& val) {
+    ROCKET_EXPECT(not val_);
+    CborItem<T> ret(ptr_, std::move(val));
+    ptr_ = nullptr;
+    return ret;
+  }
+
 private:
 
-  std::optional<T> val_; ///< The carried C++ value. This is only for producers.
+  cbor_item_t* ptr_; ///< The managed CBOR item.
+  /**
+   * The carried C++ value. It can be massive, which is why we move so often in this implementation.
+   */
+  std::optional<T> val_;
 };
 
 // Functions ------------------------------------------------------------------------------------------------
 
-cbor_item_t* loadItem(nio::ContiguousSource& in);
+/// Throws a #rocket::InputFailure, always.
+void loadFailed(nio::Source& in, const cbor_load_result& result);
+
+template<typename I>
+CborItem<I>
+loadItem(nio::ContiguousSource& in) {
+  auto buf = in.bytes();
+  cbor_load_result result;
+  cbor_item_t* item = cbor_load(buf.data(), buf.size(), &result);
+  if (result.error.code != CBOR_ERR_NONE) {
+    ROCKET_ASSERT(item == nullptr);
+    loadFailed(in, result);
+  }
+  CborItem<I> ret(item);
+  in.seek(result.read, nio::SeekMode::cur);
+  return ret;
+}
 
 // `CborConsumerImpl` ---------------------------------------------------------------------------------------
 
@@ -93,7 +146,7 @@ struct CborConsumerImpl<DataType::Char, C> {
     if constexpr (std::same_as<C, char>) {
       return cbor_build_uint8(static_cast<u8>(val));
     } else {
-      return cbor_build_uint16(static_cast<u16>(val));
+      return cbor_build_uint32(static_cast<u32>(val));
     }
   }
 };
@@ -105,7 +158,9 @@ struct CborConsumerImpl<DataType::Enum, E> {
 
   CborItem<E>
   consume(E val) const {
-    return CborConsumerImpl<UnderlyingDataType, Underlying>().consume(val);
+    auto underlying =
+      CborConsumerImpl<UnderlyingDataType, Underlying>().consume(static_cast<Underlying>(val));
+    return underlying.template cast<E>();
   }
 };
 
@@ -113,21 +168,24 @@ template<typename I>
 struct CborConsumerImpl<DataType::Integer, I> {
   CborItem<I>
   consume(I val) const {
-    switch (sizeof(I)) {
-      case 1: return cbor_build_uint8(static_cast<u8>(val));
-      case 2: return cbor_build_uint16(static_cast<u16>(val));
-      case 4: return cbor_build_uint32(static_cast<u32>(val));
-      case 8: return cbor_build_uint64(static_cast<u64>(val));
-      case 16: {
-        CborItem<I> ret(cbor_new_definite_array(2));
-        CborItem<I> hi(cbor_build_uint64(static_cast<u64>(val >> 64)));
-        CborItem<I> lo(cbor_build_uint64(static_cast<u64>(val)));
-        ROCKET_EXPECT(cbor_array_push(ret, cbor_move(hi.ptr)), "Failed to push `hi`");
-        ROCKET_EXPECT(cbor_array_push(ret, cbor_move(lo.ptr)), "Failed to push `lo`");
-        return ret;
-      }
+    if constexpr (sizeof(I) == 1) {
+      return cbor_build_uint8(static_cast<u8>(val));
+    } else if constexpr (sizeof(I) == 2) {
+      return cbor_build_uint16(static_cast<u16>(val));
+    } else if constexpr (sizeof(I) == 4) {
+      return cbor_build_uint32(static_cast<u32>(val));
+    } else if constexpr (sizeof(I) == 8) {
+      return cbor_build_uint64(static_cast<u64>(val));
+    } else if constexpr (sizeof(I) == 16) {
+      CborItem<I> ret(cbor_new_definite_array(2));
+      auto hi = cbor_build_uint64(static_cast<u64>(val >> 64));
+      auto lo = cbor_build_uint64(static_cast<u64>(val));
+      ROCKET_EXPECT(cbor_array_push(ret.ptr(), cbor_move(hi)), "Failed to push `hi`"); // XXX move?
+      ROCKET_EXPECT(cbor_array_push(ret.ptr(), cbor_move(lo)), "Failed to push `lo`"); // XXX move?
+      return ret;
+    } else {
+      ROCKET_FAIL("Cannot consume integer of type `{}`", typeid(I));
     }
-    ROCKET_FAIL("Cannot consume integer of type `{}`", typeid(I));
   }
 };
 
@@ -135,11 +193,13 @@ template<typename F>
 struct CborConsumerImpl<DataType::Float, F> {
   CborItem<F>
   consume(F val) const {
-    switch (sizeof(F)) {
-      case 4: return cbor_build_float2(static_cast<f32>(val));
-      case 8: return cbor_build_float4(static_cast<f64>(val));
+    if constexpr (sizeof(F) == 4) {
+      return cbor_build_float2(static_cast<f32>(val));
+    } else if constexpr (sizeof(F) == 8) {
+      return cbor_build_float4(static_cast<f64>(val));
+    } else {
+      ROCKET_FAIL("Cannot consume float of type `{}`", typeid(F));
     }
-    ROCKET_FAIL("Cannot consume float of type `{}`", typeid(F));
   }
 };
 
@@ -471,66 +531,92 @@ struct CborProducerImpl<DataType::Bool, bool> {
   void
   produce(CborItem<bool>& val, nio::ContiguousSource& in) const {
     const auto pos = in.tell();
-    auto* item = loadItem(in);
-    if (not cbor_is_bool(item)) {
+    auto item = loadItem<bool>(in);
+    if (not cbor_is_bool(item.ptr())) {
       throw InputFailure(pos, "Expected a boolean value");
     }
-    val = CborItem(item, cbor_get_bool(item));
+    val = item.withValue(cbor_get_bool(item.ptr()));
   }
 };
-
-#if 0
 
 template<typename C>
 struct CborProducerImpl<DataType::Char, C> {
   void
-  produce(C& val, nio::Source& in) const {
-    skip(in);
+  produce(CborItem<C>& val, nio::ContiguousSource& in) const {
     const auto pos = in.tell();
-
-    if (not readChar(in, '"')) {
-      throw InputFailure(pos, "Expected a character");
+    auto item = loadItem<C>(in);
+    if constexpr (std::same_as<C, char>) {
+      if (cbor_is_int(item.ptr()) && cbor_int_get_width(item.ptr()) == CBOR_INT_8) {
+        val = item.withValue(static_cast<char>(cbor_get_uint8(item.ptr())));
+        return;
+      }
+    } else {
+      if (cbor_is_int(item.ptr()) && cbor_int_get_width(item.ptr()) == CBOR_INT_32) {
+        val = item.withValue(static_cast<char32>(cbor_get_uint32(item.ptr())));
+        return;
+      }
     }
-    auto input = readUntilUnescapedChar(in, '"');
-    if (not input) {
-      throw InputFailure(pos, "Unterminated character literal");
-    }
-
-    const std::string unescaped = str::escape::unescapeCString(*input);
-    const std::basic_string<C> str(unicode::ConvertTo<C>::apply(unescaped));
-    if (str.size() != 1) {
-      throw InputFailure(pos, "Invalid character literal");
-    }
-    val = str[0];
+    throw InputFailure(pos, "Expected a character");
   }
 };
 
 template<typename E>
 struct CborProducerImpl<DataType::Enum, E> {
+  using Underlying = std::underlying_type_t<E>;
+  static constexpr auto UnderlyingDataType = DataTypes<Underlying>::Value;
+
   void
-  produce(E& val, nio::Source& in) const {
-    skip(in);
-    const auto pos = in.tell();
-
-    if constexpr (scn::detail::is_scannable<E, char>::value) {
-      // Read JSON string and create an inner source for it
-      Positions positions;
-      const auto input = readJsonString(in, positions);
-      nio::StringSource inner(input);
-      const auto inPos = [pos, &positions](u64 innnerPos) -> u64 {
-        return jsonStringOffset(pos, innnerPos, positions);
-      };
-
-      const auto result = scan<E>(inner);
-      if (result) {
-        val = *result;
-        return;
-      }
-      throw InputFailure(inPos(0), fmt::format("Invalid value for enum `{}`", typeid(E)));
-    }
-    throw InputFailure(pos, fmt::format("Cannot scan enum of type `{}`", typeid(E)));
+  produce(CborItem<E>& val, nio::ContiguousSource& in) const {
+    CborItem<Underlying> underlying;
+    CborProducerImpl<UnderlyingDataType, Underlying>().produce(underlying, in);
+    val = underlying.template cast<E>();
   }
 };
+
+template<typename I>
+struct CborProducerImpl<DataType::Integer, I> {
+  void
+  produce(CborItem<I>& val, nio::ContiguousSource& in) const {
+    const auto pos = in.tell();
+    auto item = loadItem<I>(in);
+    if constexpr (sizeof(I) == 1) {
+      if (cbor_is_int(item.ptr()) && cbor_int_get_width(item.ptr()) == CBOR_INT_8) {
+        val = item.withValue(static_cast<I>(cbor_get_uint8(item.ptr())));
+        return;
+      }
+    } else if constexpr (sizeof(I) == 2) {
+      if (cbor_is_int(item.ptr()) && cbor_int_get_width(item.ptr()) == CBOR_INT_16) {
+        val = item.withValue(static_cast<I>(cbor_get_uint16(item.ptr())));
+        return;
+      }
+    } else if constexpr (sizeof(I) == 4) {
+      if (cbor_is_int(item.ptr()) && cbor_int_get_width(item.ptr()) == CBOR_INT_32) {
+        val = item.withValue(static_cast<I>(cbor_get_uint32(item.ptr())));
+        return;
+      }
+    } else if constexpr (sizeof(I) == 8) {
+      if (cbor_is_int(item.ptr()) && cbor_int_get_width(item.ptr()) == CBOR_INT_64) {
+        val = item.withValue(static_cast<I>(cbor_get_uint64(item.ptr())));
+        return;
+      }
+    } else if constexpr (sizeof(I) == 16) {
+      if (cbor_isa_array(item.ptr()) && cbor_array_size(item.ptr()) == 2) {
+        auto hi = cbor_array_get(item.ptr(), 0);
+        auto lo = cbor_array_get(item.ptr(), 1);
+        u128 val128 = cbor_get_uint64(hi);
+        val128 <<= 64;
+        val128 |= cbor_get_uint64(lo);
+        val = CborItem<I>(item.ptr(), static_cast<I>(val128));
+        return;
+      }
+    } else {
+      ROCKET_FAIL("Cannot produce integer of type `{}`", typeid(I));
+    }
+    throw InputFailure(pos, "Expected an integer value");
+  }
+};
+
+#if 0
 
 template<typename I>
 struct CborProducerImpl<DataType::Integer, I> {
@@ -1435,7 +1521,7 @@ struct CborCodec : Codec<CborConsumer, CborProducer> {
     // Now serialize the item and create a byte vector for it
     unsigned char* buf;
     u64 bufSize;
-    cbor_serialize_alloc(item.ptr, &buf, &bufSize);
+    cbor_serialize_alloc(item.ptr(), &buf, &bufSize);
     ROCKET_EXPECT(bufSize > 0, "Failed to allocate memory");
     ROCKET_GUARD([&buf] { free(buf); });
     // @improve Avoid copying and use the buffer directly. Ideally, we would return some sort of an immutable
@@ -1445,12 +1531,11 @@ struct CborCodec : Codec<CborConsumer, CborProducer> {
   }
 
   /**
-   * Decodes a value from a source.    using namespace internal::cbor;
+   * Decodes a value from a source.
    *
    * @tparam T the type to decode
    * @param cbor the CBOR input byte sequence to decode
    * @return the decoded value
-   * @throw #std::exception if the value cannot be decoded
    */
   template<typename T>
   [[nodiscard]] DecodeResult<T>
