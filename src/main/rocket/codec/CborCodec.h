@@ -19,8 +19,8 @@ namespace internal::cbor {
 
 /**
  * A managed CBOR item with move semantics. It helps to avoid leaks when exceptions are thrown. More
- * generally, it serves as a bridge between a C API and the Rocket codec producers and consumers that use
- * exceptions.
+ * generally, it serves as a bridge between a C API and the Rocket codec consumers and producers that make
+ * use of exceptions.
  */
 template<typename T>
 struct CborItem {
