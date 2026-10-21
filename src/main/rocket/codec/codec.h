@@ -400,7 +400,7 @@ private:
   std::unordered_set<std::u32string> u32strings_;
 };
 
-ROCKET_PUBLIC extern thread_local DecoderStore* store;
+extern thread_local DecoderStore* store;
 
 } // namespace internal
 

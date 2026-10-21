@@ -6,7 +6,7 @@
 
 namespace rocket::codec::internal {
 
-ROCKET_PUBLIC thread_local DecoderStore* store = nullptr;
+thread_local DecoderStore* store = nullptr;
 
 } // namespace rocket::codec::internal
 
