@@ -30,9 +30,15 @@ enum class Color : u8 { Red, Green, Blue };
 ROCKET_ENUM_DECLARE(, Color, Color); // NOLINT(*-internal-linkage)
 ROCKET_ENUM_DEFINE(, Color, Color, (Red)(Green)(Blue));
 
-// Functions ------------------------------------------------------------------------------------------------
+namespace {
 
-void
+// Local variables ------------------------------------------------------------------------------------------
+
+auto& out = nio::out;
+
+// Local functions ------------------------------------------------------------------------------------------
+
+[[maybe_unused]] void
 populate_map() {
   /* Preallocate the map structure */
   cbor_item_t* root = cbor_new_definite_map(2);
@@ -58,7 +64,7 @@ populate_map() {
   cbor_decref(&root);
 }
 
-void item_examples() {
+[[maybe_unused]] void item_examples() {
   // A cbor_item_t can contain any CBOR data type
   cbor_item_t* float_item = cbor_build_float4(3.14f);
   cbor_item_t* string_item = cbor_build_string("Hello World!");
@@ -88,7 +94,7 @@ void item_examples() {
 // Part 1: End
 
 // Part 2: Begin
-void encode_decode() {
+[[maybe_unused]] void encode_decode() {
   cbor_item_t* item = cbor_build_uint8(42);
 
   // Serialize the item to a buffer (it will be allocated by libcbor)
@@ -114,7 +120,7 @@ void encode_decode() {
 // Part 2: End
 
 // Part 3: Begin
-void reference_counting() {
+[[maybe_unused]] void reference_counting() {
   // cbor_item_t is a reference counted pointer under the hood
   cbor_item_t* item = cbor_build_uint8(42);
 
@@ -152,7 +158,7 @@ void reference_counting() {
 // Part 3: End
 
 // Part 4: Begin
-void moving_values() {
+[[maybe_unused]] void moving_values() {
   {
     // Move the "42" into an array.
     cbor_item_t* array_item = cbor_new_definite_array(1);
@@ -207,7 +213,7 @@ void return_item() {
   global_item = NULL;
 }
 
-void reference_ownership() {
+[[maybe_unused]] void reference_ownership() {
   cbor_item_t* item = cbor_build_uint8(42);
 
   // Lend the item
@@ -220,14 +226,6 @@ void reference_ownership() {
 }
 // Part 5: End
 
-namespace {
-
-// Local variables ------------------------------------------------------------------------------------------
-
-auto& out = nio::out;
-
-// Local functions ------------------------------------------------------------------------------------------
-
 void
 myExit() {
   out.println("myExit");
@@ -236,20 +234,11 @@ myExit() {
 
 void
 myTerminate() {
-  // out.println("myTerminate");
+  out.println("myTerminate");
 }
 
 void
 toy() {
-  cbor_item_t* array = cbor_new_definite_array(2);
-  cbor_item_t* item0 = cbor_build_uint8(42);
-  ROCKET_EXPECT(cbor_array_push(array, item0));
-  cbor_item_t* item1 = cbor_build_uint8(42);
-  ROCKET_EXPECT(cbor_array_push(array, item1));
-
-  nio::out.println("array refcount: {}", cbor_refcount(array));
-  nio::out.println("item0 refcount: {}", cbor_refcount(item0));
-  nio::out.println("item1 refcount: {}", cbor_refcount(item1));
 }
 
 } // namespace

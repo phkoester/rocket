@@ -488,10 +488,19 @@ struct CompareConsumer {
  */
 template<typename Cmp = StdCompare>
 struct CompareEncoder : Encoder<CompareConsumer<Cmp>> {
-  using Base = Encoder<CompareConsumer<Cmp>>;
+  using Base = Encoder<CompareConsumer<Cmp>>; ///< @type_alias
 
+  /**
+   * Encodes a value.
+   *
+   * @tparam T the type to encode
+   * @param lhs the left value
+   * @param rhs the right value
+   * @return the encoded value, which is either of type #std::strong_ordering, #std::weak_ordering, or
+   *   #std::partial_ordering
+   */
   template<typename T>
-  auto
+  [[nodiscard]] auto
   encode(const T& lhs, const T& rhs) const {
     return Base::encode(lhs, rhs);
   }

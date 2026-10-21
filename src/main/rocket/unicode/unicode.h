@@ -312,6 +312,8 @@ struct fmt::formatter<rocket::unicode::CodePoint, C> {
   template<typename FormatContext>
   constexpr FormatContext::iterator
   format(const rocket::unicode::CodePoint& val, FormatContext& ctx) const {
+    using namespace rocket;
+
     // This is simple enough that we don't need a `FormattedCodec` for it
     if constexpr (std::same_as<C, char>) {
       return underlying_.format(fmt::format("U+{:0>4X}", static_cast<u32>(val)), ctx);
@@ -348,9 +350,9 @@ struct std::hash<rocket::unicode::CodePoint> {
    * @param val the value to hash
    * @return a hash value
    */
-  u64
+  rocket::u64
   operator()(rocket::unicode::CodePoint val) const {
-    return std::hash<char32>()(static_cast<char32>(val));
+    return std::hash<rocket::char32>()(static_cast<rocket::char32>(val));
   }
 };
 

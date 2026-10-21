@@ -73,16 +73,6 @@
   #error Unsupported compiler
 #endif
 
-// Detect endianness ----------------------------------------------------------------------------------------
-
-// Mixed/middle endian is not supported
-static_assert(
-  std::endian::native == std::endian::little || std::endian::native == std::endian::big,
-  "Only little-endian and big-endian architectures are supported");
-
-/// Whether the native architecture is little-endian.
-constexpr bool HAS_LITTLE_ENDIAN = std::endian::native == std::endian::little;
-
 // Macros ---------------------------------------------------------------------------------------------------
 
 #ifdef ROCKET_OS_WINDOWS
@@ -110,6 +100,8 @@ using type_info = ::type_info;
 } // namespace std
 
 #endif // ROCKET_OS_WINDOWS
+
+namespace rocket {
 
 // Rocket type aliases --------------------------------------------------------------------------------------
 
@@ -146,7 +138,15 @@ using u64 = std::uint64_t; ///< An unsigned 64-bit integer.
 using f32 = std_float; ///< A 32-bit floating point.
 using f64 = std_double; ///< A 64-bit floating point.
 
-namespace rocket {
+// Detect endianness ----------------------------------------------------------------------------------------
+
+// Mixed/middle endian is not supported
+static_assert(
+  std::endian::native == std::endian::little || std::endian::native == std::endian::big,
+  "Only little-endian and big-endian architectures are supported");
+
+/// Whether the native architecture is little-endian.
+constexpr bool HAS_LITTLE_ENDIAN = std::endian::native == std::endian::little;
 
 // Constants ------------------------------------------------------------------------------------------------
 

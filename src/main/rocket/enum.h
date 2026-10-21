@@ -173,7 +173,7 @@ struct Enum : std::false_type {
    * @param str the string to scan
    * @param strict whether the string must strictly match in its entirety. If this value is `true`, the
    *   string can be scanned in a more efficient way
-   * @return a pair of the size of the scanned portion of the string and the enum value, or an errors if the
+   * @return a pair of the size of the scanned portion of the string and the enum value, or an error if the
    *   operation fails
    */
   static Result<std::pair<u64, E>> toType(std::string_view str, bool strict);
@@ -247,7 +247,7 @@ struct scn::scanner<E, char> : scn::scanner<::std::string, char> {
     }
     const auto [size, enumVal] = enumResult.value();
     // If the consumed string is longer than the scanned portion, we need to correct the iterator
-    const i64 correction = size - str.size(); // Zero or negative
+    const rocket::i64 correction = size - str.size(); // Zero or negative
     val = enumVal;
     auto it = scanResult.value();
     std::advance(it, correction);

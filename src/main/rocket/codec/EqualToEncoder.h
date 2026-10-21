@@ -479,10 +479,18 @@ struct EqualToConsumer {
  */
 template<typename Eq = StdEqualTo>
 struct EqualToEncoder : Encoder<EqualToConsumer<Eq>> {
-  using Base = Encoder<EqualToConsumer<Eq>>;
+  using Base = Encoder<EqualToConsumer<Eq>>; ///< @type_alias
 
+  /**
+   * Encodes a value.
+   *
+   * @tparam T the type to encode
+   * @param lhs the left value
+   * @param rhs the right value
+   * @return the encoded value
+   */
   template<typename T>
-  auto
+  [[nodiscard]] bool
   encode(const T& lhs, const T& rhs) const {
     return Base::encode(lhs, rhs);
   }

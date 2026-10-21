@@ -51,6 +51,13 @@ struct CborItem {
 
   CborItem&
   operator=(CborItem&& rhs) noexcept {
+    if (&rhs == this) {
+      return *this;
+    }
+    if (ptr_ != nullptr) {
+      ROCKET_ASSERT(cbor_refcount(ptr_) > 0);
+      cbor_decref(&ptr_);
+    }
     ptr_ = rhs.ptr_;
     rhs.ptr_ = nullptr;
     val_ = std::move(rhs.val_);
@@ -99,9 +106,7 @@ struct CborItem {
 private:
 
   cbor_item_t* ptr_; ///< The managed CBOR item.
-  /**
-   * The carried C++ value. It can be massive, which is why we move so often in this implementation.
-   */
+  /// The carried C++ value, if any. It can be massive, which is why we move so often in this implementation.
   std::optional<T> val_;
 };
 
@@ -132,7 +137,7 @@ struct CborConsumerImpl;
 
 template<>
 struct CborConsumerImpl<DataType::Bool, bool> {
-  CborItem<bool>
+  [[nodiscard]] CborItem<bool>
   consume(bool val) const {
     return cbor_build_bool(val);
   }
@@ -140,7 +145,7 @@ struct CborConsumerImpl<DataType::Bool, bool> {
 
 template<typename C>
 struct CborConsumerImpl<DataType::Char, C> {
-  CborItem<C>
+  [[nodiscard]] CborItem<C>
   consume(C val) const {
     if constexpr (std::same_as<C, char>) {
       return cbor_build_uint8(static_cast<u8>(val));
@@ -155,7 +160,7 @@ struct CborConsumerImpl<DataType::Enum, E> {
   using Underlying = std::underlying_type_t<E>;
   static constexpr auto UnderlyingDataType = DataTypes<Underlying>::Value;
 
-  CborItem<E>
+  [[nodiscard]] CborItem<E>
   consume(E val) const {
     auto underlying =
       CborConsumerImpl<UnderlyingDataType, Underlying>().consume(static_cast<Underlying>(val));
@@ -165,7 +170,7 @@ struct CborConsumerImpl<DataType::Enum, E> {
 
 template<typename I>
 struct CborConsumerImpl<DataType::Integer, I> {
-  CborItem<I>
+  [[nodiscard]] CborItem<I>
   consume(I val) const {
     if constexpr (sizeof(I) == 1) {
       return cbor_build_uint8(static_cast<u8>(val));
@@ -179,30 +184,30 @@ struct CborConsumerImpl<DataType::Integer, I> {
       CborItem<I> ret(cbor_new_definite_array(2));
       CborItem<u64> hi = cbor_build_uint64(static_cast<u64>(val >> 64));
       ROCKET_EXPECT(cbor_array_push(ret.ptr(), hi.ptr()));
-      CborItem<I> lo = cbor_build_uint64(static_cast<u64>(val));
+      CborItem<u64> lo = cbor_build_uint64(static_cast<u64>(val));
       ROCKET_EXPECT(cbor_array_push(ret.ptr(), lo.ptr()));
       return ret;
     } else {
-      ROCKET_FAIL("Cannot consume integer of type `{}`", typeid(I));
+      ROCKET_TERMINATE("Cannot consume integer of type `{}`", typeid(I));
     }
   }
 };
 
 template<typename F>
 struct CborConsumerImpl<DataType::Float, F> {
-  CborItem<F>
+  [[nodiscard]] CborItem<F>
   consume(F val) const {
     if constexpr (sizeof(F) == 4) {
-      return cbor_build_float2(static_cast<f32>(val));
+      return cbor_build_float4(static_cast<f32>(val));
     } else if constexpr (sizeof(F) == 8) {
-      return cbor_build_float4(static_cast<f64>(val));
+      return cbor_build_float8(static_cast<f64>(val));
     } else {
-      ROCKET_FAIL("Cannot consume float of type `{}`", typeid(F));
+      ROCKET_TERMINATE("Cannot consume float of type `{}`", typeid(F));
     }
   }
 };
 
-#if 0
+#if 0 // NOLINT
 
 template<typename P>
 struct CborConsumerImpl<DataType::Pointer, P> {
@@ -602,20 +607,23 @@ struct CborProducerImpl<DataType::Integer, I> {
       if (cbor_isa_array(item.ptr()) && cbor_array_size(item.ptr()) == 2) {
         CborItem<u64> hi = cbor_array_get(item.ptr(), 0);
         CborItem<u64> lo = cbor_array_get(item.ptr(), 1);
-        u128 val128 = cbor_get_uint64(hi.ptr());
-        val128 <<= 64;
-        val128 |= cbor_get_uint64(lo.ptr());
-        val = item.withValue(static_cast<I>(val128));
-        return;
+        if (cbor_is_int(hi.ptr()) && cbor_int_get_width(hi.ptr()) == CBOR_INT_64 &&
+            cbor_is_int(lo.ptr()) && cbor_int_get_width(lo.ptr()) == CBOR_INT_64) {
+          u128 val128 = cbor_get_uint64(hi.ptr());
+          val128 <<= 64;
+          val128 |= cbor_get_uint64(lo.ptr());
+          val = item.withValue(static_cast<I>(val128));
+          return;
+        }
       }
     } else {
-      ROCKET_FAIL("Cannot produce integer of type `{}`", typeid(I));
+      ROCKET_TERMINATE("Cannot produce integer of type `{}`", typeid(I));
     }
     throw InputFailure(pos, "Expected an integer value");
   }
 };
 
-#if 0
+#if 0 // NOLINT
 
 template<typename I>
 struct CborProducerImpl<DataType::Integer, I> {
@@ -1510,7 +1518,7 @@ struct CborCodec : Codec<CborConsumer, CborProducer> {
    * @return a byte sequence, a binary representation of the value @p val
    */
   template<typename T>
-  std::vector<u8>
+  [[nodiscard]] std::vector<u8>
   encode(const T& val) const {
     using namespace internal::cbor;
 
@@ -1525,8 +1533,7 @@ struct CborCodec : Codec<CborConsumer, CborProducer> {
     ROCKET_GUARD([&buf] { free(buf); });
     // @improve Avoid copying and use the buffer directly. Ideally, we would return some sort of an immutable
     // view that calls `free` on destruction
-    std::vector<u8> ret(buf, buf + bufSize);
-    return ret;
+    return std::vector<u8>(buf, buf + bufSize);
   }
 
   /**

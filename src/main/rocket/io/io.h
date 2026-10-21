@@ -76,16 +76,16 @@ std::ios::pos_type tellg(std::istream& is) noexcept;
 
 // Support for 128-bit data types ---------------------------------------------------------------------------
 
-/// @op_input{#i128}
-std::istream& operator>>(std::istream& lhs, i128& rhs);
+/// @op_input{#rocket::i128}
+std::istream& operator>>(std::istream& lhs, rocket::i128& rhs);
 
-/// @op_output{#i128}
-std::ostream& operator<<(std::ostream& lhs, i128 rhs);
+/// @op_output{#rocket::i128}
+std::ostream& operator<<(std::ostream& lhs, rocket::i128 rhs);
 
-/// @op_input{#u128}
-std::istream& operator>>(std::istream& lhs, u128& rhs);
+/// @op_input{#rocket::u128}
+std::istream& operator>>(std::istream& lhs, rocket::u128& rhs);
 
-/// @op_output{#u128}
-std::ostream& operator<<(std::ostream& lhs, u128 rhs);
+/// @op_output{#rocket::u128}
+std::ostream& operator<<(std::ostream& lhs, rocket::u128 rhs);
 
 // EOF

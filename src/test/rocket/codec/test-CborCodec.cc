@@ -39,14 +39,14 @@ makeCborItemArray() {
 
 CborItem<u8>
 someFuncReturningCborItem() {
-  return CborItem<u8>(cbor_build_uint8(42));
+  return { cbor_build_uint8(42) };
 }
 
 template<typename T>
 void
 testRoundtrip(const T& val) {
-  CborCodec codec;
-  vector<u8> cbor = codec.encode(val);
+  const CborCodec codec;
+  const vector<u8> cbor = codec.encode(val);
   const auto result = codec.decode<T>(cbor);
   if (not result.has_value()) {
     const auto& error = result.error();
@@ -112,7 +112,7 @@ TEST(CborCodec, Char) {
 
 TEST(CborCodec, Enum) {
   testRoundtrip(log::LogLevel::info);
-  testRoundtrip<log::LogLevel>(static_cast<log::LogLevel>(-1));
+  testRoundtrip<log::LogLevel>(static_cast<log::LogLevel>(-1)); // NOLINT
 }
 
 TEST(CborCodec, Integer) {
