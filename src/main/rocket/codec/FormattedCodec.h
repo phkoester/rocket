@@ -871,7 +871,7 @@ struct FormattedProducerImpl<DataType::String, T> {
       // Because both unescaping and Unicode-converting produce intermediate strings local to this function,
       // decoding to `std::basic_string_view` is a bit more involved. To make this possible, we store the
       // intermediate string in the source so the decoded string view is valid for the lifetime of the source
-      const auto& ref = internal::store->store(std::move(str));
+      const auto& ref = internal::DecoderStore::get()->store(std::move(str));
       val = ref;
     } else {
       // `std::basic_string`

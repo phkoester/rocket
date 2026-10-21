@@ -6,7 +6,21 @@
 
 namespace rocket::codec::internal {
 
-thread_local DecoderStore* store = nullptr;
+// Variables ------------------------------------------------------------------------------------------------
+
+thread_local DecoderStore* currentStore = nullptr;
+
+// `DecoderStore` -------------------------------------------------------------------------------------------
+
+DecoderStore*
+DecoderStore::get() {
+  return currentStore;
+}
+
+void
+DecoderStore::set(DecoderStore* val) {
+  currentStore = val;
+}
 
 } // namespace rocket::codec::internal
 

@@ -382,15 +382,19 @@ namespace internal {
  * of the decoder.
  */
 struct DecoderStore {
-   const std::string&
-   store(std::string&& val) {
-     return *strings_.insert(std::move(val)).first;
-   }
+  static DecoderStore* get();
 
-   const std::u32string&
-   store(std::u32string&& val) {
-     return *u32strings_.insert(std::move(val)).first;
-   }
+  static void set(DecoderStore* store);
+
+  const std::string&
+  store(std::string&& val) {
+    return *strings_.insert(std::move(val)).first;
+  }
+
+  const std::u32string&
+  store(std::u32string&& val) {
+    return *u32strings_.insert(std::move(val)).first;
+  }
 
 private:
 
@@ -400,7 +404,9 @@ private:
   std::unordered_set<std::u32string> u32strings_;
 };
 
-extern thread_local DecoderStore* store;
+DecoderStore* store();
+
+void store(DecoderStore* val);
 
 } // namespace internal
 
@@ -467,7 +473,7 @@ struct Decoder {
   template<typename T, typename U = T, typename... Args>
   [[nodiscard]] DecodeResult<U>
   decode(Args&&... args) const {
-    internal::store = const_cast<internal::DecoderStore*>(&store_);
+    internal::DecoderStore::set(const_cast<internal::DecoderStore*>(&store_));
 
     constexpr auto Value = DataTypes<Purge<T>>::Value;
     using ProducerType = Producer::template Type<Value, T>;
