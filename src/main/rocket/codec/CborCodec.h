@@ -9,7 +9,10 @@
 #include "rocket/Guard.h"
 #include "rocket/codec/codec.h"
 
+#include <boost/safe_numerics/safe_integer.hpp>
 #include <cbor.h>
+
+using boost::safe_numerics::safe;
 
 namespace rocket::codec {
 
@@ -26,7 +29,7 @@ template<typename T>
 struct CborItem {
   CborItem() : ptr_(nullptr) {}
 
-  CborItem(cbor_item_t* ptr) : ptr_(ptr) {
+  CborItem(cbor_item_t* ptr) : ptr_(ptr) { // NOLINT(*-explicit-constructor)
     ROCKET_CHECK(ptr, ptr != nullptr);
     ROCKET_ASSERT(cbor_refcount(ptr) > 0);
   }
@@ -119,14 +122,14 @@ template<typename I>
 CborItem<I>
 loadItem(nio::ContiguousSource& in) {
   auto buf = in.bytes();
-  cbor_load_result result;
+  cbor_load_result result; // NOLINT
   cbor_item_t* item = cbor_load(buf.data(), buf.size(), &result);
   if (result.error.code != CBOR_ERR_NONE) {
     ROCKET_ASSERT(item == nullptr);
     loadFailed(in, result);
   }
   CborItem<I> ret(item);
-  in.seek(result.read, nio::SeekMode::cur);
+  in.seek(safe<i64>(result.read), nio::SeekMode::cur);
   return ret;
 }
 
@@ -1526,14 +1529,14 @@ struct CborCodec : Codec<CborConsumer, CborProducer> {
     CborItem<T> item = Base::encode<T, CborItem<T>>(val);
 
     // Now serialize the item and create a byte vector for it
-    unsigned char* buf;
-    u64 bufSize;
+    unsigned char* buf; // NOLINT
+    u64 bufSize; // NOLINT
     cbor_serialize_alloc(item.ptr(), &buf, &bufSize);
     ROCKET_EXPECT(bufSize > 0, "Failed to allocate memory");
-    ROCKET_GUARD([&buf] { free(buf); });
+    ROCKET_GUARD([&buf] { free(buf); }); // NOLINT
     // @improve Avoid copying and use the buffer directly. Ideally, we would return some sort of an immutable
     // view that calls `free` on destruction
-    return std::vector<u8>(buf, buf + bufSize);
+    return { buf, buf + bufSize };
   }
 
   /**

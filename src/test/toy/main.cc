@@ -38,6 +38,8 @@ auto& out = nio::out;
 
 // Local functions ------------------------------------------------------------------------------------------
 
+// NOLINTBEGIN
+
 [[maybe_unused]] void
 populate_map() {
   /* Preallocate the map structure */
@@ -51,7 +53,7 @@ populate_map() {
       root, (struct cbor_pair){
                 .key = cbor_move(cbor_build_uint8(42)),
                 .value = cbor_move(cbor_build_string("Is the answer"))});
-  if (!success) return;
+  if (!success) { return; }
   /* Output: `length` bytes of data in the `buffer` */
   unsigned char* buffer;
   size_t buffer_size;
@@ -225,6 +227,8 @@ void return_item() {
   return_item();
 }
 // Part 5: End
+
+// NOLINTEND
 
 void
 myExit() {

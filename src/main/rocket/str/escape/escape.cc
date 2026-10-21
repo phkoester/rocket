@@ -87,9 +87,8 @@ escapeCStringCodePointHex(unicode::CodePoint cp, u64& column, const CStringConfi
       ret = static_cast<string>(cp);
       column += cp.width();
       return ret;
-    } else {
-      ret = fmt::format("\\u{:0>4X}", static_cast<u32>(cp));
     }
+    ret = fmt::format("\\u{:0>4X}", static_cast<u32>(cp));
   } else {
     // C
     if (cp > 0xFFFFU) {
