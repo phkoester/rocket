@@ -20,7 +20,6 @@
 #include <memory>
 #include <span>
 #include <string>
-#include <unordered_set>
 #include <vector>
 
 namespace rocket::nio {
@@ -584,28 +583,6 @@ struct Source : Device {
   virtual bool seek(i64 offset, SeekMode mode = SeekMode::beg) = 0; // NOLINT
 
   /**
-   * Stores a value in the source.
-   *
-   * @param val the value to store
-   * @return a reference to the stored value, which remains valid for the lifetime of the source
-   */
-  const std::string&
-  store(std::string&& val) {
-    return *strings_.insert(std::move(val)).first;
-  }
-
-  /**
-   * Stores a value in the source.
-   *
-   * @param val the value to store
-   * @return a reference to the stored value, which remains valid for the lifetime of the source
-   */
-  const std::u32string&
-  store(std::u32string&& val) {
-    return *u32strings_.insert(std::move(val)).first;
-  }
-
-  /**
    * Returns the current input position
    *
    * @return the current input position, or #rocket::NPOS if the position cannot be determined
@@ -616,13 +593,6 @@ protected:
 
   /// @ctor_default
   Source() = default;
-
-private:
-
-  /// We need pointer stability, which #std::unordered_set guarantees.
-  std::unordered_set<std::string> strings_;
-  /// We need pointer stability, which #std::unordered_set guarantees.
-  std::unordered_set<std::u32string> u32strings_;
 };
 
 // `ContiguousSource` ---------------------------------------------------------------------------------------

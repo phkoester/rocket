@@ -871,7 +871,7 @@ struct FormattedProducerImpl<DataType::String, T> {
       // Because both unescaping and Unicode-converting produce intermediate strings local to this function,
       // decoding to `std::basic_string_view` is a bit more involved. To make this possible, we store the
       // intermediate string in the source so the decoded string view is valid for the lifetime of the source
-      const auto& ref = in.store(std::move(str));
+      const auto& ref = internal::store->store(std::move(str));
       val = ref;
     } else {
       // `std::basic_string`
@@ -1597,8 +1597,8 @@ struct FormattedProducer {
  * name does not match any member is an error.
  *
  * Decoding to list views and forward lists is not supported. String views and character views, however, are
- * allowed. This is made possible by storing intermediate strings in the source. Hence, decoded string views
- * and character views are valid, and valid only, for the lifetime of the source.
+ * allowed. This is made possible by storing intermediate strings in the decoder. Hence, decoded string views
+ * and character views are valid, and valid only, for the lifetime of the decoder.
  *
  * There are various optimizations for decoding from contiguous sources.
  *

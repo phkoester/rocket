@@ -373,6 +373,37 @@ struct DataTypes<rocket::unicode::CharacterView<C>> {
   static constexpr auto Value = DataType::Character; ///< The data type.
 };
 
+namespace internal {
+
+// `DecoderStore` -------------------------------------------------------------------------------------------
+
+/**
+ * A store for intermediate decoder values, such as decoded string views. These are valid for the lifetime
+ * of the decoder.
+ */
+struct DecoderStore {
+   const std::string&
+   store(std::string&& val) {
+     return *strings_.insert(std::move(val)).first;
+   }
+
+   const std::u32string&
+   store(std::u32string&& val) {
+     return *u32strings_.insert(std::move(val)).first;
+   }
+
+private:
+
+   /// We need pointer stability, which #std::unordered_set guarantees.
+  std::unordered_set<std::string> strings_;
+  /// We need pointer stability, which #std::unordered_set guarantees.
+  std::unordered_set<std::u32string> u32strings_;
+};
+
+ROCKET_PUBLIC extern thread_local DecoderStore* store;
+
+} // namespace internal
+
 // `Encoder` ------------------------------------------------------------------------------------------------
 
 /**
@@ -436,6 +467,8 @@ struct Decoder {
   template<typename T, typename U = T, typename... Args>
   [[nodiscard]] DecodeResult<U>
   decode(Args&&... args) const {
+    internal::store = const_cast<internal::DecoderStore*>(&store_);
+
     constexpr auto Value = DataTypes<Purge<T>>::Value;
     using ProducerType = Producer::template Type<Value, T>;
     ProducerType producer; // NOLINT
@@ -447,6 +480,10 @@ struct Decoder {
     }
     return val;
   }
+
+private:
+
+  internal::DecoderStore store_; ///< The store for intermediate values.
 };
 
 // `Codec` --------------------------------------------------------------------------------------------------

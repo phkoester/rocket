@@ -6,6 +6,8 @@
 
 #include "rocket/type-traits.h"
 
+#include <unordered_set>
+
 // `TEST` ---------------------------------------------------------------------------------------------------
 
 TEST(typeTraits, Ordering) {
