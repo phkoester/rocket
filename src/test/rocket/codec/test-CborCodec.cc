@@ -39,7 +39,7 @@ makeCborItemArray() {
 
 CborItem<u8>
 someFuncReturningCborItem() {
-  return { cbor_build_uint8(42) };
+  return CborItem<u8>(cbor_build_uint8(42));
 }
 
 template<typename T>

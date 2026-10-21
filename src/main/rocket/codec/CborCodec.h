@@ -12,8 +12,6 @@
 #include <boost/safe_numerics/safe_integer.hpp>
 #include <cbor.h>
 
-using boost::safe_numerics::safe;
-
 namespace rocket::codec {
 
 namespace internal::cbor {
@@ -29,7 +27,7 @@ template<typename T>
 struct CborItem {
   CborItem() : ptr_(nullptr) {}
 
-  CborItem(cbor_item_t* ptr) : ptr_(ptr) { // NOLINT(*-explicit-constructor)
+  explicit CborItem(cbor_item_t* ptr) : ptr_(ptr) {
     ROCKET_CHECK(ptr, ptr != nullptr);
     ROCKET_ASSERT(cbor_refcount(ptr) > 0);
   }
@@ -121,6 +119,8 @@ void loadFailed(nio::Source& in, const cbor_load_result& result);
 template<typename I>
 CborItem<I>
 loadItem(nio::ContiguousSource& in) {
+  using boost::safe_numerics::safe;
+
   auto buf = in.bytes();
   cbor_load_result result; // NOLINT
   cbor_item_t* item = cbor_load(buf.data(), buf.size(), &result);
@@ -142,7 +142,7 @@ template<>
 struct CborConsumerImpl<DataType::Bool, bool> {
   [[nodiscard]] CborItem<bool>
   consume(bool val) const {
-    return cbor_build_bool(val);
+    return CborItem<bool>(cbor_build_bool(val));
   }
 };
 
@@ -151,9 +151,9 @@ struct CborConsumerImpl<DataType::Char, C> {
   [[nodiscard]] CborItem<C>
   consume(C val) const {
     if constexpr (std::same_as<C, char>) {
-      return cbor_build_uint8(static_cast<u8>(val));
+      return CborItem<C>(cbor_build_uint8(static_cast<u8>(val)));
     } else {
-      return cbor_build_uint32(static_cast<u32>(val));
+      return CborItem<C>(cbor_build_uint32(static_cast<u32>(val)));
     }
   }
 };
@@ -176,18 +176,18 @@ struct CborConsumerImpl<DataType::Integer, I> {
   [[nodiscard]] CborItem<I>
   consume(I val) const {
     if constexpr (sizeof(I) == 1) {
-      return cbor_build_uint8(static_cast<u8>(val));
+      return CborItem<I>(cbor_build_uint8(static_cast<u8>(val)));
     } else if constexpr (sizeof(I) == 2) {
-      return cbor_build_uint16(static_cast<u16>(val));
+      return CborItem<I>(cbor_build_uint16(static_cast<u16>(val)));
     } else if constexpr (sizeof(I) == 4) {
-      return cbor_build_uint32(static_cast<u32>(val));
+      return CborItem<I>(cbor_build_uint32(static_cast<u32>(val)));
     } else if constexpr (sizeof(I) == 8) {
-      return cbor_build_uint64(static_cast<u64>(val));
+      return CborItem<I>(cbor_build_uint64(static_cast<u64>(val)));
     } else if constexpr (sizeof(I) == 16) {
       CborItem<I> ret(cbor_new_definite_array(2));
-      CborItem<u64> hi = cbor_build_uint64(static_cast<u64>(val >> 64));
+      CborItem<u64> hi = CborItem<u64>(cbor_build_uint64(static_cast<u64>(val >> 64)));
       ROCKET_EXPECT(cbor_array_push(ret.ptr(), hi.ptr()));
-      CborItem<u64> lo = cbor_build_uint64(static_cast<u64>(val));
+      CborItem<u64> lo = CborItem<u64>(cbor_build_uint64(static_cast<u64>(val)));
       ROCKET_EXPECT(cbor_array_push(ret.ptr(), lo.ptr()));
       return ret;
     } else {
@@ -201,9 +201,9 @@ struct CborConsumerImpl<DataType::Float, F> {
   [[nodiscard]] CborItem<F>
   consume(F val) const {
     if constexpr (sizeof(F) == 4) {
-      return cbor_build_float4(static_cast<f32>(val));
+      return CborItem<F>(cbor_build_float4(static_cast<f32>(val)));
     } else if constexpr (sizeof(F) == 8) {
-      return cbor_build_float8(static_cast<f64>(val));
+      return CborItem<F>(cbor_build_float8(static_cast<f64>(val)));
     } else {
       ROCKET_TERMINATE("Cannot consume float of type `{}`", typeid(F));
     }
@@ -608,8 +608,8 @@ struct CborProducerImpl<DataType::Integer, I> {
       }
     } else if constexpr (sizeof(I) == 16) {
       if (cbor_isa_array(item.ptr()) && cbor_array_size(item.ptr()) == 2) {
-        CborItem<u64> hi = cbor_array_get(item.ptr(), 0);
-        CborItem<u64> lo = cbor_array_get(item.ptr(), 1);
+        CborItem<u64> hi(cbor_array_get(item.ptr(), 0));
+        CborItem<u64> lo(cbor_array_get(item.ptr(), 1));
         if (cbor_is_int(hi.ptr()) && cbor_int_get_width(hi.ptr()) == CBOR_INT_64 &&
             cbor_is_int(lo.ptr()) && cbor_int_get_width(lo.ptr()) == CBOR_INT_64) {
           u128 val128 = cbor_get_uint64(hi.ptr());
