@@ -47,6 +47,7 @@ void
 testRoundtrip(const T& val) {
   const CborCodec codec;
   const vector<u8> cbor = codec.encode(val);
+
   const auto result = codec.decode<T>(cbor);
   if (not result.has_value()) {
     const auto& error = result.error();
@@ -57,7 +58,16 @@ testRoundtrip(const T& val) {
     }
   }
   const T& decodedVal = result.value();
-  EXPECT_EQ(decodedVal, val);
+
+  if constexpr (IsFloat<T>) {
+    if (std::isnan(val)) {
+      EXPECT_TRUE(std::isnan(decodedVal));
+    } else {
+      EXPECT_EQ(decodedVal, val);
+    }
+  } else {
+    EXPECT_EQ(decodedVal, val);
+  }
 }
 
 } // namespace
@@ -135,6 +145,27 @@ TEST(CborCodec, Integer128) {
   testRoundtrip(numeric_limits<i128>::max());
   testRoundtrip(numeric_limits<u128>::max());
   testRoundtrip(340282366920938463463374607431768211455_u128);
+}
+
+TEST(CborCodec, Float) {
+  testRoundtrip(1.0_f32);
+  testRoundtrip(numeric_limits<f32>::min());
+  testRoundtrip(numeric_limits<f32>::max());
+  testRoundtrip(numeric_limits<f32>::infinity());
+  testRoundtrip(numeric_limits<f32>::quiet_NaN());
+  testRoundtrip(numeric_limits<f32>::signaling_NaN());
+
+  testRoundtrip(1.0_f64);
+  testRoundtrip(numeric_limits<f64>::min());
+  testRoundtrip(numeric_limits<f64>::max());
+  testRoundtrip(numeric_limits<f64>::infinity());
+  testRoundtrip(numeric_limits<f64>::quiet_NaN());
+  testRoundtrip(numeric_limits<f64>::signaling_NaN());
+}
+
+TEST(CborCodec, Pointer) {
+  testRoundtrip(reinterpret_cast<void*>(0x12345678));
+  testRoundtrip(reinterpret_cast<void*>(0x1234567890abcdef));
 }
 
 // EOF

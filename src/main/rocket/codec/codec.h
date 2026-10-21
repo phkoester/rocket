@@ -90,7 +90,7 @@ enum class DataType : u8 {
 
   // Container types ........................................................................................
 
-  /// Strings, either #std::string or #std::string_view.
+  /// Strings, either #std::string, #std::u32string, #std::string_view, or #std::u32string_view.
   String,
   /// #std::optional values.
   Optional,

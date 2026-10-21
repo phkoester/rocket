@@ -66,10 +66,30 @@ struct CborItem {
     return *this;
   }
 
+  [[nodiscard]] cbor_item_t*
+  ptr() {
+    ROCKET_EXPECT(ptr_ != nullptr);
+    return ptr_;
+  }
+
   /// This is a one-shot move operation.
   template<typename U>
   CborItem<U>
-  cast() {
+  reinterpretCast() {
+    cbor_item_t* ptr = ptr_;
+    ptr_ = nullptr;
+    if (val_.has_value()) {
+      U converted = reinterpret_cast<U>(std::move(*val_));
+      val_ = std::nullopt;
+      return CborItem<U>(ptr, std::move(converted));
+    }
+    return CborItem<U>(ptr);
+  }
+
+  /// This is a one-shot move operation.
+  template<typename U>
+  CborItem<U>
+  staticCast() {
     cbor_item_t* ptr = ptr_;
     ptr_ = nullptr;
     if (val_.has_value()) {
@@ -78,12 +98,6 @@ struct CborItem {
       return CborItem<U>(ptr, std::move(converted));
     }
     return CborItem<U>(ptr);
-  }
-
-  [[nodiscard]] cbor_item_t*
-  ptr() {
-    ROCKET_EXPECT(ptr_ != nullptr);
-    return ptr_;
   }
 
   /// This is a one-shot move operation.
@@ -167,7 +181,7 @@ struct CborConsumerImpl<DataType::Enum, E> {
   consume(E val) const {
     auto underlying =
       CborConsumerImpl<UnderlyingDataType, Underlying>().consume(static_cast<Underlying>(val));
-    return underlying.template cast<E>();
+    return underlying.template staticCast<E>();
   }
 };
 
@@ -210,19 +224,19 @@ struct CborConsumerImpl<DataType::Float, F> {
   }
 };
 
-#if 0 // NOLINT
-
 template<typename P>
 struct CborConsumerImpl<DataType::Pointer, P> {
-  void
-  consume(P val, nio::Sink& out, CONFIG__) const {
-    if (val == nullptr) {
-      out.write("null");
-      return;
-    }
-    out.print("\"{}\"", static_cast<const void*>(val));
+  using Alt = Int<sizeof(P)>::Type;
+  static constexpr auto AltDataType = DataTypes<Alt>::Value;
+
+  [[nodiscard]] CborItem<P>
+  consume(P val) const {
+    auto alt = CborConsumerImpl<AltDataType, Alt>().consume(reinterpret_cast<Alt>(val));
+    return alt.template reinterpretCast<P>();
   }
 };
+
+#if 0 // NOLINT
 
 template<typename T>
 struct CborConsumerImpl<DataType::String, T> {
@@ -576,7 +590,7 @@ struct CborProducerImpl<DataType::Enum, E> {
   produce(CborItem<E>& val, nio::ContiguousSource& in) const {
     CborItem<Underlying> underlying;
     CborProducerImpl<UnderlyingDataType, Underlying>().produce(underlying, in);
-    val = underlying.template cast<E>();
+    val = underlying.template staticCast<E>();
   }
 };
 
@@ -626,50 +640,24 @@ struct CborProducerImpl<DataType::Integer, I> {
   }
 };
 
-#if 0 // NOLINT
-
-template<typename I>
-struct CborProducerImpl<DataType::Integer, I> {
-  void
-  produce(I& val, nio::Source& in) const {
-    skip(in);
-    const auto pos = in.tell();
-
-    const auto result = scanInteger<I>(in);
-    if (result) {
-      val = *result;
-      return;
-    }
-    throw InputFailure(pos, "Expected an integer value");
-  }
-};
-
 template<typename F>
 struct CborProducerImpl<DataType::Float, F> {
-  using Limits = std::numeric_limits<F>;
-
   void
-  produce(F& val, nio::Source& in) const {
-    skip(in);
+  produce(CborItem<F>& val, nio::ContiguousSource& in) const {
     const auto pos = in.tell();
-
-    if (readString(in, "-Infinity")) {
-      val = -Limits::infinity();
-      return;
-    }
-    if (readChoice(in, { "Infinity", "+Infinity" })) {
-      val = Limits::infinity();
-      return;
-    }
-    if (readString(in, "NaN")) {
-      val = Limits::quiet_NaN();
-      return;
-    }
-
-    const auto result = scan<F>(in);
-    if (result) {
-      val = *result;
-      return;
+    auto item = loadItem<F>(in);
+    if constexpr (sizeof(F) == 4) {
+      if (cbor_is_float(item.ptr()) && cbor_float_get_width(item.ptr()) == CBOR_FLOAT_32) {
+        val = item.withValue(static_cast<F>(cbor_float_get_float4(item.ptr())));
+        return;
+      }
+    } else if constexpr (sizeof(F) == 8) {
+      if (cbor_is_float(item.ptr()) && cbor_float_get_width(item.ptr()) == CBOR_FLOAT_64) {
+        val = item.withValue(static_cast<F>(cbor_float_get_float8(item.ptr())));
+        return;
+      }
+    } else {
+      ROCKET_TERMINATE("Cannot produce floating-point value of type `{}`", typeid(F));
     }
     throw InputFailure(pos, "Expected a floating-point value");
   }
@@ -677,32 +665,18 @@ struct CborProducerImpl<DataType::Float, F> {
 
 template<typename P>
 struct CborProducerImpl<DataType::Pointer, P> {
+  using Alt = Int<sizeof(P)>::Type;
+  static constexpr auto AltDataType = DataTypes<Alt>::Value;
+
   void
-  produce(P& val, nio::Source& in) const {
-    skip(in);
-    const auto pos = in.tell();
-
-    if (readString(in, "null")) {
-      val = nullptr;
-      return;
-    }
-
-    // Read JSON string and create an inner source for it
-    Positions positions;
-    const auto input = readJsonString(in, positions);
-    nio::StringSource inner(input);
-    const auto inPos = [pos, &positions](u64 innnerPos) -> u64 {
-      return jsonStringOffset(pos, innnerPos, positions);
-    };
-
-    const auto result = scan<P>(inner);
-    if (result) {
-      val = *result;
-      return;
-    }
-    throw InputFailure(inPos(0), "Expected a pointer value");
+  produce(CborItem<P>& val, nio::ContiguousSource& in) const {
+    CborItem<Alt> alt;
+    CborProducerImpl<AltDataType, Alt>().produce(alt, in);
+    val = alt.template reinterpretCast<P>();
   }
 };
+
+#if 0 // NOLINT
 
 template<typename T>
 struct CborProducerImpl<DataType::String, T> {
