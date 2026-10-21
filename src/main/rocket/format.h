@@ -12,20 +12,20 @@
 
 #ifdef ROCKET_OS_WINDOWS
 
-// `fmt::formatter<i128>` -----------------------------------------------------------------------------------
+// `fmt::formatter<rocket::i128>` ---------------------------------------------------------------------------
 
 /**
- * @spec_fmt_formatter{#i128}
+ * @spec_fmt_formatter{#rocket::i128}
  *
  * This formatter uses the same format specifiers as the underlying string formatter.
  */
 template<typename C> requires rocket::IsChar<C>
-struct fmt::formatter<i128, C> {
+struct fmt::formatter<rocket::i128, C> {
   /// @cond undocumented
 
   template<typename FormatContext>
   FormatContext::iterator
-  format(i128 val, FormatContext& ctx) const {
+  format(rocket::i128 val, FormatContext& ctx) const {
     std::ostringstream os;
     os << val;
     auto str = os.str();
@@ -49,20 +49,20 @@ private:
   fmt::formatter<basic_string_view<C>, C> underlying_;
 };
 
-// `fmt::formatter<u128>` -----------------------------------------------------------------------------------
+// `fmt::formatter<rocket::u128>` ---------------------------------------------------------------------------
 
 /**
- * @spec_fmt_formatter{#u128}
+ * @spec_fmt_formatter{#rocket::u128}
  *
  * This formatter uses the same format specifiers as the underlying string formatter.
  */
 template<typename C> requires rocket::IsChar<C>
-struct fmt::formatter<u128, C> {
+struct fmt::formatter<rocket::u128, C> {
   /// @cond undocumented
 
   template<typename FormatContext>
   FormatContext::iterator
-  format(u128 val, FormatContext& ctx) const {
+  format(rocket::u128 val, FormatContext& ctx) const {
     std::ostringstream os;
     os << val;
     auto str = os.str();
