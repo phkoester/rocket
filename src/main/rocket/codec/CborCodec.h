@@ -236,15 +236,12 @@ struct CborConsumerImpl<DataType::Pointer, P> {
   }
 };
 
-#if 0 // NOLINT
-
 template<typename T>
 struct CborConsumerImpl<DataType::String, T> {
-  void
-  consume(const T& val, nio::Sink& out, CONFIG__) const {
+  [[nodiscard]] CborItem<T>
+  consume(const T& val) const {
     const std::string utf8(unicode::ConvertTo<char>::apply(val));
-    const std::string escaped = str::escape::escapeCString(utf8, { .json=true, .quote='"' });
-    out.print("{}", escaped);
+    return CborItem<T>(cbor_build_stringn(utf8.c_str(), utf8.size()));
   }
 };
 
@@ -253,15 +250,17 @@ struct CborConsumerImpl<DataType::Optional, T> {
   using Elem = T::value_type;
   static constexpr auto ElemDataType = DataTypes<Elem>::Value;
 
-  void
-  consume(const T& val, nio::Sink& out, CONFIG__) const {
+  [[nodiscard]] CborItem<T>
+  consume(const T& val) const {
     if (not val) {
-      out.write("null");
-      return;
+      return CborItem<T>(cbor_new_null());
     }
-    CborConsumerImpl<ElemDataType, Elem>().consume(*val, out, config);
+    CborItem<Elem> elem = CborConsumerImpl<ElemDataType, Elem>().consume(*val);
+    return CborItem<T>(cbor_incref(elem.ptr()));
   }
 };
+
+#if 0 // NOLINT
 
 // For `MemberRef`, the tuple consumer must be able to pass additional arguments to the element consumer
 template<typename T>
@@ -676,36 +675,31 @@ struct CborProducerImpl<DataType::Pointer, P> {
   }
 };
 
-#if 0 // NOLINT
-
 template<typename T>
 struct CborProducerImpl<DataType::String, T> {
+  using C = T::value_type;
+
   void
-  produce(T& val, nio::Source& in) const {
-    skip(in);
+  produce(CborItem<T>& val, nio::ContiguousSource& in) const {
     const auto pos = in.tell();
-
-    if (not readChar(in, '"')) {
-      throw InputFailure(pos, "Expected a string");
+    auto item = loadItem<T>(in);
+    if (cbor_isa_string(item.ptr())) {
+      const unsigned char* data = cbor_string_handle(item.ptr());
+      const u64 size = cbor_string_length(item.ptr());
+      // `utf8` may be a string view here
+      const std::string_view utf8(reinterpret_cast<const char*>(data), size);
+      std::basic_string<C> str(unicode::ConvertTo<C>::apply(utf8));
+      if constexpr (std::same_as<T, std::basic_string_view<C>>) {
+        // Decoding a string view: make it point to a string bound to the decoder
+        const auto& ref = internal::DecoderStore::get()->store(std::move(str));
+        val = item.withValue(ref);
+      } else {
+        // `std::basic_string`
+        val = item.withValue(std::move(str));
+      }
+      return;
     }
-    auto input = readUntilUnescapedChar(in, '"');
-    if (not input) {
-      throw InputFailure(pos, "Unterminated string literal");
-    }
-
-    const std::string unescaped = str::escape::unescapeCString(*input);
-    using C = T::value_type;
-    std::basic_string<C> str(unicode::ConvertTo<C>::apply(unescaped));
-    if constexpr (std::same_as<T, std::basic_string_view<C>>) {
-      // Because both unescaping and Unicode-converting produce intermediate strings local to this function,
-      // decoding to `std::basic_string_view` is a bit more involved. To make this possible, we store the
-      // intermediate string in the source so the decoded string view is valid for the lifetime of the source
-      const auto& ref = internal::store->store(std::move(str));
-      val = ref;
-    } else {
-      // `std::basic_string`
-      val = std::move(str);
-    }
+    throw InputFailure(pos, "Expected a string");
   }
 };
 
@@ -715,18 +709,24 @@ struct CborProducerImpl<DataType::Optional, T> {
   static constexpr auto ElemDataType = DataTypes<Elem>::Value;
 
   void
-  produce(T& val, nio::Source& in) const {
-    skip(in);
+  produce(CborItem<T>& val, nio::ContiguousSource& in) const {
+    using boost::safe_numerics::safe;
 
-    if (readString(in, "null")) {
-      val = std::nullopt;
+    const auto pos = in.tell();
+    auto item = loadItem<T>(in);
+    if (cbor_is_null(item.ptr())) {
+      val = item.withValue(std::nullopt);
       return;
     }
+    in.seek(safe<i64>(pos), nio::SeekMode::beg); // Rewind
 
-    val = Elem();
-    CborProducerImpl<ElemDataType, Elem>().produce(*val, in);
+    CborItem<Elem> elem;
+    CborProducerImpl<ElemDataType, Elem>().produce(elem, in);
+    val = item.withValue(std::move(elem.value()));
   }
 };
+
+#if 0 // NOLINT
 
 template<typename T>
 struct CborProducerImpl<DataType::Tuple, T> {
@@ -1483,6 +1483,10 @@ struct CborProducer {
  * A CBOR codec.
  *
  * XXX
+ *
+ * Decoding to list views and forward lists is not supported. String views and character views, however, are
+ * allowed. This is made possible by keeping real strings in a store bound to the decoder. Hence, decoded
+ * string views and character views are valid, and valid only, for the lifetime of the decoder.
  */
 struct CborCodec : Codec<CborConsumer, CborProducer> {
   using Base = Codec<CborConsumer, CborProducer>; ///< @type_base
@@ -1508,8 +1512,6 @@ struct CborCodec : Codec<CborConsumer, CborProducer> {
     cbor_serialize_alloc(item.ptr(), &buf, &bufSize);
     ROCKET_EXPECT(bufSize > 0, "Failed to allocate memory");
     ROCKET_GUARD([&buf] { free(buf); }); // NOLINT
-    // @improve Avoid copying and use the buffer directly. Ideally, we would return some sort of an immutable
-    // view that calls `free` on destruction
     return { buf, buf + bufSize };
   }
 

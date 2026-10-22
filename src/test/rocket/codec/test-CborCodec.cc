@@ -51,7 +51,10 @@ testRoundtrip(const T& val) {
   const auto result = codec.decode<T>(cbor);
   if (not result.has_value()) {
     const auto& error = result.error();
-    if constexpr (std::same_as<T, char32>) {
+    if constexpr (std::same_as<T, std::u32string> || std::same_as<T, std::u32string_view>) {
+      std::string utf8(unicode::ConvertTo<char>::apply(val));
+      ROCKET_FAIL("Failed to decode value \"{}\" at position {}: {}\n", utf8, error.position, error.message);
+    } else if constexpr (std::same_as<T, char32>) {
       ROCKET_FAIL("Failed to decode value {} at position {}: {}\n", static_cast<u32>(val), error.position, error.message);
     } else {
       ROCKET_FAIL("Failed to decode value {} at position {}: {}\n", val, error.position, error.message);
@@ -166,6 +169,22 @@ TEST(CborCodec, Float) {
 TEST(CborCodec, Pointer) {
   testRoundtrip(reinterpret_cast<void*>(0x12345678));
   testRoundtrip(reinterpret_cast<void*>(0x1234567890abcdef));
+}
+
+TEST(CborCodec, String) {
+  testRoundtrip("abc € 🧑‍🌾"s);
+  testRoundtrip("abc € 🧑‍🌾"sv);
+
+  testRoundtrip(U"abc € 🧑‍🌾"s);
+  testRoundtrip(U"abc € 🧑‍🌾"sv);
+}
+
+TEST(CborCodec, Optional) {
+  testRoundtrip(std::optional<u32> {});
+  testRoundtrip(std::optional<u32>(42));
+
+  testRoundtrip(std::optional<string> {});
+  testRoundtrip(std::optional<string>("What is the answer?"));
 }
 
 // EOF
