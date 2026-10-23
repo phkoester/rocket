@@ -50,8 +50,9 @@ struct BasicCharacter {
    * @param str a string. The string must not be empty
    */
   template<typename Char> requires std::same_as<Char, C> && (not VIEW)
-  constexpr explicit BasicCharacter( std::basic_string<Char>&& str) : str_(std::move(str)) {
+  constexpr explicit BasicCharacter(std::basic_string<Char>&& str) {
     ROCKET_CHECK(str, not str.empty());
+    str_ = std::move(str);
   }
 
   /**

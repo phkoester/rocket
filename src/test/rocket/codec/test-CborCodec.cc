@@ -4,11 +4,33 @@
 
 #include "rocket-test/rocket-test.h"
 
+#include "rocket/Bimap-codec.h"
+#include "rocket/chrono/chrono.h"
 #include "rocket/codec/CborCodec.h"
 #include "rocket/log/log.h"
+#include "rocket/math/Interval-codec.h"
+#include "rocket/reflect/reflect.h"
+
+#include <fmt/chrono.h>
 
 using namespace rocket::codec;
 using namespace rocket::codec::internal::cbor;
+
+// `MyStruct` -----------------------------------------------------------------------------------------------
+
+struct MyStruct {
+  i32 ärger = 0;
+  bool ökonom = false;
+  string übermut;
+  vector<i32> vec {}; // NOLINT
+
+  ROCKET_REFLECT_MEMBERS(MyStruct, Index, (ärger)(ökonom)(übermut)(vec));
+
+  ROCKET_REFLECT_MEMBERS(MyStruct, Three, (ärger)(ökonom)(übermut));
+};
+
+ROCKET_REFLECT_MEMBERS_DECLARE(, MyStruct, Index); // NOLINT(*-internal-linkage)
+ROCKET_REFLECT_MEMBERS_DEFINE(, MyStruct, Index);
 
 namespace {
 
@@ -68,6 +90,78 @@ testRoundtrip(const T& val) {
   } else {
     EXPECT_EQ(decodedVal, val);
   }
+}
+
+template<typename T>
+void
+testHourMinuteSecond(const T& val) {
+  const auto result = codec.decode<T>(codec.encode(val));
+  if (not result.has_value()) {
+    ROCKET_FAIL(
+      "Failed to decode hour, minute, and second {} at position {}: {}\n",
+      val.to_duration().count(),
+      result.error().position,
+      result.error().message);
+  }
+  EXPECT_EQ(result.value().to_duration(), val.to_duration());
+}
+
+template<typename T>
+void
+testZonedTime(const T& val) {
+  const auto result = codec.decode<T>(codec.encode(val));
+  if (not result.has_value()) {
+    ROCKET_FAIL("Failed to decode zoned time at position {}: {}\n", result.error().position, result.error().message);
+  }
+  EXPECT_EQ(result.value(), val);
+}
+
+template<typename T>
+void
+testCharacter(const T& val) {
+  const auto result = codec.decode<T>(codec.encode(val));
+  if (not result.has_value()) {
+    ROCKET_FAIL(
+      "Failed to decode character at position {}: {}\n", result.error().position, result.error().message);
+  }
+  EXPECT_EQ(static_cast<typename T::View>(result.value()), static_cast<typename T::View>(val));
+}
+
+void
+testVarRefs() {
+  int a = 0;
+  int b = 1;
+  int c = 2;
+  const auto refs = ROCKET_REFLECT_VARS((a)(b)(c));
+
+  const auto decoded = codec.decode<tuple<int, int, int>>(codec.encode(refs));
+  if (not decoded.has_value()) {
+    ROCKET_FAIL(
+      "Failed to decode variable references at position {}: {}\n",
+      decoded.error().position,
+      decoded.error().message);
+  }
+  EXPECT_EQ(decoded.value(), (tuple<int, int, int> { 0, 1, 2 }));
+
+  const auto one = codec.decode<int>(codec.encode(std::get<1>(refs)));
+  if (not one.has_value()) {
+    ROCKET_FAIL(
+      "Failed to decode variable reference at position {}: {}\n", one.error().position, one.error().message);
+  }
+  EXPECT_EQ(one.value(), 1);
+}
+
+void
+testTimeZone(TimeZone zone) {
+  const auto result = codec.decode<TimeZone>(codec.encode(zone));
+  if (not result.has_value()) {
+    ROCKET_FAIL(
+      "Failed to decode time zone \"{}\" at position {}: {}\n",
+      zone->name(),
+      result.error().position,
+      result.error().message);
+  }
+  EXPECT_EQ(result.value(), zone);
 }
 
 } // namespace
@@ -212,6 +306,110 @@ TEST(CborCodec, Map) {
 
   testRoundtrip(unordered_map<i32, string> {});
   testRoundtrip(unordered_map<string, i32> { { "alpha"s, 1 }, { "beta"s, 2 } });
+}
+
+TEST(CborCodec, Bimap) {
+  testRoundtrip(Bimap<i32, i32> {});
+  testRoundtrip(makeBimap<i32, string>({ { 1, "alpha" }, { 2, "beta" }, { 3, "gamma" } }));
+  testRoundtrip(makeBimap<string, i32>({ { "alpha", 1 }, { "beta", 2 } }));
+
+  testRoundtrip(UnorderedBimap<i32, i32> {});
+  testRoundtrip(makeUnorderedBimap<string, i32>({ { "alpha", 1 }, { "beta", 2 } }));
+}
+
+TEST(CborCodec, Duration) {
+  using namespace std::chrono;
+
+  testRoundtrip(1ns);
+  testRoundtrip(2us);
+  testRoundtrip(3ms);
+  testRoundtrip(4s);
+  testRoundtrip(5min);
+  testRoundtrip(-6h);
+  testRoundtrip(days(7));
+  testRoundtrip(weeks(8));
+  testRoundtrip(months(9));
+  testRoundtrip(years(10));
+}
+
+TEST(CborCodec, Date) {
+  using namespace std::chrono;
+
+  testRoundtrip(year_month_day { 1970y, January, 1d });
+  testRoundtrip(year_month_day { 1970y, January, 2d });
+  testRoundtrip(year_month_day { -100y, January, 2d });
+  testRoundtrip(year_month_day { 2026y, October, 23d });
+}
+
+TEST(CborCodec, HourMinuteSecond) {
+  using namespace std::chrono;
+
+  testHourMinuteSecond(hh_mm_ss { 1h + 2min + 3s });
+  testHourMinuteSecond(hh_mm_ss { -(111h + 2min + 3s + 123456us) });
+  testHourMinuteSecond(hh_mm_ss<milliseconds> { 1h + 2min + 3s + 123ms });
+  testHourMinuteSecond(hh_mm_ss<nanoseconds> { -(111h + 2min + 3s + 123456789ns) });
+}
+
+TEST(CborCodec, TimeZone) {
+  using namespace std::chrono;
+
+  testTimeZone(locate_zone("Europe/Berlin"));
+  testTimeZone(locate_zone("UTC"));
+  testTimeZone(locate_zone("Etc/UTC"));
+}
+
+TEST(CborCodec, Time) {
+  using namespace std::chrono;
+
+  testRoundtrip(sys_seconds { 0s });
+  testRoundtrip(sys_seconds { -1000s });
+  testRoundtrip(time_point_cast<nanoseconds>(rocket::chrono::now<system_clock>()));
+}
+
+TEST(CborCodec, ZonedTime) {
+  using namespace std::chrono;
+
+  const auto now = time_point_cast<seconds>(rocket::chrono::now<system_clock>());
+  testZonedTime(zoned_time(locate_zone("UTC"), now));
+  testZonedTime(zoned_time(locate_zone("Europe/Berlin"), now));
+  testZonedTime(zoned_time<nanoseconds>(current_zone(), rocket::chrono::now<system_clock>()));
+}
+
+TEST(CborCodec, Interval) {
+  using namespace rocket::math;
+
+  testRoundtrip(ClosedInterval<f64>(-4.2_f64, 4.2_f64));
+  testRoundtrip(OpenInterval<f64>());
+  testRoundtrip(OpenInterval<i64>(nullopt, nullopt));
+  testRoundtrip(RightOpenInterval<f64>(-4.2_f64, nullopt));
+  testRoundtrip(LeftOpenInterval<i32>(1, 10));
+}
+
+TEST(CborCodec, Declared) {
+  testRoundtrip(MyStruct { 42, true, "hello", { 1, 2, 3 } });
+  testRoundtrip(MyStruct {});
+}
+
+TEST(CborCodec, Instance) {
+  using type = reflect::Instance<MyStruct, MyStruct::Three>;
+  testRoundtrip(type(MyStruct { 42, true, "hello", { 1, 2, 3 } }));
+}
+
+TEST(CborCodec, VarRef) {
+  testVarRefs();
+}
+
+TEST(CborCodec, CodePoint) {
+  using type = unicode::CodePoint;
+  testRoundtrip(type('a'));
+  testRoundtrip(type(U'€'));
+  testRoundtrip(type(U'\U0010FFFF'));
+}
+
+TEST(CborCodec, Character) {
+  testCharacter(unicode::Character<char>("hello"s));
+  testCharacter(unicode::Character<char32>(U"€"s));
+  testCharacter(unicode::CharacterView<char>("hello"sv));
 }
 
 // EOF

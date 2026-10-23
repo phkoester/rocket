@@ -292,67 +292,70 @@ struct CborConsumerImpl<DataType::Map, T> {
   }
 };
 
-#if 0 // NOLINT
-
 template<typename T>
 struct CborConsumerImpl<DataType::Bimap, T> {
   using Key = Purge<typename T::left_value_type::first_type>;
+  static constexpr auto KeyDataType = DataTypes<Key>::Value;
   using Elem = Purge<typename T::left_value_type::second_type>;
   static constexpr auto ElemDataType = DataTypes<Elem>::Value;
 
-  void
-  consume(const T& val, nio::Sink& out, CONFIG__) const {
-    beginContainer(out, config, '{');
-    u64 index = 0;
+  [[nodiscard]] CborItem<T>
+  consume(const T& val) const {
+    CborItem<T> map(cbor_new_definite_map(static_cast<u64>(val.size())));
     for (const auto& [key, elem] : val.left) {
-      nextElem(out, config, index++);
-      writeJsonString(key, out);
-      out.write(": ");
-      CborConsumerImpl<ElemDataType, Elem>().consume(elem, out, config);
+      CborItem<Key> keyItem = CborConsumerImpl<KeyDataType, Key>().consume(key);
+      CborItem<Elem> elemItem = CborConsumerImpl<ElemDataType, Elem>().consume(elem);
+      ROCKET_EXPECT(cbor_map_add(map.ptr(), { .key=keyItem.ptr(), .value=elemItem.ptr() }));
     }
-    endContainer(out, config, val.size(), '}');
+    return map;
   }
 };
 
 template<typename T>
 struct CborConsumerImpl<DataType::Duration, T> {
-  void
-  consume(T val, nio::Sink& out, CONFIG__) const { // Take by value
-    if constexpr (std::same_as<T, std::chrono::microseconds>) {
-      out.print("\"{}µs\"", val.count());
-    } else if constexpr (std::same_as<T, std::chrono::weeks>) {
-      out.print("\"{}w\"", val.count());
-    } else if constexpr (std::same_as<T, std::chrono::months>) {
-      out.print("\"{}m\"", val.count());
-    } else if constexpr (std::same_as<T, std::chrono::years>) {
-      out.print("\"{}y\"", val.count());
-    } else {
-      out.print("\"{}\"", val);
-    }
+  using Rep = T::rep;
+  static constexpr auto RepDataType = DataTypes<Rep>::Value;
+
+  [[nodiscard]] CborItem<T>
+  consume(T val) const { // Take by value
+    auto count = CborConsumerImpl<RepDataType, Rep>().consume(val.count());
+    return CborItem<T>(cbor_incref(count.ptr()));
   }
 };
 
 template<typename T>
 struct CborConsumerImpl<DataType::Date, T> {
-  void
-  consume(const T& val, nio::Sink& out, CONFIG__) const {
-    out.write(std::format("\"{}\"", val));
+  using Rep = std::chrono::sys_days::duration::rep;
+  static constexpr auto RepDataType = DataTypes<Rep>::Value;
+
+  [[nodiscard]] CborItem<T>
+  consume(const T& val) const {
+    const auto count = std::chrono::sys_days(val).time_since_epoch().count();
+    auto item = CborConsumerImpl<RepDataType, Rep>().consume(count);
+    return CborItem<T>(cbor_incref(item.ptr()));
   }
 };
 
 template<typename T>
 struct CborConsumerImpl<DataType::HourMinuteSecond, T> {
-  void
-  consume(const T& val, nio::Sink& out, CONFIG__) const {
-    out.write(std::format("\"{}\"", val));
+  using Precision = T::precision;
+  static constexpr auto PrecisionDataType = DataTypes<Precision>::Value;
+  static_assert(PrecisionDataType == DataType::Duration);
+
+  [[nodiscard]] CborItem<T>
+  consume(const T& val) const {
+    auto duration = CborConsumerImpl<PrecisionDataType, Precision>().consume(val.to_duration());
+    return CborItem<T>(cbor_incref(duration.ptr()));
   }
 };
 
 template<typename T>
 struct CborConsumerImpl<DataType::TimeZone, T> {
-  void
-  consume(T val, nio::Sink& out, CONFIG__) const {
-    out.print("\"{}\"", val->name());
+  [[nodiscard]] CborItem<T>
+  consume(T val) const {
+    const std::string name(val->name());
+    auto item = CborConsumerImpl<DataType::String, std::string>().consume(name);
+    return CborItem<T>(cbor_incref(item.ptr()));
   }
 };
 
@@ -360,28 +363,34 @@ template<typename T>
 struct CborConsumerImpl<DataType::Time, T> {
   using Clock = T::clock;
   static_assert(std::same_as<Clock, std::chrono::system_clock>, "Clock must be `system_clock`");
+  using Duration = T::duration;
+  static constexpr auto DurationDataType = DataTypes<Duration>::Value;
+  static_assert(DurationDataType == DataType::Duration);
 
-  void
-  consume(const T& val, nio::Sink& out, CONFIG__) const {
-    out.write(std::format("\"{:%FT%TZ}\"", val)); // Zulu time
+  [[nodiscard]] CborItem<T>
+  consume(const T& val) const {
+    auto epoch = CborConsumerImpl<DurationDataType, Duration>().consume(val.time_since_epoch());
+    return CborItem<T>(cbor_incref(epoch.ptr()));
   }
 };
 
 template<typename T>
 struct CborConsumerImpl<DataType::ZonedTime, T> {
+  using Duration = T::duration;
+  using SysTime = std::chrono::sys_time<Duration>;
+  static constexpr auto SysTimeDataType = DataTypes<SysTime>::Value;
+  static_assert(SysTimeDataType == DataType::Time);
   static constexpr auto TimeZoneDataType = DataTypes<TimeZone>::Value;
   static_assert(TimeZoneDataType == DataType::TimeZone);
 
-  void
-  consume(const T& val, nio::Sink& out, CONFIG__) const {
-    const auto* tz = val.get_time_zone();
-
-    const auto info = val.get_info();
-    if (info.offset == std::chrono::seconds(0)) {
-      out.write(std::format("\"{:%FT%TZ} ({})\"", val, tz->name())); // Zulu time
-    } else {
-      out.write(std::format("\"{:%FT%T%Ez} ({})\"", val, tz->name())); // Time with UTC offset
-    }
+  [[nodiscard]] CborItem<T>
+  consume(const T& val) const {
+    CborItem<T> arr(cbor_new_definite_array(2));
+    CborItem<TimeZone> zone = CborConsumerImpl<TimeZoneDataType, TimeZone>().consume(val.get_time_zone());
+    ROCKET_EXPECT(cbor_array_push(arr.ptr(), zone.ptr()));
+    CborItem<SysTime> time = CborConsumerImpl<SysTimeDataType, SysTime>().consume(val.get_sys_time());
+    ROCKET_EXPECT(cbor_array_push(arr.ptr(), time.ptr()));
+    return arr;
   }
 };
 
@@ -392,28 +401,18 @@ struct CborConsumerImpl<DataType::Interval, T> {
   using B = T::B;
   static constexpr auto BDataType = DataTypes<B>::Value;
 
-  void
-  consume(const T& val, nio::Sink& out, CONFIG__) const {
+  [[nodiscard]] CborItem<T>
+  consume(const T& val) const {
     if (val.empty()) {
-      out.write("null");
-      return;
+      return CborItem<T>(cbor_new_null());
     }
 
-    out.write('[');
-    const auto optA = optionalOf(val.a);
-    if (not optA) {
-      out.write("null");
-    } else {
-      CborConsumerImpl<ADataType, A>().consume(val.a, out, config);
-    }
-    out.write(", ");
-    const auto optB = optionalOf(val.b);
-    if (not optB) {
-      out.write("null");
-    } else {
-      CborConsumerImpl<BDataType, B>().consume(val.b, out, config);
-    }
-    out.write(']');
+    CborItem<T> arr(cbor_new_definite_array(2));
+    CborItem<A> a = CborConsumerImpl<ADataType, A>().consume(val.a);
+    ROCKET_EXPECT(cbor_array_push(arr.ptr(), a.ptr()));
+    CborItem<B> b = CborConsumerImpl<BDataType, B>().consume(val.b);
+    ROCKET_EXPECT(cbor_array_push(arr.ptr(), b.ptr()));
+    return arr;
   }
 };
 
@@ -424,11 +423,11 @@ struct CborConsumerImpl<DataType::Declared, T> {
   static constexpr auto ElemDataType = DataTypes<Elem>::Value;
   static_assert(ElemDataType == DataType::Tuple);
 
-  void
-  consume(const T& val, nio::Sink& out, CONFIG__) const {
-    // Here we have to pass an additional argument, the instance, to the tuple consumer. The tuple consumer
-    // will pass it on to the member-reference consumer
-    CborConsumerImpl<ElemDataType, Elem>().consume(refs, out, config, val);
+  [[nodiscard]] CborItem<T>
+  consume(const T& val) const {
+    // Pass the instance on to the tuple consumer, which forwards it to each member reference
+    auto item = CborConsumerImpl<ElemDataType, Elem>().consume(refs, val);
+    return CborItem<T>(cbor_incref(item.ptr()));
   }
 };
 
@@ -439,11 +438,11 @@ struct CborConsumerImpl<DataType::Instance, T> {
   static constexpr auto ElemDataType = DataTypes<Elem>::Value;
   static_assert(ElemDataType == DataType::Tuple);
 
-  void
-  consume(const T& val, nio::Sink& out, CONFIG__) const {
-    // Here we have to pass an additional argument, the instance, to the tuple consumer. The tuple consumer
-    // will pass it on to the member-reference consumer
-    CborConsumerImpl<ElemDataType, Elem>().consume(refs, out, config, val.get());
+  [[nodiscard]] CborItem<T>
+  consume(const T& val) const {
+    // Pass the instance on to the tuple consumer, which forwards it to each member reference
+    auto item = CborConsumerImpl<ElemDataType, Elem>().consume(refs, val.get());
+    return CborItem<T>(cbor_incref(item.ptr()));
   }
 };
 
@@ -453,10 +452,10 @@ struct CborConsumerImpl<DataType::MemberRef, T> {
   static constexpr auto ElemDataType = DataTypes<Elem>::Value;
 
   template<typename C>
-  void
-  consume(const T& val, nio::Sink& out, CONFIG__, const C& instance) const {
-    out.print("\"{}\": ", val.name());
-    CborConsumerImpl<ElemDataType, Elem>().consume(val.get(instance), out, config);
+  [[nodiscard]] CborItem<T>
+  consume(const T& val, const C& instance) const {
+    auto elem = CborConsumerImpl<ElemDataType, Elem>().consume(val.get(instance));
+    return CborItem<T>(cbor_incref(elem.ptr()));
   }
 };
 
@@ -465,18 +464,22 @@ struct CborConsumerImpl<DataType::VarRef, T> {
   using Elem = T::Type;
   static constexpr auto ElemDataType = DataTypes<Elem>::Value;
 
-  void
-  consume(const T& val, nio::Sink& out, CONFIG__) const {
-    out.print("\"{}\": ", val.name());
-    CborConsumerImpl<ElemDataType, Elem>().consume(val.get(), out, config);
+  [[nodiscard]] CborItem<T>
+  consume(const T& val) const {
+    auto elem = CborConsumerImpl<ElemDataType, Elem>().consume(val.get());
+    return CborItem<T>(cbor_incref(elem.ptr()));
   }
 };
 
 template<typename T>
 struct CborConsumerImpl<DataType::CodePoint, T> {
-  void
-  consume(const T& val, nio::Sink& out, CONFIG__) const {
-    out.print("\"U+{:0>4X}\"", static_cast<u32>(val));
+  using Elem = T::Type;
+  static constexpr auto ElemDataType = DataTypes<Elem>::Value;
+
+  [[nodiscard]] CborItem<T>
+  consume(const T& val) const {
+    auto elem = CborConsumerImpl<ElemDataType, Elem>().consume(static_cast<Elem>(val));
+    return CborItem<T>(cbor_incref(elem.ptr()));
   }
 };
 
@@ -485,19 +488,42 @@ struct CborConsumerImpl<DataType::Character, T> {
   using Elem = T::View;
   static constexpr auto ElemDataType = DataTypes<Elem>::Value;
 
-  void
-  consume(const T& val, nio::Sink& out, CONFIG__) const {
-    const auto elem = static_cast<Elem>(val);
-    CborConsumerImpl<ElemDataType, Elem>().consume(elem, out, config);
+  [[nodiscard]] CborItem<T>
+  consume(const T& val) const {
+    auto elem = CborConsumerImpl<ElemDataType, Elem>().consume(static_cast<Elem>(val));
+    return CborItem<T>(cbor_incref(elem.ptr()));
   }
 };
-
-#endif
 
 // `CborProducerImpl` ---------------------------------------------------------------------------------------
 
 template<DataType DataType, typename T>
 struct CborProducerImpl;
+
+template<typename Ref, typename Item, typename Instance>
+void
+assignMember(const Ref& ref, Item& arr, DecoderState& state, u64 index, Instance& instance) {
+  using Member = typename Ref::Type;
+  constexpr auto MemberDataType = DataTypes<Member>::Value;
+  CborItem<Member> member(cbor_array_get(arr.ptr(), index));
+  CborProducerImpl<MemberDataType, Member>().produce(member, state);
+  ref.get(instance) = std::move(member.value());
+}
+
+template<typename Refs, typename Item, typename Instance>
+void
+produceObject(const Refs& refs, Item& item, DecoderState& state, Instance& instance) {
+  state.nextItem();
+
+  if (not cbor_isa_array(item.ptr()) || cbor_array_size(item.ptr()) != std::tuple_size_v<Refs>) {
+    throw InputFailure(state.index, "Expected an object");
+  }
+
+  u64 index = 0;
+  std::apply([&](const auto&... ref) {
+    (assignMember(ref, item, state, index++, instance), ...);
+  }, refs);
+}
 
 template<>
 struct CborProducerImpl<DataType::Bool, bool> {
@@ -543,7 +569,11 @@ struct CborProducerImpl<DataType::Enum, E> {
   void
   produce(CborItem<E>& item, DecoderState& state) const {
     CborItem<Underlying> underlying(cbor_incref(item.ptr()));
-    CborProducerImpl<UnderlyingDataType, Underlying>().produce(underlying, state);
+    try {
+      CborProducerImpl<UnderlyingDataType, Underlying>().produce(underlying, state);
+    } catch (const InputFailure& ex) {
+      throw InputFailure(ex.position(), "Expected an enumeration value");
+    }
     item.setValue(static_cast<E>(underlying.value()));
   }
 };
@@ -631,7 +661,11 @@ struct CborProducerImpl<DataType::Pointer, P> {
   void
   produce(CborItem<P>& item, DecoderState& state) const {
     CborItem<Alt> alt(cbor_incref(item.ptr()));
-    CborProducerImpl<AltDataType, Alt>().produce(alt, state);
+    try {
+      CborProducerImpl<AltDataType, Alt>().produce(alt, state);
+    } catch (const InputFailure& ex) {
+      throw InputFailure(ex.position(), "Expected a pointer");
+    }
     item.setValue(reinterpret_cast<P>(alt.value()));
   }
 };
@@ -811,9 +845,7 @@ struct CborProducerImpl<DataType::Map, T> {
     const u64 size = cbor_map_size(item.ptr());
     T map;
     for (u64 index = 0; index < size; ++index) {
-      auto [key, elem] = produceElem(item, state, index);
-      // Make the last one win
-      map.insert_or_assign(std::move(key), std::move(elem));
+      map.insert(produceElem(item, state, index));
     }
     item.setValue(std::move(map));
   }
@@ -831,51 +863,40 @@ private:
   }
 };
 
-#if 0 // NOLINT
-
 template<typename T>
 struct CborProducerImpl<DataType::Bimap, T> {
   using Key = Purge<typename T::left_value_type::first_type>;
+  static constexpr auto KeyDataType = DataTypes<Key>::Value;
   using Elem = Purge<typename T::left_value_type::second_type>;
   static constexpr auto ElemDataType = DataTypes<Elem>::Value;
 
   void
-  produce(T& val, nio::Source& in) const {
-    skip(in);
-    const auto pos = in.tell();
+  produce(CborItem<T>& item, DecoderState& state) const {
+    state.nextItem();
 
-    val.clear();
-
-    if (not readChar(in, '{')) {
-      throw InputFailure(pos, "Expected an object");
+    if (not cbor_isa_map(item.ptr())) {
+      throw InputFailure(state.index, "Expected a bimap");
     }
 
-    u64 index = 0;
-    while (true) {
-      skip(in);
-      if (readChar(in, '}')) {
-        return;
-      }
-      if (index++ > 0) {
-        expectComma(in);
-        skip(in);
-        if (readChar(in, '}')) { // Allow trailing comma if nonempty
-          return;
-        }
-      }
-
-      Key key;
-      readJsonKey(key, in);
-      skip(in);
-
-      expectColon(in);
-      skip(in);
-
-      Elem elem;
-      CborProducerImpl<ElemDataType, Elem>().produce(elem, in);
-      // Make the last one win
-      insertOrReplace(val, key, elem);
+    const u64 size = cbor_map_size(item.ptr());
+    T map;
+    for (u64 index = 0; index < size; ++index) {
+      auto [key, elem] = produceElem(item, state, index);
+      map.left.insert({ key, elem });
     }
+    item.setValue(std::move(map));
+  }
+
+private:
+
+  [[nodiscard]] std::pair<Key, Elem>
+  produceElem(CborItem<T>& map, DecoderState& state, u64 index) const {
+    const cbor_pair& pair = cbor_map_handle(map.ptr())[index];
+    CborItem<Key> keyItem(cbor_incref(pair.key));
+    CborProducerImpl<KeyDataType, Key>().produce(keyItem, state);
+    CborItem<Elem> elemItem(cbor_incref(pair.value));
+    CborProducerImpl<ElemDataType, Elem>().produce(elemItem, state);
+    return { keyItem.value(), elemItem.value() };
   }
 };
 
@@ -885,166 +906,70 @@ struct CborProducerImpl<DataType::Duration, T> {
   static constexpr auto RepDataType = DataTypes<Rep>::Value;
 
   void
-  produce(T& val, nio::Source& in) const {
-    using namespace std::chrono;
-
-    skip(in);
-    const auto pos = in.tell();
-
-    // Read JSON string and create an inner source for it
-    Positions positions;
-    const auto input = readJsonString(in, positions);
-    nio::StringSource inner(input);
-    const auto inPos = [pos, &positions](u64 innnerPos) -> u64 {
-      return jsonStringOffset(pos, innnerPos, positions);
-    };
-
-    Rep count;
+  produce(CborItem<T>& item, DecoderState& state) const {
+    CborItem<Rep> count(cbor_incref(item.ptr()));
     try {
-      CborProducerImpl<RepDataType, Rep>().produce(count, inner);
-    } catch (const InputFailure&) {
-      throw InputFailure(inPos(0), "Expected a duration");
+      CborProducerImpl<RepDataType, Rep>().produce(count, state);
+    } catch (const InputFailure& ex) {
+      throw InputFailure(ex.position(), "Expected a duration");
     }
-
-    const std::set<std::string_view> UNITS = {
-      "ns", "µs", "us", "ms", "s", "min", "h", "d", "w", "m", "y"
-    };
-
-    if (auto str = readChoice(inner, UNITS, true); str) {
-      if (*str == "ns") {
-        val = duration_cast<T>(nanoseconds(count));
-      } else if (*str == "µs" || *str == "us") {
-        val = duration_cast<T>(microseconds(count));
-      } else if (*str == "ms") {
-        val = duration_cast<T>(milliseconds(count));
-      } else if (*str == "s") {
-        val = duration_cast<T>(seconds(count));
-      } else if (*str == "min") {
-        val = duration_cast<T>(minutes(count));
-      } else if (*str == "h") {
-        val = duration_cast<T>(hours(count));
-      } else if (*str == "d") {
-        val = duration_cast<T>(days(count));
-      } else if (*str == "w") {
-        val = duration_cast<T>(weeks(count));
-      } else if (*str == "m") {
-        val = duration_cast<T>(months(count));
-      } else if (*str == "y") {
-        val = duration_cast<T>(years(count));
-      } else {
-        ROCKET_TERMINATE_UNREACHABLE_CODE();
-      }
-      return;
-    }
-
-    throw InputFailure(inPos(inner.tell()), "Expected a time unit");
+    item.setValue(T(count.value()));
   }
 };
 
 template<typename T>
 struct CborProducerImpl<DataType::Date, T> {
+  using Rep = std::chrono::sys_days::duration::rep;
+  static constexpr auto RepDataType = DataTypes<Rep>::Value;
+
   void
-  produce(T& val, nio::Source& in) const {
+  produce(CborItem<T>& item, DecoderState& state) const {
     using namespace std::chrono;
 
-    skip(in);
-    const auto pos = in.tell();
-
-    // Read JSON string and create an inner source for it
-    Positions positions;
-    const auto input = readJsonString(in, positions);
-    nio::StringSource inner(input);
-    const auto inPos = [pos, &positions](u64 innnerPos) -> u64 {
-      return jsonStringOffset(pos, innnerPos, positions);
-    };
-
-    auto& is = inner.istream();
-    auto result = scn::scan<std_int, std_unsigned, std_unsigned>(is, "{}-{}-{}");
-    if (not result) {
-      throw InputFailure(inPos(0), "Expected a date");
+    CborItem<Rep> count(cbor_incref(item.ptr()));
+    try {
+      CborProducerImpl<RepDataType, Rep>().produce(count, state);
+    } catch (const InputFailure& ex) {
+      throw InputFailure(ex.position(), "Expected a date");
     }
-    inner.seek(io::tellg(is), nio::SeekMode::beg);
-
-    const auto& [y, m, d] = result->values();
-    val = { year(y), month(m), day(d) };
+    item.setValue(T(sys_days(days(count.value()))));
   }
 };
 
 template<typename T>
 struct CborProducerImpl<DataType::HourMinuteSecond, T> {
   using Precision = T::precision;
+  static constexpr auto PrecisionDataType = DataTypes<Precision>::Value;
+  static_assert(PrecisionDataType == DataType::Duration);
 
   void
-  produce(T& val, nio::Source& in) const {
-    using namespace std::chrono;
-
-    skip(in);
-    const auto pos = in.tell();
-
-    // Read JSON string and create an inner source for it
-    Positions positions;
-    const auto input = readJsonString(in, positions);
-    nio::StringSource inner(input);
-    const auto inPos = [pos, &positions](u64 innnerPos) -> u64 {
-      return jsonStringOffset(pos, innnerPos, positions);
-    };
-
-    // Read hour, minute, and second
-
-    auto& is = inner.istream();
-    auto result = scn::scan<hours::rep, minutes::rep, seconds::rep>(is, "{}:{}:{}");
-    if (not result) {
-      throw InputFailure(inPos(0), "Expected an hour, minute, and second");
-    }
-    inner.seek(io::tellg(is), nio::SeekMode::beg);
-
-    auto [h, m, s] = result->values();
-    bool neg = false;
-    if (h < 0) {
-      h = -h;
-      neg = true;
-    }
-
-    try
-    {
-      // Read subseconds
-
-      const nanoseconds subseconds = readSubseconds(inner);
-
-      // Finally, construct `hh_mm_ss`
-
-      Precision duration = duration_cast<Precision>(hours(h) + minutes(m) + seconds(s) + subseconds);
-      if (neg) {
-        duration = -duration;
-      }
-      val = T(duration);
+  produce(CborItem<T>& item, DecoderState& state) const {
+    CborItem<Precision> duration(cbor_incref(item.ptr()));
+    try {
+      CborProducerImpl<PrecisionDataType, Precision>().produce(duration, state);
     } catch (const InputFailure& ex) {
-      throw InputFailure(inPos(ex.position()), ex.message());
+      throw InputFailure(ex.position(), "Expected an hour, minute, and second");
     }
+    item.setValue(T(duration.value()));
   }
 };
 
 template<typename T>
 struct CborProducerImpl<DataType::TimeZone, T> {
   void
-  produce(T& val, nio::Source& in) const {
+  produce(CborItem<T>& item, DecoderState& state) const {
     using namespace std::chrono;
 
-    skip(in);
-    const auto pos = in.tell();
-
-    // Read JSON string (no inner source needed here because we use `input` directly)
-    Positions positions;
-    const auto input = readJsonString(in, positions);
-    const auto inPos = [pos, &positions](u64 innnerPos) -> u64 {
-      return jsonStringOffset(pos, innnerPos, positions);
-    };
-
+    CborItem<std::string> name(cbor_incref(item.ptr()));
     try {
-      // This throws if the time zone is not found
-      val = locate_zone(input);
+      CborProducerImpl<DataType::String, std::string>().produce(name, state);
+    } catch (const InputFailure& ex) {
+      throw InputFailure(ex.position(), "Expected a time zone");
+    }
+    try {
+      item.setValue(locate_zone(name.value()));
     } catch (const std::exception& ex) {
-      throw InputFailure(inPos(0), ex.what());
+      throw InputFailure(state.index, ex.what());
     }
   }
 };
@@ -1054,173 +979,43 @@ struct CborProducerImpl<DataType::Time, T> {
   using Clock = T::clock;
   static_assert(std::same_as<Clock, std::chrono::system_clock>, "Clock must be `system_clock`");
   using Duration = T::duration;
+  static constexpr auto DurationDataType = DataTypes<Duration>::Value;
+  static_assert(DurationDataType == DataType::Duration);
 
   void
-  produce(T& val, nio::Source& in) const {
-    using namespace std::chrono;
-
-    skip(in);
-    const auto pos = in.tell();
-
-    // Read JSON string and create an inner source for it
-
-    Positions positions;
-    const auto input = readJsonString(in, positions);
-    nio::StringSource inner(input);
-    const auto inPos = [pos, &positions](u64 innnerPos) -> u64 {
-      return jsonStringOffset(pos, innnerPos, positions);
-    };
-
-    // The environment variable `TZ` interferes somehow ...
-
-    const auto* current = current_zone();
-    const auto TZ = system::env::get<std::string>("TZ");
-    if (TZ) {
-      ROCKET_EXPECT(*TZ == current->name(), "If defined, the environment variable `TZ` must match the current time zone, which is {}", current->name());
-    }
-
-    // Scan the time point, using scnlib
-
-    auto& is = inner.istream();
-    const auto result = scn::scan<T>(is, "{:%FT%T}");
-    if (not result) {
-      throw InputFailure(inPos(0), "Expected a time point");
-    }
-    inner.seek(io::tellg(is), nio::SeekMode::beg);
-    val = result->value();
-
+  produce(CborItem<T>& item, DecoderState& state) const {
+    CborItem<Duration> epoch(cbor_incref(item.ptr()));
     try {
-      // Read subseconds
-
-      const nanoseconds subseconds = readSubseconds(inner);
-      if (subseconds.count() > 0) {
-        val += duration_cast<Duration>(subseconds);
-      }
-
-      // Read 'Z'
-
-      expectChar(inner, 'Z');
-
-      // Work around a bug in scnlib where the time point is not parsed as UTC but dependent from the current
-      // time zone
-
-      const auto info = current->get_info(val);
-      val += info.offset;
+      CborProducerImpl<DurationDataType, Duration>().produce(epoch, state);
     } catch (const InputFailure& ex) {
-      throw InputFailure(inPos(ex.position()), ex.message());
+      throw InputFailure(ex.position(), "Expected a time point");
     }
+    item.setValue(T(epoch.value()));
   }
 };
 
 template<typename T>
 struct CborProducerImpl<DataType::ZonedTime, T> {
-  using Duration = T::duration;
   static constexpr auto TimeZoneDataType = DataTypes<TimeZone>::Value;
   static_assert(TimeZoneDataType == DataType::TimeZone);
+  using Duration = T::duration;
+  using SysTime = std::chrono::sys_time<Duration>;
+  static constexpr auto SysTimeDataType = DataTypes<SysTime>::Value;
+  static_assert(SysTimeDataType == DataType::Time);
 
   void
-  produce(T& val, nio::Source& in) const {
-    using namespace std::chrono;
+  produce(CborItem<T>& item, DecoderState& state) const {
+    state.nextItem();
 
-    skip(in);
-    const auto pos = in.tell();
-
-    // Read JSON string and create an inner source for it
-
-    Positions positions;
-    const auto input = readJsonString(in, positions);
-    nio::StringSource inner(input);
-    const auto inPos = [pos, &positions](u64 innnerPos) -> u64 {
-      return jsonStringOffset(pos, innnerPos, positions);
-    };
-
-    // The environment variable `TZ` interferes somehow ...
-
-    const auto* current = current_zone();
-    const auto TZ = system::env::get<std::string>("TZ");
-    if (TZ) {
-      ROCKET_EXPECT(*TZ == current->name(), "If defined, the environment variable `TZ` must match the current time zone, which is {}", current->name());
+    if (not cbor_isa_array(item.ptr()) || cbor_array_size(item.ptr()) != 2) {
+      throw InputFailure(state.index, "Expected a zoned time");
     }
 
-    // Scan the time point, using scnlib
-
-    sys_time<Duration> tp;
-    {
-      auto& is = inner.istream();
-      const auto result = scn::scan<sys_time<Duration>>(is, "{:%FT%T}");
-      if (not result) {
-        throw InputFailure(inPos(0), "Expected a time point");
-      }
-      inner.seek(io::tellg(is), nio::SeekMode::beg);
-      tp = result->value();
-    }
-
-    try {
-      // Read subseconds
-
-      const nanoseconds subseconds = readSubseconds(inner);
-      if (subseconds.count() > 0) {
-        tp += duration_cast<Duration>(subseconds);
-      }
-
-      // Read "Z" or UTC offset
-
-      const auto offsetPos = inner.tell();
-      seconds offset;
-
-      if (not readChar(inner, 'Z')) {
-        auto sign = readChoice(inner, { "+", "-" }, false, false);
-        if (not sign) {
-          throw InputFailure(offsetPos, "Expected UTC offset");
-        }
-
-        auto& is = inner.istream();
-        const auto result = scn::scan<std_unsigned, std_unsigned>(is, "{}:{}");
-        if (not result) {
-          throw InputFailure(offsetPos, "Expected UTC offset");
-        }
-        inner.seek(io::tellg(is), nio::SeekMode::beg);
-        const auto& [h, m] = result->values();
-        offset = hours(h) + minutes(m);
-        if (*sign == "-") {
-          offset = -offset;
-        }
-      }
-
-      // Apply UTC offset; convert time point to UTC
-
-      tp -= offset;
-
-      // Work around a bug in scnlib where the time point is not parsed as UTC but dependent from the current
-      // time zone
-
-      const auto info = current->get_info(tp);
-      tp += info.offset;
-
-      // Read time zone. We need to do this by hand because the time-zone producer reads in a JSON string.
-      // Here, however, the time zone is surrounded by parentheses
-
-      expectChar(inner, ' ');
-      const u64 tzPos = inner.tell();
-      expectChar(inner, '(');
-      const auto name = readUntilChar(inner, ')');
-      if (not name) {
-        throw InputFailure(tzPos, "Unterminated time-zone name");
-      }
-      TimeZone tz; // NOLINT
-      try {
-        // This throws if the time zone is not found
-        tz = locate_zone(*name);
-      } catch (const std::exception& ex) {
-        throw InputFailure(tzPos, ex.what());
-      }
-
-      // Finally, construct the `zoned_time`
-
-      val = T(tz, tp);
-    } catch (const InputFailure& ex) {
-      throw InputFailure(inPos(ex.position()), ex.message());
-    }
+    CborItem<TimeZone> zone(cbor_array_get(item.ptr(), 0));
+    CborProducerImpl<TimeZoneDataType, TimeZone>().produce(zone, state);
+    CborItem<SysTime> time(cbor_array_get(item.ptr(), 1));
+    CborProducerImpl<SysTimeDataType, SysTime>().produce(time, state);
+    item.setValue(T(zone.value(), time.value()));
   }
 };
 
@@ -1232,51 +1027,23 @@ struct CborProducerImpl<DataType::Interval, T> {
   static constexpr auto BDataType = DataTypes<B>::Value;
 
   void
-  produce(T& val, nio::Source& in) const {
-    skip(in);
-    const auto pos = in.tell();
-
-    if (readString(in, "null")) {
-      val = T();
+  produce(CborItem<T>& item, DecoderState& state) const {
+    if (cbor_is_null(item.ptr())) {
+      state.nextItem();
+      item.setValue(T());
       return;
     }
 
-    if (not readChar(in, '[')) {
-      throw InputFailure(pos, "Expected an interval");
+    state.nextItem();
+    if (not cbor_isa_array(item.ptr()) || cbor_array_size(item.ptr()) != 2) {
+      throw InputFailure(state.index, "Expected an interval");
     }
-    skip(in);
 
-    A a = A();
-    if constexpr (IsOptional<A>) {
-      if (not readString(in, "null")) {
-        CborProducerImpl<ADataType, A>().produce(a, in);
-      }
-    } else {
-      CborProducerImpl<ADataType, A>().produce(a, in);
-    }
-    val.a = a;
-
-    skip(in);
-    expectComma(in);
-    skip(in);
-
-    B b = B();
-    if constexpr (IsOptional<B>) {
-      if (not readString(in, "null")) {
-        CborProducerImpl<BDataType, B>().produce(b, in);
-      }
-    } else {
-      CborProducerImpl<BDataType, B>().produce(b, in);
-    }
-    val.b = b;
-
-    skip(in);
-    if (readChar(in, ',')) { // Allow trailing comma
-      skip(in);
-    }
-    if (not readChar(in, ']')) {
-      throw InputFailure(in.tell(), { pos, in.tell() }, "Unterminated interval");
-    }
+    CborItem<A> a(cbor_array_get(item.ptr(), 0));
+    CborProducerImpl<ADataType, A>().produce(a, state);
+    CborItem<B> b(cbor_array_get(item.ptr(), 1));
+    CborProducerImpl<BDataType, B>().produce(b, state);
+    item.setValue(T(a.value(), b.value()));
   }
 };
 
@@ -1288,8 +1055,10 @@ struct CborProducerImpl<DataType::Declared, T> {
   static_assert(ElemDataType == DataType::Tuple);
 
   void
-  produce(T& val, nio::Source& in) const {
-    produceMembers(refs, val, in);
+  produce(CborItem<T>& item, DecoderState& state) const {
+    T val {};
+    produceObject<Elem>(refs, item, state, val);
+    item.setValue(std::move(val));
   }
 };
 
@@ -1301,8 +1070,10 @@ struct CborProducerImpl<DataType::Instance, T> {
   static_assert(ElemDataType == DataType::Tuple);
 
   void
-  produce(T& val, nio::Source& in) const {
-    produceMembers(refs, val.get(), in);
+  produce(CborItem<T>& item, DecoderState& state) const {
+    T val {};
+    produceObject<Elem>(refs, item, state, val.get());
+    item.setValue(std::move(val));
   }
 };
 
@@ -1322,33 +1093,14 @@ struct CborProducerImpl<DataType::CodePoint, T> {
   static constexpr auto ElemDataType = DataTypes<Elem>::Value;
 
   void
-  produce(T& val, nio::Source& in) const {
-    skip(in);
-    const auto pos = in.tell();
-
-    if (not readChar(in, '"')) {
-      throw InputFailure(pos, "Expected a code point");
+  produce(CborItem<T>& item, DecoderState& state) const {
+    CborItem<Elem> elem(cbor_incref(item.ptr()));
+    try {
+      CborProducerImpl<ElemDataType, Elem>().produce(elem, state);
+    } catch (const InputFailure& ex) {
+      throw InputFailure(ex.position(), "Expected a code point");
     }
-
-    if (not readString(in, "U+", false, false)) {
-      // Read `char32`
-      in.seek(-1, nio::SeekMode::cur);
-      Elem elem = Elem();
-      CborProducerImpl<ElemDataType, Elem>().produce(elem, in);
-      val = T(elem);
-      return;
-    }
-
-    // Read `U+...`
-    in.seek(-2, nio::SeekMode::cur);
-    auto result = scanCodePoint<u32>(in);
-    if (not result) {
-      throw InputFailure(pos, "Expected a code point");
-    }
-    if (not readChar(in, '"')) {
-      throw InputFailure(in.tell(), { pos, in.tell() }, "Unterminated code point");
-    }
-    val = static_cast<Elem>(*result);
+    item.setValue(T(elem.value()));
   }
 };
 
@@ -1358,14 +1110,16 @@ struct CborProducerImpl<DataType::Character, T> {
   static constexpr auto ElemDataType = DataTypes<Elem>::Value;
 
   void
-  produce(T& val, nio::Source& in) const {
-    Elem elem;
-    CborProducerImpl<ElemDataType, Elem>().produce(elem, in);
-    val = T(std::move(elem));
+  produce(CborItem<T>& item, DecoderState& state) const {
+    CborItem<Elem> elem(cbor_incref(item.ptr()));
+    try {
+      CborProducerImpl<ElemDataType, Elem>().produce(elem, state);
+    } catch (const InputFailure& ex) {
+      throw InputFailure(ex.position(), "Expected a character");
+    }
+    item.setValue(T(std::move(elem.value())));
   }
 };
-
-#endif
 
 } // namespace internal::cbor
 
@@ -1391,8 +1145,6 @@ struct CborProducer {
 
 /**
  * A CBOR codec.
- *
- * XXX
  *
  * Decoding to list views and forward lists is not supported. String views and character views, however, are
  * allowed. This is made possible by keeping real strings in a store bound to the decoder. Hence, decoded
