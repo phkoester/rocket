@@ -64,13 +64,13 @@
 // Check prerequisites --------------------------------------------------------------------------------------
 
 #if not defined(ROCKET_OS_LINUX) && not defined(ROCKET_OS_WINDOWS)
-  #error Unsupported OS
+  #error Unknown OS
 #endif
 
 #if not defined(ROCKET_CXX_COMPILER_GNU) && \
   not defined(ROCKET_CXX_COMPILER_CLANG) && \
   not defined(ROCKET_CXX_COMPILER_MSVC)
-  #error Unsupported compiler
+  #error Unknown compiler
 #endif
 
 // Macros ---------------------------------------------------------------------------------------------------

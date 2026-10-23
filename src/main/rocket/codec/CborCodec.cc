@@ -11,19 +11,16 @@ namespace rocket::codec::internal::cbor {
 
 // Functions ------------------------------------------------------------------------------------------------
 
-void
-loadFailed(nio::Source& in, const cbor_load_result& result) {
-  string message;
-  switch (result.error.code) {
-    case CBOR_ERR_NOTENOUGHDATA: message = "Not enough data"; break;
-    case CBOR_ERR_NODATA: message = "No data"; break;
-    case CBOR_ERR_MALFORMATED: message = "Malformed data"; break;
-    case CBOR_ERR_MEMERROR: message = "Out of memory"; break;
-    case CBOR_ERR_SYNTAXERROR: message = "Syntax error"; break;
-    default: ROCKET_FAIL("Invalid CBOR error code");
+string_view
+messageOf(cbor_error_code errorCode) {
+  switch (errorCode) {
+    case CBOR_ERR_NOTENOUGHDATA: return "Not enough data";
+    case CBOR_ERR_NODATA: return "No data";
+    case CBOR_ERR_MALFORMATED: return "Malformed data";
+    case CBOR_ERR_MEMERROR: return "Memory error";
+    case CBOR_ERR_SYNTAXERROR: return "Syntax error";
+    default: ROCKET_FAIL("Invalid CBOR error code {}", static_cast<i32>(errorCode));
   }
-
-  throw InputFailure(in.tell(), message);
 }
 
 }; // namespace rocket::codec::internal::cbor

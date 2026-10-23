@@ -1633,7 +1633,8 @@ struct FormattedCodec : Codec<FormattedConsumer, FormattedProducer> {
   template<typename T>
   [[nodiscard]] DecodeResult<T>
   decode(nio::Source& in) const {
-    return Base::decode<T>(in);
+    T val;
+    return Base::decode<T>(val, in);
   }
 };
 

@@ -467,24 +467,24 @@ struct Decoder {
    * @tparam T the type to decode
    * @tparam U the type the producer actually produces for `T`
    * @tparam Args types of additional arguments to pass to the producer
+   * @param val the initial value to decode into
    * @param args additional arguments to pass to the producer
    * @return the decoded value
    */
   template<typename T, typename U = T, typename... Args>
   [[nodiscard]] DecodeResult<U>
-  decode(Args&&... args) const {
+  decode(U& val, Args&&... args) const {
     internal::DecoderStore::set(const_cast<internal::DecoderStore*>(&store_));
 
     constexpr auto Value = DataTypes<Purge<T>>::Value;
     using ProducerType = Producer::template Type<Value, T>;
     ProducerType producer; // NOLINT
-    U val; // NOLINT
     try {
       producer.produce(val, std::forward<Args>(args)...);
     } catch (const InputFailure& ex) {
       return std::unexpected(DecodeError { ex.position(), ex.ranges(), ex.message() });
     }
-    return val;
+    return std::move(val);
   }
 
 private:

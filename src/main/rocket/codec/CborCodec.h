@@ -9,7 +9,6 @@
 #include "rocket/Guard.h"
 #include "rocket/codec/codec.h"
 
-#include <boost/safe_numerics/safe_integer.hpp>
 #include <cbor.h>
 
 namespace rocket::codec {
@@ -25,17 +24,12 @@ namespace internal::cbor {
  */
 template<typename T>
 struct CborItem {
-  CborItem() : ptr_(nullptr) {}
-
   explicit CborItem(cbor_item_t* ptr) : ptr_(ptr) {
     ROCKET_CHECK(ptr, ptr != nullptr);
     ROCKET_ASSERT(cbor_refcount(ptr) > 0);
   }
 
-  CborItem(cbor_item_t* ptr, T&& val) : ptr_(ptr), val_(std::move(val)) {
-    ROCKET_CHECK(ptr, ptr != nullptr);
-    ROCKET_ASSERT(cbor_refcount(ptr) > 0);
-  }
+  CborItem(const CborItem&) = delete;
 
   CborItem(CborItem&& rhs) noexcept : ptr_(rhs.ptr_), val_(std::move(rhs.val_)) {
     rhs.ptr_ = nullptr;
@@ -50,21 +44,9 @@ struct CborItem {
     val_ = std::nullopt;
   }
 
-  CborItem&
-  operator=(CborItem&& rhs) noexcept {
-    if (&rhs == this) {
-      return *this;
-    }
-    if (ptr_ != nullptr) {
-      ROCKET_ASSERT(cbor_refcount(ptr_) > 0);
-      cbor_decref(&ptr_);
-    }
-    ptr_ = rhs.ptr_;
-    rhs.ptr_ = nullptr;
-    val_ = std::move(rhs.val_);
-    rhs.val_ = std::nullopt;
-    return *this;
-  }
+  CborItem& operator=(const CborItem& rhs) = delete;
+
+  CborItem& operator=(CborItem&& rhs) = delete;
 
   [[nodiscard]] cbor_item_t*
   ptr() {
@@ -72,32 +54,11 @@ struct CborItem {
     return ptr_;
   }
 
-  /// This is a one-shot move operation.
-  template<typename U>
-  CborItem<U>
-  reinterpretCast() {
-    cbor_item_t* ptr = ptr_;
-    ptr_ = nullptr;
-    if (val_.has_value()) {
-      U converted = reinterpret_cast<U>(std::move(*val_));
-      val_ = std::nullopt;
-      return CborItem<U>(ptr, std::move(converted));
-    }
-    return CborItem<U>(ptr);
-  }
-
-  /// This is a one-shot move operation.
-  template<typename U>
-  CborItem<U>
-  staticCast() {
-    cbor_item_t* ptr = ptr_;
-    ptr_ = nullptr;
-    if (val_.has_value()) {
-      U converted = static_cast<U>(std::move(*val_));
-      val_ = std::nullopt;
-      return CborItem<U>(ptr, std::move(converted));
-    }
-    return CborItem<U>(ptr);
+  /// May only be called once.
+  void
+  setValue(T&& val) {
+    ROCKET_EXPECT(not val_);
+    val_ = std::move(val);
   }
 
   /// This is a one-shot move operation.
@@ -109,15 +70,6 @@ struct CborItem {
     return val;
   }
 
-  /// This is a one-shot move operation.
-  [[nodiscard]] CborItem<T>
-  withValue(T&& val) {
-    ROCKET_EXPECT(not val_);
-    CborItem<T> ret(ptr_, std::move(val));
-    ptr_ = nullptr;
-    return ret;
-  }
-
 private:
 
   cbor_item_t* ptr_; ///< The managed CBOR item.
@@ -125,27 +77,17 @@ private:
   std::optional<T> val_;
 };
 
+// `DecoderState` -------------------------------------------------------------------------------------------
+
+struct DecoderState {
+  u64 index;
+
+  void nextItem() { ++index; }
+};
+
 // Functions ------------------------------------------------------------------------------------------------
 
-/// Throws a #rocket::InputFailure, always.
-void loadFailed(nio::Source& in, const cbor_load_result& result);
-
-template<typename I>
-CborItem<I>
-loadItem(nio::ContiguousSource& in) {
-  using boost::safe_numerics::safe;
-
-  auto buf = in.bytes();
-  cbor_load_result result; // NOLINT
-  cbor_item_t* item = cbor_load(buf.data(), buf.size(), &result);
-  if (result.error.code != CBOR_ERR_NONE) {
-    ROCKET_ASSERT(item == nullptr);
-    loadFailed(in, result);
-  }
-  CborItem<I> ret(item);
-  in.seek(safe<i64>(result.read), nio::SeekMode::cur);
-  return ret;
-}
+std::string_view messageOf(cbor_error_code errorCode);
 
 // `CborConsumerImpl` ---------------------------------------------------------------------------------------
 
@@ -181,7 +123,7 @@ struct CborConsumerImpl<DataType::Enum, E> {
   consume(E val) const {
     auto underlying =
       CborConsumerImpl<UnderlyingDataType, Underlying>().consume(static_cast<Underlying>(val));
-    return underlying.template staticCast<E>();
+    return CborItem<E>(cbor_incref(underlying.ptr()));
   }
 };
 
@@ -232,7 +174,7 @@ struct CborConsumerImpl<DataType::Pointer, P> {
   [[nodiscard]] CborItem<P>
   consume(P val) const {
     auto alt = CborConsumerImpl<AltDataType, Alt>().consume(reinterpret_cast<Alt>(val));
-    return alt.template reinterpretCast<P>();
+    return CborItem<P>(cbor_incref(alt.ptr()));
   }
 };
 
@@ -260,32 +202,31 @@ struct CborConsumerImpl<DataType::Optional, T> {
   }
 };
 
-#if 0 // NOLINT
-
 // For `MemberRef`, the tuple consumer must be able to pass additional arguments to the element consumer
 template<typename T>
 struct CborConsumerImpl<DataType::Tuple, T> {
   template<typename... Args>
-  void
-  consume(const T& val, nio::Sink& out, CONFIG__, Args&&... args) const {
-    beginContainer(out, config, '[');
-    u64 index = 0;
+  [[nodiscard]] CborItem<T>
+  consume(const T& val, Args&&... args) const {
+    CborItem<T> arr(cbor_new_definite_array(std::tuple_size_v<T>));
     std::apply([&](auto&&... arg) {
-      (consumeElem(std::forward<decltype(arg)>(arg), out, config, index++, std::forward<Args>(args)...), ...);
+      (consumeElem(std::forward<decltype(arg)>(arg), arr, std::forward<Args>(args)...), ...);
     }, val);
-    endContainer(out, config, std::tuple_size_v<T>, ']');
+    return arr;
   }
 
 private:
 
   template<typename Elem, typename... Args>
   void
-  consumeElem(const Elem& elem, nio::Sink& out, CONFIG__, u64 index, Args&&... args) const {
-    nextElem(out, config, index);
+  consumeElem(const Elem& elem, CborItem<T>& arr, Args&&... args) const {
     constexpr auto ElemDataType = DataTypes<Elem>::Value;
-    CborConsumerImpl<ElemDataType, Elem>().consume(elem, out, config, std::forward<Args>(args)...);
+    CborItem<Elem> item = CborConsumerImpl<ElemDataType, Elem>().consume(elem, std::forward<Args>(args)...);
+    ROCKET_EXPECT(cbor_array_push(arr.ptr(), item.ptr()));
   }
 };
+
+#if 0 // NOLINT
 
 template<typename T>
 struct CborConsumerImpl<DataType::List, T> {
@@ -549,34 +490,36 @@ struct CborProducerImpl;
 template<>
 struct CborProducerImpl<DataType::Bool, bool> {
   void
-  produce(CborItem<bool>& val, nio::ContiguousSource& in) const {
-    const auto pos = in.tell();
-    auto item = loadItem<bool>(in);
+  produce(CborItem<bool>& item, DecoderState& state) const {
+    state.nextItem();
+
     if (not cbor_is_bool(item.ptr())) {
-      throw InputFailure(pos, "Expected a boolean value");
+      throw InputFailure(state.index, "Expected a boolean value");
     }
-    val = item.withValue(cbor_get_bool(item.ptr()));
+
+    item.setValue(cbor_get_bool(item.ptr()));
   }
 };
 
 template<typename C>
 struct CborProducerImpl<DataType::Char, C> {
   void
-  produce(CborItem<C>& val, nio::ContiguousSource& in) const {
-    const auto pos = in.tell();
-    auto item = loadItem<C>(in);
+  produce(CborItem<C>& item, DecoderState& state) const {
+    state.nextItem();
+
     if constexpr (std::same_as<C, char>) {
-      if (cbor_is_int(item.ptr()) && cbor_int_get_width(item.ptr()) == CBOR_INT_8) {
-        val = item.withValue(static_cast<char>(cbor_get_uint8(item.ptr())));
+      if (cbor_isa_uint(item.ptr()) && cbor_int_get_width(item.ptr()) == CBOR_INT_8) {
+        item.setValue(static_cast<char>(cbor_get_uint8(item.ptr())));
         return;
       }
     } else {
-      if (cbor_is_int(item.ptr()) && cbor_int_get_width(item.ptr()) == CBOR_INT_32) {
-        val = item.withValue(static_cast<char32>(cbor_get_uint32(item.ptr())));
+      if (cbor_isa_uint(item.ptr()) && cbor_int_get_width(item.ptr()) == CBOR_INT_32) {
+        item.setValue(static_cast<char32>(cbor_get_uint32(item.ptr())));
         return;
       }
     }
-    throw InputFailure(pos, "Expected a character");
+
+    throw InputFailure(state.index, "Expected a character");
   }
 };
 
@@ -586,79 +529,85 @@ struct CborProducerImpl<DataType::Enum, E> {
   static constexpr auto UnderlyingDataType = DataTypes<Underlying>::Value;
 
   void
-  produce(CborItem<E>& val, nio::ContiguousSource& in) const {
-    CborItem<Underlying> underlying;
-    CborProducerImpl<UnderlyingDataType, Underlying>().produce(underlying, in);
-    val = underlying.template staticCast<E>();
+  produce(CborItem<E>& item, DecoderState& state) const {
+    CborItem<Underlying> underlying(cbor_incref(item.ptr()));
+    CborProducerImpl<UnderlyingDataType, Underlying>().produce(underlying, state);
+    item.setValue(static_cast<E>(underlying.value()));
   }
 };
 
 template<typename I>
 struct CborProducerImpl<DataType::Integer, I> {
   void
-  produce(CborItem<I>& val, nio::ContiguousSource& in) const {
-    const auto pos = in.tell();
-    auto item = loadItem<I>(in);
+  produce(CborItem<I>& item, DecoderState& state) const {
+    state.nextItem();
+
     if constexpr (sizeof(I) == 1) {
-      if (cbor_is_int(item.ptr()) && cbor_int_get_width(item.ptr()) == CBOR_INT_8) {
-        val = item.withValue(static_cast<I>(cbor_get_uint8(item.ptr())));
+      if (cbor_isa_uint(item.ptr()) && cbor_int_get_width(item.ptr()) == CBOR_INT_8) {
+        item.setValue(static_cast<I>(cbor_get_uint8(item.ptr())));
         return;
       }
     } else if constexpr (sizeof(I) == 2) {
-      if (cbor_is_int(item.ptr()) && cbor_int_get_width(item.ptr()) == CBOR_INT_16) {
-        val = item.withValue(static_cast<I>(cbor_get_uint16(item.ptr())));
+      if (cbor_isa_uint(item.ptr()) && cbor_int_get_width(item.ptr()) == CBOR_INT_16) {
+        item.setValue(static_cast<I>(cbor_get_uint16(item.ptr())));
         return;
       }
     } else if constexpr (sizeof(I) == 4) {
-      if (cbor_is_int(item.ptr()) && cbor_int_get_width(item.ptr()) == CBOR_INT_32) {
-        val = item.withValue(static_cast<I>(cbor_get_uint32(item.ptr())));
+      if (cbor_isa_uint(item.ptr()) && cbor_int_get_width(item.ptr()) == CBOR_INT_32) {
+        item.setValue(static_cast<I>(cbor_get_uint32(item.ptr())));
         return;
       }
     } else if constexpr (sizeof(I) == 8) {
-      if (cbor_is_int(item.ptr()) && cbor_int_get_width(item.ptr()) == CBOR_INT_64) {
-        val = item.withValue(static_cast<I>(cbor_get_uint64(item.ptr())));
+      if (cbor_isa_uint(item.ptr()) && cbor_int_get_width(item.ptr()) == CBOR_INT_64) {
+        item.setValue(static_cast<I>(cbor_get_uint64(item.ptr())));
         return;
       }
     } else if constexpr (sizeof(I) == 16) {
       if (cbor_isa_array(item.ptr()) && cbor_array_size(item.ptr()) == 2) {
         CborItem<u64> hi(cbor_array_get(item.ptr(), 0));
+        CborProducerImpl<DataType::Integer, u64>().produce(hi, state);
+
         CborItem<u64> lo(cbor_array_get(item.ptr(), 1));
-        if (cbor_is_int(hi.ptr()) && cbor_int_get_width(hi.ptr()) == CBOR_INT_64 &&
-            cbor_is_int(lo.ptr()) && cbor_int_get_width(lo.ptr()) == CBOR_INT_64) {
-          u128 val128 = cbor_get_uint64(hi.ptr());
+        CborProducerImpl<DataType::Integer, u64>().produce(lo, state);
+
+        if (cbor_isa_uint(hi.ptr()) && cbor_int_get_width(hi.ptr()) == CBOR_INT_64 &&
+            cbor_isa_uint(lo.ptr()) && cbor_int_get_width(lo.ptr()) == CBOR_INT_64) {
+          u128 val128 = hi.value();
           val128 <<= 64;
-          val128 |= cbor_get_uint64(lo.ptr());
-          val = item.withValue(static_cast<I>(val128));
+          val128 |= lo.value();
+          item.setValue(static_cast<I>(val128));
           return;
         }
       }
     } else {
       ROCKET_TERMINATE("Cannot produce integer of type `{}`", typeid(I));
     }
-    throw InputFailure(pos, "Expected an integer value");
+
+    throw InputFailure(state.index, "Expected an integer value");
   }
 };
 
 template<typename F>
 struct CborProducerImpl<DataType::Float, F> {
   void
-  produce(CborItem<F>& val, nio::ContiguousSource& in) const {
-    const auto pos = in.tell();
-    auto item = loadItem<F>(in);
+  produce(CborItem<F>& item, DecoderState& state) const {
+    state.nextItem();
+
     if constexpr (sizeof(F) == 4) {
       if (cbor_is_float(item.ptr()) && cbor_float_get_width(item.ptr()) == CBOR_FLOAT_32) {
-        val = item.withValue(static_cast<F>(cbor_float_get_float4(item.ptr())));
+        item.setValue(static_cast<F>(cbor_float_get_float4(item.ptr())));
         return;
       }
     } else if constexpr (sizeof(F) == 8) {
       if (cbor_is_float(item.ptr()) && cbor_float_get_width(item.ptr()) == CBOR_FLOAT_64) {
-        val = item.withValue(static_cast<F>(cbor_float_get_float8(item.ptr())));
+        item.setValue(static_cast<F>(cbor_float_get_float8(item.ptr())));
         return;
       }
     } else {
       ROCKET_TERMINATE("Cannot produce floating-point value of type `{}`", typeid(F));
     }
-    throw InputFailure(pos, "Expected a floating-point value");
+
+    throw InputFailure(state.index, "Expected a floating-point value");
   }
 };
 
@@ -668,10 +617,10 @@ struct CborProducerImpl<DataType::Pointer, P> {
   static constexpr auto AltDataType = DataTypes<Alt>::Value;
 
   void
-  produce(CborItem<P>& val, nio::ContiguousSource& in) const {
-    CborItem<Alt> alt;
-    CborProducerImpl<AltDataType, Alt>().produce(alt, in);
-    val = alt.template reinterpretCast<P>();
+  produce(CborItem<P>& item, DecoderState& state) const {
+    CborItem<Alt> alt(cbor_incref(item.ptr()));
+    CborProducerImpl<AltDataType, Alt>().produce(alt, state);
+    item.setValue(reinterpret_cast<P>(alt.value()));
   }
 };
 
@@ -680,9 +629,9 @@ struct CborProducerImpl<DataType::String, T> {
   using C = T::value_type;
 
   void
-  produce(CborItem<T>& val, nio::ContiguousSource& in) const {
-    const auto pos = in.tell();
-    auto item = loadItem<T>(in);
+  produce(CborItem<T>& item, DecoderState& state) const {
+    state.nextItem();
+
     if (cbor_isa_string(item.ptr())) {
       const unsigned char* data = cbor_string_handle(item.ptr());
       const u64 size = cbor_string_length(item.ptr());
@@ -692,14 +641,15 @@ struct CborProducerImpl<DataType::String, T> {
       if constexpr (std::same_as<T, std::basic_string_view<C>>) {
         // Decoding a string view: make it point to a string bound to the decoder
         const auto& ref = internal::DecoderStore::get()->store(std::move(str));
-        val = item.withValue(ref);
+        item.setValue(ref);
       } else {
         // `std::basic_string`
-        val = item.withValue(std::move(str));
+        item.setValue(std::move(str));
       }
       return;
     }
-    throw InputFailure(pos, "Expected a string");
+
+    throw InputFailure(state.index, "Expected a string");
   }
 };
 
@@ -709,64 +659,50 @@ struct CborProducerImpl<DataType::Optional, T> {
   static constexpr auto ElemDataType = DataTypes<Elem>::Value;
 
   void
-  produce(CborItem<T>& val, nio::ContiguousSource& in) const {
-    using boost::safe_numerics::safe;
-
-    const auto pos = in.tell();
-    auto item = loadItem<T>(in);
+  produce(CborItem<T>& item, DecoderState& state) const {
     if (cbor_is_null(item.ptr())) {
-      val = item.withValue(std::nullopt);
+      state.nextItem();
+      item.setValue(std::nullopt);
       return;
     }
-    in.seek(safe<i64>(pos), nio::SeekMode::beg); // Rewind
 
-    CborItem<Elem> elem;
-    CborProducerImpl<ElemDataType, Elem>().produce(elem, in);
-    val = item.withValue(std::move(elem.value()));
+    CborItem<Elem> elem(cbor_incref(item.ptr()));
+    CborProducerImpl<ElemDataType, Elem>().produce(elem, state);
+    item.setValue(std::move(elem.value()));
   }
 };
-
-#if 0 // NOLINT
 
 template<typename T>
 struct CborProducerImpl<DataType::Tuple, T> {
   void
-  produce(T& val, nio::Source& in) const {
-    skip(in);
-    const auto pos = in.tell();
+  produce(CborItem<T>& item, DecoderState& state) const {
+    state.nextItem();
 
-    if (not readChar(in, '[')) {
-      throw InputFailure(pos, "Expected an array");
+    if (not cbor_isa_array(item.ptr()) || cbor_array_size(item.ptr()) != std::tuple_size_v<T>) {
+      throw InputFailure(state.index, fmt::format("Expected a tuple of size {}", std::tuple_size_v<T>));
     }
 
+    T tuple;
     u64 index = 0;
     std::apply([&](auto&&... arg) {
-      (produceElem(std::forward<decltype(arg)>(arg), in, index++), ...);
-    }, val);
-
-    skip(in);
-    if (std::tuple_size_v<T> > 0 && readChar(in, ',')) { // Allow trailing comma if nonempty
-      skip(in);
-    }
-    if (not readChar(in, ']')) {
-      throw InputFailure(in.tell(), { pos, in.tell() }, "Unterminated array");
-    }
+      (produceElem(std::forward<decltype(arg)>(arg), item, state, index++), ...);
+    }, tuple);
+    item.setValue(std::move(tuple));
   }
 
 private:
 
   template<typename Elem>
   void
-  produceElem(Elem& elem, nio::Source& in, u64 index) const {
-    skip(in);
-    if (index > 0) {
-      expectComma(in);
-      skip(in);
-    }
+  produceElem(Elem& elem, CborItem<T>& arr, DecoderState& state, u64 index) const {
+    CborItem<Elem> elemItem(cbor_array_get(arr.ptr(), index));
     constexpr auto ElemDataType = DataTypes<Elem>::Value;
-    CborProducerImpl<ElemDataType, Elem>().produce(elem, in);
+    CborProducerImpl<ElemDataType, Elem>().produce(elemItem, state);
+    elem = std::move(elemItem.value());
   }
 };
+
+#if 0 // NOLINT
 
 template<typename T>
 struct CborProducerImpl<DataType::List, T> {
@@ -1527,15 +1463,28 @@ struct CborCodec : Codec<CborConsumer, CborProducer> {
   decode(std::span<const u8> cbor) const {
     using namespace internal::cbor;
 
-    // Create a source from the byte sequence
-    nio::SpanSource in(cbor);
-
-    // Delegate to the producer, and we're done
-    DecodeResult<CborItem<T>> result = Base::decode<T, CborItem<T>>(in);
-    if (not result) {
-      return std::unexpected(result.error());
+    // Load the item
+    cbor_load_result loadResult; // NOLINT
+    cbor_item_t* item = cbor_load(cbor.data(), cbor.size(), &loadResult);
+    if (loadResult.error.code != CBOR_ERR_NONE) {
+      ROCKET_ASSERT(item == nullptr);
+      return std::unexpected(DecodeError {
+        loadResult.error.position, {}, std::string(messageOf(loadResult.error.code))
+      });
     }
-    return result.value().value();
+    CborItem<T> val(item);
+    if (loadResult.read != cbor.size()) {
+      return std::unexpected(DecodeError { loadResult.read, {}, "Unconsumed input" });
+    }
+
+    // Delegate to the producer
+    DecoderState state = { static_cast<u64>(-1) };
+    DecodeResult<CborItem<T>> decodeResult = Base::decode<T, CborItem<T>>(val, state);
+    if (not decodeResult) {
+      // XXX error.position ist der Index, per cbor_stream_decode umrechnen
+      return std::unexpected(decodeResult.error());
+    }
+    return decodeResult.value().value();
   }
 };
 

@@ -12,15 +12,13 @@ using namespace rocket::codec::internal::cbor;
 
 namespace {
 
+// Local variables ------------------------------------------------------------------------------------------
+
+const CborCodec codec;
+
 // Local functions ------------------------------------------------------------------------------------------
 
 CborItem<pair<u32, u32>> makeCborItemArray();
-
-void
-assignToCborItemArray(CborItem<pair<u32, u32>>& out) {
-  auto array = makeCborItemArray();
-  out = std::move(array);
-}
 
 CborItem<pair<u32, u32>>
 makeCborItemArray() {
@@ -45,7 +43,6 @@ someFuncReturningCborItem() {
 template<typename T>
 void
 testRoundtrip(const T& val) {
-  const CborCodec codec;
   const vector<u8> cbor = codec.encode(val);
 
   const auto result = codec.decode<T>(cbor);
@@ -95,15 +92,6 @@ TEST(CborCodec, CborItemArrayAsReturnValue) {
   }
 
   nio::out.println("end of CborCodec.CborItemArray");
-}
-
-TEST(CborCodec, CborItemAssigningToArray) {
-  {
-    CborItem<pair<u32, u32>> array;
-    assignToCborItemArray(array);
-  }
-
-  nio::out.println("end of CborCodec.CborItemAssigningToArray");
 }
 
 // `CborCodec` ..............................................................................................
@@ -185,6 +173,13 @@ TEST(CborCodec, Optional) {
 
   testRoundtrip(std::optional<string> {});
   testRoundtrip(std::optional<string>("What is the answer?"));
+}
+
+TEST(CborCodec, Tuple) {
+  testRoundtrip(make_tuple());
+  testRoundtrip(make_tuple(1, 2, 3));
+  testRoundtrip(make_tuple("answer"s, 42));
+  testRoundtrip(make_tuple("answer"sv, 42, true));
 }
 
 // EOF

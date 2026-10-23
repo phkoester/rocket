@@ -35,12 +35,16 @@ ROCKET_REFLECT_MEMBERS_DEFINE(, MyStruct, Index);
 
 namespace {
 
+
+// Local variables ------------------------------------------------------------------------------------------
+
+const JsonCodec codec;
+
 // Local functions ------------------------------------------------------------------------------------------
 
 template<typename T>
 string
 encode(const T& val, const JsonConsumerConfig& config = {}) {
-  const JsonCodec codec;
   nio::StringSink out;
   codec.encode(val, out, config);
   return out.str();
@@ -49,7 +53,6 @@ encode(const T& val, const JsonConsumerConfig& config = {}) {
 template<typename T>
 [[nodiscard]] DecodeResult<T>
 decode(string_view str) {
-  const JsonCodec codec;
   nio::StringSource in(str);
   return codec.decode<T>(in);
 }
@@ -57,7 +60,6 @@ decode(string_view str) {
 template<typename T>
 [[nodiscard]] pair<DecodeResult<T>, u64>
 decodeAndTell(string_view str) {
-  const JsonCodec codec;
   nio::StringSource in(str);
   return { codec.decode<T>(in), in.tell() };
 }
