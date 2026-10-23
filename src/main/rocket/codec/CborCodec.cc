@@ -23,6 +23,30 @@ messageOf(cbor_error_code errorCode) {
   }
 }
 
+u64
+positionOf(span<const u8> cbor, u64 index) {
+  unsigned char* data = const_cast<unsigned char*>(reinterpret_cast<const unsigned char*>(cbor.data()));
+  u64 itemIndex = 0;
+  u64 pos = 0;
+  cbor_decoder_result result; // NOLINT
+
+  while (pos < cbor.size()) {
+    if (itemIndex == index) {
+      return pos;
+    }
+
+    result = cbor_stream_decode(data + pos, cbor.size() - pos, nullptr, nullptr);
+    if (result.status == CBOR_DECODER_FINISHED) {
+      ++itemIndex;
+      pos += result.read;
+    } else {
+      throw InputFailure(pos, result.status == CBOR_DECODER_NEDATA ? "Not enough data" : "Malformed data");
+    }
+  }
+
+  return NPOS;
+}
+
 }; // namespace rocket::codec::internal::cbor
 
 // EOF

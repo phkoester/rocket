@@ -176,6 +176,8 @@ TEST(CborCodec, Optional) {
 }
 
 TEST(CborCodec, Tuple) {
+  testRoundtrip(make_pair(42, "answer"));
+
   testRoundtrip(make_tuple());
   testRoundtrip(make_tuple(1, 2, 3));
   testRoundtrip(make_tuple("answer"s, 42));
