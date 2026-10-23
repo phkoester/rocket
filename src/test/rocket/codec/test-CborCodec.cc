@@ -184,4 +184,34 @@ TEST(CborCodec, Tuple) {
   testRoundtrip(make_tuple("answer"sv, 42, true));
 }
 
+TEST(CborCodec, List) {
+  testRoundtrip((array<i32, 0> {}));
+  testRoundtrip((array<i32, 3> { 1, 2, 3 }));
+
+  testRoundtrip(list<i32> { 1, 2, 3 });
+
+  testRoundtrip(vector<i32> {});
+  testRoundtrip(vector<i32> { 1, 2, 3 });
+  testRoundtrip(vector<vector<i32>> { { 1, 2, 3 }, { 4, 5, 6 } });
+  testRoundtrip(vector<string> { "alpha"s, "beta"s });
+}
+
+TEST(CborCodec, Set) {
+  testRoundtrip(set<i32> {});
+  testRoundtrip(set<i32> { 1, 2, 2, 3 });
+  testRoundtrip(set<string> { "alpha"s, "beta"s });
+
+  testRoundtrip(unordered_set<i32> {});
+  testRoundtrip(unordered_set<i32> { 3, 2, 1 });
+}
+
+TEST(CborCodec, Map) {
+  testRoundtrip(map<i32, i32> {});
+  testRoundtrip(map<i32, i32> { { 1, 2 }, { 2, 3 }, { 3, 4 } });
+  testRoundtrip(map<string, i32> { { "alpha"s, 1 }, { "beta"s, 2 }, { "gamma"s, 3 } });
+
+  testRoundtrip(unordered_map<i32, string> {});
+  testRoundtrip(unordered_map<string, i32> { { "alpha"s, 1 }, { "beta"s, 2 } });
+}
+
 // EOF

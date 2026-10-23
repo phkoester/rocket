@@ -10,6 +10,7 @@
 #include "rocket/codec/codec.h"
 
 #include <cbor.h>
+#include <iterator>
 
 namespace rocket::codec {
 
@@ -228,22 +229,31 @@ private:
   }
 };
 
-#if 0 // NOLINT
-
 template<typename T>
 struct CborConsumerImpl<DataType::List, T> {
   using Elem = T::value_type;
   static constexpr auto ElemDataType = DataTypes<Elem>::Value;
 
-  void
-  consume(const T& val, nio::Sink& out, CONFIG__) const {
-    beginContainer(out, config, '[');
-    u64 index = 0;
+  [[nodiscard]] CborItem<T>
+  consume(const T& val) const {
+    CborItem<T> arr(cbor_new_definite_array(sizeOf(val)));
     for (const auto& elem : val) {
-      nextElem(out, config, index++);
-      CborConsumerImpl<ElemDataType, Elem>().consume(elem, out, config);
+      CborItem<Elem> item = CborConsumerImpl<ElemDataType, Elem>().consume(elem);
+      ROCKET_EXPECT(cbor_array_push(arr.ptr(), item.ptr()));
     }
-    endContainer(out, config, index, ']');
+    return arr;
+  }
+
+private:
+
+  [[nodiscard]] u64
+  sizeOf(const T& val) const {
+    if constexpr (IsForwardList<T>) {
+      // `std::forward_list` has no `size()`
+      return static_cast<u64>(std::distance(val.begin(), val.end()));
+    } else {
+      return static_cast<u64>(val.size());
+    }
   }
 };
 
@@ -252,37 +262,37 @@ struct CborConsumerImpl<DataType::Set, T> {
   using Elem = T::value_type;
   static constexpr auto ElemDataType = DataTypes<Elem>::Value;
 
-  void
-  consume(const T& val, nio::Sink& out, CONFIG__) const {
-    beginContainer(out, config, '[');
-    u64 index = 0;
+  [[nodiscard]] CborItem<T>
+  consume(const T& val) const {
+    CborItem<T> arr(cbor_new_definite_array(static_cast<u64>(val.size())));
     for (const auto& elem : val) {
-      nextElem(out, config, index++);
-      CborConsumerImpl<ElemDataType, Elem>().consume(elem, out, config);
+      CborItem<Elem> item = CborConsumerImpl<ElemDataType, Elem>().consume(elem);
+      ROCKET_EXPECT(cbor_array_push(arr.ptr(), item.ptr()));
     }
-    endContainer(out, config, val.size(), ']');
+    return arr;
   }
 };
 
 template<typename T>
 struct CborConsumerImpl<DataType::Map, T> {
   using Key = T::key_type;
+  static constexpr auto KeyDataType = DataTypes<Key>::Value;
   using Elem = T::mapped_type;
   static constexpr auto ElemDataType = DataTypes<Elem>::Value;
 
-  void
-  consume(const T& val, nio::Sink& out, CONFIG__) const {
-    beginContainer(out, config, '{');
-    u64 index = 0;
+  [[nodiscard]] CborItem<T>
+  consume(const T& val) const {
+    CborItem<T> map(cbor_new_definite_map(static_cast<u64>(val.size())));
     for (const auto& [key, elem] : val) {
-      nextElem(out, config, index++);
-      writeJsonString(key, out);
-      out.write(": ");
-      CborConsumerImpl<ElemDataType, Elem>().consume(elem, out, config);
+      CborItem<Key> keyItem = CborConsumerImpl<KeyDataType, Key>().consume(key);
+      CborItem<Elem> elemItem = CborConsumerImpl<ElemDataType, Elem>().consume(elem);
+      ROCKET_EXPECT(cbor_map_add(map.ptr(), { .key=keyItem.ptr(), .value=elemItem.ptr() }));
     }
-    endContainer(out, config, val.size(), '}');
+    return map;
   }
 };
+
+#if 0 // NOLINT
 
 template<typename T>
 struct CborConsumerImpl<DataType::Bimap, T> {
@@ -704,8 +714,6 @@ private:
   }
 };
 
-#if 0 // NOLINT
-
 template<typename T>
 struct CborProducerImpl<DataType::List, T> {
   static_assert(not IsView<T>, "Cannot decode list view");
@@ -715,68 +723,42 @@ struct CborProducerImpl<DataType::List, T> {
   static constexpr auto ElemDataType = DataTypes<Elem>::Value;
 
   void
-  produce(T& val, nio::Source& in) const {
-    skip(in);
-    const auto pos = in.tell();
+  produce(CborItem<T>& item, DecoderState& state) const {
+    state.nextItem();
 
-    if constexpr (not IsArray<T>) {
-      val.clear();
+    if (not cbor_isa_array(item.ptr())) {
+      throw InputFailure(state.index, "Expected a list");
     }
 
-    if (not readChar(in, '[')) {
-      throw InputFailure(pos, "Expected an array");
-    }
-
+    const u64 size = cbor_array_size(item.ptr());
     if constexpr (IsArray<T>) {
+      if (size != std::tuple_size_v<T>) {
+        throw InputFailure(state.index, fmt::format("Expected a list of size {}", std::tuple_size_v<T>));
+      }
+
       // Fixed-size array
-      produceArray(val, in, pos);
+      T arr;
+      for (u64 index = 0; index < size; ++index) {
+        arr[index] = produceElem(item, state, index);
+      }
+      item.setValue(std::move(arr));
     } else {
       // Container with `push_back`
-      produceContainerWithPushBack(val, in);
+      T list;
+      for (u64 index = 0; index < size; ++index) {
+        list.push_back(produceElem(item, state, index));
+      }
+      item.setValue(std::move(list));
     }
   }
 
 private:
 
-  void
-  produceArray(T& val, nio::Source& in, u64 pos) const {
-    const auto size = val.size();
-    for (u64 index = 0; index < size; ++index) {
-      skip(in);
-      if (index > 0) {
-        expectComma(in);
-        skip(in);
-      }
-      CborProducerImpl<ElemDataType, Elem>().produce(val[index], in);
-    }
-
-    skip(in);
-    if (size > 0 && readChar(in, ',')) { // Allow trailing comma if nonempty
-      skip(in);
-    }
-    if (not readChar(in, ']')) {
-      throw InputFailure(in.tell(), { pos, in.tell() }, fmt::format("Unterminated array of size {}", size));
-    }
-  }
-
-  void
-  produceContainerWithPushBack(T& val, nio::Source& in) const {
-    u64 index = 0;
-    while (true) {
-      skip(in);
-      if (readChar(in, ']')) {
-        return;
-      }
-      if (index++ > 0) {
-        expectComma(in);
-        skip(in);
-        if (readChar(in, ']')) { // Allow trailing comma if nonempty
-          return;
-        }
-      }
-      val.push_back(Elem());
-      CborProducerImpl<ElemDataType, Elem>().produce(val.back(), in);
-    }
+  [[nodiscard]] Elem
+  produceElem(CborItem<T>& arr, DecoderState& state, u64 index) const {
+    CborItem<Elem> elem(cbor_array_get(arr.ptr(), index));
+    CborProducerImpl<ElemDataType, Elem>().produce(elem, state);
+    return elem.value();
   }
 };
 
@@ -786,80 +768,70 @@ struct CborProducerImpl<DataType::Set, T> {
   static constexpr auto ElemDataType = DataTypes<Elem>::Value;
 
   void
-  produce(T& val, nio::Source& in) const {
-    skip(in);
-    const auto pos = in.tell();
+  produce(CborItem<T>& item, DecoderState& state) const {
+    state.nextItem();
 
-    val.clear();
-    if (not readChar(in, '[')) {
-      throw InputFailure(pos, "Expected an array");
+    if (not cbor_isa_array(item.ptr())) {
+      throw InputFailure(state.index, "Expected a set");
     }
 
-    u64 index = 0;
-    while (true) {
-      skip(in);
-      if (readChar(in, ']')) {
-        return;
-      }
-      if (index++ > 0) {
-        expectComma(in);
-        skip(in);
-        if (readChar(in, ']')) { // Allow trailing comma if nonempty
-          return;
-        }
-      }
-      Elem elem;
-      CborProducerImpl<ElemDataType, Elem>().produce(elem, in);
-      val.insert(std::move(elem));
+    const u64 size = cbor_array_size(item.ptr());
+    T set;
+    for (u64 index = 0; index < size; ++index) {
+      set.insert(produceElem(item, state, index));
     }
+    item.setValue(std::move(set));
+  }
+
+private:
+
+  [[nodiscard]] Elem
+  produceElem(CborItem<T>& arr, DecoderState& state, u64 index) const {
+    CborItem<Elem> elem(cbor_array_get(arr.ptr(), index));
+    CborProducerImpl<ElemDataType, Elem>().produce(elem, state);
+    return elem.value();
   }
 };
 
 template<typename T>
 struct CborProducerImpl<DataType::Map, T> {
   using Key = T::key_type;
+  static constexpr auto KeyDataType = DataTypes<Key>::Value;
   using Elem = T::mapped_type;
   static constexpr auto ElemDataType = DataTypes<Elem>::Value;
 
   void
-  produce(T& val, nio::Source& in) const {
-    skip(in);
-    const auto pos = in.tell();
+  produce(CborItem<T>& item, DecoderState& state) const {
+    state.nextItem();
 
-    val.clear();
-
-    if (not readChar(in, '{')) {
-      throw InputFailure(pos, "Expected an object");
+    if (not cbor_isa_map(item.ptr())) {
+      throw InputFailure(state.index, "Expected a map");
     }
 
-    u64 index = 0;
-    while (true) {
-      skip(in);
-      if (readChar(in, '}')) {
-        return;
-      }
-      if (index++ > 0) {
-        expectComma(in);
-        skip(in);
-        if (readChar(in, '}')) { // Allow trailing comma if nonempty
-          return;
-        }
-      }
-
-      Key key;
-      readJsonKey(key, in);
-      skip(in);
-
-      expectColon(in);
-      skip(in);
-
-      Elem elem;
-      CborProducerImpl<ElemDataType, Elem>().produce(elem, in);
+    const u64 size = cbor_map_size(item.ptr());
+    T map;
+    for (u64 index = 0; index < size; ++index) {
+      auto [key, elem] = produceElem(item, state, index);
       // Make the last one win
-      val.insert_or_assign(std::move(key), std::move(elem));
+      map.insert_or_assign(std::move(key), std::move(elem));
     }
+    item.setValue(std::move(map));
+  }
+
+private:
+
+  [[nodiscard]] std::pair<Key, Elem>
+  produceElem(CborItem<T>& map, DecoderState& state, u64 index) const {
+    const cbor_pair& pair = cbor_map_handle(map.ptr())[index];
+    CborItem<Key> keyItem(cbor_incref(pair.key));
+    CborProducerImpl<KeyDataType, Key>().produce(keyItem, state);
+    CborItem<Elem> elemItem(cbor_incref(pair.value));
+    CborProducerImpl<ElemDataType, Elem>().produce(elemItem, state);
+    return { keyItem.value(), elemItem.value() };
   }
 };
+
+#if 0 // NOLINT
 
 template<typename T>
 struct CborProducerImpl<DataType::Bimap, T> {
