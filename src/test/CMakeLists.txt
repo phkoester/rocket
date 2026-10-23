@@ -8,6 +8,9 @@ set(GENERATED_DIR ${CMAKE_CURRENT_BINARY_DIR}/generated)
 
 AddExecutable(bare bare/main.cc)
 
+AddExecutable(guy guy/main.cc)
+target_link_libraries(guy PRIVATE Rocket::rocket-gui)
+
 AddExecutable(logger logger/main.cc)
 target_link_libraries(logger PRIVATE Rocket::rocket)
 

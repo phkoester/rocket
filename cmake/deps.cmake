@@ -100,4 +100,18 @@ if(NOT scnlib_FOUND)
   endblock()
 endif()
 
+# wxWidgets -------------------------------------------------------------------------------------------------
+
+# https://cmake.org/cmake/help/latest/module/FindwxWidgets.html
+find_package(wxWidgets ${GAIA_WXWIDGETS_VERSION} COMPONENTS base core webview)
+if(NOT wxWidgets_FOUND)
+  block()
+    set(BUILD_SHARED_LIBS OFF)
+    # wxWidgets_USE_DEBUG
+    set(wxWidgets_USE_STATIC ON)
+    set(wxWidgets_USE_UNICODE ON)
+    FetchContent_MakeAvailable(wxWidgets)
+  endblock()
+endif()
+
 # EOF

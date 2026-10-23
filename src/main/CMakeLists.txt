@@ -198,6 +198,24 @@ target_compile_definitions(rocket-bench
 
 add_library(Rocket::rocket-bench ALIAS rocket-bench)
 
+# `rocket-gui` ----------------------------------------------------------------------------------------------
+
+AddLibrary(rocket-gui STATIC)
+target_sources(rocket-gui
+  PRIVATE
+    rocket-gui/rocket-gui.cc
+)
+target_compile_definitions(rocket-gui
+  PUBLIC
+    ${COMPILE_DEFS}
+    ROCKET_GUI
+)
+target_link_libraries(rocket-gui
+  PUBLIC
+    Rocket::rocket wxWidgets::wxWidgets
+)
+add_library(Rocket::rocket-gui ALIAS rocket-gui)
+
 # `rocket-test` ---------------------------------------------------------------------------------------------
 
 AddLibrary(rocket-test STATIC)
@@ -217,9 +235,7 @@ target_compile_definitions(rocket-test
     ${COMPILE_DEFS}
     ROCKET_TEST
 )
-target_link_libraries(rocket-test
-  PUBLIC GTest::gmock GTest::gtest Rocket::rocket
-)
+target_link_libraries(rocket-test PUBLIC GTest::gmock GTest::gtest Rocket::rocket)
 
 add_library(Rocket::rocket-test ALIAS rocket-test)
 

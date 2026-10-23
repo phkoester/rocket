@@ -1117,7 +1117,7 @@ struct CborProducerImpl<DataType::Character, T> {
     } catch (const InputFailure& ex) {
       throw InputFailure(ex.position(), "Expected a character");
     }
-    item.setValue(T(std::move(elem.value())));
+    item.setValue(std::move(T(elem.value())));
   }
 };
 
