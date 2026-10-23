@@ -1146,6 +1146,10 @@ struct CborProducer {
 /**
  * A CBOR codec.
  *
+ * The encoder can serialize an arbitrary C++ data structure to a CBOR byte sequence.
+ *
+ * The decoder can deserialize a CBOR byte sequence to an arbitrary C++ data structure.
+ *
  * Decoding to list views and forward lists is not supported. String views and character views, however, are
  * allowed. This is made possible by keeping real strings in a store bound to the decoder. Hence, decoded
  * string views and character views are valid, and valid only, for the lifetime of the decoder.

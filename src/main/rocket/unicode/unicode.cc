@@ -40,6 +40,16 @@ CodePoint::isAlnum() const {
 }
 
 bool
+CodePoint::isIdContinue() const {
+  return u_hasBinaryProperty(val_, UCHAR_XID_CONTINUE) != 0; // NOLINT
+}
+
+bool
+CodePoint::isIdStart() const {
+  return u_hasBinaryProperty(val_, UCHAR_XID_START) != 0; // NOLINT
+}
+
+bool
 CodePoint::isPrint() const {
   return u_isprint(val_) != 0; // NOLINT
 }

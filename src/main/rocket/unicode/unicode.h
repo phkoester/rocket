@@ -121,6 +121,24 @@ struct CodePoint {
   [[nodiscard]] bool isAlnum() const;
 
   /**
+   * Checks if the code point has Unicode property `XID_Continue`.
+   *
+   * `_` and the ASCII digits have this property.
+   *
+   * @return whether the code point has Unicode property `XID_Continue`
+   */
+  [[nodiscard]] bool isIdContinue() const;
+
+  /**
+   * Checks if the code point has Unicode property `XID_Start`.
+   *
+   * C++ also allows `_` to start an identifier. `_` does not have this property.
+   *
+   * @return whether the code point has Unicode property `XID_Start`
+   */
+  [[nodiscard]] bool isIdStart() const;
+
+  /**
    * Checks if the code point is printable.
    *
    * @return whether the code point is printable

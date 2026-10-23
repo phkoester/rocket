@@ -101,7 +101,8 @@
  *
  * ## Lists
  *
- * Lists appear surrounded by square brackets (`[` and `]`). Examples: `[1, 2, 3]`, `["one", "two" "three"]`.
+ * Lists appear surrounded by square brackets (`[` and `]`). Examples: `[1, 2, 3]`,
+ * `["one", "two", "three"]`.
  *
  * ## Sets
  *
@@ -214,6 +215,7 @@
 #include "rocket/str/escape/escape.h"
 #include "rocket/system/system.h"
 #include "rocket/unicode/ConvertTo.h"
+#include "rocket/unicode/unicode.h"
 
 #include <fmt/std.h>
 
@@ -703,20 +705,20 @@ produceMembers(const Refs& refs, C& instance, nio::Source& in) {
     // Read the member name
 
     const auto namePos = in.tell();
-    const auto name = readUntilChar(in, '=');
+    const auto name = readIdentifier(in);
     if (not name) {
       throw InputFailure(namePos, "Expected a member reference");
     }
-    std::string_view trimmedName = str::trimTrailing<char>(*name);
     skip(in);
+    expectChar(in, '=');
 
     // Look up the member reference by name and produce the member
 
     const bool found = std::apply([&](const auto&... ref) {
-      return (produceMember(ref, trimmedName, instance, in) || ...);
+      return (produceMember(ref, *name, instance, in) || ...);
     }, refs);
     if (not found) {
-      throw InputFailure(namePos, fmt::format("Unknown member `{}`", trimmedName));
+      throw InputFailure(namePos, fmt::format("Unknown member `{}`", *name));
     }
   }
 }
@@ -1075,6 +1077,7 @@ struct FormattedProducerImpl<DataType::Map, T> {
       }
       if (index++ > 0) {
         expectComma(in);
+        skip(in);
         if (readChar(in, '}')) { // Allow trailing comma if nonempty
           return;
         }
@@ -1581,7 +1584,7 @@ struct FormattedProducer {
 /**
  * A codec for formatted (RON) I/O.
  *
- * The encoder can serialize an arbirary C++ data structure to a sink. The output is in a format called RON
+ * The encoder can serialize an arbitrary C++ data structure to a sink. The output is in a format called RON
  * (Rocket Object Notation), which is similar to, but not quite the same as JSON. Tuples are enclosed in
  * parentheses. Lists are enclosed in square brackets. Sets and maps are enclosed in curly braces. If a
  * configuration is provided, the output may be indented and formatted as a tree.

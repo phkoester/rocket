@@ -234,8 +234,41 @@ readChoice(nio::Source& in, const set<string_view>& values, bool ignoreCase, boo
   return readLongestChoice(in, vector<string_view>(values.begin(), values.end()), ignoreCase, endOfWord);
 }
 
+optional<string>
+readIdentifier(nio::Source& in) {
+  const auto pos = in.tell();
+  const auto first = in.readCodePoint();
+  if (not first) {
+    in.seek(static_cast<i64>(pos), nio::SeekMode::beg);
+    return {};
+  }
+
+  const unicode::CodePoint cp = *first;
+  if (not cp.isIdStart() && not cp.eq('_') && not cp.eq('$')) {
+    in.seek(static_cast<i64>(pos), nio::SeekMode::beg);
+    return {};
+  }
+
+  string ret { static_cast<string>(cp) };
+  while (true) {
+    const auto pos = in.tell();
+    const auto next = in.readCodePoint();
+    if (not next) {
+      in.seek(static_cast<i64>(pos), nio::SeekMode::beg);
+      break;
+    }
+    const unicode::CodePoint cont = *next;
+    if (not cont.isIdContinue() && not cont.eq('$')) {
+      in.seek(static_cast<i64>(pos), nio::SeekMode::beg);
+      break;
+    }
+    ret.append(static_cast<string>(cont));
+  }
+  return ret;
+}
+
 bool
-readString(nio::Source& in, std::string_view str, bool ignoreCase, bool endOfWord) {
+readString(nio::Source& in, string_view str, bool ignoreCase, bool endOfWord) {
   ROCKET_CHECK(str, not str.empty(), "May not be empty");
 
 #ifndef ROCKET_NIO_NO_CONTIGUOUS_SOURCE
@@ -279,7 +312,7 @@ readSubseconds(nio::Source& in) {
 
   // Read subseconds as nanoseconds string
 
-  std::string digits;
+  string digits;
   if (readChar(in, '.')) {
     digits = readWhilePredicate(in, [](char c) { return isdigit(c); });
     if (digits.empty()) {
@@ -343,7 +376,7 @@ readUntilChar(nio::Source& in, char c) {
 }
 
 string
-readWhilePredicate(nio::Source& in, const std::function<bool(char)>& predicate) {
+readWhilePredicate(nio::Source& in, const function<bool(char)>& predicate) {
 #ifndef ROCKET_NIO_NO_CONTIGUOUS_SOURCE
   if (const auto* contiguous = dynamic_cast<nio::ContiguousSource*>(&in); contiguous != nullptr) {
     // Contiguous source
@@ -483,7 +516,7 @@ skip(nio::Source& in, bool cComments, bool shellComments) { // NOLINT(*-complexi
 }
 
 bool
-skipUntilString(nio::Source& in, std::string_view str) {
+skipUntilString(nio::Source& in, string_view str) {
   ROCKET_CHECK(str, not str.empty(), "May not be empty");
 
 #ifndef ROCKET_NIO_NO_CONTIGUOUS_SOURCE

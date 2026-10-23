@@ -104,6 +104,19 @@ void expectComma(nio::Source& in);
   bool endOfWord = true);
 
 /**
+ * Reads a C++ identifier from @p in, advances the source only on success.
+ *
+ * The first code point must have Unicode property `XID_Start`, or be `_` or `$`. Each following code point
+ * must have Unicode property `XID_Continue`, or be `$`. Reading stops before the first code point that is
+ * not part of the identifier, and that code point stays in the source. On failure, the source is left
+ * unchanged.
+ *
+ * @param in the source to read from
+ * @return the identifier, or null if the next code point cannot start an identifier
+ */
+[[nodiscard]] std::optional<std::string> readIdentifier(nio::Source& in);
+
+/**
  * Reads an expected string, advances the source only on success.
  *
  * There is an optimization for contiguous sources.

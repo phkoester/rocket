@@ -259,22 +259,24 @@ TEST(JsonCodec, ConsumerInterval) {
 }
 
 TEST(JsonCodec, ConsumerDeclared) {
+  const MyStruct val { 42, true, "hello", { 1, 2, 3 } };
   EXPECT_EQ(
-    encode(MyStruct { 42, true, "hello", { 1, 2, 3 } }),
-    "[\"ärger\": 42, \"ökonom\": true, \"übermut\": \"hello\", \"vec\": [1, 2, 3]]");
+    encode(val),
+    "{\"ärger\": 42, \"ökonom\": true, \"übermut\": \"hello\", \"vec\": [1, 2, 3]}");
+  EXPECT_EQ(decode<MyStruct>(encode(val)), val);
 }
 
 TEST(JsonCodec, ConsumerInstance) {
   using type = reflect::Instance<MyStruct, MyStruct::Three>;
-  EXPECT_EQ(
-    encode(type(MyStruct { 42, true, "hello", { 1, 2, 3 } })),
-    "[\"ärger\": 42, \"ökonom\": true, \"übermut\": \"hello\"]");
+  const type val(MyStruct { 42, true, "hello", { 1, 2, 3 } });
+  EXPECT_EQ(encode(val), "{\"ärger\": 42, \"ökonom\": true, \"übermut\": \"hello\"}");
+  EXPECT_EQ(decode<type>(encode(val)), val);
 }
 
 TEST(JsonCodec, ConsumerVarRef) {
   int a = 0, b = 1, c= 2;
   const auto& refs = ROCKET_REFLECT_VARS((a)(b)(c));
-  EXPECT_EQ(encode(refs), "[\"a\": 0, \"b\": 1, \"c\": 2]");
+  EXPECT_EQ(encode(refs), "{\"a\": 0, \"b\": 1, \"c\": 2}");
   const auto& ref = std::get<1>(refs);
   EXPECT_EQ(encode(ref), "\"b\": 1");
 }

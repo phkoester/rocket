@@ -40,7 +40,7 @@
  *
  * ## Characters {#json_char}
  *
- * Characters are JSON strings of length one. Example values: `"a"`, `"\t"`, `"€"` `"\u20AC"`.
+ * Characters are JSON strings of length one. Example values: `"a"`, `"\t"`, `"€"`, `"\u20AC"`.
  *
  * One-byte characters must be valid ASCII characters in the range [0,127]. Two-byte characters must be valid
  * Unicode code points in the ranges [U+0000,U+D7FF] and [U+E000,U+10FFFF].
@@ -50,8 +50,8 @@
  *
  * When writing, the escape sequences `\a`, `\b`, `\t`, `\n`, `\v`, `\f`, `\r`, `\e`, `\'`, and `\\` are
  * used. If a character is classified as printable by the Unicode standard or is greater than U+FFFF, it
- * appears verbatim in the* output, e.g. as `"a"` or `"€"`. Otherwise, it is written in hexadecimal
- * notation, using the prefix `\u` (four hexadecimal digits).
+ * appears verbatim in the output, e.g. as `"a"` or `"€"`. Otherwise, it is written in hexadecimal notation,
+ * using the prefix `\u` (four hexadecimal digits).
  *
  * ## Enumerations
  *
@@ -160,7 +160,7 @@
  * Empty intervals are notated as `null`. Nonempty intervals are JSON arrays of two bounds. A missing
  * (infinite) bound is notated as `null`.
  *
- * Example values: `"null"`, `"[-1.2, 3.4]"`, `"[null, -12]"`, or `"[12, null]"`.
+ * Example values: `null`, `"[-1.2, 3.4]"`, `"[null, -12]"`, or `"[12, null]"`.
  *
  * ## Declared Objects
  *
@@ -238,6 +238,18 @@ beginContainer(nio::Sink& out, JsonConsumerConfig& config, char c) {
 inline void
 endContainer(nio::Sink& out, JsonConsumerConfig& config, u64 size, char c) {
   rocket::nio::endContainer(out, config.indent, config.level, size, c);
+}
+
+/**
+ * Reports whether @p T is a tuple of member or variable references.
+ *
+ * Such a tuple is a JSON object. Every other tuple is a JSON array.
+ */
+template<typename T, u64... Index>
+constexpr bool
+isObjectTuple(std::index_sequence<Index...>) {
+  return ((DataTypes<std::tuple_element_t<Index, T>>::Value == DataType::MemberRef ||
+           DataTypes<std::tuple_element_t<Index, T>>::Value == DataType::VarRef) && ...);
 }
 
 inline u64
@@ -385,15 +397,17 @@ struct JsonConsumerImpl<DataType::Optional, T> {
 // For `MemberRef`, the tuple consumer must be able to pass additional arguments to the element consumer
 template<typename T>
 struct JsonConsumerImpl<DataType::Tuple, T> {
+  static constexpr bool Object = isObjectTuple<T>(std::make_index_sequence<std::tuple_size_v<T>>());
+
   template<typename... Args>
   void
   consume(const T& val, nio::Sink& out, CONFIG__, Args&&... args) const {
-    beginContainer(out, config, '[');
+    beginContainer(out, config, Object ? '{' : '[');
     u64 index = 0;
     std::apply([&](auto&&... arg) {
       (consumeElem(std::forward<decltype(arg)>(arg), out, config, index++, std::forward<Args>(args)...), ...);
     }, val);
-    endContainer(out, config, std::tuple_size_v<T>, ']');
+    endContainer(out, config, std::tuple_size_v<T>, Object ? '}' : ']');
   }
 
 private:
@@ -593,6 +607,12 @@ struct JsonConsumerImpl<DataType::Declared, T> {
 
   void
   consume(const T& val, nio::Sink& out, CONFIG__) const {
+    // An empty member list has no element type to recognize as an object tuple
+    if constexpr (std::tuple_size_v<Elem> == 0) {
+      beginContainer(out, config, '{');
+      endContainer(out, config, 0, '}');
+      return;
+    }
     // Here we have to pass an additional argument, the instance, to the tuple consumer. The tuple consumer
     // will pass it on to the member-reference consumer
     JsonConsumerImpl<ElemDataType, Elem>().consume(refs, out, config, val);
@@ -608,6 +628,12 @@ struct JsonConsumerImpl<DataType::Instance, T> {
 
   void
   consume(const T& val, nio::Sink& out, CONFIG__) const {
+    // An empty member list has no element type to recognize as an object tuple
+    if constexpr (std::tuple_size_v<Elem> == 0) {
+      beginContainer(out, config, '{');
+      endContainer(out, config, 0, '}');
+      return;
+    }
     // Here we have to pass an additional argument, the instance, to the tuple consumer. The tuple consumer
     // will pass it on to the member-reference consumer
     JsonConsumerImpl<ElemDataType, Elem>().consume(refs, out, config, val.get());
@@ -1756,7 +1782,6 @@ struct JsonCodec : Codec<JsonConsumer, JsonProducer> {
    * @tparam T the type to decode
    * @param in the input source
    * @return the decoded value
-   * @throw #std::exception if the value cannot be decoded
    */
   template<typename T>
   [[nodiscard]] DecodeResult<T>

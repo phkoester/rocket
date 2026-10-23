@@ -58,6 +58,21 @@ TEST(unicode, CodePointIsPrint) {
   EXPECT_FALSE(U'\uFFFF'_cp.isPrint());
 }
 
+TEST(unicode, CodePointIsIdentifier) {
+  EXPECT_TRUE('a'_cp.isIdStart());
+  EXPECT_TRUE(U'ä'_cp.isIdStart());
+  EXPECT_FALSE('_'_cp.isIdStart());
+  EXPECT_FALSE('0'_cp.isIdStart());
+  EXPECT_FALSE('$'_cp.isIdStart());
+
+  EXPECT_TRUE('a'_cp.isIdContinue());
+  EXPECT_TRUE('0'_cp.isIdContinue());
+  EXPECT_TRUE('_'_cp.isIdContinue());
+  EXPECT_TRUE(U'ä'_cp.isIdContinue());
+  EXPECT_FALSE('$'_cp.isIdContinue());
+  EXPECT_FALSE('='_cp.isIdContinue());
+}
+
 TEST(unicode, CodePointLower) {
   EXPECT_EQ('a'_cp.lower(), U'a');
   EXPECT_EQ(U'Ä'_cp.lower(), U'ä');

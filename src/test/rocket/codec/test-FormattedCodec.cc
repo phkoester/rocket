@@ -524,8 +524,15 @@ TEST(FormattedCodec, ProducerDeclared) {
   EXPECT_EQ((decode<MyStruct>("(ökonom=true, vec=[1, 2, 3])")), (MyStruct { 0, true, "", { 1, 2, 3 } }));
   EXPECT_EQ((decode<MyStruct>("()")), (MyStruct {}));
 
+  // Whitespace and comments may separate the name from '='
+  EXPECT_EQ((decode<MyStruct>("(ärger /* c */ = 42, ökonom=true)")), (MyStruct { 42, true, "", {} }));
+
   // Unknown members are an error
   EXPECT_EQ(decode<MyStruct>("(ärger=42, bogus=1)").error().message, "Unknown member `bogus`");
+  EXPECT_EQ(decode<MyStruct>("(1=2)").error().message, "Expected a member reference");
+  EXPECT_EQ(decode<MyStruct>("(_bogus=1)").error().message, "Unknown member `_bogus`");
+  EXPECT_EQ(decode<MyStruct>("($bogus=1)").error().message, "Unknown member `$bogus`");
+  EXPECT_EQ(decode<MyStruct>("(foo$bar=1)").error().message, "Unknown member `foo$bar`");
 }
 
 TEST(FormattedCodec, ProducerDeclaredFileSource) {
