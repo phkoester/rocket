@@ -108,6 +108,7 @@ if(NOT wxWidgets_FOUND)
   block()
     set(BUILD_SHARED_LIBS OFF)
     # wxWidgets_USE_DEBUG
+    set(wxBUILD_SAMPLES ALL)
     set(wxWidgets_USE_STATIC ON)
     set(wxWidgets_USE_UNICODE ON)
     FetchContent_MakeAvailable(wxWidgets)

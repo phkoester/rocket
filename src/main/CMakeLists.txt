@@ -148,7 +148,8 @@ target_sources(rocket
 if(GAIA_OS_WINDOWS)
   target_sources(rocket
     PRIVATE
-      rocket/system/system-windows.cc)
+      rocket/system/system-windows.cc
+  )
 endif()
 
 target_compile_definitions(rocket
@@ -173,8 +174,10 @@ endif()
 # Make `scn/impl.h` available
 target_include_directories(rocket SYSTEM PRIVATE ${CMAKE_BINARY_DIR}/_deps/scnlib-src/src)
 target_link_libraries(rocket
-  PUBLIC ${ROCKET_BOOST_LINK_TARGETS} Boost::int128 cbor fmt::fmt-header-only ICU::uc scn::scn
-  PRIVATE ${ROCKET_PRIVATE_LINK_TARGETS}
+  PUBLIC
+    ${ROCKET_BOOST_LINK_TARGETS} Boost::int128 cbor fmt::fmt-header-only ICU::uc scn::scn
+  PRIVATE
+    ${ROCKET_PRIVATE_LINK_TARGETS}
 )
 
 set_target_properties(rocket PROPERTIES VERSION ${PROJECT_VERSION}) # SOVERSION 0
@@ -190,30 +193,16 @@ target_sources(rocket-bench
     FILES
       rocket-bench/rocket-bench.h
 )
-target_compile_definitions(rocket-bench
-  INTERFACE
-    ${COMPILE_DEFS}
-    ROCKET_TEST
-)
+target_compile_definitions(rocket-bench INTERFACE ${COMPILE_DEFS} ROCKET_TEST)
 
 add_library(Rocket::rocket-bench ALIAS rocket-bench)
 
 # `rocket-gui` ----------------------------------------------------------------------------------------------
 
 AddLibrary(rocket-gui STATIC)
-target_sources(rocket-gui
-  PRIVATE
-    rocket-gui/rocket-gui.cc
-)
-target_compile_definitions(rocket-gui
-  PUBLIC
-    ${COMPILE_DEFS}
-    ROCKET_GUI
-)
-target_link_libraries(rocket-gui
-  PUBLIC
-    Rocket::rocket wxWidgets::wxWidgets
-)
+target_sources(rocket-gui PRIVATE rocket-gui/rocket-gui.cc)
+target_compile_definitions(rocket-gui PUBLIC ${COMPILE_DEFS} ROCKET_GUI)
+target_link_libraries(rocket-gui PUBLIC Rocket::rocket wxWidgets::wxWidgets)
 add_library(Rocket::rocket-gui ALIAS rocket-gui)
 
 # `rocket-test` ---------------------------------------------------------------------------------------------
