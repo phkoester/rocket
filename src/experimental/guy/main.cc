@@ -11,6 +11,8 @@
 
 #include <rocket-gui/rocket-gui.h>
 
+#include <wx/webview.h>
+
 using namespace rocket;
 using namespace rocket::gui;
 using namespace std;
@@ -120,6 +122,16 @@ MyFrame::MyFrame() : wxFrame(nullptr, wxID_ANY, "Hello World") {
   Bind(wxEVT_MENU, &MyFrame::OnExit, this, wxID_EXIT);
 
   Bind(wxEVT_MENU, &MyFrame::OnHello, this, ID_Hello);
+
+  wxWebView* webView = wxWebView::New(this, wxID_ANY, "https://wxwidgets.org");
+  if (!webView) {
+    SetStatusText("The web view backend is not available");
+    return;
+  }
+
+  wxBoxSizer* sizer = new wxBoxSizer(wxVERTICAL);
+  sizer->Add(webView, 1, wxEXPAND);
+  SetSizer(sizer);
 }
 
 void
