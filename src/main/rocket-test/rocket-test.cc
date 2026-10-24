@@ -33,6 +33,27 @@ const bool TEST_TERMINAL = system::env::get<bool>(ROCKET_TEST_TERMINAL).
 // Functions ------------------------------------------------------------------------------------------------
 
 fs::path
+binExecutable(string_view name) {
+  if (not BINARY_DIR) {
+    ROCKET_FAIL("`BINARY_DIR` is not set");
+  }
+  const string fileName = fmt::format("{}{}", name, system::executableSuffix());
+  fs::path ret = fs::path(*BINARY_DIR) / ".." / "bin" / fileName;
+  if (is_regular_file(ret)) {
+    return ret;
+  }
+  if (not CONFIG) {
+    ROCKET_FAIL("`CONFIG` is not set");
+  }
+  ret = fs::path(*BINARY_DIR) / *CONFIG / fileName;
+  if (is_regular_file(ret)) {
+    return ret;
+  }
+  ROCKET_FAIL("Cannot find test executable `{}`", name);
+  return ret;
+}
+
+fs::path
 testExecutable(string_view name) {
   if (not BINARY_DIR) {
     ROCKET_FAIL("`BINARY_DIR` is not set");
