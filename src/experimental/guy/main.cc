@@ -63,7 +63,6 @@ private:
   void updateHistoryButtons();
 
   unique_ptr<MyTaskBarIcon> taskBarIcon_;
-
   wxWebView* webView_ = nullptr;
 };
 
@@ -146,7 +145,7 @@ MyFrame::MyFrame() : wxFrame(
   wxMenu* menuFile = new wxMenu;
   menuFile->Append(
     ID_Hello,
-    "&Hello...\tCtrl-H",
+    "&Hello...",
     "Help string shown in status bar for this menu item");
   menuFile->AppendSeparator();
   menuFile->Append(wxID_EXIT);
