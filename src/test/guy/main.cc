@@ -8,11 +8,6 @@
 #include <rocket/nio/nio.h>
 #include <rocket-gui/rocket-gui.h>
 
-#include <wx/wxprec.h>
-#ifndef WX_PRECOMP
-  #include <wx/wx.h>
-#endif
-
 using namespace rocket;
 using namespace rocket::gui;
 
