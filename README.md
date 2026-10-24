@@ -1,8 +1,24 @@
 # Rocket
 
-Rocket is an all-purpose library written in C++.
+Rocket is an all-purpose library written in C++, helping you to create cross-platform console and GUI
+applications.
 
-It is pre-alpha, a hobby project of mine, and possibly dangerous. **Do not use it**.
+The project depends on [Gaia](https://github.com/phkoester/gaia), which provides the underlying build system
+at shell level.
+
+It is pre-alpha, a hobby project of mine, and possibly dangerous. **Use it at your own risk.**
+
+Currently, these modules are available: Rocket, Rocket.Gui, and Rocket.Test.
+
+## License
+
+Licensed under either of
+
+- Apache License, Version 2.0 ([LICENSE-APACHE](LICENSE-APACHE) or
+  http://www.apache.org/licenses/LICENSE-2.0)
+- MIT license ([LICENSE-MIT](LICENSE-MIT) or http://opensource.org/licenses/MIT)
+
+at your option.
 
 ## Third-Party Components
 
@@ -16,6 +32,7 @@ Rocket stands on the shoulders of these giants:
 - [ICU](https://github.com/unicode-org/icu)  ([license](license/ICU/LICENSE))
 - [libcbor](https://github.com/PJK/libcbor) ([license](license/libcbor/LICENSE.md))
 - [scnlib](https://github.com/eliaskosunen/scnlib) ([license](license/scnlib/LICENSE))
+- [wxWidgets](https://github.com/wxWidgets/wxWidgets) ([license](license/wxWidgets/licence.txt))
 
 ## CMake Variables
 
@@ -35,7 +52,7 @@ Rocket stands on the shoulders of these giants:
 
 | Name                   | Type     | Stage   | Description
 | :--------------------- | :------- | :------ | :----------
-| `ROCKET_EXIT`          | `bool`   | Runtime | If `true`, `std::exit` is called rather than `std::quick_exit`.
+| `ROCKET_EXIT`          | `bool`   | Runtime | If true, `std::exit` is called rather than `std::quick_exit`.
 | `ROCKET_LOG`           | `string` | Runtime | Default log options, e.g. `--log all=trace`
-| `ROCKET_QUICK_EXIT`    | `bool`   | Runtime | If `true`, `std::quick_exit` is called rather than `std::exit`.
-| `ROCKET_TEST_TERMINAL` | `bool`   | Test    | If `true`, tests are run that require standard devices to be connected to a terminal.
+| `ROCKET_QUICK_EXIT`    | `bool`   | Runtime | If true, `std::quick_exit` is called rather than `std::exit`.
+| `ROCKET_TEST_TERMINAL` | `bool`   | Test    | If true, tests are run that require standard devices to be connected to a terminal.
