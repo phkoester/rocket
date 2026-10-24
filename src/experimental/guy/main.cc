@@ -151,11 +151,16 @@ MyFrame::MyFrame() : wxFrame(
   menuFile->AppendSeparator();
   menuFile->Append(wxID_EXIT);
 
+  wxMenu* menuView = new wxMenu;
+  menuView->Append(ID_Back, "Go &Back\tAlt-Left");
+  menuView->Append(ID_Forward, "Go &Forward\tAlt-Right");
+
   wxMenu* menuHelp = new wxMenu;
   menuHelp->Append(wxID_ABOUT);
 
   wxMenuBar* menuBar = new wxMenuBar;
   menuBar->Append(menuFile, "&File");
+  menuBar->Append(menuFile, "&View");
   menuBar->Append(menuHelp, "&Help");
 
   SetMenuBar(menuBar);
