@@ -1,6 +1,6 @@
 # Rocket
 
-Rocket is an all-purpose library written in C++, helping you to create cross-platform console and GUI
+Rocket is a general-purpose library written in C++, helping you to create cross-platform CLI and GUI
 applications.
 
 The project depends on [Gaia](https://github.com/phkoester/gaia), which provides the underlying build system
