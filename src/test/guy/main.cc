@@ -5,17 +5,36 @@
  */
 
 #include <rocket/Process.h>
+#include <rocket/version.h>
+#include <rocket/cl/cl.h>
 #include <rocket/nio/nio.h>
+
 #include <rocket-gui/rocket-gui.h>
 
 using namespace rocket;
 using namespace rocket::gui;
+using namespace std;
 
-// `Command` ------------------------------------------------------------------------------------------------
+// Macros ---------------------------------------------------------------------------------------------------
 
-enum Command {
+#define COPYRIGHT "Copyright © 2024–2026 Philip Köster"
+
+// `GuyId` --------------------------------------------------------------------------------------------------
+
+enum GuyId {
   ID_Hello = 1
 };
+
+// `Pcl` ----------------------------------------------------------------------------------------------------
+
+struct Pcl {
+  optional<bool> help;
+  optional<vector<string>> files;
+  optional<bool> verbose;
+  optional<bool> version;
+};
+
+Pcl pcl; ///< The parsed command line.
 
 // `MyApp` decl ---------------------------------------------------------------------------------------------
 
@@ -50,6 +69,22 @@ MyApp::OnExit() {
 bool
 MyApp::OnInit() {
   process.init(argc, argv, "guy");
+
+  const cl::OptionGroup general("General control");
+  const cl::CommandLineConfig config {
+    .usages={ "[OPTION]... [FILE]..." },
+    .version=fmt::format("{} {}\n\n{}", "Rocket", ROCKET_VERSION_NAME, COPYRIGHT)
+  };
+  cl::CommandLine cl({
+    cl::Option::help(&general, pcl.help),
+    cl::Option::verbose(&general, pcl.verbose),
+    cl::Option::version(&general, pcl.version),
+  }, {
+    cl::Parameter::make({ .description="a file", .name="FILE" }, pcl.files)
+  }, config);
+
+  cl.parse(process.args());
+
   nio::out.println("This is {}", process.name());
   howdy();
 
@@ -89,7 +124,13 @@ MyFrame::MyFrame() : wxFrame(nullptr, wxID_ANY, "Hello World") {
 
 void
 MyFrame::OnAbout([[maybe_unused]] wxCommandEvent& ev) {
-  wxMessageBox("This is a wxWidgets Hello World example", "About Hello World", wxOK | wxICON_INFORMATION);
+  string msg = fmt::format(
+    "This is {}.\n\n{}\n\nRocket version {}", process.name(), COPYRIGHT, ROCKET_VERSION_NAME);
+  if (pcl.files) {
+    msg += fmt::format("\n\nFiles from the command line: {}", *pcl.files);
+  }
+
+  wxMessageBox(msg, fmt::format("About {}", process.name()), wxICON_INFORMATION | wxOK);
 }
 
 void
