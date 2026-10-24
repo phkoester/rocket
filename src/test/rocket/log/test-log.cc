@@ -31,7 +31,7 @@ TEST(log, LogLevelFormat) {
 }
 
 TEST(log, loggerZip) {
-  const auto path = testExecutable("logger");
+  const auto path = binExecutable("logger");
   const string executable = path.string();
 
   const auto logFilePattern = fs::temp_directory_path() / "logger-@[date].log@[zip]";

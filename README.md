@@ -8,7 +8,7 @@ at shell level.
 
 It is pre-alpha, a hobby project of mine, and possibly dangerous. **Use it at your own risk.**
 
-Currently, these modules are available: Rocket, Rocket.Gui, and Rocket.Test.
+Currently, these components are available: Rocket, Rocket.Bench, Rocket.Gui, and Rocket.Test.
 
 ## License
 

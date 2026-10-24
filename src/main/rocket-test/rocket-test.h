@@ -165,7 +165,16 @@ extern const bool TEST_TERMINAL;
 // Functions ------------------------------------------------------------------------------------------------
 
 /**
- * Returns the path to a test executable.
+ * Returns the path to a project-specific executable. Its sources reside in the `src/bin` directory.
+ *
+ * @param name the name of the executable (without the extension)
+ * @return the path to the executable
+ * @throw #rocket::InvalidState if the executable is not found
+ */
+std::filesystem::path binExecutable(std::string_view name);
+
+/**
+ * Returns the path to a project-specific test executable. Its sources reside in the `src/test` directory.
  *
  * @param name the name of the executable (without the extension)
  * @return the path to the executable
@@ -174,7 +183,7 @@ extern const bool TEST_TERMINAL;
 std::filesystem::path testExecutable(std::string_view name);
 
 /**
- * Returns the path to a test source.
+ * Returns the path to a project-specific test source. It resides in the `src/test` directory.
  *
  * @param name the name of the source
  * @return the path to the source

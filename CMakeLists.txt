@@ -36,6 +36,9 @@ include(cmake/deps.cmake)
 
 # Add subdirectories ----------------------------------------------------------------------------------------
 
+add_subdirectory(src/bin)
+# add_subdirectory(src/example)
+add_subdirectory(src/experimental)
 add_subdirectory(src/main)
 
 if(BUILD_TESTING AND ROCKET_BUILD_BENCH)
