@@ -5,10 +5,10 @@
 # Executables -----------------------------------------------------------------------------------------------
 
 AddExecutable(bare bare/main.cc)
-CopyRuntimeFiles(bare)
 
 AddExecutable(logger logger/main.cc)
 target_link_libraries(logger PRIVATE Rocket::rocket)
+CopyRuntimeFiles(logger)
 
 AddExecutable(print-args print-args/main.cc)
 target_link_libraries(print-args PRIVATE Rocket::rocket)
