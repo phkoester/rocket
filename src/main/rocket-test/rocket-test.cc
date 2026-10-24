@@ -45,7 +45,7 @@ binExecutable(string_view name) {
   if (not CONFIG) {
     ROCKET_FAIL("`CONFIG` is not set");
   }
-  ret = fs::path(*BINARY_DIR) / *CONFIG / fileName;
+  ret = fs::path(*BINARY_DIR) / ".." / "bin" / *CONFIG / fileName;
   if (is_regular_file(ret)) {
     return ret;
   }

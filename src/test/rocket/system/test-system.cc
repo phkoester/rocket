@@ -129,7 +129,7 @@ TEST(system, execPrintf) {
 }
 
 TEST(system, execPrintArgs) {
-  const fs::path printArgs = testExecutable("print-args");
+  const fs::path printArgs = binExecutable("print-args");
   const string executable = printArgs.string();
 
   {
@@ -154,7 +154,7 @@ TEST(system, execPrintArgs) {
 
 TEST(system, execPrintArgsWithSpace) {
   // Copy `print-args` to `print args`, se we have a space in the executable name
-  const fs::path printArgs = testExecutable("print-args");
+  const fs::path printArgs = binExecutable("print-args");
   const fs::path printArgsWithSpace = printArgs.parent_path() / fmt::format("print args{}", executableSuffix());
   fs::copy_file(printArgs, printArgsWithSpace, fs::copy_options::overwrite_existing);
   const string executable = printArgsWithSpace.string();
