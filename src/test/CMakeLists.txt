@@ -10,6 +10,9 @@ AddExecutable(bare bare/main.cc)
 
 AddExecutable(guy guy/main.cc)
 target_link_libraries(guy PRIVATE Rocket::rocket-gui)
+if (GAIA_OS_WINDOWS)
+  target_link_options(guy PRIVATE /subsystem:windows)
+endif()
 
 AddExecutable(logger logger/main.cc)
 target_link_libraries(logger PRIVATE Rocket::rocket)
