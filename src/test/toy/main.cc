@@ -10,8 +10,6 @@
 #include "rocket/log/log.h"
 #include "rocket/version.h"
 
-#include <iostream>
-
 using namespace rocket;
 using namespace rocket::unicode;
 using namespace std;
