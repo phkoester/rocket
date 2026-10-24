@@ -160,7 +160,7 @@ MyFrame::MyFrame() : wxFrame(
 
   wxMenuBar* menuBar = new wxMenuBar;
   menuBar->Append(menuFile, "&File");
-  menuBar->Append(menuFile, "&View");
+  menuBar->Append(menuView, "&View");
   menuBar->Append(menuHelp, "&Help");
 
   SetMenuBar(menuBar);
@@ -186,12 +186,12 @@ MyFrame::MyFrame() : wxFrame(
     ID_Back,
     "",
     wxArtProvider::GetBitmapBundle(wxART_GO_BACK, wxART_TOOLBAR),
-    "Go back to the previous page");
+    "Go Back\tAlt-Left");
   toolBar->AddTool(
     ID_Forward,
     "",
     wxArtProvider::GetBitmapBundle(wxART_GO_FORWARD, wxART_TOOLBAR),
-    "Go forward in the page history");
+    "Go Forward\tAlt-Right");
   toolBar->Realize();
   updateHistoryButtons();
 
