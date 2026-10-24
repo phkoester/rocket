@@ -20,6 +20,8 @@ enum Command {
 // `MyApp` decl ---------------------------------------------------------------------------------------------
 
 struct MyApp : wxApp {
+  virtual int OnExit() override;
+
   virtual bool OnInit() override;
 };
 
@@ -40,8 +42,17 @@ private:
 
 // `MyApp` impl ---------------------------------------------------------------------------------------------
 
+int
+MyApp::OnExit() {
+  process.exit(EXIT_SUCCESS);
+}
+
 bool
 MyApp::OnInit() {
+  process.init(argc, argv, "guy");
+  nio::out.println("This is {}", process.name());
+  howdy();
+
   MyFrame* frame = new MyFrame();
   frame->Show(true);
   return true;
@@ -77,13 +88,13 @@ MyFrame::MyFrame() : wxFrame(nullptr, wxID_ANY, "Hello World") {
 }
 
 void
-MyFrame::OnExit([[maybe_unused]] wxCommandEvent& ev) {
-  Close(true);
+MyFrame::OnAbout([[maybe_unused]] wxCommandEvent& ev) {
+  wxMessageBox("This is a wxWidgets Hello World example", "About Hello World", wxOK | wxICON_INFORMATION);
 }
 
 void
-MyFrame::OnAbout([[maybe_unused]] wxCommandEvent& ev) {
-  wxMessageBox("This is a wxWidgets Hello World example", "About Hello World", wxOK | wxICON_INFORMATION);
+MyFrame::OnExit([[maybe_unused]] wxCommandEvent& ev) {
+  Close(true);
 }
 
 void
@@ -94,15 +105,5 @@ MyFrame::OnHello([[maybe_unused]] wxCommandEvent& ev) {
 // `main` ---------------------------------------------------------------------------------------------------
 
 wxIMPLEMENT_APP(MyApp);
-
-#if 0
-i32
-main(i32 argc, char **argv) {
-  process.init(argc, argv, "guyy");
-  nio::out.println("This is {}", process.name());
-  howdy();
-  process.exit(EXIT_SUCCESS);
-}
-#endif
 
 // EOF

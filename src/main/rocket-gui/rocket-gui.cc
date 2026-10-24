@@ -9,7 +9,7 @@
 namespace rocket::gui {
 
 void howdy() {
-  nio::out.print("Howdy!");
+  nio::out.println("Howdy!");
 }
 
 } // namespace rocket::gui
