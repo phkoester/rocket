@@ -9,6 +9,7 @@ target_link_libraries(guy PRIVATE Rocket::rocket-gui)
 if (GAIA_OS_WINDOWS)
   target_link_options(guy PRIVATE /subsystem:windows)
 endif()
+CopyRuntimeFiles(guy)
 
 AddExecutable(toy toy/main.cc)
 target_link_libraries(toy PRIVATE Rocket::rocket)
