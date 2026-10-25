@@ -1,27 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 280">
-  <circle cx="140" cy="140" r="126" fill="#FFF3C4" stroke="#1A1A1A" stroke-width="10"/>
+  <circle cx="140" cy="140" r="135" fill="#FF8A00" stroke="#000000" stroke-width="10"/>
 
-  <g transform="rotate(-8 140 140) translate(0 -2)">
-    <path d="M116 112C92 90 98 46 140 24C182 46 188 90 164 112Q140 128 116 112Z" fill="#FF4D8D" stroke="#1A1A1A" stroke-width="8" stroke-linejoin="round" stroke-linecap="round"/>
-    <line x1="140" y1="78" x2="140" y2="42" stroke="#C2185B" stroke-width="5" stroke-linecap="round"/>
-  </g>
-  <g transform="rotate(66 140 140)">
-    <path d="M116 112C92 90 98 46 140 24C182 46 188 90 164 112Q140 128 116 112Z" fill="#FF7AAE" stroke="#1A1A1A" stroke-width="8" stroke-linejoin="round" stroke-linecap="round"/>
-    <line x1="140" y1="78" x2="140" y2="42" stroke="#C2185B" stroke-width="5" stroke-linecap="round"/>
-  </g>
-  <g transform="rotate(142 140 140) translate(0 -4)">
-    <path d="M116 112C92 90 98 46 140 24C182 46 188 90 164 112Q140 128 116 112Z" fill="#FF3D82" stroke="#1A1A1A" stroke-width="8" stroke-linejoin="round" stroke-linecap="round"/>
-    <line x1="140" y1="78" x2="140" y2="42" stroke="#C2185B" stroke-width="5" stroke-linecap="round"/>
-  </g>
-  <g transform="rotate(214 140 140) translate(0 2)">
-    <path d="M116 112C92 90 98 46 140 24C182 46 188 90 164 112Q140 128 116 112Z" fill="#FF6BA3" stroke="#1A1A1A" stroke-width="8" stroke-linejoin="round" stroke-linecap="round"/>
-    <line x1="140" y1="78" x2="140" y2="42" stroke="#C2185B" stroke-width="5" stroke-linecap="round"/>
-  </g>
-  <g transform="rotate(286 140 140) translate(0 -1)">
-    <path d="M116 112C92 90 98 46 140 24C182 46 188 90 164 112Q140 128 116 112Z" fill="#FF528F" stroke="#1A1A1A" stroke-width="8" stroke-linejoin="round" stroke-linecap="round"/>
-    <line x1="140" y1="78" x2="140" y2="42" stroke="#C2185B" stroke-width="5" stroke-linecap="round"/>
+  <g transform="translate(140 140) scale(1.1206896551724138) translate(-140 -140)">
+    <g transform="rotate(-8 140 140)">
+      <path d="M116 112C92 90 98 46 140 24C182 46 188 90 164 112Q140 128 116 112Z" fill="#FFFFFF"/>
+    </g>
+    <g transform="rotate(66 140 140)">
+      <path d="M116 112C92 90 98 46 140 24C182 46 188 90 164 112Q140 128 116 112Z" fill="#FFFFFF"/>
+    </g>
+    <g transform="rotate(142 140 140)">
+      <path d="M116 112C92 90 98 46 140 24C182 46 188 90 164 112Q140 128 116 112Z" fill="#FFFFFF"/>
+    </g>
+    <g transform="rotate(214 140 140)">
+      <path d="M116 112C92 90 98 46 140 24C182 46 188 90 164 112Q140 128 116 112Z" fill="#FFFFFF"/>
+    </g>
+    <g transform="rotate(286 140 140)">
+      <path d="M116 112C92 90 98 46 140 24C182 46 188 90 164 112Q140 128 116 112Z" fill="#FFFFFF"/>
+    </g>
   </g>
 
-  <circle cx="140" cy="140" r="40" fill="#FFE14A" stroke="#1A1A1A" stroke-width="8"/>
+  <circle cx="140" cy="140" r="40" fill="#FF8A00"/>
 </svg>
