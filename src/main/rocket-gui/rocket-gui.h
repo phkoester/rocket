@@ -17,7 +17,7 @@ namespace rocket::gui {
 // Functions ------------------------------------------------------------------------------------------------
 
 /**
- * A replacement for `wxToolBar::AddTool()` that adds a proper disabled bitmap on Windows.
+ * A replacement for `wxToolBar::AddTool` that adds a proper disabled bitmap on Windows.
  *
  * @param toolBar the toolbar to add the tool to
  * @param id the ID of the tool
@@ -57,16 +57,18 @@ wxBitmapBundle makeDisabled(const wxBitmapBundle& bundle);
 
 // `std::hash<wxSize>` --------------------------------------------------------------------------------------
 
+/// @spec_std_hash{wxSize}
 template<>
 struct std::hash<wxSize> {
+  /// @cond undocumented
   rocket::u64
-  operator()(const wxSize& size) const noexcept {
+  operator()(const wxSize& size) const {
     using namespace rocket;
-
     u64 ret = std::hash<i32>()(size.x);
-    rocket::hash::combine(ret, size.y);
+    rocket::hash::combine(ret, std::hash<i32>()(size.y));
     return ret;
   }
+  /// @endcond
 };
 
 // EOF
