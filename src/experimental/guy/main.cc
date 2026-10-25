@@ -141,7 +141,7 @@ addToolBarItem(
   // The native toolbar leaves 32-bit alpha bitmaps fully coloured when a button
   // is disabled, unless a disabled bitmap is provided before Realize().
   if (icon.IsOk()) {
-    tool->SetDisabledBitmap(icon.MakeDisabled());
+    tool->SetDisabledBitmapx(icon.MakeDisabled());
   }
 #endif
 }
