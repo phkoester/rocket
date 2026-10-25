@@ -1,7 +1,7 @@
 /*
  * main.cc
  *
- * The `toy` test executable links to Rocket and is a playground for quick and dirty experiments.
+ * The `toy` executable links to Rocket and is a playground for quick and dirty experiments.
  */
 
 #include "rocket/Process.h"

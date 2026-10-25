@@ -1,7 +1,7 @@
 /*
  * main.cc
  *
- * The `guy` test executable links to Rocket.Gui and is a playground for quick and dirty GUI experiments.
+ * The `guy` executable links to Rocket.Gui and is a playground for quick and dirty GUI experiments.
  */
 
 #include <rocket/Process.h>

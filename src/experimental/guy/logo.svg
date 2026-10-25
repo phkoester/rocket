@@ -1,24 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 280">
-  <circle cx="140" cy="140" r="135" fill="#FF8A00"/>
-
-  <g transform="translate(140 140) scale(1.1206896551724138) translate(-140 -140)">
-    <g transform="rotate(-8 140 140)">
-      <path d="M116 112C92 90 98 46 140 24C182 46 188 90 164 112Q140 128 116 112Z" fill="#FFFFFF"/>
+  <rect width="280" height="280" rx="64" fill="#FF8A00"/>
+  <g transform="translate(140 140) scale(0.86) translate(-140 -140)">
+    <g fill="#FFFFFF">
+      <polygon points="140,0 240,40 140,112 40,40"/>
+      <polygon points="140,0 240,40 140,112 40,40" transform="rotate(90 140 140)"/>
+      <polygon points="140,0 240,40 140,112 40,40" transform="rotate(180 140 140)"/>
+      <polygon points="140,0 240,40 140,112 40,40" transform="rotate(270 140 140)"/>
     </g>
-    <g transform="rotate(66 140 140)">
-      <path d="M116 112C92 90 98 46 140 24C182 46 188 90 164 112Q140 128 116 112Z" fill="#FFFFFF"/>
-    </g>
-    <g transform="rotate(142 140 140)">
-      <path d="M116 112C92 90 98 46 140 24C182 46 188 90 164 112Q140 128 116 112Z" fill="#FFFFFF"/>
-    </g>
-    <g transform="rotate(214 140 140)">
-      <path d="M116 112C92 90 98 46 140 24C182 46 188 90 164 112Q140 128 116 112Z" fill="#FFFFFF"/>
-    </g>
-    <g transform="rotate(286 140 140)">
-      <path d="M116 112C92 90 98 46 140 24C182 46 188 90 164 112Q140 128 116 112Z" fill="#FFFFFF"/>
-    </g>
+    <circle cx="140" cy="140" r="56" fill="#FF8A00"/>
   </g>
-
-  <circle cx="140" cy="140" r="40" fill="#FF8A00"/>
 </svg>
