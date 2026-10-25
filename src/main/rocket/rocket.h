@@ -75,7 +75,7 @@
 
 // Macros ---------------------------------------------------------------------------------------------------
 
-#if defined(ROCKET_OS_WINDOWS) && defined(ROCKET_SHARED_LIB)
+#if defined(ROCKET_OS_WINDOWS) && defined(ROCKET_SHARED_LIBS)
   #ifdef ROCKET_EXPORTING__
     #define ROCKET_PUBLIC __declspec(dllexport) ///< Specifier for global data symbols.
   #else

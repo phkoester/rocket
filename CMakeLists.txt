@@ -26,10 +26,6 @@ AddVar(ROCKET_IO_LOG                   BOOL OFF                      "Enable log
 AddVar(ROCKET_NIO_LOG                  BOOL OFF                      "Enable logging of `rocket::nio`")
 AddVar(ROCKET_NIO_NO_CONTIGUOUS_SOURCE BOOL OFF                      "Disable contiguous-source optimization for `rocket::nio`")
 
-# Set project-specific compiler definitions, features, and options ------------------------------------------
-
-set(ROCKET_COMPILE_DEFS)
-
 # Manage dependencies ---------------------------------------------------------------------------------------
 
 include(cmake/deps.cmake)
