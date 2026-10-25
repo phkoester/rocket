@@ -152,7 +152,7 @@ on4kMonitor(const wxWindow* window) {
 #endif
 }
 
-constexpr double fourKFontScale = 1.25;
+constexpr double fourKFontScale = 1.1;
 
 wxFont
 scaledFont(const wxFont& font, double factor) {
