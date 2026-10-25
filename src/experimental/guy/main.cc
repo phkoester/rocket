@@ -137,11 +137,11 @@ addToolBarItem(
   const wxSize iconSize(24, 24);
   wxBitmapBundle icon = loadSvg(svgName, iconSize);
   [[maybe_unused]] wxToolBarToolBase* tool = toolBar->AddTool(id, "", icon, shortHelp);
-#ifdef GAIA_OS_WINDOWS
+#ifdef ROCKET_OS_WINDOWS
   // The native toolbar leaves 32-bit alpha bitmaps fully coloured when a button
   // is disabled, unless a disabled bitmap is provided before Realize().
   if (icon.IsOk()) {
-    tool->SetDisabledBitmapx(icon.MakeDisabled());
+    tool->SetDisabledBitmap(icon.MakeDisabled());
   }
 #endif
 }
