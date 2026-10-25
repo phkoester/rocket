@@ -14,7 +14,6 @@
 #include <wx/aboutdlg.h>
 #include <wx/artprov.h>
 #include <wx/bmpbndl.h>
-#include <wx/filesys.h>
 #include <wx/taskbar.h>
 #include <wx/webview.h>
 #include <wx/xrc/xmlres.h>
@@ -106,98 +105,9 @@ initialFrameSize() {
   return wxSize(displaySize.x / 3, displaySize.y / 2);
 }
 
-/// SVG embedded by `wxrc` from `resource.xrc`
-wxBitmapBundle
-loadSvg(const wxString& name, const wxSize& size) {
-  wxFileSystem fs;
-  const unique_ptr<wxFSFile> file{fs.OpenFile("memory:XRC_resource/resource.cc$" + name)};
-  if (not file) {
-    return {};
-  }
-
-  wxInputStream& stream = *file->GetStream();
-  const auto len = static_cast<size_t>(stream.GetLength());
-  wxCharBuffer buf(len);
-  if (not stream.ReadAll(buf.data(), len)) {
-    return {};
-  }
-  return wxBitmapBundle::FromSVG(buf.data(), size);
-}
-
 wxBitmapBundle
 loadLogo(wxSize size = wxSize(192, 192)) {
   return loadSvg("logo.svg", size);
-}
-
-/// `wxBitmap::MakeDisabled()` only greyscales, so a black stroke stays black.
-wxBitmap
-makeDisabledBitmap(const wxBitmap& bitmap) {
-  if (not bitmap.IsOk()) {
-    return {};
-  }
-  const double scale = bitmap.GetScaleFactor();
-  const wxImage image = bitmap.ConvertToImage().ConvertToGreyscale().ConvertToDisabled();
-  return wxBitmap(image, -1, scale);
-}
-
-struct DisabledBitmapBundle : wxBitmapBundleImpl {
-  explicit DisabledBitmapBundle(const wxBitmapBundle& source) : source_(source) {}
-
-  wxSize GetDefaultSize() const override {
-    return source_.GetDefaultSize();
-  }
-
-  wxSize GetPreferredBitmapSizeAtScale(double scale) const override {
-    return source_.GetPreferredBitmapSizeAtScale(scale);
-  }
-
-  wxBitmap GetBitmap(const wxSize& size) override {
-    for (const Entry& entry : cache_) {
-      if (entry.size == size) {
-        return entry.bitmap;
-      }
-    }
-    const wxBitmap bitmap = makeDisabledBitmap(source_.GetBitmap(size));
-    cache_.push_back({ size, bitmap });
-    return bitmap;
-  }
-
-private:
-
-  struct Entry {
-    wxSize size;
-    wxBitmap bitmap;
-  };
-
-  wxBitmapBundle source_;
-  vector<Entry> cache_;
-};
-
-wxBitmapBundle
-makeDisabled(const wxBitmapBundle& bundle) {
-  if (not bundle.IsOk()) {
-    return {};
-  }
-  return wxBitmapBundle::FromImpl(new DisabledBitmapBundle(bundle));
-}
-
-void
-addToolBarItem(
-  wxToolBar* toolBar,
-  int id,
-  const wxString& svgName,
-  const wxString& shortHelp) {
-  const wxSize iconSize(24, 24);
-  wxBitmapBundle icon = loadSvg(svgName, iconSize);
-
-  [[maybe_unused]] wxToolBarToolBase* tool = toolBar->AddTool(id, "", icon, shortHelp);
-#ifdef ROCKET_OS_WINDOWS
-  // The native toolbar leaves 32-bit alpha bitmaps fully coloured when a button
-  // is disabled, unless a disabled bitmap is provided before Realize().
-  if (icon.IsOk()) {
-    tool->SetDisabledBitmap(makeDisabled(icon));
-  }
-#endif
 }
 
 // `MyApp` impl ---------------------------------------------------------------------------------------------
@@ -227,7 +137,6 @@ MyApp::OnInit() {
   cl.parse(process.args());
 
   nio::out.println("This is {}", process.name());
-  howdy();
 
   wxXmlResource::Get()->InitAllHandlers();
   InitXmlResource();
@@ -260,8 +169,8 @@ MyFrame::MyFrame() : wxFrame(
   menuFile->Append(wxID_EXIT, "E&xit", "Exit the application");
 
   wxMenu* menuView = new wxMenu;
-  menuView->Append(ID_Back, "Go &Back\tAlt-Left", "Go back");
-  menuView->Append(ID_Forward, "Go &Forward\tAlt-Right", "Go forward");
+  menuView->Append(ID_Back, "Go &Back\tAlt+Left", "Go back");
+  menuView->Append(ID_Forward, "Go &Forward\tAlt+Right", "Go forward");
 
   wxMenu* menuHelp = new wxMenu;
   menuHelp->Append(wxID_ABOUT, "&About", "About the application");
@@ -290,8 +199,8 @@ MyFrame::MyFrame() : wxFrame(
   }
 
   wxToolBar* toolBar = CreateToolBar(wxTB_DEFAULT_STYLE | wxTB_HORZ_TEXT);
-  addToolBarItem(toolBar, ID_Back, "back.svg", "Go Back\tAlt-Left");
-  addToolBarItem(toolBar, ID_Forward, "forward.svg", "Go Forward\tAlt-Right");
+  addTool(toolBar, ID_Back, "", "back.svg", "Go Back\tAlt+Left");
+  addTool(toolBar, ID_Forward, "", "forward.svg", "Go Forward\tAlt+Right");
   toolBar->Realize();
   updateHistoryButtons();
 

@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include <rocket/rocket.h>
+
 #include <wx/wxprec.h>
 #ifndef WX_PRECOMP
   #include <wx/wx.h>
@@ -13,7 +15,16 @@ namespace rocket::gui {
 
 // Functions ------------------------------------------------------------------------------------------------
 
-void howdy();
+wxToolBarToolBase* addTool(
+  wxToolBar* toolBar,
+  i32 id,
+  std::string_view label,
+  std::string_view svgName,
+  std::string_view shortHelp);
+
+wxBitmapBundle loadSvg(std::string_view name, const wxSize& size);
+
+wxBitmapBundle makeDisabled(const wxBitmapBundle& bundle);
 
 } // namespace rocket::gui
 
