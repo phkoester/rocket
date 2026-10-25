@@ -5,22 +5,12 @@
 #pragma once
 
 #include <rocket/rocket.h>
+#include <rocket/hash/hash.h>
 
 #include <wx/wxprec.h>
 #ifndef WX_PRECOMP
   #include <wx/wx.h>
 #endif
-
-// Functions in the global namespace ------------------------------------------------------------------------
-
-/// @op_cmp{`wxSize`}
-inline std::strong_ordering
-operator<=>(const wxSize& lhs, const wxSize& rhs) {
-  if (lhs.x != rhs.x) {
-    return lhs.x <=> rhs.x;
-  }
-  return lhs.y <=> rhs.y;
-}
 
 namespace rocket::gui {
 
@@ -63,5 +53,20 @@ wxBitmapBundle loadSvg(std::string_view name, const wxSize& size);
 wxBitmapBundle makeDisabled(const wxBitmapBundle& bundle);
 
 } // namespace rocket::gui
+
+
+// `std::hash<wxSize>` --------------------------------------------------------------------------------------
+
+template<>
+struct std::hash<wxSize> {
+  rocket::u64
+  operator()(const wxSize& size) const noexcept {
+    using namespace rocket;
+
+    u64 ret = std::hash<i32>()(size.x);
+    rocket::hash::combine(ret, size.y);
+    return ret;
+  }
+};
 
 // EOF

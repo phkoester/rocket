@@ -6,7 +6,7 @@
 
 #include <wx/filesys.h>
 
-#include <map>
+#include <unordered_map>
 
 using namespace std;
 
@@ -41,7 +41,7 @@ struct DisabledBitmapBundle : wxBitmapBundleImpl {
 
 private:
 
-  map<wxSize, wxBitmap> cache_;
+  unordered_map<wxSize, wxBitmap> cache_;
   wxBitmapBundle source_;
 
   wxBitmap
