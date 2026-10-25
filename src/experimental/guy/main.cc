@@ -190,9 +190,6 @@ addToolBarItem(
   const wxSize iconSize(24, 24);
   wxBitmapBundle icon = loadSvg(svgName, iconSize);
 
-  toolBar->AddTool(id, "", icon, wxBitmapBundle(), wxITEM_NORMAL, shortHelp);
-
-#ifdef ALT
   [[maybe_unused]] wxToolBarToolBase* tool = toolBar->AddTool(id, "", icon, shortHelp);
 #ifdef ROCKET_OS_WINDOWS
   // The native toolbar leaves 32-bit alpha bitmaps fully coloured when a button
@@ -200,7 +197,6 @@ addToolBarItem(
   if (icon.IsOk()) {
     tool->SetDisabledBitmap(makeDisabled(icon));
   }
-#endif
 #endif
 }
 
