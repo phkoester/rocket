@@ -50,6 +50,9 @@ if(GAIA_OS_LINUX)
 endif()
 
 AddLibrary(rocket ${VERSION_H})
+
+set_target_properties(rocket PROPERTIES VERSION ${PROJECT_VERSION}) # SOVERSION 0
+
 target_include_directories(rocket PUBLIC ${GENERATED_DIR})
 
 target_sources(rocket
@@ -180,13 +183,11 @@ target_link_libraries(rocket
     ${ROCKET_PRIVATE_LINK_TARGETS}
 )
 
-set_target_properties(rocket PROPERTIES VERSION ${PROJECT_VERSION}) # SOVERSION 0
-
 add_library(Rocket::rocket ALIAS rocket)
 
 # `rocket-bench` --------------------------------------------------------------------------------------------
 
-add_library(rocket-bench STATIC)
+AddLibrary(rocket-bench STATIC)
 target_sources(rocket-bench
   PRIVATE
     rocket-bench/rocket-bench.cc
@@ -195,13 +196,14 @@ target_sources(rocket-bench
     FILES
       rocket-bench/rocket-bench.h
 )
-target_compile_definitions(rocket-bench INTERFACE ${COMPILE_DEFS} ROCKET_TEST)
-target_link_libraries(rocket-bench PUBLIC benchmark::benchmark Rocket::rocket)
-add_library(Rocket::rocket-bench ALIAS rocket-bench)
+target_compile_definitions(rocket-bench INTERFACE ${COMPILE_DEFS} ROCKET_TEST) # XXX
+target_link_libraries(rocket-bench PUBLIC benchmark::benchmark Rocket::rocket) # XXX
+add_library(Rocket::rocket-bench ALIAS rocket-bench) # XXX
 
 # `rocket-gui` ----------------------------------------------------------------------------------------------
 
-AddLibrary(rocket-gui STATIC)
+AddLibrary(rocket-gui)
+set_target_properties(rocket-gui PROPERTIES VERSION ${PROJECT_VERSION}) # SOVERSION 0
 target_sources(rocket-gui PRIVATE rocket-gui/rocket-gui.cc)
 target_compile_definitions(rocket-gui PUBLIC ${COMPILE_DEFS} ROCKET_GUI)
 target_link_libraries(rocket-gui PUBLIC Rocket::rocket wxWidgets::wxWidgets)
