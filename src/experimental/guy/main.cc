@@ -105,11 +105,11 @@ initialFrameSize() {
   return wxSize(displaySize.x / 3, displaySize.y / 2);
 }
 
-/// Logo embedded by `wxrc` from `resource.xrc`.
+/// SVG embedded by `wxrc` from `resource.xrc`.
 wxBitmapBundle
-loadLogo(wxSize size = wxSize(192, 192)) {
+loadSvg(const wxString& name, const wxSize& size) {
   wxFileSystem fs;
-  const unique_ptr<wxFSFile> file{fs.OpenFile("memory:XRC_resource/resource.cc$logo.svg")};
+  const unique_ptr<wxFSFile> file{fs.OpenFile("memory:XRC_resource/resource.cc$" + name)};
   if (not file) {
     return {};
   }
@@ -121,6 +121,11 @@ loadLogo(wxSize size = wxSize(192, 192)) {
     return {};
   }
   return wxBitmapBundle::FromSVG(buf.data(), size);
+}
+
+wxBitmapBundle
+loadLogo(wxSize size = wxSize(192, 192)) {
+  return loadSvg("logo.svg", size);
 }
 
 // `MyApp` impl ---------------------------------------------------------------------------------------------
@@ -213,16 +218,17 @@ MyFrame::MyFrame() : wxFrame(
   }
 
   wxToolBar* toolBar = CreateToolBar(wxTB_DEFAULT_STYLE | wxTB_HORZ_TEXT);
-  toolBar->AddTool(
-    ID_Back,
-    "",
-    wxArtProvider::GetBitmapBundle(wxART_GO_BACK, wxART_TOOLBAR),
-    "Go Back\tAlt-Left");
-  toolBar->AddTool(
-    ID_Forward,
-    "",
-    wxArtProvider::GetBitmapBundle(wxART_GO_FORWARD, wxART_TOOLBAR),
-    "Go Forward\tAlt-Right");
+  const wxSize toolIconSize(24, 24);
+  wxBitmapBundle backIcon = loadSvg("back.svg", toolIconSize);
+  wxBitmapBundle forwardIcon = loadSvg("forward.svg", toolIconSize);
+  if (not backIcon.IsOk()) {
+    backIcon = wxArtProvider::GetBitmapBundle(wxART_GO_BACK, wxART_TOOLBAR);
+  }
+  if (not forwardIcon.IsOk()) {
+    forwardIcon = wxArtProvider::GetBitmapBundle(wxART_GO_FORWARD, wxART_TOOLBAR);
+  }
+  toolBar->AddTool(ID_Back, "", backIcon, "Go Back\tAlt-Left");
+  toolBar->AddTool(ID_Forward, "", forwardIcon, "Go Forward\tAlt-Right");
   toolBar->Realize();
   updateHistoryButtons();
 

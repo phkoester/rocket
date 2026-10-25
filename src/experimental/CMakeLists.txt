@@ -20,7 +20,11 @@ set(wxrc $<TARGET_FILE:wxrc>)
 add_custom_command(
   OUTPUT ${resource_cc}
   COMMAND ${wxrc} -c -o ${resource_cc} ${xrc_files}
-  DEPENDS ${xrc_files} ${CMAKE_CURRENT_SOURCE_DIR}/guy/logo.svg wxrc
+  DEPENDS ${xrc_files}
+          ${CMAKE_CURRENT_SOURCE_DIR}/guy/logo.svg
+          ${CMAKE_CURRENT_SOURCE_DIR}/guy/back.svg
+          ${CMAKE_CURRENT_SOURCE_DIR}/guy/forward.svg
+          wxrc
   COMMENT "Compiling XRC resources"
 )
 

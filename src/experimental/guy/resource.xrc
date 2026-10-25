@@ -8,6 +8,12 @@
   <object class="wxBitmap" name="logo">
     <bitmap default_size="192,192">logo.svg</bitmap>
   </object>
+  <object class="wxBitmap" name="back">
+    <bitmap default_size="24,24">back.svg</bitmap>
+  </object>
+  <object class="wxBitmap" name="forward">
+    <bitmap default_size="24,24">forward.svg</bitmap>
+  </object>
 </resource>
 
 <!-- EOF -->
