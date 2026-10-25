@@ -12,8 +12,6 @@
 #include <rocket-gui/rocket-gui.h>
 
 #include <wx/aboutdlg.h>
-#include <wx/artprov.h>
-#include <wx/bmpbndl.h>
 #include <wx/taskbar.h>
 #include <wx/webview.h>
 #include <wx/xrc/xmlres.h>

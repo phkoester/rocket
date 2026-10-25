@@ -34,7 +34,7 @@ wxToolBarToolBase* addTool(
   std::string_view shortHelp);
 
 /**
- * Loads an SVG file.
+ * Loads an SVG as a bitmap bundle.
  *
  * @param name the name of the SVG file to load
  * @param size the size of the bitmaps
@@ -43,7 +43,7 @@ wxToolBarToolBase* addTool(
 wxBitmapBundle loadSvg(std::string_view name, const wxSize& size);
 
 /**
- * Creates a disabled bitmap bundle from a bitmap bundle.
+ * Makes a disabled bitmap bundle from a bitmap bundle.
  *
  * This is especially useful on Windows, where the native tool bar doesn't show disabled bitmaps.
  *
