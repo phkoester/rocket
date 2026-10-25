@@ -105,7 +105,7 @@ initialFrameSize() {
   return wxSize(displaySize.x / 3, displaySize.y / 2);
 }
 
-/// SVG embedded by `wxrc` from `resource.xrc`.
+/// SVG embedded by `wxrc` from `resource.xrc`
 wxBitmapBundle
 loadSvg(const wxString& name, const wxSize& size) {
   wxFileSystem fs;
@@ -126,6 +126,24 @@ loadSvg(const wxString& name, const wxSize& size) {
 wxBitmapBundle
 loadLogo(wxSize size = wxSize(192, 192)) {
   return loadSvg("logo.svg", size);
+}
+
+void
+addToolBarItem(
+  wxToolBar* toolBar,
+  int id,
+  const wxString& svgName,
+  const wxString& shortHelp) {
+  const wxSize iconSize(24, 24);
+  wxBitmapBundle icon = loadSvg(svgName, iconSize);
+  [[maybe_unused]] wxToolBarToolBase* tool = toolBar->AddTool(id, "", icon, shortHelp);
+#ifdef GAIA_OS_WINDOWS
+  // The native toolbar leaves 32-bit alpha bitmaps fully coloured when a button
+  // is disabled, unless a disabled bitmap is provided before Realize().
+  if (icon.IsOk()) {
+    tool->SetDisabledBitmap(icon.MakeDisabled());
+  }
+#endif
 }
 
 // `MyApp` impl ---------------------------------------------------------------------------------------------
@@ -218,17 +236,8 @@ MyFrame::MyFrame() : wxFrame(
   }
 
   wxToolBar* toolBar = CreateToolBar(wxTB_DEFAULT_STYLE | wxTB_HORZ_TEXT);
-  const wxSize toolIconSize(24, 24);
-  wxBitmapBundle backIcon = loadSvg("back.svg", toolIconSize);
-  wxBitmapBundle forwardIcon = loadSvg("forward.svg", toolIconSize);
-  if (not backIcon.IsOk()) {
-    backIcon = wxArtProvider::GetBitmapBundle(wxART_GO_BACK, wxART_TOOLBAR);
-  }
-  if (not forwardIcon.IsOk()) {
-    forwardIcon = wxArtProvider::GetBitmapBundle(wxART_GO_FORWARD, wxART_TOOLBAR);
-  }
-  toolBar->AddTool(ID_Back, "", backIcon, "Go Back\tAlt-Left");
-  toolBar->AddTool(ID_Forward, "", forwardIcon, "Go Forward\tAlt-Right");
+  addToolBarItem(toolBar, ID_Back, "back.svg", "Go Back\tAlt-Left");
+  addToolBarItem(toolBar, ID_Forward, "forward.svg", "Go Forward\tAlt-Right");
   toolBar->Realize();
   updateHistoryButtons();
 
