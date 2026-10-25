@@ -13,6 +13,7 @@
 
 #include <wx/aboutdlg.h>
 #include <wx/artprov.h>
+#include <wx/bmpbndl.h>
 #include <wx/filesys.h>
 #include <wx/taskbar.h>
 #include <wx/webview.h>
@@ -128,6 +129,58 @@ loadLogo(wxSize size = wxSize(192, 192)) {
   return loadSvg("logo.svg", size);
 }
 
+/// `wxBitmap::MakeDisabled()` only greyscales, so a black stroke stays black.
+wxBitmap
+makeDisabledBitmap(const wxBitmap& bitmap) {
+  if (not bitmap.IsOk()) {
+    return {};
+  }
+  const double scale = bitmap.GetScaleFactor();
+  const wxImage image = bitmap.ConvertToImage().ConvertToGreyscale().ConvertToDisabled();
+  return wxBitmap(image, -1, scale);
+}
+
+struct DisabledBitmapBundle : wxBitmapBundleImpl {
+  explicit DisabledBitmapBundle(const wxBitmapBundle& source) : source_(source) {}
+
+  wxSize GetDefaultSize() const override {
+    return source_.GetDefaultSize();
+  }
+
+  wxSize GetPreferredBitmapSizeAtScale(double scale) const override {
+    return source_.GetPreferredBitmapSizeAtScale(scale);
+  }
+
+  wxBitmap GetBitmap(const wxSize& size) override {
+    for (const Entry& entry : cache_) {
+      if (entry.size == size) {
+        return entry.bitmap;
+      }
+    }
+    const wxBitmap bitmap = makeDisabledBitmap(source_.GetBitmap(size));
+    cache_.push_back({ size, bitmap });
+    return bitmap;
+  }
+
+private:
+
+  struct Entry {
+    wxSize size;
+    wxBitmap bitmap;
+  };
+
+  wxBitmapBundle source_;
+  vector<Entry> cache_;
+};
+
+wxBitmapBundle
+makeDisabled(const wxBitmapBundle& bundle) {
+  if (not bundle.IsOk()) {
+    return {};
+  }
+  return wxBitmapBundle::FromImpl(new DisabledBitmapBundle(bundle));
+}
+
 void
 addToolBarItem(
   wxToolBar* toolBar,
@@ -141,7 +194,7 @@ addToolBarItem(
   // The native toolbar leaves 32-bit alpha bitmaps fully coloured when a button
   // is disabled, unless a disabled bitmap is provided before Realize().
   if (icon.IsOk()) {
-    tool->SetDisabledBitmap(icon.MakeDisabled());
+    tool->SetDisabledBitmap(makeDisabled(icon));
   }
 #endif
 }
