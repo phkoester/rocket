@@ -8,8 +8,6 @@ set(GENERATED_DIR ${CMAKE_CURRENT_BINARY_DIR}/generated)
 
 # Preprocessor definitions ..................................................................................
 
-set(ROCKET_COMPILE_DEFS)
-
 if(CMAKE_C_COMPILER_ID STREQUAL "Clang")
   list(APPEND ROCKET_COMPILE_DEFS ROCKET_C_COMPILER_CLANG)
 elseif(CMAKE_C_COMPILER_ID STREQUAL "GNU")
@@ -158,13 +156,11 @@ target_compile_definitions(rocket
   PRIVATE
     ROCKET_EXPORTING__
   PUBLIC
+    ${COMPILE_DEFS}
     ${ROCKET_COMPILE_DEFS}
     ROCKET_TEST_PRIVATE=private
     ROCKET_TEST_PROTECTED=protected
 )
-if(BUILD_SHARED_LIBS)
-  target_compile_definitions(rocket PUBLIC ROCKET_SHARED_LIBS)
-endif()
 if(ROCKET_IO_LOG)
   target_compile_definitions(rocket PRIVATE ROCKET_IO_LOG)
 endif()
@@ -190,7 +186,7 @@ add_library(Rocket::rocket ALIAS rocket)
 
 # `rocket-bench` --------------------------------------------------------------------------------------------
 
-AddLibrary(rocket-bench)
+add_library(rocket-bench STATIC)
 target_sources(rocket-bench
   PRIVATE
     rocket-bench/rocket-bench.cc
@@ -199,21 +195,21 @@ target_sources(rocket-bench
     FILES
       rocket-bench/rocket-bench.h
 )
-target_compile_definitions(rocket-bench PUBLIC ROCKET_TEST)
+target_compile_definitions(rocket-bench INTERFACE ${COMPILE_DEFS} ROCKET_TEST)
 target_link_libraries(rocket-bench PUBLIC benchmark::benchmark Rocket::rocket)
 add_library(Rocket::rocket-bench ALIAS rocket-bench)
 
 # `rocket-gui` ----------------------------------------------------------------------------------------------
 
-AddLibrary(rocket-gui)
+AddLibrary(rocket-gui STATIC)
 target_sources(rocket-gui PRIVATE rocket-gui/rocket-gui.cc)
-target_compile_definitions(rocket-gui PUBLIC ROCKET_GUI)
+target_compile_definitions(rocket-gui PUBLIC ${COMPILE_DEFS} ROCKET_GUI)
 target_link_libraries(rocket-gui PUBLIC Rocket::rocket wxWidgets::wxWidgets)
 add_library(Rocket::rocket-gui ALIAS rocket-gui)
 
 # `rocket-test` ---------------------------------------------------------------------------------------------
 
-AddLibrary(rocket-test)
+AddLibrary(rocket-test STATIC)
 target_sources(rocket-test
   PRIVATE
     rocket-test/rocket-test.cc
@@ -225,15 +221,26 @@ target_sources(rocket-test
       rocket-test/TracingString.h
       rocket-test/matcher/matcher.h
 )
-target_compile_definitions(rocket-test PUBLIC ROCKET_TEST)
+target_compile_definitions(rocket-test
+  PUBLIC
+    ${COMPILE_DEFS}
+    ROCKET_TEST
+)
 target_link_libraries(rocket-test PUBLIC GTest::gmock GTest::gtest Rocket::rocket)
 add_library(Rocket::rocket-test ALIAS rocket-test)
 
 # `rocket-test-main` ----------------------------------------------------------------------------------------
 
 AddLibrary(rocket-test-main STATIC)
-target_sources(rocket-test-main PRIVATE rocket-test-main/main.cc)
-target_compile_definitions(rocket-test-main PRIVATE ROCKET_TEST)
+target_sources(rocket-test-main
+  PRIVATE
+    rocket-test-main/main.cc
+)
+target_compile_definitions(rocket-test-main
+  PRIVATE
+    ${COMPILE_DEFS}
+    ROCKET_TEST
+)
 target_link_libraries(rocket-test-main PRIVATE GTest::gmock GTest::gtest Rocket::rocket)
 add_library(Rocket::rocket-test-main ALIAS rocket-test-main)
 
