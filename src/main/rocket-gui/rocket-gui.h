@@ -11,6 +11,16 @@
   #include <wx/wx.h>
 #endif
 
+// Operators ------------------------------------------------------------------------------------------------
+
+inline bool
+operator<(const wxSize& lhs, const wxSize& rhs) {
+  if (lhs.x != rhs.x) {
+    return lhs.x < rhs.x;
+  }
+  return lhs.y < rhs.y;
+}
+
 namespace rocket::gui {
 
 // Functions ------------------------------------------------------------------------------------------------

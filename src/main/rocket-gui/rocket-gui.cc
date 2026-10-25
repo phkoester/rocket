@@ -6,6 +6,8 @@
 
 #include <wx/filesys.h>
 
+#include <map>
+
 using namespace std;
 
 namespace {
@@ -17,13 +19,13 @@ struct DisabledBitmapBundle : wxBitmapBundleImpl {
 
   wxBitmap
   GetBitmap(const wxSize& size) override {
-    for (const Entry& entry : cache_) {
-      if (entry.size == size) {
-        return entry.bitmap;
-      }
+    auto it = cache_.find(size);
+    if (it != cache_.end()) {
+      return it->second;
     }
+
     const wxBitmap bitmap = makeDisabledBitmap(source_.GetBitmap(size));
-    cache_.push_back({ size, bitmap });
+    cache_.insert({ size, bitmap });
     return bitmap;
   }
 
@@ -39,12 +41,7 @@ struct DisabledBitmapBundle : wxBitmapBundleImpl {
 
 private:
 
-  struct Entry {
-    wxSize size;
-    wxBitmap bitmap;
-  };
-
-  vector<Entry> cache_; // XXX map!
+  map<wxSize, wxBitmap> cache_;
   wxBitmapBundle source_;
 
   wxBitmap
