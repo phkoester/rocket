@@ -352,7 +352,7 @@ struct FileSink : Sink {
    * @param append whether to append to the file instead of overwriting it
    * @throw InvalidState if the file cannot be opened
    */
-  explicit FileSink(const std::filesystem::path& path, bool append = true);
+  explicit FileSink(const std::filesystem::path& path, bool append = false);
 
   ~FileSink() override;
 

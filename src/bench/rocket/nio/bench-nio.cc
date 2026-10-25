@@ -18,65 +18,67 @@ constexpr u64 FILE_SIZE = 1'204 * 1'024; // 1 MiB
 constexpr u64 CHUNK_SIZE = 1'024;
 constexpr u64 N = FILE_SIZE / CHUNK_SIZE;
 
+const string CHUNK(CHUNK_SIZE, ' ');
+
 // `BENCH` --------------------------------------------------------------------------------------------------
 
-BENCH(nio, FileSink, [](benchmark::State& state) {
-  const string chunk(CHUNK_SIZE, ' ');
-  const auto temp = rocket::filesystem::tempFile();
 
+void
+nio_FileSink(benchmark::State& state) { // NOLINT(*-internal-linkage)
+  const auto temp = rocket::filesystem::tempFile();
   for (auto _ : state) {
-    FileSink out(temp.string());
+    FileSink out(temp);
     for (u64 i = 0; i < N; ++i) {
-      out.Sink::write(chunk);
+      out.Sink::write(CHUNK);
     }
   }
-
   ROCKET_EXPECT(file_size(temp) == FILE_SIZE);
-})
+}
+BENCHMARK(nio_FileSink);
 
-BENCH(nio, BufferedFileSink, [](benchmark::State& state) {
-  const string chunk(CHUNK_SIZE, ' ');
+void
+nio_BufferedFileSink(benchmark::State& state) {
   const auto temp = rocket::filesystem::tempFile();
-
   for (auto _ : state) {
-    FileSink out(temp.string());
+    FileSink out(temp);
     std::setvbuf(out.file_, nullptr, _IONBF, 0); // Disable buffering
     BufferedSink buffered(out);
     for (u64 i = 0; i < N; ++i) {
-      buffered.Sink::write(chunk);
+      buffered.Sink::write(CHUNK);
     }
   }
   ROCKET_EXPECT(file_size(temp) == FILE_SIZE);
-})
+}
+BENCHMARK(nio_BufferedFileSink);
 
-BENCH(nio, StreamSink, [](benchmark::State& state) {
-  const string chunk(CHUNK_SIZE, ' ');
+void
+nio_StreamSink(benchmark::State& state) {
   const auto temp = rocket::filesystem::tempFile();
-
   for (auto _ : state) {
     ofstream os(temp.c_str());
     StreamSink out(os);
     for (u64 i = 0; i < N; ++i) {
-      out.Sink::write(chunk);
+      out.Sink::write(CHUNK);
     }
   }
   ROCKET_EXPECT(file_size(temp) == FILE_SIZE);
-})
+}
+BENCHMARK(nio_StreamSink);
 
-BENCH(nio, BufferedStreamSink, [](benchmark::State& state) {
-  const string chunk(CHUNK_SIZE, ' ');
+void
+nio_BufferedStreamSink(benchmark::State& state) {
   const auto temp = rocket::filesystem::tempFile();
-
   for (auto _ : state) {
     ofstream os(temp.c_str());
     os.rdbuf()->pubsetbuf(nullptr, 0); // Disable buffering
     StreamSink out(os);
     BufferedSink buffered(out);
     for (u64 i = 0; i < N; ++i) {
-      buffered.Sink::write(chunk);
+      buffered.Sink::write(CHUNK);
     }
   }
   ROCKET_EXPECT(file_size(temp) == FILE_SIZE);
-})
+}
+BENCHMARK(nio_BufferedStreamSink);
 
 // EOF

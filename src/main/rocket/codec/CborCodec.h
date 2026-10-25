@@ -1193,7 +1193,7 @@ struct CborCodec : Codec<CborConsumer, CborProducer> {
   decode(std::span<const u8> cbor) const {
     using namespace internal::cbor;
 
-    // Load the item
+    // Load the item, this must consume the entire input
     cbor_load_result loadResult; // NOLINT
     cbor_item_t* item = cbor_load(cbor.data(), cbor.size(), &loadResult);
     if (loadResult.error.code != CBOR_ERR_NONE) {

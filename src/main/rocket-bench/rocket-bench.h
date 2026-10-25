@@ -36,16 +36,4 @@ using namespace std;
 
 #endif // ROCKET_BENCH_NO_USING_NAMESPACE
 
-// Macros ---------------------------------------------------------------------------------------------------
-
-/// Defines and registers a benchmark function.
-#define BENCH(group, name, fn) \
-  namespace { \
-    void \
-    group##_##name(benchmark::State& state) { \
-      fn(state); \
-    } \
-    BENCHMARK(group##_##name); \
-  }
-
 // EOF

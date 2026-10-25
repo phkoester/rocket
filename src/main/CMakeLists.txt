@@ -186,15 +186,17 @@ add_library(Rocket::rocket ALIAS rocket)
 
 # `rocket-bench` --------------------------------------------------------------------------------------------
 
-add_library(rocket-bench INTERFACE)
+add_library(rocket-bench STATIC)
 target_sources(rocket-bench
+  PRIVATE
+    rocket-bench/rocket-bench.cc
   PUBLIC
     FILE_SET HEADERS
     FILES
       rocket-bench/rocket-bench.h
 )
 target_compile_definitions(rocket-bench INTERFACE ${COMPILE_DEFS} ROCKET_TEST)
-
+target_link_libraries(rocket-bench PUBLIC benchmark::benchmark Rocket::rocket)
 add_library(Rocket::rocket-bench ALIAS rocket-bench)
 
 # `rocket-gui` ----------------------------------------------------------------------------------------------
@@ -225,7 +227,6 @@ target_compile_definitions(rocket-test
     ROCKET_TEST
 )
 target_link_libraries(rocket-test PUBLIC GTest::gmock GTest::gtest Rocket::rocket)
-
 add_library(Rocket::rocket-test ALIAS rocket-test)
 
 # `rocket-test-main` ----------------------------------------------------------------------------------------
@@ -241,7 +242,6 @@ target_compile_definitions(rocket-test-main
     ROCKET_TEST
 )
 target_link_libraries(rocket-test-main PRIVATE GTest::gmock GTest::gtest Rocket::rocket)
-
 add_library(Rocket::rocket-test-main ALIAS rocket-test-main)
 
 # EOF

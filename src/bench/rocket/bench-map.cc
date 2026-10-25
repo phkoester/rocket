@@ -41,7 +41,6 @@ map_smallConstMap(benchmark::State& state) { // NOLINT(*-internal-linkage)
     [[maybe_unused]] auto _val = map.find(key);
   }
 }
-
 BENCHMARK(map_smallConstMap);
 
 void
@@ -57,7 +56,6 @@ map_smallConstUnorderedMap(benchmark::State& state) { // NOLINT(*-internal-linka
     [[maybe_unused]] auto _val = map.find(key);
   }
 }
-
 BENCHMARK(map_smallConstUnorderedMap);
 
 void
@@ -73,7 +71,6 @@ map_smallConstBimap(benchmark::State& state) { // NOLINT(*-internal-linkage)
     [[maybe_unused]] auto _val = map.left.find(key);
   }
 }
-
 BENCHMARK(map_smallConstBimap);
 
 void
@@ -89,7 +86,6 @@ map_smallConstUnorderedBimap(benchmark::State& state) { // NOLINT(*-internal-lin
     [[maybe_unused]] auto _val = map.left.find(key);
   }
 }
-
 BENCHMARK(map_smallConstUnorderedBimap);
 
 // EOF
