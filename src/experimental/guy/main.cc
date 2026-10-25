@@ -11,7 +11,9 @@
 
 #include <rocket-gui/rocket-gui.h>
 
+#include <wx/aboutdlg.h>
 #include <wx/artprov.h>
+#include <wx/filename.h>
 #include <wx/taskbar.h>
 #include <wx/webview.h>
 
@@ -100,6 +102,14 @@ initialFrameSize() {
   return wxSize(displaySize.x / 3, displaySize.y / 2);
 }
 
+/// Logo stored next to this source file.
+wxBitmapBundle
+loadLogo(wxSize size = wxSize(192, 192)) {
+  wxFileName file(wxString::FromUTF8(__FILE__));
+  file.SetFullName("logo.svg");
+  return wxBitmapBundle::FromSVGFile(file.GetFullPath(), size);
+}
+
 // `MyApp` impl ---------------------------------------------------------------------------------------------
 
 int
@@ -142,6 +152,15 @@ MyFrame::MyFrame() : wxFrame(
   "guy",
   wxPoint(50, 50),
   initialFrameSize()) {
+  const wxBitmapBundle logo = loadLogo();
+  if (logo.IsOk()) {
+    wxIconBundle icons;
+    for (const int size : { 16, 32, 48, 64, 128, 256 }) {
+      icons.AddIcon(logo.GetIcon(wxSize(size, size)));
+    }
+    SetIcons(icons);
+  }
+
   wxMenu* menuFile = new wxMenu;
   menuFile->Append(
     ID_Hello,
@@ -217,13 +236,23 @@ MyFrame::MyFrame() : wxFrame(
 
 void
 MyFrame::onAbout([[maybe_unused]] wxCommandEvent& ev) {
-  string msg = fmt::format(
-    "This is {}.\n\n{}\n\nRocket version {}", process.name(), COPYRIGHT, ROCKET_VERSION_NAME);
+  string description = fmt::format(
+    "This is {}.\n\nRocket version {}", process.name(), ROCKET_VERSION_NAME);
   if (pcl.files) {
-    msg += fmt::format("\n\nFiles from the command line: {}", *pcl.files);
+    description += fmt::format("\n\nFiles from the command line: {}", *pcl.files);
   }
 
-  wxMessageBox(msg, fmt::format("About {}", process.name()), wxICON_INFORMATION | wxOK);
+  wxAboutDialogInfo info;
+  info.SetName(process.name());
+  info.SetDescription(description);
+  info.SetCopyright(COPYRIGHT);
+
+  const wxBitmapBundle logo = loadLogo();
+  if (logo.IsOk()) {
+    info.SetIcon(logo);
+  }
+
+  wxAboutBox(info, this);
 }
 
 void
@@ -269,9 +298,12 @@ MyFrame::updateHistoryButtons() {
 
 MyTaskBarIcon::MyTaskBarIcon(wxFrame* frame) : frame_(frame) {
   Bind(wxEVT_MENU, &MyTaskBarIcon::onExit, this, wxID_EXIT);
-  SetIcon(
-    wxArtProvider::GetBitmapBundle(wxART_EXECUTABLE_FILE, wxART_OTHER, wxSize(16, 16)),
-    process.name());
+
+  wxBitmapBundle icon = loadLogo(wxSize(24, 24));
+  if (not icon.IsOk()) {
+    icon = wxArtProvider::GetBitmapBundle(wxART_EXECUTABLE_FILE, wxART_OTHER, wxSize(16, 16));
+  }
+  SetIcon(icon, process.name());
 }
 
 wxMenu*
