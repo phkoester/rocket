@@ -14,9 +14,15 @@
 #include <wx/aboutdlg.h>
 #include <wx/artprov.h>
 #include <wx/bmpbndl.h>
+#include <wx/display.h>
 #include <wx/taskbar.h>
 #include <wx/webview.h>
 #include <wx/xrc/xmlres.h>
+
+#ifdef ROCKET_OS_WINDOWS
+#include <wx/generic/aboutdlgg.h>
+#include <wx/msw/wrapwin.h>
+#endif
 
 using namespace rocket;
 using namespace rocket::gui;
@@ -67,6 +73,9 @@ private:
 
   unique_ptr<MyTaskBarIcon> taskBarIcon_;
   wxWebView* webView_ = nullptr;
+
+  /// Owner-drawn menu-bar titles on Windows. The native menu stores these pointers.
+  vector<unique_ptr<wxMenuItem>> menuBarTitles_;
 };
 
 // `MyTaskBarIcon` decl -------------------------------------------------------------------------------------
@@ -108,6 +117,184 @@ initialFrameSize() {
 wxBitmapBundle
 loadLogo(wxSize size = wxSize(192, 192)) {
   return loadSvg("logo.svg", size);
+}
+
+/// A 4K mode is 3840 pixels on its long side. `GetCurrentMode()` reports the
+/// hardware mode, which stays 3840 even when Windows scales the desktop.
+bool
+on4kMonitor(const wxWindow* window) {
+#ifdef ROCKET_OS_WINDOWS
+  int index = window ? wxDisplay::GetFromWindow(window) : wxNOT_FOUND;
+  if (index == wxNOT_FOUND && window) {
+    index = wxDisplay::GetFromPoint(window->GetPosition());
+  }
+  if (index == wxNOT_FOUND) {
+    index = 0;
+  }
+
+  const wxDisplay display(static_cast<unsigned>(index));
+  const wxVideoMode mode = display.GetCurrentMode();
+  const wxSize geometry = display.GetGeometry().GetSize();
+  int longest = mode.w;
+  if (mode.h > longest) {
+    longest = mode.h;
+  }
+  if (geometry.x > longest) {
+    longest = geometry.x;
+  }
+  if (geometry.y > longest) {
+    longest = geometry.y;
+  }
+  return longest >= 3840;
+#else
+  (void) window;
+  return false;
+#endif
+}
+
+constexpr double fourKFontScale = 1.25;
+
+wxFont
+scaledFont(const wxFont& font, double factor) {
+  wxFont scaled(font);
+  if (scaled.IsOk()) {
+    scaled.SetFractionalPointSize(scaled.GetFractionalPointSize() * factor);
+  }
+  return scaled;
+}
+
+void
+scaleControlFonts(wxWindow* window, double factor) {
+  window->InvalidateBestSize();
+  const wxFont font = scaledFont(window->GetFont(), factor);
+  if (font.IsOk()) {
+    window->SetFont(font);
+  }
+  for (wxWindow* child : window->GetChildren()) {
+    scaleControlFonts(child, factor);
+  }
+}
+
+#ifdef ROCKET_OS_WINDOWS
+
+/// Menu-bar titles are not `wxMenuItem`s. Windows only accepts a custom font for
+/// them when the item is owner-drawn.
+struct MenuBarTitle : wxMenuItem {
+  using wxMenuItem::wxMenuItem;
+
+  bool OnMeasureItem(size_t* width, size_t* height) override {
+    wxWindow* frame = GetMenu()->GetWindow();
+    wxInfoDC dc(frame);
+    wxFont font;
+    GetFontToUse(font);
+    dc.SetFont(font);
+    const wxSize extent = dc.GetTextExtent(GetItemLabelText());
+    *width = static_cast<size_t>(extent.x + frame->FromDIP(16));
+    *height = static_cast<size_t>(extent.y + frame->FromDIP(8));
+    return true;
+  }
+
+  bool OnDrawItem(wxDC& dc, const wxRect& rect, wxODAction, wxODStatus status) override {
+    wxColour foreground;
+    wxColour background;
+    GetColourToUse(status, foreground, background);
+    dc.SetPen(*wxTRANSPARENT_PEN);
+    dc.SetBrush(wxBrush(background));
+    dc.DrawRectangle(rect);
+
+    wxFont font;
+    GetFontToUse(font);
+    dc.SetFont(font);
+    dc.SetTextForeground(foreground);
+
+    wxString label;
+    int accelIndex = -1;
+    if ((status & wxODHidePrefix) == 0) {
+      accelIndex = wxControl::FindAccelIndex(GetItemLabel(), &label);
+    } else {
+      label = GetItemLabelText();
+    }
+    dc.DrawLabel(label, rect, wxALIGN_CENTRE, accelIndex);
+    return true;
+  }
+};
+
+void
+scaleMenuFonts(wxMenu* menu, const wxFont& font) {
+  vector<wxMenuItem*> items;
+  while (menu->GetMenuItemCount() > 0) {
+    items.push_back(menu->Remove(menu->FindItemByPosition(0)));
+  }
+  for (wxMenuItem* item : items) {
+    if (not item->IsSeparator()) {
+      item->SetFont(font);
+      if (wxMenu* subMenu = item->GetSubMenu()) {
+        scaleMenuFonts(subMenu, font);
+      }
+    }
+    menu->Append(item);
+  }
+}
+
+void
+scaleMenuBarTitles(wxFrame* frame, const wxFont& font, vector<unique_ptr<wxMenuItem>>& titles) {
+  wxMenuBar* menuBar = frame->GetMenuBar();
+  const HMENU handle = static_cast<HMENU>(menuBar->GetHMenu());
+  for (size_t i = 0; i < menuBar->GetMenuCount(); ++i) {
+    auto title = make_unique<MenuBarTitle>(menuBar->GetMenu(i), wxID_ANY, menuBar->GetMenuLabel(i));
+    title->SetFont(font);
+
+    MENUITEMINFO info{};
+    info.cbSize = sizeof(info);
+    info.fMask = MIIM_FTYPE | MIIM_DATA;
+    info.fType = MFT_OWNERDRAW;
+    info.dwItemData = reinterpret_cast<ULONG_PTR>(title.get());
+    ::SetMenuItemInfo(handle, static_cast<UINT>(i), TRUE, &info);
+    titles.push_back(std::move(title));
+  }
+  ::DrawMenuBar(static_cast<HWND>(frame->GetHWND()));
+}
+
+#endif
+
+void
+enlargeChromeFonts(wxFrame* frame, vector<unique_ptr<wxMenuItem>>& menuBarTitles) {
+#ifdef ROCKET_OS_WINDOWS
+  if (not on4kMonitor(frame)) {
+    return;
+  }
+
+  const wxFont font = scaledFont(wxSystemSettings::GetFont(wxSYS_DEFAULT_GUI_FONT), fourKFontScale);
+  wxMenuBar* menuBar = frame->GetMenuBar();
+  for (size_t i = 0; i < menuBar->GetMenuCount(); ++i) {
+    scaleMenuFonts(menuBar->GetMenu(i), font);
+  }
+  scaleMenuBarTitles(frame, font, menuBarTitles);
+
+  wxStatusBar* statusBar = frame->GetStatusBar();
+  statusBar->SetFont(scaledFont(statusBar->GetFont(), fourKFontScale));
+  statusBar->InvalidateBestSize();
+#else
+  (void) frame;
+  (void) menuBarTitles;
+#endif
+}
+
+void
+showAbout(wxWindow* parent, const wxAboutDialogInfo& info) {
+#ifdef ROCKET_OS_WINDOWS
+  if (on4kMonitor(parent)) {
+    wxGenericAboutDialog dialog;
+    if (dialog.Create(info, parent)) {
+      scaleControlFonts(&dialog, fourKFontScale);
+      dialog.Fit();
+      dialog.CentreOnParent();
+      dialog.ShowModal();
+      return;
+    }
+  }
+#endif
+  wxAboutBox(info, parent);
 }
 
 // `MyApp` impl ---------------------------------------------------------------------------------------------
@@ -184,6 +371,7 @@ MyFrame::MyFrame() : wxFrame(
 
   CreateStatusBar();
   SetStatusText("Welcome to wxWidgets!");
+  enlargeChromeFonts(this, menuBarTitles_);
 
   taskBarIcon_ = make_unique<MyTaskBarIcon>(this);
 
@@ -244,7 +432,7 @@ MyFrame::onAbout([[maybe_unused]] wxCommandEvent& ev) {
     info.SetIcon(logo);
   }
 
-  wxAboutBox(info, this);
+  showAbout(this, info);
 }
 
 void

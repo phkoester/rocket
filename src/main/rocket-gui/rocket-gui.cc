@@ -15,15 +15,8 @@ namespace {
 struct DisabledBitmapBundle : wxBitmapBundleImpl {
   explicit DisabledBitmapBundle(const wxBitmapBundle& source) : source_(source) {}
 
-  wxSize GetDefaultSize() const override {
-    return source_.GetDefaultSize();
-  }
-
-  wxSize GetPreferredBitmapSizeAtScale(double scale) const override {
-    return source_.GetPreferredBitmapSizeAtScale(scale);
-  }
-
-  wxBitmap GetBitmap(const wxSize& size) override {
+  wxBitmap
+  GetBitmap(const wxSize& size) override {
     for (const Entry& entry : cache_) {
       if (entry.size == size) {
         return entry.bitmap;
@@ -32,6 +25,16 @@ struct DisabledBitmapBundle : wxBitmapBundleImpl {
     const wxBitmap bitmap = makeDisabledBitmap(source_.GetBitmap(size));
     cache_.push_back({ size, bitmap });
     return bitmap;
+  }
+
+  wxSize
+  GetDefaultSize() const override {
+    return source_.GetDefaultSize();
+  }
+
+  wxSize
+  GetPreferredBitmapSizeAtScale(double scale) const override {
+    return source_.GetPreferredBitmapSizeAtScale(scale);
   }
 
 private:
@@ -44,7 +47,6 @@ private:
   vector<Entry> cache_; // XXX map!
   wxBitmapBundle source_;
 
-  /// `wxBitmap::MakeDisabled()` only greyscales, so a black stroke stays black.
   wxBitmap
   makeDisabledBitmap(const wxBitmap& bitmap) {
     if (not bitmap.IsOk()) {
@@ -88,6 +90,7 @@ loadSvg(string_view name, const wxSize& size) {
   return wxBitmapBundle::FromSVG(buf.data(), size);
 }
 
+/// `wxBitmap::MakeDisabled()` only greyscales, so a black stroke stays black.
 wxBitmapBundle
 makeDisabled(const wxBitmapBundle& bundle) {
   if (not bundle.IsOk()) {
