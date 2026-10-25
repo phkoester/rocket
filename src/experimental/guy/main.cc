@@ -13,9 +13,10 @@
 
 #include <wx/aboutdlg.h>
 #include <wx/artprov.h>
-#include <wx/filename.h>
+#include <wx/filesys.h>
 #include <wx/taskbar.h>
 #include <wx/webview.h>
+#include <wx/xrc/xmlres.h>
 
 using namespace rocket;
 using namespace rocket::gui;
@@ -96,18 +97,30 @@ Pcl pcl;
 
 // Functions ------------------------------------------------------------------------------------------------
 
+void InitXmlResource();
+
 wxSize
 initialFrameSize() {
   auto displaySize = wxGetDisplaySize();
   return wxSize(displaySize.x / 3, displaySize.y / 2);
 }
 
-/// Logo stored next to this source file.
+/// Logo embedded by `wxrc` from `resource.xrc`.
 wxBitmapBundle
 loadLogo(wxSize size = wxSize(192, 192)) {
-  wxFileName file(wxString::FromUTF8(__FILE__));
-  file.SetFullName("logo.svg");
-  return wxBitmapBundle::FromSVGFile(file.GetFullPath(), size);
+  wxFileSystem fs;
+  const unique_ptr<wxFSFile> file{fs.OpenFile("memory:XRC_resource/resource.cc$logo.svg")};
+  if (not file) {
+    return {};
+  }
+
+  wxInputStream& stream = *file->GetStream();
+  const auto len = static_cast<size_t>(stream.GetLength());
+  wxCharBuffer buf(len);
+  if (not stream.ReadAll(buf.data(), len)) {
+    return {};
+  }
+  return wxBitmapBundle::FromSVG(buf.data(), size);
 }
 
 // `MyApp` impl ---------------------------------------------------------------------------------------------
@@ -139,6 +152,9 @@ MyApp::OnInit() {
   nio::out.println("This is {}", process.name());
   howdy();
 
+  wxXmlResource::Get()->InitAllHandlers();
+  InitXmlResource();
+
   MyFrame* frame = new MyFrame();
   frame->Show(true);
   return true;
@@ -162,19 +178,16 @@ MyFrame::MyFrame() : wxFrame(
   }
 
   wxMenu* menuFile = new wxMenu;
-  menuFile->Append(
-    ID_Hello,
-    "&Hello...",
-    "Help string shown in status bar for this menu item");
+  menuFile->Append(ID_Hello, "&Hello ...", "Say hello");
   menuFile->AppendSeparator();
-  menuFile->Append(wxID_EXIT);
+  menuFile->Append(wxID_EXIT, "E&xit", "Exit the application");
 
   wxMenu* menuView = new wxMenu;
-  menuView->Append(ID_Back, "Go &Back\tAlt-Left");
-  menuView->Append(ID_Forward, "Go &Forward\tAlt-Right");
+  menuView->Append(ID_Back, "Go &Back\tAlt-Left", "Go back");
+  menuView->Append(ID_Forward, "Go &Forward\tAlt-Right", "Go forward");
 
   wxMenu* menuHelp = new wxMenu;
-  menuHelp->Append(wxID_ABOUT);
+  menuHelp->Append(wxID_ABOUT, "&About", "About the application");
 
   wxMenuBar* menuBar = new wxMenuBar;
   menuBar->Append(menuFile, "&File");
@@ -236,16 +249,17 @@ MyFrame::MyFrame() : wxFrame(
 
 void
 MyFrame::onAbout([[maybe_unused]] wxCommandEvent& ev) {
-  string description = fmt::format(
-    "This is {}.\n\nRocket version {}", process.name(), ROCKET_VERSION_NAME);
+  string description = fmt::format("This is {}.", process.name());
   if (pcl.files) {
     description += fmt::format("\n\nFiles from the command line: {}", *pcl.files);
   }
 
   wxAboutDialogInfo info;
-  info.SetName(process.name());
-  info.SetDescription(description);
   info.SetCopyright(COPYRIGHT);
+  info.SetDescription(description);
+  info.SetName(process.name());
+  info.SetVersion(fmt::format("Version {}", ROCKET_VERSION_NAME));
+  info.SetWebSite("https://github.com/phkoester/rocket");
 
   const wxBitmapBundle logo = loadLogo();
   if (logo.IsOk()) {

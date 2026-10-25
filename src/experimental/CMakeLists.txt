@@ -2,7 +2,9 @@
 # CMakeLists.txt
 #
 
-# Experimental ----------------------------------------------------------------------------------------------
+# Excutables ------------------------------------------------------------------------------------------------
+
+# guy .......................................................................................................
 
 AddExecutable(guy guy/main.cc)
 target_link_libraries(guy PRIVATE Rocket::rocket-gui)
@@ -11,23 +13,20 @@ if (GAIA_OS_WINDOWS)
 endif()
 CopyRuntimeFiles(guy)
 
-# XXX
-# One or more XRC files containing your resources.
-# set(xrc_files ${CMAKE_CURRENT_SOURCE_DIR}/resource.xrc)
+set(xrc_files ${CMAKE_CURRENT_SOURCE_DIR}/guy/resource.xrc)
+set(resource_cc ${CMAKE_CURRENT_BINARY_DIR}/resource.cc)
+set(wxrc $<TARGET_FILE:wxrc>)
 
-# Generate this file somewhere under the build directory.
-# set(resource_cpp ${CMAKE_CURRENT_BINARY_DIR}/resource.cpp)
+add_custom_command(
+  OUTPUT ${resource_cc}
+  COMMAND ${wxrc} -c -o ${resource_cc} ${xrc_files}
+  DEPENDS ${xrc_files} ${CMAKE_CURRENT_SOURCE_DIR}/guy/logo.svg wxrc
+  COMMENT "Compiling XRC resources"
+)
 
-# Not needed with the installed version, just use "wxrc".
-# set(wxrc $<TARGET_FILE:wxrc>)
+target_sources(guy PRIVATE ${resource_cc})
 
-#add_custom_command(
-#    OUTPUT ${resource_cpp}
-#    COMMAND ${wxrc} -c -o ${resource_cpp} ${xrc_files}
-#    DEPENDS ${xrc_files}
-#    DEPENDS wxrc                        # Not needed with the installed version.
-#    COMMENT "Compiling XRC resources"
-#)
+# toy .......................................................................................................
 
 AddExecutable(toy toy/main.cc)
 target_link_libraries(toy PRIVATE Rocket::rocket)
