@@ -10,7 +10,6 @@
       "name": "linux-debug",
       "binaryDir": "${sourceDir}/build/debug",
       "cacheVariables": {
-        "BUILD_SHARED_LIBS": "ON",
         "CMAKE_BUILD_TYPE": "Debug"
       }
     },
@@ -18,16 +17,12 @@
       "name": "linux-release",
       "binaryDir": "${sourceDir}/build/release",
       "cacheVariables": {
-        "BUILD_SHARED_LIBS": "ON",
         "CMAKE_BUILD_TYPE": "Release"
       }
     },
     {
       "name": "windows",
-      "binaryDir": "${sourceDir}/build",
-      "cacheVariables": {
-        "BUILD_SHARED_LIBS": "ON"
-      }
+      "binaryDir": "${sourceDir}/build"
     }
   ],
   "buildPresets": [
