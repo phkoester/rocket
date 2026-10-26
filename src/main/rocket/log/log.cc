@@ -360,10 +360,18 @@ const vector<cl::Option> CL_OPTIONS {
 // Local variables ------------------------------------------------------------------------------------------
 
 // The log mutex
-recursive_mutex logMutex;
+recursive_mutex&
+logMutex() {
+  static recursive_mutex mutex;
+  return mutex;
+}
 
 // Defined log IDs
-auto definedIds = rocket::makeUnorderedBimap<LogSettings*, string_view>();
+UnorderedBimap<LogSettings*, string_view>&
+definedIds() {
+  static auto ids = rocket::makeUnorderedBimap<LogSettings*, string_view>();
+  return ids;
+}
 
 // The `Out` instance
 Out logOut;
@@ -536,8 +544,8 @@ logImpl(
   }
 
   // Item: log ID
-  auto it = definedIds.left.find(logId);
-  ROCKET_ASSERT(it != definedIds.left.end());
+  auto it = definedIds().left.find(logId);
+  ROCKET_ASSERT(it != definedIds().left.end());
   auto id = string(it->second);
   if (id.size() > LOG_ID_WIDTH) {
     id = id.substr(0, LOG_ID_WIDTH - 1) + "…"; // Cut ID on the right side
@@ -601,7 +609,7 @@ makeLog(
   const char* prettyFunction,
   const char* file,
   i32 line) {
-  ROCKET_MUTEX_LOCK(logMutex);
+  ROCKET_MUTEX_LOCK(logMutex());
   if (not logId->active()) {
     return {};
   }
@@ -641,14 +649,14 @@ LogSettings::setSubstringLevel(const string& substring, LogLevel level) {
 /// @ThreadSafe
 string
 expandLogFilePattern(string_view pattern, const TimePoint& time) {
-  ROCKET_MUTEX_LOCK(logMutex);
+  ROCKET_MUTEX_LOCK(logMutex());
   return logOut.expand(pattern, time);
 }
 
 /// @ThreadSafe
 void
 log(LogLevel level, string_view msg) {
-  ROCKET_MUTEX_LOCK(logMutex);
+  ROCKET_MUTEX_LOCK(logMutex());
 
   auto time = chrono::now<Clock>();
   auto& out = logOut.get(time);
@@ -659,7 +667,7 @@ log(LogLevel level, string_view msg) {
 /// @ThreadSafe
 void
 logBegin(LogSettings* logId, const char* function, const char* prettyFunction, const char* file, i32 line) {
-  ROCKET_MUTEX_LOCK(logMutex);
+  ROCKET_MUTEX_LOCK(logMutex());
 
   // Begin log entry will be flushed later if necessary
   string msg = logFmt.usePrettyFunction ? prettyFunction : function;
@@ -683,9 +691,9 @@ LogSettings
 logDefine(LogSettings* logId, string_view id) {
   ROCKET_CHECK(id, id != "all", "Invalid log ID `all`; this ID is reserved");
 
-  ROCKET_MUTEX_LOCK(logMutex);
+  ROCKET_MUTEX_LOCK(logMutex());
 
-  definedIds.left.insert({ logId, id });
+  definedIds().left.insert({ logId, id });
   return {};
 }
 
@@ -697,7 +705,7 @@ logEnd() {
     // Print end log entry only if begin log entry was flushed
     const Entry& entry = logStack.back();
     if (not entry.begin_) {
-      ROCKET_MUTEX_LOCK(logMutex);
+      ROCKET_MUTEX_LOCK(logMutex());
       string msg = "} ";
       msg += logFmt.usePrettyFunction ? entry.prettyFunction_ : entry.function_;
       if (logFmt.withSourceLocation) {
@@ -725,7 +733,7 @@ void
 logInit() {
   // We need this in case of quick exit
   Process::atExit([] {
-    ROCKET_MUTEX_LOCK(logMutex);
+    ROCKET_MUTEX_LOCK(logMutex());
     logOut.flushOnExit();
   }, true);
 
@@ -748,14 +756,14 @@ const vector<cl::Option>& logOptions() { return CL_OPTIONS; }
 /// @ThreadSafe
 void
 setLogFmt(string_view val) {
-  ROCKET_MUTEX_LOCK(logMutex);
+  ROCKET_MUTEX_LOCK(logMutex());
 
   logFmt.set(val);
 }
 
 void
 setLogLevel(string_view id, string_view val) {
-  ROCKET_MUTEX_LOCK(logMutex);
+  ROCKET_MUTEX_LOCK(logMutex());
 
   string substring;
   const auto dot = id.find('.');
@@ -779,8 +787,8 @@ setLogLevel(string_view id, string_view val) {
   const auto [_, level] = result.value();
 
   if (not all) {
-    auto it = definedIds.right.find(id);
-    if (it == definedIds.right.end()) {
+    auto it = definedIds().right.find(id);
+    if (it == definedIds().right.end()) {
       ROCKET_FAIL("Unknown log ID `{}`", id);
     }
     if (substring.empty()) {
@@ -790,7 +798,7 @@ setLogLevel(string_view id, string_view val) {
     }
   } else {
     // "all"
-    for (const auto& pair : definedIds.right) {
+    for (const auto& pair : definedIds().right) {
       pair.second->level_ = level;
     }
   }
@@ -799,7 +807,7 @@ setLogLevel(string_view id, string_view val) {
 /// @ThreadSafe
 void
 setLogOut(string_view val) {
-  ROCKET_MUTEX_LOCK(logMutex);
+  ROCKET_MUTEX_LOCK(logMutex());
 
   if (val == "-" || val == "stdout") {
     logOut.set(nio::out);
