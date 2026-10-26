@@ -107,7 +107,7 @@ find_package(wxWidgets ${GAIA_WXWIDGETS_VERSION} COMPONENTS base core webview)
 if(NOT wxWidgets_FOUND)
   block()
     # If Rocket is built as shared libraries, wxWidgets must be built as shared libraries as well. On
-    # Windows, wxWidgets doesn't compile with BUILD_SHARED_LIBS=ON.
+    # Windows, wxWidgets doesn't compile with `BUILD_SHARED_LIBS=ON`
     set(wxWidgets_USE_UNICODE ON)
     FetchContent_MakeAvailable(wxWidgets)
   endblock()
