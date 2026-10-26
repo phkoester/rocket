@@ -32,7 +32,7 @@ AddVar(ROCKET_NIO_NO_CONTIGUOUS_SOURCE BOOL   OFF                      "Disable 
 list(FIND ROCKET_COMPONENTS gui index__)
 if(ROCKET_MASTER_PROJECT OR index__ GREATER_EQUAL 0)
   set(ROCKET_GUI ON)
-else
+else()
   set(ROCKET_GUI OFF)
 endif()
 message(STATUS "rocket: ROCKET_GUI: ${ROCKET_GUI}")

@@ -9,6 +9,7 @@ set(GENERATED_DIR ${CMAKE_CURRENT_BINARY_DIR}/generated)
 # Preprocessor definitions ..................................................................................
 
 set(ROCKET_COMPILE_DEFS)
+
 if(CMAKE_C_COMPILER_ID STREQUAL "Clang")
   list(APPEND ROCKET_COMPILE_DEFS ROCKET_C_COMPILER_CLANG)
 elseif(CMAKE_C_COMPILER_ID STREQUAL "GNU")
@@ -31,6 +32,27 @@ elseif(GAIA_OS_WINDOWS)
   list(APPEND ROCKET_COMPILE_DEFS ROCKET_OS_WINDOWS)
 endif()
 
+if(BUILD_SHARED_LIBS)
+  list(APPEND ROCKET_COMPILE_DEFS ROCKET_SHARED_LIBS)
+endif()
+if(ROCKET_IO_LOG)
+  list(APPEND ROCKET_COMPILE_DEFS ROCKET_IO_LOG)
+endif()
+if(ROCKET_NIO_LOG)
+  list(APPEND ROCKET_COMPILE_DEFS ROCKET_NIO_LOG)
+endif()
+if(ROCKET_NIO_NO_CONTIGUOUS_SOURCE)
+  list(APPEND ROCKET_COMPILE_DEFS ROCKET_NIO_NO_CONTIGUOUS_SOURCE)
+endif()
+
+# Private link targets ......................................................................................
+
+set(ROCKET_PRIVATE_LINK_TARGETS)
+
+if(GAIA_OS_LINUX)
+  list(APPEND ROCKET_PRIVATE_LINK_TARGETS stdc++exp)
+endif()
+
 # `version.h` ...............................................................................................
 
 set(VERSION_H ${GENERATED_DIR}/rocket/version.h)
@@ -45,17 +67,12 @@ add_custom_command(
 
 # Add the library ...........................................................................................
 
-set(ROCKET_PRIVATE_LINK_TARGETS)
-if(GAIA_OS_LINUX)
-  list(APPEND ROCKET_PRIVATE_LINK_TARGETS stdc++exp)
-endif()
-
 AddLibrary(rocket ${VERSION_H})
-
 set_target_properties(rocket PROPERTIES VERSION ${PROJECT_VERSION}) # SOVERSION 0
-
-target_include_directories(rocket PUBLIC ${GENERATED_DIR})
-
+target_include_directories(rocket SYSTEM
+  PRIVATE ${CMAKE_BINARY_DIR}/_deps/scnlib-src/src # Make `scn/impl.h` available
+  PUBLIC ${GENERATED_DIR}
+)
 target_sources(rocket
   PRIVATE
     rocket/Exception.cc
@@ -149,44 +166,22 @@ target_sources(rocket
       rocket/unicode/unicode-fwd.h
 )
 if(GAIA_OS_WINDOWS)
-  target_sources(rocket
-    PRIVATE
-      rocket/system/system-windows.cc
-  )
+  target_sources(rocket PRIVATE rocket/system/system-windows.cc)
 endif()
-
 target_compile_definitions(rocket
   PRIVATE
     ROCKET_EXPORTING__
   PUBLIC
-    ${COMPILE_DEFS}
     ${ROCKET_COMPILE_DEFS}
     ROCKET_TEST_PRIVATE=private
     ROCKET_TEST_PROTECTED=protected
 )
-if(BUILD_SHARED_LIBS)
-  target_compile_definitions(rocket PUBLIC ROCKET_SHARED_LIBS)
-endif()
-if(ROCKET_IO_LOG)
-  target_compile_definitions(rocket PRIVATE ROCKET_IO_LOG)
-endif()
-if(ROCKET_NIO_LOG)
-  target_compile_definitions(rocket PRIVATE ROCKET_NIO_LOG)
-endif()
-if(ROCKET_NIO_NO_CONTIGUOUS_SOURCE)
-  target_compile_definitions(rocket PRIVATE ROCKET_NIO_NO_CONTIGUOUS_SOURCE)
-endif()
-
-# Make `scn/impl.h` available
-target_include_directories(rocket SYSTEM PRIVATE ${CMAKE_BINARY_DIR}/_deps/scnlib-src/src)
-
 target_link_libraries(rocket
   PUBLIC
     ${ROCKET_BOOST_LINK_TARGETS} Boost::int128 cbor fmt::fmt-header-only ICU::uc scn::scn
   PRIVATE
     ${ROCKET_PRIVATE_LINK_TARGETS}
 )
-
 add_library(Rocket::rocket ALIAS rocket)
 
 # `rocket-bench` --------------------------------------------------------------------------------------------
@@ -209,7 +204,7 @@ if(ROCKET_GUI)
   AddLibrary(rocket-gui)
   set_target_properties(rocket-gui PROPERTIES VERSION ${PROJECT_VERSION}) # SOVERSION 0
   target_sources(rocket-gui PRIVATE rocket-gui/rocket-gui.cc)
-  target_compile_definitions(rocket-gui PUBLIC ${COMPILE_DEFS} ROCKET_GUI) # XXX
+  target_compile_definitions(rocket-gui PUBLIC ROCKET_GUI)
   target_link_libraries(rocket-gui PUBLIC Rocket::rocket wxWidgets::wxWidgets)
   add_library(Rocket::rocket-gui ALIAS rocket-gui)
 endif()
@@ -228,26 +223,15 @@ target_sources(rocket-test
       rocket-test/TracingString.h
       rocket-test/matcher/matcher.h
 )
-target_compile_definitions(rocket-test
-  PUBLIC
-    ${COMPILE_DEFS}
-    ROCKET_TEST
-)
+target_compile_definitions(rocket-test PUBLIC ROCKET_TEST)
 target_link_libraries(rocket-test PUBLIC GTest::gmock GTest::gtest Rocket::rocket)
 add_library(Rocket::rocket-test ALIAS rocket-test)
 
 # `rocket-test-main` ----------------------------------------------------------------------------------------
 
 AddLibrary(rocket-test-main STATIC)
-target_sources(rocket-test-main
-  PRIVATE
-    rocket-test-main/main.cc
-)
-target_compile_definitions(rocket-test-main
-  PRIVATE
-    ${COMPILE_DEFS}
-    ROCKET_TEST
-)
+target_sources(rocket-test-main PRIVATE rocket-test-main/main.cc)
+target_compile_definitions(rocket-test-main PRIVATE ROCKET_TEST)
 target_link_libraries(rocket-test-main PRIVATE GTest::gmock GTest::gtest Rocket::rocket)
 add_library(Rocket::rocket-test-main ALIAS rocket-test-main)
 
