@@ -57,8 +57,8 @@ target_include_directories(rocket PUBLIC ${GENERATED_DIR})
 
 target_sources(rocket
   PRIVATE
-    rocket/Process.cc # Move this to front so the global `process` instance is available early
     rocket/log/log.cc # Move this to front so Rocket can use its own logging API
+    rocket/Process.cc # Move this to front so the global `process` instance is available early
 
     rocket/Exception.cc
     rocket/literal.cc
