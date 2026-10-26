@@ -2,6 +2,6 @@
  * rocket-bench.cc
  */
 
-#include "rocket-bench/rocket-bench.h"
+#include "rocket-bench.h"
 
 // EOF

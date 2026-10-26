@@ -10,17 +10,6 @@
 
 #pragma once
 
-// Early macros ---------------------------------------------------------------------------------------------
-
-#undef ROCKET_TEST_PROTECTED
-/// Use this macro instead of `protected` to allow access to protected members of a class when testing.
-#define ROCKET_TEST_PROTECTED public
-#undef ROCKET_TEST_PRIVATE
-/// Use this macro instead of `private` to allow access to private members of a class when testing.
-#define ROCKET_TEST_PRIVATE public
-
-// Includes -------------------------------------------------------------------------------------------------
-
 #include <benchmark/benchmark.h>
 
 #include "rocket/assert.h"

@@ -41,7 +41,7 @@ nio_BufferedFileSink(benchmark::State& state) {
   const auto temp = rocket::filesystem::tempFile();
   for (auto _ : state) {
     FileSink out(temp);
-    std::setvbuf(out.file_, nullptr, _IONBF, 0); // Disable buffering
+    std::setvbuf(static_cast<FILE*>(out), nullptr, _IONBF, 0); // Disable buffering
     BufferedSink buffered(out);
     for (u64 i = 0; i < N; ++i) {
       buffered.Sink::write(CHUNK);

@@ -164,6 +164,9 @@ target_compile_definitions(rocket
     ROCKET_TEST_PRIVATE=private
     ROCKET_TEST_PROTECTED=protected
 )
+if(BUILD_SHARED_LIBS)
+  target_compile_definitions(rocket PUBLIC ROCKET_SHARED_LIBS)
+endif()
 if(ROCKET_IO_LOG)
   target_compile_definitions(rocket PRIVATE ROCKET_IO_LOG)
 endif()
@@ -196,9 +199,8 @@ target_sources(rocket-bench
     FILES
       rocket-bench/rocket-bench.h
 )
-target_compile_definitions(rocket-bench INTERFACE ${COMPILE_DEFS} ROCKET_TEST) # XXX
-target_link_libraries(rocket-bench PUBLIC benchmark::benchmark Rocket::rocket) # XXX
-add_library(Rocket::rocket-bench ALIAS rocket-bench) # XXX
+target_link_libraries(rocket-bench PUBLIC benchmark::benchmark Rocket::rocket)
+add_library(Rocket::rocket-bench ALIAS rocket-bench)
 
 # `rocket-gui` ----------------------------------------------------------------------------------------------
 

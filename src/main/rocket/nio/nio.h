@@ -356,6 +356,12 @@ struct FileSink : Sink {
 
   ~FileSink() override;
 
+  /// @member_op_cast{FILE*}
+  explicit operator FILE*() { return file_; }
+
+  /// @member_op_cast{const FILE*}
+  explicit operator const FILE*() const { return file_; }
+
   bool flush() override;
 
   [[nodiscard]] i32 handle() const override;
