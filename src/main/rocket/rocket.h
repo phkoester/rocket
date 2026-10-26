@@ -150,9 +150,7 @@ constexpr bool HAS_LITTLE_ENDIAN = std::endian::native == std::endian::little;
 
 // Constants ------------------------------------------------------------------------------------------------
 
-/**
- * A constant for "not a position".
- */
+/// A constant for "not a position".
 constexpr u64 NPOS = -1;
 
 } // namespace rocket
