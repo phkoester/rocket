@@ -57,10 +57,8 @@ target_include_directories(rocket PUBLIC ${GENERATED_DIR})
 
 target_sources(rocket
   PRIVATE
-    rocket/Process.cc # Move this to front so the global `process` instance is available early
-    rocket/log/log.cc # Move this to front so Rocket can use its own logging API
-
     rocket/Exception.cc
+    rocket/Process.cc
     rocket/literal.cc
     rocket/chrono/chrono.cc
     rocket/cl/cl.cc
@@ -70,6 +68,7 @@ target_sources(rocket
     rocket/external/scnlib/impl.cc
     rocket/filesystem/filesystem.cc
     rocket/io/io.cc
+    rocket/log/log.cc
     rocket/nio/nio.cc
     rocket/nio/nio-utils.cc
     rocket/str/Noun.cc

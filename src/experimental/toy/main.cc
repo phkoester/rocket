@@ -51,12 +51,12 @@ toy() {
 
 i32
 main(i32 argc, char **argv) {
-  ROCKET_PROCESS_ERROR(0, "Testing error before `process.init` ...");
+  ROCKET_PROCESS_ERROR(0, "Testing error before `process().init` ...");
 
   Process::atExit(myExit);
   Process::atExit(myTerminate, true);
 
-  process.init(argc, argv, "toy");
+  process().init(argc, argv, "toy");
 
   optional<vector<Color>> colors;
   optional<bool> foo;
@@ -93,12 +93,12 @@ main(i32 argc, char **argv) {
     cl::Parameter::make({ .description="a command-line argument", .name="ARG" }, args)
   }, config);
 
-  cl.parse(process.args());
+  cl.parse(process().args());
 
   {
     ROCKET_LOG(toy);
     ROCKET_LOG_INFO("Hey {}", "there");
-    nio::out.println("This is {}", process.name());
+    nio::out.println("This is {}", process().name());
     nio::out.println("colors: {}", colors);
     nio::out.println("foo: {}", foo);
     nio::out.println("verbose: {}", verbose);
@@ -107,7 +107,7 @@ main(i32 argc, char **argv) {
   }
 
   nio::out.println("Exiting ...");
-  process.exit(EXIT_SUCCESS);
+  process().exit(EXIT_SUCCESS);
 }
 
 // EOF

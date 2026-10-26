@@ -26,7 +26,7 @@ void printSize() {
 
 i32
 main(i32 argc, char **argv) {
-  process.init(argc, argv, "print-sizeof");
+  process().init(argc, argv, "print-sizeof");
 
   printSize<bool>();
   printSize<wchar_t>();
@@ -40,7 +40,7 @@ main(i32 argc, char **argv) {
   printSize<long double>();
   printSize<void*>();
 
-  process.exit(EXIT_SUCCESS);
+  process().exit(EXIT_SUCCESS);
 }
 
 // EOF

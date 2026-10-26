@@ -13,7 +13,7 @@ using namespace std;
 
 i32
 main(i32 argc, char **argv) {
-  process.init(argc, argv, "print-args");
+  process().init(argc, argv, "print-args");
 
   for (i32 i = 1; i < argc; ++i) {
     string arg(argv[i]);
@@ -25,7 +25,7 @@ main(i32 argc, char **argv) {
     out.println("{}={}=", i, arg);
   }
 
-  process.exit(EXIT_SUCCESS);
+  process().exit(EXIT_SUCCESS);
 }
 
 // EOF

@@ -193,9 +193,9 @@ CommandLine::applyParam(const Parameter& param, const string& val) {
 void
 CommandLine::handleException(const exception& ex, nio::Sink& out, i32 status) const {
   if (const auto* const p = dynamic_cast<const Exception*>(&ex)) {
-    process.error(out, 0, "{}", p->message());
+    process().error(out, 0, "{}", p->message());
   } else {
-    process.error(out, 0, "{}", ex.what());
+    process().error(out, 0, "{}", ex.what());
   }
 
   if (hasUsage_) {
@@ -205,7 +205,7 @@ CommandLine::handleException(const exception& ex, nio::Sink& out, i32 status) co
     printTryHelp(out);
   }
   if (status != 0) {
-    process.exit(status);
+    process().exit(status);
   }
 }
 
@@ -446,7 +446,7 @@ CommandLine::printHelp(nio::Sink& out, bool verbose, bool exit) {
   // Exit if requested
 
   if (exit) {
-    process.exit(EXIT_SUCCESS);
+    process().exit(EXIT_SUCCESS);
   }
 }
 
@@ -574,7 +574,7 @@ CommandLine::printVersion(nio::Sink& out, bool exit) {
   }
 
   if (exit) {
-    process.exit(EXIT_SUCCESS);
+    process().exit(EXIT_SUCCESS);
   }
 }
 

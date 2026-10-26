@@ -556,7 +556,7 @@ struct Parameter {
  */
 struct CommandLineConfig {
   /// The name of the command. Needed to display the usage. By default, this is the process name.
-  std::string command = process.name();
+  std::string command = process().name();
   /**
    * One or more usages, e.g. `{ "[OPTION]... FILE", "[OPTION]... PATTERN FILE" }`. If this is empty, no
    * usage hint is ever printed.
@@ -601,7 +601,7 @@ struct CommandLine {
   /**
    * Parses the command-line arguments @p args, assigns values to bound destination references.
    *
-   * @param args the command-line arguments, e.g. `process.args()`
+   * @param args the command-line arguments, e.g. `process().args()`
    * @param out the sink to write standard output to
    * @param err the sink to write error output to
    * @param exit if `true`, the program exits on help, version, or parse failure

@@ -38,7 +38,7 @@ run(const optional<vector<string>>& args) {
 
 i32
 main(i32 argc, char **argv) {
-  process.init(argc, argv, "logger");
+  process().init(argc, argv, "logger");
 
   // Parse command line
 
@@ -62,7 +62,7 @@ main(i32 argc, char **argv) {
   }, {
     cl::Parameter::make({ .description="a command-line argument", .name="ARG" }, args)
   }, config);
-  cl.parse(process.args());
+  cl.parse(process().args());
 
   // Apply hour offset
 
@@ -73,7 +73,7 @@ main(i32 argc, char **argv) {
   // Run
 
   ROCKET_LOG(logger);
-  out.println("This is {}", process.name());
+  out.println("This is {}", process().name());
   return run(args);
 }
 

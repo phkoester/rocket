@@ -197,7 +197,7 @@ Out::expand(string_view pattern, const TimePoint& time, bool update) {
 
   auto dir = filesystem::path(Process::invocationName()).parent_path().string();
   auto pid = fmt::format("{}", Process::id());
-  const auto& name = process.name();
+  const auto& name = process().name();
 
   // Expand the pattern
 
@@ -259,7 +259,7 @@ Out::setPattern(string_view pattern, const TimePoint& time) {
   try {
     fileOut_ = make_unique<nio::FileSink>(path);
   } catch (const exception& ex) {
-    process.error(nio::err, 0, "Cannot open log file `{}`; logging to standard output instead", path);
+    process().error(nio::err, 0, "Cannot open log file `{}`; logging to standard output instead", path);
     set(nio::out);
   }
 
@@ -277,7 +277,7 @@ Out::zipYesterday(const TimePoint& time) {
     try {
       system::exec( { "gzip", "-5f", path.string() } );
     } catch (const exception& ex) {
-      process.error(nio::err, 0, "Cannot zip yesterday’s log file `{}`: {}", path.string(), what(ex));
+      process().error(nio::err, 0, "Cannot zip yesterday’s log file `{}`: {}", path.string(), what(ex));
     }
   }
 }
@@ -359,18 +359,18 @@ const vector<cl::Option> CL_OPTIONS {
 
 // Local variables ------------------------------------------------------------------------------------------
 
-// The log mutex
-recursive_mutex&
-logMutex() {
-  static recursive_mutex mutex;
-  return mutex;
-}
-
 // Defined log IDs
 UnorderedBimap<LogSettings*, string_view>&
 definedIds() {
   static auto ids = rocket::makeUnorderedBimap<LogSettings*, string_view>();
   return ids;
+}
+
+// The log mutex
+recursive_mutex&
+logMutex() {
+  static recursive_mutex mutex;
+  return mutex;
 }
 
 // The `Out` instance

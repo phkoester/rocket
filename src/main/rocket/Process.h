@@ -32,7 +32,7 @@
   msg.print( \
       fmt \
       __VA_OPT__(,) __VA_ARGS__); \
-  ::rocket::process.error(::rocket::nio::err, status, "{}", msg.str()); \
+  ::rocket::process().error(::rocket::nio::err, status, "{}", msg.str()); \
 }
 
 /**
@@ -48,7 +48,7 @@
   msg.print( \
       fmt \
       __VA_OPT__(,) __VA_ARGS__); \
-  ::rocket::process.info(::rocket::nio::out, "{}", msg.str()); \
+  ::rocket::process().info(::rocket::nio::out, "{}", msg.str()); \
 }
 
 /**
@@ -64,7 +64,7 @@
   msg.print( \
       fmt \
       __VA_OPT__(,) __VA_ARGS__); \
-  ::rocket::process.warn(::rocket::nio::err, "{}", msg.str()); \
+  ::rocket::process().warn(::rocket::nio::err, "{}", msg.str()); \
 }
 
 /**
@@ -123,14 +123,14 @@ extern const std::thread::id MAIN_THREAD_ID;
  *
  * i32
  * main(i32 argc, char** argv) {
- *   process.init(argc, argv, "my-program");
+ *   process().init(argc, argv, "my-program");
  *
  *   cl::CommandLine cl;
- *   cl.parse(process.args());
+ *   cl.parse(process().args());
  *
- *   nio::out.println("This is {}", process.name());
+ *   nio::out.println("This is {}", process().name());
  *
- *   process.exit(EXIT_SUCCESS);
+ *   process().exit(EXIT_SUCCESS);
  * }
  * ```
  */
@@ -355,11 +355,11 @@ private:
 
   [[noreturn]] void exit(i32 status, bool allowUninited) const;
 
-  friend Process makeProcess__();
+  friend const Process& process();
 };
 
-/// The #rocket::Process singleton.
-ROCKET_PUBLIC extern const Process process;
+/// Returns a reference to the #rocket::Process singleton.
+[[nodiscard]] const Process& process();
 
 } // namespace rocket
 

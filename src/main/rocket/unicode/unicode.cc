@@ -28,7 +28,7 @@ namespace rocket::unicode {
 CodePoint::operator string() const {
   array<char, 4> buf; // NOLINT
   i32 i = 0;
-  UBool error = 0;
+  [[maybe_unused]] UBool error = 0;
   U8_APPEND(buf.data(), i, 4, val_, error); // NOLINT
   ROCKET_DEBUG_ASSERT(error == 0, "`U8_APPEND` failed for code-point value 0x{:X}", static_cast<u32>(val_));
   return string(buf.data(), i); // NOLINT
@@ -150,7 +150,7 @@ convertUtf32To8(u32string_view str, InvalidUnicodePolicy policy) {
     }
 
     i32 i = 0;
-    UBool error = 0;
+    [[maybe_unused]] UBool error = 0;
     U8_APPEND(buf.data(), i, 4, c, error); // NOLINT
     ROCKET_DEBUG_ASSERT(error == 0, "`U8_APPEND` failed for code-point value 0x{:X} at position {}", static_cast<u32>(c), pos);
     ret.append(buf.data(), i); // NOLINT
@@ -183,7 +183,7 @@ nextCodePoint(string_view str, u64& pos, InvalidUnicodePolicy policy) {
   ROCKET_CHECK(pos, pos < size);
   UChar32 cp; // NOLINT
   i32 i = safe<i32>(pos);
-  const i32 oldI = i;
+  [[maybe_unused]] const i32 oldI = i;
   U8_NEXT(str.data(), i, safe<i32>(size), cp); // NOLINT
   ROCKET_DEBUG_ASSERT(i > oldI, "`U8_NEXT` failed");
   if (cp < 0) {

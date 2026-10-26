@@ -16,7 +16,7 @@ using namespace std;
 i32
 main(i32 argc, char** argv) {
   testing::InitGoogleMock(&argc, argv);
-  process.init(argc, argv, nullopt, process.codeLocale());
+  process().init(argc, argv, nullopt, process().codeLocale());
 
   optional<bool> help;
 
@@ -25,10 +25,10 @@ main(i32 argc, char** argv) {
   cl::CommandLine cl({
     cl::Option::help(&general, help)
   }, {}, config);
-  cl.parse(process.args());
+  cl.parse(process().args());
 
   const i32 status = RUN_ALL_TESTS();
-  process.exit(status);
+  process().exit(status);
 }
 
 // EOF

@@ -27,7 +27,7 @@ terminate( // NOLINT(*-recursion)
   const std::source_location& sl,
   fmt::format_string<T...> fmt,
   T&&... args) {
-  process.error(nio::err, 0, "{}:{}: {}", sl.file_name(), sl.line(), format::Subformat<char>([&] {
+  process().error(nio::err, 0, "{}:{}: {}", sl.file_name(), sl.line(), format::Subformat<char>([&] {
     auto params = format::Subformat<char>::params("\\\x01");
     params.tag("\\\x01", fmt, std::forward<T>(args)...);
     return params;

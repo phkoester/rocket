@@ -111,7 +111,7 @@ private:
         if (!ec) {
           make_shared<Session>(std::move(socket), self->path_)->start();
         } else if (ec != asio::error::operation_aborted) {
-          process.error(nio::err, 0, "Accept error on {}: {}", self->path_, ec.message());
+          process().error(nio::err, 0, "Accept error on {}: {}", self->path_, ec.message());
         }
         if (self->acceptor_.is_open()) {
           self->accept();
@@ -147,7 +147,7 @@ run(const ParsedCommandLine& pcl) {
     });
     io.run();
   } catch (const exception& ex) {
-    process.error(nio::err, EXIT_SERIOUS_FAILURE, "{}", what(ex));
+    process().error(nio::err, EXIT_SERIOUS_FAILURE, "{}", what(ex));
   }
 
   return EXIT_SUCCESS;
@@ -159,7 +159,7 @@ run(const ParsedCommandLine& pcl) {
 
 i32
 main(i32 argc, char **argv) {
-  process.init(argc, argv, "comm-local-server");
+  process().init(argc, argv, "comm-local-server");
 
   ParsedCommandLine pcl;
 
@@ -175,10 +175,10 @@ main(i32 argc, char **argv) {
     }, pcl.ports),
   }, {}, config);
 
-  cl.parse(process.args());
+  cl.parse(process().args());
   const i32 exitCode = run(pcl);
   nio::out.println("Exiting ({}) ...", exitCode);
-  process.exit(exitCode);
+  process().exit(exitCode);
 }
 
 // EOF

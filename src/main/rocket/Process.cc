@@ -95,7 +95,7 @@ onTerminate() {
   callExitFns(true);
 
   try {
-    nio::err.println("{}: fatal error: Terminate handler called", process.name());
+    nio::err.println("{}: fatal error: Terminate handler called", process().name());
     if (auto ptr = current_exception()) {
       printException(nio::err, ptr);
     }
@@ -142,10 +142,6 @@ setThreadName(std::string_view name) {
 const thread::id MAIN_THREAD_ID = this_thread::get_id();
 
 // `Process` ------------------------------------------------------------------------------------------------
-
-// Some trickery to keep the ctor private
-inline Process makeProcess__() { return {}; }
-ROCKET_PUBLIC const Process process = makeProcess__();
 
 void
 Process::atExit(std::function<void()>&& fn, bool callOnTerminate) {
@@ -258,6 +254,12 @@ Process::name() const { // NOLINT(*-recursion)
 
   ROCKET_ASSERT(inited_, "Process not initialized");
   return name_;
+}
+
+const Process&
+process() {
+  static const Process proc;
+  return proc;
 }
 
 } // namespace rocket

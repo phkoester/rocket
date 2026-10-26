@@ -62,7 +62,7 @@ run(const ParsedCommandLine& pcl) {
     boost::system::error_code ignored;
     socket.shutdown(tcp::socket::shutdown_both, ignored); // NOLINT
   } catch (const exception& ex) {
-    process.error(nio::err, EXIT_SERIOUS_FAILURE, "{}", what(ex));
+    process().error(nio::err, EXIT_SERIOUS_FAILURE, "{}", what(ex));
   }
 
   return EXIT_SUCCESS;
@@ -74,7 +74,7 @@ run(const ParsedCommandLine& pcl) {
 
 i32
 main(i32 argc, char **argv) {
-  process.init(argc, argv, "comm-tcp-client");
+  process().init(argc, argv, "comm-tcp-client");
 
   ParsedCommandLine pcl;
 
@@ -101,10 +101,10 @@ main(i32 argc, char **argv) {
     }, pcl.size)
   }, config);
 
-  cl.parse(process.args());
+  cl.parse(process().args());
   const i32 exitCode = run(pcl);
   nio::out.println("Exiting ({}) ...", exitCode);
-  process.exit(exitCode);
+  process().exit(exitCode);
 }
 
 // EOF

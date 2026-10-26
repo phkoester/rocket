@@ -112,12 +112,12 @@ loadLogo(wxSize size = wxSize(192, 192)) {
 
 int
 MyApp::OnExit() {
-  process.exit(EXIT_SUCCESS);
+  process().exit(EXIT_SUCCESS);
 }
 
 bool
 MyApp::OnInit() {
-  process.init(argc, argv, "guy");
+  process().init(argc, argv, "guy");
 
   const cl::OptionGroup general("General control");
   const cl::CommandLineConfig config {
@@ -132,9 +132,9 @@ MyApp::OnInit() {
     cl::Parameter::make({ .description="a file", .name="FILE" }, pcl.files)
   }, config);
 
-  cl.parse(process.args());
+  cl.parse(process().args());
 
-  nio::out.println("This is {}", process.name());
+  nio::out.println("This is {}", process().name());
 
   wxXmlResource::Get()->InitAllHandlers();
   InitXmlResource();
@@ -225,7 +225,7 @@ MyFrame::MyFrame() : wxFrame(
 
 void
 MyFrame::onAbout([[maybe_unused]] wxCommandEvent& ev) {
-  string description = fmt::format("This is {}.", process.name());
+  string description = fmt::format("This is {}.", process().name());
   if (pcl.files) {
     description += fmt::format("\n\nFiles from the command line: {}", *pcl.files);
   }
@@ -233,7 +233,7 @@ MyFrame::onAbout([[maybe_unused]] wxCommandEvent& ev) {
   wxAboutDialogInfo info;
   info.SetCopyright(COPYRIGHT);
   info.SetDescription(description);
-  info.SetName(process.name());
+  info.SetName(process().name());
   info.SetVersion(fmt::format("Version {}", ROCKET_VERSION_NAME));
   info.SetWebSite("https://github.com/phkoester/rocket");
 
@@ -293,7 +293,7 @@ MyTaskBarIcon::MyTaskBarIcon(wxFrame* frame) : frame_(frame) {
   if (not icon.IsOk()) {
     icon = wxArtProvider::GetBitmapBundle(wxART_EXECUTABLE_FILE, wxART_OTHER, wxSize(16, 16));
   }
-  SetIcon(icon, process.name());
+  SetIcon(icon, process().name());
 }
 
 wxMenu*
