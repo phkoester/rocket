@@ -61,9 +61,6 @@ FetchContent_Declare(
   EXCLUDE_FROM_ALL
 )
 
-set(BOOST_ENABLE_CMAKE ON)
-set(BOOST_INCLUDE_LIBRARIES ${ROCKET_BOOST_LIBS})
-
 set(ROCKET_BOOST_LIBS algorithm asio bimap headers iostreams preprocessor safe_numerics)
 set(ROCKET_BOOST_NS_LIBS ${ROCKET_BOOST_LIBS})
 list(TRANSFORM ROCKET_BOOST_NS_LIBS PREPEND Boost::)
@@ -73,6 +70,8 @@ find_package(Boost ${ROCKET_BOOST_VERSION} QUIET)
 if(NOT Boost_FOUND)
   block()
     set(BUILD_SHARED_LIBS OFF)
+    set(BOOST_ENABLE_CMAKE ON) # XXX
+    set(BOOST_INCLUDE_LIBRARIES ${ROCKET_BOOST_LIBS}) # XXX
     FetchContent_MakeAvailable(Boost)
   endblock()
 endif()
@@ -88,10 +87,10 @@ FetchContent_Declare(
   EXCLUDE_FROM_ALL
 )
 
-set(FMT_MODULE OFF CACHE BOOL "Build a module library" FORCE)
-
 find_package(fmt ${ROCKET_FMT_VERSION} QUIET)
 if(NOT fmt_FOUND)
+  set(BUILD_SHARED_LIBS OFF)
+  set(FMT_MODULE OFF CACHE BOOL "Build a module library" FORCE) # XXX
   FetchContent_MakeAvailable(fmt)
 endif()
 

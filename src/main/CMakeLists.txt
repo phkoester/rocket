@@ -71,7 +71,7 @@ AddLibrary(rocket ${VERSION_H})
 set_target_properties(rocket PROPERTIES VERSION ${PROJECT_VERSION}) # SOVERSION 0
 target_include_directories(rocket SYSTEM
   PRIVATE ${CMAKE_BINARY_DIR}/_deps/scnlib-src/src # Make `scn/impl.h` available
-  PUBLIC ${GENERATED_DIR}
+  PUBLIC  ${GENERATED_DIR}
 )
 target_sources(rocket
   PRIVATE
@@ -169,18 +169,12 @@ if(GAIA_OS_WINDOWS)
   target_sources(rocket PRIVATE rocket/system/system-windows.cc)
 endif()
 target_compile_definitions(rocket
-  PRIVATE
-    ROCKET_EXPORTING__
-  PUBLIC
-    ${ROCKET_COMPILE_DEFS}
-    ROCKET_TEST_PRIVATE=private
-    ROCKET_TEST_PROTECTED=protected
+  PRIVATE ROCKET_EXPORTING__
+  PUBLIC  ${ROCKET_COMPILE_DEFS} ROCKET_TEST_PRIVATE=private ROCKET_TEST_PROTECTED=protected
 )
 target_link_libraries(rocket
-  PUBLIC
-    ${ROCKET_BOOST_LINK_TARGETS} Boost::int128 cbor fmt::fmt-header-only ICU::uc scn::scn
-  PRIVATE
-    ${ROCKET_PRIVATE_LINK_TARGETS}
+  PRIVATE ${ROCKET_PRIVATE_LINK_TARGETS}
+  PUBLIC  ${ROCKET_BOOST_LINK_TARGETS} Boost::int128 cbor fmt::fmt-header-only ICU::uc scn::scn
 )
 add_library(Rocket::rocket ALIAS rocket)
 
