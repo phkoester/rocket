@@ -216,7 +216,7 @@ if(ROCKET_GUI)
 
   block()
     # If Rocket is built as shared libraries, wxWidgets must be built as shared libraries as well
-    set(wxWidgets_USE_UNICODE ON)
+    set(wxUSE_UNICODE_UTF8 ON)
     FetchContent_MakeAvailable(wxWidgets)
   endblock()
 endif()
