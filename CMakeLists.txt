@@ -62,19 +62,15 @@ FetchContent_Declare(
 )
 
 set(ROCKET_BOOST_LIBS algorithm asio bimap headers iostreams preprocessor safe_numerics)
-set(ROCKET_BOOST_NS_LIBS ${ROCKET_BOOST_LIBS})
-list(TRANSFORM ROCKET_BOOST_NS_LIBS PREPEND Boost::)
-set(ROCKET_BOOST_LINK_TARGETS ${ROCKET_BOOST_NS_LIBS})
+set(ROCKET_BOOST_LINK_TARGETS ${ROCKET_BOOST_LIBS})
+list(TRANSFORM ROCKET_BOOST_LINK_TARGETS PREPEND Boost::)
 
-find_package(Boost ${ROCKET_BOOST_VERSION} QUIET)
-if(NOT Boost_FOUND)
-  block()
-    set(BUILD_SHARED_LIBS OFF)
-    set(BOOST_ENABLE_CMAKE ON) # XXX
-    set(BOOST_INCLUDE_LIBRARIES ${ROCKET_BOOST_LIBS}) # XXX
-    FetchContent_MakeAvailable(Boost)
-  endblock()
-endif()
+block()
+  set(BUILD_SHARED_LIBS OFF)
+  set(BOOST_ENABLE_CMAKE ON)
+  set(BOOST_INCLUDE_LIBRARIES ${ROCKET_BOOST_LIBS})
+  FetchContent_MakeAvailable(Boost)
+endblock()
 
 # fmt .......................................................................................................
 
@@ -87,12 +83,11 @@ FetchContent_Declare(
   EXCLUDE_FROM_ALL
 )
 
-find_package(fmt ${ROCKET_FMT_VERSION} QUIET)
-if(NOT fmt_FOUND)
+block()
   set(BUILD_SHARED_LIBS OFF)
   set(FMT_MODULE OFF CACHE BOOL "Build a module library" FORCE) # XXX
   FetchContent_MakeAvailable(fmt)
-endif()
+endblock()
 
 # GTest .....................................................................................................
 
@@ -105,23 +100,18 @@ FetchContent_Declare(
   EXCLUDE_FROM_ALL
 )
 
-if(GAIA_OS_WINDOWS)
-  # For Windows: Prevent overriding the parent project's compiler/linker settings
-  set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-endif()
-
-find_package(GTest ${ROCKET_GTEST_VERSION} QUIET)
-if(NOT GTest_FOUND)
-  block()
-    set(BUILD_SHARED_LIBS OFF)
-    FetchContent_MakeAvailable(GTest)
-  endblock()
-endif()
-
-if(GAIA_CXX_COMPILER_CLANG)
-  target_compile_options(gtest PRIVATE -Wno-character-conversion)
-  target_compile_options(gmock PRIVATE -Wno-character-conversion)
-endif()
+block()
+  set(BUILD_SHARED_LIBS OFF)
+  if(GAIA_OS_WINDOWS)
+    # For Windows: Prevent overriding the parent project's compiler/linker settings
+    set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+  endif()
+  FetchContent_MakeAvailable(GTest)
+  if(GAIA_CXX_COMPILER_CLANG)
+    target_compile_options(gtest PRIVATE -Wno-character-conversion)
+    target_compile_options(gmock PRIVATE -Wno-character-conversion)
+  endif()
+endblock()
 
 # Benchmark (must appear after GTest) .......................................................................
 
@@ -134,15 +124,11 @@ FetchContent_Declare(
   EXCLUDE_FROM_ALL
 )
 
-set(BENCHMARK_DOWNLOAD_DEPENDENCIES OFF)
-
-find_package(benchmark ${ROCKET_BENCHMARK_VERSION} QUIET)
-if(NOT benchmark_FOUND)
-  block()
-    set(BUILD_SHARED_LIBS OFF)
-    FetchContent_MakeAvailable(benchmark)
-  endblock()
-endif()
+block()
+  set(BUILD_SHARED_LIBS OFF)
+  set(BENCHMARK_DOWNLOAD_DEPENDENCIES OFF)
+  FetchContent_MakeAvailable(benchmark)
+endblock()
 
 # ICU .......................................................................................................
 #
@@ -162,7 +148,7 @@ endif()
 #
 # ...........................................................................................................
 
-find_package(ICU ${ROCKET_ICU_VERSION} COMPONENTS uc) # data i18n io
+find_package(ICU ${ROCKET_ICU_VERSION} REQUIRED COMPONENTS uc) # data i18n io
 
 # int128 ....................................................................................................
 
@@ -175,13 +161,10 @@ FetchContent_Declare(
   EXCLUDE_FROM_ALL
 )
 
-find_package(int128 ${ROCKET_INT128_VERSION} QUIET)
-if(NOT int128_FOUND)
-  block()
-    set(BUILD_SHARED_LIBS OFF)
-    FetchContent_MakeAvailable(int128)
-  endblock()
-endif()
+block()
+  set(BUILD_SHARED_LIBS OFF)
+  FetchContent_MakeAvailable(int128)
+endblock()
 
 # libcbor ...................................................................................................
 
@@ -194,18 +177,14 @@ FetchContent_Declare(
   EXCLUDE_FROM_ALL
 )
 
-find_package(libcbor ${ROCKET_LIBCBOR_VERSION} QUIET)
-if(NOT libcbor_FOUND)
-  block()
-    set(BUILD_SHARED_LIBS OFF)
-    set(SANITIZE OFF)
-    FetchContent_MakeAvailable(libcbor)
-  endblock()
-endif()
-
-if(GAIA_CXX_COMPILER_CLANG)
-  target_compile_options(cbor PRIVATE -Wno-unused-variable)
-endif()
+block()
+  set(BUILD_SHARED_LIBS OFF)
+  set(SANITIZE OFF) #
+  FetchContent_MakeAvailable(libcbor)
+  if(GAIA_CXX_COMPILER_CLANG)
+    target_compile_options(cbor PRIVATE -Wno-unused-variable) # XXX
+  endif()
+endblock()
 
 # scnlib ....................................................................................................
 
@@ -218,13 +197,10 @@ FetchContent_Declare(
   EXCLUDE_FROM_ALL
 )
 
-# find_package(scnlib ${ROCKET_SCNLIB_VERSION} QUIET) # Commented out because version is `master`
-if(NOT scnlib_FOUND)
-  block()
-    set(BUILD_SHARED_LIBS OFF)
-    FetchContent_MakeAvailable(scnlib)
-  endblock()
-endif()
+block()
+  set(BUILD_SHARED_LIBS OFF)
+  FetchContent_MakeAvailable(scnlib)
+endblock()
 
 # wxWidgets .................................................................................................
 
@@ -238,15 +214,11 @@ if(ROCKET_GUI)
     EXCLUDE_FROM_ALL
   )
 
-  # https://cmake.org/cmake/help/latest/module/FindwxWidgets.html
-  find_package(wxWidgets ${ROCKET_WXWIDGETS_VERSION} COMPONENTS base core webview)
-  if(NOT wxWidgets_FOUND)
-    block()
-      # If Rocket is built as shared libraries, wxWidgets must be built as shared libraries as well
-      set(wxWidgets_USE_UNICODE ON)
-      FetchContent_MakeAvailable(wxWidgets)
-    endblock()
-  endif()
+  block()
+    # If Rocket is built as shared libraries, wxWidgets must be built as shared libraries as well
+    set(wxWidgets_USE_UNICODE ON)
+    FetchContent_MakeAvailable(wxWidgets)
+  endblock()
 endif()
 
 # Add subdirectories ----------------------------------------------------------------------------------------
