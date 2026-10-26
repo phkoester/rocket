@@ -102,15 +102,16 @@ endif()
 
 # wxWidgets -------------------------------------------------------------------------------------------------
 
-# https://cmake.org/cmake/help/latest/module/FindwxWidgets.html
-find_package(wxWidgets ${GAIA_WXWIDGETS_VERSION} COMPONENTS base core webview)
-if(NOT wxWidgets_FOUND)
-  block()
-    # If Rocket is built as shared libraries, wxWidgets must be built as shared libraries as well
-    set(wxWidgets_USE_UNICODE ON)
-    FetchContent_MakeAvailable(wxWidgets)
-  endblock()
+if(ROCKET_GUI)
+  # https://cmake.org/cmake/help/latest/module/FindwxWidgets.html
+  find_package(wxWidgets ${GAIA_WXWIDGETS_VERSION} COMPONENTS base core webview)
+  if(NOT wxWidgets_FOUND)
+    block()
+      # If Rocket is built as shared libraries, wxWidgets must be built as shared libraries as well
+      set(wxWidgets_USE_UNICODE ON)
+      FetchContent_MakeAvailable(wxWidgets)
+    endblock()
+  endif()
 endif()
-
 
 # EOF

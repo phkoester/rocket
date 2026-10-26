@@ -20,15 +20,20 @@ project(rocket VERSION 0.3.0)
 
 include($ENV{GAIA_DIR}/src/main/cmake/base.cmake)
 
-AddVar(ROCKET_BUILD_BENCH              BOOL ${ROCKET_MASTER_PROJECT} "Enable benchmarking and build benchmarks")
-AddVar(ROCKET_BUILD_TEST               BOOL ${ROCKET_MASTER_PROJECT} "Enable testing and build tests")
-AddVar(ROCKET_IO_LOG                   BOOL OFF                      "Enable logging of `rocket::io`")
-AddVar(ROCKET_NIO_LOG                  BOOL OFF                      "Enable logging of `rocket::nio`")
-AddVar(ROCKET_NIO_NO_CONTIGUOUS_SOURCE BOOL OFF                      "Disable contiguous-source optimization for `rocket::nio`")
+AddVar(ROCKET_BUILD_BENCH              BOOL   ${ROCKET_MASTER_PROJECT} "Enable benchmarking and build benchmarks")
+AddVar(ROCKET_BUILD_TEST               BOOL   ${ROCKET_MASTER_PROJECT} "Enable testing and build tests")
+AddVar(ROCKET_COMPONENTS               STRING ""                       "Additional components to include: `gui`")
+AddVar(ROCKET_IO_LOG                   BOOL   OFF                      "Enable logging of `rocket::io`")
+AddVar(ROCKET_NIO_LOG                  BOOL   OFF                      "Enable logging of `rocket::nio`")
+AddVar(ROCKET_NIO_NO_CONTIGUOUS_SOURCE BOOL   OFF                      "Disable contiguous-source optimization for `rocket::nio`")
 
-# Set project-specific compiler definitions, features, and options ------------------------------------------
+# Configure components --------------------------------------------------------------------------------------
 
-set(ROCKET_COMPILE_DEFS)
+list(FIND ROCKET_COMPONENTS gui index__)
+if(ROCKET_MASTER_PROJECT OR index__ GREATER_EQUAL 0)
+  set(ROCKET_GUI ON)
+endif()
+message(STATUS "rocket: ROCKET_GUI: ${ROCKET_GUI}")
 
 # Manage dependencies ---------------------------------------------------------------------------------------
 

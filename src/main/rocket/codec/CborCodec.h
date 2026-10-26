@@ -42,7 +42,6 @@ struct CborItem {
       ROCKET_ASSERT(cbor_refcount(ptr_) > 0);
       cbor_decref(&ptr_);
     }
-    val_ = std::nullopt;
   }
 
   CborItem& operator=(const CborItem& rhs) = delete;

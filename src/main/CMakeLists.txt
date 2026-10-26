@@ -8,6 +8,7 @@ set(GENERATED_DIR ${CMAKE_CURRENT_BINARY_DIR}/generated)
 
 # Preprocessor definitions ..................................................................................
 
+set(ROCKET_COMPILE_DEFS)
 if(CMAKE_C_COMPILER_ID STREQUAL "Clang")
   list(APPEND ROCKET_COMPILE_DEFS ROCKET_C_COMPILER_CLANG)
 elseif(CMAKE_C_COMPILER_ID STREQUAL "GNU")
@@ -204,12 +205,14 @@ add_library(Rocket::rocket-bench ALIAS rocket-bench)
 
 # `rocket-gui` ----------------------------------------------------------------------------------------------
 
-AddLibrary(rocket-gui)
-set_target_properties(rocket-gui PROPERTIES VERSION ${PROJECT_VERSION}) # SOVERSION 0
-target_sources(rocket-gui PRIVATE rocket-gui/rocket-gui.cc)
-target_compile_definitions(rocket-gui PUBLIC ${COMPILE_DEFS} ROCKET_GUI) # XXX
-target_link_libraries(rocket-gui PUBLIC Rocket::rocket wxWidgets::wxWidgets)
-add_library(Rocket::rocket-gui ALIAS rocket-gui)
+if(ROCKET_GUI)
+  AddLibrary(rocket-gui)
+  set_target_properties(rocket-gui PROPERTIES VERSION ${PROJECT_VERSION}) # SOVERSION 0
+  target_sources(rocket-gui PRIVATE rocket-gui/rocket-gui.cc)
+  target_compile_definitions(rocket-gui PUBLIC ${COMPILE_DEFS} ROCKET_GUI) # XXX
+  target_link_libraries(rocket-gui PUBLIC Rocket::rocket wxWidgets::wxWidgets)
+  add_library(Rocket::rocket-gui ALIAS rocket-gui)
+endif()
 
 # `rocket-test` ---------------------------------------------------------------------------------------------
 
