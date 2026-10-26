@@ -45,12 +45,33 @@ if(ROCKET_NIO_NO_CONTIGUOUS_SOURCE)
   list(APPEND ROCKET_COMPILE_DEFS ROCKET_NIO_NO_CONTIGUOUS_SOURCE)
 endif()
 
-# Private link targets ......................................................................................
+# Link targets ..............................................................................................
 
 set(ROCKET_PRIVATE_LINK_TARGETS)
 
 if(GAIA_OS_LINUX)
   list(APPEND ROCKET_PRIVATE_LINK_TARGETS stdc++exp)
+endif()
+
+# ICU .......................................................................................................
+#
+# Run `gaia-make-icu` to build the ICU libraries
+#
+# ...........................................................................................................
+
+if(GAIA_OS_LINUX)
+  set(ROCKET_ICU_INCLUDE_DIR $ENV{ICU_DIR}/icu4c/source/common)
+  set(ROCKET_ICU_LINK_TARGETS
+    # The order of the ICU libraries matters here, `libicudata` must be last
+    $ENV{ICU_DIR}/lib/libicuio-gnu.a
+    $ENV{ICU_DIR}/lib/libicutu-gnu.a
+    $ENV{ICU_DIR}/lib/libicui18n-gnu.a
+    $ENV{ICU_DIR}/lib/libicuuc-gnu.a
+    $ENV{ICU_DIR}/lib/libicudata-gnu.a
+  )
+else()
+  set(ROCKET_ICU_INCLUDE_DIR)
+  set(ROCKET_ICU_LINK_TARGETS ICU::uc)
 endif()
 
 # `version.h` ...............................................................................................
@@ -70,8 +91,11 @@ add_custom_command(
 AddLibrary(rocket ${VERSION_H})
 set_target_properties(rocket PROPERTIES VERSION ${PROJECT_VERSION}) # SOVERSION 0
 target_include_directories(rocket SYSTEM
-  PRIVATE ${CMAKE_BINARY_DIR}/_deps/scnlib-src/src # Make `scn/impl.h` available
-  PUBLIC  ${GENERATED_DIR}
+  PRIVATE
+    ${ROCKET_ICU_INCLUDE_DIR}
+    ${CMAKE_BINARY_DIR}/_deps/scnlib-src/src # Make `scn/impl.h` available
+  PUBLIC
+    ${GENERATED_DIR}
 )
 target_sources(rocket
   PRIVATE
@@ -173,8 +197,15 @@ target_compile_definitions(rocket
   PUBLIC  ${ROCKET_COMPILE_DEFS} ROCKET_TEST_PRIVATE=private ROCKET_TEST_PROTECTED=protected
 )
 target_link_libraries(rocket
-  PRIVATE ${ROCKET_PRIVATE_LINK_TARGETS}
-  PUBLIC  ${ROCKET_BOOST_LINK_TARGETS} Boost::int128 cbor fmt::fmt-header-only ICU::uc scn::scn
+  PRIVATE
+    ${ROCKET_PRIVATE_LINK_TARGETS}
+  PUBLIC
+    ${ROCKET_BOOST_LINK_TARGETS}
+    Boost::int128
+    cbor
+    fmt::fmt-header-only
+    ${ROCKET_ICU_LINK_TARGETS}
+    scn::scn
 )
 add_library(Rocket::rocket ALIAS rocket)
 
