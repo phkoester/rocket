@@ -207,7 +207,7 @@ add_library(Rocket::rocket-bench ALIAS rocket-bench)
 AddLibrary(rocket-gui)
 set_target_properties(rocket-gui PROPERTIES VERSION ${PROJECT_VERSION}) # SOVERSION 0
 target_sources(rocket-gui PRIVATE rocket-gui/rocket-gui.cc)
-target_compile_definitions(rocket-gui PUBLIC ${COMPILE_DEFS} ROCKET_GUI)
+target_compile_definitions(rocket-gui PUBLIC ${COMPILE_DEFS} ROCKET_GUI) # XXX
 target_link_libraries(rocket-gui PUBLIC Rocket::rocket wxWidgets::wxWidgets)
 add_library(Rocket::rocket-gui ALIAS rocket-gui)
 

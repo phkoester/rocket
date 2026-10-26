@@ -4,6 +4,8 @@
 
 #include "rocket-gui.h"
 
+#include <rocket/assert.h>
+
 #include <wx/filesys.h>
 
 #include <unordered_map>
@@ -46,9 +48,7 @@ private:
 
   wxBitmap
   makeDisabledBitmap(const wxBitmap& bitmap) {
-    if (not bitmap.IsOk()) {
-      return {};
-    }
+    ROCKET_CHECK(bitmap, bitmap.IsOk());
     const double scale = bitmap.GetScaleFactor();
     const wxImage image = bitmap.ConvertToImage().ConvertToGreyscale().ConvertToDisabled();
     return wxBitmap(image, -1, scale);
@@ -73,27 +73,26 @@ addTool(wxToolBar* toolBar, i32 id, string_view label, string_view svgName, stri
 wxBitmapBundle
 loadSvg(string_view name, const wxSize& size) {
   wxFileSystem fs;
-  const unique_ptr<wxFSFile> file { fs.OpenFile("memory:XRC_resource/resource.cc$"s.append(name)) };
-  if (not file) {
-    return {};
-  }
+  string path = "memory:XRC_resource/resource.cc$"s.append(name);
+  const unique_ptr<wxFSFile> file { fs.OpenFile(path) };
+  ROCKET_EXPECT(file != nullptr, "Failed to open file at path `{}`", path);
 
   wxInputStream& stream = *file->GetStream();
   const auto len = static_cast<size_t>(stream.GetLength());
   wxCharBuffer buf(len);
-  if (not stream.ReadAll(buf.data(), len)) {
-    return {};
-  }
-  return wxBitmapBundle::FromSVG(buf.data(), size);
+  ROCKET_EXPECT(stream.ReadAll(buf.data(), len), "Failed to read stream");
+  auto ret = wxBitmapBundle::FromSVG(buf.data(), size);
+  ROCKET_EXPECT(ret.IsOk(), "Failed to make bitmap bundle from SVG");
+  return ret;
 }
 
 /// `wxBitmap::MakeDisabled()` only greyscales, so a black stroke stays black.
 wxBitmapBundle
 makeDisabled(const wxBitmapBundle& bundle) {
-  if (not bundle.IsOk()) {
-    return {};
-  }
-  return wxBitmapBundle::FromImpl(new DisabledBitmapBundle(bundle));
+  ROCKET_CHECK(bundle, bundle.IsOk());
+  auto ret = wxBitmapBundle::FromImpl(new DisabledBitmapBundle(bundle));
+  ROCKET_EXPECT(ret.IsOk(), "Failed to make disabled bitmap bundle");
+  return ret;
 }
 
 } // namespace rocket::gui
