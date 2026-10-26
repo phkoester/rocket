@@ -16,9 +16,9 @@ endif()
 
 project(rocket VERSION 0.3.0)
 
-# Configuration ---------------------------------------------------------------------------------------------
-
 include($ENV{GAIA_DIR}/src/main/cmake/base.cmake)
+
+# Configuration ---------------------------------------------------------------------------------------------
 
 AddVar(ROCKET_BUILD_BENCH              BOOL   ${ROCKET_MASTER_PROJECT} "Enable benchmarking and build benchmarks")
 AddVar(ROCKET_BUILD_TEST               BOOL   ${ROCKET_MASTER_PROJECT} "Enable testing and build tests")
@@ -32,6 +32,8 @@ AddVar(ROCKET_NIO_NO_CONTIGUOUS_SOURCE BOOL   OFF                      "Disable 
 list(FIND ROCKET_COMPONENTS gui index__)
 if(ROCKET_MASTER_PROJECT OR index__ GREATER_EQUAL 0)
   set(ROCKET_GUI ON)
+else
+  set(ROCKET_GUI OFF)
 endif()
 message(STATUS "rocket: ROCKET_GUI: ${ROCKET_GUI}")
 
