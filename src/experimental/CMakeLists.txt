@@ -6,29 +6,31 @@
 
 # guy .......................................................................................................
 
-AddExecutable(guy guy/main.cc)
-target_link_libraries(guy PRIVATE Rocket::rocket-gui)
-if (GAIA_OS_WINDOWS)
-  target_link_options(guy PRIVATE /subsystem:windows)
+if(ROCKET_GUI)
+  AddExecutable(guy guy/main.cc)
+  target_link_libraries(guy PRIVATE Rocket::rocket-gui)
+  if (GAIA_OS_WINDOWS)
+    target_link_options(guy PRIVATE /subsystem:windows)
+  endif()
+  CopyRuntimeFiles(guy)
+
+  set(xrc_files ${CMAKE_CURRENT_SOURCE_DIR}/guy/resource.xrc)
+  set(resource_cc ${CMAKE_CURRENT_BINARY_DIR}/resource.cc)
+  set(wxrc $<TARGET_FILE:wxrc>)
+
+  add_custom_command(
+    OUTPUT ${resource_cc}
+    COMMAND ${wxrc} -c -o ${resource_cc} ${xrc_files}
+    DEPENDS ${xrc_files}
+            ${CMAKE_CURRENT_SOURCE_DIR}/guy/logo.svg
+            ${CMAKE_CURRENT_SOURCE_DIR}/guy/back.svg
+            ${CMAKE_CURRENT_SOURCE_DIR}/guy/forward.svg
+            wxrc
+    COMMENT "Compiling XRC resources"
+  )
+
+  target_sources(guy PRIVATE ${resource_cc})
 endif()
-CopyRuntimeFiles(guy)
-
-set(xrc_files ${CMAKE_CURRENT_SOURCE_DIR}/guy/resource.xrc)
-set(resource_cc ${CMAKE_CURRENT_BINARY_DIR}/resource.cc)
-set(wxrc $<TARGET_FILE:wxrc>)
-
-add_custom_command(
-  OUTPUT ${resource_cc}
-  COMMAND ${wxrc} -c -o ${resource_cc} ${xrc_files}
-  DEPENDS ${xrc_files}
-          ${CMAKE_CURRENT_SOURCE_DIR}/guy/logo.svg
-          ${CMAKE_CURRENT_SOURCE_DIR}/guy/back.svg
-          ${CMAKE_CURRENT_SOURCE_DIR}/guy/forward.svg
-          wxrc
-  COMMENT "Compiling XRC resources"
-)
-
-target_sources(guy PRIVATE ${resource_cc})
 
 # toy .......................................................................................................
 
