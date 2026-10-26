@@ -22,7 +22,7 @@ include($ENV{GAIA_DIR}/src/main/cmake/base.cmake)
 
 AddVar(ROCKET_BUILD_BENCH              BOOL   ${ROCKET_MASTER_PROJECT} "Enable benchmarking and build benchmarks")
 AddVar(ROCKET_BUILD_TEST               BOOL   ${ROCKET_MASTER_PROJECT} "Enable testing and build tests")
-AddVar(ROCKET_COMPONENTS               STRING ""                       "Additional components to include: `gui`")
+AddVar(ROCKET_COMPONENTS               STRING ""                       "Additional components to enable: `gui`")
 AddVar(ROCKET_IO_LOG                   BOOL   OFF                      "Enable logging of `rocket::io`")
 AddVar(ROCKET_NIO_LOG                  BOOL   OFF                      "Enable logging of `rocket::nio`")
 AddVar(ROCKET_NIO_NO_CONTIGUOUS_SOURCE BOOL   OFF                      "Disable contiguous-source optimization for `rocket::nio`")
@@ -41,16 +41,16 @@ include(cmake/deps.cmake)
 
 # Add subdirectories ----------------------------------------------------------------------------------------
 
-add_subdirectory(src/bin)
-# add_subdirectory(src/example)
-add_subdirectory(src/experimental)
-add_subdirectory(src/main)
-
 if(BUILD_TESTING AND ROCKET_BUILD_BENCH)
   enable_testing()
   add_subdirectory(src/bench)
 endif()
-
+add_subdirectory(src/bin)
+# add_subdirectory(src/example)
+if(ROCKET_MASTER_PROJECT)
+  add_subdirectory(src/experimental)
+endif()
+add_subdirectory(src/main)
 if(BUILD_TESTING AND ROCKET_BUILD_TEST)
   enable_testing()
   add_subdirectory(src/test)
