@@ -16,7 +16,7 @@ endif()
 
 project(rocket VERSION 0.3.0)
 
-include($ENV{GAIA_DIR}/src/main/cmake/base.cmake)
+include($ENV{GAIA_DIR}/src/main/cmake/gaia.cmake)
 
 # Configuration ---------------------------------------------------------------------------------------------
 
