@@ -20,12 +20,12 @@ include($ENV{GAIA_DIR}/src/main/cmake/gaia.cmake)
 
 # Configuration ---------------------------------------------------------------------------------------------
 
-AddVar(ROCKET_BUILD_BENCH              BOOL   ${ROCKET_MASTER_PROJECT} "Enable benchmarking and build benchmarks")
-AddVar(ROCKET_BUILD_TEST               BOOL   ${ROCKET_MASTER_PROJECT} "Enable testing and build tests")
-AddVar(ROCKET_COMPONENTS               STRING ""                       "Additional components to enable: `gui`")
-AddVar(ROCKET_IO_LOG                   BOOL   OFF                      "Enable logging of `rocket::io`")
-AddVar(ROCKET_NIO_LOG                  BOOL   OFF                      "Enable logging of `rocket::nio`")
-AddVar(ROCKET_NIO_NO_CONTIGUOUS_SOURCE BOOL   OFF                      "Disable contiguous-source optimization for `rocket::nio`")
+GaiaAddVar(ROCKET_BUILD_BENCH              BOOL   ${ROCKET_MASTER_PROJECT} "Enable benchmarking and build benchmarks")
+GaiaAddVar(ROCKET_BUILD_TEST               BOOL   ${ROCKET_MASTER_PROJECT} "Enable testing and build tests")
+GaiaAddVar(ROCKET_COMPONENTS               STRING ""                       "Additional components to enable: `gui`")
+GaiaAddVar(ROCKET_IO_LOG                   BOOL   OFF                      "Enable logging of `rocket::io`")
+GaiaAddVar(ROCKET_NIO_LOG                  BOOL   OFF                      "Enable logging of `rocket::nio`")
+GaiaAddVar(ROCKET_NIO_NO_CONTIGUOUS_SOURCE BOOL   OFF                      "Disable contiguous-source optimization for `rocket::nio`")
 
 # Configure components --------------------------------------------------------------------------------------
 
@@ -35,7 +35,7 @@ if(ROCKET_MASTER_PROJECT OR index__ GREATER_EQUAL 0)
 else()
   set(ROCKET_GUI OFF)
 endif()
-message(STATUS "rocket: ROCKET_GUI: ${ROCKET_GUI}")
+GaiaStatus("ROCKET_GUI: ${ROCKET_GUI}")
 
 # Manage dependencies ---------------------------------------------------------------------------------------
 

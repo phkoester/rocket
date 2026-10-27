@@ -35,10 +35,10 @@ static constexpr u64 DEFAULT_BUFFER_SIZE = 64 * 1'024; // 64 KiB
  */
 static constexpr u64 MIN_BUFFER_SIZE = 64;
 
-// `Status` -------------------------------------------------------------------------------------------------
+// `GaiaStatus` -------------------------------------------------------------------------------------------------
 
 /// The status of a device.
-struct Status {
+struct GaiaStatus {
   /**
    * If #bad is set, the device is in an unusable state.
    */
@@ -91,7 +91,7 @@ struct Device {
    *
    * @return the status
    */
-  [[nodiscard]] Status status() const { return status_; }
+  [[nodiscard]] GaiaStatus status() const { return status_; }
 
 protected:
 
@@ -101,7 +101,7 @@ protected:
    * When an instance is constructed, the #bad bit is set, meaning the stream hasn't been opened yet and is
    * not ready to use. Derived classes must unset the #bad bit to mark the instance as usable.
    */
-  Status status_ { .bad=1, .eof=0 };
+  GaiaStatus status_ { .bad=1, .eof=0 };
 
   /// @ctor_default
   Device() = default;

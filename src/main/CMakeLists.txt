@@ -57,7 +57,7 @@ endif()
 
 set(VERSION_H ${GENERATED_DIR}/rocket/version.h)
 
-UnixPath($ENV{GAIA_DIR} dir)
+GaiaUnixPath($ENV{GAIA_DIR} dir)
 add_custom_command(
   OUTPUT   ${VERSION_H}
   COMMAND  python3 ${dir}/bin/gaia-generate-version ROCKET ${PROJECT_VERSION} -o ${VERSION_H}
@@ -67,7 +67,7 @@ add_custom_command(
 
 # Add the library ...........................................................................................
 
-AddLibrary(rocket ${VERSION_H})
+GaiaAddLibrary(rocket ${VERSION_H})
 set_target_properties(rocket PROPERTIES VERSION ${PROJECT_VERSION}) # SOVERSION 0
 target_include_directories(rocket SYSTEM
   PRIVATE ${CMAKE_BINARY_DIR}/_deps/scnlib-src/src # Make `scn/impl.h` available
@@ -187,7 +187,7 @@ add_library(Rocket::rocket ALIAS rocket)
 
 # `rocket-bench` --------------------------------------------------------------------------------------------
 
-AddLibrary(rocket-bench STATIC)
+GaiaAddLibrary(rocket-bench STATIC)
 target_sources(rocket-bench
   PRIVATE
     rocket-bench/rocket-bench.cc
@@ -202,7 +202,7 @@ add_library(Rocket::rocket-bench ALIAS rocket-bench)
 # `rocket-gui` ----------------------------------------------------------------------------------------------
 
 if(ROCKET_GUI)
-  AddLibrary(rocket-gui)
+  GaiaAddLibrary(rocket-gui)
   set_target_properties(rocket-gui PROPERTIES VERSION ${PROJECT_VERSION}) # SOVERSION 0
   target_sources(rocket-gui PRIVATE rocket-gui/rocket-gui.cc)
   target_compile_definitions(rocket-gui PUBLIC ROCKET_GUI)
@@ -212,7 +212,7 @@ endif()
 
 # `rocket-test` ---------------------------------------------------------------------------------------------
 
-AddLibrary(rocket-test STATIC)
+GaiaAddLibrary(rocket-test STATIC)
 target_sources(rocket-test
   PRIVATE
     rocket-test/rocket-test.cc
@@ -230,7 +230,7 @@ add_library(Rocket::rocket-test ALIAS rocket-test)
 
 # `rocket-test-main` ----------------------------------------------------------------------------------------
 
-AddLibrary(rocket-test-main STATIC)
+GaiaAddLibrary(rocket-test-main STATIC)
 target_sources(rocket-test-main PRIVATE rocket-test-main/main.cc)
 target_compile_definitions(rocket-test-main PRIVATE ROCKET_TEST)
 target_link_libraries(rocket-test-main PRIVATE GTest::gmock GTest::gtest Rocket::rocket)
