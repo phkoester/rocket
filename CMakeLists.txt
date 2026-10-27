@@ -44,7 +44,8 @@ set(ROCKET_BOOST_VERSION 1.92.0)
 set(ROCKET_FMT_VERSION 12.2.0)
 set(ROCKET_GTEST_VERSION 1.17.0)
 set(ROCKET_INT128_VERSION 4.1.0)
-set(ROCKET_ICU_VERSION 78.2)
+set(ROCKET_ICU_CMAKE_VERSION main)
+set(ROCKET_ICU_VERSION 79.1)
 set(ROCKET_LIBCBOR_VERSION 0.14.0)
 set(ROCKET_SCNLIB_VERSION master)
 set(ROCKET_WXWIDGETS_VERSION 3.3.4)
@@ -55,8 +56,8 @@ include(FetchContent)
 
 FetchContent_Declare(
   Boost
-  URL              https://github.com/boostorg/boost/releases/download/boost-${ROCKET_BOOST_VERSION}/boost-${ROCKET_BOOST_VERSION}-cmake.7z
-  GIT_PROGRESS   TRUE
+  URL          https://github.com/boostorg/boost/releases/download/boost-${ROCKET_BOOST_VERSION}/boost-${ROCKET_BOOST_VERSION}-cmake.7z
+  GIT_PROGRESS TRUE
   SYSTEM
   EXCLUDE_FROM_ALL
 )
@@ -132,23 +133,25 @@ endblock()
 
 # ICU .......................................................................................................
 #
-# ICU is not fully CMake-ready, so it must be installed manually.
-#
-# On Ubuntu, say
-#
-#   $ sudo apt install libicu-dev
-#
-# On Windows,
-#
-# - download <https://github.com/unicode-org/icu/releases/download/release-VERSION/icu4c-VERSION-Win64-MSVC2022.zip>
-# - unpack, copy to `C:\icu4c-VERSION-Win64-MSVC2022`
-# - set system variable `ICU_ROOT` to `C:\icu4c-VERSION-Win64-MSVC2022`
-# - add `C:\icu4c-VERSION-Win64-MSVC2022\bin64` to the system variable `PATH`
-# - when migrating to a new ICU version, use a fresh shell and clean everything
+# ICU is not CMake-ready, so it is built by icu-cmake, which downloads the ICU sources and provides the
+# targets `ICU::data`, `ICU::uc`, `ICU::i18n`, `ICU::io`, and `ICU::tu`.
 #
 # ...........................................................................................................
 
-find_package(ICU ${ROCKET_ICU_VERSION} REQUIRED COMPONENTS uc) # data i18n io
+FetchContent_Declare(
+  icu-cmake
+  GIT_REPOSITORY https://github.com/phkoester/icu-cmake.git
+  GIT_TAG        ${ROCKET_ICU_CMAKE_VERSION}
+  GIT_PROGRESS   TRUE
+  SYSTEM
+  EXCLUDE_FROM_ALL
+)
+
+block()
+  set(BUILD_SHARED_LIBS OFF)
+  set(ICU_CMAKE_ICU_VERSION ${ROCKET_ICU_VERSION})
+  FetchContent_MakeAvailable(icu-cmake)
+endblock()
 
 # int128 ....................................................................................................
 
