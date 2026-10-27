@@ -3,7 +3,7 @@
  */
 
 {
-  "dependencies": ["gaia"],
+  "dependencies": ["icu-cmake"],
   "version": "0.3.0"
 }
 
