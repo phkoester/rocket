@@ -29,7 +29,8 @@ using namespace std;
 enum GuyId {
   ID_Hello = 1,
   ID_Back,
-  ID_Forward
+  ID_Forward,
+  ID_Something
 };
 
 // `MyApp` decl ---------------------------------------------------------------------------------------------
@@ -163,6 +164,7 @@ MyFrame::MyFrame() : wxFrame(
 
   wxMenu* menuFile = new wxMenu;
   menuFile->Append(ID_Hello, "&Hello ...", "Say hello");
+  menuFile->Append(ID_Something, "&Something (€, 👨‍👩‍👦) ...", "Do something");
   menuFile->AppendSeparator();
   menuFile->Append(wxID_EXIT, "E&xit", "Exit the application");
 
