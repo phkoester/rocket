@@ -11,9 +11,7 @@ CMake Target               | Content
 `Rocket::rocket-test`      | A library for unit tests, using Rocket and GoogleTest
 `Rocket::rocket-test-main` | The `main` function for unit tests, using Rocket and GoogleTest
 
-The project depends on [icu-cmake]([https://github.com/phkoester/icu-cmake), which is a CMake wrapper for
-ICU4C. icu-cmake in turn depends on [Gaia](https://github.com/phkoester/gaia), which provides the underlying
-build system at shell level.
+Rocjet depends on [icu-cmake]([https://github.com/phkoester/icu-cmake), which is a CMake wrapper for ICU4C.
 
 It is pre-alpha, a hobby project of mine, and possibly dangerous. **Use it at your own risk.**
 
