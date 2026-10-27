@@ -3,13 +3,19 @@
 Rocket is a general-purpose library written in C++, helping you to create cross-platform CLI and GUI
 applications.
 
+CMake Target               | Content
+:------------------------- | :------
+`Rocket::rocket`           | The basic Rocket library for CLI applications
+`Rocket::rocket-bench`     | A library for benchmarks, using Rocket and Google benchmark
+`Rocket::rocket-gui`       | A library for GUI applications, using Rocket and WxWidgets
+`Rocket::rocket-test`      | A library for unit tests, using Rocket and GoogleTest
+`Rocket::rocket-test-main` | The `main` function for unit tests, using Rocket and GoogleTest
+
 The project depends on [icu-cmake]([https://github.com/phkoester/icu-cmake), which is a CMake wrapper for
-ICU4C. icu-cmake in turn depends on [Gaia](https://github.com/phkoester/gaia), which provides the
-underlying build system at shell level.
+ICU4C. icu-cmake in turn depends on [Gaia](https://github.com/phkoester/gaia), which provides the underlying
+build system at shell level.
 
 It is pre-alpha, a hobby project of mine, and possibly dangerous. **Use it at your own risk.**
-
-Currently, these components are available: Rocket, Rocket.Bench, Rocket.Gui, and Rocket.Test.
 
 ## License
 
