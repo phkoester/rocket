@@ -131,10 +131,11 @@ block()
   FetchContent_MakeAvailable(benchmark)
 endblock()
 
-# ICU .......................................................................................................
+# icu-cmake .................................................................................................
 #
-# ICU is not CMake-ready, so it is built by icu-cmake, which downloads the ICU sources and provides the
-# targets `ICU-cmake::data`, `ICU-cmake::uc`, `ICU-cmake::i18n`, `ICU-cmake::io`, and `ICU-cmake::tu`.
+# Plain vanilla ICU is not CMake-ready, so here it is built by icu-cmake, which downloads the ICU sources and
+# provides the targets `icu-cmake::data`, `icu-cmake::i18n`, `icu-cmake::io`, `icu-cmake::tu`, and
+# `icu-cmake::uc`.
 #
 # ...........................................................................................................
 
