@@ -134,7 +134,7 @@ endblock()
 # ICU .......................................................................................................
 #
 # ICU is not CMake-ready, so it is built by icu-cmake, which downloads the ICU sources and provides the
-# targets `ICU::data`, `ICU::uc`, `ICU::i18n`, `ICU::io`, and `ICU::tu`.
+# targets `ICU-cmake::data`, `ICU-cmake::uc`, `ICU-cmake::i18n`, `ICU-cmake::io`, and `ICU-cmake::tu`.
 #
 # ...........................................................................................................
 
