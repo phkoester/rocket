@@ -48,7 +48,7 @@ Rocket stands on the shoulders of these giants:
 | `CMAKE_BUILD_TYPE`                | `STRING` | `Release` if single configuration | The build type (`Debug` or `Release`)
 | `COVERAGE`                        | `BOOL`   | `OFF`                             | Enable code coverage
 | `ROCKET_BUILD_BENCH`              | `BOOL`   | `ON` if master project            | Enable benchmarking and build benchmarks
-| `ROCKET_BUILD_TEST`               | `BOOL`   | `ON` if master project            | Enable testing and build tests
+| `ROCKET_BUILD_TEST`               | `BOOL`   | `ON` if master project            | Build the unit tests
 | `ROCKET_COMPONENTS`               | `STRING` | &mdash;                           | Additional components to enable: `gui`
 | `ROCKET_IO_LOG`                   | `BOOL`   | `OFF`                             | Enable logging of `rocket::io`
 | `ROCKET_NIO_LOG`                  | `BOOL`   | `OFF`                             | Enable logging of `rocket::nio`
