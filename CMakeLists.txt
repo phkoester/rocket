@@ -16,16 +16,16 @@ if(NOT DEFINED ROCKET_MASTER_PROJECT)
   endif()
 endif()
 
-project(rocket VERSION 0.3.0)
+project(rocket VERSION 0.3.1)
 
 # Versions --------------------------------------------------------------------------------------------------
 
 set(ROCKET_BENCHMARK_VERSION 1.9.5)
 set(ROCKET_BOOST_VERSION 1.92.0)
 set(ROCKET_FMT_VERSION 12.2.0)
-set(ROCKET_GAIA_VERSION 1.2.0)
+set(ROCKET_GAIA_VERSION 1.2.1)
 set(ROCKET_GTEST_VERSION 1.17.0)
-set(ROCKET_ICU_CMAKE_VERSION 0.1.0)
+set(ROCKET_ICU_CMAKE_VERSION 0.1.1)
 set(ROCKET_ICU_CMAKE_ICU_VERSION 79.1)
 set(ROCKET_INT128_VERSION 4.1.0)
 set(ROCKET_LIBCBOR_VERSION 0.14.0)
