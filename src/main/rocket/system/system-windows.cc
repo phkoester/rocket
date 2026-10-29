@@ -56,7 +56,7 @@ private:
   struct Entry {
     const char* name;
     HANDLE handle = INVALID_HANDLE_VALUE;
-    std::optional<DWORD> mode;
+    std::optional<DWORD> mode = {};
   };
 
   std::array<Entry, 2> entries_ { {

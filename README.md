@@ -5,7 +5,7 @@ applications.
 
 CMake Target               | Content
 :------------------------- | :------
-`Rocket::rocket`           | The basic Rocket library for CLI applications
+`Rocket::rocket`           | Rocket, the basic library for CLI applications
 `Rocket::rocket-bench`     | Rocket.Bench, a library for benchmarks, using Rocket and Google benchmark
 `Rocket::rocket-gui`       | Rocket.Gui, a library for GUI applications, using Rocket and WxWidgets
 `Rocket::rocket-test`      | Rocket.Test, a library for unit tests, using Rocket and GoogleTest

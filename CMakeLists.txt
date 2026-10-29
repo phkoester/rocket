@@ -94,7 +94,7 @@ elseif(GAIA_OS_WINDOWS)
     set(COMPILE_FLAGS -Werror -Wextra)
   elseif(GAIA_CXX_COMPILER_MSVC)
     # Windows, MSVC
-    set(COMPILE_FLAGS /bigobj /Zc:preprocessor)
+    set(COMPILE_FLAGS /bigobj /wd4005 /wd4477 /wd4805 /Zc:preprocessor)
   endif()
 endif()
 
