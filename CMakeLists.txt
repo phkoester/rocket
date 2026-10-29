@@ -34,7 +34,7 @@ set(ROCKET_WXWIDGETS_VERSION 3.3.4)
 
 # Gaia ------------------------------------------------------------------------------------------------------
 
-if(NOT "$ENV{GAIA_DIR}" STREQUAL "")
+if(DEFINED ENV{GAIA_DIR})
   FetchContent_Declare(
     gaia
     SOURCE_DIR "$ENV{GAIA_DIR}"
@@ -79,6 +79,28 @@ GaiaAddVar(ROCKET_COMPONENTS               STRING ""                       "Addi
 GaiaAddVar(ROCKET_IO_LOG                   BOOL   OFF                      "Enable logging of `rocket::io`")
 GaiaAddVar(ROCKET_NIO_LOG                  BOOL   OFF                      "Enable logging of `rocket::nio`")
 GaiaAddVar(ROCKET_NIO_NO_CONTIGUOUS_SOURCE BOOL   OFF                      "Disable contiguous-source optimization for `rocket::nio`")
+
+# Set compiler and linker options ---------------------------------------------------------------------------
+
+set(COMPILE_DEFS)
+set(COMPILE_FEATURES)
+set(COMPILE_FLAGS)
+set(LINK_FLAGS)
+
+if(GAIA_OS_LINUX)
+  # Linux
+  set(COMPILE_FLAGS -Wall -Werror -Wextra)
+elseif(GAIA_OS_WINDOWS)
+  if(GAIA_CXX_COMPILER_CLANG)
+    # Windows, Clang
+    set(COMPILE_FLAGS -Wall -Werror -Wextra)
+  endif()
+endif()
+
+if(COVERAGE)
+  list(APPEND COMPILE_FLAGS -coverage)
+  list(APPEND LINK_FLAGS -coverage)
+endif()
 
 # Configure components --------------------------------------------------------------------------------------
 
@@ -173,7 +195,7 @@ endblock()
 
 # icu-cmake .................................................................................................
 
-if(NOT "$ENV{GAIA_DIR}" STREQUAL "")
+if(DEFINED ENV{GAIA_DIR})
   FetchContent_Declare(
     icu-cmake
     SOURCE_DIR "$ENV{GAIA_DIR}/../icu-cmake"

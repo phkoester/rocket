@@ -564,7 +564,7 @@ TEST(JsonCodec, ProducerDeclaredFileSource) {
     };
     const auto result = loc::locations(input, { pos }, { .setLineString=true, .source=path.string() });
     loc::printLocations(nio::out, input, result, { .styled=true });
-    throw InvalidState("Failed to decode MyStruct");
+    throw InvalidState("Cannot decode `MyStruct`");
   }
 
   const MyStruct& val = result.value();

@@ -1175,7 +1175,7 @@ struct CborCodec : Codec<CborConsumer, CborProducer> {
     unsigned char* buf; // NOLINT
     u64 bufSize; // NOLINT
     cbor_serialize_alloc(item.ptr(), &buf, &bufSize);
-    ROCKET_EXPECT(bufSize > 0, "Failed to allocate memory");
+    ROCKET_EXPECT(bufSize > 0, "Cannot allocate memory");
     ROCKET_GUARD([&buf] { free(buf); }); // NOLINT
     return { buf, buf + bufSize };
   }

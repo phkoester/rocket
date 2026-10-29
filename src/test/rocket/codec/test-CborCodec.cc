@@ -72,11 +72,11 @@ testRoundtrip(const T& val) {
     const auto& error = result.error();
     if constexpr (std::same_as<T, std::u32string> || std::same_as<T, std::u32string_view>) {
       std::string utf8(unicode::ConvertTo<char>::apply(val));
-      ROCKET_FAIL("Failed to decode value \"{}\" at position {}: {}\n", utf8, error.position, error.message);
+      ROCKET_FAIL("Cannot decode value \"{}\" at position {}: {}\n", utf8, error.position, error.message);
     } else if constexpr (std::same_as<T, char32>) {
-      ROCKET_FAIL("Failed to decode value {} at position {}: {}\n", static_cast<u32>(val), error.position, error.message);
+      ROCKET_FAIL("Cannot decode value {} at position {}: {}\n", static_cast<u32>(val), error.position, error.message);
     } else {
-      ROCKET_FAIL("Failed to decode value {} at position {}: {}\n", val, error.position, error.message);
+      ROCKET_FAIL("Cannot decode value {} at position {}: {}\n", val, error.position, error.message);
     }
   }
   const T& decodedVal = result.value();
@@ -98,7 +98,7 @@ testHourMinuteSecond(const T& val) {
   const auto result = codec.decode<T>(codec.encode(val));
   if (not result.has_value()) {
     ROCKET_FAIL(
-      "Failed to decode hour, minute, and second {} at position {}: {}\n",
+      "Cannot decode hour, minute, and second {} at position {}: {}\n",
       val.to_duration().count(),
       result.error().position,
       result.error().message);
@@ -111,7 +111,8 @@ void
 testZonedTime(const T& val) {
   const auto result = codec.decode<T>(codec.encode(val));
   if (not result.has_value()) {
-    ROCKET_FAIL("Failed to decode zoned time at position {}: {}\n", result.error().position, result.error().message);
+    ROCKET_FAIL("Cannot decode zoned time at position {}: {}\n",
+      result.error().position, result.error().message);
   }
   EXPECT_EQ(result.value(), val);
 }
@@ -121,8 +122,8 @@ void
 testCharacter(const T& val) {
   const auto result = codec.decode<T>(codec.encode(val));
   if (not result.has_value()) {
-    ROCKET_FAIL(
-      "Failed to decode character at position {}: {}\n", result.error().position, result.error().message);
+    ROCKET_FAIL("Cannot decode character at position {}: {}\n",
+      result.error().position, result.error().message);
   }
   EXPECT_EQ(static_cast<typename T::View>(result.value()), static_cast<typename T::View>(val));
 }
@@ -136,17 +137,15 @@ testVarRefs() {
 
   const auto decoded = codec.decode<tuple<int, int, int>>(codec.encode(refs));
   if (not decoded.has_value()) {
-    ROCKET_FAIL(
-      "Failed to decode variable references at position {}: {}\n",
-      decoded.error().position,
-      decoded.error().message);
+    ROCKET_FAIL("Cannot decode variable references at position {}: {}\n",
+      decoded.error().position, decoded.error().message);
   }
   EXPECT_EQ(decoded.value(), (tuple<int, int, int> { 0, 1, 2 }));
 
   const auto one = codec.decode<int>(codec.encode(std::get<1>(refs)));
   if (not one.has_value()) {
-    ROCKET_FAIL(
-      "Failed to decode variable reference at position {}: {}\n", one.error().position, one.error().message);
+    ROCKET_FAIL("Cannot decode variable reference at position {}: {}\n",
+      one.error().position, one.error().message);
   }
   EXPECT_EQ(one.value(), 1);
 }
@@ -155,11 +154,8 @@ void
 testTimeZone(TimeZone zone) {
   const auto result = codec.decode<TimeZone>(codec.encode(zone));
   if (not result.has_value()) {
-    ROCKET_FAIL(
-      "Failed to decode time zone \"{}\" at position {}: {}\n",
-      zone->name(),
-      result.error().position,
-      result.error().message);
+    ROCKET_FAIL("Cannot decode time zone \"{}\" at position {}: {}\n",
+      zone->name(), result.error().position, result.error().message);
   }
   EXPECT_EQ(result.value(), zone);
 }

@@ -119,7 +119,7 @@ FileSink::FileSink(const filesystem::path& path, bool append) :
   file_(io::open(path, append ? "ab" : "wb")),
   closeOnDestroy_(true) {
   if (file_ == nullptr) {
-    throw InvalidState(fmt::format("Failed to open file `{}` for writing", path));
+    throw InvalidState(fmt::format("Cannot open file `{}` for writing", path));
   }
   status_.bad = false;
 }
@@ -583,7 +583,7 @@ FileSource::FileSource(const filesystem::path& path) :
   file_(io::open(path, "rb")),
   closeOnDestroy_(true) {
   if (file_ == nullptr) {
-    throw InvalidState(fmt::format("Failed to open file `{}` for reading", path));
+    throw InvalidState(fmt::format("Cannot open file `{}` for reading", path));
   }
   status_.bad = false;
 }

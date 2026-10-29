@@ -64,7 +64,7 @@ sendAnsiRequest(nio::Sink& out, std::string_view sequence) {
   while (true) {
     char c = '\0';
     if (::read(STDIN_FILENO, &c, 1) != 1) {
-      throw InputFailure(ret.size(), "Failed to read response");
+      throw InputFailure(ret.size(), "Cannot read response");
     }
     ret.push_back(c);
     if (c == 'R') {
