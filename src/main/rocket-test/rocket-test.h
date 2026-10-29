@@ -73,7 +73,7 @@ struct Aborted {
 
 struct ExitedWithStatus {
   /// On Windows, the exit status is fixed, so we ignore @p status.
-  ExitedWithStatus(i32 status) {}
+  ExitedWithStatus([[maybe_unused]] i32 status) {}
 
   [[nodiscard]] bool
   operator()(i32 status) const {
