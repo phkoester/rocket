@@ -88,9 +88,13 @@ if(GAIA_OS_LINUX)
     list(APPEND COMPILE_FLAGS -Wno-ignored-attributes)
   endif()
 elseif(GAIA_OS_WINDOWS)
+  # Windows
   if(GAIA_CXX_COMPILER_CLANG)
     # Windows, Clang
-    set(COMPILE_FLAGS -Wall -Werror -Wextra)
+    set(COMPILE_FLAGS -Werror -Wextra)
+  elseif(GAIA_CXX_COMPILER_MSVC)
+    # Windows, MSVC
+    set(COMPILE_FLAGS /bigobj /Zc:preprocessor)
   endif()
 endif()
 

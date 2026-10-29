@@ -15,6 +15,7 @@ CMake Target               | Content
 
 * CMake 4.2 or higher.
 * Python 3.8 or higher. On Windows, both a native Windows Python and an MSYS Python will work.
+* The Python package `semver`.
 * On Windows, a Developer Command Prompt from Microsoft Visual Studio is required.
 
 ## Third-Party Components
