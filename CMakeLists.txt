@@ -56,12 +56,6 @@ FetchContent_MakeAvailable(gaia)
 # Get rid of a warning from libcbor
 set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
 
-# XXX
-# "More read-only target properties now error when trying to set them."
-#if(POLICY CMP0160)
-#  cmake_policy(SET CMP0160 NEW)
-#endif()
-
 # General settings ------------------------------------------------------------------------------------------
 
 set(CMAKE_CXX_EXTENSIONS ON)
@@ -90,6 +84,9 @@ set(LINK_FLAGS)
 if(GAIA_OS_LINUX)
   # Linux
   set(COMPILE_FLAGS -Wall -Werror -Wextra)
+  if(GAIA_CXX_COMPILER_GNU)
+    list(APPEND COMPILE_FLAGS -Wno-ignored-attributes)
+  endif()
 elseif(GAIA_OS_WINDOWS)
   if(GAIA_CXX_COMPILER_CLANG)
     # Windows, Clang
@@ -218,19 +215,23 @@ endblock()
 
 # int128 ....................................................................................................
 
-FetchContent_Declare(
-  int128
-  GIT_REPOSITORY https://github.com/boostorg/int128.git
-  GIT_TAG        v${ROCKET_INT128_VERSION}
-  GIT_PROGRESS   TRUE
-  SYSTEM
-  EXCLUDE_FROM_ALL
-)
+if(GAIA_OS_WINDOWS)
+  list(APPEND ROCKET_BOOST_LINK_TARGETS Boost::int128)
 
-block()
-  set(BUILD_SHARED_LIBS OFF)
-  FetchContent_MakeAvailable(int128)
-endblock()
+  FetchContent_Declare(
+    int128
+    GIT_REPOSITORY https://github.com/boostorg/int128.git
+    GIT_TAG        v${ROCKET_INT128_VERSION}
+    GIT_PROGRESS   TRUE
+    SYSTEM
+    EXCLUDE_FROM_ALL
+  )
+
+  block()
+    set(BUILD_SHARED_LIBS OFF)
+    FetchContent_MakeAvailable(int128)
+  endblock()
+endif()
 
 # libcbor ...................................................................................................
 

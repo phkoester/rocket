@@ -6,22 +6,16 @@ applications.
 CMake Target               | Content
 :------------------------- | :------
 `Rocket::rocket`           | The basic Rocket library for CLI applications
-`Rocket::rocket-bench`     | A library for benchmarks, using Rocket and Google benchmark
-`Rocket::rocket-gui`       | A library for GUI applications, using Rocket and WxWidgets
-`Rocket::rocket-test`      | A library for unit tests, using Rocket and GoogleTest
+`Rocket::rocket-bench`     | Rocket.Bench, a library for benchmarks, using Rocket and Google benchmark
+`Rocket::rocket-gui`       | Rocket.Gui, a library for GUI applications, using Rocket and WxWidgets
+`Rocket::rocket-test`      | Rocket.Test, a library for unit tests, using Rocket and GoogleTest
 `Rocket::rocket-test-main` | The `main` function for unit tests, using Rocket and GoogleTest
 
-Rocket depends on [icu-cmake]([https://github.com/phkoester/icu-cmake), which is a CMake wrapper for ICU4C.
+## CMake Requirements
 
-## License
-
-Licensed under either of
-
-- Apache License, Version 2.0 ([LICENSE-APACHE](LICENSE-APACHE) or
-  http://www.apache.org/licenses/LICENSE-2.0)
-- MIT license ([LICENSE-MIT](LICENSE-MIT) or http://opensource.org/licenses/MIT)
-
-at your option.
+* CMake 4.2 or higher.
+* Python 3.8 or higher. On Windows, both a native Windows Python and an MSYS Python will work.
+* On Windows, a Developer Command Prompt from Microsoft Visual Studio is required.
 
 ## Third-Party Components
 
@@ -37,11 +31,15 @@ Rocket stands on the shoulders of these giants:
 - [scnlib](https://github.com/eliaskosunen/scnlib) ([license](license/scnlib/LICENSE))
 - [wxWidgets](https://github.com/wxWidgets/wxWidgets) ([license](license/wxWidgets/licence.txt))
 
-## CMake Variables
+ICU is made available through CMake by [icu-cmake](https://github.com/phkoester/icu-cmake).
+
+## CMake Options
+
+All of the following options may be supplied either as defined CMake variables or as environment variables:
 
 | Name                              | Type     | Default                           | Description
 | :-------------------------------- | :------- | :-------------------------------- | :----------
-| `BUILD_SHARED_LIBS`               | `BOOL`   | `OFF`                             | Build shared libraries
+| `BUILD_SHARED_LIBS`               | `BOOL`   | `OFF`                             | Build shared libraries (`.so` on Linux, DLL on Windows) instead of static libraries
 | `BUILD_TESTING`                   | `BOOL`   | `ON`                              | Enable testing and build tests
 | `CMAKE_BUILD_TYPE`                | `STRING` | `Release` if single configuration | The build type (`Debug` or `Release`)
 | `COVERAGE`                        | `BOOL`   | `OFF`                             | Enable code coverage
@@ -60,3 +58,13 @@ Rocket stands on the shoulders of these giants:
 | `ROCKET_LOG`           | `string` | Runtime | Default log options, e.g. `--log all=trace`
 | `ROCKET_QUICK_EXIT`    | `bool`   | Runtime | If true, `std::quick_exit` is called rather than `std::exit`.
 | `ROCKET_TEST_TERMINAL` | `bool`   | Test    | If true, tests are run that require standard devices to be connected to a terminal.
+
+## License
+
+Licensed under either of
+
+- Apache License, Version 2.0 ([LICENSE-APACHE](LICENSE-APACHE) or
+  http://www.apache.org/licenses/LICENSE-2.0)
+- MIT license ([LICENSE-MIT](LICENSE-MIT) or http://opensource.org/licenses/MIT)
+
+at your option.

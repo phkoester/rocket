@@ -180,7 +180,6 @@ target_link_libraries(rocket
     ${ROCKET_PRIVATE_LINK_TARGETS}
   PUBLIC
     ${ROCKET_BOOST_LINK_TARGETS}
-    Boost::int128
     cbor
     fmt::fmt-header-only
     icu-cmake::uc

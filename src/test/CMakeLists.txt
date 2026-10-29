@@ -48,7 +48,6 @@ GaiaAddTest(test-rocket-codec-EqualToEncoder         rocket/codec           test
 GaiaAddTest(test-rocket-codec-FormattedCodec         rocket/codec           test-FormattedCodec.cc)
 GaiaAddTest(test-rocket-codec-HashEncoder            rocket/codec           test-HashEncoder.cc)
 GaiaAddTest(test-rocket-codec-JsonCodec              rocket/codec           test-JsonCodec.cc)
-GaiaAddTest(test-rocket-external-boost-int128        rocket/external        test-boost-int128.cc)
 GaiaAddTest(test-rocket-external-boost-safe-numerics rocket/external        test-boost-safe-numerics.cc)
 GaiaAddTest(test-rocket-external-Cxx                 rocket/external        test-Cxx.cc)
 GaiaAddTest(test-rocket-external-fmt                 rocket/external        test-fmt.cc)
@@ -75,7 +74,11 @@ GaiaAddTest(test-rocket-unicode                      rocket/unicode         test
 GaiaAddTest(test-rocket-unicode-Character            rocket/unicode         test-Character.cc)
 GaiaAddTest(test-rocket-unicode-Iterator             rocket/unicode         test-Iterator.cc)
 
-# Rocket Test ...............................................................................................
+if(GAIA_OS_WINDOWS)
+  GaiaAddTest(test-rocket-external-boost-int128 rocket/external test-boost-int128.cc)
+endif()
+
+# Rocket.Test ...............................................................................................
 
 GaiaAddTest(test-rocket-test-matcher rocket-test/matcher test-matcher.cc)
 
