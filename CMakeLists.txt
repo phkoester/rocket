@@ -4,6 +4,8 @@
 
 cmake_minimum_required(VERSION 4.2)
 
+include(FetchContent)
+
 # Project ---------------------------------------------------------------------------------------------------
 
 # Is this the master project?
@@ -16,7 +18,58 @@ endif()
 
 project(rocket VERSION 0.3.0)
 
-include($ENV{GAIA_DIR}/src/main/cmake/gaia.cmake)
+# Versions --------------------------------------------------------------------------------------------------
+
+set(ROCKET_BENCHMARK_VERSION 1.9.5)
+set(ROCKET_BOOST_VERSION 1.92.0)
+set(ROCKET_FMT_VERSION 12.2.0)
+set(ROCKET_GAIA_VERSION 1.2.0)
+set(ROCKET_GTEST_VERSION 1.17.0)
+set(ROCKET_ICU_CMAKE_VERSION 0.1.0)
+set(ROCKET_ICU_CMAKE_ICU_VERSION 79.1)
+set(ROCKET_INT128_VERSION 4.1.0)
+set(ROCKET_LIBCBOR_VERSION 0.14.0)
+set(ROCKET_SCNLIB_VERSION master)
+set(ROCKET_WXWIDGETS_VERSION 3.3.4)
+
+# Gaia ------------------------------------------------------------------------------------------------------
+
+if(NOT "$ENV{GAIA_DIR}" STREQUAL "")
+  FetchContent_Declare(
+    gaia
+    SOURCE_DIR "$ENV{GAIA_DIR}"
+  )
+else()
+  FetchContent_Declare(
+    gaia
+    GIT_REPOSITORY https://github.com/phkoester/gaia.git
+    GIT_TAG        v${ROCKET_GAIA_VERSION}
+    GIT_PROGRESS   TRUE
+    SYSTEM
+    EXCLUDE_FROM_ALL
+  )
+endif()
+FetchContent_MakeAvailable(gaia)
+
+# CMPs ------------------------------------------------------------------------------------------------------
+
+# Get rid of a warning from libcbor
+set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
+
+# XXX
+# "More read-only target properties now error when trying to set them."
+#if(POLICY CMP0160)
+#  cmake_policy(SET CMP0160 NEW)
+#endif()
+
+# General settings ------------------------------------------------------------------------------------------
+
+set(CMAKE_CXX_EXTENSIONS ON)
+set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
+set(FETCHCONTENT_QUIET FALSE)
 
 # Configuration ---------------------------------------------------------------------------------------------
 
@@ -37,20 +90,7 @@ else()
 endif()
 GaiaStatus("ROCKET_GUI: ${ROCKET_GUI}")
 
-# Manage dependencies ---------------------------------------------------------------------------------------
-
-set(ROCKET_BENCHMARK_VERSION 1.9.5)
-set(ROCKET_BOOST_VERSION 1.92.0)
-set(ROCKET_FMT_VERSION 12.2.0)
-set(ROCKET_GTEST_VERSION 1.17.0)
-set(ROCKET_ICU_CMAKE_VERSION main)
-set(ROCKET_ICU_CMAKE_ICU_VERSION 79.1)
-set(ROCKET_INT128_VERSION 4.1.0)
-set(ROCKET_LIBCBOR_VERSION 0.14.0)
-set(ROCKET_SCNLIB_VERSION master)
-set(ROCKET_WXWIDGETS_VERSION 3.3.4)
-
-include(FetchContent)
+# Dependencies ----------------------------------------------------------------------------------------------
 
 # Boost .....................................................................................................
 
@@ -86,7 +126,7 @@ FetchContent_Declare(
 
 block()
   set(BUILD_SHARED_LIBS OFF)
-  set(FMT_MODULE OFF CACHE BOOL "Build a module library" FORCE) # XXX
+  set(CACHE{FMT_MODULE} FORCE VALUE OFF)
   FetchContent_MakeAvailable(fmt)
 endblock()
 
@@ -133,17 +173,23 @@ endblock()
 
 # icu-cmake .................................................................................................
 
-FetchContent_Declare(
-  icu-cmake
-  GIT_REPOSITORY https://github.com/phkoester/icu-cmake.git
-  GIT_TAG        ${ROCKET_ICU_CMAKE_VERSION}
-  GIT_PROGRESS   TRUE
-  SYSTEM
-  EXCLUDE_FROM_ALL
-)
+if(NOT "$ENV{GAIA_DIR}" STREQUAL "")
+  FetchContent_Declare(
+    icu-cmake
+    SOURCE_DIR "$ENV{GAIA_DIR}/../icu-cmake"
+  )
+else()
+  FetchContent_Declare(
+    icu-cmake
+    GIT_REPOSITORY https://github.com/phkoester/icu-cmake.git
+    GIT_TAG        v${ROCKET_ICU_CMAKE_VERSION}
+    GIT_PROGRESS   TRUE
+    SYSTEM
+    EXCLUDE_FROM_ALL
+  )
+endif()
 
 block()
-  set(BUILD_SHARED_LIBS OFF)
   set(ICU_CMAKE_ICU_VERSION ${ROCKET_ICU_CMAKE_ICU_VERSION})
   FetchContent_MakeAvailable(icu-cmake)
 endblock()

@@ -2,22 +2,26 @@
 # CMakeLists.txt
 #
 
-set(GENERATED_DIR ${CMAKE_CURRENT_BINARY_DIR}/generated)
+include(GoogleTest)
 
 # Tests -----------------------------------------------------------------------------------------------------
 
-include(GoogleTest)
+set(GENERATED_DIR ${CMAKE_CURRENT_BINARY_DIR}/generated)
 
 # Rocket ....................................................................................................
 
 GaiaAddTest(test-rocket rocket test-rocket.cc)
 
-GaiaUnixPath(${PROJECT_SOURCE_DIR} dir)
+set(GENERATE_HELLO ${PROJECT_SOURCE_DIR}/cmake/generate-hello)
+GaiaPythonPath(${GENERATE_HELLO} GENERATE_HELLO_PYTHON)
+
 set(HELLO_CC ${GENERATED_DIR}/hello.cc)
+GaiaPythonPath(${HELLO_CC} HELLO_CC_PYTHON)
+
 add_custom_command(
   OUTPUT   ${HELLO_CC}
-  COMMAND  python3 ${dir}/bin/generate-hello -o ${HELLO_CC}
-  DEPENDS  ${PROJECT_SOURCE_DIR}/bin/generate-hello ${PROJECT_SOURCE_DIR}/CMakeLists.txt
+  COMMAND  python3 ${GENERATE_HELLO_PYTHON} -o ${HELLO_CC_PYTHON}
+  DEPENDS  ${GENERATE_HELLO} ${PROJECT_SOURCE_DIR}/CMakeLists.txt ${CMAKE_CURRENT_LIST_FILE}
   VERBATIM
 )
 GaiaAddTest(test-rocket-external-CMake rocket/external test-CMake.cc

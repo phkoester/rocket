@@ -56,12 +56,15 @@ endif()
 # `version.h` ...............................................................................................
 
 set(VERSION_H ${GENERATED_DIR}/rocket/version.h)
+GaiaPythonPath(${VERSION_H} VERSION_H_PYTHON)
 
-GaiaUnixPath($ENV{GAIA_DIR} dir)
+set(GENERATE_VERSION ${PROJECT_SOURCE_DIR}/cmake/generate-version)
+GaiaPythonPath(${GENERATE_VERSION} GENERATE_VERSION_PYTHON)
+
 add_custom_command(
   OUTPUT   ${VERSION_H}
-  COMMAND  python3 ${dir}/bin/gaia-generate-version ROCKET ${PROJECT_VERSION} -o ${VERSION_H}
-  DEPENDS  $ENV{GAIA_DIR}/bin/gaia-generate-version ${PROJECT_SOURCE_DIR}/CMakeLists.txt
+  COMMAND  python3 ${GENERATE_VERSION_PYTHON} ROCKET ${PROJECT_VERSION} -o ${VERSION_H_PYTHON}
+  DEPENDS  ${GENERATE_VERSION} ${PROJECT_SOURCE_DIR}/CMakeLists.txt ${CMAKE_CURRENT_LIST_FILE}
   VERBATIM
 )
 

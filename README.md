@@ -13,8 +13,6 @@ CMake Target               | Content
 
 Rocket depends on [icu-cmake]([https://github.com/phkoester/icu-cmake), which is a CMake wrapper for ICU4C.
 
-It is pre-alpha, a hobby project of mine, and possibly dangerous. **Use it at your own risk.**
-
 ## License
 
 Licensed under either of
