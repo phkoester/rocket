@@ -10,6 +10,7 @@
 
 #include <gmock/gmock.h>
 
+#include <concepts>
 #include <regex>
 
 namespace rocket::test::matcher {
@@ -120,9 +121,9 @@ containsRegex(std::shared_ptr<const internal::Regex> regex) {
  * @param pattern a regular expression
  * @return a matcher
  */
-template <typename T = std::string>
+template <typename T = std::string_view> requires std::constructible_from<std::string, const T&>
 inline testing::PolymorphicMatcher<internal::MatchesRegexMatcher>
-containsRegex(const testing::internal::StringLike<T>& pattern) {
+containsRegex(const T& pattern) {
   return containsRegex(std::make_shared<const internal::Regex>(std::string(pattern))); // NOLINT
 }
 
@@ -148,9 +149,9 @@ matchesRegex(std::shared_ptr<const internal::Regex> regex) {
  * @param pattern a regular expression
  * @return a matcher
  */
-template<typename T = std::string>
+template<typename T = std::string_view> requires std::constructible_from<std::string, const T&>
 inline testing::PolymorphicMatcher<internal::MatchesRegexMatcher>
-matchesRegex(const testing::internal::StringLike<T>& pattern) {
+matchesRegex(const T& pattern) {
   return matchesRegex(std::make_shared<const internal::Regex>(std::string(pattern))); // NOLINT
 }
 
