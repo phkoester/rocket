@@ -15,7 +15,7 @@ using boost::safe_numerics::safe;
 // TEST -----------------------------------------------------------------------------------------------------
 
 TEST(icu, u8Next) {
-  auto str = "hällo"sv;
+  const auto str = "hällo"sv;
   i32 i = 0;
   UChar32 cp = 0;
   U8_NEXT(str.data(), i, safe<i32>(str.size()), cp); // NOLINT

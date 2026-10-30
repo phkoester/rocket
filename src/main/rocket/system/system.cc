@@ -169,7 +169,8 @@ exec(const string& cl) {
   vector<char> ret;
   vector<char> buf(1'024);
 
-  const unique_ptr<FILE, decltype(&pclose)> pipe(popen(cl.c_str(), "r"), pclose);
+  auto closePipe = [](FILE* file) { pclose(file); };
+  const unique_ptr<FILE, decltype(closePipe)> pipe(popen(cl.c_str(), "r"), closePipe);
   if (not pipe) {
     ROCKET_FAIL("Cannot open pipe for command `{}`", cl);
   }

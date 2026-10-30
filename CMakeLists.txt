@@ -86,9 +86,6 @@ set(LINK_FLAGS)
 if(GAIA_OS_LINUX)
   # Linux
   set(COMPILE_FLAGS -Wall -Werror -Wextra)
-  if(GAIA_CXX_COMPILER_GNU)
-    # XXX list(APPEND COMPILE_FLAGS -Wno-ignored-attributes)
-  endif()
 elseif(GAIA_OS_WINDOWS)
   # Windows
   if(GAIA_CXX_COMPILER_LLVM)
