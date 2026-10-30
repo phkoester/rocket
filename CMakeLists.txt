@@ -149,7 +149,7 @@ endblock()
 
 # GTest .....................................................................................................
 
-if(BUILD_TESTING)
+if(BUILD_TESTING AND (ROCKET_BUILD_BENCH OR ROCKET_BUILD_TEST))
   FetchContent_Declare(
     GTest
     GIT_REPOSITORY https://github.com/google/googletest.git
@@ -175,7 +175,7 @@ endif()
 
 # Benchmark (must appear after GTest) .......................................................................
 
-if(BUILD_TESTING)
+if(BUILD_TESTING AND ROCKET_BUILD_BENCH)
   FetchContent_Declare(
     benchmark
     GIT_REPOSITORY https://github.com/google/benchmark.git
