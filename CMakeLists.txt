@@ -18,7 +18,7 @@ if(NOT DEFINED ROCKET_MASTER_PROJECT)
   endif()
 endif()
 
-project(rocket VERSION 0.3.3)
+project(rocket VERSION 0.3.4)
 
 # Versions --------------------------------------------------------------------------------------------------
 
@@ -149,48 +149,44 @@ endblock()
 
 # GTest .....................................................................................................
 
-if(BUILD_TESTING AND (ROCKET_BUILD_BENCH OR ROCKET_BUILD_TEST))
-  FetchContent_Declare(
-    GTest
-    GIT_REPOSITORY https://github.com/google/googletest.git
-    GIT_TAG        v${ROCKET_GTEST_VERSION}
-    GIT_PROGRESS   TRUE
-    SYSTEM
-    EXCLUDE_FROM_ALL
-  )
+FetchContent_Declare(
+  GTest
+  GIT_REPOSITORY https://github.com/google/googletest.git
+  GIT_TAG        v${ROCKET_GTEST_VERSION}
+  GIT_PROGRESS   TRUE
+  SYSTEM
+  EXCLUDE_FROM_ALL
+)
 
-  block()
-    set(BUILD_SHARED_LIBS OFF)
-    if(GAIA_OS_WINDOWS)
-      # For Windows: Prevent overriding the parent project's compiler/linker settings
-      set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-    endif()
-    FetchContent_MakeAvailable(GTest)
-    if(GAIA_CXX_COMPILER_LLVM)
-      target_compile_options(gtest PRIVATE -Wno-character-conversion)
-      target_compile_options(gmock PRIVATE -Wno-character-conversion)
-    endif()
-  endblock()
-endif()
+block()
+  set(BUILD_SHARED_LIBS OFF)
+  if(GAIA_OS_WINDOWS)
+    # For Windows: Prevent overriding the parent project's compiler/linker settings
+    set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+  endif()
+  FetchContent_MakeAvailable(GTest)
+  if(GAIA_CXX_COMPILER_LLVM)
+    target_compile_options(gtest PRIVATE -Wno-character-conversion)
+    target_compile_options(gmock PRIVATE -Wno-character-conversion)
+  endif()
+endblock()
 
 # Benchmark (must appear after GTest) .......................................................................
 
-if(BUILD_TESTING AND ROCKET_BUILD_BENCH)
-  FetchContent_Declare(
-    benchmark
-    GIT_REPOSITORY https://github.com/google/benchmark.git
-    GIT_TAG        v${ROCKET_BENCHMARK_VERSION}
-    GIT_PROGRESS   TRUE
-    SYSTEM
-    EXCLUDE_FROM_ALL
-  )
+FetchContent_Declare(
+  benchmark
+  GIT_REPOSITORY https://github.com/google/benchmark.git
+  GIT_TAG        v${ROCKET_BENCHMARK_VERSION}
+  GIT_PROGRESS   TRUE
+  SYSTEM
+  EXCLUDE_FROM_ALL
+)
 
-  block()
-    set(BUILD_SHARED_LIBS OFF)
-    set(BENCHMARK_DOWNLOAD_DEPENDENCIES OFF)
-    FetchContent_MakeAvailable(benchmark)
-  endblock()
-endif()
+block()
+  set(BUILD_SHARED_LIBS OFF)
+  set(BENCHMARK_DOWNLOAD_DEPENDENCIES OFF)
+  FetchContent_MakeAvailable(benchmark)
+endblock()
 
 # icu-cmake .................................................................................................
 
