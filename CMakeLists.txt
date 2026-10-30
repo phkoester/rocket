@@ -90,7 +90,7 @@ elseif(GAIA_OS_WINDOWS)
   # Windows
   if(GAIA_CXX_COMPILER_LLVM)
     # Windows, LLVM
-    set(COMPILE_FLAGS -Werror -Wextra)
+    set(COMPILE_FLAGS -Werror -Wextra) # No `-Wall` on Windows
   elseif(GAIA_CXX_COMPILER_MSVC)
     # Windows, MSVC
     set(COMPILE_FLAGS /bigobj /Zc:preprocessor)
