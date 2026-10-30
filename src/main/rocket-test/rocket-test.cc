@@ -42,12 +42,11 @@ binExecutable(string_view name) {
   if (is_regular_file(ret)) {
     return ret;
   }
-  if (not CONFIG) {
-    ROCKET_FAIL("`CONFIG` is not set");
-  }
-  ret = fs::path(*BINARY_DIR) / ".." / "bin" / *CONFIG / fileName;
-  if (is_regular_file(ret)) {
-    return ret;
+  if (CONFIG) {
+    ret = fs::path(*BINARY_DIR) / ".." / "bin" / *CONFIG / fileName;
+    if (is_regular_file(ret)) {
+      return ret;
+    }
   }
   ROCKET_FAIL("Cannot find test executable `{}`", name);
   return ret;
@@ -63,12 +62,11 @@ testExecutable(string_view name) {
   if (is_regular_file(ret)) {
     return ret;
   }
-  if (not CONFIG) {
-    ROCKET_FAIL("`CONFIG` is not set");
-  }
-  ret = fs::path(*BINARY_DIR) / *CONFIG / fileName;
-  if (is_regular_file(ret)) {
-    return ret;
+  if (CONFIG) {
+    ret = fs::path(*BINARY_DIR) / *CONFIG / fileName;
+    if (is_regular_file(ret)) {
+      return ret;
+    }
   }
   ROCKET_FAIL("Cannot find test executable `{}`", name);
   return ret;
