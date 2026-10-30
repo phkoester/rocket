@@ -4,8 +4,8 @@
 
 # Benchmarks ------------------------------------------------------------------------------------------------
 
-GaiaAddBench(bench-rocket-nio rocket/nio bench-nio.cc)
+RocketAddBench(bench-rocket-nio rocket/nio bench-nio.cc)
 
-GaiaAddBench(bench-rocket-map rocket bench-map.cc)
+RocketAddBench(bench-rocket-map rocket bench-map.cc)
 
 # EOF

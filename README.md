@@ -40,12 +40,12 @@ All of the following options may be supplied either as defined CMake variables o
 
 | Name                              | Type     | Default                           | Description
 | :-------------------------------- | :------- | :-------------------------------- | :----------
-| `BUILD_SHARED_LIBS`               | `BOOL`   | `OFF`                             | Build shared libraries (`.so` on Linux, DLL on Windows) instead of static libraries
-| `BUILD_TESTING`                   | `BOOL`   | `ON`                              | Enable testing and build tests
+| `BUILD_COVERAGE`                  | `BOOL`   | `OFF`                             | Enable code coverage and generate reports
+| `BUILD_SHARED_LIBS`               | `BOOL`   | `OFF`                             | Build shared libraries
+| `BUILD_TESTING`                   | `BOOL`   | `ON`                              | Enable testing: benchmarks and tests
 | `CMAKE_BUILD_TYPE`                | `STRING` | `Release` if single configuration | The build type (`Debug` or `Release`)
-| `COVERAGE`                        | `BOOL`   | `OFF`                             | Enable code coverage
-| `ROCKET_BUILD_BENCH`              | `BOOL`   | `ON` if master project            | Enable benchmarking and build benchmarks
-| `ROCKET_BUILD_TEST`               | `BOOL`   | `ON` if master project            | Build the unit tests
+| `ROCKET_BUILD_BENCH`              | `BOOL`   | `ON` if master project            | Build benchmarks
+| `ROCKET_BUILD_TEST`               | `BOOL`   | `ON` if master project            | Build tests
 | `ROCKET_COMPONENTS`               | `STRING` | &mdash;                           | Additional components to enable: `gui`
 | `ROCKET_IO_LOG`                   | `BOOL`   | `OFF`                             | Enable logging of `rocket::io`
 | `ROCKET_NIO_LOG`                  | `BOOL`   | `OFF`                             | Enable logging of `rocket::nio`

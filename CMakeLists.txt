@@ -4,6 +4,8 @@
 
 cmake_minimum_required(VERSION 4.2)
 
+include(${CMAKE_CURRENT_LIST_DIR}/cmake/RocketFunctions.cmake)
+
 include(FetchContent)
 
 # Project ---------------------------------------------------------------------------------------------------
@@ -67,8 +69,8 @@ set(FETCHCONTENT_QUIET FALSE)
 
 # Configuration ---------------------------------------------------------------------------------------------
 
-GaiaAddVar(ROCKET_BUILD_BENCH              BOOL   ${ROCKET_MASTER_PROJECT} "Enable benchmarking and build benchmarks")
-GaiaAddVar(ROCKET_BUILD_TEST               BOOL   ${ROCKET_MASTER_PROJECT} "Enable testing and build tests")
+GaiaAddVar(ROCKET_BUILD_BENCH              BOOL   ${ROCKET_MASTER_PROJECT} "Build benchmarks")
+GaiaAddVar(ROCKET_BUILD_TEST               BOOL   ${ROCKET_MASTER_PROJECT} "Build tests")
 GaiaAddVar(ROCKET_COMPONENTS               STRING ""                       "Additional components to enable: `gui`")
 GaiaAddVar(ROCKET_IO_LOG                   BOOL   OFF                      "Enable logging of `rocket::io`")
 GaiaAddVar(ROCKET_NIO_LOG                  BOOL   OFF                      "Enable logging of `rocket::nio`")
@@ -83,23 +85,19 @@ set(LINK_FLAGS)
 
 if(GAIA_OS_LINUX)
   # Linux
-  set(COMPILE_FLAGS -Wall -Werror -Wextra
-    --Wno-ignored-attributes
-  )
+  set(COMPILE_FLAGS -Wall -Werror -Wextra)
+  if(GAIA_CXX_COMPILER_GNU)
+    # XXX list(APPEND COMPILE_FLAGS -Wno-ignored-attributes)
+  endif()
 elseif(GAIA_OS_WINDOWS)
   # Windows
-  if(GAIA_CXX_COMPILER_CLANG)
-    # Windows, Clang
+  if(GAIA_CXX_COMPILER_LLVM)
+    # Windows, LLVM
     set(COMPILE_FLAGS -Werror -Wextra)
   elseif(GAIA_CXX_COMPILER_MSVC)
     # Windows, MSVC
     set(COMPILE_FLAGS /bigobj /Zc:preprocessor)
   endif()
-endif()
-
-if(COVERAGE)
-  list(APPEND COMPILE_FLAGS -coverage)
-  list(APPEND LINK_FLAGS -coverage)
 endif()
 
 # Configure components --------------------------------------------------------------------------------------
@@ -171,7 +169,7 @@ if(BUILD_TESTING)
       set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
     endif()
     FetchContent_MakeAvailable(GTest)
-    if(GAIA_CXX_COMPILER_CLANG)
+    if(GAIA_CXX_COMPILER_LLVM)
       target_compile_options(gtest PRIVATE -Wno-character-conversion)
       target_compile_options(gmock PRIVATE -Wno-character-conversion)
     endif()
@@ -255,7 +253,7 @@ block()
   set(BUILD_SHARED_LIBS OFF)
   set(SANITIZE OFF) #
   FetchContent_MakeAvailable(libcbor)
-  if(GAIA_CXX_COMPILER_CLANG)
+  if(GAIA_CXX_COMPILER_LLVM)
     target_compile_options(cbor PRIVATE -Wno-unused-variable) # XXX
   endif()
 endblock()

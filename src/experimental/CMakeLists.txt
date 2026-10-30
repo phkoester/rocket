@@ -12,7 +12,6 @@ if(ROCKET_GUI)
   if (GAIA_OS_WINDOWS)
     target_link_options(guy PRIVATE /subsystem:windows)
   endif()
-  GaiaCopyRuntimeFiles(guy)
 
   set(xrc_files ${CMAKE_CURRENT_SOURCE_DIR}/guy/resource.xrc)
   set(resource_cc ${CMAKE_CURRENT_BINARY_DIR}/resource.cc)

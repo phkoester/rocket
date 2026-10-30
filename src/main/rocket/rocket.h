@@ -68,7 +68,7 @@
 #endif
 
 #if not defined(ROCKET_CXX_COMPILER_GNU) && \
-  not defined(ROCKET_CXX_COMPILER_CLANG) && \
+  not defined(ROCKET_CXX_COMPILER_LLVM) && \
   not defined(ROCKET_CXX_COMPILER_MSVC)
   #error Unknown compiler
 #endif
