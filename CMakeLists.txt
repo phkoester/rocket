@@ -122,8 +122,10 @@ set(ROCKET_BOOST_COMPONENTS
   safe_numerics
 )
 
-find_package(Boost ${ROCKET_BOOST_VERSION} COMPONENTS ${ROCKET_BOOST_COMPONENTS})
+find_package(Boost ${ROCKET_BOOST_VERSION} QUIET COMPONENTS ${ROCKET_BOOST_COMPONENTS})
 if(NOT Boost_FOUND)
+  GaiaStatus("Boost ${ROCKET_BOOST_VERSION} not found; fetching it")
+
   # This works with Boost 1.87.0 or higher
   FetchContent_Declare(
     Boost
@@ -228,7 +230,7 @@ endif()
 # int128 ....................................................................................................
 
 if(GAIA_OS_WINDOWS)
-  list(APPEND ROCKET_BOOST_LINK_TARGETS Boost::int128)
+  list(APPEND ROCKET_BOOST_COMPONENTS int128)
 
   FetchContent_Declare(
     int128
