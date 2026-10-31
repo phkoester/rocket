@@ -8,6 +8,7 @@
 #include "rocket/cl/cl.h"
 #include "rocket/enum.h"
 #include "rocket/log/log.h"
+#include "rocket/system/system.h"
 #include "rocket/version.h"
 
 #include <string>
@@ -45,6 +46,7 @@ myTerminate() {
 
 void
 toy() {
+  system::exec("echo a");
 }
 
 } // namespace

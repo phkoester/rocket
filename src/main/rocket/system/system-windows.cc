@@ -3,6 +3,7 @@
  */
 
 #include "rocket/assert.h"
+#include "rocket/nio/nio.h" // XX
 
 #include <array>
 #include <memory>
@@ -11,6 +12,7 @@
 
 #include <Windows.h>
 
+using namespace rocket; // XXX
 using namespace std;
 
 namespace {
@@ -31,6 +33,7 @@ struct ConsoleModeGuard {
       DWORD mode = 0;
       if (GetConsoleMode(entry.handle, &mode) != 0) {
         entry.mode = mode;
+        nio::out.println("Got console mode for {}: 0x{:x}", entry.name, mode);
       }
     }
   }
@@ -44,6 +47,7 @@ struct ConsoleModeGuard {
       }
       if (entry.mode) {
         SetConsoleMode(entry.handle, *entry.mode);
+        nio::out.println("Set mode for {}: 0x{:x}", entry.name, *entry.mode);
       }
       CloseHandle(entry.handle);
     }
@@ -78,7 +82,8 @@ exec(const string& cl) {
 
   ConsoleModeGuard cmg;
 
-  const unique_ptr<FILE, decltype(&_pclose)> pipe(_popen(cl.c_str(), "r"), _pclose);
+  const auto closePipe = [](FILE* pipe) { _pclose(pipe); };
+  const unique_ptr<FILE, decltype(closePipe)> pipe(_popen(cl.c_str(), "r"), closePipe);
   if (not pipe) {
     ROCKET_FAIL("Cannot open pipe for command `{}`", cl);
   }
