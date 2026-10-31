@@ -111,24 +111,35 @@ GaiaStatus("ROCKET_GUI: ${ROCKET_GUI}")
 
 # Boost .....................................................................................................
 
-FetchContent_Declare(
-  Boost
-  URL          https://github.com/boostorg/boost/releases/download/boost-${ROCKET_BOOST_VERSION}/boost-${ROCKET_BOOST_VERSION}-cmake.7z
-  GIT_PROGRESS TRUE
-  SYSTEM
-  EXCLUDE_FROM_ALL
+set(ROCKET_BOOST_COMPONENTS
+  algorithm
+  asio
+  bimap
+  filesystem
+  headers
+  iostreams
+  preprocessor
+  safe_numerics
 )
 
-set(ROCKET_BOOST_LIBS algorithm asio bimap headers iostreams preprocessor safe_numerics)
-set(ROCKET_BOOST_LINK_TARGETS ${ROCKET_BOOST_LIBS})
-list(TRANSFORM ROCKET_BOOST_LINK_TARGETS PREPEND Boost::)
+find_package(Boost ${ROCKET_BOOST_VERSION} COMPONENTS ${ROCKET_BOOST_COMPONENTS})
+if(NOT Boost_FOUND)
+  # This works with Boost 1.87.0 or higher
+  FetchContent_Declare(
+    Boost
+    URL          https://github.com/boostorg/boost/releases/download/boost-${ROCKET_BOOST_VERSION}/boost-${ROCKET_BOOST_VERSION}-cmake.7z
+    GIT_PROGRESS TRUE
+    SYSTEM
+    EXCLUDE_FROM_ALL
+  )
 
-block()
-  set(BUILD_SHARED_LIBS OFF)
-  set(BOOST_ENABLE_CMAKE ON)
-  set(BOOST_INCLUDE_LIBRARIES ${ROCKET_BOOST_LIBS})
-  FetchContent_MakeAvailable(Boost)
-endblock()
+  block()
+    set(BUILD_SHARED_LIBS OFF)
+    set(BOOST_ENABLE_CMAKE ON)
+    set(BOOST_INCLUDE_LIBRARIES ${ROCKET_BOOST_COMPONENTS})
+    FetchContent_MakeAvailable(Boost)
+  endblock()
+endif()
 
 # fmt .......................................................................................................
 
