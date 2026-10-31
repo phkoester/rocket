@@ -71,7 +71,10 @@ add_custom_command(
 # Add the library ...........................................................................................
 
 GaiaAddLibrary(rocket ${VERSION_H})
-set_target_properties(rocket PROPERTIES VERSION ${PROJECT_VERSION}) # SOVERSION 0
+set_target_properties(rocket
+  PROPERTIES
+    VERSION ${PROJECT_VERSION} # SOVERSION 0
+    WINDOWS_EXPORT_ALL_SYMBOLS ON)
 target_include_directories(rocket SYSTEM
   PRIVATE ${CMAKE_BINARY_DIR}/_deps/scnlib-src/src # Make `scn/impl.h` available
   PUBLIC  ${GENERATED_DIR}
@@ -205,7 +208,10 @@ add_library(Rocket::rocket-bench ALIAS rocket-bench)
 
 if(ROCKET_GUI)
   GaiaAddLibrary(rocket-gui)
-  set_target_properties(rocket-gui PROPERTIES VERSION ${PROJECT_VERSION}) # SOVERSION 0
+  set_target_properties(rocket-gui
+    PROPERTIES
+      VERSION ${PROJECT_VERSION} # SOVERSION 0
+      WINDOWS_EXPORT_ALL_SYMBOLS ON)
   target_sources(rocket-gui PRIVATE rocket-gui/rocket-gui.cc)
   target_compile_definitions(rocket-gui PUBLIC ROCKET_GUI)
   target_link_libraries(rocket-gui PUBLIC Rocket::rocket wxWidgets::wxWidgets)

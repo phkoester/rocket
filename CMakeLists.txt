@@ -64,7 +64,7 @@ set(CMAKE_CXX_EXTENSIONS ON)
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
+set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS OFF)
 set(FETCHCONTENT_QUIET FALSE)
 
 # Configuration ---------------------------------------------------------------------------------------------
@@ -283,7 +283,7 @@ if(ROCKET_GUI)
   )
 
   block()
-    # If Rocket is built as shared libraries, wxWidgets must be built as shared libraries as well
+    # Don't change `BUILD_SHARED_LIBS`here
     set(wxUSE_UNICODE_UTF8 ON)
     FetchContent_MakeAvailable(wxWidgets)
   endblock()
