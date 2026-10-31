@@ -3,8 +3,7 @@
  */
 
 {
-  "dependencies": ["icu-cmake"],
-  "version": "0.3.4"
+  "dependencies": ["icu-cmake"]
 }
 
 // EOF

@@ -121,7 +121,7 @@ containsRegex(std::shared_ptr<const internal::Regex> regex) {
  * @param pattern a regular expression
  * @return a matcher
  */
-template <typename T = std::string_view> requires std::constructible_from<std::string, const T&>
+template <typename T = std::string_view> requires std::constructible_from<std::string_view, const T&>
 inline testing::PolymorphicMatcher<internal::MatchesRegexMatcher>
 containsRegex(const T& pattern) {
   return containsRegex(std::make_shared<const internal::Regex>(std::string(pattern))); // NOLINT
@@ -149,7 +149,7 @@ matchesRegex(std::shared_ptr<const internal::Regex> regex) {
  * @param pattern a regular expression
  * @return a matcher
  */
-template<typename T = std::string_view> requires std::constructible_from<std::string, const T&>
+template<typename T = std::string_view> requires std::constructible_from<std::string_view, const T&>
 inline testing::PolymorphicMatcher<internal::MatchesRegexMatcher>
 matchesRegex(const T& pattern) {
   return matchesRegex(std::make_shared<const internal::Regex>(std::string(pattern))); // NOLINT

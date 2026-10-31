@@ -23,7 +23,7 @@ def write_header(f, name, version_string):
 f"""/**
  * @file version.h
  *
- * This is a generated file.
+ * This is a generated file. Do not edit.
  */
 
 #pragma once

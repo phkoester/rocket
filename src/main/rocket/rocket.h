@@ -140,13 +140,15 @@ using f64 = std_double; ///< A 64-bit floating point.
 
 // Detect endianness ----------------------------------------------------------------------------------------
 
+/// Whether the native host architecture is little endian.
+constexpr bool HAS_LITTLE_ENDIAN = std::endian::native == std::endian::little;
+/// Whether the native host architecture is big endian.
+constexpr bool HAS_BIG_ENDIAN = std::endian::native == std::endian::big;
+
 // Mixed/middle endian is not supported
 static_assert(
-  std::endian::native == std::endian::little || std::endian::native == std::endian::big,
+  HAS_LITTLE_ENDIAN || HAS_BIG_ENDIAN,
   "Only little-endian and big-endian architectures are supported");
-
-/// Whether the native architecture is little-endian.
-constexpr bool HAS_LITTLE_ENDIAN = std::endian::native == std::endian::little;
 
 // Constants ------------------------------------------------------------------------------------------------
 
