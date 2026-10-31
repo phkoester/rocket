@@ -6,8 +6,8 @@
 
 # Private functions -----------------------------------------------------------------------------------------
 
-# RocketParseArgs__(outSrcFiles outEnv srcFile... [ENVIRONMENT name=value]...)
-function(RocketParseArgs__ outSrcFiles outEnv)
+# RocketParseTestArgs__(outSrcFiles outEnv srcFile... [ENVIRONMENT name=value]...)
+function(RocketParseTestArgs__ outSrcFiles outEnv)
   set(srcFiles)
   set(env)
   set(appendTo srcFiles)
@@ -27,7 +27,7 @@ endfunction()
 
 # RocketAddBench(name dir srcFile... [ENVIRONMENT name=value...])
 function(RocketAddBench name dir)
-  RocketParseArgs__(srcFiles env ${ARGN})
+  RocketParseTestArgs__(srcFiles env ${ARGN})
 
   list(TRANSFORM srcFiles PREPEND "${dir}/")
   GaiaAddExecutable(${name} ${srcFiles})
@@ -52,7 +52,7 @@ endfunction()
 
 # RocketAddTest(name dir srcFile... [ENVIRONMENT name=value...])
 function(RocketAddTest name dir)
-  RocketParseArgs__(srcFiles env ${ARGN})
+  RocketParseTestArgs__(srcFiles env ${ARGN})
 
   list(TRANSFORM srcFiles PREPEND "${dir}/")
   GaiaAddExecutable(${name} ${srcFiles})

@@ -27,8 +27,8 @@ set(ROCKET_BOOST_VERSION 1.92.0)
 set(ROCKET_FMT_VERSION 12.2.0)
 set(ROCKET_GAIA_VERSION 1.2.3)
 set(ROCKET_GTEST_VERSION 1.18.0)
+set(ROCKET_ICU_VERSION 79.1)
 set(ROCKET_ICU_CMAKE_VERSION 0.1.2)
-set(ROCKET_ICU_CMAKE_ICU_VERSION 79.1)
 set(ROCKET_INT128_VERSION 4.1.0)
 set(ROCKET_LIBCBOR_VERSION 0.14.0)
 set(ROCKET_SCNLIB_VERSION master)
@@ -188,28 +188,31 @@ block()
   FetchContent_MakeAvailable(benchmark)
 endblock()
 
-# icu-cmake .................................................................................................
+# ICU .......................................................................................................
 
-if(DEFINED ENV{GAIA_DIR})
-  FetchContent_Declare(
-    icu-cmake
-    SOURCE_DIR "$ENV{GAIA_DIR}/../icu-cmake"
-  )
-else()
-  FetchContent_Declare(
-    icu-cmake
-    GIT_REPOSITORY https://github.com/phkoester/icu-cmake.git
-    GIT_TAG        v${ROCKET_ICU_CMAKE_VERSION}
-    GIT_PROGRESS   TRUE
-    SYSTEM
-    EXCLUDE_FROM_ALL
-  )
+find_package(ICU ${ROCKET_ICU_VERSION} COMPONENTS uc)
+if(NOT ICU_FOUND)
+  if(DEFINED ENV{GAIA_DIR})
+    FetchContent_Declare(
+      icu-cmake
+      SOURCE_DIR "$ENV{GAIA_DIR}/../icu-cmake"
+    )
+  else()
+    FetchContent_Declare(
+      icu-cmake
+      GIT_REPOSITORY https://github.com/phkoester/icu-cmake.git
+      GIT_TAG        v${ROCKET_ICU_CMAKE_VERSION}
+      GIT_PROGRESS   TRUE
+      SYSTEM
+      EXCLUDE_FROM_ALL
+    )
+  endif()
+
+  block()
+    set(ICU_CMAKE_ICU_VERSION ${ROCKET_ICU_VERSION})
+    FetchContent_MakeAvailable(icu-cmake)
+  endblock()
 endif()
-
-block()
-  set(ICU_CMAKE_ICU_VERSION ${ROCKET_ICU_CMAKE_ICU_VERSION})
-  FetchContent_MakeAvailable(icu-cmake)
-endblock()
 
 # int128 ....................................................................................................
 

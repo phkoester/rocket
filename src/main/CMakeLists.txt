@@ -182,7 +182,7 @@ target_link_libraries(rocket
     ${ROCKET_BOOST_LINK_TARGETS}
     cbor
     fmt::fmt-header-only
-    icu-cmake::uc
+    ICU::uc
     scn::scn
 )
 add_library(Rocket::rocket ALIAS rocket)
