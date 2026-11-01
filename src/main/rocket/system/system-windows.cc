@@ -77,7 +77,7 @@ namespace rocket::system {
 
 string
 exec(const string& cl) {
-  vector<char> ret;
+  string ret;
   vector<char> buf(1'024);
 
   ConsoleModeGuard cmg;
