@@ -6,8 +6,14 @@
 
 #include "rocket/assert.h"
 
-#include <unicode/brkiter.h>
-#include <unicode/unistr.h>
+#include <unicode/ubrk.h>
+#include <unicode/uloc.h>
+#include <unicode/utext.h>
+#include <unicode/utf16.h>
+#include <unicode/utf8.h>
+
+#include <array>
+#include <limits>
 
 using namespace rocket;
 using namespace rocket::unicode;
@@ -15,144 +21,139 @@ using namespace std;
 
 namespace rocket::unicode {
 
-// `IteratorImpl` -------------------------------------------------------------------------------------------
-
-/**
- * Nothing from the `icu` namespace may surface in the public API, so we wrap it here.
- */
-struct IteratorImpl {
-  icu::UnicodeString unicodeString;
-  unique_ptr<icu::BreakIterator> iter;
-};
-
 // `Iterator` -----------------------------------------------------------------------------------------------
 
 template<typename C> requires IsChar<C>
 Iterator<C>::Iterator(IteratorType type, basic_string_view<C> input, const locale& loc) : // NOLINT(*-complexity)
-  input_(input),
-  impl_(new IteratorImpl(), [](IteratorImpl* val) { delete val; }) { // NOLINT
-  // 1. Make the `UnicodeString`
+  input_(input) {
+  // ICU break positions are `int32_t`
+  ROCKET_CHECK(input, input.size() <= static_cast<u64>(numeric_limits<i32>::max()), "Input too long");
 
-  auto& str = impl_->unicodeString;
+  // 1. Validate the input and, for UTF-32, convert it to UTF-16
+
+  const auto inputLength = static_cast<i32>(input.size());
   if constexpr (same_as<C, char>) {
-    str = icu::UnicodeString::fromUTF8(input);
+    for (i32 i = 0; i < inputLength;) {
+      UChar32 cp; // NOLINT
+      U8_NEXT(input.data(), i, inputLength, cp);
+      ROCKET_CHECK(input, cp >= 0, "Invalid UTF-8 input");
+    }
   } else {
-    str = icu::UnicodeString::fromUTF32(reinterpret_cast<const UChar32*>(input.data()), input.size());
-  }
-  ROCKET_CHECK(input, not str.isBogus());
-
-  // 2. Loop through the `UnicodeString` and populate `unicodeStringToInput_`
-
-  const i32 u16length = str.length();
-  const UChar* u16Buf = str.getBuffer();
-  i32 u16Index = 0;
-  UChar32 u16cp; // NOLINT
-
-  const u64 inputLength = input.size();
-  u64 inputIndex = 0;
-  UChar32 inputCp; // NOLINT
-
-  while (u16Index < u16length) {
-    // Add a mapping for this input position
-    unicodeStringToInput_.insert({ static_cast<u64>(u16Index), inputIndex });
-
-    // Get next U16 code point
-    U16_NEXT(u16Buf, u16Index, u16length, u16cp);
-
-    // Get next input code point (UTF-8 or UTF-32)
-    ROCKET_CHECK(input, inputIndex < inputLength);
-    if constexpr (same_as<C, char>) {
-      // UTF-8: Use `U8_NEXT` to loop through `input`
-      U8_NEXT(input.data(), inputIndex, inputLength, inputCp);
-    } else {
-      // UTF-32: Easy
-      inputCp = input[inputIndex++];
+    u16_.reserve(input.size());
+    for (auto ch : input) {
+      const auto cp = static_cast<u32>(ch);
+      ROCKET_CHECK(input, cp <= 0x10ffff and not U_IS_SURROGATE(cp), "Invalid UTF-32 input");
+      if (U_IS_BMP(cp)) {
+        u16_.push_back(static_cast<char16_t>(cp));
+      } else {
+        supplementaries_.push_back(static_cast<i32>(u16_.size()));
+        u16_.push_back(static_cast<char16_t>(U16_LEAD(cp)));
+        u16_.push_back(static_cast<char16_t>(U16_TRAIL(cp)));
+      }
     }
-
-    // Verify the code points match
-    const char* msg; // NOLINT
-    if constexpr (same_as<C, char>) {
-      msg = "Invalid UTF-8 input";
-    } else {
-      msg = "Invalid UTF-32 input";
-    }
-    ROCKET_CHECK(input, inputCp == u16cp, "{}", msg);
+    ROCKET_CHECK(input, u16_.size() <= static_cast<u64>(numeric_limits<i32>::max()), "Input too long");
   }
 
-  // Add a mapping for EOI
-  unicodeStringToInput_.insert({ static_cast<u64>(u16Index), inputIndex });
-
-  // 3. Create the `BreakIterator`
-
-  const icu::Locale icuLoc(loc.name().c_str());
-  ROCKET_CHECK(loc, not icuLoc.isBogus());
-
-  auto& iter = impl_->iter;
+  // 2. Resolve the locale
 
   UErrorCode status = U_ZERO_ERROR;
+  array<char, ULOC_FULLNAME_CAPACITY> locName{};
+  uloc_getName(loc.name().c_str(), locName.data(), static_cast<i32>(locName.size()), &status);
+  ROCKET_CHECK(loc, U_SUCCESS(status) and status != U_STRING_NOT_TERMINATED_WARNING, "Invalid locale");
+
+  // 3. Create the break iterator
+
+  UBreakIteratorType ubrkType = UBRK_CHARACTER;
   switch (type) {
     case IteratorType::Character:
-      iter.reset(icu::BreakIterator::createCharacterInstance(icuLoc, status));
+      ubrkType = UBRK_CHARACTER;
       break;
     case IteratorType::Line:
-      iter.reset(icu::BreakIterator::createLineInstance(icuLoc, status));
+      ubrkType = UBRK_LINE;
       break;
     case IteratorType::Sentence:
-      iter.reset(icu::BreakIterator::createSentenceInstance(icuLoc, status));
-      break;
-    case IteratorType::Title:
-      iter.reset(icu::BreakIterator::createTitleInstance(icuLoc, status));
+      ubrkType = UBRK_SENTENCE;
       break;
     case IteratorType::Word:
-      iter.reset(icu::BreakIterator::createWordInstance(icuLoc, status));
+      ubrkType = UBRK_WORD;
       break;
     default:
       ROCKET_FLOP(type, "Invalid iterator type {}", static_cast<i32>(type));
   }
+
+  status = U_ZERO_ERROR;
+  iter_.reset(ubrk_open(ubrkType, locName.data(), nullptr, 0, &status));
   ROCKET_EXPECT(U_SUCCESS(status));
 
-  // Assign the `UnicodeString` to the `BreakIterator`
-  iter->setText(str);
+  // 4. Assign the text to the break iterator
+
+  if constexpr (same_as<C, char>) {
+    // Iterate over the UTF-8 input directly. A UTF-8 `UText` uses byte offsets as native indices, so the
+    // break positions are positions in `input_`. The break iterator makes a shallow clone of the `UText`, so
+    // we may close ours right away; the text itself must stay valid, which is a precondition anyway
+    UText* text = utext_openUTF8(nullptr, input.data(), inputLength, &status);
+    ROCKET_EXPECT(U_SUCCESS(status));
+    ubrk_setUText(iter_.get(), text, &status);
+    utext_close(text);
+  } else {
+    ubrk_setText(iter_.get(), reinterpret_cast<const UChar*>(u16_.data()), static_cast<i32>(u16_.size()), &status);
+  }
+  ROCKET_EXPECT(U_SUCCESS(status));
 }
 
 template<typename C> requires IsChar<C>
 u64
 Iterator<C>::current() const {
-  return unicodeStringToInput_.left.at(impl_->iter->current());
+  return toInput(ubrk_current(iter_.get()));
 }
 
 template<typename C> requires IsChar<C>
 u64
 Iterator<C>::first() {
-  auto val = impl_->iter->first();
-  return unicodeStringToInput_.left.at(val);
+  return toInput(ubrk_first(iter_.get()));
 }
 
 template<typename C> requires IsChar<C>
 u64
 Iterator<C>::last() {
-  auto val = impl_->iter->last();
-  return unicodeStringToInput_.left.at(val);
+  return toInput(ubrk_last(iter_.get()));
 }
 
 template<typename C> requires IsChar<C>
 u64
 Iterator<C>::next() {
-  auto pos = impl_->iter->next();
-  if (pos == icu::BreakIterator::DONE) {
-    return NPOS;
-  }
-  return unicodeStringToInput_.left.at(pos);
+  return toInput(ubrk_next(iter_.get()));
 }
 
 template<typename C> requires IsChar<C>
 u64
 Iterator<C>::previous() {
-  auto pos = impl_->iter->previous();
-  if (pos == icu::BreakIterator::DONE) {
+  return toInput(ubrk_previous(iter_.get()));
+}
+
+template<typename C> requires IsChar<C>
+u64
+Iterator<C>::toInput(i32 pos) const {
+  if (pos == UBRK_DONE) {
     return NPOS;
   }
-  return unicodeStringToInput_.left.at(pos);
+  if constexpr (same_as<C, char>) {
+    // UTF-8 positions are native `UText` indices, i.e., byte offsets into `input_`
+    return static_cast<u64>(pos);
+  } else {
+    // Each surrogate pair before `pos` takes two UTF-16 units but only one UTF-32 unit. Break positions never
+    // fall inside a surrogate pair
+    const auto n = lower_bound(supplementaries_.begin(), supplementaries_.end(), pos) - supplementaries_.begin();
+    return static_cast<u64>(pos - n);
+  }
+}
+
+// `Iterator::BreakIteratorCloser` --------------------------------------------------------------------------
+
+template<typename C> requires IsChar<C>
+void
+Iterator<C>::BreakIteratorCloser::operator()(UBreakIterator* val) const noexcept {
+  ubrk_close(val);
 }
 
 // Template instantiations ----------------------------------------------------------------------------------

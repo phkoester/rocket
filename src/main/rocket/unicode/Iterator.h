@@ -6,10 +6,18 @@
 
 #pragma once
 
-#include "rocket/Bimap.h"
 #include "rocket/type-traits.h"
 
 #include <algorithm>
+#include <locale>
+#include <memory>
+#include <string_view>
+#include <vector>
+
+// `UBreakIterator` -----------------------------------------------------------------------------------------
+
+/// Opaque ICU break-iterator type, see `<unicode/ubrk.h>`
+struct UBreakIterator;
 
 namespace rocket::unicode {
 
@@ -20,13 +28,10 @@ enum class IteratorType : u8 {
   Character, ///< Iterate over characters
   Line, ///< Iterate over lines
   Sentence, ///< Iterate over sentences
-  Title, ///< Iterate over title boundaries
   Word ///< Iterate over words
 };
 
 // `Iterator` -----------------------------------------------------------------------------------------------
-
-struct IteratorImpl;
 
 /**
  * A Unicode-aware string iterator.
@@ -157,9 +162,30 @@ struct Iterator {
 
 private:
 
+  /// Deleter for an ICU `UBreakIterator`. For internal use only.
+  struct BreakIteratorCloser {
+    void operator()(UBreakIterator* val) const noexcept;
+  };
+
+  /// The input passed to the constructor.
   std::basic_string_view<C> input_;
-  std::unique_ptr<IteratorImpl, void(*)(IteratorImpl*)> impl_;
-  Positions unicodeStringToInput_;
+  /// The ICU break iterator
+  std::unique_ptr<UBreakIterator, BreakIteratorCloser> iter_;
+  /**
+   * UTF-32 only: The input converted to UTF-16. A #std::vector is used because its move operations keep the
+   * buffer address stable, which the break iterator refers to.
+   */
+  std::vector<char16_t> u16_;
+  /// UTF-32 only: The sorted UTF-16 indices of all supplementary code points (surrogate pairs) in `u16_`
+  std::vector<i32> supplementaries_;
+
+  /**
+   * Maps an ICU break position to a position in the input string.
+   *
+   * @param pos the ICU break position, possibly `UBRK_DONE`
+   * @return the input position, or #NPOS if @p pos is `UBRK_DONE`
+   */
+  [[nodiscard]] u64 toInput(i32 pos) const;
 };
 
 // Functions ------------------------------------------------------------------------------------------------
