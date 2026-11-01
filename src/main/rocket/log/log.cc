@@ -2,7 +2,7 @@
  * log.cc
  */
 
-#include "rocket/log/log.h"
+#include "log.h"
 
 #include "rocket/Process.h"
 #include "rocket/enum.h"

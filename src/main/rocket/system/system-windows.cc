@@ -75,7 +75,7 @@ namespace rocket::system {
 
 // Functions ------------------------------------------------------------------------------------------------
 
-vector<char>
+string
 exec(const string& cl) {
   vector<char> ret;
   vector<char> buf(1'024);

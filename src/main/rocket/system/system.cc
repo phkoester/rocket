@@ -3,6 +3,7 @@
  */
 
 #include "system.h"
+
 #include "rocket/InputFailure.h"
 #include "rocket/assert.h"
 
@@ -164,9 +165,9 @@ setImpl(std::string_view name, const optional<string>& val, bool replace) {
 
 #ifndef ROCKET_OS_WINDOWS
 
-vector<char>
+string
 exec(const string& cl) {
-  vector<char> ret;
+  string ret;
   vector<char> buf(1'024);
 
   const auto closePipe = [](FILE* file) { pclose(file); };
@@ -187,7 +188,7 @@ exec(const string& cl) {
 
 #endif
 
-vector<char>
+string
 exec(const vector<string_view>& args) {
   return exec(makeCl(args));
 }
