@@ -90,7 +90,6 @@ set(LINK_FLAGS)
 if(GAIA_OS_LINUX)
   # Linux
   list(APPEND COMPILE_FLAGS -Wall -Werror -Wextra)
-  list(APPEND LINK_FLAGS -static-libstdc++ -static-libgcc)
 elseif(GAIA_OS_WINDOWS)
   # Windows
   if(GAIA_CXX_COMPILER_LLVM)
