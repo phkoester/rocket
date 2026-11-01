@@ -46,7 +46,6 @@ myTerminate() {
 
 void
 toy() {
-  system::exec("echo a");
 }
 
 } // namespace
