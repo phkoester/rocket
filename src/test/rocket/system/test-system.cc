@@ -117,14 +117,12 @@ TEST(system, envGet) {
 }
 
 TEST(system, execEcho) {
-  const auto bytes = exec("echo Hello");
-  const string_view out(bytes.data(), bytes.size());
+  const auto out = exec("echo Hello");
   EXPECT_EQ(out, "Hello\n");
 }
 
 TEST(system, execPrintf) {
-  const auto bytes = exec("printf \"%s\" Hello");
-  const string_view out(bytes.data(), bytes.size());
+  const auto out = exec("printf \"%s\" Hello");
   EXPECT_EQ(out, "Hello");
 }
 
@@ -134,8 +132,7 @@ TEST(system, execPrintArgs) {
 
   {
     // Test spaces, quotes and backslash
-    const auto bytes = exec({ executable, "a", "b c", " d ", "'", "\"", "\\" });
-    const string_view out(bytes.data(), bytes.size());
+    const auto out = exec({ executable, "a", "b c", " d ", "'", "\"", "\\" });
     EXPECT_THAT(out, HasSubstr("1=a="));
     EXPECT_THAT(out, HasSubstr("2=b c="));
     EXPECT_THAT(out, HasSubstr("3= d ="));
@@ -146,8 +143,7 @@ TEST(system, execPrintArgs) {
 
   {
     // Test Unicode
-    const auto bytes = exec({ executable, "€ ÄÖÜ € 🧑‍🌾" });
-    const string_view out(bytes.data(), bytes.size());
+    const auto out = exec({ executable, "€ ÄÖÜ € 🧑‍🌾" });
     EXPECT_THAT(out, HasSubstr("1=€ ÄÖÜ € 🧑‍🌾="));
   }
 }
@@ -161,8 +157,7 @@ TEST(system, execPrintArgsWithSpace) {
 
   {
     // Test spaces and quotes, and backslash
-    const auto bytes = exec({ executable, "a", "b c", " d ", "'", "\"", "\\" });
-    const string_view out(bytes.data(), bytes.size());
+    const auto out = exec({ executable, "a", "b c", " d ", "'", "\"", "\\" });
     EXPECT_THAT(out, HasSubstr("1=a="));
     EXPECT_THAT(out, HasSubstr("2=b c="));
     EXPECT_THAT(out, HasSubstr("3= d ="));
@@ -173,8 +168,7 @@ TEST(system, execPrintArgsWithSpace) {
 
   {
     // Test Unicode
-    const auto bytes = exec({ executable, "€ ÄÖÜ € 🧑‍🌾" });
-    const string_view out(bytes.data(), bytes.size());
+    const auto out = exec({ executable, "€ ÄÖÜ € 🧑‍🌾" });
     EXPECT_THAT(out, HasSubstr("1=€ ÄÖÜ € 🧑‍🌾="));
   }
 }
