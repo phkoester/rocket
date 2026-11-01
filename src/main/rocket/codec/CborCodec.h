@@ -170,7 +170,8 @@ struct CborConsumerImpl<DataType::Float, F> {
 
 template<typename P>
 struct CborConsumerImpl<DataType::Pointer, P> {
-  using Alt = Int<sizeof(P)>::Type;
+  using Alt = u64;
+  static_assert(sizeof(P) <= sizeof(Alt));
   static constexpr auto AltDataType = DataTypes<Alt>::Value;
 
   [[nodiscard]] CborItem<P>
@@ -654,7 +655,8 @@ struct CborProducerImpl<DataType::Float, F> {
 
 template<typename P>
 struct CborProducerImpl<DataType::Pointer, P> {
-  using Alt = Int<sizeof(P)>::Type;
+  using Alt = u64;
+  static_assert(sizeof(P) <= sizeof(Alt));
   static constexpr auto AltDataType = DataTypes<Alt>::Value;
 
   void
