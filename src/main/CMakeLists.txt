@@ -70,7 +70,7 @@ add_custom_command(
 
 # Add the library ...........................................................................................
 
-GaiaAddLibrary(rocket ${VERSION_H})
+GaiaAddLibrary(rocket)
 set_target_properties(rocket
   PROPERTIES
     VERSION ${PROJECT_VERSION} # SOVERSION 0
@@ -170,6 +170,7 @@ target_sources(rocket
       rocket/unicode/Iterator.h
       rocket/unicode/unicode.h
       rocket/unicode/unicode-fwd.h
+      ${VERSION_H} # Generated; must be in a PUBLIC file set so dependents wait for it (CMP0154)
 )
 if(GAIA_OS_WINDOWS)
   target_sources(rocket PRIVATE rocket/system/system-windows.cc)
