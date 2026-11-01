@@ -60,10 +60,10 @@ private:
   struct Entry {
     const char* name;
     HANDLE handle = INVALID_HANDLE_VALUE;
-    std::optional<DWORD> mode = {};
+    optional<DWORD> mode = {};
   };
 
-  std::array<Entry, 2> entries_ { {
+  array<Entry, 2> entries_ { {
     { .name="CONIN$" },  // `stdin`
     { .name="CONOUT$" }, // `stdout` and `stderr` (same screen buffer)
   } };
