@@ -25,8 +25,14 @@ namespace {
 struct ConsoleModeGuard {
   ConsoleModeGuard() {
     for (auto& entry : entries_) {
-      entry.handle = CreateFileA(entry.name, GENERIC_READ | GENERIC_WRITE,
-        FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr, OPEN_EXISTING, 0, nullptr);
+      entry.handle = CreateFileA(
+        entry.name,
+        GENERIC_READ | GENERIC_WRITE,
+        FILE_SHARE_READ | FILE_SHARE_WRITE,
+        nullptr,
+        OPEN_EXISTING,
+        0,
+        nullptr);
       if (entry.handle == INVALID_HANDLE_VALUE) {
         continue; // No console attached
       }
@@ -80,6 +86,7 @@ exec(const string& cl) {
   string ret;
   vector<char> buf(1'024);
 
+  // Auto-restore console modes that the pipe might compromise
   ConsoleModeGuard cmg;
 
   const auto closePipe = [](FILE* pipe) { _pclose(pipe); };
