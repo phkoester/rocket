@@ -14,7 +14,7 @@
 #include <string_view>
 #include <vector>
 
-// `UBreakIterator` -----------------------------------------------------------------------------------------
+// Forwards -------------------------------------------------------------------------------------------------
 
 /// Opaque ICU break-iterator type, see `<unicode/ubrk.h>`
 struct UBreakIterator;
@@ -169,7 +169,7 @@ private:
 
   /// The input passed to the constructor.
   std::basic_string_view<C> input_;
-  /// The ICU break iterator
+  /// The ICU break iterator.
   std::unique_ptr<UBreakIterator, BreakIteratorCloser> iter_;
   /**
    * UTF-32 only: The input converted to UTF-16. A #std::vector is used because its move operations keep the
@@ -183,7 +183,7 @@ private:
    * Maps an ICU break position to a position in the input string.
    *
    * @param pos the ICU break position, possibly `UBRK_DONE`
-   * @return the input position, or #NPOS if @p pos is `UBRK_DONE`
+   * @return the input position, or #rocket::NPOS if @p pos is `UBRK_DONE`
    */
   [[nodiscard]] u64 toInput(i32 pos) const;
 };

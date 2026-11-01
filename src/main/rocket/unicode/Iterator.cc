@@ -40,8 +40,8 @@ Iterator<C>::Iterator(IteratorType type, basic_string_view<C> input, const local
     }
   } else {
     u16_.reserve(input.size());
-    for (auto ch : input) {
-      const auto cp = static_cast<u32>(ch);
+    for (auto c : input) {
+      const auto cp = static_cast<u32>(c);
       ROCKET_CHECK(input, cp <= 0x10ffff and not U_IS_SURROGATE(cp), "Invalid UTF-32 input");
       if (U_IS_BMP(cp)) {
         u16_.push_back(static_cast<char16_t>(cp));
@@ -63,7 +63,7 @@ Iterator<C>::Iterator(IteratorType type, basic_string_view<C> input, const local
 
   // 3. Create the break iterator
 
-  UBreakIteratorType ubrkType = UBRK_CHARACTER;
+  UBreakIteratorType ubrkType; // NOLINT
   switch (type) {
     case IteratorType::Character:
       ubrkType = UBRK_CHARACTER;
@@ -143,7 +143,8 @@ Iterator<C>::toInput(i32 pos) const {
   } else {
     // Each surrogate pair before `pos` takes two UTF-16 units but only one UTF-32 unit. Break positions never
     // fall inside a surrogate pair
-    const auto n = lower_bound(supplementaries_.begin(), supplementaries_.end(), pos) - supplementaries_.begin();
+    const auto n =
+      lower_bound(supplementaries_.begin(), supplementaries_.end(), pos) - supplementaries_.begin();
     return static_cast<u64>(pos - n);
   }
 }
