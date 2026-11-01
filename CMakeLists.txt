@@ -89,15 +89,16 @@ set(LINK_FLAGS)
 
 if(GAIA_OS_LINUX)
   # Linux
-  set(COMPILE_FLAGS -Wall -Werror -Wextra)
+  list(APPEND COMPILE_FLAGS -Wall -Werror -Wextra)
+  list(APPEND LINK_FLAGS -static-libstdc++ -static-libgcc)
 elseif(GAIA_OS_WINDOWS)
   # Windows
   if(GAIA_CXX_COMPILER_LLVM)
     # Windows, LLVM
-    set(COMPILE_FLAGS -Werror -Wextra) # No `-Wall` on Windows
+    list(APPEND COMPILE_FLAGS -Werror -Wextra) # No `-Wall` on Windows
   elseif(GAIA_CXX_COMPILER_MSVC)
     # Windows, MSVC
-    set(COMPILE_FLAGS /bigobj /Zc:preprocessor)
+    list(APPEND COMPILE_FLAGS /bigobj /Zc:preprocessor)
   endif()
 endif()
 
