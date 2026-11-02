@@ -4,8 +4,8 @@
 
 #include "Process.h"
 
-#include "rocket/Guard.h"
 #include "rocket/assert.h"
+#include "rocket/scope.h"
 #include "rocket/log/log.h"
 #include "rocket/str/str.h"
 #include "rocket/system/system.h"
@@ -41,7 +41,7 @@ void
 callExitFns(bool onTerminate) {
   ROCKET_MUTEX_LOCK(processMutex);
 
-  ROCKET_GUARD([] { onExitFns.clear(); });
+  ROCKET_SCOPE_EXIT([] { onExitFns.clear(); });
 
   for (const auto& [fn, callOnTerminate] : ranges::reverse_view(onExitFns)) {
     if (not onTerminate || callOnTerminate) {

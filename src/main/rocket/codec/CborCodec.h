@@ -6,11 +6,13 @@
 
 #pragma once
 
-#include "rocket/Guard.h"
+#include "rocket/assert.h"
 #include "rocket/codec/codec.h"
 
 #include <cbor.h>
+#include <cstdlib>
 #include <iterator>
+#include <memory>
 
 namespace rocket::codec {
 
@@ -1178,7 +1180,7 @@ struct CborCodec : Codec<CborConsumer, CborProducer> {
     u64 bufSize; // NOLINT
     cbor_serialize_alloc(item.ptr(), &buf, &bufSize);
     ROCKET_EXPECT(bufSize > 0, "Cannot allocate memory");
-    ROCKET_GUARD([&buf] { free(buf); }); // NOLINT
+    std::unique_ptr<unsigned char, decltype(&std::free)> ptr(buf, &std::free);
     return { buf, buf + bufSize };
   }
 

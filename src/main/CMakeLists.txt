@@ -116,7 +116,6 @@ target_sources(rocket
       rocket/Bimap-codec.h
       rocket/Cow.h
       rocket/Exception.h
-      rocket/Guard.h
       rocket/InputFailure.h
       rocket/Lazy.h
       rocket/Process.h
@@ -127,6 +126,7 @@ target_sources(rocket
       rocket/macro.h
       rocket/rocket.h
       rocket/scan.h
+      rocket/scope.h
       rocket/std.h
       rocket/std-codec.h
       rocket/type-traits.h

@@ -5,12 +5,11 @@
  */
 
 #include "rocket/Process.h"
-#include "rocket/cl/cl.h"
 #include "rocket/enum.h"
-#include "rocket/Guard.h"
-#include "rocket/log/log.h"
-#include "rocket/system/system.h"
+#include "rocket/scope.h"
 #include "rocket/version.h"
+#include "rocket/cl/cl.h"
+#include "rocket/log/log.h"
 
 #include <string>
 
@@ -47,11 +46,7 @@ myTerminate() {
 
 void
 toy() {
-  ROCKET_GUARD([] { nio::out.println("Hello from ROCKET_GUARD"); });
-
-  std::experimental::scope_exit exit([&] { nio::out.println("Hello from std::experimental::scope_exit"); });
-  std::experimental::scope_fail fail([&] { nio::out.println("Hello from std::experimental::scope_fail"); });
-  std::experimental::scope_success success([&] { nio::out.println("Hello from std::experimental::scope_success"); });
+  ROCKET_SCOPE_EXIT([] { nio::out.println("Hello from ROCKET_SCOPE_EXIT"); });
 
   nio::out.println("Hello from toy");
 }

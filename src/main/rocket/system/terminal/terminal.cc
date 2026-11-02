@@ -4,10 +4,10 @@
 
 #include "terminal.h"
 
-#include "rocket/Guard.h"
 #include "rocket/InputFailure.h"
 #include "rocket/assert.h"
 #include "rocket/scan.h"
+#include "rocket/scope.h"
 #include "rocket/io/io.h"
 
 #include <boost/safe_numerics/safe_integer.hpp>
@@ -51,7 +51,7 @@ sendAnsiRequest(nio::Sink& out, std::string_view sequence) {
 
   newT.c_lflag &= ~(ECHO | ICANON);
   tcsetattr(STDIN_FILENO, TCSANOW, &newT);
-  ROCKET_GUARD([&] { tcsetattr(STDIN_FILENO, TCSANOW, &oldT); });
+  ROCKET_SCOPE_EXIT([&] { tcsetattr(STDIN_FILENO, TCSANOW, &oldT); });
 
   // Send the ANSI code requesting cursor position
 
