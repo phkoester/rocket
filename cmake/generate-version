@@ -8,18 +8,41 @@ Usage: generate-version -o OUTPUT_FILE NAME VERSION
 """
 
 import argparse
-import semver
+import re
+# Don't import `semver` here so the build will work without it
 import sys
 
 from pathlib import Path
 
+# Constants -------------------------------------------------------------------------------------------------
+
+# Official SemVer 2.0.0 regex, see `https://semver.org`
+SEMVER_RE = re.compile(
+  r"^(?P<major>0|[1-9]\d*)\.(?P<minor>0|[1-9]\d*)\.(?P<patch>0|[1-9]\d*)"
+  r"(?:-(?P<prerelease>(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)"
+  r"(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?"
+  r"(?:\+(?P<buildmetadata>[0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$"
+)
+
 # Functions -------------------------------------------------------------------------------------------------
 
-def write_header(f, name, version_string):
-  version = semver.parse_version_info(version_string)
-  value = version.major * 1_000_000 + version.minor * 1_000 + version.patch
+def parse_version(version_string):
+  match = SEMVER_RE.match(version_string)
+  if not match:
+    raise ValueError(f"`{version_string}` is not a valid SemVer string")
+  return (
+    int(match["major"]),
+    int(match["minor"]),
+    int(match["patch"]),
+    match["prerelease"] or "",
+    match["buildmetadata"] or ""
+  )
 
-  f.write(
+def write_header(file, name, version_string):
+  major, minor, patch, prerelease, build_metadata = parse_version(version_string)
+  value = major * 1_000_000 + minor * 1_000 + patch
+
+  file.write(
 f"""/**
  * @file version.h
  *
@@ -32,11 +55,13 @@ f"""/**
 
 #define {name}_VERSION_NAME "{version_string}" ///< SemVer string.
 
-#define {name}_VERSION_MAJOR {version.major} ///< Major.
-#define {name}_VERSION_MINOR {version.minor} ///< Minor.
-#define {name}_VERSION_PATCH {version.patch} ///< Patch.
+#define {name}_VERSION_MAJOR {major} ///< Major.
+#define {name}_VERSION_MINOR {minor} ///< Minor.
+#define {name}_VERSION_PATCH {patch} ///< Patch.
+#define {name}_VERSION_PRERELEASE "{prerelease}" ///< Prerelease, or empty.
+#define {name}_VERSION_BUILD_METADATA "{build_metadata}" ///< Build metadata, or empty.
 
-/// Comparable version value (major * 1,000,000 + minor * 1,000 + patch)
+/// Comparable version value (1,000,000 * major + 1,000 * minor + patch)
 #define {name}_VERSION {value}
 
 // NOLINTEND
@@ -73,8 +98,8 @@ def main():
   path.parent.mkdir(parents=True, exist_ok=True)
 
   # Write output file
-  with open(args.output_file, 'w') as f:
-    write_header(f, args.name, args.version)
+  with open(args.output_file, 'w') as file:
+    write_header(file, args.name, args.version)
 
   return 0
 
