@@ -12,6 +12,58 @@
 
 namespace rocket {
 
+// `ScopeExit` ----------------------------------------------------------------------------------------------
+
+/**
+ * An object that executes a function in its destructor, i.e. when it goes out of scope.
+ *
+ * Use the #ROCKET_SCOPE_EXIT macro for your convenience.
+ */
+struct ScopeExit {
+  explicit ScopeExit(std::function<void()>&& fn) : active_(true), fn_(std::move(fn)) {}
+
+  ScopeExit(const ScopeExit&) = delete;
+
+  ~ScopeExit() { fn_(); }
+
+  ScopeExit& operator=(const ScopeExit&) = delete;
+
+  void release() { active_ = false; }
+
+private:
+
+  bool active_ = false;
+  std::function<void()> fn_;
+};
+
+#define ROCKET_SCOPE_EXIT(fn) ::rocket::ScopeExit ROCKET_ID()(fn)
+
+// `ScopeFailt` ----------------------------------------------------------------------------------------------
+
+/**
+ * An object that executes a function in its destructor in the face of an exception.
+ *
+ * Use the #ROCKET_SCOPE_EXIT macro for your convenience.
+ */
+ struct ScopeFail {
+  explicit ScopeFail(std::function<void()>&& fn) : active_(true), fn_(std::move(fn)) {}
+
+  ScopeFail(const ScopeFail&) = delete;
+
+  ~ScopeFail() { if (active_ && ) fn_(); }
+
+  ScopeFail& operator=(const ScopeFail&) = delete;
+
+  void release() { active_ = false; }
+
+private:
+
+  bool active_ = false;
+  std::function<void()> fn_;
+};
+
+#define ROCKET_SCOPE_EXIT(fn) ::rocket::ScopeExit ROCKET_ID()(fn)
+
 // `Guard` --------------------------------------------------------------------------------------------------
 
 /**

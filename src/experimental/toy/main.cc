@@ -12,8 +12,6 @@
 #include "rocket/system/system.h"
 #include "rocket/version.h"
 
-#include <experimental/scope>
-
 #include <string>
 
 using namespace rocket;
