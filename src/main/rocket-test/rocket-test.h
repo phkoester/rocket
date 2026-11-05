@@ -22,7 +22,6 @@
 // Includes -------------------------------------------------------------------------------------------------
 
 #include "rocket/literal.h"
-#include "rocket/rocket.h"
 #include "rocket/io/io.h"
 #include "rocket/system/system.h"
 

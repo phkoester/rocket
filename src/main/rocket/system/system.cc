@@ -20,11 +20,13 @@ extern char** environ;
 
 namespace {
 
-// Local variables ------------------------------------------------------------------------------------------
-
-recursive_mutex envMutex;
-
 // Local functions ------------------------------------------------------------------------------------------
+
+recursive_mutex&
+envMutex() {
+  static recursive_mutex mutex;
+  return mutex;
+}
 
 #ifdef ROCKET_OS_WINDOWS
 
@@ -115,7 +117,7 @@ namespace internal {
 
 optional<string>
 getImpl(std::string_view name) {
-  ROCKET_MUTEX_LOCK(envMutex);
+  ROCKET_MUTEX_LOCK(envMutex());
 
   const string nameStr(name);
 
@@ -141,7 +143,7 @@ void
 setImpl(std::string_view name, const optional<string>& val, bool replace) {
   ROCKET_CHECK(val, val || replace);
 
-  ROCKET_MUTEX_LOCK(envMutex);
+  ROCKET_MUTEX_LOCK(envMutex());
 
   const string nameStr(name);
 
@@ -277,7 +279,7 @@ namespace env {
 
 unordered_map<string, string>
 get() {
-  ROCKET_MUTEX_LOCK(envMutex);
+  ROCKET_MUTEX_LOCK(envMutex());
 
   unordered_map<string, string> ret;
 

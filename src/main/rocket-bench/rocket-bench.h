@@ -14,7 +14,6 @@
 
 #include "rocket/assert.h"
 #include "rocket/literal.h"
-#include "rocket/rocket.h"
 
 #ifndef ROCKET_BENCH_NO_USING_NAMESPACE
 

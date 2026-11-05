@@ -29,9 +29,12 @@ enum class Color : u8 { Red, Green, Blue };
 ROCKET_ENUM_DECLARE(, Color, Color); // NOLINT(*-internal-linkage)
 ROCKET_ENUM_DEFINE(, Color, Color, (Red)(Green)(Blue));
 
-namespace {
+// Functions ------------------------------------------------------------------------------------------------
 
-// Local functions ------------------------------------------------------------------------------------------
+void
+throwInvalidState() {
+  throw InvalidState("Oops");
+}
 
 void
 myExit() {
@@ -51,18 +54,21 @@ toy() {
   nio::out.println("Hello from toy");
 }
 
-} // namespace
-
 // `main` ---------------------------------------------------------------------------------------------------
 
 i32
-main(i32 argc, char **argv) {
+main([[maybe_unused]] i32 argc, [[maybe_unused]] char **argv) {
   ROCKET_PROCESS_ERROR(0, "Testing error before `process().init` ...");
 
   Process::atExit(myExit);
   Process::atExit(myTerminate, true);
 
+  nio::out.println("invocation name: {}", Process::invocationName());
+  nio::out.println("invocation short name: {}", Process::invocationShortName());
+
   process().init(argc, argv, "toy");
+
+  throwInvalidState();
 
   optional<vector<Color>> colors;
   optional<bool> foo;

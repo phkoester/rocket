@@ -16,6 +16,8 @@
   #define ROCKET_HAS_SPAN_STREAM_IMPL
 #endif
 
+#include "rocket/rocket.h"
+
 #ifndef ROCKET_HAS_SPAN_STREAM_IMPL
   #include <spanstream>
 #else

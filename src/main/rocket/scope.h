@@ -7,7 +7,6 @@
 #pragma once
 
 #include "rocket/macro.h"
-#include "rocket/rocket.h"
 
 #include <exception>
 #include <functional>

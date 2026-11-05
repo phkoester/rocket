@@ -6,7 +6,6 @@
 
 #pragma once
 
-#include "rocket/rocket.h" // `std::type_info` for MSVC
 #include "rocket/format.h"
 #include "rocket/nio/nio-fwd.h"
 #include "rocket/StackTrace.h"

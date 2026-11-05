@@ -7,7 +7,6 @@
 #pragma once
 
 #include "rocket/format.h"
-#include "rocket/rocket.h"
 #include "rocket/unicode/unicode-fwd.h"
 
 #include <fmt/color.h> // `fmt::text_style`

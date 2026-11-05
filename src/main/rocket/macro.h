@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include "rocket.h"
+#include "rocket/rocket.h"
 
 #include <boost/preprocessor/control/if.hpp>
 #include <boost/preprocessor/facilities/check_empty.hpp>
