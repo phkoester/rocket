@@ -11,7 +11,6 @@
 #include <cstdio>
 #include <memory>
 #include <optional>
-#include <unistd.h>
 
 using namespace rocket;
 using namespace std;
