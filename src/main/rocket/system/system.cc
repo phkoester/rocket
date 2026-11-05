@@ -16,6 +16,8 @@
 using namespace rocket;
 using namespace std;
 
+// Global variables -----------------------------------------------------------------------------------------
+
 extern char** environ;
 
 namespace {
@@ -283,12 +285,16 @@ get() {
 
   unordered_map<string, string> ret;
 
+#if 0
 #ifdef ROCKET_OS_WINDOWS
   char** p = _environ; // NOLINT
 #else
   char** p = environ; // NOLINT
 #endif
-  while (*p != nullptr) {
+#endif
+
+char** p = environ;
+while (*p != nullptr) {
     const string_view entry(*p);
     string_view name, val;
     auto eq = entry.find('=');

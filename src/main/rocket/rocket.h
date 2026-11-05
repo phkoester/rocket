@@ -55,6 +55,7 @@
 #include <cstdint> // `std::int8_t`, `std::uint8_t`, ...
 #include <concepts> // `std::same_as`
 #include <cstdio> // Make this generally availabe
+#include <limits>
 #include <typeinfo> // Make this generally available
 
 #ifdef ROCKET_OS_WINDOWS
