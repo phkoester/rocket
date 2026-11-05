@@ -247,7 +247,7 @@ std::string
 ambiguousMessage(const std::chrono::local_time<Duration>& tp, const LocalInfo& info) {
   using namespace std::chrono;
   std::ostringstream os;
-  os << tp << " is ambiguous.  It could be\n"
+  os << tp << " is ambiguous. It could be\n"
      << tp << ' ' << info.first.abbrev << " == " << tp - info.first.offset << " UTC or\n"
      << tp << ' ' << info.second.abbrev << " == " << tp - info.second.offset << " UTC";
   return std::move(os).str();
@@ -287,16 +287,12 @@ struct AmbiguousLocalTime : std::runtime_error {
     std::runtime_error(internal::ambiguousMessage(tp, info)) {}
 };
 
-/// @cond undocumented
-
 namespace internal {
 
 struct ZoneData; // Defined in `chrono.cc`
 struct TimeZoneAccess; // Defined in `chrono.cc`
 
 } // namespace internal
-
-/// @endcond
 
 /**
  * A time zone, equivalent to C++20's #std::chrono::time_zone.
@@ -811,7 +807,7 @@ operator<<(std::basic_ostream<CharT, Traits>& os, const ZonedTime<Duration, Time
   }
 }
 
-#endif // ROCKET_CHRONO_STD_TIME_ZONE
+#endif // ROCKET_HAS_TIME_ZONE_IMPL
 
 /// A zoned time with a precision of seconds.
 using ZonedSeconds = ZonedTime<std::chrono::seconds>;
