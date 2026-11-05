@@ -63,7 +63,7 @@
 
 // Check prerequisites --------------------------------------------------------------------------------------
 
-#if not defined(ROCKET_OS_LINUX) && not defined(ROCKET_OS_WINDOWS)
+#if not defined(ROCKET_OS_DARWIN) && not defined(ROCKET_OS_LINUX) && not defined(ROCKET_OS_WINDOWS)
   #error Unknown OS
 #endif
 
