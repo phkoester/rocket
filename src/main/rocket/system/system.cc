@@ -17,8 +17,9 @@ using namespace std;
 
 // Global variables -----------------------------------------------------------------------------------------
 
+#ifndef ROCKET_OS_WINDOWS
 extern char** environ;
-
+#endif
 namespace {
 
 // Local functions ------------------------------------------------------------------------------------------
@@ -284,15 +285,12 @@ get() {
 
   unordered_map<string, string> ret;
 
-#if 0
 #ifdef ROCKET_OS_WINDOWS
-  char** p = _environ; // NOLINT
+  char** p = _environ;
 #else
-  char** p = environ; // NOLINT
-#endif
+  char** p = environ;
 #endif
 
-char** p = environ;
 while (*p != nullptr) {
     const string_view entry(*p);
     string_view name, val;

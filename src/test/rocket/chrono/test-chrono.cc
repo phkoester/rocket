@@ -5,6 +5,7 @@
 #include "rocket-test/rocket-test.h"
 
 #include "rocket/chrono/chrono.h"
+#include "rocket/system/system.h"
 
 #include <cstdlib>
 #include <format>
@@ -282,15 +283,15 @@ TEST(chrono, currentZoneTz) {
   const char* old = std::getenv("TZ"); // NOLINT(*-mt-unsafe)
   const std::string saved = old != nullptr ? old : "";
 
-  ::setenv("TZ", "America/New_York", 1); // NOLINT(*-mt-unsafe)
+  system::env::set("TZ", "America/New_York", true);
   EXPECT_EQ(currentZone()->name(), "America/New_York");
-  ::setenv("TZ", ":Asia/Tokyo", 1); // NOLINT(*-mt-unsafe)
+  system::env::set("TZ", ":Asia/Tokyo", true);
   EXPECT_EQ(currentZone()->name(), "Asia/Tokyo");
 
   if (old != nullptr) {
-    ::setenv("TZ", saved.c_str(), 1); // NOLINT(*-mt-unsafe)
+    system::env::set("TZ", saved, true);
   } else {
-    ::unsetenv("TZ"); // NOLINT(*-mt-unsafe)
+    system::env::unset("TZ");
   }
 }
 
