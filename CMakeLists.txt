@@ -100,6 +100,7 @@ elseif(GAIA_OS_WINDOWS)
     list(APPEND COMPILE_FLAGS -Werror -Wextra) # No `-Wall` on Windows
   elseif(GAIA_CXX_COMPILER_MSVC)
     # Windows, MSVC
+    list(APPEND COMPILE_DEFS _WIN32_WINNT=0x0601)
     list(APPEND COMPILE_FLAGS /bigobj /Zc:preprocessor)
   endif()
 endif()

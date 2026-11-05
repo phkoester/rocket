@@ -277,19 +277,18 @@ TEST(chrono, ZonedTimeFormat) {
   EXPECT_EQ(os.str(), "2024-07-01 14:00:00 CEST");
 }
 
-#if !ROCKET_CHRONO_STD_TIME_ZONE
+#ifdef ROCKET_HAS_TIME_ZONE_IMPL
 
 TEST(chrono, currentZoneTz) {
-  const char* old = std::getenv("TZ"); // NOLINT(*-mt-unsafe)
-  const std::string saved = old != nullptr ? old : "";
+  const auto old = system::env::get<string>("TZ");
 
   system::env::set("TZ", "America/New_York", true);
   EXPECT_EQ(currentZone()->name(), "America/New_York");
-  system::env::set("TZ", ":Asia/Tokyo", true);
+  system::env::set("TZ", "Asia/Tokyo", true);
   EXPECT_EQ(currentZone()->name(), "Asia/Tokyo");
 
-  if (old != nullptr) {
-    system::env::set("TZ", saved, true);
+  if (old) {
+    system::env::set("TZ", *old, true);
   } else {
     system::env::unset("TZ");
   }

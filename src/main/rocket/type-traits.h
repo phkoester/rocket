@@ -290,21 +290,23 @@ concept IsCharImpl = std::same_as<T, typename Char<sizeof(T)>::Type>;
 
 template<typename T>
 concept IsIntImpl =
-  not std::same_as<T, bool> &&
-  not std::same_as<T, char> &&
-  not std::same_as<T, char32> &&
-  std::is_integral_v<T> &&
-  std::is_signed_v<T> &&
-  sizeof(T) == sizeof(typename Int<sizeof(T)>::Type);
+  std::same_as<T, i128> ||
+  (not std::same_as<T, bool> &&
+   not std::same_as<T, char> &&
+   not std::same_as<T, char32> &&
+   std::is_integral_v<T> &&
+   std::is_signed_v<T> &&
+   sizeof(T) == sizeof(typename Int<sizeof(T)>::Type));
 
 template<typename T>
 concept IsUintImpl =
-  not std::same_as<T, bool> &&
-  not std::same_as<T, char> &&
-  not std::same_as<T, char32> &&
-  std::is_integral_v<T> &&
-  std::is_unsigned_v<T> &&
-  sizeof(T) == sizeof(typename Uint<sizeof(T)>::Type);
+  std::same_as<T, u128> ||
+  (not std::same_as<T, bool> &&
+   not std::same_as<T, char> &&
+   not std::same_as<T, char32> &&
+   std::is_integral_v<T> &&
+   std::is_unsigned_v<T> &&
+   sizeof(T) == sizeof(typename Uint<sizeof(T)>::Type));
 
 template<typename T>
 concept IsFloatImpl = std::same_as<T, typename Float<sizeof(T)>::Type>;

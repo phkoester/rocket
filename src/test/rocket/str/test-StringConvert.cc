@@ -12,7 +12,7 @@ using namespace rocket::str;
 
 // `TEST` ---------------------------------------------------------------------------------------------------
 
-TEST(StringConvert, bool) {
+TEST(StringConvert, convertBool) {
   using type = bool;
 
   EXPECT_EQ(toType<type>("false"), false);
@@ -26,7 +26,7 @@ TEST(StringConvert, bool) {
   EXPECT_EQ(toType<type>("42"), true);
 }
 
-TEST(StringConvert, i32) {
+TEST(StringConvert, convertI32) {
   using type = i32;
 
   EXPECT_EQ(toType<type>("-999999"), -999'999);
@@ -36,7 +36,7 @@ TEST(StringConvert, i32) {
   EXPECT_EQ(toType<type>("1x").error().message, "Cannot scan \"1x\" as `int`");
 }
 
-TEST(StringConvert, i128) {
+TEST(StringConvert, convertI128) {
   using type = i128;
 
   EXPECT_EQ(toType<type>("-999999"), -999'999);
@@ -50,7 +50,7 @@ TEST(StringConvert, i128) {
     matchesRegex("Cannot scan \"1x\" as `.*int128`"));
 }
 
-TEST(StringConvert, enum) {
+TEST(StringConvert, convertEnum) {
   using type = log::LogLevel;
 
   EXPECT_EQ(toType<type>("trace"), log::LogLevel::trace);
