@@ -10,10 +10,9 @@
 #include "rocket/rocket.h"
 #include "rocket/unicode/unicode-fwd.h"
 
-#include <boost/safe_numerics/safe_integer.hpp>
+#include <fmt/color.h> // `fmt::text_style`
 
-#include <fmt/color.h>
-
+#include <exception>
 #include <expected>
 #include <filesystem>
 #include <iosfwd>
@@ -21,6 +20,8 @@
 #include <span>
 #include <string>
 #include <vector>
+
+#include <boost/safe_numerics/safe_integer.hpp> // Needs `<exception>`
 
 namespace rocket::nio {
 
@@ -35,10 +36,10 @@ static constexpr u64 DEFAULT_BUFFER_SIZE = 64 * 1'024; // 64 KiB
  */
 static constexpr u64 MIN_BUFFER_SIZE = 64;
 
-// `GaiaStatus` -------------------------------------------------------------------------------------------------
+// `Status` -------------------------------------------------------------------------------------------------
 
 /// The status of a device.
-struct GaiaStatus {
+struct Status {
   /**
    * If #bad is set, the device is in an unusable state.
    */
@@ -91,7 +92,7 @@ struct Device {
    *
    * @return the status
    */
-  [[nodiscard]] GaiaStatus status() const { return status_; }
+  [[nodiscard]] const Status& status() const { return status_; }
 
 protected:
 
@@ -101,7 +102,7 @@ protected:
    * When an instance is constructed, the #bad bit is set, meaning the stream hasn't been opened yet and is
    * not ready to use. Derived classes must unset the #bad bit to mark the instance as usable.
    */
-  GaiaStatus status_ { .bad=1, .eof=0 };
+  Status status_ { .bad=1, .eof=0 };
 
   /// @ctor_default
   Device() = default;

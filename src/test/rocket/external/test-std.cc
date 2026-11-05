@@ -12,7 +12,6 @@
 
 #include <filesystem>
 #include <regex>
-#include <stdfloat>
 #include <vector>
 
 using namespace rocket;
@@ -35,17 +34,6 @@ TEST(std, f32OpCmp) {
   static_assert((0.0F <=> nan) == std::partial_ordering::unordered);
   static_assert((nan <=> nan) == std::partial_ordering::unordered); // NOLINT
 }
-
-#if 0 // NOLINT
-TEST(std, float) {
-  float16_t f16 = 1.0f16;
-  EXPECT_EQ(f16, 1.0f16);
-  float32_t f32 = 1.0f32;
-  EXPECT_EQ(f32, 1.0f32);
-  std::float64_t f64 = 1.0f64;
-  EXPECT_EQ(f64, 1.0f64);
-}
-#endif
 
 /**
  * Segfaults on Windows with Clang 22.1.3.
@@ -84,7 +72,7 @@ TEST(std, chronoFormat) {
     // Local time in ISO-8601, with microseconds
     const time_point tp = time_point_cast<microseconds>(now);
     // const auto zt { chrono::zoned_time{ chrono::current_zone(), tp } };
-    const zoned_time zt { current_zone(), tp };
+    const rocket::chrono::ZonedTime zt { rocket::chrono::currentZone(), tp };
     const string str = std::format("{:%FT%T%Ez}", zt);
     EXPECT_THAT(str, matchesRegex("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{6}[+-]\\d{2}:\\d{2}"));
   }

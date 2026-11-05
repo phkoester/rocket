@@ -7,8 +7,6 @@
 #include "rocket/literal.h"
 #include "rocket/math/Interval-codec.h"
 
-#include <fmt/xchar.h>
-
 using namespace rocket::math;
 
 #ifdef ROCKET_CXX_COMPILER_MSVC

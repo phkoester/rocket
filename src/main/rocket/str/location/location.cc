@@ -154,7 +154,7 @@ printLocations( // NOLINT(*-complexity)
     0_u64 :
     ranges::max(locations | ranges::views::transform(&Location::line));
   const string maxLineStr =  fmt::format("{}", maxLine);
-  const u64 lineNumberWidth = max(config.minLineNumberWidth, maxLineStr.size());
+  const u64 lineNumberWidth = max(config.minLineNumberWidth, static_cast<u64>(maxLineStr.size()));
   const string blankPrefix = string(lineNumberWidth, ' ') + " | ";
 
   for (const auto& loc : locations) {

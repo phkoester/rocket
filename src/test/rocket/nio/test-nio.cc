@@ -9,8 +9,6 @@
 #include "rocket/log/log.h"
 #include "rocket/nio/nio.h"
 
-#include <scn/istream.h>
-
 #include <fstream>
 
 using namespace rocket::nio;

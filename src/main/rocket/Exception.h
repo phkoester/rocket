@@ -7,15 +7,14 @@
 #pragma once
 
 #include "rocket/rocket.h" // `std::type_info` for MSVC
+#include "rocket/format.h"
 #include "rocket/nio/nio-fwd.h"
+#include "rocket/StackTrace.h"
 #include "rocket/str/str.h"
 #include "rocket/unicode/ConvertTo.h"
 
-#include <fmt/std.h>
-
 #include <optional>
 #include <source_location>
-#include <stacktrace>
 #include <stdexcept>
 #include <typeinfo>
 
@@ -25,7 +24,7 @@
 #define ROCKET_EXCEPTION_SL ::std::source_location::current()
 
 /// The current stack trace.
-#define ROCKET_EXCEPTION_ST ::std::stacktrace::current()
+#define ROCKET_EXCEPTION_ST ROCKET_STACK_TRACE_CURRENT()
 
 #ifdef NDEBUG
 
@@ -81,7 +80,7 @@ struct Exception {
    *
    * @return a stack trace, if present, or null otherwise
    */
-  [[nodiscard]] const std::optional<std::stacktrace>& stackTrace() const { return st_; }
+  [[nodiscard]] const std::optional<StackTrace>& stackTrace() const { return st_; }
 
 protected:
 
@@ -95,7 +94,7 @@ protected:
   Exception(
     std::string_view msg,
     const std::optional<std::source_location>& sl,
-    const std::optional<std::stacktrace>& st) :
+    const std::optional<StackTrace>& st) :
     msg_(msg),
     sl_(sl),
     st_(st) {}
@@ -104,7 +103,7 @@ private:
 
   std::string msg_;
   std::optional<std::source_location> sl_;
-  std::optional<std::stacktrace> st_;
+  std::optional<StackTrace> st_;
 };
 
 // `InvalidArgument` ----------------------------------------------------------------------------------------
@@ -128,7 +127,7 @@ struct InvalidArgument : Exception, std::invalid_argument {
     std::string_view name,
     std::string_view msg,
     const std::optional<std::source_location>& sl = ROCKET_EXCEPTION_SL,
-    const std::optional<std::stacktrace>& st = ROCKET_EXCEPTION_ST);
+    const std::optional<StackTrace>& st = ROCKET_EXCEPTION_ST);
 
   ~InvalidArgument() override = default;
 };
@@ -152,7 +151,7 @@ struct InvalidState : Exception, std::runtime_error {
   explicit InvalidState(
     std::string_view msg,
     const std::optional<std::source_location>& sl = ROCKET_EXCEPTION_SL,
-    const std::optional<std::stacktrace>& st = ROCKET_EXCEPTION_ST);
+    const std::optional<StackTrace>& st = ROCKET_EXCEPTION_ST);
 
   ~InvalidState() override = default;
 };
@@ -176,7 +175,7 @@ struct Overflow : Exception, std::overflow_error {
   explicit Overflow(
     const std::type_info& type,
     const std::optional<std::source_location>& sl = ROCKET_EXCEPTION_SL,
-    const std::optional<std::stacktrace>& st = ROCKET_EXCEPTION_ST) :
+    const std::optional<StackTrace>& st = ROCKET_EXCEPTION_ST) :
     Overflow(type, "", sl, st) {}
 
   /**
@@ -191,7 +190,7 @@ struct Overflow : Exception, std::overflow_error {
     const std::type_info& type,
     std::string_view msg,
     const std::optional<std::source_location>& sl = ROCKET_EXCEPTION_SL,
-    const std::optional<std::stacktrace>& st = ROCKET_EXCEPTION_ST);
+    const std::optional<StackTrace>& st = ROCKET_EXCEPTION_ST);
 
   ~Overflow() override = default;
 };
@@ -215,7 +214,7 @@ struct Underflow : Exception, std::underflow_error {
   explicit Underflow(
     const std::type_info& type,
     const std::optional<std::source_location>& sl = ROCKET_EXCEPTION_SL,
-    const std::optional<std::stacktrace>& st = ROCKET_EXCEPTION_ST) :
+    const std::optional<StackTrace>& st = ROCKET_EXCEPTION_ST) :
     Underflow(type, "", sl, st) {}
 
   /**
@@ -230,7 +229,7 @@ struct Underflow : Exception, std::underflow_error {
     const std::type_info& type,
     std::string_view msg,
     const std::optional<std::source_location>& sl = ROCKET_EXCEPTION_SL,
-    const std::optional<std::stacktrace>& st = ROCKET_EXCEPTION_ST);
+    const std::optional<StackTrace>& st = ROCKET_EXCEPTION_ST);
 
   ~Underflow() override = default;
 };
@@ -345,10 +344,10 @@ struct fmt::formatter<rocket::WrappedException, C> {
         const auto& ex = *val.exception(); // Clang wants this in two lines
         type = &typeid(ex);
       } else {
-#ifdef ROCKET_OS_WINDOWS
-        type = nullptr;
-#else
+#ifdef __GLIBCXX__
         type = val.ptr().__cxa_exception_type();
+#else
+        type = nullptr;
 #endif
       }
 

@@ -10,8 +10,6 @@
 #include "rocket/reflect/reflect.h"
 #include "rocket/unicode/Character.h"
 
-#include <fmt/ranges.h>
-
 #include <numeric>
 
 using namespace rocket;
@@ -226,7 +224,7 @@ TEST(HashEncoder, HourMinuteSecond) {
 TEST(HashEncoder, TimeZone) {
   using namespace std::chrono;
 
-  const auto* current = current_zone();
+  const auto* current = rocket::chrono::currentZone();
   const HashEncoder<> encoder;
   EXPECT_NE(encoder.encode(current), 0);
 }
@@ -242,7 +240,7 @@ TEST(HashEncoder, Time) {
 TEST(HashEncoder, ZonedTime) {
   using namespace std::chrono;
 
-  const auto val = zoned_time(current_zone(), rocket::chrono::now<system_clock>());
+  const auto val = rocket::chrono::ZonedTime(rocket::chrono::currentZone(), rocket::chrono::now<system_clock>());
   const HashEncoder<> encoder;
   EXPECT_NE(encoder.encode(val), 0);
 }

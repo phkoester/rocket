@@ -86,7 +86,7 @@ struct EqualToConsumerImpl<DataType::Tuple, T, Eq> {
 
 private:
 
-  template<u64... Index, typename... Args>
+  template<std_size_t... Index, typename... Args>
   bool
   consume(const T& lhs, const T& rhs, std::index_sequence<Index...>, Args&&... args) { // NOLINT
     return (... && consumeElem( std::get<Index>(lhs), std::get<Index>(rhs), std::forward<Args>(args)...));

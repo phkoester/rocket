@@ -180,7 +180,7 @@ SpanSink::SpanSink(span<char> out) :
 u64
 SpanSink::write(span<const u8> in) {
   const u64 available = out_.size() - pos_;
-  const u64 ret = min(available, in.size());
+  const u64 ret = min(available, static_cast<u64>(in.size()));
   if (ret > 0) {
     memcpy(&out_[pos_], in.data(), ret);
     pos_ += ret;
@@ -684,7 +684,7 @@ NullSource::istream() {
   }
 
   if (istream_ == nullptr) {
-    istream_ = make_unique<ispanstream>(span<const char>());
+    istream_ = make_unique<io::ISpanStream>(span<const char>());
   }
   return *istream_;
 }
@@ -705,7 +705,7 @@ SpanSource::istream() {
 
   if (istream_ == nullptr) {
     const span<const char> chars(reinterpret_cast<const char*>(in_.data()), in_.size());
-    istream_ = make_unique<ispanstream>(chars);
+    istream_ = make_unique<io::ISpanStream>(chars);
   }
   istream_->seekg(safe<istream::off_type>(tell()), ios::beg);
   return *istream_;
@@ -717,7 +717,7 @@ SpanSource::read(span<u8> out) {
     return 0;
   }
 
-  const u64 ret = min(out.size(), in_.size() - static_cast<u64>(pos_));
+  const u64 ret = min(static_cast<u64>(out.size()), static_cast<u64>(in_.size() - pos_));
   if (ret > 0) {
     memcpy(out.data(), in_.data() + static_cast<u64>(pos_), ret);
     pos_ += ret;
@@ -751,7 +751,7 @@ SpanSource::seek(i64 offset, SeekMode mode) { // NOLINT
       }
       break;
   }
-  pos_ = min(static_cast<u64>(pos_), in_.size());
+  pos_ = min(static_cast<u64>(pos_), static_cast<u64>(in_.size()));
   status_.eof = pos_ == in_.size();
   return true;
 }
@@ -853,7 +853,7 @@ StringSource::istream() {
 
   if (istream_ == nullptr) {
     const span<const char> chars(in_.data(), in_.size());
-    istream_ = make_unique<ispanstream>(chars);
+    istream_ = make_unique<io::ISpanStream>(chars);
   }
   istream_->seekg(safe<istream::off_type>(tell()), ios::beg);
   return *istream_;
@@ -865,7 +865,7 @@ StringSource::read(span<u8> out) {
     return 0;
   }
 
-  const u64 ret = min(out.size(), in_.size() - static_cast<u64>(pos_));
+  const u64 ret = min(static_cast<u64>(out.size()), static_cast<u64>(in_.size() - pos_));
   if (ret > 0) {
     memcpy(out.data(), in_.data() + static_cast<u64>(pos_), ret);
     pos_ += ret;
@@ -899,7 +899,7 @@ StringSource::seek(i64 offset, SeekMode mode) { // NOLINT
       }
       break;
   }
-  pos_ = min(static_cast<u64>(pos_), in_.size());
+  pos_ = min(static_cast<u64>(pos_), static_cast<u64>(in_.size()));
   status_.eof = pos_ == in_.size();
   return true;
 }

@@ -8,8 +8,6 @@
 #include "rocket/io/io.h"
 #include "rocket/nio/nio.h"
 
-#include <scn/istream.h>
-
 #include <chrono>
 #include <functional>
 #include <set>

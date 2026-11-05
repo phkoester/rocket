@@ -970,7 +970,7 @@ struct CborProducerImpl<DataType::TimeZone, T> {
       throw InputFailure(ex.position(), "Expected a time zone");
     }
     try {
-      item.setValue(locate_zone(name.value()));
+      item.setValue(rocket::chrono::locateZone(name.value()));
     } catch (const std::exception& ex) {
       throw InputFailure(state.index, ex.what());
     }
@@ -1177,7 +1177,7 @@ struct CborCodec : Codec<CborConsumer, CborProducer> {
 
     // Now serialize the item and create a byte vector for it
     unsigned char* buf; // NOLINT
-    u64 bufSize; // NOLINT
+    std_size_t bufSize; // NOLINT
     cbor_serialize_alloc(item.ptr(), &buf, &bufSize);
     ROCKET_EXPECT(bufSize > 0, "Cannot allocate memory");
     std::unique_ptr<unsigned char, decltype(&std::free)> ptr(buf, &std::free);

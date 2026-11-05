@@ -7,11 +7,12 @@
 #pragma once
 
 #include "rocket/rocket.h"
+#include "rocket/io/SpanStream.h"
 
 #include <cstdio>
 #include <filesystem>
-#include <spanstream>
 #include <sstream>
+#include <string_view>
 
 #ifdef ROCKET_OS_WINDOWS
 
@@ -50,7 +51,7 @@ inline std::istringstream is() { return {}; }
  * @param str the string to read from
  * @return an input stream that reads from the string @p str
  */
-inline std::ispanstream is(std::string_view str) { return std::ispanstream(str); }
+inline ISpanStream is(std::string_view str) { return ISpanStream(str); }
 
 /**
  * Opens a file and returns a `FILE` pointer, or null if the file cannot be opened.

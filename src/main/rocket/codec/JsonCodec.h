@@ -201,6 +201,7 @@
 #pragma once
 
 #include "rocket/InputFailure.h"
+#include "rocket/format.h"
 #include "rocket/scan.h"
 #include "rocket/std.h"
 #include "rocket/codec/codec.h"
@@ -209,10 +210,6 @@
 #include "rocket/str/escape/escape.h"
 #include "rocket/system/system.h"
 #include "rocket/unicode/ConvertTo.h"
-
-#include <fmt/std.h>
-
-#include <scn/chrono.h>
 
 namespace rocket::codec {
 
@@ -245,7 +242,7 @@ endContainer(nio::Sink& out, JsonConsumerConfig& config, u64 size, char c) {
  *
  * Such a tuple is a JSON object. Every other tuple is a JSON array.
  */
-template<typename T, u64... Index>
+template<typename T, std_size_t... Index>
 constexpr bool
 isObjectTuple(std::index_sequence<Index...>) {
   return ((DataTypes<std::tuple_element_t<Index, T>>::Value == DataType::MemberRef ||
@@ -1383,7 +1380,7 @@ struct JsonProducerImpl<DataType::TimeZone, T> {
 
     try {
       // This throws if the time zone is not found
-      val = locate_zone(input);
+      val = rocket::chrono::locateZone(input);
     } catch (const std::exception& ex) {
       throw InputFailure(inPos(0), ex.what());
     }
@@ -1414,7 +1411,7 @@ struct JsonProducerImpl<DataType::Time, T> {
 
     // The environment variable `TZ` interferes somehow ...
 
-    const auto* current = current_zone();
+    const auto* current = rocket::chrono::currentZone();
     const auto TZ = system::env::get<std::string>("TZ");
     if (TZ) {
       ROCKET_EXPECT(*TZ == current->name(), "If defined, the environment variable `TZ` must match the current time zone, which is {}", current->name());
@@ -1477,7 +1474,7 @@ struct JsonProducerImpl<DataType::ZonedTime, T> {
 
     // The environment variable `TZ` interferes somehow ...
 
-    const auto* current = current_zone();
+    const auto* current = rocket::chrono::currentZone();
     const auto TZ = system::env::get<std::string>("TZ");
     if (TZ) {
       ROCKET_EXPECT(*TZ == current->name(), "If defined, the environment variable `TZ` must match the current time zone, which is {}", current->name());
@@ -1551,12 +1548,12 @@ struct JsonProducerImpl<DataType::ZonedTime, T> {
       TimeZone tz; // NOLINT
       try {
         // This throws if the time zone is not found
-        tz = locate_zone(*name);
+        tz = rocket::chrono::locateZone(*name);
       } catch (const std::exception& ex) {
         throw InputFailure(tzPos, ex.what());
       }
 
-      // Finally, construct the `zoned_time`
+      // Finally, construct the `ZonedTime`
 
       val = T(tz, tp);
     } catch (const InputFailure& ex) {

@@ -13,8 +13,11 @@
 #include <cstdlib>
 #include <ranges>
 
+#ifdef ROCKET_OS_MACOS
+  #include <crt_externs.h>
+#endif
 #ifdef ROCKET_OS_WINDOWS
-#include <process.h>
+  #include <process.h>
 #endif
 
 using namespace rocket;
@@ -55,35 +58,35 @@ callExitFns(bool onTerminate) {
   }
 }
 
-#ifdef ROCKET_OS_WINDOWS
-
-const string&
-invocationName() {
-  static string ret(__argv[0]);
-  return ret;
-}
-
-const string&
-invocationShortName() {
-  static string ret(shortName(__argv[0]));
-  return ret;
-}
-
-#else
-
+#ifdef ROCKET_OS_LINUX
 const string&
 invocationName() {
   static const string ret(::program_invocation_name);
   return ret;
 }
+#endif
+
+#ifdef ROCKET_OS_MACOS
+const string&
+invocationName() {
+  static const string ret(*_NSGetArgv()[0]);
+  return ret;
+}
+#endif
+
+#ifdef ROCKET_OS_WINDOWS
+const string&
+invocationName() {
+  static string ret(__argv[0]);
+  return ret;
+}
+#endif
 
 const string&
 invocationShortName() {
-  static const string ret(::program_invocation_short_name);
+  static string ret(shortName(invocationName()));
   return ret;
 }
-
-#endif // ROCKET_OS_WINDOWS
 
 void
 onExit() {

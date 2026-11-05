@@ -10,26 +10,6 @@ set(GENERATED_DIR ${CMAKE_CURRENT_BINARY_DIR}/generated)
 
 # Rocket ....................................................................................................
 
-RocketAddTest(test-rocket rocket test-rocket.cc)
-
-set(GENERATE_HELLO ${PROJECT_SOURCE_DIR}/cmake/generate-hello)
-GaiaPythonPath(${GENERATE_HELLO} GENERATE_HELLO_PYTHON)
-
-set(HELLO_CC ${GENERATED_DIR}/hello.cc)
-GaiaPythonPath(${HELLO_CC} HELLO_CC_PYTHON)
-
-add_custom_command(
-  OUTPUT   ${HELLO_CC}
-  COMMAND  ${Python3_EXECUTABLE} ${GENERATE_HELLO_PYTHON} -o ${HELLO_CC_PYTHON}
-  DEPENDS  ${GENERATE_HELLO} ${PROJECT_SOURCE_DIR}/CMakeLists.txt ${CMAKE_CURRENT_LIST_FILE}
-  VERBATIM
-)
-RocketAddTest(test-rocket-external-CMake rocket/external test-CMake.cc
-  ENVIRONMENT
-    "A=A A"
-    "B=B B")
-target_sources(test-rocket-external-CMake PRIVATE ${HELLO_CC})
-
 RocketAddTest(test-rocket-Bimap                        rocket                 test-Bimap.cc)
 RocketAddTest(test-rocket-Cow                          rocket                 test-Cow.cc)
 RocketAddTest(test-rocket-Exception                    rocket                 test-Exception.cc)
@@ -40,6 +20,7 @@ RocketAddTest(test-rocket-functional                   rocket                 te
 RocketAddTest(test-rocket-macro                        rocket                 test-macro.cc)
 RocketAddTest(test-rocket-scope                        rocket                 test-scope.cc)
 RocketAddTest(test-rocket-type-traits                  rocket                 test-type-traits.cc)
+RocketAddTest(test-rocket-chrono                       rocket/chrono          test-chrono.cc)
 RocketAddTest(test-rocket-cl                           rocket/cl              test-cl.cc)
 RocketAddTest(test-rocket-codec                        rocket/codec           test-codec.cc)
 RocketAddTest(test-rocket-codec-CborCodec              rocket/codec           test-CborCodec.cc)
@@ -58,6 +39,7 @@ RocketAddTest(test-rocket-format                       rocket/format          te
 RocketAddTest(test-rocket-format-std                   rocket/format          test-std.cc)
 RocketAddTest(test-rocket-hash                         rocket/hash            test-hash.cc)
 RocketAddTest(test-rocket-io                           rocket/io              test-io.cc)
+RocketAddTest(test-rocket-io-SpanStream                rocket/io              test-SpanStream.cc)
 RocketAddTest(test-rocket-log                          rocket/log             test-log.cc)
 RocketAddTest(test-rocket-math                         rocket/math            test-math.cc)
 RocketAddTest(test-rocket-math-interval                rocket/math            test-Interval.cc)
@@ -74,9 +56,31 @@ RocketAddTest(test-rocket-unicode                      rocket/unicode         te
 RocketAddTest(test-rocket-unicode-Character            rocket/unicode         test-Character.cc)
 RocketAddTest(test-rocket-unicode-Iterator             rocket/unicode         test-Iterator.cc)
 
+# Windows . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+
 if(GAIA_OS_WINDOWS)
   RocketAddTest(test-rocket-external-boost-int128 rocket/external test-boost-int128.cc)
 endif()
+
+# `test-rocket-external-CMake`  . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+
+set(GENERATE_HELLO ${PROJECT_SOURCE_DIR}/cmake/generate-hello)
+GaiaPythonPath(${GENERATE_HELLO} GENERATE_HELLO_PYTHON)
+
+set(HELLO_CC ${GENERATED_DIR}/hello.cc)
+GaiaPythonPath(${HELLO_CC} HELLO_CC_PYTHON)
+
+add_custom_command(
+  OUTPUT   ${HELLO_CC}
+  COMMAND  ${Python3_EXECUTABLE} ${GENERATE_HELLO_PYTHON} -o ${HELLO_CC_PYTHON}
+  DEPENDS  ${GENERATE_HELLO} ${PROJECT_SOURCE_DIR}/CMakeLists.txt ${CMAKE_CURRENT_LIST_FILE}
+  VERBATIM
+)
+RocketAddTest(test-rocket-external-CMake rocket/external test-CMake.cc
+  ENVIRONMENT
+    "A=A A"
+    "B=B B")
+target_sources(test-rocket-external-CMake PRIVATE ${HELLO_CC})
 
 # Rocket.Test ...............................................................................................
 

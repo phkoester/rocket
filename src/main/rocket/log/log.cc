@@ -148,7 +148,7 @@ private:
 
   static std::chrono::year_month_day
   localYmd(const TimePoint& time) {
-    auto localTime = std::chrono::zoned_time(std::chrono::current_zone(), time);
+    auto localTime = rocket::chrono::ZonedTime(rocket::chrono::currentZone(), time);
     auto localDays = std::chrono::floor<std::chrono::days>(localTime.get_local_time());
     return std::chrono::year_month_day(localDays); // NOLINT
   }
@@ -462,11 +462,11 @@ formatExecTime(const TimePoint& t1, const TimePoint& t2) {
 string
 formatTimePoint(const TimePoint& tp) {
   const auto formatImpl = [](const auto& ctp) { // ctp = cast time point
-    // Note we're using `std::format` here because `fmt::format` doesn't support `chrono::zoned_time`
+    // Note we're using `std::format` here because `fmt::format` doesn't support `rocket::chrono::ZonedTime`
     if (logFmt.useUtc) {
       return std::format("{:%FT%TZ} ", ctp);
     }
-    std::chrono::zoned_time zt { std::chrono::current_zone(), ctp };
+    rocket::chrono::ZonedTime zt { rocket::chrono::currentZone(), ctp };
     return std::format("{:%FT%T%Ez} ", zt);
   };
 

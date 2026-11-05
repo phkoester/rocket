@@ -7,9 +7,6 @@
 #include "rocket/Bimap-codec.h"
 #include "rocket/unicode/unicode.h"
 
-#include <fmt/ranges.h>
-#include <fmt/xchar.h>
-
 using namespace rocket::unicode;
 
 // Constants ------------------------------------------------------------------------------------------------

@@ -6,9 +6,6 @@
 
 #include "rocket/format.h"
 
-#include <fmt/chrono.h>
-#include <fmt/xchar.h>
-
 #include <limits>
 
 using namespace rocket;

@@ -8,8 +8,6 @@
 #include "rocket/format/Subformat.h"
 #include "rocket/nio/nio.h"
 
-#include <fmt/xchar.h>
-
 using namespace rocket::format;
 
 // `TEST` ---------------------------------------------------------------------------------------------------

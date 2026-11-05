@@ -2,9 +2,8 @@
  * message.cc
  */
 
+#include "rocket/format.h"
 #include "rocket/str/message/message.h"
-
-#include <fmt/std.h>
 
 using namespace std;
 

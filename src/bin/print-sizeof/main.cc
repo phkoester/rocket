@@ -4,8 +4,7 @@
 
 #include <rocket/Process.h>
 #include <rocket/str/Noun.h>
-
-#include <fmt/std.h> // `fmt::formatter<std::type_info>`
+#include <rocket/format.h>
 
 using namespace rocket;
 using namespace std;

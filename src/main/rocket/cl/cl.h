@@ -13,8 +13,6 @@
 #include "rocket/str/StringConvert.h"
 #include "rocket/unicode/Character.h"
 
-#include <fmt/std.h>
-
 #include <map>
 #include <set>
 

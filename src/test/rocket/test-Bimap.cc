@@ -6,8 +6,6 @@
 
 #include "rocket/Bimap-codec.h"
 
-#include <fmt/xchar.h>
-
 using namespace rocket;
 
 // `TEST` ---------------------------------------------------------------------------------------------------

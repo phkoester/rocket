@@ -90,6 +90,9 @@ set(LINK_FLAGS)
 if(GAIA_OS_LINUX)
   # Linux
   list(APPEND COMPILE_FLAGS -Wall -Werror -Wextra)
+elseif(GAIA_OS_MACOS)
+  # macOS
+  list(APPEND COMPILE_FLAGS -Wall -Werror -Wextra)
 elseif(GAIA_OS_WINDOWS)
   # Windows
   if(GAIA_CXX_COMPILER_LLVM)
@@ -125,6 +128,10 @@ set(ROCKET_BOOST_COMPONENTS
   preprocessor
   safe_numerics
 )
+
+if(GAIA_OS_MACOS AND GAIA_CXX_COMPILER_LLVM)
+  list(APPEND ROCKET_BOOST_COMPONENTS stacktrace)
+endif()
 
 find_package(Boost ${ROCKET_BOOST_VERSION} QUIET COMPONENTS ${ROCKET_BOOST_COMPONENTS})
 if(NOT Boost_FOUND)

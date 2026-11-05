@@ -314,7 +314,7 @@ using Character = BasicCharacter<C, std::basic_string<C>>;
  * @return a #rocket::unicode::Character
  */
 constexpr Character<char>
-operator""_c(const char* p, u64 len) {
+operator""_c(const char* p, std_size_t len) {
   return Character<char>(std::string_view(p, len));
 }
 
@@ -326,7 +326,7 @@ operator""_c(const char* p, u64 len) {
  * @return a #rocket::unicode::Character
 */
 constexpr Character<char32>
-operator""_c(const char32* p, u64 len) {
+operator""_c(const char32* p, std_size_t len) {
   return Character<char32>(std::u32string_view(p, len));
 }
 
@@ -356,7 +356,7 @@ using CharacterView = BasicCharacter<C, std::basic_string_view<C>>;
  * @return a #rocket::unicode::CharacterView
  */
 constexpr CharacterView<char>
-operator""_cv(const char* p, u64 len) {
+operator""_cv(const char* p, std_size_t len) {
   return CharacterView<char>(std::string_view(p, len));
 }
 
@@ -368,7 +368,7 @@ operator""_cv(const char* p, u64 len) {
  * @return a #rocket::unicode::CharacterView
 */
 constexpr CharacterView<char32>
-operator""_cv(const char32* p, u64 len) {
+operator""_cv(const char32* p, std_size_t len) {
   return CharacterView<char32>(std::u32string_view(p, len));
 }
 

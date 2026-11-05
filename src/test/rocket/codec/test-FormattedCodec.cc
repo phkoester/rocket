@@ -11,8 +11,6 @@
 #include "rocket/reflect/reflect.h"
 #include "rocket/str/location/location.h"
 
-#include <fmt/chrono.h>
-
 using namespace rocket;
 using namespace rocket::codec;
 using namespace std;
@@ -205,8 +203,8 @@ TEST(FormattedCodec, ConsumerYearDate) {
 TEST(FormattedCodec, ConsumerTimeZone) {
   using namespace std::chrono;
 
-  EXPECT_EQ(encode(locate_zone("Europe/Berlin")), "(Europe/Berlin)");
-  EXPECT_EQ(encode(locate_zone("UTC")), "(Etc/UTC)");
+  EXPECT_EQ(encode(rocket::chrono::locateZone("Europe/Berlin")), "(Europe/Berlin)");
+  EXPECT_EQ(encode(rocket::chrono::locateZone("UTC")), "(Etc/UTC)");
 }
 
 TEST(FormattedCodec, ConsumerTime) {
@@ -230,18 +228,18 @@ TEST(FormattedCodec, ConsumerZonedTime) {
 
   {
     // Current time zone
-    const auto* current = current_zone();
+    const auto* current = rocket::chrono::currentZone();
     const auto now = rocket::chrono::now<system_clock>();
-    EXPECT_THAT(encode(zoned_time(current, time_point_cast<seconds>(now))), matchesRegex(regexS));
-    EXPECT_THAT(encode(zoned_time(current, now)), matchesRegex(regexNs));
+    EXPECT_THAT(encode(rocket::chrono::ZonedTime(current, time_point_cast<seconds>(now))), matchesRegex(regexS));
+    EXPECT_THAT(encode(rocket::chrono::ZonedTime(current, now)), matchesRegex(regexNs));
   }
 
   {
     // Time zone UTC
-    const auto* utc = locate_zone("UTC");
+    const auto* utc = rocket::chrono::locateZone("UTC");
     const auto now = rocket::chrono::now<system_clock>();
-    EXPECT_THAT(encode(zoned_time(utc, time_point_cast<seconds>(now))), matchesRegex(regexS));
-    EXPECT_THAT(encode(zoned_time(utc, now)), matchesRegex(regexNs));
+    EXPECT_THAT(encode(rocket::chrono::ZonedTime(utc, time_point_cast<seconds>(now))), matchesRegex(regexS));
+    EXPECT_THAT(encode(rocket::chrono::ZonedTime(utc, now)), matchesRegex(regexNs));
   }
 }
 
@@ -460,8 +458,8 @@ TEST(FormattedCodec, ProducerDate) {
 TEST(FormattedCodec, ProducerTimeZone) {
   using namespace std::chrono;
 
-  EXPECT_EQ(decode<TimeZone>("(Europe/Berlin)"), locate_zone("Europe/Berlin"));
-  EXPECT_EQ(decode<TimeZone>("(UTC)"), locate_zone("UTC"));
+  EXPECT_EQ(decode<TimeZone>("(Europe/Berlin)"), rocket::chrono::locateZone("Europe/Berlin"));
+  EXPECT_EQ(decode<TimeZone>("(UTC)"), rocket::chrono::locateZone("UTC"));
   EXPECT_EQ(decode<TimeZone>("x").error().message, "Expected a time zone");
 
   EXPECT_THAT(decode<TimeZone>("(x)").error().message, AnyOf(
@@ -487,12 +485,12 @@ TEST(FormattedCodec, ProducerTime) {
 TEST(FormattedCodec, ProducerZonedTime) {
   using namespace std::chrono;
 
-  using ZonedTime = zoned_time<nanoseconds>;
+  using ZonedTime = rocket::chrono::ZonedTime<nanoseconds>;
 
   // Test equality on roundtrip
-  const auto* current = current_zone();
+  const auto* current = rocket::chrono::currentZone();
   const auto now = rocket::chrono::now<system_clock>();
-  const ZonedTime val1 = zoned_time(current, now);
+  const ZonedTime val1 = rocket::chrono::ZonedTime(current, now);
   string encoded = encode(val1);
   nio::out.println("VAL1: {}", encoded);
   const ZonedTime val2 = decode<ZonedTime>(encoded).value(); // NOLINT

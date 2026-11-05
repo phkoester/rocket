@@ -283,20 +283,54 @@ struct Float<8> {
 
 // Concepts for basic data types ----------------------------------------------------------------------------
 
-template<typename T>
-concept IsChar = std::same_as<Purge<T>, typename Char<sizeof(Purge<T>)>::Type>;
+namespace internal {
 
 template<typename T>
-concept IsInt = std::same_as<Purge<T>, typename Int<sizeof(Purge<T>)>::Type>;
+concept IsCharImpl = std::same_as<T, typename Char<sizeof(T)>::Type>;
 
 template<typename T>
-concept IsUint = std::same_as<Purge<T>, typename Uint<sizeof(Purge<T>)>::Type>;
+concept IsIntImpl =
+  not std::same_as<T, bool> &&
+  not std::same_as<T, char> &&
+  not std::same_as<T, char32> &&
+  std::is_integral_v<T> &&
+  std::is_signed_v<T> &&
+  sizeof(T) == sizeof(typename Int<sizeof(T)>::Type);
+
+template<typename T>
+concept IsUintImpl =
+  not std::same_as<T, bool> &&
+  not std::same_as<T, char> &&
+  not std::same_as<T, char32> &&
+  std::is_integral_v<T> &&
+  std::is_unsigned_v<T> &&
+  sizeof(T) == sizeof(typename Uint<sizeof(T)>::Type);
+
+template<typename T>
+concept IsFloatImpl = std::same_as<T, typename Float<sizeof(T)>::Type>;
+
+} // namespace internal
+
+template<typename T>
+concept IsChar = internal::IsCharImpl<Purge<T>>;
+
+template<typename T>
+concept IsInt = internal::IsIntImpl<Purge<T>>;
+
+template<typename T>
+concept IsUint = internal::IsUintImpl<Purge<T>>;
 
 template<typename T>
 concept IsInteger = IsInt<T> || IsUint<T>;
 
 template<typename T>
-concept IsFloat = std::same_as<Purge<T>, typename Float<sizeof(Purge<T>)>::Type>;
+concept IsFloat = internal::IsFloatImpl<Purge<T>>;
+
+// Verify the concepts --------------------------------------------------------------------------------------
+
+static_assert(not IsInteger<bool>);
+static_assert(not IsInteger<char>);
+static_assert(not IsInteger<char32>);
 
 // Miscellaneous concepts -----------------------------------------------------------------------------------
 

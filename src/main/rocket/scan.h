@@ -9,7 +9,9 @@
 #include "rocket/type-traits.h"
 #include "rocket/io/io.h"
 
+#include <scn/chrono.h>
 #include <scn/istream.h>
+#include <scn/ranges.h>
 
 #ifdef ROCKET_HAS_BOOST_INT128
 

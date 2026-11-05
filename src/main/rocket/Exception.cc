@@ -19,7 +19,7 @@ void printThrown(
   u64 level,
   const type_info* type,
   const optional<string>& what,
-  const optional<stacktrace>& st);
+  const optional<StackTrace>& st);
 
 string
 getWhat(i32 val) {
@@ -85,10 +85,10 @@ printExceptionPtr(nio::Sink& out, u64 level, exception_ptr ptr) { // NOLINT(*-re
   } catch (const string_view& val) {
     printThrown(out, level, &typeid(val), getWhat(val), nullopt);
   } catch (...) {
-#ifdef ROCKET_OS_WINDOWS
-    const type_info* type = nullptr;
-#else
+#ifdef __GLIBCXX__
     const type_info* type = current_exception().__cxa_exception_type();
+#else
+    const type_info* type = nullptr;
 #endif
     if (type != nullptr) {
       printThrown(out, level, type, nullopt, nullopt);
@@ -104,7 +104,7 @@ printThrown(
     u64 level,
     const type_info* type,
     const optional<string>& what,
-    const optional<stacktrace>& st) {
+    const optional<StackTrace>& st) {
   // Print information about the instance
 
   nio::StringSink instanceOf;
@@ -179,7 +179,7 @@ InvalidArgument::InvalidArgument(
     string_view name,
     string_view msg,
     const optional<source_location>& sl,
-    const optional<stacktrace>& st) :
+    const optional<StackTrace>& st) :
     Exception(fmt::format("Parameter `{}`: {}", name, msg), sl, st),
     Base(str::message::withSourceLocation(Exception::message(), Exception::sourceLocation())) {}
 
@@ -188,7 +188,7 @@ InvalidArgument::InvalidArgument(
 InvalidState::InvalidState(
     string_view msg,
     const optional<source_location>& sl,
-    const optional<stacktrace>& st) :
+    const optional<StackTrace>& st) :
     Exception(msg, sl, st),
     Base(str::message::withSourceLocation(Exception::message(), Exception::sourceLocation())) {}
 
@@ -198,7 +198,7 @@ Overflow::Overflow(
   const type_info& type,
   string_view msg,
   const optional<source_location>& sl,
-  const optional<stacktrace>& st) :
+  const optional<StackTrace>& st) :
   Exception(str::message::overflow(type, msg), sl, st),
   Base(str::message::withSourceLocation(Exception::message(), Exception::sourceLocation())) {}
 
@@ -208,7 +208,7 @@ Underflow::Underflow(
   const type_info& type,
   string_view msg,
   const optional<source_location>& sl,
-  const optional<stacktrace>& st) :
+  const optional<StackTrace>& st) :
   Exception(str::message::underflow(type, msg), sl, st),
   Base(str::message::withSourceLocation(Exception::message(), Exception::sourceLocation())) {}
 

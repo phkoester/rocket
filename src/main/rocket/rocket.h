@@ -53,6 +53,7 @@
 
 #include <bit>
 #include <cstdint> // `std::int8_t`, `std::uint8_t`, ...
+#include <concepts> // `std::same_as`
 #include <cstdio> // Make this generally availabe
 #include <typeinfo> // Make this generally available
 
@@ -63,14 +64,20 @@
 
 // Check prerequisites --------------------------------------------------------------------------------------
 
-#if not defined(ROCKET_OS_DARWIN) && not defined(ROCKET_OS_LINUX) && not defined(ROCKET_OS_WINDOWS)
+#if not defined(ROCKET_OS_LINUX) && not defined(ROCKET_OS_MACOS) && not defined(ROCKET_OS_WINDOWS)
   #error Unknown OS
+#endif
+
+#if not defined(ROCKET_C_COMPILER_GNU) && \
+  not defined(ROCKET_C_COMPILER_LLVM) && \
+  not defined(ROCKET_C_COMPILER_MSVC)
+  #error Unknown C compiler
 #endif
 
 #if not defined(ROCKET_CXX_COMPILER_GNU) && \
   not defined(ROCKET_CXX_COMPILER_LLVM) && \
   not defined(ROCKET_CXX_COMPILER_MSVC)
-  #error Unknown compiler
+  #error Unknown C++ compiler
 #endif
 
 // Macros ---------------------------------------------------------------------------------------------------
@@ -137,6 +144,33 @@ using u64 = std::uint64_t; ///< An unsigned 64-bit integer.
 #endif
 using f32 = std_float; ///< A 32-bit floating point.
 using f64 = std_double; ///< A 64-bit floating point.
+
+// Verify the type system -----------------------------------------------------------------------------------
+
+static_assert(sizeof(bool) == 1);
+static_assert(sizeof(char) == 1);
+static_assert(sizeof(char32) == 4);
+static_assert(sizeof(i8) == 1);
+static_assert(sizeof(u8) == 1);
+static_assert(sizeof(i16) == 2);
+static_assert(sizeof(u16) == 2);
+static_assert(sizeof(i32) == 4);
+static_assert(sizeof(u32) == 4);
+static_assert(sizeof(i64) == 8);
+static_assert(sizeof(u64) == 8);
+static_assert(sizeof(i128) == 16);
+static_assert(sizeof(u128) == 16);
+static_assert(sizeof(f32) == 4);
+static_assert(sizeof(f64) == 8);
+static_assert(sizeof(void*) == 8);
+
+static_assert(std::is_signed_v<char>);
+static_assert(not std::numeric_limits<char32>::is_signed);
+static_assert(sizeof(u64) == sizeof(std_size_t));
+static_assert(std::numeric_limits<i128>::is_signed);
+static_assert(not std::numeric_limits<u128>::is_signed);
+static_assert(std::same_as<decltype(1.0F), f32>);
+static_assert(std::same_as<decltype(1.0), f64>);
 
 // Detect endianness ----------------------------------------------------------------------------------------
 

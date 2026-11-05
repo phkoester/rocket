@@ -127,7 +127,7 @@ struct CompareConsumerImpl<DataType::Tuple, T, Cmp> {
 
 private:
 
-  template<u64... Index, typename... Args>
+  template<std_size_t... Index, typename... Args>
   Ordering
   consume(const T& lhs, const T& rhs, std::index_sequence<Index...>, Args&&... args) { // NOLINT
     Ordering ret = std::strong_ordering::equal;

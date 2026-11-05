@@ -7,10 +7,6 @@
 #include "rocket/enum.h"
 #include "rocket/scan.h"
 
-#include <fmt/xchar.h>
-
-#include <scn/istream.h>
-
 // `MyEnum` -------------------------------------------------------------------------------------------------
 
 enum MyEnum : u8 { fröb, fröber, fröberer, pörk, pörker, pörkerer };

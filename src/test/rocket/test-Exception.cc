@@ -8,8 +8,6 @@
 #include "rocket/Exception.h"
 #include "rocket/nio/nio.h"
 
-#include <fmt/xchar.h>
-
 using namespace std;
 
 // `TEST` ---------------------------------------------------------------------------------------------------
