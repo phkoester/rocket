@@ -1,5 +1,5 @@
 /**
- * @file SpanStream.h
+ * @file spanstream.h
  *
  * Streams reading from and writing to a fixed buffer, given as a #std::span.
  *
@@ -8,17 +8,19 @@
  * #std::basic_spanbuf, #std::basic_ispanstream, #std::basic_ospanstream, and #std::basic_spanstream.
  * Otherwise, they are portable implementations that follow the specification of these classes in the C++23
  * standard.
+ *
+ * XXX Make a table here
  */
 
 #pragma once
 
 #if defined(ROCKET_OS_MACOS) && defined(ROCKET_CXX_COMPILER_LLVM)
-  #define ROCKET_HAS_SPAN_STREAM_IMPL
+  #define ROCKET_HAS_IO_SPAN_STREAM_IMPL
 #endif
 
 #include "rocket/rocket.h"
 
-#ifndef ROCKET_HAS_SPAN_STREAM_IMPL
+#ifndef ROCKET_HAS_IO_SPAN_STREAM_IMPL
   #include <spanstream>
 #else
   #include <climits>
@@ -37,29 +39,29 @@
 
 namespace rocket::io {
 
-#ifndef ROCKET_HAS_SPAN_STREAM_IMPL
+#ifndef ROCKET_HAS_IO_SPAN_STREAM_IMPL
 
-// `BasicSpanBuf`, `BasicISpanStream`, `BasicOSpanStream`, `BasicSpanStream` --------------------------------
+// `basic_spanbuf`, `basic_ispanstream`, `basic_ospanstream`, `basic_spanstream` ----------------------------
 
 /// A stream buffer for a fixed character buffer.
 template<typename CharT, typename Traits = std::char_traits<CharT>>
-using BasicSpanBuf = std::basic_spanbuf<CharT, Traits>;
+using basic_spanbuf = std::basic_spanbuf<CharT, Traits>;
 
 /// A stream for reading from a fixed character buffer.
 template<typename CharT, typename Traits = std::char_traits<CharT>>
-using BasicISpanStream = std::basic_ispanstream<CharT, Traits>;
+using basic_ispanstream = std::basic_ispanstream<CharT, Traits>;
 
 /// A stream for writing to a fixed character buffer.
 template<typename CharT, typename Traits = std::char_traits<CharT>>
-using BasicOSpanStream = std::basic_ospanstream<CharT, Traits>;
+using basic_ospanstream = std::basic_ospanstream<CharT, Traits>;
 
 /// A stream for reading from and writing to a fixed character buffer.
 template<typename CharT, typename Traits = std::char_traits<CharT>>
-using BasicSpanStream = std::basic_spanstream<CharT, Traits>;
+using basic_spanstream = std::basic_spanstream<CharT, Traits>;
 
 #else
 
-// `BasicSpanBuf` -------------------------------------------------------------------------------------------
+// `basic_spanbuf` ------------------------------------------------------------------------------------------
 
 /**
  * A stream buffer for a fixed character buffer, equivalent to C++23's #std::basic_spanbuf.
@@ -72,7 +74,7 @@ using BasicSpanStream = std::basic_spanstream<CharT, Traits>;
  * @NotThreadSafe
  */
 template<typename CharT, typename Traits = std::char_traits<CharT>>
-struct BasicSpanBuf : public std::basic_streambuf<CharT, Traits> {
+struct basic_spanbuf : public std::basic_streambuf<CharT, Traits> {
   using Base = std::basic_streambuf<CharT, Traits>;
 
   using char_type = CharT;
@@ -82,14 +84,14 @@ struct BasicSpanBuf : public std::basic_streambuf<CharT, Traits> {
   using traits_type = Traits;
 
   /// @ctor
-  BasicSpanBuf() : BasicSpanBuf(std::ios_base::in | std::ios_base::out) {}
+  basic_spanbuf() : basic_spanbuf(std::ios_base::in | std::ios_base::out) {}
 
   /**
    * @ctor
    *
    * @param which the open mode
    */
-  explicit BasicSpanBuf(std::ios_base::openmode which) : BasicSpanBuf(std::span<CharT>(), which) {}
+  explicit basic_spanbuf(std::ios_base::openmode which) : basic_spanbuf(std::span<CharT>(), which) {}
 
   /**
    * @ctor
@@ -97,30 +99,30 @@ struct BasicSpanBuf : public std::basic_streambuf<CharT, Traits> {
    * @param s the buffer
    * @param which the open mode
    */
-  explicit BasicSpanBuf(
+  explicit basic_spanbuf(
     std::span<CharT> s,
     std::ios_base::openmode which = std::ios_base::in | std::ios_base::out) :
     mode_(which) {
     this->span(s);
   }
 
-  BasicSpanBuf(const BasicSpanBuf&) = delete;
+  basic_spanbuf(const basic_spanbuf&) = delete;
 
   /**
    * @ctor_move
    *
    * The sequence pointers of the new instance are those of @p rhs, which keeps referring to the same buffer.
    */
-  BasicSpanBuf(BasicSpanBuf&& rhs) : Base(rhs), mode_(rhs.mode_), buf_(rhs.buf_) {}
+  basic_spanbuf(basic_spanbuf&& rhs) : Base(rhs), mode_(rhs.mode_), buf_(rhs.buf_) {}
 
-  ~BasicSpanBuf() override = default;
+  ~basic_spanbuf() override = default;
 
-  BasicSpanBuf& operator=(const BasicSpanBuf&) = delete;
+  basic_spanbuf& operator=(const basic_spanbuf&) = delete;
 
   /// @op_assign_move
-  BasicSpanBuf&
-  operator=(BasicSpanBuf&& rhs) {
-    BasicSpanBuf tmp(std::move(rhs));
+  basic_spanbuf&
+  operator=(basic_spanbuf&& rhs) {
+    basic_spanbuf tmp(std::move(rhs));
     swap(tmp);
     return *this;
   }
@@ -141,7 +143,7 @@ struct BasicSpanBuf : public std::basic_streambuf<CharT, Traits> {
   /**
    * Sets a new buffer, resetting the input and output positions.
    *
-   * If opened with `std::ios_base::ate`, the output position is set to the end of the buffer.
+   * If opened with #std::ios_base::ate, the output position is set to the end of the buffer.
    *
    * @param s the buffer
    */
@@ -151,7 +153,7 @@ struct BasicSpanBuf : public std::basic_streambuf<CharT, Traits> {
     if (mode_ & std::ios_base::out) {
       this->setp(s.data(), s.data() + s.size());
       if (mode_ & std::ios_base::ate) {
-        bumpOutput(s.size());
+        bump_output(s.size());
       }
     }
     if (mode_ & std::ios_base::in) {
@@ -165,7 +167,7 @@ struct BasicSpanBuf : public std::basic_streambuf<CharT, Traits> {
    * @param rhs the other instance
    */
   void
-  swap(BasicSpanBuf& rhs) {
+  swap(basic_spanbuf& rhs) {
     Base::swap(rhs);
     std::swap(mode_, rhs.mode_);
     std::swap(buf_, rhs.buf_);
@@ -230,7 +232,7 @@ protected:
     }
     if (out) {
       this->setp(this->pbase(), this->epptr());
-      bumpOutput(static_cast<std::size_t>(newoff));
+      bump_output(static_cast<std::size_t>(newoff));
     }
     return pos_type(newoff);
   }
@@ -249,7 +251,7 @@ private:
 
   // Advances the output position by @p n. `pbump` only takes an `int`, so large buffers need several steps
   void
-  bumpOutput(std::size_t n) {
+  bump_output(std::size_t n) {
     while (n > static_cast<std::size_t>(INT_MAX)) {
       this->pbump(INT_MAX);
       n -= static_cast<std::size_t>(INT_MAX);
@@ -266,11 +268,11 @@ private:
  */
 template<typename CharT, typename Traits>
 void
-swap(BasicSpanBuf<CharT, Traits>& lhs, BasicSpanBuf<CharT, Traits>& rhs) {
+swap(basic_spanbuf<CharT, Traits>& lhs, basic_spanbuf<CharT, Traits>& rhs) {
   lhs.swap(rhs);
 }
 
-// `BasicISpanStream` ---------------------------------------------------------------------------------------
+// `basic_ispanstream` --------------------------------------------------------------------------------------
 
 namespace internal {
 
@@ -609,16 +611,16 @@ swap(BasicSpanStream<CharT, Traits>& lhs, BasicSpanStream<CharT, Traits>& rhs) {
 // `SpanBuf`, `ISpanStream`, `OSpanStream`, `SpanStream` -----------------------------------------------------
 
 /// A stream buffer for a fixed `char` buffer.
-using SpanBuf = BasicSpanBuf<char>;
+using SpanBuf = basic_spanbuf<char>;
 
 /// A stream for reading from a fixed `char` buffer.
-using ISpanStream = BasicISpanStream<char>;
+using ISpanStream = basic_ispanstream<char>;
 
 /// A stream for writing to a fixed `char` buffer.
-using OSpanStream = BasicOSpanStream<char>;
+using OSpanStream = basic_ospanstream<char>;
 
 /// A stream for reading from and writing to a fixed `char` buffer.
-using SpanStream = BasicSpanStream<char>;
+using SpanStream = basic_spanstream<char>;
 
 } // namespace rocket::io
 

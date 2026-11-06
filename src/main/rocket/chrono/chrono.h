@@ -33,7 +33,7 @@
 #pragma once
 
 #if defined(ROCKET_OS_MACOS) && defined(ROCKET_CXX_COMPILER_LLVM)
-  #define ROCKET_HAS_TIME_ZONE_IMPL
+  #define ROCKET_HAS_CHRONO_TIME_ZONE_IMPL
 #endif
 
 #include "rocket/macro.h"
@@ -41,7 +41,7 @@
 #include <chrono>
 #include <mutex>
 
-#ifdef ROCKET_HAS_TIME_ZONE_IMPL
+#ifdef ROCKET_HAS_CHRONO_TIME_ZONE_IMPL
   #include <compare>
   #include <concepts>
   #include <format>
@@ -105,7 +105,7 @@ now() {
   return Clock::now() + internal::clockOffset;
 }
 
-#ifndef ROCKET_HAS_TIME_ZONE_IMPL
+#ifndef ROCKET_HAS_CHRONO_TIME_ZONE_IMPL
 
 // Time zones (standard library) ----------------------------------------------------------------------------
 
@@ -807,7 +807,7 @@ operator<<(std::basic_ostream<CharT, Traits>& os, const ZonedTime<Duration, Time
   }
 }
 
-#endif // ROCKET_HAS_TIME_ZONE_IMPL
+#endif // ROCKET_HAS_CHRONO_TIME_ZONE_IMPL
 
 /// A zoned time with a precision of seconds.
 using ZonedSeconds = ZonedTime<std::chrono::seconds>;

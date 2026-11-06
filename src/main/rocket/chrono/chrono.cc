@@ -4,7 +4,7 @@
 
 #include "chrono.h"
 
-#ifdef ROCKET_HAS_TIME_ZONE_IMPL
+#ifdef ROCKET_HAS_CHRONO_TIME_ZONE_IMPL
   #include <algorithm>
   #include <cstdint>
   #include <cstdlib>
@@ -34,7 +34,7 @@ ROCKET_PUBLIC milliseconds clockOffset = 0ms;
 
 } // namespace rocket::chrono::internal
 
-#ifdef ROCKET_HAS_TIME_ZONE_IMPL
+#ifdef ROCKET_HAS_CHRONO_TIME_ZONE_IMPL
 
 namespace rocket::chrono {
 
@@ -1023,6 +1023,6 @@ currentZone() {
 
 } // namespace rocket::chrono
 
-#endif // ROCKET_HAS_TIME_ZONE_IMPL
+#endif // ROCKET_HAS_CHRONO_TIME_ZONE_IMPL
 
 // EOF

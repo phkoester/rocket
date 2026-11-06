@@ -93,7 +93,7 @@ private:
 
 #endif
 
-#ifdef ROCKET_HAS_TIME_ZONE_IMPL
+#ifdef ROCKET_HAS_CHRONO_TIME_ZONE_IMPL
 
 // `std::formatter<rocket::chrono::ZonedTime>` -------------------------------------------------------------
 
@@ -244,6 +244,6 @@ private:
   bool useTmFormatter_ = false;
 };
 
-#endif // ROCKET_HAS_TIME_ZONE_IMPL
+#endif // ROCKET_HAS_CHRONO_TIME_ZONE_IMPL
 
 // EOF

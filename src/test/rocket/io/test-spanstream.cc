@@ -1,10 +1,10 @@
 /*
- * test-SpanStream.cc
+ * test-spanstream.cc
  */
 
 #include "rocket-test/rocket-test.h"
 
-#include "rocket/io/SpanStream.h"
+#include "rocket/io/spanstream.h"
 
 #include <array>
 #include <string_view>
@@ -13,13 +13,13 @@
 
 // Static checks --------------------------------------------------------------------------------------------
 
-// `ISpanStream` takes read-only ranges, `OSpanStream` and `SpanStream` do not
+// `ispanstream` takes read-only ranges, `ospanstream` and `spanstream` do not
 
-static_assert(std::is_constructible_v<io::ISpanStream, std::string_view>);
-static_assert(std::is_constructible_v<io::ISpanStream, std::span<const char>>);
-static_assert(std::is_constructible_v<io::ISpanStream, std::span<char>>);
-static_assert(!std::is_constructible_v<io::OSpanStream, std::span<const char>>);
-static_assert(!std::is_constructible_v<io::SpanStream, std::span<const char>>);
+static_assert(std::is_constructible_v<io::ispanstream, std::string_view>);
+static_assert(std::is_constructible_v<io::ispanstream, std::span<const char>>);
+static_assert(std::is_constructible_v<io::ispanstream, std::span<char>>);
+static_assert(!std::is_constructible_v<io::ospanstream, std::span<const char>>);
+static_assert(!std::is_constructible_v<io::spanstream, std::span<const char>>);
 
 // `ISpanStream::span` returns a read-only span
 

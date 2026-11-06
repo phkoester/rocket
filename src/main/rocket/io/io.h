@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include "rocket/io/SpanStream.h"
+#include "rocket/io/spanstream.h"
 
 #include <cstdio>
 #include <filesystem>

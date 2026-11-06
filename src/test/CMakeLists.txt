@@ -39,7 +39,7 @@ RocketAddTest(test-rocket-format                       rocket/format          te
 RocketAddTest(test-rocket-format-std                   rocket/format          test-std.cc)
 RocketAddTest(test-rocket-hash                         rocket/hash            test-hash.cc)
 RocketAddTest(test-rocket-io                           rocket/io              test-io.cc)
-RocketAddTest(test-rocket-io-SpanStream                rocket/io              test-SpanStream.cc)
+RocketAddTest(test-rocket-io-spanstream                rocket/io              test-spanstream.cc)
 RocketAddTest(test-rocket-log                          rocket/log             test-log.cc)
 RocketAddTest(test-rocket-math                         rocket/math            test-math.cc)
 RocketAddTest(test-rocket-math-interval                rocket/math            test-Interval.cc)
