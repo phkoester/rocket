@@ -6,6 +6,7 @@
 
 #pragma once
 
+#include "rocket/TypeId.h"
 #include "rocket/format.h"
 #include "rocket/stacktrace.h"
 #include "rocket/nio/nio-fwd.h"
@@ -350,11 +351,11 @@ struct fmt::formatter<rocket::WrappedException, C> {
       }
 
       if (type != nullptr) {
-        const std::string typeName = fmt::format("{}", *type);
+        const std::string typeName = fmt::format("{}", rocket::TypeId(*type));
         if constexpr (std::same_as<C, char>) {
-          out = format_to(out, "`{}`: ", rocket::unicode::ConvertTo<C>::apply(typeName));
+          out = format_to(out, "{}: ", rocket::unicode::ConvertTo<C>::apply(typeName));
         } else {
-          out = format_to(out, U"`{}`: ", rocket::unicode::ConvertTo<C>::apply(typeName));
+          out = format_to(out, U"{}: ", rocket::unicode::ConvertTo<C>::apply(typeName));
         }
       }
     }

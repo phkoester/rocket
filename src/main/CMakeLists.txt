@@ -85,6 +85,7 @@ target_sources(rocket
   PRIVATE
     rocket/Exception.cc
     rocket/Process.cc
+    rocket/TypeId.cc
     rocket/literal.cc
     rocket/chrono/chrono.cc
     rocket/cl/cl.cc
@@ -122,6 +123,7 @@ target_sources(rocket
       rocket/Lazy.h
       rocket/Process.h
       rocket/Result.h
+      rocket/TypeId.h
       rocket/enum.h
       rocket/format.h
       rocket/functional.h

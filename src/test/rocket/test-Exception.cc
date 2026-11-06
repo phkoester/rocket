@@ -6,9 +6,23 @@
 
 #include "rocket/assert.h"
 #include "rocket/Exception.h"
+#include "rocket/TypeId.h"
 #include "rocket/nio/nio.h"
 
+#include <cxxabi.h>
+
 using namespace std;
+
+namespace {
+
+// Local functions ------------------------------------------------------------------------------------------
+
+string
+nested(const string& type) {
+  return "`std::__nested<" + type + ">`";
+}
+
+} // namespace
 
 // `TEST` ---------------------------------------------------------------------------------------------------
 
@@ -40,16 +54,18 @@ TEST(Exception, WrappedExceptionFormat) { // NOLINT(*-complexity)
         matchesRegex(".*\\.cc:\\d+: Parameter `name`: oops2 \\(Because: .*\\.cc:\\d+: oops1\\)"));
       EXPECT_THAT(
         fmt::format("{:t}", WrappedException(ex2)),
-        matchesRegex("`std::_.*ested.*<rocket::InvalidArgument>`: .*\\.cc:\\d+: Parameter `name`: oops2 \\(Because: .*\\.cc:\\d+: oops1\\)"));
+        matchesRegex(nested("rocket::InvalidArgument") + ": .*\\.cc:\\d+: Parameter `name`: oops2 \\(Because: .*\\.cc:\\d+: oops1\\)"));
 
       // Test `WrappedException` with `std::exception_ptr`
       EXPECT_THAT(
         fmt::format("{}", WrappedException(current_exception())),
         matchesRegex(".*\\.cc:\\d+: Parameter `name`: oops2 \\(Because: .*\\.cc:\\d+: oops1\\)"));
-#ifndef ROCKET_OS_WINDOWS
       EXPECT_THAT(
         fmt::format("{:t}", WrappedException(current_exception())),
-        matchesRegex("`std::_.*ested.*<rocket::InvalidArgument>`: .*\\.cc:\\d+: Parameter `name`: oops2 \\(Because: .*\\.cc:\\d+: oops1\\)"));
+#ifdef __GLIBCXX__
+        matchesRegex(nested("rocket::InvalidArgument") + ": .*\\.cc:\\d+: Parameter `name`: oops2 \\(Because: .*\\.cc:\\d+: oops1\\)"));
+#else
+        matchesRegex(".*\\.cc:\\d+: Parameter `name`: oops2 \\(Because: .*\\.cc:\\d+: oops1\\)"));
 #endif
       }
   }
@@ -69,10 +85,9 @@ TEST(Exception, printException1) { // NOLINT(*-complexity)
         nio::StringSink str1;
         printException(str1, ex3);
         EXPECT_THAT(str1.str(), AllOf(
-          // Linux: `std::_Nested_exception`, Windows: `std::_With_nested_v2`
-          containsRegex("An instance of `std::_.*ested.*<rocket::InvalidState>` was thrown: .*\\.cc:\\d+: oops3\n"),
-          containsRegex("Caused by an instance of `std::_.*ested.*<rocket::InvalidArgument>`: .*\\.cc:\\d+: Parameter `name`: oops2\n"),
-          // Linux: `char const*`, Windows: `charconst*__ptr64`
+          containsRegex("An instance of " + nested("rocket::InvalidState") + " was thrown: .*\\.cc:\\d+: oops3\n"),
+          containsRegex("Caused by an instance of " + nested("rocket::InvalidArgument") + ": .*\\.cc:\\d+: Parameter `name`: oops2\n"),
+          // Linux, macOS: `char const*`, Windows: `charconst*__ptr64`
           containsRegex("Caused by an instance of `char.*const\\*.*`: \"oops1\"\n")));
 
         nio::StringSink str2;
@@ -89,7 +104,7 @@ TEST(Exception, printException2) {
   } catch (...) {
     nio::StringSink str;
     printException(str, current_exception());
-    // Linux: `char const*`, Windows: `charconst*__ptr64`
+    // Linux, macOS: `char const*`, Windows: `charconst*__ptr64`
     EXPECT_THAT(str.str(), matchesRegex("An instance of `char.*const\\*.*` was thrown: \"oops\"\n"));
   }
 }
@@ -120,6 +135,18 @@ TEST(Exception, what2) {
     throw "oops";
   } catch (...) {
     EXPECT_EQ(what(current_exception()), "\"oops\"");
+  }
+}
+
+TEST(Exception, nestedExceptionTypeId) {
+  try {
+    try {
+      throw "oops";
+    } catch (...) {
+      throw_with_nested(InvalidArgument("name", "oops2"));
+    }
+  } catch (const InvalidArgument& ex) {
+    EXPECT_EQ(fmt::format("{}", TypeId(typeid(ex))), nested("rocket::InvalidArgument"));
   }
 }
 

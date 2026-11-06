@@ -4,6 +4,7 @@
 
 #include "Exception.h"
 
+#include "rocket/TypeId.h"
 #include "rocket/assert.h"
 #include "rocket/str/message/message.h"
 
@@ -109,7 +110,7 @@ printThrown(
 
   nio::StringSink instanceOf;
   if (type != nullptr) {
-    instanceOf.print("instance of `{}`", *type);
+    instanceOf.print("instance of {}", TypeId(*type));
   } else {
     instanceOf.Sink::write("instance of an unknown type");
   }
@@ -176,21 +177,21 @@ namespace rocket {
 // `InvalidArgument` ----------------------------------------------------------------------------------------
 
 InvalidArgument::InvalidArgument(
-    string_view name,
-    string_view msg,
-    const optional<source_location>& sl,
-    const optional<stacktrace>& st) :
-    Exception(fmt::format("Parameter `{}`: {}", name, msg), sl, st),
-    Base(str::message::withSourceLocation(Exception::message(), Exception::sourceLocation())) {}
+  string_view name,
+  string_view msg,
+  const optional<source_location>& sl,
+  const optional<stacktrace>& st) :
+  Exception(fmt::format("Parameter `{}`: {}", name, msg), sl, st),
+  Base(str::message::withSourceLocation(Exception::message(), Exception::sourceLocation())) {}
 
 // `InvalidState` -------------------------------------------------------------------------------------------
 
 InvalidState::InvalidState(
-    string_view msg,
-    const optional<source_location>& sl,
-    const optional<stacktrace>& st) :
-    Exception(msg, sl, st),
-    Base(str::message::withSourceLocation(Exception::message(), Exception::sourceLocation())) {}
+  string_view msg,
+  const optional<source_location>& sl,
+  const optional<stacktrace>& st) :
+  Exception(msg, sl, st),
+  Base(str::message::withSourceLocation(Exception::message(), Exception::sourceLocation())) {}
 
 // `Overflow` -----------------------------------------------------------------------------------------------
 
