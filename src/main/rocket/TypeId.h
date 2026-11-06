@@ -1,7 +1,7 @@
 /**
  * @file TypeId.h
  *
- * A wrapper for #std::type_info that can be formatted with a human-readable type name.
+ * A wrapper for #std::type_index that can be formatted with a human-readable type name.
  */
 
 #pragma once
@@ -41,6 +41,9 @@ struct TypeId {
    */
   template<typename T>
   [[nodiscard]] static TypeId of() { return TypeId(std::type_identity<T>()); }
+
+  /// @ctor_copy
+  TypeId(const TypeId& rhs) = default;
 
   /**
    * @ctor
@@ -113,7 +116,8 @@ struct fmt::formatter<rocket::TypeId, C> {
   template<typename FormatContext>
   FormatContext::iterator
   format(const rocket::TypeId& val, FormatContext& ctx) const {
-    return underlying_.format(rocket::unicode::ConvertTo<C>::apply('`' + val.readableName() + '`'), ctx);
+    std::string str = '`' + val.readableName() + '`';
+    return underlying_.format(rocket::unicode::ConvertTo<C>::apply(str), ctx);
   }
 
   constexpr const C*
@@ -138,7 +142,14 @@ private:
 /// @spec_std_hash{#rocket::TypeId}
 template<>
 struct std::hash<rocket::TypeId> {
-  size_t operator()(const rocket::TypeId& val) const noexcept { return val.hash(); }
+  /// @cond undocumented
+
+  rocket::u64
+  operator()(const rocket::TypeId& val) const noexcept {
+    return val.hash();
+  }
+
+  /// @endcond
 };
 
 // EOF
