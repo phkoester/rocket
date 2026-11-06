@@ -29,7 +29,7 @@ struct InputFailure : InvalidState {
     u64 position,
     std::string_view msg,
     const std::optional<std::source_location>& sl = ROCKET_EXCEPTION_SL,
-    const std::optional<StackTrace>& st = ROCKET_EXCEPTION_ST) :
+    const std::optional<stacktrace>& st = ROCKET_EXCEPTION_ST) :
     InputFailure(position, {}, msg, sl, st) {}
 
   /**
@@ -46,7 +46,7 @@ struct InputFailure : InvalidState {
     str::Range range,
     std::string_view msg,
     const std::optional<std::source_location>& sl = ROCKET_EXCEPTION_SL,
-    const std::optional<StackTrace>& st = ROCKET_EXCEPTION_ST) :
+    const std::optional<stacktrace>& st = ROCKET_EXCEPTION_ST) :
     InputFailure(position, { range }, msg, sl, st) {}
 
   /**
@@ -63,7 +63,7 @@ struct InputFailure : InvalidState {
     std::initializer_list<str::Range> ranges,
     std::string_view msg,
     const std::optional<std::source_location>& sl = ROCKET_EXCEPTION_SL,
-    const std::optional<StackTrace>& st = ROCKET_EXCEPTION_ST) :
+    const std::optional<stacktrace>& st = ROCKET_EXCEPTION_ST) :
     InvalidState(msg, sl, st),
     position_(position),
     ranges_(ranges) {}

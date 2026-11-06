@@ -1380,7 +1380,7 @@ struct JsonProducerImpl<DataType::TimeZone, T> {
 
     try {
       // This throws if the time zone is not found
-      val = rocket::chrono::locateZone(input);
+      val = rocket::chrono::locate_zone(input);
     } catch (const std::exception& ex) {
       throw InputFailure(inPos(0), ex.what());
     }
@@ -1411,7 +1411,7 @@ struct JsonProducerImpl<DataType::Time, T> {
 
     // The environment variable `TZ` interferes somehow ...
 
-    const auto* current = rocket::chrono::currentZone();
+    const auto* current = rocket::chrono::current_zone();
     const auto TZ = system::env::get<std::string>("TZ");
     if (TZ) {
       ROCKET_EXPECT(*TZ == current->name(), "If defined, the environment variable `TZ` must match the current time zone, which is {}", current->name());
@@ -1474,7 +1474,7 @@ struct JsonProducerImpl<DataType::ZonedTime, T> {
 
     // The environment variable `TZ` interferes somehow ...
 
-    const auto* current = rocket::chrono::currentZone();
+    const auto* current = rocket::chrono::current_zone();
     const auto TZ = system::env::get<std::string>("TZ");
     if (TZ) {
       ROCKET_EXPECT(*TZ == current->name(), "If defined, the environment variable `TZ` must match the current time zone, which is {}", current->name());
@@ -1548,7 +1548,7 @@ struct JsonProducerImpl<DataType::ZonedTime, T> {
       TimeZone tz; // NOLINT
       try {
         // This throws if the time zone is not found
-        tz = rocket::chrono::locateZone(*name);
+        tz = rocket::chrono::locate_zone(*name);
       } catch (const std::exception& ex) {
         throw InputFailure(tzPos, ex.what());
       }

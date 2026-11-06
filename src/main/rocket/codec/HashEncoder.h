@@ -273,7 +273,7 @@ struct HashConsumerImpl<DataType::Time, T, Hash> {
 
 template<typename T, typename Hash>
 struct HashConsumerImpl<DataType::ZonedTime, T, Hash> {
-  using TimeZone = const rocket::chrono::TimeZone*;
+  using TimeZone = const rocket::chrono::time_zone*;
   static constexpr auto TimeZoneDataType = DataTypes<TimeZone>::Value;
   static_assert(TimeZoneDataType == DataType::TimeZone);
   using Duration = T::duration;

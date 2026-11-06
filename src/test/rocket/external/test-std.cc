@@ -72,7 +72,7 @@ TEST(std, chronoFormat) {
     // Local time in ISO-8601, with microseconds
     const time_point tp = time_point_cast<microseconds>(now);
     // const auto zt { chrono::zoned_time{ chrono::current_zone(), tp } };
-    const rocket::chrono::ZonedTime zt { rocket::chrono::currentZone(), tp };
+    const rocket::chrono::zoned_time zt { rocket::chrono::current_zone(), tp };
     const string str = std::format("{:%FT%T%Ez}", zt);
     EXPECT_THAT(str, matchesRegex("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{6}[+-]\\d{2}:\\d{2}"));
   }

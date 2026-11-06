@@ -970,7 +970,7 @@ struct CborProducerImpl<DataType::TimeZone, T> {
       throw InputFailure(ex.position(), "Expected a time zone");
     }
     try {
-      item.setValue(rocket::chrono::locateZone(name.value()));
+      item.setValue(rocket::chrono::locate_zone(name.value()));
     } catch (const std::exception& ex) {
       throw InputFailure(state.index, ex.what());
     }

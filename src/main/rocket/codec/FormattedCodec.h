@@ -1277,7 +1277,7 @@ struct FormattedProducerImpl<DataType::TimeZone, T> {
     }
     try {
       // This throws if the time zone is not found
-      val = rocket::chrono::locateZone(*name);
+      val = rocket::chrono::locate_zone(*name);
     } catch (const std::exception& ex) {
       throw InputFailure(pos, ex.what());
     }
@@ -1299,7 +1299,7 @@ struct FormattedProducerImpl<DataType::Time, T> {
 
     // The environment variable `TZ` interferes somehow ...
 
-    const auto* current = rocket::chrono::currentZone();
+    const auto* current = rocket::chrono::current_zone();
     const auto TZ = system::env::get<std::string>("TZ");
     if (TZ) {
       ROCKET_EXPECT(*TZ == current->name(), "If defined, the environment variable `TZ` must match the current time zone, which is {}", current->name());
@@ -1349,7 +1349,7 @@ struct FormattedProducerImpl<DataType::ZonedTime, T> {
 
     // The environment variable `TZ` interferes somehow ...
 
-    const auto* current = rocket::chrono::currentZone();
+    const auto* current = rocket::chrono::current_zone();
     const auto TZ = system::env::get<std::string>("TZ");
     if (TZ) {
       ROCKET_EXPECT(*TZ == current->name(), "If defined, the environment variable `TZ` must match the current time zone, which is {}", current->name());

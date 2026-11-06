@@ -24,9 +24,9 @@
  * Durations               | `Duration`         | #std::chrono::duration
  * Hours, minutes, seconds | `HourMinuteSecond` | #std::chrono::hh_mm_ss
  * Dates                   | `Date`             | #std::chrono::year_month_day
- * Time zones              | `TimeZone`         | #rocket::chrono::TimeZone (#std::chrono::time_zone if available)
+ * Time zones              | `TimeZone`         | #rocket::chrono::time_zone (#std::chrono::time_zone if available)
  * Times                   | `Time`             | #std::chrono::time_point
- * Times with time zone    | `ZonedTime`        | #rocket::chrono::ZonedTime (#std::chrono::zoned_time if available)
+ * Times with time zone    | `ZonedTime`        | #rocket::chrono::zoned_time (#std::chrono::zoned_time if available)
  * Intervals               | `Interval`         | #rocket::math::Interval
  * Declared objects        | `Declared`         | #rocket::reflect::Declared
  * Instances               | `Instance`         | #rocket::reflect::Instance
@@ -114,11 +114,11 @@ enum class DataType : u8 {
   HourMinuteSecond,
   /// #std::chrono::year_month_day values.
   Date,
-  /// #rocket::chrono::TimeZone values.
+  /// #rocket::chrono::time_zone values.
   TimeZone,
   /// #std::chrono::time_point values.
   Time,
-  /// #rocket::chrono::ZonedTime values.
+  /// #rocket::chrono::zoned_time values.
   ZonedTime,
 
   // Mathematical types .....................................................................................
@@ -303,12 +303,12 @@ struct DataTypes<std::chrono::year_month_day> {
 /**
  * The specific time-zone type that can be encoded and decoded.
  *
- * This is a pointer because #rocket::chrono::TimeZone can't be constructed. Its instances are completely
- * managed by #rocket::chrono::locateZone and #rocket::chrono::currentZone.
+ * This is a pointer because #rocket::chrono::time_zone can't be constructed. Its instances are completely
+ * managed by #rocket::chrono::locate_zone and #rocket::chrono::current_zone.
  */
-using TimeZone = const rocket::chrono::TimeZone*;
+using TimeZone = const rocket::chrono::time_zone*;
 
-/// @spec{#rocket::codec::DataTypes, #rocket::chrono::TimeZone}
+/// @spec{#rocket::codec::DataTypes, #rocket::chrono::time_zone}
 template<>
 struct DataTypes<TimeZone> {
   static constexpr auto Value = DataType::TimeZone; ///< The data type.
@@ -320,9 +320,9 @@ struct DataTypes<std::chrono::time_point<Clock, Duration>> {
   static constexpr auto Value = DataType::Time; ///< The data type.
 };
 
-/// @spec{#rocket::codec::DataTypes, #rocket::chrono::ZonedTime}
+/// @spec{#rocket::codec::DataTypes, #rocket::chrono::zoned_time}
 template<typename Duration>
-struct DataTypes<rocket::chrono::ZonedTime<Duration>> {
+struct DataTypes<rocket::chrono::zoned_time<Duration>> {
   static constexpr auto Value = DataType::ZonedTime; ///< The data type.
 };
 

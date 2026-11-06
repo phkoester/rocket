@@ -187,7 +187,7 @@ TEST(scnlib, scanChronoTimePoint) {
   using namespace std::chrono;
 
   // The environment variable `TZ` interferes somehow ...
-  const auto* current = rocket::chrono::currentZone();
+  const auto* current = rocket::chrono::current_zone();
   const auto TZ = system::env::get<string>("TZ");
   if (TZ) {
     ASSERT_EQ(*TZ, current->name());
@@ -215,12 +215,12 @@ TEST(scnlib, scanChronoTimePoint) {
 
   EXPECT_EQ(val2Micros, val1Micros);
 
-  auto now1 = rocket::chrono::ZonedTime(current, val1);
+  auto now1 = rocket::chrono::zoned_time(current, val1);
   nio::out.writeln(std::format("NOW1: {:%F %T %Z}", now1));
 
-  const auto* honolulu = rocket::chrono::locateZone("Pacific/Honolulu");
+  const auto* honolulu = rocket::chrono::locate_zone("Pacific/Honolulu");
   ASSERT_NE(honolulu, nullptr);
-  auto now2 = rocket::chrono::ZonedTime(honolulu, val1);
+  auto now2 = rocket::chrono::zoned_time(honolulu, val1);
   nio::out.writeln(std::format("NOW2: {:%F %T %Z}", now2));
 
 #undef FORMAT

@@ -95,10 +95,10 @@ private:
 
 #ifdef ROCKET_HAS_CHRONO_TIME_ZONE_IMPL
 
-// `std::formatter<rocket::chrono::ZonedTime>` -------------------------------------------------------------
+// `std::formatter<rocket::chrono::zoned_time>` -------------------------------------------------------------
 
 /**
- * Formats a #rocket::chrono::ZonedTime, like #std::chrono::zoned_time is formatted.
+ * Formats a #rocket::chrono::zoned_time, like #std::chrono::zoned_time is formatted.
  *
  * The format specification is that of #std::chrono::local_time, plus `%Z` (the abbreviation of the time
  * zone), `%z` (the UTC offset as `+hhmm`), and `%Ez` and `%Oz` (the UTC offset as `+hh:mm`). Without
@@ -109,7 +109,7 @@ private:
  * @tparam CharT the character type
  */
 template<typename Duration, typename TimeZonePtr, typename CharT>
-struct std::formatter<rocket::chrono::ZonedTime<Duration, TimeZonePtr>, CharT> {
+struct std::formatter<rocket::chrono::zoned_time<Duration, TimeZonePtr>, CharT> {
   /// @cond undocumented
 
   template<typename ParseContext>
@@ -127,10 +127,10 @@ struct std::formatter<rocket::chrono::ZonedTime<Duration, TimeZonePtr>, CharT> {
 
   template<typename FormatContext>
   FormatContext::iterator
-  format(const rocket::chrono::ZonedTime<Duration, TimeZonePtr>& val, FormatContext& ctx) const {
-    using LocalTime = std::chrono::local_time<typename rocket::chrono::ZonedTime<Duration, TimeZonePtr>::duration>;
+  format(const rocket::chrono::zoned_time<Duration, TimeZonePtr>& val, FormatContext& ctx) const {
+    using LocalTime = std::chrono::local_time<typename rocket::chrono::zoned_time<Duration, TimeZonePtr>::duration>;
 
-    const rocket::chrono::SysInfo info = val.get_info();
+    const rocket::chrono::sys_info info = val.get_info();
     std::basic_string<CharT> spec;
     bool hasConversion = false;
 
@@ -177,14 +177,14 @@ private:
   std::basic_string_view<CharT> spec_;
 
   static void
-  appendAbbrev(std::basic_string<CharT>& spec, const rocket::chrono::SysInfo& info) {
+  appendAbbrev(std::basic_string<CharT>& spec, const rocket::chrono::sys_info& info) {
     for (const char c : info.abbrev) {
       spec.push_back(static_cast<CharT>(c));
     }
   }
 
   static void
-  appendOffset(std::basic_string<CharT>& spec, const rocket::chrono::SysInfo& info, bool colon) {
+  appendOffset(std::basic_string<CharT>& spec, const rocket::chrono::sys_info& info, bool colon) {
     const auto offset = info.offset;
     const auto abs = offset < std::chrono::seconds(0) ? -offset : offset;
     const auto h = std::chrono::duration_cast<std::chrono::hours>(abs).count();

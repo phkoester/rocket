@@ -129,6 +129,7 @@ target_sources(rocket
       rocket/rocket.h
       rocket/scan.h
       rocket/scope.h
+      rocket/stacktrace.h
       rocket/std.h
       rocket/std-codec.h
       rocket/type-traits.h
@@ -145,6 +146,7 @@ target_sources(rocket
       rocket/format/Subformat.h
       rocket/hash/hash.h
       rocket/io/io.h
+      rocket/io/spanstream.h
       rocket/log/log.h
       rocket/math/Interval.h
       rocket/math/Interval-codec.h

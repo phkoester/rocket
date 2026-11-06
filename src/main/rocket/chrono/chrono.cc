@@ -28,9 +28,17 @@ namespace rocket::chrono::internal {
 
 // Internal -------------------------------------------------------------------------------------------------
 
-ROCKET_PUBLIC recursive_mutex clockMutex;
+std::recursive_mutex&
+clockMutex() {
+  static std::recursive_mutex mutex;
+  return mutex;
+}
 
-ROCKET_PUBLIC milliseconds clockOffset = 0ms;
+milliseconds&
+clockOffset() {
+  static milliseconds offset = 0ms;
+  return offset;
+}
 
 } // namespace rocket::chrono::internal
 
@@ -112,12 +120,12 @@ struct internal::ZoneData {
 
 // Declared in `chrono.h`
 struct internal::TimeZoneAccess {
-  static unique_ptr<TimeZone>
+  static unique_ptr<time_zone>
   make(string name, shared_ptr<const ZoneData> data) {
-    return unique_ptr<TimeZone>(new TimeZone(std::move(name), std::move(data)));
+    return unique_ptr<time_zone>(new time_zone(std::move(name), std::move(data)));
   }
 
-  static const ZoneData& data(const TimeZone& tz) { return *tz.data_; }
+  static const ZoneData& data(const time_zone& tz) { return *tz.data_; }
 };
 
 namespace internal {
@@ -321,7 +329,7 @@ toSys(local_seconds tp, seconds offset) {
 
 // The period of a rule containing `tp`. Since the rule repeats every year, looking at the transitions of the
 // surrounding years suffices
-SysInfo
+sys_info
 ruleInfo(const PosixRule& rule, sys_seconds tp) {
   if (!rule.dst) {
     return { MIN_TIME, MAX_TIME, rule.std.offset, 0min, rule.std.abbrev };
@@ -735,7 +743,7 @@ public:
     loadLinks();
   }
 
-  const TimeZone*
+  const time_zone*
   locate(string_view name) {
     ROCKET_MUTEX_LOCK(mutex_);
 
@@ -757,7 +765,7 @@ public:
       canonical = it->second;
     }
 
-    const TimeZone* ret = nullptr;
+    const time_zone* ret = nullptr;
     if (auto it = byName_.find(canonical); it != byName_.end()) {
       ret = it->second;
     } else {
@@ -780,8 +788,8 @@ private:
   mutex mutex_;
   filesystem::path dir_;
   map<string, string, less<>> links_; // Link name to target
-  vector<unique_ptr<TimeZone>> zones_;
-  map<string, const TimeZone*, less<>> byName_; // Zone and link names to zones
+  vector<unique_ptr<time_zone>> zones_;
+  map<string, const time_zone*, less<>> byName_; // Zone and link names to zones
 
   // `tzdata.zi` lists links as `L TARGET LINK`
   void
@@ -862,10 +870,10 @@ zoneNameFromPath(string_view path) {
 
 } // namespace internal
 
-// `TimeZone` -----------------------------------------------------------------------------------------------
+// `time_zone` -----------------------------------------------------------------------------------------------
 
-SysInfo
-TimeZone::getInfo(sys_seconds tp) const {
+sys_info
+time_zone::getInfo(sys_seconds tp) const {
   using namespace internal;
   const ZoneData& data = *data_;
   tp = clamp(tp, MIN_TIME, MAX_TIME - 1s);
@@ -874,7 +882,7 @@ TimeZone::getInfo(sys_seconds tp) const {
   // transition, which is its begin
 
   if (data.rule && tp >= data.ruleStart) {
-    SysInfo info = ruleInfo(*data.rule, tp);
+    sys_info info = ruleInfo(*data.rule, tp);
     if (info.begin <= data.ruleStart) {
       info.begin = data.times.empty() ? MIN_TIME : data.times.back();
     }
@@ -897,8 +905,8 @@ TimeZone::getInfo(sys_seconds tp) const {
   return { data.times[i], nextEnd(i + 1), type.offset, data.saves[i], type.abbrev };
 }
 
-LocalInfo
-TimeZone::getLocalInfo(local_seconds tp) const {
+local_info
+time_zone::getLocalInfo(local_seconds tp) const {
   using namespace internal;
 
   // UTC offsets are below 26 hours (RFC 8536), so the periods that may contain `tp` start within 2 days
@@ -908,8 +916,8 @@ TimeZone::getLocalInfo(local_seconds tp) const {
   const sys_seconds probeBegin = t0 < MIN_TIME + Window ? MIN_TIME : t0 - Window;
   const sys_seconds probeEnd = t0 > MAX_TIME - Window ? MAX_TIME : t0 + Window;
 
-  vector<SysInfo> periods;
-  for (SysInfo info = getInfo(probeBegin);; info = getInfo(info.end)) {
+  vector<sys_info> periods;
+  for (sys_info info = getInfo(probeBegin);; info = getInfo(info.end)) {
     const bool last = info.end >= probeEnd || info.end >= MAX_TIME;
     periods.push_back(std::move(info));
     if (last) {
@@ -917,12 +925,12 @@ TimeZone::getLocalInfo(local_seconds tp) const {
     }
   }
 
-  const auto contains = [&](const SysInfo& info) {
+  const auto contains = [&](const sys_info& info) {
     const sys_seconds utc = t0 - info.offset;
     return info.begin <= utc && utc < info.end;
   };
 
-  LocalInfo ret {};
+  local_info ret {};
   bool found = false;
   for (const auto& info : periods) {
     if (!contains(info)) {
@@ -930,10 +938,10 @@ TimeZone::getLocalInfo(local_seconds tp) const {
     }
     if (!found) {
       found = true;
-      ret.result = LocalInfo::unique;
+      ret.result = local_info::unique;
       ret.first = info;
     } else {
-      ret.result = LocalInfo::ambiguous;
+      ret.result = local_info::ambiguous;
       ret.second = info;
       return ret;
     }
@@ -946,7 +954,7 @@ TimeZone::getLocalInfo(local_seconds tp) const {
 
   for (size_t i = 0; i + 1 < periods.size(); ++i) {
     if (t0 - periods[i].offset >= periods[i].end && t0 - periods[i + 1].offset < periods[i + 1].begin) {
-      ret.result = LocalInfo::nonexistent;
+      ret.result = local_info::nonexistent;
       ret.first = periods[i];
       ret.second = periods[i + 1];
       return ret;
@@ -955,23 +963,23 @@ TimeZone::getLocalInfo(local_seconds tp) const {
 
   // Unreachable for consistent data; return the period by UTC
 
-  ret.result = LocalInfo::unique;
+  ret.result = local_info::unique;
   ret.first = getInfo(t0);
   return ret;
 }
 
 // Functions -----------------------------------------------------------------------------------------------
 
-const TimeZone*
-locateZone(string_view name) {
+const time_zone*
+locate_zone(string_view name) {
   if (const auto* ret = internal::database().locate(name)) {
     return ret;
   }
-  throw runtime_error(format("rocket::chrono::locateZone: cannot locate zone: {}", name));
+  throw runtime_error(format("rocket::chrono::locate_zone: cannot locate zone: {}", name));
 }
 
-const TimeZone*
-currentZone() {
+const time_zone*
+current_zone() {
   using namespace internal;
   auto& db = database();
 
@@ -1018,7 +1026,7 @@ currentZone() {
     }
   }
 
-  return locateZone("UTC");
+  return locate_zone("UTC");
 }
 
 } // namespace rocket::chrono

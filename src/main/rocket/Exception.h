@@ -7,15 +7,14 @@
 #pragma once
 
 #include "rocket/format.h"
+#include "rocket/stacktrace.h"
 #include "rocket/nio/nio-fwd.h"
-#include "rocket/StackTrace.h"
 #include "rocket/str/str.h"
 #include "rocket/unicode/ConvertTo.h"
 
 #include <optional>
 #include <source_location>
 #include <stdexcept>
-#include <typeinfo>
 
 // Macros ---------------------------------------------------------------------------------------------------
 
@@ -79,7 +78,7 @@ struct Exception {
    *
    * @return a stack trace, if present, or null otherwise
    */
-  [[nodiscard]] const std::optional<StackTrace>& stackTrace() const { return st_; }
+  [[nodiscard]] const std::optional<stacktrace>& stackTrace() const { return st_; }
 
 protected:
 
@@ -93,7 +92,7 @@ protected:
   Exception(
     std::string_view msg,
     const std::optional<std::source_location>& sl,
-    const std::optional<StackTrace>& st) :
+    const std::optional<stacktrace>& st) :
     msg_(msg),
     sl_(sl),
     st_(st) {}
@@ -102,7 +101,7 @@ private:
 
   std::string msg_;
   std::optional<std::source_location> sl_;
-  std::optional<StackTrace> st_;
+  std::optional<stacktrace> st_;
 };
 
 // `InvalidArgument` ----------------------------------------------------------------------------------------
@@ -126,7 +125,7 @@ struct InvalidArgument : Exception, std::invalid_argument {
     std::string_view name,
     std::string_view msg,
     const std::optional<std::source_location>& sl = ROCKET_EXCEPTION_SL,
-    const std::optional<StackTrace>& st = ROCKET_EXCEPTION_ST);
+    const std::optional<stacktrace>& st = ROCKET_EXCEPTION_ST);
 
   ~InvalidArgument() override = default;
 };
@@ -150,7 +149,7 @@ struct InvalidState : Exception, std::runtime_error {
   explicit InvalidState(
     std::string_view msg,
     const std::optional<std::source_location>& sl = ROCKET_EXCEPTION_SL,
-    const std::optional<StackTrace>& st = ROCKET_EXCEPTION_ST);
+    const std::optional<stacktrace>& st = ROCKET_EXCEPTION_ST);
 
   ~InvalidState() override = default;
 };
@@ -174,7 +173,7 @@ struct Overflow : Exception, std::overflow_error {
   explicit Overflow(
     const std::type_info& type,
     const std::optional<std::source_location>& sl = ROCKET_EXCEPTION_SL,
-    const std::optional<StackTrace>& st = ROCKET_EXCEPTION_ST) :
+    const std::optional<stacktrace>& st = ROCKET_EXCEPTION_ST) :
     Overflow(type, "", sl, st) {}
 
   /**
@@ -189,7 +188,7 @@ struct Overflow : Exception, std::overflow_error {
     const std::type_info& type,
     std::string_view msg,
     const std::optional<std::source_location>& sl = ROCKET_EXCEPTION_SL,
-    const std::optional<StackTrace>& st = ROCKET_EXCEPTION_ST);
+    const std::optional<stacktrace>& st = ROCKET_EXCEPTION_ST);
 
   ~Overflow() override = default;
 };
@@ -213,7 +212,7 @@ struct Underflow : Exception, std::underflow_error {
   explicit Underflow(
     const std::type_info& type,
     const std::optional<std::source_location>& sl = ROCKET_EXCEPTION_SL,
-    const std::optional<StackTrace>& st = ROCKET_EXCEPTION_ST) :
+    const std::optional<stacktrace>& st = ROCKET_EXCEPTION_ST) :
     Underflow(type, "", sl, st) {}
 
   /**
@@ -228,7 +227,7 @@ struct Underflow : Exception, std::underflow_error {
     const std::type_info& type,
     std::string_view msg,
     const std::optional<std::source_location>& sl = ROCKET_EXCEPTION_SL,
-    const std::optional<StackTrace>& st = ROCKET_EXCEPTION_ST);
+    const std::optional<stacktrace>& st = ROCKET_EXCEPTION_ST);
 
   ~Underflow() override = default;
 };

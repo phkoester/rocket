@@ -347,9 +347,9 @@ TEST(CborCodec, HourMinuteSecond) {
 TEST(CborCodec, TimeZone) {
   using namespace std::chrono;
 
-  testTimeZone(rocket::chrono::locateZone("Europe/Berlin"));
-  testTimeZone(rocket::chrono::locateZone("UTC"));
-  testTimeZone(rocket::chrono::locateZone("Etc/UTC"));
+  testTimeZone(rocket::chrono::locate_zone("Europe/Berlin"));
+  testTimeZone(rocket::chrono::locate_zone("UTC"));
+  testTimeZone(rocket::chrono::locate_zone("Etc/UTC"));
 }
 
 TEST(CborCodec, Time) {
@@ -364,9 +364,9 @@ TEST(CborCodec, ZonedTime) {
   using namespace std::chrono;
 
   const auto now = time_point_cast<seconds>(rocket::chrono::now<system_clock>());
-  testZonedTime(rocket::chrono::ZonedTime(rocket::chrono::locateZone("UTC"), now));
-  testZonedTime(rocket::chrono::ZonedTime(rocket::chrono::locateZone("Europe/Berlin"), now));
-  testZonedTime(rocket::chrono::ZonedTime<nanoseconds>(rocket::chrono::currentZone(), rocket::chrono::now<system_clock>()));
+  testZonedTime(rocket::chrono::zoned_time(rocket::chrono::locate_zone("UTC"), now));
+  testZonedTime(rocket::chrono::zoned_time(rocket::chrono::locate_zone("Europe/Berlin"), now));
+  testZonedTime(rocket::chrono::zoned_time<nanoseconds>(rocket::chrono::current_zone(), rocket::chrono::now<system_clock>()));
 }
 
 TEST(CborCodec, Interval) {
