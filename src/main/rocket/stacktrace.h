@@ -29,7 +29,7 @@ namespace rocket {
 #define ROCKET_STACK_TRACE_CURRENT() ::boost::stacktrace::stacktrace()
 
 /// A stack trace.
-using stacktrace = boost::stacktrace::stacktrace;
+using boost::stacktrace::stacktrace;
 
 #else
 
@@ -37,7 +37,7 @@ using stacktrace = boost::stacktrace::stacktrace;
 #define ROCKET_STACK_TRACE_CURRENT() ::std::stacktrace::current()
 
 /// A stack trace.
-using stacktrace = std::stacktrace;
+using std::stacktrace;
 
 #endif // ROCKET_HAS_BOOST_STACK_TRACE
 
