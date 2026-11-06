@@ -684,7 +684,7 @@ NullSource::istream() {
   }
 
   if (istream_ == nullptr) {
-    istream_ = make_unique<io::ISpanStream>(span<const char>());
+    istream_ = make_unique<io::ispanstream>(span<const char>());
   }
   return *istream_;
 }
@@ -705,7 +705,7 @@ SpanSource::istream() {
 
   if (istream_ == nullptr) {
     const span<const char> chars(reinterpret_cast<const char*>(in_.data()), in_.size());
-    istream_ = make_unique<io::ISpanStream>(chars);
+    istream_ = make_unique<io::ispanstream>(chars);
   }
   istream_->seekg(safe<istream::off_type>(tell()), ios::beg);
   return *istream_;
@@ -727,7 +727,7 @@ SpanSource::read(span<u8> out) {
 }
 
 bool
-SpanSource::seek(i64 offset, SeekMode mode) { // NOLINT
+SpanSource::seek(i64 offset, SeekMode mode) {
   if (bad()) {
     return false;
   }
@@ -853,7 +853,7 @@ StringSource::istream() {
 
   if (istream_ == nullptr) {
     const span<const char> chars(in_.data(), in_.size());
-    istream_ = make_unique<io::ISpanStream>(chars);
+    istream_ = make_unique<io::ispanstream>(chars);
   }
   istream_->seekg(safe<istream::off_type>(tell()), ios::beg);
   return *istream_;

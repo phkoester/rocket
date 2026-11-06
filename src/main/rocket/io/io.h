@@ -50,7 +50,7 @@ inline std::istringstream is() { return {}; }
  * @param str the string to read from
  * @return an input stream that reads from the string @p str
  */
-inline ISpanStream is(std::string_view str) { return ISpanStream(str); }
+inline io::ispanstream is(std::string_view str) { return io::ispanstream(str); }
 
 /**
  * Opens a file and returns a `FILE` pointer, or null if the file cannot be opened.

@@ -3,26 +3,22 @@
  *
  * Streams reading from and writing to a fixed buffer, given as a #std::span.
  *
- * If the standard library provides `<spanstream>` (C++23), #rocket::io::BasicSpanBuf,
- * #rocket::io::BasicISpanStream, #rocket::io::BasicOSpanStream, and #rocket::io::BasicSpanStream are
+ * If the standard library provides `<spanstream>` (C++23), #rocket::io::basic_spanbuf,
+ * #rocket::io::basic_ispanstream, #rocket::io::basic_ospanstream, and #rocket::io::basic_spanstream are
  * #std::basic_spanbuf, #std::basic_ispanstream, #std::basic_ospanstream, and #std::basic_spanstream.
  * Otherwise, they are portable implementations that follow the specification of these classes in the C++23
  * standard.
- *
- * XXX Make a table here
  */
 
 #pragma once
 
 #if defined(ROCKET_OS_MACOS) && defined(ROCKET_CXX_COMPILER_LLVM)
-  #define ROCKET_HAS_IO_SPAN_STREAM_IMPL
+  #define ROCKET_HAS_IO_SPANSTREAM_IMPL
 #endif
 
 #include "rocket/rocket.h"
 
-#ifndef ROCKET_HAS_IO_SPAN_STREAM_IMPL
-  #include <spanstream>
-#else
+#ifdef ROCKET_HAS_IO_SPANSTREAM_IMPL
   #include <climits>
   #include <concepts>
   #include <cstddef>
@@ -35,31 +31,13 @@
   #include <streambuf>
   #include <string>
   #include <utility>
+#else
+  #include <spanstream>
 #endif
 
 namespace rocket::io {
 
-#ifndef ROCKET_HAS_IO_SPAN_STREAM_IMPL
-
-// `basic_spanbuf`, `basic_ispanstream`, `basic_ospanstream`, `basic_spanstream` ----------------------------
-
-/// A stream buffer for a fixed character buffer.
-template<typename CharT, typename Traits = std::char_traits<CharT>>
-using basic_spanbuf = std::basic_spanbuf<CharT, Traits>;
-
-/// A stream for reading from a fixed character buffer.
-template<typename CharT, typename Traits = std::char_traits<CharT>>
-using basic_ispanstream = std::basic_ispanstream<CharT, Traits>;
-
-/// A stream for writing to a fixed character buffer.
-template<typename CharT, typename Traits = std::char_traits<CharT>>
-using basic_ospanstream = std::basic_ospanstream<CharT, Traits>;
-
-/// A stream for reading from and writing to a fixed character buffer.
-template<typename CharT, typename Traits = std::char_traits<CharT>>
-using basic_spanstream = std::basic_spanstream<CharT, Traits>;
-
-#else
+#ifdef ROCKET_HAS_IO_SPANSTREAM_IMPL
 
 // `basic_spanbuf` ------------------------------------------------------------------------------------------
 
@@ -294,7 +272,7 @@ concept ReadOnlySpan =
  * @NotThreadSafe
  */
 template<typename CharT, typename Traits = std::char_traits<CharT>>
-struct BasicISpanStream : public std::basic_istream<CharT, Traits> {
+struct basic_ispanstream : public std::basic_istream<CharT, Traits> {
   using Base = std::basic_istream<CharT, Traits>;
 
   using char_type = CharT;
@@ -309,7 +287,7 @@ struct BasicISpanStream : public std::basic_istream<CharT, Traits> {
    * @param s the buffer
    * @param which the open mode; `std::ios_base::in` is always added
    */
-  explicit BasicISpanStream(std::span<CharT> s, std::ios_base::openmode which = std::ios_base::in) :
+  explicit basic_ispanstream(std::span<CharT> s, std::ios_base::openmode which = std::ios_base::in) :
     Base(std::addressof(sb_)), // Only stores the pointer; `sb_` is constructed next
     sb_(s, which | std::ios_base::in) {}
 
@@ -323,30 +301,30 @@ struct BasicISpanStream : public std::basic_istream<CharT, Traits> {
    * @param s the range
    */
   template<typename ROS> requires internal::ReadOnlySpan<ROS, CharT>
-  explicit BasicISpanStream(ROS&& s) : BasicISpanStream(unconst(std::forward<ROS>(s))) {}
+  explicit basic_ispanstream(ROS&& s) : basic_ispanstream(unconst(std::forward<ROS>(s))) {}
 
-  BasicISpanStream(const BasicISpanStream&) = delete;
+  basic_ispanstream(const basic_ispanstream&) = delete;
 
   /// @ctor_move
-  BasicISpanStream(BasicISpanStream&& rhs) : Base(std::move(rhs)), sb_(std::move(rhs.sb_)) {
+  basic_ispanstream(basic_ispanstream&& rhs) : Base(std::move(rhs)), sb_(std::move(rhs.sb_)) {
     Base::set_rdbuf(std::addressof(sb_));
   }
 
-  ~BasicISpanStream() override = default;
+  ~basic_ispanstream() override = default;
 
-  BasicISpanStream& operator=(const BasicISpanStream&) = delete;
+  basic_ispanstream& operator=(const basic_ispanstream&) = delete;
 
   /// @op_assign_move
-  BasicISpanStream& operator=(BasicISpanStream&& rhs) = default;
+  basic_ispanstream& operator=(basic_ispanstream&& rhs) = default;
 
   /**
    * Returns the stream buffer.
    *
    * @return the stream buffer
    */
-  [[nodiscard]] BasicSpanBuf<CharT, Traits>*
+  [[nodiscard]] basic_spanbuf<CharT, Traits>*
   rdbuf() const noexcept {
-    return const_cast<BasicSpanBuf<CharT, Traits>*>(std::addressof(sb_)); // NOLINT(*-const-cast)
+    return const_cast<basic_spanbuf<CharT, Traits>*>(std::addressof(sb_));
   }
 
   /**
@@ -381,7 +359,7 @@ struct BasicISpanStream : public std::basic_istream<CharT, Traits> {
    * @param rhs the other instance
    */
   void
-  swap(BasicISpanStream& rhs) {
+  swap(basic_ispanstream& rhs) {
     Base::swap(rhs);
     sb_.swap(rhs.sb_);
   }
@@ -396,7 +374,7 @@ private:
     return std::span<CharT>(const_cast<CharT*>(cs.data()), cs.size()); // NOLINT(*-const-cast)
   }
 
-  BasicSpanBuf<CharT, Traits> sb_;
+  basic_spanbuf<CharT, Traits> sb_;
 };
 
 /**
@@ -407,11 +385,11 @@ private:
  */
 template<typename CharT, typename Traits>
 void
-swap(BasicISpanStream<CharT, Traits>& lhs, BasicISpanStream<CharT, Traits>& rhs) {
+swap(basic_ispanstream<CharT, Traits>& lhs, basic_ispanstream<CharT, Traits>& rhs) {
   lhs.swap(rhs);
 }
 
-// `BasicOSpanStream` ---------------------------------------------------------------------------------------
+// `basic_ospanstream` ---------------------------------------------------------------------------------------
 
 /**
  * A stream for writing to a fixed character buffer, equivalent to C++23's #std::basic_ospanstream.
@@ -422,7 +400,7 @@ swap(BasicISpanStream<CharT, Traits>& lhs, BasicISpanStream<CharT, Traits>& rhs)
  * @NotThreadSafe
  */
 template<typename CharT, typename Traits = std::char_traits<CharT>>
-struct BasicOSpanStream : public std::basic_ostream<CharT, Traits> {
+struct basic_ospanstream : public std::basic_ostream<CharT, Traits> {
   using Base = std::basic_ostream<CharT, Traits>;
 
   using char_type = CharT;
@@ -437,32 +415,32 @@ struct BasicOSpanStream : public std::basic_ostream<CharT, Traits> {
    * @param s the buffer
    * @param which the open mode; `std::ios_base::out` is always added
    */
-  explicit BasicOSpanStream(std::span<CharT> s, std::ios_base::openmode which = std::ios_base::out) :
+  explicit basic_ospanstream(std::span<CharT> s, std::ios_base::openmode which = std::ios_base::out) :
     Base(std::addressof(sb_)), // Only stores the pointer; `sb_` is constructed next
     sb_(s, which | std::ios_base::out) {}
 
-  BasicOSpanStream(const BasicOSpanStream&) = delete;
+  basic_ospanstream(const basic_ospanstream&) = delete;
 
   /// @ctor_move
-  BasicOSpanStream(BasicOSpanStream&& rhs) : Base(std::move(rhs)), sb_(std::move(rhs.sb_)) {
+  basic_ospanstream(basic_ospanstream&& rhs) : Base(std::move(rhs)), sb_(std::move(rhs.sb_)) {
     Base::set_rdbuf(std::addressof(sb_));
   }
 
-  ~BasicOSpanStream() override = default;
+  ~basic_ospanstream() override = default;
 
-  BasicOSpanStream& operator=(const BasicOSpanStream&) = delete;
+  basic_ospanstream& operator=(const basic_ospanstream&) = delete;
 
   /// @op_assign_move
-  BasicOSpanStream& operator=(BasicOSpanStream&& rhs) = default;
+  basic_ospanstream& operator=(basic_ospanstream&& rhs) = default;
 
   /**
    * Returns the stream buffer.
    *
    * @return the stream buffer
    */
-  [[nodiscard]] BasicSpanBuf<CharT, Traits>*
+  [[nodiscard]] basic_spanbuf<CharT, Traits>*
   rdbuf() const noexcept {
-    return const_cast<BasicSpanBuf<CharT, Traits>*>(std::addressof(sb_)); // NOLINT(*-const-cast)
+    return const_cast<basic_spanbuf<CharT, Traits>*>(std::addressof(sb_));
   }
 
   /**
@@ -485,14 +463,14 @@ struct BasicOSpanStream : public std::basic_ostream<CharT, Traits> {
    * @param rhs the other instance
    */
   void
-  swap(BasicOSpanStream& rhs) {
+  swap(basic_ospanstream& rhs) {
     Base::swap(rhs);
     sb_.swap(rhs.sb_);
   }
 
 private:
 
-  BasicSpanBuf<CharT, Traits> sb_;
+  basic_spanbuf<CharT, Traits> sb_;
 };
 
 /**
@@ -503,11 +481,11 @@ private:
  */
 template<typename CharT, typename Traits>
 void
-swap(BasicOSpanStream<CharT, Traits>& lhs, BasicOSpanStream<CharT, Traits>& rhs) {
+swap(basic_ospanstream<CharT, Traits>& lhs, basic_ospanstream<CharT, Traits>& rhs) {
   lhs.swap(rhs);
 }
 
-// `BasicSpanStream` ----------------------------------------------------------------------------------------
+// `basic_spanstream` ----------------------------------------------------------------------------------------
 
 /**
  * A stream for reading from and writing to a fixed character buffer, equivalent to C++23's
@@ -519,7 +497,7 @@ swap(BasicOSpanStream<CharT, Traits>& lhs, BasicOSpanStream<CharT, Traits>& rhs)
  * @NotThreadSafe
  */
 template<typename CharT, typename Traits = std::char_traits<CharT>>
-struct BasicSpanStream : public std::basic_iostream<CharT, Traits> {
+struct basic_spanstream : public std::basic_iostream<CharT, Traits> {
   using Base = std::basic_iostream<CharT, Traits>;
 
   using char_type = CharT;
@@ -534,34 +512,34 @@ struct BasicSpanStream : public std::basic_iostream<CharT, Traits> {
    * @param s the buffer
    * @param which the open mode
    */
-  explicit BasicSpanStream(
+  explicit basic_spanstream(
     std::span<CharT> s,
     std::ios_base::openmode which = std::ios_base::out | std::ios_base::in) :
     Base(std::addressof(sb_)), // Only stores the pointer; `sb_` is constructed next
     sb_(s, which) {}
 
-  BasicSpanStream(const BasicSpanStream&) = delete;
+  basic_spanstream(const basic_spanstream&) = delete;
 
   /// @ctor_move
-  BasicSpanStream(BasicSpanStream&& rhs) : Base(std::move(rhs)), sb_(std::move(rhs.sb_)) {
+  basic_spanstream(basic_spanstream&& rhs) : Base(std::move(rhs)), sb_(std::move(rhs.sb_)) {
     Base::set_rdbuf(std::addressof(sb_));
   }
 
-  ~BasicSpanStream() override = default;
+  ~basic_spanstream() override = default;
 
-  BasicSpanStream& operator=(const BasicSpanStream&) = delete;
+  basic_spanstream& operator=(const basic_spanstream&) = delete;
 
   /// @op_assign_move
-  BasicSpanStream& operator=(BasicSpanStream&& rhs) = default;
+  basic_spanstream& operator=(basic_spanstream&& rhs) = default;
 
   /**
    * Returns the stream buffer.
    *
    * @return the stream buffer
    */
-  [[nodiscard]] BasicSpanBuf<CharT, Traits>*
+  [[nodiscard]] basic_spanbuf<CharT, Traits>*
   rdbuf() const noexcept {
-    return const_cast<BasicSpanBuf<CharT, Traits>*>(std::addressof(sb_)); // NOLINT(*-const-cast)
+    return const_cast<basic_spanbuf<CharT, Traits>*>(std::addressof(sb_));
   }
 
   /**
@@ -584,14 +562,14 @@ struct BasicSpanStream : public std::basic_iostream<CharT, Traits> {
    * @param rhs the other instance
    */
   void
-  swap(BasicSpanStream& rhs) {
+  swap(basic_spanstream& rhs) {
     Base::swap(rhs);
     sb_.swap(rhs.sb_);
   }
 
 private:
 
-  BasicSpanBuf<CharT, Traits> sb_;
+  basic_spanbuf<CharT, Traits> sb_;
 };
 
 /**
@@ -602,25 +580,45 @@ private:
  */
 template<typename CharT, typename Traits>
 void
-swap(BasicSpanStream<CharT, Traits>& lhs, BasicSpanStream<CharT, Traits>& rhs) {
+swap(basic_spanstream<CharT, Traits>& lhs, basic_spanstream<CharT, Traits>& rhs) {
   lhs.swap(rhs);
 }
 
-#endif // ROCKET_HAS_ROCKET_SPAN_STREAM
+#else
 
-// `SpanBuf`, `ISpanStream`, `OSpanStream`, `SpanStream` -----------------------------------------------------
+// `basic_spanbuf`, `basic_ispanstream`, `basic_ospanstream`, `basic_spanstream` ----------------------------
+
+/// A stream buffer for a fixed character buffer.
+template<typename CharT, typename Traits = std::char_traits<CharT>>
+using basic_spanbuf = std::basic_spanbuf<CharT, Traits>;
+
+/// A stream for reading from a fixed character buffer.
+template<typename CharT, typename Traits = std::char_traits<CharT>>
+using basic_ispanstream = std::basic_ispanstream<CharT, Traits>;
+
+/// A stream for writing to a fixed character buffer.
+template<typename CharT, typename Traits = std::char_traits<CharT>>
+using basic_ospanstream = std::basic_ospanstream<CharT, Traits>;
+
+/// A stream for reading from and writing to a fixed character buffer.
+template<typename CharT, typename Traits = std::char_traits<CharT>>
+using basic_spanstream = std::basic_spanstream<CharT, Traits>;
+
+#endif // ROCKET_HAS_IO_SPANSTREAM_IMPL
+
+// `spanbuf`, `ispanstream`, `ospanstream`, `spanstream` ----------------------------------------------------
 
 /// A stream buffer for a fixed `char` buffer.
-using SpanBuf = basic_spanbuf<char>;
+using spanbuf = basic_spanbuf<char>;
 
 /// A stream for reading from a fixed `char` buffer.
-using ISpanStream = basic_ispanstream<char>;
+using ispanstream = basic_ispanstream<char>;
 
 /// A stream for writing to a fixed `char` buffer.
-using OSpanStream = basic_ospanstream<char>;
+using ospanstream = basic_ospanstream<char>;
 
 /// A stream for reading from and writing to a fixed `char` buffer.
-using SpanStream = basic_spanstream<char>;
+using spanstream = basic_spanstream<char>;
 
 } // namespace rocket::io
 

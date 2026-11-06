@@ -277,8 +277,6 @@ TEST(chrono, ZonedTimeFormat) {
   EXPECT_EQ(os.str(), "2024-07-01 14:00:00 CEST");
 }
 
-#ifdef ROCKET_HAS_CHRONO_TIME_ZONE_IMPL
-
 TEST(chrono, currentZoneTz) {
   const auto old = system::env::get<string>("TZ");
 
@@ -293,7 +291,5 @@ TEST(chrono, currentZoneTz) {
     system::env::unset("TZ");
   }
 }
-
-#endif
 
 // EOF
