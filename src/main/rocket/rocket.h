@@ -51,6 +51,10 @@
 
 #pragma once
 
+#ifdef ROCKET_OS_WINDOWS
+  #define ROCKET_HAS_BOOST_INT128
+#endif
+
 #include <bit>
 #include <cstdint> // `std::int8_t`, `std::uint8_t`, ...
 #include <concepts> // `std::same_as`
@@ -58,8 +62,7 @@
 #include <limits>
 #include <typeinfo> // Make this generally available
 
-#ifdef ROCKET_OS_WINDOWS
-  #define ROCKET_HAS_BOOST_INT128
+#ifdef ROCKET_HAS_BOOST_INT128
   #include <boost/int128/int128.hpp>
 #endif
 
