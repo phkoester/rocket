@@ -399,7 +399,7 @@ ruleInfo(const PosixRule& rule, sys_seconds tp) {
   const LocalType& dst = *rule.dst;
   const int y = static_cast<int>(year_month_day(floor<days>(tp + rule.std.offset)).year());
 
-  // If DST ends exactly when it starts in the next year, as in `XXX-2<+01>-1,0/0,J365/23`, it is in effect
+  // If DST ends exactly when it starts in the next year, as in `AAA-2<+01>-1,0/0,J365/23`, it is in effect
   // all year. If it starts and ends at the same time, it is never in effect
 
   const auto startOf = [&](int i) { return toSys(localTransition(rule.start, year(i)), rule.std.offset); };

@@ -13,7 +13,7 @@
 #include <scn/istream.h>
 #include <scn/ranges.h>
 
-#ifndef ROCKET_HAS_INT128
+#ifndef ROCKET_HAS_INT128_SCN_SCANNER
 
 // `scn::scanner<rocket::i128>` -----------------------------------------------------------------------------
 
@@ -35,6 +35,6 @@ struct scn::scanner<rocket::i128, C> : scn::basic_istream_scanner<C> {};
 template<typename C> requires rocket::IsChar<C>
 struct scn::scanner<rocket::u128, C> : scn::basic_istream_scanner<C> {};
 
-#endif
+#endif // ROCKET_HAS_INT128_SCN_SCANNER
 
 // EOF

@@ -3,7 +3,7 @@
  */
 
 #include "rocket/assert.h"
-#include "rocket/nio/nio.h" // XX
+#include "rocket/nio/nio.h"
 
 #include <array>
 #include <memory>
@@ -12,7 +12,7 @@
 
 #include <Windows.h>
 
-using namespace rocket; // XXX
+using namespace rocket;
 using namespace std;
 
 namespace {

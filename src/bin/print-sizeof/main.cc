@@ -3,6 +3,7 @@
  */
 
 #include <rocket/Process.h>
+#include <rocket/TypeId.h>
 #include <rocket/str/Noun.h>
 #include <rocket/format.h>
 
@@ -15,8 +16,8 @@ namespace {
 
 template<typename T>
 void printSize() {
-  const string typeName= fmt::format("{}", typeid(T));
-  nio::out.println("{: <21} | {:>2} {}", typeName, sizeof(T), str::noun::byte(sizeof(T)));
+  const string name = fmt::format("{}", TypeId::of<T>());
+  nio::out.println("{: <23} | {:>2} {}", name, sizeof(T), str::noun::byte(sizeof(T)));
 }
 
 } // namespace

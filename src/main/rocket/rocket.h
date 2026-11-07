@@ -116,8 +116,7 @@ using i32 = std::int32_t; ///< A signed 32-bit integer.
 using u32 = std::uint32_t; ///< An unsigned 32-bit integer.
 using i64 = std::int64_t; ///< A signed 64-bit integer.
 using u64 = std::uint64_t; ///< An unsigned 64-bit integer.
-using i128 = int128__; ///< A signed 128-bit integer.
-using u128 = uint128__; ///< An unsigned 128-bit integer.
+// `i128` and `u128` are defined in `int128.h`
 using f32 = std_float; ///< A 32-bit floating point.
 using f64 = std_double; ///< A 64-bit floating point.
 

@@ -15,7 +15,7 @@
 #include <fmt/std.h>
 #include <fmt/xchar.h>
 
-#ifdef ROCKET_OS_WINDOWS
+#ifndef ROCKET_HAS_INT128_FMT_FORMATTER
 
 // `fmt::formatter<rocket::i128>` ---------------------------------------------------------------------------
 

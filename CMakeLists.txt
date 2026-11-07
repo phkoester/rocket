@@ -97,7 +97,8 @@ elseif(GAIA_OS_WINDOWS)
   # Windows
   if(GAIA_CXX_COMPILER_LLVM)
     # Windows, LLVM
-    list(APPEND COMPILE_FLAGS -Werror -Wextra) # No `-Wall` on Windows
+    list(APPEND COMPILE_FLAGS -Werror -Wextra # No `-Wall` on Windows
+      -Wno-unknown-attributes)
   elseif(GAIA_CXX_COMPILER_MSVC)
     # Windows, MSVC
     list(APPEND COMPILE_DEFS _WIN32_WINNT=0x0601)
@@ -275,7 +276,7 @@ block()
   set(SANITIZE OFF) #
   FetchContent_MakeAvailable(libcbor)
   if(GAIA_CXX_COMPILER_LLVM)
-    target_compile_options(cbor PRIVATE -Wno-unused-variable) # XXX
+    target_compile_options(cbor PRIVATE -Wno-unused-variable)
   endif()
 endblock()
 
