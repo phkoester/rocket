@@ -136,7 +136,7 @@ timeZoneAbbrev([[maybe_unused]] string_view zone, [[maybe_unused]] bool dst, str
   return ret;
 #else
   return string(fallback);
-#endif
+#endif // _MSVC_STL_VERSION
 }
 
 } // namespace rocket::chrono

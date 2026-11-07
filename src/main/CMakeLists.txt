@@ -136,7 +136,6 @@ target_sources(rocket
       rocket/std.h
       rocket/std-codec.h
       rocket/type-traits.h
-      rocket/typeinfo.h
       rocket/chrono/chrono.h
       rocket/cl/cl.h
       rocket/codec/CborCodec.h

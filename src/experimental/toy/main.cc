@@ -60,6 +60,8 @@ i32
 main([[maybe_unused]] i32 argc, [[maybe_unused]] char **argv) {
   ROCKET_PROCESS_ERROR(0, "Testing error before `process().init` ...");
 
+  [[maybe_unused]] std::type_info ti = typeid(int);
+
   Process::atExit(myExit);
   Process::atExit(myTerminate, true);
 
