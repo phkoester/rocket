@@ -1,7 +1,7 @@
 /**
  * @file chrono.h
  *
- * Utilities around #std::chrono.
+ * Utilities related #std::chrono.
  *
  * ## Time Zones
  *
@@ -63,6 +63,8 @@
   #include <utility>
 #endif
 
+// Part I: utilities related to `std::chrono` ===============================================================
+
 namespace rocket::chrono {
 
 namespace internal {
@@ -114,9 +116,28 @@ now() {
   return Clock::now() + internal::clockOffset();
 }
 
-#ifdef ROCKET_HAS_STD_CHRONO_TIME_ZONE
+/**
+ * Returns the abbreviation the standard library uses for a time zone.
+ *
+ * Microsoft's STL takes the abbreviations from the system ICU (`icu.dll`), localized for the user's default
+ * locale, so on a German system, `CET` and `CEST` are `MEZ` and `MESZ`. We ask the same ICU for the
+ * abbreviation. Other implementations use the abbreviations from the time-zone database, which are not
+ * localized.
+ *
+ * @param name the name of the time zone, in UTF-8, e.g. `Europe/Berlin`
+ * @param dst whether to return the abbreviation for daylight saving time
+ * @param fallback the abbreviation from the time-zone database
+ * @return the abbreviation
+ */
+std::string timeZoneAbbrev(std::string_view name, bool dst, std::string_view fallback);
 
-// Time zones (standard library) ----------------------------------------------------------------------------
+} // namespace rocket::chrono
+
+// Part II: time zones ======================================================================================
+
+namespace rocket::chrono {
+
+#ifdef ROCKET_HAS_STD_CHRONO_TIME_ZONE
 
 /// Information about a time zone at a certain point in time.
 using std::chrono::sys_info;
@@ -152,6 +173,39 @@ using std::chrono::zoned_time;
 using std::chrono::zoned_seconds;
 
 #else
+
+namespace internal {
+
+// Internal -------------------------------------------------------------------------------------------------
+
+struct TimeZoneAccess; // Defined in `chrono.cc`
+
+struct ZoneData; // Defined in `chrono.cc`
+
+template<typename Duration>
+std::string
+ambiguousMessage(const std::chrono::local_time<Duration>& tp, const local_info& info) {
+  using namespace std::chrono;
+  std::ostringstream os;
+  os << tp << " is ambiguous.  It could be\n" << tp << ' ' << info.first.abbrev << " == " <<
+    tp - info.first.offset << " UTC or\n" << tp << ' ' << info.second.abbrev << " == " <<
+    tp - info.second.offset << " UTC";
+  return std::move(os).str();
+}
+
+template<typename Duration>
+std::string
+nonexistentMessage(const std::chrono::local_time<Duration>& tp, const local_info& info) {
+  using namespace std::chrono;
+  std::ostringstream os;
+  os << tp << " is in a gap between\n" <<
+    local_seconds(info.first.end.time_since_epoch()) + info.first.offset << ' ' << info.first.abbrev <<
+    " and\n" << local_seconds(info.second.begin.time_since_epoch()) + info.second.offset << ' ' <<
+    info.second.abbrev << " which are both equivalent to\n" << info.first.end << " UTC";
+  return std::move(os).str();
+}
+
+} // namespace internal
 
 // `sys_info` -----------------------------------------------------------------------------------------------
 
@@ -226,33 +280,6 @@ enum class choose {
   latest ///< choose the later time point.
 };
 
-namespace internal {
-
-template<typename Duration>
-std::string
-ambiguousMessage(const std::chrono::local_time<Duration>& tp, const local_info& info) {
-  using namespace std::chrono;
-  std::ostringstream os;
-  os << tp << " is ambiguous.  It could be\n" << tp << ' ' << info.first.abbrev << " == " <<
-    tp - info.first.offset << " UTC or\n" << tp << ' ' << info.second.abbrev << " == " <<
-    tp - info.second.offset << " UTC";
-  return std::move(os).str();
-}
-
-template<typename Duration>
-std::string
-nonexistentMessage(const std::chrono::local_time<Duration>& tp, const local_info& info) {
-  using namespace std::chrono;
-  std::ostringstream os;
-  os << tp << " is in a gap between\n" <<
-    local_seconds(info.first.end.time_since_epoch()) + info.first.offset << ' ' << info.first.abbrev <<
-    " and\n" << local_seconds(info.second.begin.time_since_epoch()) + info.second.offset << ' ' <<
-    info.second.abbrev << " which are both equivalent to\n" << info.first.end << " UTC";
-  return std::move(os).str();
-}
-
-} // namespace internal
-
 // `ambiguous_local_time` -----------------------------------------------------------------------------------
 
 /**
@@ -288,13 +315,6 @@ struct nonexistent_local_time : std::runtime_error {
   nonexistent_local_time(const std::chrono::local_time<Duration>& tp, const local_info& info) :
     std::runtime_error(internal::nonexistentMessage(tp, info)) {}
 };
-
-namespace internal {
-
-struct ZoneData; // Defined in `chrono.cc`
-struct TimeZoneAccess; // Defined in `chrono.cc`
-
-} // namespace internal
 
 // `time_zone` ----------------------------------------------------------------------------------------------
 
@@ -746,6 +766,8 @@ private:
   SysTime<duration> tp_;
 };
 
+// Functions ------------------------------------------------------------------------------------------------
+
 namespace internal {
 
 template<typename T>
@@ -755,8 +777,6 @@ using TimeZoneRepresentation = std::conditional_t<
   std::remove_cvref_t<T>>;
 
 } // namespace internal
-
-// Functions ------------------------------------------------------------------------------------------------
 
 /// @cond undocumented
 

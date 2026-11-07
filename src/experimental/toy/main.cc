@@ -13,8 +13,6 @@
 
 #include <string>
 
-#include <experimental/scope>
-
 using namespace rocket;
 using namespace rocket::unicode;
 using namespace std;

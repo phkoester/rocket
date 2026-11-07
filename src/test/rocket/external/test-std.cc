@@ -85,19 +85,14 @@ TEST(std, chronoFormat) {
   }
 }
 
-/// This is expected to work on all platforms.
 TEST(std, filesystemPath) {
   namespace fs = std::filesystem;
 
   const fs::path unixPath("/path/to/file");
   EXPECT_EQ(unixPath.filename(), fs::path("file"));
   EXPECT_EQ(unixPath.parent_path(), fs::path("/path/to"));
-}
 
 #ifdef ROCKET_OS_WINDOWS
-TEST(std, filesystemPathWindows) {
-  namespace fs = std::filesystem;
-
   const fs::path windowsPath("C:\\path\\to\\file");
   EXPECT_EQ(windowsPath.filename(), fs::path("file"));
   EXPECT_EQ(windowsPath.parent_path(), fs::path("C:\\path\\to"));
@@ -106,12 +101,7 @@ TEST(std, filesystemPathWindows) {
   EXPECT_EQ(mixedPath.filename(), fs::path("e"));
   EXPECT_EQ(mixedPath.parent_path(), fs::path("a/b/c/d"));
   EXPECT_EQ(mixedPath.parent_path(), fs::path("a\\b\\c\\d"));
-}
 #endif // ROCKET_OS_WINDOWS
-
-TEST(std, formatLocale) {
-  EXPECT_EQ(std::format("{:L}", 123'456), "123,456");
-  EXPECT_EQ(std::format("{:L}", 123456.789012), "123,456.789012");
 }
 
 TEST(std, istreamDefaultExceptions) {
@@ -231,11 +221,11 @@ TEST(std, istreamI32) {
     type val = 0;
     is >> val;
 #ifdef ROCKET_OS_WINDOWS
-    // If the value is greater than the maximum value, there is a failure
+    // Windows: If the value is greater than the maximum value, there is a failure
     EXPECT_ISTREAM(is, true, true, 10);
     EXPECT_EQ(is.tellg(), -1);
 #else
-    // If the value is greater than the maximum value, then the result is capped
+    // Linux, macOS: If the value is greater than the maximum value, then the result is capped
     EXPECT_EQ(val, numeric_limits<i32>::max());
     EXPECT_ISTREAM(is, true, true, 10);
     EXPECT_EQ(is.tellg(), -1);

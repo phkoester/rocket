@@ -8,11 +8,10 @@
 #include "rocket/chrono/chrono.h"
 #include "rocket/system/system.h"
 
-#include <cstdlib>
 #include <format>
 #include <sstream>
-#include <stdexcept>
 #include <string>
+#include <string_view>
 
 using namespace std::chrono; // XXX
 
@@ -27,7 +26,24 @@ using rocket::chrono::zoned_time;
 using rocket::chrono::current_zone;
 using rocket::chrono::locate_zone;
 
-// `TEST` ---------------------------------------------------------------------------------------------------
+namespace {
+
+// Constants ------------------------------------------------------------------------------------------------
+
+/// Central European Time, localized.
+const string CET = rocket::chrono::timeZoneAbbrev("Europe/Berlin", false, "CET");
+/// Central European Summer Time, localized.
+const string CEST = rocket::chrono::timeZoneAbbrev("Europe/Berlin", true, "CEST");
+/// Eastern Standard Time, localized.
+const string EST = rocket::chrono::timeZoneAbbrev("America/New_York", false, "EST");
+/// India Standard Time, localized.
+const string IST = rocket::chrono::timeZoneAbbrev("Asia/Kolkata", false, "IST");
+/// Coordinated Universal Time, localized.
+const string UTC = rocket::chrono::timeZoneAbbrev("UTC", false, "UTC");
+
+} // namespace
+
+// `TEST`---------------------------------------------------------------------------------------------------
 
 // `sys_info` ...............................................................................................
 
@@ -39,24 +55,28 @@ TEST(chrono, sys_info) {
   EXPECT_EQ(summer.end, sys_days(2024y / October / 27) + 1h);
   EXPECT_EQ(summer.offset, 2h);
   EXPECT_EQ(summer.save, 60min);
-  EXPECT_EQ(summer.abbrev, "CEST");
+  EXPECT_EQ(summer.abbrev, CEST);
 
   const auto winter = berlin->get_info(sys_days(2024y / January / 1));
   EXPECT_EQ(winter.end, sys_days(2024y / March / 31) + 1h);
   EXPECT_EQ(winter.offset, 1h);
   EXPECT_EQ(winter.save, 0min);
-  EXPECT_EQ(winter.abbrev, "CET");
+  EXPECT_EQ(winter.abbrev, CET);
 
   // Periods begin and end exactly at the transitions
 
-  EXPECT_EQ(berlin->get_info(summer.begin - 1s).abbrev, "CET");
-  EXPECT_EQ(berlin->get_info(summer.begin).abbrev, "CEST");
-  EXPECT_EQ(berlin->get_info(summer.end - 1s).abbrev, "CEST");
-  EXPECT_EQ(berlin->get_info(summer.end).abbrev, "CET");
+  EXPECT_EQ(berlin->get_info(summer.begin - 1s).abbrev, CET);
+  EXPECT_EQ(berlin->get_info(summer.begin).abbrev, CEST);
+  EXPECT_EQ(berlin->get_info(summer.end - 1s).abbrev, CEST);
+  EXPECT_EQ(berlin->get_info(summer.end).abbrev, CET);
 
   // Sub-second precision
 
-  EXPECT_EQ(berlin->get_info(sys_time<nanoseconds>(summer.begin) - 1ns).abbrev, "CET");
+#ifdef ROCKET_OS_WINDOWS
+  EXPECT_EQ(berlin->get_info(sys_time<microseconds>(summer.begin) - 1us).abbrev, CET);
+#else
+  EXPECT_EQ(berlin->get_info(sys_time<nanoseconds>(summer.begin) - 1ns).abbrev, CET);
+#endif
 }
 
 TEST(chrono, sys_info_future) {
@@ -64,14 +84,14 @@ TEST(chrono, sys_info_future) {
 
   const auto berlin = locate_zone("Europe/Berlin")->get_info(sys_days(2200y / July / 1));
   EXPECT_EQ(berlin.offset, 2h);
-  EXPECT_EQ(berlin.abbrev, "CEST");
+  EXPECT_EQ(berlin.abbrev, CEST);
   EXPECT_EQ(berlin.begin, sys_days(2200y / March / 30) + 1h); // Last Sunday in March
   EXPECT_EQ(berlin.end, sys_days(2200y / October / 26) + 1h); // Last Sunday in October
 
   const auto newYork = locate_zone("America/New_York")->get_info(sys_days(2200y / January / 1));
   EXPECT_EQ(newYork.offset, -5h);
   EXPECT_EQ(newYork.save, 0min);
-  EXPECT_EQ(newYork.abbrev, "EST");
+  EXPECT_EQ(newYork.abbrev, EST);
 }
 
 TEST(chrono, sys_info_southern_hemisphere) {
@@ -90,11 +110,11 @@ TEST(chrono, sys_info_no_dst) {
   const auto utc = locate_zone("UTC")->get_info(sys_days(2024y / July / 1));
   EXPECT_EQ(utc.offset, 0s);
   EXPECT_EQ(utc.save, 0min);
-  EXPECT_EQ(utc.abbrev, "UTC");
+  EXPECT_EQ(utc.abbrev, UTC);
 
   const auto kolkata = locate_zone("Asia/Kolkata")->get_info(sys_days(2100y / July / 1));
   EXPECT_EQ(kolkata.offset, 5h + 30min);
-  EXPECT_EQ(kolkata.abbrev, "IST");
+  EXPECT_EQ(kolkata.abbrev, IST);
 }
 
 // `local_info` .............................................................................................
@@ -104,17 +124,17 @@ TEST(chrono, local_info) {
 
   const auto unique = berlin->get_info(local_days(2024y / July / 1) + 12h);
   EXPECT_EQ(unique.result, local_info::unique);
-  EXPECT_EQ(unique.first.abbrev, "CEST");
+  EXPECT_EQ(unique.first.abbrev, CEST);
 
   const auto gap = berlin->get_info(local_days(2024y / March / 31) + 2h + 30min);
   EXPECT_EQ(gap.result, local_info::nonexistent);
-  EXPECT_EQ(gap.first.abbrev, "CET");
-  EXPECT_EQ(gap.second.abbrev, "CEST");
+  EXPECT_EQ(gap.first.abbrev, CET);
+  EXPECT_EQ(gap.second.abbrev, CEST);
 
   const auto overlap = berlin->get_info(local_days(2024y / October / 27) + 2h + 30min);
   EXPECT_EQ(overlap.result, local_info::ambiguous);
-  EXPECT_EQ(overlap.first.abbrev, "CEST");
-  EXPECT_EQ(overlap.second.abbrev, "CET");
+  EXPECT_EQ(overlap.first.abbrev, CEST);
+  EXPECT_EQ(overlap.second.abbrev, CET);
 
   // The edges of the gap
 
@@ -167,8 +187,8 @@ TEST(chrono, time_zone_to_sys_messages) {
   } catch (const ambiguous_local_time& ex) {
     EXPECT_EQ(std::string(ex.what()),
       "2024-10-27 02:30:00 is ambiguous.  It could be\n"
-      "2024-10-27 02:30:00 CEST == 2024-10-27 00:30:00 UTC or\n"
-      "2024-10-27 02:30:00 CET == 2024-10-27 01:30:00 UTC");
+      "2024-10-27 02:30:00 " + CEST + " == 2024-10-27 00:30:00 UTC or\n"
+      "2024-10-27 02:30:00 " + CET + " == 2024-10-27 01:30:00 UTC");
   }
 
   try {
@@ -177,8 +197,8 @@ TEST(chrono, time_zone_to_sys_messages) {
   } catch (const nonexistent_local_time& ex) {
     EXPECT_EQ(std::string(ex.what()),
       "2024-03-31 02:30:00 is in a gap between\n"
-      "2024-03-31 02:00:00 CET and\n"
-      "2024-03-31 03:00:00 CEST which are both equivalent to\n"
+      "2024-03-31 02:00:00 " + CET + " and\n"
+      "2024-03-31 03:00:00 " + CEST + " which are both equivalent to\n"
       "2024-03-31 01:00:00 UTC");
   }
 }
@@ -228,7 +248,7 @@ TEST(chrono, zoned_time) {
   EXPECT_EQ(zt.get_time_zone()->name(), "Europe/Berlin");
   EXPECT_EQ(zt.get_sys_time(), utc);
   EXPECT_EQ(zt.get_local_time(), local_days(2024y / July / 1) + 14h);
-  EXPECT_EQ(zt.get_info().abbrev, "CEST");
+  EXPECT_EQ(zt.get_info().abbrev, CEST);
   EXPECT_EQ(static_cast<sys_seconds>(zt), utc);
   EXPECT_EQ(static_cast<local_seconds>(zt), local_days(2024y / July / 1) + 14h);
 
@@ -241,7 +261,7 @@ TEST(chrono, zoned_time) {
   EXPECT_EQ(fromLocal.get_sys_time(), utc);
   EXPECT_THROW(zoned_time("Europe/Berlin", local_days(2024y / March / 31) + 2h + 30min), nonexistent_local_time);
   const auto latest = zoned_time("Europe/Berlin", local_days(2024y / October / 27) + 2h + 30min, choose::latest);
-  EXPECT_EQ(latest.get_info().abbrev, "CET");
+  EXPECT_EQ(latest.get_info().abbrev, CET);
 
   // Another zone, same time point
 
@@ -272,19 +292,19 @@ TEST(chrono, zoned_time_format) {
   const auto berlin = zoned_time(locate_zone("Europe/Berlin"), utc);
   const auto newYork = zoned_time(locate_zone("America/New_York"), utc);
 
-  EXPECT_EQ(std::format("{:%F %T %Z}", berlin), "2024-07-01 14:00:00 CEST");
+  EXPECT_EQ(std::format("{:%F %T %Z}", berlin), "2024-07-01 14:00:00 " + CEST);
   EXPECT_EQ(std::format("{:%FT%T%Ez}", berlin), "2024-07-01T14:00:00+02:00");
   EXPECT_EQ(std::format("{:%FT%T%z}", newYork), "2024-07-01T08:00:00-0400");
   EXPECT_EQ(std::format("{:%FT%T%Oz}", newYork), "2024-07-01T08:00:00-04:00");
-  EXPECT_EQ(std::format("{:%H%%%Z}", berlin), "14%CEST");
-  EXPECT_EQ(std::format("{}", berlin), "2024-07-01 14:00:00 CEST");
-  EXPECT_EQ(std::format("{:>30}", berlin), "      2024-07-01 14:00:00 CEST");
+  EXPECT_EQ(std::format("{:%H%%%Z}", berlin), "14%" + CEST);
+  EXPECT_EQ(std::format("{}", berlin), "2024-07-01 14:00:00 " + CEST);
+  EXPECT_EQ(std::format("{:>30}", berlin), std::format("{:>30}", "2024-07-01 14:00:00 " + CEST));
   EXPECT_EQ(std::format("{:%FT%TZ}", zoned_time(locate_zone("UTC"), sys_time<milliseconds>(utc) + 5ms)),
     "2024-07-01T12:00:00.005Z");
 
   std::ostringstream os;
   os << berlin;
-  EXPECT_EQ(os.str(), "2024-07-01 14:00:00 CEST");
+  EXPECT_EQ(os.str(), "2024-07-01 14:00:00 " + CEST);
 }
 
 // EOF

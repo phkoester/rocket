@@ -18,6 +18,7 @@ RocketAddTest(test-rocket-TypeId                       rocket                 te
 RocketAddTest(test-rocket-assert                       rocket                 test-assert.cc)
 RocketAddTest(test-rocket-enum                         rocket                 test-enum.cc)
 RocketAddTest(test-rocket-functional                   rocket                 test-functional.cc)
+RocketAddTest(test-rocket-int128                       rocket                 test-int128.cc)
 RocketAddTest(test-rocket-macro                        rocket                 test-macro.cc)
 RocketAddTest(test-rocket-scope                        rocket                 test-scope.cc)
 RocketAddTest(test-rocket-type-traits                  rocket                 test-type-traits.cc)
@@ -56,12 +57,6 @@ RocketAddTest(test-rocket-system-terminal              rocket/system/terminal te
 RocketAddTest(test-rocket-unicode                      rocket/unicode         test-unicode.cc)
 RocketAddTest(test-rocket-unicode-Character            rocket/unicode         test-Character.cc)
 RocketAddTest(test-rocket-unicode-Iterator             rocket/unicode         test-Iterator.cc)
-
-# Windows . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
-
-if(GAIA_OS_WINDOWS)
-  RocketAddTest(test-rocket-external-boost-int128 rocket/external test-boost-int128.cc)
-endif()
 
 # `test-rocket-external-CMake`  . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
 

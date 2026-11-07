@@ -4,23 +4,64 @@
 
 #include "chrono.h"
 
-#ifndef ROCKET_HAS_STD_CHRONO_TIME_ZONE
-  #include <algorithm>
-  #include <cstdint>
-  #include <cstdlib>
-  #include <filesystem>
-  #include <fstream>
-  #include <map>
-  #include <optional>
-  #include <span>
-  #include <tuple>
-  #include <vector>
+#include <algorithm>
+#include <array>
+#include <cstdint>
+#include <cstdlib>
+#include <filesystem>
+#include <fstream>
+#include <map>
+#include <optional>
+#include <span>
+#include <tuple>
+#include <vector>
+
+#ifdef _MSVC_STL_VERSION
+  #ifndef NOMINMAX
+    #define NOMINMAX
+  #endif
+  #ifndef WIN32_LEAN_AND_MEAN
+    #define WIN32_LEAN_AND_MEAN
+  #endif
+  #include <Windows.h>
 #endif
 
+using namespace rocket;
 using namespace std;
 using namespace std::chrono;
 
-namespace rocket::chrono::internal {
+// Part I: utilities related to `std::chrono` ===============================================================
+
+namespace {
+
+// Local functions ------------------------------------------------------------------------------------------
+
+#ifdef _MSVC_STL_VERSION
+
+// Converts a UTF-8 string to UTF-16, as needed by ICU
+u16string
+toUtf16(string_view str) {
+  if (str.empty()) {
+    return {};
+  }
+  const auto len = static_cast<i32>(str.size());
+  const i32 size = MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, str.data(), len, nullptr, 0);
+  if (size <= 0) {
+    return {};
+  }
+  u16string ret(static_cast<u16string::size_type>(size), u'\0');
+  MultiByteToWideChar(
+    CP_UTF8, MB_ERR_INVALID_CHARS, str.data(), len, reinterpret_cast<wchar_t*>(ret.data()), size); // NOLINT
+  return ret;
+}
+
+#endif // _MSVC_STL_VERSION
+
+} // namespace
+
+namespace rocket::chrono {
+
+namespace internal {
 
 // Internal -------------------------------------------------------------------------------------------------
 
@@ -36,15 +77,77 @@ clockOffset() {
   return offset;
 }
 
-} // namespace rocket::chrono::internal
+} // namespace internal
+
+// Functions ------------------------------------------------------------------------------------------------
+
+string
+timeZoneAbbrev([[maybe_unused]] string_view zone, [[maybe_unused]] bool dst, string_view fallback) {
+#ifdef _MSVC_STL_VERSION
+  // We do not include any ICU header, as these are the headers of the ICU linked with Rocket
+  using UCalendar = void;
+  using UErrorCode = i32;
+  constexpr i32 UCAL_GREGORIAN = 1;
+  constexpr i32 UCAL_SHORT_STANDARD = 1;
+  constexpr i32 UCAL_SHORT_DST = 3;
+  using UcalOpen = UCalendar* (*)(const char16_t*, i32, const char*, i32, UErrorCode*);
+  using UcalClose = void (*)(UCalendar*);
+  using UcalGetTimeZoneDisplayName = i32 (*)(const UCalendar*, i32, const char*, char16_t*, i32, UErrorCode*);
+
+  const HMODULE icu = LoadLibraryExW(L"icu.dll", nullptr, LOAD_LIBRARY_SEARCH_SYSTEM32);
+  if (icu == nullptr) {
+    return string(fallback);
+  }
+  const auto ucalOpen = reinterpret_cast<UcalOpen>(GetProcAddress(icu, "ucal_open")); // NOLINT
+  const auto ucalClose = reinterpret_cast<UcalClose>(GetProcAddress(icu, "ucal_close")); // NOLINT
+  const auto ucalGetTimeZoneDisplayName = reinterpret_cast<UcalGetTimeZoneDisplayName>( // NOLINT
+    GetProcAddress(icu, "ucal_getTimeZoneDisplayName"));
+  if (ucalOpen == nullptr || ucalClose == nullptr || ucalGetTimeZoneDisplayName == nullptr) {
+    return string(fallback);
+  }
+
+  const u16string zone16 = toUtf16(zone);
+  if (zone16.empty()) {
+    return string(fallback);
+  }
+
+  // A null locale is the default locale
+  UErrorCode status = 0;
+  UCalendar* const cal = ucalOpen(zone16.c_str(), -1, nullptr, UCAL_GREGORIAN, &status);
+  if (status > 0) {
+    return string(fallback);
+  }
+  array<char16_t, 64> buf {};
+  const i32 len = ucalGetTimeZoneDisplayName(
+    cal, dst ? UCAL_SHORT_DST : UCAL_SHORT_STANDARD, nullptr, buf.data(), i32(buf.size()), &status);
+  ucalClose(cal);
+  if (status > 0 || len <= 0) {
+    return string(fallback);
+  }
+
+  // Localized names may not be ASCII, for example `GMT−5` with U+2212 (MINUS SIGN)
+  const auto* const wide = reinterpret_cast<const wchar_t*>(buf.data()); // NOLINT
+  const i32 size = WideCharToMultiByte(CP_UTF8, 0, wide, len, nullptr, 0, nullptr, nullptr);
+  if (size <= 0) {
+    return string(fallback);
+  }
+  string ret(static_cast<string::size_type>(size), '\0');
+  WideCharToMultiByte(CP_UTF8, 0, wide, len, ret.data(), size, nullptr, nullptr);
+  return ret;
+#else
+  return string(fallback);
+#endif
+}
+
+} // namespace rocket::chrono
+
+// Part II: time zones ======================================================================================
 
 #ifndef ROCKET_HAS_STD_CHRONO_TIME_ZONE
 
-namespace rocket::chrono {
+namespace {
 
-namespace internal {
-
-// Constants ------------------------------------------------------------------------------------------------
+// Local constants ------------------------------------------------------------------------------------------
 
 // The range of time points covered by time zones. This is the range of `year`, so calendar computations
 // cannot overflow
@@ -93,46 +196,10 @@ struct PosixRule {
   Date end; // End of DST
 };
 
-} // namespace internal
+// `PosixParser` --------------------------------------------------------------------------------------------
 
-// `ZoneData` -----------------------------------------------------------------------------------------------
-
-// Declared in `chrono.h`
-struct internal::ZoneData {
-  // The type before the first transition
-  LocalType initial;
-  minutes initialSave {};
-
-  // The transitions, sorted, without redundant ones: `types[i]` and `saves[i]` apply from `times[i]` on
-  vector<sys_seconds> times;
-  vector<LocalType> types;
-  vector<minutes> saves;
-
-  // The rule for time points after `ruleStart`, which is the last transition in the file, including redundant
-  // ones, or `MinTime` if the file has no transitions
-  optional<PosixRule> rule;
-  sys_seconds ruleStart = MIN_TIME;
-};
-
-// Declared in `chrono.h`
-struct internal::TimeZoneAccess {
-  static unique_ptr<time_zone>
-  make(string name, shared_ptr<const ZoneData> data) {
-    return unique_ptr<time_zone>(new time_zone(std::move(name), std::move(data)));
-  }
-
-  static const ZoneData& data(const time_zone& tz) { return *tz.data_; }
-};
-
-namespace internal {
-
-namespace {
-
-// POSIX TZ strings -----------------------------------------------------------------------------------------
-
-class PosixParser {
-public:
-
+// POSIX TZ strings
+struct PosixParser {
   explicit PosixParser(string_view str) : str_(str) {}
 
   optional<PosixRule>
@@ -293,34 +360,33 @@ private:
   }
 };
 
+// Local functions ------------------------------------------------------------------------------------------
+
 // The local time of a transition in year `y`
 local_seconds
 localTransition(const PosixRule::Date& date, year y) {
   using Kind = PosixRule::Date::Kind;
   local_days day;
   switch (date.kind) {
-  case Kind::Julian1:
-    day = local_days(y / January / 1) + days(date.day - 1);
-    if (y.is_leap() && date.day >= 60) {
-      day += days(1);
+    case Kind::Julian1:
+      day = local_days(y / January / 1) + days(date.day - 1);
+      if (y.is_leap() && date.day >= 60) {
+        day += days(1);
+      }
+      break;
+    case Kind::Julian0:
+      day = local_days(y / January / 1) + days(date.day);
+      break;
+    case Kind::MonthWeekDay: {
+      const auto m = month(static_cast<unsigned>(date.month));
+      const auto wd = weekday(static_cast<unsigned>(date.weekday));
+      day = date.week == 5 ?
+        local_days(y / m / wd[last]) :
+        local_days(y / m / wd[static_cast<unsigned>(date.week)]);
+      break;
     }
-    break;
-  case Kind::Julian0:
-    day = local_days(y / January / 1) + days(date.day);
-    break;
-  case Kind::MonthWeekDay: {
-    const auto m = month(static_cast<unsigned>(date.month));
-    const auto wd = weekday(static_cast<unsigned>(date.weekday));
-    day = date.week == 5 ? local_days(y / m / wd[last]) : local_days(y / m / wd[static_cast<unsigned>(date.week)]);
-    break;
-  }
   }
   return day + date.time;
-}
-
-sys_seconds
-toSys(local_seconds tp, seconds offset) {
-  return sys_seconds(tp.time_since_epoch()) - offset;
 }
 
 // The period of a rule containing `tp`. Since the rule repeats every year, looking at the transitions of the
@@ -394,6 +460,57 @@ ruleInfo(const PosixRule& rule, sys_seconds tp) {
   }
   return { begin, end, rule.std.offset, 0min, rule.std.abbrev };
 }
+
+sys_seconds
+toSys(local_seconds tp, seconds offset) {
+  return sys_seconds(tp.time_since_epoch()) - offset;
+}
+
+} // namespace
+
+namespace rocket::chrono {
+
+namespace internal {
+
+// `TimeZoneAccess` ----------------------------------------------------------------------------------------
+
+// Declared in `chrono.h`
+struct TimeZoneAccess {
+  static const ZoneData&
+  data(const time_zone& tz) {
+    return *tz.data_;
+  }
+
+  static unique_ptr<time_zone>
+  make(string name, shared_ptr<const ZoneData> data) {
+    return unique_ptr<time_zone>(new time_zone(std::move(name), std::move(data)));
+  }
+};
+
+// `ZoneData` -----------------------------------------------------------------------------------------------
+
+// Declared in `chrono.h`
+struct ZoneData {
+  // The type before the first transition
+  LocalType initial;
+  minutes initialSave {};
+
+  // The transitions, sorted, without redundant ones: `types[i]` and `saves[i]` apply from `times[i]` on
+  vector<sys_seconds> times;
+  vector<LocalType> types;
+  vector<minutes> saves;
+
+  // The rule for time points after `ruleStart`, which is the last transition in the file, including
+  // redundant ones, or `MinTime` if the file has no transitions
+  optional<PosixRule> rule;
+  sys_seconds ruleStart = MIN_TIME;
+};
+
+} // namespace internal
+
+namespace internal {
+
+namespace {
 
 // TZif files -----------------------------------------------------------------------------------------------
 

@@ -101,7 +101,7 @@ elseif(GAIA_OS_WINDOWS)
   elseif(GAIA_CXX_COMPILER_MSVC)
     # Windows, MSVC
     list(APPEND COMPILE_DEFS _WIN32_WINNT=0x0601)
-    list(APPEND COMPILE_FLAGS /bigobj /Zc:preprocessor)
+    list(APPEND COMPILE_FLAGS /bigobj /wd4244 /Zc:preprocessor)
   endif()
 endif()
 

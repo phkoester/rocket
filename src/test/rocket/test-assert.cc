@@ -29,11 +29,10 @@ TEST(assert, RocketAssertTrue) {
   EXPECT_FALSE(oopsCalled);
 }
 
-TEST(assertDeathTest, RocketAssertFalse) { // NOLINT
-  GTEST_FLAG_SET(death_test_style, "threadsafe");
+TEST(assertDeathTest, RocketAssertFalse) {
   EXPECT_EXIT(
       { ROCKET_ASSERT(false, "My message: {}", 42); },
-      ABORTED(), WITH_MESSAGE("Assertion `false` failed: My message: 42"));
+      ABORTED(), "Assertion `false` failed: My message: 42");
 }
 
 TEST(assert, RocketCheck) {
@@ -65,10 +64,9 @@ TEST(assert, RocketFail) {
 }
 
 TEST(assertDeathTest, RocketTerminate) {
-  GTEST_FLAG_SET(death_test_style, "threadsafe");
   EXPECT_EXIT(
       { ROCKET_TERMINATE("My message: {}", 42); },
-      ABORTED(), WITH_MESSAGE("My message: 42"));
+      ABORTED(), "My message: 42");
 }
 
 // EOF

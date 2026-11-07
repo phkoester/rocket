@@ -90,7 +90,7 @@ struct TypeId {
    *
    * @return the demangled name, for example `rocket::InvalidArgument`
    */
-  [[nodiscard]] std::string readableName() const;
+  [[nodiscard]] std::string prettyName() const;
 
 private:
 
@@ -117,7 +117,7 @@ struct fmt::formatter<rocket::TypeId, C> {
   template<typename FormatContext>
   FormatContext::iterator
   format(const rocket::TypeId& val, FormatContext& ctx) const {
-    std::string str = '`' + val.readableName() + '`';
+    std::string str = '`' + val.prettyName() + '`';
     return underlying_.format(rocket::unicode::ConvertTo<C>::apply(str), ctx);
   }
 

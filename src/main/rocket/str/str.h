@@ -290,9 +290,9 @@ void lowerIn(std::u32string& str);
 template<typename C> requires IsChar<C>
 [[nodiscard]] std::basic_string_view<C>
 removeLeading(
-    std::basic_string_view<C> str,
-    std::basic_string_view<C> sub,
-    u64 count = NPOS) {
+  std::basic_string_view<C> str,
+  std::basic_string_view<C> sub,
+  u64 count = NPOS) {
   if (sub.empty()) {
     return str;
   }
@@ -322,9 +322,9 @@ removeLeading(
 template<typename C> requires IsChar<C>
 [[nodiscard]] std::basic_string_view<C>
 removeTrailing(
-    std::basic_string_view<C> str,
-    std::basic_string_view<C> sub,
-    u64 count = NPOS) {
+  std::basic_string_view<C> str,
+  std::basic_string_view<C> sub,
+  u64 count = NPOS) {
   if (sub.empty()) {
     return str;
   }
@@ -383,6 +383,17 @@ repeat(const std::basic_string_view<C> str, u64 count) {
   }
   return ret;
 }
+
+/**
+ * Replaces up to @p count occurrences of @p from with @p to in the string @p str.
+ *
+ * @param str the string to replace in
+ * @param from the substring to replace
+ * @param to the substring to replace with
+ * @param count the maximum number of replacements
+ * @return the number of replacements
+ */
+u64 replaceIn(std::string& str, std::string_view from, std::string_view to, u64 count = NPOS);
 
 /**
  * Returns `"once"`, `"twice"`, or `"... times"` for @p n.

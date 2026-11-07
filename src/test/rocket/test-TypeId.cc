@@ -129,19 +129,19 @@ TEST(TypeId, name) {
   EXPECT_STREQ(TypeId::of<Plain>().name(), typeid(Plain).name());
 }
 
-TEST(TypeId, readableName) {
-  EXPECT_EQ(TypeId::of<int>().readableName(), "int");
-  EXPECT_EQ(TypeId::of<double>().readableName(), "double");
-  EXPECT_EQ(TypeId::of<int*>().readableName(), "int*");
-  EXPECT_EQ(TypeId::of<const int*>().readableName(), "int const*");
-  EXPECT_EQ(TypeId::of<TypeId>().readableName(), "rocket::TypeId");
-  EXPECT_EQ(TypeId::of<Plain>().readableName(), "test_typeid::Plain");
-  EXPECT_EQ(TypeId::of<Box<int>>().readableName(), "test_typeid::Box<int>");
-  EXPECT_EQ(TypeId::of<Box<Plain>>().readableName(), "test_typeid::Box<test_typeid::Plain>");
+TEST(TypeId, prettyName) {
+  EXPECT_EQ(TypeId::of<int>().prettyName(), "int");
+  EXPECT_EQ(TypeId::of<double>().prettyName(), "double");
+  EXPECT_EQ(TypeId::of<int*>().prettyName(), "int*");
+  EXPECT_EQ(TypeId::of<const int*>().prettyName(), "int const*");
+  EXPECT_EQ(TypeId::of<TypeId>().prettyName(), "rocket::TypeId");
+  EXPECT_EQ(TypeId::of<Plain>().prettyName(), "test_typeid::Plain");
+  EXPECT_EQ(TypeId::of<Box<int>>().prettyName(), "test_typeid::Box<int>");
+  EXPECT_EQ(TypeId::of<Box<Plain>>().prettyName(), "test_typeid::Box<test_typeid::Plain>");
 
   const Derived derived;
   const Base& base = derived;
-  EXPECT_EQ(TypeId(base).readableName(), "test_typeid::Derived");
+  EXPECT_EQ(TypeId(base).prettyName(), "test_typeid::Derived");
 }
 
 TEST(TypeId, format) {
@@ -165,7 +165,7 @@ TEST(TypeId, formatSpec) {
 
 TEST(TypeId, formatChar32) {
   EXPECT_EQ(fmt::format(U"{}", TypeId::of<int>()), U"`int`");
-  EXPECT_EQ(fmt::format(U"{}", TypeId::of<Plain>()), U"`typeid_test::Plain`");
+  EXPECT_EQ(fmt::format(U"{}", TypeId::of<Plain>()), U"`test_typeid::Plain`");
   EXPECT_EQ(fmt::format(U"{:>7}", TypeId::of<int>()), U"  `int`");
 }
 

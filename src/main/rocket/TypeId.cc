@@ -4,8 +4,12 @@
 
 #include "TypeId.h"
 
+#include "rocket/str/str.h"
+
+#include <cctype>
 #include <cstdlib>
 #include <memory>
+#include <string_view>
 
 #ifndef ROCKET_OS_WINDOWS
   #include <cxxabi.h>
@@ -18,11 +22,17 @@ namespace rocket {
 // `TypeId` -------------------------------------------------------------------------------------------------
 
 string
-TypeId::readableName() const {
+TypeId::prettyName() const {
   const char* const name = type_.name();
 #ifdef ROCKET_OS_WINDOWS
-  return name;
+  // Windows: the names are not mangled, but class keys are included, as in
+  // `struct std::pair<int,struct Foo>`. Remove all occurrences of `struct `
+  string ret(name);
+  str::replaceIn(ret, "struct ", "");
+  str::replaceIn(ret, " * __ptr64", "*");
+  return ret;
 #else
+  // Linux, macOS
   i32 status = 0;
   const unique_ptr<char, void (*)(void*)> ptr {
     abi::__cxa_demangle(name, nullptr, nullptr, &status),

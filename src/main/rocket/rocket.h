@@ -46,7 +46,7 @@
  * be UTF-8-encoded. This is already true at compile time: a string literal like `"ä"` must expand to
  * `"\xc3\xa4"`.
  *
- * The only Unicode encodings that Rocket supports are UTF-8 and UTF-32.
+ * The only Unicode encodings that Rocket supports are UTF-8 and UTF-32. UTF-8 is the default encoding.
  */
 
 #pragma once

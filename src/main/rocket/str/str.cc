@@ -112,6 +112,25 @@ paragraphs(string_view str) {
   return pars;
 }
 
+u64
+replaceIn(string& str, string_view from, string_view to, u64 count) {
+  ROCKET_CHECK(from, not from.empty());
+
+  if (str.empty() || count == 0) {
+    return 0;
+  }
+
+  u64 ret = 0;
+  for (u64 pos = str.find(from); pos != NPOS; pos = str.find(from, pos + to.size())) {
+    str.replace(pos, from.size(), to);
+    ++ret;
+    if (count != NPOS && ret >= count) {
+      break;
+    }
+  }
+  return ret;
+}
+
 string
 times(u64 n) {
   if (n == 1) {

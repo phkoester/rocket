@@ -124,6 +124,12 @@ TEST(str, removeTrailingChar32) {
   EXPECT_EQ(removeTrailing<type>(str, U"/"), U"dir");
 }
 
+TEST(str, replaceIn) {
+  string str = "gamma gamma gamma gamma";
+  EXPECT_EQ(replaceIn(str, "gamma", "beta"), 4);
+  EXPECT_EQ(str, "beta beta beta beta");
+}
+
 TEST(str, split) { // NOLINT(*-complexity)
   int n = 0;
   for (const auto token : split<char>("", ",")) {
