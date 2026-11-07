@@ -979,24 +979,6 @@ current_zone() {
   using namespace internal;
   auto& db = database();
 
-  // `TZ`, optionally prefixed by a colon, may be a zone name or a path to a zone file
-
-  if (const char* tz = getenv("TZ"); tz != nullptr && *tz != '\0') { // NOLINT(*-mt-unsafe)
-    string_view name(tz);
-    if (name.starts_with(':')) {
-      name.remove_prefix(1);
-    }
-    if (name.starts_with('/')) {
-      if (auto zoneName = zoneNameFromPath(name)) {
-        if (const auto* ret = db.locate(*zoneName)) {
-          return ret;
-        }
-      }
-    } else if (const auto* ret = db.locate(name)) {
-      return ret;
-    }
-  }
-
   // `/etc/localtime` is usually a symbolic link into the time-zone directory
 
   error_code ec;

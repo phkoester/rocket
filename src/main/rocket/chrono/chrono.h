@@ -433,8 +433,8 @@ private:
 /**
  * Returns the current time zone of the computer, equivalent to C++20's #std::chrono::current_zone.
  *
- * The time zone is taken from the environment variable `TZ`, the symbolic link `/etc/localtime`, or the
- * file `/etc/timezone`, in this order. If none of these yields a time zone, the result is `UTC`.
+ * The time zone is taken from the the symbolic link `/etc/localtime`, or the file `/etc/timezone`, in this
+ * order. If none of these yields a time zone, the result is `UTC`.
  *
  * @ThreadSafe
  *

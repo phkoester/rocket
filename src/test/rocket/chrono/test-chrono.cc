@@ -14,7 +14,7 @@
 #include <stdexcept>
 #include <string>
 
-using namespace std::chrono;
+using namespace std::chrono; // XXX
 
 using rocket::chrono::ambiguous_local_time;
 using rocket::chrono::choose;
@@ -23,42 +23,13 @@ using rocket::chrono::nonexistent_local_time;
 using rocket::chrono::time_zone;
 using rocket::chrono::zoned_seconds;
 using rocket::chrono::zoned_time;
+
 using rocket::chrono::current_zone;
 using rocket::chrono::locate_zone;
 
 // `TEST` ---------------------------------------------------------------------------------------------------
 
-TEST(chrono, locate_zone) {
-  const time_zone* berlin = locate_zone("Europe/Berlin");
-  ASSERT_NE(berlin, nullptr);
-  EXPECT_EQ(berlin->name(), "Europe/Berlin");
-  EXPECT_EQ(locate_zone("Europe/Berlin"), berlin);
-
-  // Links resolve to their targets
-
-  EXPECT_EQ(locate_zone("UTC")->name(), "Etc/UTC");
-  EXPECT_EQ(locate_zone("UTC"), locate_zone("Etc/UTC"));
-  EXPECT_EQ(locate_zone("US/Eastern")->name(), "America/New_York");
-
-  // Unknown or invalid names
-
-  EXPECT_THROW(static_cast<void>(locate_zone("x")), std::runtime_error);
-  EXPECT_THROW(static_cast<void>(locate_zone("")), std::runtime_error);
-  EXPECT_THROW(static_cast<void>(locate_zone("Europe")), std::runtime_error);
-  EXPECT_THROW(static_cast<void>(locate_zone("../../../etc/passwd")), std::runtime_error);
-  EXPECT_THROW(static_cast<void>(locate_zone("/etc/passwd")), std::runtime_error);
-  EXPECT_THROW(static_cast<void>(locate_zone("zone.tab")), std::runtime_error);
-}
-
-TEST(chrono, current_zone) {
-  ASSERT_NE(current_zone(), nullptr);
-  EXPECT_EQ(locate_zone(current_zone()->name()), current_zone());
-}
-
-TEST(chrono, time_zone_ordering) {
-  EXPECT_TRUE(*locate_zone("Europe/Berlin") == *locate_zone("Europe/Berlin"));
-  EXPECT_TRUE(*locate_zone("Europe/Berlin") < *locate_zone("Europe/Paris"));
-}
+// `sys_info` ...............................................................................................
 
 TEST(chrono, sys_info) {
   const time_zone* berlin = locate_zone("Europe/Berlin");
@@ -126,6 +97,8 @@ TEST(chrono, sys_info_no_dst) {
   EXPECT_EQ(kolkata.abbrev, "IST");
 }
 
+// `local_info` .............................................................................................
+
 TEST(chrono, local_info) {
   const time_zone* berlin = locate_zone("Europe/Berlin");
 
@@ -150,14 +123,21 @@ TEST(chrono, local_info) {
   EXPECT_EQ(berlin->get_info(local_days(2024y / March / 31) + 3h).result, local_info::unique);
 }
 
-TEST(chrono, to_local) {
+// `time_zone` ..............................................................................................
+
+TEST(chrono, time_zone_ordering) {
+  EXPECT_TRUE(*locate_zone("Europe/Berlin") == *locate_zone("Europe/Berlin"));
+  EXPECT_TRUE(*locate_zone("Europe/Berlin") < *locate_zone("Europe/Paris"));
+}
+
+TEST(chrono, time_zone_to_local) {
   const time_zone* newYork = locate_zone("America/New_York");
   const auto utc = sys_days(2024y / July / 1) + 12h;
   EXPECT_EQ(newYork->to_local(utc), local_days(2024y / July / 1) + 8h);
   EXPECT_EQ(newYork->to_sys(newYork->to_local(utc)), utc);
 }
 
-TEST(chrono, to_sys) {
+TEST(chrono, time_zone_to_sys) {
   const time_zone* berlin = locate_zone("Europe/Berlin");
 
   EXPECT_EQ(berlin->to_sys(local_days(2024y / July / 1) + 12h), sys_days(2024y / July / 1) + 10h);
@@ -178,8 +158,18 @@ TEST(chrono, to_sys) {
   EXPECT_EQ(ms, sys_time<milliseconds>(sys_days(2024y / July / 1) + 10h + 5ms));
 }
 
-TEST(chrono, to_sys_messages) {
+TEST(chrono, time_zone_to_sys_messages) {
   const time_zone* berlin = locate_zone("Europe/Berlin");
+
+  try {
+    static_cast<void>(berlin->to_sys(local_days(2024y / October / 27) + 2h + 30min));
+    FAIL();
+  } catch (const ambiguous_local_time& ex) {
+    EXPECT_EQ(std::string(ex.what()),
+      "2024-10-27 02:30:00 is ambiguous.  It could be\n"
+      "2024-10-27 02:30:00 CEST == 2024-10-27 00:30:00 UTC or\n"
+      "2024-10-27 02:30:00 CET == 2024-10-27 01:30:00 UTC");
+  }
 
   try {
     static_cast<void>(berlin->to_sys(local_days(2024y / March / 31) + 2h + 30min));
@@ -191,17 +181,36 @@ TEST(chrono, to_sys_messages) {
       "2024-03-31 03:00:00 CEST which are both equivalent to\n"
       "2024-03-31 01:00:00 UTC");
   }
-
-  try {
-    static_cast<void>(berlin->to_sys(local_days(2024y / October / 27) + 2h + 30min));
-    FAIL();
-  } catch (const ambiguous_local_time& ex) {
-    EXPECT_EQ(std::string(ex.what()),
-      "2024-10-27 02:30:00 is ambiguous.  It could be\n"
-      "2024-10-27 02:30:00 CEST == 2024-10-27 00:30:00 UTC or\n"
-      "2024-10-27 02:30:00 CET == 2024-10-27 01:30:00 UTC");
-  }
 }
+
+TEST(chrono, current_zone) {
+  ASSERT_NE(current_zone(), nullptr);
+  EXPECT_EQ(locate_zone(current_zone()->name()), current_zone());
+}
+
+TEST(chrono, locate_zone) {
+  const time_zone* berlin = locate_zone("Europe/Berlin");
+  ASSERT_NE(berlin, nullptr);
+  EXPECT_EQ(berlin->name(), "Europe/Berlin");
+  EXPECT_EQ(locate_zone("Europe/Berlin"), berlin);
+
+  // Links resolve to their targets
+
+  EXPECT_EQ(locate_zone("UTC")->name(), "Etc/UTC");
+  EXPECT_EQ(locate_zone("UTC"), locate_zone("Etc/UTC"));
+  EXPECT_EQ(locate_zone("US/Eastern")->name(), "America/New_York");
+
+  // Unknown or invalid names
+
+  EXPECT_THROW(static_cast<void>(locate_zone("x")), std::runtime_error);
+  EXPECT_THROW(static_cast<void>(locate_zone("")), std::runtime_error);
+  EXPECT_THROW(static_cast<void>(locate_zone("Europe")), std::runtime_error);
+  EXPECT_THROW(static_cast<void>(locate_zone("../../../etc/passwd")), std::runtime_error);
+  EXPECT_THROW(static_cast<void>(locate_zone("/etc/passwd")), std::runtime_error);
+  EXPECT_THROW(static_cast<void>(locate_zone("zone.tab")), std::runtime_error);
+}
+
+// `zoned_time` .............................................................................................
 
 TEST(chrono, zoned_time) {
   const auto utc = sys_days(2024y / July / 1) + 12h;
@@ -258,7 +267,7 @@ TEST(chrono, zoned_time) {
   EXPECT_TRUE(assigned == zt);
 }
 
-TEST(chrono, ZonedTimeFormat) {
+TEST(chrono, zoned_time_format) {
   const auto utc = sys_days(2024y / July / 1) + 12h;
   const auto berlin = zoned_time(locate_zone("Europe/Berlin"), utc);
   const auto newYork = zoned_time(locate_zone("America/New_York"), utc);
@@ -276,22 +285,6 @@ TEST(chrono, ZonedTimeFormat) {
   std::ostringstream os;
   os << berlin;
   EXPECT_EQ(os.str(), "2024-07-01 14:00:00 CEST");
-}
-
-TEST(chrono, current_zone_tz) {
-  const auto tz = system::env::get<string>("TZ");
-  ROCKET_SCOPE_EXIT([&tz] {
-    if (tz) {
-      system::env::set("TZ", *tz, true);
-    } else {
-      system::env::unset("TZ");
-    }
-  });
-
-  system::env::set("TZ", "America/New_York");
-  EXPECT_EQ(current_zone()->name(), "America/New_York");
-  system::env::set("TZ", "Asia/Tokyo");
-  EXPECT_EQ(current_zone()->name(), "Asia/Tokyo");
 }
 
 // EOF
