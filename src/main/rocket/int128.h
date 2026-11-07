@@ -2,7 +2,6 @@
  * @file int128.h
  *
  * Provides 128-bit integer types.
- * The only Unicode encodings that Rocket supports are UTF-8 and UTF-32.
  */
 
 #pragma once
