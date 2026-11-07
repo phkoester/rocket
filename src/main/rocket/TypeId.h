@@ -8,6 +8,7 @@
 
 #include "rocket/format.h"
 #include "rocket/type-traits.h"
+#include "rocket/typeinfo.h"
 #include "rocket/unicode/ConvertTo.h"
 
 #include <string>

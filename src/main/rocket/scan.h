@@ -13,7 +13,7 @@
 #include <scn/istream.h>
 #include <scn/ranges.h>
 
-#ifdef ROCKET_HAS_BOOST_INT128
+#ifndef ROCKET_HAS_INT128
 
 // `scn::scanner<rocket::i128>` -----------------------------------------------------------------------------
 

@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include "rocket/rocket.h"
+#include "rocket/typeinfo.h"
 
 #include <optional>
 #include <source_location>

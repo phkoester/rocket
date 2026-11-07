@@ -12,13 +12,24 @@
 
 #pragma once
 
+#include <version>
+
 #if defined(ROCKET_OS_MACOS) && defined(ROCKET_CXX_COMPILER_LLVM)
-  #define ROCKET_HAS_IO_SPANSTREAM_IMPL
+  #ifdef __cpp_lib_spanstream
+    #error This compiler version supports span streams
+  #endif
+#else
+  #ifndef __cpp_lib_spanstream
+    #error This compiler version does not support span streams
+  #endif
+  #define ROCKET_HAS_STD_SPANSTREAM
 #endif
 
 #include "rocket/rocket.h"
 
-#ifdef ROCKET_HAS_IO_SPANSTREAM_IMPL
+#ifdef ROCKET_HAS_STD_SPANSTREAM
+  #include <spanstream>
+#else
   #include <climits>
   #include <concepts>
   #include <cstddef>
@@ -31,13 +42,31 @@
   #include <streambuf>
   #include <string>
   #include <utility>
-#else
-  #include <spanstream>
 #endif
 
 namespace rocket::io {
 
-#ifdef ROCKET_HAS_IO_SPANSTREAM_IMPL
+#ifdef ROCKET_HAS_STD_SPANSTREAM
+
+// `basic_spanbuf`, `basic_ispanstream`, `basic_ospanstream`, `basic_spanstream` ----------------------------
+
+/// A stream buffer for a fixed character buffer.
+template<typename CharT, typename Traits = std::char_traits<CharT>>
+using basic_spanbuf = std::basic_spanbuf<CharT, Traits>;
+
+/// A stream for reading from a fixed character buffer.
+template<typename CharT, typename Traits = std::char_traits<CharT>>
+using basic_ispanstream = std::basic_ispanstream<CharT, Traits>;
+
+/// A stream for writing to a fixed character buffer.
+template<typename CharT, typename Traits = std::char_traits<CharT>>
+using basic_ospanstream = std::basic_ospanstream<CharT, Traits>;
+
+/// A stream for reading from and writing to a fixed character buffer.
+template<typename CharT, typename Traits = std::char_traits<CharT>>
+using basic_spanstream = std::basic_spanstream<CharT, Traits>;
+
+#else
 
 // `basic_spanbuf` ------------------------------------------------------------------------------------------
 
@@ -584,27 +613,7 @@ swap(basic_spanstream<CharT, Traits>& lhs, basic_spanstream<CharT, Traits>& rhs)
   lhs.swap(rhs);
 }
 
-#else
-
-// `basic_spanbuf`, `basic_ispanstream`, `basic_ospanstream`, `basic_spanstream` ----------------------------
-
-/// A stream buffer for a fixed character buffer.
-template<typename CharT, typename Traits = std::char_traits<CharT>>
-using basic_spanbuf = std::basic_spanbuf<CharT, Traits>;
-
-/// A stream for reading from a fixed character buffer.
-template<typename CharT, typename Traits = std::char_traits<CharT>>
-using basic_ispanstream = std::basic_ispanstream<CharT, Traits>;
-
-/// A stream for writing to a fixed character buffer.
-template<typename CharT, typename Traits = std::char_traits<CharT>>
-using basic_ospanstream = std::basic_ospanstream<CharT, Traits>;
-
-/// A stream for reading from and writing to a fixed character buffer.
-template<typename CharT, typename Traits = std::char_traits<CharT>>
-using basic_spanstream = std::basic_spanstream<CharT, Traits>;
-
-#endif // ROCKET_HAS_IO_SPANSTREAM_IMPL
+#endif // ROCKET_HAS_STD_SPANSTREAM
 
 // `spanbuf`, `ispanstream`, `ospanstream`, `spanstream` ----------------------------------------------------
 

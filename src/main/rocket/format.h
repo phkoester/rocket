@@ -93,7 +93,7 @@ private:
 
 #endif
 
-#ifdef ROCKET_HAS_CHRONO_TIME_ZONE_IMPL
+#ifndef ROCKET_HAS_STD_CHRONO_TIME_ZONE
 
 // `std::formatter<rocket::chrono::zoned_time>` -------------------------------------------------------------
 
@@ -207,13 +207,13 @@ private:
  * `fmt::year_month_day`. This is a copy of {fmt}'s formatter from `fmt/chrono.h`. Without a format
  * specification, the format is `%F`.
  *
- * @tparam CharT the character type
+ * @tparam C the character type
  */
 template<typename C> requires rocket::IsChar<C>
 struct fmt::formatter<std::chrono::year_month_day, C> : private fmt::formatter<std::tm, C> {
   /// @cond undocumented
 
-  FMT_CONSTEXPR auto
+  constexpr auto
   parse(fmt::parse_context<C>& ctx) -> const C* {
     auto it = ctx.begin();
     auto end = ctx.end();
@@ -244,6 +244,6 @@ private:
   bool useTmFormatter_ = false;
 };
 
-#endif // ROCKET_HAS_CHRONO_TIME_ZONE_IMPL
+#endif // ROCKET_HAS_STD_CHRONO_TIME_ZONE
 
 // EOF

@@ -311,6 +311,12 @@ if(ROCKET_GUI)
     # Don't change `BUILD_SHARED_LIBS`here
     set(wxUSE_UNICODE_UTF8 ON)
     FetchContent_MakeAvailable(wxWidgets)
+
+    foreach(target IN ITEMS wxscintilla)
+      if(TARGET ${target})
+        target_compile_options(${target} PRIVATE -Wno-deprecated-declarations)
+      endif()
+    endforeach()
   endblock()
 endif()
 

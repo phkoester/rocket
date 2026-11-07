@@ -32,8 +32,17 @@
 
 #pragma once
 
+#include <version>
+
 #if defined(ROCKET_OS_MACOS) && defined(ROCKET_CXX_COMPILER_LLVM)
-  #define ROCKET_HAS_CHRONO_TIME_ZONE_IMPL
+  #if __cpp_lib_chrono >= 201907L
+    #error This compiler version supports `std::chrono` time zones
+  #endif
+#else
+  #if __cpp_lib_chrono < 201907L
+    #error This compiler version does not support `std::chrono` time zones
+  #endif
+  #define ROCKET_HAS_STD_CHRONO_TIME_ZONE
 #endif
 
 #include "rocket/macro.h"
@@ -41,7 +50,7 @@
 #include <chrono>
 #include <mutex>
 
-#ifdef ROCKET_HAS_CHRONO_TIME_ZONE_IMPL
+#ifndef ROCKET_HAS_STD_CHRONO_TIME_ZONE
   #include <compare>
   #include <concepts>
   #include <format>
@@ -89,7 +98,7 @@ setClockOffset(Duration offset) {
 // Functions -----------------------------------------------------------------------------------------------
 
 /**
- * Returns the current time of the clock.
+ * Returns the current time of the clock, considering the clock offset.
  *
  * Testable code should use this function.
  *
@@ -105,7 +114,44 @@ now() {
   return Clock::now() + internal::clockOffset();
 }
 
-#ifdef ROCKET_HAS_CHRONO_TIME_ZONE_IMPL
+#ifdef ROCKET_HAS_STD_CHRONO_TIME_ZONE
+
+// Time zones (standard library) ----------------------------------------------------------------------------
+
+/// Information about a time zone at a certain point in time.
+using std::chrono::sys_info;
+
+/// Information about a local time in a time zone.
+using std::chrono::local_info;
+
+/// How to resolve an ambiguous local time.
+using std::chrono::choose;
+
+/// The exception thrown when a local time is ambiguous.
+using std::chrono::ambiguous_local_time;
+
+/// The exception thrown when a local time does not exist.
+using std::chrono::nonexistent_local_time;
+
+/// A time zone.
+using std::chrono::time_zone;
+
+/// Returns the current time zone of the computer.
+using std::chrono::current_zone;
+
+/// Locates a time zone by name.
+using std::chrono::locate_zone;
+
+/// The traits of a time-zone pointer used by #rocket::chrono::zoned_time.
+using std::chrono::zoned_traits;
+
+/// A time point together with a time zone.
+using std::chrono::zoned_time;
+
+/// A zoned time with a precision of seconds.
+using std::chrono::zoned_seconds;
+
+#else
 
 // `sys_info` -----------------------------------------------------------------------------------------------
 
@@ -775,44 +821,7 @@ operator<<(std::basic_ostream<CharT, Traits>& os, const zoned_time<Duration, Tim
 /// A zoned time with a precision of seconds, equivalent to C++20's #std::chrono::zoned_seconds.
 using zoned_seconds = zoned_time<std::chrono::seconds>;
 
-#else
-
-// Time zones (standard library) ----------------------------------------------------------------------------
-
-/// Information about a time zone at a certain point in time.
-using std::chrono::sys_info;
-
-/// Information about a local time in a time zone.
-using std::chrono::local_info;
-
-/// How to resolve an ambiguous local time.
-using std::chrono::choose;
-
-/// The exception thrown when a local time is ambiguous.
-using std::chrono::ambiguous_local_time;
-
-/// The exception thrown when a local time does not exist.
-using std::chrono::nonexistent_local_time;
-
-/// A time zone.
-using std::chrono::time_zone;
-
-/// Returns the current time zone of the computer.
-using std::chrono::current_zone;
-
-/// Locates a time zone by name.
-using std::chrono::locate_zone;
-
-/// The traits of a time-zone pointer used by #rocket::chrono::zoned_time.
-using std::chrono::zoned_traits;
-
-/// A time point together with a time zone.
-using std::chrono::zoned_time;
-
-/// A zoned time with a precision of seconds.
-using std::chrono::zoned_seconds;
-
-#endif // ROCKET_HAS_CHRONO_TIME_ZONE_IMPL
+#endif // ROCKET_HAS_STD_CHRONO_TIME_ZONE
 
 } // namespace rocket::chrono
 

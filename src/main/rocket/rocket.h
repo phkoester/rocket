@@ -7,19 +7,19 @@
  *
  * OS-specific data types, sizes in bytes:
  *
- * | Type          | Linux | Windows | Different?
- * | :------------ | ----: | ------: | :---------
- * | `bool`        |     1 |       1 |
- * | `wchar_t`     |     4 |       2 | Yes!
- * | `short`       |     2 |       2 |
- * | `int`         |     4 |       4 |
- * | `long`        |     8 |       4 |
- * | `long long`   |     8 |       8 |
- * | `i128`        |    16 |      16 |
- * | `float`       |     4 |       4 |
- * | `double`      |     8 |       8 |
- * | `long double` |    16 |       8 | Yes!
- * | `void*`       |     8 |       8 |
+ * | Type          | Linux | macOS   | Windows | Different?
+ * | :------------ | ----: | ------: | ------: | :---------
+ * | `bool`        |     1 |       1 |       1 |
+ * | `wchar_t`     |     4 |       4 |       2 | Yes!
+ * | `short`       |     2 |       2 |       2 |
+ * | `int`         |     4 |       4 |       4 |
+ * | `long`        |     8 |       8 |       4 | Yes!
+ * | `long long`   |     8 |       8 |       8 |
+ * | `i128`        |    16 |      16 |      16 |
+ * | `float`       |     4 |       4 |       4 |
+ * | `double`      |     8 |       8 |       8 |
+ * | `long double` |    16 |       8 |       8 | Yes!
+ * | `void*`       |     8 |       8 |       8 |
  *
  * Basic data types used in Rocket, consistent across all platforms:
  *
@@ -51,22 +51,15 @@
 
 #pragma once
 
-#ifdef ROCKET_OS_WINDOWS
-  #define ROCKET_HAS_BOOST_INT128
-#endif
+#include "rocket/int128.h"
 
-#include <bit>
+#include <bit> // `std::endian`
+#include <cstddef> // `size_t`
 #include <cstdint> // `std::int8_t`, `std::uint8_t`, ...
 #include <concepts> // `std::same_as`
-#include <cstdio> // Make this generally availabe
 #include <limits>
-#include <typeinfo> // Make this generally available
 
-#ifdef ROCKET_HAS_BOOST_INT128
-  #include <boost/int128/int128.hpp>
-#endif
-
-// Check prerequisites --------------------------------------------------------------------------------------
+// Check operating system and C/C++ compiler ----------------------------------------------------------------
 
 #if not defined(ROCKET_OS_LINUX) && not defined(ROCKET_OS_MACOS) && not defined(ROCKET_OS_WINDOWS)
   #error Unknown OS
@@ -96,25 +89,9 @@
   #define ROCKET_PUBLIC ///< Specifier for global data symbols.
 #endif
 
-// `std::type_info` for MSVC --------------------------------------------------------------------------------
-
-#ifdef ROCKET_OS_WINDOWS
-
-namespace std {
-
-/**
- * On Windows, `type_info` is in the global namespace, so we need to alias it here to make it available as
- * `std::type_info`.
- */
-using type_info = ::type_info;
-
-} // namespace std
-
-#endif // ROCKET_OS_WINDOWS
-
 namespace rocket {
 
-// Rocket type aliases --------------------------------------------------------------------------------------
+// Basic Rocket types ---------------------------------------------------------------------------------------
 
 /// @cond undocumented
 using std_wchar_t = wchar_t;
@@ -139,21 +116,18 @@ using i32 = std::int32_t; ///< A signed 32-bit integer.
 using u32 = std::uint32_t; ///< An unsigned 32-bit integer.
 using i64 = std::int64_t; ///< A signed 64-bit integer.
 using u64 = std::uint64_t; ///< An unsigned 64-bit integer.
-#ifdef ROCKET_HAS_BOOST_INT128
-  using i128 = boost::int128::int128; ///< A signed 128-bit integer.
-  using u128 = boost::int128::uint128; ///< An unsigned 128-bit integer.
-#else
-  using i128 = __int128; ///< A signed 128-bit integer.
-  using u128 = unsigned __int128; ///< An unsigned 128-bit integer.
-#endif
+using i128 = int128__; ///< A signed 128-bit integer.
+using u128 = uint128__; ///< An unsigned 128-bit integer.
 using f32 = std_float; ///< A 32-bit floating point.
 using f64 = std_double; ///< A 64-bit floating point.
 
-// Verify the type system -----------------------------------------------------------------------------------
+// Check the types ------------------------------------------------------------------------------------------
 
 static_assert(sizeof(bool) == 1);
 static_assert(sizeof(char) == 1);
+static_assert(std::is_signed_v<char>);
 static_assert(sizeof(char32) == 4);
+static_assert(not std::numeric_limits<char32>::is_signed);
 static_assert(sizeof(i8) == 1);
 static_assert(sizeof(u8) == 1);
 static_assert(sizeof(i16) == 2);
@@ -162,19 +136,16 @@ static_assert(sizeof(i32) == 4);
 static_assert(sizeof(u32) == 4);
 static_assert(sizeof(i64) == 8);
 static_assert(sizeof(u64) == 8);
-static_assert(sizeof(i128) == 16);
-static_assert(sizeof(u128) == 16);
-static_assert(sizeof(f32) == 4);
-static_assert(sizeof(f64) == 8);
-static_assert(sizeof(void*) == 8);
-
-static_assert(std::is_signed_v<char>);
-static_assert(not std::numeric_limits<char32>::is_signed);
 static_assert(sizeof(u64) == sizeof(std_size_t));
+static_assert(sizeof(i128) == 16);
 static_assert(std::numeric_limits<i128>::is_signed);
+static_assert(sizeof(u128) == 16);
 static_assert(not std::numeric_limits<u128>::is_signed);
+static_assert(sizeof(f32) == 4);
 static_assert(std::same_as<decltype(1.0F), f32>);
+static_assert(sizeof(f64) == 8);
 static_assert(std::same_as<decltype(1.0), f64>);
+static_assert(sizeof(void*) == 8);
 
 // Detect endianness ----------------------------------------------------------------------------------------
 
