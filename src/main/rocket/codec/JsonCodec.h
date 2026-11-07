@@ -522,7 +522,15 @@ template<typename T>
 struct JsonConsumerImpl<DataType::HourMinuteSecond, T> {
   void
   consume(const T& val, nio::Sink& out, CONFIG__) const {
-    out.write(std::format("\"{}\"", val));
+    out.write('"');
+    if (val.is_negative()) {
+      out.write('-');
+    }
+    out.print("{:02}:{:02}:{:02}", val.hours().count(), val.minutes().count(), val.seconds().count());
+    if constexpr (T::fractional_width > 0) {
+      out.print(".{:0{}}", val.subseconds().count(), T::fractional_width);
+    }
+    out.write('"');
   }
 };
 

@@ -276,7 +276,7 @@ struct time_zone {
   template<typename Duration>
   [[nodiscard]] sys_info
   get_info(const std::chrono::sys_time<Duration>& tp) const {
-    return getInfo(std::chrono::floor<std::chrono::seconds>(tp));
+    return getSysInfo(std::chrono::floor<std::chrono::seconds>(tp));
   }
 
   /**
@@ -297,6 +297,19 @@ struct time_zone {
    * @return the name, for example `Europe/Berlin`
    */
   [[nodiscard]] std::string_view name() const noexcept { return name_; }
+
+  /**
+   * Converts a UTC time point to the local time in this time zone.
+   *
+   * @param tp the UTC time point
+   * @return the local time
+   */
+  template<typename Duration>
+  [[nodiscard]] std::chrono::local_time<std::common_type_t<Duration, std::chrono::seconds>>
+  to_local(const std::chrono::sys_time<Duration>& tp) const {
+    using Ret = std::chrono::local_time<std::common_type_t<Duration, std::chrono::seconds>>;
+    return Ret(tp.time_since_epoch()) + get_info(tp).offset;
+  }
 
   /**
    * Converts a local time in this time zone to UTC.
@@ -321,34 +334,21 @@ struct time_zone {
   }
 
   /**
-   * Converts a UTC time point to the local time in this time zone.
-   *
-   * @param tp the UTC time point
-   * @return the local time
-   */
-  template<typename Duration>
-  [[nodiscard]] std::chrono::local_time<std::common_type_t<Duration, std::chrono::seconds>>
-  to_local(const std::chrono::sys_time<Duration>& tp) const {
-    using Ret = std::chrono::local_time<std::common_type_t<Duration, std::chrono::seconds>>;
-    return Ret(tp.time_since_epoch()) + get_info(tp).offset;
-  }
-
-  /**
    * Converts a local time in this time zone to UTC, resolving nonexistent and ambiguous local times.
    *
    * @param tp the local time
-   * @param z how to resolve an ambiguous local time
+   * @param c how to resolve an ambiguous local time
    * @return the UTC time point. If @p tp does not exist, this is the UTC time point of the gap
    */
   template<typename Duration>
   [[nodiscard]] std::chrono::sys_time<std::common_type_t<Duration, std::chrono::seconds>>
-  to_sys(const std::chrono::local_time<Duration>& tp, choose z) const {
+  to_sys(const std::chrono::local_time<Duration>& tp, choose c) const {
     using Ret = std::chrono::sys_time<std::common_type_t<Duration, std::chrono::seconds>>;
     const local_info info = get_info(tp);
     if (info.result == local_info::nonexistent) {
       return Ret(info.first.end);
     }
-    if (info.result == local_info::ambiguous && z == choose::latest) {
+    if (info.result == local_info::ambiguous && c == choose::latest) {
       return Ret(tp.time_since_epoch()) - info.second.offset;
     }
     return Ret(tp.time_since_epoch()) - info.first.offset;
@@ -377,9 +377,9 @@ private:
     name_(std::move(name)),
     data_(std::move(data)) {}
 
-  [[nodiscard]] sys_info getInfo(std::chrono::sys_seconds tp) const;
-
   [[nodiscard]] local_info getLocalInfo(std::chrono::local_seconds tp) const;
+
+  [[nodiscard]] sys_info getSysInfo(std::chrono::sys_seconds tp) const;
 };
 
 // Functions ------------------------------------------------------------------------------------------------

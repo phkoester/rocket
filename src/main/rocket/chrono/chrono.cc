@@ -846,8 +846,8 @@ database() {
   return *ret;
 }
 
-// Extracts the zone name from a path into a time-zone directory, for example `/var/db/timezone/zoneinfo/
-// Europe/Berlin` (Darwin) or `../usr/share/zoneinfo/Europe/Berlin` (Linux)
+// Extracts the zone name from a path into a time-zone directory, for example
+// `/var/db/timezone/zoneinfo/Europe/Berlin` (macOS) or `../usr/share/zoneinfo/Europe/Berlin` (Linux)
 optional<string>
 zoneNameFromPath(string_view path) {
   const auto& dir = database().dir().generic_string();
@@ -873,7 +873,7 @@ zoneNameFromPath(string_view path) {
 // `time_zone` -----------------------------------------------------------------------------------------------
 
 sys_info
-time_zone::getInfo(sys_seconds tp) const {
+time_zone::getSysInfo(sys_seconds tp) const {
   using namespace internal;
   const ZoneData& data = *data_;
   tp = clamp(tp, MIN_TIME, MAX_TIME - 1s);
@@ -917,7 +917,7 @@ time_zone::getLocalInfo(local_seconds tp) const {
   const sys_seconds probeEnd = t0 > MAX_TIME - Window ? MAX_TIME : t0 + Window;
 
   vector<sys_info> periods;
-  for (sys_info info = getInfo(probeBegin);; info = getInfo(info.end)) {
+  for (sys_info info = getSysInfo(probeBegin);; info = getSysInfo(info.end)) {
     const bool last = info.end >= probeEnd || info.end >= MAX_TIME;
     periods.push_back(std::move(info));
     if (last) {
@@ -964,7 +964,7 @@ time_zone::getLocalInfo(local_seconds tp) const {
   // Unreachable for consistent data; return the period by UTC
 
   ret.result = local_info::unique;
-  ret.first = getInfo(t0);
+  ret.first = getSysInfo(t0);
   return ret;
 }
 
@@ -1005,7 +1005,7 @@ current_zone() {
 
   error_code ec;
   const auto target = filesystem::read_symlink("/etc/localtime", ec);
-  if (!ec) {
+  if (not ec) {
     if (auto zoneName = zoneNameFromPath(target.generic_string())) {
       if (const auto* ret = db.locate(*zoneName)) {
         return ret;

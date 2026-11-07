@@ -461,16 +461,25 @@ template<typename T>
 struct FormattedConsumerImpl<DataType::Duration, T> {
   void
   consume(T val, nio::Sink& out, CONFIG__) const { // Take by value
+    out.print("{}", val.count());
+    consumeUnit(out);
+  }
+
+  /// Writes only the unit suffix of `T`, e.g. `ms`.
+  static void
+  consumeUnit(nio::Sink& out) {
     if constexpr (std::same_as<T, std::chrono::microseconds>) {
-      out.print("{}µs", val.count());
+      out.write("µs");
     } else if constexpr (std::same_as<T, std::chrono::weeks>) {
-      out.print("{}w", val.count());
+      out.write('w');
     } else if constexpr (std::same_as<T, std::chrono::months>) {
-      out.print("{}m", val.count());
+      out.write('m');
     } else if constexpr (std::same_as<T, std::chrono::years>) {
-      out.print("{}y", val.count());
+      out.write('y');
     } else {
-      out.write(std::format("{}", val));
+      // Let `std::format` determine the suffix, then strip the leading count `0`
+      const std::string str = std::format("{}", T::zero());
+      out.write(std::string_view(str).substr(1));
     }
   }
 };
@@ -487,7 +496,13 @@ template<typename T>
 struct FormattedConsumerImpl<DataType::HourMinuteSecond, T> {
   void
   consume(const T& val, nio::Sink& out, CONFIG__) const {
-    out.write(std::format("{}", val));
+    if (val.is_negative()) {
+      out.write('-');
+    }
+    out.print("{:02}:{:02}:{:02}", val.hours().count(), val.minutes().count(), val.seconds().count());
+    if constexpr (T::fractional_width > 0) {
+      out.print(".{:0{}}", val.subseconds().count(), T::fractional_width);
+    }
   }
 };
 

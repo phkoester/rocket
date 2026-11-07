@@ -195,7 +195,11 @@ TEST(JsonCodec, ConsumerHourMinuteSecond) {
   using namespace std::chrono;
 
   EXPECT_EQ(encode(hh_mm_ss { 1h + 2min + 3s }), "\"01:02:03\"");
+  EXPECT_EQ(encode(hh_mm_ss { 1h + 2min + 3s + 5ms }), "\"01:02:03.005\"");
+  EXPECT_EQ(encode(hh_mm_ss { 111h + 2min + 3s + 123ms }), "\"111:02:03.123\"");
   EXPECT_EQ(encode(hh_mm_ss { -(111h + 2min + 3s + 123456us) }), "\"-111:02:03.123456\"");
+  EXPECT_EQ(encode(hh_mm_ss { -(111h + 2min + 3s + 123456789ns) }), "\"-111:02:03.123456789\"");
+  EXPECT_EQ(encode(hh_mm_ss<minutes> { -2min }), "\"-00:02:00\"");
 }
 
 TEST(JsonCodec, ConsumerDate) {

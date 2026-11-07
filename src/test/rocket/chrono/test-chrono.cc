@@ -54,7 +54,7 @@ TEST(chrono, current_zone) {
   EXPECT_EQ(locate_zone(current_zone()->name()), current_zone());
 }
 
-TEST(chrono, TimeZoneOrdering) {
+TEST(chrono, time_zone_ordering) {
   EXPECT_TRUE(*locate_zone("Europe/Berlin") == *locate_zone("Europe/Berlin"));
   EXPECT_TRUE(*locate_zone("Europe/Berlin") < *locate_zone("Europe/Paris"));
 }
@@ -87,7 +87,7 @@ TEST(chrono, sys_info) {
   EXPECT_EQ(berlin->get_info(sys_time<nanoseconds>(summer.begin) - 1ns).abbrev, "CET");
 }
 
-TEST(chrono, SysInfoFuture) {
+TEST(chrono, sys_info_future) {
   // Far beyond the transitions listed in the files, the rules apply
 
   const auto berlin = locate_zone("Europe/Berlin")->get_info(sys_days(2200y / July / 1));
@@ -102,7 +102,7 @@ TEST(chrono, SysInfoFuture) {
   EXPECT_EQ(newYork.abbrev, "EST");
 }
 
-TEST(chrono, SysInfoSouthernHemisphere) {
+TEST(chrono, sys_info_southern_hemisphere) {
   const time_zone* sydney = locate_zone("Australia/Sydney");
   EXPECT_EQ(sydney->get_info(sys_days(2030y / January / 1)).offset, 11h);
   EXPECT_EQ(sydney->get_info(sys_days(2030y / July / 1)).offset, 10h);
@@ -114,7 +114,7 @@ TEST(chrono, SysInfoSouthernHemisphere) {
   EXPECT_EQ(lordHowe.save, 30min);
 }
 
-TEST(chrono, SysInfoNoDst) {
+TEST(chrono, sys_info_no_dst) {
   const auto utc = locate_zone("UTC")->get_info(sys_days(2024y / July / 1));
   EXPECT_EQ(utc.offset, 0s);
   EXPECT_EQ(utc.save, 0min);
@@ -149,7 +149,14 @@ TEST(chrono, local_info) {
   EXPECT_EQ(berlin->get_info(local_days(2024y / March / 31) + 3h).result, local_info::unique);
 }
 
-TEST(chrono, ToSys) {
+TEST(chrono, to_local) {
+  const time_zone* newYork = locate_zone("America/New_York");
+  const auto utc = sys_days(2024y / July / 1) + 12h;
+  EXPECT_EQ(newYork->to_local(utc), local_days(2024y / July / 1) + 8h);
+  EXPECT_EQ(newYork->to_sys(newYork->to_local(utc)), utc);
+}
+
+TEST(chrono, to_sys) {
   const time_zone* berlin = locate_zone("Europe/Berlin");
 
   EXPECT_EQ(berlin->to_sys(local_days(2024y / July / 1) + 12h), sys_days(2024y / July / 1) + 10h);
@@ -170,7 +177,7 @@ TEST(chrono, ToSys) {
   EXPECT_EQ(ms, sys_time<milliseconds>(sys_days(2024y / July / 1) + 10h + 5ms));
 }
 
-TEST(chrono, ToSysMessages) {
+TEST(chrono, to_sys_messages) {
   const time_zone* berlin = locate_zone("Europe/Berlin");
 
   try {
@@ -189,17 +196,10 @@ TEST(chrono, ToSysMessages) {
     FAIL();
   } catch (const ambiguous_local_time& ex) {
     EXPECT_EQ(std::string(ex.what()),
-      "2024-10-27 02:30:00 is ambiguous.  It could be\n"
+      "2024-10-27 02:30:00 is ambiguous. It could be\n"
       "2024-10-27 02:30:00 CEST == 2024-10-27 00:30:00 UTC or\n"
       "2024-10-27 02:30:00 CET == 2024-10-27 01:30:00 UTC");
   }
-}
-
-TEST(chrono, ToLocal) {
-  const time_zone* newYork = locate_zone("America/New_York");
-  const auto utc = sys_days(2024y / July / 1) + 12h;
-  EXPECT_EQ(newYork->to_local(utc), local_days(2024y / July / 1) + 8h);
-  EXPECT_EQ(newYork->to_sys(newYork->to_local(utc)), utc);
 }
 
 TEST(chrono, zoned_time) {
