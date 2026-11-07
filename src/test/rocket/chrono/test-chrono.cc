@@ -4,6 +4,7 @@
 
 #include "rocket-test/rocket-test.h"
 
+#include "rocket/scope.h"
 #include "rocket/chrono/chrono.h"
 #include "rocket/system/system.h"
 
@@ -196,7 +197,7 @@ TEST(chrono, to_sys_messages) {
     FAIL();
   } catch (const ambiguous_local_time& ex) {
     EXPECT_EQ(std::string(ex.what()),
-      "2024-10-27 02:30:00 is ambiguous. It could be\n"
+      "2024-10-27 02:30:00 is ambiguous.  It could be\n"
       "2024-10-27 02:30:00 CEST == 2024-10-27 00:30:00 UTC or\n"
       "2024-10-27 02:30:00 CET == 2024-10-27 01:30:00 UTC");
   }
@@ -277,19 +278,20 @@ TEST(chrono, ZonedTimeFormat) {
   EXPECT_EQ(os.str(), "2024-07-01 14:00:00 CEST");
 }
 
-TEST(chrono, currentZoneTz) {
-  const auto old = system::env::get<string>("TZ");
+TEST(chrono, current_zone_tz) {
+  const auto tz = system::env::get<string>("TZ");
+  ROCKET_SCOPE_EXIT([&tz] {
+    if (tz) {
+      system::env::set("TZ", *tz, true);
+    } else {
+      system::env::unset("TZ");
+    }
+  });
 
-  system::env::set("TZ", "America/New_York", true);
+  system::env::set("TZ", "America/New_York");
   EXPECT_EQ(current_zone()->name(), "America/New_York");
-  system::env::set("TZ", "Asia/Tokyo", true);
+  system::env::set("TZ", "Asia/Tokyo");
   EXPECT_EQ(current_zone()->name(), "Asia/Tokyo");
-
-  if (old) {
-    system::env::set("TZ", *old, true);
-  } else {
-    system::env::unset("TZ");
-  }
 }
 
 // EOF

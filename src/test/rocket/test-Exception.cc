@@ -19,7 +19,11 @@ namespace {
 
 string
 nested(const string& type) {
+#ifdef ROCKET_OS_LINUX
+  return "`std::_Nested_exception<" + type + ">`";
+#else
   return "`std::__nested<" + type + ">`";
+#endif
 }
 
 } // namespace

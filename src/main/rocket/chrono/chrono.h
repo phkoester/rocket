@@ -233,7 +233,7 @@ std::string
 ambiguousMessage(const std::chrono::local_time<Duration>& tp, const local_info& info) {
   using namespace std::chrono;
   std::ostringstream os;
-  os << tp << " is ambiguous. It could be\n" << tp << ' ' << info.first.abbrev << " == " <<
+  os << tp << " is ambiguous.  It could be\n" << tp << ' ' << info.first.abbrev << " == " <<
     tp - info.first.offset << " UTC or\n" << tp << ' ' << info.second.abbrev << " == " <<
     tp - info.second.offset << " UTC";
   return std::move(os).str();
