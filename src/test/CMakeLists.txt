@@ -14,6 +14,7 @@ RocketAddTest(test-rocket-Bimap                        rocket                 te
 RocketAddTest(test-rocket-Cow                          rocket                 test-Cow.cc)
 RocketAddTest(test-rocket-Exception                    rocket                 test-Exception.cc)
 RocketAddTest(test-rocket-Process                      rocket                 test-Process.cc)
+RocketAddTest(test-rocket-TypeId                       rocket                 test-TypeId.cc)
 RocketAddTest(test-rocket-assert                       rocket                 test-assert.cc)
 RocketAddTest(test-rocket-enum                         rocket                 test-enum.cc)
 RocketAddTest(test-rocket-functional                   rocket                 test-functional.cc)

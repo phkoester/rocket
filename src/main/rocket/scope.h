@@ -18,13 +18,13 @@
 
 #include <version>
 
-#ifdef ROCKET_OS_MACOS
+#if defined(ROCKET_OS_MACOS) || defined(ROCKET_OS_WINDOWS)
   #if __has_include(<experimental/scope>)
-    #error This compiler version supports experimental scope guards
+    #error This C++ version supports experimental scope guards
   #endif
 #else
   #if not __has_include(<experimental/scope>)
-    #error This compiler version does not support experimental scope guards
+    #error This C++ version does not support experimental scope guards
   #endif
   #define ROCKET_HAS_STD_EXPERIMENTAL_SCOPE
 #endif

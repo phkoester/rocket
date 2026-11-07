@@ -16,11 +16,11 @@
 
 #if defined(ROCKET_OS_MACOS) && defined(ROCKET_CXX_COMPILER_LLVM)
   #ifdef __cpp_lib_spanstream
-    #error This compiler version supports span streams
+    #error This C++ version supports span streams
   #endif
 #else
   #ifndef __cpp_lib_spanstream
-    #error This compiler version does not support span streams
+    #error This C++ version does not support span streams
   #endif
   #define ROCKET_HAS_STD_SPANSTREAM
 #endif

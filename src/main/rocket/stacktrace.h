@@ -13,11 +13,11 @@
 
 #if defined(ROCKET_OS_MACOS)
   #ifdef __cpp_lib_stacktrace
-    #error This compiler version supports stack traces
+    #error This C++ version supports stack traces
   #endif
 #else
   #ifndef __cpp_lib_stacktrace
-    #error This compiler version does not support stack traces
+    #error This C++ version does not support stack traces
   #endif
   #define ROCKET_HAS_STD_STACK_TRACE
 #endif

@@ -9,11 +9,11 @@
 
 #ifdef ROCKET_OS_WINDOWS
   #ifdef __SIZEOF_INT128__
-    #error This compiler version supports 128-bit integers
+    #error This C++ version supports 128-bit integers
   #endif
 #else
-  #ifndef __SIZEOF_INT128__
-    #error This compiler version does not support 128-bit integers
+  #if __SIZEOF_INT128__ != 16
+    #error This C++ version does not support 128-bit integers
   #endif
   #define ROCKET_HAS_INT128
 #endif
