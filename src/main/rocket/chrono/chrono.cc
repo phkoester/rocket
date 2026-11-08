@@ -170,8 +170,6 @@ struct LocalType {
   seconds offset {};
   bool dst = false;
   string abbrev;
-
-  // XXX friend bool operator==(const LocalType&, const LocalType&) = default;
 };
 
 // `PosixRule` ----------------------------------------------------------------------------------------------

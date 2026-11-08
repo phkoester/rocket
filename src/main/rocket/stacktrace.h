@@ -19,6 +19,7 @@
   #ifndef __cpp_lib_stacktrace
     #error This C++ version does not support stack traces
   #endif
+  /// Defined if the standard library provides `std::stacktrace`.
   #define ROCKET_HAS_STD_STACK_TRACE
 #endif
 

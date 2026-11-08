@@ -15,7 +15,7 @@
 
 namespace rocket {
 
-namespace internal {
+namespace internal::literal {
 
 // Internal -------------------------------------------------------------------------------------------------
 
@@ -212,7 +212,7 @@ struct UnsignedInteger<T, '0', Chars...> {
   static constexpr bool valid = validateUnsigned<T, 8, Chars...>();
 };
 
-} // namespace internal
+} // namespace internal::literal
 
 /**
  * 8-bit signed integer literal.
@@ -222,7 +222,7 @@ struct UnsignedInteger<T, '0', Chars...> {
 template<char... Chars>
 constexpr i8
 operator""_i8() {
-  using type = internal::SignedInteger<i8, u8, Chars...>;
+  using type = internal::literal::SignedInteger<i8, u8, Chars...>;
   static_assert(type::valid, "Invalid character or number too large");
   return type::payload;
 }
@@ -235,7 +235,7 @@ operator""_i8() {
 template<char... Chars>
 constexpr u8
 operator""_u8() {
-  using type = internal::UnsignedInteger<u8, Chars...>;
+  using type = internal::literal::UnsignedInteger<u8, Chars...>;
   static_assert(type::valid, "Invalid character or number too large");
   return type::payload;
 }
@@ -248,7 +248,7 @@ operator""_u8() {
 template<char... Chars>
 constexpr i16
 operator""_i16() {
-  using type = internal::SignedInteger<i16, u16, Chars...>;
+  using type = internal::literal::SignedInteger<i16, u16, Chars...>;
   static_assert(type::valid, "Invalid character or number too large");
   return type::payload;
 }
@@ -261,7 +261,7 @@ operator""_i16() {
 template<char... Chars>
 constexpr u16
 operator""_u16() {
-  using type = internal::UnsignedInteger<u16, Chars...>;
+  using type = internal::literal::UnsignedInteger<u16, Chars...>;
   static_assert(type::valid, "Invalid character or number too large");
   return type::payload;
 }
@@ -274,7 +274,7 @@ operator""_u16() {
 template<char... Chars>
 constexpr i32
 operator""_i32() {
-  using type = internal::SignedInteger<i32, u32, Chars...>;
+  using type = internal::literal::SignedInteger<i32, u32, Chars...>;
   static_assert(type::valid, "Invalid character or number too large");
   return type::payload;
 }
@@ -287,7 +287,7 @@ operator""_i32() {
 template<char... Chars>
 constexpr u32
 operator""_u32() {
-  using type = internal::UnsignedInteger<u32, Chars...>;
+  using type = internal::literal::UnsignedInteger<u32, Chars...>;
   static_assert(type::valid, "Invalid character or number too large");
   return type::payload;
 }
@@ -300,7 +300,7 @@ operator""_u32() {
 template<char... Chars>
 constexpr i64
 operator""_i64() {
-  using type = internal::SignedInteger<i64, u64, Chars...>;
+  using type = internal::literal::SignedInteger<i64, u64, Chars...>;
   static_assert(type::valid, "Invalid character or number too large");
   return type::payload;
 }
@@ -313,7 +313,7 @@ operator""_i64() {
 template<char... Chars>
 constexpr u64
 operator""_u64() {
-  using type = internal::UnsignedInteger<u64, Chars...>;
+  using type = internal::literal::UnsignedInteger<u64, Chars...>;
   static_assert(type::valid, "Invalid character or number too large");
   return type::payload;
 }
@@ -326,7 +326,7 @@ operator""_u64() {
 template<char... Chars>
 constexpr i128
 operator""_i128() {
-  using type = internal::SignedInteger<i128, u128, Chars...>;
+  using type = internal::literal::SignedInteger<i128, u128, Chars...>;
   static_assert(type::valid, "Invalid character or number too large");
   return type::payload;
 }
@@ -339,7 +339,7 @@ operator""_i128() {
 template<char... Chars>
 constexpr u128
 operator""_u128() {
-  using type = internal::UnsignedInteger<u128, Chars...>;
+  using type = internal::literal::UnsignedInteger<u128, Chars...>;
   static_assert(type::valid, "Invalid character or number too large");
   return type::payload;
 }

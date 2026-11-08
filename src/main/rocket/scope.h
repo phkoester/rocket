@@ -26,6 +26,7 @@
   #if not __has_include(<experimental/scope>)
     #error This C++ version does not support experimental scope guards
   #endif
+  /// Defined if the standard library provides `<experimental/scope>`.
   #define ROCKET_HAS_STD_EXPERIMENTAL_SCOPE
 #endif
 
@@ -47,9 +48,17 @@ namespace rocket {
 
 // `scope_exit`, `scope_fail`, and `scope_success` ----------------------------------------------------------
 
-using std::experimental::scope_exit;
-using std::experimental::scope_fail;
-using std::experimental::scope_success;
+/// A scope guard that calls its exit function when the scope is left, regardless of how.
+template<typename EF>
+using scope_exit = std::experimental::scope_exit<EF>;
+
+/// A scope guard that calls its exit function only if the scope is left by an exception.
+template<typename EF>
+using scope_fail = std::experimental::scope_fail<EF>;
+
+/// A scope guard that calls its exit function only if the scope is left normally, i.e., not by an exception.
+template<typename EF>
+using scope_success = std::experimental::scope_success<EF>;
 
 #else
 
@@ -67,11 +76,11 @@ using std::experimental::scope_success;
 
 namespace internal::scope {
 
-template<typename T, typename U>
-concept NotSameAs = not std::same_as<T, U>;
-
 template<typename T>
 concept NotLvalueRef = not std::is_lvalue_reference_v<T>;
+
+template<typename T, typename U>
+concept NotSameAs = not std::same_as<T, U>;
 
 } // namespace internal::scope
 

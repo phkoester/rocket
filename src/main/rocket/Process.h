@@ -75,17 +75,17 @@
  *
  * @return the current thread name
  */
-#define ROCKET_THREAD_NAME(...) ::rocket::internal::setThreadName(__VA_ARGS__)
+#define ROCKET_THREAD_NAME(...) ::rocket::internal::process::setThreadName(__VA_ARGS__)
 
 namespace rocket {
 
 // Internal -------------------------------------------------------------------------------------------------
 
-namespace internal {
+namespace internal::process {
 
 const std::string& setThreadName(std::string_view name = "");
 
-} // namespace internal
+} // namespace internal::process
 
 // Constants ------------------------------------------------------------------------------------------------
 
@@ -181,7 +181,7 @@ struct Process {
    *
    * On Linux, the locale may be configured like this:
    *
-   * ```bash
+   * ```shell
    * $ sudo locale-gen en_US.UTF-8
    * ```
    *

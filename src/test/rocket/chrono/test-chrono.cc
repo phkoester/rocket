@@ -232,6 +232,8 @@ TEST(chrono, locate_zone) {
 // `zoned_time` .............................................................................................
 
 TEST(chrono, zoned_time) {
+  using rocket::chrono::zoned_time;
+
   const auto utc = sys_days(2024y / July / 1) + 12h;
 
   // Default zone is UTC
@@ -287,6 +289,8 @@ TEST(chrono, zoned_time) {
 }
 
 TEST(chrono, zoned_time_format) {
+  using rocket::chrono::zoned_time;
+
   const auto utc = sys_days(2024y / July / 1) + 12h;
   const auto berlin = zoned_time(locate_zone("Europe/Berlin"), utc);
   const auto newYork = zoned_time(locate_zone("America/New_York"), utc);

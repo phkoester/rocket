@@ -23,7 +23,8 @@
  * - Links (alternative names like `UTC` for `Etc/UTC`) are resolved via the file `tzdata.zi` in the
  *   time-zone directory. Without that file, #rocket::chrono::time_zone::name returns the name the zone was
  *   located by.
- * - #rocket::chrono::sys_info::save is derived from the UTC offsets, since TZif files do not record it.
+ * - The member `save` of #rocket::chrono::sys_info is derived from the UTC offsets, since TZif files do not
+ *   record it.
  * - Time-zone files with leap seconds (`right/...`) are not supported.
  * - The formatter of #rocket::chrono::zoned_time does not support dynamic width or precision.
  *
@@ -141,37 +142,60 @@ namespace rocket::chrono {
 #ifdef ROCKET_HAS_STD_CHRONO_TIME_ZONE
 
 /// Information about a time zone at a certain point in time.
-using std::chrono::sys_info;
+using sys_info = std::chrono::sys_info;
 
 /// Information about a local time in a time zone.
-using std::chrono::local_info;
+using local_info = std::chrono::local_info;
 
 /// How to resolve an ambiguous local time.
-using std::chrono::choose;
+using choose = std::chrono::choose;
 
 /// The exception thrown when a local time is ambiguous.
-using std::chrono::ambiguous_local_time;
+using ambiguous_local_time = std::chrono::ambiguous_local_time;
 
 /// The exception thrown when a local time does not exist.
-using std::chrono::nonexistent_local_time;
+using nonexistent_local_time = std::chrono::nonexistent_local_time;
 
 /// A time zone.
-using std::chrono::time_zone;
+using time_zone = std::chrono::time_zone;
 
-/// Returns the current time zone of the computer.
+// For using-declarations, Doxygen takes the signature `T f(T... args)` from the cppreference tag file
+#ifdef ROCKET_DOXYGEN
+
+/**
+ * Returns the current time zone of the computer.
+ *
+ * @return the current time zone, valid until the program ends
+ */
+const time_zone* current_zone();
+
+/**
+ * Locates a time zone by name.
+ *
+ * @param name the name of the time zone, for example `Europe/Berlin`
+ * @return the time zone, valid until the program ends
+ * @throw std::runtime_error if the time zone cannot be located
+ */
+const time_zone* locate_zone(std::string_view name);
+
+#else
+
 using std::chrono::current_zone;
-
-/// Locates a time zone by name.
 using std::chrono::locate_zone;
 
+#endif // ROCKET_DOXYGEN
+
 /// The traits of a time-zone pointer used by #rocket::chrono::zoned_time.
-using std::chrono::zoned_traits;
+
+template<typename T>
+using zoned_traits = std::chrono::zoned_traits<T>;
 
 /// A time point together with a time zone.
-using std::chrono::zoned_time;
+template<typename Duration, typename TimeZonePtr = const time_zone*>
+using zoned_time = std::chrono::zoned_time<Duration, TimeZonePtr>;
 
 /// A zoned time with a precision of seconds.
-using std::chrono::zoned_seconds;
+using zoned_seconds = std::chrono::zoned_time<std::chrono::seconds>;
 
 #else
 

@@ -202,7 +202,7 @@ private:
   }
 };
 
-#ifndef ROCKET_HAS_STD_CHRONO_TIME_ZONE // XXX
+#ifndef ROCKET_HAS_STD_CHRONO_TIME_ZONE
 
 // `fmt::formatter<std::chrono::year_month_day>` -----------------------------------------------------------
 

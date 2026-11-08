@@ -123,7 +123,7 @@ namespace rocket {
 
 // Internal -------------------------------------------------------------------------------------------------
 
-namespace internal {
+namespace internal::process {
 
 thread_local string threadName;
 
@@ -138,7 +138,7 @@ setThreadName(std::string_view name) {
   return threadName;
 }
 
-} // namespace internal
+} // namespace internal::process
 
 // Constants ------------------------------------------------------------------------------------------------
 
