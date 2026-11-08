@@ -5,7 +5,7 @@
  *
  * If the standard library provides `<spanstream>` (C++23), #rocket::io::basic_spanbuf,
  * #rocket::io::basic_ispanstream, #rocket::io::basic_ospanstream, and #rocket::io::basic_spanstream are
- * #std::basic_spanbuf, #std::basic_ispanstream, #std::basic_ospanstream, and #std::basic_spanstream.
+ * `std::basic_spanbuf`, `std::basic_ispanstream`, `std::basic_ospanstream`, and `std::basic_spanstream`.
  * Otherwise, they are portable implementations that follow the specification of these classes in the C++23
  * standard.
  */
@@ -71,7 +71,7 @@ using basic_spanstream = std::basic_spanstream<CharT, Traits>;
 // `basic_spanbuf` ------------------------------------------------------------------------------------------
 
 /**
- * A stream buffer for a fixed character buffer, equivalent to C++23's #std::basic_spanbuf.
+ * A stream buffer for a fixed character buffer, equivalent to C++23's `std::basic_spanbuf`.
  *
  * The buffer is never reallocated. Writing past its end fails, as does reading past its end.
  *
@@ -82,12 +82,18 @@ using basic_spanstream = std::basic_spanstream<CharT, Traits>;
  */
 template<typename CharT, typename Traits = std::char_traits<CharT>>
 struct basic_spanbuf : public std::basic_streambuf<CharT, Traits> {
+  /// @type_base
   using Base = std::basic_streambuf<CharT, Traits>;
 
+  /// @type_alias
   using char_type = CharT;
+  /// @type_alias
   using int_type = Traits::int_type;
+  /// @type_alias
   using pos_type = Traits::pos_type;
+  /// @type_alias
   using off_type = Traits::off_type;
+  /// @type_alias
   using traits_type = Traits;
 
   /// @ctor
@@ -126,7 +132,7 @@ struct basic_spanbuf : public std::basic_streambuf<CharT, Traits> {
 
   basic_spanbuf& operator=(const basic_spanbuf&) = delete;
 
-  /// @op_assign_move
+  /// @member_op_asgmt_move
   basic_spanbuf&
   operator=(basic_spanbuf&& rhs) {
     basic_spanbuf tmp(std::move(rhs));
@@ -150,7 +156,7 @@ struct basic_spanbuf : public std::basic_streambuf<CharT, Traits> {
   /**
    * Sets a new buffer, resetting the input and output positions.
    *
-   * If opened with #std::ios_base::ate, the output position is set to the end of the buffer.
+   * If opened with `std::ios_base::ate`, the output position is set to the end of the buffer.
    *
    * @param s the buffer
    */
@@ -293,7 +299,7 @@ concept ReadOnlySpan =
 } // namespace internal
 
 /**
- * A stream for reading from a fixed character buffer, equivalent to C++23's #std::basic_ispanstream.
+ * A stream for reading from a fixed character buffer, equivalent to C++23's `std::basic_ispanstream`.
  *
  * @tparam CharT the character type
  * @tparam Traits the character traits
@@ -302,12 +308,18 @@ concept ReadOnlySpan =
  */
 template<typename CharT, typename Traits = std::char_traits<CharT>>
 struct basic_ispanstream : public std::basic_istream<CharT, Traits> {
+  /// @type_base
   using Base = std::basic_istream<CharT, Traits>;
 
+  /// @type_alias
   using char_type = CharT;
+  /// @type_alias
   using int_type = Traits::int_type;
+  /// @type_alias
   using pos_type = Traits::pos_type;
+  /// @type_alias
   using off_type = Traits::off_type;
+  /// @type_alias
   using traits_type = Traits;
 
   /**
@@ -343,7 +355,7 @@ struct basic_ispanstream : public std::basic_istream<CharT, Traits> {
 
   basic_ispanstream& operator=(const basic_ispanstream&) = delete;
 
-  /// @op_assign_move
+  /// @member_op_asgmt_move
   basic_ispanstream& operator=(basic_ispanstream&& rhs) = default;
 
   /**
@@ -421,7 +433,7 @@ swap(basic_ispanstream<CharT, Traits>& lhs, basic_ispanstream<CharT, Traits>& rh
 // `basic_ospanstream` ---------------------------------------------------------------------------------------
 
 /**
- * A stream for writing to a fixed character buffer, equivalent to C++23's #std::basic_ospanstream.
+ * A stream for writing to a fixed character buffer, equivalent to C++23's `std::basic_ospanstream`.
  *
  * @tparam CharT the character type
  * @tparam Traits the character traits
@@ -430,12 +442,18 @@ swap(basic_ispanstream<CharT, Traits>& lhs, basic_ispanstream<CharT, Traits>& rh
  */
 template<typename CharT, typename Traits = std::char_traits<CharT>>
 struct basic_ospanstream : public std::basic_ostream<CharT, Traits> {
+  /// @type_base
   using Base = std::basic_ostream<CharT, Traits>;
 
+  /// @type_alias
   using char_type = CharT;
+  /// @type_alias
   using int_type = Traits::int_type;
+  /// @type_alias
   using pos_type = Traits::pos_type;
+  /// @type_alias
   using off_type = Traits::off_type;
+  /// @type_alias
   using traits_type = Traits;
 
   /**
@@ -459,7 +477,7 @@ struct basic_ospanstream : public std::basic_ostream<CharT, Traits> {
 
   basic_ospanstream& operator=(const basic_ospanstream&) = delete;
 
-  /// @op_assign_move
+  /// @member_op_asgmt_move
   basic_ospanstream& operator=(basic_ospanstream&& rhs) = default;
 
   /**
@@ -518,7 +536,7 @@ swap(basic_ospanstream<CharT, Traits>& lhs, basic_ospanstream<CharT, Traits>& rh
 
 /**
  * A stream for reading from and writing to a fixed character buffer, equivalent to C++23's
- * #std::basic_spanstream.
+ * `std::basic_spanstream`.
  *
  * @tparam CharT the character type
  * @tparam Traits the character traits
@@ -527,12 +545,18 @@ swap(basic_ospanstream<CharT, Traits>& lhs, basic_ospanstream<CharT, Traits>& rh
  */
 template<typename CharT, typename Traits = std::char_traits<CharT>>
 struct basic_spanstream : public std::basic_iostream<CharT, Traits> {
+  /// @type_base
   using Base = std::basic_iostream<CharT, Traits>;
 
+  /// @type_alias
   using char_type = CharT;
+  /// @type_alias
   using int_type = Traits::int_type;
+  /// @type_alias
   using pos_type = Traits::pos_type;
+  /// @type_alias
   using off_type = Traits::off_type;
+  /// @type_alias
   using traits_type = Traits;
 
   /**
@@ -558,7 +582,7 @@ struct basic_spanstream : public std::basic_iostream<CharT, Traits> {
 
   basic_spanstream& operator=(const basic_spanstream&) = delete;
 
-  /// @op_assign_move
+  /// @member_op_asgmt_move
   basic_spanstream& operator=(basic_spanstream&& rhs) = default;
 
   /**

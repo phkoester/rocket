@@ -50,20 +50,26 @@ hash128(u128 val) noexcept {
 
 // `std::hash<rocket::i128>`, `std::hash<rocket::u128>` -----------------------------------------------------
 
+/// @spec_std_hash{#rocket::i128}
 template<>
 struct std::hash<rocket::i128> {
+  /// @cond undocumented
   rocket::std_size_t
   operator()(rocket::i128 val) const noexcept {
     return rocket::hash::hash128(static_cast<rocket::u128>(val));
   }
+  /// @endcond
 };
 
+/// @spec_std_hash{#rocket::u128}
 template<>
 struct std::hash<rocket::u128> {
+  /// @cond undocumented
   rocket::std_size_t
   operator()(rocket::u128 val) const noexcept {
     return rocket::hash::hash128(val);
   }
+  /// @endcond
 };
 
 #endif // ROCKET_HAS_INT128_STD_HASH

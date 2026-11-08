@@ -347,7 +347,11 @@ private:
   friend const Process& process();
 };
 
-/// Returns a reference to the #rocket::Process singleton.
+/**
+ * Returns a reference to the #rocket::Process singleton.
+ *
+ * @return a reference to the #rocket::Process singleton
+ */
 [[nodiscard]] const Process& process();
 
 } // namespace rocket

@@ -66,7 +66,7 @@ function(RocketAddTest name dir)
   endforeach()
 
   gtest_discover_tests(${name}
-    DISCOVERY_MODE PRE_TEST
+    DISCOVERY_MODE POST_BUILD
     EXTRA_ARGS --gtest_catch_exceptions=0
     PROPERTIES ENVIRONMENT "BINARY_DIR=${CMAKE_CURRENT_BINARY_DIR}"
     PROPERTIES ENVIRONMENT "CONFIG=$<CONFIG>"

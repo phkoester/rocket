@@ -83,13 +83,15 @@ concept NotLvalueRef = not std::is_lvalue_reference_v<T>;
  * @NotThreadSafe
  */
 template<typename EF>
-class [[nodiscard]] scope_exit {
-public:
-
-  /// Constructs from an lvalue, or from an rvalue that cannot be moved without throwing. If copying the
-  /// function throws, @p f is called before the exception propagates.
-  template<typename EFP> requires internal::scope::NotSameAs<std::remove_cvref_t<EFP>, scope_exit> &&
-    std::constructible_from<EF, EFP>
+struct [[nodiscard]] scope_exit {
+  /**
+   * Constructs from an lvalue, or from an rvalue that cannot be moved without throwing. If copying the
+   * function throws, @p f is called before the exception propagates.
+   *
+   * @param f the exit function
+   */
+  template<typename EFP> requires
+    internal::scope::NotSameAs<std::remove_cvref_t<EFP>, scope_exit> && std::constructible_from<EF, EFP>
   explicit scope_exit(EFP&& f) noexcept(std::is_nothrow_constructible_v<EF, EFP&>)
   try : exitFn_(f)
   {}
@@ -97,7 +99,11 @@ public:
     f();
   }
 
-  /// Constructs from an rvalue that can be moved without throwing.
+  /**
+   * Constructs from an rvalue that can be moved without throwing.
+   *
+   * @param f the exit function
+   */
   template<typename EFP> requires
     internal::scope::NotSameAs<std::remove_cvref_t<EFP>, scope_exit> &&
     std::constructible_from<EF, EFP> &&
@@ -105,18 +111,27 @@ public:
     std::is_nothrow_constructible_v<EF, EFP>
   explicit scope_exit(EFP&& f) noexcept : exitFn_(std::forward<EFP>(f)) {}
 
+  /**
+   * Constructs by moving the exit function of @p rhs, which is then released.
+   *
+   * @param rhs the guard to move from
+   */
   scope_exit(scope_exit&& rhs) noexcept requires std::is_nothrow_move_constructible_v<EF> :
     exitFn_(std::forward<EF>(rhs.exitFn_)),
-    executeOnDestruction_(rhs.executeOnDestruction_)
-  {
+    executeOnDestruction_(rhs.executeOnDestruction_) {
     rhs.release();
   }
 
+  /**
+   * Constructs by copying the exit function of @p rhs, as it cannot be moved without throwing. @p rhs is
+   * then released.
+   *
+   * @param rhs the guard to move from
+   */
   scope_exit(scope_exit&& rhs) noexcept(std::is_nothrow_copy_constructible_v<EF>)
     requires (not std::is_nothrow_move_constructible_v<EF>) && std::is_copy_constructible_v<EF>
     : exitFn_(rhs.exitFn_),
-      executeOnDestruction_(rhs.executeOnDestruction_)
-  {
+      executeOnDestruction_(rhs.executeOnDestruction_) {
     rhs.release();
   }
 
@@ -129,6 +144,7 @@ public:
   }
 
   scope_exit& operator=(const scope_exit&) = delete;
+
   scope_exit& operator=(scope_exit&&) = delete;
 
   /// Prevents the exit function from being called.
@@ -140,6 +156,7 @@ private:
   bool executeOnDestruction_ = true;
 };
 
+/// @ctad_guide{#rocket::scope_exit}
 template<typename EF>
 scope_exit(EF) -> scope_exit<EF>;
 
@@ -154,11 +171,13 @@ scope_exit(EF) -> scope_exit<EF>;
  * @NotThreadSafe
  */
 template<typename EF>
-class [[nodiscard]] scope_fail {
-public:
-
-  /// Constructs from an lvalue, or from an rvalue that cannot be moved without throwing. If copying the
-  /// function throws, @p f is called before the exception propagates.
+struct [[nodiscard]] scope_fail {
+  /**
+   * Constructs from an lvalue, or from an rvalue that cannot be moved without throwing. If copying the
+   * function throws, @p f is called before the exception propagates.
+   *
+   * @param f the exit function
+   */
   template<typename EFP>
     requires internal::scope::NotSameAs<std::remove_cvref_t<EFP>, scope_fail>
           && std::constructible_from<EF, EFP>
@@ -170,27 +189,38 @@ public:
     f();
   }
 
-  /// Constructs from an rvalue that can be moved without throwing.
-  template<typename EFP>
-    requires internal::scope::NotSameAs<std::remove_cvref_t<EFP>, scope_fail>
-          && std::constructible_from<EF, EFP>
-          && internal::scope::NotLvalueRef<EFP>
-          && std::is_nothrow_constructible_v<EF, EFP>
+  /**
+   * Constructs from an rvalue that can be moved without throwing.
+   *
+   * @param f the exit function
+   */
+  template<typename EFP> requires
+    internal::scope::NotSameAs<std::remove_cvref_t<EFP>, scope_fail> &&
+    std::constructible_from<EF, EFP> &&
+    internal::scope::NotLvalueRef<EFP> && std::is_nothrow_constructible_v<EF, EFP>
   explicit scope_fail(EFP&& f) noexcept : exitFn_(std::forward<EFP>(f)) {}
 
-  scope_fail(scope_fail&& rhs) noexcept
-    requires std::is_nothrow_move_constructible_v<EF>
-    : exitFn_(std::forward<EF>(rhs.exitFn_)),
-      uncaughtInit_(rhs.uncaughtInit_)
-  {
+  /**
+   * Constructs by moving the exit function of @p rhs, which is then released.
+   *
+   * @param rhs the guard to move from
+   */
+  scope_fail(scope_fail&& rhs) noexcept requires std::is_nothrow_move_constructible_v<EF> :
+    exitFn_(std::forward<EF>(rhs.exitFn_)),
+    uncaughtInit_(rhs.uncaughtInit_) {
     rhs.release();
   }
 
-  scope_fail(scope_fail&& rhs) noexcept(std::is_nothrow_copy_constructible_v<EF>)
-    requires (not std::is_nothrow_move_constructible_v<EF>) && std::is_copy_constructible_v<EF>
-    : exitFn_(rhs.exitFn_),
-      uncaughtInit_(rhs.uncaughtInit_)
-  {
+  /**
+   * Constructs by copying the exit function of @p rhs, as it cannot be moved without throwing. @p rhs is
+   * then released.
+   *
+   * @param rhs the guard to move from
+   */
+  scope_fail(scope_fail&& rhs) noexcept(std::is_nothrow_copy_constructible_v<EF>) requires
+    (not std::is_nothrow_move_constructible_v<EF>) && std::is_copy_constructible_v<EF> :
+    exitFn_(rhs.exitFn_),
+    uncaughtInit_(rhs.uncaughtInit_) {
     rhs.release();
   }
 
@@ -215,6 +245,7 @@ private:
   int uncaughtInit_ = std::uncaught_exceptions();
 };
 
+/// @ctad_guide{#rocket::scope_fail}
 template<typename EF>
 scope_fail(EF) -> scope_fail<EF>;
 
@@ -232,37 +263,53 @@ scope_fail(EF) -> scope_fail<EF>;
  * @NotThreadSafe
  */
 template<typename EF>
-class [[nodiscard]] scope_success {
-public:
-
-  /// Constructs from an lvalue, or from an rvalue that cannot be moved without throwing. Unlike the other
-  /// guards, @p f is not called if copying it throws.
-  template<typename EFP>
-    requires internal::scope::NotSameAs<std::remove_cvref_t<EFP>, scope_success>
-          && std::constructible_from<EF, EFP>
+struct [[nodiscard]] scope_success {
+  /**
+   * Constructs from an lvalue, or from an rvalue that cannot be moved without throwing. Unlike the other
+   * guards, @p f is not called if copying it throws.
+   *
+   * @param f the exit function
+   */
+  template<typename EFP> requires
+    internal::scope::NotSameAs<std::remove_cvref_t<EFP>, scope_success> &&
+    std::constructible_from<EF, EFP>
   explicit scope_success(EFP&& f) noexcept(std::is_nothrow_constructible_v<EF, EFP&>) : exitFn_(f) {}
 
-  /// Constructs from an rvalue that can be moved without throwing.
-  template<typename EFP>
-    requires internal::scope::NotSameAs<std::remove_cvref_t<EFP>, scope_success>
-          && std::constructible_from<EF, EFP>
-          && internal::scope::NotLvalueRef<EFP>
-          && std::is_nothrow_constructible_v<EF, EFP>
+  /**
+   * Constructs from an rvalue that can be moved without throwing.
+   *
+   * @param f the exit function
+   */
+  template<typename EFP> requires
+    internal::scope::NotSameAs<std::remove_cvref_t<EFP>, scope_success> &&
+    std::constructible_from<EF, EFP> &&
+    internal::scope::NotLvalueRef<EFP> &&
+    std::is_nothrow_constructible_v<EF, EFP>
   explicit scope_success(EFP&& f) noexcept : exitFn_(std::forward<EFP>(f)) {}
 
-  scope_success(scope_success&& rhs) noexcept
-    requires std::is_nothrow_move_constructible_v<EF>
-    : exitFn_(std::forward<EF>(rhs.exitFn_)),
-      uncaughtInit_(rhs.uncaughtInit_)
-  {
+  /**
+   * Constructs by moving the exit function of @p rhs, which is then released.
+   *
+   * @param rhs the guard to move from
+   */
+  scope_success(scope_success&& rhs) noexcept requires
+    std::is_nothrow_move_constructible_v<EF> :
+    exitFn_(std::forward<EF>(rhs.exitFn_)),
+    uncaughtInit_(rhs.uncaughtInit_) {
     rhs.release();
   }
 
-  scope_success(scope_success&& rhs) noexcept(std::is_nothrow_copy_constructible_v<EF>)
-    requires (not std::is_nothrow_move_constructible_v<EF>) && std::is_copy_constructible_v<EF>
-    : exitFn_(rhs.exitFn_),
-      uncaughtInit_(rhs.uncaughtInit_)
-  {
+  /**
+   * Constructs by copying the exit function of @p rhs, as it cannot be moved without throwing. @p rhs is
+   * then released.
+   *
+   * @param rhs the guard to move from
+   */
+  scope_success(scope_success&& rhs) noexcept(std::is_nothrow_copy_constructible_v<EF>) requires
+    (not std::is_nothrow_move_constructible_v<EF>) &&
+    std::is_copy_constructible_v<EF> :
+    exitFn_(rhs.exitFn_),
+    uncaughtInit_(rhs.uncaughtInit_) {
     rhs.release();
   }
 
@@ -275,6 +322,7 @@ public:
   }
 
   scope_success& operator=(const scope_success&) = delete;
+
   scope_success& operator=(scope_success&&) = delete;
 
   /// Prevents the exit function from being called.
@@ -286,6 +334,7 @@ private:
   int uncaughtInit_ = std::uncaught_exceptions();
 };
 
+/// @ctad_guide{#rocket::scope_success}
 template<typename EF>
 scope_success(EF) -> scope_success<EF>;
 

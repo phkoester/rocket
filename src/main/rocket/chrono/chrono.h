@@ -11,7 +11,7 @@
  * #rocket::chrono::ambiguous_local_time, #rocket::chrono::locate_zone, and #rocket::chrono::current_zone.
  *
  * If the standard library provides the C++20 time-zone support, these are #std::chrono::time_zone,
- * #std::chrono::zoned_time, and so on, brought into #rocket::chrono by using-declarations. Otherwise, they
+ * `std::chrono::zoned_time`, and so on, brought into `rocket::chrono` by using-declarations. Otherwise, they
  * are portable implementations that follow the specification of these classes in the C++20 standard,
  * reading the time-zone data from compiled TZif files (RFC 8536) in the directory given by the environment
  * variable `TZDIR`, which defaults to `/usr/share/zoneinfo`. This is the case on macOS, whose libc++ is
@@ -51,6 +51,8 @@
 #include <mutex>
 
 #ifndef ROCKET_HAS_STD_CHRONO_TIME_ZONE
+  #include <fmt/chrono.h>
+
   #include <compare>
   #include <concepts>
   #include <memory>
@@ -173,39 +175,6 @@ using std::chrono::zoned_seconds;
 
 #else
 
-namespace internal {
-
-// Internal -------------------------------------------------------------------------------------------------
-
-struct TimeZoneAccess; // Defined in `chrono.cc`
-
-struct ZoneData; // Defined in `chrono.cc`
-
-template<typename Duration>
-std::string
-ambiguousMessage(const std::chrono::local_time<Duration>& tp, const local_info& info) {
-  using namespace std::chrono;
-  std::ostringstream os;
-  os << tp << " is ambiguous.  It could be\n" << tp << ' ' << info.first.abbrev << " == " <<
-    tp - info.first.offset << " UTC or\n" << tp << ' ' << info.second.abbrev << " == " <<
-    tp - info.second.offset << " UTC";
-  return std::move(os).str();
-}
-
-template<typename Duration>
-std::string
-nonexistentMessage(const std::chrono::local_time<Duration>& tp, const local_info& info) {
-  using namespace std::chrono;
-  std::ostringstream os;
-  os << tp << " is in a gap between\n" <<
-    local_seconds(info.first.end.time_since_epoch()) + info.first.offset << ' ' << info.first.abbrev <<
-    " and\n" << local_seconds(info.second.begin.time_since_epoch()) + info.second.offset << ' ' <<
-    info.second.abbrev << " which are both equivalent to\n" << info.first.end << " UTC";
-  return std::move(os).str();
-}
-
-} // namespace internal
-
 // `sys_info` -----------------------------------------------------------------------------------------------
 
 /**
@@ -271,9 +240,36 @@ operator<<(std::basic_ostream<CharT, Traits>& os, const local_info& val) {
   return os << val.first;
 }
 
+namespace internal {
+
+template<typename Duration>
+std::string
+ambiguousMessage(const std::chrono::local_time<Duration>& tp, const local_info& info) {
+  using namespace std::chrono;
+  std::ostringstream os;
+  os << tp << " is ambiguous.  It could be\n" << tp << ' ' << info.first.abbrev << " == " <<
+    tp - info.first.offset << " UTC or\n" << tp << ' ' << info.second.abbrev << " == " <<
+    tp - info.second.offset << " UTC";
+  return std::move(os).str();
+}
+
+template<typename Duration>
+std::string
+nonexistentMessage(const std::chrono::local_time<Duration>& tp, const local_info& info) {
+  using namespace std::chrono;
+  std::ostringstream os;
+  os << tp << " is in a gap between\n" <<
+    local_seconds(info.first.end.time_since_epoch()) + info.first.offset << ' ' << info.first.abbrev <<
+    " and\n" << local_seconds(info.second.begin.time_since_epoch()) + info.second.offset << ' ' <<
+    info.second.abbrev << " which are both equivalent to\n" << info.first.end << " UTC";
+  return std::move(os).str();
+}
+
+} // namespace internal
+
 // `choose` ------------------------------------------------------------------------------------------------
 
-/// How to resolve an ambiguous local time, equivalent to C++20's #std::chrono::choose.
+/// How to resolve an ambiguous local time, equivalent to C++20's `std::chrono::choose`.
 enum class choose {
   earliest, ///< choose the earlier time point.
   latest ///< choose the later time point.
@@ -317,6 +313,14 @@ struct nonexistent_local_time : std::runtime_error {
 
 // `time_zone` ----------------------------------------------------------------------------------------------
 
+namespace internal {
+
+struct TimeZoneAccess; // Defined in `chrono.cc`
+
+struct ZoneData; // Defined in `chrono.cc`
+
+} // namespace internal
+
 /**
  * A time zone, equivalent to C++20's #std::chrono::time_zone.
  *
@@ -326,11 +330,14 @@ struct nonexistent_local_time : std::runtime_error {
  * @ThreadSafe
  */
 struct time_zone {
-  time_zone(time_zone&&) = default;
+  /// @ctor_move
+  time_zone(time_zone&& rhs) = default;
 
+  /// @dtor
   ~time_zone() = default;
 
-  time_zone& operator=(time_zone&&) = default;
+  /// @member_op_asgmt_move
+  time_zone& operator=(time_zone&& rhs) = default;
 
   /**
    * Returns the information about this time zone at a UTC time point.
@@ -485,12 +492,23 @@ const time_zone* locate_zone(std::string_view name);
 template<typename TimeZonePtr>
 struct zoned_traits {};
 
+/// @spec{#rocket::chrono::zoned_traits, const #rocket::chrono::time_zone*}
 template<>
 struct zoned_traits<const time_zone*> {
-  /// Returns `UTC`.
+  /**
+   * Returns the default time zone.
+   *
+   * @return the time zone `UTC`
+   */
   static const time_zone* default_zone() { return ::rocket::chrono::locate_zone("UTC"); }
 
-  /// Locates a time zone by name.
+  /**
+   * Locates a time zone by name.
+   *
+   * @param name the name of the time zone
+   * @return the time zone, valid until the program ends
+   * @throw std::runtime_error if the time zone cannot be located
+   */
   static const time_zone* locate_zone(std::string_view name) { return ::rocket::chrono::locate_zone(name); }
 };
 
@@ -539,7 +557,7 @@ public:
   zoned_time() requires HasDefaultZone : zone_(Traits::default_zone()) {}
 
   /// @ctor_copy
-  zoned_time(const zoned_time&) = default;
+  zoned_time(const zoned_time& rhs) = default;
 
   /**
    * @ctor
@@ -696,8 +714,8 @@ public:
   /// @dtor
   ~zoned_time() = default;
 
-  /// @op_asgmt_copy
-  zoned_time& operator=(const zoned_time&) = default;
+  /// @member_op_asgmt_copy
+  zoned_time& operator=(const zoned_time& rhs) = default;
 
   /**
    * Sets the local time, keeping the time zone.
@@ -837,7 +855,7 @@ operator<<(std::basic_ostream<CharT, Traits>& os, const zoned_time<Duration, Tim
   }
 }
 
-/// A zoned time with a precision of seconds, equivalent to C++20's #std::chrono::zoned_seconds.
+/// A zoned time with a precision of seconds, equivalent to C++20's `std::chrono::zoned_seconds`.
 using zoned_seconds = zoned_time<std::chrono::seconds>;
 
 #endif // ROCKET_HAS_STD_CHRONO_TIME_ZONE

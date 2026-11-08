@@ -69,10 +69,10 @@ struct TypeId {
   explicit TypeId(const std::type_info& type) : type_(type) {}
 
   /// @member_op_cmp_strong_ordering
-  std::strong_ordering operator<=>(const TypeId& other) const noexcept = default;
+  std::strong_ordering operator<=>(const TypeId& rhs) const noexcept = default;
 
   /// @member_fn_hash
-  u64 hash() const noexcept { return type_.hash_code(); }
+  [[nodiscard]] u64 hash() const noexcept { return type_.hash_code(); }
 
   /**
    * Returns the implementation-defined name of the type, as returned by #std::type_info::name.

@@ -155,6 +155,7 @@ using View = typename internal::ViewImpl<T>::Type;
 
 // `Char` ---------------------------------------------------------------------------------------------------
 
+/// The `Char` template.
 template<u32 N> struct Char;
 
 /**
@@ -162,7 +163,8 @@ template<u32 N> struct Char;
  */
 template<>
 struct Char<1> {
-  using Type = char; ///< @type_alias
+  /// @type_alias
+  using Type = char;
 };
 
 /**
@@ -170,7 +172,8 @@ struct Char<1> {
  */
 template<>
 struct Char<4> {
-  using Type = char32; ///< @type_alias
+  /// @type_alias
+  using Type = char32;
 };
 
 // `Int` ----------------------------------------------------------------------------------------------------
@@ -182,7 +185,8 @@ template<u32 N> struct Int;
  */
 template<>
 struct Int<1> {
-  using Type = i8; ///< @type_alias
+  /// @type_alias
+  using Type = i8;
 };
 
 /**
@@ -190,7 +194,8 @@ struct Int<1> {
  */
 template<>
 struct Int<2> {
-  using Type = i16; ///< @type_alias
+  /// @type_alias
+  using Type = i16;
 };
 
 /**
@@ -198,7 +203,8 @@ struct Int<2> {
  */
 template<>
 struct Int<4> {
-  using Type = i32; ///< @type_alias
+  /// @type_alias
+  using Type = i32;
 };
 
 /**
@@ -206,7 +212,8 @@ struct Int<4> {
  */
 template<>
 struct Int<8> {
-  using Type = i64; ///< @type_alias
+  /// @type_alias
+  using Type = i64;
 };
 
 /**
@@ -214,7 +221,8 @@ struct Int<8> {
  */
 template<>
 struct Int<16> {
-  using Type = i128; ///< @type_alias
+  /// @type_alias
+  using Type = i128;
 };
 
 // `Uint` ---------------------------------------------------------------------------------------------------
@@ -226,7 +234,8 @@ template<u32 N> struct Uint;
  */
 template<>
 struct Uint<1> {
-  using Type = u8; ///< @type_alias
+  /// @type_alias
+  using Type = u8;
 };
 
 /**
@@ -234,7 +243,8 @@ struct Uint<1> {
  */
 template<>
 struct Uint<2> {
-  using Type = u16; ///< @type_alias
+  /// @type_alias
+  using Type = u16;
 };
 
 /**
@@ -242,7 +252,8 @@ struct Uint<2> {
  */
 template<>
 struct Uint<4> {
-  using Type = u32; ///< @type_alias
+  /// @type_alias
+  using Type = u32;
 };
 
 /**
@@ -250,7 +261,8 @@ struct Uint<4> {
  */
 template<>
 struct Uint<8> {
-  using Type = u64; ///< @type_alias
+  /// @type_alias
+  using Type = u64;
 };
 
 /**
@@ -258,7 +270,8 @@ struct Uint<8> {
  */
 template<>
 struct Uint<16> {
-  using Type = u128; ///< @type_alias
+  /// @type_alias
+  using Type = u128;
 };
 
 // `Float` --------------------------------------------------------------------------------------------------
@@ -270,7 +283,8 @@ template<u32 N> struct Float;
  */
 template<>
 struct Float<4> {
-  using Type = f32; ///< @type_alias
+  /// @type_alias
+  using Type = f32;
 };
 
 /**
@@ -278,7 +292,8 @@ struct Float<4> {
  */
 template<>
 struct Float<8> {
-  using Type = f64; ///< @type_alias
+  /// @type_alias
+  using Type = f64;
 };
 
 // Concepts for basic data types ----------------------------------------------------------------------------

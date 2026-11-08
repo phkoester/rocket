@@ -27,8 +27,12 @@
 #endif
 
 using namespace rocket;
+using namespace rocket::chrono::internal;
 using namespace std;
 using namespace std::chrono;
+
+using rocket::chrono::sys_info;
+using rocket::chrono::time_zone;
 
 // Part I: utilities related to `std::chrono` ===============================================================
 
@@ -164,10 +168,10 @@ constexpr size_t MAX_FILE_SIZE = 1 << 20;
 // A local-time type: the UTC offset, whether it is DST, and the abbreviation
 struct LocalType {
   seconds offset {};
-  bool isDst = false;
+  bool dst = false;
   string abbrev;
 
-  friend bool operator==(const LocalType&, const LocalType&) = default;
+  // XXX friend bool operator==(const LocalType&, const LocalType&) = default;
 };
 
 // `PosixRule` ----------------------------------------------------------------------------------------------
@@ -216,7 +220,7 @@ struct PosixParser {
     }
 
     LocalType dst;
-    dst.isDst = true;
+    dst.dst = true;
     if (!parseAbbrev(dst.abbrev)) {
       return nullopt;
     }
@@ -389,6 +393,11 @@ localTransition(const PosixRule::Date& date, year y) {
   return day + date.time;
 }
 
+sys_seconds
+toSys(local_seconds tp, seconds offset) {
+  return sys_seconds(tp.time_since_epoch()) - offset;
+}
+
 // The period of a rule containing `tp`. Since the rule repeats every year, looking at the transitions of the
 // surrounding years suffices
 sys_info
@@ -461,11 +470,6 @@ ruleInfo(const PosixRule& rule, sys_seconds tp) {
   return { begin, end, rule.std.offset, 0min, rule.std.abbrev };
 }
 
-sys_seconds
-toSys(local_seconds tp, seconds offset) {
-  return sys_seconds(tp.time_since_epoch()) - offset;
-}
-
 } // namespace
 
 namespace rocket::chrono {
@@ -508,7 +512,7 @@ struct ZoneData {
 
 } // namespace internal
 
-namespace internal {
+} // namespace rocket::chrono
 
 namespace {
 
@@ -630,20 +634,20 @@ vector<minutes>
 computeSaves(const vector<const LocalType*>& types, const optional<PosixRule>& rule) {
   vector<minutes> ret(types.size(), 0min);
   for (size_t i = 0; i < types.size(); ++i) {
-    if (!types[i]->isDst) {
+    if (!types[i]->dst) {
       continue;
     }
 
     optional<seconds> before;
     for (size_t j = i; j-- > 0;) {
-      if (!types[j]->isDst) {
+      if (!types[j]->dst) {
         before = types[j]->offset;
         break;
       }
     }
     optional<seconds> after;
     for (size_t j = i + 1; j < types.size(); ++j) {
-      if (!types[j]->isDst) {
+      if (!types[j]->dst) {
         after = types[j]->offset;
         break;
       }
@@ -775,7 +779,7 @@ parseTzif(span<const uint8_t> bytes) {
 
     LocalType& current = data->types.empty() ? data->initial : data->types.back();
     if (type.offset == current.offset && type.abbrev == current.abbrev) {
-      current.isDst = current.isDst && type.isDst;
+      current.dst = current.dst && type.dst;
       continue;
     }
     data->times.push_back(time);
@@ -981,13 +985,12 @@ zoneNameFromPath(string_view path) {
 
 } // namespace
 
-} // namespace internal
+namespace rocket::chrono {
 
 // `time_zone` -----------------------------------------------------------------------------------------------
 
 sys_info
 time_zone::getSysInfo(sys_seconds tp) const {
-  using namespace internal;
   const ZoneData& data = *data_;
   tp = clamp(tp, MIN_TIME, MAX_TIME - 1s);
 
@@ -1020,8 +1023,6 @@ time_zone::getSysInfo(sys_seconds tp) const {
 
 local_info
 time_zone::getLocalInfo(local_seconds tp) const {
-  using namespace internal;
-
   // UTC offsets are below 26 hours (RFC 8536), so the periods that may contain `tp` start within 2 days
 
   constexpr auto Window = days(2);
@@ -1084,16 +1085,7 @@ time_zone::getLocalInfo(local_seconds tp) const {
 // Functions -----------------------------------------------------------------------------------------------
 
 const time_zone*
-locate_zone(string_view name) {
-  if (const auto* ret = internal::database().locate(name)) {
-    return ret;
-  }
-  throw runtime_error(format("rocket::chrono::locate_zone: cannot locate zone: {}", name));
-}
-
-const time_zone*
 current_zone() {
-  using namespace internal;
   auto& db = database();
 
   // `/etc/localtime` is usually a symbolic link into the time-zone directory
@@ -1122,6 +1114,14 @@ current_zone() {
   }
 
   return locate_zone("UTC");
+}
+
+const time_zone*
+locate_zone(string_view name) {
+  if (const auto* ret = database().locate(name)) {
+    return ret;
+  }
+  throw runtime_error(fmt::format("`rocket::chrono::locate_zone`: cannot locate zone: {}", name));
 }
 
 } // namespace rocket::chrono

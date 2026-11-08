@@ -32,7 +32,7 @@ struct BoostHash {
 // `StdCompare` ---------------------------------------------------------------------------------------------
 
 /**
- * A comparator using #std::compare_three_way.
+ * A comparator using `std::compare_three_way`.
  */
 struct StdCompare {
   /// @cond undocumented

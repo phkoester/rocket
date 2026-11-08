@@ -315,7 +315,7 @@ if(ROCKET_GUI)
 
     foreach(target IN ITEMS wxscintilla)
       if(TARGET ${target})
-        if(GAIA_CXX_COMPILER_GNU)
+        if(GAIA_CXX_COMPILER_GNU OR GAIA_CXX_COMPILER_CLANG)
           target_compile_options(${target} PRIVATE -Wno-deprecated-declarations)
         endif()
       endif()
