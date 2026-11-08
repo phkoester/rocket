@@ -77,6 +77,8 @@ std::string escapeCString(
  * @param config the configuration, see #rocket::str::escape::CStringConfig
  * @param positions a pointer to a #rocket::Positions. If it is nonnull, then the positions are populated
  * @return the unescaped string
+ * @throw #rocket::InputFailure if @p input is malformed. If the string is quoted, this includes any input
+ *   after the terminating quote
  */
 std::string unescapeCString(
   std::string_view input,
@@ -101,6 +103,7 @@ std::string escapeRegex(std::string_view input, Positions* positions = nullptr);
  * @param input the regular expression
  * @param positions a pointer to a #rocket::Positions. If it is nonnull, then the positions are populated
  * @return the unescaped string
+ * @throw #rocket::InputFailure if @p input is malformed
  */
 std::string unescapeRegex(std::string_view input, Positions* positions = nullptr);
 

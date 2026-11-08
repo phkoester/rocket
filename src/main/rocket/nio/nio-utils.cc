@@ -152,6 +152,8 @@ startsWith(string_view s, string_view prefix, bool ignoreCase) {
   });
 }
 
+} // namespace
+
 namespace rocket::nio {
 
 // Utilities for writing to a sink --------------------------------------------------------------------------

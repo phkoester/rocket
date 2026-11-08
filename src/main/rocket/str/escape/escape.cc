@@ -322,6 +322,23 @@ getJsonCodePoint(unicode::Iterator<char>& iter, u64 pos) {
   return 0x10000U + ((first - 0xD800U) << 10U) + (second - 0xDC00U);
 }
 
+/**
+ * Converts the value of a hexadecimal escape sequence to a code point.
+ *
+ * @param iter the iterator, positioned after the escape sequence
+ * @param pos the position of the escape sequence
+ * @param value the value of the escape sequence
+ * @return the code point
+ * @throw #rocket::InputFailure if @p value is not a valid code-point value
+ */
+unicode::CodePoint
+toCodePoint(const unicode::Iterator<char>& iter, u64 pos, u32 value) {
+  if (not unicode::CodePoint::valid(static_cast<char32>(value))) {
+    throw InputFailure(pos, { pos, iter.current() }, fmt::format("Invalid code-point value 0x{:X}", value));
+  }
+  return static_cast<char32>(value);
+}
+
 } // namespace
 
 // Functions ------------------------------------------------------------------------------------------------
@@ -448,8 +465,14 @@ unescapeCString(string_view input, const CStringConfig& config, Positions* posit
       // Single-code-point character
 
       if (config.quoted() && cp1->eq(config.quote)) {
-        // Terminating quote: EOI
+        // Terminating quote: EOI, nothing may follow it
 
+        if (const u64 end = iter.current(); end != input.size()) {
+          throw InputFailure(
+            end,
+            { end, input.size() },
+            fmt::format("Unexpected input after terminating {:?} character", config.quote));
+        }
         return ret;
       } else if (*cp1 == '\\') { // NOLINT
         // Backslash: this may either be a C-string-escaped character or a hexadecimal sequence starting with
@@ -513,13 +536,13 @@ unescapeCString(string_view input, const CStringConfig& config, Positions* posit
             break;
           }
           case 'u': {
-            const char32 i = config.json ? getJsonCodePoint(iter, pos) : getHex(iter, 4);
-            ret.append(static_cast<string>(unicode::CodePoint(i)));
+            const u32 i = config.json ? getJsonCodePoint(iter, pos) : getHex(iter, 4);
+            ret.append(static_cast<string>(toCodePoint(iter, pos, i)));
             break;
           }
           case 'U': {
-            const char32 i = getHex(iter, 8);
-            ret.append(static_cast<string>(unicode::CodePoint(i)));
+            const u32 i = getHex(iter, 8);
+            ret.append(static_cast<string>(toCodePoint(iter, pos, i)));
             break;
           }
           default: {
@@ -689,8 +712,8 @@ unescapeRegex(string_view input, Positions* positions) {
             break;
           }
           case 'u': {
-            const char32 i = getHex(iter, 4);
-            ret.append(static_cast<string>(unicode::CodePoint(i)));
+            const u32 i = getHex(iter, 4);
+            ret.append(static_cast<string>(toCodePoint(iter, pos, i)));
             break;
           }
           default: {
