@@ -42,7 +42,7 @@
 /**
  * Provides all the definitions for the enum @p type needed for full Rocket interoperability.
  *
- * This macro must be called in the enum's local namespace.
+ * This macro must be called in the enum’s local namespace.
  *
  * @param ns the namespace of the enum, e.g., `mynamespace`. May be left empty if the enum is in the global
  *   namespace

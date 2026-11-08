@@ -167,7 +167,7 @@ struct CodePoint {
   /**
    * Calculates the display width for a code point.
    *
-   * @return the code point's display width, in the range @f$[0,2]@f$
+   * @return the code point’s display width, in the range @f$[0,2]@f$
    */
   [[nodiscard]] u8 width() const;
 

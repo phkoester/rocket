@@ -26,9 +26,9 @@ using Bimap = boost::bimaps::bimap<
 /**
  * Convenience function to make a #rocket::Bimap of a #std::initializer_list.
  *
- * @tparam K the map's left key type
- * @tparam V the map's left value type
- * @param list the map elements, as seen from the map's left index
+ * @tparam K the map’s left key type
+ * @tparam V the map’s left value type
+ * @param list the map elements, as seen from the map’s left index
  * @return a new #rocket::Bimap containing the elements of @p list in its left index
  */
 template<typename K, typename V>
@@ -53,9 +53,9 @@ using UnorderedBimap = boost::bimaps::bimap<
 /**
  * Convenience function to make a #rocket::UnorderedBimap of a #std::initializer_list.
  *
- * @tparam K the map's left key type
- * @tparam V the map's left value type
- * @param list the map elements, as seen from the map's left index
+ * @tparam K the map’s left key type
+ * @tparam V the map’s left value type
+ * @param list the map elements, as seen from the map’s left index
  * @return a new #rocket::UnorderedBimap containing the elements of @p list in its left index
  */
 template<typename K, typename V>
@@ -106,7 +106,7 @@ insertOrReplace(Map& map, const K& k, const V& v) {
 /**
  * Convenience function to make a #rocket::Positions from a #std::initializer_list.
  *
- * @param list the map elements, as seen from the map's left index
+ * @param list the map elements, as seen from the map’s left index
  * @return a new #rocket::Positions containing the elements of @p list
  */
 inline Positions

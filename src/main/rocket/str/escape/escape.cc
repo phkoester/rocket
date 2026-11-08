@@ -83,7 +83,7 @@ escapeCStringCodePointHex(unicode::CodePoint cp, u64& column, const CStringConfi
   if (config.json) {
     // JSON
     if (cp > 0xFFFFU) {
-      // We can't escape code points > U+FFFF with `\u`, so just return the string representation
+      // We can’t escape code points > U+FFFF with `\u`, so just return the string representation
       ret = static_cast<string>(cp);
       column += cp.width();
       return ret;

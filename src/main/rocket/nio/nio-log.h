@@ -8,7 +8,7 @@
 
 /* Macros ---------------------------------------------------------------------------------------------------
 
-Because #rocket::log utilizes #rocket::nio, which in turn uses #rocket::io, we can't use the logging API to
+Because #rocket::log utilizes #rocket::nio, which in turn uses #rocket::io, we can’t use the logging API to
 log #rocket::nio itself. So we make up a quick and dirty logging facility here.
 
 ---------------------------------------------------------------------------------------------------------- */

@@ -44,7 +44,7 @@ wxBitmapBundle loadSvg(std::string_view name, const wxSize& size);
 /**
  * Makes a disabled bitmap bundle from a bitmap bundle.
  *
- * This is especially useful on Windows, where the native tool bar doesn't show disabled bitmaps.
+ * This is especially useful on Windows, where the native tool bar doesn’t show disabled bitmaps.
  *
  * @param bundle a bitmap bundle
  * @return a disabled bitmap bundle

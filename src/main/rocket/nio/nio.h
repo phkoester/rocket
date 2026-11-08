@@ -297,7 +297,7 @@ protected:
 /**
  * A buffered sink that may be attached to another sink.
  *
- * @note Applying an additional buffer only makes sense if the underlying sink isn't already buffered.
+ * @note Applying an additional buffer only makes sense if the underlying sink isn’t already buffered.
  */
 struct BufferedSink : Sink {
   /**
@@ -646,7 +646,7 @@ protected:
 /**
  * A buffered source that may be attached to another source.
  *
- * @note Applying an additional buffer only makes sense if the underlying source isn't already buffered.
+ * @note Applying an additional buffer only makes sense if the underlying source isn’t already buffered.
  */
 struct BufferedSource : Source {
   /**

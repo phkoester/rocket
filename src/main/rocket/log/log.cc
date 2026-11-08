@@ -250,7 +250,7 @@ Out::setPattern(string_view pattern, const TimePoint& time) {
     set(nio::out);
   }
 
-  // If zipping, check if yesterday's log file exists and zip it
+  // If zipping, check if yesterday’s log file exists and zip it
   if (zip_) {
     zipYesterday(time);
   }

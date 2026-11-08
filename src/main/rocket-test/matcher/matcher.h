@@ -45,7 +45,7 @@ struct MatchesRegexMatcher {
 
   void
   DescribeNegationTo(std::ostream* os) const {
-    *os << "doesn't " << (fullMatch_ ? "match" : "contain") << " regular expression ";
+    *os << "doesn’t " << (fullMatch_ ? "match" : "contain") << " regular expression ";
     testing::internal::UniversalPrinter<std::string>::Print(regex_->pattern, os);
   }
 
@@ -78,7 +78,7 @@ struct MatchesRegexMatcher {
    * This is a template, not just a plain function with `const std::string&`, because `absl::string_view` has
    * some interfering nonexplicit constructors.
    *
-   * @tparam MatcheeStringType the matchee's string type
+   * @tparam MatcheeStringType the matchee’s string type
    */
   template<class MatcheeStringType>
   bool
@@ -117,7 +117,7 @@ containsRegex(std::shared_ptr<const internal::Regex> regex) {
  *
  * The implementation is backed by #std::regex.
  *
- * @tparam T the pattern's string type
+ * @tparam T the pattern’s string type
  * @param pattern a regular expression
  * @return a matcher
  */
@@ -145,7 +145,7 @@ matchesRegex(std::shared_ptr<const internal::Regex> regex) {
  *
  * The implementation is backed by #std::regex.
  *
- * @tparam T the pattern's string type
+ * @tparam T the pattern’s string type
  * @param pattern a regular expression
  * @return a matcher
  */

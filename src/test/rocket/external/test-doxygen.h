@@ -3,7 +3,7 @@
  *
  * This is a Doxygen test.
  *
- * Let's see a clickable dot graph:
+ * Let’s see a clickable dot graph:
  *
  * @dot
  * digraph example {
@@ -58,7 +58,7 @@ struct B {};
 struct C : B {};
 
 /**
- * This comment tests Doxygen's link generation.
+ * This comment tests Doxygen’s link generation.
  *
  * - #MY_CONSTANT
  * - #MY_MACRO
@@ -167,7 +167,7 @@ void myFuncTemplate(T val, T wal);
 namespace foo::bar {
 
 /**
- * This comment tests Doxygen's link generation.
+ * This comment tests Doxygen’s link generation.
  *
  * - #foo::bar::FOO_MY_CONSTANT
  * - #foo::bar::FooMyType

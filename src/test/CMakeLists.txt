@@ -46,6 +46,7 @@ RocketAddTest(test-rocket-log                          rocket/log             te
 RocketAddTest(test-rocket-math                         rocket/math            test-math.cc)
 RocketAddTest(test-rocket-math-interval                rocket/math            test-Interval.cc)
 RocketAddTest(test-rocket-nio                          rocket/nio             test-nio.cc)
+RocketAddTest(test-rocket-nio-utils                    rocket/nio             test-nio-utils.cc)
 RocketAddTest(test-rocket-reflect                      rocket/reflect         test-reflect.cc)
 RocketAddTest(test-rocket-str                          rocket/str             test-str.cc)
 RocketAddTest(test-rocket-str-Range                    rocket/str             test-Range.cc)

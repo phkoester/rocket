@@ -303,7 +303,7 @@ struct DataTypes<std::chrono::year_month_day> {
 /**
  * The specific time-zone type that can be encoded and decoded.
  *
- * This is a pointer because #rocket::chrono::time_zone can't be constructed. Its instances are completely
+ * This is a pointer because #rocket::chrono::time_zone can’t be constructed. Its instances are completely
  * managed by #rocket::chrono::locate_zone and #rocket::chrono::current_zone.
  */
 using TimeZone = const rocket::chrono::time_zone*;

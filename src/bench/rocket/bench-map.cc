@@ -1,7 +1,5 @@
 /*
  * bench-map.cc
- *
- * @todo add #std::flat_map when it's available
  */
 
 #include "rocket-bench/rocket-bench.h"

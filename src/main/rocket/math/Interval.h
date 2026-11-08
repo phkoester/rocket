@@ -398,13 +398,13 @@ struct Interval {
   using B = Right::BoundType;
 
   /**
-   * The interval's lower bound.
+   * The interval’s lower bound.
    *
    * If this is null, then the interval has no lower bound and no size and is nonempty.
    */
   A a;
   /**
-   * The interval's upper bound.
+   * The interval’s upper bound.
    *
    * If this is null, then the interval has no upper bound and no size and is nonempty.
    */
@@ -432,7 +432,7 @@ struct Interval {
   /**
    * Returns the cardinality of the interval.
    *
-   * If either #a or #b are null, then the cardinality is null, meaning "infinite". Otherwise, the
+   * If either #a or #b is null, then the cardinality is null, meaning "infinite". Otherwise, the
    * cardinality is calculated as appropriate.
    *
    * Empty intervals have a cardinality of 0.
@@ -470,7 +470,7 @@ struct Interval {
    * If either #a or #b are null, then the size of the interval is null, meaning "infinite". Otherwise, the
    * size is calculated as @f$b -a@f$.
    *
-   * @attention A size of 0 doesn't necessarily mean an interval is empty. For instance, the closed interval
+   * @attention A size of 0 doesn’t necessarily mean an interval is empty. For instance, the closed interval
    * @f$[2,2]@f$ has a size of 0, but a cardinality of 1, hence it is nonempty. To check if an interval is
    * empty, use #empty instead.
    *

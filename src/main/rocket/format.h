@@ -210,7 +210,7 @@ private:
  * Formats a #std::chrono::year_month_day with {fmt}.
  *
  * {fmt} only provides this formatter if `__cpp_lib_chrono >= 201907L`; otherwise it formats its own
- * `fmt::year_month_day`. This is a copy of {fmt}'s formatter from `fmt/chrono.h`. Without a format
+ * `fmt::year_month_day`. This is a copy of {fmt}’s formatter from `fmt/chrono.h`. Without a format
  * specification, the format is `%F`.
  *
  * @tparam C the character type

@@ -119,7 +119,7 @@ TEST(std, istreamEof) {
     // Check 'tellg()' twice
     EXPECT_EQ(is.tellg(), 0);
     is.setstate(ios::eofbit);
-    // Setting 'eofbit' doesn't immediately affect 'fail()'
+    // Setting 'eofbit' doesn’t immediately affect 'fail()'
     EXPECT_FALSE(is.fail());
     // 'tellg()' affects() 'fail()' when 'eofbit' is set
     EXPECT_EQ(is.tellg(), -1);
@@ -243,7 +243,7 @@ TEST(std, istreamF64) {
   EXPECT_EQ(os.str(), "-inf");
 
   {
-    // Reading symbols doesn't work
+    // Reading symbols doesn’t work
     auto is = io::is("-inf");
     type val = 0;
     is >> val;

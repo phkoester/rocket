@@ -85,7 +85,7 @@ struct TypeId {
   /**
    * Returns the human-readable demangled name of the type.
    *
-   * If the name cannot be demangled, or if the platform's names are not mangled (MSVC), this returns the
+   * If the name cannot be demangled, or if the platform’s names are not mangled (MSVC), this returns the
    * result of #name.
    *
    * @return the demangled name, for example `rocket::InvalidArgument`

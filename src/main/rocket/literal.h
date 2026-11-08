@@ -3,7 +3,7 @@
  *
  * Literal operators for all basic Rocket data types.
  *
- * The generalized integer implementation is based on Jim Apple's wonderful work from `128-bit-literals` on
+ * The generalized integer implementation is based on Jim Apple’s wonderful work from `128-bit-literals` on
  * GitHub, see `README.md`.
  */
 

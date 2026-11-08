@@ -71,7 +71,7 @@ using basic_spanstream = std::basic_spanstream<CharT, Traits>;
 // `basic_spanbuf` ------------------------------------------------------------------------------------------
 
 /**
- * A stream buffer for a fixed character buffer, equivalent to C++23's `std::basic_spanbuf`.
+ * A stream buffer for a fixed character buffer, equivalent to C++23’s `std::basic_spanbuf`.
  *
  * The buffer is never reallocated. Writing past its end fails, as does reading past its end.
  *
@@ -299,7 +299,7 @@ concept ReadOnlySpan =
 } // namespace internal
 
 /**
- * A stream for reading from a fixed character buffer, equivalent to C++23's `std::basic_ispanstream`.
+ * A stream for reading from a fixed character buffer, equivalent to C++23’s `std::basic_ispanstream`.
  *
  * @tparam CharT the character type
  * @tparam Traits the character traits
@@ -433,7 +433,7 @@ swap(basic_ispanstream<CharT, Traits>& lhs, basic_ispanstream<CharT, Traits>& rh
 // `basic_ospanstream` ---------------------------------------------------------------------------------------
 
 /**
- * A stream for writing to a fixed character buffer, equivalent to C++23's `std::basic_ospanstream`.
+ * A stream for writing to a fixed character buffer, equivalent to C++23’s `std::basic_ospanstream`.
  *
  * @tparam CharT the character type
  * @tparam Traits the character traits

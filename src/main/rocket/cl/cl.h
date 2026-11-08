@@ -195,7 +195,7 @@ struct OptionConfig {
    */
   std::string name;
   /**
-   * The option's short name.
+   * The option’s short name.
    *
    * For instance, if this is `"⨁"`, the option may be chosen via `-⨁` on the command line.
    */
@@ -573,7 +573,7 @@ struct CommandLineConfig {
    */
   bool otherOutput = false;
   /**
-   * Include Rocket's standard options, such as for logging control?
+   * Include Rocket’s standard options, such as for logging control?
    */
   bool rocketOpts = true;
 };

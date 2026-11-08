@@ -187,7 +187,7 @@ FetchContent_Declare(
 block()
   set(BUILD_SHARED_LIBS OFF)
   if(GAIA_OS_WINDOWS)
-    # For Windows: Prevent overriding the parent project's compiler/linker settings
+    # For Windows: Prevent overriding the parent project’s compiler/linker settings
     set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
   endif()
   FetchContent_MakeAvailable(GTest)

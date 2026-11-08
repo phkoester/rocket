@@ -43,14 +43,14 @@ TEST(Subformat, charWithTagged) {
         return params;
       }
       auto params = Subformat<char>::params(": Second {}: \\1.", "case");
-      params.tag("\\1", "This {} doesn't mean much", "sentence");
+      params.tag("\\1", "This {} doesn’t mean much", "sentence");
       return params;
     }));
     return buf.str();
   };
 
   EXPECT_THAT(lambda(1), matchesRegex(".*\\.cc:\\d+: First case: The command line is `grep -i foo bar`\\. Again, the command line is `grep -i foo bar`\\. But here comes another one: `ls -l`\\."));
-  EXPECT_THAT(lambda(2), matchesRegex(".*\\.cc:\\d+: Second case: This sentence doesn't mean much\\."));
+  EXPECT_THAT(lambda(2), matchesRegex(".*\\.cc:\\d+: Second case: This sentence doesn’t mean much\\."));
 }
 
 TEST(Subformat, char32) {

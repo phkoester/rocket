@@ -23,7 +23,7 @@ testCharacter(const CharacterView<C>& c) {
   out.print("[{}]", ConvertTo<char>::apply(static_cast<basic_string_view<C>>(c)));
   auto pos = system::terminal::position(out);
   EXPECT_TRUE(pos);
-  EXPECT_EQ(pos->first, c.width() + 3); // Check terminal's cursor position
+  EXPECT_EQ(pos->first, c.width() + 3); // Check terminal’s cursor position
   out.write('\n');
   out.println("[{:~<{}}]", "", c.width());
 }

@@ -121,7 +121,7 @@ now() {
 /**
  * Returns the abbreviation the standard library uses for a time zone.
  *
- * Microsoft's STL takes the abbreviations from the system ICU (`icu.dll`), localized for the user's default
+ * Microsoft’s STL takes the abbreviations from the system ICU (`icu.dll`), localized for the user’s default
  * locale, so on a German system, `CET` and `CEST` are `MEZ` and `MESZ`. We ask the same ICU for the
  * abbreviation. Other implementations use the abbreviations from the time-zone database, which are not
  * localized.
@@ -202,7 +202,7 @@ using zoned_seconds = std::chrono::zoned_time<std::chrono::seconds>;
 // `sys_info` -----------------------------------------------------------------------------------------------
 
 /**
- * Information about a time zone at a certain point in time, equivalent to C++20's #std::chrono::sys_info.
+ * Information about a time zone at a certain point in time, equivalent to C++20’s #std::chrono::sys_info.
  */
 struct sys_info {
   /// The beginning of the period these values apply to.
@@ -238,7 +238,7 @@ operator<<(std::basic_ostream<CharT, Traits>& os, const sys_info& val) {
 // `local_info` --------------------------------------------------------------------------------------------
 
 /**
- * Information about a local time in a time zone, equivalent to C++20's #std::chrono::local_info.
+ * Information about a local time in a time zone, equivalent to C++20’s #std::chrono::local_info.
  */
 struct local_info {
   static constexpr int unique = 0; ///< The local time maps to exactly one UTC time.
@@ -298,7 +298,7 @@ nonexistentMessage(const std::chrono::local_time<Duration>& tp, const local_info
 
 // `choose` ------------------------------------------------------------------------------------------------
 
-/// How to resolve an ambiguous local time, equivalent to C++20's #std::chrono::choose.
+/// How to resolve an ambiguous local time, equivalent to C++20’s #std::chrono::choose.
 enum class choose {
   earliest, ///< choose the earlier time point.
   latest ///< choose the later time point.
@@ -351,7 +351,7 @@ struct ZoneData; // Defined in `chrono.cc`
 } // namespace internal
 
 /**
- * A time zone, equivalent to C++20's #std::chrono::time_zone.
+ * A time zone, equivalent to C++20’s #std::chrono::time_zone.
  *
  * Instances cannot be constructed. They are obtained from #rocket::chrono::locate_zone and
  * #rocket::chrono::current_zone, which keep them alive until the program ends.
@@ -486,7 +486,7 @@ private:
 // Functions ------------------------------------------------------------------------------------------------
 
 /**
- * Returns the current time zone of the computer, equivalent to C++20's #std::chrono::current_zone.
+ * Returns the current time zone of the computer, equivalent to C++20’s #std::chrono::current_zone.
  *
  * The time zone is taken from the symbolic link `/etc/localtime`, or the file `/etc/timezone`, in this
  * order. If none of these yields a time zone, the result is `UTC`.
@@ -498,7 +498,7 @@ private:
 const time_zone* current_zone();
 
 /**
- * Locates a time zone by name, equivalent to C++20's #std::chrono::locate_zone.
+ * Locates a time zone by name, equivalent to C++20’s #std::chrono::locate_zone.
  *
  * @ThreadSafe
  *
@@ -544,7 +544,7 @@ struct zoned_traits<const time_zone*> {
 // `zoned_time` ---------------------------------------------------------------------------------------------
 
 /**
- * A time point together with a time zone, equivalent to C++20's #std::chrono::zoned_time.
+ * A time point together with a time zone, equivalent to C++20’s #std::chrono::zoned_time.
  *
  * @tparam Duration the duration of the time point
  * @tparam TimeZonePtr the time-zone pointer
@@ -884,7 +884,7 @@ operator<<(std::basic_ostream<CharT, Traits>& os, const zoned_time<Duration, Tim
   }
 }
 
-/// A zoned time with a precision of seconds, equivalent to C++20's #std::chrono::zoned_seconds.
+/// A zoned time with a precision of seconds, equivalent to C++20’s #std::chrono::zoned_seconds.
 using zoned_seconds = zoned_time<std::chrono::seconds>;
 
 #endif // ROCKET_HAS_STD_CHRONO_TIME_ZONE

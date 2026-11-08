@@ -227,9 +227,9 @@ struct BasicCharacter {
   }
 
   /**
-   * Calculates the character's display width.
+   * Calculates the character’s display width.
    *
-   * @return the character's display width, in the range @f$[0,2]@f$
+   * @return the character’s display width, in the range @f$[0,2]@f$
    */
   [[nodiscard]] u8
   width() const {

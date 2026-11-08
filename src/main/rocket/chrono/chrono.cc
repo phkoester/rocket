@@ -110,14 +110,14 @@ abbreviation([[maybe_unused]] string_view name, [[maybe_unused]] bool dst, strin
     return string(fallback);
   }
 
-  const u16string zone16 = toUtf16(zone);
-  if (zone16.empty()) {
+  const u16string name16 = toUtf16(name);
+  if (name16.empty()) {
     return string(fallback);
   }
 
   // A null locale is the default locale
   UErrorCode status = 0;
-  UCalendar* const cal = ucalOpen(zone16.c_str(), -1, nullptr, UCAL_GREGORIAN, &status);
+  UCalendar* const cal = ucalOpen(name16.c_str(), -1, nullptr, UCAL_GREGORIAN, &status);
   if (status > 0) {
     return string(fallback);
   }

@@ -171,9 +171,9 @@ struct Subformat {
   explicit Subformat(const SubformatParamsProducer& fn) : params_(fn()) {}
 
   /**
-   * Returns the format's parameters.
+   * Returns the format’s parameters.
    *
-   * @return the format's parameters
+   * @return the format’s parameters
    */
   [[nodiscard]] const SubformatParams<C>& get() const { return params_; }
 

@@ -18,6 +18,19 @@ using boost::safe_numerics::safe;
 
 namespace {
 
+/**
+ * Checks if the character at position @p pos in @p str is escaped, that is, if it is preceded by an odd
+ * number of backslashes.
+ */
+bool
+isEscaped(string_view str, u64 pos) {
+  u64 count = 0;
+  while (count < pos && str[pos - count - 1] == '\\') {
+    ++count;
+  }
+  return count % 2 != 0;
+}
+
 bool
 isWordBoundary(string_view str, u64 pos) {
   if (pos >= str.size()) {
@@ -422,7 +435,7 @@ readUntilUnescapedChar(nio::Source& in, char c) {
       if (pos == NPOS) {
         return {};
       }
-      if (pos == 0 || remaining[pos - 1] != '\\') {
+      if (not isEscaped(remaining, pos)) {
         in.seek(safe<i64>(pos + 1), nio::SeekMode::cur);
         string ret(remaining.substr(0, pos));
         return ret;
@@ -438,7 +451,6 @@ readUntilUnescapedChar(nio::Source& in, char c) {
 
   const auto pos = in.tell();
 
-  optional<char> previous;
   string ret;
 
   while (true) {
@@ -446,11 +458,10 @@ readUntilUnescapedChar(nio::Source& in, char c) {
     if (in.read(current) != 1) {
       break;
     }
-    if (current == c && (not previous || *previous != '\\')) {
+    if (current == c && not isEscaped(ret, ret.size())) {
       return ret;
     }
     ret.push_back(current);
-    previous = current;
   }
 
   in.seek(safe<i64>(pos), nio::SeekMode::beg);
