@@ -129,7 +129,7 @@ now() {
  * @param fallback the abbreviation from the time-zone database
  * @return the abbreviation
  */
-std::string timeZoneAbbrev(std::string_view name, bool dst, std::string_view fallback);
+std::string abbreviation(std::string_view name, bool dst, std::string_view fallback);
 
 } // namespace rocket::chrono
 

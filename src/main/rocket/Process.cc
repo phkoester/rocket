@@ -192,11 +192,11 @@ Process::id() {
 
 void
 Process::init(
-    i32 argc,
-    char** argv,
-    optional<string_view> name,
-    optional<std::locale> locale,
-    bool quickExit) const {
+  i32 argc,
+  char** argv,
+  optional<string_view> name,
+  optional<std::locale> locale,
+  bool quickExit) const {
   ROCKET_MUTEX_LOCK(processMutex);
 
   ROCKET_ASSERT(this_thread::get_id() == MAIN_THREAD_ID, "`Process::init` must be called in the main thread");

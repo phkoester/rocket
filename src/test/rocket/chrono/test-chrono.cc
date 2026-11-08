@@ -13,33 +13,32 @@
 #include <string>
 #include <string_view>
 
-using namespace std::chrono; // XXX
+using namespace std::chrono;
 
 using rocket::chrono::ambiguous_local_time;
 using rocket::chrono::choose;
+using rocket::chrono::current_zone;
 using rocket::chrono::local_info;
+using rocket::chrono::locate_zone;
 using rocket::chrono::nonexistent_local_time;
 using rocket::chrono::time_zone;
 using rocket::chrono::zoned_seconds;
 using rocket::chrono::zoned_time;
-
-using rocket::chrono::current_zone;
-using rocket::chrono::locate_zone;
 
 namespace {
 
 // Constants ------------------------------------------------------------------------------------------------
 
 /// Central European Time, localized.
-const string CET = rocket::chrono::timeZoneAbbrev("Europe/Berlin", false, "CET");
+const string CET = rocket::chrono::abbreviation("Europe/Berlin", false, "CET");
 /// Central European Summer Time, localized.
-const string CEST = rocket::chrono::timeZoneAbbrev("Europe/Berlin", true, "CEST");
+const string CEST = rocket::chrono::abbreviation("Europe/Berlin", true, "CEST");
 /// Eastern Standard Time, localized.
-const string EST = rocket::chrono::timeZoneAbbrev("America/New_York", false, "EST");
+const string EST = rocket::chrono::abbreviation("America/New_York", false, "EST");
 /// India Standard Time, localized.
-const string IST = rocket::chrono::timeZoneAbbrev("Asia/Kolkata", false, "IST");
+const string IST = rocket::chrono::abbreviation("Asia/Kolkata", false, "IST");
 /// Coordinated Universal Time, localized.
-const string UTC = rocket::chrono::timeZoneAbbrev("UTC", false, "UTC");
+const string UTC = rocket::chrono::abbreviation("UTC", false, "UTC");
 
 } // namespace
 

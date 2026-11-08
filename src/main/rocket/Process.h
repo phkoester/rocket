@@ -173,20 +173,11 @@ struct Process {
   [[nodiscard]] const std::vector<std::string>& args() const { return args_; }
 
   /**
-   * Returns the classic locale. This is the locale as returned by #std::locale::classic.
-   *
-   * Must be called after #init.
-   *
-   * @return a locale
-   */
-  [[nodiscard]] const std::locale& classicLocale() const { return classicLocale_; }
-
-  /**
    * Returns the code locale used for logging and error messages, which is `en_US.UTF-8`.
    *
    * This is also the default locale for unit tests and benchmarks.
    *
-   * Must be called after #init.
+   * May be called before #init.
    *
    * On Linux, the locale may be configured like this:
    *
@@ -343,7 +334,6 @@ private:
   mutable std::vector<std::string> args_;
   mutable bool inited_ = false;
 
-  std::locale classicLocale_ = std::locale::classic();
   std::locale codeLocale_ = std::locale("en_US.UTF-8");
   mutable std::locale initLocale_;
   mutable std::locale systemLocale_;

@@ -82,7 +82,7 @@ clockOffset() {
 // Functions ------------------------------------------------------------------------------------------------
 
 string
-timeZoneAbbrev([[maybe_unused]] string_view zone, [[maybe_unused]] bool dst, string_view fallback) {
+abbreviation([[maybe_unused]] string_view zone, [[maybe_unused]] bool dst, string_view fallback) {
 #ifdef _MSVC_STL_VERSION
   // We do not include any ICU header, as these are the headers of the ICU linked with Rocket
   using UCalendar = void;
