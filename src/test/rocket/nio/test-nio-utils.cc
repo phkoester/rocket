@@ -46,6 +46,20 @@ forEachSource(string_view input, Fn fn) {
 }
 
 void
+testReadChoice(
+  string_view input,
+  const set<string_view>& values,
+  bool ignoreCase,
+  bool endOfWord,
+  optional<string_view> expected,
+  u64 expectedTell) {
+  forEachSource(input, [&](Source& in) {
+    EXPECT_EQ(readChoice(in, values, ignoreCase, endOfWord), expected);
+    EXPECT_EQ(in.tell(), expectedTell);
+  });
+}
+
+void
 testReadUntilUnescapedChar(string_view input, char c, const optional<string>& expected, u64 expectedTell) {
   forEachSource(input, [&](Source& in) {
     EXPECT_EQ(readUntilUnescapedChar(in, c), expected);
@@ -72,6 +86,52 @@ testSkipCComments(string_view input, u64 expectedTell) {
 } // namespace
 
 // `TEST` ---------------------------------------------------------------------------------------------------
+
+TEST(nioUtils, readChoiceWordBoundary) {
+  // A word boundary follows
+  testReadChoice("true", { "true" }, false, true, "true", 4);
+  testReadChoice("true a", { "true" }, false, true, "true", 4);
+  testReadChoice("true,a", { "true" }, false, true, "true", 4);
+
+  // No word boundary follows
+  testReadChoice("trueX", { "true" }, false, true, nullopt, 0);
+  testReadChoice("trueXy", { "true" }, false, true, nullopt, 0);
+  testReadChoice("true1", { "true" }, false, true, nullopt, 0);
+  testReadChoice("true_", { "true" }, false, true, nullopt, 0);
+  testReadChoice("true$", { "true" }, false, true, nullopt, 0);
+  testReadChoice("trueä", { "true" }, false, true, nullopt, 0);
+}
+
+TEST(nioUtils, readChoiceWordBoundaryInvalidUtf8) {
+  // An undecodable code point counts as a word boundary
+  testReadChoice("true\xFF", { "true" }, false, true, "true", 4);
+  testReadChoice("true\xC3", { "true" }, false, true, "true", 4);
+}
+
+TEST(nioUtils, readChoiceNoWordBoundaryRequired) {
+  testReadChoice("trueX", { "true" }, false, false, "true", 4);
+}
+
+TEST(nioUtils, readChoiceLongestMatch) {
+  testReadChoice("abcd e", { "ab", "abcd" }, false, true, "abcd", 4);
+  testReadChoice("ab!", { "ab", "abcd" }, false, true, "ab", 2);
+
+  // The longest match, "ab", is followed by "c", so there is no word boundary
+  testReadChoice("abc!", { "ab", "abcd" }, false, true, nullopt, 0);
+  testReadChoice("abc!", { "ab", "abcd" }, false, false, "ab", 2);
+}
+
+TEST(nioUtils, readChoiceIgnoreCase) {
+  testReadChoice("TRUE a", { "true" }, true, true, "true", 4);
+  testReadChoice("TRUE a", { "true" }, false, true, nullopt, 0);
+  testReadChoice("TRUEX", { "true" }, true, true, nullopt, 0);
+}
+
+TEST(nioUtils, readChoiceNoMatch) {
+  testReadChoice("", { "true" }, false, true, nullopt, 0);
+  testReadChoice("tru", { "true" }, false, true, nullopt, 0);
+  testReadChoice("false", { "true" }, false, true, nullopt, 0);
+}
 
 TEST(nioUtils, readUntilUnescapedCharNoBackslash) {
   testReadUntilUnescapedChar(R"(abc"def)", '"', R"(abc)", 4);

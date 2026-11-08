@@ -23,13 +23,16 @@ f32
 operator""_f32(std_long_double val) {
   using type = f32;
   using limits = numeric_limits<type>;
-  if (fabs(val) < limits::min()) {
-    throw Underflow(typeid(type));
-  }
+  // Check this first: casting a value outside the range of the type is undefined behavior
   if (val < limits::lowest() || val > limits::max()) {
     throw Overflow(typeid(type));
   }
-  return static_cast<type>(val);
+  const auto ret = static_cast<type>(val);
+  // Zero and subnormal values are fine. Only a nonzero value that is lost entirely has underflowed
+  if (val != 0 && ret == 0) {
+    throw Underflow(typeid(type));
+  }
+  return ret;
 }
 
 f64
@@ -45,13 +48,16 @@ f64
 operator""_f64(std_long_double val) {
   using type = f64;
   using limits = numeric_limits<type>;
-  if (fabs(val) < limits::min()) {
-    throw Underflow(typeid(type));
-  }
+  // Check this first: casting a value outside the range of the type is undefined behavior
   if (val < limits::lowest() || val > limits::max()) {
     throw Overflow(typeid(type));
   }
-  return static_cast<type>(val);
+  const auto ret = static_cast<type>(val);
+  // Zero and subnormal values are fine. Only a nonzero value that is lost entirely has underflowed
+  if (val != 0 && ret == 0) {
+    throw Underflow(typeid(type));
+  }
+  return ret;
 }
 
 } // namespace rocket

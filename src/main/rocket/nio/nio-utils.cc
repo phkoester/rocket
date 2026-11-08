@@ -18,21 +18,8 @@ using boost::safe_numerics::safe;
 
 namespace {
 
-/**
- * Checks if the character at position @p pos in @p str is escaped, that is, if it is preceded by an odd
- * number of backslashes.
- */
 bool
-isEscaped(string_view str, u64 pos) {
-  u64 count = 0;
-  while (count < pos && str[pos - count - 1] == '\\') {
-    ++count;
-  }
-  return count % 2 != 0;
-}
-
-bool
-isWordBoundary(string_view str, u64 pos) {
+isEndOfWord(string_view str, u64 pos) {
   if (pos >= str.size()) {
     // End of string: we have a word boundary
     return true;
@@ -49,7 +36,7 @@ isWordBoundary(string_view str, u64 pos) {
 }
 
 bool
-isWordBoundary(nio::Source& in) {
+isEndOfWord(nio::Source& in) {
   const u64 pos = in.tell();
   const auto result = in.readCodePoint();
   in.seek(safe<i64>(pos), nio::SeekMode::beg); // Rewind immediately in any case
@@ -65,11 +52,28 @@ isWordBoundary(nio::Source& in) {
 }
 
 /**
+ * Checks if the character at position @p pos in @p str is escaped, that is, if it is preceded by an odd
+ * number of backslashes.
+ */
+bool
+isEscaped(string_view str, u64 pos) {
+  u64 count = 0;
+  while (count < pos && str[pos - count - 1] == '\\') {
+    ++count;
+  }
+  return count % 2 != 0;
+}
+
+/**
  * Reads the longest of the given candidates from a noncontiguous source, advances the source only on
  * success.
  */
 optional<string_view>
-readLongestChoice(nio::Source& in, vector<string_view> candidates, bool ignoreCase, bool endOfWord) { // NOLINT(*-complexity)
+readLongestChoice( // NOLINT(*-complexity)
+  nio::Source& in,
+  vector<string_view> candidates,
+  bool ignoreCase,
+  bool endOfWord) {
   const auto pos = in.tell();
 
   string seen;
@@ -115,13 +119,15 @@ readLongestChoice(nio::Source& in, vector<string_view> candidates, bool ignoreCa
     }
   }
 
-  if (ret && endOfWord && not isWordBoundary(in)) {
-    ret = {};
-  }
   if (ret) {
-    // Seek position after `ret`
+    // Seek position after `ret`. The loop above has usually read past it, so this must happen before
+    // checking for word boundary
     in.seek(safe<i64>(pos + ret->size()), nio::SeekMode::beg);
-  } else {
+    if (endOfWord && not isEndOfWord(in)) {
+      ret = {};
+    }
+  }
+  if (not ret) {
     // No match found: rewind
     in.seek(safe<i64>(pos), nio::SeekMode::beg);
   }
@@ -232,7 +238,7 @@ readChoice(nio::Source& in, const set<string_view>& values, bool ignoreCase, boo
         ret = val;
       }
     }
-    if (ret && endOfWord && not isWordBoundary(remaining, ret->size())) {
+    if (ret && endOfWord && not isEndOfWord(remaining, ret->size())) {
       ret = {};
     }
     if (ret) {
@@ -291,7 +297,7 @@ readString(nio::Source& in, string_view str, bool ignoreCase, bool endOfWord) {
     if (not startsWith(contiguous->str(), str, ignoreCase)) {
       return false;
     }
-    if (endOfWord && not isWordBoundary(contiguous->str(), str.size())) {
+    if (endOfWord && not isEndOfWord(contiguous->str(), str.size())) {
       return false;
     }
     in.seek(safe<i64>(str.size()), nio::SeekMode::cur);
@@ -311,7 +317,7 @@ readString(nio::Source& in, string_view str, bool ignoreCase, bool endOfWord) {
       return false;
     }
   }
-  if (endOfWord && not isWordBoundary(in)) {
+  if (endOfWord && not isEndOfWord(in)) {
     // No word boundary: rewind
     in.seek(safe<i64>(pos), nio::SeekMode::beg);
     return false;

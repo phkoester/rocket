@@ -129,7 +129,7 @@ struct SignedInteger<T, U, '0', 'X', Chars...> {
 
   static constexpr T payload = static_cast<T>(makeUnsigned<U,16, Chars...>());
   static constexpr bool valid =
-      validateUnsigned<T, 16, Chars...>() && (makeUnsigned<U, 16, Chars...>() <= SignedLimit<T, U>::value);
+      validateUnsigned<U, 16, Chars...>() && (makeUnsigned<U, 16, Chars...>() <= SignedLimit<T, U>::value);
 };
 
 template<typename T, typename U, char... Chars>
@@ -139,7 +139,7 @@ struct SignedInteger<T, U, '0', 'b', Chars...> {
 
   static constexpr T payload = static_cast<T>(makeUnsigned<U, 2, Chars...>());
   static constexpr bool valid =
-    validateUnsigned<T, 2, Chars...>() && (makeUnsigned<U, 2, Chars...>() <= SignedLimit<T, U>::value);
+    validateUnsigned<U, 2, Chars...>() && (makeUnsigned<U, 2, Chars...>() <= SignedLimit<T, U>::value);
 };
 
 template<typename T, typename U, char... Chars>
@@ -357,7 +357,7 @@ f32 operator""_f32(std_unsigned_long_long val);
  *
  * @param val the value
  * @return a value of the desired type
- * @throw #rocket::Underflow on type underflow
+ * @throw #rocket::Underflow if a nonzero value is too small to be represented, even as a subnormal value
  * @throw #rocket::Overflow on type overflow
  */
 f32 operator""_f32(std_long_double val);
@@ -375,7 +375,7 @@ f64 operator""_f64(std_unsigned_long_long val);
  *
  * @param val the value
  * @return a value of the desired type
- * @throw #rocket::Underflow on type underflow
+ * @throw #rocket::Underflow if a nonzero value is too small to be represented, even as a subnormal value
  * @throw #rocket::Overflow on type overflow
  */
 f64 operator""_f64(std_long_double val);

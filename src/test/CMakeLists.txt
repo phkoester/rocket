@@ -19,6 +19,7 @@ RocketAddTest(test-rocket-assert                       rocket                 te
 RocketAddTest(test-rocket-enum                         rocket                 test-enum.cc)
 RocketAddTest(test-rocket-functional                   rocket                 test-functional.cc)
 RocketAddTest(test-rocket-int128                       rocket                 test-int128.cc)
+RocketAddTest(test-rocket-literal                      rocket                 test-literal.cc)
 RocketAddTest(test-rocket-macro                        rocket                 test-macro.cc)
 RocketAddTest(test-rocket-scope                        rocket                 test-scope.cc)
 RocketAddTest(test-rocket-type-traits                  rocket                 test-type-traits.cc)

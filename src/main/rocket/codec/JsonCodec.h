@@ -49,10 +49,10 @@
  * hexadecimal digits), and `\U` (eight hexadecimal digits) are accepted. `\/` is accepted as well. A `\u`
  * high surrogate must be followed by a `\u` low surrogate; together, they yield a single code point.
  *
- * When writing, the escape sequences `\b`, `\t`, `\n`, `\f`, `\r`, `\"`, and `\\` are used. If a character
- * is classified as printable by the Unicode standard or is greater than U+FFFF, it appears verbatim in the
- * output, e.g., as `"a"` or `"€"`. Otherwise, it is written in hexadecimal notation, using the prefix `\u`
- * (four hexadecimal digits).
+ * When writing, the escape sequences `\b`, `\t`, `\n`, `\f`, `\r`, <code>\\\"</code>, and `\\` are used. If
+ * a character is classified as printable by the Unicode standard or is greater than U+FFFF, it appears
+ * verbatim in the output, e.g., as `"a"` or `"€"`. Otherwise, it is written in hexadecimal notation, using
+ * the prefix `\u` (four hexadecimal digits).
  *
  * ## Enumerations
  *

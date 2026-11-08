@@ -28,6 +28,52 @@ testString(u64 n, i32 add = 0) {
   return ret;
 }
 
+/// Calls @p fn with a contiguous source and noncontiguous sources, which are handled by separate code paths.
+template<typename Fn>
+void
+forEachSource(string_view input, Fn fn) {
+  SCOPED_TRACE(string(input));
+
+  {
+    SCOPED_TRACE("StringSource");
+    StringSource in(input);
+    fn(in);
+  }
+
+  {
+    SCOPED_TRACE("BufferedSource");
+    StringSource underlying(input);
+    BufferedSource in(underlying, 64);
+    fn(in);
+  }
+
+  {
+    SCOPED_TRACE("FileSource");
+    const auto temp = rocket::filesystem::tempFile();
+    {
+      FileSink out(temp);
+      out.Sink::write(input);
+    }
+    FileSource in(temp);
+    fn(in);
+  }
+}
+
+void
+expectCodePoint(Source& in, char32 expected, u64 expectedTell) {
+  const auto result = in.readCodePoint();
+  ASSERT_TRUE(result.has_value());
+  EXPECT_EQ(static_cast<char32>(*result), expected);
+  EXPECT_EQ(in.tell(), expectedTell);
+}
+
+void
+expectCodePointError(Source& in, ReadCodePointError expected) {
+  const auto result = in.readCodePoint();
+  ASSERT_FALSE(result.has_value());
+  EXPECT_EQ(result.error(), expected);
+}
+
 } // namespace
 
 // `TEST` ---------------------------------------------------------------------------------------------------
@@ -427,6 +473,50 @@ TEST(nio, StringSourceSeek) {
   EXPECT_EQ(in.tell(), 128);
 
   EXPECT_THAT([&] { in.seek(-200, SeekMode::end); }, Throws<system_error>());
+}
+
+// `readCodePoint` ..........................................................................................
+
+TEST(nio, readCodePointValid) {
+  // One, two, three, and four UTF-8 bytes
+  forEachSource("aä€\U0001F971", [](Source& in) {
+    expectCodePoint(in, U'a', 1);
+    expectCodePoint(in, U'ä', 3);
+    expectCodePoint(in, U'€', 6);
+    expectCodePoint(in, U'\U0001F971', 10);
+  });
+}
+
+TEST(nio, readCodePointEof) {
+  forEachSource("", [](Source& in) {
+    expectCodePointError(in, ReadCodePointError::Eof);
+    EXPECT_TRUE(in.eof());
+  });
+
+  forEachSource("a", [](Source& in) {
+    expectCodePoint(in, U'a', 1);
+    expectCodePointError(in, ReadCodePointError::Eof);
+    EXPECT_TRUE(in.eof());
+    expectCodePointError(in, ReadCodePointError::Eof); // Still at the end
+  });
+}
+
+TEST(nio, readCodePointInvalidLeadByte) {
+  for (const string_view input : { "\xFF"sv, "\x80"sv, "\xC0\x80"sv }) {
+    forEachSource(input, [](Source& in) { expectCodePointError(in, ReadCodePointError::InvalidUtf8); });
+  }
+}
+
+TEST(nio, readCodePointTruncatedSequence) {
+  for (const string_view input : { "\xC3"sv, "\xE2\x82"sv, "\xF0\x9F\x98"sv }) {
+    forEachSource(input, [](Source& in) { expectCodePointError(in, ReadCodePointError::InvalidUtf8); });
+  }
+}
+
+TEST(nio, readCodePointInvalidContinuation) {
+  for (const string_view input : { "\xC3" "A"sv, "\xE2\x82" "A"sv, "\xED\xA0\x80"sv }) { // Last: surrogate
+    forEachSource(input, [](Source& in) { expectCodePointError(in, ReadCodePointError::InvalidUtf8); });
+  }
 }
 
 // EOF

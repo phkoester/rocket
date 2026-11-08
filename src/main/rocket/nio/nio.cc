@@ -304,10 +304,13 @@ Source::readCodePoint() {
   s.push_back(c);
 
   // Read subsequent bytes
-  auto len = unicode::utf8::lengthFromByte(c);
+  const auto len = unicode::utf8::lengthFromByte(c, unicode::InvalidUnicodePolicy::Continue);
+  if (len == NPOS) {
+    return unexpected(InvalidUtf8); // Neither a single byte nor a lead byte
+  }
   for (u64 i = 0; i < len - 1; ++i) {
     if (read(c) != 1) {
-      return unexpected(Eof);
+      return unexpected(InvalidUtf8); // Truncated sequence: there was input, so this isn't a plain EOF
     }
     s.push_back(c);
   }
@@ -403,7 +406,7 @@ ContiguousSource::readln() {
   }
   string ret(str);
   return ret;
-#endif
+#endif // ROCKET_NIO_NO_CONTIGUOUS_SOURCE
 }
 
 ReadCodePointResult
@@ -416,6 +419,12 @@ ContiguousSource::readCodePoint() {
   }
 
   const auto str = this->str();
+  if (str.empty()) {
+    // `nextCodePoint` would throw for an empty string, which must not be mistaken for invalid UTF-8
+    status_.eof = true;
+    return unexpected(Eof);
+  }
+
   try {
     u64 pos = 0;
     auto ret = unicode::nextCodePoint(str, pos);
@@ -424,7 +433,7 @@ ContiguousSource::readCodePoint() {
   } catch (const exception&) {
     return unexpected(InvalidUtf8);
   }
-#endif
+#endif // ROCKET_NIO_NO_CONTIGUOUS_SOURCE
 }
 
 // `BufferedSource` -----------------------------------------------------------------------------------------

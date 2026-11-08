@@ -568,6 +568,9 @@ struct Source : Device {
   /**
    * Tries to read a valid code point from a source.
    *
+   * The result is #rocket::nio::Eof only if no bytes are left. A truncated or otherwise malformed sequence
+   * yields #rocket::nio::InvalidUtf8, after which the position of the source is unspecified.
+   *
    * @return a code point if one was read, an error otherwise
    */
   virtual ReadCodePointResult readCodePoint();
