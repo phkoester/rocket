@@ -55,7 +55,7 @@ main(i32 argc, char** argv) {
   // GoogleTest formats numbers in internal flags (e.g., `--gtest_internal_run_death_test`, which includes
   // the parent PID) using the global locale. Digit grouping (`3,512`) breaks parsing in death-test children,
   // so use the classic numeric facet
-  std::locale::global(std::locale(std::locale(), std::locale::classic(), std::locale::numeric));
+  // XXX std::locale::global(std::locale(std::locale(), std::locale::classic(), std::locale::numeric));
 
   optional<bool> help;
   const cl::OptionGroup general("General control");

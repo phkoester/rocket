@@ -299,7 +299,8 @@ TEST(chrono, zoned_time_format) {
   EXPECT_EQ(std::format("{:%H%%%Z}", berlin), "14%" + CEST);
   EXPECT_EQ(std::format("{}", berlin), "2024-07-01 14:00:00 " + CEST);
   EXPECT_EQ(std::format("{:>30}", berlin), std::format("{:>30}", "2024-07-01 14:00:00 " + CEST));
-  EXPECT_EQ(std::format("{:%FT%TZ}", zoned_time(locate_zone("UTC"), sys_time<milliseconds>(utc) + 5ms)),
+  EXPECT_EQ(
+    std::format("{:%FT%TZ}", zoned_time(locate_zone("UTC"), sys_time<milliseconds>(utc) + 5ms)),
     "2024-07-01T12:00:00.005Z");
 
   std::ostringstream os;

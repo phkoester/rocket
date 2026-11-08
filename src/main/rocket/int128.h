@@ -16,7 +16,7 @@
     #error This C++ version does not support 128-bit integers
   #endif
   #define ROCKET_HAS_INT128
-  #if defined(ROCKET_LINUX) || defined(ROCKET_MACOS)
+  #if defined(ROCKET_OS_LINUX) || defined(ROCKET_OS_MACOS)
     // Linux, macOS: native __i128
     #define ROCKET_HAS_INT128_FMT_FORMATTER
     #define ROCKET_HAS_INT128_LIMITS

@@ -57,8 +57,13 @@ Iterator<C>::Iterator(IteratorType type, basic_string_view<C> input, const local
   // 2. Resolve the locale
 
   UErrorCode status = U_ZERO_ERROR;
-  array<char, ULOC_FULLNAME_CAPACITY> locName{};
+  array<char, 512/* XXX ULOC_FULLNAME_CAPACITY */> locName {};
   uloc_getName(loc.name().c_str(), locName.data(), static_cast<i32>(locName.size()), &status);
+  nio::out.println("loc.name: {}", loc.name()); // XXX
+  nio::out.println("loc.name.size: {}", loc.name().size());
+  nio::out.println("ULOC_FULLNAME_CAPACITY: {}", ULOC_FULLNAME_CAPACITY);
+  nio::out.println("U_SUCCESS(status): {}", U_SUCCESS(status));
+  nio::out.println("status != U_STRING_NOT_TERMINATED_WARNING: {}", status != U_STRING_NOT_TERMINATED_WARNING);
   ROCKET_CHECK(loc, U_SUCCESS(status) and status != U_STRING_NOT_TERMINATED_WARNING, "Invalid locale");
 
   // 3. Create the break iterator
