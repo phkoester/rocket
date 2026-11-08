@@ -1,6 +1,6 @@
 # Rocket
 
-Rocket is a general-purpose library written in C++, helping you to create cross-platform CLI and GUI
+Rocket is a general-purpose library written in C++, helping you create cross-platform CLI and GUI
 applications.
 
 CMake Target               | Content

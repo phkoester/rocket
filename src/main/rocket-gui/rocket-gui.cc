@@ -88,7 +88,7 @@ loadSvg(string_view name, const wxSize& size) {
   return ret;
 }
 
-/// `wxBitmap::MakeDisabled()` only greyscales, so a black stroke stays black.
+// `wxBitmap::MakeDisabled()` only grayscales, so a black stroke stays black
 wxBitmapBundle
 makeDisabled(const wxBitmapBundle& bundle) {
   ROCKET_CHECK(bundle, bundle.IsOk());

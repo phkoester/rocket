@@ -158,7 +158,7 @@ printLocations( // NOLINT(*-complexity)
   const string blankPrefix = string(lineNumberWidth, ' ') + " | ";
 
   for (const auto& loc : locations) {
-    // Print source, line number, column column number, type, and message
+    // Print source, line number, column number, type, and message
 
     ROCKET_CHECK(locationsResult, not loc.message.empty());
     out.print("{}:{}:{}: ", locationsResult.config.source, loc.line, loc.column);

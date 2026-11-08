@@ -90,8 +90,8 @@ const std::string& setThreadName(std::string_view name = "");
 // Constants ------------------------------------------------------------------------------------------------
 
 /**
- * An exit value that may be used when the program cannot start, e.g. due to a a bad command line, a bad
- * environment or missing ressources.
+ * An exit value that may be used when the program cannot start, e.g. due to a bad command line, a bad
+ * environment or missing resources.
  *
  * Once the program started operating properly, `EXIT_FAILURE` (1) may be used to indicate a problem.
  */

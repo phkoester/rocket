@@ -589,7 +589,7 @@ operator|(const Interval<Left, Right>& lhs, const Interval<Left, Right>& rhs) {
     return { *pLhs, *pRhs };
   }
 
-  // There is an intersection: collaps the two intervals into a single interval
+  // There is an intersection: collapse the two intervals into a single interval
 
   return { Interval<Left, Right>(a, b) };
 }

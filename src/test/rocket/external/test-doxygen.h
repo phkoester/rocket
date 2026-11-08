@@ -53,7 +53,7 @@
 struct B {};
 
 /**
- * The irresistable #C class, packed with content.
+ * The irresistible #C class, packed with content.
  */
 struct C : B {};
 

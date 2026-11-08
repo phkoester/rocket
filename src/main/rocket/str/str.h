@@ -164,7 +164,7 @@ std::string capitalize(std::string_view str);
 std::u32string capitalize(std::u32string_view str);
 
 /**
- * Joins elements of a range into a string, using a a set of different separators.
+ * Joins elements of a range into a string, using a set of different separators.
  *
  * ## Examples
  *
@@ -183,7 +183,7 @@ std::u32string capitalize(std::u32string_view str);
  * @param end the end of the range
  * @param sep the separator to use between elements
  * @param lastSepIfTwo the last separator to use if there are exactly two elements
- * @param lastSepIfMore the last sseparator to use if there are more than two elements
+ * @param lastSepIfMore the last separator to use if there are more than two elements
  * @return a new string
  */
 template<typename Iterator>
@@ -278,7 +278,7 @@ void lowerIn(std::u32string& str);
 [[nodiscard]] std::vector<std::vector<std::string>> paragraphs(std::string_view str);
 
 /**
- * Makes a string view such that it has up to @p count leading occurrencies of @p sub removed.
+ * Makes a string view such that it has up to @p count leading occurrences of @p sub removed.
  *
  * The underlying string of @p str must remain valid for the lifetime of the returned string view.
  *

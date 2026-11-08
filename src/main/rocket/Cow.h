@@ -29,8 +29,8 @@ struct Cow {
   /**
    * @ctor
    *
-   * @param ref the value to reference. If the types @p T and @p U are the same, The reference must remain
-   *   valid for the lifetime of the #Cow.
+   * @param ref the value to reference. If the types @p T and @p U are the same, the reference must remain
+   *   valid for the lifetime of the #Cow
    */
   explicit Cow(const T& ref) : choice_(Ref(ref)) {}
 

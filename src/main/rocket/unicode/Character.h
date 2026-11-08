@@ -58,7 +58,7 @@ struct BasicCharacter {
   /**
    * @ctor
    *
-   * Constructa a character or a character view from a string view.
+   * Constructs a character or a character view from a string view.
    *
    * @param str a string. The string must not be empty. If the instance is a character view, the string must
    *   remain valid for the lifetime of the instance

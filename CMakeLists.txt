@@ -309,13 +309,13 @@ if(ROCKET_GUI)
   )
 
   block()
-    # Don't change `BUILD_SHARED_LIBS`here
+    # Don't change `BUILD_SHARED_LIBS` here
     set(wxUSE_UNICODE_UTF8 ON)
     FetchContent_MakeAvailable(wxWidgets)
 
     foreach(target IN ITEMS wxscintilla)
       if(TARGET ${target})
-        if(GAIA_CXX_COMPILER_GNU OR GAIA_CXX_COMPILER_CLANG)
+        if(GAIA_CXX_COMPILER_GNU OR GAIA_CXX_COMPILER_LLVM)
           target_compile_options(${target} PRIVATE -Wno-deprecated-declarations)
         endif()
       endif()

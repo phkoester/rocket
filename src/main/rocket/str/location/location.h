@@ -46,14 +46,14 @@ struct Position {
   /**
    * The position to look for.
    *
-   * There must be a character bondary at this position. The position is highlighted with a caret (`^`)
+   * There must be a character boundary at this position. The position is highlighted with a caret (`^`)
    * underneath.
    */
   u64 position;
   /**
    * The ranges associated with this position.
    *
-   * There must be character bondaries at the ranges' lower and upper positions. The ranges are underlined
+   * There must be character boundaries at the ranges' lower and upper positions. The ranges are underlined
    * with the tilde (`~`).
    */
   Ranges ranges {}; // NOLINT

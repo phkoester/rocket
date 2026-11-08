@@ -129,7 +129,7 @@ FileSink::~FileSink() {
 
   if (closeOnDestroy_) {
     [[maybe_unused]] const auto result = fclose(file_); // NOLINT
-    NIO_LOG("fclose=" << result << ", file=" << file_ << ", ferror=" << ferror(file_));
+    NIO_LOG("fclose=" << result);
   }
 }
 
@@ -522,6 +522,13 @@ BufferedSource::seek(i64 offset, SeekMode mode) { // NOLINT
     return false;
   }
 
+  // The underlying source is ahead of our position by the unread part of the buffer, so a relative seek has
+  // to compensate for that
+  if (mode == SeekMode::cur && bufPos_ != NPOS) {
+    const i64 unread = safe<i64>(oldTell) - safe<i64>(bufPos_ + pos_);
+    offset -= unread;
+  }
+
   // Do the job
   const auto ret = underlying_.seek(offset, mode);
 
@@ -778,7 +785,7 @@ StreamSource::read(span<u8> out) {
     return 0;
   }
 
-  // If less bytes than `out.size()` are read, `bad`, `fail`, and `eof` all remain `false`
+  // If fewer bytes than `out.size()` are read, `bad`, `fail`, and `eof` all remain `false`
   is_.read(reinterpret_cast<char*>(out.data()), safe<streamsize>(out.size()));
   auto count = is_.gcount();
   NIO_LOG("count=" << count << ", out.size=" << out.size() << ", bad=" << is_.bad() << ", fail=" << is_.fail() << ", eof=" << is_.eof());

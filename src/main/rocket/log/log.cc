@@ -243,7 +243,6 @@ Out::setPattern(string_view pattern, const TimePoint& time) {
   out_ = nullptr;
 
   auto path = expand(pattern, time, true);
-  // Always append to avoid data loss
   try {
     fileOut_ = make_unique<nio::FileSink>(path);
   } catch (const exception& ex) {

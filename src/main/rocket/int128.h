@@ -56,7 +56,7 @@ using u128 = boost::int128::uint128; ///< An unsigned 128-bit integer type.
 /// @spec_std_numeric_limits{#rocket::i128}
 template<>
 struct std::numeric_limits<rocket::i128> {
-  /// Whether tyoe is signed.
+  /// Whether the type is signed.
   static constexpr bool is_signed = true;
 
   /// Maximum value.
@@ -71,7 +71,7 @@ struct std::numeric_limits<rocket::i128> {
 /// @spec_std_numeric_limits{#rocket::u128}
 template<>
 struct std::numeric_limits<rocket::u128> {
-  /// Whether tyoe is signed.
+  /// Whether the type is signed.
   static constexpr bool is_signed = false;
 
   /// Maximum value.

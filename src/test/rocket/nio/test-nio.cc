@@ -175,6 +175,79 @@ TEST(nio, BufferedSourceSeek) {
   EXPECT_EQ(buffered.underlying_.tell(), 20);
 }
 
+TEST(nio, BufferedSourceSeekRelative) {
+  const string s128 = testString(128);
+  StringSource in(s128);
+  BufferedSource buffered(in, 64);
+
+  char c = '\0';
+  EXPECT_EQ(buffered.Source::read(c), 1);
+  EXPECT_EQ(c, '0');
+  EXPECT_EQ(buffered.tell(), 1);
+  EXPECT_EQ(buffered.underlying_.tell(), 64);
+
+  // Backward, buffer hit
+
+  EXPECT_TRUE(buffered.seek(-1, SeekMode::cur));
+  EXPECT_EQ(buffered.bufPos_, 0);
+  EXPECT_EQ(buffered.pos_, 0);
+  EXPECT_EQ(buffered.end_, 64);
+  EXPECT_EQ(buffered.tell(), 0);
+  EXPECT_EQ(buffered.underlying_.tell(), 64);
+
+  EXPECT_EQ(buffered.Source::read(c), 1);
+  EXPECT_EQ(c, '0');
+
+  // Forward, buffer hit
+
+  EXPECT_TRUE(buffered.seek(5, SeekMode::cur));
+  EXPECT_EQ(buffered.bufPos_, 0);
+  EXPECT_EQ(buffered.pos_, 6);
+  EXPECT_EQ(buffered.end_, 64);
+  EXPECT_EQ(buffered.tell(), 6);
+  EXPECT_EQ(buffered.underlying_.tell(), 64);
+
+  EXPECT_EQ(buffered.Source::read(c), 1);
+  EXPECT_EQ(c, '6');
+  EXPECT_EQ(buffered.tell(), 7);
+
+  // Zero offset
+
+  EXPECT_TRUE(buffered.seek(0, SeekMode::cur));
+  EXPECT_EQ(buffered.pos_, 7);
+  EXPECT_EQ(buffered.tell(), 7);
+  EXPECT_EQ(buffered.underlying_.tell(), 64);
+
+  // Forward, beyond the buffer
+
+  EXPECT_TRUE(buffered.seek(100, SeekMode::cur));
+  EXPECT_EQ(buffered.bufPos_, 107);
+  EXPECT_EQ(buffered.pos_, 0);
+  EXPECT_EQ(buffered.end_, 0);
+  EXPECT_EQ(buffered.tell(), 107);
+  EXPECT_EQ(buffered.underlying_.tell(), 107);
+
+  EXPECT_EQ(buffered.Source::read(c), 1);
+  EXPECT_EQ(c, '7');
+  EXPECT_EQ(buffered.bufPos_, 107);
+  EXPECT_EQ(buffered.pos_, 1);
+  EXPECT_EQ(buffered.end_, 21);
+  EXPECT_EQ(buffered.tell(), 108);
+  EXPECT_EQ(buffered.underlying_.tell(), 128);
+
+  // Backward, before the buffer
+
+  EXPECT_TRUE(buffered.seek(-100, SeekMode::cur));
+  EXPECT_EQ(buffered.bufPos_, 8);
+  EXPECT_EQ(buffered.pos_, 0);
+  EXPECT_EQ(buffered.end_, 0);
+  EXPECT_EQ(buffered.tell(), 8);
+  EXPECT_EQ(buffered.underlying_.tell(), 8);
+
+  EXPECT_EQ(buffered.Source::read(c), 1);
+  EXPECT_EQ(c, '8');
+}
+
 TEST(nio, FileSourceDoesNotExist) {
   EXPECT_THAT(
     [&] { const FileSource in("/file/does/not/exist"); },

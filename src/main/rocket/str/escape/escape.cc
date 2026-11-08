@@ -364,7 +364,7 @@ unescapeCString(string_view input, const CStringConfig& config, Positions* posit
           case 'b': // Backspace = 8
             ret.push_back('\b');
             break;
-          case 't': // Horzontal tab = 9
+          case 't': // Horizontal tab = 9
             ret.push_back('\t');
             break;
           case 'n': // Line feed = 10
@@ -542,7 +542,7 @@ unescapeRegex(string_view input, Positions* positions) {
           case '^': // Circumflex = 94
           case '{': // Left brace = 123
           case '|': // Vertical bar = 124
-          case '}': // Right brace = 123
+          case '}': // Right brace = 125
             ret.push_back(static_cast<char>(*cp2));
             break;
           case 'x': {

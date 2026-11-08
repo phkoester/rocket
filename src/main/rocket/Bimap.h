@@ -93,12 +93,12 @@ bool
 insertOrReplace(Map& map, const K& k, const V& v) {
   if (auto it = map.right.find(v); it != map.right.end()) {
     if (it->second == k) {
-      return true;
+      return false;
     }
     map.right.erase(it);
   }
   if (auto it = map.left.find(k); it != map.left.end()) {
-    return map.left.replace_data(it, v);
+    return not map.left.replace_data(it, v);
   }
   return map.insert({ k, v  }).second;
 }

@@ -39,7 +39,7 @@ addArg(vector<string>& out, const string& arg, set<string>& seenFiles) { // NOLI
       }
       const string absFile = absPath.string();
       if (not seenFiles.insert(absFile).second) {
-        ROCKET_FAIL("Argument file `{}` causes infinite loop", file);
+        ROCKET_FAIL("Argument file `{}` appears twice", file);
       }
 
       // Read the argument file, add arguments
@@ -636,9 +636,9 @@ CommandLine::ParserState::updateOpt(const Option& opt, bool flag) {
     if (it == seenOpts.end()) {
       return;
     }
-    auto& occurrs = it->second;
-    if (occurrs > 0) {
-      --occurrs;
+    auto& occurs = it->second;
+    if (occurs > 0) {
+      --occurs;
     }
   }
 }

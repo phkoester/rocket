@@ -810,7 +810,7 @@ private:
 /**
  * The class #StreamSource provides support for #std::istream.
  *
- * Using I/O streams is generally discouraged, because it’s not partable and not efficient. Wherever
+ * Using I/O streams is generally discouraged, because it’s not portable and not efficient. Wherever
  * possible, use #rocket::nio::FileSource instead.
  */
 struct StreamSource : Source {

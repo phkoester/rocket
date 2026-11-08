@@ -1,7 +1,7 @@
 /**
  * @file hash.h
  *
- * Hashing utiltities.
+ * Hashing utilities.
  */
 
 #pragma once

@@ -57,11 +57,11 @@ FILE*
 open(const std::filesystem::path& path, std::string_view modes) {
 #ifdef ROCKET_OS_WINDOWS
   FILE* file = nullptr;
-  fopen_s(&file, path.string().c_str(), string(modes).c_str());
-  IO_LOG("path=" << path << ", fopen_s=" << result << ", file=" << file_ << ", ferror=" << (file_ ? ferror(file_) : -1));
+  const auto result = fopen_s(&file, path.string().c_str(), string(modes).c_str());
+  IO_LOG("path=" << path << ", fopen_s=" << result << ", file=" << file << ", ferror=" << (file ? ferror(file) : -1));
 #else
   FILE* file = fopen(path.string().c_str(), string(modes).c_str()); // NOLINT
-  IO_LOG("path=" << path << ", fopen=" << file_ << ", ferror=" << (file_ ? ferror(file_) : -1));
+  IO_LOG("path=" << path << ", fopen=" << file << ", ferror=" << (file ? ferror(file) : -1));
 #endif
   return file;
 }

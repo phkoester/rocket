@@ -45,7 +45,7 @@ function(RocketAddBench name dir)
       "BINARY_DIR=${CMAKE_CURRENT_BINARY_DIR}"
       "CONFIG=$<CONFIG>"
       "CONFIGS=${configs}"
-      "SOURCE_DIR=${CMAKE_SOURCE_DIR}/src/test/${dir}"
+      "SOURCE_DIR=${CMAKE_SOURCE_DIR}/src/bench/${dir}"
       ${env}
   )
 endfunction()
