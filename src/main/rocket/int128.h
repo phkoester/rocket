@@ -6,7 +6,7 @@
 
 #pragma once
 
-#if defined(ROCKET_OS_WINDOWS)
+#ifdef ROCKET_OS_WINDOWS
   // Windows: Boost.Int128
   #define ROCKET_HAS_BOOST_INT128
   #define ROCKET_HAS_INT128_LIMITS

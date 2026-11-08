@@ -357,7 +357,7 @@ struct FileSink : Sink {
   ~FileSink() override;
 
   /// @member_op_cast{FILE*}
-  explicit operator FILE*() { return file_; }
+  explicit operator FILE*() { return file_; } // NOLINT
 
   /// @member_op_cast{const FILE*}
   explicit operator const FILE*() const { return file_; }
@@ -523,7 +523,7 @@ struct Source : Device {
    *
    * @return a reference to an input stream
    */
-  virtual std::istream& istream() = 0;
+  [[nodiscard]] virtual std::istream& istream() = 0;
 
   /**
    * Reads a single character from a source.
@@ -593,7 +593,7 @@ struct Source : Device {
    *
    * @return the current input position, or #rocket::NPOS if the position cannot be determined
    */
-  virtual u64 tell() = 0;
+  [[nodiscard]] virtual u64 tell() = 0;
 
 protected:
 
@@ -614,7 +614,7 @@ struct ContiguousSource : Source {
    *
    * @return the bytes available in the contiguous source
    */
-  virtual std::span<const u8> bytes() const = 0;
+  [[nodiscard]] virtual std::span<const u8> bytes() const = 0;
 
   std::string readln() override;
 
@@ -625,7 +625,7 @@ struct ContiguousSource : Source {
    *
    * @return the string available in the contiguous source
    */
-  virtual std::string_view str() const = 0;
+  [[nodiscard]] virtual std::string_view str() const = 0;
 
 protected:
 
@@ -657,7 +657,7 @@ struct BufferedSource : Source {
 
   bool seek(i64 offset, SeekMode mode = SeekMode::beg) override; // NOLINT
 
-  u64 tell() override;
+  [[nodiscard]] u64 tell() override;
 
 ROCKET_TEST_PRIVATE:
 
@@ -710,7 +710,7 @@ struct FileSource : Source {
 
   bool seek(i64 offset, SeekMode mode = SeekMode::beg) override; // NOLINT
 
-  u64 tell() override;
+  [[nodiscard]] u64 tell() override;
 
 ROCKET_TEST_PRIVATE:
 
@@ -740,7 +740,7 @@ ROCKET_TEST_PRIVATE:
     return false;
   }
 
-  u64 tell() override { return NPOS; }
+  [[nodiscard]] u64 tell() override { return NPOS; }
 
 private:
 
@@ -765,30 +765,30 @@ struct SpanSource : ContiguousSource {
 
   ~SpanSource() override = default;
 
-  std::span<const u8> bytes() const override { return in_.subspan(pos_); }
+  [[nodiscard]] std::span<const u8> bytes() const override { return in_.subspan(pos_); }
 
-  i32 handle() const override { return -1; }
+  [[nodiscard]] i32 handle() const override { return -1; }
 
-  std::istream& istream() override;
+  [[nodiscard]] std::istream& istream() override;
 
   /**
    * Returns the input span the source was constructed with.
    *
    * @return the input span that the source was constructed with
    */
-  std::span<const u8> in() const { return in_; }
+  [[nodiscard]] std::span<const u8> in() const { return in_; }
 
   u64 read(std::span<u8> out) override;
 
   bool seek(i64 offset, SeekMode mode = SeekMode::beg) override; // NOLINT
 
-  std::string_view
+  [[nodiscard]] std::string_view
   str() const override {
     const auto bytes = this->bytes();
     return { reinterpret_cast<const char*>(bytes.data()), bytes.size() };
   }
 
-  u64 tell() override { return bad() ? NPOS : static_cast<u64>(pos_); }
+  [[nodiscard]] u64 tell() override { return bad() ? NPOS : static_cast<u64>(pos_); }
 
 private:
 
@@ -821,7 +821,7 @@ struct StreamSource : Source {
 
   bool seek(i64 offset, SeekMode mode = SeekMode::beg) override; // NOLINT
 
-  u64 tell() override;
+  [[nodiscard]] u64 tell() override;
 
 private:
 
@@ -846,30 +846,30 @@ struct StringSource : ContiguousSource {
 
   ~StringSource() override = default;
 
-  std::span<const u8>
+  [[nodiscard]] std::span<const u8>
   bytes() const override {
     const auto str = this->str();
     return { reinterpret_cast<const u8*>(str.data()), str.size() };
   }
 
-  i32 handle() const override { return -1; }
+  [[nodiscard]] i32 handle() const override { return -1; }
 
   /**
    * Returns the input string the source was constructed with.
    *
    * @return the input string that the source was constructed with
    */
-  std::string_view in() const { return in_; }
+  [[nodiscard]] std::string_view in() const { return in_; }
 
-  std::istream& istream() override;
+  [[nodiscard]] std::istream& istream() override;
 
   u64 read(std::span<u8> out) override;
 
   bool seek(i64 offset, SeekMode mode = SeekMode::beg) override; // NOLINT
 
-  std::string_view str() const override { return in_.substr(pos_); }
+  [[nodiscard]] std::string_view str() const override { return in_.substr(pos_); }
 
-  u64 tell() override { return bad() ? NPOS : static_cast<u64>(pos_); }
+  [[nodiscard]] u64 tell() override { return bad() ? NPOS : static_cast<u64>(pos_); }
 
 private:
 

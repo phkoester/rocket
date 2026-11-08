@@ -25,7 +25,7 @@ messageOf(cbor_error_code errorCode) {
 
 u64
 positionOf(span<const u8> cbor, u64 index) {
-  unsigned char* data = const_cast<unsigned char*>(reinterpret_cast<const unsigned char*>(cbor.data()));
+  auto* const data = const_cast<unsigned char*>(reinterpret_cast<const unsigned char*>(cbor.data()));
   u64 itemIndex = 0;
   u64 pos = 0;
   cbor_decoder_result result; // NOLINT

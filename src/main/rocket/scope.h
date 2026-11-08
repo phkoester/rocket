@@ -358,17 +358,17 @@ scope_success(EF) -> scope_success<EF>;
 /**
  * Makes an anonymous #rocket::scope_exit guard that calls @p fn whenever the current scope is left.
  */
-#define ROCKET_SCOPE_EXIT(fn) ::rocket::scope_exit ROCKET_ID()(fn)
+#define ROCKET_SCOPE_EXIT(fn) const ::rocket::scope_exit ROCKET_ID()(fn)
 
 /**
  * Makes an anonymous #rocket::scope_fail guard that calls @p fn if the current scope is left by an
  * exception.
  */
-#define ROCKET_SCOPE_FAIL(fn) ::rocket::scope_fail ROCKET_ID()(fn)
+#define ROCKET_SCOPE_FAIL(fn) const ::rocket::scope_fail ROCKET_ID()(fn)
 
 /**
  * Makes an anonymous #rocket::scope_success guard that calls @p fn if the current scope is left normally.
  */
-#define ROCKET_SCOPE_SUCCESS(fn) ::rocket::scope_success ROCKET_ID()(fn)
+#define ROCKET_SCOPE_SUCCESS(fn) const ::rocket::scope_success ROCKET_ID()(fn)
 
 // EOF

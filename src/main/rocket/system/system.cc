@@ -286,12 +286,12 @@ get() {
   unordered_map<string, string> ret;
 
 #ifdef ROCKET_OS_WINDOWS
-  char** p = _environ;
+  char** p = _environ; // NOLINT
 #else
-  char** p = environ;
+  char** p = environ; // NOLINT
 #endif
 
-while (*p != nullptr) {
+  while (*p != nullptr) {
     const string_view entry(*p);
     string_view name, val;
     auto eq = entry.find('=');

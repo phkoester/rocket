@@ -57,9 +57,10 @@ struct TypeId {
    * @ctor
    *
    * @tparam T the type to use
+   * @param type a type identity
    */
   template<typename T>
-  explicit TypeId(std::type_identity<T>) : type_(typeid(T)) {}
+  explicit TypeId([[maybe_unused]] std::type_identity<T> type) : type_(typeid(T)) {}
 
   /**
    * @ctor
@@ -93,7 +94,7 @@ struct TypeId {
 
 private:
 
-  const std::type_index type_;
+  std::type_index type_;
 };
 
 } // namespace rocket

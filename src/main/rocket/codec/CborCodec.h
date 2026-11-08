@@ -145,9 +145,9 @@ struct CborConsumerImpl<DataType::Integer, I> {
       return CborItem<I>(cbor_build_uint64(static_cast<u64>(val)));
     } else if constexpr (sizeof(I) == 16) {
       CborItem<I> ret(cbor_new_definite_array(2));
-      CborItem<u64> hi = CborItem<u64>(cbor_build_uint64(static_cast<u64>(val >> 64)));
+      auto hi = CborItem<u64>(cbor_build_uint64(static_cast<u64>(val >> 64)));
       ROCKET_EXPECT(cbor_array_push(ret.ptr(), hi.ptr()));
-      CborItem<u64> lo = CborItem<u64>(cbor_build_uint64(static_cast<u64>(val)));
+      auto lo = CborItem<u64>(cbor_build_uint64(static_cast<u64>(val)));
       ROCKET_EXPECT(cbor_array_push(ret.ptr(), lo.ptr()));
       return ret;
     } else {
@@ -1180,7 +1180,7 @@ struct CborCodec : Codec<CborConsumer, CborProducer> {
     std_size_t bufSize; // NOLINT
     cbor_serialize_alloc(item.ptr(), &buf, &bufSize);
     ROCKET_EXPECT(bufSize > 0, "Cannot allocate memory");
-    std::unique_ptr<unsigned char, decltype(&std::free)> ptr(buf, &std::free);
+    const std::unique_ptr<unsigned char, decltype(&std::free)> ptr(buf, &std::free);
     return { buf, buf + bufSize };
   }
 

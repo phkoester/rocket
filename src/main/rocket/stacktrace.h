@@ -11,7 +11,7 @@
 
 #include <version>
 
-#if defined(ROCKET_OS_MACOS)
+#ifdef ROCKET_OS_MACOS
   #ifdef __cpp_lib_stacktrace
     #error This C++ version supports stack traces
   #endif
