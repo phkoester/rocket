@@ -17,10 +17,10 @@ namespace {
 
 string
 nestedException(const string& type) {
-#ifdef ROCKET_OS_LINUX
+#if defined(ROCKET_OS_LINUX) // NOLINT
   // Linux
   return "`std::_Nested_exception<" + type + ">`";
-#elifdef(ROCKET_OS_MACOS)
+#elif defined(ROCKET_OS_MACOS) // NOLINT
   // macOS
   return "`std::__nested<" + type + ">`";
 #else
