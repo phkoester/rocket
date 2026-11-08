@@ -6,6 +6,47 @@
 
 #include "rocket/io/io.h"
 
+namespace {
+
+// Local constants ------------------------------------------------------------------------------------------
+
+// These have 39 digits, the same as the greatest `u128`, but are greater. Multiplying them out wraps around
+// to a value that can look perfectly valid
+const string FOUR_E38 = "4" + string(38, '0');
+const string NINE_E38 = "9" + string(38, '0');
+
+const string TWO_TO_128 = "340282366920938463463374607431768211456";
+
+// Local functions ------------------------------------------------------------------------------------------
+
+/// Checks that reading @p input fails, consumes all of it, and leaves the destination unchanged.
+template<typename T>
+void
+expectOverflow(const string& input) {
+  SCOPED_TRACE(input);
+
+  auto val = static_cast<T>(42);
+  auto is = io::is(input);
+  is >> val;
+  EXPECT_ISTREAM(is, true, true, static_cast<i32>(input.size()));
+  EXPECT_EQ(val, static_cast<T>(42));
+}
+
+/// Checks that reading @p input succeeds, consumes all of it, and yields @p expected.
+template<typename T>
+void
+expectValue(const string& input, T expected) {
+  SCOPED_TRACE(input);
+
+  auto val = static_cast<T>(42);
+  auto is = io::is(input);
+  is >> val;
+  EXPECT_ISTREAM(is, false, true, static_cast<i32>(input.size()));
+  EXPECT_EQ(val, expected);
+}
+
+} // namespace
+
 // `TEST` ---------------------------------------------------------------------------------------------------
 
 TEST(io, i128OpInput) {
@@ -180,6 +221,46 @@ TEST(io, i128OpInput) {
     is >> val;
     EXPECT_ISTREAM(is, true, true, 41);
   }
+}
+
+TEST(io, i128OpInputOverflow) {
+  expectOverflow<i128>(FOUR_E38);
+  expectOverflow<i128>("+" + FOUR_E38);
+  expectOverflow<i128>("-" + FOUR_E38);
+  expectOverflow<i128>(NINE_E38);
+  expectOverflow<i128>("-" + NINE_E38);
+  expectOverflow<i128>(TWO_TO_128);
+  expectOverflow<i128>("-" + TWO_TO_128);
+  expectOverflow<i128>("1" + string(39, '0'));
+}
+
+TEST(io, i128OpInputOverflowStopsAtNonDigit) {
+  auto val = static_cast<i128>(42);
+  const string input = FOUR_E38 + "x"; // `io::is` only keeps a view, so this must outlive the stream
+  auto is = io::is(input);
+  is >> val;
+  EXPECT_ISTREAM(is, true, false, 39);
+  EXPECT_EQ(val, static_cast<i128>(42));
+}
+
+TEST(io, i128OpInputLimits) {
+  using limits = numeric_limits<i128>;
+
+  expectValue<i128>("170141183460469231731687303715884105727", limits::max());
+  expectValue<i128>("+170141183460469231731687303715884105727", limits::max());
+  expectValue<i128>("-170141183460469231731687303715884105728", limits::min());
+  expectValue<i128>("-170141183460469231731687303715884105727", limits::min() + 1);
+}
+
+TEST(io, i128OpInputLeadingZeros) {
+  using limits = numeric_limits<i128>;
+
+  expectValue<i128>(string(50, '0') + "1", static_cast<i128>(1));
+  expectValue<i128>("-" + string(50, '0') + "1", static_cast<i128>(-1));
+  expectValue<i128>(string(10, '0') + "170141183460469231731687303715884105727", limits::max());
+  expectValue<i128>("-" + string(10, '0') + "170141183460469231731687303715884105728", limits::min());
+  expectValue<i128>(string(50, '0'), static_cast<i128>(0));
+  expectValue<i128>("-0", static_cast<i128>(0));
 }
 
 TEST(io, i128OpOutput) {
@@ -374,6 +455,42 @@ TEST(io, u128OpInput) {
     is >> val;
     EXPECT_ISTREAM(is, true, true, 41);
   }
+}
+
+TEST(io, u128OpInputOverflow) {
+  expectOverflow<u128>(FOUR_E38); // Used to yield 59717633079061536536625392568231788544
+  expectOverflow<u128>("+" + FOUR_E38);
+  expectOverflow<u128>(NINE_E38);
+  expectOverflow<u128>(TWO_TO_128); // Wraps around to 0
+  expectOverflow<u128>("680564733841876926926749214863536422912"); // 2^129, also wraps around to 0
+  expectOverflow<u128>("1" + string(39, '0'));
+
+  expectOverflow<u128>("-" + FOUR_E38); // Handled by the `i128` overload
+}
+
+TEST(io, u128OpInputOverflowStopsAtNonDigit) {
+  auto val = static_cast<u128>(42);
+  const string input = FOUR_E38 + "x"; // `io::is` only keeps a view, so this must outlive the stream
+  auto is = io::is(input);
+  is >> val;
+  EXPECT_ISTREAM(is, true, false, 39);
+  EXPECT_EQ(val, static_cast<u128>(42));
+}
+
+TEST(io, u128OpInputLimits) {
+  using limits = numeric_limits<u128>;
+
+  expectValue<u128>("340282366920938463463374607431768211455", limits::max());
+  expectValue<u128>("+340282366920938463463374607431768211455", limits::max());
+  expectValue<u128>("340282366920938463463374607431768211454", limits::max() - 1);
+}
+
+TEST(io, u128OpInputLeadingZeros) {
+  using limits = numeric_limits<u128>;
+
+  expectValue<u128>(string(50, '0') + "1", static_cast<u128>(1));
+  expectValue<u128>(string(10, '0') + "340282366920938463463374607431768211455", limits::max());
+  expectValue<u128>(string(50, '0'), static_cast<u128>(0));
 }
 
 TEST(io, u128OpOutput) {

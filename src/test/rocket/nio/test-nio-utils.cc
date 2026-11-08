@@ -14,28 +14,23 @@ namespace {
 
 // Local functions ------------------------------------------------------------------------------------------
 
+/// Calls @p fn with a contiguous source and noncontiguous sources, which are handled by separate code paths.
+template<typename Fn>
 void
-expectReadUntilUnescapedChar(Source& in, char c, const optional<string>& expected, u64 expectedTell) {
-  EXPECT_EQ(readUntilUnescapedChar(in, c), expected);
-  EXPECT_EQ(in.tell(), expectedTell);
-}
-
-/// Checks a contiguous source and noncontiguous sources, which are handled by separate code paths.
-void
-testReadUntilUnescapedChar(string_view input, char c, const optional<string>& expected, u64 expectedTell) {
+forEachSource(string_view input, Fn fn) {
   SCOPED_TRACE(string(input));
 
   {
     SCOPED_TRACE("StringSource");
     StringSource in(input);
-    expectReadUntilUnescapedChar(in, c, expected, expectedTell);
+    fn(in);
   }
 
   {
     SCOPED_TRACE("BufferedSource");
     StringSource underlying(input);
     BufferedSource in(underlying, 64);
-    expectReadUntilUnescapedChar(in, c, expected, expectedTell);
+    fn(in);
   }
 
   {
@@ -46,8 +41,32 @@ testReadUntilUnescapedChar(string_view input, char c, const optional<string>& ex
       out.Sink::write(input);
     }
     FileSource in(temp);
-    expectReadUntilUnescapedChar(in, c, expected, expectedTell);
+    fn(in);
   }
+}
+
+void
+testReadUntilUnescapedChar(string_view input, char c, const optional<string>& expected, u64 expectedTell) {
+  forEachSource(input, [&](Source& in) {
+    EXPECT_EQ(readUntilUnescapedChar(in, c), expected);
+    EXPECT_EQ(in.tell(), expectedTell);
+  });
+}
+
+void
+testSkipUntilString(string_view input, string_view str, bool expected, u64 expectedTell) {
+  forEachSource(input, [&](Source& in) {
+    EXPECT_EQ(skipUntilString(in, str), expected);
+    EXPECT_EQ(in.tell(), expectedTell);
+  });
+}
+
+void
+testSkipCComments(string_view input, u64 expectedTell) {
+  forEachSource(input, [&](Source& in) {
+    skip(in, true, false);
+    EXPECT_EQ(in.tell(), expectedTell);
+  });
 }
 
 } // namespace
@@ -88,6 +107,48 @@ TEST(nioUtils, readUntilUnescapedCharNotFound) {
   testReadUntilUnescapedChar(R"(abc)", '"', nullopt, 0);
   testReadUntilUnescapedChar(R"(a\")", '"', nullopt, 0);
   testReadUntilUnescapedChar(R"(a\\\")", '"', nullopt, 0);
+}
+
+TEST(nioUtils, skipUntilStringFound) {
+  testSkipUntilString("*/x", "*/", true, 2);
+  testSkipUntilString("a*/x", "*/", true, 3);
+  testSkipUntilString("*/*/", "*/", true, 2); // Stops after the first occurrence
+  testSkipUntilString("a\nb", "\n", true, 2);
+}
+
+TEST(nioUtils, skipUntilStringPartialMatches) {
+  // The character that ends a partial match may start the actual match
+  testSkipUntilString("**/x", "*/", true, 3);
+  testSkipUntilString("***/x", "*/", true, 4);
+  testSkipUntilString("*x*/y", "*/", true, 4);
+
+  // The tail of a partial match may be the start of the actual match
+  testSkipUntilString("aaab", "aab", true, 4);
+  testSkipUntilString("abababc", "ababc", true, 7);
+}
+
+TEST(nioUtils, skipUntilStringNotFound) {
+  // The source is advanced to its end
+  testSkipUntilString("", "*/", false, 0);
+  testSkipUntilString("**", "*/", false, 2);
+  testSkipUntilString("abc", "*/", false, 3);
+}
+
+TEST(nioUtils, skipCCommentsEndingInAsterisks) {
+  testSkipCComments("/***/x", 5);
+  testSkipCComments("/****/x", 6);
+  testSkipCComments("/** a **/x", 9);
+  testSkipCComments("  /** a **/  x", 13);
+  testSkipCComments("/** a **/", 9);
+}
+
+TEST(nioUtils, skipCCommentsUnterminated) {
+  forEachSource("/** a *", [&](Source& in) {
+    EXPECT_THAT(
+      [&] { skip(in, true, false); },
+      throwsInputFailure(0, EndsWith("Unterminated C-style comment")));
+    EXPECT_EQ(in.tell(), 0); // The source must not be advanced on failure
+  });
 }
 
 // EOF

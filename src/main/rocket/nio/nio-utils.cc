@@ -545,7 +545,11 @@ skipUntilString(nio::Source& in, string_view str) {
   }
 #endif
 
-  string seen;
+  // Noncontiguous source: compare the last `str.size()` characters. A partial match must not simply be
+  // discarded on a mismatch, because its tail may be the start of the actual match, as with "*/" in "**/" or
+  // "aab" in "aaab"
+
+  string window;
 
   while (true) {
     char c; // NOLINT
@@ -553,14 +557,12 @@ skipUntilString(nio::Source& in, string_view str) {
       break;
     }
 
-    const u64 index = seen.size();
-    if (c == str[index]) {
-      seen.push_back(c);
-      if (seen == str) {
-        return true;
-      }
-    } else {
-      seen.clear();
+    window.push_back(c);
+    if (window.size() > str.size()) {
+      window.erase(window.begin());
+    }
+    if (window == str) {
+      return true;
     }
   }
 

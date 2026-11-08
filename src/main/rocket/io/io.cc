@@ -9,7 +9,7 @@
 
 #include <array>
 #include <iostream>
-#include <ranges>
+#include <optional>
 
 using namespace rocket;
 using namespace std;
@@ -101,6 +101,30 @@ tellg(std::istream& is) noexcept {
 namespace {
 
 /**
+ * Converts decimal digits to an unsigned value.
+ *
+ * The check happens before each step, so no intermediate result can overflow. Checking afterward whether the
+ * value got smaller does not work, because a value that wraps around can still end up larger than before.
+ *
+ * @param digits the decimal digits
+ * @param limit the greatest value allowed
+ * @return the value, or null if it exceeds @p limit
+ */
+optional<u128>
+parseDigits(string_view digits, u128 limit) {
+  u128 ret = 0;
+  for (const char c : digits) {
+    const u128 digit = c - '0';
+    // This is `ret * 10 + digit > limit`, rearranged so that it cannot overflow itself
+    if (ret > (limit - digit) / 10) {
+      return nullopt;
+    }
+    ret = ret * 10 + digit;
+  }
+  return ret;
+}
+
+/**
  * Skips leading whitespace and peeks at the next character.
  *
  * Only `peek()` and `get()` are used for reading, never `seekg()` or `unget()`, so that this also works
@@ -138,10 +162,7 @@ operator>>(istream& lhs, i128& rhs) {
   if (c == char_traits<char>::eof()) {
     return lhs;
   }
-  i128 sgn = 1;
-  if (c == '-') {
-    sgn = -1;
-  }
+  const bool negative = c == '-';
   if (c == '+' || c == '-') {
     lhs.get();
   }
@@ -151,42 +172,27 @@ operator>>(istream& lhs, i128& rhs) {
   string buf;
   readDigits(lhs, buf);
 
-  // Got no digits, or too many?
+  // Got no digits?
 
-  if (buf.empty() || buf.size() > 39) {
+  if (buf.empty()) {
     lhs.setstate(ios::failbit);
     return lhs;
   }
 
-  // Convert string to value, check for overflow
+  // Convert string to magnitude, check for overflow. The magnitude is unsigned, because the lowest value's
+  // magnitude is one greater than the highest value and doesn't fit into an `i128`
 
-  i128 val = 0;
-  i128 factor = 1;
-
-  for (const char c : ranges::reverse_view(buf)) {
-    const i128 v = c - '0';
-    const auto old = val;
-    if (sgn == -1) {
-      val -= v * factor;
-      if (val > old) {
-        // Negative overflow
-        lhs.setstate(ios::failbit);
-        return lhs;
-      }
-    } else {
-      val += v * factor;
-      if (val < old) {
-        // Positive overflow
-        lhs.setstate(ios::failbit);
-        return lhs;
-      }
-    }
-    factor *= 10;
+  const auto max = static_cast<u128>(numeric_limits<i128>::max());
+  const auto magnitude = parseDigits(buf, negative ? max + 1 : max);
+  if (not magnitude) {
+    lhs.setstate(ios::failbit);
+    return lhs;
   }
 
-  // Done
+  // Done. Negate while still unsigned: unsigned arithmetic wraps by definition, so the lowest value needs no
+  // special handling
 
-  rhs = val;
+  rhs = static_cast<i128>(negative ? static_cast<u128>(0) - *magnitude : *magnitude);
   return lhs;
 }
 
@@ -220,33 +226,24 @@ operator>>(istream& lhs, u128& rhs) {
   string buf;
   readDigits(lhs, buf);
 
-  // Got no digits, or too many?
+  // Got no digits?
 
-  if (buf.empty() || buf.size() > 39) {
+  if (buf.empty()) {
     lhs.setstate(ios::failbit);
     return lhs;
   }
 
   // Convert string to value, check for overflow
 
-  u128 val = 0;
-  u128 factor = 1;
-
-  for (const char c : ranges::reverse_view(buf)) {
-    const u128 v = c - '0';
-    const auto old = val;
-    val += v * factor;
-    if (val < old) {
-      // Overflow
-      lhs.setstate(ios::failbit);
-      return lhs;
-    }
-    factor *= 10;
+  const auto val = parseDigits(buf, numeric_limits<u128>::max());
+  if (not val) {
+    lhs.setstate(ios::failbit);
+    return lhs;
   }
 
   // Done
 
-  rhs = val;
+  rhs = *val;
   return lhs;
 }
 
