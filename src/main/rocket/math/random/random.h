@@ -61,13 +61,13 @@ charOf(Gen& gen, std::string_view chars) {
 }
 
 /**
- * Returns a random string of length @p n, consisting of characters from the string @p chars.
+ * Returns a random string of length @p count, consisting of characters from the string @p chars.
  *
  * @tparam Gen the generator type
  * @param gen the generator
  * @param count the length of the string
  * @param chars the characters to choose from
- * @return a random string of length @p n, consisting of characters from the string @p chars
+ * @return a random string of length @p count, consisting of characters from the string @p chars
  */
 template<typename Gen>
 std::string
@@ -81,12 +81,12 @@ charsOf(Gen& gen, u64 count, std::string_view chars) {
 }
 
 /**
- * Returns a random hexadecimal string of length @p n.
+ * Returns a random hexadecimal string of length @p count.
  *
  * @tparam Gen the generator type
  * @param gen the generator
  * @param count the length of the string
- * @return a random hexadecimal string of length @p n
+ * @return a random hexadecimal string of length @p count
  */
 template<typename Gen>
 std::string

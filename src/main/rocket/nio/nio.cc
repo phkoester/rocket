@@ -794,7 +794,6 @@ StreamSource::read(span<u8> out) {
     return 0;
   }
 
-  // If fewer bytes than `out.size()` are read, `bad`, `fail`, and `eof` all remain `false`
   is_.read(reinterpret_cast<char*>(out.data()), safe<streamsize>(out.size()));
   auto count = is_.gcount();
   NIO_LOG("count=" << count << ", out.size=" << out.size() << ", bad=" << is_.bad() << ", fail=" << is_.fail() << ", eof=" << is_.eof());

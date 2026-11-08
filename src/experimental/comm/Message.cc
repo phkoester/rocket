@@ -55,3 +55,5 @@ Message::parseSize(std::string_view input) {
 }
 
 } // namespace rocket::comm
+
+// EOF

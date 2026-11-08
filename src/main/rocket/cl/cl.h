@@ -584,6 +584,12 @@ struct CommandLineConfig {
  * A command-line parser and help-text formatter.
  */
 struct CommandLine {
+  /// @ctor_copy
+  CommandLine(const CommandLine& rhs) = delete; // The lookup maps point into `opts_`
+
+  /// @ctor_move
+  CommandLine(CommandLine&& rhs) noexcept = default;
+
   /**
    * @ctor
    *
@@ -595,6 +601,12 @@ struct CommandLine {
     const std::vector<Option>& opts = {},
     const std::vector<Parameter>& params = {},
     const CommandLineConfig& config = {});
+
+  /// @member_op_asgmt_copy
+  CommandLine& operator=(const CommandLine& rhs) = delete;
+
+  /// @member_op_asgmt_move
+  CommandLine& operator=(CommandLine&& rhs) noexcept = default;
 
   /**
    * Parses the command-line arguments @p args, assigns values to bound destination references.

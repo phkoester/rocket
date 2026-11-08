@@ -185,10 +185,10 @@ struct PosixRule {
     };
 
     Kind kind = Kind::MonthWeekDay;
-    int day = 0;
-    int month = 0;
-    int week = 0;
-    int weekday = 0;
+    i32 day = 0;
+    i32 month = 0;
+    i32 week = 0;
+    i32 weekday = 0;
     seconds time = 2h; // Local time of the transition, may be negative or exceed 24 hours
   };
 
@@ -208,7 +208,7 @@ struct PosixParser {
   parse() {
     PosixRule rule;
     seconds offset;
-    if (!parseAbbrev(rule.std.abbrev) || !parseTime(offset)) {
+    if (not parseAbbrev(rule.std.abbrev) || not parseTime(offset)) {
       return nullopt;
     }
     rule.std.offset = -offset;
@@ -219,11 +219,11 @@ struct PosixParser {
 
     LocalType dst;
     dst.dst = true;
-    if (!parseAbbrev(dst.abbrev)) {
+    if (not parseAbbrev(dst.abbrev)) {
       return nullopt;
     }
-    if (!atEnd() && peek() != ',') {
-      if (!parseTime(offset)) {
+    if (not atEnd() && peek() != ',') {
+      if (not parseTime(offset)) {
         return nullopt;
       }
       dst.offset = -offset;
@@ -238,7 +238,8 @@ struct PosixParser {
       rule.end = { .kind = PosixRule::Date::Kind::MonthWeekDay, .month = 11, .week = 1 };
       return rule;
     }
-    if (!consume(',') || !parseDate(rule.start) || !consume(',') || !parseDate(rule.end) || !atEnd()) {
+    if (not consume(',') || not parseDate(rule.start) || not consume(',') || not parseDate(rule.end) ||
+        not atEnd()) {
       return nullopt;
     }
     return rule;
@@ -271,9 +272,9 @@ private:
   parseAbbrev(string& out) {
     out.clear();
     if (consume('<')) {
-      while (!atEnd() && peek() != '>') {
+      while (not atEnd() && peek() != '>') {
         const char c = peek();
-        if (!isAlpha(c) && !isDigit(c) && c != '+' && c != '-') {
+        if (not isAlpha(c) && not isDigit(c) && c != '+' && c != '-') {
           return false;
         }
         out.push_back(c);
@@ -289,8 +290,8 @@ private:
   }
 
   bool
-  parseNumber(int& out, int max) {
-    if (!isDigit(peek())) {
+  parseNumber(i32& out, i32 max) {
+    if (not isDigit(peek())) {
       return false;
     }
     out = 0;
@@ -313,17 +314,17 @@ private:
     } else {
       consume('+');
     }
-    int h = 0;
-    int m = 0;
-    int s = 0;
-    if (!parseNumber(h, 167)) {
+    i32 h = 0;
+    i32 m = 0;
+    i32 s = 0;
+    if (not parseNumber(h, 167)) {
       return false;
     }
     if (consume(':')) {
-      if (!parseNumber(m, 59)) {
+      if (not parseNumber(m, 59)) {
         return false;
       }
-      if (consume(':') && !parseNumber(s, 59)) {
+      if (consume(':') && not parseNumber(s, 59)) {
         return false;
       }
     }
@@ -339,18 +340,19 @@ private:
     using Kind = PosixRule::Date::Kind;
     if (consume('J')) {
       out.kind = Kind::Julian1;
-      if (!parseNumber(out.day, 365) || out.day < 1) {
+      if (not parseNumber(out.day, 365) || out.day < 1) {
         return false;
       }
     } else if (consume('M')) {
       out.kind = Kind::MonthWeekDay;
-      if (!parseNumber(out.month, 12) || out.month < 1 || !consume('.') || !parseNumber(out.week, 5) ||
-          out.week < 1 || !consume('.') || !parseNumber(out.weekday, 6)) {
+      if (not parseNumber(out.month, 12) || out.month < 1 || not consume('.') ||
+          not parseNumber(out.week, 5) || out.week < 1 || not consume('.') ||
+          not parseNumber(out.weekday, 6)) {
         return false;
       }
     } else {
       out.kind = Kind::Julian0;
-      if (!parseNumber(out.day, 365)) {
+      if (not parseNumber(out.day, 365)) {
         return false;
       }
     }
@@ -400,18 +402,18 @@ toSys(local_seconds tp, seconds offset) {
 // surrounding years suffices
 sys_info
 ruleInfo(const PosixRule& rule, sys_seconds tp) {
-  if (!rule.dst) {
+  if (not rule.dst) {
     return { MIN_TIME, MAX_TIME, rule.std.offset, 0min, rule.std.abbrev };
   }
   const LocalType& dst = *rule.dst;
-  const int y = static_cast<int>(year_month_day(floor<days>(tp + rule.std.offset)).year());
+  const i32 y = static_cast<i32>(year_month_day(floor<days>(tp + rule.std.offset)).year());
 
   // If DST ends exactly when it starts in the next year, as in `AAA-2<+01>-1,0/0,J365/23`, it is in effect
   // all year. If it starts and ends at the same time, it is never in effect
 
-  const auto startOf = [&](int i) { return toSys(localTransition(rule.start, year(i)), rule.std.offset); };
-  const auto endOf = [&](int i) { return toSys(localTransition(rule.end, year(i)), dst.offset); };
-  const int refYear = clamp(y, static_cast<int>(year::min()), static_cast<int>(year::max()) - 1);
+  const auto startOf = [&](i32 i) { return toSys(localTransition(rule.start, year(i)), rule.std.offset); };
+  const auto endOf = [&](i32 i) { return toSys(localTransition(rule.end, year(i)), dst.offset); };
+  const i32 refYear = clamp(y, static_cast<i32>(year::min()), static_cast<i32>(year::max()) - 1);
   if (endOf(refYear) == startOf(refYear + 1)) {
     return { MIN_TIME, MAX_TIME, dst.offset, duration_cast<minutes>(dst.offset - rule.std.offset), dst.abbrev };
   }
@@ -425,9 +427,9 @@ ruleInfo(const PosixRule& rule, sys_seconds tp) {
   };
 
   vector<Change> changes;
-  const int minYear = max(y - 2, static_cast<int>(year::min()));
-  const int maxYear = min(y + 2, static_cast<int>(year::max()));
-  for (int i = minYear; i <= maxYear; ++i) {
+  const i32 minYear = max(y - 2, static_cast<i32>(year::min()));
+  const i32 maxYear = min(y + 2, static_cast<i32>(year::max()));
+  for (i32 i = minYear; i <= maxYear; ++i) {
     changes.push_back({ startOf(i), true });
     changes.push_back({ endOf(i), false });
   }
@@ -440,7 +442,7 @@ ruleInfo(const PosixRule& rule, sys_seconds tp) {
 
   // Find the effective changes around `tp`. Changes at the same time are combined
 
-  bool state = !changes.front().toDst;
+  bool state = not changes.front().toDst;
   sys_seconds begin = MIN_TIME;
   sys_seconds end = MAX_TIME;
   for (size_t i = 0; i < changes.size();) {
@@ -503,7 +505,7 @@ struct ZoneData {
   vector<minutes> saves;
 
   // The rule for time points after `ruleStart`, which is the last transition in the file, including
-  // redundant ones, or `MinTime` if the file has no transitions
+  // redundant ones, or `MIN_TIME` if the file has no transitions
   optional<PosixRule> rule;
   sys_seconds ruleStart = MIN_TIME;
 };
@@ -543,7 +545,7 @@ public:
   u32() {
     need(4);
     uint32_t ret = 0;
-    for (int i = 0; i < 4; ++i) {
+    for (i32 i = 0; i < 4; ++i) {
       ret = (ret << 8) | bytes_[pos_++];
     }
     return ret;
@@ -556,7 +558,7 @@ public:
     }
     need(8);
     uint64_t ret = 0;
-    for (int i = 0; i < 8; ++i) {
+    for (i32 i = 0; i < 8; ++i) {
       ret = (ret << 8) | bytes_[pos_++];
     }
     return static_cast<int64_t>(ret);
@@ -632,25 +634,25 @@ vector<minutes>
 computeSaves(const vector<const LocalType*>& types, const optional<PosixRule>& rule) {
   vector<minutes> ret(types.size(), 0min);
   for (size_t i = 0; i < types.size(); ++i) {
-    if (!types[i]->dst) {
+    if (not types[i]->dst) {
       continue;
     }
 
     optional<seconds> before;
     for (size_t j = i; j-- > 0;) {
-      if (!types[j]->dst) {
+      if (not types[j]->dst) {
         before = types[j]->offset;
         break;
       }
     }
     optional<seconds> after;
     for (size_t j = i + 1; j < types.size(); ++j) {
-      if (!types[j]->dst) {
+      if (not types[j]->dst) {
         after = types[j]->offset;
         break;
       }
     }
-    if (!after && rule) {
+    if (not after && rule) {
       after = rule->std.offset;
     }
 
@@ -660,7 +662,7 @@ computeSaves(const vector<const LocalType*>& types, const optional<PosixRule>& r
     const auto key = [](minutes m) { return tuple(m < 0min, m % 30min != 0min, abs(m)); };
     minutes save = 0min;
     for (const auto& stdOffset : { after, before }) {
-      if (!stdOffset) {
+      if (not stdOffset) {
         continue;
       }
       const auto candidate = duration_cast<minutes>(types[i]->offset - *stdOffset);
@@ -742,7 +744,7 @@ parseTzif(span<const uint8_t> bytes) {
     for (char c = static_cast<char>(in.u8()); c != '\n'; c = static_cast<char>(in.u8())) {
       footer.push_back(c);
     }
-    if (!footer.empty()) {
+    if (not footer.empty()) {
       rule = PosixParser(footer).parse(); // An invalid footer is ignored
     }
   }
@@ -830,7 +832,7 @@ isValidName(string_view name) {
 optional<vector<uint8_t>>
 readFile(const filesystem::path& path) {
   error_code ec;
-  if (!filesystem::is_regular_file(path, ec)) {
+  if (not filesystem::is_regular_file(path, ec)) {
     return nullopt;
   }
   const auto size = filesystem::file_size(path, ec);
@@ -838,7 +840,7 @@ readFile(const filesystem::path& path) {
     return nullopt;
   }
   ifstream in(path, ios::binary);
-  if (!in) {
+  if (not in) {
     return nullopt;
   }
   vector<uint8_t> ret(size);
@@ -865,14 +867,14 @@ public:
     if (auto it = byName_.find(name); it != byName_.end()) {
       return it->second;
     }
-    if (!isValidName(name)) {
+    if (not isValidName(name)) {
       return nullptr;
     }
 
     // Resolve links. Links point to zones, but be robust against chains and cycles
 
     string canonical(name);
-    for (int i = 0; i < 8; ++i) {
+    for (i32 i = 0; i < 8; ++i) {
       auto it = links_.find(canonical);
       if (it == links_.end()) {
         break;
@@ -912,7 +914,7 @@ private:
     ifstream in(dir_ / "tzdata.zi");
     string line;
     while (in && getline(in, line)) {
-      if (!line.starts_with("L ")) {
+      if (not line.starts_with("L ")) {
         continue;
       }
       const auto sep = line.find(' ', 2);
@@ -921,10 +923,10 @@ private:
       }
       string target = line.substr(2, sep - 2);
       string link = line.substr(sep + 1);
-      while (!link.empty() && (link.back() == '\r' || link.back() == ' ')) {
+      while (not link.empty() && (link.back() == '\r' || link.back() == ' ')) {
         link.pop_back();
       }
-      if (!target.empty() && !link.empty()) {
+      if (not target.empty() && not link.empty()) {
         links_.emplace(std::move(link), std::move(target));
       }
     }
@@ -1045,10 +1047,10 @@ time_zone::getLocalInfo(local_seconds tp) const {
   local_info ret {};
   bool found = false;
   for (const auto& info : periods) {
-    if (!contains(info)) {
+    if (not contains(info)) {
       continue;
     }
-    if (!found) {
+    if (not found) {
       found = true;
       ret.result = local_info::unique;
       ret.first = info;
@@ -1103,7 +1105,7 @@ current_zone() {
   ifstream in("/etc/timezone");
   string line;
   if (in && getline(in, line)) {
-    while (!line.empty() && isspace(static_cast<u8>(line.back()))) {
+    while (not line.empty() && isspace(static_cast<u8>(line.back()))) {
       line.pop_back();
     }
     if (const auto* ret = db.locate(line)) {

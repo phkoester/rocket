@@ -79,7 +79,7 @@ Iterator<C>::Iterator(IteratorType type, basic_string_view<C> input, const local
     u16_.reserve(input.size());
     for (auto c : input) {
       const auto cp = static_cast<u32>(c);
-      ROCKET_CHECK(input, cp <= 0x10ffff and not U_IS_SURROGATE(cp), "Invalid UTF-32 input");
+      ROCKET_CHECK(input, cp <= 0x10FFFF and not U_IS_SURROGATE(cp), "Invalid UTF-32 input");
       if (U_IS_BMP(cp)) {
         u16_.push_back(static_cast<char16_t>(cp));
       } else {

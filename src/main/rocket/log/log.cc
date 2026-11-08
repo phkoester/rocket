@@ -770,11 +770,11 @@ setLogLevel(string_view id, string_view val) {
   }
 
   if (id.empty()) {
-    ROCKET_FAIL("Missing log ID", id);
+    ROCKET_FAIL("Missing log ID");
   }
   const bool all = id == "all";
   if (all && not substring.empty()) {
-    ROCKET_FAIL("Log ID `all` cannot be used with a substring", id);
+    ROCKET_FAIL("Log ID `all` cannot be used with a substring");
   }
 
   const auto result = Enum<LogLevel>::toType(val, true);

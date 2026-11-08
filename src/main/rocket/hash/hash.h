@@ -28,7 +28,7 @@ namespace rocket::hash {
  */
 inline void
 combine(u64& seed, u64 hash) {
-  seed = boost::hash_detail::hash_mix(seed + 0x9e3779b9 + hash);
+  seed = boost::hash_detail::hash_mix(seed + 0x9E3779B9 + hash);
 }
 
 /**

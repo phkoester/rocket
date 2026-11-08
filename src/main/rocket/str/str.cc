@@ -216,6 +216,8 @@ upperIn(u32string& str) {
 
 string
 wrap(string_view str, u64 leftIndent, u64 width) {
+  ROCKET_CHECK(width, width > leftIndent);
+
   width -= leftIndent;
 
   // Collect paragraphs, consisting of words

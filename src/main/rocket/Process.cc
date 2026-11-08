@@ -11,7 +11,6 @@
 #include "rocket/system/system.h"
 
 #include <cstdlib>
-#include <ranges>
 
 #ifdef ROCKET_OS_MACOS
   #include <crt_externs.h>
@@ -44,9 +43,14 @@ void
 callExitFns(bool onTerminate) {
   ROCKET_MUTEX_LOCK(processMutex);
 
-  ROCKET_SCOPE_EXIT([] { onExitFns.clear(); });
+  ROCKET_SCOPE_FAIL([] { onExitFns.clear(); });
 
-  for (const auto& [fn, callOnTerminate] : ranges::reverse_view(onExitFns)) {
+  // Take each function off the vector before calling it. A function may call `Process::atExit`, which may
+  // reallocate the vector. Newly registered functions are called next
+  while (not onExitFns.empty()) {
+    auto [fn, callOnTerminate] = std::move(onExitFns.back());
+    onExitFns.pop_back();
+
     if (not onTerminate || callOnTerminate) {
       try {
         fn();

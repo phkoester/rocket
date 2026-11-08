@@ -126,7 +126,7 @@ escapeCStringCodePointHex(unicode::CodePoint cp, u64& column, const CStringConfi
     // C
     if (cp > 0xFFFFU) {
       ret = fmt::format("\\U{:0>8X}", static_cast<u32>(cp));
-    } else if (cp > 0x00ffU) {
+    } else if (cp > 0x00FFU) {
       ret = fmt::format("\\u{:0>4X}", static_cast<u32>(cp));
     } else {
       ret = fmt::format("\\x{:0>2X}", static_cast<u32>(cp));
@@ -261,8 +261,10 @@ getHex(unicode::Iterator<char>& iter, u64 n) {
     auto pos = iter.current();
     auto seg = iter.nextSegment();
     if (seg.empty()) {
-      throw InputFailure(pos, { pos0, iter.current() },
-          fmt::format("Expected {} hexadecimal digits, got EOI", n, input));
+      throw InputFailure(
+        pos,
+        { pos0, iter.current() },
+        fmt::format("Expected {} hexadecimal digits, got EOI", n));
     }
     auto c = unicode::CharacterView<char>(seg);
     if (not c.isXdigit()) {

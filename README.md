@@ -13,7 +13,7 @@ CMake Target               | Content
 ## CMake Requirements
 
 * CMake 4.2 or higher.
-* Python 3.8 or higher. On Windows, both a native Windows Python and an MSYS Python will work.
+* Python 3.10 or higher. On Windows, both a native Windows Python and an MSYS Python will work.
 * On Windows, a Developer Command Prompt from Microsoft Visual Studio is required.
 
 ## Third-Party Components
