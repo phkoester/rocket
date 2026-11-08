@@ -242,12 +242,20 @@ void
 Out::setPattern(string_view pattern, const TimePoint& time) {
   out_ = nullptr;
 
-  auto path = expand(pattern, time, true);
+  filesystem::path path;
   try {
-    fileOut_ = make_unique<nio::FileSink>(path);
-  } catch (const exception& ex) {
-    process().error(nio::err, 0, "Cannot open log file `{}`; logging to standard output instead", path);
+    path = expand(pattern, time, true);
+  } catch (const exception&) {
+    process().error(nio::err, 0, "Cannot apply log-output pattern `{}`; logging to standard output instead", pattern);
     set(nio::out);
+  }
+  if (not path.empty()) {
+    try {
+      fileOut_ = make_unique<nio::FileSink>(path);
+    } catch (const exception&) {
+      process().error(nio::err, 0, "Cannot open log file `{}`; logging to standard output instead", path);
+      set(nio::out);
+    }
   }
 
   // If zipping, check if yesterday’s log file exists and zip it

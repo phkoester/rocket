@@ -38,7 +38,6 @@ All of the following options may be supplied either as defined CMake variables o
 
 | Name                              | Type     | Default                           | Description
 | :-------------------------------- | :------- | :-------------------------------- | :----------
-| `BUILD_COVERAGE`                  | `BOOL`   | `OFF`                             | Enable code coverage and generate reports
 | `BUILD_SHARED_LIBS`               | `BOOL`   | `OFF`                             | Build shared libraries
 | `BUILD_TESTING`                   | `BOOL`   | `ON`                              | Enable testing: benchmarks and tests
 | `CMAKE_BUILD_TYPE`                | `STRING` | `Release` if single configuration | The build type (`Debug` or `Release`)
