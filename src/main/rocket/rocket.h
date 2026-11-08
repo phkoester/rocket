@@ -7,8 +7,8 @@
  *
  * OS-specific data types, sizes in bytes:
  *
- * | Type          | Linux | macOS   | Windows | Different?
- * | :------------ | ----: | ------: | ------: | :---------
+ * | Type          | Linux | macOS   | Windows | Inconsistent?
+ * | :------------ | ----: | ------: | ------: | :------------
  * | `bool`        |     1 |       1 |       1 |
  * | `wchar_t`     |     4 |       4 |       2 | Yes!
  * | `short`       |     2 |       2 |       2 |

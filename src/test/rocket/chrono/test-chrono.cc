@@ -291,15 +291,15 @@ TEST(chrono, zoned_time_format) {
   const auto berlin = zoned_time(locate_zone("Europe/Berlin"), utc);
   const auto newYork = zoned_time(locate_zone("America/New_York"), utc);
 
-  EXPECT_EQ(std::format("{:%F %T %Z}", berlin), "2024-07-01 14:00:00 " + CEST);
-  EXPECT_EQ(std::format("{:%FT%T%Ez}", berlin), "2024-07-01T14:00:00+02:00");
-  EXPECT_EQ(std::format("{:%FT%T%z}", newYork), "2024-07-01T08:00:00-0400");
-  EXPECT_EQ(std::format("{:%FT%T%Oz}", newYork), "2024-07-01T08:00:00-04:00");
-  EXPECT_EQ(std::format("{:%H%%%Z}", berlin), "14%" + CEST);
-  EXPECT_EQ(std::format("{}", berlin), "2024-07-01 14:00:00 " + CEST);
-  EXPECT_EQ(std::format("{:>30}", berlin), std::format("{:>30}", "2024-07-01 14:00:00 " + CEST));
+  EXPECT_EQ(fmt::format("{:%F %T %Z}", berlin), "2024-07-01 14:00:00 " + CEST);
+  EXPECT_EQ(fmt::format("{:%FT%T%Ez}", berlin), "2024-07-01T14:00:00+02:00");
+  EXPECT_EQ(fmt::format("{:%FT%T%z}", newYork), "2024-07-01T08:00:00-0400");
+  EXPECT_EQ(fmt::format("{:%FT%T%Oz}", newYork), "2024-07-01T08:00:00-04:00");
+  EXPECT_EQ(fmt::format("{:%H%%%Z}", berlin), "14%" + CEST);
+  EXPECT_EQ(fmt::format("{}", berlin), "2024-07-01 14:00:00 " + CEST);
+  EXPECT_EQ(fmt::format("{:>30}", berlin), fmt::format("{:>30}", "2024-07-01 14:00:00 " + CEST));
   EXPECT_EQ(
-    std::format("{:%FT%TZ}", zoned_time(locate_zone("UTC"), sys_time<milliseconds>(utc) + 5ms)),
+    fmt::format("{:%FT%TZ}", zoned_time(locate_zone("UTC"), sys_time<milliseconds>(utc) + 5ms)),
     "2024-07-01T12:00:00.005Z");
 
   std::ostringstream os;

@@ -40,6 +40,8 @@ TEST(std, f32OpCmp) {
  *
  * - https://github.com/llvm/llvm-project/issues/158302
  * - https://github.com/llvm/llvm-project/issues/191462
+ *
+ * The crash happens when #std::current_exception() is called inside a nested exception handler.
  */
 TEST(std, rethrowException) {
   try {
@@ -73,14 +75,14 @@ TEST(std, chronoFormat) {
     const time_point tp = time_point_cast<microseconds>(now);
     // const auto zt { chrono::zoned_time{ chrono::current_zone(), tp } };
     const rocket::chrono::zoned_time zt { rocket::chrono::current_zone(), tp };
-    const string str = std::format("{:%FT%T%Ez}", zt);
+    const string str = fmt::format("{:%FT%T%Ez}", zt);
     EXPECT_THAT(str, matchesRegex("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{6}[+-]\\d{2}:\\d{2}"));
   }
 
   {
     // UTC time in ISO-8601, with microseconds
     const time_point tp = time_point_cast<microseconds>(now);
-    const string str = std::format("{:%FT%TZ}", tp);
+    const string str = fmt::format("{:%FT%TZ}", tp);
     EXPECT_THAT(str, matchesRegex("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{6}Z"));
   }
 }

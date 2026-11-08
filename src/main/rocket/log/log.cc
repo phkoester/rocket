@@ -191,9 +191,9 @@ Out::expand(string_view pattern, const TimePoint& time, bool update) {
   // Prepare the values
 
   auto localYmd = Out::localYmd(time);
-  auto localDate = std::format("{}", localYmd);
+  auto localDate = fmt::format("{}", localYmd);
   auto utcYmd = Out::utcYmd(time);
-  auto utcDate = std::format("{}", utcYmd);
+  auto utcDate = fmt::format("{}", utcYmd);
 
   auto dir = filesystem::path(Process::invocationName()).parent_path().string();
   auto pid = fmt::format("{}", Process::id());
@@ -462,12 +462,11 @@ formatExecTime(const TimePoint& t1, const TimePoint& t2) {
 string
 formatTimePoint(const TimePoint& tp) {
   const auto formatImpl = [](const auto& ctp) { // ctp = cast time point
-    // Note we're using `std::format` here because `fmt::format` doesn't support `rocket::chrono::zoned_time`
     if (logFmt.useUtc) {
-      return std::format("{:%FT%TZ} ", ctp);
+      return fmt::format("{:%FT%TZ} ", ctp);
     }
     rocket::chrono::zoned_time zt { rocket::chrono::current_zone(), ctp };
-    return std::format("{:%FT%T%Ez} ", zt);
+    return fmt::format("{:%FT%T%Ez} ", zt);
   };
 
   if (logFmt.secondsRez == 0) {

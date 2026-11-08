@@ -478,7 +478,7 @@ struct FormattedConsumerImpl<DataType::Duration, T> {
       out.write('y');
     } else {
       // Let `std::format` determine the suffix, then strip the leading count `0`
-      const std::string str = std::format("{}", T::zero());
+      const std::string str = fmt::format("{}", T::zero());
       out.write(std::string_view(str).substr(1));
     }
   }
@@ -488,7 +488,7 @@ template<typename T>
 struct FormattedConsumerImpl<DataType::Date, T> {
   void
   consume(const T& val, nio::Sink& out, CONFIG__) const {
-    out.write(std::format("{}", val));
+    out.write(fmt::format("{}", val));
   }
 };
 
@@ -521,7 +521,7 @@ struct FormattedConsumerImpl<DataType::Time, T> {
 
   void
   consume(const T& val, nio::Sink& out, CONFIG__) const {
-    out.write(std::format("{:%FT%TZ}", val)); // Zulu time
+    out.write(fmt::format("{:%FT%TZ}", val)); // Zulu time
   }
 };
 
@@ -536,9 +536,9 @@ struct FormattedConsumerImpl<DataType::ZonedTime, T> {
 
     const auto info = val.get_info();
     if (info.offset == std::chrono::seconds(0)) {
-      out.write(std::format("{:%FT%TZ}", val)); // Zulu time
+      out.write(fmt::format("{:%FT%TZ}", val)); // Zulu time
     } else {
-      out.write(std::format("{:%FT%T%Ez}", val)); // Time with UTC offset
+      out.write(fmt::format("{:%FT%T%Ez}", val)); // Time with UTC offset
     }
 
     out.write(' ');

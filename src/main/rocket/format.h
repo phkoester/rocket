@@ -93,12 +93,10 @@ private:
 
 #endif
 
-#ifndef ROCKET_HAS_STD_CHRONO_TIME_ZONE
-
-// `std::formatter<rocket::chrono::zoned_time>` -------------------------------------------------------------
+// `fmt::formatter<rocket::chrono::zoned_time>` -------------------------------------------------------------
 
 /**
- * Formats a #rocket::chrono::zoned_time, like #std::chrono::zoned_time is formatted.
+ * Formats a #rocket::chrono::zoned_time.
  *
  * The format specification is that of #std::chrono::local_time, plus `%Z` (the abbreviation of the time
  * zone), `%z` (the UTC offset as `+hhmm`), and `%Ez` and `%Oz` (the UTC offset as `+hh:mm`). Without
@@ -106,42 +104,48 @@ private:
  *
  * @tparam Duration the duration of the time point
  * @tparam TimeZonePtr the time-zone pointer
- * @tparam CharT the character type
+ * @tparam C the character type
  */
-template<typename Duration, typename TimeZonePtr, typename CharT>
-struct std::formatter<rocket::chrono::zoned_time<Duration, TimeZonePtr>, CharT> {
+template<typename Duration, typename TimeZonePtr, typename C> requires rocket::IsChar<C>
+struct fmt::formatter<rocket::chrono::zoned_time<Duration, TimeZonePtr>, C> {
   /// @cond undocumented
 
   template<typename ParseContext>
   constexpr ParseContext::iterator
   parse(ParseContext& ctx) {
     // Chrono specifications cannot contain braces, so the specification extends to the closing brace. It is
-    // only stored here; the formatter of `local_time` parses it in `format`, after substituting `%Z` and `%z`
+    // only stored here; the formatter of `sys_time` parses it in `format`, after substituting `%Z` and
+    // `%z`
     auto it = ctx.begin();
     while (it != ctx.end() && *it != '}') {
       ++it;
     }
-    spec_ = std::basic_string_view<CharT>(ctx.begin(), it);
+    spec_ = std::basic_string_view<C>(ctx.begin(), it);
     return it;
   }
 
   template<typename FormatContext>
   FormatContext::iterator
   format(const rocket::chrono::zoned_time<Duration, TimeZonePtr>& val, FormatContext& ctx) const {
-    using LocalTime = std::chrono::local_time<typename rocket::chrono::zoned_time<Duration, TimeZonePtr>::duration>;
+    using namespace rocket;
+
+    // The local time is deliberately formatted as a `sys_time`. {fmt} only provides a formatter for
+    // `std::chrono::local_time` if `__cpp_lib_chrono >= 201907L`, and that formatter prints wrong subseconds
+    // for times before the epoch. The time zone does not matter, as `%Z` and `%z` are substituted below
+    using SysTime = fmt::sys_time<typename rocket::chrono::zoned_time<Duration, TimeZonePtr>::duration>;
 
     const rocket::chrono::sys_info info = val.get_info();
-    std::basic_string<CharT> spec;
+    std::basic_string<C> spec;
     bool hasConversion = false;
 
-    for (std::size_t i = 0; i < spec_.size(); ++i) {
-      const CharT c = spec_[i];
+    for (u64 i = 0; i < spec_.size(); ++i) {
+      const C c = spec_[i];
       if (c != '%' || i + 1 == spec_.size()) {
         spec.push_back(c);
         continue;
       }
       hasConversion = true;
-      const CharT next = spec_[i + 1];
+      const C next = spec_[i + 1];
       if (next == 'Z') {
         appendAbbrev(spec, info);
         i += 1;
@@ -157,46 +161,48 @@ struct std::formatter<rocket::chrono::zoned_time<Duration, TimeZonePtr>, CharT> 
         i += 1;
       }
     }
-    if (!hasConversion) {
+    if (not hasConversion) {
       for (const char c : std::string_view("%F %T ")) {
-        spec.push_back(static_cast<CharT>(c));
+        spec.push_back(static_cast<C>(c));
       }
       appendAbbrev(spec, info);
     }
 
-    std::formatter<LocalTime, CharT> formatter;
-    std::basic_format_parse_context<CharT> parseCtx(spec);
+    fmt::formatter<SysTime, C> formatter;
+    fmt::parse_context<C> parseCtx(spec);
     formatter.parse(parseCtx);
-    return formatter.format(val.get_local_time(), ctx);
+    return formatter.format(SysTime(val.get_local_time().time_since_epoch()), ctx);
   }
 
   /// @endcond
 
 private:
 
-  std::basic_string_view<CharT> spec_;
+  std::basic_string_view<C> spec_;
 
   static void
-  appendAbbrev(std::basic_string<CharT>& spec, const rocket::chrono::sys_info& info) {
+  appendAbbrev(std::basic_string<C>& spec, const rocket::chrono::sys_info& info) {
     for (const char c : info.abbrev) {
-      spec.push_back(static_cast<CharT>(c));
+      spec.push_back(static_cast<C>(c));
     }
   }
 
   static void
-  appendOffset(std::basic_string<CharT>& spec, const rocket::chrono::sys_info& info, bool colon) {
+  appendOffset(std::basic_string<C>& spec, const rocket::chrono::sys_info& info, bool colon) {
     const auto offset = info.offset;
     const auto abs = offset < std::chrono::seconds(0) ? -offset : offset;
     const auto h = std::chrono::duration_cast<std::chrono::hours>(abs).count();
     const auto m = std::chrono::duration_cast<std::chrono::minutes>(abs % std::chrono::hours(1)).count();
-    const std::string str = colon
-      ? std::format("{}{:02}:{:02}", offset < std::chrono::seconds(0) ? '-' : '+', h, m)
-      : std::format("{}{:02}{:02}", offset < std::chrono::seconds(0) ? '-' : '+', h, m);
+    const std::string str = colon ?
+      fmt::format("{}{:02}:{:02}", offset < std::chrono::seconds(0) ? '-' : '+', h, m) :
+      fmt::format("{}{:02}{:02}", offset < std::chrono::seconds(0) ? '-' : '+', h, m);
     for (const char c : str) {
-      spec.push_back(static_cast<CharT>(c));
+      spec.push_back(static_cast<C>(c));
     }
   }
 };
+
+#ifndef ROCKET_HAS_STD_CHRONO_TIME_ZONE // XXX
 
 // `fmt::formatter<std::chrono::year_month_day>` -----------------------------------------------------------
 

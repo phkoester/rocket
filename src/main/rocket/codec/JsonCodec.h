@@ -514,7 +514,7 @@ template<typename T>
 struct JsonConsumerImpl<DataType::Date, T> {
   void
   consume(const T& val, nio::Sink& out, CONFIG__) const {
-    out.write(std::format("\"{}\"", val));
+    out.write(fmt::format("\"{}\"", val));
   }
 };
 
@@ -549,7 +549,7 @@ struct JsonConsumerImpl<DataType::Time, T> {
 
   void
   consume(const T& val, nio::Sink& out, CONFIG__) const {
-    out.write(std::format("\"{:%FT%TZ}\"", val)); // Zulu time
+    out.write(fmt::format("\"{:%FT%TZ}\"", val)); // Zulu time
   }
 };
 
@@ -564,9 +564,9 @@ struct JsonConsumerImpl<DataType::ZonedTime, T> {
 
     const auto info = val.get_info();
     if (info.offset == std::chrono::seconds(0)) {
-      out.write(std::format("\"{:%FT%TZ} ({})\"", val, tz->name())); // Zulu time
+      out.write(fmt::format("\"{:%FT%TZ} ({})\"", val, tz->name())); // Zulu time
     } else {
-      out.write(std::format("\"{:%FT%T%Ez} ({})\"", val, tz->name())); // Time with UTC offset
+      out.write(fmt::format("\"{:%FT%T%Ez} ({})\"", val, tz->name())); // Time with UTC offset
     }
   }
 };

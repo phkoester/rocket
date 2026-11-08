@@ -53,7 +53,6 @@
 #ifndef ROCKET_HAS_STD_CHRONO_TIME_ZONE
   #include <compare>
   #include <concepts>
-  #include <format>
   #include <memory>
   #include <ostream>
   #include <sstream>
@@ -832,9 +831,9 @@ template<typename CharT, typename Traits, typename Duration, typename TimeZonePt
 std::basic_ostream<CharT, Traits>&
 operator<<(std::basic_ostream<CharT, Traits>& os, const zoned_time<Duration, TimeZonePtr>& val) {
   if constexpr (std::same_as<CharT, char>) {
-    return os << std::format(os.getloc(), "{:L%F %T %Z}", val);
+    return os << fmt::format(os.getloc(), "{:L%F %T %Z}", val);
   } else {
-    return os << std::format(os.getloc(), L"{:L%F %T %Z}", val);
+    return os << fmt::format(os.getloc(), L"{:L%F %T %Z}", val);
   }
 }
 

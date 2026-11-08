@@ -186,7 +186,7 @@ TEST(scnlib, scanChronoTimePoint) {
 
   using namespace std::chrono;
 
-  // The environment variable `TZ` interferes somehow ...
+  // The environment variable `TZ` interferes somehow. Make sure it matches the current time zone.
   const auto* current = rocket::chrono::current_zone();
   const auto TZ = system::env::get<string>("TZ");
   if (TZ) {
@@ -195,7 +195,7 @@ TEST(scnlib, scanChronoTimePoint) {
 
   using TimePoint = time_point<system_clock, nanoseconds>;
   const TimePoint val1 = rocket::chrono::now<system_clock>();
-  const string input = std::format(FORMAT, val1); // "2026-01-27 05:51:13.396968455", 29 chars
+  const string input = fmt::format(FORMAT, val1); // "2026-01-27 05:51:13.396968455", 29 chars
   nio::out.println("VAL1: {}", input);
   const auto result = scn::scan<TimePoint>(input, FORMAT_SCAN);
   ASSERT_TRUE(result);
@@ -216,12 +216,12 @@ TEST(scnlib, scanChronoTimePoint) {
   EXPECT_EQ(val2Micros, val1Micros);
 
   auto now1 = rocket::chrono::zoned_time(current, val1);
-  nio::out.writeln(std::format("NOW1: {:%F %T %Z}", now1));
+  nio::out.println("NOW1: {:%F %T %Z}", now1);
 
   const auto* honolulu = rocket::chrono::locate_zone("Pacific/Honolulu");
   ASSERT_NE(honolulu, nullptr);
   auto now2 = rocket::chrono::zoned_time(honolulu, val1);
-  nio::out.writeln(std::format("NOW2: {:%F %T %Z}", now2));
+  nio::out.println("NOW2: {:%F %T %Z}", now2);
 
 #undef FORMAT
 #undef FORMAT_SCAN
