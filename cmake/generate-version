@@ -4,15 +4,15 @@
 #
 
 """
-Usage: generate-version -o OUTPUT_FILE NAME VERSION
+Usage: generate-version NAME VERSION
+
+Writes the generated header to stdout.
 """
 
 import argparse
 import re
 # Don't import `semver` here so the build will work without it
 import sys
-
-from pathlib import Path
 
 # Constants -------------------------------------------------------------------------------------------------
 
@@ -75,13 +75,6 @@ def main():
   # Parse arguments
   parser = argparse.ArgumentParser()
   parser.add_argument(
-    "-o", "--output",
-    dest="output_file",
-    type=str,
-    help="output file path (required)",
-    required=True,
-  )
-  parser.add_argument(
     "name",
     type=str,
     help="name",
@@ -93,13 +86,7 @@ def main():
   )
   args = parser.parse_args()
 
-  # Make directories as needed
-  path = Path(args.output_file)
-  path.parent.mkdir(parents=True, exist_ok=True)
-
-  # Write output file
-  with open(args.output_file, 'w') as file:
-    write_header(file, args.name, args.version)
+  write_header(sys.stdout, args.name, args.version)
 
   return 0
 

@@ -78,8 +78,9 @@ loadSvg(string_view name, const wxSize& size) {
   ROCKET_EXPECT(file != nullptr, "Cannot open file `{}`", path);
 
   wxInputStream& stream = *file->GetStream();
-  const auto len = static_cast<size_t>(stream.GetLength());
-  ROCKET_EXPECT(len > 0, "Cannot read stream");
+  const wxFileOffset streamLen = stream.GetLength();
+  ROCKET_EXPECT(streamLen > 0, "Cannot read stream");
+  const auto len = static_cast<size_t>(streamLen);
   wxCharBuffer buf(len);
   ROCKET_EXPECT(stream.ReadAll(buf.data(), len), "Cannot read stream");
   auto ret = wxBitmapBundle::FromSVG(buf.data(), size);

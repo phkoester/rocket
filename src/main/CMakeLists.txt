@@ -58,14 +58,14 @@ endif()
 # `version.h` ...............................................................................................
 
 set(VERSION_H ${GENERATED_DIR}/rocket/version.h)
-GaiaPythonPath(${VERSION_H} VERSION_H_PYTHON)
 
 set(GENERATE_VERSION ${PROJECT_SOURCE_DIR}/cmake/generate-version)
 GaiaPythonPath(${GENERATE_VERSION} GENERATE_VERSION_PYTHON)
 
 add_custom_command(
   OUTPUT   ${VERSION_H}
-  COMMAND  ${Python3_EXECUTABLE} ${GENERATE_VERSION_PYTHON} ROCKET ${PROJECT_VERSION} -o ${VERSION_H_PYTHON}
+  COMMAND  ${CMAKE_COMMAND} -E make_directory ${GENERATED_DIR}/rocket
+  COMMAND  ${Python3_EXECUTABLE} ${GENERATE_VERSION_PYTHON} ROCKET ${PROJECT_VERSION} > ${VERSION_H}
   DEPENDS  ${GENERATE_VERSION} ${PROJECT_SOURCE_DIR}/CMakeLists.txt ${CMAKE_CURRENT_LIST_FILE}
   VERBATIM
 )
