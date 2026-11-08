@@ -39,7 +39,6 @@ struct ConsoleModeGuard {
       DWORD mode = 0;
       if (GetConsoleMode(entry.handle, &mode) != 0) {
         entry.mode = mode;
-        nio::out.println("Got console mode for {}: 0x{:x}", entry.name, mode);
       }
     }
   }
@@ -53,7 +52,6 @@ struct ConsoleModeGuard {
       }
       if (entry.mode) {
         SetConsoleMode(entry.handle, *entry.mode);
-        nio::out.println("Set mode for {}: 0x{:x}", entry.name, *entry.mode);
       }
       CloseHandle(entry.handle);
     }

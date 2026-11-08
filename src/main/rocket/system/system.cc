@@ -82,14 +82,18 @@ escapeCmd(string_view str) {
 /**
  * Windows: Converts arguments to a command-line string that passes each argument literally.
  *
- * The first argument names the program. `cmd.exe` must recognize it as one token, so unlike the other
- * arguments, it isn't quoted but only escaped.
+ * The first argument names the program. `cmd.exe` passes the program token on to the program as it stands,
+ * so a path with spaces has to be in real quotation marks for the C runtime to read it as one argument. An
+ * escaped space would not do: the caret is gone by then, and the path would be split at the space.
+ *
+ * With a quotation mark at the start of the line, `cmd.exe /c` removes the first and the last quotation mark
+ * of the line. The whole command line is therefore enclosed in one more pair for it to remove.
  *
  * Line breaks cannot be passed at all: `cmd.exe` stops reading the command line at the first one.
  */
 string
 makeCl(const vector<string_view>& args) {
-  string ret;
+  string ret = "\"";
 
   for (u64 i = 0; i < args.size(); ++i) {
     const string_view arg = args[i];
@@ -99,12 +103,17 @@ makeCl(const vector<string_view>& args) {
       not arg.contains('\n') && not arg.contains('\r'),
       "May not contain line breaks on Windows");
 
-    if (i > 0) {
+    if (i == 0) {
+      // Inside real quotation marks, a further one would end the quoting and expose the rest to `cmd.exe`
+      ROCKET_CHECK(args, not arg.contains('"'), "Program may not contain quotation marks on Windows");
+      ret.append(quoteArg(arg));
+    } else {
       ret.push_back(' ');
+      ret.append(escapeCmd(quoteArg(arg)));
     }
-    ret.append(i == 0 ? escapeCmd(arg) : escapeCmd(quoteArg(arg)));
   }
 
+  ret.push_back('"');
   return ret;
 }
 
