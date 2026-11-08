@@ -9,6 +9,7 @@
 
 #include <algorithm>
 #include <string>
+#include <utility>
 #include <vector>
 
 #pragma once
@@ -394,6 +395,27 @@ repeat(const std::basic_string_view<C> str, u64 count) {
  * @return the number of replacements
  */
 u64 replaceIn(std::string& str, std::string_view from, std::string_view to, u64 count = NPOS);
+
+/**
+ * Replaces up to @p count occurrences of several substrings in the string @p str, in a single pass.
+ *
+ * The replacements happen simultaneously rather than one after the other, so replaced text is never searched
+ * again: Applying `{ { "a", "b" }, { "b", "a" } }` to `"ab"` yields `"ba"`.
+ *
+ * The string is scanned from left to right. If several `from` substrings match at the same position, the one
+ * that comes first in @p pairs wins, so list a longer `from` before any of its prefixes.
+ *
+ * The string views in @p pairs may refer to @p str itself.
+ *
+ * @param str the string to replace in
+ * @param pairs the `from` and `to` pairs. No `from` substring may be empty
+ * @param count the maximum number of replacements, in total across all pairs
+ * @return the number of replacements
+ */
+u64 replaceIn(
+  std::string& str,
+  const std::vector<std::pair<std::string_view, std::string_view>>& pairs,
+  u64 count = NPOS);
 
 /**
  * Returns `"once"`, `"twice"`, or `"... times"` for @p n.

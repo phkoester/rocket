@@ -11,8 +11,6 @@
 #include "rocket/str/str.h"
 #include "rocket/system/system.h"
 
-#include <boost/algorithm/string.hpp>
-
 using namespace rocket;
 using namespace rocket::log;
 using namespace std;
@@ -201,30 +199,20 @@ Out::expand(string_view pattern, const TimePoint& time, bool update) {
 
   // Expand the pattern
 
+  const bool utcFound = pattern.contains("@[utc]");
+  const bool dateFound = pattern.contains("@[date]");
+  const bool zipFound = pattern.contains("@[zip]");
+  const string_view date = utcFound ? utcDate : localDate;
+
   string ret(pattern);
-
-  auto replaceAll = [](string& str, string_view from, string_view to) -> bool {
-    const string old(str);
-    boost::replace_all(str, from, to);
-    return str != old;
-  };
-
-  // Start with `@[utc]`
-  string_view date;
-  boost::replace_all(ret, "@[utc]", "");
-  const bool utcFound = replaceAll(ret, "@[utc]", "");
-  if (utcFound) {
-    date = utcDate;
-  } else {
-    date = localDate;
-  }
-
-  // Now do the rest
-  const bool dateFound = replaceAll(ret, "@[date]", date);
-  replaceAll(ret, "@[dir]", dir);
-  replaceAll(ret, "@[name]", name);
-  replaceAll(ret, "@[pid]", pid);
-  const bool zipFound = replaceAll(ret, "@[zip]", "");
+  str::replaceIn(ret, {
+    { "@[date]", date },
+    { "@[dir]", dir },
+    { "@[name]", name },
+    { "@[pid]", pid },
+    { "@[utc]", "" },
+    { "@[zip]", "" },
+  });
 
   // Do sanity checks
 
