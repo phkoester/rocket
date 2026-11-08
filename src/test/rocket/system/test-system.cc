@@ -173,6 +173,107 @@ TEST(system, execPrintArgsWithSpace) {
   }
 }
 
+TEST(system, execArgsAreLiteral) {
+  const string executable = binExecutable("print-args").string();
+
+  // None of these may be interpreted by a shell, on any platform
+  const vector<string_view> values {
+    "$HOME",
+    "${HOME}",
+    "$(echo injected)",
+    "`echo injected`",
+    "a;echo injected",
+    "a|echo injected",
+    "a&echo injected",
+    "a&&echo injected",
+    "a\techo injected",
+    "a>b",
+    "a<b",
+    "*",
+    "?",
+    "[a-z]",
+    "~",
+    "#a",
+    "(a)",
+    "{a,b}",
+    "!a",
+    "%PATH%",
+    "^",
+    "a^b",
+    "a=b",
+    "a,b",
+  };
+
+  for (const string_view val : values) {
+    SCOPED_TRACE(string(val));
+
+    const auto out = exec({ executable, val });
+    EXPECT_THAT(out, HasSubstr(fmt::format("1={}=", val)));
+    EXPECT_THAT(out, Not(HasSubstr("2="))); // The value must not be split
+    EXPECT_THAT(out, Not(HasSubstr("\ninjected"))); // An injected command would print on a line of its own
+  }
+}
+
+TEST(system, execArgsEmpty) {
+  const string executable = binExecutable("print-args").string();
+
+  const auto out = exec({ executable, "", "a", "", "" });
+  EXPECT_THAT(out, HasSubstr("1=="));
+  EXPECT_THAT(out, HasSubstr("2=a="));
+  EXPECT_THAT(out, HasSubstr("3=="));
+  EXPECT_THAT(out, HasSubstr("4=="));
+  EXPECT_THAT(out, Not(HasSubstr("5=")));
+}
+
+TEST(system, execArgsApostrophes) {
+  const string executable = binExecutable("print-args").string();
+
+  for (const string_view val : { "it's"sv, "''"sv, "'a b'"sv, "\"'\""sv, "'\\''"sv }) {
+    SCOPED_TRACE(string(val));
+
+    const auto out = exec({ executable, val });
+    EXPECT_THAT(out, HasSubstr(fmt::format("1={}=", val)));
+    EXPECT_THAT(out, Not(HasSubstr("2=")));
+  }
+}
+
+TEST(system, execArgsBackslashes) {
+  const string executable = binExecutable("print-args").string();
+
+  // Windows treats backslashes specially in front of quotation marks, which includes the closing one
+  const vector<string_view> values { "a\\ b", "a\\", "a\\\\", "\\\\server\\share", "a\\\"b", "a\\\\\"b" };
+
+  for (const string_view val : values) {
+    SCOPED_TRACE(string(val));
+
+    const auto out = exec({ executable, val });
+    EXPECT_THAT(out, HasSubstr(fmt::format("1={}=", val)));
+    EXPECT_THAT(out, Not(HasSubstr("2=")));
+  }
+}
+
+TEST(system, execArgsLineBreak) {
+  const string executable = binExecutable("print-args").string();
+
+#ifdef ROCKET_OS_WINDOWS
+  EXPECT_THAT(
+    [&] { exec({ executable, "a\nb" }); },
+    ThrowsMessage<InvalidArgument>(EndsWith("May not contain line breaks on Windows")));
+#else
+  const auto out = exec({ executable, "a\nb" });
+  EXPECT_THAT(out, HasSubstr("1=a\nb="));
+  EXPECT_THAT(out, Not(HasSubstr("2=")));
+#endif
+}
+
+TEST(system, execArgsNul) {
+  const string executable = binExecutable("print-args").string();
+
+  EXPECT_THAT(
+    [&] { exec({ executable, "a\0b"sv }); },
+    ThrowsMessage<InvalidArgument>(EndsWith("May not contain NUL characters")));
+}
+
 TEST(system, makeArgs) {
   EXPECT_EQ(makeArgs(""), vector<string> {});
   EXPECT_EQ(makeArgs(" \r\n\t   "), vector<string> {});

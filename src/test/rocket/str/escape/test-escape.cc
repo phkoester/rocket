@@ -132,6 +132,106 @@ TEST(escape, CString) {
       throwsInputFailure(3, { 3, 15 }, EndsWith("Invalid escape sequence")));
 }
 
+// In the following tests, U+0301 (COMBINING ACUTE ACCENT) joins the preceding character, and U+0600 (ARABIC
+// NUMBER SIGN) joins the following character, to form a single grapheme cluster
+
+TEST(escape, CStringClusterQuoteWithCombiningMark) {
+  Positions pos;
+
+  const string in = "\"\u0301x";
+  const CStringConfig config { .quote='"' };
+  const string escaped = escapeCString(in, config, &pos);
+  EXPECT_EQ(escaped, "\"\\\"\u0301x\"");
+  EXPECT_EQ(pos, makePositions({ { 0, 1 }, { 3, 5 }, { 4, 6 } }));
+
+  const string out = unescapeCString(escaped, config, &pos);
+  EXPECT_EQ(out, in);
+  EXPECT_EQ(pos, makePositions({ { 1, 0 }, { 5, 3 }, { 6, 4 } }));
+}
+
+TEST(escape, CStringClusterBackslashWithCombiningMark) {
+  Positions pos;
+
+  const string in = "\\\u0301";
+  const string escaped = escapeCString(in, {}, &pos);
+  EXPECT_EQ(escaped, "\\\\\u0301");
+  EXPECT_EQ(pos, makePositions({ { 0, 0 }, { 3, 4 } }));
+
+  const string out = unescapeCString(escaped, {}, &pos);
+  EXPECT_EQ(out, in);
+  EXPECT_EQ(pos, makePositions({ { 0, 0 }, { 4, 3 } }));
+}
+
+TEST(escape, CStringClusterOtherQuoteStaysVerbatim) {
+  // Without a configured quote, a quote needs no escaping
+  const string in1 = "\"\u0301";
+  EXPECT_EQ(escapeCString(in1), in1);
+  EXPECT_EQ(unescapeCString(in1), in1);
+
+  // The same goes for a quote other than the configured one
+  const CStringConfig config { .quote='"' };
+  const string in2 = "'\u0301";
+  const string escaped = escapeCString(in2, config);
+  EXPECT_EQ(escaped, "\"'\u0301\"");
+  EXPECT_EQ(unescapeCString(escaped, config), in2);
+}
+
+TEST(escape, CStringClusterPrependedQuote) {
+  Positions pos;
+
+  const string in = "\u0600\"x";
+  const CStringConfig config { .quote='"' };
+  const string escaped = escapeCString(in, config, &pos);
+  EXPECT_EQ(escaped, "\"\u0600\\\"x\"");
+  EXPECT_EQ(pos, makePositions({ { 0, 1 }, { 3, 5 }, { 4, 6 } }));
+
+  const string out = unescapeCString(escaped, config, &pos);
+  EXPECT_EQ(out, in);
+  EXPECT_EQ(pos, makePositions({ { 1, 0 }, { 5, 3 }, { 6, 4 } }));
+}
+
+TEST(escape, CStringClusterPrependedBackslash) {
+  Positions pos;
+
+  const string in = "\u0600\\";
+  const string escaped = escapeCString(in, {}, &pos);
+  EXPECT_EQ(escaped, "\u0600\\\\");
+  EXPECT_EQ(pos, makePositions({ { 0, 0 }, { 3, 4 } }));
+
+  const string out = unescapeCString(escaped, {}, &pos);
+  EXPECT_EQ(out, in);
+  EXPECT_EQ(pos, makePositions({ { 0, 0 }, { 4, 3 } }));
+}
+
+TEST(escape, CStringClusterAtQuotes) {
+  const CStringConfig config { .quote='"' };
+
+  // A combining mark at the beginning forms a cluster with the opening quote
+  const string in = "\u0301x";
+  const string escaped = escapeCString(in, config);
+  EXPECT_EQ(escaped, "\"\u0301x\"");
+  EXPECT_EQ(unescapeCString(escaped, config), in);
+
+  // A prepending character at the end forms a cluster with the closing quote
+  EXPECT_EQ(unescapeCString("\"a\u0600\"", config), "a\u0600");
+}
+
+TEST(escape, CStringClusterColumn) {
+  // The cluster has a width of 1, and the added backslash makes it 2, so the tab expands to 6 spaces
+  const string escaped = escapeCString("\"\u0301\t", { .quote='"', .tabSize=8 });
+  EXPECT_EQ(escaped, "\"\\\"\u0301      \"");
+}
+
+TEST(escape, CStringClusterInvalidEscape) {
+  EXPECT_THAT(
+      [&] { unescapeCString("\\a\u0301"); },
+      throwsInputFailure(0, { 0, 4 }, EndsWith("Invalid escape sequence")));
+
+  EXPECT_THAT(
+      [&] { unescapeCString("\u0600\\q"); },
+      throwsInputFailure(0, { 0, 4 }, EndsWith("Invalid escape sequence")));
+}
+
 TEST(escape, Regex) {
   Positions pos;
 
@@ -148,6 +248,75 @@ TEST(escape, Regex) {
         pos,
         makePositions({ { 0, 0 }, { 2, 1 }, { 4, 2 }, { 10, 5 }, { 12, 6 }, { 14, 7 }, { 16, 8 }, { 17, 9 }, { 18, 10 }, { 19, 11 }, { 21, 12 } }));
   }
+}
+
+TEST(escape, RegexClusterSpecialCharWithCombiningMark) {
+  Positions pos;
+
+  const string in = "(\u0301x";
+  const string escaped = escapeRegex(in, &pos);
+  EXPECT_EQ(escaped, "\\(\u0301x");
+  EXPECT_EQ(pos, makePositions({ { 0, 0 }, { 3, 4 }, { 4, 5 } }));
+
+  const string out = unescapeRegex(escaped, &pos);
+  EXPECT_EQ(out, in);
+  EXPECT_EQ(pos, makePositions({ { 0, 0 }, { 4, 3 }, { 5, 4 } }));
+}
+
+TEST(escape, RegexClusterAllSpecialChars) {
+  for (const char c : "$()*+.?[\\]^{|}"sv) {
+    SCOPED_TRACE(string(1, c));
+
+    const string in = string(1, c) + "\u0301";
+    const string escaped = escapeRegex(in);
+    EXPECT_EQ(escaped, "\\" + in);
+    EXPECT_EQ(unescapeRegex(escaped), in);
+  }
+}
+
+TEST(escape, RegexClusterPrependedSpecialChar) {
+  Positions pos;
+
+  const string in = "\u0600(";
+  const string escaped = escapeRegex(in, &pos);
+  EXPECT_EQ(escaped, "\u0600\\(");
+  EXPECT_EQ(pos, makePositions({ { 0, 0 }, { 3, 4 } }));
+
+  const string out = unescapeRegex(escaped, &pos);
+  EXPECT_EQ(out, in);
+  EXPECT_EQ(pos, makePositions({ { 0, 0 }, { 4, 3 } }));
+}
+
+TEST(escape, RegexClusterPrependedBackslash) {
+  const string in = "\u0600\\";
+  const string escaped = escapeRegex(in);
+  EXPECT_EQ(escaped, "\u0600\\\\");
+  EXPECT_EQ(unescapeRegex(escaped), in);
+}
+
+TEST(escape, RegexClusterStaysVerbatim) {
+  // Neither character is special
+  for (const string& in : { "a\u0301"s, "-\u0301"s }) {
+    SCOPED_TRACE(in);
+
+    EXPECT_EQ(escapeRegex(in), in);
+    EXPECT_EQ(unescapeRegex(in), in);
+  }
+
+  // U+1F9D1 U+200D U+1F33E (Farmer): the ZERO WIDTH JOINER must not become a hexadecimal sequence
+  const string farmer = "\U0001F9D1\u200D\U0001F33E";
+  EXPECT_EQ(escapeRegex(farmer), farmer);
+  EXPECT_EQ(unescapeRegex(farmer), farmer);
+}
+
+TEST(escape, RegexClusterInvalidEscape) {
+  EXPECT_THAT(
+      [&] { unescapeRegex("\\a\u0301"); },
+      throwsInputFailure(0, { 0, 4 }, EndsWith("Invalid escape sequence")));
+
+  EXPECT_THAT(
+      [&] { unescapeRegex("\u0600\\q"); },
+      throwsInputFailure(0, { 0, 4 }, EndsWith("Invalid escape sequence")));
 }
 
 // EOF

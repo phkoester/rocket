@@ -122,6 +122,23 @@ TEST(JsonCodec, ConsumerString) {
   EXPECT_EQ(encode(U"\U0010FFFF"sv), "\"\U0010FFFF\"");
 }
 
+TEST(JsonCodec, ConsumerStringShortEscapes) {
+  EXPECT_EQ(encode("\b\t\n\f\r\"\\"sv), R"("\b\t\n\f\r\"\\")");
+  EXPECT_EQ(encode("'/"sv), R"("'/")"); // Neither needs escaping
+}
+
+TEST(JsonCodec, ConsumerStringNoNonstandardEscapes) {
+  // JSON has no `\a`, `\v`, or `\e`
+  EXPECT_EQ(encode("\a"sv), R"("\u0007")");
+  EXPECT_EQ(encode("\v"sv), R"("\u000B")");
+  EXPECT_EQ(encode("\x1b"sv), R"("\u001B")");
+  EXPECT_EQ(encode("a\a\vb"sv), R"("a\u0007\u000Bb")");
+  EXPECT_EQ(encode('\a'), R"("\u0007")");
+  EXPECT_EQ(encode(U'\v'), R"("\u000B")");
+
+  EXPECT_EQ(encode("\x01"sv), R"("\u0001")");
+}
+
 TEST(JsonCodec, ConsumerOptional) {
   using type = optional<string>;
 
@@ -319,6 +336,16 @@ TEST(JsonCodec, ProducerChar32) {
   EXPECT_EQ(decode<char32>("  \"\\x800D\"").error().message, "Invalid character literal");
 }
 
+TEST(JsonCodec, ProducerCharSlash) {
+  EXPECT_EQ(decode<char>(R"("\/")"), '/');
+  EXPECT_EQ(decode<char32>(R"("\/")"), U'/');
+}
+
+TEST(JsonCodec, ProducerChar32SurrogatePair) {
+  EXPECT_EQ(decode<char32>(R"("\uD83E\uDD71")"), U'\U0001F971'); // U+1F971 (Yawning Face)
+  EXPECT_EQ(decode<char32>(R"("\uD83D")").error().message, "Unpaired surrogate in escape sequence");
+}
+
 TEST(JsonCodec, ProducerEnum) {
   enum Color : u8 { Red, Green, Blue };
 
@@ -358,6 +385,48 @@ TEST(JsonCodec, ProducerPointer) {
   EXPECT_EQ(
     decodeAndTell<void*>("  \"0x12345678\"  "),
     make_pair(reinterpret_cast<void*>(0x12345678), 14_u64));
+}
+
+TEST(JsonCodec, ProducerStringSlash) {
+  EXPECT_EQ(decode<string>(R"("a\/b")"), "a/b");
+  EXPECT_EQ(decode<string>(R"("a/b")"), "a/b");
+}
+
+TEST(JsonCodec, ProducerStringSurrogatePair) {
+  EXPECT_EQ(decode<string>(R"("🥱")"), "🥱"); // U+1F971 (Yawning Face)
+  EXPECT_EQ(decode<string>(R"("🥱")"), "🥱");
+  EXPECT_EQ(decode<string>(R"("a🥱b")"), "a🥱b");
+  EXPECT_EQ(decode<string>(R"("𐀀")"), "\U00010000"); // Lowest pair
+  EXPECT_EQ(decode<string>(R"("􏿿")"), "\U0010FFFF"); // Highest pair
+  EXPECT_EQ(decode<u32string>(R"("🥱")"), U"\U0001F971");
+}
+
+TEST(JsonCodec, ProducerStringBmpEscapesAroundSurrogates) {
+  EXPECT_EQ(decode<string>(R"("퟿")"), "퟿"); // Just below the surrogates
+  EXPECT_EQ(decode<string>(R"("")"), ""); // Just above the surrogates
+}
+
+TEST(JsonCodec, ProducerStringUnpairedSurrogate) {
+  constexpr string_view MESSAGE = "Unpaired surrogate in escape sequence";
+
+  EXPECT_EQ(decode<string>(R"("\uD83E")").error().message, MESSAGE); // High surrogate at EOI
+  EXPECT_EQ(decode<string>(R"("\uD83Ex")").error().message, MESSAGE); // High surrogate, then no backslash
+  EXPECT_EQ(decode<string>(R"("\uD83E\n")").error().message, MESSAGE); // High surrogate, then another escape
+  EXPECT_EQ(decode<string>(R"("\uD83EA")").error().message, MESSAGE); // High surrogate, then no surrogate
+  EXPECT_EQ(decode<string>(R"("\uD83E\uD83E")").error().message, MESSAGE); // Two high surrogates
+  EXPECT_EQ(decode<string>(R"("\uDD71")").error().message, MESSAGE); // Low surrogate on its own
+  EXPECT_EQ(decode<string>(R"("\uDD71\uD83E")").error().message, MESSAGE); // Pair in the wrong order
+
+  EXPECT_EQ(decode<string>(R"("\uD83E\uDD")").error().message, "Expected 4 hexadecimal digits, got EOI");
+}
+
+TEST(JsonCodec, StringEscapesRoundtrip) {
+  const string in = "\a\b\t\n\v\f\r\x1b\"\\/'🥱";
+  const auto out = encode(in);
+  EXPECT_EQ(out.find("\\a"), string::npos);
+  EXPECT_EQ(out.find("\\v"), string::npos);
+  EXPECT_EQ(out.find("\\e"), string::npos);
+  EXPECT_EQ(decode<string>(out), in);
 }
 
 TEST(JsonCodec, ProducerOptionalString) {
@@ -475,6 +544,7 @@ TEST(JsonCodec, ProducerTimeZone) {
   using namespace std::chrono;
 
   EXPECT_EQ(decode<TimeZone>("\"Europe/Berlin\""), rocket::chrono::locate_zone("Europe/Berlin"));
+  EXPECT_EQ(decode<TimeZone>(R"("Europe\/Berlin")"), rocket::chrono::locate_zone("Europe/Berlin"));
   EXPECT_EQ(decode<TimeZone>("\"UTC\""), rocket::chrono::locate_zone("UTC"));
   EXPECT_EQ(decode<TimeZone>("x").error().message, "Expected a string");
 

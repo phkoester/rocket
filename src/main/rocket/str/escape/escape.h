@@ -21,6 +21,13 @@ namespace rocket::str::escape {
 struct CStringConfig {
   /**
    * Whether to unescape from or escape to JSON.
+   *
+   * When escaping, characters that have no JSON escape sequence, such as BEL, VT, and ESC, are written in
+   * hexadecimal notation with the prefix `\u`.
+   *
+   * When unescaping, all C-string escape sequences remain valid. In addition, `\/` is accepted, and a `\u`
+   * high surrogate followed by a `\u` low surrogate yields a single code point. Unpaired surrogates are
+   * invalid.
    */
   bool json = false;
   /**
@@ -50,6 +57,9 @@ struct CStringConfig {
 /**
  * Escapes an input string to a C string.
  *
+ * Grapheme clusters of several code points are kept verbatim, except that a quote or backslash inside a
+ * cluster is escaped.
+ *
  * @param input the input string
  * @param config the configuration, see #rocket::str::escape::CStringConfig
  * @param positions a pointer to a #rocket::Positions. If it is nonnull, then the positions are populated
@@ -75,6 +85,9 @@ std::string unescapeCString(
 
 /**
  * Escapes an input string to a regular expression.
+ *
+ * Grapheme clusters of several code points are kept verbatim, except that a special character inside a
+ * cluster is escaped.
  *
  * @param input the input string
  * @param positions a pointer to a #rocket::Positions. If it is nonnull, then the positions are populated

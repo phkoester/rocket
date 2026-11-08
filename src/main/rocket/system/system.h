@@ -40,8 +40,13 @@ std::string exec(const std::string& cl);
 /**
  * Executes a command and captures the output to stdout.
  *
- * @param args the command line to execute
+ * Each argument reaches the command literally, as a single argument. No shell interprets it, so it is safe
+ * to pass untrusted values.
+ *
+ * @param args the command line to execute. The first element is the program. Elements may not contain NUL
+ *   characters and, on Windows, line breaks
  * @return the captured output
+ * @throw #rocket::InvalidArgument if an element of @p args contains a character that cannot be passed
  * @throw #rocket::InvalidState if the command cannot be executed
  */
 std::string exec(const std::vector<std::string_view>& args);

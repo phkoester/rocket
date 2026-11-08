@@ -88,7 +88,7 @@
  * `"3 \u20AC"`. Any well-formed UTF-8 string is a valid RON string.
  *
  * When writing, the writing rules for @ref formatted_char "characters" apply. Grapheme clusters are
- * recognized and written verbatim.
+ * recognized and written verbatim, except that a quote or backslash inside a cluster is escaped.
  *
  * ## Optional Values
  *

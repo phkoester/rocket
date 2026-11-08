@@ -46,12 +46,13 @@
  * Unicode code points in the ranges [U+0000,U+D7FF] and [U+E000,U+10FFFF].
  *
  * When reading, escape sequences as well as the prefixes `\x` (two hexadecimal digits), `\u` (four
- * hexadecimal digits), and `\U` (eight hexadecimal digits) are accepted.
+ * hexadecimal digits), and `\U` (eight hexadecimal digits) are accepted. `\/` is accepted as well. A `\u`
+ * high surrogate must be followed by a `\u` low surrogate; together, they yield a single code point.
  *
- * When writing, the escape sequences `\a`, `\b`, `\t`, `\n`, `\v`, `\f`, `\r`, `\e`, `\'`, and `\\` are
- * used. If a character is classified as printable by the Unicode standard or is greater than U+FFFF, it
- * appears verbatim in the output, e.g., as `"a"` or `"€"`. Otherwise, it is written in hexadecimal notation,
- * using the prefix `\u` (four hexadecimal digits).
+ * When writing, the escape sequences `\b`, `\t`, `\n`, `\f`, `\r`, `\"`, and `\\` are used. If a character
+ * is classified as printable by the Unicode standard or is greater than U+FFFF, it appears verbatim in the
+ * output, e.g., as `"a"` or `"€"`. Otherwise, it is written in hexadecimal notation, using the prefix `\u`
+ * (four hexadecimal digits).
  *
  * ## Enumerations
  *
@@ -82,7 +83,7 @@
  * `"3 \u20AC"`. Any well-formed UTF-8 string is a valid JSON string.
  *
  * When writing, the writing rules for @ref json_char "characters" apply. Grapheme clusters are recognized
- * and written verbatim.
+ * and written verbatim, except that a quote or backslash inside a cluster is escaped.
  *
  * ## Optional Values
  *
@@ -823,7 +824,7 @@ struct JsonProducerImpl<DataType::Char, C> {
       throw InputFailure(pos, "Unterminated character literal");
     }
 
-    const std::string unescaped = str::escape::unescapeCString(*input);
+    const std::string unescaped = str::escape::unescapeCString(*input, { .json=true });
     const std::basic_string<C> str(unicode::ConvertTo<C>::apply(unescaped));
     if (str.size() != 1) {
       throw InputFailure(pos, "Invalid character literal");
@@ -952,7 +953,7 @@ struct JsonProducerImpl<DataType::String, T> {
       throw InputFailure(pos, "Unterminated string literal");
     }
 
-    const std::string unescaped = str::escape::unescapeCString(*input);
+    const std::string unescaped = str::escape::unescapeCString(*input, { .json=true });
     std::basic_string<C> str(unicode::ConvertTo<C>::apply(unescaped));
     if constexpr (std::same_as<T, std::basic_string_view<C>>) {
       // Decoding a string view: make it point to a string bound to the decoder

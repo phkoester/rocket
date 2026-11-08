@@ -33,38 +33,76 @@ envMutex() {
 #ifdef ROCKET_OS_WINDOWS
 
 /**
- * Windows: Convert arguments to a command-line string. The rules are:
+ * Windows: Quotes an argument such that the C runtime of the called program reads it back unchanged.
  *
- * - Replace a space by `" "`
- * - Replace a quotation mark by `\"`
- * - Replace a backslash followed by a quotation mark by `"\\"`
+ * Backslashes are only special in front of a quotation mark: there, they must be doubled. This includes the
+ * closing quotation mark. A quotation mark inside the argument is escaped with one more backslash.
+ */
+string
+quoteArg(string_view arg) {
+  string ret = "\"";
+  u64 backslashes = 0;
+
+  for (const char c : arg) {
+    if (c == '\\') {
+      ++backslashes; // Decide how to write them when we see what follows
+      continue;
+    }
+    ret.append(c == '"' ? 2 * backslashes + 1 : backslashes, '\\');
+    ret.push_back(c);
+    backslashes = 0;
+  }
+
+  ret.append(2 * backslashes, '\\');
+  ret.push_back('"');
+  return ret;
+}
+
+/**
+ * Windows: Escapes a string for `cmd.exe`, which `_popen` runs the command line with.
+ *
+ * Quotation marks are escaped as well, so `cmd.exe` never enters its quoted mode, in which the following
+ * metacharacters would be interpreted differently. The carets are gone by the time the program is started.
+ */
+string
+escapeCmd(string_view str) {
+  constexpr string_view METACHARS = "()[]%!^\"`<>&|;, *?";
+
+  string ret;
+  ret.reserve(str.size());
+  for (const char c : str) {
+    if (METACHARS.contains(c)) {
+      ret.push_back('^');
+    }
+    ret.push_back(c);
+  }
+  return ret;
+}
+
+/**
+ * Windows: Converts arguments to a command-line string that passes each argument literally.
+ *
+ * The first argument names the program. `cmd.exe` must recognize it as one token, so unlike the other
+ * arguments, it isn't quoted but only escaped.
+ *
+ * Line breaks cannot be passed at all: `cmd.exe` stops reading the command line at the first one.
  */
 string
 makeCl(const vector<string_view>& args) {
   string ret;
 
-  for (const auto& arg : args) {
-    if (not ret.empty()) {
+  for (u64 i = 0; i < args.size(); ++i) {
+    const string_view arg = args[i];
+    ROCKET_CHECK(args, not arg.contains('\0'), "May not contain NUL characters");
+    ROCKET_CHECK(
+      args,
+      not arg.contains('\n') && not arg.contains('\r'),
+      "May not contain line breaks on Windows");
+
+    if (i > 0) {
       ret.push_back(' ');
     }
-
-    for (u64 i = 0, size = arg.size(); i < size; ++i) {
-      char c = arg[i];
-      optional<char> next;
-      if (i < size - 1) {
-        next = arg[i + 1];
-      }
-
-      if (c == ' ') {
-        ret.append("\" \"");
-      } else if (c == '"') {
-        ret.append("\\\"");
-      } else if (c == '\\' && next && *next == '"') {
-        ret.append("\"\\\\\"");
-      } else {
-        ret.push_back(c);
-      }
-    }
+    ret.append(i == 0 ? escapeCmd(arg) : escapeCmd(quoteArg(arg)));
   }
 
   return ret;
@@ -73,35 +111,33 @@ makeCl(const vector<string_view>& args) {
 #else
 
 /**
- * Non-Windows: Convert arguments to a command-line string. The rules are:
+ * Non-Windows: Converts arguments to a command-line string that passes each argument literally.
  *
- * - Escape a space with a backslash
- * - Escape a quotation mark with a backslash
- * - Escape an apostrophe with a backslash
- * - Escape a backslash with a backslash
+ * `popen` hands the command line to `/bin/sh`. Enclosing each argument in single quotes turns off all
+ * interpretation by the shell, including variable expansion, command substitution, operators, and globbing.
+ * It also preserves empty arguments as `''`. Only a single quote itself cannot appear inside single quotes,
+ * so it is written as `'\''`: close the quotes, add an escaped single quote, and reopen the quotes.
  */
 string
 makeCl(const vector<string_view>& args) {
   string ret;
 
   for (const auto& arg : args) {
+    ROCKET_CHECK(args, not arg.contains('\0'), "May not contain NUL characters");
+
     if (not ret.empty()) {
       ret.push_back(' ');
     }
 
+    ret.push_back('\'');
     for (const char c : arg) {
-      if (c == ' ') {
-        ret.append("\\ ");
-      } else if (c == '"') {
-        ret.append("\\\"");
-      } else if (c == '\'') {
-        ret.append("\\'");
-      } else if (c == '\\') {
-        ret.append("\\\\");
+      if (c == '\'') {
+        ret.append("'\\''");
       } else {
         ret.push_back(c);
       }
     }
+    ret.push_back('\'');
   }
 
   return ret;
