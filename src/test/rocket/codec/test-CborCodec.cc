@@ -62,7 +62,7 @@ someFuncReturningCborItem() {
 
 template<typename T>
 void
-testRoundtrip(const T& val) {
+testRoundtrip(const T& val) { // NOLINT(*-complexity)
   const vector<u8> cbor = codec.encode(val);
 
   const auto result = codec.decode<T>(cbor);

@@ -29,7 +29,7 @@ TEST(assert, RocketAssertTrue) {
   EXPECT_FALSE(oopsCalled);
 }
 
-TEST(assertDeathTest, RocketAssertFalse) {
+TEST(assertDeathTest, RocketAssertFalse) { // NOLINT(*-complexity)
   EXPECT_EXIT(
       { ROCKET_ASSERT(false, "My message: {}", 42); },
       ABORTED(), "Assertion `false` failed: My message: 42");

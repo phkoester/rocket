@@ -385,7 +385,7 @@ namespace internal {
 struct DecoderStore {
   static DecoderStore* get();
 
-  static void set(DecoderStore* store);
+  static void set(DecoderStore* val);
 
   const std::string&
   store(std::string&& val) {

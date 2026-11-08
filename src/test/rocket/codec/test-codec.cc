@@ -337,7 +337,7 @@ struct TracingCodec : Codec<TracingConsumer, TracingProducer> {
   template<typename T>
   [[nodiscard]] DecodeResult<T>
   decode(nio::Source& in, nio::Sink& out) const {
-    T val;
+    T val {};
     return Base::decode<T>(val, in, out);
   }
 

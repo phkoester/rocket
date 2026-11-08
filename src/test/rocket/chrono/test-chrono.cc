@@ -46,7 +46,7 @@ const string UTC = rocket::chrono::abbreviation("UTC", false, "UTC");
 
 // `sys_info` ...............................................................................................
 
-TEST(chrono, sys_info) {
+TEST(chrono, sysInfo) {
   const time_zone* berlin = locate_zone("Europe/Berlin");
 
   const auto summer = berlin->get_info(sys_days(2024y / July / 1) + 12h);
@@ -78,7 +78,7 @@ TEST(chrono, sys_info) {
 #endif
 }
 
-TEST(chrono, sys_info_future) {
+TEST(chrono, sysInfoFuture) {
   // Far beyond the transitions listed in the files, the rules apply
 
   const auto berlin = locate_zone("Europe/Berlin")->get_info(sys_days(2200y / July / 1));
@@ -93,7 +93,7 @@ TEST(chrono, sys_info_future) {
   EXPECT_EQ(newYork.abbrev, EST);
 }
 
-TEST(chrono, sys_info_southern_hemisphere) {
+TEST(chrono, sysInfoSouthernHemisphere) {
   const time_zone* sydney = locate_zone("Australia/Sydney");
   EXPECT_EQ(sydney->get_info(sys_days(2030y / January / 1)).offset, 11h);
   EXPECT_EQ(sydney->get_info(sys_days(2030y / July / 1)).offset, 10h);
@@ -105,7 +105,7 @@ TEST(chrono, sys_info_southern_hemisphere) {
   EXPECT_EQ(lordHowe.save, 30min);
 }
 
-TEST(chrono, sys_info_no_dst) {
+TEST(chrono, sysInfoNoDst) {
   const auto utc = locate_zone("UTC")->get_info(sys_days(2024y / July / 1));
   EXPECT_EQ(utc.offset, 0s);
   EXPECT_EQ(utc.save, 0min);
@@ -118,7 +118,7 @@ TEST(chrono, sys_info_no_dst) {
 
 // `local_info` .............................................................................................
 
-TEST(chrono, local_info) {
+TEST(chrono, localInfo) {
   const time_zone* berlin = locate_zone("Europe/Berlin");
 
   const auto unique = berlin->get_info(local_days(2024y / July / 1) + 12h);
@@ -144,19 +144,19 @@ TEST(chrono, local_info) {
 
 // `time_zone` ..............................................................................................
 
-TEST(chrono, time_zone_ordering) {
+TEST(chrono, timeZoneOrdering) {
   EXPECT_TRUE(*locate_zone("Europe/Berlin") == *locate_zone("Europe/Berlin"));
   EXPECT_TRUE(*locate_zone("Europe/Berlin") < *locate_zone("Europe/Paris"));
 }
 
-TEST(chrono, time_zone_to_local) {
+TEST(chrono, timeZoneToLocal) {
   const time_zone* newYork = locate_zone("America/New_York");
   const auto utc = sys_days(2024y / July / 1) + 12h;
   EXPECT_EQ(newYork->to_local(utc), local_days(2024y / July / 1) + 8h);
   EXPECT_EQ(newYork->to_sys(newYork->to_local(utc)), utc);
 }
 
-TEST(chrono, time_zone_to_sys) {
+TEST(chrono, timeZoneToSys) {
   const time_zone* berlin = locate_zone("Europe/Berlin");
 
   EXPECT_EQ(berlin->to_sys(local_days(2024y / July / 1) + 12h), sys_days(2024y / July / 1) + 10h);
@@ -177,7 +177,7 @@ TEST(chrono, time_zone_to_sys) {
   EXPECT_EQ(ms, sys_time<milliseconds>(sys_days(2024y / July / 1) + 10h + 5ms));
 }
 
-TEST(chrono, time_zone_to_sys_messages) {
+TEST(chrono, timeZoneToSysMessages) {
   const time_zone* berlin = locate_zone("Europe/Berlin");
 
   try {
@@ -202,12 +202,12 @@ TEST(chrono, time_zone_to_sys_messages) {
   }
 }
 
-TEST(chrono, current_zone) {
+TEST(chrono, currentZone) {
   ASSERT_NE(current_zone(), nullptr);
   EXPECT_EQ(locate_zone(current_zone()->name()), current_zone());
 }
 
-TEST(chrono, locate_zone) {
+TEST(chrono, locateZone) {
   const time_zone* berlin = locate_zone("Europe/Berlin");
   ASSERT_NE(berlin, nullptr);
   EXPECT_EQ(berlin->name(), "Europe/Berlin");
@@ -231,7 +231,7 @@ TEST(chrono, locate_zone) {
 
 // `zoned_time` .............................................................................................
 
-TEST(chrono, zoned_time) {
+TEST(chrono, zonedTime) {
   using rocket::chrono::zoned_time;
 
   const auto utc = sys_days(2024y / July / 1) + 12h;
@@ -288,7 +288,7 @@ TEST(chrono, zoned_time) {
   EXPECT_TRUE(assigned == zt);
 }
 
-TEST(chrono, zoned_time_format) {
+TEST(chrono, zonedTimeFormat) {
   using rocket::chrono::zoned_time;
 
   const auto utc = sys_days(2024y / July / 1) + 12h;

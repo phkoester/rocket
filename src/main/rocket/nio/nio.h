@@ -580,13 +580,21 @@ struct Source : Device {
   std::string readString();
 
   /**
+   * Seeks a new position in the source, using #rocket::nio::SeekMode::beg.
+   *
+   * @param offset the offset to seek to
+   * @return whether the operation succeeded
+   */
+  bool seek(i64 offset) { return seek(offset, SeekMode::beg); }
+
+  /**
    * Seeks a new position in the source.
    *
    * @param offset the offset to seek to
    * @param mode the seek mode
    * @return whether the operation succeeded
    */
-  virtual bool seek(i64 offset, SeekMode mode = SeekMode::beg) = 0; // NOLINT
+  virtual bool seek(i64 offset, SeekMode mode) = 0;
 
   /**
    * Returns the current input position
@@ -655,7 +663,7 @@ struct BufferedSource : Source {
 
   u64 read(std::span<u8> out) override;
 
-  bool seek(i64 offset, SeekMode mode = SeekMode::beg) override; // NOLINT
+  bool seek(i64 offset, SeekMode mode) override;
 
   [[nodiscard]] u64 tell() override;
 
@@ -708,7 +716,7 @@ struct FileSource : Source {
 
   u64 read(std::span<u8> out) override;
 
-  bool seek(i64 offset, SeekMode mode = SeekMode::beg) override; // NOLINT
+  bool seek(i64 offset, SeekMode mode) override;
 
   [[nodiscard]] u64 tell() override;
 
@@ -736,7 +744,7 @@ ROCKET_TEST_PRIVATE:
   u64 read([[maybe_unused]] std::span<u8> out) override { return 0; }
 
   bool
-  seek([[maybe_unused]] i64 offset, [[maybe_unused]] SeekMode mode = SeekMode::beg) override { // NOLINT
+  seek([[maybe_unused]] i64 offset, [[maybe_unused]] SeekMode mode) override {
     return false;
   }
 
@@ -780,7 +788,7 @@ struct SpanSource : ContiguousSource {
 
   u64 read(std::span<u8> out) override;
 
-  bool seek(i64 offset, SeekMode mode = SeekMode::beg) override; // NOLINT
+  bool seek(i64 offset, SeekMode mode) override;
 
   [[nodiscard]] std::string_view
   str() const override {
@@ -819,7 +827,7 @@ struct StreamSource : Source {
 
   u64 read(std::span<u8> out) override;
 
-  bool seek(i64 offset, SeekMode mode = SeekMode::beg) override; // NOLINT
+  bool seek(i64 offset, SeekMode mode) override;
 
   [[nodiscard]] u64 tell() override;
 
@@ -865,7 +873,7 @@ struct StringSource : ContiguousSource {
 
   u64 read(std::span<u8> out) override;
 
-  bool seek(i64 offset, SeekMode mode = SeekMode::beg) override; // NOLINT
+  bool seek(i64 offset, SeekMode mode) override;
 
   [[nodiscard]] std::string_view str() const override { return in_.substr(pos_); }
 

@@ -22,8 +22,7 @@ const string CHUNK(CHUNK_SIZE, ' ');
 
 // `BENCH` --------------------------------------------------------------------------------------------------
 
-
-void
+static void
 nio_FileSink(benchmark::State& state) { // NOLINT(*-internal-linkage)
   const auto temp = rocket::filesystem::tempFile();
   for (auto _ : state) { // NOLINT
@@ -36,7 +35,7 @@ nio_FileSink(benchmark::State& state) { // NOLINT(*-internal-linkage)
 }
 BENCHMARK(nio_FileSink);
 
-void
+static void
 nio_BufferedFileSink(benchmark::State& state) {
   const auto temp = rocket::filesystem::tempFile();
   for (auto _ : state) { // NOLINT
@@ -51,7 +50,7 @@ nio_BufferedFileSink(benchmark::State& state) {
 }
 BENCHMARK(nio_BufferedFileSink);
 
-void
+static void
 nio_StreamSink(benchmark::State& state) {
   const auto temp = rocket::filesystem::tempFile();
   for (auto _ : state) { // NOLINT
@@ -65,7 +64,7 @@ nio_StreamSink(benchmark::State& state) {
 }
 BENCHMARK(nio_StreamSink);
 
-void
+static void
 nio_BufferedStreamSink(benchmark::State& state) {
   const auto temp = rocket::filesystem::tempFile();
   for (auto _ : state) { // NOLINT

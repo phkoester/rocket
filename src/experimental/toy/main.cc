@@ -29,7 +29,9 @@ enum class Color : u8 { Red, Green, Blue };
 ROCKET_ENUM_DECLARE(, Color, Color); // NOLINT(*-internal-linkage)
 ROCKET_ENUM_DEFINE(, Color, Color, (Red)(Green)(Blue));
 
-// Functions ------------------------------------------------------------------------------------------------
+namespace {
+
+// Local functions ------------------------------------------------------------------------------------------
 
 void
 throwInvalidState() {
@@ -53,6 +55,8 @@ toy() {
 
   nio::out.println("Hello from toy");
 }
+
+} // namespace
 
 // `main` ---------------------------------------------------------------------------------------------------
 

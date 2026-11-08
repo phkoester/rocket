@@ -199,7 +199,7 @@ MyFrame::MyFrame() : wxFrame(
   Bind(wxEVT_MENU, &MyFrame::onHello, this, ID_Hello);
 
   webView_ = wxWebView::New(this, wxID_ANY, "https://wxwidgets.org");
-  if (not webView_) {
+  if (webView_ == nullptr) {
     SetStatusText("The web view backend is not available");
     return;
   }

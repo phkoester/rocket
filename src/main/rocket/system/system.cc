@@ -18,7 +18,7 @@ using namespace std;
 // Global variables -----------------------------------------------------------------------------------------
 
 #ifndef ROCKET_OS_WINDOWS
-extern char** environ;
+extern char** environ; // NOLINT
 #endif
 namespace {
 

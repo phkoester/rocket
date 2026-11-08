@@ -138,14 +138,14 @@ TEST(nio, BufferedSourceSeek) {
   EXPECT_EQ(buffered.tell(), 1);
   EXPECT_EQ(buffered.underlying_.tell(), 64);
 
-  buffered.seek(30);
+  buffered.Source::seek(30);
   EXPECT_EQ(buffered.bufPos_, 0);
   EXPECT_EQ(buffered.pos_, 30);
   EXPECT_EQ(buffered.end_, 64);
   EXPECT_EQ(buffered.tell(), 30);
   EXPECT_EQ(buffered.underlying_.tell(), 64);
 
-  buffered.seek(64);
+  buffered.Source::seek(64);
   EXPECT_EQ(buffered.bufPos_, 0);
   EXPECT_EQ(buffered.pos_, 64);
   EXPECT_EQ(buffered.end_, 64);
@@ -167,7 +167,7 @@ TEST(nio, BufferedSourceSeek) {
   EXPECT_EQ(buffered.tell(), 108);
   EXPECT_EQ(buffered.underlying_.tell(), 128);
 
-  buffered.seek(20);
+  buffered.Source::seek(20);
   EXPECT_EQ(buffered.bufPos_, 20);
   EXPECT_EQ(buffered.pos_, 0);
   EXPECT_EQ(buffered.end_, 0);
@@ -323,26 +323,26 @@ TEST(nio, StringSourceSeek) {
   const string str128 = testString(128);
   StringSource in(str128);
 
-  in.seek(0);
+  in.Source::seek(0);
   EXPECT_EQ(in.tell(), 0);
   char c = '\0';
   EXPECT_EQ(in.Source::read(c), 1);
   EXPECT_EQ(c, '0');
   EXPECT_EQ(in.tell(), 1);
 
-  in.seek(127);
+  in.Source::seek(127);
   EXPECT_EQ(in.tell(), 127);
   EXPECT_EQ(in.Source::read(c), 1);
   EXPECT_EQ(c, '7');
   EXPECT_EQ(in.tell(), 128);
 
-  in.seek(129);
+  in.Source::seek(129);
   EXPECT_EQ(in.tell(), 128);
 
   in.seek(-11, SeekMode::cur);
   EXPECT_EQ(in.tell(), 117);
 
-  EXPECT_THAT([&] { in.seek(-1); }, Throws<system_error>());
+  EXPECT_THAT([&] { in.Source::seek(-1); }, Throws<system_error>());
 
   in.seek(0, SeekMode::end);
   EXPECT_EQ(in.tell(), 128);

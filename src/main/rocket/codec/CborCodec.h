@@ -669,7 +669,7 @@ struct CborProducerImpl<DataType::Pointer, P> {
     } catch (const InputFailure& ex) {
       throw InputFailure(ex.position(), "Expected a pointer");
     }
-    item.setValue(reinterpret_cast<P>(alt.value()));
+    item.setValue(reinterpret_cast<P>(alt.value())); // NOLINT
   }
 };
 
@@ -774,16 +774,16 @@ struct CborProducerImpl<DataType::List, T> {
       }
 
       // Fixed-size array
-      T arr;
+      T arr {};
       for (u64 index = 0; index < size; ++index) {
         arr[index] = produceElem(item, state, index);
       }
       item.setValue(std::move(arr));
     } else {
       // Container with `push_back`
-      T list;
+      T list {};
       for (u64 index = 0; index < size; ++index) {
-        list.push_back(produceElem(item, state, index));
+        list.push_back(produceElem(item, state, index)); // NOLINT(performance-*)
       }
       item.setValue(std::move(list));
     }
