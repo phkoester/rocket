@@ -8,6 +8,7 @@
 
 #include "rocket/Bimap.h"
 #include "rocket/Result.h"
+#include "rocket/TypeId.h"
 #include "rocket/assert.h"
 #include "rocket/format.h"
 #include "rocket/scan.h"
@@ -86,7 +87,7 @@
   rocket::Enum<ns::type>::toString(ns::type val) { \
     auto it = ns::get##name##Map__().left.find(val); \
     if (it == ns::get##name##Map__().left.end()) { \
-      ROCKET_FAIL("Invalid `{}` value {}", typeid(ns::type), ::std::to_underlying(val)); \
+      ROCKET_FAIL("Invalid {} value: {}", ::rocket::TypeId::of<ns::type>(), ::std::to_underlying(val)); \
     } \
     return it->second; \
   } \

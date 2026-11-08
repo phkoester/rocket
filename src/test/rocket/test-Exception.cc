@@ -153,7 +153,7 @@ TEST(Exception, nestedExceptionTypeId) {
       throw_with_nested(InvalidArgument("name", "oops2"));
     }
   } catch (const InvalidArgument& ex) {
-    EXPECT_EQ(fmt::format("{}", TypeId(typeid(ex))), nestedException("rocket::InvalidArgument"));
+    EXPECT_EQ(fmt::format("{}", TypeId(ex)), nestedException("rocket::InvalidArgument"));
   }
 }
 

@@ -237,7 +237,7 @@ struct fmt::formatter<T, C> {
   format(const T& val, FormatContext& ctx) const {
     auto out = ctx.out();
     if (withType_) {
-      const std::string typeName = fmt::format("{}", typeid(val));
+      const std::string typeName = fmt::format("{}", TypeId(val).prettyName());
       // GCC 13.3 needs `fmt::detail` here
       out = fmt::detail::write<C>(out, rocket::unicode::ConvertTo<C>::apply(typeName));
     }
@@ -288,7 +288,7 @@ struct fmt::formatter<rocket::reflect::Instance<T, Inner>, C> {
   format(const Type& val, FormatContext& ctx) const {
     auto out = ctx.out();
     if (withType_) {
-      const std::string typeName = fmt::format("{}", typeid(typename Type::Type));
+      const std::string typeName = fmt::format("{}", TypeId::of<typename Type::Type>().prettyName());
       out = detail::write<C>(out, rocket::unicode::ConvertTo<C>::apply(typeName));
     }
     const rocket::codec::FormattedCodec codec;

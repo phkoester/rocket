@@ -87,7 +87,7 @@ TEST(FormattedCodec, ConsumerEnum) {
   EXPECT_EQ(encode(log::LogLevel::info), "info");
   EXPECT_THAT(
     [&] { encode(static_cast<log::LogLevel>(-1)); }, // NOLINT
-    ThrowsMessage<InvalidState>(EndsWith("Invalid `rocket::log::LogLevel` value 255")));
+    ThrowsMessage<InvalidState>(EndsWith("Invalid `rocket::log::LogLevel` value: 255")));
 }
 
 TEST(FormattedCodec, ConsumerIntegerI64) {

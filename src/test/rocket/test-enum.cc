@@ -50,7 +50,7 @@ TEST(enum, MyEnumFormat) {
 
   EXPECT_THAT(
     [] { static_cast<void>(fmt::format("{}", static_cast<MyEnum>(10))); }, // NOLINT
-    ThrowsMessage<InvalidState>(EndsWith("Invalid `MyEnum` value 10")));
+    ThrowsMessage<InvalidState>(EndsWith("Invalid `MyEnum` value: 10")));
 
   EXPECT_EQ(fmt::format(U"{}", fröb), U"fröb");
 }

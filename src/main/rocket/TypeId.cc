@@ -28,6 +28,7 @@ TypeId::prettyName() const {
   // Windows: the names are not mangled, but class keys are included, as in
   // `struct std::pair<int,struct Foo>`. Remove all occurrences of `struct `
   string ret(name);
+  str::replaceIn(ret, "enum ", "");
   str::replaceIn(ret, "struct ", "");
   str::replaceIn(ret, " * __ptr64", "*");
   return ret;

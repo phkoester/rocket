@@ -2,6 +2,7 @@
  * message.cc
  */
 
+#include "rocket/TypeId.h"
 #include "rocket/format.h"
 #include "rocket/str/message/message.h"
 
@@ -13,23 +14,23 @@ namespace rocket::str::message {
 
 string
 cannotScanAs(string_view input, const type_info& type) {
-  return fmt::format("Cannot scan {:?} as `{}`", input, type);
+  return fmt::format("Cannot scan {:?} as {}", input, TypeId(type));
 }
 
 string
 overflow(const type_info& type, string_view msg) {
   if (msg.empty()) {
-    return fmt::format("`{}` overflow", type);
+    return fmt::format("{} overflow", TypeId(type));
   }
-  return fmt::format("`{}` overflow: {}", type, msg);
+  return fmt::format("{} overflow: {}", TypeId(type), msg);
 }
 
 string
 underflow(const type_info& type, string_view msg) {
   if (msg.empty()) {
-    return fmt::format("`{}` underflow", type);
+    return fmt::format("{} underflow", TypeId(type));
   }
-  return fmt::format("`{}` underflow: {}", type, msg);
+  return fmt::format("{} underflow: {}", TypeId(type), msg);
 }
 
 string

@@ -151,7 +151,7 @@ struct CborConsumerImpl<DataType::Integer, I> {
       ROCKET_EXPECT(cbor_array_push(ret.ptr(), lo.ptr()));
       return ret;
     } else {
-      ROCKET_TERMINATE("Cannot consume integer of type `{}`", typeid(I));
+      ROCKET_TERMINATE("Cannot consume integer of type {}", TypeId::of<I>());
     }
   }
 };
@@ -165,7 +165,7 @@ struct CborConsumerImpl<DataType::Float, F> {
     } else if constexpr (sizeof(F) == 8) {
       return CborItem<F>(cbor_build_float8(static_cast<f64>(val)));
     } else {
-      ROCKET_TERMINATE("Cannot consume float of type `{}`", typeid(F));
+      ROCKET_TERMINATE("Cannot consume float of type {}", TypeId::of<F>());
     }
   }
 };
@@ -624,7 +624,7 @@ struct CborProducerImpl<DataType::Integer, I> {
         }
       }
     } else {
-      ROCKET_TERMINATE("Cannot produce integer of type `{}`", typeid(I));
+      ROCKET_TERMINATE("Cannot produce integer of type {}", TypeId::of<I>());
     }
 
     throw InputFailure(state.index, "Expected an integer value");
@@ -648,7 +648,7 @@ struct CborProducerImpl<DataType::Float, F> {
         return;
       }
     } else {
-      ROCKET_TERMINATE("Cannot produce floating-point value of type `{}`", typeid(F));
+      ROCKET_TERMINATE("Cannot produce floating-point value of type {}", TypeId::of<F>());
     }
 
     throw InputFailure(state.index, "Expected a floating-point value");

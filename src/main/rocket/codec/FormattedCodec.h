@@ -289,7 +289,7 @@ struct FormattedConsumerImpl<DataType::Enum, E> {
       out.print("{}", val);
       return;
     }
-    ROCKET_FAIL("Cannot format enum of type `{}`", typeid(E));
+    ROCKET_FAIL("Cannot format enum of type {}", TypeId::of<E>());
   }
 };
 
@@ -791,9 +791,9 @@ struct FormattedProducerImpl<DataType::Enum, E> {
         val = *result;
         return;
       }
-      throw InputFailure(pos, fmt::format("Invalid value for enum `{}`", typeid(E)));
+      throw InputFailure(pos, fmt::format("Invalid value for enum {}", TypeId::of<E>()));
     }
-    throw InputFailure(pos, fmt::format("Cannot scan enum of type `{}`", typeid(E)));
+    throw InputFailure(pos, fmt::format("Cannot scan enum of type {}", TypeId::of<E>()));
   }
 };
 
