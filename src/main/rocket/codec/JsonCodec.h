@@ -244,7 +244,7 @@ endContainer(nio::Sink& out, JsonConsumerConfig& config, u64 size, char c) {
  */
 template<typename T, std_size_t... Index>
 constexpr bool
-isObjectTuple(std::index_sequence<Index...>) {
+isObjectTuple([[maybe_unused]] std::index_sequence<Index...> seq) {
   return ((DataTypes<std::tuple_element_t<Index, T>>::Value == DataType::MemberRef ||
            DataTypes<std::tuple_element_t<Index, T>>::Value == DataType::VarRef) && ...);
 }

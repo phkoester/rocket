@@ -37,7 +37,7 @@ private:
 TEST(scope, ScopeExitRunsOnNormalExit) {
   i32 count = 0;
   {
-    scope_exit guard([&count] { ++count; });
+    const scope_exit guard([&count] { ++count; });
     EXPECT_EQ(count, 0);
   }
   EXPECT_EQ(count, 1);
@@ -46,7 +46,7 @@ TEST(scope, ScopeExitRunsOnNormalExit) {
 TEST(scope, ScopeExitRunsOnException) {
   i32 count = 0;
   try {
-    scope_exit guard([&count] { ++count; });
+    const scope_exit guard([&count] { ++count; });
     throw runtime_error("test");
   } catch (const runtime_error&) {
     EXPECT_EQ(count, 1);
@@ -73,9 +73,9 @@ TEST(scope, ScopeExitRelease) {
 TEST(scope, ScopeExitReverseOrder) {
   vector<i32> order;
   {
-    scope_exit guard1([&order] { order.push_back(1); });
-    scope_exit guard2([&order] { order.push_back(2); });
-    scope_exit guard3([&order] { order.push_back(3); });
+    const scope_exit guard1([&order] { order.push_back(1); });
+    const scope_exit guard2([&order] { order.push_back(2); });
+    const scope_exit guard3([&order] { order.push_back(3); });
   }
   EXPECT_EQ(order, (vector<i32> { 3, 2, 1 }));
 }
@@ -95,7 +95,7 @@ TEST(scope, ScopeExitMacro) {
 TEST(scope, ScopeFailDoesNotRunOnNormalExit) {
   i32 count = 0;
   {
-    scope_fail guard([&count] { ++count; });
+    const scope_fail guard([&count] { ++count; });
   }
   EXPECT_EQ(count, 0);
 }
@@ -103,7 +103,7 @@ TEST(scope, ScopeFailDoesNotRunOnNormalExit) {
 TEST(scope, ScopeFailRunsOnException) {
   i32 count = 0;
   try {
-    scope_fail guard([&count] { ++count; });
+    const scope_fail guard([&count] { ++count; });
     throw runtime_error("test");
   } catch (const runtime_error&) {
     EXPECT_EQ(count, 1);
@@ -114,7 +114,7 @@ TEST(scope, ScopeFailRunsOnException) {
 TEST(scope, ScopeFailDoesNotRunOnCaughtException) {
   i32 count = 0;
   {
-    scope_fail guard([&count] { ++count; });
+    const scope_fail guard([&count] { ++count; });
     try {
       throw runtime_error("test");
     } catch (const runtime_error&) {}
@@ -136,8 +136,8 @@ TEST(scope, ScopeFailDuringUnwinding) {
   // A guard created during stack unwinding must not fire if its own scope exits normally
   i32 count = 0;
   try {
-    OnDestroy onDestroy([&count] {
-      scope_fail guard([&count] { ++count; });
+    const OnDestroy onDestroy([&count] {
+      const scope_fail guard([&count] { ++count; });
     });
     throw runtime_error("test");
   } catch (const runtime_error&) {}
@@ -145,9 +145,9 @@ TEST(scope, ScopeFailDuringUnwinding) {
 
   // ... but it must fire if its own scope is left by a new exception
   try {
-    OnDestroy onDestroy([&count] {
+    const OnDestroy onDestroy([&count] {
       try {
-        scope_fail guard([&count] { ++count; });
+        const scope_fail guard([&count] { ++count; });
         throw logic_error("nested");
       } catch (const logic_error&) {}
     });
@@ -175,7 +175,7 @@ TEST(scope, ScopeFailMacro) {
 TEST(scope, ScopeSuccessRunsOnNormalExit) {
   i32 count = 0;
   {
-    scope_success guard([&count] { ++count; });
+    const scope_success guard([&count] { ++count; });
     EXPECT_EQ(count, 0);
   }
   EXPECT_EQ(count, 1);
@@ -184,7 +184,7 @@ TEST(scope, ScopeSuccessRunsOnNormalExit) {
 TEST(scope, ScopeSuccessDoesNotRunOnException) {
   i32 count = 0;
   try {
-    scope_success guard([&count] { ++count; });
+    const scope_success guard([&count] { ++count; });
     throw runtime_error("test");
   } catch (const runtime_error&) {}
   EXPECT_EQ(count, 0);
@@ -193,7 +193,7 @@ TEST(scope, ScopeSuccessDoesNotRunOnException) {
 TEST(scope, ScopeSuccessRunsAfterCaughtException) {
   i32 count = 0;
   {
-    scope_success guard([&count] { ++count; });
+    const scope_success guard([&count] { ++count; });
     try {
       throw runtime_error("test");
     } catch (const runtime_error&) {}
@@ -214,8 +214,8 @@ TEST(scope, ScopeSuccessDuringUnwinding) {
   // A guard created during stack unwinding must fire if its own scope exits normally
   i32 count = 0;
   try {
-    OnDestroy onDestroy([&count] {
-      scope_success guard([&count] { ++count; });
+    const OnDestroy onDestroy([&count] {
+      const scope_success guard([&count] { ++count; });
     });
     throw runtime_error("test");
   } catch (const runtime_error&) {}
@@ -223,9 +223,9 @@ TEST(scope, ScopeSuccessDuringUnwinding) {
 
   // ... but it must not fire if its own scope is left by a new exception
   try {
-    OnDestroy onDestroy([&count] {
+    const OnDestroy onDestroy([&count] {
       try {
-        scope_success guard([&count] { ++count; });
+        const scope_success guard([&count] { ++count; });
         throw logic_error("nested");
       } catch (const logic_error&) {}
     });
@@ -254,21 +254,21 @@ TEST(scope, MoveTransfersOwnership) {
   i32 count = 0;
   {
     scope_exit a([&count] { ++count; });
-    scope_exit b(std::move(a));
+    const scope_exit b(std::move(a));
   }
   EXPECT_EQ(count, 1);
 
   count = 0;
   {
     scope_success a([&count] { ++count; });
-    scope_success b(std::move(a));
+    const scope_success b(std::move(a));
   }
   EXPECT_EQ(count, 1);
 
   count = 0;
   try {
     scope_fail a([&count] { ++count; });
-    scope_fail b(std::move(a));
+    const scope_fail b(std::move(a));
     throw runtime_error("test");
   } catch (const runtime_error&) {}
   EXPECT_EQ(count, 1);
@@ -278,7 +278,7 @@ TEST(scope, ExitFunctionFromLvalue) {
   i32 count = 0;
   const auto fn = [&count] { ++count; };
   {
-    scope_exit guard(fn);
+    const scope_exit guard(fn);
   }
   EXPECT_EQ(count, 1);
 }

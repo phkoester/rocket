@@ -203,7 +203,7 @@ template<typename C> requires IsChar<C>
 concat(const std::vector<std::basic_string_view<C>>& segments, u64 pos = 0, u64 count = NPOS) {
   std::basic_string<C> ret;
   pos = std::min(pos, static_cast<u64>(segments.size()));
-  count = std::min(static_cast<u64>(count), static_cast<u64>(segments.size() - pos));
+  count = std::min(count, static_cast<u64>(segments.size() - pos));
   for (u64 i = pos, end = pos + count; i < end; ++i) {
     ret.append(segments[i]);
   }

@@ -175,7 +175,7 @@ struct Process {
   /**
    * Returns the code locale used for logging and error messages, which is `en_US.UTF-8`.
    *
-   * This is also the default locale for unit tests and benchmarks.
+   * This is also the default locale for Rocket.Test unit tests.
    *
    * May be called before #init.
    *

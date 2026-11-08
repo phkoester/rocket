@@ -26,7 +26,7 @@ const string CHUNK(CHUNK_SIZE, ' ');
 void
 nio_FileSink(benchmark::State& state) { // NOLINT(*-internal-linkage)
   const auto temp = rocket::filesystem::tempFile();
-  for (auto _ : state) {
+  for (auto _ : state) { // NOLINT
     FileSink out(temp);
     for (u64 i = 0; i < N; ++i) {
       out.Sink::write(CHUNK);
@@ -39,7 +39,7 @@ BENCHMARK(nio_FileSink);
 void
 nio_BufferedFileSink(benchmark::State& state) {
   const auto temp = rocket::filesystem::tempFile();
-  for (auto _ : state) {
+  for (auto _ : state) { // NOLINT
     FileSink out(temp);
     std::setvbuf(static_cast<FILE*>(out), nullptr, _IONBF, 0); // Disable buffering
     BufferedSink buffered(out);
@@ -54,7 +54,7 @@ BENCHMARK(nio_BufferedFileSink);
 void
 nio_StreamSink(benchmark::State& state) {
   const auto temp = rocket::filesystem::tempFile();
-  for (auto _ : state) {
+  for (auto _ : state) { // NOLINT
     ofstream os(temp.c_str());
     StreamSink out(os);
     for (u64 i = 0; i < N; ++i) {
@@ -68,7 +68,7 @@ BENCHMARK(nio_StreamSink);
 void
 nio_BufferedStreamSink(benchmark::State& state) {
   const auto temp = rocket::filesystem::tempFile();
-  for (auto _ : state) {
+  for (auto _ : state) { // NOLINT
     ofstream os(temp.c_str());
     os.rdbuf()->pubsetbuf(nullptr, 0); // Disable buffering
     StreamSink out(os);

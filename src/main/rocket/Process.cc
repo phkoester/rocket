@@ -84,7 +84,7 @@ invocationName() {
 
 const string&
 invocationShortName() {
-  static string ret(shortName(invocationName()));
+  static const string ret(shortName(invocationName()));
   return ret;
 }
 

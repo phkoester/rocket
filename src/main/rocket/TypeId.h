@@ -117,7 +117,7 @@ struct fmt::formatter<rocket::TypeId, C> {
   template<typename FormatContext>
   FormatContext::iterator
   format(const rocket::TypeId& val, FormatContext& ctx) const {
-    std::string str = '`' + val.prettyName() + '`';
+    const std::string str = '`' + val.prettyName() + '`';
     return underlying_.format(rocket::unicode::ConvertTo<C>::apply(str), ctx);
   }
 

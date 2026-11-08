@@ -24,9 +24,38 @@ using namespace std;
 
 #define COPYRIGHT "Copyright © 2024–2026 Philip Köster"
 
+namespace {
+
+// Local functions ------------------------------------------------------------------------------------------
+
+wxSize
+initialFrameSize() {
+  auto displaySize = wxGetDisplaySize();
+  return { displaySize.x / 3, displaySize.y / 2 };
+}
+
+wxBitmapBundle
+loadLogo(wxSize size = wxSize(192, 192)) {
+  return loadSvg("logo.svg", size);
+}
+
+// `Pcl` ----------------------------------------------------------------------------------------------------
+
+/// Parsed command line.
+struct Pcl {
+  optional<bool> help;
+  optional<vector<string>> files;
+  optional<bool> verbose;
+  optional<bool> version;
+};
+
+Pcl pcl; // NOLINT
+
+} // namespace
+
 // `GuyId` --------------------------------------------------------------------------------------------------
 
-enum GuyId {
+enum GuyId : u8 {
   ID_Hello = 1,
   ID_Back,
   ID_Forward,
@@ -36,9 +65,9 @@ enum GuyId {
 // `MyApp` decl ---------------------------------------------------------------------------------------------
 
 struct MyApp : wxApp {
-  virtual int OnExit() override;
+  int OnExit() override;
 
-  virtual bool OnInit() override;
+  bool OnInit() override;
 };
 
 // `MyFrame` decl -------------------------------------------------------------------------------------------
@@ -82,32 +111,9 @@ private:
   wxFrame* frame_;
 };
 
-// `Pcl` ----------------------------------------------------------------------------------------------------
-
-/// Parsed command line.
-struct Pcl {
-  optional<bool> help;
-  optional<vector<string>> files;
-  optional<bool> verbose;
-  optional<bool> version;
-};
-
-Pcl pcl;
-
 // Functions ------------------------------------------------------------------------------------------------
 
 void InitXmlResource();
-
-wxSize
-initialFrameSize() {
-  auto displaySize = wxGetDisplaySize();
-  return wxSize(displaySize.x / 3, displaySize.y / 2);
-}
-
-wxBitmapBundle
-loadLogo(wxSize size = wxSize(192, 192)) {
-  return loadSvg("logo.svg", size);
-}
 
 // `MyApp` impl ---------------------------------------------------------------------------------------------
 
@@ -140,7 +146,7 @@ MyApp::OnInit() {
   wxXmlResource::Get()->InitAllHandlers();
   InitXmlResource();
 
-  MyFrame* frame = new MyFrame();
+  auto* frame = new MyFrame();
   frame->Show(true);
   return true;
 }
@@ -156,26 +162,26 @@ MyFrame::MyFrame() : wxFrame(
   const wxBitmapBundle logo = loadLogo();
   if (logo.IsOk()) {
     wxIconBundle icons;
-    for (const int size : { 16, 32, 48, 64, 128, 256 }) {
+    for (const int size : { 16, 32, 48, 64, 128, 256, 512 }) {
       icons.AddIcon(logo.GetIcon(wxSize(size, size)));
     }
     SetIcons(icons);
   }
 
-  wxMenu* menuFile = new wxMenu;
+  auto* menuFile = new wxMenu;
   menuFile->Append(ID_Hello, "&Hello ...", "Say hello");
   menuFile->Append(ID_Something, "&Something (€, 👨‍👩‍👦) ...", "Do something");
   menuFile->AppendSeparator();
   menuFile->Append(wxID_EXIT, "E&xit", "Exit the application");
 
-  wxMenu* menuView = new wxMenu;
+  auto* menuView = new wxMenu;
   menuView->Append(ID_Back, "Go &Back\tAlt+Left", "Go back");
   menuView->Append(ID_Forward, "Go &Forward\tAlt+Right", "Go forward");
 
-  wxMenu* menuHelp = new wxMenu;
+  auto* menuHelp = new wxMenu;
   menuHelp->Append(wxID_ABOUT, "&About", "About the application");
 
-  wxMenuBar* menuBar = new wxMenuBar;
+  auto* menuBar = new wxMenuBar;
   menuBar->Append(menuFile, "&File");
   menuBar->Append(menuView, "&View");
   menuBar->Append(menuHelp, "&Help");
@@ -205,11 +211,11 @@ MyFrame::MyFrame() : wxFrame(
   updateHistoryButtons();
 
   // Keyboard accelerators are delivered as menu commands; toolbar clicks stay tool events
-  wxAcceleratorEntry entries[] = {
+  wxAcceleratorEntry entries[] = { // NOLINT
     wxAcceleratorEntry(wxACCEL_ALT, WXK_LEFT, ID_Back),
     wxAcceleratorEntry(wxACCEL_ALT, WXK_RIGHT, ID_Forward)
   };
-  SetAcceleratorTable(wxAcceleratorTable(size(entries), entries));
+  SetAcceleratorTable(wxAcceleratorTable(size(entries), entries)); // NOLINT
 
   Bind(wxEVT_MENU, &MyFrame::onBack, this, ID_Back);
   Bind(wxEVT_MENU, &MyFrame::onForward, this, ID_Forward);
@@ -220,7 +226,7 @@ MyFrame::MyFrame() : wxFrame(
   Bind(wxEVT_WEBVIEW_NAVIGATED, &MyFrame::onNavigated, this, webView_->GetId());
   Bind(wxEVT_WEBVIEW_LOADED, &MyFrame::onNavigated, this, webView_->GetId());
 
-  wxBoxSizer* sizer = new wxBoxSizer(wxVERTICAL);
+  auto* sizer = new wxBoxSizer(wxVERTICAL);
   sizer->Add(webView_, 1, wxEXPAND);
   SetSizer(sizer);
 }
@@ -279,7 +285,7 @@ MyFrame::onNavigated([[maybe_unused]] wxWebViewEvent& ev) {
 void
 MyFrame::updateHistoryButtons() {
   wxToolBar* toolBar = GetToolBar();
-  if (not toolBar || not webView_) {
+  if (toolBar == nullptr || webView_ == nullptr) {
     return;
   }
   toolBar->EnableTool(ID_Back, webView_->CanGoBack());
@@ -300,7 +306,7 @@ MyTaskBarIcon::MyTaskBarIcon(wxFrame* frame) : frame_(frame) {
 
 wxMenu*
 MyTaskBarIcon::CreatePopupMenu() {
-  wxMenu* menu = new wxMenu;
+  auto* menu = new wxMenu;
   menu->Append(wxID_EXIT, "E&xit");
   return menu;
 }

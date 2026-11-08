@@ -12,6 +12,7 @@
 #include <unicode/utf16.h>
 #include <unicode/utf8.h>
 
+#include <algorithm>
 #include <array>
 #include <limits>
 #include <string>
@@ -177,11 +178,10 @@ Iterator<C>::toInput(i32 pos) const {
     // UTF-8 positions are native `UText` indices, i.e., byte offsets into `input_`
     return static_cast<u64>(pos);
   } else {
-    // Each surrogate pair before `pos` takes two UTF-16 units but only one UTF-32 unit. Break positions never
-    // fall inside a surrogate pair
-    const auto n =
-      lower_bound(supplementaries_.begin(), supplementaries_.end(), pos) - supplementaries_.begin();
-    return static_cast<u64>(pos - n);
+    // Each surrogate pair before `pos` takes two UTF-16 units but only one UTF-32 unit. Break positions
+    // never fall inside a surrogate pair
+    const auto n = ranges::lower_bound(supplementaries_, pos) - supplementaries_.begin();
+    return pos - n;
   }
 }
 

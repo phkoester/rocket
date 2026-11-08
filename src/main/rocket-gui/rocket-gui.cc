@@ -51,7 +51,7 @@ private:
     ROCKET_CHECK(bitmap, bitmap.IsOk());
     const double scale = bitmap.GetScaleFactor();
     const wxImage image = bitmap.ConvertToImage().ConvertToGreyscale().ConvertToDisabled();
-    return wxBitmap(image, -1, scale);
+    return { image, -1, scale };
   }
 };
 
@@ -61,7 +61,7 @@ namespace rocket::gui {
 
 wxToolBarToolBase*
 addTool(wxToolBar* toolBar, i32 id, string_view label, string_view svgName, string_view shortHelp) {
-  wxBitmapBundle bundle = loadSvg(svgName, wxSize(24, 24));
+  const wxBitmapBundle bundle = loadSvg(svgName, wxSize(24, 24));
   auto* ret = toolBar->AddTool(id, string(label), bundle, string(shortHelp));
 #ifdef ROCKET_OS_WINDOWS
   ret->SetDisabledBitmap(makeDisabled(bundle));
@@ -90,7 +90,7 @@ loadSvg(string_view name, const wxSize& size) {
 wxBitmapBundle
 makeDisabled(const wxBitmapBundle& bundle) {
   ROCKET_CHECK(bundle, bundle.IsOk());
-  auto ret = wxBitmapBundle::FromImpl(new DisabledBitmapBundle(bundle));
+  auto ret = wxBitmapBundle::FromImpl(new DisabledBitmapBundle(bundle)); // NOLINT
   ROCKET_EXPECT(ret.IsOk(), "Cannot make disabled bitmap bundle");
   return ret;
 }
