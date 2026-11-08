@@ -21,7 +21,7 @@
 /**
  * Calls #rocket::Process::error.
  *
- * This may be used even if the process isn't initialized yet.
+ * This may be used even if the process isn’t initialized yet.
  *
  * Usage: `ROCKET_PROCESS_ERROR(status, fmt, [args]...])`
  */
@@ -37,7 +37,7 @@
 /**
  * Calls #rocket::Process::info.
  *
- * This may be used even if the process isn't initialized yet.
+ * This may be used even if the process isn’t initialized yet.
  *
  * Usage: `ROCKET_PROCESS_INFO(fmt, [args]...])`
  */
@@ -53,7 +53,7 @@
 /**
  * Calls #rocket::Process::warn.
  *
- * This may be used even if the process isn't initialized yet.
+ * This may be used even if the process isn’t initialized yet.
  *
  * Usage: `ROCKET_PROCESS_WARN(fmt, [args]...])`
  */
