@@ -736,7 +736,7 @@ logInit() {
 
   // Apply default log options from environment variable `ROCKET_LOG`
   const string val = system::env::get<string>("ROCKET_LOG").value_or("");
-  const auto args = system::makeArgs(val);
+  const auto args = system::makeArgs(val); // XXX Kann werfen: ROCKET_LOG="'a"
   if (not args.empty()) {
     cl::CommandLine cl(CL_OPTIONS, {}, { .rocketOpts = false });
     cl.parse(args);

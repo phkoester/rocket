@@ -35,7 +35,7 @@ positionOf(span<const u8> cbor, u64 index) {
       return pos;
     }
 
-    result = cbor_stream_decode(data + pos, cbor.size() - pos, nullptr, nullptr);
+    result = cbor_stream_decode(data + pos, cbor.size() - pos, &cbor_empty_callbacks, nullptr);
     if (result.status == CBOR_DECODER_FINISHED) {
       ++itemIndex;
       pos += result.read;

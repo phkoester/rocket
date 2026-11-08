@@ -82,7 +82,7 @@ private:
 // Functions ------------------------------------------------------------------------------------------------
 
 /**
- * Returns the terminal’s current cursor position, if available. The pair' s `first` is the column starting
+ * Returns the terminal’s current cursor position, if available. The pair’s `first` is the column starting
  * with 1, `second` is the line starting with 1.
  *
  * @param out the sink to write to
@@ -91,7 +91,7 @@ private:
 std::optional<std::pair<u64, u64>> position(nio::Sink& out);
 
 /**
- * Returns the terminal’s current size, if available. The pair' s `first` is the width in columns, `second`
+ * Returns the terminal’s current size, if available. The pair’s `first` is the width in columns, `second`
  * is the height in lines.
  *
  * @param device a new I/O device
