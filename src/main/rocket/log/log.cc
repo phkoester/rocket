@@ -219,6 +219,9 @@ Out::expand(string_view pattern, const TimePoint& time, bool update) {
   if (zipFound && not dateFound) {
     ROCKET_FAIL("Can only zip yesterday’s log file if a date is present in the pattern");
   }
+  if (ret.empty()) {
+    ROCKET_FAIL("Empty pattern");
+  }
   if (ret.find("@[") != NPOS) {
     ROCKET_FAIL("Invalid pattern");
   }

@@ -88,7 +88,7 @@ exec(const string& cl) {
   ConsoleModeGuard cmg;
 
   const auto closePipe = [](FILE* pipe) { _pclose(pipe); };
-  const unique_ptr<FILE, decltype(closePipe)> pipe(_popen(cl.c_str(), "r"), closePipe);
+  unique_ptr<FILE, decltype(closePipe)> pipe(_popen(cl.c_str(), "r"), closePipe);
   if (not pipe) {
     ROCKET_FAIL("Cannot open pipe for command `{}`", cl);
   }
@@ -98,6 +98,12 @@ exec(const string& cl) {
   }
   if (ferror(pipe.get()) != 0) {
     ROCKET_FAIL("Cannot read from pipe for command `{}`", cl);
+  }
+
+  // Close the pipe here rather than in the deleter, because only `_pclose` tells how the command ended
+  const i32 status = _pclose(pipe.release());
+  if (status != 0) {
+    ROCKET_FAIL("Command `{}` failed with status {}", cl, status);
   }
 
   return ret;

@@ -144,6 +144,13 @@ position(nio::Sink& out) { // NOLINT
   }
   return make_pair(safe<u64>(csbi.dwCursorPosition.X + 1), safe<u64>(csbi.dwCursorPosition.Y + 1));
 #else
+  // The terminal sends its response to `stdin`. If that is not a terminal, reading from it would consume
+  // unrelated input or block forever
+
+  if (ROCKET_ISATTY(STDIN_FILENO) == 0) {
+    return {};
+  }
+
   // Send the ANSI code requesting cursor position
 
   const string response = sendAnsiRequest(out, "\x1b[6n");

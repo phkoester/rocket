@@ -668,7 +668,7 @@ computeSaves(const vector<const LocalType*>& types, const optional<PosixRule>& r
         save = candidate;
       }
     }
-    ret[i] = save != 0min ? save : 60min; // DST must have a non-zero save
+    ret[i] = save != 0min ? save : 60min; // DST must have a nonzero save
   }
   return ret;
 }
@@ -1103,7 +1103,7 @@ current_zone() {
   ifstream in("/etc/timezone");
   string line;
   if (in && getline(in, line)) {
-    while (!line.empty() && isspace(static_cast<unsigned char>(line.back()))) {
+    while (!line.empty() && isspace(static_cast<u8>(line.back()))) {
       line.pop_back();
     }
     if (const auto* ret = db.locate(line)) {

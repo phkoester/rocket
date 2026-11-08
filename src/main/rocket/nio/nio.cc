@@ -607,7 +607,7 @@ FileSource::FileSource(const filesystem::path& path) :
 FileSource::~FileSource() {
   if (closeOnDestroy_) {
     [[maybe_unused]] const auto result = fclose(file_); // NOLINT
-    NIO_LOG("fclose=" << result << ", file=" << file_ << ", ferror=" << ferror(file_));
+    NIO_LOG("fclose=" << result);
   }
 }
 
@@ -847,9 +847,6 @@ StreamSource::tell() {
   NIO_LOG("tellg=" << result << ", bad=" << is_.bad() << ", fail=" << is_.fail() << ", eof=" << is_.eof());
   status_.bad = is_.bad();
 
-  if (result < 0) {
-    return NPOS;
-  }
   return static_cast<u64>(result); // `boost::safe_numerics::safe` doesn’t work with `std::ios::pos_type`
 }
 

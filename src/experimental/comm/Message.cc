@@ -16,7 +16,7 @@ namespace rocket::comm {
 Message::Message(u64 size) {
   ROCKET_CHECK(size, size == 0 || size >= 2);
 
-  payload_.reserve(size);
+  payload_.resize(size);
   if (size == 0) {
     return;
   }

@@ -29,7 +29,7 @@ StringConvert<bool>::isFalse(string_view str) {
     return true;
   }
   string lower(str);
-  ranges::transform(lower, lower.begin(), [](char c) { return tolower(c); });
+  ranges::transform(lower, lower.begin(), [](char c) { return tolower(static_cast<u8>(c)); });
   return LOWER_FALSE_VALUES.contains(lower);
 }
 

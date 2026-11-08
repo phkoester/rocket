@@ -50,7 +50,7 @@ mean(It begin, It end) {
 /**
  * Calculates the standard deviation for the values in the half-open interval @f$[begin,end)@f$.
  *
- * Let the values be @f$(x_{1},...,x_{N})@f$, this functions returns
+ * Let the values be @f$(x_{1},...,x_{N})@f$, this function returns
  *
  * @f[
  * \sigma = \sqrt{\frac{1}{N} \sum_{i=1}^N (x_i - \overline{x})^2}

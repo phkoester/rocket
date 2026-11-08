@@ -12,6 +12,10 @@
 #include <memory>
 #include <optional>
 
+#ifndef ROCKET_OS_WINDOWS
+  #include <sys/wait.h>
+#endif
+
 using namespace rocket;
 using namespace std;
 
@@ -223,7 +227,7 @@ exec(const string& cl) {
   vector<char> buf(1'024);
 
   const auto closePipe = [](FILE* file) { pclose(file); };
-  const unique_ptr<FILE, decltype(closePipe)> pipe(popen(cl.c_str(), "r"), closePipe);
+  unique_ptr<FILE, decltype(closePipe)> pipe(popen(cl.c_str(), "r"), closePipe);
   if (not pipe) {
     ROCKET_FAIL("Cannot open pipe for command `{}`", cl);
   }
@@ -233,6 +237,18 @@ exec(const string& cl) {
   }
   if (ferror(pipe.get()) != 0) {
     ROCKET_FAIL("Cannot read from pipe for command `{}`", cl);
+  }
+
+  // Close the pipe here rather than in the deleter, because only `pclose` tells how the command ended
+  const i32 status = pclose(pipe.release());
+  if (status == -1) {
+    ROCKET_FAIL("Cannot close pipe for command `{}`", cl);
+  }
+  if (WIFSIGNALED(status)) {
+    ROCKET_FAIL("Command `{}` was terminated by signal {}", cl, WTERMSIG(status));
+  }
+  if (WEXITSTATUS(status) != 0) {
+    ROCKET_FAIL("Command `{}` failed with exit status {}", cl, WEXITSTATUS(status));
   }
 
   return ret;
@@ -252,6 +268,7 @@ makeArgs(string_view cl) { // NOLINT(*-complexity)
   enum State : u8 { NORMAL, SINGLE, DOUBLE };
   State state = NORMAL;
   string arg;
+  bool inArg = false; // An argument can be in progress and still be empty, as with `''`
 
   for (size_t i = 0, size = cl.size(); i < size; ++i) {
     const char c = cl[i];
@@ -262,12 +279,16 @@ makeArgs(string_view cl) { // NOLINT(*-complexity)
 
     switch (state) {
       case NORMAL:
-        if (isspace(c) != 0) {
-          if (not arg.empty()) {
+        if (isspace(static_cast<u8>(c)) != 0) {
+          if (inArg) {
             ret.push_back(arg);
             arg.clear();
+            inArg = false;
           }
-        } else if (c == '\'') {
+          break;
+        }
+        inArg = true;
+        if (c == '\'') {
           state = SINGLE;
         } else if (c == '"') {
           state = DOUBLE;
@@ -311,7 +332,7 @@ makeArgs(string_view cl) { // NOLINT(*-complexity)
     throw InputFailure(cl.size(), "Unterminated double quote");
   }
 
-  if (not arg.empty()) {
+  if (inArg) {
     ret.push_back(arg);
   }
 

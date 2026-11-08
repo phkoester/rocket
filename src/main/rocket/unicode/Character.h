@@ -166,7 +166,7 @@ struct BasicCharacter {
    */
   [[nodiscard]] bool
   isXdigit() const {
-    return str_.size() == 1 && std::isxdigit(str_[0]);
+    return str_.size() == 1 && std::isxdigit(static_cast<u8>(str_[0]));
   }
 
   /**

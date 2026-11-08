@@ -33,7 +33,7 @@ void setImpl(std::string_view name, const std::optional<std::string>& val, bool 
  *
  * @param cl the command line to execute
  * @return the captured output
- * @throw #rocket::InvalidState if the command cannot be executed
+ * @throw #rocket::InvalidState if the command cannot be executed or does not exit with status 0
  */
 std::string exec(const std::string& cl);
 
@@ -47,7 +47,7 @@ std::string exec(const std::string& cl);
  *   characters and, on Windows, line breaks
  * @return the captured output
  * @throw #rocket::InvalidArgument if an element of @p args contains a character that cannot be passed
- * @throw #rocket::InvalidState if the command cannot be executed
+ * @throw #rocket::InvalidState if the command cannot be executed or does not exit with status 0
  */
 std::string exec(const std::vector<std::string_view>& args);
 

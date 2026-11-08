@@ -81,14 +81,16 @@ readLongestChoice( // NOLINT(*-complexity)
 
   const auto matchesChar = [ignoreCase](char lhs, char rhs) {
     if (ignoreCase) {
-      return tolower(lhs) == tolower(rhs);
+      return tolower(static_cast<u8>(lhs)) == tolower(static_cast<u8>(rhs));
     }
     return lhs == rhs;
   };
 
   const auto matchesString = [ignoreCase](string_view lhs, string_view rhs) {
     if (ignoreCase) {
-      return ranges::equal(lhs, rhs, [](char lhs, char rhs) { return tolower(lhs) == tolower(rhs); });
+      return ranges::equal(
+        lhs, rhs,
+        [](char lhs, char rhs) { return tolower(static_cast<u8>(lhs)) == tolower(static_cast<u8>(rhs)); });
     }
     return lhs == rhs;
   };
@@ -146,11 +148,9 @@ startsWith(string_view s, string_view prefix, bool ignoreCase) {
     return false;
   }
   return ranges::equal(s.substr(0, prefix.size()), prefix, [](char lhs, char rhs) {
-    return tolower(lhs) == tolower(rhs);
+    return tolower(static_cast<u8>(lhs)) == tolower(static_cast<u8>(rhs));
   });
 }
-
-} // namespace
 
 namespace rocket::nio {
 
@@ -311,7 +311,8 @@ readString(nio::Source& in, string_view str, bool ignoreCase, bool endOfWord) {
 
   for (const char expected : str) {
     char c; // NOLINT
-    if (in.read(c) != 1 || (ignoreCase ? tolower(c) != tolower(expected) : c != expected)) {
+    if (in.read(c) != 1 ||
+      (ignoreCase ? tolower(static_cast<u8>(c)) != tolower(static_cast<u8>(expected)) : c != expected)) {
       // EOF or mismatch: rewind
       in.seek(safe<i64>(pos), nio::SeekMode::beg);
       return false;
@@ -333,7 +334,7 @@ readSubseconds(nio::Source& in) {
 
   string digits;
   if (readChar(in, '.')) {
-    digits = readWhilePredicate(in, [](char c) { return isdigit(c); });
+    digits = readWhilePredicate(in, [](char c) { return isdigit(static_cast<u8>(c)); });
     if (digits.empty()) {
       throw InputFailure(in.tell(), "Expected subseconds");
     }

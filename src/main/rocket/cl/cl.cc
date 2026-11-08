@@ -146,7 +146,7 @@ CommandLine::applyOpt(const Option& opt, bool nameFlag, const optional<string>& 
 
   try {
     if (opt.choices && not opt.choices->contains(useValue)) {
-      ROCKET_FAIL("Invalid value `{}`", val);
+      ROCKET_FAIL("Invalid value `{}`", useValue);
     }
     const bool result = opt.apply(useValue);
     parserState_.updateOpt(opt, result);
@@ -522,7 +522,7 @@ CommandLine::printHelpOpts(nio::Sink& out, bool verbose, u64 width) const { // N
  */
 void
 CommandLine::printHelpParams(nio::Sink& out, bool verbose, u64 width) const {
-  // Loop trhough parameters
+  // Loop through parameters
 
   out.writeln("Parameters:\n");
 
