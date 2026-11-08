@@ -304,7 +304,7 @@ const vector<cl::Option> CL_OPTIONS {
     .name="log-fmt",
     .takesValue=true,
     .verboseDescription=
-      "set log format. FMT is a string of format specifiers, e.g. `fs3Z`. Valid specifiers are:\n"
+      "set log format. FMT is a string of format specifiers, e.g., `fs3Z`. Valid specifiers are:\n"
       NBSP NBSP "f" NBSP NBSP NBSP "display function names\n"
       NBSP NBSP "F" NBSP NBSP NBSP "display pretty function names (*)\n"
       NBSP NBSP "i" NBSP NBSP NBSP "do not log function stack immediately (*)\n"

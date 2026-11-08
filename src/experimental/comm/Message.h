@@ -21,7 +21,7 @@ struct Message {
   /**
    * Parses a size from a string.
    *
-   * @param input the input string, e.g. `"16b"`, `"100k"`, `"1m"`, or `"1g"`
+   * @param input the input string, e.g., `"16b"`, `"100k"`, `"1m"`, or `"1g"`
    * @return the size in bytes
    */
   static u64 parseSize(std::string_view input);

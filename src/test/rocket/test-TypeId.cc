@@ -155,7 +155,7 @@ TEST(TypeId, format) {
 }
 
 TEST(TypeId, formatSpec) {
-  // Format specifiers apply to the name including the back ticks
+  // Format specifiers apply to the name including the backticks
   EXPECT_EQ(fmt::format("{:>7}", TypeId::of<int>()), "  `int`");
   EXPECT_EQ(fmt::format("{:<7}|", TypeId::of<int>()), "`int`  |");
   EXPECT_EQ(fmt::format("{:*^9}", TypeId::of<int>()), "**`int`**");

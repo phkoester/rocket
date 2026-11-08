@@ -5,7 +5,7 @@
  *
  * # The RON File Format
  *
- * RON is a human-readable format that is similar to, but not quite the same as JSON. It is designed to be
+ * RON is a human-readable format that is similar to, but not quite the same as, JSON. It is designed to be
  * easy to read and write by hand. It is also designed to be easy to parse and generate programmatically.
  *
  * This codec is generous when decoding, but strict when encoding. This means that when reading, it will
@@ -54,7 +54,7 @@
  *
  * When writing, the escape sequences `\a`, `\b`, `\t`, `\n`, `\v`, `\f`, `\r`, `\e`, `\'`, and `\\` are
  * used. If a character is classified as printable by the Unicode standard, it appears verbatim in the
- * output, e.g. as `'a'` or `'€'`. Otherwise, it is written in hexadecimal notation, using the prefixes
+ * output, e.g., as `'a'` or `'€'`. Otherwise, it is written in hexadecimal notation, using the prefixes
  * `\x` (two hexadecimal digits), `\u` (four hexadecimal digits), or `\U` (eight hexadecimal digits), as
  * needed.
  *
@@ -195,7 +195,7 @@
  *
  * ## Code Points
  *
- * Code points appear in the typical Unicode notation, e.g. `U+0041` or `U+10FFFF`.
+ * Code points appear in the typical Unicode notation, e.g., `U+0041` or `U+10FFFF`.
  *
  * A single character is also accepted when reading.
  *
@@ -465,7 +465,7 @@ struct FormattedConsumerImpl<DataType::Duration, T> {
     consumeUnit(out);
   }
 
-  /// Writes only the unit suffix of `T`, e.g. `ms`.
+  /// Writes only the unit suffix of `T`, e.g., `ms`.
   static void
   consumeUnit(nio::Sink& out) {
     if constexpr (std::same_as<T, std::chrono::microseconds>) {
@@ -1341,7 +1341,7 @@ struct FormattedProducerImpl<DataType::Time, T> {
 
     expectChar(in, 'Z');
 
-    // Work around a bug in scnlib where the time point is not parsed as UTC but dependent from the current
+    // Work around a bug in scnlib where the time point is not parsed as UTC but dependent on the current
     // time zone
 
     const auto info = current->get_info(val);

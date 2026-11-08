@@ -50,7 +50,7 @@
  *
  * When writing, the escape sequences `\a`, `\b`, `\t`, `\n`, `\v`, `\f`, `\r`, `\e`, `\'`, and `\\` are
  * used. If a character is classified as printable by the Unicode standard or is greater than U+FFFF, it
- * appears verbatim in the output, e.g. as `"a"` or `"€"`. Otherwise, it is written in hexadecimal notation,
+ * appears verbatim in the output, e.g., as `"a"` or `"€"`. Otherwise, it is written in hexadecimal notation,
  * using the prefix `\u` (four hexadecimal digits).
  *
  * ## Enumerations
@@ -189,7 +189,7 @@
  *
  * ## Code Points
  *
- * Code points appear as JSON strings in the typical Unicode notation, e.g. `"U+0041"` or `"U+10FFFF"`.
+ * Code points appear as JSON strings in the typical Unicode notation, e.g., `"U+0041"` or `"U+10FFFF"`.
  *
  * A JSON string of a single character is also accepted when reading.
  *

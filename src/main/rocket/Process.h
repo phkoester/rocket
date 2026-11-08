@@ -69,7 +69,7 @@
 /**
  * Sets or returns the name of the current thread.
  *
- * The rocket logging API considers the thread name for logging.
+ * The Rocket logging API considers the thread name for logging.
  *
  * Usage: `ROCKET_THREAD_NAME([name])`
  *
@@ -90,7 +90,7 @@ const std::string& setThreadName(std::string_view name = "");
 // Constants ------------------------------------------------------------------------------------------------
 
 /**
- * An exit value that may be used when the program cannot start, e.g. due to a bad command line, a bad
+ * An exit value that may be used when the program cannot start, e.g., due to a bad command line, a bad
  * environment or missing resources.
  *
  * Once the program started operating properly, `EXIT_FAILURE` (1) may be used to indicate a problem.

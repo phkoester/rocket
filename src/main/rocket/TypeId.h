@@ -104,11 +104,11 @@ private:
 /**
  * @spec_fmt_formatter{#rocket::TypeId}
  *
- * The type ID is formatted as its demangled name in back ticks, for example
+ * The type ID is formatted as its demangled name in backticks, for example
  * <code>`rocket::InvalidArgument`</code>.
  *
  * This formatter uses the same format specifiers as the underlying string formatter; they apply to the name
- * including the back ticks.
+ * including the backticks.
  */
 template<typename C> requires rocket::IsChar<C>
 struct fmt::formatter<rocket::TypeId, C> {

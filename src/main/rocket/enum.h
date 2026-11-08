@@ -32,10 +32,10 @@
  *
  * @note This macro must be called in the global namespace.
  *
- * @param ns the namespace of the enum, e.g. `mynamespace`. May be left empty if the enum is in the global
+ * @param ns the namespace of the enum, e.g., `mynamespace`. May be left empty if the enum is in the global
  *   namespace
- * @param type the type of the enum, without namespace, e.g. `MyClass::MyEnum`
- * @param name the name to use for generated identifiers, e.g. `MyClass_MyEnum`
+ * @param type the type of the enum, without namespace, e.g., `MyClass::MyEnum`
+ * @param name the name to use for generated identifiers, e.g., `MyClass_MyEnum`
  */
 #define ROCKET_ENUM_DECLARE(ns, type, name) ROCKET_ENUM_DECLARE__(ns, type, name)
 
@@ -44,11 +44,11 @@
  *
  * This macro must be called in the enum's local namespace.
  *
- * @param ns the namespace of the enum, e.g. `mynamespace`. May be left empty if the enum is in the global
+ * @param ns the namespace of the enum, e.g., `mynamespace`. May be left empty if the enum is in the global
  *   namespace
- * @param type the type of the enum, without namespace, e.g. `MyClass::MyEnum`
- * @param name the name to use for generated identifiers, e.g. `MyClass_MyEnum`
- * @param seq a sequence for the enum values, e.g. `(red)(green)(blue)`
+ * @param type the type of the enum, without namespace, e.g., `MyClass::MyEnum`
+ * @param name the name to use for generated identifiers, e.g., `MyClass_MyEnum`
+ * @param seq a sequence for the enum values, e.g., `(red)(green)(blue)`
  */
 #define ROCKET_ENUM_DEFINE(ns, type, name, seq) ROCKET_ENUM_DEFINE__(ns, type, name, seq)
 

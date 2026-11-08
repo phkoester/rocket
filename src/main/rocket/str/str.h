@@ -310,7 +310,7 @@ removeLeading(
 }
 
 /**
- * Makes a string view such that it has up to @p count trailing occurrencies of @p sub removed.
+ * Makes a string view such that it has up to @p count trailing occurrences of @p sub removed.
  *
  * The underlying string of @p str must remain valid for the lifetime of the returned string view.
  *

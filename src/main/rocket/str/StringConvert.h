@@ -30,7 +30,7 @@ struct StringConvert<bool> {
 
   [[nodiscard]] static Result<Type>
   toType(std::string_view str) {
-    // Anything that is not false is true, e.g. "42"!
+    // Anything that is not false is true, e.g., "42"!
     return not isFalse(str);
   }
 

@@ -532,7 +532,7 @@ BufferedSource::seek(i64 offset, SeekMode mode) { // NOLINT
   // Do the job
   const auto ret = underlying_.seek(offset, mode);
 
-  // Get the new position se we can see if we have a buffer hit
+  // Get the new position so we can see if we have a buffer hit
   const u64 newTell = underlying_.tell();
   if (newTell == NPOS) {
     NIO_LOG("Getting new position failed; invalidating buffer");

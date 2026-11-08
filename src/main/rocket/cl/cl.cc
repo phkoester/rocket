@@ -450,10 +450,8 @@ CommandLine::printHelp(nio::Sink& out, bool verbose, bool exit) {
   }
 }
 
-/**
- * Option groups appear in the order they are seen. However, no group or group with an empty title comes
- * first. Within the groups, options appear in the order they are seen.
- */
+// Option groups appear in the order they are seen. However, options with no group, or a group with an empty
+// title, come first. Within the groups, options appear in the order they are seen
 void
 CommandLine::printHelpOpts(nio::Sink& out, bool verbose, u64 width) const { // NOLINT(*-complexity)
   // Collect groups and options therein
@@ -524,7 +522,7 @@ CommandLine::printHelpOpts(nio::Sink& out, bool verbose, u64 width) const { // N
  */
 void
 CommandLine::printHelpParams(nio::Sink& out, bool verbose, u64 width) const {
-  // Loop though parameters
+  // Loop trhough parameters
 
   out.writeln("Parameters:\n");
 

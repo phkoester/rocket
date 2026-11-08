@@ -104,7 +104,7 @@ struct Cow {
   /**
    * Returns a nonconst reference to the owned value.
    *
-   * @note This requires that the #Cow is "modified", i.e. it has been assigned an owned value.
+   * @note This requires that the #Cow is "modified", i.e., it has been assigned an owned value.
    *
    * @return a nonconst reference to the owned value
    */
@@ -117,7 +117,7 @@ struct Cow {
   /**
    * Returns a const reference to the owned value.
    *
-   * @note This requires that the #Cow is "modified", i.e. it has been assigned an owned value.
+   * @note This requires that the #Cow is "modified", i.e., it has been assigned an owned value.
    *
    * @return a const reference to the owned value
    */

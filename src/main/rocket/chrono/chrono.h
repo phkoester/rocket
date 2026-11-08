@@ -11,7 +11,7 @@
  * #rocket::chrono::ambiguous_local_time, #rocket::chrono::locate_zone, and #rocket::chrono::current_zone.
  *
  * If the standard library provides the C++20 time-zone support, these are #std::chrono::time_zone,
- * `std::chrono::zoned_time`, and so on, brought into `rocket::chrono` by using-declarations. Otherwise, they
+ * #std::chrono::zoned_time, and so on, brought into `rocket::chrono` by using-declarations. Otherwise, they
  * are portable implementations that follow the specification of these classes in the C++20 standard,
  * reading the time-zone data from compiled TZif files (RFC 8536) in the directory given by the environment
  * variable `TZDIR`, which defaults to `/usr/share/zoneinfo`. This is the case on macOS, whose libc++ is
@@ -19,7 +19,7 @@
  *
  * Differences of the portable implementation:
  *
- * - There is no #std::chrono::tzdb; time zones are loaded on demand.
+ * - There is no `rocket::chrono::tzdb`; time zones are loaded on demand.
  * - Links (alternative names like `UTC` for `Etc/UTC`) are resolved via the file `tzdata.zi` in the
  *   time-zone directory. Without that file, #rocket::chrono::time_zone::name returns the name the zone was
  *   located by.
@@ -126,7 +126,7 @@ now() {
  * abbreviation. Other implementations use the abbreviations from the time-zone database, which are not
  * localized.
  *
- * @param name the name of the time zone, in UTF-8, e.g. `Europe/Berlin`
+ * @param name the name of the time zone, in UTF-8, e.g., `Europe/Berlin`
  * @param dst whether to return the abbreviation for daylight saving time
  * @param fallback the abbreviation from the time-zone database
  * @return the abbreviation
@@ -205,11 +205,16 @@ using zoned_seconds = std::chrono::zoned_time<std::chrono::seconds>;
  * Information about a time zone at a certain point in time, equivalent to C++20's #std::chrono::sys_info.
  */
 struct sys_info {
-  std::chrono::sys_seconds begin; ///< The begin of the period these values apply to.
-  std::chrono::sys_seconds end; ///< The end (exclusive) of the period these values apply to.
-  std::chrono::seconds offset; ///< The UTC offset, local time minus UTC.
-  std::chrono::minutes save; ///< The daylight-saving offset. Non-zero if and only if daylight saving is in effect.
-  std::string abbrev; ///< The abbreviation of the time zone, for example `CEST`.
+  /// The beginning of the period these values apply to.
+  std::chrono::sys_seconds begin;
+  /// The end (exclusive) of the period these values apply to.
+  std::chrono::sys_seconds end;
+  /// The UTC offset, local time minus UTC.
+  std::chrono::seconds offset;
+  /// The daylight-saving offset. Non-ero if and only if daylight saving is in effect.
+  std::chrono::minutes save;
+  /// The abbreviation of the time zone, for example `CEST`.
+  std::string abbrev;
 };
 
 /**
@@ -293,7 +298,7 @@ nonexistentMessage(const std::chrono::local_time<Duration>& tp, const local_info
 
 // `choose` ------------------------------------------------------------------------------------------------
 
-/// How to resolve an ambiguous local time, equivalent to C++20's `std::chrono::choose`.
+/// How to resolve an ambiguous local time, equivalent to C++20's #std::chrono::choose.
 enum class choose {
   earliest, ///< choose the earlier time point.
   latest ///< choose the later time point.
@@ -879,7 +884,7 @@ operator<<(std::basic_ostream<CharT, Traits>& os, const zoned_time<Duration, Tim
   }
 }
 
-/// A zoned time with a precision of seconds, equivalent to C++20's `std::chrono::zoned_seconds`.
+/// A zoned time with a precision of seconds, equivalent to C++20's #std::chrono::zoned_seconds.
 using zoned_seconds = zoned_time<std::chrono::seconds>;
 
 #endif // ROCKET_HAS_STD_CHRONO_TIME_ZONE

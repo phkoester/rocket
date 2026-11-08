@@ -151,14 +151,14 @@ struct CodePoint {
   [[nodiscard]] bool isWhitespace() const;
 
   /**
-   * Returns a lower-case code point for this code point.
+   * Returns a lowercase code point for this code point.
    *
    * @return a code point in lower case
    */
   [[nodiscard]] CodePoint lower() const;
 
   /**
-   * Returns an upper-case code point for this code point.
+   * Returns an uppercase code point for this code point.
    *
    * @return a code point in upper case
    */

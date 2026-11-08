@@ -502,7 +502,7 @@ unescapeRegex(string_view input, Positions* positions) {
       // Single-code-point character
 
       if (*cp1 == '\\') {
-        // Backslash: this may either be a regular-expresssion-escaped character or a hexadecimal sequence
+        // Backslash: this may either be a regular-expression-escaped character or a hexadecimal sequence
         // starting with "\\x" or "\\u"
 
         // Read another character following the backslash

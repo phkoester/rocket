@@ -18,10 +18,10 @@ namespace rocket::math {
 // Functions ------------------------------------------------------------------------------------------------
 
 /**
- * Calculates the average mean for the values in the half-open interval @f$[begin,end)@f$.
+ * Calculates the arithmetic mean for the values in the half-open interval @f$[begin,end)@f$.
  *
  * To avoid overflow, this function calculates a *cumulative moving average*. Let the values be
- * @f$(x_{1},...,x_{N})@f$, this functions returns
+ * @f$(x_{1},...,x_{N})@f$, this function returns
  *
  * @f[
  * \overline{x} = \frac{\sum_{i=1}^N x_i}{N}

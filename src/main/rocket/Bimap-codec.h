@@ -41,7 +41,7 @@ operator<<(std::ostream& lhs, const bimap<A, B>& rhs) {
 /**
  * @fn_PrintTo{`boost::bimaps::bimap`}
  *
- * @todo Why do we need this? For some reason, GoogleTest doesn find `operator<<` ...
+ * @todo Why do we need this? For some reason, GoogleTest doesn't find `operator<<` ...
  */
 template<typename A, typename B>
 inline void

@@ -29,7 +29,7 @@ void setImpl(std::string_view name, const std::optional<std::string>& val, bool 
 // Functions ------------------------------------------------------------------------------------------------
 
 /**
- * Executes @p cl and captures the output to standard out.
+ * Executes @p cl and captures the output to stdout.
  *
  * @param cl the command line to execute
  * @return the captured output
@@ -38,7 +38,7 @@ void setImpl(std::string_view name, const std::optional<std::string>& val, bool 
 std::string exec(const std::string& cl);
 
 /**
- * Executes a command and captures the output to standard out.
+ * Executes a command and captures the output to stdout.
  *
  * @param args the command line to execute
  * @return the captured output
@@ -154,7 +154,7 @@ get(std::string_view name) {
  *
  * This function is thread-safe as long as all callers use this API from `system.h` exclusively.
  *
- * @attention In Windows, setting an environment variable to an empty string unsets the variable.
+ * @attention On Windows, setting an environment variable to an empty string unsets the variable.
  *
  * @tparam T the type of the new value
  * @param name the name of the environment variable

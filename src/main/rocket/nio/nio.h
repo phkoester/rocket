@@ -394,7 +394,7 @@ struct NullSink : Sink {
 // `SpanSink` -----------------------------------------------------------------------------------------------
 
 /**
- * A sink that writes to a span, i.e. into preallocated memory.
+ * A sink that writes to a span, i.e., into preallocated memory.
  */
 struct SpanSink : Sink {
   /**

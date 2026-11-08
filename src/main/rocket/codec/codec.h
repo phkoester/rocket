@@ -84,7 +84,7 @@ enum class DataType : u8 {
   Enum,
   /// Integer values conforming to #rocket::IsInteger.
   Integer,
-  /// Floating point-values conforming to #rocket::IsFloat.
+  /// Floating-point values conforming to #rocket::IsFloat.
   Float,
   /// Pointers.
   Pointer,

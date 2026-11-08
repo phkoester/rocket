@@ -54,7 +54,7 @@ All of the following options may be supplied either as defined CMake variables o
 | Name                   | Type     | Stage   | Description
 | :--------------------- | :------- | :------ | :----------
 | `ROCKET_EXIT`          | `bool`   | Runtime | If true, `std::exit` is called rather than `std::quick_exit`.
-| `ROCKET_LOG`           | `string` | Runtime | Default log options, e.g. `--log all=trace`
+| `ROCKET_LOG`           | `string` | Runtime | Default log options, e.g., `--log all=trace`
 | `ROCKET_QUICK_EXIT`    | `bool`   | Runtime | If true, `std::quick_exit` is called rather than `std::exit`.
 | `ROCKET_TEST_TERMINAL` | `bool`   | Test    | If true, tests are run that require standard devices to be connected to a terminal.
 

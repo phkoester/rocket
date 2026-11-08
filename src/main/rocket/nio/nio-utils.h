@@ -170,7 +170,7 @@ void expectComma(nio::Source& in);
 [[nodiscard]] std::optional<std::string> readUntilUnescapedChar(nio::Source& in, char c);
 
 /**
- * Reads characters from a source while @p predecate yields `true`, advances the source only as long as the
+ * Reads characters from a source while @p predicate yields `true`, advances the source only as long as the
  * predicate holds.
  *
  * @param in the source to read from

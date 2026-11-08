@@ -161,7 +161,7 @@ struct OptionConfig {
   /**
    * A short description text.
    *
-   * By convention, this starts with a lower-case verb and does not end with a period, e.g.
+   * By convention, this starts with a lowercase verb and does not end with a period, e.g.
    * `"print NUM lines of leading context"`.
    */
   std::optional<std::string> description {}; // NOLINT
@@ -327,7 +327,7 @@ struct Option {
   }
 
   /**
-   * Convenience factory function that makes a new verbose option and binds it to a an optional `bool`
+   * Convenience factory function that makes a new verbose option and binds it to an optional `bool`
    * destination reference.
    *
    * @param group the option group, may be null
@@ -427,14 +427,14 @@ struct ParameterConfig {
   /**
    * A short description.
    *
-   * By convention, this starts with a lower-case letter and does not end with a period, e.g.
+   * By convention, this starts with a lowercase letter and does not end with a period, e.g.
    * `"the input file"`.
    */
   std::optional<std::string> description {}; // NOLINT
   /**
    * A short format description.
    *
-   * This parameter should briefly describe the format, e.g. <code>"file"</code>, <code>"number"</code>, or
+   * This parameter should briefly describe the format, e.g., <code>"file"</code>, <code>"number"</code>, or
    * <code>"`red`, `green`, or `blue`"</code>.
    */
   std::optional<std::string> format {}; // NOLINT
@@ -451,7 +451,7 @@ struct ParameterConfig {
   /**
    * The parameter name.
    *
-   * By convention, this is in all-caps, e.g. `"FILE"`, and matches the usage line.
+   * By convention, this is in all-caps, e.g., `"FILE"`, and matches the usage line.
    */
   std::string name;
   /**
@@ -556,7 +556,7 @@ struct CommandLineConfig {
   /// The name of the command. Needed to display the usage. By default, this is the process name.
   std::string command = process().name();
   /**
-   * One or more usages, e.g. `{ "[OPTION]... FILE", "[OPTION]... PATTERN FILE" }`. If this is empty, no
+   * One or more usages, e.g., `{ "[OPTION]... FILE", "[OPTION]... PATTERN FILE" }`. If this is empty, no
    * usage hint is ever printed.
    */
   std::vector<std::string> usages {}; // NOLINT
@@ -599,7 +599,7 @@ struct CommandLine {
   /**
    * Parses the command-line arguments @p args, assigns values to bound destination references.
    *
-   * @param args the command-line arguments, e.g. `process().args()`
+   * @param args the command-line arguments, e.g., `process().args()`
    * @param out the sink to write standard output to
    * @param err the sink to write error output to
    * @param exit if `true`, the program exits on help, version, or parse failure

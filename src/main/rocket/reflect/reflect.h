@@ -23,7 +23,7 @@
  * @note This macro must be called inside the class declaration, in a public section.
  *
  * @param cls the name of the class that holds the members (without namespace)
- * @param name the name of the member-reference container, e.g. `Index`
+ * @param name the name of the member-reference container, e.g., `Index`
  * @param seq a sequence of member names
  */
 #define ROCKET_REFLECT_MEMBERS(cls, name, seq) ROCKET_REFLECT_MEMBERS__(cls, name, seq)
@@ -39,10 +39,10 @@
  *
  * @note This macro must be called in the global namespace.
  *
- * @param ns the namespace of the class, e.g. `mynamespace`. May be left empty if the class is in the global
+ * @param ns the namespace of the class, e.g., `mynamespace`. May be left empty if the class is in the global
  *   namespace
- * @param cls the type of the class without namespace, e.g. `MyClass`
- * @param name the name of the member-reference container to use, e.g. `Index`
+ * @param cls the type of the class without namespace, e.g., `MyClass`
+ * @param name the name of the member-reference container to use, e.g., `Index`
 */
 #define ROCKET_REFLECT_MEMBERS_DECLARE(ns, cls, name) ROCKET_REFLECT_MEMBERS_DECLARE__(ns, cls, name)
 
@@ -51,10 +51,10 @@
  *
  * @note This macro must be called in the global namespace.
  *
- * @param ns the namespace of the class, e.g. `mynamespace`. May be left empty if the class is in the global
+ * @param ns the namespace of the class, e.g., `mynamespace`. May be left empty if the class is in the global
  *   namespace
- * @param cls the type of the class without namespace, e.g. `MyClass`
- * @param name the name of the member-reference container to use, e.g. `Index`
+ * @param cls the type of the class without namespace, e.g., `MyClass`
+ * @param name the name of the member-reference container to use, e.g., `Index`
 */
 #define ROCKET_REFLECT_MEMBERS_DEFINE(ns, cls, name) ROCKET_REFLECT_MEMBERS_DEFINE__(ns, cls, name)
 
@@ -66,7 +66,7 @@
  * @param baseCls the name of the base class
  * @param baseName the name of the member-reference container of the base class
  * @param cls the name of the derived class that holds the members (without namespace)
- * @param name the name for this member-reference container. e.g. `Index`
+ * @param name the name for this member-reference container. e.g., `Index`
  * @param seq a sequence of member names
  */
 #define ROCKET_REFLECT_MEMBERS_DERIVED(baseCls, baseName, cls, name, seq) \
