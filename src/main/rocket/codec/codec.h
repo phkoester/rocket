@@ -414,6 +414,29 @@ void store(DecoderStore* val);
 // Functions ------------------------------------------------------------------------------------------------
 
 /**
+ * Makes a date from scanned values.
+ *
+ * @param y the year
+ * @param m the month
+ * @param d the day
+ * @return the date, or null if the values do not form a valid date
+ */
+inline std::optional<std::chrono::year_month_day>
+makeDate(std_int y, std_unsigned m, std_unsigned d) {
+  using namespace std::chrono;
+
+  // Check the ranges first, because `year`, `month`, and `day` truncate their arguments
+  if (y < static_cast<std_int>(year::min()) || y > static_cast<std_int>(year::max()) || m > 12 || d > 31) {
+    return {};
+  }
+  const year_month_day ret { year(y), month(m), day(d) };
+  if (not ret.ok()) {
+    return {};
+  }
+  return ret;
+}
+
+/**
  * Unescapes the content of a quoted literal, reporting failures relative to the enclosing input.
  *
  * @param input the content of the literal, without its quotes
@@ -434,6 +457,37 @@ unescapeLiteral(
   } catch (const InputFailure& ex) {
     throw ex.shifted(contentPos);
   }
+}
+
+/**
+ * Checks if scanned values form a valid hour, minute, and second.
+ *
+ * The hour may be negative and greater than 23, but must be small enough for the sum of all parts to fit
+ * into nanoseconds.
+ *
+ * @param h the hour
+ * @param m the minute
+ * @param s the second
+ * @return whether the values are valid
+ */
+inline bool
+validHourMinuteSecond(std::chrono::hours::rep h, std::chrono::minutes::rep m, std::chrono::seconds::rep s) {
+  using namespace std::chrono;
+
+  const auto maxHours = duration_cast<hours>(nanoseconds::max()).count();
+  return h > -maxHours && h < maxHours && m >= 0 && m < 60 && s >= 0 && s < 60;
+}
+
+/**
+ * Checks if scanned values form a valid UTC offset, which is at most 23:59 in magnitude, as in RFC 3339.
+ *
+ * @param h the hour
+ * @param m the minute
+ * @return whether the values are valid
+ */
+inline bool
+validUtcOffset(u32 h, u32 m) {
+  return h < 24 && m < 60;
 }
 
 } // namespace internal

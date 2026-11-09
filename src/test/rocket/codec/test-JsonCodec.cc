@@ -625,6 +625,44 @@ TEST(JsonCodec, ProducerHourMinuteSecond) {
   EXPECT_EQ(decode<hh_mm_ss<milliseconds>>("\"01:02:03.\"").error().message, "Expected subseconds");
 }
 
+TEST(JsonCodec, ProducerHourMinuteSecondInvalid) {
+  using namespace std::chrono;
+  constexpr string_view INVALID = "Invalid hour, minute, or second";
+
+  expectFailure<hh_mm_ss<seconds>>("\"01:60:00\"", INVALID, 1);
+  expectFailure<hh_mm_ss<seconds>>("\"01:00:60\"", INVALID, 1);
+  expectFailure<hh_mm_ss<seconds>>("\"01:-1:00\"", INVALID, 1);
+  expectFailure<hh_mm_ss<seconds>>("\"01:00:-1\"", INVALID, 1);
+  expectFailure<hh_mm_ss<seconds>>("  \"01:99:99\"", INVALID, 3);
+
+  // The sum of all parts would not fit into nanoseconds
+  expectFailure<hh_mm_ss<seconds>>("\"2562047:00:00\"", INVALID, 1);
+  expectFailure<hh_mm_ss<seconds>>("\"-2562047:00:00\"", INVALID, 1);
+
+  EXPECT_EQ(decode<hh_mm_ss<seconds>>("\"01:59:59\"").value().to_duration(), 1h + 59min + 59s);
+  EXPECT_EQ(decode<hh_mm_ss<seconds>>("\"2562046:59:59\"").value().to_duration(), 2562046h + 59min + 59s);
+}
+
+TEST(JsonCodec, ProducerDateInvalid) {
+  using namespace std::chrono;
+  constexpr string_view INVALID = "Invalid date";
+
+  expectFailure<year_month_day>("\"2026-13-01\"", INVALID, 1);
+  expectFailure<year_month_day>("\"2026-00-01\"", INVALID, 1);
+  expectFailure<year_month_day>("\"2026-01-32\"", INVALID, 1);
+  expectFailure<year_month_day>("\"2026-01-00\"", INVALID, 1);
+  expectFailure<year_month_day>("\"2026-02-30\"", INVALID, 1);
+  expectFailure<year_month_day>("\"2025-02-29\"", INVALID, 1); // No leap year
+  expectFailure<year_month_day>("  \"2026-13-45\"", INVALID, 3);
+
+  // These would be truncated to valid values
+  expectFailure<year_month_day>("\"2026-257-01\"", INVALID, 1);
+  expectFailure<year_month_day>("\"2026-01-257\"", INVALID, 1);
+  expectFailure<year_month_day>("\"70000-01-01\"", INVALID, 1);
+
+  EXPECT_EQ(decode<year_month_day>("\"2024-02-29\""), (year_month_day { 2024y, February, 29d }));
+}
+
 TEST(JsonCodec, ProducerDate) {
   using namespace std::chrono;
 
@@ -677,6 +715,23 @@ TEST(JsonCodec, ProducerZonedTime) {
   const ZonedTime val2 = decode<ZonedTime>(encoded).value(); // NOLINT
   nio::out.println("VAL2: {}", encode(val2));
   EXPECT_EQ(val2, val1);
+}
+
+TEST(JsonCodec, ProducerZonedTimeUtcOffset) {
+  using namespace std::chrono;
+  using ZonedTime = rocket::chrono::zoned_time<nanoseconds>;
+  constexpr string_view INVALID = "Invalid UTC offset";
+
+  expectFailure<ZonedTime>("\"2026-10-07T11:21:00+24:00 (Europe/Berlin)\"", INVALID, 20);
+  expectFailure<ZonedTime>("\"2026-10-07T11:21:00-24:00 (Europe/Berlin)\"", INVALID, 20);
+  expectFailure<ZonedTime>("\"2026-10-07T11:21:00+01:60 (Europe/Berlin)\"", INVALID, 20);
+  expectFailure<ZonedTime>("\"2026-10-07T11:21:00+99:99 (Europe/Berlin)\"", INVALID, 20);
+  expectFailure<ZonedTime>("  \"2026-10-07T11:21:00+24:00 (Europe/Berlin)\"", INVALID, 22);
+  expectFailure<ZonedTime>("\"2026-10-07T11:21:00.5+24:00 (Europe/Berlin)\"", INVALID, 22);
+
+  EXPECT_TRUE(decode<ZonedTime>("\"2026-10-07T11:21:00+23:59 (Europe/Berlin)\"").has_value());
+  EXPECT_TRUE(decode<ZonedTime>("\"2026-10-07T11:21:00-23:59 (Europe/Berlin)\"").has_value());
+  EXPECT_TRUE(decode<ZonedTime>("\"2026-10-07T11:21:00+00:00 (Europe/Berlin)\"").has_value());
 }
 
 TEST(JsonCodec, ProducerInterval) {

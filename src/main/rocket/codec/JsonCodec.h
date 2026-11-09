@@ -1309,7 +1309,11 @@ struct JsonProducerImpl<DataType::Date, T> {
     inner.seek(io::tellg(is), nio::SeekMode::beg);
 
     const auto& [y, m, d] = result->values();
-    val = { year(y), month(m), day(d) };
+    const auto date = makeDate(y, m, d);
+    if (not date) {
+      throw InputFailure(inPos(0), "Invalid date");
+    }
+    val = *date;
   }
 };
 
@@ -1350,6 +1354,9 @@ struct JsonProducerImpl<DataType::HourMinuteSecond, T> {
     inner.seek(io::tellg(is), nio::SeekMode::beg);
 
     auto [h, m, s] = result->values();
+    if (not validHourMinuteSecond(h, m, s)) {
+      throw InputFailure(inPos(0), "Invalid hour, minute, or second");
+    }
     const bool neg = minus || h < 0; // The scanner may skip more whitespace than we do
     if (h < 0) {
       h = -h;
@@ -1525,12 +1532,15 @@ struct JsonProducerImpl<DataType::ZonedTime, T> {
         }
 
         auto& is = inner.istream();
-        const auto result = scn::scan<std_unsigned, std_unsigned>(is, "{}:{}");
+        const auto result = scn::scan<u32, u32>(is, "{}:{}");
         if (not result) {
           throw InputFailure(offsetPos, "Expected UTC offset");
         }
         inner.seek(io::tellg(is), nio::SeekMode::beg);
         const auto& [h, m] = result->values();
+        if (not validUtcOffset(h, m)) {
+          throw InputFailure(offsetPos, "Invalid UTC offset");
+        }
         offset = hours(h) + minutes(m);
         if (*sign == "-") {
           offset = -offset;
