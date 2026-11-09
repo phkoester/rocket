@@ -84,6 +84,27 @@ struct InputFailure : InvalidState {
    */
   [[nodiscard]] const str::Ranges& ranges() const { return ranges_; }
 
+  /**
+   * Returns a copy of this instance with the position and all ranges moved by an offset.
+   *
+   * This translates a failure in a substring to the enclosing string.
+   *
+   * @param offset the offset to add
+   * @return the moved copy
+   */
+  [[nodiscard]] InputFailure
+  shifted(u64 offset) const {
+    InputFailure ret(*this);
+    ret.position_ += offset;
+    for (auto& range : ret.ranges_) {
+      range.a += offset;
+      if (range.b) {
+        *range.b += offset;
+      }
+    }
+    return ret;
+  }
+
 private:
 
   u64 position_;

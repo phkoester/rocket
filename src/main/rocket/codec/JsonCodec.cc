@@ -36,7 +36,7 @@ readJsonString(nio::Source& in, Positions& positions) {
     throw InputFailure(pos, "Unterminated string literal");
   }
 
-  const string unescaped = str::escape::unescapeCString(*input, { .json=true }, &positions);
+  const string unescaped = unescapeLiteral(*input, pos + 1, { .json=true }, &positions);
   // Postconditions:
   // - `positions` maps offset in `input` (greater) -> offset in `unescaped` (smaller)
   // - Position 0 in `unescaped` is `pos + 1` in `in` (because of the opening quote)

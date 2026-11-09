@@ -55,12 +55,14 @@ decode(string_view str) {
   return codec.decode<T>(in);
 }
 
-// `Character` has no default constructor, so `JsonCodec::decode` cannot create one
 template<typename T>
-[[nodiscard]] DecodeResult<T>
-decodeInto(T val, string_view str) {
-  nio::StringSource in(str);
-  return codec.Base::decode<T>(val, in);
+void
+expectFailure(string_view input, string_view message, u64 position, const str::Ranges& ranges = {}) {
+  const auto result = decode<T>(input);
+  ASSERT_FALSE(result.has_value()) << input;
+  EXPECT_EQ(result.error().message, message) << input;
+  EXPECT_EQ(result.error().position, position) << input;
+  EXPECT_EQ(result.error().ranges, ranges) << input;
 }
 
 template<typename T>
@@ -68,6 +70,14 @@ template<typename T>
 decodeAndTell(string_view str) {
   nio::StringSource in(str);
   return { codec.decode<T>(in), in.tell() };
+}
+
+// `Character` has no default constructor, so `JsonCodec::decode` cannot create one
+template<typename T>
+[[nodiscard]] DecodeResult<T>
+decodeInto(T val, string_view str) {
+  nio::StringSource in(str);
+  return codec.Base::decode<T>(val, in);
 }
 
 } // namespace
@@ -518,6 +528,21 @@ TEST(JsonCodec, ProducerDuration) {
   EXPECT_EQ(decode<seconds>("x").error().message, "Expected a string");
   EXPECT_EQ(decode<seconds>("\"x\"").error().message, "Expected a duration");
   EXPECT_EQ(decode<seconds>("\"10x\"").error().message, "Expected a time unit");
+}
+
+TEST(JsonCodec, ProducerEscapeFailurePosition) {
+  using Map = map<string, string>;
+  constexpr string_view INVALID_ESCAPE = "Invalid escape sequence";
+
+  expectFailure<string>("  \"\\q\"", INVALID_ESCAPE, 3, { { 3, 5 } });
+  expectFailure<char>("  \"\\q\"", INVALID_ESCAPE, 3, { { 3, 5 } });
+  expectFailure<Map>("{\n  \"a\": \"\\q\"\n}", INVALID_ESCAPE, 10, { { 10, 12 } }); // Value on a later line
+  expectFailure<Map>("{\"\\q\": \"x\"}", INVALID_ESCAPE, 2, { { 2, 4 } }); // Key
+  // Through `readJsonString`
+  expectFailure<std::chrono::seconds>(" \"\\q\"", INVALID_ESCAPE, 2, { { 2, 4 } });
+
+  expectFailure<string>(R"("\uDD71")", "Unpaired surrogate in escape sequence", 1, { { 1, 7 } });
+  expectFailure<string>("  \"a\xFF\"", "Invalid UTF-8 byte sequence", 4);
 }
 
 TEST(JsonCodec, ProducerCharacter) {

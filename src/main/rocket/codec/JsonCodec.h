@@ -820,7 +820,7 @@ struct JsonProducerImpl<DataType::Char, C> {
       throw InputFailure(pos, "Unterminated character literal");
     }
 
-    const std::string unescaped = str::escape::unescapeCString(*input, { .json=true });
+    const std::string unescaped = unescapeLiteral(*input, pos + 1, { .json=true });
     const std::basic_string<C> str(unicode::ConvertTo<C>::apply(unescaped));
     if (str.size() != 1) {
       throw InputFailure(pos, "Invalid character literal");
@@ -949,7 +949,7 @@ struct JsonProducerImpl<DataType::String, T> {
       throw InputFailure(pos, "Unterminated string literal");
     }
 
-    const std::string unescaped = str::escape::unescapeCString(*input, { .json=true });
+    const std::string unescaped = unescapeLiteral(*input, pos + 1, { .json=true });
     std::basic_string<C> str(unicode::ConvertTo<C>::apply(unescaped));
     if constexpr (std::same_as<T, std::basic_string_view<C>>) {
       // Decoding a string view: make it point to a string bound to the decoder

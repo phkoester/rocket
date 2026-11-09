@@ -39,6 +39,7 @@
 #pragma once
 
 #include "rocket/Bimap.h"
+#include "rocket/InputFailure.h"
 #include "rocket/type-traits.h"
 #include "rocket/chrono/chrono.h"
 #include "rocket/math/Interval.h"
@@ -47,6 +48,7 @@
 #include "rocket/reflect/MemberRef.h"
 #include "rocket/reflect/VarRef.h"
 #include "rocket/str/Range.h"
+#include "rocket/str/escape/escape.h"
 #include "rocket/unicode/Character.h"
 
 #include <array>
@@ -408,6 +410,31 @@ private:
 DecoderStore* store();
 
 void store(DecoderStore* val);
+
+// Functions ------------------------------------------------------------------------------------------------
+
+/**
+ * Unescapes the content of a quoted literal, reporting failures relative to the enclosing input.
+ *
+ * @param input the content of the literal, without its quotes
+ * @param contentPos the position of @p input in the enclosing input
+ * @param config the configuration
+ * @param positions if nonnull, receives the positions, which are relative to @p input
+ * @return the unescaped string
+ * @throw #rocket::InputFailure if @p input is malformed
+ */
+inline std::string
+unescapeLiteral(
+  std::string_view input,
+  u64 contentPos,
+  const str::escape::CStringConfig& config = {},
+  Positions* positions = nullptr) {
+  try {
+    return str::escape::unescapeCString(input, config, positions);
+  } catch (const InputFailure& ex) {
+    throw ex.shifted(contentPos);
+  }
+}
 
 } // namespace internal
 
