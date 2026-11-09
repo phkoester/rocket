@@ -666,7 +666,11 @@ FileSource::seek(i64 offset, SeekMode mode) { // NOLINT
       ROCKET_FLOP(mode, "Invalid seek mode {}", static_cast<i32>(mode));
   }
 
+#ifdef ROCKET_OS_WINDOWS
+  auto result = _fseeki64(file_, safe<__int64>(offset), origin);
+#else
   auto result = fseek(file_, safe<std_long>(offset), origin);
+#endif
   NIO_LOG("fseek=" << result << ", ferror=" << ferror(file_));
   return result == 0;
 }
@@ -677,7 +681,11 @@ FileSource::tell() {
     return NPOS;
   }
 
+#ifdef ROCKET_OS_WINDOWS
+  auto result = _ftelli64(file_); // `__int64`
+#else
   auto result = ftell(file_);
+#endif
   NIO_LOG("ftell=" << result << ", ferror=" << ferror(file_));
   if (result == -1) {
     return NPOS;
