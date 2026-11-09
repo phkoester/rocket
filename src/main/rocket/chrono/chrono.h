@@ -210,7 +210,7 @@ struct sys_info {
   std::chrono::sys_seconds end;
   /// The UTC offset, local time minus UTC.
   std::chrono::seconds offset;
-  /// The daylight-saving offset. Non-ero if and only if daylight saving is in effect.
+  /// The daylight-saving offset. Nonzero if and only if daylight saving is in effect.
   std::chrono::minutes save;
   /// The abbreviation of the time zone, for example `CEST`.
   std::string abbrev;

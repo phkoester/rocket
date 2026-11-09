@@ -123,7 +123,7 @@ struct BasicCharacter {
   }
 
   /**
-   * Checks if the character is an end of line (EOL)
+   * Checks if the character is an end of line (EOL).
    *
    * @return whether the character is an end of line
    */
@@ -241,11 +241,12 @@ struct BasicCharacter {
         return 2;
       }
       /*
-       * In the rust crate `unicode-display-width`, the following code is used to handle U+FE0F:
+       * In the Rust crate `unicode-display-width`, the following code is used to handle U+FE0F:
        *
        *  // emoji style variation selector
        *  if scalar_value == '\u{FE0F}' {
        *    return 2;
+       *  }
        */
     }
     return ret;
@@ -342,7 +343,7 @@ operator""_c(const char32* p, std_size_t len) {
  *
  * ```
  * auto c = "a"_cv; // ASCII character 'a'
- * assert(c1.width() == 1);
+ * assert(c.width() == 1);
  * ```
  */
 template<typename C> requires IsChar<C>

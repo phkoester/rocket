@@ -36,7 +36,7 @@ namespace {
  *
  * @param out the sink to write to
  * @param sequence the ANSI escape sequence to write
- * @return the response from `stdin` if this instance is active, otherwise an empty string
+ * @return the response from `stdin`
  * @throw #rocket::InputFailure if the response from `stdin` cannot be read
  */
 string

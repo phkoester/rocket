@@ -42,8 +42,8 @@
  *
  * Characters are JSON strings of length one. Example values: `"a"`, `"\t"`, `"€"`, `"\u20AC"`.
  *
- * One-byte characters must be valid ASCII characters in the range [0,127]. Two-byte characters must be valid
- * Unicode code points in the ranges [U+0000,U+D7FF] and [U+E000,U+10FFFF].
+ * One-byte characters must be valid ASCII characters in the range [0,127]. Four-byte characters must be
+ * valid Unicode code points in the ranges [U+0000,U+D7FF] and [U+E000,U+10FFFF].
  *
  * When reading, escape sequences as well as the prefixes `\x` (two hexadecimal digits), `\u` (four
  * hexadecimal digits), and `\U` (eight hexadecimal digits) are accepted. `\/` is accepted as well. A `\u`
@@ -106,7 +106,7 @@
  * ## Maps
  *
  * Maps are JSON objects. Keys are always JSON strings surrounded by double quotes (`"`). Example:
- * `{ "alpha": 1, "beta": 2}`.
+ * `{ "alpha": 1, "beta": 2 }`.
  *
  * Duplicate keys are discouraged but allowed. If a key appears multiple times, the last one wins.
  *
@@ -161,7 +161,7 @@
  * Empty intervals are notated as `null`. Nonempty intervals are JSON arrays of two bounds. A missing
  * (infinite) bound is notated as `null`.
  *
- * Example values: `null`, `"[-1.2, 3.4]"`, `"[null, -12]"`, or `"[12, null]"`.
+ * Example values: `null`, `[-1.2, 3.4]`, `[null, -12]`, or `[12, null]`.
  *
  * ## Declared Objects
  *
@@ -709,8 +709,8 @@ readJsonKey(Key& key, nio::Source& in) {
     Positions positions;
     const auto input = readJsonString(in, positions);
     nio::StringSource inner(input);
-    const auto inPos = [pos, &positions](u64 innnerPos) -> u64 {
-      return jsonStringOffset(pos, innnerPos, positions);
+    const auto inPos = [pos, &positions](u64 innerPos) -> u64 {
+      return jsonStringOffset(pos, innerPos, positions);
     };
 
     try {
@@ -845,8 +845,8 @@ struct JsonProducerImpl<DataType::Enum, E> {
       Positions positions;
       const auto input = readJsonString(in, positions);
       nio::StringSource inner(input);
-      const auto inPos = [pos, &positions](u64 innnerPos) -> u64 {
-        return jsonStringOffset(pos, innnerPos, positions);
+      const auto inPos = [pos, &positions](u64 innerPos) -> u64 {
+        return jsonStringOffset(pos, innerPos, positions);
       };
 
       const auto result = scan<E>(inner);
@@ -923,8 +923,8 @@ struct JsonProducerImpl<DataType::Pointer, P> {
     Positions positions;
     const auto input = readJsonString(in, positions);
     nio::StringSource inner(input);
-    const auto inPos = [pos, &positions](u64 innnerPos) -> u64 {
-      return jsonStringOffset(pos, innnerPos, positions);
+    const auto inPos = [pos, &positions](u64 innerPos) -> u64 {
+      return jsonStringOffset(pos, innerPos, positions);
     };
 
     const auto result = scan<P>(inner);
@@ -1242,8 +1242,8 @@ struct JsonProducerImpl<DataType::Duration, T> {
     Positions positions;
     const auto input = readJsonString(in, positions);
     nio::StringSource inner(input);
-    const auto inPos = [pos, &positions](u64 innnerPos) -> u64 {
-      return jsonStringOffset(pos, innnerPos, positions);
+    const auto inPos = [pos, &positions](u64 innerPos) -> u64 {
+      return jsonStringOffset(pos, innerPos, positions);
     };
 
     Rep count;
@@ -1301,8 +1301,8 @@ struct JsonProducerImpl<DataType::Date, T> {
     Positions positions;
     const auto input = readJsonString(in, positions);
     nio::StringSource inner(input);
-    const auto inPos = [pos, &positions](u64 innnerPos) -> u64 {
-      return jsonStringOffset(pos, innnerPos, positions);
+    const auto inPos = [pos, &positions](u64 innerPos) -> u64 {
+      return jsonStringOffset(pos, innerPos, positions);
     };
 
     auto& is = inner.istream();
@@ -1332,8 +1332,8 @@ struct JsonProducerImpl<DataType::HourMinuteSecond, T> {
     Positions positions;
     const auto input = readJsonString(in, positions);
     nio::StringSource inner(input);
-    const auto inPos = [pos, &positions](u64 innnerPos) -> u64 {
-      return jsonStringOffset(pos, innnerPos, positions);
+    const auto inPos = [pos, &positions](u64 innerPos) -> u64 {
+      return jsonStringOffset(pos, innerPos, positions);
     };
 
     // Read hour, minute, and second
@@ -1383,8 +1383,8 @@ struct JsonProducerImpl<DataType::TimeZone, T> {
     // Read JSON string (no inner source needed here because we use `input` directly)
     Positions positions;
     const auto input = readJsonString(in, positions);
-    const auto inPos = [pos, &positions](u64 innnerPos) -> u64 {
-      return jsonStringOffset(pos, innnerPos, positions);
+    const auto inPos = [pos, &positions](u64 innerPos) -> u64 {
+      return jsonStringOffset(pos, innerPos, positions);
     };
 
     try {
@@ -1414,8 +1414,8 @@ struct JsonProducerImpl<DataType::Time, T> {
     Positions positions;
     const auto input = readJsonString(in, positions);
     nio::StringSource inner(input);
-    const auto inPos = [pos, &positions](u64 innnerPos) -> u64 {
-      return jsonStringOffset(pos, innnerPos, positions);
+    const auto inPos = [pos, &positions](u64 innerPos) -> u64 {
+      return jsonStringOffset(pos, innerPos, positions);
     };
 
     // The environment variable `TZ` interferes somehow ...
@@ -1448,7 +1448,7 @@ struct JsonProducerImpl<DataType::Time, T> {
 
       expectChar(inner, 'Z');
 
-      // Work around a bug in scnlib where the time point is not parsed as UTC but dependent from the current
+      // Work around a bug in scnlib where the time point is not parsed as UTC but dependent on the current
       // time zone
 
       const auto info = current->get_info(val);
@@ -1477,8 +1477,8 @@ struct JsonProducerImpl<DataType::ZonedTime, T> {
     Positions positions;
     const auto input = readJsonString(in, positions);
     nio::StringSource inner(input);
-    const auto inPos = [pos, &positions](u64 innnerPos) -> u64 {
-      return jsonStringOffset(pos, innnerPos, positions);
+    const auto inPos = [pos, &positions](u64 innerPos) -> u64 {
+      return jsonStringOffset(pos, innerPos, positions);
     };
 
     // The environment variable `TZ` interferes somehow ...
@@ -1513,7 +1513,7 @@ struct JsonProducerImpl<DataType::ZonedTime, T> {
       // Read "Z" or UTC offset
 
       const auto offsetPos = inner.tell();
-      seconds offset;
+      seconds offset {};
 
       if (not readChar(inner, 'Z')) {
         auto sign = readChoice(inner, { "+", "-" }, false, false);
@@ -1751,8 +1751,7 @@ struct JsonProducer {
  *
  * When decoding a declared type or a #rocket::reflect::Instance, the `"name": value` entries may appear in
  * any order, and entries may be missing altogether; missing members keep their default values. An entry
- * whose
- * name does not match any member is an error.
+ * whose name does not match any member is an error.
  *
  * Decoding to list views and forward lists is not supported. String views and character views, however, are
  * allowed. This is made possible by keeping real strings in a store bound to the decoder. Hence, decoded

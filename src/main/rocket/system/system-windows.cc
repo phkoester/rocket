@@ -103,7 +103,7 @@ exec(const string& cl) {
   // Close the pipe here rather than in the deleter, because only `_pclose` tells how the command ended
   const i32 status = _pclose(pipe.release());
   if (status != 0) {
-    ROCKET_FAIL("Command `{}` failed with status {}", cl, status);
+    ROCKET_FAIL("Command `{}` failed with exit status {}", cl, status);
   }
 
   return ret;

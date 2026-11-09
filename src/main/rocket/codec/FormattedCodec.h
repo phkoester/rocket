@@ -1393,7 +1393,7 @@ struct FormattedProducerImpl<DataType::ZonedTime, T> {
     // Read "Z" or UTC offset
 
     const auto offsetPos = in.tell();
-    seconds offset;
+    seconds offset {};
 
     if (not readChar(in, 'Z')) {
       auto sign = readChoice(in, { "+", "-" }, false, false);
@@ -1418,7 +1418,7 @@ struct FormattedProducerImpl<DataType::ZonedTime, T> {
 
     tp -= offset;
 
-    // Work around a bug in scnlib where the time point is not parsed as UTC but dependent from the current
+    // Work around a bug in scnlib where the time point is not parsed as UTC but dependent on the current
     // time zone
 
     const auto info = current->get_info(tp);
@@ -1596,7 +1596,7 @@ struct FormattedProducer {
  * A codec for formatted (RON) I/O.
  *
  * The encoder can serialize an arbitrary C++ data structure to a sink. The output is in a format called RON
- * (Rocket Object Notation), which is similar to, but not quite the same as JSON. Tuples are enclosed in
+ * (Rocket Object Notation), which is similar to, but not quite the same as, JSON. Tuples are enclosed in
  * parentheses. Lists are enclosed in square brackets. Sets and maps are enclosed in curly braces. If a
  * configuration is provided, the output may be indented and formatted as a tree.
  *

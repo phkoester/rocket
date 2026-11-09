@@ -23,4 +23,8 @@ TEST(CMake, generated) {
   EXPECT_EQ(string_view(generated()), "Hello from `generate-hello`!"sv);
 }
 
+TEST(CMake, version) {
+  EXPECT_GT(ROCKET_VERSION, 0);
+}
+
 // EOF

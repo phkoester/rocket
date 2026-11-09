@@ -94,7 +94,7 @@ std::optional<std::pair<u64, u64>> position(nio::Sink& out);
  * Returns the terminal’s current size, if available. The pair’s `first` is the width in columns, `second`
  * is the height in lines.
  *
- * @param device a new I/O device
+ * @param device an I/O device
  * @return the terminal size, or null if not available
  */
 std::optional<std::pair<u64, u64>> size(nio::Device& device);

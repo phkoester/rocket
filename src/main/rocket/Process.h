@@ -262,7 +262,7 @@ struct Process {
    * @param argc `argc` from `main`
    * @param argv `argv` from `main`
    * @param name the name of the program. If this is null, the file name from `argv[0]` is used. It is
-   *    recommended to give the program a proper name independent from `argv[0]`
+   *    recommended to give the program a proper name independent of `argv[0]`
    * @param locale the locale to use for the process. If this is null, the locale from the environment is
    *    used
    * @param quickExit if `true`, #exit calls #std::quick_exit, otherwise it calls #std::exit

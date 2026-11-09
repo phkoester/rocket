@@ -26,7 +26,7 @@ namespace rocket::unicode {
  * Note there is a literal operator for #rocket::unicode::CodePoint:
  *
  * ```
- * use namespace rocket::unicode;
+ * using namespace rocket::unicode;
  * auto cp = 'a'_cp;
  * assert(cp.upper() == 'A'_cp);
  * ```

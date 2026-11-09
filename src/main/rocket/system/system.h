@@ -91,7 +91,7 @@ std::vector<std::string> makeArgs(std::string_view cl);
 /**
  * Returns the system-dependent path separator.
  *
- * @return the path
+ * @return the path separator
  */
 consteval char
 pathSeparator() {

@@ -300,7 +300,7 @@ CommandLine::parse(const vector<string>& args, nio::Sink& out, nio::Sink& err, b
             }
             break;
           } else {
-            // No value: Apply, continue in code-point loop
+            // No value: Apply, continue in character loop
             applyOpt(opt, false, nullopt);
           }
         }
@@ -439,7 +439,7 @@ CommandLine::printHelp(nio::Sink& out, bool verbose, bool exit) {
   // Hint to verbose help
 
   if (not verbose && hasVerboseDescriptions_) {
-    out.println("\nMore information is available with `{} --help --verbose`", config_.command);
+    out.println("\nMore information is available with `{} --help --verbose`.", config_.command);
   }
 
   // Exit if requested

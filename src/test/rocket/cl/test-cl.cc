@@ -225,7 +225,7 @@ parseCommand(const vector<string>& args, nio::Sink& out = nio::out, nio::Sink& e
         "lingua, institutis, legibus inter se differunt. Gallos ab Aquitanis Garunna~"
         "flumen, a Belgis Matrona et Sequana dividit.~"
         "~"
-        "More information is available with `test-rocket-cl --help --verbose`~"
+        "More information is available with `test-rocket-cl --help --verbose`.~"
       ));
   }
 

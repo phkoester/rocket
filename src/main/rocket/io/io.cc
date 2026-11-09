@@ -128,7 +128,7 @@ parseDigits(string_view digits, u128 limit) {
  * Skips leading whitespace and peeks at the next character.
  *
  * Only `peek()` and `get()` are used for reading, never `seekg()` or `unget()`, so that this also works
- * with non-seekable stream buffers (e.g., the one used by `scn::basic_istream_scanner`).
+ * with nonseekable stream buffers (e.g., the one used by `scn::basic_istream_scanner`).
  *
  * @return the next character, or `char_traits<char>::eof()` if there is none
  */
@@ -139,7 +139,7 @@ peekFirst(istream& is) {
 }
 
 /**
- * Reads decimal digits into @p buf until a non-digit or EOF is encountered. The non-digit is not consumed.
+ * Reads decimal digits into @p buf until a nondigit or EOF is encountered. The nondigit is not consumed.
  */
 void
 readDigits(istream& is, string& buf) {

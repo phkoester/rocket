@@ -6,7 +6,7 @@ applications.
 CMake Target               | Content
 :------------------------- | :------
 `Rocket::rocket`           | Rocket, the basic library for CLI applications
-`Rocket::rocket-bench`     | Rocket.Bench, a library for benchmarks, using Rocket and Google benchmark
+`Rocket::rocket-bench`     | Rocket.Bench, a library for benchmarks, using Rocket and Google Benchmark
 `Rocket::rocket-gui`       | Rocket.Gui, a library for GUI applications, using Rocket and wxWidgets
 `Rocket::rocket-test`      | Rocket.Test, a library for unit tests, using Rocket and GoogleTest
 
@@ -25,7 +25,7 @@ Rocket stands on the shoulders of these giants:
 - [Boost](https://github.com/boostorg/boost) ([license](license/Boost/LICENSE_1_0.txt))
 - [{fmt}](https://github.com/fmtlib/fmt) ([license](license/fmt/LICENSE))
 - [GoogleTest](https://github.com/google/googletest) ([license](license/GTest/LICENSE))
-- [ICU](https://github.com/unicode-org/icu)  ([license](license/ICU/LICENSE))
+- [ICU](https://github.com/unicode-org/icu) ([license](license/ICU/LICENSE))
 - [libcbor](https://github.com/PJK/libcbor) ([license](license/libcbor/LICENSE.md))
 - [scnlib](https://github.com/eliaskosunen/scnlib) ([license](license/scnlib/LICENSE))
 - [wxWidgets](https://github.com/wxWidgets/wxWidgets) ([license](license/wxWidgets/licence.txt))
