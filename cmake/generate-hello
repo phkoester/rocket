@@ -3,30 +3,21 @@
 # generate-hello
 #
 
+"""
+Usage: generate-hello
+
+Writes the generated source file to stdout.
+"""
+
 import argparse
 import sys
-
-from pathlib import Path
 
 def main():
   # Parse arguments
   parser = argparse.ArgumentParser()
-  parser.add_argument(
-    "-o", "--output",
-    dest="output_file",
-    type=str,
-    help="Output file path",
-    required=True,
-  )
-  args = parser.parse_args()
+  parser.parse_args()
 
-  # Make directories as needed
-  path = Path(args.output_file)
-  path.parent.mkdir(parents=True, exist_ok=True)
-
-  # Write output file
-  with open(args.output_file, 'w') as f:
-    f.write("const char* generated() { return \"Hello from `generated.cc`!\"; }\n")
+  sys.stdout.write("const char* generated() { return \"Hello from `generate-hello`!\"; }\n")
 
   return 0
 

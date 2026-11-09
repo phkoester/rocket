@@ -159,7 +159,6 @@ using nonexistent_local_time = std::chrono::nonexistent_local_time;
 /// A time zone.
 using time_zone = std::chrono::time_zone;
 
-// For using-declarations, Doxygen takes the signature `T f(T... args)` from the cppreference tag file
 #ifdef ROCKET_DOXYGEN
 
 /**

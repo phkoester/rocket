@@ -111,7 +111,7 @@ TEST(JsonCodec, ConsumerFloatF64) {
 
 TEST(JsonCodec, ConsumerPointer) {
   EXPECT_EQ(encode(reinterpret_cast<void*>(0)), "null");
-  EXPECT_THAT(encode(reinterpret_cast<void*>(0x12345678)), matchesRegex("\"0x[0-9a-f]+\""));
+  EXPECT_THAT(encode(reinterpret_cast<void*>(0x1234ABCD)), matchesRegex("\"0x[0-9A-F]+\""));
 }
 
 TEST(JsonCodec, ConsumerString) {

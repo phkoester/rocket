@@ -95,30 +95,30 @@ template<typename EF>
 struct [[nodiscard]] scope_exit {
   /**
    * Constructs from an lvalue, or from an rvalue that cannot be moved without throwing. If copying the
-   * function throws, @p f is called before the exception propagates.
+   * function throws, @p fn is called before the exception propagates.
    *
-   * @param f the exit function
+   * @param fn the exit function
    */
   template<typename EFP> requires
     internal::scope::NotSameAs<std::remove_cvref_t<EFP>, scope_exit> && std::constructible_from<EF, EFP>
-  explicit scope_exit(EFP&& f) noexcept(std::is_nothrow_constructible_v<EF, EFP&>)
-  try : exitFn_(f)
+  explicit scope_exit(EFP&& fn) noexcept(std::is_nothrow_constructible_v<EF, EFP&>)
+  try : exitFn_(fn)
   {}
   catch (...) {
-    f();
+    fn();
   }
 
   /**
    * Constructs from an rvalue that can be moved without throwing.
    *
-   * @param f the exit function
+   * @param fn the exit function
    */
   template<typename EFP> requires
     internal::scope::NotSameAs<std::remove_cvref_t<EFP>, scope_exit> &&
     std::constructible_from<EF, EFP> &&
     internal::scope::NotLvalueRef<EFP> &&
     std::is_nothrow_constructible_v<EF, EFP>
-  explicit scope_exit(EFP&& f) noexcept : exitFn_(std::forward<EFP>(f)) {}
+  explicit scope_exit(EFP&& fn) noexcept : exitFn_(std::forward<EFP>(fn)) {}
 
   /**
    * Constructs by moving the exit function of @p rhs, which is then released.
@@ -183,31 +183,31 @@ template<typename EF>
 struct [[nodiscard]] scope_fail {
   /**
    * Constructs from an lvalue, or from an rvalue that cannot be moved without throwing. If copying the
-   * function throws, @p f is called before the exception propagates.
+   * function throws, @p fn is called before the exception propagates.
    *
-   * @param f the exit function
+   * @param fn the exit function
    */
   template<typename EFP>
     requires internal::scope::NotSameAs<std::remove_cvref_t<EFP>, scope_fail>
           && std::constructible_from<EF, EFP>
-  explicit scope_fail(EFP&& f) noexcept(std::is_nothrow_constructible_v<EF, EFP&>)
+  explicit scope_fail(EFP&& fn) noexcept(std::is_nothrow_constructible_v<EF, EFP&>)
   try
-    : exitFn_(f)
+    : exitFn_(fn)
   {}
   catch (...) {
-    f();
+    fn();
   }
 
   /**
    * Constructs from an rvalue that can be moved without throwing.
    *
-   * @param f the exit function
+   * @param fn the exit function
    */
   template<typename EFP> requires
     internal::scope::NotSameAs<std::remove_cvref_t<EFP>, scope_fail> &&
     std::constructible_from<EF, EFP> &&
     internal::scope::NotLvalueRef<EFP> && std::is_nothrow_constructible_v<EF, EFP>
-  explicit scope_fail(EFP&& f) noexcept : exitFn_(std::forward<EFP>(f)) {}
+  explicit scope_fail(EFP&& fn) noexcept : exitFn_(std::forward<EFP>(fn)) {}
 
   /**
    * Constructs by moving the exit function of @p rhs, which is then released.
@@ -275,26 +275,26 @@ template<typename EF>
 struct [[nodiscard]] scope_success {
   /**
    * Constructs from an lvalue, or from an rvalue that cannot be moved without throwing. Unlike the other
-   * guards, @p f is not called if copying it throws.
+   * guards, @p fn is not called if copying it throws.
    *
-   * @param f the exit function
+   * @param fn the exit function
    */
   template<typename EFP> requires
     internal::scope::NotSameAs<std::remove_cvref_t<EFP>, scope_success> &&
     std::constructible_from<EF, EFP>
-  explicit scope_success(EFP&& f) noexcept(std::is_nothrow_constructible_v<EF, EFP&>) : exitFn_(f) {}
+  explicit scope_success(EFP&& fn) noexcept(std::is_nothrow_constructible_v<EF, EFP&>) : exitFn_(fn) {}
 
   /**
    * Constructs from an rvalue that can be moved without throwing.
    *
-   * @param f the exit function
+   * @param fn the exit function
    */
   template<typename EFP> requires
     internal::scope::NotSameAs<std::remove_cvref_t<EFP>, scope_success> &&
     std::constructible_from<EF, EFP> &&
     internal::scope::NotLvalueRef<EFP> &&
     std::is_nothrow_constructible_v<EF, EFP>
-  explicit scope_success(EFP&& f) noexcept : exitFn_(std::forward<EFP>(f)) {}
+  explicit scope_success(EFP&& fn) noexcept : exitFn_(std::forward<EFP>(fn)) {}
 
   /**
    * Constructs by moving the exit function of @p rhs, which is then released.
