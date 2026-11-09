@@ -630,6 +630,14 @@ TEST(JsonCodec, ProducerFailureInsideClusterOutsideString) {
   EXPECT_EQ(loc::locations(input, { pos }).locations.at(0).column, 2U);
 }
 
+TEST(JsonCodec, ProducerCodePointInvalid) {
+  using CodePoint = unicode::CodePoint;
+
+  expectFailure<CodePoint>("  \"U+110000\"", "Invalid code-point value 0x110000", 2);
+  expectFailure<CodePoint>("  \"U+D800\"", "Invalid code-point value 0xD800", 2);
+  expectFailure<pair<i32, CodePoint>>("[1, \"U+110000\"]", "Invalid code-point value 0x110000", 4);
+}
+
 TEST(JsonCodec, ProducerCharacter) {
   const unicode::Character<char> character("x"s);
   const unicode::CharacterView<char> view("x"sv);

@@ -1103,7 +1103,11 @@ struct CborProducerImpl<DataType::CodePoint, T> {
     } catch (const InputFailure& ex) {
       throw InputFailure(ex.position(), "Expected a code point");
     }
-    item.setValue(T(elem.value()));
+    try {
+      item.setValue(T(elem.value()));
+    } catch (const InputFailure& ex) {
+      throw ex.shifted(state.index); // `CodePoint` reports position 0
+    }
   }
 };
 

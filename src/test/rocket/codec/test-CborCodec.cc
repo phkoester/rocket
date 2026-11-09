@@ -412,6 +412,20 @@ TEST(CborCodec, Character) {
   testCharacter(unicode::CharacterView<char>("hello"sv));
 }
 
+TEST(CborCodec, CodePointInvalid) {
+  // An array holding a valid code point at offset 1 and an invalid one at offset 6
+  const vector<u8> tooLarge { 0x82, 0x1A, 0x00, 0x00, 0x00, 0x41, 0x1A, 0x00, 0x11, 0x00, 0x00 };
+  const auto result1 = decode<vector<unicode::CodePoint>>(tooLarge);
+  EXPECT_EQ(result1.error().message, "Invalid code-point value 0x110000");
+  EXPECT_EQ(result1.error().position, 6U);
+
+  // The same with a surrogate
+  const vector<u8> surrogate { 0x82, 0x1A, 0x00, 0x00, 0x00, 0x41, 0x1A, 0x00, 0x00, 0xD8, 0x00 };
+  const auto result2 = decode<vector<unicode::CodePoint>>(surrogate);
+  EXPECT_EQ(result2.error().message, "Invalid code-point value 0xD800");
+  EXPECT_EQ(result2.error().position, 6U);
+}
+
 TEST(CborCodec, CharacterEmpty) {
   // An empty text string
   const vector<u8> empty { 0x60 };

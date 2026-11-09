@@ -1699,7 +1699,11 @@ struct JsonProducerImpl<DataType::CodePoint, T> {
     if (not readChar(in, '"')) {
       throw InputFailure(in.tell(), { pos, in.tell() }, "Unterminated code point");
     }
-    val = static_cast<Elem>(*result);
+    try {
+      val = static_cast<Elem>(*result);
+    } catch (const InputFailure& ex) {
+      throw ex.shifted(pos); // `CodePoint` reports position 0
+    }
   }
 };
 

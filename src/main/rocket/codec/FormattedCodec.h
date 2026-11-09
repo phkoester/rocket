@@ -1529,7 +1529,11 @@ struct FormattedProducerImpl<DataType::CodePoint, T> {
     // Read `U+...`
     auto result = scanCodePoint<u32>(in);
     if (result) {
-      val = static_cast<Elem>(*result);
+      try {
+        val = static_cast<Elem>(*result);
+      } catch (const InputFailure& ex) {
+        throw ex.shifted(pos); // `CodePoint` reports position 0
+      }
       return;
     }
     throw InputFailure(pos, "Expected a code point");
