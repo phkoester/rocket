@@ -56,16 +56,6 @@ decode(string_view str) {
 }
 
 template<typename T>
-void
-expectFailure(string_view input, string_view message, u64 position, const str::Ranges& ranges = {}) {
-  const auto result = decode<T>(input);
-  ASSERT_FALSE(result.has_value()) << input;
-  EXPECT_EQ(result.error().message, message) << input;
-  EXPECT_EQ(result.error().position, position) << input;
-  EXPECT_EQ(result.error().ranges, ranges) << input;
-}
-
-template<typename T>
 [[nodiscard]] pair<DecodeResult<T>, u64>
 decodeAndTell(string_view str) {
   nio::StringSource in(str);
@@ -78,6 +68,16 @@ template<typename T>
 decodeInto(T val, string_view str) {
   nio::StringSource in(str);
   return codec.Base::decode<T>(val, in);
+}
+
+template<typename T>
+void
+expectFailure(string_view input, string_view message, u64 position, const str::Ranges& ranges = {}) {
+  const auto result = decode<T>(input);
+  ASSERT_FALSE(result.has_value()) << input;
+  EXPECT_EQ(result.error().message, message) << input;
+  EXPECT_EQ(result.error().position, position) << input;
+  EXPECT_EQ(result.error().ranges, ranges) << input;
 }
 
 } // namespace
@@ -543,6 +543,16 @@ TEST(JsonCodec, ProducerEscapeFailurePosition) {
 
   expectFailure<string>(R"("\uDD71")", "Unpaired surrogate in escape sequence", 1, { { 1, 7 } });
   expectFailure<string>("  \"a\xFF\"", "Invalid UTF-8 byte sequence", 4);
+}
+
+TEST(JsonCodec, ProducerKeyFailureRanges) {
+  using Map = map<pair<i32, i32>, i32>;
+  constexpr string_view UNTERMINATED = "Unterminated array";
+
+  expectFailure<Map>("{\"[1, 2\": 3}", UNTERMINATED, 7, { { 2, 7 } });
+
+  // An escape sequence is longer in the input than after unescaping, so the bounds must be mapped
+  expectFailure<Map>("{\"\\u005B1, 2\": 3}", UNTERMINATED, 12, { { 2, 12 } });
 }
 
 TEST(JsonCodec, ProducerCharacter) {

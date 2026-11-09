@@ -712,7 +712,7 @@ readJsonKey(Key& key, nio::Source& in) {
     try {
       JsonProducerImpl<KeyDataType, Key>().produce(key, inner);
     } catch (const InputFailure& ex) {
-      throw InputFailure(inPos(ex.position()), ex.message());
+      throw ex.mapped(inPos);
     }
   }
 }
@@ -1369,7 +1369,7 @@ struct JsonProducerImpl<DataType::HourMinuteSecond, T> {
       }
       val = T(duration);
     } catch (const InputFailure& ex) {
-      throw InputFailure(inPos(ex.position()), ex.message());
+      throw ex.mapped(inPos);
     }
   }
 };
@@ -1457,7 +1457,7 @@ struct JsonProducerImpl<DataType::Time, T> {
       const auto info = current->get_info(val);
       val += info.offset;
     } catch (const InputFailure& ex) {
-      throw InputFailure(inPos(ex.position()), ex.message());
+      throw ex.mapped(inPos);
     }
   }
 };
@@ -1569,7 +1569,7 @@ struct JsonProducerImpl<DataType::ZonedTime, T> {
 
       val = T(tz, tp);
     } catch (const InputFailure& ex) {
-      throw InputFailure(inPos(ex.position()), ex.message());
+      throw ex.mapped(inPos);
     }
   }
 };

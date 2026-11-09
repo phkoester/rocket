@@ -6,6 +6,7 @@
 
 #include "rocket/assert.h"
 #include "rocket/Exception.h"
+#include "rocket/InputFailure.h"
 #include "rocket/TypeId.h"
 #include "rocket/nio/nio.h"
 
@@ -155,6 +156,30 @@ TEST(Exception, nestedExceptionTypeId) {
   } catch (const InvalidArgument& ex) {
     EXPECT_EQ(fmt::format("{}", TypeId(ex)), nestedException("rocket::InvalidArgument"));
   }
+}
+
+TEST(InputFailure, mapped) {
+  const InputFailure ex(3, { { 1, 4 }, { 5, 8 } }, "oops");
+
+  const auto mapped = ex.mapped([](u64 position) { return 2 * position; });
+  EXPECT_EQ(mapped.position(), 6U);
+  EXPECT_EQ(mapped.ranges(), (str::Ranges { { 2, 8 }, { 10, 16 } }));
+  EXPECT_EQ(mapped.message(), "oops");
+
+  // The original stays as it is
+  EXPECT_EQ(ex.position(), 3U);
+  EXPECT_EQ(ex.ranges(), (str::Ranges { { 1, 4 }, { 5, 8 } }));
+}
+
+TEST(InputFailure, shifted) {
+  const auto shifted = InputFailure(3, { 1, 4 }, "oops").shifted(10);
+  EXPECT_EQ(shifted.position(), 13U);
+  EXPECT_EQ(shifted.ranges(), (str::Ranges { { 11, 14 } }));
+  EXPECT_EQ(shifted.message(), "oops");
+
+  const auto noRanges = InputFailure(3, "oops").shifted(10);
+  EXPECT_EQ(noRanges.position(), 13U);
+  EXPECT_TRUE(noRanges.ranges().empty());
 }
 
 // EOF

@@ -85,6 +85,27 @@ struct InputFailure : InvalidState {
   [[nodiscard]] const str::Ranges& ranges() const { return ranges_; }
 
   /**
+   * Returns a copy of this instance with the position and all range bounds translated by a function.
+   *
+   * @tparam F the function type
+   * @param fn the function, which maps a position to the translated position
+   * @return the translated copy
+   */
+  template<typename F>
+  [[nodiscard]] InputFailure
+  mapped(const F& fn) const {
+    InputFailure ret(*this);
+    ret.position_ = fn(position_);
+    for (auto& range : ret.ranges_) {
+      range.a = fn(range.a);
+      if (range.b) {
+        *range.b = fn(*range.b);
+      }
+    }
+    return ret;
+  }
+
+  /**
    * Returns a copy of this instance with the position and all ranges moved by an offset.
    *
    * This translates a failure in a substring to the enclosing string.
@@ -94,15 +115,7 @@ struct InputFailure : InvalidState {
    */
   [[nodiscard]] InputFailure
   shifted(u64 offset) const {
-    InputFailure ret(*this);
-    ret.position_ += offset;
-    for (auto& range : ret.ranges_) {
-      range.a += offset;
-      if (range.b) {
-        *range.b += offset;
-      }
-    }
-    return ret;
+    return mapped([offset](u64 position) { return position + offset; });
   }
 
 private:
