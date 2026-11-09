@@ -555,6 +555,31 @@ TEST(JsonCodec, ProducerKeyFailureRanges) {
   expectFailure<Map>("{\"\\u005B1, 2\": 3}", UNTERMINATED, 12, { { 2, 12 } });
 }
 
+TEST(JsonCodec, ProducerUnexpectedInputAfterValue) {
+  using namespace std::chrono;
+  using TimePoint = time_point<system_clock, nanoseconds>;
+  using ZonedTime = rocket::chrono::zoned_time<nanoseconds>;
+  constexpr string_view UNEXPECTED = "Unexpected input after value";
+
+  expectFailure<seconds>("\"5s!\"", UNEXPECTED, 3, { { 3, 4 } });
+  expectFailure<seconds>("  \"5s!\"", UNEXPECTED, 5, { { 5, 6 } });
+  expectFailure<year_month_day>("\"1970-01-02x\"", UNEXPECTED, 11, { { 11, 12 } });
+  expectFailure<hh_mm_ss<seconds>>("\"01:02:03x\"", UNEXPECTED, 9, { { 9, 10 } });
+  expectFailure<TimePoint>("\"2026-10-07T09:05:26Zx\"", UNEXPECTED, 21, { { 21, 22 } });
+  expectFailure<ZonedTime>("\"2026-10-07T11:21:00+02:00 (Europe/Berlin)x\"", UNEXPECTED, 42, { { 42, 43 } });
+  expectFailure<log::LogLevel>("\"info x\"", UNEXPECTED, 6, { { 6, 7 } });
+  expectFailure<void*>("\"0x1234!\"", UNEXPECTED, 7, { { 7, 8 } });
+  expectFailure<map<i32, i32>>("{\"1!\": 2}", UNEXPECTED, 3, { { 3, 4 } });
+
+  // An escape sequence is longer in the input than after unescaping, so the bounds must be mapped
+  expectFailure<seconds>("\"5s\\u0021\"", UNEXPECTED, 3, { { 3, 9 } });
+
+  // Whitespace may follow the value, just as it may precede it
+  EXPECT_EQ(decode<seconds>("\"5s \""), 5s);
+  EXPECT_EQ(decode<year_month_day>("\"1970-01-02\\t\""), (year_month_day { 1970y, January, 2d }));
+  EXPECT_EQ(decode<log::LogLevel>("\"info \""), log::LogLevel::info);
+}
+
 TEST(JsonCodec, ProducerCharacter) {
   const unicode::Character<char> character("x"s);
   const unicode::CharacterView<char> view("x"sv);

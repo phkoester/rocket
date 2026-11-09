@@ -259,6 +259,25 @@ nextElem(nio::Sink& out, JsonConsumerConfig& config, u64 index) {
 
 std::string readJsonString(nio::Source& in, Positions& positions);
 
+/**
+ * Checks that an inner source over the content of a JSON string has been consumed, apart from whitespace.
+ *
+ * @tparam InPos the type of @p inPos
+ * @param inner the inner source
+ * @param size the size of the content of the inner source
+ * @param inPos a function that translates a position in @p inner to a position in the outer source
+ * @throw #rocket::InputFailure if unconsumed input remains
+ */
+template<typename InPos>
+void
+expectEndOfString(nio::Source& inner, u64 size, const InPos& inPos) {
+  rocket::nio::skip(inner, false, false);
+  const u64 innerPos = inner.tell();
+  if (innerPos != size) {
+    throw InputFailure(inPos(innerPos), { inPos(innerPos), inPos(size) }, "Unexpected input after value");
+  }
+}
+
 inline void
 skip(nio::Source& in) {
   rocket::nio::skip(in, true, false);
@@ -714,6 +733,7 @@ readJsonKey(Key& key, nio::Source& in) {
     } catch (const InputFailure& ex) {
       throw ex.mapped(inPos);
     }
+    expectEndOfString(inner, input.size(), inPos);
   }
 }
 
@@ -847,6 +867,7 @@ struct JsonProducerImpl<DataType::Enum, E> {
 
       const auto result = scan<E>(inner);
       if (result) {
+        expectEndOfString(inner, input.size(), inPos);
         val = *result;
         return;
       }
@@ -925,6 +946,7 @@ struct JsonProducerImpl<DataType::Pointer, P> {
 
     const auto result = scan<P>(inner);
     if (result) {
+      expectEndOfString(inner, input.size(), inPos);
       val = *result;
       return;
     }
@@ -1277,6 +1299,7 @@ struct JsonProducerImpl<DataType::Duration, T> {
       } else {
         ROCKET_TERMINATE_UNREACHABLE_CODE();
       }
+      expectEndOfString(inner, input.size(), inPos);
       return;
     }
 
@@ -1314,6 +1337,7 @@ struct JsonProducerImpl<DataType::Date, T> {
       throw InputFailure(inPos(0), "Invalid date");
     }
     val = *date;
+    expectEndOfString(inner, input.size(), inPos);
   }
 };
 
@@ -1378,6 +1402,7 @@ struct JsonProducerImpl<DataType::HourMinuteSecond, T> {
     } catch (const InputFailure& ex) {
       throw ex.mapped(inPos);
     }
+    expectEndOfString(inner, input.size(), inPos);
   }
 };
 
@@ -1466,6 +1491,7 @@ struct JsonProducerImpl<DataType::Time, T> {
     } catch (const InputFailure& ex) {
       throw ex.mapped(inPos);
     }
+    expectEndOfString(inner, input.size(), inPos);
   }
 };
 
@@ -1581,6 +1607,7 @@ struct JsonProducerImpl<DataType::ZonedTime, T> {
     } catch (const InputFailure& ex) {
       throw ex.mapped(inPos);
     }
+    expectEndOfString(inner, input.size(), inPos);
   }
 };
 
