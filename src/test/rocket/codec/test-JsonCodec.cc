@@ -582,22 +582,6 @@ TEST(JsonCodec, ProducerUnexpectedInputAfterValue) {
   EXPECT_EQ(decode<log::LogLevel>("\"info \""), log::LogLevel::info);
 }
 
-TEST(JsonCodec, ProducerCharacter) {
-  const unicode::Character<char> character("x"s);
-  const unicode::CharacterView<char> view("x"sv);
-
-  EXPECT_EQ(static_cast<string_view>(decodeInto(character, "\"a\"").value()), "a");
-  EXPECT_EQ(static_cast<string_view>(decodeInto(view, "\"a\"").value()), "a");
-
-  const auto empty = decodeInto(character, "  \"\"");
-  EXPECT_EQ(empty.error().message, "Expected a character");
-  EXPECT_EQ(empty.error().position, 2U);
-
-  const auto emptyView = decodeInto(view, "\"\"");
-  EXPECT_EQ(emptyView.error().message, "Expected a character");
-  EXPECT_EQ(emptyView.error().position, 0U);
-}
-
 TEST(JsonCodec, ProducerFailureInsideCluster) {
   using namespace std::chrono;
 
@@ -619,6 +603,47 @@ TEST(JsonCodec, ProducerFailureInsideCluster) {
   const auto rethrown = decode<hh_mm_ss<milliseconds>>("\"01:02:03.\u0301\"");
   EXPECT_EQ(rethrown.error().message, "Expected subseconds");
   EXPECT_EQ(rethrown.error().position, 9U);
+}
+
+TEST(JsonCodec, ProducerFailureInsideClusterOutsideString) {
+  using Pair = pair<i32, i32>;
+
+  // A digit and U+0301 (COMBINING ACUTE ACCENT) form one cluster, so these failures lie inside it. The
+  // reported positions are the starts of the clusters
+  expectFailure<Pair>("[1́, 2]", "Expected ,", 1);
+  expectFailure<Pair>("[1, 2́", "Unterminated array", 4, { { 0, 4 } });
+
+  // A failure at a cluster boundary stays where it is
+  expectFailure<Pair>("[1; 2]", "Expected ,", 2);
+
+  // The source stays where the failure occurred
+  EXPECT_EQ(decodeAndTell<Pair>("[1́, 2]").second, 2U);
+
+  // The position is now a character boundary, so `locations` accepts it
+  namespace loc = rocket::str::location;
+  const string input = "[1́, 2]";
+  const auto result = decode<Pair>(input);
+  ASSERT_FALSE(result.has_value());
+  const loc::Position pos {
+    .type=loc::error, .position=result.error().position, .message=result.error().message
+  };
+  EXPECT_EQ(loc::locations(input, { pos }).locations.at(0).column, 2U);
+}
+
+TEST(JsonCodec, ProducerCharacter) {
+  const unicode::Character<char> character("x"s);
+  const unicode::CharacterView<char> view("x"sv);
+
+  EXPECT_EQ(static_cast<string_view>(decodeInto(character, "\"a\"").value()), "a");
+  EXPECT_EQ(static_cast<string_view>(decodeInto(view, "\"a\"").value()), "a");
+
+  const auto empty = decodeInto(character, "  \"\"");
+  EXPECT_EQ(empty.error().message, "Expected a character");
+  EXPECT_EQ(empty.error().position, 2U);
+
+  const auto emptyView = decodeInto(view, "\"\"");
+  EXPECT_EQ(emptyView.error().message, "Expected a character");
+  EXPECT_EQ(emptyView.error().position, 0U);
 }
 
 TEST(JsonCodec, ProducerHourMinuteSecond) {

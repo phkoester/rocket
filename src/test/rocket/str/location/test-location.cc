@@ -286,4 +286,54 @@ TEST(location, printLocations) { // NOLINT(*-complexity)
   }
 }
 
+TEST(location, printLocationsEmptyInput) {
+  const string input;
+  const Position pos { .type=note, .position=0, .message="Oops" };
+  const auto result = locations(input, { pos });
+  nio::StringSink out;
+  printLocations(out, input, result);
+  EXPECT_EQ(out.str(),
+    "(input):1:1: note: Oops\n"
+    "    1 | \n"
+    "      | ^\n");
+}
+
+// After escaping, U+0301 (COMBINING ACUTE ACCENT) joins the last character of what the preceding character
+// was replaced with, so the position of the mark lies inside a character of the escaped line
+TEST(location, printLocationsEscapeMergesWithCombiningMark) {
+  const auto print = [](string_view input, const Position& pos, const LocationsConfig& config) {
+    const auto result = locations(input, { pos }, config);
+    nio::StringSink out;
+    printLocations(out, input, result);
+    return out.str();
+  };
+
+  const Position pos { .type=note, .position=1, .message="Oops" };
+
+  // A tab expanded to spaces
+  EXPECT_EQ(print("\t\u0301x", pos, {}),
+    "(input):1:9: note: Oops\n"
+    "    1 |         \u0301x\n"
+    "      |        ^\n");
+
+  // A tab escaped as `\t`
+  EXPECT_EQ(print("\t\u0301x", pos, { .tabSize=nullopt }),
+    "(input):1:1: note: Oops\n"
+    "    1 | \\t\u0301x\n"
+    "      |  ^\n");
+
+  // A control character escaped in hexadecimal notation
+  EXPECT_EQ(print("\x01\u0301x", pos, {}),
+    "(input):1:1: note: Oops\n"
+    "    1 | \\x01\u0301x\n"
+    "      |    ^\n");
+
+  // A range that ends at the mark
+  const Position withRange { .type=note, .position=1, .ranges={ { 0, 1 } }, .message="Oops" };
+  EXPECT_EQ(print("\t\u0301x", withRange, {}),
+    "(input):1:9: note: Oops\n"
+    "    1 |         \u0301x\n"
+    "      | ~~~~~~~^\n");
+}
+
 // EOF

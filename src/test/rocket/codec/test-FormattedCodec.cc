@@ -13,6 +13,8 @@
 #include "rocket/str/location/location.h"
 #include "rocket/system/system.h"
 
+#include <sstream>
+
 using namespace rocket::codec;
 
 // `MyStruct` -----------------------------------------------------------------------------------------------
@@ -51,6 +53,14 @@ template<typename T>
 [[nodiscard]] DecodeResult<T>
 decode(string_view str) {
   nio::StringSource in(str);
+  return codec.decode<T>(in);
+}
+
+template<typename T>
+[[nodiscard]] DecodeResult<T>
+decodeFromStream(const string& str) {
+  istringstream is(str);
+  nio::StreamSource in(is);
   return codec.decode<T>(in);
 }
 
@@ -390,6 +400,36 @@ TEST(FormattedCodec, ProducerEscapeFailurePosition) {
   expectFailure<Map>("{\"\\q\": \"x\"}", INVALID_ESCAPE, 2, { { 2, 4 } }); // Key
 
   expectFailure<string>("  \"a\xFF\"", "Invalid UTF-8 byte sequence", 4);
+}
+
+TEST(FormattedCodec, ProducerFailureInsideCluster) {
+  using Pair = pair<i32, i32>;
+
+  // A digit and U+0301 (COMBINING ACUTE ACCENT) form one cluster, so these failures lie inside it. The
+  // reported positions are the starts of the clusters
+  expectFailure<Pair>("(1́, 2)", "Expected ,", 1);
+  expectFailure<Pair>("(1, 2́", "Unterminated tuple", 4, { { 0, 4 } });
+
+  // A failure at a cluster boundary stays where it is
+  expectFailure<Pair>("(1; 2)", "Expected ,", 2);
+
+  // The same goes for a source that is not contiguous
+  const auto fromStream = decodeFromStream<Pair>("(1́, 2)");
+  ASSERT_FALSE(fromStream.has_value());
+  EXPECT_EQ(fromStream.error().position, 1U);
+
+  // The source stays where the failure occurred
+  EXPECT_EQ(decodeAndTell<Pair>("(1́, 2)").second, 2U);
+
+  // The position is now a character boundary, so `locations` accepts it
+  namespace loc = rocket::str::location;
+  const string input = "(1́, 2)";
+  const auto result = decode<Pair>(input);
+  ASSERT_FALSE(result.has_value());
+  const loc::Position pos {
+    .type=loc::error, .position=result.error().position, .message=result.error().message
+  };
+  EXPECT_EQ(loc::locations(input, { pos }).locations.at(0).column, 2U);
 }
 
 TEST(FormattedCodec, ProducerCharacter) {

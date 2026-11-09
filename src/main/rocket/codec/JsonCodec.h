@@ -1802,7 +1802,11 @@ struct JsonCodec : Codec<JsonConsumer, JsonProducer> {
   [[nodiscard]] DecodeResult<T>
   decode(nio::Source& in) const {
     T val {};
-    return Base::decode<T>(val, in);
+    auto result = Base::decode<T>(val, in);
+    if (not result) {
+      internal::snapToClusterStarts(result.error(), in);
+    }
+    return result;
   }
 };
 

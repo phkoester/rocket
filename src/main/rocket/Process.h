@@ -28,9 +28,7 @@
 #define ROCKET_PROCESS_ERROR(status, fmt, ...) { \
   ::rocket::nio::StringSink msg; \
   msg.print("{}:{}: ", ROCKET_SRC_FILE, __LINE__); \
-  msg.print( \
-      fmt \
-      __VA_OPT__(,) __VA_ARGS__); \
+  msg.print(fmt __VA_OPT__(,) __VA_ARGS__); \
   ::rocket::process().error(::rocket::nio::err, status, "{}", msg.str()); \
 }
 
@@ -44,9 +42,7 @@
  #define ROCKET_PROCESS_INFO(fmt, ...) { \
   ::rocket::nio::StringSink msg; \
   msg.print("{}:{}: ", ROCKET_SRC_FILE, __LINE__); \
-  msg.print( \
-      fmt \
-      __VA_OPT__(,) __VA_ARGS__); \
+  msg.print(fmt __VA_OPT__(,) __VA_ARGS__); \
   ::rocket::process().info(::rocket::nio::out, "{}", msg.str()); \
 }
 
@@ -60,9 +56,7 @@
  #define ROCKET_PROCESS_WARN(fmt, ...) { \
   ::rocket::nio::StringSink msg; \
   msg.print("{}:{}: ", ROCKET_SRC_FILE, __LINE__); \
-  msg.print( \
-      fmt \
-      __VA_OPT__(,) __VA_ARGS__); \
+  msg.print(fmt __VA_OPT__(,) __VA_ARGS__); \
   ::rocket::process().warn(::rocket::nio::err, "{}", msg.str()); \
 }
 
@@ -287,11 +281,11 @@ struct Process {
    * @param quickExit if `true`, #exit calls #std::quick_exit, otherwise it calls #std::exit
    */
   void init(
-      i32 argc,
-      char** argv,
-      std::optional<std::string_view> name = std::nullopt,
-      std::optional<std::locale> locale = std::nullopt,
-      bool quickExit = true) const;
+    i32 argc,
+    char** argv,
+    std::optional<std::string_view> name = std::nullopt,
+    std::optional<std::locale> locale = std::nullopt,
+    bool quickExit = true) const;
 
   /**
    * Returns the locale this process picked in #init.

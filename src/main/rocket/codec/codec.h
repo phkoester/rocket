@@ -576,6 +576,27 @@ struct DecodeError {
 template<typename T>
 using DecodeResult = std::expected<T, DecodeError>;
 
+namespace internal {
+
+// Functions ------------------------------------------------------------------------------------------------
+
+/**
+ * Moves the position and the ranges of a decode error to the starts of their grapheme clusters.
+ *
+ * Producers that read a source byte by byte can fail inside a cluster, for example between a digit and a
+ * combining mark. Such a position is not a character boundary, which #rocket::str::location::locations
+ * requires.
+ *
+ * This reads the entire source again, so it is meant for the error path only. The source is left where it
+ * was. The error is left as it is if the source cannot seek or does not hold valid UTF-8.
+ *
+ * @param error the error to adjust
+ * @param in the source the error refers to
+ */
+void snapToClusterStarts(DecodeError& error, nio::Source& in);
+
+} // namespace internal
+
 // `Decoder` ------------------------------------------------------------------------------------------------
 
 /**

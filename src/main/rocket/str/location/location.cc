@@ -145,7 +145,6 @@ printLocations( // NOLINT(*-complexity)
   optional<string_view> input,
   const LocationsResult& locationsResult,
   const PrintLocationsConfig& config) {
-  ROCKET_CHECK(input, not (input && input->empty()), "May not be empty");
   ROCKET_CHECK(locationsResult, not locationsResult.config.source.empty());
 
   // Find out line-number width and format
@@ -232,8 +231,14 @@ printLocations( // NOLINT(*-complexity)
       ROCKET_EXPECT(leftIt != escapePositions.left.end());
       pos = leftIt->second;
 
-      // 3. Translate escaped-line position to escaped-line character position
+      // 3. Translate escaped-line position to escaped-line character position. Escaping can merge characters
+      // that were separate in the line: after a tab or a control character, a combining mark joins the last
+      // character of the replacement. The position then lies inside a character, so use the start of that
+      // character. Offset 0 always has an entry
       auto rightIt = escapedLinePositions.right.find(pos);
+      while (rightIt == escapedLinePositions.right.end() && pos > 0) {
+        rightIt = escapedLinePositions.right.find(--pos);
+      }
       ROCKET_EXPECT(rightIt != escapedLinePositions.right.end());
       pos = rightIt->second;
 

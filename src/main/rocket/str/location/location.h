@@ -60,13 +60,13 @@ struct Position {
   /**
    * The message associated with this position.
    *
-   * THe message may not be empty. It is part of the error message.
+   * The message may not be empty. It is part of the error message.
    */
   std::string message;
   /**
    * The optional caption associated with this position.
    *
-   * The caption may be null, bot not empty. It is displayed underneath the caret (`^`).
+   * The caption may be null, but not empty. It is displayed underneath the caret (`^`).
    */
   std::optional<std::string> caption {}; // NOLINT
 };
