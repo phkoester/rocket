@@ -55,6 +55,14 @@ decode(string_view str) {
   return codec.decode<T>(in);
 }
 
+// `Character` has no default constructor, so `JsonCodec::decode` cannot create one
+template<typename T>
+[[nodiscard]] DecodeResult<T>
+decodeInto(T val, string_view str) {
+  nio::StringSource in(str);
+  return codec.Base::decode<T>(val, in);
+}
+
 template<typename T>
 [[nodiscard]] pair<DecodeResult<T>, u64>
 decodeAndTell(string_view str) {
@@ -510,6 +518,22 @@ TEST(JsonCodec, ProducerDuration) {
   EXPECT_EQ(decode<seconds>("x").error().message, "Expected a string");
   EXPECT_EQ(decode<seconds>("\"x\"").error().message, "Expected a duration");
   EXPECT_EQ(decode<seconds>("\"10x\"").error().message, "Expected a time unit");
+}
+
+TEST(JsonCodec, ProducerCharacter) {
+  const unicode::Character<char> character("x"s);
+  const unicode::CharacterView<char> view("x"sv);
+
+  EXPECT_EQ(static_cast<string_view>(decodeInto(character, "\"a\"").value()), "a");
+  EXPECT_EQ(static_cast<string_view>(decodeInto(view, "\"a\"").value()), "a");
+
+  const auto empty = decodeInto(character, "  \"\"");
+  EXPECT_EQ(empty.error().message, "Expected a character");
+  EXPECT_EQ(empty.error().position, 2U);
+
+  const auto emptyView = decodeInto(view, "\"\"");
+  EXPECT_EQ(emptyView.error().message, "Expected a character");
+  EXPECT_EQ(emptyView.error().position, 0U);
 }
 
 TEST(JsonCodec, ProducerFailureInsideCluster) {

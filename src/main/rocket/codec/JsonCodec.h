@@ -1709,8 +1709,14 @@ struct JsonProducerImpl<DataType::Character, T> {
 
   void
   produce(T& val, nio::Source& in) const {
+    skip(in);
+    const auto pos = in.tell();
+
     Elem elem;
     JsonProducerImpl<ElemDataType, Elem>().produce(elem, in);
+    if (elem.empty()) {
+      throw InputFailure(pos, "Expected a character");
+    }
     val = T(std::move(elem));
   }
 };

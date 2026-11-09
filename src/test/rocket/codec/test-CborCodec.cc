@@ -61,6 +61,12 @@ someFuncReturningCborItem() {
 }
 
 template<typename T>
+[[nodiscard]] DecodeResult<T>
+decode(const vector<u8>& cbor) {
+  return codec.decode<T>(cbor);
+}
+
+template<typename T>
 void
 testRoundtrip(const T& val) { // NOLINT(*-complexity)
   const vector<u8> cbor = codec.encode(val);
@@ -404,6 +410,26 @@ TEST(CborCodec, Character) {
   testCharacter(unicode::Character<char>("hello"s));
   testCharacter(unicode::Character<char32>(U"€"s));
   testCharacter(unicode::CharacterView<char>("hello"sv));
+}
+
+TEST(CborCodec, CharacterEmpty) {
+  // An empty text string
+  const vector<u8> empty { 0x60 };
+
+  const auto character = decode<unicode::Character<char>>(empty);
+  EXPECT_EQ(character.error().message, "Expected a character");
+  EXPECT_EQ(character.error().position, 0U);
+
+  const auto view = decode<unicode::CharacterView<char>>(empty);
+  EXPECT_EQ(view.error().message, "Expected a character");
+  EXPECT_EQ(view.error().position, 0U);
+
+  // An array holding the text string "a" and an empty text string
+  const vector<u8> array { 0x82, 0x61, 'a', 0x60 };
+
+  const auto list = decode<vector<unicode::Character<char>>>(array);
+  EXPECT_EQ(list.error().message, "Expected a character");
+  EXPECT_EQ(list.error().position, 3U);
 }
 
 // EOF

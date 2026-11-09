@@ -52,6 +52,14 @@ decode(string_view str) {
   return codec.decode<T>(in);
 }
 
+// `Character` has no default constructor, so `FormattedCodec::decode` cannot create one
+template<typename T>
+[[nodiscard]] DecodeResult<T>
+decodeInto(T val, string_view str) {
+  nio::StringSource in(str);
+  return codec.Base::decode<T>(val, in);
+}
+
 template<typename T>
 [[nodiscard]] pair<DecodeResult<T>, u64>
 decodeAndTell(string_view str) {
@@ -358,6 +366,22 @@ TEST(FormattedCodec, ProducerInvalidUtf8) {
   EXPECT_EQ(decode<string>("\"a\xFF\"").error().message, MESSAGE);
   EXPECT_EQ(decode<string>("\"\xE2\x82\"").error().message, MESSAGE); // Truncated sequence
   EXPECT_EQ(decode<char>("'\xFF'").error().message, MESSAGE);
+}
+
+TEST(FormattedCodec, ProducerCharacter) {
+  const unicode::Character<char> character("x"s);
+  const unicode::CharacterView<char> view("x"sv);
+
+  EXPECT_EQ(static_cast<string_view>(decodeInto(character, "\"a\"").value()), "a");
+  EXPECT_EQ(static_cast<string_view>(decodeInto(view, "\"a\"").value()), "a");
+
+  const auto empty = decodeInto(character, "  \"\"");
+  EXPECT_EQ(empty.error().message, "Expected a character");
+  EXPECT_EQ(empty.error().position, 2U);
+
+  const auto emptyView = decodeInto(view, "\"\"");
+  EXPECT_EQ(emptyView.error().message, "Expected a character");
+  EXPECT_EQ(emptyView.error().position, 0U);
 }
 
 TEST(FormattedCodec, ProducerOptionalString) {
