@@ -327,7 +327,7 @@ struct FormattedConsumerImpl<DataType::Pointer, P> {
       out.write("null");
       return;
     }
-    out.print("{}", static_cast<const void*>(val));
+    out.print("0x{:X}", reinterpret_cast<std::uintptr_t>(static_cast<const void*>(val)));
   }
 };
 
