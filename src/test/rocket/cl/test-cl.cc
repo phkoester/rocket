@@ -579,4 +579,39 @@ TEST(cl, parseParametersMaxOccurs) {
   EXPECT_EQ(args, (vector<string> { "c", "d" }));
 }
 
+TEST(cl, helpUngroupedOptions) {
+  const OptionGroup named { "Named" };
+  const OptionGroup untitled { "" };
+  optional<bool> help;
+  optional<bool> inNamed;
+  optional<bool> inUntitled;
+
+  // The group order matters! Ungrouped options come first, even if they are declared later
+  CommandLine cl({
+    Option::custom({ .description="an option in a named group", .group=&named, .name="named" }, inNamed),
+    Option::help(nullptr, help),
+    Option::custom({
+      .description="an option in an untitled group",
+      .group=&untitled,
+      .name="untitled"
+    }, inUntitled)
+  }, {}, { .rocketOpts=false });
+
+  nio::StringSink buf;
+  EXPECT_FALSE(cl.parse({ "--help" }, buf, buf, false));
+  EXPECT_EQ(
+    buf.str(),
+    "Options:\n"
+    "\n"
+    "  -?, --help\n"
+    "          display this help text and exit\n"
+    "      --untitled\n"
+    "          an option in an untitled group\n"
+    "\n"
+    "Named:\n"
+    "\n"
+    "      --named\n"
+    "          an option in a named group\n");
+}
+
 // EOF

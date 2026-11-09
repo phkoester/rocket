@@ -450,7 +450,8 @@ CommandLine::printHelp(nio::Sink& out, bool verbose, bool exit) {
 }
 
 // Option groups appear in the order they are seen. However, options with no group, or a group with an empty
-// title, come first. Within the groups, options appear in the order they are seen
+// title, come first, under the heading "Options". Within the groups, options appear in the order they are
+// seen
 void
 CommandLine::printHelpOpts(nio::Sink& out, bool verbose, u64 width) const { // NOLINT(*-complexity)
   // Collect groups and options therein
@@ -458,7 +459,7 @@ CommandLine::printHelpOpts(nio::Sink& out, bool verbose, u64 width) const { // N
   map<const OptionGroup*, vector<const Option*>> options;
   vector<const OptionGroup*> groups;
 
-  OptionGroup null;
+  OptionGroup null { "Options" };
   options.emplace(&null, vector<const Option*>());
   groups.push_back(&null);
 
