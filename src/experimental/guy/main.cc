@@ -93,6 +93,7 @@ private:
 
   void updateHistoryButtons();
 
+  unique_ptr<wxTaskBarIcon> dockIcon_;
   unique_ptr<MyTaskBarIcon> taskBarIcon_;
   wxWebView* webView_ = nullptr;
 };
@@ -192,6 +193,15 @@ MyFrame::MyFrame() : wxFrame(
   SetStatusText("Welcome to wxWidgets!");
 
   taskBarIcon_ = make_unique<MyTaskBarIcon>(this);
+
+#ifdef __WXOSX__
+  // macOS ignores frame icons. The Dock shows the application icon, which a bare executable does not have
+  const wxBitmapBundle dockLogo = loadLogo(wxSize(512, 512));
+  if (dockLogo.IsOk()) {
+    dockIcon_ = make_unique<wxTaskBarIcon>(wxTBI_DOCK);
+    dockIcon_->SetIcon(dockLogo, "guy");
+  }
+#endif
 
   Bind(wxEVT_MENU, &MyFrame::onAbout, this, wxID_ABOUT);
   Bind(wxEVT_MENU, &MyFrame::onExit, this, wxID_EXIT);
