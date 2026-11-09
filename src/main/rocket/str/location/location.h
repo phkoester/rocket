@@ -112,7 +112,8 @@ struct LocationsConfig {
   std::string source {}; // NOLINT
   /**
    * Configures the handling of tab characters. If this is null, then there is no special treatment for tab
-   * characters---they are displayed as `\t`. Otherwise, a tab expands to at most #tabSize spaces.
+   * characters---they are displayed as `\t`. Otherwise, a tab expands to at most #tabSize spaces. The tab
+   * size may not be 0.
    */
   std::optional<u64> tabSize = 8;
 };

@@ -40,7 +40,7 @@ struct CStringConfig {
    * Configures the handling of tab characters.
    *
    * If this is null, then tab characters are escaped as `"\\t"`. Otherwise, a tab expands to at most
-   * #tabSize spaces.
+   * #tabSize spaces. The tab size may not be 0.
    */
   std::optional<u64> tabSize = std::nullopt;
 

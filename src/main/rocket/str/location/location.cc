@@ -26,6 +26,8 @@ namespace rocket::str::location {
 
 LocationsResult
 locations(string_view input, const vector<Position>& positions, const LocationsConfig& config) { // NOLINT(*-complexity)
+  ROCKET_CHECK(config, not config.tabSize || *config.tabSize > 0, "Tab size may not be 0");
+
   // Prepare result
 
   LocationsResult ret;

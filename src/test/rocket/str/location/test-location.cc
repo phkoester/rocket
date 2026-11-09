@@ -286,6 +286,18 @@ TEST(location, printLocations) { // NOLINT(*-complexity)
   }
 }
 
+TEST(location, locationsTabSize) {
+  const Position pos { .type=note, .position=2, .message="Oops" };
+
+  EXPECT_THAT(
+    ([&] { locations("a\tb", { pos }, { .tabSize=0 }); }),
+    ThrowsMessage<InvalidArgument>(EndsWith("Tab size may not be 0")));
+
+  // The smallest tab size is valid
+  const auto result = locations("a\tb", { pos }, { .tabSize=1 });
+  EXPECT_EQ(result.locations.at(0).column, 3U);
+}
+
 TEST(location, printLocationsEmptyInput) {
   const string input;
   const Position pos { .type=note, .position=0, .message="Oops" };

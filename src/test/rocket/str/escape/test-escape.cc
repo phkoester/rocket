@@ -248,6 +248,16 @@ TEST(escape, CStringInvalidUtf8) {
       throwsInputFailure(1, EndsWith("Invalid UTF-8 byte sequence")));
 }
 
+TEST(escape, CStringTabSize) {
+  EXPECT_THAT(
+      [&] { escapeCString("a\tb", { .tabSize=0 }); },
+      ThrowsMessage<InvalidArgument>(EndsWith("Tab size may not be 0")));
+
+  // The zero check does not apply if there is no tab size, and the smallest tab size is valid
+  EXPECT_EQ(escapeCString("a\tb", { .tabSize=nullopt }), "a\\tb");
+  EXPECT_EQ(escapeCString("a\tb", { .tabSize=1 }), "a b");
+}
+
 TEST(escape, Regex) {
   Positions pos;
 

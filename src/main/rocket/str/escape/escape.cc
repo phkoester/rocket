@@ -350,6 +350,7 @@ namespace rocket::str::escape {
 string
 escapeCString(string_view input, const CStringConfig& config, Positions* positions) {
   ROCKET_CHECK(config, config.quote == '\0' || config.quote == '"' || config.quote == '\'');
+  ROCKET_CHECK(config, not config.tabSize || *config.tabSize > 0, "Tab size may not be 0");
 
   string ret;
   if (positions != nullptr) {
