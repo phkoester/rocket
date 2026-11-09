@@ -131,14 +131,14 @@ void lowerIn(std::u32string& str);
 [[nodiscard]] std::vector<std::vector<std::string>> paragraphs(std::string_view str);
 
 /**
- * Makes a string view such that it has up to @p count leading occurrences of @p sub removed.
+ * Makes a string view such that it has up to @p n leading occurrences of @p sub removed.
  *
  * The underlying string of @p str must remain valid for the lifetime of the returned string view.
  *
  * @tparam C the character type
  * @param str a string view
  * @param sub the substring to look for
- * @param count the maximum number of removals
+ * @param n the maximum number of removals
  * @return a string view
  */
 template<typename C> requires IsChar<C>
@@ -146,13 +146,13 @@ template<typename C> requires IsChar<C>
 removeLeading(
   std::basic_string_view<C> str,
   std::basic_string_view<C> sub,
-  u64 count = NPOS) {
+  u64 n = NPOS) {
   if (sub.empty()) {
     return str;
   }
 
   std::basic_string_view<C> ret(str);
-  for (u64 i = 0; i < count; ++i) {
+  for (u64 i = 0; i < n; ++i) {
     if (ret.starts_with(sub)) {
       ret.remove_prefix(sub.size());
     } else {
@@ -163,14 +163,14 @@ removeLeading(
 }
 
 /**
- * Makes a string view such that it has up to @p count trailing occurrences of @p sub removed.
+ * Makes a string view such that it has up to @p n trailing occurrences of @p sub removed.
  *
  * The underlying string of @p str must remain valid for the lifetime of the returned string view.
  *
  * @tparam C the character type
  * @param str a string view
  * @param sub the substring to look for
- * @param count the maximum number of removals
+ * @param n the maximum number of removals
  * @return a string view
  */
 template<typename C> requires IsChar<C>
@@ -178,13 +178,13 @@ template<typename C> requires IsChar<C>
 removeTrailing(
   std::basic_string_view<C> str,
   std::basic_string_view<C> sub,
-  u64 count = NPOS) {
+  u64 n = NPOS) {
   if (sub.empty()) {
     return str;
   }
 
   std::basic_string_view<C> ret(str);
-  for (u64 i = 0; i < count; ++i) {
+  for (u64 i = 0; i < n; ++i) {
     if (ret.ends_with(sub)) {
       ret.remove_suffix(sub.size());
     } else {
@@ -220,37 +220,37 @@ removeTrailingEol(std::basic_string_view<C> str) {
 }
 
 /**
- * Repeats the string @p str @p count times.
+ * Repeats the string @p str @p n times.
  *
  * @tparam C the character type
  * @param str a string
- * @param count the number of repetitions
+ * @param n the number of repetitions
  * @return a new string
  */
 template<typename C> requires IsChar<C>
 [[nodiscard]] std::basic_string<C>
-repeat(const std::basic_string_view<C> str, u64 count) {
+repeat(const std::basic_string_view<C> str, u64 n) {
   std::basic_string<C> ret;
-  ret.reserve(count * str.size());
-  for (u64 i = 0; i < count; ++i) {
+  ret.reserve(n * str.size());
+  for (u64 i = 0; i < n; ++i) {
     ret.append(str);
   }
   return ret;
 }
 
 /**
- * Replaces up to @p count occurrences of @p from with @p to in the string @p str.
+ * Replaces up to @p n occurrences of @p from with @p to in the string @p str.
  *
  * @param str the string to replace in
  * @param from the substring to replace
  * @param to the substring to replace with
- * @param count the maximum number of replacements
+ * @param n the maximum number of replacements
  * @return the number of replacements
  */
-u64 replaceIn(std::string& str, std::string_view from, std::string_view to, u64 count = NPOS);
+u64 replaceIn(std::string& str, std::string_view from, std::string_view to, u64 n = NPOS);
 
 /**
- * Replaces up to @p count occurrences of several substrings in the string @p str, in a single pass.
+ * Replaces up to @p n occurrences of several substrings in the string @p str, in a single pass.
  *
  * The replacements happen simultaneously rather than one after the other, so replaced text is never searched
  * again: Applying `{ { "a", "b" }, { "b", "a" } }` to `"ab"` yields `"ba"`.
@@ -262,13 +262,13 @@ u64 replaceIn(std::string& str, std::string_view from, std::string_view to, u64 
  *
  * @param str the string to replace in
  * @param pairs the `from` and `to` pairs. No `from` substring may be empty
- * @param count the maximum number of replacements, in total across all pairs
+ * @param n the maximum number of replacements, in total across all pairs
  * @return the number of replacements
  */
 u64 replaceIn(
   std::string& str,
   const std::vector<std::pair<std::string_view, std::string_view>>& pairs,
-  u64 count = NPOS);
+  u64 n = NPOS);
 
 /**
  * Returns `"once"`, `"twice"`, or `"... times"` for @p n.

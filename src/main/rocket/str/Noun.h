@@ -30,21 +30,21 @@ struct Noun {
   /**
    * Text expansion function, returns either the singular or the plural form.
    *
-   * @param count the amount
-   * @return if @p count is -1 or 1, the singular, otherwise the plural
+   * @param n the number
+   * @return if @p n is -1 or 1, the singular, otherwise the plural
    */
   std::string_view
-  operator()(i64 count) const {
-    return count == 1 || count == -1 ? singular : plural;
+  operator()(i64 n) const {
+    return n == 1 || n == -1 ? singular : plural;
   }
 
   /**
-   * Text expansion function, returns @p val, followed by either the singular or the plural form.
+   * Text expansion function, returns @p n, followed by either the singular or the plural form.
    *
-   * @param val the value
-   * @return the amount, followed by either the singular or the plural
+   * @param n the number
+   * @return @p n, followed by either the singular or the plural
    */
-  [[nodiscard]] std::string amount(i64 val) const;
+  [[nodiscard]] std::string amount(i64 n) const;
 };
 
 // Predefined nouns -----------------------------------------------------------------------------------------

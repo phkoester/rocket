@@ -129,10 +129,10 @@ paragraphs(string_view str) {
 }
 
 u64
-replaceIn(string& str, string_view from, string_view to, u64 count) {
+replaceIn(string& str, string_view from, string_view to, u64 n) {
   ROCKET_CHECK(from, not from.empty());
 
-  if (str.empty() || count == 0) {
+  if (str.empty() || n == 0) {
     return 0;
   }
 
@@ -140,7 +140,7 @@ replaceIn(string& str, string_view from, string_view to, u64 count) {
   for (u64 pos = str.find(from); pos != NPOS; pos = str.find(from, pos + to.size())) {
     str.replace(pos, from.size(), to);
     ++ret;
-    if (count != NPOS && ret >= count) {
+    if (n != NPOS && ret >= n) {
       break;
     }
   }
@@ -148,7 +148,7 @@ replaceIn(string& str, string_view from, string_view to, u64 count) {
 }
 
 u64
-replaceIn(string& str, const vector<pair<string_view, string_view>>& pairs, u64 count) {
+replaceIn(string& str, const vector<pair<string_view, string_view>>& pairs, u64 n) {
   if (pairs.empty()) {
     return 0;
   }
@@ -168,7 +168,7 @@ replaceIn(string& str, const vector<pair<string_view, string_view>>& pairs, u64 
   u64 ret = 0;
   u64 cursor = 0; // The end of the part of `src` that has been processed
 
-  while (ret < count) {
+  while (ret < n) {
     // `min_element` returns the first minimum, so on ties the earliest pair wins. `NPOS` sorts last
     const auto it = ranges::min_element(matches);
     const u64 pos = *it;
