@@ -297,7 +297,7 @@ nonexistentMessage(const std::chrono::local_time<Duration>& tp, const local_info
 
 // `choose` ------------------------------------------------------------------------------------------------
 
-/// How to resolve an ambiguous local time, equivalent to C++20’s #std::chrono::choose.
+/// How to resolve an ambiguous local time, equivalent to C++20’s `std::chrono::choose`.
 enum class choose {
   earliest, ///< choose the earlier time point.
   latest ///< choose the later time point.
@@ -883,7 +883,7 @@ operator<<(std::basic_ostream<CharT, Traits>& os, const zoned_time<Duration, Tim
   }
 }
 
-/// A zoned time with a precision of seconds, equivalent to C++20’s #std::chrono::zoned_seconds.
+/// A zoned time with a precision of seconds, equivalent to C++20’s `std::chrono::zoned_seconds`.
 using zoned_seconds = zoned_time<std::chrono::seconds>;
 
 #endif // ROCKET_HAS_STD_CHRONO_TIME_ZONE

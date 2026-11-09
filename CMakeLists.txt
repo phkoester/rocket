@@ -87,11 +87,8 @@ set(COMPILE_FEATURES)
 set(COMPILE_FLAGS)
 set(LINK_FLAGS)
 
-if(GAIA_OS_LINUX)
-  # Linux
-  list(APPEND COMPILE_FLAGS -Wall -Werror -Wextra)
-elseif(GAIA_OS_MACOS)
-  # macOS
+if(GAIA_OS_LINUX OR GAIA_OS_MACOS)
+  # Linux/macOS
   list(APPEND COMPILE_FLAGS -Wall -Werror -Wextra)
 elseif(GAIA_OS_WINDOWS)
   # Windows
