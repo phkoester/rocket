@@ -213,7 +213,6 @@
 #include "rocket/nio/nio.h"
 #include "rocket/nio/nio-utils.h"
 #include "rocket/str/escape/escape.h"
-#include "rocket/system/system.h"
 #include "rocket/unicode/ConvertTo.h"
 #include "rocket/unicode/unicode.h"
 
@@ -1324,23 +1323,13 @@ struct FormattedProducerImpl<DataType::Time, T> {
     skip(in);
     const auto pos = in.tell();
 
-    // The environment variable `TZ` interferes somehow ...
+    // Scan the time point
 
-    const auto* current = rocket::chrono::current_zone();
-    const auto TZ = system::env::get<std::string>("TZ");
-    if (TZ) {
-      ROCKET_EXPECT(*TZ == current->name(), "If defined, the environment variable `TZ` must match the current time zone, which is {}", current->name());
-    }
-
-    // Scan the time point, using scnlib
-
-    auto& is = in.istream();
-    const auto result = scn::scan<T>(is, "{:%FT%T}");
-    if (not result) {
+    const auto scanned = scanSysTime<Duration>(in);
+    if (not scanned) {
       throw InputFailure(pos, "Expected a time point");
     }
-    in.seek(io::tellg(is), nio::SeekMode::beg);
-    val = result->value();
+    val = *scanned;
 
     // Read subseconds
 
@@ -1352,12 +1341,6 @@ struct FormattedProducerImpl<DataType::Time, T> {
     // Read 'Z'
 
     expectChar(in, 'Z');
-
-    // Work around a bug in scnlib where the time point is not parsed as UTC but dependent on the current
-    // time zone
-
-    const auto info = current->get_info(val);
-    val += info.offset;
   }
 };
 
@@ -1374,26 +1357,13 @@ struct FormattedProducerImpl<DataType::ZonedTime, T> {
     skip(in);
     const auto pos = in.tell();
 
-    // The environment variable `TZ` interferes somehow ...
+    // Scan the time point
 
-    const auto* current = rocket::chrono::current_zone();
-    const auto TZ = system::env::get<std::string>("TZ");
-    if (TZ) {
-      ROCKET_EXPECT(*TZ == current->name(), "If defined, the environment variable `TZ` must match the current time zone, which is {}", current->name());
+    const auto scanned = scanSysTime<Duration>(in);
+    if (not scanned) {
+      throw InputFailure(pos, "Expected a time point");
     }
-
-    // Scan the time point, using scnlib
-
-    sys_time<Duration> tp;
-    {
-      auto& is = in.istream();
-      const auto result = scn::scan<sys_time<Duration>>(is, "{:%FT%T}");
-      if (not result) {
-        throw InputFailure(pos, "Expected a time point");
-      }
-      in.seek(io::tellg(is), nio::SeekMode::beg);
-      tp = result->value();
-    }
+    sys_time<Duration> tp = *scanned;
 
     // Read subseconds
 
@@ -1432,12 +1402,6 @@ struct FormattedProducerImpl<DataType::ZonedTime, T> {
     // Apply UTC offset; convert time point to UTC
 
     tp -= offset;
-
-    // Work around a bug in scnlib where the time point is not parsed as UTC but dependent on the current
-    // time zone
-
-    const auto info = current->get_info(tp);
-    tp += info.offset;
 
     // Read time zone
 

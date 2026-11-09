@@ -5,11 +5,13 @@
 #include "rocket-test/rocket-test.h"
 
 #include "rocket/Bimap-codec.h"
+#include "rocket/scope.h"
 #include "rocket/codec/FormattedCodec.h"
 #include "rocket/chrono/chrono.h"
 #include "rocket/log/log.h"
 #include "rocket/reflect/reflect.h"
 #include "rocket/str/location/location.h"
+#include "rocket/system/system.h"
 
 using namespace rocket::codec;
 
@@ -610,6 +612,56 @@ TEST(FormattedCodec, ProducerZonedTimeUtcOffset) {
   EXPECT_TRUE(decode<ZonedTime>("2026-10-07T11:21:00+23:59 (Europe/Berlin)").has_value());
   EXPECT_TRUE(decode<ZonedTime>("2026-10-07T11:21:00-23:59 (Europe/Berlin)").has_value());
   EXPECT_TRUE(decode<ZonedTime>("2026-10-07T11:21:00+00:00 (Europe/Berlin)").has_value());
+}
+
+TEST(FormattedCodec, ProducerTimeIndependentOfLocalZone) {
+  using namespace std::chrono;
+  using TimePoint = time_point<system_clock, nanoseconds>;
+  using ZonedTime = rocket::chrono::zoned_time<nanoseconds>;
+
+  const auto expectTime = [](string_view input, TimePoint expected) {
+    const auto result = decode<TimePoint>(input);
+    ASSERT_TRUE(result.has_value()) << input;
+    EXPECT_EQ(*result, expected) << input;
+  };
+  const auto expectZoned = [](string_view input, TimePoint expected) {
+    const auto result = decode<ZonedTime>(input);
+    ASSERT_TRUE(result.has_value()) << input;
+    EXPECT_EQ(result->get_sys_time(), expected) << input;
+  };
+
+  const auto oldTz = system::env::get<string>("TZ");
+  ROCKET_SCOPE_EXIT([&] {
+    if (oldTz) {
+      system::env::set("TZ", *oldTz);
+    } else {
+      system::env::unset("TZ");
+    }
+  });
+
+  const sys_days summer = 2026y / July / 15;
+  const sys_days spring = 2026y / March / 29; // DST starts in Europe/Berlin at 01:00 UTC
+  const sys_days autumn = 2026y / October / 25; // DST ends in Europe/Berlin at 01:00 UTC
+
+  for (const auto* tz : { "UTC", "Europe/Berlin", "America/New_York", "Asia/Tokyo" }) {
+    SCOPED_TRACE(tz);
+    system::env::set("TZ", tz);
+
+    expectTime("2026-07-15T12:00:00Z", summer + 12h);
+    expectTime("2026-07-15T12:00:00.25Z", summer + 12h + 250ms);
+
+    // As local times in Europe/Berlin, these do not exist and exist twice, respectively
+    expectTime("2026-03-29T02:30:00Z", spring + 2h + 30min);
+    expectTime("2026-10-25T02:30:00Z", autumn + 2h + 30min);
+
+    expectZoned("2026-07-15T14:00:00+02:00 (Europe/Berlin)", summer + 12h);
+    expectZoned("2026-03-29T03:30:00+02:00 (Europe/Berlin)", spring + 1h + 30min);
+    expectZoned("2026-10-25T02:30:00+01:00 (Europe/Berlin)", autumn + 1h + 30min);
+    expectZoned("2026-07-15T12:00:00Z (UTC)", summer + 12h);
+  }
+
+  // `std::mktime` would have moved this to March 2
+  expectFailure<TimePoint>("2026-02-30T12:00:00Z", "Expected a time point", 0);
 }
 
 TEST(FormattedCodec, ProducerInterval) {

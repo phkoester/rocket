@@ -209,7 +209,6 @@
 #include "rocket/nio/nio.h"
 #include "rocket/nio/nio-utils.h"
 #include "rocket/str/escape/escape.h"
-#include "rocket/system/system.h"
 #include "rocket/unicode/ConvertTo.h"
 
 namespace rocket::codec {
@@ -1453,23 +1452,13 @@ struct JsonProducerImpl<DataType::Time, T> {
       return jsonStringOffset(pos, innerPos, positions);
     };
 
-    // The environment variable `TZ` interferes somehow ...
+    // Scan the time point
 
-    const auto* current = rocket::chrono::current_zone();
-    const auto TZ = system::env::get<std::string>("TZ");
-    if (TZ) {
-      ROCKET_EXPECT(*TZ == current->name(), "If defined, the environment variable `TZ` must match the current time zone, which is {}", current->name());
-    }
-
-    // Scan the time point, using scnlib
-
-    auto& is = inner.istream();
-    const auto result = scn::scan<T>(is, "{:%FT%T}");
-    if (not result) {
+    const auto scanned = scanSysTime<Duration>(inner);
+    if (not scanned) {
       throw InputFailure(inPos(0), "Expected a time point");
     }
-    inner.seek(io::tellg(is), nio::SeekMode::beg);
-    val = result->value();
+    val = *scanned;
 
     try {
       // Read subseconds
@@ -1482,12 +1471,6 @@ struct JsonProducerImpl<DataType::Time, T> {
       // Read 'Z'
 
       expectChar(inner, 'Z');
-
-      // Work around a bug in scnlib where the time point is not parsed as UTC but dependent on the current
-      // time zone
-
-      const auto info = current->get_info(val);
-      val += info.offset;
     } catch (const InputFailure& ex) {
       throw ex.mapped(inPos);
     }
@@ -1517,26 +1500,13 @@ struct JsonProducerImpl<DataType::ZonedTime, T> {
       return jsonStringOffset(pos, innerPos, positions);
     };
 
-    // The environment variable `TZ` interferes somehow ...
+    // Scan the time point
 
-    const auto* current = rocket::chrono::current_zone();
-    const auto TZ = system::env::get<std::string>("TZ");
-    if (TZ) {
-      ROCKET_EXPECT(*TZ == current->name(), "If defined, the environment variable `TZ` must match the current time zone, which is {}", current->name());
+    const auto scanned = scanSysTime<Duration>(inner);
+    if (not scanned) {
+      throw InputFailure(inPos(0), "Expected a time point");
     }
-
-    // Scan the time point, using scnlib
-
-    sys_time<Duration> tp;
-    {
-      auto& is = inner.istream();
-      const auto result = scn::scan<sys_time<Duration>>(is, "{:%FT%T}");
-      if (not result) {
-        throw InputFailure(inPos(0), "Expected a time point");
-      }
-      inner.seek(io::tellg(is), nio::SeekMode::beg);
-      tp = result->value();
-    }
+    sys_time<Duration> tp = *scanned;
 
     try {
       // Read subseconds
@@ -1576,12 +1546,6 @@ struct JsonProducerImpl<DataType::ZonedTime, T> {
       // Apply UTC offset; convert time point to UTC
 
       tp -= offset;
-
-      // Work around a bug in scnlib where the time point is not parsed as UTC but dependent from the current
-      // time zone
-
-      const auto info = current->get_info(tp);
-      tp += info.offset;
 
       // Read time zone. We need to do this by hand because the time-zone producer reads in a JSON string.
       // Here, however, the time zone is surrounded by parentheses

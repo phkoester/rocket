@@ -6,10 +6,13 @@
 
 #include "rocket/format.h"
 #include "rocket/scan.h"
-#include "rocket/chrono/chrono.h"
+#include "rocket/scope.h"
 #include "rocket/system/system.h"
 
 #include <scn/regex.h>
+
+#include <chrono>
+#include <time.h> // `tzset` and `_tzset`, which <ctime> does not declare
 
 // `TEST` ---------------------------------------------------------------------------------------------------
 
@@ -179,52 +182,52 @@ TEST(scnlib, scanVector) {
   EXPECT_EQ(result->begin() - input.begin(), 9);
 }
 
+// This documents a bug in scnlib: the scanner for `std::chrono::time_point` calls `std::mktime`, so it takes
+// the fields for local time, although a `system_clock` time point is UTC. The codecs avoid the scanner, see
+// `rocket::codec::internal::scanSysTime`
+//
+// The test expects the wrong result, so it passes for as long as the bug exists. If it fails, scnlib has
+// probably been fixed, and `scanSysTime` can scan time points directly. The expected value must then be
+// changed to the correct one, as stated below
+//
 // @todo Wait for a fix in scnlib
 TEST(scnlib, scanChronoTimePoint) {
-#define FORMAT      "{:%Y-%m-%d %H:%M:%S}"
-#define FORMAT_SCAN "{:%Y-%m-%d %H:%M:%.S}"
-
   using namespace std::chrono;
-
-  // The environment variable `TZ` interferes somehow. Make sure it matches the current time zone.
-  const auto* current = rocket::chrono::current_zone();
-  const auto TZ = system::env::get<string>("TZ");
-  if (TZ) {
-    ASSERT_EQ(*TZ, current->name());
-  }
-
   using TimePoint = time_point<system_clock, nanoseconds>;
-  const TimePoint val1 = rocket::chrono::now<system_clock>();
-  const string input = fmt::format(FORMAT, val1); // "2026-01-27 05:51:13.396968455", 29 chars
-  nio::out.println("VAL1: {}", input);
-  const auto result = scn::scan<TimePoint>(input, FORMAT_SCAN);
+
+  // Makes the C runtime pick up the current value of `TZ`. Otherwise, Windows only reads it once
+  const auto applyTz = [] {
+#ifdef ROCKET_OS_WINDOWS
+    _tzset();
+#else
+    tzset();
+#endif
+  };
+
+  const auto oldTz = system::env::get<string>("TZ");
+  ROCKET_SCOPE_EXIT([&] {
+    if (oldTz) {
+      system::env::set("TZ", *oldTz);
+    } else {
+      system::env::unset("TZ");
+    }
+    applyTz();
+  });
+
+  // A fixed UTC offset of +9 hours without DST, so the result depends on neither the machine nor the date.
+  // The POSIX notation works on all platforms, unlike a name such as `Asia/Tokyo`
+  system::env::set("TZ", "JST-9");
+  applyTz();
+
+  const string_view input = "2026-07-15 12:00:00.25"sv;
+  const auto result = scn::scan<TimePoint>(input, "{:%Y-%m-%d %H:%M:%.S}");
   ASSERT_TRUE(result);
-  auto val2 = result->value();
-  EXPECT_EQ(result->begin() - input.begin(), 29);
-  nio::out.println("VAL2: " FORMAT, val2);
+  EXPECT_EQ(result->begin() - input.begin(), 22);
 
-  // The time zone of the scanned time point is unclear. The following adjustment seems to convert the time
-  // point to UTC
-  const auto info = current->get_info(val1);
-  val2 += info.offset;
-  nio::out.println("VAL3: " FORMAT, val2);
-
-  // Cast to microseconds, because there might be a rounding issue
-  const auto val1Micros = time_point_cast<microseconds>(val1);
-  const auto val2Micros = time_point_cast<microseconds>(val2);
-
-  EXPECT_EQ(val2Micros, val1Micros);
-
-  auto now1 = rocket::chrono::zoned_time(current, val1);
-  nio::out.println("NOW1: {:%F %T %Z}", now1);
-
-  const auto* honolulu = rocket::chrono::locate_zone("Pacific/Honolulu");
-  ASSERT_NE(honolulu, nullptr);
-  auto now2 = rocket::chrono::zoned_time(honolulu, val1);
-  nio::out.println("NOW2: {:%F %T %Z}", now2);
-
-#undef FORMAT
-#undef FORMAT_SCAN
+  // The correct result is `day + 12h + 250ms`. Because `std::mktime` takes the fields for local time, the
+  // result is 9 hours too early
+  const sys_days day = 2026y / July / 15;
+  EXPECT_EQ(result->value(), day + 3h + 250ms);
 }
 
 // EOF
