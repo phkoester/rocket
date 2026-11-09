@@ -83,7 +83,25 @@ namespace rocket {
 
 namespace internal::process {
 
+/**
+ * Returns the locale selected by the environment.
+ *
+ * The environment may name a locale that is not installed, which must not keep a program from starting.
+ *
+ * @param err the sink to write a warning to if the locale is not available
+ * @return the locale from the environment, or the classic locale if it is not available
+ */
+std::locale localeFromEnvironment(nio::Sink& err);
+
 const std::string& setThreadName(std::string_view name = "");
+
+/**
+ * Creates a locale by name.
+ *
+ * @param name the name of the locale
+ * @return the locale, or null if it is not available on this system
+ */
+std::optional<std::locale> tryLocale(const std::string& name);
 
 } // namespace internal::process
 
@@ -173,7 +191,8 @@ struct Process {
   [[nodiscard]] const std::vector<std::string>& args() const { return args_; }
 
   /**
-   * Returns the code locale used for logging and error messages, which is `en_US.UTF-8`.
+   * Returns the code locale used for logging and error messages, which is `en_US.UTF-8`, or the classic
+   * locale if `en_US.UTF-8` is not available on this system.
    *
    * This is also the default locale for Rocket.Test unit tests.
    *
@@ -334,7 +353,7 @@ private:
   mutable std::vector<std::string> args_;
   mutable bool inited_ = false;
 
-  std::locale codeLocale_ = std::locale("en_US.UTF-8");
+  std::locale codeLocale_ = internal::process::tryLocale("en_US.UTF-8").value_or(std::locale::classic());
   mutable std::locale initLocale_;
   mutable std::locale systemLocale_;
 

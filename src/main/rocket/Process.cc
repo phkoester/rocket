@@ -133,6 +133,15 @@ thread_local string threadName;
 
 ROCKET_INIT([&] { threadName = "main"; });
 
+std::locale
+localeFromEnvironment(nio::Sink& err) {
+  if (auto ret = tryLocale("")) {
+    return *ret;
+  }
+  rocket::process().warn(err, "Cannot use the locale from the environment; using the classic locale instead");
+  return std::locale::classic();
+}
+
 /// @ThreadSafe
 const string&
 setThreadName(std::string_view name) {
@@ -140,6 +149,15 @@ setThreadName(std::string_view name) {
     threadName = name;
   }
   return threadName;
+}
+
+optional<std::locale>
+tryLocale(const string& name) {
+  try {
+    return std::locale(name);
+  } catch (const runtime_error&) {
+    return {};
+  }
 }
 
 } // namespace internal::process
@@ -206,14 +224,15 @@ Process::init(
   ROCKET_ASSERT(this_thread::get_id() == MAIN_THREAD_ID, "`Process::init` must be called in the main thread");
   ROCKET_ASSERT(not inited_, "Process already initialized");
 
-  // Set the C locale from the environment
+  // Set the C locale from the environment. If this fails, the C locale stays in place, which matches the
+  // fallback to the classic locale below
 
   const string localeName = locale ? locale->name() : "";
   setlocale(LC_ALL, localeName.c_str()); // NOLINT(concurrency-*)
 
   // Set the C++ locale from the environment
 
-  initLocale_ = locale ? *locale : std::locale(localeName);
+  initLocale_ = locale ? *locale : internal::process::localeFromEnvironment(nio::err);
   systemLocale_ = std::locale::global(initLocale_);
 
   // Initialize members
