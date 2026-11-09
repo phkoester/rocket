@@ -7,7 +7,6 @@
 #include "rocket/literal.h"
 #include "rocket/type-traits.h"
 
-#include <algorithm>
 #include <string>
 #include <utility>
 #include <vector>
@@ -15,135 +14,6 @@
 #pragma once
 
 namespace rocket::str {
-
-// `SplitIterator` ------------------------------------------------------------------------------------------
-
-/**
- * The iterator used by #rocket::str::SplitResult.
- *
- * @tparam C the character type
- */
-template<typename C> requires IsChar<C>
-struct SplitIterator {
-  /// @cond undocumented
-
-  SplitIterator(std::basic_string_view<C> str, size_t pos, std::basic_string_view<C> sep) :
-      str_(str), pos_(pos), sep_(sep) {
-    if (pos == NPOS) {
-      // The end
-      end_ = NPOS;
-      return;
-    }
-
-    pos_ = std::min(pos_, str_.size());
-    if (pos_ == str_.size()) {
-      // Empty token at the end
-      end_ = pos_;
-    } else {
-      // A token
-      end_ = str_.find(sep_, pos_);
-      if (end_ == NPOS) {
-        end_ = str_.size();
-      }
-    }
-  }
-
-  bool operator!=(const SplitIterator& rhs) const { return pos_ != rhs.pos_ || end_ != rhs.end_; }
-
-  SplitIterator&
-  operator++() {
-    if (end_ == str_.size()) {
-      // The end
-      pos_ = end_ = NPOS;
-      return *this;
-    }
-
-    pos_ = end_ + sep_.size();
-    if (pos_ == str_.size()) {
-      // Empty token at the end
-      end_ = pos_;
-    } else {
-      // A token
-      end_ = str_.find(sep_, pos_);
-      if (end_ == NPOS) {
-        end_ = str_.size();
-      }
-    }
-
-    return *this;
-  }
-
-  std::basic_string_view<C> operator*() const { return str_.substr(pos_, end_ - pos_); }
-
-  /// @endcond
-
-private:
-
-  /// The input string to split.
-  std::basic_string_view<C> str_;
-  /**
-   * The current position in the string.
-   *
-   * If this is #rocket::NPOS, the iterator is exhausted.
-   */
-  size_t pos_;
-  /**
-   * The end of the current token.
-   *
-   * If #pos_ is #rocket::NPOS, this is also #rocket::NPOS.
-   */
-  size_t end_;
-  /// The separator.
-  std::basic_string<C> sep_;
-};
-
-// `SplitResult` --------------------------------------------------------------------------------------------
-
-/**
- * An object returned by #split that can be used to iterate over the string-view tokens.
- *
- * @tparam C the character type
- */
-template<typename C> requires IsChar<C>
-struct SplitResult {
-  /// @cond undocumented
-
-  SplitResult(std::basic_string_view<C> str, std::basic_string_view<C> sep) : str_(str), sep_(sep) {}
-
-  [[nodiscard]] SplitIterator<C> begin() const { return SplitIterator<C>(str_, 0, sep_); }
-
-  [[nodiscard]] SplitIterator<C> end() const { return SplitIterator<C>(str_, NPOS, sep_); }
-
-  /// @endcond
-
-private:
-
-  /// The input string to split.
-  std::basic_string_view<C> str_;
-  /// The separator.
-  std::basic_string<C> sep_;
-};
-
-// `split` --------------------------------------------------------------------------------------------------
-
-/**
- * Splits a string into tokens.
- *
- * No strings are ever allocated, except for the separator, so this is a very efficient way to split a string
- * into tokens.
- *
- * The underlying string of @p str must remain valid for the lifetime of the returned result.
- *
- * @tparam C the character type
- * @param str the string to split
- * @param sep the separator to use
- * @return a result object that can be used to iterate over the tokens
- */
-template<typename C> requires IsChar<C>
-[[nodiscard]] SplitResult<C>
-split(std::basic_string_view<C> str, std::basic_string_view<C> sep) {
-  return SplitResult<C>(str, sep);
-}
 
 // Functions ------------------------------------------------------------------------------------------------
 
@@ -219,27 +89,10 @@ std::string join(
  *
  * The underlying string of @p str must remain valid for the lifetime of the returned vector.
  *
- * @tparam C the character type
  * @param str the string to split
  * @return a vector of lines
  */
-template<typename C> requires IsChar<C>
-[[nodiscard]] std::vector<std::basic_string_view<C>>
-lines(std::basic_string_view<C> str) {
-  std::vector<std::basic_string_view<C>> ret;
-
-  // Handle LF and CR/LF
-  constexpr auto CR = LiteralString<C, '\r'>();
-  constexpr auto LF = LiteralString<C, '\n'>();
-  for (auto line : split<C>(str, LF)) {
-    if (line.ends_with(CR)) {
-      line.remove_suffix(CR.size());
-    }
-    ret.push_back(line);
-  }
-
-  return ret;
-}
+[[nodiscard]] std::vector<std::string_view> lines(std::string_view str);
 
 /**
  * Converts a UTF-8 string to lower case, handling Unicode characters correctly.
@@ -285,7 +138,7 @@ void lowerIn(std::u32string& str);
  * @tparam C the character type
  * @param str a string view
  * @param sub the substring to look for
- * @param count the maximum amount of removals
+ * @param count the maximum number of removals
  * @return a string view
  */
 template<typename C> requires IsChar<C>
@@ -317,7 +170,7 @@ removeLeading(
  * @tparam C the character type
  * @param str a string view
  * @param sub the substring to look for
- * @param count the maximum amount of removals
+ * @param count the maximum number of removals
  * @return a string view
  */
 template<typename C> requires IsChar<C>

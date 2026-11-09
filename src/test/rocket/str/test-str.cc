@@ -22,12 +22,12 @@ pars(const vector<vector<string>>& vec) {
 // `TEST` ---------------------------------------------------------------------------------------------------
 
 TEST(str, lines) {
-  EXPECT_EQ(lines<char>(""), (vector<string_view>{ "" }));
-  EXPECT_EQ(lines<char>("a b"), (vector<string_view>{ "a b" }));
-  EXPECT_EQ(lines<char>("a\nb"), (vector<string_view>{ "a", "b" }));
-  EXPECT_EQ(lines<char>("a\r\nb"), (vector<string_view>{ "a", "b" }));
-  EXPECT_EQ(lines<char>("a\n\nb"), (vector<string_view>{ "a", "", "b" }));
-  EXPECT_EQ(lines<char>("\na"), (vector<string_view>{ "", "a" }));
+  EXPECT_EQ(lines(""), (vector<string_view>{ "" }));
+  EXPECT_EQ(lines("a b"), (vector<string_view>{ "a b" }));
+  EXPECT_EQ(lines("a\nb"), (vector<string_view>{ "a", "b" }));
+  EXPECT_EQ(lines("a\r\nb"), (vector<string_view>{ "a", "b" }));
+  EXPECT_EQ(lines("a\n\nb"), (vector<string_view>{ "a", "", "b" }));
+  EXPECT_EQ(lines("\na"), (vector<string_view>{ "", "a" }));
 }
 
 TEST(str, lowerIn) {
@@ -128,54 +128,6 @@ TEST(str, replaceIn) {
   string str = "gamma gamma gamma gamma";
   EXPECT_EQ(replaceIn(str, "gamma", "beta"), 4);
   EXPECT_EQ(str, "beta beta beta beta");
-}
-
-TEST(str, split) { // NOLINT(*-complexity)
-  int n = 0;
-  for (const auto token : split<char>("", ",")) {
-    static_assert(same_as<decltype(token), const string_view>);
-    if (n == 0) { EXPECT_EQ(token, ""); }
-    ++n;
-  }
-  EXPECT_EQ(n, 1);
-
-  n = 0;
-  for (const auto token : split<char>(" ", ",")) {
-    if (n == 0) { EXPECT_EQ(token, " "); }
-    ++n;
-  }
-  EXPECT_EQ(n, 1);
-
-  n = 0;
-  for (const auto token : split<char>(",", ",")) {
-    if (n == 0) { EXPECT_EQ(token, ""); }
-    if (n == 1) { EXPECT_EQ(token, ""); }
-    ++n;
-  }
-  EXPECT_EQ(n, 2);
-
-  n = 0;
-  for (const auto token : split<char>(",,", ",")) {
-    if (n == 0) { EXPECT_EQ(token, ""); }
-    if (n == 1) { EXPECT_EQ(token, ""); }
-    if (n == 2) { EXPECT_EQ(token, ""); }
-    ++n;
-  }
-  EXPECT_EQ(n, 3);
-
-
-  n = 0;
-  for (const auto token : split<char>("||a||b c||||d||||", "||")) {
-    if (n == 0) { EXPECT_EQ(token, ""); }
-    if (n == 1) { EXPECT_EQ(token, "a"); }
-    if (n == 2) { EXPECT_EQ(token, "b c"); }
-    if (n == 3) { EXPECT_EQ(token, ""); }
-    if (n == 4) { EXPECT_EQ(token, "d"); }
-    if (n == 5) { EXPECT_EQ(token, ""); }
-    if (n == 6) { EXPECT_EQ(token, ""); }
-    ++n;
-  }
-  EXPECT_EQ(n, 7);
 }
 
 TEST(str, trim) {

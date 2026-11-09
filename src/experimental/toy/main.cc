@@ -72,8 +72,6 @@ main([[maybe_unused]] i32 argc, [[maybe_unused]] char **argv) {
 
   process().init(argc, argv, "toy");
 
-  throwInvalidState();
-
   optional<vector<Color>> colors;
   optional<bool> foo;
   optional<bool> help;
@@ -119,8 +117,11 @@ main([[maybe_unused]] i32 argc, [[maybe_unused]] char **argv) {
     nio::out.println("foo: {}", foo);
     nio::out.println("verbose: {}", verbose);
     nio::out.println("args: {}", args);
-    toy();
   }
+
+  toy();
+
+  throwInvalidState();
 
   nio::out.println("Exiting ...");
   process().exit(EXIT_SUCCESS);

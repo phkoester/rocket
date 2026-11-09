@@ -45,7 +45,7 @@ TEST(location, locationsEoi) {
 }
 
 TEST(location, locationsLf) {
-  const string input = "a line with an line break at the end\n";
+  const string input = "a line with a line break at the end\n";
   const Position pos { .type=error, .position=10, .message="Oops" };
   const auto result = locations(input, { pos }, { .setLineString=true });
   EXPECT_EQ(result.locations.size(), 1);

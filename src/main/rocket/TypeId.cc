@@ -25,8 +25,7 @@ string
 TypeId::prettyName() const {
   const char* const name = type_.name();
 #ifdef ROCKET_OS_WINDOWS
-  // Windows: the names are not mangled, but class keys are included, as in
-  // `struct std::pair<int,struct Foo>`. Remove all occurrences of `struct `
+  // Windows: the names are not mangled, but still need some sanitizing
   string ret(name);
   str::replaceIn(ret, {
     { "enum ", "" },

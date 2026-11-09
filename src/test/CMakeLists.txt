@@ -50,6 +50,7 @@ RocketAddTest(test-rocket-nio                          rocket/nio             te
 RocketAddTest(test-rocket-nio-utils                    rocket/nio             test-nio-utils.cc)
 RocketAddTest(test-rocket-reflect                      rocket/reflect         test-reflect.cc)
 RocketAddTest(test-rocket-str                          rocket/str             test-str.cc)
+RocketAddTest(test-rocket-str-split                    rocket/str             test-split.cc)
 RocketAddTest(test-rocket-str-Range                    rocket/str             test-Range.cc)
 RocketAddTest(test-rocket-str-StringConvert            rocket/str             test-StringConvert.cc)
 RocketAddTest(test-rocket-str-escape                   rocket/str/escape      test-escape.cc)

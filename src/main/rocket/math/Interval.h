@@ -458,7 +458,7 @@ struct Interval {
   /**
    * Tests if the interval is empty.
    *
-   * If either #a or #b are null, meaning "infinite", then the interval is nonempty.
+   * If either #a or #b is null, meaning "infinite", then the interval is nonempty.
    *
    * @return whether the interval is empty
    */

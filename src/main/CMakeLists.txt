@@ -165,8 +165,9 @@ target_sources(rocket
       rocket/reflect/reflect.h
       rocket/str/Noun.h
       rocket/str/Range.h
-      rocket/str/str.h
       rocket/str/StringConvert.h
+      rocket/str/split.h
+      rocket/str/str.h
       rocket/str/escape/escape.h
       rocket/str/location/location.h
       rocket/str/message/message.h

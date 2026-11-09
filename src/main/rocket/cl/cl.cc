@@ -5,7 +5,6 @@
 #include "cl.h"
 
 #include "rocket/assert.h"
-#include "rocket/literal.h"
 #include "rocket/log/log.h"
 #include "rocket/nio/nio.h"
 #include "rocket/str/str.h"
@@ -48,7 +47,7 @@ addArg(vector<string>& out, const string& arg, set<string>& seenFiles) { // NOLI
         ROCKET_FAIL("Cannot read argument file `{}`", file);
       }
       const string contents = in.readString();
-      auto lines = str::lines<char>(contents);
+      auto lines = str::lines(contents);
       ROCKET_ASSERT(not lines.empty());
       if (lines.back().empty()) {
         // Ignore empty last line

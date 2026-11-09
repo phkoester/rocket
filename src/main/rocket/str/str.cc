@@ -4,6 +4,7 @@
 
 #include "str.h"
 
+#include "rocket/str/split.h"
 #include "rocket/unicode/Character.h"
 #include "rocket/unicode/Iterator.h"
 
@@ -34,6 +35,21 @@ capitalize(u32string_view str) {
   }
   u32string ret(str);
   ret[0] = CodePoint(str[0]).upper();
+  return ret;
+}
+
+vector<string_view>
+lines(string_view str) {
+  vector<string_view> ret;
+
+  // Handle LF and CR/LF
+  for (auto line : split<char>(str, "\n")) {
+    if (line.ends_with('\r')) {
+      line.remove_suffix(1);
+    }
+    ret.push_back(line);
+  }
+
   return ret;
 }
 

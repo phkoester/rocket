@@ -8,6 +8,7 @@
 #include "rocket/enum.h"
 #include "rocket/macro.h"
 #include "rocket/chrono/chrono.h"
+#include "rocket/str/split.h"
 #include "rocket/str/str.h"
 #include "rocket/system/system.h"
 
@@ -735,11 +736,20 @@ logInit() {
   }, true);
 
   // Apply default log options from environment variable `ROCKET_LOG`
+  vector<string> args;
   const string val = system::env::get<string>("ROCKET_LOG").value_or("");
-  const auto args = system::makeArgs(val); // XXX Kann werfen: ROCKET_LOG="'a"
+  try {
+    args = system::makeArgs(val);
+  } catch (const Exception& ex) {
+    ROCKET_PROCESS_ERROR(EXIT_SERIOUS_FAILURE, "Cannot parse `ROCKET_LOG`, which is {:?}: {}", val, ex.message());
+  }
   if (not args.empty()) {
     cl::CommandLine cl(CL_OPTIONS, {}, { .rocketOpts = false });
-    cl.parse(args);
+    try {
+      cl.parse(args);
+    } catch (const Exception& ex) {
+      ROCKET_PROCESS_ERROR(EXIT_SERIOUS_FAILURE, "Cannot parse log options: {}", ex.message());
+    }
   }
 }
 

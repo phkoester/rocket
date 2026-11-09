@@ -38,7 +38,7 @@ Message::display() const {
 u64
 Message::parseSize(std::string_view input) {
   auto result = scn::scan<u64, char>(input, "{:i}{}");
-  ROCKET_EXPECT(result, "Invalid size input: {:?}", input);
+  ROCKET_EXPECT(result, "Invalid size {:?}", input);
   const auto [size, unit] = result->values();
   switch (unit) {
     case 'b':
@@ -50,7 +50,7 @@ Message::parseSize(std::string_view input) {
     case 'g':
       return size * 1024 * 1024 * 1024;
     default:
-      ROCKET_FAIL("Invalid unit: {}", unit);
+      ROCKET_FAIL("Invalid unit {:?}", unit);
   }
 }
 

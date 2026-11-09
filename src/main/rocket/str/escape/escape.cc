@@ -202,7 +202,7 @@ escapeRegexCodePoint(unicode::CodePoint cp, u64& column) {
       case '\\': // Backslash = 92
       case ']' : // Right bracket = 93
       case '^' : // Circumflex = 94
-      case '{' : // Left Brace = 123
+      case '{' : // Left brace = 123
       case '|' : // Vertical bar = 124
       case '}' : // Right brace = 125
         ret = string { '\\', static_cast<char>(cp) };
