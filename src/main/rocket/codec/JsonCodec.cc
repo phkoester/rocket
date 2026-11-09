@@ -10,6 +10,20 @@ namespace rocket::codec::internal::json {
 
 // Functions ------------------------------------------------------------------------------------------------
 
+u64
+jsonStringOffset(u64 pos, u64 unescapedOffset, const Positions& positions) {
+  // `positions` only has entries at grapheme-cluster boundaries. For an offset inside a cluster, use the
+  // start of that cluster. Offset 0 always has an entry
+  auto it = positions.right.find(unescapedOffset);
+  while (it == positions.right.end() && unescapedOffset > 0) {
+    it = positions.right.find(--unescapedOffset);
+  }
+  ROCKET_EXPECT(it != positions.right.end());
+
+  // Need to add 1 because of the opening quote
+  return pos + 1 + it->second;
+}
+
 string
 readJsonString(nio::Source& in, Positions& positions) {
   const auto pos = in.tell();

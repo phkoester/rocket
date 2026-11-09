@@ -250,11 +250,7 @@ isObjectTuple([[maybe_unused]] std::index_sequence<Index...> seq) {
            DataTypes<std::tuple_element_t<Index, T>>::Value == DataType::VarRef) && ...);
 }
 
-inline u64
-jsonStringOffset(u64 pos, u64 unescapedOffset, const Positions& positions) {
-  // Need to add 1 because of the opening quote
-  return pos + 1 + positions.right.at(unescapedOffset);
-}
+u64 jsonStringOffset(u64 pos, u64 unescapedOffset, const Positions& positions);
 
 inline void
 nextElem(nio::Sink& out, JsonConsumerConfig& config, u64 index) {

@@ -512,6 +512,29 @@ TEST(JsonCodec, ProducerDuration) {
   EXPECT_EQ(decode<seconds>("\"10x\"").error().message, "Expected a time unit");
 }
 
+TEST(JsonCodec, ProducerFailureInsideCluster) {
+  using namespace std::chrono;
+
+  // A digit or dot and U+0301 (COMBINING ACUTE ACCENT) form one cluster, so these failures lie inside it.
+  // The reported position is the start of the cluster
+
+  const auto simple = decode<seconds>("\"5\u0301\"");
+  EXPECT_EQ(simple.error().message, "Expected a time unit");
+  EXPECT_EQ(simple.error().position, 1U);
+
+  const auto indented = decode<seconds>("  \"5\u0301\"");
+  EXPECT_EQ(indented.error().message, "Expected a time unit");
+  EXPECT_EQ(indented.error().position, 3U);
+
+  const auto afterEscape = decode<seconds>("\"\\u00355\u0301\"");
+  EXPECT_EQ(afterEscape.error().message, "Expected a time unit");
+  EXPECT_EQ(afterEscape.error().position, 7U);
+
+  const auto rethrown = decode<hh_mm_ss<milliseconds>>("\"01:02:03.\u0301\"");
+  EXPECT_EQ(rethrown.error().message, "Expected subseconds");
+  EXPECT_EQ(rethrown.error().position, 9U);
+}
+
 TEST(JsonCodec, ProducerHourMinuteSecond) {
   using namespace std::chrono;
 
