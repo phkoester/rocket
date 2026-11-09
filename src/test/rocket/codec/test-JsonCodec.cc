@@ -406,6 +406,15 @@ TEST(JsonCodec, ProducerStringBmpEscapesAroundSurrogates) {
   EXPECT_EQ(decode<string>(R"("")"), ""); // Just above the surrogates
 }
 
+TEST(JsonCodec, ProducerInvalidUtf8) {
+  constexpr string_view MESSAGE = "Invalid UTF-8 byte sequence";
+
+  EXPECT_EQ(decode<string>("\"a\xFF\"").error().message, MESSAGE);
+  EXPECT_EQ(decode<string>("\"\xE2\x82\"").error().message, MESSAGE); // Truncated sequence
+  EXPECT_EQ(decode<char>("\"\xFF\"").error().message, MESSAGE);
+  EXPECT_EQ(decode<std::chrono::seconds>("\"\xFF\"").error().message, MESSAGE); // Through `readJsonString`
+}
+
 TEST(JsonCodec, ProducerStringUnpairedSurrogate) {
   constexpr string_view MESSAGE = "Unpaired surrogate in escape sequence";
 
@@ -521,6 +530,10 @@ TEST(JsonCodec, ProducerHourMinuteSecond) {
   EXPECT_EQ(
     decode<hh_mm_ss<nanoseconds>>("\"-111:02:03.123456789\"").value().to_duration(),
     (hh_mm_ss { -(111h + 2min + 3s + 123456789ns) }).to_duration());
+  EXPECT_EQ(decode<hh_mm_ss<seconds>>("\"-00:02:00\"").value().to_duration(), -2min);
+  EXPECT_EQ(decode<hh_mm_ss<seconds>>("\" -00:02:00\"").value().to_duration(), -2min);
+  EXPECT_EQ(decode<hh_mm_ss<seconds>>("\" -01:02:03\"").value().to_duration(), -(1h + 2min + 3s));
+  EXPECT_EQ(decode<hh_mm_ss<seconds>>("\"\\t-01:02:03\"").value().to_duration(), -(1h + 2min + 3s));
 
   EXPECT_EQ(decode<hh_mm_ss<milliseconds>>("x").error().message, "Expected a string");
   EXPECT_EQ(decode<hh_mm_ss<milliseconds>>("\"x\"").error().message, "Expected an hour, minute, and second");

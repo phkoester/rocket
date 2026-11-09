@@ -352,6 +352,14 @@ TEST(FormattedCodec, ProducerPointer) {
   EXPECT_EQ(decodeAndTell<void*>("  0x12345678  "), make_pair(reinterpret_cast<void*>(0x12345678), 12_u64));
 }
 
+TEST(FormattedCodec, ProducerInvalidUtf8) {
+  constexpr string_view MESSAGE = "Invalid UTF-8 byte sequence";
+
+  EXPECT_EQ(decode<string>("\"a\xFF\"").error().message, MESSAGE);
+  EXPECT_EQ(decode<string>("\"\xE2\x82\"").error().message, MESSAGE); // Truncated sequence
+  EXPECT_EQ(decode<char>("'\xFF'").error().message, MESSAGE);
+}
+
 TEST(FormattedCodec, ProducerOptionalString) {
   using type = optional<string>;
   EXPECT_EQ(decode<type>("  null  "), nullopt);
@@ -442,6 +450,9 @@ TEST(FormattedCodec, ProducerHourMinuteSecond) {
   EXPECT_EQ(
     decode<hh_mm_ss<nanoseconds>>("-111:02:03.123456789").value().to_duration(),
     (hh_mm_ss { -(111h + 2min + 3s + 123456789ns) }).to_duration());
+  EXPECT_EQ(decode<hh_mm_ss<seconds>>("-00:02:00").value().to_duration(), -2min);
+  EXPECT_EQ(decode<hh_mm_ss<seconds>>(" -00:02:00").value().to_duration(), -2min);
+  EXPECT_EQ(decode<hh_mm_ss<seconds>>(" -01:02:03").value().to_duration(), -(1h + 2min + 3s));
 
   EXPECT_EQ(decode<hh_mm_ss<milliseconds>>("x").error().message, "Expected an hour, minute, and second");
   EXPECT_EQ(decode<hh_mm_ss<milliseconds>>("01:02:").error().message, "Expected an hour, minute, and second");

@@ -1336,7 +1336,15 @@ struct JsonProducerImpl<DataType::HourMinuteSecond, T> {
       return jsonStringOffset(pos, innerPos, positions);
     };
 
-    // Read hour, minute, and second
+    // Read hour, minute, and second. The sign must be detected here, because the scanned hour cannot tell
+    // `-00` from `00`. The scanner skips leading whitespace, so the sign may follow some. Comments do not
+    // belong inside the string, so they are not skipped
+
+    rocket::nio::skip(inner, false, false);
+    const bool minus = readChar(inner, '-');
+    if (minus) {
+      inner.seek(-1, nio::SeekMode::cur);
+    }
 
     auto& is = inner.istream();
     auto result = scn::scan<hours::rep, minutes::rep, seconds::rep>(is, "{}:{}:{}");
@@ -1346,10 +1354,9 @@ struct JsonProducerImpl<DataType::HourMinuteSecond, T> {
     inner.seek(io::tellg(is), nio::SeekMode::beg);
 
     auto [h, m, s] = result->values();
-    bool neg = false;
+    const bool neg = minus || h < 0; // The scanner may skip more whitespace than we do
     if (h < 0) {
       h = -h;
-      neg = true;
     }
 
     try

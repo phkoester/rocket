@@ -232,6 +232,22 @@ TEST(escape, CStringClusterInvalidEscape) {
       throwsInputFailure(0, { 0, 4 }, EndsWith("Invalid escape sequence")));
 }
 
+TEST(escape, CStringInvalidUtf8) {
+  EXPECT_THAT(
+      [&] { unescapeCString("a\xFF"); },
+      throwsInputFailure(1, EndsWith("Invalid UTF-8 byte sequence")));
+
+  // Truncated sequence
+  EXPECT_THAT(
+      [&] { unescapeCString("a\xE2\x82"); },
+      throwsInputFailure(1, EndsWith("Invalid UTF-8 byte sequence")));
+
+  // Inside quotes
+  EXPECT_THAT(
+      [&] { unescapeCString("\"\xFF\"", { .quote='"' }); },
+      throwsInputFailure(1, EndsWith("Invalid UTF-8 byte sequence")));
+}
+
 TEST(escape, Regex) {
   Positions pos;
 
@@ -317,6 +333,17 @@ TEST(escape, RegexClusterInvalidEscape) {
   EXPECT_THAT(
       [&] { unescapeRegex("\u0600\\q"); },
       throwsInputFailure(0, { 0, 4 }, EndsWith("Invalid escape sequence")));
+}
+
+TEST(escape, RegexInvalidUtf8) {
+  EXPECT_THAT(
+      [&] { unescapeRegex("a\xFF"); },
+      throwsInputFailure(1, EndsWith("Invalid UTF-8 byte sequence")));
+
+  // Truncated sequence
+  EXPECT_THAT(
+      [&] { unescapeRegex("a\xE2\x82"); },
+      throwsInputFailure(1, EndsWith("Invalid UTF-8 byte sequence")));
 }
 
 // EOF

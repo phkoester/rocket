@@ -429,6 +429,10 @@ unescapeCString(string_view input, const CStringConfig& config, Positions* posit
     positions->clear();
   }
 
+  // Report malformed input as `InputFailure`; `unicode::Iterator` would throw `InvalidArgument`
+
+  unicode::utf8::validate(input);
+
   // If needed, read quote
 
   auto iter = unicode::Iterator(unicode::IteratorType::Character, input);
@@ -628,6 +632,10 @@ unescapeRegex(string_view input, Positions* positions) {
   if (positions != nullptr) {
     positions->clear();
   }
+
+  // Report malformed input as `InputFailure`; `unicode::Iterator` would throw `InvalidArgument`
+
+  unicode::utf8::validate(input);
 
   auto iter = unicode::Iterator(unicode::IteratorType::Character, input);
   while (true) {
