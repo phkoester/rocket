@@ -290,7 +290,7 @@ TEST(literal, floatUnderflowF32) {
 }
 
 TEST(literal, floatUnderflowF64) {
-  // This is only possible if `long double` has more precision than `f64`, which isn't the case everywhere
+  // This is only possible if `long double` has more precision than `f64`, which isn’t the case everywhere
   if (numeric_limits<std_long_double>::digits <= numeric_limits<f64>::digits) {
     GTEST_SKIP() << "`long double` is no wider than `f64`";
   }

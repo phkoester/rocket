@@ -197,8 +197,7 @@ Process::exit(i32 status, bool allowUninited) const { // NOLINT(*-recursion)
 
   if (quickExit_) {
     std::quick_exit(status);
-  }
-  else {
+  } else {
     std::exit(status); // NOLINT(concurrency-*)
   }
 }

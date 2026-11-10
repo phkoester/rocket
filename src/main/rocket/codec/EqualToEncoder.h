@@ -422,7 +422,7 @@ struct EqualToConsumerImpl<DataType::VarRef, T, Eq> {
 
   bool
   consume(const T& lhs, const T& rhs) {
-    // For `VarRef`, don't compare the names
+    // For `VarRef`, don’t compare the names
     return EqualToConsumerImpl<ElemDataType, Elem, Eq>().consume(lhs.get(), rhs.get());
   }
 };

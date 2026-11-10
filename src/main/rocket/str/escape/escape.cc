@@ -32,7 +32,7 @@ string escapeCStringTab(u64& column, const CStringConfig& config);
  *
  * A quote or a backslash may be part of such a cluster: it can be followed by combining marks, as in U+0022
  * U+0301, or preceded by a prepending character, as in U+0600 U+0022. These must be escaped, or the output
- * would be malformed. Everything else stays verbatim. In particular, ZERO WIDTH JOINER isn't printable, but
+ * would be malformed. Everything else stays verbatim. In particular, ZERO WIDTH JOINER isn’t printable, but
  * must not be turned into a hexadecimal sequence, as that would tear emoji sequences apart.
  *
  * Working on bytes is safe here, because in UTF-8, ASCII bytes never occur inside a multi-byte sequence.
@@ -650,7 +650,7 @@ unescapeRegex(string_view input, Positions* positions) {
       positions->insert({ pos, ret.size() });
     }
     if (not c1) {
-      // EOF
+      // EOI
       return ret;
     }
 

@@ -224,7 +224,7 @@ operator<<(std::ostream& lhs, const VarRef<T>& rhs) {
 // `fmt::formatter<rocket::reflect::Declared>` --------------------------------------------------------------
 
 /**
- * @spec_fmt_formatter{#rocket::reflect::Declared}
+ * @spec_fmt_formatter{rocket::reflect::Declared}
  *
  * - If the `i` format specifier is used, then the output is indented.
  * - If the `t` format specifier is used, then the type name is included.
@@ -273,7 +273,7 @@ private:
 // `fmt::formatter<rocket::reflect::Instance>` --------------------------------------------------------------
 
 /**
- * @spec_fmt_formatter{#rocket::reflect::Instance}
+ * @spec_fmt_formatter{rocket::reflect::Instance}
  *
  * - If the `i` format specifier is used, then the output is indented.
  * - If the `t` format specifier is used, then the type name is included.
@@ -322,7 +322,7 @@ private:
 // `fmt::formatter<rocket::reflect::VarRef>` ----------------------------------------------------------------
 
 /**
- * @spec_fmt_formatter{#rocket::reflect::VarRef}
+ * @spec_fmt_formatter{rocket::reflect::VarRef}
  *
  * - If the `i` format specifier is used, then the output is indented.
  */
@@ -360,7 +360,7 @@ private:
 
 // `std::hash<rocket::reflect::Declared>` -------------------------------------------------------------------
 
-/// @spec_std_hash{#rocket::reflect::Declared}
+/// @spec_std_hash{rocket::reflect::Declared}
 template<typename T> requires rocket::reflect::Declared<T>::value
 struct std::hash<T> {
   /// @cond undocumented
@@ -373,13 +373,13 @@ struct std::hash<T> {
 
 // `std::hash<rocket::reflect::Instance>` -------------------------------------------------------------------
 
-/// @spec_std_hash{#rocket::reflect::Instance}
+/// @spec_std_hash{rocket::reflect::Instance}
 template<typename T, typename Inner>
 struct std::hash<rocket::reflect::Instance<T, Inner>> {
   /// @cond undocumented
   using Type = rocket::reflect::Instance<T, Inner>;
 
-  u64
+  rocket::u64
   operator()(const Type& val) const {
     return rocket::codec::HashEncoder<>().encode(val);
   }
@@ -388,13 +388,13 @@ struct std::hash<rocket::reflect::Instance<T, Inner>> {
 
 // `std::hash<rocket::reflect::VarRef>` ---------------------------------------------------------------------
 
-/// @spec_std_hash{#rocket::reflect::VarRef}
+/// @spec_std_hash{rocket::reflect::VarRef}
 template<typename T>
 struct std::hash<rocket::reflect::VarRef<T>> {
   /// @cond undocumented
   using Type = rocket::reflect::VarRef<T>;
 
-  u64
+  rocket::u64
   operator()(const Type& val) const {
     return rocket::codec::HashEncoder<>().encode(val);
   }

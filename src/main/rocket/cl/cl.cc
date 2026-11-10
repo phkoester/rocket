@@ -130,7 +130,7 @@ CommandLine::CommandLine(
 
 void
 CommandLine::applyOpt(const Option& opt, bool nameFlag, const optional<string>& val) {
-  // Don't use `ROCKET_CHECK` here for cleaner exception messages
+  // Don’t use `ROCKET_CHECK` here for cleaner exception messages
 
   if (opt.takesValue && not val) {
     ROCKET_FAIL("Missing value for option `{}`", name(opt, nameFlag));
@@ -145,7 +145,7 @@ CommandLine::applyOpt(const Option& opt, bool nameFlag, const optional<string>& 
 
   try {
     if (opt.choices && not opt.choices->contains(useValue)) {
-      ROCKET_FAIL("Invalid value `{}`", useValue);
+      ROCKET_FAIL("Invalid value {:?}", useValue);
     }
     const bool result = opt.apply(useValue);
     parserState_.updateOpt(opt, result);
@@ -166,7 +166,7 @@ CommandLine::applyOpt(const Option& opt, bool nameFlag, const optional<string>& 
 
 void
 CommandLine::applyParam(const Parameter& param, const string& val) {
-  // Don't use `ROCKET_CHECK` here for cleaner exception messages
+  // Don’t use `ROCKET_CHECK` here for cleaner exception messages
 
   try {
     if (param.choices && not param.choices->contains(val)) {
@@ -289,8 +289,7 @@ CommandLine::parse(const vector<string>& args, nio::Sink& out, nio::Sink& err, b
               // Take the rest of the argument
               string val = unicode::concat(segs, segNext - segsBegin);
               applyOpt(opt, false, val);
-            }
-            else {
+            } else {
               optional<string> val;
               // Take the next argument, if any
               if (it + 1 != useArgs.end()) {
@@ -372,8 +371,7 @@ CommandLine::parse(const vector<string>& args, nio::Sink& out, nio::Sink& err, b
     }
 
     return true;
-  }
-  catch (const exception& ex) {
+  } catch (const exception& ex) {
     handleException(ex, err, exit ? EXIT_SERIOUS_FAILURE : 0);
     return false;
   }
@@ -578,7 +576,7 @@ CommandLine::printVersion(nio::Sink& out, bool exit) {
 
 void
 CommandLine::validate(string_view name, bool nameFlag) {
-  // Don't use `ROCKET_CHECK` here for cleaner exception messages
+  // Don’t use `ROCKET_CHECK` here for cleaner exception messages
 
   const char* what = nameFlag ? "option name" : "option short name";
   if (name.empty()) {

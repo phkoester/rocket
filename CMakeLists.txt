@@ -305,7 +305,7 @@ if(ROCKET_GUI)
   )
 
   block()
-    # Don't change `BUILD_SHARED_LIBS` here
+    # Don’t change `BUILD_SHARED_LIBS` here
     set(wxUSE_UNICODE_UTF8 ON)
     FetchContent_MakeAvailable(wxWidgets)
 

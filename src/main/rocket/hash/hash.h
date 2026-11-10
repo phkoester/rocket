@@ -50,7 +50,7 @@ hash128(u128 val) noexcept {
 
 // `std::hash<rocket::i128>`, `std::hash<rocket::u128>` -----------------------------------------------------
 
-/// @spec_std_hash{#rocket::i128}
+/// @spec_std_hash{rocket::i128}
 template<>
 struct std::hash<rocket::i128> {
   /// @cond undocumented
@@ -61,7 +61,7 @@ struct std::hash<rocket::i128> {
   /// @endcond
 };
 
-/// @spec_std_hash{#rocket::u128}
+/// @spec_std_hash{rocket::u128}
 template<>
 struct std::hash<rocket::u128> {
   /// @cond undocumented

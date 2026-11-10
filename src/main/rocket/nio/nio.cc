@@ -326,7 +326,7 @@ Source::readCodePoint() {
       if (bad()) {
         return unexpected(Bad);
       }
-      return failInvalidUtf8(); // Truncated sequence: there was input, so this isn't a plain EOF
+      return failInvalidUtf8(); // Truncated sequence: there was input, so this isn’t a plain EOF
     }
     s.push_back(c);
   }

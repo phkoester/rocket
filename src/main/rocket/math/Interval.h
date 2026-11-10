@@ -689,7 +689,7 @@ unionOf(const Intervals<Left, Right>& val) {
   }
 
   std::sort(sorted.begin(), sorted.end(), [](const Type& lhs, const Type& rhs) {
-    // Return `true` iff `lhs` starts strictly left of `rhs`
+    // Return if `lhs` starts strictly left of `rhs`
     return Left::leftMin(lhs.a, rhs.a) == lhs.a && lhs.a != rhs.a;
   });
 

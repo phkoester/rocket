@@ -159,145 +159,145 @@ enum class DataType : u8 {
 template<typename T>
 struct DataTypes;
 
-/// @spec{#rocket::codec::DataTypes, bool}
+/// @spec{rocket::codec::DataTypes, bool}
 template<>
 struct DataTypes<bool> {
   static constexpr auto Value = DataType::Bool; ///< The value type.
 };
 
-/// @spec{#rocket::codec::DataTypes, #rocket::IsChar}
+/// @spec{rocket::codec::DataTypes, rocket::IsChar}
 template<typename C> requires IsChar<C>
 struct DataTypes<C> {
   static constexpr auto Value = DataType::Char; ///< The data type.
 };
 
-/// @spec{#rocket::codec::DataTypes, #std::is_enum_v}
+/// @spec{rocket::codec::DataTypes, std::is_enum_v}
 template<typename E> requires std::is_enum_v<E>
 struct DataTypes<E> {
   static constexpr auto Value = DataType::Enum; ///< The data type.
 };
 
-/// @spec{#rocket::codec::DataTypes, #rocket::IsInteger}
+/// @spec{rocket::codec::DataTypes, rocket::IsInteger}
 template<typename I> requires IsInteger<I>
 struct DataTypes<I> {
   static constexpr auto Value = DataType::Integer; ///< The data type.
 };
 
-/// @spec{#rocket::codec::DataTypes, #rocket::IsFloat}
+/// @spec{rocket::codec::DataTypes, rocket::IsFloat}
 template<typename F> requires IsFloat<F>
 struct DataTypes<F> {
   static constexpr auto Value = DataType::Float; ///< The data type.
 };
 
-/// @spec{#rocket::codec::DataTypes, #std::is_pointer_v}
+/// @spec{rocket::codec::DataTypes, std::is_pointer_v}
 template<typename P> requires std::is_pointer_v<P>
 struct DataTypes<P> {
   static constexpr auto Value = DataType::Pointer; ///< The data type.
 };
 
-/// @spec{#rocket::codec::DataTypes, #std::basic_string}
+/// @spec{rocket::codec::DataTypes, std::basic_string}
 template<typename C> requires IsChar<C>
 struct DataTypes<std::basic_string<C>> {
   static constexpr auto Value = DataType::String; ///< The data type.
 };
 
-/// @spec{#rocket::codec::DataTypes, #std::basic_string_view}
+/// @spec{rocket::codec::DataTypes, std::basic_string_view}
 template<typename C, typename Traits> requires IsChar<C>
 struct DataTypes<std::basic_string_view<C, Traits>> {
   static constexpr auto Value = DataType::String; ///< The data type.
 };
 
-/// @spec{#rocket::codec::DataTypes, #std::optional}
+/// @spec{rocket::codec::DataTypes, std::optional}
 template<typename T>
 struct DataTypes<std::optional<T>> {
   static constexpr auto Value = DataType::Optional; ///< The data type.
 };
 
-/// @spec{#rocket::codec::DataTypes, #std::pair}
+/// @spec{rocket::codec::DataTypes, std::pair}
 template<typename A, typename B>
 struct DataTypes<std::pair<A, B>> {
   static constexpr auto Value = DataType::Tuple; ///< The data type.
 };
 
-/// @spec{#rocket::codec::DataTypes, #std::tuple}
+/// @spec{rocket::codec::DataTypes, std::tuple}
 template<typename... T>
 struct DataTypes<std::tuple<T...>> {
   static constexpr auto Value = DataType::Tuple; ///< The value type.
 };
 
-/// @spec{#rocket::codec::DataTypes, #std::array}
+/// @spec{rocket::codec::DataTypes, std::array}
 template<typename T, u64 N>
 struct DataTypes<std::array<T, N>> {
   static constexpr auto Value = DataType::List; ///< The data type.
 };
 
-/// @spec{#rocket::codec::DataTypes, #std::forward_list}
+/// @spec{rocket::codec::DataTypes, std::forward_list}
 template<typename T, typename Alloc>
 struct DataTypes<std::forward_list<T, Alloc>> {
   static constexpr auto Value = DataType::List; ///< The data type.
 };
 
-/// @spec{#rocket::codec::DataTypes, #std::list}
+/// @spec{rocket::codec::DataTypes, std::list}
 template<typename T, typename Alloc>
 struct DataTypes<std::list<T, Alloc>> {
   static constexpr auto Value = DataType::List; ///< The data type.
 };
 
-/// @spec{#rocket::codec::DataTypes, #std::span}
+/// @spec{rocket::codec::DataTypes, std::span}
 template<typename T, u64 Extent>
 struct DataTypes<std::span<T, Extent>> {
   static constexpr auto Value = DataType::List; ///< The data type.
 };
 
-/// @spec{#rocket::codec::DataTypes, #std::vector}
+/// @spec{rocket::codec::DataTypes, std::vector}
 template<typename T, typename Alloc>
 struct DataTypes<std::vector<T, Alloc>> {
   static constexpr auto Value = DataType::List; ///< The data type.
 };
 
-/// @spec{#rocket::codec::DataTypes, #std::set}
+/// @spec{rocket::codec::DataTypes, std::set}
 template<typename T, typename Compare, typename Alloc>
 struct DataTypes<std::set<T, Compare, Alloc>> {
   static constexpr auto Value = DataType::Set; ///< The data type.
 };
 
-/// @spec{#rocket::codec::DataTypes, #std::unordered_set}
+/// @spec{rocket::codec::DataTypes, std::unordered_set}
 template<typename T, typename Hash, typename Pred, typename Alloc>
 struct DataTypes<std::unordered_set<T, Hash, Pred, Alloc>> {
   static constexpr auto Value = DataType::Set; ///< The data type.
 };
 
-/// @spec{#rocket::codec::DataTypes, #std::map}
+/// @spec{rocket::codec::DataTypes, std::map}
 template<typename K, typename V, typename Compare, typename Alloc>
 struct DataTypes<std::map<K, V, Compare, Alloc>> {
   static constexpr auto Value = DataType::Map; ///< The value type.
 };
 
-/// @spec{#rocket::codec::DataTypes, #std::unordered_map}
+/// @spec{rocket::codec::DataTypes, std::unordered_map}
 template<typename K, typename V, typename Hash, typename Pred, typename Alloc>
 struct DataTypes<std::unordered_map<K, V, Hash, Pred, Alloc>> {
   static constexpr auto Value = DataType::Map; ///< The data type.
 };
 
-/// @spec{#rocket::codec::DataTypes, boost::bimaps::bimap}
+/// @spec{rocket::codec::DataTypes, boost::bimaps::bimap}
 template<typename A, typename B>
 struct DataTypes<boost::bimaps::bimap<A, B>> {
   static constexpr auto Value = DataType::Bimap; ///< The data type.
 };
 
-/// @spec{#rocket::codec::DataTypes, std::chrono::duration}
+/// @spec{rocket::codec::DataTypes, std::chrono::duration}
 template<typename Rep, typename Period>
 struct DataTypes<std::chrono::duration<Rep, Period>> {
   static constexpr auto Value = DataType::Duration; ///< The data type.
 };
 
-/// @spec{#rocket::codec::DataTypes, std::chrono::hh_mm_ss}
+/// @spec{rocket::codec::DataTypes, std::chrono::hh_mm_ss}
 template<typename Duration>
 struct DataTypes<std::chrono::hh_mm_ss<Duration>> {
   static constexpr auto Value = DataType::HourMinuteSecond; ///< The data type.
 };
 
-/// @spec{#rocket::codec::DataTypes, std::chrono::year_month_day}
+/// @spec{rocket::codec::DataTypes, std::chrono::year_month_day}
 template<>
 struct DataTypes<std::chrono::year_month_day> {
   static constexpr auto Value = DataType::Date; ///< The data type.
@@ -311,67 +311,67 @@ struct DataTypes<std::chrono::year_month_day> {
  */
 using TimeZone = const rocket::chrono::time_zone*;
 
-/// @spec{#rocket::codec::DataTypes, #rocket::chrono::time_zone}
+/// @spec{rocket::codec::DataTypes, rocket::chrono::time_zone}
 template<>
 struct DataTypes<TimeZone> {
   static constexpr auto Value = DataType::TimeZone; ///< The data type.
 };
 
-/// @spec{#rocket::codec::DataTypes, std::chrono::time_point}
+/// @spec{rocket::codec::DataTypes, std::chrono::time_point}
 template<typename Clock, typename Duration>
 struct DataTypes<std::chrono::time_point<Clock, Duration>> {
   static constexpr auto Value = DataType::Time; ///< The data type.
 };
 
-/// @spec{#rocket::codec::DataTypes, #rocket::chrono::zoned_time}
+/// @spec{rocket::codec::DataTypes, rocket::chrono::zoned_time}
 template<typename Duration>
 struct DataTypes<rocket::chrono::zoned_time<Duration>> {
   static constexpr auto Value = DataType::ZonedTime; ///< The data type.
 };
 
-/// @spec{#rocket::codec::DataTypes, #rocket::math::Interval}
+/// @spec{rocket::codec::DataTypes, rocket::math::Interval}
 template<typename Left, typename Right>
 struct DataTypes<rocket::math::Interval<Left, Right>> {
   static constexpr auto Value = DataType::Interval; ///< The data type.
 };
 
-/// @spec{#rocket::codec::DataTypes, #rocket::reflect::Declared}
+/// @spec{rocket::codec::DataTypes, rocket::reflect::Declared}
 template< typename T> requires rocket::reflect::Declared<T>::value
 struct DataTypes<T> {
   static constexpr auto Value = DataType::Declared; ///< The data type.
 };
 
-/// @spec{#rocket::codec::DataTypes, #rocket::reflect::Instance}
+/// @spec{rocket::codec::DataTypes, rocket::reflect::Instance}
 template<typename T, typename Inner>
 struct DataTypes<rocket::reflect::Instance<T, Inner>> {
   static constexpr auto Value = DataType::Instance; ///< The data type.
 };
 
-/// @spec{#rocket::codec::DataTypes, #rocket::reflect::MemberRef}
+/// @spec{rocket::codec::DataTypes, rocket::reflect::MemberRef}
 template<typename C, typename T>
 struct DataTypes<rocket::reflect::MemberRef<C, T>> {
   static constexpr auto Value = DataType::MemberRef; ///< The data type.
 };
 
-/// @spec{#rocket::codec::DataTypes, #rocket::reflect::VarRef}
+/// @spec{rocket::codec::DataTypes, rocket::reflect::VarRef}
 template<typename T>
 struct DataTypes<rocket::reflect::VarRef<T>> {
   static constexpr auto Value = DataType::VarRef; ///< The data type.
 };
 
-/// @spec{#rocket::codec::DataTypes, #rocket::unicode::CodePoint}
+/// @spec{rocket::codec::DataTypes, rocket::unicode::CodePoint}
 template<>
 struct DataTypes<rocket::unicode::CodePoint> {
   static constexpr auto Value = DataType::CodePoint; ///< The data type.
 };
 
-/// @spec{#rocket::codec::DataTypes, #rocket::unicode::Character}
+/// @spec{rocket::codec::DataTypes, rocket::unicode::Character}
 template<typename C> requires IsChar<C>
 struct DataTypes<rocket::unicode::Character<C>> {
   static constexpr auto Value = DataType::Character; ///< The data type.
 };
 
-/// @spec{#rocket::codec::DataTypes, #rocket::unicode::CharacterView}
+/// @spec{rocket::codec::DataTypes, rocket::unicode::CharacterView}
 template<typename C> requires IsChar<C>
 struct DataTypes<rocket::unicode::CharacterView<C>> {
   static constexpr auto Value = DataType::Character; ///< The data type.

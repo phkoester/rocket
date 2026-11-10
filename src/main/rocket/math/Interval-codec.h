@@ -28,7 +28,7 @@ operator<<(std::ostream& lhs, const Interval<Left, Right>& rhs) {
 // `fmt::formatter<rocket::math::Interval>` -----------------------------------------------------------------
 
 /**
- * @spec_fmt_formatter{#rocket::math::Interval}
+ * @spec_fmt_formatter{rocket::math::Interval}
  *
  * - If the `i` format specifier is used, then the output is indented.
  */

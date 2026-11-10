@@ -44,6 +44,6 @@ readJsonString(nio::Source& in, Positions& positions) {
   return unescaped;
 }
 
-}; // namespace rocket::codec::internal::json
+} // namespace rocket::codec::internal::json
 
 // EOF

@@ -416,17 +416,17 @@ TEST(JsonCodec, ProducerStringSlash) {
 }
 
 TEST(JsonCodec, ProducerStringSurrogatePair) {
-  EXPECT_EQ(decode<string>(R"("🥱")"), "🥱"); // U+1F971 (Yawning Face)
-  EXPECT_EQ(decode<string>(R"("🥱")"), "🥱");
-  EXPECT_EQ(decode<string>(R"("a🥱b")"), "a🥱b");
-  EXPECT_EQ(decode<string>(R"("𐀀")"), "\U00010000"); // Lowest pair
-  EXPECT_EQ(decode<string>(R"("􏿿")"), "\U0010FFFF"); // Highest pair
-  EXPECT_EQ(decode<u32string>(R"("🥱")"), U"\U0001F971");
+  EXPECT_EQ(decode<string>(R"("\uD83E\uDD71")"), "🥱"); // U+1F971 (Yawning Face)
+  EXPECT_EQ(decode<string>(R"("\ud83e\udd71")"), "🥱"); // Lowercase digits
+  EXPECT_EQ(decode<string>(R"("a\uD83E\uDD71b")"), "a🥱b");
+  EXPECT_EQ(decode<string>(R"("\uD800\uDC00")"), "\U00010000"); // Lowest pair
+  EXPECT_EQ(decode<string>(R"("\uDBFF\uDFFF")"), "\U0010FFFF"); // Highest pair
+  EXPECT_EQ(decode<u32string>(R"("\uD83E\uDD71")"), U"\U0001F971");
 }
 
 TEST(JsonCodec, ProducerStringBmpEscapesAroundSurrogates) {
-  EXPECT_EQ(decode<string>(R"("퟿")"), "퟿"); // Just below the surrogates
-  EXPECT_EQ(decode<string>(R"("")"), ""); // Just above the surrogates
+  EXPECT_EQ(decode<string>(R"("\uD7FF")"), "\uD7FF"); // Just below the surrogates
+  EXPECT_EQ(decode<string>(R"("\uE000")"), "\uE000"); // Just above the surrogates
 }
 
 TEST(JsonCodec, ProducerInvalidUtf8) {

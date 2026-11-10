@@ -476,7 +476,7 @@ namespace rocket::chrono {
 
 namespace internal {
 
-// `TimeZoneAccess` ----------------------------------------------------------------------------------------
+// `TimeZoneAccess` -----------------------------------------------------------------------------------------
 
 // Declared in `chrono.h`
 struct TimeZoneAccess {
@@ -987,7 +987,7 @@ zoneNameFromPath(string_view path) {
 
 namespace rocket::chrono {
 
-// `time_zone` -----------------------------------------------------------------------------------------------
+// `time_zone` ----------------------------------------------------------------------------------------------
 
 sys_info
 time_zone::getSysInfo(sys_seconds tp) const {
@@ -1082,7 +1082,7 @@ time_zone::getLocalInfo(local_seconds tp) const {
   return ret;
 }
 
-// Functions -----------------------------------------------------------------------------------------------
+// Functions ------------------------------------------------------------------------------------------------
 
 const time_zone*
 current_zone() {

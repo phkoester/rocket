@@ -317,7 +317,7 @@ using utf32::validate;
 // `fmt::formatter<rocket::unicode::CodePoint>` -------------------------------------------------------------
 
 /**
- * @spec_fmt_formatter{#rocket::unicode::CodePoint}
+ * @spec_fmt_formatter{rocket::unicode::CodePoint}
  *
  * This formatter uses the same format specifiers as the underlying formatter for type #std::string.
  */
@@ -330,7 +330,7 @@ struct fmt::formatter<rocket::unicode::CodePoint, C> {
   format(const rocket::unicode::CodePoint& val, FormatContext& ctx) const {
     using namespace rocket;
 
-    // This is simple enough that we don't need a `FormattedCodec` for it
+    // This is simple enough that we don’t need a `FormattedCodec` for it
     if constexpr (std::same_as<C, char>) {
       return underlying_.format(fmt::format("U+{:0>4X}", static_cast<u32>(val)), ctx);
     } else {
@@ -357,7 +357,7 @@ private:
 
 // `std::hash<rocket::unicode::CodePoint>` ------------------------------------------------------------------
 
-/// @spec_std_hash{#rocket::unicode::CodePoint}
+/// @spec_std_hash{rocket::unicode::CodePoint}
 template<>
 struct std::hash<rocket::unicode::CodePoint> {
   /**
@@ -374,7 +374,7 @@ struct std::hash<rocket::unicode::CodePoint> {
 
 // `std::numeric_limits<rocket::unicode::CodePoint>` --------------------------------------------------------
 
-/// @spec_std_numeric_limits{#rocket::unicode::CodePoint}
+/// @spec_std_numeric_limits{rocket::unicode::CodePoint}
 template<>
 struct std::numeric_limits<rocket::unicode::CodePoint> {
   /// A code point is an exact type.

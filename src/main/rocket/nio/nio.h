@@ -98,7 +98,7 @@ protected:
   /**
    * The status of the instance.
    *
-   * When an instance is constructed, the #bad bit is set, meaning the stream hasn't been opened yet and is
+   * When an instance is constructed, the #bad bit is set, meaning the stream hasn’t been opened yet and is
    * not ready to use. Derived classes must unset the #bad bit to mark the instance as usable.
    */
   Status status_ { .bad=1, .eof=0 };

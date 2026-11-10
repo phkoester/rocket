@@ -99,7 +99,7 @@ setClockOffset(Duration offset) {
 
 } // namespace internal
 
-// Functions -----------------------------------------------------------------------------------------------
+// Functions ------------------------------------------------------------------------------------------------
 
 /**
  * Returns the current time of the clock, considering the clock offset.
@@ -234,7 +234,7 @@ operator<<(std::basic_ostream<CharT, Traits>& os, const sys_info& val) {
   return os << ']';
 }
 
-// `local_info` --------------------------------------------------------------------------------------------
+// `local_info` ---------------------------------------------------------------------------------------------
 
 /**
  * Information about a local time in a time zone, equivalent to C++20’s #std::chrono::local_info.
@@ -306,7 +306,7 @@ enum class choose {
 // `ambiguous_local_time` -----------------------------------------------------------------------------------
 
 /**
- * The exception thrown when a local time is ambiguous, equivalent to C++20's
+ * The exception thrown when a local time is ambiguous, equivalent to C++20’s
  * #std::chrono::ambiguous_local_time.
  */
 struct ambiguous_local_time : std::runtime_error {
@@ -321,10 +321,10 @@ struct ambiguous_local_time : std::runtime_error {
     std::runtime_error(internal::ambiguousMessage(tp, info)) {}
 };
 
-// `nonexistent_local_time` --------------------------------------------------------------------------------
+// `nonexistent_local_time` ---------------------------------------------------------------------------------
 
 /**
- * The exception thrown when a local time does not exist, equivalent to C++20's
+ * The exception thrown when a local time does not exist, equivalent to C++20’s
  * #std::chrono::nonexistent_local_time.
  */
 struct nonexistent_local_time : std::runtime_error {
@@ -510,7 +510,7 @@ const time_zone* locate_zone(std::string_view name);
 // `zoned_traits` -------------------------------------------------------------------------------------------
 
 /**
- * The traits of a time-zone pointer used by #rocket::chrono::zoned_time, equivalent to C++20's
+ * The traits of a time-zone pointer used by #rocket::chrono::zoned_time, equivalent to C++20’s
  * #std::chrono::zoned_traits.
  *
  * Specializations provide the static member functions `default_zone()` and `locate_zone(std::string_view)`.
@@ -520,7 +520,7 @@ const time_zone* locate_zone(std::string_view name);
 template<typename TimeZonePtr>
 struct zoned_traits {};
 
-/// @spec{#rocket::chrono::zoned_traits, const #rocket::chrono::time_zone*}
+/// @spec{rocket::chrono::zoned_traits, const rocket::chrono::time_zone*}
 template<>
 struct zoned_traits<const time_zone*> {
   /**

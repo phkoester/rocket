@@ -342,7 +342,7 @@ struct HashConsumerImpl<DataType::VarRef, T, Hash> {
 
   u64
   consume(const T& val) {
-    // For `VarRef`, don't include the name in the hash
+    // For `VarRef`, don’t include the name in the hash
     return HashConsumerImpl<ElemDataType, Elem, Hash>().consume(val.get());
   }
 };

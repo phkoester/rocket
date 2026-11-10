@@ -160,7 +160,7 @@ matchesRegex(const T& pattern) {
  * exception.
  *
  * @tparam Exception the exception type
- * @tparam Matchers the matchers' types
+ * @tparam Matchers the matchers’ types
  * @param matchers the matchers to be combined with `AllOf`
  * @return a matcher
  */

@@ -185,7 +185,7 @@ struct Enum : std::false_type {
 // `fmt::formatter<rocket::Enum>` ---------------------------------------------------------------------------
 
 /**
- * @spec_fmt_formatter{#rocket::Enum}
+ * @spec_fmt_formatter{rocket::Enum}
  *
  * This formatter uses the same format specifiers as the underlying string formatter.
  */
@@ -220,7 +220,7 @@ private:
 // `scn::scanner<rocket::Enum>` -----------------------------------------------------------------------------
 
 /**
- * @spec_scn_scanner{#rocket::Enum}
+ * @spec_scn_scanner{rocket::Enum}
  *
  * This scanner uses the same format specifiers as the underlying string scanner.
  */

@@ -102,7 +102,7 @@ private:
 // `fmt::formatter<rocket::TypeId>` -------------------------------------------------------------------------
 
 /**
- * @spec_fmt_formatter{#rocket::TypeId}
+ * @spec_fmt_formatter{rocket::TypeId}
  *
  * The type ID is formatted as its demangled name in backticks, for example
  * <code>`rocket::InvalidArgument`</code>.
@@ -140,7 +140,7 @@ private:
 
 // `std::hash<rocket::TypeId>` ------------------------------------------------------------------------------
 
-/// @spec_std_hash{#rocket::TypeId}
+/// @spec_std_hash{rocket::TypeId}
 template<>
 struct std::hash<rocket::TypeId> {
   /// @cond undocumented

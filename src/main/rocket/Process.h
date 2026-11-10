@@ -117,7 +117,7 @@ extern const std::thread::id MAIN_THREAD_ID;
 /**
  * A central Rocket class to be used in `main`.
  *
- * You don't ever create a #Process object. To access the singleton, use #rocket::process.
+ * You don’t ever create a #Process object. To access the singleton, use #rocket::process.
  *
  * @ThreadSafe
  *

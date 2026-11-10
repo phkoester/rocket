@@ -65,7 +65,7 @@ TEST(str, splitEmptySep) {
   EXPECT_THAT([] { static_cast<void>(split<char>("abc", "").begin()); }, throwsEmptySep);
   EXPECT_THAT([] { static_cast<void>(split<char>("abc", "").end()); }, throwsEmptySep);
 
-  // The input doesn't matter
+  // The input doesn’t matter
   EXPECT_THAT([] { static_cast<void>(split<char>("", "").begin()); }, throwsEmptySep);
 
   EXPECT_THAT([] { static_cast<void>(split<char32>(U"abc", U"").begin()); }, throwsEmptySep);

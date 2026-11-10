@@ -174,11 +174,7 @@ struct basic_spanbuf : public std::basic_streambuf<CharT, Traits> {
     }
   }
 
-  /**
-   * Swaps the state of this instance with that of @p rhs.
-   *
-   * @param rhs the other instance
-   */
+  /// @member_fn_swap
   void
   swap(basic_spanbuf& rhs) {
     Base::swap(rhs);
@@ -273,12 +269,7 @@ private:
   }
 };
 
-/**
- * Swaps the states of two span buffers.
- *
- * @param lhs the first buffer
- * @param rhs the second buffer
- */
+/// @fn_swap{rocket::io::basic_spanbuf}
 template<typename CharT, typename Traits>
 void
 swap(basic_spanbuf<CharT, Traits>& lhs, basic_spanbuf<CharT, Traits>& rhs) {
@@ -394,11 +385,7 @@ struct basic_ispanstream : public std::basic_istream<CharT, Traits> {
     rdbuf()->span(unconst(std::forward<ROS>(s)));
   }
 
-  /**
-   * Swaps the state of this instance with that of @p rhs.
-   *
-   * @param rhs the other instance
-   */
+  /// @member_fn_swap
   void
   swap(basic_ispanstream& rhs) {
     Base::swap(rhs);
@@ -418,19 +405,14 @@ private:
   basic_spanbuf<CharT, Traits> sb_;
 };
 
-/**
- * Swaps the states of two input span streams.
- *
- * @param lhs the first stream
- * @param rhs the second stream
- */
+/// @fn_swap{rocket::io::basic_ispanstream}
 template<typename CharT, typename Traits>
 void
 swap(basic_ispanstream<CharT, Traits>& lhs, basic_ispanstream<CharT, Traits>& rhs) {
   lhs.swap(rhs);
 }
 
-// `basic_ospanstream` ---------------------------------------------------------------------------------------
+// `basic_ospanstream` --------------------------------------------------------------------------------------
 
 /**
  * A stream for writing to a fixed character buffer, equivalent to C++23’s `std::basic_ospanstream`.
@@ -504,11 +486,8 @@ struct basic_ospanstream : public std::basic_ostream<CharT, Traits> {
    */
   void span(std::span<CharT> s) noexcept { rdbuf()->span(s); }
 
-  /**
-   * Swaps the state of this instance with that of @p rhs.
-   *
-   * @param rhs the other instance
-   */
+
+  /// @member_fn_swap
   void
   swap(basic_ospanstream& rhs) {
     Base::swap(rhs);
@@ -520,22 +499,17 @@ private:
   basic_spanbuf<CharT, Traits> sb_;
 };
 
-/**
- * Swaps the states of two output span streams.
- *
- * @param lhs the first stream
- * @param rhs the second stream
- */
+/// @fn_swap{rocket::io::basic_ospanstream}
 template<typename CharT, typename Traits>
 void
 swap(basic_ospanstream<CharT, Traits>& lhs, basic_ospanstream<CharT, Traits>& rhs) {
   lhs.swap(rhs);
 }
 
-// `basic_spanstream` ----------------------------------------------------------------------------------------
+// `basic_spanstream` ---------------------------------------------------------------------------------------
 
 /**
- * A stream for reading from and writing to a fixed character buffer, equivalent to C++23's
+ * A stream for reading from and writing to a fixed character buffer, equivalent to C++23’s
  * `std::basic_spanstream`.
  *
  * @tparam CharT the character type
@@ -609,11 +583,8 @@ struct basic_spanstream : public std::basic_iostream<CharT, Traits> {
    */
   void span(std::span<CharT> s) noexcept { rdbuf()->span(s); }
 
-  /**
-   * Swaps the state of this instance with that of @p rhs.
-   *
-   * @param rhs the other instance
-   */
+
+  /// @member_fn_swap
   void
   swap(basic_spanstream& rhs) {
     Base::swap(rhs);
@@ -625,12 +596,7 @@ private:
   basic_spanbuf<CharT, Traits> sb_;
 };
 
-/**
- * Swaps the states of two span streams.
- *
- * @param lhs the first stream
- * @param rhs the second stream
- */
+/// @fn_swap{rocket::io::basic_spanstream}
 template<typename CharT, typename Traits>
 void
 swap(basic_spanstream<CharT, Traits>& lhs, basic_spanstream<CharT, Traits>& rhs) {

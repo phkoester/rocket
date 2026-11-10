@@ -20,7 +20,7 @@
 // `fmt::formatter<rocket::i128>` ---------------------------------------------------------------------------
 
 /**
- * @spec_fmt_formatter{#rocket::i128}
+ * @spec_fmt_formatter{rocket::i128}
  *
  * This formatter uses the same format specifiers as the underlying string formatter.
  */
@@ -57,7 +57,7 @@ private:
 // `fmt::formatter<rocket::u128>` ---------------------------------------------------------------------------
 
 /**
- * @spec_fmt_formatter{#rocket::u128}
+ * @spec_fmt_formatter{rocket::u128}
  *
  * This formatter uses the same format specifiers as the underlying string formatter.
  */
@@ -204,7 +204,7 @@ private:
 
 #ifndef ROCKET_HAS_STD_CHRONO_TIME_ZONE
 
-// `fmt::formatter<std::chrono::year_month_day>` -----------------------------------------------------------
+// `fmt::formatter<std::chrono::year_month_day>` ------------------------------------------------------------
 
 /**
  * Formats a #std::chrono::year_month_day with {fmt}.

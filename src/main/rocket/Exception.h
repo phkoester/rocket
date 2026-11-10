@@ -322,7 +322,7 @@ std::string what(std::exception_ptr ptr);
 // `fmt::formatter<rocket::WrappedException>` ---------------------------------------------------------------
 
 /**
- * @spec_fmt_formatter{#rocket::WrappedException}
+ * @spec_fmt_formatter{rocket::WrappedException}
  *
  * - If the `?` format specifier is used, then the stack trace is included.
  * - If the `t` format specifier is used, then the type of the exception is included.

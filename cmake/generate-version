@@ -11,7 +11,7 @@ Writes the generated header to stdout.
 
 import argparse
 import re
-# Don't import `semver` here so the build will work without it
+# Don’t import `semver` here so the build will work without it
 import sys
 
 # Constants -------------------------------------------------------------------------------------------------

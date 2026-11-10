@@ -121,7 +121,7 @@ using GetResult = std::expected<T, GetError>;
 // Functions ................................................................................................
 
 /**
- * Returns all environment variables as a set of name-value pairs.
+ * Returns all environment variables as a map of name-value pairs.
  *
  * This function is thread-safe as long as all callers use this API from `system.h` exclusively.
  *

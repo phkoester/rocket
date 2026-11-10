@@ -186,7 +186,7 @@ private:
 
 // `fmt::formatter<rocket::format::Subformat>` --------------------------------------------------------------
 
-/// @spec_fmt_formatter{#rocket::format::Subformat}
+/// @spec_fmt_formatter{rocket::format::Subformat}
 template<typename C>
 struct fmt::formatter<rocket::format::Subformat<C>, C> {
   /// @cond undocumented

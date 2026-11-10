@@ -97,7 +97,7 @@ struct BasicCharacter {
   /**
    * Returns the number of code points in the character.
    *
-   * @note You usually don't need this function. If you do, something might be wrong with your code. Using
+   * @note You usually don’t need this function. If you do, something might be wrong with your code. Using
    *   this function on a segment returned by #rocket::unicode::Iterator is redundant and inefficient.
    *
    * @return the number of code points in the character

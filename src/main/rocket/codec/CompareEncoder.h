@@ -427,7 +427,7 @@ struct CompareConsumerImpl<DataType::VarRef, T, Cmp> {
 
   Ordering
   consume(const T& lhs, const T& rhs) {
-    // For `VarRef`, don't compare the names
+    // For `VarRef`, don’t compare the names
     return CompareConsumerImpl<ElemDataType, Elem, Cmp>().consume(lhs.get(), rhs.get());
   }
 };

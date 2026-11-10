@@ -18,7 +18,7 @@
 // `scn::scanner<rocket::i128>` -----------------------------------------------------------------------------
 
 /**
- * @spec_scn_scanner{#rocket::i128}
+ * @spec_scn_scanner{rocket::i128}
  *
  * This scanner reads the value via `operator>>`; format specifiers are not supported.
  */
@@ -28,7 +28,7 @@ struct scn::scanner<rocket::i128, C> : scn::basic_istream_scanner<C> {};
 // `scn::scanner<rocket::u128>` -----------------------------------------------------------------------------
 
 /**
- * @spec_scn_scanner{#rocket::u128}
+ * @spec_scn_scanner{rocket::u128}
  *
  * This scanner reads the value via `operator>>`; format specifiers are not supported.
  */

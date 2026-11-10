@@ -54,7 +54,7 @@ PrintTo(const bimap<A, B>& val, std::ostream* os) {
 // `fmt::formatter<boost::bimaps::bimap>` -------------------------------------------------------------------
 
 /**
- * @spec_fmt_formatter{`boost::bimaps::bimap`}
+ * @spec_fmt_formatter{boost::bimaps::bimap}
  *
  * - If the `i` format specifier is used, then the output is indented.
  */

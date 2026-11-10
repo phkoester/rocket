@@ -53,7 +53,7 @@ using u128 = boost::int128::uint128; ///< An unsigned 128-bit integer type.
 
 // `std::numeric_limits<rocket::i128>` ----------------------------------------------------------------------
 
-/// @spec_std_numeric_limits{#rocket::i128}
+/// @spec_std_numeric_limits{rocket::i128}
 template<>
 struct std::numeric_limits<rocket::i128> {
   /// Whether the type is signed.
@@ -68,7 +68,7 @@ struct std::numeric_limits<rocket::i128> {
 
 // `std::numeric_limits<rocket::u128>` ----------------------------------------------------------------------
 
-/// @spec_std_numeric_limits{#rocket::u128}
+/// @spec_std_numeric_limits{rocket::u128}
 template<>
 struct std::numeric_limits<rocket::u128> {
   /// Whether the type is signed.

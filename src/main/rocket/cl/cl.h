@@ -317,7 +317,7 @@ struct Option {
   static Option
   help(const OptionGroup* group, std::optional<bool>& out) {
     const OptionConfig config {
-      .description="display this help text and exit",
+      .description="display this help and exit",
       .group=group,
       .name="help",
       .shortName=unicode::Character<char>("?")

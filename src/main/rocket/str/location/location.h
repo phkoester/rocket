@@ -53,7 +53,7 @@ struct Position {
   /**
    * The ranges associated with this position.
    *
-   * There must be character boundaries at the ranges' lower and upper positions. The ranges are underlined
+   * There must be character boundaries at the ranges’ lower and upper positions. The ranges are underlined
    * with the tilde (`~`).
    */
   Ranges ranges {}; // NOLINT
@@ -158,7 +158,7 @@ struct PrintLocationsConfig {
  *
  * @param input the input string. It must be UTF-8-encoded, using LF (`"\n"`) or CR/LF (`"\r\n"`) as line
  *   breaks
- * @param positions the positions to look for. They needn't be sorted in any way. The order of the positions
+ * @param positions the positions to look for. They needn’t be sorted in any way. The order of the positions
  *   is preserved in the #rocket::str::location::LocationsResult. The only restriction is that all
  *   #rocket::str::location::Position#position values have to be unique
  * @param config the configuration

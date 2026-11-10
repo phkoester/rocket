@@ -134,7 +134,7 @@ parseCommand(const vector<string>& args, nio::Sink& out = nio::out, nio::Sink& e
         .shortName="s"_c
       }, parseCommandShow),
       Option::custom({
-        .description="test something, or don't",
+        .description="test something, or don’t",
         .group=&show,
         .name="test",
         .shortName="t"_c
@@ -218,7 +218,7 @@ parseCommand(const vector<string>& args, nio::Sink& out = nio::out, nio::Sink& e
         "Miscellaneous:~"
         "~"
         "  -\\?, --help~"
-        "          display this help text and exit~"
+        "          display this help and exit~"
         "~"
         "Gallia est omnis divisa in partes tres, quarum unam incolunt Belgae, aliam~"
         "Aquitani, tertiam qui ipsorum lingua Celtae, nostra Galli appellantur. Hi omnes~"
@@ -245,7 +245,7 @@ parseCommand(const vector<string>& args, nio::Sink& out = nio::out, nio::Sink& e
       "List control:\n"
       "\n"
       "  -?, --help\n"
-      "          display this help text and exit\n"
+      "          display this help and exit\n"
       "  -l, --list\n"
       "          a list option that is good for nothing\n");
   }
@@ -298,11 +298,11 @@ parseCommand(const vector<string>& args, nio::Sink& out = nio::out, nio::Sink& e
       "Show control:\n"
       "\n"
       "  -?, --help\n"
-      "          display this help text and exit\n"
+      "          display this help and exit\n"
       "  -s, --show\n"
       "          a show option that is good for nothing\n"
       "  -t, --test\n"
-      "          test something, or don't\n");
+      "          test something, or don’t\n");
   }
 
   // Test invalid show option
@@ -604,7 +604,7 @@ TEST(cl, helpUngroupedOptions) {
     "Options:\n"
     "\n"
     "  -?, --help\n"
-    "          display this help text and exit\n"
+    "          display this help and exit\n"
     "      --untitled\n"
     "          an option in an untitled group\n"
     "\n"

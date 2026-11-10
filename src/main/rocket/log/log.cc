@@ -229,7 +229,7 @@ Out::expand(
   const auto patternDir = patternPath.parent_path().string();
   const bool dateFoundInPatternDir = patternDir.contains("@[date]");
   const bool pidFoundInPatternDir = patternDir.contains("@[pid]");
-  // We assume the directory part of the pattern to be "variable" if it contains a date or a PID. We don't
+  // We assume the directory part of the pattern to be "variable" if it contains a date or a PID. We don’t
   // support zipping older log files in this case, because that would involve a rather complicated directory
   // lookup
   const bool variablePatternDir = dateFoundInPatternDir || pidFoundInPatternDir;
@@ -270,7 +270,7 @@ Out::expand(
 
   if (zipFound && variablePatternDir) {
     // A pattern like `some/path/@[date]-@[pid]/name.log` works fine; however, in this case where the
-    // directory part of the pattern is variable, we don't support zipping older log files
+    // directory part of the pattern is variable, we don’t support zipping older log files
     ROCKET_FAIL("Can only zip older log files in the same directory");
   }
   if (zipFound && not dateFoundInPatternName) {

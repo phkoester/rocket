@@ -179,8 +179,8 @@ operator>>(istream& lhs, i128& rhs) {
     return lhs;
   }
 
-  // Convert string to magnitude, check for overflow. The magnitude is unsigned, because the lowest value's
-  // magnitude is one greater than the highest value and doesn't fit into an `i128`
+  // Convert string to magnitude, check for overflow. The magnitude is unsigned, because the lowest value’s
+  // magnitude is one greater than the highest value and doesn’t fit into an `i128`
 
   const auto max = static_cast<u128>(numeric_limits<i128>::max());
   const auto magnitude = parseDigits(buf, negative ? max + 1 : max);
