@@ -407,11 +407,11 @@ TEST(FormattedCodec, ProducerFailureInsideCluster) {
 
   // A digit and U+0301 (COMBINING ACUTE ACCENT) form one cluster, so these failures lie inside it. The
   // reported positions are the starts of the clusters
-  expectFailure<Pair>("(1́, 2)", "Expected ,", 1);
+  expectFailure<Pair>("(1́, 2)", "Expected ','", 1);
   expectFailure<Pair>("(1, 2́", "Unterminated tuple", 4, { { 0, 4 } });
 
   // A failure at a cluster boundary stays where it is
-  expectFailure<Pair>("(1; 2)", "Expected ,", 2);
+  expectFailure<Pair>("(1; 2)", "Expected ','", 2);
 
   // The same goes for a source that is not contiguous
   const auto fromStream = decodeFromStream<Pair>("(1́, 2)");

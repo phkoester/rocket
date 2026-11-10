@@ -8,9 +8,11 @@
 #include "rocket/enum.h"
 #include "rocket/macro.h"
 #include "rocket/chrono/chrono.h"
-#include "rocket/str/split.h"
 #include "rocket/str/str.h"
+#include "rocket/str/escape/escape.h"
 #include "rocket/system/system.h"
+
+#include <regex>
 
 using namespace rocket;
 using namespace rocket::log;
@@ -117,7 +119,12 @@ Fmt logFmt;
 
 // `Out` ----------------------------------------------------------------------------------------------------
 
-/// @NotThreadSafe
+/**
+ * The log output sink
+ *
+ * This class is not thread-safe, so all usages must be protected by #logMutex.
+ * @NotThreadSafe
+ */
 struct Out {
   /// This one is publicly available; tests may need this.
   string
@@ -152,6 +159,21 @@ private:
     return std::chrono::year_month_day(localDays); // NOLINT
   }
 
+  static string
+  regex(string_view name) {
+    string ret = str::escape::escapeRegex(name);
+    // '[' and ']' are special characters in regex, so we need to escape them
+    str::replaceIn(ret, {
+      { "@\\[date\\]", "(\\d{4}-\\d{2}-\\d{2})" }, // Make this a group
+      { "@\\[dir\\]", "" },
+      { "@\\[name\\]", ".+" },
+      { "@\\[pid\\]", "\\d+" },
+      { "@\\[utc\\]", "" },
+      { "@\\[zip\\]", "" },
+    });
+    return ret;
+  }
+
   static std::chrono::year_month_day
   utcYmd(const TimePoint& time) {
     auto utcDays = std::chrono::floor<std::chrono::days>(time);
@@ -166,9 +188,16 @@ private:
   optional<std::chrono::year_month_day> ymd_;
   bool zip_ = false;
 
-  string expand(string_view pattern, const TimePoint& time, bool update);
+  // `ymd` replaces the date taken from `time` for `@[date]`
+  string expand(
+    string_view pattern,
+    const TimePoint& time,
+    bool update,
+    optional<std::chrono::year_month_day> ymd = nullopt);
 
-  void zipYesterday(const TimePoint& time);
+  void reset();
+
+  void zipOlderFiles(string_view pattern, const filesystem::path& current);
 };
 
 nio::Sink&
@@ -186,29 +215,51 @@ Out::get(const TimePoint& time) {
 }
 
 string
-Out::expand(string_view pattern, const TimePoint& time, bool update) {
+Out::expand(
+  string_view pattern,
+  const TimePoint& time,
+  bool update,
+  optional<std::chrono::year_month_day> ymd) {
+  namespace fs = std::filesystem;
+
   // Prepare the values
 
-  auto localYmd = Out::localYmd(time);
-  auto localDate = fmt::format("{}", localYmd);
-  auto utcYmd = Out::utcYmd(time);
-  auto utcDate = fmt::format("{}", utcYmd);
+  const auto patternPath = fs::path(pattern);
 
-  auto dir = filesystem::path(Process::invocationName()).parent_path().string();
-  auto pid = fmt::format("{}", Process::id());
-  const auto& name = process().name();
+  const auto patternDir = patternPath.parent_path().string();
+  const bool dateFoundInPatternDir = patternDir.contains("@[date]");
+  const bool pidFoundInPatternDir = patternDir.contains("@[pid]");
+  // We assume the directory part of the pattern to be "variable" if it contains a date or a PID. We don't
+  // support zipping older log files in this case, because that would involve a rather complicated directory
+  // lookup
+  const bool variablePatternDir = dateFoundInPatternDir || pidFoundInPatternDir;
 
-  // Expand the pattern
+  const auto patternName = patternPath.filename().string();
+  // When zipping, we require a date in the name part of the pattern so there are different log files in
+  // the same directory, differing by their dates
+  const bool dateFoundInPatternName = patternName.contains("@[date]");
 
   const bool utcFound = pattern.contains("@[utc]");
   const bool dateFound = pattern.contains("@[date]");
   const bool zipFound = pattern.contains("@[zip]");
-  const string_view date = utcFound ? utcDate : localDate;
+
+  if (not ymd) {
+    ymd = utcFound ? utcYmd(time) : localYmd(time);
+  }
+  const string date = fmt::format("{}", *ymd);
+
+  const auto invocationPath = fs::path(Process::invocationName());
+  const auto dir = invocationPath.parent_path();
+
+  const auto pid = fmt::format("{}", Process::id());
+  const auto& name = process().name();
+
+  // Expand the pattern
 
   string ret(pattern);
   str::replaceIn(ret, {
     { "@[date]", date },
-    { "@[dir]", dir },
+    { "@[dir]", dir.string() },
     { "@[name]", name },
     { "@[pid]", pid },
     { "@[utc]", "" },
@@ -217,8 +268,14 @@ Out::expand(string_view pattern, const TimePoint& time, bool update) {
 
   // Do sanity checks
 
-  if (zipFound && not dateFound) {
-    ROCKET_FAIL("Can only zip yesterday’s log file if a date is present in the pattern");
+  if (zipFound && variablePatternDir) {
+    // A pattern like `some/path/@[date]-@[pid]/name.log` works fine; however, in this case where the
+    // directory part of the pattern is variable, we don't support zipping older log files
+    ROCKET_FAIL("Can only zip older log files in the same directory");
+  }
+  if (zipFound && not dateFoundInPatternName) {
+    // If the pattern is something like `some/path/name-@[date].log`, we can easily look for older zip files
+    ROCKET_FAIL("Can only zip older log files if a date is present in the name part of the pattern");
   }
   if (ret.empty()) {
     ROCKET_FAIL("Empty pattern");
@@ -234,12 +291,23 @@ Out::expand(string_view pattern, const TimePoint& time, bool update) {
     utc_ = utcFound;
     ymd_ = nullopt;
     if (dateFound) {
-      ymd_ = utc_ ? utcYmd : localYmd;
+      ymd_ = ymd;
     }
     zip_ = zipFound;
   }
 
   return ret;
+}
+
+void
+Out::reset() {
+  out_ = &nio::out;
+  fileOut_ = nullptr;
+
+  pattern_ = "";
+  utc_ = false;
+  ymd_ = nullopt;
+  zip_ = false;
 }
 
 void
@@ -251,32 +319,71 @@ Out::setPattern(string_view pattern, const TimePoint& time) {
     path = expand(pattern, time, true);
   } catch (const exception&) {
     process().error(nio::err, 0, "Cannot apply log-output pattern `{}`; logging to standard output instead", pattern);
-    set(nio::out);
+    reset();
+    return;
   }
   if (not path.empty()) {
     try {
       fileOut_ = make_unique<nio::FileSink>(path);
     } catch (const exception&) {
       process().error(nio::err, 0, "Cannot open log file `{}`; logging to standard output instead", path);
-      set(nio::out);
+      reset();
+      return;
     }
   }
 
-  // If zipping, check if yesterday’s log file exists and zip it
+  // Zip older files
   if (zip_) {
-    zipYesterday(time);
+    zipOlderFiles(pattern, path);
   }
 }
 
 void
-Out::zipYesterday(const TimePoint& time) {
-  const string expanded = expand(pattern_, time - 24h, false);
-  const filesystem::path path(expanded);
-  if (filesystem::is_regular_file(path)) {
-    try {
-      system::exec( { "gzip", "-5f", path.string() } );
-    } catch (const exception& ex) {
-      process().error(nio::err, 0, "Cannot zip yesterday’s log file `{}`: {}", path.string(), what(ex));
+Out::zipOlderFiles(string_view pattern, const filesystem::path& current) {
+  namespace fs = std::filesystem;
+
+  string namePattern = fs::path(pattern).filename().string();
+  string nameRegex = regex(namePattern);
+  std::regex nameRe(nameRegex);
+
+  auto currentDir = current.parent_path();
+  if (currentDir.empty()) {
+    currentDir = fs::absolute(current).parent_path();
+  }
+
+  ROCKET_ASSERT(ymd_, "A date must be present");
+  string currentDate = fmt::format("{}", *ymd_);
+
+  error_code ec;
+  fs::directory_iterator it(currentDir, fs::directory_options::skip_permission_denied, ec);
+  if (ec) {
+    process().error(nio::err, 0, "Cannot scan directory `{}`: {}", currentDir, ec.message());
+    return;
+  }
+  for (; it != fs::directory_iterator(); it.increment(ec)) {
+    if (ec) {
+      break;
+    }
+    if (not it->is_regular_file(ec) || ec) {
+      continue;
+    }
+
+    auto entryPath = it->path();
+    string entryName = entryPath.filename().string();
+    smatch match;
+    if (regex_match(entryName, match, nameRe)) {
+      // Group 1 is the directory-entry date, `YYYY-MM-DD`
+      const string entryDate = match[1].str();
+      // Using `YYYY-MM-DD` for the date part of the name, we can compare the strings directly
+      if (entryDate < currentDate) {
+        // The entry date is older: zip the file
+        process().info(nio::out, "Zipping log file `{}` ...", entryPath);
+        try {
+          system::exec( { "gzip", "-5f", entryPath.string() } );
+        } catch (const exception& ex) {
+          process().error(nio::err, 0, "Cannot zip log file `{}`: {}", entryPath, what(ex));
+        }
+      }
     }
   }
 }
@@ -351,8 +458,8 @@ const vector<cl::Option> CL_OPTIONS {
       NBSP NBSP "@[dir]" NBSP NBSP NBSP "expands to the parent directory of the executable\n"
       NBSP NBSP "@[name]"     NBSP NBSP "expands to the name of the process\n"
       NBSP NBSP "@[pid]" NBSP NBSP NBSP "expands to the process ID (PID)\n"
-      NBSP NBSP "@[utc]" NBSP NBSP NBSP "serves as a hint to use UTC date rather than local date\n"
-      NBSP NBSP "@[zip]" NBSP NBSP NBSP "serves as a hint to zip yesterday’s log file (requires `gzip`)",
+      NBSP NBSP "@[utc]" NBSP NBSP NBSP "serves as a hint to use the UTC date rather than the local date\n"
+      NBSP NBSP "@[zip]" NBSP NBSP NBSP "serves as a hint to zip older log files (requires `gzip`)",
   }, applyLogOut),
 };
 

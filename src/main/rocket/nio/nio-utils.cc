@@ -2,8 +2,8 @@
  * nio-utils.cc
  */
 
-#include "rocket/assert.h"
 #include "rocket/InputFailure.h"
+#include "rocket/assert.h"
 #include "rocket/nio/nio-utils.h"
 #include "rocket/unicode/unicode.h"
 
@@ -196,7 +196,7 @@ nextElem(nio::Sink& out, bool indent, u64 level, u64 index) {
 void
 expectChar(nio::Source& in, char c) {
   if (not readChar(in, c)) {
-    throw InputFailure(in.tell(), fmt::format("Expected {}", c));
+    throw InputFailure(in.tell(), fmt::format("Expected {:?}", c));
   }
 }
 

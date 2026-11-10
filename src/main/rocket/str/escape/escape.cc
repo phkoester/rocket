@@ -67,7 +67,7 @@ escapeCStringCodePoint(unicode::CodePoint cp, u64& column, const CStringConfig& 
       case '\b': // Backspace = 8
         ret = string { '\\', 'b' };
         break;
-      case '\t':// Horizontal tab = 9
+      case '\t': // Horizontal tab = 9
         return escapeCStringTab(column, config);
       case '\n': // Line feed = 10
         ret = string { '\\', 'n' };

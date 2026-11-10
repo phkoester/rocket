@@ -610,11 +610,11 @@ TEST(JsonCodec, ProducerFailureInsideClusterOutsideString) {
 
   // A digit and U+0301 (COMBINING ACUTE ACCENT) form one cluster, so these failures lie inside it. The
   // reported positions are the starts of the clusters
-  expectFailure<Pair>("[1́, 2]", "Expected ,", 1);
+  expectFailure<Pair>("[1́, 2]", "Expected ','", 1);
   expectFailure<Pair>("[1, 2́", "Unterminated array", 4, { { 0, 4 } });
 
   // A failure at a cluster boundary stays where it is
-  expectFailure<Pair>("[1; 2]", "Expected ,", 2);
+  expectFailure<Pair>("[1; 2]", "Expected ','", 2);
 
   // The source stays where the failure occurred
   EXPECT_EQ(decodeAndTell<Pair>("[1́, 2]").second, 2U);
