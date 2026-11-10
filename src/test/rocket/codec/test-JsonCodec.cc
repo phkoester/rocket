@@ -98,7 +98,8 @@ TEST(JsonCodec, ConsumerChar) {
   EXPECT_EQ(encode('\t'), "\"\\t\"");
   EXPECT_EQ(encode(U'€'), "\"€\"");
   EXPECT_EQ(encode(U'\u200B'), "\"\\u200B\"");
-  EXPECT_EQ(encode(U'\U0010FFFF'), "\"\U0010FFFF\"");
+  EXPECT_EQ(encode(U'\U0001F971'), "\"\U0001F971\""); // Printable, so verbatim
+  EXPECT_EQ(encode(U'\U0010FFFF'), "\"\\uDBFF\\uDFFF\""); // Not printable, so a surrogate pair
 }
 
 TEST(JsonCodec, ConsumerEnum) {
@@ -139,7 +140,9 @@ TEST(JsonCodec, ConsumerString) {
   EXPECT_EQ(encode(U"Hello"sv), "\"Hello\"");
   EXPECT_EQ(encode("\x7f"sv), "\"\\u007F\"");
   EXPECT_EQ(encode(U"\u200B"sv), "\"\\u200B\"");
-  EXPECT_EQ(encode(U"\U0010FFFF"sv), "\"\U0010FFFF\"");
+  EXPECT_EQ(encode(U"\U0001F971"sv), "\"\U0001F971\""); // Printable, so verbatim
+  EXPECT_EQ(encode(U"\U0010FFFF"sv), "\"\\uDBFF\\uDFFF\""); // Not printable, so a surrogate pair
+  EXPECT_EQ(encode(U"a\U000F0000b"sv), "\"a\\uDB80\\uDC00b\""); // U+F0000 is a private-use code point
 }
 
 TEST(JsonCodec, ConsumerStringShortEscapes) {

@@ -248,6 +248,24 @@ TEST(escape, CStringInvalidUtf8) {
       throwsInputFailure(1, EndsWith("Invalid UTF-8 byte sequence")));
 }
 
+TEST(escape, CStringJsonSurrogatePair) {
+  const CStringConfig config { .json=true };
+
+  // A nonprintable code point greater than U+FFFF is written as a surrogate pair
+  const string in = "a\U0010FFFFb";
+  const string escaped = escapeCString(in, config);
+  EXPECT_EQ(escaped, "a\\uDBFF\\uDFFFb");
+  EXPECT_EQ(unescapeCString(escaped, config), in);
+
+  EXPECT_EQ(escapeCString("\U000F0000", config), "\\uDB80\\uDC00"); // A private-use code point
+
+  // A printable one stays verbatim
+  EXPECT_EQ(escapeCString("\U0001F971", config), "\U0001F971"); // U+1F971 (Yawning Face)
+
+  // Without JSON, `\U` is used
+  EXPECT_EQ(escapeCString(in), "a\\U0010FFFFb");
+}
+
 TEST(escape, CStringTabSize) {
   EXPECT_THAT(
       [&] { escapeCString("a\tb", { .tabSize=0 }); },

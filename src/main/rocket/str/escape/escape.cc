@@ -116,12 +116,14 @@ escapeCStringCodePointHex(unicode::CodePoint cp, u64& column, const CStringConfi
   if (config.json) {
     // JSON
     if (cp > 0xFFFFU) {
-      // We can’t escape code points > U+FFFF with `\u`, so just return the string representation
-      ret = static_cast<string>(cp);
-      column += cp.width();
-      return ret;
+      // `\u` takes only four hexadecimal digits, so write a UTF-16 surrogate pair
+      const u32 offset = static_cast<u32>(cp) - 0x10000U;
+      const u32 high = 0xD800U + (offset >> 10U);
+      const u32 low = 0xDC00U + (offset & 0x3FFU);
+      ret = fmt::format("\\u{:0>4X}\\u{:0>4X}", high, low);
+    } else {
+      ret = fmt::format("\\u{:0>4X}", static_cast<u32>(cp));
     }
-    ret = fmt::format("\\u{:0>4X}", static_cast<u32>(cp));
   } else {
     // C
     if (cp > 0xFFFFU) {

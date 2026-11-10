@@ -23,7 +23,8 @@ struct CStringConfig {
    * Whether to unescape from or escape to JSON.
    *
    * When escaping, characters that have no JSON escape sequence, such as BEL, VT, and ESC, are written in
-   * hexadecimal notation with the prefix `\u`.
+   * hexadecimal notation with the prefix `\u`. A nonprintable code point greater than U+FFFF is written as
+   * a `\u` high surrogate followed by a `\u` low surrogate.
    *
    * When unescaping, all C-string escape sequences remain valid. In addition, `\/` is accepted, and a `\u`
    * high surrogate followed by a `\u` low surrogate yields a single code point. Unpaired surrogates are

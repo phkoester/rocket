@@ -50,9 +50,10 @@
  * high surrogate must be followed by a `\u` low surrogate; together, they yield a single code point.
  *
  * When writing, the escape sequences `\b`, `\t`, `\n`, `\f`, `\r`, <code>\\\"</code>, and `\\` are used. If
- * a character is classified as printable by the Unicode standard or is greater than U+FFFF, it appears
- * verbatim in the output, e.g., as `"a"` or `"€"`. Otherwise, it is written in hexadecimal notation, using
- * the prefix `\u` (four hexadecimal digits).
+ * a character is classified as printable by the Unicode standard, it appears verbatim in the output, e.g.,
+ * as `"a"` or `"€"`. Otherwise, it is written in hexadecimal notation, using the prefix `\u` (four
+ * hexadecimal digits). A character greater than U+FFFF is then written as a `\u` high surrogate followed by
+ * a `\u` low surrogate.
  *
  * ## Enumerations
  *
