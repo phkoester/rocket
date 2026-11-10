@@ -847,6 +847,7 @@ struct CborProducerImpl<DataType::Map, T> {
 
     const u64 size = cbor_map_size(item.ptr());
     T map;
+    // With CBOR, the first insert wins
     for (u64 index = 0; index < size; ++index) {
       map.insert(produceElem(item, state, index));
     }
@@ -883,6 +884,7 @@ struct CborProducerImpl<DataType::Bimap, T> {
 
     const u64 size = cbor_map_size(item.ptr());
     T map;
+    // With CBOR, the first insert wins
     for (u64 index = 0; index < size; ++index) {
       auto [key, elem] = produceElem(item, state, index);
       map.left.insert({ key, elem });

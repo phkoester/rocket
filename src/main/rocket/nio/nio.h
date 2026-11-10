@@ -566,10 +566,13 @@ struct Source : Device {
   std::vector<u8> readAll();
 
   /**
-   * Tries to read a valid code point from a source.
+   * Tries to read a valid code point from a source, advances the source only on success.
    *
    * The result is #rocket::nio::Eof only if no bytes are left. A truncated or otherwise malformed sequence
-   * yields #rocket::nio::InvalidUtf8, after which the position of the source is unspecified.
+   * yields #rocket::nio::InvalidUtf8. An I/O error yields #rocket::nio::Bad.
+   *
+   * A source that cannot report its position, as one over a pipe, cannot go back either. It still advances
+   * over the bytes read on failure.
    *
    * @return a code point if one was read, an error otherwise
    */

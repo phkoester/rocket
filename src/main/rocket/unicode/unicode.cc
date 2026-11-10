@@ -174,7 +174,7 @@ lengthFromByte(char c, InvalidUnicodePolicy policy) {
   if (policy == InvalidUnicodePolicy::Continue) {
     return NPOS;
   }
-  throw InputFailure(0, fmt::format("{:0>#2x} is neither a single nor a UTF-8 lead byte", c));
+  throw InputFailure(0, fmt::format("{:0>#2X} is neither a single nor a UTF-8 lead byte", c));
 }
 
 CodePoint

@@ -114,7 +114,6 @@ target_sources(rocket
       ${CMAKE_CURRENT_SOURCE_DIR}
       ${GENERATED_DIR}
     FILES
-      rocket/assert.h
       rocket/Bimap.h
       rocket/Bimap-codec.h
       rocket/Cow.h
@@ -124,10 +123,12 @@ target_sources(rocket
       rocket/Process.h
       rocket/Result.h
       rocket/TypeId.h
+      rocket/assert.h
       rocket/enum.h
       rocket/format.h
       rocket/functional.h
       rocket/int128.h
+      rocket/literal.h
       rocket/macro.h
       rocket/rocket.h
       rocket/scan.h

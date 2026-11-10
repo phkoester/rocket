@@ -140,7 +140,6 @@ if(NOT Boost_FOUND)
   FetchContent_Declare(
     Boost
     URL          https://github.com/boostorg/boost/releases/download/boost-${ROCKET_BOOST_VERSION}/boost-${ROCKET_BOOST_VERSION}-cmake.7z
-    GIT_PROGRESS TRUE
     SYSTEM
     EXCLUDE_FROM_ALL
   )

@@ -295,22 +295,38 @@ Source::readCodePoint() {
     return unexpected(Bad);
   }
 
+  // A source that cannot report its position, such as a pipe or `NullSource`, cannot go back either. It is
+  // not bad, though, so it is read all the same
+  const u64 initialPos = tell();
+
   // Read first byte
   char c; // NOLINT
   if (read(c) != 1) {
-    return unexpected(Eof);
+    return unexpected(bad() ? Bad : Eof);
   }
   string s;
   s.push_back(c);
 
+  // The source may only advance on success, so rewind the position on failure, if possible. Seeking a source
+  // that cannot seek would not only fail, but might also discard buffered input
+  const auto failInvalidUtf8 = [&] {
+    if (initialPos != NPOS) {
+      seek(safe<i64>(initialPos), SeekMode::beg);
+    }
+    return unexpected(InvalidUtf8);
+  };
+
   // Read subsequent bytes
   const auto len = unicode::utf8::lengthFromByte(c, unicode::InvalidUnicodePolicy::Continue);
   if (len == NPOS) {
-    return unexpected(InvalidUtf8); // Neither a single byte nor a lead byte
+    return failInvalidUtf8(); // Neither a single byte nor a lead byte
   }
   for (u64 i = 0; i < len - 1; ++i) {
     if (read(c) != 1) {
-      return unexpected(InvalidUtf8); // Truncated sequence: there was input, so this isn't a plain EOF
+      if (bad()) {
+        return unexpected(Bad);
+      }
+      return failInvalidUtf8(); // Truncated sequence: there was input, so this isn't a plain EOF
     }
     s.push_back(c);
   }
@@ -320,11 +336,11 @@ Source::readCodePoint() {
     u64 pos = 0;
     auto ret = unicode::nextCodePoint(s, pos);
     if (pos != s.size()) {
-      return unexpected(InvalidUtf8);
+      return failInvalidUtf8();
     }
     return ret;
   } catch (const exception&) {
-    return unexpected(InvalidUtf8);
+    return failInvalidUtf8();
   }
 }
 
@@ -846,6 +862,13 @@ StreamSource::seek(i64 offset, SeekMode mode) { // NOLINT
 u64
 StreamSource::tell() {
   if (bad()) {
+    return NPOS;
+  }
+
+  // A stream that cannot seek, such as one over a pipe, has no position. Ask the stream buffer, which leaves
+  // the state of the stream alone, unlike `tellg`
+  if (is_.rdbuf() == nullptr ||
+      is_.rdbuf()->pubseekoff(0, ios::cur, ios::in) == istream::pos_type(istream::off_type(-1))) {
     return NPOS;
   }
 

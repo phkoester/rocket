@@ -215,7 +215,7 @@ escapeRegexCodePoint(unicode::CodePoint cp, u64& column) {
   }
 
   // Printable characters, code points > U+FFFF
-  if (cp.isPrint() || cp > 0xffffU) {
+  if (cp.isPrint() || cp > 0xFFFFU) {
     column += cp.width();
     return static_cast<string>(cp);
   }
