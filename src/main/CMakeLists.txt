@@ -53,6 +53,9 @@ set(ROCKET_PRIVATE_LINK_TARGETS)
 
 if(GAIA_OS_LINUX)
   list(APPEND ROCKET_PRIVATE_LINK_TARGETS stdc++exp)
+elseif(GAIA_OS_WINDOWS)
+  # The ICU shipped with Windows (`icu.dll`), used through `<icu.h>` from the Windows SDK
+  list(APPEND ROCKET_PRIVATE_LINK_TARGETS icu)
 endif()
 
 # `version.h` ...............................................................................................
@@ -194,7 +197,7 @@ target_link_libraries(rocket
     ${ROCKET_BOOST_LINK_TARGETS}
     cbor
     fmt::fmt-header-only
-    ICU::uc
+    # XXX ICU::uc
     scn::scn
 )
 add_library(Rocket::rocket ALIAS rocket)

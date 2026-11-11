@@ -8,15 +8,20 @@
 
 #include <boost/safe_numerics/safe_integer.hpp>
 
-#include <unicode/uchar.h>
-#include <unicode/utf8.h>
-#include <unicode/utypes.h>
+#ifdef ROCKET_OS_WINDOWS
+  #include <Windows.h>
+  #include <icu.h> // Must come after `<Windows.h>`, which defines `NTDDI_VERSION`
+#else
+  #include <unicode/uchar.h>
+  #include <unicode/utf8.h>
+  #include <unicode/utypes.h>
+#endif
 
 #include <array>
 
 using boost::safe_numerics::safe;
 
-using namespace icu;
+// XXX using namespace icu;
 using namespace rocket;
 using namespace rocket::unicode;
 using namespace std;
@@ -169,7 +174,9 @@ lengthFromByte(char c, InvalidUnicodePolicy policy) {
     return 1;
   }
   if (U8_IS_LEAD(c)) {
-    return U8_LENGTH_FROM_LEAD_BYTE(c);
+    // Not `U8_LENGTH_FROM_LEAD_BYTE`, which is a draft API since ICU 78 and missing from the Windows SDK's
+    // `<icu.h>`
+    return U8_COUNT_TRAIL_BYTES(c) + 1;
   }
   if (policy == InvalidUnicodePolicy::Continue) {
     return NPOS;

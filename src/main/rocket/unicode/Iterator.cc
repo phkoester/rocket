@@ -6,11 +6,17 @@
 
 #include "rocket/assert.h"
 
-#include <unicode/ubrk.h>
-#include <unicode/uloc.h>
-#include <unicode/utext.h>
-#include <unicode/utf16.h>
-#include <unicode/utf8.h>
+#ifdef ROCKET_OS_WINDOWS
+  #define NOMINMAX
+  #include <Windows.h>
+  #include <icu.h> // Must come after `<Windows.h>`, which defines `NTDDI_VERSION`
+#else
+  #include <unicode/ubrk.h>
+  #include <unicode/uloc.h>
+  #include <unicode/utext.h>
+  #include <unicode/utf16.h>
+  #include <unicode/utf8.h>
+#endif
 
 #include <algorithm>
 #include <array>

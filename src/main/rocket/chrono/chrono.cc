@@ -4,6 +4,8 @@
 
 #include "chrono.h"
 
+#include "rocket/scope.h"
+
 #include <algorithm>
 #include <array>
 #include <cstdint>
@@ -19,6 +21,7 @@
 #ifdef ROCKET_OS_WINDOWS
   #define NOMINMAX
   #include <Windows.h>
+  #include <icu.h>  // Must come after `<Windows.h>`, which defines `NTDDI_VERSION`
 #endif
 
 using namespace rocket;
@@ -35,6 +38,7 @@ namespace {
 
 // Local functions ------------------------------------------------------------------------------------------
 
+#if 0 // Old implementation, loading `icu.dll` dynamically. Replaced by the ICU API from <icu.h>
 #ifdef ROCKET_OS_WINDOWS
 
 // Converts a UTF-8 string to UTF-16, as needed by ICU
@@ -55,6 +59,7 @@ toUtf16(string_view str) {
 }
 
 #endif // ROCKET_OS_WINDOWS
+#endif // 0
 
 } // namespace
 
@@ -79,6 +84,56 @@ clockOffset() {
 } // namespace internal
 
 // Functions ------------------------------------------------------------------------------------------------
+
+string
+abbreviation([[maybe_unused]] string_view name, [[maybe_unused]] bool dst, string_view fallback) {
+#ifdef ROCKET_OS_WINDOWS
+  // Convert the zone name from UTF-8 to UTF-16
+
+  UErrorCode status = U_ZERO_ERROR;
+  array<UChar, 128> name16 {};
+  i32 name16Len = 0;
+  u_strFromUTF8(name16.data(), i32(name16.size()), &name16Len, name.data(), i32(name.size()), &status);
+  if (U_FAILURE(status) || name16Len <= 0) {
+    return string(fallback);
+  }
+
+  // Open a calendar for the zone. A null locale is the default locale
+
+  UCalendar* const cal = ucal_open(name16.data(), name16Len, nullptr, UCAL_GREGORIAN, &status);
+  if (U_FAILURE(status)) {
+    return string(fallback);
+  }
+  ROCKET_SCOPE_EXIT([&] { ucal_close(cal); });
+
+  array<UChar, 64> buf {};
+  const i32 len = ucal_getTimeZoneDisplayName(
+    cal, dst ? UCAL_SHORT_DST : UCAL_SHORT_STANDARD, nullptr, buf.data(), i32(buf.size()), &status);
+  if (U_FAILURE(status) || len <= 0) {
+    return string(fallback);
+  }
+
+  // Convert the result to UTF-8. Localized names may not be ASCII, for example `GMT−5` with U+2212 (MINUS
+  // SIGN). Preflight to get the size
+
+  i32 size = 0;
+  u_strToUTF8(nullptr, 0, &size, buf.data(), len, &status);
+  if (status != U_BUFFER_OVERFLOW_ERROR || size <= 0) {
+    return string(fallback);
+  }
+  status = U_ZERO_ERROR;
+  string ret(static_cast<string::size_type>(size), '\0');
+  u_strToUTF8(ret.data(), size, nullptr, buf.data(), len, &status);
+  if (U_FAILURE(status)) {
+    return string(fallback);
+  }
+  return ret;
+#else
+  return string(fallback);
+#endif // ROCKET_OS_WINDOWS
+}
+
+#if 0 // Old implementation, loading `icu.dll` dynamically. Replaced by the ICU API from <icu.h>
 
 string
 abbreviation([[maybe_unused]] string_view name, [[maybe_unused]] bool dst, string_view fallback) {
@@ -160,6 +215,8 @@ abbreviation([[maybe_unused]] string_view name, [[maybe_unused]] bool dst, strin
   return string(fallback);
 #endif // ROCKET_OS_WINDOWS
 }
+
+#endif // 0
 
 } // namespace rocket::chrono
 

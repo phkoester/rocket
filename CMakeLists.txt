@@ -27,8 +27,8 @@ set(ROCKET_BOOST_VERSION 1.92.0)
 set(ROCKET_FMT_VERSION 12.2.0)
 set(ROCKET_GAIA_VERSION 1.2.4)
 set(ROCKET_GTEST_VERSION 1.18.0)
-set(ROCKET_ICU_VERSION 79.1)
-set(ROCKET_ICU_CMAKE_VERSION 0.1.3)
+set(ROCKET_ICU_VERSION 72.1)
+# XXX set(ROCKET_ICU_CMAKE_VERSION 0.1.3)
 set(ROCKET_INT128_VERSION 4.1.0)
 set(ROCKET_LIBCBOR_VERSION 0.14.0)
 set(ROCKET_SCNLIB_VERSION master)
@@ -97,8 +97,7 @@ elseif(GAIA_OS_WINDOWS)
     list(APPEND COMPILE_FLAGS -Werror -Wextra # No `-Wall` on Windows
       -Wno-unknown-attributes)
   elseif(GAIA_CXX_COMPILER_MSVC)
-    # Windows, MSVC
-    list(APPEND COMPILE_DEFS _WIN32_WINNT=0x0601)
+    list(APPEND COMPILE_DEFS _WIN32_WINNT=0x0A00)
     list(APPEND COMPILE_FLAGS /bigobj /wd4244 /Zc:preprocessor)
   endif()
 endif()
@@ -212,7 +211,15 @@ endblock()
 
 # ICU .......................................................................................................
 
-find_package(ICU ${ROCKET_ICU_VERSION} COMPONENTS uc)
+if(NOT GAIA_OS_WINDOWS)
+  # On Windows, Rocket uses the ICU shipped with Windows through `<icu.h>` from the Windows SDK, which
+  # `FindICU` cannot find (it looks for `unicode/utypes.h`). Its version depends on the Windows build and is
+  # checked at runtime by the test `icu.version`
+  find_package(ICU ${ROCKER_ICU_VERSION} REQUIRED COMPONENTS uc)
+endif()
+
+if(OFF) # XXX
+find_package(ICU ${ROCKET_ICU_VERSION} COMPONENTS uc) # XXX
 if(NOT ICU_FOUND)
   if(DEFINED ENV{GAIA_DIR})
     FetchContent_Declare(
@@ -234,6 +241,7 @@ if(NOT ICU_FOUND)
     set(ICU_CMAKE_ICU_VERSION ${ROCKET_ICU_VERSION})
     FetchContent_MakeAvailable(icu-cmake)
   endblock()
+endif()
 endif()
 
 # Boost.Int128 ..............................................................................................
