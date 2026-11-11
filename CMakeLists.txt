@@ -28,7 +28,7 @@ set(ROCKET_FMT_VERSION 12.2.0)
 set(ROCKET_GAIA_VERSION 1.2.4)
 set(ROCKET_GTEST_VERSION 1.18.0)
 set(ROCKET_ICU_VERSION 72.1)
-# XXX set(ROCKET_ICU_CMAKE_VERSION 0.1.3)
+set(ROCKET_ICU_CMAKE_VERSION 0.1.3)
 set(ROCKET_INT128_VERSION 4.1.0)
 set(ROCKET_LIBCBOR_VERSION 0.14.0)
 set(ROCKET_SCNLIB_VERSION master)
@@ -76,6 +76,7 @@ set(FETCHCONTENT_QUIET FALSE)
 GaiaAddVar(ROCKET_BUILD_BENCH              BOOL   ${ROCKET_MASTER_PROJECT} "Build benchmarks")
 GaiaAddVar(ROCKET_BUILD_TEST               BOOL   ${ROCKET_MASTER_PROJECT} "Build tests")
 GaiaAddVar(ROCKET_COMPONENTS               STRING ""                       "Additional components to enable: `gui`")
+GaiaAddVar(ROCKET_ICU_CMAKE                BOOL   OFF                      "Use icu-cmake to build ICU")
 GaiaAddVar(ROCKET_IO_LOG                   BOOL   OFF                      "Enable logging of `rocket::io`")
 GaiaAddVar(ROCKET_NIO_LOG                  BOOL   OFF                      "Enable logging of `rocket::nio`")
 GaiaAddVar(ROCKET_NIO_NO_CONTIGUOUS_SOURCE BOOL   OFF                      "Disable contiguous-source optimization for `rocket::nio`")
@@ -211,16 +212,7 @@ endblock()
 
 # ICU .......................................................................................................
 
-if(NOT GAIA_OS_WINDOWS)
-  # On Windows, Rocket uses the ICU shipped with Windows through `<icu.h>` from the Windows SDK, which
-  # `FindICU` cannot find (it looks for `unicode/utypes.h`). Its version depends on the Windows build and is
-  # checked at runtime by the test `icu.version`
-  find_package(ICU ${ROCKET_ICU_VERSION} REQUIRED COMPONENTS uc)
-endif()
-
-if(OFF) # XXX
-find_package(ICU ${ROCKET_ICU_VERSION} COMPONENTS uc) # XXX
-if(NOT ICU_FOUND)
+if(ROCKET_ICU_CMAKE)
   if(DEFINED ENV{GAIA_DIR})
     FetchContent_Declare(
       icu-cmake
@@ -241,7 +233,13 @@ if(NOT ICU_FOUND)
     set(ICU_CMAKE_ICU_VERSION ${ROCKET_ICU_VERSION})
     FetchContent_MakeAvailable(icu-cmake)
   endblock()
-endif()
+else()
+  if(NOT GAIA_OS_WINDOWS)
+    # On Windows, Rocket uses the ICU shipped with Windows through `<icu.h>` from the Windows SDK, which
+    # `FindICU` cannot find (it looks for `unicode/utypes.h`). Its version depends on the Windows build and
+    # is checked at runtime by the test `icu.version`
+    find_package(ICU ${ROCKET_ICU_VERSION} REQUIRED COMPONENTS uc)
+  endif()
 endif()
 
 # Boost.Int128 ..............................................................................................

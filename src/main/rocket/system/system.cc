@@ -6,19 +6,17 @@
 
 #include "rocket/InputFailure.h"
 #include "rocket/assert.h"
+#include "rocket/windows.h"
+
+#ifndef ROCKET_OS_WINDOWS
+  #include <sys/wait.h>
+#endif
 
 #include <array>
 #include <cstdlib>
 #include <cstdio>
 #include <memory>
 #include <optional>
-
-#ifdef ROCKET_OS_WINDOWS
-  #define NOMINMAX
-  #include <Windows.h>
-#else
-  #include <sys/wait.h>
-#endif
 
 using namespace rocket;
 using namespace std;

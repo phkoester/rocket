@@ -3,6 +3,7 @@
  */
 
 #include <rocket/Process.h>
+#include <rocket/windows.h>
 #include <rocket/cl/cl.h>
 
 #include <gmock/gmock.h>
@@ -10,7 +11,6 @@
 #include <cstdlib>
 
 #ifdef ROCKET_OS_WINDOWS
-  #include <Windows.h>
   #include <crtdbg.h>
 #endif
 

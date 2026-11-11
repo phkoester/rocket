@@ -5,17 +5,9 @@
 #include "unicode.h"
 
 #include "rocket/assert.h"
+#include "rocket/icu.h"
 
 #include <boost/safe_numerics/safe_integer.hpp>
-
-#ifdef ROCKET_OS_WINDOWS
-  #include <Windows.h>
-  #include <icu.h> // Must come after `<Windows.h>`, which defines `NTDDI_VERSION`
-#else
-  #include <unicode/uchar.h>
-  #include <unicode/utf8.h>
-  #include <unicode/utypes.h>
-#endif
 
 #include <array>
 

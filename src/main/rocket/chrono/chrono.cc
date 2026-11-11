@@ -4,6 +4,7 @@
 
 #include "chrono.h"
 
+#include "rocket/icu.h"
 #include "rocket/scope.h"
 
 #include <algorithm>
@@ -18,10 +19,8 @@
 #include <tuple>
 #include <vector>
 
-#ifdef ROCKET_OS_WINDOWS
-  #define NOMINMAX
-  #include <Windows.h>
-  #include <icu.h>  // Must come after `<Windows.h>`, which defines `NTDDI_VERSION`
+#if defined(ROCKET_ICU_CMAKE) && defined(ROCKET_OS_WINDOWS)
+  #define CHRONO_LOAD_ICU_DLL
 #endif
 
 using namespace rocket;
@@ -33,35 +32,6 @@ using rocket::chrono::sys_info;
 using rocket::chrono::time_zone;
 
 // Part I: utilities related to `std::chrono` ===============================================================
-
-namespace {
-
-// Local functions ------------------------------------------------------------------------------------------
-
-#if 0 // Old implementation, loading `icu.dll` dynamically. Replaced by the ICU API from <icu.h>
-#ifdef ROCKET_OS_WINDOWS
-
-// Converts a UTF-8 string to UTF-16, as needed by ICU
-u16string
-toUtf16(string_view str) {
-  if (str.empty()) {
-    return {};
-  }
-  const auto len = static_cast<i32>(str.size());
-  const i32 size = MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, str.data(), len, nullptr, 0);
-  if (size <= 0) {
-    return {};
-  }
-  u16string ret(static_cast<u16string::size_type>(size), u'\0');
-  MultiByteToWideChar(
-    CP_UTF8, MB_ERR_INVALID_CHARS, str.data(), len, reinterpret_cast<wchar_t*>(ret.data()), size); // NOLINT
-  return ret;
-}
-
-#endif // ROCKET_OS_WINDOWS
-#endif // 0
-
-} // namespace
 
 namespace rocket::chrono {
 
@@ -88,6 +58,50 @@ clockOffset() {
 string
 abbreviation([[maybe_unused]] string_view name, [[maybe_unused]] bool dst, string_view fallback) {
 #ifdef ROCKET_OS_WINDOWS
+  #ifdef CHRONO_LOAD_ICU_DLL
+
+  using UcalOpen = decltype(ucal_open);
+  using UcalClose = decltype(ucal_close);
+  using UcalGetTimeZoneDisplayName = decltype(ucal_getTimeZoneDisplayName);
+
+  struct IcuApi {
+    UcalOpen open = nullptr;
+    UcalClose close = nullptr;
+    UcalGetTimeZoneDisplayName getTimeZoneDisplayName = nullptr;
+  };
+
+  // Loaded once and never freed on purpose: the module stays loaded for the lifetime of the process
+
+  static const IcuApi icuApi = [] {
+    IcuApi ret;
+    if (const HMODULE icu = LoadLibraryExW(L"icu.dll", nullptr, LOAD_LIBRARY_SEARCH_SYSTEM32);
+      icu != nullptr) {
+      ret.open = reinterpret_cast<UcalOpen>( // NOLINT
+        GetProcAddress(icu, "ucal_open"));
+      ret.close = reinterpret_cast<UcalClose>( // NOLINT
+        GetProcAddress(icu, "ucal_close"));
+      ret.getTimeZoneDisplayName = reinterpret_cast<UcalGetTimeZoneDisplayName>( // NOLINT
+        GetProcAddress(icu, "ucal_getTimeZoneDisplayName"));
+    }
+    return ret;
+  }();
+
+  if (icuApi.open == nullptr || icuApi.close == nullptr || icuApi.getTimeZoneDisplayName == nullptr) {
+    return string(fallback);
+  }
+
+  const auto this_ucal_open = icuApi.open;
+  const auto this_ucal_close = icuApi.close;
+  const auto this_ucal_getTimeZoneDisplayName = icuApi.getTimeZoneDisplayName;
+
+  #else
+
+  const auto this_ucal_open = ucal_open;
+  const auto this_ucal_close = ucal_close;
+  const auto this_ucal_getTimeZoneDisplayName = ucal_getTimeZoneDisplayName;
+
+  #endif // CHRONO_LOAD_ICU_DLL
+
   // Convert the zone name from UTF-8 to UTF-16
 
   UErrorCode status = U_ZERO_ERROR;
@@ -100,14 +114,14 @@ abbreviation([[maybe_unused]] string_view name, [[maybe_unused]] bool dst, strin
 
   // Open a calendar for the zone. A null locale is the default locale
 
-  UCalendar* const cal = ucal_open(name16.data(), name16Len, nullptr, UCAL_GREGORIAN, &status);
+  UCalendar* const cal = this_ucal_open(name16.data(), name16Len, nullptr, UCAL_GREGORIAN, &status);
   if (U_FAILURE(status)) {
     return string(fallback);
   }
-  ROCKET_SCOPE_EXIT([&] { ucal_close(cal); });
+  ROCKET_SCOPE_EXIT([&] { this_ucal_close(cal); });
 
   array<UChar, 64> buf {};
-  const i32 len = ucal_getTimeZoneDisplayName(
+  const i32 len = this_ucal_getTimeZoneDisplayName(
     cal, dst ? UCAL_SHORT_DST : UCAL_SHORT_STANDARD, nullptr, buf.data(), i32(buf.size()), &status);
   if (U_FAILURE(status) || len <= 0) {
     return string(fallback);
@@ -132,91 +146,6 @@ abbreviation([[maybe_unused]] string_view name, [[maybe_unused]] bool dst, strin
   return string(fallback);
 #endif // ROCKET_OS_WINDOWS
 }
-
-#if 0 // Old implementation, loading `icu.dll` dynamically. Replaced by the ICU API from <icu.h>
-
-string
-abbreviation([[maybe_unused]] string_view name, [[maybe_unused]] bool dst, string_view fallback) {
-#ifdef ROCKET_OS_WINDOWS
-  // We do not include any ICU header, as these are the headers of the ICU linked with Rocket
-
-  using UCalendar = void;
-  using UErrorCode = i32;
-
-  constexpr i32 UCAL_GREGORIAN = 1;
-  constexpr i32 UCAL_SHORT_STANDARD = 1;
-  constexpr i32 UCAL_SHORT_DST = 3;
-
-  using UcalOpen = UCalendar* (*)(const char16_t*, i32, const char*, i32, UErrorCode*);
-  using UcalClose = void (*)(UCalendar*);
-  using UcalGetTimeZoneDisplayName = i32 (*)(const UCalendar*, i32, const char*, char16_t*, i32, UErrorCode*);
-
-  struct IcuApi {
-    UcalOpen open = nullptr;
-    UcalClose close = nullptr;
-    UcalGetTimeZoneDisplayName getTimeZoneDisplayName = nullptr;
-  };
-
-  // Loaded once and never freed on purpose: the module stays loaded for the lifetime of the process
-
-  static const IcuApi icuApi = [] {
-    IcuApi ret;
-    if (const HMODULE icu = LoadLibraryExW(L"icu.dll", nullptr, LOAD_LIBRARY_SEARCH_SYSTEM32);
-      icu != nullptr) {
-      ret.open = reinterpret_cast<UcalOpen>( // NOLINT
-        GetProcAddress(icu, "ucal_open"));
-      ret.close = reinterpret_cast<UcalClose>( // NOLINT
-        GetProcAddress(icu, "ucal_close"));
-      ret.getTimeZoneDisplayName = reinterpret_cast<UcalGetTimeZoneDisplayName>( // NOLINT
-        GetProcAddress(icu, "ucal_getTimeZoneDisplayName"));
-    }
-    return ret;
-  }();
-
-  const auto ucalOpen = icuApi.open;
-  const auto ucalClose = icuApi.close;
-  const auto ucalGetTimeZoneDisplayName = icuApi.getTimeZoneDisplayName;
-
-  if (ucalOpen == nullptr || ucalClose == nullptr || ucalGetTimeZoneDisplayName == nullptr) {
-    return string(fallback);
-  }
-
-  const u16string name16 = toUtf16(name);
-  if (name16.empty()) {
-    return string(fallback);
-  }
-
-  // A null locale is the default locale
-
-  UErrorCode status = 0;
-  UCalendar* const cal = ucalOpen(name16.c_str(), -1, nullptr, UCAL_GREGORIAN, &status);
-  if (status > 0) {
-    return string(fallback);
-  }
-  array<char16_t, 64> buf {};
-  const i32 len = ucalGetTimeZoneDisplayName(
-    cal, dst ? UCAL_SHORT_DST : UCAL_SHORT_STANDARD, nullptr, buf.data(), i32(buf.size()), &status);
-  ucalClose(cal);
-  if (status > 0 || len <= 0) {
-    return string(fallback);
-  }
-
-  // Localized names may not be ASCII, for example `GMT−5` with U+2212 (MINUS SIGN)
-
-  const auto* const wide = reinterpret_cast<const wchar_t*>(buf.data()); // NOLINT
-  const i32 size = WideCharToMultiByte(CP_UTF8, 0, wide, len, nullptr, 0, nullptr, nullptr);
-  if (size <= 0) {
-    return string(fallback);
-  }
-  string ret(static_cast<string::size_type>(size), '\0');
-  WideCharToMultiByte(CP_UTF8, 0, wide, len, ret.data(), size, nullptr, nullptr);
-  return ret;
-#else
-  return string(fallback);
-#endif // ROCKET_OS_WINDOWS
-}
-
-#endif // 0
 
 } // namespace rocket::chrono
 

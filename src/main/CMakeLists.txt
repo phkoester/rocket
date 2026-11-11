@@ -37,6 +37,12 @@ endif()
 if(BUILD_SHARED_LIBS)
   list(APPEND ROCKET_COMPILE_DEFS ROCKET_SHARED_LIBS)
 endif()
+
+list(APPEND ROCKET_COMPILE_DEFS "ROCKET_ICU_VERSION=\"${ROCKET_ICU_VERSION}\"")
+if(ROCKET_ICU_CMAKE)
+  list(APPEND ROCKET_COMPILE_DEFS ROCKET_ICU_CMAKE)
+endif()
+
 if(ROCKET_IO_LOG)
   list(APPEND ROCKET_COMPILE_DEFS ROCKET_IO_LOG)
 endif()
@@ -47,8 +53,6 @@ if(ROCKET_NIO_NO_CONTIGUOUS_SOURCE)
   list(APPEND ROCKET_COMPILE_DEFS ROCKET_NIO_NO_CONTIGUOUS_SOURCE)
 endif()
 
-list(APPEND ROCKET_COMPILE_DEFS "ROCKET_ICU_VERSION=\"${ROCKET_ICU_VERSION}\"")
-
 # Link targets ..............................................................................................
 
 set(ROCKET_LINK_TARGETS)
@@ -57,12 +61,16 @@ if(GAIA_OS_LINUX)
   list(APPEND ROCKET_LINK_TARGETS PRIVATE stdc++exp)
 endif()
 
-if(NOT GAIA_OS_WINDOWS)
-  # The ICU found by `find_package(ICU ...)`
+if(ROCKET_ICU_CMAKE)
   list(APPEND ROCKET_LINK_TARGETS PUBLIC ICU::uc)
 else()
-  # The ICU shipped with Windows (`icu.dll`), used through `<icu.h>` from the Windows SDK
-  list(APPEND ROCKET_LINK_TARGETS PUBLIC icu)
+  if(NOT GAIA_OS_WINDOWS)
+    # The ICU found by `find_package(ICU ...)`
+    list(APPEND ROCKET_LINK_TARGETS PUBLIC ICU::uc)
+  else()
+    # The ICU shipped with Windows (`icu.dll`), used through `<icu.h>` from the Windows SDK
+    list(APPEND ROCKET_LINK_TARGETS PUBLIC icu)
+  endif()
 endif()
 
 # `version.h` ...............................................................................................
@@ -96,7 +104,9 @@ target_sources(rocket
     rocket/Exception.cc
     rocket/Process.cc
     rocket/TypeId.cc
+    rocket/icu.h
     rocket/literal.cc
+    rocket/windows.h
     rocket/chrono/chrono.cc
     rocket/cl/cl.cc
     rocket/codec/CborCodec.cc
@@ -203,7 +213,6 @@ target_link_libraries(rocket
     ${ROCKET_BOOST_LINK_TARGETS}
     cbor
     fmt::fmt-header-only
-    # XXX ICU::uc
     scn::scn
 )
 add_library(Rocket::rocket ALIAS rocket)

@@ -8,13 +8,7 @@
 
 #include "rocket-test/rocket-test.h"
 
-#ifdef ROCKET_OS_WINDOWS
-  #include <Windows.h>
-  #include <icu.h> // Must come after `<Windows.h>`, which defines `NTDDI_VERSION`
-#else
-  #include <unicode/utf8.h>
-  #include <unicode/uversion.h>
-#endif
+#include "rocket/icu.h"
 
 #include <boost/safe_numerics/safe_integer.hpp>
 
