@@ -47,6 +47,8 @@ if(ROCKET_NIO_NO_CONTIGUOUS_SOURCE)
   list(APPEND ROCKET_COMPILE_DEFS ROCKET_NIO_NO_CONTIGUOUS_SOURCE)
 endif()
 
+list(APPEND ROCKET_COMPILE_DEFS "ROCKET_ICU_VERSION=\"${ROCKET_ICU_VERSION}\"")
+
 # Link targets ..............................................................................................
 
 set(ROCKET_LINK_TARGETS)

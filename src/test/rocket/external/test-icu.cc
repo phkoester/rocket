@@ -47,11 +47,19 @@ TEST(icu, version) {
   array<char, U_MAX_VERSION_STRING_LENGTH> str {};
   u_versionToString(info, str.data());
 
-  // Require at least ICU 72.1, the system ICU on Windows 11 at the time of writing. `info` holds major,
-  // minor, milli, and micro
+  // Require at least `ROCKET_ICU_VERSION`. `u_versionFromString` fills missing trailing fields with zeros
 
-  EXPECT_TRUE(tuple(info[0], info[1]) >= tuple(72, 1)) <<
-    "ICU version " << str.data() << " is older than 72.1";
+  constexpr auto minStr = ROCKET_ICU_VERSION;
+
+  UVersionInfo minInfo {};
+  u_versionFromString(minInfo, minStr);
+  ASSERT_NE(minInfo[0], 0) << "Cannot parse `ROCKET_ICU_VERSION` \"" << minStr << '"';
+
+  // `UVersionInfo` holds major, minor, milli, and micro; compare them lexicographically
+
+  const auto curVer = tuple(info[0], info[1], info[2], info[3]);
+  const auto minVer = tuple(minInfo[0], minInfo[1], minInfo[2], minInfo[3]);
+  EXPECT_TRUE(curVer >= minVer) <<"ICU version " << str.data() << " is older than " << minStr;
 }
 
 // EOF
