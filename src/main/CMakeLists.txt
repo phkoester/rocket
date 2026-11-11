@@ -55,18 +55,12 @@ if(GAIA_OS_LINUX)
   list(APPEND ROCKET_LINK_TARGETS PRIVATE stdc++exp)
 endif()
 
-if(BUILD_SHARED_LIBS)
-  list(APPEND ROCKET_LINK_TARGETS PUBLIC)
-else()
-  list(APPEND ROCKET_LINK_TARGETS PRIVATE)
-endif()
-
-if(GAIA_OS_LINUX)
+if(NOT GAIA_OS_WINDOWS)
   # The ICU found by `find_package(ICU ...)`
-  list(APPEND ROCKET_LINK_TARGETS ICU::uc)
-elseif(GAIA_OS_WINDOWS)
+  list(APPEND ROCKET_LINK_TARGETS PUBLIC ICU::uc)
+else()
   # The ICU shipped with Windows (`icu.dll`), used through `<icu.h>` from the Windows SDK
-  list(APPEND ROCKET_LINK_TARGETS icu)
+  list(APPEND ROCKET_LINK_TARGETS PUBLIC icu)
 endif()
 
 # `version.h` ...............................................................................................
