@@ -215,7 +215,7 @@ if(NOT GAIA_OS_WINDOWS)
   # On Windows, Rocket uses the ICU shipped with Windows through `<icu.h>` from the Windows SDK, which
   # `FindICU` cannot find (it looks for `unicode/utypes.h`). Its version depends on the Windows build and is
   # checked at runtime by the test `icu.version`
-  find_package(ICU ${ROCKER_ICU_VERSION} REQUIRED COMPONENTS uc)
+  find_package(ICU ${ROCKET_ICU_VERSION} REQUIRED COMPONENTS uc)
 endif()
 
 if(OFF) # XXX

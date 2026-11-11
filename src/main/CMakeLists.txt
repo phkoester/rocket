@@ -49,13 +49,24 @@ endif()
 
 # Link targets ..............................................................................................
 
-set(ROCKET_PRIVATE_LINK_TARGETS)
+set(ROCKET_LINK_TARGETS)
 
 if(GAIA_OS_LINUX)
-  list(APPEND ROCKET_PRIVATE_LINK_TARGETS stdc++exp)
+  list(APPEND ROCKET_LINK_TARGETS PRIVATE stdc++exp)
+endif()
+
+if(BUILD_SHARED_LIBS)
+  list(APPEND ROCKET_LINK_TARGETS PUBLIC)
+else()
+  list(APPEND ROCKET_LINK_TARGETS PRIVATE)
+endif()
+
+if(GAIA_OS_LINUX)
+  # The ICU found by `find_package(ICU ...)`
+  list(APPEND ROCKET_LINK_TARGETS ICU::uc)
 elseif(GAIA_OS_WINDOWS)
   # The ICU shipped with Windows (`icu.dll`), used through `<icu.h>` from the Windows SDK
-  list(APPEND ROCKET_PRIVATE_LINK_TARGETS icu)
+  list(APPEND ROCKET_LINK_TARGETS icu)
 endif()
 
 # `version.h` ...............................................................................................
@@ -191,8 +202,7 @@ target_compile_definitions(rocket
 set(ROCKET_BOOST_LINK_TARGETS ${ROCKET_BOOST_COMPONENTS})
 list(TRANSFORM ROCKET_BOOST_LINK_TARGETS PREPEND Boost::)
 target_link_libraries(rocket
-  PRIVATE
-    ${ROCKET_PRIVATE_LINK_TARGETS}
+  ${ROCKET_LINK_TARGETS}
   PUBLIC
     ${ROCKET_BOOST_LINK_TARGETS}
     cbor
