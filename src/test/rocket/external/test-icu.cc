@@ -53,7 +53,7 @@ TEST(icu, version) {
 
   const auto curVer = tuple(info[0], info[1], info[2], info[3]);
   const auto minVer = tuple(minInfo[0], minInfo[1], minInfo[2], minInfo[3]);
-  EXPECT_TRUE(curVer >= minVer) <<"ICU version " << str.data() << " is older than " << minStr;
+  EXPECT_TRUE(curVer >= minVer) << "ICU version " << str.data() << " is older than " << minStr;
 }
 
 // EOF

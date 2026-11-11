@@ -98,6 +98,7 @@ elseif(GAIA_OS_WINDOWS)
     list(APPEND COMPILE_FLAGS -Werror -Wextra # No `-Wall` on Windows
       -Wno-unknown-attributes)
   elseif(GAIA_CXX_COMPILER_MSVC)
+    # Windows 10, needed by `<icu.h>` from the Windows SDK, which only declares its API for Windows 10
     list(APPEND COMPILE_DEFS _WIN32_WINNT=0x0A00)
     list(APPEND COMPILE_FLAGS /bigobj /wd4244 /Zc:preprocessor)
   endif()
@@ -238,7 +239,7 @@ else()
     # On Windows, Rocket uses the ICU shipped with Windows through `<icu.h>` from the Windows SDK, which
     # `FindICU` cannot find (it looks for `unicode/utypes.h`). Its version depends on the Windows build and
     # is checked at runtime by the test `icu.version`
-    find_package(ICU ${ROCKET_ICU_VERSION} REQUIRED COMPONENTS uc)
+    find_package(ICU ${ROCKET_ICU_VERSION} REQUIRED COMPONENTS i18n uc)
   endif()
 endif()
 

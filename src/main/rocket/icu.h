@@ -7,6 +7,7 @@
 #pragma once
 
 #if defined(ROCKET_ICU_CMAKE) || defined(ROCKET_OS_LINUX) || defined(ROCKET_OS_MACOS)
+  #define ROCKET_ICU_HEADERS
   #include <unicode/ubrk.h>
   #include <unicode/ucal.h>
   #include <unicode/uchar.h>
@@ -17,7 +18,7 @@
   #include <unicode/utf8.h>
   #include <unicode/utypes.h>
   #include <unicode/uversion.h>
-#else
+#elif defined(ROCKET_OS_WINDOWS)
   #include "windows.h" // Must come first, defines `NTDDI_VERSION`
   #include <icu.h>
 #endif

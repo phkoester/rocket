@@ -6,6 +6,7 @@
 
 #include "rocket/icu.h"
 #include "rocket/scope.h"
+#include "rocket/windows.h"
 
 #include <algorithm>
 #include <array>
@@ -60,9 +61,9 @@ abbreviation([[maybe_unused]] string_view name, [[maybe_unused]] bool dst, strin
 #ifdef ROCKET_OS_WINDOWS
   #ifdef CHRONO_LOAD_ICU_DLL
 
-  using UcalOpen = decltype(ucal_open);
-  using UcalClose = decltype(ucal_close);
-  using UcalGetTimeZoneDisplayName = decltype(ucal_getTimeZoneDisplayName);
+  using UcalOpen = decltype(&ucal_open);
+  using UcalClose = decltype(&ucal_close);
+  using UcalGetTimeZoneDisplayName = decltype(&ucal_getTimeZoneDisplayName);
 
   struct IcuApi {
     UcalOpen open = nullptr;
@@ -72,7 +73,7 @@ abbreviation([[maybe_unused]] string_view name, [[maybe_unused]] bool dst, strin
 
   // Loaded once and never freed on purpose: the module stays loaded for the lifetime of the process
 
-  static const IcuApi icuApi = [] {
+  static const IcuApi api = [] {
     IcuApi ret;
     if (const HMODULE icu = LoadLibraryExW(L"icu.dll", nullptr, LOAD_LIBRARY_SEARCH_SYSTEM32);
       icu != nullptr) {
@@ -86,13 +87,13 @@ abbreviation([[maybe_unused]] string_view name, [[maybe_unused]] bool dst, strin
     return ret;
   }();
 
-  if (icuApi.open == nullptr || icuApi.close == nullptr || icuApi.getTimeZoneDisplayName == nullptr) {
+  if (api.open == nullptr || api.close == nullptr || api.getTimeZoneDisplayName == nullptr) {
     return string(fallback);
   }
 
-  const auto this_ucal_open = icuApi.open;
-  const auto this_ucal_close = icuApi.close;
-  const auto this_ucal_getTimeZoneDisplayName = icuApi.getTimeZoneDisplayName;
+  const auto this_ucal_open = api.open;
+  const auto this_ucal_close = api.close;
+  const auto this_ucal_getTimeZoneDisplayName = api.getTimeZoneDisplayName;
 
   #else
 

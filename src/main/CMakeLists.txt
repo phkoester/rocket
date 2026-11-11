@@ -62,11 +62,11 @@ if(GAIA_OS_LINUX)
 endif()
 
 if(ROCKET_ICU_CMAKE)
-  list(APPEND ROCKET_LINK_TARGETS PUBLIC ICU::uc)
+  list(APPEND ROCKET_LINK_TARGETS PUBLIC ICU::i18n ICU::uc)
 else()
   if(NOT GAIA_OS_WINDOWS)
     # The ICU found by `find_package(ICU ...)`
-    list(APPEND ROCKET_LINK_TARGETS PUBLIC ICU::uc)
+    list(APPEND ROCKET_LINK_TARGETS PUBLIC ICU::i18n ICU::uc)
   else()
     # The ICU shipped with Windows (`icu.dll`), used through `<icu.h>` from the Windows SDK
     list(APPEND ROCKET_LINK_TARGETS PUBLIC icu)
