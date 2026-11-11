@@ -29,6 +29,7 @@ set(ROCKET_GAIA_VERSION 1.2.4)
 set(ROCKET_GTEST_VERSION 1.18.0)
 set(ROCKET_ICU_VERSION 72.1)
 set(ROCKET_ICU_CMAKE_VERSION 0.1.3)
+set(ROCKET_ICU_CMAKE_ICU_VERSION 79.1)
 set(ROCKET_INT128_VERSION 4.1.0)
 set(ROCKET_LIBCBOR_VERSION 0.14.0)
 set(ROCKET_SCNLIB_VERSION master)
@@ -116,6 +117,25 @@ GaiaStatus("ROCKET_GUI: ${ROCKET_GUI}")
 
 # Dependencies ----------------------------------------------------------------------------------------------
 
+# ICU root (macOS); must come before Boost ..................................................................
+
+# Homebrew's `icu4c` is keg-only, so point `FindICU` at it. Otherwise it picks up the partial ICU headers
+# from the macOS SDK, which come without a linkable `icuuc`/`icui18n`. This must come before Boost, whose
+# Boost.Regex and Boost.Locale run `find_package(ICU)` themselves and would cache the SDK's `ICU_INCLUDE_DIR`
+
+if(GAIA_OS_MACOS AND NOT ROCKET_ICU_CMAKE AND NOT ICU_ROOT AND NOT DEFINED ENV{ICU_ROOT})
+  execute_process(
+    COMMAND brew --prefix icu4c
+    OUTPUT_VARIABLE ROCKET_BREW_ICU_PREFIX
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+    ERROR_QUIET
+    RESULT_VARIABLE ROCKET_BREW_RESULT
+  )
+  if(ROCKET_BREW_RESULT EQUAL 0 AND IS_DIRECTORY "${ROCKET_BREW_ICU_PREFIX}")
+    set(ICU_ROOT "${ROCKET_BREW_ICU_PREFIX}")
+  endif()
+endif()
+
 # Boost .....................................................................................................
 
 set(ROCKET_BOOST_COMPONENTS
@@ -194,7 +214,7 @@ block()
   endif()
 endblock()
 
-# Benchmark (must appear after GoogleTest) ..................................................................
+# Benchmark; must come after GoogleTest .....................................................................
 
 FetchContent_Declare(
   benchmark
@@ -231,7 +251,7 @@ if(ROCKET_ICU_CMAKE)
   endif()
 
   block()
-    set(ICU_CMAKE_ICU_VERSION ${ROCKET_ICU_VERSION})
+    set(ICU_CMAKE_ICU_VERSION ${ROCKET_ICU_CMAKE_ICU_VERSION})
     FetchContent_MakeAvailable(icu-cmake)
   endblock()
 else()
