@@ -255,10 +255,10 @@ if(ROCKET_ICU_CMAKE)
     FetchContent_MakeAvailable(icu-cmake)
   endblock()
 else()
+  # On Windows, with `ROCKET_ICU_CMAKE` disabled, Rocket uses the ICU shipped with Windows through `<icu.h>`
+  # from the Windows SDK, which `FindICU` cannot find (it looks for `unicode/utypes.h`). Its version depends
+  # on the Windows build and is checked at runtime by the test `icu.version`
   if(NOT GAIA_OS_WINDOWS)
-    # On Windows, with `ROCKET_ICU_CMAKE` disabled, Rocket uses the ICU shipped with Windows through
-    # `<icu.h>` from the Windows SDK, which `FindICU` cannot find (it looks for `unicode/utypes.h`). Its
-    # version depends on the Windows build and is checked at runtime by the test `icu.version`
     find_package(ICU ${ROCKET_ICU_VERSION} REQUIRED COMPONENTS i18n uc)
   endif()
 endif()
