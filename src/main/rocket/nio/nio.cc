@@ -667,28 +667,15 @@ FileSource::seek(i64 offset, SeekMode mode) { // NOLINT
 
   status_.eof = false;
 
-  i32 origin = -1;
+  i32 origin; // NOLINT
   switch (mode) {
-    case SeekMode::beg:
-      origin = SEEK_SET;
-      break;
-    case SeekMode::cur:
-      origin = SEEK_CUR;
-      break;
-    case SeekMode::end:
-      origin = SEEK_END;
-      break;
-    default:
-      ROCKET_FLOP(mode, "Invalid seek mode {}", static_cast<i32>(mode));
+    case SeekMode::beg: origin = SEEK_SET; break;
+    case SeekMode::cur: origin = SEEK_CUR; break;
+    case SeekMode::end: origin = SEEK_END; break;
+    default: ROCKET_FLOP(mode, "Invalid seek mode {}", static_cast<i32>(mode));
   }
 
-#ifdef ROCKET_OS_WINDOWS
-  auto result = _fseeki64(file_, safe<__int64>(offset), origin);
-#else
-  auto result = fseek(file_, safe<std_long>(offset), origin);
-#endif
-  NIO_LOG("fseek=" << result << ", ferror=" << ferror(file_));
-  return result == 0;
+  return io::seek(file_, offset, origin) == 0;
 }
 
 u64
@@ -697,17 +684,7 @@ FileSource::tell() {
     return NPOS;
   }
 
-#ifdef ROCKET_OS_WINDOWS
-  auto result = _ftelli64(file_); // `__int64`
-#else
-  auto result = ftell(file_);
-#endif
-  NIO_LOG("ftell=" << result << ", ferror=" << ferror(file_));
-  if (result == -1) {
-    return NPOS;
-  }
-  ROCKET_ASSERT(result >= 0);
-  return safe<u64>(result);
+  return io::tell(file_);
 }
 
 // `NullSource` ---------------------------------------------------------------------------------------------
@@ -873,11 +850,11 @@ StreamSource::tell() {
   }
 
   // Use the `tellg` implementation from `rocket::io`
-  auto result = io::tellg(is_);
+  const u64 result = io::tellg(is_);
   NIO_LOG("tellg=" << result << ", bad=" << is_.bad() << ", fail=" << is_.fail() << ", eof=" << is_.eof());
   status_.bad = is_.bad();
 
-  return static_cast<u64>(result); // `boost::safe_numerics::safe` doesn’t work with `std::ios::pos_type`
+  return result;
 }
 
 // `StringSource` -------------------------------------------------------------------------------------------

@@ -55,7 +55,7 @@ inline io::ispanstream is(std::string_view str) { return io::ispanstream(str); }
 /**
  * Opens a file and returns a `FILE` pointer, or null if the file cannot be opened.
  *
- * This function is meant to be a replacement for #std::fopen.
+ * This is a portable implementation that works on Linux, macOS, and Windows.
  *
  * @param path the path to the file
  * @param modes the modes to open the file with
@@ -64,13 +64,37 @@ inline io::ispanstream is(std::string_view str) { return io::ispanstream(str); }
 FILE* open(const std::filesystem::path& path, std::string_view modes);
 
 /**
+ * Seeks to the specified position in the stream referenced by @p file.
+ *
+ * This is a portable implementation that works on Linux, macOS, and Windows.
+ *
+ * @param file a `FILE` pointer
+ * @param offset the offset to seek to
+ * @param origin the origin to seek from
+ * @return 0 on success, -1 on failure
+ */
+i32 seek(FILE* file, i64 offset, i32 origin);
+
+/**
+ * Returns the current position in the stream referenced by @p file.
+ *
+ * This is a portable implementation that works on Linux, macOS, and Windows.
+ *
+ * @param file a `FILE` pointer
+ * @return the current position in the stream, or #rocket::NPOS if the position cannot be determined
+ */
+u64 tell(FILE* file);
+
+/**
  * Similar to #std::istream::tellg, but leaves @p is unchanged and returns the actual current position
  * rather than -1 if `is.fail()` returns `true`.
  *
+ * This is a portable implementation that works on Linux, macOS, and Windows.
+ *
  * @param is the input stream
- * @return the actual current input position, always nonnegative
+ * @return the current position in the stream, or #rocket::NPOS if the position cannot be determined
  */
-std::ios::pos_type tellg(std::istream& is) noexcept;
+u64 tellg(std::istream& is) noexcept;
 
 } // namespace rocket::io
 

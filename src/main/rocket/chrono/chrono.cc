@@ -16,13 +16,8 @@
 #include <tuple>
 #include <vector>
 
-#ifdef _MSVC_STL_VERSION
-  #ifndef NOMINMAX
-    #define NOMINMAX
-  #endif
-  #ifndef WIN32_LEAN_AND_MEAN
-    #define WIN32_LEAN_AND_MEAN
-  #endif
+#ifdef ROCKET_OS_WINDOWS
+  #define NOMINMAX
   #include <Windows.h>
 #endif
 
@@ -40,7 +35,7 @@ namespace {
 
 // Local functions ------------------------------------------------------------------------------------------
 
-#ifdef _MSVC_STL_VERSION
+#ifdef ROCKET_OS_WINDOWS
 
 // Converts a UTF-8 string to UTF-16, as needed by ICU
 u16string
@@ -59,7 +54,7 @@ toUtf16(string_view str) {
   return ret;
 }
 
-#endif // _MSVC_STL_VERSION
+#endif // ROCKET_OS_WINDOWS
 
 } // namespace
 
@@ -87,25 +82,46 @@ clockOffset() {
 
 string
 abbreviation([[maybe_unused]] string_view name, [[maybe_unused]] bool dst, string_view fallback) {
-#ifdef _MSVC_STL_VERSION
+#ifdef ROCKET_OS_WINDOWS
   // We do not include any ICU header, as these are the headers of the ICU linked with Rocket
+
   using UCalendar = void;
   using UErrorCode = i32;
+
   constexpr i32 UCAL_GREGORIAN = 1;
   constexpr i32 UCAL_SHORT_STANDARD = 1;
   constexpr i32 UCAL_SHORT_DST = 3;
+
   using UcalOpen = UCalendar* (*)(const char16_t*, i32, const char*, i32, UErrorCode*);
   using UcalClose = void (*)(UCalendar*);
   using UcalGetTimeZoneDisplayName = i32 (*)(const UCalendar*, i32, const char*, char16_t*, i32, UErrorCode*);
 
-  const HMODULE icu = LoadLibraryExW(L"icu.dll", nullptr, LOAD_LIBRARY_SEARCH_SYSTEM32);
-  if (icu == nullptr) {
-    return string(fallback);
-  }
-  const auto ucalOpen = reinterpret_cast<UcalOpen>(GetProcAddress(icu, "ucal_open")); // NOLINT
-  const auto ucalClose = reinterpret_cast<UcalClose>(GetProcAddress(icu, "ucal_close")); // NOLINT
-  const auto ucalGetTimeZoneDisplayName = reinterpret_cast<UcalGetTimeZoneDisplayName>( // NOLINT
-    GetProcAddress(icu, "ucal_getTimeZoneDisplayName"));
+  struct IcuApi {
+    UcalOpen open = nullptr;
+    UcalClose close = nullptr;
+    UcalGetTimeZoneDisplayName getTimeZoneDisplayName = nullptr;
+  };
+
+  // Loaded once and never freed on purpose: the module stays loaded for the lifetime of the process
+
+  static const IcuApi icuApi = [] {
+    IcuApi ret;
+    if (const HMODULE icu = LoadLibraryExW(L"icu.dll", nullptr, LOAD_LIBRARY_SEARCH_SYSTEM32);
+      icu != nullptr) {
+      ret.open = reinterpret_cast<UcalOpen>( // NOLINT
+        GetProcAddress(icu, "ucal_open"));
+      ret.close = reinterpret_cast<UcalClose>( // NOLINT
+        GetProcAddress(icu, "ucal_close"));
+      ret.getTimeZoneDisplayName = reinterpret_cast<UcalGetTimeZoneDisplayName>( // NOLINT
+        GetProcAddress(icu, "ucal_getTimeZoneDisplayName"));
+    }
+    return ret;
+  }();
+
+  const auto ucalOpen = icuApi.open;
+  const auto ucalClose = icuApi.close;
+  const auto ucalGetTimeZoneDisplayName = icuApi.getTimeZoneDisplayName;
+
   if (ucalOpen == nullptr || ucalClose == nullptr || ucalGetTimeZoneDisplayName == nullptr) {
     return string(fallback);
   }
@@ -116,6 +132,7 @@ abbreviation([[maybe_unused]] string_view name, [[maybe_unused]] bool dst, strin
   }
 
   // A null locale is the default locale
+
   UErrorCode status = 0;
   UCalendar* const cal = ucalOpen(name16.c_str(), -1, nullptr, UCAL_GREGORIAN, &status);
   if (status > 0) {
@@ -130,6 +147,7 @@ abbreviation([[maybe_unused]] string_view name, [[maybe_unused]] bool dst, strin
   }
 
   // Localized names may not be ASCII, for example `GMT−5` with U+2212 (MINUS SIGN)
+
   const auto* const wide = reinterpret_cast<const wchar_t*>(buf.data()); // NOLINT
   const i32 size = WideCharToMultiByte(CP_UTF8, 0, wide, len, nullptr, 0, nullptr, nullptr);
   if (size <= 0) {
@@ -140,7 +158,7 @@ abbreviation([[maybe_unused]] string_view name, [[maybe_unused]] bool dst, strin
   return ret;
 #else
   return string(fallback);
-#endif // _MSVC_STL_VERSION
+#endif // ROCKET_OS_WINDOWS
 }
 
 } // namespace rocket::chrono

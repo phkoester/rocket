@@ -13,10 +13,12 @@
 #include <boost/safe_numerics/safe_integer.hpp>
 
 #ifdef ROCKET_OS_WINDOWS
-#include <Windows.h>
+  // Windows
+  #include <Windows.h>
 #else
-#include <termios.h>
-#include <sys/ioctl.h>
+  // Linux, macOS
+  #include <termios.h>
+  #include <sys/ioctl.h>
 #endif
 
 using namespace rocket;
@@ -175,7 +177,9 @@ size(nio::Device& device) {
   }
 
 #ifdef ROCKET_OS_WINDOWS
-  // Windows: Use CSBI
+  // Windows: Use CSBI. `dwSize` is the size of the screen buffer, which may be far larger than the visible
+  // window (for example, 9001 rows with scrollback). `srWindow` holds the visible window's inclusive
+  // coordinates within that buffer
 
   auto handle = getHandle(fd);
   ROCKET_ASSERT(handle != INVALID_HANDLE_VALUE);
@@ -183,7 +187,8 @@ size(nio::Device& device) {
   if (not GetConsoleScreenBufferInfo(handle, &csbi)) {
     return {};
   }
-  return make_pair(safe<u64>(csbi.dwSize.X), safe<u64>(csbi.dwSize.Y));
+  const auto& win = csbi.srWindow;
+  return make_pair(safe<u64>(win.Right - win.Left + 1), safe<u64>(win.Bottom - win.Top + 1));
 #else
   // Non-Windows: Use `ioctl`
 

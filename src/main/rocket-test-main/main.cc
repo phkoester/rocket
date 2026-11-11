@@ -10,7 +10,7 @@
 #include <cstdlib>
 
 #ifdef ROCKET_OS_WINDOWS
-  #include <windows.h>
+  #include <Windows.h>
   #include <crtdbg.h>
 #endif
 

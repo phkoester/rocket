@@ -10,6 +10,7 @@
 #include "rocket/version.h"
 #include "rocket/cl/cl.h"
 #include "rocket/log/log.h"
+#include "rocket/system/terminal/terminal.h"
 
 #include <string>
 
@@ -54,6 +55,8 @@ toy() {
   ROCKET_SCOPE_EXIT([] { nio::out.println("Hello from ROCKET_SCOPE_EXIT"); });
 
   nio::out.println("Hello from toy");
+
+  nio::out.println("terminal size: {}", system::terminal::size(nio::out));
 }
 
 } // namespace

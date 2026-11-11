@@ -54,7 +54,7 @@ namespace rocket::io {
 // Functions ------------------------------------------------------------------------------------------------
 
 FILE*
-open(const std::filesystem::path& path, std::string_view modes) {
+open(const filesystem::path& path, string_view modes) {
 #ifdef ROCKET_OS_WINDOWS
   FILE* file = nullptr;
   const auto result = fopen_s(&file, path.string().c_str(), string(modes).c_str());
@@ -66,15 +66,43 @@ open(const std::filesystem::path& path, std::string_view modes) {
   return file;
 }
 
-std::ios::pos_type
-tellg(std::istream& is) noexcept {
+i32
+seek(FILE* file, i64 offset, i32 origin) {
+#ifdef ROCKET_OS_WINDOWS
+  return _fseeki64(file, offset, origin);
+#else
+  return fseek(file, offset, origin);
+#endif
+}
+
+u64
+tell(FILE* file) {
+#ifdef ROCKET_OS_WINDOWS
+  auto result = _ftelli64(file); // `__int64`
+#else
+  auto result = ftell(file); // `long`
+#endif
+  IO_LOG("ftell=" << result << ", ferror=" << ferror(file));
+  return static_cast<u64>(result);
+}
+
+u64
+tellg(istream& is) noexcept {
+  // Save the state
   const auto state = is.rdstate();
 
   // Clear all bits
   is.clear();
+
   // This is expected to never throw, otherwise this implementation is flawed
-  auto ret = is.tellg();
-  ROCKET_ASSERT(ret >= 0);
+  decltype(is.tellg()) result;
+  try {
+    result = is.tellg();
+  } catch (const exception& ex) {
+    ROCKET_TERMINATE("`is.tellg()` failed: {}", ex.what());
+  } catch (...) {
+    ROCKET_TERMINATE("`is.tellg()` failed");
+  }
 
   // Restore the state
   if ((is.exceptions() & state) == 0) {
@@ -84,14 +112,14 @@ tellg(std::istream& is) noexcept {
     // Restore the state with exception
     try {
       is.clear(state);
-    } catch (const std::ios::failure&) {
+    } catch (const ios::failure&) {
       // Nothing to do, we want to catch this silently
     } catch (...) {
       ROCKET_TERMINATE("`is.clear()` failed");
     }
   }
 
-  return ret;
+  return static_cast<u64>(result);
 }
 
 } // namespace rocket::io

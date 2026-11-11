@@ -181,9 +181,6 @@ target_sources(rocket
       rocket/unicode/unicode-fwd.h
       ${VERSION_H} # Generated; must be in a PUBLIC file set so dependents wait for it (CMP0154)
 )
-if(GAIA_OS_WINDOWS)
-  target_sources(rocket PRIVATE rocket/system/system-windows.cc)
-endif()
 target_compile_definitions(rocket
   PRIVATE ROCKET_EXPORTING__
   PUBLIC  ${ROCKET_COMPILE_DEFS} ROCKET_TEST_PRIVATE=private ROCKET_TEST_PROTECTED=protected

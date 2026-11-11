@@ -7,12 +7,16 @@
 #include "rocket/InputFailure.h"
 #include "rocket/assert.h"
 
+#include <array>
 #include <cstdlib>
 #include <cstdio>
 #include <memory>
 #include <optional>
 
-#ifndef ROCKET_OS_WINDOWS
+#ifdef ROCKET_OS_WINDOWS
+  #define NOMINMAX
+  #include <Windows.h>
+#else
   #include <sys/wait.h>
 #endif
 
@@ -24,9 +28,74 @@ using namespace std;
 #ifndef ROCKET_OS_WINDOWS
 extern char** environ; // NOLINT
 #endif
+
 namespace {
 
+#ifdef ROCKET_OS_WINDOWS
+
+// `ConsoleModeGuard` ---------------------------------------------------------------------------------------
+
+/**
+ * A guard that restores the console mode of `stdin` and `stdout`.
+ */
+struct ConsoleModeGuard {
+  ConsoleModeGuard() {
+    for (auto& entry : entries_) {
+      entry.handle = CreateFileA(
+        entry.name,
+        GENERIC_READ | GENERIC_WRITE,
+        FILE_SHARE_READ | FILE_SHARE_WRITE,
+        nullptr,
+        OPEN_EXISTING,
+        0,
+        nullptr);
+      if (entry.handle == INVALID_HANDLE_VALUE) {
+        continue; // No console attached
+      }
+      DWORD mode = 0;
+      if (GetConsoleMode(entry.handle, &mode) != 0) {
+        entry.mode = mode;
+      }
+    }
+  }
+
+  ConsoleModeGuard(const ConsoleModeGuard&) = delete;
+
+  ~ConsoleModeGuard() {
+    for (const auto& entry : entries_) {
+      if (entry.handle == INVALID_HANDLE_VALUE) {
+        continue;
+      }
+      if (entry.mode) {
+        SetConsoleMode(entry.handle, *entry.mode);
+      }
+      CloseHandle(entry.handle);
+    }
+  }
+
+  ConsoleModeGuard& operator=(const ConsoleModeGuard&) = delete;
+
+private:
+
+  struct Entry {
+    const char* name;
+    HANDLE handle = INVALID_HANDLE_VALUE;
+    optional<DWORD> mode = {};
+  };
+
+  array<Entry, 2> entries_ { {
+    { .name="CONIN$" },  // `stdin`
+    { .name="CONOUT$" }, // `stdout` and `stderr` (same screen buffer)
+  } };
+};
+
+#endif // ROCKET_OS_WINDOWS
+
 // Local functions ------------------------------------------------------------------------------------------
+
+#ifdef ROCKET_OS_WINDOWS
+string quoteArg(string_view arg);
+#endif
 
 recursive_mutex&
 envMutex() {
@@ -35,32 +104,6 @@ envMutex() {
 }
 
 #ifdef ROCKET_OS_WINDOWS
-
-/**
- * Windows: Quotes an argument such that the C runtime of the called program reads it back unchanged.
- *
- * Backslashes are only special in front of a quotation mark: there, they must be doubled. This includes the
- * closing quotation mark. A quotation mark inside the argument is escaped with one more backslash.
- */
-string
-quoteArg(string_view arg) {
-  string ret = "\"";
-  u64 backslashes = 0;
-
-  for (const char c : arg) {
-    if (c == '\\') {
-      ++backslashes; // Decide how to write them when we see what follows
-      continue;
-    }
-    ret.append(c == '"' ? 2 * backslashes + 1 : backslashes, '\\');
-    ret.push_back(c);
-    backslashes = 0;
-  }
-
-  ret.append(2 * backslashes, '\\');
-  ret.push_back('"');
-  return ret;
-}
 
 /**
  * Windows: Escapes a string for `cmd.exe`, which `_popen` runs the command line with.
@@ -124,7 +167,7 @@ makeCl(const vector<string_view>& args) {
 #else
 
 /**
- * Non-Windows: Converts arguments to a command-line string that passes each argument literally.
+ * Linux, macOS: Converts arguments to a command-line string that passes each argument literally.
  *
  * `popen` hands the command line to `/bin/sh`. Enclosing each argument in single quotes turns off all
  * interpretation by the shell, including variable expansion, command substitution, operators, and globbing.
@@ -153,6 +196,36 @@ makeCl(const vector<string_view>& args) {
     ret.push_back('\'');
   }
 
+  return ret;
+}
+
+#endif
+
+#ifdef ROCKET_OS_WINDOWS
+
+/**
+ * Windows: Quotes an argument such that the C runtime of the called program reads it back unchanged.
+ *
+ * Backslashes are only special in front of a quotation mark: there, they must be doubled. This includes the
+ * closing quotation mark. A quotation mark inside the argument is escaped with one more backslash.
+ */
+string
+quoteArg(string_view arg) {
+  string ret = "\"";
+  u64 backslashes = 0;
+
+  for (const char c : arg) {
+    if (c == '\\') {
+      ++backslashes; // Decide how to write them when we see what follows
+      continue;
+    }
+    ret.append(c == '"' ? 2 * backslashes + 1 : backslashes, '\\');
+    ret.push_back(c);
+    backslashes = 0;
+  }
+
+  ret.append(2 * backslashes, '\\');
+  ret.push_back('"');
   return ret;
 }
 
@@ -219,8 +292,42 @@ setImpl(std::string_view name, const optional<string>& val, bool replace) {
 
 // Functions ------------------------------------------------------------------------------------------------
 
-#ifndef ROCKET_OS_WINDOWS
+#ifdef ROCKET_OS_WINDOWS
 
+// Windows
+string
+exec(const string& cl) {
+  string ret;
+  vector<char> buf(1'024);
+
+  // Auto-restore console modes that the pipe might compromise
+  ConsoleModeGuard cmg;
+
+  const auto closePipe = [](FILE* pipe) { _pclose(pipe); };
+  unique_ptr<FILE, decltype(closePipe)> pipe(_popen(cl.c_str(), "r"), closePipe);
+  if (not pipe) {
+    ROCKET_FAIL("Cannot open pipe for command `{}`", cl);
+  }
+  u64 n; // NOLINT
+  while ((n = fread(buf.data(), 1, buf.size(), pipe.get())) > 0) {
+    ret.insert(ret.end(), buf.begin(), buf.begin() + n); // NOLINT
+  }
+  if (ferror(pipe.get()) != 0) {
+    ROCKET_FAIL("Cannot read from pipe for command `{}`", cl);
+  }
+
+  // Close the pipe here rather than in the deleter, because only `_pclose` tells how the command ended
+  const i32 status = _pclose(pipe.release());
+  if (status != 0) {
+    ROCKET_FAIL("Command `{}` failed with exit status {}", cl, status);
+  }
+
+  return ret;
+}
+
+#else
+
+// Linux, macOS
 string
 exec(const string& cl) {
   string ret;
