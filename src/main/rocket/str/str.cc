@@ -28,16 +28,6 @@ capitalize(string_view str) {
   return ret;
 }
 
-u32string
-capitalize(u32string_view str) {
-  if (str.empty()) {
-    return {};
-  }
-  u32string ret(str);
-  ret[0] = CodePoint(str[0]).upper();
-  return ret;
-}
-
 vector<string_view>
 lines(string_view str) {
   vector<string_view> ret;
@@ -128,6 +118,63 @@ paragraphs(string_view str) {
   return pars;
 }
 
+string_view
+removeLeading(string_view str, string_view sub, u64 n) {
+  if (sub.empty()) {
+    return str;
+  }
+
+  std::string_view ret(str);
+  for (u64 i = 0; i < n; ++i) {
+    if (ret.starts_with(sub)) {
+      ret.remove_prefix(sub.size());
+    } else {
+      return ret;
+    }
+  }
+  return ret;
+}
+
+string_view
+removeTrailing(string_view str, string_view sub, u64 n) {
+  if (sub.empty()) {
+    return str;
+  }
+
+  string_view ret(str);
+  for (u64 i = 0; i < n; ++i) {
+    if (ret.ends_with(sub)) {
+      ret.remove_suffix(sub.size());
+    } else {
+      return ret;
+    }
+  }
+  return ret;
+}
+
+string_view
+removeTrailingEol(string_view str) {
+  if (str.ends_with("\r\n")) {
+    str.remove_suffix(2);
+    return str;
+  }
+  if (str.ends_with("\n")) {
+    str.remove_suffix(1);
+    return str;
+  }
+  return str;
+}
+
+string
+repeat(string_view str, u64 n) {
+  string ret;
+  ret.reserve(n * str.size());
+  for (u64 i = 0; i < n; ++i) {
+    ret.append(str);
+  }
+  return ret;
+}
+
 u64
 replaceIn(string& str, string_view from, string_view to, u64 n) {
   ROCKET_CHECK(from, not from.empty());
@@ -211,18 +258,29 @@ times(u64 n) {
   return fmt::format("{} times", n);
 }
 
+string_view
+trimLeading(string_view str) {
+  const auto pos = str.find_first_not_of("\t\n\v\f\r ");
+  if (pos == NPOS) {
+    return {};
+  }
+  return str.substr(pos);
+}
+
+string_view
+trimTrailing(string_view str) {
+  const auto pos = str.find_last_not_of("\t\n\v\f\r ");
+  if (pos == NPOS) {
+    return {};
+  }
+  return str.substr(0, pos + 1);
+}
+
 string
 upper(string_view str) {
   u32string localStr = convertUtf8To32(str);
   upperIn(localStr);
   return convertUtf32To8(localStr);
-}
-
-u32string
-upper(u32string_view str) {
-  u32string ret(str);
-  upperIn(ret);
-  return ret;
 }
 
 void

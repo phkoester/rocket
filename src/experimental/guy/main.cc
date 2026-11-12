@@ -125,7 +125,7 @@ MyApp::OnExit() {
 
 bool
 MyApp::OnInit() {
-  process().init(argc, argv, "guy");
+  process().init(argc, argv, "Guy");
 
   const cl::OptionGroup general("General control");
   const cl::CommandLineConfig config {

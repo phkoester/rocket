@@ -16,7 +16,7 @@ namespace rocket::math {
 
 // Internal -------------------------------------------------------------------------------------------------
 
-namespace internal {
+namespace internal::interval {
 
 // `BoundTraits` ............................................................................................
 
@@ -363,7 +363,7 @@ struct IntervalTraits<LeftClosed<T>, RightOpen<T>> {
   }
 };
 
-} // namespace internal
+} // namespace internal::interval
 
 // `Interval` -----------------------------------------------------------------------------------------------
 
@@ -379,13 +379,15 @@ struct Interval {
   /// The element type.
   using Type = typename Left::Type;
 
-  static_assert(
-       std::same_as<Left, internal::LeftClosed<Type>> || std::same_as<Left, internal::LeftOpen<Type>>);
-  static_assert(
-       std::same_as<Right, internal::RightClosed<Type>> || std::same_as<Right, internal::RightOpen<Type>>);
+  static_assert(std::same_as<
+    Left,
+    internal::interval::LeftClosed<Type>> || std::same_as<Left, internal::interval::LeftOpen<Type>>);
+  static_assert(std::same_as<
+    Right,
+    internal::interval::RightClosed<Type>> || std::same_as<Right, internal::interval::RightOpen<Type>>);
 
   /// The interval traits.
-  using Traits = internal::IntervalTraits<Left, Right>;
+  using Traits = internal::interval::IntervalTraits<Left, Right>;
 
   /// The type of the lower-bound traits.
   using LeftType = Left;
@@ -602,7 +604,7 @@ operator|(const Interval<Left, Right>& lhs, const Interval<Left, Right>& rhs) {
  * @tparam T the element type
  */
 template<typename T>
-using ClosedInterval = Interval<internal::LeftClosed<T>, internal::RightClosed<T>>;
+using ClosedInterval = Interval<internal::interval::LeftClosed<T>, internal::interval::RightClosed<T>>;
 
 /**
  * An open interval @f$(a,b)@f$ contains all elements @f$x@f$ such that @f$a < x < b@f$.
@@ -610,7 +612,7 @@ using ClosedInterval = Interval<internal::LeftClosed<T>, internal::RightClosed<T
  * @tparam T the element type
  */
 template<typename T>
-using OpenInterval = Interval<internal::LeftOpen<T>, internal::RightOpen<T>>;
+using OpenInterval = Interval<internal::interval::LeftOpen<T>, internal::interval::RightOpen<T>>;
 
 /**
  * A left-open interval @f$(a,b]@f$ contains all elements @f$x@f$ such that @f$a < x <= b@f$.
@@ -618,7 +620,7 @@ using OpenInterval = Interval<internal::LeftOpen<T>, internal::RightOpen<T>>;
  * @tparam T the element type
  */
 template<typename T>
-using LeftOpenInterval = Interval<internal::LeftOpen<T>, internal::RightClosed<T>>;
+using LeftOpenInterval = Interval<internal::interval::LeftOpen<T>, internal::interval::RightClosed<T>>;
 
 /**
  * A right-open interval @f$[a,b)@f$ contains all elements @f$x@f$ such that @f$a <= x < b@f$.
@@ -626,7 +628,7 @@ using LeftOpenInterval = Interval<internal::LeftOpen<T>, internal::RightClosed<T
  * @tparam T the element type
  */
 template<typename T>
-using RightOpenInterval = Interval<internal::LeftClosed<T>, internal::RightOpen<T>>;
+using RightOpenInterval = Interval<internal::interval::LeftClosed<T>, internal::interval::RightOpen<T>>;
 
 // `Intervals` ----------------------------------------------------------------------------------------------
 
@@ -717,25 +719,25 @@ unionOf(const Intervals<Left, Right>& val) {
  * A vector of #rocket::math::ClosedInterval%s.
  */
 template<typename T>
-using ClosedIntervals = Intervals<internal::LeftClosed<T>, internal::RightClosed<T>>;
+using ClosedIntervals = Intervals<internal::interval::LeftClosed<T>, internal::interval::RightClosed<T>>;
 
 /**
  * A vector of #rocket::math::OpenInterval%s.
  */
 template<typename T>
-using OpenIntervals = Intervals<internal::LeftOpen<T>, internal::RightOpen<T>>;
+using OpenIntervals = Intervals<internal::interval::LeftOpen<T>, internal::interval::RightOpen<T>>;
 
 /**
  * A vector of #rocket::math::LeftOpenInterval%s.
  */
 template<typename T>
-using LeftOpenIntervals = Intervals<internal::LeftOpen<T>, internal::RightClosed<T>>;
+using LeftOpenIntervals = Intervals<internal::interval::LeftOpen<T>, internal::interval::RightClosed<T>>;
 
 /**
  * A vector of #rocket::math::RightOpenInterval%s.
  */
 template<typename T>
-using RightOpenIntervals = Intervals<internal::LeftClosed<T>, internal::RightOpen<T>>;
+using RightOpenIntervals = Intervals<internal::interval::LeftClosed<T>, internal::interval::RightOpen<T>>;
 
 } // namespace rocket::math
 

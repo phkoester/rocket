@@ -58,7 +58,7 @@ main(i32 argc, char** argv) {
   // so use the classic numeric facet
   testLocale = locale(testLocale, locale::classic(), locale::numeric);
 
-  process().init(argc, argv, nullopt, testLocale);
+  process().init(argc, argv, process().invocationStem().string(), testLocale);
 
   optional<bool> help;
   const cl::OptionGroup general("General control");

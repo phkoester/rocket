@@ -11,7 +11,7 @@
 
 namespace rocket::codec {
 
-namespace internal {
+namespace internal::equal_to {
 
 // `EqualToConsumerImpl` ------------------------------------------------------------------------------------
 
@@ -453,7 +453,7 @@ struct EqualToConsumerImpl<DataType::Character, T, Eq> {
   }
 };
 
-} // namespace internal
+} // namespace internal::equal_to
 
 // `EqualToConsumer`-----------------------------------------------------------------------------------------
 
@@ -466,7 +466,7 @@ template<typename Eq>
 struct EqualToConsumer {
   /// @type_alias
   template<DataType DataType, typename T>
-  using Type = internal::EqualToConsumerImpl<DataType, T, Eq>;
+  using Type = internal::equal_to::EqualToConsumerImpl<DataType, T, Eq>;
 };
 
 // `EqualToEncoder` -----------------------------------------------------------------------------------------

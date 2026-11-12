@@ -763,7 +763,7 @@ struct CborProducerImpl<DataType::Pointer, P> {
     try {
       CborProducerImpl<AltDataType, Alt>().produce(alt, state);
     } catch (const InputFailure& ex) {
-      throw InputFailure(ex.position(), "Expected a pointer");
+      throw InputFailure(ex.position(), "Expected a pointer value");
     }
     item.setValue(reinterpret_cast<P>(alt.value())); // NOLINT
   }

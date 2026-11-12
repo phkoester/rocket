@@ -1,14 +1,12 @@
 /**
  * @file str.h
  *
- * A string library, ready for `char` (UTF-8) and `char32` (UTF-32).
+ * A string library, mostly for UTF-8 strings.
  */
 
-#include "rocket/literal.h"
-#include "rocket/type-traits.h"
+#include "rocket/rocket.h"
 
 #include <string>
-#include <utility>
 #include <vector>
 
 #pragma once
@@ -20,18 +18,10 @@ namespace rocket::str {
 /**
  * Makes a new string from @p str that has its first letter capitalized
  *
- * @param str a UTF-8 string
+ * @param str a string
  * @return a new string
  */
 std::string capitalize(std::string_view str);
-
-/**
- * Makes a new string from @p str that has its first letter capitalized
- *
- * @param str a UTF-32 string
- * @return a new string
- */
-std::u32string capitalize(std::u32string_view str);
 
 /**
  * Joins elements of a range into a string, using a set of different separators.
@@ -95,7 +85,7 @@ std::string join(
 [[nodiscard]] std::vector<std::string_view> lines(std::string_view str);
 
 /**
- * Converts a UTF-8 string to lower case, handling Unicode characters correctly.
+ * Converts a UTF-8 string to lower case, handling Unicode code points correctly.
  *
  * @param str the string to convert
  * @return a new string
@@ -103,15 +93,7 @@ std::string join(
 [[nodiscard]] std::string lower(std::string_view str);
 
 /**
- * Converts a UTF-32 string to lower case, handling Unicode characters correctly.
- *
- * @param str the string to convert
- * @return a new string
- */
-[[nodiscard]] std::u32string lower(std::u32string_view str);
-
-/**
- * Converts a UTF-32 string to lower case, handling Unicode characters correctly.
+ * Converts a UTF-32 string to lower case, handling Unicode code points correctly.
  *
  * @param str the string to convert
  */
@@ -126,7 +108,7 @@ void lowerIn(std::u32string& str);
  * - Consecutive whitespace is collapsed.
  *
  * @param str the string to split into paragraphs
- * @return a vector of paragraphs. Each paragraph is a vector of words. Each word is a UTF-8 string
+ * @return a vector of paragraphs. Each paragraph is a vector of words. Each word is a string
  */
 [[nodiscard]] std::vector<std::vector<std::string>> paragraphs(std::string_view str);
 
@@ -135,108 +117,43 @@ void lowerIn(std::u32string& str);
  *
  * The underlying string of @p str must remain valid for the lifetime of the returned string view.
  *
- * @tparam C the character type
  * @param str a string view
  * @param sub the substring to look for
  * @param n the maximum number of removals
  * @return a string view
  */
-template<typename C> requires IsChar<C>
-[[nodiscard]] std::basic_string_view<C>
-removeLeading(
-  std::basic_string_view<C> str,
-  std::basic_string_view<C> sub,
-  u64 n = NPOS) {
-  if (sub.empty()) {
-    return str;
-  }
-
-  std::basic_string_view<C> ret(str);
-  for (u64 i = 0; i < n; ++i) {
-    if (ret.starts_with(sub)) {
-      ret.remove_prefix(sub.size());
-    } else {
-      return ret;
-    }
-  }
-  return ret;
-}
+std::string_view removeLeading(std::string_view str, std::string_view sub, u64 n = NPOS);
 
 /**
  * Makes a string view such that it has up to @p n trailing occurrences of @p sub removed.
  *
  * The underlying string of @p str must remain valid for the lifetime of the returned string view.
  *
- * @tparam C the character type
  * @param str a string view
  * @param sub the substring to look for
  * @param n the maximum number of removals
  * @return a string view
  */
-template<typename C> requires IsChar<C>
-[[nodiscard]] std::basic_string_view<C>
-removeTrailing(
-  std::basic_string_view<C> str,
-  std::basic_string_view<C> sub,
-  u64 n = NPOS) {
-  if (sub.empty()) {
-    return str;
-  }
-
-  std::basic_string_view<C> ret(str);
-  for (u64 i = 0; i < n; ++i) {
-    if (ret.ends_with(sub)) {
-      ret.remove_suffix(sub.size());
-    } else {
-      return ret;
-    }
-  }
-  return ret;
-}
+std::string_view removeTrailing(std::string_view str, std::string_view sub, u64 n = NPOS);
 
 /**
  * Makes a string view such that it has a trailing end-of-line, if any, removed.
  *
  * The underlying string of @p str must remain valid for the lifetime of the returned string view.
  *
- * @tparam C the character type
  * @param str a string view
  * @return a string view
  */
-template<typename C> requires IsChar<C>
-[[nodiscard]] std::basic_string_view<C>
-removeTrailingEol(std::basic_string_view<C> str) {
-  constexpr auto CRLF = LiteralString<C, '\r', '\n'>();
-  if (str.ends_with(CRLF)) {
-    str.remove_suffix(CRLF.size());
-    return str;
-  }
-  constexpr auto LF = LiteralString<C, '\n'>();
-  if (str.ends_with(LF)) {
-    str.remove_suffix(LF.size());
-    return str;
-  }
-  return str;
-}
+std::string_view removeTrailingEol(std::string_view str);
 
 /**
  * Repeats the string @p str @p n times.
  *
- * @tparam C the character type
  * @param str a string
  * @param n the number of repetitions
  * @return a new string
  */
-template<typename C> requires IsChar<C>
-[[nodiscard]] std::basic_string<C>
-repeat(const std::basic_string_view<C> str, u64 n) {
-  std::basic_string<C> ret;
-  ret.reserve(n * str.size());
-  for (u64 i = 0; i < n; ++i) {
-    ret.append(str);
-  }
-  return ret;
-}
+std::string repeat(std::string_view str, u64 n);
 
 /**
  * Replaces up to @p n occurrences of @p from with @p to in the string @p str.
@@ -281,54 +198,32 @@ u64 replaceIn(
 /**
  * Removes leading whitespace from a string.
  *
- * @tparam C the character type
  * @param str the string to trim
  * @return a new string view
  */
-template<typename C> requires IsChar<C>
-[[nodiscard]] std::basic_string_view<C>
-trimLeading(std::basic_string_view<C> str) {
-  constexpr auto WS = LiteralString<C, '\t', '\n', '\v', '\f', '\r', ' '>();
-  const auto pos = str.find_first_not_of(WS);
-  if (pos == NPOS) {
-    return std::basic_string_view<C>();
-  }
-  return str.substr(pos);
-}
+std::string_view trimLeading(std::string_view str);
 
 /**
  * Removes trailing whitespace from a string.
  *
- * @tparam C the character type
  * @param str the string to trim
  * @return a new string view
  */
-template<typename C> requires IsChar<C>
-[[nodiscard]] std::basic_string_view<C>
-trimTrailing(std::basic_string_view<C> str) {
-  constexpr auto WS = LiteralString<C, '\t', '\n', '\v', '\f', '\r', ' '>();
-  const auto pos = str.find_last_not_of(WS);
-  if (pos == NPOS) {
-    return std::basic_string_view<C>();
-  }
-  return str.substr(0, pos + 1);
-}
+std::string_view trimTrailing(std::string_view str);
 
 /**
  * Removes leading and trailing whitespace from a string.
  *
- * @tparam C the character type
  * @param str the string to trim
  * @return a new string view
  */
-template<typename C> requires IsChar<C>
-[[nodiscard]] std::basic_string_view<C>
-trim(std::basic_string_view<C> str) {
+inline std::string_view
+trim(std::string_view str) {
   return trimLeading(trimTrailing(str));
 }
 
 /**
- * Converts a UTF-8 string to upper case, handling Unicode characters correctly.
+ * Converts a UTF-8 string to upper case, handling Unicode code points correctly.
  *
  * @param str the string to convert
  * @return a new string
@@ -336,15 +231,7 @@ trim(std::basic_string_view<C> str) {
 [[nodiscard]] std::string upper(std::string_view str);
 
 /**
- * Converts a UTF-32 string to upper case, handling Unicode characters correctly.
- *
- * @param str the string to convert
- * @return a new string
- */
-[[nodiscard]] std::u32string upper(std::u32string_view str);
-
-/**
- * Converts a UTF-32 string to upper case, handling Unicode characters correctly.
+ * Converts a UTF-32 string to upper case, handling Unicode code points correctly.
  *
  * @param str the string to convert
  */

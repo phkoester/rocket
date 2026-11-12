@@ -24,7 +24,7 @@ struct MyDerivedStruct : MyStruct {
 // `TEST` ---------------------------------------------------------------------------------------------------
 
 TEST(CompareEncoder, CmpOrdering) {
-  using codec::internal::CmpOrdering;
+  using codec::internal::compare::CmpOrdering;
   using reflect::MemberRef;
 
   using Cmp = StdCompare;
@@ -33,7 +33,7 @@ TEST(CompareEncoder, CmpOrdering) {
 }
 
 TEST(CompareEncoder, CmpCommonOrdering) {
-  using codec::internal::CmpCommonOrdering;
+  using codec::internal::compare::CmpCommonOrdering;
   using reflect::MemberRef;
 
   using Cmp = StdCompare;

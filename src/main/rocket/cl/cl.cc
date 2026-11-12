@@ -5,6 +5,7 @@
 #include "cl.h"
 
 #include "rocket/assert.h"
+#include "rocket/literal.h"
 #include "rocket/log/log.h"
 #include "rocket/nio/nio.h"
 #include "rocket/str/str.h"
@@ -606,7 +607,7 @@ void
 CommandLine::validate(string_view name, bool nameFlag) {
   // Don’t use `ROCKET_CHECK` here for cleaner exception messages
 
-  const char* what = nameFlag ? "option name" : "option short name";
+  const char* what = nameFlag ? "option name" : "short option name";
   if (name.empty()) {
     ROCKET_FAIL("{} may not be empty", str::capitalize(what));
   }

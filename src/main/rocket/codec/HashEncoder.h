@@ -14,7 +14,7 @@
 
 namespace rocket::codec {
 
-namespace internal {
+namespace internal::hash {
 
 // Functions ------------------------------------------------------------------------------------------------
 
@@ -27,7 +27,7 @@ combine(u64& seed, u64 hash) {
     seed += hash;
   } else {
     // Otherwise, do it like the Boost guys do it
-    hash::combine(seed, hash);
+    rocket::hash::combine(seed, hash);
   }
 }
 
@@ -371,7 +371,7 @@ struct HashConsumerImpl<DataType::Character, T, Hash> {
   }
 };
 
-} // namespace internal
+} // namespace internal::hash
 
 // `HashConsumer` (no pun intended) -------------------------------------------------------------------------
 
@@ -384,7 +384,7 @@ template<typename Hash>
 struct HashConsumer {
   /// @type_alias
   template<DataType DataType, typename T>
-  using Type = internal::HashConsumerImpl<DataType, T, Hash>;
+  using Type = internal::hash::HashConsumerImpl<DataType, T, Hash>;
 };
 
 // `HashEncoder` --------------------------------------------------------------------------------------------

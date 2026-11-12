@@ -67,11 +67,11 @@ i32
 main([[maybe_unused]] i32 argc, [[maybe_unused]] char **argv) {
   ROCKET_PROCESS_ERROR(0, "Testing error before `process().init` ...");
 
-  Process::atExit(myExit);
-  Process::atExit(myTerminate, true);
+  process().atExit(myExit);
+  process().atExit(myTerminate, true);
 
-  nio::out.println("invocation name: {}", Process::invocationName());
-  nio::out.println("invocation short name: {}", Process::invocationShortName());
+  nio::out.println("invocation path: {}", process().invocationPath());
+  nio::out.println("invocation stem: {}", process().invocationStem());
 
   process().init(argc, argv, "toy");
 

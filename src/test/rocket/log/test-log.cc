@@ -62,7 +62,7 @@ TEST(log, loggerZip) {
 
   // Clean up
 
-  Process::atExit([=] {
+  process().atExit([=] {
     fs::remove(logFile1);
     fs::remove(logFile2);
   }, true);

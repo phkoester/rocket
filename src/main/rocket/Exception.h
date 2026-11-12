@@ -380,7 +380,7 @@ struct fmt::formatter<rocket::WrappedException, C> {
         os << *p->stackTrace();
         const std::string str = os.str();
 
-        const auto withoutEol = rocket::str::removeTrailingEol<char>(str);
+        const auto withoutEol = rocket::str::removeTrailingEol(str);
         out = detail::write<C>(out, rocket::unicode::ConvertTo<C>::apply(withoutEol));
       }
     }

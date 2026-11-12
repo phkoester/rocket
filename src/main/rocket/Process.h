@@ -9,6 +9,7 @@
 #include "rocket/io/io.h"
 #include "rocket/nio/nio.h"
 
+#include <filesystem>
 #include <functional>
 #include <locale>
 #include <optional>
@@ -135,48 +136,14 @@ extern const std::thread::id MAIN_THREAD_ID;
  * i32
  * main(i32 argc, char** argv) {
  *   process().init(argc, argv, "my-program");
- *
  *   cl::CommandLine cl;
  *   cl.parse(process().args());
- *
  *   nio::out.println("This is {}", process().name());
- *
  *   process().exit(EXIT_SUCCESS);
  * }
  * ```
  */
 struct Process {
-  /**
-   * Registers a function to be called upon exit and quick exit, and even possibly on abnormal termination.
-   *
-   * @param fn the function to register
-   * @param callOnTerminate whether to call the function even on abnormal termination
-   */
-  static void atExit(std::function<void()>&& fn, bool callOnTerminate = false);
-
-  /**
-   * Returns the process ID (PID).
-   *
-   * @return the process ID (PID)
-   */
-  [[nodiscard]] static i32 id();
-
-  /**
-   * Returns the command this program was started with.
-   *
-   * If the command is not available, for example because `argv` was empty, this is `"program"`.
-   *
-   * @return the invocation name
-   */
-  [[nodiscard]] static const std::string& invocationName();
-
-  /**
-   * Returns the file-name portion of the command this program was started with.
-   *
-   * @return the invocation short name
-   */
-  [[nodiscard]] static const std::string& invocationShortName();
-
   /**
    * Returns the command line.
    *
@@ -184,7 +151,17 @@ struct Process {
    *
    * @return the command line, as separate strings. `argv[0]` is not included
    */
-  [[nodiscard]] const std::vector<std::string>& args() const { return args_; }
+  [[nodiscard]] const std::vector<std::string>& args() const;
+
+  /**
+   * Registers a function to be called upon exit and quick exit, and even possibly on abnormal termination.
+   *
+   * May be called before #init.
+   *
+   * @param fn the function to register
+   * @param callOnTerminate whether to call the function even on abnormal termination
+   */
+  void atExit(std::function<void()>&& fn, bool callOnTerminate = false) const;
 
   /**
    * Returns the code locale used for logging and error messages, which is `en_US.UTF-8`, or the classic
@@ -228,21 +205,30 @@ struct Process {
     out.println(fmt, std::forward<T>(args)...);
 
     if (status != 0) {
-      exit(status, true);
+      exit(status);
     }
   }
 
   /**
    * Exits the program.
    *
-   * Must be called after #init.
+   * May be called before #init.
    *
    * Depending on how #init was parameterized, this function either calls #std::exit or #std::quick_exit.
-   * The environment variables `ROCKET_EXIT` and `ROCKET_QUICK_EXIT` overrule the parameterized setting.
+   * The environment variables `ROCKET_EXIT` and `ROCKET_QUICK_EXIT` may overrule this setting.
    *
    * @param status the exit status
    */
-  [[noreturn]] void exit(i32 status) const { exit(status, false); }
+  [[noreturn]] void exit(i32 status) const;
+
+  /**
+   * Returns the process ID (PID).
+   *
+   * May be called before #init.
+   *
+   * @return the process ID (PID)
+   */
+  [[nodiscard]] i32 id() const;
 
   /**
    * Outputs an information message.
@@ -276,28 +262,49 @@ struct Process {
    *
    * @param argc `argc` from `main`
    * @param argv `argv` from `main`
-   * @param name the name of the program. If this is null, the file name from `argv[0]` is used, or
-   *    `"program"` if `argv[0]` is missing or yields no name. It is recommended to give the program a proper
-   *    name independent of `argv[0]`
+   * @param name the name of the program
    * @param locale the locale to use for the process. If this is null, the locale from the environment is
    *    used
-   * @param quickExit if `true`, #exit calls #std::quick_exit, otherwise it calls #std::exit
+   * @param quickExit if `true`, #exit calls #std::quick_exit, otherwise it calls #std::exit. The environment
+   *    variables `ROCKET_EXIT` and `ROCKET_QUICK_EXIT` may override this setting
    */
   void init(
     i32 argc,
     char** argv,
-    std::optional<std::string_view> name = std::nullopt,
+    std::string_view name,
     std::optional<std::locale> locale = std::nullopt,
     bool quickExit = true) const;
 
   /**
-   * Returns the locale this process picked in #init.
+   * Returns the command the process was started with.
+   *
+   * If the command is not available, for example because `argv` was empty, this is `"program"`.
+   *
+   * May be called before #init.
+   *
+   * @return the invocation path
+   */
+  [[nodiscard]] const std::filesystem::path& invocationPath() const;
+
+  /**
+   * Returns the file-stem portion of the command the process was started with.
+   *
+   * If the file stem is not available, for example because `argv` was empty, this is `"program"`.
+   *
+   * May be called before #init.
+   *
+   * @return the file-stem portion of the invocation path
+   */
+  [[nodiscard]] const std::filesystem::path& invocationStem() const;
+
+  /**
+   * Returns the locale the process picked in #init.
    *
    * Must be called after #init.
    *
    * @return a locale
    */
-  [[nodiscard]] const std::locale& initLocale() const { return initLocale_; }
+  [[nodiscard]] const std::locale& initLocale() const;
 
   /**
    * Returns the name of the process.
@@ -309,12 +316,13 @@ struct Process {
   [[nodiscard]] const std::string& name() const;
 
   /**
-   * Returns the system locale. This is the locale that was returned by the first call of
-   * #std::locale::global.
+   * Returns the system locale.
    *
-   * Must be called after #init.
+   * This is the global locale that was active by the time the process was constructed.
    *
-   * @return a locale
+   * May be called before #init.
+   *
+   * @return the system locale
    */
   [[nodiscard]] const std::locale& systemLocale() const { return systemLocale_; }
 
@@ -342,31 +350,32 @@ struct Process {
 
 private:
 
+  mutable std::filesystem::path invocationPath_;
+  mutable std::filesystem::path invocationStem_;
+
   mutable i32 argc_ = 0;
   mutable char** argv_ = nullptr;
   mutable std::string name_;
   mutable bool quickExit_ = true;
-
   mutable std::vector<std::string> args_;
   mutable bool inited_ = false;
 
+  // Default-constructed locale: a copy of the current global locale
+  std::locale systemLocale_;
   std::locale codeLocale_ = internal::process::tryLocale("en_US.UTF-8").value_or(std::locale::classic());
   mutable std::locale initLocale_;
-  mutable std::locale systemLocale_;
 
   Process() = default;
 
-  [[nodiscard]] const std::string& autoName() const;
-
-  [[noreturn]] void exit(i32 status, bool allowUninited) const;
+  [[nodiscard]] std::string autoName() const;
 
   friend const Process& process();
 };
 
 /**
- * Returns a reference to the #rocket::Process singleton.
+ * Returns a reference to the current process.
  *
- * @return a reference to the #rocket::Process singleton
+ * @return a reference to the current process.
  */
 [[nodiscard]] const Process& process();
 

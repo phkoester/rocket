@@ -30,10 +30,16 @@ TEST(str, lines) {
   EXPECT_EQ(lines("\na"), (vector<string_view>{ "", "a" }));
 }
 
+TEST(str, lower) {
+  EXPECT_EQ(str::lower("debug"), "debug");
+  EXPECT_EQ(str::lower("DEBUG"), "debug");
+  EXPECT_EQ(str::lower("ÄÖÜÉ"), "äöüé");
+}
+
 TEST(str, lowerIn) {
-  u32string str = U"ÄÖÜ";
+  u32string str = U"ÄÖÜÉ";
   lowerIn(str);
-  EXPECT_EQ(str, U"äöü");
+  EXPECT_EQ(str, U"äöüé");
 }
 
 #define NBSP "\u00A0"
@@ -51,77 +57,22 @@ TEST(str, paragraphs) {
   EXPECT_EQ(paragraphs("\na"), (pars({{}, {"a"} })));
 }
 
-TEST(str, removeLeadingChar) {
-  using type = char;
-
-  string_view str;
-  EXPECT_EQ(removeLeading<type>(str, "hello"), "");
-
-  str = "hello";
-  EXPECT_EQ(removeLeading<type>(str, ""), "hello");
-
-  str = "/dir";
-  EXPECT_EQ(removeLeading<type>(str, "/"), "dir");
-
-  str = "//dir";
-  EXPECT_EQ(removeLeading<type>(str, "/", 1), "/dir");
-
-  str = "///dir";
-  EXPECT_EQ(removeLeading<type>(str, "/"), "dir");
+TEST(str, removeLeading) {
+  EXPECT_EQ(removeLeading("", "hello"), "");
+  EXPECT_EQ(removeLeading("hello", ""), "hello");
+  EXPECT_EQ(removeLeading("/dir", "/"), "dir");
+  EXPECT_EQ(removeLeading("//dir", "/", 1), "/dir");
+  EXPECT_EQ(removeLeading("//dir", "/", 2), "dir");
+  EXPECT_EQ(removeLeading("///dir", "/"), "dir");
 }
 
-TEST(str, removeLeadingChar32) {
-  using type = char32;
-
-  u32string_view str;
-  EXPECT_EQ(removeLeading<type>(str, U"hello"), U"");
-
-  str = U"hello";
-  EXPECT_EQ(removeLeading<type>(str, U""), U"hello");
-
-  str = U"/dir";
-  EXPECT_EQ(removeLeading<type>(str, U"/"), U"dir");
-
-  str = U"//dir";
-  EXPECT_EQ(removeLeading<type>(str, U"/", 1), U"/dir");
-
-  str = U"///dir";
-  EXPECT_EQ(removeLeading<type>(str, U"/"), U"dir");
-}
-
-TEST(str, removeTrailingChar) {
-  using type = char;
-
-  string_view str;
-  EXPECT_EQ(removeTrailing<type>(str, "hello"), "");
-
-  str = "hello";
-  EXPECT_EQ(removeTrailing<type>(str, ""), "hello");
-
-  str = "dir/";
-  EXPECT_EQ(removeTrailing<type>(str, "/"), "dir");
-
-  str = "dir//";
-  EXPECT_EQ(removeTrailing<type>(str, "/", 1), "dir/");
-
-  str = "dir///";
-  EXPECT_EQ(removeTrailing<type>(str, "/"), "dir");
-}
-
-TEST(str, removeTrailingChar32) {
-  using type = char32;
-
-  u32string_view str;
-  EXPECT_EQ(removeTrailing<type>(str, U"hello"), U"");
-
-  str = U"hello";
-  EXPECT_EQ(removeTrailing<type>(str, U""), U"hello");
-
-  str = U"dir//";
-  EXPECT_EQ(removeTrailing<type>(str, U"/", 1), U"dir/");
-
-  str = U"dir///";
-  EXPECT_EQ(removeTrailing<type>(str, U"/"), U"dir");
+TEST(str, removeTrailing) {
+  EXPECT_EQ(removeTrailing("", "hello"), "");
+  EXPECT_EQ(removeTrailing("hello", ""), "hello");
+  EXPECT_EQ(removeTrailing("dir/", "/"), "dir");
+  EXPECT_EQ(removeTrailing("dir//", "/", 1), "dir/");
+  EXPECT_EQ(removeTrailing("dir//", "/", 2), "dir");
+  EXPECT_EQ(removeTrailing("dir///", "/"), "dir");
 }
 
 TEST(str, replaceIn) {
@@ -154,22 +105,16 @@ TEST(str, trimTrailing) {
   EXPECT_EQ(trimTrailing(" \t\na b c\v\f "sv), " \t\na b c"sv);
 }
 
-TEST(str, upperChar) {
+TEST(str, upper) {
   EXPECT_EQ(str::upper("debug"), "DEBUG");
   EXPECT_EQ(str::upper("DEBUG"), "DEBUG");
-  EXPECT_EQ(str::upper("äöü"), "ÄÖÜ");
-}
-
-TEST(str, upperChar32) {
-  EXPECT_EQ(str::upper(U"debug"), U"DEBUG");
-  EXPECT_EQ(str::upper(U"DEBUG"), U"DEBUG");
-  EXPECT_EQ(str::upper(U"äöü"), U"ÄÖÜ");
+  EXPECT_EQ(str::upper("äöüé"), "ÄÖÜÉ");
 }
 
 TEST(str, upperIn) {
-  u32string str = U"äöü";
+  u32string str = U"äöüé";
   upperIn(str);
-  EXPECT_EQ(str, U"ÄÖÜ");
+  EXPECT_EQ(str, U"ÄÖÜÉ");
 }
 
 // EOF

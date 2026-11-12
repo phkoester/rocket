@@ -30,9 +30,9 @@ Rocket stands on the shoulders of these giants:
 - [scnlib](https://github.com/eliaskosunen/scnlib) ([license](license/scnlib/LICENSE))
 - [wxWidgets](https://github.com/wxWidgets/wxWidgets) ([license](license/wxWidgets/licence.txt))
 
-## CMake Options
+## CMake Variables
 
-All of the following options may be supplied either as defined CMake variables or as environment variables:
+All of the following may be supplied either as defined CMake variables or as environment variables:
 
 | Name                              | Type     | Default                           | Description
 | :-------------------------------- | :------- | :-------------------------------- | :----------

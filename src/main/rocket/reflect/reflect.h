@@ -100,7 +100,7 @@
     static constexpr auto refs = ROCKET_REFLECT_MEMBERS_REFS__(cls, seq); \
     \
     using Cmp = ::rocket::StdCompare; \
-    using Ordering = ::rocket::codec::internal::CmpCommonOrdering<Cmp, Purge<decltype(refs)>>; \
+    using Ordering = ::rocket::codec::internal::compare::CmpCommonOrdering<Cmp, Purge<decltype(refs)>>; \
   }
 
 #define ROCKET_REFLECT_MEMBERS_DERIVED__(baseCls, baseName, cls, name, seq) \
@@ -110,7 +110,7 @@
       ROCKET_REFLECT_MEMBERS_REFS__(cls, seq)); \
     \
     using Cmp = ::rocket::StdCompare; \
-    using Ordering = ::rocket::codec::internal::CmpCommonOrdering<Cmp, Purge<decltype(refs)>>; \
+    using Ordering = ::rocket::codec::internal::compare::CmpCommonOrdering<Cmp, Purge<decltype(refs)>>; \
   }
 
 #define ROCKET_REFLECT_MEMBERS_DECLARE_DECLARED__(ns, cls, name) \

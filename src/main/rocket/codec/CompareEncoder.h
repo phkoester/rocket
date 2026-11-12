@@ -9,7 +9,7 @@
 
 namespace rocket::codec {
 
-namespace internal {
+namespace internal::compare {
 
 // `CmpOrdering` --------------------------------------------------------------------------------------------
 
@@ -458,7 +458,7 @@ struct CompareConsumerImpl<DataType::Character, T, Cmp> {
   }
 };
 
-} // namespace internal
+} // namespace internal::compare
 
 // `CompareConsumer` ----------------------------------------------------------------------------------------
 
@@ -471,7 +471,7 @@ template<typename Cmp>
 struct CompareConsumer {
   /// @type_alias
   template<DataType DataType, typename T>
-  using Type = internal::CompareConsumerImpl<DataType, T, Cmp>;
+  using Type = internal::compare::CompareConsumerImpl<DataType, T, Cmp>;
 };
 
 // `CompareEncoder` -----------------------------------------------------------------------------------------

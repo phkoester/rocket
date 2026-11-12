@@ -230,7 +230,7 @@ unicode::CharacterView<char>
 getChar(unicode::Iterator<char>& iter) {
   auto seg = iter.nextSegment();
   if (seg.empty()) {
-    throw InputFailure(iter.current(), "Expected character, got EOI");
+    throw InputFailure(iter.current(), "Expected a character, got EOI");
   }
   return unicode::CharacterView<char>(seg);
 }

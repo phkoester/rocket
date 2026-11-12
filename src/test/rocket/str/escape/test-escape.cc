@@ -108,7 +108,7 @@ TEST(escape, CString) {
 
   EXPECT_THAT(
       [&] { unescapeCString("abc\\"); },
-      throwsInputFailure(4, EndsWith("Expected character, got EOI")));
+      throwsInputFailure(4, EndsWith("Expected a character, got EOI")));
 
   EXPECT_THAT(
       [&] { unescapeCString("abc\\Ä"); },

@@ -165,7 +165,7 @@
  * Empty intervals are notated as `null`. Nonempty intervals are JSON arrays of two bounds. A missing
  * (infinite) bound is notated as `null`.
  *
- * Example values: `null`, `[-1.2, 3.4]`, `[null, -12]`, or `[12, null]`.
+ * Example values: `null`, `[-1.2, 3.4]`, `[null, -12]`, `[12, null]`.
  *
  * ## Declared Objects
  *

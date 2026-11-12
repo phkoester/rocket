@@ -85,6 +85,7 @@ fileSeparator() {
  *
  * @param cl the command-line string
  * @return a vector of arguments
+ * @throw #rocket::InputFailure for unterminated quotes and trailing backslashes
  */
 std::vector<std::string> makeArgs(std::string_view cl);
 
@@ -125,7 +126,7 @@ using GetResult = std::expected<T, GetError>;
  *
  * This function is thread-safe as long as all callers use this API from `system.h` exclusively.
  *
- * @return a set of name-value pairs
+ * @return a map of name-value pairs
  */
 [[nodiscard]] std::unordered_map<std::string, std::string> get();
 

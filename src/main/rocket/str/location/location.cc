@@ -277,7 +277,7 @@ printLocations( // NOLINT(*-complexity)
 
     // Right-trim, print the indicators
 
-    indicators = str::removeTrailing<char>(indicators, " ");
+    indicators = str::removeTrailing(indicators, " ");
     out.write(blankPrefix);
     if (config.styled) {
       out.print(fg(fmt::color::green) | fmt::emphasis::bold, "{}\n", indicators);

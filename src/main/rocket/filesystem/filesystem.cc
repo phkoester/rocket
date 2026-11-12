@@ -45,7 +45,7 @@ tempDir() {
   }
 
   // Remove the directory on exit, but not on termination
-  Process::atExit([=] {
+  process().atExit([=] {
     std::error_code error;
     remove_all(ret, error);
     if (error) {
@@ -67,7 +67,7 @@ tempFile() {
   fs::path ret = dir / name;
 
   // Remove the file on exit and on termination
-  Process::atExit([=] { remove(ret); }, true);
+  process().atExit([=] { remove(ret); }, true);
 
   return ret;
 }

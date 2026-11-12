@@ -155,10 +155,7 @@ private:
 
   static string
   expandDir() {
-    namespace fs = std::filesystem;
-    const auto invocationPath = fs::path(Process::invocationName());
-    const auto dir = invocationPath.parent_path();
-    return dir.string();
+    return process().invocationPath().parent_path().string();
   }
 
   static string
@@ -284,7 +281,7 @@ Out::expand(
   }
   const string date = fmt::format("{}", *ymd);
 
-  const auto pid = fmt::format("{}", Process::id());
+  const auto pid = fmt::format("{}", process().id());
 
   // Expand the pattern
 
@@ -866,7 +863,7 @@ logEnd() {
 void
 logInit() {
   // We need this in case of quick exit
-  Process::atExit([] {
+  process().atExit([] {
     ROCKET_MUTEX_LOCK(logMutex());
     logOut.flushOnExit();
   }, true);

@@ -40,8 +40,6 @@ vector<pair<function<void()>, bool>> onExitFns;
 
 // Local functions ------------------------------------------------------------------------------------------
 
-string shortName(string_view str);
-
 /// Returns @p argv0, or #FALLBACK_NAME if @p argv0 is null or empty.
 string
 argv0OrFallback(const char* argv0) {
@@ -49,7 +47,7 @@ argv0OrFallback(const char* argv0) {
 }
 
 void
-callExitFns(bool onTerminate) {
+callOnExitFns(bool onTerminate) {
   ROCKET_MUTEX_LOCK(processMutex);
 
   ROCKET_SCOPE_FAIL([] { onExitFns.clear(); });
@@ -71,45 +69,35 @@ callExitFns(bool onTerminate) {
   }
 }
 
-#ifdef ROCKET_OS_LINUX
-const string&
-invocationName() {
-  static const string ret(argv0OrFallback(::program_invocation_name));
-  return ret;
-}
+const filesystem::path&
+invocationPath() {
+#if defined(ROCKET_OS_LINUX)
+  static const filesystem::path path = argv0OrFallback(::program_invocation_name);
+#elif defined(ROCKET_OS_MACOS)
+  static const filesystem::path path = []() {
+    char** const argv = *_NSGetArgv();
+    return argv0OrFallback(argv != nullptr ? argv[0] : nullptr);
+  }();
+#else
+  static const filesystem::path path = argv0OrFallback(__argv != nullptr ? __argv[0] : nullptr);
 #endif
-
-#ifdef ROCKET_OS_MACOS
-const string&
-invocationName() {
-  char** const argv = *_NSGetArgv();
-  static const string ret(argv0OrFallback(argv != nullptr ? argv[0] : nullptr));
-  return ret;
+  return path;
 }
-#endif
 
-#ifdef ROCKET_OS_WINDOWS
-const string&
-invocationName() {
-  static const string ret(argv0OrFallback(__argv != nullptr ? __argv[0] : nullptr));
-  return ret;
-}
-#endif
-
-const string&
-invocationShortName() {
-  static const string ret(shortName(invocationName()));
-  return ret;
+const filesystem::path&
+invocationStem() {
+  static const filesystem::path stem = invocationPath().stem();
+  return stem;
 }
 
 void
 onExit() {
-  callExitFns(false);
+  callOnExitFns(false);
 }
 
 [[noreturn]] void
 onTerminate() {
-  callExitFns(true);
+  callOnExitFns(true);
 
   try {
     nio::err.println("{}: fatal error: Terminate handler called", process().name());
@@ -124,14 +112,6 @@ onTerminate() {
   abort();
 }
 
-string
-shortName(string_view str) {
-  const string fileName = filesystem::path(str).filename().string();
-  const auto sv = str::removeTrailing<char>(fileName, system::executableSuffix());
-  // A path such as `/` or `.exe` has no name left
-  return sv.empty() ? string(FALLBACK_NAME) : string(sv);
-}
-
 } // namespace
 
 namespace rocket {
@@ -144,28 +124,28 @@ thread_local string threadName;
 
 ROCKET_INIT([&] { threadName = "main"; });
 
-std::locale
+locale
 localeFromEnvironment(nio::Sink& err) {
   if (auto ret = tryLocale("")) {
     return *ret;
   }
   rocket::process().warn(err, "Cannot use the locale from the environment; using the classic locale instead");
-  return std::locale::classic();
+  return locale::classic();
 }
 
 /// @ThreadSafe
 const string&
-setThreadName(std::string_view name) {
+setThreadName(string_view name) {
   if (not name.empty()) {
     threadName = name;
   }
   return threadName;
 }
 
-optional<std::locale>
+optional<locale>
 tryLocale(const string& name) {
   try {
-    return std::locale(name);
+    return locale(name);
   } catch (const runtime_error&) {
     return {};
   }
@@ -179,28 +159,34 @@ const thread::id MAIN_THREAD_ID = this_thread::get_id();
 
 // `Process` ------------------------------------------------------------------------------------------------
 
+const vector<string>&
+Process::args() const {
+  ROCKET_MUTEX_LOCK(processMutex);
+
+  ROCKET_ASSERT(inited_, "Process not initialized");
+  return args_;
+}
+
 void
-Process::atExit(std::function<void()>&& fn, bool callOnTerminate) {
+Process::atExit(function<void()>&& fn, bool callOnTerminate) const {
   ROCKET_MUTEX_LOCK(processMutex);
 
   onExitFns.emplace_back(std::move(fn), callOnTerminate);
 }
 
-const string&
-Process::autoName() const { // NOLINT(*-recursion)
+string
+Process::autoName() const {
   ROCKET_MUTEX_LOCK(processMutex);
 
-  return inited_ ? name() : invocationShortName();
+  return inited_ ? name() : invocationStem().string();
 }
 
 void
-Process::exit(i32 status, bool allowUninited) const { // NOLINT(*-recursion)
+Process::exit(i32 status) const {
   ROCKET_MUTEX_LOCK(processMutex);
 
-  ROCKET_ASSERT(allowUninited || inited_, "Process not initialized");
-
   if (ROCKET_EXIT) {
-    std::exit(status); // NOLINT(concurrency-*)
+    std::exit(status);
   }
   if (ROCKET_QUICK_EXIT) {
     std::quick_exit(status);
@@ -209,12 +195,12 @@ Process::exit(i32 status, bool allowUninited) const { // NOLINT(*-recursion)
   if (quickExit_) {
     std::quick_exit(status);
   } else {
-    std::exit(status); // NOLINT(concurrency-*)
+    std::exit(status);
   }
 }
 
 i32
-Process::id() {
+Process::id() const {
 #ifdef ROCKET_OS_WINDOWS
   return _getpid();
 #else
@@ -226,34 +212,27 @@ void
 Process::init(
   i32 argc,
   char** argv,
-  optional<string_view> name,
-  optional<std::locale> locale,
+  string_view name,
+  optional<locale> locale,
   bool quickExit) const {
+  ROCKET_CHECK(name, not name.empty());
+
   ROCKET_MUTEX_LOCK(processMutex);
 
   ROCKET_ASSERT(this_thread::get_id() == MAIN_THREAD_ID, "`Process::init` must be called in the main thread");
   ROCKET_ASSERT(not inited_, "Process already initialized");
 
-  // Set the C locale from the environment. If this fails, the C locale stays in place, which matches the
-  // fallback to the classic locale below
-
-  const string localeName = locale ? locale->name() : "";
-  setlocale(LC_ALL, localeName.c_str()); // NOLINT(concurrency-*)
-
-  // Set the C++ locale from the environment
+  // Set given locale, if any, otherwise the locale from the environment
 
   initLocale_ = locale ? *locale : internal::process::localeFromEnvironment(nio::err);
-  systemLocale_ = std::locale::global(initLocale_);
+  std::locale::global(initLocale_);
 
-  // Initialize members
+  // Initialize more members
 
   argc_ = argc;
   argv_ = argv;
-
-  name_ = name ? *name : shortName(argv0OrFallback(argc > 0 && argv != nullptr ? argv[0] : nullptr));
-
+  name_ = name;
   quickExit_ = quickExit;
-
   for (i32 i = 1; i < argc; ++i) {
     args_.emplace_back(argv[i]);
   }
@@ -265,7 +244,7 @@ Process::init(
 
   inited_ = true;
 
-  // Set the terminate handler. This must be done *after* setting `inited_` to `true`
+  // Set the terminate handler
 
   set_terminate(onTerminate);
 
@@ -274,18 +253,36 @@ Process::init(
   log::internal::logInit();
 }
 
-const string&
-Process::invocationName() {
-  return ::invocationName();
+const locale&
+Process::initLocale() const {
+  ROCKET_MUTEX_LOCK(processMutex);
+
+  ROCKET_ASSERT(inited_, "Process not initialized");
+  return initLocale_;
+}
+
+const filesystem::path&
+Process::invocationPath() const {
+  ROCKET_MUTEX_LOCK(processMutex);
+
+  if (invocationPath_.empty()) {
+    invocationPath_ = ::invocationPath();
+  }
+  return invocationPath_;
+}
+
+const filesystem::path&
+Process::invocationStem() const {
+  ROCKET_MUTEX_LOCK(processMutex);
+
+  if (invocationStem_.empty()) {
+    invocationStem_ = ::invocationStem();
+  }
+  return invocationStem_;
 }
 
 const string&
-Process::invocationShortName() {
-  return ::invocationShortName();
-}
-
-const string&
-Process::name() const { // NOLINT(*-recursion)
+Process::name() const {
   ROCKET_MUTEX_LOCK(processMutex);
 
   ROCKET_ASSERT(inited_, "Process not initialized");
