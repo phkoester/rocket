@@ -33,6 +33,30 @@ ROCKET_ENUM_DEFINE(, Color, Color, (Red)(Green)(Blue));
 
 namespace {
 
+struct A {
+  int a;
+
+  virtual ~A() = default;
+};
+
+struct B : A {
+  int b;
+
+  virtual ~B() = default;
+};
+
+struct C : B {
+  int c;
+
+  virtual ~C() = default;
+};
+
+[[maybe_unused]]
+void handle(const A&) { nio::out.println("handle.A"); }
+
+[[maybe_unused]]
+void handle(const B&) { nio::out.println("handle.B"); }
+
 // Local functions ------------------------------------------------------------------------------------------
 
 void
@@ -59,6 +83,9 @@ toy() {
 
   nio::out.println("terminal size: {}", system::terminal::size(nio::out));
 
+  C c;
+  handle(c);
+
   auto result = system::exec("echo 'Hello");
   nio::out.println("result.ok(): {}", result.ok());
   nio::out.println("result.status: {}", result.status);
@@ -73,7 +100,7 @@ toy() {
 // `main` ---------------------------------------------------------------------------------------------------
 
 i32
-main([[maybe_unused]] i32 argc, [[maybe_unused]] char **argv) {
+main(i32 argc, char **argv) {
   ROCKET_PROCESS_ERROR(0, "Testing error before `process().init` ...");
 
   process().atExit(myExit);
