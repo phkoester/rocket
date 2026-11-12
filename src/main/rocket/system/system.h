@@ -11,6 +11,7 @@
 
 #include <optional>
 #include <string>
+#include <system_error>
 #include <unordered_map>
 #include <vector>
 
@@ -26,30 +27,95 @@ void setImpl(std::string_view name, const std::optional<std::string>& val, bool 
 
 } // namespace internal
 
+// `ExecResult` ---------------------------------------------------------------------------------------------
+
+/**
+ * The result of #rocket::system::exec.
+ *
+ * A command that ran has either #status or #signal set. A command that could not be started has neither,
+ * and #error tells why.
+ */
+struct ExecResult {
+  /// The output to stdout. If the command ran with `combined`, the output to stderr as well.
+  std::string out;
+
+  /// The output to stderr. Always empty if the command ran with `combined`.
+  std::string err;
+
+  /**
+   * The exit status if the command exited normally, otherwise empty.
+   *
+   * On Windows, this is the exit code of the process, converted to #rocket::i32.
+   */
+  std::optional<i32> status;
+
+  /// Linux, macOS: The number of the signal that terminated the command, otherwise empty. Always empty on
+  /// Windows.
+  std::optional<i32> signal;
+
+  /**
+   * The system error if the command could not be started or its output could not be read completely,
+   * otherwise empty.
+   *
+   * A command that cannot be found is reported here by the overload taking arguments. The overload taking a
+   * command line hands it to a shell, which reports it with an exit status instead: 127 on Linux and macOS,
+   * 9009 on Windows.
+   */
+  std::error_code error;
+
+  /**
+   * Returns whether the command ran, exited with status 0, and its output was read completely.
+   *
+   * @return `true` on success, otherwise `false`
+   */
+  [[nodiscard]] bool
+  ok() const {
+    return not error && status == 0;
+  }
+};
+
 // Functions ------------------------------------------------------------------------------------------------
 
 /**
- * Executes @p cl and captures the output to stdout.
+ * Executes the command line @p cl with the shell and captures the output to stdout and stderr.
  *
- * @param cl the command line to execute
- * @return the captured output
- * @throw #rocket::InvalidState if the command cannot be executed or does not exit with status 0
+ * On Linux and macOS, the shell is `/bin/sh -c`. On Windows, it is `cmd.exe /c`.
+ *
+ * The command inherits stdin. A nonzero exit status, a signal, or a failure to start the command is not an
+ * error of this function: it is reported in the result.
+ *
+ * @param cl the command line to execute. It may not contain NUL characters
+ * @param combined if `true`, the output to stderr goes to #rocket::system::ExecResult::out as well, in the
+ *   order the command writes it. Note that a command commonly buffers its output to stdout when it writes
+ *   to a pipe, but not its output to stderr
+ * @return the result
+ * @throw #rocket::InvalidArgument if @p cl contains a NUL character
  */
-std::string exec(const std::string& cl);
+ExecResult exec(const std::string& cl, bool combined = false);
 
 /**
- * Executes a command and captures the output to stdout.
+ * Executes a command and captures the output to stdout and stderr.
  *
  * Each argument reaches the command literally, as a single argument. No shell interprets it, so it is safe
- * to pass untrusted values.
+ * to pass untrusted values. The program is looked up in the `PATH` if it does not contain a path separator.
  *
- * @param args the command line to execute. The first element is the program. Elements may not contain NUL
- *   characters and, on Windows, line breaks
- * @return the captured output
- * @throw #rocket::InvalidArgument if an element of @p args contains a character that cannot be passed
- * @throw #rocket::InvalidState if the command cannot be executed or does not exit with status 0
+ * The command inherits stdin. A nonzero exit status, a signal, or a failure to start the command is not an
+ * error of this function: it is reported in the result.
+ *
+ * @attention On Windows, the program may not be a batch file (`.bat` or `.cmd`). Windows hands batch files
+ * to `cmd.exe`, which would interpret the arguments. Use #exec(const std::string&, bool) to run a batch file
+ * with arguments that are known to be harmless.
+ *
+ * @param args the command line to execute. The first element is the program. It may not be empty, nor
+ *   contain quotation marks on Windows. No element may contain NUL characters
+ * @param combined if `true`, the output to stderr goes to #rocket::system::ExecResult::out as well, in the
+ *   order the command writes it. Note that a command commonly buffers its output to stdout when it writes
+ *   to a pipe, but not its output to stderr
+ * @return the result
+ * @throw #rocket::InvalidArgument if @p args is empty, or an element of @p args contains a character that
+ *   cannot be passed, or the program is a batch file on Windows
  */
-std::string exec(const std::vector<std::string_view>& args);
+ExecResult exec(const std::vector<std::string_view>& args, bool combined = false);
 
 /**
  * Returns the system-dependent executable suffix.

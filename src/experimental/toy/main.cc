@@ -10,6 +10,7 @@
 #include "rocket/version.h"
 #include "rocket/cl/cl.h"
 #include "rocket/log/log.h"
+#include "rocket/system/system.h"
 #include "rocket/system/terminal/terminal.h"
 
 #include <string>
@@ -57,6 +58,14 @@ toy() {
   nio::out.println("Hello from toy");
 
   nio::out.println("terminal size: {}", system::terminal::size(nio::out));
+
+  auto result = system::exec("echo 'Hello");
+  nio::out.println("result.ok(): {}", result.ok());
+  nio::out.println("result.status: {}", result.status);
+  nio::out.println("result.signal: {}", result.signal);
+  nio::out.println("result.error: {}", result.error);
+  nio::out.println("result.err: {}", result.err);
+  nio::out.println("result.out: {}", result.out);
 }
 
 } // namespace

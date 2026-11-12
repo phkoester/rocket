@@ -6,7 +6,10 @@
 
 #include "rocket/icu.h"
 #include "rocket/scope.h"
-#include "rocket/windows.h"
+
+#ifdef ROCKET_OS_WINDOWS
+  #include "rocket/windows.h"
+#endif
 
 #include <algorithm>
 #include <array>

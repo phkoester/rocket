@@ -6,8 +6,6 @@
 
 #pragma once
 
-#ifdef ROCKET_OS_WINDOWS
-
 #define NOMINMAX
 
 #ifndef ROCKET_WINDOWS_FULL
@@ -15,7 +13,5 @@
 #endif
 
 #include <Windows.h>
-
-#endif // ROCKET_OS_WINDOWS
 
 // EOF

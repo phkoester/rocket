@@ -405,7 +405,21 @@ Out::zipOlderFiles(string_view pattern, const filesystem::path& current) {
         // The entry date is older: zip the file
         process().info(nio::err, "Zipping log file `{}` ...", entryPath);
         try {
-          system::exec( { "gzip", "-5f", entryPath.string() } );
+          const auto result = system::exec( { "gzip", "-5f", entryPath.string() } );
+          if (not result.ok()) {
+            string reason;
+            if (result.error) {
+              reason = result.error.message();
+            } else if (result.signal) {
+              reason = fmt::format("`gzip` was terminated by signal {}", *result.signal);
+            } else {
+              reason = fmt::format("`gzip` failed with exit status {}", result.status.value_or(-1));
+            }
+            if (const auto err = str::trim(result.err); not err.empty()) {
+              reason = fmt::format("{}: {}", reason, err);
+            }
+            process().error(nio::err, 0, "Cannot zip log file `{}`: {}", entryPath, reason);
+          }
         } catch (const exception& ex) {
           process().error(nio::err, 0, "Cannot zip log file `{}`: {}", entryPath, what(ex));
         }

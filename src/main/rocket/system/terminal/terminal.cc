@@ -8,12 +8,13 @@
 #include "rocket/assert.h"
 #include "rocket/scan.h"
 #include "rocket/scope.h"
-#include "rocket/windows.h"
 #include "rocket/io/io.h"
 
 #include <boost/safe_numerics/safe_integer.hpp>
 
-#ifndef ROCKET_OS_WINDOWS
+#ifdef ROCKET_OS_WINDOWS
+  #include "rocket/windows.h"
+#else
   #include <sys/ioctl.h>
   #include <termios.h>
 #endif

@@ -7,11 +7,38 @@
 #include "rocket/log/log.h"
 #include "rocket/system/system.h"
 
+#include <algorithm>
+#include <csignal>
 #include <filesystem>
 
 namespace fs = std::filesystem;
 
 using namespace rocket::system;
+
+namespace {
+
+// Local constants ------------------------------------------------------------------------------------------
+
+/// A command line that writes `out` to stdout, then `err` to stderr.
+#ifdef ROCKET_OS_WINDOWS
+const string OUT_THEN_ERR = "echo out& echo err>&2";
+#else
+const string OUT_THEN_ERR = "echo out; echo err >&2";
+#endif
+
+// Local functions ------------------------------------------------------------------------------------------
+
+/// Returns @p line with the line break that `echo` writes. The output is captured as is, with no conversion.
+string
+NL(string_view line) {
+#ifdef ROCKET_OS_WINDOWS
+  return fmt::format("{}\r\n", line);
+#else
+  return fmt::format("{}\n", line);
+#endif
+}
+
+} // namespace
 
 // `TEST` ---------------------------------------------------------------------------------------------------
 
@@ -117,12 +144,131 @@ TEST(system, envGet) {
 }
 
 TEST(system, execEcho) {
-  const auto out = exec("echo Hello");
-  EXPECT_EQ(out, "Hello\n");
+  const auto result = exec("echo Hello");
+  EXPECT_TRUE(result.ok());
+  EXPECT_EQ(result.out, NL("Hello"));
+  EXPECT_EQ(result.err, "");
+  EXPECT_EQ(result.status, 0);
+  EXPECT_EQ(result.signal, nullopt);
+  EXPECT_FALSE(result.error);
+}
+
+TEST(system, execStderr) {
+  const auto result = exec("echo Hello>&2");
+  EXPECT_TRUE(result.ok());
+  EXPECT_EQ(result.out, "");
+  EXPECT_EQ(result.err, NL("Hello"));
+}
+
+TEST(system, execSeparate) {
+  const auto result = exec(OUT_THEN_ERR);
+  EXPECT_TRUE(result.ok());
+  EXPECT_EQ(result.out, NL("out"));
+  EXPECT_EQ(result.err, NL("err"));
+}
+
+TEST(system, execCombined) {
+  const auto result = exec(OUT_THEN_ERR, true);
+  EXPECT_TRUE(result.ok());
+  EXPECT_EQ(result.out, NL("out") + NL("err"));
+  EXPECT_EQ(result.err, "");
+}
+
+TEST(system, execCombinedArgs) {
+  const string executable = binExecutable("print-args").string();
+
+  const auto result = exec({ executable, "a" }, true);
+  EXPECT_TRUE(result.ok());
+  EXPECT_THAT(result.out, HasSubstr("1=a="));
+  EXPECT_EQ(result.err, "");
+}
+
+TEST(system, execLargeOutput) {
+  // Much more output to both streams than a pipe holds. Reading one stream after the other would block
+  constexpr i32 LINES = 10'000;
+#ifdef ROCKET_OS_WINDOWS
+  const string cl = fmt::format("for /L %i in (1,1,{}) do @(echo xxxxxxxxxx& echo yyyyyyyyyy>&2)", LINES);
+#else
+  const string cl = fmt::format(
+    "i=0; while [ $i -lt {} ]; do echo xxxxxxxxxx; echo yyyyyyyyyy >&2; i=$((i+1)); done", LINES);
+#endif
+
+  const auto result = exec(cl);
+  EXPECT_TRUE(result.ok());
+  EXPECT_EQ(ranges::count(result.out, '\n'), LINES);
+  EXPECT_EQ(ranges::count(result.err, '\n'), LINES);
+  EXPECT_EQ(ranges::count(result.out, 'y'), 0);
+  EXPECT_EQ(ranges::count(result.err, 'x'), 0);
+}
+
+TEST(system, execExitStatus) {
+  const auto result = exec("exit 3");
+  EXPECT_FALSE(result.ok());
+  EXPECT_EQ(result.status, 3);
+  EXPECT_EQ(result.signal, nullopt);
+  EXPECT_FALSE(result.error);
+}
+
+TEST(system, execSignal) {
+#ifdef ROCKET_OS_WINDOWS
+  GTEST_SKIP();
+#else
+  // `kill` is built into the shell, so the shell terminates itself
+  const auto result = exec("kill -TERM $$");
+  EXPECT_FALSE(result.ok());
+  EXPECT_EQ(result.status, nullopt);
+  EXPECT_EQ(result.signal, SIGTERM);
+  EXPECT_FALSE(result.error);
+#endif
+}
+
+TEST(system, execNotFound) {
+  const auto result = exec(vector<string_view> { "rocket-no-such-program" });
+  EXPECT_FALSE(result.ok());
+  EXPECT_EQ(result.status, nullopt);
+  EXPECT_EQ(result.signal, nullopt);
+  EXPECT_TRUE(result.error);
+}
+
+TEST(system, execNotFoundShell) {
+  const auto result = exec("rocket-no-such-program");
+  EXPECT_FALSE(result.ok());
+#ifdef ROCKET_OS_WINDOWS
+  EXPECT_EQ(result.status, 9'009);
+#else
+  EXPECT_EQ(result.status, 127);
+#endif
+  EXPECT_FALSE(result.error);
+  EXPECT_FALSE(result.err.empty());
+}
+
+TEST(system, execInvalid) {
+  EXPECT_THAT(
+    [&] { exec(string("a\0b", 3)); },
+    ThrowsMessage<InvalidArgument>(EndsWith("May not contain NUL characters")));
+  EXPECT_THAT(
+    [&] { exec(vector<string_view> {}); },
+    ThrowsMessage<InvalidArgument>(EndsWith("May not be empty")));
+  EXPECT_THAT(
+    [&] { exec(vector<string_view> { "" }); },
+    ThrowsMessage<InvalidArgument>(EndsWith("Program may not be empty")));
+}
+
+TEST(system, execBatchFile) {
+#ifndef ROCKET_OS_WINDOWS
+  GTEST_SKIP();
+#else
+  for (const string_view program : { "a.bat", "a.cmd", "A.BAT", "a.Cmd", "a.bat.", "a.bat. ." }) {
+    SCOPED_TRACE(string(program));
+    EXPECT_THAT(
+      [&] { exec({ program, "arg" }); },
+      ThrowsMessage<InvalidArgument>(EndsWith("Program may not be a batch file on Windows")));
+  }
+#endif
 }
 
 TEST(system, execPrintf) {
-  const auto out = exec("printf \"%s\" Hello");
+  const auto out = exec("printf \"%s\" Hello").out;
   EXPECT_EQ(out, "Hello");
 }
 
@@ -132,7 +278,7 @@ TEST(system, execPrintArgs) {
 
   {
     // Test spaces, quotes and backslash
-    const auto out = exec({ executable, "a", "b c", " d ", "'", "\"", "\\" });
+    const auto out = exec({ executable, "a", "b c", " d ", "'", "\"", "\\" }).out;
     EXPECT_THAT(out, HasSubstr("1=a="));
     EXPECT_THAT(out, HasSubstr("2=b c="));
     EXPECT_THAT(out, HasSubstr("3= d ="));
@@ -143,7 +289,7 @@ TEST(system, execPrintArgs) {
 
   {
     // Test Unicode
-    const auto out = exec({ executable, "€ ÄÖÜ € 🧑‍🌾" });
+    const auto out = exec({ executable, "€ ÄÖÜ € 🧑‍🌾" }).out;
     EXPECT_THAT(out, HasSubstr("1=€ ÄÖÜ € 🧑‍🌾="));
   }
 }
@@ -151,13 +297,14 @@ TEST(system, execPrintArgs) {
 TEST(system, execPrintArgsWithSpace) {
   // Copy `print-args` to `print args`, se we have a space in the executable name
   const fs::path printArgs = binExecutable("print-args");
-  const fs::path printArgsWithSpace = printArgs.parent_path() / fmt::format("print args{}", executableSuffix());
+  const fs::path printArgsWithSpace =
+    printArgs.parent_path() / fmt::format("print args{}", executableSuffix());
   fs::copy_file(printArgs, printArgsWithSpace, fs::copy_options::overwrite_existing);
   const string executable = printArgsWithSpace.string();
 
   {
     // Test spaces and quotes, and backslash
-    const auto out = exec({ executable, "a", "b c", " d ", "'", "\"", "\\" });
+    const auto out = exec({ executable, "a", "b c", " d ", "'", "\"", "\\" }).out;
     EXPECT_THAT(out, HasSubstr("1=a="));
     EXPECT_THAT(out, HasSubstr("2=b c="));
     EXPECT_THAT(out, HasSubstr("3= d ="));
@@ -168,7 +315,7 @@ TEST(system, execPrintArgsWithSpace) {
 
   {
     // Test Unicode
-    const auto out = exec({ executable, "€ ÄÖÜ € 🧑‍🌾" });
+    const auto out = exec({ executable, "€ ÄÖÜ € 🧑‍🌾" }).out;
     EXPECT_THAT(out, HasSubstr("1=€ ÄÖÜ € 🧑‍🌾="));
   }
 }
@@ -207,7 +354,7 @@ TEST(system, execArgsAreLiteral) {
   for (const string_view val : values) {
     SCOPED_TRACE(string(val));
 
-    const auto out = exec({ executable, val });
+    const auto out = exec({ executable, val }).out;
     EXPECT_THAT(out, HasSubstr(fmt::format("1={}=", val)));
     EXPECT_THAT(out, Not(HasSubstr("2="))); // The value must not be split
     EXPECT_THAT(out, Not(HasSubstr("\ninjected"))); // An injected command would print on a line of its own
@@ -217,7 +364,7 @@ TEST(system, execArgsAreLiteral) {
 TEST(system, execArgsEmpty) {
   const string executable = binExecutable("print-args").string();
 
-  const auto out = exec({ executable, "", "a", "", "" });
+  const auto out = exec({ executable, "", "a", "", "" }).out;
   EXPECT_THAT(out, HasSubstr("1=="));
   EXPECT_THAT(out, HasSubstr("2=a="));
   EXPECT_THAT(out, HasSubstr("3=="));
@@ -231,7 +378,7 @@ TEST(system, execArgsApostrophes) {
   for (const string_view val : { "it's"sv, "''"sv, "'a b'"sv, "\"'\""sv, "'\\''"sv }) {
     SCOPED_TRACE(string(val));
 
-    const auto out = exec({ executable, val });
+    const auto out = exec({ executable, val }).out;
     EXPECT_THAT(out, HasSubstr(fmt::format("1={}=", val)));
     EXPECT_THAT(out, Not(HasSubstr("2=")));
   }
@@ -246,7 +393,7 @@ TEST(system, execArgsBackslashes) {
   for (const string_view val : values) {
     SCOPED_TRACE(string(val));
 
-    const auto out = exec({ executable, val });
+    const auto out = exec({ executable, val }).out;
     EXPECT_THAT(out, HasSubstr(fmt::format("1={}=", val)));
     EXPECT_THAT(out, Not(HasSubstr("2=")));
   }
@@ -255,15 +402,14 @@ TEST(system, execArgsBackslashes) {
 TEST(system, execArgsLineBreak) {
   const string executable = binExecutable("print-args").string();
 
-#ifdef ROCKET_OS_WINDOWS
-  EXPECT_THAT(
-    [&] { exec({ executable, "a\nb" }); },
-    ThrowsMessage<InvalidArgument>(EndsWith("May not contain line breaks on Windows")));
-#else
-  const auto out = exec({ executable, "a\nb" });
-  EXPECT_THAT(out, HasSubstr("1=a\nb="));
-  EXPECT_THAT(out, Not(HasSubstr("2=")));
-#endif
+  // No shell is involved, so line breaks can be passed on Windows as well
+  for (const string_view val : { "a\nb"sv, "a\r\nb"sv }) {
+    SCOPED_TRACE(string(val));
+
+    const auto out = exec({ executable, val }).out;
+    EXPECT_THAT(out, HasSubstr(fmt::format("1={}=", val)));
+    EXPECT_THAT(out, Not(HasSubstr("2=")));
+  }
 }
 
 TEST(system, execArgsNul) {

@@ -38,9 +38,10 @@ TEST(log, loggerZip) {
 
   // Run `logger`, check log file
 
-  string out = system::exec( { executable,
+  auto result = system::exec( { executable,
     "--log", "all=trace", "--log-out", logFilePattern, "Hi", "folks!" } );
-  // nio::out.println("OUT1:[\n{}]", out);
+  EXPECT_TRUE(result.ok());
+  // nio::out.println("OUT1:[\n{}]", result.out);
 
   auto time = rocket::chrono::now<log::internal::Clock>();
   string logFile1 = log::internal::expandLogFilePattern(logFilePattern, time);
@@ -48,9 +49,10 @@ TEST(log, loggerZip) {
 
   // Run `logger` again, with 3 days (72 hours) offset, check zip file and new log file
 
-  out = system::exec( { executable,
+  result = system::exec( { executable,
     "--log", "all=trace", "--log-out", logFilePattern, "--offset", "72", "Hi", "again!" } );
-  // nio::out.println("OUT2:[\n{}]", out);
+  EXPECT_TRUE(result.ok());
+  // nio::out.println("OUT2:[\n{}]", result.out);
 
   EXPECT_FALSE(fs::is_regular_file(logFile1));
   logFile1 += ".gz";
