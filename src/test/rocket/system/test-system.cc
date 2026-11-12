@@ -209,18 +209,16 @@ TEST(system, execExitStatus) {
   EXPECT_FALSE(result.error);
 }
 
+#ifndef ROCKET_OS_WINDOWS
 TEST(system, execSignal) {
-#ifdef ROCKET_OS_WINDOWS
-  GTEST_SKIP();
-#else
   // `kill` is built into the shell, so the shell terminates itself
   const auto result = exec("kill -TERM $$");
   EXPECT_FALSE(result.ok());
   EXPECT_EQ(result.status, nullopt);
   EXPECT_EQ(result.signal, SIGTERM);
   EXPECT_FALSE(result.error);
-#endif
 }
+#endif // ROCKET_OS_WINDOWS
 
 TEST(system, execNotFound) {
   const auto result = exec(vector<string_view> { "rocket-no-such-program" });
@@ -255,18 +253,16 @@ TEST(system, execInvalid) {
     ThrowsMessage<InvalidArgument>(EndsWith("Program may not be empty")));
 }
 
+#ifdef ROCKET_OS_WINDOWS
 TEST(system, execBatchFile) {
-#ifndef ROCKET_OS_WINDOWS
-  GTEST_SKIP();
-#else
   for (const string_view program : { "a.bat", "a.cmd", "A.BAT", "a.Cmd", "a.bat.", "a.bat. ." }) {
     SCOPED_TRACE(string(program));
     EXPECT_THAT(
       [&] { exec({ program, "arg" }); },
       ThrowsMessage<InvalidArgument>(EndsWith("Program may not be a batch file on Windows")));
   }
-#endif
 }
+#endif // ROCKET_OS_WINDOWS
 
 TEST(system, execPrintf) {
   const auto out = exec("printf \"%s\" Hello").out;
