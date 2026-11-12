@@ -234,7 +234,8 @@ TEST(system, execNotFoundShell) {
   const auto result = exec("rocket-no-such-program");
   EXPECT_FALSE(result.ok());
 #ifdef ROCKET_OS_WINDOWS
-  EXPECT_EQ(result.status, 9'009);
+  // `cmd.exe /c` exits with 9009 on older builds of Windows and with 1 on newer ones
+  EXPECT_THAT(result.status, Optional(AnyOf(1, 9'009)));
 #else
   EXPECT_EQ(result.status, 127);
 #endif
@@ -402,13 +403,19 @@ TEST(system, execArgsBackslashes) {
 TEST(system, execArgsLineBreak) {
   const string executable = binExecutable("print-args").string();
 
-  // No shell is involved, so line breaks can be passed on Windows as well
-  for (const string_view val : { "a\nb"sv, "a\r\nb"sv }) {
+  // No shell is involved, so line breaks can be passed on Windows as well. The bytes are checked rather than
+  // the echoed text because Windows translates each `\n` written to stdout into `\r\n`.
+  const vector<pair<string_view, string_view>> cases {
+    { "a\nb"sv, "1: [97, 10, 98]"sv },
+    { "a\r\nb"sv, "1: [97, 13, 10, 98]"sv },
+  };
+
+  for (const auto& [val, bytes] : cases) {
     SCOPED_TRACE(string(val));
 
     const auto out = exec({ executable, val }).out;
-    EXPECT_THAT(out, HasSubstr(fmt::format("1={}=", val)));
-    EXPECT_THAT(out, Not(HasSubstr("2=")));
+    EXPECT_THAT(out, HasSubstr(bytes));
+    EXPECT_THAT(out, Not(HasSubstr("2:")));
   }
 }
 

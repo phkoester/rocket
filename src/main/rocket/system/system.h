@@ -58,8 +58,8 @@ struct ExecResult {
    * otherwise empty.
    *
    * A command that cannot be found is reported here by the overload taking arguments. The overload taking a
-   * command line hands it to a shell, which reports it with an exit status instead: 127 on Linux and macOS,
-   * 9009 on Windows.
+   * command line hands it to a shell, which reports it with a nonzero exit status instead: 127 on Linux and
+   * macOS, 9009 or 1 on Windows, depending on the version of `cmd.exe`.
    */
   std::error_code error;
 
