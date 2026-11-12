@@ -406,7 +406,7 @@ Out::zipOlderFiles(string_view pattern, const filesystem::path& current) {
       // Using `YYYY-MM-DD` for the date part of the name, we can compare the strings directly
       if (entryDate < currentDate) {
         // The entry date is older: zip the file
-        process().info(nio::out, "Zipping log file `{}` ...", entryPath);
+        process().info(nio::err, "Zipping log file `{}` ...", entryPath);
         try {
           system::exec( { "gzip", "-5f", entryPath.string() } );
         } catch (const exception& ex) {
@@ -881,11 +881,7 @@ logInit() {
   }
   if (not args.empty()) {
     cl::CommandLine cl(CL_OPTIONS, {}, { .rocketOpts = false });
-    try {
-      cl.parse(args);
-    } catch (const Exception& ex) {
-      ROCKET_PROCESS_ERROR(EXIT_SERIOUS_FAILURE, "Cannot parse log options: {}", ex.message());
-    }
+    cl.parse(args);
   }
 }
 

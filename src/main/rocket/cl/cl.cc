@@ -11,15 +11,33 @@
 #include "rocket/system/terminal/terminal.h"
 #include "rocket/unicode/Iterator.h"
 
+#include <algorithm>
+
 using namespace rocket;
 using namespace std;
 
 namespace {
 
+// `ArgFile` ------------------------------------------------------------------------------------------------
+
+/// An argument file that is being expanded.
+struct ArgFile {
+  string absFile; ///< The canonical path, which identifies the file.
+  string file; ///< The file name as given, for messages.
+};
+
 // Local functions ------------------------------------------------------------------------------------------
 
+/**
+ * Adds @p arg to @p out, expanding it recursively if it names an argument file.
+ *
+ * @param out the expanded arguments
+ * @param arg the argument
+ * @param openFiles the argument files being expanded, from the outermost to the innermost. A file may be
+ *   expanded any number of times, but not while it is being expanded already, which would be a cycle
+ */
 void
-addArg(vector<string>& out, const string& arg, set<string>& seenFiles) { // NOLINT(*-recursion)
+addArg(vector<string>& out, const string& arg, vector<ArgFile>& openFiles) { // NOLINT(*-recursion)
   if (arg.starts_with("@")) {
     if (arg.size() == 1) {
       // "@" is just a regular argument
@@ -37,9 +55,18 @@ addArg(vector<string>& out, const string& arg, set<string>& seenFiles) { // NOLI
         ROCKET_FAIL("Cannot resolve argument file `{}`", file);
       }
       const string absFile = absPath.string();
-      if (not seenFiles.insert(absFile).second) {
-        ROCKET_FAIL("Argument file `{}` appears twice", file);
+      const auto open = ranges::find(openFiles, absFile, &ArgFile::absFile);
+      if (open != openFiles.end()) {
+        // Show the cycle, from the file that is expanded again to the file that includes it again
+        vector<string> cycle;
+        for (auto it = open; it != openFiles.end(); ++it) {
+          cycle.push_back(fmt::format("`{}`", it->file));
+        }
+        cycle.push_back(fmt::format("`{}`", file));
+        const string chain = str::join(cycle.begin(), cycle.end(), " -> ", " -> ", " -> ");
+        ROCKET_FAIL("Argument file `{}` includes itself: {}", file, chain);
       }
+      openFiles.push_back({ .absFile=absFile, .file=file });
 
       // Read the argument file, add arguments
       auto in = nio::FileSource(file);
@@ -54,8 +81,9 @@ addArg(vector<string>& out, const string& arg, set<string>& seenFiles) { // NOLI
         lines.pop_back();
       }
       for (const auto& line : lines) {
-        addArg(out, static_cast<string>(line), seenFiles); // Recursive call
+        addArg(out, static_cast<string>(line), openFiles); // Recursive call
       }
+      openFiles.pop_back();
     }
   } else {
     // Regular argument
@@ -67,9 +95,9 @@ addArg(vector<string>& out, const string& arg, set<string>& seenFiles) { // NOLI
 vector<string>
 expandArgs(const vector<string>& args) {
   vector<string> ret;
-  set<string> seenFiles;
+  vector<ArgFile> openFiles;
   for (const auto& arg : args) {
-    addArg(ret, arg, seenFiles);
+    addArg(ret, arg, openFiles);
   }
   return ret;
 }

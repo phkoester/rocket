@@ -85,6 +85,10 @@ private:
  * Returns the terminal’s current cursor position, if available. The pair’s `first` is the column starting
  * with 1, `second` is the line starting with 1.
  *
+ * The position is relative to the visible window, so it lies within the size that #size returns. On
+ * Windows, where the screen buffer may be larger than the window, a cursor outside the window has no
+ * position.
+ *
  * @param out the sink to write to
  * @return the cursor position, or null if not available
  */

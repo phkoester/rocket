@@ -5,7 +5,10 @@
 #include "rocket-test/rocket-test.h"
 
 #include "rocket/cl/cl.h"
+#include "rocket/filesystem/filesystem.h"
 #include "rocket/log/log.h"
+
+#include <fstream>
 
 using namespace rocket::cl;
 using namespace rocket::unicode;
@@ -577,6 +580,66 @@ TEST(cl, parseParametersMaxOccurs) {
   EXPECT_TRUE(cl.parse({ "a", "b", "c", "d" }, buf, buf, false));
   EXPECT_EQ(commands, (vector<string> { "a", "b" }));
   EXPECT_EQ(args, (vector<string> { "c", "d" }));
+}
+
+TEST(cl, argFiles) {
+  namespace fs = std::filesystem;
+
+  const fs::path dir = rocket::filesystem::tempDir();
+  const auto writeFile = [&](const string& name, const string& contents) {
+    const fs::path path = dir / name;
+    std::ofstream(path, std::ios::binary) << contents;
+    return path.string();
+  };
+  const auto parse = [](const vector<string>& cl, vector<string>& args, nio::StringSink& buf) {
+    CommandLine cmdLine({}, { Parameter::make({ .name="ARG" }, args) }, { .rocketOpts=false });
+    return cmdLine.parse(cl, buf, buf, false);
+  };
+
+  const string common = writeFile("common.txt", "c\n");
+  const string a = writeFile("a.txt", fmt::format("@{}\n1\n", common));
+  const string b = writeFile("b.txt", fmt::format("@{}\n2\n", common));
+
+  // The same file twice in a row is no cycle
+  {
+    vector<string> args;
+    nio::StringSink buf;
+    EXPECT_TRUE(parse({ "@" + common, "@" + common }, args, buf)) << buf.str();
+    EXPECT_EQ(args, (vector<string> { "c", "c" }));
+  }
+
+  // Two files that include the same file are no cycle either
+  {
+    vector<string> args;
+    nio::StringSink buf;
+    EXPECT_TRUE(parse({ "@" + a, "@" + b }, args, buf)) << buf.str();
+    EXPECT_EQ(args, (vector<string> { "c", "1", "c", "2" }));
+  }
+
+  // A file that includes itself
+  {
+    const string self = writeFile("self.txt", fmt::format("x\n@{}\n", (dir / "self.txt").string()));
+    vector<string> args;
+    nio::StringSink buf;
+    EXPECT_FALSE(parse({ "@" + self }, args, buf));
+    EXPECT_TRUE(
+      buf.str().contains(fmt::format("Argument file `{0}` includes itself: `{0}` -> `{0}`", self)))
+      << buf.str();
+  }
+
+  // Two files that include each other
+  {
+    const string first = (dir / "first.txt").string();
+    const string second = (dir / "second.txt").string();
+    writeFile("first.txt", fmt::format("@{}\n", second));
+    writeFile("second.txt", fmt::format("@{}\n", first));
+    vector<string> args;
+    nio::StringSink buf;
+    EXPECT_FALSE(parse({ "@" + first }, args, buf));
+    EXPECT_TRUE(
+      buf.str().contains(fmt::format("includes itself: `{0}` -> `{1}` -> `{0}`", first, second)))
+      << buf.str();
+  }
 }
 
 TEST(cl, helpUngroupedOptions) {

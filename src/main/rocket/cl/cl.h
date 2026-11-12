@@ -615,7 +615,7 @@ struct CommandLine {
    * @param out the sink to write standard output to
    * @param err the sink to write error output to
    * @param exit if `true`, the program exits on help, version, or parse failure
-   * @return whether the application should continue after parsing. On help, version, or parse failure, the
+   * @return if the application should continue after parsing. On help, version, or parse failure, the
    *   function returns `false`. If @p exit is `true`, the return value may be ignored
    */
   bool parse(

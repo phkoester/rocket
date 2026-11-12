@@ -133,7 +133,9 @@ position(nio::Sink& out) { // NOLINT
   }
 
 #ifdef ROCKET_OS_WINDOWS
-  // Use CSBI
+  // Use CSBI. `dwCursorPosition` is relative to the screen buffer, which may be far larger than the visible
+  // window, so make it relative to the window, `srWindow`, like `size` does. A cursor that has been scrolled
+  // out of the window has no position in it
 
   auto handle = getHandle(fd);
   ROCKET_ASSERT(handle != INVALID_HANDLE_VALUE);
@@ -141,7 +143,12 @@ position(nio::Sink& out) { // NOLINT
   if (not GetConsoleScreenBufferInfo(handle, &csbi)) {
     return {};
   }
-  return make_pair(safe<u64>(csbi.dwCursorPosition.X + 1), safe<u64>(csbi.dwCursorPosition.Y + 1));
+  const auto& win = csbi.srWindow;
+  const auto& cursor = csbi.dwCursorPosition;
+  if (cursor.X < win.Left || cursor.X > win.Right || cursor.Y < win.Top || cursor.Y > win.Bottom) {
+    return {};
+  }
+  return make_pair(safe<u64>(cursor.X - win.Left + 1), safe<u64>(cursor.Y - win.Top + 1));
 #else
   // The terminal sends its response to `stdin`. If that is not a terminal, reading from it would consume
   // unrelated input or block forever
