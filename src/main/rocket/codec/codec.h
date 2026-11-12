@@ -40,6 +40,7 @@
 
 #include "rocket/Bimap.h"
 #include "rocket/InputFailure.h"
+#include "rocket/assert.h"
 #include "rocket/type-traits.h"
 #include "rocket/chrono/chrono.h"
 #include "rocket/math/Interval.h"
@@ -415,6 +416,37 @@ void store(DecoderStore* val);
 // Functions ------------------------------------------------------------------------------------------------
 
 /**
+ * Converts a count of @p Unit to the duration type @p To, checking the range.
+ *
+ * Like #std::chrono::duration_cast, this truncates toward zero. Unlike #std::chrono::duration_cast, an
+ * integer result that does not fit into `To::rep` is reported instead of overflowing.
+ *
+ * @tparam To the target duration type
+ * @tparam Unit the duration type that @p count is given in
+ * @param count the number of units
+ * @return the converted duration, or null if it is out of range
+ */
+template<typename To, typename Unit>
+std::optional<To>
+checkedDurationCast(typename To::rep count) {
+  using Rep = To::rep;
+  if constexpr (std::floating_point<Rep>) {
+    // No undefined behavior here: a value out of range becomes infinity
+    return std::chrono::duration_cast<To>(std::chrono::duration<Rep, typename Unit::period>(count));
+  } else {
+    static_assert(sizeof(Rep) <= 8, "128-bit duration representations are not supported");
+    using Ratio = std::ratio_divide<typename Unit::period, typename To::period>;
+    // `count` has at most 64 bits and `Ratio::num` at most 55 (years to nanoseconds), so this cannot
+    // overflow
+    const i128 val = static_cast<i128>(count) * Ratio::num / Ratio::den;
+    if (val < std::numeric_limits<Rep>::min() || val > std::numeric_limits<Rep>::max()) {
+      return {};
+    }
+    return To(static_cast<Rep>(val));
+  }
+}
+
+/**
  * Makes a date from scanned values.
  *
  * @param y the year
@@ -499,6 +531,52 @@ unescapeLiteral(
   } catch (const InputFailure& ex) {
     throw ex.shifted(contentPos);
   }
+}
+
+/**
+ * Converts a count of the time unit @p unit to the duration type @p To, checking the range.
+ *
+ * @tparam To the target duration type
+ * @param unit the time unit: `ns`, `µs`, `us`, `ms`, `s`, `min`, `h`, `d`, `w`, `m`, or `y`
+ * @param count the number of units
+ * @return the converted duration, or null if it is out of range
+ */
+template<typename To>
+std::optional<To>
+unitDurationCast(std::string_view unit, typename To::rep count) {
+  using namespace std::chrono;
+
+  if (unit == "ns") {
+    return checkedDurationCast<To, nanoseconds>(count);
+  }
+  if (unit == "µs" || unit == "us") {
+    return checkedDurationCast<To, microseconds>(count);
+  }
+  if (unit == "ms") {
+    return checkedDurationCast<To, milliseconds>(count);
+  }
+  if (unit == "s") {
+    return checkedDurationCast<To, seconds>(count);
+  }
+  if (unit == "min") {
+    return checkedDurationCast<To, minutes>(count);
+  }
+  if (unit == "h") {
+    return checkedDurationCast<To, hours>(count);
+  }
+  if (unit == "d") {
+    return checkedDurationCast<To, days>(count);
+  }
+  if (unit == "w") {
+    return checkedDurationCast<To, weeks>(count);
+  }
+  if (unit == "m") {
+    return checkedDurationCast<To, months>(count);
+  }
+  if (unit == "y") {
+    return checkedDurationCast<To, years>(count);
+  }
+  ROCKET_TERMINATE_UNREACHABLE_CODE();
 }
 
 /**

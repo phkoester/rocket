@@ -526,6 +526,17 @@ TEST(FormattedCodec, ProducerDuration) {
 
   EXPECT_EQ(decode<seconds>("x").error().message, "Expected a duration");
   EXPECT_EQ(decode<seconds>("10x").error().message, "Expected a time unit");
+
+  // Range checks: 292 years fit into `nanoseconds`, 300 years do not
+  EXPECT_EQ(decode<nanoseconds>("292y"), duration_cast<nanoseconds>(years(292)));
+  EXPECT_EQ(decode<nanoseconds>("9223372036854775807ns"), nanoseconds::max());
+  EXPECT_EQ(decode<nanoseconds>("-9223372036854775808ns"), nanoseconds::min());
+  expectFailure<nanoseconds>("  300y", "Duration out of range", 2);
+  expectFailure<nanoseconds>("  -300y", "Duration out of range", 2);
+  expectFailure<duration<i32, std::milli>>("  3000h", "Duration out of range", 2);
+
+  // A floating-point representation cannot overflow
+  EXPECT_TRUE((decode<duration<f32, std::nano>>("300y")));
 }
 
 TEST(FormattedCodec, ProducerHourMinuteSecond) {

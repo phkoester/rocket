@@ -143,6 +143,9 @@
  * `m`   | Months
  * `y`   | Years
  *
+ * When reading, the value is converted to the target type, truncating toward zero. A value that does not fit
+ * into the target type is an error.
+ *
  * ## Hours, Minutes, Seconds
  *
  * Example values: `01:02:03`, `01:02:03.123`, `01:02:03.123456`, `-111:02:03.123456789`.
@@ -1180,29 +1183,11 @@ struct FormattedProducerImpl<DataType::Duration, T> {
     };
 
     if (auto str = readChoice(in, UNITS, true); str) {
-      if (*str == "ns") {
-        val = duration_cast<T>(nanoseconds(count));
-      } else if (*str == "µs" || *str == "us") {
-        val = duration_cast<T>(microseconds(count));
-      } else if (*str == "ms") {
-        val = duration_cast<T>(milliseconds(count));
-      } else if (*str == "s") {
-        val = duration_cast<T>(seconds(count));
-      } else if (*str == "min") {
-        val = duration_cast<T>(minutes(count));
-      } else if (*str == "h") {
-        val = duration_cast<T>(hours(count));
-      } else if (*str == "d") {
-        val = duration_cast<T>(days(count));
-      } else if (*str == "w") {
-        val = duration_cast<T>(weeks(count));
-      } else if (*str == "m") {
-        val = duration_cast<T>(months(count));
-      } else if (*str == "y") {
-        val = duration_cast<T>(years(count));
-      } else {
-        ROCKET_TERMINATE_UNREACHABLE_CODE();
+      const auto result = unitDurationCast<T>(*str, count);
+      if (not result) {
+        throw InputFailure(pos, "Duration out of range");
       }
+      val = *result;
       return;
     }
 
