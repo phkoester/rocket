@@ -120,9 +120,10 @@ Fmt logFmt;
 // `Out` ----------------------------------------------------------------------------------------------------
 
 /**
- * The log output sink
+ * The log-output sink.
  *
- * This class is not thread-safe, so all usages must be protected by #logMutex.
+ * This class is not thread-safe, so all usages must be guarded by #logMutex.
+ *
  * @NotThreadSafe
  */
 struct Out {
@@ -152,6 +153,19 @@ struct Out {
 
 private:
 
+  static string
+  expandDir() {
+    namespace fs = std::filesystem;
+    const auto invocationPath = fs::path(Process::invocationName());
+    const auto dir = invocationPath.parent_path();
+    return dir.string();
+  }
+
+  static string
+  expandName() {
+    return process().name();
+  }
+
   static std::chrono::year_month_day
   localYmd(const TimePoint& time) {
     auto localTime = rocket::chrono::zoned_time(rocket::chrono::current_zone(), time);
@@ -159,17 +173,39 @@ private:
     return std::chrono::year_month_day(localDays); // NOLINT
   }
 
+  /**
+   * Converts the file-name part of a log-output pattern to a regex pattern.
+   *
+   * @param name the file-name part of a log-output pattern; must not contain any file sepatators
+   * @return the regex
+   */
   static string
-  regex(string_view name) {
-    string ret = str::escape::escapeRegex(name);
-    // '[' and ']' are special characters in regex, so we need to escape them
+  regex(string_view namePattern) {
+    namespace fs = std::filesystem;
+
+    ROCKET_ASSERT(
+      not fs::path(namePattern).has_parent_path(),
+      "File-name pattern must not contain any file separators");
+
+    // Expand `<dir>` and `<name>` to their real values, eliminate the hints `<utc>` and `<zip>`
+
+    string ret(namePattern);
     str::replaceIn(ret, {
-      { "@\\[date\\]", "(\\d{4}-\\d{2}-\\d{2})" }, // Make this a group
-      { "@\\[dir\\]", "" },
-      { "@\\[name\\]", ".+" },
-      { "@\\[pid\\]", "\\d+" },
-      { "@\\[utc\\]", "" },
-      { "@\\[zip\\]", "" },
+      { "<dir>", expandDir()},
+      { "<name>", expandName() },
+      { "<utc>", "" },
+      { "<zip>", "" }
+    });
+
+    // Escape for regex
+
+    ret = str::escape::escapeRegex(ret);
+
+    // Replace `<date>` and `<pid>` with regex patterns
+
+    str::replaceIn(ret, {
+      { "<date>", "(\\d{4}-\\d{2}-\\d{2})" }, // Make this a group
+      { "<pid>", "\\d+" }
     });
     return ret;
   }
@@ -188,7 +224,7 @@ private:
   optional<std::chrono::year_month_day> ymd_;
   bool zip_ = false;
 
-  // `ymd` replaces the date taken from `time` for `@[date]`
+  // `ymd` replaces the date taken from `time` for `<date>`
   string expand(
     string_view pattern,
     const TimePoint& time,
@@ -227,61 +263,54 @@ Out::expand(
   const auto patternPath = fs::path(pattern);
 
   const auto patternDir = patternPath.parent_path().string();
-  const bool dateFoundInPatternDir = patternDir.contains("@[date]");
-  const bool pidFoundInPatternDir = patternDir.contains("@[pid]");
-  // We assume the directory part of the pattern to be "variable" if it contains a date or a PID. We don’t
+  const bool dateFoundInPatternDir = patternDir.contains("<date>");
+  const bool pidFoundInPatternDir = patternDir.contains("<pid>");
+  // We assume the directory part of the pattern to be "unstable" if it contains a date or a PID. We don’t
   // support zipping older log files in this case, because that would involve a rather complicated directory
   // lookup
-  const bool variablePatternDir = dateFoundInPatternDir || pidFoundInPatternDir;
+  const bool unstablePatternDir = dateFoundInPatternDir || pidFoundInPatternDir;
 
   const auto patternName = patternPath.filename().string();
   // When zipping, we require a date in the name part of the pattern so there are different log files in
   // the same directory, differing by their dates
-  const bool dateFoundInPatternName = patternName.contains("@[date]");
+  const bool dateFoundInPatternName = patternName.contains("<date>");
 
-  const bool utcFound = pattern.contains("@[utc]");
-  const bool dateFound = pattern.contains("@[date]");
-  const bool zipFound = pattern.contains("@[zip]");
+  const bool utcFound = pattern.contains("<utc>");
+  const bool dateFound = pattern.contains("<date>");
+  const bool zipFound = pattern.contains("<zip>");
 
   if (not ymd) {
     ymd = utcFound ? utcYmd(time) : localYmd(time);
   }
   const string date = fmt::format("{}", *ymd);
 
-  const auto invocationPath = fs::path(Process::invocationName());
-  const auto dir = invocationPath.parent_path();
-
   const auto pid = fmt::format("{}", Process::id());
-  const auto& name = process().name();
 
   // Expand the pattern
 
   string ret(pattern);
   str::replaceIn(ret, {
-    { "@[date]", date },
-    { "@[dir]", dir.string() },
-    { "@[name]", name },
-    { "@[pid]", pid },
-    { "@[utc]", "" },
-    { "@[zip]", "" },
+    { "<date>", date },
+    { "<dir>", expandDir() },
+    { "<name>", expandName() },
+    { "<pid>", pid },
+    { "<utc>", "" },
+    { "<zip>", "" },
   });
 
   // Do sanity checks
 
-  if (zipFound && variablePatternDir) {
-    // A pattern like `some/path/@[date]-@[pid]/name.log` works fine; however, in this case where the
-    // directory part of the pattern is variable, we don’t support zipping older log files
+  if (zipFound && unstablePatternDir) {
+    // A pattern like `some/path/<date>-<pid>/name.log` works fine; however, in this case where the directory
+    // part of the pattern is unstable, we don’t support zipping older log files
     ROCKET_FAIL("Can only zip older log files in the same directory");
   }
   if (zipFound && not dateFoundInPatternName) {
-    // If the pattern is something like `some/path/name-@[date].log`, we can easily look for older zip files
+    // If the pattern is something like `some/path/name-<date>.log`, we can easily look for older zip files
     ROCKET_FAIL("Can only zip older log files if a date is present in the name part of the pattern");
   }
   if (ret.empty()) {
     ROCKET_FAIL("Empty pattern");
-  }
-  if (ret.find("@[") != NPOS) {
-    ROCKET_FAIL("Invalid pattern");
   }
 
   // If requested, update members
@@ -324,7 +353,7 @@ Out::setPattern(string_view pattern, const TimePoint& time) {
   }
   if (not path.empty()) {
     try {
-      fileOut_ = make_unique<nio::FileSink>(path);
+      fileOut_ = make_unique<nio::FileSink>(path, true); // Append to the file
     } catch (const exception&) {
       process().error(nio::err, 0, "Cannot open log file `{}`; logging to standard output instead", path);
       reset();
@@ -452,14 +481,14 @@ const vector<cl::Option> CL_OPTIONS {
     .verboseDescription=
       "log to system device or file. If OUT is `-` or `stdout`, log messages are written to standard "
       "output, which is the default. If OUT is `stderr`, log messages are written to standard error. "
-      "Otherwise, OUT is a PATTERN. Examples: `@[name].log` or `@[name]-@[date].log@[zip]`. Inside PATTERN, "
+      "Otherwise, OUT is a PATTERN. Examples: `<name>.log` or `<name>-<date>.log<zip>`. Inside PATTERN, "
       "these placeholders are available:\n"
-      NBSP NBSP "@[date]"     NBSP NBSP "expands to the current date\n"
-      NBSP NBSP "@[dir]" NBSP NBSP NBSP "expands to the parent directory of the executable\n"
-      NBSP NBSP "@[name]"     NBSP NBSP "expands to the name of the process\n"
-      NBSP NBSP "@[pid]" NBSP NBSP NBSP "expands to the process ID (PID)\n"
-      NBSP NBSP "@[utc]" NBSP NBSP NBSP "serves as a hint to use the UTC date rather than the local date\n"
-      NBSP NBSP "@[zip]" NBSP NBSP NBSP "serves as a hint to zip older log files (requires `gzip`)",
+      NBSP NBSP "<date>"     NBSP NBSP "expands to the current date\n"
+      NBSP NBSP "<dir>" NBSP NBSP NBSP "expands to the parent directory of the executable\n"
+      NBSP NBSP "<name>"     NBSP NBSP "expands to the name of the process\n"
+      NBSP NBSP "<pid>" NBSP NBSP NBSP "expands to the process ID (PID)\n"
+      NBSP NBSP "<utc>" NBSP NBSP NBSP "serves as a hint to use the UTC date rather than the local date\n"
+      NBSP NBSP "<zip>" NBSP NBSP NBSP "serves as a hint to zip older log files (requires `gzip`)",
   }, applyLogOut),
 };
 

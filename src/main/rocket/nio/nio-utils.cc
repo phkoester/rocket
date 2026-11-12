@@ -463,7 +463,7 @@ readUntilUnescapedChar(nio::Source& in, char c) {
   string ret;
 
   while (true) {
-    char current; // NOLINT;
+    char current; // NOLINT
     if (in.read(current) != 1) {
       break;
     }

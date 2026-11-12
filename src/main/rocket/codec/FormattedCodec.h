@@ -1380,13 +1380,13 @@ struct FormattedProducerImpl<DataType::ZonedTime, T> {
     if (not readChar(in, 'Z')) {
       auto sign = readChoice(in, { "+", "-" }, false, false);
       if (not sign) {
-        throw InputFailure(offsetPos, "Expected UTC offset");
+        throw InputFailure(offsetPos, "Expected a UTC offset");
       }
 
       auto& is = in.istream();
       const auto result = scn::scan<u32, u32>(is, "{}:{}");
       if (not result) {
-        throw InputFailure(offsetPos, "Expected UTC offset");
+        throw InputFailure(offsetPos, "Expected a UTC offset");
       }
       in.seek(io::tellg(is), nio::SeekMode::beg);
       const auto& [h, m] = result->values();

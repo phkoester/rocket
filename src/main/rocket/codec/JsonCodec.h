@@ -96,7 +96,7 @@
  *
  * ## Lists
  *
- * Lists are JSON arrays. Examples: `[1, 2, 3]`, `["one", "two", "three"]`.
+ * Lists are JSON arrays. Example values: `[1, 2, 3]`, `["one", "two", "three"]`.
  *
  * ## Sets
  *
@@ -1525,13 +1525,13 @@ struct JsonProducerImpl<DataType::ZonedTime, T> {
       if (not readChar(inner, 'Z')) {
         auto sign = readChoice(inner, { "+", "-" }, false, false);
         if (not sign) {
-          throw InputFailure(offsetPos, "Expected UTC offset");
+          throw InputFailure(offsetPos, "Expected a UTC offset");
         }
 
         auto& is = inner.istream();
         const auto result = scn::scan<u32, u32>(is, "{}:{}");
         if (not result) {
-          throw InputFailure(offsetPos, "Expected UTC offset");
+          throw InputFailure(offsetPos, "Expected a UTC offset");
         }
         inner.seek(io::tellg(is), nio::SeekMode::beg);
         const auto& [h, m] = result->values();

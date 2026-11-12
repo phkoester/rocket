@@ -34,7 +34,7 @@ TEST(log, loggerZip) {
   const auto path = binExecutable("logger");
   const string executable = path.string();
 
-  const auto logFilePattern = (fs::temp_directory_path() / "logger-@[date].log@[zip]").string();
+  const auto logFilePattern = (fs::temp_directory_path() / "logger-<date>.log<zip>").string();
 
   // Run `logger`, check log file
 

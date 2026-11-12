@@ -235,7 +235,7 @@ struct Process {
    *
    * Must be called after #init.
    *
-   * Depending on how #init was parametrized, this function either calls #std::exit or #std::quick_exit.
+   * Depending on how #init was parameterized, this function either calls #std::exit or #std::quick_exit.
    * The environment variables `ROCKET_EXIT` and `ROCKET_QUICK_EXIT` overrule the parametrized setting.
    *
    * @param status the exit status

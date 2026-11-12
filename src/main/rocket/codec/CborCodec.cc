@@ -47,6 +47,6 @@ positionOf(span<const u8> cbor, u64 index) {
   return NPOS;
 }
 
-}; // namespace rocket::codec::internal::cbor
+} // namespace rocket::codec::internal::cbor
 
 // EOF

@@ -205,146 +205,136 @@ void setLogOut(std::string_view val);
 /**
  * Logs a message, using log level #rocket::log::error.
  *
- * Usage: `ROCKET_LOG_ERROR(fmt, [args]...])`
+ * Usage: `ROCKET_LOG_ERROR(fmt, [args]...)`
  */
 #define ROCKET_LOG_ERROR(fmt, ...) \
   if (rocketLog__ && rocketLog__->level_ >= ::rocket::log::LogLevel::error) { \
     ::rocket::log::internal::logMessage( \
-      ::rocket::log::LogLevel::error, \
-      fmt \
-      __VA_OPT__(,) __VA_ARGS__); \
+      ::rocket::log::LogLevel::error, fmt __VA_OPT__(,) __VA_ARGS__); \
   }
 
 #ifdef NDEBUG
 /**
  * Only in debug code, where `NDEBUG` is not defined, logs a message, using log level #rocket::log::error.
  *
- * Usage: `ROCKET_DEBUG_LOG_ERROR(fmt, [args]...])`
+ * Usage: `ROCKET_DEBUG_LOG_ERROR(fmt, [args]...)`
  */
 #define ROCKET_DEBUG_LOG_ERROR(fmt, ...)
 #else
 /**
  * Only in debug code, where `NDEBUG` is not defined, logs a message, using log level #rocket::log::error.
  *
- * Usage: `ROCKET_LOG_ERROR(fmt, [args]...])`
+ * Usage: `ROCKET_LOG_ERROR(fmt, [args]...)`
  */
-#define ROCKET_DEBUG_LOG_ERROR(fmt, ...) ROCKET_LOG_ERROR(fmt, __VA_OPT__(,) __VA_ARGS__)
+#define ROCKET_DEBUG_LOG_ERROR(fmt, ...) ROCKET_LOG_ERROR(fmt __VA_OPT__(,) __VA_ARGS__)
 #endif // NDEBUG
 
 /**
  * Logs a message, using log level #rocket::log::warn.
  *
- * Usage: `ROCKET_LOG_WARN(fmt, [args]...])`
+ * Usage: `ROCKET_LOG_WARN(fmt, [args]...)`
  */
 #define ROCKET_LOG_WARN(fmt, ...) \
   if (rocketLog__ && rocketLog__->level_ >= ::rocket::log::LogLevel::warn) { \
-    ::rocket::log::internal::logMessag( \
-      ::rocket::log::LogLevel::warn, \
-      fmt \
-      __VA_OPT__(,) __VA_ARGS__); \
+    ::rocket::log::internal::logMessage( \
+      ::rocket::log::LogLevel::warn, fmt __VA_OPT__(,) __VA_ARGS__); \
   }
 
 #ifdef NDEBUG
 /**
  * Only in debug code, where `NDEBUG` is not defined, logs a message, using log level #rocket::log::warn.
  *
- * Usage: `ROCKET_DEBUG_LOG_WARN(fmt, [args]...])`
+ * Usage: `ROCKET_DEBUG_LOG_WARN(fmt, [args]...)`
  */
 #define ROCKET_DEBUG_LOG_WARN(fmt, ...)
 #else
 /**
  * Only in debug code, where `NDEBUG` is not defined, logs a message, using log level #rocket::log::warn.
  *
- * Usage: `ROCKET_LOG_ERROR(fmt, [args]...])`
+ * Usage: `ROCKET_LOG_ERROR(fmt, [args]...)`
  */
-#define ROCKET_DEBUG_LOG_WARN(fmt, ...) ROCKET_LOG_WARN(fmt, __VA_OPT__(,) __VA_ARGS__)
+#define ROCKET_DEBUG_LOG_WARN(fmt, ...) ROCKET_LOG_WARN(fmt __VA_OPT__(,) __VA_ARGS__)
 #endif // NDEBUG
 
 /**
  * Logs a message, using log level #rocket::log::info.
  *
- * Usage: `ROCKET_LOG_INFO(fmt, [args]...])`
+ * Usage: `ROCKET_LOG_INFO(fmt, [args]...)`
  */
 #define ROCKET_LOG_INFO(fmt, ...) \
   if (rocketLog__ && rocketLog__->level_ >= ::rocket::log::LogLevel::info) { \
     ::rocket::log::internal::logMessage( \
-      ::rocket::log::LogLevel::info, \
-      fmt \
-      __VA_OPT__(,) __VA_ARGS__); \
+      ::rocket::log::LogLevel::info, fmt __VA_OPT__(,) __VA_ARGS__); \
   }
 
 #ifdef NDEBUG
 /**
  * Only in debug code, where `NDEBUG` is not defined, logs a message, using log level #rocket::log::info.
  *
- * Usage: `ROCKET_DEBUG_LOG_INFO(fmt, [args]...])`
+ * Usage: `ROCKET_DEBUG_LOG_INFO(fmt, [args]...)`
  */
 #define ROCKET_DEBUG_LOG_INFO(fmt, ...)
 #else
 /**
  * Only in debug code, where `NDEBUG` is not defined, logs a message, using log level #rocket::log::info.
  *
- * Usage: `ROCKET_LOG_INFO(fmt, [args]...])`
+ * Usage: `ROCKET_LOG_INFO(fmt, [args]...)`
  */
-#define ROCKET_DEBUG_LOG_INFO(fmt, ...) ROCKET_LOG_INFO(fmt, __VA_OPT__(,) __VA_ARGS__)
+#define ROCKET_DEBUG_LOG_INFO(fmt, ...) ROCKET_LOG_INFO(fmt __VA_OPT__(,) __VA_ARGS__)
 #endif // NDEBUG
 
 /**
  * Logs a message, using log level #rocket::log::debug.
  *
- * Usage: `ROCKET_LOG_DEBUG(fmt, [args]...])`
+ * Usage: `ROCKET_LOG_DEBUG(fmt, [args]...)`
  */
 #define ROCKET_LOG_DEBUG(fmt, ...) \
   if (rocketLog__ && rocketLog__->level_ >= ::rocket::log::LogLevel::debug) { \
     ::rocket::log::internal::logMessage( \
-      ::rocket::log::LogLevel::debug, \
-      fmt \
-      __VA_OPT__(,) __VA_ARGS__); \
+      ::rocket::log::LogLevel::debug, fmt __VA_OPT__(,) __VA_ARGS__); \
   }
 
 #ifdef NDEBUG
 /**
  * Only in debug code, where `NDEBUG` is not defined, logs a message, using log level #rocket::log::debug.
  *
- * Usage: `ROCKET_DEBUG_LOG_DEBUG(fmt, [args]...])`
+ * Usage: `ROCKET_DEBUG_LOG_DEBUG(fmt, [args]...)`
  */
 #define ROCKET_DEBUG_LOG_DEBUG(fmt, ...)
 #else
 /**
  * Only in debug code, where `NDEBUG` is not defined, logs a message, using log level #rocket::log::debug.
  *
- * Usage: `ROCKET_LOG_DEBUG(fmt, [args]...])`
+ * Usage: `ROCKET_LOG_DEBUG(fmt, [args]...)`
  */
-#define ROCKET_DEBUG_LOG_DEBUG(fmt, ...) ROCKET_LOG_DEBUG(fmt, __VA_OPT__(,) __VA_ARGS__)
+#define ROCKET_DEBUG_LOG_DEBUG(fmt, ...) ROCKET_LOG_DEBUG(fmt __VA_OPT__(,) __VA_ARGS__)
 #endif // NDEBUG
 
 /**
  * Logs a message, using log level #rocket::log::trace.
  *
- * Usage: `ROCKET_LOG_TRACE(fmt, [args]...])`
+ * Usage: `ROCKET_LOG_TRACE(fmt, [args]...)`
  */
 #define ROCKET_LOG_TRACE(fmt, ...) \
   if (rocketLog__ && rocketLog__->level_ >= ::rocket::log::LogLevel::trace) { \
     ::rocket::log::internal::logMessage( \
-      ::rocket::log::LogLevel::trace, \
-      fmt \
-      __VA_OPT__(,) __VA_ARGS__); \
+      ::rocket::log::LogLevel::trace, fmt __VA_OPT__(,) __VA_ARGS__); \
   }
 
 #ifdef NDEBUG
 /**
  * Only in debug code, where `NDEBUG` is not defined, logs a message, using log level #rocket::log::trace.
  *
- * Usage: `ROCKET_DEBUG_LOG_TRACE(fmt, [args]...])`
+ * Usage: `ROCKET_DEBUG_LOG_TRACE(fmt, [args]...)`
  */
 #define ROCKET_DEBUG_LOG_TRACE(fmt, ...)
 #else
 /**
  * Only in debug code, where `NDEBUG` is not defined, logs a message, using log level #rocket::log::trace.
  *
- * Usage: `ROCKET_LOG_TRACE(fmt, [args]...])`
+ * Usage: `ROCKET_LOG_TRACE(fmt, [args]...)`
  */
-#define ROCKET_DEBUG_LOG_TRACE(fmt, ...) ROCKET_LOG_TRACE(fmt, __VA_OPT__(,) __VA_ARGS__)
+#define ROCKET_DEBUG_LOG_TRACE(fmt, ...) ROCKET_LOG_TRACE(fmt __VA_OPT__(,) __VA_ARGS__)
 #endif // NDEBUG
 
 // EOF
