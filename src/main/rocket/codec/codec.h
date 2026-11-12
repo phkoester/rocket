@@ -227,7 +227,7 @@ struct DataTypes<std::tuple<T...>> {
 };
 
 /// @spec{rocket::codec::DataTypes, std::array}
-template<typename T, u64 N>
+template<typename T, std_size_t N>
 struct DataTypes<std::array<T, N>> {
   static constexpr auto Value = DataType::List; ///< The data type.
 };
@@ -245,7 +245,7 @@ struct DataTypes<std::list<T, Alloc>> {
 };
 
 /// @spec{rocket::codec::DataTypes, std::span}
-template<typename T, u64 Extent>
+template<typename T, std_size_t Extent>
 struct DataTypes<std::span<T, Extent>> {
   static constexpr auto Value = DataType::List; ///< The data type.
 };

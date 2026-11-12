@@ -18,7 +18,7 @@
 
 #include <version>
 
-#if defined(ROCKET_OS_MACOS) || defined(ROCKET_OS_WINDOWS)
+#if (defined(ROCKET_OS_MACOS) && defined(ROCKET_CXX_COMPILER_LLVM)) || defined(ROCKET_OS_WINDOWS)
   #if __has_include(<experimental/scope>)
     #error This C++ version supports experimental scope guards
   #endif

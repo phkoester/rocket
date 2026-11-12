@@ -26,7 +26,7 @@ namespace internal {
 template<typename T>
 struct IsArrayImpl : std::false_type {};
 
-template<typename T, u64 N>
+template<typename T, std_size_t N>
 struct IsArrayImpl<std::array<T, N>> : std::true_type {};
 
 template<typename T>
@@ -56,7 +56,7 @@ struct IsVectorImpl<std::vector<T, Alloc>> : std::true_type {};
 template<typename T>
 struct IsViewImpl : std::false_type {};
 
-template<typename T, u64 Extent>
+template<typename T, std_size_t Extent>
 struct IsViewImpl<std::span<T, Extent>> : std::true_type {};
 
 template<typename C, typename Traits>
@@ -83,7 +83,7 @@ struct ViewImpl {
   using Type = T;
 };
 
-template<typename T, u64 N>
+template<typename T, std_size_t N>
 struct ViewImpl<std::array<T, N>> {
   using Type = std::span<const T>;
 };
@@ -93,7 +93,7 @@ struct ViewImpl<std::basic_string<C, Traits, Alloc>> {
   using Type = std::basic_string_view<C, Traits>;
 };
 
-template<typename T, u64 Extent>
+template<typename T, std_size_t Extent>
 struct ViewImpl<std::span<T, Extent>> {
   using Type = std::span<const T, Extent>;
 };

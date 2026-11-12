@@ -4,6 +4,7 @@
 
 #include "rocket-test/rocket-test.h"
 
+#include "rocket/format.h"
 #include "rocket/TypeId.h"
 
 #include <unordered_set>
@@ -130,17 +131,23 @@ TEST(TypeId, name) {
 }
 
 TEST(TypeId, prettyName) {
+#if defined(ROCKET_CXX_COMPILER_GNU)
+  constexpr string_view STD_NS = "std::";
+  constexpr string_view STD_STRING_NS = "std::__cxx11::";
+#elif defined(ROCKET_CXX_COMPILER_LLVM)
+  constexpr string_view STD_NS = "std::__1::";
+  constexpr string_view STD_STRING_NS = "std::__1::";
+#else
+  constexpr string_view STD_NS = "std::";
+  constexpr string_view STD_STRING_NS = "std::";
+#endif
+
   EXPECT_EQ(TypeId::of<std_int>().prettyName(), "int");
   EXPECT_EQ(TypeId::of<std_double>().prettyName(), "double");
   EXPECT_EQ(TypeId::of<std_int*>().prettyName(), "int*");
   EXPECT_EQ(TypeId::of<const std_int*>().prettyName(), "int const*");
   EXPECT_EQ(TypeId::of<TypeId>().prettyName(), "rocket::TypeId");
-  EXPECT_THAT(
-    TypeId::of<string>().prettyName(),
-    matchesRegex("std::(__cxx11::)?basic_string<char, std::char_traits<char>, std::allocator<char>>"));
-  EXPECT_THAT(
-    TypeId::of<vector<string>>().prettyName(),
-    matchesRegex("std::vector<std::(__cxx11::)?basic_string<char, std::char_traits<char>, std::allocator<char>>, std::allocator<std::(__cxx11::)?basic_string<char, std::char_traits<char>, std::allocator<char>>>>"));
+
   EXPECT_EQ(TypeId::of<Plain>().prettyName(), "test_typeid::Plain");
   EXPECT_EQ(TypeId::of<Box<std_int>>().prettyName(), "test_typeid::Box<int>");
   EXPECT_EQ(TypeId::of<Box<Plain>>().prettyName(), "test_typeid::Box<test_typeid::Plain>");
@@ -148,6 +155,17 @@ TEST(TypeId, prettyName) {
   const Derived derived;
   const Base& base = derived;
   EXPECT_EQ(TypeId(base).prettyName(), "test_typeid::Derived");
+
+  EXPECT_THAT(
+    TypeId::of<string>().prettyName(),
+    matchesRegex(fmt::format(
+      "{1}basic_string<char, {0}char_traits<char>, {0}allocator<char>>",
+      STD_NS, STD_STRING_NS)));
+  EXPECT_THAT(
+    TypeId::of<vector<string>>().prettyName(),
+    matchesRegex(fmt::format(
+      "{0}vector<{1}basic_string<char, {0}char_traits<char>, {0}allocator<char>>, {0}allocator<{1}basic_string<char, {0}char_traits<char>, {0}allocator<char>>>>",
+      STD_NS, STD_STRING_NS)));
 }
 
 TEST(TypeId, format) {

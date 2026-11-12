@@ -74,13 +74,18 @@ set(FETCHCONTENT_QUIET FALSE)
 
 # Configuration ---------------------------------------------------------------------------------------------
 
-GaiaAddVar(ROCKET_BUILD_BENCH              BOOL   ${ROCKET_MASTER_PROJECT} "Build benchmarks")
-GaiaAddVar(ROCKET_BUILD_TEST               BOOL   ${ROCKET_MASTER_PROJECT} "Build tests")
-GaiaAddVar(ROCKET_COMPONENTS               STRING ""                       "Additional components to enable: `gui`")
-GaiaAddVar(ROCKET_ICU_CMAKE                BOOL   OFF                      "Use icu-cmake to build ICU")
-GaiaAddVar(ROCKET_IO_LOG                   BOOL   OFF                      "Enable logging of `rocket::io`")
-GaiaAddVar(ROCKET_NIO_LOG                  BOOL   OFF                      "Enable logging of `rocket::nio`")
-GaiaAddVar(ROCKET_NIO_NO_CONTIGUOUS_SOURCE BOOL   OFF                      "Disable contiguous-source optimization for `rocket::nio`")
+set(defaultComponents)
+if(ROCKET_MASTER_PROJECT)
+  set(defaultComponents gui)
+endif()
+
+GaiaAddVar(ROCKET_BUILD_BENCH              BOOL   "${ROCKET_MASTER_PROJECT}" "Build benchmarks")
+GaiaAddVar(ROCKET_BUILD_TEST               BOOL   "${ROCKET_MASTER_PROJECT}" "Build tests")
+GaiaAddVar(ROCKET_COMPONENTS               STRING "${defaultComponents}"     "Additional components to enable: `gui`")
+GaiaAddVar(ROCKET_ICU_CMAKE                BOOL   OFF                        "Use icu-cmake to build ICU")
+GaiaAddVar(ROCKET_IO_LOG                   BOOL   OFF                        "Enable logging of `rocket::io`")
+GaiaAddVar(ROCKET_NIO_LOG                  BOOL   OFF                        "Enable logging of `rocket::nio`")
+GaiaAddVar(ROCKET_NIO_NO_CONTIGUOUS_SOURCE BOOL   OFF                        "Disable contiguous-source optimization for `rocket::nio`")
 
 # Set compiler and linker options ---------------------------------------------------------------------------
 
@@ -109,7 +114,7 @@ endif()
 # Configure components --------------------------------------------------------------------------------------
 
 list(FIND ROCKET_COMPONENTS gui index__)
-if(ROCKET_MASTER_PROJECT OR index__ GREATER_EQUAL 0)
+if(index__ GREATER_EQUAL 0)
   set(ROCKET_GUI ON)
 else()
   set(ROCKET_GUI OFF)

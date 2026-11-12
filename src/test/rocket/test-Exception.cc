@@ -18,14 +18,11 @@ namespace {
 
 string
 nestedException(const string& type) {
-#if defined(ROCKET_OS_LINUX) // NOLINT
-  // Linux
+#if defined(ROCKET_CXX_COMPILER_GNU)
   return "`std::_Nested_exception<" + type + ">`";
-#elif defined(ROCKET_OS_MACOS) // NOLINT
-  // macOS
+#elif defined(ROCKET_CXX_COMPILER_LLVM)
   return "`std::__nested<" + type + ">`";
 #else
-  // Windows
   return "`std::_With_nested_v2<" + type + ">`";
 #endif
 }

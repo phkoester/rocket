@@ -1126,7 +1126,8 @@ locate_zone(string_view name) {
   if (const auto* ret = database().locate(name)) {
     return ret;
   }
-  throw runtime_error(fmt::format("Cannot locate time zone: {}", name));
+  // Use the same error message as the standard library
+  throw runtime_error(fmt::format("cannot locate zone: {}", name));
 }
 
 } // namespace rocket::chrono

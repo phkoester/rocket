@@ -620,7 +620,7 @@ TEST(FormattedCodec, ProducerTimeZone) {
   EXPECT_EQ(decode<TimeZone>("x").error().message, "Expected a time zone");
 
   EXPECT_THAT(decode<TimeZone>("(x)").error().message, AnyOf(
-    EndsWith("cannot locate zone: x"), // Linux
+    EndsWith("cannot locate zone: x"), // Linux, macOS
     StrEq("unable to locate time_zone with given name"))); // Windows
 }
 

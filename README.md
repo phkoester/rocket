@@ -41,7 +41,7 @@ All of the following options may be supplied either as defined CMake variables o
 | `CMAKE_BUILD_TYPE`                | `STRING` | `Release` if single configuration | The build type (`Debug` or `Release`)
 | `ROCKET_BUILD_BENCH`              | `BOOL`   | `ON` if master project            | Build benchmarks
 | `ROCKET_BUILD_TEST`               | `BOOL`   | `ON` if master project            | Build tests
-| `ROCKET_COMPONENTS`               | `STRING` | &mdash;                           | Additional components to enable: `gui`
+| `ROCKET_COMPONENTS`               | `STRING` | `gui` if master project           | Additional components to enable: `gui`. Set this to `none` to disable additional components
 | `ROCKET_ICU_CMAKE`                | `BOOL`   | `OFF`                             | Use icu-cmake to build ICU
 | `ROCKET_IO_LOG`                   | `BOOL`   | `OFF`                             | Enable logging of `rocket::io`
 | `ROCKET_NIO_LOG`                  | `BOOL`   | `OFF`                             | Enable logging of `rocket::nio`
