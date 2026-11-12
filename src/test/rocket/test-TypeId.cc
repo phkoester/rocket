@@ -130,13 +130,19 @@ TEST(TypeId, name) {
 }
 
 TEST(TypeId, prettyName) {
-  EXPECT_EQ(TypeId::of<int>().prettyName(), "int");
-  EXPECT_EQ(TypeId::of<double>().prettyName(), "double");
-  EXPECT_EQ(TypeId::of<int*>().prettyName(), "int*");
-  EXPECT_EQ(TypeId::of<const int*>().prettyName(), "int const*");
+  EXPECT_EQ(TypeId::of<std_int>().prettyName(), "int");
+  EXPECT_EQ(TypeId::of<std_double>().prettyName(), "double");
+  EXPECT_EQ(TypeId::of<std_int*>().prettyName(), "int*");
+  EXPECT_EQ(TypeId::of<const std_int*>().prettyName(), "int const*");
   EXPECT_EQ(TypeId::of<TypeId>().prettyName(), "rocket::TypeId");
+  EXPECT_THAT(
+    TypeId::of<string>().prettyName(),
+    matchesRegex("std::(__cxx11::)?basic_string<char, std::char_traits<char>, std::allocator<char>>"));
+  EXPECT_THAT(
+    TypeId::of<vector<string>>().prettyName(),
+    matchesRegex("std::vector<std::(__cxx11::)?basic_string<char, std::char_traits<char>, std::allocator<char>>, std::allocator<std::(__cxx11::)?basic_string<char, std::char_traits<char>, std::allocator<char>>>>"));
   EXPECT_EQ(TypeId::of<Plain>().prettyName(), "test_typeid::Plain");
-  EXPECT_EQ(TypeId::of<Box<int>>().prettyName(), "test_typeid::Box<int>");
+  EXPECT_EQ(TypeId::of<Box<std_int>>().prettyName(), "test_typeid::Box<int>");
   EXPECT_EQ(TypeId::of<Box<Plain>>().prettyName(), "test_typeid::Box<test_typeid::Plain>");
 
   const Derived derived;

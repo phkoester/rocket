@@ -28,10 +28,14 @@ TypeId::prettyName() const {
   // Windows: the names are not mangled, but still need some sanitizing
   string ret(name);
   str::replaceIn(ret, {
+    { "class ", "" },
     { "enum ", "" },
     { "struct ", "" },
     { " * __ptr64", "*" },
+    { ",", ", " }
   });
+  // Replace "> >" with ">>" in a loop
+  while (str::replaceIn(ret, { { "> >", ">>" } }) > 0);
   return ret;
 #else
   // Linux, macOS
