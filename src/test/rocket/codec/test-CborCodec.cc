@@ -34,7 +34,7 @@ namespace {
 
 // Local variables ------------------------------------------------------------------------------------------
 
-const CborCodec codec;
+const CborCodec cborCodec;
 
 // Local functions ------------------------------------------------------------------------------------------
 
@@ -63,15 +63,15 @@ someFuncReturningCborItem() {
 template<typename T>
 [[nodiscard]] DecodeResult<T>
 decode(const vector<u8>& cbor) {
-  return codec.decode<T>(cbor);
+  return cborCodec.decode<T>(cbor);
 }
 
 template<typename T>
 void
 testRoundtrip(const T& val) { // NOLINT(*-complexity)
-  const vector<u8> cbor = codec.encode(val);
+  const vector<u8> cbor = cborCodec.encode(val);
 
-  const auto result = codec.decode<T>(cbor);
+  const auto result = cborCodec.decode<T>(cbor);
   if (not result.has_value()) {
     const auto& error = result.error();
     if constexpr (std::same_as<T, std::u32string> || std::same_as<T, std::u32string_view>) {
@@ -99,7 +99,7 @@ testRoundtrip(const T& val) { // NOLINT(*-complexity)
 template<typename T>
 void
 testHourMinuteSecond(const T& val) {
-  const auto result = codec.decode<T>(codec.encode(val));
+  const auto result = cborCodec.decode<T>(cborCodec.encode(val));
   if (not result.has_value()) {
     ROCKET_FAIL(
       "Cannot decode hour, minute, and second {} at position {}: {}\n",
@@ -113,7 +113,7 @@ testHourMinuteSecond(const T& val) {
 template<typename T>
 void
 testZonedTime(const T& val) {
-  const auto result = codec.decode<T>(codec.encode(val));
+  const auto result = cborCodec.decode<T>(cborCodec.encode(val));
   if (not result.has_value()) {
     ROCKET_FAIL("Cannot decode zoned time at position {}: {}\n",
       result.error().position, result.error().message);
@@ -124,7 +124,7 @@ testZonedTime(const T& val) {
 template<typename T>
 void
 testCharacter(const T& val) {
-  const auto result = codec.decode<T>(codec.encode(val));
+  const auto result = cborCodec.decode<T>(cborCodec.encode(val));
   if (not result.has_value()) {
     ROCKET_FAIL("Cannot decode character at position {}: {}\n",
       result.error().position, result.error().message);
@@ -139,14 +139,14 @@ testVarRefs() {
   int c = 2;
   const auto refs = ROCKET_REFLECT_VARS((a)(b)(c));
 
-  const auto decoded = codec.decode<tuple<int, int, int>>(codec.encode(refs));
+  const auto decoded = cborCodec.decode<tuple<int, int, int>>(cborCodec.encode(refs));
   if (not decoded.has_value()) {
     ROCKET_FAIL("Cannot decode variable references at position {}: {}\n",
       decoded.error().position, decoded.error().message);
   }
   EXPECT_EQ(decoded.value(), (tuple<int, int, int> { 0, 1, 2 }));
 
-  const auto one = codec.decode<int>(codec.encode(std::get<1>(refs)));
+  const auto one = cborCodec.decode<int>(cborCodec.encode(std::get<1>(refs)));
   if (not one.has_value()) {
     ROCKET_FAIL("Cannot decode variable reference at position {}: {}\n",
       one.error().position, one.error().message);
@@ -156,7 +156,7 @@ testVarRefs() {
 
 void
 testTimeZone(TimeZone zone) {
-  const auto result = codec.decode<TimeZone>(codec.encode(zone));
+  const auto result = cborCodec.decode<TimeZone>(cborCodec.encode(zone));
   if (not result.has_value()) {
     ROCKET_FAIL("Cannot decode time zone \"{}\" at position {}: {}\n",
       zone->name(), result.error().position, result.error().message);
@@ -223,6 +223,22 @@ TEST(CborCodec, Integer) {
 
   testRoundtrip(1000000000_i64);
   testRoundtrip(1000000000_u64);
+
+  testRoundtrip(static_cast<i8>(-1));
+  testRoundtrip(static_cast<i16>(-1000));
+  testRoundtrip(static_cast<i32>(-100000));
+  testRoundtrip(static_cast<i64>(-1000000000));
+
+  testRoundtrip(numeric_limits<i8>::min());
+  testRoundtrip(numeric_limits<i8>::max());
+  testRoundtrip(numeric_limits<u8>::max());
+  testRoundtrip(numeric_limits<i16>::min());
+  testRoundtrip(numeric_limits<u16>::max());
+  testRoundtrip(numeric_limits<i32>::min());
+  testRoundtrip(numeric_limits<u32>::max());
+  testRoundtrip(numeric_limits<i64>::min());
+  testRoundtrip(numeric_limits<i64>::max());
+  testRoundtrip(numeric_limits<u64>::max());
 }
 
 TEST(CborCodec, Integer128) {
@@ -230,6 +246,99 @@ TEST(CborCodec, Integer128) {
   testRoundtrip(numeric_limits<i128>::max());
   testRoundtrip(numeric_limits<u128>::max());
   testRoundtrip(340282366920938463463374607431768211455_u128);
+  testRoundtrip(-1_i128);
+  testRoundtrip(-18446744073709551616_i128); // -2^64, still a negative integer
+  testRoundtrip(-18446744073709551617_i128); // -2^64 - 1, a bignum
+  testRoundtrip(18446744073709551616_u128); // 2^64, a bignum
+}
+
+TEST(CborCodec, IntegerEncoding) {
+  // Shortest encoding, negative integers as major type 1 (RFC 8949)
+  EXPECT_EQ(cborCodec.encode(0_i32), (vector<u8> { 0x00 }));
+  EXPECT_EQ(cborCodec.encode(23_i32), (vector<u8> { 0x17 }));
+  EXPECT_EQ(cborCodec.encode(24_i32), (vector<u8> { 0x18, 0x18 }));
+  EXPECT_EQ(cborCodec.encode(1000_u64), (vector<u8> { 0x19, 0x03, 0xE8 }));
+  EXPECT_EQ(cborCodec.encode(static_cast<i32>(-1)), (vector<u8> { 0x20 }));
+  EXPECT_EQ(cborCodec.encode(static_cast<i8>(-24)), (vector<u8> { 0x37 }));
+  EXPECT_EQ(cborCodec.encode(static_cast<i8>(-25)), (vector<u8> { 0x38, 0x18 }));
+  EXPECT_EQ(cborCodec.encode(static_cast<i64>(-500)), (vector<u8> { 0x39, 0x01, 0xF3 }));
+  EXPECT_EQ(
+    cborCodec.encode(numeric_limits<i64>::min()),
+    (vector<u8> { 0x3B, 0x7F, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF }));
+  EXPECT_EQ(
+    cborCodec.encode(numeric_limits<u64>::max()),
+    (vector<u8> { 0x1B, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF }));
+
+  // 128-bit values: integers within the 64-bit range, bignums beyond
+  EXPECT_EQ(cborCodec.encode(5_u128), (vector<u8> { 0x05 }));
+  EXPECT_EQ(cborCodec.encode(-1_i128), (vector<u8> { 0x20 }));
+  EXPECT_EQ(
+    cborCodec.encode(-18446744073709551616_i128),
+    (vector<u8> { 0x3B, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF }));
+  EXPECT_EQ(
+    cborCodec.encode(18446744073709551616_u128),
+    (vector<u8> { 0xC2, 0x49, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }));
+  EXPECT_EQ(
+    cborCodec.encode(-18446744073709551617_i128),
+    (vector<u8> { 0xC3, 0x49, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }));
+
+  // Characters are unsigned
+  EXPECT_EQ(cborCodec.encode('\xff'), (vector<u8> { 0x18, 0xFF }));
+  EXPECT_EQ(cborCodec.encode(U'€'), (vector<u8> { 0x19, 0x20, 0xAC }));
+
+  // Negative durations and time points are negative integers
+  EXPECT_EQ(cborCodec.encode(std::chrono::hours(-6)), (vector<u8> { 0x25 }));
+}
+
+TEST(CborCodec, IntegerDecoding) {
+  EXPECT_EQ(decode<i32>({ 0x20 }), -1);
+  EXPECT_EQ(decode<i8>({ 0x38, 0x7F }), numeric_limits<i8>::min());
+  EXPECT_EQ(decode<i8>({ 0x18, 0x7F }), numeric_limits<i8>::max());
+
+  // Any encoding width is accepted
+  EXPECT_EQ(decode<u8>({ 0x1B, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01 }), 1_u8);
+  EXPECT_EQ(decode<i64>({ 0x05 }), 5_i64);
+
+  // Bignums are accepted, even for small values and with leading zeros
+  EXPECT_EQ(decode<u64>({ 0xC2, 0x41, 0x05 }), 5_u64);
+  EXPECT_EQ(decode<i32>({ 0xC3, 0x42, 0x00, 0x05 }), -6);
+  EXPECT_EQ(
+    decode<i128>({ 0x3B, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF }),
+    -18446744073709551616_i128);
+}
+
+TEST(CborCodec, IntegerInvalid) {
+  const auto expectFailure = [](const vector<u8>& cbor, auto expected, string_view message, u64 position) {
+    const auto result = decode<decltype(expected)>(cbor);
+    ASSERT_FALSE(result.has_value());
+    EXPECT_EQ(result.error().message, message);
+    EXPECT_EQ(result.error().position, position);
+  };
+  constexpr string_view OUT_OF_RANGE = "Integer value out of range";
+
+  expectFailure({ 0x20 }, u32(), OUT_OF_RANGE, 0); // -1
+  expectFailure({ 0x18, 0x80 }, i8(), OUT_OF_RANGE, 0); // 128
+  expectFailure({ 0x38, 0x80 }, i8(), OUT_OF_RANGE, 0); // -129
+  expectFailure({ 0x19, 0x01, 0x00 }, u8(), OUT_OF_RANGE, 0); // 256
+  expectFailure({ 0x3B, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF }, i64(), OUT_OF_RANGE, 0); // -2^64
+  expectFailure({ 0xC3, 0x41, 0x05 }, u128(), OUT_OF_RANGE, 0); // -6
+  expectFailure( // 2^128
+    {
+      0xC2, 0x51, 0x01,
+      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+    },
+    u128(), OUT_OF_RANGE, 0);
+  expectFailure({ 0x61, 'a' }, i32(), "Expected an integer value", 0);
+  expectFailure({ 0xC4, 0x41, 0x05 }, i32(), "Expected an integer value", 0); // Tag 4 is no bignum
+
+  // Positions: the third byte holds 200, which is out of range for `i8`
+  expectFailure({ 0x82, 0x01, 0x18, 0xC8 }, vector<i8>(), OUT_OF_RANGE, 2);
+  // The bignum takes two items, the tag and its byte string, so the position of -1 must still be right
+  expectFailure({ 0x82, 0xC2, 0x41, 0x05, 0x20 }, vector<u128>(), OUT_OF_RANGE, 4);
+
+  // Characters
+  expectFailure({ 0x19, 0x01, 0x00 }, char(), "Expected a character", 0);
+  expectFailure({ 0x20 }, char32(), "Expected a character", 0);
 }
 
 TEST(CborCodec, Float) {

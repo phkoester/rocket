@@ -38,7 +38,7 @@ namespace {
 
 // Local variables ------------------------------------------------------------------------------------------
 
-const JsonCodec codec;
+const JsonCodec jsonCodec;
 
 // Local functions ------------------------------------------------------------------------------------------
 
@@ -46,7 +46,7 @@ template<typename T>
 string
 encode(const T& val, const JsonConsumerConfig& config = {}) {
   nio::StringSink out;
-  codec.encode(val, out, config);
+  jsonCodec.encode(val, out, config);
   return out.str();
 }
 
@@ -54,14 +54,14 @@ template<typename T>
 [[nodiscard]] DecodeResult<T>
 decode(string_view str) {
   nio::StringSource in(str);
-  return codec.decode<T>(in);
+  return jsonCodec.decode<T>(in);
 }
 
 template<typename T>
 [[nodiscard]] pair<DecodeResult<T>, u64>
 decodeAndTell(string_view str) {
   nio::StringSource in(str);
-  return { codec.decode<T>(in), in.tell() };
+  return { jsonCodec.decode<T>(in), in.tell() };
 }
 
 // `Character` has no default constructor, so `JsonCodec::decode` cannot create one
@@ -69,7 +69,7 @@ template<typename T>
 [[nodiscard]] DecodeResult<T>
 decodeInto(T val, string_view str) {
   nio::StringSource in(str);
-  return codec.Base::decode<T>(val, in);
+  return jsonCodec.Base::decode<T>(val, in);
 }
 
 template<typename T>
@@ -467,9 +467,8 @@ TEST(JsonCodec, ProducerOptionalString) {
 }
 
 TEST(JsonCodec, ProducerOptionalStringView) {
-  const JsonCodec codec;
   nio::StringSource in("\"Hello\""); // The source must remain valid for the string view
-  EXPECT_EQ(codec.decode<optional<basic_string_view<char32>>>(in), U"Hello"sv);
+  EXPECT_EQ(jsonCodec.decode<optional<basic_string_view<char32>>>(in), U"Hello"sv);
 }
 
 TEST(JsonCodec, ProducerTuple) {
@@ -900,8 +899,7 @@ TEST(JsonCodec, ProducerDeclaredFileSource) {
 
   nio::FileSource in(path);
 
-  const JsonCodec codec;
-  const auto result = codec.decode<MyStruct>(in);
+  const auto result = jsonCodec.decode<MyStruct>(in);
   if (not result) {
     const DecodeError& err = result.error();
     namespace loc = rocket::str::location;

@@ -37,7 +37,7 @@ namespace {
 
 // Local variables ------------------------------------------------------------------------------------------
 
-const FormattedCodec codec;
+const FormattedCodec formattedCodec;
 
 // Local functions ------------------------------------------------------------------------------------------
 
@@ -45,7 +45,7 @@ template<typename T>
 string
 encode(const T& val, const FormattedConsumerConfig& config = {}) {
   nio::StringSink out;
-  codec.encode(val, out, config);
+  formattedCodec.encode(val, out, config);
   return out.str();
 }
 
@@ -53,7 +53,7 @@ template<typename T>
 [[nodiscard]] DecodeResult<T>
 decode(string_view str) {
   nio::StringSource in(str);
-  return codec.decode<T>(in);
+  return formattedCodec.decode<T>(in);
 }
 
 template<typename T>
@@ -61,14 +61,14 @@ template<typename T>
 decodeFromStream(const string& str) {
   istringstream is(str);
   nio::StreamSource in(is);
-  return codec.decode<T>(in);
+  return formattedCodec.decode<T>(in);
 }
 
 template<typename T>
 [[nodiscard]] pair<DecodeResult<T>, u64>
 decodeAndTell(string_view str) {
   nio::StringSource in(str);
-  return { codec.decode<T>(in), in.tell() };
+  return { formattedCodec.decode<T>(in), in.tell() };
 }
 
 // `Character` has no default constructor, so `FormattedCodec::decode` cannot create one
@@ -76,7 +76,7 @@ template<typename T>
 [[nodiscard]] DecodeResult<T>
 decodeInto(T val, string_view str) {
   nio::StringSource in(str);
-  return codec.Base::decode<T>(val, in);
+  return formattedCodec.Base::decode<T>(val, in);
 }
 
 template<typename T>
@@ -462,9 +462,8 @@ TEST(FormattedCodec, ProducerOptionalString) {
 }
 
 TEST(FormattedCodec, ProducerOptionalStringView) {
-  const FormattedCodec codec;
   nio::StringSource in("\"Hello\""); // The source must remain valid for the string view
-  EXPECT_EQ(codec.decode<optional<basic_string_view<char32>>>(in), U"Hello"sv);
+  EXPECT_EQ(formattedCodec.decode<optional<basic_string_view<char32>>>(in), U"Hello"sv);
 }
 
 TEST(FormattedCodec, ProducerTuple) {
@@ -769,8 +768,7 @@ TEST(FormattedCodec, ProducerDeclaredFileSource) {
 
   nio::FileSource in(path);
 
-  const FormattedCodec codec;
-  const auto result = codec.decode<MyStruct>(in);
+  const auto result = formattedCodec.decode<MyStruct>(in);
   if (not result) {
     const DecodeError& err = result.error();
     namespace loc = rocket::str::location;

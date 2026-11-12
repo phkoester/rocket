@@ -10,8 +10,10 @@
 #include "rocket/codec/codec.h"
 
 #include <cbor.h>
+#include <array>
 #include <cstdlib>
 #include <iterator>
+#include <limits>
 #include <memory>
 
 namespace rocket::codec {
@@ -93,6 +95,161 @@ std::string_view messageOf(cbor_error_code errorCode);
 
 u64 positionOf(std::span<const u8> cbor, u64 index);
 
+/**
+ * Builds an unsigned integer item (major type 0) with the value @p val, using the shortest encoding
+ * (RFC 8949, Section 4.2.1).
+ */
+inline cbor_item_t*
+buildUint(u64 val) {
+  if (val <= 0xFFU) {
+    return cbor_build_uint8(static_cast<u8>(val));
+  }
+  if (val <= 0xFFFFU) {
+    return cbor_build_uint16(static_cast<u16>(val));
+  }
+  if (val <= 0xFFFF'FFFFU) {
+    return cbor_build_uint32(static_cast<u32>(val));
+  }
+  return cbor_build_uint64(val);
+}
+
+/**
+ * Builds a negative integer item (major type 1) with the value `-1 - val`, using the shortest encoding.
+ */
+inline cbor_item_t*
+buildNegint(u64 val) {
+  if (val <= 0xFFU) {
+    return cbor_build_negint8(static_cast<u8>(val));
+  }
+  if (val <= 0xFFFFU) {
+    return cbor_build_negint16(static_cast<u16>(val));
+  }
+  if (val <= 0xFFFF'FFFFU) {
+    return cbor_build_negint32(static_cast<u32>(val));
+  }
+  return cbor_build_negint64(val);
+}
+
+/**
+ * Builds a bignum item (RFC 8949, Section 3.4.3): tag 2 with the value @p val if @p negative is `false`,
+ * tag 3 with the value `-1 - val` otherwise. The byte string holds @p val in big-endian order, without
+ * leading zeros.
+ */
+inline cbor_item_t*
+buildBignum(bool negative, u128 val) {
+  std::array<u8, 16> bytes {};
+  for (u64 i = bytes.size(); i-- > 0;) {
+    bytes[i] = static_cast<u8>(val & 0xFFU);
+    val >>= 8;
+  }
+  u64 begin = 0;
+  while (begin < bytes.size() - 1 && bytes[begin] == 0) {
+    ++begin;
+  }
+  const auto* data = reinterpret_cast<const unsigned char*>(bytes.data() + begin);
+  CborItem<u8> bytestring(cbor_build_bytestring(data, bytes.size() - begin));
+  // This increments the reference count of `bytestring`, which the tag then shares
+  return cbor_build_tag(negative ? 3 : 2, bytestring.ptr());
+}
+
+/**
+ * Builds an integer item for @p val: an unsigned or negative integer if the value is in the 64-bit range, a
+ * bignum otherwise.
+ */
+template<typename I>
+cbor_item_t*
+buildInteger(I val) {
+  static_assert(sizeof(I) <= 16, "Integer type too large");
+  if constexpr (std::numeric_limits<I>::is_signed) {
+    if (val < 0) {
+      // `-1 - val` is nonnegative and, unlike `-val`, cannot overflow
+      if constexpr (sizeof(I) == 16) {
+        const auto n = static_cast<u128>(-1 - val);
+        if (n <= static_cast<u128>(std::numeric_limits<u64>::max())) {
+          return buildNegint(static_cast<u64>(n));
+        }
+        return buildBignum(true, n);
+      } else {
+        return buildNegint(static_cast<u64>(-1 - static_cast<i64>(val)));
+      }
+    }
+  }
+  if constexpr (sizeof(I) == 16) {
+    const auto n = static_cast<u128>(val);
+    if (n <= static_cast<u128>(std::numeric_limits<u64>::max())) {
+      return buildUint(static_cast<u64>(n));
+    }
+    return buildBignum(false, n);
+  } else {
+    return buildUint(static_cast<u64>(val));
+  }
+}
+
+/// An integer read from a CBOR item: `raw` if `negative` is `false`, `-1 - raw` otherwise.
+struct IntegerValue {
+  bool negative = false;
+  u128 raw {};
+};
+
+/**
+ * Reads an unsigned integer, a negative integer, or a bignum of any encoding width.
+ *
+ * @param item the item to read
+ * @param state the decoder state, already advanced to @p item. A bignum advances it by one more item, the
+ *   byte string
+ * @param pos the position to report errors at
+ * @return the integer value
+ * @throw #rocket::InputFailure if @p item is not an integer, or if a bignum exceeds 128 bits
+ */
+inline IntegerValue
+readInteger(cbor_item_t* item, DecoderState& state, u64 pos) {
+  if (cbor_isa_uint(item)) {
+    return { .negative = false, .raw = cbor_get_int(item) };
+  }
+  if (cbor_isa_negint(item)) {
+    return { .negative = true, .raw = cbor_get_int(item) };
+  }
+  if (cbor_isa_tag(item) && (cbor_tag_value(item) == 2 || cbor_tag_value(item) == 3)) {
+    state.nextItem(); // The byte string
+    CborItem<u8> content(cbor_tag_item(item));
+    if (not cbor_isa_bytestring(content.ptr()) || not cbor_bytestring_is_definite(content.ptr())) {
+      throw InputFailure(pos, "Expected an integer value");
+    }
+    const u8* data = cbor_bytestring_handle(content.ptr());
+    const u64 size = cbor_bytestring_length(content.ptr());
+    u128 raw {};
+    for (u64 i = 0; i < size; ++i) {
+      if ((raw >> 120) != 0) {
+        throw InputFailure(pos, "Integer value out of range");
+      }
+      raw = (raw << 8) | data[i];
+    }
+    return { .negative = cbor_tag_value(item) == 3, .raw = raw };
+  }
+  throw InputFailure(pos, "Expected an integer value");
+}
+
+/**
+ * Converts an integer value to @p I, checking the range.
+ *
+ * @throw #rocket::InputFailure if the value does not fit into @p I
+ */
+template<typename I>
+I
+toInteger(const IntegerValue& val, u64 pos) {
+  using Limits = std::numeric_limits<I>;
+  // For a signed type, the greatest magnitude `raw` of a negative value, `-1 - min`, equals `max`
+  if (val.raw > static_cast<u128>(Limits::max()) || (val.negative && not Limits::is_signed)) {
+    throw InputFailure(pos, "Integer value out of range");
+  }
+  if constexpr (Limits::is_signed) {
+    if (val.negative) {
+      return static_cast<I>(-static_cast<I>(val.raw) - 1);
+    }
+  }
+  return static_cast<I>(val.raw);
+}
+
 // `CborConsumerImpl` ---------------------------------------------------------------------------------------
 
 template<DataType DataType, typename T>
@@ -106,15 +263,14 @@ struct CborConsumerImpl<DataType::Bool, bool> {
   }
 };
 
+// Characters are unsigned: a `char` is its byte value, never a negative number
 template<typename C>
 struct CborConsumerImpl<DataType::Char, C> {
+  using Alt = std::conditional_t<std::same_as<C, char>, u8, u32>;
+
   [[nodiscard]] CborItem<C>
   consume(C val) const {
-    if constexpr (std::same_as<C, char>) {
-      return CborItem<C>(cbor_build_uint8(static_cast<u8>(val)));
-    } else {
-      return CborItem<C>(cbor_build_uint32(static_cast<u32>(val)));
-    }
+    return CborItem<C>(buildInteger(static_cast<Alt>(val)));
   }
 };
 
@@ -135,24 +291,7 @@ template<typename I>
 struct CborConsumerImpl<DataType::Integer, I> {
   [[nodiscard]] CborItem<I>
   consume(I val) const {
-    if constexpr (sizeof(I) == 1) {
-      return CborItem<I>(cbor_build_uint8(static_cast<u8>(val)));
-    } else if constexpr (sizeof(I) == 2) {
-      return CborItem<I>(cbor_build_uint16(static_cast<u16>(val)));
-    } else if constexpr (sizeof(I) == 4) {
-      return CborItem<I>(cbor_build_uint32(static_cast<u32>(val)));
-    } else if constexpr (sizeof(I) == 8) {
-      return CborItem<I>(cbor_build_uint64(static_cast<u64>(val)));
-    } else if constexpr (sizeof(I) == 16) {
-      CborItem<I> ret(cbor_new_definite_array(2));
-      auto hi = CborItem<u64>(cbor_build_uint64(static_cast<u64>(val >> 64)));
-      ROCKET_EXPECT(cbor_array_push(ret.ptr(), hi.ptr()));
-      auto lo = CborItem<u64>(cbor_build_uint64(static_cast<u64>(val)));
-      ROCKET_EXPECT(cbor_array_push(ret.ptr(), lo.ptr()));
-      return ret;
-    } else {
-      ROCKET_TERMINATE("Cannot consume integer of type {}", TypeId::of<I>());
-    }
+    return CborItem<I>(buildInteger(val));
   }
 };
 
@@ -543,23 +682,19 @@ struct CborProducerImpl<DataType::Bool, bool> {
 
 template<typename C>
 struct CborProducerImpl<DataType::Char, C> {
+  using Alt = std::conditional_t<std::same_as<C, char>, u8, u32>;
+
   void
   produce(CborItem<C>& item, DecoderState& state) const {
     state.nextItem();
+    const u64 pos = state.index;
 
-    if constexpr (std::same_as<C, char>) {
-      if (cbor_isa_uint(item.ptr()) && cbor_int_get_width(item.ptr()) == CBOR_INT_8) {
-        item.setValue(static_cast<char>(cbor_get_uint8(item.ptr())));
-        return;
-      }
-    } else {
-      if (cbor_isa_uint(item.ptr()) && cbor_int_get_width(item.ptr()) == CBOR_INT_32) {
-        item.setValue(static_cast<char32>(cbor_get_uint32(item.ptr())));
-        return;
-      }
+    try {
+      const IntegerValue val = readInteger(item.ptr(), state, pos);
+      item.setValue(static_cast<C>(toInteger<Alt>(val, pos)));
+    } catch (const InputFailure&) {
+      throw InputFailure(pos, "Expected a character");
     }
-
-    throw InputFailure(state.index, "Expected a character");
   }
 };
 
@@ -585,49 +720,10 @@ struct CborProducerImpl<DataType::Integer, I> {
   void
   produce(CborItem<I>& item, DecoderState& state) const {
     state.nextItem();
+    const u64 pos = state.index;
 
-    if constexpr (sizeof(I) == 1) {
-      if (cbor_isa_uint(item.ptr()) && cbor_int_get_width(item.ptr()) == CBOR_INT_8) {
-        item.setValue(static_cast<I>(cbor_get_uint8(item.ptr())));
-        return;
-      }
-    } else if constexpr (sizeof(I) == 2) {
-      if (cbor_isa_uint(item.ptr()) && cbor_int_get_width(item.ptr()) == CBOR_INT_16) {
-        item.setValue(static_cast<I>(cbor_get_uint16(item.ptr())));
-        return;
-      }
-    } else if constexpr (sizeof(I) == 4) {
-      if (cbor_isa_uint(item.ptr()) && cbor_int_get_width(item.ptr()) == CBOR_INT_32) {
-        item.setValue(static_cast<I>(cbor_get_uint32(item.ptr())));
-        return;
-      }
-    } else if constexpr (sizeof(I) == 8) {
-      if (cbor_isa_uint(item.ptr()) && cbor_int_get_width(item.ptr()) == CBOR_INT_64) {
-        item.setValue(static_cast<I>(cbor_get_uint64(item.ptr())));
-        return;
-      }
-    } else if constexpr (sizeof(I) == 16) {
-      if (cbor_isa_array(item.ptr()) && cbor_array_size(item.ptr()) == 2) {
-        CborItem<u64> hi(cbor_array_get(item.ptr(), 0));
-        CborProducerImpl<DataType::Integer, u64>().produce(hi, state);
-
-        CborItem<u64> lo(cbor_array_get(item.ptr(), 1));
-        CborProducerImpl<DataType::Integer, u64>().produce(lo, state);
-
-        if (cbor_isa_uint(hi.ptr()) && cbor_int_get_width(hi.ptr()) == CBOR_INT_64 &&
-            cbor_isa_uint(lo.ptr()) && cbor_int_get_width(lo.ptr()) == CBOR_INT_64) {
-          u128 val128 = hi.value();
-          val128 <<= 64;
-          val128 |= lo.value();
-          item.setValue(static_cast<I>(val128));
-          return;
-        }
-      }
-    } else {
-      ROCKET_TERMINATE("Cannot produce integer of type {}", TypeId::of<I>());
-    }
-
-    throw InputFailure(state.index, "Expected an integer value");
+    const IntegerValue val = readInteger(item.ptr(), state, pos);
+    item.setValue(toInteger<I>(val, pos));
   }
 };
 
@@ -1162,6 +1258,13 @@ struct CborProducer {
  * The encoder can serialize an arbitrary C++ data structure to a CBOR byte sequence.
  *
  * The decoder can deserialize a CBOR byte sequence to an arbitrary C++ data structure.
+ *
+ * Integer values are written as CBOR unsigned or negative integers (major types 0 and 1), using the shortest
+ * encoding. 128-bit values outside the 64-bit range are written as bignums (tags 2 and 3). Characters are
+ * unsigned: a `char` is written as its byte value in the range [0,255], a `char32` as its code-point value.
+ * Durations, dates, and time points are written as integer counts, so negative values are negative integers.
+ * The decoder accepts integers of any encoding width, including bignums, and reports a value that does not
+ * fit into the target type as an error.
  *
  * Decoding to list views and forward lists is not supported. String views and character views, however, are
  * allowed. This is made possible by keeping real strings in a store bound to the decoder. Hence, decoded
