@@ -182,7 +182,7 @@ size(nio::Device& device) {
 
 #ifdef ROCKET_OS_WINDOWS
   // Windows: Use CSBI. `dwSize` is the size of the screen buffer, which may be far larger than the visible
-  // window (for example, 9001 rows with scrollback). `srWindow` holds the visible window's inclusive
+  // window (for example, 9001 rows with scrollback). `srWindow` holds the visible window’s inclusive
   // coordinates within that buffer
 
   auto handle = getHandle(fd);

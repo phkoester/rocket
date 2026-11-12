@@ -26,6 +26,10 @@ endfunction()
 # Functions -------------------------------------------------------------------------------------------------
 
 # RocketAddBench(name dir srcFile... [ENVIRONMENT name=value...])
+#
+# Each benchmark sees the environment variables `BINARY_DIR`, `CONFIG`, `CONFIGS`, and `SOURCE_DIR`.
+# `SOURCE_DIR` is `dir` in the source directory of the calling `CMakeLists.txt`, where the source files
+# are. So it is also right when Rocket is a subproject or the function is called from another project.
 function(RocketAddBench name dir)
   RocketParseTestArgs__(srcFiles env ${ARGN})
 
@@ -45,12 +49,16 @@ function(RocketAddBench name dir)
       "BINARY_DIR=${CMAKE_CURRENT_BINARY_DIR}"
       "CONFIG=$<CONFIG>"
       "CONFIGS=${configs}"
-      "SOURCE_DIR=${CMAKE_SOURCE_DIR}/src/bench/${dir}"
+      "SOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR}/${dir}"
       ${env}
   )
 endfunction()
 
 # RocketAddTest(name dir srcFile... [ENVIRONMENT name=value...])
+#
+# Each test sees the environment variables `BINARY_DIR`, `CONFIG`, `CONFIGS`, and `SOURCE_DIR`. `SOURCE_DIR`
+# is `dir` in the source directory of the calling `CMakeLists.txt`, where the source files are. So it is also
+# right when Rocket is a subproject or the function is called from another project.
 function(RocketAddTest name dir)
   RocketParseTestArgs__(srcFiles env ${ARGN})
 
@@ -71,7 +79,7 @@ function(RocketAddTest name dir)
     PROPERTIES ENVIRONMENT "BINARY_DIR=${CMAKE_CURRENT_BINARY_DIR}"
     PROPERTIES ENVIRONMENT "CONFIG=$<CONFIG>"
     PROPERTIES ENVIRONMENT "CONFIGS=${configs}"
-    PROPERTIES ENVIRONMENT "SOURCE_DIR=${CMAKE_SOURCE_DIR}/src/test/${dir}"
+    PROPERTIES ENVIRONMENT "SOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR}/${dir}"
     ${envProps}
   )
 endfunction()

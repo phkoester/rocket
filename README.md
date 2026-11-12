@@ -30,8 +30,6 @@ Rocket stands on the shoulders of these giants:
 - [scnlib](https://github.com/eliaskosunen/scnlib) ([license](license/scnlib/LICENSE))
 - [wxWidgets](https://github.com/wxWidgets/wxWidgets) ([license](license/wxWidgets/licence.txt))
 
-ICU is made available through CMake by [icu-cmake](https://github.com/phkoester/icu-cmake).
-
 ## CMake Options
 
 All of the following options may be supplied either as defined CMake variables or as environment variables:

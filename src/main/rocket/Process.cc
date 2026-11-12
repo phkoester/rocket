@@ -29,6 +29,9 @@ namespace {
 const bool ROCKET_EXIT = system::env::get<bool>("ROCKET_EXIT").value_or(false);
 const bool ROCKET_QUICK_EXIT = system::env::get<bool>("ROCKET_QUICK_EXIT").value_or(false);
 
+/// The name used if `argv[0]` is missing or empty, which is possible: `execve` may pass an empty `argv`.
+constexpr string_view FALLBACK_NAME = "program";
+
 // Local variables ------------------------------------------------------------------------------------------
 
 recursive_mutex processMutex;
@@ -38,6 +41,12 @@ vector<pair<function<void()>, bool>> onExitFns;
 // Local functions ------------------------------------------------------------------------------------------
 
 string shortName(string_view str);
+
+/// Returns @p argv0, or #FALLBACK_NAME if @p argv0 is null or empty.
+string
+argv0OrFallback(const char* argv0) {
+  return argv0 != nullptr && *argv0 != '\0' ? string(argv0) : string(FALLBACK_NAME);
+}
 
 void
 callExitFns(bool onTerminate) {
@@ -65,7 +74,7 @@ callExitFns(bool onTerminate) {
 #ifdef ROCKET_OS_LINUX
 const string&
 invocationName() {
-  static const string ret(::program_invocation_name);
+  static const string ret(argv0OrFallback(::program_invocation_name));
   return ret;
 }
 #endif
@@ -73,7 +82,8 @@ invocationName() {
 #ifdef ROCKET_OS_MACOS
 const string&
 invocationName() {
-  static const string ret(*_NSGetArgv()[0]);
+  char** const argv = *_NSGetArgv();
+  static const string ret(argv0OrFallback(argv != nullptr ? argv[0] : nullptr));
   return ret;
 }
 #endif
@@ -81,7 +91,7 @@ invocationName() {
 #ifdef ROCKET_OS_WINDOWS
 const string&
 invocationName() {
-  static string ret(__argv[0]);
+  static const string ret(argv0OrFallback(__argv != nullptr ? __argv[0] : nullptr));
   return ret;
 }
 #endif
@@ -118,7 +128,8 @@ string
 shortName(string_view str) {
   const string fileName = filesystem::path(str).filename().string();
   const auto sv = str::removeTrailing<char>(fileName, system::executableSuffix());
-  return string(sv);
+  // A path such as `/` or `.exe` has no name left
+  return sv.empty() ? string(FALLBACK_NAME) : string(sv);
 }
 
 } // namespace
@@ -239,7 +250,7 @@ Process::init(
   argc_ = argc;
   argv_ = argv;
 
-  name_ = name ? *name : shortName(argv[0]);
+  name_ = name ? *name : shortName(argv0OrFallback(argc > 0 && argv != nullptr ? argv[0] : nullptr));
 
   quickExit_ = quickExit;
 

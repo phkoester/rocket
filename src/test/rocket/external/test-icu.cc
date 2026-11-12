@@ -33,7 +33,7 @@ TEST(icu, u8Next) {
 }
 
 TEST(icu, version) {
-  // The version of the ICU library loaded at runtime. On Windows, that is the system's `icu.dll`, whose
+  // The version of the ICU library loaded at runtime. On Windows, that is the system’s `icu.dll`, whose
   // version depends on the Windows build
 
   UVersionInfo info {};

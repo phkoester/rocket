@@ -224,7 +224,7 @@ void setLogOut(std::string_view val);
 /**
  * Only in debug code, where `NDEBUG` is not defined, logs a message, using log level #rocket::log::error.
  *
- * Usage: `ROCKET_LOG_ERROR(fmt, [args]...)`
+ * Usage: `ROCKET_DEBUG_LOG_ERROR(fmt, [args]...)`
  */
 #define ROCKET_DEBUG_LOG_ERROR(fmt, ...) ROCKET_LOG_ERROR(fmt __VA_OPT__(,) __VA_ARGS__)
 #endif // NDEBUG
@@ -251,7 +251,7 @@ void setLogOut(std::string_view val);
 /**
  * Only in debug code, where `NDEBUG` is not defined, logs a message, using log level #rocket::log::warn.
  *
- * Usage: `ROCKET_LOG_ERROR(fmt, [args]...)`
+ * Usage: `ROCKET_DEBUG_LOG_WARN(fmt, [args]...)`
  */
 #define ROCKET_DEBUG_LOG_WARN(fmt, ...) ROCKET_LOG_WARN(fmt __VA_OPT__(,) __VA_ARGS__)
 #endif // NDEBUG
@@ -278,7 +278,7 @@ void setLogOut(std::string_view val);
 /**
  * Only in debug code, where `NDEBUG` is not defined, logs a message, using log level #rocket::log::info.
  *
- * Usage: `ROCKET_LOG_INFO(fmt, [args]...)`
+ * Usage: `ROCKET_DEBUG_LOG_INFO(fmt, [args]...)`
  */
 #define ROCKET_DEBUG_LOG_INFO(fmt, ...) ROCKET_LOG_INFO(fmt __VA_OPT__(,) __VA_ARGS__)
 #endif // NDEBUG
@@ -305,7 +305,7 @@ void setLogOut(std::string_view val);
 /**
  * Only in debug code, where `NDEBUG` is not defined, logs a message, using log level #rocket::log::debug.
  *
- * Usage: `ROCKET_LOG_DEBUG(fmt, [args]...)`
+ * Usage: `ROCKET_DEBUG_LOG_DEBUG(fmt, [args]...)`
  */
 #define ROCKET_DEBUG_LOG_DEBUG(fmt, ...) ROCKET_LOG_DEBUG(fmt __VA_OPT__(,) __VA_ARGS__)
 #endif // NDEBUG
@@ -332,7 +332,7 @@ void setLogOut(std::string_view val);
 /**
  * Only in debug code, where `NDEBUG` is not defined, logs a message, using log level #rocket::log::trace.
  *
- * Usage: `ROCKET_LOG_TRACE(fmt, [args]...)`
+ * Usage: `ROCKET_DEBUG_LOG_TRACE(fmt, [args]...)`
  */
 #define ROCKET_DEBUG_LOG_TRACE(fmt, ...) ROCKET_LOG_TRACE(fmt __VA_OPT__(,) __VA_ARGS__)
 #endif // NDEBUG

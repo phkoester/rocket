@@ -97,7 +97,7 @@ struct Cow {
   /**
    * Checks if the #Cow has been assigned an owned value.
    *
-   * @return whether the #Cow has been assigned an owned value
+   * @return if the #Cow has been assigned an owned value
    */
   [[nodiscard]] bool modified() const { return choice_.index() == 1; }
 

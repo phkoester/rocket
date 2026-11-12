@@ -95,8 +95,14 @@ set_target_properties(rocket
   PROPERTIES
     VERSION ${PROJECT_VERSION} # SOVERSION 0
     WINDOWS_EXPORT_ALL_SYMBOLS ON)
+# Make `scn/impl.h` available. scnlib is fetched inside a `block()`, so `scnlib_SOURCE_DIR` has to be read
+# back. This also respects `FETCHCONTENT_BASE_DIR` and `FETCHCONTENT_SOURCE_DIR_SCNLIB`
+FetchContent_GetProperties(scnlib)
+if(NOT scnlib_POPULATED)
+  GaiaFatalError("scnlib has not been fetched")
+endif()
 target_include_directories(rocket SYSTEM
-  PRIVATE ${CMAKE_BINARY_DIR}/_deps/scnlib-src/src # Make `scn/impl.h` available
+  PRIVATE ${scnlib_SOURCE_DIR}/src
   PUBLIC  ${GENERATED_DIR}
 )
 target_sources(rocket

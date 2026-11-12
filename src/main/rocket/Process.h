@@ -164,6 +164,8 @@ struct Process {
   /**
    * Returns the command this program was started with.
    *
+   * If the command is not available, for example because `argv` was empty, this is `"program"`.
+   *
    * @return the invocation name
    */
   [[nodiscard]] static const std::string& invocationName();
@@ -274,8 +276,9 @@ struct Process {
    *
    * @param argc `argc` from `main`
    * @param argv `argv` from `main`
-   * @param name the name of the program. If this is null, the file name from `argv[0]` is used. It is
-   *    recommended to give the program a proper name independent of `argv[0]`
+   * @param name the name of the program. If this is null, the file name from `argv[0]` is used, or
+   *    `"program"` if `argv[0]` is missing or yields no name. It is recommended to give the program a proper
+   *    name independent of `argv[0]`
    * @param locale the locale to use for the process. If this is null, the locale from the environment is
    *    used
    * @param quickExit if `true`, #exit calls #std::quick_exit, otherwise it calls #std::exit

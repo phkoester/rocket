@@ -80,7 +80,7 @@ void expectComma(nio::Source& in);
  *
  * @param in the source to read from
  * @param c the character to read
- * @return whether the character was read
+ * @return if the character was read
  */
 [[nodiscard]] bool readChar(nio::Source& in, char c);
 
@@ -123,7 +123,7 @@ void expectComma(nio::Source& in);
  * @param str the string to read, must not be empty
  * @param ignoreCase whether to ignore case
  * @param endOfWord whether to check if the end of the returned string matches a word boundary
- * @return whether the string was read
+ * @return if the string was read
  */
 [[nodiscard]] bool readString(
   nio::Source& in,
@@ -308,7 +308,7 @@ void skip(nio::Source& in, bool cComments, bool shellComments);
  *
  * @param in the source to read from
  * @param str the expected string
- * @return whether the expected string was found
+ * @return if the expected string was found
  */
 bool skipUntilString(nio::Source& in, std::string_view str);
 

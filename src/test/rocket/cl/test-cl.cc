@@ -181,7 +181,7 @@ parseCommand(const vector<string>& args, nio::Sink& out = nio::out, nio::Sink& e
     parseCommand({ "-o", "walk", "dog" }, buf, buf);
     EXPECT_EQ(
         buf.str(),
-        "test-rocket-cl: error: Parameter `COMMAND`: Invalid value `walk`; expected `list` or `show`\n"
+        "test-rocket-cl: error: Parameter `COMMAND`: Invalid value \"walk\"; expected `list` or `show`\n"
         "Usage: test-rocket-cl [OPTION]... list [OPTION]... FILE...\n"
         "  or   test-rocket-cl [OPTION]... show [OPTION]... [ARG]...\n"
         "Try `test-rocket-cl --help` for more information.\n");

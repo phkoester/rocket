@@ -588,7 +588,7 @@ unitDurationCast(std::string_view unit, typename To::rep count) {
  * @param h the hour
  * @param m the minute
  * @param s the second
- * @return whether the values are valid
+ * @return if the values are valid
  */
 inline bool
 validHourMinuteSecond(std::chrono::hours::rep h, std::chrono::minutes::rep m, std::chrono::seconds::rep s) {
@@ -603,7 +603,7 @@ validHourMinuteSecond(std::chrono::hours::rep h, std::chrono::minutes::rep m, st
  *
  * @param h the hour
  * @param m the minute
- * @return whether the values are valid
+ * @return if the values are valid
  */
 inline bool
 validUtcOffset(u32 h, u32 m) {

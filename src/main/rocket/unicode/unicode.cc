@@ -166,7 +166,7 @@ lengthFromByte(char c, InvalidUnicodePolicy policy) {
     return 1;
   }
   if (U8_IS_LEAD(c)) {
-    // Not `U8_LENGTH_FROM_LEAD_BYTE`, which is a draft API since ICU 78 and missing from the Windows SDK's
+    // Not `U8_LENGTH_FROM_LEAD_BYTE`, which is a draft API since ICU 78 and missing from the Windows SDK’s
     // `<icu.h>`
     return U8_COUNT_TRAIL_BYTES(c) + 1;
   }

@@ -94,13 +94,14 @@ if(GAIA_OS_LINUX OR GAIA_OS_MACOS)
   list(APPEND COMPILE_FLAGS -Wall -Werror -Wextra)
 elseif(GAIA_OS_WINDOWS)
   # Windows
+  # Windows 10, needed by `<icu.h>` from the Windows SDK, which only declares its API for Windows 10
+  list(APPEND COMPILE_DEFS _WIN32_WINNT=0x0A00)
   if(GAIA_CXX_COMPILER_LLVM)
     # Windows, LLVM
     list(APPEND COMPILE_FLAGS -Werror -Wextra # No `-Wall` on Windows
       -Wno-unknown-attributes)
   elseif(GAIA_CXX_COMPILER_MSVC)
-    # Windows 10, needed by `<icu.h>` from the Windows SDK, which only declares its API for Windows 10
-    list(APPEND COMPILE_DEFS _WIN32_WINNT=0x0A00)
+    # Windows, MSVC
     list(APPEND COMPILE_FLAGS /bigobj /wd4244 /Zc:preprocessor)
   endif()
 endif()
@@ -119,9 +120,9 @@ GaiaStatus("ROCKET_GUI: ${ROCKET_GUI}")
 
 # ICU root (macOS); must come before Boost ..................................................................
 
-# Homebrew's `icu4c` is keg-only, so point `FindICU` at it. Otherwise it picks up the partial ICU headers
+# Homebrew’s `icu4c` is keg-only, so point `FindICU` at it. Otherwise it picks up the partial ICU headers
 # from the macOS SDK, which come without a linkable `icuuc`/`icui18n`. This must come before Boost, whose
-# Boost.Regex and Boost.Locale run `find_package(ICU)` themselves and would cache the SDK's `ICU_INCLUDE_DIR`
+# Boost.Regex and Boost.Locale run `find_package(ICU)` themselves and would cache the SDK’s `ICU_INCLUDE_DIR`
 
 if(GAIA_OS_MACOS AND NOT ROCKET_ICU_CMAKE AND NOT ICU_ROOT AND NOT DEFINED ENV{ICU_ROOT})
   execute_process(

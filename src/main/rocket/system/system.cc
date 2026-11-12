@@ -12,6 +12,10 @@
   #include <sys/wait.h>
 #endif
 
+#ifdef ROCKET_OS_WINDOWS
+  #include <cerrno>
+#endif
+
 #include <array>
 #include <cstdlib>
 #include <cstdio>
@@ -304,20 +308,25 @@ exec(const string& cl) {
   const auto closePipe = [](FILE* pipe) { _pclose(pipe); };
   unique_ptr<FILE, decltype(closePipe)> pipe(_popen(cl.c_str(), "r"), closePipe);
   if (not pipe) {
-    ROCKET_FAIL("Cannot open pipe for command `{}`", cl);
+    ROCKET_FAIL("Cannot open pipe for command {:?}", cl);
   }
   u64 n; // NOLINT
   while ((n = fread(buf.data(), 1, buf.size(), pipe.get())) > 0) {
     ret.insert(ret.end(), buf.begin(), buf.begin() + n); // NOLINT
   }
   if (ferror(pipe.get()) != 0) {
-    ROCKET_FAIL("Cannot read from pipe for command `{}`", cl);
+    ROCKET_FAIL("Cannot read from pipe for command {:?}", cl);
   }
 
   // Close the pipe here rather than in the deleter, because only `_pclose` tells how the command ended
+  // `_pclose` returns -1 and sets `errno` if it fails. A command may exit with -1 itself, so check `errno`
+  errno = 0;
   const i32 status = _pclose(pipe.release());
+  if (status == -1 && errno != 0) {
+    ROCKET_FAIL("Cannot close pipe for command {:?}", cl);
+  }
   if (status != 0) {
-    ROCKET_FAIL("Command `{}` failed with exit status {}", cl, status);
+    ROCKET_FAIL("Command {:?} failed with exit status {}", cl, status);
   }
 
   return ret;
@@ -334,26 +343,26 @@ exec(const string& cl) {
   const auto closePipe = [](FILE* file) { pclose(file); };
   unique_ptr<FILE, decltype(closePipe)> pipe(popen(cl.c_str(), "r"), closePipe);
   if (not pipe) {
-    ROCKET_FAIL("Cannot open pipe for command `{}`", cl);
+    ROCKET_FAIL("Cannot open pipe for command {:?}", cl);
   }
   u64 n; // NOLINT
   while ((n = fread(buf.data(), 1, buf.size(), pipe.get())) > 0) {
     ret.insert(ret.end(), buf.begin(), buf.begin() + n); // NOLINT
   }
   if (ferror(pipe.get()) != 0) {
-    ROCKET_FAIL("Cannot read from pipe for command `{}`", cl);
+    ROCKET_FAIL("Cannot read from pipe for command {:?}", cl);
   }
 
   // Close the pipe here rather than in the deleter, because only `pclose` tells how the command ended
   const i32 status = pclose(pipe.release());
   if (status == -1) {
-    ROCKET_FAIL("Cannot close pipe for command `{}`", cl);
+    ROCKET_FAIL("Cannot close pipe for command {:?}", cl);
   }
   if (WIFSIGNALED(status)) {
-    ROCKET_FAIL("Command `{}` was terminated by signal {}", cl, WTERMSIG(status));
+    ROCKET_FAIL("Command {:?} was terminated by signal {}", cl, WTERMSIG(status));
   }
   if (WEXITSTATUS(status) != 0) {
-    ROCKET_FAIL("Command `{}` failed with exit status {}", cl, WEXITSTATUS(status));
+    ROCKET_FAIL("Command {:?} failed with exit status {}", cl, WEXITSTATUS(status));
   }
 
   return ret;

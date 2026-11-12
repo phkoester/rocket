@@ -48,7 +48,7 @@ struct CStringConfig {
   /**
    * Checks if the escaped string is to be quoted.
    *
-   * @return whether the escaped string is to be quoted
+   * @return if the escaped string is to be quoted
    */
   [[nodiscard]] bool quoted() const { return quote != '\0'; }
 };

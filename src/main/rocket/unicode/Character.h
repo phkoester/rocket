@@ -87,7 +87,7 @@ struct BasicCharacter {
   /**
    * Checks if the character is an ASCII character.
    *
-   * @return whether the character is an ASCII character
+   * @return if the character is an ASCII character
    */
   [[nodiscard]] bool
   constexpr ascii() const {
@@ -115,7 +115,7 @@ struct BasicCharacter {
   /**
    * Checks if the character is a carriage return / line feed sequence (CR/LF).
    *
-   * @return whether the character is a carriage return / line feed sequence
+   * @return if the character is a carriage return / line feed sequence
    */
   [[nodiscard]] constexpr bool
   crLf() const {
@@ -125,7 +125,7 @@ struct BasicCharacter {
   /**
    * Checks if the character is an end of line (EOL).
    *
-   * @return whether the character is an end of line
+   * @return if the character is an end of line
    */
   [[nodiscard]] constexpr bool
   eol() const {
@@ -136,7 +136,7 @@ struct BasicCharacter {
    * Checks if the character equals the specified ASCII character.
    *
    * @param c the ASCII character to check
-   * @return whether the character equals the specified ASCII character
+   * @return if the character equals the specified ASCII character
    */
   [[nodiscard]] constexpr bool
   eq(char c) const {
@@ -146,7 +146,7 @@ struct BasicCharacter {
   /**
    * Checks if the character is whitespace.
    *
-   * @return whether the character is whitespace
+   * @return if the character is whitespace
    */
   [[nodiscard]] bool
   isWhitespace() const {
@@ -162,7 +162,7 @@ struct BasicCharacter {
   /**
    * Checks if the character is a hexadecimal digit.
    *
-   * @return whether the character is a hexadecimal digit
+   * @return if the character is a hexadecimal digit
    */
   [[nodiscard]] bool
   isXdigit() const {
@@ -172,7 +172,7 @@ struct BasicCharacter {
   /**
    * Checks if the character is a line feed (LF).
    *
-   * @return whether the character is a line feed
+   * @return if the character is a line feed
    */
   [[nodiscard]] constexpr bool
   lf() const {
@@ -182,7 +182,7 @@ struct BasicCharacter {
   /**
    * Checks if the character is a no-break space
    *
-   * @return whether the character is a no-break space
+   * @return if the character is a no-break space
    */
   [[nodiscard]] bool
   nbsp() const {
@@ -204,7 +204,7 @@ struct BasicCharacter {
   /**
    * Checks if the character is a tab.
    *
-   * @return whether the character is a tab
+   * @return if the character is a tab
    */
   [[nodiscard]] constexpr bool
   tab() const {

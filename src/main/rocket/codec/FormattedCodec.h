@@ -47,8 +47,8 @@
  * Characters start and end with a single quote (`'`). Example values: `'a'`, `'\x20'`, `'€'`, `'\u20AC'`,
  * `'\U0010FFFF'`.
  *
- * One-byte characters must be valid ASCII characters in the range [0,127]. Two-byte characters must be valid
- * Unicode code points in the ranges [U+0000,U+D7FF] and [U+E000,U+10FFFF].
+ * One-byte characters must be valid ASCII characters in the range [0,127]. Four-byte characters must be
+ * valid Unicode code points in the ranges [U+0000,U+D7FF] and [U+E000,U+10FFFF].
  *
  * When reading, escape sequences as well as the prefixes `\x`, `\u`, and `\U` are accepted.
  *

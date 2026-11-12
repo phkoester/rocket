@@ -198,7 +198,7 @@ CommandLine::applyParam(const Parameter& param, const string& val) {
 
   try {
     if (param.choices && not param.choices->contains(val)) {
-      ROCKET_FAIL("Invalid value `{}`", val);
+      ROCKET_FAIL("Invalid value {:?}", val);
     }
     param.apply(val);
     parserState_.updateParam(param);

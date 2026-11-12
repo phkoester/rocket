@@ -68,14 +68,14 @@ struct Device {
   /**
    * Checks if the bad bit is set.
    *
-   * @return whether the bad bit is set
+   * @return if the bad bit is set
    */
   [[nodiscard]] bool bad() const { return status_.bad; }
 
   /**
    * Checks if the EOF bit is set.
    *
-   * @return whether the EOF bit is set
+   * @return if the EOF bit is set
    */
   [[nodiscard]] bool eof() const { return status_.eof; }
 
@@ -116,7 +116,7 @@ struct Sink : Device {
   /**
    * Flushes the sink.
    *
-   * @return whether the operation succeeded
+   * @return if the operation succeeded
    */
   virtual bool flush() = 0;
 
@@ -589,7 +589,7 @@ struct Source : Device {
    * Seeks a new position in the source, using #rocket::nio::SeekMode::beg.
    *
    * @param offset the offset to seek to
-   * @return whether the operation succeeded
+   * @return if the operation succeeded
    */
   bool seek(i64 offset) { return seek(offset, SeekMode::beg); }
 
@@ -598,7 +598,7 @@ struct Source : Device {
    *
    * @param offset the offset to seek to
    * @param mode the seek mode
-   * @return whether the operation succeeded
+   * @return if the operation succeeded
    */
   virtual bool seek(i64 offset, SeekMode mode) = 0;
 

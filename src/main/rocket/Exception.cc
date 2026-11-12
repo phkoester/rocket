@@ -83,7 +83,7 @@ printExceptionPtr(nio::Sink& out, u64 level, exception_ptr ptr) { // NOLINT(*-re
     printThrown(out, level, &typeid(val), getWhat(val), nullopt);
   } catch (const string& val) {
     printThrown(out, level, &typeid(val), getWhat(val), nullopt);
-  } catch (const string_view& val) {
+  } catch (string_view& val) {
     printThrown(out, level, &typeid(val), getWhat(val), nullopt);
   } catch (...) {
 #ifdef __GLIBCXX__
