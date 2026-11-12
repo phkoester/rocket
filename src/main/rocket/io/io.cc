@@ -160,7 +160,7 @@ parseDigits(string_view digits, u128 limit) {
  *
  * @return the next character, or `char_traits<char>::eof()` if there is none
  */
-int
+i32
 peekFirst(istream& is) {
   is >> ws;
   return is.peek();

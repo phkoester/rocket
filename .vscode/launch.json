@@ -9,7 +9,7 @@
       "type": "lldb-dap",
       "request": "launch",
       "name": "toy (debug)",
-      "program": "${workspaceRoot}/build/debug/src/experimal/toy",
+      "program": "${workspaceRoot}/build/debug/src/experimental/toy",
       "args": [],
       "env": [],
       "cwd": "${workspaceRoot}",
