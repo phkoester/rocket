@@ -113,6 +113,7 @@ target_sources(rocket
     rocket/icu.h
     rocket/literal.cc
     rocket/windows.h
+    rocket/archive/archive.cc
     rocket/chrono/chrono.cc
     rocket/cl/cl.cc
     rocket/codec/CborCodec.cc
@@ -163,6 +164,7 @@ target_sources(rocket
       rocket/std.h
       rocket/std-codec.h
       rocket/type-traits.h
+      rocket/archive/archive.h
       rocket/chrono/chrono.h
       rocket/cl/cl.h
       rocket/codec/CborCodec.h
@@ -217,6 +219,7 @@ target_link_libraries(rocket
   ${ROCKET_LINK_TARGETS}
   PUBLIC
     ${ROCKET_BOOST_LINK_TARGETS}
+    archive_static
     cbor
     fmt::fmt-header-only
     scn::scn

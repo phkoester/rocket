@@ -31,6 +31,7 @@ set(ROCKET_ICU_VERSION 72.1)
 set(ROCKET_ICU_CMAKE_VERSION 0.1.3)
 set(ROCKET_ICU_CMAKE_ICU_VERSION 79.1)
 set(ROCKET_INT128_VERSION 4.1.0)
+set(ROCKET_LIBARCHIVE_VERSION 3.8.11)
 set(ROCKET_LIBCBOR_VERSION 0.14.0)
 set(ROCKET_SCNLIB_VERSION master)
 set(ROCKET_WXWIDGETS_VERSION 3.3.4)
@@ -288,6 +289,22 @@ if(GAIA_OS_WINDOWS)
     FetchContent_MakeAvailable(int128)
   endblock()
 endif()
+
+# libarchive ................................................................................................
+
+FetchContent_Declare(
+  libarchive
+  GIT_REPOSITORY https://github.com/libarchive/libarchive.git
+  GIT_TAG        v${ROCKET_LIBARCHIVE_VERSION}
+  GIT_PROGRESS   TRUE
+  SYSTEM
+  EXCLUDE_FROM_ALL
+)
+
+block()
+  set(BUILD_SHARED_LIBS OFF)
+  FetchContent_MakeAvailable(libarchive)
+endblock()
 
 # libcbor ...................................................................................................
 
