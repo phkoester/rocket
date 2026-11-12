@@ -1,7 +1,7 @@
 /**
  * @file archive.h
  *
- * Archive and compression functions, based on libarchive.
+ * Archive functions, based on libarchive.
  */
 
 #pragma once

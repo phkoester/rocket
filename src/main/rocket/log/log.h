@@ -100,7 +100,11 @@ std::unique_ptr<Log> makeLog(
 
 // Functions ................................................................................................
 
-std::string expandLogFilePattern(std::string_view pattern, const TimePoint& time);
+std::string expandLogFilePattern(
+  std::filesystem::path dir,
+  std::string_view name,
+  std::string_view pattern,
+  const TimePoint& time);
 
 void log(LogLevel level, std::string_view msg);
 

@@ -31,26 +31,29 @@ TEST(log, LogLevelFormat) {
 }
 
 TEST(log, loggerZip) {
-  const auto path = binExecutable("logger");
-  const string executable = path.string();
+  const auto loggerPath = binExecutable("logger");
+  const auto loggerDir = loggerPath.parent_path();
+  const string logger = loggerPath.string();
 
-  const auto logFilePattern = (fs::temp_directory_path() / "logger-<date>.log<zip>").string();
+  const auto logFilePattern = "<dir>/<name>-<date>.log<zip>";
 
   // Run `logger`, check log file
 
-  auto result = system::exec( { executable,
-    "--log", "all=trace", "--log-out", logFilePattern, "Hi", "folks!" } );
+  auto result = system::exec( {
+    logger, "--log", "all=trace", "--log-out", logFilePattern, "Hi", "folks!"
+  } );
   EXPECT_TRUE(result.ok());
   // nio::out.println("OUT1:[\n{}]", result.out);
 
   auto time = rocket::chrono::now<log::internal::Clock>();
-  string logFile1 = log::internal::expandLogFilePattern(logFilePattern, time);
+  string logFile1 = log::internal::expandLogFilePattern(loggerDir, "logger", logFilePattern, time);
   EXPECT_TRUE(fs::is_regular_file(logFile1));
 
   // Run `logger` again, with 3 days (72 hours) offset, check zip file and new log file
 
-  result = system::exec( { executable,
-    "--log", "all=trace", "--log-out", logFilePattern, "--offset", "72", "Hi", "again!" } );
+  result = system::exec( {
+    logger, "--log", "all=trace", "--log-out", logFilePattern, "--offset", "72", "Hi", "again!"
+  } );
   EXPECT_TRUE(result.ok());
   // nio::out.println("OUT2:[\n{}]", result.out);
 
@@ -59,15 +62,13 @@ TEST(log, loggerZip) {
   EXPECT_TRUE(fs::is_regular_file(logFile1));
 
   time += 72h;
-  const string logFile2 = log::internal::expandLogFilePattern(logFilePattern, time);
+  const string logFile2 = log::internal::expandLogFilePattern(loggerDir, "logger", logFilePattern, time);
   EXPECT_TRUE(fs::is_regular_file(logFile2));
 
   // Clean up
 
-  process().atExit([=] {
-    fs::remove(logFile1);
-    fs::remove(logFile2);
-  }, true);
+  fs::remove(logFile1);
+  fs::remove(logFile2);
 }
 
 // EOF

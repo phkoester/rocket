@@ -303,6 +303,9 @@ FetchContent_Declare(
 
 block()
   set(BUILD_SHARED_LIBS OFF)
+  # libarchive's test setup references `${CMAKE_SOURCE_DIR}/build/cmake/...`, which breaks when it is not the
+  # top-level project. We don't need its tests anyway
+  set(ENABLE_TEST OFF)
   FetchContent_MakeAvailable(libarchive)
 endblock()
 

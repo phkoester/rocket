@@ -12,9 +12,6 @@
 #include <memory>
 #include <system_error>
 
-#ifndef LIBARCHIVE_STATIC
-  #define LIBARCHIVE_STATIC
-#endif
 #include <archive.h>
 #include <archive_entry.h>
 
@@ -53,7 +50,7 @@ errorString(struct archive* a) {
 
 /// Throws #rocket::InvalidState if @p status signals an error.
 void
-checkStatus(struct archive* a, int status, string_view what, const fs::path& path) {
+checkStatus(struct archive* a, i32 status, string_view what, const fs::path& path) {
   if (status < ARCHIVE_WARN) {
     ROCKET_FAIL("{} `{}` failed: {}", what, path.string(), errorString(a));
   }
@@ -204,7 +201,7 @@ gzip(const fs::path& srce, const fs::path& dest) {
   }
 
   // Remove a partially written destination on failure
-  scope_fail cleanup([&]() noexcept {
+  ROCKET_SCOPE_FAIL([&]() noexcept {
     error_code ignored;
     fs::remove(absDest, ignored);
   });
