@@ -22,7 +22,7 @@ struct Ansi {
   /**
    * @ctor
    *
-   * @param active if `true`, then ANSI escape sequences are generated, otherwise empty strings.
+   * @param active if `true`, then ANSI escape sequences are generated, otherwise empty strings
    */
   explicit Ansi(bool active) : active_(active) {}
 

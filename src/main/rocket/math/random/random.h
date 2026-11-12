@@ -36,7 +36,7 @@ gen() {
  * @param gen the generator
  * @param lower the lower bound
  * @param upper the upper bound
- * @return a random integer number in the closed interval @f$[lower,upper]@f$.
+ * @return a random integer number in the closed interval @f$[lower,upper]@f$
  */
 template<typename I, typename Gen> requires IsInteger<I>
 inline I

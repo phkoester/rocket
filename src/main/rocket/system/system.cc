@@ -12,11 +12,8 @@
   #include <sys/wait.h>
 #endif
 
-#ifdef ROCKET_OS_WINDOWS
-  #include <cerrno>
-#endif
-
 #include <array>
+#include <cerrno>
 #include <cstdlib>
 #include <cstdio>
 #include <memory>
@@ -28,7 +25,7 @@ using namespace std;
 // Global variables -----------------------------------------------------------------------------------------
 
 #ifndef ROCKET_OS_WINDOWS
-extern char** environ; // NOLINT
+extern char** environ;
 #endif
 
 namespace {
@@ -466,12 +463,15 @@ get() {
   unordered_map<string, string> ret;
 
 #ifdef ROCKET_OS_WINDOWS
+  // The C runtime builds `_environ` from the process environment block and leaves out the hidden per-drive
+  // entries such as `=C:=C:\path`. Unlike `GetEnvironmentStrings`, which returns the raw block, it therefore
+  // holds only ordinary variables
   char** p = _environ; // NOLINT
 #else
   char** p = environ; // NOLINT
 #endif
 
-  while (*p != nullptr) {
+  for (; p != nullptr && *p != nullptr; ++p) {
     const string_view entry(*p);
     string_view name, val;
     auto eq = entry.find('=');
@@ -481,8 +481,11 @@ get() {
       name = entry.substr(0, eq);
       val = entry.substr(eq + 1);
     }
+    // A variable has a nonempty name. Skip anything else, in case a hidden entry gets through after all
+    if (name.empty()) {
+      continue;
+    }
     ret.emplace(name, val);
-    ++p;
   }
 
   return ret;

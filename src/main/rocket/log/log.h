@@ -145,7 +145,7 @@ void setLogLevel(std::string_view id, std::string_view val);
  *
  * @ThreadSafe
  *
- * @param val `"-"`, `"stdout"`, or `"stderr"`, or a pattern.
+ * @param val `"-"`, `"stdout"`, or `"stderr"`, or a pattern
  */
 void setLogOut(std::string_view val);
 

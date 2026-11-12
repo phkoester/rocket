@@ -96,7 +96,7 @@ struct Iterator {
   u64 next(); // NOLINT
 
   /**
-   * Returns the next segment in the input string
+   * Returns the next segment in the input string.
    *
    * @return the next segment. If it is empty, the iterator is exhausted
    */
@@ -111,7 +111,7 @@ struct Iterator {
   }
 
   /**
-   * Returns the next segments in the input string
+   * Returns the next segments in the input string.
    *
    * @return the next segments
    */
@@ -132,7 +132,7 @@ struct Iterator {
   u64 previous(); // NOLINT
 
   /**
-   * Returns the previous segment in the input string
+   * Returns the previous segment in the input string.
    *
    * @return the previous segment. If it is empty, the iterator is exhausted
    */
@@ -147,7 +147,7 @@ struct Iterator {
   }
 
   /**
-   * Returns the previous segments in the input string
+   * Returns the previous segments in the input string.
    *
    * @return the previous segments
    */
