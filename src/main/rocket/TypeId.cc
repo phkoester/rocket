@@ -34,18 +34,16 @@ TypeId::prettyName() const {
     { " * __ptr64", "*" },
     { ",", ", " }
   });
-  // Replace "> >" with ">>" in a loop
-  while (str::replaceIn(ret, { { "> >", ">>" } }) > 0);
-  return ret;
 #else
   // Linux, macOS
   i32 status = 0;
-  const unique_ptr<char, void (*)(void*)> ptr {
-    abi::__cxa_demangle(name, nullptr, nullptr, &status),
-    free
-  };
-  return status == 0 ? ptr.get() : name;
+  const unique_ptr<char, void (*)(void*)> ptr { abi::__cxa_demangle(name, nullptr, nullptr, &status), free };
+  string ret(status == 0 ? ptr.get() : name);
 #endif
+
+  // Replace "> >" with ">>" in a loop
+  while (str::replaceIn(ret, { { "> >", ">>" } }) > 0);
+  return ret;
 }
 
 } // namespace rocket
