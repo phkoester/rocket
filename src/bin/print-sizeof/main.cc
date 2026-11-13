@@ -12,12 +12,16 @@ using namespace std;
 
 namespace {
 
+// Local constants ------------------------------------------------------------------------------------------
+
+constexpr u32 LEFT_COLUMN_WIDTH = 23;
+
 // Local functions ------------------------------------------------------------------------------------------
 
 template<typename T>
 void printSize() {
   const string name = fmt::format("{}", TypeId::of<T>());
-  nio::out.println("{: <23} | {:>2} {}", name, sizeof(T), str::noun::byte(sizeof(T)));
+  nio::out.println("{: <{}} | {:>2} {}", name, LEFT_COLUMN_WIDTH, sizeof(T), str::noun::byte(sizeof(T)));
 }
 
 } // namespace

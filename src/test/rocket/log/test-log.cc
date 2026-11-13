@@ -31,7 +31,7 @@ TEST(log, LogLevelFormat) {
 }
 
 TEST(log, loggerZip) {
-  const auto logger = binExecutable("logger");
+  const auto logger = testExecutable("logger");
   const auto loggerDir = logger.parent_path();
 
   constexpr auto LOG_OUT = "<dir>/<name>-<date>.log<zip>"sv;

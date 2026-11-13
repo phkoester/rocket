@@ -173,7 +173,7 @@ TEST(system, execCombined) {
 }
 
 TEST(system, execCombinedArgs) {
-  const string executable = binExecutable("print-args").string();
+  const string executable = testExecutable("print-args").string();
 
   const auto result = exec({ executable, "a" }, true);
   EXPECT_TRUE(result);
@@ -208,7 +208,7 @@ TEST(system, execExitStatus) {
 }
 
 #ifndef ROCKET_OS_WINDOWS
-TEST(system, execSignal) {
+TEST(system, execPosixSignal) {
   // `kill` is built into the shell, so the shell terminates itself
   const auto result = exec("kill -TERM $$");
   EXPECT_FALSE(result);
@@ -252,7 +252,7 @@ TEST(system, execInvalid) {
 }
 
 #ifdef ROCKET_OS_WINDOWS
-TEST(system, execBatchFile) {
+TEST(system, execWindowsBatchFile) {
   for (const string_view program : { "a.bat", "a.cmd", "A.BAT", "a.Cmd", "a.bat.", "a.bat. ." }) {
     SCOPED_TRACE(string(program));
     EXPECT_THAT(
@@ -268,7 +268,7 @@ TEST(system, execPrintf) {
 }
 
 TEST(system, execPrintArgs) {
-  const fs::path printArgs = binExecutable("print-args");
+  const fs::path printArgs = testExecutable("print-args");
   const string executable = printArgs.string();
 
   {
@@ -291,7 +291,7 @@ TEST(system, execPrintArgs) {
 
 TEST(system, execPrintArgsWithSpace) {
   // Copy `print-args` to `print args`, se we have a space in the executable name
-  const fs::path printArgs = binExecutable("print-args");
+  const fs::path printArgs = testExecutable("print-args");
   const fs::path printArgsWithSpace =
     printArgs.parent_path() / fmt::format("print args{}", executableSuffix());
   fs::copy_file(printArgs, printArgsWithSpace, fs::copy_options::overwrite_existing);
@@ -316,7 +316,7 @@ TEST(system, execPrintArgsWithSpace) {
 }
 
 TEST(system, execArgsAreLiteral) {
-  const string executable = binExecutable("print-args").string();
+  const string executable = testExecutable("print-args").string();
 
   // None of these may be interpreted by a shell, on any platform
   const vector<string_view> values {
@@ -357,7 +357,7 @@ TEST(system, execArgsAreLiteral) {
 }
 
 TEST(system, execArgsEmpty) {
-  const string executable = binExecutable("print-args").string();
+  const string executable = testExecutable("print-args").string();
 
   const auto out = exec({ executable, "", "a", "", "" }).out;
   EXPECT_THAT(out, HasSubstr("1=="));
@@ -368,7 +368,7 @@ TEST(system, execArgsEmpty) {
 }
 
 TEST(system, execArgsApostrophes) {
-  const string executable = binExecutable("print-args").string();
+  const string executable = testExecutable("print-args").string();
 
   for (const string_view val : { "it's"sv, "''"sv, "'a b'"sv, "\"'\""sv, "'\\''"sv }) {
     SCOPED_TRACE(string(val));
@@ -380,7 +380,7 @@ TEST(system, execArgsApostrophes) {
 }
 
 TEST(system, execArgsBackslashes) {
-  const string executable = binExecutable("print-args").string();
+  const string executable = testExecutable("print-args").string();
 
   // Windows treats backslashes specially in front of quotation marks, which includes the closing one
   const vector<string_view> values { "a\\ b", "a\\", "a\\\\", "\\\\server\\share", "a\\\"b", "a\\\\\"b" };
@@ -395,7 +395,7 @@ TEST(system, execArgsBackslashes) {
 }
 
 TEST(system, execArgsLineBreak) {
-  const string executable = binExecutable("print-args").string();
+  const string executable = testExecutable("print-args").string();
 
   // No shell is involved, so line breaks can be passed on Windows as well. The bytes are checked rather than
   // the echoed text because Windows translates each `\n` written to stdout into `\r\n`.
@@ -414,7 +414,7 @@ TEST(system, execArgsLineBreak) {
 }
 
 TEST(system, execArgsNul) {
-  const string executable = binExecutable("print-args").string();
+  const string executable = testExecutable("print-args").string();
 
   EXPECT_THAT(
     [&] { exec({ executable, "a\0b"sv }); },

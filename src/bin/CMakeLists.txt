@@ -4,15 +4,13 @@
 
 # Executables -----------------------------------------------------------------------------------------------
 
-GaiaAddExecutable(bare bare/main.cc)
-
-GaiaAddExecutable(logger logger/main.cc)
-target_link_libraries(logger PRIVATE Rocket::rocket)
-
-GaiaAddExecutable(print-args print-args/main.cc)
-target_link_libraries(print-args PRIVATE Rocket::rocket)
-
 GaiaAddExecutable(print-sizeof print-sizeof/main.cc)
 target_link_libraries(print-sizeof PRIVATE Rocket::rocket)
+
+GaiaAddExecutable(print-versions print-versions/main.cc)
+target_link_libraries(print-versions PRIVATE Rocket::rocket)
+if(ROCKET_GUI)
+  target_link_libraries(print-versions PRIVATE Rocket::rocket-gui)
+endif()
 
 # EOF

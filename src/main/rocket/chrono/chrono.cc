@@ -23,10 +23,6 @@
 #include <tuple>
 #include <vector>
 
-#if defined(ROCKET_ICU_CMAKE) && defined(ROCKET_OS_WINDOWS)
-  #define CHRONO_LOAD_ICU_DLL
-#endif
-
 using namespace rocket;
 using namespace rocket::chrono::internal;
 using namespace std;
@@ -62,7 +58,9 @@ clockOffset() {
 string
 abbreviation([[maybe_unused]] string_view name, [[maybe_unused]] bool dst, string_view fallback) {
 #ifdef ROCKET_OS_WINDOWS
-  #ifdef CHRONO_LOAD_ICU_DLL
+  #ifdef ROCKET_ICU_CMAKE
+
+  // Windows, icu-cmake: load the API functions from `icu.dll` for localized names
 
   using UcalOpen = decltype(&ucal_open);
   using UcalClose = decltype(&ucal_close);
@@ -94,17 +92,17 @@ abbreviation([[maybe_unused]] string_view name, [[maybe_unused]] bool dst, strin
     return string(fallback);
   }
 
-  const auto this_ucal_open = api.open;
-  const auto this_ucal_close = api.close;
-  const auto this_ucal_getTimeZoneDisplayName = api.getTimeZoneDisplayName;
+  const auto call_ucal_open = api.open;
+  const auto call_ucal_close = api.close;
+  const auto call_ucal_getTimeZoneDisplayName = api.getTimeZoneDisplayName;
 
   #else
 
-  const auto this_ucal_open = ucal_open;
-  const auto this_ucal_close = ucal_close;
-  const auto this_ucal_getTimeZoneDisplayName = ucal_getTimeZoneDisplayName;
+  const auto call_ucal_open = ucal_open;
+  const auto call_ucal_close = ucal_close;
+  const auto call_ucal_getTimeZoneDisplayName = ucal_getTimeZoneDisplayName;
 
-  #endif // CHRONO_LOAD_ICU_DLL
+  #endif // ROCKET_ICU_CMAKE
 
   // Convert the zone name from UTF-8 to UTF-16
 
@@ -118,14 +116,14 @@ abbreviation([[maybe_unused]] string_view name, [[maybe_unused]] bool dst, strin
 
   // Open a calendar for the zone. A null locale is the default locale
 
-  UCalendar* const cal = this_ucal_open(name16.data(), name16Len, nullptr, UCAL_GREGORIAN, &status);
+  UCalendar* const cal = call_ucal_open(name16.data(), name16Len, nullptr, UCAL_GREGORIAN, &status);
   if (U_FAILURE(status)) {
     return string(fallback);
   }
-  ROCKET_SCOPE_EXIT([&] { this_ucal_close(cal); });
+  ROCKET_SCOPE_EXIT([&] { call_ucal_close(cal); });
 
   array<UChar, 64> buf {};
-  const i32 len = this_ucal_getTimeZoneDisplayName(
+  const i32 len = call_ucal_getTimeZoneDisplayName(
     cal, dst ? UCAL_SHORT_DST : UCAL_SHORT_STANDARD, nullptr, buf.data(), i32(buf.size()), &status);
   if (U_FAILURE(status) || len <= 0) {
     return string(fallback);

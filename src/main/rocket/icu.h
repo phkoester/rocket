@@ -7,7 +7,6 @@
 #pragma once
 
 #if defined(ROCKET_ICU_CMAKE) || defined(ROCKET_OS_LINUX) || defined(ROCKET_OS_MACOS)
-  #define ROCKET_ICU_HEADERS
   #include <unicode/ubrk.h>
   #include <unicode/ucal.h>
   #include <unicode/uchar.h>
