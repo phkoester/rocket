@@ -41,7 +41,7 @@ TEST(log, loggerZip) {
   auto result = system::exec( {
     logger.string(), "--log", "all=trace", "--log-out", LOG_OUT, "Hi", "folks!"
   }, true );
-  EXPECT_TRUE(result.ok());
+  EXPECT_TRUE(result);
   // nio::out.println("OUT1:[\n{}]", result.out);
 
   auto time = rocket::chrono::now();
@@ -53,7 +53,7 @@ TEST(log, loggerZip) {
   result = system::exec( {
     logger.string(), "--log", "all=trace", "--log-out", LOG_OUT, "--offset", "72", "Hi", "again!"
   }, true );
-  EXPECT_TRUE(result.ok());
+  EXPECT_TRUE(result);
   // nio::out.println("OUT2:[\n{}]", result.out);
 
   EXPECT_FALSE(fs::is_regular_file(logFile1)); // Old log file must be gone

@@ -377,9 +377,9 @@ Out::set(string_view val, const TimePoint& time) {
 
 void
 Out::zipOlderFiles(const fs::path& current) {
-  string namePattern = fs::path(pattern_).filename().string();
-  string nameRegex = Out::nameRegex(namePattern);
-  std::regex nameRe(nameRegex);
+  const string namePattern = fs::path(pattern_).filename().string();
+  const string nameRegex = Out::nameRegex(namePattern);
+  const std::regex nameRe(nameRegex);
 
   auto currentDir = current.parent_path();
   if (currentDir.empty()) {
@@ -387,7 +387,7 @@ Out::zipOlderFiles(const fs::path& current) {
   }
 
   ROCKET_ASSERT(ymd_, "A date must be present");
-  string currentDate = fmt::format("{}", *ymd_);
+  const string currentDate = fmt::format("{}", *ymd_);
 
   error_code ec;
   fs::directory_iterator it(currentDir, fs::directory_options::skip_permission_denied, ec);

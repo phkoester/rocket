@@ -87,7 +87,7 @@ toy() {
   handle(c);
 
   auto result = system::exec("echo 'Hello");
-  nio::out.println("result.ok(): {}", result.ok());
+  nio::out.println("result.ok(): {}", static_cast<bool>(result));
   nio::out.println("result.status: {}", result.status);
   nio::out.println("result.signal: {}", result.signal);
   nio::out.println("result.error: {}", result.error);

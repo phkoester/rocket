@@ -2,8 +2,6 @@
  * main.cc
  */
 
-#define ROCKET_TEST
-
 #include "rocket/Process.h"
 #include "rocket/format.h"
 #include "rocket/chrono/chrono.h"

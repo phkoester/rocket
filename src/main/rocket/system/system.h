@@ -27,6 +27,36 @@ void setImpl(std::string_view name, const std::optional<std::string>& val, bool 
 
 } // namespace internal
 
+// Constants ------------------------------------------------------------------------------------------------
+
+/// The POSIX new-line byte sequence.
+constexpr const char* NL_POSIX = "\n";
+
+/// The Windows new-line byte sequence.
+constexpr const char* NL_WINDOWS = "\r\n";
+
+#ifdef ROCKET_OS_WINDOWS
+
+/// The system-dependent file separator.
+constexpr char FS = '\\';
+/// The system-dependent path separator.
+constexpr char PS = ';';
+
+/// The system-dependent new-line byte sequence.
+constexpr const char* NL = NL_WINDOWS;
+
+#else
+
+/// The system-dependent file separator.
+constexpr char FS = '/';
+/// The system-dependent path separator.
+constexpr char PS = ':';
+
+/// The system-dependent new-line byte sequence.
+constexpr const char* NL = NL_POSIX;
+
+#endif // ROCKET_OS_WINDOWS
+
 // `ExecResult` ---------------------------------------------------------------------------------------------
 
 /**
@@ -68,8 +98,7 @@ struct ExecResult {
    *
    * @return `true` on success, otherwise `false`
    */
-  [[nodiscard]] bool
-  ok() const {
+  [[nodiscard]] operator bool() const { // NOLINT
     return not error && status == 0;
   }
 };
@@ -133,20 +162,6 @@ executableSuffix() {
 }
 
 /**
- * Returns the system-dependent file separator.
- *
- * @return the file separator
- */
-consteval char
-fileSeparator() {
-#ifdef ROCKET_OS_WINDOWS
-  return '\\';
-#else
-  return '/';
-#endif
-}
-
-/**
  * Converts a command-line string to a vector of arguments.
  *
  * @param cl the command-line string
@@ -154,20 +169,6 @@ fileSeparator() {
  * @throw #rocket::InputFailure for unterminated quotes and trailing backslashes
  */
 std::vector<std::string> makeArgs(std::string_view cl);
-
-/**
- * Returns the system-dependent path separator.
- *
- * @return the path separator
- */
-consteval char
-pathSeparator() {
-#ifdef ROCKET_OS_WINDOWS
-  return ';';
-#else
-  return ':';
-#endif
-}
 
 namespace env {
 

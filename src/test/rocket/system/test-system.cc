@@ -30,12 +30,10 @@ const string OUT_THEN_ERR = "echo out; echo err >&2";
 
 /// Returns @p line with the line break that `echo` writes. The output is captured as is, with no conversion.
 string
-NL(string_view line) {
-#ifdef ROCKET_OS_WINDOWS
-  return fmt::format("{}\r\n", line);
-#else
-  return fmt::format("{}\n", line);
-#endif
+nl(string_view line) {
+  string ret(line);
+  ret.append(NL);
+  return ret;
 }
 
 } // namespace
@@ -145,8 +143,8 @@ TEST(system, envGet) {
 
 TEST(system, execEcho) {
   const auto result = exec("echo Hello");
-  EXPECT_TRUE(result.ok());
-  EXPECT_EQ(result.out, NL("Hello"));
+  EXPECT_TRUE(result);
+  EXPECT_EQ(result.out, nl("Hello"));
   EXPECT_EQ(result.err, "");
   EXPECT_EQ(result.status, 0);
   EXPECT_EQ(result.signal, nullopt);
@@ -155,22 +153,22 @@ TEST(system, execEcho) {
 
 TEST(system, execStderr) {
   const auto result = exec("echo Hello>&2");
-  EXPECT_TRUE(result.ok());
+  EXPECT_TRUE(result);
   EXPECT_EQ(result.out, "");
-  EXPECT_EQ(result.err, NL("Hello"));
+  EXPECT_EQ(result.err, nl("Hello"));
 }
 
 TEST(system, execSeparate) {
   const auto result = exec(OUT_THEN_ERR);
-  EXPECT_TRUE(result.ok());
-  EXPECT_EQ(result.out, NL("out"));
-  EXPECT_EQ(result.err, NL("err"));
+  EXPECT_TRUE(result);
+  EXPECT_EQ(result.out, nl("out"));
+  EXPECT_EQ(result.err, nl("err"));
 }
 
 TEST(system, execCombined) {
   const auto result = exec(OUT_THEN_ERR, true);
-  EXPECT_TRUE(result.ok());
-  EXPECT_EQ(result.out, NL("out") + NL("err"));
+  EXPECT_TRUE(result);
+  EXPECT_EQ(result.out, nl("out") + nl("err"));
   EXPECT_EQ(result.err, "");
 }
 
@@ -178,7 +176,7 @@ TEST(system, execCombinedArgs) {
   const string executable = binExecutable("print-args").string();
 
   const auto result = exec({ executable, "a" }, true);
-  EXPECT_TRUE(result.ok());
+  EXPECT_TRUE(result);
   EXPECT_THAT(result.out, HasSubstr("1=a="));
   EXPECT_EQ(result.err, "");
 }
@@ -194,7 +192,7 @@ TEST(system, execLargeOutput) {
 #endif
 
   const auto result = exec(cl);
-  EXPECT_TRUE(result.ok());
+  EXPECT_TRUE(result);
   EXPECT_EQ(ranges::count(result.out, '\n'), LINES);
   EXPECT_EQ(ranges::count(result.err, '\n'), LINES);
   EXPECT_EQ(ranges::count(result.out, 'y'), 0);
@@ -203,7 +201,7 @@ TEST(system, execLargeOutput) {
 
 TEST(system, execExitStatus) {
   const auto result = exec("exit 3");
-  EXPECT_FALSE(result.ok());
+  EXPECT_FALSE(result);
   EXPECT_EQ(result.status, 3);
   EXPECT_EQ(result.signal, nullopt);
   EXPECT_FALSE(result.error);
@@ -213,7 +211,7 @@ TEST(system, execExitStatus) {
 TEST(system, execSignal) {
   // `kill` is built into the shell, so the shell terminates itself
   const auto result = exec("kill -TERM $$");
-  EXPECT_FALSE(result.ok());
+  EXPECT_FALSE(result);
   EXPECT_EQ(result.status, nullopt);
   EXPECT_EQ(result.signal, SIGTERM);
   EXPECT_FALSE(result.error);
@@ -222,7 +220,7 @@ TEST(system, execSignal) {
 
 TEST(system, execNotFound) {
   const auto result = exec(vector<string_view> { "rocket-no-such-program" });
-  EXPECT_FALSE(result.ok());
+  EXPECT_FALSE(result);
   EXPECT_EQ(result.status, nullopt);
   EXPECT_EQ(result.signal, nullopt);
   EXPECT_TRUE(result.error);
@@ -230,7 +228,7 @@ TEST(system, execNotFound) {
 
 TEST(system, execNotFoundShell) {
   const auto result = exec("rocket-no-such-program");
-  EXPECT_FALSE(result.ok());
+  EXPECT_FALSE(result);
 #ifdef ROCKET_OS_WINDOWS
   // `cmd.exe /c` exits with 9009 on older builds of Windows and with 1 on newer ones
   EXPECT_THAT(result.status, Optional(AnyOf(1, 9'009)));

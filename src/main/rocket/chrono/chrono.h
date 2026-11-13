@@ -77,7 +77,24 @@ std::recursive_mutex& clockMutex();
 
 std::chrono::milliseconds& clockOffset();
 
-#ifdef ROCKET_TEST
+/**
+ * Sets the clock offset so that the current time becomes a given time point.
+ *
+ * The offset is rounded to the precision of the clock offset.
+ *
+ * Useful for testing.
+ *
+ * @ThreadSafe
+ *
+ * @param tp the time point that should be the current time
+ */
+template<typename Duration>
+void
+setClock(const std::chrono::sys_time<Duration>& tp) {
+  using namespace std::chrono;
+  ROCKET_MUTEX_LOCK(clockMutex());
+  clockOffset() = round<milliseconds>(tp - system_clock::now());
+}
 
 /**
  * Sets the clock offset.
@@ -94,8 +111,6 @@ setClockOffset(Duration offset) {
   ROCKET_MUTEX_LOCK(clockMutex());
   clockOffset() = offset;
 }
-
-#endif // ROCKET_TEST
 
 } // namespace internal
 
