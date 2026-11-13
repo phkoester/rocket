@@ -45,7 +45,7 @@ TEST(log, loggerZip) {
   // nio::out.println("OUT1:[\n{}]", result.out);
 
   auto time = rocket::chrono::now();
-  string logFile1 = expandLogOut(LOG_OUT, loggerDir, logger.stem().string(), 0, time);
+  const string logFile1 = expandLogOut(LOG_OUT, loggerDir, logger.stem().string(), 0, time);
   EXPECT_TRUE(fs::is_regular_file(logFile1));
 
   // Run `logger` again, with 3 days (72 hours) offset, check zip file and new log file
@@ -56,18 +56,18 @@ TEST(log, loggerZip) {
   EXPECT_TRUE(result.ok());
   // nio::out.println("OUT2:[\n{}]", result.out);
 
-  EXPECT_FALSE(fs::is_regular_file(logFile1));
-  logFile1 += ".gz";
-  EXPECT_TRUE(fs::is_regular_file(logFile1));
+  EXPECT_FALSE(fs::is_regular_file(logFile1)); // Old log file must be gone
+  const string gzFile = logFile1 + ".gz";
+  EXPECT_TRUE(fs::is_regular_file(gzFile)); // Zip file must be present
 
   time += 72h;
-  const string logFile2 = expandLogOut(LOG_OUT, loggerDir, logger.stem().string(), -1, time);
-  EXPECT_TRUE(fs::is_regular_file(logFile2));
+  const string logFile2 = expandLogOut(LOG_OUT, loggerDir, logger.stem().string(), 0, time);
+  EXPECT_TRUE(fs::is_regular_file(logFile2)); // New log file must be present
 
   // Clean up
 
   error_code ignored;
-  fs::remove(logFile1, ignored);
+  fs::remove(gzFile, ignored);
   fs::remove(logFile2, ignored);
 }
 
