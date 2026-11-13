@@ -31,29 +31,28 @@ TEST(log, LogLevelFormat) {
 }
 
 TEST(log, loggerZip) {
-  const auto loggerPath = binExecutable("logger");
-  const auto loggerDir = loggerPath.parent_path();
-  const string logger = loggerPath.string();
+  const auto logger = binExecutable("logger");
+  const auto loggerDir = logger.parent_path();
 
-  const auto logFilePattern = "<dir>/<name>-<date>.log<zip>";
+  constexpr auto LOG_OUT = "<dir>/<name>-<date>.log<zip>"sv;
 
   // Run `logger`, check log file
 
   auto result = system::exec( {
-    logger, "--log", "all=trace", "--log-out", logFilePattern, "Hi", "folks!"
-  } );
+    logger.string(), "--log", "all=trace", "--log-out", LOG_OUT, "Hi", "folks!"
+  }, true );
   EXPECT_TRUE(result.ok());
   // nio::out.println("OUT1:[\n{}]", result.out);
 
-  auto time = rocket::chrono::now<log::internal::Clock>();
-  string logFile1 = log::internal::expandLogFilePattern(loggerDir, "logger", logFilePattern, time);
+  auto time = rocket::chrono::now();
+  string logFile1 = expandLogOut(LOG_OUT, loggerDir, logger.stem().string(), -1, time);
   EXPECT_TRUE(fs::is_regular_file(logFile1));
 
   // Run `logger` again, with 3 days (72 hours) offset, check zip file and new log file
 
   result = system::exec( {
-    logger, "--log", "all=trace", "--log-out", logFilePattern, "--offset", "72", "Hi", "again!"
-  } );
+    logger.string(), "--log", "all=trace", "--log-out", LOG_OUT, "--offset", "72", "Hi", "again!"
+  }, true );
   EXPECT_TRUE(result.ok());
   // nio::out.println("OUT2:[\n{}]", result.out);
 
@@ -62,7 +61,7 @@ TEST(log, loggerZip) {
   EXPECT_TRUE(fs::is_regular_file(logFile1));
 
   time += 72h;
-  const string logFile2 = log::internal::expandLogFilePattern(loggerDir, "logger", logFilePattern, time);
+  const string logFile2 = expandLogOut(LOG_OUT, loggerDir, logger.stem().string(), -1, time);
   EXPECT_TRUE(fs::is_regular_file(logFile2));
 
   // Clean up

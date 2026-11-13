@@ -23,8 +23,6 @@ namespace fs = std::filesystem;
 
 namespace {
 
-using rocket::log::internal::Clock;
-using rocket::log::internal::TimePoint;
 using rocket::log::internal::LogSettings;
 
 // Local constants ------------------------------------------------------------------------------------------
@@ -130,10 +128,70 @@ Fmt logFmt;
  * @NotThreadSafe
  */
 struct Out {
-  /// This one is publicly available; tests may need this.
-  string
-  expand(fs::path dir, string_view name, string_view pattern, const TimePoint& time) {
-    return expand(dir, name, pattern, time, false);
+  struct ExpandResult {
+    string out;
+    bool utc = false;
+    bool zip = false;
+    optional<std::chrono::year_month_day> ymd;
+  };
+
+  // This one is publicly available; tests may need it. Throws `InvalidateState`
+  static ExpandResult
+  expand(string_view pattern, const fs::path& dir, string_view name, i32 pid, const TimePoint& time) {
+    ExpandResult ret;
+    ret.out = pattern;
+
+    // Detect and eliminate the hints
+
+    ret.utc = str::replaceIn(ret.out, "<utc>", "") > 0;
+    ret.zip = str::replaceIn(ret.out, "<zip>", "") > 0;
+
+    // Find out if we have a stable directory and a name with a date
+
+    const fs::path patternPath(ret.out);
+    const auto patternDir = patternPath.parent_path();
+    const auto patternName = patternPath.filename();
+
+    const string patternDirStr = patternDir.string();
+    // `<dir>` and `<name>` are assumed to be stable, while `<date>` and `<pid>` are not
+    const bool dirStable = not patternDirStr.contains("<date>") && not patternDirStr.contains("<pid>");
+    const bool nameHasDate = patternName.string().contains("<date>");
+
+    // If present, expand `<date>`
+
+    const bool date = ret.out.contains("<date>");
+    if (date) {
+      // The functions `utcYmd` and `localYmd` must be static and stateless
+      ret.ymd = ret.utc ? utcYmd(time) : localYmd(time);
+      str::replaceIn(ret.out, {
+        { "<date>", fmt::format("{}", *ret.ymd) },
+      });
+    }
+
+    // Expand the remaining placeholders
+
+    str::replaceIn(ret.out, {
+      { "<dir>", dir.string() },
+      { "<name>", name },
+      { "<pid>", fmt::format("{}", pid) }
+    });
+
+    // Do sanity checks
+
+    if (ret.out.empty()) {
+      ROCKET_FAIL("Empty pattern");
+    }
+    // A pattern like `some/path/<date>-<pid>/name.log` works fine; however, in this case where the
+    // directory part of the pattern is unstable, we don’t support zipping older log files
+    if (ret.zip && not dirStable) {
+      ROCKET_FAIL("Can only zip older log files in the same directory");
+    }
+    // If the pattern is something like `some/path/name-<date>.log`, we can easily look for older zip files
+    if (ret.zip && not nameHasDate) {
+      ROCKET_FAIL("Can only zip older log files if a date is present in the name part of the pattern");
+    }
+
+    return ret;
   }
 
   void flushOnExit() {
@@ -146,19 +204,13 @@ struct Out {
 
   nio::Sink& get(const TimePoint& time);
 
-  void
-  set(nio::Sink& out) {
-    out_ = &out;
-    fileOut_ = nullptr;
-  }
-
-  void setPattern(string_view pattern, const TimePoint& time);
+  void set(string_view pattern, const TimePoint& time);
 
 private:
 
-  static string
+  static fs::path
   expandDir() {
-    return process().invocationPath().parent_path().string();
+    return process().invocationPath().parent_path();
   }
 
   static string
@@ -174,37 +226,36 @@ private:
   }
 
   /**
-   * Converts the file-name part of a log-output pattern to a regex pattern.
+   * Converts the file-name part of a log-output pattern to a regex pattern that is suitable for finding
+   * sibling log files in the same directory.
+   *
+   * This is needed to zip older log files.
    *
    * @param name the file-name part of a log-output pattern; must not contain any file sepatators
    * @return the regex
    */
   static string
-  regex(string_view namePattern) {
-    ROCKET_ASSERT(
-      not fs::path(namePattern).has_parent_path(),
-      "File-name pattern must not contain any file separators");
+  nameRegex(const fs::path& name) {
+    ROCKET_ASSERT(not name.has_parent_path(), "File-name pattern must not contain any file separators");
 
     // Expand `<dir>` and `<name>` to their real values, eliminate the hints `<utc>` and `<zip>`
-
-    string ret(namePattern);
+    string ret(name.string());
     str::replaceIn(ret, {
-      { "<dir>", expandDir() },
+      { "<dir>", expandDir().string() },
       { "<name>", expandName() },
       { "<utc>", "" },
       { "<zip>", "" }
     });
 
     // Escape for regex
-
     ret = str::escape::escapeRegex(ret);
 
     // Replace `<date>` and `<pid>` with regex patterns
-
     str::replaceIn(ret, {
-      { "<date>", "(\\d{4}-\\d{2}-\\d{2})" }, // Make this a group
-      { "<pid>", "\\d+" }
+      { "<date>", "(\\d{4}-\\d{2}-\\d{2})" }, // `YYYY-MM-DD`, and make this a group
+      { "<pid>", "\\d+" }, // One or more digits
     });
+
     return ret;
   }
 
@@ -222,16 +273,20 @@ private:
   optional<std::chrono::year_month_day> ymd_;
   bool zip_ = false;
 
-  // `ymd` replaces the date taken from `time` for `<date>`
-  string expand(
-    fs::path dir,
-    string_view name,
-    string_view pattern,
-    const TimePoint& time,
-    bool update,
-    optional<std::chrono::year_month_day> ymd = nullopt);
+  void reset() {
+    set(nio::out, "stdout");
+  }
 
-  void reset();
+  void
+  set(nio::Sink& out, string_view pattern) {
+    out_ = &out;
+    fileOut_ = nullptr;
+
+    pattern_ = pattern;
+    utc_ = false;
+    ymd_ = {};
+    zip_ = false;
+  }
 
   void zipOlderFiles(string_view pattern, const fs::path& current);
 };
@@ -239,118 +294,52 @@ private:
 nio::Sink&
 Out::get(const TimePoint& time) {
   if (fileOut_ && ymd_) {
-    // Writing to a file: has the date in the pattern changed?
+    // Writing to a file, with a date in the pattern: has the date in the pattern changed?
     auto newYmd = utc_ ? utcYmd(time) : localYmd(time);
     if (newYmd != *ymd_) {
       // Date has changed: reassign the pattern, open new log file
-      setPattern(pattern_, time);
+      set(pattern_, time);
     }
   }
 
   return out_ != nullptr ? *out_ : *fileOut_;
 }
 
-string
-Out::expand(
-  fs::path dir,
-  string_view name,
-  string_view pattern,
-  const TimePoint& time,
-  bool update,
-  optional<std::chrono::year_month_day> ymd) {
-  // Prepare the values
-
-  const auto patternPath = fs::path(pattern);
-
-  const auto patternDir = patternPath.parent_path().string();
-  const bool dateFoundInPatternDir = patternDir.contains("<date>");
-  const bool pidFoundInPatternDir = patternDir.contains("<pid>");
-  // We assume the directory part of the pattern to be "unstable" if it contains a date or a PID. We don’t
-  // support zipping older log files in this case, because that would involve a rather complicated directory
-  // lookup
-  const bool unstablePatternDir = dateFoundInPatternDir || pidFoundInPatternDir;
-
-  const auto patternName = patternPath.filename().string();
-  // When zipping, we require a date in the name part of the pattern so there are different log files in
-  // the same directory, differing by their dates
-  const bool dateFoundInPatternName = patternName.contains("<date>");
-
-  const bool utcFound = pattern.contains("<utc>");
-  const bool dateFound = pattern.contains("<date>");
-  const bool zipFound = pattern.contains("<zip>");
-
-  if (not ymd) {
-    ymd = utcFound ? utcYmd(time) : localYmd(time);
-  }
-  const string date = fmt::format("{}", *ymd);
-
-  const auto pid = fmt::format("{}", process().id());
-
-  // Expand the pattern
-
-  string ret(pattern);
-  str::replaceIn(ret, {
-    { "<date>", date },
-    { "<dir>", dir.string() },
-    { "<name>", name },
-    { "<pid>", pid },
-    { "<utc>", "" },
-    { "<zip>", "" },
-  });
-
-  // Do sanity checks
-
-  if (zipFound && unstablePatternDir) {
-    // A pattern like `some/path/<date>-<pid>/name.log` works fine; however, in this case where the directory
-    // part of the pattern is unstable, we don’t support zipping older log files
-    ROCKET_FAIL("Can only zip older log files in the same directory");
-  }
-  if (zipFound && not dateFoundInPatternName) {
-    // If the pattern is something like `some/path/name-<date>.log`, we can easily look for older zip files
-    ROCKET_FAIL("Can only zip older log files if a date is present in the name part of the pattern");
-  }
-  if (ret.empty()) {
-    ROCKET_FAIL("Empty pattern");
-  }
-
-  // If requested, update members
-
-  if (update) {
-    pattern_ = pattern;
-    utc_ = utcFound;
-    ymd_ = nullopt;
-    if (dateFound) {
-      ymd_ = ymd;
-    }
-    zip_ = zipFound;
-  }
-
-  return ret;
-}
-
 void
-Out::reset() {
-  out_ = &nio::out;
-  fileOut_ = nullptr;
-
-  pattern_ = "";
-  utc_ = false;
-  ymd_ = nullopt;
-  zip_ = false;
-}
-
-void
-Out::setPattern(string_view pattern, const TimePoint& time) {
+Out::set(string_view val, const TimePoint& time) {
   out_ = nullptr;
+
+  if (val == "-" || val == "stdout") {
+    set(nio::out, "stdout");
+    return;
+  } else if (val == "stderr") {
+    set(nio::err, "stderr");
+    return;
+  }
+
+  // `val` is a pattern
 
   fs::path path;
   try {
-    path = expand(expandDir(), expandName(), pattern, time, true);
+    auto result = expand(val, expandDir(), expandName(), process().id(), time);
+    path = result.out;
+
+    pattern_ = val;
+    utc_ = result.utc;
+    ymd_ = result.ymd;
+    zip_ = result.zip;
+  } catch (const Exception& ex) {
+    process().error(nio::err, 0,
+      "Cannot apply log-output pattern `{}`; logging to standard output instead: {}",
+      val, ex.message());
+    reset();
+    return;
   } catch (const exception&) {
-    process().error(nio::err, 0, "Cannot apply log-output pattern `{}`; logging to standard output instead", pattern);
+    process().error(nio::err, 0, "Cannot apply log-output pattern `{}`; logging to standard output instead", val);
     reset();
     return;
   }
+
   if (not path.empty()) {
     try {
       fileOut_ = make_unique<nio::FileSink>(path, true); // Append to the file
@@ -363,14 +352,14 @@ Out::setPattern(string_view pattern, const TimePoint& time) {
 
   // Zip older files
   if (zip_) {
-    zipOlderFiles(pattern, path);
+    zipOlderFiles(val, path);
   }
 }
 
 void
 Out::zipOlderFiles(string_view pattern, const fs::path& current) {
   string namePattern = fs::path(pattern).filename().string();
-  string nameRegex = regex(namePattern);
+  string nameRegex = Out::nameRegex(namePattern);
   std::regex nameRe(nameRegex);
 
   auto currentDir = current.parent_path();
@@ -395,8 +384,8 @@ Out::zipOlderFiles(string_view pattern, const fs::path& current) {
       continue;
     }
 
-    auto entryPath = it->path();
-    string entryName = entryPath.filename().string();
+    auto entry = it->path();
+    string entryName = entry.filename().string();
     smatch match;
     if (regex_match(entryName, match, nameRe)) {
       // Group 1 is the directory-entry date, `YYYY-MM-DD`
@@ -404,19 +393,19 @@ Out::zipOlderFiles(string_view pattern, const fs::path& current) {
       // Using `YYYY-MM-DD` for the date part of the name, we can compare the strings directly
       if (entryDate < currentDate) {
         // The entry date is older: zip the file
-        process().info(nio::err, "Zipping log file `{}` ...", entryPath);
-        const auto gz = entryPath.string() + ".gz";
+        process().info(nio::err, "Zipping log file `{}` ...", entry);
+        const auto gz = entry.string() + ".gz";
         try {
-          archive::gzip(entryPath, gz);
+          archive::gzip(entry, gz);
           error_code ec;
-          fs::remove(entryPath, ec);
+          fs::remove(entry, ec);
           if (ec) {
-            process().error(nio::err, 0, "Cannot remove log file `{}`: {}", entryPath, ec.message());
+            process().error(nio::err, 0, "Cannot remove log file `{}`: {}", entry, ec.message());
           }
         } catch (const Exception& ex) {
-          process().error(nio::err, 0, "Cannot zip log file `{}`: {}", entryPath, ex.message());
+          process().error(nio::err, 0, "Cannot zip log file `{}`: {}", entry, ex.message());
         } catch (const exception& ex) {
-          process().error(nio::err, 0, "Cannot zip log file `{}`: {}", entryPath, ex.what());
+          process().error(nio::err, 0, "Cannot zip log file `{}`: {}", entry, ex.what());
         }
       }
     }
@@ -526,6 +515,10 @@ thread_local vector<Entry> logStack;
 
 // Local functions ------------------------------------------------------------------------------------------
 
+void setLogFmt(string_view val);
+void setLogLevel(string_view id, string_view val);
+void setLogOut(string_view val);
+
 /**
  * Handles the `--log` option.
  *
@@ -577,7 +570,7 @@ applyLogOut(optional<string_view> val) {
   return true;
 }
 
-/// @ThreadSafe
+// @ThreadSafe
 string
 formatExecTime(const TimePoint& t1, const TimePoint& t2) {
   const auto ns = std::chrono::duration_cast<std::chrono::nanoseconds>(t2 - t1).count();
@@ -599,7 +592,7 @@ formatExecTime(const TimePoint& t1, const TimePoint& t2) {
   return fmt::format("{}.{:0>3} s", ms / 1'000, ms % 1'000);
 }
 
-/// @NotThreadSafe
+// @NotThreadSafe
 string
 formatTimePoint(const TimePoint& tp) {
   const auto formatImpl = [](const auto& ctp) { // ctp = cast time point
@@ -647,7 +640,7 @@ logFlush(nio::Sink& out) {
   }
 }
 
-/// @NotThreadSafe
+// @NotThreadSafe
 void
 logImpl(
   nio::Sink& out,
@@ -727,6 +720,81 @@ logImpl(
   }
 }
 
+// @ThreadSafe
+void
+setLogFmt(string_view val) {
+  ROCKET_MUTEX_LOCK(logMutex());
+
+  logFmt.set(val);
+}
+
+/**
+ * Sets the log level for the log ID @p id to @p val.
+ *
+ * If @p id is `"all"`, the log level is set for all log IDs.
+ *
+ * @ThreadSafe
+ *
+ * @param id the log ID with an optional substring in the form `ID[.SUBSTRING]`, or `"all"`
+ * @param val the log level
+ */
+void
+setLogLevel(string_view id, string_view val) {
+  ROCKET_MUTEX_LOCK(logMutex());
+
+  string substring;
+  const auto dot = id.find('.');
+  if (dot != string::npos) {
+    substring = id.substr(dot + 1);
+    id = id.substr(0, dot);
+  }
+
+  if (id.empty()) {
+    ROCKET_FAIL("Missing log ID");
+  }
+  const bool all = id == "all";
+  if (all && not substring.empty()) {
+    ROCKET_FAIL("Log ID `all` cannot be used with a substring");
+  }
+
+  const auto result = Enum<LogLevel>::toType(val, true);
+  if (not result) {
+    throw InvalidState(result.error().message);
+  }
+  const auto [_, level] = result.value();
+
+  if (not all) {
+    auto it = definedIds().right.find(id);
+    if (it == definedIds().right.end()) {
+      ROCKET_FAIL("Unknown log ID `{}`", id);
+    }
+    if (substring.empty()) {
+      it->second->level_ = level;
+    } else {
+      it->second->setSubstringLevel(substring, level);
+    }
+  } else {
+    // "all"
+    for (const auto& pair : definedIds().right) {
+      pair.second->level_ = level;
+    }
+  }
+}
+
+/**
+ * Set the log output.
+ *
+ * @ThreadSafe
+ *
+ * @param val `"-"`, `"stdout"`, or `"stderr"`, or a log-output pattern
+ */
+void
+setLogOut(string_view val) {
+  ROCKET_MUTEX_LOCK(logMutex());
+
+  logOut.set(val, rocket::chrono::now());
+}
+
 } // namespace
 
 // `LogLevel` -----------------------------------------------------------------------------------------------
@@ -785,13 +853,6 @@ LogSettings::setSubstringLevel(const string& substring, LogLevel level) {
 }
 
 // Functions ................................................................................................
-
-/// @ThreadSafe
-string
-expandLogFilePattern(fs::path dir, string_view name, string_view pattern, const TimePoint& time) {
-  ROCKET_MUTEX_LOCK(logMutex());
-  return logOut.expand(dir, name, pattern, time);
-}
 
 /// @ThreadSafe
 void
@@ -898,69 +959,13 @@ const vector<cl::Option>& logOptions() { return CL_OPTIONS; }
 
 // Functions ------------------------------------------------------------------------------------------------
 
-/// @ThreadSafe
-void
-setLogFmt(string_view val) {
-  ROCKET_MUTEX_LOCK(logMutex());
-
-  logFmt.set(val);
-}
-
-void
-setLogLevel(string_view id, string_view val) {
-  ROCKET_MUTEX_LOCK(logMutex());
-
-  string substring;
-  const auto dot = id.find('.');
-  if (dot != string::npos) {
-    substring = id.substr(dot + 1);
-    id = id.substr(0, dot);
+// Needs no mutex log, calls static functions only
+string
+expandLogOut(string_view val, const fs::path& dir, string_view name, i32 pid, const TimePoint& time) {
+  if (val == "-" || val == "stdout" || val == "stderr") {
+    return string(val);
   }
-
-  if (id.empty()) {
-    ROCKET_FAIL("Missing log ID");
-  }
-  const bool all = id == "all";
-  if (all && not substring.empty()) {
-    ROCKET_FAIL("Log ID `all` cannot be used with a substring");
-  }
-
-  const auto result = Enum<LogLevel>::toType(val, true);
-  if (not result) {
-    throw InvalidState(result.error().message);
-  }
-  const auto [_, level] = result.value();
-
-  if (not all) {
-    auto it = definedIds().right.find(id);
-    if (it == definedIds().right.end()) {
-      ROCKET_FAIL("Unknown log ID `{}`", id);
-    }
-    if (substring.empty()) {
-      it->second->level_ = level;
-    } else {
-      it->second->setSubstringLevel(substring, level);
-    }
-  } else {
-    // "all"
-    for (const auto& pair : definedIds().right) {
-      pair.second->level_ = level;
-    }
-  }
-}
-
-/// @ThreadSafe
-void
-setLogOut(string_view val) {
-  ROCKET_MUTEX_LOCK(logMutex());
-
-  if (val == "-" || val == "stdout") {
-    logOut.set(nio::out);
-  } else if (val == "stderr") {
-    logOut.set(nio::err);
-  } else {
-    logOut.setPattern(val, chrono::now<Clock>());
-  }
+  return Out::expand(val, dir, name, pid, time).out;
 }
 
 } // namespace rocket::log

@@ -51,9 +51,6 @@ namespace rocket::log {
 
 namespace internal {
 
-using Clock = std::chrono::system_clock;
-using TimePoint = std::chrono::time_point<Clock>;
-
 // `LogSettings` ............................................................................................
 
 /// @NotThreadSafe
@@ -100,12 +97,6 @@ std::unique_ptr<Log> makeLog(
 
 // Functions ................................................................................................
 
-std::string expandLogFilePattern(
-  std::filesystem::path dir,
-  std::string_view name,
-  std::string_view pattern,
-  const TimePoint& time);
-
 void log(LogLevel level, std::string_view msg);
 
 LogSettings logDefine(LogSettings* logId, std::string_view id);
@@ -123,35 +114,28 @@ const std::vector<cl::Option>& logOptions();
 
 // Functions ------------------------------------------------------------------------------------------------
 
-/**
- * Sets the log format.
- *
- * @ThreadSafe
- *
- * @param val the log format
- */
-void setLogFmt(std::string_view val);
+using Clock = std::chrono::system_clock;
+using TimePoint = std::chrono::time_point<Clock>;
 
 /**
- * Sets the log level for the log ID @p id to @p val.
+ * Expands a log-output value.
  *
- * If @p id is `"all"`, the log level is set for all log IDs.
+ * Useful for testing other processes’ log files.
  *
- * @ThreadSafe
- *
- * @param id the log ID with an optional substring in the form `ID[.SUBSTRING]`, or `"all"`
- * @param val the log level
+ * @param val `"-"`, `"stdout"`, `"stderr"`, or a log-output pattern. If it is a pattern, it may contain the
+ *   placeholders `<date>`, `<dir>`, `<name>`, `<pid>`, `<utc>`, and `<zip>`.
+ * @param dir the directory
+ * @param name the process name
+ * @param pid the process ID (PID)
+ * @param time the time
+ * @throw #rocket::InvalidateState if @p val is invalid
  */
-void setLogLevel(std::string_view id, std::string_view val);
-
-/**
- * Set the log output.
- *
- * @ThreadSafe
- *
- * @param val `"-"`, `"stdout"`, or `"stderr"`, or a pattern
- */
-void setLogOut(std::string_view val);
+std::string expandLogOut(
+  std::string_view val,
+  const std::filesystem::path& dir,
+  std::string_view name,
+  i32 pid,
+  const TimePoint& time);
 
 } // namespace rocket::log
 

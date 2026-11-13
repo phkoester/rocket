@@ -111,7 +111,7 @@ setClockOffset(Duration offset) {
  * @tparam Clock the clock to use
  * @return the current time
  */
-template<typename Clock>
+template<typename Clock = std::chrono::system_clock>
 std::chrono::time_point<Clock>
 now() {
   ROCKET_MUTEX_LOCK(internal::clockMutex());

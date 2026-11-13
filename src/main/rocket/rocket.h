@@ -7,8 +7,8 @@
  *
  * OS-specific data types, sizes in bytes:
  *
- * | Type          | Linux | macOS   | Windows | Inconsistent?
- * | :------------ | ----: | ------: | ------: | :------------
+ * | Type          | Linux | macOS   | Windows | Unstable?
+ * | :------------ | ----: | ------: | ------: | :--------
  * | `bool`        |     1 |       1 |       1 |
  * | `wchar_t`     |     4 |       4 |       2 | Yes!
  * | `short`       |     2 |       2 |       2 |
@@ -21,7 +21,7 @@
  * | `long double` |    16 |       8 |       8 | Yes!
  * | `void*`       |     8 |       8 |       8 |
  *
- * Basic data types used in Rocket, consistent across all platforms:
+ * Basic data types used in Rocket, stable across all platforms:
  *
  * | Type             | Size
  * | :--------------- | ---:
