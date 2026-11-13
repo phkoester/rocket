@@ -14,40 +14,7 @@
 
 namespace rocket::nio {
 
-// Utilities for writing to a sink --------------------------------------------------------------------------
-
-/**
- * Takes care of indentation.
- *
- * @param out the sink to write to
- * @param indent whether to indent the output
- * @param level the current indentation level
- * @param c the character to write
- */
-void beginContainer(nio::Sink& out, bool indent, u64& level, char c);
-
-/**
- * Takes care of indentation.
- *
- * @param out the sink to write to
- * @param indent whether to indent the output
- * @param level the current indentation level
- * @param size the size of the container
- * @param c the character to write
- */
-void endContainer(nio::Sink& out, bool indent, u64& level, u64 size, char c);
-
-/**
- * Takes care of indentation.
- *
- * @param out the sink to write to
- * @param indent whether to indent the output
- * @param level the current indentation level
- * @param index the index of the element
- */
-void nextElem(nio::Sink& out, bool indent, u64 level, u64 index);
-
-// Utilities for reading from a source ----------------------------------------------------------------------
+// Functions ------------------------------------------------------------------------------------------------
 
 /**
  * Throws if the next character in the source is not the expected character @p c, advances the source only

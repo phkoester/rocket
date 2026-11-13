@@ -233,12 +233,12 @@ namespace internal::json {
 
 inline void
 beginContainer(nio::Sink& out, JsonConsumerConfig& config, char c) {
-  rocket::nio::beginContainer(out, config.indent, config.level, c);
+  rocket::codec::internal::beginContainer(out, config.indent, config.level, c);
 }
 
 inline void
 endContainer(nio::Sink& out, JsonConsumerConfig& config, u64 size, char c) {
-  rocket::nio::endContainer(out, config.indent, config.level, size, c);
+  rocket::codec::internal::endContainer(out, config.indent, config.level, size, c);
 }
 
 /**
@@ -257,7 +257,7 @@ u64 jsonStringOffset(u64 pos, u64 unescapedOffset, const Positions& positions);
 
 inline void
 nextElem(nio::Sink& out, JsonConsumerConfig& config, u64 index) {
-  rocket::nio::nextElem(out, config.indent, config.level, index);
+  rocket::codec::internal::nextElem(out, config.indent, config.level, index);
 }
 
 std::string readJsonString(nio::Source& in, Positions& positions);

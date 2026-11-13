@@ -9,12 +9,8 @@
 #include "rocket/reflect/reflect.h"
 #include "rocket/unicode/ConvertTo.h"
 
-#include <boost/safe_numerics/safe_integer.hpp>
-
 using namespace rocket;
 using namespace rocket::codec;
-
-using boost::safe_numerics::safe;
 
 // `MyStruct` -----------------------------------------------------------------------------------------------
 
@@ -43,7 +39,7 @@ read(nio::Source& in, string_view str) {
   const auto n = in.read(buf);
   const bool ret = n == buf.size() && buf == str;
   if (not ret) {
-    in.seek(safe<i64>(pos));
+    in.seek(static_cast<i64>(pos));
   }
   return ret;
 }

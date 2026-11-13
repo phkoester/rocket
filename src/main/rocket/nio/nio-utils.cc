@@ -168,42 +168,7 @@ startsWith(string_view s, string_view prefix, bool ignoreCase) {
 
 namespace rocket::nio {
 
-// Utilities for writing to a sink --------------------------------------------------------------------------
-
-void
-beginContainer(nio::Sink& out, bool indent, u64& level, char c) {
-  if (indent) {
-    ++level;
-  }
-  out.write(c);
-}
-
-void
-endContainer(nio::Sink& out, bool indent, u64& level, u64 size, char c) {
-  if (indent) {
-    --level;
-    if (size > 0) {
-      out.print("\n{: <{}}", "", 2 * level);
-    }
-  }
-  out.write(c);
-}
-
-void
-nextElem(nio::Sink& out, bool indent, u64 level, u64 index) {
-  if (index > 0) {
-    if (indent) {
-      out.write(',');
-    } else {
-      out.write(", ");
-    }
-  }
-  if (indent) {
-    out.print("\n{: <{}}", "", 2 * level);
-  }
-}
-
-// Utilities for reading from a source ----------------------------------------------------------------------
+// Functions ------------------------------------------------------------------------------------------------
 
 void
 expectChar(nio::Source& in, char c) {

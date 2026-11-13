@@ -43,6 +43,9 @@ struct Device {
   /// @dtor
   virtual ~Device() = default;
 
+  /// @member_op_asgmt_copy
+  Device& operator=(const Device& rhs) = delete;
+
   /**
    * Checks if the device is in an unusable state, e.g., after an I/O error.
    *
@@ -145,7 +148,6 @@ struct Sink : Device {
   println(fmt::format_string<T...> fmt, T&&... args) {
     auto ret = print(fmt, std::forward<T>(args)...);
     ret += write('\n');
-    flush();
     return ret;
   }
 
@@ -162,7 +164,6 @@ struct Sink : Device {
   println(const std::locale& locale, fmt::format_string<T...> fmt, T&&... args) {
     auto ret = print(locale, fmt, std::forward<T>(args)...);
     ret += write('\n');
-    flush();
     return ret;
   }
 
@@ -325,7 +326,7 @@ struct NullSink : Sink {
 
   [[nodiscard]] bool eof() const override { return true; }
 
-  bool flush() override { return false; }
+  bool flush() override { return true; }
 
   [[nodiscard]] i32 handle() const override { return -1; }
 
@@ -351,7 +352,7 @@ struct SpanSink : Sink {
 
   [[nodiscard]] bool eof() const override { return pos_ == out_.size(); }
 
-  bool flush() override { return false; }
+  bool flush() override { return true; }
 
   [[nodiscard]] i32 handle() const override { return -1; }
 
@@ -420,7 +421,7 @@ struct StringSink : Sink {
 
   [[nodiscard]] bool eof() const override { return false; }
 
-  bool flush() override { return false; }
+  bool flush() override { return true; }
 
   [[nodiscard]] i32 handle() const override { return -1; }
 
@@ -582,7 +583,7 @@ protected:
 struct ContiguousSource : Source {
   ~ContiguousSource() override = default;
 
-  [[nodiscard]] bool bad() const override { return false; }
+  [[nodiscard]] bool bad() const final { return false; }
 
   /**
    * Returns the bytes available in the contiguous source.
@@ -651,6 +652,8 @@ struct FileSource : Source {
 
   u64 read(std::span<u8> out) override;
 
+  std::string readln() override;
+
   bool seek(i64 offset, SeekMode mode) override;
 
   [[nodiscard]] u64 tell() override;
@@ -659,7 +662,7 @@ ROCKET_TEST_PRIVATE:
 
   FILE* file_; ///< The `FILE` pointer, never null.
   bool closeOnDestroy_; ///< Whether to close the file on destruction.
-  std::unique_ptr<std::istream> istream_; ///< An optional input stream.
+  std::unique_ptr<std::istream> istream_; ///< An optional input stream, reading through #file_.
 };
 
 // `NullSource` ---------------------------------------------------------------------------------------------
@@ -737,7 +740,7 @@ struct SpanSource : ContiguousSource {
     return { reinterpret_cast<const char*>(bytes.data()), bytes.size() };
   }
 
-  [[nodiscard]] u64 tell() override { return bad() ? NPOS : pos_; }
+  [[nodiscard]] u64 tell() override { return pos_; }
 
 private:
 
@@ -770,6 +773,8 @@ struct StreamSource : Source {
   std::optional<char> peek() override;
 
   u64 read(std::span<u8> out) override;
+
+  std::string readln() override;
 
   bool seek(i64 offset, SeekMode mode) override;
 
@@ -821,7 +826,7 @@ struct StringSource : ContiguousSource {
 
   [[nodiscard]] std::string_view str() const override { return in_.substr(pos_); }
 
-  [[nodiscard]] u64 tell() override { return bad() ? NPOS : pos_; }
+  [[nodiscard]] u64 tell() override { return pos_; }
 
 private:
 

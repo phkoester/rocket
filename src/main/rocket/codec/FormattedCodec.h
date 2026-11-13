@@ -237,17 +237,17 @@ namespace internal::formatted {
 
 inline void
 beginContainer(nio::Sink& out, FormattedConsumerConfig& config, char c) {
-  rocket::nio::beginContainer(out, config.indent, config.level, c);
+  rocket::codec::internal::beginContainer(out, config.indent, config.level, c);
 }
 
 inline void
 endContainer(nio::Sink& out, FormattedConsumerConfig& config, u64 size, char c) {
-  rocket::nio::endContainer(out, config.indent, config.level, size, c);
+  rocket::codec::internal::endContainer(out, config.indent, config.level, size, c);
 }
 
 inline void
 nextElem(nio::Sink& out, FormattedConsumerConfig& config, u64 index) {
-  rocket::nio::nextElem(out, config.indent, config.level, index);
+  rocket::codec::internal::nextElem(out, config.indent, config.level, index);
 }
 
 inline void

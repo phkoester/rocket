@@ -10,15 +10,11 @@
 
 #include "rocket/icu.h"
 
-#include <boost/safe_numerics/safe_integer.hpp>
-
 #include <array>
 #include <tuple>
 
 using namespace std;
 using namespace rocket;
-
-using boost::safe_numerics::safe;
 
 // TEST -----------------------------------------------------------------------------------------------------
 
@@ -26,9 +22,9 @@ TEST(icu, u8Next) {
   const auto str = "hällo"sv;
   i32 i = 0;
   UChar32 cp = 0;
-  U8_NEXT(str.data(), i, safe<i32>(str.size()), cp); // NOLINT
+  U8_NEXT(str.data(), i, static_cast<i32>(str.size()), cp); // NOLINT
   EXPECT_EQ(cp, 'h');
-  U8_NEXT(str.data(), i, safe<i32>(str.size()), cp); // NOLINT
+  U8_NEXT(str.data(), i, static_cast<i32>(str.size()), cp); // NOLINT
   EXPECT_EQ(cp, 0xE4); // U+00E4 (LATIN SMALL LETTER A WITH DIAERESIS)
 }
 

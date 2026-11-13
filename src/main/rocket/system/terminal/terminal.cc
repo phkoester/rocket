@@ -10,8 +10,6 @@
 #include "rocket/scope.h"
 #include "rocket/io/io.h"
 
-#include <boost/safe_numerics/safe_integer.hpp>
-
 #ifdef ROCKET_OS_WINDOWS
   #include "rocket/windows.h"
 #else
@@ -22,8 +20,6 @@
 using namespace rocket;
 using namespace rocket::system::terminal;
 using namespace std;
-
-using boost::safe_numerics::safe;
 
 namespace {
 
@@ -149,7 +145,7 @@ position(nio::Sink& out) { // NOLINT
   if (cursor.X < win.Left || cursor.X > win.Right || cursor.Y < win.Top || cursor.Y > win.Bottom) {
     return {};
   }
-  return make_pair(safe<u64>(cursor.X - win.Left + 1), safe<u64>(cursor.Y - win.Top + 1));
+  return make_pair(static_cast<u64>(cursor.X - win.Left + 1), static_cast<u64>(cursor.Y - win.Top + 1));
 #else
   // The terminal sends its response to `stdin`. If that is not a terminal, reading from it would consume
   // unrelated input or block forever
@@ -193,7 +189,7 @@ size(nio::Device& device) {
     return {};
   }
   const auto& win = csbi.srWindow;
-  return make_pair(safe<u64>(win.Right - win.Left + 1), safe<u64>(win.Bottom - win.Top + 1));
+  return make_pair(static_cast<u64>(win.Right - win.Left + 1), static_cast<u64>(win.Bottom - win.Top + 1));
 #else
   // Non-Windows: Use `ioctl`
 
@@ -202,7 +198,7 @@ size(nio::Device& device) {
   if (res != 0) {
     return {};
   }
-  return make_pair(safe<u64>(ws.ws_col), safe<u64>(ws.ws_row));
+  return make_pair(static_cast<u64>(ws.ws_col), static_cast<u64>(ws.ws_row));
 #endif
 }
 

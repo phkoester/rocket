@@ -8,14 +8,12 @@
 #include "rocket/io/io.h"
 #include "rocket/unicode/unicode.h"
 
-#include <boost/iostreams/stream.hpp>
-#include <boost/iostreams/device/file_descriptor.hpp>
-
 #include <algorithm>
 #include <cstring>
 #include <exception>
 #include <iostream>
 #include <optional>
+#include <streambuf>
 
 using namespace rocket;
 using namespace rocket::nio;
@@ -38,6 +36,7 @@ contiguousSeekPos(u64 pos, u64 size, i64 offset, SeekMode mode) {
     case SeekMode::beg: base = 0; break;
     case SeekMode::cur: base = pos; break;
     case SeekMode::end: base = size; break;
+    default: ROCKET_FLOP(mode, "Invalid seek mode {}", static_cast<i32>(mode));
   }
 
   if (offset < 0) {
@@ -55,6 +54,91 @@ contiguousSeekPos(u64 pos, u64 size, i64 offset, SeekMode mode) {
   return forward >= size - base ? size : base + forward;
 }
 
+/// Removes a trailing @c '\r' from @p line, which was read up to a @c '\n'.
+void
+removeTrailingCr(string& line) {
+  if (not line.empty() && line.back() == '\r') {
+    line.pop_back();
+  }
+}
+
+// `FileStreambuf`, `FileIstream` ---------------------------------------------------------------------------
+
+/**
+ * An unbuffered stream buffer that reads through a `FILE` pointer.
+ *
+ * As there is no buffer, the stream and the `FILE` pointer always agree on the position. This also holds for
+ * a `FILE` pointer that cannot seek, such as one over a pipe, and for text-mode translation on Windows.
+ */
+struct FileStreambuf : streambuf {
+  explicit FileStreambuf(FILE* file) : file_(file) {}
+
+protected:
+
+  /// Peeks at the next character, without consuming it.
+  int_type
+  underflow() override {
+    const i32 c = getc(file_);
+    if (c == EOF) {
+      return traits_type::eof();
+    }
+    ungetc(c, file_);
+    return c; // `getc` yields an `unsigned char` value, which is what `to_int_type` would yield, too
+  }
+
+  /// Consumes the next character.
+  int_type
+  uflow() override {
+    const i32 c = getc(file_);
+    return c == EOF ? traits_type::eof() : c;
+  }
+
+  /// Puts back @p c. As there is no buffer, the previous character is unknown if @p c is EOF.
+  int_type
+  pbackfail(int_type c) override {
+    if (traits_type::eq_int_type(c, traits_type::eof()) || ungetc(c, file_) == EOF) {
+      return traits_type::eof();
+    }
+    return c;
+  }
+
+  streamsize
+  xsgetn(char* s, streamsize n) override {
+    return static_cast<streamsize>(fread(s, 1, static_cast<size_t>(n), file_));
+  }
+
+  pos_type
+  seekoff(off_type off, ios::seekdir dir, [[maybe_unused]] ios::openmode which) override {
+    // Querying the position must not seek, which would discard a character put back by `ungetc`
+    if (off != 0 || dir != ios::cur) {
+      const i32 origin = dir == ios::beg ? SEEK_SET : dir == ios::cur ? SEEK_CUR : SEEK_END;
+      if (not io::seek(file_, off, origin)) {
+        return pos_type(off_type(-1));
+      }
+    }
+    const u64 pos = io::tell(file_);
+    return pos == NPOS ? pos_type(off_type(-1)) : pos_type(static_cast<off_type>(pos));
+  }
+
+  pos_type
+  seekpos(pos_type pos, ios::openmode which) override {
+    return seekoff(off_type(pos), ios::beg, which);
+  }
+
+private:
+
+  FILE* file_;
+};
+
+/// An input stream that reads through a `FILE` pointer, using a #FileStreambuf.
+struct FileIstream : std::istream {
+  explicit FileIstream(FILE* file) : std::istream(nullptr), buf_(file) { rdbuf(&buf_); }
+
+private:
+
+  FileStreambuf buf_;
+};
+
 } // namespace
 
 namespace rocket::nio {
@@ -69,7 +153,6 @@ Sink::writeln(string_view in) {
 
   auto ret = write(in);
   ret += write('\n');
-  flush();
   return ret;
 }
 
@@ -174,7 +257,7 @@ StreamSink::handle() const {
   if (&os_ == &cout) {
     return STDOUT_FILENO;
   }
-  if (&os_ == &cerr) {
+  if (&os_ == &cerr || &os_ == &clog) {
     return STDERR_FILENO;
   }
   return -1;
@@ -186,8 +269,9 @@ StreamSink::write(span<const u8> in) {
     return 0;
   }
 
-  const auto result = os_.rdbuf()->sputn(reinterpret_cast<const char*>(in.data()), static_cast<streamsize>(in.size()));
-  return result > 0 ? static_cast<u64>(result) : 0;
+  // Through `ostream::write`, not the stream buffer, so that a failure sets `badbit` and `unitbuf` is honored
+  os_.write(reinterpret_cast<const char*>(in.data()), static_cast<streamsize>(in.size()));
+  return os_ ? in.size() : 0;
 }
 
 // `StringSink` ---------------------------------------------------------------------------------------------
@@ -197,10 +281,6 @@ StringSink::StringSink(string& ref) :
 
 u64
 StringSink::write(span<const u8> in) {
-  if (bad()) {
-    return 0;
-  }
-
   const string_view view(reinterpret_cast<const char*>(in.data()), in.size());
   if (ptr_ != nullptr) {
     ptr_->append(view);
@@ -331,11 +411,9 @@ Source::readln() {
     ret.push_back(c);
   }
 
-  // Remove trailing '\r' if it precedes the '\n'
-  if (lf && not ret.empty() && ret.back() == '\r') {
-    ret.pop_back();
+  if (lf) {
+    removeTrailingCr(ret);
   }
-
   return ret;
 }
 
@@ -343,10 +421,6 @@ Source::readln() {
 
 optional<char>
 ContiguousSource::peek() {
-  if (bad()) {
-    return nullopt;
-  }
-
   const auto str = this->str();
   if (str.empty()) {
     return nullopt;
@@ -359,10 +433,6 @@ ContiguousSource::readln() {
 #ifdef ROCKET_NIO_NO_CONTIGUOUS_SOURCE
   return Source::readln();
 #else
-  if (bad()) {
-    return {};
-  }
-
   auto str = this->str();
   auto pos = str.find('\n');
 
@@ -387,10 +457,6 @@ ContiguousSource::readCodePoint() {
 #ifdef ROCKET_NIO_NO_CONTIGUOUS_SOURCE
   return Source::readCodePoint();
 #else
-  if (bad()) {
-    return unexpected(Bad);
-  }
-
   const auto str = this->str();
   if (str.empty()) {
     // `nextCodePoint` would throw for an empty string, which must not be mistaken for invalid UTF-8
@@ -452,13 +518,11 @@ FileSource::istream() {
   }
 
   if (istream_ == nullptr) {
-    namespace bio = boost::iostreams;
-    using FileDescriptorIstream = bio::stream<bio::file_descriptor_source>;
-    istream_ = make_unique<FileDescriptorIstream>(handle(), bio::never_close_handle);
+    istream_ = make_unique<FileIstream>(file_);
   }
-  if (const u64 pos = tell(); pos != NPOS) {
-    istream_->seekg(static_cast<istream::off_type>(pos), ios::beg);
-  }
+  // The stream reads through `file_`, so it is always at the right position. Only clear what a previous use
+  // left behind, such as `failbit` after a failed extraction
+  istream_->clear();
   return *istream_;
 }
 
@@ -485,6 +549,23 @@ FileSource::read(span<u8> out) {
 
   const auto result = fread(out.data(), 1, out.size(), file_);
   return result;
+}
+
+string
+FileSource::readln() {
+  if (bad()) {
+    return {};
+  }
+
+  string ret;
+  for (i32 c = getc(file_); c != EOF; c = getc(file_)) {
+    if (c == '\n') {
+      removeTrailingCr(ret);
+      break;
+    }
+    ret.push_back(static_cast<char>(c));
+  }
+  return ret;
 }
 
 bool
@@ -517,13 +598,10 @@ FileSource::tell() {
 
 istream&
 NullSource::istream() {
-  if (bad()) {
-    throw InvalidState("`NullSource` is bad");
-  }
-
   if (istream_ == nullptr) {
     istream_ = make_unique<io::ispanstream>(span<const char>());
   }
+  istream_->clear();
   return *istream_;
 }
 
@@ -534,24 +612,17 @@ SpanSource::SpanSource(span<const u8> in) :
 
 istream&
 SpanSource::istream() {
-  if (bad()) {
-    throw InvalidState("`SpanSource` is bad");
-  }
-
   if (istream_ == nullptr) {
     const span<const char> chars(reinterpret_cast<const char*>(in_.data()), in_.size());
     istream_ = make_unique<io::ispanstream>(chars);
   }
+  istream_->clear(); // `seekg` does nothing while `failbit` is set
   istream_->seekg(static_cast<istream::off_type>(pos_), ios::beg);
   return *istream_;
 }
 
 u64
 SpanSource::read(span<u8> out) {
-  if (bad()) {
-    return 0;
-  }
-
   const u64 ret = min<u64>(out.size(), in_.size() - pos_);
   if (ret > 0) {
     memcpy(out.data(), in_.data() + pos_, ret);
@@ -562,10 +633,6 @@ SpanSource::read(span<u8> out) {
 
 bool
 SpanSource::seek(i64 offset, SeekMode mode) {
-  if (bad()) {
-    return false;
-  }
-
   const auto pos = contiguousSeekPos(pos_, in_.size(), offset, mode);
   if (not pos) {
     return false;
@@ -611,6 +678,20 @@ StreamSource::read(span<u8> out) {
   return static_cast<u64>(count);
 }
 
+string
+StreamSource::readln() {
+  if (bad()) {
+    return {};
+  }
+
+  string ret;
+  // `getline` sets `eofbit` only if it hit the end, so `eof()` tells whether the line had a line feed
+  if (getline(is_, ret) && not is_.eof()) {
+    removeTrailingCr(ret);
+  }
+  return ret;
+}
+
 bool
 StreamSource::seek(i64 offset, SeekMode mode) { // NOLINT
   if (bad()) {
@@ -632,10 +713,15 @@ StreamSource::seek(i64 offset, SeekMode mode) { // NOLINT
       ROCKET_FLOP(mode, "Invalid seek mode {}", static_cast<i32>(mode));
   }
 
-  // We need to clear the fail bit, otherwise the seek will fail
-  is_.clear(is_.rdstate() & ~ios_base::failbit);
+  // `seekg` does nothing while `failbit` is set, which a previous read may have left behind
+  is_.clear(is_.rdstate() & ~ios::failbit);
   is_.seekg(static_cast<istream::off_type>(offset), dir);
-  return not bad();
+  if (is_.fail()) {
+    // The seek failed, e.g., on a stream that cannot seek. Clear `failbit` again, so the stream stays usable
+    is_.clear(is_.rdstate() & ~ios::failbit);
+    return false;
+  }
+  return true;
 }
 
 u64
@@ -656,24 +742,17 @@ StringSource::StringSource(string_view in) :
 
 istream&
 StringSource::istream() {
-  if (bad()) {
-    throw InvalidState("`StringSource` is bad");
-  }
-
   if (istream_ == nullptr) {
     const span<const char> chars(in_.data(), in_.size());
     istream_ = make_unique<io::ispanstream>(chars);
   }
+  istream_->clear(); // `seekg` does nothing while `failbit` is set
   istream_->seekg(static_cast<istream::off_type>(pos_), ios::beg);
   return *istream_;
 }
 
 u64
 StringSource::read(span<u8> out) {
-  if (bad()) {
-    return 0;
-  }
-
   const u64 ret = min<u64>(out.size(), in_.size() - pos_);
   if (ret > 0) {
     memcpy(out.data(), in_.data() + pos_, ret);
@@ -684,10 +763,6 @@ StringSource::read(span<u8> out) {
 
 bool
 StringSource::seek(i64 offset, SeekMode mode) { // NOLINT
-  if (bad()) {
-    return false;
-  }
-
   const auto pos = contiguousSeekPos(pos_, in_.size(), offset, mode);
   if (not pos) {
     return false;

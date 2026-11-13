@@ -149,9 +149,7 @@ set(ROCKET_BOOST_COMPONENTS
   bimap
   filesystem
   headers
-  iostreams
   preprocessor
-  safe_numerics
 )
 
 if(GAIA_OS_MACOS)

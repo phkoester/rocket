@@ -7,11 +7,9 @@
 #include "rocket/assert.h"
 #include "rocket/icu.h"
 
-#include <boost/safe_numerics/safe_integer.hpp>
-
+#include <algorithm>
 #include <array>
-
-using boost::safe_numerics::safe;
+#include <limits>
 
 // XXX using namespace icu;
 using namespace rocket;
@@ -108,7 +106,8 @@ convertUtf8To32(string_view str, InvalidUnicodePolicy policy) { // NOLINT(*-comp
   for (u64 pos = 0, size = str.size(); pos < size; /* Empty */) {
     UChar32 cp; // NOLINT
     i32 i = 0;
-    const i32 len = safe<i32>(str.size() - pos);
+    // `U8_NEXT` takes an `i32` length. A code point has at most 4 bytes, so clamping does no harm
+    const auto len = static_cast<i32>(min<u64>(size - pos, numeric_limits<i32>::max()));
     U8_NEXT(&str[pos], i, len, cp); // NOLINT
     ROCKET_DEBUG_ASSERT(i > 0, "`U8_NEXT` failed");
 
@@ -182,18 +181,20 @@ nextCodePoint(string_view str, u64& pos, InvalidUnicodePolicy policy) {
   const auto size = str.size();
   ROCKET_CHECK(pos, pos < size);
   UChar32 cp; // NOLINT
-  i32 i = safe<i32>(pos);
-  [[maybe_unused]] const i32 oldI = i;
-  U8_NEXT(str.data(), i, safe<i32>(size), cp); // NOLINT
-  ROCKET_DEBUG_ASSERT(i > oldI, "`U8_NEXT` failed");
+  // `U8_NEXT` takes `i32` indices, so it gets the rest of the string from `pos` on, which also works for
+  // strings beyond 2 GiB. A code point has at most 4 bytes, so clamping the length does no harm
+  i32 i = 0;
+  const auto len = static_cast<i32>(min<u64>(size - pos, numeric_limits<i32>::max()));
+  U8_NEXT(&str[pos], i, len, cp); // NOLINT
+  ROCKET_DEBUG_ASSERT(i > 0, "`U8_NEXT` failed");
   if (cp < 0) {
     if (policy == InvalidUnicodePolicy::Throw) {
       throw InputFailure(pos, "Invalid UTF-8 byte sequence");
     }
-    pos = i;
+    pos += static_cast<u64>(i);
     return U'�';
   }
-  pos = i;
+  pos += static_cast<u64>(i);
   return static_cast<char32>(cp);
 }
 

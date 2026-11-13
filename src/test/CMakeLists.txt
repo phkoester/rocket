@@ -44,7 +44,6 @@ RocketAddTest(test-rocket-codec-FormattedCodec         rocket/codec           te
 RocketAddTest(test-rocket-codec-HashEncoder            rocket/codec           test-HashEncoder.cc)
 RocketAddTest(test-rocket-codec-JsonCodec              rocket/codec           test-JsonCodec.cc)
 RocketAddTest(test-rocket-external-Cxx                 rocket/external        test-Cxx.cc)
-RocketAddTest(test-rocket-external-boost-safe-numerics rocket/external        test-boost-safe-numerics.cc)
 RocketAddTest(test-rocket-external-fmt                 rocket/external        test-fmt.cc)
 RocketAddTest(test-rocket-external-icu                 rocket/external        test-icu.cc)
 RocketAddTest(test-rocket-external-scnlib              rocket/external        test-scnlib.cc)

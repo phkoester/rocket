@@ -7,7 +7,7 @@
 #include "rocket/assert.h"
 #include "rocket/scope.h"
 #include "rocket/log/log.h"
-#include "rocket/str/str.h"
+#include "rocket/nio/nio.h"
 #include "rocket/system/system.h"
 
 #include <cstdlib>
@@ -69,6 +69,13 @@ callOnExitFns(bool onTerminate) {
   }
 }
 
+// Flushes `nio::out` and `nio::err`. Neither `std::quick_exit` nor `abort` flushes C streams
+void
+flushStandardSinks() {
+  nio::out.flush();
+  nio::err.flush();
+}
+
 const filesystem::path&
 invocationPath() {
 #if defined(ROCKET_OS_LINUX)
@@ -93,11 +100,13 @@ invocationStem() {
 void
 onExit() {
   callOnExitFns(false);
+  flushStandardSinks();
 }
 
 [[noreturn]] void
 onTerminate() {
   callOnExitFns(true);
+  flushStandardSinks(); // Before the error message, to keep the order of the output
 
   try {
     nio::err.println("{}: fatal error: Terminate handler called", process().name());
@@ -109,6 +118,7 @@ onTerminate() {
     ROCKET_PROCESS_ERROR(0, "`onTerminate` failed");
   }
 
+  flushStandardSinks();
   abort();
 }
 

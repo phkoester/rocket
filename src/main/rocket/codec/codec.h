@@ -416,6 +416,16 @@ void store(DecoderStore* val);
 // Functions ------------------------------------------------------------------------------------------------
 
 /**
+ * Takes care of indentation.
+ *
+ * @param out the sink to write to
+ * @param indent whether to indent the output
+ * @param level the current indentation level
+ * @param c the character to write
+ */
+void beginContainer(nio::Sink& out, bool indent, u64& level, char c);
+
+/**
  * Converts a count of @p Unit to the duration type @p To, checking the range.
  *
  * Like #std::chrono::duration_cast, this truncates toward zero. Unlike #std::chrono::duration_cast, an
@@ -447,6 +457,17 @@ checkedDurationCast(typename To::rep count) {
 }
 
 /**
+ * Takes care of indentation.
+ *
+ * @param out the sink to write to
+ * @param indent whether to indent the output
+ * @param level the current indentation level
+ * @param size the size of the container
+ * @param c the character to write
+ */
+void endContainer(nio::Sink& out, bool indent, u64& level, u64 size, char c);
+
+/**
  * Makes a date from scanned values.
  *
  * @param y the year
@@ -468,6 +489,16 @@ makeDate(std_int y, std_unsigned m, std_unsigned d) {
   }
   return ret;
 }
+
+/**
+ * Takes care of indentation.
+ *
+ * @param out the sink to write to
+ * @param indent whether to indent the output
+ * @param level the current indentation level
+ * @param index the index of the element
+ */
+void nextElem(nio::Sink& out, bool indent, u64 level, u64 index);
 
 /**
  * Scans a time point in UTC in the format `%FT%T`, advancing the source past it on success.
