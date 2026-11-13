@@ -13,14 +13,12 @@ namespace rocket::nio {
 struct Device;
 
 struct Sink;
-struct BufferedSink;
 struct NullSink;
 struct SpanSink;
 struct StringSink;
 
 struct Source;
 struct ContiguousSource;
-struct BufferedSource;
 struct NullSource;
 struct SpanSource;
 struct StringSource;

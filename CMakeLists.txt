@@ -84,8 +84,6 @@ GaiaAddVar(ROCKET_BUILD_BENCH              BOOL   "${ROCKET_MASTER_PROJECT}" "Bu
 GaiaAddVar(ROCKET_BUILD_TEST               BOOL   "${ROCKET_MASTER_PROJECT}" "Build tests")
 GaiaAddVar(ROCKET_COMPONENTS               STRING "${defaultComponents}"     "Additional components to enable: `gui`")
 GaiaAddVar(ROCKET_ICU_CMAKE                BOOL   OFF                        "Use icu-cmake to build ICU")
-GaiaAddVar(ROCKET_IO_LOG                   BOOL   OFF                        "Enable logging of `rocket::io`")
-GaiaAddVar(ROCKET_NIO_LOG                  BOOL   OFF                        "Enable logging of `rocket::nio`")
 GaiaAddVar(ROCKET_NIO_NO_CONTIGUOUS_SOURCE BOOL   OFF                        "Disable contiguous-source optimization for `rocket::nio`")
 
 # Set compiler and linker options ---------------------------------------------------------------------------

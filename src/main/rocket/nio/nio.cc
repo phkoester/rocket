@@ -6,19 +6,56 @@
 
 #include "rocket/assert.h"
 #include "rocket/io/io.h"
-#include "rocket/nio/nio-log.h"
 #include "rocket/unicode/unicode.h"
 
 #include <boost/iostreams/stream.hpp>
 #include <boost/iostreams/device/file_descriptor.hpp>
 
+#include <algorithm>
+#include <cstring>
+#include <exception>
 #include <iostream>
+#include <optional>
 
 using namespace rocket;
 using namespace rocket::nio;
 using namespace std;
 
-using boost::safe_numerics::safe;
+// Local functions ------------------------------------------------------------------------------------------
+
+namespace {
+
+/**
+ * Computes the new position of a contiguous source of size @p size, currently at @p pos, for
+ * #rocket::nio::Source#seek. A position beyond the end is clamped to the end.
+ *
+ * @return the new position, or null if it would be before the beginning
+ */
+optional<u64>
+contiguousSeekPos(u64 pos, u64 size, i64 offset, SeekMode mode) {
+  u64 base = 0;
+  switch (mode) {
+    case SeekMode::beg: base = 0; break;
+    case SeekMode::cur: base = pos; break;
+    case SeekMode::end: base = size; break;
+  }
+
+  if (offset < 0) {
+    // `-offset` would overflow for the lowest `i64`, `-(offset + 1) + 1` cannot
+    const u64 back = static_cast<u64>(-(offset + 1)) + 1;
+    if (back > base) {
+      return nullopt;
+    }
+    return base - back;
+  }
+
+  // `base <= size` always holds, so `size - base` cannot wrap, and comparing against it avoids an overflow
+  // of `base + offset`
+  const auto forward = static_cast<u64>(offset);
+  return forward >= size - base ? size : base + forward;
+}
+
+} // namespace
 
 namespace rocket::nio {
 
@@ -36,83 +73,12 @@ Sink::writeln(string_view in) {
   return ret;
 }
 
-// `BufferedSink` -------------------------------------------------------------------------------------------
-
-BufferedSink::BufferedSink(Sink& underlying, u64 size) :
-    underlying_(underlying),
-    size_(size) {
-  ROCKET_CHECK(size, size >= MIN_BUFFER_SIZE);
-  status_ = underlying.status();
-  if (not bad()) {
-    buf_ = make_unique<u8[]>(size); // NOLINT
-  }
-}
-
-BufferedSink::~BufferedSink() {
-  flush(); // NOLINT
-}
-
-bool
-BufferedSink::flush() {
-  if (bad()) {
-    return false;
-  }
-
-  flushBuffer();
-  return underlying_.flush();
-}
-
-void
-BufferedSink::flushBuffer() {
-  ROCKET_ASSERT(buf_);
-
-  if (pos_ > 0) {
-    NIO_LOG("Flushing " << pos_ << " bytes from buffer to underlying")
-    underlying_.write(span<const u8>(&buf_[0], pos_));
-    pos_ = 0;
-  }
-}
-
-u64
-BufferedSink::write(span<const u8> in) {
-  if (bad()) {
-    return 0;
-  }
-
-  // Loop while there is data to write
-
-  auto rest = in;
-  while (not rest.empty()) {
-    // Find out if the buffer can fulfill the request
-
-    const u64 available = size_ - pos_;
-    if (rest.size() <= available) {
-      // Yes, it can: Store the rest in the buffer, exit loop
-      memcpy(&buf_[pos_], rest.data(), rest.size());
-      NIO_LOG("Buffer can fulfill request, storing " << rest.size() << " bytes in buffer");
-      pos_ += rest.size();
-      break;
-    }
-
-    // Fill and flush the buffer, continue in loop
-
-    memcpy(&buf_[pos_], rest.data(), available);
-    NIO_LOG("Storing " << available << " available bytes in buffer");
-    pos_ += available;
-    rest = rest.subspan(available);
-    flushBuffer();
-  }
-
-  return in.size();
-}
-
 // `FileSink` -----------------------------------------------------------------------------------------------
 
 FileSink::FileSink(FILE* file) :
   file_(file),
   closeOnDestroy_(false) {
   ROCKET_CHECK(file, file != nullptr);
-  status_.bad = false;
 }
 
 FileSink::FileSink(const filesystem::path& path, bool append) :
@@ -121,16 +87,24 @@ FileSink::FileSink(const filesystem::path& path, bool append) :
   if (file_ == nullptr) {
     throw InvalidState(fmt::format("Cannot open file `{}` for writing", path));
   }
-  status_.bad = false;
 }
 
 FileSink::~FileSink() {
   flush(); // NOLINT
 
   if (closeOnDestroy_) {
-    [[maybe_unused]] const auto result = fclose(file_); // NOLINT
-    NIO_LOG("fclose=" << result);
+    fclose(file_); // NOLINT
   }
+}
+
+bool
+FileSink::bad() const {
+  return ferror(file_) != 0;
+}
+
+bool
+FileSink::eof() const {
+  return feof(file_) != 0;
 }
 
 bool
@@ -140,7 +114,6 @@ FileSink::flush() {
   }
 
   const auto result = fflush(file_);
-  NIO_LOG("fflush=" << result << ", ferror=" << ferror(file_));
   return result == 0;
 }
 
@@ -157,25 +130,14 @@ FileSink::write(span<const u8> in) {
 
   const auto result = fwrite(in.data(), 1, in.size(), file_);
   auto error = ferror(file_);
-  NIO_LOG("fwrite=" << result << ", in.size=" << in.size() << ", ferror=" << error);
   ROCKET_ASSERT(result == in.size() || error != 0);
   return result;
-}
-
-// `NullSink` -----------------------------------------------------------------------------------------------
-
-NullSink::NullSink() {
-  status_.bad = false;
-  status_.eof = true;
 }
 
 // `SpanSink` -----------------------------------------------------------------------------------------------
 
 SpanSink::SpanSink(span<char> out) :
-  out_(out) {
-  status_.bad = false;
-  status_.eof = out.empty();
-}
+  out_(out) {}
 
 u64
 SpanSink::write(span<const u8> in) {
@@ -185,19 +147,13 @@ SpanSink::write(span<const u8> in) {
     memcpy(&out_[pos_], in.data(), ret);
     pos_ += ret;
   }
-  if (ret < in.size()) {
-    status_.eof = true;
-  }
   return ret;
 }
 
 // `StreamSink` ---------------------------------------------------------------------------------------------
 
 StreamSink::StreamSink(ostream& os) :
-    os_(os) {
-  status_.bad = os.bad();
-  status_.eof = os.eof();
-}
+  os_(os) {}
 
 StreamSink::~StreamSink() {
   flush(); // NOLINT
@@ -210,9 +166,6 @@ StreamSink::flush() {
   }
 
   os_.flush();
-  NIO_LOG("bad=" << os_.bad() << ", fail=" << os_.fail() << ", eof=" << os_.eof());
-  status_.bad = os_.bad();
-  status_.eof = os_.eof();
   return not bad();
 }
 
@@ -233,23 +186,14 @@ StreamSink::write(span<const u8> in) {
     return 0;
   }
 
-  const auto result = os_.rdbuf()->sputn(reinterpret_cast<const char*>(in.data()), safe<streamsize>(in.size()));
-  NIO_LOG("rdbuf()->sputn=" << result << ", bad=" << os_.bad() << ", fail=" << os_.fail() << ", eof=" << os_.eof());
-  status_.bad = os_.bad();
-  status_.eof = os_.eof();
-  return safe<u64>(result);
+  const auto result = os_.rdbuf()->sputn(reinterpret_cast<const char*>(in.data()), static_cast<streamsize>(in.size()));
+  return result > 0 ? static_cast<u64>(result) : 0;
 }
 
 // `StringSink` ---------------------------------------------------------------------------------------------
 
-StringSink::StringSink() {
-  status_.bad = false;
-}
-
 StringSink::StringSink(string& ref) :
-  ptr_(&ref) {
-  status_.bad = false;
-}
+  ptr_(&ref) {}
 
 u64
 StringSink::write(span<const u8> in) {
@@ -311,7 +255,7 @@ Source::readCodePoint() {
   // that cannot seek would not only fail, but might also discard buffered input
   const auto failInvalidUtf8 = [&] {
     if (initialPos != NPOS) {
-      seek(safe<i64>(initialPos), SeekMode::beg);
+      seek(static_cast<i64>(initialPos), SeekMode::beg);
     }
     return unexpected(InvalidUtf8);
   };
@@ -397,6 +341,19 @@ Source::readln() {
 
 // `ContiguousSource` ---------------------------------------------------------------------------------------
 
+optional<char>
+ContiguousSource::peek() {
+  if (bad()) {
+    return nullopt;
+  }
+
+  const auto str = this->str();
+  if (str.empty()) {
+    return nullopt;
+  }
+  return str.front();
+}
+
 string
 ContiguousSource::readln() {
 #ifdef ROCKET_NIO_NO_CONTIGUOUS_SOURCE
@@ -415,7 +372,7 @@ ContiguousSource::readln() {
     return ret;
   }
 
-  seek(safe<i64>(pos + 1), SeekMode::cur);
+  seek(static_cast<i64>(pos + 1), SeekMode::cur);
   str = str.substr(0, pos);
   if (not str.empty() && str.back() == '\r') {
     str = str.substr(0, str.size() - 1);
@@ -437,169 +394,18 @@ ContiguousSource::readCodePoint() {
   const auto str = this->str();
   if (str.empty()) {
     // `nextCodePoint` would throw for an empty string, which must not be mistaken for invalid UTF-8
-    status_.eof = true;
     return unexpected(Eof);
   }
 
   try {
     u64 pos = 0;
     auto ret = unicode::nextCodePoint(str, pos);
-    seek(safe<i64>(pos), SeekMode::cur);
+    seek(static_cast<i64>(pos), SeekMode::cur);
     return ret;
   } catch (const exception&) {
     return unexpected(InvalidUtf8);
   }
 #endif // ROCKET_NIO_NO_CONTIGUOUS_SOURCE
-}
-
-// `BufferedSource` -----------------------------------------------------------------------------------------
-
-BufferedSource::BufferedSource(Source& underlying, u64 size) :
-  underlying_(underlying),
-  size_(size) {
-  ROCKET_CHECK(size, size >= MIN_BUFFER_SIZE);
-  status_ = underlying.status();
-  if (not bad()) {
-    buf_ = make_unique<u8[]>(size); // NOLINT
-    bufPos_ = underlying.tell();
-  }
-}
-
-istream&
-BufferedSource::istream() {
-  if (bad()) {
-    throw InvalidState("`BufferedSource` is bad");
-  }
-
-  auto& ret = underlying_.istream();
-  ret.seekg(safe<istream::off_type>(tell()), ios::beg);
-  return ret;
-}
-
-u64
-BufferedSource::read(span<u8> out) {
-  if (bad()) {
-    return 0;
-  }
-
-  // Loop while there is data to read
-
-  u64 ret = 0;
-
-  auto rest = out;
-  while (not rest.empty()) {
-    // If needed, initialize buffer
-
-    if (pos_ == end_) {
-      bufPos_ = underlying_.tell();
-      pos_ = 0;
-      end_ = underlying_.read(span<u8>(&buf_[0], size_));
-      NIO_LOG("Initialized buffer with " << end_ << " bytes from underlying; bufPos=" << bufPos_ << ", pos=" << pos_ << ", end=" << end_);
-      if (end_ == 0) {
-        break;
-      }
-    }
-
-    // Find out if the buffer can fulfill the request
-
-    const u64 available = end_ - pos_;
-    if (rest.size() <= available) {
-      // Yes, it can: Copy the buffer to the rest, exit loop
-      NIO_LOG("Buffer can fulfill request, copying " << rest.size() << " bytes from buffer");
-      memcpy(rest.data(), &buf_[pos_], rest.size());
-      pos_ += rest.size();
-      ret += rest.size();
-      break;
-    }
-
-    // Flush the buffer, continue in loop
-
-    NIO_LOG("Copying " << available << " available bytes from buffer");
-    memcpy(rest.data(), &buf_[pos_], available);
-    pos_ += available;
-    ret += available;
-    rest = rest.subspan(available);
-    if (end_ < size_) {
-      break;
-    }
-  }
-
-  status_.eof = ret < out.size();
-
-  ROCKET_ASSERT(ret <= out.size());
-  return ret;
-}
-
-bool
-BufferedSource::seek(i64 offset, SeekMode mode) { // NOLINT
-  if (bad()) {
-    return false;
-  }
-
-  status_.eof = false;
-
-  // Get the old position so we can restore it later
-  const u64 oldTell = underlying_.tell();
-  if (oldTell == NPOS) {
-    NIO_LOG("Getting old position failed; invalidating buffer");
-    bufPos_ = NPOS;
-    pos_ = end_ = 0;
-    return false;
-  }
-
-  // The underlying source is ahead of our position by the unread part of the buffer, so a relative seek has
-  // to compensate for that
-  if (mode == SeekMode::cur && bufPos_ != NPOS) {
-    const i64 unread = safe<i64>(oldTell) - safe<i64>(bufPos_ + pos_);
-    offset -= unread;
-  }
-
-  // Do the job
-  const auto ret = underlying_.seek(offset, mode);
-
-  // Get the new position so we can see if we have a buffer hit
-  const u64 newTell = underlying_.tell();
-  if (newTell == NPOS) {
-    NIO_LOG("Getting new position failed; invalidating buffer");
-    bufPos_ = NPOS;
-    pos_ = end_ = 0;
-    return ret;
-  }
-
-  // Do we know at all where we are?
-  if (bufPos_ == NPOS) {
-    NIO_LOG("Buffer position is unknown; invalidating the buffer");
-    bufPos_ = newTell;
-    pos_ = end_ = 0;
-    return ret;
-  }
-
-  // Do we have a buffer hit?
-  const u64 ourPos = newTell - bufPos_;
-  if (ourPos <= end_) {
-    // Yes, we do: Update our position and restore the underlying position
-    NIO_LOG("Going from " << pos_ << " to " << ourPos);
-    pos_ = ourPos;
-    return underlying_.seek(safe<i64>(oldTell));
-  }
-
-  // No buffer hit
-  NIO_LOG("New position is beyond the buffer; invalidating buffer");
-  bufPos_ = newTell;
-  pos_ = end_ = 0;
-  return ret;
-}
-
-u64
-BufferedSource::tell() {
-  if (bad()) {
-    return NPOS;
-  }
-
-  if (bufPos_ == NPOS) {
-    return NPOS;
-  }
-  return bufPos_ + pos_;
 }
 
 // `FileSource` ---------------------------------------------------------------------------------------------
@@ -608,7 +414,6 @@ FileSource::FileSource(FILE* file) :
   file_(file),
   closeOnDestroy_(false) {
   ROCKET_CHECK(file, file != nullptr);
-  status_.bad = false;
 }
 
 FileSource::FileSource(const filesystem::path& path) :
@@ -617,14 +422,22 @@ FileSource::FileSource(const filesystem::path& path) :
   if (file_ == nullptr) {
     throw InvalidState(fmt::format("Cannot open file `{}` for reading", path));
   }
-  status_.bad = false;
 }
 
 FileSource::~FileSource() {
   if (closeOnDestroy_) {
-    [[maybe_unused]] const auto result = fclose(file_); // NOLINT
-    NIO_LOG("fclose=" << result);
+    fclose(file_); // NOLINT
   }
+}
+
+bool
+FileSource::bad() const {
+  return ferror(file_) != 0;
+}
+
+bool
+FileSource::eof() const {
+  return feof(file_) != 0;
 }
 
 i32
@@ -643,8 +456,25 @@ FileSource::istream() {
     using FileDescriptorIstream = bio::stream<bio::file_descriptor_source>;
     istream_ = make_unique<FileDescriptorIstream>(handle(), bio::never_close_handle);
   }
-  istream_->seekg(safe<istream::off_type>(tell()), ios::beg);
+  if (const u64 pos = tell(); pos != NPOS) {
+    istream_->seekg(static_cast<istream::off_type>(pos), ios::beg);
+  }
   return *istream_;
+}
+
+optional<char>
+FileSource::peek() {
+  if (bad()) {
+    return nullopt;
+  }
+
+  const i32 c = getc(file_);
+  if (c == EOF) {
+    return nullopt;
+  }
+  // C guarantees one character of pushback, even for streams that cannot seek
+  ungetc(c, file_);
+  return static_cast<char>(c);
 }
 
 u64
@@ -654,8 +484,6 @@ FileSource::read(span<u8> out) {
   }
 
   const auto result = fread(out.data(), 1, out.size(), file_);
-  NIO_LOG("fread=" << result << ", out.size=" << out.size() << ", ferror=" << ferror(file_));
-  status_.eof = result < out.size();
   return result;
 }
 
@@ -665,8 +493,6 @@ FileSource::seek(i64 offset, SeekMode mode) { // NOLINT
     return false;
   }
 
-  status_.eof = false;
-
   i32 origin; // NOLINT
   switch (mode) {
     case SeekMode::beg: origin = SEEK_SET; break;
@@ -675,7 +501,7 @@ FileSource::seek(i64 offset, SeekMode mode) { // NOLINT
     default: ROCKET_FLOP(mode, "Invalid seek mode {}", static_cast<i32>(mode));
   }
 
-  return io::seek(file_, offset, origin) == 0;
+  return io::seek(file_, offset, origin);
 }
 
 u64
@@ -688,11 +514,6 @@ FileSource::tell() {
 }
 
 // `NullSource` ---------------------------------------------------------------------------------------------
-
-NullSource::NullSource() {
-  status_.bad = false;
-  status_.eof = true;
-}
 
 istream&
 NullSource::istream() {
@@ -709,10 +530,7 @@ NullSource::istream() {
 // `SpanSource` ---------------------------------------------------------------------------------------------
 
 SpanSource::SpanSource(span<const u8> in) :
-  in_(in) {
-  status_.bad = false;
-  status_.eof = in.empty();
-}
+  in_(in) {}
 
 istream&
 SpanSource::istream() {
@@ -724,7 +542,7 @@ SpanSource::istream() {
     const span<const char> chars(reinterpret_cast<const char*>(in_.data()), in_.size());
     istream_ = make_unique<io::ispanstream>(chars);
   }
-  istream_->seekg(safe<istream::off_type>(tell()), ios::beg);
+  istream_->seekg(static_cast<istream::off_type>(pos_), ios::beg);
   return *istream_;
 }
 
@@ -734,12 +552,11 @@ SpanSource::read(span<u8> out) {
     return 0;
   }
 
-  const u64 ret = min(static_cast<u64>(out.size()), static_cast<u64>(in_.size() - pos_));
+  const u64 ret = min<u64>(out.size(), in_.size() - pos_);
   if (ret > 0) {
-    memcpy(out.data(), in_.data() + static_cast<u64>(pos_), ret);
+    memcpy(out.data(), in_.data() + pos_, ret);
     pos_ += ret;
   }
-  status_.eof = ret < out.size();
   return ret;
 }
 
@@ -749,37 +566,18 @@ SpanSource::seek(i64 offset, SeekMode mode) {
     return false;
   }
 
-  switch (mode) {
-    case SeekMode::beg:
-      pos_ = offset;
-      break;
-    case SeekMode::cur:
-      if (offset >= 0) {
-        pos_ += offset;
-      } else {
-        pos_ -= (-offset);
-      }
-      break;
-    case SeekMode::end:
-      if (offset >= 0) {
-        pos_ = safe<u64>(in_.size()) + offset;
-      } else {
-        pos_ = safe<u64>(in_.size()) - (-offset);
-      }
-      break;
+  const auto pos = contiguousSeekPos(pos_, in_.size(), offset, mode);
+  if (not pos) {
+    return false;
   }
-  pos_ = min(static_cast<u64>(pos_), static_cast<u64>(in_.size()));
-  status_.eof = pos_ == in_.size();
+  pos_ = *pos;
   return true;
 }
 
 // `StreamSource` -------------------------------------------------------------------------------------------
 
 StreamSource::StreamSource(std::istream& is) :
-  is_(is) {
-  status_.bad = is.bad();
-  status_.eof = is.eof();
-}
+  is_(is) {}
 
 i32
 StreamSource::handle() const {
@@ -789,18 +587,28 @@ StreamSource::handle() const {
   return -1;
 }
 
+optional<char>
+StreamSource::peek() {
+  if (bad()) {
+    return nullopt;
+  }
+
+  const auto c = is_.peek();
+  if (c == istream::traits_type::eof()) {
+    return nullopt;
+  }
+  return istream::traits_type::to_char_type(c);
+}
+
 u64
 StreamSource::read(span<u8> out) {
   if (bad()) {
     return 0;
   }
 
-  is_.read(reinterpret_cast<char*>(out.data()), safe<streamsize>(out.size()));
+  is_.read(reinterpret_cast<char*>(out.data()), static_cast<streamsize>(out.size()));
   auto count = is_.gcount();
-  NIO_LOG("count=" << count << ", out.size=" << out.size() << ", bad=" << is_.bad() << ", fail=" << is_.fail() << ", eof=" << is_.eof());
-  status_.bad = is_.bad();
-  status_.eof = is_.eof();
-  return safe<u64>(count);
+  return static_cast<u64>(count);
 }
 
 bool
@@ -808,8 +616,6 @@ StreamSource::seek(i64 offset, SeekMode mode) { // NOLINT
   if (bad()) {
     return false;
   }
-
-  status_.eof = false;
 
   ios::seekdir dir = ios::beg;
   switch (mode) {
@@ -826,13 +632,9 @@ StreamSource::seek(i64 offset, SeekMode mode) { // NOLINT
       ROCKET_FLOP(mode, "Invalid seek mode {}", static_cast<i32>(mode));
   }
 
-  NIO_LOG("Before clear failbit, bad=" << is_.bad() << ", fail=" << is_.fail() << ", eof=" << is_.eof() << ", tellg=" << io::tellg(is_));
   // We need to clear the fail bit, otherwise the seek will fail
   is_.clear(is_.rdstate() & ~ios_base::failbit);
-  NIO_LOG("After clear failbit, bad=" << is_.bad() << ", fail=" << is_.fail() << ", eof=" << is_.eof() << ", tellg=" << io::tellg(is_));
-  is_.seekg(safe<istream::off_type>(offset), dir);
-  NIO_LOG("After seekg, bad=" << is_.bad() << ", fail=" << is_.fail() << ", eof=" << is_.eof() << ", tellg=" << io::tellg(is_));
-  status_.bad = is_.bad();
+  is_.seekg(static_cast<istream::off_type>(offset), dir);
   return not bad();
 }
 
@@ -842,28 +644,15 @@ StreamSource::tell() {
     return NPOS;
   }
 
-  // A stream that cannot seek, such as one over a pipe, has no position. Ask the stream buffer, which leaves
-  // the state of the stream alone, unlike `tellg`
-  if (is_.rdbuf() == nullptr ||
-      is_.rdbuf()->pubseekoff(0, ios::cur, ios::in) == istream::pos_type(istream::off_type(-1))) {
-    return NPOS;
-  }
-
-  // Use the `tellg` implementation from `rocket::io`
-  const u64 result = io::tellg(is_);
-  NIO_LOG("tellg=" << result << ", bad=" << is_.bad() << ", fail=" << is_.fail() << ", eof=" << is_.eof());
-  status_.bad = is_.bad();
-
-  return result;
+  // `io::tell` asks the stream buffer and leaves the state of the stream alone, unlike `tellg`. A stream that
+  // cannot seek, such as one over a pipe, has no position
+  return io::tell(is_);
 }
 
 // `StringSource` -------------------------------------------------------------------------------------------
 
 StringSource::StringSource(string_view in) :
-  in_(in) {
-  status_.bad = false;
-  status_.eof = in.empty();
-}
+  in_(in) {}
 
 istream&
 StringSource::istream() {
@@ -875,7 +664,7 @@ StringSource::istream() {
     const span<const char> chars(in_.data(), in_.size());
     istream_ = make_unique<io::ispanstream>(chars);
   }
-  istream_->seekg(safe<istream::off_type>(tell()), ios::beg);
+  istream_->seekg(static_cast<istream::off_type>(pos_), ios::beg);
   return *istream_;
 }
 
@@ -885,12 +674,11 @@ StringSource::read(span<u8> out) {
     return 0;
   }
 
-  const u64 ret = min(static_cast<u64>(out.size()), static_cast<u64>(in_.size() - pos_));
+  const u64 ret = min<u64>(out.size(), in_.size() - pos_);
   if (ret > 0) {
-    memcpy(out.data(), in_.data() + static_cast<u64>(pos_), ret);
+    memcpy(out.data(), in_.data() + pos_, ret);
     pos_ += ret;
   }
-  status_.eof = ret < out.size();
   return ret;
 }
 
@@ -900,27 +688,11 @@ StringSource::seek(i64 offset, SeekMode mode) { // NOLINT
     return false;
   }
 
-  switch (mode) {
-    case SeekMode::beg:
-      pos_ = offset;
-      break;
-    case SeekMode::cur:
-      if (offset >= 0) {
-        pos_ += offset;
-      } else {
-        pos_ -= (-offset);
-      }
-      break;
-    case SeekMode::end:
-      if (offset >= 0) {
-        pos_ = safe<u64>(in_.size()) + offset;
-      } else {
-        pos_ = safe<u64>(in_.size()) - (-offset);
-      }
-      break;
+  const auto pos = contiguousSeekPos(pos_, in_.size(), offset, mode);
+  if (not pos) {
+    return false;
   }
-  pos_ = min(static_cast<u64>(pos_), static_cast<u64>(in_.size()));
-  status_.eof = pos_ == in_.size();
+  pos_ = *pos;
   return true;
 }
 

@@ -8,9 +8,24 @@
 #include "rocket/nio/nio-utils.h"
 #include "rocket/nio/nio.h"
 
+#include <sstream>
+
 using namespace rocket::nio;
 
 namespace {
+
+// `NonseekableBuf` -----------------------------------------------------------------------------------------
+
+/// A stream buffer that cannot seek, like one over a pipe.
+struct NonseekableBuf : stringbuf {
+  explicit NonseekableBuf(const string& str) : stringbuf(str, ios::in) {}
+
+protected:
+
+  pos_type seekoff(off_type, ios::seekdir, ios::openmode) override { return pos_type(off_type(-1)); }
+
+  pos_type seekpos(pos_type, ios::openmode) override { return pos_type(off_type(-1)); }
+};
 
 // Local functions ------------------------------------------------------------------------------------------
 
@@ -23,13 +38,6 @@ forEachSource(string_view input, Fn fn) {
   {
     SCOPED_TRACE("StringSource");
     StringSource in(input);
-    fn(in);
-  }
-
-  {
-    SCOPED_TRACE("BufferedSource");
-    StringSource underlying(input);
-    BufferedSource in(underlying, 64);
     fn(in);
   }
 
@@ -86,6 +94,33 @@ testSkipCComments(string_view input, u64 expectedTell) {
 } // namespace
 
 // `TEST` ---------------------------------------------------------------------------------------------------
+
+TEST(nioUtils, readChar) {
+  forEachSource("ab", [](Source& in) {
+    EXPECT_FALSE(readChar(in, 'x'));
+    EXPECT_EQ(in.tell(), 0);
+    EXPECT_TRUE(readChar(in, 'a'));
+    EXPECT_EQ(in.tell(), 1);
+    EXPECT_FALSE(readChar(in, 'a'));
+    EXPECT_EQ(in.tell(), 1);
+    EXPECT_TRUE(readChar(in, 'b'));
+    EXPECT_EQ(in.tell(), 2);
+    EXPECT_FALSE(readChar(in, 'b')); // EOF
+  });
+}
+
+TEST(nioUtils, readCharNonseekable) {
+  NonseekableBuf buf("ab");
+  istream is(&buf);
+  StreamSource in(is);
+  ASSERT_EQ(in.tell(), NPOS);
+
+  EXPECT_FALSE(readChar(in, 'x'));
+  EXPECT_TRUE(readChar(in, 'a'));
+  EXPECT_FALSE(readChar(in, 'a'));
+  EXPECT_TRUE(readChar(in, 'b'));
+  EXPECT_FALSE(readChar(in, 'b')); // EOF
+}
 
 TEST(nioUtils, readChoiceWordBoundary) {
   // A word boundary follows
@@ -167,6 +202,33 @@ TEST(nioUtils, readUntilUnescapedCharNotFound) {
   testReadUntilUnescapedChar(R"(abc)", '"', nullopt, 0);
   testReadUntilUnescapedChar(R"(a\")", '"', nullopt, 0);
   testReadUntilUnescapedChar(R"(a\\\")", '"', nullopt, 0);
+}
+
+TEST(nioUtils, readWhilePredicate) {
+  const auto isDigit = [](char c) { return c >= '0' && c <= '9'; };
+  forEachSource("123ab", [&](Source& in) {
+    EXPECT_EQ(readWhilePredicate(in, isDigit), "123");
+    EXPECT_EQ(in.tell(), 3);
+    EXPECT_EQ(readWhilePredicate(in, isDigit), "");
+    EXPECT_EQ(in.tell(), 3);
+  });
+  forEachSource("123", [&](Source& in) {
+    EXPECT_EQ(readWhilePredicate(in, isDigit), "123"); // Up to EOF
+    EXPECT_EQ(in.tell(), 3);
+  });
+}
+
+TEST(nioUtils, readWhilePredicateNonseekable) {
+  const auto isDigit = [](char c) { return c >= '0' && c <= '9'; };
+  NonseekableBuf buf("123ab");
+  istream is(&buf);
+  StreamSource in(is);
+  ASSERT_EQ(in.tell(), NPOS);
+
+  EXPECT_EQ(readWhilePredicate(in, isDigit), "123");
+  char c = '\0';
+  EXPECT_EQ(in.Source::read(c), 1);
+  EXPECT_EQ(c, 'a'); // The first nondigit was not consumed
 }
 
 TEST(nioUtils, skipUntilStringFound) {

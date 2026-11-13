@@ -20,9 +20,15 @@
 #define ROCKET_FILENO _fileno ///< Macro for portability.
 #define ROCKET_ISATTY _isatty ///< Macro for portability.
 
-#define STDIN_FILENO  0 ///< Standard input file number.
-#define STDOUT_FILENO 1 ///< Standard output file number.
-#define STDERR_FILENO 2 ///< Standard error file number.
+#ifndef STDIN_FILENO
+  #define STDIN_FILENO  0 ///< Standard input file number.
+#endif
+#ifndef STDOUT_FILENO
+  #define STDOUT_FILENO 1 ///< Standard output file number.
+#endif
+#ifndef STDERR_FILENO
+  #define STDERR_FILENO 2 ///< Standard error file number.
+#endif
 
 #else
 
@@ -35,7 +41,65 @@
 
 namespace rocket::io {
 
-// Functions ------------------------------------------------------------------------------------------------
+// Functions working with `FILE` pointers -------------------------------------------------------------------
+
+/**
+ * Opens a file and returns a `FILE` pointer, or null if the file cannot be opened.
+ *
+ * This is a portable implementation that works on Linux, macOS, and Windows. On Windows, the path is passed
+ * to the CRT as a wide string, so paths with characters outside the ANSI code page work, and the file is
+ * opened without sharing restrictions, matching the POSIX behavior.
+ *
+ * @param path the path to the file
+ * @param modes the modes to open the file with
+ * @return a `FILE` pointer, or null if the file cannot be opened
+ */
+FILE* open(const std::filesystem::path& path, std::string_view modes);
+
+/**
+ * Seeks to the specified position in the stream referenced by @p file.
+ *
+ * This is a portable implementation that works on Linux, macOS, and Windows. It always fails on streams that
+ * are not #seekable, even on platforms where the C library would report a meaningless success.
+ *
+ * @param file a `FILE` pointer, may not be null
+ * @param offset the offset to seek to
+ * @param origin the origin to seek from
+ * @return if the operation succeeded. On failure, `errno` is set
+ */
+bool seek(FILE* file, i64 offset, i32 origin);
+
+/**
+ * Checks if the stream referenced by @p file is seekable.
+ *
+ * A stream is seekable if it is backed by a regular file (or, on POSIX systems, a block device). Pipes,
+ * FIFOs, sockets, and terminals are not seekable.
+ *
+ * This is a portable implementation that works on Linux, macOS, and Windows. It inspects the type of the
+ * underlying file rather than attempting to seek, because on some platforms seeking on a pipe or a terminal
+ * may succeed with a meaningless result.
+ *
+ * On POSIX systems, streams without a file descriptor, such as those made by `fmemopen` or `open_memstream`,
+ * are checked by querying the stream position instead.
+ *
+ * @param file a `FILE` pointer, may not be null
+ * @return if the stream is seekable
+ */
+bool seekable(FILE* file);
+
+/**
+ * Returns the current position in the stream referenced by @p file.
+ *
+ * This is a portable implementation that works on Linux, macOS, and Windows. It always returns
+ * #rocket::NPOS for streams that are not #seekable, even on platforms where the C library would report a
+ * meaningless position.
+ *
+ * @param file a `FILE` pointer, may not be null
+ * @return the current position in the stream, or #rocket::NPOS if the position cannot be determined
+ */
+u64 tell(FILE* file);
+
+// Functions working with streams ---------------------------------------------------------------------------
 
 /**
  * Makes an empty input stream.
@@ -53,48 +117,36 @@ inline std::istringstream is() { return {}; }
 inline io::ispanstream is(std::string_view str) { return io::ispanstream(str); }
 
 /**
- * Opens a file and returns a `FILE` pointer, or null if the file cannot be opened.
+ * Checks if the input stream @p is is seekable.
  *
- * This is a portable implementation that works on Linux, macOS, and Windows.
- *
- * @param path the path to the file
- * @param modes the modes to open the file with
- * @return a `FILE` pointer, or null if the file cannot be opened
- */
-FILE* open(const std::filesystem::path& path, std::string_view modes);
-
-/**
- * Seeks to the specified position in the stream referenced by @p file.
- *
- * This is a portable implementation that works on Linux, macOS, and Windows.
- *
- * @param file a `FILE` pointer
- * @param offset the offset to seek to
- * @param origin the origin to seek from
- * @return 0 on success, -1 on failure
- */
-i32 seek(FILE* file, i64 offset, i32 origin);
-
-/**
- * Returns the current position in the stream referenced by @p file.
- *
- * This is a portable implementation that works on Linux, macOS, and Windows.
- *
- * @param file a `FILE` pointer
- * @return the current position in the stream, or #rocket::NPOS if the position cannot be determined
- */
-u64 tell(FILE* file);
-
-/**
- * Similar to #std::istream::tellg, but leaves @p is unchanged and returns the actual current position
- * rather than -1 if `is.fail()` returns `true`.
+ * The stream is seekable if #tell reports a position for it. Like #tell, this leaves @p is entirely
+ * unchanged.
  *
  * This is a portable implementation that works on Linux, macOS, and Windows.
  *
  * @param is the input stream
- * @return the current position in the stream, or #rocket::NPOS if the position cannot be determined
+ * @return if the stream is seekable
  */
-u64 tellg(std::istream& is) noexcept;
+bool seekable(std::istream& is) noexcept;
+
+/**
+ * Returns the current read position of the input stream @p is.
+ *
+ * Unlike #std::istream::tellg, this queries the stream buffer directly. It returns the actual position even
+ * if a state bit is set, e.g., `eofbit` after an extraction reached the end of the input, where `tellg` would
+ * return -1 and set `failbit`. It leaves @p is entirely unchanged: its state is not modified, its exception
+ * mask is not consulted, and its tied stream is not flushed.
+ *
+ * If @p is is #std::cin, `stdin` must also be #seekable, because on Windows and macOS, the stream buffer of
+ * #std::cin may report a meaningless position for a pipe or a terminal.
+ *
+ * This is a portable implementation that works on Linux, macOS, and Windows.
+ *
+ * @param is the input stream
+ * @return the current position in the stream, or #rocket::NPOS if the position cannot be determined, e.g.,
+ *   because @p is has no stream buffer or the stream buffer is not seekable
+ */
+u64 tell(std::istream& is) noexcept;
 
 } // namespace rocket::io
 

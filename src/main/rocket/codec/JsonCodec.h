@@ -1314,7 +1314,7 @@ struct JsonProducerImpl<DataType::Date, T> {
     if (not result) {
       throw InputFailure(inPos(0), "Expected a date");
     }
-    inner.seek(io::tellg(is), nio::SeekMode::beg);
+    inner.seek(io::tell(is), nio::SeekMode::beg);
 
     const auto& [y, m, d] = result->values();
     const auto date = makeDate(y, m, d);
@@ -1360,7 +1360,7 @@ struct JsonProducerImpl<DataType::HourMinuteSecond, T> {
     if (not result) {
       throw InputFailure(inPos(0), "Expected an hour, minute, and second");
     }
-    inner.seek(io::tellg(is), nio::SeekMode::beg);
+    inner.seek(io::tell(is), nio::SeekMode::beg);
 
     auto [h, m, s] = result->values();
     if (not validHourMinuteSecond(h, m, s)) {
@@ -1518,7 +1518,7 @@ struct JsonProducerImpl<DataType::ZonedTime, T> {
         if (not result) {
           throw InputFailure(offsetPos, "Expected a UTC offset");
         }
-        inner.seek(io::tellg(is), nio::SeekMode::beg);
+        inner.seek(io::tell(is), nio::SeekMode::beg);
         const auto& [h, m] = result->values();
         if (not validUtcOffset(h, m)) {
           throw InputFailure(offsetPos, "Invalid UTC offset");

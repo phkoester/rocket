@@ -43,8 +43,6 @@ All of the following may be supplied either as defined CMake variables or as env
 | `ROCKET_BUILD_TEST`               | `BOOL`   | `ON` if master project            | Build tests
 | `ROCKET_COMPONENTS`               | `STRING` | `gui` if master project           | Additional components to enable: `gui`. Set this to `none` to disable additional components
 | `ROCKET_ICU_CMAKE`                | `BOOL`   | `OFF`                             | Use icu-cmake to build ICU
-| `ROCKET_IO_LOG`                   | `BOOL`   | `OFF`                             | Enable logging of `rocket::io`
-| `ROCKET_NIO_LOG`                  | `BOOL`   | `OFF`                             | Enable logging of `rocket::nio`
 | `ROCKET_NIO_NO_CONTIGUOUS_SOURCE` | `BOOL`   | `OFF`                             | Disable contiguous-source optimization for `rocket::nio`
 
 ## Environment Variables

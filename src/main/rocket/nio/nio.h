@@ -11,16 +11,14 @@
 
 #include <fmt/color.h> // `fmt::text_style`
 
-#include <exception>
 #include <expected>
 #include <filesystem>
 #include <iosfwd>
 #include <memory>
+#include <optional>
 #include <span>
 #include <string>
 #include <vector>
-
-#include <boost/safe_numerics/safe_integer.hpp> // Needs `<exception>`
 
 namespace rocket::nio {
 
@@ -30,26 +28,6 @@ namespace rocket::nio {
  * The default buffer size in bytes.
  */
 static constexpr u64 DEFAULT_BUFFER_SIZE = 64 * 1'024; // 64 KiB
-/**
- * The minimum buffer size in bytes.
- */
-static constexpr u64 MIN_BUFFER_SIZE = 64;
-
-// `Status` -------------------------------------------------------------------------------------------------
-
-/// The status of a device.
-struct Status {
-  /**
-   * If #bad is set, the device is in an unusable state.
-   */
-  unsigned bad : 1;
-  /**
-   * If #eof is set, the device is exhausted.
-   *
-   * Subsequent operations, such as repositioning, may clear this bit.
-   */
-  unsigned eof : 1;
-};
 
 // `Device` -------------------------------------------------------------------------------------------------
 
@@ -66,18 +44,24 @@ struct Device {
   virtual ~Device() = default;
 
   /**
-   * Checks if the bad bit is set.
+   * Checks if the device is in an unusable state, e.g., after an I/O error.
    *
-   * @return if the bad bit is set
+   * This is taken from the underlying device, e.g., `ferror` for a `FILE` pointer or `bad()` for a stream.
+   *
+   * @return if the device is bad
    */
-  [[nodiscard]] bool bad() const { return status_.bad; }
+  [[nodiscard]] virtual bool bad() const = 0;
 
   /**
-   * Checks if the EOF bit is set.
+   * Checks if the device is exhausted: a source has reached the end of its input, a sink has no room for
+   * more output. Repositioning may clear this state.
    *
-   * @return if the EOF bit is set
+   * This is taken from the underlying device, e.g., `feof` for a `FILE` pointer, `eof()` for a stream, or
+   * the position for a contiguous source.
+   *
+   * @return if the device is exhausted
    */
-  [[nodiscard]] bool eof() const { return status_.eof; }
+  [[nodiscard]] virtual bool eof() const = 0;
 
   /**
    * Returns the handle of the instance.
@@ -86,22 +70,7 @@ struct Device {
    */
   [[nodiscard]] virtual i32 handle() const = 0;
 
-  /**
-   * Returns the status.
-   *
-   * @return the status
-   */
-  [[nodiscard]] const Status& status() const { return status_; }
-
 protected:
-
-  /**
-   * The status of the instance.
-   *
-   * When an instance is constructed, the #bad bit is set, meaning the stream hasn’t been opened yet and is
-   * not ready to use. Derived classes must unset the #bad bit to mark the instance as usable.
-   */
-  Status status_ { .bad=1, .eof=0 };
 
   /// @ctor_default
   Device() = default;
@@ -292,42 +261,6 @@ protected:
   Sink() = default;
 };
 
-// `BufferedSink` -------------------------------------------------------------------------------------------
-
-/**
- * A buffered sink that may be attached to another sink.
- *
- * @note Applying an additional buffer only makes sense if the underlying sink isn’t already buffered.
- */
-struct BufferedSink : Sink {
-  /**
-   * @ctor
-   *
-   * @param underlying the underlying sink
-   * @param size the size of the buffer
-   */
-  explicit BufferedSink(Sink& underlying, u64 size = DEFAULT_BUFFER_SIZE);
-
-  ~BufferedSink() override;
-
-  bool flush() override;
-
-  [[nodiscard]] i32 handle() const override { return underlying_.handle(); }
-
-  u64 write(std::span<const u8> in) override;
-
-ROCKET_TEST_PRIVATE:
-
-  Sink& underlying_; ///< The underlying sink.
-  u64 size_; ///< The size of the buffer.
-  /// The buffer.
-  std::unique_ptr<u8[]> buf_; // NOLINT
-  u64 pos_ = 0; ///< The current position in the buffer.
-
-  /// Flushes the buffer to the underlying sink.
-  void flushBuffer();
-};
-
 // `FileSink` -----------------------------------------------------------------------------------------------
 
 /**
@@ -362,6 +295,10 @@ struct FileSink : Sink {
   /// @member_op_cast{const FILE*}
   explicit operator const FILE*() const { return file_; }
 
+  [[nodiscard]] bool bad() const override;
+
+  [[nodiscard]] bool eof() const override;
+
   bool flush() override;
 
   [[nodiscard]] i32 handle() const override;
@@ -380,9 +317,13 @@ ROCKET_TEST_PRIVATE:
  * A null sink that never writes anything.
  */
 struct NullSink : Sink {
-  NullSink();
+  NullSink() = default;
 
   ~NullSink() override = default;
+
+  [[nodiscard]] bool bad() const override { return false; }
+
+  [[nodiscard]] bool eof() const override { return true; }
 
   bool flush() override { return false; }
 
@@ -406,6 +347,10 @@ struct SpanSink : Sink {
 
   ~SpanSink() override = default;
 
+  [[nodiscard]] bool bad() const override { return false; }
+
+  [[nodiscard]] bool eof() const override { return pos_ == out_.size(); }
+
   bool flush() override { return false; }
 
   [[nodiscard]] i32 handle() const override { return -1; }
@@ -422,9 +367,6 @@ private:
 
 /**
  * The class #StreamSink provides support for #std::ostream.
- *
- * Using I/O streams is generally discouraged, because it’s not portable and not efficient. Wherever
- * possible, use #rocket::nio::FileSink instead.
  */
 struct StreamSink : Sink {
   /**
@@ -435,6 +377,10 @@ struct StreamSink : Sink {
   explicit StreamSink(std::ostream& os);
 
   ~StreamSink() override;
+
+  [[nodiscard]] bool bad() const override { return os_.bad(); }
+
+  [[nodiscard]] bool eof() const override { return os_.eof(); }
 
   bool flush() override;
 
@@ -459,7 +405,7 @@ struct StringSink : Sink {
   /**
    * Constructs a new #StringSink with an owned string.
    */
-  explicit StringSink();
+  explicit StringSink() = default;
 
   /**
    * Constructs a new #StringSink with a string reference and no owned string.
@@ -469,6 +415,10 @@ struct StringSink : Sink {
   explicit StringSink(std::string& ref);
 
   ~StringSink() override = default;
+
+  [[nodiscard]] bool bad() const override { return false; }
+
+  [[nodiscard]] bool eof() const override { return false; }
 
   bool flush() override { return false; }
 
@@ -524,6 +474,15 @@ struct Source : Device {
    * @return a reference to an input stream
    */
   [[nodiscard]] virtual std::istream& istream() = 0;
+
+  /**
+   * Returns the next character without consuming it.
+   *
+   * Unlike reading and seeking back, this also works with sources that cannot seek, such as pipes.
+   *
+   * @return the next character, or `nullopt` if no character is available
+   */
+  virtual std::optional<char> peek() = 0;
 
   /**
    * Reads a single character from a source.
@@ -623,12 +582,18 @@ protected:
 struct ContiguousSource : Source {
   ~ContiguousSource() override = default;
 
+  [[nodiscard]] bool bad() const override { return false; }
+
   /**
    * Returns the bytes available in the contiguous source.
    *
    * @return the bytes available in the contiguous source
    */
   [[nodiscard]] virtual std::span<const u8> bytes() const = 0;
+
+  [[nodiscard]] bool eof() const override { return bytes().empty(); }
+
+  std::optional<char> peek() override;
 
   std::string readln() override;
 
@@ -645,48 +610,6 @@ protected:
 
   /// @ctor_default
   ContiguousSource() = default;
-};
-
-// `BufferedSource` -----------------------------------------------------------------------------------------
-
-/**
- * A buffered source that may be attached to another source.
- *
- * @note Applying an additional buffer only makes sense if the underlying source isn’t already buffered.
- */
-struct BufferedSource : Source {
-  /**
-   * @ctor
-   *
-   * @param underlying the underlying source
-   * @param size the size of the buffer
-   */
-  explicit BufferedSource(Source& underlying, u64 size = DEFAULT_BUFFER_SIZE);
-
-  [[nodiscard]] i32 handle() const override { return underlying_.handle(); }
-
-  std::istream& istream() override;
-
-  u64 read(std::span<u8> out) override;
-
-  bool seek(i64 offset, SeekMode mode) override;
-
-  [[nodiscard]] u64 tell() override;
-
-ROCKET_TEST_PRIVATE:
-
-  Source& underlying_; ///< The underlying source.
-  u64 size_; ///< The size of the buffer.
-  /// The buffer.
-  std::unique_ptr<u8[]> buf_; // NOLINT
-  u64 bufPos_ = NPOS; ///< Where buffer position 0 maps to in the underlying source.
-  u64 pos_ = 0; ///< The current position in the buffer.
-  /**
-   * This is the actual input size of the buffer, which may be less than its allocated size.
-   *
-   * If this is 0, #pos_ must be 0, too, and the buffer is considered to be invalid.
-   */
-  u64 end_ = 0;
 };
 
 // `FileSource` ---------------------------------------------------------------------------------------------
@@ -716,9 +639,15 @@ struct FileSource : Source {
 
   ~FileSource() override;
 
+  [[nodiscard]] bool bad() const override;
+
+  [[nodiscard]] bool eof() const override;
+
   [[nodiscard]] i32 handle() const override;
 
   std::istream& istream() override;
+
+  std::optional<char> peek() override;
 
   u64 read(std::span<u8> out) override;
 
@@ -738,14 +667,20 @@ ROCKET_TEST_PRIVATE:
 /**
  * A null source that never reads anything.
  */
- struct NullSource : Source {
-  NullSource();
+struct NullSource : Source {
+  NullSource() = default;
 
   ~NullSource() override = default;
+
+  [[nodiscard]] bool bad() const override { return false; }
+
+  [[nodiscard]] bool eof() const override { return true; }
 
   [[nodiscard]] i32 handle() const override { return -1; }
 
   std::istream& istream() override;
+
+  std::optional<char> peek() override { return std::nullopt; }
 
   u64 read([[maybe_unused]] std::span<u8> out) override { return 0; }
 
@@ -802,12 +737,12 @@ struct SpanSource : ContiguousSource {
     return { reinterpret_cast<const char*>(bytes.data()), bytes.size() };
   }
 
-  [[nodiscard]] u64 tell() override { return bad() ? NPOS : static_cast<u64>(pos_); }
+  [[nodiscard]] u64 tell() override { return bad() ? NPOS : pos_; }
 
 private:
 
   std::span<const u8> in_;
-  boost::safe_numerics::safe<u64> pos_ = 0;
+  u64 pos_ = 0;
   std::unique_ptr<std::istream> istream_;
 };
 
@@ -815,9 +750,6 @@ private:
 
 /**
  * The class #StreamSource provides support for #std::istream.
- *
- * Using I/O streams is generally discouraged, because it’s not portable and not efficient. Wherever
- * possible, use #rocket::nio::FileSource instead.
  */
 struct StreamSource : Source {
   /**
@@ -827,9 +759,15 @@ struct StreamSource : Source {
    */
   explicit StreamSource(std::istream& is);
 
+  [[nodiscard]] bool bad() const override { return is_.bad(); }
+
+  [[nodiscard]] bool eof() const override { return is_.eof(); }
+
   [[nodiscard]] i32 handle() const override;
 
   std::istream& istream() override { return is_; }
+
+  std::optional<char> peek() override;
 
   u64 read(std::span<u8> out) override;
 
@@ -883,12 +821,12 @@ struct StringSource : ContiguousSource {
 
   [[nodiscard]] std::string_view str() const override { return in_.substr(pos_); }
 
-  [[nodiscard]] u64 tell() override { return bad() ? NPOS : static_cast<u64>(pos_); }
+  [[nodiscard]] u64 tell() override { return bad() ? NPOS : pos_; }
 
 private:
 
   std::string_view in_;
-  boost::safe_numerics::safe<u64> pos_ = 0;
+  u64 pos_ = 0;
   std::unique_ptr<std::istream> istream_;
 };
 

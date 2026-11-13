@@ -41,13 +41,6 @@ forEachSource(string_view input, Fn fn) {
   }
 
   {
-    SCOPED_TRACE("BufferedSource");
-    StringSource underlying(input);
-    BufferedSource in(underlying, 64);
-    fn(in);
-  }
-
-  {
     SCOPED_TRACE("FileSource");
     const auto temp = rocket::filesystem::tempFile();
     {
@@ -79,22 +72,6 @@ expectCodePointError(Source& in, ReadCodePointError expected) {
 // `TEST` ---------------------------------------------------------------------------------------------------
 
 // `Sink` ...................................................................................................
-
-TEST(nio, BufferedSink) {
-  StringSink out;
-  BufferedSink buffered(out, 64);
-  EXPECT_EQ(buffered.size_, 64);
-
-  buffered.Sink::write(string(testString(32)));
-  EXPECT_EQ(buffered.pos_, 32);
-  EXPECT_EQ(out.str(), "");
-  buffered.Sink::write(testString(33, 2));
-  EXPECT_EQ(buffered.pos_, 1);
-  EXPECT_EQ(out.str(), testString(64));
-  buffered.flush();
-  EXPECT_EQ(out.str(), testString(65));
-  EXPECT_EQ(buffered.pos_, 0);
-}
 
 TEST(nio, FileSinkDoesNotExist) {
   EXPECT_THAT(
@@ -136,163 +113,6 @@ TEST(nio, StringSink) {
 }
 
 // `Source` .................................................................................................
-
-TEST(nio, BufferedSource) {
-  const string str65 = testString(65);
-  StringSource in(str65);
-  BufferedSource buffered(in, 64);
-  EXPECT_EQ(buffered.size_, 64);
-  EXPECT_EQ(buffered.pos_, 0);
-  EXPECT_EQ(buffered.end_, 0);
-
-  string str32(32, ' ');
-  EXPECT_EQ(buffered.Source::read(str32), 32);
-  EXPECT_EQ(string_view(str32), testString(32));
-  EXPECT_EQ(buffered.pos_, 32);
-  EXPECT_EQ(buffered.end_, 64);
-
-  string str40 = string(40, ' ');
-  EXPECT_EQ(buffered.Source::read(str40), 33);
-  EXPECT_EQ(buffered.pos_, 1);
-  EXPECT_EQ(buffered.end_, 1);
-  const span<char> span33(str40.data(), 33);
-  EXPECT_EQ(string_view(span33.data(), 33), testString(33, 2));
-}
-
-TEST(nio, BufferedSourceExactMatch) {
-  const string str20 = testString(20);
-  StringSource in(str20);
-  BufferedSource buffered(in, 64);
-
-  string out20(20, ' ');
-  EXPECT_EQ(buffered.Source::read(out20), 20);
-  EXPECT_EQ(buffered.pos_, 20);
-  EXPECT_EQ(buffered.end_, 20);
-}
-
-TEST(nio, BufferedSourceSeek) {
-  const string s128 = testString(128);
-  StringSource in(s128);
-  BufferedSource buffered(in, 64);
-  EXPECT_EQ(buffered.tell(), 0);
-
-  char c = '\0';
-  EXPECT_EQ(buffered.Source::read(c), 1);
-  EXPECT_EQ(c, '0');
-  EXPECT_EQ(buffered.pos_, 1);
-  EXPECT_EQ(buffered.end_, 64);
-  EXPECT_EQ(buffered.tell(), 1);
-  EXPECT_EQ(buffered.underlying_.tell(), 64);
-
-  buffered.Source::seek(30);
-  EXPECT_EQ(buffered.bufPos_, 0);
-  EXPECT_EQ(buffered.pos_, 30);
-  EXPECT_EQ(buffered.end_, 64);
-  EXPECT_EQ(buffered.tell(), 30);
-  EXPECT_EQ(buffered.underlying_.tell(), 64);
-
-  buffered.Source::seek(64);
-  EXPECT_EQ(buffered.bufPos_, 0);
-  EXPECT_EQ(buffered.pos_, 64);
-  EXPECT_EQ(buffered.end_, 64);
-  EXPECT_EQ(buffered.tell(), 64);
-  EXPECT_EQ(buffered.underlying_.tell(), 64);
-
-  EXPECT_EQ(buffered.Source::read(c), 1);
-  EXPECT_EQ(c, '4');
-  EXPECT_EQ(buffered.bufPos_, 64);
-  EXPECT_EQ(buffered.pos_, 1);
-  EXPECT_EQ(buffered.end_, 64);
-  EXPECT_EQ(buffered.tell(), 65);
-  EXPECT_EQ(buffered.underlying_.tell(), 128);
-
-  buffered.seek(-20, SeekMode::end);
-  EXPECT_EQ(buffered.bufPos_, 64);
-  EXPECT_EQ(buffered.pos_, 44);
-  EXPECT_EQ(buffered.end_, 64);
-  EXPECT_EQ(buffered.tell(), 108);
-  EXPECT_EQ(buffered.underlying_.tell(), 128);
-
-  buffered.Source::seek(20);
-  EXPECT_EQ(buffered.bufPos_, 20);
-  EXPECT_EQ(buffered.pos_, 0);
-  EXPECT_EQ(buffered.end_, 0);
-  EXPECT_EQ(buffered.tell(), 20);
-  EXPECT_EQ(buffered.underlying_.tell(), 20);
-}
-
-TEST(nio, BufferedSourceSeekRelative) {
-  const string s128 = testString(128);
-  StringSource in(s128);
-  BufferedSource buffered(in, 64);
-
-  char c = '\0';
-  EXPECT_EQ(buffered.Source::read(c), 1);
-  EXPECT_EQ(c, '0');
-  EXPECT_EQ(buffered.tell(), 1);
-  EXPECT_EQ(buffered.underlying_.tell(), 64);
-
-  // Backward, buffer hit
-
-  EXPECT_TRUE(buffered.seek(-1, SeekMode::cur));
-  EXPECT_EQ(buffered.bufPos_, 0);
-  EXPECT_EQ(buffered.pos_, 0);
-  EXPECT_EQ(buffered.end_, 64);
-  EXPECT_EQ(buffered.tell(), 0);
-  EXPECT_EQ(buffered.underlying_.tell(), 64);
-
-  EXPECT_EQ(buffered.Source::read(c), 1);
-  EXPECT_EQ(c, '0');
-
-  // Forward, buffer hit
-
-  EXPECT_TRUE(buffered.seek(5, SeekMode::cur));
-  EXPECT_EQ(buffered.bufPos_, 0);
-  EXPECT_EQ(buffered.pos_, 6);
-  EXPECT_EQ(buffered.end_, 64);
-  EXPECT_EQ(buffered.tell(), 6);
-  EXPECT_EQ(buffered.underlying_.tell(), 64);
-
-  EXPECT_EQ(buffered.Source::read(c), 1);
-  EXPECT_EQ(c, '6');
-  EXPECT_EQ(buffered.tell(), 7);
-
-  // Zero offset
-
-  EXPECT_TRUE(buffered.seek(0, SeekMode::cur));
-  EXPECT_EQ(buffered.pos_, 7);
-  EXPECT_EQ(buffered.tell(), 7);
-  EXPECT_EQ(buffered.underlying_.tell(), 64);
-
-  // Forward, beyond the buffer
-
-  EXPECT_TRUE(buffered.seek(100, SeekMode::cur));
-  EXPECT_EQ(buffered.bufPos_, 107);
-  EXPECT_EQ(buffered.pos_, 0);
-  EXPECT_EQ(buffered.end_, 0);
-  EXPECT_EQ(buffered.tell(), 107);
-  EXPECT_EQ(buffered.underlying_.tell(), 107);
-
-  EXPECT_EQ(buffered.Source::read(c), 1);
-  EXPECT_EQ(c, '7');
-  EXPECT_EQ(buffered.bufPos_, 107);
-  EXPECT_EQ(buffered.pos_, 1);
-  EXPECT_EQ(buffered.end_, 21);
-  EXPECT_EQ(buffered.tell(), 108);
-  EXPECT_EQ(buffered.underlying_.tell(), 128);
-
-  // Backward, before the buffer
-
-  EXPECT_TRUE(buffered.seek(-100, SeekMode::cur));
-  EXPECT_EQ(buffered.bufPos_, 8);
-  EXPECT_EQ(buffered.pos_, 0);
-  EXPECT_EQ(buffered.end_, 0);
-  EXPECT_EQ(buffered.tell(), 8);
-  EXPECT_EQ(buffered.underlying_.tell(), 8);
-
-  EXPECT_EQ(buffered.Source::read(c), 1);
-  EXPECT_EQ(c, '8');
-}
 
 TEST(nio, FileSourceDoesNotExist) {
   EXPECT_THAT(
@@ -355,7 +175,7 @@ TEST(nio, FileSourceScanIstream) {
   const auto [level1, level2] = result->values();
   EXPECT_EQ(level1, log::LogLevel::debug);
   EXPECT_EQ(level2, log::LogLevel::info);
-  EXPECT_EQ(io::tellg(is), 11);
+  EXPECT_EQ(io::tell(is), 11);
 }
 
 TEST(nio, NullSource) {
@@ -364,6 +184,7 @@ TEST(nio, NullSource) {
   EXPECT_TRUE(in.eof());
   char c; // NOLINT
   EXPECT_EQ(in.Source::read(c), 0);
+  EXPECT_EQ(in.peek(), nullopt);
 }
 
 TEST(nio, SpanSource) {
@@ -461,7 +282,8 @@ TEST(nio, StringSourceSeek) {
   in.seek(-11, SeekMode::cur);
   EXPECT_EQ(in.tell(), 117);
 
-  EXPECT_THAT([&] { in.Source::seek(-1); }, Throws<system_error>());
+  EXPECT_FALSE(in.Source::seek(-1)); // Before the beginning: fails, position unchanged
+  EXPECT_EQ(in.tell(), 117);
 
   in.seek(0, SeekMode::end);
   EXPECT_EQ(in.tell(), 128);
@@ -472,7 +294,31 @@ TEST(nio, StringSourceSeek) {
   in.seek(3, SeekMode::end);
   EXPECT_EQ(in.tell(), 128);
 
-  EXPECT_THAT([&] { in.seek(-200, SeekMode::end); }, Throws<system_error>());
+  EXPECT_FALSE(in.seek(-200, SeekMode::end));
+  EXPECT_EQ(in.tell(), 128);
+  EXPECT_FALSE(in.seek(numeric_limits<i64>::min(), SeekMode::cur));
+  EXPECT_EQ(in.tell(), 128);
+}
+
+// `peek` ...................................................................................................
+
+TEST(nio, peek) {
+  forEachSource("ab", [](Source& in) {
+    EXPECT_EQ(in.peek(), 'a');
+    EXPECT_EQ(in.peek(), 'a'); // Peeking does not advance
+    EXPECT_EQ(in.tell(), 0);
+
+    char c = '\0';
+    EXPECT_EQ(in.Source::read(c), 1);
+    EXPECT_EQ(c, 'a');
+    EXPECT_EQ(in.peek(), 'b');
+    EXPECT_EQ(in.tell(), 1);
+
+    EXPECT_EQ(in.Source::read(c), 1);
+    EXPECT_EQ(c, 'b');
+    EXPECT_EQ(in.peek(), nullopt);
+    EXPECT_TRUE(in.eof());
+  });
 }
 
 // `readCodePoint` ..........................................................................................

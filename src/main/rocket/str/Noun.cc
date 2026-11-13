@@ -23,6 +23,7 @@ namespace noun {
 
 ROCKET_PUBLIC const Noun byte { "byte", "bytes" };
 ROCKET_PUBLIC const Noun character { "character", "characters" };
+ROCKET_PUBLIC const Noun line { "line", "lines" };
 
 } // namespace noun
 

@@ -497,7 +497,7 @@ scanSysTime(nio::Source& in) {
   if (not result) {
     return {};
   }
-  in.seek(io::tellg(is), nio::SeekMode::beg);
+  in.seek(io::tell(is), nio::SeekMode::beg);
 
   // The format sets all of these fields, and scnlib has checked their ranges, but not the day of the month
   const auto& fields = result->value();

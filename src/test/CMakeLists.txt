@@ -5,18 +5,15 @@
 include(GoogleTest)
 
 # Test executables ------------------------------------------------------------------------------------------
-#
-# Helper executables run by the tests; see `rocket::test::testExecutable`
-#
-# -----------------------------------------------------------------------------------------------------------
-
-GaiaAddExecutable(bare bare/main.cc)
 
 GaiaAddExecutable(logger logger/main.cc)
 target_link_libraries(logger PRIVATE Rocket::rocket)
 
 GaiaAddExecutable(print-args print-args/main.cc)
 target_link_libraries(print-args PRIVATE Rocket::rocket)
+
+GaiaAddExecutable(read-stdin read-stdin/main.cc)
+target_link_libraries(read-stdin PRIVATE Rocket::rocket)
 
 # Tests -----------------------------------------------------------------------------------------------------
 

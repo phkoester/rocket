@@ -4,6 +4,8 @@
 
 # Executables -----------------------------------------------------------------------------------------------
 
+GaiaAddExecutable(bare bare/main.cc)
+
 GaiaAddExecutable(print-sizeof print-sizeof/main.cc)
 target_link_libraries(print-sizeof PRIVATE Rocket::rocket)
 

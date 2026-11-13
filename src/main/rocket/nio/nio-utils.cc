@@ -7,16 +7,28 @@
 #include "rocket/nio/nio-utils.h"
 #include "rocket/unicode/unicode.h"
 
-#include <boost/safe_numerics/safe_integer.hpp>
+#include <exception>
 
 using namespace rocket;
 using namespace std;
 
-using boost::safe_numerics::safe;
-
 // Local functions ------------------------------------------------------------------------------------------
 
 namespace {
+
+/**
+ * Seeks @p in to the absolute position @p pos plus @p offset, where @p pos was obtained from `in.tell()`.
+ *
+ * @throw InvalidState if @p pos is #rocket::NPOS, i.e., @p in cannot report its position and therefore
+ *   cannot go back
+ */
+void
+rewindTo(nio::Source& in, u64 pos, u64 offset = 0) {
+  if (pos == NPOS) {
+    throw InvalidState("Cannot go back in a source that cannot report its position");
+  }
+  in.seek(static_cast<i64>(pos + offset), nio::SeekMode::beg);
+}
 
 bool
 isEndOfWord(string_view str, u64 pos) {
@@ -39,7 +51,7 @@ bool
 isEndOfWord(nio::Source& in) {
   const u64 pos = in.tell();
   const auto result = in.readCodePoint();
-  in.seek(safe<i64>(pos), nio::SeekMode::beg); // Rewind immediately in any case
+  rewindTo(in, pos); // Rewind immediately in any case
 
   if (not result) {
     // Could not read code point: we have a word boundary
@@ -124,14 +136,14 @@ readLongestChoice( // NOLINT(*-complexity)
   if (ret) {
     // Seek position after `ret`. The loop above has usually read past it, so this must happen before
     // checking for word boundary
-    in.seek(safe<i64>(pos + ret->size()), nio::SeekMode::beg);
+    rewindTo(in, pos, ret->size());
     if (endOfWord && not isEndOfWord(in)) {
       ret = {};
     }
   }
   if (not ret) {
     // No match found: rewind
-    in.seek(safe<i64>(pos), nio::SeekMode::beg);
+    rewindTo(in, pos);
   }
   return ret;
 }
@@ -212,15 +224,11 @@ expectComma(nio::Source& in) {
 
 bool
 readChar(nio::Source& in, char c) {
+  if (in.peek() != c) {
+    return false;
+  }
   char current; // NOLINT
-  if (in.read(current) != 1) {
-    return false;
-  }
-  if (current != c) {
-    in.seek(-1, nio::SeekMode::cur);
-    return false;
-  }
-  return true;
+  return in.read(current) == 1;
 }
 
 optional<string_view>
@@ -244,7 +252,7 @@ readChoice(nio::Source& in, const set<string_view>& values, bool ignoreCase, boo
       ret = {};
     }
     if (ret) {
-      in.seek(safe<i64>(ret->size()), nio::SeekMode::cur);
+      in.seek(static_cast<i64>(ret->size()), nio::SeekMode::cur);
     }
     return ret;
   }
@@ -260,13 +268,13 @@ readIdentifier(nio::Source& in) {
   const auto pos = in.tell();
   const auto first = in.readCodePoint();
   if (not first) {
-    in.seek(static_cast<i64>(pos), nio::SeekMode::beg);
+    rewindTo(in, pos);
     return {};
   }
 
   const unicode::CodePoint cp = *first;
   if (not cp.isIdStart() && not cp.eq('_') && not cp.eq('$')) {
-    in.seek(static_cast<i64>(pos), nio::SeekMode::beg);
+    rewindTo(in, pos);
     return {};
   }
 
@@ -275,12 +283,12 @@ readIdentifier(nio::Source& in) {
     const auto pos = in.tell();
     const auto next = in.readCodePoint();
     if (not next) {
-      in.seek(static_cast<i64>(pos), nio::SeekMode::beg);
+      rewindTo(in, pos);
       break;
     }
     const unicode::CodePoint cont = *next;
     if (not cont.isIdContinue() && not cont.eq('$')) {
-      in.seek(static_cast<i64>(pos), nio::SeekMode::beg);
+      rewindTo(in, pos);
       break;
     }
     ret.append(static_cast<string>(cont));
@@ -302,7 +310,7 @@ readString(nio::Source& in, string_view str, bool ignoreCase, bool endOfWord) {
     if (endOfWord && not isEndOfWord(contiguous->str(), str.size())) {
       return false;
     }
-    in.seek(safe<i64>(str.size()), nio::SeekMode::cur);
+    in.seek(static_cast<i64>(str.size()), nio::SeekMode::cur);
     return true;
   }
 #endif
@@ -316,13 +324,13 @@ readString(nio::Source& in, string_view str, bool ignoreCase, bool endOfWord) {
     if (in.read(c) != 1 ||
       (ignoreCase ? tolower(static_cast<u8>(c)) != tolower(static_cast<u8>(expected)) : c != expected)) {
       // EOF or mismatch: rewind
-      in.seek(safe<i64>(pos), nio::SeekMode::beg);
+      rewindTo(in, pos);
       return false;
     }
   }
   if (endOfWord && not isEndOfWord(in)) {
     // No word boundary: rewind
-    in.seek(safe<i64>(pos), nio::SeekMode::beg);
+    rewindTo(in, pos);
     return false;
   }
   return true;
@@ -371,7 +379,7 @@ readUntilChar(nio::Source& in, char c) {
     if (pos == NPOS) {
       return {};
     }
-    in.seek(safe<i64>(pos + 1), nio::SeekMode::cur);
+    in.seek(static_cast<i64>(pos + 1), nio::SeekMode::cur);
     return string(remaining.substr(0, pos));
   }
 #endif
@@ -393,7 +401,7 @@ readUntilChar(nio::Source& in, char c) {
     ret.push_back(current);
   }
 
-  in.seek(safe<i64>(pos), nio::SeekMode::beg);
+  rewindTo(in, pos);
   return {};
 }
 
@@ -409,7 +417,7 @@ readWhilePredicate(nio::Source& in, const function<bool(char)>& predicate) {
       ++it;
     }
     string ret(remaining.begin(), it);
-    in.seek(safe<i64>(ret.size()), nio::SeekMode::cur);
+    in.seek(static_cast<i64>(ret.size()), nio::SeekMode::cur);
     return ret;
   }
 #endif
@@ -417,15 +425,13 @@ readWhilePredicate(nio::Source& in, const function<bool(char)>& predicate) {
   // Noncontiguous source
   string ret;
   while (true) {
-    char c; // NOLINT
-    if (in.read(c) != 1) {
+    const auto c = in.peek();
+    if (not c || not predicate(*c)) {
       break;
     }
-    if (not predicate(c)) {
-      in.seek(-1, nio::SeekMode::cur);
-      break;
-    }
-    ret.push_back(c);
+    char consumed; // NOLINT
+    in.read(consumed);
+    ret.push_back(consumed);
   }
   return ret;
 }
@@ -445,7 +451,7 @@ readUntilUnescapedChar(nio::Source& in, char c) {
         return {};
       }
       if (not isEscaped(remaining, pos)) {
-        in.seek(safe<i64>(pos + 1), nio::SeekMode::cur);
+        in.seek(static_cast<i64>(pos + 1), nio::SeekMode::cur);
         string ret(remaining.substr(0, pos));
         return ret;
       }
@@ -473,7 +479,7 @@ readUntilUnescapedChar(nio::Source& in, char c) {
     ret.push_back(current);
   }
 
-  in.seek(safe<i64>(pos), nio::SeekMode::beg);
+  rewindTo(in, pos);
   return {};
 }
 
@@ -523,14 +529,14 @@ skip(nio::Source& in, bool cComments, bool shellComments) { // NOLINT(*-complexi
     // Skip C-style `/*` comments until `*/`
     if (cComments && first == '/' && second == '*') {
       if (not skipUntilString(in, "*/")) {
-        in.seek(safe<i64>(pos), nio::SeekMode::beg);
+        rewindTo(in, pos);
         throw InputFailure(pos, "Unterminated C-style comment");
       }
       continue;
     }
 
     // Otherwise, stop skipping
-    in.seek(safe<i64>(pos), nio::SeekMode::beg);
+    rewindTo(in, pos);
     break;
   }
 }
@@ -549,7 +555,7 @@ skipUntilString(nio::Source& in, string_view str) {
       in.seek(0, nio::SeekMode::end);
       return false;
     }
-    in.seek(safe<i64>(pos + str.size()), nio::SeekMode::cur);
+    in.seek(static_cast<i64>(pos + str.size()), nio::SeekMode::cur);
     return true;
   }
 #endif

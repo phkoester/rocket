@@ -1209,7 +1209,7 @@ struct FormattedProducerImpl<DataType::Date, T> {
     if (not result) {
       throw InputFailure(pos, "Expected a date");
     }
-    in.seek(io::tellg(is), nio::SeekMode::beg);
+    in.seek(io::tell(is), nio::SeekMode::beg);
 
     const auto& [y, m, d] = result->values();
     const auto date = makeDate(y, m, d);
@@ -1244,7 +1244,7 @@ struct FormattedProducerImpl<DataType::HourMinuteSecond, T> {
     if (not result) {
       throw InputFailure(pos, "Expected an hour, minute, and second");
     }
-    in.seek(io::tellg(is), nio::SeekMode::beg);
+    in.seek(io::tell(is), nio::SeekMode::beg);
 
     auto [h, m, s] = result->values();
     if (not validHourMinuteSecond(h, m, s)) {
@@ -1373,7 +1373,7 @@ struct FormattedProducerImpl<DataType::ZonedTime, T> {
       if (not result) {
         throw InputFailure(offsetPos, "Expected a UTC offset");
       }
-      in.seek(io::tellg(is), nio::SeekMode::beg);
+      in.seek(io::tell(is), nio::SeekMode::beg);
       const auto& [h, m] = result->values();
       if (not validUtcOffset(h, m)) {
         throw InputFailure(offsetPos, "Invalid UTC offset");

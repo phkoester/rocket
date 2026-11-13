@@ -78,6 +78,8 @@ void expectComma(nio::Source& in);
 /**
  * Reads a single expected character, advances the source only on success.
  *
+ * This also works with sources that cannot seek, such as pipes.
+ *
  * @param in the source to read from
  * @param c the character to read
  * @return if the character was read
@@ -173,6 +175,8 @@ void expectComma(nio::Source& in);
  * Reads characters from a source while @p predicate yields `true`, advances the source only as long as the
  * predicate holds.
  *
+ * This also works with sources that cannot seek, such as pipes.
+ *
  * @param in the source to read from
  * @param predicate the predicate to call
  * @return the read string
@@ -212,7 +216,7 @@ scan(nio::Source& in) {
   if (not result) {
     return {};
   }
-  in.seek(io::tellg(is), nio::SeekMode::beg);
+  in.seek(io::tell(is), nio::SeekMode::beg);
   return result->value();
 }
 
@@ -247,7 +251,7 @@ scanCodePoint(nio::Source& in) {
   if (not result) {
     return {};
   }
-  in.seek(io::tellg(is), nio::SeekMode::beg);
+  in.seek(io::tell(is), nio::SeekMode::beg);
   return result->value();
 }
 
@@ -285,7 +289,7 @@ scanInteger(nio::Source& in) {
   if (not result) {
     return {};
   }
-  in.seek(io::tellg(is), nio::SeekMode::beg);
+  in.seek(io::tell(is), nio::SeekMode::beg);
   return result->value();
 }
 

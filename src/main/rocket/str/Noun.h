@@ -53,6 +53,7 @@ namespace noun {
 
 ROCKET_PUBLIC extern const Noun byte; ///< A noun.
 ROCKET_PUBLIC extern const Noun character; ///< A noun.
+ROCKET_PUBLIC extern const Noun line; ///< A noun.
 
 } // namespace noun
 

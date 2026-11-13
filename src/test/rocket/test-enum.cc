@@ -99,7 +99,7 @@ TEST(enum, MyEnumScan) {
     const auto [val1, val2] = result->values();
     EXPECT_EQ(val1, fröb);
     EXPECT_EQ(val2, fröberer);
-    EXPECT_EQ(io::tellg(is), 16);
+    EXPECT_EQ(io::tell(is), 16);
   }
 }
 

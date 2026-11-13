@@ -5,18 +5,150 @@
 #include "rocket/io/io.h"
 
 #include "rocket/assert.h"
-#include "rocket/io/io-log.h"
+
+#ifdef ROCKET_OS_WINDOWS
+  #include "rocket/windows.h"
+  #include <share.h> // `_SH_DENYNO`
+#else
+  #include <sys/stat.h>
+  #include <sys/types.h> // `off_t`
+#endif
 
 #include <array>
+#include <cerrno>
 #include <iostream>
 #include <optional>
 
 using namespace rocket;
 using namespace std;
 
-namespace {
+namespace rocket::io {
 
-// Local functions ------------------------------------------------------------------------------------------
+// Functions working with `FILE` pointers -------------------------------------------------------------------
+
+FILE*
+open(const filesystem::path& path, string_view modes) {
+#ifdef ROCKET_OS_WINDOWS
+  // `_wfsopen` takes the path as a wide string, so paths with characters outside the ANSI code page work.
+  // `_SH_DENYNO` allows other processes to read and write the file, as on POSIX systems. (`fopen_s` would
+  // deny write access to others.) The modes are ASCII, so a plain widening suffices
+  const wstring wmodes(modes.begin(), modes.end());
+  return _wfsopen(path.c_str(), wmodes.c_str(), _SH_DENYNO);
+#else
+  return fopen(path.c_str(), string(modes).c_str()); // NOLINT
+#endif
+}
+
+bool
+seek(FILE* file, i64 offset, i32 origin) {
+  ROCKET_ASSERT(file != nullptr);
+
+  // On Windows and macOS, seeking a pipe or a terminal may report success
+  if (not seekable(file)) {
+    errno = ESPIPE;
+    return false;
+  }
+
+#ifdef ROCKET_OS_WINDOWS
+  const auto result = _fseeki64(file, offset, origin);
+#else
+  if constexpr (sizeof(off_t) < sizeof(i64)) {
+    // 32-bit `off_t`: build with `_FILE_OFFSET_BITS=64` to support large files
+    if (offset != static_cast<off_t>(offset)) {
+      errno = EOVERFLOW;
+      return false;
+    }
+  }
+  const auto result = fseeko(file, static_cast<off_t>(offset), origin);
+#endif
+  return result == 0;
+}
+
+bool
+seekable(FILE* file) {
+  ROCKET_ASSERT(file != nullptr);
+
+  const i32 fd = ROCKET_FILENO(file);
+#ifdef ROCKET_OS_WINDOWS
+  // `_fileno` returns -2 for a standard stream that isn’t attached to anything, e.g., in a GUI process
+  if (fd < 0) {
+    return false;
+  }
+  // `_get_osfhandle` returns -2 under the same conditions, which is also the pseudo-handle of the current
+  // thread, so it must not be passed on
+  const auto handle = reinterpret_cast<HANDLE>(_get_osfhandle(fd)); // NOLINT
+  if (handle == INVALID_HANDLE_VALUE || handle == reinterpret_cast<HANDLE>(-2)) { // NOLINT
+    return false;
+  }
+  const DWORD type = GetFileType(handle);
+  return type == FILE_TYPE_DISK; // `FILE_TYPE_PIPE`: pipe or socket, `FILE_TYPE_CHAR`: console or `NUL`
+#else
+  if (fd < 0) {
+    // No file descriptor, e.g., a stream made by `fmemopen` or `open_memstream`. Such streams are implemented
+    // by the C library, which reports a position only if the stream is seekable
+    return ftello(file) != -1;
+  }
+  struct stat st {};
+  if (fstat(fd, &st) != 0) {
+    return false;
+  }
+  return S_ISREG(st.st_mode) || S_ISBLK(st.st_mode);
+#endif
+}
+
+u64
+tell(FILE* file) {
+  ROCKET_ASSERT(file != nullptr);
+
+  // On Windows and macOS, a pipe or a terminal may report a meaningless position
+  if (not seekable(file)) {
+    return NPOS;
+  }
+
+#ifdef ROCKET_OS_WINDOWS
+  const auto result = _ftelli64(file); // `__int64`
+#else
+  const auto result = ftello(file); // `off_t`
+#endif
+  return result < 0 ? NPOS : static_cast<u64>(result);
+}
+
+// Functions working with streams ---------------------------------------------------------------------------
+
+bool
+seekable(istream& is) noexcept {
+  return tell(is) != NPOS;
+}
+
+u64
+tell(istream& is) noexcept {
+  // Ask the stream buffer directly. This is what `tellg` does after constructing a sentry, but the sentry
+  // fails if any state bit is set, and it flushes the tied stream
+  auto* buf = is.rdbuf();
+  if (buf == nullptr) {
+    return NPOS;
+  }
+  const auto result = buf->pubseekoff(0, ios::cur, ios::in);
+  if (result == istream::pos_type(istream::off_type(-1))) {
+    return NPOS;
+  }
+
+  // The stream buffer of `cin` is backed by `stdin`. On Windows and macOS, it may report a meaningless
+  // position for a pipe or a terminal, so ask `stdin` as well
+  if (&is == &cin && not seekable(stdin)) {
+    return NPOS;
+  }
+
+  return static_cast<u64>(streamoff(result));
+}
+
+} // namespace rocket::io
+
+#ifndef ROCKET_HAS_INT128_OP_IO
+
+// Support for 128-bit data types ---------------------------------------------------------------------------
+
+namespace {
 
 /**
  * @return pointer to the end
@@ -46,87 +178,6 @@ u128ToString(char* dest, u128 val) {
   *u128ToStringImpl(dest, val) = '\0';
   return dest;
 }
-
-} // namespace
-
-namespace rocket::io {
-
-// Functions ------------------------------------------------------------------------------------------------
-
-FILE*
-open(const filesystem::path& path, string_view modes) {
-#ifdef ROCKET_OS_WINDOWS
-  FILE* file = nullptr;
-  const auto result = fopen_s(&file, path.string().c_str(), string(modes).c_str());
-  IO_LOG("path=" << path << ", fopen_s=" << result << ", file=" << file << ", ferror=" << (file ? ferror(file) : -1));
-#else
-  FILE* file = fopen(path.string().c_str(), string(modes).c_str()); // NOLINT
-  IO_LOG("path=" << path << ", fopen=" << file << ", ferror=" << (file ? ferror(file) : -1));
-#endif
-  return file;
-}
-
-i32
-seek(FILE* file, i64 offset, i32 origin) {
-#ifdef ROCKET_OS_WINDOWS
-  return _fseeki64(file, offset, origin);
-#else
-  return fseek(file, offset, origin);
-#endif
-}
-
-u64
-tell(FILE* file) {
-#ifdef ROCKET_OS_WINDOWS
-  auto result = _ftelli64(file); // `__int64`
-#else
-  auto result = ftell(file); // `long`
-#endif
-  IO_LOG("ftell=" << result << ", ferror=" << ferror(file));
-  return static_cast<u64>(result);
-}
-
-u64
-tellg(istream& is) noexcept {
-  // Save the state
-  const auto state = is.rdstate();
-
-  // Clear all bits
-  is.clear();
-
-  // This is expected to never throw, otherwise this implementation is flawed
-  decltype(is.tellg()) result;
-  try {
-    result = is.tellg();
-  } catch (const exception& ex) {
-    ROCKET_TERMINATE("`is.tellg()` failed: {}", ex.what());
-  } catch (...) {
-    ROCKET_TERMINATE("`is.tellg()` failed");
-  }
-
-  // Restore the state
-  if ((is.exceptions() & state) == 0) {
-    // Restore the state without exception
-    is.clear(state);
-  } else {
-    // Restore the state with exception
-    try {
-      is.clear(state);
-    } catch (const ios::failure&) {
-      // Nothing to do, we want to catch this silently
-    } catch (...) {
-      ROCKET_TERMINATE("`is.clear()` failed");
-    }
-  }
-
-  return static_cast<u64>(result);
-}
-
-} // namespace rocket::io
-
-// Support for 128-bit data types ---------------------------------------------------------------------------
-
-namespace {
 
 /**
  * Converts decimal digits to an unsigned value.
@@ -188,6 +239,8 @@ operator>>(istream& lhs, i128& rhs) {
 
   const int c = peekFirst(lhs);
   if (c == char_traits<char>::eof()) {
+    // No input: fail like the standard extractors (`ws` and `peek` only set `eofbit`)
+    lhs.setstate(ios::failbit);
     return lhs;
   }
   const bool negative = c == '-';
@@ -231,19 +284,26 @@ operator<<(ostream& lhs, i128 rhs) {
   return lhs << buf.data();
 }
 
-// `u128` ---------------------------------------------------------------------------------------------------
-
 istream&
 operator>>(istream& lhs, u128& rhs) {
   // Read optional sign ('+' or '-')
 
   const int c = peekFirst(lhs);
   if (c == char_traits<char>::eof()) {
+    // No input: fail like the standard extractors (`ws` and `peek` only set `eofbit`)
+    lhs.setstate(ios::failbit);
     return lhs;
   }
   if (c == '-') {
-    // Negative number: use the `i128` overload, which sees the still unconsumed '-'
-    return operator>>(lhs, reinterpret_cast<i128&>(rhs));
+    // Negative number: use the `i128` overload, which sees the still unconsumed '-', and wrap the result
+    // around. Reading into a temporary avoids aliasing a `u128` as an `i128`, which is undefined behavior
+    // where the two are distinct class types
+    i128 val {};
+    operator>>(lhs, val);
+    if (not lhs.fail()) {
+      rhs = static_cast<u128>(val);
+    }
+    return lhs;
   }
   if (c == '+') {
     lhs.get();
@@ -281,5 +341,7 @@ operator<<(ostream& lhs, u128 rhs) {
   u128ToString(buf.data(), rhs);
   return lhs << buf.data();
 }
+
+#endif
 
 // EOF
