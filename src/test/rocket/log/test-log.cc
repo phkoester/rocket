@@ -45,7 +45,7 @@ TEST(log, loggerZip) {
   // nio::out.println("OUT1:[\n{}]", result.out);
 
   auto time = rocket::chrono::now();
-  string logFile1 = expandLogOut(LOG_OUT, loggerDir, logger.stem().string(), -1, time);
+  string logFile1 = expandLogOut(LOG_OUT, loggerDir, logger.stem().string(), 0, time);
   EXPECT_TRUE(fs::is_regular_file(logFile1));
 
   // Run `logger` again, with 3 days (72 hours) offset, check zip file and new log file
@@ -66,8 +66,9 @@ TEST(log, loggerZip) {
 
   // Clean up
 
-  fs::remove(logFile1);
-  fs::remove(logFile2);
+  error_code ignored;
+  fs::remove(logFile1, ignored);
+  fs::remove(logFile2, ignored);
 }
 
 // EOF
