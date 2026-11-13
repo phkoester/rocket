@@ -35,11 +35,18 @@ constexpr u32 LEFT_COLUMN_WIDTH = 17;
 
 // Local functions ------------------------------------------------------------------------------------------
 
-void printVersion(string_view name, string_view version) {
-  nio::out.println("{: <{}} | {}", name, LEFT_COLUMN_WIDTH, version);
+#ifdef ROCKET_OS_WINDOWS
+
+string
+icuVersion() {
+  UVersionInfo info {};
+  u_getVersion(info);
+  array<char, U_MAX_VERSION_STRING_LENGTH> str {};
+  u_versionToString(info, str.data());
+  return str.data();
 }
 
-#if defined(ROCKET_OS_WINDOWS) && defined(ROCKET_ICU_CMAKE)
+#ifdef ROCKET_ICU_CMAKE
 
 /**
  * Returns the ICU version shipped with the Windows SDK.
@@ -53,8 +60,7 @@ icuVersionWindowsSdk() {
   static const UGetVersion call_u_getVersion = []() -> UGetVersion {
     if (const HMODULE icu = LoadLibraryExW(L"icu.dll", nullptr, LOAD_LIBRARY_SEARCH_SYSTEM32);
       icu != nullptr) {
-      return reinterpret_cast<UGetVersion>( // NOLINT
-        GetProcAddress(icu, "u_getVersion"));
+      return reinterpret_cast<UGetVersion>(GetProcAddress(icu, "u_getVersion")); // NOLINT
     }
     return nullptr;
   }();
@@ -70,7 +76,14 @@ icuVersionWindowsSdk() {
   return str.data();
 }
 
-#endif
+#endif // ROCKET_ICU_CMAKE
+
+#endif // ROCKET_OS_WINDOWS
+
+void
+printVersion(string_view name, string_view version) {
+  nio::out.println("{: <{}} | {}", name, LEFT_COLUMN_WIDTH, version);
+}
 
 } // namespace
 
@@ -91,9 +104,14 @@ main(i32 argc, char **argv) {
 
   // ICU
 
-  printVersion("ICU", U_ICU_VERSION);
-#if defined(ROCKET_OS_WINDOWS) && defined(ROCKET_ICU_CMAKE)
+#if defined(ROCKET_OS_WINDOWS)
+  // Windows `<icu.h>` does not provide `U_ICU_VERSION`
+  printVersion("ICU", icuVersion());
+  #ifdef ROCKET_ICU_CMAKE
   printVersion("ICU (Windows SDK)", icuVersionWindowsSdk());
+  #endif
+#else
+  printVersion("ICU", U_ICU_VERSION);
 #endif
 
   // {fmt}
