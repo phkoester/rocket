@@ -13,13 +13,10 @@
 #endif
 
 #include <boost/version.hpp>
-
 #ifdef ROCKET_GUI
   #include <wx/version.h>
 #endif
-
 #include <archive.h>
-
 #include <cbor.h>
 
 #include <array>
