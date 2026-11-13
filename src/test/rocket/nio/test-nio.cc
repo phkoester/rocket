@@ -4,7 +4,6 @@
 
 #include "rocket-test/rocket-test.h"
 
-#include "rocket/scan.h"
 #include "rocket/filesystem/filesystem.h"
 #include "rocket/log/log.h"
 #include "rocket/nio/nio-utils.h"
@@ -29,6 +28,60 @@ testString(u64 n, i32 add = 0) {
   return ret;
 }
 
+/**
+ * Calls @p fn with each sink that keeps its output, and expects the output to equal @p expected.
+ *
+ * @p fn returns `false` if any print operation failed.
+ */
+template<typename Fn>
+void
+forEachSink(string_view expected, Fn fn) {
+  {
+    SCOPED_TRACE("FileSink");
+    const auto temp = rocket::filesystem::tempFile();
+    {
+      FileSink out(temp);
+      EXPECT_TRUE(fn(out));
+      EXPECT_FALSE(out.bad());
+    }
+    FileSource in(temp);
+    EXPECT_EQ(in.readString(), expected);
+  }
+
+  {
+    SCOPED_TRACE("SpanSink");
+    string buf(expected.size() + 8, '#'); // With room to spare
+    SpanSink out(span<char>(buf.data(), buf.size()));
+    EXPECT_TRUE(fn(out));
+    EXPECT_EQ(buf, string(expected) + string(8, '#'));
+  }
+
+  {
+    SCOPED_TRACE("StreamSink");
+    ostringstream os;
+    StreamSink out(os);
+    EXPECT_TRUE(fn(out));
+    EXPECT_FALSE(out.bad());
+    EXPECT_EQ(os.str(), expected);
+  }
+
+  {
+    SCOPED_TRACE("StringSink (owned)");
+    StringSink out;
+    EXPECT_TRUE(fn(out));
+    EXPECT_EQ(out.str(), expected);
+  }
+
+  {
+    SCOPED_TRACE("StringSink (referenced)");
+    string buf = "prefix:";
+    StringSink out(buf);
+    EXPECT_TRUE(fn(out));
+    EXPECT_EQ(buf, "prefix:" + string(expected));
+    EXPECT_EQ(&out.str(), &buf);
+  }
+}
+
 /// Calls @p fn with a contiguous source and noncontiguous sources, which are handled by separate code paths.
 template<typename Fn>
 void
@@ -51,6 +104,20 @@ forEachSource(string_view input, Fn fn) {
     FileSource in(temp);
     fn(in);
   }
+}
+
+/// A numeric punctuation facet with `'` as the thousands separator and `,` as the decimal point.
+struct TestNumpunct : numpunct<char> {
+  char do_decimal_point() const override { return ','; }
+  char do_thousands_sep() const override { return '\''; }
+  string do_grouping() const override { return "\3"; }
+};
+
+/// Returns a locale using #TestNumpunct, independent of the locales installed on the system.
+const locale&
+testLocale() {
+  static const locale ret(locale::classic(), new TestNumpunct); // NOLINT
+  return ret;
 }
 
 void
@@ -113,6 +180,111 @@ TEST(nio, StringSink) {
   EXPECT_EQ(buf, "Hi there\n");
 }
 
+// `print`, `println` .......................................................................................
+
+TEST(nio, print) {
+  forEachSink("Hi there, 42", [](Sink& out) { return out.print("Hi {}, {}", "there", 42); });
+  forEachSink("No args", [](Sink& out) { return out.print("No args"); });
+  forEachSink("", [](Sink& out) { return out.print(""); });
+  forEachSink("ab-c", [](Sink& out) { return out.print("a") && out.print("{}", 'b') && out.print("-c"); });
+}
+
+TEST(nio, println) {
+  forEachSink("Hi there, 42\n", [](Sink& out) { return out.println("Hi {}, {}", "there", 42); });
+  forEachSink("\n", [](Sink& out) { return out.println(""); });
+  forEachSink("a\nb\n", [](Sink& out) { return out.println("a") && out.println("{}", 'b'); });
+  forEachSink("a b\n", [](Sink& out) { return out.print("a ") && out.println("b"); });
+}
+
+TEST(nio, printStyle) {
+  const auto style = fmt::fg(fmt::color::red) | fmt::emphasis::bold;
+  const auto expected = fmt::format(style, "Hi {}", "there");
+  ASSERT_NE(expected, "Hi there"); // The style must actually emit escape sequences
+  forEachSink(expected, [&](Sink& out) { return out.print(style, "Hi {}", "there"); });
+
+  // An empty style emits no escape sequences
+  forEachSink("Hi there", [](Sink& out) { return out.print(fmt::text_style(), "Hi {}", "there"); });
+}
+
+TEST(nio, printlnStyle) {
+  const auto style = fmt::fg(fmt::color::red) | fmt::emphasis::bold;
+  const auto expected = fmt::format(style, "Hi {}", "there") + '\n'; // Line feed after the reset sequence
+  forEachSink(expected, [&](Sink& out) { return out.println(style, "Hi {}", "there"); });
+
+  forEachSink("Hi there\n", [](Sink& out) { return out.println(fmt::text_style(), "Hi {}", "there"); });
+}
+
+TEST(nio, printLocale) {
+  // The locale only applies to `L` specifiers
+  forEachSink("1'234'567 1234567 1'234,5", [](Sink& out) {
+    return out.print(testLocale(), "{:L} {} {:L}", 1'234'567, 1'234'567, 1234.5);
+  });
+
+  // The classic locale has no grouping
+  forEachSink("1234567", [](Sink& out) { return out.print(locale::classic(), "{:L}", 1'234'567); });
+}
+
+TEST(nio, printlnLocale) {
+  forEachSink("1'234'567 1234567\n", [](Sink& out) {
+    return out.println(testLocale(), "{:L} {}", 1'234'567, 1'234'567);
+  });
+}
+
+TEST(nio, printMixed) {
+  const auto style = fmt::fg(fmt::color::green);
+  const auto expected = "a 1'000\n" + fmt::format(style, "b") + "\nc\nd";
+  forEachSink(expected, [&](Sink& out) {
+    return out.println(testLocale(), "a {:L}", 1'000) && out.println(style, "b") && out.println("c")
+      && out.Sink::write("d") == 1;
+  });
+}
+
+TEST(nio, printNullSink) {
+  NullSink out;
+  EXPECT_TRUE(out.print("Hi {}", "there"));
+  EXPECT_TRUE(out.print(fmt::fg(fmt::color::red), "Hi {}", "there"));
+  EXPECT_TRUE(out.print(testLocale(), "{:L}", 1'000));
+  EXPECT_TRUE(out.println("Hi {}", "there"));
+  EXPECT_TRUE(out.println(fmt::fg(fmt::color::red), "Hi {}", "there"));
+  EXPECT_TRUE(out.println(testLocale(), "{:L}", 1'000));
+}
+
+TEST(nio, printSpanSinkTruncated) {
+  {
+    string str = "[....]";
+    SpanSink out(span<char>(&str[1], 4));
+    EXPECT_FALSE(out.print("{}", "ABCDEF")); // Only 4 of 6 chars fit
+    EXPECT_EQ(str, "[ABCD]");
+    EXPECT_TRUE(out.eof());
+    EXPECT_FALSE(out.print("X")); // Full
+    EXPECT_TRUE(out.print("")); // Nothing to write always fits
+    EXPECT_EQ(str, "[ABCD]");
+  }
+
+  {
+    string str = "[....]";
+    SpanSink out(span<char>(&str[1], 4));
+    EXPECT_TRUE(out.print("AB"));
+    EXPECT_FALSE(out.println("CD")); // The line feed does not fit
+    EXPECT_EQ(str, "[ABCD]");
+  }
+
+  {
+    string str = "[....]";
+    SpanSink out(span<char>(&str[1], 4));
+    EXPECT_FALSE(out.print(testLocale(), "{:L}", 1'234'567)); // "1'234'567" is too long
+    EXPECT_EQ(str, "[1'23]");
+  }
+
+  {
+    string str = "[....]";
+    SpanSink out(span<char>(&str[1], 4));
+    EXPECT_FALSE(out.print(fmt::fg(fmt::color::red), "A")); // The escape sequences do not fit
+    EXPECT_EQ(str.substr(1, 4), fmt::format(fmt::fg(fmt::color::red), "A").substr(0, 4));
+    EXPECT_TRUE(out.eof());
+  }
+}
+
 // `Source` .................................................................................................
 
 TEST(nio, FileSourceDoesNotExist) {
@@ -167,16 +339,15 @@ TEST(nio, FileSourceReadString) {
   EXPECT_EQ(in.tell(), 10);
 }
 
-TEST(nio, FileSourceScanIstream) {
-  const auto path = testSource("test-nio-FileSourceScanIstream.txt");
+TEST(nio, FileSourceScan) {
+  const auto path = testSource("test-nio-FileSourceScan.txt");
   FileSource in(path);
-  auto& is = in.istream();
-  auto result = scn::scan<log::LogLevel, log::LogLevel>(is, "{}, {}");
+  auto result = in.scan<log::LogLevel, log::LogLevel>("{}, {}");
   ASSERT_TRUE(result);
   const auto [level1, level2] = result->values();
   EXPECT_EQ(level1, log::LogLevel::debug);
   EXPECT_EQ(level2, log::LogLevel::info);
-  EXPECT_EQ(io::tell(is), 11);
+  EXPECT_EQ(in.tell(), 11);
 }
 
 TEST(nio, NullSource) {

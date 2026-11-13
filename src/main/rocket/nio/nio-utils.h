@@ -4,8 +4,6 @@
 
 #pragma once
 
-#include "rocket/scan.h"
-#include "rocket/io/io.h"
 #include "rocket/nio/nio.h"
 
 #include <chrono>
@@ -179,100 +177,6 @@ void expectComma(nio::Source& in);
  * @return the read string
  */
 std::string readWhilePredicate(nio::Source& in, const std::function<bool(char)>& predicate);
-
-/**
- * Scans from a source, using `scnlib`.
- *
- * There is an optimization for contiguous sources.
- *
- * @tparam T the type to scan
- * @param in the source to read from
- * @return the scanned value, or null if no value was scanned
- */
-template<typename T>
-[[nodiscard]] std::optional<T>
-scan(nio::Source& in) {
-  if (const auto* contiguous = dynamic_cast<nio::ContiguousSource*>(&in); contiguous != nullptr) {
-    const auto str = contiguous->str();
-    auto result = scn::scan<T>(str, "{}");
-    if (not result) {
-      return {};
-    }
-    in.seek(result->begin() - str.begin(), nio::SeekMode::cur);
-    return result->value();
-  } else {
-    std::istream& is = in.istream();
-    auto result = scn::scan<T>(is, "{}");
-    if (not result) {
-      return {};
-    }
-    in.seek(io::tell(is), nio::SeekMode::beg);
-    return result->value();
-  }
-}
-
-/**
- * Scans a code point from a source, using `scnlib`.
- *
- * There is an optimization for contiguous sources.
- *
- * @tparam I the integer type to scan
- * @param in the source to read from
- * @return the scanned value, or null if no value was scanned
- */
-template<typename I>
-[[nodiscard]] std::optional<I>
-scanCodePoint(nio::Source& in) {
-  if (const auto* contiguous = dynamic_cast<nio::ContiguousSource*>(&in); contiguous != nullptr) {
-    const auto str = contiguous->str();
-    auto result = scn::scan<I>(str, "U+{:X}");
-    if (not result) {
-      return {};
-    }
-    in.seek(result->begin() - str.begin(), nio::SeekMode::cur);
-    return result->value();
-  } else {
-    std::istream& is = in.istream();
-    auto result = scn::scan<I>(is, "U+{:X}");
-    if (not result) {
-      return {};
-    }
-    in.seek(io::tell(is), nio::SeekMode::beg);
-    return result->value();
-  }
-}
-
-/**
- * Scans an integer value from a source, using `scnlib`.
- *
- * There is an optimization for contiguous sources.
- *
- * @tparam I the integer type to scan
- * @param in the source to read from
- * @return the scanned value, or null if no value was scanned
- */
-template<typename I>
-[[nodiscard]] std::optional<I>
-scanInteger(nio::Source& in) {
-  if (const auto* contiguous = dynamic_cast<nio::ContiguousSource*>(&in); contiguous != nullptr) {
-    const auto str = contiguous->str();
-    // Setting `base` to 0 detects the base from the input
-    auto result = scn::scan_int<I>(str, 0);
-    if (not result) {
-      return {};
-    }
-    in.seek(result->begin() - str.begin(), nio::SeekMode::cur);
-    return result->value();
-  } else {
-    std::istream& is = in.istream();
-    auto result = scn::scan<I>(is, "{:i}");
-    if (not result) {
-      return {};
-    }
-    in.seek(io::tell(is), nio::SeekMode::beg);
-    return result->value();
-  }
-}
 
 /**
  * Skips whitespace and comments, advances the source only if there is something to skip.

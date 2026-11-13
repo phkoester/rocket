@@ -7,14 +7,12 @@
 #pragma once
 
 #include "rocket/format.h"
-#include "rocket/unicode/unicode-fwd.h"
+#include "rocket/scan.h"
 
 #include <fmt/color.h> // `fmt::text_style`
 
-#include <expected>
 #include <filesystem>
 #include <iosfwd>
-#include <memory>
 #include <optional>
 #include <span>
 #include <string>
@@ -576,19 +574,25 @@ enum class SeekMode : u8 {
   end ///< Seek relative to the end of the source
 };
 
+// `ScanFormatString` ---------------------------------------------------------------------------------------
+
+/**
+ * The format string type for #rocket::nio::Source#scan.
+ *
+ * A source is not contiguous in general, so the format string is checked as for a noncontiguous source. This
+ * rejects scanning a #std::string_view at compile time.
+ *
+ * @tparam T the types to scan
+ */
+template<typename... T>
+using ScanFormatString = scn::scan_format_string<scn::scan_file&, T...>;
+
 // `Source` -------------------------------------------------------------------------------------------------
 
 /**
  * Source base class. An input device that can be read from.
  */
 struct Source : Device {
-  /**
-   * Provides #std::istream interoperability.
-   *
-   * @return a reference to an input stream
-   */
-  [[nodiscard]] virtual std::istream& istream() = 0;
-
   /**
    * Returns the next character without consuming it.
    *
@@ -646,6 +650,46 @@ struct Source : Device {
   std::string readString();
 
   /**
+   * Scans values from the source, using `scnlib`.
+   *
+   * The source is advanced past the scanned input. The position of the remaining input is the position of
+   * the source, so the result holds no range, unlike the result of `scn::scan`.
+   *
+   * @tparam T the types to scan
+   * @param fmt the format string
+   * @return the scanned values, or the error
+   */
+  template<typename... T>
+  [[nodiscard]] scn::scan_expected<scn::scan_result<scn::ranges::dangling, T...>>
+  scan(ScanFormatString<T...> fmt) {
+    scn::scan_result<scn::ranges::dangling, T...> ret;
+    if (const auto result = vscan(fmt.get(), scn::make_scan_args(ret.values())); not result) {
+      return scn::unexpected(result.error());
+    }
+    return ret;
+  }
+
+  /**
+   * Scans values from the source, using `scnlib` and a locale.
+   *
+   * The locale only applies to arguments with the `L` format specifier. See #scan.
+   *
+   * @tparam T the types to scan
+   * @param locale the locale
+   * @param fmt the format string
+   * @return the scanned values, or the error
+   */
+  template<typename... T>
+  [[nodiscard]] scn::scan_expected<scn::scan_result<scn::ranges::dangling, T...>>
+  scan(const std::locale& locale, ScanFormatString<T...> fmt) {
+    scn::scan_result<scn::ranges::dangling, T...> ret;
+    if (const auto result = vscan(locale, fmt.get(), scn::make_scan_args(ret.values())); not result) {
+      return scn::unexpected(result.error());
+    }
+    return ret;
+  }
+
+  /**
    * Seeks a new position in the source, using #rocket::nio::SeekMode::beg.
    *
    * @param offset the offset to seek to
@@ -668,6 +712,27 @@ struct Source : Device {
    * @return the current input position, or #rocket::NPOS if the position cannot be determined
    */
   [[nodiscard]] virtual u64 tell() = 0;
+
+  /**
+   * Scans values from the source. This is the type-erased backend of #scan.
+   *
+   * @param fmt the format string
+   * @param args the arguments to scan into
+   * @return nothing, or the error
+   */
+  virtual scn::scan_expected<void> vscan(
+    std::string_view fmt, scn::scan_args args) = 0;
+
+  /**
+   * Scans values from the source, using a locale. This is the type-erased backend of #scan.
+   *
+   * @param locale the locale
+   * @param fmt the format string
+   * @param args the arguments to scan into
+   * @return nothing, or the error
+   */
+  virtual scn::scan_expected<void> vscan(
+    const std::locale& locale, std::string_view fmt, scn::scan_args args) = 0;
 
 protected:
 
@@ -697,6 +762,12 @@ struct ContiguousSource : Source {
   std::optional<char> peek() override;
 
   std::string readln() override;
+
+  scn::scan_expected<void> vscan(
+    std::string_view fmt, scn::scan_args args) override;
+
+  scn::scan_expected<void> vscan(
+    const std::locale& locale, std::string_view fmt, scn::scan_args args) override;
 
   /**
    * Returns the string available in the contiguous source.
@@ -744,8 +815,6 @@ struct FileSource : Source {
 
   [[nodiscard]] i32 handle() const override;
 
-  std::istream& istream() override;
-
   std::optional<char> peek() override;
 
   u64 read(std::span<u8> out) override;
@@ -756,11 +825,16 @@ struct FileSource : Source {
 
   [[nodiscard]] u64 tell() override;
 
+  scn::scan_expected<void> vscan(
+    std::string_view fmt, scn::scan_args args) override;
+
+  scn::scan_expected<void> vscan(
+    const std::locale& locale, std::string_view fmt, scn::scan_args args) override;
+
 ROCKET_TEST_PRIVATE:
 
   FILE* file_; ///< The `FILE` pointer, never null.
   bool closeOnDestroy_; ///< Whether to close the file on destruction.
-  std::unique_ptr<std::istream> istream_; ///< An optional input stream, reading through #file_.
 };
 
 // `NullSource` ---------------------------------------------------------------------------------------------
@@ -779,8 +853,6 @@ struct NullSource : Source {
 
   [[nodiscard]] i32 handle() const override { return -1; }
 
-  std::istream& istream() override;
-
   std::optional<char> peek() override { return std::nullopt; }
 
   u64 read(std::span<u8>) override { return 0; }
@@ -791,9 +863,14 @@ struct NullSource : Source {
 
   [[nodiscard]] u64 tell() override { return NPOS; }
 
+  scn::scan_expected<void> vscan(
+    std::string_view fmt, scn::scan_args args) override;
+
+  scn::scan_expected<void> vscan(const std::locale& locale,
+    std::string_view fmt, scn::scan_args args) override;
+
 private:
 
-  std::unique_ptr<std::istream> istream_;
 };
 
 // `SpanSource` ---------------------------------------------------------------------------------------------
@@ -818,8 +895,6 @@ struct SpanSource : ContiguousSource {
 
   [[nodiscard]] i32 handle() const override { return -1; }
 
-  [[nodiscard]] std::istream& istream() override;
-
   /**
    * Returns the input span the source was constructed with.
    *
@@ -843,7 +918,6 @@ private:
 
   std::span<const u8> in_;
   u64 pos_ = 0;
-  std::unique_ptr<std::istream> istream_;
 };
 
 // `StreamSource` -------------------------------------------------------------------------------------------
@@ -865,8 +939,6 @@ struct StreamSource : Source {
 
   [[nodiscard]] i32 handle() const override;
 
-  std::istream& istream() override { return is_; }
-
   std::optional<char> peek() override;
 
   u64 read(std::span<u8> out) override;
@@ -876,6 +948,12 @@ struct StreamSource : Source {
   bool seek(i64 offset, SeekMode mode) override;
 
   [[nodiscard]] u64 tell() override;
+
+  scn::scan_expected<void> vscan(
+    std::string_view fmt, scn::scan_args args) override;
+
+  scn::scan_expected<void> vscan(
+    const std::locale& locale, std::string_view fmt, scn::scan_args args) override;
 
 private:
 
@@ -915,8 +993,6 @@ struct StringSource : ContiguousSource {
    */
   [[nodiscard]] std::string_view in() const { return in_; }
 
-  [[nodiscard]] std::istream& istream() override;
-
   u64 read(std::span<u8> out) override;
 
   bool seek(i64 offset, SeekMode mode) override;
@@ -929,7 +1005,6 @@ private:
 
   std::string_view in_;
   u64 pos_ = 0;
-  std::unique_ptr<std::istream> istream_;
 };
 
 // Variables ------------------------------------------------------------------------------------------------

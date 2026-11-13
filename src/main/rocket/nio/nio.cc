@@ -17,7 +17,6 @@
 #include <iterator>
 #include <locale>
 #include <optional>
-#include <streambuf>
 #include <system_error>
 
 using namespace rocket;
@@ -89,6 +88,33 @@ formatToBuffer(const locale& locale, fmt::string_view fmt, fmt::format_args args
   return ret;
 }
 
+/// Returns the error of @p result, if any, dropping its value.
+template<typename T>
+scn::scan_expected<void>
+toVoid(const scn::scan_expected<T>& result) {
+  if (not result) {
+    return scn::unexpected(result.error());
+  }
+  return {};
+}
+
+/**
+ * Checks the result of scanning from @p file, a `scn::scan_file`.
+ *
+ * Afterwards, `scn::scan_file` puts unread input back into its `FILE`. Input it could not put back is left in
+ * its prelude, which would be lost.
+ */
+template<typename T>
+scn::scan_expected<void>
+checkFileScan(const scn::scan_file& file, const scn::scan_expected<T>& result) {
+  if (not file.prelude().empty()) {
+    // This does not happen with glibc, which can put back any amount of input
+    return scn::unexpected(
+      scn::scan_error(scn::scan_error::invalid_source_state, "Cannot put back unread input"));
+  }
+  return toVoid(result);
+}
+
 /// Removes a trailing @c '\r' from @p line, which was read up to a @c '\n'.
 void
 removeTrailingCr(string& line) {
@@ -96,83 +122,6 @@ removeTrailingCr(string& line) {
     line.pop_back();
   }
 }
-
-// `FileStreambuf`, `FileIstream` ---------------------------------------------------------------------------
-
-/**
- * An unbuffered stream buffer that reads through a `FILE` pointer.
- *
- * As there is no buffer, the stream and the `FILE` pointer always agree on the position. This also holds for
- * a `FILE` pointer that cannot seek, such as one over a pipe, and for text-mode translation on Windows.
- */
-struct FileStreambuf : streambuf {
-  explicit FileStreambuf(FILE* file) : file_(file) {}
-
-protected:
-
-  /// Peeks at the next character, without consuming it.
-  int_type
-  underflow() override {
-    const i32 c = getc(file_);
-    if (c == EOF) {
-      return traits_type::eof();
-    }
-    ungetc(c, file_);
-    return c; // `getc` yields an `unsigned char` value, which is what `to_int_type` would yield, too
-  }
-
-  /// Consumes the next character.
-  int_type
-  uflow() override {
-    const i32 c = getc(file_);
-    return c == EOF ? traits_type::eof() : c;
-  }
-
-  /// Puts back @p c. As there is no buffer, the previous character is unknown if @p c is EOF.
-  int_type
-  pbackfail(int_type c) override {
-    if (traits_type::eq_int_type(c, traits_type::eof()) || ungetc(c, file_) == EOF) {
-      return traits_type::eof();
-    }
-    return c;
-  }
-
-  streamsize
-  xsgetn(char* s, streamsize n) override {
-    return static_cast<streamsize>(fread(s, 1, static_cast<size_t>(n), file_));
-  }
-
-  pos_type
-  seekoff(off_type off, ios::seekdir dir, [[maybe_unused]] ios::openmode which) override {
-    // Querying the position must not seek, which would discard a character put back by `ungetc`
-    if (off != 0 || dir != ios::cur) {
-      const i32 origin = dir == ios::beg ? SEEK_SET : dir == ios::cur ? SEEK_CUR : SEEK_END;
-      if (not io::seek(file_, off, origin)) {
-        return pos_type(off_type(-1));
-      }
-    }
-    const u64 pos = io::tell(file_);
-    return pos == NPOS ? pos_type(off_type(-1)) : pos_type(static_cast<off_type>(pos));
-  }
-
-  pos_type
-  seekpos(pos_type pos, ios::openmode which) override {
-    return seekoff(off_type(pos), ios::beg, which);
-  }
-
-private:
-
-  FILE* file_;
-};
-
-/// An input stream that reads through a `FILE` pointer, using a #FileStreambuf.
-struct FileIstream : std::istream {
-  explicit FileIstream(FILE* file) : std::istream(nullptr), buf_(file) { rdbuf(&buf_); }
-
-private:
-
-  FileStreambuf buf_;
-};
 
 } // namespace
 
@@ -609,6 +558,28 @@ ContiguousSource::readln() {
   return ret;
 }
 
+scn::scan_expected<void>
+ContiguousSource::vscan(string_view fmt, scn::scan_args args) {
+  const auto str = this->str();
+  const auto result = scn::vscan(str, fmt, args);
+  if (not result) {
+    return scn::unexpected(result.error());
+  }
+  seek(static_cast<i64>(result->begin() - str.begin()), SeekMode::cur);
+  return {};
+}
+
+scn::scan_expected<void>
+ContiguousSource::vscan(const locale& locale, string_view fmt, scn::scan_args args) {
+  const auto str = this->str();
+  const auto result = scn::vscan(locale, str, fmt, args);
+  if (not result) {
+    return scn::unexpected(result.error());
+  }
+  seek(static_cast<i64>(result->begin() - str.begin()), SeekMode::cur);
+  return {};
+}
+
 // `FileSource` ---------------------------------------------------------------------------------------------
 
 FileSource::FileSource(FILE* file) :
@@ -644,21 +615,6 @@ FileSource::eof() const {
 i32
 FileSource::handle() const {
   return ROCKET_FILENO(file_);
-}
-
-istream&
-FileSource::istream() {
-  if (bad()) {
-    throw InvalidState("`FileSource` is bad");
-  }
-
-  if (istream_ == nullptr) {
-    istream_ = make_unique<FileIstream>(file_);
-  }
-  // The stream reads through `file_`, so it is always at the right position. Only clear what a previous use
-  // left behind, such as `failbit` after a failed extraction
-  istream_->clear();
-  return *istream_;
 }
 
 optional<char>
@@ -729,32 +685,46 @@ FileSource::tell() {
   return io::tell(file_);
 }
 
+scn::scan_expected<void>
+FileSource::vscan(string_view fmt, scn::scan_args args) {
+  if (bad()) {
+    return scn::unexpected(scn::scan_error(scn::scan_error::invalid_source_state, "`FileSource` is bad"));
+  }
+
+  // Scans directly through `file_`. `scn::scan_file` locks `file_` while scanning
+  scn::scan_file file(file_);
+  const auto result = scn::vscan(file, fmt, args);
+  return checkFileScan(file, result);
+}
+
+scn::scan_expected<void>
+FileSource::vscan(const locale& locale, string_view fmt, scn::scan_args args) {
+  if (bad()) {
+    return scn::unexpected(scn::scan_error(scn::scan_error::invalid_source_state, "`FileSource` is bad"));
+  }
+
+  scn::scan_file file(file_);
+  const auto result = scn::vscan(locale, file, fmt, args);
+  return checkFileScan(file, result);
+}
+
 // `NullSource` ---------------------------------------------------------------------------------------------
 
-istream&
-NullSource::istream() {
-  if (istream_ == nullptr) {
-    istream_ = make_unique<io::ispanstream>(span<const char>());
-  }
-  istream_->clear();
-  return *istream_;
+scn::scan_expected<void>
+NullSource::vscan(string_view fmt, scn::scan_args args) {
+  // Scanning from empty input fails, unless the format string expects nothing
+  return toVoid(scn::vscan(string_view(), fmt, args));
+}
+
+scn::scan_expected<void>
+NullSource::vscan(const locale& locale, string_view fmt, scn::scan_args args) {
+  return toVoid(scn::vscan(locale, string_view(), fmt, args));
 }
 
 // `SpanSource` ---------------------------------------------------------------------------------------------
 
 SpanSource::SpanSource(span<const u8> in) :
   in_(in) {}
-
-istream&
-SpanSource::istream() {
-  if (istream_ == nullptr) {
-    const span<const char> chars(reinterpret_cast<const char*>(in_.data()), in_.size());
-    istream_ = make_unique<io::ispanstream>(chars);
-  }
-  istream_->clear(); // `seekg` does nothing while `failbit` is set
-  istream_->seekg(static_cast<istream::off_type>(pos_), ios::beg);
-  return *istream_;
-}
 
 u64
 SpanSource::read(span<u8> out) {
@@ -870,21 +840,29 @@ StreamSource::tell() {
   return io::tell(is_);
 }
 
+scn::scan_expected<void>
+StreamSource::vscan(string_view fmt, scn::scan_args args) {
+  if (bad()) {
+    return scn::unexpected(scn::scan_error(scn::scan_error::invalid_source_state, "`StreamSource` is bad"));
+  }
+
+  // Scans directly from the stream buffer of `is_`, putting unread input back afterwards
+  return toVoid(scn::vscan(is_, fmt, args));
+}
+
+scn::scan_expected<void>
+StreamSource::vscan(const locale& locale, string_view fmt, scn::scan_args args) {
+  if (bad()) {
+    return scn::unexpected(scn::scan_error(scn::scan_error::invalid_source_state, "`StreamSource` is bad"));
+  }
+
+  return toVoid(scn::vscan(locale, is_, fmt, args));
+}
+
 // `StringSource` -------------------------------------------------------------------------------------------
 
 StringSource::StringSource(string_view in) :
   in_(in) {}
-
-istream&
-StringSource::istream() {
-  if (istream_ == nullptr) {
-    const span<const char> chars(in_.data(), in_.size());
-    istream_ = make_unique<io::ispanstream>(chars);
-  }
-  istream_->clear(); // `seekg` does nothing while `failbit` is set
-  istream_->seekg(static_cast<istream::off_type>(pos_), ios::beg);
-  return *istream_;
-}
 
 u64
 StringSource::read(span<u8> out) {

@@ -523,12 +523,10 @@ std::optional<std::chrono::sys_time<Duration>>
 scanSysTime(nio::Source& in) {
   using namespace std::chrono;
 
-  auto& is = in.istream();
-  const auto result = scn::scan<scn::datetime_components>(is, "{:%FT%T}");
+  const auto result = in.scan<scn::datetime_components>("{:%FT%T}");
   if (not result) {
     return {};
   }
-  in.seek(io::tell(is), nio::SeekMode::beg);
 
   // The format sets all of these fields, and scnlib has checked their ranges, but not the day of the month
   const auto& fields = result->value();

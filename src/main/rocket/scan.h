@@ -7,7 +7,6 @@
 #pragma once
 
 #include "rocket/type-traits.h"
-#include "rocket/io/io.h"
 
 #include <scn/chrono.h>
 #include <scn/istream.h>

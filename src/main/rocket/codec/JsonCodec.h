@@ -868,10 +868,10 @@ struct JsonProducerImpl<DataType::Enum, E> {
         return jsonStringOffset(pos, innerPos, positions);
       };
 
-      const auto result = scan<E>(inner);
+      const auto result = inner.scan<E>("{}");
       if (result) {
         expectEndOfString(inner, input.size(), inPos);
-        val = *result;
+        val = result->value();
         return;
       }
       throw InputFailure(inPos(0), fmt::format("Invalid value for enum {}", TypeId::of<E>()));
@@ -887,9 +887,10 @@ struct JsonProducerImpl<DataType::Integer, I> {
     skip(in);
     const auto pos = in.tell();
 
-    const auto result = scanInteger<I>(in);
+    // `{:i}` detects the base from the input, so a prefix such as `0x` is accepted
+    const auto result = in.scan<I>("{:i}");
     if (result) {
-      val = *result;
+      val = result->value();
       return;
     }
     throw InputFailure(pos, "Expected an integer value");
@@ -918,9 +919,9 @@ struct JsonProducerImpl<DataType::Float, F> {
       return;
     }
 
-    const auto result = scan<F>(in);
+    const auto result = in.scan<F>("{}");
     if (result) {
-      val = *result;
+      val = result->value();
       return;
     }
     throw InputFailure(pos, "Expected a floating-point value");
@@ -947,10 +948,10 @@ struct JsonProducerImpl<DataType::Pointer, P> {
       return jsonStringOffset(pos, innerPos, positions);
     };
 
-    const auto result = scan<P>(inner);
+    const auto result = inner.scan<P>("{}");
     if (result) {
       expectEndOfString(inner, input.size(), inPos);
-      val = *result;
+      val = result->value();
       return;
     }
     throw InputFailure(inPos(0), "Expected a pointer value");
@@ -1309,12 +1310,10 @@ struct JsonProducerImpl<DataType::Date, T> {
       return jsonStringOffset(pos, innerPos, positions);
     };
 
-    auto& is = inner.istream();
-    auto result = scn::scan<std_int, std_unsigned, std_unsigned>(is, "{}-{}-{}");
+    auto result = inner.scan<std_int, std_unsigned, std_unsigned>("{}-{}-{}");
     if (not result) {
       throw InputFailure(inPos(0), "Expected a date");
     }
-    inner.seek(io::tell(is), nio::SeekMode::beg);
 
     const auto& [y, m, d] = result->values();
     const auto date = makeDate(y, m, d);
@@ -1355,12 +1354,10 @@ struct JsonProducerImpl<DataType::HourMinuteSecond, T> {
       inner.seek(-1, nio::SeekMode::cur);
     }
 
-    auto& is = inner.istream();
-    auto result = scn::scan<hours::rep, minutes::rep, seconds::rep>(is, "{}:{}:{}");
+    auto result = inner.scan<hours::rep, minutes::rep, seconds::rep>("{}:{}:{}");
     if (not result) {
       throw InputFailure(inPos(0), "Expected an hour, minute, and second");
     }
-    inner.seek(io::tell(is), nio::SeekMode::beg);
 
     auto [h, m, s] = result->values();
     if (not validHourMinuteSecond(h, m, s)) {
@@ -1513,12 +1510,10 @@ struct JsonProducerImpl<DataType::ZonedTime, T> {
           throw InputFailure(offsetPos, "Expected a UTC offset");
         }
 
-        auto& is = inner.istream();
-        const auto result = scn::scan<u32, u32>(is, "{}:{}");
+        const auto result = inner.scan<u32, u32>("{}:{}");
         if (not result) {
           throw InputFailure(offsetPos, "Expected a UTC offset");
         }
-        inner.seek(io::tell(is), nio::SeekMode::beg);
         const auto& [h, m] = result->values();
         if (not validUtcOffset(h, m)) {
           throw InputFailure(offsetPos, "Invalid UTC offset");
@@ -1678,7 +1673,7 @@ struct JsonProducerImpl<DataType::CodePoint, T> {
 
     // Read `U+...`
     in.seek(-2, nio::SeekMode::cur);
-    auto result = scanCodePoint<u32>(in);
+    auto result = in.scan<u32>("U+{:X}");
     if (not result) {
       throw InputFailure(pos, "Expected a code point");
     }
@@ -1686,7 +1681,7 @@ struct JsonProducerImpl<DataType::CodePoint, T> {
       throw InputFailure(in.tell(), { pos, in.tell() }, "Unterminated code point");
     }
     try {
-      val = static_cast<Elem>(*result);
+      val = static_cast<Elem>(result->value());
     } catch (const InputFailure& ex) {
       throw ex.shifted(pos); // `CodePoint` reports position 0
     }

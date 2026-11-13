@@ -788,9 +788,9 @@ struct FormattedProducerImpl<DataType::Enum, E> {
     const auto pos = in.tell();
 
     if constexpr (scn::detail::is_scannable<E, char>::value) {
-      const auto result = scan<E>(in);
+      const auto result = in.scan<E>("{}");
       if (result) {
-        val = *result;
+        val = result->value();
         return;
       }
       throw InputFailure(pos, fmt::format("Invalid value for enum {}", TypeId::of<E>()));
@@ -806,9 +806,10 @@ struct FormattedProducerImpl<DataType::Integer, I> {
     skip(in);
     const auto pos = in.tell();
 
-    const auto result = scanInteger<I>(in);
+    // `{:i}` detects the base from the input, so a prefix such as `0x` is accepted
+    const auto result = in.scan<I>("{:i}");
     if (result) {
-      val = *result;
+      val = result->value();
       return;
     }
     throw InputFailure(pos, "Expected an integer value");
@@ -833,9 +834,9 @@ struct FormattedProducerImpl<DataType::Float, F> {
       return;
     }
 
-    const auto result = scan<F>(in);
+    const auto result = in.scan<F>("{}");
     if (result) {
-      val = *result;
+      val = result->value();
       return;
     }
     throw InputFailure(pos, "Expected a floating-point value");
@@ -854,9 +855,9 @@ struct FormattedProducerImpl<DataType::Pointer, P> {
       return;
     }
 
-    const auto result = scan<P>(in);
+    const auto result = in.scan<P>("{}");
     if (result) {
-      val = *result;
+      val = result->value();
       return;
     }
     throw InputFailure(pos, "Expected a pointer value");
@@ -1204,12 +1205,10 @@ struct FormattedProducerImpl<DataType::Date, T> {
     skip(in);
     const auto pos = in.tell();
 
-    auto& is = in.istream();
-    auto result = scn::scan<std_int, std_unsigned, std_unsigned>(is, "{}-{}-{}");
+    auto result = in.scan<std_int, std_unsigned, std_unsigned>("{}-{}-{}");
     if (not result) {
       throw InputFailure(pos, "Expected a date");
     }
-    in.seek(io::tell(is), nio::SeekMode::beg);
 
     const auto& [y, m, d] = result->values();
     const auto date = makeDate(y, m, d);
@@ -1239,12 +1238,10 @@ struct FormattedProducerImpl<DataType::HourMinuteSecond, T> {
       in.seek(-1, nio::SeekMode::cur);
     }
 
-    auto& is = in.istream();
-    auto result = scn::scan<hours::rep, minutes::rep, seconds::rep>(is, "{}:{}:{}");
+    auto result = in.scan<hours::rep, minutes::rep, seconds::rep>("{}:{}:{}");
     if (not result) {
       throw InputFailure(pos, "Expected an hour, minute, and second");
     }
-    in.seek(io::tell(is), nio::SeekMode::beg);
 
     auto [h, m, s] = result->values();
     if (not validHourMinuteSecond(h, m, s)) {
@@ -1368,12 +1365,10 @@ struct FormattedProducerImpl<DataType::ZonedTime, T> {
         throw InputFailure(offsetPos, "Expected a UTC offset");
       }
 
-      auto& is = in.istream();
-      const auto result = scn::scan<u32, u32>(is, "{}:{}");
+      const auto result = in.scan<u32, u32>("{}:{}");
       if (not result) {
         throw InputFailure(offsetPos, "Expected a UTC offset");
       }
-      in.seek(io::tell(is), nio::SeekMode::beg);
       const auto& [h, m] = result->values();
       if (not validUtcOffset(h, m)) {
         throw InputFailure(offsetPos, "Invalid UTC offset");
@@ -1512,10 +1507,10 @@ struct FormattedProducerImpl<DataType::CodePoint, T> {
     }
 
     // Read `U+...`
-    auto result = scanCodePoint<u32>(in);
+    auto result = in.scan<u32>("U+{:X}");
     if (result) {
       try {
-        val = static_cast<Elem>(*result);
+        val = static_cast<Elem>(result->value());
       } catch (const InputFailure& ex) {
         throw ex.shifted(pos); // `CodePoint` reports position 0
       }
