@@ -199,7 +199,7 @@ Process::exit(i32 status) const {
   }
 }
 
-i32
+u32
 Process::id() const {
 #ifdef ROCKET_OS_WINDOWS
   return _getpid();

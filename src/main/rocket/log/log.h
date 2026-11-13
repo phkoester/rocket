@@ -128,13 +128,13 @@ using TimePoint = std::chrono::time_point<Clock>;
  * @param name the process name
  * @param pid the process ID (PID)
  * @param time the time
- * @throw #rocket::InvalidateState if @p val is invalid
+ * @throw #rocket::InvalidState if @p val is invalid
  */
 std::string expandLogOut(
   std::string_view val,
   const std::filesystem::path& dir,
   std::string_view name,
-  i32 pid,
+  u32 pid,
   const TimePoint& time);
 
 } // namespace rocket::log

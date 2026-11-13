@@ -135,64 +135,19 @@ struct Out {
     optional<std::chrono::year_month_day> ymd;
   };
 
-  // This one is publicly available; tests may need it. Throws `InvalidateState`
-  static ExpandResult
-  expand(string_view pattern, const fs::path& dir, string_view name, i32 pid, const TimePoint& time) {
-    ExpandResult ret;
-    ret.out = pattern;
-
-    // Detect and eliminate the hints
-
-    ret.utc = str::replaceIn(ret.out, "<utc>", "") > 0;
-    ret.zip = str::replaceIn(ret.out, "<zip>", "") > 0;
-
-    // Find out if we have a stable directory and a name with a date
-
-    const fs::path patternPath(ret.out);
-    const auto patternDir = patternPath.parent_path();
-    const auto patternName = patternPath.filename();
-
-    const string patternDirStr = patternDir.string();
-    // `<dir>` and `<name>` are assumed to be stable, while `<date>` and `<pid>` are not
-    const bool dirStable = not patternDirStr.contains("<date>") && not patternDirStr.contains("<pid>");
-    const bool nameHasDate = patternName.string().contains("<date>");
-
-    // If present, expand `<date>`
-
-    const bool date = ret.out.contains("<date>");
-    if (date) {
-      // The functions `utcYmd` and `localYmd` must be static and stateless
-      ret.ymd = ret.utc ? utcYmd(time) : localYmd(time);
-      str::replaceIn(ret.out, {
-        { "<date>", fmt::format("{}", *ret.ymd) },
-      });
-    }
-
-    // Expand the remaining placeholders
-
-    str::replaceIn(ret.out, {
-      { "<dir>", dir.string() },
-      { "<name>", name },
-      { "<pid>", fmt::format("{}", pid) }
-    });
-
-    // Do sanity checks
-
-    if (ret.out.empty()) {
-      ROCKET_FAIL("Empty pattern");
-    }
-    // A pattern like `some/path/<date>-<pid>/name.log` works fine; however, in this case where the
-    // directory part of the pattern is unstable, we don’t support zipping older log files
-    if (ret.zip && not dirStable) {
-      ROCKET_FAIL("Can only zip older log files in the same directory");
-    }
-    // If the pattern is something like `some/path/name-<date>.log`, we can easily look for older zip files
-    if (ret.zip && not nameHasDate) {
-      ROCKET_FAIL("Can only zip older log files if a date is present in the name part of the pattern");
-    }
-
-    return ret;
-  }
+  /**
+   * This one is publicly available; tests may need it.
+   *
+   * @ThreadSafe
+   *
+   * @throw #rocket::InvalidState if @p pattern is invalid
+   */
+  static ExpandResult expand(
+    string_view pattern,
+    const fs::path& dir,
+    string_view name,
+    u32 pid,
+    const TimePoint& time);
 
   void flushOnExit() {
     if (out_ != nullptr) {
@@ -218,6 +173,7 @@ private:
     return process().name();
   }
 
+  // Must be static and stateless
   static std::chrono::year_month_day
   localYmd(const TimePoint& time) {
     auto localTime = rocket::chrono::zoned_time(rocket::chrono::current_zone(), time);
@@ -229,36 +185,16 @@ private:
    * Converts the file-name part of a log-output pattern to a regex pattern that is suitable for finding
    * sibling log files in the same directory.
    *
-   * This is needed to zip older log files.
+   * This is needed for zipping older log files.
    *
-   * @param name the file-name part of a log-output pattern; must not contain any file sepatators
+   * @ThreadSafe
+   *
+   * @param name the file-name part of a log-output pattern; must not contain any file separators
    * @return the regex
    */
-  static string
-  nameRegex(const fs::path& name) {
-    ROCKET_ASSERT(not name.has_parent_path(), "File-name pattern must not contain any file separators");
+  static string nameRegex(const fs::path& name);
 
-    // Expand `<dir>` and `<name>` to their real values, eliminate the hints `<utc>` and `<zip>`
-    string ret(name.string());
-    str::replaceIn(ret, {
-      { "<dir>", expandDir().string() },
-      { "<name>", expandName() },
-      { "<utc>", "" },
-      { "<zip>", "" }
-    });
-
-    // Escape for regex
-    ret = str::escape::escapeRegex(ret);
-
-    // Replace `<date>` and `<pid>` with regex patterns
-    str::replaceIn(ret, {
-      { "<date>", "(\\d{4}-\\d{2}-\\d{2})" }, // `YYYY-MM-DD`, and make this a group
-      { "<pid>", "\\d+" }, // One or more digits
-    });
-
-    return ret;
-  }
-
+  // Must be static and stateless
   static std::chrono::year_month_day
   utcYmd(const TimePoint& time) {
     auto utcDays = std::chrono::floor<std::chrono::days>(time);
@@ -288,13 +224,71 @@ private:
     zip_ = false;
   }
 
-  void zipOlderFiles(string_view pattern, const fs::path& current);
+  void zipOlderFiles(const fs::path& current);
 };
+
+Out::ExpandResult
+Out::expand(string_view pattern, const fs::path& dir, string_view name, u32 pid, const TimePoint& time) {
+  Out::ExpandResult ret;
+  ret.out = pattern;
+
+  // Detect and eliminate the hints
+
+  ret.utc = str::replaceIn(ret.out, "<utc>", "") > 0;
+  ret.zip = str::replaceIn(ret.out, "<zip>", "") > 0;
+
+  // Find out if we have a stable directory and a name with a date
+
+  const fs::path patternPath(ret.out);
+  const auto patternDir = patternPath.parent_path();
+  const auto patternName = patternPath.filename();
+
+  const string patternDirStr = patternDir.string();
+  // `<dir>` and `<name>` are assumed to be stable, while `<date>` and `<pid>` are not
+  const bool dirStable = not patternDirStr.contains("<date>") && not patternDirStr.contains("<pid>");
+  const bool nameHasDate = patternName.string().contains("<date>");
+
+  // If present, expand `<date>`
+
+  const bool date = ret.out.contains("<date>");
+  if (date) {
+    // The functions `utcYmd` and `localYmd` must be static and stateless
+    ret.ymd = ret.utc ? utcYmd(time) : localYmd(time);
+    str::replaceIn(ret.out, {
+      { "<date>", fmt::format("{}", *ret.ymd) },
+    });
+  }
+
+  // Expand the remaining placeholders
+
+  str::replaceIn(ret.out, {
+    { "<dir>", dir.string() },
+    { "<name>", name },
+    { "<pid>", fmt::format("{}", pid) }
+  });
+
+  // Do sanity checks
+
+  if (ret.out.empty()) {
+    ROCKET_FAIL("Empty pattern");
+  }
+  // A pattern like `some/path/<date>-<pid>/name.log` works fine; however, in this case where the
+  // directory part of the pattern is unstable, we don’t support zipping older log files
+  if (ret.zip && not dirStable) {
+    ROCKET_FAIL("Can only zip older log files in the same directory");
+  }
+  // If the pattern is something like `some/path/name-<date>.log`, we can easily look for older zip files
+  if (ret.zip && not nameHasDate) {
+    ROCKET_FAIL("Can only zip older log files if a date is present in the name part of the pattern");
+  }
+
+  return ret;
+}
 
 nio::Sink&
 Out::get(const TimePoint& time) {
   if (fileOut_ && ymd_) {
-    // Writing to a file, with a date in the pattern: has the date in the pattern changed?
+    // Writing to a file, with a date in the pattern: has the date changed?
     auto newYmd = utc_ ? utcYmd(time) : localYmd(time);
     if (newYmd != *ymd_) {
       // Date has changed: reassign the pattern, open new log file
@@ -303,6 +297,31 @@ Out::get(const TimePoint& time) {
   }
 
   return out_ != nullptr ? *out_ : *fileOut_;
+}
+
+string
+Out::nameRegex(const fs::path& name) {
+  ROCKET_ASSERT(not name.has_parent_path(), "File-name pattern must not contain any file separators");
+
+  // Expand `<dir>` and `<name>` to their real values, eliminate the hints `<utc>` and `<zip>`
+  string ret(name.string());
+  str::replaceIn(ret, {
+    { "<dir>", expandDir().string() },
+    { "<name>", expandName() },
+    { "<utc>", "" },
+    { "<zip>", "" }
+  });
+
+  // Escape for regex
+  ret = str::escape::escapeRegex(ret);
+
+  // Replace `<date>` and `<pid>` with regex patterns
+  str::replaceIn(ret, {
+    { "<date>", "(\\d{4}-\\d{2}-\\d{2})" }, // `YYYY-MM-DD`, and make this a group
+    { "<pid>", "\\d+" }, // One or more digits
+  });
+
+  return ret;
 }
 
 void
@@ -352,13 +371,13 @@ Out::set(string_view val, const TimePoint& time) {
 
   // Zip older files
   if (zip_) {
-    zipOlderFiles(val, path);
+    zipOlderFiles(path);
   }
 }
 
 void
-Out::zipOlderFiles(string_view pattern, const fs::path& current) {
-  string namePattern = fs::path(pattern).filename().string();
+Out::zipOlderFiles(const fs::path& current) {
+  string namePattern = fs::path(pattern_).filename().string();
   string nameRegex = Out::nameRegex(namePattern);
   std::regex nameRe(nameRegex);
 
@@ -961,7 +980,7 @@ const vector<cl::Option>& logOptions() { return CL_OPTIONS; }
 
 // Needs no mutex log, calls static functions only
 string
-expandLogOut(string_view val, const fs::path& dir, string_view name, i32 pid, const TimePoint& time) {
+expandLogOut(string_view val, const fs::path& dir, string_view name, u32 pid, const TimePoint& time) {
   if (val == "-" || val == "stdout" || val == "stderr") {
     return string(val);
   }

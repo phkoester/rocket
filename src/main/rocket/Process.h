@@ -228,7 +228,7 @@ struct Process {
    *
    * @return the process ID (PID)
    */
-  [[nodiscard]] i32 id() const;
+  [[nodiscard]] u32 id() const;
 
   /**
    * Outputs an information message.
