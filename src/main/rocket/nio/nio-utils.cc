@@ -50,7 +50,7 @@ isEndOfWord(string_view str, u64 pos) {
 bool
 isEndOfWord(nio::Source& in) {
   const u64 pos = in.tell();
-  const auto result = in.readCodePoint();
+  const auto result = nio::readCodePoint(in);
   rewindTo(in, pos); // Rewind immediately in any case
 
   if (not result) {
@@ -198,9 +198,8 @@ readChar(nio::Source& in, char c) {
 
 optional<string_view>
 readChoice(nio::Source& in, const set<string_view>& values, bool ignoreCase, bool endOfWord) {
-#ifndef ROCKET_NIO_NO_CONTIGUOUS_SOURCE
   if (const auto* contiguous = dynamic_cast<nio::ContiguousSource*>(&in); contiguous != nullptr) {
-    // Contiguous source
+    // Contiguous
 
     const auto remaining = contiguous->str();
     optional<string_view> ret; // The longest matching value so far
@@ -220,18 +219,93 @@ readChoice(nio::Source& in, const set<string_view>& values, bool ignoreCase, boo
       in.seek(static_cast<i64>(ret->size()), nio::SeekMode::cur);
     }
     return ret;
+  } else {
+    // Noncontiguous
+
+    return readLongestChoice(in, vector<string_view>(values.begin(), values.end()), ignoreCase, endOfWord);
   }
-#endif
+}
 
-  // Noncontiguous source
+ReadCodePointResult
+readCodePoint(nio::Source& in) {
+  if (const auto* contiguous = dynamic_cast<nio::ContiguousSource*>(&in); contiguous != nullptr) {
+    // Contiguous
 
-  return readLongestChoice(in, vector<string_view>(values.begin(), values.end()), ignoreCase, endOfWord);
+    const auto str = contiguous->str();
+    if (str.empty()) {
+      // `nextCodePoint` would throw for an empty string, which must not be mistaken for invalid UTF-8
+      return unexpected(Eof);
+    }
+
+    try {
+      u64 pos = 0;
+      auto ret = unicode::nextCodePoint(str, pos);
+      in.seek(static_cast<i64>(pos), SeekMode::cur);
+      return ret;
+    } catch (const exception&) {
+      return unexpected(InvalidUtf8);
+    }
+  } else {
+    // Noncontiguous
+
+    if (in.bad()) {
+      return unexpected(Bad);
+    }
+
+    // A source that cannot report its position, such as a pipe or `NullSource`, cannot go back either. It is
+    // not bad, though, so it is read all the same
+    const u64 initialPos = in.tell();
+
+    // Read first byte
+    char c; // NOLINT
+    if (in.read(c) != 1) {
+      return unexpected(in.bad() ? Bad : Eof);
+    }
+    string s;
+    s.push_back(c);
+
+    // The source may only advance on success, so rewind the position on failure, if possible. Seeking a
+    // source that cannot seek would not only fail, but might also discard buffered input
+    const auto failInvalidUtf8 = [&] {
+      if (initialPos != NPOS) {
+        in.seek(static_cast<i64>(initialPos), SeekMode::beg);
+      }
+      return unexpected(InvalidUtf8);
+    };
+
+    // Read subsequent bytes
+    const auto len = unicode::utf8::lengthFromByte(c, unicode::InvalidUnicodePolicy::Continue);
+    if (len == NPOS) {
+      return failInvalidUtf8(); // Neither a single byte nor a lead byte
+    }
+    for (u64 i = 0; i < len - 1; ++i) {
+      if (in.read(c) != 1) {
+        if (in.bad()) {
+          return unexpected(Bad);
+        }
+        return failInvalidUtf8(); // Truncated sequence: there was input, so this isn’t a plain EOF
+      }
+      s.push_back(c);
+    }
+
+    // Decode the code point
+    try {
+      u64 pos = 0;
+      auto ret = unicode::nextCodePoint(s, pos);
+      if (pos != s.size()) {
+        return failInvalidUtf8();
+      }
+      return ret;
+    } catch (const exception&) {
+      return failInvalidUtf8();
+    }
+  }
 }
 
 optional<string>
 readIdentifier(nio::Source& in) {
   const auto pos = in.tell();
-  const auto first = in.readCodePoint();
+  const auto first = readCodePoint(in);
   if (not first) {
     rewindTo(in, pos);
     return {};
@@ -246,7 +320,7 @@ readIdentifier(nio::Source& in) {
   string ret { static_cast<string>(cp) };
   while (true) {
     const auto pos = in.tell();
-    const auto next = in.readCodePoint();
+    const auto next = readCodePoint(in);
     if (not next) {
       rewindTo(in, pos);
       break;
@@ -265,40 +339,39 @@ bool
 readString(nio::Source& in, string_view str, bool ignoreCase, bool endOfWord) {
   ROCKET_CHECK(str, not str.empty(), "May not be empty");
 
-#ifndef ROCKET_NIO_NO_CONTIGUOUS_SOURCE
   if (const auto* contiguous = dynamic_cast<nio::ContiguousSource*>(&in); contiguous != nullptr) {
-    // Contiguous source
+    // Contiguous
 
-    if (not startsWith(contiguous->str(), str, ignoreCase)) {
+    const auto remaining = contiguous->str();
+    if (not startsWith(remaining, str, ignoreCase)) {
       return false;
     }
-    if (endOfWord && not isEndOfWord(contiguous->str(), str.size())) {
+    if (endOfWord && not isEndOfWord(remaining, str.size())) {
       return false;
     }
     in.seek(static_cast<i64>(str.size()), nio::SeekMode::cur);
     return true;
-  }
-#endif
+  } else {
+    // Noncontiguous
 
-  // Noncontiguous source
+    const auto pos = in.tell();
 
-  const auto pos = in.tell();
-
-  for (const char expected : str) {
-    char c; // NOLINT
-    if (in.read(c) != 1 ||
-      (ignoreCase ? tolower(static_cast<u8>(c)) != tolower(static_cast<u8>(expected)) : c != expected)) {
-      // EOF or mismatch: rewind
+    for (const char expected : str) {
+      char c; // NOLINT
+      if (in.read(c) != 1 ||
+        (ignoreCase ? tolower(static_cast<u8>(c)) != tolower(static_cast<u8>(expected)) : c != expected)) {
+        // EOF or mismatch: rewind
+        rewindTo(in, pos);
+        return false;
+      }
+    }
+    if (endOfWord && not isEndOfWord(in)) {
+      // No word boundary: rewind
       rewindTo(in, pos);
       return false;
     }
+    return true;
   }
-  if (endOfWord && not isEndOfWord(in)) {
-    // No word boundary: rewind
-    rewindTo(in, pos);
-    return false;
-  }
-  return true;
 }
 
 std::chrono::nanoseconds
@@ -335,9 +408,8 @@ readSubseconds(nio::Source& in) {
 
 optional<string>
 readUntilChar(nio::Source& in, char c) {
-#ifndef ROCKET_NIO_NO_CONTIGUOUS_SOURCE
   if (const auto* contiguous = dynamic_cast<nio::ContiguousSource*>(&in); contiguous != nullptr) {
-    // Contiguous source
+    // Contiguous
 
     const auto remaining = contiguous->str();
     const u64 pos = remaining.find(c);
@@ -346,66 +418,33 @@ readUntilChar(nio::Source& in, char c) {
     }
     in.seek(static_cast<i64>(pos + 1), nio::SeekMode::cur);
     return string(remaining.substr(0, pos));
-  }
-#endif
+  } else {
+    // Noncontiguous
 
-  // Noncontiguous source
+    const auto pos = in.tell();
 
-  const auto pos = in.tell();
+    string ret;
 
-  string ret;
-
-  while (true) {
-    char current; // NOLINT
-    if (in.read(current) != 1) {
-      break;
+    while (true) {
+      char current; // NOLINT
+      if (in.read(current) != 1) {
+        break;
+      }
+      if (current == c) {
+        return ret;
+      }
+      ret.push_back(current);
     }
-    if (current == c) {
-      return ret;
-    }
-    ret.push_back(current);
+
+    rewindTo(in, pos);
+    return {};
   }
-
-  rewindTo(in, pos);
-  return {};
-}
-
-string
-readWhilePredicate(nio::Source& in, const function<bool(char)>& predicate) {
-#ifndef ROCKET_NIO_NO_CONTIGUOUS_SOURCE
-  if (const auto* contiguous = dynamic_cast<nio::ContiguousSource*>(&in); contiguous != nullptr) {
-    // Contiguous source
-
-    const auto remaining = contiguous->str();
-    auto it = remaining.begin(), end = remaining.end();
-    while (it != end && predicate(*it)) {
-      ++it;
-    }
-    string ret(remaining.begin(), it);
-    in.seek(static_cast<i64>(ret.size()), nio::SeekMode::cur);
-    return ret;
-  }
-#endif
-
-  // Noncontiguous source
-  string ret;
-  while (true) {
-    const auto c = in.peek();
-    if (not c || not predicate(*c)) {
-      break;
-    }
-    char consumed; // NOLINT
-    in.read(consumed);
-    ret.push_back(consumed);
-  }
-  return ret;
 }
 
 optional<string>
 readUntilUnescapedChar(nio::Source& in, char c) {
-#ifndef ROCKET_NIO_NO_CONTIGUOUS_SOURCE
   if (const auto* contiguous = dynamic_cast<nio::ContiguousSource*>(&in); contiguous != nullptr) {
-    // Contiguous source
+    // Contiguous
 
     const auto remaining = contiguous->str();
     u64 pos = 0;
@@ -417,35 +456,61 @@ readUntilUnescapedChar(nio::Source& in, char c) {
       }
       if (not isEscaped(remaining, pos)) {
         in.seek(static_cast<i64>(pos + 1), nio::SeekMode::cur);
-        string ret(remaining.substr(0, pos));
-        return ret;
+        return string(remaining.substr(0, pos));
       }
       ++pos;
     }
+  } else {
+    // Noncontiguous
 
-    ROCKET_TERMINATE_UNREACHABLE_CODE();
-  }
-#endif
+    const auto pos = in.tell();
 
-  // Noncontiguous source
+    string ret;
 
-  const auto pos = in.tell();
-
-  string ret;
-
-  while (true) {
-    char current; // NOLINT
-    if (in.read(current) != 1) {
-      break;
+    while (true) {
+      char current; // NOLINT
+      if (in.read(current) != 1) {
+        break;
+      }
+      if (current == c && not isEscaped(ret, ret.size())) {
+        return ret;
+      }
+      ret.push_back(current);
     }
-    if (current == c && not isEscaped(ret, ret.size())) {
-      return ret;
-    }
-    ret.push_back(current);
-  }
 
-  rewindTo(in, pos);
-  return {};
+    rewindTo(in, pos);
+    return {};
+  }
+}
+
+string
+readWhilePredicate(nio::Source& in, const function<bool(char)>& predicate) {
+  if (const auto* contiguous = dynamic_cast<nio::ContiguousSource*>(&in); contiguous != nullptr) {
+    // Contiguous
+
+    const auto remaining = contiguous->str();
+    auto it = remaining.begin(), end = remaining.end();
+    while (it != end && predicate(*it)) {
+      ++it;
+    }
+    string ret(remaining.begin(), it);
+    in.seek(static_cast<i64>(ret.size()), nio::SeekMode::cur);
+    return ret;
+  } else {
+    // Noncontiguous
+
+    string ret;
+    while (true) {
+      const auto c = in.peek();
+      if (not c || not predicate(*c)) {
+        break;
+      }
+      char consumed; // NOLINT
+      in.read(consumed);
+      ret.push_back(consumed);
+    }
+    return ret;
+  }
 }
 
 void
@@ -510,43 +575,41 @@ bool
 skipUntilString(nio::Source& in, string_view str) {
   ROCKET_CHECK(str, not str.empty(), "May not be empty");
 
-#ifndef ROCKET_NIO_NO_CONTIGUOUS_SOURCE
   if (const auto* contiguous = dynamic_cast<nio::ContiguousSource*>(&in); contiguous != nullptr) {
-    // Contiguous source
+    // Contiguous
 
-    const auto remaining = contiguous->str();
-    const auto pos = remaining.find(str);
+    const auto pos = contiguous->str().find(str);
     if (pos == NPOS) {
       in.seek(0, nio::SeekMode::end);
       return false;
     }
     in.seek(static_cast<i64>(pos + str.size()), nio::SeekMode::cur);
     return true;
+  } else {
+    // Noncontiguous
+
+    // Compare the last `str.size()` characters. A partial match must not simply be discarded on a mismatch,
+    // because its tail may be the start of the actual match, as with "*/" in "**/" or "aab" in "aaab"
+
+    string window;
+
+    while (true) {
+      char c; // NOLINT
+      if (in.read(c) != 1) {
+        break;
+      }
+
+      window.push_back(c);
+      if (window.size() > str.size()) {
+        window.erase(window.begin());
+      }
+      if (window == str) {
+        return true;
+      }
+    }
+
+    return false;
   }
-#endif
-
-  // Noncontiguous source: compare the last `str.size()` characters. A partial match must not simply be
-  // discarded on a mismatch, because its tail may be the start of the actual match, as with "*/" in "**/" or
-  // "aab" in "aaab"
-
-  string window;
-
-  while (true) {
-    char c; // NOLINT
-    if (in.read(c) != 1) {
-      break;
-    }
-
-    window.push_back(c);
-    if (window.size() > str.size()) {
-      window.erase(window.begin());
-    }
-    if (window == str) {
-      return true;
-    }
-  }
-
-  return false;
 }
 
 } // namespace rocket::nio

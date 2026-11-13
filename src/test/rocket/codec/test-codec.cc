@@ -65,7 +65,7 @@ struct TracingConsumerImpl;
 
 template<>
 struct TracingConsumerImpl<DataType::Bool, bool> {
-  u64
+  bool
   consume(bool val, nio::StringSink& out) {
     return out.println("consuming boolean: {}", val);
   }
@@ -73,7 +73,7 @@ struct TracingConsumerImpl<DataType::Bool, bool> {
 
 template<typename C>
 struct TracingConsumerImpl<DataType::Char, C> {
-  u64
+  bool
   consume(C val, nio::StringSink& out) {
     const basic_string<C> str { val };
     return out.println("consuming character: '{}'", unicode::ConvertTo<char>::apply(str));
@@ -82,7 +82,7 @@ struct TracingConsumerImpl<DataType::Char, C> {
 
 template<typename I>
 struct TracingConsumerImpl<DataType::Integer, I> {
-  u64
+  bool
   consume(I val, nio::StringSink& out) {
     return out.println("consuming integer: {}", val);
   }
@@ -90,7 +90,7 @@ struct TracingConsumerImpl<DataType::Integer, I> {
 
 template<typename T>
 struct TracingConsumerImpl<DataType::String, T> {
-  u64
+  bool
   consume(const T& val, nio::StringSink& out) {
     return out.println("consuming string: {:?}", unicode::ConvertTo<char>::apply(val));
   }
@@ -101,11 +101,11 @@ struct TracingConsumerImpl<DataType::Optional, T> {
   using Elem = typename T::value_type;
   static constexpr auto ElemDataType = DataTypes<Elem>::Value;
 
-  u64
+  bool
   consume(const T& val, nio::StringSink& out) {
     auto ret = out.println("consuming optional: {}", val);
     if (val) {
-      ret += TracingConsumerImpl<ElemDataType, Elem>().consume(*val, out);
+      ret = TracingConsumerImpl<ElemDataType, Elem>().consume(*val, out) && ret;
     }
     return ret;
   }
@@ -115,7 +115,7 @@ struct TracingConsumerImpl<DataType::Optional, T> {
 template<typename T>
 struct TracingConsumerImpl<DataType::Tuple, T> {
   template<typename... Args>
-  u64
+  bool
   consume(const T& val, nio::StringSink& out, Args&&... args) {
     const auto size = std::tuple_size_v<T>;
     auto ret = out.println("consuming tuple: {}", size);
@@ -128,15 +128,17 @@ struct TracingConsumerImpl<DataType::Tuple, T> {
 private:
 
   template<typename Elem, typename... Args>
-  u64
-  consumeElem(u64& result, const Elem& elem, nio::StringSink& out, Args&&... args) {
+  bool
+  consumeElem(bool& result, const Elem& elem, nio::StringSink& out, Args&&... args) {
     if constexpr (fmt::is_formattable<Elem>::value) {
-      result += out.println("consuming tuple elem: {}", elem);
+      result = out.println("consuming tuple elem: {}", elem) && result;
     } else {
-      result += out.println("consuming tuple elem");
+      result = out.println("consuming tuple elem") && result;
     }
     constexpr auto ElemDataType = DataTypes<Elem>::Value;
-    result += TracingConsumerImpl<ElemDataType, Elem>().consume(elem, out, std::forward<Args>(args)...);
+    const bool elemResult =
+      TracingConsumerImpl<ElemDataType, Elem>().consume(elem, out, std::forward<Args>(args)...);
+    result = elemResult && result;
     return result;
   }
 };
@@ -146,12 +148,12 @@ struct TracingConsumerImpl<DataType::List, T> {
   using Elem = typename T::value_type;
   static constexpr auto ElemDataType = DataTypes<Elem>::Value;
 
-  u64
+  bool
   consume(const T& val, nio::StringSink& out) {
     const auto size = val.size();
     auto ret = out.println("consuming list: {}", size);
     for (const auto& elem : val) {
-      ret += TracingConsumerImpl<ElemDataType, Elem>().consume(elem, out);
+      ret = TracingConsumerImpl<ElemDataType, Elem>().consume(elem, out) && ret;
     }
     return ret;
   }
@@ -164,11 +166,11 @@ struct TracingConsumerImpl<DataType::Declared, T> {
   static constexpr auto ElemDataType = DataTypes<Elem>::Value;
   static_assert(ElemDataType == DataType::Tuple);
 
-  u64
+  bool
   consume(const T& val, nio::StringSink& out) {
     auto ret = out.println("consuming declared");
     // Here we have to pass an additional argument, the instance, to the tuple consumer
-    ret += TracingConsumerImpl<ElemDataType, Elem>().consume(refs, out, val);
+    ret = TracingConsumerImpl<ElemDataType, Elem>().consume(refs, out, val) && ret;
     return ret;
   }
 };
@@ -180,11 +182,11 @@ struct TracingConsumerImpl<DataType::Instance, T> {
   static constexpr auto ElemDataType = DataTypes<Elem>::Value;
   static_assert(ElemDataType == DataType::Tuple);
 
-  u64
+  bool
   consume(const T& val, nio::StringSink& out) {
     auto ret = out.println("consuming instance");
     // Here we have to pass an additional argument, the instance, to the tuple consumer
-    ret += TracingConsumerImpl<ElemDataType, Elem>().consume(refs, out, val.get());
+    ret = TracingConsumerImpl<ElemDataType, Elem>().consume(refs, out, val.get()) && ret;
     return ret;
   }
 };
@@ -195,10 +197,10 @@ struct TracingConsumerImpl<DataType::MemberRef, T> {
   static constexpr auto ElemDataType = DataTypes<Elem>::Value;
 
   template<typename C>
-  u64
+  bool
   consume(const T& val, nio::StringSink& out, const C& instance) {
     auto ret = out.println("consuming memberref: \"{}\"", val.name());
-    ret += TracingConsumerImpl<ElemDataType, Elem>().consume(val.get(instance), out);
+    ret = TracingConsumerImpl<ElemDataType, Elem>().consume(val.get(instance), out) && ret;
     return ret;
   }
 };
@@ -208,10 +210,10 @@ struct TracingConsumerImpl<DataType::VarRef, T> {
   using Elem = typename T::Type;
   static constexpr auto ElemDataType = DataTypes<Elem>::Value;
 
-  u64
+  bool
   consume(const T& val, nio::StringSink& out) {
     auto ret = out.println("consuming varref: \"{}\"", val.name());
-    ret += TracingConsumerImpl<ElemDataType, Elem>().consume(val.get(), out);
+    ret = TracingConsumerImpl<ElemDataType, Elem>().consume(val.get(), out) && ret;
     return ret;
   }
 };
@@ -325,7 +327,7 @@ struct TracingCodec : Codec<TracingConsumer, TracingProducer> {
   using Base = Codec<TracingConsumer, TracingProducer>;
 
   template<typename T>
-  u64
+  bool
   encode(const T& val, nio::StringSink& out) const {
     return Base::encode<T>(val, out);
   }
@@ -347,7 +349,7 @@ TEST(codec, TracingConsumerBool) {
   const TracingCodec codec;
   nio::StringSink out;
   [[maybe_unused]] auto result = codec.encode(true, out);
-  static_assert(same_as<decltype(result), u64>);
+  static_assert(same_as<decltype(result), bool>);
   codec.encode(false, out);
   EXPECT_EQ(out.str(),
     "consuming boolean: true\n"

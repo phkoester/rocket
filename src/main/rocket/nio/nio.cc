@@ -8,12 +8,17 @@
 #include "rocket/io/io.h"
 #include "rocket/unicode/unicode.h"
 
+#include <fmt/ostream.h>
+
 #include <algorithm>
 #include <cstring>
 #include <exception>
 #include <iostream>
+#include <iterator>
+#include <locale>
 #include <optional>
 #include <streambuf>
+#include <system_error>
 
 using namespace rocket;
 using namespace rocket::nio;
@@ -52,6 +57,36 @@ contiguousSeekPos(u64 pos, u64 size, i64 offset, SeekMode mode) {
   // of `base + offset`
   const auto forward = static_cast<u64>(offset);
   return forward >= size - base ? size : base + forward;
+}
+
+/// Returns the bytes of @p buf.
+span<const u8>
+bytes(const fmt::memory_buffer& buf) {
+  return { reinterpret_cast<const u8*>(buf.data()), buf.size() };
+}
+
+/// Formats into a buffer that keeps short messages on the stack.
+fmt::memory_buffer
+formatToBuffer(fmt::string_view fmt, fmt::format_args args) {
+  fmt::memory_buffer ret;
+  fmt::vformat_to(fmt::appender(ret), fmt, args);
+  return ret;
+}
+
+/// Formats into a buffer that keeps short messages on the stack.
+fmt::memory_buffer
+formatToBuffer(fmt::text_style style, fmt::string_view fmt, fmt::format_args args) {
+  fmt::memory_buffer ret;
+  fmt::vformat_to(fmt::appender(ret), style, fmt, args);
+  return ret;
+}
+
+/// Formats into a buffer that keeps short messages on the stack.
+fmt::memory_buffer
+formatToBuffer(const locale& locale, fmt::string_view fmt, fmt::format_args args) {
+  fmt::memory_buffer ret;
+  fmt::vformat_to(fmt::appender(ret), fmt::locale_ref(locale), fmt, args);
+  return ret;
 }
 
 /// Removes a trailing @c '\r' from @p line, which was read up to a @c '\n'.
@@ -156,6 +191,21 @@ Sink::writeln(string_view in) {
   return ret;
 }
 
+bool
+Sink::vprintln(fmt::string_view fmt, fmt::format_args args) {
+  return vprint(fmt, args) && write('\n') == 1;
+}
+
+bool
+Sink::vprintln(fmt::text_style style, fmt::string_view fmt, fmt::format_args args) {
+  return vprint(style, fmt, args) && write('\n') == 1;
+}
+
+bool
+Sink::vprintln(const locale& locale, fmt::string_view fmt, fmt::format_args args) {
+  return vprint(locale, fmt, args) && write('\n') == 1;
+}
+
 // `FileSink` -----------------------------------------------------------------------------------------------
 
 FileSink::FileSink(FILE* file) :
@@ -205,6 +255,87 @@ FileSink::handle() const {
   return ROCKET_FILENO(file_);
 }
 
+bool
+FileSink::vprint(fmt::string_view fmt, fmt::format_args args) {
+  if (bad()) {
+    return false;
+  }
+
+  try {
+    // Formats directly into the buffer of `file_`, if possible
+    fmt::vprint(file_, fmt, args);
+  } catch (const system_error&) {
+    return false;
+  }
+  return not bad();
+}
+
+bool
+FileSink::vprint(fmt::text_style style, fmt::string_view fmt, fmt::format_args args) {
+  if (bad()) {
+    return false;
+  }
+
+  try {
+    fmt::vprint(file_, style, fmt, args);
+  } catch (const system_error&) {
+    return false;
+  }
+  return not bad();
+}
+
+bool
+FileSink::vprint(const locale& locale, fmt::string_view fmt, fmt::format_args args) {
+  if (bad()) {
+    return false;
+  }
+
+  // {fmt} cannot print to a `FILE*` with a locale
+  const auto buf = formatToBuffer(locale, fmt, args);
+  return fwrite(buf.data(), 1, buf.size(), file_) == buf.size();
+}
+
+bool
+FileSink::vprintln(fmt::string_view fmt, fmt::format_args args) {
+  if (bad()) {
+    return false;
+  }
+
+  try {
+    // Writes message and line feed at once
+    fmt::vprintln(file_, fmt, args);
+  } catch (const system_error&) {
+    return false;
+  }
+  return not bad();
+}
+
+bool
+FileSink::vprintln(fmt::text_style style, fmt::string_view fmt, fmt::format_args args) {
+  if (bad()) {
+    return false;
+  }
+
+  try {
+    fmt::vprintln(file_, style, fmt, args);
+  } catch (const system_error&) {
+    return false;
+  }
+  return not bad();
+}
+
+bool
+FileSink::vprintln(const locale& locale, fmt::string_view fmt, fmt::format_args args) {
+  if (bad()) {
+    return false;
+  }
+
+  // {fmt} cannot print to a `FILE*` with a locale
+  auto buf = formatToBuffer(locale, fmt, args);
+  buf.push_back('\n');
+  return fwrite(buf.data(), 1, buf.size(), file_) == buf.size();
+}
+
 u64
 FileSink::write(span<const u8> in) {
   if (bad()) {
@@ -222,6 +353,27 @@ FileSink::write(span<const u8> in) {
 SpanSink::SpanSink(span<char> out) :
   out_(out) {}
 
+bool
+SpanSink::vprint(fmt::string_view fmt, fmt::format_args args) {
+  // Format directly into the span. `result.size` is the untruncated size
+  const u64 available = out_.size() - pos_;
+  const auto result = fmt::vformat_to_n(out_.data() + pos_, available, fmt, args);
+  pos_ += min(available, static_cast<u64>(result.size));
+  return result.size <= available;
+}
+
+bool
+SpanSink::vprint(fmt::text_style style, fmt::string_view fmt, fmt::format_args args) {
+  const auto buf = formatToBuffer(style, fmt, args);
+  return write(bytes(buf)) == buf.size();
+}
+
+bool
+SpanSink::vprint(const locale& locale, fmt::string_view fmt, fmt::format_args args) {
+  const auto buf = formatToBuffer(locale, fmt, args);
+  return write(bytes(buf)) == buf.size();
+}
+
 u64
 SpanSink::write(span<const u8> in) {
   const u64 available = out_.size() - pos_;
@@ -232,6 +384,7 @@ SpanSink::write(span<const u8> in) {
   }
   return ret;
 }
+
 
 // `StreamSink` ---------------------------------------------------------------------------------------------
 
@@ -263,13 +416,90 @@ StreamSink::handle() const {
   return -1;
 }
 
+bool
+StreamSink::vprint(fmt::string_view fmt, fmt::format_args args) {
+  if (bad()) {
+    return false;
+  }
+
+  try {
+    fmt::vprint(os_, fmt, args);
+  } catch (const system_error&) {
+    return false;
+  }
+  return static_cast<bool>(os_);
+}
+
+bool
+StreamSink::vprint(fmt::text_style style, fmt::string_view fmt, fmt::format_args args) {
+  if (bad()) {
+    return false;
+  }
+
+  // {fmt} cannot print to a `std::ostream` with a text style
+  const auto buf = formatToBuffer(style, fmt, args);
+  os_.write(buf.data(), static_cast<streamsize>(buf.size()));
+  return static_cast<bool>(os_);
+}
+
+bool
+StreamSink::vprint(const locale& locale, fmt::string_view fmt, fmt::format_args args) {
+  if (bad()) {
+    return false;
+  }
+
+  // {fmt} cannot print to a `std::ostream` with a locale
+  const auto buf = formatToBuffer(locale, fmt, args);
+  os_.write(buf.data(), static_cast<streamsize>(buf.size()));
+  return static_cast<bool>(os_);
+}
+
+bool
+StreamSink::vprintln(fmt::string_view fmt, fmt::format_args args) {
+  if (bad()) {
+    return false;
+  }
+
+  // {fmt} cannot print a line to a `std::ostream` without formatting into a temporary string, so format
+  // message and line feed into a buffer and write both at once
+  auto buf = formatToBuffer(fmt, args);
+  buf.push_back('\n');
+  os_.write(buf.data(), static_cast<streamsize>(buf.size()));
+  return static_cast<bool>(os_);
+}
+
+bool
+StreamSink::vprintln(fmt::text_style style, fmt::string_view fmt, fmt::format_args args) {
+  if (bad()) {
+    return false;
+  }
+
+  auto buf = formatToBuffer(style, fmt, args);
+  buf.push_back('\n');
+  os_.write(buf.data(), static_cast<streamsize>(buf.size()));
+  return static_cast<bool>(os_);
+}
+
+bool
+StreamSink::vprintln(const locale& locale, fmt::string_view fmt, fmt::format_args args) {
+  if (bad()) {
+    return false;
+  }
+
+  auto buf = formatToBuffer(locale, fmt, args);
+  buf.push_back('\n');
+  os_.write(buf.data(), static_cast<streamsize>(buf.size()));
+  return static_cast<bool>(os_);
+}
+
 u64
 StreamSink::write(span<const u8> in) {
   if (bad()) {
     return 0;
   }
 
-  // Through `ostream::write`, not the stream buffer, so that a failure sets `badbit` and `unitbuf` is honored
+  // Through `ostream::write`, not the stream buffer, so that a failure sets `badbit` and `unitbuf` is
+  // honored
   os_.write(reinterpret_cast<const char*>(in.data()), static_cast<streamsize>(in.size()));
   return os_ ? in.size() : 0;
 }
@@ -279,14 +509,27 @@ StreamSink::write(span<const u8> in) {
 StringSink::StringSink(string& ref) :
   ptr_(&ref) {}
 
+bool
+StringSink::vprint(fmt::string_view fmt, fmt::format_args args) {
+  fmt::vformat_to(back_inserter(target()), fmt, args);
+  return true;
+}
+
+bool
+StringSink::vprint(fmt::text_style style, fmt::string_view fmt, fmt::format_args args) {
+  fmt::vformat_to(back_inserter(target()), style, fmt, args);
+  return true;
+}
+
+bool
+StringSink::vprint(const locale& locale, fmt::string_view fmt, fmt::format_args args) {
+  fmt::vformat_to(back_inserter(target()), fmt::locale_ref(locale), fmt, args);
+  return true;
+}
+
 u64
 StringSink::write(span<const u8> in) {
-  const string_view view(reinterpret_cast<const char*>(in.data()), in.size());
-  if (ptr_ != nullptr) {
-    ptr_->append(view);
-  } else {
-    owned_.append(view);
-  }
+  target().append(reinterpret_cast<const char*>(in.data()), in.size());
   return in.size();
 }
 
@@ -313,61 +556,6 @@ Source::readAll() {
   return ret;
 }
 
-ReadCodePointResult
-Source::readCodePoint() {
-  if (bad()) {
-    return unexpected(Bad);
-  }
-
-  // A source that cannot report its position, such as a pipe or `NullSource`, cannot go back either. It is
-  // not bad, though, so it is read all the same
-  const u64 initialPos = tell();
-
-  // Read first byte
-  char c; // NOLINT
-  if (read(c) != 1) {
-    return unexpected(bad() ? Bad : Eof);
-  }
-  string s;
-  s.push_back(c);
-
-  // The source may only advance on success, so rewind the position on failure, if possible. Seeking a source
-  // that cannot seek would not only fail, but might also discard buffered input
-  const auto failInvalidUtf8 = [&] {
-    if (initialPos != NPOS) {
-      seek(static_cast<i64>(initialPos), SeekMode::beg);
-    }
-    return unexpected(InvalidUtf8);
-  };
-
-  // Read subsequent bytes
-  const auto len = unicode::utf8::lengthFromByte(c, unicode::InvalidUnicodePolicy::Continue);
-  if (len == NPOS) {
-    return failInvalidUtf8(); // Neither a single byte nor a lead byte
-  }
-  for (u64 i = 0; i < len - 1; ++i) {
-    if (read(c) != 1) {
-      if (bad()) {
-        return unexpected(Bad);
-      }
-      return failInvalidUtf8(); // Truncated sequence: there was input, so this isn’t a plain EOF
-    }
-    s.push_back(c);
-  }
-
-  // Decode the code point
-  try {
-    u64 pos = 0;
-    auto ret = unicode::nextCodePoint(s, pos);
-    if (pos != s.size()) {
-      return failInvalidUtf8();
-    }
-    return ret;
-  } catch (const exception&) {
-    return failInvalidUtf8();
-  }
-}
-
 string
 Source::readString() {
   if (bad()) {
@@ -390,33 +578,6 @@ Source::readString() {
   return ret;
 }
 
-string
-Source::readln() {
-  if (bad()) {
-    return {};
-  }
-
-  string ret;
-
-  bool lf = false;
-  while (true) {
-    char c; // NOLINT
-    if (read(c) != 1) {
-      break;
-    }
-    if (c == '\n') {
-      lf = true;
-      break;
-    }
-    ret.push_back(c);
-  }
-
-  if (lf) {
-    removeTrailingCr(ret);
-  }
-  return ret;
-}
-
 // `ContiguousSource` ---------------------------------------------------------------------------------------
 
 optional<char>
@@ -430,9 +591,6 @@ ContiguousSource::peek() {
 
 string
 ContiguousSource::readln() {
-#ifdef ROCKET_NIO_NO_CONTIGUOUS_SOURCE
-  return Source::readln();
-#else
   auto str = this->str();
   auto pos = str.find('\n');
 
@@ -449,29 +607,6 @@ ContiguousSource::readln() {
   }
   string ret(str);
   return ret;
-#endif // ROCKET_NIO_NO_CONTIGUOUS_SOURCE
-}
-
-ReadCodePointResult
-ContiguousSource::readCodePoint() {
-#ifdef ROCKET_NIO_NO_CONTIGUOUS_SOURCE
-  return Source::readCodePoint();
-#else
-  const auto str = this->str();
-  if (str.empty()) {
-    // `nextCodePoint` would throw for an empty string, which must not be mistaken for invalid UTF-8
-    return unexpected(Eof);
-  }
-
-  try {
-    u64 pos = 0;
-    auto ret = unicode::nextCodePoint(str, pos);
-    seek(static_cast<i64>(pos), SeekMode::cur);
-    return ret;
-  } catch (const exception&) {
-    return unexpected(InvalidUtf8);
-  }
-#endif // ROCKET_NIO_NO_CONTIGUOUS_SOURCE
 }
 
 // `FileSource` ---------------------------------------------------------------------------------------------

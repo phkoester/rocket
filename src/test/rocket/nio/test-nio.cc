@@ -7,6 +7,7 @@
 #include "rocket/scan.h"
 #include "rocket/filesystem/filesystem.h"
 #include "rocket/log/log.h"
+#include "rocket/nio/nio-utils.h"
 #include "rocket/nio/nio.h"
 
 #include <fstream>
@@ -54,7 +55,7 @@ forEachSource(string_view input, Fn fn) {
 
 void
 expectCodePoint(Source& in, char32 expected, u64 expectedTell) {
-  const auto result = in.readCodePoint();
+  const auto result = readCodePoint(in);
   ASSERT_TRUE(result.has_value());
   EXPECT_EQ(static_cast<char32>(*result), expected);
   EXPECT_EQ(in.tell(), expectedTell);
@@ -62,7 +63,7 @@ expectCodePoint(Source& in, char32 expected, u64 expectedTell) {
 
 void
 expectCodePointError(Source& in, ReadCodePointError expected) {
-  const auto result = in.readCodePoint();
+  const auto result = readCodePoint(in);
   ASSERT_FALSE(result.has_value());
   EXPECT_EQ(result.error(), expected);
 }
@@ -251,11 +252,11 @@ TEST(nio, StringSource) {
 
 TEST(nio, StringSourceReadln) {
   StringSource in("First line\r\nSecond line\n");
-  string line = in.Source::readln();
+  string line = in.readln();
   EXPECT_EQ(line, "First line");
-  line = in.Source::readln();
+  line = in.readln();
   EXPECT_EQ(line, "Second line");
-  line = in.Source::readln();
+  line = in.readln();
   EXPECT_EQ(line, "");
 }
 

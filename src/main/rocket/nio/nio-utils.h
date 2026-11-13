@@ -9,10 +9,23 @@
 #include "rocket/nio/nio.h"
 
 #include <chrono>
+#include <expected>
 #include <functional>
 #include <set>
 
 namespace rocket::nio {
+
+// `ReadCodePointError`, `ReadCodePointResult` --------------------------------------------------------------
+
+/// The error type for #rocket::nio::readCodePoint.
+enum ReadCodePointError : u8 {
+  Bad, ///< Bad I/O device
+  Eof, ///< End of file
+  InvalidUtf8, ///< Invalid UTF-8 byte sequence
+};
+
+/// The result type with #rocket::nio::ReadCodePointError.
+using ReadCodePointResult = std::expected<unicode::CodePoint, ReadCodePointError>;
 
 // Functions ------------------------------------------------------------------------------------------------
 
@@ -69,6 +82,22 @@ void expectComma(nio::Source& in);
   const std::set<std::string_view>& values,
   bool ignoreCase = false,
   bool endOfWord = true);
+
+/**
+ * Tries to read a valid code point from a source, advances the source only on success.
+ *
+ * The result is #rocket::nio::Eof only if no bytes are left. A truncated or otherwise malformed sequence
+ * yields #rocket::nio::InvalidUtf8. An I/O error yields #rocket::nio::Bad.
+ *
+ * A source that cannot report its position, as one over a pipe, cannot go back either. It still advances
+ * over the bytes read on failure.
+ *
+ * There is an optimization for contiguous sources.
+ *
+ * @param in the source to read from
+ * @return a code point if one was read, an error otherwise
+ */
+[[nodiscard]] ReadCodePointResult readCodePoint(nio::Source& in);
 
 /**
  * Reads a C++ identifier from @p in, advances the source only on success.
@@ -142,7 +171,8 @@ void expectComma(nio::Source& in);
  * Reads characters from a source while @p predicate yields `true`, advances the source only as long as the
  * predicate holds.
  *
- * This also works with sources that cannot seek, such as pipes.
+ * This also works with sources that cannot seek, such as pipes. There is an optimization for contiguous
+ * sources.
  *
  * @param in the source to read from
  * @param predicate the predicate to call
@@ -162,10 +192,7 @@ std::string readWhilePredicate(nio::Source& in, const std::function<bool(char)>&
 template<typename T>
 [[nodiscard]] std::optional<T>
 scan(nio::Source& in) {
-#ifndef ROCKET_NIO_NO_CONTIGUOUS_SOURCE
   if (const auto* contiguous = dynamic_cast<nio::ContiguousSource*>(&in); contiguous != nullptr) {
-    // Contiguous source
-
     const auto str = contiguous->str();
     auto result = scn::scan<T>(str, "{}");
     if (not result) {
@@ -173,18 +200,15 @@ scan(nio::Source& in) {
     }
     in.seek(result->begin() - str.begin(), nio::SeekMode::cur);
     return result->value();
+  } else {
+    std::istream& is = in.istream();
+    auto result = scn::scan<T>(is, "{}");
+    if (not result) {
+      return {};
+    }
+    in.seek(io::tell(is), nio::SeekMode::beg);
+    return result->value();
   }
-#endif
-
-  // Noncontiguous source
-
-  std::istream& is = in.istream();
-  auto result = scn::scan<T>(is, "{}");
-  if (not result) {
-    return {};
-  }
-  in.seek(io::tell(is), nio::SeekMode::beg);
-  return result->value();
 }
 
 /**
@@ -199,10 +223,7 @@ scan(nio::Source& in) {
 template<typename I>
 [[nodiscard]] std::optional<I>
 scanCodePoint(nio::Source& in) {
-#ifndef ROCKET_NIO_NO_CONTIGUOUS_SOURCE
   if (const auto* contiguous = dynamic_cast<nio::ContiguousSource*>(&in); contiguous != nullptr) {
-    // Contiguous source
-
     const auto str = contiguous->str();
     auto result = scn::scan<I>(str, "U+{:X}");
     if (not result) {
@@ -210,16 +231,15 @@ scanCodePoint(nio::Source& in) {
     }
     in.seek(result->begin() - str.begin(), nio::SeekMode::cur);
     return result->value();
+  } else {
+    std::istream& is = in.istream();
+    auto result = scn::scan<I>(is, "U+{:X}");
+    if (not result) {
+      return {};
+    }
+    in.seek(io::tell(is), nio::SeekMode::beg);
+    return result->value();
   }
-#endif
-
-  std::istream& is = in.istream();
-  auto result = scn::scan<I>(is, "U+{:X}");
-  if (not result) {
-    return {};
-  }
-  in.seek(io::tell(is), nio::SeekMode::beg);
-  return result->value();
 }
 
 /**
@@ -234,10 +254,7 @@ scanCodePoint(nio::Source& in) {
 template<typename I>
 [[nodiscard]] std::optional<I>
 scanInteger(nio::Source& in) {
-#ifndef ROCKET_NIO_NO_CONTIGUOUS_SOURCE
   if (const auto* contiguous = dynamic_cast<nio::ContiguousSource*>(&in); contiguous != nullptr) {
-    // Contiguous source
-
     const auto str = contiguous->str();
     // Setting `base` to 0 detects the base from the input
     auto result = scn::scan_int<I>(str, 0);
@@ -246,18 +263,15 @@ scanInteger(nio::Source& in) {
     }
     in.seek(result->begin() - str.begin(), nio::SeekMode::cur);
     return result->value();
+  } else {
+    std::istream& is = in.istream();
+    auto result = scn::scan<I>(is, "{:i}");
+    if (not result) {
+      return {};
+    }
+    in.seek(io::tell(is), nio::SeekMode::beg);
+    return result->value();
   }
-#endif
-
-  // Noncontiguous source
-
-  std::istream& is = in.istream();
-  auto result = scn::scan<I>(is, "{:i}");
-  if (not result) {
-    return {};
-  }
-  in.seek(io::tell(is), nio::SeekMode::beg);
-  return result->value();
 }
 
 /**
@@ -272,8 +286,8 @@ void skip(nio::Source& in, bool cComments, bool shellComments);
 /**
  * Skips until an expected string is found, advances the source in any case.
  *
- * If the expected string @p s is not found, the source is advanced to its end. Otherwise, the source is
- * advanced until after the first occurrence of @p s.
+ * If the expected string @p str is not found, the source is advanced to its end. Otherwise, the source is
+ * advanced until after the first occurrence of @p str.
  *
  * There is an optimization for contiguous sources.
  *

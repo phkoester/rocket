@@ -97,13 +97,12 @@ struct Sink : Device {
    *
    * @param fmt the format string
    * @param args the arguments
-   * @return the number of bytes written
+   * @return if the operation succeeded
    */
   template<typename... T>
-  u64
+  bool
   print(fmt::format_string<T...> fmt, T&&... args) {
-    auto formatted = fmt::format(fmt, std::forward<T>(args)...);
-    return write(formatted);
+    return vprint(fmt.get(), fmt::make_format_args(args...));
   }
 
   /**
@@ -112,13 +111,12 @@ struct Sink : Device {
    * @param style the style to use
    * @param fmt the format string
    * @param args the arguments
-   * @return the number of bytes written
+   * @return if the operation succeeded
    */
   template<typename... T>
-  u64
+  bool
   print(fmt::text_style style, fmt::format_string<T...> fmt, T&&... args) {
-    auto formatted = fmt::format(style, fmt, std::forward<T>(args)...);
-    return write(formatted);
+    return vprint(style, fmt.get(), fmt::make_format_args(args...));
   }
 
   /**
@@ -127,13 +125,12 @@ struct Sink : Device {
    * @param locale the locale
    * @param fmt the format string
    * @param args the arguments
-   * @return the number of bytes written
+   * @return if the operation succeeded
    */
   template<typename... T>
-  u64
+  bool
   print(const std::locale& locale, fmt::format_string<T...> fmt, T&&... args) {
-    auto formatted = fmt::format(locale, fmt, std::forward<T>(args)...);
-    return write(formatted);
+    return vprint(locale, fmt.get(), fmt::make_format_args(args...));
   }
 
   /**
@@ -141,14 +138,26 @@ struct Sink : Device {
    *
    * @param fmt the format string
    * @param args the arguments
-   * @return the number of bytes written
+   * @return if the operation succeeded
    */
   template<typename... T>
-  u64
+  bool
   println(fmt::format_string<T...> fmt, T&&... args) {
-    auto ret = print(fmt, std::forward<T>(args)...);
-    ret += write('\n');
-    return ret;
+    return vprintln(fmt.get(), fmt::make_format_args(args...));
+  }
+
+  /**
+   * Prints a formatted message and a line feed to the sink.
+   *
+   * @param style the style to use
+   * @param fmt the format string
+   * @param args the arguments
+   * @return if the operation succeeded
+   */
+  template<typename... T>
+  bool
+  println(fmt::text_style style, fmt::format_string<T...> fmt, T&&... args) {
+    return vprintln(style, fmt.get(), fmt::make_format_args(args...));
   }
 
   /**
@@ -157,15 +166,80 @@ struct Sink : Device {
    * @param locale the locale
    * @param fmt the format string
    * @param args the arguments
-   * @return the number of bytes written
+   * @return if the operation succeeded
    */
   template<typename... T>
-  u64
+  bool
   println(const std::locale& locale, fmt::format_string<T...> fmt, T&&... args) {
-    auto ret = print(locale, fmt, std::forward<T>(args)...);
-    ret += write('\n');
-    return ret;
+    return vprintln(locale, fmt.get(), fmt::make_format_args(args...));
   }
+
+  /**
+   * Prints a formatted message to the sink. This is the type-erased backend of #print.
+   *
+   * @param fmt the format string
+   * @param args the arguments
+   * @return if the operation succeeded
+   */
+  virtual bool vprint(fmt::string_view fmt, fmt::format_args args) = 0;
+
+  /**
+   * Prints a formatted message to the sink. This is the type-erased backend of #print.
+   *
+   * @param style the style to use
+   * @param fmt the format string
+   * @param args the arguments
+   * @return if the operation succeeded
+   */
+  virtual bool vprint(fmt::text_style style, fmt::string_view fmt, fmt::format_args args) = 0;
+
+  /**
+   * Prints a formatted message to the sink. This is the type-erased backend of #print.
+   *
+   * @param locale the locale
+   * @param fmt the format string
+   * @param args the arguments
+   * @return if the operation succeeded
+   */
+  virtual bool vprint(const std::locale& locale, fmt::string_view fmt, fmt::format_args args) = 0;
+
+  /**
+   * Prints a formatted message and a line feed to the sink. This is the type-erased backend of #println.
+   *
+   * The default implementation calls #vprint and writes a line feed. Sinks that can print both at once
+   * override this.
+   *
+   * @param fmt the format string
+   * @param args the arguments
+   * @return if the operation succeeded
+   */
+  virtual bool vprintln(fmt::string_view fmt, fmt::format_args args);
+
+  /**
+   * Prints a formatted message and a line feed to the sink. This is the type-erased backend of #println.
+   *
+   * The default implementation calls #vprint and writes a line feed. Sinks that can print both at once
+   * override this.
+   *
+   * @param style the style to use
+   * @param fmt the format string
+   * @param args the arguments
+   * @return if the operation succeeded
+   */
+  virtual bool vprintln(fmt::text_style style, fmt::string_view fmt, fmt::format_args args);
+
+  /**
+   * Prints a formatted message and a line feed to the sink. This is the type-erased backend of #println.
+   *
+   * The default implementation calls #vprint and writes a line feed. Sinks that can print both at once
+   * override this.
+   *
+   * @param locale the locale
+   * @param fmt the format string
+   * @param args the arguments
+   * @return if the operation succeeded
+   */
+  virtual bool vprintln(const std::locale& locale, fmt::string_view fmt, fmt::format_args args);
 
   /**
    * Writes a single character to the sink.
@@ -304,6 +378,18 @@ struct FileSink : Sink {
 
   [[nodiscard]] i32 handle() const override;
 
+  bool vprint(fmt::string_view fmt, fmt::format_args args) override;
+
+  bool vprint(fmt::text_style style, fmt::string_view fmt, fmt::format_args args) override;
+
+  bool vprint(const std::locale& locale, fmt::string_view fmt, fmt::format_args args) override;
+
+  bool vprintln(fmt::string_view fmt, fmt::format_args args) override;
+
+  bool vprintln(fmt::text_style style, fmt::string_view fmt, fmt::format_args args) override;
+
+  bool vprintln(const std::locale& locale, fmt::string_view fmt, fmt::format_args args) override;
+
   u64 write(std::span<const u8> in) override;
 
 ROCKET_TEST_PRIVATE:
@@ -330,7 +416,19 @@ struct NullSink : Sink {
 
   [[nodiscard]] i32 handle() const override { return -1; }
 
-  u64 write([[maybe_unused]] std::span<const u8> in) override { return 0; }
+  bool vprint(fmt::string_view, fmt::format_args) override { return true; }
+
+  bool vprint(fmt::text_style, fmt::string_view, fmt::format_args) override { return true; }
+
+  bool vprint(const std::locale&, fmt::string_view, fmt::format_args) override { return true; }
+
+  bool vprintln(fmt::string_view, fmt::format_args) override { return true; }
+
+  bool vprintln(fmt::text_style, fmt::string_view, fmt::format_args) override { return true; }
+
+  bool vprintln(const std::locale&, fmt::string_view, fmt::format_args) override { return true; }
+
+  u64 write(std::span<const u8>) override { return 0; }
 };
 
 // `SpanSink` -----------------------------------------------------------------------------------------------
@@ -355,6 +453,12 @@ struct SpanSink : Sink {
   bool flush() override { return true; }
 
   [[nodiscard]] i32 handle() const override { return -1; }
+
+  bool vprint(fmt::string_view fmt, fmt::format_args args) override;
+
+  bool vprint(fmt::text_style style, fmt::string_view fmt, fmt::format_args args) override;
+
+  bool vprint(const std::locale& locale, fmt::string_view fmt, fmt::format_args args) override;
 
   u64 write(std::span<const u8> in) override;
 
@@ -386,6 +490,18 @@ struct StreamSink : Sink {
   bool flush() override;
 
   [[nodiscard]] i32 handle() const override;
+
+  bool vprint(fmt::string_view fmt, fmt::format_args args) override;
+
+  bool vprint(fmt::text_style style, fmt::string_view fmt, fmt::format_args args) override;
+
+  bool vprint(const std::locale& locale, fmt::string_view fmt, fmt::format_args args) override;
+
+  bool vprintln(fmt::string_view fmt, fmt::format_args args) override;
+
+  bool vprintln(fmt::text_style style, fmt::string_view fmt, fmt::format_args args) override;
+
+  bool vprintln(const std::locale& locale, fmt::string_view fmt, fmt::format_args args) override;
 
   u64 write(std::span<const u8> in) override;
 
@@ -432,25 +548,22 @@ struct StringSink : Sink {
    */
   [[nodiscard]] const std::string& str() const { return ptr_ != nullptr ? *ptr_ : owned_; }
 
+  bool vprint(fmt::string_view fmt, fmt::format_args args) override;
+
+  bool vprint(fmt::text_style style, fmt::string_view fmt, fmt::format_args args) override;
+
+  bool vprint(const std::locale& locale, fmt::string_view fmt, fmt::format_args args) override;
+
   u64 write(std::span<const u8> in) override;
 
 private:
 
+  /// Returns the string to write to (either referenced or owned).
+  std::string& target() { return ptr_ != nullptr ? *ptr_ : owned_; }
+
   std::string* ptr_ = nullptr;
   std::string owned_;
 };
-
-// `ReadCodePointError`, `ReadCodePointResult` --------------------------------------------------------------
-
-/// The error type for #rocket::nio::Source#readCodePoint.
-enum ReadCodePointError : u8 {
-  Bad, ///< Bad I/O device
-  Eof, ///< End of file
-  InvalidUtf8, ///< Invalid UTF-8 byte sequence
-};
-
-/// The result type with #rocket::nio::ReadCodePointError.
-using ReadCodePointResult = std::expected<unicode::CodePoint, ReadCodePointError>;
 
 // `SeekMode` -----------------------------------------------------------------------------------------------
 
@@ -516,7 +629,7 @@ struct Source : Device {
    *
    * @return the line read, not containing the trailing @c '\\r' or @c '\\n'
    */
-  virtual std::string readln();
+  virtual std::string readln() = 0;
 
   /**
    * Reads all available bytes from a source into a vector.
@@ -524,19 +637,6 @@ struct Source : Device {
    * @return the bytes read
    */
   std::vector<u8> readAll();
-
-  /**
-   * Tries to read a valid code point from a source, advances the source only on success.
-   *
-   * The result is #rocket::nio::Eof only if no bytes are left. A truncated or otherwise malformed sequence
-   * yields #rocket::nio::InvalidUtf8. An I/O error yields #rocket::nio::Bad.
-   *
-   * A source that cannot report its position, as one over a pipe, cannot go back either. It still advances
-   * over the bytes read on failure.
-   *
-   * @return a code point if one was read, an error otherwise
-   */
-  virtual ReadCodePointResult readCodePoint();
 
   /**
    * Reads all available characters from a source into a string.
@@ -597,8 +697,6 @@ struct ContiguousSource : Source {
   std::optional<char> peek() override;
 
   std::string readln() override;
-
-  ReadCodePointResult readCodePoint() override;
 
   /**
    * Returns the string available in the contiguous source.
@@ -685,12 +783,11 @@ struct NullSource : Source {
 
   std::optional<char> peek() override { return std::nullopt; }
 
-  u64 read([[maybe_unused]] std::span<u8> out) override { return 0; }
+  u64 read(std::span<u8>) override { return 0; }
 
-  bool
-  seek([[maybe_unused]] i64 offset, [[maybe_unused]] SeekMode mode) override {
-    return false;
-  }
+  std::string readln() override { return {}; }
+
+  bool seek(i64, SeekMode) override { return false; }
 
   [[nodiscard]] u64 tell() override { return NPOS; }
 
