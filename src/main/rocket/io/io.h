@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include "rocket/io/spanstream.h"
+#include "rocket/rocket.h"
 
 #include <cstdio>
 #include <filesystem>
@@ -131,6 +131,21 @@ FILE* open(const std::filesystem::path& path, std::string_view modes);
 bool seek(FILE* file, i64 offset, i32 origin);
 
 /**
+ * Seeks to the specified position in the stream referenced by @p file, like #seek, but with its seekability
+ * known.
+ *
+ * Checking if a stream is #seekable takes a system call. A caller that seeks often can check once, e.g.,
+ * when it starts using the stream, and pass the result here.
+ *
+ * @param file a `FILE` pointer, may not be null
+ * @param offset the offset to seek to
+ * @param origin the origin to seek from
+ * @param seekable whether @p file is #seekable
+ * @return if the operation succeeded. On failure, `errno` is set
+ */
+bool seek(FILE* file, i64 offset, i32 origin, bool seekable);
+
+/**
  * Checks if the stream referenced by @p file is seekable.
  *
  * A stream is seekable if it is backed by a regular file (or, on POSIX systems, a block device). Pipes,
@@ -160,6 +175,19 @@ bool seekable(FILE* file);
  */
 u64 tell(FILE* file);
 
+/**
+ * Returns the current position in the stream referenced by @p file, like #tell, but with its seekability
+ * known.
+ *
+ * Checking if a stream is #seekable takes a system call. A caller that asks often can check once, e.g., when
+ * it starts using the stream, and pass the result here.
+ *
+ * @param file a `FILE` pointer, may not be null
+ * @param seekable whether @p file is #seekable
+ * @return the current position in the stream, or #rocket::NPOS if the position cannot be determined
+ */
+u64 tell(FILE* file, bool seekable);
+
 // Functions working with streams ---------------------------------------------------------------------------
 
 /**
@@ -175,7 +203,7 @@ inline std::istringstream is() { return {}; }
  * @param str the string to read from
  * @return an input stream that reads from the string @p str
  */
-inline io::ispanstream is(std::string_view str) { return io::ispanstream(str); }
+inline std::istringstream is(std::string_view str) { return std::istringstream(std::string(str)); }
 
 /**
  * Checks if the input stream @p is is seekable.

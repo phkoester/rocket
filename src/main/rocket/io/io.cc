@@ -48,9 +48,15 @@ open(const filesystem::path& path, string_view modes) {
 bool
 seek(FILE* file, i64 offset, i32 origin) {
   ROCKET_ASSERT(file != nullptr);
+  return seek(file, offset, origin, seekable(file));
+}
+
+bool
+seek(FILE* file, i64 offset, i32 origin, bool seekable) {
+  ROCKET_ASSERT(file != nullptr);
 
   // On Windows and macOS, seeking a pipe or a terminal may report success
-  if (not seekable(file)) {
+  if (not seekable) {
     errno = ESPIPE;
     return false;
   }
@@ -90,8 +96,8 @@ seekable(FILE* file) {
   return type == FILE_TYPE_DISK; // `FILE_TYPE_PIPE`: pipe or socket, `FILE_TYPE_CHAR`: console or `NUL`
 #else
   if (fd < 0) {
-    // No file descriptor, e.g., a stream made by `fmemopen` or `open_memstream`. Such streams are implemented
-    // by the C library, which reports a position only if the stream is seekable
+    // No file descriptor, e.g., a stream made by `fmemopen` or `open_memstream`. Such streams are
+    // implemented by the C library, which reports a position only if the stream is seekable
     return ftello(file) != -1;
   }
   struct stat st {};
@@ -105,9 +111,15 @@ seekable(FILE* file) {
 u64
 tell(FILE* file) {
   ROCKET_ASSERT(file != nullptr);
+  return tell(file, seekable(file));
+}
+
+u64
+tell(FILE* file, bool seekable) {
+  ROCKET_ASSERT(file != nullptr);
 
   // On Windows and macOS, a pipe or a terminal may report a meaningless position
-  if (not seekable(file)) {
+  if (not seekable) {
     return NPOS;
   }
 
@@ -128,25 +140,29 @@ seekable(istream& is) noexcept {
 
 bool
 seekable(ostream& os) noexcept {
-  // Ask the stream buffer directly, like `tell` for an input stream does
-  auto* buf = os.rdbuf();
-  if (buf == nullptr || buf->pubseekoff(0, ios::cur, ios::out) == ostream::pos_type(ostream::off_type(-1))) {
+  // The stream buffers of the standard output streams are backed by `stdout` and `stderr`. On Windows and
+  // macOS, they may report a meaningless position for a pipe or a terminal, so ask the `FILE` as well. Do so
+  // first: with `sync_with_stdio`, asking the stream buffer seeks the `FILE`, which flushes it and may set
+  // `errno`
+  if ((&os == &cout && not seekable(stdout)) || ((&os == &cerr || &os == &clog) && not seekable(stderr))) {
     return false;
   }
 
-  // The stream buffers of the standard output streams are backed by `stdout` and `stderr`. On Windows and
-  // macOS, they may report a meaningless position for a pipe or a terminal, so ask the `FILE` as well
-  if (&os == &cout) {
-    return seekable(stdout);
-  }
-  if (&os == &cerr || &os == &clog) {
-    return seekable(stderr);
-  }
-  return true;
+  // Ask the stream buffer directly, like `tell` for an input stream does
+  auto* buf = os.rdbuf();
+  return buf != nullptr &&
+    buf->pubseekoff(0, ios::cur, ios::out) != ostream::pos_type(ostream::off_type(-1));
 }
 
 u64
 tell(istream& is) noexcept {
+  // The stream buffer of `cin` is backed by `stdin`. On Windows and macOS, it may report a meaningless
+  // position for a pipe or a terminal, so ask `stdin` as well. Do so first: with `sync_with_stdio`, asking
+  // the stream buffer seeks `stdin`, which may set `errno`
+  if (&is == &cin && not seekable(stdin)) {
+    return NPOS;
+  }
+
   // Ask the stream buffer directly. This is what `tellg` does after constructing a sentry, but the sentry
   // fails if any state bit is set, and it flushes the tied stream
   auto* buf = is.rdbuf();
@@ -157,13 +173,6 @@ tell(istream& is) noexcept {
   if (result == istream::pos_type(istream::off_type(-1))) {
     return NPOS;
   }
-
-  // The stream buffer of `cin` is backed by `stdin`. On Windows and macOS, it may report a meaningless
-  // position for a pipe or a terminal, so ask `stdin` as well
-  if (&is == &cin && not seekable(stdin)) {
-    return NPOS;
-  }
-
   return static_cast<u64>(streamoff(result));
 }
 
@@ -300,7 +309,8 @@ struct ParsedInteger {
   u128 magnitude = 0; ///< The magnitude, valid if #number and not #overflow.
   bool negative = false; ///< Whether there was a minus sign.
   bool number = false; ///< Whether a number was found, i.e., digits, and no misplaced thousands separator.
-  bool groupingMatches = true; ///< Whether the digit groups match the locale. If not, the number is still valid.
+  /// Whether the digit groups match the locale. If not, the number is still valid.
+  bool groupingMatches = true;
   bool overflow = false; ///< Whether the magnitude exceeds the limit.
   bool eof = false; ///< Whether the end of the input was reached.
 };
@@ -309,12 +319,12 @@ struct ParsedInteger {
  * Parses an optionally signed integer from @p buf in the base selected by @p flags. This follows libstdc++'s
  * `num_get::_M_extract_int`.
  *
- * In base 16, an `0x` or `0X` prefix is skipped. If the base is detected, a leading `0x` or `0X` selects base
- * 16, a leading `0` base 8, anything else base 10. Digits are consumed even after an overflow, so that the
- * whole number is consumed.
+ * In base 16, an `0x` or `0X` prefix is skipped. If the base is detected, a leading `0x` or `0X` selects
+ * base 16, a leading `0` base 8, anything else base 10. Digits are consumed even after an overflow, so that
+ * the whole number is consumed.
  *
- * If the locale groups digits, thousands separators may separate the digits. A separator at the start or after
- * another one ends the input, and there is no number then. The decimal point always ends the input.
+ * If the locale groups digits, thousands separators may separate the digits. A separator at the start or
+ * after another one ends the input, and there is no number then. The decimal point always ends the input.
  *
  * The check for an overflow happens before each step, so no intermediate result can overflow. Checking
  * afterward whether the value got smaller does not work, because a value that wraps around can still end up
@@ -429,8 +439,8 @@ parseInteger(
 }
 
 /**
- * Sets `badbit` on @p is after its stream buffer threw, and rethrows if `badbit` is in the exception mask, as
- * the standard extractors do. Must be called from a `catch` block.
+ * Sets `badbit` on @p is after its stream buffer threw, and rethrows if `badbit` is in the exception mask,
+ * as the standard extractors do. Must be called from a `catch` block.
  */
 void
 handleBufferException(ios& is) {
@@ -447,10 +457,10 @@ handleBufferException(ios& is) {
 /**
  * Extracts an integer of type @p T from @p is, like the standard extractors.
  *
- * If the sentry fails, e.g., at the end of the input, @p val is left unchanged. If there is no number, @p val
- * is set to 0. On an overflow, it is set to the greatest or the lowest value. Both set `failbit`. For an
- * unsigned type, a negative value wraps around, as with `strtoull`. If the digit groups do not match the
- * locale, @p val is set, but `failbit` is set as well.
+ * If the sentry fails, e.g., at the end of the input, @p val is left unchanged. If there is no number,
+ * @p val is set to 0. On an overflow, it is set to the greatest or the lowest value. Both set `failbit`.
+ * For an unsigned type, a negative value wraps around, as with `strtoull`. If the digit groups do not match
+ * the locale, @p val is set, but `failbit` is set as well.
  */
 template<typename T>
 istream&
@@ -479,8 +489,8 @@ extractInteger(istream& is, T& val) {
     val = SIGNED && parsed.negative ? numeric_limits<T>::min() : numeric_limits<T>::max();
     state |= ios::failbit;
   } else {
-    // Negate while still unsigned: unsigned arithmetic wraps by definition, so neither the lowest signed value
-    // nor a negative unsigned value needs special handling
+    // Negate while still unsigned: unsigned arithmetic wraps by definition, so neither the lowest signed
+    // value nor a negative unsigned value needs special handling
     val = static_cast<T>(parsed.negative ? static_cast<u128>(0) - parsed.magnitude : parsed.magnitude);
   }
   if (parsed.eof) {
@@ -494,9 +504,9 @@ extractInteger(istream& is, T& val) {
  * Inserts an integer of type @p T into @p os, like the standard inserters.
  *
  * This honors `basefield`, `showbase`, `showpos`, `uppercase`, `adjustfield`, the width, the fill character,
- * and the digit grouping of the stream's locale, which applies in any base. As with `printf`'s `%o` and `%x`,
- * a negative value is written as its two's complement in octal and hexadecimal. `showpos` only applies to a
- * signed value in decimal, `showbase` only to a nonzero value.
+ * and the digit grouping of the stream's locale, which applies in any base. As with `printf`'s `%o` and
+ * `%x`, a negative value is written as its two's complement in octal and hexadecimal. `showpos` only applies
+ * to a signed value in decimal, `showbase` only to a nonzero value.
  */
 template<typename T>
 ostream&
@@ -588,6 +598,6 @@ operator<<(ostream& lhs, u128 rhs) {
   return insertInteger(lhs, rhs);
 }
 
-#endif
+#endif // ROCKET_HAS_INT128_OP_IO
 
 // EOF

@@ -88,7 +88,8 @@ void expectComma(nio::Source& in);
  *
  * @param in the source to read from
  * @param values the set of expected strings, all elements must not be empty
- * @param ignoreCase whether to ignore case
+ * @param ignoreCase whether to ignore case. Only ASCII letters are folded, `A` to `Z` matching `a` to `z`.
+ *   Any other character, including a non-ASCII letter such as `Ä`, must match exactly
  * @param endOfWord whether to check if the end of the returned string matches a word boundary
  * @return the read string, or null if no string was read
  * @throw #rocket::InvalidState if the source must go back, but @p in cannot report its position or seek
@@ -148,9 +149,13 @@ void expectComma(nio::Source& in);
  *
  * @param in the source to read from
  * @param str the string to read, must not be empty
- * @param ignoreCase whether to ignore case
+ * @param ignoreCase whether to ignore case. Only ASCII letters are folded, `A` to `Z` matching `a` to `z`.
+ *   Any other character, including a non-ASCII letter such as `Ä`, must match exactly
  * @param endOfWord whether to check if the end of the returned string matches a word boundary
  * @return if the string was read
+ * @throw #rocket::InvalidState if the source must go back, i.e., on any mismatch, at the end of the input, or
+ *   if the word boundary is missing or requires reading a non-ASCII code point, but @p in cannot report its
+ *   position or seek. A contiguous source never needs to go back
  * @throw #rocket::io::IoError if @p in is bad, e.g., after an I/O error
  */
 [[nodiscard]] bool readString(
@@ -181,6 +186,8 @@ void expectComma(nio::Source& in);
  * @param in the source to read from
  * @param c the character to read until
  * @return the read string, not including @p c, or null if no string was read
+ * @throw #rocket::InvalidState if @p c is not found, so that the source must go back, but @p in cannot report
+ *   its position or seek
  * @throw #rocket::io::IoError if @p in is bad, e.g., after an I/O error
  */
 [[nodiscard]] std::optional<std::string> readUntilChar(nio::Source& in, char c);
@@ -196,6 +203,8 @@ void expectComma(nio::Source& in);
  * @param in the source to read from
  * @param c the character to read until
  * @return the read string, not including @p c, or null if no string was read
+ * @throw #rocket::InvalidState if @p c is not found, so that the source must go back, but @p in cannot report
+ *   its position or seek
  * @throw #rocket::io::IoError if @p in is bad, e.g., after an I/O error
  */
 [[nodiscard]] std::optional<std::string> readUntilUnescapedChar(nio::Source& in, char c);
@@ -220,6 +229,9 @@ std::string readWhilePredicate(nio::Source& in, const std::function<bool(char)>&
  * @param in the source to read from
  * @param cComments whether to skip C-style comments
  * @param shellComments whether to skip Shell-style comments
+ * @throw #rocket::InputFailure if a C-style comment is not terminated. The source is not advanced then
+ * @throw #rocket::InvalidState if the source must go back, but @p in cannot report its position or seek. This
+ *   happens at the first character that is not skipped, unless the input ends before
  * @throw #rocket::io::IoError if @p in is bad, e.g., after an I/O error
  */
 void skip(nio::Source& in, bool cComments, bool shellComments);

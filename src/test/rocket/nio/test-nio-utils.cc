@@ -76,7 +76,7 @@ forEachSource(string_view input, Fn fn) {
     const auto temp = rocket::filesystem::tempFile();
     {
       FileSink out(temp);
-      out.Sink::write(input);
+      out.write(input);
     }
     FileSource in(temp);
     fn(in);
@@ -140,6 +140,24 @@ TEST(nioUtils, readChar) {
   });
 }
 
+TEST(nioUtils, expectChar) {
+  forEachSource("a:,b", [](Source& in) {
+    EXPECT_NO_THROW(expectChar(in, 'a'));
+    EXPECT_NO_THROW(expectColon(in));
+    EXPECT_NO_THROW(expectComma(in));
+    EXPECT_EQ(in.tell(), 3);
+
+    // On failure, the position is that of the unexpected character, and the source is not advanced
+    EXPECT_THAT([&] { expectChar(in, 'x'); }, throwsInputFailure(3, EndsWith("Expected 'x'")));
+    EXPECT_THAT([&] { expectColon(in); }, throwsInputFailure(3, EndsWith("Expected ':'")));
+    EXPECT_THAT([&] { expectComma(in); }, throwsInputFailure(3, EndsWith("Expected ','")));
+    EXPECT_EQ(in.tell(), 3);
+
+    EXPECT_NO_THROW(expectChar(in, 'b'));
+    EXPECT_THAT([&] { expectChar(in, 'b'); }, throwsInputFailure(4, EndsWith("Expected 'b'"))); // EOF
+  });
+}
+
 TEST(nioUtils, readCharNonseekable) {
   io::testing::NonseekableBuf buf("ab");
   istream is(&buf);
@@ -193,6 +211,38 @@ TEST(nioUtils, readChoiceIgnoreCase) {
   testReadChoice("TRUEX", { "true" }, true, true, nullopt);
 }
 
+TEST(nioUtils, ignoreCaseFoldsAsciiLettersOnly) {
+  // `readString` and `readChoice`, each through the contiguous and the noncontiguous code path
+  const auto test = [](string_view input, string_view expected, bool matches) {
+    forEachSource(input, [&](Source& in) {
+      EXPECT_EQ(readString(in, expected, true, false), matches);
+      EXPECT_EQ(in.tell(), matches ? expected.size() : 0);
+    });
+    forEachSource(input, [&](Source& in) {
+      EXPECT_EQ(readChoice(in, { expected }, true, false), matches ? optional(expected) : nullopt);
+      EXPECT_EQ(in.tell(), matches ? expected.size() : 0);
+    });
+  };
+
+  // ASCII letters match regardless of case
+  test("HeLLo", "hello", true);
+  test("hello", "HELLO", true);
+  test("AZaz", "azAZ", true);
+
+  // Other ASCII characters must match exactly, even those that differ from each other in the same bit as
+  // upper and lower case letters do
+  test("@", "`", false);
+  test("[", "{", false);
+  test("^", "~", false);
+  test("1", "1", true);
+
+  // Non-ASCII letters must match exactly, in UTF-8 and in a single-byte encoding such as ISO 8859-1
+  test("\u00C4", "\u00E4", false); // `Ä`, `ä`
+  test("\u00E4", "\u00E4", true);
+  test("\xC4", "\xE4", false);
+  test("STRA\u00DFE", "stra\u00DFe", true); // `ß` matches only itself
+}
+
 TEST(nioUtils, readChoiceNoMatch) {
   testReadChoice("", { "true" }, false, true, nullopt);
   testReadChoice("tru", { "true" }, false, true, nullopt);
@@ -222,6 +272,108 @@ TEST(nioUtils, readIdentifierNoIdentifier) {
     forEachSource(input, [](Source& in) {
       EXPECT_EQ(readIdentifier(in), nullopt);
       EXPECT_EQ(in.tell(), 0);
+    });
+  }
+}
+
+TEST(nioUtils, readString) {
+  forEachSource("hello world", [](Source& in) {
+    EXPECT_TRUE(readString(in, "hello"));
+    EXPECT_EQ(in.tell(), 5);
+    EXPECT_TRUE(readString(in, " ", false, false));
+    EXPECT_TRUE(readString(in, "world"));
+    EXPECT_EQ(in.tell(), 11);
+    EXPECT_FALSE(readString(in, "x")); // EOF
+    EXPECT_EQ(in.tell(), 11);
+  });
+
+  // On failure, the source is not advanced
+  const auto test = [](string_view input, string_view str, bool ignoreCase, bool endOfWord, bool expected) {
+    forEachSource(input, [&](Source& in) {
+      SCOPED_TRACE(fmt::format("{:?}, ignoreCase {}, endOfWord {}", str, ignoreCase, endOfWord));
+      EXPECT_EQ(readString(in, str, ignoreCase, endOfWord), expected);
+      EXPECT_EQ(in.tell(), expected ? str.size() : 0);
+    });
+  };
+  test("help", "hello", false, true, false); // Mismatch
+  test("xello", "hello", false, true, false); // Mismatch at the first character
+  test("hel", "hello", false, true, false); // EOF
+
+  // Word boundary
+  test("hello", "hello", false, true, true);
+  test("hello!", "hello", false, true, true);
+  test("hello x", "hello", false, true, true);
+  test("hellox", "hello", false, true, false);
+  test("hello_", "hello", false, true, false);
+  test("hello$", "hello", false, true, false);
+  test("hello1", "hello", false, true, false);
+  test("helloä", "hello", false, true, false); // A non-ASCII letter continues the word
+  test("hello€", "hello", false, true, true); // `€` does not
+  test("hello\xFF", "hello", false, true, true); // Invalid UTF-8 is a word boundary
+  test("hellox", "hello", false, false, true);
+
+  // Case
+  test("HELLO", "hello", true, true, true);
+  test("HELLO", "hello", false, true, false);
+  test("HELLOX", "hello", true, true, false);
+}
+
+TEST(nioUtils, readUntilChar) {
+  forEachSource("ab,cd,", [](Source& in) {
+    EXPECT_EQ(readUntilChar(in, ','), "ab");
+    EXPECT_EQ(in.tell(), 3); // The character is consumed
+    EXPECT_EQ(readUntilChar(in, ','), "cd");
+    EXPECT_EQ(in.tell(), 6);
+    EXPECT_EQ(readUntilChar(in, ','), nullopt); // EOF
+    EXPECT_EQ(in.tell(), 6);
+  });
+  forEachSource(",x", [](Source& in) {
+    EXPECT_EQ(readUntilChar(in, ','), "");
+    EXPECT_EQ(in.tell(), 1);
+  });
+
+  // Unlike `readUntilUnescapedChar`, a backslash does not escape the character
+  forEachSource(R"(a\,b)", [](Source& in) {
+    EXPECT_EQ(readUntilChar(in, ','), R"(a\)");
+    EXPECT_EQ(in.tell(), 3);
+  });
+
+  // If the character is not found, the source is not advanced
+  for (const string_view input : { ""sv, "abc"sv }) {
+    forEachSource(input, [](Source& in) {
+      EXPECT_EQ(readUntilChar(in, ','), nullopt);
+      EXPECT_EQ(in.tell(), 0);
+    });
+  }
+}
+
+TEST(nioUtils, readSubseconds) {
+  const auto test = [](string_view input, i64 expectedNs, u64 expectedTell) {
+    forEachSource(input, [&](Source& in) {
+      EXPECT_EQ(readSubseconds(in), std::chrono::nanoseconds(expectedNs));
+      EXPECT_EQ(in.tell(), expectedTell);
+    });
+  };
+
+  // Without `.`, there are no subseconds, and the source is not advanced
+  test("", 0, 0);
+  test("5", 0, 0);
+  test("x", 0, 0);
+
+  // Fewer than 9 digits are padded, more than 9 are truncated, not rounded, but consumed
+  test(".5", 500'000'000, 2);
+  test(".05 rest", 50'000'000, 3);
+  test(".123456789", 123'456'789, 10);
+  test(".000000001", 1, 10);
+  test(".1234567891999x", 123'456'789, 14);
+  test(".999999999999", 999'999'999, 13);
+
+  // A `.` without digits is invalid. The `.` is consumed, and the position is that of the missing digits
+  for (const string_view input : { "."sv, ".x"sv, ". 5"sv }) {
+    forEachSource(input, [](Source& in) {
+      EXPECT_THAT(
+        [&] { (void) readSubseconds(in); },
+        throwsInputFailure(1, EndsWith("Expected subseconds")));
     });
   }
 }
@@ -285,7 +437,7 @@ TEST(nioUtils, readWhilePredicateNonseekable) {
 
   EXPECT_EQ(readWhilePredicate(in, isDigit), "123");
   char c = '\0';
-  EXPECT_EQ(in.Source::read(c), 1);
+  EXPECT_EQ(in.read(c), 1);
   EXPECT_EQ(c, 'a'); // The first nondigit was not consumed
 }
 
@@ -320,6 +472,29 @@ TEST(nioUtils, skipCCommentsEndingInAsterisks) {
   testSkipCComments("/** a **/x", 9);
   testSkipCComments("  /** a **/  x", 13);
   testSkipCComments("/** a **/", 9);
+}
+
+TEST(nioUtils, skipShellComments) {
+  const auto test = [](string_view input, bool cComments, bool shellComments, u64 expectedTell) {
+    forEachSource(input, [&](Source& in) {
+      SCOPED_TRACE(fmt::format("cComments {}, shellComments {}", cComments, shellComments));
+      skip(in, cComments, shellComments);
+      EXPECT_EQ(in.tell(), expectedTell);
+    });
+  };
+
+  test("  # comment\n  # more\nx", false, true, 21);
+  test("# only a comment", false, true, 16); // Up to the end of the input
+  test("#\n#\n", false, true, 4);
+  test("x # not skipped", false, true, 0);
+
+  // Without shell comments, `#` stops skipping
+  test("  # comment\nx", false, false, 2);
+  test("  # comment\nx", true, false, 2);
+
+  // Both kinds of comments
+  test("# a\n// b\n/* c */ x", true, true, 17);
+  test("// a # b\n# c // d\nx", true, true, 18);
 }
 
 TEST(nioUtils, skipCCommentsUnterminated) {
@@ -502,7 +677,9 @@ TEST(nioUtils, readCodePointNonseekable) {
   {
     // A malformed sequence of several bytes must be gone back over
     NonseekableSource src("\xC3" "Ab");
-    EXPECT_THAT([&] { (void) readCodePoint(src.in); }, ThrowsMessage<InvalidState>(EndsWith(CANNOT_GO_BACK)));
+    EXPECT_THAT(
+      [&] { (void) readCodePoint(src.in); },
+      ThrowsMessage<InvalidState>(EndsWith(CANNOT_GO_BACK)));
     EXPECT_EQ(src.in.readString(), "b");
   }
 }

@@ -119,6 +119,65 @@ checkFileScan(Source& in, const scn::scan_file& file, const scn::scan_expected<T
   return toVoid(result);
 }
 
+/**
+ * Writes @p size bytes at @p data to @p os, for #rocket::nio::StreamSink.
+ *
+ * This goes through `ostream::write`, not the stream buffer, so that a failure sets `badbit` and `unitbuf` is
+ * honored. If the exception mask of @p os makes the failure throw `ios_base::failure`, a `system_error`, this
+ * returns `false` instead, as all of #rocket::nio::StreamSink does.
+ *
+ * @return if @p os is still good
+ */
+bool
+writeToStream(ostream& os, const char* data, u64 size) {
+  try {
+    os.write(data, static_cast<streamsize>(size));
+  } catch (const system_error&) {
+    return false;
+  }
+  return static_cast<bool>(os);
+}
+
+/**
+ * Holds the lock of a `FILE`, so that several characters can be read with #getcUnlocked, without locking and
+ * unlocking the `FILE` for each of them. The lock is recursive, so the `FILE` can still be used otherwise.
+ */
+struct FileLock {
+  explicit FileLock(FILE* file) : file_(file) {
+#ifdef ROCKET_OS_WINDOWS
+    _lock_file(file_);
+#else
+    flockfile(file_);
+#endif
+  }
+
+  FileLock(const FileLock&) = delete;
+
+  FileLock& operator=(const FileLock&) = delete;
+
+  ~FileLock() {
+#ifdef ROCKET_OS_WINDOWS
+    _unlock_file(file_);
+#else
+    funlockfile(file_);
+#endif
+  }
+
+private:
+
+  FILE* file_;
+};
+
+/// Reads a character from @p file, like `getc`, but without locking it. The caller must hold a #FileLock.
+i32
+getcUnlocked(FILE* file) {
+#ifdef ROCKET_OS_WINDOWS
+  return _getc_nolock(file);
+#else
+  return getc_unlocked(file);
+#endif
+}
+
 /// Removes a trailing @c '\r' from @p line, which was read up to a @c '\n'.
 void
 removeTrailingCr(string& line) {
@@ -183,6 +242,7 @@ FileSink::FileSink(FILE* file) :
   file_(file),
   closeOnDestroy_(false) {
   ROCKET_CHECK(file, file != nullptr);
+  seekable_ = io::seekable(file_);
 }
 
 FileSink::FileSink(const filesystem::path& path, bool append) :
@@ -191,6 +251,7 @@ FileSink::FileSink(const filesystem::path& path, bool append) :
   if (file_ == nullptr) {
     throw InvalidState(fmt::format("Cannot open file `{}` for writing", path));
   }
+  seekable_ = io::seekable(file_);
 }
 
 FileSink::~FileSink() {
@@ -224,11 +285,6 @@ FileSink::flush() {
 i32
 FileSink::handle() const {
   return ROCKET_FILENO(file_);
-}
-
-bool
-FileSink::seekable() const {
-  return io::seekable(file_);
 }
 
 bool
@@ -377,7 +433,11 @@ StreamSink::flush() {
     return false;
   }
 
-  os_.flush();
+  try {
+    os_.flush();
+  } catch (const system_error&) {
+    return false;
+  }
   return not bad();
 }
 
@@ -419,8 +479,7 @@ StreamSink::vprint(fmt::text_style style, fmt::string_view fmt, fmt::format_args
 
   // {fmt} cannot print to a `std::ostream` with a text style
   const auto buf = formatToBuffer(style, fmt, args);
-  os_.write(buf.data(), static_cast<streamsize>(buf.size()));
-  return static_cast<bool>(os_);
+  return writeToStream(os_, buf.data(), buf.size());
 }
 
 bool
@@ -431,8 +490,7 @@ StreamSink::vprint(const locale& locale, fmt::string_view fmt, fmt::format_args 
 
   // {fmt} cannot print to a `std::ostream` with a locale
   const auto buf = formatToBuffer(locale, fmt, args);
-  os_.write(buf.data(), static_cast<streamsize>(buf.size()));
-  return static_cast<bool>(os_);
+  return writeToStream(os_, buf.data(), buf.size());
 }
 
 bool
@@ -445,8 +503,7 @@ StreamSink::vprintln(fmt::string_view fmt, fmt::format_args args) {
   // message and line feed into a buffer and write both at once
   auto buf = formatToBuffer(fmt, args);
   buf.push_back('\n');
-  os_.write(buf.data(), static_cast<streamsize>(buf.size()));
-  return static_cast<bool>(os_);
+  return writeToStream(os_, buf.data(), buf.size());
 }
 
 bool
@@ -457,8 +514,7 @@ StreamSink::vprintln(fmt::text_style style, fmt::string_view fmt, fmt::format_ar
 
   auto buf = formatToBuffer(style, fmt, args);
   buf.push_back('\n');
-  os_.write(buf.data(), static_cast<streamsize>(buf.size()));
-  return static_cast<bool>(os_);
+  return writeToStream(os_, buf.data(), buf.size());
 }
 
 bool
@@ -469,8 +525,7 @@ StreamSink::vprintln(const locale& locale, fmt::string_view fmt, fmt::format_arg
 
   auto buf = formatToBuffer(locale, fmt, args);
   buf.push_back('\n');
-  os_.write(buf.data(), static_cast<streamsize>(buf.size()));
-  return static_cast<bool>(os_);
+  return writeToStream(os_, buf.data(), buf.size());
 }
 
 u64
@@ -479,10 +534,7 @@ StreamSink::write(span<const u8> in) {
     return 0;
   }
 
-  // Through `ostream::write`, not the stream buffer, so that a failure sets `badbit` and `unitbuf` is
-  // honored
-  os_.write(reinterpret_cast<const char*>(in.data()), static_cast<streamsize>(in.size()));
-  return os_ ? in.size() : 0;
+  return writeToStream(os_, reinterpret_cast<const char*>(in.data()), in.size()) ? in.size() : 0;
 }
 
 // `StringSink` ---------------------------------------------------------------------------------------------
@@ -621,6 +673,7 @@ FileSource::FileSource(FILE* file) :
   file_(file),
   closeOnDestroy_(false) {
   ROCKET_CHECK(file, file != nullptr);
+  seekable_ = io::seekable(file_);
 }
 
 FileSource::FileSource(const filesystem::path& path) :
@@ -629,6 +682,7 @@ FileSource::FileSource(const filesystem::path& path) :
   if (file_ == nullptr) {
     throw InvalidState(fmt::format("Cannot open file `{}` for reading", path));
   }
+  seekable_ = io::seekable(file_);
 }
 
 FileSource::~FileSource() {
@@ -658,7 +712,9 @@ FileSource::peek() {
     return nullopt;
   }
 
-  const i32 c = getc(file_);
+  // Holding the lock across `getc` and `ungetc` also keeps other threads from reading in between
+  const FileLock lock(file_);
+  const i32 c = getcUnlocked(file_);
   if (c == EOF) {
     return nullopt;
   }
@@ -683,13 +739,16 @@ FileSource::readln() {
     return nullopt;
   }
 
-  i32 c = getc(file_);
+  // Lock the file once for the whole line, not for each character
+  const FileLock lock(file_);
+
+  i32 c = getcUnlocked(file_);
   if (c == EOF) {
     return nullopt;
   }
 
   string ret;
-  for (; c != EOF; c = getc(file_)) {
+  for (; c != EOF; c = getcUnlocked(file_)) {
     if (c == '\n') {
       removeTrailingCr(ret);
       break;
@@ -719,12 +778,7 @@ FileSource::seek(i64 offset, SeekMode mode) { // NOLINT
     default: ROCKET_FLOP(mode, "Invalid seek mode {}", static_cast<i32>(mode));
   }
 
-  return io::seek(file_, offset, origin);
-}
-
-bool
-FileSource::seekable() const {
-  return io::seekable(file_);
+  return io::seek(file_, offset, origin, seekable_);
 }
 
 optional<u64>
@@ -733,7 +787,7 @@ FileSource::tell() {
     return nullopt;
   }
 
-  const u64 ret = io::tell(file_);
+  const u64 ret = io::tell(file_, seekable_);
   return ret == NPOS ? nullopt : optional(ret);
 }
 
@@ -875,6 +929,11 @@ StreamSource::seek(i64 offset, SeekMode mode) { // NOLINT
       break;
     default:
       ROCKET_FLOP(mode, "Invalid seek mode {}", static_cast<i32>(mode));
+  }
+
+  // On Windows and macOS, seeking `cin` may report success for a pipe or a terminal, as with `io::tell`
+  if (&is_ == &cin && not io::seekable(stdin)) {
+    return false;
   }
 
   // `seekg` does nothing while `failbit` is set, which a previous read may have left behind

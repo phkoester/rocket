@@ -11,6 +11,7 @@
 #include "rocket/nio/nio.h"
 
 #include <fstream>
+#include <functional>
 
 #ifndef ROCKET_OS_WINDOWS
 #include <unistd.h> // `pipe`, `write`, `close`
@@ -104,7 +105,7 @@ forEachSource(string_view input, Fn fn) {
     const auto temp = rocket::filesystem::tempFile();
     {
       FileSink out(temp);
-      out.Sink::write(input);
+      out.write(input);
     }
     FileSource in(temp);
     fn(in);
@@ -253,7 +254,7 @@ forEachScanSource(string_view input, Fn fn) {
   const auto temp = rocket::filesystem::tempFile();
   {
     FileSink out(temp);
-    out.Sink::write(input);
+    out.write(input);
   }
 
   {
@@ -367,17 +368,24 @@ TEST(nio, FileSinkDoesNotExist) {
 }
 
 TEST(nio, NullSink) {
+  // Like `/dev/null`, everything written is discarded, and every write succeeds
   NullSink out;
+  EXPECT_EQ(out.write("abc"), 3);
+  EXPECT_EQ(out.write('a'), 1);
+  EXPECT_EQ(out.write(static_cast<u8>(0)), 1);
+  EXPECT_EQ(out.write(""), 0);
+  EXPECT_EQ(out.write("abcdef", 2, 3), 3);
+  EXPECT_EQ(out.writeln("abc"), 4);
+  EXPECT_TRUE(out.flush());
   EXPECT_FALSE(out.bad());
-  EXPECT_TRUE(out.eof());
-  EXPECT_EQ(out.Sink::write("a"), 0);
+  EXPECT_FALSE(out.eof()); // Never full
 }
 
 TEST(nio, SpanSink) {
   string str = "---[abcd]---";
   const span<char> span(&str[4], 4);
   SpanSink out(span);
-  EXPECT_EQ(out.Sink::write("ABCDEF"), 4); // Writing 6 chars, but only 4 fit
+  EXPECT_EQ(out.write("ABCDEF"), 4); // Writing 6 chars, but only 4 fit
   EXPECT_EQ(str, "---[ABCD]---");
 }
 
@@ -386,18 +394,18 @@ TEST(nio, writeOffset) {
   const span<const u8> bytes(reinterpret_cast<const u8*>(str.data()), str.size());
   StringSink out;
 
-  EXPECT_EQ(out.Sink::write(bytes, 2, 2), 2); // "cd"
-  EXPECT_EQ(out.Sink::write(bytes, 4), 2); // "ef"
-  EXPECT_EQ(out.Sink::write(bytes, 5, 10), 1); // "f": fewer bytes are written if the input ends before
-  EXPECT_EQ(out.Sink::write(bytes, 6), 0); // At the end: nothing to write
-  EXPECT_EQ(out.Sink::write(str, 1, 2), 2); // "bc"
-  EXPECT_EQ(out.Sink::writeln(str, 3, 1), 2); // "d\n"
+  EXPECT_EQ(out.write(bytes, 2, 2), 2); // "cd"
+  EXPECT_EQ(out.write(bytes, 4), 2); // "ef"
+  EXPECT_EQ(out.write(bytes, 5, 10), 1); // "f": fewer bytes are written if the input ends before
+  EXPECT_EQ(out.write(bytes, 6), 0); // At the end: nothing to write
+  EXPECT_EQ(out.write(str, 1, 2), 2); // "bc"
+  EXPECT_EQ(out.writeln(str, 3, 1), 2); // "d\n"
   EXPECT_EQ(out.str(), "cdeffbcd\n");
 
   // An offset beyond the end is an error, and nothing is written
-  EXPECT_THROW(out.Sink::write(bytes, 7), InvalidArgument);
-  EXPECT_THROW(out.Sink::write(str, 7), InvalidArgument);
-  EXPECT_THROW(out.Sink::writeln(str, 7), InvalidArgument);
+  EXPECT_THROW(out.write(bytes, 7), InvalidArgument);
+  EXPECT_THROW(out.write(str, 7), InvalidArgument);
+  EXPECT_THROW(out.writeln(str, 7), InvalidArgument);
   EXPECT_EQ(out.str(), "cdeffbcd\n");
 }
 
@@ -406,6 +414,41 @@ TEST(nio, StreamSink) {
   StreamSink out(os);
   out.println("Hi {}", "there");
   EXPECT_EQ(os.str(), "Hi there\n");
+}
+
+TEST(nio, StreamSinkExceptionMask) {
+  // A stream buffer that accepts nothing and cannot sync, like a full device
+  struct FailingOutBuf : streambuf {
+  protected:
+
+    int_type overflow(int_type) override { return traits_type::eof(); }
+    int sync() override { return -1; }
+  };
+
+  // With `badbit` in the exception mask, a failure throws `ios_base::failure`. Every operation reports it as a
+  // failure instead
+  const vector<pair<string, function<bool(Sink&)>>> cases {
+    { "print", [](Sink& out) { return out.print("Hi {}", "there"); } },
+    { "print style", [](Sink& out) { return out.print(fmt::fg(fmt::color::red), "Hi {}", "there"); } },
+    { "print locale", [](Sink& out) { return out.print(testLocale(), "{:L}", 1'000); } },
+    { "println", [](Sink& out) { return out.println("Hi {}", "there"); } },
+    { "println style", [](Sink& out) { return out.println(fmt::fg(fmt::color::red), "Hi {}", "there"); } },
+    { "println locale", [](Sink& out) { return out.println(testLocale(), "{:L}", 1'000); } },
+    { "write", [](Sink& out) { return out.write("abc") == 3; } },
+    { "writeln", [](Sink& out) { return out.writeln("abc") == 4; } },
+    { "flush", [](Sink& out) { return out.flush(); } },
+  };
+  for (const auto& [name, fn] : cases) {
+    SCOPED_TRACE(name);
+    FailingOutBuf buf;
+    ostream os(&buf);
+    os.exceptions(ios::badbit);
+    StreamSink out(os);
+    bool result = true;
+    EXPECT_NO_THROW(result = fn(out));
+    EXPECT_FALSE(result);
+    EXPECT_TRUE(out.bad());
+  }
 }
 
 TEST(nio, StringSink) {
@@ -512,7 +555,7 @@ TEST(nio, printMixed) {
   const auto expected = "a 1'000\n" + fmt::format(style, "b") + "\nc\nd";
   forEachSink(expected, [&](Sink& out) {
     return out.println(testLocale(), "a {:L}", 1'000) && out.println(style, "b") && out.println("c")
-      && out.Sink::write("d") == 1;
+      && out.write("d") == 1;
   });
 }
 
@@ -634,7 +677,7 @@ TEST(nio, FileSourceScanBacktrackAcrossBufferRefill) {
   const auto temp = rocket::filesystem::tempFile();
   {
     FileSink out(temp);
-    out.Sink::write("12e+x rest");
+    out.write("12e+x rest");
   }
 
   array<char, 3> buf {}; // Buffers "12e", "+x ", ...
@@ -653,7 +696,7 @@ TEST(nio, FileSourceScanFailureAcrossBufferRefill) {
   const auto temp = rocket::filesystem::tempFile();
   {
     FileSink out(temp);
-    out.Sink::write("abcdefgh rest");
+    out.write("abcdefgh rest");
   }
 
   array<char, 4> buf {};
@@ -668,12 +711,28 @@ TEST(nio, FileSourceScanFailureAcrossBufferRefill) {
 #endif
 
 TEST(nio, NullSource) {
+  // Like `/dev/null`, the source is always at the end of its input
   NullSource in;
   EXPECT_FALSE(in.bad());
   EXPECT_TRUE(in.eof());
   char c; // NOLINT
-  EXPECT_EQ(in.Source::read(c), 0);
+  EXPECT_EQ(in.read(c), 0);
+  string str(4, '#');
+  EXPECT_EQ(in.read(str), 0);
+  EXPECT_EQ(str, "####");
   EXPECT_EQ(in.peek(), nullopt);
+  EXPECT_TRUE(in.readAll().empty());
+  EXPECT_EQ(in.readString(), "");
+
+  // Seeking always succeeds, and the position stays 0
+  EXPECT_TRUE(in.seekable());
+  EXPECT_EQ(in.tell(), 0);
+  EXPECT_TRUE(in.seek(0));
+  EXPECT_TRUE(in.seek(42));
+  EXPECT_TRUE(in.seek(-1, SeekMode::cur));
+  EXPECT_TRUE(in.seek(numeric_limits<i64>::max(), SeekMode::end));
+  EXPECT_EQ(in.tell(), 0);
+  EXPECT_TRUE(in.eof());
 }
 
 TEST(nio, SpanSource) {
@@ -756,28 +815,28 @@ TEST(nio, StringSourceSeek) {
   const string str128 = testString(128);
   StringSource in(str128);
 
-  in.Source::seek(0);
+  in.seek(0);
   EXPECT_EQ(in.position(), 0);
   char c = '\0';
-  EXPECT_EQ(in.Source::read(c), 1);
+  EXPECT_EQ(in.read(c), 1);
   EXPECT_EQ(c, '0');
   EXPECT_EQ(in.position(), 1);
 
-  in.Source::seek(127);
+  in.seek(127);
   EXPECT_EQ(in.position(), 127);
-  EXPECT_EQ(in.Source::read(c), 1);
+  EXPECT_EQ(in.read(c), 1);
   EXPECT_EQ(c, '7');
   EXPECT_EQ(in.position(), 128);
 
-  EXPECT_FALSE(in.Source::seek(129)); // Beyond the end: fails, position unchanged
+  EXPECT_FALSE(in.seek(129)); // Beyond the end: fails, position unchanged
   EXPECT_EQ(in.position(), 128);
-  EXPECT_TRUE(in.Source::seek(128)); // The end itself is in range
+  EXPECT_TRUE(in.seek(128)); // The end itself is in range
   EXPECT_EQ(in.position(), 128);
 
   in.seek(-11, SeekMode::cur);
   EXPECT_EQ(in.position(), 117);
 
-  EXPECT_FALSE(in.Source::seek(-1)); // Before the beginning: fails, position unchanged
+  EXPECT_FALSE(in.seek(-1)); // Before the beginning: fails, position unchanged
   EXPECT_EQ(in.position(), 117);
 
   in.seek(0, SeekMode::end);
@@ -801,17 +860,82 @@ TEST(nio, StringSourceSeek) {
   EXPECT_EQ(in.position(), 128);
 }
 
+#ifndef ROCKET_OS_WINDOWS
+namespace {
+
+/// Redirects a file descriptor to one end of a new pipe, and restores it on destruction.
+struct PipeRedirect {
+  explicit PipeRedirect(i32 fd) : fd_(fd) {
+    array<i32, 2> fds {};
+    if (pipe(fds.data()) != 0) {
+      return;
+    }
+    saved_ = dup(fd);
+    dup2(fd == STDIN_FILENO ? fds[0] : fds[1], fd);
+    close(fds[0]);
+    close(fds[1]);
+  }
+
+  PipeRedirect(const PipeRedirect&) = delete;
+  PipeRedirect& operator=(const PipeRedirect&) = delete;
+
+  ~PipeRedirect() {
+    if (saved_ >= 0) {
+      dup2(saved_, fd_);
+      close(saved_);
+    }
+  }
+
+  [[nodiscard]] bool ok() const { return saved_ >= 0; }
+
+private:
+
+  i32 fd_;
+  i32 saved_ = -1;
+};
+
+} // namespace
+
+TEST(nio, standardStreamsOverPipes) {
+  // With `stdin` and `stdout` over pipes, the standard streams are not seekable. That is decided from the
+  // `FILE` alone, without seeking the stream buffer, which would seek the `FILE` and set `errno`
+  fflush(stdout);
+  cout.flush();
+  {
+    const PipeRedirect in(STDIN_FILENO);
+    const PipeRedirect out(STDOUT_FILENO);
+    ASSERT_TRUE(in.ok());
+    ASSERT_TRUE(out.ok());
+
+    errno = 0;
+    EXPECT_EQ(io::tell(cin), NPOS);
+    EXPECT_FALSE(io::seekable(cin));
+    EXPECT_FALSE(io::seekable(cout));
+    EXPECT_EQ(errno, 0);
+
+    StreamSource src(cin);
+    EXPECT_FALSE(src.seekable());
+    EXPECT_EQ(src.tell(), nullopt);
+    EXPECT_FALSE(src.seek(0));
+    EXPECT_FALSE(src.seek(0, SeekMode::cur));
+    EXPECT_EQ(errno, 0);
+    EXPECT_FALSE(cin.fail());
+  }
+  clearerr(stdin);
+}
+#endif // !ROCKET_OS_WINDOWS
+
 TEST(nio, seekableSources) {
   const auto temp = rocket::filesystem::tempFile();
   {
     FileSink out(temp);
-    out.Sink::write("abc");
+    out.write("abc");
   }
 
   EXPECT_TRUE(StringSource("abc").seekable());
   EXPECT_TRUE(SpanSource().seekable());
   EXPECT_TRUE(FileSource(temp).seekable());
-  EXPECT_FALSE(NullSource().seekable());
+  EXPECT_TRUE(NullSource().seekable()); // Like `/dev/null`, unlike `FileSource` over it
 
 #ifndef ROCKET_OS_WINDOWS
   const auto pipeFile = openPipe("abc");
@@ -836,7 +960,7 @@ TEST(nio, seekableSources) {
   forEachScanSource("abc", [](Source& in) {
     EXPECT_EQ(in.seekable(), in.tell().has_value());
     char c = '\0';
-    ASSERT_EQ(in.Source::read(c), 1);
+    ASSERT_EQ(in.read(c), 1);
     EXPECT_EQ(in.seekable(), in.tell().has_value());
   });
 }
@@ -1130,13 +1254,37 @@ TEST(nio, scanAfterRead) {
   // Scanning starts at the current position, after input read otherwise
   forEachScanSource("ab 12 cd", [](Source& in) {
     char c = '\0';
-    ASSERT_EQ(in.Source::read(c), 1);
+    ASSERT_EQ(in.read(c), 1);
     ASSERT_EQ(in.peek(), 'b');
     const auto result = in.scan<string, i32>("{} {}");
     ASSERT_TRUE(result);
     EXPECT_EQ(result->values(), make_tuple("b"s, 12));
     expectTell(in, 5);
     EXPECT_EQ(in.readln(), " cd");
+  });
+}
+
+TEST(nio, scanAfterPeek) {
+  // Peeking leaves the character in the source, so the next scan sees it
+  forEachScanSource("12 34 x", [](Source& in) {
+    auto result = in.scan<i32>("{}");
+    ASSERT_TRUE(result);
+    EXPECT_EQ(result->value(), 12);
+
+    EXPECT_EQ(in.peek(), ' ');
+    result = in.scan<i32>("{}");
+    ASSERT_TRUE(result);
+    EXPECT_EQ(result->value(), 34);
+
+    EXPECT_EQ(in.peek(), ' ');
+    EXPECT_EQ(in.peek(), ' ');
+    const auto chr = in.scan<char>(" {}");
+    ASSERT_TRUE(chr);
+    EXPECT_EQ(chr->value(), 'x');
+
+    EXPECT_EQ(in.peek(), nullopt);
+    EXPECT_FALSE(in.scan<i32>("{}"));
+    expectRest(in, "");
   });
 }
 
@@ -1158,12 +1306,12 @@ TEST(nio, peek) {
     EXPECT_EQ(in.tell(), 0);
 
     char c = '\0';
-    EXPECT_EQ(in.Source::read(c), 1);
+    EXPECT_EQ(in.read(c), 1);
     EXPECT_EQ(c, 'a');
     EXPECT_EQ(in.peek(), 'b');
     EXPECT_EQ(in.tell(), 1);
 
-    EXPECT_EQ(in.Source::read(c), 1);
+    EXPECT_EQ(in.read(c), 1);
     EXPECT_EQ(c, 'b');
     EXPECT_EQ(in.peek(), nullopt);
     EXPECT_TRUE(in.eof());

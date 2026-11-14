@@ -33,6 +33,18 @@ void rewindTo(nio::Source& in, optional<u64> pos, u64 offset = 0);
 
 bool isWordCodePoint(unicode::CodePoint cp);
 
+/**
+ * Returns whether @p lhs and @p rhs are equal, ignoring the case of ASCII letters.
+ *
+ * Only `A` to `Z` are folded, so the result does not depend on the C locale, and the bytes of a UTF-8 sequence
+ * are never folded, which `tolower` might do in a single-byte locale such as ISO 8859-1.
+ */
+constexpr bool
+equalsIgnoreAsciiCase(char lhs, char rhs) {
+  const auto fold = [](char c) { return c >= 'A' && c <= 'Z' ? static_cast<char>(c - 'A' + 'a') : c; };
+  return fold(lhs) == fold(rhs);
+}
+
 /// Returns whether @p c is an ASCII character that can be part of a word.
 bool
 isAsciiWordChar(char c) {
@@ -175,7 +187,7 @@ rewindTo(nio::Source& in, optional<u64> pos, u64 offset) {
 }
 
 /**
- * Returns whether @p s starts with @p prefix, optionally ignoring case.
+ * Returns whether @p s starts with @p prefix, optionally ignoring the case of ASCII letters.
  */
 bool
 startsWith(string_view s, string_view prefix, bool ignoreCase) {
@@ -185,9 +197,7 @@ startsWith(string_view s, string_view prefix, bool ignoreCase) {
   if (s.size() < prefix.size()) {
     return false;
   }
-  return ranges::equal(s.substr(0, prefix.size()), prefix, [](char lhs, char rhs) {
-    return tolower(static_cast<u8>(lhs)) == tolower(static_cast<u8>(rhs));
-  });
+  return ranges::equal(s.substr(0, prefix.size()), prefix, equalsIgnoreAsciiCase);
 }
 
 } // namespace
@@ -288,10 +298,7 @@ readChoice( // NOLINT(*-complexity)
   }
 
   const auto matchesChar = [ignoreCase](char lhs, char rhs) {
-    if (ignoreCase) {
-      return tolower(static_cast<u8>(lhs)) == tolower(static_cast<u8>(rhs));
-    }
-    return lhs == rhs;
+    return ignoreCase ? equalsIgnoreAsciiCase(lhs, rhs) : lhs == rhs;
   };
 
   const auto start = in.tell();
@@ -490,7 +497,7 @@ readString(nio::Source& in, string_view str, bool ignoreCase, bool endOfWord) {
     for (const char expected : str) {
       char c; // NOLINT
       if (not readOne(in, c) ||
-        (ignoreCase ? tolower(static_cast<u8>(c)) != tolower(static_cast<u8>(expected)) : c != expected)) {
+        (ignoreCase ? not equalsIgnoreAsciiCase(c, expected) : c != expected)) {
         // EOF or mismatch: rewind
         rewindTo(in, pos);
         return false;

@@ -92,6 +92,9 @@ protected:
 
 /**
  * Sink base class. An output device that can be written to.
+ *
+ * A subclass that overrides #write must also declare `using Sink::write;`, or the other overloads of #write
+ * are hidden in the subclass.
  */
 struct Sink : Device {
   /**
@@ -343,6 +346,9 @@ protected:
 
 /**
  * A file sink, backed by a `FILE` pointer.
+ *
+ * Whether the file is seekable is determined once, at construction, as this takes a system call. If the
+ * file is reopened afterward, e.g., with `freopen`, it is still considered seekable or not as before.
  */
 struct FileSink : Sink {
   /**
@@ -381,7 +387,7 @@ struct FileSink : Sink {
 
   [[nodiscard]] i32 handle() const override;
 
-  [[nodiscard]] bool seekable() const override;
+  [[nodiscard]] bool seekable() const override { return seekable_; }
 
   bool vprint(fmt::string_view fmt, fmt::format_args args) override;
 
@@ -395,18 +401,23 @@ struct FileSink : Sink {
 
   bool vprintln(const std::locale& locale, fmt::string_view fmt, fmt::format_args args) override;
 
+  using Sink::write;
+
   u64 write(std::span<const u8> in) override;
 
 ROCKET_TEST_PRIVATE:
 
   FILE* file_; ///< The `FILE` pointer, never null.
   bool closeOnDestroy_; ///< Whether to close the file on destruction.
+  bool seekable_ = false; ///< Whether the file is seekable, determined at construction.
 };
 
 // `NullSink` -----------------------------------------------------------------------------------------------
 
 /**
- * A null sink that never writes anything.
+ * A null sink that discards everything written to it, like `/dev/null`.
+ *
+ * Every operation succeeds: a write reports all bytes as written, and the sink is never bad or exhausted.
  */
 struct NullSink : Sink {
   NullSink() = default;
@@ -415,7 +426,7 @@ struct NullSink : Sink {
 
   [[nodiscard]] bool bad() const override { return false; }
 
-  [[nodiscard]] bool eof() const override { return true; }
+  [[nodiscard]] bool eof() const override { return false; }
 
   bool flush() override { return true; }
 
@@ -435,7 +446,9 @@ struct NullSink : Sink {
 
   bool vprintln(const std::locale&, fmt::string_view, fmt::format_args) override { return true; }
 
-  u64 write(std::span<const u8>) override { return 0; }
+  using Sink::write;
+
+  u64 write(std::span<const u8> in) override { return in.size(); }
 };
 
 // `SpanSink` -----------------------------------------------------------------------------------------------
@@ -468,6 +481,8 @@ struct SpanSink : Sink {
   bool vprint(fmt::text_style style, fmt::string_view fmt, fmt::format_args args) override;
 
   bool vprint(const std::locale& locale, fmt::string_view fmt, fmt::format_args args) override;
+
+  using Sink::write;
 
   u64 write(std::span<const u8> in) override;
 
@@ -513,6 +528,8 @@ struct StreamSink : Sink {
   bool vprintln(fmt::text_style style, fmt::string_view fmt, fmt::format_args args) override;
 
   bool vprintln(const std::locale& locale, fmt::string_view fmt, fmt::format_args args) override;
+
+  using Sink::write;
 
   u64 write(std::span<const u8> in) override;
 
@@ -567,6 +584,8 @@ struct StringSink : Sink {
 
   bool vprint(const std::locale& locale, fmt::string_view fmt, fmt::format_args args) override;
 
+  using Sink::write;
+
   u64 write(std::span<const u8> in) override;
 
 private:
@@ -606,6 +625,9 @@ using ScanFormatString = scn::scan_format_string<scn::scan_file&, T...>;
 
 /**
  * Source base class. An input device that can be read from.
+ *
+ * A subclass that overrides #read or #seek must also declare `using Source::read;` or `using Source::seek;`,
+ * or the other overloads are hidden in the subclass.
  */
 struct Source : Device {
   /**
@@ -634,7 +656,10 @@ struct Source : Device {
   virtual u64 read(std::span<u8> out) = 0;
 
   /**
-   * Reads as many characters as available into a string.
+   * Reads characters into a string, as many as fit into its current size.
+   *
+   * The string is not resized: it is filled from the start with at most `out.size()` characters, and
+   * characters beyond the number read are left unchanged. To read all available characters, use #readString.
    *
    * @param out the string to read into
    * @return the number of bytes read
@@ -816,6 +841,9 @@ protected:
 
 /**
  * A file source, backed by a `FILE` pointer.
+ *
+ * Whether the file is seekable is determined once, at construction, as this takes a system call. If the
+ * file is reopened afterward, e.g., with `freopen`, it is still considered seekable or not as before.
  */
 struct FileSource : Source {
   /**
@@ -847,13 +875,17 @@ struct FileSource : Source {
 
   std::optional<char> peek() override;
 
+  using Source::read;
+
   u64 read(std::span<u8> out) override;
 
   std::optional<std::string> readln() override;
 
+  using Source::seek;
+
   bool seek(i64 offset, SeekMode mode) override;
 
-  [[nodiscard]] bool seekable() const override;
+  [[nodiscard]] bool seekable() const override { return seekable_; }
 
   [[nodiscard]] std::optional<u64> tell() override;
 
@@ -867,12 +899,16 @@ ROCKET_TEST_PRIVATE:
 
   FILE* file_; ///< The `FILE` pointer, never null.
   bool closeOnDestroy_; ///< Whether to close the file on destruction.
+  bool seekable_ = false; ///< Whether the file is seekable, determined at construction.
 };
 
 // `NullSource` ---------------------------------------------------------------------------------------------
 
 /**
- * A null source that never reads anything.
+ * A null source that is always at the end of its input, like `/dev/null`.
+ *
+ * Reading yields nothing, and scanning fails unless the format string expects nothing. As with `/dev/null`,
+ * seeking always succeeds, to any offset in any mode, and the position always stays 0.
  */
 struct NullSource : Source {
   NullSource() = default;
@@ -887,15 +923,19 @@ struct NullSource : Source {
 
   std::optional<char> peek() override { return std::nullopt; }
 
+  using Source::read;
+
   u64 read(std::span<u8>) override { return 0; }
 
   std::optional<std::string> readln() override { return std::nullopt; }
 
-  bool seek(i64, SeekMode) override { return false; }
+  using Source::seek;
 
-  [[nodiscard]] bool seekable() const override { return false; }
+  bool seek(i64, SeekMode) override { return true; }
 
-  [[nodiscard]] std::optional<u64> tell() override { return std::nullopt; }
+  [[nodiscard]] bool seekable() const override { return true; }
+
+  [[nodiscard]] std::optional<u64> tell() override { return 0; }
 
   scn::scan_expected<void> vscan(
     std::string_view fmt, scn::scan_args args) override;
@@ -933,7 +973,11 @@ struct SpanSource : ContiguousSource {
    */
   [[nodiscard]] std::span<const u8> in() const { return in_; }
 
+  using Source::read;
+
   u64 read(std::span<u8> out) override;
+
+  using Source::seek;
 
   /**
    * Seeks a new position in the source. A position before the beginning or beyond the end is out of range;
@@ -980,9 +1024,13 @@ struct StreamSource : Source {
 
   std::optional<char> peek() override;
 
+  using Source::read;
+
   u64 read(std::span<u8> out) override;
 
   std::optional<std::string> readln() override;
+
+  using Source::seek;
 
   bool seek(i64 offset, SeekMode mode) override;
 
@@ -1034,7 +1082,11 @@ struct StringSource : ContiguousSource {
    */
   [[nodiscard]] std::string_view in() const { return in_; }
 
+  using Source::read;
+
   u64 read(std::span<u8> out) override;
+
+  using Source::seek;
 
   /**
    * Seeks a new position in the source. A position before the beginning or beyond the end is out of range;

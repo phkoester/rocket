@@ -112,7 +112,7 @@ printThrown(
   if (type != nullptr) {
     instanceOf.print("instance of {}", TypeId(*type));
   } else {
-    instanceOf.Sink::write("instance of an unknown type");
+    instanceOf.write("instance of an unknown type");
   }
 
   nio::StringSink msg;
@@ -236,7 +236,7 @@ printException(nio::Sink& out, exception_ptr ptr) { // NOLINT
 string
 what(const exception& ex) {
   nio::StringSink out;
-  out.Sink::write(getWhat(ex));
+  out.write(getWhat(ex));
   try {
     rethrow_if_nested(ex);
   } catch (...) {
