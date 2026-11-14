@@ -183,7 +183,8 @@ tell(istream& is) noexcept {
 // Support for 128-bit data types ---------------------------------------------------------------------------
 
 // These follow the standard extractors and inserters for integers (`num_get` and `num_put`), as implemented
-// by libstdc++, including the digit grouping of the stream's locale
+// by libstdc++, including the digit grouping of the stream's locale. With the MSVC STL, the extractors follow
+// its `num_get` instead, which treats thousands separators differently
 
 namespace {
 
@@ -277,6 +278,149 @@ addGrouping(string_view digits, const string& grouping, char sep) {
   return ret;
 }
 
+/// The result of #parseInteger.
+struct ParsedInteger {
+  u128 magnitude = 0; ///< The magnitude, valid if #number and not #overflow.
+  bool negative = false; ///< Whether there was a minus sign.
+  bool number = false; ///< Whether a number was found, i.e., digits, and no misplaced thousands separator.
+  /// Whether the digit groups match the locale. If not, the number is still valid.
+  bool groupingMatches = true;
+  bool overflow = false; ///< Whether the magnitude exceeds the limit.
+  bool eof = false; ///< Whether the end of the input was reached.
+};
+
+/**
+ * Adds @p digit to the magnitude of @p parsed in @p base, unless it already overflowed. The check for an
+ * overflow happens before each step, so no intermediate result can overflow. Checking afterward whether the
+ * value got smaller does not work, because a value that wraps around can still end up larger than before.
+ */
+void
+addDigit(ParsedInteger& parsed, u32 digit, u32 base, u128 limit) {
+  if (parsed.overflow) {
+    return;
+  }
+  const u128 base128 = base;
+  const u128 digit128 = digit;
+  // This is `magnitude * base + digit > limit`, rearranged so that it cannot overflow itself
+  if (parsed.magnitude > (limit - digit128) / base128) {
+    parsed.overflow = true;
+  } else {
+    parsed.magnitude = parsed.magnitude * base128 + digit128;
+  }
+}
+
+#ifdef _MSVC_STL_VERSION
+
+/**
+ * Parses an optionally signed integer from @p buf in the base selected by @p flags. This follows the MSVC
+ * STL's `num_get::_Parse_int_with_locale`.
+ *
+ * In base 16, an `0x` or `0X` prefix is skipped. If the base is detected, a leading `0x` or `0X` selects
+ * base 16, a leading `0` base 8, anything else base 10. The decimal point plays no role.
+ *
+ * Thousands separators are recognized if the grouping of the locale is not empty, even if it groups no
+ * digits. Separators before and after the sign, adjacent separators, and a trailing separator are consumed,
+ * but mean that the grouping does not match. A group size that is not positive, or `CHAR_MAX`, matches any
+ * group, and the last size repeats.
+ *
+ * @param buf the stream buffer to read from
+ * @param flags the format flags of the stream
+ * @param loc the locale of the stream
+ * @param positiveLimit the greatest magnitude allowed without a minus sign
+ * @param negativeLimit the greatest magnitude allowed with a minus sign
+ */
+ParsedInteger
+parseInteger(streambuf& buf, ios::fmtflags flags, const locale& loc, u128 positiveLimit, u128 negativeLimit) {
+  const auto& facet = use_facet<numpunct<char>>(loc);
+  const string grouping = facet.grouping();
+  const char thousandsSep = grouping.empty() ? '\0' : facet.thousands_sep();
+
+  ParsedInteger ret;
+  bool badGrouping = false;
+  auto c = buf.sgetc();
+  const auto atEof = [&] { return traits::eq_int_type(c, traits::eof()); };
+  const auto advance = [&] { c = buf.snextc(); };
+  const auto isSep = [&] { return thousandsSep != '\0' && c == traits::to_int_type(thousandsSep); };
+  const auto skipSeps = [&] {
+    while (isSep()) {
+      badGrouping = true;
+      advance();
+    }
+  };
+
+  // Sign, and base prefix
+
+  skipSeps();
+  if (c == '+' || c == '-') {
+    ret.negative = c == '-';
+    advance();
+  }
+  skipSeps();
+
+  u32 base = baseFromFlags(flags);
+  bool seenDigit = false;
+  if (c == '0') {
+    seenDigit = true;
+    advance();
+    if ((c == 'x' || c == 'X') && (base == 0 || base == 16)) {
+      base = 16;
+      seenDigit = false; // Digits must follow
+      advance();
+    } else if (base == 0) {
+      base = 8;
+    }
+  }
+  if (base == 0) {
+    base = 10;
+  }
+
+  // Digits and thousands separators. A digit comes first, even if it is also the separator
+
+  const u128 limit = ret.negative ? negativeLimit : positiveLimit;
+  vector<u64> groups { seenDigit ? 1U : 0U }; // The sizes of the digit groups, from the left
+  while (not atEof()) {
+    if (const auto digit = digitValue(c, base)) {
+      addDigit(ret, *digit, base, limit);
+      seenDigit = true;
+      ++groups.back();
+    } else if (not isSep()) {
+      break;
+    } else if (groups.back() == 0) {
+      badGrouping = true; // Adjacent separators, or a separator right after `0x`
+    } else {
+      groups.push_back(0);
+    }
+    advance();
+  }
+
+  if (groups.size() > 1 && groups.back() == 0) {
+    badGrouping = true; // Trailing separator
+  }
+  if (seenDigit && groups.size() > 1) {
+    // Starting at the rightmost group. All groups must match exactly, except for the leftmost one, which may
+    // be shorter
+    u64 index = 0;
+    char size = 0;
+    for (auto i = groups.size(); i > 0 && not badGrouping;) {
+      if (index < grouping.size()) {
+        size = grouping[index++]; // Otherwise, the last size repeats
+      }
+      --i;
+      if (isGroupSize(size)) {
+        const auto expected = static_cast<u64>(size);
+        badGrouping = i > 0 ? groups[i] != expected : groups[i] > expected;
+      }
+    }
+  }
+
+  ret.number = seenDigit;
+  ret.groupingMatches = not badGrouping;
+  ret.eof = atEof();
+  return ret;
+}
+
+#else
+
 /**
  * Checks if the digit groups found in the input match @p grouping. This is libstdc++'s `__verify_grouping`.
  *
@@ -304,17 +448,6 @@ verifyGrouping(const string& grouping, const string& found) {
   return ret;
 }
 
-/// The result of #parseInteger.
-struct ParsedInteger {
-  u128 magnitude = 0; ///< The magnitude, valid if #number and not #overflow.
-  bool negative = false; ///< Whether there was a minus sign.
-  bool number = false; ///< Whether a number was found, i.e., digits, and no misplaced thousands separator.
-  /// Whether the digit groups match the locale. If not, the number is still valid.
-  bool groupingMatches = true;
-  bool overflow = false; ///< Whether the magnitude exceeds the limit.
-  bool eof = false; ///< Whether the end of the input was reached.
-};
-
 /**
  * Parses an optionally signed integer from @p buf in the base selected by @p flags. This follows libstdc++'s
  * `num_get::_M_extract_int`.
@@ -326,23 +459,15 @@ struct ParsedInteger {
  * If the locale groups digits, thousands separators may separate the digits. A separator at the start or
  * after another one ends the input, and there is no number then. The decimal point always ends the input.
  *
- * The check for an overflow happens before each step, so no intermediate result can overflow. Checking
- * afterward whether the value got smaller does not work, because a value that wraps around can still end up
- * larger than before.
- *
  * @param buf the stream buffer to read from
  * @param flags the format flags of the stream
- * @param punct the numeric punctuation of the stream's locale
+ * @param loc the locale of the stream
  * @param positiveLimit the greatest magnitude allowed without a minus sign
  * @param negativeLimit the greatest magnitude allowed with a minus sign
  */
 ParsedInteger
-parseInteger(
-  streambuf& buf,
-  ios::fmtflags flags,
-  const Punctuation& punct,
-  u128 positiveLimit,
-  u128 negativeLimit) {
+parseInteger(streambuf& buf, ios::fmtflags flags, const locale& loc, u128 positiveLimit, u128 negativeLimit) {
+  const auto punct = punctuation(loc);
   ParsedInteger ret;
   auto c = buf.sgetc();
   const auto atEof = [&] { return traits::eq_int_type(c, traits::eof()); };
@@ -396,7 +521,6 @@ parseInteger(
 
   // Digits and thousands separators
 
-  const u128 base128 = base;
   const u128 limit = ret.negative ? negativeLimit : positiveLimit;
   string foundGrouping; // The sizes of the digit groups, from the left
   bool misplacedSep = false;
@@ -415,15 +539,7 @@ parseInteger(
       if (not digit) {
         break;
       }
-      if (not ret.overflow) {
-        const u128 digit128 = *digit;
-        // This is `magnitude * base + digit > limit`, rearranged so that it cannot overflow itself
-        if (ret.magnitude > (limit - digit128) / base128) {
-          ret.overflow = true;
-        } else {
-          ret.magnitude = ret.magnitude * base128 + digit128;
-        }
-      }
+      addDigit(ret, *digit, base, limit);
       ++sepPos;
     }
     advance();
@@ -437,6 +553,8 @@ parseInteger(
   ret.eof = atEof();
   return ret;
 }
+
+#endif // _MSVC_STL_VERSION
 
 /**
  * Sets `badbit` on @p is after its stream buffer threw, and rethrows if `badbit` is in the exception mask,
@@ -475,7 +593,7 @@ extractInteger(istream& is, T& val) {
   ParsedInteger parsed;
   try {
     const auto max = static_cast<u128>(numeric_limits<T>::max());
-    parsed = parseInteger(*is.rdbuf(), is.flags(), punctuation(is.getloc()), max, SIGNED ? max + 1 : max);
+    parsed = parseInteger(*is.rdbuf(), is.flags(), is.getloc(), max, SIGNED ? max + 1 : max);
   } catch (...) {
     handleBufferException(is);
     return is;
