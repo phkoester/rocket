@@ -728,11 +728,11 @@ struct Source : Device {
   virtual bool seek(i64 offset, SeekMode mode) = 0;
 
   /**
-   * Returns the current input position
+   * Returns the current input position.
    *
-   * @return the current input position, or #rocket::NPOS if the position cannot be determined
+   * @return the current input position, or an empty optional if the position cannot be determined
    */
-  [[nodiscard]] virtual u64 tell() = 0;
+  [[nodiscard]] virtual std::optional<u64> tell() = 0;
 
   /**
    * Scans values from the source. This is the type-erased backend of #scan.
@@ -782,9 +782,19 @@ struct ContiguousSource : Source {
 
   std::optional<char> peek() override;
 
+  /**
+   * Returns the current input position. Unlike #rocket::nio::Source#tell, this cannot fail, because a
+   * contiguous source always has a position.
+   *
+   * @return the current input position
+   */
+  [[nodiscard]] virtual u64 position() const = 0;
+
   std::string readln() override;
 
   [[nodiscard]] bool seekable() const final { return true; }
+
+  [[nodiscard]] std::optional<u64> tell() final { return position(); }
 
   scn::scan_expected<void> vscan(
     std::string_view fmt, scn::scan_args args) override;
@@ -848,7 +858,7 @@ struct FileSource : Source {
 
   [[nodiscard]] bool seekable() const override;
 
-  [[nodiscard]] u64 tell() override;
+  [[nodiscard]] std::optional<u64> tell() override;
 
   scn::scan_expected<void> vscan(
     std::string_view fmt, scn::scan_args args) override;
@@ -888,7 +898,7 @@ struct NullSource : Source {
 
   [[nodiscard]] bool seekable() const override { return false; }
 
-  [[nodiscard]] u64 tell() override { return NPOS; }
+  [[nodiscard]] std::optional<u64> tell() override { return std::nullopt; }
 
   scn::scan_expected<void> vscan(
     std::string_view fmt, scn::scan_args args) override;
@@ -936,7 +946,7 @@ struct SpanSource : ContiguousSource {
     return { reinterpret_cast<const char*>(bytes.data()), bytes.size() };
   }
 
-  [[nodiscard]] u64 tell() override { return pos_; }
+  [[nodiscard]] u64 position() const override { return pos_; }
 
 private:
 
@@ -973,7 +983,7 @@ struct StreamSource : Source {
 
   [[nodiscard]] bool seekable() const override;
 
-  [[nodiscard]] u64 tell() override;
+  [[nodiscard]] std::optional<u64> tell() override;
 
   scn::scan_expected<void> vscan(
     std::string_view fmt, scn::scan_args args) override;
@@ -1025,7 +1035,7 @@ struct StringSource : ContiguousSource {
 
   [[nodiscard]] std::string_view str() const override { return in_.substr(pos_); }
 
-  [[nodiscard]] u64 tell() override { return pos_; }
+  [[nodiscard]] u64 position() const override { return pos_; }
 
 private:
 

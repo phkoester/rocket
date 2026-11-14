@@ -1,5 +1,5 @@
 #
-# RocketFunctions.cmake
+# rocket-functions.cmake
 #
 # Helper functions for Rocket.
 #

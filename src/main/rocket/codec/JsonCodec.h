@@ -253,7 +253,15 @@ isObjectTuple([[maybe_unused]] std::index_sequence<Index...> seq) {
            DataTypes<std::tuple_element_t<Index, T>>::Value == DataType::VarRef) && ...);
 }
 
-u64 jsonStringOffset(u64 pos, u64 unescapedOffset, const Positions& positions);
+/**
+ * Translates an offset in the unescaped content of a JSON string to a position in the enclosing input.
+ *
+ * @param pos the position of the opening quote of the string, or an empty optional if it is unknown
+ * @param unescapedOffset the offset in the unescaped content
+ * @param positions the positions recorded while unescaping
+ * @return the position in the enclosing input, or an empty optional if @p pos is empty
+ */
+std::optional<u64> jsonStringOffset(std::optional<u64> pos, u64 unescapedOffset, const Positions& positions);
 
 inline void
 nextElem(nio::Sink& out, JsonConsumerConfig& config, u64 index) {
@@ -273,11 +281,12 @@ std::string readJsonString(nio::Source& in, Positions& positions);
  */
 template<typename InPos>
 void
-expectEndOfString(nio::Source& inner, u64 size, const InPos& inPos) {
+expectEndOfString(nio::ContiguousSource& inner, u64 size, const InPos& inPos) {
   rocket::nio::skip(inner, false, false);
-  const u64 innerPos = inner.tell();
+  const u64 innerPos = inner.position();
   if (innerPos != size) {
-    throw InputFailure(inPos(innerPos), { inPos(innerPos), inPos(size) }, "Unexpected input after value");
+    throw InputFailure::withRange(
+      inPos(innerPos), inPos(innerPos), inPos(size), "Unexpected input after value");
   }
 }
 
@@ -727,7 +736,7 @@ readJsonKey(Key& key, nio::Source& in) {
     Positions positions;
     const auto input = readJsonString(in, positions);
     nio::StringSource inner(input);
-    const auto inPos = [pos, &positions](u64 innerPos) -> u64 {
+    const auto inPos = [pos, &positions](u64 innerPos) -> std::optional<u64> {
       return jsonStringOffset(pos, innerPos, positions);
     };
 
@@ -843,7 +852,7 @@ struct JsonProducerImpl<DataType::Char, C> {
       throw InputFailure(pos, "Unterminated character literal");
     }
 
-    const std::string unescaped = unescapeLiteral(*input, pos + 1, { .json=true });
+    const std::string unescaped = unescapeLiteral(*input, pos, { .json=true });
     const std::basic_string<C> str(unicode::ConvertTo<C>::apply(unescaped));
     if (str.size() != 1) {
       throw InputFailure(pos, "Invalid character literal");
@@ -864,7 +873,7 @@ struct JsonProducerImpl<DataType::Enum, E> {
       Positions positions;
       const auto input = readJsonString(in, positions);
       nio::StringSource inner(input);
-      const auto inPos = [pos, &positions](u64 innerPos) -> u64 {
+      const auto inPos = [pos, &positions](u64 innerPos) -> std::optional<u64> {
         return jsonStringOffset(pos, innerPos, positions);
       };
 
@@ -944,7 +953,7 @@ struct JsonProducerImpl<DataType::Pointer, P> {
     Positions positions;
     const auto input = readJsonString(in, positions);
     nio::StringSource inner(input);
-    const auto inPos = [pos, &positions](u64 innerPos) -> u64 {
+    const auto inPos = [pos, &positions](u64 innerPos) -> std::optional<u64> {
       return jsonStringOffset(pos, innerPos, positions);
     };
 
@@ -975,7 +984,7 @@ struct JsonProducerImpl<DataType::String, T> {
       throw InputFailure(pos, "Unterminated string literal");
     }
 
-    const std::string unescaped = unescapeLiteral(*input, pos + 1, { .json=true });
+    const std::string unescaped = unescapeLiteral(*input, pos, { .json=true });
     std::basic_string<C> str(unicode::ConvertTo<C>::apply(unescaped));
     if constexpr (std::same_as<T, std::basic_string_view<C>>) {
       // Decoding a string view: make it point to a string bound to the decoder
@@ -1028,7 +1037,8 @@ struct JsonProducerImpl<DataType::Tuple, T> {
       skip(in);
     }
     if (not readChar(in, ']')) {
-      throw InputFailure(in.tell(), { pos, in.tell() }, "Unterminated array");
+      const auto end = in.tell();
+      throw InputFailure::withRange(end, pos, end, "Unterminated array");
     }
   }
 
@@ -1080,7 +1090,7 @@ struct JsonProducerImpl<DataType::List, T> {
 private:
 
   void
-  produceArray(T& val, nio::Source& in, u64 pos) const {
+  produceArray(T& val, nio::Source& in, std::optional<u64> pos) const {
     const auto size = val.size();
     for (u64 index = 0; index < size; ++index) {
       skip(in);
@@ -1096,7 +1106,8 @@ private:
       skip(in);
     }
     if (not readChar(in, ']')) {
-      throw InputFailure(in.tell(), { pos, in.tell() }, fmt::format("Unterminated array of size {}", size));
+      const auto end = in.tell();
+      throw InputFailure::withRange(end, pos, end, fmt::format("Unterminated array of size {}", size));
     }
   }
 
@@ -1264,7 +1275,7 @@ struct JsonProducerImpl<DataType::Duration, T> {
     Positions positions;
     const auto input = readJsonString(in, positions);
     nio::StringSource inner(input);
-    const auto inPos = [pos, &positions](u64 innerPos) -> u64 {
+    const auto inPos = [pos, &positions](u64 innerPos) -> std::optional<u64> {
       return jsonStringOffset(pos, innerPos, positions);
     };
 
@@ -1289,7 +1300,7 @@ struct JsonProducerImpl<DataType::Duration, T> {
       return;
     }
 
-    throw InputFailure(inPos(inner.tell()), "Expected a time unit");
+    throw InputFailure(inPos(inner.position()), "Expected a time unit");
   }
 };
 
@@ -1306,7 +1317,7 @@ struct JsonProducerImpl<DataType::Date, T> {
     Positions positions;
     const auto input = readJsonString(in, positions);
     nio::StringSource inner(input);
-    const auto inPos = [pos, &positions](u64 innerPos) -> u64 {
+    const auto inPos = [pos, &positions](u64 innerPos) -> std::optional<u64> {
       return jsonStringOffset(pos, innerPos, positions);
     };
 
@@ -1340,7 +1351,7 @@ struct JsonProducerImpl<DataType::HourMinuteSecond, T> {
     Positions positions;
     const auto input = readJsonString(in, positions);
     nio::StringSource inner(input);
-    const auto inPos = [pos, &positions](u64 innerPos) -> u64 {
+    const auto inPos = [pos, &positions](u64 innerPos) -> std::optional<u64> {
       return jsonStringOffset(pos, innerPos, positions);
     };
 
@@ -1400,7 +1411,7 @@ struct JsonProducerImpl<DataType::TimeZone, T> {
     // Read JSON string (no inner source needed here because we use `input` directly)
     Positions positions;
     const auto input = readJsonString(in, positions);
-    const auto inPos = [pos, &positions](u64 innerPos) -> u64 {
+    const auto inPos = [pos, &positions](u64 innerPos) -> std::optional<u64> {
       return jsonStringOffset(pos, innerPos, positions);
     };
 
@@ -1431,7 +1442,7 @@ struct JsonProducerImpl<DataType::Time, T> {
     Positions positions;
     const auto input = readJsonString(in, positions);
     nio::StringSource inner(input);
-    const auto inPos = [pos, &positions](u64 innerPos) -> u64 {
+    const auto inPos = [pos, &positions](u64 innerPos) -> std::optional<u64> {
       return jsonStringOffset(pos, innerPos, positions);
     };
 
@@ -1479,7 +1490,7 @@ struct JsonProducerImpl<DataType::ZonedTime, T> {
     Positions positions;
     const auto input = readJsonString(in, positions);
     nio::StringSource inner(input);
-    const auto inPos = [pos, &positions](u64 innerPos) -> u64 {
+    const auto inPos = [pos, &positions](u64 innerPos) -> std::optional<u64> {
       return jsonStringOffset(pos, innerPos, positions);
     };
 
@@ -1501,7 +1512,7 @@ struct JsonProducerImpl<DataType::ZonedTime, T> {
 
       // Read "Z" or UTC offset
 
-      const auto offsetPos = inner.tell();
+      const auto offsetPos = inner.position();
       seconds offset {};
 
       if (not readChar(inner, 'Z')) {
@@ -1532,7 +1543,7 @@ struct JsonProducerImpl<DataType::ZonedTime, T> {
       // Here, however, the time zone is surrounded by parentheses
 
       expectChar(inner, ' ');
-      const u64 tzPos = inner.tell();
+      const u64 tzPos = inner.position();
       expectChar(inner, '(');
       const auto name = readUntilChar(inner, ')');
       if (not name) {
@@ -1607,7 +1618,8 @@ struct JsonProducerImpl<DataType::Interval, T> {
       skip(in);
     }
     if (not readChar(in, ']')) {
-      throw InputFailure(in.tell(), { pos, in.tell() }, "Unterminated interval");
+      const auto end = in.tell();
+      throw InputFailure::withRange(end, pos, end, "Unterminated interval");
     }
   }
 };
@@ -1678,7 +1690,8 @@ struct JsonProducerImpl<DataType::CodePoint, T> {
       throw InputFailure(pos, "Expected a code point");
     }
     if (not readChar(in, '"')) {
-      throw InputFailure(in.tell(), { pos, in.tell() }, "Unterminated code point");
+      const auto end = in.tell();
+      throw InputFailure::withRange(end, pos, end, "Unterminated code point");
     }
     try {
       val = static_cast<Elem>(result->value());

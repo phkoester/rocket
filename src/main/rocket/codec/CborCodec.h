@@ -1330,7 +1330,8 @@ struct CborCodec : Codec<CborConsumer, CborProducer> {
       const auto& err = decodeResult.error();
       // The position of the error from the base class is actually the index of the item. We need to convert
       // it to the position in the input
-      return std::unexpected(DecodeError { positionOf(cbor, err.position), err.ranges, err.message });
+      const auto pos = err.position ? std::optional(positionOf(cbor, *err.position)) : std::nullopt;
+      return std::unexpected(DecodeError { pos, err.ranges, err.message });
     }
     return decodeResult.value().value();
   }

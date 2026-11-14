@@ -7,14 +7,27 @@
 #include "rocket/filesystem/filesystem.h"
 #include "rocket/nio/nio-utils.h"
 #include "rocket/nio/nio.h"
-
-#include <sstream>
+#include "rocket/unicode/unicode.h"
 
 using namespace rocket::nio;
 
 namespace {
 
+// Local types ----------------------------------------------------------------------------------------------
+
+/// A #rocket::nio::StreamSource that cannot seek or report its position, like one over a pipe.
+struct NonseekableSource {
+  NonseekableBuf buf;
+  istream is;
+  StreamSource in;
+
+  explicit NonseekableSource(const string& str) : buf(str), is(&buf), in(is) {}
+};
+
 // Local functions ------------------------------------------------------------------------------------------
+
+/// The message of the #rocket::InvalidState thrown when a source that cannot seek would have to go back.
+constexpr string_view CANNOT_GO_BACK = "Cannot go back in a source that cannot report its position";
 
 /// Calls @p fn with a contiguous source and noncontiguous sources, which are handled by separate code paths.
 template<typename Fn>
@@ -100,7 +113,7 @@ TEST(nioUtils, readCharNonseekable) {
   NonseekableBuf buf("ab");
   istream is(&buf);
   StreamSource in(is);
-  ASSERT_EQ(in.tell(), NPOS);
+  ASSERT_EQ(in.tell(), nullopt);
 
   EXPECT_FALSE(readChar(in, 'x'));
   EXPECT_TRUE(readChar(in, 'a'));
@@ -210,7 +223,7 @@ TEST(nioUtils, readWhilePredicateNonseekable) {
   NonseekableBuf buf("123ab");
   istream is(&buf);
   StreamSource in(is);
-  ASSERT_EQ(in.tell(), NPOS);
+  ASSERT_EQ(in.tell(), nullopt);
 
   EXPECT_EQ(readWhilePredicate(in, isDigit), "123");
   char c = '\0';
@@ -258,6 +271,139 @@ TEST(nioUtils, skipCCommentsUnterminated) {
       throwsInputFailure(0, EndsWith("Unterminated C-style comment")));
     EXPECT_EQ(in.tell(), 0); // The source must not be advanced on failure
   });
+}
+
+// Nonseekable sources ......................................................................................
+
+// A source that cannot seek cannot go back either. Functions that must go back throw `InvalidState`, and the
+// input read up to that point is lost. These tests pin down that behavior.
+
+TEST(nioUtils, expectCharNonseekable) {
+  NonseekableSource src("ab");
+  ASSERT_EQ(src.in.tell(), nullopt);
+
+  EXPECT_NO_THROW(expectChar(src.in, 'a'));
+  // The position of the failure is unknown
+  EXPECT_THAT([&] { expectChar(src.in, 'x'); }, throwsInputFailure(nullopt, EndsWith("Expected 'x'")));
+  EXPECT_EQ(src.in.readString(), "b"); // `expectChar` only peeks, so nothing is lost
+}
+
+TEST(nioUtils, readChoiceNonseekableMatch) {
+  // Even a match throws: the source has read past it and would have to go back
+  NonseekableSource src("true!x");
+  EXPECT_THAT(
+    [&] { (void) readChoice(src.in, { "true" }, false, false); },
+    ThrowsMessage<InvalidState>(EndsWith(CANNOT_GO_BACK)));
+  EXPECT_EQ(src.in.readString(), "x");
+}
+
+TEST(nioUtils, readChoiceNonseekableNoMatch) {
+  NonseekableSource src("xyz");
+  EXPECT_THAT(
+    [&] { (void) readChoice(src.in, { "true" }, false, false); },
+    ThrowsMessage<InvalidState>(EndsWith(CANNOT_GO_BACK)));
+  EXPECT_EQ(src.in.readString(), "yz");
+}
+
+TEST(nioUtils, readCodePointNonseekable) {
+  NonseekableSource src("\xC3\xA4\x80" "ab");
+
+  const auto first = readCodePoint(src.in);
+  ASSERT_TRUE(first);
+  EXPECT_EQ(static_cast<char32>(*first), U'ä');
+
+  // Invalid UTF-8 does not throw, but the invalid byte is lost instead of being rewound
+  const auto second = readCodePoint(src.in);
+  ASSERT_FALSE(second);
+  EXPECT_EQ(second.error(), InvalidUtf8);
+  EXPECT_EQ(src.in.readString(), "ab");
+}
+
+TEST(nioUtils, readIdentifierNonseekable) {
+  // The identifier is read, but going back over the code point after it throws
+  NonseekableSource src("abc def");
+  EXPECT_THAT(
+    [&] { (void) readIdentifier(src.in); }, ThrowsMessage<InvalidState>(EndsWith(CANNOT_GO_BACK)));
+  EXPECT_EQ(src.in.readString(), "def");
+}
+
+TEST(nioUtils, readIdentifierNonseekableNoIdentifier) {
+  NonseekableSource src("1ab");
+  EXPECT_THAT(
+    [&] { (void) readIdentifier(src.in); }, ThrowsMessage<InvalidState>(EndsWith(CANNOT_GO_BACK)));
+  EXPECT_EQ(src.in.readString(), "ab");
+}
+
+TEST(nioUtils, readStringNonseekable) {
+  // A match without a word-boundary check does not need to go back
+  NonseekableSource src("abc");
+  EXPECT_TRUE(readString(src.in, "ab", false, false));
+  EXPECT_EQ(src.in.readString(), "c");
+}
+
+TEST(nioUtils, readStringNonseekableMismatch) {
+  NonseekableSource src("abxy");
+  EXPECT_THAT(
+    [&] { (void) readString(src.in, "abc", false, false); },
+    ThrowsMessage<InvalidState>(EndsWith(CANNOT_GO_BACK)));
+  EXPECT_EQ(src.in.readString(), "y");
+}
+
+TEST(nioUtils, readStringNonseekableEndOfWord) {
+  // Checking the word boundary reads the next code point and always goes back
+  NonseekableSource src("ab cd");
+  EXPECT_THAT(
+    [&] { (void) readString(src.in, "ab", false, true); },
+    ThrowsMessage<InvalidState>(EndsWith(CANNOT_GO_BACK)));
+  EXPECT_EQ(src.in.readString(), "cd");
+}
+
+TEST(nioUtils, readUntilCharNonseekable) {
+  NonseekableSource src("ab,c");
+  EXPECT_EQ(readUntilChar(src.in, ','), "ab");
+  EXPECT_EQ(src.in.readString(), "c");
+}
+
+TEST(nioUtils, readUntilCharNonseekableNotFound) {
+  NonseekableSource src("abc");
+  EXPECT_THAT(
+    [&] { (void) readUntilChar(src.in, ','); }, ThrowsMessage<InvalidState>(EndsWith(CANNOT_GO_BACK)));
+  EXPECT_EQ(src.in.readString(), "");
+}
+
+TEST(nioUtils, readUntilUnescapedCharNonseekableNotFound) {
+  NonseekableSource src(R"(a\,b)");
+  EXPECT_THAT(
+    [&] { (void) readUntilUnescapedChar(src.in, ','); },
+    ThrowsMessage<InvalidState>(EndsWith(CANNOT_GO_BACK)));
+  EXPECT_EQ(src.in.readString(), "");
+}
+
+TEST(nioUtils, skipNonseekable) {
+  // Skipping stops at the first nonwhitespace character, which it has to go back over
+  NonseekableSource src("  xy");
+  EXPECT_THAT([&] { skip(src.in, false, false); }, ThrowsMessage<InvalidState>(EndsWith(CANNOT_GO_BACK)));
+  EXPECT_EQ(src.in.readString(), "y");
+}
+
+TEST(nioUtils, skipNonseekableCComments) {
+  // A `/` that does not start a comment is read together with the character after it
+  NonseekableSource src("/x y");
+  EXPECT_THAT([&] { skip(src.in, true, false); }, ThrowsMessage<InvalidState>(EndsWith(CANNOT_GO_BACK)));
+  EXPECT_EQ(src.in.readString(), " y");
+}
+
+TEST(nioUtils, skipNonseekableToEof) {
+  // Whitespace and comments up to the end of the input need not go back
+  NonseekableSource src("  // comment\n  ");
+  EXPECT_NO_THROW(skip(src.in, true, false));
+  EXPECT_EQ(src.in.readString(), "");
+}
+
+TEST(nioUtils, skipUntilStringNonseekable) {
+  NonseekableSource src("a*/b");
+  EXPECT_TRUE(skipUntilString(src.in, "*/"));
+  EXPECT_EQ(src.in.readString(), "b");
 }
 
 // EOF

@@ -6,13 +6,11 @@
 
 #include "rocket/assert.h"
 #include "rocket/io/io.h"
-#include "rocket/unicode/unicode.h"
 
 #include <fmt/ostream.h>
 
 #include <algorithm>
 #include <cstring>
-#include <exception>
 #include <iostream>
 #include <iterator>
 #include <locale>
@@ -109,8 +107,8 @@ scn::scan_expected<void>
 checkFileScan(Source& in, const scn::scan_file& file, const scn::scan_expected<T>& result) {
   // glibc can put back any amount of input, but the Windows C runtime only guarantees one character
   if (const auto n = file.prelude().size(); n != 0) {
-    const auto pos = in.seekable() ? in.tell() : NPOS;
-    if (pos == NPOS || pos < n || not in.seek(static_cast<i64>(pos - n), SeekMode::beg)) {
+    const auto pos = in.seekable() ? in.tell() : optional<u64>();
+    if (not pos || *pos < n || not in.seek(static_cast<i64>(*pos - n), SeekMode::beg)) {
       return scn::unexpected(
         scn::scan_error(scn::scan_error::invalid_source_state, "Cannot put back unread input"));
     }
@@ -694,13 +692,14 @@ FileSource::seekable() const {
   return io::seekable(file_);
 }
 
-u64
+optional<u64>
 FileSource::tell() {
   if (bad()) {
-    return NPOS;
+    return nullopt;
   }
 
-  return io::tell(file_);
+  const u64 ret = io::tell(file_);
+  return ret == NPOS ? nullopt : optional(ret);
 }
 
 scn::scan_expected<void>
@@ -852,15 +851,16 @@ StreamSource::seekable() const {
   return io::seekable(is_);
 }
 
-u64
+optional<u64>
 StreamSource::tell() {
   if (bad()) {
-    return NPOS;
+    return nullopt;
   }
 
   // `io::tell` asks the stream buffer and leaves the state of the stream alone, unlike `tellg`. A stream that
   // cannot seek, such as one over a pipe, has no position
-  return io::tell(is_);
+  const u64 ret = io::tell(is_);
+  return ret == NPOS ? nullopt : optional(ret);
 }
 
 scn::scan_expected<void>

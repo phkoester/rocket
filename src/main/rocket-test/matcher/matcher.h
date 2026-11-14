@@ -203,13 +203,14 @@ throwsInputFailure(PositionMatcher&& positionMatcher, WhatMatcher&& whatMatcher)
  *
  * @tparam C the character type
  * @tparam WhatMatcher the type of @p whatMatcher
- * @param position the expected value of the `.position()` property of the exception
+ * @param position the expected value of the `.position()` property of the exception, or an empty optional if
+ *   the position is unknown
  * @param whatMatcher a matcher for the `.what()` property of the exception
  * @return a matcher
  */
 template<typename WhatMatcher>
 inline testing::PolymorphicMatcher<testing::internal::ExceptionMatcherImpl<InputFailure>>
-throwsInputFailure(u64 position, WhatMatcher&& whatMatcher) {
+throwsInputFailure(std::optional<u64> position, WhatMatcher&& whatMatcher) {
   return throwsInputFailure(
     testing::Eq(position),
     std::forward<WhatMatcher>(whatMatcher));
@@ -251,14 +252,15 @@ throwsInputFailure(
  *
  * @tparam C the character type
  * @tparam WhatMatcher the type of @p whatMatcher
- * @param position the expected value of the `.position()` property of the exception
+ * @param position the expected value of the `.position()` property of the exception, or an empty optional if
+ *   the position is unknown
  * @param range the expected one and only element in the `.ranges()` property of the exception
  * @param whatMatcher a matcher for the `.what()` property of the exception
  * @return a matcher
  */
 template<typename WhatMatcher>
 inline testing::PolymorphicMatcher<testing::internal::ExceptionMatcherImpl<InputFailure>>
-throwsInputFailure(u64 position, str::Range range, WhatMatcher&& whatMatcher) {
+throwsInputFailure(std::optional<u64> position, str::Range range, WhatMatcher&& whatMatcher) {
   return throwsInputFailure(
     testing::Eq(position),
     testing::Eq(str::Ranges { range }),
@@ -270,14 +272,15 @@ throwsInputFailure(u64 position, str::Range range, WhatMatcher&& whatMatcher) {
  *
  * @tparam C the character type
  * @tparam WhatMatcher the type of @p whatMatcher
- * @param position the expected value of the `.position()` property of the exception
+ * @param position the expected value of the `.position()` property of the exception, or an empty optional if
+ *   the position is unknown
  * @param ranges the expected value of the `.ranges()` property of the exception
  * @param whatMatcher a matcher for the `.what()` property of the exception
  * @return a matcher
  */
 template<typename WhatMatcher>
 inline testing::PolymorphicMatcher<testing::internal::ExceptionMatcherImpl<InputFailure>>
-throwsInputFailure(u64 position, const str::Ranges& ranges, WhatMatcher&& whatMatcher) {
+throwsInputFailure(std::optional<u64> position, const str::Ranges& ranges, WhatMatcher&& whatMatcher) {
   return throwsInputFailure(
     testing::Eq(position),
     testing::Eq(ranges),

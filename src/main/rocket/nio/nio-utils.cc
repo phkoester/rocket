@@ -19,15 +19,14 @@ namespace {
 /**
  * Seeks @p in to the absolute position @p pos plus @p offset, where @p pos was obtained from `in.tell()`.
  *
- * @throw InvalidState if @p pos is #rocket::NPOS, i.e., @p in cannot report its position and therefore
- *   cannot go back
+ * @throw InvalidState if @p pos is empty, i.e., @p in cannot report its position and therefore cannot go back
  */
 void
-rewindTo(nio::Source& in, u64 pos, u64 offset = 0) {
-  if (pos == NPOS) {
+rewindTo(nio::Source& in, optional<u64> pos, u64 offset = 0) {
+  if (not pos) {
     throw InvalidState("Cannot go back in a source that cannot report its position");
   }
-  in.seek(static_cast<i64>(pos + offset), nio::SeekMode::beg);
+  in.seek(static_cast<i64>(*pos + offset), nio::SeekMode::beg);
 }
 
 bool
@@ -49,7 +48,7 @@ isEndOfWord(string_view str, u64 pos) {
 
 bool
 isEndOfWord(nio::Source& in) {
-  const u64 pos = in.tell();
+  const auto pos = in.tell();
   const auto result = nio::readCodePoint(in);
   rewindTo(in, pos); // Rewind immediately in any case
 
@@ -254,7 +253,7 @@ readCodePoint(nio::Source& in) {
 
     // A source that cannot report its position, such as a pipe or `NullSource`, cannot go back either. It is
     // not bad, though, so it is read all the same
-    const u64 initialPos = in.tell();
+    const auto initialPos = in.tell();
 
     // Read first byte
     char c; // NOLINT
@@ -267,8 +266,8 @@ readCodePoint(nio::Source& in) {
     // The source may only advance on success, so rewind the position on failure, if possible. Seeking a
     // source that cannot seek would not only fail, but might also discard buffered input
     const auto failInvalidUtf8 = [&] {
-      if (initialPos != NPOS) {
-        in.seek(static_cast<i64>(initialPos), SeekMode::beg);
+      if (initialPos) {
+        in.seek(static_cast<i64>(*initialPos), SeekMode::beg);
       }
       return unexpected(InvalidUtf8);
     };

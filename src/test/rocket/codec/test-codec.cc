@@ -34,12 +34,12 @@ namespace {
 // Tests if `str` is available in `in`
 bool
 read(nio::Source& in, string_view str) {
-  auto pos = in.tell();
+  const auto pos = in.tell();
   string buf(str.size(), ' ');
   const auto n = in.read(buf);
   const bool ret = n == buf.size() && buf == str;
   if (not ret) {
-    in.seek(static_cast<i64>(pos));
+    in.seek(static_cast<i64>(pos.value()));
   }
   return ret;
 }

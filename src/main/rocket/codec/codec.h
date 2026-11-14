@@ -44,7 +44,6 @@
 #include "rocket/type-traits.h"
 #include "rocket/chrono/chrono.h"
 #include "rocket/math/Interval.h"
-#include "rocket/nio/nio-utils.h"
 #include "rocket/reflect/Declared.h"
 #include "rocket/reflect/Instance.h"
 #include "rocket/reflect/MemberRef.h"
@@ -504,7 +503,8 @@ void nextElem(nio::Sink& out, bool indent, u64 level, u64 index);
  * Unescapes the content of a quoted literal, reporting failures relative to the enclosing input.
  *
  * @param input the content of the literal, without its quotes
- * @param contentPos the position of @p input in the enclosing input
+ * @param quotePos the position of the opening quote in the enclosing input, or an empty optional if it is
+ *   unknown. In the latter case, failures have no position
  * @param config the configuration
  * @param positions if nonnull, receives the positions, which are relative to @p input
  * @return the unescaped string
@@ -513,13 +513,14 @@ void nextElem(nio::Sink& out, bool indent, u64 level, u64 index);
 inline std::string
 unescapeLiteral(
   std::string_view input,
-  u64 contentPos,
+  std::optional<u64> quotePos,
   const str::escape::CStringConfig& config = {},
   Positions* positions = nullptr) {
   try {
     return str::escape::unescapeCString(input, config, positions);
   } catch (const InputFailure& ex) {
-    throw ex.shifted(contentPos);
+    // The content starts after the opening quote
+    throw ex.shifted(quotePos.transform([](u64 pos) { return pos + 1; }));
   }
 }
 
@@ -635,8 +636,8 @@ struct Encoder {
 
 /// The error type for #rocket::codec::Decoder::decode.
 struct DecodeError {
-  u64 position; ///< The position in the input where the error occurred.
-  str::Ranges ranges; ///< The ranges of interest in the input.
+  std::optional<u64> position; ///< The position in the input where the error occurred, if known.
+  str::Ranges ranges; ///< The ranges of interest in the input. Empty if the position is unknown.
   std::string message; ///< The error message.
 };
 

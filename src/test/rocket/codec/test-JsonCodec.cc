@@ -61,7 +61,7 @@ template<typename T>
 [[nodiscard]] pair<DecodeResult<T>, u64>
 decodeAndTell(string_view str) {
   nio::StringSource in(str);
-  return { jsonCodec.decode<T>(in), in.tell() };
+  return { jsonCodec.decode<T>(in), in.position() };
 }
 
 // `Character` has no default constructor, so `JsonCodec::decode` cannot create one
@@ -638,7 +638,7 @@ TEST(JsonCodec, ProducerFailureInsideClusterOutsideString) {
   const auto result = decode<Pair>(input);
   ASSERT_FALSE(result.has_value());
   const loc::Position pos {
-    .type=loc::error, .position=result.error().position, .message=result.error().message
+    .type=loc::error, .position=result.error().position.value(), .message=result.error().message
   };
   EXPECT_EQ(loc::locations(input, { pos }).locations.at(0).column, 2U);
 }
@@ -807,6 +807,19 @@ TEST(JsonCodec, ProducerZonedTimeUtcOffset) {
   EXPECT_TRUE(decode<ZonedTime>("\"2026-10-07T11:21:00+00:00 (Europe/Berlin)\"").has_value());
 }
 
+TEST(JsonCodec, ProducerZonedTimeTimeZone) {
+  using namespace std::chrono;
+  using ZonedTime = rocket::chrono::zoned_time<nanoseconds>;
+
+  // Failures in the time zone are reported at the opening parenthesis, in the outer input
+  expectFailure<ZonedTime>("\"2026-10-07T11:21:00Z (Europe/Berlin\"", "Unterminated time-zone name", 22);
+  expectFailure<ZonedTime>("  \"2026-10-07T11:21:00Z (Europe/Berlin\"", "Unterminated time-zone name", 24);
+
+  const auto result = decode<ZonedTime>("\"2026-10-07T11:21:00+01:00 (Nowhere/Nothing)\"");
+  ASSERT_FALSE(result.has_value());
+  EXPECT_EQ(result.error().position, 27);
+}
+
 TEST(JsonCodec, ProducerTimeIndependentOfLocalZone) {
   using namespace std::chrono;
   using TimePoint = time_point<system_clock, nanoseconds>;
@@ -904,7 +917,7 @@ TEST(JsonCodec, ProducerDeclaredFileSource) {
     const DecodeError& err = result.error();
     namespace loc = rocket::str::location;
     const loc::Position pos {
-      .type=loc::error, .position=err.position, .ranges=err.ranges, .message=err.message
+      .type=loc::error, .position=err.position.value(), .ranges=err.ranges, .message=err.message
     };
     const auto result = loc::locations(input, { pos }, { .setLineString=true, .source=path.string() });
     loc::printLocations(nio::out, input, result, { .styled=true });

@@ -163,19 +163,19 @@ openPipe(string_view input, span<char> buffer = {}) {
     close(fds[0]);
     return {};
   }
-  if (written != static_cast<ssize_t>(input.size())
-    || (not buffer.empty() && setvbuf(ret.get(), buffer.data(), _IOFBF, buffer.size()) != 0)) {
+  if (written != static_cast<ssize_t>(input.size()) ||
+    (not buffer.empty() && setvbuf(ret.get(), buffer.data(), _IOFBF, buffer.size()) != 0)) {
     ret.reset();
   }
   return ret;
 }
-#endif
+#endif // !ROCKET_OS_WINDOWS
 
 /**
  * Calls @p fn with each kind of source over @p input: contiguous, seekable, and nonseekable, and files with
  * a tiny buffer, which scnlib refills during a scan.
  *
- * Nonseekable sources report #rocket::NPOS from `tell`, so @p fn checks the position with #expectRest or
+ * Nonseekable sources report no position from `tell`, so @p fn checks the position with #expectRest or
  * #expectTell.
  */
 template<typename Fn>
@@ -267,8 +267,8 @@ expectRest(Source& in, string_view expected) {
 /// Expects the position of @p in to equal @p expected, if @p in can tell its position.
 void
 expectTell(Source& in, u64 expected) {
-  if (const auto pos = in.tell(); pos != NPOS) {
-    EXPECT_EQ(pos, expected);
+  if (const auto pos = in.tell()) {
+    EXPECT_EQ(*pos, expected);
   }
 }
 
@@ -666,40 +666,40 @@ TEST(nio, StringSourceSeek) {
   StringSource in(str128);
 
   in.Source::seek(0);
-  EXPECT_EQ(in.tell(), 0);
+  EXPECT_EQ(in.position(), 0);
   char c = '\0';
   EXPECT_EQ(in.Source::read(c), 1);
   EXPECT_EQ(c, '0');
-  EXPECT_EQ(in.tell(), 1);
+  EXPECT_EQ(in.position(), 1);
 
   in.Source::seek(127);
-  EXPECT_EQ(in.tell(), 127);
+  EXPECT_EQ(in.position(), 127);
   EXPECT_EQ(in.Source::read(c), 1);
   EXPECT_EQ(c, '7');
-  EXPECT_EQ(in.tell(), 128);
+  EXPECT_EQ(in.position(), 128);
 
   in.Source::seek(129);
-  EXPECT_EQ(in.tell(), 128);
+  EXPECT_EQ(in.position(), 128);
 
   in.seek(-11, SeekMode::cur);
-  EXPECT_EQ(in.tell(), 117);
+  EXPECT_EQ(in.position(), 117);
 
   EXPECT_FALSE(in.Source::seek(-1)); // Before the beginning: fails, position unchanged
-  EXPECT_EQ(in.tell(), 117);
+  EXPECT_EQ(in.position(), 117);
 
   in.seek(0, SeekMode::end);
-  EXPECT_EQ(in.tell(), 128);
+  EXPECT_EQ(in.position(), 128);
 
   in.seek(-10, SeekMode::end);
-  EXPECT_EQ(in.tell(), 118);
+  EXPECT_EQ(in.position(), 118);
 
   in.seek(3, SeekMode::end);
-  EXPECT_EQ(in.tell(), 128);
+  EXPECT_EQ(in.position(), 128);
 
   EXPECT_FALSE(in.seek(-200, SeekMode::end));
-  EXPECT_EQ(in.tell(), 128);
+  EXPECT_EQ(in.position(), 128);
   EXPECT_FALSE(in.seek(numeric_limits<i64>::min(), SeekMode::cur));
-  EXPECT_EQ(in.tell(), 128);
+  EXPECT_EQ(in.position(), 128);
 }
 
 TEST(nio, seekableSources) {
@@ -735,10 +735,10 @@ TEST(nio, seekableSources) {
 
   // A source is seekable exactly if it can tell its position, before and after reading
   forEachScanSource("abc", [](Source& in) {
-    EXPECT_EQ(in.seekable(), in.tell() != NPOS);
+    EXPECT_EQ(in.seekable(), in.tell().has_value());
     char c = '\0';
     ASSERT_EQ(in.Source::read(c), 1);
-    EXPECT_EQ(in.seekable(), in.tell() != NPOS);
+    EXPECT_EQ(in.seekable(), in.tell().has_value());
   });
 }
 
@@ -837,6 +837,30 @@ TEST(nio, scanMultipleValues) {
     expectRest(in, ".");
   });
 }
+
+#ifndef ROCKET_OS_WINDOWS
+TEST(nio, scanTimePointFromPipe) {
+  using namespace std::chrono;
+  constexpr string_view INPUT = "2026-11-14T12:34:56 rest";
+  const sys_seconds expected = sys_days(2026y / November / 14) + 12h + 34min + 56s;
+
+  // With the default buffer, and with a tiny buffer, which scnlib refills during the scan
+  array<char, 3> tiny {};
+  for (const span<char> buffer : { span<char>(), span<char>(tiny) }) {
+    SCOPED_TRACE(fmt::format("buffer size {}", buffer.size()));
+    const auto pipeFile = openPipe(INPUT, buffer);
+    ASSERT_NE(pipeFile, nullptr);
+    FileSource in(pipeFile.get());
+    ASSERT_FALSE(in.seekable());
+
+    const auto result = in.scan<sys_seconds>("{:%FT%T}");
+    ASSERT_TRUE(result) << result.error().msg();
+    EXPECT_EQ(result->value(), expected);
+    EXPECT_EQ(in.tell(), nullopt);
+    expectRest(in, " rest"); // Only the time point was consumed
+  }
+}
+#endif // !ROCKET_OS_WINDOWS
 
 TEST(nio, scanSkipsWhitespace) {
   // Leading whitespace is skipped, trailing whitespace is not consumed

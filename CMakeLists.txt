@@ -4,7 +4,7 @@
 
 cmake_minimum_required(VERSION 4.2)
 
-include(${CMAKE_CURRENT_LIST_DIR}/cmake/RocketFunctions.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/cmake/rocket-functions.cmake)
 
 include(FetchContent)
 

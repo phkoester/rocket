@@ -67,12 +67,12 @@ nextElem(nio::Sink& out, bool indent, u64 level, u64 index) {
 
 void
 snapToClusterStarts(DecodeError& error, nio::Source& in) {
-  const u64 oldPos = in.tell();
-  if (oldPos == NPOS || not in.seek(0, nio::SeekMode::beg)) {
+  const auto oldPos = in.tell();
+  if (not oldPos || not in.seek(0, nio::SeekMode::beg)) {
     return;
   }
   const string text = in.readString();
-  in.seek(static_cast<i64>(oldPos), nio::SeekMode::beg);
+  in.seek(static_cast<i64>(*oldPos), nio::SeekMode::beg);
 
   vector<u64> starts { 0 };
   try {
@@ -87,7 +87,9 @@ snapToClusterStarts(DecodeError& error, nio::Source& in) {
   // `starts` begins with 0, so the element in front of the upper bound always exists
   const auto snap = [&starts](u64 pos) { return *(ranges::upper_bound(starts, pos) - 1); };
 
-  error.position = snap(error.position);
+  if (error.position) {
+    error.position = snap(*error.position);
+  }
   for (auto& range : error.ranges) {
     range.a = snap(range.a);
     if (range.b) {
