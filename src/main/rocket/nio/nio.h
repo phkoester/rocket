@@ -71,6 +71,17 @@ struct Device {
    */
   [[nodiscard]] virtual i32 handle() const = 0;
 
+  /**
+   * Checks if the position in the device can be changed.
+   *
+   * For a source, this tells if #rocket::nio::Source#seek and #rocket::nio::Source#tell work. For a sink,
+   * which has no position of its own, this tells if the underlying device has one, e.g., a regular file.
+   * Pipes, sockets, terminals, and memory that is only appended to are not seekable.
+   *
+   * @return if the device is seekable
+   */
+  [[nodiscard]] virtual bool seekable() const = 0;
+
 protected:
 
   /// @ctor_default
@@ -376,6 +387,8 @@ struct FileSink : Sink {
 
   [[nodiscard]] i32 handle() const override;
 
+  [[nodiscard]] bool seekable() const override;
+
   bool vprint(fmt::string_view fmt, fmt::format_args args) override;
 
   bool vprint(fmt::text_style style, fmt::string_view fmt, fmt::format_args args) override;
@@ -413,6 +426,8 @@ struct NullSink : Sink {
   bool flush() override { return true; }
 
   [[nodiscard]] i32 handle() const override { return -1; }
+
+  [[nodiscard]] bool seekable() const override { return false; }
 
   bool vprint(fmt::string_view, fmt::format_args) override { return true; }
 
@@ -452,6 +467,8 @@ struct SpanSink : Sink {
 
   [[nodiscard]] i32 handle() const override { return -1; }
 
+  [[nodiscard]] bool seekable() const override { return false; }
+
   bool vprint(fmt::string_view fmt, fmt::format_args args) override;
 
   bool vprint(fmt::text_style style, fmt::string_view fmt, fmt::format_args args) override;
@@ -488,6 +505,8 @@ struct StreamSink : Sink {
   bool flush() override;
 
   [[nodiscard]] i32 handle() const override;
+
+  [[nodiscard]] bool seekable() const override;
 
   bool vprint(fmt::string_view fmt, fmt::format_args args) override;
 
@@ -538,6 +557,8 @@ struct StringSink : Sink {
   bool flush() override { return true; }
 
   [[nodiscard]] i32 handle() const override { return -1; }
+
+  [[nodiscard]] bool seekable() const override { return false; }
 
   /**
    * Returns a reference to the string (either referenced or owned).
@@ -763,6 +784,8 @@ struct ContiguousSource : Source {
 
   std::string readln() override;
 
+  [[nodiscard]] bool seekable() const final { return true; }
+
   scn::scan_expected<void> vscan(
     std::string_view fmt, scn::scan_args args) override;
 
@@ -823,6 +846,8 @@ struct FileSource : Source {
 
   bool seek(i64 offset, SeekMode mode) override;
 
+  [[nodiscard]] bool seekable() const override;
+
   [[nodiscard]] u64 tell() override;
 
   scn::scan_expected<void> vscan(
@@ -861,6 +886,8 @@ struct NullSource : Source {
 
   bool seek(i64, SeekMode) override { return false; }
 
+  [[nodiscard]] bool seekable() const override { return false; }
+
   [[nodiscard]] u64 tell() override { return NPOS; }
 
   scn::scan_expected<void> vscan(
@@ -868,9 +895,6 @@ struct NullSource : Source {
 
   scn::scan_expected<void> vscan(const std::locale& locale,
     std::string_view fmt, scn::scan_args args) override;
-
-private:
-
 };
 
 // `SpanSource` ---------------------------------------------------------------------------------------------
@@ -946,6 +970,8 @@ struct StreamSource : Source {
   std::string readln() override;
 
   bool seek(i64 offset, SeekMode mode) override;
+
+  [[nodiscard]] bool seekable() const override;
 
   [[nodiscard]] u64 tell() override;
 

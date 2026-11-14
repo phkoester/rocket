@@ -33,7 +33,7 @@ set(ROCKET_ICU_CMAKE_ICU_VERSION 79.1)
 set(ROCKET_INT128_VERSION 4.1.0)
 set(ROCKET_LIBARCHIVE_VERSION 3.8.11)
 set(ROCKET_LIBCBOR_VERSION 0.14.0)
-set(ROCKET_SCNLIB_VERSION master)
+set(ROCKET_SCNLIB_VERSION 4b8a7400ce34208fa47b9abec492a6497a7ab48c) # `master` as of 2026-11-14
 set(ROCKET_WXWIDGETS_VERSION 3.3.4)
 
 # Gaia ------------------------------------------------------------------------------------------------------
@@ -326,11 +326,21 @@ endblock()
 
 # scnlib ....................................................................................................
 
+# The patch instantiates the built-in scanners for `bool`, `char32_t`, and `void*`, which `master` misses,
+# fixes `FILE` input being returned twice after a scan backtracks across a buffer refill, and makes scanning
+# a `system_clock` time point take the fields as UTC instead of local time. Its hash is part of the command,
+# so that editing the patch repopulates scnlib
+set(ROCKET_SCNLIB_PATCH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/patches/scnlib.patch")
+file(SHA256 "${ROCKET_SCNLIB_PATCH}" ROCKET_SCNLIB_PATCH_HASH)
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${ROCKET_SCNLIB_PATCH}")
+
 FetchContent_Declare(
   scnlib
   GIT_REPOSITORY https://github.com/eliaskosunen/scnlib.git
   GIT_TAG        ${ROCKET_SCNLIB_VERSION}
   GIT_PROGRESS   TRUE
+  PATCH_COMMAND  ${CMAKE_COMMAND} -DPATCH=${ROCKET_SCNLIB_PATCH} -DPATCH_HASH=${ROCKET_SCNLIB_PATCH_HASH}
+                 -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/apply-patch.cmake
   SYSTEM
   EXCLUDE_FROM_ALL
 )

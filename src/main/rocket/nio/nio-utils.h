@@ -10,8 +10,34 @@
 #include <expected>
 #include <functional>
 #include <set>
+#include <sstream>
 
 namespace rocket::nio {
+
+// `NonseekableBuf` -----------------------------------------------------------------------------------------
+
+/**
+ * A stream buffer over a string that cannot seek, like one over a pipe.
+ *
+ * Useful for testing code with a #rocket::nio::StreamSource that cannot seek.
+ */
+struct NonseekableBuf : std::stringbuf {
+  /**
+   * @ctor
+   *
+   * @param str the string to read from
+   */
+  explicit NonseekableBuf(const std::string& str) : std::stringbuf(str, std::ios::in) {}
+
+protected:
+
+  pos_type
+  seekoff(off_type, std::ios::seekdir, std::ios::openmode) override {
+    return pos_type(off_type(-1));
+  }
+
+  pos_type seekpos(pos_type, std::ios::openmode) override { return pos_type(off_type(-1)); }
+};
 
 // `ReadCodePointError`, `ReadCodePointResult` --------------------------------------------------------------
 

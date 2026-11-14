@@ -5,11 +5,16 @@
 #include "rocket-test/rocket-test.h"
 
 #include "rocket/filesystem/filesystem.h"
+#include "rocket/io/io.h"
 #include "rocket/log/log.h"
 #include "rocket/nio/nio-utils.h"
 #include "rocket/nio/nio.h"
 
 #include <fstream>
+
+#ifndef ROCKET_OS_WINDOWS
+#include <unistd.h> // `pipe`, `write`, `close`
+#endif
 
 using namespace rocket::nio;
 
@@ -120,6 +125,153 @@ testLocale() {
   return ret;
 }
 
+/// Closes a `FILE`.
+struct FileCloser {
+  void operator()(FILE* file) const { fclose(file); }
+};
+
+/**
+ * Opens @p path for reading with @p buffer as its buffer, or returns null on error. @p buffer must outlive
+ * the file. glibc ignores the size if the buffer is null, so the caller provides it.
+ */
+unique_ptr<FILE, FileCloser>
+openWithBuffer(const std::filesystem::path& path, span<char> buffer) {
+  unique_ptr<FILE, FileCloser> ret(fopen(path.string().c_str(), "rb"));
+  if (ret != nullptr && setvbuf(ret.get(), buffer.data(), _IOFBF, buffer.size()) != 0) {
+    ret.reset();
+  }
+  return ret;
+}
+
+#ifndef ROCKET_OS_WINDOWS
+/**
+ * Returns a `FILE` reading @p input from a pipe, which cannot seek, or null on error. If @p buffer is not
+ * empty, it is used as the buffer of the file and must outlive it.
+ *
+ * The input is written in full before reading starts, so it must fit into the pipe.
+ */
+unique_ptr<FILE, FileCloser>
+openPipe(string_view input, span<char> buffer = {}) {
+  array<i32, 2> fds {};
+  if (pipe(fds.data()) != 0) {
+    return {};
+  }
+  const auto written = write(fds[1], input.data(), input.size());
+  close(fds[1]);
+  unique_ptr<FILE, FileCloser> ret(fdopen(fds[0], "rb"));
+  if (ret == nullptr) {
+    close(fds[0]);
+    return {};
+  }
+  if (written != static_cast<ssize_t>(input.size())
+    || (not buffer.empty() && setvbuf(ret.get(), buffer.data(), _IOFBF, buffer.size()) != 0)) {
+    ret.reset();
+  }
+  return ret;
+}
+#endif
+
+/**
+ * Calls @p fn with each kind of source over @p input: contiguous, seekable, and nonseekable, and files with
+ * a tiny buffer, which scnlib refills during a scan.
+ *
+ * Nonseekable sources report #rocket::NPOS from `tell`, so @p fn checks the position with #expectRest or
+ * #expectTell.
+ */
+template<typename Fn>
+void
+forEachScanSource(string_view input, Fn fn) {
+  SCOPED_TRACE(string(input));
+
+  {
+    SCOPED_TRACE("StringSource");
+    StringSource in(input);
+    fn(in);
+  }
+
+  {
+    SCOPED_TRACE("SpanSource");
+    SpanSource in(span<const u8>(reinterpret_cast<const u8*>(input.data()), input.size()));
+    fn(in);
+  }
+
+  const auto temp = rocket::filesystem::tempFile();
+  {
+    FileSink out(temp);
+    out.Sink::write(input);
+  }
+
+  {
+    SCOPED_TRACE("FileSource");
+    FileSource in(temp);
+    fn(in);
+  }
+
+#ifndef ROCKET_OS_WINDOWS // The Windows C runtime only guarantees one character of putback
+  {
+    SCOPED_TRACE("FileSource (3-byte buffer)");
+    array<char, 3> buf {};
+    const auto file = openWithBuffer(temp, buf);
+    ASSERT_NE(file, nullptr);
+    FileSource in(file.get());
+    fn(in);
+  }
+
+  {
+    SCOPED_TRACE("FileSource (pipe)");
+    const auto file = openPipe(input);
+    ASSERT_NE(file, nullptr);
+    FileSource in(file.get());
+    fn(in);
+  }
+
+  {
+    SCOPED_TRACE("FileSource (pipe, 3-byte buffer)");
+    array<char, 3> buf {};
+    const auto file = openPipe(input, buf);
+    ASSERT_NE(file, nullptr);
+    FileSource in(file.get());
+    fn(in);
+  }
+#endif
+
+  {
+    SCOPED_TRACE("StreamSource (istringstream)");
+    istringstream is { string(input) };
+    StreamSource in(is);
+    fn(in);
+  }
+
+  {
+    SCOPED_TRACE("StreamSource (ifstream)");
+    ifstream is(temp, ios::binary);
+    StreamSource in(is);
+    fn(in);
+  }
+
+  {
+    SCOPED_TRACE("StreamSource (nonseekable)");
+    NonseekableBuf buf { string(input) };
+    istream is(&buf);
+    StreamSource in(is);
+    fn(in);
+  }
+}
+
+/// Expects the remaining input of @p in to equal @p expected. Consumes the remaining input.
+void
+expectRest(Source& in, string_view expected) {
+  EXPECT_EQ(in.readString(), expected);
+}
+
+/// Expects the position of @p in to equal @p expected, if @p in can tell its position.
+void
+expectTell(Source& in, u64 expected) {
+  if (const auto pos = in.tell(); pos != NPOS) {
+    EXPECT_EQ(pos, expected);
+  }
+}
+
 void
 expectCodePoint(Source& in, char32 expected, u64 expectedTell) {
   const auto result = readCodePoint(in);
@@ -178,6 +330,44 @@ TEST(nio, StringSink) {
   StringSink out2(buf); // With external string
   out2.println("Hi {}", "there");
   EXPECT_EQ(buf, "Hi there\n");
+}
+
+TEST(nio, seekableSinks) {
+  const auto temp = rocket::filesystem::tempFile();
+  EXPECT_TRUE(FileSink(temp).seekable());
+
+#ifndef ROCKET_OS_WINDOWS
+  array<i32, 2> fds {};
+  ASSERT_EQ(pipe(fds.data()), 0);
+  close(fds[0]);
+  const unique_ptr<FILE, FileCloser> pipeFile(fdopen(fds[1], "wb"));
+  ASSERT_NE(pipeFile, nullptr);
+  EXPECT_FALSE(FileSink(pipeFile.get()).seekable());
+#endif
+
+  EXPECT_FALSE(NullSink().seekable());
+
+  string str = "....";
+  EXPECT_FALSE(SpanSink(span<char>(str.data(), str.size())).seekable());
+
+  EXPECT_FALSE(StringSink().seekable());
+
+  ostringstream os;
+  EXPECT_TRUE(StreamSink(os).seekable());
+
+  ofstream ofs(temp, ios::binary);
+  EXPECT_TRUE(StreamSink(ofs).seekable());
+
+  streambuf* nullBuf = nullptr;
+  ostream noBuf(nullBuf);
+  EXPECT_FALSE(StreamSink(noBuf).seekable());
+
+  struct NoSeekBuf : streambuf {} noSeekBuf; // `streambuf` cannot seek by default
+  ostream noSeek(&noSeekBuf);
+  EXPECT_FALSE(StreamSink(noSeek).seekable());
+
+  // Like `stdout`, which depends on how the test is run
+  EXPECT_EQ(StreamSink(cout).seekable(), io::seekable(stdout));
 }
 
 // `print`, `println` .......................................................................................
@@ -350,6 +540,46 @@ TEST(nio, FileSourceScan) {
   EXPECT_EQ(in.tell(), 11);
 }
 
+#ifndef ROCKET_OS_WINDOWS // The Windows C runtime only guarantees one character of putback
+// A tiny `FILE` buffer makes scnlib refill it during a scan, so that backtracking puts back input from an
+// earlier buffer. Without the scnlib patch, this returned input from the current buffer twice
+TEST(nio, FileSourceScanBacktrackAcrossBufferRefill) {
+  const auto temp = rocket::filesystem::tempFile();
+  {
+    FileSink out(temp);
+    out.Sink::write("12e+x rest");
+  }
+
+  array<char, 3> buf {}; // Buffers "12e", "+x ", ...
+  const auto file = openWithBuffer(temp, buf);
+  ASSERT_NE(file, nullptr);
+  FileSource in(file.get());
+
+  // Reads "12e+", then backtracks to "12", which is in the first buffer
+  const auto result = in.scan<double>("{}");
+  ASSERT_TRUE(result);
+  EXPECT_EQ(result->value(), 12.0);
+  EXPECT_EQ(in.readString(), "e+x rest");
+}
+
+TEST(nio, FileSourceScanFailureAcrossBufferRefill) {
+  const auto temp = rocket::filesystem::tempFile();
+  {
+    FileSink out(temp);
+    out.Sink::write("abcdefgh rest");
+  }
+
+  array<char, 4> buf {};
+  const auto file = openWithBuffer(temp, buf);
+  ASSERT_NE(file, nullptr);
+  FileSource in(file.get());
+
+  // Reads past the 'r' of "rest" before failing, then puts back everything
+  EXPECT_FALSE((in.scan<string, i32>("{} {}")));
+  EXPECT_EQ(in.readString(), "abcdefgh rest");
+}
+#endif
+
 TEST(nio, NullSource) {
   NullSource in;
   EXPECT_FALSE(in.bad());
@@ -470,6 +700,275 @@ TEST(nio, StringSourceSeek) {
   EXPECT_EQ(in.tell(), 128);
   EXPECT_FALSE(in.seek(numeric_limits<i64>::min(), SeekMode::cur));
   EXPECT_EQ(in.tell(), 128);
+}
+
+TEST(nio, seekableSources) {
+  const auto temp = rocket::filesystem::tempFile();
+  {
+    FileSink out(temp);
+    out.Sink::write("abc");
+  }
+
+  EXPECT_TRUE(StringSource("abc").seekable());
+  EXPECT_TRUE(SpanSource().seekable());
+  EXPECT_TRUE(FileSource(temp).seekable());
+  EXPECT_FALSE(NullSource().seekable());
+
+#ifndef ROCKET_OS_WINDOWS
+  const auto pipeFile = openPipe("abc");
+  ASSERT_NE(pipeFile, nullptr);
+  EXPECT_FALSE(FileSource(pipeFile.get()).seekable());
+#endif
+
+  istringstream iss("abc");
+  EXPECT_TRUE(StreamSource(iss).seekable());
+
+  ifstream ifs(temp, ios::binary);
+  EXPECT_TRUE(StreamSource(ifs).seekable());
+
+  NonseekableBuf buf("abc");
+  istream is(&buf);
+  EXPECT_FALSE(StreamSource(is).seekable());
+
+  // Like `stdin`, which depends on how the test is run
+  EXPECT_EQ(StreamSource(cin).seekable(), io::seekable(stdin));
+
+  // A source is seekable exactly if it can tell its position, before and after reading
+  forEachScanSource("abc", [](Source& in) {
+    EXPECT_EQ(in.seekable(), in.tell() != NPOS);
+    char c = '\0';
+    ASSERT_EQ(in.Source::read(c), 1);
+    EXPECT_EQ(in.seekable(), in.tell() != NPOS);
+  });
+}
+
+// `scan` ...................................................................................................
+
+TEST(nio, scanInteger) {
+  forEachScanSource("42 rest", [](Source& in) {
+    const auto result = in.scan<i32>("{}");
+    ASSERT_TRUE(result);
+    EXPECT_EQ(result->value(), 42);
+    expectTell(in, 2);
+    expectRest(in, " rest");
+  });
+
+  forEachScanSource("-17", [](Source& in) { // At the end of the input
+    const auto result = in.scan<i64>("{}");
+    ASSERT_TRUE(result);
+    EXPECT_EQ(result->value(), -17);
+    expectTell(in, 3);
+    expectRest(in, "");
+  });
+
+  forEachScanSource("0x1F;", [](Source& in) { // Base detected from the prefix
+    const auto result = in.scan<u32>("{:i}");
+    ASSERT_TRUE(result);
+    EXPECT_EQ(result->value(), 31);
+    expectRest(in, ";");
+  });
+}
+
+TEST(nio, scanFloat) {
+  forEachScanSource("3.25,", [](Source& in) {
+    const auto result = in.scan<double>("{}");
+    ASSERT_TRUE(result);
+    EXPECT_EQ(result->value(), 3.25);
+    expectTell(in, 4);
+    expectRest(in, ",");
+  });
+
+  // Reads "12e+", then backtracks to "12", as the exponent has no digits
+  forEachScanSource("12e+x rest", [](Source& in) {
+    const auto result = in.scan<double>("{}");
+    ASSERT_TRUE(result);
+    EXPECT_EQ(result->value(), 12.0);
+    expectTell(in, 2);
+    expectRest(in, "e+x rest");
+  });
+}
+
+TEST(nio, scanStringAndChar) {
+  forEachScanSource("hello world", [](Source& in) { // A string ends at whitespace
+    const auto result = in.scan<string>("{}");
+    ASSERT_TRUE(result);
+    EXPECT_EQ(result->value(), "hello");
+    expectRest(in, " world");
+  });
+
+  forEachScanSource("xyz", [](Source& in) {
+    const auto result = in.scan<char>("{}");
+    ASSERT_TRUE(result);
+    EXPECT_EQ(result->value(), 'x');
+    expectTell(in, 1);
+    expectRest(in, "yz");
+  });
+}
+
+TEST(nio, scanBool) {
+  forEachScanSource("true 0", [](Source& in) {
+    const auto result = in.scan<bool, bool>("{} {}");
+    ASSERT_TRUE(result);
+    const auto [val1, val2] = result->values();
+    EXPECT_TRUE(val1);
+    EXPECT_FALSE(val2);
+    expectRest(in, "");
+  });
+}
+
+TEST(nio, scanMultipleValues) {
+  forEachScanSource("2026-11-14T12", [](Source& in) {
+    const auto result = in.scan<i32, u32, u32>("{}-{}-{}");
+    ASSERT_TRUE(result);
+    const auto [year, month, day] = result->values();
+    EXPECT_EQ(year, 2026);
+    EXPECT_EQ(month, 11);
+    EXPECT_EQ(day, 14);
+    expectTell(in, 10);
+    expectRest(in, "T12");
+  });
+
+  forEachScanSource("debug, info.", [](Source& in) { // Custom scanner
+    const auto result = in.scan<log::LogLevel, log::LogLevel>("{}, {}");
+    ASSERT_TRUE(result);
+    const auto [level1, level2] = result->values();
+    EXPECT_EQ(level1, log::LogLevel::debug);
+    EXPECT_EQ(level2, log::LogLevel::info);
+    expectRest(in, ".");
+  });
+}
+
+TEST(nio, scanSkipsWhitespace) {
+  // Leading whitespace is skipped, trailing whitespace is not consumed
+  forEachScanSource(" \t\n 42  ", [](Source& in) {
+    const auto result = in.scan<i32>("{}");
+    ASSERT_TRUE(result);
+    EXPECT_EQ(result->value(), 42);
+    expectTell(in, 6);
+    expectRest(in, "  ");
+  });
+
+  // Whitespace in the format string matches any amount of whitespace, including none
+  forEachScanSource("1   2,3 4", [](Source& in) {
+    const auto result = in.scan<i32, i32, i32, i32>("{} {},{} {}");
+    ASSERT_TRUE(result);
+    EXPECT_EQ(result->values(), make_tuple(1, 2, 3, 4));
+    expectRest(in, "");
+  });
+}
+
+TEST(nio, scanSuccessive) {
+  forEachScanSource("1 2 3", [](Source& in) {
+    for (i32 i = 1; i <= 3; ++i) {
+      const auto result = in.scan<i32>("{}");
+      ASSERT_TRUE(result);
+      EXPECT_EQ(result->value(), i);
+    }
+    const auto result = in.scan<i32>("{}");
+    ASSERT_FALSE(result);
+    EXPECT_EQ(result.error().code(), scn::scan_error::end_of_input);
+    expectRest(in, "");
+  });
+}
+
+TEST(nio, scanFailureResets) {
+  // A failed scan leaves the source where it was before the scan
+  forEachScanSource("abc 1", [](Source& in) { // Invalid value
+    const auto result = in.scan<i32>("{}");
+    ASSERT_FALSE(result);
+    EXPECT_EQ(result.error().code(), scn::scan_error::invalid_scanned_value);
+    expectTell(in, 0);
+    expectRest(in, "abc 1");
+  });
+
+  forEachScanSource("  12 abc", [](Source& in) { // The first value succeeds, the second fails
+    const auto result = in.scan<i32, i32>("{} {}");
+    ASSERT_FALSE(result);
+    expectTell(in, 0);
+    expectRest(in, "  12 abc");
+  });
+
+  forEachScanSource("12;34", [](Source& in) { // Literal mismatch
+    const auto result = in.scan<i32, i32>("{},{}");
+    ASSERT_FALSE(result);
+    EXPECT_EQ(result.error().code(), scn::scan_error::invalid_literal);
+    expectTell(in, 0);
+    expectRest(in, "12;34");
+  });
+
+  forEachScanSource("abcdefgh rest", [](Source& in) { // Reads past several 3-byte buffers before failing
+    const auto result = in.scan<string, i32>("{} {}");
+    ASSERT_FALSE(result);
+    expectTell(in, 0);
+    expectRest(in, "abcdefgh rest");
+  });
+
+  forEachScanSource("x 5", [](Source& in) { // After a failure, a different scan succeeds
+    ASSERT_FALSE(in.scan<i32>("{}"));
+    const auto result = in.scan<char, i32>("{} {}");
+    ASSERT_TRUE(result);
+    EXPECT_EQ(result->values(), make_tuple('x', 5));
+    expectRest(in, "");
+  });
+}
+
+TEST(nio, scanEndOfInput) {
+  forEachScanSource("", [](Source& in) {
+    const auto result = in.scan<i32>("{}");
+    ASSERT_FALSE(result);
+    EXPECT_EQ(result.error().code(), scn::scan_error::end_of_input);
+    expectRest(in, "");
+  });
+
+  forEachScanSource("   ", [](Source& in) { // Only whitespace
+    ASSERT_FALSE(in.scan<i32>("{}"));
+    expectRest(in, "   ");
+  });
+
+  forEachScanSource("7,", [](Source& in) { // Input ends before the second value
+    ASSERT_FALSE((in.scan<i32, i32>("{},{}")));
+    expectRest(in, "7,");
+  });
+}
+
+TEST(nio, scanLocale) {
+  // The locale only applies to `L` specifiers
+  forEachScanSource("1,5 2,5", [](Source& in) {
+    const auto result = in.scan<double, double>(testLocale(), "{:L} {}");
+    ASSERT_TRUE(result);
+    const auto [val1, val2] = result->values();
+    EXPECT_EQ(val1, 1.5);
+    EXPECT_EQ(val2, 2.0);
+    expectRest(in, ",5");
+  });
+
+  forEachScanSource("x", [](Source& in) { // A failed scan with a locale resets, too
+    ASSERT_FALSE(in.scan<double>(testLocale(), "{:L}"));
+    expectRest(in, "x");
+  });
+}
+
+TEST(nio, scanAfterRead) {
+  // Scanning starts at the current position, after input read otherwise
+  forEachScanSource("ab 12 cd", [](Source& in) {
+    char c = '\0';
+    ASSERT_EQ(in.Source::read(c), 1);
+    ASSERT_EQ(in.peek(), 'b');
+    const auto result = in.scan<string, i32>("{} {}");
+    ASSERT_TRUE(result);
+    EXPECT_EQ(result->values(), make_tuple("b"s, 12));
+    expectTell(in, 5);
+    EXPECT_EQ(in.readln(), " cd");
+  });
+}
+
+TEST(nio, scanNullSource) {
+  NullSource in;
+  const auto result = in.scan<i32>("{}");
+  ASSERT_FALSE(result);
+  EXPECT_EQ(result.error().code(), scn::scan_error::end_of_input);
+  EXPECT_FALSE(in.scan<i32>(testLocale(), "{:L}"));
+  EXPECT_TRUE(in.scan<>("")); // Nothing expected, so nothing missing
 }
 
 // `peek` ...................................................................................................

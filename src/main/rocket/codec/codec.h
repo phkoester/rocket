@@ -24,9 +24,9 @@
  * Durations               | `Duration`         | #std::chrono::duration
  * Hours, minutes, seconds | `HourMinuteSecond` | #std::chrono::hh_mm_ss
  * Dates                   | `Date`             | #std::chrono::year_month_day
- * Time zones              | `TimeZone`         | #rocket::chrono::time_zone (#std::chrono::time_zone if available)
+ * Time zones              | `TimeZone`         | #rocket::chrono::time_zone
  * Times                   | `Time`             | #std::chrono::time_point
- * Times with time zone    | `ZonedTime`        | #rocket::chrono::zoned_time (#std::chrono::zoned_time if available)
+ * Times with time zone    | `ZonedTime`        | #rocket::chrono::zoned_time
  * Intervals               | `Interval`         | #rocket::math::Interval
  * Declared objects        | `Declared`         | #rocket::reflect::Declared
  * Instances               | `Instance`         | #rocket::reflect::Instance
@@ -499,45 +499,6 @@ makeDate(std_int y, std_unsigned m, std_unsigned d) {
  * @param index the index of the element
  */
 void nextElem(nio::Sink& out, bool indent, u64 level, u64 index);
-
-/**
- * Scans a time point in UTC in the format `%FT%T`, advancing the source past it on success.
- *
- * This deliberately avoids the scnlib scanner for #std::chrono::time_point, which has a bug (seen in commit
- * 4b8a7400): it converts the scanned fields with `std::mktime`, which takes them for local time in the zone
- * selected by the environment variable `TZ` or the system configuration. A `system_clock` time point,
- * however, is UTC, so the result is off by the local UTC offset. Adding that offset back afterward does not
- * work in general: where the fields fall into a DST change, they name a local time that does not exist or
- * exists twice, and `std::mktime` has already moved them or picked one of the two.
- *
- * Scanning `scn::datetime_components` yields the plain fields, and converting these through
- * #std::chrono::sys_days involves no time zone at all. Once scnlib is fixed (the test `scanChronoTimePoint`
- * in `test-scnlib.cc` tracks this), this function can scan the time point directly.
- *
- * @tparam Duration the duration of the time point
- * @param in the source to read from
- * @return the time point, or null if the input is not a valid date and time
- */
-template<typename Duration>
-std::optional<std::chrono::sys_time<Duration>>
-scanSysTime(nio::Source& in) {
-  using namespace std::chrono;
-
-  const auto result = in.scan<scn::datetime_components>("{:%FT%T}");
-  if (not result) {
-    return {};
-  }
-
-  // The format sets all of these fields, and scnlib has checked their ranges, but not the day of the month
-  const auto& fields = result->value();
-  const auto date = makeDate(
-    *fields.year, static_cast<std_unsigned>(*fields.mon), static_cast<std_unsigned>(*fields.mday));
-  if (not date) {
-    return {};
-  }
-  const seconds time = hours(*fields.hour) + minutes(*fields.min) + seconds(*fields.sec);
-  return time_point_cast<Duration>(sys_seconds(sys_days(*date)) + time);
-}
 
 /**
  * Unescapes the content of a quoted literal, reporting failures relative to the enclosing input.

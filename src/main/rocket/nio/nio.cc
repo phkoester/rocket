@@ -101,8 +101,8 @@ toVoid(const scn::scan_expected<T>& result) {
 /**
  * Checks the result of scanning from @p file, a `scn::scan_file`.
  *
- * Afterwards, `scn::scan_file` puts unread input back into its `FILE`. Input it could not put back is left in
- * its prelude, which would be lost.
+ * Afterwards, `scn::scan_file` puts unread input back into its `FILE`. Input it could not put back is left
+ * in its prelude, which would be lost.
  */
 template<typename T>
 scn::scan_expected<void>
@@ -202,6 +202,11 @@ FileSink::flush() {
 i32
 FileSink::handle() const {
   return ROCKET_FILENO(file_);
+}
+
+bool
+FileSink::seekable() const {
+  return io::seekable(file_);
 }
 
 bool
@@ -363,6 +368,11 @@ StreamSink::handle() const {
     return STDERR_FILENO;
   }
   return -1;
+}
+
+bool
+StreamSink::seekable() const {
+  return io::seekable(os_);
 }
 
 bool
@@ -676,6 +686,11 @@ FileSource::seek(i64 offset, SeekMode mode) { // NOLINT
   return io::seek(file_, offset, origin);
 }
 
+bool
+FileSource::seekable() const {
+  return io::seekable(file_);
+}
+
 u64
 FileSource::tell() {
   if (bad()) {
@@ -827,6 +842,11 @@ StreamSource::seek(i64 offset, SeekMode mode) { // NOLINT
     return false;
   }
   return true;
+}
+
+bool
+StreamSource::seekable() const {
+  return io::seekable(is_);
 }
 
 u64

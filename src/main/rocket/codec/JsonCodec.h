@@ -1437,11 +1437,11 @@ struct JsonProducerImpl<DataType::Time, T> {
 
     // Scan the time point
 
-    const auto scanned = scanSysTime<Duration>(inner);
+    const auto scanned = inner.scan<sys_time<Duration>>("{:%FT%T}");
     if (not scanned) {
       throw InputFailure(inPos(0), "Expected a time point");
     }
-    val = *scanned;
+    val = scanned->value();
 
     try {
       // Read subseconds
@@ -1485,11 +1485,11 @@ struct JsonProducerImpl<DataType::ZonedTime, T> {
 
     // Scan the time point
 
-    const auto scanned = scanSysTime<Duration>(inner);
+    const auto scanned = inner.scan<sys_time<Duration>>("{:%FT%T}");
     if (not scanned) {
       throw InputFailure(inPos(0), "Expected a time point");
     }
-    sys_time<Duration> tp = *scanned;
+    sys_time<Duration> tp = scanned->value();
 
     try {
       // Read subseconds

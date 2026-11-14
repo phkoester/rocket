@@ -12,9 +12,6 @@ target_link_libraries(logger PRIVATE Rocket::rocket)
 GaiaAddExecutable(print-args print-args/main.cc)
 target_link_libraries(print-args PRIVATE Rocket::rocket)
 
-GaiaAddExecutable(read-stdin read-stdin/main.cc)
-target_link_libraries(read-stdin PRIVATE Rocket::rocket)
-
 # Tests -----------------------------------------------------------------------------------------------------
 
 set(GENERATED_DIR ${CMAKE_CURRENT_BINARY_DIR}/generated)

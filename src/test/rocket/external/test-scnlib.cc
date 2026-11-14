@@ -182,15 +182,9 @@ TEST(scnlib, scanVector) {
   EXPECT_EQ(result->begin() - input.begin(), 9);
 }
 
-// This documents a bug in scnlib: the scanner for `std::chrono::time_point` calls `std::mktime`, so it takes
-// the fields for local time, although a `system_clock` time point is UTC. The codecs avoid the scanner, see
-// `rocket::codec::internal::scanSysTime`
-//
-// The test expects the wrong result, so it passes for as long as the bug exists. If it fails, scnlib has
-// probably been fixed, and `scanSysTime` can scan time points directly. The expected value must then be
-// changed to the correct one, as stated below
-//
-// @todo Wait for a fix in scnlib
+// The scanner for `std::chrono::time_point` used to call `std::mktime`, which takes the fields for local
+// time, although a `system_clock` time point is UTC. `cmake/patches/scnlib.patch` makes it take the fields
+// as UTC. Under a time zone other than UTC, these tests fail without the patch
 TEST(scnlib, scanChronoTimePoint) {
   using namespace std::chrono;
   using TimePoint = time_point<system_clock, nanoseconds>;
@@ -219,15 +213,50 @@ TEST(scnlib, scanChronoTimePoint) {
   system::env::set("TZ", "JST-9");
   applyTz();
 
-  const string_view input = "2026-07-15 12:00:00.25"sv;
-  const auto result = scn::scan<TimePoint>(input, "{:%Y-%m-%d %H:%M:%.S}");
-  ASSERT_TRUE(result);
-  EXPECT_EQ(result->begin() - input.begin(), 22);
-
-  // The correct result is `day + 12h + 250ms`. Because `std::mktime` takes the fields for local time, the
-  // result is 9 hours too early
   const sys_days day = 2026y / July / 15;
-  EXPECT_EQ(result->value(), day + 3h + 250ms);
+
+  {
+    const string_view input = "2026-07-15 12:00:00.25"sv;
+    const auto result = scn::scan<TimePoint>(input, "{:%Y-%m-%d %H:%M:%.S}");
+    ASSERT_TRUE(result);
+    EXPECT_EQ(result->begin() - input.begin(), 22);
+    EXPECT_EQ(result->value(), day + 12h + 250ms);
+  }
+
+  {
+    // A coarser duration truncates
+    const auto result = scn::scan<sys_seconds>("2026-07-15T12:34:56", "{:%FT%T}");
+    ASSERT_TRUE(result);
+    EXPECT_EQ(result->value(), day + 12h + 34min + 56s);
+  }
+
+  {
+    // A UTC offset is applied
+    const auto result = scn::scan<sys_seconds>("2026-07-15T12:00:00+0200", "{:%FT%T%z}");
+    ASSERT_TRUE(result);
+    EXPECT_EQ(result->value(), day + 10h);
+  }
+
+  {
+    // Before the epoch
+    const auto result = scn::scan<sys_seconds>("1969-12-31T23:59:59", "{:%FT%T}");
+    ASSERT_TRUE(result);
+    EXPECT_EQ(result->value(), sys_seconds(-1s));
+  }
+}
+
+TEST(scnlib, scanChronoTimePointDayOfMonth) {
+  using namespace std::chrono;
+
+  // A day that does not exist in the month fails, instead of being moved into the next month
+  EXPECT_FALSE(scn::scan<sys_seconds>("2026-02-30T00:00:00", "{:%FT%T}"));
+  EXPECT_FALSE(scn::scan<sys_seconds>("2026-04-31T00:00:00", "{:%FT%T}"));
+  EXPECT_FALSE(scn::scan<sys_seconds>("2026-02-29T00:00:00", "{:%FT%T}")); // Not a leap year
+  EXPECT_FALSE(scn::scan<sys_seconds>("1900-02-29T00:00:00", "{:%FT%T}")); // Not a leap year
+
+  const auto leap = scn::scan<sys_seconds>("2000-02-29T00:00:00", "{:%FT%T}"); // A leap year
+  ASSERT_TRUE(leap);
+  EXPECT_EQ(leap->value(), sys_days(2000y / February / 29));
 }
 
 // EOF

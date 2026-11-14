@@ -14,19 +14,6 @@ using namespace rocket::nio;
 
 namespace {
 
-// `NonseekableBuf` -----------------------------------------------------------------------------------------
-
-/// A stream buffer that cannot seek, like one over a pipe.
-struct NonseekableBuf : stringbuf {
-  explicit NonseekableBuf(const string& str) : stringbuf(str, ios::in) {}
-
-protected:
-
-  pos_type seekoff(off_type, ios::seekdir, ios::openmode) override { return pos_type(off_type(-1)); }
-
-  pos_type seekpos(pos_type, ios::openmode) override { return pos_type(off_type(-1)); }
-};
-
 // Local functions ------------------------------------------------------------------------------------------
 
 /// Calls @p fn with a contiguous source and noncontiguous sources, which are handled by separate code paths.

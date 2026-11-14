@@ -130,6 +130,23 @@ inline io::ispanstream is(std::string_view str) { return io::ispanstream(str); }
 bool seekable(std::istream& is) noexcept;
 
 /**
+ * Checks if the output stream @p os is seekable.
+ *
+ * The stream is seekable if its stream buffer reports a position for it. This leaves @p os entirely
+ * unchanged.
+ *
+ * If @p os is #std::cout, #std::cerr, or #std::clog, `stdout` or `stderr` must also be #seekable, because on
+ * Windows and macOS, the stream buffers of these streams may report a meaningless position for a pipe or a
+ * terminal.
+ *
+ * This is a portable implementation that works on Linux, macOS, and Windows.
+ *
+ * @param os the output stream
+ * @return if the stream is seekable
+ */
+bool seekable(std::ostream& os) noexcept;
+
+/**
  * Returns the current read position of the input stream @p is.
  *
  * Unlike #std::istream::tellg, this queries the stream buffer directly. It returns the actual position even

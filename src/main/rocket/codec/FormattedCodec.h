@@ -1307,11 +1307,11 @@ struct FormattedProducerImpl<DataType::Time, T> {
 
     // Scan the time point
 
-    const auto scanned = scanSysTime<Duration>(in);
+    const auto scanned = in.scan<sys_time<Duration>>("{:%FT%T}");
     if (not scanned) {
       throw InputFailure(pos, "Expected a time point");
     }
-    val = *scanned;
+    val = scanned->value();
 
     // Read subseconds
 
@@ -1341,11 +1341,11 @@ struct FormattedProducerImpl<DataType::ZonedTime, T> {
 
     // Scan the time point
 
-    const auto scanned = scanSysTime<Duration>(in);
+    const auto scanned = in.scan<sys_time<Duration>>("{:%FT%T}");
     if (not scanned) {
       throw InputFailure(pos, "Expected a time point");
     }
-    sys_time<Duration> tp = *scanned;
+    sys_time<Duration> tp = scanned->value();
 
     // Read subseconds
 

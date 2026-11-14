@@ -120,6 +120,25 @@ seekable(istream& is) noexcept {
   return tell(is) != NPOS;
 }
 
+bool
+seekable(ostream& os) noexcept {
+  // Ask the stream buffer directly, like `tell` for an input stream does
+  auto* buf = os.rdbuf();
+  if (buf == nullptr || buf->pubseekoff(0, ios::cur, ios::out) == ostream::pos_type(ostream::off_type(-1))) {
+    return false;
+  }
+
+  // The stream buffers of the standard output streams are backed by `stdout` and `stderr`. On Windows and
+  // macOS, they may report a meaningless position for a pipe or a terminal, so ask the `FILE` as well
+  if (&os == &cout) {
+    return seekable(stdout);
+  }
+  if (&os == &cerr || &os == &clog) {
+    return seekable(stderr);
+  }
+  return true;
+}
+
 u64
 tell(istream& is) noexcept {
   // Ask the stream buffer directly. This is what `tellg` does after constructing a sentry, but the sentry
