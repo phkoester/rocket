@@ -76,7 +76,7 @@ index f36594ee..a7a2b333 100644
          // Duration more precise than seconds (seconds is std::ratio<1, 1>)
          if (dt.subsec) {
 diff --git a/src/scn/impl.cpp b/src/scn/impl.cpp
-index 805ee788..e2b08f24 100644
+index 805ee788..05d04fda 100644
 --- a/src/scn/impl.cpp
 +++ b/src/scn/impl.cpp
 @@ -265,6 +265,9 @@ scan_expected<ranges::iterator_t<Range>> internal_skip_classic_whitespace(
@@ -89,6 +89,30 @@ index 805ee788..e2b08f24 100644
      SCN_DEFINE_SCANNER_SCAN_FOR_TYPE(signed char, Context)                     \
      SCN_DEFINE_SCANNER_SCAN_FOR_TYPE(short, Context)                           \
      SCN_DEFINE_SCANNER_SCAN_FOR_TYPE(int, Context)                             \
+@@ -4938,6 +4941,23 @@ SCN_PUBLIC bool basic_scan_istream_buffer<CharT>::do_sync(
+ {
+     SCN_EXPECT(m_stream);
+     auto& streambuf = *m_stream->rdbuf();
++
++    // Seek back over the unread input if the stream buffer can seek, as
++    // `sputbackc` may put back as little as one character, as with MSVC after
++    // the stream buffer hit the end. Mixing both does not work with MSVC
++    using off_type = typename traits::off_type;
++    using pos_type = typename traits::pos_type;
++    const auto n_unread =
++        static_cast<std::ptrdiff_t>(this->m_current_view.size() +
++                                    this->m_putback_buffer.size()) -
++        position;
++    if (n_unread == 0 ||
++        streambuf.pubseekoff(static_cast<off_type>(-n_unread),
++                             std::ios_base::cur,
++                             std::ios_base::in) != pos_type(off_type(-1))) {
++        return true;
++    }
++
+     return impl::buffer_sync_helper(position, this->m_current_view,
+                                     this->m_putback_buffer, [&](CharT ch) {
+                                         return !traits::eq_int_type(
 diff --git a/src/scn/impl.h b/src/scn/impl.h
 index 7547b9f9..c317a214 100644
 --- a/src/scn/impl.h

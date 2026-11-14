@@ -99,18 +99,21 @@ toVoid(const scn::scan_expected<T>& result) {
 }
 
 /**
- * Checks the result of scanning from @p file, a `scn::scan_file`.
+ * Checks the result of scanning from @p file, a `scn::scan_file` over @p in.
  *
  * Afterwards, `scn::scan_file` puts unread input back into its `FILE`. Input it could not put back is left
- * in its prelude, which would be lost.
+ * in its prelude, which would be lost. If @p in can seek, it seeks back over that input instead.
  */
 template<typename T>
 scn::scan_expected<void>
-checkFileScan(const scn::scan_file& file, const scn::scan_expected<T>& result) {
-  if (not file.prelude().empty()) {
-    // This does not happen with glibc, which can put back any amount of input
-    return scn::unexpected(
-      scn::scan_error(scn::scan_error::invalid_source_state, "Cannot put back unread input"));
+checkFileScan(Source& in, const scn::scan_file& file, const scn::scan_expected<T>& result) {
+  // glibc can put back any amount of input, but the Windows C runtime only guarantees one character
+  if (const auto n = file.prelude().size(); n != 0) {
+    const auto pos = in.seekable() ? in.tell() : NPOS;
+    if (pos == NPOS || pos < n || not in.seek(static_cast<i64>(pos - n), SeekMode::beg)) {
+      return scn::unexpected(
+        scn::scan_error(scn::scan_error::invalid_source_state, "Cannot put back unread input"));
+    }
   }
   return toVoid(result);
 }
@@ -709,7 +712,7 @@ FileSource::vscan(string_view fmt, scn::scan_args args) {
   // Scans directly through `file_`. `scn::scan_file` locks `file_` while scanning
   scn::scan_file file(file_);
   const auto result = scn::vscan(file, fmt, args);
-  return checkFileScan(file, result);
+  return checkFileScan(*this, file, result);
 }
 
 scn::scan_expected<void>
@@ -720,7 +723,7 @@ FileSource::vscan(const locale& locale, string_view fmt, scn::scan_args args) {
 
   scn::scan_file file(file_);
   const auto result = scn::vscan(locale, file, fmt, args);
-  return checkFileScan(file, result);
+  return checkFileScan(*this, file, result);
 }
 
 // `NullSource` ---------------------------------------------------------------------------------------------
