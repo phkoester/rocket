@@ -77,6 +77,11 @@ std::recursive_mutex& clockMutex();
 
 std::chrono::milliseconds& clockOffset();
 
+} // namespace internal
+
+#ifdef ROCKET_TEST
+
+namespace testing {
 /**
  * Sets the clock offset so that the current time becomes a given time point.
  *
@@ -92,8 +97,8 @@ template<typename Duration>
 void
 setClock(const std::chrono::sys_time<Duration>& tp) {
   using namespace std::chrono;
-  ROCKET_MUTEX_LOCK(clockMutex());
-  clockOffset() = round<milliseconds>(tp - system_clock::now());
+  ROCKET_MUTEX_LOCK(internal::clockMutex());
+  internal::clockOffset() = round<milliseconds>(tp - system_clock::now());
 }
 
 /**
@@ -108,11 +113,13 @@ setClock(const std::chrono::sys_time<Duration>& tp) {
 template<typename Duration>
 void
 setClockOffset(Duration offset) {
-  ROCKET_MUTEX_LOCK(clockMutex());
-  clockOffset() = offset;
+  ROCKET_MUTEX_LOCK(internal::clockMutex());
+  internal::clockOffset() = offset;
 }
 
-} // namespace internal
+} // namespace testing
+
+#endif // ROCKET_TEST
 
 // Functions ------------------------------------------------------------------------------------------------
 

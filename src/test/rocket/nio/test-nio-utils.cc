@@ -5,6 +5,7 @@
 #include "rocket-test/rocket-test.h"
 
 #include "rocket/filesystem/filesystem.h"
+#include "rocket/io/IoError.h"
 #include "rocket/nio/nio-utils.h"
 #include "rocket/nio/nio.h"
 
@@ -16,14 +17,44 @@ namespace {
 
 /// A #rocket::nio::StreamSource that cannot seek or report its position, like one over a pipe.
 struct NonseekableSource {
-  NonseekableBuf buf;
+  io::testing::NonseekableBuf buf;
   istream is;
   StreamSource in;
 
   explicit NonseekableSource(const string& str) : buf(str), is(&buf), in(is) {}
 };
 
+/// A stream buffer that reports its position, but cannot seek anywhere else.
+struct TellOnlyBuf : stringbuf {
+  explicit TellOnlyBuf(const string& str) : stringbuf(str, ios::in) {}
+
+protected:
+
+  pos_type
+  seekoff(off_type off, ios::seekdir dir, ios::openmode which) override {
+    if (off == 0 && dir == ios::cur) {
+      return stringbuf::seekoff(off, dir, which);
+    }
+    return pos_type(off_type(-1));
+  }
+
+  pos_type seekpos(pos_type, ios::openmode) override { return pos_type(off_type(-1)); }
+};
+
+/// A #rocket::nio::StreamSource over a #rocket::io::testing::FailingBuf. The stream sets `badbit` when the
+/// buffer fails.
+struct FailingSource {
+  io::testing::FailingBuf buf;
+  istream is;
+  StreamSource in;
+
+  explicit FailingSource(const string& str) : buf(str), is(&buf), in(is) {}
+};
+
 // Local functions ------------------------------------------------------------------------------------------
+
+/// The message of the #rocket::io::IoError thrown on an I/O error.
+constexpr string_view CANNOT_READ = "Cannot read from the source";
 
 /// The message of the #rocket::InvalidState thrown when a source that cannot seek would have to go back.
 constexpr string_view CANNOT_GO_BACK = "Cannot go back in a source that cannot report its position";
@@ -110,7 +141,7 @@ TEST(nioUtils, readChar) {
 }
 
 TEST(nioUtils, readCharNonseekable) {
-  NonseekableBuf buf("ab");
+  io::testing::NonseekableBuf buf("ab");
   istream is(&buf);
   StreamSource in(is);
   ASSERT_EQ(in.tell(), nullopt);
@@ -247,7 +278,7 @@ TEST(nioUtils, readWhilePredicate) {
 
 TEST(nioUtils, readWhilePredicateNonseekable) {
   const auto isDigit = [](char c) { return c >= '0' && c <= '9'; };
-  NonseekableBuf buf("123ab");
+  io::testing::NonseekableBuf buf("123ab");
   istream is(&buf);
   StreamSource in(is);
   ASSERT_EQ(in.tell(), nullopt);
@@ -298,6 +329,71 @@ TEST(nioUtils, skipCCommentsUnterminated) {
       throwsInputFailure(0, EndsWith("Unterminated C-style comment")));
     EXPECT_EQ(in.tell(), 0); // The source must not be advanced on failure
   });
+}
+
+// I/O errors ...............................................................................................
+
+TEST(nioUtils, ioErrors) {
+  // Each function reads the given input, and then the device fails
+  const auto isDigit = [](char c) { return c >= '0' && c <= '9'; };
+  const vector<pair<string, function<void(Source&)>>> cases {
+    { "", [](Source& in) { expectChar(in, 'a'); } },
+    { "", [](Source& in) { expectColon(in); } },
+    { "", [](Source& in) { expectComma(in); } },
+    { "", [](Source& in) { (void) readChar(in, 'a'); } },
+    { "tr", [](Source& in) { (void) readChoice(in, { "true" }); } },
+    { "ab", [](Source& in) { (void) readIdentifier(in); } },
+    { "ab", [](Source& in) { (void) readString(in, "abc"); } },
+    { ".12", [](Source& in) { (void) readSubseconds(in); } },
+    { "ab", [](Source& in) { (void) readUntilChar(in, ','); } },
+    { "ab", [](Source& in) { (void) readUntilUnescapedChar(in, ','); } },
+    { "12", [&](Source& in) { (void) readWhilePredicate(in, isDigit); } },
+    { "  ", [](Source& in) { skip(in, true, true); } },
+    { "ab", [](Source& in) { (void) skipUntilString(in, "*/"); } },
+  };
+  for (u64 i = 0; i < cases.size(); ++i) {
+    SCOPED_TRACE(fmt::format("case {}", i));
+    FailingSource src(cases[i].first);
+    EXPECT_THAT([&] { cases[i].second(src.in); }, ThrowsMessage<io::IoError>(EndsWith(CANNOT_READ)));
+    EXPECT_TRUE(src.in.bad());
+  }
+}
+
+TEST(nioUtils, readCharacterIoError) {
+  // The first code point is read, then the device fails while checking whether the character goes on
+  FailingSource src("a");
+  EXPECT_THAT([&] { (void) readCharacter(src.in); }, ThrowsMessage<io::IoError>(EndsWith(CANNOT_READ)));
+  EXPECT_TRUE(src.in.bad());
+}
+
+TEST(nioUtils, readCodePointIoError) {
+  {
+    // The device fails before the first byte
+    FailingSource src("");
+    EXPECT_THAT([&] { (void) readCodePoint(src.in); }, ThrowsMessage<io::IoError>(EndsWith(CANNOT_READ)));
+    EXPECT_TRUE(src.in.bad());
+  }
+  {
+    // The device fails in the middle of a sequence of several bytes
+    FailingSource src("\xC3");
+    EXPECT_THAT([&] { (void) readCodePoint(src.in); }, ThrowsMessage<io::IoError>(EndsWith(CANNOT_READ)));
+    EXPECT_TRUE(src.in.bad());
+  }
+}
+
+// Failing seeks ............................................................................................
+
+TEST(nioUtils, goingBackFailsIfSeekFails) {
+  // The source reports its position, so going back is attempted, but the seek fails. This must not pass as a
+  // failure that left the source where it was
+  TellOnlyBuf buf("abx");
+  istream is(&buf);
+  StreamSource in(is);
+  ASSERT_EQ(in.tell(), 0);
+
+  EXPECT_THAT(
+    [&] { (void) readString(in, "abc", false, false); },
+    ThrowsMessage<InvalidState>(EndsWith("Cannot go back to position 0 in the source")));
 }
 
 // Nonseekable sources ......................................................................................
@@ -430,6 +526,12 @@ TEST(nioUtils, readIdentifierNonseekable) {
     EXPECT_THAT(
       [&] { (void) readIdentifier(src.in); }, ThrowsMessage<InvalidState>(EndsWith(CANNOT_GO_BACK)));
   }
+  {
+    // An invalid byte after the identifier is detected by peeking, so nothing must be gone back over
+    NonseekableSource src("abc\x80x");
+    EXPECT_EQ(readIdentifier(src.in), "abc");
+    EXPECT_EQ(src.in.readString(), "\x80x");
+  }
 }
 
 TEST(nioUtils, readIdentifierNonseekableNoIdentifier) {
@@ -444,6 +546,12 @@ TEST(nioUtils, readIdentifierNonseekableNoIdentifier) {
     NonseekableSource src("€ab");
     EXPECT_THAT(
       [&] { (void) readIdentifier(src.in); }, ThrowsMessage<InvalidState>(EndsWith(CANNOT_GO_BACK)));
+  }
+  {
+    // An invalid byte is detected by peeking, so nothing is consumed
+    NonseekableSource src("\x80" "ab");
+    EXPECT_EQ(readIdentifier(src.in), nullopt);
+    EXPECT_EQ(src.in.readString(), "\x80" "ab");
   }
 }
 

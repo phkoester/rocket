@@ -102,6 +102,7 @@ target_sources(rocket
     rocket/codec/JsonCodec.cc
     rocket/codec/codec.cc
     rocket/filesystem/filesystem.cc
+    rocket/io/IoError.cc
     rocket/io/io.cc
     rocket/log/log.cc
     rocket/nio/nio.cc
@@ -158,6 +159,7 @@ target_sources(rocket
       rocket/filesystem/filesystem.h
       rocket/format/Subformat.h
       rocket/hash/hash.h
+      rocket/io/IoError.h
       rocket/io/io.h
       rocket/io/spanstream.h
       rocket/log/log.h

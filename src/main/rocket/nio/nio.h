@@ -281,17 +281,15 @@ struct Sink : Device {
   virtual u64 write(std::span<const u8> in) = 0;
 
   /**
-   * Writes bytes to the sink
+   * Writes bytes to the sink.
    *
    * @param in the bytes to write
    * @param offset the offset at which to start writing
-   * @param n the number of bytes to write
+   * @param n the number of bytes to write. Fewer are written if @p in ends before
    * @return the number of bytes written
+   * @throw #rocket::InvalidArgument if @p offset is greater than the size of @p in
    */
-  u64
-  write(std::span<const u8> in, u64 offset, u64 n = NPOS) {
-    return write(in.subspan(offset, n));
-  }
+  u64 write(std::span<const u8> in, u64 offset, u64 n = NPOS);
 
   /**
    * Writes a string to the sink.
@@ -310,13 +308,11 @@ struct Sink : Device {
    *
    * @param in the string to write
    * @param offset the offset at which to start writing
-   * @param n the number of bytes to write
+   * @param n the number of bytes to write. Fewer are written if @p in ends before
    * @return the number of bytes written
+   * @throw #rocket::InvalidArgument if @p offset is greater than the size of @p in
    */
-  u64
-  write(std::string_view in, u64 offset, u64 n = std::string_view::npos) {
-    return write(in.substr(offset, n));
-  }
+  u64 write(std::string_view in, u64 offset, u64 n = std::string_view::npos);
 
   /**
    * Writes a string and a line feed to the sink.
@@ -331,13 +327,11 @@ struct Sink : Device {
    *
    * @param in the string to write
    * @param offset the offset at which to start writing
-   * @param n the number of bytes to write
+   * @param n the number of bytes to write. Fewer are written if @p in ends before
    * @return the number of bytes written
+   * @throw #rocket::InvalidArgument if @p offset is greater than the size of @p in
    */
-  u64
-  writeln(std::string_view in, u64 offset, u64 n = std::string_view::npos) {
-    return writeln(in.substr(offset, n));
-  }
+  u64 writeln(std::string_view in, u64 offset, u64 n = std::string_view::npos);
 
 protected:
 
@@ -650,11 +644,14 @@ struct Source : Device {
   /**
    * Reads a line from a source into a string.
    *
-   * A trailing @c '\\r' is removed if it precedes a @c '\\n'.
+   * A trailing @c '\\r' is removed if it precedes a @c '\\n'. The last line need not end with a @c '\\n'.
    *
-   * @return the line read, not containing the trailing @c '\\r' or @c '\\n'
+   * On an I/O error, the result is null, even if part of a line was read, and the source is bad.
+   *
+   * @return the line read, not containing the trailing @c '\\r' or @c '\\n', or null if no more input is
+   *   available or an I/O error occurred
    */
-  virtual std::string readln() = 0;
+  virtual std::optional<std::string> readln() = 0;
 
   /**
    * Reads all available bytes from a source into a vector.
@@ -790,7 +787,7 @@ struct ContiguousSource : Source {
    */
   [[nodiscard]] virtual u64 position() const = 0;
 
-  std::string readln() override;
+  std::optional<std::string> readln() override;
 
   [[nodiscard]] bool seekable() const final { return true; }
 
@@ -852,7 +849,7 @@ struct FileSource : Source {
 
   u64 read(std::span<u8> out) override;
 
-  std::string readln() override;
+  std::optional<std::string> readln() override;
 
   bool seek(i64 offset, SeekMode mode) override;
 
@@ -892,7 +889,7 @@ struct NullSource : Source {
 
   u64 read(std::span<u8>) override { return 0; }
 
-  std::string readln() override { return {}; }
+  std::optional<std::string> readln() override { return std::nullopt; }
 
   bool seek(i64, SeekMode) override { return false; }
 
@@ -938,6 +935,14 @@ struct SpanSource : ContiguousSource {
 
   u64 read(std::span<u8> out) override;
 
+  /**
+   * Seeks a new position in the source. A position before the beginning or beyond the end is out of range;
+   * then, the position is left unchanged.
+   *
+   * @param offset the offset to seek to
+   * @param mode the seek mode
+   * @return if the position was in range
+   */
   bool seek(i64 offset, SeekMode mode) override;
 
   [[nodiscard]] std::string_view
@@ -977,7 +982,7 @@ struct StreamSource : Source {
 
   u64 read(std::span<u8> out) override;
 
-  std::string readln() override;
+  std::optional<std::string> readln() override;
 
   bool seek(i64 offset, SeekMode mode) override;
 
@@ -1031,6 +1036,14 @@ struct StringSource : ContiguousSource {
 
   u64 read(std::span<u8> out) override;
 
+  /**
+   * Seeks a new position in the source. A position before the beginning or beyond the end is out of range;
+   * then, the position is left unchanged.
+   *
+   * @param offset the offset to seek to
+   * @param mode the seek mode
+   * @return if the position was in range
+   */
   bool seek(i64 offset, SeekMode mode) override;
 
   [[nodiscard]] std::string_view str() const override { return in_.substr(pos_); }

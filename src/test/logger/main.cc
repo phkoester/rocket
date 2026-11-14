@@ -2,6 +2,8 @@
  * main.cc
  */
 
+#define ROCKET_TEST
+
 #include "rocket/Process.h"
 #include "rocket/format.h"
 #include "rocket/chrono/chrono.h"
@@ -64,7 +66,7 @@ main(i32 argc, char **argv) {
   // Apply hour offset
 
   if (hours) {
-    rocket::chrono::internal::setClockOffset(std::chrono::hours(*hours));
+    rocket::chrono::testing::setClockOffset(std::chrono::hours(*hours));
   }
 
   // Run

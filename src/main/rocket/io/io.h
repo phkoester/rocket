@@ -11,7 +11,10 @@
 #include <cstdio>
 #include <filesystem>
 #include <sstream>
+#include <stdexcept>
+#include <string>
 #include <string_view>
+#include <utility>
 
 #ifdef ROCKET_OS_WINDOWS
 
@@ -40,6 +43,64 @@
 #endif // ROCKET_OS_WINDOWS
 
 namespace rocket::io {
+
+#ifdef ROCKET_TEST
+namespace testing {
+
+// `FailingBuf` ---------------------------------------------------------------------------------------------
+
+/**
+ * A stream buffer that yields a string and then fails, like a device with an I/O error.
+ *
+ * Reading past the string throws from `underflow`, which makes an `std::istream` set `badbit`. Useful for
+ * testing code with a #rocket::nio::StreamSource that fails.
+ */
+struct FailingBuf : std::streambuf {
+  /**
+   * @ctor
+   *
+   * @param str the string to yield before failing
+   */
+  explicit FailingBuf(std::string str) : str_(std::move(str)) {
+    setg(str_.data(), str_.data(), str_.data() + str_.size());
+  }
+
+protected:
+
+  int_type underflow() override { throw std::runtime_error("Simulated I/O error"); }
+
+private:
+
+  std::string str_;
+};
+
+// `NonseekableBuf` -----------------------------------------------------------------------------------------
+
+/**
+ * A stream buffer over a string that cannot seek, like one over a pipe.
+ *
+ * Useful for testing code with a #rocket::nio::StreamSource that cannot seek.
+ */
+struct NonseekableBuf : std::stringbuf {
+  /**
+   * @ctor
+   *
+   * @param str the string to read from
+   */
+  explicit NonseekableBuf(const std::string& str) : std::stringbuf(str, std::ios::in) {}
+
+protected:
+
+  pos_type
+  seekoff(off_type, std::ios::seekdir, std::ios::openmode) override {
+    return pos_type(off_type(-1));
+  }
+
+  pos_type seekpos(pos_type, std::ios::openmode) override { return pos_type(off_type(-1)); }
+};
+
+} // namespace testing
+#endif // ROCKET_TEST
 
 // Functions working with `FILE` pointers -------------------------------------------------------------------
 

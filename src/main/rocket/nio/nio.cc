@@ -27,9 +27,9 @@ namespace {
 
 /**
  * Computes the new position of a contiguous source of size @p size, currently at @p pos, for
- * #rocket::nio::Source#seek. A position beyond the end is clamped to the end.
+ * #rocket::nio::Source#seek.
  *
- * @return the new position, or null if it would be before the beginning
+ * @return the new position, or null if it would be before the beginning or beyond the end
  */
 optional<u64>
 contiguousSeekPos(u64 pos, u64 size, i64 offset, SeekMode mode) {
@@ -53,7 +53,10 @@ contiguousSeekPos(u64 pos, u64 size, i64 offset, SeekMode mode) {
   // `base <= size` always holds, so `size - base` cannot wrap, and comparing against it avoids an overflow
   // of `base + offset`
   const auto forward = static_cast<u64>(offset);
-  return forward >= size - base ? size : base + forward;
+  if (forward > size - base) {
+    return nullopt;
+  }
+  return base + forward;
 }
 
 /// Returns the bytes of @p buf.
@@ -129,6 +132,24 @@ removeTrailingCr(string& line) {
 namespace rocket::nio {
 
 // `Sink` ---------------------------------------------------------------------------------------------------
+
+u64
+Sink::write(span<const u8> in, u64 offset, u64 n) {
+  ROCKET_CHECK(offset, offset <= in.size(), "Must not be greater than the size {}", in.size());
+  return write(in.subspan(offset, min<u64>(n, in.size() - offset)));
+}
+
+u64
+Sink::write(string_view in, u64 offset, u64 n) {
+  ROCKET_CHECK(offset, offset <= in.size(), "Must not be greater than the size {}", in.size());
+  return write(in.substr(offset, n));
+}
+
+u64
+Sink::writeln(string_view in, u64 offset, u64 n) {
+  ROCKET_CHECK(offset, offset <= in.size(), "Must not be greater than the size {}", in.size());
+  return writeln(in.substr(offset, n));
+}
 
 u64
 Sink::writeln(string_view in) {
@@ -549,9 +570,12 @@ ContiguousSource::peek() {
   return str.front();
 }
 
-string
+optional<string>
 ContiguousSource::readln() {
   auto str = this->str();
+  if (str.empty()) {
+    return nullopt;
+  }
   auto pos = str.find('\n');
 
   if (pos == NPOS) {
@@ -653,19 +677,30 @@ FileSource::read(span<u8> out) {
   return result;
 }
 
-string
+optional<string>
 FileSource::readln() {
   if (bad()) {
-    return {};
+    return nullopt;
+  }
+
+  i32 c = getc(file_);
+  if (c == EOF) {
+    return nullopt;
   }
 
   string ret;
-  for (i32 c = getc(file_); c != EOF; c = getc(file_)) {
+  for (; c != EOF; c = getc(file_)) {
     if (c == '\n') {
       removeTrailingCr(ret);
       break;
     }
     ret.push_back(static_cast<char>(c));
+  }
+
+  // `getc` also returns `EOF` on an I/O error. The line read so far is incomplete then, so it is dropped, as
+  // with `StreamSource`, where `getline` fails once `badbit` is set
+  if (bad()) {
+    return nullopt;
   }
   return ret;
 }
@@ -800,15 +835,22 @@ StreamSource::read(span<u8> out) {
   return static_cast<u64>(count);
 }
 
-string
+optional<string>
 StreamSource::readln() {
   if (bad()) {
-    return {};
+    return nullopt;
   }
 
+  // `getline` does nothing while `failbit` is set, which a previous read may have left behind
+  is_.clear(is_.rdstate() & ~ios::failbit);
+
+  // `getline` fails if it extracts nothing, i.e., at the end of the input. Otherwise, it sets `eofbit` only
+  // if it hit the end, so `eof()` tells whether the line had a line feed
   string ret;
-  // `getline` sets `eofbit` only if it hit the end, so `eof()` tells whether the line had a line feed
-  if (getline(is_, ret) && not is_.eof()) {
+  if (not getline(is_, ret)) {
+    return nullopt;
+  }
+  if (not is_.eof()) {
     removeTrailingCr(ret);
   }
   return ret;

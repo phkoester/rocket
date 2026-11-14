@@ -4,6 +4,7 @@
 
 #include "rocket/InputFailure.h"
 #include "rocket/assert.h"
+#include "rocket/io/IoError.h"
 #include "rocket/nio/nio-utils.h"
 #include "rocket/unicode/Iterator.h"
 #include "rocket/unicode/unicode.h"
@@ -17,10 +18,14 @@ using namespace std;
 
 namespace {
 
-/// The message of the #rocket::InputFailure thrown on an I/O error.
+/// The message of the #rocket::io::IoError thrown on an I/O error.
 constexpr string_view IO_ERROR = "Cannot read from the source";
 /// The message of the #rocket::InputFailure thrown on invalid UTF-8.
 constexpr string_view INVALID_UTF8 = "Invalid UTF-8";
+
+optional<char> peekChar(nio::Source& in);
+
+bool readOne(nio::Source& in, char& c);
 
 optional<unicode::CodePoint> readValidCodePoint(nio::Source& in);
 
@@ -69,7 +74,7 @@ isEndOfWord(string_view str, u64 pos) {
  */
 bool
 isEndOfWord(nio::Source& in) {
-  const auto c = in.peek();
+  const auto c = peekChar(in);
   if (not c) {
     // End of input: we have a word boundary
     return true;
@@ -108,17 +113,47 @@ isWordCodePoint(unicode::CodePoint cp) {
 }
 
 /**
- * Reads a code point like #rocket::nio::readCodePoint, but returns an empty optional for invalid UTF-8,
- * which only an I/O error still throws for. The source is not advanced in that case.
+ * Returns the next character of @p in without consuming it, like #rocket::nio::Source#peek, but tells an I/O
+ * error from the end of the input.
+ *
+ * @return the next character, or an empty optional at the end of the input
+ * @throw #rocket::io::IoError if @p in is bad
+ */
+optional<char>
+peekChar(nio::Source& in) {
+  const auto ret = in.peek();
+  if (not ret && in.bad()) {
+    throw io::IoError(IO_ERROR);
+  }
+  return ret;
+}
+
+/**
+ * Reads a single character from @p in into @p c, but tells an I/O error from the end of the input.
+ *
+ * @return if a character was read, i.e., `false` at the end of the input
+ * @throw #rocket::io::IoError if @p in is bad
+ */
+bool
+readOne(nio::Source& in, char& c) {
+  if (in.read(c) == 1) {
+    return true;
+  }
+  if (in.bad()) {
+    throw io::IoError(IO_ERROR);
+  }
+  return false;
+}
+
+/**
+ * Reads a code point like #rocket::nio::readCodePoint, but returns an empty optional for invalid UTF-8
+ * instead of throwing. The source is not advanced in that case.
  */
 optional<unicode::CodePoint>
 readValidCodePoint(nio::Source& in) {
   try {
     return nio::readCodePoint(in);
   } catch (const InputFailure&) {
-    if (in.bad()) {
-      throw; // I/O error
-    }
     return {}; // Invalid UTF-8
   }
 }
@@ -126,14 +161,17 @@ readValidCodePoint(nio::Source& in) {
 /**
  * Seeks @p in to the absolute position @p pos plus @p offset, where @p pos was obtained from `in.tell()`.
  *
- * @throw InvalidState if @p pos is empty, i.e., @p in cannot report its position and therefore cannot go back
+ * @throw InvalidState if @p pos is empty, i.e., @p in cannot report its position and therefore cannot go back,
+ *   or if seeking fails, which would leave @p in at an unknown position
  */
 void
 rewindTo(nio::Source& in, optional<u64> pos, u64 offset) {
   if (not pos) {
     throw InvalidState("Cannot go back in a source that cannot report its position");
   }
-  in.seek(static_cast<i64>(*pos + offset), nio::SeekMode::beg);
+  if (not in.seek(static_cast<i64>(*pos + offset), nio::SeekMode::beg)) {
+    throw InvalidState(fmt::format("Cannot go back to position {} in the source", *pos + offset));
+  }
 }
 
 /**
@@ -177,17 +215,15 @@ expectComma(nio::Source& in) {
 
 bool
 readChar(nio::Source& in, char c) {
-  if (in.peek() != c) {
+  if (peekChar(in) != c) {
     return false;
   }
   char current; // NOLINT
-  return in.read(current) == 1;
+  return readOne(in, current);
 }
 
 optional<unicode::Character<char>>
 readCharacter(nio::Source& in) {
-  const auto start = in.tell();
-
   // The first code point decides about the end of the input, invalid UTF-8, and I/O errors
   const auto first = readCodePoint(in);
   if (not first) {
@@ -197,11 +233,8 @@ readCharacter(nio::Source& in) {
   // Add code points while they continue the character
   string ret(static_cast<string>(*first));
   while (true) {
-    const auto c = in.peek();
+    const auto c = peekChar(in);
     if (not c) {
-      if (in.bad()) {
-        throw InputFailure(start, IO_ERROR);
-      }
       break; // End of input
     }
 
@@ -211,7 +244,7 @@ readCharacter(nio::Source& in) {
         break;
       }
       char consumed; // NOLINT
-      in.read(consumed);
+      readOne(in, consumed);
       ret.push_back(consumed);
       continue;
     }
@@ -223,9 +256,6 @@ readCharacter(nio::Source& in) {
     try {
       next = readCodePoint(in);
     } catch (const InputFailure&) {
-      if (in.bad()) {
-        throw InputFailure(start, IO_ERROR);
-      }
       break; // Invalid UTF-8 ends the character. `readCodePoint` has not advanced the source
     }
     if (not next) {
@@ -269,7 +299,7 @@ readChoice( // NOLINT(*-complexity)
   optional<string_view> ret; // The longest candidate matched so far
 
   while (true) {
-    const auto c = in.peek();
+    const auto c = peekChar(in);
     if (not c) {
       break;
     }
@@ -287,7 +317,7 @@ readChoice( // NOLINT(*-complexity)
     }
 
     char consumed; // NOLINT
-    in.read(consumed);
+    readOne(in, consumed);
     seen.push_back(consumed);
     candidates = std::move(next);
     for (const auto candidate : candidates) {
@@ -349,11 +379,8 @@ readCodePoint(nio::Source& in) {
 
     // Check the first byte by peeking: at the end of the input, or if the byte is neither a single byte nor
     // a lead byte, nothing is consumed
-    const auto first = in.peek();
+    const auto first = peekChar(in);
     if (not first) {
-      if (in.bad()) {
-        throw InputFailure(start, IO_ERROR);
-      }
       return {};
     }
     const auto len = unicode::utf8::lengthFromByte(*first, unicode::InvalidUnicodePolicy::Continue);
@@ -364,7 +391,7 @@ readCodePoint(nio::Source& in) {
     string s(len, '\0');
     const u64 n = in.read(s);
     if (n != len && in.bad()) {
-      throw InputFailure(start, IO_ERROR); // The position is unspecified
+      throw io::IoError(IO_ERROR); // The position is unspecified
     }
 
     // Decode the code point. On failure, go back over the bytes read
@@ -391,20 +418,23 @@ readIdentifier(nio::Source& in) {
 
   // Check the first code point. An ASCII character decides by itself, so peeking suffices. Any other
   // character must be read as a whole code point, and gone back over on failure
-  const auto firstByte = in.peek();
+  const auto firstByte = peekChar(in);
   if (not firstByte || (static_cast<u8>(*firstByte) < 0x80 && not isStart(static_cast<char32>(*firstByte)))) {
     return {};
   }
   const auto start = in.tell();
   const auto first = readValidCodePoint(in);
-  if (not first || not isStart(*first)) {
+  if (not first) {
+    return {}; // Invalid UTF-8. `readCodePoint` has not advanced the source
+  }
+  if (not isStart(*first)) {
     rewindTo(in, start);
     return {};
   }
 
   string ret { static_cast<string>(*first) };
   while (true) {
-    const auto c = in.peek();
+    const auto c = peekChar(in);
     if (not c) {
       break;
     }
@@ -415,7 +445,7 @@ readIdentifier(nio::Source& in) {
         break;
       }
       char consumed; // NOLINT
-      in.read(consumed);
+      readOne(in, consumed);
       ret.push_back(consumed);
       continue;
     }
@@ -424,7 +454,10 @@ readIdentifier(nio::Source& in) {
     // source must go back over it, because it is not part of the identifier
     const auto pos = in.tell();
     const auto next = readValidCodePoint(in);
-    if (not next || not isContinue(*next)) {
+    if (not next) {
+      break; // Invalid UTF-8 ends the identifier. `readCodePoint` has not advanced the source
+    }
+    if (not isContinue(*next)) {
       rewindTo(in, pos);
       break;
     }
@@ -456,7 +489,7 @@ readString(nio::Source& in, string_view str, bool ignoreCase, bool endOfWord) {
 
     for (const char expected : str) {
       char c; // NOLINT
-      if (in.read(c) != 1 ||
+      if (not readOne(in, c) ||
         (ignoreCase ? tolower(static_cast<u8>(c)) != tolower(static_cast<u8>(expected)) : c != expected)) {
         // EOF or mismatch: rewind
         rewindTo(in, pos);
@@ -523,7 +556,7 @@ readUntilChar(nio::Source& in, char c) {
 
     while (true) {
       char current; // NOLINT
-      if (in.read(current) != 1) {
+      if (not readOne(in, current)) {
         break;
       }
       if (current == c) {
@@ -565,7 +598,7 @@ readUntilUnescapedChar(nio::Source& in, char c) {
 
     while (true) {
       char current; // NOLINT
-      if (in.read(current) != 1) {
+      if (not readOne(in, current)) {
         break;
       }
       if (current == c && not isEscaped(ret, ret.size())) {
@@ -597,12 +630,12 @@ readWhilePredicate(nio::Source& in, const function<bool(char)>& predicate) {
 
     string ret;
     while (true) {
-      const auto c = in.peek();
+      const auto c = peekChar(in);
       if (not c || not predicate(*c)) {
         break;
       }
       char consumed; // NOLINT
-      in.read(consumed);
+      readOne(in, consumed);
       ret.push_back(consumed);
     }
     return ret;
@@ -618,7 +651,7 @@ skip(nio::Source& in, bool cComments, bool shellComments) { // NOLINT(*-complexi
 
     // Read first char
     char first; // NOLINT
-    if (in.read(first) != 1) {
+    if (not readOne(in, first)) {
       break;
     }
 
@@ -626,7 +659,7 @@ skip(nio::Source& in, bool cComments, bool shellComments) { // NOLINT(*-complexi
     optional<char> second;
     if (cComments && first == '/') {
       char c; // NOLINT
-      if (in.read(c) == 1) {
+      if (readOne(in, c)) {
         second = c;
       }
     }
@@ -691,7 +724,7 @@ skipUntilString(nio::Source& in, string_view str) {
 
     while (true) {
       char c; // NOLINT
-      if (in.read(c) != 1) {
+      if (not readOne(in, c)) {
         break;
       }
 

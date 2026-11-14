@@ -171,6 +171,61 @@ openPipe(string_view input, span<char> buffer = {}) {
 }
 #endif // !ROCKET_OS_WINDOWS
 
+#if defined(__GLIBC__) || defined(__APPLE__)
+#define ROCKET_TEST_HAS_FAILING_FILE
+
+/// The state of a `FILE` made by #openFailing.
+struct FailingFileState {
+  string input;
+  u64 pos = 0;
+};
+
+/// Reads from a #FailingFileState: first all of its input, then an I/O error.
+i64
+readFailing(void* cookie, char* buf, u64 size) {
+  auto& state = *static_cast<FailingFileState*>(cookie);
+  if (state.pos == state.input.size()) {
+    errno = EIO;
+    return -1;
+  }
+  const u64 n = min(size, state.input.size() - state.pos);
+  memcpy(buf, state.input.data() + state.pos, n);
+  state.pos += n;
+  return static_cast<i64>(n);
+}
+
+/// Returns a `FILE` that yields @p input and then fails, like a device with an I/O error, or null on error.
+unique_ptr<FILE, FileCloser>
+openFailing(string_view input) {
+  auto* state = new FailingFileState { string(input) }; // NOLINT: Deleted when the file is closed
+#ifdef __GLIBC__
+  cookie_io_functions_t functions {};
+  functions.read = [](void* cookie, char* buf, size_t size) -> ssize_t {
+    return readFailing(cookie, buf, size);
+  };
+  functions.close = [](void* cookie) {
+    delete static_cast<FailingFileState*>(cookie); // NOLINT
+    return 0;
+  };
+  unique_ptr<FILE, FileCloser> ret(fopencookie(state, "rb", functions));
+#else
+  unique_ptr<FILE, FileCloser> ret(funopen(
+    state,
+    [](void* cookie, char* buf, int size) { return static_cast<int>(readFailing(cookie, buf, size)); },
+    nullptr,
+    nullptr,
+    [](void* cookie) {
+      delete static_cast<FailingFileState*>(cookie); // NOLINT
+      return 0;
+    }));
+#endif
+  if (ret == nullptr) {
+    delete state; // NOLINT
+  }
+  return ret;
+}
+#endif // __GLIBC__ || __APPLE__
+
 /**
  * Calls @p fn with each kind of source over @p input: contiguous, seekable, and nonseekable, and files with
  * a tiny buffer, which scnlib refills during a scan.
@@ -251,7 +306,7 @@ forEachScanSource(string_view input, Fn fn) {
 
   {
     SCOPED_TRACE("StreamSource (nonseekable)");
-    NonseekableBuf buf { string(input) };
+    io::testing::NonseekableBuf buf { string(input) };
     istream is(&buf);
     StreamSource in(is);
     fn(in);
@@ -324,6 +379,26 @@ TEST(nio, SpanSink) {
   SpanSink out(span);
   EXPECT_EQ(out.Sink::write("ABCDEF"), 4); // Writing 6 chars, but only 4 fit
   EXPECT_EQ(str, "---[ABCD]---");
+}
+
+TEST(nio, writeOffset) {
+  const string_view str = "abcdef";
+  const span<const u8> bytes(reinterpret_cast<const u8*>(str.data()), str.size());
+  StringSink out;
+
+  EXPECT_EQ(out.Sink::write(bytes, 2, 2), 2); // "cd"
+  EXPECT_EQ(out.Sink::write(bytes, 4), 2); // "ef"
+  EXPECT_EQ(out.Sink::write(bytes, 5, 10), 1); // "f": fewer bytes are written if the input ends before
+  EXPECT_EQ(out.Sink::write(bytes, 6), 0); // At the end: nothing to write
+  EXPECT_EQ(out.Sink::write(str, 1, 2), 2); // "bc"
+  EXPECT_EQ(out.Sink::writeln(str, 3, 1), 2); // "d\n"
+  EXPECT_EQ(out.str(), "cdeffbcd\n");
+
+  // An offset beyond the end is an error, and nothing is written
+  EXPECT_THROW(out.Sink::write(bytes, 7), InvalidArgument);
+  EXPECT_THROW(out.Sink::write(str, 7), InvalidArgument);
+  EXPECT_THROW(out.Sink::writeln(str, 7), InvalidArgument);
+  EXPECT_EQ(out.str(), "cdeffbcd\n");
 }
 
 TEST(nio, StreamSink) {
@@ -657,20 +732,24 @@ TEST(nio, StreamSourceReadString) {
   EXPECT_EQ(in.tell(), 10);
 }
 
+TEST(nio, SpanSourceSeek) {
+  const string str = "abc";
+  SpanSource in(span<const u8>(reinterpret_cast<const u8*>(str.data()), str.size()));
+
+  EXPECT_TRUE(in.seek(2, SeekMode::beg));
+  EXPECT_EQ(in.position(), 2);
+  EXPECT_FALSE(in.seek(4, SeekMode::beg)); // Beyond the end: fails, position unchanged
+  EXPECT_EQ(in.position(), 2);
+  EXPECT_FALSE(in.seek(-3, SeekMode::cur)); // Before the beginning
+  EXPECT_EQ(in.position(), 2);
+  EXPECT_TRUE(in.seek(0, SeekMode::end));
+  EXPECT_EQ(in.position(), 3);
+}
+
 TEST(nio, StringSource) {
   StringSource in("Hello, world!");
   const auto str = in.readString();
   EXPECT_EQ(str, "Hello, world!");
-}
-
-TEST(nio, StringSourceReadln) {
-  StringSource in("First line\r\nSecond line\n");
-  string line = in.readln();
-  EXPECT_EQ(line, "First line");
-  line = in.readln();
-  EXPECT_EQ(line, "Second line");
-  line = in.readln();
-  EXPECT_EQ(line, "");
 }
 
 TEST(nio, StringSourceSeek) {
@@ -690,7 +769,9 @@ TEST(nio, StringSourceSeek) {
   EXPECT_EQ(c, '7');
   EXPECT_EQ(in.position(), 128);
 
-  in.Source::seek(129);
+  EXPECT_FALSE(in.Source::seek(129)); // Beyond the end: fails, position unchanged
+  EXPECT_EQ(in.position(), 128);
+  EXPECT_TRUE(in.Source::seek(128)); // The end itself is in range
   EXPECT_EQ(in.position(), 128);
 
   in.seek(-11, SeekMode::cur);
@@ -705,7 +786,13 @@ TEST(nio, StringSourceSeek) {
   in.seek(-10, SeekMode::end);
   EXPECT_EQ(in.position(), 118);
 
-  in.seek(3, SeekMode::end);
+  EXPECT_FALSE(in.seek(3, SeekMode::end));
+  EXPECT_EQ(in.position(), 118);
+  EXPECT_FALSE(in.seek(11, SeekMode::cur));
+  EXPECT_EQ(in.position(), 118);
+  EXPECT_FALSE(in.seek(numeric_limits<i64>::max(), SeekMode::cur));
+  EXPECT_EQ(in.position(), 118);
+  EXPECT_TRUE(in.seek(10, SeekMode::cur));
   EXPECT_EQ(in.position(), 128);
 
   EXPECT_FALSE(in.seek(-200, SeekMode::end));
@@ -738,7 +825,7 @@ TEST(nio, seekableSources) {
   ifstream ifs(temp, ios::binary);
   EXPECT_TRUE(StreamSource(ifs).seekable());
 
-  NonseekableBuf buf("abc");
+  io::testing::NonseekableBuf buf("abc");
   istream is(&buf);
   EXPECT_FALSE(StreamSource(is).seekable());
 
@@ -752,6 +839,61 @@ TEST(nio, seekableSources) {
     ASSERT_EQ(in.Source::read(c), 1);
     EXPECT_EQ(in.seekable(), in.tell().has_value());
   });
+}
+
+// `readln` .................................................................................................
+
+TEST(nio, readln) {
+  const auto test = [](string_view input, const vector<string>& expected) {
+    forEachScanSource(input, [&](Source& in) {
+      for (const auto& line : expected) {
+        EXPECT_EQ(in.readln(), line);
+      }
+      EXPECT_EQ(in.readln(), nullopt); // No more input
+      EXPECT_EQ(in.readln(), nullopt); // Still none
+    });
+  };
+
+  test("First line\r\nSecond line\n", { "First line", "Second line" });
+  test("a\nb", { "a", "b" }); // The last line need not end with a line feed
+  test("\n\n", { "", "" }); // Empty lines are not the end of the input
+  test("", {});
+  test("a\r", { "a\r" }); // A carriage return is only removed before a line feed
+  test("a\r\r\n", { "a\r" }); // Only one carriage return is removed
+}
+
+TEST(nio, readlnIoError) {
+  // A complete line before the error is returned. The incomplete line at the error is dropped, and the source
+  // is bad
+
+#ifdef ROCKET_TEST_HAS_FAILING_FILE
+  {
+    SCOPED_TRACE("FileSource");
+    const auto file = openFailing("a\nbc");
+    ASSERT_NE(file, nullptr);
+    FileSource in(file.get());
+    EXPECT_EQ(in.readln(), "a");
+    EXPECT_FALSE(in.bad());
+    EXPECT_EQ(in.readln(), nullopt);
+    EXPECT_TRUE(in.bad());
+  }
+#endif
+
+  {
+    SCOPED_TRACE("StreamSource");
+    io::testing::FailingBuf buf("a\nbc");
+    istream is(&buf);
+    StreamSource in(is);
+    EXPECT_EQ(in.readln(), "a");
+    EXPECT_FALSE(in.bad());
+    EXPECT_EQ(in.readln(), nullopt);
+    EXPECT_TRUE(in.bad());
+  }
+}
+
+TEST(nio, readlnNullSource) {
+  NullSource in;
+  EXPECT_EQ(in.readln(), nullopt);
 }
 
 // `scan` ...................................................................................................
