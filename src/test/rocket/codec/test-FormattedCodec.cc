@@ -525,6 +525,9 @@ TEST(FormattedCodec, ProducerDuration) {
 
   EXPECT_EQ(decode<seconds>("x").error().message, "Expected a duration");
   EXPECT_EQ(decode<seconds>("10x").error().message, "Expected a time unit");
+  // The failure is reported where the unit should have started
+  EXPECT_EQ(decode<seconds>("10x").error().position, 2);
+  EXPECT_EQ(decode<seconds>("10mix").error().position, 2);
 
   // Range checks: 292 years fit into `nanoseconds`, 300 years do not
   EXPECT_EQ(decode<nanoseconds>("292y"), duration_cast<nanoseconds>(years(292)));
@@ -743,6 +746,10 @@ TEST(FormattedCodec, ProducerInterval) {
   EXPECT_EQ(
     decode<OpenInterval<i64>>("  (  -∞ /* Comment */, ∞)  // Comment"),
     OpenInterval<i64>(nullopt, nullopt));
+
+  // A sign that starts both an infinity and a number belongs to the number
+  EXPECT_EQ(decode<OpenInterval<i64>>("(-5,+7)"), OpenInterval<i64>(-5, 7));
+  EXPECT_EQ(decode<OpenInterval<i64>>("(-inf,+inf)"), OpenInterval<i64>(nullopt, nullopt));
 }
 
 TEST(FormattedCodec, ProducerDeclared) {
@@ -766,6 +773,9 @@ TEST(FormattedCodec, ProducerDeclared) {
   // Unknown members are an error
   EXPECT_EQ(decode<MyStruct>("(ärger=42, bogus=1)").error().message, "Unknown member `bogus`");
   EXPECT_EQ(decode<MyStruct>("(1=2)").error().message, "Expected a member reference");
+  // Failures are reported where the member name starts
+  EXPECT_EQ(decode<MyStruct>("(1=2)").error().position, 1);
+  EXPECT_EQ(decode<MyStruct>("(ärger=42, bogus=1)").error().position, 12);
   EXPECT_EQ(decode<MyStruct>("(_bogus=1)").error().message, "Unknown member `_bogus`");
   EXPECT_EQ(decode<MyStruct>("($bogus=1)").error().message, "Unknown member `$bogus`");
   EXPECT_EQ(decode<MyStruct>("(foo$bar=1)").error().message, "Unknown member `foo$bar`");

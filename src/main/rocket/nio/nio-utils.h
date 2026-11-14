@@ -5,9 +5,10 @@
 #pragma once
 
 #include "rocket/nio/nio.h"
+#include "rocket/unicode/Character.h"
 
 #include <chrono>
-#include <expected>
+#include <optional>
 #include <functional>
 #include <set>
 #include <sstream>
@@ -38,18 +39,6 @@ protected:
 
   pos_type seekpos(pos_type, std::ios::openmode) override { return pos_type(off_type(-1)); }
 };
-
-// `ReadCodePointError`, `ReadCodePointResult` --------------------------------------------------------------
-
-/// The error type for #rocket::nio::readCodePoint.
-enum ReadCodePointError : u8 {
-  Bad, ///< Bad I/O device
-  Eof, ///< End of file
-  InvalidUtf8, ///< Invalid UTF-8 byte sequence
-};
-
-/// The result type with #rocket::nio::ReadCodePointError.
-using ReadCodePointResult = std::expected<unicode::CodePoint, ReadCodePointError>;
 
 // Functions ------------------------------------------------------------------------------------------------
 
@@ -91,15 +80,39 @@ void expectComma(nio::Source& in);
 [[nodiscard]] bool readChar(nio::Source& in, char c);
 
 /**
- * Reads any of a set of expected strings, advances the source only on success.
+ * Tries to read a character, i.e., an extended grapheme cluster, from a source, advances the source only on
+ * success.
  *
- * There is an optimization for contiguous sources.
+ * At the end of the input, the result is empty. If the first code point of the character is invalid UTF-8,
+ * #rocket::InputFailure is thrown at the position where the character should have started, and the source
+ * is not advanced. Invalid UTF-8 after the first code point ends the character, and stays in the source. An
+ * I/O error throws #rocket::InputFailure at the position where the character should have started; the source
+ * is bad then, and its position is unspecified.
+ *
+ * ASCII characters are checked by peeking. Any other code point must be read as a whole. If it does not
+ * continue the character, the source must go back over it, which a source that cannot seek cannot do.
+ *
+ * @param in the source to read from
+ * @return the character read, or an empty optional at the end of the input
+ * @throw #rocket::InputFailure on invalid UTF-8 at the start of the character, or on an I/O error
+ * @throw #rocket::InvalidState if the source must go back, but @p in cannot report its position
+ */
+[[nodiscard]] std::optional<unicode::Character<char>> readCharacter(nio::Source& in);
+
+/**
+ * Tries to read the longest of a set of expected strings, advances the source only on success.
+ *
+ * Bytes are only consumed while they continue an expected string, so a source that cannot seek works if the
+ * first byte already does not match, or if the source stops right after the match. Otherwise, the source
+ * must go back: on any other failure, if a longer expected string fails after a shorter one has matched, or
+ * if checking the word boundary requires reading a non-ASCII code point.
  *
  * @param in the source to read from
  * @param values the set of expected strings, all elements must not be empty
  * @param ignoreCase whether to ignore case
  * @param endOfWord whether to check if the end of the returned string matches a word boundary
  * @return the read string, or null if no string was read
+ * @throw #rocket::InvalidState if the source must go back, but @p in cannot report its position
  */
 [[nodiscard]] std::optional<std::string_view> readChoice(
   nio::Source& in,
@@ -108,31 +121,40 @@ void expectComma(nio::Source& in);
   bool endOfWord = true);
 
 /**
- * Tries to read a valid code point from a source, advances the source only on success.
+ * Tries to read a valid UTF-8 encoded code point from a source, advances the source only on success.
  *
- * The result is #rocket::nio::Eof only if no bytes are left. A truncated or otherwise malformed sequence
- * yields #rocket::nio::InvalidUtf8. An I/O error yields #rocket::nio::Bad.
+ * At the end of the input, the result is empty. A truncated or otherwise malformed sequence, and an I/O
+ * error, throw #rocket::InputFailure at the position where the code point should have started. On invalid
+ * UTF-8, the source is not advanced. After an I/O error, the source is bad, and its position is unspecified.
  *
- * A source that cannot report its position, as one over a pipe, cannot go back either. It still advances
- * over the bytes read on failure.
+ * The first byte is checked by peeking, so a source that cannot seek works unless a sequence of several
+ * bytes turns out to be malformed. Then, the source must go back over the bytes read.
  *
  * There is an optimization for contiguous sources.
  *
  * @param in the source to read from
- * @return a code point if one was read, an error otherwise
+ * @return the code point read, or an empty optional at the end of the input
+ * @throw #rocket::InputFailure on invalid UTF-8 or an I/O error
+ * @throw #rocket::InvalidState if the source must go back over invalid UTF-8, but @p in cannot report its
+ *   position
  */
-[[nodiscard]] ReadCodePointResult readCodePoint(nio::Source& in);
+[[nodiscard]] std::optional<unicode::CodePoint> readCodePoint(nio::Source& in);
 
 /**
- * Reads a C++ identifier from @p in, advances the source only on success.
+ * Tries to read a C++ identifier from @p in, advances the source only on success.
  *
  * The first code point must have Unicode property `XID_Start`, or be `_` or `$`. Each following code point
  * must have Unicode property `XID_Continue`, or be `$`. Reading stops before the first code point that is
- * not part of the identifier, and that code point stays in the source. On failure, the source is left
- * unchanged.
+ * not part of the identifier, and that code point stays in the source.
+ *
+ * ASCII characters are checked by peeking, so a source that cannot seek works unless a non-ASCII code point
+ * must be read and gone back over: at the start, where it cannot start an identifier, or after the
+ * identifier.
  *
  * @param in the source to read from
  * @return the identifier, or null if the next code point cannot start an identifier
+ * @throw #rocket::InvalidState if the source must go back over a non-ASCII code point, but @p in cannot
+ *   report its position
  */
 [[nodiscard]] std::optional<std::string> readIdentifier(nio::Source& in);
 

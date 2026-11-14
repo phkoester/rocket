@@ -281,10 +281,22 @@ expectCodePoint(Source& in, char32 expected, u64 expectedTell) {
 }
 
 void
-expectCodePointError(Source& in, ReadCodePointError expected) {
-  const auto result = readCodePoint(in);
-  ASSERT_FALSE(result.has_value());
-  EXPECT_EQ(result.error(), expected);
+expectNoCodePoint(Source& in) {
+  EXPECT_EQ(readCodePoint(in), nullopt);
+}
+
+void
+expectCharacter(Source& in, string_view expected, u64 expectedTell) {
+  const auto result = readCharacter(in);
+  ASSERT_TRUE(result.has_value());
+  EXPECT_EQ(static_cast<string>(*result), expected);
+  EXPECT_EQ(in.tell(), expectedTell);
+}
+
+/// Expects reading a code point from @p in, which is at position 0, to fail for invalid UTF-8.
+void
+expectInvalidUtf8(Source& in) {
+  EXPECT_THAT([&] { (void) readCodePoint(in); }, throwsInputFailure(0, EndsWith("Invalid UTF-8")));
 }
 
 } // namespace
@@ -1016,6 +1028,64 @@ TEST(nio, peek) {
   });
 }
 
+// `readCharacter` ..........................................................................................
+
+TEST(nio, readCharacter) {
+  forEachSource("ab", [](Source& in) {
+    expectCharacter(in, "a", 1);
+    expectCharacter(in, "b", 2);
+    EXPECT_EQ(readCharacter(in), nullopt); // End of input
+  });
+
+  // A combining mark continues the character
+  forEachSource("a\u0301b", [](Source& in) {
+    expectCharacter(in, "a\u0301", 3);
+    expectCharacter(in, "b", 4);
+  });
+
+  // CR LF is a single character, although both code points are ASCII
+  forEachSource("\r\nx", [](Source& in) {
+    expectCharacter(in, "\r\n", 2);
+    expectCharacter(in, "x", 3);
+  });
+
+  // Man, ZWJ, woman, ZWJ, boy
+  forEachSource("\U0001F468\u200D\U0001F469\u200D\U0001F466x", [](Source& in) {
+    expectCharacter(in, "\U0001F468\u200D\U0001F469\u200D\U0001F466", 18);
+    expectCharacter(in, "x", 19);
+  });
+
+  // Two flags, each made of two regional indicators
+  forEachSource("\U0001F1E9\U0001F1EA\U0001F1EB\U0001F1F7", [](Source& in) {
+    expectCharacter(in, "\U0001F1E9\U0001F1EA", 8);
+    expectCharacter(in, "\U0001F1EB\U0001F1F7", 16);
+  });
+
+  // A non-ASCII code point that does not continue the character is gone back over
+  forEachSource("äö", [](Source& in) {
+    expectCharacter(in, "ä", 2);
+    expectCharacter(in, "ö", 4);
+  });
+}
+
+TEST(nio, readCharacterInvalidUtf8) {
+  // At the start of the character, invalid UTF-8 throws, and the source is not advanced
+  forEachSource("\xFF" "a", [](Source& in) {
+    EXPECT_THAT([&] { (void) readCharacter(in); }, throwsInputFailure(0, EndsWith("Invalid UTF-8")));
+    expectRest(in, "\xFF" "a");
+  });
+
+  // After the first code point, invalid UTF-8 ends the character, and stays in the source
+  forEachSource("a\xFF", [](Source& in) {
+    expectCharacter(in, "a", 1);
+    expectRest(in, "\xFF");
+  });
+  forEachSource("a\xC3", [](Source& in) { // Truncated
+    expectCharacter(in, "a", 1);
+    expectRest(in, "\xC3");
+  });
+}
+
 // `readCodePoint` ..........................................................................................
 
 TEST(nio, readCodePointValid) {
@@ -1030,33 +1100,44 @@ TEST(nio, readCodePointValid) {
 
 TEST(nio, readCodePointEof) {
   forEachSource("", [](Source& in) {
-    expectCodePointError(in, ReadCodePointError::Eof);
+    expectNoCodePoint(in);
     EXPECT_TRUE(in.eof());
   });
 
   forEachSource("a", [](Source& in) {
     expectCodePoint(in, U'a', 1);
-    expectCodePointError(in, ReadCodePointError::Eof);
+    expectNoCodePoint(in);
     EXPECT_TRUE(in.eof());
-    expectCodePointError(in, ReadCodePointError::Eof); // Still at the end
+    expectNoCodePoint(in); // Still at the end
   });
 }
 
+// On invalid UTF-8, the source is not advanced. All of these sources can seek
+
 TEST(nio, readCodePointInvalidLeadByte) {
-  for (const string_view input : { "\xFF"sv, "\x80"sv, "\xC0\x80"sv }) {
-    forEachSource(input, [](Source& in) { expectCodePointError(in, ReadCodePointError::InvalidUtf8); });
+  for (const string_view input : { "\xFFx"sv, "\x80x"sv, "\xC0\x80x"sv }) {
+    forEachSource(input, [input](Source& in) {
+      expectInvalidUtf8(in);
+      expectRest(in, input);
+    });
   }
 }
 
 TEST(nio, readCodePointTruncatedSequence) {
   for (const string_view input : { "\xC3"sv, "\xE2\x82"sv, "\xF0\x9F\x98"sv }) {
-    forEachSource(input, [](Source& in) { expectCodePointError(in, ReadCodePointError::InvalidUtf8); });
+    forEachSource(input, [input](Source& in) {
+      expectInvalidUtf8(in);
+      expectRest(in, input);
+    });
   }
 }
 
 TEST(nio, readCodePointInvalidContinuation) {
-  for (const string_view input : { "\xC3" "A"sv, "\xE2\x82" "A"sv, "\xED\xA0\x80"sv }) { // Last: surrogate
-    forEachSource(input, [](Source& in) { expectCodePointError(in, ReadCodePointError::InvalidUtf8); });
+  for (const string_view input : { "\xC3" "Ax"sv, "\xE2\x82" "Ax"sv, "\xED\xA0\x80x"sv }) { // Last: surrogate
+    forEachSource(input, [input](Source& in) {
+      expectInvalidUtf8(in);
+      expectRest(in, input);
+    });
   }
 }
 

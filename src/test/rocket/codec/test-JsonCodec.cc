@@ -532,6 +532,9 @@ TEST(JsonCodec, ProducerDuration) {
   EXPECT_EQ(decode<seconds>("x").error().message, "Expected a string");
   EXPECT_EQ(decode<seconds>("\"x\"").error().message, "Expected a duration");
   EXPECT_EQ(decode<seconds>("\"10x\"").error().message, "Expected a time unit");
+  // The failure is reported where the unit should have started
+  EXPECT_EQ(decode<seconds>("\"10x\"").error().position, 3);
+  EXPECT_EQ(decode<seconds>("\"10mix\"").error().position, 3);
 
   // Range checks: 292 years fit into `nanoseconds`, 300 years do not
   EXPECT_EQ(decode<nanoseconds>("\"292y\""), duration_cast<nanoseconds>(years(292)));
