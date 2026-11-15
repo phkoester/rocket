@@ -73,6 +73,8 @@ protected:
 
 bool Cxx::Member::dtorCalled = false;
 
+// Tests ====================================================================================================
+
 TEST_F(Cxx, assignLvalueToOptional) {
   string trace;
   {

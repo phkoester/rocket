@@ -10,7 +10,7 @@
 
 using namespace rocket::format;
 
-// `TEST` ---------------------------------------------------------------------------------------------------
+// Tests ====================================================================================================
 
 TEST(Subformat, char) {
   auto lambda = [](i32 n) -> string {
@@ -49,8 +49,12 @@ TEST(Subformat, charWithTagged) {
     return buf.str();
   };
 
-  EXPECT_THAT(lambda(1), matchesRegex(".*\\.cc:\\d+: First case: The command line is `grep -i foo bar`\\. Again, the command line is `grep -i foo bar`\\. But here comes another one: `ls -l`\\."));
-  EXPECT_THAT(lambda(2), matchesRegex(".*\\.cc:\\d+: Second case: This sentence doesn’t mean much\\."));
+  EXPECT_THAT(
+    lambda(1),
+    matchesRegex(".*\\.cc:\\d+: First case: The command line is `grep -i foo bar`\\. Again, the command line is `grep -i foo bar`\\. But here comes another one: `ls -l`\\."));
+  EXPECT_THAT(
+    lambda(2),
+    matchesRegex(".*\\.cc:\\d+: Second case: This sentence doesn’t mean much\\."));
 }
 
 TEST(Subformat, char32) {

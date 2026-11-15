@@ -10,14 +10,15 @@
 
 using namespace rocket::math;
 
-// `TEST` ---------------------------------------------------------------------------------------------------
+// Tests ====================================================================================================
 
 TEST(math, mean) {
   {
     const vector<i32> vec;
     EXPECT_THAT(
-        [&] { mean<f64>(vec.begin(), vec.end()); },
-        ThrowsMessage<InvalidArgument>(EndsWith("Parameter `end`: Check `end > begin` failed: Range is empty")));
+      [&] { mean<f64>(vec.begin(), vec.end()); },
+      ThrowsMessage<InvalidArgument>(
+        EndsWith("Parameter `end`: Check `end > begin` failed: Range is empty")));
   }
 
   {

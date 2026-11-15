@@ -36,7 +36,7 @@ namespace {
 
 const CborCodec cborCodec;
 
-// Local functions ------------------------------------------------------------------------------------------
+// Local CBOR functions -------------------------------------------------------------------------------------
 
 CborItem<pair<u32, u32>> makeCborItemArray();
 
@@ -60,10 +60,39 @@ someFuncReturningCborItem() {
   return CborItem<u8>(cbor_build_uint8(42));
 }
 
+// Local functions ------------------------------------------------------------------------------------------
+
 template<typename T>
 [[nodiscard]] DecodeResult<T>
 decode(const vector<u8>& cbor) {
   return cborCodec.decode<T>(cbor);
+}
+
+// Local test functions -------------------------------------------------------------------------------------
+
+template<typename T>
+void
+testCharacter(const T& val) {
+  const auto result = cborCodec.decode<T>(cborCodec.encode(val));
+  if (not result.has_value()) {
+    ROCKET_FAIL("Cannot decode character at position {}: {}\n",
+      result.error().position, result.error().message);
+  }
+  EXPECT_EQ(static_cast<typename T::View>(result.value()), static_cast<typename T::View>(val));
+}
+
+template<typename T>
+void
+testHourMinuteSecond(const T& val) {
+  const auto result = cborCodec.decode<T>(cborCodec.encode(val));
+  if (not result.has_value()) {
+    ROCKET_FAIL(
+      "Cannot decode hour, minute, and second {} at position {}: {}\n",
+      val.to_duration().count(),
+      result.error().position,
+      result.error().message);
+  }
+  EXPECT_EQ(result.value().to_duration(), val.to_duration());
 }
 
 template<typename T>
@@ -96,40 +125,14 @@ testRoundtrip(const T& val) { // NOLINT(*-complexity)
   }
 }
 
-template<typename T>
 void
-testHourMinuteSecond(const T& val) {
-  const auto result = cborCodec.decode<T>(cborCodec.encode(val));
+testTimeZone(TimeZone zone) {
+  const auto result = cborCodec.decode<TimeZone>(cborCodec.encode(zone));
   if (not result.has_value()) {
-    ROCKET_FAIL(
-      "Cannot decode hour, minute, and second {} at position {}: {}\n",
-      val.to_duration().count(),
-      result.error().position,
-      result.error().message);
+    ROCKET_FAIL("Cannot decode time zone \"{}\" at position {}: {}\n",
+      zone->name(), result.error().position, result.error().message);
   }
-  EXPECT_EQ(result.value().to_duration(), val.to_duration());
-}
-
-template<typename T>
-void
-testZonedTime(const T& val) {
-  const auto result = cborCodec.decode<T>(cborCodec.encode(val));
-  if (not result.has_value()) {
-    ROCKET_FAIL("Cannot decode zoned time at position {}: {}\n",
-      result.error().position, result.error().message);
-  }
-  EXPECT_EQ(result.value(), val);
-}
-
-template<typename T>
-void
-testCharacter(const T& val) {
-  const auto result = cborCodec.decode<T>(cborCodec.encode(val));
-  if (not result.has_value()) {
-    ROCKET_FAIL("Cannot decode character at position {}: {}\n",
-      result.error().position, result.error().message);
-  }
-  EXPECT_EQ(static_cast<typename T::View>(result.value()), static_cast<typename T::View>(val));
+  EXPECT_EQ(result.value(), zone);
 }
 
 void
@@ -154,21 +157,22 @@ testVarRefs() {
   EXPECT_EQ(one.value(), 1);
 }
 
+template<typename T>
 void
-testTimeZone(TimeZone zone) {
-  const auto result = cborCodec.decode<TimeZone>(cborCodec.encode(zone));
+testZonedTime(const T& val) {
+  const auto result = cborCodec.decode<T>(cborCodec.encode(val));
   if (not result.has_value()) {
-    ROCKET_FAIL("Cannot decode time zone \"{}\" at position {}: {}\n",
-      zone->name(), result.error().position, result.error().message);
+    ROCKET_FAIL("Cannot decode zoned time at position {}: {}\n",
+      result.error().position, result.error().message);
   }
-  EXPECT_EQ(result.value(), zone);
+  EXPECT_EQ(result.value(), val);
 }
 
 } // namespace
 
-// `TEST` ---------------------------------------------------------------------------------------------------
+// Tests ====================================================================================================
 
-// `CborItem` ...............................................................................................
+// `CborItem` -----------------------------------------------------------------------------------------------
 
 TEST(CborCodec, CborItemAsReturnValue) {
   auto item = someFuncReturningCborItem();
@@ -188,7 +192,7 @@ TEST(CborCodec, CborItemArrayAsReturnValue) {
   nio::out.println("end of CborCodec.CborItemArray");
 }
 
-// `CborCodec` ..............................................................................................
+// `CborCodec` ----------------------------------------------------------------------------------------------
 
 TEST(CborCodec, Bool) {
   testRoundtrip(false);

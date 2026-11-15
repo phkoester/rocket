@@ -19,6 +19,8 @@
 
 using namespace rocket::nio;
 
+using rocket::io::testing::FailingBuf;
+using rocket::io::testing::NonseekableBuf;
 namespace {
 
 // Local functions ------------------------------------------------------------------------------------------
@@ -307,7 +309,7 @@ forEachScanSource(string_view input, Fn fn) {
 
   {
     SCOPED_TRACE("StreamSource (nonseekable)");
-    io::testing::NonseekableBuf buf { string(input) };
+    NonseekableBuf buf { string(input) };
     istream is(&buf);
     StreamSource in(is);
     fn(in);
@@ -357,7 +359,7 @@ expectInvalidUtf8(Source& in) {
 
 } // namespace
 
-// `TEST` ---------------------------------------------------------------------------------------------------
+// Tests ====================================================================================================
 
 // `Sink` ...................................................................................................
 
@@ -949,7 +951,7 @@ TEST(nio, seekableSources) {
   ifstream ifs(temp, ios::binary);
   EXPECT_TRUE(StreamSource(ifs).seekable());
 
-  io::testing::NonseekableBuf buf("abc");
+  NonseekableBuf buf("abc");
   istream is(&buf);
   EXPECT_FALSE(StreamSource(is).seekable());
 
@@ -1005,7 +1007,7 @@ TEST(nio, readlnIoError) {
 
   {
     SCOPED_TRACE("StreamSource");
-    io::testing::FailingBuf buf("a\nbc");
+    FailingBuf buf("a\nbc");
     istream is(&buf);
     StreamSource in(is);
     EXPECT_EQ(in.readln(), "a");

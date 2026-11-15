@@ -6,58 +6,27 @@
 
 #include "rocket/filesystem/filesystem.h"
 #include "rocket/io/IoError.h"
+#include "rocket/io/io.h"
 #include "rocket/nio/nio-utils.h"
 #include "rocket/nio/nio.h"
 
 using namespace rocket::nio;
 
+using rocket::io::testing::TellOnlyBuf;
+using rocket::nio::testing::FailingSource;
+using rocket::nio::testing::NonseekableSource;
+
 namespace {
 
-// Local types ----------------------------------------------------------------------------------------------
-
-/// A #rocket::nio::StreamSource that cannot seek or report its position, like one over a pipe.
-struct NonseekableSource {
-  io::testing::NonseekableBuf buf;
-  istream is;
-  StreamSource in;
-
-  explicit NonseekableSource(const string& str) : buf(str), is(&buf), in(is) {}
-};
-
-/// A stream buffer that reports its position, but cannot seek anywhere else.
-struct TellOnlyBuf : stringbuf {
-  explicit TellOnlyBuf(const string& str) : stringbuf(str, ios::in) {}
-
-protected:
-
-  pos_type
-  seekoff(off_type off, ios::seekdir dir, ios::openmode which) override {
-    if (off == 0 && dir == ios::cur) {
-      return stringbuf::seekoff(off, dir, which);
-    }
-    return pos_type(off_type(-1));
-  }
-
-  pos_type seekpos(pos_type, ios::openmode) override { return pos_type(off_type(-1)); }
-};
-
-/// A #rocket::nio::StreamSource over a #rocket::io::testing::FailingBuf. The stream sets `badbit` when the
-/// buffer fails.
-struct FailingSource {
-  io::testing::FailingBuf buf;
-  istream is;
-  StreamSource in;
-
-  explicit FailingSource(const string& str) : buf(str), is(&buf), in(is) {}
-};
-
-// Local functions ------------------------------------------------------------------------------------------
+// Local constants ------------------------------------------------------------------------------------------
 
 /// The message of the #rocket::io::IoError thrown on an I/O error.
 constexpr string_view CANNOT_READ = "Cannot read from the source";
 
 /// The message of the #rocket::InvalidState thrown when a source that cannot seek would have to go back.
 constexpr string_view CANNOT_GO_BACK = "Cannot go back in a source that cannot report its position";
+
+// Local functions ------------------------------------------------------------------------------------------
 
 /// Calls @p fn with a contiguous source and noncontiguous sources, which are handled by separate code paths.
 template<typename Fn>
@@ -83,6 +52,8 @@ forEachSource(string_view input, Fn fn) {
   }
 }
 
+// Local test functions -------------------------------------------------------------------------------------
+
 /// Tests `readChoice`. On failure, the source must not be advanced, so @p expectedTell defaults to 0.
 void
 testReadChoice(
@@ -107,14 +78,6 @@ testReadUntilUnescapedChar(string_view input, char c, const optional<string>& ex
 }
 
 void
-testSkipUntilString(string_view input, string_view str, bool expected, u64 expectedTell) {
-  forEachSource(input, [&](Source& in) {
-    EXPECT_EQ(skipUntilString(in, str), expected);
-    EXPECT_EQ(in.tell(), expectedTell);
-  });
-}
-
-void
 testSkipCComments(string_view input, u64 expectedTell) {
   forEachSource(input, [&](Source& in) {
     skip(in, true, false);
@@ -122,9 +85,19 @@ testSkipCComments(string_view input, u64 expectedTell) {
   });
 }
 
+void
+testSkipUntilString(string_view input, string_view str, bool expected, u64 expectedTell) {
+  forEachSource(input, [&](Source& in) {
+    EXPECT_EQ(skipUntilString(in, str), expected);
+    EXPECT_EQ(in.tell(), expectedTell);
+  });
+}
+
 } // namespace
 
-// `TEST` ---------------------------------------------------------------------------------------------------
+// Tests ====================================================================================================
+
+// Functions ------------------------------------------------------------------------------------------------
 
 TEST(nioUtils, readChar) {
   forEachSource("ab", [](Source& in) {
@@ -156,19 +129,6 @@ TEST(nioUtils, expectChar) {
     EXPECT_NO_THROW(expectChar(in, 'b'));
     EXPECT_THAT([&] { expectChar(in, 'b'); }, throwsInputFailure(4, EndsWith("Expected 'b'"))); // EOF
   });
-}
-
-TEST(nioUtils, readCharNonseekable) {
-  io::testing::NonseekableBuf buf("ab");
-  istream is(&buf);
-  StreamSource in(is);
-  ASSERT_EQ(in.tell(), nullopt);
-
-  EXPECT_FALSE(readChar(in, 'x'));
-  EXPECT_TRUE(readChar(in, 'a'));
-  EXPECT_FALSE(readChar(in, 'a'));
-  EXPECT_TRUE(readChar(in, 'b'));
-  EXPECT_FALSE(readChar(in, 'b')); // EOF
 }
 
 TEST(nioUtils, readChoiceWordBoundary) {
@@ -430,14 +390,12 @@ TEST(nioUtils, readWhilePredicate) {
 
 TEST(nioUtils, readWhilePredicateNonseekable) {
   const auto isDigit = [](char c) { return c >= '0' && c <= '9'; };
-  io::testing::NonseekableBuf buf("123ab");
-  istream is(&buf);
-  StreamSource in(is);
-  ASSERT_EQ(in.tell(), nullopt);
+  NonseekableSource src("123ab");
+  ASSERT_EQ(src.in.tell(), nullopt);
 
-  EXPECT_EQ(readWhilePredicate(in, isDigit), "123");
+  EXPECT_EQ(readWhilePredicate(src.in, isDigit), "123");
   char c = '\0';
-  EXPECT_EQ(in.read(c), 1);
+  EXPECT_EQ(src.in.read(c), 1);
   EXPECT_EQ(c, 'a'); // The first nondigit was not consumed
 }
 
@@ -506,7 +464,7 @@ TEST(nioUtils, skipCCommentsUnterminated) {
   });
 }
 
-// I/O errors ...............................................................................................
+// `rocket::io::IoError` ------------------------------------------------------------------------------------
 
 TEST(nioUtils, ioErrors) {
   // Each function reads the given input, and then the device fails
@@ -556,7 +514,7 @@ TEST(nioUtils, readCodePointIoError) {
   }
 }
 
-// Failing seeks ............................................................................................
+// Failing seeks --------------------------------------------------------------------------------------------
 
 TEST(nioUtils, goingBackFailsIfSeekFails) {
   // The source reports its position, so going back is attempted, but the seek fails. This must not pass as a
@@ -571,7 +529,7 @@ TEST(nioUtils, goingBackFailsIfSeekFails) {
     ThrowsMessage<InvalidState>(EndsWith("Cannot go back to position 0 in the source")));
 }
 
-// Nonseekable sources ......................................................................................
+// Nonseekable sources --------------------------------------------------------------------------------------
 
 // A source that cannot seek cannot go back either. Functions that must go back throw `InvalidState`, and the
 // input read up to that point is lost. These tests pin down that behavior.
@@ -584,6 +542,17 @@ TEST(nioUtils, expectCharNonseekable) {
   // The position of the failure is unknown
   EXPECT_THAT([&] { expectChar(src.in, 'x'); }, throwsInputFailure(nullopt, EndsWith("Expected 'x'")));
   EXPECT_EQ(src.in.readString(), "b"); // `expectChar` only peeks, so nothing is lost
+}
+
+TEST(nioUtils, readCharNonseekable) {
+  NonseekableSource src("ab");
+  ASSERT_EQ(src.in.tell(), nullopt);
+
+  EXPECT_FALSE(readChar(src.in, 'x'));
+  EXPECT_TRUE(readChar(src.in, 'a'));
+  EXPECT_FALSE(readChar(src.in, 'a'));
+  EXPECT_TRUE(readChar(src.in, 'b'));
+  EXPECT_FALSE(readChar(src.in, 'b')); // EOF
 }
 
 TEST(nioUtils, readCharacterNonseekable) {

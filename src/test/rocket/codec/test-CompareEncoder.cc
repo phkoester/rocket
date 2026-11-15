@@ -21,7 +21,7 @@ struct MyDerivedStruct : MyStruct {
   float c = 0.0F;
 };
 
-// `TEST` ---------------------------------------------------------------------------------------------------
+// Tests ====================================================================================================
 
 TEST(CompareEncoder, CmpOrdering) {
   using codec::internal::compare::CmpOrdering;

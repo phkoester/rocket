@@ -9,7 +9,7 @@
 #include "rocket/nio/nio.h"
 #include "rocket/system/system.h"
 
-// `TEST` ---------------------------------------------------------------------------------------------------
+// Tests ====================================================================================================
 
 TEST(Process, error0) {
   nio::StringSink buf;
@@ -20,13 +20,13 @@ TEST(Process, error0) {
 TEST(ProcessDeathTest, error2) {
   EXPECT_EXIT(
     { process().error(nio::err, 2, "Test error"); },
-    testing::ExitedWithCode(2), "test-rocket-Process: fatal error: Test error\n");
+    ExitedWithCode(2), "test-rocket-Process: fatal error: Test error\n");
 }
 
 TEST(ProcessDeathTest, exit) {
   EXPECT_EXIT(
     { process().error(nio::err, 7, "Exiting ..."); },
-    testing::ExitedWithCode(7), "test-rocket-Process: fatal error: Exiting ...\n");
+    ExitedWithCode(7), "test-rocket-Process: fatal error: Exiting ...\n");
 }
 
 TEST(Process, tryLocale) {

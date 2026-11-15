@@ -7,6 +7,7 @@
 #pragma once
 
 #include "rocket/rocket.h"
+#include "rocket/io/int128.h"
 
 #include <cstdio>
 #include <filesystem>
@@ -35,64 +36,6 @@
 #endif // ROCKET_OS_WINDOWS
 
 namespace rocket::io {
-
-#ifdef ROCKET_TEST
-namespace testing {
-
-// `FailingBuf` ---------------------------------------------------------------------------------------------
-
-/**
- * A stream buffer that yields a string and then fails, like a device with an I/O error.
- *
- * Reading past the string throws from `underflow`, which makes an `std::istream` set `badbit`. Useful for
- * testing code with a #rocket::nio::StreamSource that fails.
- */
-struct FailingBuf : std::streambuf {
-  /**
-   * @ctor
-   *
-   * @param str the string to yield before failing
-   */
-  explicit FailingBuf(std::string str) : str_(std::move(str)) {
-    setg(str_.data(), str_.data(), str_.data() + str_.size());
-  }
-
-protected:
-
-  int_type underflow() override { throw std::runtime_error("Simulated I/O error"); }
-
-private:
-
-  std::string str_;
-};
-
-// `NonseekableBuf` -----------------------------------------------------------------------------------------
-
-/**
- * A stream buffer over a string that cannot seek, like one over a pipe.
- *
- * Useful for testing code with a #rocket::nio::StreamSource that cannot seek.
- */
-struct NonseekableBuf : std::stringbuf {
-  /**
-   * @ctor
-   *
-   * @param str the string to read from
-   */
-  explicit NonseekableBuf(const std::string& str) : std::stringbuf(str, std::ios::in) {}
-
-protected:
-
-  pos_type
-  seekoff(off_type, std::ios::seekdir, std::ios::openmode) override {
-    return pos_type(off_type(-1));
-  }
-
-  pos_type seekpos(pos_type, std::ios::openmode) override { return pos_type(off_type(-1)); }
-};
-
-} // namespace testing
-#endif // ROCKET_TEST
 
 // Functions working with `FILE` pointers -------------------------------------------------------------------
 
@@ -246,24 +189,83 @@ bool seekable(std::ostream& os) noexcept;
  */
 u64 tell(std::istream& is) noexcept;
 
+#ifdef ROCKET_TEST
+namespace testing {
+
+// `FailingBuf` ---------------------------------------------------------------------------------------------
+
+/**
+ * A stream buffer that yields a string and then fails, like a device with an I/O error.
+ *
+ * Reading past the string throws from `underflow`, which makes an `std::istream` set `badbit`. Useful for
+ * testing code with a #rocket::nio::StreamSource that fails.
+ */
+struct FailingBuf : std::streambuf {
+  /**
+   * @ctor
+   *
+   * @param str the string to yield before failing
+   */
+  explicit FailingBuf(std::string str) : str_(std::move(str)) {
+    setg(str_.data(), str_.data(), str_.data() + str_.size());
+  }
+
+protected:
+
+  int_type underflow() override { throw std::runtime_error("Simulated I/O error"); }
+
+private:
+
+  std::string str_;
+};
+
+// `NonseekableBuf` -----------------------------------------------------------------------------------------
+
+/**
+ * A stream buffer over a string that cannot seek, like one over a pipe.
+ *
+ * Useful for testing code with a #rocket::nio::StreamSource that cannot seek.
+ */
+struct NonseekableBuf : std::stringbuf {
+  /**
+   * @ctor
+   *
+   * @param str the string to read from
+   */
+  explicit NonseekableBuf(const std::string& str) : std::stringbuf(str, std::ios::in) {}
+
+protected:
+
+  pos_type
+  seekoff(off_type, std::ios::seekdir, std::ios::openmode) override {
+    return pos_type(off_type(-1));
+  }
+
+  pos_type seekpos(pos_type, std::ios::openmode) override { return pos_type(off_type(-1)); }
+};
+
+// `TellOnlyBuf` --------------------------------------------------------------------------------------------
+
+/// A stream buffer that reports its position, but cannot seek anywhere else.
+struct TellOnlyBuf : std::stringbuf {
+  explicit TellOnlyBuf(const std::string& str) : std::stringbuf(str, std::ios::in) {}
+
+protected:
+
+  pos_type
+  seekoff(off_type off, std::ios::seekdir dir, std::ios::openmode which) override {
+    if (off == 0 && dir == std::ios::cur) {
+      return std::stringbuf::seekoff(off, dir, which);
+    }
+    return pos_type(off_type(-1));
+  }
+
+  pos_type seekpos(pos_type, std::ios::openmode) override { return pos_type(off_type(-1)); }
+};
+
+} // namespace testing
+#endif // ROCKET_TEST
+
 } // namespace rocket::io
-
-#ifndef ROCKET_HAS_INT128_OP_IO
-
-// Support for 128-bit data types ---------------------------------------------------------------------------
-
-/// @op_input{#rocket::i128}
-std::istream& operator>>(std::istream& lhs, rocket::i128& rhs);
-
-/// @op_output{#rocket::i128}
-std::ostream& operator<<(std::ostream& lhs, rocket::i128 rhs);
-
-/// @op_input{#rocket::u128}
-std::istream& operator>>(std::istream& lhs, rocket::u128& rhs);
-
-/// @op_output{#rocket::u128}
-std::ostream& operator<<(std::ostream& lhs, rocket::u128 rhs);
-
-#endif
 
 // EOF

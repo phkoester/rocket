@@ -32,7 +32,7 @@ enum MyEnumInNamespace : u8 { red, green, blue };
 ROCKET_ENUM_DECLARE(mynamespace, MyEnumInNamespace, MyEnumInNamespace); // NOLINT(*-internal-linkage)
 ROCKET_ENUM_DEFINE(mynamespace, MyEnumInNamespace, MyEnumInNamespace, (red)(green)(blue));
 
-// `TEST` ---------------------------------------------------------------------------------------------------
+// Tests ====================================================================================================
 
 TEST(enum, MyEnumOpOutput) {
   ostringstream os;

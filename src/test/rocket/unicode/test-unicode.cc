@@ -19,7 +19,7 @@ constexpr char CONT         = static_cast<char>(0b1011'1111);
 constexpr char32 D800       = static_cast<char32>(0xD800U);
 constexpr char32 MAX_PLUS_1 = static_cast<char32>(0x10FFFFU + 1);
 
-// `TEST` ---------------------------------------------------------------------------------------------------
+// Tests ====================================================================================================
 
 TEST(unicode, CodePointCtor) {
   EXPECT_THAT(

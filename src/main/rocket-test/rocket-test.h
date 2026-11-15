@@ -35,11 +35,11 @@
 #ifndef ROCKET_TEST_NO_USING_NAMESPACE
 
 // NOLINTBEGIN
-using namespace rocket;
-using namespace rocket::test;
-using namespace rocket::test::matcher;
-using namespace std;
-using namespace testing;
+using namespace ::rocket;
+using namespace ::rocket::test;
+using namespace ::rocket::test::matcher;
+using namespace ::std;
+using namespace ::testing;
 // NOLINTEND
 
 #endif // ROCKET_TEST_NO_USING_NAMESPACE

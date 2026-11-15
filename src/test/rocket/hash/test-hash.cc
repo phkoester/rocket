@@ -8,9 +8,9 @@
 
 using namespace rocket::hash;
 
-// `TEST` ---------------------------------------------------------------------------------------------------
+// Tests ====================================================================================================
 
-/// Tests that the order affects the hash value.
+// Tests that the order affects the hash value
 TEST(hash, combine) {
   u64 seed = 1;
   combine(seed, 2);

@@ -13,9 +13,9 @@
 using namespace rocket::cl;
 using namespace rocket::unicode;
 
-// Local functions ------------------------------------------------------------------------------------------
-
 namespace {
+
+// Local functions ------------------------------------------------------------------------------------------
 
 optional<bool> parseCommandOmit; // CL 1 "-o"
 optional<bool> parseCommandHelp; // CL 1 "-?"
@@ -156,13 +156,13 @@ parseCommand(const vector<string>& args, nio::Sink& out = nio::out, nio::Sink& e
 
 } // namespace
 
-// `TEST` ---------------------------------------------------------------------------------------------------
+// Tests ====================================================================================================
 
 /**
  * Usage: cmd [-o | -?] list [-? | -l] FILE...
  *   or   cmd [-o | -?] show [-? | -s | -t] [ARG]...
  */
- TEST(cl, parseCommand) {
+TEST(cl, parseCommand) {
   // Test invalid option
   {
     nio::StringSink buf;

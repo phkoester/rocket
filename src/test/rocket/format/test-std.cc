@@ -4,15 +4,11 @@
 
 #include "rocket-test/rocket-test.h"
 
-#include "rocket/assert.h"
-#include "rocket/nio/nio.h"
-
 #include <span>
-#include <type_traits>
 #include <unordered_map>
 #include <unordered_set>
 
-// `TEST` ---------------------------------------------------------------------------------------------------
+// Tests ====================================================================================================
 
 TEST(std, byteFormat) {
   EXPECT_EQ(fmt::format("{}", byte { 0 }), "0");

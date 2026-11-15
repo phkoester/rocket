@@ -37,7 +37,7 @@ template<char... C> consteval bool operator""_validU128() { return VALID_UNSIGNE
 
 } // namespace
 
-// `TEST` ---------------------------------------------------------------------------------------------------
+// Tests ====================================================================================================
 
 TEST(literal, integerTypes) {
   static_assert(same_as<decltype(1_i8), i8>);

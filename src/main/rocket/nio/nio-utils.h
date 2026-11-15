@@ -1,5 +1,10 @@
 /**
  * @file nio-utils.h
+ *
+ * Utilities for `rocket::nio`.
+ *
+ * Unlike the sinks and sources declared in `nio.h`, these functions may throw #rocket::InputFailure or
+ * #rocket::io::IoError. Also, they may throw #rocket::InvalidState if the source cannot go back.
  */
 
 #pragma once
@@ -11,7 +16,6 @@
 #include <optional>
 #include <functional>
 #include <set>
-#include <sstream>
 
 namespace rocket::nio {
 

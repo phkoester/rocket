@@ -53,7 +53,7 @@ public:
 ROCKET_REFLECT_MEMBERS_DECLARE(, MyDerivedStruct, Index); // NOLINT(*-internal-linkage)
 ROCKET_REFLECT_MEMBERS_DEFINE(, MyDerivedStruct, Index);
 
-// `TEST` ---------------------------------------------------------------------------------------------------
+// Tests ====================================================================================================
 
 TEST(reflect, MyStruct) {
   static_assert(same_as<MyStruct::Index::Ordering, strong_ordering>);

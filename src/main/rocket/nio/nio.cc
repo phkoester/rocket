@@ -67,16 +67,6 @@ bytes(const fmt::memory_buffer& buf) {
   return { reinterpret_cast<const u8*>(buf.data()), buf.size() };
 }
 
-#if 0 // XXX
-/// Formats into a buffer that keeps short messages on the stack.
-fmt::memory_buffer
-formatToBuffer(fmt::string_view fmt, fmt::format_args args) {
-  fmt::memory_buffer ret;
-  fmt::vformat_to(fmt::appender(ret), fmt, args);
-  return ret;
-}
-#endif
-
 /// Formats into a buffer that keeps short messages on the stack.
 fmt::memory_buffer
 formatToBuffer(fmt::text_style style, fmt::string_view fmt, fmt::format_args args) {

@@ -7,6 +7,7 @@
 #pragma once
 
 #include "rocket/format.h"
+#include "rocket/io/io.h"
 #include "rocket/scan.h"
 
 #include <fmt/color.h> // `fmt::text_style`
@@ -1136,6 +1137,35 @@ ROCKET_PUBLIC extern Source& in; // NOLINT
 ROCKET_PUBLIC extern Sink& out; // NOLINT
 /// The sink connected to stderr.
 ROCKET_PUBLIC extern Sink& err; // NOLINT
+
+#ifdef ROCKET_TEST
+namespace testing {
+
+// `FailingSource` ------------------------------------------------------------------------------------------
+
+/// A #rocket::nio::StreamSource over a #rocket::io::testing::FailingBuf. The stream sets `badbit` when the
+/// buffer fails.
+struct FailingSource {
+  io::testing::FailingBuf buf;
+  std::istream is;
+  StreamSource in;
+
+  explicit FailingSource(const std::string& str) : buf(str), is(&buf), in(is) {}
+};
+
+// `NonseekableSource` -------------------------------------------------------------------------------------
+
+/// A #rocket::nio::StreamSource that cannot seek or report its position, like one over a pipe.
+struct NonseekableSource {
+  io::testing::NonseekableBuf buf;
+  std::istream is;
+  StreamSource in;
+
+  explicit NonseekableSource(const std::string& str) : buf(str), is(&buf), in(is) {}
+};
+
+} // namespace testing
+#endif // ROCKET_TEST
 
 } // namespace rocket::nio
 

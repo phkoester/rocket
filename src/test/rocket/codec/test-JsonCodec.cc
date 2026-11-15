@@ -72,6 +72,8 @@ decodeInto(T val, string_view str) {
   return jsonCodec.Base::decode<T>(val, in);
 }
 
+// Local test functions -------------------------------------------------------------------------------------
+
 template<typename T>
 void
 expectFailure(string_view input, string_view message, u64 position, const str::Ranges& ranges = {}) {
@@ -84,9 +86,9 @@ expectFailure(string_view input, string_view message, u64 position, const str::R
 
 } // namespace
 
-// `TEST` ---------------------------------------------------------------------------------------------------
+// Tests ====================================================================================================
 
-// `JsonConsumer` ...........................................................................................
+// `JsonConsumer` -------------------------------------------------------------------------------------------
 
 TEST(JsonCodec, ConsumerBool) {
   EXPECT_EQ(encode(true), "true");
@@ -269,25 +271,33 @@ TEST(JsonCodec, ConsumerTime) {
 TEST(JsonCodec, ConsumerZonedTime) {
   using namespace std::chrono;
 
-  const auto* const regexS =
+  const auto* const regexSecond =
     R"(\"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(Z|[+-]\d{2}:\d{2}) \([^ ]+\)\")"; // Seconds
-  const auto* const regexNs =
+  const auto* const regexNanosecond =
     R"(\"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{6,9}(Z|[+-]\d{2}:\d{2}) \([^ ]+\)\")"; // Nanoseconds
 
   {
     // Current time zone
     const auto* current = rocket::chrono::current_zone();
     const auto now = rocket::chrono::now<system_clock>();
-    EXPECT_THAT(encode(rocket::chrono::zoned_time(current, time_point_cast<seconds>(now))), matchesRegex(regexS));
-    EXPECT_THAT(encode(rocket::chrono::zoned_time(current, now)), matchesRegex(regexNs));
+    EXPECT_THAT(
+      encode(rocket::chrono::zoned_time(current, time_point_cast<seconds>(now))),
+      matchesRegex(regexSecond));
+    EXPECT_THAT(
+      encode(rocket::chrono::zoned_time(current, now)),
+      matchesRegex(regexNanosecond));
   }
 
   {
     // Time zone UTC
     const auto* utc = rocket::chrono::locate_zone("UTC");
     const auto now = rocket::chrono::now<system_clock>();
-    EXPECT_THAT(encode(rocket::chrono::zoned_time(utc, time_point_cast<seconds>(now))), matchesRegex(regexS));
-    EXPECT_THAT(encode(rocket::chrono::zoned_time(utc, now)), matchesRegex(regexNs));
+    EXPECT_THAT(
+      encode(rocket::chrono::zoned_time(utc, time_point_cast<seconds>(now))),
+      matchesRegex(regexSecond));
+    EXPECT_THAT(
+      encode(rocket::chrono::zoned_time(utc, now)),
+      matchesRegex(regexNanosecond));
   }
 }
 
@@ -331,7 +341,7 @@ TEST(JsonCodec, ConsumerCodePoint) {
   EXPECT_EQ(encode(type(U'\U0010FFFF')), "\"U+10FFFF\"");
 }
 
-// `JsonProducer` ...........................................................................................
+// `JsonProducer` -------------------------------------------------------------------------------------------
 
 TEST(JsonCodec, ProducerBool) {
   EXPECT_EQ(decode<bool>("// sup\ntrue"), true);

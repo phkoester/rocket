@@ -97,12 +97,14 @@ target_sources(rocket
     rocket/windows.h
     rocket/archive/archive.cc
     rocket/chrono/chrono.cc
+    rocket/chrono/time_zone.cc
     rocket/cl/cl.cc
     rocket/codec/CborCodec.cc
     rocket/codec/JsonCodec.cc
     rocket/codec/codec.cc
     rocket/filesystem/filesystem.cc
     rocket/io/IoError.cc
+    rocket/io/int128.cc
     rocket/io/io.cc
     rocket/log/log.cc
     rocket/nio/nio.cc
@@ -148,6 +150,7 @@ target_sources(rocket
       rocket/type-traits.h
       rocket/archive/archive.h
       rocket/chrono/chrono.h
+      rocket/chrono/time_zone.h
       rocket/cl/cl.h
       rocket/codec/CborCodec.h
       rocket/codec/CompareEncoder.h
@@ -160,6 +163,7 @@ target_sources(rocket
       rocket/format/Subformat.h
       rocket/hash/hash.h
       rocket/io/IoError.h
+      rocket/io/int128.h
       rocket/io/io.h
       rocket/io/spanstream.h
       rocket/log/log.h

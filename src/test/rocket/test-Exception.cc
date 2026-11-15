@@ -12,7 +12,7 @@
 
 using namespace std;
 
-// `TEST` ---------------------------------------------------------------------------------------------------
+// Tests ====================================================================================================
 
 // Segfaults on Windows with Clang 22.1.3
 TEST(Exception, WrappedExceptionFormat) { // NOLINT(*-complexity)

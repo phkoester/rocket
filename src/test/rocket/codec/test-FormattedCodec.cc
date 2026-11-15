@@ -6,8 +6,8 @@
 
 #include "rocket/Bimap-codec.h"
 #include "rocket/scope.h"
-#include "rocket/codec/FormattedCodec.h"
 #include "rocket/chrono/chrono.h"
+#include "rocket/codec/FormattedCodec.h"
 #include "rocket/log/log.h"
 #include "rocket/reflect/reflect.h"
 #include "rocket/str/location/location.h"
@@ -79,6 +79,8 @@ decodeInto(T val, string_view str) {
   return formattedCodec.Base::decode<T>(val, in);
 }
 
+// Local test functions -------------------------------------------------------------------------------------
+
 template<typename T>
 void
 expectFailure(string_view input, string_view message, u64 position, const str::Ranges& ranges = {}) {
@@ -91,9 +93,9 @@ expectFailure(string_view input, string_view message, u64 position, const str::R
 
 } // namespace
 
-// `TEST` ---------------------------------------------------------------------------------------------------
+// Tests ====================================================================================================
 
-// `FormattedConsumer` ......................................................................................
+// `FormattedConsumer` --------------------------------------------------------------------------------------
 
 TEST(FormattedCodec, ConsumerBool) {
   EXPECT_EQ(encode(false), "false");
@@ -313,7 +315,7 @@ TEST(FormattedCodec, ConsumerCodePoint) {
   EXPECT_EQ(encode(type(U'\U0010FFFF')), "U+10FFFF");
 }
 
-// `FormattedProducer` ......................................................................................
+// `FormattedProducer` --------------------------------------------------------------------------------------
 
 TEST(FormattedCodec, ProducerBool) {
   EXPECT_EQ(decode<bool>("// sup\nTRue"), true);
@@ -563,8 +565,12 @@ TEST(FormattedCodec, ProducerHourMinuteSecond) {
   EXPECT_EQ(decode<hh_mm_ss<seconds>>(" -00:02:00").value().to_duration(), -2min);
   EXPECT_EQ(decode<hh_mm_ss<seconds>>(" -01:02:03").value().to_duration(), -(1h + 2min + 3s));
 
-  EXPECT_EQ(decode<hh_mm_ss<milliseconds>>("x").error().message, "Expected an hour, minute, and second");
-  EXPECT_EQ(decode<hh_mm_ss<milliseconds>>("01:02:").error().message, "Expected an hour, minute, and second");
+  EXPECT_EQ(
+    decode<hh_mm_ss<milliseconds>>("x").error().message,
+    "Expected an hour, minute, and second");
+  EXPECT_EQ(
+    decode<hh_mm_ss<milliseconds>>("01:02:").error().message,
+    "Expected an hour, minute, and second");
   EXPECT_EQ(decode<hh_mm_ss<milliseconds>>("01:02:03.").error().message, "Expected subseconds");
 }
 

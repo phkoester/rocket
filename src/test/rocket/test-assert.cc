@@ -19,7 +19,7 @@ const char* oops() { oopsCalled = true; return "oops"; }
 
 } // namespace
 
-// `TEST` ---------------------------------------------------------------------------------------------------
+// Tests ====================================================================================================
 
 TEST(assert, RocketAssertTrue) {
   EXPECT_NO_THROW({ ROCKET_ASSERT(true); });
