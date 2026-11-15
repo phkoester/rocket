@@ -13,9 +13,6 @@
 #include "rocket/system/system.h"
 #include "rocket/system/terminal/terminal.h"
 
-#include <iostream>
-#include <string>
-
 using namespace rocket;
 using namespace rocket::unicode;
 using namespace std;
@@ -60,7 +57,7 @@ void handle(const B&) { nio::out.println("handle.B"); }
 
 // Local functions ------------------------------------------------------------------------------------------
 
-void
+[[maybe_unused]] void
 throwInvalidState() {
   throw InvalidState("Oops");
 }
@@ -78,9 +75,6 @@ myTerminate() {
 
 void
 toy() {
-  i128 v = 5;
-  cout << "VAL: " << v << endl;
-
   ROCKET_SCOPE_EXIT([] { nio::out.println("Hello from ROCKET_SCOPE_EXIT"); });
 
   nio::out.println("Hello from toy");
@@ -164,7 +158,7 @@ main(i32 argc, char **argv) {
 
   toy();
 
-  throwInvalidState();
+  // throwInvalidState();
 
   nio::out.println("Exiting ...");
   process().exit(EXIT_SUCCESS);

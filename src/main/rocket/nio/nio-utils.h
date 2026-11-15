@@ -223,14 +223,14 @@ void expectComma(nio::Source& in);
 std::string readWhilePredicate(nio::Source& in, const std::function<bool(char)>& predicate);
 
 /**
- * Skips whitespace and comments, advances the source only if there is something to skip.
+ * Skips whitespace and comments.
  *
  * @param in the source to read from
  * @param cComments whether to skip C-style comments
  * @param shellComments whether to skip Shell-style comments
  * @throw #rocket::InputFailure if a C-style comment is not terminated. The source is not advanced then
- * @throw #rocket::InvalidState if the source must go back, but @p in cannot report its position or seek. This
- *   happens at the first character that is not skipped, unless the input ends before
+ * @throw #rocket::InvalidState if the source must go back, but @p in cannot report its position or seek.
+ *   This happens at the first character that is not skipped, unless the input ends before
  * @throw #rocket::io::IoError if @p in is bad, e.g., after an I/O error
  */
 void skip(nio::Source& in, bool cComments, bool shellComments);

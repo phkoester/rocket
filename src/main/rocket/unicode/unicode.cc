@@ -11,7 +11,6 @@
 #include <array>
 #include <limits>
 
-// XXX using namespace icu;
 using namespace rocket;
 using namespace rocket::unicode;
 using namespace std;

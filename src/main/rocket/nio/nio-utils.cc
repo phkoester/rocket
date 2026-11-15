@@ -12,6 +12,7 @@
 #include <exception>
 
 using namespace rocket;
+using namespace rocket::nio;
 using namespace std;
 
 namespace {
@@ -23,13 +24,13 @@ constexpr string_view INVALID_UTF8 = "Invalid UTF-8";
 
 // Local functions ------------------------------------------------------------------------------------------
 
-optional<char> peekChar(nio::Source& in);
+optional<char> peekChar(Source& in);
 
-bool readOne(nio::Source& in, char& c);
+bool readOne(Source& in, char& c);
 
-optional<unicode::CodePoint> readValidCodePoint(nio::Source& in);
+optional<unicode::CodePoint> readValidCodePoint(Source& in);
 
-void rewindTo(nio::Source& in, optional<u64> pos, u64 offset = 0);
+void rewindTo(Source& in, optional<u64> pos, u64 offset = 0);
 
 bool isWordCodePoint(unicode::CodePoint cp);
 
@@ -69,7 +70,7 @@ isEndOfWord(string_view str, u64 pos) {
   try {
     const auto cp = unicode::nextCodePoint(str, pos);
     // Next code point is not alphanumeric, underscore, or dollar sign: we have a word boundary
-    return not cp.isAlnum() && not cp.eq('_') && not cp.eq('$');
+    return not cp.isAlnum() && cp != '_' && cp != '$';
   } catch (const exception&) {
     // Could not read code point: we have a word boundary
     return true;
@@ -85,7 +86,7 @@ isEndOfWord(string_view str, u64 pos) {
  * @throw InvalidState if the next character is not ASCII and @p in cannot go back
  */
 bool
-isEndOfWord(nio::Source& in) {
+isEndOfWord(Source& in) {
   const auto c = peekChar(in);
   if (not c) {
     // End of input: we have a word boundary
@@ -132,7 +133,7 @@ isWordCodePoint(unicode::CodePoint cp) {
  * @throw #rocket::io::IoError if @p in is bad
  */
 optional<char>
-peekChar(nio::Source& in) {
+peekChar(Source& in) {
   const auto ret = in.peek();
   if (not ret && in.bad()) {
     throw io::IoError(in.code());
@@ -147,7 +148,7 @@ peekChar(nio::Source& in) {
  * @throw #rocket::io::IoError if @p in is bad
  */
 bool
-readOne(nio::Source& in, char& c) {
+readOne(Source& in, char& c) {
   if (in.read(c) == 1) {
     return true;
   }
@@ -162,9 +163,9 @@ readOne(nio::Source& in, char& c) {
  * instead of throwing. The source is not advanced in that case.
  */
 optional<unicode::CodePoint>
-readValidCodePoint(nio::Source& in) {
+readValidCodePoint(Source& in) {
   try {
-    return nio::readCodePoint(in);
+    return readCodePoint(in);
   } catch (const InputFailure&) {
     return {}; // Invalid UTF-8
   }
@@ -177,11 +178,11 @@ readValidCodePoint(nio::Source& in) {
  *   or if seeking fails, which would leave @p in at an unknown position
  */
 void
-rewindTo(nio::Source& in, optional<u64> pos, u64 offset) {
+rewindTo(Source& in, optional<u64> pos, u64 offset) {
   if (not pos) {
     throw InvalidState("Cannot go back in a source that cannot report its position");
   }
-  if (not in.seek(static_cast<i64>(*pos + offset), nio::SeekMode::beg)) {
+  if (not in.seek(static_cast<i64>(*pos + offset), SeekMode::beg)) {
     throw InvalidState(fmt::format("Cannot go back to position {} in the source", *pos + offset));
   }
 }
@@ -207,24 +208,24 @@ namespace rocket::nio {
 // Functions ------------------------------------------------------------------------------------------------
 
 void
-expectChar(nio::Source& in, char c) {
+expectChar(Source& in, char c) {
   if (not readChar(in, c)) {
     throw InputFailure(in.tell(), fmt::format("Expected {:?}", c));
   }
 }
 
 void
-expectColon(nio::Source& in) {
+expectColon(Source& in) {
   expectChar(in, ':');
 }
 
 void
-expectComma(nio::Source& in) {
+expectComma(Source& in) {
   expectChar(in, ',');
 }
 
 bool
-readChar(nio::Source& in, char c) {
+readChar(Source& in, char c) {
   if (peekChar(in) != c) {
     return false;
   }
@@ -233,7 +234,7 @@ readChar(nio::Source& in, char c) {
 }
 
 optional<unicode::Character<char>>
-readCharacter(nio::Source& in) {
+readCharacter(Source& in) {
   // The first code point decides about the end of the input, invalid UTF-8, and I/O errors
   const auto first = readCodePoint(in);
   if (not first) {
@@ -283,7 +284,7 @@ readCharacter(nio::Source& in) {
 
 optional<string_view>
 readChoice( // NOLINT(*-complexity)
-  nio::Source& in,
+  Source& in,
   const set<string_view>& values,
   bool ignoreCase,
   bool endOfWord) {
@@ -362,8 +363,8 @@ readChoice( // NOLINT(*-complexity)
 }
 
 optional<unicode::CodePoint>
-readCodePoint(nio::Source& in) {
-  if (const auto* contiguous = dynamic_cast<nio::ContiguousSource*>(&in); contiguous != nullptr) {
+readCodePoint(Source& in) {
+  if (const auto* contiguous = dynamic_cast<ContiguousSource*>(&in); contiguous != nullptr) {
     // Contiguous
 
     const auto str = contiguous->str();
@@ -419,9 +420,9 @@ readCodePoint(nio::Source& in) {
 }
 
 optional<string>
-readIdentifier(nio::Source& in) {
-  const auto isStart = [](unicode::CodePoint cp) { return cp.isIdStart() || cp.eq('_') || cp.eq('$'); };
-  const auto isContinue = [](unicode::CodePoint cp) { return cp.isIdContinue() || cp.eq('$'); };
+readIdentifier(Source& in) {
+  const auto isStart = [](unicode::CodePoint cp) { return cp.isIdStart() || cp == '_' || cp == '$'; };
+  const auto isContinue = [](unicode::CodePoint cp) { return cp.isIdContinue() || cp == '$'; };
 
   // Check the first code point. An ASCII character decides by itself, so peeking suffices. Any other
   // character must be read as a whole code point, and gone back over on failure
@@ -474,10 +475,10 @@ readIdentifier(nio::Source& in) {
 }
 
 bool
-readString(nio::Source& in, string_view str, bool ignoreCase, bool endOfWord) {
+readString(Source& in, string_view str, bool ignoreCase, bool endOfWord) {
   ROCKET_CHECK(str, not str.empty(), "May not be empty");
 
-  if (const auto* contiguous = dynamic_cast<nio::ContiguousSource*>(&in); contiguous != nullptr) {
+  if (const auto* contiguous = dynamic_cast<ContiguousSource*>(&in); contiguous != nullptr) {
     // Contiguous
 
     const auto remaining = contiguous->str();
@@ -487,7 +488,7 @@ readString(nio::Source& in, string_view str, bool ignoreCase, bool endOfWord) {
     if (endOfWord && not isEndOfWord(remaining, str.size())) {
       return false;
     }
-    in.seek(static_cast<i64>(str.size()), nio::SeekMode::cur);
+    in.seek(static_cast<i64>(str.size()), SeekMode::cur);
     return true;
   } else {
     // Noncontiguous
@@ -513,7 +514,7 @@ readString(nio::Source& in, string_view str, bool ignoreCase, bool endOfWord) {
 }
 
 std::chrono::nanoseconds
-readSubseconds(nio::Source& in) {
+readSubseconds(Source& in) {
   using namespace std::chrono;
 
   // Read subseconds as nanoseconds string
@@ -543,8 +544,8 @@ readSubseconds(nio::Source& in) {
 }
 
 optional<string>
-readUntilChar(nio::Source& in, char c) {
-  if (const auto* contiguous = dynamic_cast<nio::ContiguousSource*>(&in); contiguous != nullptr) {
+readUntilChar(Source& in, char c) {
+  if (const auto* contiguous = dynamic_cast<ContiguousSource*>(&in); contiguous != nullptr) {
     // Contiguous
 
     const auto remaining = contiguous->str();
@@ -552,7 +553,7 @@ readUntilChar(nio::Source& in, char c) {
     if (pos == NPOS) {
       return {};
     }
-    in.seek(static_cast<i64>(pos + 1), nio::SeekMode::cur);
+    in.seek(static_cast<i64>(pos + 1), SeekMode::cur);
     return string(remaining.substr(0, pos));
   } else {
     // Noncontiguous
@@ -578,8 +579,8 @@ readUntilChar(nio::Source& in, char c) {
 }
 
 optional<string>
-readUntilUnescapedChar(nio::Source& in, char c) {
-  if (const auto* contiguous = dynamic_cast<nio::ContiguousSource*>(&in); contiguous != nullptr) {
+readUntilUnescapedChar(Source& in, char c) {
+  if (const auto* contiguous = dynamic_cast<ContiguousSource*>(&in); contiguous != nullptr) {
     // Contiguous
 
     const auto remaining = contiguous->str();
@@ -591,7 +592,7 @@ readUntilUnescapedChar(nio::Source& in, char c) {
         return {};
       }
       if (not isEscaped(remaining, pos)) {
-        in.seek(static_cast<i64>(pos + 1), nio::SeekMode::cur);
+        in.seek(static_cast<i64>(pos + 1), SeekMode::cur);
         return string(remaining.substr(0, pos));
       }
       ++pos;
@@ -620,8 +621,8 @@ readUntilUnescapedChar(nio::Source& in, char c) {
 }
 
 string
-readWhilePredicate(nio::Source& in, const function<bool(char)>& predicate) {
-  if (const auto* contiguous = dynamic_cast<nio::ContiguousSource*>(&in); contiguous != nullptr) {
+readWhilePredicate(Source& in, const function<bool(char)>& predicate) {
+  if (const auto* contiguous = dynamic_cast<ContiguousSource*>(&in); contiguous != nullptr) {
     // Contiguous
 
     const auto remaining = contiguous->str();
@@ -630,7 +631,7 @@ readWhilePredicate(nio::Source& in, const function<bool(char)>& predicate) {
       ++it;
     }
     string ret(remaining.begin(), it);
-    in.seek(static_cast<i64>(ret.size()), nio::SeekMode::cur);
+    in.seek(static_cast<i64>(ret.size()), SeekMode::cur);
     return ret;
   } else {
     // Noncontiguous
@@ -650,7 +651,7 @@ readWhilePredicate(nio::Source& in, const function<bool(char)>& predicate) {
 }
 
 void
-skip(nio::Source& in, bool cComments, bool shellComments) { // NOLINT(*-complexity)
+skip(Source& in, bool cComments, bool shellComments) { // NOLINT(*-complexity)
   constexpr string_view WS = "\t\n\v\f\r ";
 
   while (true) {
@@ -708,18 +709,18 @@ skip(nio::Source& in, bool cComments, bool shellComments) { // NOLINT(*-complexi
 }
 
 bool
-skipUntilString(nio::Source& in, string_view str) {
+skipUntilString(Source& in, string_view str) {
   ROCKET_CHECK(str, not str.empty(), "May not be empty");
 
-  if (const auto* contiguous = dynamic_cast<nio::ContiguousSource*>(&in); contiguous != nullptr) {
+  if (const auto* contiguous = dynamic_cast<ContiguousSource*>(&in); contiguous != nullptr) {
     // Contiguous
 
     const auto pos = contiguous->str().find(str);
     if (pos == NPOS) {
-      in.seek(0, nio::SeekMode::end);
+      in.seek(0, SeekMode::end);
       return false;
     }
-    in.seek(static_cast<i64>(pos + str.size()), nio::SeekMode::cur);
+    in.seek(static_cast<i64>(pos + str.size()), SeekMode::cur);
     return true;
   } else {
     // Noncontiguous
