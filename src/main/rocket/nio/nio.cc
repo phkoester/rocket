@@ -21,6 +21,8 @@ using namespace rocket;
 using namespace rocket::nio;
 using namespace std;
 
+namespace fs = std::filesystem;
+
 // Local functions ------------------------------------------------------------------------------------------
 
 namespace {
@@ -178,11 +180,17 @@ getcUnlocked(FILE* file) {
 #endif
 }
 
-/// Removes a trailing @c '\r' from @p line, which was read up to a @c '\n'.
 void
 removeTrailingCr(string& line) {
-  if (not line.empty() && line.back() == '\r') {
+  if (line.ends_with('\r')) {
     line.pop_back();
+  }
+}
+
+void
+removeTrailingCr(string_view& line) {
+  if (line.ends_with('\r')) {
+    line.remove_suffix(1);
   }
 }
 
@@ -221,21 +229,6 @@ Sink::writeln(string_view in) {
   return ret;
 }
 
-bool
-Sink::vprintln(fmt::string_view fmt, fmt::format_args args) {
-  return vprint(fmt, args) && write('\n') == 1;
-}
-
-bool
-Sink::vprintln(fmt::text_style style, fmt::string_view fmt, fmt::format_args args) {
-  return vprint(style, fmt, args) && write('\n') == 1;
-}
-
-bool
-Sink::vprintln(const locale& locale, fmt::string_view fmt, fmt::format_args args) {
-  return vprint(locale, fmt, args) && write('\n') == 1;
-}
-
 // `FileSink` -----------------------------------------------------------------------------------------------
 
 FileSink::FileSink(FILE* file) :
@@ -245,8 +238,8 @@ FileSink::FileSink(FILE* file) :
   seekable_ = io::seekable(file_);
 }
 
-FileSink::FileSink(const filesystem::path& path, bool append) :
-  file_(io::open(path, append ? "ab" : "wb")),
+FileSink::FileSink(const fs::path& path, bool append, bool binary) :
+  file_(io::open(path, append ? (binary ? "ab" : "a") : (binary ? "wb" : "w"))),
   closeOnDestroy_(true) {
   if (file_ == nullptr) {
     throw InvalidState(fmt::format("Cannot open file `{}` for writing", path));
@@ -327,47 +320,6 @@ FileSink::vprint(const locale& locale, fmt::string_view fmt, fmt::format_args ar
   return fwrite(buf.data(), 1, buf.size(), file_) == buf.size();
 }
 
-bool
-FileSink::vprintln(fmt::string_view fmt, fmt::format_args args) {
-  if (bad()) {
-    return false;
-  }
-
-  try {
-    // Writes message and line feed at once
-    fmt::vprintln(file_, fmt, args);
-  } catch (const system_error&) {
-    return false;
-  }
-  return not bad();
-}
-
-bool
-FileSink::vprintln(fmt::text_style style, fmt::string_view fmt, fmt::format_args args) {
-  if (bad()) {
-    return false;
-  }
-
-  try {
-    fmt::vprintln(file_, style, fmt, args);
-  } catch (const system_error&) {
-    return false;
-  }
-  return not bad();
-}
-
-bool
-FileSink::vprintln(const locale& locale, fmt::string_view fmt, fmt::format_args args) {
-  if (bad()) {
-    return false;
-  }
-
-  // {fmt} cannot print to a `FILE*` with a locale
-  auto buf = formatToBuffer(locale, fmt, args);
-  buf.push_back('\n');
-  return fwrite(buf.data(), 1, buf.size(), file_) == buf.size();
-}
-
 u64
 FileSink::write(span<const u8> in) {
   if (bad()) {
@@ -421,7 +373,15 @@ SpanSink::write(span<const u8> in) {
 // `StreamSink` ---------------------------------------------------------------------------------------------
 
 StreamSink::StreamSink(ostream& os) :
-  os_(os) {}
+  ptr_(&os) {}
+
+StreamSink::StreamSink(const fs::path& path, bool append, bool binary) :
+  owned_(ofstream(path, (append ? ios::app : ios::trunc) | (binary ? ios::binary : ios::openmode {})))
+{
+  if (not owned_) {
+    throw InvalidState(fmt::format("Cannot open file `{}` for writing", path));
+  }
+}
 
 StreamSink::~StreamSink() {
   flush(); // NOLINT
@@ -434,7 +394,7 @@ StreamSink::flush() {
   }
 
   try {
-    os_.flush();
+    out().flush();
   } catch (const system_error&) {
     return false;
   }
@@ -443,10 +403,10 @@ StreamSink::flush() {
 
 i32
 StreamSink::handle() const {
-  if (&os_ == &cout) {
+  if (&out() == &cout) {
     return STDOUT_FILENO;
   }
-  if (&os_ == &cerr || &os_ == &clog) {
+  if (&out() == &cerr || &out() == &clog) {
     return STDERR_FILENO;
   }
   return -1;
@@ -454,7 +414,7 @@ StreamSink::handle() const {
 
 bool
 StreamSink::seekable() const {
-  return io::seekable(os_);
+  return io::seekable(const_cast<ostream&>(out()));
 }
 
 bool
@@ -464,11 +424,11 @@ StreamSink::vprint(fmt::string_view fmt, fmt::format_args args) {
   }
 
   try {
-    fmt::vprint(os_, fmt, args);
+    fmt::vprint(out(), fmt, args);
   } catch (const system_error&) {
     return false;
   }
-  return static_cast<bool>(os_);
+  return static_cast<bool>(out());
 }
 
 bool
@@ -479,7 +439,7 @@ StreamSink::vprint(fmt::text_style style, fmt::string_view fmt, fmt::format_args
 
   // {fmt} cannot print to a `std::ostream` with a text style
   const auto buf = formatToBuffer(style, fmt, args);
-  return writeToStream(os_, buf.data(), buf.size());
+  return writeToStream(out(), buf.data(), buf.size());
 }
 
 bool
@@ -490,42 +450,7 @@ StreamSink::vprint(const locale& locale, fmt::string_view fmt, fmt::format_args 
 
   // {fmt} cannot print to a `std::ostream` with a locale
   const auto buf = formatToBuffer(locale, fmt, args);
-  return writeToStream(os_, buf.data(), buf.size());
-}
-
-bool
-StreamSink::vprintln(fmt::string_view fmt, fmt::format_args args) {
-  if (bad()) {
-    return false;
-  }
-
-  // {fmt} cannot print a line to a `std::ostream` without formatting into a temporary string, so format
-  // message and line feed into a buffer and write both at once
-  auto buf = formatToBuffer(fmt, args);
-  buf.push_back('\n');
-  return writeToStream(os_, buf.data(), buf.size());
-}
-
-bool
-StreamSink::vprintln(fmt::text_style style, fmt::string_view fmt, fmt::format_args args) {
-  if (bad()) {
-    return false;
-  }
-
-  auto buf = formatToBuffer(style, fmt, args);
-  buf.push_back('\n');
-  return writeToStream(os_, buf.data(), buf.size());
-}
-
-bool
-StreamSink::vprintln(const locale& locale, fmt::string_view fmt, fmt::format_args args) {
-  if (bad()) {
-    return false;
-  }
-
-  auto buf = formatToBuffer(locale, fmt, args);
-  buf.push_back('\n');
-  return writeToStream(os_, buf.data(), buf.size());
+  return writeToStream(out(), buf.data(), buf.size());
 }
 
 u64
@@ -534,35 +459,32 @@ StreamSink::write(span<const u8> in) {
     return 0;
   }
 
-  return writeToStream(os_, reinterpret_cast<const char*>(in.data()), in.size()) ? in.size() : 0;
+  return writeToStream(out(), reinterpret_cast<const char*>(in.data()), in.size()) ? in.size() : 0;
 }
 
 // `StringSink` ---------------------------------------------------------------------------------------------
 
-StringSink::StringSink(string& ref) :
-  ptr_(&ref) {}
-
 bool
 StringSink::vprint(fmt::string_view fmt, fmt::format_args args) {
-  fmt::vformat_to(back_inserter(target()), fmt, args);
+  fmt::vformat_to(back_inserter(out()), fmt, args);
   return true;
 }
 
 bool
 StringSink::vprint(fmt::text_style style, fmt::string_view fmt, fmt::format_args args) {
-  fmt::vformat_to(back_inserter(target()), style, fmt, args);
+  fmt::vformat_to(back_inserter(out()), style, fmt, args);
   return true;
 }
 
 bool
 StringSink::vprint(const locale& locale, fmt::string_view fmt, fmt::format_args args) {
-  fmt::vformat_to(back_inserter(target()), fmt::locale_ref(locale), fmt, args);
+  fmt::vformat_to(back_inserter(out()), fmt::locale_ref(locale), fmt, args);
   return true;
 }
 
 u64
 StringSink::write(span<const u8> in) {
-  target().append(reinterpret_cast<const char*>(in.data()), in.size());
+  out().append(reinterpret_cast<const char*>(in.data()), in.size());
   return in.size();
 }
 
@@ -632,17 +554,13 @@ ContiguousSource::readln() {
 
   if (pos == NPOS) {
     seek(0, SeekMode::end);
-    string ret(str);
-    return ret;
+    return string(str);
   }
 
   seek(static_cast<i64>(pos + 1), SeekMode::cur);
   str = str.substr(0, pos);
-  if (not str.empty() && str.back() == '\r') {
-    str = str.substr(0, str.size() - 1);
-  }
-  string ret(str);
-  return ret;
+  removeTrailingCr(str);
+  return string(str);
 }
 
 scn::scan_expected<void>
@@ -676,8 +594,8 @@ FileSource::FileSource(FILE* file) :
   seekable_ = io::seekable(file_);
 }
 
-FileSource::FileSource(const filesystem::path& path) :
-  file_(io::open(path, "rb")),
+FileSource::FileSource(const fs::path& path, bool binary) :
+  file_(io::open(path, binary ? "rb" : "r")),
   closeOnDestroy_(true) {
   if (file_ == nullptr) {
     throw InvalidState(fmt::format("Cannot open file `{}` for reading", path));
@@ -855,11 +773,19 @@ SpanSource::seek(i64 offset, SeekMode mode) {
 // `StreamSource` -------------------------------------------------------------------------------------------
 
 StreamSource::StreamSource(std::istream& is) :
-  is_(is) {}
+  ptr_(&is) {}
+
+StreamSource::StreamSource(const fs::path& path, bool binary) :
+  owned_(ifstream(path, binary ? ios::binary : ios::openmode {}))
+{
+  if (not owned_) {
+    throw InvalidState(fmt::format("Cannot open file `{}` for reading", path));
+  }
+}
 
 i32
 StreamSource::handle() const {
-  if (&is_ == &cin) {
+  if (&in() == &cin) {
     return STDIN_FILENO;
   }
   return -1;
@@ -872,8 +798,8 @@ StreamSource::peek() {
   }
 
   // If the stream buffer throws, the MSVC STL's `peek` sets `badbit` but returns 0 instead of EOF
-  const auto c = is_.peek();
-  if (c == istream::traits_type::eof() || is_.bad()) {
+  const auto c = in().peek();
+  if (c == istream::traits_type::eof() || in().bad()) {
     return nullopt;
   }
   return istream::traits_type::to_char_type(c);
@@ -885,8 +811,8 @@ StreamSource::read(span<u8> out) {
     return 0;
   }
 
-  is_.read(reinterpret_cast<char*>(out.data()), static_cast<streamsize>(out.size()));
-  auto count = is_.gcount();
+  in().read(reinterpret_cast<char*>(out.data()), static_cast<streamsize>(out.size()));
+  auto count = in().gcount();
   return static_cast<u64>(count);
 }
 
@@ -897,15 +823,15 @@ StreamSource::readln() {
   }
 
   // `getline` does nothing while `failbit` is set, which a previous read may have left behind
-  is_.clear(is_.rdstate() & ~ios::failbit);
+  in().clear(in().rdstate() & ~ios::failbit);
 
   // `getline` fails if it extracts nothing, i.e., at the end of the input. Otherwise, it sets `eofbit` only
   // if it hit the end, so `eof()` tells whether the line had a line feed
   string ret;
-  if (not getline(is_, ret)) {
+  if (not getline(in(), ret)) {
     return nullopt;
   }
-  if (not is_.eof()) {
+  if (not in().eof()) {
     removeTrailingCr(ret);
   }
   return ret;
@@ -933,16 +859,16 @@ StreamSource::seek(i64 offset, SeekMode mode) { // NOLINT
   }
 
   // On Windows and macOS, seeking `cin` may report success for a pipe or a terminal, as with `io::tell`
-  if (&is_ == &cin && not io::seekable(stdin)) {
+  if (&in() == &cin && not io::seekable(stdin)) {
     return false;
   }
 
   // `seekg` does nothing while `failbit` is set, which a previous read may have left behind
-  is_.clear(is_.rdstate() & ~ios::failbit);
-  is_.seekg(static_cast<istream::off_type>(offset), dir);
-  if (is_.fail()) {
+  in().clear(in().rdstate() & ~ios::failbit);
+  in().seekg(static_cast<istream::off_type>(offset), dir);
+  if (in().fail()) {
     // The seek failed, e.g., on a stream that cannot seek. Clear `failbit` again, so the stream stays usable
-    is_.clear(is_.rdstate() & ~ios::failbit);
+    in().clear(in().rdstate() & ~ios::failbit);
     return false;
   }
   return true;
@@ -950,7 +876,7 @@ StreamSource::seek(i64 offset, SeekMode mode) { // NOLINT
 
 bool
 StreamSource::seekable() const {
-  return io::seekable(is_);
+  return io::seekable(const_cast<std::istream&>(in()));
 }
 
 optional<u64>
@@ -961,7 +887,7 @@ StreamSource::tell() {
 
   // `io::tell` asks the stream buffer and leaves the state of the stream alone, unlike `tellg`. A stream that
   // cannot seek, such as one over a pipe, has no position
-  const u64 ret = io::tell(is_);
+  const u64 ret = io::tell(in());
   return ret == NPOS ? nullopt : optional(ret);
 }
 
@@ -971,8 +897,8 @@ StreamSource::vscan(string_view fmt, scn::scan_args args) {
     return scn::unexpected(scn::scan_error(scn::scan_error::invalid_source_state, "`StreamSource` is bad"));
   }
 
-  // Scans directly from the stream buffer of `is_`, putting unread input back afterwards
-  return toVoid(scn::vscan(is_, fmt, args));
+  // Scans directly from the stream buffer of `in()`, putting unread input back afterwards
+  return toVoid(scn::vscan(in(), fmt, args));
 }
 
 scn::scan_expected<void>
@@ -981,7 +907,7 @@ StreamSource::vscan(const locale& locale, string_view fmt, scn::scan_args args) 
     return scn::unexpected(scn::scan_error(scn::scan_error::invalid_source_state, "`StreamSource` is bad"));
   }
 
-  return toVoid(scn::vscan(locale, is_, fmt, args));
+  return toVoid(scn::vscan(locale, in(), fmt, args));
 }
 
 // `StringSource` -------------------------------------------------------------------------------------------

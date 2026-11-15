@@ -33,7 +33,7 @@ namespace rocket::io {
 // Functions working with `FILE` pointers -------------------------------------------------------------------
 
 FILE*
-open(const filesystem::path& path, string_view modes) {
+open(const filesystem::path& path, std::string_view modes) {
 #ifdef ROCKET_OS_WINDOWS
   // `_wfsopen` takes the path as a wide string, so paths with characters outside the ANSI code page work.
   // `_SH_DENYNO` allows other processes to read and write the file, as on POSIX systems. (`fopen_s` would

@@ -349,12 +349,12 @@ Out::set(string_view val, const TimePoint& time) {
     zip_ = result.zip;
   } catch (const Exception& ex) {
     process().error(nio::err, 0,
-      "Cannot apply log-output pattern `{}`; logging to standard output instead: {}",
+      "Cannot apply log-output pattern `{}`; logging to stdout instead: {}",
       val, ex.message());
     reset();
     return;
   } catch (const exception&) {
-    process().error(nio::err, 0, "Cannot apply log-output pattern `{}`; logging to standard output instead", val);
+    process().error(nio::err, 0, "Cannot apply log-output pattern `{}`; logging to stdout instead", val);
     reset();
     return;
   }
@@ -363,7 +363,7 @@ Out::set(string_view val, const TimePoint& time) {
     try {
       fileOut_ = make_unique<nio::FileSink>(path, true); // Append to the file
     } catch (const exception&) {
-      process().error(nio::err, 0, "Cannot open log file `{}`; logging to standard output instead", path);
+      process().error(nio::err, 0, "Cannot open log file `{}`; logging to stdout instead", path);
       reset();
       return;
     }

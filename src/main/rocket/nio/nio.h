@@ -12,20 +12,20 @@
 #include <fmt/color.h> // `fmt::text_style`
 
 #include <filesystem>
+#include <fstream>
 #include <iosfwd>
 #include <optional>
 #include <span>
 #include <string>
+#include <string_view>
 #include <vector>
 
 namespace rocket::nio {
 
 // Constants ------------------------------------------------------------------------------------------------
 
-/**
- * The default buffer size in bytes.
- */
-static constexpr u64 DEFAULT_BUFFER_SIZE = 64 * 1'024; // 64 KiB
+/// The default buffer size in bytes.
+constexpr u64 DEFAULT_BUFFER_SIZE = 16 * 1'024; // 16 KiB
 
 // `Device` -------------------------------------------------------------------------------------------------
 
@@ -155,7 +155,7 @@ struct Sink : Device {
   template<typename... T>
   bool
   println(fmt::format_string<T...> fmt, T&&... args) {
-    return vprintln(fmt.get(), fmt::make_format_args(args...));
+    return vprint(fmt.get(), fmt::make_format_args(args...)) && write('\n') == 1;
   }
 
   /**
@@ -169,7 +169,7 @@ struct Sink : Device {
   template<typename... T>
   bool
   println(fmt::text_style style, fmt::format_string<T...> fmt, T&&... args) {
-    return vprintln(style, fmt.get(), fmt::make_format_args(args...));
+    return vprint(style, fmt.get(), fmt::make_format_args(args...)) && write('\n') == 1;
   }
 
   /**
@@ -183,75 +183,8 @@ struct Sink : Device {
   template<typename... T>
   bool
   println(const std::locale& locale, fmt::format_string<T...> fmt, T&&... args) {
-    return vprintln(locale, fmt.get(), fmt::make_format_args(args...));
+    return vprint(locale, fmt.get(), fmt::make_format_args(args...)) && write('\n') == 1;
   }
-
-  /**
-   * Prints a formatted message to the sink. This is the type-erased backend of #print.
-   *
-   * @param fmt the format string
-   * @param args the arguments
-   * @return if the operation succeeded
-   */
-  virtual bool vprint(fmt::string_view fmt, fmt::format_args args) = 0;
-
-  /**
-   * Prints a formatted message to the sink. This is the type-erased backend of #print.
-   *
-   * @param style the style to use
-   * @param fmt the format string
-   * @param args the arguments
-   * @return if the operation succeeded
-   */
-  virtual bool vprint(fmt::text_style style, fmt::string_view fmt, fmt::format_args args) = 0;
-
-  /**
-   * Prints a formatted message to the sink. This is the type-erased backend of #print.
-   *
-   * @param locale the locale
-   * @param fmt the format string
-   * @param args the arguments
-   * @return if the operation succeeded
-   */
-  virtual bool vprint(const std::locale& locale, fmt::string_view fmt, fmt::format_args args) = 0;
-
-  /**
-   * Prints a formatted message and a line feed to the sink. This is the type-erased backend of #println.
-   *
-   * The default implementation calls #vprint and writes a line feed. Sinks that can print both at once
-   * override this.
-   *
-   * @param fmt the format string
-   * @param args the arguments
-   * @return if the operation succeeded
-   */
-  virtual bool vprintln(fmt::string_view fmt, fmt::format_args args);
-
-  /**
-   * Prints a formatted message and a line feed to the sink. This is the type-erased backend of #println.
-   *
-   * The default implementation calls #vprint and writes a line feed. Sinks that can print both at once
-   * override this.
-   *
-   * @param style the style to use
-   * @param fmt the format string
-   * @param args the arguments
-   * @return if the operation succeeded
-   */
-  virtual bool vprintln(fmt::text_style style, fmt::string_view fmt, fmt::format_args args);
-
-  /**
-   * Prints a formatted message and a line feed to the sink. This is the type-erased backend of #println.
-   *
-   * The default implementation calls #vprint and writes a line feed. Sinks that can print both at once
-   * override this.
-   *
-   * @param locale the locale
-   * @param fmt the format string
-   * @param args the arguments
-   * @return if the operation succeeded
-   */
-  virtual bool vprintln(const std::locale& locale, fmt::string_view fmt, fmt::format_args args);
 
   /**
    * Writes a single character to the sink.
@@ -339,7 +272,36 @@ struct Sink : Device {
 protected:
 
   /// @ctor
-  Sink() = default;
+  Sink() {}
+
+  /**
+   * Prints a formatted message to the sink. This is the type-erased backend of #print.
+   *
+   * @param fmt the format string
+   * @param args the arguments
+   * @return if the operation succeeded
+   */
+  virtual bool vprint(fmt::string_view fmt, fmt::format_args args) = 0;
+
+  /**
+   * Prints a formatted message to the sink. This is the type-erased backend of #print.
+   *
+   * @param style the style to use
+   * @param fmt the format string
+   * @param args the arguments
+   * @return if the operation succeeded
+   */
+  virtual bool vprint(fmt::text_style style, fmt::string_view fmt, fmt::format_args args) = 0;
+
+  /**
+   * Prints a formatted message to the sink. This is the type-erased backend of #print.
+   *
+   * @param locale the locale
+   * @param fmt the format string
+   * @param args the arguments
+   * @return if the operation succeeded
+   */
+  virtual bool vprint(const std::locale& locale, fmt::string_view fmt, fmt::format_args args) = 0;
 };
 
 // `FileSink` -----------------------------------------------------------------------------------------------
@@ -367,9 +329,10 @@ struct FileSink : Sink {
    *
    * @param path a path to a file
    * @param append whether to append to the file instead of overwriting it
+   * @param binary whether to open the file in binary or text mode
    * @throw InvalidState if the file cannot be opened
    */
-  explicit FileSink(const std::filesystem::path& path, bool append = false);
+  explicit FileSink(const std::filesystem::path& path, bool append = false, bool binary = true);
 
   ~FileSink() override;
 
@@ -389,21 +352,17 @@ struct FileSink : Sink {
 
   [[nodiscard]] bool seekable() const override { return seekable_; }
 
+  using Sink::write;
+
+  u64 write(std::span<const u8> in) override;
+
+protected:
+
   bool vprint(fmt::string_view fmt, fmt::format_args args) override;
 
   bool vprint(fmt::text_style style, fmt::string_view fmt, fmt::format_args args) override;
 
   bool vprint(const std::locale& locale, fmt::string_view fmt, fmt::format_args args) override;
-
-  bool vprintln(fmt::string_view fmt, fmt::format_args args) override;
-
-  bool vprintln(fmt::text_style style, fmt::string_view fmt, fmt::format_args args) override;
-
-  bool vprintln(const std::locale& locale, fmt::string_view fmt, fmt::format_args args) override;
-
-  using Sink::write;
-
-  u64 write(std::span<const u8> in) override;
 
 ROCKET_TEST_PRIVATE:
 
@@ -434,21 +393,17 @@ struct NullSink : Sink {
 
   [[nodiscard]] bool seekable() const override { return false; }
 
+  using Sink::write;
+
+  u64 write(std::span<const u8> in) override { return in.size(); }
+
+protected:
+
   bool vprint(fmt::string_view, fmt::format_args) override { return true; }
 
   bool vprint(fmt::text_style, fmt::string_view, fmt::format_args) override { return true; }
 
   bool vprint(const std::locale&, fmt::string_view, fmt::format_args) override { return true; }
-
-  bool vprintln(fmt::string_view, fmt::format_args) override { return true; }
-
-  bool vprintln(fmt::text_style, fmt::string_view, fmt::format_args) override { return true; }
-
-  bool vprintln(const std::locale&, fmt::string_view, fmt::format_args) override { return true; }
-
-  using Sink::write;
-
-  u64 write(std::span<const u8> in) override { return in.size(); }
 };
 
 // `SpanSink` -----------------------------------------------------------------------------------------------
@@ -475,16 +430,17 @@ struct SpanSink : Sink {
   [[nodiscard]] i32 handle() const override { return -1; }
 
   [[nodiscard]] bool seekable() const override { return false; }
+  using Sink::write;
+
+  u64 write(std::span<const u8> in) override;
+
+protected:
 
   bool vprint(fmt::string_view fmt, fmt::format_args args) override;
 
   bool vprint(fmt::text_style style, fmt::string_view fmt, fmt::format_args args) override;
 
   bool vprint(const std::locale& locale, fmt::string_view fmt, fmt::format_args args) override;
-
-  using Sink::write;
-
-  u64 write(std::span<const u8> in) override;
 
 private:
 
@@ -505,17 +461,53 @@ struct StreamSink : Sink {
    */
   explicit StreamSink(std::ostream& os);
 
+  /**
+   * @ctor
+   *
+   * Opens a file at path @p path for writing. The file is closed on destruction.
+   *
+   * @param path a path to a file
+   * @param append whether to append to the file instead of overwriting it
+   * @param binary whether to open the file in binary or text mode
+   * @throw InvalidState if the file cannot be opened
+   */
+  explicit StreamSink(const std::filesystem::path& path, bool append = false, bool binary = true);
+
   ~StreamSink() override;
 
-  [[nodiscard]] bool bad() const override { return os_.bad(); }
+  [[nodiscard]] bool bad() const override { return out().bad(); }
 
-  [[nodiscard]] bool eof() const override { return os_.eof(); }
+  [[nodiscard]] bool eof() const override { return out().eof(); }
 
   bool flush() override;
 
   [[nodiscard]] i32 handle() const override;
 
+  /**
+   * Returns a reference to the stream to write to (either referenced or owned).
+   *
+   * @return the output stream
+   */
+  [[nodiscard]] std::ostream& out() {
+    return ptr_ != nullptr ? *ptr_ : static_cast<std::ostream&>(owned_);
+  }
+
+  /**
+   * Returns a reference to the stream to write to (either referenced or owned).
+   *
+   * @return the output stream
+   */
+  [[nodiscard]] const std::ostream& out() const {
+    return ptr_ != nullptr ? *ptr_ : static_cast<const std::ostream&>(owned_);
+  }
+
   [[nodiscard]] bool seekable() const override;
+
+  using Sink::write;
+
+  u64 write(std::span<const u8> in) override;
+
+protected:
 
   bool vprint(fmt::string_view fmt, fmt::format_args args) override;
 
@@ -523,19 +515,10 @@ struct StreamSink : Sink {
 
   bool vprint(const std::locale& locale, fmt::string_view fmt, fmt::format_args args) override;
 
-  bool vprintln(fmt::string_view fmt, fmt::format_args args) override;
-
-  bool vprintln(fmt::text_style style, fmt::string_view fmt, fmt::format_args args) override;
-
-  bool vprintln(const std::locale& locale, fmt::string_view fmt, fmt::format_args args) override;
-
-  using Sink::write;
-
-  u64 write(std::span<const u8> in) override;
-
 private:
 
-  std::ostream& os_;
+  std::ostream* ptr_ = nullptr;
+  std::ofstream owned_;
 };
 
 // `StringSink` ---------------------------------------------------------------------------------------------
@@ -557,7 +540,7 @@ struct StringSink : Sink {
    *
    * @param ref the string to write to. The reference must remain valid for the lifetime of the #StringSink
    */
-  explicit StringSink(std::string& ref);
+  explicit StringSink(std::string& ref) : ptr_(&ref) {}
 
   ~StringSink() override = default;
 
@@ -576,7 +559,13 @@ struct StringSink : Sink {
    *
    * @return the referenced or the owned string
    */
-  [[nodiscard]] const std::string& str() const { return ptr_ != nullptr ? *ptr_ : owned_; }
+  [[nodiscard]] const std::string& str() const { return out(); }
+
+  using Sink::write;
+
+  u64 write(std::span<const u8> in) override;
+
+protected:
 
   bool vprint(fmt::string_view fmt, fmt::format_args args) override;
 
@@ -584,14 +573,11 @@ struct StringSink : Sink {
 
   bool vprint(const std::locale& locale, fmt::string_view fmt, fmt::format_args args) override;
 
-  using Sink::write;
-
-  u64 write(std::span<const u8> in) override;
-
 private:
 
-  /// Returns the string to write to (either referenced or owned).
-  std::string& target() { return ptr_ != nullptr ? *ptr_ : owned_; }
+  [[nodiscard]] std::string& out() { return ptr_ != nullptr ? *ptr_ : owned_; }
+
+  [[nodiscard]] const std::string& out() const { return ptr_ != nullptr ? *ptr_ : owned_; }
 
   std::string* ptr_ = nullptr;
   std::string owned_;
@@ -756,6 +742,8 @@ struct Source : Device {
    */
   [[nodiscard]] virtual std::optional<u64> tell() = 0;
 
+protected:
+
   /**
    * Scans values from the source. This is the type-erased backend of #scan.
    *
@@ -776,8 +764,6 @@ struct Source : Device {
    */
   virtual scn::scan_expected<void> vscan(
     const std::locale& locale, std::string_view fmt, scn::scan_args args) = 0;
-
-protected:
 
   /// @ctor_default
   Source() = default;
@@ -818,12 +804,6 @@ struct ContiguousSource : Source {
 
   [[nodiscard]] std::optional<u64> tell() final { return position(); }
 
-  scn::scan_expected<void> vscan(
-    std::string_view fmt, scn::scan_args args) override;
-
-  scn::scan_expected<void> vscan(
-    const std::locale& locale, std::string_view fmt, scn::scan_args args) override;
-
   /**
    * Returns the string available in the contiguous source.
    *
@@ -832,6 +812,12 @@ struct ContiguousSource : Source {
   [[nodiscard]] virtual std::string_view str() const = 0;
 
 protected:
+
+  scn::scan_expected<void> vscan(
+    std::string_view fmt, scn::scan_args args) override;
+
+  scn::scan_expected<void> vscan(
+    const std::locale& locale, std::string_view fmt, scn::scan_args args) override;
 
   /// @ctor_default
   ContiguousSource() = default;
@@ -861,9 +847,10 @@ struct FileSource : Source {
    * Opens a file at path @p path for reading. The file is closed on destruction.
    *
    * @param path a path to a file
+   * @param binary whether to open the file in binary or text mode
    * @throw InvalidState if the file cannot be opened
    */
-  explicit FileSource(const std::filesystem::path& path);
+  explicit FileSource(const std::filesystem::path& path, bool binary = true);
 
   ~FileSource() override;
 
@@ -888,6 +875,8 @@ struct FileSource : Source {
   [[nodiscard]] bool seekable() const override { return seekable_; }
 
   [[nodiscard]] std::optional<u64> tell() override;
+
+protected:
 
   scn::scan_expected<void> vscan(
     std::string_view fmt, scn::scan_args args) override;
@@ -936,6 +925,8 @@ struct NullSource : Source {
   [[nodiscard]] bool seekable() const override { return true; }
 
   [[nodiscard]] std::optional<u64> tell() override { return 0; }
+
+protected:
 
   scn::scan_expected<void> vscan(
     std::string_view fmt, scn::scan_args args) override;
@@ -1016,11 +1007,37 @@ struct StreamSource : Source {
    */
   explicit StreamSource(std::istream& is);
 
-  [[nodiscard]] bool bad() const override { return is_.bad(); }
+  /**
+   * @ctor
+   *
+   * @param path a path to a file
+   * @param binary whether to open the file in binary or text mode
+   */
+  explicit StreamSource(const std::filesystem::path& path, bool binary = true);
 
-  [[nodiscard]] bool eof() const override { return is_.eof(); }
+  [[nodiscard]] bool bad() const override { return in().bad(); }
+
+  [[nodiscard]] bool eof() const override { return in().eof(); }
 
   [[nodiscard]] i32 handle() const override;
+
+  /**
+   * Returns a reference to the input stream (either referenced or owned).
+   *
+   * @return the input stream
+   */
+  [[nodiscard]] std::istream& in() {
+    return ptr_ != nullptr ? *ptr_ : static_cast<std::istream&>(owned_);
+  }
+
+  /**
+   * Returns a reference to the input stream (either referenced or owned).
+   *
+   * @return the input stream
+   */
+  [[nodiscard]] const std::istream& in() const {
+    return ptr_ != nullptr ? *ptr_ : static_cast<const std::istream&>(owned_);
+  }
 
   std::optional<char> peek() override;
 
@@ -1038,6 +1055,8 @@ struct StreamSource : Source {
 
   [[nodiscard]] std::optional<u64> tell() override;
 
+protected:
+
   scn::scan_expected<void> vscan(
     std::string_view fmt, scn::scan_args args) override;
 
@@ -1046,7 +1065,8 @@ struct StreamSource : Source {
 
 private:
 
-  std::istream& is_;
+  std::istream* ptr_ = nullptr;
+  std::ifstream owned_;
 };
 
 // `StringSource` -------------------------------------------------------------------------------------------
@@ -1110,11 +1130,11 @@ private:
 
 // Variables ------------------------------------------------------------------------------------------------
 
-/// The standard input source.
+/// The source connected to stdin.
 ROCKET_PUBLIC extern Source& in; // NOLINT
-/// The standard output sink.
+/// The sink connected to stdout.
 ROCKET_PUBLIC extern Sink& out; // NOLINT
-/// The standard error sink.
+/// The sink connected to stderr.
 ROCKET_PUBLIC extern Sink& err; // NOLINT
 
 } // namespace rocket::nio

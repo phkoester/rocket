@@ -30,10 +30,10 @@ void setImpl(std::string_view name, const std::optional<std::string>& val, bool 
 // Constants ------------------------------------------------------------------------------------------------
 
 /// The POSIX new-line byte sequence.
-constexpr const char* NL_POSIX = "\n";
+constexpr std::string_view NL_POSIX = "\n";
 
 /// The Windows new-line byte sequence.
-constexpr const char* NL_WINDOWS = "\r\n";
+constexpr std::string_view NL_WINDOWS = "\r\n";
 
 #ifdef ROCKET_OS_WINDOWS
 
@@ -43,7 +43,7 @@ constexpr char FS = '\\';
 constexpr char PS = ';';
 
 /// The system-dependent new-line byte sequence.
-constexpr const char* NL = NL_WINDOWS;
+constexpr std::string_view NL = NL_WINDOWS;
 
 #else
 
@@ -53,7 +53,7 @@ constexpr char FS = '/';
 constexpr char PS = ':';
 
 /// The system-dependent new-line byte sequence.
-constexpr const char* NL = NL_POSIX;
+constexpr std::string_view NL = NL_POSIX;
 
 #endif // ROCKET_OS_WINDOWS
 

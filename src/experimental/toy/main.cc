@@ -13,6 +13,7 @@
 #include "rocket/system/system.h"
 #include "rocket/system/terminal/terminal.h"
 
+#include <iostream>
 #include <string>
 
 using namespace rocket;
@@ -77,6 +78,9 @@ myTerminate() {
 
 void
 toy() {
+  i128 v = 5;
+  cout << "VAL: " << v << endl;
+
   ROCKET_SCOPE_EXIT([] { nio::out.println("Hello from ROCKET_SCOPE_EXIT"); });
 
   nio::out.println("Hello from toy");

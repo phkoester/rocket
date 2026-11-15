@@ -11,10 +11,8 @@
 #include <cstdio>
 #include <filesystem>
 #include <sstream>
-#include <stdexcept>
 #include <string>
 #include <string_view>
-#include <utility>
 
 #ifdef ROCKET_OS_WINDOWS
 
@@ -23,15 +21,9 @@
 #define ROCKET_FILENO _fileno ///< Macro for portability.
 #define ROCKET_ISATTY _isatty ///< Macro for portability.
 
-#ifndef STDIN_FILENO
-  #define STDIN_FILENO  0 ///< Standard input file number.
-#endif
-#ifndef STDOUT_FILENO
-  #define STDOUT_FILENO 1 ///< Standard output file number.
-#endif
-#ifndef STDERR_FILENO
-  #define STDERR_FILENO 2 ///< Standard error file number.
-#endif
+#define STDIN_FILENO  0 ///< stdin file number.
+#define STDOUT_FILENO 1 ///< stdout file number.
+#define STDERR_FILENO 2 ///< stderr file number.
 
 #else
 
