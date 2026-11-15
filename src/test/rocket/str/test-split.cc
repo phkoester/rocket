@@ -10,7 +10,7 @@ using namespace rocket::str;
 
 // Tests ====================================================================================================
 
-TEST(str, split) { // NOLINT(*-complexity)
+TEST(split, split) { // NOLINT(*-complexity)
   int n = 0;
   for (const auto token : split<char>("", ",")) {
     static_assert(same_as<decltype(token), const string_view>);
@@ -58,7 +58,7 @@ TEST(str, split) { // NOLINT(*-complexity)
   EXPECT_EQ(n, 7);
 }
 
-TEST(str, splitEmptySep) {
+TEST(split, splitEmptySep) {
   const auto throwsEmptySep =
     ThrowsMessage<InvalidArgument>(EndsWith("Parameter `sep`: Check `not sep.empty()` failed"));
 
@@ -71,7 +71,7 @@ TEST(str, splitEmptySep) {
   EXPECT_THAT([] { static_cast<void>(split<char32>(U"abc", U"").begin()); }, throwsEmptySep);
 }
 
-TEST(str, splitPosOutOfBounds) {
+TEST(split, splitPosOutOfBounds) {
   const auto throwsOutOfBounds =
     ThrowsMessage<InvalidArgument>(
       EndsWith("Parameter `pos`: Check `pos == NPOS || pos <= str.size()` failed"));

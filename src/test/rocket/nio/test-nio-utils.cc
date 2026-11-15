@@ -20,9 +20,6 @@ namespace {
 
 // Local constants ------------------------------------------------------------------------------------------
 
-/// The message of the #rocket::io::IoError thrown on an I/O error.
-constexpr string_view CANNOT_READ = "Cannot read from the source";
-
 /// The message of the #rocket::InvalidState thrown when a source that cannot seek would have to go back.
 constexpr string_view CANNOT_GO_BACK = "Cannot go back in a source that cannot report its position";
 
@@ -52,7 +49,46 @@ forEachSource(string_view input, Fn fn) {
   }
 }
 
+/// Returns a matcher for the #rocket::io::IoError thrown when a #rocket::nio::testing::FailingSource fails.
+auto
+throwsIoError() {
+  return Throws<io::IoError>(Property(&io::IoError::code, Eq(make_error_code(errc::io_error))));
+}
+
 // Local test functions -------------------------------------------------------------------------------------
+
+void
+expectCharacter(Source& in, string_view expected, u64 expectedTell) {
+  const auto result = readCharacter(in);
+  ASSERT_TRUE(result.has_value());
+  EXPECT_EQ(static_cast<string>(*result), expected);
+  EXPECT_EQ(in.tell(), expectedTell);
+}
+
+void
+expectCodePoint(Source& in, char32 expected, u64 expectedTell) {
+  const auto result = readCodePoint(in);
+  ASSERT_TRUE(result.has_value());
+  EXPECT_EQ(static_cast<char32>(*result), expected);
+  EXPECT_EQ(in.tell(), expectedTell);
+}
+
+/// Expects reading a code point from @p in, which is at position 0, to fail for invalid UTF-8.
+void
+expectInvalidUtf8(Source& in) {
+  EXPECT_THAT([&] { (void) readCodePoint(in); }, throwsInputFailure(0, EndsWith("Invalid UTF-8")));
+}
+
+void
+expectNoCodePoint(Source& in) {
+  EXPECT_EQ(readCodePoint(in), nullopt);
+}
+
+/// Expects the remaining input of @p in to equal @p expected. Consumes the remaining input.
+void
+expectRest(Source& in, string_view expected) {
+  EXPECT_EQ(in.readString(), expected);
+}
 
 /// Tests `readChoice`. On failure, the source must not be advanced, so @p expectedTell defaults to 0.
 void
@@ -110,6 +146,62 @@ TEST(nioUtils, readChar) {
     EXPECT_TRUE(readChar(in, 'b'));
     EXPECT_EQ(in.tell(), 2);
     EXPECT_FALSE(readChar(in, 'b')); // EOF
+  });
+}
+
+TEST(nioUtils, readCharacter) {
+  forEachSource("ab", [](Source& in) {
+    expectCharacter(in, "a", 1);
+    expectCharacter(in, "b", 2);
+    EXPECT_EQ(readCharacter(in), nullopt); // End of input
+  });
+
+  // A combining mark continues the character
+  forEachSource("a\u0301b", [](Source& in) {
+    expectCharacter(in, "a\u0301", 3);
+    expectCharacter(in, "b", 4);
+  });
+
+  // CR LF is a single character, although both code points are ASCII
+  forEachSource("\r\nx", [](Source& in) {
+    expectCharacter(in, "\r\n", 2);
+    expectCharacter(in, "x", 3);
+  });
+
+  // Man, ZWJ, woman, ZWJ, boy
+  forEachSource("\U0001F468\u200D\U0001F469\u200D\U0001F466x", [](Source& in) {
+    expectCharacter(in, "\U0001F468\u200D\U0001F469\u200D\U0001F466", 18);
+    expectCharacter(in, "x", 19);
+  });
+
+  // Two flags, each made of two regional indicators
+  forEachSource("\U0001F1E9\U0001F1EA\U0001F1EB\U0001F1F7", [](Source& in) {
+    expectCharacter(in, "\U0001F1E9\U0001F1EA", 8);
+    expectCharacter(in, "\U0001F1EB\U0001F1F7", 16);
+  });
+
+  // A non-ASCII code point that does not continue the character is gone back over
+  forEachSource("äö", [](Source& in) {
+    expectCharacter(in, "ä", 2);
+    expectCharacter(in, "ö", 4);
+  });
+}
+
+TEST(nioUtils, readCharacterInvalidUtf8) {
+  // At the start of the character, invalid UTF-8 throws, and the source is not advanced
+  forEachSource("\xFF" "a", [](Source& in) {
+    EXPECT_THAT([&] { (void) readCharacter(in); }, throwsInputFailure(0, EndsWith("Invalid UTF-8")));
+    expectRest(in, "\xFF" "a");
+  });
+
+  // After the first code point, invalid UTF-8 ends the character, and stays in the source
+  forEachSource("a\xFF", [](Source& in) {
+    expectCharacter(in, "a", 1);
+    expectRest(in, "\xFF");
+  });
+  forEachSource("a\xC3", [](Source& in) { // Truncated
+    expectCharacter(in, "a", 1);
+    expectRest(in, "\xC3");
   });
 }
 
@@ -207,6 +299,60 @@ TEST(nioUtils, readChoiceNoMatch) {
   testReadChoice("", { "true" }, false, true, nullopt);
   testReadChoice("tru", { "true" }, false, true, nullopt);
   testReadChoice("false", { "true" }, false, true, nullopt);
+}
+
+TEST(nioUtils, readCodePointValid) {
+  // One, two, three, and four UTF-8 bytes
+  forEachSource("aä€\U0001F971", [](Source& in) {
+    expectCodePoint(in, U'a', 1);
+    expectCodePoint(in, U'ä', 3);
+    expectCodePoint(in, U'€', 6);
+    expectCodePoint(in, U'\U0001F971', 10);
+  });
+}
+
+TEST(nioUtils, readCodePointEof) {
+  forEachSource("", [](Source& in) {
+    expectNoCodePoint(in);
+    EXPECT_TRUE(in.eof());
+  });
+
+  forEachSource("a", [](Source& in) {
+    expectCodePoint(in, U'a', 1);
+    expectNoCodePoint(in);
+    EXPECT_TRUE(in.eof());
+    expectNoCodePoint(in); // Still at the end
+  });
+}
+
+// On invalid UTF-8, the source is not advanced. All of these sources can seek
+
+TEST(nioUtils, readCodePointInvalidLeadByte) {
+  for (const string_view input : { "\xFFx"sv, "\x80x"sv, "\xC0\x80x"sv }) {
+    forEachSource(input, [input](Source& in) {
+      expectInvalidUtf8(in);
+      expectRest(in, input);
+    });
+  }
+}
+
+TEST(nioUtils, readCodePointTruncatedSequence) {
+  for (const string_view input : { "\xC3"sv, "\xE2\x82"sv, "\xF0\x9F\x98"sv }) {
+    forEachSource(input, [input](Source& in) {
+      expectInvalidUtf8(in);
+      expectRest(in, input);
+    });
+  }
+}
+
+TEST(nioUtils, readCodePointInvalidContinuation) {
+  // Last: surrogate
+  for (const string_view input : { "\xC3" "Ax"sv, "\xE2\x82" "Ax"sv, "\xED\xA0\x80x"sv }) {
+    forEachSource(input, [input](Source& in) {
+      expectInvalidUtf8(in);
+      expectRest(in, input);
+    });
+  }
 }
 
 TEST(nioUtils, readIdentifier) {
@@ -464,7 +610,7 @@ TEST(nioUtils, skipCCommentsUnterminated) {
   });
 }
 
-// `rocket::io::IoError` ------------------------------------------------------------------------------------
+// `rocket::io::IoError` ....................................................................................
 
 TEST(nioUtils, ioErrors) {
   // Each function reads the given input, and then the device fails
@@ -487,7 +633,7 @@ TEST(nioUtils, ioErrors) {
   for (u64 i = 0; i < cases.size(); ++i) {
     SCOPED_TRACE(fmt::format("case {}", i));
     FailingSource src(cases[i].first);
-    EXPECT_THAT([&] { cases[i].second(src.in); }, ThrowsMessage<io::IoError>(EndsWith(CANNOT_READ)));
+    EXPECT_THAT([&] { cases[i].second(src.in); }, throwsIoError());
     EXPECT_TRUE(src.in.bad());
   }
 }
@@ -495,7 +641,7 @@ TEST(nioUtils, ioErrors) {
 TEST(nioUtils, readCharacterIoError) {
   // The first code point is read, then the device fails while checking whether the character goes on
   FailingSource src("a");
-  EXPECT_THAT([&] { (void) readCharacter(src.in); }, ThrowsMessage<io::IoError>(EndsWith(CANNOT_READ)));
+  EXPECT_THAT([&] { (void) readCharacter(src.in); }, throwsIoError());
   EXPECT_TRUE(src.in.bad());
 }
 
@@ -503,18 +649,18 @@ TEST(nioUtils, readCodePointIoError) {
   {
     // The device fails before the first byte
     FailingSource src("");
-    EXPECT_THAT([&] { (void) readCodePoint(src.in); }, ThrowsMessage<io::IoError>(EndsWith(CANNOT_READ)));
+    EXPECT_THAT([&] { (void) readCodePoint(src.in); }, throwsIoError());
     EXPECT_TRUE(src.in.bad());
   }
   {
     // The device fails in the middle of a sequence of several bytes
     FailingSource src("\xC3");
-    EXPECT_THAT([&] { (void) readCodePoint(src.in); }, ThrowsMessage<io::IoError>(EndsWith(CANNOT_READ)));
+    EXPECT_THAT([&] { (void) readCodePoint(src.in); }, throwsIoError());
     EXPECT_TRUE(src.in.bad());
   }
 }
 
-// Failing seeks --------------------------------------------------------------------------------------------
+// Failing seeks ............................................................................................
 
 TEST(nioUtils, goingBackFailsIfSeekFails) {
   // The source reports its position, so going back is attempted, but the seek fails. This must not pass as a
@@ -529,7 +675,7 @@ TEST(nioUtils, goingBackFailsIfSeekFails) {
     ThrowsMessage<InvalidState>(EndsWith("Cannot go back to position 0 in the source")));
 }
 
-// Nonseekable sources --------------------------------------------------------------------------------------
+// Nonseekable sources ......................................................................................
 
 // A source that cannot seek cannot go back either. Functions that must go back throw `InvalidState`, and the
 // input read up to that point is lost. These tests pin down that behavior.

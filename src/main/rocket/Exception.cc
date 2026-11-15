@@ -182,7 +182,7 @@ InvalidArgument::InvalidArgument(
   const optional<source_location>& sl,
   const optional<stacktrace>& st) :
   Exception(fmt::format("Parameter `{}`: {}", name, msg), sl, st),
-  Base(str::message::withSourceLocation(Exception::message(), Exception::sourceLocation())) {}
+  invalid_argument(str::message::withSourceLocation(Exception::message(), Exception::sourceLocation())) {}
 
 // `InvalidState` -------------------------------------------------------------------------------------------
 
@@ -191,7 +191,7 @@ InvalidState::InvalidState(
   const optional<source_location>& sl,
   const optional<stacktrace>& st) :
   Exception(msg, sl, st),
-  Base(str::message::withSourceLocation(Exception::message(), Exception::sourceLocation())) {}
+  runtime_error(str::message::withSourceLocation(Exception::message(), Exception::sourceLocation())) {}
 
 // `Overflow` -----------------------------------------------------------------------------------------------
 
@@ -201,7 +201,7 @@ Overflow::Overflow(
   const optional<source_location>& sl,
   const optional<stacktrace>& st) :
   Exception(str::message::overflow(type, msg), sl, st),
-  Base(str::message::withSourceLocation(Exception::message(), Exception::sourceLocation())) {}
+  overflow_error(str::message::withSourceLocation(Exception::message(), Exception::sourceLocation())) {}
 
 // `Underflow` ----------------------------------------------------------------------------------------------
 
@@ -211,7 +211,7 @@ Underflow::Underflow(
   const optional<source_location>& sl,
   const optional<stacktrace>& st) :
   Exception(str::message::underflow(type, msg), sl, st),
-  Base(str::message::withSourceLocation(Exception::message(), Exception::sourceLocation())) {}
+  underflow_error(str::message::withSourceLocation(Exception::message(), Exception::sourceLocation())) {}
 
 // Functions ------------------------------------------------------------------------------------------------
 

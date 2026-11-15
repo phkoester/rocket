@@ -37,7 +37,9 @@ TEST(Subformat, charWithTagged) {
     nio::StringSink buf;
     buf.print("{}:{}{}", ROCKET_SRC_FILE, __LINE__, Subformat<char>([&] {
       if (n == 1) {
-        auto params = Subformat<char>::params(": First case: The {0} is `@@`{1} Again, the {0} is `@@`{1} But here comes another one: `⊕`{1}", "command line", ".");
+        auto params = Subformat<char>::params(
+          ": First case: The {0} is `@@`{1} Again, the {0} is `@@`{1} But here comes another one: `⊕`{1}",
+          "command line", ".");
         params.tag("@@", "grep {} {} {}", "-i", "foo", "bar");
         params.tag("⊕", "{} -l", "ls");
         return params;
@@ -51,7 +53,8 @@ TEST(Subformat, charWithTagged) {
 
   EXPECT_THAT(
     lambda(1),
-    matchesRegex(".*\\.cc:\\d+: First case: The command line is `grep -i foo bar`\\. Again, the command line is `grep -i foo bar`\\. But here comes another one: `ls -l`\\."));
+    matchesRegex(".*\\.cc:\\d+: First case: The command line is `grep -i foo bar`\\. "
+      "Again, the command line is `grep -i foo bar`\\. But here comes another one: `ls -l`\\."));
   EXPECT_THAT(
     lambda(2),
     matchesRegex(".*\\.cc:\\d+: Second case: This sentence doesn’t mean much\\."));

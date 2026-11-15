@@ -55,6 +55,18 @@ struct Device {
   [[nodiscard]] virtual bool bad() const = 0;
 
   /**
+   * Returns the error code of the device: the I/O error that made the device #bad.
+   *
+   * The code is set when an operation makes the device bad, or at construction if the device is bad already.
+   * It stays set while the device is bad. #rocket::nio::Source#seek restores a bad source, which clears the
+   * code. A device that is not bad, and was not made bad by some other user of the underlying device, has an
+   * empty code.
+   *
+   * @return the error code of the device
+   */
+  [[nodiscard]] const std::error_code& code() const { return ec_; }
+
+  /**
    * Checks if the device is exhausted: a source has reached the end of its input, a sink has no room for
    * more output. Repositioning may clear this state.
    *
@@ -84,6 +96,8 @@ struct Device {
   [[nodiscard]] virtual bool seekable() const = 0;
 
 protected:
+
+  std::error_code ec_; ///< The error code of the device, see #code.
 
   /// @ctor_default
   Device() = default;
@@ -331,7 +345,7 @@ struct FileSink : Sink {
    * @param path a path to a file
    * @param append whether to append to the file instead of overwriting it
    * @param binary whether to open the file in binary or text mode
-   * @throw InvalidState if the file cannot be opened
+   * @throw #rocket::io::IoError if the file cannot be opened
    */
   explicit FileSink(const std::filesystem::path& path, bool append = false, bool binary = true);
 
@@ -453,6 +467,10 @@ private:
 
 /**
  * The class #StreamSink provides support for #std::ostream.
+ *
+ * The exception mask of the stream is left alone. Whatever it is, the sink does not throw on I/O errors, nor
+ * for any state bit in the mask: an exception from the stream buffer is an I/O error, which makes the sink
+ * #bad and sets its #code.
  */
 struct StreamSink : Sink {
   /**
@@ -470,7 +488,7 @@ struct StreamSink : Sink {
    * @param path a path to a file
    * @param append whether to append to the file instead of overwriting it
    * @param binary whether to open the file in binary or text mode
-   * @throw InvalidState if the file cannot be opened
+   * @throw #rocket::io::IoError if the file cannot be opened
    */
   explicit StreamSink(const std::filesystem::path& path, bool append = false, bool binary = true);
 
@@ -489,7 +507,8 @@ struct StreamSink : Sink {
    *
    * @return the output stream
    */
-  [[nodiscard]] std::ostream& out() {
+  [[nodiscard]] std::ostream&
+  out() {
     return ptr_ != nullptr ? *ptr_ : static_cast<std::ostream&>(owned_);
   }
 
@@ -498,7 +517,8 @@ struct StreamSink : Sink {
    *
    * @return the output stream
    */
-  [[nodiscard]] const std::ostream& out() const {
+  [[nodiscard]] const std::ostream&
+  out() const {
     return ptr_ != nullptr ? *ptr_ : static_cast<const std::ostream&>(owned_);
   }
 
@@ -730,6 +750,9 @@ struct Source : Device {
   /**
    * Seeks a new position in the source.
    *
+   * This first restores a source that is #bad or at the end of its input, which clears its #code. A seek that
+   * fails, e.g., because the source cannot seek, does not make the source bad.
+   *
    * @param offset the offset to seek to
    * @param mode the seek mode
    * @return if the operation succeeded
@@ -849,7 +872,7 @@ struct FileSource : Source {
    *
    * @param path a path to a file
    * @param binary whether to open the file in binary or text mode
-   * @throw InvalidState if the file cannot be opened
+   * @throw #rocket::io::IoError if the file cannot be opened
    */
   explicit FileSource(const std::filesystem::path& path, bool binary = true);
 
@@ -999,6 +1022,10 @@ private:
 
 /**
  * The class #StreamSource provides support for #std::istream.
+ *
+ * The exception mask of the stream is left alone. Whatever it is, the source does not throw on I/O errors,
+ * nor for any state bit in the mask: an exception from the stream buffer is an I/O error, which makes the
+ * source #bad and sets its #code.
  */
 struct StreamSource : Source {
   /**
@@ -1013,6 +1040,7 @@ struct StreamSource : Source {
    *
    * @param path a path to a file
    * @param binary whether to open the file in binary or text mode
+   * @throw #rocket::io::IoError if the file cannot be opened
    */
   explicit StreamSource(const std::filesystem::path& path, bool binary = true);
 
@@ -1027,7 +1055,8 @@ struct StreamSource : Source {
    *
    * @return the input stream
    */
-  [[nodiscard]] std::istream& in() {
+  [[nodiscard]] std::istream&
+  in() {
     return ptr_ != nullptr ? *ptr_ : static_cast<std::istream&>(owned_);
   }
 
@@ -1036,7 +1065,8 @@ struct StreamSource : Source {
    *
    * @return the input stream
    */
-  [[nodiscard]] const std::istream& in() const {
+  [[nodiscard]] const std::istream&
+  in() const {
     return ptr_ != nullptr ? *ptr_ : static_cast<const std::istream&>(owned_);
   }
 

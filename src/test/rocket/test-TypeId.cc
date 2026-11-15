@@ -11,7 +11,7 @@
 
 namespace test_typeid {
 
-// Local types ----------------------------------------------------------------------------------------------
+// Types in namespace ---------------------------------------------------------------------------------------
 
 struct Plain {};
 
@@ -151,7 +151,8 @@ TEST(TypeId, prettyName) {
   EXPECT_THAT(
     TypeId::of<vector<string>>().prettyName(),
     matchesRegex(
-      "std.*::vector<std.*::basic_string<char, std.*::char_traits<char>, std.*::allocator<char>>, std.*::allocator<std.*::basic_string<char, std.*::char_traits<char>, std.*::allocator<char>>>>"));
+      "std.*::vector<std.*::basic_string<char, std.*::char_traits<char>, std.*::allocator<char>>, "
+        "std.*::allocator<std.*::basic_string<char, std.*::char_traits<char>, std.*::allocator<char>>>>"));
 }
 
 TEST(TypeId, format) {

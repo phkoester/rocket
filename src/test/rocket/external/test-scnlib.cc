@@ -12,7 +12,7 @@
 #include <scn/regex.h>
 
 #include <chrono>
-#include <time.h> // `tzset` and `_tzset`, which <ctime> does not declare
+#include <time.h> // `tzset` and `_tzset`, which `<ctime>` does not declare
 
 // Tests ====================================================================================================
 
@@ -46,7 +46,6 @@ TEST(scnlib, scanU32Hex) {
     ASSERT_TRUE(result);
     const auto [val] = result->values();
     EXPECT_EQ(val, 0x1234ABCD);
-    // `result.error()` may not be called here!
   }
 
   {
@@ -74,7 +73,6 @@ TEST(scnlib, scanU32Hex) {
     const auto input = "abCDZZZZ"sv;
     const auto result = scn::scan<u32>(input, "{:8x}");
     ASSERT_FALSE(result);
-    // `result->begin()` may not be called here!
   }
 
   {
@@ -119,20 +117,6 @@ TEST(scnlib, scanMap) {
   EXPECT_EQ(val2, val1);
   EXPECT_EQ(result->begin() - input.begin(), 27);
 }
-
-#if 0 // NOLINT
-TEST(scnlib, scanRegex) {
-  auto result = scn::scan<scn::regex_matches>("abc123", "{:/([a-z]+)([0-9]+)/}");
-  const scn::regex_matches& matches = result->value();
-  EXPECT_EQ(matches.size(), 3);
-  for (size_t i = 0; i < matches.size(); ++i) {
-    optional<scn::regex_matches::match_type> match = matches.at(i);
-    if (i == 0) { EXPECT_EQ(match->get(), "abc123"); }
-    if (i == 1) { EXPECT_EQ(match->get(), "abc"); }
-    if (i == 2) { EXPECT_EQ(match->get(), "123"); }
-  }
-}
-#endif
 
 TEST(scnlib, scanPair) {
   using type = pair<bool, int>;

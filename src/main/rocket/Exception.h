@@ -111,9 +111,6 @@ private:
  * An exception indicating an invalid argument.
  */
 struct InvalidArgument : Exception, std::invalid_argument {
-  /// @type_base
-  using Base = std::invalid_argument;
-
   /**
    * @ctor
    *
@@ -137,9 +134,6 @@ struct InvalidArgument : Exception, std::invalid_argument {
  * An exception indicating an invalid state.
  */
 struct InvalidState : Exception, std::runtime_error {
-  /// @type_base
-  using Base = std::runtime_error;
-
   /**
    * @ctor
    *
@@ -161,9 +155,6 @@ struct InvalidState : Exception, std::runtime_error {
  * An exception indicating a type overflow.
  */
 struct Overflow : Exception, std::overflow_error {
-  /// @type_base
-  using Base = std::overflow_error;
-
   /**
    * @ctor
    *
@@ -200,9 +191,6 @@ struct Overflow : Exception, std::overflow_error {
  * An exception indicating a type underflow.
  */
 struct Underflow : Exception, std::underflow_error {
-  /// @type_base
-  using Base = std::underflow_error;
-
   /**
    * @ctor
    *

@@ -12,7 +12,7 @@ using namespace rocket::unicode;
 
 namespace {
 
-// Local functions ------------------------------------------------------------------------------------------
+// Local test functions -------------------------------------------------------------------------------------
 
 template<typename C> requires IsChar<C>
 void

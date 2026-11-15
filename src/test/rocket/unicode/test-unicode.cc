@@ -21,6 +21,8 @@ constexpr char32 MAX_PLUS_1 = static_cast<char32>(0x10FFFFU + 1);
 
 // Tests ====================================================================================================
 
+// `CodePoint` ----------------------------------------------------------------------------------------------
+
 TEST(unicode, CodePointCtor) {
   EXPECT_THAT(
     [&] { '\x80'_cp; },
@@ -113,6 +115,8 @@ TEST(unicode, CodePointVectorFormat) {
   EXPECT_EQ(fmt::format("{:n:~>8}", cps), "~~U+0061, ~~U+0062, ~~U+0063");
 }
 
+// Functions ------------------------------------------------------------------------------------------------
+
 TEST(unicode, conversions) {
   EXPECT_EQ(convertUtf8To32("äöü€"), U"äöü€");
   EXPECT_EQ(convertUtf32To8(U"äöü€"), "äöü€");
@@ -164,7 +168,7 @@ TEST(unicode, conversions) {
   EXPECT_EQ(convertUtf32To8(str6, unicode::Continue), "a�c");
 }
 
-// `rocket::unicode::utf8` ..................................................................................
+// `rocket::unicode::utf8` ----------------------------------------------------------------------------------
 
 TEST(unicode, utf8Validate) {
   Positions pos;
@@ -211,7 +215,7 @@ TEST(unicode, utf8Validate) {
   }
 }
 
-// `rocket::unicode::utf32` .................................................................................
+// `rocket::unicode::utf32` ---------------------------------------------------------------------------------
 
 TEST(unicode, utf32Validate) {
   Positions pos;

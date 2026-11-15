@@ -14,14 +14,14 @@
 using namespace rocket;
 using namespace std;
 
-// Local functions ------------------------------------------------------------------------------------------
-
 namespace {
 
-/// The message of the #rocket::io::IoError thrown on an I/O error.
-constexpr string_view IO_ERROR = "Cannot read from the source";
+// Local constants ------------------------------------------------------------------------------------------
+
 /// The message of the #rocket::InputFailure thrown on invalid UTF-8.
 constexpr string_view INVALID_UTF8 = "Invalid UTF-8";
+
+// Local functions ------------------------------------------------------------------------------------------
 
 optional<char> peekChar(nio::Source& in);
 
@@ -135,7 +135,7 @@ optional<char>
 peekChar(nio::Source& in) {
   const auto ret = in.peek();
   if (not ret && in.bad()) {
-    throw io::IoError(IO_ERROR);
+    throw io::IoError(in.code());
   }
   return ret;
 }
@@ -152,7 +152,7 @@ readOne(nio::Source& in, char& c) {
     return true;
   }
   if (in.bad()) {
-    throw io::IoError(IO_ERROR);
+    throw io::IoError(in.code());
   }
   return false;
 }
@@ -398,7 +398,7 @@ readCodePoint(nio::Source& in) {
     string s(len, '\0');
     const u64 n = in.read(s);
     if (n != len && in.bad()) {
-      throw io::IoError(IO_ERROR); // The position is unspecified
+      throw io::IoError(in.code()); // The position is unspecified
     }
 
     // Decode the code point. On failure, go back over the bytes read

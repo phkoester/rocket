@@ -55,20 +55,6 @@ FILE* open(const std::filesystem::path& path, std::string_view modes);
 /**
  * Seeks to the specified position in the stream referenced by @p file.
  *
- * This is a portable implementation that works on Linux, macOS, and Windows. It always fails on streams that
- * are not #seekable, even on platforms where the C library would report a meaningless success.
- *
- * @param file a `FILE` pointer, may not be null
- * @param offset the offset to seek to
- * @param origin the origin to seek from
- * @return if the operation succeeded. On failure, `errno` is set
- */
-bool seek(FILE* file, i64 offset, i32 origin);
-
-/**
- * Seeks to the specified position in the stream referenced by @p file, like #seek, but with its seekability
- * known.
- *
  * Checking if a stream is #seekable takes a system call. A caller that seeks often can check once, e.g.,
  * when it starts using the stream, and pass the result here.
  *
@@ -185,7 +171,7 @@ bool seekable(std::ostream& os) noexcept;
  *
  * @param is the input stream
  * @return the current position in the stream, or #rocket::NPOS if the position cannot be determined, e.g.,
- *   because @p is has no stream buffer or the stream buffer is not seekable
+ *   because @p is has no stream buffer, or the stream buffer is not seekable or throws
  */
 u64 tell(std::istream& is) noexcept;
 

@@ -479,7 +479,7 @@ struct FormattedConsumerImpl<DataType::Duration, T> {
     } else if constexpr (std::same_as<T, std::chrono::years>) {
       out.write('y');
     } else {
-      // Let `std::format` determine the suffix, then strip the leading count `0`
+      // Let `fmt::format` determine the suffix, then strip the leading count `0`
       const std::string str = fmt::format("{}", T::zero());
       out.write(std::string_view(str).substr(1));
     }

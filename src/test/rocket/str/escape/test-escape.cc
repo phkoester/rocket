@@ -285,16 +285,22 @@ TEST(escape, Regex) {
     EXPECT_EQ(escaped, "\\r\\t\\uFFFF\\(\\)\\[a-z\\]");
     EXPECT_EQ(
         pos,
-        makePositions({ { 0, 0 }, { 1, 2 }, { 2, 4 }, { 5, 10 }, { 6, 12 }, { 7, 14 }, { 8, 16 }, { 9, 17 }, { 10, 18 }, { 11, 19 }, { 12, 21 } }));
+        makePositions({
+          { 0, 0 }, { 1, 2 }, { 2, 4 }, { 5, 10 }, { 6, 12 }, { 7, 14 }, { 8, 16 }, { 9, 17 }, { 10, 18 },
+          { 11, 19 }, { 12, 21 }
+        }));
     const auto out = unescapeRegex(escaped, &pos);
     EXPECT_EQ(out, in);
     EXPECT_EQ(
         pos,
-        makePositions({ { 0, 0 }, { 2, 1 }, { 4, 2 }, { 10, 5 }, { 12, 6 }, { 14, 7 }, { 16, 8 }, { 17, 9 }, { 18, 10 }, { 19, 11 }, { 21, 12 } }));
+        makePositions({
+          { 0, 0 }, { 2, 1 }, { 4, 2 }, { 10, 5 }, { 12, 6 }, { 14, 7 }, { 16, 8 }, { 17, 9 }, { 18, 10 },
+          { 19, 11 }, { 21, 12 }
+        }));
   }
 }
 
-TEST(escape, RegexClusterSpecialCharWithCombiningMark) {
+TEST(escape, regexClusterSpecialCharWithCombiningMark) {
   Positions pos;
 
   const string in = "(\u0301x";
@@ -318,7 +324,7 @@ TEST(escape, RegexClusterAllSpecialChars) {
   }
 }
 
-TEST(escape, RegexClusterPrependedSpecialChar) {
+TEST(escape, regexClusterPrependedSpecialChar) {
   Positions pos;
 
   const string in = "\u0600(";
@@ -331,14 +337,14 @@ TEST(escape, RegexClusterPrependedSpecialChar) {
   EXPECT_EQ(pos, makePositions({ { 0, 0 }, { 4, 3 } }));
 }
 
-TEST(escape, RegexClusterPrependedBackslash) {
+TEST(escape, regexClusterPrependedBackslash) {
   const string in = "\u0600\\";
   const string escaped = escapeRegex(in);
   EXPECT_EQ(escaped, "\u0600\\\\");
   EXPECT_EQ(unescapeRegex(escaped), in);
 }
 
-TEST(escape, RegexClusterStaysVerbatim) {
+TEST(escape, regexClusterStaysVerbatim) {
   // Neither character is special
   for (const string& in : { "a\u0301"s, "-\u0301"s }) {
     SCOPED_TRACE(in);
@@ -353,7 +359,7 @@ TEST(escape, RegexClusterStaysVerbatim) {
   EXPECT_EQ(unescapeRegex(farmer), farmer);
 }
 
-TEST(escape, RegexClusterInvalidEscape) {
+TEST(escape, regexClusterInvalidEscape) {
   EXPECT_THAT(
       [&] { unescapeRegex("\\a\u0301"); },
       throwsInputFailure(0, { 0, 4 }, EndsWith("Invalid escape sequence")));
@@ -363,7 +369,7 @@ TEST(escape, RegexClusterInvalidEscape) {
       throwsInputFailure(0, { 0, 4 }, EndsWith("Invalid escape sequence")));
 }
 
-TEST(escape, RegexInvalidUtf8) {
+TEST(escape, regexInvalidUtf8) {
   EXPECT_THAT(
       [&] { unescapeRegex("a\xFF"); },
       throwsInputFailure(1, EndsWith("Invalid UTF-8 byte sequence")));

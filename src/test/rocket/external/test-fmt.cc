@@ -84,14 +84,16 @@ TEST(fmt, f32Format) {
 
   EXPECT_EQ(fmt::format("{:.5}", 0.999'999_f32), "1");
   EXPECT_EQ(fmt::format("{:.5}", 0.999'99_f32), "0.99999");
-  EXPECT_EQ(fmt::format("{:.3f}", 12.1236_f32), "12.124"); // Round to 3 significant digits after the decimal point
+  // Round to 3 significant digits after the decimal point
+  EXPECT_EQ(fmt::format("{:.3f}", 12.1236_f32), "12.124");
   EXPECT_EQ(fmt::format("{:.5}", 1.0_f32 / 3), "0.33333");
 }
 
 TEST(fmt, f64Format) {
   EXPECT_EQ(fmt::format("{:.5}", 0.999'999_f64), "1");
   EXPECT_EQ(fmt::format("{:.5}", 0.999'99_f64), "0.99999");
-  EXPECT_EQ(fmt::format("{:.3f}", 12.1236_f64), "12.124"); // Round to 3 significant digits after the decimal point
+  // Round to 3 significant digits after the decimal point
+  EXPECT_EQ(fmt::format("{:.3f}", 12.1236_f64), "12.124");
   EXPECT_EQ(fmt::format("{:.5}", 1.0_f64 / 3), "0.33333");
 }
 
@@ -111,7 +113,7 @@ TEST(fmt, char32PtrFormat) {
   EXPECT_EQ(fmt::format(U"{}", U"hello"), U"hello");
 }
 
-TEST(fmt, chronoDuration) {
+TEST(fmt, chronoDurationFormat) {
   using namespace std::chrono;
 
   EXPECT_EQ(fmt::format("{}", nanoseconds(1)), "1ns");

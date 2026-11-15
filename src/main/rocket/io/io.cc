@@ -40,12 +40,6 @@ open(const filesystem::path& path, std::string_view modes) {
 }
 
 bool
-seek(FILE* file, i64 offset, i32 origin) {
-  ROCKET_ASSERT(file != nullptr);
-  return seek(file, offset, origin, seekable(file));
-}
-
-bool
 seek(FILE* file, i64 offset, i32 origin, bool seekable) {
   ROCKET_ASSERT(file != nullptr);
 
@@ -143,9 +137,14 @@ seekable(ostream& os) noexcept {
   }
 
   // Ask the stream buffer directly, like `tell` for an input stream does
+  // A stream buffer that throws cannot seek either
   auto* buf = os.rdbuf();
-  return buf != nullptr &&
-    buf->pubseekoff(0, ios::cur, ios::out) != ostream::pos_type(ostream::off_type(-1));
+  try {
+    return buf != nullptr &&
+      buf->pubseekoff(0, ios::cur, ios::out) != ostream::pos_type(ostream::off_type(-1));
+  } catch (...) {
+    return false;
+  }
 }
 
 u64
@@ -163,7 +162,13 @@ tell(istream& is) noexcept {
   if (buf == nullptr) {
     return NPOS;
   }
-  const auto result = buf->pubseekoff(0, ios::cur, ios::in);
+  // A stream buffer that throws has no position
+  istream::pos_type result;
+  try {
+    result = buf->pubseekoff(0, ios::cur, ios::in);
+  } catch (...) {
+    return NPOS;
+  }
   if (result == istream::pos_type(istream::off_type(-1))) {
     return NPOS;
   }

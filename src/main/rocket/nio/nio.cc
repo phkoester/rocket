@@ -6,6 +6,7 @@
 
 #include "rocket/assert.h"
 #include "rocket/io/io.h"
+#include "rocket/io/IoError.h"
 
 #include <fmt/ostream.h>
 
@@ -23,114 +24,9 @@ using namespace std;
 
 namespace fs = std::filesystem;
 
-// Local functions ------------------------------------------------------------------------------------------
-
 namespace {
 
-/**
- * Computes the new position of a contiguous source of size @p size, currently at @p pos, for
- * #rocket::nio::Source#seek.
- *
- * @return the new position, or null if it would be before the beginning or beyond the end
- */
-optional<u64>
-contiguousSeekPos(u64 pos, u64 size, i64 offset, SeekMode mode) {
-  u64 base = 0;
-  switch (mode) {
-    case SeekMode::beg: base = 0; break;
-    case SeekMode::cur: base = pos; break;
-    case SeekMode::end: base = size; break;
-    default: ROCKET_FLOP(mode, "Invalid seek mode {}", static_cast<i32>(mode));
-  }
-
-  if (offset < 0) {
-    // `-offset` would overflow for the lowest `i64`, `-(offset + 1) + 1` cannot
-    const u64 back = static_cast<u64>(-(offset + 1)) + 1;
-    if (back > base) {
-      return nullopt;
-    }
-    return base - back;
-  }
-
-  // `base <= size` always holds, so `size - base` cannot wrap, and comparing against it avoids an overflow
-  // of `base + offset`
-  const auto forward = static_cast<u64>(offset);
-  if (forward > size - base) {
-    return nullopt;
-  }
-  return base + forward;
-}
-
-/// Returns the bytes of @p buf.
-span<const u8>
-bytes(const fmt::memory_buffer& buf) {
-  return { reinterpret_cast<const u8*>(buf.data()), buf.size() };
-}
-
-/// Formats into a buffer that keeps short messages on the stack.
-fmt::memory_buffer
-formatToBuffer(fmt::text_style style, fmt::string_view fmt, fmt::format_args args) {
-  fmt::memory_buffer ret;
-  fmt::vformat_to(fmt::appender(ret), style, fmt, args);
-  return ret;
-}
-
-/// Formats into a buffer that keeps short messages on the stack.
-fmt::memory_buffer
-formatToBuffer(const locale& locale, fmt::string_view fmt, fmt::format_args args) {
-  fmt::memory_buffer ret;
-  fmt::vformat_to(fmt::appender(ret), fmt::locale_ref(locale), fmt, args);
-  return ret;
-}
-
-/// Returns the error of @p result, if any, dropping its value.
-template<typename T>
-scn::scan_expected<void>
-toVoid(const scn::scan_expected<T>& result) {
-  if (not result) {
-    return scn::unexpected(result.error());
-  }
-  return {};
-}
-
-/**
- * Checks the result of scanning from @p file, a `scn::scan_file` over @p in.
- *
- * Afterwards, `scn::scan_file` puts unread input back into its `FILE`. Input it could not put back is left
- * in its prelude, which would be lost. If @p in can seek, it seeks back over that input instead.
- */
-template<typename T>
-scn::scan_expected<void>
-checkFileScan(Source& in, const scn::scan_file& file, const scn::scan_expected<T>& result) {
-  // glibc can put back any amount of input, but the Windows C runtime only guarantees one character
-  if (const auto n = file.prelude().size(); n != 0) {
-    const auto pos = in.seekable() ? in.tell() : optional<u64>();
-    if (not pos || *pos < n || not in.seek(static_cast<i64>(*pos - n), SeekMode::beg)) {
-      return scn::unexpected(
-        scn::scan_error(scn::scan_error::invalid_source_state, "Cannot put back unread input"));
-    }
-  }
-  return toVoid(result);
-}
-
-/**
- * Writes @p size bytes at @p data to @p os, for #rocket::nio::StreamSink.
- *
- * This goes through `ostream::write`, not the stream buffer, so that a failure sets `badbit` and `unitbuf` is
- * honored. If the exception mask of @p os makes the failure throw `ios_base::failure`, a `system_error`, this
- * returns `false` instead, as all of #rocket::nio::StreamSink does.
- *
- * @return if @p os is still good
- */
-bool
-writeToStream(ostream& os, const char* data, u64 size) {
-  try {
-    os.write(data, static_cast<streamsize>(size));
-  } catch (const system_error&) {
-    return false;
-  }
-  return static_cast<bool>(os);
-}
+// `FileLock` -----------------------------------------------------------------------------------------------
 
 /**
  * Holds the lock of a `FILE`, so that several characters can be read with #getcUnlocked, without locking and
@@ -170,6 +66,170 @@ getcUnlocked(FILE* file) {
 #else
   return getc_unlocked(file);
 #endif
+}
+
+// `checkFileScan` ------------------------------------------------------------------------------------------
+
+/// Returns the error of @p result, if any, dropping its value.
+template<typename T>
+scn::scan_expected<void>
+toVoid(const scn::scan_expected<T>& result) {
+  if (not result) {
+    return scn::unexpected(result.error());
+  }
+  return {};
+}
+
+/**
+ * Checks the result of scanning from @p file, a `scn::scan_file` over @p in.
+ *
+ * Afterwards, `scn::scan_file` puts unread input back into its `FILE`. Input it could not put back is left
+ * in its prelude, which would be lost. If @p in can seek, it seeks back over that input instead.
+ */
+template<typename T>
+scn::scan_expected<void>
+checkFileScan(Source& in, const scn::scan_file& file, const scn::scan_expected<T>& result) {
+  // glibc can put back any amount of input, but the Windows C runtime only guarantees one character
+  if (const auto n = file.prelude().size(); n != 0) {
+    const auto pos = in.seekable() ? in.tell() : optional<u64>();
+    if (not pos || *pos < n || not in.seek(static_cast<i64>(*pos - n), SeekMode::beg)) {
+      return scn::unexpected(
+        scn::scan_error(scn::scan_error::invalid_source_state, "Cannot put back unread input"));
+    }
+  }
+  return toVoid(result);
+}
+
+// Local functions ------------------------------------------------------------------------------------------
+
+/// Returns the bytes of @p buf.
+span<const u8>
+bytes(const fmt::memory_buffer& buf) {
+  return { reinterpret_cast<const u8*>(buf.data()), buf.size() };
+}
+
+/**
+ * Computes the new position of a contiguous source of size @p size, currently at @p pos, for
+ * #rocket::nio::Source#seek.
+ *
+ * @return the new position, or null if it would be before the beginning or beyond the end
+ */
+optional<u64>
+contiguousSeekPos(u64 pos, u64 size, i64 offset, SeekMode mode) {
+  u64 base = 0;
+  switch (mode) {
+    case SeekMode::beg: base = 0; break;
+    case SeekMode::cur: base = pos; break;
+    case SeekMode::end: base = size; break;
+    default: ROCKET_FLOP(mode, "Invalid seek mode {}", static_cast<i32>(mode));
+  }
+
+  if (offset < 0) {
+    // `-offset` would overflow for the lowest `i64`, `-(offset + 1) + 1` cannot
+    const u64 back = static_cast<u64>(-(offset + 1)) + 1;
+    if (back > base) {
+      return nullopt;
+    }
+    return base - back;
+  }
+
+  // `base <= size` always holds, so `size - base` cannot wrap, and comparing against it avoids an overflow
+  // of `base + offset`
+  const auto forward = static_cast<u64>(offset);
+  if (forward > size - base) {
+    return nullopt;
+  }
+  return base + forward;
+}
+
+/// Formats into a buffer that keeps short messages on the stack.
+fmt::memory_buffer
+formatToBuffer(fmt::text_style style, fmt::string_view fmt, fmt::format_args args) {
+  fmt::memory_buffer ret;
+  fmt::vformat_to(fmt::appender(ret), style, fmt, args);
+  return ret;
+}
+
+/// Formats into a buffer that keeps short messages on the stack.
+fmt::memory_buffer
+formatToBuffer(const locale& locale, fmt::string_view fmt, fmt::format_args args) {
+  fmt::memory_buffer ret;
+  fmt::vformat_to(fmt::appender(ret), fmt::locale_ref(locale), fmt, args);
+  return ret;
+}
+
+std::error_code
+genericErrorCode(int error) {
+  return { error, generic_category() };
+}
+
+/// Returns the error code for `errno`, or `errc::io_error` if `errno` is not set.
+std::error_code
+errnoCode() {
+  return errno != 0 ? genericErrorCode(errno) : make_error_code(errc::io_error);
+}
+
+/// Clears the state of @p s. This throws only if @p s has no stream buffer, which sets `badbit`, and `badbit`
+/// is in the exception mask. This is ignored here, @p s stays bad then.
+void
+clearState(ios& s) noexcept {
+  try {
+    s.clear();
+  } catch (const ios::failure&) { // NOLINT(bugprone-empty-catch)
+  }
+}
+
+/// Returns the scan error for an I/O error.
+scn::scan_expected<void>
+ioScanError() {
+  return scn::unexpected(scn::scan_error(scn::scan_error::invalid_source_state, "I/O error"));
+}
+
+/// Sets `badbit` on @p s. This throws if `badbit` is in the exception mask of @p s, which is ignored here.
+void
+setBad(ios& s) noexcept {
+  try {
+    s.setstate(ios::badbit);
+  } catch (const ios::failure&) { // NOLINT(bugprone-empty-catch)
+  }
+}
+
+/**
+ * Runs @p op, an operation on @p s, and maintains @p ec, whatever the exception mask of @p s.
+ *
+ * - An `ios_base::failure` is the stream telling about a state bit in its exception mask, after it set the
+ *   state. It is ignored here, as the state tells what happened.
+ * - Any other exception comes from the stream buffer. The stream rethrows it if `badbit` is in its exception
+ *   mask, and @p op may call the stream buffer directly, too. It is an I/O error, so `badbit` is set.
+ * - A `fmt::format_error` or a `std::bad_alloc` is no I/O error, it is rethrown.
+ *
+ * If @p s is bad afterwards, @p ec is set: to the code of a `std::system_error` from the stream buffer, or to
+ * the code for `errno`, which a `std::filebuf` leaves behind. @p s must not be bad when this is called.
+ */
+template<typename F>
+void
+runStreamOp(ios& s, error_code& ec, F op) {
+  errno = 0;
+  try {
+    op();
+  } catch (const ios::failure&) { // NOLINT(bugprone-empty-catch)
+  } catch (const system_error& ex) {
+    setBad(s);
+    ec = ex.code();
+    return;
+  } catch (const fmt::format_error&) {
+    throw;
+  } catch (const bad_alloc&) {
+    if (s.bad()) {
+      ec = make_error_code(errc::not_enough_memory);
+    }
+    throw;
+  } catch (const exception&) {
+    setBad(s);
+  }
+  if (s.bad()) {
+    ec = errnoCode();
+  }
 }
 
 void
@@ -227,6 +287,9 @@ FileSink::FileSink(FILE* file) :
   file_(file),
   closeOnDestroy_(false) {
   ROCKET_CHECK(file, file != nullptr);
+  if (bad()) {
+    ec_ = make_error_code(errc::io_error);
+  }
   seekable_ = io::seekable(file_);
 }
 
@@ -234,7 +297,8 @@ FileSink::FileSink(const fs::path& path, bool append, bool binary) :
   file_(io::open(path, append ? (binary ? "ab" : "a") : (binary ? "wb" : "w"))),
   closeOnDestroy_(true) {
   if (file_ == nullptr) {
-    throw InvalidState(fmt::format("Cannot open file `{}` for writing", path));
+    const auto ec = genericErrorCode(errno);
+    throw io::IoError(ec, fmt::format("Cannot open file `{}` for writing", path));
   }
   seekable_ = io::seekable(file_);
 }
@@ -263,8 +327,14 @@ FileSink::flush() {
     return false;
   }
 
-  const auto result = fflush(file_);
-  return result == 0;
+  errno = 0;
+  if (fflush(file_) != 0) {
+    if (bad()) {
+      ec_ = errnoCode();
+    }
+    return false;
+  }
+  return true;
 }
 
 i32
@@ -278,13 +348,20 @@ FileSink::vprint(fmt::string_view fmt, fmt::format_args args) {
     return false;
   }
 
+  // Formats directly into the buffer of `file_`, if possible. {fmt} throws a `system_error` with the code
+  // for `errno` if writing fails
+  errno = 0;
   try {
-    // Formats directly into the buffer of `file_`, if possible
     fmt::vprint(file_, fmt, args);
-  } catch (const system_error&) {
+  } catch (const system_error& ex) {
+    ec_ = ex.code();
     return false;
   }
-  return not bad();
+  if (bad()) {
+    ec_ = errnoCode();
+    return false;
+  }
+  return true;
 }
 
 bool
@@ -293,12 +370,18 @@ FileSink::vprint(fmt::text_style style, fmt::string_view fmt, fmt::format_args a
     return false;
   }
 
+  errno = 0;
   try {
     fmt::vprint(file_, style, fmt, args);
-  } catch (const system_error&) {
+  } catch (const system_error& ex) {
+    ec_ = ex.code();
     return false;
   }
-  return not bad();
+  if (bad()) {
+    ec_ = errnoCode();
+    return false;
+  }
+  return true;
 }
 
 bool
@@ -309,7 +392,7 @@ FileSink::vprint(const locale& locale, fmt::string_view fmt, fmt::format_args ar
 
   // {fmt} cannot print to a `FILE*` with a locale
   const auto buf = formatToBuffer(locale, fmt, args);
-  return fwrite(buf.data(), 1, buf.size(), file_) == buf.size();
+  return write(bytes(buf)) == buf.size();
 }
 
 u64
@@ -318,10 +401,12 @@ FileSink::write(span<const u8> in) {
     return 0;
   }
 
-  const auto result = fwrite(in.data(), 1, in.size(), file_);
-  auto error = ferror(file_);
-  ROCKET_ASSERT(result == in.size() || error != 0);
-  return result;
+  errno = 0;
+  const auto ret = fwrite(in.data(), 1, in.size(), file_);
+  if (bad()) {
+    ec_ = errnoCode();
+  }
+  return ret;
 }
 
 // `SpanSink` -----------------------------------------------------------------------------------------------
@@ -365,13 +450,18 @@ SpanSink::write(span<const u8> in) {
 // `StreamSink` ---------------------------------------------------------------------------------------------
 
 StreamSink::StreamSink(ostream& os) :
-  ptr_(&os) {}
+  ptr_(&os) {
+  if (bad()) {
+    ec_ = make_error_code(errc::io_error);
+  }
+}
 
-StreamSink::StreamSink(const fs::path& path, bool append, bool binary) :
-  owned_(ofstream(path, (append ? ios::app : ios::trunc) | (binary ? ios::binary : ios::openmode {})))
-{
-  if (not owned_) {
-    throw InvalidState(fmt::format("Cannot open file `{}` for writing", path));
+StreamSink::StreamSink(const fs::path& path, bool append, bool binary) {
+  // A failing `open` sets `failbit`, not `badbit`. The exception mask of `owned_` is empty, so it does not throw
+  errno = 0;
+  owned_.open(path, (append ? ios::app : ios::trunc) | (binary ? ios::binary : ios::openmode {}));
+  if (not owned_.is_open()) {
+    throw io::IoError(errnoCode(), fmt::format("Cannot open file `{}` for writing", path));
   }
 }
 
@@ -385,11 +475,7 @@ StreamSink::flush() {
     return false;
   }
 
-  try {
-    out().flush();
-  } catch (const system_error&) {
-    return false;
-  }
+  runStreamOp(out(), ec_, [this] { out().flush(); });
   return not bad();
 }
 
@@ -415,12 +501,8 @@ StreamSink::vprint(fmt::string_view fmt, fmt::format_args args) {
     return false;
   }
 
-  try {
-    fmt::vprint(out(), fmt, args);
-  } catch (const system_error&) {
-    return false;
-  }
-  return static_cast<bool>(out());
+  runStreamOp(out(), ec_, [&] { fmt::vprint(out(), fmt, args); });
+  return not bad();
 }
 
 bool
@@ -431,7 +513,7 @@ StreamSink::vprint(fmt::text_style style, fmt::string_view fmt, fmt::format_args
 
   // {fmt} cannot print to a `std::ostream` with a text style
   const auto buf = formatToBuffer(style, fmt, args);
-  return writeToStream(out(), buf.data(), buf.size());
+  return write(bytes(buf)) == buf.size();
 }
 
 bool
@@ -442,7 +524,7 @@ StreamSink::vprint(const locale& locale, fmt::string_view fmt, fmt::format_args 
 
   // {fmt} cannot print to a `std::ostream` with a locale
   const auto buf = formatToBuffer(locale, fmt, args);
-  return writeToStream(out(), buf.data(), buf.size());
+  return write(bytes(buf)) == buf.size();
 }
 
 u64
@@ -451,7 +533,23 @@ StreamSink::write(span<const u8> in) {
     return 0;
   }
 
-  return writeToStream(out(), reinterpret_cast<const char*>(in.data()), in.size()) ? in.size() : 0;
+  // Not `ostream::write`, which only tells whether all bytes were written, but `sputn`, which tells how
+  // many. The sentry does what `write` does around it: it flushes a tied stream, and on destruction honors
+  // `unitbuf`. `write` sets `badbit` on a short count, and so do we. If the stream buffer throws, we cannot
+  // know how much it took
+  auto& os = out();
+  u64 ret = 0;
+  runStreamOp(os, ec_, [&] {
+    const ostream::sentry sentry(os);
+    if (sentry) {
+      ret = static_cast<u64>(
+        os.rdbuf()->sputn(reinterpret_cast<const char*>(in.data()), static_cast<streamsize>(in.size())));
+      if (ret < in.size()) {
+        setBad(os);
+      }
+    }
+  });
+  return ret;
 }
 
 // `StringSink` ---------------------------------------------------------------------------------------------
@@ -583,6 +681,9 @@ FileSource::FileSource(FILE* file) :
   file_(file),
   closeOnDestroy_(false) {
   ROCKET_CHECK(file, file != nullptr);
+  if (bad()) {
+    ec_ = make_error_code(errc::io_error);
+  }
   seekable_ = io::seekable(file_);
 }
 
@@ -590,7 +691,8 @@ FileSource::FileSource(const fs::path& path, bool binary) :
   file_(io::open(path, binary ? "rb" : "r")),
   closeOnDestroy_(true) {
   if (file_ == nullptr) {
-    throw InvalidState(fmt::format("Cannot open file `{}` for reading", path));
+    const auto ec = genericErrorCode(errno);
+    throw io::IoError(ec, fmt::format("Cannot open file `{}` for reading", path));
   }
   seekable_ = io::seekable(file_);
 }
@@ -624,8 +726,12 @@ FileSource::peek() {
 
   // Holding the lock across `getc` and `ungetc` also keeps other threads from reading in between
   const FileLock lock(file_);
+  errno = 0;
   const i32 c = getcUnlocked(file_);
   if (c == EOF) {
+    if (bad()) {
+      ec_ = errnoCode();
+    }
     return nullopt;
   }
   // C guarantees one character of pushback, even for streams that cannot seek
@@ -639,8 +745,13 @@ FileSource::read(span<u8> out) {
     return 0;
   }
 
-  const auto result = fread(out.data(), 1, out.size(), file_);
-  return result;
+  // A short count may just be the end of the input
+  errno = 0;
+  const auto ret = fread(out.data(), 1, out.size(), file_);
+  if (bad()) {
+    ec_ = errnoCode();
+  }
+  return ret;
 }
 
 optional<string>
@@ -652,8 +763,12 @@ FileSource::readln() {
   // Lock the file once for the whole line, not for each character
   const FileLock lock(file_);
 
+  errno = 0;
   i32 c = getcUnlocked(file_);
   if (c == EOF) {
+    if (bad()) {
+      ec_ = errnoCode();
+    }
     return nullopt;
   }
 
@@ -669,6 +784,7 @@ FileSource::readln() {
   // `getc` also returns `EOF` on an I/O error. The line read so far is incomplete then, so it is dropped, as
   // with `StreamSource`, where `getline` fails once `badbit` is set
   if (bad()) {
+    ec_ = errnoCode();
     return nullopt;
   }
   return ret;
@@ -676,10 +792,6 @@ FileSource::readln() {
 
 bool
 FileSource::seek(i64 offset, SeekMode mode) { // NOLINT
-  if (bad()) {
-    return false;
-  }
-
   i32 origin; // NOLINT
   switch (mode) {
     case SeekMode::beg: origin = SEEK_SET; break;
@@ -688,7 +800,17 @@ FileSource::seek(i64 offset, SeekMode mode) { // NOLINT
     default: ROCKET_FLOP(mode, "Invalid seek mode {}", static_cast<i32>(mode));
   }
 
-  return io::seek(file_, offset, origin, seekable_);
+  // Restore the device. `fseek` clears the end-of-file indicator, but not the error indicator. A seek that
+  // fails, e.g., on a pipe, does not make the device bad
+  clearerr(file_);
+  ec_.clear();
+  errno = 0;
+  const auto ret = io::seek(file_, offset, origin, seekable_);
+  if (bad()) {
+    ec_ = errnoCode();
+    return false;
+  }
+  return ret;
 }
 
 optional<u64>
@@ -697,6 +819,7 @@ FileSource::tell() {
     return nullopt;
   }
 
+  // `ftell` does not make the device bad if it fails
   const u64 ret = io::tell(file_, seekable_);
   return ret == NPOS ? nullopt : optional(ret);
 }
@@ -708,8 +831,14 @@ FileSource::vscan(string_view fmt, scn::scan_args args) {
   }
 
   // Scans directly through `file_`. `scn::scan_file` locks `file_` while scanning
+  errno = 0;
   scn::scan_file file(file_);
   const auto result = scn::vscan(file, fmt, args);
+  if (bad()) {
+    // Do not put back unread input, a seek would restore the device
+    ec_ = errnoCode();
+    return ioScanError();
+  }
   return checkFileScan(*this, file, result);
 }
 
@@ -719,8 +848,14 @@ FileSource::vscan(const locale& locale, string_view fmt, scn::scan_args args) {
     return scn::unexpected(scn::scan_error(scn::scan_error::invalid_source_state, "`FileSource` is bad"));
   }
 
+  errno = 0;
   scn::scan_file file(file_);
   const auto result = scn::vscan(locale, file, fmt, args);
+  if (bad()) {
+    // Do not put back unread input, a seek would restore the device
+    ec_ = errnoCode();
+    return ioScanError();
+  }
   return checkFileScan(*this, file, result);
 }
 
@@ -765,13 +900,18 @@ SpanSource::seek(i64 offset, SeekMode mode) {
 // `StreamSource` -------------------------------------------------------------------------------------------
 
 StreamSource::StreamSource(std::istream& is) :
-  ptr_(&is) {}
+  ptr_(&is) {
+  if (bad()) {
+    ec_ = make_error_code(errc::io_error);
+  }
+}
 
-StreamSource::StreamSource(const fs::path& path, bool binary) :
-  owned_(ifstream(path, binary ? ios::binary : ios::openmode {}))
-{
-  if (not owned_) {
-    throw InvalidState(fmt::format("Cannot open file `{}` for reading", path));
+StreamSource::StreamSource(const fs::path& path, bool binary) {
+  // A failing `open` sets `failbit`, not `badbit`. The exception mask of `owned_` is empty, so it does not throw
+  errno = 0;
+  owned_.open(path, binary ? ios::binary : ios::openmode {});
+  if (not owned_.is_open()) {
+    throw io::IoError(errnoCode(), fmt::format("Cannot open file `{}` for reading", path));
   }
 }
 
@@ -789,9 +929,11 @@ StreamSource::peek() {
     return nullopt;
   }
 
-  // If the stream buffer throws, the MSVC STL's `peek` sets `badbit` but returns 0 instead of EOF
-  const auto c = in().peek();
-  if (c == istream::traits_type::eof() || in().bad()) {
+  // If the stream buffer throws, the MSVC STL's `peek` sets `badbit` but returns 0 instead of EOF, so check
+  // `bad()` as well
+  auto c = istream::traits_type::eof();
+  runStreamOp(in(), ec_, [&] { c = in().peek(); });
+  if (c == istream::traits_type::eof() || bad()) {
     return nullopt;
   }
   return istream::traits_type::to_char_type(c);
@@ -803,27 +945,34 @@ StreamSource::read(span<u8> out) {
     return 0;
   }
 
-  in().read(reinterpret_cast<char*>(out.data()), static_cast<streamsize>(out.size()));
-  auto count = in().gcount();
-  return static_cast<u64>(count);
+  // `gcount` is the number of characters extracted. If the stream buffer threw, it may not count the
+  // characters extracted before, as with libstdc++
+  runStreamOp(in(), ec_, [&] {
+    in().read(reinterpret_cast<char*>(out.data()), static_cast<streamsize>(out.size()));
+  });
+  return static_cast<u64>(in().gcount());
 }
 
 optional<string>
 StreamSource::readln() {
-  if (bad()) {
+  // The end of the input sticks, as with a `FILE`, until a seek
+  if (bad() || eof()) {
     return nullopt;
   }
 
-  // `getline` does nothing while `failbit` is set, which a previous read may have left behind
-  in().clear(in().rdstate() & ~ios::failbit);
-
-  // `getline` fails if it extracts nothing, i.e., at the end of the input. Otherwise, it sets `eofbit` only
-  // if it hit the end, so `eof()` tells whether the line had a line feed
+  // `getline` does nothing while `failbit` is set, which a previous operation may have left behind. It fails
+  // if it extracts nothing, i.e., at the end of the input. Otherwise, it sets `eofbit` only if it hit the end,
+  // so `eof()` tells whether the line had a line feed. If the exception mask makes it throw, the state is set
+  // all the same
   string ret;
-  if (not getline(in(), ret)) {
+  runStreamOp(in(), ec_, [&] {
+    clearState(in());
+    getline(in(), ret);
+  });
+  if (in().fail()) { // Also if bad
     return nullopt;
   }
-  if (not in().eof()) {
+  if (not eof()) {
     removeTrailingCr(ret);
   }
   return ret;
@@ -831,10 +980,6 @@ StreamSource::readln() {
 
 bool
 StreamSource::seek(i64 offset, SeekMode mode) { // NOLINT
-  if (bad()) {
-    return false;
-  }
-
   ios::seekdir dir = ios::beg;
   switch (mode) {
     case SeekMode::beg:
@@ -850,17 +995,28 @@ StreamSource::seek(i64 offset, SeekMode mode) { // NOLINT
       ROCKET_FLOP(mode, "Invalid seek mode {}", static_cast<i32>(mode));
   }
 
+  // Restore the device. `seekg` does nothing while `failbit` or `badbit` is set, which a previous operation
+  // may have left behind. A seek that fails, e.g., on a pipe, does not make the device bad
+  clearState(in());
+  ec_.clear();
+  if (bad()) { // Without a stream buffer
+    ec_ = make_error_code(errc::io_error);
+    return false;
+  }
+
   // On Windows and macOS, seeking `cin` may report success for a pipe or a terminal, as with `io::tell`
   if (&in() == &cin && not io::seekable(stdin)) {
     return false;
   }
 
-  // `seekg` does nothing while `failbit` is set, which a previous read may have left behind
-  in().clear(in().rdstate() & ~ios::failbit);
-  in().seekg(static_cast<istream::off_type>(offset), dir);
+  // `seekg` sets `failbit` if the stream buffer cannot seek, e.g., over a pipe
+  runStreamOp(in(), ec_, [&] { in().seekg(static_cast<istream::off_type>(offset), dir); });
+  if (bad()) {
+    return false;
+  }
   if (in().fail()) {
-    // The seek failed, e.g., on a stream that cannot seek. Clear `failbit` again, so the stream stays usable
-    in().clear(in().rdstate() & ~ios::failbit);
+    // Clear `failbit` again, so the stream stays usable
+    clearState(in());
     return false;
   }
   return true;
@@ -877,8 +1033,8 @@ StreamSource::tell() {
     return nullopt;
   }
 
-  // `io::tell` asks the stream buffer and leaves the state of the stream alone, unlike `tellg`. A stream that
-  // cannot seek, such as one over a pipe, has no position
+  // `io::tell` asks the stream buffer and leaves the state of the stream alone, unlike `tellg`. A stream
+  // that cannot seek, such as one over a pipe, has no position
   const u64 ret = io::tell(in());
   return ret == NPOS ? nullopt : optional(ret);
 }
@@ -890,7 +1046,9 @@ StreamSource::vscan(string_view fmt, scn::scan_args args) {
   }
 
   // Scans directly from the stream buffer of `in()`, putting unread input back afterwards
-  return toVoid(scn::vscan(in(), fmt, args));
+  scn::scan_expected<void> ret = ioScanError();
+  runStreamOp(in(), ec_, [&] { ret = toVoid(scn::vscan(in(), fmt, args)); });
+  return bad() ? ioScanError() : ret;
 }
 
 scn::scan_expected<void>
@@ -899,7 +1057,9 @@ StreamSource::vscan(const locale& locale, string_view fmt, scn::scan_args args) 
     return scn::unexpected(scn::scan_error(scn::scan_error::invalid_source_state, "`StreamSource` is bad"));
   }
 
-  return toVoid(scn::vscan(locale, in(), fmt, args));
+  scn::scan_expected<void> ret = ioScanError();
+  runStreamOp(in(), ec_, [&] { ret = toVoid(scn::vscan(locale, in(), fmt, args)); });
+  return bad() ? ioScanError() : ret;
 }
 
 // `StringSource` -------------------------------------------------------------------------------------------

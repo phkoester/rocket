@@ -59,6 +59,7 @@ TEST(Process, localeFromEnvironment) {
   }
 
 #ifndef ROCKET_OS_WINDOWS // On Windows, the C++ runtime does not take the locale from `LC_ALL`
+
   // An unavailable locale causes a warning and the fallback, but no exception
   {
     system::env::set("LC_ALL", "xx_XX.bogus");
@@ -70,7 +71,8 @@ TEST(Process, localeFromEnvironment) {
       "test-rocket-Process: warning: Cannot use the locale from the environment; "
       "using the classic locale instead\n");
   }
-#endif
+
+#endif // ROCKET_OS_WINDOWS
 }
 
 // EOF

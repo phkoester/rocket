@@ -5,9 +5,9 @@
 #include "rocket-test/rocket-test.h"
 
 #include "rocket/filesystem/filesystem.h"
+#include "rocket/io/IoError.h"
 #include "rocket/io/io.h"
 #include "rocket/log/log.h"
-#include "rocket/nio/nio-utils.h"
 #include "rocket/nio/nio.h"
 
 #include <fstream>
@@ -23,7 +23,166 @@ using rocket::io::testing::FailingBuf;
 using rocket::io::testing::NonseekableBuf;
 namespace {
 
+// `FileCloser` ---------------------------------------------------------------------------------------------
+
+/// Closes a `FILE`.
+struct FileCloser {
+  void operator()(FILE* file) const { fclose(file); }
+};
+
+/**
+ * Opens @p path for reading with @p buffer as its buffer, or returns null on error. @p buffer must outlive
+ * the file. glibc ignores the size if the buffer is null, so the caller provides it.
+ */
+unique_ptr<FILE, FileCloser>
+openWithBuffer(const std::filesystem::path& path, span<char> buffer) {
+  unique_ptr<FILE, FileCloser> ret(fopen(path.string().c_str(), "rb"));
+  if (ret != nullptr && setvbuf(ret.get(), buffer.data(), _IOFBF, buffer.size()) != 0) {
+    ret.reset();
+  }
+  return ret;
+}
+
+// `FailingFileState` ---------------------------------------------------------------------------------------
+
+#if defined(__GLIBC__) || defined(__APPLE__)
+#define ROCKET_TEST_HAS_FAILING_FILE
+
+/// The state of a `FILE` made by #openFailing.
+struct FailingFileState {
+  string input;
+  u64 pos = 0;
+};
+
+/// Reads from a #FailingFileState: first all of its input, then an I/O error.
+i64
+readFailing(void* cookie, char* buf, u64 size) {
+  auto& state = *static_cast<FailingFileState*>(cookie);
+  if (state.pos == state.input.size()) {
+    errno = EIO;
+    return -1;
+  }
+  const u64 n = min(size, state.input.size() - state.pos);
+  memcpy(buf, state.input.data() + state.pos, n);
+  state.pos += n;
+  return static_cast<i64>(n);
+}
+
+/// Returns a `FILE` that yields @p input and then fails, like a device with an I/O error, or null on error.
+unique_ptr<FILE, FileCloser>
+openFailing(string_view input) {
+  auto* state = new FailingFileState { string(input) }; // NOLINT: Deleted when the file is closed
+#ifdef __GLIBC__
+  cookie_io_functions_t functions {};
+  functions.read = [](void* cookie, char* buf, size_t size) -> ssize_t {
+    return readFailing(cookie, buf, size);
+  };
+  functions.close = [](void* cookie) {
+    delete static_cast<FailingFileState*>(cookie); // NOLINT
+    return 0;
+  };
+  unique_ptr<FILE, FileCloser> ret(fopencookie(state, "rb", functions));
+#else
+  unique_ptr<FILE, FileCloser> ret(funopen(
+    state,
+    [](void* cookie, char* buf, int size) { return static_cast<int>(readFailing(cookie, buf, size)); },
+    nullptr,
+    nullptr,
+    [](void* cookie) {
+      delete static_cast<FailingFileState*>(cookie); // NOLINT
+      return 0;
+    }));
+#endif
+  if (ret == nullptr) {
+    delete state; // NOLINT
+  }
+  return ret;
+}
+
+#endif // __GLIBC__ || __APPLE__
+
+// `PipeRedirect` -------------------------------------------------------------------------------------------
+
+#ifndef ROCKET_OS_WINDOWS
+
+/// Redirects a file descriptor to one end of a new pipe, and restores it on destruction.
+struct PipeRedirect {
+  explicit PipeRedirect(i32 fd) : fd_(fd) {
+    array<i32, 2> fds {};
+    if (pipe(fds.data()) != 0) {
+      return;
+    }
+    saved_ = dup(fd);
+    dup2(fd == STDIN_FILENO ? fds[0] : fds[1], fd);
+    close(fds[0]);
+    close(fds[1]);
+  }
+
+  PipeRedirect(const PipeRedirect&) = delete;
+  PipeRedirect& operator=(const PipeRedirect&) = delete;
+
+  ~PipeRedirect() {
+    if (saved_ >= 0) {
+      dup2(saved_, fd_);
+      close(saved_);
+    }
+  }
+
+  [[nodiscard]] bool ok() const { return saved_ >= 0; }
+
+private:
+
+  i32 fd_;
+  i32 saved_ = -1;
+};
+
+#endif // ROCKET_OS_WINDOWS
+
+// `TestNumpunct` -------------------------------------------------------------------------------------------
+
+/// A numeric punctuation facet with `'` as the thousands separator and `,` as the decimal point.
+struct TestNumpunct : numpunct<char> {
+  char do_decimal_point() const override { return ','; }
+  char do_thousands_sep() const override { return '\''; }
+  string do_grouping() const override { return "\3"; }
+};
+
 // Local functions ------------------------------------------------------------------------------------------
+
+#ifndef ROCKET_OS_WINDOWS
+/**
+ * Returns a `FILE` reading @p input from a pipe, which cannot seek, or null on error. If @p buffer is not
+ * empty, it is used as the buffer of the file and must outlive it.
+ *
+ * The input is written in full before reading starts, so it must fit into the pipe.
+ */
+unique_ptr<FILE, FileCloser>
+openPipe(string_view input, span<char> buffer = {}) {
+  array<i32, 2> fds {};
+  if (pipe(fds.data()) != 0) {
+    return {};
+  }
+  const auto written = write(fds[1], input.data(), input.size());
+  close(fds[1]);
+  unique_ptr<FILE, FileCloser> ret(fdopen(fds[0], "rb"));
+  if (ret == nullptr) {
+    close(fds[0]);
+    return {};
+  }
+  if (written != static_cast<ssize_t>(input.size()) ||
+    (not buffer.empty() && setvbuf(ret.get(), buffer.data(), _IOFBF, buffer.size()) != 0)) {
+    ret.reset();
+  }
+  return ret;
+}
+#endif // !ROCKET_OS_WINDOWS
+
+/// Returns a locale using #TestNumpunct, independent of the locales installed on the system.
+const locale&
+testLocale() {
+  static const locale ret(locale::classic(), new TestNumpunct); // NOLINT
+  return ret;
+}
 
 /// Returns "01234567890123...".
 string
@@ -34,6 +193,34 @@ testString(u64 n, i32 add = 0) {
     add = (add + 1) % 10;
   }
   return ret;
+}
+
+/**
+ * Returns a matcher for the #rocket::io::IoError thrown when opening a file that does not exist. Its message
+ * is @p msg, followed by the message of the error code.
+ */
+auto
+throwsDoesNotExist(const string& msg) {
+  const auto ec = make_error_code(errc::no_such_file_or_directory);
+  return Throws<io::IoError>(AllOf(
+    Property(&io::IoError::code, Eq(ec)),
+    Property(&io::IoError::message, Eq(fmt::format("{}: {}", msg, ec.message())))));
+}
+
+// Local test functions -------------------------------------------------------------------------------------
+
+/// Expects the remaining input of @p in to equal @p expected. Consumes the remaining input.
+void
+expectRest(Source& in, string_view expected) {
+  EXPECT_EQ(in.readString(), expected);
+}
+
+/// Expects the position of @p in to equal @p expected, if @p in can tell its position.
+void
+expectTell(Source& in, u64 expected) {
+  if (const auto pos = in.tell()) {
+    EXPECT_EQ(*pos, expected);
+  }
 }
 
 /**
@@ -113,121 +300,6 @@ forEachSource(string_view input, Fn fn) {
     fn(in);
   }
 }
-
-/// A numeric punctuation facet with `'` as the thousands separator and `,` as the decimal point.
-struct TestNumpunct : numpunct<char> {
-  char do_decimal_point() const override { return ','; }
-  char do_thousands_sep() const override { return '\''; }
-  string do_grouping() const override { return "\3"; }
-};
-
-/// Returns a locale using #TestNumpunct, independent of the locales installed on the system.
-const locale&
-testLocale() {
-  static const locale ret(locale::classic(), new TestNumpunct); // NOLINT
-  return ret;
-}
-
-/// Closes a `FILE`.
-struct FileCloser {
-  void operator()(FILE* file) const { fclose(file); }
-};
-
-/**
- * Opens @p path for reading with @p buffer as its buffer, or returns null on error. @p buffer must outlive
- * the file. glibc ignores the size if the buffer is null, so the caller provides it.
- */
-unique_ptr<FILE, FileCloser>
-openWithBuffer(const std::filesystem::path& path, span<char> buffer) {
-  unique_ptr<FILE, FileCloser> ret(fopen(path.string().c_str(), "rb"));
-  if (ret != nullptr && setvbuf(ret.get(), buffer.data(), _IOFBF, buffer.size()) != 0) {
-    ret.reset();
-  }
-  return ret;
-}
-
-#ifndef ROCKET_OS_WINDOWS
-/**
- * Returns a `FILE` reading @p input from a pipe, which cannot seek, or null on error. If @p buffer is not
- * empty, it is used as the buffer of the file and must outlive it.
- *
- * The input is written in full before reading starts, so it must fit into the pipe.
- */
-unique_ptr<FILE, FileCloser>
-openPipe(string_view input, span<char> buffer = {}) {
-  array<i32, 2> fds {};
-  if (pipe(fds.data()) != 0) {
-    return {};
-  }
-  const auto written = write(fds[1], input.data(), input.size());
-  close(fds[1]);
-  unique_ptr<FILE, FileCloser> ret(fdopen(fds[0], "rb"));
-  if (ret == nullptr) {
-    close(fds[0]);
-    return {};
-  }
-  if (written != static_cast<ssize_t>(input.size()) ||
-    (not buffer.empty() && setvbuf(ret.get(), buffer.data(), _IOFBF, buffer.size()) != 0)) {
-    ret.reset();
-  }
-  return ret;
-}
-#endif // !ROCKET_OS_WINDOWS
-
-#if defined(__GLIBC__) || defined(__APPLE__)
-#define ROCKET_TEST_HAS_FAILING_FILE
-
-/// The state of a `FILE` made by #openFailing.
-struct FailingFileState {
-  string input;
-  u64 pos = 0;
-};
-
-/// Reads from a #FailingFileState: first all of its input, then an I/O error.
-i64
-readFailing(void* cookie, char* buf, u64 size) {
-  auto& state = *static_cast<FailingFileState*>(cookie);
-  if (state.pos == state.input.size()) {
-    errno = EIO;
-    return -1;
-  }
-  const u64 n = min(size, state.input.size() - state.pos);
-  memcpy(buf, state.input.data() + state.pos, n);
-  state.pos += n;
-  return static_cast<i64>(n);
-}
-
-/// Returns a `FILE` that yields @p input and then fails, like a device with an I/O error, or null on error.
-unique_ptr<FILE, FileCloser>
-openFailing(string_view input) {
-  auto* state = new FailingFileState { string(input) }; // NOLINT: Deleted when the file is closed
-#ifdef __GLIBC__
-  cookie_io_functions_t functions {};
-  functions.read = [](void* cookie, char* buf, size_t size) -> ssize_t {
-    return readFailing(cookie, buf, size);
-  };
-  functions.close = [](void* cookie) {
-    delete static_cast<FailingFileState*>(cookie); // NOLINT
-    return 0;
-  };
-  unique_ptr<FILE, FileCloser> ret(fopencookie(state, "rb", functions));
-#else
-  unique_ptr<FILE, FileCloser> ret(funopen(
-    state,
-    [](void* cookie, char* buf, int size) { return static_cast<int>(readFailing(cookie, buf, size)); },
-    nullptr,
-    nullptr,
-    [](void* cookie) {
-      delete static_cast<FailingFileState*>(cookie); // NOLINT
-      return 0;
-    }));
-#endif
-  if (ret == nullptr) {
-    delete state; // NOLINT
-  }
-  return ret;
-}
-#endif // __GLIBC__ || __APPLE__
 
 /**
  * Calls @p fn with each kind of source over @p input: contiguous, seekable, and nonseekable, and files with
@@ -316,57 +388,16 @@ forEachScanSource(string_view input, Fn fn) {
   }
 }
 
-/// Expects the remaining input of @p in to equal @p expected. Consumes the remaining input.
-void
-expectRest(Source& in, string_view expected) {
-  EXPECT_EQ(in.readString(), expected);
-}
-
-/// Expects the position of @p in to equal @p expected, if @p in can tell its position.
-void
-expectTell(Source& in, u64 expected) {
-  if (const auto pos = in.tell()) {
-    EXPECT_EQ(*pos, expected);
-  }
-}
-
-void
-expectCodePoint(Source& in, char32 expected, u64 expectedTell) {
-  const auto result = readCodePoint(in);
-  ASSERT_TRUE(result.has_value());
-  EXPECT_EQ(static_cast<char32>(*result), expected);
-  EXPECT_EQ(in.tell(), expectedTell);
-}
-
-void
-expectNoCodePoint(Source& in) {
-  EXPECT_EQ(readCodePoint(in), nullopt);
-}
-
-void
-expectCharacter(Source& in, string_view expected, u64 expectedTell) {
-  const auto result = readCharacter(in);
-  ASSERT_TRUE(result.has_value());
-  EXPECT_EQ(static_cast<string>(*result), expected);
-  EXPECT_EQ(in.tell(), expectedTell);
-}
-
-/// Expects reading a code point from @p in, which is at position 0, to fail for invalid UTF-8.
-void
-expectInvalidUtf8(Source& in) {
-  EXPECT_THAT([&] { (void) readCodePoint(in); }, throwsInputFailure(0, EndsWith("Invalid UTF-8")));
-}
-
 } // namespace
 
 // Tests ====================================================================================================
 
-// `Sink` ...................................................................................................
+// `Sink` ---------------------------------------------------------------------------------------------------
 
 TEST(nio, FileSinkDoesNotExist) {
   EXPECT_THAT(
     [&] { const FileSink out("/file/does/not/exist"); },
-    ThrowsMessage<InvalidState>(EndsWith("Cannot open file `/file/does/not/exist` for writing")));
+    throwsDoesNotExist("Cannot open file `/file/does/not/exist` for writing"));
 }
 
 TEST(nio, NullSink) {
@@ -391,7 +422,7 @@ TEST(nio, SpanSink) {
   EXPECT_EQ(str, "---[ABCD]---");
 }
 
-TEST(nio, writeOffset) {
+TEST(nio, StringSinkWriteOffset) {
   const string_view str = "abcdef";
   const span<const u8> bytes(reinterpret_cast<const u8*>(str.data()), str.size());
   StringSink out;
@@ -416,6 +447,66 @@ TEST(nio, StreamSink) {
   StreamSink out(os);
   out.println("Hi {}", "there");
   EXPECT_EQ(os.str(), "Hi there\n");
+}
+
+TEST(nio, StreamSinkDoesNotExist) {
+  EXPECT_THAT(
+    [&] { const StreamSink out("/file/does/not/exist"); },
+    throwsDoesNotExist("Cannot open file `/file/does/not/exist` for writing"));
+}
+
+TEST(nio, StreamSinkLeavesExceptionMaskAlone) {
+  // A stream that is bad already, with `badbit` in its exception mask, does not make the constructor throw
+  ostringstream os;
+  os.exceptions(ios::badbit);
+  os.setstate(ios::failbit);
+  try {
+    os.setstate(ios::badbit);
+  } catch (const ios::failure&) {
+  }
+  const StreamSink out(os);
+  EXPECT_TRUE(out.bad());
+  EXPECT_EQ(out.code(), errc::io_error);
+  EXPECT_EQ(os.exceptions(), ios::badbit);
+
+  ostringstream os2;
+  const StreamSink out2(os2);
+  EXPECT_EQ(os2.exceptions(), ios::goodbit);
+  EXPECT_FALSE(out2.code());
+}
+
+TEST(nio, StreamSinkBufferThrows) {
+  // A `system_error` from the stream buffer keeps its code, any other exception is an I/O error. Neither
+  // escapes, whatever the exception mask
+  struct ThrowingOutBuf : streambuf {
+    bool system = false;
+
+  protected:
+
+    int_type
+    overflow(int_type) override {
+      if (system) {
+        throw system_error(make_error_code(errc::no_space_on_device));
+      }
+      throw runtime_error("Simulated I/O error");
+    }
+  };
+
+  for (const auto mask : { ios::goodbit, ios::badbit, ios::badbit | ios::failbit | ios::eofbit }) {
+    for (const bool system : { false, true }) {
+      SCOPED_TRACE(fmt::format("mask {}, system {}", static_cast<i32>(mask), system));
+      ThrowingOutBuf buf;
+      buf.system = system;
+      ostream os(&buf);
+      os.exceptions(mask);
+      StreamSink out(os);
+      u64 n = 1;
+      EXPECT_NO_THROW(n = out.write("abc"));
+      EXPECT_EQ(n, 0);
+      EXPECT_TRUE(out.bad());
+      EXPECT_EQ(out.code(), system ? errc::no_space_on_device : errc::io_error);
+    }
+  }
 }
 
 TEST(nio, StreamSinkExceptionMask) {
@@ -607,12 +698,88 @@ TEST(nio, printSpanSinkTruncated) {
   }
 }
 
-// `Source` .................................................................................................
+// `Source` -------------------------------------------------------------------------------------------------
 
 TEST(nio, FileSourceDoesNotExist) {
   EXPECT_THAT(
     [&] { const FileSource in("/file/does/not/exist"); },
-    ThrowsMessage<InvalidState>(EndsWith("Cannot open file `/file/does/not/exist` for reading")));
+    throwsDoesNotExist("Cannot open file `/file/does/not/exist` for reading"));
+}
+
+TEST(nio, StreamSourceDoesNotExist) {
+  EXPECT_THAT(
+    [&] { const StreamSource in("/file/does/not/exist"); },
+    throwsDoesNotExist("Cannot open file `/file/does/not/exist` for reading"));
+}
+
+TEST(nio, StreamSourceExceptionMask) {
+  // Reaching the end of the input is no error, even with `failbit` and `eofbit` in the exception mask
+  for (const auto mask : { ios::goodbit, ios::badbit | ios::failbit | ios::eofbit }) {
+    SCOPED_TRACE(fmt::format("mask {}", static_cast<i32>(mask)));
+    {
+      istringstream is("a\nb");
+      is.exceptions(mask);
+      StreamSource in(is);
+      EXPECT_EQ(in.readln(), "a");
+      EXPECT_EQ(in.readln(), "b"); // Hits the end, which sets `eofbit`
+      EXPECT_EQ(in.readln(), nullopt);
+      EXPECT_EQ(in.peek(), nullopt);
+      EXPECT_FALSE(in.bad());
+      EXPECT_FALSE(in.code());
+      EXPECT_TRUE(in.seek(0));
+      EXPECT_EQ(in.readln(), "a");
+      EXPECT_EQ(is.exceptions(), mask);
+    }
+    {
+      istringstream is("abc");
+      is.exceptions(mask);
+      StreamSource in(is);
+      string s(5, '.');
+      EXPECT_EQ(in.read(s), 3); // A short read sets `failbit` and `eofbit`
+      EXPECT_EQ(s, "abc..");
+      EXPECT_EQ(in.read(s), 0);
+      EXPECT_FALSE(in.bad());
+      EXPECT_FALSE(in.code());
+    }
+  }
+}
+
+TEST(nio, StreamSourceBufferThrows) {
+  // `FailingBuf` throws a `runtime_error`, which the stream rethrows if `badbit` is in its exception mask
+  for (const auto mask : { ios::goodbit, ios::badbit }) {
+    SCOPED_TRACE(fmt::format("mask {}", static_cast<i32>(mask)));
+    FailingBuf buf("ab");
+    istream is(&buf);
+    is.exceptions(mask);
+    StreamSource in(is);
+    string s(3, '.');
+    u64 n = 3;
+    EXPECT_NO_THROW(n = in.read(s));
+    EXPECT_LE(n, 2); // With libstdc++, `gcount` does not count the bytes before the stream buffer threw
+    EXPECT_TRUE(in.bad());
+    EXPECT_EQ(in.code(), errc::io_error);
+
+    // A seek restores the source and clears the code, even if the seek fails, as `FailingBuf` cannot seek
+    EXPECT_FALSE(in.seek(0));
+    EXPECT_FALSE(in.bad());
+    EXPECT_FALSE(in.code());
+  }
+}
+
+TEST(nio, FileSourceCodeAtEndOfInput) {
+  // Reading to the end of the input does not set the code
+  const auto temp = rocket::filesystem::tempFile();
+  {
+    FileSink out(temp);
+    out.write("abc");
+  }
+  FileSource in(temp);
+  string s(5, '.');
+  EXPECT_EQ(in.read(s), 3);
+  EXPECT_EQ(in.peek(), nullopt);
+  EXPECT_EQ(in.readln(), nullopt);
+  EXPECT_FALSE(in.bad());
+  EXPECT_FALSE(in.code());
 }
 
 TEST(nio, FileSourceReadAll) {
@@ -673,8 +840,10 @@ TEST(nio, FileSourceScan) {
 }
 
 #ifndef ROCKET_OS_WINDOWS // The Windows C runtime only guarantees one character of putback
+
 // A tiny `FILE` buffer makes scnlib refill it during a scan, so that backtracking puts back input from an
 // earlier buffer. Without the scnlib patch, this returned input from the current buffer twice
+
 TEST(nio, FileSourceScanBacktrackAcrossBufferRefill) {
   const auto temp = rocket::filesystem::tempFile();
   {
@@ -710,7 +879,8 @@ TEST(nio, FileSourceScanFailureAcrossBufferRefill) {
   EXPECT_FALSE((in.scan<string, i32>("{} {}")));
   EXPECT_EQ(in.readString(), "abcdefgh rest");
 }
-#endif
+
+#endif // ROCKET_OS_WINDOWS
 
 TEST(nio, NullSource) {
   // Like `/dev/null`, the source is always at the end of its input
@@ -863,40 +1033,6 @@ TEST(nio, StringSourceSeek) {
 }
 
 #ifndef ROCKET_OS_WINDOWS
-namespace {
-
-/// Redirects a file descriptor to one end of a new pipe, and restores it on destruction.
-struct PipeRedirect {
-  explicit PipeRedirect(i32 fd) : fd_(fd) {
-    array<i32, 2> fds {};
-    if (pipe(fds.data()) != 0) {
-      return;
-    }
-    saved_ = dup(fd);
-    dup2(fd == STDIN_FILENO ? fds[0] : fds[1], fd);
-    close(fds[0]);
-    close(fds[1]);
-  }
-
-  PipeRedirect(const PipeRedirect&) = delete;
-  PipeRedirect& operator=(const PipeRedirect&) = delete;
-
-  ~PipeRedirect() {
-    if (saved_ >= 0) {
-      dup2(saved_, fd_);
-      close(saved_);
-    }
-  }
-
-  [[nodiscard]] bool ok() const { return saved_ >= 0; }
-
-private:
-
-  i32 fd_;
-  i32 saved_ = -1;
-};
-
-} // namespace
 
 TEST(nio, standardStreamsOverPipes) {
   // With `stdin` and `stdout` over pipes, the standard streams are not seekable. That is decided from the
@@ -925,7 +1061,8 @@ TEST(nio, standardStreamsOverPipes) {
   }
   clearerr(stdin);
 }
-#endif // !ROCKET_OS_WINDOWS
+
+#endif // ROCKET_OS_WINDOWS
 
 TEST(nio, seekableSources) {
   const auto temp = rocket::filesystem::tempFile();
@@ -964,6 +1101,25 @@ TEST(nio, seekableSources) {
     char c = '\0';
     ASSERT_EQ(in.read(c), 1);
     EXPECT_EQ(in.seekable(), in.tell().has_value());
+  });
+}
+
+TEST(nio, SourcePeek) {
+  forEachSource("ab", [](Source& in) {
+    EXPECT_EQ(in.peek(), 'a');
+    EXPECT_EQ(in.peek(), 'a'); // Peeking does not advance
+    EXPECT_EQ(in.tell(), 0);
+
+    char c = '\0';
+    EXPECT_EQ(in.read(c), 1);
+    EXPECT_EQ(c, 'a');
+    EXPECT_EQ(in.peek(), 'b');
+    EXPECT_EQ(in.tell(), 1);
+
+    EXPECT_EQ(in.read(c), 1);
+    EXPECT_EQ(c, 'b');
+    EXPECT_EQ(in.peek(), nullopt);
+    EXPECT_TRUE(in.eof());
   });
 }
 
@@ -1119,6 +1275,7 @@ TEST(nio, scanMultipleValues) {
 }
 
 #ifndef ROCKET_OS_WINDOWS
+
 TEST(nio, scanTimePointFromPipe) {
   using namespace std::chrono;
   constexpr string_view INPUT = "2026-11-14T12:34:56 rest";
@@ -1140,7 +1297,8 @@ TEST(nio, scanTimePointFromPipe) {
     expectRest(in, " rest"); // Only the time point was consumed
   }
 }
-#endif // !ROCKET_OS_WINDOWS
+
+#endif // ROCKET_OS_WINDOWS
 
 TEST(nio, scanSkipsWhitespace) {
   // Leading whitespace is skipped, trailing whitespace is not consumed
@@ -1297,140 +1455,6 @@ TEST(nio, scanNullSource) {
   EXPECT_EQ(result.error().code(), scn::scan_error::end_of_input);
   EXPECT_FALSE(in.scan<i32>(testLocale(), "{:L}"));
   EXPECT_TRUE(in.scan<>("")); // Nothing expected, so nothing missing
-}
-
-// `peek` ...................................................................................................
-
-TEST(nio, peek) {
-  forEachSource("ab", [](Source& in) {
-    EXPECT_EQ(in.peek(), 'a');
-    EXPECT_EQ(in.peek(), 'a'); // Peeking does not advance
-    EXPECT_EQ(in.tell(), 0);
-
-    char c = '\0';
-    EXPECT_EQ(in.read(c), 1);
-    EXPECT_EQ(c, 'a');
-    EXPECT_EQ(in.peek(), 'b');
-    EXPECT_EQ(in.tell(), 1);
-
-    EXPECT_EQ(in.read(c), 1);
-    EXPECT_EQ(c, 'b');
-    EXPECT_EQ(in.peek(), nullopt);
-    EXPECT_TRUE(in.eof());
-  });
-}
-
-// `readCharacter` ..........................................................................................
-
-TEST(nio, readCharacter) {
-  forEachSource("ab", [](Source& in) {
-    expectCharacter(in, "a", 1);
-    expectCharacter(in, "b", 2);
-    EXPECT_EQ(readCharacter(in), nullopt); // End of input
-  });
-
-  // A combining mark continues the character
-  forEachSource("a\u0301b", [](Source& in) {
-    expectCharacter(in, "a\u0301", 3);
-    expectCharacter(in, "b", 4);
-  });
-
-  // CR LF is a single character, although both code points are ASCII
-  forEachSource("\r\nx", [](Source& in) {
-    expectCharacter(in, "\r\n", 2);
-    expectCharacter(in, "x", 3);
-  });
-
-  // Man, ZWJ, woman, ZWJ, boy
-  forEachSource("\U0001F468\u200D\U0001F469\u200D\U0001F466x", [](Source& in) {
-    expectCharacter(in, "\U0001F468\u200D\U0001F469\u200D\U0001F466", 18);
-    expectCharacter(in, "x", 19);
-  });
-
-  // Two flags, each made of two regional indicators
-  forEachSource("\U0001F1E9\U0001F1EA\U0001F1EB\U0001F1F7", [](Source& in) {
-    expectCharacter(in, "\U0001F1E9\U0001F1EA", 8);
-    expectCharacter(in, "\U0001F1EB\U0001F1F7", 16);
-  });
-
-  // A non-ASCII code point that does not continue the character is gone back over
-  forEachSource("äö", [](Source& in) {
-    expectCharacter(in, "ä", 2);
-    expectCharacter(in, "ö", 4);
-  });
-}
-
-TEST(nio, readCharacterInvalidUtf8) {
-  // At the start of the character, invalid UTF-8 throws, and the source is not advanced
-  forEachSource("\xFF" "a", [](Source& in) {
-    EXPECT_THAT([&] { (void) readCharacter(in); }, throwsInputFailure(0, EndsWith("Invalid UTF-8")));
-    expectRest(in, "\xFF" "a");
-  });
-
-  // After the first code point, invalid UTF-8 ends the character, and stays in the source
-  forEachSource("a\xFF", [](Source& in) {
-    expectCharacter(in, "a", 1);
-    expectRest(in, "\xFF");
-  });
-  forEachSource("a\xC3", [](Source& in) { // Truncated
-    expectCharacter(in, "a", 1);
-    expectRest(in, "\xC3");
-  });
-}
-
-// `readCodePoint` ..........................................................................................
-
-TEST(nio, readCodePointValid) {
-  // One, two, three, and four UTF-8 bytes
-  forEachSource("aä€\U0001F971", [](Source& in) {
-    expectCodePoint(in, U'a', 1);
-    expectCodePoint(in, U'ä', 3);
-    expectCodePoint(in, U'€', 6);
-    expectCodePoint(in, U'\U0001F971', 10);
-  });
-}
-
-TEST(nio, readCodePointEof) {
-  forEachSource("", [](Source& in) {
-    expectNoCodePoint(in);
-    EXPECT_TRUE(in.eof());
-  });
-
-  forEachSource("a", [](Source& in) {
-    expectCodePoint(in, U'a', 1);
-    expectNoCodePoint(in);
-    EXPECT_TRUE(in.eof());
-    expectNoCodePoint(in); // Still at the end
-  });
-}
-
-// On invalid UTF-8, the source is not advanced. All of these sources can seek
-
-TEST(nio, readCodePointInvalidLeadByte) {
-  for (const string_view input : { "\xFFx"sv, "\x80x"sv, "\xC0\x80x"sv }) {
-    forEachSource(input, [input](Source& in) {
-      expectInvalidUtf8(in);
-      expectRest(in, input);
-    });
-  }
-}
-
-TEST(nio, readCodePointTruncatedSequence) {
-  for (const string_view input : { "\xC3"sv, "\xE2\x82"sv, "\xF0\x9F\x98"sv }) {
-    forEachSource(input, [input](Source& in) {
-      expectInvalidUtf8(in);
-      expectRest(in, input);
-    });
-  }
-}
-
-TEST(nio, readCodePointInvalidContinuation) {
-  for (const string_view input : { "\xC3" "Ax"sv, "\xE2\x82" "Ax"sv, "\xED\xA0\x80x"sv }) { // Last: surrogate
-    forEachSource(input, [input](Source& in) {
-      expectInvalidUtf8(in);
-      expectRest(in, input);
-    });
-  }
 }
 
 // EOF

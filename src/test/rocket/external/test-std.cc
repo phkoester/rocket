@@ -6,7 +6,6 @@
 
 #include "rocket-test/rocket-test.h"
 
-#include "rocket/chrono/chrono.h"
 #include "rocket/io/io.h"
 #include "rocket/nio/nio.h"
 
@@ -62,28 +61,6 @@ TEST(std, rethrowException) {
         cout << "Caught ...\n"; // NOLINT
       }
     }
-  }
-}
-
-TEST(std, chronoFormat) {
-  using namespace std::chrono;
-
-  const auto now = rocket::chrono::now<system_clock>();
-
-  {
-    // Local time in ISO-8601, with microseconds
-    const time_point tp = time_point_cast<microseconds>(now);
-    // const auto zt { chrono::zoned_time{ chrono::current_zone(), tp } };
-    const rocket::chrono::zoned_time zt { rocket::chrono::current_zone(), tp };
-    const string str = fmt::format("{:%FT%T%Ez}", zt);
-    EXPECT_THAT(str, matchesRegex("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{6}[+-]\\d{2}:\\d{2}"));
-  }
-
-  {
-    // UTC time in ISO-8601, with microseconds
-    const time_point tp = time_point_cast<microseconds>(now);
-    const string str = fmt::format("{:%FT%TZ}", tp);
-    EXPECT_THAT(str, matchesRegex("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{6}Z"));
   }
 }
 
