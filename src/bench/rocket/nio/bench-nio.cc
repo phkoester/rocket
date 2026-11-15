@@ -70,7 +70,8 @@ tempFileWithLines(string_view line, u64 n) {
 void
 nio_FileSourceReadln(benchmark::State& state) { // NOLINT(*-internal-linkage)
   // Locks the `FILE` once per line, not once per character
-  const auto temp = tempFileWithLines("The quick brown fox jumps over the lazy dog, again and again.\n", 16'384);
+  const auto temp = tempFileWithLines(
+    "The quick brown fox jumps over the lazy dog, again and again.\n", 16'384);
   for (auto _ : state) { // NOLINT
     FileSource in(temp);
     u64 n = 0;
