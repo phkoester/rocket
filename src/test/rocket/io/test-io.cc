@@ -19,14 +19,6 @@ struct FileCloser {
 
 using FilePtr = unique_ptr<FILE, FileCloser>;
 
-// Local functions ------------------------------------------------------------------------------------------
-
-bool
-seek(FILE* file, i64 offset, i32 origin) {
-  ROCKET_ASSERT(file != nullptr);
-  return io::seek(file, offset, origin, io::seekable(file));
-}
-
 } // namespace
 
 // Tests ====================================================================================================
@@ -79,35 +71,26 @@ TEST(io, seekAndTellFile) {
   EXPECT_TRUE(io::seekable(file.get()));
   EXPECT_EQ(io::tell(file.get()), 0);
 
-  EXPECT_TRUE(seek(file.get(), 3, SEEK_SET));
+  EXPECT_TRUE(io::seek(file.get(), 3, SEEK_SET));
   EXPECT_EQ(io::tell(file.get()), 3);
   EXPECT_EQ(fgetc(file.get()), '3');
   EXPECT_EQ(io::tell(file.get()), 4);
-  EXPECT_TRUE(seek(file.get(), -2, SEEK_CUR));
+  EXPECT_TRUE(io::seek(file.get(), -2, SEEK_CUR));
   EXPECT_EQ(io::tell(file.get()), 2);
-  EXPECT_TRUE(seek(file.get(), -1, SEEK_END));
+  EXPECT_TRUE(io::seek(file.get(), -1, SEEK_END));
   EXPECT_EQ(io::tell(file.get()), 9);
   EXPECT_EQ(fgetc(file.get()), '9');
   EXPECT_EQ(fgetc(file.get()), EOF);
   EXPECT_TRUE(feof(file.get()));
-  EXPECT_TRUE(seek(file.get(), 0, SEEK_SET)); // Clears the end-of-file indicator
+  EXPECT_TRUE(io::seek(file.get(), 0, SEEK_SET)); // Clears the end-of-file indicator
   EXPECT_FALSE(feof(file.get()));
   EXPECT_EQ(io::tell(file.get()), 0);
 
   // Seeking before the beginning fails, and sets `errno`
   errno = 0;
-  EXPECT_FALSE(seek(file.get(), -1, SEEK_SET));
+  EXPECT_FALSE(io::seek(file.get(), -1, SEEK_SET));
   EXPECT_NE(errno, 0);
   EXPECT_EQ(io::tell(file.get()), 0);
-
-  // With seekability passed in, the stream is not asked. A stream said not to be seekable has no position
-  EXPECT_TRUE(io::seek(file.get(), 5, SEEK_SET, true));
-  EXPECT_EQ(io::tell(file.get(), true), 5);
-  errno = 0;
-  EXPECT_FALSE(io::seek(file.get(), 0, SEEK_SET, false));
-  EXPECT_EQ(errno, ESPIPE);
-  EXPECT_EQ(io::tell(file.get(), false), NPOS);
-  EXPECT_EQ(io::tell(file.get()), 5); // Unchanged
 }
 
 #ifndef ROCKET_OS_WINDOWS
@@ -124,7 +107,7 @@ TEST(io, seekAndTellPipe) {
   EXPECT_FALSE(io::seekable(file.get()));
   EXPECT_EQ(io::tell(file.get()), NPOS);
   errno = 0;
-  EXPECT_FALSE(seek(file.get(), 0, SEEK_SET));
+  EXPECT_FALSE(io::seek(file.get(), 0, SEEK_SET));
   EXPECT_EQ(errno, ESPIPE);
   EXPECT_EQ(fgetc(file.get()), 'a');
   EXPECT_EQ(io::tell(file.get()), NPOS);
@@ -136,7 +119,7 @@ TEST(io, seekAndTellMemoryStream) {
   const FilePtr file(fmemopen(buf.data(), buf.size(), "rb"));
   ASSERT_NE(file, nullptr);
   EXPECT_TRUE(io::seekable(file.get()));
-  EXPECT_TRUE(seek(file.get(), 4, SEEK_SET));
+  EXPECT_TRUE(io::seek(file.get(), 4, SEEK_SET));
   EXPECT_EQ(io::tell(file.get()), 4);
   EXPECT_EQ(fgetc(file.get()), 'e');
 }

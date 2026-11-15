@@ -571,9 +571,9 @@ TEST(nio, seekableSinks) {
   EXPECT_FALSE(NullSink().seekable());
 
   string str = "....";
-  EXPECT_FALSE(SpanSink(span<char>(str.data(), str.size())).seekable());
+  EXPECT_TRUE(SpanSink(span<char>(str.data(), str.size())).seekable());
 
-  EXPECT_FALSE(StringSink().seekable());
+  EXPECT_TRUE(StringSink().seekable());
 
   ostringstream os;
   EXPECT_TRUE(StreamSink(os).seekable());
@@ -759,10 +759,10 @@ TEST(nio, StreamSourceBufferThrows) {
     EXPECT_TRUE(in.bad());
     EXPECT_EQ(in.code(), errc::io_error);
 
-    // A seek restores the source and clears the code, even if the seek fails, as `FailingBuf` cannot seek
+    // A seek restores the source, but does not clear the code
     EXPECT_FALSE(in.seek(0));
     EXPECT_FALSE(in.bad());
-    EXPECT_FALSE(in.code());
+    EXPECT_EQ(in.code(), errc::invalid_seek);
   }
 }
 
@@ -1037,29 +1037,69 @@ TEST(nio, StringSourceSeek) {
 TEST(nio, standardStreamsOverPipes) {
   // With `stdin` and `stdout` over pipes, the standard streams are not seekable. That is decided from the
   // `FILE` alone, without seeking the stream buffer, which would seek the `FILE` and set `errno`
+  //
+  // While `stdout` is redirected, gtest cannot report a failure: writing to the pipe raises `SIGPIPE`. So
+  // the results are only collected there, and checked once `stdout` is restored
+  struct {
+    bool inOk = false;
+    bool outOk = false;
+    u64 ioTell = 0;
+    bool ioSeekableCin = true;
+    bool ioSeekableCout = true;
+    i32 errnoAfterIo = -1;
+    bool srcSeekable = true;
+    optional<u64> srcTell;
+    i32 errnoAfterTell = -1;
+    bool seekBeg = true;
+    bool seekCur = true;
+    i32 errnoAfterSeek = -1;
+    error_code srcCode;
+    bool cinFail = true;
+  } r;
+
   fflush(stdout);
   cout.flush();
   {
     const PipeRedirect in(STDIN_FILENO);
     const PipeRedirect out(STDOUT_FILENO);
-    ASSERT_TRUE(in.ok());
-    ASSERT_TRUE(out.ok());
+    r.inOk = in.ok();
+    r.outOk = out.ok();
+    if (r.inOk && r.outOk) {
+      errno = 0;
+      r.ioTell = io::tell(cin);
+      r.ioSeekableCin = io::seekable(cin);
+      r.ioSeekableCout = io::seekable(cout);
+      r.errnoAfterIo = errno;
 
-    errno = 0;
-    EXPECT_EQ(io::tell(cin), NPOS);
-    EXPECT_FALSE(io::seekable(cin));
-    EXPECT_FALSE(io::seekable(cout));
-    EXPECT_EQ(errno, 0);
+      StreamSource src(cin);
+      r.srcSeekable = src.seekable();
+      r.srcTell = src.tell();
+      r.errnoAfterTell = errno;
 
-    StreamSource src(cin);
-    EXPECT_FALSE(src.seekable());
-    EXPECT_EQ(src.tell(), nullopt);
-    EXPECT_FALSE(src.seek(0));
-    EXPECT_FALSE(src.seek(0, SeekMode::cur));
-    EXPECT_EQ(errno, 0);
-    EXPECT_FALSE(cin.fail());
+      // A source that cannot seek fails a seek with `ESPIPE`, without seeking the stream buffer
+      r.seekBeg = src.seek(0);
+      r.seekCur = src.seek(0, SeekMode::cur);
+      r.errnoAfterSeek = errno;
+      r.srcCode = src.code();
+      r.cinFail = cin.fail();
+    }
   }
   clearerr(stdin);
+
+  ASSERT_TRUE(r.inOk);
+  ASSERT_TRUE(r.outOk);
+  EXPECT_EQ(r.ioTell, NPOS);
+  EXPECT_FALSE(r.ioSeekableCin);
+  EXPECT_FALSE(r.ioSeekableCout);
+  EXPECT_EQ(r.errnoAfterIo, 0);
+  EXPECT_FALSE(r.srcSeekable);
+  EXPECT_EQ(r.srcTell, nullopt);
+  EXPECT_EQ(r.errnoAfterTell, 0);
+  EXPECT_FALSE(r.seekBeg);
+  EXPECT_FALSE(r.seekCur);
+  EXPECT_EQ(r.errnoAfterSeek, ESPIPE);
+  EXPECT_EQ(r.srcCode, errc::invalid_seek);
+  EXPECT_FALSE(r.cinFail);
 }
 
 #endif // ROCKET_OS_WINDOWS

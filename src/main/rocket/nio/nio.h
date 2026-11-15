@@ -87,17 +87,19 @@ struct Device {
   /**
    * Checks if the position in the device can be changed.
    *
-   * For a source, this tells if #rocket::nio::Source#seek and #rocket::nio::Source#tell work. For a sink,
-   * which has no position of its own, this tells if the underlying device has one, e.g., a regular file.
-   * Pipes, sockets, terminals, and memory that is only appended to are not seekable.
+   * For a source, this tells if #rocket::nio::Source#seek and #rocket::nio::Source#tell work.
+   * Pipes, sockets, and terminals are not seekable.
+   *
+   * This is determined once, at construction, as this may take a system call.
    *
    * @return if the device is seekable
    */
-  [[nodiscard]] virtual bool seekable() const = 0;
+  [[nodiscard]] bool seekable() const { return seekable_; }
 
 protected:
 
   std::error_code ec_; ///< The error code of the device, see #code.
+  bool seekable_ = false; ///< Whether the device is seekable, see #seekable.
 
   /// @ctor_default
   Device() = default;
@@ -263,7 +265,7 @@ struct Sink : Device {
    * @return the number of bytes written
    * @throw #rocket::InvalidArgument if @p offset is greater than the size of @p in
    */
-  u64 write(std::string_view in, u64 offset, u64 n = std::string_view::npos);
+  u64 write(std::string_view in, u64 offset, u64 n = NPOS);
 
   /**
    * Writes a string and a line feed to the sink.
@@ -282,12 +284,12 @@ struct Sink : Device {
    * @return the number of bytes written
    * @throw #rocket::InvalidArgument if @p offset is greater than the size of @p in
    */
-  u64 writeln(std::string_view in, u64 offset, u64 n = std::string_view::npos);
+  u64 writeln(std::string_view in, u64 offset, u64 n = NPOS);
 
 protected:
 
-  /// @ctor
-  Sink() {}
+  /// @ctor_default
+  Sink() = default;
 
   /**
    * Prints a formatted message to the sink. This is the type-erased backend of #print.
@@ -365,8 +367,6 @@ struct FileSink : Sink {
 
   [[nodiscard]] i32 handle() const override;
 
-  [[nodiscard]] bool seekable() const override { return seekable_; }
-
   using Sink::write;
 
   u64 write(std::span<const u8> in) override;
@@ -383,7 +383,6 @@ ROCKET_TEST_PRIVATE:
 
   FILE* file_; ///< The `FILE` pointer, never null.
   bool closeOnDestroy_; ///< Whether to close the file on destruction.
-  bool seekable_ = false; ///< Whether the file is seekable, determined at construction.
 };
 
 // `NullSink` -----------------------------------------------------------------------------------------------
@@ -405,8 +404,6 @@ struct NullSink : Sink {
   bool flush() override { return true; }
 
   [[nodiscard]] i32 handle() const override { return -1; }
-
-  [[nodiscard]] bool seekable() const override { return false; }
 
   using Sink::write;
 
@@ -444,7 +441,6 @@ struct SpanSink : Sink {
 
   [[nodiscard]] i32 handle() const override { return -1; }
 
-  [[nodiscard]] bool seekable() const override { return false; }
   using Sink::write;
 
   u64 write(std::span<const u8> in) override;
@@ -467,6 +463,10 @@ private:
 
 /**
  * The class #StreamSink provides support for #std::ostream.
+ *
+ * Whether the stream is seekable is determined once, at construction, as this may take a system call. If the
+ * stream buffer is replaced afterward, e.g., with `rdbuf`, the stream is still considered seekable or not as
+ * before.
  *
  * The exception mask of the stream is left alone. Whatever it is, the sink does not throw on I/O errors, nor
  * for any state bit in the mask: an exception from the stream buffer is an I/O error, which makes the sink
@@ -522,8 +522,6 @@ struct StreamSink : Sink {
     return ptr_ != nullptr ? *ptr_ : static_cast<const std::ostream&>(owned_);
   }
 
-  [[nodiscard]] bool seekable() const override;
-
   using Sink::write;
 
   u64 write(std::span<const u8> in) override;
@@ -554,14 +552,14 @@ struct StringSink : Sink {
   /**
    * Constructs a new #StringSink with an owned string.
    */
-  explicit StringSink() = default;
+  explicit StringSink();
 
   /**
    * Constructs a new #StringSink with a string reference and no owned string.
    *
    * @param ref the string to write to. The reference must remain valid for the lifetime of the #StringSink
    */
-  explicit StringSink(std::string& ref) : ptr_(&ref) {}
+  explicit StringSink(std::string& ref);
 
   ~StringSink() override = default;
 
@@ -572,8 +570,6 @@ struct StringSink : Sink {
   bool flush() override { return true; }
 
   [[nodiscard]] i32 handle() const override { return -1; }
-
-  [[nodiscard]] bool seekable() const override { return false; }
 
   /**
    * Returns a reference to the string (either referenced or owned).
@@ -642,7 +638,7 @@ struct Source : Device {
    *
    * Unlike reading and seeking back, this also works with sources that cannot seek, such as pipes.
    *
-   * @return the next character, or `nullopt` if no character is available
+   * @return the next character, or null if no character is available
    */
   virtual std::optional<char> peek() = 0;
 
@@ -750,9 +746,6 @@ struct Source : Device {
   /**
    * Seeks a new position in the source.
    *
-   * This first restores a source that is #bad or at the end of its input, which clears its #code. A seek that
-   * fails, e.g., because the source cannot seek, does not make the source bad.
-   *
    * @param offset the offset to seek to
    * @param mode the seek mode
    * @return if the operation succeeded
@@ -824,8 +817,6 @@ struct ContiguousSource : Source {
 
   std::optional<std::string> readln() override;
 
-  [[nodiscard]] bool seekable() const final { return true; }
-
   [[nodiscard]] std::optional<u64> tell() final { return position(); }
 
   /**
@@ -844,7 +835,7 @@ protected:
     const std::locale& locale, std::string_view fmt, scn::scan_args args) override;
 
   /// @ctor_default
-  ContiguousSource() = default;
+  ContiguousSource() { seekable_ = true; }
 };
 
 // `FileSource` ---------------------------------------------------------------------------------------------
@@ -896,8 +887,6 @@ struct FileSource : Source {
 
   bool seek(i64 offset, SeekMode mode) override;
 
-  [[nodiscard]] bool seekable() const override { return seekable_; }
-
   [[nodiscard]] std::optional<u64> tell() override;
 
 protected:
@@ -912,7 +901,6 @@ ROCKET_TEST_PRIVATE:
 
   FILE* file_; ///< The `FILE` pointer, never null.
   bool closeOnDestroy_; ///< Whether to close the file on destruction.
-  bool seekable_ = false; ///< Whether the file is seekable, determined at construction.
 };
 
 // `NullSource` ---------------------------------------------------------------------------------------------
@@ -924,7 +912,7 @@ ROCKET_TEST_PRIVATE:
  * seeking always succeeds, to any offset in any mode, and the position always stays 0.
  */
 struct NullSource : Source {
-  NullSource() = default;
+  NullSource() { seekable_ = true; }
 
   ~NullSource() override = default;
 
@@ -945,8 +933,6 @@ struct NullSource : Source {
   using Source::seek;
 
   bool seek(i64, SeekMode) override { return true; }
-
-  [[nodiscard]] bool seekable() const override { return true; }
 
   [[nodiscard]] std::optional<u64> tell() override { return 0; }
 
@@ -1023,6 +1009,10 @@ private:
 /**
  * The class #StreamSource provides support for #std::istream.
  *
+ * Whether the stream is seekable is determined once, at construction, as this may take a system call. If the
+ * stream buffer is replaced afterward, e.g., with `rdbuf`, the stream is still considered seekable or not as
+ * before.
+ *
  * The exception mask of the stream is left alone. Whatever it is, the source does not throw on I/O errors,
  * nor for any state bit in the mask: an exception from the stream buffer is an I/O error, which makes the
  * source #bad and sets its #code.
@@ -1081,8 +1071,6 @@ struct StreamSource : Source {
   using Source::seek;
 
   bool seek(i64 offset, SeekMode mode) override;
-
-  [[nodiscard]] bool seekable() const override;
 
   [[nodiscard]] std::optional<u64> tell() override;
 

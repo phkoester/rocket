@@ -91,7 +91,7 @@ scn::scan_expected<void>
 checkFileScan(Source& in, const scn::scan_file& file, const scn::scan_expected<T>& result) {
   // glibc can put back any amount of input, but the Windows C runtime only guarantees one character
   if (const auto n = file.prelude().size(); n != 0) {
-    const auto pos = in.seekable() ? in.tell() : optional<u64>();
+    const auto pos = in.tell();
     if (not pos || *pos < n || not in.seek(static_cast<i64>(*pos - n), SeekMode::beg)) {
       return scn::unexpected(
         scn::scan_error(scn::scan_error::invalid_source_state, "Cannot put back unread input"));
@@ -412,7 +412,9 @@ FileSink::write(span<const u8> in) {
 // `SpanSink` -----------------------------------------------------------------------------------------------
 
 SpanSink::SpanSink(span<char> out) :
-  out_(out) {}
+  out_(out) {
+  seekable_ = true;
+}
 
 bool
 SpanSink::vprint(fmt::string_view fmt, fmt::format_args args) {
@@ -454,6 +456,7 @@ StreamSink::StreamSink(ostream& os) :
   if (bad()) {
     ec_ = make_error_code(errc::io_error);
   }
+  seekable_ = io::seekable(out());
 }
 
 StreamSink::StreamSink(const fs::path& path, bool append, bool binary) {
@@ -463,6 +466,7 @@ StreamSink::StreamSink(const fs::path& path, bool append, bool binary) {
   if (not owned_.is_open()) {
     throw io::IoError(errnoCode(), fmt::format("Cannot open file `{}` for writing", path));
   }
+  seekable_ = io::seekable(out());
 }
 
 StreamSink::~StreamSink() {
@@ -488,11 +492,6 @@ StreamSink::handle() const {
     return STDERR_FILENO;
   }
   return -1;
-}
-
-bool
-StreamSink::seekable() const {
-  return io::seekable(const_cast<ostream&>(out()));
 }
 
 bool
@@ -553,6 +552,15 @@ StreamSink::write(span<const u8> in) {
 }
 
 // `StringSink` ---------------------------------------------------------------------------------------------
+
+StringSink::StringSink() {
+  seekable_ = true;
+}
+
+StringSink::StringSink(string& ref) :
+  ptr_(&ref) {
+  seekable_ = true;
+}
 
 bool
 StringSink::vprint(fmt::string_view fmt, fmt::format_args args) {
@@ -805,7 +813,12 @@ FileSource::seek(i64 offset, SeekMode mode) { // NOLINT
   clearerr(file_);
   ec_.clear();
   errno = 0;
-  const auto ret = io::seek(file_, offset, origin, seekable_);
+  if (not seekable()) {
+    errno = ESPIPE;
+    ec_ = genericErrorCode(errno);
+    return false;
+  }
+  const auto ret = io::seek(file_, offset, origin);
   if (bad()) {
     ec_ = errnoCode();
     return false;
@@ -815,12 +828,12 @@ FileSource::seek(i64 offset, SeekMode mode) { // NOLINT
 
 optional<u64>
 FileSource::tell() {
-  if (bad()) {
+  if (bad() || not seekable()) {
     return nullopt;
   }
 
   // `ftell` does not make the device bad if it fails
-  const u64 ret = io::tell(file_, seekable_);
+  const u64 ret = io::tell(file_);
   return ret == NPOS ? nullopt : optional(ret);
 }
 
@@ -904,6 +917,7 @@ StreamSource::StreamSource(std::istream& is) :
   if (bad()) {
     ec_ = make_error_code(errc::io_error);
   }
+  seekable_ = io::seekable(in());
 }
 
 StreamSource::StreamSource(const fs::path& path, bool binary) {
@@ -913,6 +927,7 @@ StreamSource::StreamSource(const fs::path& path, bool binary) {
   if (not owned_.is_open()) {
     throw io::IoError(errnoCode(), fmt::format("Cannot open file `{}` for reading", path));
   }
+  seekable_ = io::seekable(in());
 }
 
 i32
@@ -1003,9 +1018,10 @@ StreamSource::seek(i64 offset, SeekMode mode) { // NOLINT
     ec_ = make_error_code(errc::io_error);
     return false;
   }
-
-  // On Windows and macOS, seeking `cin` may report success for a pipe or a terminal, as with `io::tell`
-  if (&in() == &cin && not io::seekable(stdin)) {
+  errno = 0;
+  if (not seekable()) {
+    errno = ESPIPE;
+    ec_ = genericErrorCode(errno);
     return false;
   }
 
@@ -1022,19 +1038,13 @@ StreamSource::seek(i64 offset, SeekMode mode) { // NOLINT
   return true;
 }
 
-bool
-StreamSource::seekable() const {
-  return io::seekable(const_cast<std::istream&>(in()));
-}
-
 optional<u64>
 StreamSource::tell() {
-  if (bad()) {
+  if (bad() || not seekable()) {
     return nullopt;
   }
 
-  // `io::tell` asks the stream buffer and leaves the state of the stream alone, unlike `tellg`. A stream
-  // that cannot seek, such as one over a pipe, has no position
+  // `io::tell` asks the stream buffer and leaves the state of the stream alone, unlike `tellg`
   const u64 ret = io::tell(in());
   return ret == NPOS ? nullopt : optional(ret);
 }

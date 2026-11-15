@@ -40,14 +40,8 @@ open(const filesystem::path& path, std::string_view modes) {
 }
 
 bool
-seek(FILE* file, i64 offset, i32 origin, bool seekable) {
+seek(FILE* file, i64 offset, i32 origin) {
   ROCKET_ASSERT(file != nullptr);
-
-  // On Windows and macOS, seeking a pipe or a terminal may report success
-  if (not seekable) {
-    errno = ESPIPE;
-    return false;
-  }
 
 #ifdef ROCKET_OS_WINDOWS
   const auto result = _fseeki64(file, offset, origin);
@@ -99,17 +93,6 @@ seekable(FILE* file) {
 u64
 tell(FILE* file) {
   ROCKET_ASSERT(file != nullptr);
-  return tell(file, seekable(file));
-}
-
-u64
-tell(FILE* file, bool seekable) {
-  ROCKET_ASSERT(file != nullptr);
-
-  // On Windows and macOS, a pipe or a terminal may report a meaningless position
-  if (not seekable) {
-    return NPOS;
-  }
 
 #ifdef ROCKET_OS_WINDOWS
   const auto result = _ftelli64(file); // `__int64`

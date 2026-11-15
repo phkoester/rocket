@@ -69,7 +69,7 @@ isEndOfWord(string_view str, u64 pos) {
   try {
     const auto cp = unicode::nextCodePoint(str, pos);
     // Next code point is not alphanumeric, underscore, or dollar sign: we have a word boundary
-    return not cp.isAlnum() && cp != '_' && cp != '$';
+    return not cp.isAlnum() && not cp.eq('_') && not cp.eq('$');
   } catch (const exception&) {
     // Could not read code point: we have a word boundary
     return true;

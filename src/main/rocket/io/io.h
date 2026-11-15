@@ -55,16 +55,12 @@ FILE* open(const std::filesystem::path& path, std::string_view modes);
 /**
  * Seeks to the specified position in the stream referenced by @p file.
  *
- * Checking if a stream is #seekable takes a system call. A caller that seeks often can check once, e.g.,
- * when it starts using the stream, and pass the result here.
- *
  * @param file a `FILE` pointer, may not be null
  * @param offset the offset to seek to
  * @param origin the origin to seek from
- * @param seekable whether @p file is #seekable
  * @return if the operation succeeded. On failure, `errno` is set
  */
-bool seek(FILE* file, i64 offset, i32 origin, bool seekable);
+bool seek(FILE* file, i64 offset, i32 origin);
 
 /**
  * Checks if the stream referenced by @p file is seekable.
@@ -87,27 +83,12 @@ bool seekable(FILE* file);
 /**
  * Returns the current position in the stream referenced by @p file.
  *
- * This is a portable implementation that works on Linux, macOS, and Windows. It always returns
- * #rocket::NPOS for streams that are not #seekable, even on platforms where the C library would report a
- * meaningless position.
+ * This is a portable implementation that works on Linux, macOS, and Windows.
  *
  * @param file a `FILE` pointer, may not be null
  * @return the current position in the stream, or #rocket::NPOS if the position cannot be determined
  */
 u64 tell(FILE* file);
-
-/**
- * Returns the current position in the stream referenced by @p file, like #tell, but with its seekability
- * known.
- *
- * Checking if a stream is #seekable takes a system call. A caller that asks often can check once, e.g., when
- * it starts using the stream, and pass the result here.
- *
- * @param file a `FILE` pointer, may not be null
- * @param seekable whether @p file is #seekable
- * @return the current position in the stream, or #rocket::NPOS if the position cannot be determined
- */
-u64 tell(FILE* file, bool seekable);
 
 // Functions working with streams ---------------------------------------------------------------------------
 
@@ -183,8 +164,7 @@ namespace testing {
 /**
  * A stream buffer that yields a string and then fails, like a device with an I/O error.
  *
- * Reading past the string throws from `underflow`, which makes an `std::istream` set `badbit`. Useful for
- * testing code with a #rocket::nio::StreamSource that fails.
+ * Reading past the string throws from `underflow`, which makes an `std::istream` set `badbit`.
  */
 struct FailingBuf : std::streambuf {
   /**
@@ -209,8 +189,6 @@ private:
 
 /**
  * A stream buffer over a string that cannot seek, like one over a pipe.
- *
- * Useful for testing code with a #rocket::nio::StreamSource that cannot seek.
  */
 struct NonseekableBuf : std::stringbuf {
   /**
