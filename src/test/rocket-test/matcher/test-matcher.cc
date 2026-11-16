@@ -6,19 +6,21 @@
 
 #include "rocket/InputFailure.h"
 
+#define MODULE rocketTestMatcher
+
 // Tests ====================================================================================================
 
-TEST(matcher, containsRegex) {
+TEST(MODULE, containsRegex) {
   EXPECT_THAT("Rocket", containsRegex("ock"));
   EXPECT_THAT("Rocket", containsRegex(".ck"));
   EXPECT_THAT("Rocket", containsRegex("o.+e"));
 }
 
-TEST(matcher, matchesRegex) {
+TEST(MODULE, matchesRegex) {
   EXPECT_THAT("main.cc:42: foo", matchesRegex(".*\\.cc:\\d+: foo"));
 }
 
-TEST(matcher, throwsInputFailure) {
+TEST(MODULE, throwsInputFailure) {
   EXPECT_THAT(
     [&] { throw InputFailure(2, "oops"); },
     throwsInputFailure(Eq(2), EndsWith("oops")));

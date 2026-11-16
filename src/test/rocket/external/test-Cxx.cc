@@ -8,14 +8,16 @@
 
 #include "rocket-test/TracingString.h"
 
-// `Cxx` ----------------------------------------------------------------------------------------------------
+#define MODULE rocketExternalCxx
 
-struct Cxx : Test {
-  Cxx() { // NOLINT
+// `MODULE` -------------------------------------------------------------------------------------------------
+
+struct MODULE : Test {
+  MODULE() { // NOLINT
     reset();
   }
 
-  ~Cxx() override = default;
+  ~MODULE() override = default;
 
 protected:
 
@@ -71,11 +73,11 @@ protected:
   }
 };
 
-bool Cxx::Member::dtorCalled = false;
+bool MODULE::Member::dtorCalled = false;
 
 // Tests ====================================================================================================
 
-TEST_F(Cxx, assignLvalueToOptional) {
+TEST_F(MODULE, assignLvalueToOptional) {
   string trace;
   {
     optional<TracingString> dest;
@@ -90,7 +92,7 @@ TEST_F(Cxx, assignLvalueToOptional) {
       "2.dtor: a\n");
 }
 
-TEST_F(Cxx, assignLvalueToOptionalWithMove) {
+TEST_F(MODULE, assignLvalueToOptionalWithMove) {
   string trace;
   {
     optional<TracingString> dest;
@@ -105,7 +107,7 @@ TEST_F(Cxx, assignLvalueToOptionalWithMove) {
       "2.dtor: a\n");
 }
 
-TEST_F(Cxx, divideByZeroF64) {
+TEST_F(MODULE, divideByZeroF64) {
   using type = f64;
   const type zero = 0;
 
@@ -116,7 +118,7 @@ TEST_F(Cxx, divideByZeroF64) {
   EXPECT_EQ(n / zero, -numeric_limits<type>::infinity());
 }
 
-TEST_F(Cxx, optionalEmplace) {
+TEST_F(MODULE, optionalEmplace) {
   string trace;
   {
     optional<TracingString> dest;
@@ -128,7 +130,7 @@ TEST_F(Cxx, optionalEmplace) {
       "1.dtor: a\n");
 }
 
-TEST_F(Cxx, utf8Identifier) {
+TEST_F(MODULE, utf8Identifier) {
   // German
   [[maybe_unused]] i32 _blöße; // NOLINT
 
@@ -142,7 +144,7 @@ TEST_F(Cxx, utf8Identifier) {
   [[maybe_unused]] i32 _你好; // NOLINT
 }
 
-TEST_F(Cxx, utf8StringLiteral) {
+TEST_F(MODULE, utf8StringLiteral) {
   const auto sv = "ä"sv;
   EXPECT_EQ(sv, "\xc3\xa4");
   ASSERT_EQ(sv.size(), 2);
@@ -150,7 +152,7 @@ TEST_F(Cxx, utf8StringLiteral) {
   EXPECT_EQ(sv[1], '\xa4');
 }
 
-TEST_F(Cxx, vectorPushBackLvalue) {
+TEST_F(MODULE, vectorPushBackLvalue) {
   string trace;
   {
     vector<TracingString> vec;
@@ -165,7 +167,7 @@ TEST_F(Cxx, vectorPushBackLvalue) {
       "2.dtor: a\n");
 }
 
-TEST_F(Cxx, vectorPushBackLvalueWithMove) {
+TEST_F(MODULE, vectorPushBackLvalueWithMove) {
   string trace;
   {
     vector<TracingString> vec;
@@ -180,7 +182,7 @@ TEST_F(Cxx, vectorPushBackLvalueWithMove) {
       "2.dtor: a\n");
 }
 
-TEST_F(Cxx, vectorEmplaceBack) {
+TEST_F(MODULE, vectorEmplaceBack) {
   string trace;
   {
     vector<TracingString> vec;
@@ -192,7 +194,7 @@ TEST_F(Cxx, vectorEmplaceBack) {
       "1.dtor: a\n");
 }
 
-TEST_F(Cxx, forwardWithBar) {
+TEST_F(MODULE, forwardWithBar) {
   const i32 lvalue = 0;
   bar(lvalue);
   EXPECT_EQ(fooLvalue, 1);
@@ -201,7 +203,7 @@ TEST_F(Cxx, forwardWithBar) {
   EXPECT_EQ(fooRvalue, 1);
 }
 
-TEST_F(Cxx, forwardWithBaz) {
+TEST_F(MODULE, forwardWithBaz) {
   const i32 lvalue = 0;
   baz(lvalue);
   EXPECT_EQ(fooLvalue, 1);
@@ -210,7 +212,7 @@ TEST_F(Cxx, forwardWithBaz) {
   EXPECT_EQ(fooRvalue, 1);
 }
 
-TEST_F(Cxx, implicitVirtualDtor) {
+TEST_F(MODULE, implicitVirtualDtor) {
   A* p = new B; // NOLINT
   EXPECT_FALSE(Member::dtorCalled);
   delete p; // NOLINT

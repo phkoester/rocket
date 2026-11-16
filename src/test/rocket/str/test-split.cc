@@ -8,9 +8,11 @@
 
 using namespace rocket::str;
 
+#define MODULE rocketStrSplit
+
 // Tests ====================================================================================================
 
-TEST(split, split) { // NOLINT(*-complexity)
+TEST(MODULE, split) { // NOLINT(*-complexity)
   int n = 0;
   for (const auto token : split<char>("", ",")) {
     static_assert(same_as<decltype(token), const string_view>);
@@ -58,7 +60,7 @@ TEST(split, split) { // NOLINT(*-complexity)
   EXPECT_EQ(n, 7);
 }
 
-TEST(split, splitEmptySep) {
+TEST(MODULE, splitEmptySep) {
   const auto throwsEmptySep =
     ThrowsMessage<InvalidArgument>(EndsWith("Parameter `sep`: Check `not sep.empty()` failed"));
 
@@ -71,7 +73,7 @@ TEST(split, splitEmptySep) {
   EXPECT_THAT([] { static_cast<void>(split<char32>(U"abc", U"").begin()); }, throwsEmptySep);
 }
 
-TEST(split, splitPosOutOfBounds) {
+TEST(MODULE, splitPosOutOfBounds) {
   const auto throwsOutOfBounds =
     ThrowsMessage<InvalidArgument>(
       EndsWith("Parameter `pos`: Check `pos == NPOS || pos <= str.size()` failed"));

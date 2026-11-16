@@ -1,5 +1,5 @@
 /*
- * test-int128.cc
+ * test-io-int128.cc
  */
 
 #include "rocket-test/rocket-test.h"
@@ -10,6 +10,8 @@
 #include <locale>
 
 using rocket::io::testing::FailingBuf;
+
+#define MODULE rocketIoInt128
 
 namespace {
 
@@ -57,7 +59,7 @@ expectValue(const string& input, T expected) {
 
 // Tests ====================================================================================================
 
-TEST(int128, i128OpInput) {
+TEST(MODULE, i128OpInput) {
   using compareType = i32;
   compareType compare = 0;
   auto compareLimits = numeric_limits<compareType>();
@@ -231,7 +233,7 @@ TEST(int128, i128OpInput) {
   }
 }
 
-TEST(int128, i128OpInputOverflow) {
+TEST(MODULE, i128OpInputOverflow) {
   constexpr auto MAX = numeric_limits<i128>::max();
   constexpr auto MIN = numeric_limits<i128>::min();
 
@@ -245,7 +247,7 @@ TEST(int128, i128OpInputOverflow) {
   expectOverflow<i128>("1" + string(39, '0'), MAX);
 }
 
-TEST(int128, i128OpInputOverflowStopsAtNonDigit) {
+TEST(MODULE, i128OpInputOverflowStopsAtNonDigit) {
   auto val = static_cast<i128>(42);
   const string input = FOUR_E38 + "x"; // `io::is` only keeps a view, so this must outlive the stream
   auto is = io::is(input);
@@ -254,7 +256,7 @@ TEST(int128, i128OpInputOverflowStopsAtNonDigit) {
   EXPECT_EQ(val, numeric_limits<i128>::max());
 }
 
-TEST(int128, i128OpInputLimits) {
+TEST(MODULE, i128OpInputLimits) {
   using limits = numeric_limits<i128>;
 
   expectValue<i128>("170141183460469231731687303715884105727", limits::max());
@@ -263,7 +265,7 @@ TEST(int128, i128OpInputLimits) {
   expectValue<i128>("-170141183460469231731687303715884105727", limits::min() + 1);
 }
 
-TEST(int128, i128OpInputLeadingZeros) {
+TEST(MODULE, i128OpInputLeadingZeros) {
   using limits = numeric_limits<i128>;
 
   expectValue<i128>(string(50, '0') + "1", static_cast<i128>(1));
@@ -274,7 +276,7 @@ TEST(int128, i128OpInputLeadingZeros) {
   expectValue<i128>("-0", static_cast<i128>(0));
 }
 
-TEST(int128, i128OpOutput) {
+TEST(MODULE, i128OpOutput) {
   using type = i128;
 
   using limits = numeric_limits<type>;
@@ -292,7 +294,7 @@ TEST(int128, i128OpOutput) {
   }
 }
 
-TEST(int128, u128OpInput) {
+TEST(MODULE, u128OpInput) {
   using compareType = u32;
   compareType compare = 0;
   auto compareLimits = numeric_limits<compareType>();
@@ -468,7 +470,7 @@ TEST(int128, u128OpInput) {
   }
 }
 
-TEST(int128, u128OpInputOverflow) {
+TEST(MODULE, u128OpInputOverflow) {
   // Like the standard extractors for unsigned types, the greatest value is the result even for a negative
   // value
   constexpr auto MAX = numeric_limits<u128>::max();
@@ -483,7 +485,7 @@ TEST(int128, u128OpInputOverflow) {
   expectOverflow<u128>("-" + TWO_TO_128, MAX);
 }
 
-TEST(int128, u128OpInputOverflowStopsAtNonDigit) {
+TEST(MODULE, u128OpInputOverflowStopsAtNonDigit) {
   auto val = static_cast<u128>(42);
   const string input = FOUR_E38 + "x"; // `io::is` only keeps a view, so this must outlive the stream
   auto is = io::is(input);
@@ -492,7 +494,7 @@ TEST(int128, u128OpInputOverflowStopsAtNonDigit) {
   EXPECT_EQ(val, numeric_limits<u128>::max());
 }
 
-TEST(int128, u128OpInputNegative) {
+TEST(MODULE, u128OpInputNegative) {
   // Like the standard extractors for unsigned types, any magnitude up to the greatest value is negated, and
   // wraps around
   {
@@ -511,7 +513,7 @@ TEST(int128, u128OpInputNegative) {
   expectValue<u128>("-170141183460469231731687303715884105729", MAX >> 1);
 }
 
-TEST(int128, u128OpInputLimits) {
+TEST(MODULE, u128OpInputLimits) {
   using limits = numeric_limits<u128>;
 
   expectValue<u128>("340282366920938463463374607431768211455", limits::max());
@@ -519,7 +521,7 @@ TEST(int128, u128OpInputLimits) {
   expectValue<u128>("340282366920938463463374607431768211454", limits::max() - 1);
 }
 
-TEST(int128, u128OpInputLeadingZeros) {
+TEST(MODULE, u128OpInputLeadingZeros) {
   using limits = numeric_limits<u128>;
 
   expectValue<u128>(string(50, '0') + "1", static_cast<u128>(1));
@@ -527,7 +529,7 @@ TEST(int128, u128OpInputLeadingZeros) {
   expectValue<u128>(string(50, '0'), static_cast<u128>(0));
 }
 
-TEST(int128, u128OpOutput) {
+TEST(MODULE, u128OpOutput) {
   using type = u128;
 
   using limits = numeric_limits<type>;
@@ -736,7 +738,7 @@ expectOutputLikeStd(Std val, const Setup& setup) {
 
 } // namespace
 
-TEST(int128, all128OpInputLikeStd) {
+TEST(MODULE, all128OpInputLikeStd) {
   const vector<string> inputs {
     "", "   ", "x", "+", "-", "-x", "42", "+42", "-42", " \t42 rest", "0", "-0", "007", "08", "17", "0x1f",
     "0X1F;", "0x", "0xg", "-0x10", "00x1", "ff", "FfZ", "g", "777", "1e3",
@@ -755,7 +757,7 @@ TEST(int128, all128OpInputLikeStd) {
   }
 }
 
-TEST(int128, all128OpInputExceptions) {
+TEST(MODULE, all128OpInputExceptions) {
   {
     // A stream buffer that throws sets `badbit`. The exception is only rethrown if `badbit` is in the
     // exception mask
@@ -802,7 +804,7 @@ TEST(int128, all128OpInputExceptions) {
   }
 }
 
-TEST(int128, all128OpOutputLikeStd) {
+TEST(MODULE, all128OpOutputLikeStd) {
   const vector<i64> signedValues {
     0, 1, 42, 255, 4'096, 12'345, 1'234'567, -1, -42, -1'234'567, numeric_limits<i64>::max(),
     numeric_limits<i64>::min(),
@@ -827,7 +829,7 @@ TEST(int128, all128OpOutputLikeStd) {
   }
 }
 
-TEST(int128, all128OpGroupingBeyond64Bits) {
+TEST(MODULE, all128OpGroupingBeyond64Bits) {
   // Digit grouping also works for values that do not fit into 64 bits, and round-trips
   const auto group3 = imbue('\'', "\3");
   const auto group32 = imbue('\'', "\3\2");
@@ -876,7 +878,7 @@ TEST(int128, all128OpGroupingBeyond64Bits) {
   EXPECT_EQ(val, numeric_limits<i128>::max());
 }
 
-TEST(int128, all28OpOutputTwosComplement) {
+TEST(MODULE, all28OpOutputTwosComplement) {
   // As with the standard inserters, a negative value is written as its two's complement in octal and
   // hexadecimal
   const auto format = [](auto val, auto... manipulators) {

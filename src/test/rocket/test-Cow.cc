@@ -6,9 +6,11 @@
 
 #include "rocket/Cow.h"
 
+#define MODULE rocketCow
+
 // Tests ====================================================================================================
 
-TEST(Cow, differentTypes) {
+TEST(MODULE, differentTypes) {
   string str = "hi";
   Cow<string_view, string> cow(str);
   static_assert((std::same_as<decltype(cow.get()), const string_view>));
@@ -22,7 +24,7 @@ TEST(Cow, differentTypes) {
   EXPECT_TRUE(cow.modified());
 }
 
-TEST(Cow, sameTypes) {
+TEST(MODULE, sameTypes) {
   i32 n = 3;
   Cow<i32> cow(n);
   static_assert((std::same_as<decltype(cow.get()), const i32&>));

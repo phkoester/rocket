@@ -12,6 +12,8 @@
 using namespace rocket;
 using namespace rocket::codec;
 
+#define MODULE rocketCodec
+
 // `MyStruct` -----------------------------------------------------------------------------------------------
 
 struct MyStruct {
@@ -345,7 +347,7 @@ struct TracingCodec : Codec<TracingConsumer, TracingProducer> {
 
 // `TracingConsumer` ----------------------------------------------------------------------------------------
 
-TEST(codec, TracingConsumerBool) {
+TEST(MODULE, TracingConsumerBool) {
   const TracingCodec codec;
   nio::StringSink out;
   [[maybe_unused]] auto result = codec.encode(true, out);
@@ -356,7 +358,7 @@ TEST(codec, TracingConsumerBool) {
     "consuming boolean: false\n");
 }
 
-TEST(codec, TracingConsumerCharacter) {
+TEST(MODULE, TracingConsumerCharacter) {
   const TracingCodec codec;
   nio::StringSink out;
   codec.encode('a', out);
@@ -366,7 +368,7 @@ TEST(codec, TracingConsumerCharacter) {
     "consuming character: '€'\n");
 }
 
-TEST(codec, TracingConsumerString) {
+TEST(MODULE, TracingConsumerString) {
   const TracingCodec codec;
   nio::StringSink out;
   codec.encode("hello"sv, out);
@@ -376,7 +378,7 @@ TEST(codec, TracingConsumerString) {
     "consuming string: \"world\"\n");
 }
 
-TEST(codec, TracingConsumerOptionalI32) {
+TEST(MODULE, TracingConsumerOptionalI32) {
   using type = std::optional<i32>;
 
   const TracingCodec codec;
@@ -391,7 +393,7 @@ TEST(codec, TracingConsumerOptionalI32) {
     "consuming integer: 42\n");
 }
 
-TEST(codec, TracingConsumerTuplePair) {
+TEST(MODULE, TracingConsumerTuplePair) {
   const TracingCodec codec;
   nio::StringSink out;
   codec.encode(make_pair("answer"sv, 42), out);
@@ -403,7 +405,7 @@ TEST(codec, TracingConsumerTuplePair) {
     "consuming integer: 42\n");
 }
 
-TEST(codec, TracingConsumerTupleTuple) {
+TEST(MODULE, TracingConsumerTupleTuple) {
   const TracingCodec codec;
   nio::StringSink out;
   codec.encode(make_tuple("answer"sv, 42, true), out);
@@ -417,7 +419,7 @@ TEST(codec, TracingConsumerTupleTuple) {
     "consuming boolean: true\n");
 }
 
-TEST(codec, TracingConsumerListArray) {
+TEST(MODULE, TracingConsumerListArray) {
   const TracingCodec codec;
   nio::StringSink out;
   codec.encode(array { 1, 2, 3 }, out);
@@ -428,7 +430,7 @@ TEST(codec, TracingConsumerListArray) {
     "consuming integer: 3\n");
 }
 
-TEST(codec, TracingConsumerListVector) {
+TEST(MODULE, TracingConsumerListVector) {
   const TracingCodec codec;
   nio::StringSink out;
   codec.encode(vector { 1, 2, 3, 4 }, out);
@@ -440,7 +442,7 @@ TEST(codec, TracingConsumerListVector) {
     "consuming integer: 4\n");
 }
 
-TEST(codec, TracingConsumerDeclared) {
+TEST(MODULE, TracingConsumerDeclared) {
   const TracingCodec codec;
   nio::StringSink out;
   const MyStruct val { 42, true, "hello", { 1, 2, 3 } };
@@ -465,7 +467,7 @@ TEST(codec, TracingConsumerDeclared) {
     "consuming integer: 3\n");
 }
 
-TEST(codec, TracingConsumerInstance) {
+TEST(MODULE, TracingConsumerInstance) {
   const TracingCodec codec;
   nio::StringSink out;
   const MyStruct my { 42, true, "hello", { 1, 2, 3 } };
@@ -485,7 +487,7 @@ TEST(codec, TracingConsumerInstance) {
     "consuming string: \"hello\"\n");
 }
 
-TEST(codec, TracingConsumerVarRef) {
+TEST(MODULE, TracingConsumerVarRef) {
   const TracingCodec codec;
   nio::StringSink out;
   const i32 a = 42;
@@ -506,7 +508,7 @@ TEST(codec, TracingConsumerVarRef) {
     "consuming string: \"hello\"\n");
 }
 
-TEST(codec, TracingConsumerOptionalAndVectorInTypeLoop) {
+TEST(MODULE, TracingConsumerOptionalAndVectorInTypeLoop) {
   using type = optional<vector<optional<i32>>>;
 
   const TracingCodec codec;
@@ -533,7 +535,7 @@ TEST(codec, TracingConsumerOptionalAndVectorInTypeLoop) {
   }
 }
 
-TEST(codec, TracingConsumerVectorAndOptionalInTypeLoop) {
+TEST(MODULE, TracingConsumerVectorAndOptionalInTypeLoop) {
   using type = vector<optional<vector<i32>>>;
 
   const TracingCodec codec;
@@ -560,7 +562,7 @@ TEST(codec, TracingConsumerVectorAndOptionalInTypeLoop) {
 
 // `TracingProducer` ----------------------------------------------------------------------------------------
 
-TEST(codec, TracingProducerBool) {
+TEST(MODULE, TracingProducerBool) {
   using type = bool;
   const TracingCodec codec;
   nio::StringSource in("true");
@@ -569,7 +571,7 @@ TEST(codec, TracingProducerBool) {
   EXPECT_EQ(out.str(), "producing boolean\n");
 }
 
-TEST(codec, TracingProducerString) {
+TEST(MODULE, TracingProducerString) {
   using type = string;
   const TracingCodec codec;
   nio::StringSource in("5Hello6Rocket");
@@ -581,7 +583,7 @@ TEST(codec, TracingProducerString) {
     "producing string\n");
 }
 
-TEST(codec, TracingProducerOptionalBool) {
+TEST(MODULE, TracingProducerOptionalBool) {
   using type = optional<bool>;
   const TracingCodec codec;
 
@@ -602,7 +604,7 @@ TEST(codec, TracingProducerOptionalBool) {
   }
 }
 
-TEST(codec, TracingProducerListArray) {
+TEST(MODULE, TracingProducerListArray) {
   using type = array<i32, 3>;
   const TracingCodec codec;
   nio::StringSource in("3012");
@@ -615,7 +617,7 @@ TEST(codec, TracingProducerListArray) {
     "producing integer\n");
 }
 
-TEST(codec, TracingProducerListVector) {
+TEST(MODULE, TracingProducerListVector) {
   using type = vector<i32>;
   const TracingCodec codec;
   nio::StringSource in("43210");

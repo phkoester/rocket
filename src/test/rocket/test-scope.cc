@@ -9,6 +9,8 @@
 #include <stdexcept>
 #include <vector>
 
+#define MODULE rocketScope
+
 namespace {
 
 // `OnDestroy` ----------------------------------------------------------------------------------------------
@@ -34,7 +36,7 @@ private:
 
 // `scope_exit` ---------------------------------------------------------------------------------------------
 
-TEST(scope, scopeExitRunsOnNormalExit) {
+TEST(MODULE, scopeExitRunsOnNormalExit) {
   i32 count = 0;
   {
     const scope_exit guard([&count] { ++count; });
@@ -43,7 +45,7 @@ TEST(scope, scopeExitRunsOnNormalExit) {
   EXPECT_EQ(count, 1);
 }
 
-TEST(scope, scopeExitRunsOnException) {
+TEST(MODULE, scopeExitRunsOnException) {
   i32 count = 0;
   try {
     const scope_exit guard([&count] { ++count; });
@@ -54,7 +56,7 @@ TEST(scope, scopeExitRunsOnException) {
   EXPECT_EQ(count, 1);
 }
 
-TEST(scope, scopeExitRelease) {
+TEST(MODULE, scopeExitRelease) {
   i32 count = 0;
   {
     scope_exit guard([&count] { ++count; });
@@ -70,7 +72,7 @@ TEST(scope, scopeExitRelease) {
   EXPECT_EQ(count, 0);
 }
 
-TEST(scope, scopeExitReverseOrder) {
+TEST(MODULE, scopeExitReverseOrder) {
   vector<i32> order;
   {
     const scope_exit guard1([&order] { order.push_back(1); });
@@ -80,7 +82,7 @@ TEST(scope, scopeExitReverseOrder) {
   EXPECT_EQ(order, (vector<i32> { 3, 2, 1 }));
 }
 
-TEST(scope, scopeExitMacro) {
+TEST(MODULE, scopeExitMacro) {
   vector<i32> order;
   {
     ROCKET_SCOPE_EXIT([&order] { order.push_back(1); });
@@ -90,7 +92,7 @@ TEST(scope, scopeExitMacro) {
   EXPECT_EQ(order, (vector<i32> { 2, 1 }));
 }
 
-TEST(scope, scopeExitFunctionFromLvalue) {
+TEST(MODULE, scopeExitFunctionFromLvalue) {
   i32 count = 0;
   const auto fn = [&count] { ++count; };
   {
@@ -101,7 +103,7 @@ TEST(scope, scopeExitFunctionFromLvalue) {
 
 // `scope_fail` ---------------------------------------------------------------------------------------------
 
-TEST(scope, scopeFailDoesNotRunOnNormalExit) {
+TEST(MODULE, scopeFailDoesNotRunOnNormalExit) {
   i32 count = 0;
   {
     const scope_fail guard([&count] { ++count; });
@@ -109,7 +111,7 @@ TEST(scope, scopeFailDoesNotRunOnNormalExit) {
   EXPECT_EQ(count, 0);
 }
 
-TEST(scope, scopeFailRunsOnException) {
+TEST(MODULE, scopeFailRunsOnException) {
   i32 count = 0;
   try {
     const scope_fail guard([&count] { ++count; });
@@ -120,7 +122,7 @@ TEST(scope, scopeFailRunsOnException) {
   EXPECT_EQ(count, 1);
 }
 
-TEST(scope, scopeFailDoesNotRunOnCaughtException) {
+TEST(MODULE, scopeFailDoesNotRunOnCaughtException) {
   i32 count = 0;
   {
     const scope_fail guard([&count] { ++count; });
@@ -131,7 +133,7 @@ TEST(scope, scopeFailDoesNotRunOnCaughtException) {
   EXPECT_EQ(count, 0);
 }
 
-TEST(scope, scopeFailRelease) {
+TEST(MODULE, scopeFailRelease) {
   i32 count = 0;
   try {
     scope_fail guard([&count] { ++count; });
@@ -141,7 +143,7 @@ TEST(scope, scopeFailRelease) {
   EXPECT_EQ(count, 0);
 }
 
-TEST(scope, scopeFailDuringUnwinding) {
+TEST(MODULE, scopeFailDuringUnwinding) {
   // A guard created during stack unwinding must not fire if its own scope exits normally
   i32 count = 0;
   try {
@@ -165,7 +167,7 @@ TEST(scope, scopeFailDuringUnwinding) {
   EXPECT_EQ(count, 1);
 }
 
-TEST(scope, scopeFailMacro) {
+TEST(MODULE, scopeFailMacro) {
   i32 count = 0;
   {
     ROCKET_SCOPE_FAIL([&count] { ++count; });
@@ -181,7 +183,7 @@ TEST(scope, scopeFailMacro) {
 
 // `scope_success` ------------------------------------------------------------------------------------------
 
-TEST(scope, scopeSuccessRunsOnNormalExit) {
+TEST(MODULE, scopeSuccessRunsOnNormalExit) {
   i32 count = 0;
   {
     const scope_success guard([&count] { ++count; });
@@ -190,7 +192,7 @@ TEST(scope, scopeSuccessRunsOnNormalExit) {
   EXPECT_EQ(count, 1);
 }
 
-TEST(scope, scopeSuccessDoesNotRunOnException) {
+TEST(MODULE, scopeSuccessDoesNotRunOnException) {
   i32 count = 0;
   try {
     const scope_success guard([&count] { ++count; });
@@ -199,7 +201,7 @@ TEST(scope, scopeSuccessDoesNotRunOnException) {
   EXPECT_EQ(count, 0);
 }
 
-TEST(scope, scopeSuccessRunsAfterCaughtException) {
+TEST(MODULE, scopeSuccessRunsAfterCaughtException) {
   i32 count = 0;
   {
     const scope_success guard([&count] { ++count; });
@@ -210,7 +212,7 @@ TEST(scope, scopeSuccessRunsAfterCaughtException) {
   EXPECT_EQ(count, 1);
 }
 
-TEST(scope, scopeSuccessRelease) {
+TEST(MODULE, scopeSuccessRelease) {
   i32 count = 0;
   {
     scope_success guard([&count] { ++count; });
@@ -219,7 +221,7 @@ TEST(scope, scopeSuccessRelease) {
   EXPECT_EQ(count, 0);
 }
 
-TEST(scope, scopeSuccessDuringUnwinding) {
+TEST(MODULE, scopeSuccessDuringUnwinding) {
   // A guard created during stack unwinding must fire if its own scope exits normally
   i32 count = 0;
   try {
@@ -243,7 +245,7 @@ TEST(scope, scopeSuccessDuringUnwinding) {
   EXPECT_EQ(count, 1);
 }
 
-TEST(scope, scopeSuccessMacro) {
+TEST(MODULE, scopeSuccessMacro) {
   i32 count = 0;
   {
     ROCKET_SCOPE_SUCCESS([&count] { ++count; });
@@ -259,7 +261,7 @@ TEST(scope, scopeSuccessMacro) {
 
 // Move construction ----------------------------------------------------------------------------------------
 
-TEST(scope, moveTransfersOwnership) {
+TEST(MODULE, moveTransfersOwnership) {
   i32 count = 0;
   {
     scope_exit a([&count] { ++count; });

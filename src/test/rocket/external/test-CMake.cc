@@ -10,20 +10,22 @@
 using namespace rocket::system;
 using namespace std;
 
+#define MODULE rocketExternalCMake
+
 extern const char* generated();
 
 // Tests ====================================================================================================
 
-TEST(CMake, env) {
+TEST(MODULE, env) {
   EXPECT_EQ(system::env::get<string>("A"), "A A");
   EXPECT_EQ(system::env::get<string>("B"), "B B");
 }
 
-TEST(CMake, generated) {
+TEST(MODULE, generated) {
   EXPECT_EQ(string_view(generated()), "Hello from `generate-hello`!"sv);
 }
 
-TEST(CMake, version) {
+TEST(MODULE, version) {
   EXPECT_GT(ROCKET_VERSION, 0);
 }
 

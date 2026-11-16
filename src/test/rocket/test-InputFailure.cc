@@ -9,9 +9,11 @@
 
 using namespace std;
 
+#define MODULE rocketInputFailure
+
 // Tests ====================================================================================================
 
-TEST(InputFailure, mapped) {
+TEST(MODULE, mapped) {
   const InputFailure ex(3, { { 1, 4 }, { 5, 8 } }, "oops");
 
   const auto mapped = ex.mapped([](u64 position) { return 2 * position; });
@@ -24,7 +26,7 @@ TEST(InputFailure, mapped) {
   EXPECT_EQ(ex.ranges(), (str::Ranges { { 1, 4 }, { 5, 8 } }));
 }
 
-TEST(InputFailure, mappedUnknown) {
+TEST(MODULE, mappedUnknown) {
   const InputFailure ex(3, { { 1, 4 } }, "oops");
 
   // If any position cannot be translated, the copy has neither a position nor ranges
@@ -39,7 +41,7 @@ TEST(InputFailure, mappedUnknown) {
   EXPECT_EQ(mapped.message(), "oops");
 }
 
-TEST(InputFailure, noPosition) {
+TEST(MODULE, noPosition) {
   const InputFailure ex(nullopt, "oops");
   EXPECT_EQ(ex.position(), nullopt);
   EXPECT_TRUE(ex.ranges().empty());
@@ -52,7 +54,7 @@ TEST(InputFailure, noPosition) {
   EXPECT_THROW(InputFailure(nullopt, { { 1, 4 } }, "oops"), InvalidArgument);
 }
 
-TEST(InputFailure, shifted) {
+TEST(MODULE, shifted) {
   const auto shifted = InputFailure(3, { { 1, 4 } }, "oops").shifted(10);
   EXPECT_EQ(shifted.position(), 13U);
   EXPECT_EQ(shifted.ranges(), (str::Ranges { { 11, 14 } }));
@@ -68,7 +70,7 @@ TEST(InputFailure, shifted) {
   EXPECT_TRUE(unknown.ranges().empty());
 }
 
-TEST(InputFailure, withRange) {
+TEST(MODULE, withRange) {
   const auto ex = InputFailure::withRange(4, 1, 4, "oops");
   EXPECT_EQ(ex.position(), 4U);
   EXPECT_EQ(ex.ranges(), (str::Ranges { { 1, 4 } }));

@@ -15,9 +15,11 @@
 
 using namespace rocket;
 
+#define MODULE rocketExternalStd
+
 // Tests ====================================================================================================
 
-TEST(std, f32OpCmp) {
+TEST(MODULE, f32OpCmp) {
   using type = f32;
   using limits = numeric_limits<type>;
   constexpr auto nan = limits::quiet_NaN();
@@ -42,7 +44,7 @@ TEST(std, f32OpCmp) {
  *
  * The crash happens when #std::current_exception() is called inside a nested exception handler.
  */
-TEST(std, rethrowException) {
+TEST(MODULE, rethrowException) {
   try {
     throw runtime_error("oops");
   } catch (const runtime_error&) {
@@ -64,7 +66,7 @@ TEST(std, rethrowException) {
   }
 }
 
-TEST(std, filesystemPath) {
+TEST(MODULE, filesystemPath) {
   namespace fs = std::filesystem;
 
   const fs::path unixPath("/path/to/file");
@@ -83,12 +85,12 @@ TEST(std, filesystemPath) {
 #endif // ROCKET_OS_WINDOWS
 }
 
-TEST(std, istreamDefaultExceptions) {
+TEST(MODULE, istreamDefaultExceptions) {
   auto is = io::is();
   EXPECT_EQ(is.exceptions(), 0);
 }
 
-TEST(std, istreamEof) {
+TEST(MODULE, istreamEof) {
   {
     auto is = io::is();
     // Check 'tellg()' once
@@ -118,7 +120,7 @@ TEST(std, istreamEof) {
   }
 }
 
-TEST(std, istreamBool) {
+TEST(MODULE, istreamBool) {
   using type = bool;
 
   {
@@ -139,14 +141,14 @@ TEST(std, istreamBool) {
   }
 }
 
-TEST(std, istreamChar) {
+TEST(MODULE, istreamChar) {
   auto is = io::is("a");
   char c = '\0';
   is >> c;
   EXPECT_EQ(c, 'a');
 }
 
-TEST(std, istreamI32) {
+TEST(MODULE, istreamI32) {
   using type = i32;
 
   {
@@ -203,7 +205,7 @@ TEST(std, istreamI32) {
   }
 }
 
-TEST(std, istreamF64) {
+TEST(MODULE, istreamF64) {
   using type = f64;
 
   ostringstream os;
@@ -219,7 +221,7 @@ TEST(std, istreamF64) {
   }
 }
 
-TEST(std, regexGreedy) {
+TEST(MODULE, regexGreedy) {
   string str = "1: 2: 3: 4";
   const regex re(".*: ");
   vector<string> matches;
@@ -230,7 +232,7 @@ TEST(std, regexGreedy) {
   EXPECT_EQ(matches, vector<string> { "1: 2: 3: " });
 }
 
-TEST(std, regexNongreedy) {
+TEST(MODULE, regexNongreedy) {
   string str = "1: 2: 3: 4";
   const regex re(".*?: ");
   vector<string> matches;
@@ -241,14 +243,14 @@ TEST(std, regexNongreedy) {
   EXPECT_EQ(matches, (vector<string> { "1: ", "2: ", "3: " }));
 }
 
-TEST(std, regexLineFeed) {
+TEST(MODULE, regexLineFeed) {
   const string str = "aaa\nbbb";
   EXPECT_TRUE(regex_match(str, regex("a+\nb+")));
   EXPECT_FALSE(regex_match(str, regex("a.*b"))); // '.' does not match line feed
   EXPECT_TRUE(regex_match(str, regex("a[^]*b"))); // '[^]' (not nothing) matches line feed
 }
 
-TEST(std, vectorOpCmp) {
+TEST(MODULE, vectorOpCmp) {
   using type = vector<i32>;
 
   EXPECT_LT((type { 1, 2, 3 }), (type { 1, 2, 4 }));

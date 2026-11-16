@@ -8,6 +8,8 @@
 
 using namespace rocket::reflect;
 
+#define MODULE rocketReflect
+
 // `MyStruct` -----------------------------------------------------------------------------------------------
 
 struct MyStruct {
@@ -55,7 +57,7 @@ ROCKET_REFLECT_MEMBERS_DEFINE(, MyDerivedStruct, Index);
 
 // Tests ====================================================================================================
 
-TEST(reflect, MyStruct) {
+TEST(MODULE, MyStruct) {
   static_assert(same_as<MyStruct::Index::Ordering, strong_ordering>);
   static_assert(same_as<MyStruct::Public::Ordering, strong_ordering>);
 
@@ -75,7 +77,7 @@ TEST(reflect, MyStruct) {
 /**
  * Tests that the macro #ROCKET_REFLECT_MEMBERS does not affect the size of a class.
  */
-TEST(reflect, MyStructSizeof) {
+TEST(MODULE, MyStructSizeof) {
   struct BareStruct {
     i32 ä;
     string b;
@@ -84,33 +86,33 @@ TEST(reflect, MyStructSizeof) {
   EXPECT_EQ(sizeof(BareStruct), sizeof(MyStruct));
 }
 
-TEST(reflect, MyStructOpEq) {
+TEST(MODULE, MyStructOpEq) {
   EXPECT_EQ(MyStruct(42, "rocket", true), MyStruct(42, "rocket", true));
 }
 
-TEST(reflect, MyStructOpNe) {
+TEST(MODULE, MyStructOpNe) {
   EXPECT_NE(MyStruct(42, "rocket", true), MyStruct(42, "rocket", false));
 }
 
-TEST(reflect, MyStructOpLt) {
+TEST(MODULE, MyStructOpLt) {
   EXPECT_THAT(MyStruct(42, "rocket", false), Lt(MyStruct(43, "rocket", false)));
   EXPECT_THAT(MyStruct(42, "rocket", false), Lt(MyStruct(42, "rocket", true)));
   EXPECT_THAT(MyStruct(42, "rocket", false), Not(Lt(MyStruct(42, "rocket", false))));
 }
 
-TEST(reflect, MyStructOpGt) {
+TEST(MODULE, MyStructOpGt) {
   EXPECT_THAT(MyStruct(43, "rocket", false), Gt(MyStruct(42, "rocket", false)));
   EXPECT_THAT(MyStruct(42, "rocket", true), Gt(MyStruct(42, "rocket", false)));
   EXPECT_THAT(MyStruct(42, "rocket", false), Not(Gt(MyStruct(42, "rocket", false))));
 }
 
-TEST(reflect, MyStructOpOutput) {
+TEST(MODULE, MyStructOpOutput) {
   ostringstream os;
   os << MyStruct(42, "rocket", true);
   EXPECT_EQ(os.str(), "(ä=42, b=\"rocket\", c=true)");
 }
 
-TEST(reflect, MyStructFormat) {
+TEST(MODULE, MyStructFormat) {
   const MyStruct m(42, "rocket", true);
   EXPECT_EQ(fmt::format("{}", m), "(ä=42, b=\"rocket\", c=true)");
   EXPECT_EQ(fmt::format("{:it}", m),
@@ -122,7 +124,7 @@ TEST(reflect, MyStructFormat) {
   EXPECT_EQ(fmt::format("{:t}", m), "MyStruct(ä=42, b=\"rocket\", c=true)");
 }
 
-TEST(reflect, MyStructHash) {
+TEST(MODULE, MyStructHash) {
   const MyStruct m1(42, "rocket", true);
   const MyStruct m2(42, "rocket", true);
   const MyStruct m3(43, "rocket", true);
@@ -137,7 +139,7 @@ TEST(reflect, MyStructHash) {
   EXPECT_NE(hash3, 0);
 }
 
-TEST(reflect, MyStructPublic) {
+TEST(MODULE, MyStructPublic) {
   MyStruct m1(12, "here", true);
   EXPECT_EQ(m1.b, "here");
   get<1>(MyStruct::Public::refs).get(m1) = "everywhere";
@@ -148,7 +150,7 @@ TEST(reflect, MyStructPublic) {
   EXPECT_EQ(get<1>(MyStruct::Public::refs).get(m2), "there");
 }
 
-TEST(reflect, MyStructPublicOpEqNe) {
+TEST(MODULE, MyStructPublicOpEqNe) {
   using type = Instance<MyStruct, MyStruct::Public>;
 
   static_assert(same_as<decltype(declval<type>() <=> declval<type>()), strong_ordering>);
@@ -167,7 +169,7 @@ TEST(reflect, MyStructPublicOpEqNe) {
   EXPECT_NE(val3, val2);
 }
 
-TEST(reflect, MyStructPublicHash) {
+TEST(MODULE, MyStructPublicHash) {
   using type = Instance<MyStruct, MyStruct::Public>;
 
   const MyStruct m1 = MyStruct(42, "rocket", true);
@@ -185,7 +187,7 @@ TEST(reflect, MyStructPublicHash) {
   EXPECT_NE(hash1, hash3);
 }
 
-TEST(reflect, MyStructPublicFormat) {
+TEST(MODULE, MyStructPublicFormat) {
   using type = Instance<MyStruct, MyStruct::Public>;
 
   const MyStruct m(42, "rocket", true);
@@ -194,7 +196,7 @@ TEST(reflect, MyStructPublicFormat) {
   EXPECT_EQ(fmt::format("{:t}", val), "MyStruct(ä=42, b=\"rocket\")");
 }
 
-TEST(reflect, MyDerivedStructFormat) {
+TEST(MODULE, MyDerivedStructFormat) {
   static_assert(same_as<MyDerivedStruct::Index::Ordering, partial_ordering>);
 
   const MyDerivedStruct m(41, "rocket", true, "everywhere", 4.2_f32);
@@ -202,7 +204,7 @@ TEST(reflect, MyDerivedStructFormat) {
   EXPECT_EQ(fmt::format("{:t}", m), "MyDerivedStruct(ä=41, b=\"rocket\", c=true, d=\"everywhere\", e=4.2)");
 }
 
-TEST(reflect, VarRef) {
+TEST(MODULE, VarRef) {
   i32 ä1 = 2;
   string b1 = "hi";
   f32 f1 = .5f;
@@ -232,7 +234,7 @@ TEST(reflect, VarRef) {
   EXPECT_EQ(ä1, 3);
 }
 
-TEST(reflect, VarRefOpEqNe) {
+TEST(MODULE, VarRefOpEqNe) {
   i32 i1 = 2;
   i64 l1 = 3;
   const auto vars1 = ROCKET_REFLECT_VARS((i1)(l1));
@@ -245,7 +247,7 @@ TEST(reflect, VarRefOpEqNe) {
   EXPECT_NE(get<1>(vars1), get<1>(vars2));
 }
 
-TEST(reflect, VarRefOpCmp) {
+TEST(MODULE, VarRefOpCmp) {
   static_assert(same_as<decltype(declval<VarRef<i32>>() <=> declval<VarRef<i32>>()), strong_ordering>);
   static_assert(same_as<decltype(declval<VarRef<f32>>() <=> declval<VarRef<f32>>()), partial_ordering>);
 
@@ -274,7 +276,7 @@ TEST(reflect, VarRefOpCmp) {
   EXPECT_LT(vars3, vars4);
 }
 
-TEST(reflect, VarRefOpOutput) {
+TEST(MODULE, VarRefOpOutput) {
   i32 i = 2;
   i64 l = 3;
   const auto vars = ROCKET_REFLECT_VARS((i)(l));
@@ -285,7 +287,7 @@ TEST(reflect, VarRefOpOutput) {
   EXPECT_EQ(os.str(), "i=2");
 }
 
-TEST(reflect, VarRefHash) {
+TEST(MODULE, VarRefHash) {
   i32 i1 = 2;
   i64 l1 = 3;
   auto vars1 = ROCKET_REFLECT_VARS((i1)(l1));

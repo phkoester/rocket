@@ -57,7 +57,6 @@
 #include <cstddef> // `size_t`
 #include <cstdint> // `std::int8_t`, `std::uint8_t`, ...
 #include <concepts> // `std::same_as`
-#include <limits>
 
 // Check operating system and C/C++ compiler ----------------------------------------------------------------
 

@@ -9,17 +9,19 @@
 
 using namespace rocket;
 
+#define MODULE rocketFunctional
+
 // Tests ====================================================================================================
 
-TEST(functional, BoostHashI132) {
+TEST(MODULE, BoostHashI132) {
   EXPECT_EQ(BoostHash()(42_i32), 42_u64);
 }
 
-TEST(functional, BoostHash128) {
+TEST(MODULE, BoostHash128) {
   EXPECT_NE(BoostHash()(numeric_limits<i128>::max()), 0);
 }
 
-TEST(functional, StdHash128) {
+TEST(MODULE, StdHash128) {
   EXPECT_EQ(StdHash()(1_i128), StdHash()(1_i128));
   EXPECT_NE(StdHash()(1_i128), StdHash()(2_i128));
 }

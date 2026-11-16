@@ -11,8 +11,12 @@
 #include "rocket/math/Interval-codec.h"
 #include "rocket/reflect/reflect.h"
 
+#include <fmt/ostream.h>
+
 using namespace rocket::codec;
 using namespace rocket::codec::internal::cbor;
+
+#define MODULE rocketCodecCborCodec
 
 // `MyStruct` -----------------------------------------------------------------------------------------------
 
@@ -108,6 +112,9 @@ testRoundtrip(const T& val) { // NOLINT(*-complexity)
       ROCKET_FAIL("Cannot decode value \"{}\" at position {}: {}\n", utf8, error.position, error.message);
     } else if constexpr (std::same_as<T, char32>) {
       ROCKET_FAIL("Cannot decode value {} at position {}: {}\n", static_cast<u32>(val), error.position, error.message);
+    } else if constexpr (not fmt::is_formattable<T>::value) {
+      ROCKET_FAIL(
+        "Cannot decode value {} at position {}: {}\n", fmt::streamed(val), error.position, error.message);
     } else {
       ROCKET_FAIL("Cannot decode value {} at position {}: {}\n", val, error.position, error.message);
     }
@@ -174,12 +181,12 @@ testZonedTime(const T& val) {
 
 // `CborItem` -----------------------------------------------------------------------------------------------
 
-TEST(CborCodec, CborItemAsReturnValue) {
+TEST(MODULE, CborItemAsReturnValue) {
   auto item = someFuncReturningCborItem();
   EXPECT_EQ(cbor_refcount(item.ptr()), 1);
 }
 
-TEST(CborCodec, CborItemArrayAsReturnValue) {
+TEST(MODULE, CborItemArrayAsReturnValue) {
   {
     auto array = makeCborItemArray();
     EXPECT_EQ(cbor_refcount(array.ptr()), 1);
@@ -194,12 +201,12 @@ TEST(CborCodec, CborItemArrayAsReturnValue) {
 
 // `CborCodec` ----------------------------------------------------------------------------------------------
 
-TEST(CborCodec, Bool) {
+TEST(MODULE, Bool) {
   testRoundtrip(false);
   testRoundtrip(true);
 }
 
-TEST(CborCodec, Char) {
+TEST(MODULE, Char) {
   testRoundtrip('a');
   testRoundtrip('\x00');
   testRoundtrip('\x7f');
@@ -209,12 +216,12 @@ TEST(CborCodec, Char) {
   testRoundtrip(U'€');
 }
 
-TEST(CborCodec, Enum) {
+TEST(MODULE, Enum) {
   testRoundtrip(log::LogLevel::info);
   testRoundtrip<log::LogLevel>(static_cast<log::LogLevel>(-1)); // NOLINT
 }
 
-TEST(CborCodec, Integer) {
+TEST(MODULE, Integer) {
   testRoundtrip(100_i8);
   testRoundtrip(100_u8);
 
@@ -245,7 +252,7 @@ TEST(CborCodec, Integer) {
   testRoundtrip(numeric_limits<u64>::max());
 }
 
-TEST(CborCodec, Integer128) {
+TEST(MODULE, Integer128) {
   testRoundtrip(numeric_limits<i128>::min());
   testRoundtrip(numeric_limits<i128>::max());
   testRoundtrip(numeric_limits<u128>::max());
@@ -256,7 +263,7 @@ TEST(CborCodec, Integer128) {
   testRoundtrip(18446744073709551616_u128); // 2^64, a bignum
 }
 
-TEST(CborCodec, IntegerEncoding) {
+TEST(MODULE, IntegerEncoding) {
   // Shortest encoding, negative integers as major type 1 (RFC 8949)
   EXPECT_EQ(cborCodec.encode(0_i32), (vector<u8> { 0x00 }));
   EXPECT_EQ(cborCodec.encode(23_i32), (vector<u8> { 0x17 }));
@@ -294,7 +301,7 @@ TEST(CborCodec, IntegerEncoding) {
   EXPECT_EQ(cborCodec.encode(std::chrono::hours(-6)), (vector<u8> { 0x25 }));
 }
 
-TEST(CborCodec, IntegerDecoding) {
+TEST(MODULE, IntegerDecoding) {
   EXPECT_EQ(decode<i32>({ 0x20 }), -1);
   EXPECT_EQ(decode<i8>({ 0x38, 0x7F }), numeric_limits<i8>::min());
   EXPECT_EQ(decode<i8>({ 0x18, 0x7F }), numeric_limits<i8>::max());
@@ -311,7 +318,7 @@ TEST(CborCodec, IntegerDecoding) {
     -18446744073709551616_i128);
 }
 
-TEST(CborCodec, IntegerInvalid) {
+TEST(MODULE, IntegerInvalid) {
   const auto expectFailure = [](const vector<u8>& cbor, auto expected, string_view message, u64 position) {
     const auto result = decode<decltype(expected)>(cbor);
     ASSERT_FALSE(result.has_value());
@@ -345,7 +352,7 @@ TEST(CborCodec, IntegerInvalid) {
   expectFailure({ 0x20 }, char32(), "Expected a character", 0);
 }
 
-TEST(CborCodec, Float) {
+TEST(MODULE, Float) {
   testRoundtrip(1.0_f32);
   testRoundtrip(numeric_limits<f32>::min());
   testRoundtrip(numeric_limits<f32>::max());
@@ -361,12 +368,12 @@ TEST(CborCodec, Float) {
   testRoundtrip(numeric_limits<f64>::signaling_NaN());
 }
 
-TEST(CborCodec, Pointer) {
+TEST(MODULE, Pointer) {
   testRoundtrip(reinterpret_cast<void*>(0x12345678));
   testRoundtrip(reinterpret_cast<void*>(0x1234567890abcdef));
 }
 
-TEST(CborCodec, String) {
+TEST(MODULE, String) {
   testRoundtrip("abc € 🧑‍🌾"s);
   testRoundtrip("abc € 🧑‍🌾"sv);
 
@@ -374,7 +381,7 @@ TEST(CborCodec, String) {
   testRoundtrip(U"abc € 🧑‍🌾"sv);
 }
 
-TEST(CborCodec, Optional) {
+TEST(MODULE, Optional) {
   testRoundtrip(std::optional<u32> {});
   testRoundtrip(std::optional<u32>(42));
 
@@ -382,7 +389,7 @@ TEST(CborCodec, Optional) {
   testRoundtrip(std::optional<string>("What is the answer?"));
 }
 
-TEST(CborCodec, Tuple) {
+TEST(MODULE, Tuple) {
   testRoundtrip(make_pair(42, "answer"));
 
   testRoundtrip(make_tuple());
@@ -391,7 +398,7 @@ TEST(CborCodec, Tuple) {
   testRoundtrip(make_tuple("answer"sv, 42, true));
 }
 
-TEST(CborCodec, List) {
+TEST(MODULE, List) {
   testRoundtrip((array<i32, 0> {}));
   testRoundtrip((array<i32, 3> { 1, 2, 3 }));
 
@@ -403,7 +410,7 @@ TEST(CborCodec, List) {
   testRoundtrip(vector<string> { "alpha"s, "beta"s });
 }
 
-TEST(CborCodec, Set) {
+TEST(MODULE, Set) {
   testRoundtrip(set<i32> {});
   testRoundtrip(set<i32> { 1, 2, 2, 3 });
   testRoundtrip(set<string> { "alpha"s, "beta"s });
@@ -412,7 +419,7 @@ TEST(CborCodec, Set) {
   testRoundtrip(unordered_set<i32> { 3, 2, 1 });
 }
 
-TEST(CborCodec, Map) {
+TEST(MODULE, Map) {
   testRoundtrip(map<i32, i32> {});
   testRoundtrip(map<i32, i32> { { 1, 2 }, { 2, 3 }, { 3, 4 } });
   testRoundtrip(map<string, i32> { { "alpha"s, 1 }, { "beta"s, 2 }, { "gamma"s, 3 } });
@@ -421,7 +428,7 @@ TEST(CborCodec, Map) {
   testRoundtrip(unordered_map<string, i32> { { "alpha"s, 1 }, { "beta"s, 2 } });
 }
 
-TEST(CborCodec, Bimap) {
+TEST(MODULE, Bimap) {
   testRoundtrip(Bimap<i32, i32> {});
   testRoundtrip(makeBimap<i32, string>({ { 1, "alpha" }, { 2, "beta" }, { 3, "gamma" } }));
   testRoundtrip(makeBimap<string, i32>({ { "alpha", 1 }, { "beta", 2 } }));
@@ -430,7 +437,7 @@ TEST(CborCodec, Bimap) {
   testRoundtrip(makeUnorderedBimap<string, i32>({ { "alpha", 1 }, { "beta", 2 } }));
 }
 
-TEST(CborCodec, Duration) {
+TEST(MODULE, Duration) {
   using namespace std::chrono;
 
   testRoundtrip(1ns);
@@ -445,7 +452,7 @@ TEST(CborCodec, Duration) {
   testRoundtrip(years(10));
 }
 
-TEST(CborCodec, Date) {
+TEST(MODULE, Date) {
   using namespace std::chrono;
 
   testRoundtrip(year_month_day { 1970y, January, 1d });
@@ -454,7 +461,7 @@ TEST(CborCodec, Date) {
   testRoundtrip(year_month_day { 2026y, October, 23d });
 }
 
-TEST(CborCodec, HourMinuteSecond) {
+TEST(MODULE, HourMinuteSecond) {
   using namespace std::chrono;
 
   testHourMinuteSecond(hh_mm_ss { 1h + 2min + 3s });
@@ -463,7 +470,7 @@ TEST(CborCodec, HourMinuteSecond) {
   testHourMinuteSecond(hh_mm_ss<nanoseconds> { -(111h + 2min + 3s + 123456789ns) });
 }
 
-TEST(CborCodec, TimeZone) {
+TEST(MODULE, TimeZone) {
   using namespace std::chrono;
 
   testTimeZone(rocket::chrono::locate_zone("Europe/Berlin"));
@@ -471,7 +478,7 @@ TEST(CborCodec, TimeZone) {
   testTimeZone(rocket::chrono::locate_zone("Etc/UTC"));
 }
 
-TEST(CborCodec, Time) {
+TEST(MODULE, Time) {
   using namespace std::chrono;
 
   testRoundtrip(sys_seconds { 0s });
@@ -479,7 +486,7 @@ TEST(CborCodec, Time) {
   testRoundtrip(time_point_cast<nanoseconds>(rocket::chrono::now<system_clock>()));
 }
 
-TEST(CborCodec, ZonedTime) {
+TEST(MODULE, ZonedTime) {
   using namespace std::chrono;
 
   const auto now = time_point_cast<seconds>(rocket::chrono::now<system_clock>());
@@ -488,7 +495,7 @@ TEST(CborCodec, ZonedTime) {
   testZonedTime(rocket::chrono::zoned_time<nanoseconds>(rocket::chrono::current_zone(), rocket::chrono::now<system_clock>()));
 }
 
-TEST(CborCodec, Interval) {
+TEST(MODULE, Interval) {
   using namespace rocket::math;
 
   testRoundtrip(ClosedInterval<f64>(-4.2_f64, 4.2_f64));
@@ -498,34 +505,34 @@ TEST(CborCodec, Interval) {
   testRoundtrip(LeftOpenInterval<i32>(1, 10));
 }
 
-TEST(CborCodec, Declared) {
+TEST(MODULE, Declared) {
   testRoundtrip(MyStruct { 42, true, "hello", { 1, 2, 3 } });
   testRoundtrip(MyStruct {});
 }
 
-TEST(CborCodec, Instance) {
+TEST(MODULE, Instance) {
   using type = reflect::Instance<MyStruct, MyStruct::Three>;
   testRoundtrip(type(MyStruct { 42, true, "hello", { 1, 2, 3 } }));
 }
 
-TEST(CborCodec, VarRef) {
+TEST(MODULE, VarRef) {
   testVarRefs();
 }
 
-TEST(CborCodec, CodePoint) {
+TEST(MODULE, CodePoint) {
   using type = unicode::CodePoint;
   testRoundtrip(type('a'));
   testRoundtrip(type(U'€'));
   testRoundtrip(type(U'\U0010FFFF'));
 }
 
-TEST(CborCodec, Character) {
+TEST(MODULE, Character) {
   testCharacter(unicode::Character<char>("hello"s));
   testCharacter(unicode::Character<char32>(U"€"s));
   testCharacter(unicode::CharacterView<char>("hello"sv));
 }
 
-TEST(CborCodec, CodePointInvalid) {
+TEST(MODULE, CodePointInvalid) {
   // An array holding a valid code point at offset 1 and an invalid one at offset 6
   const vector<u8> tooLarge { 0x82, 0x1A, 0x00, 0x00, 0x00, 0x41, 0x1A, 0x00, 0x11, 0x00, 0x00 };
   const auto result1 = decode<vector<unicode::CodePoint>>(tooLarge);
@@ -539,7 +546,7 @@ TEST(CborCodec, CodePointInvalid) {
   EXPECT_EQ(result2.error().position, 6U);
 }
 
-TEST(CborCodec, CharacterEmpty) {
+TEST(MODULE, CharacterEmpty) {
   // An empty text string
   const vector<u8> empty { 0x60 };
 

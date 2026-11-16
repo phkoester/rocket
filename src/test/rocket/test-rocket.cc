@@ -1,10 +1,10 @@
 /*
- * test-int128.cc
+ * test-rocket.cc
  */
 
 #include "rocket-test/rocket-test.h"
 
-#include <limits>
+#define MODULE rocket
 
 namespace {
 
@@ -26,7 +26,7 @@ constexpr u128 PATTERN = 0x0123'4567'89AB'CDEF'FEDC'BA98'7654'3210_u128;
 
 // Tests ====================================================================================================
 
-TEST(int128, limits) {
+TEST(MODULE, limits) {
   EXPECT_EQ(I128_MAX, 170141183460469231731687303715884105727_i128);
   EXPECT_EQ(U128_MAX, 340282366920938463463374607431768211455_u128);
   EXPECT_EQ(U128_MAX, 0xFFFF'FFFF'FFFF'FFFF'FFFF'FFFF'FFFF'FFFF_u128);
@@ -34,7 +34,7 @@ TEST(int128, limits) {
   EXPECT_EQ(u128(-1), U128_MAX);
 }
 
-TEST(int128, opCmp) {
+TEST(MODULE, opCmp) {
   EXPECT_LT(i128(-1), i128(0));
   EXPECT_GT(u128(-1), u128(0));
 
@@ -50,7 +50,7 @@ TEST(int128, opCmp) {
   EXPECT_LT(0x0'FFFF'FFFF'FFFF'FFFF_u128, 0x1'0000'0000'0000'0000_u128);
 }
 
-TEST(int128, opNeg) {
+TEST(MODULE, opNeg) {
   EXPECT_EQ(-(1_i128), i128(-1));
   EXPECT_EQ(-(-42_i128), 42_i128);
   EXPECT_EQ(-I128_MAX, I128_MIN + 1_i128);
@@ -61,7 +61,7 @@ TEST(int128, opNeg) {
   EXPECT_EQ(-TWO_64, 0xFFFF'FFFF'FFFF'FFFF'0000'0000'0000'0000_u128);
 }
 
-TEST(int128, opAdd) {
+TEST(MODULE, opAdd) {
   // Signed
   EXPECT_EQ(1_i128 + 2_i128, 3_i128);
   EXPECT_EQ(-1_i128 + 1_i128, 0_i128);
@@ -89,7 +89,7 @@ TEST(int128, opAdd) {
   EXPECT_EQ(b, 0x1'FFFF'FFFF'FFFF'FFFE_u128);
 }
 
-TEST(int128, opSub) {
+TEST(MODULE, opSub) {
   // Signed
   EXPECT_EQ(3_i128 - 2_i128, 1_i128);
   EXPECT_EQ(2_i128 - 3_i128, -1_i128);
@@ -116,7 +116,7 @@ TEST(int128, opSub) {
   EXPECT_EQ(b, 1_u128);
 }
 
-TEST(int128, opMul) {
+TEST(MODULE, opMul) {
   // Signed
   EXPECT_EQ(6_i128 * 7_i128, 42_i128);
   EXPECT_EQ(-6_i128 * 7_i128, -42_i128);
@@ -151,7 +151,7 @@ TEST(int128, opMul) {
   EXPECT_EQ(b, 0x3'0000'0000'0000'0000_u128);
 }
 
-TEST(int128, opDiv) {
+TEST(MODULE, opDiv) {
   // Signed, truncates toward zero
   EXPECT_EQ(42_i128 / 6_i128, 7_i128);
   EXPECT_EQ(7_i128 / 2_i128, 3_i128);
@@ -196,7 +196,7 @@ TEST(int128, opDiv) {
   EXPECT_EQ(b, U64_MAX);
 }
 
-TEST(int128, opMod) {
+TEST(MODULE, opMod) {
   // Signed, the sign follows the dividend
   EXPECT_EQ(42_i128 % 6_i128, 0_i128);
   EXPECT_EQ(7_i128 % 2_i128, 1_i128);
@@ -237,7 +237,7 @@ TEST(int128, opMod) {
   EXPECT_EQ(b, 455_u128);
 }
 
-TEST(int128, opShl) {
+TEST(MODULE, opShl) {
   // Unsigned
   EXPECT_EQ(1_u128 << 0, 1_u128);
   EXPECT_EQ(1_u128 << 1, 2_u128);
@@ -269,7 +269,7 @@ TEST(int128, opShl) {
   EXPECT_EQ(b, -5_i128 * i128(TWO_64) * 64_i128);
 }
 
-TEST(int128, opShr) {
+TEST(MODULE, opShr) {
   // Unsigned, logical
   EXPECT_EQ(1_u128 >> 0, 1_u128);
   EXPECT_EQ(1_u128 >> 1, 0_u128);
@@ -303,7 +303,7 @@ TEST(int128, opShr) {
   EXPECT_EQ(b, -125000000000000000000_i128);
 }
 
-TEST(int128, opShlShrRoundtrip) {
+TEST(MODULE, opShlShrRoundtrip) {
   for (i32 i = 0; i < 128; ++i) {
     const u128 bit = 1_u128 << i;
     EXPECT_EQ(bit >> i, 1_u128) << "i = " << i;

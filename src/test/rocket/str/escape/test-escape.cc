@@ -9,9 +9,11 @@
 
 using namespace rocket::str::escape;
 
+#define MODULE rocketStrEscape
+
 // Tests ====================================================================================================
 
-TEST(escape, CString) {
+TEST(MODULE, CString) {
   Positions pos;
 
   // Double quotes, escaping, UTF-8 'ä'
@@ -135,7 +137,7 @@ TEST(escape, CString) {
 // In the following tests, U+0301 (COMBINING ACUTE ACCENT) joins the preceding character, and U+0600 (ARABIC
 // NUMBER SIGN) joins the following character, to form a single grapheme cluster
 
-TEST(escape, CStringClusterQuoteWithCombiningMark) {
+TEST(MODULE, CStringClusterQuoteWithCombiningMark) {
   Positions pos;
 
   const string in = "\"\u0301x";
@@ -149,7 +151,7 @@ TEST(escape, CStringClusterQuoteWithCombiningMark) {
   EXPECT_EQ(pos, makePositions({ { 1, 0 }, { 5, 3 }, { 6, 4 } }));
 }
 
-TEST(escape, CStringClusterBackslashWithCombiningMark) {
+TEST(MODULE, CStringClusterBackslashWithCombiningMark) {
   Positions pos;
 
   const string in = "\\\u0301";
@@ -162,7 +164,7 @@ TEST(escape, CStringClusterBackslashWithCombiningMark) {
   EXPECT_EQ(pos, makePositions({ { 0, 0 }, { 4, 3 } }));
 }
 
-TEST(escape, CStringClusterOtherQuoteStaysVerbatim) {
+TEST(MODULE, CStringClusterOtherQuoteStaysVerbatim) {
   // Without a configured quote, a quote needs no escaping
   const string in1 = "\"\u0301";
   EXPECT_EQ(escapeCString(in1), in1);
@@ -176,7 +178,7 @@ TEST(escape, CStringClusterOtherQuoteStaysVerbatim) {
   EXPECT_EQ(unescapeCString(escaped, config), in2);
 }
 
-TEST(escape, CStringClusterPrependedQuote) {
+TEST(MODULE, CStringClusterPrependedQuote) {
   Positions pos;
 
   const string in = "\u0600\"x";
@@ -190,7 +192,7 @@ TEST(escape, CStringClusterPrependedQuote) {
   EXPECT_EQ(pos, makePositions({ { 1, 0 }, { 5, 3 }, { 6, 4 } }));
 }
 
-TEST(escape, CStringClusterPrependedBackslash) {
+TEST(MODULE, CStringClusterPrependedBackslash) {
   Positions pos;
 
   const string in = "\u0600\\";
@@ -203,7 +205,7 @@ TEST(escape, CStringClusterPrependedBackslash) {
   EXPECT_EQ(pos, makePositions({ { 0, 0 }, { 4, 3 } }));
 }
 
-TEST(escape, CStringClusterAtQuotes) {
+TEST(MODULE, CStringClusterAtQuotes) {
   const CStringConfig config { .quote='"' };
 
   // A combining mark at the beginning forms a cluster with the opening quote
@@ -216,13 +218,13 @@ TEST(escape, CStringClusterAtQuotes) {
   EXPECT_EQ(unescapeCString("\"a\u0600\"", config), "a\u0600");
 }
 
-TEST(escape, CStringClusterColumn) {
+TEST(MODULE, CStringClusterColumn) {
   // The cluster has a width of 1, and the added backslash makes it 2, so the tab expands to 6 spaces
   const string escaped = escapeCString("\"\u0301\t", { .quote='"', .tabSize=8 });
   EXPECT_EQ(escaped, "\"\\\"\u0301      \"");
 }
 
-TEST(escape, CStringClusterInvalidEscape) {
+TEST(MODULE, CStringClusterInvalidEscape) {
   EXPECT_THAT(
       [&] { unescapeCString("\\a\u0301"); },
       throwsInputFailure(0, { 0, 4 }, EndsWith("Invalid escape sequence")));
@@ -232,7 +234,7 @@ TEST(escape, CStringClusterInvalidEscape) {
       throwsInputFailure(0, { 0, 4 }, EndsWith("Invalid escape sequence")));
 }
 
-TEST(escape, CStringInvalidUtf8) {
+TEST(MODULE, CStringInvalidUtf8) {
   EXPECT_THAT(
       [&] { unescapeCString("a\xFF"); },
       throwsInputFailure(1, EndsWith("Invalid UTF-8 byte sequence")));
@@ -248,7 +250,7 @@ TEST(escape, CStringInvalidUtf8) {
       throwsInputFailure(1, EndsWith("Invalid UTF-8 byte sequence")));
 }
 
-TEST(escape, CStringJsonSurrogatePair) {
+TEST(MODULE, CStringJsonSurrogatePair) {
   const CStringConfig config { .json=true };
 
   // A nonprintable code point greater than U+FFFF is written as a surrogate pair
@@ -266,7 +268,7 @@ TEST(escape, CStringJsonSurrogatePair) {
   EXPECT_EQ(escapeCString(in), "a\\U0010FFFFb");
 }
 
-TEST(escape, CStringTabSize) {
+TEST(MODULE, CStringTabSize) {
   EXPECT_THAT(
       [&] { escapeCString("a\tb", { .tabSize=0 }); },
       ThrowsMessage<InvalidArgument>(EndsWith("Tab size may not be 0")));
@@ -276,7 +278,7 @@ TEST(escape, CStringTabSize) {
   EXPECT_EQ(escapeCString("a\tb", { .tabSize=1 }), "a b");
 }
 
-TEST(escape, Regex) {
+TEST(MODULE, Regex) {
   Positions pos;
 
   {
@@ -300,7 +302,7 @@ TEST(escape, Regex) {
   }
 }
 
-TEST(escape, regexClusterSpecialCharWithCombiningMark) {
+TEST(MODULE, regexClusterSpecialCharWithCombiningMark) {
   Positions pos;
 
   const string in = "(\u0301x";
@@ -313,7 +315,7 @@ TEST(escape, regexClusterSpecialCharWithCombiningMark) {
   EXPECT_EQ(pos, makePositions({ { 0, 0 }, { 4, 3 }, { 5, 4 } }));
 }
 
-TEST(escape, RegexClusterAllSpecialChars) {
+TEST(MODULE, RegexClusterAllSpecialChars) {
   for (const char c : "$()*+.?[\\]^{|}"sv) {
     SCOPED_TRACE(string(1, c));
 
@@ -324,7 +326,7 @@ TEST(escape, RegexClusterAllSpecialChars) {
   }
 }
 
-TEST(escape, regexClusterPrependedSpecialChar) {
+TEST(MODULE, regexClusterPrependedSpecialChar) {
   Positions pos;
 
   const string in = "\u0600(";
@@ -337,14 +339,14 @@ TEST(escape, regexClusterPrependedSpecialChar) {
   EXPECT_EQ(pos, makePositions({ { 0, 0 }, { 4, 3 } }));
 }
 
-TEST(escape, regexClusterPrependedBackslash) {
+TEST(MODULE, regexClusterPrependedBackslash) {
   const string in = "\u0600\\";
   const string escaped = escapeRegex(in);
   EXPECT_EQ(escaped, "\u0600\\\\");
   EXPECT_EQ(unescapeRegex(escaped), in);
 }
 
-TEST(escape, regexClusterStaysVerbatim) {
+TEST(MODULE, regexClusterStaysVerbatim) {
   // Neither character is special
   for (const string& in : { "a\u0301"s, "-\u0301"s }) {
     SCOPED_TRACE(in);
@@ -359,7 +361,7 @@ TEST(escape, regexClusterStaysVerbatim) {
   EXPECT_EQ(unescapeRegex(farmer), farmer);
 }
 
-TEST(escape, regexClusterInvalidEscape) {
+TEST(MODULE, regexClusterInvalidEscape) {
   EXPECT_THAT(
       [&] { unescapeRegex("\\a\u0301"); },
       throwsInputFailure(0, { 0, 4 }, EndsWith("Invalid escape sequence")));
@@ -369,7 +371,7 @@ TEST(escape, regexClusterInvalidEscape) {
       throwsInputFailure(0, { 0, 4 }, EndsWith("Invalid escape sequence")));
 }
 
-TEST(escape, regexInvalidUtf8) {
+TEST(MODULE, regexInvalidUtf8) {
   EXPECT_THAT(
       [&] { unescapeRegex("a\xFF"); },
       throwsInputFailure(1, EndsWith("Invalid UTF-8 byte sequence")));

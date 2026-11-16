@@ -8,9 +8,11 @@
 
 using namespace rocket::str;
 
+#define MODULE rocketStrRange
+
 // Tests ====================================================================================================
 
-TEST(Range, initializerList) {
+TEST(MODULE, initializerList) {
   const str::Range val {};
   EXPECT_EQ(val.a, 1);
   EXPECT_EQ(val.b, 0);

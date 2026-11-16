@@ -7,6 +7,8 @@
 #include "rocket/enum.h"
 #include "rocket/scan.h"
 
+#define MODULE rocketEnum
+
 // `MyEnum` -------------------------------------------------------------------------------------------------
 
 enum MyEnum : u8 { fröb, fröber, fröberer, pörk, pörker, pörkerer };
@@ -34,13 +36,13 @@ ROCKET_ENUM_DEFINE(mynamespace, MyEnumInNamespace, MyEnumInNamespace, (red)(gree
 
 // Tests ====================================================================================================
 
-TEST(enum, MyEnumOpOutput) {
+TEST(MODULE, MyEnumOpOutput) {
   ostringstream os;
   os << fröb;
   EXPECT_EQ(os.str(), "fröb");
 }
 
-TEST(enum, MyEnumFormat) {
+TEST(MODULE, MyEnumFormat) {
   EXPECT_EQ(fmt::format("{}", fröber), "fröber");
   EXPECT_EQ(fmt::format("{}", fröberer), "fröberer");
   EXPECT_EQ(fmt::format("{}", pörk), "pörk");
@@ -55,7 +57,7 @@ TEST(enum, MyEnumFormat) {
   EXPECT_EQ(fmt::format(U"{}", fröb), U"fröb");
 }
 
-TEST(enum, MyEnumScan) {
+TEST(MODULE, MyEnumScan) {
   {
     const auto result = scn::scan<MyEnum>("", "{}");
     ASSERT_FALSE(result);
@@ -103,7 +105,7 @@ TEST(enum, MyEnumScan) {
   }
 }
 
-TEST(enum, MyEnumToType) {
+TEST(MODULE, MyEnumToType) {
   EXPECT_EQ(Enum<MyEnum>::toType("fröb", true), make_pair(5_u64, fröb ));
   EXPECT_EQ(Enum<MyEnum>::toType("fröbx", false), make_pair(5_u64, fröb ));
   EXPECT_EQ(Enum<MyEnum>::toType("fröber", true), make_pair(7_u64, fröber));
@@ -116,24 +118,24 @@ TEST(enum, MyEnumToType) {
   EXPECT_EQ(Enum<MyEnum>::toType("fröbx", true).error().message, "Cannot scan \"fröbx\" as `MyEnum`");
 }
 
-TEST(enum, MyEnumClassOpOutput) {
+TEST(MODULE, MyEnumClassOpOutput) {
   ostringstream os;
   os << MyEnumClass::hürx;
   EXPECT_EQ(os.str(), "hürx");
 }
 
-TEST(enum, MyEnumFClassFormat) {
+TEST(MODULE, MyEnumFClassFormat) {
   EXPECT_EQ(fmt::format("{}", MyEnumClass::hürx), "hürx");
 }
 
-TEST(enum, MyEnumClassToType) {
+TEST(MODULE, MyEnumClassToType) {
   EXPECT_EQ(Enum<MyEnumClass>::toType("hürxer", true), make_pair(7_u64, MyEnumClass::hürxer));
 
   EXPECT_EQ(Enum<MyEnumClass>::toType("foo", true).error().message, "Cannot scan \"foo\" as `MyEnumClass`");
   EXPECT_EQ(Enum<MyEnumClass>::toType("hürxerx", true).error().message, "Cannot scan \"hürxerx\" as `MyEnumClass`");
 }
 
-TEST(enum, MyEnumInNamespaceOpOutput) {
+TEST(MODULE, MyEnumInNamespaceOpOutput) {
   ostringstream os;
   os << mynamespace::red;
   EXPECT_EQ(os.str(), "red");

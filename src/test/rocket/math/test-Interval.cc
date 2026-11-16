@@ -9,13 +9,15 @@
 
 using namespace rocket::math;
 
+#define MODULE rocketMathInterval
+
 // Tests ====================================================================================================
 
 // Interval -------------------------------------------------------------------------------------------------
 
 // Integer ..................................................................................................
 
-TEST(Interval, ClosedIntervalI32) {
+TEST(MODULE, ClosedIntervalI32) {
   using type = ClosedInterval<i32>;
 
   type val = type();
@@ -62,7 +64,7 @@ TEST(Interval, ClosedIntervalI32) {
   EXPECT_EQ(type(1, 0), type());
 }
 
-TEST(Interval, ClosedIntervalU32) {
+TEST(MODULE, ClosedIntervalU32) {
   using type = ClosedInterval<u32>;
 
   type val = type();
@@ -100,7 +102,7 @@ TEST(Interval, ClosedIntervalU32) {
   EXPECT_EQ(type(1, 0), type());
 }
 
-TEST(Interval, LeftOpenIntervalI32) {
+TEST(MODULE, LeftOpenIntervalI32) {
   using type = LeftOpenInterval<i32>;
 
   type val = type();
@@ -151,7 +153,7 @@ TEST(Interval, LeftOpenIntervalI32) {
   EXPECT_EQ(type(1, 0), type());
 }
 
-TEST(Interval, LeftOpenIntervalU32) {
+TEST(MODULE, LeftOpenIntervalU32) {
   using type = LeftOpenInterval<u32>;
 
   type val = type();
@@ -198,7 +200,7 @@ TEST(Interval, LeftOpenIntervalU32) {
   EXPECT_EQ(type(1, 0), type());
 }
 
-TEST(Interval, RightOpenIntervalI32) {
+TEST(MODULE, RightOpenIntervalI32) {
   using type = RightOpenInterval<i32>;
 
   type val = type();
@@ -247,7 +249,7 @@ TEST(Interval, RightOpenIntervalI32) {
   EXPECT_EQ(type(1, 0), type());
 }
 
-TEST(Interval, RightOpenIntervalU32) {
+TEST(MODULE, RightOpenIntervalU32) {
   using type = RightOpenInterval<u32>;
 
   type val = type();
@@ -292,7 +294,7 @@ TEST(Interval, RightOpenIntervalU32) {
   EXPECT_EQ(type(1, 0), type());
 }
 
-TEST(Interval, OpenIntervalI32) {
+TEST(MODULE, OpenIntervalI32) {
   using type = OpenInterval<i32>;
 
   type val = type();
@@ -361,7 +363,7 @@ TEST(Interval, OpenIntervalI32) {
   EXPECT_EQ(type(1, 0), type());
 }
 
-TEST(Interval, OpenIntervalU32) {
+TEST(MODULE, OpenIntervalU32) {
   using type = OpenInterval<u32>;
 
   type val = type();
@@ -426,7 +428,7 @@ TEST(Interval, OpenIntervalU32) {
 
 // Floating-point ...........................................................................................
 
-TEST(Interval, ClosedIntervalF32) {
+TEST(MODULE, ClosedIntervalF32) {
   using type = ClosedInterval<f32>;
 
   type val = type();
@@ -453,7 +455,7 @@ TEST(Interval, ClosedIntervalF32) {
   EXPECT_EQ(type(1, 0), type());
 }
 
-TEST(Interval, LeftOpenIntervalF32) {
+TEST(MODULE, LeftOpenIntervalF32) {
   using type = LeftOpenInterval<f32>;
 
   type val = type();
@@ -484,7 +486,7 @@ TEST(Interval, LeftOpenIntervalF32) {
   EXPECT_EQ(type(1_f32, 0), type());
 }
 
-TEST(Interval, RightOpenIntervalF32) {
+TEST(MODULE, RightOpenIntervalF32) {
   using type = RightOpenInterval<f32>;
 
   type val = type();
@@ -515,7 +517,7 @@ TEST(Interval, RightOpenIntervalF32) {
   EXPECT_EQ(type(1, 0_f32), type());
 }
 
-TEST(Interval, OpenIntervalF32) {
+TEST(MODULE, OpenIntervalF32) {
   using type = OpenInterval<f32>;
 
   auto val = type();
@@ -558,7 +560,7 @@ TEST(Interval, OpenIntervalF32) {
 
 // Operators ................................................................................................
 
-TEST(Interval, operatorBitWiseAnd) {
+TEST(MODULE, operatorBitWiseAnd) {
   {
     using type = ClosedInterval<i32>;
     EXPECT_EQ(type() & type(), type());
@@ -579,7 +581,7 @@ TEST(Interval, operatorBitWiseAnd) {
   }
 }
 
-TEST(Interval, operatorBitWiseOr) {
+TEST(MODULE, operatorBitWiseOr) {
   {
     using type = ClosedInterval<i32>;
     EXPECT_EQ(type() | type(), vector<type>{ type() });
@@ -635,7 +637,7 @@ TEST(Interval, operatorBitWiseOr) {
 
 // Format ...................................................................................................
 
-TEST(Interval, ClosedIntervalFormat) {
+TEST(MODULE, ClosedIntervalFormat) {
   using type = ClosedInterval<i32>;
 
   EXPECT_EQ(fmt::format("{}", type()), "∅");
@@ -646,7 +648,7 @@ TEST(Interval, ClosedIntervalFormat) {
   EXPECT_EQ(fmt::format("{}", type(1, 2)), "[1,2]");
 }
 
-TEST(Interval, RightOpenIntervalI32Format) {
+TEST(MODULE, RightOpenIntervalI32Format) {
   using type = RightOpenInterval<i32>;
 
   EXPECT_EQ(fmt::format("{}", type()), "∅");
@@ -658,7 +660,7 @@ TEST(Interval, RightOpenIntervalI32Format) {
   EXPECT_EQ(fmt::format(U"{}", type(1'000, 2'000)), U"[1000,2000)");
 }
 
-TEST(Interval, RightOpenIntervalF64Format) {
+TEST(MODULE, RightOpenIntervalF64Format) {
   using type = RightOpenInterval<f64>;
 
   EXPECT_EQ(fmt::format("{}", type()), "∅");
@@ -667,7 +669,7 @@ TEST(Interval, RightOpenIntervalF64Format) {
 
 // Intervals ------------------------------------------------------------------------------------------------
 
-TEST(Interval, OpenIntervalsI32IntersectionOf) {
+TEST(MODULE, OpenIntervalsI32IntersectionOf) {
   using type = i32;
   using ival = OpenInterval<type>;
   using ivals = OpenIntervals<type>;
@@ -718,7 +720,7 @@ TEST(Interval, OpenIntervalsI32IntersectionOf) {
     ival(2, 4));
 }
 
-TEST(Interval, OpenIntervalsF64IntersectionOf) {
+TEST(MODULE, OpenIntervalsF64IntersectionOf) {
   using type = f64;
   using ival = OpenInterval<type>;
   using ivals = OpenIntervals<type>;
@@ -769,7 +771,7 @@ TEST(Interval, OpenIntervalsF64IntersectionOf) {
     ival(2, 4));
 }
 
-TEST(Interval, ClosedIntervalsI32UnionOf) {
+TEST(MODULE, ClosedIntervalsI32UnionOf) {
   using type = i32;
   using ival = ClosedInterval<type>;
   using ivals = ClosedIntervals<type>;
@@ -820,7 +822,7 @@ TEST(Interval, ClosedIntervalsI32UnionOf) {
     (ivals { ival(1, 5) }));
 }
 
-TEST(Interval, OpenIntervalsF64UnionOf) {
+TEST(MODULE, OpenIntervalsF64UnionOf) {
   using type = f64;
   using ival = OpenInterval<type>;
   using ivals = OpenIntervals<type>;

@@ -9,12 +9,14 @@
 
 using namespace rocket::system::terminal;
 
+#define MODULE rocketSystemTerminal
+
 // Tests ====================================================================================================
 
 /**
  * This test requires `ROCKET_TEST_TERMINAL=1`.
  */
-TEST(terminal, position) {
+TEST(MODULE, position) {
   REQUIRE_ENV(ROCKET_TEST_TERMINAL);
 
   const Ansi ansi(true);
@@ -37,7 +39,7 @@ TEST(terminal, position) {
 /**
  * This test requires `ROCKET_TEST_TERMINAL=1`.
  */
-TEST(terminal, size) { // NOLINT(*-complexity)
+TEST(MODULE, size) { // NOLINT(*-complexity)
   REQUIRE_ENV(ROCKET_TEST_TERMINAL);
 
   auto size = system::terminal::size(nio::out);

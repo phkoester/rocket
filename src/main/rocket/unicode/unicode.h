@@ -12,8 +12,6 @@
 #include "rocket/format.h"
 #include "rocket/unicode/unicode-fwd.h"
 
-#include <limits>
-
 namespace rocket::unicode {
 
 // `CodePoint` ----------------------------------------------------------------------------------------------

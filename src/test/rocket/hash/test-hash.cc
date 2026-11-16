@@ -8,10 +8,12 @@
 
 using namespace rocket::hash;
 
+#define MODULE rocketHash
+
 // Tests ====================================================================================================
 
 // Tests that the order affects the hash value
-TEST(hash, combine) {
+TEST(MODULE, combine) {
   u64 seed = 1;
   combine(seed, 2);
   combine(seed, 3);

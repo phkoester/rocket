@@ -9,6 +9,8 @@
 
 #include <cmath>
 
+#define MODULE rocketLiteral
+
 namespace {
 
 namespace lit = rocket::internal::literal;
@@ -39,7 +41,7 @@ template<char... C> consteval bool operator""_validU128() { return VALID_UNSIGNE
 
 // Tests ====================================================================================================
 
-TEST(literal, integerTypes) {
+TEST(MODULE, integerTypes) {
   static_assert(same_as<decltype(1_i8), i8>);
   static_assert(same_as<decltype(1_u8), u8>);
   static_assert(same_as<decltype(1_i16), i16>);
@@ -52,14 +54,14 @@ TEST(literal, integerTypes) {
   static_assert(same_as<decltype(1_u128), u128>);
 }
 
-TEST(literal, integerIsConstexpr) {
+TEST(MODULE, integerIsConstexpr) {
   static_assert(42_i32 == 42);
   static_assert(0xFF_u8 == 255);
   static_assert(0b101_i32 == 5);
   static_assert(017_u16 == 15);
 }
 
-TEST(literal, integerZero) {
+TEST(MODULE, integerZero) {
   EXPECT_EQ(0_i8, 0);
   EXPECT_EQ(0_u8, 0);
   EXPECT_EQ(0_i32, 0);
@@ -72,7 +74,7 @@ TEST(literal, integerZero) {
   EXPECT_EQ(0b0_i32, 0);
 }
 
-TEST(literal, integerLimits) {
+TEST(MODULE, integerLimits) {
   EXPECT_EQ(127_i8, numeric_limits<i8>::max());
   EXPECT_EQ(255_u8, numeric_limits<u8>::max());
   EXPECT_EQ(32767_i16, numeric_limits<i16>::max());
@@ -85,7 +87,7 @@ TEST(literal, integerLimits) {
   EXPECT_EQ(340282366920938463463374607431768211455_u128, numeric_limits<u128>::max());
 }
 
-TEST(literal, integerHexadecimal) {
+TEST(MODULE, integerHexadecimal) {
   EXPECT_EQ(0x7F_i8, 127);
   EXPECT_EQ(0X7F_i8, 127);
   EXPECT_EQ(0xFF_u8, 255);
@@ -99,7 +101,7 @@ TEST(literal, integerHexadecimal) {
   EXPECT_EQ(0XFFFF'FFFF'FFFF'FFFF'FFFF'FFFF'FFFF'FFFF_u128, numeric_limits<u128>::max());
 }
 
-TEST(literal, integerBinary) {
+TEST(MODULE, integerBinary) {
   EXPECT_EQ(0b1111111_i8, 127);
   EXPECT_EQ(0B1111111_i8, 127);
   EXPECT_EQ(0b11111111_u8, 255);
@@ -110,14 +112,14 @@ TEST(literal, integerBinary) {
   EXPECT_EQ(0b1000'0000'0000'0000'0000'0000'0000'0000_u32, 2147483648U);
 }
 
-TEST(literal, integerOctal) {
+TEST(MODULE, integerOctal) {
   EXPECT_EQ(0177_i8, 127);
   EXPECT_EQ(0377_u8, 255);
   EXPECT_EQ(017_i32, 15);
   EXPECT_EQ(017_u32, 15U);
 }
 
-TEST(literal, integerDigitSeparators) {
+TEST(MODULE, integerDigitSeparators) {
   EXPECT_EQ(1'000_i32, 1000);
   EXPECT_EQ(1'000'000_u64, 1000000U);
   EXPECT_EQ(0xFF'FF_u16, 65535);
@@ -125,7 +127,7 @@ TEST(literal, integerDigitSeparators) {
   EXPECT_EQ(0'17_u8, 15);
 }
 
-TEST(literal, integerValidityDecimal) {
+TEST(MODULE, integerValidityDecimal) {
   EXPECT_TRUE(127_validI8);
   EXPECT_FALSE(128_validI8);
   EXPECT_TRUE(255_validU8);
@@ -152,7 +154,7 @@ TEST(literal, integerValidityDecimal) {
   EXPECT_FALSE(340282366920938463463374607431768211456_validU128);
 }
 
-TEST(literal, integerValidityFarOutOfRange) {
+TEST(MODULE, integerValidityFarOutOfRange) {
   // The value must not wrap around and appear valid
   EXPECT_FALSE(1000_validU8);
   EXPECT_FALSE(65792_validU8); // 0x10100
@@ -160,7 +162,7 @@ TEST(literal, integerValidityFarOutOfRange) {
   EXPECT_FALSE(3402823669209384634633746074317682114560_validU128);
 }
 
-TEST(literal, integerValidityOtherBases) {
+TEST(MODULE, integerValidityOtherBases) {
   EXPECT_TRUE(0x7F_validI8);
   EXPECT_FALSE(0x80_validI8);
   EXPECT_TRUE(0X7F_validI8);
@@ -185,14 +187,14 @@ TEST(literal, integerValidityOtherBases) {
   EXPECT_FALSE(0400_validU8);
 }
 
-TEST(literal, floatTypes) {
+TEST(MODULE, floatTypes) {
   static_assert(same_as<decltype(1_f32), f32>);
   static_assert(same_as<decltype(1.0_f32), f32>);
   static_assert(same_as<decltype(1_f64), f64>);
   static_assert(same_as<decltype(1.0_f64), f64>);
 }
 
-TEST(literal, floatZero) {
+TEST(MODULE, floatZero) {
   EXPECT_EQ(0.0_f32, 0.0F);
   EXPECT_EQ(.0_f32, 0.0F);
   EXPECT_EQ(0e0_f32, 0.0F);
@@ -204,7 +206,7 @@ TEST(literal, floatZero) {
   EXPECT_EQ(0.0e10_f64, 0.0);
 }
 
-TEST(literal, floatNegativeZero) {
+TEST(MODULE, floatNegativeZero) {
   // A literal is never negative, but the operators can be called directly
   EXPECT_EQ(operator""_f32(-0.0L), 0.0F);
   EXPECT_TRUE(signbit(operator""_f32(-0.0L)));
@@ -212,7 +214,7 @@ TEST(literal, floatNegativeZero) {
   EXPECT_TRUE(signbit(operator""_f64(-0.0L)));
 }
 
-TEST(literal, floatValues) {
+TEST(MODULE, floatValues) {
   EXPECT_EQ(1.5_f32, 1.5F);
   EXPECT_EQ(-1.5_f32, -1.5F);
   EXPECT_EQ(1'000.5_f32, 1000.5F);
@@ -228,7 +230,7 @@ TEST(literal, floatValues) {
   EXPECT_DOUBLE_EQ(1e100_f64, 1e100);
 }
 
-TEST(literal, floatFromInteger) {
+TEST(MODULE, floatFromInteger) {
   EXPECT_EQ(0_f32, 0.0F);
   EXPECT_EQ(42_f32, 42.0F);
   EXPECT_EQ(16777216_f32, 16777216.0F);
@@ -240,7 +242,7 @@ TEST(literal, floatFromInteger) {
   EXPECT_DOUBLE_EQ(18446744073709551615_f64, 18446744073709551616.0);
 }
 
-TEST(literal, floatLimits) {
+TEST(MODULE, floatLimits) {
   using limitsF32 = numeric_limits<f32>;
   using limitsF64 = numeric_limits<f64>;
 
@@ -253,7 +255,7 @@ TEST(literal, floatLimits) {
   EXPECT_EQ(operator""_f64(static_cast<std_long_double>(limitsF64::min())), limitsF64::min());
 }
 
-TEST(literal, floatSubnormal) {
+TEST(MODULE, floatSubnormal) {
   using limitsF32 = numeric_limits<f32>;
   using limitsF64 = numeric_limits<f64>;
 
@@ -274,13 +276,13 @@ TEST(literal, floatSubnormal) {
   EXPECT_EQ(operator""_f64(static_cast<std_long_double>(limitsF64::denorm_min())), limitsF64::denorm_min());
 }
 
-TEST(literal, floatRoundsUpToSmallestSubnormal) {
+TEST(MODULE, floatRoundsUpToSmallestSubnormal) {
   // Three quarters of the smallest subnormal value is closer to that value than to zero
   const auto val = static_cast<std_long_double>(numeric_limits<f32>::denorm_min()) * 3 / 4;
   EXPECT_EQ(operator""_f32(val), numeric_limits<f32>::denorm_min());
 }
 
-TEST(literal, floatUnderflowF32) {
+TEST(MODULE, floatUnderflowF32) {
   EXPECT_THAT([] { static_cast<void>(1e-50_f32); }, Throws<Underflow>());
 
   // A quarter of the smallest subnormal value rounds to zero
@@ -289,7 +291,7 @@ TEST(literal, floatUnderflowF32) {
   EXPECT_THAT([&] { static_cast<void>(operator""_f32(-val)); }, Throws<Underflow>());
 }
 
-TEST(literal, floatUnderflowF64) {
+TEST(MODULE, floatUnderflowF64) {
   // This is only possible if `long double` has more precision than `f64`, which isn’t the case everywhere
   if (numeric_limits<std_long_double>::digits <= numeric_limits<f64>::digits) {
     GTEST_SKIP() << "`long double` is no wider than `f64`";
@@ -300,7 +302,7 @@ TEST(literal, floatUnderflowF64) {
   EXPECT_THAT([&] { static_cast<void>(operator""_f64(-val)); }, Throws<Underflow>());
 }
 
-TEST(literal, floatOverflowF32) {
+TEST(MODULE, floatOverflowF32) {
   EXPECT_THAT([] { static_cast<void>(1e39_f32); }, Throws<Overflow>());
 
   // The next representable value above the greatest `f32`
@@ -311,7 +313,7 @@ TEST(literal, floatOverflowF32) {
   EXPECT_THAT([&] { static_cast<void>(operator""_f32(-val)); }, Throws<Overflow>());
 }
 
-TEST(literal, floatOverflowF64) {
+TEST(MODULE, floatOverflowF64) {
   // Where `long double` is no wider than `f64`, this is infinity, which must be rejected as well
   const auto val = nextafter(
     static_cast<std_long_double>(numeric_limits<f64>::max()),
@@ -320,7 +322,7 @@ TEST(literal, floatOverflowF64) {
   EXPECT_THAT([&] { static_cast<void>(operator""_f64(-val)); }, Throws<Overflow>());
 }
 
-TEST(literal, literalStringChar) {
+TEST(MODULE, literalStringChar) {
   using type = LiteralString<char, 'a', 'b', 'c'>;
 
   static_assert(type().size() == 3);
@@ -331,7 +333,7 @@ TEST(literal, literalStringChar) {
   EXPECT_EQ(view, "abc"sv);
 }
 
-TEST(literal, literalStringChar32) {
+TEST(MODULE, literalStringChar32) {
   using type = LiteralString<char32, U'a', U'€'>;
 
   static_assert(type().size() == 2);
@@ -340,7 +342,7 @@ TEST(literal, literalStringChar32) {
   EXPECT_EQ(view, U"a€"sv);
 }
 
-TEST(literal, literalStringEmpty) {
+TEST(MODULE, literalStringEmpty) {
   using type = LiteralString<char>;
 
   static_assert(type().size() == 0); // NOLINT(*-container-size-empty)
@@ -349,7 +351,7 @@ TEST(literal, literalStringEmpty) {
   EXPECT_TRUE(view.empty());
 }
 
-TEST(literal, literalStringIsConstexpr) {
+TEST(MODULE, literalStringIsConstexpr) {
   static constexpr string_view VIEW = LiteralString<char, 'x', 'y'>();
   static_assert(VIEW == "xy"sv);
 }

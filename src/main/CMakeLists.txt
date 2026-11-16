@@ -104,8 +104,8 @@ target_sources(rocket
     rocket/codec/codec.cc
     rocket/filesystem/filesystem.cc
     rocket/io/IoError.cc
-    rocket/io/int128.cc
     rocket/io/io.cc
+    rocket/io/io-int128.cc
     rocket/log/log.cc
     rocket/nio/nio.cc
     rocket/nio/nio-utils.cc
@@ -135,14 +135,20 @@ target_sources(rocket
       rocket/Result.h
       rocket/TypeId.h
       rocket/assert.h
+      rocket/configure.h
       rocket/enum.h
       rocket/format.h
+      rocket/format-chrono.h
+      rocket/format-int128.h
       rocket/functional.h
       rocket/int128.h
       rocket/literal.h
       rocket/macro.h
       rocket/rocket.h
       rocket/scan.h
+      rocket/scan-Bimap.h
+      rocket/scan-chrono.h
+      rocket/scan-int128.h
       rocket/scope.h
       rocket/stacktrace.h
       rocket/std.h
@@ -163,8 +169,8 @@ target_sources(rocket
       rocket/format/Subformat.h
       rocket/hash/hash.h
       rocket/io/IoError.h
-      rocket/io/int128.h
       rocket/io/io.h
+      rocket/io/io-int128.h
       rocket/io/spanstream.h
       rocket/log/log.h
       rocket/math/Interval.h

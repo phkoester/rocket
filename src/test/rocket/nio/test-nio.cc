@@ -21,6 +21,9 @@ using namespace rocket::nio;
 
 using rocket::io::testing::FailingBuf;
 using rocket::io::testing::NonseekableBuf;
+
+#define MODULE rocketNio
+
 namespace {
 
 // `FileCloser` ---------------------------------------------------------------------------------------------
@@ -394,13 +397,13 @@ forEachScanSource(string_view input, Fn fn) {
 
 // `Sink` ---------------------------------------------------------------------------------------------------
 
-TEST(nio, FileSinkDoesNotExist) {
+TEST(MODULE, FileSinkDoesNotExist) {
   EXPECT_THAT(
     [&] { const FileSink out("/file/does/not/exist"); },
     throwsDoesNotExist("Cannot open file `/file/does/not/exist` for writing"));
 }
 
-TEST(nio, NullSink) {
+TEST(MODULE, NullSink) {
   // Like `/dev/null`, everything written is discarded, and every write succeeds
   NullSink out;
   EXPECT_EQ(out.write("abc"), 3);
@@ -414,7 +417,7 @@ TEST(nio, NullSink) {
   EXPECT_FALSE(out.eof()); // Never full
 }
 
-TEST(nio, SpanSink) {
+TEST(MODULE, SpanSink) {
   string str = "---[abcd]---";
   const span<char> span(&str[4], 4);
   SpanSink out(span);
@@ -422,7 +425,7 @@ TEST(nio, SpanSink) {
   EXPECT_EQ(str, "---[ABCD]---");
 }
 
-TEST(nio, StringSinkWriteOffset) {
+TEST(MODULE, StringSinkWriteOffset) {
   const string_view str = "abcdef";
   const span<const u8> bytes(reinterpret_cast<const u8*>(str.data()), str.size());
   StringSink out;
@@ -442,20 +445,20 @@ TEST(nio, StringSinkWriteOffset) {
   EXPECT_EQ(out.str(), "cdeffbcd\n");
 }
 
-TEST(nio, StreamSink) {
+TEST(MODULE, StreamSink) {
   ostringstream os;
   StreamSink out(os);
   out.println("Hi {}", "there");
   EXPECT_EQ(os.str(), "Hi there\n");
 }
 
-TEST(nio, StreamSinkDoesNotExist) {
+TEST(MODULE, StreamSinkDoesNotExist) {
   EXPECT_THAT(
     [&] { const StreamSink out("/file/does/not/exist"); },
     throwsDoesNotExist("Cannot open file `/file/does/not/exist` for writing"));
 }
 
-TEST(nio, StreamSinkLeavesExceptionMaskAlone) {
+TEST(MODULE, StreamSinkLeavesExceptionMaskAlone) {
   // A stream that is bad already, with `badbit` in its exception mask, does not make the constructor throw
   ostringstream os;
   os.exceptions(ios::badbit);
@@ -475,7 +478,7 @@ TEST(nio, StreamSinkLeavesExceptionMaskAlone) {
   EXPECT_FALSE(out2.code());
 }
 
-TEST(nio, StreamSinkBufferThrows) {
+TEST(MODULE, StreamSinkBufferThrows) {
   // A `system_error` from the stream buffer keeps its code, any other exception is an I/O error. Neither
   // escapes, whatever the exception mask
   struct ThrowingOutBuf : streambuf {
@@ -509,7 +512,7 @@ TEST(nio, StreamSinkBufferThrows) {
   }
 }
 
-TEST(nio, StreamSinkExceptionMask) {
+TEST(MODULE, StreamSinkExceptionMask) {
   // A stream buffer that accepts nothing and cannot sync, like a full device
   struct FailingOutBuf : streambuf {
   protected:
@@ -544,7 +547,7 @@ TEST(nio, StreamSinkExceptionMask) {
   }
 }
 
-TEST(nio, StringSink) {
+TEST(MODULE, StringSink) {
   StringSink out1; // With managed string
   out1.println("Hi {}", "there");
   EXPECT_EQ(out1.str(), "Hi there\n");
@@ -555,7 +558,7 @@ TEST(nio, StringSink) {
   EXPECT_EQ(buf, "Hi there\n");
 }
 
-TEST(nio, seekableSinks) {
+TEST(MODULE, seekableSinks) {
   const auto temp = rocket::filesystem::tempFile();
   EXPECT_TRUE(FileSink(temp).seekable());
 
@@ -595,21 +598,21 @@ TEST(nio, seekableSinks) {
 
 // `print`, `println` .......................................................................................
 
-TEST(nio, print) {
+TEST(MODULE, print) {
   forEachSink("Hi there, 42", [](Sink& out) { return out.print("Hi {}, {}", "there", 42); });
   forEachSink("No args", [](Sink& out) { return out.print("No args"); });
   forEachSink("", [](Sink& out) { return out.print(""); });
   forEachSink("ab-c", [](Sink& out) { return out.print("a") && out.print("{}", 'b') && out.print("-c"); });
 }
 
-TEST(nio, println) {
+TEST(MODULE, println) {
   forEachSink("Hi there, 42\n", [](Sink& out) { return out.println("Hi {}, {}", "there", 42); });
   forEachSink("\n", [](Sink& out) { return out.println(""); });
   forEachSink("a\nb\n", [](Sink& out) { return out.println("a") && out.println("{}", 'b'); });
   forEachSink("a b\n", [](Sink& out) { return out.print("a ") && out.println("b"); });
 }
 
-TEST(nio, printStyle) {
+TEST(MODULE, printStyle) {
   const auto style = fmt::fg(fmt::color::red) | fmt::emphasis::bold;
   const auto expected = fmt::format(style, "Hi {}", "there");
   ASSERT_NE(expected, "Hi there"); // The style must actually emit escape sequences
@@ -619,7 +622,7 @@ TEST(nio, printStyle) {
   forEachSink("Hi there", [](Sink& out) { return out.print(fmt::text_style(), "Hi {}", "there"); });
 }
 
-TEST(nio, printlnStyle) {
+TEST(MODULE, printlnStyle) {
   const auto style = fmt::fg(fmt::color::red) | fmt::emphasis::bold;
   const auto expected = fmt::format(style, "Hi {}", "there") + '\n'; // Line feed after the reset sequence
   forEachSink(expected, [&](Sink& out) { return out.println(style, "Hi {}", "there"); });
@@ -627,7 +630,7 @@ TEST(nio, printlnStyle) {
   forEachSink("Hi there\n", [](Sink& out) { return out.println(fmt::text_style(), "Hi {}", "there"); });
 }
 
-TEST(nio, printLocale) {
+TEST(MODULE, printLocale) {
   // The locale only applies to `L` specifiers
   forEachSink("1'234'567 1234567 1'234,5", [](Sink& out) {
     return out.print(testLocale(), "{:L} {} {:L}", 1'234'567, 1'234'567, 1234.5);
@@ -637,13 +640,13 @@ TEST(nio, printLocale) {
   forEachSink("1234567", [](Sink& out) { return out.print(locale::classic(), "{:L}", 1'234'567); });
 }
 
-TEST(nio, printlnLocale) {
+TEST(MODULE, printlnLocale) {
   forEachSink("1'234'567 1234567\n", [](Sink& out) {
     return out.println(testLocale(), "{:L} {}", 1'234'567, 1'234'567);
   });
 }
 
-TEST(nio, printMixed) {
+TEST(MODULE, printMixed) {
   const auto style = fmt::fg(fmt::color::green);
   const auto expected = "a 1'000\n" + fmt::format(style, "b") + "\nc\nd";
   forEachSink(expected, [&](Sink& out) {
@@ -652,7 +655,7 @@ TEST(nio, printMixed) {
   });
 }
 
-TEST(nio, printNullSink) {
+TEST(MODULE, printNullSink) {
   NullSink out;
   EXPECT_TRUE(out.print("Hi {}", "there"));
   EXPECT_TRUE(out.print(fmt::fg(fmt::color::red), "Hi {}", "there"));
@@ -662,7 +665,7 @@ TEST(nio, printNullSink) {
   EXPECT_TRUE(out.println(testLocale(), "{:L}", 1'000));
 }
 
-TEST(nio, printSpanSinkTruncated) {
+TEST(MODULE, printSpanSinkTruncated) {
   {
     string str = "[....]";
     SpanSink out(span<char>(&str[1], 4));
@@ -700,19 +703,19 @@ TEST(nio, printSpanSinkTruncated) {
 
 // `Source` -------------------------------------------------------------------------------------------------
 
-TEST(nio, FileSourceDoesNotExist) {
+TEST(MODULE, FileSourceDoesNotExist) {
   EXPECT_THAT(
     [&] { const FileSource in("/file/does/not/exist"); },
     throwsDoesNotExist("Cannot open file `/file/does/not/exist` for reading"));
 }
 
-TEST(nio, StreamSourceDoesNotExist) {
+TEST(MODULE, StreamSourceDoesNotExist) {
   EXPECT_THAT(
     [&] { const StreamSource in("/file/does/not/exist"); },
     throwsDoesNotExist("Cannot open file `/file/does/not/exist` for reading"));
 }
 
-TEST(nio, StreamSourceExceptionMask) {
+TEST(MODULE, StreamSourceExceptionMask) {
   // Reaching the end of the input is no error, even with `failbit` and `eofbit` in the exception mask
   for (const auto mask : { ios::goodbit, ios::badbit | ios::failbit | ios::eofbit }) {
     SCOPED_TRACE(fmt::format("mask {}", static_cast<i32>(mask)));
@@ -744,7 +747,7 @@ TEST(nio, StreamSourceExceptionMask) {
   }
 }
 
-TEST(nio, StreamSourceBufferThrows) {
+TEST(MODULE, StreamSourceBufferThrows) {
   // `FailingBuf` throws a `runtime_error`, which the stream rethrows if `badbit` is in its exception mask
   for (const auto mask : { ios::goodbit, ios::badbit }) {
     SCOPED_TRACE(fmt::format("mask {}", static_cast<i32>(mask)));
@@ -766,7 +769,7 @@ TEST(nio, StreamSourceBufferThrows) {
   }
 }
 
-TEST(nio, FileSourceCodeAtEndOfInput) {
+TEST(MODULE, FileSourceCodeAtEndOfInput) {
   // Reading to the end of the input does not set the code
   const auto temp = rocket::filesystem::tempFile();
   {
@@ -782,7 +785,7 @@ TEST(nio, FileSourceCodeAtEndOfInput) {
   EXPECT_FALSE(in.code());
 }
 
-TEST(nio, FileSourceReadAll) {
+TEST(MODULE, FileSourceReadAll) {
   const auto temp = rocket::filesystem::tempFile();
 
   const vector<u8> data { 0, 0, 0, 0 };
@@ -804,7 +807,7 @@ TEST(nio, FileSourceReadAll) {
   EXPECT_TRUE(bytes.empty());
 }
 
-TEST(nio, FileSourceReadString) {
+TEST(MODULE, FileSourceReadString) {
   const auto temp = rocket::filesystem::tempFile();
 
   {
@@ -828,7 +831,7 @@ TEST(nio, FileSourceReadString) {
   EXPECT_EQ(in.tell(), 10);
 }
 
-TEST(nio, FileSourceScan) {
+TEST(MODULE, FileSourceScan) {
   const auto path = testSource("test-nio-FileSourceScan.txt");
   FileSource in(path);
   auto result = in.scan<log::LogLevel, log::LogLevel>("{}, {}");
@@ -844,7 +847,7 @@ TEST(nio, FileSourceScan) {
 // A tiny `FILE` buffer makes scnlib refill it during a scan, so that backtracking puts back input from an
 // earlier buffer. Without the scnlib patch, this returned input from the current buffer twice
 
-TEST(nio, FileSourceScanBacktrackAcrossBufferRefill) {
+TEST(MODULE, FileSourceScanBacktrackAcrossBufferRefill) {
   const auto temp = rocket::filesystem::tempFile();
   {
     FileSink out(temp);
@@ -863,7 +866,7 @@ TEST(nio, FileSourceScanBacktrackAcrossBufferRefill) {
   EXPECT_EQ(in.readString(), "e+x rest");
 }
 
-TEST(nio, FileSourceScanFailureAcrossBufferRefill) {
+TEST(MODULE, FileSourceScanFailureAcrossBufferRefill) {
   const auto temp = rocket::filesystem::tempFile();
   {
     FileSink out(temp);
@@ -882,7 +885,7 @@ TEST(nio, FileSourceScanFailureAcrossBufferRefill) {
 
 #endif // ROCKET_OS_WINDOWS
 
-TEST(nio, NullSource) {
+TEST(MODULE, NullSource) {
   // Like `/dev/null`, the source is always at the end of its input
   NullSource in;
   EXPECT_FALSE(in.bad());
@@ -907,14 +910,14 @@ TEST(nio, NullSource) {
   EXPECT_TRUE(in.eof());
 }
 
-TEST(nio, SpanSource) {
+TEST(MODULE, SpanSource) {
   vector<u8> vec { 'H', 'e', 'l', 'l', 'o', ',', ' ', 'w', 'o', 'r', 'l', 'd', '!' };
   SpanSource in(vec);
   const auto str = in.readString();
   EXPECT_EQ(str, "Hello, world!");
 }
 
-TEST(nio, StreamSourceReadAll) {
+TEST(MODULE, StreamSourceReadAll) {
   auto temp = rocket::filesystem::tempFile();
 
   const vector<u8> data { 0, 0, 0, 0 };
@@ -937,7 +940,7 @@ TEST(nio, StreamSourceReadAll) {
   EXPECT_TRUE(bytes.empty());
 }
 
-TEST(nio, StreamSourceReadString) {
+TEST(MODULE, StreamSourceReadString) {
   auto temp = rocket::filesystem::tempFile();
 
   {
@@ -963,7 +966,7 @@ TEST(nio, StreamSourceReadString) {
   EXPECT_EQ(in.tell(), 10);
 }
 
-TEST(nio, SpanSourceSeek) {
+TEST(MODULE, SpanSourceSeek) {
   const string str = "abc";
   SpanSource in(span<const u8>(reinterpret_cast<const u8*>(str.data()), str.size()));
 
@@ -977,13 +980,13 @@ TEST(nio, SpanSourceSeek) {
   EXPECT_EQ(in.position(), 3);
 }
 
-TEST(nio, StringSource) {
+TEST(MODULE, StringSource) {
   StringSource in("Hello, world!");
   const auto str = in.readString();
   EXPECT_EQ(str, "Hello, world!");
 }
 
-TEST(nio, StringSourceSeek) {
+TEST(MODULE, StringSourceSeek) {
   const string str128 = testString(128);
   StringSource in(str128);
 
@@ -1034,7 +1037,7 @@ TEST(nio, StringSourceSeek) {
 
 #ifndef ROCKET_OS_WINDOWS
 
-TEST(nio, standardStreamsOverPipes) {
+TEST(MODULE, standardStreamsOverPipes) {
   // With `stdin` and `stdout` over pipes, the standard streams are not seekable. That is decided from the
   // `FILE` alone, without seeking the stream buffer, which would seek the `FILE` and set `errno`
   //
@@ -1104,7 +1107,7 @@ TEST(nio, standardStreamsOverPipes) {
 
 #endif // ROCKET_OS_WINDOWS
 
-TEST(nio, seekableSources) {
+TEST(MODULE, seekableSources) {
   const auto temp = rocket::filesystem::tempFile();
   {
     FileSink out(temp);
@@ -1144,7 +1147,7 @@ TEST(nio, seekableSources) {
   });
 }
 
-TEST(nio, SourcePeek) {
+TEST(MODULE, SourcePeek) {
   forEachSource("ab", [](Source& in) {
     EXPECT_EQ(in.peek(), 'a');
     EXPECT_EQ(in.peek(), 'a'); // Peeking does not advance
@@ -1165,7 +1168,7 @@ TEST(nio, SourcePeek) {
 
 // `readln` .................................................................................................
 
-TEST(nio, readln) {
+TEST(MODULE, readln) {
   const auto test = [](string_view input, const vector<string>& expected) {
     forEachScanSource(input, [&](Source& in) {
       for (const auto& line : expected) {
@@ -1184,7 +1187,7 @@ TEST(nio, readln) {
   test("a\r\r\n", { "a\r" }); // Only one carriage return is removed
 }
 
-TEST(nio, readlnIoError) {
+TEST(MODULE, readlnIoError) {
   // A complete line before the error is returned. The incomplete line at the error is dropped, and the source
   // is bad
 
@@ -1213,14 +1216,14 @@ TEST(nio, readlnIoError) {
   }
 }
 
-TEST(nio, readlnNullSource) {
+TEST(MODULE, readlnNullSource) {
   NullSource in;
   EXPECT_EQ(in.readln(), nullopt);
 }
 
 // `scan` ...................................................................................................
 
-TEST(nio, scanInteger) {
+TEST(MODULE, scanInteger) {
   forEachScanSource("42 rest", [](Source& in) {
     const auto result = in.scan<i32>("{}");
     ASSERT_TRUE(result);
@@ -1245,7 +1248,7 @@ TEST(nio, scanInteger) {
   });
 }
 
-TEST(nio, scanFloat) {
+TEST(MODULE, scanFloat) {
   forEachScanSource("3.25,", [](Source& in) {
     const auto result = in.scan<double>("{}");
     ASSERT_TRUE(result);
@@ -1264,7 +1267,7 @@ TEST(nio, scanFloat) {
   });
 }
 
-TEST(nio, scanStringAndChar) {
+TEST(MODULE, scanStringAndChar) {
   forEachScanSource("hello world", [](Source& in) { // A string ends at whitespace
     const auto result = in.scan<string>("{}");
     ASSERT_TRUE(result);
@@ -1281,7 +1284,7 @@ TEST(nio, scanStringAndChar) {
   });
 }
 
-TEST(nio, scanBool) {
+TEST(MODULE, scanBool) {
   forEachScanSource("true 0", [](Source& in) {
     const auto result = in.scan<bool, bool>("{} {}");
     ASSERT_TRUE(result);
@@ -1292,7 +1295,7 @@ TEST(nio, scanBool) {
   });
 }
 
-TEST(nio, scanMultipleValues) {
+TEST(MODULE, scanMultipleValues) {
   forEachScanSource("2026-11-14T12", [](Source& in) {
     const auto result = in.scan<i32, u32, u32>("{}-{}-{}");
     ASSERT_TRUE(result);
@@ -1316,7 +1319,7 @@ TEST(nio, scanMultipleValues) {
 
 #ifndef ROCKET_OS_WINDOWS
 
-TEST(nio, scanTimePointFromPipe) {
+TEST(MODULE, scanTimePointFromPipe) {
   using namespace std::chrono;
   constexpr string_view INPUT = "2026-11-14T12:34:56 rest";
   const sys_seconds expected = sys_days(2026y / November / 14) + 12h + 34min + 56s;
@@ -1340,7 +1343,7 @@ TEST(nio, scanTimePointFromPipe) {
 
 #endif // ROCKET_OS_WINDOWS
 
-TEST(nio, scanSkipsWhitespace) {
+TEST(MODULE, scanSkipsWhitespace) {
   // Leading whitespace is skipped, trailing whitespace is not consumed
   forEachScanSource(" \t\n 42  ", [](Source& in) {
     const auto result = in.scan<i32>("{}");
@@ -1359,7 +1362,7 @@ TEST(nio, scanSkipsWhitespace) {
   });
 }
 
-TEST(nio, scanSuccessive) {
+TEST(MODULE, scanSuccessive) {
   forEachScanSource("1 2 3", [](Source& in) {
     for (i32 i = 1; i <= 3; ++i) {
       const auto result = in.scan<i32>("{}");
@@ -1373,7 +1376,7 @@ TEST(nio, scanSuccessive) {
   });
 }
 
-TEST(nio, scanFailureResets) {
+TEST(MODULE, scanFailureResets) {
   // A failed scan leaves the source where it was before the scan
   forEachScanSource("abc 1", [](Source& in) { // Invalid value
     const auto result = in.scan<i32>("{}");
@@ -1414,7 +1417,7 @@ TEST(nio, scanFailureResets) {
   });
 }
 
-TEST(nio, scanEndOfInput) {
+TEST(MODULE, scanEndOfInput) {
   forEachScanSource("", [](Source& in) {
     const auto result = in.scan<i32>("{}");
     ASSERT_FALSE(result);
@@ -1433,7 +1436,7 @@ TEST(nio, scanEndOfInput) {
   });
 }
 
-TEST(nio, scanLocale) {
+TEST(MODULE, scanLocale) {
   // The locale only applies to `L` specifiers
   forEachScanSource("1,5 2,5", [](Source& in) {
     const auto result = in.scan<double, double>(testLocale(), "{:L} {}");
@@ -1450,7 +1453,7 @@ TEST(nio, scanLocale) {
   });
 }
 
-TEST(nio, scanAfterRead) {
+TEST(MODULE, scanAfterRead) {
   // Scanning starts at the current position, after input read otherwise
   forEachScanSource("ab 12 cd", [](Source& in) {
     char c = '\0';
@@ -1464,7 +1467,7 @@ TEST(nio, scanAfterRead) {
   });
 }
 
-TEST(nio, scanAfterPeek) {
+TEST(MODULE, scanAfterPeek) {
   // Peeking leaves the character in the source, so the next scan sees it
   forEachScanSource("12 34 x", [](Source& in) {
     auto result = in.scan<i32>("{}");
@@ -1488,7 +1491,7 @@ TEST(nio, scanAfterPeek) {
   });
 }
 
-TEST(nio, scanNullSource) {
+TEST(MODULE, scanNullSource) {
   NullSource in;
   const auto result = in.scan<i32>("{}");
   ASSERT_FALSE(result);

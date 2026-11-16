@@ -16,9 +16,11 @@
 using namespace std;
 using namespace rocket;
 
+#define MODULE rocketExternalIcu
+
 // Tests ====================================================================================================
 
-TEST(icu, u8Next) {
+TEST(MODULE, u8Next) {
   const auto str = "hällo"sv;
   i32 i = 0;
   UChar32 cp = 0;
@@ -28,7 +30,7 @@ TEST(icu, u8Next) {
   EXPECT_EQ(cp, 0xE4); // U+00E4 (LATIN SMALL LETTER A WITH DIAERESIS)
 }
 
-TEST(icu, version) {
+TEST(MODULE, version) {
   // The version of the ICU library loaded at runtime. On Windows, that is the system’s `icu.dll`, whose
   // version depends on the Windows build
 

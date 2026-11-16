@@ -29,19 +29,6 @@
 
 #pragma once
 
-#include <version>
-
-#if defined(ROCKET_OS_MACOS) && defined(ROCKET_CXX_COMPILER_LLVM)
-  #if __cpp_lib_chrono >= 201907L
-    #error This C++ version supports `std::chrono` time zones
-  #endif
-#else
-  #if __cpp_lib_chrono < 201907L
-    #error This C++ version does not support `std::chrono` time zones
-  #endif
-  #define ROCKET_HAS_STD_CHRONO_TIME_ZONE
-#endif
-
 #include "rocket/rocket.h"
 
 #include <chrono>

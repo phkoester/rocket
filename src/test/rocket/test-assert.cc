@@ -9,6 +9,8 @@
 
 #include <csignal>
 
+#define MODULE rocketAssert
+#define MODULE_DEATH_TEST MODULE##DeathTest
 namespace {
 
 // Local functions ------------------------------------------------------------------------------------------
@@ -21,7 +23,7 @@ const char* oops() { oopsCalled = true; return "oops"; }
 
 // Tests ====================================================================================================
 
-TEST(assert, RocketAssertTrue) {
+TEST(MODULE, RocketAssertTrue) {
   EXPECT_NO_THROW({ ROCKET_ASSERT(true); });
 
   oopsCalled = false;
@@ -29,13 +31,13 @@ TEST(assert, RocketAssertTrue) {
   EXPECT_FALSE(oopsCalled);
 }
 
-TEST(assertDeathTest, RocketAssertFalse) { // NOLINT(*-complexity)
+TEST(MODULE_DEATH_TEST, RocketAssertFalse) { // NOLINT(*-complexity)
   EXPECT_EXIT(
       { ROCKET_ASSERT(false, "My message: {}", 42); },
       ABORTED(), "Assertion `false` failed: My message: 42");
 }
 
-TEST(assert, RocketCheck) {
+TEST(MODULE, RocketCheck) {
   char c = 'a';
 
   EXPECT_THAT(
@@ -47,7 +49,7 @@ TEST(assert, RocketCheck) {
       ThrowsMessage<InvalidArgument>(EndsWith("Parameter `c`: Check `c == 'b'` failed: oops")));
 }
 
-TEST(assert, RocketExpect) {
+TEST(MODULE, RocketExpect) {
   oopsCalled = false;
   EXPECT_THAT(
       [] { ROCKET_EXPECT(true && false, "{}", oops()); },
@@ -55,7 +57,7 @@ TEST(assert, RocketExpect) {
   EXPECT_TRUE(oopsCalled);
 }
 
-TEST(assert, RocketFail) {
+TEST(MODULE, RocketFail) {
   oopsCalled = false;
   EXPECT_THAT(
       [] { ROCKET_FAIL("{}", oops()); },
@@ -63,7 +65,7 @@ TEST(assert, RocketFail) {
   EXPECT_TRUE(oopsCalled);
 }
 
-TEST(assertDeathTest, RocketTerminate) {
+TEST(MODULE_DEATH_TEST, RocketTerminate) {
   EXPECT_EXIT(
       { ROCKET_TERMINATE("My message: {}", 42); },
       ABORTED(), "My message: 42");

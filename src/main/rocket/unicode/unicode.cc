@@ -9,7 +9,6 @@
 
 #include <algorithm>
 #include <array>
-#include <limits>
 
 using namespace rocket;
 using namespace rocket::unicode;

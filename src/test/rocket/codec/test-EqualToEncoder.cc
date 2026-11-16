@@ -10,6 +10,8 @@
 using namespace rocket;
 using namespace rocket::codec;
 
+#define MODULE rocketCodecEqualToEncoder
+
 // `MyStruct` -----------------------------------------------------------------------------------------------
 
 struct MyStruct {
@@ -27,7 +29,7 @@ ROCKET_REFLECT_MEMBERS_DEFINE(, MyStruct, Index);
 
 // Tests ====================================================================================================
 
-TEST(EqualToEncoder, Bool) {
+TEST(MODULE, Bool) {
   const EqualToEncoder<> encoder;
   EXPECT_TRUE(encoder.encode(false, false));
   EXPECT_FALSE(encoder.encode(false, true));
@@ -35,7 +37,7 @@ TEST(EqualToEncoder, Bool) {
   EXPECT_TRUE(encoder.encode(true, true));
 }
 
-TEST(EqualToEncoder, String) {
+TEST(MODULE, String) {
   const EqualToEncoder<> encoder;
   EXPECT_TRUE(encoder.encode("a"sv, "a"sv));
   EXPECT_FALSE(encoder.encode("a"sv, "b"sv));
@@ -43,7 +45,7 @@ TEST(EqualToEncoder, String) {
   EXPECT_TRUE(encoder.encode("b"sv, "b"sv));
 }
 
-TEST(EqualToEncoder, ListVector) {
+TEST(MODULE, ListVector) {
   using type = vector<i32>;
   const type a { 1, 2, 3 };
   const type b { 3, 2, 1 };
@@ -55,7 +57,7 @@ TEST(EqualToEncoder, ListVector) {
   EXPECT_TRUE(encoder.encode(b, b));
 }
 
-TEST(EqualToEncoder, SetUnordered) {
+TEST(MODULE, SetUnordered) {
   using type = unordered_set<string>;
   const type a { "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten" };
   const type b { "ten", "nine", "eight", "seven", "six", "five", "four", "three", "two", "one" };
@@ -75,7 +77,7 @@ TEST(EqualToEncoder, SetUnordered) {
   EXPECT_TRUE(encoder.encode(c, d));
 }
 
-TEST(EqualToEncoder, MapUnordered) {
+TEST(MODULE, MapUnordered) {
   using type = unordered_map<i32, string>;
   const type a { { 1, "one" }, { 2, "two" }, { 3, "three" } };
   const type b { { 3, "three" }, { 2, "two" }, { 1, "one" } };
@@ -92,7 +94,7 @@ TEST(EqualToEncoder, MapUnordered) {
   EXPECT_FALSE(encoder.encode(c, a));
 }
 
-TEST(EqualToEncoder, BimapUnordered) {
+TEST(MODULE, BimapUnordered) {
   using type = UnorderedBimap<i32, string>;
   const type a = makeUnorderedBimap<i32, string>({ { 1, "one" }, { 2, "two" }, { 3, "three" } });
   const type b = makeUnorderedBimap<i32, string>({ { 3, "three" }, { 2, "two" }, { 1, "one" } });
@@ -109,7 +111,7 @@ TEST(EqualToEncoder, BimapUnordered) {
   EXPECT_FALSE(encoder.encode(c, a));
 }
 
-TEST(EqualToEncoder, Declared) {
+TEST(MODULE, Declared) {
   const MyStruct a { 1, true, "one", { 1, 2, 3 } };
   const MyStruct b { 1, true, "one", { 1, 2, 3 } };
   const MyStruct c { 1, true, "two", { 1, 2, 3 } };

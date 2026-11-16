@@ -9,27 +9,30 @@
 #include "rocket/nio/nio.h"
 #include "rocket/system/system.h"
 
+#define MODULE rocketProcess
+#define MODULE_DEATH_TEST MODULE##DeathTest
+
 // Tests ====================================================================================================
 
-TEST(Process, error0) {
+TEST(MODULE, error0) {
   nio::StringSink buf;
   process().error(buf, 0, "Test error");
   EXPECT_EQ(buf.str(), "test-rocket-Process: error: Test error\n");
 }
 
-TEST(ProcessDeathTest, error2) {
+TEST(MODULE_DEATH_TEST, error2) {
   EXPECT_EXIT(
     { process().error(nio::err, 2, "Test error"); },
     ExitedWithCode(2), "test-rocket-Process: fatal error: Test error\n");
 }
 
-TEST(ProcessDeathTest, exit) {
+TEST(MODULE_DEATH_TEST, exit) {
   EXPECT_EXIT(
     { process().error(nio::err, 7, "Exiting ..."); },
     ExitedWithCode(7), "test-rocket-Process: fatal error: Exiting ...\n");
 }
 
-TEST(Process, tryLocale) {
+TEST(MODULE, tryLocale) {
   namespace impl = rocket::internal::process;
 
   EXPECT_TRUE(impl::tryLocale("C").has_value());
@@ -38,7 +41,7 @@ TEST(Process, tryLocale) {
 
 // `Process::init` delegates to this function. It cannot be tested through `init` itself, not even in a death
 // test, because `main` has already called `init` by then and `init` may only be called once
-TEST(Process, localeFromEnvironment) {
+TEST(MODULE, localeFromEnvironment) {
   namespace impl = rocket::internal::process;
 
   const auto oldLcAll = system::env::get<string>("LC_ALL");

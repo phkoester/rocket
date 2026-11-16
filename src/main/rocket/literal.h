@@ -11,8 +11,6 @@
 
 #include "rocket/type-traits.h"
 
-#include <limits>
-
 namespace rocket {
 
 namespace internal::literal {

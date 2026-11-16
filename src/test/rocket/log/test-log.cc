@@ -12,6 +12,8 @@
 #include "rocket/log/log.h"
 #include "rocket/system/system.h"
 
+#define MODULE rocketLog
+
 namespace fs = std::filesystem;
 
 using namespace rocket::log;
@@ -20,17 +22,17 @@ ROCKET_LOG_DEFINE(test_log);
 
 // Tests ====================================================================================================
 
-TEST(log, log) {
+TEST(MODULE, log) {
   ROCKET_LOG(test_log);
   ROCKET_LOG_INFO("Some info");
 }
 
-TEST(log, LogLevelFormat) {
+TEST(MODULE, LogLevelFormat) {
   EXPECT_EQ(fmt::format("{}", LogLevel::none), "none");
   EXPECT_EQ(fmt::format(U"{}", LogLevel::none), U"none");
 }
 
-TEST(log, loggerZip) {
+TEST(MODULE, loggerZip) {
   const auto logger = testExecutable("logger");
   const auto loggerDir = logger.parent_path();
 

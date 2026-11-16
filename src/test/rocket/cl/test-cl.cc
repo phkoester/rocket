@@ -13,6 +13,8 @@
 using namespace rocket::cl;
 using namespace rocket::unicode;
 
+#define MODULE rocketCl
+
 namespace {
 
 // Local functions ------------------------------------------------------------------------------------------
@@ -162,7 +164,7 @@ parseCommand(const vector<string>& args, nio::Sink& out = nio::out, nio::Sink& e
  * Usage: cmd [-o | -?] list [-? | -l] FILE...
  *   or   cmd [-o | -?] show [-? | -s | -t] [ARG]...
  */
-TEST(cl, parseCommand) {
+TEST(MODULE, parseCommand) {
   // Test invalid option
   {
     nio::StringSink buf;
@@ -331,7 +333,7 @@ TEST(cl, parseCommand) {
   }
 }
 
-TEST(cl, parseOptionOptionalBool) {
+TEST(MODULE, parseOptionOptionalBool) {
   optional<bool> flag;
   optional<vector<string>> args;
 
@@ -410,7 +412,7 @@ TEST(cl, parseOptionOptionalBool) {
   }
 }
 
-TEST(cl, parseOptionI32) {
+TEST(MODULE, parseOptionI32) {
   i32 num = 0;
   optional<vector<string>> args;
 
@@ -462,7 +464,7 @@ TEST(cl, parseOptionI32) {
   }
 }
 
-TEST(cl, parseOptionEnum) {
+TEST(MODULE, parseOptionEnum) {
   log::LogLevel level; // NOLINT
   vector<string> args;
 
@@ -489,7 +491,7 @@ TEST(cl, parseOptionEnum) {
   }
 }
 
-TEST(cl, parseOptionVector) {
+TEST(MODULE, parseOptionVector) {
   vector<string> names;
   vector<string> args;
 
@@ -509,7 +511,7 @@ TEST(cl, parseOptionVector) {
   }
 }
 
-TEST(cl, parseOptionShortName) {
+TEST(MODULE, parseOptionShortName) {
   bool ignore = false;
   string name;
   bool verbose = false;
@@ -557,7 +559,7 @@ TEST(cl, parseOptionShortName) {
   EXPECT_EQ(args, (vector<string> { "a", "b" }));
 }
 
-TEST(cl, parseParameter) {
+TEST(MODULE, parseParameter) {
   vector<string> args;
   CommandLine cl {
     {}, { Parameter::make({ .description="a command-line argument", .name="ARG" }, args) }
@@ -567,7 +569,7 @@ TEST(cl, parseParameter) {
   EXPECT_EQ(args, (vector<string> { "a", "b", "c" }));
 }
 
-TEST(cl, parseParametersMaxOccurs) {
+TEST(MODULE, parseParametersMaxOccurs) {
   vector<string> commands;
   vector<string> args;
   CommandLine cl {
@@ -582,7 +584,7 @@ TEST(cl, parseParametersMaxOccurs) {
   EXPECT_EQ(args, (vector<string> { "c", "d" }));
 }
 
-TEST(cl, argFiles) {
+TEST(MODULE, argFiles) {
   namespace fs = std::filesystem;
 
   const fs::path dir = rocket::filesystem::tempDir();
@@ -642,7 +644,7 @@ TEST(cl, argFiles) {
   }
 }
 
-TEST(cl, helpUngroupedOptions) {
+TEST(MODULE, helpUngroupedOptions) {
   const OptionGroup named { "Named" };
   const OptionGroup untitled { "" };
   optional<bool> help;

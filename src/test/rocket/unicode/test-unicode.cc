@@ -9,6 +9,8 @@
 
 using namespace rocket::unicode;
 
+#define MODULE rocketUnicode
+
 // Constants ------------------------------------------------------------------------------------------------
 
 constexpr char TWO_BYTES    = static_cast<char>(0b1101'1111);
@@ -23,7 +25,7 @@ constexpr char32 MAX_PLUS_1 = static_cast<char32>(0x10FFFFU + 1);
 
 // `CodePoint` ----------------------------------------------------------------------------------------------
 
-TEST(unicode, CodePointCtor) {
+TEST(MODULE, CodePointCtor) {
   EXPECT_THAT(
     [&] { '\x80'_cp; },
     throwsInputFailure(0, EndsWith("Invalid ASCII value 0x80")));
@@ -35,7 +37,7 @@ TEST(unicode, CodePointCtor) {
     throwsInputFailure(0, EndsWith("Invalid code-point value 0x110000")));
 }
 
-TEST(unicode, CodePointOpCastString) {
+TEST(MODULE, CodePointOpCastString) {
   using type = string;
 
   EXPECT_EQ(static_cast<type>('\x41'_cp), "A");
@@ -43,7 +45,7 @@ TEST(unicode, CodePointOpCastString) {
   EXPECT_EQ(static_cast<type>(U'\u20AC'_cp), "€");
 }
 
-TEST(unicode, CodePointOpCastU32String) {
+TEST(MODULE, CodePointOpCastU32String) {
   using type = u32string;
 
   EXPECT_EQ(static_cast<type>('\x41'_cp), U"A");
@@ -51,13 +53,13 @@ TEST(unicode, CodePointOpCastU32String) {
   EXPECT_EQ(static_cast<type>(U'\u20AC'_cp), U"€");
 }
 
-TEST(unicode, CodePointIsPrint) {
+TEST(MODULE, CodePointIsPrint) {
   EXPECT_TRUE('a'_cp.isPrint());
   EXPECT_FALSE(U'\uFFF0'_cp.isPrint());
   EXPECT_FALSE(U'\uFFFF'_cp.isPrint());
 }
 
-TEST(unicode, CodePointIsIdentifier) {
+TEST(MODULE, CodePointIsIdentifier) {
   EXPECT_TRUE('a'_cp.isIdStart());
   EXPECT_TRUE(U'ä'_cp.isIdStart());
   EXPECT_FALSE('_'_cp.isIdStart());
@@ -72,19 +74,19 @@ TEST(unicode, CodePointIsIdentifier) {
   EXPECT_FALSE('='_cp.isIdContinue());
 }
 
-TEST(unicode, CodePointLower) {
+TEST(MODULE, CodePointLower) {
   EXPECT_EQ('a'_cp.lower(), U'a');
   EXPECT_EQ(U'Ä'_cp.lower(), U'ä');
   EXPECT_EQ(U'É'_cp.lower(), U'é');
 }
 
-TEST(unicode, CodePointUpper) {
+TEST(MODULE, CodePointUpper) {
   EXPECT_EQ('A'_cp.upper(), U'A');
   EXPECT_EQ(U'ä'_cp.upper(), U'Ä');
   EXPECT_EQ(U'é'_cp.upper(), U'É');
 }
 
-TEST(unicode, CodePointWidth) {
+TEST(MODULE, CodePointWidth) {
   EXPECT_EQ(U'\u0000'_cp.width(), 0); // NULL (0)
   EXPECT_EQ(U'\u0001'_cp.width(), 0); // START OF HEADING (1)
   EXPECT_EQ(U'\u001F'_cp.width(), 0); // INFORMATION SEPARATOR ONE (31)
@@ -98,7 +100,7 @@ TEST(unicode, CodePointWidth) {
   EXPECT_EQ(U'\u0300'_cp.width(), 0); // COMBINING GRAVE ACCENT, Category Mn (768)
 }
 
-TEST(unicode, CodePointFormat) {
+TEST(MODULE, CodePointFormat) {
   EXPECT_EQ(fmt::format("{}", '\0'_cp), "U+0000");
   EXPECT_EQ(fmt::format("{}", U'\u20AC'_cp), "U+20AC");
   EXPECT_EQ(fmt::format("{}", U'\u00FF'_cp), "U+00FF");
@@ -108,7 +110,7 @@ TEST(unicode, CodePointFormat) {
   EXPECT_EQ(fmt::format(U"{}", U'\u20AC'_cp), U"U+20AC");
 }
 
-TEST(unicode, CodePointVectorFormat) {
+TEST(MODULE, CodePointVectorFormat) {
   auto cps = vector<CodePoint> { 'a'_cp, 'b'_cp, 'c'_cp };
   EXPECT_EQ(fmt::format("{::}", cps), "[U+0061, U+0062, U+0063]");
   EXPECT_EQ(fmt::format("{::~>8}", cps), "[~~U+0061, ~~U+0062, ~~U+0063]");
@@ -117,7 +119,7 @@ TEST(unicode, CodePointVectorFormat) {
 
 // Functions ------------------------------------------------------------------------------------------------
 
-TEST(unicode, conversions) {
+TEST(MODULE, conversions) {
   EXPECT_EQ(convertUtf8To32("äöü€"), U"äöü€");
   EXPECT_EQ(convertUtf32To8(U"äöü€"), "äöü€");
 
@@ -170,7 +172,7 @@ TEST(unicode, conversions) {
 
 // `rocket::unicode::utf8` ----------------------------------------------------------------------------------
 
-TEST(unicode, utf8Validate) {
+TEST(MODULE, utf8Validate) {
   Positions pos;
 
   {
@@ -217,7 +219,7 @@ TEST(unicode, utf8Validate) {
 
 // `rocket::unicode::utf32` ---------------------------------------------------------------------------------
 
-TEST(unicode, utf32Validate) {
+TEST(MODULE, utf32Validate) {
   Positions pos;
 
   {

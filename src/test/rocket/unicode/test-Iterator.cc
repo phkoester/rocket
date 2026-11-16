@@ -9,9 +9,11 @@
 
 using namespace rocket::unicode;
 
+#define MODULE rocketUnicodeIterator
+
 // Tests ====================================================================================================
 
-TEST(Iterator, char) {
+TEST(MODULE, char) {
   using type = char;
 
   const string_view str = "ä€"; // 2 + 3 bytes
@@ -30,7 +32,7 @@ TEST(Iterator, char) {
   EXPECT_EQ(it.next(), NPOS); // Not a typo: testing twice
 }
 
-TEST(Iterator, charMultiCodePoint) {
+TEST(MODULE, charMultiCodePoint) {
   using type = char;
 
   const string_view str = "🧑‍🌾\r\n👨‍👩‍👦"sv;
@@ -48,7 +50,7 @@ TEST(Iterator, charMultiCodePoint) {
   EXPECT_EQ(unicode::CharacterView<char>(segs[2]).countCodePoints(), 5);
 }
 
-TEST(Iterator, char32) {
+TEST(MODULE, char32) {
   using type = char32;
 
   const u32string_view str = U"ä€";
@@ -67,7 +69,7 @@ TEST(Iterator, char32) {
   EXPECT_EQ(it.next(), NPOS); // Not a typo: testing twice
 }
 
-TEST(Iterator, char32MultiCodePoint) {
+TEST(MODULE, char32MultiCodePoint) {
   using type = char32;
 
   const u32string_view str = U"🧑‍🌾\r\n👨‍👩‍👦";

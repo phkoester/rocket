@@ -10,6 +10,8 @@
 
 using namespace rocket::unicode;
 
+#define MODULE rocketUnicodeCharacter
+
 namespace {
 
 // Local test functions -------------------------------------------------------------------------------------
@@ -32,7 +34,7 @@ testCharacter(const CharacterView<C>& c) {
 
 // Tests ====================================================================================================
 
-TEST(Character, charWidth) {
+TEST(MODULE, charWidth) {
   EXPECT_EQ("\t"_c.width(), 0);
   EXPECT_EQ("\u200D"_c.width(), 0); // u+0200D (ZERO WIDTH JOINER)
 
@@ -63,7 +65,7 @@ TEST(Character, charWidth) {
   }
 }
 
-TEST(Character, char32Width) {
+TEST(MODULE, char32Width) {
   {
     // U+1F468 (MAN), U+200D (ZERO WIDTH JOINER), U+1F469 (WOMAN), U+200D (ZERO WIDTH JOINER), U+1F466 (BOY)
     static_assert(U"👨‍👩‍👦"sv == U"👨\u200D👩\u200D👦"sv);

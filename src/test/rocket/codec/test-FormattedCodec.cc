@@ -17,6 +17,8 @@
 
 using namespace rocket::codec;
 
+#define MODULE rocketCodecFormattedCodec
+
 // `MyStruct` -----------------------------------------------------------------------------------------------
 
 struct MyStruct {
@@ -97,12 +99,12 @@ expectFailure(string_view input, string_view message, u64 position, const str::R
 
 // `FormattedConsumer` --------------------------------------------------------------------------------------
 
-TEST(FormattedCodec, ConsumerBool) {
+TEST(MODULE, ConsumerBool) {
   EXPECT_EQ(encode(false), "false");
   EXPECT_EQ(encode(true), "true");
 }
 
-TEST(FormattedCodec, ConsumerChar) {
+TEST(MODULE, ConsumerChar) {
   EXPECT_EQ(encode('\x7F'), "'\\x7F'");
   EXPECT_EQ(encode('\t'), "'\\t'");
   EXPECT_EQ(encode(U'€'), "'€'");
@@ -110,7 +112,7 @@ TEST(FormattedCodec, ConsumerChar) {
   EXPECT_EQ(encode(U'\U0010FFFF'), "'\\U0010FFFF'");
 }
 
-TEST(FormattedCodec, ConsumerEnum) {
+TEST(MODULE, ConsumerEnum) {
   enum Color : u8 { Red, Green, Blue };
   EXPECT_THAT(
     [] { encode(Blue); },
@@ -122,12 +124,12 @@ TEST(FormattedCodec, ConsumerEnum) {
     ThrowsMessage<InvalidState>(EndsWith("Invalid `rocket::log::LogLevel` value 255")));
 }
 
-TEST(FormattedCodec, ConsumerIntegerI64) {
+TEST(MODULE, ConsumerIntegerI64) {
   EXPECT_EQ(encode(-42_i64), "-42");
   EXPECT_EQ(encode(+42_i64), "42");
 }
 
-TEST(FormattedCodec, ConsumerFloatF64) {
+TEST(MODULE, ConsumerFloatF64) {
   using type = f64;
   using limits = numeric_limits<type>;
 
@@ -138,12 +140,12 @@ TEST(FormattedCodec, ConsumerFloatF64) {
   EXPECT_EQ(encode(limits::infinity()), "∞");
 }
 
-TEST(FormattedCodec, ConsumerPointer) {
+TEST(MODULE, ConsumerPointer) {
   EXPECT_EQ(encode(reinterpret_cast<void*>(0)), "null");
   EXPECT_THAT(encode(reinterpret_cast<void*>(0x1234ABCD)), matchesRegex("0x[0-9A-F]+"));
 }
 
-TEST(FormattedCodec, ConsumerString) {
+TEST(MODULE, ConsumerString) {
   EXPECT_EQ(encode("Hello"sv), "\"Hello\"");
   EXPECT_EQ(encode(U"Hello"sv), "\"Hello\"");
   EXPECT_EQ(encode("\x7f"sv), "\"\\x7F\"");
@@ -151,7 +153,7 @@ TEST(FormattedCodec, ConsumerString) {
   EXPECT_EQ(encode(U"\U00010FFF"sv), "\"\\U00010FFF\"");
 }
 
-TEST(FormattedCodec, ConsumerOptional) {
+TEST(MODULE, ConsumerOptional) {
   using type = optional<string>;
 
   const type val;
@@ -159,7 +161,7 @@ TEST(FormattedCodec, ConsumerOptional) {
   EXPECT_EQ(encode<type>("Hello"), "\"Hello\"");
 }
 
-TEST(FormattedCodec, ConsumerTuplePair) {
+TEST(MODULE, ConsumerTuplePair) {
   EXPECT_EQ(encode(make_pair("answer"sv, 42)), "(\"answer\", 42)");
   EXPECT_EQ(encode(make_pair("answer"sv, 42), { .indent=true }),
     "(\n"
@@ -168,7 +170,7 @@ TEST(FormattedCodec, ConsumerTuplePair) {
     ")");
 }
 
-TEST(FormattedCodec, ConsumerList) {
+TEST(MODULE, ConsumerList) {
   EXPECT_EQ(encode(forward_list<i32> { 1, 2, 3 }), "[1, 2, 3]");
 
   const vector<i32> valVectorI32 { 1, 2, 3 };
@@ -191,18 +193,18 @@ TEST(FormattedCodec, ConsumerList) {
     "]");
 }
 
-TEST(FormattedCodec, ConsumerSet) {
+TEST(MODULE, ConsumerSet) {
   EXPECT_EQ(encode(set<i32> {}), "{}");
   EXPECT_EQ(encode(set<i32> { 1, 2, 2, 3 }), "{1, 2, 3}");
 }
 
-TEST(FormattedCodec, ConsumerMap) {
+TEST(MODULE, ConsumerMap) {
   EXPECT_EQ(
     encode(map<string, i32> { { "alpha", 1 }, { "beta", 2 }, { "gamma", 3 } }),
     "{\"alpha\": 1, \"beta\": 2, \"gamma\": 3}");
 }
 
-TEST(FormattedCodec, ConsumerDuration) {
+TEST(MODULE, ConsumerDuration) {
   using namespace std::chrono;
 
   EXPECT_EQ(encode(1ns), "1ns");
@@ -217,7 +219,7 @@ TEST(FormattedCodec, ConsumerDuration) {
   EXPECT_EQ(encode(years(10)), "10y");
 }
 
-TEST(FormattedCodec, ConsumerHourMinuteSecond) {
+TEST(MODULE, ConsumerHourMinuteSecond) {
   using namespace std::chrono;
 
   EXPECT_EQ(encode(hh_mm_ss { 1h + 2min + 3s }), "01:02:03");
@@ -228,20 +230,20 @@ TEST(FormattedCodec, ConsumerHourMinuteSecond) {
   EXPECT_EQ(encode(hh_mm_ss<minutes> { -2min }), "-00:02:00");
 }
 
-TEST(FormattedCodec, ConsumerYearDate) {
+TEST(MODULE, ConsumerYearDate) {
   using namespace std::chrono;
 
   EXPECT_EQ(encode(year_month_day { 1970y, January, 2d }), "1970-01-02");
 }
 
-TEST(FormattedCodec, ConsumerTimeZone) {
+TEST(MODULE, ConsumerTimeZone) {
   using namespace std::chrono;
 
   EXPECT_EQ(encode(rocket::chrono::locate_zone("Europe/Berlin")), "(Europe/Berlin)");
   EXPECT_EQ(encode(rocket::chrono::locate_zone("UTC")), "(Etc/UTC)");
 }
 
-TEST(FormattedCodec, ConsumerTime) {
+TEST(MODULE, ConsumerTime) {
   using namespace std::chrono;
 
   const auto* const regexS = R"(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z)"; // Seconds
@@ -252,7 +254,7 @@ TEST(FormattedCodec, ConsumerTime) {
   EXPECT_THAT(encode(now), matchesRegex(regexNs));
 }
 
-TEST(FormattedCodec, ConsumerZonedTime) {
+TEST(MODULE, ConsumerZonedTime) {
   using namespace std::chrono;
 
   const auto* const regexS =
@@ -277,7 +279,7 @@ TEST(FormattedCodec, ConsumerZonedTime) {
   }
 }
 
-TEST(FormattedCodec, ConsumerInterval) {
+TEST(MODULE, ConsumerInterval) {
   EXPECT_EQ(encode(math::ClosedInterval<f32>(-4.2F, 4.2F)), "[-4.2,4.2]");
   EXPECT_EQ(encode(math::LeftOpenInterval<f32>(-4.2F, 4.2F)), "(-4.2,4.2]");
   EXPECT_EQ(encode(math::RightOpenInterval<f32>(-4.2F, 4.2F)), "[-4.2,4.2)");
@@ -286,20 +288,20 @@ TEST(FormattedCodec, ConsumerInterval) {
   EXPECT_EQ(encode(math::OpenInterval<f32>(nullopt, nullopt)), "(-∞,∞)");
 }
 
-TEST(FormattedCodec, ConsumerDeclared) {
+TEST(MODULE, ConsumerDeclared) {
   EXPECT_EQ(
     encode(MyStruct { 42, true, "hello", { 1, 2, 3 } }),
     "(ärger=42, ökonom=true, übermut=\"hello\", vec=[1, 2, 3])");
 }
 
-TEST(FormattedCodec, ConsumerInstance) {
+TEST(MODULE, ConsumerInstance) {
   using type = reflect::Instance<MyStruct, MyStruct::Three>;
   EXPECT_EQ(
     encode(type(MyStruct { 42, true, "hello", { 1, 2, 3 } })),
     "(ärger=42, ökonom=true, übermut=\"hello\")");
 }
 
-TEST(FormattedCodec, ConsumerVarRef) {
+TEST(MODULE, ConsumerVarRef) {
   int a = 0, b = 1, c= 2;
   const auto& refs = ROCKET_REFLECT_VARS((a)(b)(c));
   EXPECT_EQ(encode(refs), "(a=0, b=1, c=2)");
@@ -307,7 +309,7 @@ TEST(FormattedCodec, ConsumerVarRef) {
   EXPECT_EQ(encode(ref), "b=1");
 }
 
-TEST(FormattedCodec, ConsumerCodePoint) {
+TEST(MODULE, ConsumerCodePoint) {
   using type = unicode::CodePoint;
 
   EXPECT_EQ(encode(type('a')), "U+0061");
@@ -317,7 +319,7 @@ TEST(FormattedCodec, ConsumerCodePoint) {
 
 // `FormattedProducer` --------------------------------------------------------------------------------------
 
-TEST(FormattedCodec, ProducerBool) {
+TEST(MODULE, ProducerBool) {
   EXPECT_EQ(decode<bool>("// sup\nTRue"), true);
   EXPECT_EQ(decode<bool>("  /* comment\nanother line in the comment */\r\n# comment\n\ttRUe"), true);
   EXPECT_EQ(decode<bool>("\r\n  1"), true);
@@ -325,7 +327,7 @@ TEST(FormattedCodec, ProducerBool) {
   EXPECT_EQ(decode<bool>("\r\nx").error().message, "Expected a boolean value");
 }
 
-TEST(FormattedCodec, ProducerChar) {
+TEST(MODULE, ProducerChar) {
   EXPECT_EQ(decode<char>("'a'"), 'a');
   EXPECT_EQ(decode<char>("'\\''"), '\'');
   EXPECT_EQ(decode<char>("'\\t'"), '\t');
@@ -334,7 +336,7 @@ TEST(FormattedCodec, ProducerChar) {
   EXPECT_EQ(decode<char>("  '\\xFF'").error().message, "Invalid character literal");
 }
 
-TEST(FormattedCodec, ProducerChar32) {
+TEST(MODULE, ProducerChar32) {
   EXPECT_EQ(decode<char32>("'ä'"), U'ä');
   EXPECT_EQ(decode<char32>("'\u20ac'"), U'€');
   EXPECT_EQ(decode<char32>("'\U00010FFF'"), U'\U00010FFF');
@@ -343,7 +345,7 @@ TEST(FormattedCodec, ProducerChar32) {
   EXPECT_EQ(decode<char32>("  '\\x800D'").error().message, "Invalid character literal");
 }
 
-TEST(FormattedCodec, ProducerEnum) {
+TEST(MODULE, ProducerEnum) {
   enum Color : u8 { Red, Green, Blue };
 
   EXPECT_THAT(decode<Color>("2").error().message, matchesRegex("Cannot scan enum of type `.*Color`"));
@@ -354,7 +356,7 @@ TEST(FormattedCodec, ProducerEnum) {
     "Invalid value for enum `rocket::log::LogLevel`");
 }
 
-TEST(FormattedCodec, ProducerInteger) {
+TEST(MODULE, ProducerInteger) {
   EXPECT_EQ(decode<i32>("-42"), -42);
   EXPECT_EQ(decode<i32>("0xABcd"), 0xABCD);
   EXPECT_EQ(decode<i32>("077"), 077);
@@ -364,7 +366,7 @@ TEST(FormattedCodec, ProducerInteger) {
   EXPECT_EQ(decode<i32>("  x").error().message, "Expected an integer value");
 }
 
-TEST(FormattedCodec, ProducerFloat) {
+TEST(MODULE, ProducerFloat) {
   using type = f64;
   using limits = numeric_limits<type>;
 
@@ -379,12 +381,12 @@ TEST(FormattedCodec, ProducerFloat) {
   EXPECT_TRUE(isnan(decode<type>("nan").value()));
 }
 
-TEST(FormattedCodec, ProducerPointer) {
+TEST(MODULE, ProducerPointer) {
   EXPECT_EQ(decodeAndTell<void*>("  null  "), make_pair(static_cast<void*>(0), 6_u64)); // NOLINT
   EXPECT_EQ(decodeAndTell<void*>("  0x12345678  "), make_pair(reinterpret_cast<void*>(0x12345678), 12_u64));
 }
 
-TEST(FormattedCodec, ProducerInvalidUtf8) {
+TEST(MODULE, ProducerInvalidUtf8) {
   constexpr string_view MESSAGE = "Invalid UTF-8 byte sequence";
 
   EXPECT_EQ(decode<string>("\"a\xFF\"").error().message, MESSAGE);
@@ -392,7 +394,7 @@ TEST(FormattedCodec, ProducerInvalidUtf8) {
   EXPECT_EQ(decode<char>("'\xFF'").error().message, MESSAGE);
 }
 
-TEST(FormattedCodec, ProducerEscapeFailurePosition) {
+TEST(MODULE, ProducerEscapeFailurePosition) {
   using Map = map<string, string>;
   constexpr string_view INVALID_ESCAPE = "Invalid escape sequence";
 
@@ -404,7 +406,7 @@ TEST(FormattedCodec, ProducerEscapeFailurePosition) {
   expectFailure<string>("  \"a\xFF\"", "Invalid UTF-8 byte sequence", 4);
 }
 
-TEST(FormattedCodec, ProducerFailureInsideCluster) {
+TEST(MODULE, ProducerFailureInsideCluster) {
   using Pair = pair<i32, i32>;
 
   // A digit and U+0301 (COMBINING ACUTE ACCENT) form one cluster, so these failures lie inside it. The
@@ -434,7 +436,7 @@ TEST(FormattedCodec, ProducerFailureInsideCluster) {
   EXPECT_EQ(loc::locations(input, { pos }).locations.at(0).column, 2U);
 }
 
-TEST(FormattedCodec, ProducerCodePointInvalid) {
+TEST(MODULE, ProducerCodePointInvalid) {
   using CodePoint = unicode::CodePoint;
 
   expectFailure<CodePoint>("  U+110000", "Invalid code-point value 0x110000", 2);
@@ -442,7 +444,7 @@ TEST(FormattedCodec, ProducerCodePointInvalid) {
   expectFailure<pair<i32, CodePoint>>("(1, U+110000)", "Invalid code-point value 0x110000", 4);
 }
 
-TEST(FormattedCodec, ProducerCharacter) {
+TEST(MODULE, ProducerCharacter) {
   const unicode::Character<char> character("x"s);
   const unicode::CharacterView<char> view("x"sv);
 
@@ -458,17 +460,17 @@ TEST(FormattedCodec, ProducerCharacter) {
   EXPECT_EQ(emptyView.error().position, 0U);
 }
 
-TEST(FormattedCodec, ProducerOptionalString) {
+TEST(MODULE, ProducerOptionalString) {
   using type = optional<string>;
   EXPECT_EQ(decode<type>("  null  "), nullopt);
 }
 
-TEST(FormattedCodec, ProducerOptionalStringView) {
+TEST(MODULE, ProducerOptionalStringView) {
   nio::StringSource in("\"Hello\""); // The source must remain valid for the string view
   EXPECT_EQ(formattedCodec.decode<optional<basic_string_view<char32>>>(in), U"Hello"sv);
 }
 
-TEST(FormattedCodec, ProducerTuple) {
+TEST(MODULE, ProducerTuple) {
   EXPECT_EQ((decode<pair<string, i32>>("  (  \"answer\"   , 42   )")), make_pair("answer"s, 42_i32));
   EXPECT_EQ(
     (decode<pair<string, i32>>("  (  # comment\n \"answer\"   , 42  /* comment */  , // comment\n  )")),
@@ -477,7 +479,7 @@ TEST(FormattedCodec, ProducerTuple) {
   EXPECT_EQ((decode<tuple<i32, i32, bool>>("(1, 2, true)")), make_tuple(1_i32, 2_i32, true));
 }
 
-TEST(FormattedCodec, ProducerList) {
+TEST(MODULE, ProducerList) {
   EXPECT_EQ((decode<array<i32, 3>>("  [ 1, 2, 3   ]")), (array<i32, 3> { 1, 2, 3 }));
   EXPECT_EQ((decode<array<i32, 3>>("  [ 1, 2, 3   , ]")), (array<i32, 3> { 1, 2, 3 }));
   EXPECT_EQ((decode<list<i32>>("  [ 1, 2, 3   , ]")), (list<i32> { 1, 2, 3 }));
@@ -487,11 +489,11 @@ TEST(FormattedCodec, ProducerList) {
   EXPECT_EQ((decode<vector<i32>>("  [ 1, 2, 3   , ]")), (vector<i32> { 1, 2, 3 }));
 }
 
-TEST(FormattedCodec, ProducerSet) {
+TEST(MODULE, ProducerSet) {
   EXPECT_EQ((decode<set<i32>>("  { 3, 2, 1  ,  }   ")), (set<i32> { 1, 2, 3 }));
 }
 
-TEST(FormattedCodec, ProducerMap) {
+TEST(MODULE, ProducerMap) {
   using type = std::map<i32, string>;
 
   // Test last one wins
@@ -500,7 +502,7 @@ TEST(FormattedCodec, ProducerMap) {
     (type { { 1, "alpha" }, { 2, "beta" }, { 3, "gamma" } }));
 }
 
-TEST(FormattedCodec, ProducerBimap) {
+TEST(MODULE, ProducerBimap) {
   using type = Bimap<string, i32>;
   // Test last one wins
   EXPECT_EQ(
@@ -508,7 +510,7 @@ TEST(FormattedCodec, ProducerBimap) {
     (makeBimap<string, i32>({ { "alpha", 1 }, { "beta", 2 }, { "gamma", 3 } })));
 }
 
-TEST(FormattedCodec, ProducerBimapUnordered) {
+TEST(MODULE, ProducerBimapUnordered) {
   using type = UnorderedBimap<string, i32>;
   // Test last one wins
   EXPECT_EQ(
@@ -516,7 +518,7 @@ TEST(FormattedCodec, ProducerBimapUnordered) {
     (makeUnorderedBimap<string, i32>({ { "alpha", 1 }, { "beta", 2 }, { "gamma", 3 } })));
 }
 
-TEST(FormattedCodec, ProducerDuration) {
+TEST(MODULE, ProducerDuration) {
   using namespace std::chrono;
 
   EXPECT_EQ(decode<milliseconds>("1s"), 1000ms);
@@ -543,7 +545,7 @@ TEST(FormattedCodec, ProducerDuration) {
   EXPECT_TRUE((decode<duration<f32, std::nano>>("300y")));
 }
 
-TEST(FormattedCodec, ProducerHourMinuteSecond) {
+TEST(MODULE, ProducerHourMinuteSecond) {
   using namespace std::chrono;
 
   EXPECT_EQ(
@@ -574,7 +576,7 @@ TEST(FormattedCodec, ProducerHourMinuteSecond) {
   EXPECT_EQ(decode<hh_mm_ss<milliseconds>>("01:02:03.").error().message, "Expected subseconds");
 }
 
-TEST(FormattedCodec, ProducerHourMinuteSecondInvalid) {
+TEST(MODULE, ProducerHourMinuteSecondInvalid) {
   using namespace std::chrono;
   constexpr string_view INVALID = "Invalid hour, minute, or second";
 
@@ -592,7 +594,7 @@ TEST(FormattedCodec, ProducerHourMinuteSecondInvalid) {
   EXPECT_EQ(decode<hh_mm_ss<seconds>>("2562046:59:59").value().to_duration(), 2562046h + 59min + 59s);
 }
 
-TEST(FormattedCodec, ProducerDateInvalid) {
+TEST(MODULE, ProducerDateInvalid) {
   using namespace std::chrono;
   constexpr string_view INVALID = "Invalid date";
 
@@ -612,7 +614,7 @@ TEST(FormattedCodec, ProducerDateInvalid) {
   EXPECT_EQ(decode<year_month_day>("2024-02-29"), (year_month_day { 2024y, February, 29d }));
 }
 
-TEST(FormattedCodec, ProducerDate) {
+TEST(MODULE, ProducerDate) {
   using namespace std::chrono;
 
   EXPECT_EQ(decode<year_month_day>("1970-01-02"), (year_month_day { 1970y, January, 2d }));
@@ -621,7 +623,7 @@ TEST(FormattedCodec, ProducerDate) {
   EXPECT_EQ(decode<year_month_day>("x").error().message, "Expected a date");
 }
 
-TEST(FormattedCodec, ProducerTimeZone) {
+TEST(MODULE, ProducerTimeZone) {
   using namespace std::chrono;
 
   EXPECT_EQ(decode<TimeZone>("(Europe/Berlin)"), rocket::chrono::locate_zone("Europe/Berlin"));
@@ -633,7 +635,7 @@ TEST(FormattedCodec, ProducerTimeZone) {
     StrEq("unable to locate time_zone with given name"))); // Windows
 }
 
-TEST(FormattedCodec, ProducerTime) {
+TEST(MODULE, ProducerTime) {
   using namespace std::chrono;
 
   using TimePoint = time_point<system_clock, nanoseconds>;
@@ -648,7 +650,7 @@ TEST(FormattedCodec, ProducerTime) {
   EXPECT_EQ(val2.time_since_epoch().count(), val1.time_since_epoch().count());
 }
 
-TEST(FormattedCodec, ProducerZonedTime) {
+TEST(MODULE, ProducerZonedTime) {
   using namespace std::chrono;
 
   using ZonedTime = rocket::chrono::zoned_time<nanoseconds>;
@@ -664,7 +666,7 @@ TEST(FormattedCodec, ProducerZonedTime) {
   EXPECT_EQ(val2, val1);
 }
 
-TEST(FormattedCodec, ProducerZonedTimeUtcOffset) {
+TEST(MODULE, ProducerZonedTimeUtcOffset) {
   using namespace std::chrono;
   using ZonedTime = rocket::chrono::zoned_time<nanoseconds>;
   constexpr string_view INVALID = "Invalid UTC offset";
@@ -681,7 +683,7 @@ TEST(FormattedCodec, ProducerZonedTimeUtcOffset) {
   EXPECT_TRUE(decode<ZonedTime>("2026-10-07T11:21:00+00:00 (Europe/Berlin)").has_value());
 }
 
-TEST(FormattedCodec, ProducerZonedTimeTimeZone) {
+TEST(MODULE, ProducerZonedTimeTimeZone) {
   using namespace std::chrono;
   using ZonedTime = rocket::chrono::zoned_time<nanoseconds>;
 
@@ -695,7 +697,7 @@ TEST(FormattedCodec, ProducerZonedTimeTimeZone) {
   EXPECT_EQ(result.error().position, 26);
 }
 
-TEST(FormattedCodec, ProducerTimeIndependentOfLocalZone) {
+TEST(MODULE, ProducerTimeIndependentOfLocalZone) {
   using namespace std::chrono;
   using TimePoint = time_point<system_clock, nanoseconds>;
   using ZonedTime = rocket::chrono::zoned_time<nanoseconds>;
@@ -745,7 +747,7 @@ TEST(FormattedCodec, ProducerTimeIndependentOfLocalZone) {
   expectFailure<TimePoint>("2026-02-30T12:00:00Z", "Expected a time point", 0);
 }
 
-TEST(FormattedCodec, ProducerInterval) {
+TEST(MODULE, ProducerInterval) {
   using namespace rocket::math;
   EXPECT_EQ(decode<ClosedInterval<f64>>("[-4.2,4.2]"), ClosedInterval<f64>(-4.2_f64, 4.2_f64));
   EXPECT_EQ(decode<OpenInterval<f64>>("∅"), OpenInterval<f64>());
@@ -758,7 +760,7 @@ TEST(FormattedCodec, ProducerInterval) {
   EXPECT_EQ(decode<OpenInterval<i64>>("(-inf,+inf)"), OpenInterval<i64>(nullopt, nullopt));
 }
 
-TEST(FormattedCodec, ProducerDeclared) {
+TEST(MODULE, ProducerDeclared) {
   // Test last one wins
   EXPECT_EQ(
     (decode<MyStruct>("  ( ärger  =  42, vec=[7, 8], ökonom=true, übermut=\"hello\", vec=[1, 2, 3] )   ")),
@@ -787,7 +789,7 @@ TEST(FormattedCodec, ProducerDeclared) {
   EXPECT_EQ(decode<MyStruct>("(foo$bar=1)").error().message, "Unknown member `foo$bar`");
 }
 
-TEST(FormattedCodec, ProducerDeclaredFileSource) {
+TEST(MODULE, ProducerDeclaredFileSource) {
   const auto path = testSource("test-FormattedCodec-MyStruct.ron");
 
   string input;
@@ -817,7 +819,7 @@ TEST(FormattedCodec, ProducerDeclaredFileSource) {
   EXPECT_EQ(val.vec, (vector<i32> { 10, 9, 8, 7, 6, 5, 4, 3, 2, 1 }));
 }
 
-TEST(FormattedCodec, ProducerInstance) {
+TEST(MODULE, ProducerInstance) {
   using type = reflect::Instance<MyStruct, MyStruct::Three>;
   const MyStruct val { 42, true, "hello" };
   EXPECT_EQ(
@@ -825,7 +827,7 @@ TEST(FormattedCodec, ProducerInstance) {
     (type(val)));
 }
 
-TEST(FormattedCodec, ProducerCodePoint) {
+TEST(MODULE, ProducerCodePoint) {
   using type = unicode::CodePoint;
   EXPECT_EQ(decode<type>("'a',"), type('a'));
   EXPECT_EQ(decode<type>("'€'"), type(U'€'));

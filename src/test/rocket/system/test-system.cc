@@ -11,6 +11,8 @@
 #include <csignal>
 #include <filesystem>
 
+#define MODULE rocketSystem
+
 namespace fs = std::filesystem;
 
 using namespace rocket::system;
@@ -40,7 +42,7 @@ nl(string_view line) {
 
 // Tests ====================================================================================================
 
-TEST(system, envBool) {
+TEST(MODULE, envBool) {
   using type = bool;
 
   const char* name = "MY_BOOL";
@@ -64,7 +66,7 @@ TEST(system, envBool) {
   EXPECT_EQ(env::get<type>(name), true);
 }
 
-TEST(system, envF64) {
+TEST(MODULE, envF64) {
   using type = f64;
 
   const char* name = "MY_F64";
@@ -84,7 +86,7 @@ TEST(system, envF64) {
   EXPECT_EQ(env::get<type>(name), -1.3);
 }
 
-TEST(system, envLogLevel) {
+TEST(MODULE, envLogLevel) {
   using type = log::LogLevel;
 
   const char* name = "MY_LOG_LEVEL";
@@ -112,7 +114,7 @@ TEST(system, envLogLevel) {
   EXPECT_EQ(env::get<type>(name).error(), env::GetError::NotFound);
 }
 
-TEST(system, envString) {
+TEST(MODULE, envString) {
   using type = string;
 
   const char* name = "MY_STRING";
@@ -129,7 +131,7 @@ TEST(system, envString) {
   EXPECT_EQ(env::get<type>(name).error(), env::GetError::NotFound);
 }
 
-TEST(system, envGet) {
+TEST(MODULE, envGet) {
   env::set("MY_ENV1", "");
   env::set("MY_ENV2", "value");
   auto env = env::get();
@@ -141,7 +143,7 @@ TEST(system, envGet) {
   EXPECT_EQ(env.at("MY_ENV2"), "value");
 }
 
-TEST(system, execEcho) {
+TEST(MODULE, execEcho) {
   const auto result = exec("echo Hello");
   EXPECT_TRUE(result);
   EXPECT_EQ(result.out, nl("Hello"));
@@ -151,28 +153,28 @@ TEST(system, execEcho) {
   EXPECT_FALSE(result.error);
 }
 
-TEST(system, execStderr) {
+TEST(MODULE, execStderr) {
   const auto result = exec("echo Hello>&2");
   EXPECT_TRUE(result);
   EXPECT_EQ(result.out, "");
   EXPECT_EQ(result.err, nl("Hello"));
 }
 
-TEST(system, execSeparate) {
+TEST(MODULE, execSeparate) {
   const auto result = exec(OUT_THEN_ERR);
   EXPECT_TRUE(result);
   EXPECT_EQ(result.out, nl("out"));
   EXPECT_EQ(result.err, nl("err"));
 }
 
-TEST(system, execCombined) {
+TEST(MODULE, execCombined) {
   const auto result = exec(OUT_THEN_ERR, true);
   EXPECT_TRUE(result);
   EXPECT_EQ(result.out, nl("out") + nl("err"));
   EXPECT_EQ(result.err, "");
 }
 
-TEST(system, execCombinedArgs) {
+TEST(MODULE, execCombinedArgs) {
   const string executable = testExecutable("print-args").string();
 
   const auto result = exec({ executable, "a" }, true);
@@ -181,7 +183,7 @@ TEST(system, execCombinedArgs) {
   EXPECT_EQ(result.err, "");
 }
 
-TEST(system, execLargeOutput) {
+TEST(MODULE, execLargeOutput) {
   // Much more output to both streams than a pipe holds. Reading one stream after the other would block
   constexpr i32 LINES = 10'000;
 #ifdef ROCKET_OS_WINDOWS
@@ -199,7 +201,7 @@ TEST(system, execLargeOutput) {
   EXPECT_EQ(ranges::count(result.err, 'x'), 0);
 }
 
-TEST(system, execExitStatus) {
+TEST(MODULE, execExitStatus) {
   const auto result = exec("exit 3");
   EXPECT_FALSE(result);
   EXPECT_EQ(result.status, 3);
@@ -208,7 +210,7 @@ TEST(system, execExitStatus) {
 }
 
 #ifndef ROCKET_OS_WINDOWS
-TEST(system, execPosixSignal) {
+TEST(MODULE, execPosixSignal) {
   // `kill` is built into the shell, so the shell terminates itself
   const auto result = exec("kill -TERM $$");
   EXPECT_FALSE(result);
@@ -218,7 +220,7 @@ TEST(system, execPosixSignal) {
 }
 #endif // ROCKET_OS_WINDOWS
 
-TEST(system, execNotFound) {
+TEST(MODULE, execNotFound) {
   const auto result = exec(vector<string_view> { "rocket-no-such-program" });
   EXPECT_FALSE(result);
   EXPECT_EQ(result.status, nullopt);
@@ -226,7 +228,7 @@ TEST(system, execNotFound) {
   EXPECT_TRUE(result.error);
 }
 
-TEST(system, execNotFoundShell) {
+TEST(MODULE, execNotFoundShell) {
   const auto result = exec("rocket-no-such-program");
   EXPECT_FALSE(result);
 #ifdef ROCKET_OS_WINDOWS
@@ -239,7 +241,7 @@ TEST(system, execNotFoundShell) {
   EXPECT_FALSE(result.err.empty());
 }
 
-TEST(system, execInvalid) {
+TEST(MODULE, execInvalid) {
   EXPECT_THAT(
     [&] { exec(string("a\0b", 3)); },
     ThrowsMessage<InvalidArgument>(EndsWith("May not contain NUL characters")));
@@ -252,7 +254,7 @@ TEST(system, execInvalid) {
 }
 
 #ifdef ROCKET_OS_WINDOWS
-TEST(system, execWindowsBatchFile) {
+TEST(MODULE, execWindowsBatchFile) {
   for (const string_view program : { "a.bat", "a.cmd", "A.BAT", "a.Cmd", "a.bat.", "a.bat. ." }) {
     SCOPED_TRACE(string(program));
     EXPECT_THAT(
@@ -262,12 +264,12 @@ TEST(system, execWindowsBatchFile) {
 }
 #endif // ROCKET_OS_WINDOWS
 
-TEST(system, execPrintf) {
+TEST(MODULE, execPrintf) {
   const auto out = exec("printf \"%s\" Hello").out;
   EXPECT_EQ(out, "Hello");
 }
 
-TEST(system, execPrintArgs) {
+TEST(MODULE, execPrintArgs) {
   const fs::path printArgs = testExecutable("print-args");
   const string executable = printArgs.string();
 
@@ -289,7 +291,7 @@ TEST(system, execPrintArgs) {
   }
 }
 
-TEST(system, execPrintArgsWithSpace) {
+TEST(MODULE, execPrintArgsWithSpace) {
   // Copy `print-args` to `print args`, se we have a space in the executable name
   const fs::path printArgs = testExecutable("print-args");
   const fs::path printArgsWithSpace =
@@ -315,7 +317,7 @@ TEST(system, execPrintArgsWithSpace) {
   }
 }
 
-TEST(system, execArgsAreLiteral) {
+TEST(MODULE, execArgsAreLiteral) {
   const string executable = testExecutable("print-args").string();
 
   // None of these may be interpreted by a shell, on any platform
@@ -356,7 +358,7 @@ TEST(system, execArgsAreLiteral) {
   }
 }
 
-TEST(system, execArgsEmpty) {
+TEST(MODULE, execArgsEmpty) {
   const string executable = testExecutable("print-args").string();
 
   const auto out = exec({ executable, "", "a", "", "" }).out;
@@ -367,7 +369,7 @@ TEST(system, execArgsEmpty) {
   EXPECT_THAT(out, Not(HasSubstr("5=")));
 }
 
-TEST(system, execArgsApostrophes) {
+TEST(MODULE, execArgsApostrophes) {
   const string executable = testExecutable("print-args").string();
 
   for (const string_view val : { "it's"sv, "''"sv, "'a b'"sv, "\"'\""sv, "'\\''"sv }) {
@@ -379,7 +381,7 @@ TEST(system, execArgsApostrophes) {
   }
 }
 
-TEST(system, execArgsBackslashes) {
+TEST(MODULE, execArgsBackslashes) {
   const string executable = testExecutable("print-args").string();
 
   // Windows treats backslashes specially in front of quotation marks, which includes the closing one
@@ -394,7 +396,7 @@ TEST(system, execArgsBackslashes) {
   }
 }
 
-TEST(system, execArgsLineBreak) {
+TEST(MODULE, execArgsLineBreak) {
   const string executable = testExecutable("print-args").string();
 
   // No shell is involved, so line breaks can be passed on Windows as well. The bytes are checked rather than
@@ -413,7 +415,7 @@ TEST(system, execArgsLineBreak) {
   }
 }
 
-TEST(system, execArgsNul) {
+TEST(MODULE, execArgsNul) {
   const string executable = testExecutable("print-args").string();
 
   EXPECT_THAT(
@@ -421,7 +423,7 @@ TEST(system, execArgsNul) {
     ThrowsMessage<InvalidArgument>(EndsWith("May not contain NUL characters")));
 }
 
-TEST(system, makeArgs) {
+TEST(MODULE, makeArgs) {
   EXPECT_EQ(makeArgs(""), vector<string> {});
   EXPECT_EQ(makeArgs(" \r\n\t   "), vector<string> {});
   EXPECT_EQ(makeArgs(" \r\na\t   "), vector<string> { "a" });

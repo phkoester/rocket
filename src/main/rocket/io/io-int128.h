@@ -1,5 +1,5 @@
 /**
- * @file int128.h
+ * @file io-int128.h
  *
  * Stream input and output operators for 128-bit integers.
  */
@@ -9,8 +9,6 @@
 #include "rocket/rocket.h"
 
 #include <iosfwd>
-
-#ifndef ROCKET_HAS_INT128_OP_IO
 
 // Support for 128-bit data types ---------------------------------------------------------------------------
 
@@ -109,8 +107,5 @@ std::istream& operator>>(std::istream& lhs, rocket::u128& rhs);
  * @return @p lhs
  */
 std::ostream& operator<<(std::ostream& lhs, rocket::u128 rhs);
-
-
-#endif // ROCKET_HAS_INT128_OP_IO
 
 // EOF

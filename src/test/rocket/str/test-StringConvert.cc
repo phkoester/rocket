@@ -10,9 +10,11 @@
 
 using namespace rocket::str;
 
+#define MODULE rocketStrStringConvert
+
 // Tests ====================================================================================================
 
-TEST(StringConvert, convertBool) {
+TEST(MODULE, convertBool) {
   using type = bool;
 
   EXPECT_EQ(toType<type>("false"), false);
@@ -26,7 +28,7 @@ TEST(StringConvert, convertBool) {
   EXPECT_EQ(toType<type>("42"), true);
 }
 
-TEST(StringConvert, convertI32) {
+TEST(MODULE, convertI32) {
   using type = i32;
 
   EXPECT_EQ(toType<type>("-999999"), -999'999);
@@ -36,7 +38,7 @@ TEST(StringConvert, convertI32) {
   EXPECT_EQ(toType<type>("1x").error().message, "Cannot scan \"1x\" as `int`");
 }
 
-TEST(StringConvert, convertI128) {
+TEST(MODULE, convertI128) {
   using type = i128;
 
   EXPECT_EQ(toType<type>("-999999"), -999'999);
@@ -50,7 +52,7 @@ TEST(StringConvert, convertI128) {
     matchesRegex("Cannot scan \"1x\" as `.*int128`"));
 }
 
-TEST(StringConvert, convertEnum) {
+TEST(MODULE, convertEnum) {
   using type = log::LogLevel;
 
   EXPECT_EQ(toType<type>("trace"), log::LogLevel::trace);

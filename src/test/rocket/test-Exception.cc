@@ -11,10 +11,12 @@
 
 using namespace std;
 
+#define MODULE rocketException
+
 // Tests ====================================================================================================
 
 // Segfaults on Windows with Clang 22.1.3
-TEST(Exception, WrappedExceptionFormat) { // NOLINT(*-complexity)
+TEST(MODULE, WrappedExceptionFormat) { // NOLINT(*-complexity)
   try  {
     ROCKET_FAIL("oops1");
   } catch (const exception& ex1) {
@@ -61,7 +63,7 @@ TEST(Exception, WrappedExceptionFormat) { // NOLINT(*-complexity)
 }
 
 // Segfaults on Windows with Clang 22.1.3
-TEST(Exception, printException1) { // NOLINT(*-complexity)
+TEST(MODULE, printException1) { // NOLINT(*-complexity)
   try {
     throw "oops1";
   } catch (...) {
@@ -86,7 +88,7 @@ TEST(Exception, printException1) { // NOLINT(*-complexity)
   }
 }
 
-TEST(Exception, printException2) {
+TEST(MODULE, printException2) {
   try {
     throw "oops";
   } catch (...) {
@@ -97,7 +99,7 @@ TEST(Exception, printException2) {
 }
 
 // Segfaults on Windows with Clang 22.1.3
-TEST(Exception, what1) { // NOLINT(*-complexity)
+TEST(MODULE, what1) { // NOLINT(*-complexity)
   try {
     throw "oops1";
   } catch (...) {
@@ -117,7 +119,7 @@ TEST(Exception, what1) { // NOLINT(*-complexity)
   }
 }
 
-TEST(Exception, what2) {
+TEST(MODULE, what2) {
   try {
     throw "oops";
   } catch (...) {
@@ -125,7 +127,7 @@ TEST(Exception, what2) {
   }
 }
 
-TEST(Exception, nestedExceptionTypeId) {
+TEST(MODULE, nestedExceptionTypeId) {
   try {
     try {
       throw "oops";

@@ -9,6 +9,8 @@
 
 using namespace rocket::str::location;
 
+#define MODULE rocketStrLocation
+
 // Macros ---------------------------------------------------------------------------------------------------
 
 #define EXPECT_LOCATION( \
@@ -25,7 +27,7 @@ using namespace rocket::str::location;
 
 // Tests ====================================================================================================
 
-TEST(location, locationsEmptyInput) {
+TEST(MODULE, locationsEmptyInput) {
   const Position pos { .type=note, .position=0, .message="Oops" };
   const auto result = locations("", { pos });
   EXPECT_EQ(result.config.source, "(input)");
@@ -34,7 +36,7 @@ TEST(location, locationsEmptyInput) {
   EXPECT_LOCATION(loc, note, 0, ({}), 1, 1, ({ 0, 0 }), nullopt, "Oops", nullopt);
 }
 
-TEST(location, locationsEoi) {
+TEST(MODULE, locationsEoi) {
   const string input = "a line without a line break at the end";
   const Position pos { .type=error, .position=10, .message="Oops" };
   const auto result = locations(input, { pos }, { .setLineString=true });
@@ -44,7 +46,7 @@ TEST(location, locationsEoi) {
   EXPECT_LOCATION(loc, error, 10, ({}), 1, 11, ({ 0, input.size() }), input, "Oops", nullopt);
 }
 
-TEST(location, locationsLf) {
+TEST(MODULE, locationsLf) {
   const string input = "a line with a line break at the end\n";
   const Position pos { .type=error, .position=10, .message="Oops" };
   const auto result = locations(input, { pos }, { .setLineString=true });
@@ -61,7 +63,7 @@ TEST(location, locationsLf) {
     nullopt);
 }
 
-TEST(location, locationsCrlf) {
+TEST(MODULE, locationsCrlf) {
   const string input = "a line with a line break at the end\r\n";
   const Position pos { .type=error, .position=10, .message="Oops" };
   const auto result = locations(input, { pos }, { .setLineString=true });
@@ -78,7 +80,7 @@ TEST(location, locationsCrlf) {
     nullopt);
 }
 
-TEST(location, locationsNullByte) {
+TEST(MODULE, locationsNullByte) {
   const string input = "a\x00" "b"s;
   const Position pos { .type=error, .position=3, .message="Oops" };
   const auto result = locations(input, { pos }, { .setLineString=true });
@@ -88,7 +90,7 @@ TEST(location, locationsNullByte) {
 }
 
 
-TEST(location, locationsMultiByteCharactersAndLineBreak) {
+TEST(MODULE, locationsMultiByteCharactersAndLineBreak) {
   const string input = "ä€\n€";
 
   {
@@ -108,7 +110,7 @@ TEST(location, locationsMultiByteCharactersAndLineBreak) {
   }
 }
 
-TEST(location, locationsKafkaTxt) {
+TEST(MODULE, locationsKafkaTxt) {
   const auto source = testSource("test-location-Kafka.txt").string();
   nio::FileSource in(source);
   const auto input = in.readString();
@@ -133,7 +135,7 @@ TEST(location, locationsKafkaTxt) {
   EXPECT_EQ(line, loc.lineString);
 }
 
-TEST(location, locationsMultiByteCharacter) {
+TEST(MODULE, locationsMultiByteCharacter) {
   // 🧑‍🌾: U+1F9D1, U+200D, U+1F33E, 4 + 3 + 4 = 11 bytes
   const string input = "🧑‍🌾";
 
@@ -163,7 +165,7 @@ TEST(location, locationsMultiByteCharacter) {
   }
 }
 
-TEST(location, locationsTabSize0) {
+TEST(MODULE, locationsTabSize0) {
   const string input = "a\nb\tc"; // 0: a, 1: \n, 2: b, 3: \t, 4: c
   // Position 4 points to `c` in the second line
   const Position pos { .type=note, .position=4, .message="Oops" };
@@ -175,7 +177,7 @@ TEST(location, locationsTabSize0) {
 }
 
 
-TEST(location, locationsTabSize8) {
+TEST(MODULE, locationsTabSize8) {
   const string input = "a\nb\tc"; // 0: a, 1: \n, 2: b, 3: \t, 4: c
   // Position 4 points to `c` in the second line
   const Position pos { .type=note, .position=4, .message="Oops" };
@@ -185,7 +187,7 @@ TEST(location, locationsTabSize8) {
   EXPECT_LOCATION(loc, note, 4, ({}), 2, 9, ({ 2, 5 }), "b\tc", "Oops", nullopt);
 }
 
-TEST(location, printLocations) { // NOLINT(*-complexity)
+TEST(MODULE, printLocations) { // NOLINT(*-complexity)
   // Test multi-line input, more than one position per line
   {
     const string input = "a multi-line\ntext, where the second line is somewhat longer";
@@ -286,7 +288,7 @@ TEST(location, printLocations) { // NOLINT(*-complexity)
   }
 }
 
-TEST(location, locationsTabSize) {
+TEST(MODULE, locationsTabSize) {
   const Position pos { .type=note, .position=2, .message="Oops" };
 
   EXPECT_THAT(
@@ -298,7 +300,7 @@ TEST(location, locationsTabSize) {
   EXPECT_EQ(result.locations.at(0).column, 3U);
 }
 
-TEST(location, printLocationsEmptyInput) {
+TEST(MODULE, printLocationsEmptyInput) {
   const string input;
   const Position pos { .type=note, .position=0, .message="Oops" };
   const auto result = locations(input, { pos });
@@ -312,7 +314,7 @@ TEST(location, printLocationsEmptyInput) {
 
 // After escaping, U+0301 (COMBINING ACUTE ACCENT) joins the last character of what the preceding character
 // was replaced with, so the position of the mark lies inside a character of the escaped line
-TEST(location, printLocationsEscapeMergesWithCombiningMark) {
+TEST(MODULE, printLocationsEscapeMergesWithCombiningMark) {
   const auto print = [](string_view input, const Position& pos, const LocationsConfig& config) {
     const auto result = locations(input, { pos }, config);
     nio::StringSink out;

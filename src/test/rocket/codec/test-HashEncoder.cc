@@ -16,6 +16,8 @@ using namespace rocket;
 using namespace rocket::codec;
 using namespace rocket::unicode;
 
+#define MODULE rocketCodecHashEncoder
+
 // `MyStruct` -----------------------------------------------------------------------------------------------
 
 struct MyStruct {
@@ -32,25 +34,25 @@ ROCKET_REFLECT_MEMBERS_DEFINE(, MyStruct, Index);
 
 // Tests ====================================================================================================
 
-TEST(HashEncoder, Enum) {
+TEST(MODULE, Enum) {
   const HashEncoder<> encoder;
   enum Color : u8 { red = 0, green, blue };
   EXPECT_EQ(encoder.encode(blue), 2);
 }
 
-TEST(HashEncoder, i128) {
+TEST(MODULE, i128) {
   const HashEncoder<> encoder;
   EXPECT_NE(encoder.encode(1234_i128), 0);
 }
 
-TEST(HashEncoder, Pointer) {
+TEST(MODULE, Pointer) {
   const HashEncoder<> encoder;
   void* ptr = nullptr; // NOLINT
   EXPECT_EQ(encoder.encode(ptr), 0);
 }
 
 /// Tests that the order of insertion does not affect the hash value for ordered sets.
-TEST(HashEncoder, SetOrdered) {
+TEST(MODULE, SetOrdered) {
   const HashEncoder<> encoder;
 
   const u64 N = 100;
@@ -71,7 +73,7 @@ TEST(HashEncoder, SetOrdered) {
 }
 
 /// Tests that the order of insertion does not affect the hash value for unordered sets.
-TEST(HashEncoder, SetUnordered) {
+TEST(MODULE, SetUnordered) {
   const HashEncoder<> encoder;
 
   const u64 N = 100;
@@ -92,7 +94,7 @@ TEST(HashEncoder, SetUnordered) {
 }
 
 /// Tests that the order of insertion does not affect the hash value for ordered maps.
-TEST(HashEncoder, MapOrdered) {
+TEST(MODULE, MapOrdered) {
   const HashEncoder<> encoder;
 
   const u64 N = 100;
@@ -116,7 +118,7 @@ TEST(HashEncoder, MapOrdered) {
 }
 
 /// Tests that the order of insertion does not affect the hash value for unordered maps.
-TEST(HashEncoder, MapUnordered) {
+TEST(MODULE, MapUnordered) {
   const HashEncoder<> encoder;
 
   const u64 N = 100;
@@ -140,7 +142,7 @@ TEST(HashEncoder, MapUnordered) {
 }
 
 /// Tests that the order of insertion does not affect the hash value for ordered bimaps.
-TEST(HashEncoder, BimapOrdered) {
+TEST(MODULE, BimapOrdered) {
   const HashEncoder<> encoder;
 
   const u64 N = 100;
@@ -164,7 +166,7 @@ TEST(HashEncoder, BimapOrdered) {
 }
 
 /// Tests that the order of insertion does not affect the hash value for unordered bimaps.
-TEST(HashEncoder, BimapUnordered) {
+TEST(MODULE, BimapUnordered) {
   const HashEncoder<> encoder;
 
   const u64 N = 100;
@@ -187,7 +189,7 @@ TEST(HashEncoder, BimapUnordered) {
   EXPECT_EQ(hashes.size(), 1);
 }
 
-TEST(HashEncoder, Duration) {
+TEST(MODULE, Duration) {
   using namespace std::chrono;
 
   const u64 count = 1;
@@ -202,7 +204,7 @@ TEST(HashEncoder, Duration) {
   EXPECT_NE(msHash, sHash);
 }
 
-TEST(HashEncoder, Date) {
+TEST(MODULE, Date) {
   using namespace std::chrono;
 
   const HashEncoder<> encoder;
@@ -210,7 +212,7 @@ TEST(HashEncoder, Date) {
   EXPECT_NE(encoder.encode(val), 0);
 }
 
-TEST(HashEncoder, HourMinuteSecond) {
+TEST(MODULE, HourMinuteSecond) {
   using namespace std::chrono;
 
   const HashEncoder<> encoder;
@@ -221,7 +223,7 @@ TEST(HashEncoder, HourMinuteSecond) {
   EXPECT_NE(encoder.encode(val), 0);
 }
 
-TEST(HashEncoder, TimeZone) {
+TEST(MODULE, TimeZone) {
   using namespace std::chrono;
 
   const auto* current = rocket::chrono::current_zone();
@@ -229,7 +231,7 @@ TEST(HashEncoder, TimeZone) {
   EXPECT_NE(encoder.encode(current), 0);
 }
 
-TEST(HashEncoder, Time) {
+TEST(MODULE, Time) {
   using namespace std::chrono;
 
   const auto val = rocket::chrono::now<system_clock>();
@@ -237,7 +239,7 @@ TEST(HashEncoder, Time) {
   EXPECT_NE(encoder.encode(val), 0);
 }
 
-TEST(HashEncoder, ZonedTime) {
+TEST(MODULE, ZonedTime) {
   using namespace std::chrono;
 
   const auto val = rocket::chrono::zoned_time(rocket::chrono::current_zone(), rocket::chrono::now<system_clock>());
@@ -245,19 +247,19 @@ TEST(HashEncoder, ZonedTime) {
   EXPECT_NE(encoder.encode(val), 0);
 }
 
-TEST(HashEncoder, DeclaredMyStruct) {
+TEST(MODULE, DeclaredMyStruct) {
   const MyStruct val { 42, true, "hello", { 1, 2, 3 } };
   const HashEncoder<> encoder;
   EXPECT_NE(encoder.encode(val), 0);
 }
 
-TEST(HashEncoder, Character) {
+TEST(MODULE, Character) {
   const auto val = "hello"_c;
   const HashEncoder<> encoder;
   EXPECT_NE(encoder.encode(val), 0);
 }
 
-TEST(HashEncoder, CharacterView) {
+TEST(MODULE, CharacterView) {
   const auto val = "hello"_cv;
   const HashEncoder<> encoder;
   EXPECT_NE(encoder.encode(val), 0);

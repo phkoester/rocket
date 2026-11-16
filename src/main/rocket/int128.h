@@ -6,81 +6,29 @@
 
 #pragma once
 
-#ifdef ROCKET_OS_WINDOWS
-  // Windows: Boost.Int128
-  #define ROCKET_HAS_BOOST_INT128
-  #define ROCKET_HAS_INT128_LIMITS
-  #define ROCKET_HAS_INT128_STD_HASH
-#else
-  #ifndef __SIZEOF_INT128__
-    #error This C++ version does not support 128-bit integers
-  #endif
-  #define ROCKET_HAS_INT128
-  #if defined(ROCKET_OS_LINUX) || defined(ROCKET_OS_MACOS)
-    // Linux, macOS: native __i128
-    #define ROCKET_HAS_INT128_FMT_FORMATTER
-    #define ROCKET_HAS_INT128_LIMITS
-    #define ROCKET_HAS_INT128_SCN_SCANNER
-    #define ROCKET_HAS_INT128_STD_HASH
-  #endif
-#endif // ROCKET_OS_WINDOWS
+#include "rocket/configure.h"
 
+// Boost.Int128 defines `std::numeric_limits`, so include `<limits>` here for the sake of symmetry
 #include <limits>
 
-#ifndef ROCKET_HAS_INT128
+#ifdef ROCKET_HAS_BOOST_INT128
   #include <boost/int128/int128.hpp>
 #endif
 
 namespace rocket {
 
-// `int128__` and `uint128__` -------------------------------------------------------------------------------
+// `i128` and `u128` ----------------------------------------------------------------------------------------
 
 #ifdef ROCKET_HAS_INT128
-
 using i128 = __int128; ///< A signed 128-bit integer type.
 using u128 = unsigned __int128; ///< An unsigned 128-bit integer type.
+#endif
 
-#else
-
+#ifdef ROCKET_HAS_BOOST_INT128
 using i128 = boost::int128::int128; ///< A signed 128-bit integer type.
 using u128 = boost::int128::uint128; ///< An unsigned 128-bit integer type.
-
-#endif // ROCKET_HAS_INT128
+#endif
 
 } // namespace rocket
-
-#ifndef ROCKET_HAS_INT128_LIMITS
-
-// `std::numeric_limits<rocket::i128>` ----------------------------------------------------------------------
-
-/// @spec_std_numeric_limits{rocket::i128}
-template<>
-struct std::numeric_limits<rocket::i128> {
-  /// Whether the type is signed.
-  static constexpr bool is_signed = true;
-
-  /// Maximum value.
-  static constexpr rocket::i128 max() noexcept { return ~(rocket::i128(1) << 127); }
-
-  /// Minimum value.
-  static constexpr rocket::i128 min() noexcept { return rocket::i128(1) << 127; }
-};
-
-// `std::numeric_limits<rocket::u128>` ----------------------------------------------------------------------
-
-/// @spec_std_numeric_limits{rocket::u128}
-template<>
-struct std::numeric_limits<rocket::u128> {
-  /// Whether the type is signed.
-  static constexpr bool is_signed = false;
-
-  /// Maximum value.
-  static constexpr rocket::u128 max() noexcept { return ~(rocket::u128(0)); }
-
-  /// Minimum value.
-  static constexpr rocket::u128 min() noexcept { return rocket::u128(0); }
-};
-
-#endif // ROCKET_HAS_INT128_LIMITS
 
 // EOF

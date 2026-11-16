@@ -10,9 +10,11 @@
 
 using namespace rocket::math;
 
+#define MODULE rocketMath
+
 // Tests ====================================================================================================
 
-TEST(math, mean) {
+TEST(MODULE, mean) {
   {
     const vector<i32> vec;
     EXPECT_THAT(
@@ -27,7 +29,7 @@ TEST(math, mean) {
   }
 }
 
-TEST(math, meanAndStandardDeviation) {
+TEST(MODULE, meanAndStandardDeviation) {
   auto gen = math::random::gen();
   normal_distribution<f64> distrib(7, 3); // Mean 7, standard deviation 3
 
@@ -41,7 +43,7 @@ TEST(math, meanAndStandardDeviation) {
   EXPECT_NEAR(sigma, 3, 0.01);
 }
 
-TEST(math, standardDeviation) {
+TEST(MODULE, standardDeviation) {
   const vector<i32> vec { 1, 2, 3, 4 };
   EXPECT_THAT(standardDeviation<f64>(vec.begin(), vec.end()), DoubleEq(1.1180339887498949));
 }

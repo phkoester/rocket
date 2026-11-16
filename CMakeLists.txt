@@ -326,10 +326,13 @@ endblock()
 
 # scnlib ....................................................................................................
 
-# The patch instantiates the built-in scanners for `bool`, `char32_t`, and `void*`, which `master` misses,
-# fixes `FILE` input being returned twice after a scan backtracks across a buffer refill, and makes scanning
-# a `system_clock` time point take the fields as UTC instead of local time. Its hash is part of the command,
-# so that editing the patch repopulates scnlib
+# The patch:
+#
+# - Instantiates the built-in scanners for `bool`, `char32_t`, and `void*`, which `master` misses
+# - Fixes `FILE` input being returned twice after a scan backtracks across a buffer refill
+# - Makes scanning a `system_clock` time point take the fields as UTC instead of local time
+#
+# Its hash is part of the command, so that editing the patch repopulates scnlib
 set(ROCKET_SCNLIB_PATCH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/patches/scnlib.patch")
 file(SHA256 "${ROCKET_SCNLIB_PATCH}" ROCKET_SCNLIB_PATCH_HASH)
 set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${ROCKET_SCNLIB_PATCH}")

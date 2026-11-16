@@ -8,6 +8,8 @@
 
 using namespace rocket::str;
 
+#define MODULE rocketStr
+
 namespace {
 
 // Local functions ------------------------------------------------------------------------------------------
@@ -21,7 +23,7 @@ pars(const vector<vector<string>>& vec) {
 
 // Tests ====================================================================================================
 
-TEST(str, lines) {
+TEST(MODULE, lines) {
   EXPECT_EQ(lines(""), (vector<string_view>{ "" }));
   EXPECT_EQ(lines("a b"), (vector<string_view>{ "a b" }));
   EXPECT_EQ(lines("a\nb"), (vector<string_view>{ "a", "b" }));
@@ -30,13 +32,13 @@ TEST(str, lines) {
   EXPECT_EQ(lines("\na"), (vector<string_view>{ "", "a" }));
 }
 
-TEST(str, lower) {
+TEST(MODULE, lower) {
   EXPECT_EQ(str::lower("debug"), "debug");
   EXPECT_EQ(str::lower("DEBUG"), "debug");
   EXPECT_EQ(str::lower("ÄÖÜÉ"), "äöüé");
 }
 
-TEST(str, lowerIn) {
+TEST(MODULE, lowerIn) {
   u32string str = U"ÄÖÜÉ";
   lowerIn(str);
   EXPECT_EQ(str, U"äöüé");
@@ -44,7 +46,7 @@ TEST(str, lowerIn) {
 
 #define NBSP "\u00A0"
 
-TEST(str, paragraphs) {
+TEST(MODULE, paragraphs) {
   EXPECT_EQ(paragraphs(""), (pars({{}})));
   EXPECT_EQ(paragraphs("a b"), (pars({{ "a", "b" }})));
   EXPECT_EQ(
@@ -57,7 +59,7 @@ TEST(str, paragraphs) {
   EXPECT_EQ(paragraphs("\na"), (pars({{}, {"a"} })));
 }
 
-TEST(str, removeLeading) {
+TEST(MODULE, removeLeading) {
   EXPECT_EQ(removeLeading("", "hello"), "");
   EXPECT_EQ(removeLeading("hello", ""), "hello");
   EXPECT_EQ(removeLeading("/dir", "/"), "dir");
@@ -66,7 +68,7 @@ TEST(str, removeLeading) {
   EXPECT_EQ(removeLeading("///dir", "/"), "dir");
 }
 
-TEST(str, removeTrailing) {
+TEST(MODULE, removeTrailing) {
   EXPECT_EQ(removeTrailing("", "hello"), "");
   EXPECT_EQ(removeTrailing("hello", ""), "hello");
   EXPECT_EQ(removeTrailing("dir/", "/"), "dir");
@@ -75,13 +77,13 @@ TEST(str, removeTrailing) {
   EXPECT_EQ(removeTrailing("dir///", "/"), "dir");
 }
 
-TEST(str, replaceIn) {
+TEST(MODULE, replaceIn) {
   string str = "gamma gamma gamma gamma";
   EXPECT_EQ(replaceIn(str, "gamma", "beta"), 4);
   EXPECT_EQ(str, "beta beta beta beta");
 }
 
-TEST(str, trim) {
+TEST(MODULE, trim) {
   EXPECT_EQ(trim(""sv), ""sv);
   EXPECT_EQ(trim("\t\n\v\f\r "sv), ""sv);
   EXPECT_EQ(trim("abc"sv), "abc"sv);
@@ -89,7 +91,7 @@ TEST(str, trim) {
   EXPECT_EQ(trim(" \t\na b c\v\f "sv), "a b c"sv);
 }
 
-TEST(str, trimLeading) {
+TEST(MODULE, trimLeading) {
   EXPECT_EQ(trimLeading(""sv), ""sv);
   EXPECT_EQ(trimLeading("\t\n\v\f\r "sv), ""sv);
   EXPECT_EQ(trimLeading("abc"sv), "abc"sv);
@@ -97,7 +99,7 @@ TEST(str, trimLeading) {
   EXPECT_EQ(trimLeading(" \t\na b c\v\f "sv), "a b c\v\f "sv);
 }
 
-TEST(str, trimTrailing) {
+TEST(MODULE, trimTrailing) {
   EXPECT_EQ(trimTrailing(""sv), ""sv);
   EXPECT_EQ(trimTrailing("\t\n\v\f\r "sv), ""sv);
   EXPECT_EQ(trimTrailing("abc"sv), "abc"sv);
@@ -105,13 +107,13 @@ TEST(str, trimTrailing) {
   EXPECT_EQ(trimTrailing(" \t\na b c\v\f "sv), " \t\na b c"sv);
 }
 
-TEST(str, upper) {
+TEST(MODULE, upper) {
   EXPECT_EQ(str::upper("debug"), "DEBUG");
   EXPECT_EQ(str::upper("DEBUG"), "DEBUG");
   EXPECT_EQ(str::upper("äöüé"), "ÄÖÜÉ");
 }
 
-TEST(str, upperIn) {
+TEST(MODULE, upperIn) {
   u32string str = U"äöüé";
   upperIn(str);
   EXPECT_EQ(str, U"ÄÖÜÉ");

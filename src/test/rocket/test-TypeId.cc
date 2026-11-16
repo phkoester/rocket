@@ -9,6 +9,8 @@
 
 #include <unordered_set>
 
+#define MODULE rocketTypeId
+
 namespace test_typeid {
 
 // Types in namespace ---------------------------------------------------------------------------------------
@@ -35,7 +37,7 @@ using namespace test_typeid;
 
 // Tests ====================================================================================================
 
-TEST(TypeId, of) {
+TEST(MODULE, of) {
   EXPECT_EQ(TypeId::of<i32>(), TypeId(type_identity<i32>()));
   EXPECT_EQ(TypeId::of<i32>(), TypeId(typeid(i32)));
   EXPECT_EQ(TypeId::of<Plain>(), TypeId(typeid(Plain)));
@@ -43,7 +45,7 @@ TEST(TypeId, of) {
   EXPECT_NE(TypeId::of<Base>(), TypeId::of<Derived>());
 }
 
-TEST(TypeId, ofIgnoresCvAndReferences) {
+TEST(MODULE, ofIgnoresCvAndReferences) {
   // Like `typeid`, top-level cv-qualifiers and references are ignored
   EXPECT_EQ(TypeId::of<const i32>(), TypeId::of<i32>());
   EXPECT_EQ(TypeId::of<volatile i32>(), TypeId::of<i32>());
@@ -56,7 +58,7 @@ TEST(TypeId, ofIgnoresCvAndReferences) {
   EXPECT_NE(TypeId::of<const i32*>(), TypeId::of<i32*>());
 }
 
-TEST(TypeId, ctorObject) {
+TEST(MODULE, ctorObject) {
   EXPECT_EQ(TypeId(42), TypeId::of<int>());
   EXPECT_EQ(TypeId(string("hi")), TypeId::of<string>());
 
@@ -64,7 +66,7 @@ TEST(TypeId, ctorObject) {
   EXPECT_EQ(TypeId(plain), TypeId::of<Plain>());
 }
 
-TEST(TypeId, ctorObjectPolymorphic) {
+TEST(MODULE, ctorObjectPolymorphic) {
   const Derived derived;
   const Base& base = derived;
   EXPECT_EQ(TypeId(base), TypeId::of<Derived>());
@@ -74,21 +76,21 @@ TEST(TypeId, ctorObjectPolymorphic) {
   EXPECT_EQ(TypeId(base2), TypeId::of<Base>());
 }
 
-TEST(TypeId, ctorObjectPointer) {
+TEST(MODULE, ctorObjectPointer) {
   // A pointer is not polymorphic, so its static type is used
   const Derived derived;
   const Base* ptr = &derived;
   EXPECT_EQ(TypeId(ptr), TypeId::of<const Base*>());
 }
 
-TEST(TypeId, copy) {
+TEST(MODULE, copy) {
   const TypeId a = TypeId::of<Plain>();
   const TypeId b(a);
   EXPECT_EQ(a, b);
   EXPECT_EQ(b, TypeId::of<Plain>());
 }
 
-TEST(TypeId, compare) {
+TEST(MODULE, compare) {
   const TypeId a = TypeId::of<i32>();
   const TypeId b = TypeId::of<Plain>();
 
@@ -108,14 +110,14 @@ TEST(TypeId, compare) {
   EXPECT_EQ(a <=> b, 0 <=> (b <=> a));
 }
 
-TEST(TypeId, hash) {
+TEST(MODULE, hash) {
   EXPECT_EQ(TypeId::of<i32>().hash(), TypeId::of<const i32&>().hash());
   EXPECT_EQ(TypeId::of<i32>().hash(), typeid(i32).hash_code());
   EXPECT_EQ(TypeId::of<i32>().hash(), std::hash<TypeId>()(TypeId::of<i32>()));
   EXPECT_EQ(TypeId::of<Plain>().hash(), std::hash<TypeId>()(TypeId::of<Plain>()));
 }
 
-TEST(TypeId, unorderedSet) {
+TEST(MODULE, unorderedSet) {
   unordered_set<TypeId> set;
   EXPECT_TRUE(set.insert(TypeId::of<i32>()).second);
   EXPECT_TRUE(set.insert(TypeId::of<Plain>()).second);
@@ -125,12 +127,12 @@ TEST(TypeId, unorderedSet) {
   EXPECT_FALSE(set.contains(TypeId::of<i64>()));
 }
 
-TEST(TypeId, name) {
+TEST(MODULE, name) {
   EXPECT_STREQ(TypeId::of<i32>().name(), typeid(i32).name());
   EXPECT_STREQ(TypeId::of<Plain>().name(), typeid(Plain).name());
 }
 
-TEST(TypeId, prettyName) {
+TEST(MODULE, prettyName) {
   EXPECT_EQ(TypeId::of<std_int>().prettyName(), "int");
   EXPECT_EQ(TypeId::of<std_double>().prettyName(), "double");
   EXPECT_EQ(TypeId::of<std_int*>().prettyName(), "int*");
@@ -155,7 +157,7 @@ TEST(TypeId, prettyName) {
         "std.*::allocator<std.*::basic_string<char, std.*::char_traits<char>, std.*::allocator<char>>>>"));
 }
 
-TEST(TypeId, format) {
+TEST(MODULE, format) {
   EXPECT_EQ(fmt::format("{}", TypeId::of<int>()), "`int`");
   EXPECT_EQ(fmt::format("{}", TypeId::of<Plain>()), "`test_typeid::Plain`");
   EXPECT_EQ(fmt::format("{}", TypeId::of<Box<int>>()), "`test_typeid::Box<int>`");
@@ -165,7 +167,7 @@ TEST(TypeId, format) {
   EXPECT_EQ(fmt::format("{}", TypeId(base)), "`test_typeid::Derived`");
 }
 
-TEST(TypeId, formatSpec) {
+TEST(MODULE, formatSpec) {
   // Format specifiers apply to the name including the backticks
   EXPECT_EQ(fmt::format("{:>7}", TypeId::of<int>()), "  `int`");
   EXPECT_EQ(fmt::format("{:<7}|", TypeId::of<int>()), "`int`  |");
@@ -174,7 +176,7 @@ TEST(TypeId, formatSpec) {
   EXPECT_EQ(fmt::format("{:?}", TypeId::of<int>()), "\"`int`\"");
 }
 
-TEST(TypeId, formatChar32) {
+TEST(MODULE, formatChar32) {
   EXPECT_EQ(fmt::format(U"{}", TypeId::of<int>()), U"`int`");
   EXPECT_EQ(fmt::format(U"{}", TypeId::of<Plain>()), U"`test_typeid::Plain`");
   EXPECT_EQ(fmt::format(U"{:>7}", TypeId::of<int>()), U"  `int`");

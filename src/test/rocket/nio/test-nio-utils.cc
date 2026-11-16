@@ -16,6 +16,8 @@ using rocket::io::testing::TellOnlyBuf;
 using rocket::nio::testing::FailingSource;
 using rocket::nio::testing::NonseekableSource;
 
+#define MODULE rocketNioUtils
+
 namespace {
 
 // Local constants ------------------------------------------------------------------------------------------
@@ -135,7 +137,7 @@ testSkipUntilString(string_view input, string_view str, bool expected, u64 expec
 
 // Functions ------------------------------------------------------------------------------------------------
 
-TEST(nioUtils, readChar) {
+TEST(MODULE, readChar) {
   forEachSource("ab", [](Source& in) {
     EXPECT_FALSE(readChar(in, 'x'));
     EXPECT_EQ(in.tell(), 0);
@@ -149,7 +151,7 @@ TEST(nioUtils, readChar) {
   });
 }
 
-TEST(nioUtils, readCharacter) {
+TEST(MODULE, readCharacter) {
   forEachSource("ab", [](Source& in) {
     expectCharacter(in, "a", 1);
     expectCharacter(in, "b", 2);
@@ -187,7 +189,7 @@ TEST(nioUtils, readCharacter) {
   });
 }
 
-TEST(nioUtils, readCharacterInvalidUtf8) {
+TEST(MODULE, readCharacterInvalidUtf8) {
   // At the start of the character, invalid UTF-8 throws, and the source is not advanced
   forEachSource("\xFF" "a", [](Source& in) {
     EXPECT_THAT([&] { (void) readCharacter(in); }, throwsInputFailure(0, EndsWith("Invalid UTF-8")));
@@ -205,7 +207,7 @@ TEST(nioUtils, readCharacterInvalidUtf8) {
   });
 }
 
-TEST(nioUtils, expectChar) {
+TEST(MODULE, expectChar) {
   forEachSource("a:,b", [](Source& in) {
     EXPECT_NO_THROW(expectChar(in, 'a'));
     EXPECT_NO_THROW(expectColon(in));
@@ -223,7 +225,7 @@ TEST(nioUtils, expectChar) {
   });
 }
 
-TEST(nioUtils, readChoiceWordBoundary) {
+TEST(MODULE, readChoiceWordBoundary) {
   // A word boundary follows
   testReadChoice("true", { "true" }, false, true, "true", 4);
   testReadChoice("true a", { "true" }, false, true, "true", 4);
@@ -238,17 +240,17 @@ TEST(nioUtils, readChoiceWordBoundary) {
   testReadChoice("trueä", { "true" }, false, true, nullopt);
 }
 
-TEST(nioUtils, readChoiceWordBoundaryInvalidUtf8) {
+TEST(MODULE, readChoiceWordBoundaryInvalidUtf8) {
   // An undecodable code point counts as a word boundary
   testReadChoice("true\xFF", { "true" }, false, true, "true", 4);
   testReadChoice("true\xC3", { "true" }, false, true, "true", 4);
 }
 
-TEST(nioUtils, readChoiceNoWordBoundaryRequired) {
+TEST(MODULE, readChoiceNoWordBoundaryRequired) {
   testReadChoice("trueX", { "true" }, false, false, "true", 4);
 }
 
-TEST(nioUtils, readChoiceLongestMatch) {
+TEST(MODULE, readChoiceLongestMatch) {
   testReadChoice("abcd e", { "ab", "abcd" }, false, true, "abcd", 4);
   testReadChoice("ab!", { "ab", "abcd" }, false, true, "ab", 2);
 
@@ -257,13 +259,13 @@ TEST(nioUtils, readChoiceLongestMatch) {
   testReadChoice("abc!", { "ab", "abcd" }, false, false, "ab", 2);
 }
 
-TEST(nioUtils, readChoiceIgnoreCase) {
+TEST(MODULE, readChoiceIgnoreCase) {
   testReadChoice("TRUE a", { "true" }, true, true, "true", 4);
   testReadChoice("TRUE a", { "true" }, false, true, nullopt);
   testReadChoice("TRUEX", { "true" }, true, true, nullopt);
 }
 
-TEST(nioUtils, ignoreCaseFoldsAsciiLettersOnly) {
+TEST(MODULE, ignoreCaseFoldsAsciiLettersOnly) {
   // `readString` and `readChoice`, each through the contiguous and the noncontiguous code path
   const auto test = [](string_view input, string_view expected, bool matches) {
     forEachSource(input, [&](Source& in) {
@@ -295,13 +297,13 @@ TEST(nioUtils, ignoreCaseFoldsAsciiLettersOnly) {
   test("STRA\u00DFE", "stra\u00DFe", true); // `ß` matches only itself
 }
 
-TEST(nioUtils, readChoiceNoMatch) {
+TEST(MODULE, readChoiceNoMatch) {
   testReadChoice("", { "true" }, false, true, nullopt);
   testReadChoice("tru", { "true" }, false, true, nullopt);
   testReadChoice("false", { "true" }, false, true, nullopt);
 }
 
-TEST(nioUtils, readCodePointValid) {
+TEST(MODULE, readCodePointValid) {
   // One, two, three, and four UTF-8 bytes
   forEachSource("aä€\U0001F971", [](Source& in) {
     expectCodePoint(in, U'a', 1);
@@ -311,7 +313,7 @@ TEST(nioUtils, readCodePointValid) {
   });
 }
 
-TEST(nioUtils, readCodePointEof) {
+TEST(MODULE, readCodePointEof) {
   forEachSource("", [](Source& in) {
     expectNoCodePoint(in);
     EXPECT_TRUE(in.eof());
@@ -327,7 +329,7 @@ TEST(nioUtils, readCodePointEof) {
 
 // On invalid UTF-8, the source is not advanced. All of these sources can seek
 
-TEST(nioUtils, readCodePointInvalidLeadByte) {
+TEST(MODULE, readCodePointInvalidLeadByte) {
   for (const string_view input : { "\xFFx"sv, "\x80x"sv, "\xC0\x80x"sv }) {
     forEachSource(input, [input](Source& in) {
       expectInvalidUtf8(in);
@@ -336,7 +338,7 @@ TEST(nioUtils, readCodePointInvalidLeadByte) {
   }
 }
 
-TEST(nioUtils, readCodePointTruncatedSequence) {
+TEST(MODULE, readCodePointTruncatedSequence) {
   for (const string_view input : { "\xC3"sv, "\xE2\x82"sv, "\xF0\x9F\x98"sv }) {
     forEachSource(input, [input](Source& in) {
       expectInvalidUtf8(in);
@@ -345,7 +347,7 @@ TEST(nioUtils, readCodePointTruncatedSequence) {
   }
 }
 
-TEST(nioUtils, readCodePointInvalidContinuation) {
+TEST(MODULE, readCodePointInvalidContinuation) {
   // Last: surrogate
   for (const string_view input : { "\xC3" "Ax"sv, "\xE2\x82" "Ax"sv, "\xED\xA0\x80x"sv }) {
     forEachSource(input, [input](Source& in) {
@@ -355,7 +357,7 @@ TEST(nioUtils, readCodePointInvalidContinuation) {
   }
 }
 
-TEST(nioUtils, readIdentifier) {
+TEST(MODULE, readIdentifier) {
   const auto test = [](string_view input, optional<string> expected, u64 expectedTell) {
     forEachSource(input, [&](Source& in) {
       EXPECT_EQ(readIdentifier(in), expected);
@@ -372,7 +374,7 @@ TEST(nioUtils, readIdentifier) {
   test("abc\xFF", "abc", 3); // Invalid UTF-8 ends the identifier
 }
 
-TEST(nioUtils, readIdentifierNoIdentifier) {
+TEST(MODULE, readIdentifierNoIdentifier) {
   // On failure, the source is not advanced
   for (const string_view input : { ""sv, "1ab"sv, " ab"sv, "€"sv, "\xFF"sv }) {
     forEachSource(input, [](Source& in) {
@@ -382,7 +384,7 @@ TEST(nioUtils, readIdentifierNoIdentifier) {
   }
 }
 
-TEST(nioUtils, readString) {
+TEST(MODULE, readString) {
   forEachSource("hello world", [](Source& in) {
     EXPECT_TRUE(readString(in, "hello"));
     EXPECT_EQ(in.tell(), 5);
@@ -424,7 +426,7 @@ TEST(nioUtils, readString) {
   test("HELLOX", "hello", true, true, false);
 }
 
-TEST(nioUtils, readUntilChar) {
+TEST(MODULE, readUntilChar) {
   forEachSource("ab,cd,", [](Source& in) {
     EXPECT_EQ(readUntilChar(in, ','), "ab");
     EXPECT_EQ(in.tell(), 3); // The character is consumed
@@ -453,7 +455,7 @@ TEST(nioUtils, readUntilChar) {
   }
 }
 
-TEST(nioUtils, readSubseconds) {
+TEST(MODULE, readSubseconds) {
   const auto test = [](string_view input, i64 expectedNs, u64 expectedTell) {
     forEachSource(input, [&](Source& in) {
       EXPECT_EQ(readSubseconds(in), std::chrono::nanoseconds(expectedNs));
@@ -484,35 +486,35 @@ TEST(nioUtils, readSubseconds) {
   }
 }
 
-TEST(nioUtils, readUntilUnescapedCharNoBackslash) {
+TEST(MODULE, readUntilUnescapedCharNoBackslash) {
   testReadUntilUnescapedChar(R"(abc"def)", '"', R"(abc)", 4);
   testReadUntilUnescapedChar(R"("def)", '"', "", 1);
 }
 
-TEST(nioUtils, readUntilUnescapedCharOddBackslashes) {
+TEST(MODULE, readUntilUnescapedCharOddBackslashes) {
   // An odd number of backslashes escapes the character, so reading continues
   testReadUntilUnescapedChar(R"(a\"b"c)", '"', R"(a\"b)", 5);
   testReadUntilUnescapedChar(R"(a\\\"b"c)", '"', R"(a\\\"b)", 7);
   testReadUntilUnescapedChar(R"(\"b"c)", '"', R"(\"b)", 4);
 }
 
-TEST(nioUtils, readUntilUnescapedCharEvenBackslashes) {
+TEST(MODULE, readUntilUnescapedCharEvenBackslashes) {
   // An even number of backslashes consists of escaped backslashes only, so the character is unescaped
   testReadUntilUnescapedChar(R"(a\\"b)", '"', R"(a\\)", 4);
   testReadUntilUnescapedChar(R"(a\\\\"b)", '"', R"(a\\\\)", 6);
   testReadUntilUnescapedChar(R"(\\"b)", '"', R"(\\)", 3);
 }
 
-TEST(nioUtils, readUntilUnescapedCharBackslashNotAdjacent) {
+TEST(MODULE, readUntilUnescapedCharBackslashNotAdjacent) {
   testReadUntilUnescapedChar(R"(a\nb"c)", '"', R"(a\nb)", 5);
 }
 
-TEST(nioUtils, readUntilUnescapedCharOtherChar) {
+TEST(MODULE, readUntilUnescapedCharOtherChar) {
   testReadUntilUnescapedChar(R"(a\\'b)", '\'', R"(a\\)", 4);
   testReadUntilUnescapedChar(R"(a\'b'c)", '\'', R"(a\'b)", 5);
 }
 
-TEST(nioUtils, readUntilUnescapedCharNotFound) {
+TEST(MODULE, readUntilUnescapedCharNotFound) {
   // The source must not be advanced on failure
   testReadUntilUnescapedChar("", '"', nullopt, 0);
   testReadUntilUnescapedChar(R"(abc)", '"', nullopt, 0);
@@ -520,7 +522,7 @@ TEST(nioUtils, readUntilUnescapedCharNotFound) {
   testReadUntilUnescapedChar(R"(a\\\")", '"', nullopt, 0);
 }
 
-TEST(nioUtils, readWhilePredicate) {
+TEST(MODULE, readWhilePredicate) {
   const auto isDigit = [](char c) { return c >= '0' && c <= '9'; };
   forEachSource("123ab", [&](Source& in) {
     EXPECT_EQ(readWhilePredicate(in, isDigit), "123");
@@ -534,7 +536,7 @@ TEST(nioUtils, readWhilePredicate) {
   });
 }
 
-TEST(nioUtils, readWhilePredicateNonseekable) {
+TEST(MODULE, readWhilePredicateNonseekable) {
   const auto isDigit = [](char c) { return c >= '0' && c <= '9'; };
   NonseekableSource src("123ab");
   ASSERT_EQ(src.in.tell(), nullopt);
@@ -545,14 +547,14 @@ TEST(nioUtils, readWhilePredicateNonseekable) {
   EXPECT_EQ(c, 'a'); // The first nondigit was not consumed
 }
 
-TEST(nioUtils, skipUntilStringFound) {
+TEST(MODULE, skipUntilStringFound) {
   testSkipUntilString("*/x", "*/", true, 2);
   testSkipUntilString("a*/x", "*/", true, 3);
   testSkipUntilString("*/*/", "*/", true, 2); // Stops after the first occurrence
   testSkipUntilString("a\nb", "\n", true, 2);
 }
 
-TEST(nioUtils, skipUntilStringPartialMatches) {
+TEST(MODULE, skipUntilStringPartialMatches) {
   // The character that ends a partial match may start the actual match
   testSkipUntilString("**/x", "*/", true, 3);
   testSkipUntilString("***/x", "*/", true, 4);
@@ -563,14 +565,14 @@ TEST(nioUtils, skipUntilStringPartialMatches) {
   testSkipUntilString("abababc", "ababc", true, 7);
 }
 
-TEST(nioUtils, skipUntilStringNotFound) {
+TEST(MODULE, skipUntilStringNotFound) {
   // The source is advanced to its end
   testSkipUntilString("", "*/", false, 0);
   testSkipUntilString("**", "*/", false, 2);
   testSkipUntilString("abc", "*/", false, 3);
 }
 
-TEST(nioUtils, skipCCommentsEndingInAsterisks) {
+TEST(MODULE, skipCCommentsEndingInAsterisks) {
   testSkipCComments("/***/x", 5);
   testSkipCComments("/****/x", 6);
   testSkipCComments("/** a **/x", 9);
@@ -578,7 +580,7 @@ TEST(nioUtils, skipCCommentsEndingInAsterisks) {
   testSkipCComments("/** a **/", 9);
 }
 
-TEST(nioUtils, skipShellComments) {
+TEST(MODULE, skipShellComments) {
   const auto test = [](string_view input, bool cComments, bool shellComments, u64 expectedTell) {
     forEachSource(input, [&](Source& in) {
       SCOPED_TRACE(fmt::format("cComments {}, shellComments {}", cComments, shellComments));
@@ -601,7 +603,7 @@ TEST(nioUtils, skipShellComments) {
   test("// a # b\n# c // d\nx", true, true, 18);
 }
 
-TEST(nioUtils, skipCCommentsUnterminated) {
+TEST(MODULE, skipCCommentsUnterminated) {
   forEachSource("/** a *", [&](Source& in) {
     EXPECT_THAT(
       [&] { skip(in, true, false); },
@@ -612,7 +614,7 @@ TEST(nioUtils, skipCCommentsUnterminated) {
 
 // `rocket::io::IoError` ....................................................................................
 
-TEST(nioUtils, ioErrors) {
+TEST(MODULE, ioErrors) {
   // Each function reads the given input, and then the device fails
   const auto isDigit = [](char c) { return c >= '0' && c <= '9'; };
   const vector<pair<string, function<void(Source&)>>> cases {
@@ -638,14 +640,14 @@ TEST(nioUtils, ioErrors) {
   }
 }
 
-TEST(nioUtils, readCharacterIoError) {
+TEST(MODULE, readCharacterIoError) {
   // The first code point is read, then the device fails while checking whether the character goes on
   FailingSource src("a");
   EXPECT_THAT([&] { (void) readCharacter(src.in); }, throwsIoError());
   EXPECT_TRUE(src.in.bad());
 }
 
-TEST(nioUtils, readCodePointIoError) {
+TEST(MODULE, readCodePointIoError) {
   {
     // The device fails before the first byte
     FailingSource src("");
@@ -662,7 +664,7 @@ TEST(nioUtils, readCodePointIoError) {
 
 // Failing seeks ............................................................................................
 
-TEST(nioUtils, goingBackFailsIfSeekFails) {
+TEST(MODULE, goingBackFailsIfSeekFails) {
   // The source reports its position, so going back is attempted, but the seek fails. This must not pass as a
   // failure that left the source where it was
   TellOnlyBuf buf("abx");
@@ -680,7 +682,7 @@ TEST(nioUtils, goingBackFailsIfSeekFails) {
 // A source that cannot seek cannot go back either. Functions that must go back throw `InvalidState`, and the
 // input read up to that point is lost. These tests pin down that behavior.
 
-TEST(nioUtils, expectCharNonseekable) {
+TEST(MODULE, expectCharNonseekable) {
   NonseekableSource src("ab");
   ASSERT_EQ(src.in.tell(), nullopt);
 
@@ -690,7 +692,7 @@ TEST(nioUtils, expectCharNonseekable) {
   EXPECT_EQ(src.in.readString(), "b"); // `expectChar` only peeks, so nothing is lost
 }
 
-TEST(nioUtils, readCharNonseekable) {
+TEST(MODULE, readCharNonseekable) {
   NonseekableSource src("ab");
   ASSERT_EQ(src.in.tell(), nullopt);
 
@@ -701,7 +703,7 @@ TEST(nioUtils, readCharNonseekable) {
   EXPECT_FALSE(readChar(src.in, 'b')); // EOF
 }
 
-TEST(nioUtils, readCharacterNonseekable) {
+TEST(MODULE, readCharacterNonseekable) {
   {
     // An ASCII character after the character is checked by peeking
     NonseekableSource src("a\u0301 x");
@@ -718,14 +720,14 @@ TEST(nioUtils, readCharacterNonseekable) {
   }
 }
 
-TEST(nioUtils, readChoiceNonseekableMatch) {
+TEST(MODULE, readChoiceNonseekableMatch) {
   // A byte is only consumed if it continues the match, so the source stops right after it
   NonseekableSource src("true!x");
   EXPECT_EQ(readChoice(src.in, { "true" }, false, false), "true");
   EXPECT_EQ(src.in.readString(), "!x");
 }
 
-TEST(nioUtils, readChoiceNonseekableNoMatch) {
+TEST(MODULE, readChoiceNonseekableNoMatch) {
   {
     // The first byte does not match, so nothing is consumed, and nothing must be gone back over
     NonseekableSource src("xyz");
@@ -742,7 +744,7 @@ TEST(nioUtils, readChoiceNonseekableNoMatch) {
   }
 }
 
-TEST(nioUtils, readChoiceNonseekableEndOfWord) {
+TEST(MODULE, readChoiceNonseekableEndOfWord) {
   {
     // An ASCII character after the match decides the word boundary by peeking
     NonseekableSource src("true x");
@@ -764,7 +766,7 @@ TEST(nioUtils, readChoiceNonseekableEndOfWord) {
   }
 }
 
-TEST(nioUtils, readChoiceNonseekableLongerCandidateFails) {
+TEST(MODULE, readChoiceNonseekableLongerCandidateFails) {
   // After "a" matched, "abc" failed at "x": the source would have to go back over "b"
   for (const bool endOfWord : { false, true }) {
     NonseekableSource src("abx");
@@ -775,7 +777,7 @@ TEST(nioUtils, readChoiceNonseekableLongerCandidateFails) {
   }
 }
 
-TEST(nioUtils, readCodePointNonseekable) {
+TEST(MODULE, readCodePointNonseekable) {
   {
     NonseekableSource src("\xC3\xA4\x80" "ab");
 
@@ -799,7 +801,7 @@ TEST(nioUtils, readCodePointNonseekable) {
   }
 }
 
-TEST(nioUtils, readIdentifierNonseekable) {
+TEST(MODULE, readIdentifierNonseekable) {
   {
     // An ASCII character after the identifier is detected by peeking
     NonseekableSource src("abc def");
@@ -826,7 +828,7 @@ TEST(nioUtils, readIdentifierNonseekable) {
   }
 }
 
-TEST(nioUtils, readIdentifierNonseekableNoIdentifier) {
+TEST(MODULE, readIdentifierNonseekableNoIdentifier) {
   {
     // An ASCII character is checked by peeking, so nothing is consumed
     NonseekableSource src("1ab");
@@ -847,14 +849,14 @@ TEST(nioUtils, readIdentifierNonseekableNoIdentifier) {
   }
 }
 
-TEST(nioUtils, readStringNonseekable) {
+TEST(MODULE, readStringNonseekable) {
   // A match without a word-boundary check does not need to go back
   NonseekableSource src("abc");
   EXPECT_TRUE(readString(src.in, "ab", false, false));
   EXPECT_EQ(src.in.readString(), "c");
 }
 
-TEST(nioUtils, readStringNonseekableMismatch) {
+TEST(MODULE, readStringNonseekableMismatch) {
   NonseekableSource src("abxy");
   EXPECT_THAT(
     [&] { (void) readString(src.in, "abc", false, false); },
@@ -862,27 +864,27 @@ TEST(nioUtils, readStringNonseekableMismatch) {
   EXPECT_EQ(src.in.readString(), "y");
 }
 
-TEST(nioUtils, readStringNonseekableEndOfWord) {
+TEST(MODULE, readStringNonseekableEndOfWord) {
   // An ASCII character after the match decides the word boundary by peeking
   NonseekableSource src("ab cd");
   EXPECT_TRUE(readString(src.in, "ab", false, true));
   EXPECT_EQ(src.in.readString(), " cd");
 }
 
-TEST(nioUtils, readUntilCharNonseekable) {
+TEST(MODULE, readUntilCharNonseekable) {
   NonseekableSource src("ab,c");
   EXPECT_EQ(readUntilChar(src.in, ','), "ab");
   EXPECT_EQ(src.in.readString(), "c");
 }
 
-TEST(nioUtils, readUntilCharNonseekableNotFound) {
+TEST(MODULE, readUntilCharNonseekableNotFound) {
   NonseekableSource src("abc");
   EXPECT_THAT(
     [&] { (void) readUntilChar(src.in, ','); }, ThrowsMessage<InvalidState>(EndsWith(CANNOT_GO_BACK)));
   EXPECT_EQ(src.in.readString(), "");
 }
 
-TEST(nioUtils, readUntilUnescapedCharNonseekableNotFound) {
+TEST(MODULE, readUntilUnescapedCharNonseekableNotFound) {
   NonseekableSource src(R"(a\,b)");
   EXPECT_THAT(
     [&] { (void) readUntilUnescapedChar(src.in, ','); },
@@ -890,28 +892,28 @@ TEST(nioUtils, readUntilUnescapedCharNonseekableNotFound) {
   EXPECT_EQ(src.in.readString(), "");
 }
 
-TEST(nioUtils, skipNonseekable) {
+TEST(MODULE, skipNonseekable) {
   // Skipping stops at the first nonwhitespace character, which it has to go back over
   NonseekableSource src("  xy");
   EXPECT_THAT([&] { skip(src.in, false, false); }, ThrowsMessage<InvalidState>(EndsWith(CANNOT_GO_BACK)));
   EXPECT_EQ(src.in.readString(), "y");
 }
 
-TEST(nioUtils, skipNonseekableCComments) {
+TEST(MODULE, skipNonseekableCComments) {
   // A `/` that does not start a comment is read together with the character after it
   NonseekableSource src("/x y");
   EXPECT_THAT([&] { skip(src.in, true, false); }, ThrowsMessage<InvalidState>(EndsWith(CANNOT_GO_BACK)));
   EXPECT_EQ(src.in.readString(), " y");
 }
 
-TEST(nioUtils, skipNonseekableToEof) {
+TEST(MODULE, skipNonseekableToEof) {
   // Whitespace and comments up to the end of the input need not go back
   NonseekableSource src("  // comment\n  ");
   EXPECT_NO_THROW(skip(src.in, true, false));
   EXPECT_EQ(src.in.readString(), "");
 }
 
-TEST(nioUtils, skipUntilStringNonseekable) {
+TEST(MODULE, skipUntilStringNonseekable) {
   NonseekableSource src("a*/b");
   EXPECT_TRUE(skipUntilString(src.in, "*/"));
   EXPECT_EQ(src.in.readString(), "b");

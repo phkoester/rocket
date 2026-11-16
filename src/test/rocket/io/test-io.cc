@@ -9,6 +9,8 @@
 
 #include <cerrno>
 
+#define MODULE rocketIo
+
 namespace {
 
 // `FileCloser` ---------------------------------------------------------------------------------------------
@@ -23,7 +25,7 @@ using FilePtr = unique_ptr<FILE, FileCloser>;
 
 // Tests ====================================================================================================
 
-TEST(io, open) {
+TEST(MODULE, open) {
   const auto temp = rocket::filesystem::tempFile();
 
   {
@@ -58,7 +60,7 @@ TEST(io, open) {
   EXPECT_EQ(io::open(temp.parent_path() / "does-not-exist", "rb"), nullptr);
 }
 
-TEST(io, seekAndTellFile) {
+TEST(MODULE, seekAndTellFile) {
   const auto temp = rocket::filesystem::tempFile();
   {
     const FilePtr file(io::open(temp, "wb"));
@@ -95,7 +97,7 @@ TEST(io, seekAndTellFile) {
 
 #ifndef ROCKET_OS_WINDOWS
 
-TEST(io, seekAndTellPipe) {
+TEST(MODULE, seekAndTellPipe) {
   array<i32, 2> fds {};
   ASSERT_EQ(pipe(fds.data()), 0);
   ASSERT_EQ(write(fds[1], "abc", 3), 3);
@@ -113,7 +115,7 @@ TEST(io, seekAndTellPipe) {
   EXPECT_EQ(io::tell(file.get()), NPOS);
 }
 
-TEST(io, seekAndTellMemoryStream) {
+TEST(MODULE, seekAndTellMemoryStream) {
   // A stream without a file descriptor is seekable if the C library reports a position for it
   string buf = "abcdef";
   const FilePtr file(fmemopen(buf.data(), buf.size(), "rb"));

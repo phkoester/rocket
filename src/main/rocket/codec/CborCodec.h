@@ -13,7 +13,6 @@
 #include <array>
 #include <cstdlib>
 #include <iterator>
-#include <limits>
 #include <memory>
 
 namespace rocket::codec {

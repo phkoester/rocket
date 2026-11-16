@@ -11,6 +11,8 @@
 #include <type_traits>
 #include <utility>
 
+#define MODULE rocketIoSpanstream
+
 // Static checks --------------------------------------------------------------------------------------------
 
 // `ispanstream` takes read-only ranges, `ospanstream` and `spanstream` do not
@@ -33,7 +35,7 @@ static_assert(not std::is_convertible_v<std::string_view, io::ispanstream>);
 
 // Tests ====================================================================================================
 
-TEST(spanstream, ispanstream) {
+TEST(MODULE, ispanstream) {
   const string_view input = "12 34";
 
   io::ispanstream is(input);
@@ -77,7 +79,7 @@ TEST(spanstream, ispanstream) {
   EXPECT_EQ(is.rdbuf()->sputc('x'), char_traits<char>::eof());
 }
 
-TEST(spanstream, ispanstreamEmpty) {
+TEST(MODULE, ispanstreamEmpty) {
   io::ispanstream is(span<const char>{});
   EXPECT_TRUE(is.span().empty());
 
@@ -87,7 +89,7 @@ TEST(spanstream, ispanstreamEmpty) {
   EXPECT_TRUE(is.eof());
 }
 
-TEST(spanstream, ispanstreamMove) {
+TEST(MODULE, ispanstreamMove) {
   const string_view input = "12 34";
 
   io::ispanstream is(input);
@@ -106,7 +108,7 @@ TEST(spanstream, ispanstreamMove) {
   EXPECT_EQ(is3.span().data(), input.data());
 }
 
-TEST(spanstream, ispanstreamSwap) {
+TEST(MODULE, ispanstreamSwap) {
   const string_view input1 = "1";
   const string_view input2 = "2";
 
@@ -124,7 +126,7 @@ TEST(spanstream, ispanstreamSwap) {
   EXPECT_EQ(a, 1);
 }
 
-TEST(spanstream, ospanstream) {
+TEST(MODULE, ospanstream) {
   array<char, 8> buf{};
 
   io::ospanstream os(buf);
@@ -159,7 +161,7 @@ TEST(spanstream, ospanstream) {
   // `std::ios_base::in` instead of `std::ios_base::out`
 }
 
-TEST(spanstream, ospanstreamAte) {
+TEST(MODULE, ospanstreamAte) {
   array<char, 8> buf = {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'};
 
   // `std::ios_base::out` is always added
@@ -171,7 +173,7 @@ TEST(spanstream, ospanstreamAte) {
   EXPECT_TRUE(os.bad());
 }
 
-TEST(spanstream, ospanstreamMove) {
+TEST(MODULE, ospanstreamMove) {
   array<char, 8> buf{};
 
   io::ospanstream os(buf);
@@ -190,7 +192,7 @@ TEST(spanstream, ospanstreamMove) {
   EXPECT_EQ(string_view(os3.span().data(), os3.span().size()), "abcde");
 }
 
-TEST(spanstream, spanstream) {
+TEST(MODULE, spanstream) {
   array<char, 8> buf{};
 
   io::spanstream ss(buf);
@@ -204,7 +206,7 @@ TEST(spanstream, spanstream) {
   EXPECT_EQ(b, 34);
 }
 
-TEST(spanstream, spanstreamIn) {
+TEST(MODULE, spanstreamIn) {
   array<char, 5> buf = {'1', '2', ' ', '3', '4'};
 
   // Opened for input only, `span` returns the whole buffer

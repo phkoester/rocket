@@ -6,6 +6,8 @@
 
 #include "rocket/macro.h"
 
+#define MODULE rocketMacro
+
 namespace {
 
 // Local variables ------------------------------------------------------------------------------------------
@@ -21,7 +23,7 @@ ROCKET_INIT(([] { y = 13; }));
 
 // Tests ====================================================================================================
 
-TEST(macro, RocketInit) {
+TEST(MODULE, RocketInit) {
   EXPECT_EQ(x, 12);
   EXPECT_EQ(y, 13);
 }

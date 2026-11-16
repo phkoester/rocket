@@ -10,9 +10,11 @@
 
 using namespace rocket::format;
 
+#define MODULE rocketFormatSubformat
+
 // Tests ====================================================================================================
 
-TEST(Subformat, char) {
+TEST(MODULE, char) {
   auto lambda = [](i32 n) -> string {
     nio::StringSink buf;
     buf.print("n is {}.{}", n, Subformat<char>([&] {
@@ -32,7 +34,7 @@ TEST(Subformat, char) {
   EXPECT_EQ(lambda(11), "n is 11.");
 }
 
-TEST(Subformat, charWithTagged) {
+TEST(MODULE, charWithTagged) {
   auto lambda = [](i32 n) -> string {
     nio::StringSink buf;
     buf.print("{}:{}{}", ROCKET_SRC_FILE, __LINE__, Subformat<char>([&] {
@@ -60,7 +62,7 @@ TEST(Subformat, charWithTagged) {
     matchesRegex(".*\\.cc:\\d+: Second case: This sentence doesn’t mean much\\."));
 }
 
-TEST(Subformat, char32) {
+TEST(MODULE, char32) {
   auto str = fmt::format(U"a {} d", Subformat<char32>([&] {
     return Subformat<char32>::params(fmt::format(U"{} {}", U'b', U'c'));
   }));

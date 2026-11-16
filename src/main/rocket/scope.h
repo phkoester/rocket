@@ -37,7 +37,6 @@
 #else
   #include <concepts>
   #include <exception>
-  #include <limits>
   #include <type_traits>
   #include <utility>
 #endif
