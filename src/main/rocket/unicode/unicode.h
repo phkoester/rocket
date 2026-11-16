@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include "rocket/Bimap.h"
+#include "rocket/Positions.h"
 #include "rocket/Cow.h"
 #include "rocket/InputFailure.h"
 #include "rocket/format.h"

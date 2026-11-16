@@ -1253,8 +1253,10 @@ struct JsonProducerImpl<DataType::Bimap, T> {
 
       Elem elem;
       JsonProducerImpl<ElemDataType, Elem>().produce(elem, in);
-      // Make the last one win
-      insertOrReplace(val, key, elem);
+      // Make the last one win. Both the key and the element must be unique, so remove any pair with either
+      val.left.erase(key);
+      val.right.erase(elem);
+      val.insert({ std::move(key), std::move(elem) });
     }
   }
 };

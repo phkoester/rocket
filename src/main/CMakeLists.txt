@@ -131,6 +131,7 @@ target_sources(rocket
       rocket/Exception.h
       rocket/InputFailure.h
       rocket/Lazy.h
+      rocket/Positions.h
       rocket/Process.h
       rocket/Result.h
       rocket/TypeId.h

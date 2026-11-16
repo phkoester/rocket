@@ -522,6 +522,10 @@ TEST(MODULE, ProducerBimap) {
     (decode<type>(
       "  { \"alpha\"\t: 1, \"beta\"  :/* comment */ 2, \"gamma\": 4, \"gamma\": 3  ,  }   ")),
     (makeBimap<string, i32>({ { "alpha", 1 }, { "beta", 2 }, { "gamma", 3 } })));
+  // Also for a value that is already mapped from another key
+  EXPECT_EQ(
+    (decode<type>("{ \"alpha\": 1, \"beta\": 2, \"gamma\": 1 }")),
+    (makeBimap<string, i32>({ { "beta", 2 }, { "gamma", 1 } })));
 }
 
 TEST(MODULE, ProducerBimapUnordered) {
@@ -530,6 +534,10 @@ TEST(MODULE, ProducerBimapUnordered) {
   EXPECT_EQ(
     (decode<type>("  { \"alpha\"\t: 1, \"beta\"  :/* comment */ 2, \"gamma\": 4, \"gamma\": 3  ,  }   ")),
     (makeUnorderedBimap<string, i32>({ { "alpha", 1 }, { "beta", 2 }, { "gamma", 3 } })));
+  // Also for a value that is already mapped from another key
+  EXPECT_EQ(
+    (decode<type>("{ \"alpha\": 1, \"beta\": 2, \"gamma\": 1 }")),
+    (makeUnorderedBimap<string, i32>({ { "beta", 2 }, { "gamma", 1 } })));
 }
 
 TEST(MODULE, ProducerDuration) {

@@ -13,6 +13,8 @@
 #include "rocket/system/system.h"
 #include "rocket/system/terminal/terminal.h"
 
+#include <iostream>
+
 using namespace rocket;
 using namespace rocket::unicode;
 using namespace std;
@@ -75,6 +77,16 @@ myTerminate() {
 
 void
 toy() {
+  map<int, string> m1 {{ 1, "one" }, {2, "two" }, { 3, "three" }};
+  // map<int, string> m2 {{ 1, "one" }, {2, "two" }, { 3, "three" }};
+
+  fmt::println("m1: {}", m1);
+
+  // Bimap<int, string> b1 = makeBimap<int, string>( { { 1, "one" }, {2, "two" }, { 3, "three" } });
+  // Bimap<int, string> b2 = makeBimap<int, string>( { { 1, "one" }, {2, "two" }, { 3, "three" } });
+
+  // fmt::println("b1: {}", b1);
+
   ROCKET_SCOPE_EXIT([] { nio::out.println("Hello from ROCKET_SCOPE_EXIT"); });
 
   nio::out.println("Hello from toy");
