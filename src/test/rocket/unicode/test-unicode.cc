@@ -4,7 +4,6 @@
 
 #include "rocket-test/rocket-test.h"
 
-#include "rocket/Bimap-codec.h"
 #include "rocket/unicode/unicode.h"
 
 using namespace rocket::unicode;
@@ -28,13 +27,13 @@ constexpr char32 MAX_PLUS_1 = static_cast<char32>(0x10FFFFU + 1);
 TEST(MODULE, CodePointCtor) {
   EXPECT_THAT(
     [&] { '\x80'_cp; },
-    throwsInputFailure(0, EndsWith("Invalid ASCII value 0x80")));
+    throwsInputFailure(0, EndsWith("invalid ASCII value 0x80")));
   EXPECT_THAT(
     [&] { CodePoint { D800 }; },
-    throwsInputFailure(0, EndsWith("Invalid code-point value 0xD800")));
+    throwsInputFailure(0, EndsWith("invalid code-point value 0xD800")));
   EXPECT_THAT(
     [&] { CodePoint { MAX_PLUS_1 }; },
-    throwsInputFailure(0, EndsWith("Invalid code-point value 0x110000")));
+    throwsInputFailure(0, EndsWith("invalid code-point value 0x110000")));
 }
 
 TEST(MODULE, CodePointOpCastString) {
@@ -151,13 +150,13 @@ TEST(MODULE, conversions) {
   string str4 = "abc\xC8"; // Invalid ASCII: 200
   EXPECT_THAT(
     [&] { convertUtf8To32(str4); },
-    throwsInputFailure(3, EndsWith("Invalid UTF-8 byte sequence")));
+    throwsInputFailure(3, EndsWith("invalid UTF-8 byte sequence")));
   EXPECT_EQ(convertUtf8To32(str4, unicode::Continue), U"abc�");
 
   const string str5 { 'a', CONT, 'b' };
   EXPECT_THAT(
     [&] { convertUtf8To32(str5); },
-    throwsInputFailure(1, EndsWith("Invalid UTF-8 byte sequence")));
+    throwsInputFailure(1, EndsWith("invalid UTF-8 byte sequence")));
   EXPECT_EQ(convertUtf8To32(str5, unicode::Continue), U"a�b");
 
   // Test invalid UTF-32
@@ -166,7 +165,7 @@ TEST(MODULE, conversions) {
   str6[1] = static_cast<char32>(0xD800);
   EXPECT_THAT(
     [&] { convertUtf32To8(str6); },
-    throwsInputFailure(1, EndsWith("Invalid code-point value 0xD800")));
+    throwsInputFailure(1, EndsWith("invalid code-point value 0xD800")));
   EXPECT_EQ(convertUtf32To8(str6, unicode::Continue), "a�c");
 }
 

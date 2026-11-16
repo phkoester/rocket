@@ -518,7 +518,7 @@ private:
 // `fmt::formatter<rocket::i128>` ---------------------------------------------------------------------------
 
 /**
- * @spec_fmt_formatter{rocket::i128}
+ * @spec_fmt_formatter{#rocket::i128}
  *
  * This formatter supports the same format specifications as the {fmt} formatters of built-in integers.
  */
@@ -529,7 +529,7 @@ struct fmt::formatter<rocket::i128, C> :
 // `fmt::formatter<rocket::u128>` ---------------------------------------------------------------------------
 
 /**
- * @spec_fmt_formatter{rocket::u128}
+ * @spec_fmt_formatter{#rocket::u128}
  *
  * This formatter supports the same format specifications as the {fmt} formatters of built-in integers.
  */

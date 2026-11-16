@@ -33,11 +33,11 @@ readJsonString(nio::Source& in, Positions& positions) {
   const auto pos = in.tell();
 
   if (not readChar(in, '"')) {
-    throw InputFailure(pos, "Expected a string");
+    throw InputFailure(pos, "expected a string");
   }
   const auto input = readUntilUnescapedChar(in, '"');
   if (not input) {
-    throw InputFailure(pos, "Unterminated string literal");
+    throw InputFailure(pos, "unterminated string literal");
   }
 
   const string unescaped = unescapeLiteral(*input, pos, { .json=true }, &positions);

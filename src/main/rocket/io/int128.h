@@ -1,5 +1,5 @@
 /**
- * @file io-int128.h
+ * @file io/int128.h
  *
  * Stream input and output operators for 128-bit integers.
  */

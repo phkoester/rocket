@@ -43,7 +43,7 @@ assertFailed( // NOLINT(*-recursion)
   const char* expr,
   fmt::format_string<T...> fmt = "",
   T&&... args) {
-  terminate(sl, "Assertion `{}` failed{}", expr, rocket::format::Subformat<char>([&] {
+  terminate(sl, "assertion `{}` failed{}", expr, rocket::format::Subformat<char>([&] {
     if (fmt.get().size() > 0) {
       auto params = rocket::format::Subformat<char>::params(": \\\x01");
       params.tag("\\\x01", fmt, std::forward<T>(args)...);
@@ -73,7 +73,7 @@ checkFailed(
   const char* expr,
   fmt::format_string<T...> fmt = "",
   T&&... args) {
-  flop(sl, name, "Check `{}` failed{}", expr, rocket::format::Subformat<char>([&] {
+  flop(sl, name, "check `{}` failed{}", expr, rocket::format::Subformat<char>([&] {
     if (fmt.get().size() > 0) {
       auto params = rocket::format::Subformat<char>::params(": \\\x01");
       params.tag("\\\x01", fmt, std::forward<T>(args)...);
@@ -101,7 +101,7 @@ expectFailed(
   const char* expr,
   fmt::format_string<T...> fmt = "",
   T&&... args) {
-  fail(sl, "Expectation `{}` failed{}", expr, rocket::format::Subformat<char>([&] {
+  fail(sl, "expectation `{}` failed{}", expr, rocket::format::Subformat<char>([&] {
     if (fmt.get().size() > 0) {
       auto params = rocket::format::Subformat<char>::params(": \\@0");
       params.tag("\\@0", fmt, std::forward<T>(args)...);
@@ -129,17 +129,17 @@ expectFailed(
  * Terminates because of an invalid function call.
  */
 #define ROCKET_TERMINATE_INVALID_CALL() \
-  ROCKET_TERMINATE("Invalid call of function `{}`", ROCKET_PRETTY_FUNCTION)
+  ROCKET_TERMINATE("invalid call of function `{}`", ROCKET_PRETTY_FUNCTION)
 
 /**
  * Terminates because of a missing implementation.
  */
-#define ROCKET_TERMINATE_NOT_IMPLEMENTED() ROCKET_TERMINATE("Not implemented")
+#define ROCKET_TERMINATE_NOT_IMPLEMENTED() ROCKET_TERMINATE("not implemented")
 
 /**
  * Terminates because code was reached that was supposed to be unreachable.
  */
-#define ROCKET_TERMINATE_UNREACHABLE_CODE() ROCKET_TERMINATE("Unreachable code")
+#define ROCKET_TERMINATE_UNREACHABLE_CODE() ROCKET_TERMINATE("unreachable code")
 
 /**
  * Terminates if @p expr evaluates to `false`.
@@ -240,17 +240,17 @@ if (not (expr)) { \
 /**
  * Throws #rocket::InvalidState because of an invalid function call.
  */
-#define ROCKET_FAIL_INVALID_CALL() ROCKET_FAIL("Invalid call of function `{}`", ROCKET_PRETTY_FUNCTION)
+#define ROCKET_FAIL_INVALID_CALL() ROCKET_FAIL("invalid call of function `{}`", ROCKET_PRETTY_FUNCTION)
 
 /**
  * Throws #rocket::InvalidState because of a missing implementation.
  */
-#define ROCKET_FAIL_NOT_IMPLEMENTED() ROCKET_FAIL("Not implemented")
+#define ROCKET_FAIL_NOT_IMPLEMENTED() ROCKET_FAIL("not implemented")
 
 /**
  * Throws #rocket::InvalidState because code was reached that was supposed to be unreachable.
  */
-#define ROCKET_FAIL_UNREACHABLE_CODE() ROCKET_FAIL("Unreachable code")
+#define ROCKET_FAIL_UNREACHABLE_CODE() ROCKET_FAIL("unreachable code")
 
 /**
  * Throws #rocket::InvalidState if @p expr evaluates to `false`.

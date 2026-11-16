@@ -158,7 +158,7 @@ buildBignum(bool negative, u128 val) {
 template<typename I>
 cbor_item_t*
 buildInteger(I val) {
-  static_assert(sizeof(I) <= 16, "Integer type too large");
+  static_assert(sizeof(I) <= 16, "integer type too large");
   if constexpr (std::numeric_limits<I>::is_signed) {
     if (val < 0) {
       // `-1 - val` is nonnegative and, unlike `-val`, cannot overflow
@@ -212,20 +212,20 @@ readInteger(cbor_item_t* item, DecoderState& state, u64 pos) {
     state.nextItem(); // The byte string
     CborItem<u8> content(cbor_tag_item(item));
     if (not cbor_isa_bytestring(content.ptr()) || not cbor_bytestring_is_definite(content.ptr())) {
-      throw InputFailure(pos, "Expected an integer value");
+      throw InputFailure(pos, "expected an integer value");
     }
     const u8* data = cbor_bytestring_handle(content.ptr());
     const u64 size = cbor_bytestring_length(content.ptr());
     u128 raw {};
     for (u64 i = 0; i < size; ++i) {
       if ((raw >> 120) != 0) {
-        throw InputFailure(pos, "Integer value out of range");
+        throw InputFailure(pos, "integer value out of range");
       }
       raw = (raw << 8) | data[i];
     }
     return { .negative = cbor_tag_value(item) == 3, .raw = raw };
   }
-  throw InputFailure(pos, "Expected an integer value");
+  throw InputFailure(pos, "expected an integer value");
 }
 
 /**
@@ -239,7 +239,7 @@ toInteger(const IntegerValue& val, u64 pos) {
   using Limits = std::numeric_limits<I>;
   // For a signed type, the greatest magnitude `raw` of a negative value, `-1 - min`, equals `max`
   if (val.raw > static_cast<u128>(Limits::max()) || (val.negative && not Limits::is_signed)) {
-    throw InputFailure(pos, "Integer value out of range");
+    throw InputFailure(pos, "integer value out of range");
   }
   if constexpr (Limits::is_signed) {
     if (val.negative) {
@@ -303,7 +303,7 @@ struct CborConsumerImpl<DataType::Float, F> {
     } else if constexpr (sizeof(F) == 8) {
       return CborItem<F>(cbor_build_float8(static_cast<f64>(val)));
     } else {
-      ROCKET_TERMINATE("Cannot consume float of type {}", TypeId::of<F>());
+      ROCKET_TERMINATE("cannot consume float of type {}", TypeId::of<F>());
     }
   }
 };
@@ -502,7 +502,7 @@ struct CborConsumerImpl<DataType::TimeZone, T> {
 template<typename T>
 struct CborConsumerImpl<DataType::Time, T> {
   using Clock = T::clock;
-  static_assert(std::same_as<Clock, std::chrono::system_clock>, "Clock must be `system_clock`");
+  static_assert(std::same_as<Clock, std::chrono::system_clock>, "clock must be `system_clock`");
   using Duration = T::duration;
   static constexpr auto DurationDataType = DataTypes<Duration>::Value;
   static_assert(DurationDataType == DataType::Duration);
@@ -656,7 +656,7 @@ produceObject(const Refs& refs, Item& item, DecoderState& state, Instance& insta
   state.nextItem();
 
   if (not cbor_isa_array(item.ptr()) || cbor_array_size(item.ptr()) != std::tuple_size_v<Refs>) {
-    throw InputFailure(state.index, "Expected an object");
+    throw InputFailure(state.index, "expected an object");
   }
 
   u64 index = 0;
@@ -672,7 +672,7 @@ struct CborProducerImpl<DataType::Bool, bool> {
     state.nextItem();
 
     if (not cbor_is_bool(item.ptr())) {
-      throw InputFailure(state.index, "Expected a boolean value");
+      throw InputFailure(state.index, "expected a boolean value");
     }
 
     item.setValue(cbor_get_bool(item.ptr()));
@@ -692,7 +692,7 @@ struct CborProducerImpl<DataType::Char, C> {
       const IntegerValue val = readInteger(item.ptr(), state, pos);
       item.setValue(static_cast<C>(toInteger<Alt>(val, pos)));
     } catch (const InputFailure&) {
-      throw InputFailure(pos, "Expected a character");
+      throw InputFailure(pos, "expected a character");
     }
   }
 };
@@ -708,7 +708,7 @@ struct CborProducerImpl<DataType::Enum, E> {
     try {
       CborProducerImpl<UnderlyingDataType, Underlying>().produce(underlying, state);
     } catch (const InputFailure& ex) {
-      throw InputFailure(ex.position(), "Expected an enumeration value");
+      throw InputFailure(ex.position(), "expected an enumeration value");
     }
     item.setValue(static_cast<E>(underlying.value()));
   }
@@ -743,10 +743,10 @@ struct CborProducerImpl<DataType::Float, F> {
         return;
       }
     } else {
-      ROCKET_TERMINATE("Cannot produce floating-point value of type {}", TypeId::of<F>());
+      ROCKET_TERMINATE("cannot produce floating-point value of type {}", TypeId::of<F>());
     }
 
-    throw InputFailure(state.index, "Expected a floating-point value");
+    throw InputFailure(state.index, "expected a floating-point value");
   }
 };
 
@@ -762,7 +762,7 @@ struct CborProducerImpl<DataType::Pointer, P> {
     try {
       CborProducerImpl<AltDataType, Alt>().produce(alt, state);
     } catch (const InputFailure& ex) {
-      throw InputFailure(ex.position(), "Expected a pointer value");
+      throw InputFailure(ex.position(), "expected a pointer value");
     }
     item.setValue(reinterpret_cast<P>(alt.value())); // NOLINT
   }
@@ -793,7 +793,7 @@ struct CborProducerImpl<DataType::String, T> {
       return;
     }
 
-    throw InputFailure(state.index, "Expected a string");
+    throw InputFailure(state.index, "expected a string");
   }
 };
 
@@ -823,7 +823,7 @@ struct CborProducerImpl<DataType::Tuple, T> {
     state.nextItem();
 
     if (not cbor_isa_array(item.ptr()) || cbor_array_size(item.ptr()) != std::tuple_size_v<T>) {
-      throw InputFailure(state.index, fmt::format("Expected a tuple of size {}", std::tuple_size_v<T>));
+      throw InputFailure(state.index, fmt::format("expected a tuple of size {}", std::tuple_size_v<T>));
     }
 
     T tuple;
@@ -848,8 +848,8 @@ private:
 
 template<typename T>
 struct CborProducerImpl<DataType::List, T> {
-  static_assert(not IsView<T>, "Cannot decode list view");
-  static_assert(not IsForwardList<T>, "Cannot decode forward list");
+  static_assert(not IsView<T>, "cannot decode list view");
+  static_assert(not IsForwardList<T>, "cannot decode forward list");
 
   using Elem = T::value_type;
   static constexpr auto ElemDataType = DataTypes<Elem>::Value;
@@ -859,13 +859,13 @@ struct CborProducerImpl<DataType::List, T> {
     state.nextItem();
 
     if (not cbor_isa_array(item.ptr())) {
-      throw InputFailure(state.index, "Expected a list");
+      throw InputFailure(state.index, "expected a list");
     }
 
     const u64 size = cbor_array_size(item.ptr());
     if constexpr (IsArray<T>) {
       if (size != std::tuple_size_v<T>) {
-        throw InputFailure(state.index, fmt::format("Expected a list of size {}", std::tuple_size_v<T>));
+        throw InputFailure(state.index, fmt::format("expected a list of size {}", std::tuple_size_v<T>));
       }
 
       // Fixed-size array
@@ -904,7 +904,7 @@ struct CborProducerImpl<DataType::Set, T> {
     state.nextItem();
 
     if (not cbor_isa_array(item.ptr())) {
-      throw InputFailure(state.index, "Expected a set");
+      throw InputFailure(state.index, "expected a set");
     }
 
     const u64 size = cbor_array_size(item.ptr());
@@ -937,7 +937,7 @@ struct CborProducerImpl<DataType::Map, T> {
     state.nextItem();
 
     if (not cbor_isa_map(item.ptr())) {
-      throw InputFailure(state.index, "Expected a map");
+      throw InputFailure(state.index, "expected a map");
     }
 
     const u64 size = cbor_map_size(item.ptr());
@@ -974,7 +974,7 @@ struct CborProducerImpl<DataType::Bimap, T> {
     state.nextItem();
 
     if (not cbor_isa_map(item.ptr())) {
-      throw InputFailure(state.index, "Expected a bimap");
+      throw InputFailure(state.index, "expected a bimap");
     }
 
     const u64 size = cbor_map_size(item.ptr());
@@ -1011,7 +1011,7 @@ struct CborProducerImpl<DataType::Duration, T> {
     try {
       CborProducerImpl<RepDataType, Rep>().produce(count, state);
     } catch (const InputFailure& ex) {
-      throw InputFailure(ex.position(), "Expected a duration");
+      throw InputFailure(ex.position(), "expected a duration");
     }
     item.setValue(T(count.value()));
   }
@@ -1030,7 +1030,7 @@ struct CborProducerImpl<DataType::Date, T> {
     try {
       CborProducerImpl<RepDataType, Rep>().produce(count, state);
     } catch (const InputFailure& ex) {
-      throw InputFailure(ex.position(), "Expected a date");
+      throw InputFailure(ex.position(), "expected a date");
     }
     item.setValue(T(sys_days(days(count.value()))));
   }
@@ -1048,7 +1048,7 @@ struct CborProducerImpl<DataType::HourMinuteSecond, T> {
     try {
       CborProducerImpl<PrecisionDataType, Precision>().produce(duration, state);
     } catch (const InputFailure& ex) {
-      throw InputFailure(ex.position(), "Expected an hour, minute, and second");
+      throw InputFailure(ex.position(), "expected an hour, minute, and second");
     }
     item.setValue(T(duration.value()));
   }
@@ -1064,7 +1064,7 @@ struct CborProducerImpl<DataType::TimeZone, T> {
     try {
       CborProducerImpl<DataType::String, std::string>().produce(name, state);
     } catch (const InputFailure& ex) {
-      throw InputFailure(ex.position(), "Expected a time zone");
+      throw InputFailure(ex.position(), "expected a time zone");
     }
     try {
       item.setValue(rocket::chrono::locate_zone(name.value()));
@@ -1077,7 +1077,7 @@ struct CborProducerImpl<DataType::TimeZone, T> {
 template<typename T>
 struct CborProducerImpl<DataType::Time, T> {
   using Clock = T::clock;
-  static_assert(std::same_as<Clock, std::chrono::system_clock>, "Clock must be `system_clock`");
+  static_assert(std::same_as<Clock, std::chrono::system_clock>, "clock must be `system_clock`");
   using Duration = T::duration;
   static constexpr auto DurationDataType = DataTypes<Duration>::Value;
   static_assert(DurationDataType == DataType::Duration);
@@ -1088,7 +1088,7 @@ struct CborProducerImpl<DataType::Time, T> {
     try {
       CborProducerImpl<DurationDataType, Duration>().produce(epoch, state);
     } catch (const InputFailure& ex) {
-      throw InputFailure(ex.position(), "Expected a time point");
+      throw InputFailure(ex.position(), "expected a time point");
     }
     item.setValue(T(epoch.value()));
   }
@@ -1108,7 +1108,7 @@ struct CborProducerImpl<DataType::ZonedTime, T> {
     state.nextItem();
 
     if (not cbor_isa_array(item.ptr()) || cbor_array_size(item.ptr()) != 2) {
-      throw InputFailure(state.index, "Expected a zoned time");
+      throw InputFailure(state.index, "expected a zoned time");
     }
 
     CborItem<TimeZone> zone(cbor_array_get(item.ptr(), 0));
@@ -1136,7 +1136,7 @@ struct CborProducerImpl<DataType::Interval, T> {
 
     state.nextItem();
     if (not cbor_isa_array(item.ptr()) || cbor_array_size(item.ptr()) != 2) {
-      throw InputFailure(state.index, "Expected an interval");
+      throw InputFailure(state.index, "expected an interval");
     }
 
     CborItem<A> a(cbor_array_get(item.ptr(), 0));
@@ -1179,12 +1179,12 @@ struct CborProducerImpl<DataType::Instance, T> {
 
 template<typename T>
 struct CborProducerImpl<DataType::MemberRef, T> {
-  static_assert(false, "Cannot decode member reference");
+  static_assert(false, "cannot decode member reference");
 };
 
 template<typename T>
 struct CborProducerImpl<DataType::VarRef, T> {
-  static_assert(false, "Cannot decode variable reference");
+  static_assert(false, "cannot decode variable reference");
 };
 
 template<typename T>
@@ -1198,7 +1198,7 @@ struct CborProducerImpl<DataType::CodePoint, T> {
     try {
       CborProducerImpl<ElemDataType, Elem>().produce(elem, state);
     } catch (const InputFailure& ex) {
-      throw InputFailure(ex.position(), "Expected a code point");
+      throw InputFailure(ex.position(), "expected a code point");
     }
     try {
       item.setValue(T(elem.value()));
@@ -1219,11 +1219,11 @@ struct CborProducerImpl<DataType::Character, T> {
     try {
       CborProducerImpl<ElemDataType, Elem>().produce(elem, state);
     } catch (const InputFailure& ex) {
-      throw InputFailure(ex.position(), "Expected a character");
+      throw InputFailure(ex.position(), "expected a character");
     }
     auto value = elem.value();
     if (value.empty()) {
-      throw InputFailure(state.index, "Expected a character");
+      throw InputFailure(state.index, "expected a character");
     }
     item.setValue(T(std::move(value)));
   }
@@ -1291,7 +1291,7 @@ struct CborCodec : Codec<CborConsumer, CborProducer> {
     unsigned char* buf; // NOLINT
     std_size_t bufSize; // NOLINT
     cbor_serialize_alloc(item.ptr(), &buf, &bufSize);
-    ROCKET_EXPECT(bufSize > 0, "Cannot allocate memory");
+    ROCKET_EXPECT(bufSize > 0, "cannot allocate memory");
     const std::unique_ptr<unsigned char, decltype(&std::free)> ptr(buf, &std::free);
     return { buf, buf + bufSize };
   }

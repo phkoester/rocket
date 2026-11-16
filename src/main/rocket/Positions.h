@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include "rocket/Bimap.h"
+#include "rocket/bimap.h"
 
 namespace rocket {
 
@@ -15,7 +15,7 @@ namespace rocket {
 /**
  * A general-purpose bidirectional map that translates positions.
  */
-using Positions = UnorderedBimap<u64, u64>;
+using Positions = unordered_bimap<u64, u64>;
 
 // Functions ------------------------------------------------------------------------------------------------
 
@@ -27,7 +27,7 @@ using Positions = UnorderedBimap<u64, u64>;
  */
 inline Positions
 makePositions(std::initializer_list<std::pair<u64, u64>> list) {
-  return makeUnorderedBimap(list);
+  return make_unordered_bimap(list);
 }
 
 } // namespace rocket

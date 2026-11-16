@@ -58,8 +58,8 @@ TEST(MODULE, IsForwardList) {
 }
 
 TEST(MODULE, IsUnordered) {
-  static_assert(not IsUnordered<Bimap<i32, i32>>);
-  static_assert(IsUnordered<UnorderedBimap<i32, i32>>);
+  static_assert(not IsUnordered<bimap<i32, i32>>);
+  static_assert(IsUnordered<unordered_bimap<i32, i32>>);
   static_assert(not IsUnordered<map<i32, i32>>);
   static_assert(not IsUnordered<set<i32>>);
   static_assert(IsUnordered<unordered_map<i32, i32>>);

@@ -154,7 +154,7 @@ TEST(MODULE, BimapOrdered) {
 
   for (u64 i = 0; i < N; ++i) {
     ranges::shuffle(vec, gen);
-    Bimap<u64, string> map;
+    bimap<u64, string> map;
     for (const auto& elem : vec) {
       map.left.insert({ elem, fmt::format("{}", elem) });
     }
@@ -178,7 +178,7 @@ TEST(MODULE, BimapUnordered) {
 
   for (u64 i = 0; i < N; ++i) {
     ranges::shuffle(vec, gen);
-    UnorderedBimap<u64, string> map;
+    unordered_bimap<u64, string> map;
     for (const auto& elem : vec) {
       map.left.insert({ elem, fmt::format("{}", elem) });
     }

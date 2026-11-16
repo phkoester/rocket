@@ -665,7 +665,7 @@ private:
 // `scn::scanner<rocket::i128>` -----------------------------------------------------------------------------
 
 /**
- * @spec_scn_scanner{rocket::i128}
+ * @spec_scn_scanner{#rocket::i128}
  *
  * This scanner supports the same format specifications as the scnlib scanners of built-in integers.
  */
@@ -676,7 +676,7 @@ struct scn::scanner<rocket::i128, C> :
 // `scn::scanner<rocket::u128>` -----------------------------------------------------------------------------
 
 /**
- * @spec_scn_scanner{rocket::u128}
+ * @spec_scn_scanner{#rocket::u128}
  *
  * This scanner supports the same format specifications as the scnlib scanners of built-in integers.
  */

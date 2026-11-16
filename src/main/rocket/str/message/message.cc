@@ -14,7 +14,7 @@ namespace rocket::str::message {
 
 string
 cannotScanAs(string_view input, const type_info& type) {
-  return fmt::format("Cannot scan {:?} as {}", input, TypeId(type));
+  return fmt::format("cannot scan {:?} as {}", input, TypeId(type));
 }
 
 string

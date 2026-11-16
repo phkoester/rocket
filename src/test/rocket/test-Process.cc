@@ -16,20 +16,20 @@
 
 TEST(MODULE, error0) {
   nio::StringSink buf;
-  process().error(buf, 0, "Test error");
-  EXPECT_EQ(buf.str(), "test-rocket-Process: error: Test error\n");
+  process().error(buf, 0, "test error");
+  EXPECT_EQ(buf.str(), "test-rocket-Process: error: test error\n");
 }
 
 TEST(MODULE_DEATH_TEST, error2) {
   EXPECT_EXIT(
-    { process().error(nio::err, 2, "Test error"); },
-    ExitedWithCode(2), "test-rocket-Process: fatal error: Test error\n");
+    { process().error(nio::err, 2, "test error"); },
+    ExitedWithCode(2), "test-rocket-Process: fatal error: test error\n");
 }
 
 TEST(MODULE_DEATH_TEST, exit) {
   EXPECT_EXIT(
-    { process().error(nio::err, 7, "Exiting ..."); },
-    ExitedWithCode(7), "test-rocket-Process: fatal error: Exiting ...\n");
+    { process().error(nio::err, 7, "exiting ..."); },
+    ExitedWithCode(7), "test-rocket-Process: fatal error: exiting ...\n");
 }
 
 TEST(MODULE, tryLocale) {
@@ -71,7 +71,7 @@ TEST(MODULE, localeFromEnvironment) {
     EXPECT_TRUE(loc == std::locale::classic());
     EXPECT_EQ(
       buf.str(),
-      "test-rocket-Process: warning: Cannot use the locale from the environment; "
+      "test-rocket-Process: warning: cannot use the locale from the environment; "
       "using the classic locale instead\n");
   }
 

@@ -13,8 +13,6 @@
 #include "rocket/system/system.h"
 #include "rocket/system/terminal/terminal.h"
 
-#include <iostream>
-
 using namespace rocket;
 using namespace rocket::unicode;
 using namespace std;
@@ -61,7 +59,7 @@ void handle(const B&) { nio::out.println("handle.B"); }
 
 [[maybe_unused]] void
 throwInvalidState() {
-  throw InvalidState("Oops");
+  throw InvalidState("oops");
 }
 
 void
@@ -77,15 +75,21 @@ myTerminate() {
 
 void
 toy() {
-  map<int, string> m1 {{ 1, "one" }, {2, "two" }, { 3, "three" }};
-  // map<int, string> m2 {{ 1, "one" }, {2, "two" }, { 3, "three" }};
+  unordered_map<int, string> m1 {{ 1, "one" }, {2, "two" }, { 3, "three" }};
+  unordered_map<int, string> m2 {{ 1, "one" }, {2, "two" }, { 3, "three" }};
 
+  if (m1 == m2) {
+
+  }
   fmt::println("m1: {}", m1);
 
-  // Bimap<int, string> b1 = makeBimap<int, string>( { { 1, "one" }, {2, "two" }, { 3, "three" } });
-  // Bimap<int, string> b2 = makeBimap<int, string>( { { 1, "one" }, {2, "two" }, { 3, "three" } });
+  bimap<int, string> b1 = make_bimap<int, string>( { { 1, "one" }, {2, "two" }, { 3, "three" } });
+  bimap<int, string> b2 = make_bimap<int, string>( { { 1, "one" }, {2, "two" }, { 3, "three" } });
 
-  // fmt::println("b1: {}", b1);
+  if (b1 == b2) {
+  }
+
+  fmt::println("b1: {}", b1);
 
   ROCKET_SCOPE_EXIT([] { nio::out.println("Hello from ROCKET_SCOPE_EXIT"); });
 
@@ -111,7 +115,7 @@ toy() {
 
 i32
 main(i32 argc, char **argv) {
-  ROCKET_PROCESS_ERROR(0, "Testing error before `process().init` ...");
+  ROCKET_PROCESS_ERROR(0, "testing error before `process().init` ...");
 
   process().atExit(myExit);
   process().atExit(myTerminate, true);

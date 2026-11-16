@@ -181,7 +181,7 @@ struct CompareConsumerImpl<DataType::Set, T, Cmp> {
   using Ordering = CmpOrdering<Cmp, Elem>;
 
   static constexpr auto Unordered = IsUnordered<T>;
-  static_assert(not Unordered, "Cannot compare unordered sets");
+  static_assert(not Unordered, "cannot compare unordered sets");
 
   Ordering
   consume(const T& lhs, const T& rhs) {
@@ -212,7 +212,7 @@ struct CompareConsumerImpl<DataType::Map, T, Cmp> {
   using Ordering = CmpCommonOrdering<Cmp, Key, Elem>;
 
   static constexpr auto Unordered = IsUnordered<T>;
-  static_assert(not Unordered, "Cannot compare unordered maps");
+  static_assert(not Unordered, "cannot compare unordered maps");
 
   Ordering
   consume(const T& lhs, const T& rhs) {
@@ -249,7 +249,7 @@ struct CompareConsumerImpl<DataType::Bimap, T, Cmp> {
   using Ordering = CmpCommonOrdering<Cmp, Key, Elem>;
 
   static constexpr auto Unordered = IsUnordered<T>;
-  static_assert(not Unordered, "Cannot compare unordered bimaps");
+  static_assert(not Unordered, "cannot compare unordered bimaps");
 
   Ordering
   consume(const T& lhs, const T& rhs) {

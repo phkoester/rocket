@@ -95,10 +95,10 @@ TEST(MODULE, MapUnordered) {
 }
 
 TEST(MODULE, BimapUnordered) {
-  using type = UnorderedBimap<i32, string>;
-  const type a = makeUnorderedBimap<i32, string>({ { 1, "one" }, { 2, "two" }, { 3, "three" } });
-  const type b = makeUnorderedBimap<i32, string>({ { 3, "three" }, { 2, "two" }, { 1, "one" } });
-  const type c = makeUnorderedBimap<i32, string>({ { 1, "one" }, { 2, "two" }, { 3, "free" } });
+  using type = unordered_bimap<i32, string>;
+  const type a = make_unordered_bimap<i32, string>({ { 1, "one" }, { 2, "two" }, { 3, "three" } });
+  const type b = make_unordered_bimap<i32, string>({ { 3, "three" }, { 2, "two" }, { 1, "one" } });
+  const type c = make_unordered_bimap<i32, string>({ { 1, "one" }, { 2, "two" }, { 3, "free" } });
 
   const EqualToEncoder<> encoder;
 

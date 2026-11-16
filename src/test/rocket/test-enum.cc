@@ -52,7 +52,7 @@ TEST(MODULE, MyEnumFormat) {
 
   EXPECT_THAT(
     [] { static_cast<void>(fmt::format("{}", static_cast<MyEnum>(10))); }, // NOLINT
-    ThrowsMessage<InvalidState>(EndsWith("Invalid `MyEnum` value 10")));
+    ThrowsMessage<InvalidState>(EndsWith("invalid `MyEnum` value 10")));
 
   EXPECT_EQ(fmt::format(U"{}", fröb), U"fröb");
 }
@@ -101,7 +101,7 @@ TEST(MODULE, MyEnumScan) {
     const auto [val1, val2] = result->values();
     EXPECT_EQ(val1, fröb);
     EXPECT_EQ(val2, fröberer);
-    EXPECT_EQ(io::tell(is), 16);
+    EXPECT_EQ(io::stream::tell(is), 16);
   }
 }
 
@@ -114,8 +114,8 @@ TEST(MODULE, MyEnumToType) {
   EXPECT_EQ(Enum<MyEnum>::toType("pörker", true), make_pair(7_u64, pörker));
   EXPECT_EQ(Enum<MyEnum>::toType("pörkerer", true), make_pair(9_u64, pörkerer));
 
-  EXPECT_EQ(Enum<MyEnum>::toType("foo", true).error().message , "Cannot scan \"foo\" as `MyEnum`");
-  EXPECT_EQ(Enum<MyEnum>::toType("fröbx", true).error().message, "Cannot scan \"fröbx\" as `MyEnum`");
+  EXPECT_EQ(Enum<MyEnum>::toType("foo", true).error().message , "cannot scan \"foo\" as `MyEnum`");
+  EXPECT_EQ(Enum<MyEnum>::toType("fröbx", true).error().message, "cannot scan \"fröbx\" as `MyEnum`");
 }
 
 TEST(MODULE, MyEnumClassOpOutput) {
@@ -131,8 +131,8 @@ TEST(MODULE, MyEnumFClassFormat) {
 TEST(MODULE, MyEnumClassToType) {
   EXPECT_EQ(Enum<MyEnumClass>::toType("hürxer", true), make_pair(7_u64, MyEnumClass::hürxer));
 
-  EXPECT_EQ(Enum<MyEnumClass>::toType("foo", true).error().message, "Cannot scan \"foo\" as `MyEnumClass`");
-  EXPECT_EQ(Enum<MyEnumClass>::toType("hürxerx", true).error().message, "Cannot scan \"hürxerx\" as `MyEnumClass`");
+  EXPECT_EQ(Enum<MyEnumClass>::toType("foo", true).error().message, "cannot scan \"foo\" as `MyEnumClass`");
+  EXPECT_EQ(Enum<MyEnumClass>::toType("hürxerx", true).error().message, "cannot scan \"hürxerx\" as `MyEnumClass`");
 }
 
 TEST(MODULE, MyEnumInNamespaceOpOutput) {

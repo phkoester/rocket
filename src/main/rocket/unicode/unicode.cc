@@ -112,7 +112,7 @@ convertUtf8To32(string_view str, InvalidUnicodePolicy policy) { // NOLINT(*-comp
     if (cp < 0) {
       // Invalid or incomplete UTF-8 byte sequence
       if (policy == InvalidUnicodePolicy::Throw) {
-        throw InputFailure(pos, "Invalid UTF-8 byte sequence");
+        throw InputFailure(pos, "invalid UTF-8 byte sequence");
       }
       pos += i;
       ret.push_back(U'�');
@@ -137,7 +137,7 @@ convertUtf32To8(u32string_view str, InvalidUnicodePolicy policy) {
 
     if (not CodePoint::valid(c)) {
       if (policy == InvalidUnicodePolicy::Throw) {
-        throw InputFailure(pos, fmt::format("Invalid code-point value 0x{:X}", static_cast<u32>(c)));
+        throw InputFailure(pos, fmt::format("invalid code-point value 0x{:X}", static_cast<u32>(c)));
       }
       ret.append("�");
       continue;
@@ -187,7 +187,7 @@ nextCodePoint(string_view str, u64& pos, InvalidUnicodePolicy policy) {
   ROCKET_DEBUG_ASSERT(i > 0, "`U8_NEXT` failed");
   if (cp < 0) {
     if (policy == InvalidUnicodePolicy::Throw) {
-      throw InputFailure(pos, "Invalid UTF-8 byte sequence");
+      throw InputFailure(pos, "invalid UTF-8 byte sequence");
     }
     pos += static_cast<u64>(i);
     return U'�';
@@ -230,7 +230,7 @@ validate(string_view str, InvalidUnicodePolicy policy, Positions* positions) { /
     } else {
       // Invalid code point
       if (policy == InvalidUnicodePolicy::Throw) {
-        throw InputFailure(oldI, "Invalid UTF-8 byte sequence");
+        throw InputFailure(oldI, "invalid UTF-8 byte sequence");
       }
       if (not ret.modified()) {
         ret = string(str.data(), oldI);
@@ -257,7 +257,7 @@ nextCodePoint(u32string_view str, u64& pos, InvalidUnicodePolicy policy) {
   char32 c = str[pos];
   if (not CodePoint::valid(c)) {
     if (policy == InvalidUnicodePolicy::Throw) {
-      throw InputFailure(pos, fmt::format("Invalid code-point value 0x{:X}", static_cast<u32>(c)));
+      throw InputFailure(pos, fmt::format("invalid code-point value 0x{:X}", static_cast<u32>(c)));
     }
     ++pos;
     return U'�';
@@ -292,7 +292,7 @@ validate(u32string_view str, InvalidUnicodePolicy policy, Positions* positions) 
     } else {
       // Invalid code point
       if (policy == InvalidUnicodePolicy::Throw) {
-        throw InputFailure(i, fmt::format("Invalid code-point value 0x{:X}", static_cast<u32>(c)));
+        throw InputFailure(i, fmt::format("invalid code-point value 0x{:X}", static_cast<u32>(c)));
       }
       if (not ret.modified()) {
         ret = u32string(str.data(), i);

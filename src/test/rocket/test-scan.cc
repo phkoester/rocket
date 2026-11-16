@@ -336,6 +336,32 @@ TEST(MODULE, rocketF64) {
   EXPECT_EQ(scanError<f64>("abc", "{}"), scn::scan_error::invalid_scanned_value);
 }
 
+TEST(MODULE, rocketBimap) {
+  using type = bimap<i32, f64>;
+
+  const auto val1 = make_bimap<i32, f64>({ { 1, 1.11 }, { 2, 2.22 }, { 3, 3.33 } });
+  const string input = fmt::format("{}", val1); // "{1: 1.11, 2: 2.22, 3: 3.33}", 27 chars
+  const auto result = scn::scan<type>(input, "{}");
+  ASSERT_TRUE(result);
+  const auto& val2 = result->value();
+  EXPECT_EQ(fmt::format("{}", val2), input);
+  EXPECT_EQ(result->begin() - input.begin(), 27);
+
+  EXPECT_EQ(scanError<type>("{1: 1.11", "{}"), scn::scan_error::end_of_input);
+  EXPECT_EQ(scanError<type>("{1 1.11}", "{}"), scn::scan_error::invalid_scanned_value);
+}
+
+TEST(MODULE, rocketUnorderedBimap) {
+  using type = unordered_bimap<i32, f64>;
+
+  const auto result = scn::scan<type>("{1: 1.5, 2: 2.5}", "{}");
+  ASSERT_TRUE(result);
+  const auto& val = result->value();
+  EXPECT_EQ(val.size(), 2);
+  EXPECT_EQ(val.left.at(1), 1.5);
+  EXPECT_EQ(val.left.at(2), 2.5);
+}
+
 TEST(MODULE, rocketChronoZonedTime) {
   using namespace std::chrono;
   using rocket::chrono::zoned_seconds;

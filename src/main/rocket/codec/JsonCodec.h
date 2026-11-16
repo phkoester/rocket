@@ -286,7 +286,7 @@ expectEndOfString(nio::ContiguousSource& inner, u64 size, const InPos& inPos) {
   const u64 innerPos = inner.position();
   if (innerPos != size) {
     throw InputFailure::withRange(
-      inPos(innerPos), inPos(innerPos), inPos(size), "Unexpected input after value");
+      inPos(innerPos), inPos(innerPos), inPos(size), "unexpected input after value");
   }
 }
 
@@ -348,7 +348,7 @@ struct JsonConsumerImpl<DataType::Enum, E> {
       out.print("\"{}\"", val);
       return;
     }
-    ROCKET_FAIL("Cannot format enum of type {}", TypeId::of<E>());
+    ROCKET_FAIL("cannot format enum of type {}", TypeId::of<E>());
   }
 };
 
@@ -573,7 +573,7 @@ struct JsonConsumerImpl<DataType::TimeZone, T> {
 template<typename T>
 struct JsonConsumerImpl<DataType::Time, T> {
   using Clock = T::clock;
-  static_assert(std::same_as<Clock, std::chrono::system_clock>, "Clock must be `system_clock`");
+  static_assert(std::same_as<Clock, std::chrono::system_clock>, "clock must be `system_clock`");
 
   void
   consume(const T& val, nio::Sink& out, CONFIG__) const {
@@ -780,7 +780,7 @@ produceMembers(const Refs& refs, C& instance, nio::Source& in) {
   const auto pos = in.tell();
 
   if (not readChar(in, '{')) {
-    throw InputFailure(pos, "Expected an object");
+    throw InputFailure(pos, "expected an object");
   }
 
   u64 index = 0;
@@ -813,7 +813,7 @@ produceMembers(const Refs& refs, C& instance, nio::Source& in) {
       return (produceMember(ref, name, instance, in) || ...);
     }, refs);
     if (not found) {
-      throw InputFailure(namePos, fmt::format("Unknown member `{}`", name));
+      throw InputFailure(namePos, fmt::format("unknown member `{}`", name));
     }
   }
 }
@@ -833,7 +833,7 @@ struct JsonProducerImpl<DataType::Bool, bool> {
       val = true;
       return;
     }
-    throw InputFailure(pos, "Expected a boolean value");
+    throw InputFailure(pos, "expected a boolean value");
   }
 };
 
@@ -845,17 +845,17 @@ struct JsonProducerImpl<DataType::Char, C> {
     const auto pos = in.tell();
 
     if (not readChar(in, '"')) {
-      throw InputFailure(pos, "Expected a character");
+      throw InputFailure(pos, "expected a character");
     }
     auto input = readUntilUnescapedChar(in, '"');
     if (not input) {
-      throw InputFailure(pos, "Unterminated character literal");
+      throw InputFailure(pos, "unterminated character literal");
     }
 
     const std::string unescaped = unescapeLiteral(*input, pos, { .json=true });
     const std::basic_string<C> str(unicode::ConvertTo<C>::apply(unescaped));
     if (str.size() != 1) {
-      throw InputFailure(pos, "Invalid character literal");
+      throw InputFailure(pos, "invalid character literal");
     }
     val = str[0];
   }
@@ -883,9 +883,9 @@ struct JsonProducerImpl<DataType::Enum, E> {
         val = result->value();
         return;
       }
-      throw InputFailure(inPos(0), fmt::format("Invalid value for enum {}", TypeId::of<E>()));
+      throw InputFailure(inPos(0), fmt::format("invalid value for enum {}", TypeId::of<E>()));
     }
-    throw InputFailure(pos, fmt::format("Cannot scan enum of type {}", TypeId::of<E>()));
+    throw InputFailure(pos, fmt::format("cannot scan enum of type {}", TypeId::of<E>()));
   }
 };
 
@@ -902,7 +902,7 @@ struct JsonProducerImpl<DataType::Integer, I> {
       val = result->value();
       return;
     }
-    throw InputFailure(pos, "Expected an integer value");
+    throw InputFailure(pos, "expected an integer value");
   }
 };
 
@@ -933,7 +933,7 @@ struct JsonProducerImpl<DataType::Float, F> {
       val = result->value();
       return;
     }
-    throw InputFailure(pos, "Expected a floating-point value");
+    throw InputFailure(pos, "expected a floating-point value");
   }
 };
 
@@ -963,7 +963,7 @@ struct JsonProducerImpl<DataType::Pointer, P> {
       val = result->value();
       return;
     }
-    throw InputFailure(inPos(0), "Expected a pointer value");
+    throw InputFailure(inPos(0), "expected a pointer value");
   }
 };
 
@@ -977,11 +977,11 @@ struct JsonProducerImpl<DataType::String, T> {
     const auto pos = in.tell();
 
     if (not readChar(in, '"')) {
-      throw InputFailure(pos, "Expected a string");
+      throw InputFailure(pos, "expected a string");
     }
     auto input = readUntilUnescapedChar(in, '"');
     if (not input) {
-      throw InputFailure(pos, "Unterminated string literal");
+      throw InputFailure(pos, "unterminated string literal");
     }
 
     const std::string unescaped = unescapeLiteral(*input, pos, { .json=true });
@@ -1024,7 +1024,7 @@ struct JsonProducerImpl<DataType::Tuple, T> {
     const auto pos = in.tell();
 
     if (not readChar(in, '[')) {
-      throw InputFailure(pos, "Expected an array");
+      throw InputFailure(pos, "expected an array");
     }
 
     u64 index = 0;
@@ -1038,7 +1038,7 @@ struct JsonProducerImpl<DataType::Tuple, T> {
     }
     if (not readChar(in, ']')) {
       const auto end = in.tell();
-      throw InputFailure::withRange(end, pos, end, "Unterminated array");
+      throw InputFailure::withRange(end, pos, end, "unterminated array");
     }
   }
 
@@ -1059,8 +1059,8 @@ private:
 
 template<typename T>
 struct JsonProducerImpl<DataType::List, T> {
-  static_assert(not IsView<T>, "Cannot decode list view");
-  static_assert(not IsForwardList<T>, "Cannot decode forward list");
+  static_assert(not IsView<T>, "cannot decode list view");
+  static_assert(not IsForwardList<T>, "cannot decode forward list");
 
   using Elem = T::value_type;
   static constexpr auto ElemDataType = DataTypes<Elem>::Value;
@@ -1075,7 +1075,7 @@ struct JsonProducerImpl<DataType::List, T> {
     }
 
     if (not readChar(in, '[')) {
-      throw InputFailure(pos, "Expected an array");
+      throw InputFailure(pos, "expected an array");
     }
 
     if constexpr (IsArray<T>) {
@@ -1107,7 +1107,7 @@ private:
     }
     if (not readChar(in, ']')) {
       const auto end = in.tell();
-      throw InputFailure::withRange(end, pos, end, fmt::format("Unterminated array of size {}", size));
+      throw InputFailure::withRange(end, pos, end, fmt::format("unterminated array of size {}", size));
     }
   }
 
@@ -1144,7 +1144,7 @@ struct JsonProducerImpl<DataType::Set, T> {
 
     val.clear();
     if (not readChar(in, '[')) {
-      throw InputFailure(pos, "Expected an array");
+      throw InputFailure(pos, "expected an array");
     }
 
     u64 index = 0;
@@ -1181,7 +1181,7 @@ struct JsonProducerImpl<DataType::Map, T> {
     val.clear();
 
     if (not readChar(in, '{')) {
-      throw InputFailure(pos, "Expected an object");
+      throw InputFailure(pos, "expected an object");
     }
 
     u64 index = 0;
@@ -1227,7 +1227,7 @@ struct JsonProducerImpl<DataType::Bimap, T> {
     val.clear();
 
     if (not readChar(in, '{')) {
-      throw InputFailure(pos, "Expected an object");
+      throw InputFailure(pos, "expected an object");
     }
 
     u64 index = 0;
@@ -1285,7 +1285,7 @@ struct JsonProducerImpl<DataType::Duration, T> {
     try {
       JsonProducerImpl<RepDataType, Rep>().produce(count, inner);
     } catch (const InputFailure&) {
-      throw InputFailure(inPos(0), "Expected a duration");
+      throw InputFailure(inPos(0), "expected a duration");
     }
 
     const std::set<std::string_view> UNITS = {
@@ -1295,14 +1295,14 @@ struct JsonProducerImpl<DataType::Duration, T> {
     if (auto str = readChoice(inner, UNITS, true); str) {
       const auto result = unitDurationCast<T>(*str, count);
       if (not result) {
-        throw InputFailure(inPos(0), "Duration out of range");
+        throw InputFailure(inPos(0), "duration out of range");
       }
       val = *result;
       expectEndOfString(inner, input.size(), inPos);
       return;
     }
 
-    throw InputFailure(inPos(inner.position()), "Expected a time unit");
+    throw InputFailure(inPos(inner.position()), "expected a time unit");
   }
 };
 
@@ -1325,13 +1325,13 @@ struct JsonProducerImpl<DataType::Date, T> {
 
     auto result = inner.scan<std_int, std_unsigned, std_unsigned>("{}-{}-{}");
     if (not result) {
-      throw InputFailure(inPos(0), "Expected a date");
+      throw InputFailure(inPos(0), "expected a date");
     }
 
     const auto& [y, m, d] = result->values();
     const auto date = makeDate(y, m, d);
     if (not date) {
-      throw InputFailure(inPos(0), "Invalid date");
+      throw InputFailure(inPos(0), "invalid date");
     }
     val = *date;
     expectEndOfString(inner, input.size(), inPos);
@@ -1369,12 +1369,12 @@ struct JsonProducerImpl<DataType::HourMinuteSecond, T> {
 
     auto result = inner.scan<hours::rep, minutes::rep, seconds::rep>("{}:{}:{}");
     if (not result) {
-      throw InputFailure(inPos(0), "Expected an hour, minute, and second");
+      throw InputFailure(inPos(0), "expected an hour, minute, and second");
     }
 
     auto [h, m, s] = result->values();
     if (not validHourMinuteSecond(h, m, s)) {
-      throw InputFailure(inPos(0), "Invalid hour, minute, or second");
+      throw InputFailure(inPos(0), "invalid hour, minute, or second");
     }
     const bool neg = minus || h < 0; // The scanner may skip more whitespace than we do
     if (h < 0) {
@@ -1429,7 +1429,7 @@ struct JsonProducerImpl<DataType::TimeZone, T> {
 template<typename T>
 struct JsonProducerImpl<DataType::Time, T> {
   using Clock = T::clock;
-  static_assert(std::same_as<Clock, std::chrono::system_clock>, "Clock must be `system_clock`");
+  static_assert(std::same_as<Clock, std::chrono::system_clock>, "clock must be `system_clock`");
   using Duration = T::duration;
 
   void
@@ -1452,7 +1452,7 @@ struct JsonProducerImpl<DataType::Time, T> {
 
     const auto scanned = inner.scan<sys_time<Duration>>("{:%FT%T}");
     if (not scanned) {
-      throw InputFailure(inPos(0), "Expected a time point");
+      throw InputFailure(inPos(0), "expected a time point");
     }
     val = scanned->value();
 
@@ -1500,7 +1500,7 @@ struct JsonProducerImpl<DataType::ZonedTime, T> {
 
     const auto scanned = inner.scan<sys_time<Duration>>("{:%FT%T}");
     if (not scanned) {
-      throw InputFailure(inPos(0), "Expected a time point");
+      throw InputFailure(inPos(0), "expected a time point");
     }
     sys_time<Duration> tp = scanned->value();
 
@@ -1520,16 +1520,16 @@ struct JsonProducerImpl<DataType::ZonedTime, T> {
       if (not readChar(inner, 'Z')) {
         auto sign = readChoice(inner, { "+", "-" }, false, false);
         if (not sign) {
-          throw InputFailure(offsetPos, "Expected a UTC offset");
+          throw InputFailure(offsetPos, "expected a UTC offset");
         }
 
         const auto result = inner.scan<u32, u32>("{}:{}");
         if (not result) {
-          throw InputFailure(offsetPos, "Expected a UTC offset");
+          throw InputFailure(offsetPos, "expected a UTC offset");
         }
         const auto& [h, m] = result->values();
         if (not validUtcOffset(h, m)) {
-          throw InputFailure(offsetPos, "Invalid UTC offset");
+          throw InputFailure(offsetPos, "invalid UTC offset");
         }
         offset = hours(h) + minutes(m);
         if (*sign == "-") {
@@ -1549,7 +1549,7 @@ struct JsonProducerImpl<DataType::ZonedTime, T> {
       expectChar(inner, '(');
       const auto name = readUntilChar(inner, ')');
       if (not name) {
-        throw InputFailure(tzPos, "Unterminated time-zone name");
+        throw InputFailure(tzPos, "unterminated time-zone name");
       }
       TimeZone tz; // NOLINT
       try {
@@ -1587,7 +1587,7 @@ struct JsonProducerImpl<DataType::Interval, T> {
     }
 
     if (not readChar(in, '[')) {
-      throw InputFailure(pos, "Expected an interval");
+      throw InputFailure(pos, "expected an interval");
     }
     skip(in);
 
@@ -1621,7 +1621,7 @@ struct JsonProducerImpl<DataType::Interval, T> {
     }
     if (not readChar(in, ']')) {
       const auto end = in.tell();
-      throw InputFailure::withRange(end, pos, end, "Unterminated interval");
+      throw InputFailure::withRange(end, pos, end, "unterminated interval");
     }
   }
 };
@@ -1654,12 +1654,12 @@ struct JsonProducerImpl<DataType::Instance, T> {
 
 template<typename T>
 struct JsonProducerImpl<DataType::MemberRef, T> {
-  static_assert(false, "Cannot decode member reference");
+  static_assert(false, "cannot decode member reference");
 };
 
 template<typename T>
 struct JsonProducerImpl<DataType::VarRef, T> {
-  static_assert(false, "Cannot decode variable reference");
+  static_assert(false, "cannot decode variable reference");
 };
 
 template<typename T>
@@ -1673,7 +1673,7 @@ struct JsonProducerImpl<DataType::CodePoint, T> {
     const auto pos = in.tell();
 
     if (not readChar(in, '"')) {
-      throw InputFailure(pos, "Expected a code point");
+      throw InputFailure(pos, "expected a code point");
     }
 
     if (not readString(in, "U+", false, false)) {
@@ -1689,11 +1689,11 @@ struct JsonProducerImpl<DataType::CodePoint, T> {
     in.seek(-2, nio::SeekMode::cur);
     auto result = in.scan<u32>("U+{:X}");
     if (not result) {
-      throw InputFailure(pos, "Expected a code point");
+      throw InputFailure(pos, "expected a code point");
     }
     if (not readChar(in, '"')) {
       const auto end = in.tell();
-      throw InputFailure::withRange(end, pos, end, "Unterminated code point");
+      throw InputFailure::withRange(end, pos, end, "unterminated code point");
     }
     try {
       val = static_cast<Elem>(result->value());
@@ -1716,7 +1716,7 @@ struct JsonProducerImpl<DataType::Character, T> {
     Elem elem;
     JsonProducerImpl<ElemDataType, Elem>().produce(elem, in);
     if (elem.empty()) {
-      throw InputFailure(pos, "Expected a character");
+      throw InputFailure(pos, "expected a character");
     }
     val = T(std::move(elem));
   }

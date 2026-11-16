@@ -36,7 +36,7 @@ namespace rocket::math {
 template<typename T, typename It> requires IsFloat<T>
 T
 mean(It begin, It end) {
-  ROCKET_CHECK(end, end > begin, "Range is empty");
+  ROCKET_CHECK(end, end > begin, "range is empty");
 
   // Calculating CMA = Cumulative Moving Average
   T ret = 0;

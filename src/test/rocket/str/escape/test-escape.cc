@@ -4,7 +4,6 @@
 
 #include "rocket-test/rocket-test.h"
 
-#include "rocket/Bimap-codec.h"
 #include "rocket/str/escape/escape.h"
 
 using namespace rocket::str::escape;
@@ -106,32 +105,32 @@ TEST(MODULE, CString) {
 
   EXPECT_THAT(
       [&] { unescapeCString("\"äbc", { .quote='"' }); },
-      throwsInputFailure(5, { 0, 5 }, EndsWith("Missing terminating '\"' character")));
+      throwsInputFailure(5, { 0, 5 }, EndsWith("missing terminating '\"' character")));
 
   EXPECT_THAT(
       [&] { unescapeCString("abc\\"); },
-      throwsInputFailure(4, EndsWith("Expected a character, got EOI")));
+      throwsInputFailure(4, EndsWith("expected a character, got EOI")));
 
   EXPECT_THAT(
       [&] { unescapeCString("abc\\Ä"); },
-      throwsInputFailure(3, { 3, 6 }, EndsWith("Invalid escape sequence")));
+      throwsInputFailure(3, { 3, 6 }, EndsWith("invalid escape sequence")));
 
   EXPECT_THAT(
       [&] { unescapeCString("\\x"); },
-      throwsInputFailure(2, { 2,  2 }, EndsWith("Expected 2 hexadecimal digits, got EOI")));
+      throwsInputFailure(2, { 2,  2 }, EndsWith("expected 2 hexadecimal digits, got EOI")));
 
   EXPECT_THAT(
       [&] { unescapeCString("\\U123456"); },
-      throwsInputFailure(8, { 2, 8 }, EndsWith("Expected 8 hexadecimal digits, got EOI")));
+      throwsInputFailure(8, { 2, 8 }, EndsWith("expected 8 hexadecimal digits, got EOI")));
 
   EXPECT_THAT(
       [&] { unescapeCString("\\x0X"); },
-      throwsInputFailure(3, { 2, 4 }, EndsWith("Expected a hexadecimal digit, got \"X\"")));
+      throwsInputFailure(3, { 2, 4 }, EndsWith("expected a hexadecimal digit, got \"X\"")));
 
   // 🧑‍🌾: 11 bytes, 3 code points
   EXPECT_THAT(
       [&] { unescapeCString("abc\\🧑‍🌾"); },
-      throwsInputFailure(3, { 3, 15 }, EndsWith("Invalid escape sequence")));
+      throwsInputFailure(3, { 3, 15 }, EndsWith("invalid escape sequence")));
 }
 
 // In the following tests, U+0301 (COMBINING ACUTE ACCENT) joins the preceding character, and U+0600 (ARABIC
@@ -227,27 +226,27 @@ TEST(MODULE, CStringClusterColumn) {
 TEST(MODULE, CStringClusterInvalidEscape) {
   EXPECT_THAT(
       [&] { unescapeCString("\\a\u0301"); },
-      throwsInputFailure(0, { 0, 4 }, EndsWith("Invalid escape sequence")));
+      throwsInputFailure(0, { 0, 4 }, EndsWith("invalid escape sequence")));
 
   EXPECT_THAT(
       [&] { unescapeCString("\u0600\\q"); },
-      throwsInputFailure(0, { 0, 4 }, EndsWith("Invalid escape sequence")));
+      throwsInputFailure(0, { 0, 4 }, EndsWith("invalid escape sequence")));
 }
 
 TEST(MODULE, CStringInvalidUtf8) {
   EXPECT_THAT(
       [&] { unescapeCString("a\xFF"); },
-      throwsInputFailure(1, EndsWith("Invalid UTF-8 byte sequence")));
+      throwsInputFailure(1, EndsWith("invalid UTF-8 byte sequence")));
 
   // Truncated sequence
   EXPECT_THAT(
       [&] { unescapeCString("a\xE2\x82"); },
-      throwsInputFailure(1, EndsWith("Invalid UTF-8 byte sequence")));
+      throwsInputFailure(1, EndsWith("invalid UTF-8 byte sequence")));
 
   // Inside quotes
   EXPECT_THAT(
       [&] { unescapeCString("\"\xFF\"", { .quote='"' }); },
-      throwsInputFailure(1, EndsWith("Invalid UTF-8 byte sequence")));
+      throwsInputFailure(1, EndsWith("invalid UTF-8 byte sequence")));
 }
 
 TEST(MODULE, CStringJsonSurrogatePair) {
@@ -271,7 +270,7 @@ TEST(MODULE, CStringJsonSurrogatePair) {
 TEST(MODULE, CStringTabSize) {
   EXPECT_THAT(
       [&] { escapeCString("a\tb", { .tabSize=0 }); },
-      ThrowsMessage<InvalidArgument>(EndsWith("Tab size may not be 0")));
+      ThrowsMessage<InvalidArgument>(EndsWith("tab size may not be 0")));
 
   // The zero check does not apply if there is no tab size, and the smallest tab size is valid
   EXPECT_EQ(escapeCString("a\tb", { .tabSize=nullopt }), "a\\tb");
@@ -364,22 +363,22 @@ TEST(MODULE, regexClusterStaysVerbatim) {
 TEST(MODULE, regexClusterInvalidEscape) {
   EXPECT_THAT(
       [&] { unescapeRegex("\\a\u0301"); },
-      throwsInputFailure(0, { 0, 4 }, EndsWith("Invalid escape sequence")));
+      throwsInputFailure(0, { 0, 4 }, EndsWith("invalid escape sequence")));
 
   EXPECT_THAT(
       [&] { unescapeRegex("\u0600\\q"); },
-      throwsInputFailure(0, { 0, 4 }, EndsWith("Invalid escape sequence")));
+      throwsInputFailure(0, { 0, 4 }, EndsWith("invalid escape sequence")));
 }
 
 TEST(MODULE, regexInvalidUtf8) {
   EXPECT_THAT(
       [&] { unescapeRegex("a\xFF"); },
-      throwsInputFailure(1, EndsWith("Invalid UTF-8 byte sequence")));
+      throwsInputFailure(1, EndsWith("invalid UTF-8 byte sequence")));
 
   // Truncated sequence
   EXPECT_THAT(
       [&] { unescapeRegex("a\xE2\x82"); },
-      throwsInputFailure(1, EndsWith("Invalid UTF-8 byte sequence")));
+      throwsInputFailure(1, EndsWith("invalid UTF-8 byte sequence")));
 }
 
 // EOF

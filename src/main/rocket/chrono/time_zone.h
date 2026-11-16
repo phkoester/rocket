@@ -102,7 +102,7 @@ const time_zone* current_zone();
  *
  * @param name the name of the time zone, for example `Europe/Berlin`
  * @return the time zone, valid until the program ends
- * @throw std::runtime_error if the time zone cannot be located
+ * @throw #std::runtime_error if the time zone cannot be located
  */
 const time_zone* locate_zone(std::string_view name);
 
@@ -431,7 +431,7 @@ const time_zone* current_zone();
  *
  * @param name the name of the time zone, for example `Europe/Berlin`
  * @return the time zone, valid until the program ends
- * @throw std::runtime_error if the time zone cannot be located
+ * @throw #std::runtime_error if the time zone cannot be located
  */
 const time_zone* locate_zone(std::string_view name);
 
@@ -448,7 +448,7 @@ const time_zone* locate_zone(std::string_view name);
 template<typename TimeZonePtr>
 struct zoned_traits {};
 
-/// @spec{rocket::chrono::zoned_traits, const rocket::chrono::time_zone*}
+/// @spec{#rocket::chrono::zoned_traits, const #rocket::chrono::time_zone*}
 template<>
 struct zoned_traits<const time_zone*> {
   /**
@@ -463,7 +463,7 @@ struct zoned_traits<const time_zone*> {
    *
    * @param name the name of the time zone
    * @return the time zone, valid until the program ends
-   * @throw std::runtime_error if the time zone cannot be located
+   * @throw #std::runtime_error if the time zone cannot be located
    */
   static const time_zone* locate_zone(std::string_view name) { return ::rocket::chrono::locate_zone(name); }
 };

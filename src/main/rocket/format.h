@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "rocket/format-bimap.h"
 #include "rocket/format-chrono.h"
 #include "rocket/format-int128.h"
 

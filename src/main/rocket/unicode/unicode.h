@@ -58,7 +58,7 @@ struct CodePoint {
     val_(val) {
     if (not ascii()) {
       if (policy == InvalidUnicodePolicy::Throw) {
-        throw InputFailure(0, fmt::format("Invalid ASCII value 0x{:X}", val));
+        throw InputFailure(0, fmt::format("invalid ASCII value 0x{:X}", val));
       }
       val_ = U'�';
     }
@@ -76,7 +76,7 @@ struct CodePoint {
     val_(val) {
     if (not valid(val_)) {
       if (policy == InvalidUnicodePolicy::Throw) {
-        throw InputFailure(0, fmt::format("Invalid code-point value 0x{:X}", static_cast<u32>(val)));
+        throw InputFailure(0, fmt::format("invalid code-point value 0x{:X}", static_cast<u32>(val)));
       }
       val_ = U'�';
     }
@@ -315,7 +315,7 @@ using utf32::validate;
 // `fmt::formatter<rocket::unicode::CodePoint>` -------------------------------------------------------------
 
 /**
- * @spec_fmt_formatter{rocket::unicode::CodePoint}
+ * @spec_fmt_formatter{#rocket::unicode::CodePoint}
  *
  * This formatter uses the same format specifiers as the underlying formatter for type #std::string.
  */
@@ -355,7 +355,7 @@ private:
 
 // `std::hash<rocket::unicode::CodePoint>` ------------------------------------------------------------------
 
-/// @spec_std_hash{rocket::unicode::CodePoint}
+/// @spec_std_hash{#rocket::unicode::CodePoint}
 template<>
 struct std::hash<rocket::unicode::CodePoint> {
   /**
@@ -372,7 +372,7 @@ struct std::hash<rocket::unicode::CodePoint> {
 
 // `std::numeric_limits<rocket::unicode::CodePoint>` --------------------------------------------------------
 
-/// @spec_std_numeric_limits{rocket::unicode::CodePoint}
+/// @spec_std_numeric_limits{#rocket::unicode::CodePoint}
 template<>
 struct std::numeric_limits<rocket::unicode::CodePoint> {
   /// A code point is an exact type.

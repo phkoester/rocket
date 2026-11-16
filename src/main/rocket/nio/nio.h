@@ -1157,6 +1157,7 @@ ROCKET_PUBLIC extern Sink& out; // NOLINT
 ROCKET_PUBLIC extern Sink& err; // NOLINT
 
 #ifdef ROCKET_TEST
+
 namespace testing {
 
 // `FailingSource` ------------------------------------------------------------------------------------------
@@ -1183,6 +1184,7 @@ struct NonseekableSource {
 };
 
 } // namespace testing
+
 #endif // ROCKET_TEST
 
 } // namespace rocket::nio

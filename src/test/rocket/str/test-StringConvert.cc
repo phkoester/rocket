@@ -34,8 +34,8 @@ TEST(MODULE, convertI32) {
   EXPECT_EQ(toType<type>("-999999"), -999'999);
   EXPECT_EQ(toType<type>("-2147483648"), numeric_limits<type>::min());
 
-  EXPECT_EQ(toType<type>("foo").error().message, "Cannot scan \"foo\" as `int`");
-  EXPECT_EQ(toType<type>("1x").error().message, "Cannot scan \"1x\" as `int`");
+  EXPECT_EQ(toType<type>("foo").error().message, "cannot scan \"foo\" as `int`");
+  EXPECT_EQ(toType<type>("1x").error().message, "cannot scan \"1x\" as `int`");
 }
 
 TEST(MODULE, convertI128) {
@@ -46,10 +46,10 @@ TEST(MODULE, convertI128) {
 
   EXPECT_THAT(
     toType<type>("foo").error().message,
-    matchesRegex("Cannot scan \"foo\" as `.*int128`"));
+    matchesRegex("cannot scan \"foo\" as `.*int128`"));
   EXPECT_THAT(
     toType<type>("1x").error().message,
-    matchesRegex("Cannot scan \"1x\" as `.*int128`"));
+    matchesRegex("cannot scan \"1x\" as `.*int128`"));
 }
 
 TEST(MODULE, convertEnum) {
@@ -57,8 +57,8 @@ TEST(MODULE, convertEnum) {
 
   EXPECT_EQ(toType<type>("trace"), log::LogLevel::trace);
 
-  EXPECT_EQ(toType<type>("foo").error().message, "Cannot scan \"foo\" as `rocket::log::LogLevel`");
-  EXPECT_EQ(toType<type>("tracex").error().message, "Cannot scan \"tracex\" as `rocket::log::LogLevel`");
+  EXPECT_EQ(toType<type>("foo").error().message, "cannot scan \"foo\" as `rocket::log::LogLevel`");
+  EXPECT_EQ(toType<type>("tracex").error().message, "cannot scan \"tracex\" as `rocket::log::LogLevel`");
 }
 
 // EOF

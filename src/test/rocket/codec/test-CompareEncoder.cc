@@ -118,9 +118,9 @@ TEST(MODULE, MapVector) {
 TEST(MODULE, BimapString) {
   using Elem = string;
 
-  using Bimap = Bimap<Elem, Elem>;
-  const Bimap a = makeBimap<Elem, Elem>({ { "one", "two" }, { "three", "four" } });
-  const Bimap b = makeBimap<Elem, Elem>({ { "three", "four" }, { "one", "two" } });
+  using bimap = bimap<Elem, Elem>;
+  const bimap a = make_bimap<Elem, Elem>({ { "one", "two" }, { "three", "four" } });
+  const bimap b = make_bimap<Elem, Elem>({ { "three", "four" }, { "one", "two" } });
 
   const CompareEncoder<> encoder;
   EXPECT_TRUE(std::is_eq(encoder.encode(a, b)));

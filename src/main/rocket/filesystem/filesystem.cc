@@ -30,7 +30,7 @@ systemTempDir() {
   ret = fs::temp_directory_path();
 #endif
   if (not fs::is_directory(ret)) {
-    ROCKET_FAIL("Path `{}` does not point to a directory", ret.string());
+    ROCKET_FAIL("path `{}` does not point to a directory", ret.string());
   }
   return ret;
 }
@@ -41,7 +41,7 @@ tempDir() {
 
   // Create the directory
   if (not create_directory(ret)) {
-    ROCKET_FAIL("Cannot create temporary directory `{}`", ret.string());
+    ROCKET_FAIL("cannot create temporary directory `{}`", ret.string());
   }
 
   // Remove the directory on exit, but not on termination
@@ -49,7 +49,7 @@ tempDir() {
     std::error_code error;
     remove_all(ret, error);
     if (error) {
-      ROCKET_FAIL("Cannot remove temporary directory `{}`: {}", ret.string(), error.message());
+      ROCKET_FAIL("cannot remove temporary directory `{}`: {}", ret.string(), error.message());
     }
   });
 
@@ -62,7 +62,7 @@ tempFile() {
   const fs::path name = fmt::format("rocket-{}.tmp", math::random::hex(gen, 32));
   const fs::path dir = fs::temp_directory_path();
   if (not is_directory(dir)) {
-    ROCKET_FAIL("Path `{}` does not point to a directory", dir.string());
+    ROCKET_FAIL("path `{}` does not point to a directory", dir.string());
   }
   fs::path ret = dir / name;
 

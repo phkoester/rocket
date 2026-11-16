@@ -48,7 +48,7 @@ binExecutable(string_view name) {
       return ret;
     }
   }
-  ROCKET_FAIL("Cannot find test executable `{}`", name);
+  ROCKET_FAIL("cannot find test executable `{}`", name);
   return ret;
 }
 
@@ -68,7 +68,7 @@ testExecutable(string_view name) {
       return ret;
     }
   }
-  ROCKET_FAIL("Cannot find test executable `{}`", name);
+  ROCKET_FAIL("cannot find test executable `{}`", name);
   return ret;
 }
 
@@ -81,7 +81,7 @@ testSource(string_view name) {
   if (is_regular_file(ret)) {
     return ret;
   }
-  ROCKET_FAIL("Cannot find test source `{}`", name);
+  ROCKET_FAIL("cannot find test source `{}`", name);
   return ret;
 }
 

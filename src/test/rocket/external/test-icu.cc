@@ -45,7 +45,7 @@ TEST(MODULE, version) {
 
   UVersionInfo minInfo {};
   u_versionFromString(minInfo, minStr);
-  ASSERT_NE(minInfo[0], 0) << "Cannot parse `ROCKET_ICU_VERSION` \"" << minStr << '"';
+  ASSERT_NE(minInfo[0], 0) << "cannot parse `ROCKET_ICU_VERSION` \"" << minStr << '"';
 
   // `UVersionInfo` holds major, minor, milli, and micro; compare them lexicographically
 

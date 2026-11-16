@@ -23,7 +23,7 @@ execute_process(
   RESULT_VARIABLE result
 )
 if(NOT result EQUAL 0)
-  message(FATAL_ERROR "Cannot restore the checkout in `${CMAKE_CURRENT_SOURCE_DIR}`")
+  message(FATAL_ERROR "cannot restore the checkout in `${CMAKE_CURRENT_SOURCE_DIR}`")
 endif()
 
 execute_process(
@@ -31,8 +31,8 @@ execute_process(
   RESULT_VARIABLE result
 )
 if(NOT result EQUAL 0)
-  message(FATAL_ERROR "Cannot apply patch `${PATCH}`")
+  message(FATAL_ERROR "cannot apply patch `${PATCH}`")
 endif()
-message(STATUS "Applied patch `${PATCH}`")
+message(STATUS "applied patch `${PATCH}`")
 
 # EOF

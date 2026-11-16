@@ -97,7 +97,7 @@ private:
         if (!ec) {
           make_shared<Session>(std::move(socket), self->port_)->start();
         } else {
-          process().error(nio::err, 0, "Accept error on port {}: {}", self->port_, ec.message());
+          process().error(nio::err, 0, "accept error on port {}: {}", self->port_, ec.message());
         }
         self->accept();
       });

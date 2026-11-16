@@ -171,7 +171,7 @@ TEST(MODULE, parseCommand) {
     parseCommand({ "-p", "list", "a" }, buf, buf);
     EXPECT_EQ(
         buf.str(),
-        "test-rocket-cl: error: Unknown option `-p`\n"
+        "test-rocket-cl: error: unknown option `-p`\n"
         "Usage: test-rocket-cl [OPTION]... list [OPTION]... FILE...\n"
         "  or   test-rocket-cl [OPTION]... show [OPTION]... [ARG]...\n"
         "Try `test-rocket-cl --help` for more information.\n");
@@ -183,7 +183,7 @@ TEST(MODULE, parseCommand) {
     parseCommand({ "-o", "walk", "dog" }, buf, buf);
     EXPECT_EQ(
         buf.str(),
-        "test-rocket-cl: error: Parameter `COMMAND`: Invalid value \"walk\"; expected `list` or `show`\n"
+        "test-rocket-cl: error: parameter `COMMAND`: invalid value \"walk\"; expected `list` or `show`\n"
         "Usage: test-rocket-cl [OPTION]... list [OPTION]... FILE...\n"
         "  or   test-rocket-cl [OPTION]... show [OPTION]... [ARG]...\n"
         "Try `test-rocket-cl --help` for more information.\n");
@@ -261,7 +261,7 @@ TEST(MODULE, parseCommand) {
     parseCommand({ "list", "-Q" }, buf, buf);
     EXPECT_EQ(
         buf.str(),
-        "test-rocket-cl: error: Unknown option `-Q`\n"
+        "test-rocket-cl: error: unknown option `-Q`\n"
         "Usage: test-rocket-cl list [OPTION]... FILE...\n"
         "Try `test-rocket-cl list --help` for more information.\n");
   }
@@ -272,7 +272,7 @@ TEST(MODULE, parseCommand) {
     parseCommand({ "list", "-l" }, buf, buf);
     EXPECT_EQ(
         buf.str(),
-        "test-rocket-cl: error: Missing required argument for parameter `FILE`\n"
+        "test-rocket-cl: error: missing required argument for parameter `FILE`\n"
         "Usage: test-rocket-cl list [OPTION]... FILE...\n"
         "Try `test-rocket-cl list --help` for more information.\n");
   }
@@ -316,7 +316,7 @@ TEST(MODULE, parseCommand) {
     parseCommand({ "show", "-Q" }, buf, buf);
     EXPECT_EQ(
         buf.str(),
-        "test-rocket-cl: error: Unknown option `-Q`\n"
+        "test-rocket-cl: error: unknown option `-Q`\n"
         "Usage: test-rocket-cl show [OPTION]... [ARG]...\n"
         "Try `test-rocket-cl show --help` for more information.\n");
   }
@@ -408,7 +408,7 @@ TEST(MODULE, parseOptionOptionalBool) {
     args = nullopt;
     nio::StringSink buf;
     EXPECT_FALSE(cl.parse({ "a", "-🧑‍🌾=hello", "b", "c" }, buf, buf, false));
-    EXPECT_EQ(buf.str(), "test-rocket-cl: error: Option `-🧑‍🌾` cannot take a value\n");
+    EXPECT_EQ(buf.str(), "test-rocket-cl: error: option `-🧑‍🌾` cannot take a value\n");
   }
 }
 
@@ -451,7 +451,7 @@ TEST(MODULE, parseOptionI32) {
     args = nullopt;
     nio::StringSink buf;
     EXPECT_FALSE(cl.parse({ "a", "-n" }, buf, buf, false));
-    EXPECT_EQ(buf.str(), "test-rocket-cl: error: Missing value for option `-n`\n");
+    EXPECT_EQ(buf.str(), "test-rocket-cl: error: missing value for option `-n`\n");
   }
 
   // Test error when conversion fails
@@ -460,7 +460,7 @@ TEST(MODULE, parseOptionI32) {
     args = nullopt;
     nio::StringSink buf;
     EXPECT_FALSE(cl.parse({ "a", "-n", "hello" }, buf, buf, false));
-    EXPECT_EQ(buf.str(), "test-rocket-cl: error: Option `-n`: Cannot scan \"hello\" as `int`; expected number\n");
+    EXPECT_EQ(buf.str(), "test-rocket-cl: error: option `-n`: cannot scan \"hello\" as `int`; expected number\n");
   }
 }
 
@@ -487,7 +487,7 @@ TEST(MODULE, parseOptionEnum) {
     level = log::LogLevel::none; // NOLINT
     nio::StringSink buf;
     EXPECT_FALSE(cl.parse({ "a", "-l", "nonsense" }, buf, buf, false));
-    EXPECT_EQ(buf.str(), "test-rocket-cl: error: Option `-l`: Cannot scan \"nonsense\" as `rocket::log::LogLevel`\n");
+    EXPECT_EQ(buf.str(), "test-rocket-cl: error: option `-l`: cannot scan \"nonsense\" as `rocket::log::LogLevel`\n");
   }
 }
 
@@ -625,7 +625,7 @@ TEST(MODULE, argFiles) {
     nio::StringSink buf;
     EXPECT_FALSE(parse({ "@" + self }, args, buf));
     EXPECT_TRUE(
-      buf.str().contains(fmt::format("Argument file `{0}` includes itself: `{0}` -> `{0}`", self)))
+      buf.str().contains(fmt::format("argument file `{0}` includes itself: `{0}` -> `{0}`", self)))
       << buf.str();
   }
 

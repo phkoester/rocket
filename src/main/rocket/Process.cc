@@ -139,7 +139,7 @@ localeFromEnvironment(nio::Sink& err) {
   if (auto ret = tryLocale("")) {
     return *ret;
   }
-  rocket::process().warn(err, "Cannot use the locale from the environment; using the classic locale instead");
+  rocket::process().warn(err, "cannot use the locale from the environment; using the classic locale instead");
   return locale::classic();
 }
 
@@ -173,7 +173,7 @@ const vector<string>&
 Process::args() const {
   ROCKET_MUTEX_LOCK(processMutex);
 
-  ROCKET_ASSERT(inited_, "Process not initialized");
+  ROCKET_ASSERT(inited_, "process not initialized");
   return args_;
 }
 
@@ -230,7 +230,7 @@ Process::init(
   ROCKET_MUTEX_LOCK(processMutex);
 
   ROCKET_ASSERT(this_thread::get_id() == MAIN_THREAD_ID, "`Process::init` must be called in the main thread");
-  ROCKET_ASSERT(not inited_, "Process already initialized");
+  ROCKET_ASSERT(not inited_, "process already initialized");
 
   // Set given locale, if any, otherwise the locale from the environment
 
@@ -267,7 +267,7 @@ const locale&
 Process::initLocale() const {
   ROCKET_MUTEX_LOCK(processMutex);
 
-  ROCKET_ASSERT(inited_, "Process not initialized");
+  ROCKET_ASSERT(inited_, "process not initialized");
   return initLocale_;
 }
 
@@ -295,7 +295,7 @@ const string&
 Process::name() const {
   ROCKET_MUTEX_LOCK(processMutex);
 
-  ROCKET_ASSERT(inited_, "Process not initialized");
+  ROCKET_ASSERT(inited_, "process not initialized");
   return name_;
 }
 

@@ -75,16 +75,16 @@ loadSvg(string_view name, const wxSize& size) {
   wxFileSystem fs;
   string path = "memory:XRC_resource/resource.cc$"s.append(name);
   const unique_ptr<wxFSFile> file { fs.OpenFile(path) };
-  ROCKET_EXPECT(file != nullptr, "Cannot open file `{}`", path);
+  ROCKET_EXPECT(file != nullptr, "cannot open file `{}`", path);
 
   wxInputStream& stream = *file->GetStream();
   const wxFileOffset streamLen = stream.GetLength();
-  ROCKET_EXPECT(streamLen > 0, "Cannot read stream");
+  ROCKET_EXPECT(streamLen > 0, "cannot read stream");
   const auto len = static_cast<size_t>(streamLen);
   wxCharBuffer buf(len);
-  ROCKET_EXPECT(stream.ReadAll(buf.data(), len), "Cannot read stream");
+  ROCKET_EXPECT(stream.ReadAll(buf.data(), len), "cannot read stream");
   auto ret = wxBitmapBundle::FromSVG(buf.data(), size);
-  ROCKET_EXPECT(ret.IsOk(), "Cannot make bitmap bundle from SVG");
+  ROCKET_EXPECT(ret.IsOk(), "cannot make bitmap bundle from SVG");
   return ret;
 }
 
@@ -93,7 +93,7 @@ wxBitmapBundle
 makeDisabled(const wxBitmapBundle& bundle) {
   ROCKET_CHECK(bundle, bundle.IsOk());
   auto ret = wxBitmapBundle::FromImpl(new DisabledBitmapBundle(bundle)); // NOLINT
-  ROCKET_EXPECT(ret.IsOk(), "Cannot make disabled bitmap bundle");
+  ROCKET_EXPECT(ret.IsOk(), "cannot make disabled bitmap bundle");
   return ret;
 }
 

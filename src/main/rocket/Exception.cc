@@ -181,7 +181,7 @@ InvalidArgument::InvalidArgument(
   string_view msg,
   const optional<source_location>& sl,
   const optional<stacktrace>& st) :
-  Exception(fmt::format("Parameter `{}`: {}", name, msg), sl, st),
+  Exception(fmt::format("parameter `{}`: {}", name, msg), sl, st),
   invalid_argument(str::message::withSourceLocation(Exception::message(), Exception::sourceLocation())) {}
 
 // `InvalidState` -------------------------------------------------------------------------------------------

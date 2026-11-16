@@ -4,7 +4,6 @@
 
 #include "rocket-test/rocket-test.h"
 
-#include "rocket/Bimap-codec.h"
 #include "rocket/scope.h"
 #include "rocket/codec/JsonCodec.h"
 #include "rocket/chrono/chrono.h"
@@ -110,12 +109,12 @@ TEST(MODULE, ConsumerEnum) {
   enum Color : u8 { Red, Green, Blue };
   EXPECT_THAT(
     [] { encode(Blue); },
-    ThrowsMessage<InvalidState>(matchesRegex(".*Cannot format enum of type `.*Color`")));
+    ThrowsMessage<InvalidState>(matchesRegex(".*cannot format enum of type `.*Color`")));
 
   EXPECT_EQ(encode(log::LogLevel::info), "\"info\"");
   EXPECT_THAT(
     [&] { encode(static_cast<log::LogLevel>(-1)); }, // NOLINT
-    ThrowsMessage<InvalidState>(EndsWith("Invalid `rocket::log::LogLevel` value 255")));
+    ThrowsMessage<InvalidState>(EndsWith("invalid `rocket::log::LogLevel` value 255")));
 }
 
 TEST(MODULE, ConsumerIntegerI64) {
@@ -350,16 +349,16 @@ TEST(MODULE, ProducerBool) {
   EXPECT_EQ(decode<bool>("  /* comment\nanother line in the comment */\r\n\ttrue"), true);
   EXPECT_EQ(decode<bool>("\r\n  true"), true);
   EXPECT_EQ(decode<bool>("false"), false);
-  EXPECT_EQ(decode<bool>("\r\nx").error().message, "Expected a boolean value");
+  EXPECT_EQ(decode<bool>("\r\nx").error().message, "expected a boolean value");
 }
 
 TEST(MODULE, ProducerChar) {
   EXPECT_EQ(decode<char>("\"a\""), 'a');
   EXPECT_EQ(decode<char>("\"'\""), '\'');
   EXPECT_EQ(decode<char>("\"\\t\""), '\t');
-  EXPECT_EQ(decode<char>("  \"ä\"").error().message, "Invalid character literal");
+  EXPECT_EQ(decode<char>("  \"ä\"").error().message, "invalid character literal");
 
-  EXPECT_EQ(decode<char>("  \"\\xFF\"").error().message, "Invalid character literal");
+  EXPECT_EQ(decode<char>("  \"\\xFF\"").error().message, "invalid character literal");
 }
 
 TEST(MODULE, ProducerChar32) {
@@ -368,7 +367,7 @@ TEST(MODULE, ProducerChar32) {
   EXPECT_EQ(decode<char32>("\"\\U0010FFFF\""), U'\U0010FFFF');
   EXPECT_EQ(decode<char32>("\"€\""), U'€');
 
-  EXPECT_EQ(decode<char32>("  \"\\x800D\"").error().message, "Invalid character literal");
+  EXPECT_EQ(decode<char32>("  \"\\x800D\"").error().message, "invalid character literal");
 }
 
 TEST(MODULE, ProducerCharSlash) {
@@ -384,12 +383,12 @@ TEST(MODULE, ProducerChar32SurrogatePair) {
 TEST(MODULE, ProducerEnum) {
   enum Color : u8 { Red, Green, Blue };
 
-  EXPECT_THAT(decode<Color>("2").error().message, matchesRegex("Cannot scan enum of type `.*Color`"));
+  EXPECT_THAT(decode<Color>("2").error().message, matchesRegex("cannot scan enum of type `.*Color`"));
 
   EXPECT_EQ(decode<log::LogLevel>("  \"info\"  "), log::LogLevel::info);
   EXPECT_EQ(
     decode<log::LogLevel>("\"bogus\"").error().message,
-    "Invalid value for enum `rocket::log::LogLevel`");
+    "invalid value for enum `rocket::log::LogLevel`");
 }
 
 TEST(MODULE, ProducerInteger) {
@@ -399,7 +398,7 @@ TEST(MODULE, ProducerInteger) {
   EXPECT_EQ(decode<i32>("0o123"), 0123);
   EXPECT_EQ(decode<i32>("0b1010101"), 0b1010101);
 
-  EXPECT_EQ(decode<i32>("  x").error().message, "Expected an integer value");
+  EXPECT_EQ(decode<i32>("  x").error().message, "expected an integer value");
 }
 
 TEST(MODULE, ProducerFloat) {
@@ -442,7 +441,7 @@ TEST(MODULE, ProducerStringBmpEscapesAroundSurrogates) {
 }
 
 TEST(MODULE, ProducerInvalidUtf8) {
-  constexpr string_view MESSAGE = "Invalid UTF-8 byte sequence";
+  constexpr string_view MESSAGE = "invalid UTF-8 byte sequence";
 
   EXPECT_EQ(decode<string>("\"a\xFF\"").error().message, MESSAGE);
   EXPECT_EQ(decode<string>("\"\xE2\x82\"").error().message, MESSAGE); // Truncated sequence
@@ -461,7 +460,7 @@ TEST(MODULE, ProducerStringUnpairedSurrogate) {
   EXPECT_EQ(decode<string>(R"("\uDD71")").error().message, MESSAGE); // Low surrogate on its own
   EXPECT_EQ(decode<string>(R"("\uDD71\uD83E")").error().message, MESSAGE); // Pair in the wrong order
 
-  EXPECT_EQ(decode<string>(R"("\uD83E\uDD")").error().message, "Expected 4 hexadecimal digits, got EOI");
+  EXPECT_EQ(decode<string>(R"("\uD83E\uDD")").error().message, "expected 4 hexadecimal digits, got EOI");
 }
 
 TEST(MODULE, StringEscapesRoundtrip) {
@@ -516,28 +515,28 @@ TEST(MODULE, ProducerMap) {
 }
 
 TEST(MODULE, ProducerBimap) {
-  using type = Bimap<string, i32>;
+  using type = bimap<string, i32>;
   // Test last one wins
   EXPECT_EQ(
     (decode<type>(
       "  { \"alpha\"\t: 1, \"beta\"  :/* comment */ 2, \"gamma\": 4, \"gamma\": 3  ,  }   ")),
-    (makeBimap<string, i32>({ { "alpha", 1 }, { "beta", 2 }, { "gamma", 3 } })));
+    (make_bimap<string, i32>({ { "alpha", 1 }, { "beta", 2 }, { "gamma", 3 } })));
   // Also for a value that is already mapped from another key
   EXPECT_EQ(
     (decode<type>("{ \"alpha\": 1, \"beta\": 2, \"gamma\": 1 }")),
-    (makeBimap<string, i32>({ { "beta", 2 }, { "gamma", 1 } })));
+    (make_bimap<string, i32>({ { "beta", 2 }, { "gamma", 1 } })));
 }
 
 TEST(MODULE, ProducerBimapUnordered) {
-  using type = UnorderedBimap<string, i32>;
+  using type = unordered_bimap<string, i32>;
   // Test last one wins
   EXPECT_EQ(
     (decode<type>("  { \"alpha\"\t: 1, \"beta\"  :/* comment */ 2, \"gamma\": 4, \"gamma\": 3  ,  }   ")),
-    (makeUnorderedBimap<string, i32>({ { "alpha", 1 }, { "beta", 2 }, { "gamma", 3 } })));
+    (make_unordered_bimap<string, i32>({ { "alpha", 1 }, { "beta", 2 }, { "gamma", 3 } })));
   // Also for a value that is already mapped from another key
   EXPECT_EQ(
     (decode<type>("{ \"alpha\": 1, \"beta\": 2, \"gamma\": 1 }")),
-    (makeUnorderedBimap<string, i32>({ { "beta", 2 }, { "gamma", 1 } })));
+    (make_unordered_bimap<string, i32>({ { "beta", 2 }, { "gamma", 1 } })));
 }
 
 TEST(MODULE, ProducerDuration) {
@@ -549,9 +548,9 @@ TEST(MODULE, ProducerDuration) {
 
   EXPECT_EQ(decode<seconds>("\"1000ms\""), 1s);
 
-  EXPECT_EQ(decode<seconds>("x").error().message, "Expected a string");
-  EXPECT_EQ(decode<seconds>("\"x\"").error().message, "Expected a duration");
-  EXPECT_EQ(decode<seconds>("\"10x\"").error().message, "Expected a time unit");
+  EXPECT_EQ(decode<seconds>("x").error().message, "expected a string");
+  EXPECT_EQ(decode<seconds>("\"x\"").error().message, "expected a duration");
+  EXPECT_EQ(decode<seconds>("\"10x\"").error().message, "expected a time unit");
   // The failure is reported where the unit should have started
   EXPECT_EQ(decode<seconds>("\"10x\"").error().position, 3);
   EXPECT_EQ(decode<seconds>("\"10mix\"").error().position, 3);
@@ -560,9 +559,9 @@ TEST(MODULE, ProducerDuration) {
   EXPECT_EQ(decode<nanoseconds>("\"292y\""), duration_cast<nanoseconds>(years(292)));
   EXPECT_EQ(decode<nanoseconds>("\"9223372036854775807ns\""), nanoseconds::max());
   EXPECT_EQ(decode<nanoseconds>("\"-9223372036854775808ns\""), nanoseconds::min());
-  expectFailure<nanoseconds>("  \"300y\"", "Duration out of range", 3);
-  expectFailure<nanoseconds>("  \"-300y\"", "Duration out of range", 3);
-  expectFailure<duration<i32, std::milli>>("  \"3000h\"", "Duration out of range", 3);
+  expectFailure<nanoseconds>("  \"300y\"", "duration out of range", 3);
+  expectFailure<nanoseconds>("  \"-300y\"", "duration out of range", 3);
+  expectFailure<duration<i32, std::milli>>("  \"3000h\"", "duration out of range", 3);
 
   // A floating-point representation cannot overflow
   EXPECT_TRUE((decode<duration<f32, std::nano>>("\"300y\"")));
@@ -570,7 +569,7 @@ TEST(MODULE, ProducerDuration) {
 
 TEST(MODULE, ProducerEscapeFailurePosition) {
   using Map = map<string, string>;
-  constexpr string_view INVALID_ESCAPE = "Invalid escape sequence";
+  constexpr string_view INVALID_ESCAPE = "invalid escape sequence";
 
   expectFailure<string>("  \"\\q\"", INVALID_ESCAPE, 3, { { 3, 5 } });
   expectFailure<char>("  \"\\q\"", INVALID_ESCAPE, 3, { { 3, 5 } });
@@ -580,12 +579,12 @@ TEST(MODULE, ProducerEscapeFailurePosition) {
   expectFailure<std::chrono::seconds>(" \"\\q\"", INVALID_ESCAPE, 2, { { 2, 4 } });
 
   expectFailure<string>(R"("\uDD71")", "Unpaired surrogate in escape sequence", 1, { { 1, 7 } });
-  expectFailure<string>("  \"a\xFF\"", "Invalid UTF-8 byte sequence", 4);
+  expectFailure<string>("  \"a\xFF\"", "invalid UTF-8 byte sequence", 4);
 }
 
 TEST(MODULE, ProducerKeyFailureRanges) {
   using Map = map<pair<i32, i32>, i32>;
-  constexpr string_view UNTERMINATED = "Unterminated array";
+  constexpr string_view UNTERMINATED = "unterminated array";
 
   expectFailure<Map>("{\"[1, 2\": 3}", UNTERMINATED, 7, { { 2, 7 } });
 
@@ -597,7 +596,7 @@ TEST(MODULE, ProducerUnexpectedInputAfterValue) {
   using namespace std::chrono;
   using TimePoint = time_point<system_clock, nanoseconds>;
   using ZonedTime = rocket::chrono::zoned_time<nanoseconds>;
-  constexpr string_view UNEXPECTED = "Unexpected input after value";
+  constexpr string_view UNEXPECTED = "unexpected input after value";
 
   expectFailure<seconds>("\"5s!\"", UNEXPECTED, 3, { { 3, 4 } });
   expectFailure<seconds>("  \"5s!\"", UNEXPECTED, 5, { { 5, 6 } });
@@ -625,19 +624,19 @@ TEST(MODULE, ProducerFailureInsideCluster) {
   // The reported position is the start of the cluster
 
   const auto simple = decode<seconds>("\"5\u0301\"");
-  EXPECT_EQ(simple.error().message, "Expected a time unit");
+  EXPECT_EQ(simple.error().message, "expected a time unit");
   EXPECT_EQ(simple.error().position, 1U);
 
   const auto indented = decode<seconds>("  \"5\u0301\"");
-  EXPECT_EQ(indented.error().message, "Expected a time unit");
+  EXPECT_EQ(indented.error().message, "expected a time unit");
   EXPECT_EQ(indented.error().position, 3U);
 
   const auto afterEscape = decode<seconds>("\"\\u00355\u0301\"");
-  EXPECT_EQ(afterEscape.error().message, "Expected a time unit");
+  EXPECT_EQ(afterEscape.error().message, "expected a time unit");
   EXPECT_EQ(afterEscape.error().position, 7U);
 
   const auto rethrown = decode<hh_mm_ss<milliseconds>>("\"01:02:03.\u0301\"");
-  EXPECT_EQ(rethrown.error().message, "Expected subseconds");
+  EXPECT_EQ(rethrown.error().message, "expected subseconds");
   EXPECT_EQ(rethrown.error().position, 9U);
 }
 
@@ -646,11 +645,11 @@ TEST(MODULE, ProducerFailureInsideClusterOutsideString) {
 
   // A digit and U+0301 (COMBINING ACUTE ACCENT) form one cluster, so these failures lie inside it. The
   // reported positions are the starts of the clusters
-  expectFailure<Pair>("[1́, 2]", "Expected ','", 1);
-  expectFailure<Pair>("[1, 2́", "Unterminated array", 4, { { 0, 4 } });
+  expectFailure<Pair>("[1́, 2]", "expected ','", 1);
+  expectFailure<Pair>("[1, 2́", "unterminated array", 4, { { 0, 4 } });
 
   // A failure at a cluster boundary stays where it is
-  expectFailure<Pair>("[1; 2]", "Expected ','", 2);
+  expectFailure<Pair>("[1; 2]", "expected ','", 2);
 
   // The source stays where the failure occurred
   EXPECT_EQ(decodeAndTell<Pair>("[1́, 2]").second, 2U);
@@ -669,9 +668,9 @@ TEST(MODULE, ProducerFailureInsideClusterOutsideString) {
 TEST(MODULE, ProducerCodePointInvalid) {
   using CodePoint = unicode::CodePoint;
 
-  expectFailure<CodePoint>("  \"U+110000\"", "Invalid code-point value 0x110000", 2);
-  expectFailure<CodePoint>("  \"U+D800\"", "Invalid code-point value 0xD800", 2);
-  expectFailure<pair<i32, CodePoint>>("[1, \"U+110000\"]", "Invalid code-point value 0x110000", 4);
+  expectFailure<CodePoint>("  \"U+110000\"", "invalid code-point value 0x110000", 2);
+  expectFailure<CodePoint>("  \"U+D800\"", "invalid code-point value 0xD800", 2);
+  expectFailure<pair<i32, CodePoint>>("[1, \"U+110000\"]", "invalid code-point value 0x110000", 4);
 }
 
 TEST(MODULE, ProducerCharacter) {
@@ -682,11 +681,11 @@ TEST(MODULE, ProducerCharacter) {
   EXPECT_EQ(static_cast<string_view>(decodeInto(view, "\"a\"").value()), "a");
 
   const auto empty = decodeInto(character, "  \"\"");
-  EXPECT_EQ(empty.error().message, "Expected a character");
+  EXPECT_EQ(empty.error().message, "expected a character");
   EXPECT_EQ(empty.error().position, 2U);
 
   const auto emptyView = decodeInto(view, "\"\"");
-  EXPECT_EQ(emptyView.error().message, "Expected a character");
+  EXPECT_EQ(emptyView.error().message, "expected a character");
   EXPECT_EQ(emptyView.error().position, 0U);
 }
 
@@ -713,17 +712,17 @@ TEST(MODULE, ProducerHourMinuteSecond) {
   EXPECT_EQ(decode<hh_mm_ss<seconds>>("\" -01:02:03\"").value().to_duration(), -(1h + 2min + 3s));
   EXPECT_EQ(decode<hh_mm_ss<seconds>>("\"\\t-01:02:03\"").value().to_duration(), -(1h + 2min + 3s));
 
-  EXPECT_EQ(decode<hh_mm_ss<milliseconds>>("x").error().message, "Expected a string");
-  EXPECT_EQ(decode<hh_mm_ss<milliseconds>>("\"x\"").error().message, "Expected an hour, minute, and second");
+  EXPECT_EQ(decode<hh_mm_ss<milliseconds>>("x").error().message, "expected a string");
+  EXPECT_EQ(decode<hh_mm_ss<milliseconds>>("\"x\"").error().message, "expected an hour, minute, and second");
   EXPECT_EQ(
     decode<hh_mm_ss<milliseconds>>("\"01:02:\"").error().message,
-    "Expected an hour, minute, and second");
-  EXPECT_EQ(decode<hh_mm_ss<milliseconds>>("\"01:02:03.\"").error().message, "Expected subseconds");
+    "expected an hour, minute, and second");
+  EXPECT_EQ(decode<hh_mm_ss<milliseconds>>("\"01:02:03.\"").error().message, "expected subseconds");
 }
 
 TEST(MODULE, ProducerHourMinuteSecondInvalid) {
   using namespace std::chrono;
-  constexpr string_view INVALID = "Invalid hour, minute, or second";
+  constexpr string_view INVALID = "invalid hour, minute, or second";
 
   expectFailure<hh_mm_ss<seconds>>("\"01:60:00\"", INVALID, 1);
   expectFailure<hh_mm_ss<seconds>>("\"01:00:60\"", INVALID, 1);
@@ -741,7 +740,7 @@ TEST(MODULE, ProducerHourMinuteSecondInvalid) {
 
 TEST(MODULE, ProducerDateInvalid) {
   using namespace std::chrono;
-  constexpr string_view INVALID = "Invalid date";
+  constexpr string_view INVALID = "invalid date";
 
   expectFailure<year_month_day>("\"2026-13-01\"", INVALID, 1);
   expectFailure<year_month_day>("\"2026-00-01\"", INVALID, 1);
@@ -765,8 +764,8 @@ TEST(MODULE, ProducerDate) {
   EXPECT_EQ(decode<year_month_day>("\"1970-01-02\""), (year_month_day { 1970y, January, 2d }));
   EXPECT_EQ(decode<year_month_day>("\"-100-01-02\""), (year_month_day { -100y, January, 2d }));
 
-  EXPECT_EQ(decode<year_month_day>("x").error().message, "Expected a string");
-  EXPECT_EQ(decode<year_month_day>("\"x\"").error().message, "Expected a date");
+  EXPECT_EQ(decode<year_month_day>("x").error().message, "expected a string");
+  EXPECT_EQ(decode<year_month_day>("\"x\"").error().message, "expected a date");
 }
 
 TEST(MODULE, ProducerTimeZone) {
@@ -775,7 +774,7 @@ TEST(MODULE, ProducerTimeZone) {
   EXPECT_EQ(decode<TimeZone>("\"Europe/Berlin\""), rocket::chrono::locate_zone("Europe/Berlin"));
   EXPECT_EQ(decode<TimeZone>(R"("Europe\/Berlin")"), rocket::chrono::locate_zone("Europe/Berlin"));
   EXPECT_EQ(decode<TimeZone>("\"UTC\""), rocket::chrono::locate_zone("UTC"));
-  EXPECT_EQ(decode<TimeZone>("x").error().message, "Expected a string");
+  EXPECT_EQ(decode<TimeZone>("x").error().message, "expected a string");
 
   EXPECT_THAT(decode<TimeZone>("\"x\"").error().message, AnyOf(
     EndsWith("cannot locate zone: x"), // Linux, macOS
@@ -816,7 +815,7 @@ TEST(MODULE, ProducerZonedTime) {
 TEST(MODULE, ProducerZonedTimeUtcOffset) {
   using namespace std::chrono;
   using ZonedTime = rocket::chrono::zoned_time<nanoseconds>;
-  constexpr string_view INVALID = "Invalid UTC offset";
+  constexpr string_view INVALID = "invalid UTC offset";
 
   expectFailure<ZonedTime>("\"2026-10-07T11:21:00+24:00 (Europe/Berlin)\"", INVALID, 20);
   expectFailure<ZonedTime>("\"2026-10-07T11:21:00-24:00 (Europe/Berlin)\"", INVALID, 20);
@@ -835,8 +834,8 @@ TEST(MODULE, ProducerZonedTimeTimeZone) {
   using ZonedTime = rocket::chrono::zoned_time<nanoseconds>;
 
   // Failures in the time zone are reported at the opening parenthesis, in the outer input
-  expectFailure<ZonedTime>("\"2026-10-07T11:21:00Z (Europe/Berlin\"", "Unterminated time-zone name", 22);
-  expectFailure<ZonedTime>("  \"2026-10-07T11:21:00Z (Europe/Berlin\"", "Unterminated time-zone name", 24);
+  expectFailure<ZonedTime>("\"2026-10-07T11:21:00Z (Europe/Berlin\"", "unterminated time-zone name", 22);
+  expectFailure<ZonedTime>("  \"2026-10-07T11:21:00Z (Europe/Berlin\"", "unterminated time-zone name", 24);
 
   const auto result = decode<ZonedTime>("\"2026-10-07T11:21:00+01:00 (Nowhere/Nothing)\"");
   ASSERT_FALSE(result.has_value());
@@ -890,7 +889,7 @@ TEST(MODULE, ProducerTimeIndependentOfLocalZone) {
   }
 
   // `std::mktime` would have moved this to March 2
-  expectFailure<TimePoint>("\"2026-02-30T12:00:00Z\"", "Expected a time point", 1);
+  expectFailure<TimePoint>("\"2026-02-30T12:00:00Z\"", "expected a time point", 1);
 }
 
 TEST(MODULE, ProducerInterval) {
@@ -921,7 +920,7 @@ TEST(MODULE, ProducerDeclared) {
   EXPECT_EQ((decode<MyStruct>("{}")), (MyStruct {}));
 
   // Unknown members are an error
-  EXPECT_EQ(decode<MyStruct>("{\"ärger\": 42, \"bogus\": 1}").error().message, "Unknown member `bogus`");
+  EXPECT_EQ(decode<MyStruct>("{\"ärger\": 42, \"bogus\": 1}").error().message, "unknown member `bogus`");
 }
 
 TEST(MODULE, ProducerDeclaredFileSource) {
@@ -944,7 +943,7 @@ TEST(MODULE, ProducerDeclaredFileSource) {
     };
     const auto result = loc::locations(input, { pos }, { .setLineString=true, .source=path.string() });
     loc::printLocations(nio::out, input, result, { .styled=true });
-    throw InvalidState("Cannot decode `MyStruct`");
+    throw InvalidState("cannot decode `MyStruct`");
   }
 
   const MyStruct& val = result.value();

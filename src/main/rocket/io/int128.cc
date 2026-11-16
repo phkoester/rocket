@@ -1,8 +1,8 @@
 /*
- * io-int128.cc
+ * int128.cc
  */
 
-#include "rocket/io/io-int128.h"
+#include "rocket/io/int128.h"
 
 #include <array>
 #include <concepts>
@@ -18,13 +18,11 @@
 using namespace rocket;
 using namespace std;
 
-#ifndef ROCKET_HAS_INT128_OP_IO
-
 // Support for 128-bit data types ---------------------------------------------------------------------------
 
 // These follow the standard extractors and inserters for integers (`num_get` and `num_put`), as implemented
-// by libstdc++, including the digit grouping of the stream's locale. With the MSVC STL, the extractors follow
-// its `num_get` instead, which treats thousands separators differently
+// by libstdc++, including the digit grouping of the stream's locale. With the MSVC STL, the extractors
+// follow its `num_get` instead, which treats thousands separators differently
 
 namespace {
 
@@ -555,7 +553,5 @@ ostream&
 operator<<(ostream& lhs, u128 rhs) {
   return insertInteger(lhs, rhs);
 }
-
-#endif // ROCKET_HAS_INT128_OP_IO
 
 // EOF

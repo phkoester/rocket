@@ -29,17 +29,17 @@ TEST(MODULE, open) {
   const auto temp = rocket::filesystem::tempFile();
 
   {
-    const FilePtr file(io::open(temp, "wb"));
+    const FilePtr file(io::file::open(temp, "wb"));
     ASSERT_NE(file, nullptr);
     EXPECT_EQ(fwrite("abc", 1, 3, file.get()), 3);
   }
   {
-    const FilePtr file(io::open(temp, "ab")); // Appends
+    const FilePtr file(io::file::open(temp, "ab")); // Appends
     ASSERT_NE(file, nullptr);
     EXPECT_EQ(fwrite("de", 1, 2, file.get()), 2);
   }
   {
-    const FilePtr file(io::open(temp, "rb"));
+    const FilePtr file(io::file::open(temp, "rb"));
     ASSERT_NE(file, nullptr);
     array<char, 8> buf {};
     EXPECT_EQ(fread(buf.data(), 1, buf.size(), file.get()), 5);
@@ -49,50 +49,50 @@ TEST(MODULE, open) {
   // A path with characters outside ASCII, which on Windows are passed to the C runtime as a wide string
   const auto unicode = temp.parent_path() / (temp.filename().string() + " ä€\U0001F600");
   {
-    const FilePtr file(io::open(unicode, "wb"));
+    const FilePtr file(io::file::open(unicode, "wb"));
     ASSERT_NE(file, nullptr);
   }
   EXPECT_TRUE(std::filesystem::exists(unicode));
   std::filesystem::remove(unicode);
 
   // Errors
-  EXPECT_EQ(io::open("/does/not/exist", "rb"), nullptr);
-  EXPECT_EQ(io::open(temp.parent_path() / "does-not-exist", "rb"), nullptr);
+  EXPECT_EQ(io::file::open("/does/not/exist", "rb"), nullptr);
+  EXPECT_EQ(io::file::open(temp.parent_path() / "does-not-exist", "rb"), nullptr);
 }
 
 TEST(MODULE, seekAndTellFile) {
   const auto temp = rocket::filesystem::tempFile();
   {
-    const FilePtr file(io::open(temp, "wb"));
+    const FilePtr file(io::file::open(temp, "wb"));
     ASSERT_NE(file, nullptr);
     fwrite("0123456789", 1, 10, file.get());
   }
 
-  const FilePtr file(io::open(temp, "rb"));
+  const FilePtr file(io::file::open(temp, "rb"));
   ASSERT_NE(file, nullptr);
-  EXPECT_TRUE(io::seekable(file.get()));
-  EXPECT_EQ(io::tell(file.get()), 0);
+  EXPECT_TRUE(io::file::seekable(file.get()));
+  EXPECT_EQ(io::file::tell(file.get()), 0);
 
-  EXPECT_TRUE(io::seek(file.get(), 3, SEEK_SET));
-  EXPECT_EQ(io::tell(file.get()), 3);
+  EXPECT_TRUE(io::file::seek(file.get(), 3, SEEK_SET));
+  EXPECT_EQ(io::file::tell(file.get()), 3);
   EXPECT_EQ(fgetc(file.get()), '3');
-  EXPECT_EQ(io::tell(file.get()), 4);
-  EXPECT_TRUE(io::seek(file.get(), -2, SEEK_CUR));
-  EXPECT_EQ(io::tell(file.get()), 2);
-  EXPECT_TRUE(io::seek(file.get(), -1, SEEK_END));
-  EXPECT_EQ(io::tell(file.get()), 9);
+  EXPECT_EQ(io::file::tell(file.get()), 4);
+  EXPECT_TRUE(io::file::seek(file.get(), -2, SEEK_CUR));
+  EXPECT_EQ(io::file::tell(file.get()), 2);
+  EXPECT_TRUE(io::file::seek(file.get(), -1, SEEK_END));
+  EXPECT_EQ(io::file::tell(file.get()), 9);
   EXPECT_EQ(fgetc(file.get()), '9');
   EXPECT_EQ(fgetc(file.get()), EOF);
   EXPECT_TRUE(feof(file.get()));
-  EXPECT_TRUE(io::seek(file.get(), 0, SEEK_SET)); // Clears the end-of-file indicator
+  EXPECT_TRUE(io::file::seek(file.get(), 0, SEEK_SET)); // Clears the end-of-file indicator
   EXPECT_FALSE(feof(file.get()));
-  EXPECT_EQ(io::tell(file.get()), 0);
+  EXPECT_EQ(io::file::tell(file.get()), 0);
 
   // Seeking before the beginning fails, and sets `errno`
   errno = 0;
-  EXPECT_FALSE(io::seek(file.get(), -1, SEEK_SET));
+  EXPECT_FALSE(io::file::seek(file.get(), -1, SEEK_SET));
   EXPECT_NE(errno, 0);
-  EXPECT_EQ(io::tell(file.get()), 0);
+  EXPECT_EQ(io::file::tell(file.get()), 0);
 }
 
 #ifndef ROCKET_OS_WINDOWS
@@ -106,13 +106,13 @@ TEST(MODULE, seekAndTellPipe) {
   ASSERT_NE(file, nullptr);
 
   // A pipe is not seekable, has no position, and seeking fails without consuming anything
-  EXPECT_FALSE(io::seekable(file.get()));
-  EXPECT_EQ(io::tell(file.get()), NPOS);
+  EXPECT_FALSE(io::file::seekable(file.get()));
+  EXPECT_EQ(io::file::tell(file.get()), NPOS);
   errno = 0;
-  EXPECT_FALSE(io::seek(file.get(), 0, SEEK_SET));
+  EXPECT_FALSE(io::file::seek(file.get(), 0, SEEK_SET));
   EXPECT_EQ(errno, ESPIPE);
   EXPECT_EQ(fgetc(file.get()), 'a');
-  EXPECT_EQ(io::tell(file.get()), NPOS);
+  EXPECT_EQ(io::file::tell(file.get()), NPOS);
 }
 
 TEST(MODULE, seekAndTellMemoryStream) {
@@ -120,9 +120,9 @@ TEST(MODULE, seekAndTellMemoryStream) {
   string buf = "abcdef";
   const FilePtr file(fmemopen(buf.data(), buf.size(), "rb"));
   ASSERT_NE(file, nullptr);
-  EXPECT_TRUE(io::seekable(file.get()));
-  EXPECT_TRUE(io::seek(file.get(), 4, SEEK_SET));
-  EXPECT_EQ(io::tell(file.get()), 4);
+  EXPECT_TRUE(io::file::seekable(file.get()));
+  EXPECT_TRUE(io::file::seek(file.get(), 4, SEEK_SET));
+  EXPECT_EQ(io::file::tell(file.get()), 4);
   EXPECT_EQ(fgetc(file.get()), 'e');
 }
 

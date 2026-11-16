@@ -26,6 +26,8 @@ namespace rocket::io {
 
 // Functions working with `FILE` pointers -------------------------------------------------------------------
 
+namespace file {
+
 FILE*
 open(const filesystem::path& path, std::string_view modes) {
 #ifdef ROCKET_OS_WINDOWS
@@ -102,7 +104,11 @@ tell(FILE* file) {
   return result < 0 ? NPOS : static_cast<u64>(result);
 }
 
+} // namespace file
+
 // Functions working with streams ---------------------------------------------------------------------------
+
+namespace stream {
 
 bool
 seekable(istream& is) noexcept {
@@ -115,7 +121,8 @@ seekable(ostream& os) noexcept {
   // macOS, they may report a meaningless position for a pipe or a terminal, so ask the `FILE` as well. Do so
   // first: with `sync_with_stdio`, asking the stream buffer seeks the `FILE`, which flushes it and may set
   // `errno`
-  if ((&os == &cout && not seekable(stdout)) || ((&os == &cerr || &os == &clog) && not seekable(stderr))) {
+  if ((&os == &cout && not file::seekable(stdout)) ||
+    ((&os == &cerr || &os == &clog) && not file::seekable(stderr))) {
     return false;
   }
 
@@ -135,7 +142,7 @@ tell(istream& is) noexcept {
   // The stream buffer of `cin` is backed by `stdin`. On Windows and macOS, it may report a meaningless
   // position for a pipe or a terminal, so ask `stdin` as well. Do so first: with `sync_with_stdio`, asking
   // the stream buffer seeks `stdin`, which may set `errno`
-  if (&is == &cin && not seekable(stdin)) {
+  if (&is == &cin && not file::seekable(stdin)) {
     return NPOS;
   }
 
@@ -157,6 +164,8 @@ tell(istream& is) noexcept {
   }
   return static_cast<u64>(streamoff(result));
 }
+
+} // namespace stream
 
 } // namespace rocket::io
 

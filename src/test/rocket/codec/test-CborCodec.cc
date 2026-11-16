@@ -4,7 +4,6 @@
 
 #include "rocket-test/rocket-test.h"
 
-#include "rocket/Bimap-codec.h"
 #include "rocket/chrono/chrono.h"
 #include "rocket/codec/CborCodec.h"
 #include "rocket/log/log.h"
@@ -79,7 +78,7 @@ void
 testCharacter(const T& val) {
   const auto result = cborCodec.decode<T>(cborCodec.encode(val));
   if (not result.has_value()) {
-    ROCKET_FAIL("Cannot decode character at position {}: {}\n",
+    ROCKET_FAIL("cannot decode character at position {}: {}\n",
       result.error().position, result.error().message);
   }
   EXPECT_EQ(static_cast<typename T::View>(result.value()), static_cast<typename T::View>(val));
@@ -91,7 +90,7 @@ testHourMinuteSecond(const T& val) {
   const auto result = cborCodec.decode<T>(cborCodec.encode(val));
   if (not result.has_value()) {
     ROCKET_FAIL(
-      "Cannot decode hour, minute, and second {} at position {}: {}\n",
+      "cannot decode hour, minute, and second {} at position {}: {}\n",
       val.to_duration().count(),
       result.error().position,
       result.error().message);
@@ -109,14 +108,14 @@ testRoundtrip(const T& val) { // NOLINT(*-complexity)
     const auto& error = result.error();
     if constexpr (std::same_as<T, std::u32string> || std::same_as<T, std::u32string_view>) {
       std::string utf8(unicode::ConvertTo<char>::apply(val));
-      ROCKET_FAIL("Cannot decode value \"{}\" at position {}: {}\n", utf8, error.position, error.message);
+      ROCKET_FAIL("cannot decode value \"{}\" at position {}: {}\n", utf8, error.position, error.message);
     } else if constexpr (std::same_as<T, char32>) {
-      ROCKET_FAIL("Cannot decode value {} at position {}: {}\n", static_cast<u32>(val), error.position, error.message);
+      ROCKET_FAIL("cannot decode value {} at position {}: {}\n", static_cast<u32>(val), error.position, error.message);
     } else if constexpr (not fmt::is_formattable<T>::value) {
       ROCKET_FAIL(
-        "Cannot decode value {} at position {}: {}\n", fmt::streamed(val), error.position, error.message);
+        "cannot decode value {} at position {}: {}\n", fmt::streamed(val), error.position, error.message);
     } else {
-      ROCKET_FAIL("Cannot decode value {} at position {}: {}\n", val, error.position, error.message);
+      ROCKET_FAIL("cannot decode value {} at position {}: {}\n", val, error.position, error.message);
     }
   }
   const T& decodedVal = result.value();
@@ -136,7 +135,7 @@ void
 testTimeZone(TimeZone zone) {
   const auto result = cborCodec.decode<TimeZone>(cborCodec.encode(zone));
   if (not result.has_value()) {
-    ROCKET_FAIL("Cannot decode time zone \"{}\" at position {}: {}\n",
+    ROCKET_FAIL("cannot decode time zone \"{}\" at position {}: {}\n",
       zone->name(), result.error().position, result.error().message);
   }
   EXPECT_EQ(result.value(), zone);
@@ -151,14 +150,14 @@ testVarRefs() {
 
   const auto decoded = cborCodec.decode<tuple<int, int, int>>(cborCodec.encode(refs));
   if (not decoded.has_value()) {
-    ROCKET_FAIL("Cannot decode variable references at position {}: {}\n",
+    ROCKET_FAIL("cannot decode variable references at position {}: {}\n",
       decoded.error().position, decoded.error().message);
   }
   EXPECT_EQ(decoded.value(), (tuple<int, int, int> { 0, 1, 2 }));
 
   const auto one = cborCodec.decode<int>(cborCodec.encode(std::get<1>(refs)));
   if (not one.has_value()) {
-    ROCKET_FAIL("Cannot decode variable reference at position {}: {}\n",
+    ROCKET_FAIL("cannot decode variable reference at position {}: {}\n",
       one.error().position, one.error().message);
   }
   EXPECT_EQ(one.value(), 1);
@@ -169,7 +168,7 @@ void
 testZonedTime(const T& val) {
   const auto result = cborCodec.decode<T>(cborCodec.encode(val));
   if (not result.has_value()) {
-    ROCKET_FAIL("Cannot decode zoned time at position {}: {}\n",
+    ROCKET_FAIL("cannot decode zoned time at position {}: {}\n",
       result.error().position, result.error().message);
   }
   EXPECT_EQ(result.value(), val);
@@ -325,7 +324,7 @@ TEST(MODULE, IntegerInvalid) {
     EXPECT_EQ(result.error().message, message);
     EXPECT_EQ(result.error().position, position);
   };
-  constexpr string_view OUT_OF_RANGE = "Integer value out of range";
+  constexpr string_view OUT_OF_RANGE = "integer value out of range";
 
   expectFailure({ 0x20 }, u32(), OUT_OF_RANGE, 0); // -1
   expectFailure({ 0x18, 0x80 }, i8(), OUT_OF_RANGE, 0); // 128
@@ -339,8 +338,8 @@ TEST(MODULE, IntegerInvalid) {
       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
     },
     u128(), OUT_OF_RANGE, 0);
-  expectFailure({ 0x61, 'a' }, i32(), "Expected an integer value", 0);
-  expectFailure({ 0xC4, 0x41, 0x05 }, i32(), "Expected an integer value", 0); // Tag 4 is no bignum
+  expectFailure({ 0x61, 'a' }, i32(), "expected an integer value", 0);
+  expectFailure({ 0xC4, 0x41, 0x05 }, i32(), "expected an integer value", 0); // Tag 4 is no bignum
 
   // Positions: the third byte holds 200, which is out of range for `i8`
   expectFailure({ 0x82, 0x01, 0x18, 0xC8 }, vector<i8>(), OUT_OF_RANGE, 2);
@@ -348,8 +347,8 @@ TEST(MODULE, IntegerInvalid) {
   expectFailure({ 0x82, 0xC2, 0x41, 0x05, 0x20 }, vector<u128>(), OUT_OF_RANGE, 4);
 
   // Characters
-  expectFailure({ 0x19, 0x01, 0x00 }, char(), "Expected a character", 0);
-  expectFailure({ 0x20 }, char32(), "Expected a character", 0);
+  expectFailure({ 0x19, 0x01, 0x00 }, char(), "expected a character", 0);
+  expectFailure({ 0x20 }, char32(), "expected a character", 0);
 }
 
 TEST(MODULE, Float) {
@@ -429,12 +428,12 @@ TEST(MODULE, Map) {
 }
 
 TEST(MODULE, Bimap) {
-  testRoundtrip(Bimap<i32, i32> {});
-  testRoundtrip(makeBimap<i32, string>({ { 1, "alpha" }, { 2, "beta" }, { 3, "gamma" } }));
-  testRoundtrip(makeBimap<string, i32>({ { "alpha", 1 }, { "beta", 2 } }));
+  testRoundtrip(bimap<i32, i32> {});
+  testRoundtrip(make_bimap<i32, string>({ { 1, "alpha" }, { 2, "beta" }, { 3, "gamma" } }));
+  testRoundtrip(make_bimap<string, i32>({ { "alpha", 1 }, { "beta", 2 } }));
 
-  testRoundtrip(UnorderedBimap<i32, i32> {});
-  testRoundtrip(makeUnorderedBimap<string, i32>({ { "alpha", 1 }, { "beta", 2 } }));
+  testRoundtrip(unordered_bimap<i32, i32> {});
+  testRoundtrip(make_unordered_bimap<string, i32>({ { "alpha", 1 }, { "beta", 2 } }));
 }
 
 TEST(MODULE, Duration) {
@@ -536,13 +535,13 @@ TEST(MODULE, CodePointInvalid) {
   // An array holding a valid code point at offset 1 and an invalid one at offset 6
   const vector<u8> tooLarge { 0x82, 0x1A, 0x00, 0x00, 0x00, 0x41, 0x1A, 0x00, 0x11, 0x00, 0x00 };
   const auto result1 = decode<vector<unicode::CodePoint>>(tooLarge);
-  EXPECT_EQ(result1.error().message, "Invalid code-point value 0x110000");
+  EXPECT_EQ(result1.error().message, "invalid code-point value 0x110000");
   EXPECT_EQ(result1.error().position, 6U);
 
   // The same with a surrogate
   const vector<u8> surrogate { 0x82, 0x1A, 0x00, 0x00, 0x00, 0x41, 0x1A, 0x00, 0x00, 0xD8, 0x00 };
   const auto result2 = decode<vector<unicode::CodePoint>>(surrogate);
-  EXPECT_EQ(result2.error().message, "Invalid code-point value 0xD800");
+  EXPECT_EQ(result2.error().message, "invalid code-point value 0xD800");
   EXPECT_EQ(result2.error().position, 6U);
 }
 
@@ -551,18 +550,18 @@ TEST(MODULE, CharacterEmpty) {
   const vector<u8> empty { 0x60 };
 
   const auto character = decode<unicode::Character<char>>(empty);
-  EXPECT_EQ(character.error().message, "Expected a character");
+  EXPECT_EQ(character.error().message, "expected a character");
   EXPECT_EQ(character.error().position, 0U);
 
   const auto view = decode<unicode::CharacterView<char>>(empty);
-  EXPECT_EQ(view.error().message, "Expected a character");
+  EXPECT_EQ(view.error().message, "expected a character");
   EXPECT_EQ(view.error().position, 0U);
 
   // An array holding the text string "a" and an empty text string
   const vector<u8> array { 0x82, 0x61, 'a', 0x60 };
 
   const auto list = decode<vector<unicode::Character<char>>>(array);
-  EXPECT_EQ(list.error().message, "Expected a character");
+  EXPECT_EQ(list.error().message, "expected a character");
   EXPECT_EQ(list.error().position, 3U);
 }
 

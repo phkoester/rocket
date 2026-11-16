@@ -230,7 +230,7 @@ unicode::CharacterView<char>
 getChar(unicode::Iterator<char>& iter) {
   auto seg = iter.nextSegment();
   if (seg.empty()) {
-    throw InputFailure(iter.current(), "Expected a character, got EOI");
+    throw InputFailure(iter.current(), "expected a character, got EOI");
   }
   return unicode::CharacterView<char>(seg);
 }
@@ -245,11 +245,11 @@ getChar(unicode::Iterator<char>& iter, char expected) {
   const u64 pos = iter.current();
   auto seg = iter.nextSegment();
   if (seg.empty()) {
-    throw InputFailure(pos, fmt::format("Expected character {:?}, got EOI", expected));
+    throw InputFailure(pos, fmt::format("expected character {:?}, got EOI", expected));
   }
   if (seg.front() != expected) {
     unicode::CharacterView<char> c(seg);
-    throw InputFailure(pos, fmt::format("Expected character {:?}, got {:?}", expected, c));
+    throw InputFailure(pos, fmt::format("expected character {:?}, got {:?}", expected, c));
   }
   return seg.substr(1);
 }
@@ -266,12 +266,12 @@ getHex(unicode::Iterator<char>& iter, u64 n) {
       throw InputFailure(
         pos,
         { { pos0, iter.current() } },
-        fmt::format("Expected {} hexadecimal digits, got EOI", n));
+        fmt::format("expected {} hexadecimal digits, got EOI", n));
     }
     auto c = unicode::CharacterView<char>(seg);
     if (not c.isXdigit()) {
       throw InputFailure(pos, { { pos0, iter.current() } },
-          fmt::format("Expected a hexadecimal digit, got {:?}", c));
+          fmt::format("expected a hexadecimal digit, got {:?}", c));
     }
     input.append(static_cast<string_view>(c));
   }
@@ -339,7 +339,7 @@ unicode::CodePoint
 toCodePoint(const unicode::Iterator<char>& iter, u64 pos, u32 value) {
   if (not unicode::CodePoint::valid(static_cast<char32>(value))) {
     throw InputFailure(
-      pos, { { pos, iter.current() } }, fmt::format("Invalid code-point value 0x{:X}", value));
+      pos, { { pos, iter.current() } }, fmt::format("invalid code-point value 0x{:X}", value));
   }
   return static_cast<char32>(value);
 }
@@ -353,7 +353,7 @@ namespace rocket::str::escape {
 string
 escapeCString(string_view input, const CStringConfig& config, Positions* positions) {
   ROCKET_CHECK(config, config.quote == '\0' || config.quote == '"' || config.quote == '\'');
-  ROCKET_CHECK(config, not config.tabSize || *config.tabSize > 0, "Tab size may not be 0");
+  ROCKET_CHECK(config, not config.tabSize || *config.tabSize > 0, "tab size may not be 0");
 
   string ret;
   if (positions != nullptr) {
@@ -457,7 +457,7 @@ unescapeCString(string_view input, const CStringConfig& config, Positions* posit
       // EOI
       if (config.quoted()) {
         throw InputFailure(
-          pos, { { 0, pos } }, fmt::format("Missing terminating {:?} character", config.quote));
+          pos, { { 0, pos } }, fmt::format("missing terminating {:?} character", config.quote));
       }
       return ret;
     }
@@ -482,7 +482,7 @@ unescapeCString(string_view input, const CStringConfig& config, Positions* posit
           throw InputFailure(
             end,
             { { end, input.size() } },
-            fmt::format("Unexpected input after terminating {:?} character", config.quote));
+            fmt::format("unexpected input after terminating {:?} character", config.quote));
         }
         return ret;
       } else if (*cp1 == '\\') { // NOLINT
@@ -499,7 +499,7 @@ unescapeCString(string_view input, const CStringConfig& config, Positions* posit
 
           const auto cluster = static_cast<string_view>(c2);
           if (cluster.front() != '"' && cluster.front() != '\'' && cluster.front() != '\\') {
-            throw InputFailure(pos, { { pos, iter.current() } }, "Invalid escape sequence");
+            throw InputFailure(pos, { { pos, iter.current() } }, "invalid escape sequence");
           }
           ret.append(cluster);
           continue;
@@ -537,7 +537,7 @@ unescapeCString(string_view input, const CStringConfig& config, Positions* posit
             break;
           case '/': // Slash = 47
             if (not config.json) {
-              throw InputFailure(pos, { { pos, iter.current() } }, "Invalid escape sequence");
+              throw InputFailure(pos, { { pos, iter.current() } }, "invalid escape sequence");
             }
             ret.push_back('/');
             break;
@@ -557,7 +557,7 @@ unescapeCString(string_view input, const CStringConfig& config, Positions* posit
             break;
           }
           default: {
-            throw InputFailure(pos, { { pos, iter.current() } }, "Invalid escape sequence");
+            throw InputFailure(pos, { { pos, iter.current() } }, "invalid escape sequence");
           }
         }
       } else {
@@ -683,7 +683,7 @@ unescapeRegex(string_view input, Positions* positions) {
 
           const auto cluster = static_cast<string_view>(c2);
           if (not REGEX_SPECIAL_CHARS.contains(cluster.front())) {
-            throw InputFailure(pos, { { pos, iter.current() } }, "Invalid escape sequence");
+            throw InputFailure(pos, { { pos, iter.current() } }, "invalid escape sequence");
           }
           ret.append(cluster);
           continue;
@@ -732,7 +732,7 @@ unescapeRegex(string_view input, Positions* positions) {
             break;
           }
           default: {
-            throw InputFailure(pos, { { pos, iter.current() } }, "Invalid escape sequence");
+            throw InputFailure(pos, { { pos, iter.current() } }, "invalid escape sequence");
           }
         }
       } else {

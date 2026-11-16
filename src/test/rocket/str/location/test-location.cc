@@ -28,27 +28,27 @@ using namespace rocket::str::location;
 // Tests ====================================================================================================
 
 TEST(MODULE, locationsEmptyInput) {
-  const Position pos { .type=note, .position=0, .message="Oops" };
+  const Position pos { .type=note, .position=0, .message="oops" };
   const auto result = locations("", { pos });
   EXPECT_EQ(result.config.source, "(input)");
   EXPECT_EQ(result.locations.size(), 1);
   const auto& loc = result.locations[0];
-  EXPECT_LOCATION(loc, note, 0, ({}), 1, 1, ({ 0, 0 }), nullopt, "Oops", nullopt);
+  EXPECT_LOCATION(loc, note, 0, ({}), 1, 1, ({ 0, 0 }), nullopt, "oops", nullopt);
 }
 
 TEST(MODULE, locationsEoi) {
   const string input = "a line without a line break at the end";
-  const Position pos { .type=error, .position=10, .message="Oops" };
+  const Position pos { .type=error, .position=10, .message="oops" };
   const auto result = locations(input, { pos }, { .setLineString=true });
   EXPECT_EQ(result.config.source, "(input)");
   EXPECT_EQ(result.locations.size(), 1);
   const auto& loc = result.locations[0];
-  EXPECT_LOCATION(loc, error, 10, ({}), 1, 11, ({ 0, input.size() }), input, "Oops", nullopt);
+  EXPECT_LOCATION(loc, error, 10, ({}), 1, 11, ({ 0, input.size() }), input, "oops", nullopt);
 }
 
 TEST(MODULE, locationsLf) {
   const string input = "a line with a line break at the end\n";
-  const Position pos { .type=error, .position=10, .message="Oops" };
+  const Position pos { .type=error, .position=10, .message="oops" };
   const auto result = locations(input, { pos }, { .setLineString=true });
   EXPECT_EQ(result.locations.size(), 1);
   const auto& loc = result.locations[0];
@@ -59,13 +59,13 @@ TEST(MODULE, locationsLf) {
     1, 11,
     ({ 0, input.size() - 1 }),
     input.substr(0, input.size() - 1),
-    "Oops",
+    "oops",
     nullopt);
 }
 
 TEST(MODULE, locationsCrlf) {
   const string input = "a line with a line break at the end\r\n";
-  const Position pos { .type=error, .position=10, .message="Oops" };
+  const Position pos { .type=error, .position=10, .message="oops" };
   const auto result = locations(input, { pos }, { .setLineString=true });
   EXPECT_EQ(result.locations.size(), 1);
   const auto& loc = result.locations[0];
@@ -76,17 +76,17 @@ TEST(MODULE, locationsCrlf) {
     1, 11,
     ({ 0, input.size() - 2 }),
     input.substr(0, input.size() - 2),
-    "Oops",
+    "oops",
     nullopt);
 }
 
 TEST(MODULE, locationsNullByte) {
   const string input = "a\x00" "b"s;
-  const Position pos { .type=error, .position=3, .message="Oops" };
+  const Position pos { .type=error, .position=3, .message="oops" };
   const auto result = locations(input, { pos }, { .setLineString=true });
   EXPECT_EQ(result.locations.size(), 1);
   const auto& loc = result.locations[0];
-  EXPECT_LOCATION(loc, error, 3, ({}), 1, 3, ({ 0, 3 }), input, "Oops", nullopt);
+  EXPECT_LOCATION(loc, error, 3, ({}), 1, 3, ({ 0, 3 }), input, "oops", nullopt);
 }
 
 
@@ -94,19 +94,19 @@ TEST(MODULE, locationsMultiByteCharactersAndLineBreak) {
   const string input = "ä€\n€";
 
   {
-    const Position pos { .type=error, .position=2, .message="Oops" };
+    const Position pos { .type=error, .position=2, .message="oops" };
     const auto result = locations(input, { pos }, { .setLineString=true });
     EXPECT_EQ(result.locations.size(), 1);
     const auto& loc = result.locations[0];
-    EXPECT_LOCATION(loc, error, 2, ({}), 1, 2, ({ 0, 5 }), "ä€", "Oops", nullopt);
+    EXPECT_LOCATION(loc, error, 2, ({}), 1, 2, ({ 0, 5 }), "ä€", "oops", nullopt);
   }
 
   {
-    const Position pos { .type=error, .position=6, .message="Oops" };
+    const Position pos { .type=error, .position=6, .message="oops" };
     const auto result = locations(input, { pos }, { .setLineString=true });
     EXPECT_EQ(result.locations.size(), 1);
     const auto& loc = result.locations[0];
-    EXPECT_LOCATION(loc, error, 6, ({}), 2, 1, ({ 6, 9 }), "€", "Oops", nullopt);
+    EXPECT_LOCATION(loc, error, 6, ({}), 2, 1, ({ 6, 9 }), "€", "oops", nullopt);
   }
 }
 
@@ -115,7 +115,7 @@ TEST(MODULE, locationsKafkaTxt) {
   nio::FileSource in(source);
   const auto input = in.readString();
 
-  const Position pos { .type=error, .position=3'000, .message="Oops" };
+  const Position pos { .type=error, .position=3'000, .message="oops" };
   const auto result = locations(input, { pos }, { .setLineString=true, .source=source });
   EXPECT_EQ(result.config.source, source);
   EXPECT_EQ(result.locations.size(), 1);
@@ -128,7 +128,7 @@ TEST(MODULE, locationsKafkaTxt) {
     ({ 2'922, 3'033 }),
     "blödsinnig. Der Mensch muß seinen Schlaf haben. Andere Reisende leben wie Haremsfrauen. Wenn ich zum "
     "Beispiel",
-    "Oops",
+    "oops",
     nullopt);
 
   const string_view line(input.begin() + loc.lineRange.a, input.begin() + *loc.lineRange.b); // NOLINT
@@ -142,49 +142,49 @@ TEST(MODULE, locationsMultiByteCharacter) {
   // No character boundary at position 4
   EXPECT_THAT(
     ([&] {
-      const Position pos { .type=error, .position=4, .message="Oops" };
+      const Position pos { .type=error, .position=4, .message="oops" };
       locations(input, { pos }, {});
     }),
-    ThrowsMessage<InvalidState>(EndsWith("Position 4 not found in source")));
+    ThrowsMessage<InvalidState>(EndsWith("position 4 not found in source")));
 
   // No character boundary at position 7
   EXPECT_THAT(
     ([&] {
-      const Position pos { .type=error, .position=7, .message="Oops" };
+      const Position pos { .type=error, .position=7, .message="oops" };
       locations(input, { pos }, {});
     }),
-    ThrowsMessage<InvalidState>(EndsWith("Position 7 not found in source")));
+    ThrowsMessage<InvalidState>(EndsWith("position 7 not found in source")));
 
   // Position 11 is okay
   {
-    const Position pos { .type=error, .position=11, .message="Oops" };
+    const Position pos { .type=error, .position=11, .message="oops" };
     const auto result = locations(input, { pos }, { .setLineString=true });
     EXPECT_EQ(result.locations.size(), 1);
     const auto& loc = result.locations[0];
-    EXPECT_LOCATION(loc, error, 11, ({}), 1, 3, ({ 0, 11 }), "🧑‍🌾", "Oops", nullopt);
+    EXPECT_LOCATION(loc, error, 11, ({}), 1, 3, ({ 0, 11 }), "🧑‍🌾", "oops", nullopt);
   }
 }
 
 TEST(MODULE, locationsTabSize0) {
   const string input = "a\nb\tc"; // 0: a, 1: \n, 2: b, 3: \t, 4: c
   // Position 4 points to `c` in the second line
-  const Position pos { .type=note, .position=4, .message="Oops" };
+  const Position pos { .type=note, .position=4, .message="oops" };
   const auto result = locations(input, { pos }, { .setLineString=true, .tabSize=nullopt });
   EXPECT_EQ(result.locations.size(), 1);
   const auto& loc = result.locations[0];
   // Character width of '\t' is 0
-  EXPECT_LOCATION(loc, note, 4, ({}), 2, 2, ({ 2, 5 }), "b\tc", "Oops", nullopt);
+  EXPECT_LOCATION(loc, note, 4, ({}), 2, 2, ({ 2, 5 }), "b\tc", "oops", nullopt);
 }
 
 
 TEST(MODULE, locationsTabSize8) {
   const string input = "a\nb\tc"; // 0: a, 1: \n, 2: b, 3: \t, 4: c
   // Position 4 points to `c` in the second line
-  const Position pos { .type=note, .position=4, .message="Oops" };
+  const Position pos { .type=note, .position=4, .message="oops" };
   const auto result = locations(input, { pos }, { .setLineString=true });
   EXPECT_EQ(result.locations.size(), 1);
   const auto& loc = result.locations[0];
-  EXPECT_LOCATION(loc, note, 4, ({}), 2, 9, ({ 2, 5 }), "b\tc", "Oops", nullopt);
+  EXPECT_LOCATION(loc, note, 4, ({}), 2, 9, ({ 2, 5 }), "b\tc", "oops", nullopt);
 }
 
 TEST(MODULE, printLocations) { // NOLINT(*-complexity)
@@ -192,9 +192,9 @@ TEST(MODULE, printLocations) { // NOLINT(*-complexity)
   {
     const string input = "a multi-line\ntext, where the second line is somewhat longer";
     const nio::StringSource in(input);
-    const Position pos0 { .type=note, .position=2, .message="Oops1" };
-    const Position pos1 { .type=warning, .position=13, .message="Oops2" };
-    const Position pos2 { .type=error, .position=19, .message="Oops3", .caption="Watch out!" };
+    const Position pos0 { .type=note, .position=2, .message="oops1" };
+    const Position pos1 { .type=warning, .position=13, .message="oops2" };
+    const Position pos2 { .type=error, .position=19, .message="oops3", .caption="Watch out!" };
     const auto result = locations(input, { pos0, pos1, pos2 }, { .setLineString=true, .source="foo" });
     EXPECT_EQ(result.config.source, "foo");
     EXPECT_EQ(result.locations.size(), 3);
@@ -206,7 +206,7 @@ TEST(MODULE, printLocations) { // NOLINT(*-complexity)
       1, 3,
       ({ 0, 12 }),
       input.substr(0, 12),
-      "Oops1",
+      "oops1",
       nullopt);
     const auto& loc1 = result.locations[1];
     EXPECT_LOCATION(
@@ -216,7 +216,7 @@ TEST(MODULE, printLocations) { // NOLINT(*-complexity)
       2, 1,
       ({ 13, input.size() }),
       input.substr(13),
-      "Oops2",
+      "oops2",
       nullopt);
     const auto& loc2 = result.locations[2];
     EXPECT_LOCATION(
@@ -226,7 +226,7 @@ TEST(MODULE, printLocations) { // NOLINT(*-complexity)
       2, 7,
       ({ 13, input.size() }),
       input.substr(13),
-      "Oops3",
+      "oops3",
       "Watch out!");
     nio::StringSink out;
     if (TEST_TERMINAL) {
@@ -234,13 +234,13 @@ TEST(MODULE, printLocations) { // NOLINT(*-complexity)
     }
     printLocations(out, nullopt, result, {});
     EXPECT_EQ(out.str(),
-      "foo:1:3: note: Oops1\n"
+      "foo:1:3: note: oops1\n"
       "    1 | a multi-line\n"
       "      |   ^\n"
-      "foo:2:1: warning: Oops2\n"
+      "foo:2:1: warning: oops2\n"
       "    2 | text, where the second line is somewhat longer\n"
       "      | ^\n"
-      "foo:2:7: error: Oops3\n"
+      "foo:2:7: error: oops3\n"
       "    2 | text, where the second line is somewhat longer\n"
       "      |       ^\n"
       "      |       Watch out!\n");
@@ -249,11 +249,11 @@ TEST(MODULE, printLocations) { // NOLINT(*-complexity)
   // Test multi-code-point character
   {
     const string input = "🧑‍🌾\x00\tabc"s;
-    const Position pos { .type=note, .position=13, .message="Oops" };
+    const Position pos { .type=note, .position=13, .message="oops" };
     const auto result = locations(input, { pos }, {});
     EXPECT_EQ(result.locations.size(), 1);
     const auto& loc = result.locations[0];
-    EXPECT_LOCATION(loc, note, 13, ({}), 1, 9, ({ 0, 16 }), nullopt, "Oops", nullopt);
+    EXPECT_LOCATION(loc, note, 13, ({}), 1, 9, ({ 0, 16 }), nullopt, "oops", nullopt);
     const string line = input.substr(loc.lineRange.a, *loc.lineRange.b - loc.lineRange.a);
     EXPECT_EQ(line, input);
     nio::StringSink out;
@@ -262,7 +262,7 @@ TEST(MODULE, printLocations) { // NOLINT(*-complexity)
     }
     printLocations(out, input, result, {});
     EXPECT_EQ(out.str(),
-      "(input):1:9: note: Oops\n"
+      "(input):1:9: note: oops\n"
       "    1 | 🧑‍🌾\\x00  abc\n"
       "      |         ^\n");
   }
@@ -270,30 +270,30 @@ TEST(MODULE, printLocations) { // NOLINT(*-complexity)
   // Test multi-code-point character, position at end of string
   {
     const string input = "🧑‍🌾\x00\tabc"s;
-    const Position pos { .type=note, .position=16, .ranges={ { 0, 16 } }, .message="Oops" };
+    const Position pos { .type=note, .position=16, .ranges={ { 0, 16 } }, .message="oops" };
     const auto result = locations(input, { pos }, {});
     EXPECT_EQ(result.locations.size(), 1);
     const auto& loc = result.locations[0];
     // Test a range that spans the entire line
-    EXPECT_LOCATION(loc, note, 16, ({ { 0, 16 } }), 1, 12, ({ 0, 16 }), nullopt, "Oops", nullopt);
+    EXPECT_LOCATION(loc, note, 16, ({ { 0, 16 } }), 1, 12, ({ 0, 16 }), nullopt, "oops", nullopt);
     nio::StringSink out;
     if (TEST_TERMINAL) {
       printLocations(nio::out, input, result, { .styled=true });
     }
     printLocations(out, input, result, {});
     EXPECT_EQ(out.str(),
-      "(input):1:12: note: Oops\n"
+      "(input):1:12: note: oops\n"
       "    1 | 🧑‍🌾\\x00  abc\n"
       "      | ~~~~~~~~~~~^\n");
   }
 }
 
 TEST(MODULE, locationsTabSize) {
-  const Position pos { .type=note, .position=2, .message="Oops" };
+  const Position pos { .type=note, .position=2, .message="oops" };
 
   EXPECT_THAT(
     ([&] { locations("a\tb", { pos }, { .tabSize=0 }); }),
-    ThrowsMessage<InvalidArgument>(EndsWith("Tab size may not be 0")));
+    ThrowsMessage<InvalidArgument>(EndsWith("tab size may not be 0")));
 
   // The smallest tab size is valid
   const auto result = locations("a\tb", { pos }, { .tabSize=1 });
@@ -302,12 +302,12 @@ TEST(MODULE, locationsTabSize) {
 
 TEST(MODULE, printLocationsEmptyInput) {
   const string input;
-  const Position pos { .type=note, .position=0, .message="Oops" };
+  const Position pos { .type=note, .position=0, .message="oops" };
   const auto result = locations(input, { pos });
   nio::StringSink out;
   printLocations(out, input, result);
   EXPECT_EQ(out.str(),
-    "(input):1:1: note: Oops\n"
+    "(input):1:1: note: oops\n"
     "    1 | \n"
     "      | ^\n");
 }
@@ -322,30 +322,30 @@ TEST(MODULE, printLocationsEscapeMergesWithCombiningMark) {
     return out.str();
   };
 
-  const Position pos { .type=note, .position=1, .message="Oops" };
+  const Position pos { .type=note, .position=1, .message="oops" };
 
   // A tab expanded to spaces
   EXPECT_EQ(print("\t\u0301x", pos, {}),
-    "(input):1:9: note: Oops\n"
+    "(input):1:9: note: oops\n"
     "    1 |         \u0301x\n"
     "      |        ^\n");
 
   // A tab escaped as `\t`
   EXPECT_EQ(print("\t\u0301x", pos, { .tabSize=nullopt }),
-    "(input):1:1: note: Oops\n"
+    "(input):1:1: note: oops\n"
     "    1 | \\t\u0301x\n"
     "      |  ^\n");
 
   // A control character escaped in hexadecimal notation
   EXPECT_EQ(print("\x01\u0301x", pos, {}),
-    "(input):1:1: note: Oops\n"
+    "(input):1:1: note: oops\n"
     "    1 | \\x01\u0301x\n"
     "      |    ^\n");
 
   // A range that ends at the mark
-  const Position withRange { .type=note, .position=1, .ranges={ { 0, 1 } }, .message="Oops" };
+  const Position withRange { .type=note, .position=1, .ranges={ { 0, 1 } }, .message="oops" };
   EXPECT_EQ(print("\t\u0301x", withRange, {}),
-    "(input):1:9: note: Oops\n"
+    "(input):1:9: note: oops\n"
     "    1 |         \u0301x\n"
     "      | ~~~~~~~^\n");
 }

@@ -93,14 +93,14 @@ struct Fmt {
         case 'L': withSourceLocation = true; break;
         case 's': {
           if (it == end - 1) {
-            ROCKET_FAIL("Missing seconds resolution");
+            ROCKET_FAIL("missing seconds resolution");
           }
           switch (*++it) {
             case '0': secondsRez = 0; break;
             case '3': secondsRez = 3; break;
             case '6': secondsRez = 6; break;
             case '9': secondsRez = 9; break;
-            default: ROCKET_FAIL("Invalid seconds resolution {:?}", *it);
+            default: ROCKET_FAIL("invalid seconds resolution {:?}", *it);
           }
           break;
         }
@@ -110,7 +110,7 @@ struct Fmt {
         case 'X': withExecTimes = true; break;
         case 'z': useUtc = false; break;
         case 'Z': useUtc = true; break;
-        default: ROCKET_FAIL("Invalid format specifier {:?}", *it);
+        default: ROCKET_FAIL("invalid format specifier {:?}", *it);
       }
     }
   }
@@ -270,16 +270,16 @@ Out::expand(string_view pattern, const fs::path& dir, string_view name, u32 pid,
   // Do sanity checks
 
   if (ret.out.empty()) {
-    ROCKET_FAIL("Empty pattern");
+    ROCKET_FAIL("empty pattern");
   }
   // A pattern like `some/path/<date>-<pid>/name.log` works fine; however, in this case where the
   // directory part of the pattern is unstable, we don’t support zipping older log files
   if (ret.zip && not dirStable) {
-    ROCKET_FAIL("Can only zip older log files in the same directory");
+    ROCKET_FAIL("can only zip older log files in the same directory");
   }
   // If the pattern is something like `some/path/name-<date>.log`, we can easily look for older zip files
   if (ret.zip && not nameHasDate) {
-    ROCKET_FAIL("Can only zip older log files if a date is present in the name part of the pattern");
+    ROCKET_FAIL("can only zip older log files if a date is present in the name part of the pattern");
   }
 
   return ret;
@@ -301,7 +301,7 @@ Out::get(const TimePoint& time) {
 
 string
 Out::nameRegex(const fs::path& name) {
-  ROCKET_ASSERT(not name.has_parent_path(), "File-name pattern must not contain any file separators");
+  ROCKET_ASSERT(not name.has_parent_path(), "file-name pattern must not contain any file separators");
 
   // Expand `<dir>` and `<name>` to their real values, eliminate the hints `<utc>` and `<zip>`
   string ret(name.string());
@@ -349,12 +349,12 @@ Out::set(string_view val, const TimePoint& time) {
     zip_ = result.zip;
   } catch (const Exception& ex) {
     process().error(nio::err, 0,
-      "Cannot apply log-output pattern `{}`; logging to stdout instead: {}",
+      "cannot apply log-output pattern `{}`; logging to stdout instead: {}",
       val, ex.message());
     reset();
     return;
   } catch (const exception&) {
-    process().error(nio::err, 0, "Cannot apply log-output pattern `{}`; logging to stdout instead", val);
+    process().error(nio::err, 0, "cannot apply log-output pattern `{}`; logging to stdout instead", val);
     reset();
     return;
   }
@@ -363,7 +363,7 @@ Out::set(string_view val, const TimePoint& time) {
     try {
       fileOut_ = make_unique<nio::FileSink>(path, true); // Append to the file
     } catch (const exception&) {
-      process().error(nio::err, 0, "Cannot open log file `{}`; logging to stdout instead", path);
+      process().error(nio::err, 0, "cannot open log file `{}`; logging to stdout instead", path);
       reset();
       return;
     }
@@ -386,13 +386,13 @@ Out::zipOlderFiles(const fs::path& current) {
     currentDir = fs::absolute(current).parent_path();
   }
 
-  ROCKET_ASSERT(ymd_, "A date must be present");
+  ROCKET_ASSERT(ymd_, "a date must be present");
   const string currentDate = fmt::format("{}", *ymd_);
 
   error_code ec;
   fs::directory_iterator it(currentDir, fs::directory_options::skip_permission_denied, ec);
   if (ec) {
-    process().error(nio::err, 0, "Cannot scan directory `{}`: {}", currentDir, ec.message());
+    process().error(nio::err, 0, "cannot scan directory `{}`: {}", currentDir, ec.message());
     return;
   }
   for (; it != fs::directory_iterator(); it.increment(ec)) {
@@ -412,19 +412,19 @@ Out::zipOlderFiles(const fs::path& current) {
       // Using `YYYY-MM-DD` for the date part of the name, we can compare the strings directly
       if (entryDate < currentDate) {
         // The entry date is older: zip the file
-        process().info(nio::err, "Zipping log file `{}` ...", entry);
+        process().info(nio::err, "zipping log file `{}` ...", entry);
         const auto gz = entry.string() + ".gz";
         try {
           archive::gzip(entry, gz);
           error_code ec;
           fs::remove(entry, ec);
           if (ec) {
-            process().error(nio::err, 0, "Cannot remove log file `{}`: {}", entry, ec.message());
+            process().error(nio::err, 0, "cannot remove log file `{}`: {}", entry, ec.message());
           }
         } catch (const Exception& ex) {
-          process().error(nio::err, 0, "Cannot zip log file `{}`: {}", entry, ex.message());
+          process().error(nio::err, 0, "cannot zip log file `{}`: {}", entry, ex.message());
         } catch (const exception& ex) {
-          process().error(nio::err, 0, "Cannot zip log file `{}`: {}", entry, ex.what());
+          process().error(nio::err, 0, "cannot zip log file `{}`: {}", entry, ex.what());
         }
       }
     }
@@ -509,9 +509,9 @@ const vector<cl::Option> CL_OPTIONS {
 // Local variables ------------------------------------------------------------------------------------------
 
 // Defined log IDs
-UnorderedBimap<LogSettings*, string_view>&
+unordered_bimap<LogSettings*, string_view>&
 definedIds() {
-  static auto ids = rocket::makeUnorderedBimap<LogSettings*, string_view>();
+  static auto ids = rocket::make_unordered_bimap<LogSettings*, string_view>();
   return ids;
 }
 
@@ -769,11 +769,11 @@ setLogLevel(string_view id, string_view val) {
   }
 
   if (id.empty()) {
-    ROCKET_FAIL("Missing log ID");
+    ROCKET_FAIL("missing log ID");
   }
   const bool all = id == "all";
   if (all && not substring.empty()) {
-    ROCKET_FAIL("Log ID `all` cannot be used with a substring");
+    ROCKET_FAIL("log ID `all` cannot be used with a substring");
   }
 
   const auto result = Enum<LogLevel>::toType(val, true);
@@ -785,7 +785,7 @@ setLogLevel(string_view id, string_view val) {
   if (not all) {
     auto it = definedIds().right.find(id);
     if (it == definedIds().right.end()) {
-      ROCKET_FAIL("Unknown log ID `{}`", id);
+      ROCKET_FAIL("unknown log ID `{}`", id);
     }
     if (substring.empty()) {
       it->second->level_ = level;
@@ -909,7 +909,7 @@ logBegin(LogSettings* logId, const char* function, const char* prettyFunction, c
 /// @ThreadSafe
 LogSettings
 logDefine(LogSettings* logId, string_view id) {
-  ROCKET_CHECK(id, id != "all", "Invalid log ID `all`; this ID is reserved");
+  ROCKET_CHECK(id, id != "all", "invalid log ID `all`; this ID is reserved");
 
   ROCKET_MUTEX_LOCK(logMutex());
 
@@ -940,9 +940,9 @@ logEnd() {
       logImpl(logOut.get(time), entry.logId_, LogLevel::none, logStack.size() - 1, time, msg);
     }
   } catch (const exception& ex) {
-    ROCKET_PROCESS_ERROR(0, "Cannot log message: {}", what(ex));
+    ROCKET_PROCESS_ERROR(0, "cannot log message: {}", what(ex));
   } catch (...) {
-    ROCKET_PROCESS_ERROR(0, "Cannot log message");
+    ROCKET_PROCESS_ERROR(0, "cannot log message");
   }
   // After catching anything, we can safely pop from the stack
   logStack.pop_back();
@@ -963,7 +963,7 @@ logInit() {
   try {
     args = system::makeArgs(val);
   } catch (const Exception& ex) {
-    ROCKET_PROCESS_ERROR(EXIT_SERIOUS_FAILURE, "Cannot parse `ROCKET_LOG`, which is {:?}: {}", val, ex.message());
+    ROCKET_PROCESS_ERROR(EXIT_SERIOUS_FAILURE, "cannot parse `ROCKET_LOG`, which is {:?}: {}", val, ex.message());
   }
   if (not args.empty()) {
     cl::CommandLine cl(CL_OPTIONS, {}, { .rocketOpts = false });

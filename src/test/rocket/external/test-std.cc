@@ -86,13 +86,13 @@ TEST(MODULE, filesystemPath) {
 }
 
 TEST(MODULE, istreamDefaultExceptions) {
-  auto is = io::is();
+  auto is = io::stream::is();
   EXPECT_EQ(is.exceptions(), 0);
 }
 
 TEST(MODULE, istreamEof) {
   {
-    auto is = io::is();
+    auto is = io::stream::is();
     // Check 'tellg()' once
     EXPECT_EQ(is.tellg(), 0);
     // Check 'tellg()' twice
@@ -106,7 +106,7 @@ TEST(MODULE, istreamEof) {
   }
 
   {
-    auto is = io::is();
+    auto is = io::stream::is();
     char c = '\0';
     is >> c;
     EXPECT_TRUE(is.eof());
@@ -124,7 +124,7 @@ TEST(MODULE, istreamBool) {
   using type = bool;
 
   {
-    auto is = io::is("tru");
+    auto is = io::stream::is("tru");
     type val = false;
     is >> boolalpha >> val;
     EXPECT_EQ(val, false);
@@ -134,7 +134,7 @@ TEST(MODULE, istreamBool) {
   }
 
   {
-    auto is = io::is("true");
+    auto is = io::stream::is("true");
     type val = false;
     is >> boolalpha >> val;
     EXPECT_EQ(val, true);
@@ -142,7 +142,7 @@ TEST(MODULE, istreamBool) {
 }
 
 TEST(MODULE, istreamChar) {
-  auto is = io::is("a");
+  auto is = io::stream::is("a");
   char c = '\0';
   is >> c;
   EXPECT_EQ(c, 'a');
@@ -152,7 +152,7 @@ TEST(MODULE, istreamI32) {
   using type = i32;
 
   {
-    auto is = io::is();
+    auto is = io::stream::is();
     type val = 0;
     is >> val;
     EXPECT_EQ(val, 0);
@@ -160,7 +160,7 @@ TEST(MODULE, istreamI32) {
   }
 
   {
-    auto is = io::is("a");
+    auto is = io::stream::is("a");
     type val = 0;
     is >> val;
     EXPECT_EQ(val, 0);
@@ -168,7 +168,7 @@ TEST(MODULE, istreamI32) {
   }
 
   {
-    auto is = io::is("-");
+    auto is = io::stream::is("-");
     type val = 0;
     is >> val;
     EXPECT_EQ(val, 0);
@@ -177,7 +177,7 @@ TEST(MODULE, istreamI32) {
   }
 
   {
-    auto is = io::is("-12");
+    auto is = io::stream::is("-12");
     type val = 0;
     is >> val;
     EXPECT_EQ(val, -12);
@@ -189,7 +189,7 @@ TEST(MODULE, istreamI32) {
   {
     nio::StringSink buf;
     buf.print("{}", numeric_limits<i32>::max() + static_cast<i64>(1));
-    auto is = io::is(buf.str());
+    auto is = io::stream::is(buf.str());
     type val = 0;
     is >> val;
 #ifdef ROCKET_OS_WINDOWS
@@ -214,7 +214,7 @@ TEST(MODULE, istreamF64) {
 
   {
     // Reading symbols doesn’t work
-    auto is = io::is("-inf");
+    auto is = io::stream::is("-inf");
     type val = 0;
     is >> val;
     EXPECT_EQ(val, 0);

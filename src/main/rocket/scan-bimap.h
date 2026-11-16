@@ -1,12 +1,12 @@
 /**
- * @file scan-Bimap.h
+ * @file scan-bimap.h
  *
  * Scanning support for Bimaps.
  */
 
 #pragma once
 
-#include "rocket/Bimap.h"
+#include "rocket/bimap.h"
 
 #include <scn/ranges.h>
 #include <scn/scan.h>
@@ -80,7 +80,7 @@ struct scn::scanner<boost::bimaps::bimap<A, B>, C> {
           return unexpected(result.error());
         }
       }
-      Key k{};
+      Key k {};
       if (auto result = scn::scanner<Key, C>().scan(k, ctx); result) {
         ctx.advance_to(*result);
       } else {
@@ -89,7 +89,7 @@ struct scn::scanner<boost::bimaps::bimap<A, B>, C> {
       if (auto result = scanStr(keySep); not result) {
         return unexpected(result.error());
       }
-      Value v{};
+      Value v {};
       if (auto result = scn::scanner<Value, C>().scan(v, ctx); result) {
         ctx.advance_to(*result);
       } else {

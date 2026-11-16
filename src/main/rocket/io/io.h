@@ -1,12 +1,12 @@
 /**
  * @file io.h
  *
- * I/O utilities.
+ * I/O utilities, both for `FILE` pointers and STL I/O streams.
  */
 
 #pragma once
 
-#include "rocket/io/io-int128.h"
+#include "rocket/io/int128.h"
 
 #include <cstdio>
 #include <filesystem>
@@ -35,6 +35,8 @@
 #endif // ROCKET_OS_WINDOWS
 
 namespace rocket::io {
+
+namespace file {
 
 // Functions working with `FILE` pointers -------------------------------------------------------------------
 
@@ -89,6 +91,10 @@ bool seekable(FILE* file);
  */
 u64 tell(FILE* file);
 
+} // namespace file
+
+namespace stream {
+
 // Functions working with streams ---------------------------------------------------------------------------
 
 /**
@@ -109,8 +115,8 @@ inline std::istringstream is(std::string_view str) { return std::istringstream(s
 /**
  * Checks if the input stream @p is is seekable.
  *
- * The stream is seekable if #tell reports a position for it. Like #tell, this leaves @p is entirely
- * unchanged.
+ * The stream is seekable if #rocket::io::stream::tell reports a position for it. Like
+ * #rocket::io::stream::tell, this leaves @p is entirely unchanged.
  *
  * This is a portable implementation that works on Linux, macOS, and Windows.
  *
@@ -125,9 +131,9 @@ bool seekable(std::istream& is) noexcept;
  * The stream is seekable if its stream buffer reports a position for it. This leaves @p os entirely
  * unchanged.
  *
- * If @p os is #std::cout, #std::cerr, or #std::clog, `stdout` or `stderr` must also be #seekable, because on
- * Windows and macOS, the stream buffers of these streams may report a meaningless position for a pipe or a
- * terminal.
+ * If @p os is #std::cout, #std::cerr, or #std::clog, `stdout` or `stderr` must also be
+ * #rocket::io::file::seekable, because on Windows and macOS, the stream buffers of these streams may report a
+ * meaningless position for a pipe or a terminal.
  *
  * This is a portable implementation that works on Linux, macOS, and Windows.
  *
@@ -144,8 +150,8 @@ bool seekable(std::ostream& os) noexcept;
  * return -1 and set `failbit`. It leaves @p is entirely unchanged: its state is not modified, its exception
  * mask is not consulted, and its tied stream is not flushed.
  *
- * If @p is is #std::cin, `stdin` must also be #seekable, because on Windows and macOS, the stream buffer of
- * #std::cin may report a meaningless position for a pipe or a terminal.
+ * If @p is is #std::cin, `stdin` must also be #rocket::io::file::seekable, because on Windows and macOS, the
+ * stream buffer of #std::cin may report a meaningless position for a pipe or a terminal.
  *
  * This is a portable implementation that works on Linux, macOS, and Windows.
  *
@@ -155,7 +161,10 @@ bool seekable(std::ostream& os) noexcept;
  */
 u64 tell(std::istream& is) noexcept;
 
+} // namespace stream
+
 #ifdef ROCKET_TEST
+
 namespace testing {
 
 // `FailingBuf` ---------------------------------------------------------------------------------------------
@@ -177,7 +186,7 @@ struct FailingBuf : std::streambuf {
 
 protected:
 
-  int_type underflow() override { throw std::runtime_error("Simulated I/O error"); }
+  int_type underflow() override { throw std::runtime_error("simulated I/O error"); }
 
 private:
 
@@ -227,6 +236,7 @@ protected:
 };
 
 } // namespace testing
+
 #endif // ROCKET_TEST
 
 } // namespace rocket::io

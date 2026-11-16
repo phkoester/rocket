@@ -269,7 +269,7 @@ private:
   }
 };
 
-/// @fn_swap{rocket::io::basic_spanbuf}
+/// @fn_swap{#rocket::io::basic_spanbuf}
 template<typename CharT, typename Traits>
 void
 swap(basic_spanbuf<CharT, Traits>& lhs, basic_spanbuf<CharT, Traits>& rhs) {
@@ -405,7 +405,7 @@ private:
   basic_spanbuf<CharT, Traits> sb_;
 };
 
-/// @fn_swap{rocket::io::basic_ispanstream}
+/// @fn_swap{#rocket::io::basic_ispanstream}
 template<typename CharT, typename Traits>
 void
 swap(basic_ispanstream<CharT, Traits>& lhs, basic_ispanstream<CharT, Traits>& rhs) {
@@ -499,7 +499,7 @@ private:
   basic_spanbuf<CharT, Traits> sb_;
 };
 
-/// @fn_swap{rocket::io::basic_ospanstream}
+/// @fn_swap{#rocket::io::basic_ospanstream}
 template<typename CharT, typename Traits>
 void
 swap(basic_ospanstream<CharT, Traits>& lhs, basic_ospanstream<CharT, Traits>& rhs) {
@@ -596,7 +596,7 @@ private:
   basic_spanbuf<CharT, Traits> sb_;
 };
 
-/// @fn_swap{rocket::io::basic_spanstream}
+/// @fn_swap{#rocket::io::basic_spanstream}
 template<typename CharT, typename Traits>
 void
 swap(basic_spanstream<CharT, Traits>& lhs, basic_spanstream<CharT, Traits>& rhs) {

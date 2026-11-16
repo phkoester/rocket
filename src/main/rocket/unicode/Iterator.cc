@@ -58,7 +58,7 @@ template<typename C> requires IsChar<C>
 Iterator<C>::Iterator(IteratorType type, basic_string_view<C> input, const locale& loc) : // NOLINT(*-complexity)
   input_(input) {
   // ICU break positions are `int32_t`
-  ROCKET_CHECK(input, input.size() <= static_cast<u64>(numeric_limits<i32>::max()), "Input too long");
+  ROCKET_CHECK(input, input.size() <= static_cast<u64>(numeric_limits<i32>::max()), "input too long");
 
   // 1. Validate the input and, for UTF-32, convert it to UTF-16
 
@@ -67,13 +67,13 @@ Iterator<C>::Iterator(IteratorType type, basic_string_view<C> input, const local
     for (i32 i = 0; i < inputLength;) {
       UChar32 cp; // NOLINT
       U8_NEXT(input.data(), i, inputLength, cp);
-      ROCKET_CHECK(input, cp >= 0, "Invalid UTF-8 input");
+      ROCKET_CHECK(input, cp >= 0, "invalid UTF-8 input");
     }
   } else {
     u16_.reserve(input.size());
     for (auto c : input) {
       const auto cp = static_cast<u32>(c);
-      ROCKET_CHECK(input, cp <= 0x10FFFF and not U_IS_SURROGATE(cp), "Invalid UTF-32 input");
+      ROCKET_CHECK(input, cp <= 0x10FFFF and not U_IS_SURROGATE(cp), "invalid UTF-32 input");
       if (U_IS_BMP(cp)) {
         u16_.push_back(static_cast<char16_t>(cp));
       } else {
@@ -82,7 +82,7 @@ Iterator<C>::Iterator(IteratorType type, basic_string_view<C> input, const local
         u16_.push_back(static_cast<char16_t>(U16_TRAIL(cp)));
       }
     }
-    ROCKET_CHECK(input, u16_.size() <= static_cast<u64>(numeric_limits<i32>::max()), "Input too long");
+    ROCKET_CHECK(input, u16_.size() <= static_cast<u64>(numeric_limits<i32>::max()), "input too long");
   }
 
   // 2. Resolve the locale
@@ -90,7 +90,7 @@ Iterator<C>::Iterator(IteratorType type, basic_string_view<C> input, const local
   UErrorCode status = U_ZERO_ERROR;
   array<char, ULOC_FULLNAME_CAPACITY> locName {};
   uloc_getName(localeName(loc).c_str(), locName.data(), static_cast<i32>(locName.size()), &status);
-  ROCKET_CHECK(loc, U_SUCCESS(status) and status != U_STRING_NOT_TERMINATED_WARNING, "Invalid locale");
+  ROCKET_CHECK(loc, U_SUCCESS(status) and status != U_STRING_NOT_TERMINATED_WARNING, "invalid locale");
 
   // 3. Create the break iterator
 
@@ -109,7 +109,7 @@ Iterator<C>::Iterator(IteratorType type, basic_string_view<C> input, const local
       ubrkType = UBRK_WORD;
       break;
     default:
-      ROCKET_FLOP(type, "Invalid iterator type {}", static_cast<i32>(type));
+      ROCKET_FLOP(type, "invalid iterator type {}", static_cast<i32>(type));
   }
 
   status = U_ZERO_ERROR;

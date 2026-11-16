@@ -92,7 +92,7 @@ valueOf(const T& val) {
  * @param val a value; either of type @p T or `std::optional<T>`
  * @return a value. If the value is to be taken from a `std::optional<T>`, that optional is dereferenced,
  *   otherwise the value is returned directly
- * @throw std::bad_optional_access if the value is not present
+ * @throw #std::bad_optional_access if the value is not present
  */
 template<typename T>
 constexpr const T&

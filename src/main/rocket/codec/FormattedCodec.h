@@ -291,7 +291,7 @@ struct FormattedConsumerImpl<DataType::Enum, E> {
       out.print("{}", val);
       return;
     }
-    ROCKET_FAIL("Cannot format enum of type {}", TypeId::of<E>());
+    ROCKET_FAIL("cannot format enum of type {}", TypeId::of<E>());
   }
 };
 
@@ -519,7 +519,7 @@ struct FormattedConsumerImpl<DataType::TimeZone, T> {
 template<typename T>
 struct FormattedConsumerImpl<DataType::Time, T> {
   using Clock = T::clock;
-  static_assert(std::same_as<Clock, std::chrono::system_clock>, "Clock must be `system_clock`");
+  static_assert(std::same_as<Clock, std::chrono::system_clock>, "clock must be `system_clock`");
 
   void
   consume(const T& val, nio::Sink& out, CONFIG__) const {
@@ -698,7 +698,7 @@ produceMembers(const Refs& refs, C& instance, nio::Source& in) {
   const auto pos = in.tell();
 
   if (not readChar(in, '(')) {
-    throw InputFailure(pos, "Expected a tuple");
+    throw InputFailure(pos, "expected a tuple");
   }
 
   u64 index = 0;
@@ -720,7 +720,7 @@ produceMembers(const Refs& refs, C& instance, nio::Source& in) {
     const auto namePos = in.tell();
     const auto name = readIdentifier(in);
     if (not name) {
-      throw InputFailure(namePos, "Expected a member reference");
+      throw InputFailure(namePos, "expected a member reference");
     }
     skip(in);
     expectChar(in, '=');
@@ -731,7 +731,7 @@ produceMembers(const Refs& refs, C& instance, nio::Source& in) {
       return (produceMember(ref, *name, instance, in) || ...);
     }, refs);
     if (not found) {
-      throw InputFailure(namePos, fmt::format("Unknown member `{}`", *name));
+      throw InputFailure(namePos, fmt::format("unknown member `{}`", *name));
     }
   }
 }
@@ -751,7 +751,7 @@ struct FormattedProducerImpl<DataType::Bool, bool> {
       val = true;
       return;
     }
-    throw InputFailure(pos, "Expected a boolean value");
+    throw InputFailure(pos, "expected a boolean value");
   }
 };
 
@@ -763,18 +763,18 @@ struct FormattedProducerImpl<DataType::Char, C> {
     const auto pos = in.tell();
 
     if (not readChar(in, '\'')) {
-      throw InputFailure(pos, "Expected a character");
+      throw InputFailure(pos, "expected a character");
     }
 
     auto input = readUntilUnescapedChar(in, '\'');
     if (not input) {
-      throw InputFailure(pos, "Unterminated character literal");
+      throw InputFailure(pos, "unterminated character literal");
     }
 
     const std::string unescaped = unescapeLiteral(*input, pos);
     const std::basic_string<C> str(unicode::ConvertTo<C>::apply(unescaped));
     if (str.size() != 1) {
-      throw InputFailure(pos, "Invalid character literal");
+      throw InputFailure(pos, "invalid character literal");
     }
     val = str[0];
   }
@@ -793,9 +793,9 @@ struct FormattedProducerImpl<DataType::Enum, E> {
         val = result->value();
         return;
       }
-      throw InputFailure(pos, fmt::format("Invalid value for enum {}", TypeId::of<E>()));
+      throw InputFailure(pos, fmt::format("invalid value for enum {}", TypeId::of<E>()));
     }
-    throw InputFailure(pos, fmt::format("Cannot scan enum of type {}", TypeId::of<E>()));
+    throw InputFailure(pos, fmt::format("cannot scan enum of type {}", TypeId::of<E>()));
   }
 };
 
@@ -812,7 +812,7 @@ struct FormattedProducerImpl<DataType::Integer, I> {
       val = result->value();
       return;
     }
-    throw InputFailure(pos, "Expected an integer value");
+    throw InputFailure(pos, "expected an integer value");
   }
 };
 
@@ -839,7 +839,7 @@ struct FormattedProducerImpl<DataType::Float, F> {
       val = result->value();
       return;
     }
-    throw InputFailure(pos, "Expected a floating-point value");
+    throw InputFailure(pos, "expected a floating-point value");
   }
 };
 
@@ -860,7 +860,7 @@ struct FormattedProducerImpl<DataType::Pointer, P> {
       val = result->value();
       return;
     }
-    throw InputFailure(pos, "Expected a pointer value");
+    throw InputFailure(pos, "expected a pointer value");
   }
 };
 
@@ -874,12 +874,12 @@ struct FormattedProducerImpl<DataType::String, T> {
     const auto pos = in.tell();
 
     if (not readChar(in, '"')) {
-      throw InputFailure(pos, "Expected a string");
+      throw InputFailure(pos, "expected a string");
     }
 
     auto input = readUntilUnescapedChar(in, '"');
     if (not input) {
-      throw InputFailure(pos, "Unterminated string literal");
+      throw InputFailure(pos, "unterminated string literal");
     }
 
     const std::string unescaped = unescapeLiteral(*input, pos);
@@ -924,7 +924,7 @@ struct FormattedProducerImpl<DataType::Tuple, T> {
     const auto pos = in.tell();
 
     if (not readChar(in, '(')) {
-      throw InputFailure(pos, "Expected a tuple");
+      throw InputFailure(pos, "expected a tuple");
     }
 
     u64 index = 0;
@@ -938,7 +938,7 @@ struct FormattedProducerImpl<DataType::Tuple, T> {
     }
     if (not readChar(in, ')')) {
       const auto end = in.tell();
-      throw InputFailure::withRange(end, pos, end, "Unterminated tuple");
+      throw InputFailure::withRange(end, pos, end, "unterminated tuple");
     }
   }
 
@@ -959,8 +959,8 @@ private:
 
 template<typename T>
 struct FormattedProducerImpl<DataType::List, T> {
-  static_assert(not IsView<T>, "Cannot decode list view");
-  static_assert(not IsForwardList<T>, "Cannot decode forward list");
+  static_assert(not IsView<T>, "cannot decode list view");
+  static_assert(not IsForwardList<T>, "cannot decode forward list");
 
   using Elem = T::value_type;
   static constexpr auto ElemDataType = DataTypes<Elem>::Value;
@@ -975,7 +975,7 @@ struct FormattedProducerImpl<DataType::List, T> {
     }
 
     if (not readChar(in, '[')) {
-      throw InputFailure(pos, "Expected a list");
+      throw InputFailure(pos, "expected a list");
     }
 
     if constexpr (IsArray<T>) {
@@ -1007,7 +1007,7 @@ private:
     }
     if (not readChar(in, ']')) {
       const auto end = in.tell();
-      throw InputFailure::withRange(end, pos, end, fmt::format("Unterminated array of size {}", size));
+      throw InputFailure::withRange(end, pos, end, fmt::format("unterminated array of size {}", size));
     }
   }
 
@@ -1044,7 +1044,7 @@ struct FormattedProducerImpl<DataType::Set, T> {
 
     val.clear();
     if (not readChar(in, '{')) {
-      throw InputFailure(pos, "Expected a set");
+      throw InputFailure(pos, "expected a set");
     }
 
     u64 index = 0;
@@ -1082,7 +1082,7 @@ struct FormattedProducerImpl<DataType::Map, T> {
     val.clear();
 
     if (not readChar(in, '{')) {
-      throw InputFailure(pos, "Expected a map");
+      throw InputFailure(pos, "expected a map");
     }
 
     u64 index = 0;
@@ -1130,7 +1130,7 @@ struct FormattedProducerImpl<DataType::Bimap, T> {
     val.clear();
 
     if (not readChar(in, '{')) {
-      throw InputFailure(pos, "Expected a map");
+      throw InputFailure(pos, "expected a map");
     }
 
     u64 index = 0;
@@ -1180,7 +1180,7 @@ struct FormattedProducerImpl<DataType::Duration, T> {
     try {
       FormattedProducerImpl<RepDataType, Rep>().produce(count, in);
     } catch (const InputFailure&) {
-      throw InputFailure(pos, "Expected a duration");
+      throw InputFailure(pos, "expected a duration");
     }
 
     const std::set<std::string_view> UNITS = {
@@ -1190,13 +1190,13 @@ struct FormattedProducerImpl<DataType::Duration, T> {
     if (auto str = readChoice(in, UNITS, true); str) {
       const auto result = unitDurationCast<T>(*str, count);
       if (not result) {
-        throw InputFailure(pos, "Duration out of range");
+        throw InputFailure(pos, "duration out of range");
       }
       val = *result;
       return;
     }
 
-    throw InputFailure(in.tell(), "Expected a time unit");
+    throw InputFailure(in.tell(), "expected a time unit");
   }
 };
 
@@ -1211,13 +1211,13 @@ struct FormattedProducerImpl<DataType::Date, T> {
 
     auto result = in.scan<std_int, std_unsigned, std_unsigned>("{}-{}-{}");
     if (not result) {
-      throw InputFailure(pos, "Expected a date");
+      throw InputFailure(pos, "expected a date");
     }
 
     const auto& [y, m, d] = result->values();
     const auto date = makeDate(y, m, d);
     if (not date) {
-      throw InputFailure(pos, "Invalid date");
+      throw InputFailure(pos, "invalid date");
     }
     val = *date;
   }
@@ -1244,12 +1244,12 @@ struct FormattedProducerImpl<DataType::HourMinuteSecond, T> {
 
     auto result = in.scan<hours::rep, minutes::rep, seconds::rep>("{}:{}:{}");
     if (not result) {
-      throw InputFailure(pos, "Expected an hour, minute, and second");
+      throw InputFailure(pos, "expected an hour, minute, and second");
     }
 
     auto [h, m, s] = result->values();
     if (not validHourMinuteSecond(h, m, s)) {
-      throw InputFailure(pos, "Invalid hour, minute, or second");
+      throw InputFailure(pos, "invalid hour, minute, or second");
     }
     const bool neg = minus || h < 0; // The scanner may skip more whitespace than we do
     if (h < 0) {
@@ -1280,12 +1280,12 @@ struct FormattedProducerImpl<DataType::TimeZone, T> {
     const auto pos = in.tell();
 
     if (not readChar(in, '(')) {
-      throw InputFailure(pos, "Expected a time zone");
+      throw InputFailure(pos, "expected a time zone");
     }
 
     auto name = readUntilChar(in, ')');
     if (not name) {
-      throw InputFailure(pos, "Unmatched opening parenthesis");
+      throw InputFailure(pos, "unmatched opening parenthesis");
     }
     try {
       // This throws if the time zone is not found
@@ -1299,7 +1299,7 @@ struct FormattedProducerImpl<DataType::TimeZone, T> {
 template<typename T>
 struct FormattedProducerImpl<DataType::Time, T> {
   using Clock = T::clock;
-  static_assert(std::same_as<Clock, std::chrono::system_clock>, "Clock must be `system_clock`");
+  static_assert(std::same_as<Clock, std::chrono::system_clock>, "clock must be `system_clock`");
   using Duration = T::duration;
 
   void
@@ -1313,7 +1313,7 @@ struct FormattedProducerImpl<DataType::Time, T> {
 
     const auto scanned = in.scan<sys_time<Duration>>("{:%FT%T}");
     if (not scanned) {
-      throw InputFailure(pos, "Expected a time point");
+      throw InputFailure(pos, "expected a time point");
     }
     val = scanned->value();
 
@@ -1347,7 +1347,7 @@ struct FormattedProducerImpl<DataType::ZonedTime, T> {
 
     const auto scanned = in.scan<sys_time<Duration>>("{:%FT%T}");
     if (not scanned) {
-      throw InputFailure(pos, "Expected a time point");
+      throw InputFailure(pos, "expected a time point");
     }
     sys_time<Duration> tp = scanned->value();
 
@@ -1366,16 +1366,16 @@ struct FormattedProducerImpl<DataType::ZonedTime, T> {
     if (not readChar(in, 'Z')) {
       auto sign = readChoice(in, { "+", "-" }, false, false);
       if (not sign) {
-        throw InputFailure(offsetPos, "Expected a UTC offset");
+        throw InputFailure(offsetPos, "expected a UTC offset");
       }
 
       const auto result = in.scan<u32, u32>("{}:{}");
       if (not result) {
-        throw InputFailure(offsetPos, "Expected a UTC offset");
+        throw InputFailure(offsetPos, "expected a UTC offset");
       }
       const auto& [h, m] = result->values();
       if (not validUtcOffset(h, m)) {
-        throw InputFailure(offsetPos, "Invalid UTC offset");
+        throw InputFailure(offsetPos, "invalid UTC offset");
       }
       offset = hours(h) + minutes(m);
       if (*sign == "-") {
@@ -1420,7 +1420,7 @@ struct FormattedProducerImpl<DataType::Interval, T> {
     }
 
     if (not readChar(in, Left::Symbol)) {
-      throw InputFailure(pos, "Expected an interval");
+      throw InputFailure(pos, "expected an interval");
     }
     skip(in);
 
@@ -1451,7 +1451,7 @@ struct FormattedProducerImpl<DataType::Interval, T> {
     skip(in);
     if (not readChar(in, Right::Symbol)) {
       const auto end = in.tell();
-      throw InputFailure::withRange(end, pos, end, "Unterminated interval");
+      throw InputFailure::withRange(end, pos, end, "unterminated interval");
     }
   }
 };
@@ -1484,12 +1484,12 @@ struct FormattedProducerImpl<DataType::Instance, T> {
 
 template<typename T>
 struct FormattedProducerImpl<DataType::MemberRef, T> {
-  static_assert(false, "Cannot decode member reference");
+  static_assert(false, "cannot decode member reference");
 };
 
 template<typename T>
 struct FormattedProducerImpl<DataType::VarRef, T> {
-  static_assert(false, "Cannot decode variable reference");
+  static_assert(false, "cannot decode variable reference");
 };
 
 template<typename T>
@@ -1521,7 +1521,7 @@ struct FormattedProducerImpl<DataType::CodePoint, T> {
       }
       return;
     }
-    throw InputFailure(pos, "Expected a code point");
+    throw InputFailure(pos, "expected a code point");
   }
 };
 
@@ -1538,7 +1538,7 @@ struct FormattedProducerImpl<DataType::Character, T> {
     Elem elem;
     FormattedProducerImpl<ElemDataType, Elem>().produce(elem, in);
     if (elem.empty()) {
-      throw InputFailure(pos, "Expected a character");
+      throw InputFailure(pos, "expected a character");
     }
     val = T(std::move(elem));
   }

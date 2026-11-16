@@ -20,7 +20,7 @@ TEST(MODULE, mean) {
     EXPECT_THAT(
       [&] { mean<f64>(vec.begin(), vec.end()); },
       ThrowsMessage<InvalidArgument>(
-        EndsWith("Parameter `end`: Check `end > begin` failed: Range is empty")));
+        EndsWith("parameter `end`: check `end > begin` failed: range is empty")));
   }
 
   {

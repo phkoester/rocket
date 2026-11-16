@@ -342,11 +342,11 @@ makeCl(const vector<string_view>& args) {
 
   for (u64 i = 0; i < args.size(); ++i) {
     const string_view arg = args[i];
-    ROCKET_CHECK(args, not arg.contains('\0'), "May not contain NUL characters");
+    ROCKET_CHECK(args, not arg.contains('\0'), "may not contain NUL characters");
 
     if (i == 0) {
-      ROCKET_CHECK(args, not arg.contains('"'), "Program may not contain quotation marks on Windows");
-      ROCKET_CHECK(args, not isBatchFile(arg), "Program may not be a batch file on Windows");
+      ROCKET_CHECK(args, not arg.contains('"'), "program may not contain quotation marks on Windows");
+      ROCKET_CHECK(args, not isBatchFile(arg), "program may not be a batch file on Windows");
       ret.push_back('"');
       ret.append(arg);
       ret.push_back('"');
@@ -781,7 +781,7 @@ setImpl(std::string_view name, const optional<string>& val, bool replace) {
 // Windows
 ExecResult
 exec(const string& cl, bool combined) {
-  ROCKET_CHECK(cl, not cl.contains('\0'), "May not contain NUL characters");
+  ROCKET_CHECK(cl, not cl.contains('\0'), "may not contain NUL characters");
 
   string app;
   if (const auto ec = cmdPath(app); ec) {
@@ -796,8 +796,8 @@ exec(const string& cl, bool combined) {
 // Windows
 ExecResult
 exec(const vector<string_view>& args, bool combined) {
-  ROCKET_CHECK(args, not args.empty(), "May not be empty");
-  ROCKET_CHECK(args, not args.front().empty(), "Program may not be empty");
+  ROCKET_CHECK(args, not args.empty(), "may not be empty");
+  ROCKET_CHECK(args, not args.front().empty(), "program may not be empty");
 
   return execImpl(nullptr, makeCl(args), combined);
 }
@@ -807,7 +807,7 @@ exec(const vector<string_view>& args, bool combined) {
 // Linux, macOS
 ExecResult
 exec(const string& cl, bool combined) {
-  ROCKET_CHECK(cl, not cl.contains('\0'), "May not contain NUL characters");
+  ROCKET_CHECK(cl, not cl.contains('\0'), "may not contain NUL characters");
 
   // This is how POSIX.1-2024 specifies `popen`. `--` ends the options of the shell, in case `cl` starts with
   // `-` or `+`
@@ -817,13 +817,13 @@ exec(const string& cl, bool combined) {
 // Linux, macOS
 ExecResult
 exec(const vector<string_view>& args, bool combined) {
-  ROCKET_CHECK(args, not args.empty(), "May not be empty");
-  ROCKET_CHECK(args, not args.front().empty(), "Program may not be empty");
+  ROCKET_CHECK(args, not args.empty(), "may not be empty");
+  ROCKET_CHECK(args, not args.front().empty(), "program may not be empty");
 
   vector<string> argv;
   argv.reserve(args.size());
   for (const string_view arg : args) {
-    ROCKET_CHECK(args, not arg.contains('\0'), "May not contain NUL characters");
+    ROCKET_CHECK(args, not arg.contains('\0'), "may not contain NUL characters");
     argv.emplace_back(arg);
   }
   return execImpl(nullptr, std::move(argv), combined);
@@ -864,7 +864,7 @@ makeArgs(string_view cl) { // NOLINT(*-complexity)
           state = DOUBLE;
         } else if (c == '\\') {
           if (not next) {
-            throw InputFailure(i, "Invalid escape sequence");
+            throw InputFailure(i, "invalid escape sequence");
           }
           arg.push_back(*next);
           ++i;
@@ -884,7 +884,7 @@ makeArgs(string_view cl) { // NOLINT(*-complexity)
           state = NORMAL;
         } else if (c == '\\') {
           if (not next) {
-            throw InputFailure(i, "Invalid escape sequence");
+            throw InputFailure(i, "invalid escape sequence");
           }
           arg.push_back(*next);
           ++i;
@@ -896,10 +896,10 @@ makeArgs(string_view cl) { // NOLINT(*-complexity)
   }
 
   if (state == SINGLE) {
-    throw InputFailure(cl.size(), "Unterminated single quote");
+    throw InputFailure(cl.size(), "unterminated single quote");
   }
   if (state == DOUBLE) {
-    throw InputFailure(cl.size(), "Unterminated double quote");
+    throw InputFailure(cl.size(), "unterminated double quote");
   }
 
   if (inArg) {

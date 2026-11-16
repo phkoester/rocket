@@ -14,6 +14,21 @@
 
 #define MODULE rocketFormat
 
+namespace {
+
+// Local constants ------------------------------------------------------------------------------------------
+
+/// Central European Time, localized.
+const string CET = rocket::chrono::abbreviation("Europe/Berlin", false, "CET");
+/// Central European Summer Time, localized.
+const string CEST = rocket::chrono::abbreviation("Europe/Berlin", true, "CEST");
+/// Eastern Standard Time, localized.
+const string EST = rocket::chrono::abbreviation("America/New_York", false, "EST");
+/// Coordinated Universal Time, localized.
+const string UTC = rocket::chrono::abbreviation("UTC", false, "UTC");
+
+} // namespace
+
 // Tests ====================================================================================================
 
 // Global ---------------------------------------------------------------------------------------------------
@@ -242,18 +257,27 @@ TEST(MODULE, rocketF64) {
   EXPECT_EQ(fmt::format("{:.5}", 1.0_f64 / 3), "0.33333");
 }
 
+TEST(MODULE, rocketBimap) {
+  const auto val = make_bimap<i32, string>({ { 3, "three" }, { 1, "one" }, { 2, "two" } });
+  EXPECT_EQ(fmt::format("{}", val), "{1: \"one\", 2: \"two\", 3: \"three\"}");
+  EXPECT_EQ(fmt::format("{:n}", val), "1: \"one\", 2: \"two\", 3: \"three\"");
+  EXPECT_EQ(fmt::format("{::}", val), "{1: \"one\", 2: \"two\", 3: \"three\"}");
+  EXPECT_EQ(fmt::format("{}", bimap<i32, string>()), "{}");
+}
+
+TEST(MODULE, rocketUnorderedBimap) {
+  const auto val = make_unordered_bimap<i32, string>({ { 3, "three" }, { 2, "two" }, { 1, "one" } });
+  EXPECT_THAT(fmt::format("{}", val), matchesRegex("\\{\\d: \".*\", \\d: \".*\", \\d: \".*\"\\}"));
+  EXPECT_THAT(fmt::format("{:n}", val), matchesRegex("\\d: \".*\", \\d: \".*\", \\d: \".*\""));
+  EXPECT_EQ(fmt::format("{}", unordered_bimap<i32, string>()), "{}");
+}
+
 TEST(MODULE, rocketChronoZonedTime) {
   using namespace std::chrono;
 
   const auto* berlin = rocket::chrono::locate_zone("Europe/Berlin");
   const auto* newYork = rocket::chrono::locate_zone("America/New_York");
   const auto* utc = rocket::chrono::locate_zone("UTC");
-
-  // The abbreviations are localized on Windows, e.g., `MEZ` and `MESZ` on a German system
-  const auto CET = rocket::chrono::abbreviation("Europe/Berlin", false, "CET");
-  const auto CEST = rocket::chrono::abbreviation("Europe/Berlin", true, "CEST");
-  const auto EST = rocket::chrono::abbreviation("America/New_York", false, "EST");
-  const auto UTC = rocket::chrono::abbreviation("UTC", false, "UTC");
 
   const sys_seconds summer = sys_days(2026y / October / 23d) + 10h;
   const sys_seconds winter = sys_days(2026y / December / 1d) + 10h;

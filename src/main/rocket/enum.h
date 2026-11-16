@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include "rocket/Bimap.h"
+#include "rocket/bimap.h"
 #include "rocket/Result.h"
 #include "rocket/TypeId.h"
 #include "rocket/assert.h"
@@ -67,8 +67,8 @@
   }
 
 #define ROCKET_ENUM_DECLARE_MAP__(type, name) \
-    extern const ::rocket::Bimap<type, ::std::string_view> name##Map__; \
-    const ::rocket::Bimap<type, ::std::string_view>& get##name##Map__();
+    extern const ::rocket::bimap<type, ::std::string_view> name##Map__; \
+    const ::rocket::bimap<type, ::std::string_view>& get##name##Map__();
 
 #define ROCKET_ENUM_DECLARE_OP_OUTPUT__(type) \
   ::std::ostream& operator<<(::std::ostream& lhs, type rhs);
@@ -87,7 +87,7 @@
   rocket::Enum<ns::type>::toString(ns::type val) { \
     auto it = ns::get##name##Map__().left.find(val); \
     if (it == ns::get##name##Map__().left.end()) { \
-      ROCKET_FAIL("Invalid {} value {}", ::rocket::TypeId::of<ns::type>(), ::std::to_underlying(val)); \
+      ROCKET_FAIL("invalid {} value {}", ::rocket::TypeId::of<ns::type>(), ::std::to_underlying(val)); \
     } \
     return it->second; \
   } \
@@ -125,12 +125,12 @@
 #define ROCKET_ENUM_DEFINE_MAP_ELEM__(r, data, elem) { data::elem, BOOST_PP_STRINGIZE(elem) },
 
 #define ROCKET_ENUM_DEFINE_MAP__(type, name, seq) \
-  const ::rocket::Bimap<type, ::std::string_view> name##Map__ = \
-    ::rocket::makeBimap<type, ::std::string_view>({ \
+  const ::rocket::bimap<type, ::std::string_view> name##Map__ = \
+    ::rocket::make_bimap<type, ::std::string_view>({ \
     BOOST_PP_SEQ_FOR_EACH(ROCKET_ENUM_DEFINE_MAP_ELEM__, type, seq) \
   }); \
   \
-  const ::rocket::Bimap<type, ::std::string_view>& \
+  const ::rocket::bimap<type, ::std::string_view>& \
   get##name##Map__() { \
     return name##Map__; \
   }
@@ -185,7 +185,7 @@ struct Enum : std::false_type {
 // `fmt::formatter<rocket::Enum>` ---------------------------------------------------------------------------
 
 /**
- * @spec_fmt_formatter{rocket::Enum}
+ * @spec_fmt_formatter{#rocket::Enum}
  *
  * This formatter uses the same format specifiers as the underlying string formatter.
  */
@@ -220,7 +220,7 @@ private:
 // `scn::scanner<rocket::Enum>` -----------------------------------------------------------------------------
 
 /**
- * @spec_scn_scanner{rocket::Enum}
+ * @spec_scn_scanner{#rocket::Enum}
  *
  * This scanner uses the same format specifiers as the underlying string scanner.
  */

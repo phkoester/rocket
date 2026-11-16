@@ -4,7 +4,7 @@
 
 #include "rocket-bench/rocket-bench.h"
 
-#include "rocket/Bimap.h"
+#include "rocket/bimap.h"
 #include "rocket/math/random/random.h"
 
 #include <array>
@@ -58,7 +58,7 @@ BENCHMARK(map_smallConstUnorderedMap);
 
 void
 map_smallConstBimap(benchmark::State& state) { // NOLINT(*-internal-linkage)
-  rocket::Bimap<string_view, u64> map;
+  rocket::bimap<string_view, u64> map;
   for (u64 i = 0; i < SMALL_CONST_MAP_KEYS.size(); ++i) {
     map.insert({ SMALL_CONST_MAP_KEYS[i], i });
   }
@@ -73,7 +73,7 @@ BENCHMARK(map_smallConstBimap);
 
 void
 map_smallConstUnorderedBimap(benchmark::State& state) { // NOLINT(*-internal-linkage)
-  rocket::UnorderedBimap<string_view, u64> map;
+  rocket::unordered_bimap<string_view, u64> map;
   for (u64 i = 0; i < SMALL_CONST_MAP_KEYS.size(); ++i) {
     map.insert({ SMALL_CONST_MAP_KEYS[i], i });
   }

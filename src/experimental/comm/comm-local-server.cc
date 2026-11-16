@@ -111,7 +111,7 @@ private:
         if (!ec) {
           make_shared<Session>(std::move(socket), self->path_)->start();
         } else if (ec != asio::error::operation_aborted) {
-          process().error(nio::err, 0, "Accept error on {}: {}", self->path_, ec.message());
+          process().error(nio::err, 0, "accept error on {}: {}", self->path_, ec.message());
         }
         if (self->acceptor_.is_open()) {
           self->accept();

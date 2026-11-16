@@ -62,7 +62,7 @@ TEST(MODULE, split) { // NOLINT(*-complexity)
 
 TEST(MODULE, splitEmptySep) {
   const auto throwsEmptySep =
-    ThrowsMessage<InvalidArgument>(EndsWith("Parameter `sep`: Check `not sep.empty()` failed"));
+    ThrowsMessage<InvalidArgument>(EndsWith("parameter `sep`: check `not sep.empty()` failed"));
 
   EXPECT_THAT([] { static_cast<void>(split<char>("abc", "").begin()); }, throwsEmptySep);
   EXPECT_THAT([] { static_cast<void>(split<char>("abc", "").end()); }, throwsEmptySep);
@@ -76,7 +76,7 @@ TEST(MODULE, splitEmptySep) {
 TEST(MODULE, splitPosOutOfBounds) {
   const auto throwsOutOfBounds =
     ThrowsMessage<InvalidArgument>(
-      EndsWith("Parameter `pos`: Check `pos == NPOS || pos <= str.size()` failed"));
+      EndsWith("parameter `pos`: check `pos == NPOS || pos <= str.size()` failed"));
 
   EXPECT_THAT([] { SplitIterator<char>("abc", 4, ","); }, throwsOutOfBounds);
   EXPECT_THAT([] { SplitIterator<char>("", 1, ","); }, throwsOutOfBounds);

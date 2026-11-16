@@ -67,12 +67,12 @@ using namespace ::testing;
  * @param is the input stream
  * @param _fail the expected value of `is.fail()`
  * @param _eof the expected value of `is.eof()`
- * @param _tell the expected value of `rocket::io::tell(is)`
+ * @param _tell the expected value of `rocket::io::stream::tell(is)`
  */
 #define EXPECT_ISTREAM(is, _fail, _eof, _tell) \
   EXPECT_EQ(is.fail(), _fail); \
   EXPECT_EQ(is.eof(), _eof); \
-  EXPECT_EQ(::rocket::io::tell(is), _tell)
+  EXPECT_EQ(::rocket::io::stream::tell(is), _tell)
 
 /**
  * Checks if an environment variable is set to `true`. If it is not, the test is skipped.
@@ -94,7 +94,7 @@ using namespace ::testing;
   if (not ::rocket::system::env::get<bool>(name).value_or(false)) { \
     static bool info = false; \
     if (not info) { \
-      ROCKET_PROCESS_INFO("Exiting function because `" name "` is not set to `true`"); \
+      ROCKET_PROCESS_INFO("exiting function because `" name "` is not set to `true`"); \
       info = true; \
     } \
     return; \

@@ -40,23 +40,23 @@ TEST(MODULE, WrappedExceptionFormat) { // NOLINT(*-complexity)
       // Test `WrappedException` with `std::exception`
       EXPECT_THAT(
         fmt::format("{}", WrappedException(ex2)),
-        matchesRegex(".*\\.cc:\\d+: Parameter `name`: oops2 \\(Because: .*\\.cc:\\d+: oops1\\)"));
+        matchesRegex(".*\\.cc:\\d+: parameter `name`: oops2 \\(Because: .*\\.cc:\\d+: oops1\\)"));
       EXPECT_THAT(
         fmt::format("{:t}", WrappedException(ex2)),
-        matchesRegex("`std::.*[Nn]ested.*<rocket::InvalidArgument>`: .*\\.cc:\\d+: Parameter `name`: oops2 \\(Because: .*\\.cc:\\d+: oops1\\)"));
+        matchesRegex("`std::.*[Nn]ested.*<rocket::InvalidArgument>`: .*\\.cc:\\d+: parameter `name`: oops2 \\(Because: .*\\.cc:\\d+: oops1\\)"));
 
       // Test `WrappedException` with `std::exception_ptr`
       EXPECT_THAT(
         fmt::format("{}", WrappedException(current_exception())),
-        matchesRegex(".*\\.cc:\\d+: Parameter `name`: oops2 \\(Because: .*\\.cc:\\d+: oops1\\)"));
+        matchesRegex(".*\\.cc:\\d+: parameter `name`: oops2 \\(Because: .*\\.cc:\\d+: oops1\\)"));
 #ifdef __GLIBCXX__
       EXPECT_THAT(
         fmt::format("{:t}", WrappedException(current_exception())),
-        matchesRegex("`std::.*[Nn]ested.*<rocket::InvalidArgument>`: .*\\.cc:\\d+: Parameter `name`: oops2 \\(Because: .*\\.cc:\\d+: oops1\\)"));
+        matchesRegex("`std::.*[Nn]ested.*<rocket::InvalidArgument>`: .*\\.cc:\\d+: parameter `name`: oops2 \\(Because: .*\\.cc:\\d+: oops1\\)"));
 #else
       EXPECT_THAT(
         fmt::format("{:t}", WrappedException(current_exception())),
-        matchesRegex(".*\\.cc:\\d+: Parameter `name`: oops2 \\(Because: .*\\.cc:\\d+: oops1\\)"));
+        matchesRegex(".*\\.cc:\\d+: parameter `name`: oops2 \\(Because: .*\\.cc:\\d+: oops1\\)"));
 #endif
     }
   }
@@ -77,7 +77,7 @@ TEST(MODULE, printException1) { // NOLINT(*-complexity)
         printException(str1, ex3);
         EXPECT_THAT(str1.str(), AllOf(
           containsRegex("An instance of `std::.*[Nn]ested.*<rocket::InvalidState>` was thrown: .*\\.cc:\\d+: oops3\n"),
-          containsRegex("Caused by an instance of `std::.*[Nn]ested.*<rocket::InvalidArgument>`: .*\\.cc:\\d+: Parameter `name`: oops2\n"),
+          containsRegex("Caused by an instance of `std::.*[Nn]ested.*<rocket::InvalidArgument>`: .*\\.cc:\\d+: parameter `name`: oops2\n"),
           containsRegex("Caused by an instance of `char const\\*`: \"oops1\"\n")));
 
         nio::StringSink str2;
@@ -110,7 +110,7 @@ TEST(MODULE, what1) { // NOLINT(*-complexity)
         throw_with_nested(InvalidState("oops3"));
       } catch (const InvalidState& ex3) {
         const string str1 = what(ex3);
-        EXPECT_THAT(str1, matchesRegex(".*\\.cc:\\d+: oops3 \\(Because: .*\\.cc:\\d+: Parameter `name`: oops2 \\(Because: \"oops1\"\\)\\)"));
+        EXPECT_THAT(str1, matchesRegex(".*\\.cc:\\d+: oops3 \\(Because: .*\\.cc:\\d+: parameter `name`: oops2 \\(Because: \"oops1\"\\)\\)"));
 
         const string str2 = what(current_exception());
         EXPECT_EQ(str2, str1);

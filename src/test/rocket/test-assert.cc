@@ -33,8 +33,8 @@ TEST(MODULE, RocketAssertTrue) {
 
 TEST(MODULE_DEATH_TEST, RocketAssertFalse) { // NOLINT(*-complexity)
   EXPECT_EXIT(
-      { ROCKET_ASSERT(false, "My message: {}", 42); },
-      ABORTED(), "Assertion `false` failed: My message: 42");
+      { ROCKET_ASSERT(false, "my message: {}", 42); },
+      ABORTED(), "assertion `false` failed: my message: 42");
 }
 
 TEST(MODULE, RocketCheck) {
@@ -42,18 +42,18 @@ TEST(MODULE, RocketCheck) {
 
   EXPECT_THAT(
       [&] { ROCKET_CHECK(c, c == 'b'); },
-      ThrowsMessage<InvalidArgument>(EndsWith("Parameter `c`: Check `c == 'b'` failed")));
+      ThrowsMessage<InvalidArgument>(EndsWith("parameter `c`: check `c == 'b'` failed")));
 
   EXPECT_THAT(
       [&] { ROCKET_CHECK(c, c == 'b', "oops"); },
-      ThrowsMessage<InvalidArgument>(EndsWith("Parameter `c`: Check `c == 'b'` failed: oops")));
+      ThrowsMessage<InvalidArgument>(EndsWith("parameter `c`: check `c == 'b'` failed: oops")));
 }
 
 TEST(MODULE, RocketExpect) {
   oopsCalled = false;
   EXPECT_THAT(
       [] { ROCKET_EXPECT(true && false, "{}", oops()); },
-      ThrowsMessage<InvalidState>(EndsWith("Expectation `true && false` failed: oops")));
+      ThrowsMessage<InvalidState>(EndsWith("expectation `true && false` failed: oops")));
   EXPECT_TRUE(oopsCalled);
 }
 
@@ -67,8 +67,8 @@ TEST(MODULE, RocketFail) {
 
 TEST(MODULE_DEATH_TEST, RocketTerminate) {
   EXPECT_EXIT(
-      { ROCKET_TERMINATE("My message: {}", 42); },
-      ABORTED(), "My message: 42");
+      { ROCKET_TERMINATE("my message: {}", 42); },
+      ABORTED(), "my message: 42");
 }
 
 // EOF

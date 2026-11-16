@@ -400,7 +400,7 @@ forEachScanSource(string_view input, Fn fn) {
 TEST(MODULE, FileSinkDoesNotExist) {
   EXPECT_THAT(
     [&] { const FileSink out("/file/does/not/exist"); },
-    throwsDoesNotExist("Cannot open file `/file/does/not/exist` for writing"));
+    throwsDoesNotExist("cannot open file `/file/does/not/exist` for writing"));
 }
 
 TEST(MODULE, NullSink) {
@@ -455,7 +455,7 @@ TEST(MODULE, StreamSink) {
 TEST(MODULE, StreamSinkDoesNotExist) {
   EXPECT_THAT(
     [&] { const StreamSink out("/file/does/not/exist"); },
-    throwsDoesNotExist("Cannot open file `/file/does/not/exist` for writing"));
+    throwsDoesNotExist("cannot open file `/file/does/not/exist` for writing"));
 }
 
 TEST(MODULE, StreamSinkLeavesExceptionMaskAlone) {
@@ -491,7 +491,7 @@ TEST(MODULE, StreamSinkBufferThrows) {
       if (system) {
         throw system_error(make_error_code(errc::no_space_on_device));
       }
-      throw runtime_error("Simulated I/O error");
+      throw runtime_error("simulated I/O error");
     }
   };
 
@@ -593,7 +593,7 @@ TEST(MODULE, seekableSinks) {
   EXPECT_FALSE(StreamSink(noSeek).seekable());
 
   // Like `stdout`, which depends on how the test is run
-  EXPECT_EQ(StreamSink(cout).seekable(), io::seekable(stdout));
+  EXPECT_EQ(StreamSink(cout).seekable(), io::file::seekable(stdout));
 }
 
 // `print`, `println` .......................................................................................
@@ -706,13 +706,13 @@ TEST(MODULE, printSpanSinkTruncated) {
 TEST(MODULE, FileSourceDoesNotExist) {
   EXPECT_THAT(
     [&] { const FileSource in("/file/does/not/exist"); },
-    throwsDoesNotExist("Cannot open file `/file/does/not/exist` for reading"));
+    throwsDoesNotExist("cannot open file `/file/does/not/exist` for reading"));
 }
 
 TEST(MODULE, StreamSourceDoesNotExist) {
   EXPECT_THAT(
     [&] { const StreamSource in("/file/does/not/exist"); },
-    throwsDoesNotExist("Cannot open file `/file/does/not/exist` for reading"));
+    throwsDoesNotExist("cannot open file `/file/does/not/exist` for reading"));
 }
 
 TEST(MODULE, StreamSourceExceptionMask) {
@@ -1069,9 +1069,9 @@ TEST(MODULE, standardStreamsOverPipes) {
     r.outOk = out.ok();
     if (r.inOk && r.outOk) {
       errno = 0;
-      r.ioTell = io::tell(cin);
-      r.ioSeekableCin = io::seekable(cin);
-      r.ioSeekableCout = io::seekable(cout);
+      r.ioTell = io::stream::tell(cin);
+      r.ioSeekableCin = io::stream::seekable(cin);
+      r.ioSeekableCout = io::stream::seekable(cout);
       r.errnoAfterIo = errno;
 
       StreamSource src(cin);
@@ -1136,7 +1136,7 @@ TEST(MODULE, seekableSources) {
   EXPECT_FALSE(StreamSource(is).seekable());
 
   // Like `stdin`, which depends on how the test is run
-  EXPECT_EQ(StreamSource(cin).seekable(), io::seekable(stdin));
+  EXPECT_EQ(StreamSource(cin).seekable(), io::file::seekable(stdin));
 
   // A source is seekable exactly if it can tell its position, before and after reading
   forEachScanSource("abc", [](Source& in) {

@@ -244,13 +244,13 @@ TEST(MODULE, execNotFoundShell) {
 TEST(MODULE, execInvalid) {
   EXPECT_THAT(
     [&] { exec(string("a\0b", 3)); },
-    ThrowsMessage<InvalidArgument>(EndsWith("May not contain NUL characters")));
+    ThrowsMessage<InvalidArgument>(EndsWith("may not contain NUL characters")));
   EXPECT_THAT(
     [&] { exec(vector<string_view> {}); },
-    ThrowsMessage<InvalidArgument>(EndsWith("May not be empty")));
+    ThrowsMessage<InvalidArgument>(EndsWith("may not be empty")));
   EXPECT_THAT(
     [&] { exec(vector<string_view> { "" }); },
-    ThrowsMessage<InvalidArgument>(EndsWith("Program may not be empty")));
+    ThrowsMessage<InvalidArgument>(EndsWith("program may not be empty")));
 }
 
 #ifdef ROCKET_OS_WINDOWS
@@ -259,7 +259,7 @@ TEST(MODULE, execWindowsBatchFile) {
     SCOPED_TRACE(string(program));
     EXPECT_THAT(
       [&] { exec({ program, "arg" }); },
-      ThrowsMessage<InvalidArgument>(EndsWith("Program may not be a batch file on Windows")));
+      ThrowsMessage<InvalidArgument>(EndsWith("program may not be a batch file on Windows")));
   }
 }
 #endif // ROCKET_OS_WINDOWS
@@ -420,7 +420,7 @@ TEST(MODULE, execArgsNul) {
 
   EXPECT_THAT(
     [&] { exec({ executable, "a\0b"sv }); },
-    ThrowsMessage<InvalidArgument>(EndsWith("May not contain NUL characters")));
+    ThrowsMessage<InvalidArgument>(EndsWith("may not contain NUL characters")));
 }
 
 TEST(MODULE, makeArgs) {
@@ -439,16 +439,16 @@ TEST(MODULE, makeArgs) {
 
   EXPECT_THAT(
     [&] { makeArgs(" a'"); },
-    throwsInputFailure(3, EndsWith("Unterminated single quote")));
+    throwsInputFailure(3, EndsWith("unterminated single quote")));
   EXPECT_THAT(
     [&] { makeArgs(" a\""); },
-    throwsInputFailure(3, EndsWith("Unterminated double quote")));
+    throwsInputFailure(3, EndsWith("unterminated double quote")));
   EXPECT_THAT(
     [&] { makeArgs("\\"); },
-    throwsInputFailure(0, EndsWith("Invalid escape sequence")));
+    throwsInputFailure(0, EndsWith("invalid escape sequence")));
   EXPECT_THAT(
     [&] { makeArgs("\"\\"); },
-    throwsInputFailure(1, EndsWith("Invalid escape sequence")));
+    throwsInputFailure(1, EndsWith("invalid escape sequence")));
 }
 
 // EOF

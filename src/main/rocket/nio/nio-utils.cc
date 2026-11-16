@@ -20,7 +20,7 @@ namespace {
 // Local constants ------------------------------------------------------------------------------------------
 
 /// The message of the #rocket::InputFailure thrown on invalid UTF-8.
-constexpr string_view INVALID_UTF8 = "Invalid UTF-8";
+constexpr string_view INVALID_UTF8 = "invalid UTF-8";
 
 // Local functions ------------------------------------------------------------------------------------------
 
@@ -180,10 +180,10 @@ readValidCodePoint(Source& in) {
 void
 rewindTo(Source& in, optional<u64> pos, u64 offset) {
   if (not pos) {
-    throw InvalidState("Cannot go back in a source that cannot report its position");
+    throw InvalidState("cannot go back in a source that cannot report its position");
   }
   if (not in.seek(static_cast<i64>(*pos + offset), SeekMode::beg)) {
-    throw InvalidState(fmt::format("Cannot go back to position {} in the source", *pos + offset));
+    throw InvalidState(fmt::format("cannot go back to position {} in the source", *pos + offset));
   }
 }
 
@@ -210,7 +210,7 @@ namespace rocket::nio {
 void
 expectChar(Source& in, char c) {
   if (not readChar(in, c)) {
-    throw InputFailure(in.tell(), fmt::format("Expected {:?}", c));
+    throw InputFailure(in.tell(), fmt::format("expected {:?}", c));
   }
 }
 
@@ -295,7 +295,7 @@ readChoice( // NOLINT(*-complexity)
 
   vector<string_view> candidates(values.begin(), values.end());
   for (const auto candidate : candidates) {
-    ROCKET_CHECK(values, not candidate.empty(), "May not contain empty elements");
+    ROCKET_CHECK(values, not candidate.empty(), "may not contain empty elements");
   }
 
   const auto matchesChar = [ignoreCase](char lhs, char rhs) {
@@ -476,7 +476,7 @@ readIdentifier(Source& in) {
 
 bool
 readString(Source& in, string_view str, bool ignoreCase, bool endOfWord) {
-  ROCKET_CHECK(str, not str.empty(), "May not be empty");
+  ROCKET_CHECK(str, not str.empty(), "may not be empty");
 
   if (const auto* contiguous = dynamic_cast<ContiguousSource*>(&in); contiguous != nullptr) {
     // Contiguous
@@ -523,7 +523,7 @@ readSubseconds(Source& in) {
   if (readChar(in, '.')) {
     digits = readWhilePredicate(in, [](char c) { return isdigit(static_cast<u8>(c)); });
     if (digits.empty()) {
-      throw InputFailure(in.tell(), "Expected subseconds");
+      throw InputFailure(in.tell(), "expected subseconds");
     }
   }
   while (digits.size() < 9) {
@@ -697,7 +697,7 @@ skip(Source& in, bool cComments, bool shellComments) { // NOLINT(*-complexity)
     if (cComments && first == '/' && second == '*') {
       if (not skipUntilString(in, "*/")) {
         rewindTo(in, pos);
-        throw InputFailure(pos, "Unterminated C-style comment");
+        throw InputFailure(pos, "unterminated C-style comment");
       }
       continue;
     }
@@ -710,7 +710,7 @@ skip(Source& in, bool cComments, bool shellComments) { // NOLINT(*-complexity)
 
 bool
 skipUntilString(Source& in, string_view str) {
-  ROCKET_CHECK(str, not str.empty(), "May not be empty");
+  ROCKET_CHECK(str, not str.empty(), "may not be empty");
 
   if (const auto* contiguous = dynamic_cast<ContiguousSource*>(&in); contiguous != nullptr) {
     // Contiguous

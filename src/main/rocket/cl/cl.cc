@@ -53,7 +53,7 @@ addArg(vector<string>& out, const string& arg, vector<ArgFile>& openFiles) { // 
       try {
         absPath = filesystem::canonical(file);
       } catch (const exception&) {
-        ROCKET_FAIL("Cannot resolve argument file `{}`", file);
+        ROCKET_FAIL("cannot resolve argument file `{}`", file);
       }
       const string absFile = absPath.string();
       const auto open = ranges::find(openFiles, absFile, &ArgFile::absFile);
@@ -65,14 +65,14 @@ addArg(vector<string>& out, const string& arg, vector<ArgFile>& openFiles) { // 
         }
         cycle.push_back(fmt::format("`{}`", file));
         const string chain = str::join(cycle.begin(), cycle.end(), " -> ", " -> ", " -> ");
-        ROCKET_FAIL("Argument file `{}` includes itself: {}", file, chain);
+        ROCKET_FAIL("argument file `{}` includes itself: {}", file, chain);
       }
       openFiles.push_back({ .absFile=absFile, .file=file });
 
       // Read the argument file, add arguments
       auto in = nio::FileSource(file);
       if (in.bad()) {
-        ROCKET_FAIL("Cannot read argument file `{}`", file);
+        ROCKET_FAIL("cannot read argument file `{}`", file);
       }
       const string contents = in.readString();
       auto lines = str::lines(contents);
@@ -138,12 +138,12 @@ CommandLine::CommandLine(
     }
     validate(opt.name, true);
     auto pair = byName_.emplace(opt.name, &opt);
-    ROCKET_CHECK(opts, pair.second, "Duplicate option `{}`", name(opt, true));
+    ROCKET_CHECK(opts, pair.second, "duplicate option `{}`", name(opt, true));
     if (opt.shortName) {
       const string shortName(static_cast<string_view>(*opt.shortName));
       validate(shortName, false);
       auto pair = byShortName_.emplace(*opt.shortName, &opt);
-      ROCKET_CHECK(opts, pair.second, "Duplicate option `{}`", name(opt, false));
+      ROCKET_CHECK(opts, pair.second, "duplicate option `{}`", name(opt, false));
     }
   }
 
@@ -162,19 +162,19 @@ CommandLine::applyOpt(const Option& opt, bool nameFlag, const optional<string>& 
   // Don’t use `ROCKET_CHECK` here for cleaner exception messages
 
   if (opt.takesValue && not val) {
-    ROCKET_FAIL("Missing value for option `{}`", name(opt, nameFlag));
+    ROCKET_FAIL("missing value for option `{}`", name(opt, nameFlag));
   }
   // Usually, options not taking a value may not be assigned a value. There is one exception to this rule:
   // boolean values are allowed
   static const set<string_view> BOOL_VALUES { "0", "false", "1", "true" };
   if (not opt.takesValue && val && not BOOL_VALUES.contains(*val)) {
-    ROCKET_FAIL("Option `{}` cannot take a value", name(opt, nameFlag));
+    ROCKET_FAIL("option `{}` cannot take a value", name(opt, nameFlag));
   }
   string useValue = val.value_or("true");
 
   try {
     if (opt.choices && not opt.choices->contains(useValue)) {
-      ROCKET_FAIL("Invalid value {:?}", useValue);
+      ROCKET_FAIL("invalid value {:?}", useValue);
     }
     const bool result = opt.apply(useValue);
     parserState_.updateOpt(opt, result);
@@ -183,13 +183,13 @@ CommandLine::applyOpt(const Option& opt, bool nameFlag, const optional<string>& 
     if (opt.format) {
       expected = fmt::format("; expected {}", *opt.format);
     }
-    ROCKET_FAIL("Option `{}`: {}{}", name(opt, nameFlag), ex.message(), expected);
+    ROCKET_FAIL("option `{}`: {}{}", name(opt, nameFlag), ex.message(), expected);
   } catch (const exception& ex) {
     string expected;
     if (opt.format) {
       expected = fmt::format("; expected {}", *opt.format);
     }
-    ROCKET_FAIL("Option `{}`: Invalid value {:?}{}", name(opt, nameFlag), useValue, expected);
+    ROCKET_FAIL("option `{}`: invalid value {:?}{}", name(opt, nameFlag), useValue, expected);
   }
 }
 
@@ -199,7 +199,7 @@ CommandLine::applyParam(const Parameter& param, const string& val) {
 
   try {
     if (param.choices && not param.choices->contains(val)) {
-      ROCKET_FAIL("Invalid value {:?}", val);
+      ROCKET_FAIL("invalid value {:?}", val);
     }
     param.apply(val);
     parserState_.updateParam(param);
@@ -208,13 +208,13 @@ CommandLine::applyParam(const Parameter& param, const string& val) {
     if (param.format) {
       expected = fmt::format("; expected {}", *param.format);
     }
-    ROCKET_FAIL("Parameter `{}`: {}{}", param.name, ex.message(), expected);
+    ROCKET_FAIL("parameter `{}`: {}{}", param.name, ex.message(), expected);
   } catch (const exception& ex) {
     string expected;
     if (param.format) {
       expected = fmt::format("; expected {}", *param.format);
     }
-    ROCKET_FAIL("Parameter `{}`: Invalid value {:?}{}", param.name, val, expected);
+    ROCKET_FAIL("parameter `{}`: invalid value {:?}{}", param.name, val, expected);
   }
 }
 
@@ -270,7 +270,7 @@ CommandLine::parse(const vector<string>& args, nio::Sink& out, nio::Sink& err, b
         string name = eq == string::npos ? arg : arg.substr(0, eq);
         auto mapIt = byName_.find(name);
         if (mapIt == byName_.end()) {
-          ROCKET_FAIL("Unknown option `--{}`", name);
+          ROCKET_FAIL("unknown option `--{}`", name);
         }
         const Option& opt = *mapIt->second;
 
@@ -301,7 +301,7 @@ CommandLine::parse(const vector<string>& args, nio::Sink& out, nio::Sink& err, b
           auto seg = *segIt;
           auto mapIt = byShortName_.find(seg);
           if (mapIt == byShortName_.end()) {
-            ROCKET_FAIL("Unknown option `-{}`", seg);
+            ROCKET_FAIL("unknown option `-{}`", seg);
           }
           const Option& opt = *mapIt->second;
 
@@ -336,7 +336,7 @@ CommandLine::parse(const vector<string>& args, nio::Sink& out, nio::Sink& err, b
         // 4. Not an option, but a positional argument: assign
 
         if (paramIndex >= params_.size()) {
-          ROCKET_FAIL("Extraneous argument `{}`", arg);
+          ROCKET_FAIL("extraneous argument `{}`", arg);
         }
         const Parameter* param = &params_[paramIndex];
         if (paramOccurs == param->maxOccurs) {
@@ -344,7 +344,7 @@ CommandLine::parse(const vector<string>& args, nio::Sink& out, nio::Sink& err, b
           ++paramIndex;
           paramOccurs = 0;
           if (paramIndex >= params_.size()) {
-            ROCKET_FAIL("Extraneous argument `{}`", arg);
+            ROCKET_FAIL("extraneous argument `{}`", arg);
           }
           param = &params_[paramIndex];
         }
@@ -376,13 +376,13 @@ CommandLine::parse(const vector<string>& args, nio::Sink& out, nio::Sink& err, b
       const auto count = parserState_.countOpt(opt);
       if (count < opt.minOccurs) {
         if (opt.minOccurs == 1) {
-          ROCKET_FAIL("Missing required option `{}`", name(opt, true));
+          ROCKET_FAIL("missing required option `{}`", name(opt, true));
         } else {
-          ROCKET_FAIL("Option `{}` is required at least {}", name(opt, true), str::times(opt.minOccurs));
+          ROCKET_FAIL("option `{}` is required at least {}", name(opt, true), str::times(opt.minOccurs));
         }
       }
       if (count > opt.maxOccurs) {
-        ROCKET_FAIL("Option `{}` may be supplied at most {}", name(opt, true), str::times(opt.maxOccurs));
+        ROCKET_FAIL("option `{}` may be supplied at most {}", name(opt, true), str::times(opt.maxOccurs));
       }
     }
 
@@ -391,9 +391,9 @@ CommandLine::parse(const vector<string>& args, nio::Sink& out, nio::Sink& err, b
       const auto count = parserState_.countParam(param);
       if (count < param.minOccurs) {
         if (param.minOccurs == 1) {
-          ROCKET_FAIL("Missing required argument for parameter `{}`", param.name);
+          ROCKET_FAIL("missing required argument for parameter `{}`", param.name);
         } else {
-          ROCKET_FAIL("Parameter `{}` is required at least {}", param.name, str::times(param.minOccurs));
+          ROCKET_FAIL("parameter `{}` is required at least {}", param.name, str::times(param.minOccurs));
         }
       }
       // No need to check `maxOccurs` here; this is handled already
@@ -591,7 +591,7 @@ CommandLine::printUsage(nio::Sink& out) const {
 void
 CommandLine::printVersion(nio::Sink& out, bool exit) {
   if (not config_.version) {
-    out.writeln("No version information available");
+    out.writeln("no version information available");
   } else {
     const auto size = system::terminal::size(out);
     const u64 width = max(40_u64, size ? size->first : 80_u64);
@@ -612,7 +612,7 @@ CommandLine::validate(string_view name, bool nameFlag) {
     ROCKET_FAIL("{} may not be empty", str::capitalize(what));
   }
   if (name.starts_with("-") || name.find_first_of(" =") != string::npos) {
-    ROCKET_FAIL("Invalid {} {:?}", what, name);
+    ROCKET_FAIL("invalid {} {:?}", what, name);
   }
 }
 

@@ -19,7 +19,7 @@ messageOf(cbor_error_code errorCode) {
     case CBOR_ERR_MALFORMATED: return "Malformed data";
     case CBOR_ERR_MEMERROR: return "Memory error";
     case CBOR_ERR_SYNTAXERROR: return "Syntax error";
-    default: ROCKET_FAIL("Invalid CBOR error code {}", static_cast<i32>(errorCode));
+    default: ROCKET_FAIL("invalid CBOR error code {}", static_cast<i32>(errorCode));
   }
 }
 
@@ -40,7 +40,7 @@ positionOf(span<const u8> cbor, u64 index) {
       ++itemIndex;
       pos += result.read;
     } else {
-      throw InputFailure(pos, result.status == CBOR_DECODER_NEDATA ? "Not enough data" : "Malformed data");
+      throw InputFailure(pos, result.status == CBOR_DECODER_NEDATA ? "not enough data" : "Malformed data");
     }
   }
 

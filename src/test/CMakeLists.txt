@@ -19,7 +19,6 @@ set(GENERATED_DIR ${CMAKE_CURRENT_BINARY_DIR}/generated)
 # Rocket ....................................................................................................
 
 RocketAddTest(test-rocket                              rocket                 test-rocket.cc)
-RocketAddTest(test-rocket-Bimap                        rocket                 test-Bimap.cc)
 RocketAddTest(test-rocket-Cow                          rocket                 test-Cow.cc)
 RocketAddTest(test-rocket-Exception                    rocket                 test-Exception.cc)
 RocketAddTest(test-rocket-InputFailure                 rocket                 test-InputFailure.cc)
@@ -49,7 +48,7 @@ RocketAddTest(test-rocket-external-std                 rocket/external        te
 RocketAddTest(test-rocket-format-Subformat             rocket/format          test-Subformat.cc)
 RocketAddTest(test-rocket-hash                         rocket/hash            test-hash.cc)
 RocketAddTest(test-rocket-io                           rocket/io              test-io.cc)
-RocketAddTest(test-rocket-io-int128                    rocket/io              test-io-int128.cc)
+RocketAddTest(test-rocket-io-int128                    rocket/io              test-int128.cc)
 RocketAddTest(test-rocket-io-spanstream                rocket/io              test-spanstream.cc)
 RocketAddTest(test-rocket-log                          rocket/log             test-log.cc)
 RocketAddTest(test-rocket-math                         rocket/math            test-math.cc)

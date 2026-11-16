@@ -23,7 +23,7 @@ namespace {
 // Local constants ------------------------------------------------------------------------------------------
 
 /// The message of the #rocket::InvalidState thrown when a source that cannot seek would have to go back.
-constexpr string_view CANNOT_GO_BACK = "Cannot go back in a source that cannot report its position";
+constexpr string_view CANNOT_GO_BACK = "cannot go back in a source that cannot report its position";
 
 // Local functions ------------------------------------------------------------------------------------------
 
@@ -78,7 +78,7 @@ expectCodePoint(Source& in, char32 expected, u64 expectedTell) {
 /// Expects reading a code point from @p in, which is at position 0, to fail for invalid UTF-8.
 void
 expectInvalidUtf8(Source& in) {
-  EXPECT_THAT([&] { (void) readCodePoint(in); }, throwsInputFailure(0, EndsWith("Invalid UTF-8")));
+  EXPECT_THAT([&] { (void) readCodePoint(in); }, throwsInputFailure(0, EndsWith("invalid UTF-8")));
 }
 
 void
@@ -192,7 +192,7 @@ TEST(MODULE, readCharacter) {
 TEST(MODULE, readCharacterInvalidUtf8) {
   // At the start of the character, invalid UTF-8 throws, and the source is not advanced
   forEachSource("\xFF" "a", [](Source& in) {
-    EXPECT_THAT([&] { (void) readCharacter(in); }, throwsInputFailure(0, EndsWith("Invalid UTF-8")));
+    EXPECT_THAT([&] { (void) readCharacter(in); }, throwsInputFailure(0, EndsWith("invalid UTF-8")));
     expectRest(in, "\xFF" "a");
   });
 
@@ -215,13 +215,13 @@ TEST(MODULE, expectChar) {
     EXPECT_EQ(in.tell(), 3);
 
     // On failure, the position is that of the unexpected character, and the source is not advanced
-    EXPECT_THAT([&] { expectChar(in, 'x'); }, throwsInputFailure(3, EndsWith("Expected 'x'")));
-    EXPECT_THAT([&] { expectColon(in); }, throwsInputFailure(3, EndsWith("Expected ':'")));
-    EXPECT_THAT([&] { expectComma(in); }, throwsInputFailure(3, EndsWith("Expected ','")));
+    EXPECT_THAT([&] { expectChar(in, 'x'); }, throwsInputFailure(3, EndsWith("expected 'x'")));
+    EXPECT_THAT([&] { expectColon(in); }, throwsInputFailure(3, EndsWith("expected ':'")));
+    EXPECT_THAT([&] { expectComma(in); }, throwsInputFailure(3, EndsWith("expected ','")));
     EXPECT_EQ(in.tell(), 3);
 
     EXPECT_NO_THROW(expectChar(in, 'b'));
-    EXPECT_THAT([&] { expectChar(in, 'b'); }, throwsInputFailure(4, EndsWith("Expected 'b'"))); // EOF
+    EXPECT_THAT([&] { expectChar(in, 'b'); }, throwsInputFailure(4, EndsWith("expected 'b'"))); // EOF
   });
 }
 
@@ -481,7 +481,7 @@ TEST(MODULE, readSubseconds) {
     forEachSource(input, [](Source& in) {
       EXPECT_THAT(
         [&] { (void) readSubseconds(in); },
-        throwsInputFailure(1, EndsWith("Expected subseconds")));
+        throwsInputFailure(1, EndsWith("expected subseconds")));
     });
   }
 }
@@ -607,7 +607,7 @@ TEST(MODULE, skipCCommentsUnterminated) {
   forEachSource("/** a *", [&](Source& in) {
     EXPECT_THAT(
       [&] { skip(in, true, false); },
-      throwsInputFailure(0, EndsWith("Unterminated C-style comment")));
+      throwsInputFailure(0, EndsWith("unterminated C-style comment")));
     EXPECT_EQ(in.tell(), 0); // The source must not be advanced on failure
   });
 }
@@ -674,7 +674,7 @@ TEST(MODULE, goingBackFailsIfSeekFails) {
 
   EXPECT_THAT(
     [&] { (void) readString(in, "abc", false, false); },
-    ThrowsMessage<InvalidState>(EndsWith("Cannot go back to position 0 in the source")));
+    ThrowsMessage<InvalidState>(EndsWith("cannot go back to position 0 in the source")));
 }
 
 // Nonseekable sources ......................................................................................
@@ -688,7 +688,7 @@ TEST(MODULE, expectCharNonseekable) {
 
   EXPECT_NO_THROW(expectChar(src.in, 'a'));
   // The position of the failure is unknown
-  EXPECT_THAT([&] { expectChar(src.in, 'x'); }, throwsInputFailure(nullopt, EndsWith("Expected 'x'")));
+  EXPECT_THAT([&] { expectChar(src.in, 'x'); }, throwsInputFailure(nullopt, EndsWith("expected 'x'")));
   EXPECT_EQ(src.in.readString(), "b"); // `expectChar` only peeks, so nothing is lost
 }
 
@@ -788,7 +788,7 @@ TEST(MODULE, readCodePointNonseekable) {
     // A byte that is neither a single byte nor a lead byte is detected by peeking, so nothing is consumed.
     // The position of the failure is unknown
     EXPECT_THAT(
-      [&] { (void) readCodePoint(src.in); }, throwsInputFailure(nullopt, EndsWith("Invalid UTF-8")));
+      [&] { (void) readCodePoint(src.in); }, throwsInputFailure(nullopt, EndsWith("invalid UTF-8")));
     EXPECT_EQ(src.in.readString(), "\x80" "ab");
   }
   {

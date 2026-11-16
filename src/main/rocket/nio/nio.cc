@@ -121,7 +121,7 @@ contiguousSeekPos(u64 pos, u64 size, i64 offset, SeekMode mode) {
     case SeekMode::beg: base = 0; break;
     case SeekMode::cur: base = pos; break;
     case SeekMode::end: base = size; break;
-    default: ROCKET_FLOP(mode, "Invalid seek mode {}", static_cast<i32>(mode));
+    default: ROCKET_FLOP(mode, "invalid seek mode {}", static_cast<i32>(mode));
   }
 
   if (offset < 0) {
@@ -254,19 +254,19 @@ namespace rocket::nio {
 
 u64
 Sink::write(span<const u8> in, u64 offset, u64 n) {
-  ROCKET_CHECK(offset, offset <= in.size(), "Must not be greater than the size {}", in.size());
+  ROCKET_CHECK(offset, offset <= in.size(), "must not be greater than the size {}", in.size());
   return write(in.subspan(offset, min<u64>(n, in.size() - offset)));
 }
 
 u64
 Sink::write(string_view in, u64 offset, u64 n) {
-  ROCKET_CHECK(offset, offset <= in.size(), "Must not be greater than the size {}", in.size());
+  ROCKET_CHECK(offset, offset <= in.size(), "must not be greater than the size {}", in.size());
   return write(in.substr(offset, n));
 }
 
 u64
 Sink::writeln(string_view in, u64 offset, u64 n) {
-  ROCKET_CHECK(offset, offset <= in.size(), "Must not be greater than the size {}", in.size());
+  ROCKET_CHECK(offset, offset <= in.size(), "must not be greater than the size {}", in.size());
   return writeln(in.substr(offset, n));
 }
 
@@ -290,17 +290,17 @@ FileSink::FileSink(FILE* file) :
   if (bad()) {
     ec_ = make_error_code(errc::io_error);
   }
-  seekable_ = io::seekable(file_);
+  seekable_ = io::file::seekable(file_);
 }
 
 FileSink::FileSink(const fs::path& path, bool append, bool binary) :
-  file_(io::open(path, append ? (binary ? "ab" : "a") : (binary ? "wb" : "w"))),
+  file_(io::file::open(path, append ? (binary ? "ab" : "a") : (binary ? "wb" : "w"))),
   closeOnDestroy_(true) {
   if (file_ == nullptr) {
     const auto ec = genericErrorCode(errno);
-    throw io::IoError(ec, fmt::format("Cannot open file `{}` for writing", path));
+    throw io::IoError(ec, fmt::format("cannot open file `{}` for writing", path));
   }
-  seekable_ = io::seekable(file_);
+  seekable_ = io::file::seekable(file_);
 }
 
 FileSink::~FileSink() {
@@ -456,7 +456,7 @@ StreamSink::StreamSink(ostream& os) :
   if (bad()) {
     ec_ = make_error_code(errc::io_error);
   }
-  seekable_ = io::seekable(out());
+  seekable_ = io::stream::seekable(out());
 }
 
 StreamSink::StreamSink(const fs::path& path, bool append, bool binary) {
@@ -464,9 +464,9 @@ StreamSink::StreamSink(const fs::path& path, bool append, bool binary) {
   errno = 0;
   owned_.open(path, (append ? ios::app : ios::trunc) | (binary ? ios::binary : ios::openmode {}));
   if (not owned_.is_open()) {
-    throw io::IoError(errnoCode(), fmt::format("Cannot open file `{}` for writing", path));
+    throw io::IoError(errnoCode(), fmt::format("cannot open file `{}` for writing", path));
   }
-  seekable_ = io::seekable(out());
+  seekable_ = io::stream::seekable(out());
 }
 
 StreamSink::~StreamSink() {
@@ -692,17 +692,17 @@ FileSource::FileSource(FILE* file) :
   if (bad()) {
     ec_ = make_error_code(errc::io_error);
   }
-  seekable_ = io::seekable(file_);
+  seekable_ = io::file::seekable(file_);
 }
 
 FileSource::FileSource(const fs::path& path, bool binary) :
-  file_(io::open(path, binary ? "rb" : "r")),
+  file_(io::file::open(path, binary ? "rb" : "r")),
   closeOnDestroy_(true) {
   if (file_ == nullptr) {
     const auto ec = genericErrorCode(errno);
-    throw io::IoError(ec, fmt::format("Cannot open file `{}` for reading", path));
+    throw io::IoError(ec, fmt::format("cannot open file `{}` for reading", path));
   }
-  seekable_ = io::seekable(file_);
+  seekable_ = io::file::seekable(file_);
 }
 
 FileSource::~FileSource() {
@@ -805,7 +805,7 @@ FileSource::seek(i64 offset, SeekMode mode) { // NOLINT
     case SeekMode::beg: origin = SEEK_SET; break;
     case SeekMode::cur: origin = SEEK_CUR; break;
     case SeekMode::end: origin = SEEK_END; break;
-    default: ROCKET_FLOP(mode, "Invalid seek mode {}", static_cast<i32>(mode));
+    default: ROCKET_FLOP(mode, "invalid seek mode {}", static_cast<i32>(mode));
   }
 
   // Restore the device. `fseek` clears the end-of-file indicator, but not the error indicator. A seek that
@@ -818,7 +818,7 @@ FileSource::seek(i64 offset, SeekMode mode) { // NOLINT
     ec_ = genericErrorCode(errno);
     return false;
   }
-  const auto ret = io::seek(file_, offset, origin);
+  const auto ret = io::file::seek(file_, offset, origin);
   if (bad()) {
     ec_ = errnoCode();
     return false;
@@ -833,7 +833,7 @@ FileSource::tell() {
   }
 
   // `ftell` does not make the device bad if it fails
-  const u64 ret = io::tell(file_);
+  const u64 ret = io::file::tell(file_);
   return ret == NPOS ? nullopt : optional(ret);
 }
 
@@ -917,7 +917,7 @@ StreamSource::StreamSource(std::istream& is) :
   if (bad()) {
     ec_ = make_error_code(errc::io_error);
   }
-  seekable_ = io::seekable(in());
+  seekable_ = io::stream::seekable(in());
 }
 
 StreamSource::StreamSource(const fs::path& path, bool binary) {
@@ -925,9 +925,9 @@ StreamSource::StreamSource(const fs::path& path, bool binary) {
   errno = 0;
   owned_.open(path, binary ? ios::binary : ios::openmode {});
   if (not owned_.is_open()) {
-    throw io::IoError(errnoCode(), fmt::format("Cannot open file `{}` for reading", path));
+    throw io::IoError(errnoCode(), fmt::format("cannot open file `{}` for reading", path));
   }
-  seekable_ = io::seekable(in());
+  seekable_ = io::stream::seekable(in());
 }
 
 i32
@@ -1007,7 +1007,7 @@ StreamSource::seek(i64 offset, SeekMode mode) { // NOLINT
       dir = ios::end;
       break;
     default:
-      ROCKET_FLOP(mode, "Invalid seek mode {}", static_cast<i32>(mode));
+      ROCKET_FLOP(mode, "invalid seek mode {}", static_cast<i32>(mode));
   }
 
   // Restore the device. `seekg` does nothing while `failbit` or `badbit` is set, which a previous operation
@@ -1044,8 +1044,8 @@ StreamSource::tell() {
     return nullopt;
   }
 
-  // `io::tell` asks the stream buffer and leaves the state of the stream alone, unlike `tellg`
-  const u64 ret = io::tell(in());
+  // `io::stream::tell` asks the stream buffer and leaves the state of the stream alone, unlike `tellg`
+  const u64 ret = io::stream::tell(in());
   return ret == NPOS ? nullopt : optional(ret);
 }
 

@@ -26,7 +26,7 @@ namespace rocket::str::location {
 
 LocationsResult
 locations(string_view input, const vector<Position>& positions, const LocationsConfig& config) { // NOLINT(*-complexity)
-  ROCKET_CHECK(config, not config.tabSize || *config.tabSize > 0, "Tab size may not be 0");
+  ROCKET_CHECK(config, not config.tabSize || *config.tabSize > 0, "tab size may not be 0");
 
   // Prepare result
 
@@ -51,7 +51,7 @@ locations(string_view input, const vector<Position>& positions, const LocationsC
       .message = pos.message,
       .caption = pos.caption
     });
-    ROCKET_CHECK(positions, emplaceResult.second, "Duplicate position {}", pos.position);
+    ROCKET_CHECK(positions, emplaceResult.second, "duplicate position {}", pos.position);
 
     maxPos = max(pos.position, maxPos);
   }
@@ -134,7 +134,7 @@ locations(string_view input, const vector<Position>& positions, const LocationsC
     if (loc.line != NPOS) {
       ret.locations.push_back(loc);
     } else {
-      ROCKET_FAIL("Position {} not found in source", loc.position);
+      ROCKET_FAIL("position {} not found in source", loc.position);
     }
   }
 
@@ -183,7 +183,7 @@ printLocations( // NOLINT(*-complexity)
     // Escape the line as C-string, take tab setting from `locationsResult`, print the line as characters
     // (skip zero-width characters)
 
-    ROCKET_CHECK(input, input || loc.lineString, "Either `input` or `lineString` must be supplied");
+    ROCKET_CHECK(input, input || loc.lineString, "either `input` or `lineString` must be supplied");
     const string line = loc.lineString ?
       *loc.lineString :
       string(input->substr(loc.lineRange.a, *loc.lineRange.size()));

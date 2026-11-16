@@ -60,7 +60,7 @@ sendAnsiRequest(nio::Sink& out, std::string_view sequence) {
   while (true) {
     char c = '\0';
     if (::read(STDIN_FILENO, &c, 1) != 1) {
-      throw InputFailure(ret.size(), "Cannot read response");
+      throw InputFailure(ret.size(), "cannot read response");
     }
     ret.push_back(c);
     if (c == 'R') {
@@ -161,7 +161,7 @@ position(nio::Sink& out) { // NOLINT
   // Scan the response
 
   const auto result = scn::scan<u64, u64>(response, "\x1b[{};{}R");
-  ROCKET_EXPECT(result, "Cannot scan response {:?}", response);
+  ROCKET_EXPECT(result, "cannot scan response {:?}", response);
   const auto [y, x] = result->values();
 
   // Done

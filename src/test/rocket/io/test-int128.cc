@@ -1,5 +1,5 @@
 /*
- * test-io-int128.cc
+ * test-int128.cc
  */
 
 #include "rocket-test/rocket-test.h"
@@ -36,7 +36,7 @@ expectOverflow(const string& input, T expected) {
   SCOPED_TRACE(input);
 
   auto val = static_cast<T>(42);
-  auto is = io::is(input);
+  auto is = io::stream::is(input);
   is >> val;
   EXPECT_ISTREAM(is, true, true, static_cast<i32>(input.size()));
   EXPECT_EQ(val, expected);
@@ -49,7 +49,7 @@ expectValue(const string& input, T expected) {
   SCOPED_TRACE(input);
 
   auto val = static_cast<T>(42);
-  auto is = io::is(input);
+  auto is = io::stream::is(input);
   is >> val;
   EXPECT_ISTREAM(is, false, true, static_cast<i32>(input.size()));
   EXPECT_EQ(val, expected);
@@ -72,11 +72,11 @@ TEST(MODULE, i128OpInput) {
   {
     const string input;
 
-    auto isCompare = io::is(input);
+    auto isCompare = io::stream::is(input);
     isCompare >> compare;
     EXPECT_ISTREAM(isCompare, true, true, 0);
 
-    auto is = io::is(input);
+    auto is = io::stream::is(input);
     is >> val;
     EXPECT_ISTREAM(is, true, true, 0);
   }
@@ -85,11 +85,11 @@ TEST(MODULE, i128OpInput) {
   {
     const string input = "x";
 
-    auto isCompare = io::is(input);
+    auto isCompare = io::stream::is(input);
     isCompare >> compare;
     EXPECT_ISTREAM(isCompare, true, false, 0);
 
-    auto is = io::is(input);
+    auto is = io::stream::is(input);
     is >> val;
     EXPECT_ISTREAM(is, true, false, 0);
   }
@@ -98,11 +98,11 @@ TEST(MODULE, i128OpInput) {
   {
     const string input = "-";
 
-    auto isCompare = io::is(input);
+    auto isCompare = io::stream::is(input);
     isCompare >> compare;
     EXPECT_ISTREAM(isCompare, true, true, 1);
 
-    auto is = io::is(input);
+    auto is = io::stream::is(input);
     is >> val;
     EXPECT_ISTREAM(is, true, true, 1);
   }
@@ -111,11 +111,11 @@ TEST(MODULE, i128OpInput) {
   {
     const string input = "-x";
 
-    auto isCompare = io::is(input);
+    auto isCompare = io::stream::is(input);
     isCompare >> compare;
     EXPECT_ISTREAM(isCompare, true, false, 1);
 
-    auto is = io::is(input);
+    auto is = io::stream::is(input);
     is >> val;
     EXPECT_ISTREAM(is, true, false, 1);
   }
@@ -124,12 +124,12 @@ TEST(MODULE, i128OpInput) {
   {
     const string input = "-1";
 
-    auto isCompare = io::is(input);
+    auto isCompare = io::stream::is(input);
     isCompare >> compare;
     EXPECT_ISTREAM(isCompare, false, true, 2);
     EXPECT_EQ(compare, -1);
 
-    auto is = io::is(input);
+    auto is = io::stream::is(input);
     is >> val;
     EXPECT_ISTREAM(is, false, true, 2);
     EXPECT_EQ(val, -1);
@@ -139,12 +139,12 @@ TEST(MODULE, i128OpInput) {
   {
     const string input = "-999999x";
 
-    auto isCompare = io::is(input);
+    auto isCompare = io::stream::is(input);
     isCompare >> compare;
     EXPECT_ISTREAM(isCompare, false, false, 7);
     EXPECT_EQ(compare, -999999);
 
-    auto is = io::is(input);
+    auto is = io::stream::is(input);
     is >> val;
     EXPECT_ISTREAM(is, false, false, 7);
     EXPECT_EQ(val, -999999);
@@ -153,13 +153,13 @@ TEST(MODULE, i128OpInput) {
   // MIN
   {
     const string compareInput = "-2147483648";
-    auto isCompare = io::is(compareInput);
+    auto isCompare = io::stream::is(compareInput);
     isCompare >> compare;
     EXPECT_ISTREAM(isCompare, false, true, 11);
     EXPECT_EQ(compare, compareLimits.min());
 
     const string input = "-170141183460469231731687303715884105728";
-    auto is = io::is(input);
+    auto is = io::stream::is(input);
     is >> val;
     EXPECT_ISTREAM(is, false, true, 40);
     EXPECT_EQ(val, limits.min());
@@ -168,12 +168,12 @@ TEST(MODULE, i128OpInput) {
   // MIN - 1, overflow
   {
     const string compareInput = "-2147483649";
-    auto isCompare = io::is(compareInput);
+    auto isCompare = io::stream::is(compareInput);
     isCompare >> compare;
     EXPECT_ISTREAM(isCompare, true, true, 11);
 
     const string input = "-170141183460469231731687303715884105729";
-    auto is = io::is(input);
+    auto is = io::stream::is(input);
     is >> val;
     EXPECT_ISTREAM(is, true, true, 40);
   }
@@ -181,13 +181,13 @@ TEST(MODULE, i128OpInput) {
   // MAX
   {
     const string compareInput = "2147483647";
-    auto isCompare = io::is(compareInput);
+    auto isCompare = io::stream::is(compareInput);
     isCompare >> compare;
     EXPECT_ISTREAM(isCompare, false, true, 10);
     EXPECT_EQ(compare, compareLimits.max());
 
     const string input = "170141183460469231731687303715884105727";
-    auto is = io::is(input);
+    auto is = io::stream::is(input);
     is >> val;
     EXPECT_ISTREAM(is, false, true, 39);
     EXPECT_EQ(val, limits.max());
@@ -196,12 +196,12 @@ TEST(MODULE, i128OpInput) {
   // MAX + 1, overflow
   {
     const string compareInput = "2147483648";
-    auto isCompare = io::is(compareInput);
+    auto isCompare = io::stream::is(compareInput);
     isCompare >> compare;
     EXPECT_ISTREAM(isCompare, true, true, 10);
 
     const string input = "170141183460469231731687303715884105728";
-    auto is = io::is(input);
+    auto is = io::stream::is(input);
     is >> val;
     EXPECT_ISTREAM(is, true, true, 39);
   }
@@ -209,12 +209,12 @@ TEST(MODULE, i128OpInput) {
   // MAX * 10, overflow
   {
     const string compareInput = "21474836470";
-    auto isCompare = io::is(compareInput);
+    auto isCompare = io::stream::is(compareInput);
     isCompare >> compare;
     EXPECT_ISTREAM(isCompare, true, true, 11);
 
     const string input = "1701411834604692317316873037158841057280";
-    auto is = io::is(input);
+    auto is = io::stream::is(input);
     is >> val;
     EXPECT_ISTREAM(is, true, true, 40);
   }
@@ -222,12 +222,12 @@ TEST(MODULE, i128OpInput) {
   // MAX * 100, overflow
   {
     const string compareInput = "214748364700";
-    auto isCompare = io::is(compareInput);
+    auto isCompare = io::stream::is(compareInput);
     isCompare >> compare;
     EXPECT_ISTREAM(isCompare, true, true, 12);
 
     const string input = "17014118346046923173168730371588410572800";
-    auto is = io::is(input);
+    auto is = io::stream::is(input);
     is >> val;
     EXPECT_ISTREAM(is, true, true, 41);
   }
@@ -249,8 +249,8 @@ TEST(MODULE, i128OpInputOverflow) {
 
 TEST(MODULE, i128OpInputOverflowStopsAtNonDigit) {
   auto val = static_cast<i128>(42);
-  const string input = FOUR_E38 + "x"; // `io::is` only keeps a view, so this must outlive the stream
-  auto is = io::is(input);
+  const string input = FOUR_E38 + "x"; // `io::stream::is` only keeps a view, so this must outlive the stream
+  auto is = io::stream::is(input);
   is >> val;
   EXPECT_ISTREAM(is, true, false, 39);
   EXPECT_EQ(val, numeric_limits<i128>::max());
@@ -307,11 +307,11 @@ TEST(MODULE, u128OpInput) {
   {
     const string input;
 
-    auto isCompare = io::is(input);
+    auto isCompare = io::stream::is(input);
     isCompare >> compare;
     EXPECT_ISTREAM(isCompare, true, true, 0);
 
-    auto is = io::is(input);
+    auto is = io::stream::is(input);
     is >> val;
     EXPECT_ISTREAM(is, true, true, 0);
   }
@@ -320,11 +320,11 @@ TEST(MODULE, u128OpInput) {
   {
     const string input = "x";
 
-    auto isCompare = io::is(input);
+    auto isCompare = io::stream::is(input);
     isCompare >> compare;
     EXPECT_ISTREAM(isCompare, true, false, 0);
 
-    auto is = io::is(input);
+    auto is = io::stream::is(input);
     is >> val;
     EXPECT_ISTREAM(is, true, false, 0);
   }
@@ -333,11 +333,11 @@ TEST(MODULE, u128OpInput) {
   {
     const string input = "-";
 
-    auto isCompare = io::is(input);
+    auto isCompare = io::stream::is(input);
     isCompare >> compare;
     EXPECT_ISTREAM(isCompare, true, true, 1);
 
-    auto is = io::is(input);
+    auto is = io::stream::is(input);
     is >> val;
     EXPECT_ISTREAM(is, true, true, 1);
   }
@@ -346,11 +346,11 @@ TEST(MODULE, u128OpInput) {
   {
     const string input = "-x";
 
-    auto isCompare = io::is(input);
+    auto isCompare = io::stream::is(input);
     isCompare >> compare;
     EXPECT_ISTREAM(isCompare, true, false, 1);
 
-    auto is = io::is(input);
+    auto is = io::stream::is(input);
     is >> val;
     EXPECT_ISTREAM(is, true, false, 1);
   }
@@ -359,12 +359,12 @@ TEST(MODULE, u128OpInput) {
   {
     const string input = "1";
 
-    auto isCompare = io::is(input);
+    auto isCompare = io::stream::is(input);
     isCompare >> compare;
     EXPECT_ISTREAM(isCompare, false, true, 1);
     EXPECT_EQ(compare, 1);
 
-    auto is = io::is(input);
+    auto is = io::stream::is(input);
     is >> val;
     EXPECT_ISTREAM(is, false, true, 1);
     EXPECT_EQ(val, 1U);
@@ -374,12 +374,12 @@ TEST(MODULE, u128OpInput) {
   {
     const string input = "999999x";
 
-    auto isCompare = io::is(input);
+    auto isCompare = io::stream::is(input);
     isCompare >> compare;
     EXPECT_ISTREAM(isCompare, false, false, 6);
     EXPECT_EQ(compare, 999999);
 
-    auto is = io::is(input);
+    auto is = io::stream::is(input);
     is >> val;
     EXPECT_ISTREAM(is, false, false, 6);
     EXPECT_EQ(val, 999999U);
@@ -389,12 +389,12 @@ TEST(MODULE, u128OpInput) {
   {
     const string input = "0";
 
-    auto isCompare = io::is(input);
+    auto isCompare = io::stream::is(input);
     isCompare >> compare;
     EXPECT_ISTREAM(isCompare, false, true, 1);
     EXPECT_EQ(compare, compareLimits.min());
 
-    auto is = io::is(input);
+    auto is = io::stream::is(input);
     is >> val;
     EXPECT_ISTREAM(is, false, true, 1);
     EXPECT_EQ(val, limits::min());
@@ -404,12 +404,12 @@ TEST(MODULE, u128OpInput) {
   {
     const string input = "-1";
 
-    auto isCompare = io::is(input);
+    auto isCompare = io::stream::is(input);
     isCompare >> compare;
     EXPECT_ISTREAM(isCompare, false, true, 2);
     EXPECT_EQ(compare, compareLimits.max());
 
-    auto is = io::is(input);
+    auto is = io::stream::is(input);
     is >> val;
     EXPECT_ISTREAM(is, false, true, 2);
     EXPECT_EQ(val, limits::max());
@@ -418,13 +418,13 @@ TEST(MODULE, u128OpInput) {
   // MAX
   {
     const string compareInput = "4294967295";
-    auto isCompare = io::is(compareInput);
+    auto isCompare = io::stream::is(compareInput);
     isCompare >> compare;
     EXPECT_ISTREAM(isCompare, false, true, 10);
     EXPECT_EQ(compare, compareLimits.max());
 
     const string input = "340282366920938463463374607431768211455";
-    auto is = io::is(input);
+    auto is = io::stream::is(input);
     is >> val;
     EXPECT_ISTREAM(is, false, true, 39);
     EXPECT_EQ(val, limits::max());
@@ -433,12 +433,12 @@ TEST(MODULE, u128OpInput) {
   // MAX + 1, overflow
   {
     const string compareInput = "4294967296";
-    auto isCompare = io::is(compareInput);
+    auto isCompare = io::stream::is(compareInput);
     isCompare >> compare;
     EXPECT_ISTREAM(isCompare, true, true, 10);
 
     const string input = "340282366920938463463374607431768211456";
-    auto is = io::is(input);
+    auto is = io::stream::is(input);
     is >> val;
     EXPECT_ISTREAM(is, true, true, 39);
   }
@@ -446,12 +446,12 @@ TEST(MODULE, u128OpInput) {
   // MAX * 10, overflow
   {
     const string compareInput = "42949672960";
-    auto isCompare = io::is(compareInput);
+    auto isCompare = io::stream::is(compareInput);
     isCompare >> compare;
     EXPECT_ISTREAM(isCompare, true, true, 11);
 
     const string input = "3402823669209384634633746074317682114560";
-    auto is = io::is(input);
+    auto is = io::stream::is(input);
     is >> val;
     EXPECT_ISTREAM(is, true, true, 40);
   }
@@ -459,12 +459,12 @@ TEST(MODULE, u128OpInput) {
   // MAX * 100, overflow
   {
     const string compareInput = "429496729600";
-    auto isCompare = io::is(compareInput);
+    auto isCompare = io::stream::is(compareInput);
     isCompare >> compare;
     EXPECT_ISTREAM(isCompare, true, true, 12);
 
     const string input = "34028236692093846346337460743176821145600";
-    auto is = io::is(input);
+    auto is = io::stream::is(input);
     is >> val;
     EXPECT_ISTREAM(is, true, true, 41);
   }
@@ -487,8 +487,8 @@ TEST(MODULE, u128OpInputOverflow) {
 
 TEST(MODULE, u128OpInputOverflowStopsAtNonDigit) {
   auto val = static_cast<u128>(42);
-  const string input = FOUR_E38 + "x"; // `io::is` only keeps a view, so this must outlive the stream
-  auto is = io::is(input);
+  const string input = FOUR_E38 + "x"; // `io::stream::is` only keeps a view, so this must outlive the stream
+  auto is = io::stream::is(input);
   is >> val;
   EXPECT_ISTREAM(is, true, false, 39);
   EXPECT_EQ(val, numeric_limits<u128>::max());
@@ -499,7 +499,7 @@ TEST(MODULE, u128OpInputNegative) {
   // wraps around
   {
     u32 compare = 0;
-    auto is = io::is("-4294967295");
+    auto is = io::stream::is("-4294967295");
     is >> compare;
     EXPECT_ISTREAM(is, false, true, 11);
     EXPECT_EQ(compare, 1);
@@ -700,18 +700,18 @@ void
 expectInputLikeStd(const string& input, const Setup& setup) {
   SCOPED_TRACE(fmt::format("{:?}, {}", input, setup.name));
 
-  auto stdIs = io::is(input);
+  auto stdIs = io::stream::is(input);
   setup.apply(stdIs);
   auto stdVal = static_cast<Std>(42);
   stdIs >> stdVal;
 
-  auto is = io::is(input);
+  auto is = io::stream::is(input);
   setup.apply(is);
   auto val = static_cast<T>(42);
   is >> val;
 
   EXPECT_EQ(is.rdstate(), stdIs.rdstate());
-  EXPECT_EQ(io::tell(is), io::tell(stdIs));
+  EXPECT_EQ(io::stream::tell(is), io::stream::tell(stdIs));
   // A negative value wraps around at a different width for unsigned types, so compare as signed values
   EXPECT_EQ(static_cast<i128>(val), static_cast<i128>(static_cast<i64>(stdVal)));
 }
@@ -789,12 +789,12 @@ TEST(MODULE, all128OpInputExceptions) {
 
   {
     // With `failbit` in the exception mask, a failure throws, after the value has been set
-    auto stdIs = io::is("x");
+    auto stdIs = io::stream::is("x");
     stdIs.exceptions(ios::failbit);
     auto stdVal = static_cast<i64>(42);
     EXPECT_THROW(stdIs >> stdVal, ios::failure);
 
-    auto is = io::is("x");
+    auto is = io::stream::is("x");
     is.exceptions(ios::failbit);
     auto val = static_cast<u128>(42);
     EXPECT_THROW(is >> val, ios::failure);
@@ -854,7 +854,7 @@ TEST(MODULE, all128OpGroupingBeyond64Bits) {
          { "34'02'82'36'69'20'93'84'63'46'33'74'60'74'31'76'82'11'455", group32 },
        }) {
     SCOPED_TRACE(text);
-    auto is = io::is(text);
+    auto is = io::stream::is(text);
     setup(is);
     if (text.starts_with('-')) {
       i128 val = 0;
@@ -870,7 +870,7 @@ TEST(MODULE, all128OpGroupingBeyond64Bits) {
   }
 
   // A mismatched grouping still yields the value, but sets `failbit`
-  auto is = io::is("170'141'183'460'469'231'731'687'303'715'884'1'05'727");
+  auto is = io::stream::is("170'141'183'460'469'231'731'687'303'715'884'1'05'727");
   group3(is);
   i128 val = 0;
   is >> val;
