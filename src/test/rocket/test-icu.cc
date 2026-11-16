@@ -16,7 +16,7 @@
 using namespace std;
 using namespace rocket;
 
-#define MODULE rocketExternalIcu
+#define MODULE rocketIcu
 
 // Tests ====================================================================================================
 

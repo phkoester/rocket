@@ -67,7 +67,7 @@ TEST(MODULE, MyEnumScan) {
   {
     const auto result = scn::scan<MyEnum>("frö", "{}");
     ASSERT_FALSE(result);
-    EXPECT_EQ(string_view(result.error().msg()), "Invalid enum value"sv);
+    EXPECT_EQ(string_view(result.error().msg()), "invalid enum value"sv);
   }
 
   {

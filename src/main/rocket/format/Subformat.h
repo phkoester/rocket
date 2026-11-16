@@ -7,11 +7,10 @@
 #include "rocket/format.h"
 #include "rocket/type-traits.h"
 
-#include <boost/algorithm/string.hpp>
-
 #include <functional>
 #include <map>
 #include <string>
+#include <string_view>
 
 namespace rocket::format {
 
@@ -27,7 +26,7 @@ struct SubformatParams {
   /// The formatted string.
   std::basic_string<C> formatted_;
   /// The tagged values.
-  std::map<std::basic_string_view<C>, std::basic_string<C>> tagged_;
+  std::map<std::basic_string<C>, std::basic_string<C>, std::less<>> tagged_;
 
   /**
    * Sets the formatted string.
@@ -186,28 +185,71 @@ private:
 
 // `fmt::formatter<rocket::format::Subformat>` --------------------------------------------------------------
 
-/// @spec_fmt_formatter{#rocket::format::Subformat}
+/**
+ * @spec_fmt_formatter{#rocket::format::Subformat}
+ *
+ * Every occurrence of a tag in the formatted string is replaced with the tagged value. The replacement is
+ * done in a single pass, so tags in the tagged values are not replaced in turn. If several tags occur at the
+ * same position, then the longest one is replaced.
+ *
+ * This formatter uses the same format specifiers as the underlying string formatter; they apply to the whole
+ * string after the replacement.
+ */
 template<typename C>
 struct fmt::formatter<rocket::format::Subformat<C>, C> {
   /// @cond undocumented
 
-  template<typename FormatContext>
-  constexpr FormatContext::iterator
-  format(const rocket::format::Subformat<C>& val, FormatContext& ctx) const {
-    const auto& params = val.get();
-    auto formatted = params.formatted_;
-    for (const auto& [tag, val] : params.tagged_) {
-      boost::replace_all(formatted, tag, val);
-    }
-    return detail::write<C>(ctx.out(), formatted);
+  constexpr const C*
+  parse(fmt::parse_context<C>& ctx) {
+    return underlying_.parse(ctx);
   }
 
-  constexpr const C*
-  parse(parse_context<C>& ctx) {
-    return ctx.begin();
+  template<typename FormatContext>
+  FormatContext::iterator
+  format(const rocket::format::Subformat<C>& val, FormatContext& ctx) const {
+    return underlying_.format(std::basic_string_view<C>(replaceTags(val.get())), ctx);
   }
 
   /// @endcond
+
+private:
+
+  fmt::formatter<std::basic_string_view<C>, C> underlying_;
+
+  static std::basic_string<C>
+  replaceTags(const rocket::format::SubformatParams<C>& params) {
+    using Size = std::basic_string<C>::size_type;
+    constexpr Size npos = std::basic_string<C>::npos;
+
+    const std::basic_string<C>& formatted = params.formatted_;
+    std::basic_string<C> ret;
+    Size pos = 0;
+    while (true) {
+      // Find the leftmost tag, and the longest one if several tags occur at the same position
+      Size matchPos = npos;
+      const std::basic_string<C>* tag = nullptr;
+      const std::basic_string<C>* value = nullptr;
+      for (const auto& [t, v] : params.tagged_) {
+        if (t.empty()) {
+          continue;
+        }
+        const Size p = formatted.find(t, pos);
+        if (p < matchPos || (p != npos && p == matchPos && t.size() > tag->size())) {
+          matchPos = p;
+          tag = &t;
+          value = &v;
+        }
+      }
+      if (tag == nullptr) {
+        break;
+      }
+      ret.append(formatted, pos, matchPos - pos);
+      ret.append(*value);
+      pos = matchPos + tag->size();
+    }
+    ret.append(formatted, pos);
+    return ret;
+  }
 };
 
 // EOF

@@ -122,6 +122,8 @@ TEST(MODULE, MyStructFormat) {
     "  c=true\n"
     ")");
   EXPECT_EQ(fmt::format("{:t}", m), "MyStruct(ä=42, b=\"rocket\", c=true)");
+  EXPECT_EQ(fmt::format("{:ti}", m), fmt::format("{:it}", m));
+  EXPECT_EQ(fmt::format(U"{:t}", m), U"MyStruct(ä=42, b=\"rocket\", c=true)");
 }
 
 TEST(MODULE, MyStructHash) {

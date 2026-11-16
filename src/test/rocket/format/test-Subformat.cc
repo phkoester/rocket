@@ -62,6 +62,33 @@ TEST(MODULE, charWithTagged) {
     matchesRegex(".*\\.cc:\\d+: Second case: This sentence doesn’t mean much\\."));
 }
 
+TEST(MODULE, charTaggedValuesAreNotReplaced) {
+  auto str = fmt::format("[{}]", Subformat<char>([&] {
+    auto params = Subformat<char>::params("@1 @2");
+    params.tag("@1", "{}", "@2");
+    params.tag("@2", "{}", "two");
+    return params;
+  }));
+  EXPECT_EQ(str, "[@2 two]");
+}
+
+TEST(MODULE, charLongestTagWins) {
+  auto str = fmt::format("{}", Subformat<char>([&] {
+    auto params = Subformat<char>::params("@@ @");
+    params.tag("@", "{}", "one");
+    params.tag("@@", "{}", "two");
+    return params;
+  }));
+  EXPECT_EQ(str, "two one");
+}
+
+TEST(MODULE, charFormatSpecifiers) {
+  auto str = fmt::format("{:*^7}", Subformat<char>([&] {
+    return Subformat<char>::params("abc");
+  }));
+  EXPECT_EQ(str, "**abc**");
+}
+
 TEST(MODULE, char32) {
   auto str = fmt::format(U"a {} d", Subformat<char32>([&] {
     return Subformat<char32>::params(fmt::format(U"{} {}", U'b', U'c'));

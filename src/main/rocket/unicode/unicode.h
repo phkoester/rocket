@@ -10,6 +10,7 @@
 #include "rocket/Cow.h"
 #include "rocket/InputFailure.h"
 #include "rocket/format.h"
+#include "rocket/format/StringFormatter.h"
 #include "rocket/unicode/unicode-fwd.h"
 
 namespace rocket::unicode {
@@ -317,40 +318,24 @@ using utf32::validate;
 /**
  * @spec_fmt_formatter{#rocket::unicode::CodePoint}
  *
- * This formatter uses the same format specifiers as the underlying formatter for type #std::string.
+ * The code point is formatted as `U+` followed by at least four uppercase hexadecimal digits, for example
+ * `U+00E4`.
+ *
+ * This formatter uses the same format specifiers as the underlying string formatter; they apply to the whole
+ * string including the `U+`.
  */
-template<typename C>
-struct fmt::formatter<rocket::unicode::CodePoint, C> {
+template<typename C> requires rocket::IsChar<C>
+struct fmt::formatter<rocket::unicode::CodePoint, C> : rocket::internal::format::StringFormatter<C> {
   /// @cond undocumented
 
   template<typename FormatContext>
-  constexpr FormatContext::iterator
-  format(const rocket::unicode::CodePoint& val, FormatContext& ctx) const {
-    using namespace rocket;
-
+  FormatContext::iterator
+  format(rocket::unicode::CodePoint val, FormatContext& ctx) const {
     // This is simple enough that we don’t need a `FormattedCodec` for it
-    if constexpr (std::same_as<C, char>) {
-      return underlying_.format(fmt::format("U+{:0>4X}", static_cast<u32>(val)), ctx);
-    } else {
-      return underlying_.format(fmt::format(U"U+{:0>4X}", static_cast<u32>(val)), ctx);
-    }
-  }
-
-  constexpr const C*
-  parse(fmt::parse_context<C>& ctx) {
-    return underlying_.parse(ctx);
-  }
-
-  constexpr void
-  set_debug_format(bool val = true) {
-    underlying_.set_debug_format(val);
+    return this->formatUtf8(fmt::format("U+{:04X}", static_cast<rocket::u32>(val)), ctx);
   }
 
   /// @endcond
-
-private:
-
-  fmt::formatter<basic_string_view<C>, C> underlying_;
 };
 
 // `std::hash<rocket::unicode::CodePoint>` ------------------------------------------------------------------

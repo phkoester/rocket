@@ -6,6 +6,7 @@
 
 #include "rocket/type-traits.h"
 
+#include <list>
 #include <unordered_set>
 
 #define MODULE rocketTypeTraits

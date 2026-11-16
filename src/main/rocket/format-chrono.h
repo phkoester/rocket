@@ -34,6 +34,19 @@ template<typename Duration, typename TimeZonePtr, typename C> requires rocket::I
 struct fmt::formatter<rocket::chrono::zoned_time<Duration, TimeZonePtr>, C> {
   /// @cond undocumented
 
+  template<typename ParseContext>
+  constexpr ParseContext::iterator
+  parse(ParseContext& ctx) {
+    // Chrono specifications cannot contain braces, so the specification extends to the closing brace. It is
+    // only stored here and interpreted in `format`
+    auto it = ctx.begin();
+    while (it != ctx.end() && *it != '}') {
+      ++it;
+    }
+    spec_ = std::basic_string_view<C>(ctx.begin(), it);
+    return it;
+  }
+
   template<typename FormatContext>
   FormatContext::iterator
   format(const rocket::chrono::zoned_time<Duration, TimeZonePtr>& val, FormatContext& ctx) const {
@@ -110,19 +123,6 @@ struct fmt::formatter<rocket::chrono::zoned_time<Duration, TimeZonePtr>, C> {
     return formatter.format(std::basic_string_view<C>(buf.data(), buf.size()), ctx);
   }
 
-  template<typename ParseContext>
-  constexpr ParseContext::iterator
-  parse(ParseContext& ctx) {
-    // Chrono specifications cannot contain braces, so the specification extends to the closing brace. It is
-    // only stored here and interpreted in `format`
-    auto it = ctx.begin();
-    while (it != ctx.end() && *it != '}') {
-      ++it;
-    }
-    spec_ = std::basic_string_view<C>(ctx.begin(), it);
-    return it;
-  }
-
   /// @endcond
 
 private:
@@ -194,6 +194,14 @@ template<typename C> requires rocket::IsChar<C>
 struct fmt::formatter<std::chrono::year_month_day, C> : private fmt::formatter<std::tm, C> {
   /// @cond undocumented
 
+  constexpr auto
+  parse(fmt::parse_context<C>& ctx) -> const C* {
+    auto it = ctx.begin();
+    auto end = ctx.end();
+    useTmFormatter_ = it != end && *it != '}';
+    return useTmFormatter_ ? fmt::formatter<std::tm, C>::parse(ctx) : it;
+  }
+
   template<typename FormatContext>
   auto
   format(std::chrono::year_month_day val, FormatContext& ctx) const -> decltype(ctx.out()) {
@@ -208,14 +216,6 @@ struct fmt::formatter<std::chrono::year_month_day, C> : private fmt::formatter<s
     auto w = fmt::detail::tm_writer<decltype(ctx.out()), C>(loc, ctx.out(), time);
     w.on_iso_date();
     return w.out();
-  }
-
-  constexpr auto
-  parse(fmt::parse_context<C>& ctx) -> const C* {
-    auto it = ctx.begin();
-    auto end = ctx.end();
-    useTmFormatter_ = it != end && *it != '}';
-    return useTmFormatter_ ? fmt::formatter<std::tm, C>::parse(ctx) : it;
   }
 
   /// @endcond

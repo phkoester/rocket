@@ -8,12 +8,14 @@
 
 #include "rocket/TypeId.h"
 #include "rocket/format.h"
+#include "rocket/format/StringFormatter.h"
 #include "rocket/stacktrace.h"
 #include "rocket/nio/nio-fwd.h"
 #include "rocket/str/str.h"
 #include "rocket/unicode/ConvertTo.h"
 
 #include <optional>
+#include <sstream>
 #include <source_location>
 #include <stdexcept>
 
@@ -314,85 +316,64 @@ std::string what(std::exception_ptr ptr);
  *
  * - If the `?` format specifier is used, then the stack trace is included.
  * - If the `t` format specifier is used, then the type of the exception is included.
+ *
+ * The format specifiers may appear in any order.
  */
-template<typename C>
+template<typename C> requires rocket::IsChar<C>
 struct fmt::formatter<rocket::WrappedException, C> {
   /// @cond undocumented
 
-  template<typename FormatContext>
-  FormatContext::iterator
-  format(const rocket::WrappedException& val, FormatContext& ctx) const{
-    // If requested, append type
-
-    auto out = ctx.out();
-    if (withType_) {
-      const std::type_info* type; // NOLINT
-      if (val.exception()) {
-        const auto& ex = *val.exception(); // Clang wants this in two lines
-        type = &typeid(ex);
-      } else {
-#ifdef __GLIBCXX__
-        type = val.ptr().__cxa_exception_type();
-#else
-        type = nullptr;
-#endif
-      }
-
-      if (type != nullptr) {
-        const std::string typeName = fmt::format("{}", rocket::TypeId(*type));
-        if constexpr (std::same_as<C, char>) {
-          out = format_to(out, "{}: ", rocket::unicode::ConvertTo<C>::apply(typeName));
-        } else {
-          out = format_to(out, U"{}: ", rocket::unicode::ConvertTo<C>::apply(typeName));
-        }
-      }
-    }
-
-    // Append message
-
-    std::string what;
-    if (val.exception()) {
-      what = rocket::what(*val.exception());
-    } else {
-      what = rocket::what(val.ptr());
-    }
-    out = detail::write<C>(out, rocket::unicode::ConvertTo<C>::apply(what));
-
-    // If debug, append stack trace
-
-    if (debug_) {
-      const auto* const p = dynamic_cast<const rocket::Exception*>(val.exception());
-      if (p && p->stackTrace()) {
-        out = detail::write<C>(out, static_cast<C>('\n'));
-        std::ostringstream os;
-        os << *p->stackTrace();
-        const std::string str = os.str();
-
-        const auto withoutEol = rocket::str::removeTrailingEol(str);
-        out = detail::write<C>(out, rocket::unicode::ConvertTo<C>::apply(withoutEol));
-      }
-    }
-    return out;
-  }
-
   constexpr const C*
-  parse(parse_context<C>& ctx) {
-    auto it = ctx.begin();
-    auto end = ctx.end();
-    if (it != end && *it == '?') {
-      debug_ = true;
-      ++it;
-    }
-    if (it != end && *it == 't') {
-      withType_ = true;
-      ++it;
-    }
-    return it;
+  parse(fmt::parse_context<C>& ctx) {
+    return rocket::internal::format::parseFlags(ctx, [this](C c) {
+      if (c == '?') {
+        debug_ = true;
+        return true;
+      }
+      if (c == 't') {
+        withType_ = true;
+        return true;
+      }
+      return false;
+    });
   }
 
   constexpr void
   set_debug_format(bool val = true) {
     debug_ = val;
+  }
+
+  template<typename FormatContext>
+  FormatContext::iterator
+  format(const rocket::WrappedException& val, FormatContext& ctx) const {
+    using rocket::internal::format::writeUtf8;
+
+    const std::exception* const ex = val.exception();
+    auto out = ctx.out();
+
+    // If requested, write the type
+
+    if (withType_) {
+      if (const std::type_info* const type = typeOf(val)) {
+        out = writeUtf8<C>(out, fmt::format("{}: ", rocket::TypeId(*type)));
+      }
+    }
+
+    // Write the message
+
+    out = writeUtf8<C>(out, ex ? rocket::what(*ex) : rocket::what(val.ptr()));
+
+    // If debug, write the stack trace
+
+    if (debug_) {
+      const auto* const p = dynamic_cast<const rocket::Exception*>(ex);
+      if (p && p->stackTrace()) {
+        std::ostringstream os;
+        os << '\n' << *p->stackTrace();
+        out = writeUtf8<C>(out, rocket::str::removeTrailingEol(os.str()));
+      }
+    }
+    return out;
   }
 
   /// @endcond
@@ -401,6 +382,19 @@ private:
 
   bool debug_ = false;
   bool withType_ = false;
+
+  /// Returns the dynamic type of the wrapped exception, or `nullptr` if it cannot be determined.
+  static const std::type_info*
+  typeOf(const rocket::WrappedException& val) {
+    if (const std::exception* const ex = val.exception()) {
+      return &typeid(*ex);
+    }
+#ifdef __GLIBCXX__
+    return val.ptr().__cxa_exception_type();
+#else
+    return nullptr;
+#endif
+  }
 };
 
 // EOF

@@ -7,6 +7,7 @@
 #pragma once
 
 #include "rocket/format.h"
+#include "rocket/format/StringFormatter.h"
 #include "rocket/type-traits.h"
 #include "rocket/unicode/ConvertTo.h"
 
@@ -111,31 +112,16 @@ private:
  * including the backticks.
  */
 template<typename C> requires rocket::IsChar<C>
-struct fmt::formatter<rocket::TypeId, C> {
+struct fmt::formatter<rocket::TypeId, C> : rocket::internal::format::StringFormatter<C> {
   /// @cond undocumented
 
   template<typename FormatContext>
   FormatContext::iterator
   format(const rocket::TypeId& val, FormatContext& ctx) const {
-    const std::string str = '`' + val.prettyName() + '`';
-    return underlying_.format(rocket::unicode::ConvertTo<C>::apply(str), ctx);
-  }
-
-  constexpr const C*
-  parse(parse_context<C>& ctx) {
-    return underlying_.parse(ctx);
-  }
-
-  constexpr void
-  set_debug_format(bool val = true) {
-    underlying_.set_debug_format(val);
+    return this->formatUtf8('`' + val.prettyName() + '`', ctx);
   }
 
   /// @endcond
-
-private:
-
-  fmt::formatter<basic_string_view<C>, C> underlying_;
 };
 
 // `std::hash<rocket::TypeId>` ------------------------------------------------------------------------------

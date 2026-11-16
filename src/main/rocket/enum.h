@@ -11,6 +11,7 @@
 #include "rocket/TypeId.h"
 #include "rocket/assert.h"
 #include "rocket/format.h"
+#include "rocket/format/StringFormatter.h"
 #include "rocket/scan.h"
 #include "rocket/str/message/message.h"
 #include "rocket/unicode/ConvertTo.h"
@@ -190,31 +191,16 @@ struct Enum : std::false_type {
  * This formatter uses the same format specifiers as the underlying string formatter.
  */
 template<typename E, typename C> requires rocket::Enum<E>::value && rocket::IsChar<C>
-struct fmt::formatter<E, C> {
+struct fmt::formatter<E, C> : rocket::internal::format::StringFormatter<C> {
   /// @cond undocumented
 
   template<typename FormatContext>
   FormatContext::iterator
   format(E val, FormatContext& ctx) const {
-    auto str = rocket::Enum<E>::toString(val); // This may throw, which is okay
-    return underlying_.format(rocket::unicode::ConvertTo<C>::apply(str), ctx);
-  }
-
-  constexpr const C*
-  parse(parse_context<C>& ctx) {
-    return underlying_.parse(ctx);
-  }
-
-  constexpr void
-  set_debug_format(bool val = true) {
-    underlying_.set_debug_format(val);
+    return this->formatUtf8(rocket::Enum<E>::toString(val), ctx); // This may throw, which is okay
   }
 
   /// @endcond
-
-private:
-
-  fmt::formatter<basic_string_view<C>, C> underlying_;
 };
 
 // `scn::scanner<rocket::Enum>` -----------------------------------------------------------------------------
@@ -222,37 +208,35 @@ private:
 /**
  * @spec_scn_scanner{#rocket::Enum}
  *
- * This scanner uses the same format specifiers as the underlying string scanner.
+ * This scanner uses the same format specifiers as the underlying string scanner. It scans a word and then
+ * gives back the characters that follow the longest enum name the word starts with, so that, for example,
+ * `Red,` scans as `Red` and leaves the comma in the input.
  */
 template<typename E> requires rocket::Enum<E>::value
-struct scn::scanner<E, char> : scn::scanner<::std::string, char> {
+struct scn::scanner<E, char> : scn::scanner<std::string, char> {
   /// @cond undocumented
 
-  /**
-   * This must be a scanner for #std::string, not for #std::string_view, because the latter would not work
-   * when scanning from a #std::istream.
-   */
-  using Base = scn::scanner<::std::string, char>;
-
   template<typename Context>
-  scan_expected<typename Context::iterator>
+  scn::scan_expected<typename Context::iterator>
   scan(E& val, Context& ctx) const {
+    // This must scan a #std::string, not a #std::string_view, because the latter does not work when scanning
+    // from a #std::istream
     std::string str;
-    auto scanResult = Base::scan(str, ctx);
+    auto scanResult = scn::scanner<std::string, char>::scan(str, ctx);
     if (not scanResult) {
-      return unexpected(scanResult.error());
+      return scn::unexpected(scanResult.error());
     }
-    const auto enumResult = ::rocket::Enum<E>::toType(str, false);
+    const auto enumResult = rocket::Enum<E>::toType(str, false);
     if (not enumResult) {
-      return unexpected(scan_error(scan_error::invalid_scanned_value, "Invalid enum value"));
+      return scn::unexpected(scn::scan_error(scn::scan_error::invalid_scanned_value, "invalid enum value"));
     }
-    const auto [size, enumVal] = enumResult.value();
-    // If the consumed string is longer than the scanned portion, we need to correct the iterator
-    const rocket::i64 correction = size - str.size(); // Zero or negative
+    const auto [size, enumVal] = *enumResult;
     val = enumVal;
-    auto it = scanResult.value();
-    std::advance(it, correction);
-    return it; \
+
+    // Give back what follows the scanned portion of the word. The iterators of scnlib are bidirectional
+    auto it = *scanResult;
+    std::advance(it, static_cast<std::ptrdiff_t>(size) - static_cast<std::ptrdiff_t>(str.size()));
+    return it;
   }
 
   /// @endcond

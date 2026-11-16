@@ -10,6 +10,7 @@
 #include "rocket/codec/EqualToEncoder.h"
 #include "rocket/codec/HashEncoder.h"
 #include "rocket/codec/FormattedCodec.h"
+#include "rocket/format/CodecFormatter.h"
 #include "rocket/nio/nio.h"
 #include "rocket/unicode/ConvertTo.h"
 
@@ -227,47 +228,21 @@ operator<<(std::ostream& lhs, const VarRef<T>& rhs) {
  * @spec_fmt_formatter{#rocket::reflect::Declared}
  *
  * - If the `i` format specifier is used, then the output is indented.
- * - If the `t` format specifier is used, then the type name is included.
+ * - If the `t` format specifier is used, then the name of the dynamic type is included.
+ *
+ * The format specifiers may appear in any order.
  */
 template<typename T, typename C> requires rocket::reflect::Declared<T>::value && rocket::IsChar<C>
-struct fmt::formatter<T, C> {
+struct fmt::formatter<T, C> : rocket::internal::format::CodecFormatter<C, true> {
   /// @cond undocumented
+
   template<typename FormatContext>
-  constexpr FormatContext::iterator
+  FormatContext::iterator
   format(const T& val, FormatContext& ctx) const {
-    auto out = ctx.out();
-    if (withType_) {
-      const std::string typeName = fmt::format("{}", TypeId(val).prettyName());
-      // GCC 13.3 needs `fmt::detail` here
-      out = fmt::detail::write<C>(out, rocket::unicode::ConvertTo<C>::apply(typeName));
-    }
-    const rocket::codec::FormattedCodec codec;
-    rocket::nio::StringSink buf;
-    codec.encode(val, buf, { .indent=indent_ });
-    // GCC 13.3 needs `fmt::detail` here
-    out = fmt::detail::write<C>(out, rocket::unicode::ConvertTo<C>::apply(buf.str()));
-    return out;
+    return this->formatEncoded(val, typeid(val), ctx);
   }
 
-  constexpr const C*
-  parse(fmt::parse_context<C>& ctx) { // GCC 13.3 needs `fmt::parse_context` here
-    auto it = ctx.begin(), end = ctx.end();
-    if (it != end && *it == 'i') {
-      indent_ = true;
-      ++it;
-    }
-    if (it != end && *it == 't') {
-      withType_ = true;
-      ++it;
-    }
-    return it;
-  }
   /// @endcond
-
-private:
-
-  bool indent_ = false;
-  bool withType_ = false;
 };
 
 // `fmt::formatter<rocket::reflect::Instance>` --------------------------------------------------------------
@@ -277,46 +252,22 @@ private:
  *
  * - If the `i` format specifier is used, then the output is indented.
  * - If the `t` format specifier is used, then the type name is included.
+ *
+ * The format specifiers may appear in any order.
  */
 template<typename T, typename Inner, typename C> requires rocket::IsChar<C>
-struct fmt::formatter<rocket::reflect::Instance<T, Inner>, C> {
+struct fmt::formatter<rocket::reflect::Instance<T, Inner>, C> : rocket::internal::format::CodecFormatter<C, true> {
   /// @cond undocumented
+
   using Type = rocket::reflect::Instance<T, Inner>;
 
   template<typename FormatContext>
-  constexpr FormatContext::iterator
+  FormatContext::iterator
   format(const Type& val, FormatContext& ctx) const {
-    auto out = ctx.out();
-    if (withType_) {
-      const std::string typeName = fmt::format("{}", TypeId::of<typename Type::Type>().prettyName());
-      out = detail::write<C>(out, rocket::unicode::ConvertTo<C>::apply(typeName));
-    }
-    const rocket::codec::FormattedCodec codec;
-    rocket::nio::StringSink buf;
-    codec.encode(val, buf, { .indent=indent_ });
-    out = detail::write<C>(out, rocket::unicode::ConvertTo<C>::apply(buf.str()));
-    return out;
+    return this->formatEncoded(val, typeid(typename Type::Type), ctx);
   }
 
-  constexpr const C*
-  parse(parse_context<C>& ctx) {
-    auto it = ctx.begin(), end = ctx.end();
-    if (it != end && *it == 'i') {
-      indent_ = true;
-      ++it;
-    }
-    if (it != end && *it == 't') {
-      withType_ = true;
-      ++it;
-    }
-    return it;
-  }
   /// @endcond
-
-private:
-
-  bool indent_ = false;
-  bool withType_ = false;
 };
 
 // `fmt::formatter<rocket::reflect::VarRef>` ----------------------------------------------------------------
@@ -327,35 +278,16 @@ private:
  * - If the `i` format specifier is used, then the output is indented.
  */
 template<typename T, typename C> requires fmt::is_formattable<T, C>::value && rocket::IsChar<C>
-struct fmt::formatter<rocket::reflect::VarRef<T>, C> {
+struct fmt::formatter<rocket::reflect::VarRef<T>, C> : rocket::internal::format::CodecFormatter<C> {
   /// @cond undocumented
-  using Type = rocket::reflect::VarRef<T>;
 
   template<typename FormatContext>
-  constexpr FormatContext::iterator
-  format(const Type& val, FormatContext& ctx) const {
-    auto out = ctx.out();
-    const rocket::codec::FormattedCodec codec;
-    rocket::nio::StringSink buf;
-    codec.encode(val, buf, { .indent=indent_ });
-    out = detail::write<C>(out, rocket::unicode::ConvertTo<C>::apply(buf.str()));
-    return out;
+  FormatContext::iterator
+  format(const rocket::reflect::VarRef<T>& val, FormatContext& ctx) const {
+    return this->formatEncoded(val, ctx);
   }
 
-  constexpr const C*
-  parse(parse_context<C>& ctx) {
-    auto it = ctx.begin(), end = ctx.end();
-    if (it != end && *it == 'i') {
-      indent_ = true;
-      ++it;
-    }
-    return it;
-  }
   /// @endcond
-
-private:
-
-  bool indent_ = false;
 };
 
 // `std::hash<rocket::reflect::Declared>` -------------------------------------------------------------------

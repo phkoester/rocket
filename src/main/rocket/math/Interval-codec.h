@@ -8,6 +8,7 @@
 
 #include "rocket/format.h"
 #include "rocket/codec/FormattedCodec.h"
+#include "rocket/format/CodecFormatter.h"
 #include "rocket/math/Interval.h"
 
 #include <ostream>
@@ -32,38 +33,17 @@ operator<<(std::ostream& lhs, const Interval<Left, Right>& rhs) {
  *
  * - If the `i` format specifier is used, then the output is indented.
  */
-template<typename Left, typename Right, typename C>
-struct fmt::formatter<rocket::math::Interval<Left, Right>, C> {
+template<typename Left, typename Right, typename C> requires rocket::IsChar<C>
+struct fmt::formatter<rocket::math::Interval<Left, Right>, C> : rocket::internal::format::CodecFormatter<C> {
   /// @cond undocumented
 
-  using Type = rocket::math::Interval<Left, Right>;
-
   template<typename FormatContext>
-  constexpr FormatContext::iterator
-  format(const Type& val, FormatContext& ctx) const {
-    auto out = ctx.out();
-    const rocket::codec::FormattedCodec codec;
-    rocket::nio::StringSink buf;
-    codec.encode(val, buf, { .indent=indent_ });
-    out = detail::write<C>(out, rocket::unicode::ConvertTo<C>::apply(buf.str()));
-    return out;
-  }
-
-  constexpr const C*
-  parse(parse_context<C>& ctx) {
-    auto it = ctx.begin(), end = ctx.end();
-    if (it != end && *it == 'i') {
-      indent_ = true;
-      ++it;
-    }
-    return it;
+  FormatContext::iterator
+  format(const rocket::math::Interval<Left, Right>& val, FormatContext& ctx) const {
+    return this->formatEncoded(val, ctx);
   }
 
   /// @endcond
-
-private:
-
-  bool indent_ = false;
 };
 
 // EOF

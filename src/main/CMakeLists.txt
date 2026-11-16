@@ -167,6 +167,8 @@ target_sources(rocket
       rocket/codec/JsonCodec.h
       rocket/codec/codec.h
       rocket/filesystem/filesystem.h
+      rocket/format/CodecFormatter.h
+      rocket/format/StringFormatter.h
       rocket/format/Subformat.h
       rocket/hash/hash.h
       rocket/io/IoError.h

@@ -34,6 +34,10 @@ TEST(MODULE, WrappedExceptionFormat) { // NOLINT(*-complexity)
     ranges::replace(msg, '\n', '|');
     EXPECT_THAT(msg, matchesRegex("`rocket::InvalidState`: .*\\.cc:\\d+: oops1\\|.*|.*|.*"));
 
+    msg = fmt::format("{:t?}", WrappedException(ex1));
+    ranges::replace(msg, '\n', '|');
+    EXPECT_THAT(msg, matchesRegex("`rocket::InvalidState`: .*\\.cc:\\d+: oops1\\|.*|.*|.*"));
+
     try {
       throw_with_nested(InvalidArgument("name", "oops2"));
     } catch (const exception& ex2) {
