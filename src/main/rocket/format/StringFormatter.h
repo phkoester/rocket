@@ -1,5 +1,5 @@
 /**
- * @file StringFormatter.h
+ * StringFormatter.h
  *
  * Building blocks for {fmt} formatters of types that are formatted as UTF-8 strings.
  */

@@ -131,9 +131,9 @@ template<>
 struct std::hash<rocket::TypeId> {
   /// @cond undocumented
 
-  rocket::u64
+  rocket::std_size_t
   operator()(const rocket::TypeId& val) const noexcept {
-    return val.hash();
+    return static_cast<rocket::std_size_t>(val.hash());
   }
 
   /// @endcond

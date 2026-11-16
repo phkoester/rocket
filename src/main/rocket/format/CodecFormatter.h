@@ -1,5 +1,5 @@
 /**
- * @file CodecFormatter.h
+ * CodecFormatter.h
  *
  * A building block for {fmt} formatters of types that are formatted with #rocket::codec::FormattedCodec.
  */

@@ -296,9 +296,9 @@ struct fmt::formatter<rocket::reflect::VarRef<T>, C> : rocket::internal::format:
 template<typename T> requires rocket::reflect::Declared<T>::value
 struct std::hash<T> {
   /// @cond undocumented
-  u64
+  rocket::std_size_t
   operator()(const T& val) const {
-    return rocket::codec::HashEncoder<>().encode(val);
+    return static_cast<rocket::std_size_t>(rocket::codec::HashEncoder<>().encode(val));
   }
   /// @endcond
 };
@@ -311,9 +311,9 @@ struct std::hash<rocket::reflect::Instance<T, Inner>> {
   /// @cond undocumented
   using Type = rocket::reflect::Instance<T, Inner>;
 
-  rocket::u64
+  rocket::std_size_t
   operator()(const Type& val) const {
-    return rocket::codec::HashEncoder<>().encode(val);
+    return static_cast<rocket::std_size_t>(rocket::codec::HashEncoder<>().encode(val));
   }
   /// @endcond
 };
@@ -326,9 +326,9 @@ struct std::hash<rocket::reflect::VarRef<T>> {
   /// @cond undocumented
   using Type = rocket::reflect::VarRef<T>;
 
-  rocket::u64
+  rocket::std_size_t
   operator()(const Type& val) const {
-    return rocket::codec::HashEncoder<>().encode(val);
+    return static_cast<rocket::std_size_t>(rocket::codec::HashEncoder<>().encode(val));
   }
   /// @endcond
 };

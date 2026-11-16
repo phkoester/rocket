@@ -349,7 +349,7 @@ struct std::hash<rocket::unicode::CodePoint> {
    * @param val the value to hash
    * @return a hash value
    */
-  rocket::u64
+  rocket::std_size_t
   operator()(rocket::unicode::CodePoint val) const {
     return std::hash<rocket::char32>()(static_cast<rocket::char32>(val));
   }

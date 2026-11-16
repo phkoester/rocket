@@ -67,7 +67,7 @@ struct StdEqualTo {
 struct StdHash {
   /// @cond undocumented
   template<typename T>
-  [[nodiscard]] u64
+  [[nodiscard]] std_size_t
   operator()(const T& val) const {
     return std::hash<T>()(val);
   }

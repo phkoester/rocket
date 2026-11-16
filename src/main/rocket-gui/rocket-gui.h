@@ -60,10 +60,10 @@ wxBitmapBundle makeDisabled(const wxBitmapBundle& bundle);
 template<>
 struct std::hash<wxSize> {
   /// @cond undocumented
-  rocket::u64
+  rocket::std_size_t
   operator()(const wxSize& size) const {
     using namespace rocket;
-    u64 ret = std::hash<i32>()(size.x);
+    rocket::std_size_t ret = std::hash<i32>()(size.x);
     rocket::hash::combine(ret, std::hash<i32>()(size.y));
     return ret;
   }
