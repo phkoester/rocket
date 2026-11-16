@@ -1165,10 +1165,15 @@ namespace testing {
 /// A #rocket::nio::StreamSource over a #rocket::io::testing::FailingBuf. The stream sets `badbit` when the
 /// buffer fails.
 struct FailingSource {
-  io::testing::FailingBuf buf;
-  std::istream is;
-  StreamSource in;
+  io::testing::FailingBuf buf; ///< The stream buffer.
+  std::istream is; ///< The stream over #buf.
+  StreamSource in; ///< The source over #is.
 
+  /**
+   * @ctor
+   *
+   * @param str the string to read from
+   */
   explicit FailingSource(const std::string& str) : buf(str), is(&buf), in(is) {}
 };
 
@@ -1176,10 +1181,15 @@ struct FailingSource {
 
 /// A #rocket::nio::StreamSource that cannot seek or report its position, like one over a pipe.
 struct NonseekableSource {
-  io::testing::NonseekableBuf buf;
-  std::istream is;
-  StreamSource in;
+  io::testing::NonseekableBuf buf; ///< The stream buffer.
+  std::istream is; ///< The stream over #buf.
+  StreamSource in; ///< The source over #is.
 
+  /**
+   * @ctor
+   *
+   * @param str the string to read from
+   */
   explicit NonseekableSource(const std::string& str) : buf(str), is(&buf), in(is) {}
 };
 

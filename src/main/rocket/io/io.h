@@ -186,6 +186,12 @@ struct FailingBuf : std::streambuf {
 
 protected:
 
+  /**
+   * Fails, as the string is exhausted.
+   *
+   * @return never returns
+   * @throw #std::runtime_error always
+   */
   int_type underflow() override { throw std::runtime_error("simulated I/O error"); }
 
 private:
@@ -208,11 +214,21 @@ struct NonseekableBuf : std::stringbuf {
 
 protected:
 
+  /**
+   * Fails to seek.
+   *
+   * @return an invalid position
+   */
   pos_type
   seekoff(off_type, std::ios::seekdir, std::ios::openmode) override {
     return pos_type(off_type(-1));
   }
 
+  /**
+   * Fails to seek.
+   *
+   * @return an invalid position
+   */
   pos_type seekpos(pos_type, std::ios::openmode) override { return pos_type(off_type(-1)); }
 };
 
@@ -220,10 +236,23 @@ protected:
 
 /// A stream buffer that reports its position, but cannot seek anywhere else.
 struct TellOnlyBuf : std::stringbuf {
+  /**
+   * @ctor
+   *
+   * @param str the string to read from
+   */
   explicit TellOnlyBuf(const std::string& str) : std::stringbuf(str, std::ios::in) {}
 
 protected:
 
+  /**
+   * Reports the current position if @p off is 0 and @p dir is `std::ios::cur`, otherwise fails to seek.
+   *
+   * @param off the offset
+   * @param dir the direction to seek from
+   * @param which the sequences to seek in
+   * @return the current position, or an invalid position
+   */
   pos_type
   seekoff(off_type off, std::ios::seekdir dir, std::ios::openmode which) override {
     if (off == 0 && dir == std::ios::cur) {
@@ -232,6 +261,11 @@ protected:
     return pos_type(off_type(-1));
   }
 
+  /**
+   * Fails to seek.
+   *
+   * @return an invalid position
+   */
   pos_type seekpos(pos_type, std::ios::openmode) override { return pos_type(off_type(-1)); }
 };
 

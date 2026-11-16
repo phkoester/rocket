@@ -132,8 +132,8 @@ ExecResult exec(const std::string& cl, bool combined = false);
  * error of this function: it is reported in the result.
  *
  * @attention On Windows, the program may not be a batch file (`.bat` or `.cmd`). Windows hands batch files
- * to `cmd.exe`, which would interpret the arguments. Use #exec(const std::string&, bool) to run a batch file
- * with arguments that are known to be harmless.
+ * to `cmd.exe`, which would interpret the arguments. Use #rocket::system::exec(const std::string&, bool) to
+ * run a batch file with arguments that are known to be harmless.
  *
  * @param args the command line to execute. The first element is the program. It may not be empty, nor
  *   contain quotation marks on Windows. No element may contain NUL characters

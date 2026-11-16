@@ -131,6 +131,7 @@ using TimePoint = std::chrono::time_point<Clock>;
  * @param name the process name
  * @param pid the process ID (PID)
  * @param time the time
+ * @return the expanded value
  * @throw #rocket::InvalidState if @p val is invalid
  */
 std::string expandLogOut(
