@@ -27,8 +27,9 @@ terminate( // NOLINT(*-recursion)
   const std::source_location& sl,
   fmt::format_string<T...> fmt,
   T&&... args) {
-  rocket::process().error(nio::err, 0, "{}:{}: {}", sl.file_name(), sl.line(), format::Subformat<char>([&] {
-    auto params = format::Subformat<char>::params("\\\x01");
+  rocket::process().error(nio::err, 0, "{}:{}: {}", sl.file_name(), sl.line(),
+    rocket::format::Subformat<char>([&] {
+    auto params = rocket::format::Subformat<char>::params("\\\x01");
     params.tag("\\\x01", fmt, std::forward<T>(args)...);
     return params;
   }));
@@ -42,13 +43,13 @@ assertFailed( // NOLINT(*-recursion)
   const char* expr,
   fmt::format_string<T...> fmt = "",
   T&&... args) {
-  terminate(sl, "Assertion `{}` failed{}", expr, format::Subformat<char>([&] {
+  terminate(sl, "Assertion `{}` failed{}", expr, rocket::format::Subformat<char>([&] {
     if (fmt.get().size() > 0) {
-      auto params = format::Subformat<char>::params(": \\\x01");
+      auto params = rocket::format::Subformat<char>::params(": \\\x01");
       params.tag("\\\x01", fmt, std::forward<T>(args)...);
       return params;
     }
-    return format::Subformat<char>::params();
+    return rocket::format::Subformat<char>::params();
   }));
 }
 
@@ -72,13 +73,13 @@ checkFailed(
   const char* expr,
   fmt::format_string<T...> fmt = "",
   T&&... args) {
-  flop(sl, name, "Check `{}` failed{}", expr, format::Subformat<char>([&] {
+  flop(sl, name, "Check `{}` failed{}", expr, rocket::format::Subformat<char>([&] {
     if (fmt.get().size() > 0) {
-      auto params = format::Subformat<char>::params(": \\\x01");
+      auto params = rocket::format::Subformat<char>::params(": \\\x01");
       params.tag("\\\x01", fmt, std::forward<T>(args)...);
       return params;
     }
-    return format::Subformat<char>::params();
+    return rocket::format::Subformat<char>::params();
   }));
 }
 
@@ -100,13 +101,13 @@ expectFailed(
   const char* expr,
   fmt::format_string<T...> fmt = "",
   T&&... args) {
-  fail(sl, "Expectation `{}` failed{}", expr, format::Subformat<char>([&] {
+  fail(sl, "Expectation `{}` failed{}", expr, rocket::format::Subformat<char>([&] {
     if (fmt.get().size() > 0) {
-      auto params = format::Subformat<char>::params(": \\@0");
+      auto params = rocket::format::Subformat<char>::params(": \\@0");
       params.tag("\\@0", fmt, std::forward<T>(args)...);
       return params;
     }
-    return format::Subformat<char>::params();
+    return rocket::format::Subformat<char>::params();
   }));
 }
 

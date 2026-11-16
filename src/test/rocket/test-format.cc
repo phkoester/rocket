@@ -5,6 +5,7 @@
 #include "rocket-test/rocket-test.h"
 
 #include "rocket/format.h"
+#include "rocket/unicode/unicode.h"
 
 #include <locale>
 #include <span>
@@ -248,22 +249,28 @@ TEST(MODULE, rocketChronoZonedTime) {
   const auto* newYork = rocket::chrono::locate_zone("America/New_York");
   const auto* utc = rocket::chrono::locate_zone("UTC");
 
+  // The abbreviations are localized on Windows, e.g., `MEZ` and `MESZ` on a German system
+  const auto CET = rocket::chrono::abbreviation("Europe/Berlin", false, "CET");
+  const auto CEST = rocket::chrono::abbreviation("Europe/Berlin", true, "CEST");
+  const auto EST = rocket::chrono::abbreviation("America/New_York", false, "EST");
+  const auto UTC = rocket::chrono::abbreviation("UTC", false, "UTC");
+
   const sys_seconds summer = sys_days(2026y / October / 23d) + 10h;
   const sys_seconds winter = sys_days(2026y / December / 1d) + 10h;
 
   // Default format: `%F %T %Z`
-  EXPECT_EQ(fmt::format("{}", rocket::chrono::zoned_time(berlin, summer)), "2026-10-23 12:00:00 CEST");
-  EXPECT_EQ(fmt::format("{}", rocket::chrono::zoned_time(berlin, winter)), "2026-12-01 11:00:00 CET");
-  EXPECT_EQ(fmt::format("{}", rocket::chrono::zoned_time(newYork, winter)), "2026-12-01 05:00:00 EST");
-  EXPECT_EQ(fmt::format("{}", rocket::chrono::zoned_time(utc, winter)), "2026-12-01 10:00:00 UTC");
+  EXPECT_EQ(fmt::format("{}", rocket::chrono::zoned_time(berlin, summer)), "2026-10-23 12:00:00 " + CEST);
+  EXPECT_EQ(fmt::format("{}", rocket::chrono::zoned_time(berlin, winter)), "2026-12-01 11:00:00 " + CET);
+  EXPECT_EQ(fmt::format("{}", rocket::chrono::zoned_time(newYork, winter)), "2026-12-01 05:00:00 " + EST);
+  EXPECT_EQ(fmt::format("{}", rocket::chrono::zoned_time(utc, winter)), "2026-12-01 10:00:00 " + UTC);
 
   // Subseconds, also before the epoch
   EXPECT_EQ(
     fmt::format("{}", rocket::chrono::zoned_time(berlin, sys_time<milliseconds>(summer + 123ms))),
-    "2026-10-23 12:00:00.123 CEST");
+    "2026-10-23 12:00:00.123 " + CEST);
   EXPECT_EQ(
     fmt::format("{}", rocket::chrono::zoned_time(berlin, sys_time<milliseconds>(sys_seconds() - 500ms))),
-    "1970-01-01 00:59:59.500 CET");
+    "1970-01-01 00:59:59.500 " + CET);
 
   // UTC offsets
   EXPECT_EQ(
@@ -276,26 +283,35 @@ TEST(MODULE, rocketChronoZonedTime) {
   EXPECT_EQ(fmt::format("{:%Ez}", rocket::chrono::zoned_time(berlin, summer)), "+02:00");
 
   // Specifications starting with `%Z` or `%z`
-  EXPECT_EQ(fmt::format("{:%Z}", rocket::chrono::zoned_time(berlin, summer)), "CEST");
-  EXPECT_EQ(fmt::format("{:%Z %T}", rocket::chrono::zoned_time(berlin, summer)), "CEST 12:00:00");
-  EXPECT_EQ(fmt::format("{:%z%Z}", rocket::chrono::zoned_time(berlin, summer)), "+0200CEST");
+  EXPECT_EQ(fmt::format("{:%Z}", rocket::chrono::zoned_time(berlin, summer)), CEST);
+  EXPECT_EQ(fmt::format("{:%Z %T}", rocket::chrono::zoned_time(berlin, summer)), CEST + " 12:00:00");
+  EXPECT_EQ(fmt::format("{:%z%Z}", rocket::chrono::zoned_time(berlin, summer)), "+0200" + CEST);
   EXPECT_EQ(fmt::format("{:>8%z}", rocket::chrono::zoned_time(berlin, summer)), "   +0200");
 
   // Other specifications
-  EXPECT_EQ(fmt::format("{:%H:%M %Z}", rocket::chrono::zoned_time(berlin, summer)), "12:00 CEST");
+  EXPECT_EQ(fmt::format("{:%H:%M %Z}", rocket::chrono::zoned_time(berlin, summer)), "12:00 " + CEST);
   EXPECT_EQ(fmt::format("{:%%Z}", rocket::chrono::zoned_time(berlin, summer)), "%Z");
 
-  // Fill and alignment
-  EXPECT_EQ(fmt::format("{:>26}", rocket::chrono::zoned_time(berlin, summer)), "  2026-10-23 12:00:00 CEST");
-  EXPECT_EQ(fmt::format("{:*<10%H:%M %Z}", rocket::chrono::zoned_time(berlin, summer)), "12:00 CEST");
-  EXPECT_EQ(fmt::format("{:*<12%H:%M %Z}", rocket::chrono::zoned_time(berlin, summer)), "12:00 CEST**");
-  EXPECT_EQ(fmt::format("{:*^12%Z}", rocket::chrono::zoned_time(berlin, summer)), "****CEST****");
+  // Fill and alignment. The padding depends on the length of the abbreviation, so pad the expected string
+  // the same way
+  EXPECT_EQ(
+    fmt::format("{:>26}", rocket::chrono::zoned_time(berlin, summer)),
+    fmt::format("{:>26}", "2026-10-23 12:00:00 " + CEST));
+  EXPECT_EQ(
+    fmt::format("{:*<10%H:%M %Z}", rocket::chrono::zoned_time(berlin, summer)),
+    fmt::format("{:*<10}", "12:00 " + CEST));
+  EXPECT_EQ(
+    fmt::format("{:*<12%H:%M %Z}", rocket::chrono::zoned_time(berlin, summer)),
+    fmt::format("{:*<12}", "12:00 " + CEST));
+  EXPECT_EQ(fmt::format("{:*^12%Z}", rocket::chrono::zoned_time(berlin, summer)), fmt::format("{:*^12}", CEST));
 
   // Localization, literal text, and other character types
-  EXPECT_EQ(fmt::format("{:L%H:%M %Z}", rocket::chrono::zoned_time(berlin, summer)), "12:00 CEST");
-  EXPECT_EQ(fmt::format("{:%H{%Z}", rocket::chrono::zoned_time(berlin, summer)), "12{CEST");
-  EXPECT_EQ(fmt::format(U"{}", rocket::chrono::zoned_time(berlin, summer)), U"2026-10-23 12:00:00 CEST");
-  EXPECT_EQ(fmt::format(U"{:%Z %Ez}", rocket::chrono::zoned_time(berlin, summer)), U"CEST +02:00");
+  EXPECT_EQ(fmt::format("{:L%H:%M %Z}", rocket::chrono::zoned_time(berlin, summer)), "12:00 " + CEST);
+  EXPECT_EQ(fmt::format("{:%H{%Z}", rocket::chrono::zoned_time(berlin, summer)), "12{" + CEST);
+  const auto cest32 = rocket::unicode::convertUtf8To32(CEST);
+  EXPECT_EQ(
+    fmt::format(U"{}", rocket::chrono::zoned_time(berlin, summer)), U"2026-10-23 12:00:00 " + cest32);
+  EXPECT_EQ(fmt::format(U"{:%Z %Ez}", rocket::chrono::zoned_time(berlin, summer)), cest32 + U" +02:00");
 
   // Invalid specifications
   EXPECT_THROW(
