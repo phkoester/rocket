@@ -4,8 +4,19 @@
 
 #include "rocket-test/rocket-test.h"
 
+#include "rocket/bimap-format.h"
+#include "rocket/bimap-scan.h"
 #include "rocket/format.h"
 #include "rocket/scan.h"
+#include "rocket/log/log.h"
+#include "rocket/math/Interval-format.h"
+#include "rocket/math/Interval-scan.h"
+#include "rocket/nio/nio.h"
+#include "rocket/reflect/reflect.h"
+#include "rocket/reflect/reflect-format.h"
+#include "rocket/reflect/reflect-scan.h"
+#include "rocket/unicode/unicode-format.h"
+#include "rocket/unicode/unicode-scan.h"
 #include "rocket/scope.h"
 #include "rocket/system/system.h"
 
@@ -86,6 +97,55 @@ groupingLocale() {
 }
 
 } // namespace
+
+// Types ====================================================================================================
+
+// `MyStruct` -----------------------------------------------------------------------------------------------
+
+struct MyStruct {
+  i32 ä = 0;
+  string b;
+
+  MyStruct() = default;
+
+  MyStruct(i32 ä, string_view b, bool c) : ä(ä), b(b), c(c) {}
+
+  [[nodiscard]] bool getC() const { return c; }
+
+private:
+
+  bool c = false;
+
+public:
+
+  ROCKET_REFLECT_MEMBERS(MyStruct, Index, (ä)(b)(c));
+
+  ROCKET_REFLECT_MEMBERS(MyStruct, Public, (ä)(b));
+};
+
+ROCKET_REFLECT_MEMBERS_DECLARE(, MyStruct, Index); // NOLINT(*-internal-linkage)
+ROCKET_REFLECT_MEMBERS_DEFINE(, MyStruct, Index);
+
+// `MyDerivedStruct` ----------------------------------------------------------------------------------------
+
+struct MyDerivedStruct : MyStruct {
+  string d;
+
+  MyDerivedStruct() = default;
+
+  MyDerivedStruct(i32 ä, string_view b, bool c, string_view d, f32 e) : MyStruct(ä, b, c), d(d), e(e) {}
+
+private:
+
+  f32 e = 0;
+
+public:
+
+  ROCKET_REFLECT_MEMBERS_DERIVED(MyStruct, Index, MyDerivedStruct, Index, (d)(e));
+};
+
+ROCKET_REFLECT_MEMBERS_DECLARE(, MyDerivedStruct, Index); // NOLINT(*-internal-linkage)
+ROCKET_REFLECT_MEMBERS_DEFINE(, MyDerivedStruct, Index);
 
 // Tests ====================================================================================================
 
@@ -362,6 +422,91 @@ TEST(MODULE, rocketUnorderedBimap) {
   EXPECT_EQ(val.left.at(2), 2.5);
 }
 
+TEST(MODULE, rocketEnum) {
+  using log::LogLevel;
+
+  EXPECT_EQ(scanOne<LogLevel>("none", "{}"), ok(LogLevel::none, 4));
+  EXPECT_EQ(scanOne<LogLevel>("error", "{}"), ok(LogLevel::error, 5));
+  EXPECT_EQ(scanOne<LogLevel>("warn", "{}"), ok(LogLevel::warn, 4));
+  EXPECT_EQ(scanOne<LogLevel>("info", "{}"), ok(LogLevel::info, 4));
+  EXPECT_EQ(scanOne<LogLevel>("debug", "{}"), ok(LogLevel::debug, 5));
+  EXPECT_EQ(scanOne<LogLevel>("trace", "{}"), ok(LogLevel::trace, 5));
+
+  // Leading whitespace is skipped, and scanning stops at the next whitespace
+  EXPECT_EQ(scanOne<LogLevel>("  info debug", "{}"), ok(LogLevel::info, 6));
+
+  // What follows the enum name within the word is given back
+  EXPECT_EQ(scanOne<LogLevel>("warn,", "{}"), ok(LogLevel::warn, 4));
+  EXPECT_EQ(scanOne<LogLevel>("debugger", "{}"), ok(LogLevel::debug, 5));
+
+  {
+    const auto result = scn::scan<LogLevel, LogLevel>("error, trace", "{}, {}");
+    ASSERT_TRUE(result);
+    const auto [val1, val2] = result->values();
+    EXPECT_EQ(val1, LogLevel::error);
+    EXPECT_EQ(val2, LogLevel::trace);
+  }
+
+  // Roundtrip
+  for (const auto val : {
+    LogLevel::none, LogLevel::error, LogLevel::warn, LogLevel::info, LogLevel::debug, LogLevel::trace }) {
+    const string input = fmt::format("{}", val);
+    EXPECT_EQ(scanOne<LogLevel>(input, "{}"), ok(val, static_cast<i64>(input.size())));
+  }
+
+  EXPECT_EQ(scanError<LogLevel>("", "{}"), scn::scan_error::end_of_input);
+  EXPECT_EQ(scanError<LogLevel>("bogus", "{}"), scn::scan_error::invalid_scanned_value);
+  EXPECT_EQ(scanError<LogLevel>("INFO", "{}"), scn::scan_error::invalid_scanned_value);
+  EXPECT_EQ(scanError<LogLevel>(",info", "{}"), scn::scan_error::invalid_scanned_value);
+}
+
+TEST(MODULE, rocketEnumSource) {
+  using log::LogLevel;
+
+  // Positions: `debug` 0-4, `info` 6-9, `,` 10, `warn` 12-15, `trace` 17-21, `none` 23-26
+  nio::StringSource in("debug info, warn\ttrace\nnone");
+  EXPECT_EQ(in.tell(), 0);
+
+  {
+    const auto result = in.scan<LogLevel>("{}");
+    ASSERT_TRUE(result);
+    EXPECT_EQ(result->value(), LogLevel::debug);
+    EXPECT_EQ(in.tell(), 5);
+  }
+
+  // The comma that follows `info` is given back to the source
+  {
+    const auto result = in.scan<LogLevel>("{}");
+    ASSERT_TRUE(result);
+    EXPECT_EQ(result->value(), LogLevel::info);
+    EXPECT_EQ(in.tell(), 10);
+  }
+
+  {
+    const auto result = in.scan<LogLevel>(",{}");
+    ASSERT_TRUE(result);
+    EXPECT_EQ(result->value(), LogLevel::warn);
+    EXPECT_EQ(in.tell(), 16);
+  }
+
+  // A space in the format string matches any whitespace, including tabs and newlines
+  {
+    const auto result = in.scan<LogLevel, LogLevel>("{} {}");
+    ASSERT_TRUE(result);
+    const auto [val1, val2] = result->values();
+    EXPECT_EQ(val1, LogLevel::trace);
+    EXPECT_EQ(val2, LogLevel::none);
+    EXPECT_EQ(in.tell(), 27);
+  }
+
+  {
+    const auto result = in.scan<LogLevel>("{}");
+    ASSERT_FALSE(result);
+    EXPECT_EQ(result.error().code(), scn::scan_error::end_of_input);
+    EXPECT_EQ(in.tell(), 27);
+  }
+}
+
 TEST(MODULE, rocketChronoZonedTime) {
   using namespace std::chrono;
   using rocket::chrono::zoned_seconds;
@@ -376,9 +521,11 @@ TEST(MODULE, rocketChronoZonedTime) {
 
   // Default format: `%F %T %Z`, with the name of the time zone
   EXPECT_EQ(
-    scanOne<zoned_seconds>("2026-10-23 12:00:00 Europe/Berlin", "{}"), ok(zoned_seconds(berlin, summer), 33));
+    scanOne<zoned_seconds>("2026-10-23 12:00:00 Europe/Berlin", "{}"),
+    ok(zoned_seconds(berlin, summer), 33));
   EXPECT_EQ(
-    scanOne<zoned_seconds>("2026-12-01 11:00:00 Europe/Berlin", "{}"), ok(zoned_seconds(berlin, winter), 33));
+    scanOne<zoned_seconds>("2026-12-01 11:00:00 Europe/Berlin", "{}"),
+    ok(zoned_seconds(berlin, winter), 33));
   EXPECT_EQ(
     scanOne<zoned_seconds>("2026-12-01 05:00:00 America/New_York", "{}"),
     ok(zoned_seconds(newYork, winter), 36));
@@ -394,8 +541,12 @@ TEST(MODULE, rocketChronoZonedTime) {
   {
     using ZonedMs = zoned_time<milliseconds>;
     const ZonedMs val(berlin, sys_time<milliseconds>(summer + 123ms));
-    EXPECT_EQ(scanOne<ZonedMs>("2026-10-23 12:00:00.123 Europe/Berlin", "{}"), ok(val, 37));
-    EXPECT_EQ(scanOne<ZonedMs>(fmt::format("{:%F %T %Z}", ZonedMs(utc, val)), "{}"), ok(ZonedMs(utc, val), 27));
+    EXPECT_EQ(
+      scanOne<ZonedMs>("2026-10-23 12:00:00.123 Europe/Berlin", "{}"),
+      ok(val, 37));
+    EXPECT_EQ(
+      scanOne<ZonedMs>(fmt::format("{:%F %T %Z}", ZonedMs(utc, val)), "{}"),
+      ok(ZonedMs(utc, val), 27));
   }
 
   // Other specifications
@@ -409,7 +560,8 @@ TEST(MODULE, rocketChronoZonedTime) {
   // An ambiguous local time, when DST ends, requires the UTC offset
   const sys_seconds fold = sys_days(2026y / October / 25d) + 0h + 30min;
   EXPECT_EQ(
-    scanError<zoned_seconds>("2026-10-25 02:30:00 Europe/Berlin", "{}"), scn::scan_error::invalid_scanned_value);
+    scanError<zoned_seconds>("2026-10-25 02:30:00 Europe/Berlin", "{}"),
+    scn::scan_error::invalid_scanned_value);
   EXPECT_EQ(
     scanOne<zoned_seconds>("2026-10-25 02:30:00 +0200 Europe/Berlin", "{:%F %T %z %Z}"),
     ok(zoned_seconds(berlin, fold), 39));
@@ -422,19 +574,255 @@ TEST(MODULE, rocketChronoZonedTime) {
 
   // A nonexistent local time, when DST starts
   EXPECT_EQ(
-    scanError<zoned_seconds>("2026-03-29 02:30:00 Europe/Berlin", "{}"), scn::scan_error::invalid_scanned_value);
+    scanError<zoned_seconds>("2026-03-29 02:30:00 Europe/Berlin", "{}"),
+    scn::scan_error::invalid_scanned_value);
 
   // Unknown time zones; abbreviations are not supported
   EXPECT_EQ(
-    scanError<zoned_seconds>("2026-10-23 12:00:00 Mars/Olympus", "{}"), scn::scan_error::invalid_scanned_value);
-  EXPECT_EQ(scanError<zoned_seconds>("2026-10-23 12:00:00 CEST", "{}"), scn::scan_error::invalid_scanned_value);
+    scanError<zoned_seconds>("2026-10-23 12:00:00 Mars/Olympus", "{}"),
+    scn::scan_error::invalid_scanned_value);
+  EXPECT_EQ(
+    scanError<zoned_seconds>("2026-10-23 12:00:00 CEST", "{}"),
+    scn::scan_error::invalid_scanned_value);
+
+  // Legacy names that look like abbreviations are rejected, too
+  EXPECT_EQ(
+    scanError<zoned_seconds>("2026-10-23 12:00:00 CET", "{}"),
+    scn::scan_error::invalid_scanned_value);
+  EXPECT_EQ(
+    scanError<zoned_seconds>("2026-10-23 12:00:00 EST", "{}"),
+    scn::scan_error::invalid_scanned_value);
+  EXPECT_TRUE(scanOne<zoned_seconds>("2026-10-23 12:00:00 GMT", "{}"));
 
   // Invalid dates and specifications
   EXPECT_EQ(
-    scanError<zoned_seconds>("2026-02-30 12:00:00 Europe/Berlin", "{}"), scn::scan_error::invalid_scanned_value);
+    scanError<zoned_seconds>("2026-02-30 12:00:00 Europe/Berlin", "{}"),
+    scn::scan_error::invalid_scanned_value);
   EXPECT_EQ(
-    scanError<zoned_seconds>("12:00:00 Europe/Berlin", "{:%T %Z}"), scn::scan_error::invalid_scanned_value);
-  EXPECT_EQ(scanError<zoned_seconds>("2026-10-23 12:00:00", "{:%F %T}"), scn::scan_error::invalid_format_string);
+    scanError<zoned_seconds>("12:00:00 Europe/Berlin", "{:%T %Z}"),
+    scn::scan_error::invalid_scanned_value);
+  EXPECT_EQ(
+    scanError<zoned_seconds>("2026-10-23 12:00:00", "{:%F %T}"),
+    scn::scan_error::invalid_format_string);
+}
+
+TEST(MODULE, rocketMathClosedInterval) {
+  using type = rocket::math::ClosedInterval<i32>;
+
+  EXPECT_EQ(scanOne<type>("∅", "{}"), ok(type(), 3));
+  EXPECT_EQ(scanOne<type>("[1,1]", "{}"), ok(type(1, 1), 5));
+  EXPECT_EQ(scanOne<type>("[1,2]", "{}"), ok(type(1, 2), 5));
+  EXPECT_EQ(scanOne<type>(" [ -1 , 2 ] ", "{}"), ok(type(-1, 2), 11));
+
+  EXPECT_EQ(scanError<type>("", "{}"), scn::scan_error::end_of_input);
+  EXPECT_EQ(scanError<type>("[1,2", "{}"), scn::scan_error::end_of_input);
+  EXPECT_EQ(scanError<type>("[1,2)", "{}"), scn::scan_error::invalid_scanned_value);
+  EXPECT_EQ(scanError<type>("(1,2]", "{}"), scn::scan_error::invalid_scanned_value);
+  EXPECT_EQ(scanError<type>("[1 2]", "{}"), scn::scan_error::invalid_scanned_value);
+  EXPECT_EQ(scanError<type>("[-∞,2]", "{}"), scn::scan_error::invalid_scanned_value);
+  EXPECT_EQ(scanError<type>("{}", "{}"), scn::scan_error::invalid_scanned_value);
+}
+
+TEST(MODULE, rocketMathRightOpenIntervalI32) {
+  using type = rocket::math::RightOpenInterval<i32>;
+
+  EXPECT_EQ(scanOne<type>("∅", "{}"), ok(type(), 3));
+  EXPECT_EQ(scanOne<type>("[1,2)", "{}"), ok(type(1, 2), 5));
+  EXPECT_EQ(scanOne<type>("[1000,2000)", "{}"), ok(type(1'000, 2'000), 11));
+  EXPECT_EQ(scanOne<type>("[5,∞)", "{}"), ok(type(5, nullopt), 7));
+
+  EXPECT_EQ(scanError<type>("[-∞,5)", "{}"), scn::scan_error::invalid_scanned_value);
+  EXPECT_EQ(scanError<type>("[1,2]", "{}"), scn::scan_error::invalid_scanned_value);
+}
+
+TEST(MODULE, rocketMathRightOpenIntervalF64) {
+  using type = rocket::math::RightOpenInterval<f64>;
+  constexpr auto inf = numeric_limits<f64>::infinity();
+
+  EXPECT_EQ(scanOne<type>("∅", "{}"), ok(type(), 3));
+  EXPECT_EQ(scanOne<type>("[1.5,2.5)", "{}"), ok(type(1.5, 2.5), 9));
+  EXPECT_EQ(scanOne<type>("[-∞,∞)", "{}"), ok(type(-inf, nullopt), 10));
+  EXPECT_EQ(scanOne<type>("[-1e3,inf)", "{}"), ok(type(-1'000.0, inf), 10));
+}
+
+TEST(MODULE, rocketMathIntervalRoundtrip) {
+  using namespace rocket::math;
+  constexpr auto inf = numeric_limits<f64>::infinity();
+
+  const auto roundtrip = [](const auto& val) {
+    using type = std::remove_cvref_t<decltype(val)>;
+    const string input = fmt::format("{}", val);
+    EXPECT_EQ(scanOne<type>(input, "{}"), ok(val, static_cast<i64>(input.size()))) << input;
+  };
+
+  roundtrip(ClosedInterval<i32>());
+  roundtrip(ClosedInterval<i32>(-3, 7));
+  roundtrip(ClosedInterval<u8>(1, 200));
+  roundtrip(ClosedInterval<i64>(numeric_limits<i64>::min(), numeric_limits<i64>::max()));
+  roundtrip(ClosedInterval<f64>(-inf, inf));
+  roundtrip(ClosedInterval<f64>(-1.25, 3.4e100));
+  roundtrip(ClosedInterval<f32>(0.1F, 0.2F));
+  roundtrip(OpenInterval<i32>(nullopt, nullopt));
+  roundtrip(OpenInterval<i32>(1, 5));
+  roundtrip(OpenInterval<f64>(nullopt, 2.5));
+  roundtrip(LeftOpenInterval<i16>(nullopt, -12));
+  roundtrip(LeftOpenInterval<f64>(1e-9, 2));
+  roundtrip(RightOpenInterval<f64>(12, nullopt));
+  roundtrip(RightOpenInterval<u64>(0, numeric_limits<u64>::max()));
+}
+
+TEST(MODULE, rocketReflectDeclared) {
+  using type = MyStruct;
+  const type val(42, "rocket", true);
+
+  EXPECT_EQ(scanOne<type>("(ä=42, b=\"rocket\", c=true)", "{}"), ok(val, 27));
+  EXPECT_EQ(scanOne<type>("MyStruct(ä=42, b=\"rocket\", c=true)", "{:t}"), ok(val, 35));
+  EXPECT_EQ(scanOne<type>(" \n MyStruct \n ( c = true , ä = 42 , b = \"rocket\" ) ", "{:t}"), ok(val, 51));
+  EXPECT_EQ(scanOne<type>("(c=true)", "{}"), ok(type(0, "", true), 8));
+  EXPECT_EQ(scanOne<type>("()", "{}"), ok(type(), 2));
+
+  // Roundtrips, also of indented output
+  for (const char* fmt : { "{}", "{:i}" }) {
+    const string input = fmt::format(fmt::runtime(fmt), val);
+    EXPECT_EQ(scanOne<type>(input, "{}"), ok(val, static_cast<i64>(input.size()))) << input;
+  }
+  for (const char* fmt : { "{:t}", "{:it}" }) {
+    const string input = fmt::format(fmt::runtime(fmt), val);
+    EXPECT_EQ(scanOne<type>(input, "{:t}"), ok(val, static_cast<i64>(input.size()))) << input;
+  }
+
+  // Errors
+  EXPECT_EQ(scanError<type>("", "{}"), scn::scan_error::end_of_input);
+  EXPECT_EQ(scanError<type>("(ä=42", "{}"), scn::scan_error::end_of_input);
+  EXPECT_EQ(scanError<type>("(x=42)", "{}"), scn::scan_error::invalid_scanned_value);
+  EXPECT_EQ(scanError<type>("(ä=\"x\")", "{}"), scn::scan_error::invalid_scanned_value);
+  EXPECT_EQ(scanError<type>("MyStruct(ä=42)", "{}"), scn::scan_error::invalid_scanned_value);
+  EXPECT_EQ(scanError<type>("(ä=42)", "{:t}"), scn::scan_error::invalid_scanned_value);
+  EXPECT_EQ(scanError<type>("MyStructure(ä=42)", "{:t}"), scn::scan_error::invalid_scanned_value);
+  EXPECT_EQ(scanError<type>("MyStr", "{:t}"), scn::scan_error::end_of_input);
+  EXPECT_EQ(scanError<type>("(ä=42)", "{:i}"), scn::scan_error::invalid_format_string);
+}
+
+TEST(MODULE, rocketReflectDeclaredDerived) {
+  using type = MyDerivedStruct;
+  const type val(41, "rocket", true, "everywhere", 4.2_f32);
+
+  for (const char* fmt : { "{}", "{:i}" }) {
+    const string input = fmt::format(fmt::runtime(fmt), val);
+    EXPECT_EQ(scanOne<type>(input, "{}"), ok(val, static_cast<i64>(input.size()))) << input;
+  }
+  for (const char* fmt : { "{:t}", "{:it}" }) {
+    const string input = fmt::format(fmt::runtime(fmt), val);
+    EXPECT_EQ(scanOne<type>(input, "{:t}"), ok(val, static_cast<i64>(input.size()))) << input;
+  }
+
+  // The name must be that of the scanned type
+  EXPECT_EQ(scanError<type>("MyStruct(ä=41)", "{:t}"), scn::scan_error::invalid_scanned_value);
+}
+
+TEST(MODULE, rocketReflectInstance) {
+  using type = rocket::reflect::Instance<MyStruct, MyStruct::Public>;
+
+  const auto plain = scanOne<type>("(ä=42, b=\"rocket\")", "{}");
+  ASSERT_TRUE(plain);
+  EXPECT_EQ(plain->first.get().ä, 42);
+  EXPECT_EQ(plain->first.get().b, "rocket");
+  EXPECT_FALSE(plain->first.get().getC());
+  EXPECT_EQ(plain->second, 19);
+
+  const auto named = scanOne<type>("MyStruct(ä=42, b=\"rocket\")", "{:t}");
+  ASSERT_TRUE(named);
+  EXPECT_EQ(named->first, plain->first);
+  EXPECT_EQ(named->second, 27);
+
+  // Only the public members are known
+  EXPECT_EQ(scanError<type>("(c=true)", "{}"), scn::scan_error::invalid_scanned_value);
+
+  const type val(MyStruct(43, "everywhere", false));
+  for (const char* fmt : { "{:t}", "{:it}" }) {
+    const string input = fmt::format(fmt::runtime(fmt), val);
+    EXPECT_EQ(scanOne<type>(input, "{:t}"), ok(val, static_cast<i64>(input.size()))) << input;
+  }
+}
+
+TEST(MODULE, rocketReflectSequence) {
+  // The scanner consumes only the value, so further values can follow
+  const auto result = scn::scan<MyStruct, i32>("MyStruct(ä=1) 2", "{:t} {}");
+  ASSERT_TRUE(result);
+  const auto& [val, i] = result->values();
+  EXPECT_EQ(val, MyStruct(1, "", false));
+  EXPECT_EQ(i, 2);
+}
+
+TEST(MODULE, rocketUnicodeCharacter) {
+  using namespace rocket::unicode;
+  using type = Character<char>;
+
+  // `Character` has no `operator==`, so its string is compared
+  const auto scanChar = [](string_view input) -> optional<pair<string, i64>> {
+    const auto result = scanOne<type>(input, "{}");
+    if (not result) {
+      return nullopt;
+    }
+    return pair<string, i64>(string(result->first), result->second);
+  };
+  const auto okChar = [](string_view str, i64 length) {
+    return optional<pair<string, i64>>(pair<string, i64>(string(str), length));
+  };
+
+  EXPECT_EQ(scanChar("a"), okChar("a", 1));
+  EXPECT_EQ(scanChar("€"), okChar("€", 3));
+  EXPECT_EQ(scanChar("  ä "), okChar("ä", 4));
+  EXPECT_EQ(scanChar("abc"), okChar("a", 1));
+  EXPECT_EQ(scanChar("e\u0301x"), okChar("e\u0301", 3)); // e + COMBINING ACUTE ACCENT
+  EXPECT_EQ(scanChar("👨‍👩‍👦!"), okChar("👨‍👩‍👦", 18)); // MAN, ZWJ, WOMAN, ZWJ, BOY
+  EXPECT_EQ(scanChar(""), nullopt);
+  EXPECT_EQ(scanChar("   "), nullopt);
+
+  // Roundtrips
+  for (const auto& c : { "a"_c, "€"_c, "e\u0301"_c, "👨‍👩‍👦"_c }) {
+    const string input = fmt::format("{}", c);
+    EXPECT_EQ(scanChar(input), okChar(input, static_cast<i64>(input.size()))) << input;
+  }
+
+  // Characters in sequence
+  const auto result = scn::scan<type, type, i32>("ab 7", "{}{} {}");
+  ASSERT_TRUE(result);
+  const auto& [c1, c2, i] = result->values();
+  EXPECT_EQ(string(c1), "a");
+  EXPECT_EQ(string(c2), "b");
+  EXPECT_EQ(i, 7);
+}
+
+TEST(MODULE, rocketUnicodeCodePoint) {
+  using namespace rocket::unicode;
+  using type = CodePoint;
+
+  EXPECT_EQ(scanOne<type>("U+0000", "{}"), ok('\0'_cp, 6));
+  EXPECT_EQ(scanOne<type>("U+0041", "{}"), ok('A'_cp, 6));
+  EXPECT_EQ(scanOne<type>("U+20AC", "{}"), ok(U'\u20AC'_cp, 6));
+  EXPECT_EQ(scanOne<type>("U+20ac", "{}"), ok(U'\u20AC'_cp, 6));
+  EXPECT_EQ(scanOne<type>("U+1ABCD", "{}"), ok(U'\U0001ABCD'_cp, 7));
+  EXPECT_EQ(scanOne<type>("U+10FFFF", "{}"), ok(U'\U0010FFFF'_cp, 8));
+  EXPECT_EQ(scanOne<type>("U+41", "{}"), ok('A'_cp, 4));
+  EXPECT_EQ(scanOne<type>("  U+0041,", "{}"), ok('A'_cp, 8));
+
+  // Roundtrips
+  for (const auto cp : { '\0'_cp, 'z'_cp, U'\u00E4'_cp, U'\uFFFD'_cp, U'\U0001F600'_cp, U'\U0010FFFF'_cp }) {
+    const string input = fmt::format("{}", cp);
+    EXPECT_EQ(scanOne<type>(input, "{}"), ok(cp, static_cast<i64>(input.size()))) << input;
+  }
+
+  // Errors
+  EXPECT_EQ(scanError<type>("", "{}"), scn::scan_error::end_of_input);
+  EXPECT_EQ(scanError<type>("U+", "{}"), scn::scan_error::end_of_input);
+  EXPECT_EQ(scanError<type>("U+G", "{}"), scn::scan_error::invalid_scanned_value);
+  EXPECT_EQ(scanError<type>("u+0041", "{}"), scn::scan_error::invalid_scanned_value);
+  EXPECT_EQ(scanError<type>("U0041", "{}"), scn::scan_error::invalid_scanned_value);
+  EXPECT_EQ(scanError<type>("A", "{}"), scn::scan_error::invalid_scanned_value);
+  EXPECT_EQ(scanError<type>("U+110000", "{}"), scn::scan_error::invalid_scanned_value);
+  EXPECT_EQ(scanError<type>("U+D800", "{}"), scn::scan_error::invalid_scanned_value);
+  EXPECT_EQ(scanError<type>("U+DFFF", "{}"), scn::scan_error::invalid_scanned_value);
 }
 
 // `std` ----------------------------------------------------------------------------------------------------
@@ -584,6 +972,54 @@ TEST(MODULE, stdChronoDuration) {
   EXPECT_EQ(scanError<seconds>("42s", "{:%Y}"), scn::scan_error::invalid_format_string);
   EXPECT_EQ(scanError<seconds>("42s", "{:%q}"), scn::scan_error::invalid_format_string);
   EXPECT_EQ(scanError<seconds>("42s", "{:%Q%Q}"), scn::scan_error::invalid_format_string);
+}
+
+TEST(MODULE, stdChronoHhMmSs) {
+  using namespace std::chrono;
+
+  // `hh_mm_ss` has no `operator==`, so its duration is compared
+  const auto scanDuration = [](string_view input, auto type) -> optional<pair<decltype(type), i64>> {
+    const auto result = scanOne<hh_mm_ss<decltype(type)>>(input, "{}");
+    if (not result) {
+      return nullopt;
+    }
+    return pair(result->first.to_duration(), result->second);
+  };
+
+  EXPECT_EQ(scanDuration("01:02:03", 0s), ok(1h + 2min + 3s, 8));
+  EXPECT_EQ(scanDuration("  1:2:3", 0s), ok(1h + 2min + 3s, 7));
+  EXPECT_EQ(scanDuration("01:02:03.005", 0ms), ok(1h + 2min + 3s + 5ms, 12));
+  EXPECT_EQ(scanDuration("-111:02:03.123456789", 0ns), ok(-(111h + 2min + 3s + 123456789ns), 20));
+  EXPECT_EQ(scanDuration("-00:02:00", 0s), ok(seconds(-2min), 9));
+  EXPECT_EQ(scanDuration("2562046:59:59", 0s), ok(2562046h + 59min + 59s, 13));
+  EXPECT_EQ(scanDuration("01:02:03,", 0s), ok(1h + 2min + 3s, 8));
+
+  // Subseconds are truncated to the precision, and digits beyond nanoseconds are ignored
+  EXPECT_EQ(scanDuration("01:02:03.999", 0s), ok(1h + 2min + 3s, 12));
+  EXPECT_EQ(scanDuration("-01:02:03.999", 0ms), ok(-(1h + 2min + 3s + 999ms), 13));
+  EXPECT_EQ(scanDuration("00:00:00.1234567891", 0ns), ok(123456789ns, 19));
+
+  // Roundtrips
+  const auto vals = initializer_list<nanoseconds> {
+    0ns, 1h + 2min + 3s + 5ms, -(111h + 2min + 3s + 123456789ns), 2562046h + 1ns
+  };
+  for (const nanoseconds val : vals) {
+    const string input = fmt::format("{}", hh_mm_ss { val });
+    EXPECT_EQ(scanDuration(input, 0ns), ok(val, static_cast<i64>(input.size()))) << input;
+  }
+
+  // Errors
+  using type = hh_mm_ss<seconds>;
+  EXPECT_EQ(scanError<type>("", "{}"), scn::scan_error::end_of_input);
+  EXPECT_EQ(scanError<type>("x", "{}"), scn::scan_error::invalid_scanned_value);
+  EXPECT_EQ(scanError<type>("01:02", "{}"), scn::scan_error::invalid_scanned_value);
+  EXPECT_EQ(scanError<type>("01:02:", "{}"), scn::scan_error::invalid_scanned_value);
+  EXPECT_EQ(scanError<type>("01:02:03.", "{}"), scn::scan_error::invalid_scanned_value);
+  EXPECT_EQ(scanError<type>("01:60:00", "{}"), scn::scan_error::invalid_scanned_value);
+  EXPECT_EQ(scanError<type>("01:00:60", "{}"), scn::scan_error::invalid_scanned_value);
+  EXPECT_EQ(scanError<type>("01:-1:00", "{}"), scn::scan_error::invalid_scanned_value);
+  EXPECT_EQ(scanError<type>("2562047:00:00", "{}"), scn::scan_error::invalid_scanned_value);
+  EXPECT_EQ(scanError<type>("--01:00:00", "{}"), scn::scan_error::invalid_scanned_value);
 }
 
 // The scanner for `std::chrono::time_point` used to call `std::mktime`, which takes the fields for local

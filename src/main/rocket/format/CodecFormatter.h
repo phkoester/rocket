@@ -12,13 +12,7 @@
 #include "rocket/format/StringFormatter.h"
 #include "rocket/nio/nio.h"
 
-#include <fmt/format.h>
-
-#include <typeinfo>
-
-/// @cond undocumented
-
-namespace rocket::internal::format {
+namespace rocket::format::internal {
 
 /**
  * A base for formatters of types that are formatted with #rocket::codec::FormattedCodec.
@@ -32,9 +26,7 @@ namespace rocket::internal::format {
  * @tparam WithType whether the `t` format specifier is accepted
  */
 template<typename C, bool WithType = false> requires IsChar<C>
-class CodecFormatter {
-public:
-
+struct CodecFormatter {
   constexpr const C*
   parse(fmt::parse_context<C>& ctx) {
     return parseFlags(ctx, [this](C c) {
@@ -91,8 +83,6 @@ private:
   bool withType_ = false;
 };
 
-} // namespace rocket::internal::format
-
-/// @endcond
+} // namespace rocket::format::internal
 
 // EOF

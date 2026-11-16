@@ -10,7 +10,6 @@
 #include "rocket/Cow.h"
 #include "rocket/InputFailure.h"
 #include "rocket/format.h"
-#include "rocket/format/StringFormatter.h"
 #include "rocket/unicode/unicode-fwd.h"
 
 namespace rocket::unicode {
@@ -197,9 +196,6 @@ operator""_cp(char32 val) {
   return { val };
 }
 
-/// @op_output{#rocket::unicode::CodePoint}
-std::ostream& operator<<(std::ostream& lhs, CodePoint rhs);
-
 // Functions ------------------------------------------------------------------------------------------------
 
 // UTF8 .....................................................................................................
@@ -312,31 +308,6 @@ using utf8::validate;
 using utf32::validate;
 
 } // namespace rocket::unicode
-
-// `fmt::formatter<rocket::unicode::CodePoint>` -------------------------------------------------------------
-
-/**
- * @spec_fmt_formatter{#rocket::unicode::CodePoint}
- *
- * The code point is formatted as `U+` followed by at least four uppercase hexadecimal digits, for example
- * `U+00E4`.
- *
- * This formatter uses the same format specifiers as the underlying string formatter; they apply to the whole
- * string including the `U+`.
- */
-template<typename C> requires rocket::IsChar<C>
-struct fmt::formatter<rocket::unicode::CodePoint, C> : rocket::internal::format::StringFormatter<C> {
-  /// @cond undocumented
-
-  template<typename FormatContext>
-  FormatContext::iterator
-  format(rocket::unicode::CodePoint val, FormatContext& ctx) const {
-    // This is simple enough that we don’t need a `FormattedCodec` for it
-    return this->formatUtf8(fmt::format("U+{:04X}", static_cast<rocket::u32>(val)), ctx);
-  }
-
-  /// @endcond
-};
 
 // `std::hash<rocket::unicode::CodePoint>` ------------------------------------------------------------------
 

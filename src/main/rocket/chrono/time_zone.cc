@@ -503,9 +503,7 @@ namespace {
 
 struct ParseError {};
 
-class Reader {
-public:
-
+struct Reader {
   explicit Reader(span<const uint8_t> bytes) : bytes_(bytes) {}
 
   [[nodiscard]] size_t pos() const { return pos_; }
@@ -834,9 +832,7 @@ readFile(const filesystem::path& path) {
   return ret;
 }
 
-class Database {
-public:
-
+struct Database {
   Database() {
     const char* dir = getenv("TZDIR"); // NOLINT(*-mt-unsafe)
     dir_ = dir != nullptr && *dir != '\0' ? filesystem::path(dir) : filesystem::path(DEFAULT_ZONE_INFO_DIR);

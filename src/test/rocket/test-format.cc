@@ -4,8 +4,15 @@
 
 #include "rocket-test/rocket-test.h"
 
+#include "rocket/TypeId-format.h"
 #include "rocket/format.h"
+#include "rocket/bimap-format.h"
+#include "rocket/log/log.h"
+#include "rocket/math/Interval-format.h"
+#include "rocket/reflect/reflect.h"
+#include "rocket/reflect/reflect-format.h"
 #include "rocket/unicode/unicode.h"
+#include "rocket/unicode/unicode-format.h"
 
 #include <locale>
 #include <span>
@@ -28,6 +35,73 @@ const string EST = rocket::chrono::abbreviation("America/New_York", false, "EST"
 const string UTC = rocket::chrono::abbreviation("UTC", false, "UTC");
 
 } // namespace
+
+// Types ====================================================================================================
+
+// `MyStruct` -----------------------------------------------------------------------------------------------
+
+struct MyStruct {
+  i32 ä = 0;
+  string b;
+
+  MyStruct() = default;
+
+  MyStruct(i32 ä, string_view b, bool c) : ä(ä), b(b), c(c) {}
+
+private:
+
+  bool c = false;
+
+public:
+
+  ROCKET_REFLECT_MEMBERS(MyStruct, Index, (ä)(b)(c));
+
+  ROCKET_REFLECT_MEMBERS(MyStruct, Public, (ä)(b));
+};
+
+ROCKET_REFLECT_MEMBERS_DECLARE(, MyStruct, Index); // NOLINT(*-internal-linkage)
+ROCKET_REFLECT_MEMBERS_DEFINE(, MyStruct, Index);
+
+// `MyDerivedStruct` ----------------------------------------------------------------------------------------
+
+struct MyDerivedStruct : MyStruct {
+  string d;
+
+  MyDerivedStruct(i32 ä, string_view b, bool c, string_view d, f32 e) : MyStruct(ä, b, c), d(d), e(e) {}
+
+private:
+
+  f32 e = 0;
+
+public:
+
+  ROCKET_REFLECT_MEMBERS_DERIVED(MyStruct, Index, MyDerivedStruct, Index, (d)(e));
+};
+
+ROCKET_REFLECT_MEMBERS_DECLARE(, MyDerivedStruct, Index); // NOLINT(*-internal-linkage)
+ROCKET_REFLECT_MEMBERS_DEFINE(, MyDerivedStruct, Index);
+
+// `test_typeid` --------------------------------------------------------------------------------------------
+
+namespace test_typeid {
+
+struct Plain {};
+
+struct Base {
+  Base() = default;
+  Base(const Base&) = default;
+  Base(Base&&) = default;
+  Base& operator=(const Base&) = default;
+  Base& operator=(Base&&) = default;
+  virtual ~Base() = default;
+};
+
+struct Derived : Base {};
+
+template<typename T>
+struct Box {};
+
+} // namespace test_typeid
 
 // Tests ====================================================================================================
 
@@ -272,6 +346,53 @@ TEST(MODULE, rocketUnorderedBimap) {
   EXPECT_EQ(fmt::format("{}", unordered_bimap<i32, string>()), "{}");
 }
 
+TEST(MODULE, rocketEnum) {
+  using log::LogLevel;
+  EXPECT_EQ(fmt::format("{}", LogLevel::none), "none");
+  EXPECT_EQ(fmt::format("{}", LogLevel::error), "error");
+  EXPECT_EQ(fmt::format("{}", LogLevel::warn), "warn");
+  EXPECT_EQ(fmt::format("{}", LogLevel::info), "info");
+  EXPECT_EQ(fmt::format("{}", LogLevel::debug), "debug");
+  EXPECT_EQ(fmt::format("{}", LogLevel::trace), "trace");
+  EXPECT_EQ(fmt::format("{:?}", LogLevel::info), "\"info\"");
+  EXPECT_EQ(fmt::format("{:6}", LogLevel::info), "info  ");
+  EXPECT_EQ(fmt::format("{:>6}", LogLevel::info), "  info");
+  EXPECT_EQ(fmt::format("{:*^8}", LogLevel::info), "**info**");
+  EXPECT_EQ(fmt::format("{:.2}", LogLevel::info), "in");
+  EXPECT_EQ(fmt::format("{} {}", LogLevel::warn, LogLevel::error), "warn error");
+  EXPECT_THROW((void) fmt::format(fmt::runtime("{:d}"), LogLevel::info), fmt::format_error);
+  EXPECT_THROW((void) fmt::format("{}", static_cast<LogLevel>(-1)), InvalidState); // NOLINT
+}
+
+TEST(MODULE, rocketTypeId) {
+  using namespace test_typeid;
+
+  EXPECT_EQ(fmt::format("{}", TypeId::of<int>()), "`int`");
+  EXPECT_EQ(fmt::format("{}", TypeId::of<Plain>()), "`test_typeid::Plain`");
+  EXPECT_EQ(fmt::format("{}", TypeId::of<Box<int>>()), "`test_typeid::Box<int>`");
+
+  const Derived derived;
+  const Base& base = derived;
+  EXPECT_EQ(fmt::format("{}", TypeId(base)), "`test_typeid::Derived`");
+}
+
+TEST(MODULE, rocketTypeIdSpec) {
+  // Format specifiers apply to the name including the backticks
+  EXPECT_EQ(fmt::format("{:>7}", TypeId::of<int>()), "  `int`");
+  EXPECT_EQ(fmt::format("{:<7}|", TypeId::of<int>()), "`int`  |");
+  EXPECT_EQ(fmt::format("{:*^9}", TypeId::of<int>()), "**`int`**");
+  EXPECT_EQ(fmt::format("{:.3}", TypeId::of<int>()), "`in");
+  EXPECT_EQ(fmt::format("{:?}", TypeId::of<int>()), "\"`int`\"");
+}
+
+TEST(MODULE, rocketTypeIdChar32) {
+  using namespace test_typeid;
+
+  EXPECT_EQ(fmt::format(U"{}", TypeId::of<int>()), U"`int`");
+  EXPECT_EQ(fmt::format(U"{}", TypeId::of<Plain>()), U"`test_typeid::Plain`");
+  EXPECT_EQ(fmt::format(U"{:>7}", TypeId::of<int>()), U"  `int`");
+}
+
 TEST(MODULE, rocketChronoZonedTime) {
   using namespace std::chrono;
 
@@ -343,6 +464,129 @@ TEST(MODULE, rocketChronoZonedTime) {
   EXPECT_THROW(
     (void) fmt::format(fmt::runtime("{:x%Z}"), rocket::chrono::zoned_time(berlin, summer)),
     fmt::format_error);
+}
+
+TEST(MODULE, rocketMathClosedInterval) {
+  using type = rocket::math::ClosedInterval<i32>;
+
+  EXPECT_EQ(fmt::format("{}", type()), "∅");
+  EXPECT_EQ(fmt::format("{}", type(1, 1)), "[1,1]");
+  EXPECT_EQ(fmt::format("{}", type(1, 2)), "[1,2]");
+}
+
+TEST(MODULE, rocketMathRightOpenIntervalI32) {
+  using type = rocket::math::RightOpenInterval<i32>;
+
+  EXPECT_EQ(fmt::format("{}", type()), "∅");
+  EXPECT_EQ(fmt::format("{}", type(1, 1)), "∅");
+  EXPECT_EQ(fmt::format("{}", type(1, 2)), "[1,2)");
+  EXPECT_EQ(fmt::format("{}", type(1'000, 2'000)), "[1000,2000)");
+  EXPECT_EQ(fmt::format("{}", type(5, nullopt)), "[5,∞)");
+
+  EXPECT_EQ(fmt::format(U"{}", type(1'000, 2'000)), U"[1000,2000)");
+}
+
+TEST(MODULE, rocketMathRightOpenIntervalF64) {
+  using type = rocket::math::RightOpenInterval<f64>;
+
+  EXPECT_EQ(fmt::format("{}", type()), "∅");
+  EXPECT_EQ(fmt::format("{}", type(1, 1)), "∅");
+}
+
+TEST(MODULE, rocketReflectDeclared) {
+  const MyStruct m(42, "rocket", true);
+  EXPECT_EQ(fmt::format("{}", m), "(ä=42, b=\"rocket\", c=true)");
+  EXPECT_EQ(fmt::format("{:it}", m),
+    "MyStruct(\n"
+    "  ä=42,\n"
+    "  b=\"rocket\",\n"
+    "  c=true\n"
+    ")");
+  EXPECT_EQ(fmt::format("{:t}", m), "MyStruct(ä=42, b=\"rocket\", c=true)");
+  EXPECT_EQ(fmt::format("{:ti}", m), fmt::format("{:it}", m));
+  EXPECT_EQ(fmt::format(U"{:t}", m), U"MyStruct(ä=42, b=\"rocket\", c=true)");
+}
+
+TEST(MODULE, rocketReflectDeclaredDerived) {
+  const MyDerivedStruct m(41, "rocket", true, "everywhere", 4.2_f32);
+  EXPECT_EQ(fmt::format("{}", m), "(ä=41, b=\"rocket\", c=true, d=\"everywhere\", e=4.2)");
+  EXPECT_EQ(fmt::format("{:t}", m), "MyDerivedStruct(ä=41, b=\"rocket\", c=true, d=\"everywhere\", e=4.2)");
+}
+
+TEST(MODULE, rocketReflectInstance) {
+  using type = rocket::reflect::Instance<MyStruct, MyStruct::Public>;
+
+  const MyStruct m(42, "rocket", true);
+  type val(m);
+  EXPECT_EQ(fmt::format("{}", val), "(ä=42, b=\"rocket\")");
+  EXPECT_EQ(fmt::format("{:t}", val), "MyStruct(ä=42, b=\"rocket\")");
+}
+
+TEST(MODULE, rocketReflectVarRef) {
+  i32 ä1 = 2;
+  string b1 = "hi";
+  f32 f1 = .5f;
+  const auto vars1 = ROCKET_REFLECT_VARS((ä1)(b1)(f1));
+  EXPECT_EQ(fmt::format("{}", vars1), "(ä1=2, b1=\"hi\", f1=0.5)");
+
+  i32 ä2 = 2;
+  string b2 = "hi";
+  f32 f2 = .5f;
+  const auto vars2 = ROCKET_REFLECT_VARS((ä2)(b2)(f2));
+  EXPECT_EQ(fmt::format("{}", vars2), "(ä2=2, b2=\"hi\", f2=0.5)");
+
+  i32 ä3 = 2;
+  string b3 = "hi";
+  f32 f3 = .6f;
+  const auto vars3 = ROCKET_REFLECT_VARS((ä3)(b3)(f3));
+  EXPECT_EQ(fmt::format("{}", vars3), "(ä3=2, b3=\"hi\", f3=0.6)");
+}
+
+TEST(MODULE, rocketUnicodeCharacter) {
+  using namespace rocket::unicode;
+
+  // A character is formatted as its string
+  EXPECT_EQ(fmt::format("{}", "a"_c), "a");
+  EXPECT_EQ(fmt::format("{}", "€"_c), "€");
+  EXPECT_EQ(fmt::format("{}", "e\u0301"_c), "e\u0301"); // e + COMBINING ACUTE ACCENT
+  EXPECT_EQ(fmt::format("{}", "👨‍👩‍👦"_c), "👨‍👩‍👦"); // MAN, ZWJ, WOMAN, ZWJ, BOY
+  EXPECT_EQ(fmt::format("{}", Character<char>()), "\uFFFD"); // REPLACEMENT CHARACTER
+
+  // The format specifiers are those of the string formatter
+  EXPECT_EQ(fmt::format("{:>3}", "€"_c), "  €");
+  EXPECT_EQ(fmt::format("{:*^5}", "a"_c), "**a**");
+  EXPECT_EQ(fmt::format("{:?}", "a"_c), "\"a\"");
+  EXPECT_EQ(fmt::format("{:?}", "\n"_c), "\"\\n\"");
+
+  // Character views and `char32`
+  EXPECT_EQ(fmt::format("{}", "ä"_cv), "ä");
+  EXPECT_EQ(fmt::format(U"{}", U"€"_c), U"€");
+  EXPECT_EQ(fmt::format(U"{}", U"ä"_cv), U"ä");
+
+  // In a range
+  const auto chars = vector<Character<char>> { "a"_c, "€"_c };
+  EXPECT_EQ(fmt::format("{}", chars), "[\"a\", \"€\"]");
+}
+
+TEST(MODULE, rocketUnicodeCodePoint) {
+  using namespace rocket::unicode;
+
+  EXPECT_EQ(fmt::format("{}", '\0'_cp), "U+0000");
+  EXPECT_EQ(fmt::format("{}", U'\u20AC'_cp), "U+20AC");
+  EXPECT_EQ(fmt::format("{}", U'\u00FF'_cp), "U+00FF");
+  EXPECT_EQ(fmt::format("{}", U'\U0001ABCD'_cp), "U+1ABCD");
+  EXPECT_EQ(fmt::format("{}", U'\U0010FFFF'_cp), "U+10FFFF");
+
+  EXPECT_EQ(fmt::format(U"{}", U'\u20AC'_cp), U"U+20AC");
+}
+
+TEST(MODULE, rocketUnicodeCodePointVector) {
+  using namespace rocket::unicode;
+
+  auto cps = vector<CodePoint> { 'a'_cp, 'b'_cp, 'c'_cp };
+  EXPECT_EQ(fmt::format("{::}", cps), "[U+0061, U+0062, U+0063]");
+  EXPECT_EQ(fmt::format("{::~>8}", cps), "[~~U+0061, ~~U+0062, ~~U+0063]");
+  EXPECT_EQ(fmt::format("{:n:~>8}", cps), "~~U+0061, ~~U+0062, ~~U+0063");
 }
 
 // `std` ----------------------------------------------------------------------------------------------------
@@ -431,6 +675,24 @@ TEST(MODULE, stdChronoDuration) {
   EXPECT_EQ(fmt::format("{}", weeks(1)), "1[604800]s");
   EXPECT_EQ(fmt::format("{}", months(1)), "1[2629746]s");
   EXPECT_EQ(fmt::format("{}", years(1)), "1[31556952]s");
+}
+
+TEST(MODULE, stdChronoHhMmSs) {
+  using namespace std::chrono;
+
+  EXPECT_EQ(fmt::format("{}", hh_mm_ss { 1h + 2min + 3s }), "01:02:03");
+  EXPECT_EQ(fmt::format("{}", hh_mm_ss { 1h + 2min + 3s + 5ms }), "01:02:03.005");
+  EXPECT_EQ(fmt::format("{}", hh_mm_ss { 111h + 2min + 3s + 123ms }), "111:02:03.123");
+  EXPECT_EQ(fmt::format("{}", hh_mm_ss { -(111h + 2min + 3s + 123456us) }), "-111:02:03.123456");
+  EXPECT_EQ(fmt::format("{}", hh_mm_ss { -(111h + 2min + 3s + 123456789ns) }), "-111:02:03.123456789");
+  EXPECT_EQ(fmt::format("{}", hh_mm_ss<minutes> { -2min }), "-00:02:00");
+  EXPECT_EQ(fmt::format("{}", hh_mm_ss { 2562046h + 59min + 59s }), "2562046:59:59");
+  EXPECT_EQ(fmt::format("{}", hh_mm_ss { 0s }), "00:00:00");
+
+  // The format specifiers are those of the string formatter
+  EXPECT_EQ(fmt::format("{:>10}", hh_mm_ss { 1h + 2min + 3s }), "  01:02:03");
+  EXPECT_EQ(fmt::format("{:?}", hh_mm_ss { 1h + 2min + 3s }), "\"01:02:03\"");
+  EXPECT_EQ(fmt::format(U"{}", hh_mm_ss { -(1h + 2min + 3s + 5ms) }), U"-01:02:03.005");
 }
 
 TEST(MODULE, stdChronoTimePoint) {

@@ -81,7 +81,7 @@ using basic_spanstream = std::basic_spanstream<CharT, Traits>;
  * @NotThreadSafe
  */
 template<typename CharT, typename Traits = std::char_traits<CharT>>
-struct basic_spanbuf : public std::basic_streambuf<CharT, Traits> {
+struct basic_spanbuf : std::basic_streambuf<CharT, Traits> {
   /// @type_base
   using Base = std::basic_streambuf<CharT, Traits>;
 
@@ -298,7 +298,7 @@ concept ReadOnlySpan =
  * @NotThreadSafe
  */
 template<typename CharT, typename Traits = std::char_traits<CharT>>
-struct basic_ispanstream : public std::basic_istream<CharT, Traits> {
+struct basic_ispanstream : std::basic_istream<CharT, Traits> {
   /// @type_base
   using Base = std::basic_istream<CharT, Traits>;
 
@@ -423,7 +423,7 @@ swap(basic_ispanstream<CharT, Traits>& lhs, basic_ispanstream<CharT, Traits>& rh
  * @NotThreadSafe
  */
 template<typename CharT, typename Traits = std::char_traits<CharT>>
-struct basic_ospanstream : public std::basic_ostream<CharT, Traits> {
+struct basic_ospanstream : std::basic_ostream<CharT, Traits> {
   /// @type_base
   using Base = std::basic_ostream<CharT, Traits>;
 
@@ -518,7 +518,7 @@ swap(basic_ospanstream<CharT, Traits>& lhs, basic_ospanstream<CharT, Traits>& rh
  * @NotThreadSafe
  */
 template<typename CharT, typename Traits = std::char_traits<CharT>>
-struct basic_spanstream : public std::basic_iostream<CharT, Traits> {
+struct basic_spanstream : std::basic_iostream<CharT, Traits> {
   /// @type_base
   using Base = std::basic_iostream<CharT, Traits>;
 

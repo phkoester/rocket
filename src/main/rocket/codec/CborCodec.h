@@ -6,6 +6,7 @@
 
 #pragma once
 
+#include "rocket/TypeId-format.h"
 #include "rocket/assert.h"
 #include "rocket/codec/codec.h"
 
@@ -1067,7 +1068,7 @@ struct CborProducerImpl<DataType::TimeZone, T> {
       throw InputFailure(ex.position(), "expected a time zone");
     }
     try {
-      item.setValue(rocket::chrono::locate_zone(name.value()));
+      item.setValue(rocket::chrono::locateUnambiguousZone(name.value()));
     } catch (const std::exception& ex) {
       throw InputFailure(state.index, ex.what());
     }

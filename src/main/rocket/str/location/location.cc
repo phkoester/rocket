@@ -5,6 +5,7 @@
 #include "location.h"
 
 #include "rocket/assert.h"
+#include "rocket/format.h"
 #include "rocket/literal.h"
 #include "rocket/str/str.h"
 #include "rocket/str/escape/escape.h"

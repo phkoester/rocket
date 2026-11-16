@@ -7,6 +7,7 @@
 #include "rocket/codec/codec.h"
 #include "rocket/nio/nio.h"
 #include "rocket/reflect/reflect.h"
+#include "rocket/reflect/reflect-format.h"
 #include "rocket/unicode/ConvertTo.h"
 
 using namespace rocket;

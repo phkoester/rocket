@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include "rocket/TypeId.h"
+#include "rocket/TypeId-format.h"
 #include "rocket/format.h"
 #include "rocket/format/StringFormatter.h"
 #include "rocket/stacktrace.h"
@@ -325,7 +325,7 @@ struct fmt::formatter<rocket::WrappedException, C> {
 
   constexpr const C*
   parse(fmt::parse_context<C>& ctx) {
-    return rocket::internal::format::parseFlags(ctx, [this](C c) {
+    return rocket::format::internal::parseFlags(ctx, [this](C c) {
       if (c == '?') {
         debug_ = true;
         return true;
@@ -346,7 +346,7 @@ struct fmt::formatter<rocket::WrappedException, C> {
   template<typename FormatContext>
   FormatContext::iterator
   format(const rocket::WrappedException& val, FormatContext& ctx) const {
-    using rocket::internal::format::writeUtf8;
+    using rocket::format::internal::writeUtf8;
 
     const std::exception* const ex = val.exception();
     auto out = ctx.out();

@@ -99,23 +99,6 @@ TEST(MODULE, CodePointWidth) {
   EXPECT_EQ(U'\u0300'_cp.width(), 0); // COMBINING GRAVE ACCENT, Category Mn (768)
 }
 
-TEST(MODULE, CodePointFormat) {
-  EXPECT_EQ(fmt::format("{}", '\0'_cp), "U+0000");
-  EXPECT_EQ(fmt::format("{}", U'\u20AC'_cp), "U+20AC");
-  EXPECT_EQ(fmt::format("{}", U'\u00FF'_cp), "U+00FF");
-  EXPECT_EQ(fmt::format("{}", U'\U0001ABCD'_cp), "U+1ABCD");
-  EXPECT_EQ(fmt::format("{}", U'\U0010FFFF'_cp), "U+10FFFF");
-
-  EXPECT_EQ(fmt::format(U"{}", U'\u20AC'_cp), U"U+20AC");
-}
-
-TEST(MODULE, CodePointVectorFormat) {
-  auto cps = vector<CodePoint> { 'a'_cp, 'b'_cp, 'c'_cp };
-  EXPECT_EQ(fmt::format("{::}", cps), "[U+0061, U+0062, U+0063]");
-  EXPECT_EQ(fmt::format("{::~>8}", cps), "[~~U+0061, ~~U+0062, ~~U+0063]");
-  EXPECT_EQ(fmt::format("{:n:~>8}", cps), "~~U+0061, ~~U+0062, ~~U+0063");
-}
-
 // Functions ------------------------------------------------------------------------------------------------
 
 TEST(MODULE, conversions) {

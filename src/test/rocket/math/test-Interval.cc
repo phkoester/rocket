@@ -4,8 +4,7 @@
 
 #include "rocket-test/rocket-test.h"
 
-#include "rocket/literal.h"
-#include "rocket/math/Interval-codec.h"
+#include "rocket/math/Interval.h"
 
 using namespace rocket::math;
 
@@ -633,38 +632,6 @@ TEST(MODULE, operatorBitWiseOr) {
       type(1, 2) | type(3, 4),
       (vector<type> { type(1, 2), type(3, 4) }));
   }
-}
-
-// Format ...................................................................................................
-
-TEST(MODULE, ClosedIntervalFormat) {
-  using type = ClosedInterval<i32>;
-
-  EXPECT_EQ(fmt::format("{}", type()), "∅");
-  EXPECT_EQ(type().size(), 0);
-  EXPECT_TRUE(type().empty());
-
-  EXPECT_EQ(fmt::format("{}", type(1, 1)), "[1,1]");
-  EXPECT_EQ(fmt::format("{}", type(1, 2)), "[1,2]");
-}
-
-TEST(MODULE, RightOpenIntervalI32Format) {
-  using type = RightOpenInterval<i32>;
-
-  EXPECT_EQ(fmt::format("{}", type()), "∅");
-  EXPECT_EQ(fmt::format("{}", type(1, 1)), "∅");
-  EXPECT_EQ(fmt::format("{}", type(1, 2)), "[1,2)");
-  EXPECT_EQ(fmt::format("{}", type(1'000, 2'000)), "[1000,2000)");
-  EXPECT_EQ(fmt::format("{}", type(5, nullopt)), "[5,∞)");
-
-  EXPECT_EQ(fmt::format(U"{}", type(1'000, 2'000)), U"[1000,2000)");
-}
-
-TEST(MODULE, RightOpenIntervalF64Format) {
-  using type = RightOpenInterval<f64>;
-
-  EXPECT_EQ(fmt::format("{}", type()), "∅");
-  EXPECT_EQ(fmt::format("{}", type(1, 1)), "∅");
 }
 
 // Intervals ------------------------------------------------------------------------------------------------

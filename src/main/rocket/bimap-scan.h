@@ -1,5 +1,5 @@
 /**
- * @file scan-bimap.h
+ * @file bimap-scan.h
  *
  * Scanning support for Bimaps.
  */
@@ -7,6 +7,7 @@
 #pragma once
 
 #include "rocket/bimap.h"
+#include "rocket/type-traits.h"
 
 #include <scn/ranges.h>
 #include <scn/scan.h>
@@ -18,7 +19,7 @@
 // `scn::range_format_kind<boost::bimaps::bimap>` -----------------------------------------------------------
 
 /// Keeps the range scanners of scnlib away from Bimaps, which are scanned by the scanner below.
-template<typename A, typename B, typename C>
+template<typename A, typename B, typename C> requires rocket::IsChar<C>
 struct scn::range_format_kind<boost::bimaps::bimap<A, B>, C> :
   std::integral_constant<scn::range_format, scn::range_format::disabled> {};
 
@@ -36,7 +37,7 @@ struct scn::range_format_kind<boost::bimaps::bimap<A, B>, C> :
  *
  * - Like for a #std::map, no format specifiers are accepted.
  */
-template<typename A, typename B, typename C>
+template<typename A, typename B, typename C> requires rocket::IsChar<C>
 struct scn::scanner<boost::bimaps::bimap<A, B>, C> {
   /// @cond undocumented
 

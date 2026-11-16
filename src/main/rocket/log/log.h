@@ -114,7 +114,10 @@ const std::vector<cl::Option>& logOptions();
 
 // Functions ------------------------------------------------------------------------------------------------
 
+/// The system clock.
 using Clock = std::chrono::system_clock;
+
+/// A time point on the system clock.
 using TimePoint = std::chrono::time_point<Clock>;
 
 /**

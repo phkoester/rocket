@@ -1,5 +1,5 @@
 /**
- * @file format-bimap.h
+ * @file bimap-format.h
  *
  * Formatting support for Bimaps.
  */
@@ -7,6 +7,7 @@
 #pragma once
 
 #include "rocket/bimap.h"
+#include "rocket/type-traits.h"
 
 #include <fmt/format.h>
 #include <fmt/ranges.h>
@@ -17,7 +18,7 @@
 // `fmt::range_format_kind<boost::bimaps::bimap>` -----------------------------------------------------------
 
 /// Keeps the range formatters of {fmt} away from Bimaps, which are formatted by the formatter below.
-template<typename A, typename B, typename C>
+template<typename A, typename B, typename C> requires rocket::IsChar<C>
 struct fmt::range_format_kind<boost::bimaps::bimap<A, B>, C> :
   std::integral_constant<fmt::range_format, fmt::range_format::disabled> {};
 
@@ -34,7 +35,7 @@ struct fmt::range_format_kind<boost::bimaps::bimap<A, B>, C> :
  * - Like for a #std::map, no other format specifiers are accepted, except for an empty underlying format
  *   specification after a colon, as in `{::}` or `{:n:}`.
  */
-template<typename A, typename B, typename C>
+template<typename A, typename B, typename C> requires rocket::IsChar<C>
 struct fmt::formatter<boost::bimaps::bimap<A, B>, C> {
   /// @cond undocumented
 
@@ -110,11 +111,6 @@ namespace boost::bimaps {
 
 /**
  * @fn_PrintTo{boost::bimaps::bimap}
- *
- * GoogleTest prints iterable types with its container printer before it considers `operator<<`. A bimap's
- * elements are Boost relations without a printer, so they would be dumped as raw bytes. A `PrintTo` found
- * by argument-dependent lookup (ADL) takes precedence over that. This function must live in `boost::bimaps`,
- * the namespace of boost::bimaps::bimap.
  */
 template<typename A, typename B>
 inline void

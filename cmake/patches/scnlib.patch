@@ -1,8 +1,16 @@
 diff --git a/include/scn/chrono.h b/include/scn/chrono.h
-index f36594ee..a7a2b333 100644
+index f36594ee..921442b5 100644
 --- a/include/scn/chrono.h
 +++ b/include/scn/chrono.h
-@@ -345,25 +345,63 @@ enum class numeric_system {
+@@ -24,6 +24,7 @@ import std;
+ #include <time.h>
+ #else
+ #include <chrono>
++#include <cmath>
+ #include <ctime>
+ #endif
+ 
+@@ -345,31 +346,71 @@ enum class numeric_system {
      alternative_o,  // 'O'
  };
  
@@ -75,8 +83,18 @@ index f36594ee..a7a2b333 100644
      if constexpr (Duration::period::type::den > std::intmax_t{1}) {
          // Duration more precise than seconds (seconds is std::ratio<1, 1>)
          if (dt.subsec) {
++            // Round, as the product is not exact: `0.529594325` times 1e9
++            // is slightly less than 529594325
+             auto subsec_in_ns =
+-                std::chrono::nanoseconds{static_cast<std::int64_t>(
+-                    *dt.subsec * static_cast<double>(std::nano::den))};
++                std::chrono::nanoseconds{static_cast<std::int64_t>(std::llround(
++                    *dt.subsec * static_cast<double>(std::nano::den)))};
+             return std::chrono::duration_cast<Duration>(time + subsec_in_ns);
+         }
+     }
 diff --git a/src/scn/impl.cpp b/src/scn/impl.cpp
-index 805ee788..05d04fda 100644
+index 805ee788..49291b0a 100644
 --- a/src/scn/impl.cpp
 +++ b/src/scn/impl.cpp
 @@ -265,6 +265,9 @@ scan_expected<ranges::iterator_t<Range>> internal_skip_classic_whitespace(
@@ -89,7 +107,74 @@ index 805ee788..05d04fda 100644
      SCN_DEFINE_SCANNER_SCAN_FOR_TYPE(signed char, Context)                     \
      SCN_DEFINE_SCANNER_SCAN_FOR_TYPE(short, Context)                           \
      SCN_DEFINE_SCANNER_SCAN_FOR_TYPE(int, Context)                             \
-@@ -4938,6 +4941,23 @@ SCN_PUBLIC bool basic_scan_istream_buffer<CharT>::do_sync(
+@@ -3970,6 +3973,15 @@ public:
+         SCN_UNUSED(sys);
+ #endif
+ 
++        // A negative year, as {fmt} writes it, e.g. `-005` or `-10000`, has
++        // up to five digits, which covers the range of `std::chrono::year`.
++        // A nonnegative year keeps exactly four digits, so that formats such
++        // as `%Y%m%d` still work
++        if (consume_ch('-')) {
++            const int digits = read_classic_unsigned_integer(1, 5);
++            setter::set_full_year(*this, m_tm, m_st, digits < 0 ? -1 : -digits);
++            return;
++        }
+         int yr = read_classic_unsigned_integer(4, 4);
+         setter::set_full_year(*this, m_tm, m_st, yr);
+     }
+@@ -4265,10 +4277,11 @@ public:
+         int whole = read_classic_unsigned_integer(1, 2);
+         setter::set_sec(*this, m_tm, m_st, whole);
+ 
++        // The fraction is optional, so that `%.S` also reads whole seconds,
++        // as {fmt} writes them for a time point with a precision of seconds
+         if (!m_st.localized || sys == numeric_system::standard) {
+             if (!consume_ch('.')) {
+-                return set_error({scan_error::invalid_scanned_value,
+-                                  "Expected `.` in subsecond value"});
++                return;
+             }
+         }
+ #if !SCN_DISABLE_LOCALE
+@@ -4276,9 +4289,7 @@ public:
+             auto& state = get_localized_read_state();
+             CharT sep = state.numpunct_facet->decimal_point();
+             if (!consume_code_unit(sep)) {
+-                return set_error(
+-                    {scan_error::invalid_scanned_value,
+-                     "Expected decimal separator in subsecond value"});
++                return;
+             }
+         }
+ #endif  // !SCN_DISABLE_LOCALE
+@@ -4326,6 +4337,12 @@ public:
+         bool is_minus = false;
+         {
+             const auto sign_ch = *m_begin;
++            // `Z` (Zulu time) is the UTC offset +00:00, as in RFC 3339
++            if (sign_ch == CharT{'Z'}) {
++                ++m_begin;
++                setter::set_tz_offset(*this, m_tm, m_st, std::chrono::minutes{0});
++                return;
++            }
+             if (sign_ch == CharT{'+'}) {
+                 ++m_begin;
+             }
+@@ -4375,6 +4392,12 @@ public:
+             }
+         }
+ 
++        // Otherwise, `+01:60` would be read as `+02:00`
++        if (minute > 59) {
++            return set_error({scan_error::invalid_scanned_value,
++                              "Invalid value for UTC offset minutes"});
++        }
++
+         setter::set_tz_offset(
+             *this, m_tm, m_st,
+             std::chrono::minutes{(is_minus ? -1 : 1) * (hour * 60 + minute)});
+@@ -4938,6 +4961,23 @@ SCN_PUBLIC bool basic_scan_istream_buffer<CharT>::do_sync(
  {
      SCN_EXPECT(m_stream);
      auto& streambuf = *m_stream->rdbuf();

@@ -2,7 +2,7 @@
  * message.cc
  */
 
-#include "rocket/TypeId.h"
+#include "rocket/TypeId-format.h"
 #include "rocket/format.h"
 #include "rocket/str/message/message.h"
 

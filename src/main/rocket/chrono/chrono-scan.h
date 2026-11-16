@@ -1,5 +1,5 @@
 /**
- * @file scan-chrono.h
+ * @file chrono-scan.h
  *
  * scnlib scanners for chrono types.
  */
@@ -24,7 +24,7 @@
 #include <string_view>
 #include <type_traits>
 
-namespace rocket::internal::scan::chrono {
+namespace rocket::chrono::internal::scan {
 
 // Utilities ------------------------------------------------------------------------------------------------
 
@@ -131,7 +131,8 @@ readUnitNumber(It& it, Sent end, std::intmax_t& val) {
 }
 
 /**
- * Reads a unit suffix as {fmt} writes it, for example `ms` or `[604800]s`, and returns its period in seconds.
+ * Reads a unit suffix as {fmt} writes it, for example `ms` or `[604800]s`, and returns its period in
+ * seconds.
  */
 template<typename C, typename Context>
 scn::scan_expected<void>
@@ -196,7 +197,8 @@ convertCount(Rep count, std::intmax_t num, std::intmax_t den) {
       (static_cast<long double>(den) * static_cast<long double>(Period::num));
     return static_cast<Rep>(static_cast<long double>(count) * factor);
   } else {
-    // The factor is `n/d`. Both fit into `u128`, as `num`, `den`, and the parts of `Period` fit into `intmax_t`
+    // The factor is `n/d`. Both fit into `u128`, as `num`, `den`, and the parts of `Period` fit into
+    // `intmax_t`
     u128 n = static_cast<u128>(static_cast<std::uintmax_t>(num)) * static_cast<u128>(Period::den);
     u128 d = static_cast<u128>(static_cast<std::uintmax_t>(den)) * static_cast<u128>(Period::num);
     u128 a = n;
@@ -246,7 +248,7 @@ convertCount(Rep count, std::intmax_t num, std::intmax_t den) {
   }
 }
 
-} // namespace rocket::internal::scan::chrono
+} // namespace rocket::chrono::internal::scan
 
 // `scn::scanner<std::chrono::duration>` --------------------------------------------------------------------
 
@@ -259,9 +261,9 @@ convertCount(Rep count, std::intmax_t num, std::intmax_t den) {
  * characters match themselves. Without a format specification, the format is `%Q%q`, so the output of {fmt},
  * such as `42ms`, `1min`, or `1[604800]s`, can be scanned.
  *
- * The count is scanned like a value of the type `Rep`. The unit suffix is any that {fmt} writes, plus `us` for
- * microseconds; the count is converted to `Period`, failing if it is not representable exactly (unless `Rep`
- * is a floating-point type) or overflows. Without `%q`, the count is in units of `Period`.
+ * The count is scanned like a value of the type `Rep`. The unit suffix is any that {fmt} writes, plus `us`
+ * for microseconds; the count is converted to `Period`, failing if it is not representable exactly (unless
+ * `Rep` is a floating-point type) or overflows. Without `%q`, the count is in units of `Period`.
  *
  * @tparam Rep the representation of the count
  * @tparam Period the period of the duration
@@ -308,7 +310,7 @@ struct scn::scanner<std::chrono::duration<Rep, Period>, C> {
   template<typename Context>
   scn::scan_expected<typename Context::iterator>
   scan(std::chrono::duration<Rep, Period>& val, Context& ctx) const {
-    using namespace rocket::internal::scan::chrono;
+    using namespace rocket::chrono::internal::scan;
 
     static constexpr C defaultSpec[] = { '%', 'Q', '%', 'q' };
     const std::basic_string_view<C> spec = spec_.empty() ? std::basic_string_view<C>(defaultSpec, 4) : spec_;
@@ -383,7 +385,7 @@ private:
 
 // `scn::scanner<rocket::chrono::zoned_time>` ---------------------------------------------------------------
 
-namespace rocket::internal::scan::chrono {
+namespace rocket::chrono::internal::scan {
 
 /**
  * Splits a chrono format specification into segments, calling `f(segment, isOffset)` for each nonempty one.
@@ -451,7 +453,7 @@ merge(scn::datetime_components& dst, const scn::datetime_components& src) {
   copy(dst.tz_name, src.tz_name);
 }
 
-} // namespace rocket::internal::scan::chrono
+} // namespace rocket::chrono::internal::scan
 
 /**
  * Scans a #rocket::chrono::zoned_time.
@@ -459,9 +461,11 @@ merge(scn::datetime_components& dst, const scn::datetime_components& src) {
  * scnlib does not provide this scanner. The format specification is that of scnlib for date and time, which
  * must contain a date and `%Z`. Unlike when formatting, `%Z` is the name of the time zone in the time-zone
  * database, such as `Europe/Berlin` or `UTC`, not its abbreviation; abbreviations such as `CST` are
- * ambiguous. The date and time are the local time in that time zone. Unlike in scnlib, `%Z` may be combined
- * with the UTC offset `%z` (or `%Ez` or `%Oz`), which then selects between the two meanings of an ambiguous
- * local time, and must match the time zone; without it, an ambiguous or nonexistent local time fails.
+ * ambiguous. Legacy names that look like abbreviations, such as `CET` or `EST`, are rejected, see
+ * #rocket::chrono::isUnambiguousZoneName. The date and time are the local time in that time zone. Unlike in
+ * scnlib, `%Z` may be combined with the UTC offset `%z` (or `%Ez` or `%Oz`), which then selects between the
+ * two meanings of an ambiguous local time, and must match the time zone; without it, an ambiguous or
+ * nonexistent local time fails.
  *
  * Without a format specification, the format is `%F %T %Z`, or `%F %H:%M:%.S %Z` for a duration finer than
  * seconds, so the output of the formatter with the default format can be scanned if it uses a time-zone
@@ -475,9 +479,7 @@ template<typename Duration, typename TimeZonePtr, typename C>
   requires rocket::IsChar<C> && requires(std::string_view name) {
     { rocket::chrono::zoned_traits<TimeZonePtr>::locate_zone(name) } -> std::convertible_to<TimeZonePtr>;
   }
-struct scn::scanner<rocket::chrono::zoned_time<Duration, TimeZonePtr>, C> {
-private:
-
+class scn::scanner<rocket::chrono::zoned_time<Duration, TimeZonePtr>, C> {
   using ZonedTime = rocket::chrono::zoned_time<Duration, TimeZonePtr>;
 
 public:
@@ -487,7 +489,7 @@ public:
   template<typename ParseCtx>
   constexpr ParseCtx::iterator
   parse(ParseCtx& pctx) {
-    using rocket::internal::scan::chrono::forEachSegment;
+    using rocket::chrono::internal::scan::forEachSegment;
 
     const auto begin = pctx.begin();
     auto it = begin;
@@ -539,9 +541,9 @@ public:
   scn::scan_expected<typename Context::iterator>
   scan(ZonedTime& val, Context& ctx) const {
     using namespace std::chrono;
-    using rocket::internal::scan::chrono::forEachSegment;
-    using rocket::internal::scan::chrono::invalidValue;
-    using rocket::internal::scan::chrono::merge;
+    using rocket::chrono::internal::scan::forEachSegment;
+    using rocket::chrono::internal::scan::invalidValue;
+    using rocket::chrono::internal::scan::merge;
     using D = ZonedTime::duration;
 
     // Scan the segments with scnlib
@@ -588,12 +590,18 @@ public:
       lt += duration_cast<D>(nanoseconds(std::llround(*dt.subsec * static_cast<double>(std::nano::den))));
     }
 
-    // Time zone
+    // Time zone. scnlib reads an empty name if no name character follows
+    if (not dt.tz_name || dt.tz_name->empty()) {
+      return invalidValue("Expected a time-zone name");
+    }
     TimeZonePtr zone;
     try {
       zone = rocket::chrono::zoned_traits<TimeZonePtr>::locate_zone(*dt.tz_name);
     } catch (const std::exception&) {
       return invalidValue("Unknown time zone");
+    }
+    if (not rocket::chrono::isUnambiguousZoneName(*dt.tz_name)) {
+      return invalidValue("Ambiguous time-zone name");
     }
 
     // UTC offset
@@ -634,6 +642,122 @@ private:
   };
 
   std::basic_string_view<C> spec_;
+};
+
+// `scn::scanner<std::chrono::hh_mm_ss>` --------------------------------------------------------------------
+
+namespace rocket::chrono::internal::scan {
+
+/// Reads decimal digits into `val`, failing if there are none or if `val` would exceed `max`.
+template<typename It, typename Sent>
+scn::scan_expected<void>
+readDigits(It& it, Sent end, std::int64_t max, std::int64_t& val) {
+  if (it == end || *it < '0' || *it > '9') {
+    return invalidValue("Expected hour, minute, and second");
+  }
+  val = 0;
+  do {
+    val = val * 10 + static_cast<std::int64_t>(*it - '0');
+    if (val > max) {
+      return invalidValue("Invalid hour, minute, or second");
+    }
+    ++it;
+  } while (it != end && *it >= '0' && *it <= '9');
+  return {};
+}
+
+} // namespace rocket::chrono::internal::scan
+
+/**
+ * Scans a #std::chrono::hh_mm_ss.
+ *
+ * scnlib does not provide this scanner. It reads what the formatter in `rocket/chrono/chrono-format.h`
+ * writes: `[-]H:M:S`, optionally followed by a dot and subseconds, e.g., `01:02:03`, `01:02:03.005`, or
+ * `-111:02:03.123456789`. Whitespace before the value is skipped.
+ *
+ * The hours are not limited to 0 through 23, but the whole value must fit into #std::chrono::nanoseconds.
+ * The minutes and seconds must be less than 60. Subseconds finer than nanoseconds are ignored, and the
+ * value is truncated toward zero to the precision of @p Duration.
+ *
+ * - No format specifiers are accepted.
+ *
+ * @tparam Duration the duration of the #std::chrono::hh_mm_ss
+ * @tparam C the character type
+ */
+template<typename Duration, typename C> requires rocket::IsChar<C>
+struct scn::scanner<std::chrono::hh_mm_ss<Duration>, C> {
+  /// @cond undocumented
+
+  template<typename ParseCtx>
+  constexpr ParseCtx::iterator
+  parse(ParseCtx& pctx) {
+    return pctx.begin();
+  }
+
+  template<typename Context>
+  scn::scan_expected<typename Context::iterator>
+  scan(std::chrono::hh_mm_ss<Duration>& val, Context& ctx) const {
+    using namespace std::chrono;
+    using namespace rocket::chrono::internal::scan;
+
+    auto skipped = scn::detail::internal_skip_classic_whitespace(ctx.range(), false);
+    if (not skipped) {
+      return scn::unexpected(skipped.error());
+    }
+    auto it = *skipped;
+    const auto end = ctx.end();
+
+    const bool negative = it != end && *it == '-';
+    if (negative) {
+      ++it;
+    }
+
+    // Hours, so that the whole value fits into nanoseconds
+    constexpr std::int64_t maxHours = duration_cast<hours>(nanoseconds::max()).count() - 1;
+    std::int64_t h = 0;
+    std::int64_t m = 0;
+    std::int64_t s = 0;
+    if (auto result = readDigits(it, end, maxHours, h); not result) {
+      return scn::unexpected(result.error());
+    }
+    for (std::int64_t* field : { &m, &s }) {
+      if (it == end || *it != ':') {
+        return invalidValue("Expected hour, minute, and second");
+      }
+      ++it;
+      if (auto result = readDigits(it, end, 59, *field); not result) {
+        return scn::unexpected(result.error());
+      }
+    }
+
+    // Subseconds, as nanoseconds
+    std::int64_t ns = 0;
+    if (it != end && *it == '.') {
+      ++it;
+      if (it == end || *it < '0' || *it > '9') {
+        return invalidValue("Expected subseconds");
+      }
+      int digits = 0;
+      for (; it != end && *it >= '0' && *it <= '9'; ++it) {
+        if (digits < 9) {
+          ns = ns * 10 + static_cast<std::int64_t>(*it - '0');
+          ++digits;
+        }
+      }
+      for (; digits < 9; ++digits) {
+        ns *= 10;
+      }
+    }
+
+    auto duration = duration_cast<Duration>(hours(h) + minutes(m) + seconds(s) + nanoseconds(ns));
+    if (negative) {
+      duration = -duration;
+    }
+    val = std::chrono::hh_mm_ss<Duration>(duration);
+    return it;
+  }
+
+  /// @endcond
 };
 
 #ifndef ROCKET_HAS_SCN_SCANNER_STD_CHRONO_YEAR_MONTH_DAY

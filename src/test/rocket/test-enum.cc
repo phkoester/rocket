@@ -5,7 +5,6 @@
 #include "rocket-test/rocket-test.h"
 
 #include "rocket/enum.h"
-#include "rocket/scan.h"
 
 #define MODULE rocketEnum
 
@@ -36,75 +35,6 @@ ROCKET_ENUM_DEFINE(mynamespace, MyEnumInNamespace, MyEnumInNamespace, (red)(gree
 
 // Tests ====================================================================================================
 
-TEST(MODULE, MyEnumOpOutput) {
-  ostringstream os;
-  os << fröb;
-  EXPECT_EQ(os.str(), "fröb");
-}
-
-TEST(MODULE, MyEnumFormat) {
-  EXPECT_EQ(fmt::format("{}", fröber), "fröber");
-  EXPECT_EQ(fmt::format("{}", fröberer), "fröberer");
-  EXPECT_EQ(fmt::format("{}", pörk), "pörk");
-  EXPECT_EQ(fmt::format("{}", pörker), "pörker");
-  EXPECT_EQ(fmt::format("{}", pörkerer), "pörkerer");
-  EXPECT_EQ(fmt::format("{: >10}", fröber), "    fröber"); // Tests UTF-8 alignment; 4 spaces expected
-
-  EXPECT_THAT(
-    [] { static_cast<void>(fmt::format("{}", static_cast<MyEnum>(10))); }, // NOLINT
-    ThrowsMessage<InvalidState>(EndsWith("invalid `MyEnum` value 10")));
-
-  EXPECT_EQ(fmt::format(U"{}", fröb), U"fröb");
-}
-
-TEST(MODULE, MyEnumScan) {
-  {
-    const auto result = scn::scan<MyEnum>("", "{}");
-    ASSERT_FALSE(result);
-    EXPECT_EQ(string_view(result.error().msg()), "EOF"sv);
-  }
-
-  {
-    const auto result = scn::scan<MyEnum>("frö", "{}");
-    ASSERT_FALSE(result);
-    EXPECT_EQ(string_view(result.error().msg()), "invalid enum value"sv);
-  }
-
-  {
-    const auto result = scn::scan<MyEnum>("fröb", "{}");
-    ASSERT_TRUE(result);
-    const auto val = result->value();
-    EXPECT_EQ(val, fröb);
-  }
-
-  {
-    const auto result = scn::scan<MyEnum>("fröbZZZ", "{}");
-    ASSERT_TRUE(result);
-    const auto val = result->value();
-    EXPECT_EQ(val, fröb);
-    EXPECT_EQ(string_view(result->begin()), "ZZZ"sv);
-  }
-
-  {
-    const auto result = scn::scan<MyEnum>("  fröberer  xx", "{}");
-    ASSERT_TRUE(result);
-    const auto val = result->value();
-    EXPECT_EQ(val, fröberer);
-    EXPECT_EQ(string_view(result->begin()), "  xx"sv);
-  }
-
-  {
-    const string input = "fröb, fröberer...";
-    auto is = istringstream(input);
-    const auto result = scn::scan<MyEnum, MyEnum>(is, "{}, {}");
-    ASSERT_TRUE(result);
-    const auto [val1, val2] = result->values();
-    EXPECT_EQ(val1, fröb);
-    EXPECT_EQ(val2, fröberer);
-    EXPECT_EQ(io::stream::tell(is), 16);
-  }
-}
-
 TEST(MODULE, MyEnumToType) {
   EXPECT_EQ(Enum<MyEnum>::toType("fröb", true), make_pair(5_u64, fröb ));
   EXPECT_EQ(Enum<MyEnum>::toType("fröbx", false), make_pair(5_u64, fröb ));
@@ -118,27 +48,11 @@ TEST(MODULE, MyEnumToType) {
   EXPECT_EQ(Enum<MyEnum>::toType("fröbx", true).error().message, "cannot scan \"fröbx\" as `MyEnum`");
 }
 
-TEST(MODULE, MyEnumClassOpOutput) {
-  ostringstream os;
-  os << MyEnumClass::hürx;
-  EXPECT_EQ(os.str(), "hürx");
-}
-
-TEST(MODULE, MyEnumFClassFormat) {
-  EXPECT_EQ(fmt::format("{}", MyEnumClass::hürx), "hürx");
-}
-
 TEST(MODULE, MyEnumClassToType) {
   EXPECT_EQ(Enum<MyEnumClass>::toType("hürxer", true), make_pair(7_u64, MyEnumClass::hürxer));
 
   EXPECT_EQ(Enum<MyEnumClass>::toType("foo", true).error().message, "cannot scan \"foo\" as `MyEnumClass`");
   EXPECT_EQ(Enum<MyEnumClass>::toType("hürxerx", true).error().message, "cannot scan \"hürxerx\" as `MyEnumClass`");
-}
-
-TEST(MODULE, MyEnumInNamespaceOpOutput) {
-  ostringstream os;
-  os << mynamespace::red;
-  EXPECT_EQ(os.str(), "red");
 }
 
 // EOF

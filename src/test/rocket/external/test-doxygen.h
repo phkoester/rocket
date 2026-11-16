@@ -72,7 +72,7 @@ struct C : B {};
  * - #MyClassTemplate
  * - #MyClassTemplate#a
  * - #myFunc
- * - #myFunc(i32)
+ * - #myFunc(rocket::i32)
  * - #myFuncTemplate(T)
  * - #myFuncTemplate(T, T)
  */
@@ -91,7 +91,7 @@ constexpr auto MY_CONSTANT = 0;
 /**
  * A simple type.
  */
-using MyType = i32;
+using MyType = rocket::i32;
 
 /**
  * A simple enum.
@@ -116,9 +116,9 @@ enum class MyEnumClass {
  */
 struct MyClass {
   /// Not the same as #b.
-  i32 a;
+  rocket::i32 a;
   /// Not the same as #a.
-  i32 b;
+  rocket::i32 b;
 };
 
 /// @op_output{#MyClass}
@@ -139,11 +139,11 @@ struct MyClassTemplate {
 void myFunc();
 
 /**
- * #myFunc(i32) with one argument.
+ * #myFunc(rocket::i32) with one argument.
  *
  * @param n text
  */
-void myFunc(i32 n);
+void myFunc(rocket::i32 n);
 
 /**
  * #myFuncTemplate(T) with one argument.
@@ -180,7 +180,7 @@ namespace foo::bar {
  * - #foo::bar::FooMyClassTemplate
  * - #foo::bar::FooMyClassTemplate#a
  * - #foo::bar::fooMyFunc
- * - #foo::bar::fooMyFunc(i32)
+ * - #foo::bar::fooMyFunc(rocket::i32)
  * - #foo::bar::fooMyFuncTemplate(T)
  * - #foo::bar::fooMyFuncTemplate(T, T)
  */
@@ -194,7 +194,7 @@ constexpr auto FOO_MY_CONSTANT = 0;
 /**
  * A simple type.
  */
-using FooMyType = i32;
+using FooMyType = rocket::i32;
 
 /**
  * A simple enum.
@@ -219,9 +219,9 @@ enum class FooMyEnumClass {
  */
 struct FooMyClass {
   /// Not the same as #b.
-  i32 a;
+  rocket::i32 a;
   /// Not the same as #a.
-  i32 b;
+  rocket::i32 b;
 };
 
 /// @op_output{#foo::bar::FooMyClass}
@@ -242,11 +242,11 @@ struct FooMyClassTemplate {
 void fooMyFunc();
 
 /**
- * #foo::bar::fooMyFunc(i32) with one argument.
+ * #foo::bar::fooMyFunc(rocket::i32) with one argument.
  *
  * @param n text
  */
-void fooMyFunc(i32 n);
+void fooMyFunc(rocket::i32 n);
 
 /**
  * #foo::bar::fooMyFuncTemplate(T) with one argument.

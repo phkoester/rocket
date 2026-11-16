@@ -9,10 +9,8 @@
 #include "rocket/codec/CompareEncoder.h"
 #include "rocket/codec/EqualToEncoder.h"
 #include "rocket/codec/HashEncoder.h"
-#include "rocket/codec/FormattedCodec.h"
-#include "rocket/format/CodecFormatter.h"
-#include "rocket/nio/nio.h"
-#include "rocket/unicode/ConvertTo.h"
+
+#include <functional> // `std::hash`
 
 // Macros ---------------------------------------------------------------------------------------------------
 
@@ -36,7 +34,6 @@
  *
  * - a #rocket::reflect::Declared specialization;
  * - comparison operators `==`, `<=>`;
- * - an output operator for #std::ostream.
  *
  * @note This macro must be called in the global namespace.
  *
@@ -126,15 +123,11 @@
 #define ROCKET_REFLECT_MEMBERS_DECLARE_OP_CMP__(cls, name) \
   cls::name::Ordering operator<=>(const cls& lhs, const cls& rhs)
 
-#define ROCKET_REFLECT_MEMBERS_DECLARE_OP_OUTPUT__(cls) \
-  ::std::ostream& operator<<(::std::ostream&, const cls& rhs)
-
 #define ROCKET_REFLECT_MEMBERS_DECLARE__(ns, cls, name) \
   ROCKET_REFLECT_MEMBERS_DECLARE_DECLARED__(ns, cls, name); \
   ROCKET_NAMESPACE_BEGIN(ns); \
   ROCKET_REFLECT_MEMBERS_DECLARE_OP_EQ__(cls); \
   ROCKET_REFLECT_MEMBERS_DECLARE_OP_CMP__(cls, name); \
-  ROCKET_REFLECT_MEMBERS_DECLARE_OP_OUTPUT__(cls); \
   ROCKET_NAMESPACE_END(ns)
 
 #define ROCKET_REFLECT_MEMBERS_DEFINE_OP_EQ__(cls) \
@@ -149,17 +142,10 @@
     return ::rocket::codec::CompareEncoder<>().encode(lhs, rhs); \
   }
 
-#define ROCKET_REFLECT_MEMBERS_DEFINE_OP_OUTPUT__(cls) \
-  ::std::ostream& \
-  operator<<(::std::ostream& lhs, const cls& rhs) { \
-    return lhs << fmt::format("{}", rhs); \
-  }
-
 #define ROCKET_REFLECT_MEMBERS_DEFINE__(ns, cls, name) \
   ROCKET_NAMESPACE_BEGIN(ns); \
   ROCKET_REFLECT_MEMBERS_DEFINE_OP_EQ__(cls); \
   ROCKET_REFLECT_MEMBERS_DEFINE_OP_CMP__(cls, name); \
-  ROCKET_REFLECT_MEMBERS_DEFINE_OP_OUTPUT__(cls); \
   ROCKET_NAMESPACE_END(ns)
 
 // Variables ................................................................................................
@@ -190,13 +176,6 @@ operator<=>(const Instance<T, Inner>& lhs, const Instance<T, Inner>& rhs) {
   return codec::CompareEncoder<>().encode(lhs, rhs);
 }
 
-/// @op_output{#rocket::reflect::Instance}
-template<typename T, typename Inner>
-inline std::ostream&
-operator<<(std::ostream& lhs, const Instance<T, Inner>& rhs) {
-  return lhs << fmt::format("{}", rhs);
-}
-
 // `VarRef` -------------------------------------------------------------------------------------------------
 
 /// @op_eq{#rocket::reflect::VarRef}
@@ -213,82 +192,7 @@ operator<=>(const VarRef<T>& lhs, const VarRef<T>& rhs) {
   return codec::CompareEncoder<>().encode(lhs, rhs);
 }
 
-/// @op_output{#rocket::reflect::VarRef}
-template<typename T>
-inline std::ostream&
-operator<<(std::ostream& lhs, const VarRef<T>& rhs) {
-  return lhs << fmt::format("{}", rhs);
-}
-
 } // namespace rocket::reflect
-
-// `fmt::formatter<rocket::reflect::Declared>` --------------------------------------------------------------
-
-/**
- * @spec_fmt_formatter{#rocket::reflect::Declared}
- *
- * - If the `i` format specifier is used, then the output is indented.
- * - If the `t` format specifier is used, then the name of the dynamic type is included.
- *
- * The format specifiers may appear in any order.
- */
-template<typename T, typename C> requires rocket::reflect::Declared<T>::value && rocket::IsChar<C>
-struct fmt::formatter<T, C> : rocket::internal::format::CodecFormatter<C, true> {
-  /// @cond undocumented
-
-  template<typename FormatContext>
-  FormatContext::iterator
-  format(const T& val, FormatContext& ctx) const {
-    return this->formatEncoded(val, typeid(val), ctx);
-  }
-
-  /// @endcond
-};
-
-// `fmt::formatter<rocket::reflect::Instance>` --------------------------------------------------------------
-
-/**
- * @spec_fmt_formatter{#rocket::reflect::Instance}
- *
- * - If the `i` format specifier is used, then the output is indented.
- * - If the `t` format specifier is used, then the type name is included.
- *
- * The format specifiers may appear in any order.
- */
-template<typename T, typename Inner, typename C> requires rocket::IsChar<C>
-struct fmt::formatter<rocket::reflect::Instance<T, Inner>, C> : rocket::internal::format::CodecFormatter<C, true> {
-  /// @cond undocumented
-
-  using Type = rocket::reflect::Instance<T, Inner>;
-
-  template<typename FormatContext>
-  FormatContext::iterator
-  format(const Type& val, FormatContext& ctx) const {
-    return this->formatEncoded(val, typeid(typename Type::Type), ctx);
-  }
-
-  /// @endcond
-};
-
-// `fmt::formatter<rocket::reflect::VarRef>` ----------------------------------------------------------------
-
-/**
- * @spec_fmt_formatter{#rocket::reflect::VarRef}
- *
- * - If the `i` format specifier is used, then the output is indented.
- */
-template<typename T, typename C> requires fmt::is_formattable<T, C>::value && rocket::IsChar<C>
-struct fmt::formatter<rocket::reflect::VarRef<T>, C> : rocket::internal::format::CodecFormatter<C> {
-  /// @cond undocumented
-
-  template<typename FormatContext>
-  FormatContext::iterator
-  format(const rocket::reflect::VarRef<T>& val, FormatContext& ctx) const {
-    return this->formatEncoded(val, ctx);
-  }
-
-  /// @endcond
-};
 
 // `std::hash<rocket::reflect::Declared>` -------------------------------------------------------------------
 

@@ -213,9 +213,9 @@ TEST(MODULE, ConsumerDuration) {
   EXPECT_EQ(encode(5min), "5min");
   EXPECT_EQ(encode(-6h), "-6h");
   EXPECT_EQ(encode(days(7)), "7d");
-  EXPECT_EQ(encode(weeks(8)), "8w");
-  EXPECT_EQ(encode(months(9)), "9m");
-  EXPECT_EQ(encode(years(10)), "10y");
+  EXPECT_EQ(encode(weeks(8)), "8[604800]s");
+  EXPECT_EQ(encode(months(9)), "9[2629746]s");
+  EXPECT_EQ(encode(years(10)), "10[31556952]s");
 }
 
 TEST(MODULE, ConsumerHourMinuteSecond) {
@@ -238,8 +238,8 @@ TEST(MODULE, ConsumerYearDate) {
 TEST(MODULE, ConsumerTimeZone) {
   using namespace std::chrono;
 
-  EXPECT_EQ(encode(rocket::chrono::locate_zone("Europe/Berlin")), "(Europe/Berlin)");
-  EXPECT_EQ(encode(rocket::chrono::locate_zone("UTC")), "(Etc/UTC)");
+  EXPECT_EQ(encode(rocket::chrono::locate_zone("Europe/Berlin")), "Europe/Berlin");
+  EXPECT_EQ(encode(rocket::chrono::locate_zone("UTC")), "Etc/UTC");
 }
 
 TEST(MODULE, ConsumerTime) {
@@ -256,25 +256,33 @@ TEST(MODULE, ConsumerTime) {
 TEST(MODULE, ConsumerZonedTime) {
   using namespace std::chrono;
 
-  const auto* const regexS =
-    R"(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(Z|[+-]\d{2}:\d{2}) \([^ ]+\))"; // Seconds
-  const auto* const regexNs =
-    R"(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{6,9}(Z|[+-]\d{2}:\d{2}) \([^ ]+\))"; // Nanoseconds
+  const auto* const regexSecond =
+    R"(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(Z|[+-]\d{2}:\d{2}) [^ ]+)"; // Seconds
+  const auto* const regexNanosecond =
+    R"(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{6,9}(Z|[+-]\d{2}:\d{2}) [^ ]+)"; // Nanoseconds
 
   {
     // Current time zone
     const auto* current = rocket::chrono::current_zone();
     const auto now = rocket::chrono::now<system_clock>();
-    EXPECT_THAT(encode(rocket::chrono::zoned_time(current, time_point_cast<seconds>(now))), matchesRegex(regexS));
-    EXPECT_THAT(encode(rocket::chrono::zoned_time(current, now)), matchesRegex(regexNs));
+    EXPECT_THAT(
+      encode(rocket::chrono::zoned_time(current, time_point_cast<seconds>(now))),
+      matchesRegex(regexSecond));
+    EXPECT_THAT(
+      encode(rocket::chrono::zoned_time(current, now)),
+      matchesRegex(regexNanosecond));
   }
 
   {
     // Time zone UTC
     const auto* utc = rocket::chrono::locate_zone("UTC");
     const auto now = rocket::chrono::now<system_clock>();
-    EXPECT_THAT(encode(rocket::chrono::zoned_time(utc, time_point_cast<seconds>(now))), matchesRegex(regexS));
-    EXPECT_THAT(encode(rocket::chrono::zoned_time(utc, now)), matchesRegex(regexNs));
+    EXPECT_THAT(
+      encode(rocket::chrono::zoned_time(utc, time_point_cast<seconds>(now))),
+      matchesRegex(regexSecond));
+    EXPECT_THAT(
+      encode(rocket::chrono::zoned_time(utc, now)),
+      matchesRegex(regexNanosecond));
   }
 }
 
@@ -285,6 +293,7 @@ TEST(MODULE, ConsumerInterval) {
   EXPECT_EQ(encode(math::RightOpenInterval<f32>(-4.2, nullopt)), "[-4.2,∞)");
   EXPECT_EQ(encode(math::OpenInterval<f32>()), "∅");
   EXPECT_EQ(encode(math::OpenInterval<f32>(nullopt, nullopt)), "(-∞,∞)");
+  EXPECT_EQ(encode(math::ClosedInterval<f64>(-numeric_limits<f64>::infinity(), 1)), "[-∞,1]");
 }
 
 TEST(MODULE, ConsumerDeclared) {
@@ -438,9 +447,12 @@ TEST(MODULE, ProducerFailureInsideCluster) {
 TEST(MODULE, ProducerCodePointInvalid) {
   using CodePoint = unicode::CodePoint;
 
-  expectFailure<CodePoint>("  U+110000", "invalid code-point value 0x110000", 2);
-  expectFailure<CodePoint>("  U+D800", "invalid code-point value 0xD800", 2);
-  expectFailure<pair<i32, CodePoint>>("(1, U+110000)", "invalid code-point value 0x110000", 4);
+  expectFailure<CodePoint>("  U+110000", "invalid code point", 2);
+  expectFailure<CodePoint>("  U+D800", "invalid code point", 2);
+  expectFailure<pair<i32, CodePoint>>("(1, U+110000)", "invalid code point", 4);
+  expectFailure<CodePoint>("  U+", "expected hexadecimal digits", 2);
+  expectFailure<CodePoint>("  U+G", "expected hexadecimal digits", 2);
+  expectFailure<CodePoint>("  x", "expected a code point", 2);
 }
 
 TEST(MODULE, ProducerCharacter) {
@@ -531,25 +543,36 @@ TEST(MODULE, ProducerDuration) {
   EXPECT_EQ(decode<milliseconds>("1s"), 1000ms);
   EXPECT_EQ(decode<milliseconds>("1s"), 1s);
   EXPECT_EQ(decode<milliseconds>("-5s"), -5s);
-
   EXPECT_EQ(decode<seconds>("1000ms"), 1s);
+  EXPECT_EQ(decode<microseconds>("7us"), 7us);
+  EXPECT_EQ(decode<microseconds>("7µs"), 7us);
+  EXPECT_EQ(decode<days>("2[604800]s"), days(14));
+  EXPECT_EQ(decode<seconds>("3[1/1]s"), 3s);
 
-  EXPECT_EQ(decode<seconds>("x").error().message, "expected a duration");
-  EXPECT_EQ(decode<seconds>("10x").error().message, "expected a time unit");
-  // The failure is reported where the unit should have started
-  EXPECT_EQ(decode<seconds>("10x").error().position, 2);
-  EXPECT_EQ(decode<seconds>("10mix").error().position, 2);
+  // Roundtrips, also of units without a suffix of their own
+  EXPECT_EQ(decode<weeks>(encode(weeks(8))), weeks(8));
+  EXPECT_EQ(decode<months>(encode(months(9))), months(9));
+  EXPECT_EQ(decode<years>(encode(years(10))), years(10));
+
+  // The value must be exactly representable in the target type, unless that has a floating-point count
+  expectFailure<seconds>("  1500ms", "duration not representable in the target type", 2 + 0);
+  EXPECT_EQ(decode<duration<f64>>("1500ms"), duration<f64>(1.5));
+
+  expectFailure<seconds>("  x", "expected a duration", 2 + 0);
+  expectFailure<seconds>("  10x", "expected a duration", 2 + 0);
+  expectFailure<seconds>("  10mix", "expected a duration", 2 + 0);
+  expectFailure<seconds>("  10w", "expected a duration", 2 + 0);
 
   // Range checks: 292 years fit into `nanoseconds`, 300 years do not
-  EXPECT_EQ(decode<nanoseconds>("292y"), duration_cast<nanoseconds>(years(292)));
+  EXPECT_EQ(decode<nanoseconds>("292[31556952]s"), duration_cast<nanoseconds>(years(292)));
   EXPECT_EQ(decode<nanoseconds>("9223372036854775807ns"), nanoseconds::max());
   EXPECT_EQ(decode<nanoseconds>("-9223372036854775808ns"), nanoseconds::min());
-  expectFailure<nanoseconds>("  300y", "duration out of range", 2);
-  expectFailure<nanoseconds>("  -300y", "duration out of range", 2);
-  expectFailure<duration<i32, std::milli>>("  3000h", "duration out of range", 2);
+  expectFailure<nanoseconds>("  300[31556952]s", "duration out of range", 2 + 0);
+  expectFailure<nanoseconds>("  -300[31556952]s", "duration out of range", 2 + 0);
+  expectFailure<duration<i32, std::milli>>("  3000h", "duration out of range", 2 + 0);
 
   // A floating-point representation cannot overflow
-  EXPECT_TRUE((decode<duration<f32, std::nano>>("300y")));
+  EXPECT_TRUE((decode<duration<f32, std::nano>>("300[31556952]s")));
 }
 
 TEST(MODULE, ProducerHourMinuteSecond) {
@@ -589,8 +612,10 @@ TEST(MODULE, ProducerHourMinuteSecondInvalid) {
 
   expectFailure<hh_mm_ss<seconds>>("01:60:00", INVALID, 0);
   expectFailure<hh_mm_ss<seconds>>("01:00:60", INVALID, 0);
-  expectFailure<hh_mm_ss<seconds>>("01:-1:00", INVALID, 0);
-  expectFailure<hh_mm_ss<seconds>>("01:00:-1", INVALID, 0);
+
+  // Only the hours may have a sign, in front of them
+  expectFailure<hh_mm_ss<seconds>>("01:-1:00", "expected an hour, minute, and second", 0);
+  expectFailure<hh_mm_ss<seconds>>("01:00:-1", "expected an hour, minute, and second", 0);
   expectFailure<hh_mm_ss<seconds>>("  01:99:99", INVALID, 2);
 
   // The sum of all parts would not fit into nanoseconds
@@ -616,7 +641,9 @@ TEST(MODULE, ProducerDateInvalid) {
   // These would be truncated to valid values
   expectFailure<year_month_day>("2026-257-01", INVALID, 0);
   expectFailure<year_month_day>("2026-01-257", INVALID, 0);
-  expectFailure<year_month_day>("70000-01-01", INVALID, 0);
+
+  // A nonnegative year has exactly four digits, so later years cannot be read
+  expectFailure<year_month_day>("70000-01-01", "expected a date", 0);
 
   EXPECT_EQ(decode<year_month_day>("2024-02-29"), (year_month_day { 2024y, February, 29d }));
 }
@@ -628,18 +655,45 @@ TEST(MODULE, ProducerDate) {
   EXPECT_EQ(decode<year_month_day>("-100-01-02"), (year_month_day { -100y, January, 2d }));
 
   EXPECT_EQ(decode<year_month_day>("x").error().message, "expected a date");
+
+  // Negative years, as {fmt} writes them, roundtrip
+  for (const int y : { -32767, -10000, -100, -5, 0, 5, 2026, 9999 }) {
+    const year_month_day val { year(y), March, 4d };
+    EXPECT_EQ(decode<year_month_day>(encode(val)), val) << encode(val);
+  }
 }
 
 TEST(MODULE, ProducerTimeZone) {
   using namespace std::chrono;
 
-  EXPECT_EQ(decode<TimeZone>("(Europe/Berlin)"), rocket::chrono::locate_zone("Europe/Berlin"));
-  EXPECT_EQ(decode<TimeZone>("(UTC)"), rocket::chrono::locate_zone("UTC"));
-  EXPECT_EQ(decode<TimeZone>("x").error().message, "expected a time zone");
+  EXPECT_EQ(decode<TimeZone>("Europe/Berlin"), rocket::chrono::locate_zone("Europe/Berlin"));
+  EXPECT_EQ(decode<TimeZone>("  UTC"), rocket::chrono::locate_zone("UTC"));
+  EXPECT_EQ(
+    decode<TimeZone>("America/Port-au-Prince"),
+    rocket::chrono::locate_zone("America/Port-au-Prince"));
+  EXPECT_EQ(decode<TimeZone>("Etc/GMT+5"), rocket::chrono::locate_zone("Etc/GMT+5"));
+  EXPECT_EQ(decode<TimeZone>("(UTC)").error().message, "expected a time zone");
 
-  EXPECT_THAT(decode<TimeZone>("(x)").error().message, AnyOf(
+  // A name ends at the first character that cannot be part of it
+  EXPECT_EQ(
+    decode<vector<TimeZone>>("[UTC, Europe/Berlin]"),
+    (vector<TimeZone> {
+      rocket::chrono::locate_zone("UTC"), rocket::chrono::locate_zone("Europe/Berlin")
+    }));
+
+  EXPECT_THAT(decode<TimeZone>("x").error().message, AnyOf(
     EndsWith("cannot locate zone: x"), // Linux, macOS
     StrEq("unable to locate time_zone with given name"))); // Windows
+
+  // Legacy names that look like abbreviations are rejected, other names are accepted
+  for (const auto* name : { "CET", "EST", "MST", "EST5EDT", "PST8PDT", "Japan" }) {
+    EXPECT_EQ(
+      decode<TimeZone>(fmt::format("{}", name)).error().message,
+      fmt::format("ambiguous time-zone name `{}`", name));
+  }
+  for (const auto* name : { "UTC", "GMT", "Etc/GMT+5", "US/Eastern" }) {
+    EXPECT_EQ(decode<TimeZone>(fmt::format("{}", name)), rocket::chrono::locate_zone(name)) << name;
+  }
 }
 
 TEST(MODULE, ProducerTime) {
@@ -678,30 +732,47 @@ TEST(MODULE, ProducerZonedTimeUtcOffset) {
   using ZonedTime = rocket::chrono::zoned_time<nanoseconds>;
   constexpr string_view INVALID = "invalid UTC offset";
 
-  expectFailure<ZonedTime>("2026-10-07T11:21:00+24:00 (Europe/Berlin)", INVALID, 19);
-  expectFailure<ZonedTime>("2026-10-07T11:21:00-24:00 (Europe/Berlin)", INVALID, 19);
-  expectFailure<ZonedTime>("2026-10-07T11:21:00+01:60 (Europe/Berlin)", INVALID, 19);
-  expectFailure<ZonedTime>("2026-10-07T11:21:00+99:99 (Europe/Berlin)", INVALID, 19);
-  expectFailure<ZonedTime>("  2026-10-07T11:21:00+24:00 (Europe/Berlin)", INVALID, 21);
-  expectFailure<ZonedTime>("2026-10-07T11:21:00.5+24:00 (Europe/Berlin)", INVALID, 21);
+  // The UTC offset must be one that the time zone has at that local time. In October, Europe/Berlin is at
+  // +02:00
+  expectFailure<ZonedTime>("2026-10-07T11:21:00+01:00 Europe/Berlin", INVALID, 0);
+  expectFailure<ZonedTime>("2026-10-07T11:21:00Z Europe/Berlin", INVALID, 0);
+  expectFailure<ZonedTime>("2026-10-07T11:21:00+24:00 Europe/Berlin", INVALID, 0);
+  expectFailure<ZonedTime>("2026-10-07T11:21:00-24:00 Europe/Berlin", INVALID, 0);
+  expectFailure<ZonedTime>("  2026-10-07T11:21:00+24:00 Europe/Berlin", INVALID, 2);
+  expectFailure<ZonedTime>("2026-10-07T11:21:00.5+24:00 Europe/Berlin", INVALID, 0);
 
-  EXPECT_TRUE(decode<ZonedTime>("2026-10-07T11:21:00+23:59 (Europe/Berlin)").has_value());
-  EXPECT_TRUE(decode<ZonedTime>("2026-10-07T11:21:00-23:59 (Europe/Berlin)").has_value());
-  EXPECT_TRUE(decode<ZonedTime>("2026-10-07T11:21:00+00:00 (Europe/Berlin)").has_value());
+  // Minutes above 59 are invalid, otherwise `+01:60` would be read as `+02:00`
+  expectFailure<ZonedTime>("2026-10-07T11:21:00+01:60 Europe/Berlin", INVALID, 0);
+  expectFailure<ZonedTime>("2026-10-07T11:21:00+99:99 Europe/Berlin", INVALID, 0);
+
+  const auto expectSys = [](string_view input, sys_seconds expected) {
+    const auto result = decode<ZonedTime>(input);
+    ASSERT_TRUE(result.has_value()) << input;
+    EXPECT_EQ(result->get_sys_time(), expected) << input;
+  };
+  const sys_days october = 2026y / October / 7;
+  const sys_days january = 2026y / January / 7;
+  expectSys("2026-10-07T11:21:00+02:00 Europe/Berlin", october + 9h + 21min);
+  expectSys("2026-01-07T11:21:00+01:00 Europe/Berlin", january + 10h + 21min);
+  expectSys("2026-01-07T11:21:00Z Europe/London", january + 11h + 21min);
+  expectSys("2026-01-07T11:21:00+00:00 UTC", january + 11h + 21min);
 }
 
 TEST(MODULE, ProducerZonedTimeTimeZone) {
   using namespace std::chrono;
   using ZonedTime = rocket::chrono::zoned_time<nanoseconds>;
+  constexpr string_view EXPECTED = "expected a time point with time zone";
 
-  // Failures in the time zone are reported at the opening parenthesis
-  expectFailure<ZonedTime>("2026-10-07T11:21:00Z (Europe/Berlin", "unmatched opening parenthesis", 21);
-  expectFailure<ZonedTime>("  2026-10-07T11:21:00Z (Europe/Berlin", "unmatched opening parenthesis", 23);
-  expectFailure<ZonedTime>("2026-10-07T11:21:00Z Europe/Berlin", "expected a time zone", 21);
+  // Failures are reported at the start of the value
+  expectFailure<ZonedTime>("2026-10-07T11:21:00Z ", EXPECTED, 0);
+  expectFailure<ZonedTime>("  2026-10-07T11:21:00Z ", EXPECTED, 2);
+  expectFailure<ZonedTime>("  2026-10-07T11:21:00Z (Europe/Berlin)", EXPECTED, 2);
+  expectFailure<ZonedTime>("2026-10-07T11:21:00+01:00 Nowhere/Nothing", "unknown time zone", 0);
+  expectFailure<ZonedTime>("2026-01-07T11:21:00+01:00 CET", "ambiguous time-zone name", 0);
 
-  const auto result = decode<ZonedTime>("2026-10-07T11:21:00+01:00 (Nowhere/Nothing)");
-  ASSERT_FALSE(result.has_value());
-  EXPECT_EQ(result.error().position, 26);
+  EXPECT_EQ(
+    decode<ZonedTime>("2026-01-07T11:21:00Z Europe/London").value().get_time_zone(),
+    rocket::chrono::locate_zone("Europe/London"));
 }
 
 TEST(MODULE, ProducerTimeIndependentOfLocalZone) {
@@ -744,10 +815,10 @@ TEST(MODULE, ProducerTimeIndependentOfLocalZone) {
     expectTime("2026-03-29T02:30:00Z", spring + 2h + 30min);
     expectTime("2026-10-25T02:30:00Z", autumn + 2h + 30min);
 
-    expectZoned("2026-07-15T14:00:00+02:00 (Europe/Berlin)", summer + 12h);
-    expectZoned("2026-03-29T03:30:00+02:00 (Europe/Berlin)", spring + 1h + 30min);
-    expectZoned("2026-10-25T02:30:00+01:00 (Europe/Berlin)", autumn + 1h + 30min);
-    expectZoned("2026-07-15T12:00:00Z (UTC)", summer + 12h);
+    expectZoned("2026-07-15T14:00:00+02:00 Europe/Berlin", summer + 12h);
+    expectZoned("2026-03-29T03:30:00+02:00 Europe/Berlin", spring + 1h + 30min);
+    expectZoned("2026-10-25T02:30:00+01:00 Europe/Berlin", autumn + 1h + 30min);
+    expectZoned("2026-07-15T12:00:00Z UTC", summer + 12h);
   }
 
   // `std::mktime` would have moved this to March 2
@@ -759,12 +830,37 @@ TEST(MODULE, ProducerInterval) {
   EXPECT_EQ(decode<ClosedInterval<f64>>("[-4.2,4.2]"), ClosedInterval<f64>(-4.2_f64, 4.2_f64));
   EXPECT_EQ(decode<OpenInterval<f64>>("∅"), OpenInterval<f64>());
   EXPECT_EQ(
-    decode<OpenInterval<i64>>("  (  -∞ /* Comment */, ∞)  // Comment"),
+    decode<OpenInterval<i64>>("  /* Comment */ (  -∞ , ∞ )  // Comment"),
     OpenInterval<i64>(nullopt, nullopt));
-
-  // A sign that starts both an infinity and a number belongs to the number
+  EXPECT_EQ(decode<RightOpenInterval<i32>>("[5,∞)"), RightOpenInterval<i32>(5, nullopt));
   EXPECT_EQ(decode<OpenInterval<i64>>("(-5,+7)"), OpenInterval<i64>(-5, 7));
-  EXPECT_EQ(decode<OpenInterval<i64>>("(-inf,+inf)"), OpenInterval<i64>(nullopt, nullopt));
+
+  // Roundtrips
+  for (const auto& val : { RightOpenInterval<f64>(-1.25, 3.5), RightOpenInterval<f64>(12, nullopt),
+                           RightOpenInterval<f64>() }) {
+    EXPECT_EQ(decode<RightOpenInterval<f64>>(encode(val)), val) << encode(val);
+  }
+
+  // Within a container
+  EXPECT_EQ(
+    decode<vector<ClosedInterval<i32>>>("[[1,2], ∅, [3,4]]"),
+    (vector<ClosedInterval<i32>> {
+      ClosedInterval<i32>(1, 2), ClosedInterval<i32>(), ClosedInterval<i32>(3, 4)
+    }));
+
+  // From a noncontiguous source
+  {
+    std::istringstream is("  [1,∞) [2,3)");
+    nio::StreamSource in(is);
+    EXPECT_EQ(formattedCodec.decode<RightOpenInterval<i32>>(in), RightOpenInterval<i32>(1, nullopt));
+    EXPECT_EQ(formattedCodec.decode<RightOpenInterval<i32>>(in), RightOpenInterval<i32>(2, 3));
+  }
+
+  // Errors
+  expectFailure<ClosedInterval<i32>>("  [1,2)", "expected an interval", 2);
+  expectFailure<ClosedInterval<i32>>("{}", "expected an interval", 0);
+  expectFailure<OpenInterval<i64>>("(-inf,+inf)", "expected an interval", 0);
+  expectFailure<OpenInterval<i64>>("(-∞ /* Comment */, ∞)", "expected an interval", 0);
 }
 
 TEST(MODULE, ProducerDeclared) {

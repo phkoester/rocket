@@ -89,11 +89,6 @@ CodePoint::width() const {
   return 1;
 }
 
-ostream&
-operator<<(ostream& lhs, CodePoint rhs) {
-  return lhs << fmt::format("{}", rhs);
-}
-
 // Functions ------------------------------------------------------------------------------------------------
 
 u32string

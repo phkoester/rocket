@@ -106,24 +106,8 @@ TEST(MODULE, MyStructOpGt) {
   EXPECT_THAT(MyStruct(42, "rocket", false), Not(Gt(MyStruct(42, "rocket", false))));
 }
 
-TEST(MODULE, MyStructOpOutput) {
-  ostringstream os;
-  os << MyStruct(42, "rocket", true);
-  EXPECT_EQ(os.str(), "(ä=42, b=\"rocket\", c=true)");
-}
-
-TEST(MODULE, MyStructFormat) {
-  const MyStruct m(42, "rocket", true);
-  EXPECT_EQ(fmt::format("{}", m), "(ä=42, b=\"rocket\", c=true)");
-  EXPECT_EQ(fmt::format("{:it}", m),
-    "MyStruct(\n"
-    "  ä=42,\n"
-    "  b=\"rocket\",\n"
-    "  c=true\n"
-    ")");
-  EXPECT_EQ(fmt::format("{:t}", m), "MyStruct(ä=42, b=\"rocket\", c=true)");
-  EXPECT_EQ(fmt::format("{:ti}", m), fmt::format("{:it}", m));
-  EXPECT_EQ(fmt::format(U"{:t}", m), U"MyStruct(ä=42, b=\"rocket\", c=true)");
+TEST(MODULE, MyDerivedStructOrdering) {
+  static_assert(same_as<MyDerivedStruct::Index::Ordering, partial_ordering>);
 }
 
 TEST(MODULE, MyStructHash) {
@@ -189,44 +173,22 @@ TEST(MODULE, MyStructPublicHash) {
   EXPECT_NE(hash1, hash3);
 }
 
-TEST(MODULE, MyStructPublicFormat) {
-  using type = Instance<MyStruct, MyStruct::Public>;
-
-  const MyStruct m(42, "rocket", true);
-  type val(m);
-  EXPECT_EQ(fmt::format("{}", val), "(ä=42, b=\"rocket\")");
-  EXPECT_EQ(fmt::format("{:t}", val), "MyStruct(ä=42, b=\"rocket\")");
-}
-
-TEST(MODULE, MyDerivedStructFormat) {
-  static_assert(same_as<MyDerivedStruct::Index::Ordering, partial_ordering>);
-
-  const MyDerivedStruct m(41, "rocket", true, "everywhere", 4.2_f32);
-  EXPECT_EQ(fmt::format("{}", m), "(ä=41, b=\"rocket\", c=true, d=\"everywhere\", e=4.2)");
-  EXPECT_EQ(fmt::format("{:t}", m), "MyDerivedStruct(ä=41, b=\"rocket\", c=true, d=\"everywhere\", e=4.2)");
-}
-
 TEST(MODULE, VarRef) {
   i32 ä1 = 2;
   string b1 = "hi";
   f32 f1 = .5f;
-
   auto vars1 = ROCKET_REFLECT_VARS((ä1)(b1)(f1));
-  EXPECT_EQ(fmt::format("{}", vars1), "(ä1=2, b1=\"hi\", f1=0.5)");
 
   i32 ä2 = 2;
   string b2 = "hi";
   f32 f2 = .5f;
   auto vars2 = ROCKET_REFLECT_VARS((ä2)(b2)(f2));
   EXPECT_EQ(vars2, vars1); // Only the values are compared, not the names
-  EXPECT_EQ(fmt::format("{}", vars2), "(ä2=2, b2=\"hi\", f2=0.5)");
 
   i32 ä3 = 2;
   string b3 = "hi";
   f32 f3 = .6f;
-
   const auto vars3 = ROCKET_REFLECT_VARS((ä3)(b3)(f3));
-  EXPECT_EQ(fmt::format("{}", vars3), "(ä3=2, b3=\"hi\", f3=0.6)");
 
   EXPECT_NE(vars3, vars1);
   EXPECT_LT(vars1, vars3);
@@ -276,17 +238,6 @@ TEST(MODULE, VarRefOpCmp) {
   const auto& vars4 = ROCKET_REFLECT_VARS((f3)(f4));
 
   EXPECT_LT(vars3, vars4);
-}
-
-TEST(MODULE, VarRefOpOutput) {
-  i32 i = 2;
-  i64 l = 3;
-  const auto vars = ROCKET_REFLECT_VARS((i)(l));
-
-  const auto v0 = get<0>(vars);
-  ostringstream os;
-  os << v0;
-  EXPECT_EQ(os.str(), "i=2");
 }
 
 TEST(MODULE, VarRefHash) {

@@ -4,7 +4,6 @@
 
 #include "rocket-test/rocket-test.h"
 
-#include "rocket/format.h"
 #include "rocket/TypeId.h"
 
 #include <unordered_set>
@@ -155,31 +154,6 @@ TEST(MODULE, prettyName) {
     matchesRegex(
       "std.*::vector<std.*::basic_string<char, std.*::char_traits<char>, std.*::allocator<char>>, "
         "std.*::allocator<std.*::basic_string<char, std.*::char_traits<char>, std.*::allocator<char>>>>"));
-}
-
-TEST(MODULE, format) {
-  EXPECT_EQ(fmt::format("{}", TypeId::of<int>()), "`int`");
-  EXPECT_EQ(fmt::format("{}", TypeId::of<Plain>()), "`test_typeid::Plain`");
-  EXPECT_EQ(fmt::format("{}", TypeId::of<Box<int>>()), "`test_typeid::Box<int>`");
-
-  const Derived derived;
-  const Base& base = derived;
-  EXPECT_EQ(fmt::format("{}", TypeId(base)), "`test_typeid::Derived`");
-}
-
-TEST(MODULE, formatSpec) {
-  // Format specifiers apply to the name including the backticks
-  EXPECT_EQ(fmt::format("{:>7}", TypeId::of<int>()), "  `int`");
-  EXPECT_EQ(fmt::format("{:<7}|", TypeId::of<int>()), "`int`  |");
-  EXPECT_EQ(fmt::format("{:*^9}", TypeId::of<int>()), "**`int`**");
-  EXPECT_EQ(fmt::format("{:.3}", TypeId::of<int>()), "`in");
-  EXPECT_EQ(fmt::format("{:?}", TypeId::of<int>()), "\"`int`\"");
-}
-
-TEST(MODULE, formatChar32) {
-  EXPECT_EQ(fmt::format(U"{}", TypeId::of<int>()), U"`int`");
-  EXPECT_EQ(fmt::format(U"{}", TypeId::of<Plain>()), U"`test_typeid::Plain`");
-  EXPECT_EQ(fmt::format(U"{:>7}", TypeId::of<int>()), U"  `int`");
 }
 
 // EOF

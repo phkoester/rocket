@@ -195,7 +195,7 @@ private:
  * This formatter uses the same format specifiers as the underlying string formatter; they apply to the whole
  * string after the replacement.
  */
-template<typename C>
+template<typename C> requires rocket::IsChar<C>
 struct fmt::formatter<rocket::format::Subformat<C>, C> {
   /// @cond undocumented
 

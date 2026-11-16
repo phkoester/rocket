@@ -1,5 +1,5 @@
 /**
- * @file scan-int128.h
+ * @file int128-scan.h
  *
  * scnlib scanners for 128-bit integers.
  */
@@ -40,9 +40,7 @@ namespace rocket::internal::scan::int128 {
  * @tparam C the character type
  */
 template<typename T, typename U, typename C>
-class Scanner {
-public:
-
+struct Scanner {
   /// @cond undocumented
 
   template<typename ParseCtx>

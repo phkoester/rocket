@@ -120,25 +120,25 @@
  *
  * ## Durations
  *
- * Durations are JSON strings of an integer value directly followed by a unit. Example values: `"5ns"`,
- * `"1700µs"`.
+ * Durations are JSON strings in the notation of {fmt}: a count, directly followed by a unit. Example values:
+ * `"5ns"`, `"1700µs"`, `"90min"`, `"2[604800]s"` (two weeks).
  *
- * Unit  | Meaning
- * :---- | :------
- * `ns`  | Nanoseconds
- * `µs`  | Microseconds
- * `us`  | Microseconds
- * `ms`  | Milliseconds
- * `s`   | Seconds
- * `min` | Minutes
- * `h`   | Hours
- * `d`   | Days
- * `w`   | Weeks
- * `m`   | Months
- * `y`   | Years
+ * Unit       | Meaning
+ * :--------- | :------
+ * `ns`       | Nanoseconds
+ * `µs`       | Microseconds
+ * `us`       | Microseconds (reading only)
+ * `ms`       | Milliseconds
+ * `s`        | Seconds
+ * `min`      | Minutes
+ * `h`        | Hours
+ * `d`        | Days
+ * `[n]s`     | Units of `n` seconds, e.g., `[604800]s` for weeks
+ * `[n/d]s`   | Units of `n/d` seconds
  *
- * When reading, the value is converted to the target type, truncating toward zero. A value that does not fit
- * into the target type is an error.
+ * Other SI prefixes that {fmt} writes, such as `ps` or `ks`, are accepted, too. When reading, the value is
+ * converted to the target type. A value that is not exactly representable in the target type, or that does
+ * not fit into it, is an error.
  *
  * ## Hours, Minutes, Seconds
  *
@@ -147,6 +147,9 @@
  * ## Dates
  *
  * Example values: `"1970-01-02"`, `"-100-01-02"`.
+ *
+ * Dates are written by {fmt} and read with the scnlib format `%F`. Years from -32767 through 9999 can be
+ * read; a nonnegative year has exactly four digits.
  *
  * ## Time Zones
  *
@@ -160,12 +163,16 @@
  *
  * Example value: `"2026-10-07T11:21:00.561378057+02:00 (Europe/Berlin)"`.
  *
+ * The UTC offset is `Z` for +00:00. When reading, the offset must be one that the time zone has at that
+ * local time; it selects between the two meanings of an ambiguous local time.
+ *
  * ## Intervals
  *
- * Empty intervals are notated as `null`. Nonempty intervals are JSON arrays of two bounds. A missing
- * (infinite) bound is notated as `null`.
+ * Intervals are JSON strings: `∅` for an empty interval, otherwise the two bounds separated by a comma,
+ * enclosed in `[` or `]` for a closed bound and `(` or `)` for an open bound. A missing bound is notated as
+ * `-∞` or `∞`.
  *
- * Example values: `null`, `[-1.2, 3.4]`, `[null, -12]`, `[12, null]`.
+ * Example values: `"∅"`, `"[-1.2,3.4]"`, `"(-1.2,3.4)"`, `"(-∞,-12]"`, `"[12,∞)"`.
  *
  * ## Declared Objects
  *
@@ -206,14 +213,19 @@
 #pragma once
 
 #include "rocket/InputFailure.h"
+#include "rocket/TypeId-format.h"
 #include "rocket/format.h"
 #include "rocket/scan.h"
 #include "rocket/std.h"
 #include "rocket/codec/codec.h"
+#include "rocket/math/Interval-format.h"
+#include "rocket/math/Interval-scan.h"
 #include "rocket/nio/nio.h"
 #include "rocket/nio/nio-utils.h"
 #include "rocket/str/escape/escape.h"
 #include "rocket/unicode/ConvertTo.h"
+#include "rocket/unicode/unicode-format.h"
+#include "rocket/unicode/unicode-scan.h"
 
 namespace rocket::codec {
 
@@ -430,7 +442,8 @@ struct JsonConsumerImpl<DataType::Tuple, T> {
     beginContainer(out, config, Object ? '{' : '[');
     u64 index = 0;
     std::apply([&](auto&&... arg) {
-      (consumeElem(std::forward<decltype(arg)>(arg), out, config, index++, std::forward<Args>(args)...), ...);
+      (consumeElem(std::forward<decltype(arg)>(arg),
+        out, config, index++, std::forward<Args>(args)...), ...);
     }, val);
     endContainer(out, config, std::tuple_size_v<T>, Object ? '}' : ']');
   }
@@ -524,17 +537,8 @@ template<typename T>
 struct JsonConsumerImpl<DataType::Duration, T> {
   void
   consume(T val, nio::Sink& out, CONFIG__) const { // Take by value
-    if constexpr (std::same_as<T, std::chrono::microseconds>) {
-      out.print("\"{}µs\"", val.count());
-    } else if constexpr (std::same_as<T, std::chrono::weeks>) {
-      out.print("\"{}w\"", val.count());
-    } else if constexpr (std::same_as<T, std::chrono::months>) {
-      out.print("\"{}m\"", val.count());
-    } else if constexpr (std::same_as<T, std::chrono::years>) {
-      out.print("\"{}y\"", val.count());
-    } else {
-      out.print("\"{}\"", val);
-    }
+    // The notation contains neither quotes nor backslashes, so it needs no escaping
+    out.print("\"{}\"", val);
   }
 };
 
@@ -550,15 +554,7 @@ template<typename T>
 struct JsonConsumerImpl<DataType::HourMinuteSecond, T> {
   void
   consume(const T& val, nio::Sink& out, CONFIG__) const {
-    out.write('"');
-    if (val.is_negative()) {
-      out.write('-');
-    }
-    out.print("{:02}:{:02}:{:02}", val.hours().count(), val.minutes().count(), val.seconds().count());
-    if constexpr (T::fractional_width > 0) {
-      out.print(".{:0{}}", val.subseconds().count(), T::fractional_width);
-    }
-    out.write('"');
+    out.print("\"{}\"", val);
   }
 };
 
@@ -583,51 +579,23 @@ struct JsonConsumerImpl<DataType::Time, T> {
 
 template<typename T>
 struct JsonConsumerImpl<DataType::ZonedTime, T> {
-  static constexpr auto TimeZoneDataType = DataTypes<TimeZone>::Value;
-  static_assert(TimeZoneDataType == DataType::TimeZone);
-
   void
   consume(const T& val, nio::Sink& out, CONFIG__) const {
     const auto* tz = val.get_time_zone();
-
-    const auto info = val.get_info();
-    if (info.offset == std::chrono::seconds(0)) {
-      out.write(fmt::format("\"{:%FT%TZ} ({})\"", val, tz->name())); // Zulu time
+    if (val.get_info().offset == std::chrono::seconds(0)) {
+      out.print("\"{:%FT%TZ} ({})\"", val, tz->name()); // Zulu time
     } else {
-      out.write(fmt::format("\"{:%FT%T%Ez} ({})\"", val, tz->name())); // Time with UTC offset
+      out.print("\"{:%FT%T%Ez} ({})\"", val, tz->name()); // Time with UTC offset
     }
   }
 };
 
 template<typename T>
 struct JsonConsumerImpl<DataType::Interval, T> {
-  using A = T::A;
-  static constexpr auto ADataType = DataTypes<A>::Value;
-  using B = T::B;
-  static constexpr auto BDataType = DataTypes<B>::Value;
-
   void
   consume(const T& val, nio::Sink& out, CONFIG__) const {
-    if (val.empty()) {
-      out.write("null");
-      return;
-    }
-
-    out.write('[');
-    const auto optA = optionalOf(val.a);
-    if (not optA) {
-      out.write("null");
-    } else {
-      JsonConsumerImpl<ADataType, A>().consume(val.a, out, config);
-    }
-    out.write(", ");
-    const auto optB = optionalOf(val.b);
-    if (not optB) {
-      out.write("null");
-    } else {
-      JsonConsumerImpl<BDataType, B>().consume(val.b, out, config);
-    }
-    out.write(']');
+    // The notation contains neither quotes nor backslashes, so it needs no escaping
+    out.write(fmt::format("\"{}\"", val));
   }
 };
 
@@ -702,7 +670,7 @@ template<typename T>
 struct JsonConsumerImpl<DataType::CodePoint, T> {
   void
   consume(const T& val, nio::Sink& out, CONFIG__) const {
-    out.print("\"U+{:0>4X}\"", static_cast<u32>(val));
+    out.print("\"{}\"", val);
   }
 };
 
@@ -1263,13 +1231,8 @@ struct JsonProducerImpl<DataType::Bimap, T> {
 
 template<typename T>
 struct JsonProducerImpl<DataType::Duration, T> {
-  using Rep = T::rep;
-  static constexpr auto RepDataType = DataTypes<Rep>::Value;
-
   void
   produce(T& val, nio::Source& in) const {
-    using namespace std::chrono;
-
     skip(in);
     const auto pos = in.tell();
 
@@ -1281,28 +1244,12 @@ struct JsonProducerImpl<DataType::Duration, T> {
       return jsonStringOffset(pos, innerPos, positions);
     };
 
-    Rep count;
-    try {
-      JsonProducerImpl<RepDataType, Rep>().produce(count, inner);
-    } catch (const InputFailure&) {
-      throw InputFailure(inPos(0), "expected a duration");
+    auto result = inner.scan<T>("{}");
+    if (not result) {
+      throw InputFailure(inPos(0), durationError(result.error()));
     }
-
-    const std::set<std::string_view> UNITS = {
-      "ns", "µs", "us", "ms", "s", "min", "h", "d", "w", "m", "y"
-    };
-
-    if (auto str = readChoice(inner, UNITS, true); str) {
-      const auto result = unitDurationCast<T>(*str, count);
-      if (not result) {
-        throw InputFailure(inPos(0), "duration out of range");
-      }
-      val = *result;
-      expectEndOfString(inner, input.size(), inPos);
-      return;
-    }
-
-    throw InputFailure(inPos(inner.position()), "expected a time unit");
+    val = result->value();
+    expectEndOfString(inner, input.size(), inPos);
   }
 };
 
@@ -1310,8 +1257,6 @@ template<typename T>
 struct JsonProducerImpl<DataType::Date, T> {
   void
   produce(T& val, nio::Source& in) const {
-    using namespace std::chrono;
-
     skip(in);
     const auto pos = in.tell();
 
@@ -1323,29 +1268,24 @@ struct JsonProducerImpl<DataType::Date, T> {
       return jsonStringOffset(pos, innerPos, positions);
     };
 
-    auto result = inner.scan<std_int, std_unsigned, std_unsigned>("{}-{}-{}");
+    auto result = inner.scan<T>("{:%F}");
     if (not result) {
-      throw InputFailure(inPos(0), "expected a date");
+      throw InputFailure(inPos(0), dateError(result.error()));
     }
-
-    const auto& [y, m, d] = result->values();
-    const auto date = makeDate(y, m, d);
-    if (not date) {
+    // A digit after the date means that a field has too many digits, e.g., `2026-01-257`
+    const auto next = inner.peek();
+    if (not result->value().ok() || (next && *next >= '0' && *next <= '9')) {
       throw InputFailure(inPos(0), "invalid date");
     }
-    val = *date;
+    val = result->value();
     expectEndOfString(inner, input.size(), inPos);
   }
 };
 
 template<typename T>
 struct JsonProducerImpl<DataType::HourMinuteSecond, T> {
-  using Precision = T::precision;
-
   void
   produce(T& val, nio::Source& in) const {
-    using namespace std::chrono;
-
     skip(in);
     const auto pos = in.tell();
 
@@ -1357,46 +1297,11 @@ struct JsonProducerImpl<DataType::HourMinuteSecond, T> {
       return jsonStringOffset(pos, innerPos, positions);
     };
 
-    // Read hour, minute, and second. The sign must be detected here, because the scanned hour cannot tell
-    // `-00` from `00`. The scanner skips leading whitespace, so the sign may follow some. Comments do not
-    // belong inside the string, so they are not skipped
-
-    rocket::nio::skip(inner, false, false);
-    const bool minus = readChar(inner, '-');
-    if (minus) {
-      inner.seek(-1, nio::SeekMode::cur);
-    }
-
-    auto result = inner.scan<hours::rep, minutes::rep, seconds::rep>("{}:{}:{}");
+    auto result = inner.scan<T>("{}");
     if (not result) {
-      throw InputFailure(inPos(0), "expected an hour, minute, and second");
+      throw InputFailure(inPos(0), hourMinuteSecondError(result.error()));
     }
-
-    auto [h, m, s] = result->values();
-    if (not validHourMinuteSecond(h, m, s)) {
-      throw InputFailure(inPos(0), "invalid hour, minute, or second");
-    }
-    const bool neg = minus || h < 0; // The scanner may skip more whitespace than we do
-    if (h < 0) {
-      h = -h;
-    }
-
-    try
-    {
-      // Read subseconds
-
-      const nanoseconds subseconds = readSubseconds(inner);
-
-      // Finally, construct `hh_mm_ss`
-
-      Precision duration = duration_cast<Precision>(hours(h) + minutes(m) + seconds(s) + subseconds);
-      if (neg) {
-        duration = -duration;
-      }
-      val = T(duration);
-    } catch (const InputFailure& ex) {
-      throw ex.mapped(inPos);
-    }
+    val = result->value();
     expectEndOfString(inner, input.size(), inPos);
   }
 };
@@ -1419,7 +1324,7 @@ struct JsonProducerImpl<DataType::TimeZone, T> {
 
     try {
       // This throws if the time zone is not found
-      val = rocket::chrono::locate_zone(input);
+      val = rocket::chrono::locateUnambiguousZone(input);
     } catch (const std::exception& ex) {
       throw InputFailure(inPos(0), ex.what());
     }
@@ -1430,17 +1335,13 @@ template<typename T>
 struct JsonProducerImpl<DataType::Time, T> {
   using Clock = T::clock;
   static_assert(std::same_as<Clock, std::chrono::system_clock>, "clock must be `system_clock`");
-  using Duration = T::duration;
 
   void
   produce(T& val, nio::Source& in) const {
-    using namespace std::chrono;
-
     skip(in);
     const auto pos = in.tell();
 
     // Read JSON string and create an inner source for it
-
     Positions positions;
     const auto input = readJsonString(in, positions);
     nio::StringSource inner(input);
@@ -1448,47 +1349,24 @@ struct JsonProducerImpl<DataType::Time, T> {
       return jsonStringOffset(pos, innerPos, positions);
     };
 
-    // Scan the time point
-
-    const auto scanned = inner.scan<sys_time<Duration>>("{:%FT%T}");
-    if (not scanned) {
+    // The patched scnlib reads optional subseconds with `%.S`
+    auto result = inner.scan<T>("{:%FT%H:%M:%.SZ}");
+    if (not result) {
       throw InputFailure(inPos(0), "expected a time point");
     }
-    val = scanned->value();
-
-    try {
-      // Read subseconds
-
-      const nanoseconds subseconds = readSubseconds(inner);
-      if (subseconds.count() > 0) {
-        val += duration_cast<Duration>(subseconds);
-      }
-
-      // Read 'Z'
-
-      expectChar(inner, 'Z');
-    } catch (const InputFailure& ex) {
-      throw ex.mapped(inPos);
-    }
+    val = result->value();
     expectEndOfString(inner, input.size(), inPos);
   }
 };
 
 template<typename T>
 struct JsonProducerImpl<DataType::ZonedTime, T> {
-  using Duration = T::duration;
-  static constexpr auto TimeZoneDataType = DataTypes<TimeZone>::Value;
-  static_assert(TimeZoneDataType == DataType::TimeZone);
-
   void
   produce(T& val, nio::Source& in) const {
-    using namespace std::chrono;
-
     skip(in);
     const auto pos = in.tell();
 
     // Read JSON string and create an inner source for it
-
     Positions positions;
     const auto input = readJsonString(in, positions);
     nio::StringSource inner(input);
@@ -1496,133 +1374,37 @@ struct JsonProducerImpl<DataType::ZonedTime, T> {
       return jsonStringOffset(pos, innerPos, positions);
     };
 
-    // Scan the time point
-
-    const auto scanned = inner.scan<sys_time<Duration>>("{:%FT%T}");
-    if (not scanned) {
-      throw InputFailure(inPos(0), "expected a time point");
+    // The patched scnlib reads optional subseconds with `%.S` and `Z` as a UTC offset with `%Ez`
+    auto result = inner.scan<T>("{:%FT%H:%M:%.S%Ez (%Z)}");
+    if (not result) {
+      throw InputFailure(inPos(0), zonedTimeError(result.error()));
     }
-    sys_time<Duration> tp = scanned->value();
-
-    try {
-      // Read subseconds
-
-      const nanoseconds subseconds = readSubseconds(inner);
-      if (subseconds.count() > 0) {
-        tp += duration_cast<Duration>(subseconds);
-      }
-
-      // Read "Z" or UTC offset
-
-      const auto offsetPos = inner.position();
-      seconds offset {};
-
-      if (not readChar(inner, 'Z')) {
-        auto sign = readChoice(inner, { "+", "-" }, false, false);
-        if (not sign) {
-          throw InputFailure(offsetPos, "expected a UTC offset");
-        }
-
-        const auto result = inner.scan<u32, u32>("{}:{}");
-        if (not result) {
-          throw InputFailure(offsetPos, "expected a UTC offset");
-        }
-        const auto& [h, m] = result->values();
-        if (not validUtcOffset(h, m)) {
-          throw InputFailure(offsetPos, "invalid UTC offset");
-        }
-        offset = hours(h) + minutes(m);
-        if (*sign == "-") {
-          offset = -offset;
-        }
-      }
-
-      // Apply UTC offset; convert time point to UTC
-
-      tp -= offset;
-
-      // Read time zone. We need to do this by hand because the time-zone producer reads in a JSON string.
-      // Here, however, the time zone is surrounded by parentheses
-
-      expectChar(inner, ' ');
-      const u64 tzPos = inner.position();
-      expectChar(inner, '(');
-      const auto name = readUntilChar(inner, ')');
-      if (not name) {
-        throw InputFailure(tzPos, "unterminated time-zone name");
-      }
-      TimeZone tz; // NOLINT
-      try {
-        // This throws if the time zone is not found
-        tz = rocket::chrono::locate_zone(*name);
-      } catch (const std::exception& ex) {
-        throw InputFailure(tzPos, ex.what());
-      }
-
-      // Finally, construct the `ZonedTime`
-
-      val = T(tz, tp);
-    } catch (const InputFailure& ex) {
-      throw ex.mapped(inPos);
-    }
+    val = result->value();
     expectEndOfString(inner, input.size(), inPos);
   }
 };
 
 template<typename T>
 struct JsonProducerImpl<DataType::Interval, T> {
-  using A = T::A;
-  static constexpr auto ADataType = DataTypes<A>::Value;
-  using B = T::B;
-  static constexpr auto BDataType = DataTypes<B>::Value;
-
   void
   produce(T& val, nio::Source& in) const {
     skip(in);
     const auto pos = in.tell();
 
-    if (readString(in, "null")) {
-      val = T();
-      return;
-    }
+    // Read JSON string and create an inner source for it
+    Positions positions;
+    const auto input = readJsonString(in, positions);
+    nio::StringSource inner(input);
+    const auto inPos = [pos, &positions](u64 innerPos) -> std::optional<u64> {
+      return jsonStringOffset(pos, innerPos, positions);
+    };
 
-    if (not readChar(in, '[')) {
-      throw InputFailure(pos, "expected an interval");
+    auto result = inner.scan<T>("{}");
+    if (not result) {
+      throw InputFailure(inPos(0), "expected an interval");
     }
-    skip(in);
-
-    A a = A();
-    if constexpr (IsOptional<A>) {
-      if (not readString(in, "null")) {
-        JsonProducerImpl<ADataType, A>().produce(a, in);
-      }
-    } else {
-      JsonProducerImpl<ADataType, A>().produce(a, in);
-    }
-    val.a = a;
-
-    skip(in);
-    expectComma(in);
-    skip(in);
-
-    B b = B();
-    if constexpr (IsOptional<B>) {
-      if (not readString(in, "null")) {
-        JsonProducerImpl<BDataType, B>().produce(b, in);
-      }
-    } else {
-      JsonProducerImpl<BDataType, B>().produce(b, in);
-    }
-    val.b = b;
-
-    skip(in);
-    if (readChar(in, ',')) { // Allow trailing comma
-      skip(in);
-    }
-    if (not readChar(in, ']')) {
-      const auto end = in.tell();
-      throw InputFailure::withRange(end, pos, end, "unterminated interval");
-    }
+    val = result->value();
+    expectEndOfString(inner, input.size(), inPos);
   }
 };
 
@@ -1687,19 +1469,15 @@ struct JsonProducerImpl<DataType::CodePoint, T> {
 
     // Read `U+...`
     in.seek(-2, nio::SeekMode::cur);
-    auto result = in.scan<u32>("U+{:X}");
+    auto result = in.scan<T>("{}");
     if (not result) {
-      throw InputFailure(pos, "expected a code point");
+      throw InputFailure(pos, result.error().msg());
     }
     if (not readChar(in, '"')) {
       const auto end = in.tell();
       throw InputFailure::withRange(end, pos, end, "unterminated code point");
     }
-    try {
-      val = static_cast<Elem>(result->value());
-    } catch (const InputFailure& ex) {
-      throw ex.shifted(pos); // `CodePoint` reports position 0
-    }
+    val = result->value();
   }
 };
 

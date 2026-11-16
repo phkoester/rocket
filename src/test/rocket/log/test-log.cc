@@ -14,9 +14,9 @@
 
 #define MODULE rocketLog
 
-namespace fs = std::filesystem;
-
 using namespace rocket::log;
+
+namespace fs = std::filesystem;
 
 ROCKET_LOG_DEFINE(test_log);
 
@@ -25,11 +25,6 @@ ROCKET_LOG_DEFINE(test_log);
 TEST(MODULE, log) {
   ROCKET_LOG(test_log);
   ROCKET_LOG_INFO("Some info");
-}
-
-TEST(MODULE, LogLevelFormat) {
-  EXPECT_EQ(fmt::format("{}", LogLevel::none), "none");
-  EXPECT_EQ(fmt::format(U"{}", LogLevel::none), U"none");
 }
 
 TEST(MODULE, loggerZip) {

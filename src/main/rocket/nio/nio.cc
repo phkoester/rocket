@@ -10,6 +10,8 @@
 
 #include <fmt/ostream.h>
 
+#include <scn/istream.h>
+
 #include <algorithm>
 #include <cstring>
 #include <iostream>

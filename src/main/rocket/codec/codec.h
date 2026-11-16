@@ -38,10 +38,10 @@
 
 #pragma once
 
-#include "rocket/bimap.h"
 #include "rocket/InputFailure.h"
 #include "rocket/Positions.h"
 #include "rocket/assert.h"
+#include "rocket/bimap.h"
 #include "rocket/type-traits.h"
 #include "rocket/chrono/chrono.h"
 #include "rocket/math/Interval.h"
@@ -52,6 +52,8 @@
 #include "rocket/str/Range.h"
 #include "rocket/str/escape/escape.h"
 #include "rocket/unicode/Character.h"
+
+#include <scn/scan.h>
 
 #include <array>
 #include <chrono>
@@ -526,68 +528,89 @@ unescapeLiteral(
 }
 
 /**
- * Converts a count of the time unit @p unit to the duration type @p To, checking the range.
+ * Returns the message for a failed scan of a duration.
  *
- * @tparam To the target duration type
- * @param unit the time unit: `ns`, `µs`, `us`, `ms`, `s`, `min`, `h`, `d`, `w`, `m`, or `y`
- * @param count the number of units
- * @return the converted duration, or null if it is out of range
+ * @param error the scan error
+ * @return the message
  */
-template<typename To>
-std::optional<To>
-unitDurationCast(std::string_view unit, typename To::rep count) {
-  using namespace std::chrono;
+inline std::string_view
+durationError(const scn::scan_error& error) {
+  using namespace std::string_view_literals;
 
-  if (unit == "ns") {
-    return checkedDurationCast<To, nanoseconds>(count);
+  switch (error.code()) {
+  case scn::scan_error::value_positive_overflow:
+  case scn::scan_error::value_negative_overflow:
+    return "duration out of range"sv;
+  default:
+    break;
   }
-  if (unit == "µs" || unit == "us") {
-    return checkedDurationCast<To, microseconds>(count);
+  if (std::string_view(error.msg()).starts_with("Duration not representable"sv)) {
+    return "duration not representable in the target type"sv;
   }
-  if (unit == "ms") {
-    return checkedDurationCast<To, milliseconds>(count);
-  }
-  if (unit == "s") {
-    return checkedDurationCast<To, seconds>(count);
-  }
-  if (unit == "min") {
-    return checkedDurationCast<To, minutes>(count);
-  }
-  if (unit == "h") {
-    return checkedDurationCast<To, hours>(count);
-  }
-  if (unit == "d") {
-    return checkedDurationCast<To, days>(count);
-  }
-  if (unit == "w") {
-    return checkedDurationCast<To, weeks>(count);
-  }
-  if (unit == "m") {
-    return checkedDurationCast<To, months>(count);
-  }
-  if (unit == "y") {
-    return checkedDurationCast<To, years>(count);
-  }
-  ROCKET_TERMINATE_UNREACHABLE_CODE();
+  return "expected a duration"sv;
 }
 
 /**
- * Checks if scanned values form a valid hour, minute, and second.
+ * Returns the message for a failed scan of a date.
  *
- * The hour may be negative and greater than 23, but must be small enough for the sum of all parts to fit
- * into nanoseconds.
- *
- * @param h the hour
- * @param m the minute
- * @param s the second
- * @return if the values are valid
+ * @param error the scan error
+ * @return the message
  */
-inline bool
-validHourMinuteSecond(std::chrono::hours::rep h, std::chrono::minutes::rep m, std::chrono::seconds::rep s) {
-  using namespace std::chrono;
+inline std::string_view
+dateError(const scn::scan_error& error) {
+  using namespace std::string_view_literals;
 
-  const auto maxHours = duration_cast<hours>(nanoseconds::max()).count();
-  return h > -maxHours && h < maxHours && m >= 0 && m < 60 && s >= 0 && s < 60;
+  // scnlib reports a month or day out of range like this
+  if (std::string_view(error.msg()).starts_with("Invalid value for"sv)) {
+    return "invalid date"sv;
+  }
+  return "expected a date"sv;
+}
+
+/**
+ * Returns the message for a failed scan of a #rocket::chrono::zoned_time.
+ *
+ * @param error the scan error
+ * @return the message
+ */
+inline std::string_view
+zonedTimeError(const scn::scan_error& error) {
+  using namespace std::string_view_literals;
+
+  const std::string_view msg(error.msg());
+  if (msg.starts_with("The UTC offset"sv) || msg.starts_with("Invalid value for UTC offset"sv)) {
+    return "invalid UTC offset"sv;
+  }
+  if (msg.starts_with("Unknown time zone"sv)) {
+    return "unknown time zone"sv;
+  }
+  if (msg.starts_with("Ambiguous time-zone name"sv)) {
+    return "ambiguous time-zone name"sv;
+  }
+  if (msg.starts_with("Invalid date"sv)) {
+    return "invalid date"sv;
+  }
+  return "expected a time point with time zone"sv;
+}
+
+/**
+ * Returns the message for a failed scan of a #std::chrono::hh_mm_ss.
+ *
+ * @param error the scan error
+ * @return the message
+ */
+inline std::string_view
+hourMinuteSecondError(const scn::scan_error& error) {
+  using namespace std::string_view_literals;
+
+  const std::string_view msg(error.msg());
+  if (msg.starts_with("Invalid hour"sv)) {
+    return "invalid hour, minute, or second"sv;
+  }
+  if (msg.starts_with("Expected subseconds"sv)) {
+    return "expected subseconds"sv;
+  }
+  return "expected an hour, minute, and second"sv;
 }
 
 /**

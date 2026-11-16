@@ -3,7 +3,7 @@
  */
 
 #include <rocket/Process.h>
-#include <rocket/TypeId.h>
+#include <rocket/TypeId-format.h>
 #include <rocket/str/Noun.h>
 #include <rocket/format.h>
 

@@ -146,9 +146,7 @@ private:
 /**
  * Linux, macOS: A file descriptor that closes itself.
  */
-class Fd {
-public:
-
+struct Fd {
   Fd() = default;
 
   explicit Fd(i32 fd) : fd_(fd) {}

@@ -331,6 +331,9 @@ endblock()
 # - Instantiates the built-in scanners for `bool`, `char32_t`, and `void*`, which `master` misses
 # - Fixes `FILE` input being returned twice after a scan backtracks across a buffer refill
 # - Makes scanning a `system_clock` time point take the fields as UTC instead of local time
+# - Makes `%Y` accept a negative year with up to five digits, as {fmt} writes it, such as `-005` or `-10000`
+# - Makes the fraction of `%.S` optional and rounds it to the nearest nanosecond instead of truncating it
+# - Makes `%z` accept `Z` (Zulu time) as the UTC offset +00:00, as in RFC 3339, and reject minutes above 59
 #
 # Its hash is part of the command, so that editing the patch repopulates scnlib
 set(ROCKET_SCNLIB_PATCH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/patches/scnlib.patch")

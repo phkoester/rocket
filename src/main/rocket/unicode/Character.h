@@ -31,6 +31,14 @@ struct BasicCharacter {
   static constexpr bool VIEW = std::same_as<String, View>;
 
   /**
+   * @ctor_default
+   *
+   * Constructs U+FFFD (REPLACEMENT CHARACTER), so that a character is never empty. A default constructor is
+   * required for scanning with scnlib.
+   */
+  constexpr BasicCharacter() : str_(replacement()) {}
+
+  /**
    * @ctor
    *
    * Constructs a character from a string reference.
@@ -254,6 +262,16 @@ struct BasicCharacter {
 
 private:
 
+  /// Returns U+FFFD (REPLACEMENT CHARACTER), encoded for the character type @p C.
+  static constexpr std::basic_string_view<C>
+  replacement() {
+    if constexpr (std::same_as<C, char>) {
+      return "\xEF\xBF\xBD";
+    } else {
+      return U"�";
+    }
+  }
+
   /**
    * The string, which is either a #std::basic_string or a #std::basic_string_view.
    *
@@ -261,20 +279,6 @@ private:
    */
   String str_;
 };
-
-/// @op_output{#rocket::unicode::BasicCharacter}
-template<typename C, typename String> requires IsChar<C>
-inline std::ostream&
-operator<<(std::ostream& lhs, const BasicCharacter<C, String>& rhs) {
-  return lhs << static_cast<std::basic_string_view<C>>(rhs);
-}
-
-/// @fn_format_as{#rocket::unicode::BasicCharacter}
-template<typename C, typename String> requires IsChar<C>
-constexpr auto
-format_as(const BasicCharacter<C, String>& val) {
-  return static_cast<std::basic_string_view<C>>(val);
-}
 
 // `Character` ----------------------------------------------------------------------------------------------
 

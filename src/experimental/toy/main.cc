@@ -5,7 +5,9 @@
  */
 
 #include "rocket/Process.h"
+#include "rocket/bimap-format.h"
 #include "rocket/enum.h"
+#include "rocket/format.h"
 #include "rocket/scope.h"
 #include "rocket/version.h"
 #include "rocket/cl/cl.h"

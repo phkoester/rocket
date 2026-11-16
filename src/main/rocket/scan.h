@@ -6,12 +6,13 @@
 
 #pragma once
 
-#include "rocket/scan-bimap.h"
-#include "rocket/scan-chrono.h"
-#include "rocket/scan-int128.h"
+#include "rocket/enum-scan.h"
+#include "rocket/int128-scan.h"
+#include "rocket/chrono/chrono-scan.h"
 
 #include <scn/chrono.h>
-#include <scn/istream.h>
 #include <scn/ranges.h>
+#include <scn/scan.h>
+#include <scn/xchar.h>
 
 // EOF

@@ -4,6 +4,7 @@
 
 #include "rocket-test/rocket-test.h"
 
+#include "rocket/format.h"
 #include "rocket/log/log.h"
 #include "rocket/system/system.h"
 

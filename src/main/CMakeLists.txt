@@ -104,7 +104,6 @@ target_sources(rocket
     rocket/codec/codec.cc
     rocket/filesystem/filesystem.cc
     rocket/io/IoError.cc
-    rocket/io/int128.cc
     rocket/io/io.cc
     rocket/log/log.cc
     rocket/nio/nio.cc
@@ -126,6 +125,8 @@ target_sources(rocket
       ${GENERATED_DIR}
     FILES
       rocket/bimap.h
+      rocket/bimap-format.h
+      rocket/bimap-scan.h
       rocket/Cow.h
       rocket/Exception.h
       rocket/InputFailure.h
@@ -134,22 +135,22 @@ target_sources(rocket
       rocket/Process.h
       rocket/Result.h
       rocket/TypeId.h
+      rocket/TypeId-format.h
       rocket/assert.h
       rocket/configure.h
       rocket/enum.h
+      rocket/enum-format.h
+      rocket/enum-fwd.h
+      rocket/enum-scan.h
       rocket/format.h
-      rocket/format-bimap.h
-      rocket/format-chrono.h
-      rocket/format-int128.h
       rocket/functional.h
       rocket/int128.h
+      rocket/int128-format.h
+      rocket/int128-scan.h
       rocket/literal.h
       rocket/macro.h
       rocket/rocket.h
       rocket/scan.h
-      rocket/scan-bimap.h
-      rocket/scan-chrono.h
-      rocket/scan-int128.h
       rocket/scope.h
       rocket/stacktrace.h
       rocket/std.h
@@ -157,6 +158,8 @@ target_sources(rocket
       rocket/type-traits.h
       rocket/archive/archive.h
       rocket/chrono/chrono.h
+      rocket/chrono/chrono-format.h
+      rocket/chrono/chrono-scan.h
       rocket/chrono/time_zone.h
       rocket/cl/cl.h
       rocket/codec/CborCodec.h
@@ -172,12 +175,12 @@ target_sources(rocket
       rocket/format/Subformat.h
       rocket/hash/hash.h
       rocket/io/IoError.h
-      rocket/io/int128.h
       rocket/io/io.h
       rocket/io/spanstream.h
       rocket/log/log.h
       rocket/math/Interval.h
-      rocket/math/Interval-codec.h
+      rocket/math/Interval-format.h
+      rocket/math/Interval-scan.h
       rocket/math/math.h
       rocket/math/random/random.h
       rocket/nio/nio.h
@@ -188,6 +191,8 @@ target_sources(rocket
       rocket/reflect/MemberRef.h
       rocket/reflect/VarRef.h
       rocket/reflect/reflect.h
+      rocket/reflect/reflect-format.h
+      rocket/reflect/reflect-scan.h
       rocket/str/Noun.h
       rocket/str/Range.h
       rocket/str/StringConvert.h
@@ -202,6 +207,8 @@ target_sources(rocket
       rocket/unicode/ConvertTo.h
       rocket/unicode/Iterator.h
       rocket/unicode/unicode.h
+      rocket/unicode/unicode-format.h
+      rocket/unicode/unicode-scan.h
       rocket/unicode/unicode-fwd.h
       ${VERSION_H} # Generated; must be in a PUBLIC file set so dependents wait for it (CMP0154)
 )

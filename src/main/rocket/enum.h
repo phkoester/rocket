@@ -6,30 +6,22 @@
 
 #pragma once
 
-#include "rocket/bimap.h"
 #include "rocket/Result.h"
-#include "rocket/TypeId.h"
+#include "rocket/TypeId-format.h"
 #include "rocket/assert.h"
-#include "rocket/format.h"
-#include "rocket/format/StringFormatter.h"
-#include "rocket/scan.h"
+#include "rocket/bimap.h"
+#include "rocket/enum-fwd.h"
 #include "rocket/str/message/message.h"
-#include "rocket/unicode/ConvertTo.h"
 
 #include <boost/preprocessor/stringize.hpp>
 #include <boost/preprocessor/seq/for_each.hpp>
-
-#include <ostream>
 
 // Macros ---------------------------------------------------------------------------------------------------
 
 /**
  * Provides all the declarations for the enum @p type needed for full Rocket interoperability.
  *
- * In particular, this provides:
- *
- * - a #rocket::Enum specialization;
- * - an output operator for #std::ostream.
+ * In particular, this provides a #rocket::Enum specialization.
  *
  * @note This macro must be called in the global namespace.
  *
@@ -71,14 +63,10 @@
     extern const ::rocket::bimap<type, ::std::string_view> name##Map__; \
     const ::rocket::bimap<type, ::std::string_view>& get##name##Map__();
 
-#define ROCKET_ENUM_DECLARE_OP_OUTPUT__(type) \
-  ::std::ostream& operator<<(::std::ostream& lhs, type rhs);
-
 #define ROCKET_ENUM_DECLARE__(ns, type, name) \
   ROCKET_ENUM_DECLARE_ROCKET_ENUM__(ns, type); \
   ROCKET_NAMESPACE_BEGIN(ns); \
   ROCKET_ENUM_DECLARE_MAP__(type, name); \
-  ROCKET_ENUM_DECLARE_OP_OUTPUT__(type); \
   ROCKET_NAMESPACE_END(ns)
 
 // Definitions ..............................................................................................
@@ -136,110 +124,12 @@
     return name##Map__; \
   }
 
-#define ROCKET_ENUM_DEFINE_OP_OUTPUT__(type) \
-  ::std::ostream& \
-  operator<<(::std::ostream& lhs, type rhs) { \
-    return lhs << fmt::format("{}", rhs); \
-  }
-
 #define ROCKET_ENUM_DEFINE__(ns, type, name, seq) \
   ROCKET_ENUM_DEFINE_ROCKET_ENUM__(ns, type, name); \
   ROCKET_NAMESPACE_BEGIN(ns); \
   ROCKET_ENUM_DEFINE_MAP__(type, name, seq); \
-  ROCKET_ENUM_DEFINE_OP_OUTPUT__(type); \
   ROCKET_NAMESPACE_END(ns)
 
 /// @endcond
-
-namespace rocket {
-
-// `Enum` ---------------------------------------------------------------------------------------------------
-
-/**
- * A class template for Rocket enums, providing some additional information about an enum.
- */
-template<typename E> requires std::is_enum_v<E>
-struct Enum : std::false_type {
-  /**
-   * Converts an enum value to a string.
-   *
-   * @param val the enum value
-   * @return a string
-   * @throw #rocket::InvalidState if the operation fails
-   */
-  static std::string_view toString(E val);
-
-  /**
-   * Scans a string to an enum value.
-   *
-   * @param str the string to scan
-   * @param strict whether the string must strictly match in its entirety. If this value is `true`, the
-   *   string can be scanned in a more efficient way
-   * @return a pair of the size of the scanned portion of the string and the enum value, or an error if the
-   *   operation fails
-   */
-  static Result<std::pair<u64, E>> toType(std::string_view str, bool strict);
-};
-
-} // namespace rocket
-
-// `fmt::formatter<rocket::Enum>` ---------------------------------------------------------------------------
-
-/**
- * @spec_fmt_formatter{#rocket::Enum}
- *
- * This formatter uses the same format specifiers as the underlying string formatter.
- */
-template<typename E, typename C> requires rocket::Enum<E>::value && rocket::IsChar<C>
-struct fmt::formatter<E, C> : rocket::internal::format::StringFormatter<C> {
-  /// @cond undocumented
-
-  template<typename FormatContext>
-  FormatContext::iterator
-  format(E val, FormatContext& ctx) const {
-    return this->formatUtf8(rocket::Enum<E>::toString(val), ctx); // This may throw, which is okay
-  }
-
-  /// @endcond
-};
-
-// `scn::scanner<rocket::Enum>` -----------------------------------------------------------------------------
-
-/**
- * @spec_scn_scanner{#rocket::Enum}
- *
- * This scanner uses the same format specifiers as the underlying string scanner. It scans a word and then
- * gives back the characters that follow the longest enum name the word starts with, so that, for example,
- * `Red,` scans as `Red` and leaves the comma in the input.
- */
-template<typename E> requires rocket::Enum<E>::value
-struct scn::scanner<E, char> : scn::scanner<std::string, char> {
-  /// @cond undocumented
-
-  template<typename Context>
-  scn::scan_expected<typename Context::iterator>
-  scan(E& val, Context& ctx) const {
-    // This must scan a #std::string, not a #std::string_view, because the latter does not work when scanning
-    // from a #std::istream
-    std::string str;
-    auto scanResult = scn::scanner<std::string, char>::scan(str, ctx);
-    if (not scanResult) {
-      return scn::unexpected(scanResult.error());
-    }
-    const auto enumResult = rocket::Enum<E>::toType(str, false);
-    if (not enumResult) {
-      return scn::unexpected(scn::scan_error(scn::scan_error::invalid_scanned_value, "invalid enum value"));
-    }
-    const auto [size, enumVal] = *enumResult;
-    val = enumVal;
-
-    // Give back what follows the scanned portion of the word. The iterators of scnlib are bidirectional
-    auto it = *scanResult;
-    std::advance(it, static_cast<std::ptrdiff_t>(size) - static_cast<std::ptrdiff_t>(str.size()));
-    return it;
-  }
-
-  /// @endcond
-};
 
 // EOF

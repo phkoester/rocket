@@ -1,5 +1,5 @@
 /**
- * @file format-int128.h
+ * @file int128-format.h
  *
  * {fmt} formatters for 128-bit integers.
  */
@@ -49,9 +49,7 @@ namespace rocket::internal::format::int128 {
  * @tparam C the character type
  */
 template<typename T, typename U, typename C>
-class Formatter {
-public:
-
+struct Formatter {
   /// @cond undocumented
 
   constexpr const C*

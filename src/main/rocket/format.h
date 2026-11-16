@@ -4,9 +4,9 @@
 
 #pragma once
 
-#include "rocket/format-bimap.h"
-#include "rocket/format-chrono.h"
-#include "rocket/format-int128.h"
+#include "rocket/enum-format.h"
+#include "rocket/int128-format.h"
+#include "rocket/chrono/chrono-format.h"
 
 #include <fmt/chrono.h>
 #include <fmt/format.h>

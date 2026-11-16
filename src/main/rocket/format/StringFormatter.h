@@ -13,9 +13,7 @@
 
 #include <string_view>
 
-/// @cond undocumented
-
-namespace rocket::internal::format {
+namespace rocket::format::internal {
 
 /**
  * Writes a UTF-8 string to an output iterator, converted to the character type @p C.
@@ -67,9 +65,7 @@ parseFlags(fmt::parse_context<C>& ctx, F onFlag) {
  * @tparam C the character type
  */
 template<typename C> requires IsChar<C>
-class StringFormatter {
-public:
-
+struct StringFormatter {
   constexpr const C*
   parse(fmt::parse_context<C>& ctx) {
     return formatter_.parse(ctx);
@@ -94,8 +90,6 @@ private:
   fmt::formatter<std::basic_string_view<C>, C> formatter_;
 };
 
-} // namespace rocket::internal::format
-
-/// @endcond
+} // namespace rocket::format::internal
 
 // EOF

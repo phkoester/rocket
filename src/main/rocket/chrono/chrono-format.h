@@ -1,5 +1,5 @@
 /**
- * @file format-chrono.h
+ * @file chrono-format.h
  *
  * {fmt} formatters for chrono types.
  */
@@ -14,6 +14,7 @@
 
 #include <chrono>
 #include <ctime>
+#include <iterator>
 #include <string>
 #include <string_view>
 
@@ -175,6 +176,59 @@ private:
       buf.push_back(static_cast<C>(c));
     }
   }
+};
+
+// `fmt::formatter<std::chrono::hh_mm_ss>` ------------------------------------------------------------------
+
+/**
+ * Formats a #std::chrono::hh_mm_ss.
+ *
+ * {fmt} does not provide this formatter, and the `%T` of a duration wraps the hours to 0 through 23. This
+ * formatter writes `[-]HH:MM:SS`, where the hours have at least two digits and are not wrapped, followed by
+ * a dot and the subseconds if the precision is finer than seconds, with as many digits as the precision
+ * needs. Example values: `01:02:03`, `01:02:03.005`, `-111:02:03.123456789`.
+ *
+ * This formatter uses the same format specifiers as the underlying string formatter; they apply to the whole
+ * string.
+ *
+ * @tparam Duration the duration of the #std::chrono::hh_mm_ss
+ * @tparam C the character type
+ */
+template<typename Duration, typename C> requires rocket::IsChar<C>
+struct fmt::formatter<std::chrono::hh_mm_ss<Duration>, C> {
+  /// @cond undocumented
+
+  constexpr const C*
+  parse(fmt::parse_context<C>& ctx) {
+    return formatter_.parse(ctx);
+  }
+
+  template<typename FormatContext>
+  FormatContext::iterator
+  format(const std::chrono::hh_mm_ss<Duration>& val, FormatContext& ctx) const {
+    using Type = std::chrono::hh_mm_ss<Duration>;
+
+    std::string str;
+    if (val.is_negative()) {
+      str += '-';
+    }
+    fmt::format_to(
+      std::back_inserter(str), "{:02}:{:02}:{:02}", val.hours().count(), val.minutes().count(),
+      val.seconds().count());
+    if constexpr (Type::fractional_width > 0) {
+      fmt::format_to(std::back_inserter(str), ".{:0{}}", val.subseconds().count(), Type::fractional_width);
+    }
+
+    // The string is ASCII, so it is widened code unit by code unit
+    const std::basic_string<C> converted(str.begin(), str.end());
+    return formatter_.format(std::basic_string_view<C>(converted), ctx);
+  }
+
+  /// @endcond
+
+private:
+
+  fmt::formatter<std::basic_string_view<C>, C> formatter_;
 };
 
 #ifndef ROCKET_HAS_FMT_FORMATTER_STD_CHRONO_YEAR_MONTH_DAY

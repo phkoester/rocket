@@ -4,11 +4,15 @@
 
 #include "rocket-test/rocket-test.h"
 
+#include "rocket/bimap-format.h"
+#include "rocket/format.h"
 #include "rocket/chrono/chrono.h"
 #include "rocket/codec/CborCodec.h"
 #include "rocket/log/log.h"
-#include "rocket/math/Interval-codec.h"
+#include "rocket/math/Interval-format.h"
 #include "rocket/reflect/reflect.h"
+#include "rocket/reflect/reflect-format.h"
+#include "rocket/unicode/unicode-format.h"
 
 #include <fmt/ostream.h>
 

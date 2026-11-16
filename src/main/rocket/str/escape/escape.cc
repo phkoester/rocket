@@ -9,6 +9,7 @@
 #include "rocket/scan.h"
 #include "rocket/unicode/Character.h"
 #include "rocket/unicode/Iterator.h"
+#include "rocket/unicode/unicode-format.h"
 
 using namespace rocket;
 using namespace rocket::str;
