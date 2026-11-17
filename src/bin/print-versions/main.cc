@@ -21,16 +21,21 @@
 #include <archive.h>
 #include <cbor.h>
 
+#include <algorithm>
 #include <array>
+#include <ranges>
+#include <string>
+#include <utility>
+#include <vector>
 
 using namespace rocket;
 using namespace std;
 
 namespace {
 
-// Local constants ------------------------------------------------------------------------------------------
+// Local types ----------------------------------------------------------------------------------------------
 
-constexpr u32 LEFT_COLUMN_WIDTH = 17;
+using Row = pair<string, string>;
 
 // Local functions ------------------------------------------------------------------------------------------
 
@@ -80,8 +85,13 @@ icuVersionWindowsSdk() {
 #endif // ROCKET_OS_WINDOWS
 
 void
-printVersion(string_view name, string_view version) {
-  nio::out.println("{: <{}} | {}", name, LEFT_COLUMN_WIDTH, version);
+printTable(const vector<Row>& rows) {
+  const size_t leftColumnWidth = rows.empty() ?
+    0 :
+    ranges::max(rows | views::transform([](const Row& row) { return row.first.size(); }));
+  for (const auto& [left, right] : rows) {
+    nio::out.println("{: <{}} | {}", left, leftColumnWidth, right);
+  }
 }
 
 } // namespace
@@ -92,51 +102,55 @@ i32
 main(i32 argc, char **argv) {
   process().init(argc, argv, "print-versions");
 
+  vector<Row> rows;
+
   // Rocket
 
-  printVersion("Rocket", ROCKET_VERSION_NAME);
+  rows.emplace_back("Rocket", ROCKET_VERSION_NAME);
 
   // Boost
 
-  printVersion("Boost", fmt::format("{}.{}.{}",
+  rows.emplace_back("Boost", fmt::format("{}.{}.{}",
     BOOST_VERSION / 100'000, BOOST_VERSION / 100 % 1'000, BOOST_VERSION % 100));
 
   // ICU
 
 #ifdef ROCKET_OS_WINDOWS
   // Windows `<icu.h>` does not provide `U_ICU_VERSION`
-  printVersion("ICU", icuVersion());
+  rows.emplace_back("ICU", icuVersion());
   #ifdef ROCKET_ICU_CMAKE
-  printVersion("ICU (Windows SDK)", icuVersionWindowsSdk());
+  rows.emplace_back("ICU (Windows SDK)", icuVersionWindowsSdk());
   #endif
 #else
-  printVersion("ICU", U_ICU_VERSION);
+  rows.emplace_back("ICU", U_ICU_VERSION);
 #endif
 
   // {fmt}
 
-  printVersion("{fmt}", fmt::format("{}.{}.{}",
+  rows.emplace_back("{fmt}", fmt::format("{}.{}.{}",
     FMT_VERSION / 10'000, FMT_VERSION / 100 % 100, FMT_VERSION % 100));
 
   // libarchive
 
-  printVersion("libarchive", ARCHIVE_VERSION_ONLY_STRING);
+  rows.emplace_back("libarchive", ARCHIVE_VERSION_ONLY_STRING);
 
   // libcbor
 
-  printVersion("libcbor", fmt::format("{}.{}.{}",
+  rows.emplace_back("libcbor", fmt::format("{}.{}.{}",
     CBOR_MAJOR_VERSION, CBOR_MINOR_VERSION, CBOR_PATCH_VERSION));
 
   // scnlib
 
-  printVersion("scnlib", fmt::format("{}.{}.{}",
+  rows.emplace_back("scnlib", fmt::format("{}.{}.{}",
     SCN_VERSION / 10'000'000, SCN_VERSION / 10'000 % 1'000, SCN_VERSION % 10'000));
 
   // wxWidgets
 
 #ifdef ROCKET_GUI
-  printVersion("wxWidgets", fmt::format("{}.{}.{}", wxMAJOR_VERSION, wxMINOR_VERSION, wxRELEASE_NUMBER));
+  rows.emplace_back("wxWidgets", fmt::format("{}.{}.{}", wxMAJOR_VERSION, wxMINOR_VERSION, wxRELEASE_NUMBER));
 #endif
+
+  printTable(rows);
 
   process().exit(EXIT_SUCCESS);
 }

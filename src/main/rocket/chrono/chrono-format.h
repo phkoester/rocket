@@ -137,9 +137,30 @@ private:
 
   std::basic_string_view<C> spec_;
 
-  // The time is always formatted with `char`. For other character types, {fmt} would use
-  // `std::time_put<C>`, which libstdc++ does not provide for `char32_t`, so the specification is converted
-  // to UTF-8 and the result back to `C`
+  static void
+  appendAbbrev(fmt::basic_memory_buffer<C>& buf, const rocket::chrono::sys_info& info) {
+    for (const char c : info.abbrev) {
+      buf.push_back(static_cast<C>(c));
+    }
+  }
+
+  static void
+  appendOffset(fmt::basic_memory_buffer<C>& buf, const rocket::chrono::sys_info& info, bool colon) {
+    const auto offset = info.offset;
+    const auto abs = offset < std::chrono::seconds(0) ? -offset : offset;
+    const auto h = std::chrono::duration_cast<std::chrono::hours>(abs).count();
+    const auto m = std::chrono::duration_cast<std::chrono::minutes>(abs % std::chrono::hours(1)).count();
+    const std::string str = colon ?
+      fmt::format("{}{:02}:{:02}", offset < std::chrono::seconds(0) ? '-' : '+', h, m) :
+      fmt::format("{}{:02}{:02}", offset < std::chrono::seconds(0) ? '-' : '+', h, m);
+    for (const char c : str) {
+      buf.push_back(static_cast<C>(c));
+    }
+  }
+
+  // The time is always formatted with `char`. For other character types, {fmt} would use `std::time_put<C>`,
+  // which libstdc++ does not provide for `char32_t`, so the specification is converted to UTF-8 and the
+  // result back to `C`
   static void
   formatTime(
     fmt::basic_memory_buffer<C>& buf,
@@ -162,27 +183,6 @@ private:
     formatter.format(time, ctx);
     const auto converted = rocket::unicode::ConvertTo<C>::apply(std::string_view(out.data(), out.size()));
     buf.append(converted.data(), converted.data() + converted.size());
-  }
-
-  static void
-  appendAbbrev(fmt::basic_memory_buffer<C>& buf, const rocket::chrono::sys_info& info) {
-    for (const char c : info.abbrev) {
-      buf.push_back(static_cast<C>(c));
-    }
-  }
-
-  static void
-  appendOffset(fmt::basic_memory_buffer<C>& buf, const rocket::chrono::sys_info& info, bool colon) {
-    const auto offset = info.offset;
-    const auto abs = offset < std::chrono::seconds(0) ? -offset : offset;
-    const auto h = std::chrono::duration_cast<std::chrono::hours>(abs).count();
-    const auto m = std::chrono::duration_cast<std::chrono::minutes>(abs % std::chrono::hours(1)).count();
-    const std::string str = colon ?
-      fmt::format("{}{:02}:{:02}", offset < std::chrono::seconds(0) ? '-' : '+', h, m) :
-      fmt::format("{}{:02}{:02}", offset < std::chrono::seconds(0) ? '-' : '+', h, m);
-    for (const char c : str) {
-      buf.push_back(static_cast<C>(c));
-    }
   }
 };
 

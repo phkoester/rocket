@@ -210,10 +210,6 @@ block()
     set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
   endif()
   FetchContent_MakeAvailable(GTest)
-  if(GAIA_CXX_COMPILER_LLVM)
-    target_compile_options(gtest PRIVATE -Wno-character-conversion)
-    target_compile_options(gmock PRIVATE -Wno-character-conversion)
-  endif()
 endblock()
 
 # Benchmark; must come after GoogleTest .....................................................................
@@ -230,6 +226,8 @@ FetchContent_Declare(
 block()
   set(BUILD_SHARED_LIBS OFF)
   set(BENCHMARK_DOWNLOAD_DEPENDENCIES OFF)
+  # Benchmark registers its own tests with CTest, which are excluded from the build and thus fail as "Not Run"
+  set(BENCHMARK_ENABLE_TESTING OFF)
   FetchContent_MakeAvailable(benchmark)
 endblock()
 
@@ -319,9 +317,6 @@ block()
   set(BUILD_SHARED_LIBS OFF)
   set(SANITIZE OFF) #
   FetchContent_MakeAvailable(libcbor)
-  if(GAIA_CXX_COMPILER_LLVM)
-    target_compile_options(cbor PRIVATE -Wno-unused-variable)
-  endif()
 endblock()
 
 # scnlib ....................................................................................................
@@ -374,14 +369,6 @@ if(ROCKET_GUI)
     # Don’t change `BUILD_SHARED_LIBS` here
     set(wxUSE_UNICODE_UTF8 ON)
     FetchContent_MakeAvailable(wxWidgets)
-
-    foreach(target IN ITEMS wxscintilla)
-      if(TARGET ${target})
-        if(GAIA_CXX_COMPILER_GNU OR GAIA_CXX_COMPILER_LLVM)
-          target_compile_options(${target} PRIVATE -Wno-deprecated-declarations)
-        endif()
-      endif()
-    endforeach()
   endblock()
 endif()
 
