@@ -48,12 +48,13 @@ tempDir() {
 
   // Remove the directory on exit, but not on termination
   process().atExit([=] {
-    std::error_code error;
-    remove_all(ret, error);
-    if (error) {
-      ROCKET_FAIL("cannot remove temporary directory `{}`: {}", ret, error.message());
+    process().info(nio::err, "removing temporary directory `{}` ...", ret);
+    error_code ec;
+    remove_all(ret, ec);
+    if (ec) {
+      process().error(nio::err, 0, "cannot remove temporary directory `{}`: {}", ret, ec.message());
     }
-  });
+  }, false);
 
   return ret;
 }
@@ -69,7 +70,14 @@ tempFile() {
   fs::path ret = dir / name;
 
   // Remove the file on exit and on termination
-  process().atExit([=] { remove(ret); }, true);
+  process().atExit([=] {
+    process().info(nio::err, "removing temporary file `{}` ...", ret);
+    error_code ec;
+    remove(ret, ec);
+    if (ec) {
+      process().error(nio::err, 0, "cannot remove temporary file `{}`: {}", ret, ec.message());
+    }
+  }, true);
 
   return ret;
 }
