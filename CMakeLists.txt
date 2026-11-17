@@ -105,7 +105,8 @@ elseif(GAIA_OS_WINDOWS)
       -Wno-unknown-attributes)
   elseif(GAIA_CXX_COMPILER_MSVC)
     # Windows, MSVC
-    list(APPEND COMPILE_FLAGS /bigobj /wd4244 /Zc:preprocessor)
+    # `/utf-8`: The sources are UTF-8 without a BOM. MSVC would read them in the ANSI code page
+    list(APPEND COMPILE_FLAGS /bigobj /utf-8 /wd4244 /Zc:preprocessor)
   endif()
 endif()
 
