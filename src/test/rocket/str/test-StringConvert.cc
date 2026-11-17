@@ -5,6 +5,7 @@
 #include "rocket-test/rocket-test.h"
 
 #include "rocket/enum.h"
+#include "rocket/int128-scan.h"
 #include "rocket/log/log.h"
 #include "rocket/str/StringConvert.h"
 

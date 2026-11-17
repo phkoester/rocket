@@ -7,6 +7,7 @@
 #include "rocket/TypeId-format.h"
 #include "rocket/bimap-format.h"
 #include "rocket/enum-format.h"
+#include "rocket/int128-format.h"
 #include "rocket/chrono/chrono-format.h"
 #include "rocket/log/log.h"
 #include "rocket/math/Interval-format.h"

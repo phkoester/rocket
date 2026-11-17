@@ -6,6 +6,7 @@
 
 #include "rocket/bimap-format.h"
 #include "rocket/enum-format.h"
+#include "rocket/int128-format.h"
 #include "rocket/chrono/chrono-format.h"
 #include "rocket/codec/CborCodec.h"
 #include "rocket/log/log.h"

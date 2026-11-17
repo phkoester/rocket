@@ -8,6 +8,8 @@
 #include "rocket/bimap-scan.h"
 #include "rocket/enum-format.h"
 #include "rocket/enum-scan.h"
+#include "rocket/int128-format.h"
+#include "rocket/int128-scan.h"
 #include <rocket/chrono/chrono-format.h>
 #include <rocket/chrono/chrono-scan.h>
 #include "rocket/log/log.h"
