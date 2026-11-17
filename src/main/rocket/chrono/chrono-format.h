@@ -8,6 +8,7 @@
 
 #include "rocket/chrono/chrono.h"
 #include "rocket/type-traits.h"
+#include "rocket/unicode/ConvertTo.h"
 
 #include <fmt/chrono.h>
 
@@ -136,6 +137,9 @@ private:
 
   std::basic_string_view<C> spec_;
 
+  // The time is always formatted with `char`. For other character types, {fmt} would use
+  // `std::time_put<C>`, which libstdc++ does not provide for `char32_t`, so the specification is converted
+  // to UTF-8 and the result back to `C`
   static void
   formatTime(
     fmt::basic_memory_buffer<C>& buf,
@@ -143,18 +147,21 @@ private:
     bool localized,
     const SysTime& time,
     fmt::locale_ref loc) {
-    std::basic_string<C> fullSpec;
+    std::string fullSpec;
     if (localized) {
       fullSpec.push_back('L');
     }
-    fullSpec.append(spec);
-    fmt::formatter<SysTime, C> formatter;
-    fmt::parse_context<C> parseCtx(fullSpec);
+    fullSpec.append(rocket::unicode::ConvertTo<char>::apply(spec));
+    fmt::formatter<SysTime, char> formatter;
+    fmt::parse_context<char> parseCtx(fullSpec);
     if (formatter.parse(parseCtx) != parseCtx.end()) {
       throw fmt::format_error("invalid format");
     }
-    fmt::buffered_context<C> ctx(fmt::basic_appender<C>(buf), {}, loc);
+    fmt::memory_buffer out;
+    fmt::buffered_context<char> ctx(fmt::appender(out), {}, loc);
     formatter.format(time, ctx);
+    const auto converted = rocket::unicode::ConvertTo<C>::apply(std::string_view(out.data(), out.size()));
+    buf.append(converted.data(), converted.data() + converted.size());
   }
 
   static void
