@@ -6,8 +6,10 @@
 
 #include "rocket/bimap-format.h"
 #include "rocket/bimap-scan.h"
-#include "rocket/format.h"
-#include "rocket/scan.h"
+#include "rocket/enum-format.h"
+#include "rocket/enum-scan.h"
+#include <rocket/chrono/chrono-format.h>
+#include <rocket/chrono/chrono-scan.h>
 #include "rocket/log/log.h"
 #include "rocket/math/Interval-format.h"
 #include "rocket/math/Interval-scan.h"

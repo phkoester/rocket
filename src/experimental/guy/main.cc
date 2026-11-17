@@ -11,6 +11,8 @@
 
 #include <rocket-gui/rocket-gui.h>
 
+#include <fmt/ranges.h>
+
 #include <wx/aboutdlg.h>
 #include <wx/taskbar.h>
 #include <wx/webview.h>

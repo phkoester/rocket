@@ -4,7 +4,7 @@
 
 #include "rocket-test/rocket-test.h"
 
-#include "rocket/format.h"
+#include "rocket/enum-format.h"
 #include "rocket/log/log.h"
 #include "rocket/system/system.h"
 
@@ -12,11 +12,11 @@
 #include <csignal>
 #include <filesystem>
 
-#define MODULE rocketSystem
-
 namespace fs = std::filesystem;
 
 using namespace rocket::system;
+
+#define MODULE rocketSystem
 
 namespace {
 

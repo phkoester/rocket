@@ -6,14 +6,18 @@
 
 #include "rocket/Process.h"
 #include "rocket/bimap-format.h"
+#include "rocket/enum-format.h"
 #include "rocket/enum.h"
-#include "rocket/format.h"
 #include "rocket/scope.h"
 #include "rocket/version.h"
 #include "rocket/cl/cl.h"
 #include "rocket/log/log.h"
+#include "rocket/nio/nio.h"
 #include "rocket/system/system.h"
 #include "rocket/system/terminal/terminal.h"
+
+#include <fmt/ranges.h>
+#include <fmt/std.h>
 
 using namespace rocket;
 using namespace rocket::unicode;

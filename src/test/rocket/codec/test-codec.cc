@@ -10,6 +10,9 @@
 #include "rocket/reflect/reflect-format.h"
 #include "rocket/unicode/ConvertTo.h"
 
+#include <fmt/ranges.h>
+#include <fmt/std.h>
+
 using namespace rocket;
 using namespace rocket::codec;
 

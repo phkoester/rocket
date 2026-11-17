@@ -5,7 +5,8 @@
 #include <rocket/Process.h>
 #include <rocket/TypeId-format.h>
 #include <rocket/str/Noun.h>
-#include <rocket/format.h>
+
+#include <fmt/format.h>
 
 using namespace rocket;
 using namespace std;

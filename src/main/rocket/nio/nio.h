@@ -6,11 +6,11 @@
 
 #pragma once
 
-#include "rocket/format.h"
 #include "rocket/io/io.h"
-#include "rocket/scan.h"
 
 #include <fmt/color.h> // `fmt::text_style`
+
+#include <scn/ranges.h>
 
 #include <filesystem>
 #include <fstream>

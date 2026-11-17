@@ -57,6 +57,7 @@
 
 #include <array>
 #include <chrono>
+#include <expected>
 #include <forward_list>
 #include <list>
 #include <map>

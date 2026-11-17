@@ -8,6 +8,8 @@
 #include "rocket/cl/cl.h"
 #include "rocket/filesystem/filesystem.h"
 
+#include <fmt/std.h>
+
 #include <boost/asio.hpp>
 
 namespace asio = boost::asio;

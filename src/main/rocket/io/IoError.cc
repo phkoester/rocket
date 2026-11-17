@@ -2,7 +2,6 @@
  * IoError.cc
  */
 
-#include "rocket/format.h"
 #include "rocket/io/IoError.h"
 #include "rocket/str/message/message.h"
 

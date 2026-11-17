@@ -5,14 +5,17 @@
 #include "rocket-test/rocket-test.h"
 
 #include "rocket/TypeId-format.h"
-#include "rocket/format.h"
 #include "rocket/bimap-format.h"
+#include "rocket/enum-format.h"
+#include "rocket/chrono/chrono-format.h"
 #include "rocket/log/log.h"
 #include "rocket/math/Interval-format.h"
 #include "rocket/reflect/reflect.h"
 #include "rocket/reflect/reflect-format.h"
 #include "rocket/unicode/unicode.h"
 #include "rocket/unicode/unicode-format.h"
+
+#include <fmt/xchar.h>
 
 #include <locale>
 #include <span>

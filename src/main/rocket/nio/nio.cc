@@ -9,6 +9,7 @@
 #include "rocket/io/IoError.h"
 
 #include <fmt/ostream.h>
+#include <fmt/std.h>
 
 #include <scn/istream.h>
 

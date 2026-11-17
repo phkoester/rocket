@@ -10,6 +10,8 @@
 
 #include <boost/asio.hpp>
 
+#include <fmt/std.h>
+
 namespace asio = boost::asio;
 
 using namespace rocket;

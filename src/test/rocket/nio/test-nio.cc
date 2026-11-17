@@ -4,6 +4,8 @@
 
 #include "rocket-test/rocket-test.h"
 
+#include "rocket/enum-scan.h"
+#include "rocket/chrono/chrono-scan.h"
 #include "rocket/filesystem/filesystem.h"
 #include "rocket/io/IoError.h"
 #include "rocket/io/io.h"

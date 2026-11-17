@@ -3,9 +3,7 @@
  */
 
 #include <rocket/Process.h>
-#include <rocket/format.h>
 #include <rocket/icu.h>
-#include <rocket/scan.h>
 #include <rocket/version.h>
 
 #ifdef ROCKET_OS_WINDOWS
@@ -13,9 +11,13 @@
 #endif
 
 #include <boost/version.hpp>
+
+#include <fmt/format.h>
+
 #ifdef ROCKET_GUI
   #include <wx/version.h>
 #endif
+
 #include <archive.h>
 #include <cbor.h>
 

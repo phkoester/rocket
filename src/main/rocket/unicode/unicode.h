@@ -9,8 +9,9 @@
 #include "rocket/Positions.h"
 #include "rocket/Cow.h"
 #include "rocket/InputFailure.h"
-#include "rocket/format.h"
 #include "rocket/unicode/unicode-fwd.h"
+
+#include <fmt/format.h>
 
 namespace rocket::unicode {
 

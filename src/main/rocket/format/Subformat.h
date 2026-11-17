@@ -4,8 +4,9 @@
 
 #pragma once
 
-#include "rocket/format.h"
 #include "rocket/type-traits.h"
+
+#include <fmt/format.h>
 
 #include <functional>
 #include <map>

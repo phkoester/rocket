@@ -10,7 +10,6 @@
 #include "rocket/chrono/chrono.h"
 
 #include <scn/chrono.h>
-#include <scn/scan.h>
 
 #include <cassert>
 #include <chrono>

@@ -10,6 +10,10 @@
 #include "rocket/codec/EqualToEncoder.h"
 #include "rocket/codec/HashEncoder.h"
 
+#include <boost/preprocessor/seq/enum.hpp>
+#include <boost/preprocessor/seq/for_each.hpp>
+#include <boost/preprocessor/stringize.hpp>
+
 #include <functional> // `std::hash`
 
 // Macros ---------------------------------------------------------------------------------------------------

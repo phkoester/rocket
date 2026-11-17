@@ -9,6 +9,8 @@
 #include "rocket/TypeId.h"
 #include "rocket/nio/nio.h"
 
+#include <fmt/xchar.h>
+
 using namespace std;
 
 #define MODULE rocketException

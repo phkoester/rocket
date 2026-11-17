@@ -142,7 +142,6 @@ target_sources(rocket
       rocket/enum-format.h
       rocket/enum-fwd.h
       rocket/enum-scan.h
-      rocket/format.h
       rocket/functional.h
       rocket/int128.h
       rocket/int128-format.h
@@ -150,7 +149,6 @@ target_sources(rocket
       rocket/literal.h
       rocket/macro.h
       rocket/rocket.h
-      rocket/scan.h
       rocket/scope.h
       rocket/stacktrace.h
       rocket/std.h

@@ -6,12 +6,13 @@
 
 #pragma once
 
-#include "rocket/enum.h"
-#include "rocket/Exception.h"
+#include "rocket/enum-fwd.h"
 #include "rocket/type-traits.h"
 #include "rocket/str/message/message.h"
 
-#include "rocket/scan.h"
+#include <fmt/format.h>
+
+#include <scn/scan.h>
 
 namespace rocket::str {
 

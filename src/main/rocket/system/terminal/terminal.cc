@@ -6,9 +6,10 @@
 
 #include "rocket/InputFailure.h"
 #include "rocket/assert.h"
-#include "rocket/scan.h"
 #include "rocket/scope.h"
 #include "rocket/io/io.h"
+
+#include <scn/scan.h>
 
 #ifdef ROCKET_OS_WINDOWS
   #include "rocket/windows.h"

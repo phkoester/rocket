@@ -9,6 +9,9 @@
 #include "rocket/io/io.h"
 #include "rocket/nio/nio.h"
 
+#include <fmt/format.h>
+#include <fmt/color.h>
+
 #include <filesystem>
 #include <functional>
 #include <locale>

@@ -4,6 +4,7 @@
 
 #include "rocket-test/rocket-test.h"
 
+#include "rocket/bimap.h"
 #include "rocket/type-traits.h"
 
 #include <list>

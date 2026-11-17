@@ -3,7 +3,6 @@
  */
 
 #include "rocket/TypeId-format.h"
-#include "rocket/format.h"
 #include "rocket/str/message/message.h"
 
 using namespace std;

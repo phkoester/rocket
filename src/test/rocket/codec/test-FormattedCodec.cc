@@ -4,8 +4,11 @@
 
 #include "rocket-test/rocket-test.h"
 
+#include "rocket/enum-format.h"
+#include "rocket/enum-scan.h"
 #include "rocket/scope.h"
-#include "rocket/chrono/chrono.h"
+#include "rocket/chrono/chrono-format.h"
+#include "rocket/chrono/chrono-scan.h"
 #include "rocket/codec/FormattedCodec.h"
 #include "rocket/log/log.h"
 #include "rocket/reflect/reflect.h"
