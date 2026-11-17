@@ -34,7 +34,8 @@ using namespace std;
 // Global variables -----------------------------------------------------------------------------------------
 
 #ifndef ROCKET_OS_WINDOWS
-extern char** environ;
+// Redundant with glibc, which declares `environ` in `<unistd.h>`, but required on macOS
+extern char** environ; // NOLINT(readability-redundant-declaration)
 #endif
 
 namespace {
@@ -558,7 +559,7 @@ makePipe(Fd& readEnd, Fd& writeEnd) {
   // stderr of the command could overwrite it before it is used. Move it out of the way
   for (Fd* fd : { &readEnd, &writeEnd }) {
     if (fd->get() <= STDERR_FILENO) {
-      const i32 newFd = fcntl(fd->get(), F_DUPFD_CLOEXEC, STDERR_FILENO + 1);
+      const i32 newFd = fcntl(fd->get(), F_DUPFD_CLOEXEC, STDERR_FILENO + 1); // NOLINT(*-vararg)
       if (newFd == -1) {
         return lastError();
       }
@@ -674,7 +675,7 @@ execImpl(const char* path, vector<string> args, bool combined) {
       }
     }
 
-    const i32 rc = path
+    const i32 rc = path != nullptr
       ? posix_spawn(&pid, path, &actions, nullptr, argv.data(), environ)
       : posix_spawnp(&pid, argv.front(), &actions, nullptr, argv.data(), environ);
     if (rc != 0) {

@@ -35,16 +35,16 @@ TEST(MODULE, version) {
   // version depends on the Windows build
 
   UVersionInfo info {};
-  u_getVersion(info);
+  u_getVersion(std::data(info));
   array<char, U_MAX_VERSION_STRING_LENGTH> str {};
-  u_versionToString(info, str.data());
+  u_versionToString(std::data(info), str.data());
 
   // Require at least `ROCKET_ICU_VERSION`. `u_versionFromString` fills missing trailing fields with zeros
 
   constexpr auto minStr = ROCKET_ICU_VERSION;
 
   UVersionInfo minInfo {};
-  u_versionFromString(minInfo, minStr);
+  u_versionFromString(std::data(minInfo), minStr);
   ASSERT_NE(minInfo[0], 0) << "cannot parse `ROCKET_ICU_VERSION` \"" << minStr << '"';
 
   // `UVersionInfo` holds major, minor, milli, and micro; compare them lexicographically

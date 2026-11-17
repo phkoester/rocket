@@ -8,7 +8,7 @@
 
 #include <version>
 
-#if defined(ROCKET_OS_LINUX)
+#ifdef ROCKET_OS_LINUX
 // Linux ----------------------------------------------------------------------------------------------------
 
 // 128-bit integers
@@ -27,7 +27,7 @@
 #define ROCKET_HAS_FMT_FORMATTER_STD_CHRONO_YEAR_MONTH_DAY
 #define ROCKET_HAS_SCN_SCANNER_STD_CHRONO_YEAR_MONTH_DAY
 
-#elif defined(ROCKET_OS_MACOS)
+#elifdef ROCKET_OS_MACOS
 // macOS ----------------------------------------------------------------------------------------------------
 
 #ifndef __SIZEOF_INT128__

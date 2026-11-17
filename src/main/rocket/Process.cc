@@ -78,9 +78,9 @@ flushStandardSinks() {
 
 const filesystem::path&
 invocationPath() {
-#if defined(ROCKET_OS_LINUX)
+#ifdef ROCKET_OS_LINUX
   static const filesystem::path path = argv0OrFallback(::program_invocation_name);
-#elif defined(ROCKET_OS_MACOS)
+#elifdef ROCKET_OS_MACOS
   static const filesystem::path path = []() {
     char** const argv = *_NSGetArgv();
     return argv0OrFallback(argv != nullptr ? argv[0] : nullptr);
@@ -188,15 +188,17 @@ string
 Process::autoName() const {
   ROCKET_MUTEX_LOCK(processMutex);
 
-  return inited_ ? name() : invocationStem().string();
+  // Read `name_` directly: `name` asserts, and a failing assertion may ask for the automatic name
+  return inited_ ? name_ : invocationStem().string();
 }
 
 void
 Process::exit(i32 status) const {
   ROCKET_MUTEX_LOCK(processMutex);
 
+  // Calling `exit` is the purpose of this function. It is serialized by `processMutex`
   if (ROCKET_EXIT) {
-    std::exit(status);
+    std::exit(status); // NOLINT(concurrency-mt-unsafe)
   }
   if (ROCKET_QUICK_EXIT) {
     std::quick_exit(status);
@@ -205,7 +207,7 @@ Process::exit(i32 status) const {
   if (quickExit_) {
     std::quick_exit(status);
   } else {
-    std::exit(status);
+    std::exit(status); // NOLINT(concurrency-mt-unsafe)
   }
 }
 

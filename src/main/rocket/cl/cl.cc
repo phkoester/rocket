@@ -38,7 +38,7 @@ struct ArgFile {
  *   expanded any number of times, but not while it is being expanded already, which would be a cycle
  */
 void
-addArg(vector<string>& out, const string& arg, vector<ArgFile>& openFiles) { // NOLINT(*-recursion)
+addArg(vector<string>& out, const string& arg, vector<ArgFile>& openFiles) { // NOLINT(*-complexity,*-recursion)
   if (arg.starts_with("@")) {
     if (arg.size() == 1) {
       // "@" is just a regular argument

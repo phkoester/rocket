@@ -14,6 +14,7 @@
 
 #include <fstream>
 #include <functional>
+#include <utility>
 
 #ifndef ROCKET_OS_WINDOWS
 #include <unistd.h> // `pipe`, `write`, `close`
@@ -174,7 +175,7 @@ openPipe(string_view input, span<char> buffer = {}) {
     close(fds[0]);
     return {};
   }
-  if (written != static_cast<ssize_t>(input.size()) ||
+  if (std::cmp_not_equal(written, input.size()) ||
     (not buffer.empty() && setvbuf(ret.get(), buffer.data(), _IOFBF, buffer.size()) != 0)) {
     ret.reset();
   }
@@ -235,7 +236,7 @@ expectTell(Source& in, u64 expected) {
  */
 template<typename Fn>
 void
-forEachSink(string_view expected, Fn fn) {
+forEachSink(string_view expected, Fn fn) { // NOLINT(*-complexity)
   {
     SCOPED_TRACE("FileSink");
     const auto temp = rocket::filesystem::tempFile();
@@ -480,7 +481,7 @@ TEST(MODULE, StreamSinkLeavesExceptionMaskAlone) {
   EXPECT_FALSE(out2.code());
 }
 
-TEST(MODULE, StreamSinkBufferThrows) {
+TEST(MODULE, StreamSinkBufferThrows) { // NOLINT(*-complexity)
   // A `system_error` from the stream buffer keeps its code, any other exception is an I/O error. Neither
   // escapes, whatever the exception mask
   struct ThrowingOutBuf : streambuf {
@@ -489,7 +490,7 @@ TEST(MODULE, StreamSinkBufferThrows) {
   protected:
 
     int_type
-    overflow(int_type) override {
+    overflow(int_type /*ch*/) override {
       if (system) {
         throw system_error(make_error_code(errc::no_space_on_device));
       }
@@ -514,12 +515,12 @@ TEST(MODULE, StreamSinkBufferThrows) {
   }
 }
 
-TEST(MODULE, StreamSinkExceptionMask) {
+TEST(MODULE, StreamSinkExceptionMask) { // NOLINT(*-complexity)
   // A stream buffer that accepts nothing and cannot sync, like a full device
   struct FailingOutBuf : streambuf {
   protected:
 
-    int_type overflow(int_type) override { return traits_type::eof(); }
+    int_type overflow(int_type /*ch*/) override { return traits_type::eof(); }
     int sync() override { return -1; }
   };
 
@@ -717,7 +718,7 @@ TEST(MODULE, StreamSourceDoesNotExist) {
     throwsDoesNotExist("cannot open file `/file/does/not/exist` for reading"));
 }
 
-TEST(MODULE, StreamSourceExceptionMask) {
+TEST(MODULE, StreamSourceExceptionMask) { // NOLINT(*-complexity)
   // Reaching the end of the input is no error, even with `failbit` and `eofbit` in the exception mask
   for (const auto mask : { ios::goodbit, ios::badbit | ios::failbit | ios::eofbit }) {
     SCOPED_TRACE(fmt::format("mask {}", static_cast<i32>(mask)));
@@ -749,7 +750,7 @@ TEST(MODULE, StreamSourceExceptionMask) {
   }
 }
 
-TEST(MODULE, StreamSourceBufferThrows) {
+TEST(MODULE, StreamSourceBufferThrows) { // NOLINT(*-complexity)
   // `FailingBuf` throws a `runtime_error`, which the stream rethrows if `badbit` is in its exception mask
   for (const auto mask : { ios::goodbit, ios::badbit }) {
     SCOPED_TRACE(fmt::format("mask {}", static_cast<i32>(mask)));
@@ -1039,7 +1040,7 @@ TEST(MODULE, StringSourceSeek) {
 
 #ifndef ROCKET_OS_WINDOWS
 
-TEST(MODULE, standardStreamsOverPipes) {
+TEST(MODULE, standardStreamsOverPipes) { // NOLINT(*-complexity)
   // With `stdin` and `stdout` over pipes, the standard streams are not seekable. That is decided from the
   // `FILE` alone, without seeking the stream buffer, which would seek the `FILE` and set `errno`
   //
@@ -1149,8 +1150,8 @@ TEST(MODULE, seekableSources) {
   });
 }
 
-TEST(MODULE, SourcePeek) {
-  forEachSource("ab", [](Source& in) {
+TEST(MODULE, SourcePeek) { // NOLINT(*-complexity)
+  forEachSource("ab", [](Source& in) { // NOLINT(*-complexity)
     EXPECT_EQ(in.peek(), 'a');
     EXPECT_EQ(in.peek(), 'a'); // Peeking does not advance
     EXPECT_EQ(in.tell(), 0);
@@ -1170,7 +1171,7 @@ TEST(MODULE, SourcePeek) {
 
 // `readln` .................................................................................................
 
-TEST(MODULE, readln) {
+TEST(MODULE, readln) { // NOLINT(*-complexity)
   const auto test = [](string_view input, const vector<string>& expected) {
     forEachScanSource(input, [&](Source& in) {
       for (const auto& line : expected) {
@@ -1225,7 +1226,7 @@ TEST(MODULE, readlnNullSource) {
 
 // `scan` ...................................................................................................
 
-TEST(MODULE, scanInteger) {
+TEST(MODULE, scanInteger) { // NOLINT(*-complexity)
   forEachScanSource("42 rest", [](Source& in) {
     const auto result = in.scan<i32>("{}");
     ASSERT_TRUE(result);
@@ -1297,7 +1298,7 @@ TEST(MODULE, scanBool) {
   });
 }
 
-TEST(MODULE, scanMultipleValues) {
+TEST(MODULE, scanMultipleValues) { // NOLINT(*-complexity)
   forEachScanSource("2026-11-14T12", [](Source& in) {
     const auto result = in.scan<i32, u32, u32>("{}-{}-{}");
     ASSERT_TRUE(result);
@@ -1321,7 +1322,7 @@ TEST(MODULE, scanMultipleValues) {
 
 #ifndef ROCKET_OS_WINDOWS
 
-TEST(MODULE, scanTimePointFromPipe) {
+TEST(MODULE, scanTimePointFromPipe) { // NOLINT(*-complexity)
   using namespace std::chrono;
   constexpr string_view INPUT = "2026-11-14T12:34:56 rest";
   const sys_seconds expected = sys_days(2026y / November / 14) + 12h + 34min + 56s;
@@ -1364,7 +1365,7 @@ TEST(MODULE, scanSkipsWhitespace) {
   });
 }
 
-TEST(MODULE, scanSuccessive) {
+TEST(MODULE, scanSuccessive) { // NOLINT(*-complexity)
   forEachScanSource("1 2 3", [](Source& in) {
     for (i32 i = 1; i <= 3; ++i) {
       const auto result = in.scan<i32>("{}");
@@ -1378,7 +1379,7 @@ TEST(MODULE, scanSuccessive) {
   });
 }
 
-TEST(MODULE, scanFailureResets) {
+TEST(MODULE, scanFailureResets) { // NOLINT(*-complexity)
   // A failed scan leaves the source where it was before the scan
   forEachScanSource("abc 1", [](Source& in) { // Invalid value
     const auto result = in.scan<i32>("{}");
@@ -1455,7 +1456,7 @@ TEST(MODULE, scanLocale) {
   });
 }
 
-TEST(MODULE, scanAfterRead) {
+TEST(MODULE, scanAfterRead) { // NOLINT(*-complexity)
   // Scanning starts at the current position, after input read otherwise
   forEachScanSource("ab 12 cd", [](Source& in) {
     char c = '\0';
@@ -1469,9 +1470,9 @@ TEST(MODULE, scanAfterRead) {
   });
 }
 
-TEST(MODULE, scanAfterPeek) {
+TEST(MODULE, scanAfterPeek) { // NOLINT(*-complexity)
   // Peeking leaves the character in the source, so the next scan sees it
-  forEachScanSource("12 34 x", [](Source& in) {
+  forEachScanSource("12 34 x", [](Source& in) { // NOLINT(*-complexity)
     auto result = in.scan<i32>("{}");
     ASSERT_TRUE(result);
     EXPECT_EQ(result->value(), 12);

@@ -633,7 +633,7 @@ escapeRegex(string_view input, Positions* positions) {
 }
 
 string
-unescapeRegex(string_view input, Positions* positions) {
+unescapeRegex(string_view input, Positions* positions) { // NOLINT(*-complexity)
   string ret;
 
   if (positions != nullptr) {

@@ -42,7 +42,7 @@ TypeId::prettyName() const {
 #endif
 
   // Replace "> >" with ">>" in a loop
-  while (str::replaceIn(ret, { { "> >", ">>" } }) > 0);
+  while (str::replaceIn(ret, { { "> >", ">>" } }) > 0) {}
   return ret;
 }
 

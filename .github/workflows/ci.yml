@@ -1,0 +1,68 @@
+#
+# ci.yml
+#
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+# A new push to the same branch or PR cancels the run in progress
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  linux:
+    name: Linux (GCC, Release)
+    runs-on: ubuntu-latest
+    # Ubuntu 26.04 ships GCC 15, CMake 4.2, and ICU 78, which the hosted runner images do not
+    container: ubuntu:26.04
+    timeout-minutes: 120
+
+    env:
+      CCACHE_DIR: ${{ github.workspace }}/.ccache
+      CCACHE_MAXSIZE: 2G
+      CMAKE_C_COMPILER_LAUNCHER: ccache
+      CMAKE_CXX_COMPILER_LAUNCHER: ccache
+      DEBIAN_FRONTEND: noninteractive
+      LANG: C.UTF-8
+
+    steps:
+      # Git must be installed before checkout, otherwise `actions/checkout` downloads a tarball without
+      # `.git`
+      - name: Install packages
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends \
+            ca-certificates ccache cmake g++ git libgtk-3-dev libicu-dev ninja-build python3 tzdata
+
+      - name: Check out
+        uses: actions/checkout@v4
+
+      # The container runs as root, but the workspace belongs to the runner user
+      - name: Mark the workspace safe for Git
+        run: git config --global --add safe.directory '*'
+
+      - name: Restore ccache
+        uses: actions/cache@v4
+        with:
+          path: .ccache
+          key: ccache-linux-release-${{ github.sha }}
+          restore-keys: ccache-linux-release-
+
+      - name: Configure
+        run: cmake --preset linux-release -DROCKET_BUILD_BENCH=ON -DROCKET_BUILD_TEST=ON
+
+      - name: Build
+        run: cmake --build --preset linux-release
+
+      - name: Test
+        run: ctest --test-dir build/release --output-on-failure --parallel "$(nproc)"
+
+      - name: Show ccache statistics
+        if: always()
+        run: ccache --show-stats

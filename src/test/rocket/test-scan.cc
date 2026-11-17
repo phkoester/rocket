@@ -27,7 +27,7 @@
 #include <chrono>
 #include <locale>
 #include <optional>
-#include <time.h> // `tzset` and `_tzset`, which `<ctime>` does not declare
+#include <time.h> // NOLINT(modernize-deprecated-headers): for `tzset` and `_tzset`, missing in `<ctime>`
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
@@ -45,7 +45,7 @@ using Scanned = optional<pair<T, i64>>;
 /// Returns the expected result of a successful scan.
 template<typename T>
 Scanned<T>
-ok(T val, i64 length) {
+ok(const T& val, i64 length) {
   return pair<T, i64>(val, length);
 }
 
@@ -97,7 +97,7 @@ groupingLocale() {
     }
   };
 
-  return std::locale(std::locale::classic(), new Numpunct());
+  return { std::locale::classic(), new Numpunct() };
 }
 
 } // namespace
@@ -236,9 +236,9 @@ TEST(MODULE, rocketU32) {
   EXPECT_EQ(scanOne<u32>("4294967295", "{}"), ok(numeric_limits<u32>::max(), 10));
 
   // Hexadecimal, up to the first character that is not a digit
-  EXPECT_EQ(scanOne<u32>("1234abCD", "{:x}"), ok(0x1234ABCDu, 8));
-  EXPECT_EQ(scanOne<u32>("abCDZZZZ", "{:x}"), ok(0xABCDu, 4));
-  EXPECT_EQ(scanOne<u32>("12345678", "{:8x}"), ok(0x12345678u, 8));
+  EXPECT_EQ(scanOne<u32>("1234abCD", "{:x}"), ok(0x1234ABCDU, 8));
+  EXPECT_EQ(scanOne<u32>("abCDZZZZ", "{:x}"), ok(0xABCDU, 4));
+  EXPECT_EQ(scanOne<u32>("12345678", "{:8x}"), ok(0x12345678U, 8));
   EXPECT_EQ(scanError<u32>("abCDZZZZ", "{:8x}"), scn::scan_error::length_too_short);
 
   {
@@ -246,7 +246,7 @@ TEST(MODULE, rocketU32) {
     const string fmt = "{:x}";
     const auto result = scn::scan<u32>(input, scn::runtime_format(fmt));
     ASSERT_TRUE(result);
-    EXPECT_EQ(result->value(), 0xABCDEu);
+    EXPECT_EQ(result->value(), 0xABCDEU);
     EXPECT_EQ(result->begin() - input.begin(), 5);
   }
 }
@@ -675,7 +675,7 @@ TEST(MODULE, rocketMathIntervalRoundtrip) {
   roundtrip(RightOpenInterval<u64>(0, numeric_limits<u64>::max()));
 }
 
-TEST(MODULE, rocketReflectDeclared) {
+TEST(MODULE, rocketReflectDeclared) { // NOLINT(*-complexity)
   using type = MyStruct;
   const type val(42, "rocket", true);
 
@@ -758,7 +758,7 @@ TEST(MODULE, rocketReflectSequence) {
   EXPECT_EQ(i, 2);
 }
 
-TEST(MODULE, rocketUnicodeCharacter) {
+TEST(MODULE, rocketUnicodeCharacter) { // NOLINT(*-complexity)
   using namespace rocket::unicode;
   using type = Character<char>;
 
@@ -798,7 +798,7 @@ TEST(MODULE, rocketUnicodeCharacter) {
   EXPECT_EQ(i, 7);
 }
 
-TEST(MODULE, rocketUnicodeCodePoint) {
+TEST(MODULE, rocketUnicodeCodePoint) { // NOLINT(*-complexity)
   using namespace rocket::unicode;
   using type = CodePoint;
 
@@ -921,7 +921,7 @@ TEST(MODULE, stdVector) {
   EXPECT_EQ(result->begin() - input.begin(), 9);
 }
 
-TEST(MODULE, stdChronoDuration) {
+TEST(MODULE, stdChronoDuration) { // NOLINT(*-complexity)
   using namespace std::chrono;
 
   // Default format: `%Q%q`, the output of the formatter
@@ -978,7 +978,7 @@ TEST(MODULE, stdChronoDuration) {
   EXPECT_EQ(scanError<seconds>("42s", "{:%Q%Q}"), scn::scan_error::invalid_format_string);
 }
 
-TEST(MODULE, stdChronoHhMmSs) {
+TEST(MODULE, stdChronoHhMmSs) { // NOLINT(*-complexity)
   using namespace std::chrono;
 
   // `hh_mm_ss` has no `operator==`, so its duration is compared
@@ -1029,7 +1029,7 @@ TEST(MODULE, stdChronoHhMmSs) {
 // The scanner for `std::chrono::time_point` used to call `std::mktime`, which takes the fields for local
 // time, although a `system_clock` time point is UTC. `cmake/patches/scnlib.patch` makes it take the fields
 // as UTC. Under a time zone other than UTC, these tests fail without the patch
-TEST(MODULE, stdChronoTimePoint) {
+TEST(MODULE, stdChronoTimePoint) { // NOLINT(*-complexity)
   using namespace std::chrono;
   using TimePoint = time_point<system_clock, nanoseconds>;
 

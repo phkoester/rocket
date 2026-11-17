@@ -22,7 +22,7 @@ namespace rocket {
 #if defined(ROCKET_HAS_INT128) || defined(ROCKET_DOXYGEN)
 using i128 = __int128; ///< A signed 128-bit integer type.
 using u128 = unsigned __int128; ///< An unsigned 128-bit integer type.
-#elif defined(ROCKET_HAS_BOOST_INT128)
+#elifdef ROCKET_HAS_BOOST_INT128
 using i128 = boost::int128::int128; ///< A signed 128-bit integer type.
 using u128 = boost::int128::uint128; ///< An unsigned 128-bit integer type.
 #endif

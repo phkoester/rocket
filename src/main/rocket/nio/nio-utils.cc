@@ -380,43 +380,43 @@ readCodePoint(Source& in) {
     } catch (const exception&) {
       throw InputFailure(contiguous->position(), INVALID_UTF8);
     }
-  } else {
-    // Noncontiguous
+  }
 
-    const auto start = in.tell();
+  // Noncontiguous
 
-    // Check the first byte by peeking: at the end of the input, or if the byte is neither a single byte nor
-    // a lead byte, nothing is consumed
-    const auto first = peekChar(in);
-    if (not first) {
-      return {};
-    }
-    const auto len = unicode::utf8::lengthFromByte(*first, unicode::InvalidUnicodePolicy::Continue);
-    if (len == NPOS) {
-      throw InputFailure(start, INVALID_UTF8);
-    }
+  const auto start = in.tell();
 
-    string s(len, '\0');
-    const u64 n = in.read(s);
-    if (n != len && in.bad()) {
-      throw io::IoError(in.code()); // The position is unspecified
-    }
-
-    // Decode the code point. On failure, go back over the bytes read
-    try {
-      u64 pos = 0;
-      if (n == len) {
-        auto ret = unicode::nextCodePoint(s, pos);
-        if (pos == s.size()) {
-          return ret;
-        }
-      }
-    } catch (const exception&) {
-      // Fall through
-    }
-    rewindTo(in, start);
+  // Check the first byte by peeking: at the end of the input, or if the byte is neither a single byte nor
+  // a lead byte, nothing is consumed
+  const auto first = peekChar(in);
+  if (not first) {
+    return {};
+  }
+  const auto len = unicode::utf8::lengthFromByte(*first, unicode::InvalidUnicodePolicy::Continue);
+  if (len == NPOS) {
     throw InputFailure(start, INVALID_UTF8);
   }
+
+  string s(len, '\0');
+  const u64 n = in.read(s);
+  if (n != len && in.bad()) {
+    throw io::IoError(in.code()); // The position is unspecified
+  }
+
+  // Decode the code point. On failure, go back over the bytes read
+  try {
+    u64 pos = 0;
+    if (n == len) {
+      auto ret = unicode::nextCodePoint(s, pos);
+      if (pos == s.size()) {
+        return ret;
+      }
+    }
+  } catch (const exception&) {
+    // Fall through
+  }
+  rewindTo(in, start);
+  throw InputFailure(start, INVALID_UTF8);
 }
 
 optional<string>
@@ -490,27 +490,27 @@ readString(Source& in, string_view str, bool ignoreCase, bool endOfWord) {
     }
     in.seek(static_cast<i64>(str.size()), SeekMode::cur);
     return true;
-  } else {
-    // Noncontiguous
+  }
 
-    const auto pos = in.tell();
+  // Noncontiguous
 
-    for (const char expected : str) {
-      char c; // NOLINT
-      if (not readOne(in, c) ||
-        (ignoreCase ? not equalsIgnoreAsciiCase(c, expected) : c != expected)) {
-        // EOF or mismatch: rewind
-        rewindTo(in, pos);
-        return false;
-      }
-    }
-    if (endOfWord && not isEndOfWord(in)) {
-      // No word boundary: rewind
+  const auto pos = in.tell();
+
+  for (const char expected : str) {
+    char c; // NOLINT
+    if (not readOne(in, c) ||
+      (ignoreCase ? not equalsIgnoreAsciiCase(c, expected) : c != expected)) {
+      // EOF or mismatch: rewind
       rewindTo(in, pos);
       return false;
     }
-    return true;
   }
+  if (endOfWord && not isEndOfWord(in)) {
+    // No word boundary: rewind
+    rewindTo(in, pos);
+    return false;
+  }
+  return true;
 }
 
 std::chrono::nanoseconds
@@ -555,27 +555,27 @@ readUntilChar(Source& in, char c) {
     }
     in.seek(static_cast<i64>(pos + 1), SeekMode::cur);
     return string(remaining.substr(0, pos));
-  } else {
-    // Noncontiguous
-
-    const auto pos = in.tell();
-
-    string ret;
-
-    while (true) {
-      char current; // NOLINT
-      if (not readOne(in, current)) {
-        break;
-      }
-      if (current == c) {
-        return ret;
-      }
-      ret.push_back(current);
-    }
-
-    rewindTo(in, pos);
-    return {};
   }
+
+  // Noncontiguous
+
+  const auto pos = in.tell();
+
+  string ret;
+
+  while (true) {
+    char current; // NOLINT
+    if (not readOne(in, current)) {
+      break;
+    }
+    if (current == c) {
+      return ret;
+    }
+    ret.push_back(current);
+  }
+
+  rewindTo(in, pos);
+  return nullopt;
 }
 
 optional<string>
@@ -597,27 +597,28 @@ readUntilUnescapedChar(Source& in, char c) {
       }
       ++pos;
     }
-  } else {
-    // Noncontiguous
-
-    const auto pos = in.tell();
-
-    string ret;
-
-    while (true) {
-      char current; // NOLINT
-      if (not readOne(in, current)) {
-        break;
-      }
-      if (current == c && not isEscaped(ret, ret.size())) {
-        return ret;
-      }
-      ret.push_back(current);
-    }
-
-    rewindTo(in, pos);
-    return {};
+    return nullopt;
   }
+
+  // Noncontiguous
+
+  const auto pos = in.tell();
+
+  string ret;
+
+  while (true) {
+    char current; // NOLINT
+    if (not readOne(in, current)) {
+      break;
+    }
+    if (current == c && not isEscaped(ret, ret.size())) {
+      return ret;
+    }
+    ret.push_back(current);
+  }
+
+  rewindTo(in, pos);
+  return nullopt;
 }
 
 string
@@ -633,21 +634,21 @@ readWhilePredicate(Source& in, const function<bool(char)>& predicate) {
     string ret(remaining.begin(), it);
     in.seek(static_cast<i64>(ret.size()), SeekMode::cur);
     return ret;
-  } else {
-    // Noncontiguous
-
-    string ret;
-    while (true) {
-      const auto c = peekChar(in);
-      if (not c || not predicate(*c)) {
-        break;
-      }
-      char consumed; // NOLINT
-      readOne(in, consumed);
-      ret.push_back(consumed);
-    }
-    return ret;
   }
+
+  // Noncontiguous
+
+  string ret;
+  while (true) {
+    const auto c = peekChar(in);
+    if (not c || not predicate(*c)) {
+      break;
+    }
+    char consumed; // NOLINT
+    readOne(in, consumed);
+    ret.push_back(consumed);
+  }
+  return ret;
 }
 
 void
@@ -722,31 +723,31 @@ skipUntilString(Source& in, string_view str) {
     }
     in.seek(static_cast<i64>(pos + str.size()), SeekMode::cur);
     return true;
-  } else {
-    // Noncontiguous
+  }
 
-    // Compare the last `str.size()` characters. A partial match must not simply be discarded on a mismatch,
-    // because its tail may be the start of the actual match, as with "*/" in "**/" or "aab" in "aaab"
+  // Noncontiguous
 
-    string window;
+  // Compare the last `str.size()` characters. A partial match must not simply be discarded on a mismatch,
+  // because its tail may be the start of the actual match, as with "*/" in "**/" or "aab" in "aaab"
 
-    while (true) {
-      char c; // NOLINT
-      if (not readOne(in, c)) {
-        break;
-      }
+  string window;
 
-      window.push_back(c);
-      if (window.size() > str.size()) {
-        window.erase(window.begin());
-      }
-      if (window == str) {
-        return true;
-      }
+  while (true) {
+    char c; // NOLINT
+    if (not readOne(in, c)) {
+      break;
     }
 
-    return false;
+    window.push_back(c);
+    if (window.size() > str.size()) {
+      window.erase(window.begin());
+    }
+    if (window == str) {
+      return true;
+    }
   }
+
+  return false;
 }
 
 } // namespace rocket::nio

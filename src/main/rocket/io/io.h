@@ -220,8 +220,8 @@ protected:
    * @return an invalid position
    */
   pos_type
-  seekoff(off_type, std::ios::seekdir, std::ios::openmode) override {
-    return pos_type(off_type(-1));
+  seekoff(off_type /*off*/, std::ios::seekdir /*dir*/, std::ios::openmode /*which*/) override {
+    return {static_cast<off_type>(-1)};
   }
 
   /**
@@ -229,7 +229,10 @@ protected:
    *
    * @return an invalid position
    */
-  pos_type seekpos(pos_type, std::ios::openmode) override { return pos_type(off_type(-1)); }
+  pos_type
+  seekpos(pos_type /*pos*/, std::ios::openmode /*which*/) override {
+    return {static_cast<off_type>(-1)};
+  }
 };
 
 // `TellOnlyBuf` --------------------------------------------------------------------------------------------
@@ -258,7 +261,7 @@ protected:
     if (off == 0 && dir == std::ios::cur) {
       return std::stringbuf::seekoff(off, dir, which);
     }
-    return pos_type(off_type(-1));
+    return {static_cast<off_type>(-1)};
   }
 
   /**
@@ -266,7 +269,10 @@ protected:
    *
    * @return an invalid position
    */
-  pos_type seekpos(pos_type, std::ios::openmode) override { return pos_type(off_type(-1)); }
+  pos_type
+  seekpos(pos_type /*pos*/, std::ios::openmode /*which*/) override {
+    return {static_cast<off_type>(-1)};
+  }
 };
 
 } // namespace testing

@@ -103,7 +103,7 @@ main(i32 argc, char **argv) {
 
   // ICU
 
-#if defined(ROCKET_OS_WINDOWS)
+#ifdef ROCKET_OS_WINDOWS
   // Windows `<icu.h>` does not provide `U_ICU_VERSION`
   printVersion("ICU", icuVersion());
   #ifdef ROCKET_ICU_CMAKE

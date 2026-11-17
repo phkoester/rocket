@@ -415,10 +415,10 @@ TEST(MODULE, ProducerEscapeFailurePosition) {
   using Map = map<string, string>;
   constexpr string_view INVALID_ESCAPE = "invalid escape sequence";
 
-  expectFailure<string>("  \"\\q\"", INVALID_ESCAPE, 3, { { 3, 5 } });
+  expectFailure<string>(R"(  "\q")", INVALID_ESCAPE, 3, { { 3, 5 } });
   expectFailure<char>("  '\\q'", INVALID_ESCAPE, 3, { { 3, 5 } });
   expectFailure<Map>("{\n  \"a\": \"\\q\"\n}", INVALID_ESCAPE, 10, { { 10, 12 } }); // Value on a later line
-  expectFailure<Map>("{\"\\q\": \"x\"}", INVALID_ESCAPE, 2, { { 2, 4 } }); // Key
+  expectFailure<Map>(R"({"\q": "x"})", INVALID_ESCAPE, 2, { { 2, 4 } }); // Key
 
   expectFailure<string>("  \"a\xFF\"", "invalid UTF-8 byte sequence", 4);
 }
@@ -672,7 +672,7 @@ TEST(MODULE, ProducerDate) {
   }
 }
 
-TEST(MODULE, ProducerTimeZone) {
+TEST(MODULE, ProducerTimeZone) { // NOLINT(*-complexity)
   using namespace std::chrono;
 
   EXPECT_EQ(decode<TimeZone>("Europe/Berlin"), rocket::chrono::locate_zone("Europe/Berlin"));
@@ -784,7 +784,7 @@ TEST(MODULE, ProducerZonedTimeTimeZone) {
     rocket::chrono::locate_zone("Europe/London"));
 }
 
-TEST(MODULE, ProducerTimeIndependentOfLocalZone) {
+TEST(MODULE, ProducerTimeIndependentOfLocalZone) { // NOLINT(*-complexity)
   using namespace std::chrono;
   using TimePoint = time_point<system_clock, nanoseconds>;
   using ZonedTime = rocket::chrono::zoned_time<nanoseconds>;
@@ -834,7 +834,7 @@ TEST(MODULE, ProducerTimeIndependentOfLocalZone) {
   expectFailure<TimePoint>("2026-02-30T12:00:00Z", "expected a time point", 0);
 }
 
-TEST(MODULE, ProducerInterval) {
+TEST(MODULE, ProducerInterval) { // NOLINT(*-complexity)
   using namespace rocket::math;
   EXPECT_EQ(decode<ClosedInterval<f64>>("[-4.2,4.2]"), ClosedInterval<f64>(-4.2_f64, 4.2_f64));
   EXPECT_EQ(decode<OpenInterval<f64>>("∅"), OpenInterval<f64>());

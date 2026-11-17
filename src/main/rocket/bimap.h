@@ -12,6 +12,8 @@
 #include <boost/bimap/set_of.hpp>
 #include <boost/bimap/unordered_set_of.hpp>
 
+#include <algorithm>
+
 namespace rocket {
 
 // `bimap` --------------------------------------------------------------------------------------------------
@@ -89,13 +91,10 @@ operator==(const rocket::unordered_bimap<K, V>& lhs, const rocket::unordered_bim
   if (lhs.size() != rhs.size()) {
     return false;
   }
-  for (const auto& elem : lhs.left) {
+  return std::ranges::all_of(lhs.left, [&rhs](const auto& elem) {
     auto it = rhs.left.find(elem.first);
-    if (it == rhs.left.end() || !(it->second == elem.second)) {
-      return false;
-    }
-  }
-  return true;
+    return it != rhs.left.end() && it->second == elem.second;
+  });
 }
 
 } // namespace boost::bimaps

@@ -38,28 +38,28 @@ ROCKET_ENUM_DEFINE(, Color, Color, (Red)(Green)(Blue));
 namespace {
 
 struct A {
-  int a;
+  int a {};
 
   virtual ~A() = default;
 };
 
 struct B : A {
-  int b;
+  int b {};
 
-  virtual ~B() = default;
+  ~B() override = default;
 };
 
 struct C : B {
-  int c;
+  int c {};
 
-  virtual ~C() = default;
+  ~C() override = default;
 };
 
 [[maybe_unused]]
-void handle(const A&) { nio::out.println("handle.A"); }
+void handle(const A& /*val*/) { nio::out.println("handle.A"); }
 
 [[maybe_unused]]
-void handle(const B&) { nio::out.println("handle.B"); }
+void handle(const B& /*val*/) { nio::out.println("handle.B"); }
 
 // Local functions ------------------------------------------------------------------------------------------
 
@@ -82,7 +82,7 @@ myTerminate() {
 void
 toy() {
   unordered_map<int, string> m1 {{ 1, "one" }, {2, "two" }, { 3, "three" }};
-  unordered_map<int, string> m2 {{ 1, "one" }, {2, "two" }, { 3, "three" }};
+  const unordered_map<int, string> m2 {{ 1, "one" }, {2, "two" }, { 3, "three" }};
 
   if (m1 == m2) {
 
@@ -90,7 +90,7 @@ toy() {
   fmt::println("m1: {}", m1);
 
   bimap<int, string> b1 = make_bimap<int, string>( { { 1, "one" }, {2, "two" }, { 3, "three" } });
-  bimap<int, string> b2 = make_bimap<int, string>( { { 1, "one" }, {2, "two" }, { 3, "three" } });
+  const bimap<int, string> b2 = make_bimap<int, string>( { { 1, "one" }, {2, "two" }, { 3, "three" } });
 
   if (b1 == b2) {
   }
@@ -103,7 +103,7 @@ toy() {
 
   nio::out.println("terminal size: {}", system::terminal::size(nio::out));
 
-  C c;
+  const C c;
   handle(c);
 
   auto result = system::exec("echo 'Hello");

@@ -334,6 +334,8 @@ endblock()
 # - Makes `%Y` accept a negative year with up to five digits, as {fmt} writes it, such as `-005` or `-10000`
 # - Makes the fraction of `%.S` optional and rounds it to the nearest nanosecond instead of truncating it
 # - Makes `%z` accept `Z` (Zulu time) as the UTC offset +00:00, as in RFC 3339, and reject minutes above 59
+# - Makes the format-string checker return after an out-of-range argument ID instead of indexing its argument
+#   types out of bounds, which clang-tidy reports as `clang-analyzer-security.ArrayBound`
 #
 # Its hash is part of the command, so that editing the patch repopulates scnlib
 set(ROCKET_SCNLIB_PATCH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/patches/scnlib.patch")

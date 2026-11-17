@@ -10,7 +10,6 @@
 #include <csignal>
 
 #define MODULE rocketAssert
-#define MODULE_DEATH_TEST MODULE##DeathTest
 namespace {
 
 // Local functions ------------------------------------------------------------------------------------------
@@ -31,7 +30,7 @@ TEST(MODULE, RocketAssertTrue) {
   EXPECT_FALSE(oopsCalled);
 }
 
-TEST(MODULE_DEATH_TEST, RocketAssertFalse) { // NOLINT(*-complexity)
+TEST(rocketAssertDeathTest, RocketAssertFalse) { // NOLINT(*-complexity)
   EXPECT_EXIT(
       { ROCKET_ASSERT(false, "my message: {}", 42); },
       ABORTED(), "assertion `false` failed: my message: 42");
@@ -65,7 +64,7 @@ TEST(MODULE, RocketFail) {
   EXPECT_TRUE(oopsCalled);
 }
 
-TEST(MODULE_DEATH_TEST, RocketTerminate) {
+TEST(rocketAssertDeathTest, RocketTerminate) {
   EXPECT_EXIT(
       { ROCKET_TERMINATE("my message: {}", 42); },
       ABORTED(), "my message: 42");

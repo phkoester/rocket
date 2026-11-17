@@ -324,8 +324,9 @@ TEST(MODULE, IntegerDecoding) {
 }
 
 TEST(MODULE, IntegerInvalid) {
-  const auto expectFailure = [](const vector<u8>& cbor, auto expected, string_view message, u64 position) {
-    const auto result = decode<decltype(expected)>(cbor);
+  // `expected` only selects the type to decode
+  const auto expectFailure = [](const vector<u8>& cbor, const auto& expected, string_view message, u64 position) {
+    const auto result = decode<std::remove_cvref_t<decltype(expected)>>(cbor);
     ASSERT_FALSE(result.has_value());
     EXPECT_EQ(result.error().message, message);
     EXPECT_EQ(result.error().position, position);

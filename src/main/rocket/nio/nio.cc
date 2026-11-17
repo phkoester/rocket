@@ -67,8 +67,17 @@ getcUnlocked(FILE* file) {
 #ifdef ROCKET_OS_WINDOWS
   return _getc_nolock(file);
 #else
-  return getc_unlocked(file);
+  return getc_unlocked(file); // NOLINT(concurrency-mt-unsafe): the caller holds a `FileLock`
 #endif
+}
+
+/// Returns the `fopen` mode for writing to a file.
+const char*
+writeMode(bool append, bool binary) {
+  if (append) {
+    return binary ? "ab" : "a";
+  }
+  return binary ? "wb" : "w";
 }
 
 // `checkFileScan` ------------------------------------------------------------------------------------------
@@ -297,7 +306,7 @@ FileSink::FileSink(FILE* file) :
 }
 
 FileSink::FileSink(const fs::path& path, bool append, bool binary) :
-  file_(io::file::open(path, append ? (binary ? "ab" : "a") : (binary ? "wb" : "w"))),
+  file_(io::file::open(path, writeMode(append, binary))),
   closeOnDestroy_(true) {
   if (file_ == nullptr) {
     const auto ec = genericErrorCode(errno);

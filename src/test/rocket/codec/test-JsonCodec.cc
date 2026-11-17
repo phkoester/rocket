@@ -594,12 +594,12 @@ TEST(MODULE, ProducerEscapeFailurePosition) {
   using Map = map<string, string>;
   constexpr string_view INVALID_ESCAPE = "invalid escape sequence";
 
-  expectFailure<string>("  \"\\q\"", INVALID_ESCAPE, 3, { { 3, 5 } });
-  expectFailure<char>("  \"\\q\"", INVALID_ESCAPE, 3, { { 3, 5 } });
+  expectFailure<string>(R"(  "\q")", INVALID_ESCAPE, 3, { { 3, 5 } });
+  expectFailure<char>(R"(  "\q")", INVALID_ESCAPE, 3, { { 3, 5 } });
   expectFailure<Map>("{\n  \"a\": \"\\q\"\n}", INVALID_ESCAPE, 10, { { 10, 12 } }); // Value on a later line
-  expectFailure<Map>("{\"\\q\": \"x\"}", INVALID_ESCAPE, 2, { { 2, 4 } }); // Key
+  expectFailure<Map>(R"({"\q": "x"})", INVALID_ESCAPE, 2, { { 2, 4 } }); // Key
   // Through `readJsonString`
-  expectFailure<std::chrono::seconds>(" \"\\q\"", INVALID_ESCAPE, 2, { { 2, 4 } });
+  expectFailure<std::chrono::seconds>(R"( "\q")", INVALID_ESCAPE, 2, { { 2, 4 } });
 
   expectFailure<string>(R"("\uDD71")", "Unpaired surrogate in escape sequence", 1, { { 1, 7 } });
   expectFailure<string>("  \"a\xFF\"", "invalid UTF-8 byte sequence", 4);
@@ -612,7 +612,7 @@ TEST(MODULE, ProducerKeyFailureRanges) {
   expectFailure<Map>("{\"[1, 2\": 3}", UNTERMINATED, 7, { { 2, 7 } });
 
   // An escape sequence is longer in the input than after unescaping, so the bounds must be mapped
-  expectFailure<Map>("{\"\\u005B1, 2\": 3}", UNTERMINATED, 12, { { 2, 12 } });
+  expectFailure<Map>(R"({"\u005B1, 2": 3})", UNTERMINATED, 12, { { 2, 12 } });
 }
 
 TEST(MODULE, ProducerUnexpectedInputAfterValue) {
@@ -632,7 +632,7 @@ TEST(MODULE, ProducerUnexpectedInputAfterValue) {
   expectFailure<map<i32, i32>>("{\"1!\": 2}", UNEXPECTED, 3, { { 3, 4 } });
 
   // An escape sequence is longer in the input than after unescaping, so the bounds must be mapped
-  expectFailure<seconds>("\"5s\\u0021\"", UNEXPECTED, 3, { { 3, 9 } });
+  expectFailure<seconds>(R"("5s\u0021")", UNEXPECTED, 3, { { 3, 9 } });
 
   // Whitespace may follow the value, just as it may precede it
   EXPECT_EQ(decode<seconds>("\"5s \""), 5s);
@@ -806,7 +806,7 @@ TEST(MODULE, ProducerDate) {
   }
 }
 
-TEST(MODULE, ProducerTimeZone) {
+TEST(MODULE, ProducerTimeZone) { // NOLINT(*-complexity)
   using namespace std::chrono;
 
   EXPECT_EQ(decode<TimeZone>("\"Europe/Berlin\""), rocket::chrono::locate_zone("Europe/Berlin"));
@@ -909,7 +909,7 @@ TEST(MODULE, ProducerZonedTimeTimeZone) {
     rocket::chrono::locate_zone("Europe/London"));
 }
 
-TEST(MODULE, ProducerTimeIndependentOfLocalZone) {
+TEST(MODULE, ProducerTimeIndependentOfLocalZone) { // NOLINT(*-complexity)
   using namespace std::chrono;
   using TimePoint = time_point<system_clock, nanoseconds>;
   using ZonedTime = rocket::chrono::zoned_time<nanoseconds>;
@@ -959,7 +959,7 @@ TEST(MODULE, ProducerTimeIndependentOfLocalZone) {
   expectFailure<TimePoint>("\"2026-02-30T12:00:00Z\"", "expected a time point", 1);
 }
 
-TEST(MODULE, ProducerInterval) {
+TEST(MODULE, ProducerInterval) { // NOLINT(*-complexity)
   using namespace rocket::math;
   EXPECT_EQ(decode<ClosedInterval<f64>>("\"[-4.2,4.2]\""), ClosedInterval<f64>(-4.2_f64, 4.2_f64));
   EXPECT_EQ(decode<ClosedInterval<f64>>("\" [ -4.2 , 4.2 ] \""), ClosedInterval<f64>(-4.2_f64, 4.2_f64));

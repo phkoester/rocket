@@ -101,8 +101,8 @@ private:
   template<typename Context>
   static scan_expected<void>
   expect(Context& ctx, char c) {
-    const C str[] = { static_cast<C>(c) };
-    if (auto it = match(ctx, std::basic_string_view<C>(str, 1)); it) {
+    const C ch = static_cast<C>(c);
+    if (auto it = match(ctx, std::basic_string_view<C>(&ch, 1)); it) {
       ctx.advance_to(*it);
       return {};
     }

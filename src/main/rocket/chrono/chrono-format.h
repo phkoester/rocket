@@ -11,6 +11,7 @@
 
 #include <fmt/chrono.h>
 
+#include <array>
 #include <chrono>
 #include <iterator>
 #include <string>
@@ -51,14 +52,16 @@ struct fmt::formatter<rocket::chrono::zoned_time<Duration, TimeZonePtr>, C> {
   format(const rocket::chrono::zoned_time<Duration, TimeZonePtr>& val, FormatContext& ctx) const {
     using namespace rocket;
 
-    static constexpr C defaultSpec[] = { '%', 'F', ' ', '%', 'T', ' ', '%', 'Z' };
+    static constexpr auto defaultSpec = std::to_array<C>({ '%', 'F', ' ', '%', 'T', ' ', '%', 'Z' });
 
     // The specification consists of a standard part (fill, alignment, width, and `L`) and a chrono part,
     // which starts at the first `%`. Without a chrono part, the format is `%F %T %Z`
     const u64 pos = spec_.find('%');
     std::basic_string_view<C> stdSpec = spec_.substr(0, pos);
     const std::basic_string_view<C> chronoSpec =
-      pos == std::basic_string_view<C>::npos ? std::basic_string_view<C>(defaultSpec, 8) : spec_.substr(pos);
+      pos == std::basic_string_view<C>::npos ?
+        std::basic_string_view<C>(defaultSpec.data(), defaultSpec.size()) :
+        spec_.substr(pos);
     const bool localized = not stdSpec.empty() && stdSpec.back() == 'L';
     if (localized) {
       stdSpec.remove_suffix(1);

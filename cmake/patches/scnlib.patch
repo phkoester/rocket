@@ -93,6 +93,34 @@ index f36594ee..921442b5 100644
              return std::chrono::duration_cast<Duration>(time + subsec_in_ns);
          }
      }
+diff --git a/include/scn/scan.h b/include/scn/scan.h
+index 01dc86be..3ec6afc3 100644
+--- a/include/scn/scan.h
++++ b/include/scn/scan.h
+@@ -10859,6 +10859,12 @@ public:
+     constexpr void on_replacement_field(size_t id, const CharT* begin)
+     {
+         set_arg_as_read(id);
++        if (id >= num_args) {
++            // `set_arg_as_read` has reported the error, which fails a
++            // compile-time check already. Return anyway, so that `m_types` is
++            // not indexed out of bounds
++            return;
++        }
+ 
+         auto type = m_types[id];
+         check_arg_can_be_read(type);
+@@ -10880,6 +10886,10 @@ public:
+                                            const CharT*)
+     {
+         set_arg_as_read(id);
++        if (id >= num_args) {
++            // See `on_replacement_field`
++            return begin;
++        }
+         check_arg_can_be_read(m_types[id]);
+ 
+         m_parse_context.advance_to(begin);
 diff --git a/src/scn/impl.cpp b/src/scn/impl.cpp
 index 805ee788..49291b0a 100644
 --- a/src/scn/impl.cpp

@@ -584,7 +584,7 @@ TEST(MODULE, parseParametersMaxOccurs) {
   EXPECT_EQ(args, (vector<string> { "c", "d" }));
 }
 
-TEST(MODULE, argFiles) {
+TEST(MODULE, argFiles) { // NOLINT(*-complexity)
   namespace fs = std::filesystem;
 
   const fs::path dir = rocket::filesystem::tempDir();

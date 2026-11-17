@@ -96,6 +96,14 @@ std::string join(
  * Converts a UTF-32 string to lower case, handling Unicode code points correctly.
  *
  * @param str the string to convert
+ * @return a new string
+ */
+[[nodiscard]] std::u32string lower(std::u32string_view str);
+
+/**
+ * Converts a UTF-32 string to lower case, handling Unicode code points correctly.
+ *
+ * @param str the string to convert
  */
 void lowerIn(std::u32string& str);
 

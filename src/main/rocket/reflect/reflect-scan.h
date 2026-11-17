@@ -50,7 +50,9 @@ struct IteratorSource : nio::Source {
    * @param begin the start of the input
    * @param end the end of the input
    */
-  IteratorSource(It begin, Sent end) : begin_(begin), it_(begin), end_(end) { seekable_ = true; }
+  IteratorSource(It begin, Sent end) : begin_(begin), it_(begin), end_(end) {
+    seekable_ = true; // NOLINT(cppcoreguidelines-prefer-member-initializer): a member of the base class
+  }
 
   [[nodiscard]] bool bad() const override { return false; }
 

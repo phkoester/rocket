@@ -131,7 +131,7 @@ seekable(ostream& os) noexcept {
   auto* buf = os.rdbuf();
   try {
     return buf != nullptr &&
-      buf->pubseekoff(0, ios::cur, ios::out) != ostream::pos_type(ostream::off_type(-1));
+      buf->pubseekoff(0, ios::cur, ios::out) != ostream::pos_type(static_cast<ostream::off_type>(-1));
   } catch (...) {
     return false;
   }
@@ -159,10 +159,10 @@ tell(istream& is) noexcept {
   } catch (...) {
     return NPOS;
   }
-  if (result == istream::pos_type(istream::off_type(-1))) {
+  if (result == istream::pos_type(static_cast<istream::off_type>(-1))) {
     return NPOS;
   }
-  return static_cast<u64>(streamoff(result));
+  return static_cast<u64>(static_cast<streamoff>(result));
 }
 
 } // namespace stream

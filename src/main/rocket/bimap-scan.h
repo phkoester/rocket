@@ -12,6 +12,7 @@
 #include <scn/ranges.h>
 #include <scn/scan.h>
 
+#include <array>
 #include <string_view>
 #include <type_traits>
 #include <utility>
@@ -54,13 +55,13 @@ struct scn::scanner<boost::bimaps::bimap<A, B>, C> {
   template<typename Context>
   scan_expected<typename Context::iterator>
   scan(Type& val, Context& ctx) const {
-    static constexpr C open[] = { C('{') };
-    static constexpr C close[] = { C('}') };
-    static constexpr C sep[] = { C(',') };
-    static constexpr C keySep[] = { C(':') };
+    static constexpr std::array open = { C('{') };
+    static constexpr std::array close = { C('}') };
+    static constexpr std::array sep = { C(',') };
+    static constexpr std::array keySep = { C(':') };
 
-    const auto scanStr = [&ctx](const C* str) -> scan_expected<void> {
-      auto result = detail::scan_str(ctx.range(), std::basic_string_view<C>(str, 1));
+    const auto scanStr = [&ctx](const std::array<C, 1>& str) -> scan_expected<void> {
+      auto result = detail::scan_str(ctx.range(), std::basic_string_view<C>(str.data(), str.size()));
       if (not result) {
         return unexpected(result.error());
       }
@@ -73,7 +74,7 @@ struct scn::scanner<boost::bimaps::bimap<A, B>, C> {
     }
     for (bool first = true; ; first = false) {
       // Peek at the closing brace; it is consumed after the loop
-      if (detail::scan_str(ctx.range(), std::basic_string_view<C>(close, 1))) {
+      if (detail::scan_str(ctx.range(), std::basic_string_view<C>(close.data(), close.size()))) {
         break;
       }
       if (not first) {
@@ -98,7 +99,7 @@ struct scn::scanner<boost::bimaps::bimap<A, B>, C> {
       }
       val.insert({ std::move(k), std::move(v) }); // `bimap` has no `emplace`
     }
-    return detail::scan_str(ctx.range(), std::basic_string_view<C>(close, 1));
+    return detail::scan_str(ctx.range(), std::basic_string_view<C>(close.data(), close.size()));
   }
 
   /// @endcond

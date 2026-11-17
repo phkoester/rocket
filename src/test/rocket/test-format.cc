@@ -202,7 +202,7 @@ groupingLocale() {
     }
   };
 
-  return std::locale(std::locale::classic(), new Numpunct());
+  return { std::locale::classic(), new Numpunct() };
 }
 
 } // namespace

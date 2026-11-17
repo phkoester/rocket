@@ -6,9 +6,7 @@
 
 using namespace std::chrono;
 
-namespace rocket::chrono {
-
-namespace internal {
+namespace rocket::chrono::internal {
 
 // Internal -------------------------------------------------------------------------------------------------
 
@@ -24,8 +22,6 @@ clockOffset() {
   return offset;
 }
 
-} // namespace internal
-
-} // namespace rocket::chrono
+} // namespace rocket::chrono::internal
 
 // EOF

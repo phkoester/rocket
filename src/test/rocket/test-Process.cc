@@ -10,7 +10,6 @@
 #include "rocket/system/system.h"
 
 #define MODULE rocketProcess
-#define MODULE_DEATH_TEST MODULE##DeathTest
 
 // Tests ====================================================================================================
 
@@ -20,13 +19,13 @@ TEST(MODULE, error0) {
   EXPECT_EQ(buf.str(), "test-rocket-Process: error: test error\n");
 }
 
-TEST(MODULE_DEATH_TEST, error2) {
+TEST(rocketProcessDeathTest, error2) {
   EXPECT_EXIT(
     { process().error(nio::err, 2, "test error"); },
     ExitedWithCode(2), "test-rocket-Process: fatal error: test error\n");
 }
 
-TEST(MODULE_DEATH_TEST, exit) {
+TEST(rocketProcessDeathTest, exit) {
   EXPECT_EXIT(
     { process().error(nio::err, 7, "exiting ..."); },
     ExitedWithCode(7), "test-rocket-Process: fatal error: exiting ...\n");

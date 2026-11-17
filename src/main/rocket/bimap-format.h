@@ -13,6 +13,7 @@
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 
+#include <array>
 #include <ostream>
 #include <type_traits>
 
@@ -61,38 +62,39 @@ struct fmt::formatter<boost::bimaps::bimap<A, B>, C> {
       ctx.advance_to(it);
     }
     keyFormatter_.parse(ctx);
-    detail::maybe_set_debug_format(keyFormatter_, true);
+    // fmt's fallback overload of `maybe_set_debug_format` is a C-style vararg function
+    detail::maybe_set_debug_format(keyFormatter_, true); // NOLINT(cppcoreguidelines-pro-type-vararg)
     valueFormatter_.parse(ctx);
-    detail::maybe_set_debug_format(valueFormatter_, true);
+    detail::maybe_set_debug_format(valueFormatter_, true); // NOLINT(cppcoreguidelines-pro-type-vararg)
     return it;
   }
 
   template<typename FormatContext>
   FormatContext::iterator
   format(const Type& val, FormatContext& ctx) const {
-    static constexpr C open[] = { C('{') };
-    static constexpr C close[] = { C('}') };
-    static constexpr C sep[] = { C(','), C(' ') };
-    static constexpr C keySep[] = { C(':'), C(' ') };
+    static constexpr std::array open = { C('{') };
+    static constexpr std::array close = { C('}') };
+    static constexpr std::array sep = { C(','), C(' ') };
+    static constexpr std::array keySep = { C(':'), C(' ') };
 
     auto out = ctx.out();
     if (not noDelimiters_) {
-      out = detail::copy<C>(basic_string_view<C>(open, 1), out);
+      out = detail::copy<C>(basic_string_view<C>(open.data(), open.size()), out);
     }
     bool first = true;
     for (const auto& elem : val.left) {
       if (not first) {
-        out = detail::copy<C>(basic_string_view<C>(sep, 2), out);
+        out = detail::copy<C>(basic_string_view<C>(sep.data(), sep.size()), out);
       }
       first = false;
       ctx.advance_to(out);
       out = keyFormatter_.format(elem.first, ctx);
-      out = detail::copy<C>(basic_string_view<C>(keySep, 2), out);
+      out = detail::copy<C>(basic_string_view<C>(keySep.data(), keySep.size()), out);
       ctx.advance_to(out);
       out = valueFormatter_.format(elem.second, ctx);
     }
     if (not noDelimiters_) {
-      out = detail::copy<C>(basic_string_view<C>(close, 1), out);
+      out = detail::copy<C>(basic_string_view<C>(close.data(), close.size()), out);
     }
     return out;
   }

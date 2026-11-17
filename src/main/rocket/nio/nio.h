@@ -122,6 +122,9 @@ struct Sink : Device {
    */
   virtual bool flush() = 0;
 
+  // `fmt::make_format_args` binds its arguments to lvalue references, so `args` cannot be forwarded
+  // NOLINTBEGIN(cppcoreguidelines-missing-std-forward)
+
   /**
    * Prints a formatted message to the sink.
    *
@@ -203,6 +206,8 @@ struct Sink : Device {
   println(const std::locale& locale, fmt::format_string<T...> fmt, T&&... args) {
     return vprint(locale, fmt.get(), fmt::make_format_args(args...)) && write('\n') == 1;
   }
+
+  // NOLINTEND(cppcoreguidelines-missing-std-forward)
 
   /**
    * Writes a single character to the sink.
@@ -330,7 +335,7 @@ protected:
  * Whether the file is seekable is determined once, at construction, as this takes a system call. If the
  * file is reopened afterward, e.g., with `freopen`, it is still considered seekable or not as before.
  */
-struct FileSink : Sink {
+struct FileSink final : Sink {
   /**
    * @ctor
    *
@@ -412,11 +417,11 @@ struct NullSink : Sink {
 
 protected:
 
-  bool vprint(fmt::string_view, fmt::format_args) override { return true; }
+  bool vprint(fmt::string_view /*fmt*/, fmt::format_args /*args*/) override { return true; }
 
-  bool vprint(fmt::text_style, fmt::string_view, fmt::format_args) override { return true; }
+  bool vprint(fmt::text_style /*style*/, fmt::string_view /*fmt*/, fmt::format_args /*args*/) override { return true; }
 
-  bool vprint(const std::locale&, fmt::string_view, fmt::format_args) override { return true; }
+  bool vprint(const std::locale& /*locale*/, fmt::string_view /*fmt*/, fmt::format_args /*args*/) override { return true; }
 };
 
 // `SpanSink` -----------------------------------------------------------------------------------------------
@@ -473,7 +478,7 @@ private:
  * for any state bit in the mask: an exception from the stream buffer is an I/O error, which makes the sink
  * #bad and sets its #code.
  */
-struct StreamSink : Sink {
+struct StreamSink final : Sink {
   /**
    * @ctor
    *
@@ -847,7 +852,7 @@ protected:
  * Whether the file is seekable is determined once, at construction, as this takes a system call. If the
  * file is reopened afterward, e.g., with `freopen`, it is still considered seekable or not as before.
  */
-struct FileSource : Source {
+struct FileSource final : Source {
   /**
    * @ctor
    *
@@ -927,13 +932,13 @@ struct NullSource : Source {
 
   using Source::read;
 
-  u64 read(std::span<u8>) override { return 0; }
+  u64 read(std::span<u8> /*out*/) override { return 0; }
 
   std::optional<std::string> readln() override { return std::nullopt; }
 
   using Source::seek;
 
-  bool seek(i64, SeekMode) override { return true; }
+  bool seek(i64 /*offset*/, SeekMode /*mode*/) override { return true; }
 
   [[nodiscard]] std::optional<u64> tell() override { return 0; }
 
@@ -1018,7 +1023,7 @@ private:
  * nor for any state bit in the mask: an exception from the stream buffer is an I/O error, which makes the
  * source #bad and sets its #code.
  */
-struct StreamSource : Source {
+struct StreamSource final : Source {
   /**
    * @ctor
    *

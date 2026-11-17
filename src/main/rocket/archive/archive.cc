@@ -45,7 +45,7 @@ using ArchiveEntryPtr = unique_ptr<archive_entry, ArchiveEntryDeleter>;
 const char*
 errorString(struct archive* a) {
   const char* ret = archive_error_string(a);
-  return ret ? ret : "Unknown error";
+  return ret != nullptr ? ret : "Unknown error";
 }
 
 /// Throws #rocket::InvalidState if @p status signals an error.
@@ -141,7 +141,7 @@ addTarEntry(struct archive* a, struct archive* disk, const fs::path& path, const
 
 void
 gzipDir(const fs::path& srce, const fs::path& dest) {
-  ArchiveReadPtr diskPtr(archive_read_disk_new());
+  const ArchiveReadPtr diskPtr(archive_read_disk_new());
   if (not diskPtr) {
     ROCKET_FAIL("cannot allocate disk reader");
   }

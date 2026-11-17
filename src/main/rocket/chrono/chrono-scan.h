@@ -11,6 +11,7 @@
 
 #include <scn/chrono.h>
 
+#include <array>
 #include <cassert>
 #include <chrono>
 #include <cmath>
@@ -86,7 +87,7 @@ struct Unit {
 };
 
 /// The unit suffixes {fmt} writes for durations, plus `us` for microseconds.
-inline constexpr Unit units[] = {
+inline constexpr auto units = std::to_array<Unit>({
   { U"as", 1, std::atto::den },
   { U"fs", 1, std::femto::den },
   { U"ps", 1, std::pico::den },
@@ -108,7 +109,7 @@ inline constexpr Unit units[] = {
   { U"min", 60, 1 },
   { U"h", 3600, 1 },
   { U"d", 86400, 1 },
-};
+});
 
 /// Reads a positive number for the unit `[num]s` or `[num/den]s`.
 template<typename It, typename Sent>
@@ -117,15 +118,16 @@ readUnitNumber(It& it, Sent end, std::intmax_t& val) {
   if (it == end || *it < '0' || *it > '9') {
     return false;
   }
+  // The first character is a digit, as checked above
   val = 0;
-  do {
+  while (it != end && *it >= '0' && *it <= '9') {
     const auto digit = static_cast<std::intmax_t>(*it - '0');
     if (val > (std::numeric_limits<std::intmax_t>::max() - digit) / 10) {
       return false;
     }
     val = val * 10 + digit;
     ++it;
-  } while (it != end && *it >= '0' && *it <= '9');
+  }
   return val != 0;
 }
 
@@ -152,8 +154,8 @@ readUnit(Context& ctx, std::intmax_t& num, std::intmax_t& den) {
         return invalidValue("Invalid duration unit");
       }
     }
-    static constexpr C close[] = { ']', 's' };
-    if (not match(it, end, std::basic_string_view<C>(close, 2))) {
+    static constexpr auto close = std::to_array<C>({ ']', 's' });
+    if (not match(it, end, std::basic_string_view<C>(close.data(), close.size()))) {
       return invalidValue("Invalid duration unit");
     }
     ctx.advance_to(it);
@@ -202,7 +204,7 @@ convertCount(Rep count, std::intmax_t num, std::intmax_t den) {
     u128 d = static_cast<u128>(static_cast<std::uintmax_t>(den)) * static_cast<u128>(Period::num);
     u128 a = n;
     u128 b = d;
-    while (b != u128(0)) {
+    while (b != static_cast<u128>(0)) {
       const u128 t = a % b;
       a = b;
       b = t;
@@ -211,10 +213,11 @@ convertCount(Rep count, std::intmax_t num, std::intmax_t den) {
     d /= a;
 
     bool negative = false;
-    u128 magnitude;
+    u128 magnitude {};
     if constexpr (std::is_signed_v<Rep>) {
       negative = count < 0;
-      magnitude = negative ? static_cast<u128>(-(count + 1)) + u128(1) : static_cast<u128>(count);
+      magnitude =
+        negative ? static_cast<u128>(-(count + 1)) + static_cast<u128>(1) : static_cast<u128>(count);
     } else {
       magnitude = static_cast<u128>(count);
     }
@@ -224,26 +227,26 @@ convertCount(Rep count, std::intmax_t num, std::intmax_t den) {
         negative ? scn::scan_error::value_negative_overflow : scn::scan_error::value_positive_overflow,
         "Duration overflow"));
     };
-    if (magnitude != u128(0) && magnitude > std::numeric_limits<u128>::max() / n) {
+    if (magnitude != static_cast<u128>(0) && magnitude > std::numeric_limits<u128>::max() / n) {
       return overflow();
     }
     const u128 product = magnitude * n;
-    if (product % d != u128(0)) {
+    if (product % d != static_cast<u128>(0)) {
       return invalidValue("Duration not representable in the target type");
     }
     const u128 result = product / d;
 
-    u128 limit;
+    u128 limit {};
     if (negative) {
       const Rep min = std::numeric_limits<Rep>::min();
-      limit = static_cast<u128>(-(min + 1)) + u128(1);
+      limit = static_cast<u128>(-(min + 1)) + static_cast<u128>(1);
     } else {
       limit = static_cast<u128>(std::numeric_limits<Rep>::max());
     }
     if (result > limit) {
       return overflow();
     }
-    return negative ? static_cast<Rep>(u128(0) - result) : static_cast<Rep>(result);
+    return negative ? static_cast<Rep>(static_cast<u128>(0) - result) : static_cast<Rep>(result);
   }
 }
 
@@ -308,11 +311,12 @@ struct scn::scanner<std::chrono::duration<Rep, Period>, C> {
 
   template<typename Context>
   scn::scan_expected<typename Context::iterator>
-  scan(std::chrono::duration<Rep, Period>& val, Context& ctx) const {
+  scan(std::chrono::duration<Rep, Period>& val, Context& ctx) const { // NOLINT(*-complexity)
     using namespace rocket::chrono::internal::scan;
 
-    static constexpr C defaultSpec[] = { '%', 'Q', '%', 'q' };
-    const std::basic_string_view<C> spec = spec_.empty() ? std::basic_string_view<C>(defaultSpec, 4) : spec_;
+    static constexpr auto defaultSpec = std::to_array<C>({ '%', 'Q', '%', 'q' });
+    const std::basic_string_view<C> spec =
+      spec_.empty() ? std::basic_string_view<C>(defaultSpec.data(), defaultSpec.size()) : spec_;
 
     Rep count {};
     bool hasUnit = false;
@@ -327,7 +331,7 @@ struct scn::scanner<std::chrono::duration<Rep, Period>, C> {
       if (c == '%') {
         const C next = spec[++i];
         if (next == 'Q') {
-          scn::scanner<Rep, C> scanner;
+          const scn::scanner<Rep, C> scanner {};
           auto result = scanner.scan(count, ctx);
           if (not result) {
             return scn::unexpected(result.error());
@@ -497,9 +501,9 @@ public:
     }
     if (it == begin) {
       if constexpr (std::ratio_less_v<typename ZonedTime::duration::period, std::ratio<1>>) {
-        spec_ = std::basic_string_view<C>(subsecondSpec, std::size(subsecondSpec));
+        spec_ = std::basic_string_view<C>(subsecondSpec.data(), subsecondSpec.size());
       } else {
-        spec_ = std::basic_string_view<C>(defaultSpec, std::size(defaultSpec));
+        spec_ = std::basic_string_view<C>(defaultSpec.data(), defaultSpec.size());
       }
       return it;
     }
@@ -538,7 +542,7 @@ public:
 
   template<typename Context>
   scn::scan_expected<typename Context::iterator>
-  scan(ZonedTime& val, Context& ctx) const {
+  scan(ZonedTime& val, Context& ctx) const { // NOLINT(*-complexity)
     using namespace std::chrono;
     using rocket::chrono::internal::scan::forEachSegment;
     using rocket::chrono::internal::scan::invalidValue;
@@ -575,7 +579,7 @@ public:
       return invalidValue("Invalid date");
     }
     const sys_days days(ymd);
-    if (dt.wday && weekday(static_cast<unsigned>(dt.wday->c_encoding())) != weekday(days)) {
+    if (dt.wday && weekday(dt.wday->c_encoding()) != weekday(days)) {
       return invalidValue("The weekday does not match the date");
     }
     if (dt.yday && *dt.yday != (days - sys_days(ymd.year() / January / 1)).count()) {
@@ -635,10 +639,10 @@ public:
 
 private:
 
-  static constexpr C defaultSpec[] = { '%', 'F', ' ', '%', 'T', ' ', '%', 'Z' };
-  static constexpr C subsecondSpec[] = {
+  static constexpr auto defaultSpec = std::to_array<C>({ '%', 'F', ' ', '%', 'T', ' ', '%', 'Z' });
+  static constexpr auto subsecondSpec = std::to_array<C>({
     '%', 'F', ' ', '%', 'H', ':', '%', 'M', ':', '%', '.', 'S', ' ', '%', 'Z'
-  };
+  });
 
   std::basic_string_view<C> spec_;
 };
@@ -654,14 +658,15 @@ readDigits(It& it, Sent end, std::int64_t max, std::int64_t& val) {
   if (it == end || *it < '0' || *it > '9') {
     return invalidValue("Expected hour, minute, and second");
   }
+  // The first character is a digit, as checked above
   val = 0;
-  do {
+  while (it != end && *it >= '0' && *it <= '9') {
     val = val * 10 + static_cast<std::int64_t>(*it - '0');
     if (val > max) {
       return invalidValue("Invalid hour, minute, or second");
     }
     ++it;
-  } while (it != end && *it >= '0' && *it <= '9');
+  }
   return {};
 }
 

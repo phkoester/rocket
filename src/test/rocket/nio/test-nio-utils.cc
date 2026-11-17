@@ -137,8 +137,8 @@ testSkipUntilString(string_view input, string_view str, bool expected, u64 expec
 
 // Functions ------------------------------------------------------------------------------------------------
 
-TEST(MODULE, readChar) {
-  forEachSource("ab", [](Source& in) {
+TEST(MODULE, readChar) { // NOLINT(*-complexity)
+  forEachSource("ab", [](Source& in) { // NOLINT(*-complexity)
     EXPECT_FALSE(readChar(in, 'x'));
     EXPECT_EQ(in.tell(), 0);
     EXPECT_TRUE(readChar(in, 'a'));
@@ -207,8 +207,8 @@ TEST(MODULE, readCharacterInvalidUtf8) {
   });
 }
 
-TEST(MODULE, expectChar) {
-  forEachSource("a:,b", [](Source& in) {
+TEST(MODULE, expectChar) { // NOLINT(*-complexity)
+  forEachSource("a:,b", [](Source& in) { // NOLINT(*-complexity)
     EXPECT_NO_THROW(expectChar(in, 'a'));
     EXPECT_NO_THROW(expectColon(in));
     EXPECT_NO_THROW(expectComma(in));
@@ -265,7 +265,7 @@ TEST(MODULE, readChoiceIgnoreCase) {
   testReadChoice("TRUEX", { "true" }, true, true, nullopt);
 }
 
-TEST(MODULE, ignoreCaseFoldsAsciiLettersOnly) {
+TEST(MODULE, ignoreCaseFoldsAsciiLettersOnly) { // NOLINT(*-complexity)
   // `readString` and `readChoice`, each through the contiguous and the noncontiguous code path
   const auto test = [](string_view input, string_view expected, bool matches) {
     forEachSource(input, [&](Source& in) {
@@ -384,8 +384,8 @@ TEST(MODULE, readIdentifierNoIdentifier) {
   }
 }
 
-TEST(MODULE, readString) {
-  forEachSource("hello world", [](Source& in) {
+TEST(MODULE, readString) { // NOLINT(*-complexity)
+  forEachSource("hello world", [](Source& in) { // NOLINT(*-complexity)
     EXPECT_TRUE(readString(in, "hello"));
     EXPECT_EQ(in.tell(), 5);
     EXPECT_TRUE(readString(in, " ", false, false));
@@ -426,7 +426,7 @@ TEST(MODULE, readString) {
   test("HELLOX", "hello", true, true, false);
 }
 
-TEST(MODULE, readUntilChar) {
+TEST(MODULE, readUntilChar) { // NOLINT(*-complexity)
   forEachSource("ab,cd,", [](Source& in) {
     EXPECT_EQ(readUntilChar(in, ','), "ab");
     EXPECT_EQ(in.tell(), 3); // The character is consumed
@@ -522,7 +522,7 @@ TEST(MODULE, readUntilUnescapedCharNotFound) {
   testReadUntilUnescapedChar(R"(a\\\")", '"', nullopt, 0);
 }
 
-TEST(MODULE, readWhilePredicate) {
+TEST(MODULE, readWhilePredicate) { // NOLINT(*-complexity)
   const auto isDigit = [](char c) { return c >= '0' && c <= '9'; };
   forEachSource("123ab", [&](Source& in) {
     EXPECT_EQ(readWhilePredicate(in, isDigit), "123");

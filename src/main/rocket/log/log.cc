@@ -161,7 +161,7 @@ struct Out {
 
   nio::Sink& get(const TimePoint& time);
 
-  void set(string_view pattern, const TimePoint& time);
+  void set(string_view val, const TimePoint& time);
 
 private:
 
@@ -319,8 +319,8 @@ Out::nameRegex(const fs::path& name) {
 
   // Replace `<date>` and `<pid>` with regex patterns
   str::replaceIn(ret, {
-    { "<date>", "(\\d{4}-\\d{2}-\\d{2})" }, // `YYYY-MM-DD`, and make this a group
-    { "<pid>", "\\d+" }, // One or more digits
+    { "<date>", R"((\d{4}-\d{2}-\d{2}))" }, // `YYYY-MM-DD`, and make this a group
+    { "<pid>", R"(\d+)" }, // One or more digits
   });
 
   return ret;
@@ -333,7 +333,8 @@ Out::set(string_view val, const TimePoint& time) {
   if (val == "-" || val == "stdout") {
     set(nio::out, "stdout");
     return;
-  } else if (val == "stderr") {
+  }
+  if (val == "stderr") {
     set(nio::err, "stderr");
     return;
   }
@@ -406,29 +407,32 @@ Out::zipOlderFiles(const fs::path& current) {
     }
 
     auto entry = it->path();
-    string entryName = entry.filename().string();
+    const string entryName = entry.filename().string();
     smatch match;
-    if (regex_match(entryName, match, nameRe)) {
-      // Group 1 is the directory-entry date, `YYYY-MM-DD`
-      const string entryDate = match[1].str();
-      // Using `YYYY-MM-DD` for the date part of the name, we can compare the strings directly
-      if (entryDate < currentDate) {
-        // The entry date is older: zip the file
-        process().info(nio::err, "zipping log file `{}` ...", entry);
-        const auto gz = entry.string() + ".gz";
-        try {
-          archive::gzip(entry, gz);
-          error_code ec;
-          fs::remove(entry, ec);
-          if (ec) {
-            process().error(nio::err, 0, "cannot remove log file `{}`: {}", entry, ec.message());
-          }
-        } catch (const Exception& ex) {
-          process().error(nio::err, 0, "cannot zip log file `{}`: {}", entry, ex.message());
-        } catch (const exception& ex) {
-          process().error(nio::err, 0, "cannot zip log file `{}`: {}", entry, ex.what());
-        }
+    if (not regex_match(entryName, match, nameRe)) {
+      continue;
+    }
+    // Group 1 is the directory-entry date, `YYYY-MM-DD`
+    const string entryDate = match[1].str();
+    // Using `YYYY-MM-DD` for the date part of the name, we can compare the strings directly
+    if (entryDate >= currentDate) {
+      continue;
+    }
+
+    // The entry date is older: zip the file
+    process().info(nio::err, "zipping log file `{}` ...", entry);
+    const auto gz = entry.string() + ".gz";
+    try {
+      archive::gzip(entry, gz);
+      error_code ec;
+      fs::remove(entry, ec);
+      if (ec) {
+        process().error(nio::err, 0, "cannot remove log file `{}`: {}", entry, ec.message());
       }
+    } catch (const Exception& ex) {
+      process().error(nio::err, 0, "cannot zip log file `{}`: {}", entry, ex.message());
+    } catch (const exception& ex) {
+      process().error(nio::err, 0, "cannot zip log file `{}`: {}", entry, ex.what());
     }
   }
 }

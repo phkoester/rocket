@@ -17,7 +17,7 @@
   #include <unicode/utf8.h>
   #include <unicode/utypes.h>
   #include <unicode/uversion.h>
-#elif defined(ROCKET_OS_WINDOWS)
+#elifdef ROCKET_OS_WINDOWS
   #include "windows.h" // Must come first, defines `NTDDI_VERSION`
   #include <icu.h>
 #endif
