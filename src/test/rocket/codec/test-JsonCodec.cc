@@ -6,6 +6,8 @@
 
 #include "rocket/enum-format.h"
 #include "rocket/enum-scan.h"
+#include "rocket/int128-format.h"
+#include "rocket/int128-scan.h"
 #include "rocket/scope.h"
 #include "rocket/codec/JsonCodec.h"
 #include "rocket/chrono/chrono-format.h"
