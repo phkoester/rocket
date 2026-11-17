@@ -181,6 +181,14 @@ errnoCode() {
   return errno != 0 ? genericErrorCode(errno) : make_error_code(errc::io_error);
 }
 
+/// Returns the error code for a failure of the stream buffer of @p s. Only a `std::filebuf` leaves a
+/// meaningful `errno` behind. Any other stream buffer may have thrown, and the stream swallowed it, and the
+/// exception runtime may have left a stale `errno` then, so this is `errc::io_error`.
+std::error_code
+streamBufferErrorCode(const ios& s) {
+  return dynamic_cast<const filebuf*>(s.rdbuf()) != nullptr ? errnoCode() : make_error_code(errc::io_error);
+}
+
 /// Clears the state of @p s. This throws only if @p s has no stream buffer, which sets `badbit`, and `badbit`
 /// is in the exception mask. This is ignored here, @p s stays bad then.
 void
@@ -215,8 +223,9 @@ setBad(ios& s) noexcept {
  *   mask, and @p op may call the stream buffer directly, too. It is an I/O error, so `badbit` is set.
  * - A `fmt::format_error` or a `std::bad_alloc` is no I/O error, it is rethrown.
  *
- * If @p s is bad afterwards, @p ec is set: to the code of a `std::system_error` from the stream buffer, or to
- * the code for `errno`, which a `std::filebuf` leaves behind. @p s must not be bad when this is called.
+ * If @p s is bad afterwards, @p ec is set: to the code of a `std::system_error` from the stream buffer, to
+ * `errc::io_error` for any other exception from it, or else to #streamBufferErrorCode. @p s must not be bad
+ * when this is called.
  */
 template<typename F>
 void
@@ -237,10 +246,13 @@ runStreamOp(ios& s, error_code& ec, F op) {
     }
     throw;
   } catch (const exception&) {
+    // Throwing leaves `errno` meaningless, the exception runtime may have touched it
     setBad(s);
+    ec = make_error_code(errc::io_error);
+    return;
   }
   if (s.bad()) {
-    ec = errnoCode();
+    ec = streamBufferErrorCode(s);
   }
 }
 

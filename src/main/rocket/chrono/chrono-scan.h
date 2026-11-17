@@ -573,16 +573,20 @@ public:
     if (not dt.year || not dt.mon || not dt.mday) {
       return invalidValue("A zoned time requires a date");
     }
-    const year_month_day ymd(
-      year(*dt.year), month(static_cast<unsigned>(*dt.mon)), day(static_cast<unsigned>(*dt.mday)));
+    // Use `std::chrono::year_month_day` and siblings to avoid ambiguity with scnlib’s
+    const std::chrono::year_month_day ymd(
+      std::chrono::year(*dt.year),
+      std::chrono::month(static_cast<unsigned>(*dt.mon)),
+      std::chrono::day(static_cast<unsigned>(*dt.mday)));
     if (not ymd.ok()) {
       return invalidValue("Invalid date");
     }
-    const sys_days days(ymd);
-    if (dt.wday && weekday(dt.wday->c_encoding()) != weekday(days)) {
+    const std::chrono::sys_days days(ymd);
+    if (dt.wday && std::chrono::weekday(dt.wday->c_encoding()) != std::chrono::weekday(days)) {
       return invalidValue("The weekday does not match the date");
     }
-    if (dt.yday && *dt.yday != (days - sys_days(ymd.year() / January / 1)).count()) {
+    if (dt.yday && *dt.yday !=
+       (days - std::chrono::sys_days(ymd.year() / std::chrono::January / 1)).count()) {
       return invalidValue("The day of the year does not match the date");
     }
 

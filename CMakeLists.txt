@@ -299,6 +299,9 @@ block()
   # libarchive's test setup references `${CMAKE_SOURCE_DIR}/build/cmake/...`, which breaks when it is not the
   # top-level project. We don't need its tests anyway
   set(ENABLE_TEST OFF)
+  # libarchive adds `-Werror` in Debug builds, so deprecations in newer system libraries (e.g., lz4) break the
+  # build
+  set(ENABLE_WERROR OFF)
   FetchContent_MakeAvailable(libarchive)
 endblock()
 

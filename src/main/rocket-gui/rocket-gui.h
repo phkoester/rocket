@@ -63,7 +63,7 @@ struct std::hash<wxSize> {
   rocket::std_size_t
   operator()(const wxSize& size) const {
     using namespace rocket;
-    rocket::std_size_t ret = std::hash<i32>()(size.x);
+    u64 ret = std::hash<i32>()(size.x);
     rocket::hash::combine(ret, std::hash<i32>()(size.y));
     return ret;
   }

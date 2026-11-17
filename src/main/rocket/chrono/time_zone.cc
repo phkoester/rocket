@@ -5,30 +5,30 @@
 #include "time_zone.h"
 
 #include "rocket/icu.h"
+#include "rocket/scope.h"
 
 #ifdef ROCKET_OS_WINDOWS
-  #include "rocket/scope.h"
   #include "rocket/windows.h"
+#endif
 
-  #include <array>
-#endif // ROCKET_OS_WINDOWS
-
-#ifndef ROCKET_HAS_STD_CHRONO_TIME_ZONE
-  #include <algorithm>
-  #include <cstdint>
-  #include <cstdlib>
-  #include <filesystem>
-  #include <fstream>
-  #include <map>
-  #include <optional>
-  #include <span>
-  #include <tuple>
-  #include <vector>
-#endif // ROCKET_HAS_STD_CHRONO_TIME_ZONE
+#include <algorithm>
+#include <array>
+#include <cstdint>
+#include <cstdlib>
+#include <filesystem>
+#include <fstream>
+#include <map>
+#include <optional>
+#include <span>
+#include <tuple>
+#include <vector>
 
 using namespace rocket;
 using namespace std;
 using namespace std::chrono;
+
+using rocket::chrono::sys_info;
+using rocket::chrono::time_zone;
 
 namespace rocket::chrono {
 
@@ -131,6 +131,9 @@ abbreviation([[maybe_unused]] string_view name, [[maybe_unused]] bool dst, strin
 } // namespace rocket::chrono
 
 #ifndef ROCKET_HAS_STD_CHRONO_TIME_ZONE
+
+using rocket::chrono::internal::TimeZoneAccess;
+using rocket::chrono::internal::ZoneData;
 
 namespace {
 

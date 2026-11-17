@@ -12,6 +12,7 @@
 #include "rocket/nio/nio-fwd.h"
 #include "rocket/str/str.h"
 
+#include <exception>
 #include <optional>
 #include <sstream>
 #include <source_location>
