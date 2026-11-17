@@ -29,12 +29,18 @@ jobs:
       CMAKE_C_COMPILER_LAUNCHER: ccache
       CMAKE_CXX_COMPILER_LAUNCHER: ccache
       DEBIAN_FRONTEND: noninteractive
+      GAIA_DIR: ${{ github.workspace }}/gaia
       LANG: C.UTF-8
+
+    defaults:
+      run:
+        working-directory: rocket
 
     steps:
       # Git must be installed before checkout, otherwise `actions/checkout` downloads a tarball without
       # `.git`
       - name: Install packages
+        working-directory: .
         run: |
           apt-get update
           apt-get install -y --no-install-recommends \
@@ -42,6 +48,16 @@ jobs:
 
       - name: Check out
         uses: actions/checkout@v4
+        with:
+          path: rocket
+
+      # Rocket uses `GAIA_DIR` as Gaia's source instead of fetching the tag `v${ROCKET_GAIA_VERSION}`
+      - name: Check out Gaia
+        uses: actions/checkout@v4
+        with:
+          repository: phkoester/gaia
+          ref: main
+          path: gaia
 
       # The container runs as root, but the workspace belongs to the runner user
       - name: Mark the workspace safe for Git
