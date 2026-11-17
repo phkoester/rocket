@@ -96,7 +96,7 @@ TEST(MODULE, envLogLevel) {
   EXPECT_EQ(env::get<type>(name).error(), env::GetError::NotFound);
   // Convert to `optional<LogLevel>` and check if it is empty
   EXPECT_EQ(
-    env::get<type>(name).transform([](type val) { return optional<log::LogLevel>(val); }).value_or({}),
+    env::get<type>(name).transform([](type val) { return optional<log::LogLevel>(val); }).value_or(nullopt),
     optional<type>());
 
   env::set(name, type::debug);
@@ -108,7 +108,7 @@ TEST(MODULE, envLogLevel) {
   EXPECT_EQ(env::get<type>(name).error(), env::GetError::ConversionFailed);
   // Convert to `optional<LogLevel>` and check if it is empty
   EXPECT_EQ(
-    env::get<type>(name).transform([](type val) { return optional<log::LogLevel>(val); }).value_or({}),
+    env::get<type>(name).transform([](type val) { return optional<log::LogLevel>(val); }).value_or(nullopt),
     optional<type>());
 
   env::unset(name);

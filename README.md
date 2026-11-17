@@ -1,5 +1,7 @@
 # Rocket
 
+[![CI](https://github.com/phkoester/rocket/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/phkoester/rocket/actions/workflows/ci.yml?query=branch%3Amain)
+
 Rocket is a general-purpose library written in C++, helping you create cross-platform CLI and GUI
 applications.
 
