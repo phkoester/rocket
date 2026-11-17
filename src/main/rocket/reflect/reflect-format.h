@@ -14,8 +14,6 @@
 
 #include <fmt/format.h>
 
-#include <typeinfo>
-
 // `fmt::formatter<rocket::reflect::Declared>` --------------------------------------------------------------
 
 /**

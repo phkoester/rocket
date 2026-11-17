@@ -11,9 +11,13 @@
 #include "rocket/chrono/chrono-format.h"
 #include "rocket/chrono/chrono-scan.h"
 #include "rocket/log/log.h"
+#include "rocket/math/Interval-format.h"
+#include "rocket/math/Interval-scan.h"
 #include "rocket/reflect/reflect.h"
 #include "rocket/str/location/location.h"
 #include "rocket/system/system.h"
+#include "rocket/unicode/unicode-format.h"
+#include "rocket/unicode/unicode-scan.h"
 
 using namespace rocket;
 using namespace rocket::codec;

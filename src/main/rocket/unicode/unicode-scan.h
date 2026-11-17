@@ -9,7 +9,6 @@
 
 #pragma once
 
-#include "rocket/type-traits.h"
 #include "rocket/unicode/Iterator.h"
 #include "rocket/unicode/Character.h"
 #include "rocket/unicode/unicode.h"

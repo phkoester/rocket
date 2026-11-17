@@ -6,8 +6,9 @@
 
 #pragma once
 
-#include "rocket/bimap.h"
 #include "rocket/type-traits.h"
+
+#include <boost/bimap/bimap.hpp>
 
 #include <fmt/format.h>
 #include <fmt/ranges.h>

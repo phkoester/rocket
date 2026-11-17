@@ -6,7 +6,6 @@
 
 #pragma once
 
-#include "rocket/TypeId-format.h"
 #include "rocket/assert.h"
 #include "rocket/codec/codec.h"
 

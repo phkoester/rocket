@@ -213,17 +213,11 @@
 #pragma once
 
 #include "rocket/InputFailure.h"
-#include "rocket/TypeId-format.h"
-#include "rocket/std.h"
 #include "rocket/codec/codec.h"
-#include "rocket/math/Interval-format.h"
-#include "rocket/math/Interval-scan.h"
 #include "rocket/nio/nio.h"
 #include "rocket/nio/nio-utils.h"
 #include "rocket/str/escape/escape.h"
 #include "rocket/unicode/ConvertTo.h"
-#include "rocket/unicode/unicode-format.h"
-#include "rocket/unicode/unicode-scan.h"
 
 namespace rocket::codec {
 

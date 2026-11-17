@@ -8,6 +8,7 @@
 
 #include "rocket/TypeId-format.h"
 #include "rocket/stacktrace.h"
+#include "rocket/type-traits.h"
 #include "rocket/nio/nio-fwd.h"
 #include "rocket/str/str.h"
 

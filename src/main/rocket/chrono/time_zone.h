@@ -31,23 +31,19 @@
 
 #include "rocket/rocket.h"
 
+#include <fmt/chrono.h>
+
 #include <chrono>
+#include <compare>
+#include <concepts>
+#include <memory>
+#include <ostream>
+#include <sstream>
 #include <stdexcept>
 #include <string>
 #include <string_view>
-
-#ifndef ROCKET_HAS_STD_CHRONO_TIME_ZONE
-  #include <fmt/chrono.h>
-
-  #include <compare>
-  #include <concepts>
-  #include <memory>
-  #include <ostream>
-  #include <sstream>
-  #include <stdexcept>
-  #include <type_traits>
-  #include <utility>
-#endif
+#include <type_traits>
+#include <utility>
 
 namespace rocket::chrono {
 

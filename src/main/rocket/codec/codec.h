@@ -40,8 +40,6 @@
 
 #include "rocket/InputFailure.h"
 #include "rocket/Positions.h"
-#include "rocket/assert.h"
-#include "rocket/bimap.h"
 #include "rocket/type-traits.h"
 #include "rocket/chrono/chrono.h"
 #include "rocket/math/Interval.h"

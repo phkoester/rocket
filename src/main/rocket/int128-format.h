@@ -6,19 +6,18 @@
 
 #pragma once
 
+#include "rocket/rocket.h"
+
 #include "rocket/type-traits.h"
 
 #include <fmt/format.h>
 
 #include <climits>
 #include <limits>
+#include <locale>
 #include <string>
 #include <string_view>
 #include <type_traits>
-
-#if FMT_USE_LOCALE
-  #include <locale>
-#endif
 
 #ifndef ROCKET_HAS_FMT_FORMATTER_INT128
 

@@ -6,6 +6,7 @@
 
 #pragma once
 
+#include "rocket/rocket.h"
 #include "rocket/io/io.h"
 
 #include <fmt/color.h> // `fmt::text_style`

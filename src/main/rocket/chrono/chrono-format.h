@@ -6,8 +6,8 @@
 
 #pragma once
 
-#include "rocket/type-traits.h"
 #include "rocket/chrono/chrono.h"
+#include "rocket/type-traits.h"
 
 #include <fmt/chrono.h>
 

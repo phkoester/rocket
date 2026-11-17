@@ -12,14 +12,11 @@
 
 #include <cstddef>
 #include <limits>
+#include <locale>
 #include <ranges>
 #include <string>
 #include <string_view>
 #include <type_traits>
-
-#if !SCN_DISABLE_LOCALE
-  #include <locale>
-#endif
 
 #ifndef ROCKET_HAS_SCN_SCANNER_INT128
 

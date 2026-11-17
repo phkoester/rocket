@@ -6,8 +6,6 @@
 
 #pragma once
 
-#include "rocket/Result.h"
-#include "rocket/TypeId-format.h"
 #include "rocket/assert.h"
 #include "rocket/bimap.h"
 #include "rocket/enum-fwd.h"
@@ -15,6 +13,8 @@
 
 #include <boost/preprocessor/stringize.hpp>
 #include <boost/preprocessor/seq/for_each.hpp>
+
+#include <type_traits>
 
 // Macros ---------------------------------------------------------------------------------------------------
 
