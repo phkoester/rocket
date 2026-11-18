@@ -1,224 +1,222 @@
-/**
- * @file FormattedCodec.h
- *
- * Reads and writes RON (Rocket Object Notation). The recommended file-name extension is `.ron`.
- *
- * # The RON File Format
- *
- * RON is a human-readable format that is similar to, but not quite the same as, JSON. It is designed to be
- * easy to read and write by hand. It is also designed to be easy to parse and generate programmatically.
- *
- * This codec is generous when decoding, but strict when encoding. This means that when reading, it will
- * accept a variety of formats, but it will be canonical and consistent when writing.
- *
- * For detailed information on the supported data types and how they map to C++, see @ref codec_type_system.
- *
- * ## Text-File Encoding, Line Breaks
- *
- * RON is a text format. It must always be encoded in UTF-8 to work with this codec.
- *
- * When reading, both Unix-style and Windows-style line breaks are accepted. When writing, Unix-style line
- * breaks are used.
- *
- * ## Comments
- *
- * RON supports C-style single-line and multi-line comments. Single-line comments start with `//` and
- * continue to the end of the line. Multi-line comments start with <code>/</code><code>*</code> and end with
- * <code>*</code><code>/</code>.
- *
- * Shell-style comments are also accepted. They start with `#` and continue to the end of the line.
- *
- * Comments are never written.
- *
- * ## Trailing Comma
- *
- * When reading, a trailing comma after the last element of a container is allowed and ignored. When writing,
- * no trailing comma is added.
- *
- * ## Boolean Values
- *
- * When reading, the values `0`, `1`, `false`, and `true` are valid. Case is ignored, so `False` and
- * `truE` are also accepted.
- *
- * Boolean values are always written as `true` or `false`.
- *
- * ## Characters {#formatted_char}
- *
- * Characters start and end with a single quote (`'`). Example values: `'a'`, `'\x20'`, `'€'`, `'\u20AC'`,
- * `'\U0010FFFF'`.
- *
- * One-byte characters must be valid ASCII characters in the range [0,127]. Four-byte characters must be
- * valid Unicode code points in the ranges [U+0000,U+D7FF] and [U+E000,U+10FFFF].
- *
- * When reading, escape sequences as well as the prefixes `\x`, `\u`, and `\U` are accepted.
- *
- * When writing, the escape sequences `\a`, `\b`, `\t`, `\n`, `\v`, `\f`, `\r`, `\e`, `\'`, and `\\` are
- * used. If a character is classified as printable by the Unicode standard, it appears verbatim in the
- * output, e.g., as `'a'` or `'€'`. Otherwise, it is written in hexadecimal notation, using the prefixes
- * `\x` (two hexadecimal digits), `\u` (four hexadecimal digits), or `\U` (eight hexadecimal digits), as
- * needed.
- *
- * ## Enumerations
- *
- * Enumerations appear exactly as in code, with no surrounding quotes. Example values: `Red`, `GREEN`,
- * `powder_blue`.
- *
- * ## Integer Values
- *
- * Example values: `+42`, `-42`, `0xABCD` (hexadecimal), `077` (octal), `0o123` (octal), `0b1010101`
- * (binary).
- *
- * Integer values are always written in decimal notation, without any leading `+`.
- *
- * ## Floating-Point Values
- *
- * Example values: `.1`, `0.1`, `+2.`, `-2.0`, `1e3`, `-1e3`, `1.23e-4`, `1.23e+4`, `-inf`, `inf`, `+inf`,
- * `-∞`, `∞`, `nan`.
- *
- * Floating-point values are always written in their canonical form, without any leading `+`. For infinite
- * values, `-∞` and `∞` are used.
- *
- * ## Pointers
- *
- * Pointers are always hexadecimal values, starting with `0x`. The null pointer is notated as `null`.
- *
- * ## Strings
- *
- * Strings always appear surrounded by double quotes (`"`). Example values: `"Hello"`, `"Hello\nWorld"`,
- * `"3 \u20AC"`. Any well-formed UTF-8 string is a valid RON string.
- *
- * When writing, the writing rules for @ref formatted_char "characters" apply. Grapheme clusters are
- * recognized and written verbatim, except that a quote or backslash inside a cluster is escaped.
- *
- * ## Optional Values
- *
- * Optional values appear just like normal values, with one exception: null options are notated as `null`.
- *
- * ## Tuples
- *
- * Tuples appear surrounded by parentheses (`(` and `)`). Example values: `(1, 2, 3)`,
- * `("Answer", 42, true)`.
- *
- * ## Lists
- *
- * Lists appear surrounded by square brackets (`[` and `]`). Examples: `[1, 2, 3]`,
- * `["one", "two", "three"]`.
- *
- * ## Sets
- *
- * Sets appear surrounded by curly braces (`{` and `}`). Example values: `{1, 2, 3}`,
- * `{"one", "two", "three"}`.
- *
- * Duplicate elements are discouraged but allowed. If an element appears multiple times, the first one wins.
- *
- * ## Maps
- *
- * Maps appear surrounded by curly braces (`{` and `}`). Key-value pairs are separated by a colon (`:`).
- * Example: `{1: "one", 2: "two", 3: "three"}`.
- *
- * Duplicate keys are discouraged but allowed. If a key appears multiple times, the last one wins.
- *
- * ## Bidirectional Maps
- *
- * Bidirectional maps appear just like normal maps. Only the left side is notated. The right side is the
- * implicit opposite.
- *
- * Duplicate keys are discouraged but allowed. If a key appears multiple times, the last one wins.
- *
- * ## Durations
- *
- * Durations are notated as {fmt} writes them: a count, directly followed by a unit. Example values: `5ns`,
- * `1700µs`, `90min`, `2[604800]s` (two weeks).
- *
- * Unit       | Meaning
- * :--------- | :------
- * `ns`       | Nanoseconds
- * `µs`       | Microseconds
- * `us`       | Microseconds (reading only)
- * `ms`       | Milliseconds
- * `s`        | Seconds
- * `min`      | Minutes
- * `h`        | Hours
- * `d`        | Days
- * `[n]s`     | Units of `n` seconds, e.g., `[604800]s` for weeks
- * `[n/d]s`   | Units of `n/d` seconds
- *
- * Other SI prefixes that {fmt} writes, such as `ps` or `ks`, are accepted, too. When reading, the value is
- * converted to the target type. A value that is not exactly representable in the target type, or that does
- * not fit into it, is an error.
- *
- * ## Hours, Minutes, Seconds
- *
- * Example values: `01:02:03`, `01:02:03.123`, `01:02:03.123456`, `-111:02:03.123456789`.
- *
- * ## Dates
- *
- * Example values: `1970-01-02`, `-100-01-02`.
- *
- * Dates are written by {fmt} and read with the scnlib format `%F`. Years from -32767 through 9999 can be
- * read; a nonnegative year has exactly four digits.
- *
- * ## Time Zones
- *
- * Time zones are notated by their IANA names, without quotes. Example values: `Europe/Berlin`, `UTC`,
- * `Etc/GMT+5`.
- *
- * When reading, a name consists of ASCII letters, digits, and the characters `_`, `/`, `+`, and `-`.
- *
- * ## Times
- *
- * Example value: `2026-10-07T09:05:26.529594325Z`.
- *
- * ## Times with Time Zone
- *
- * Example value: `2026-10-07T11:21:00.561378057+02:00 Europe/Berlin`.
- *
- * The UTC offset is `Z` for +00:00. When reading, the offset must be one that the time zone has at that
- * local time; it selects between the two meanings of an ambiguous local time.
- *
- * ## Intervals
- *
- * Intervals are read and written in the notation of `rocket/math/Interval-format.h` and
- * `rocket/math/Interval-scan.h`. Example values: `∅` (empty), `[-1.2,3.4]` (closed), `(-1.2,3.4)` (open),
- * `(-∞,-12]` (left-open), `[12,∞)` (right-open). A missing bound is notated as `-∞` or `∞`.
- *
- * Whitespace is allowed between the tokens of an interval, comments are not.
- *
- * ## Declared Objects
- *
- * Members appear like a tuple surrounded by parentheses (`(` and `)`), where each entry is a name-value pair
- * separated by an equal sign (`=`). Example: `(x_=11, y_=12, name_="A")`.
- *
- * Duplicate member names are discouraged but allowed. If a name appears multiple times, the last one wins.
- *
- * ## Instances
- *
- * Instances appear just like declared objects. They only display a different set of members, most probably
- * a subset.
- *
- * Duplicate member names are discouraged but allowed. If a name appears multiple times, the last one wins.
- *
- * ## Members
- *
- * See declared objects.
- *
- * ## Variables
- *
- * Variables appear like a tuple surrounded by parentheses (`(` and `)`), where each entry is a name-value
- * pair separated by an equal sign (`=`). Example: `(x=11, y=12, name="A")`.
- *
- * They cannot be decoded.
- *
- * ## Code Points
- *
- * Code points appear in the typical Unicode notation, e.g., `U+0041` or `U+10FFFF`.
- *
- * A single character is also accepted when reading.
- *
- * ## Grapheme Clusters
- *
- * Grapheme clusters appear just like strings.
- */
+/// @file FormattedCodec.h
+///
+/// Reads and writes RON (Rocket Object Notation). The recommended file-name extension is `.ron`.
+///
+/// # The RON File Format
+///
+/// RON is a human-readable format that is similar to, but not quite the same as, JSON. It is designed to be
+/// easy to read and write by hand. It is also designed to be easy to parse and generate programmatically.
+///
+/// This codec is generous when decoding, but strict when encoding. This means that when reading, it will
+/// accept a variety of formats, but it will be canonical and consistent when writing.
+///
+/// For detailed information on the supported data types and how they map to C++, see @ref codec_type_system.
+///
+/// ## Text-File Encoding, Line Breaks
+///
+/// RON is a text format. It must always be encoded in UTF-8 to work with this codec.
+///
+/// When reading, both Unix-style and Windows-style line breaks are accepted. When writing, Unix-style line
+/// breaks are used.
+///
+/// ## Comments
+///
+/// RON supports C-style single-line and multi-line comments. Single-line comments start with `//` and
+/// continue to the end of the line. Multi-line comments start with <code>/</code><code>*</code> and end with
+/// <code>*</code><code>/</code>.
+///
+/// Shell-style comments are also accepted. They start with `#` and continue to the end of the line.
+///
+/// Comments are never written.
+///
+/// ## Trailing Comma
+///
+/// When reading, a trailing comma after the last element of a container is allowed and ignored. When
+/// writing, no trailing comma is added.
+///
+/// ## Boolean Values
+///
+/// When reading, the values `0`, `1`, `false`, and `true` are valid. Case is ignored, so `False` and
+/// `truE` are also accepted.
+///
+/// Boolean values are always written as `true` or `false`.
+///
+/// ## Characters {#formatted_char}
+///
+/// Characters start and end with a single quote (`'`). Example values: `'a'`, `'\x20'`, `'€'`, `'\u20AC'`,
+/// `'\U0010FFFF'`.
+///
+/// One-byte characters must be valid ASCII characters in the range [0,127]. Four-byte characters must be
+/// valid Unicode code points in the ranges [U+0000,U+D7FF] and [U+E000,U+10FFFF].
+///
+/// When reading, escape sequences as well as the prefixes `\x`, `\u`, and `\U` are accepted.
+///
+/// When writing, the escape sequences `\a`, `\b`, `\t`, `\n`, `\v`, `\f`, `\r`, `\e`, `\'`, and `\\` are
+/// used. If a character is classified as printable by the Unicode standard, it appears verbatim in the
+/// output, e.g., as `'a'` or `'€'`. Otherwise, it is written in hexadecimal notation, using the prefixes
+/// `\x` (two hexadecimal digits), `\u` (four hexadecimal digits), or `\U` (eight hexadecimal digits), as
+/// needed.
+///
+/// ## Enumerations
+///
+/// Enumerations appear exactly as in code, with no surrounding quotes. Example values: `Red`, `GREEN`,
+/// `powder_blue`.
+///
+/// ## Integer Values
+///
+/// Example values: `+42`, `-42`, `0xABCD` (hexadecimal), `077` (octal), `0o123` (octal), `0b1010101`
+/// (binary).
+///
+/// Integer values are always written in decimal notation, without any leading `+`.
+///
+/// ## Floating-Point Values
+///
+/// Example values: `.1`, `0.1`, `+2.`, `-2.0`, `1e3`, `-1e3`, `1.23e-4`, `1.23e+4`, `-inf`, `inf`, `+inf`,
+/// `-∞`, `∞`, `nan`.
+///
+/// Floating-point values are always written in their canonical form, without any leading `+`. For infinite
+/// values, `-∞` and `∞` are used.
+///
+/// ## Pointers
+///
+/// Pointers are always hexadecimal values, starting with `0x`. The null pointer is notated as `null`.
+///
+/// ## Strings
+///
+/// Strings always appear surrounded by double quotes (`"`). Example values: `"Hello"`, `"Hello\nWorld"`,
+/// `"3 \u20AC"`. Any well-formed UTF-8 string is a valid RON string.
+///
+/// When writing, the writing rules for @ref formatted_char "characters" apply. Grapheme clusters are
+/// recognized and written verbatim, except that a quote or backslash inside a cluster is escaped.
+///
+/// ## Optional Values
+///
+/// Optional values appear just like normal values, with one exception: null options are notated as `null`.
+///
+/// ## Tuples
+///
+/// Tuples appear surrounded by parentheses (`(` and `)`). Example values: `(1, 2, 3)`,
+/// `("Answer", 42, true)`.
+///
+/// ## Lists
+///
+/// Lists appear surrounded by square brackets (`[` and `]`). Examples: `[1, 2, 3]`,
+/// `["one", "two", "three"]`.
+///
+/// ## Sets
+///
+/// Sets appear surrounded by curly braces (`{` and `}`). Example values: `{1, 2, 3}`,
+/// `{"one", "two", "three"}`.
+///
+/// Duplicate elements are discouraged but allowed. If an element appears multiple times, the first one wins.
+///
+/// ## Maps
+///
+/// Maps appear surrounded by curly braces (`{` and `}`). Key-value pairs are separated by a colon (`:`).
+/// Example: `{1: "one", 2: "two", 3: "three"}`.
+///
+/// Duplicate keys are discouraged but allowed. If a key appears multiple times, the last one wins.
+///
+/// ## Bidirectional Maps
+///
+/// Bidirectional maps appear just like normal maps. Only the left side is notated. The right side is the
+/// implicit opposite.
+///
+/// Duplicate keys are discouraged but allowed. If a key appears multiple times, the last one wins.
+///
+/// ## Durations
+///
+/// Durations are notated as {fmt} writes them: a count, directly followed by a unit. Example values: `5ns`,
+/// `1700µs`, `90min`, `2[604800]s` (two weeks).
+///
+/// Unit       | Meaning
+/// :--------- | :------
+/// `ns`       | Nanoseconds
+/// `µs`       | Microseconds
+/// `us`       | Microseconds (reading only)
+/// `ms`       | Milliseconds
+/// `s`        | Seconds
+/// `min`      | Minutes
+/// `h`        | Hours
+/// `d`        | Days
+/// `[n]s`     | Units of `n` seconds, e.g., `[604800]s` for weeks
+/// `[n/d]s`   | Units of `n/d` seconds
+///
+/// Other SI prefixes that {fmt} writes, such as `ps` or `ks`, are accepted, too. When reading, the value is
+/// converted to the target type. A value that is not exactly representable in the target type, or that does
+/// not fit into it, is an error.
+///
+/// ## Hours, Minutes, Seconds
+///
+/// Example values: `01:02:03`, `01:02:03.123`, `01:02:03.123456`, `-111:02:03.123456789`.
+///
+/// ## Dates
+///
+/// Example values: `1970-01-02`, `-100-01-02`.
+///
+/// Dates are written by {fmt} and read with the scnlib format `%F`. Years from -32767 through 9999 can be
+/// read; a nonnegative year has exactly four digits.
+///
+/// ## Time Zones
+///
+/// Time zones are notated by their IANA names, without quotes. Example values: `Europe/Berlin`, `UTC`,
+/// `Etc/GMT+5`.
+///
+/// When reading, a name consists of ASCII letters, digits, and the characters `_`, `/`, `+`, and `-`.
+///
+/// ## Times
+///
+/// Example value: `2026-10-07T09:05:26.529594325Z`.
+///
+/// ## Times with Time Zone
+///
+/// Example value: `2026-10-07T11:21:00.561378057+02:00 Europe/Berlin`.
+///
+/// The UTC offset is `Z` for +00:00. When reading, the offset must be one that the time zone has at that
+/// local time; it selects between the two meanings of an ambiguous local time.
+///
+/// ## Intervals
+///
+/// Intervals are read and written in the notation of `rocket/math/Interval-format.h` and
+/// `rocket/math/Interval-scan.h`. Example values: `∅` (empty), `[-1.2,3.4]` (closed), `(-1.2,3.4)` (open),
+/// `(-∞,-12]` (left-open), `[12,∞)` (right-open). A missing bound is notated as `-∞` or `∞`.
+///
+/// Whitespace is allowed between the tokens of an interval, comments are not.
+///
+/// ## Declared Objects
+///
+/// Members appear like a tuple surrounded by parentheses (`(` and `)`), where each entry is a name-value
+/// pair separated by an equal sign (`=`). Example: `(x_=11, y_=12, name_="A")`.
+///
+/// Duplicate member names are discouraged but allowed. If a name appears multiple times, the last one wins.
+///
+/// ## Instances
+///
+/// Instances appear just like declared objects. They only display a different set of members, most probably
+/// a subset.
+///
+/// Duplicate member names are discouraged but allowed. If a name appears multiple times, the last one wins.
+///
+/// ## Members
+///
+/// See declared objects.
+///
+/// ## Variables
+///
+/// Variables appear like a tuple surrounded by parentheses (`(` and `)`), where each entry is a name-value
+/// pair separated by an equal sign (`=`). Example: `(x=11, y=12, name="A")`.
+///
+/// They cannot be decoded.
+///
+/// ## Code Points
+///
+/// Code points appear in the typical Unicode notation, e.g., `U+0041` or `U+10FFFF`.
+///
+/// A single character is also accepted when reading.
+///
+/// ## Grapheme Clusters
+///
+/// Grapheme clusters appear just like strings.
 
 #pragma once
 
@@ -618,10 +616,8 @@ struct FormattedConsumerImpl<DataType::Character, T> {
 template<DataType DataType, typename T>
 struct FormattedProducerImpl;
 
-/**
- * Produces a single member of @p instance if the name of the member reference @p ref matches @p name.
- * Returns whether the name matched, so callers can fold over a tuple of member references.
- */
+/// Produces a single member of @p instance if the name of the member reference @p ref matches @p name.
+/// Returns whether the name matched, so callers can fold over a tuple of member references.
 template<typename Ref, typename C>
 bool
 produceMember(const Ref& ref, std::string_view name, C& instance, nio::Source& in) {
@@ -634,14 +630,12 @@ produceMember(const Ref& ref, std::string_view name, C& instance, nio::Source& i
   return true;
 }
 
-/**
- * Produces the members of @p instance from a parenthesized list of `name=value` entries, using the member
- * references in @p refs to look up each name.
- *
- * Unlike the tuple producer, the entries may appear in any order, and entries may be missing altogether, in
- * which case the corresponding members of @p instance are left untouched. An entry whose name does not match
- * any member reference is an error.
- */
+/// Produces the members of @p instance from a parenthesized list of `name=value` entries, using the member
+/// references in @p refs to look up each name.
+///
+/// Unlike the tuple producer, the entries may appear in any order, and entries may be missing altogether, in
+/// which case the corresponding members of @p instance are left untouched. An entry whose name does not
+/// match any member reference is an error.
 template<typename Refs, typename C>
 void
 produceMembers(const Refs& refs, C& instance, nio::Source& in) {
@@ -1344,43 +1338,39 @@ struct FormattedProducer {
 
 // `FormattedCodec` -----------------------------------------------------------------------------------------
 
-/**
- * A codec for formatted (RON) I/O.
- *
- * The encoder can serialize an arbitrary C++ data structure to a sink. The output is in a format called RON
- * (Rocket Object Notation), which is similar to, but not quite the same as, JSON. Tuples are enclosed in
- * parentheses. Lists are enclosed in square brackets. Sets and maps are enclosed in curly braces. If a
- * configuration is provided, the output may be indented and formatted as a tree.
- *
- * The decoder can scan such a formatted input from a source and construct an arbitrary C++ data structure
- * from it. While scanning, any irrelevant whitespace, including line breaks, is ignored. The decoder skips
- * single-line C-style comments starting with <code>//</code>, multi-line C-style comments starting with
- * <code>/</code><code>*</code>, as well as single-line shell-style comments starting with `#`.
- *
- * When decoding a declared type or a #rocket::reflect::Instance, the `name=value` entries may appear in any
- * order, and entries may be missing altogether; missing members keep their default values. An entry whose
- * name does not match any member is an error.
- *
- * Decoding to list views and forward lists is not supported. String views and character views, however, are
- * allowed. This is made possible by keeping real strings in a store bound to the decoder. Hence, decoded
- * string views and character views are valid, and valid only, for the lifetime of the decoder.
- *
- * There are various optimizations for decoding from contiguous sources.
- *
- * @see #rocket::codec::FormattedConsumerConfig
- */
+/// A codec for formatted (RON) I/O.
+///
+/// The encoder can serialize an arbitrary C++ data structure to a sink. The output is in a format called RON
+/// (Rocket Object Notation), which is similar to, but not quite the same as, JSON. Tuples are enclosed in
+/// parentheses. Lists are enclosed in square brackets. Sets and maps are enclosed in curly braces. If a
+/// configuration is provided, the output may be indented and formatted as a tree.
+///
+/// The decoder can scan such a formatted input from a source and construct an arbitrary C++ data structure
+/// from it. While scanning, any irrelevant whitespace, including line breaks, is ignored. The decoder skips
+/// single-line C-style comments starting with <code>//</code>, multi-line C-style comments starting with
+/// <code>/</code><code>*</code>, as well as single-line shell-style comments starting with `#`.
+///
+/// When decoding a declared type or a #rocket::reflect::Instance, the `name=value` entries may appear in any
+/// order, and entries may be missing altogether; missing members keep their default values. An entry whose
+/// name does not match any member is an error.
+///
+/// Decoding to list views and forward lists is not supported. String views and character views, however, are
+/// allowed. This is made possible by keeping real strings in a store bound to the decoder. Hence, decoded
+/// string views and character views are valid, and valid only, for the lifetime of the decoder.
+///
+/// There are various optimizations for decoding from contiguous sources.
+///
+/// @see #rocket::codec::FormattedConsumerConfig
 struct FormattedCodec : Codec<FormattedConsumer, FormattedProducer> {
   using Base = Codec<FormattedConsumer, FormattedProducer>; ///< @type_base
 
-  /**
-   * Encodes a value.
-   *
-   * @tparam T the type to encode
-   * @param val the value to encode
-   * @param out the output sink
-   * @param config the configuration
-   * @return whatever the consumer returns
-   */
+  /// Encodes a value.
+  ///
+  /// @tparam T the type to encode
+  /// @param val the value to encode
+  /// @param out the output sink
+  /// @param config the configuration
+  /// @return whatever the consumer returns
   template<typename T>
   auto
   encode(const T& val, nio::Sink& out, const FormattedConsumerConfig& config = {}) const {
@@ -1389,13 +1379,11 @@ struct FormattedCodec : Codec<FormattedConsumer, FormattedProducer> {
     return Base::encode(val, out, localConfig);
   }
 
-  /**
-   * Decodes a value from a source.
-   *
-   * @tparam T the type to decode
-   * @param in the input source
-   * @return the decoded value
-   */
+  /// Decodes a value from a source.
+  ///
+  /// @tparam T the type to decode
+  /// @param in the input source
+  /// @return the decoded value
   template<typename T>
   [[nodiscard]] DecodeResult<T>
   decode(nio::Source& in) const {

@@ -1,6 +1,4 @@
-/*
- * message.cc
- */
+// message.cc
 
 #include "rocket/TypeId-format.h"
 #include "rocket/str/message/message.h"

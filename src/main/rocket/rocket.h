@@ -1,53 +1,51 @@
-/**
- * @file rocket.h
- *
- * Rocket base header.
- *
- * Contains very basic types and declarations.
- *
- * OS-specific data types, sizes in bytes:
- *
- * | Type          | Linux | macOS   | Windows | Unstable?
- * | :------------ | ----: | ------: | ------: | :--------
- * | `bool`        |     1 |       1 |       1 |
- * | `wchar_t`     |     4 |       4 |       2 | Yes!
- * | `short`       |     2 |       2 |       2 |
- * | `int`         |     4 |       4 |       4 |
- * | `long`        |     8 |       8 |       4 | Yes!
- * | `long long`   |     8 |       8 |       8 |
- * | `i128`        |    16 |      16 |      16 |
- * | `float`       |     4 |       4 |       4 |
- * | `double`      |     8 |       8 |       8 |
- * | `long double` |    16 |       8 |       8 | Yes!
- * | `void*`       |     8 |       8 |       8 |
- *
- * Basic data types used in Rocket, stable across all platforms:
- *
- * | Type             | Size
- * | :--------------- | ---:
- * | `bool`           |    1
- * | `char`           |    1
- * | `rocket::char32` |    4
- * | `rocket::i8`     |    1
- * | `rocket::u8`     |    1
- * | `rocket::i16`    |    2
- * | `rocket::u16`    |    2
- * | `rocket::i32`    |    4
- * | `rocket::u32`    |    4
- * | `rocket::i64`    |    8
- * | `rocket::u64`    |    8
- * | `rocket::i128`   |   16
- * | `rocket::u128`   |   16
- * | `rocket::f32`    |    4
- * | `rocket::f64`    |    8
- * | `void*`          |    8
- *
- * In Rocket, C strings of type `char*` and instances of #std::string or #std::string_view are assumed to
- * be UTF-8-encoded. This is already true at compile time: a string literal like `"ä"` must expand to
- * `"\xc3\xa4"`.
- *
- * The only Unicode encodings that Rocket supports are UTF-8 and UTF-32. UTF-8 is the default encoding.
- */
+/// @file rocket.h
+///
+/// Rocket base header.
+///
+/// Contains very basic types and declarations.
+///
+/// OS-specific data types, sizes in bytes:
+///
+/// | Type          | Linux | macOS   | Windows | Unstable?
+/// | :------------ | ----: | ------: | ------: | :--------
+/// | `bool`        |     1 |       1 |       1 |
+/// | `wchar_t`     |     4 |       4 |       2 | Yes!
+/// | `short`       |     2 |       2 |       2 |
+/// | `int`         |     4 |       4 |       4 |
+/// | `long`        |     8 |       8 |       4 | Yes!
+/// | `long long`   |     8 |       8 |       8 |
+/// | `i128`        |    16 |      16 |      16 |
+/// | `float`       |     4 |       4 |       4 |
+/// | `double`      |     8 |       8 |       8 |
+/// | `long double` |    16 |       8 |       8 | Yes!
+/// | `void*`       |     8 |       8 |       8 |
+///
+/// Basic data types used in Rocket, stable across all platforms:
+///
+/// | Type             | Size
+/// | :--------------- | ---:
+/// | `bool`           |    1
+/// | `char`           |    1
+/// | `rocket::char32` |    4
+/// | `rocket::i8`     |    1
+/// | `rocket::u8`     |    1
+/// | `rocket::i16`    |    2
+/// | `rocket::u16`    |    2
+/// | `rocket::i32`    |    4
+/// | `rocket::u32`    |    4
+/// | `rocket::i64`    |    8
+/// | `rocket::u64`    |    8
+/// | `rocket::i128`   |   16
+/// | `rocket::u128`   |   16
+/// | `rocket::f32`    |    4
+/// | `rocket::f64`    |    8
+/// | `void*`          |    8
+///
+/// In Rocket, C strings of type `char*` and instances of #std::string or #std::string_view are assumed to
+/// be UTF-8-encoded. This is already true at compile time: a string literal like `"ä"` must expand to
+/// `"\xc3\xa4"`.
+///
+/// The only Unicode encodings that Rocket supports are UTF-8 and UTF-32. UTF-8 is the default encoding.
 
 #pragma once
 

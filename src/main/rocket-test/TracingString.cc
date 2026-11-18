@@ -1,6 +1,4 @@
-/*
- * TracingString.cc
- */
+// TracingString.cc
 
 #include "TracingString.h"
 

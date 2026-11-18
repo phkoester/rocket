@@ -1,6 +1,4 @@
-/*
- * StringConvert.cc
- */
+// StringConvert.cc
 
 #include "StringConvert.h"
 

@@ -1,6 +1,4 @@
-/*
- * test-rocket.cc
- */
+// test-rocket.cc
 
 #include "rocket-test/rocket-test.h"
 

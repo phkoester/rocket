@@ -1,6 +1,4 @@
-/*
- * test-Iterator.cc
- */
+// test-Iterator.cc
 
 #include "rocket-test/rocket-test.h"
 

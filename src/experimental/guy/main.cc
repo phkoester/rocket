@@ -1,8 +1,6 @@
-/*
- * main.cc
- *
- * The `guy` executable links to Rocket.Gui and is a playground for quick and dirty GUI experiments.
- */
+// main.cc
+//
+// The guy executable links to Rocket.Gui and is a playground for quick and dirty GUI experiments.
 
 #include <rocket/Process.h>
 #include <rocket/version.h>

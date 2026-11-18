@@ -1,6 +1,4 @@
-/*
- * location.cc
- */
+// location.cc
 
 #include "location.h"
 

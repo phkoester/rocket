@@ -1,8 +1,6 @@
-/**
- * @file chrono-scan.h
- *
- * scnlib scanners for chrono types.
- */
+/// @file chrono-scan.h
+///
+/// scnlib scanners for chrono types.
 
 #pragma once
 
@@ -129,10 +127,8 @@ readUnitNumber(It& it, Sent end, std::intmax_t& val) {
   return val != 0;
 }
 
-/**
- * Reads a unit suffix as {fmt} writes it, for example `ms` or `[604800]s`, and returns its period in
- * seconds.
- */
+/// Reads a unit suffix as {fmt} writes it, for example `ms` or `[604800]s`, and returns its period in
+/// seconds.
 template<typename C, typename Context>
 scn::scan_expected<void>
 readUnit(Context& ctx, std::intmax_t& num, std::intmax_t& den) {
@@ -182,12 +178,10 @@ readUnit(Context& ctx, std::intmax_t& num, std::intmax_t& den) {
   return {};
 }
 
-/**
- * Converts a count of `num/den` seconds exactly to a count of `Period`.
- *
- * Floating-point counts are converted arithmetically. Integral counts fail if the result is not an integer
- * or does not fit into `Rep`.
- */
+/// Converts a count of `num/den` seconds exactly to a count of `Period`.
+///
+/// Floating-point counts are converted arithmetically. Integral counts fail if the result is not an integer
+/// or does not fit into `Rep`.
 template<typename Rep, typename Period>
 scn::scan_expected<Rep>
 convertCount(Rep count, std::intmax_t num, std::intmax_t den) {
@@ -252,23 +246,21 @@ convertCount(Rep count, std::intmax_t num, std::intmax_t den) {
 
 // `scn::scanner<std::chrono::duration>` --------------------------------------------------------------------
 
-/**
- * Scans a #std::chrono::duration.
- *
- * scnlib does not provide this scanner. The format specification consists of the conversions `%Q` (the
- * count, required exactly once), `%q` (the unit suffix), `%%` (a `%`), `%n` (one whitespace character), and
- * `%t` (an optional whitespace character). Other whitespace matches any amount of whitespace, and other
- * characters match themselves. Without a format specification, the format is `%Q%q`, so the output of {fmt},
- * such as `42ms`, `1min`, or `1[604800]s`, can be scanned.
- *
- * The count is scanned like a value of the type `Rep`. The unit suffix is any that {fmt} writes, plus `us`
- * for microseconds; the count is converted to `Period`, failing if it is not representable exactly (unless
- * `Rep` is a floating-point type) or overflows. Without `%q`, the count is in units of `Period`.
- *
- * @tparam Rep the representation of the count
- * @tparam Period the period of the duration
- * @tparam C the character type
- */
+/// Scans a #std::chrono::duration.
+///
+/// scnlib does not provide this scanner. The format specification consists of the conversions `%Q` (the
+/// count, required exactly once), `%q` (the unit suffix), `%%` (a `%`), `%n` (one whitespace character), and
+/// `%t` (an optional whitespace character). Other whitespace matches any amount of whitespace, and other
+/// characters match themselves. Without a format specification, the format is `%Q%q`, so the output of
+/// {fmt}, such as `42ms`, `1min`, or `1[604800]s`, can be scanned.
+///
+/// The count is scanned like a value of the type `Rep`. The unit suffix is any that {fmt} writes, plus `us`
+/// for microseconds; the count is converted to `Period`, failing if it is not representable exactly (unless
+/// `Rep` is a floating-point type) or overflows. Without `%q`, the count is in units of `Period`.
+///
+/// @tparam Rep the representation of the count
+/// @tparam Period the period of the duration
+/// @tparam C the character type
 template<typename Rep, typename Period, typename C>
   requires rocket::IsChar<C> && (std::integral<Rep> || std::floating_point<Rep>)
 struct scn::scanner<std::chrono::duration<Rep, Period>, C> {
@@ -388,12 +380,10 @@ private:
 
 namespace rocket::chrono::internal::scan {
 
-/**
- * Splits a chrono format specification into segments, calling `f(segment, isOffset)` for each nonempty one.
- *
- * The UTC offsets `%z`, `%Ez`, and `%Oz`, with the literal text after them, form segments of their own,
- * because scnlib does not accept them together with the time-zone name `%Z` in one specification.
- */
+/// Splits a chrono format specification into segments, calling `f(segment, isOffset)` for each nonempty one.
+///
+/// The UTC offsets `%z`, `%Ez`, and `%Oz`, with the literal text after them, form segments of their own,
+/// because scnlib does not accept them together with the time-zone name `%Z` in one specification.
 template<typename C, typename F>
 constexpr void
 forEachSegment(std::basic_string_view<C> spec, F f) {
@@ -456,26 +446,24 @@ merge(scn::datetime_components& dst, const scn::datetime_components& src) {
 
 } // namespace rocket::chrono::internal::scan
 
-/**
- * Scans a #rocket::chrono::zoned_time.
- *
- * scnlib does not provide this scanner. The format specification is that of scnlib for date and time, which
- * must contain a date and `%Z`. Unlike when formatting, `%Z` is the name of the time zone in the time-zone
- * database, such as `Europe/Berlin` or `UTC`, not its abbreviation; abbreviations such as `CST` are
- * ambiguous. Legacy names that look like abbreviations, such as `CET` or `EST`, are rejected, see
- * #rocket::chrono::isUnambiguousZoneName. The date and time are the local time in that time zone. Unlike in
- * scnlib, `%Z` may be combined with the UTC offset `%z` (or `%Ez` or `%Oz`), which then selects between the
- * two meanings of an ambiguous local time, and must match the time zone; without it, an ambiguous or
- * nonexistent local time fails.
- *
- * Without a format specification, the format is `%F %T %Z`, or `%F %H:%M:%.S %Z` for a duration finer than
- * seconds, so the output of the formatter with the default format can be scanned if it uses a time-zone
- * name.
- *
- * @tparam Duration the duration of the time point
- * @tparam TimeZonePtr the time-zone pointer
- * @tparam C the character type
- */
+/// Scans a #rocket::chrono::zoned_time.
+///
+/// scnlib does not provide this scanner. The format specification is that of scnlib for date and time, which
+/// must contain a date and `%Z`. Unlike when formatting, `%Z` is the name of the time zone in the time-zone
+/// database, such as `Europe/Berlin` or `UTC`, not its abbreviation; abbreviations such as `CST` are
+/// ambiguous. Legacy names that look like abbreviations, such as `CET` or `EST`, are rejected, see
+/// #rocket::chrono::isUnambiguousZoneName. The date and time are the local time in that time zone. Unlike in
+/// scnlib, `%Z` may be combined with the UTC offset `%z` (or `%Ez` or `%Oz`), which then selects between the
+/// two meanings of an ambiguous local time, and must match the time zone; without it, an ambiguous or
+/// nonexistent local time fails.
+///
+/// Without a format specification, the format is `%F %T %Z`, or `%F %H:%M:%.S %Z` for a duration finer than
+/// seconds, so the output of the formatter with the default format can be scanned if it uses a time-zone
+/// name.
+///
+/// @tparam Duration the duration of the time point
+/// @tparam TimeZonePtr the time-zone pointer
+/// @tparam C the character type
 template<typename Duration, typename TimeZonePtr, typename C>
   requires rocket::IsChar<C> && requires(std::string_view name) {
     { rocket::chrono::zoned_traits<TimeZonePtr>::locate_zone(name) } -> std::convertible_to<TimeZonePtr>;
@@ -674,22 +662,20 @@ readDigits(It& it, Sent end, std::int64_t max, std::int64_t& val) {
 
 } // namespace rocket::chrono::internal::scan
 
-/**
- * Scans a #std::chrono::hh_mm_ss.
- *
- * scnlib does not provide this scanner. It reads what the formatter in `rocket/chrono/chrono-format.h`
- * writes: `[-]H:M:S`, optionally followed by a dot and subseconds, e.g., `01:02:03`, `01:02:03.005`, or
- * `-111:02:03.123456789`. Whitespace before the value is skipped.
- *
- * The hours are not limited to 0 through 23, but the whole value must fit into #std::chrono::nanoseconds.
- * The minutes and seconds must be less than 60. Subseconds finer than nanoseconds are ignored, and the
- * value is truncated toward zero to the precision of @p Duration.
- *
- * - No format specifiers are accepted.
- *
- * @tparam Duration the duration of the #std::chrono::hh_mm_ss
- * @tparam C the character type
- */
+/// Scans a #std::chrono::hh_mm_ss.
+///
+/// scnlib does not provide this scanner. It reads what the formatter in `rocket/chrono/chrono-format.h`
+/// writes: `[-]H:M:S`, optionally followed by a dot and subseconds, e.g., `01:02:03`, `01:02:03.005`, or
+/// `-111:02:03.123456789`. Whitespace before the value is skipped.
+///
+/// The hours are not limited to 0 through 23, but the whole value must fit into #std::chrono::nanoseconds.
+/// The minutes and seconds must be less than 60. Subseconds finer than nanoseconds are ignored, and the
+/// value is truncated toward zero to the precision of @p Duration.
+///
+/// - No format specifiers are accepted.
+///
+/// @tparam Duration the duration of the #std::chrono::hh_mm_ss
+/// @tparam C the character type
 template<typename Duration, typename C> requires rocket::IsChar<C>
 struct scn::scanner<std::chrono::hh_mm_ss<Duration>, C> {
   /// @cond undocumented
@@ -768,19 +754,17 @@ struct scn::scanner<std::chrono::hh_mm_ss<Duration>, C> {
 
 // `scn::scanner<std::chrono::year_month_day>` --------------------------------------------------------------
 
-/**
- * Scans a #std::chrono::year_month_day with scnlib.
- *
- * scnlib only provides this scanner if `__cpp_lib_chrono >= 201907L`; otherwise it scans its own
- * `scn::year_month_day`. This is a copy of scnlib’s scanner from `scn/chrono.h`. Like there, there is no
- * default format, so a format specification such as `%F` is required.
- *
- * If scnlib provides its own scanner, the two do not collide: both are partial specializations for the same
- * arguments, but this one is constrained by #rocket::IsChar, so partial ordering makes it the more
- * specialized one, and it is always picked.
- *
- * @tparam C the character type
- */
+/// Scans a #std::chrono::year_month_day with scnlib.
+///
+/// scnlib only provides this scanner if `__cpp_lib_chrono >= 201907L`; otherwise it scans its own
+/// `scn::year_month_day`. This is a copy of scnlib’s scanner from `scn/chrono.h`. Like there, there is no
+/// default format, so a format specification such as `%F` is required.
+///
+/// If scnlib provides its own scanner, the two do not collide: both are partial specializations for the same
+/// arguments, but this one is constrained by #rocket::IsChar, so partial ordering makes it the more
+/// specialized one, and it is always picked.
+///
+/// @tparam C the character type
 template<typename C> requires rocket::IsChar<C>
 struct scn::scanner<std::chrono::year_month_day, C> : scn::detail::chrono_component_scanner<C> {
   /// @cond undocumented

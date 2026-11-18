@@ -1,6 +1,4 @@
-/*
- * io.cc
- */
+// io.cc
 
 #include "rocket/io/io.h"
 

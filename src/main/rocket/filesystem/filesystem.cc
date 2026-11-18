@@ -1,6 +1,4 @@
-/*
- * filesystem.cc
- */
+// filesystem.cc
 
 #include "filesystem.h"
 

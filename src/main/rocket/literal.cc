@@ -1,6 +1,4 @@
-/*
- * literal.cc
- */
+// literal.cc
 
 #include "literal.h"
 

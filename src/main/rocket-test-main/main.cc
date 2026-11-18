@@ -1,6 +1,4 @@
-/*
- * main.cc
- */
+// main.cc
 
 #include <rocket/Process.h>
 #include <rocket/cl/cl.h>

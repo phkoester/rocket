@@ -1,6 +1,4 @@
-/*
- * test-nio-utils.cc
- */
+// test-nio-utils.cc
 
 #include "rocket-test/rocket-test.h"
 

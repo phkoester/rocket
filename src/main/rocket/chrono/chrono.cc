@@ -1,6 +1,4 @@
-/*
- * chrono.cc
- */
+// chrono.cc
 
 #include "chrono.h"
 

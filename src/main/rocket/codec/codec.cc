@@ -1,6 +1,4 @@
-/*
- * codec.cc
- */
+// codec.cc
 
 #include "rocket/codec/codec.h"
 

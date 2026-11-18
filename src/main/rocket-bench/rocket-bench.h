@@ -1,12 +1,10 @@
-/**
- * @file rocket-bench.h
- *
- * This header must always be the first included file in a benchmark.
- *
- * Parameters:
- *
- * - `ROCKET_BENCH_NO_USING_NAMESPACE`: If defined, the `using namespace` directives are not included.
- */
+/// @file rocket-bench.h
+///
+/// This header must always be the first included file in a benchmark.
+///
+/// Parameters:
+///
+/// - `ROCKET_BENCH_NO_USING_NAMESPACE`: If defined, the `using namespace` directives are not included.
 
 #pragma once
 

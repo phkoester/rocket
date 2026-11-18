@@ -1,8 +1,6 @@
-/**
- * @file Interval-scan.h
- *
- * Scanning support for mathematical intervals.
- */
+/// @file Interval-scan.h
+///
+/// Scanning support for mathematical intervals.
 
 #pragma once
 
@@ -16,19 +14,18 @@
 
 // `scn::scanner<rocket::math::Interval>` -------------------------------------------------------------------
 
-/**
- * @spec_scn_scanner{#rocket::math::Interval}
- *
- * The scanner reads what the formatter in `rocket/math/Interval-format.h` writes: `∅` for an empty interval,
- * otherwise the two bounds separated by a comma, enclosed in `[` or `]` for a closed bound and `(` or `)` for
- * an open bound, e.g., `[1,2]`, `(-1.5,3)`, `(-∞,12]`, or `[12,∞)`. Whitespace is skipped before each token.
- * The bounds are scanned with their default scanners.
- *
- * - For an open bound, `-∞` on the left and `∞` on the right denote a missing bound.
- * - For a floating-point bound, `-∞` and `∞` otherwise denote negative and positive infinity.
- * - The bracket types must match the interval type, e.g., `[1,2)` is no valid #rocket::math::ClosedInterval.
- * - No format specifiers are accepted.
- */
+/// @spec_scn_scanner{#rocket::math::Interval}
+///
+/// The scanner reads what the formatter in `rocket/math/Interval-format.h` writes: `∅` for an empty
+/// interval, otherwise the two bounds separated by a comma, enclosed in `[` or `]` for a closed bound and
+/// `(` or `)` for an open bound, e.g., `[1,2]`, `(-1.5,3)`, `(-∞,12]`, or `[12,∞)`. Whitespace is skipped
+/// before each token. The bounds are scanned with their default scanners.
+///
+/// - For an open bound, `-∞` on the left and `∞` on the right denote a missing bound.
+/// - For a floating-point bound, `-∞` and `∞` otherwise denote negative and positive infinity.
+/// - The bracket types must match the interval type, e.g., `[1,2)` is no
+///   valid #rocket::math::ClosedInterval.
+/// - No format specifiers are accepted.
 template<typename Left, typename Right, typename C> requires rocket::IsChar<C>
 struct scn::scanner<rocket::math::Interval<Left, Right>, C> {
   /// @cond undocumented
@@ -75,10 +72,8 @@ struct scn::scanner<rocket::math::Interval<Left, Right>, C> {
 
 private:
 
-  /**
-   * Skips whitespace and matches @p str. On success, returns the iterator past @p str, without advancing
-   * @p ctx.
-   */
+  /// Skips whitespace and matches @p str. On success, returns the iterator past @p str, without advancing
+  /// @p ctx.
   template<typename Context>
   static std::optional<typename Context::iterator>
   match(Context& ctx, std::basic_string_view<C> str) {
@@ -112,9 +107,7 @@ private:
     return unexpected(scan_error(scan_error::invalid_scanned_value, "invalid interval"));
   }
 
-  /**
-   * Scans a bound. @p unbounded is the notation of a missing bound, which is only valid for an open bound.
-   */
+  /// Scans a bound. @p unbounded is the notation of a missing bound, which is only valid for an open bound.
   template<typename Traits, typename Context>
   static scan_expected<void>
   scanBound(typename Traits::BoundType& bound, Context& ctx, std::basic_string_view<C> unbounded) {

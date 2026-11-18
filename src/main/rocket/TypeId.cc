@@ -1,6 +1,4 @@
-/*
- * TypeId.cc
- */
+// TypeId.cc
 
 #include "TypeId.h"
 

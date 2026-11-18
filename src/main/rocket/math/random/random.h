@@ -1,8 +1,6 @@
-/**
- * @file random.h
- *
- * Random numbers.
- */
+/// @file random.h
+///
+/// Random numbers.
 
 #pragma once
 
@@ -15,12 +13,10 @@ namespace rocket::math::random {
 
 // Functions ------------------------------------------------------------------------------------------------
 
-/**
- * Makes a new generator.
- *
- * @tparam Gen the generator type, defaults to #std::mt19937
- * @return a new generator
- */
+/// Makes a new generator.
+///
+/// @tparam Gen the generator type, defaults to #std::mt19937
+/// @return a new generator
 template<typename Gen = std::mt19937>
 inline Gen
 gen() {
@@ -28,30 +24,26 @@ gen() {
   return Gen(rd());
 }
 
-/**
- * Generates a random integer number in the closed interval @f$[lower,upper]@f$.
- *
- * @tparam Gen the generator type
- * @tparam I the integer type
- * @param gen the generator
- * @param lower the lower bound
- * @param upper the upper bound
- * @return a random integer number in the closed interval @f$[lower,upper]@f$
- */
+/// Generates a random integer number in the closed interval @f$[lower,upper]@f$.
+///
+/// @tparam Gen the generator type
+/// @tparam I the integer type
+/// @param gen the generator
+/// @param lower the lower bound
+/// @param upper the upper bound
+/// @return a random integer number in the closed interval @f$[lower,upper]@f$
 template<typename I, typename Gen> requires IsInteger<I>
 inline I
 uniformInteger(Gen& gen, I lower, I upper) {
   return std::uniform_int_distribution<I>(lower, upper)(gen);
 }
 
-/**
- * Returns a random character from the string @p chars.
- *
- * @tparam Gen the generator type
- * @param gen the generator
- * @param chars the characters to choose from
- * @return a random character from the string @p chars
- */
+/// Returns a random character from the string @p chars.
+///
+/// @tparam Gen the generator type
+/// @param gen the generator
+/// @param chars the characters to choose from
+/// @return a random character from the string @p chars
 template<typename Gen>
 char
 charOf(Gen& gen, std::string_view chars) {
@@ -60,15 +52,13 @@ charOf(Gen& gen, std::string_view chars) {
   return chars[index];
 }
 
-/**
- * Returns a random string of length @p n, consisting of characters from the string @p chars.
- *
- * @tparam Gen the generator type
- * @param gen the generator
- * @param n the length of the string
- * @param chars the characters to choose from
- * @return a random string of length @p n, consisting of characters from the string @p chars
- */
+/// Returns a random string of length @p n, consisting of characters from the string @p chars.
+///
+/// @tparam Gen the generator type
+/// @param gen the generator
+/// @param n the length of the string
+/// @param chars the characters to choose from
+/// @return a random string of length @p n, consisting of characters from the string @p chars
 template<typename Gen>
 std::string
 charsOf(Gen& gen, u64 n, std::string_view chars) {
@@ -80,14 +70,12 @@ charsOf(Gen& gen, u64 n, std::string_view chars) {
   return ret;
 }
 
-/**
- * Returns a random hexadecimal string of length @p n.
- *
- * @tparam Gen the generator type
- * @param gen the generator
- * @param n the length of the string
- * @return a random hexadecimal string of length @p n
- */
+/// Returns a random hexadecimal string of length @p n.
+///
+/// @tparam Gen the generator type
+/// @param gen the generator
+/// @param n the length of the string
+/// @return a random hexadecimal string of length @p n
 template<typename Gen>
 std::string
 hex(Gen& gen, u64 n) {

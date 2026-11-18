@@ -1,8 +1,6 @@
-/**
- * StringFormatter.h
- *
- * Building blocks for {fmt} formatters of types that are formatted as UTF-8 strings.
- */
+/// StringFormatter.h
+///
+/// Building blocks for {fmt} formatters of types that are formatted as UTF-8 strings.
 
 #pragma once
 
@@ -15,15 +13,13 @@
 
 namespace rocket::format::internal {
 
-/**
- * Writes a UTF-8 string to an output iterator, converted to the character type @p C.
- *
- * @tparam C the character type
- * @tparam Out the type of the output iterator
- * @param out the output iterator
- * @param str the UTF-8 string
- * @return the output iterator past the written characters
- */
+/// Writes a UTF-8 string to an output iterator, converted to the character type @p C.
+///
+/// @tparam C the character type
+/// @tparam Out the type of the output iterator
+/// @param out the output iterator
+/// @param str the UTF-8 string
+/// @return the output iterator past the written characters
 template<typename C, typename Out> requires IsChar<C>
 Out
 writeUtf8(Out out, std::string_view str) {
@@ -33,15 +29,13 @@ writeUtf8(Out out, std::string_view str) {
   return fmt::detail::copy<C>(view.data(), view.data() + view.size(), out);
 }
 
-/**
- * Parses format specifications that consist of single-character flags, which may appear in any order.
- *
- * @tparam C the character type
- * @tparam F the type of the flag handler
- * @param ctx the parse context
- * @param onFlag a function that is called with each flag and returns whether the flag is valid
- * @return an iterator to the end of the format specifications
- */
+/// Parses format specifications that consist of single-character flags, which may appear in any order.
+///
+/// @tparam C the character type
+/// @tparam F the type of the flag handler
+/// @param ctx the parse context
+/// @param onFlag a function that is called with each flag and returns whether the flag is valid
+/// @return an iterator to the end of the format specifications
 template<typename C, typename F> requires IsChar<C>
 constexpr const C*
 parseFlags(fmt::parse_context<C>& ctx, F onFlag) {
@@ -55,15 +49,13 @@ parseFlags(fmt::parse_context<C>& ctx, F onFlag) {
   return it;
 }
 
-/**
- * A base for formatters of types that are formatted as UTF-8 strings.
- *
- * The derived formatter converts its value to a UTF-8 string and passes it to `formatUtf8`. Format
- * specifications, including the debug format, are those of the {fmt} string formatter and apply to the whole
- * string.
- *
- * @tparam C the character type
- */
+/// A base for formatters of types that are formatted as UTF-8 strings.
+///
+/// The derived formatter converts its value to a UTF-8 string and passes it to `formatUtf8`. Format
+/// specifications, including the debug format, are those of the {fmt} string formatter and apply to the
+/// whole string.
+///
+/// @tparam C the character type
 template<typename C> requires IsChar<C>
 struct StringFormatter {
   constexpr const C*

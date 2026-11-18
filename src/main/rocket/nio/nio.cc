@@ -1,6 +1,4 @@
-/*
- * nio.cc
- */
+// nio.cc
 
 #include "nio.h"
 
@@ -117,10 +115,8 @@ bytes(const fmt::memory_buffer& buf) {
   return { reinterpret_cast<const u8*>(buf.data()), buf.size() };
 }
 
-/**
- * Clears the state of @p s. This throws only if @p s has no stream buffer, which sets `badbit`, and `badbit`
- * is in the exception mask. This is ignored here, @p s stays bad then.
- */
+/// Clears the state of @p s. This throws only if @p s has no stream buffer, which sets `badbit`, and
+/// `badbit` is in the exception mask. This is ignored here, @p s stays bad then.
 void
 clearState(ios& s) noexcept {
   try {
@@ -129,12 +125,10 @@ clearState(ios& s) noexcept {
   }
 }
 
-/**
- * Computes the new position of a contiguous source of size @p size, currently at @p pos, for
- * #rocket::nio::Source#seek.
- *
- * @return the new position, or null if it would be before the beginning or beyond the end
- */
+/// Computes the new position of a contiguous source of size @p size, currently at @p pos, for
+/// #rocket::nio::Source#seek.
+///
+/// @return the new position, or null if it would be before the beginning or beyond the end
 optional<u64>
 contiguousSeekPos(u64 pos, u64 size, i64 offset, SeekMode mode) {
   u64 base = 0;
@@ -208,19 +202,18 @@ setBad(ios& s) noexcept {
   }
 }
 
-/**
- * Runs @p op, an operation on @p s, and maintains @p ec, whatever the exception mask of @p s.
- *
- * - An `ios_base::failure` is the stream telling about a state bit in its exception mask, after it set the
- *   state. It is ignored here, as the state tells what happened.
- * - Any other exception comes from the stream buffer. The stream rethrows it if `badbit` is in its exception
- *   mask, and @p op may call the stream buffer directly, too. It is an I/O error, so `badbit` is set.
- * - A `fmt::format_error` or a `std::bad_alloc` is no I/O error, it is rethrown.
- *
- * If @p s is bad afterwards, @p ec is set: to the code of a `std::system_error` from the stream buffer, to
- * `errc::io_error` for any other exception from it, or else to #streamBufferErrorCode. @p s must not be bad
- * when this is called.
- */
+/// Runs @p op, an operation on @p s, and maintains @p ec, whatever the exception mask of @p s.
+///
+/// - An `ios_base::failure` is the stream telling about a state bit in its exception mask, after it set the
+///   state. It is ignored here, as the state tells what happened.
+/// - Any other exception comes from the stream buffer. The stream rethrows it if `badbit` is in its
+///   exception mask, and @p op may call the stream buffer directly, too. It is an I/O error, so `badbit` is
+///   set.
+/// - A `fmt::format_error` or a `std::bad_alloc` is no I/O error, it is rethrown.
+///
+/// If @p s is bad afterwards, @p ec is set: to the code of a `std::system_error` from the stream buffer, to
+/// `errc::io_error` for any other exception from it, or else to #streamBufferErrorCode. @p s must not be bad
+/// when this is called.
 template<typename F>
 void
 runStreamOp(ios& s, error_code& ec, F op) {

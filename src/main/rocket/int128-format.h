@@ -1,8 +1,6 @@
-/**
- * @file int128-format.h
- *
- * {fmt} formatters for 128-bit integers.
- */
+/// @file int128-format.h
+///
+/// {fmt} formatters for 128-bit integers.
 
 #pragma once
 
@@ -21,28 +19,26 @@ namespace rocket::internal::format::int128 {
 
 // `Formatter` ----------------------------------------------------------------------------------------------
 
-/**
- * A {fmt} formatter for a 128-bit integer type that {fmt} does not support natively.
- *
- * The formatter accepts the same format specifications as the {fmt} formatters of built-in integers,
- * reports the same errors, and produces the same output:
- *
- * ```
- * [[fill]align][sign]["#"]["0"][width]["L"][type]
- * ```
- *
- * - `align` is one of `<`, `>`, and `^`; numbers are right-aligned by default
- * - `sign` is one of `+`, `-`, and ` `, and is only allowed for signed types
- * - `#` adds the prefix `0b`, `0B`, `0`, `0x`, or `0X` for the binary, octal, and hexadecimal types
- * - `0` pads with zeros after the sign and the prefix; it is ignored if `align` is given
- * - `width` is a number or a nested replacement field `{}`, `{n}`, or `{name}`
- * - `L` groups the digits according to the locale of the context
- * - `type` is one of `d`, `b`, `B`, `o`, `x`, `X`, and `c`
- *
- * @tparam T the integer type
- * @tparam U the unsigned integer type corresponding to `T`
- * @tparam C the character type
- */
+/// A {fmt} formatter for a 128-bit integer type that {fmt} does not support natively.
+///
+/// The formatter accepts the same format specifications as the {fmt} formatters of built-in integers,
+/// reports the same errors, and produces the same output:
+///
+/// ```
+/// [[fill]align][sign]["#"]["0"][width]["L"][type]
+/// ```
+///
+/// - `align` is one of `<`, `>`, and `^`; numbers are right-aligned by default
+/// - `sign` is one of `+`, `-`, and ` `, and is only allowed for signed types
+/// - `#` adds the prefix `0b`, `0B`, `0`, `0x`, or `0X` for the binary, octal, and hexadecimal types
+/// - `0` pads with zeros after the sign and the prefix; it is ignored if `align` is given
+/// - `width` is a number or a nested replacement field `{}`, `{n}`, or `{name}`
+/// - `L` groups the digits according to the locale of the context
+/// - `type` is one of `d`, `b`, `B`, `o`, `x`, `X`, and `c`
+///
+/// @tparam T the integer type
+/// @tparam U the unsigned integer type corresponding to `T`
+/// @tparam C the character type
 template<typename T, typename U, typename C>
 struct Formatter {
   /// @cond undocumented
@@ -510,22 +506,18 @@ private:
 
 // `fmt::formatter<rocket::i128>` ---------------------------------------------------------------------------
 
-/**
- * @spec_fmt_formatter{#rocket::i128}
- *
- * This formatter supports the same format specifications as the {fmt} formatters of built-in integers.
- */
+/// @spec_fmt_formatter{#rocket::i128}
+///
+/// This formatter supports the same format specifications as the {fmt} formatters of built-in integers.
 template<typename C> requires rocket::IsChar<C>
 struct fmt::formatter<rocket::i128, C> :
   rocket::internal::format::int128::Formatter<rocket::i128, rocket::u128, C> {};
 
 // `fmt::formatter<rocket::u128>` ---------------------------------------------------------------------------
 
-/**
- * @spec_fmt_formatter{#rocket::u128}
- *
- * This formatter supports the same format specifications as the {fmt} formatters of built-in integers.
- */
+/// @spec_fmt_formatter{#rocket::u128}
+///
+/// This formatter supports the same format specifications as the {fmt} formatters of built-in integers.
 template<typename C> requires rocket::IsChar<C>
 struct fmt::formatter<rocket::u128, C> :
   rocket::internal::format::int128::Formatter<rocket::u128, rocket::u128, C> {};

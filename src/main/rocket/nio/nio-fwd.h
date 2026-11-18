@@ -1,8 +1,6 @@
-/**
- * @file nio-fwd.h
- *
- * `nio` forward declarations.
- */
+/// @file nio-fwd.h
+///
+/// `nio` forward declarations.
 
 #pragma once
 

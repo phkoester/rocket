@@ -1,8 +1,6 @@
-/**
- * @file Exception.h
- *
- * A collection of basic exceptions.
- */
+/// @file Exception.h
+///
+/// A collection of basic exceptions.
 
 #pragma once
 
@@ -48,49 +46,39 @@ namespace rocket {
 
 // `Exception` ----------------------------------------------------------------------------------------------
 
-/**
- * A simple class that all Rocket exceptions derive from in addition to their base classes.
- *
- * It holds
- *
- * - a plain message (without source-location information),
- * - an optional source location,
- * - and an optional stack trace.
- */
+/// A simple class that all Rocket exceptions derive from in addition to their base classes.
+///
+/// It holds
+///
+/// - a plain message (without source-location information),
+/// - an optional source location,
+/// - and an optional stack trace.
 struct Exception {
   /// @dtor
   virtual ~Exception() = default;
 
-  /**
-   * Returns the plain message of this exception, not including any source-location information.
-   *
-   * @return a message
-   */
+  /// Returns the plain message of this exception, not including any source-location information.
+  ///
+  /// @return a message
   [[nodiscard]] const std::string& message() const { return msg_; }
 
-  /**
-   * Returns the source location from which this exception was thrown.
-   *
-   * @return a source location, if present, or null otherwise
-   */
+  /// Returns the source location from which this exception was thrown.
+  ///
+  /// @return a source location, if present, or null otherwise
   [[nodiscard]] const std::optional<std::source_location>& sourceLocation() const { return sl_; }
 
-  /**
-   * Returns the stack trace of this exception.
-   *
-   * @return a stack trace, if present, or null otherwise
-   */
+  /// Returns the stack trace of this exception.
+  ///
+  /// @return a stack trace, if present, or null otherwise
   [[nodiscard]] const std::optional<stacktrace>& stackTrace() const { return st_; }
 
 protected:
 
-  /**
-   * @ctor
-   *
-   * @param msg the plain message
-   * @param sl the source location
-   * @param st the stack trace
-   */
+  /// @ctor
+  ///
+  /// @param msg the plain message
+  /// @param sl the source location
+  /// @param st the stack trace
   Exception(
     std::string_view msg,
     const std::optional<std::source_location>& sl,
@@ -108,18 +96,14 @@ private:
 
 // `InvalidArgument` ----------------------------------------------------------------------------------------
 
-/**
- * An exception indicating an invalid argument.
- */
+/// An exception indicating an invalid argument.
 struct InvalidArgument : Exception, std::invalid_argument {
-  /**
-   * @ctor
-   *
-   * @param name the name of the argument
-   * @param msg the message
-   * @param sl the source location
-   * @param st the stack trace
-   */
+  /// @ctor
+  ///
+  /// @param name the name of the argument
+  /// @param msg the message
+  /// @param sl the source location
+  /// @param st the stack trace
   InvalidArgument(
     std::string_view name,
     std::string_view msg,
@@ -131,17 +115,13 @@ struct InvalidArgument : Exception, std::invalid_argument {
 
 // `InvalidState` -------------------------------------------------------------------------------------------
 
-/**
- * An exception indicating an invalid state.
- */
+/// An exception indicating an invalid state.
 struct InvalidState : Exception, std::runtime_error {
-  /**
-   * @ctor
-   *
-   * @param msg the message
-   * @param sl the source location
-   * @param st the stack trace
-   */
+  /// @ctor
+  ///
+  /// @param msg the message
+  /// @param sl the source location
+  /// @param st the stack trace
   explicit InvalidState(
     std::string_view msg,
     const std::optional<std::source_location>& sl = ROCKET_EXCEPTION_SL,
@@ -152,31 +132,25 @@ struct InvalidState : Exception, std::runtime_error {
 
 // `Overflow` -----------------------------------------------------------------------------------------------
 
-/**
- * An exception indicating a type overflow.
- */
+/// An exception indicating a type overflow.
 struct Overflow : Exception, std::overflow_error {
-  /**
-   * @ctor
-   *
-   * @param type the type
-   * @param sl the source location
-   * @param st the stack trace
-   */
+  /// @ctor
+  ///
+  /// @param type the type
+  /// @param sl the source location
+  /// @param st the stack trace
   explicit Overflow(
     const std::type_info& type,
     const std::optional<std::source_location>& sl = ROCKET_EXCEPTION_SL,
     const std::optional<stacktrace>& st = ROCKET_EXCEPTION_ST) :
     Overflow(type, "", sl, st) {}
 
-  /**
-   * @ctor
-   *
-   * @param type the type
-   * @param msg additional message
-   * @param sl the source location
-   * @param st the stack trace
-   */
+  /// @ctor
+  ///
+  /// @param type the type
+  /// @param msg additional message
+  /// @param sl the source location
+  /// @param st the stack trace
   Overflow(
     const std::type_info& type,
     std::string_view msg,
@@ -188,31 +162,25 @@ struct Overflow : Exception, std::overflow_error {
 
 // `Underflow` ----------------------------------------------------------------------------------------------
 
-/**
- * An exception indicating a type underflow.
- */
+/// An exception indicating a type underflow.
 struct Underflow : Exception, std::underflow_error {
-  /**
-   * @ctor
-   *
-   * @param type the type
-   * @param sl the source location
-   * @param st the stack trace
-   */
+  /// @ctor
+  ///
+  /// @param type the type
+  /// @param sl the source location
+  /// @param st the stack trace
   explicit Underflow(
     const std::type_info& type,
     const std::optional<std::source_location>& sl = ROCKET_EXCEPTION_SL,
     const std::optional<stacktrace>& st = ROCKET_EXCEPTION_ST) :
     Underflow(type, "", sl, st) {}
 
-  /**
-   * @ctor
-   *
-   * @param type the type
-   * @param msg additional message
-   * @param sl the source location
-   * @param st the stack trace
-   */
+  /// @ctor
+  ///
+  /// @param type the type
+  /// @param msg additional message
+  /// @param sl the source location
+  /// @param st the stack trace
   Underflow(
     const std::type_info& type,
     std::string_view msg,
@@ -224,36 +192,26 @@ struct Underflow : Exception, std::underflow_error {
 
 // `WrappedException` ---------------------------------------------------------------------------------------
 
-/**
- * An exception wrapper which has its own `fmt::formatter` specialization.
- */
+/// An exception wrapper which has its own `fmt::formatter` specialization.
 struct WrappedException {
-  /**
-   * @ctor
-   *
-   * @param ex the exception
-   */
+  /// @ctor
+  ///
+  /// @param ex the exception
   explicit WrappedException(const std::exception& ex) : ex_(&ex) {}
 
-  /**
-   * @ctor
-   *
-   * @param ptr the exception pointer
-   */
+  /// @ctor
+  ///
+  /// @param ptr the exception pointer
   explicit WrappedException(std::exception_ptr ptr) : ptr_(ptr) {} // NOLINT
 
-  /**
-   * Returns the exception the instance was constructed with.
-   *
-   * @return the exception, or null if the instance was not constructed with an exception
-   */
+  /// Returns the exception the instance was constructed with.
+  ///
+  /// @return the exception, or null if the instance was not constructed with an exception
   [[nodiscard]] const std::exception* exception() const { return ex_; }
 
-  /**
-   * Returns the exception pointer the instance was constructed with.
-   *
-   * @return the exception pointer, or null if the instance was not constructed with an exception pointer
-   */
+  /// Returns the exception pointer the instance was constructed with.
+  ///
+  /// @return the exception pointer, or null if the instance was not constructed with an exception pointer
   [[nodiscard]] std::exception_ptr ptr() const { return ptr_; }
 
 private:
@@ -264,60 +222,50 @@ private:
 
 // Functions ------------------------------------------------------------------------------------------------
 
-/**
- * Prints detailed information about the exception @p ex to the sink @p sink.
- *
- * If there are nested exceptions, the whole exception hierarchy is processed. The output may span multiple
- * lines, the last printed character is always <code>'\\n'</code>.
- *
- * @param out the sink to print to
- * @param ex the exception
- */
+/// Prints detailed information about the exception @p ex to the sink @p sink.
+///
+/// If there are nested exceptions, the whole exception hierarchy is processed. The output may span multiple
+/// lines, the last printed character is always <code>'\\n'</code>.
+///
+/// @param out the sink to print to
+/// @param ex the exception
 void printException(nio::Sink& out, const std::exception& ex);
 
-/**
- * Prints detailed information about the exception pointer @p ex to the sink @p sink.
- *
- * If there are nested exceptions, the whole exception hierarchy is processed. The output may span multiple
- * lines, the last printed character is always <code>'\\n'</code>.
- *
- * @param out the sink to print to
- * @param ptr the exception pointer. May not be null
- */
+/// Prints detailed information about the exception pointer @p ex to the sink @p sink.
+///
+/// If there are nested exceptions, the whole exception hierarchy is processed. The output may span multiple
+/// lines, the last printed character is always <code>'\\n'</code>.
+///
+/// @param out the sink to print to
+/// @param ptr the exception pointer. May not be null
 void printException(nio::Sink& out, std::exception_ptr ptr);
 
-/**
- * Extracts the `what` message from an exception.
- *
- * If there are nested exceptions, the whole exception hierarchy is processed.
- *
- * @param ex the exception
- * @return a string
- */
+/// Extracts the `what` message from an exception.
+///
+/// If there are nested exceptions, the whole exception hierarchy is processed.
+///
+/// @param ex the exception
+/// @return a string
 std::string what(const std::exception& ex);
 
-/**
- * Extracts the `what` message from an exception pointer.
- *
- * If there are nested exceptions, the whole exception hierarchy is processed.
- *
- * @param ptr the exception pointer. May not be null
- * @return a string
- */
+/// Extracts the `what` message from an exception pointer.
+///
+/// If there are nested exceptions, the whole exception hierarchy is processed.
+///
+/// @param ptr the exception pointer. May not be null
+/// @return a string
 std::string what(std::exception_ptr ptr);
 
 } // namespace rocket
 
 // `fmt::formatter<rocket::WrappedException>` ---------------------------------------------------------------
 
-/**
- * @spec_fmt_formatter{#rocket::WrappedException}
- *
- * - If the `?` format specifier is used, then the stack trace is included.
- * - If the `t` format specifier is used, then the type of the exception is included.
- *
- * The format specifiers may appear in any order.
- */
+/// @spec_fmt_formatter{#rocket::WrappedException}
+///
+/// - If the `?` format specifier is used, then the stack trace is included.
+/// - If the `t` format specifier is used, then the type of the exception is included.
+///
+/// The format specifiers may appear in any order.
 template<typename C> requires rocket::IsChar<C>
 struct fmt::formatter<rocket::WrappedException, C> {
   /// @cond undocumented

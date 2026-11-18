@@ -1,8 +1,6 @@
-/**
- * @file Character.h
- *
- * Unicode characters, or grapheme clusters.
- */
+/// @file Character.h
+///
+/// Unicode characters, or grapheme clusters.
 
 #pragma once
 
@@ -13,12 +11,10 @@ namespace rocket::unicode {
 
 // `BasicCharacter` -----------------------------------------------------------------------------------------
 
-/**
- * The implementation of both #rocket::unicode::Character and #rocket::unicode::CharacterView.
- *
- * @tparam C the character type
- * @tparam String the string type, either #std::basic_string or #std::basic_string_view
- */
+/// The implementation of both #rocket::unicode::Character and #rocket::unicode::CharacterView.
+///
+/// @tparam C the character type
+/// @tparam String the string type, either #std::basic_string or #std::basic_string_view
 template<typename C, typename String> requires IsChar<C>
 struct BasicCharacter {
   using Type = String; ///< @type_alias
@@ -27,58 +23,48 @@ struct BasicCharacter {
   /// A compile-time constant that is `true` if the character class is a view, `false` otherwise.
   static constexpr bool VIEW = std::same_as<String, View>;
 
-  /**
-   * @ctor_default
-   *
-   * Constructs U+FFFD (REPLACEMENT CHARACTER), so that a character is never empty. A default constructor is
-   * required for scanning with scnlib.
-   */
+  /// @ctor_default
+  ///
+  /// Constructs U+FFFD (REPLACEMENT CHARACTER), so that a character is never empty. A default constructor is
+  /// required for scanning with scnlib.
   constexpr BasicCharacter() : str_(replacement()) {}
 
-  /**
-   * @ctor
-   *
-   * Constructs a character from a string reference.
-   *
-   * @param str a string. The string must not be empty
-   */
+  /// @ctor
+  ///
+  /// Constructs a character from a string reference.
+  ///
+  /// @param str a string. The string must not be empty
   template<typename Char> requires std::same_as<Char, C> && (not VIEW)
   constexpr explicit BasicCharacter( const std::basic_string<Char>& str) : str_(str) {
     ROCKET_CHECK(str, not str.empty());
   }
 
-  /**
-   * @ctor
-   *
-   * Constructs a character from a string rvalue.
-   *
-   * @param str a string. The string must not be empty
-   */
+  /// @ctor
+  ///
+  /// Constructs a character from a string rvalue.
+  ///
+  /// @param str a string. The string must not be empty
   template<typename Char> requires std::same_as<Char, C> && (not VIEW)
   constexpr explicit BasicCharacter(std::basic_string<Char>&& str) {
     ROCKET_CHECK(str, not str.empty());
     str_ = std::move(str);
   }
 
-  /**
-   * @ctor
-   *
-   * Constructs a character or a character view from a string view.
-   *
-   * @param str a string. The string must not be empty. If the instance is a character view, the string must
-   *   remain valid for the lifetime of the instance
-   */
+  /// @ctor
+  ///
+  /// Constructs a character or a character view from a string view.
+  ///
+  /// @param str a string. The string must not be empty. If the instance is a character view, the string must
+  ///   remain valid for the lifetime of the instance
   constexpr explicit BasicCharacter(std::basic_string_view<C> str) : str_(str) {
     ROCKET_CHECK(str, not str.empty());
   }
 
-  /**
-   * @ctor
-   *
-   * Constructs a character view from a character.
-   *
-   * @param rhs the right-hand side, which holds a string
-   */
+  /// @ctor
+  ///
+  /// Constructs a character view from a character.
+  ///
+  /// @param rhs the right-hand side, which holds a string
   template<typename Char> requires std::same_as<Char, C> && VIEW
   constexpr explicit BasicCharacter(const BasicCharacter<Char, std::basic_string<Char>>& rhs ) :
       str_(static_cast<std::basic_string_view<C>>(rhs)) {}
@@ -89,24 +75,20 @@ struct BasicCharacter {
   /// @member_op_cast{#std::basic_string_view}
   constexpr explicit operator std::basic_string_view<C>() const { return str_; }
 
-  /**
-   * Checks if the character is an ASCII character.
-   *
-   * @return if the character is an ASCII character
-   */
+  /// Checks if the character is an ASCII character.
+  ///
+  /// @return if the character is an ASCII character
   [[nodiscard]] bool
   constexpr ascii() const {
     return str_.size() == 1 && static_cast<u32>(str_[0]) < 0x80;
   }
 
-  /**
-   * Returns the number of code points in the character.
-   *
-   * @note You usually don’t need this function. If you do, something might be wrong with your code. Using
-   *   this function on a segment returned by #rocket::unicode::Iterator is redundant and inefficient.
-   *
-   * @return the number of code points in the character
-   */
+  /// Returns the number of code points in the character.
+  ///
+  /// @note You usually don’t need this function. If you do, something might be wrong with your code. Using
+  ///   this function on a segment returned by #rocket::unicode::Iterator is redundant and inefficient.
+  ///
+  /// @return the number of code points in the character
   [[nodiscard]] u64
   countCodePoints() const {
     u64 ret = 0;
@@ -117,42 +99,34 @@ struct BasicCharacter {
     return ret;
   }
 
-  /**
-   * Checks if the character is a carriage return / line feed sequence (CR/LF).
-   *
-   * @return if the character is a carriage return / line feed sequence
-   */
+  /// Checks if the character is a carriage return / line feed sequence (CR/LF).
+  ///
+  /// @return if the character is a carriage return / line feed sequence
   [[nodiscard]] constexpr bool
   crLf() const {
     return str_.size() == 2 && str_[0] == '\r' && str_[1] == '\n';
   }
 
-  /**
-   * Checks if the character is an end of line (EOL).
-   *
-   * @return if the character is an end of line
-   */
+  /// Checks if the character is an end of line (EOL).
+  ///
+  /// @return if the character is an end of line
   [[nodiscard]] constexpr bool
   eol() const {
     return lf() || crLf();
   }
 
-  /**
-   * Checks if the character equals the specified ASCII character.
-   *
-   * @param c the ASCII character to check
-   * @return if the character equals the specified ASCII character
-   */
+  /// Checks if the character equals the specified ASCII character.
+  ///
+  /// @param c the ASCII character to check
+  /// @return if the character equals the specified ASCII character
   [[nodiscard]] constexpr bool
   eq(char c) const {
     return ascii() && str_[0] == c;
   }
 
-  /**
-   * Checks if the character is whitespace.
-   *
-   * @return if the character is whitespace
-   */
+  /// Checks if the character is whitespace.
+  ///
+  /// @return if the character is whitespace
   [[nodiscard]] bool
   isWhitespace() const {
     for (u64 pos = 0; pos < str_.size(); /* Empty */) {
@@ -164,31 +138,25 @@ struct BasicCharacter {
     return true;
   }
 
-  /**
-   * Checks if the character is a hexadecimal digit.
-   *
-   * @return if the character is a hexadecimal digit
-   */
+  /// Checks if the character is a hexadecimal digit.
+  ///
+  /// @return if the character is a hexadecimal digit
   [[nodiscard]] bool
   isXdigit() const {
     return str_.size() == 1 && std::isxdigit(static_cast<u8>(str_[0]));
   }
 
-  /**
-   * Checks if the character is a line feed (LF).
-   *
-   * @return if the character is a line feed
-   */
+  /// Checks if the character is a line feed (LF).
+  ///
+  /// @return if the character is a line feed
   [[nodiscard]] constexpr bool
   lf() const {
     return str_.size() == 1 && str_[0] == '\n';
   }
 
-  /**
-   * Checks if the character is a no-break space
-   *
-   * @return if the character is a no-break space
-   */
+  /// Checks if the character is a no-break space
+  ///
+  /// @return if the character is a no-break space
   [[nodiscard]] bool
   nbsp() const {
     u64 pos = 0;
@@ -199,28 +167,22 @@ struct BasicCharacter {
     return pos == str_.size();
   }
 
-  /**
-   * Returns the size of the underlying string, in code units (`char` or `char32`)
-   *
-   * @return the size of the underlying string
-   */
+  /// Returns the size of the underlying string, in code units (`char` or `char32`)
+  ///
+  /// @return the size of the underlying string
   [[nodiscard]] constexpr u64 size() const { return str_.size(); }
 
-  /**
-   * Checks if the character is a tab.
-   *
-   * @return if the character is a tab
-   */
+  /// Checks if the character is a tab.
+  ///
+  /// @return if the character is a tab
   [[nodiscard]] constexpr bool
   tab() const {
     return str_.size() == 1 && str_[0] == '\t';
   }
 
-  /**
-   * Tries to convert the character to a code point.
-   *
-   * @return a code point if the character consists of exactly one code point, null otherwise
-   */
+  /// Tries to convert the character to a code point.
+  ///
+  /// @return a code point if the character consists of exactly one code point, null otherwise
   [[nodiscard]] std::optional<CodePoint>
   toCodePoint() const {
     u64 pos = 0;
@@ -231,11 +193,9 @@ struct BasicCharacter {
     return std::nullopt;
   }
 
-  /**
-   * Calculates the character’s display width.
-   *
-   * @return the character’s display width, in the range @f$[0,2]@f$
-   */
+  /// Calculates the character’s display width.
+  ///
+  /// @return the character’s display width, in the range @f$[0,2]@f$
   [[nodiscard]] u8
   width() const {
     u8 ret = 0;
@@ -245,14 +205,12 @@ struct BasicCharacter {
       if (ret == 2) {
         return 2;
       }
-      /*
-       * In the Rust crate `unicode-display-width`, the following code is used to handle U+FE0F:
-       *
-       *  // emoji style variation selector
-       *  if scalar_value == '\u{FE0F}' {
-       *    return 2;
-       *  }
-       */
+      // In the Rust crate `unicode-display-width`, the following code is used to handle U+FE0F:
+      //
+      //   // emoji style variation selector
+      //   if scalar_value == '\u{FE0F}' {
+      //    return 2;
+      //   }
     }
     return ret;
   }
@@ -269,64 +227,56 @@ private:
     }
   }
 
-  /**
-   * The string, which is either a #std::basic_string or a #std::basic_string_view.
-   *
-   * The string must not be empty.
-   */
+  /// The string, which is either a #std::basic_string or a #std::basic_string_view.
+  ///
+  /// The string must not be empty.
   String str_;
 };
 
 // `Character` ----------------------------------------------------------------------------------------------
 
-/**
- * A Unicode character, or a grapheme cluster, consisting of one or more code points.
- *
- * A string suitable for a #rocket::unicode::Character can be obtained as a segment from a
- * #rocket::unicode::Iterator with the iterator type #rocket::unicode::IteratorType::Character.
- *
- * Think of this as a basic text-processing element that is superior to `char`, `char32`, or even
- * #rocket::unicode::CodePoint. Use it whenever you can, and make your code Unicode-ready.
- *
- * @tparam C the character type
- *
- * ## Examples
- *
- * ```
- * auto c1 = "a"_c; // ASCII character 'a'
- * assert(c1.width() == 1);
- * auto c2 = "€"_c; // U+20AC (EURO SIGN)
- * assert(c2.width() == 1);
- * auto c3 = "👨"_c; // U+1F468 (MAN)
- * assert(c3.width() == 2);
- * // U+1F468 (MAN), U+200D (ZERO WIDTH JOINER), U+1F469 (WOMAN), U+200D (ZERO WIDTH JOINER), U+1F466 (BOY)
- * auto c4 = "👨‍👩‍👦"_c;
- * assert(c4.countCodePoints() == 5);
- * assert(c4.width() == 2);
- * ```
- */
+/// A Unicode character, or a grapheme cluster, consisting of one or more code points.
+///
+/// A string suitable for a #rocket::unicode::Character can be obtained as a segment from a
+/// #rocket::unicode::Iterator with the iterator type #rocket::unicode::IteratorType::Character.
+///
+/// Think of this as a basic text-processing element that is superior to `char`, `char32`, or even
+/// #rocket::unicode::CodePoint. Use it whenever you can, and make your code Unicode-ready.
+///
+/// @tparam C the character type
+///
+/// ## Examples
+///
+/// ```
+/// auto c1 = "a"_c; // ASCII character 'a'
+/// assert(c1.width() == 1);
+/// auto c2 = "€"_c; // U+20AC (EURO SIGN)
+/// assert(c2.width() == 1);
+/// auto c3 = "👨"_c; // U+1F468 (MAN)
+/// assert(c3.width() == 2);
+/// // U+1F468 (MAN), U+200D (ZERO WIDTH JOINER), U+1F469 (WOMAN), U+200D (ZERO WIDTH JOINER), U+1F466 (BOY)
+/// auto c4 = "👨‍👩‍👦"_c;
+/// assert(c4.countCodePoints() == 5);
+/// assert(c4.width() == 2);
+/// ```
 template<typename C> requires IsChar<C>
 using Character = BasicCharacter<C, std::basic_string<C>>;
 
-/**
- * Literal operator for #rocket::unicode::Character.
- *
- * @param p the string literal
- * @param len the length of the string literal
- * @return a #rocket::unicode::Character
- */
+/// Literal operator for #rocket::unicode::Character.
+///
+/// @param p the string literal
+/// @param len the length of the string literal
+/// @return a #rocket::unicode::Character
 constexpr Character<char>
 operator""_c(const char* p, std_size_t len) {
   return Character<char>(std::string_view(p, len));
 }
 
-/**
- * Literal operator for #rocket::unicode::Character.
- *
- * @param p the string literal
- * @param len the length of the string literal
- * @return a #rocket::unicode::Character
-*/
+/// Literal operator for #rocket::unicode::Character.
+///
+/// @param p the string literal
+/// @param len the length of the string literal
+/// @return a #rocket::unicode::Character
 constexpr Character<char32>
 operator""_c(const char32* p, std_size_t len) {
   return Character<char32>(std::u32string_view(p, len));
@@ -334,41 +284,35 @@ operator""_c(const char32* p, std_size_t len) {
 
 // `CharacterView` ------------------------------------------------------------------------------------------
 
-/**
- * This is very much the same as #rocket::unicode::Character, except that it is a view into a string, not a
- * string itself.
- *
- * @tparam C the character type
- *
- * ## Examples
- *
- * ```
- * auto c = "a"_cv; // ASCII character 'a'
- * assert(c.width() == 1);
- * ```
- */
+/// This is very much the same as #rocket::unicode::Character, except that it is a view into a string, not a
+/// string itself.
+///
+/// @tparam C the character type
+///
+/// ## Examples
+///
+/// ```
+/// auto c = "a"_cv; // ASCII character 'a'
+/// assert(c.width() == 1);
+/// ```
 template<typename C> requires IsChar<C>
 using CharacterView = BasicCharacter<C, std::basic_string_view<C>>;
 
-/**
- * Literal operator for #rocket::unicode::CharacterView.
- *
- * @param p the string literal
- * @param len the length of the string literal
- * @return a #rocket::unicode::CharacterView
- */
+/// Literal operator for #rocket::unicode::CharacterView.
+///
+/// @param p the string literal
+/// @param len the length of the string literal
+/// @return a #rocket::unicode::CharacterView
 constexpr CharacterView<char>
 operator""_cv(const char* p, std_size_t len) {
   return CharacterView<char>(std::string_view(p, len));
 }
 
-/**
- * Literal operator for #rocket::unicode::CharacterView.
- *
- * @param p the string literal
- * @param len the length of the string literal
- * @return a #rocket::unicode::CharacterView
-*/
+/// Literal operator for #rocket::unicode::CharacterView.
+///
+/// @param p the string literal
+/// @param len the length of the string literal
+/// @return a #rocket::unicode::CharacterView
 constexpr CharacterView<char32>
 operator""_cv(const char32* p, std_size_t len) {
   return CharacterView<char32>(std::u32string_view(p, len));

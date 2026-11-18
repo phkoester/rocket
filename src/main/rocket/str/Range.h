@@ -1,8 +1,6 @@
-/**
- * @file Range.h
- *
- * String ranges.
- */
+/// @file Range.h
+///
+/// String ranges.
 
 #pragma once
 

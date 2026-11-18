@@ -1,6 +1,4 @@
-/*
- * test-CborCodec.cc
- */
+// test-CborCodec.cc
 
 #include "rocket-test/rocket-test.h"
 

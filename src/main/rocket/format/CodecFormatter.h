@@ -1,8 +1,6 @@
-/**
- * CodecFormatter.h
- *
- * A building block for {fmt} formatters of types that are formatted with #rocket::codec::FormattedCodec.
- */
+/// CodecFormatter.h
+///
+/// A building block for {fmt} formatters of types that are formatted with #rocket::codec::FormattedCodec.
 
 #pragma once
 
@@ -14,17 +12,15 @@
 
 namespace rocket::format::internal {
 
-/**
- * A base for formatters of types that are formatted with #rocket::codec::FormattedCodec.
- *
- * - If the `i` format specifier is used, then the output is indented.
- * - If @p WithType is `true` and the `t` format specifier is used, then the type name is included.
- *
- * The format specifiers may appear in any order.
- *
- * @tparam C the character type
- * @tparam WithType whether the `t` format specifier is accepted
- */
+/// A base for formatters of types that are formatted with #rocket::codec::FormattedCodec.
+///
+/// - If the `i` format specifier is used, then the output is indented.
+/// - If @p WithType is `true` and the `t` format specifier is used, then the type name is included.
+///
+/// The format specifiers may appear in any order.
+///
+/// @tparam C the character type
+/// @tparam WithType whether the `t` format specifier is accepted
 template<typename C, bool WithType = false> requires IsChar<C>
 struct CodecFormatter {
   constexpr const C*
@@ -44,14 +40,12 @@ struct CodecFormatter {
 
 protected:
 
-  /**
-   * Formats a value.
-   *
-   * @param val the value
-   * @param type the type whose name is written if the `t` format specifier is used
-   * @param ctx the format context
-   * @return the output iterator past the written characters
-   */
+  /// Formats a value.
+  ///
+  /// @param val the value
+  /// @param type the type whose name is written if the `t` format specifier is used
+  /// @param ctx the format context
+  /// @return the output iterator past the written characters
   template<typename T, typename FormatContext>
   FormatContext::iterator
   formatEncoded(const T& val, const std::type_info& type, FormatContext& ctx) const {
@@ -64,13 +58,11 @@ protected:
     return writeUtf8<C>(out, buf.str());
   }
 
-  /**
-   * Formats a value without a type name.
-   *
-   * @param val the value
-   * @param ctx the format context
-   * @return the output iterator past the written characters
-   */
+  /// Formats a value without a type name.
+  ///
+  /// @param val the value
+  /// @param ctx the format context
+  /// @return the output iterator past the written characters
   template<typename T, typename FormatContext>
   FormatContext::iterator
   formatEncoded(const T& val, FormatContext& ctx) const {

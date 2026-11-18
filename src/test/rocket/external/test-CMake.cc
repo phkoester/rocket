@@ -1,6 +1,4 @@
-/*
- * test-CMake.cc
- */
+// test-CMake.cc
 
 #include "rocket-test/rocket-test.h"
 

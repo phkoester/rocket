@@ -1,6 +1,4 @@
-/*
- * log.cc
- */
+// log.cc
 
 #include "log.h"
 
@@ -46,9 +44,7 @@ const map<LogLevel, string_view> LEVEL_DISPLAY {
 
 // `Entry` --------------------------------------------------------------------------------------------------
 
-/**
- * A stack entry.
- */
+/// A stack entry.
 struct Entry {
   LogSettings* logId_;
   const char* function_;
@@ -125,13 +121,11 @@ Fmt logFmt;
 
 // `Out` ----------------------------------------------------------------------------------------------------
 
-/**
- * The log-output sink.
- *
- * This class is not thread-safe, so all usages must be guarded by #logMutex.
- *
- * @NotThreadSafe
- */
+/// The log-output sink.
+///
+/// This class is not thread-safe, so all usages must be guarded by #logMutex.
+///
+/// @NotThreadSafe
 struct Out {
   struct ExpandResult {
     string out;
@@ -140,13 +134,11 @@ struct Out {
     optional<std::chrono::year_month_day> ymd;
   };
 
-  /**
-   * This one is publicly available; tests may need it.
-   *
-   * @ThreadSafe
-   *
-   * @throw #rocket::InvalidState if @p pattern is invalid
-   */
+  /// This one is publicly available; tests may need it.
+  ///
+  /// @ThreadSafe
+  ///
+  /// @throw #rocket::InvalidState if @p pattern is invalid
   static ExpandResult expand(
     string_view pattern,
     const fs::path& dir,
@@ -186,17 +178,15 @@ private:
     return std::chrono::year_month_day(localDays); // NOLINT
   }
 
-  /**
-   * Converts the file-name part of a log-output pattern to a regex pattern that is suitable for finding
-   * sibling log files in the same directory.
-   *
-   * This is needed for zipping older log files.
-   *
-   * @ThreadSafe
-   *
-   * @param name the file-name part of a log-output pattern; must not contain any file separators
-   * @return the regex
-   */
+  /// Converts the file-name part of a log-output pattern to a regex pattern that is suitable for finding
+  /// sibling log files in the same directory.
+  ///
+  /// This is needed for zipping older log files.
+  ///
+  /// @ThreadSafe
+  ///
+  /// @param name the file-name part of a log-output pattern; must not contain any file separators
+  /// @return the regex
   static string nameRegex(const fs::path& name);
 
   // Must be static and stateless
@@ -539,11 +529,9 @@ logMutex() {
 // The `Out` instance
 Out logOut;
 
-/**
- * The function stack.
- *
- * @ThreadSafe
- */
+/// The function stack.
+///
+/// @ThreadSafe
 thread_local vector<Entry> logStack;
 
 // Local functions ------------------------------------------------------------------------------------------
@@ -552,11 +540,9 @@ void setLogFmt(string_view val);
 void setLogLevel(string_view id, string_view val);
 void setLogOut(string_view val);
 
-/**
- * Handles the `--log` option.
- *
- * @ThreadSafe
- */
+/// Handles the `--log` option.
+///
+/// @ThreadSafe
 bool
 applyLog(optional<string_view> val) {
   ROCKET_ASSERT(val);
@@ -575,11 +561,9 @@ applyLog(optional<string_view> val) {
   return true;
 }
 
-/**
- * Handles the `--log-fmt` option.
- *
- * @ThreadSafe
- */
+/// Handles the `--log-fmt` option.
+///
+/// @ThreadSafe
 bool
 applyLogFmt(optional<string_view> val) {
   ROCKET_ASSERT(val);
@@ -589,11 +573,9 @@ applyLogFmt(optional<string_view> val) {
   return true;
 }
 
-/**
- * Handles the `--log-out` option.
- *
- * @ThreadSafe
- */
+/// Handles the `--log-out` option.
+///
+/// @ThreadSafe
 bool
 applyLogOut(optional<string_view> val) {
   ROCKET_ASSERT(val);
@@ -648,11 +630,9 @@ formatTimePoint(const SystemTimePoint& tp) {
   return formatImpl(time_point_cast<std::chrono::nanoseconds>(tp));
 }
 
-/**
- * Flushes pending begin log entries.
- *
- * @NotThreadSafe
- */
+/// Flushes pending begin log entries.
+///
+/// @NotThreadSafe
 void
 logFlush(nio::Sink& out) {
   auto begin = logStack.end();
@@ -761,16 +741,14 @@ setLogFmt(string_view val) {
   logFmt.set(val);
 }
 
-/**
- * Sets the log level for the log ID @p id to @p val.
- *
- * If @p id is `"all"`, the log level is set for all log IDs.
- *
- * @ThreadSafe
- *
- * @param id the log ID with an optional substring in the form `ID[.SUBSTRING]`, or `"all"`
- * @param val the log level
- */
+/// Sets the log level for the log ID @p id to @p val.
+///
+/// If @p id is `"all"`, the log level is set for all log IDs.
+///
+/// @ThreadSafe
+///
+/// @param id the log ID with an optional substring in the form `ID[.SUBSTRING]`, or `"all"`
+/// @param val the log level
 void
 setLogLevel(string_view id, string_view val) {
   ROCKET_MUTEX_LOCK(logMutex());
@@ -814,13 +792,11 @@ setLogLevel(string_view id, string_view val) {
   }
 }
 
-/**
- * Set the log output.
- *
- * @ThreadSafe
- *
- * @param val `"-"`, `"stdout"`, or `"stderr"`, or a log-output pattern
- */
+/// Set the log output.
+///
+/// @ThreadSafe
+///
+/// @param val `"-"`, `"stdout"`, or `"stderr"`, or a log-output pattern
 void
 setLogOut(string_view val) {
   ROCKET_MUTEX_LOCK(logMutex());

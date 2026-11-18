@@ -1,6 +1,4 @@
-/*
- * test-CompareEncoder.cc
- */
+// test-CompareEncoder.cc
 
 #include "rocket-test/rocket-test.h"
 

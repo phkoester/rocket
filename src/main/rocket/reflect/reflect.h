@@ -1,8 +1,6 @@
-/**
- * @file reflect.h
- *
- * C++ reflection support: members and variables.
- */
+/// @file reflect.h
+///
+/// C++ reflection support: members and variables.
 
 #pragma once
 
@@ -20,68 +18,58 @@
 
 // Members ..................................................................................................
 
-/**
- * Provides access to a named member-reference container.
- *
- * @note This macro must be called inside the class declaration, in a public section.
- *
- * @param cls the name of the class that holds the members (without namespace)
- * @param name the name of the member-reference container, e.g., `Index`
- * @param seq a sequence of member names
- */
+/// Provides access to a named member-reference container.
+///
+/// @note This macro must be called inside the class declaration, in a public section.
+///
+/// @param cls the name of the class that holds the members (without namespace)
+/// @param name the name of the member-reference container, e.g., `Index`
+/// @param seq a sequence of member names
 #define ROCKET_REFLECT_MEMBERS(cls, name, seq) ROCKET_REFLECT_MEMBERS__(cls, name, seq)
 
-/**
- * Provides all the declarations for the class @p cls needed for full Rocket interoperability.
- *
- * In particular, this provides:
- *
- * - a #rocket::reflect::Declared specialization;
- * - comparison operators `==`, `<=>`;
- *
- * @note This macro must be called in the global namespace.
- *
- * @param ns the namespace of the class, e.g., `mynamespace`. May be left empty if the class is in the global
- *   namespace
- * @param cls the type of the class without namespace, e.g., `MyClass`
- * @param name the name of the member-reference container to use, e.g., `Index`
-*/
+/// Provides all the declarations for the class @p cls needed for full Rocket interoperability.
+///
+/// In particular, this provides:
+///
+/// - a #rocket::reflect::Declared specialization;
+/// - comparison operators `==`, `<=>`;
+///
+/// @note This macro must be called in the global namespace.
+///
+/// @param ns the namespace of the class, e.g., `mynamespace`. May be left empty if the class is in the
+///   global namespace
+/// @param cls the type of the class without namespace, e.g., `MyClass`
+/// @param name the name of the member-reference container to use, e.g., `Index`
 #define ROCKET_REFLECT_MEMBERS_DECLARE(ns, cls, name) ROCKET_REFLECT_MEMBERS_DECLARE__(ns, cls, name)
 
-/**
- * Provides all the definitions for the class @p cls needed for full Rocket interoperability.
- *
- * @note This macro must be called in the global namespace.
- *
- * @param ns the namespace of the class, e.g., `mynamespace`. May be left empty if the class is in the global
- *   namespace
- * @param cls the type of the class without namespace, e.g., `MyClass`
- * @param name the name of the member-reference container to use, e.g., `Index`
-*/
+/// Provides all the definitions for the class @p cls needed for full Rocket interoperability.
+///
+/// @note This macro must be called in the global namespace.
+///
+/// @param ns the namespace of the class, e.g., `mynamespace`. May be left empty if the class is in the
+///   global namespace
+/// @param cls the type of the class without namespace, e.g., `MyClass`
+/// @param name the name of the member-reference container to use, e.g., `Index`
 #define ROCKET_REFLECT_MEMBERS_DEFINE(ns, cls, name) ROCKET_REFLECT_MEMBERS_DEFINE__(ns, cls, name)
 
-/**
- * Provides access to a named member-reference container for a derived class.
- *
- * @note This macro must be called inside the class declaration, in a public section.
- *
- * @param baseCls the name of the base class
- * @param baseName the name of the member-reference container of the base class
- * @param cls the name of the derived class that holds the members (without namespace)
- * @param name the name for this member-reference container. e.g., `Index`
- * @param seq a sequence of member names
- */
+/// Provides access to a named member-reference container for a derived class.
+///
+/// @note This macro must be called inside the class declaration, in a public section.
+///
+/// @param baseCls the name of the base class
+/// @param baseName the name of the member-reference container of the base class
+/// @param cls the name of the derived class that holds the members (without namespace)
+/// @param name the name for this member-reference container. e.g., `Index`
+/// @param seq a sequence of member names
 #define ROCKET_REFLECT_MEMBERS_DERIVED(baseCls, baseName, cls, name, seq) \
   ROCKET_REFLECT_MEMBERS_DERIVED__(baseCls, baseName, cls, name, seq)
 
 // Variables ................................................................................................
 
-/**
- * Makes a variable-reference container, which is in fact a #std::tuple of #rocket::reflect::VarRef
- * instances.
- *
- * @param seq a sequence of variable names
- */
+/// Makes a variable-reference container, which is in fact a #std::tuple of #rocket::reflect::VarRef
+/// instances.
+///
+/// @param seq a sequence of variable names
 #define ROCKET_REFLECT_VARS(seq) ROCKET_REFLECT_VARS__(seq)
 
 // Internal macros ------------------------------------------------------------------------------------------

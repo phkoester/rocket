@@ -1,6 +1,4 @@
-/*
- * test-reflect.cc
- */
+// test-reflect.cc
 
 #include "rocket-test/rocket-test.h"
 
@@ -74,9 +72,7 @@ TEST(MODULE, MyStruct) {
   EXPECT_EQ(get<2>(MyStruct::Index::refs).get(m2), true);
 }
 
-/**
- * Tests that the macro #ROCKET_REFLECT_MEMBERS does not affect the size of a class.
- */
+/// Tests that the macro #ROCKET_REFLECT_MEMBERS does not affect the size of a class.
 TEST(MODULE, MyStructSizeof) {
   struct BareStruct {
     i32 ä;

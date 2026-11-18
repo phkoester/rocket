@@ -1,8 +1,6 @@
-/**
- * @file MemberRef.h
- *
- * C++ reflection support: member references.
- */
+/// @file MemberRef.h
+///
+/// C++ reflection support: member references.
 
 #pragma once
 
@@ -12,45 +10,35 @@ namespace rocket::reflect {
 
 // `MemberRef` ----------------------------------------------------------------------------------------------
 
-/**
- * References on members that need an instance to evaluate.
- *
- * Instances of this class are returned by #ROCKET_REFLECT_MEMBERS.
- */
+/// References on members that need an instance to evaluate.
+///
+/// Instances of this class are returned by #ROCKET_REFLECT_MEMBERS.
 template<typename C, typename T>
 struct MemberRef {
   using Class = Purge<C>; ///< @type_alias
   using Type = Purge<T>; ///< @type_alias
 
-  /**
-   * @ctor
-   *
-   * @param name the name of the member
-   * @param ptr the pointer to the member
-   */
+  /// @ctor
+  ///
+  /// @param name the name of the member
+  /// @param ptr the pointer to the member
   consteval MemberRef(const char* name, T C::* ptr) : name_(name), ptr_(const_cast<Type Class::*>(ptr)) {}
 
-  /**
-   * Returns the value of the member.
-   *
-   * @param instance the instance
-   * @return the value of the member
-   */
+  /// Returns the value of the member.
+  ///
+  /// @param instance the instance
+  /// @return the value of the member
   [[nodiscard]] constexpr Type& get(Class& instance) const { return instance.*ptr_; }
 
-  /**
-   * Returns the value of the member.
-   *
-   * @param instance the instance
-   * @return the value of the member
-   */
+  /// Returns the value of the member.
+  ///
+  /// @param instance the instance
+  /// @return the value of the member
   [[nodiscard]] constexpr const Type& get(const Class& instance) const { return instance.*ptr_; }
 
-  /**
-   * Returns the name of the member.
-   *
-   * @return the name of the member
-   */
+  /// Returns the name of the member.
+  ///
+  /// @return the name of the member
   [[nodiscard]] constexpr std::string_view name() const { return name_; }
 
 private:

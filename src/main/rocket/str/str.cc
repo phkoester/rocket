@@ -1,6 +1,4 @@
-/*
- * str.cc
- */
+// str.cc
 
 #include "str.h"
 

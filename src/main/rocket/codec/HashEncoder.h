@@ -1,8 +1,6 @@
-/**
- * @file HashEncoder.h
- *
- * Hashing arbitrary C++ data structures.
- */
+/// @file HashEncoder.h
+///
+/// Hashing arbitrary C++ data structures.
 
 #pragma once
 
@@ -375,11 +373,9 @@ struct HashConsumerImpl<DataType::Character, T, Hash> {
 
 // `HashConsumer` (no pun intended) -------------------------------------------------------------------------
 
-/**
- * The consumer for the #HashEncoder.
- *
- * @tparam Hash the hasher to use
- */
+/// The consumer for the #HashEncoder.
+///
+/// @tparam Hash the hasher to use
 template<typename Hash>
 struct HashConsumer {
   /// @type_alias
@@ -389,12 +385,10 @@ struct HashConsumer {
 
 // `HashEncoder` --------------------------------------------------------------------------------------------
 
-/**
- * The hash encoder.
- *
- * @tparam Hash the hasher to use. The hasher must be able to provide hash values for all primitive data
- *   types, including 128-bit data types, and strings
- */
+/// The hash encoder.
+///
+/// @tparam Hash the hasher to use. The hasher must be able to provide hash values for all primitive data
+///   types, including 128-bit data types, and strings
 template<typename Hash = BoostHash>
 using HashEncoder = Encoder<HashConsumer<Hash>>;
 

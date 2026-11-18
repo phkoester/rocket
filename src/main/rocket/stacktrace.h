@@ -1,13 +1,11 @@
-/**
- * @file stacktrace.h
- *
- * Portability layer for #std::stacktrace.
- *
- * This header declares #rocket::stacktrace.
- *
- * If the standard library provides `<stacktrace>` (C++23), #rocket::stacktrace is `std::stacktrace`.
- * Otherwise, it is `boost::stacktrace::stacktrace`.
- */
+/// @file stacktrace.h
+///
+/// Portability layer for #std::stacktrace.
+///
+/// This header declares #rocket::stacktrace.
+///
+/// If the standard library provides `<stacktrace>` (C++23), #rocket::stacktrace is `std::stacktrace`.
+/// Otherwise, it is `boost::stacktrace::stacktrace`.
 
 #pragma once
 

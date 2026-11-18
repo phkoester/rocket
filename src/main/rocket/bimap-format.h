@@ -1,8 +1,6 @@
-/**
- * @file bimap-format.h
- *
- * Formatting support for Bimaps.
- */
+/// @file bimap-format.h
+///
+/// Formatting support for Bimaps.
 
 #pragma once
 
@@ -26,17 +24,15 @@ struct fmt::range_format_kind<boost::bimaps::bimap<A, B>, C> :
 
 // `fmt::formatter<boost::bimaps::bimap>` -------------------------------------------------------------------
 
-/**
- * @spec_fmt_formatter{boost::bimaps::bimap}
- *
- * The formatter formats the left view of the bimap, just as {fmt} formats a #std::map or a
- * #std::unordered_map: as `{k1: v1, k2: v2}`, with keys and values in their debug format, so that strings
- * are quoted and escaped.
- *
- * - If the `n` format specifier is used, then the braces are omitted.
- * - Like for a #std::map, no other format specifiers are accepted, except for an empty underlying format
- *   specification after a colon, as in `{::}` or `{:n:}`.
- */
+/// @spec_fmt_formatter{boost::bimaps::bimap}
+///
+/// The formatter formats the left view of the bimap, just as {fmt} formats a #std::map or a
+/// #std::unordered_map: as `{k1: v1, k2: v2}`, with keys and values in their debug format, so that strings
+/// are quoted and escaped.
+///
+/// - If the `n` format specifier is used, then the braces are omitted.
+/// - Like for a #std::map, no other format specifiers are accepted, except for an empty underlying format
+///   specification after a colon, as in `{::}` or `{:n:}`.
 template<typename A, typename B, typename C> requires rocket::IsChar<C>
 struct fmt::formatter<boost::bimaps::bimap<A, B>, C> {
   /// @cond undocumented
@@ -112,9 +108,7 @@ private:
 
 namespace boost::bimaps {
 
-/**
- * @fn_PrintTo{boost::bimaps::bimap}
- */
+/// @fn_PrintTo{boost::bimaps::bimap}
 template<typename A, typename B>
 inline void
 PrintTo(const bimap<A, B>& val, std::ostream* os) {

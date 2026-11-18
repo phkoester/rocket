@@ -1,8 +1,6 @@
-/**
- * @file math.h
- *
- * Mathematical utilities.
- */
+/// @file math.h
+///
+/// Mathematical utilities.
 
 #pragma once
 
@@ -17,22 +15,20 @@ namespace rocket::math {
 
 // Functions ------------------------------------------------------------------------------------------------
 
-/**
- * Calculates the arithmetic mean for the values in the half-open interval @f$[begin,end)@f$.
- *
- * To avoid overflow, this function calculates a *cumulative moving average*. Let the values be
- * @f$(x_{1},...,x_{N})@f$, this function returns
- *
- * @f[
- * \overline{x} = \frac{\sum_{i=1}^N x_i}{N}
- * @f]
- *
- * @tparam T the element type
- * @tparam It the iterator type
- * @param begin the beginning of the range, inclusive
- * @param end the end of the range, exclusive
- * @return the mean
- */
+/// Calculates the arithmetic mean for the values in the half-open interval @f$[begin,end)@f$.
+///
+/// To avoid overflow, this function calculates a *cumulative moving average*. Let the values be
+/// @f$(x_{1},...,x_{N})@f$, this function returns
+///
+/// @f[
+/// \overline{x} = \frac{\sum_{i=1}^N x_i}{N}
+/// @f]
+///
+/// @tparam T the element type
+/// @tparam It the iterator type
+/// @param begin the beginning of the range, inclusive
+/// @param end the end of the range, exclusive
+/// @return the mean
 template<typename T, typename It> requires IsFloat<T>
 T
 mean(It begin, It end) {
@@ -47,21 +43,19 @@ mean(It begin, It end) {
   return ret;
 }
 
-/**
- * Calculates the standard deviation for the values in the half-open interval @f$[begin,end)@f$.
- *
- * Let the values be @f$(x_{1},...,x_{N})@f$, this function returns
- *
- * @f[
- * \sigma = \sqrt{\frac{1}{N} \sum_{i=1}^N (x_i - \overline{x})^2}
- * @f]
- *
- * @tparam T the element type
- * @tparam It the iterator type
- * @param begin the beginning of the range, inclusive
- * @param end the end of the range, exclusive
- * @return the standard deviation
- */
+/// Calculates the standard deviation for the values in the half-open interval @f$[begin,end)@f$.
+///
+/// Let the values be @f$(x_{1},...,x_{N})@f$, this function returns
+///
+/// @f[
+/// \sigma = \sqrt{\frac{1}{N} \sum_{i=1}^N (x_i - \overline{x})^2}
+/// @f]
+///
+/// @tparam T the element type
+/// @tparam It the iterator type
+/// @param begin the beginning of the range, inclusive
+/// @param end the end of the range, exclusive
+/// @return the standard deviation
 template<typename T, typename It> requires IsFloat<T>
 T
 standardDeviation(It begin, It end) {

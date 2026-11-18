@@ -1,6 +1,4 @@
-/*
- * test-JsonCodec-MyStruct.json
- */
+// test-JsonCodec-MyStruct.json
 
 {
   "ärger"   : 16,

@@ -1,6 +1,4 @@
-/*
- * Process.cc
- */
+// Process.cc
 
 #include "Process.h"
 

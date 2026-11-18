@@ -1,8 +1,6 @@
-/**
- * @file cl.h
- *
- * Rocket CL: a command-line parser and help-text formatter.
- */
+/// @file cl.h
+///
+/// Rocket CL: a command-line parser and help-text formatter.
 
 #pragma once
 
@@ -135,12 +133,10 @@ applyToInteger(std::optional<I>& out, std::string_view val) {
 
 // `OptionGroup` --------------------------------------------------------------------------------------------
 
-/**
- * An option group with a title.
- *
- * Command-line options may be assigned a pointer to an option group. When displaying the help text, options
- * appear grouped by their groups.
- */
+/// An option group with a title.
+///
+/// Command-line options may be assigned a pointer to an option group. When displaying the help text, options
+/// appear grouped by their groups.
 struct OptionGroup {
   std::string title; ///< The title.
 };
@@ -154,63 +150,43 @@ enum class OptionType : u8 { Custom, Help, Verbose, Version };
 
 /// Configuration for #rocket::cl::Option.
 struct OptionConfig {
-  /**
-   * A set of allowed values.
-   */
+  /// A set of allowed values.
   std::optional<std::set<std::string>> choices {}; // NOLINT
-  /**
-   * A short description text.
-   *
-   * By convention, this starts with a lowercase verb and does not end with a period, e.g.
-   * `"print NUM lines of leading context"`.
-   */
+  /// A short description text.
+  ///
+  /// By convention, this starts with a lowercase verb and does not end with a period, e.g.
+  /// `"print NUM lines of leading context"`.
   std::optional<std::string> description {}; // NOLINT
-  /**
-   * A short format description.
-   *
-   * If the option takes a value, this parameter should briefly describe the format, e.g.
-   * <code>"file"</code>, <code>"number"</code>, or <code>"`red`, `green`, or `blue`"</code>.
-   */
+  /// A short format description.
+  ///
+  /// If the option takes a value, this parameter should briefly describe the format, e.g.
+  /// <code>"file"</code>, <code>"number"</code>, or <code>"`red`, `green`, or `blue`"</code>.
   std::optional<std::string> format {}; // NOLINT
-  /**
-   * A pointer to an option group.
-   *
-   * May be null.
-   */
+  /// A pointer to an option group.
+  ///
+  /// May be null.
   const OptionGroup* group = nullptr;
-  /**
-   * Minimum number of occurrences.
-   *
-   * If null, this will be auto-configured.
-   */
+  /// Minimum number of occurrences.
+  ///
+  /// If null, this will be auto-configured.
   std::optional<u64> minOccurs {}; // NOLINT
-   /**
-   * Maximum number of occurrences.
-   */
+  /// Maximum number of occurrences.
   u64 maxOccurs = NPOS;
-  /**
-   * The option name.
-   *
-   * For example, if this is `"verbose"`, the option may be chosen via `--verbose` on the command line.
-   */
+  /// The option name.
+  ///
+  /// For example, if this is `"verbose"`, the option may be chosen via `--verbose` on the command line.
   std::string name;
-  /**
-   * The option’s short name.
-   *
-   * For instance, if this is `"⨁"`, the option may be chosen via `-⨁` on the command line.
-   */
+  /// The option’s short name.
+  ///
+  /// For instance, if this is `"⨁"`, the option may be chosen via `-⨁` on the command line.
   std::optional<unicode::Character<char>> shortName {}; // NOLINT
-  /**
-   * Whether the option takes a value.
-   *
-   * If null, this will be auto-configured.
-   */
+  /// Whether the option takes a value.
+  ///
+  /// If null, this will be auto-configured.
   std::optional<bool> takesValue {}; // NOLINT
-  /**
-   * An optional verbose description.
-   *
-   * A verbose description that is displayed when verbose help is requested.
-   */
+  /// An optional verbose description.
+  ///
+  /// A verbose description that is displayed when verbose help is requested.
   std::optional<std::string> verboseDescription {}; // NOLINT
 };
 
@@ -221,16 +197,14 @@ struct Option {
   /// Type for a function that is called to apply an option value.
   using Apply = std::function<bool(std::string_view val)>;
 
-  /**
-   * Low-level factory function that makes a new option.
-   *
-   * Usually, you should use one of the following convenience functions instead.
-   *
-   * @param type the type of the option
-   * @param config the configuration
-   * @param apply the function that applies the option value
-   * @return a new option
-   */
+  /// Low-level factory function that makes a new option.
+  ///
+  /// Usually, you should use one of the following convenience functions instead.
+  ///
+  /// @param type the type of the option
+  /// @param config the configuration
+  /// @param apply the function that applies the option value
+  /// @return a new option
   static Option
   of(OptionType type, const OptionConfig& config, Apply apply) {
     return {
@@ -249,16 +223,14 @@ struct Option {
     };
   }
 
-  /**
-   * Convenience factory function that makes a new custom option and binds it to a destination reference.
-   *
-   * @tparam T the type of the destination reference. If this is a #std::optional reference, the option
-   *   is optional, otherwise it is required. If this is a #std::vector reference, the option can consume
-   *   multiple values from the command line
-   * @param config the configuration
-   * @param out the destination reference that is assigned the option value
-   * @return a new option
-   */
+  /// Convenience factory function that makes a new custom option and binds it to a destination reference.
+  ///
+  /// @tparam T the type of the destination reference. If this is a #std::optional reference, the option
+  ///   is optional, otherwise it is required. If this is a #std::vector reference, the option can consume
+  ///   multiple values from the command line
+  /// @param config the configuration
+  /// @param out the destination reference that is assigned the option value
+  /// @return a new option
   template<typename T>
   static Option
   custom(const OptionConfig& config, T& out) {
@@ -304,16 +276,14 @@ struct Option {
     return of(OptionType::Custom, localConfig, apply);
   }
 
-  /**
-   * Convenience factory function that makes a new help option and binds it to a destination reference.
-   *
-   * When providing a help option, consider providing a verbose option and verbose descriptions for options
-   * and parameters as well.
-   *
-   * @param group the option group, may be null
-   * @param out the destination reference that is assigned the option value
-   * @return a new option
-   */
+  /// Convenience factory function that makes a new help option and binds it to a destination reference.
+  ///
+  /// When providing a help option, consider providing a verbose option and verbose descriptions for options
+  /// and parameters as well.
+  ///
+  /// @param group the option group, may be null
+  /// @param out the destination reference that is assigned the option value
+  /// @return a new option
   static Option
   help(const OptionGroup* group, std::optional<bool>& out) {
     const OptionConfig config {
@@ -326,14 +296,12 @@ struct Option {
     return of(OptionType::Help, config, apply);
   }
 
-  /**
-   * Convenience factory function that makes a new verbose option and binds it to an optional `bool`
-   * destination reference.
-   *
-   * @param group the option group, may be null
-   * @param out the destination reference that is assigned the option value
-   * @return a new option
-   */
+  /// Convenience factory function that makes a new verbose option and binds it to an optional `bool`
+  /// destination reference.
+  ///
+  /// @param group the option group, may be null
+  /// @param out the destination reference that is assigned the option value
+  /// @return a new option
   static Option
   verbose(const OptionGroup* group, std::optional<bool>& out) {
     const OptionConfig config {
@@ -346,18 +314,16 @@ struct Option {
     return of(OptionType::Verbose, config, apply);
   }
 
-  /**
-   * Convenience factory function that makes a new verbose option and binds it to an optional `u64`
-   * destination reference.
-   *
-   * Each occurrence of the option in the command line increases the level of verbosity by one. `-v` sets the
-   * level to 1, `-vv` sets it to 2, and so on.
-   *
-   * @param group the option group, may be null
-   * @param maxOccurs the maximum number of occurrences
-   * @param out the destination reference that is assigned the option value
-   * @return a new option
-   */
+  /// Convenience factory function that makes a new verbose option and binds it to an optional `u64`
+  /// destination reference.
+  ///
+  /// Each occurrence of the option in the command line increases the level of verbosity by one. `-v` sets
+  /// the level to 1, `-vv` sets it to 2, and so on.
+  ///
+  /// @param group the option group, may be null
+  /// @param maxOccurs the maximum number of occurrences
+  /// @param out the destination reference that is assigned the option value
+  /// @return a new option
   static Option
   verbose(const OptionGroup* group, u64 maxOccurs, std::optional<u64>& out) {
     ROCKET_CHECK(maxOccurs, maxOccurs > 1);
@@ -375,13 +341,11 @@ struct Option {
     return of(OptionType::Verbose, config, apply);
   }
 
-  /**
-   * Convenience factory function that makes a new version option and binds it to a destination reference.
-   *
-   * @param group the option group, may be null
-   * @param out the destination reference that is assigned the option value
-   * @return a new option
-   */
+  /// Convenience factory function that makes a new version option and binds it to a destination reference.
+  ///
+  /// @param group the option group, may be null
+  /// @param out the destination reference that is assigned the option value
+  /// @return a new option
   static Option
   version(const OptionGroup* group, std::optional<bool>& out) {
     const OptionConfig config {
@@ -413,52 +377,36 @@ struct Option {
 
 /// Configuration for #rocket::cl::Parameter.
 struct ParameterConfig {
-  /**
-   * A set of allowed values.
-   */
+  /// A set of allowed values.
   std::optional<std::set<std::string>> choices {}; // NOLINT
-  /**
-   * Whether options shall be consumed as positional arguments after this parameter.
-   *
-   * Set this to `true` if the parameter is followed by a new command line that needs to be parsed in a
-   * separate pass.
-   */
+  /// Whether options shall be consumed as positional arguments after this parameter.
+  ///
+  /// Set this to `true` if the parameter is followed by a new command line that needs to be parsed in a
+  /// separate pass.
   bool consumeOpts = false;
-  /**
-   * A short description.
-   *
-   * By convention, this starts with a lowercase letter and does not end with a period, e.g.
-   * `"the input file"`.
-   */
+  /// A short description.
+  ///
+  /// By convention, this starts with a lowercase letter and does not end with a period, e.g.
+  /// `"the input file"`.
   std::optional<std::string> description {}; // NOLINT
-  /**
-   * A short format description.
-   *
-   * This parameter should briefly describe the format, e.g., <code>"file"</code>, <code>"number"</code>, or
-   * <code>"`red`, `green`, or `blue`"</code>.
-   */
+  /// A short format description.
+  ///
+  /// This parameter should briefly describe the format, e.g., <code>"file"</code>, <code>"number"</code>, or
+  /// <code>"`red`, `green`, or `blue`"</code>.
   std::optional<std::string> format {}; // NOLINT
-  /**
-   * Minimum number of occurrences.
-   */
+  /// Minimum number of occurrences.
   u64 minOccurs = 1;
-  /**
-   * Maximum number of occurrences.
-   *
-   * If null, this will be auto-configured.
-   */
+  /// Maximum number of occurrences.
+  ///
+  /// If null, this will be auto-configured.
   std::optional<u64> maxOccurs {}; // NOLINT
-  /**
-   * The parameter name.
-   *
-   * By convention, this is in all-caps, e.g., `"FILE"`, and matches the usage line.
-   */
+  /// The parameter name.
+  ///
+  /// By convention, this is in all-caps, e.g., `"FILE"`, and matches the usage line.
   std::string name;
-  /**
-   * An optional verbose description.
-   *
-   * A verbose description that is displayed when verbose help is requested.
-   */
+  /// An optional verbose description.
+  ///
+  /// A verbose description that is displayed when verbose help is requested.
   std::optional<std::string> verboseDescription {}; // NOLINT
 };
 
@@ -469,15 +417,13 @@ struct Parameter {
   /// Type for a function that is called to apply an argument.
   using Apply = std::function<void(std::string_view val)>;
 
-  /**
-   * Low-level factory function that makes a new parameter.
-   *
-   * Usually, you should use one of the following convenience functions instead.
-   *
-   * @param config the configuration
-   * @param apply the function that applies the argument
-   * @return a new parameter
-   */
+  /// Low-level factory function that makes a new parameter.
+  ///
+  /// Usually, you should use one of the following convenience functions instead.
+  ///
+  /// @param config the configuration
+  /// @param apply the function that applies the argument
+  /// @return a new parameter
   static Parameter
   of(const ParameterConfig& config, Apply apply) {
     return {
@@ -493,16 +439,14 @@ struct Parameter {
     };
   }
 
-  /**
-   * Convenience factory function that makes a new parameter and binds it to a destination reference.
-   *
-   * @tparam T the type of the destination reference. If this is a #std::optional reference, the parameter
-   *   is optional, otherwise it is required. If this is a #std::vector reference, the parameter can consume
-   *   multiple values from the command line
-   * @param config the configuration
-   * @param out the destination reference that is assigned the argument
-   * @return a new parameter
-   */
+  /// Convenience factory function that makes a new parameter and binds it to a destination reference.
+  ///
+  /// @tparam T the type of the destination reference. If this is a #std::optional reference, the parameter
+  ///   is optional, otherwise it is required. If this is a #std::vector reference, the parameter can consume
+  ///   multiple values from the command line
+  /// @param config the configuration
+  /// @param out the destination reference that is assigned the argument
+  /// @return a new parameter
   template<typename T>
   static Parameter
   make(const ParameterConfig& config, T& out) {
@@ -549,16 +493,12 @@ struct Parameter {
 
 // `CommandLineConfig` --------------------------------------------------------------------------------------
 
-/**
- * Parameters that configure the behavior of a #rocket::cl::CommandLine.
- */
+/// Parameters that configure the behavior of a #rocket::cl::CommandLine.
 struct CommandLineConfig {
   /// The name of the command. Needed to display the usage. By default, this is the process name.
   std::string command = process().name();
-  /**
-   * One or more usages, e.g., `{ "[OPTION]... FILE", "[OPTION]... PATTERN FILE" }`. If this is empty, no
-   * usage hint is ever printed.
-   */
+  /// One or more usages, e.g., `{ "[OPTION]... FILE", "[OPTION]... PATTERN FILE" }`. If this is empty, no
+  /// usage hint is ever printed.
   std::vector<std::string> usages {}; // NOLINT
   /// Prolog text to be displayed when the `--help` option is supplied.
   std::optional<std::string> prolog {}; // NOLINT
@@ -567,22 +507,16 @@ struct CommandLineConfig {
   /// Version text to be displayed when the `--version` option is supplied.
   std::optional<std::string> version {}; // NOLINT
 
-  /**
-   * Did another module process the command line and output something? If this is `true`, an extra empty line
-   * is printed before the help text.
-   */
+  /// Did another module process the command line and output something? If this is `true`, an extra empty
+  /// line is printed before the help text.
   bool otherOutput = false;
-  /**
-   * Include Rocket’s standard options, such as for logging control?
-   */
+  /// Include Rocket’s standard options, such as for logging control?
   bool rocketOpts = true;
 };
 
 // `CommandLine` --------------------------------------------------------------------------------------------
 
-/**
- * A command-line parser and help-text formatter.
- */
+/// A command-line parser and help-text formatter.
 struct CommandLine {
   /// @ctor_copy
   CommandLine(const CommandLine& rhs) = delete; // The lookup maps point into `opts_`
@@ -590,13 +524,11 @@ struct CommandLine {
   /// @ctor_move
   CommandLine(CommandLine&& rhs) noexcept = default;
 
-  /**
-   * @ctor
-   *
-   * @param opts the command-line options
-   * @param params the command-line parameters
-   * @param config the configuration
-   */
+  /// @ctor
+  ///
+  /// @param opts the command-line options
+  /// @param params the command-line parameters
+  /// @param config the configuration
   explicit CommandLine(
     const std::vector<Option>& opts = {},
     const std::vector<Parameter>& params = {},
@@ -608,16 +540,14 @@ struct CommandLine {
   /// @member_op_asgmt_move
   CommandLine& operator=(CommandLine&& rhs) noexcept = default;
 
-  /**
-   * Parses the command-line arguments @p args, assigns values to bound destination references.
-   *
-   * @param args the command-line arguments, e.g., `process().args()`
-   * @param out the sink to write standard output to
-   * @param err the sink to write error output to
-   * @param exit if `true`, the program exits on help, version, or parse failure
-   * @return if the application should continue after parsing. On help, version, or parse failure, the
-   *   function returns `false`. If @p exit is `true`, the return value may be ignored
-   */
+  /// Parses the command-line arguments @p args, assigns values to bound destination references.
+  ///
+  /// @param args the command-line arguments, e.g., `process().args()`
+  /// @param out the sink to write standard output to
+  /// @param err the sink to write error output to
+  /// @param exit if `true`, the program exits on help, version, or parse failure
+  /// @return if the application should continue after parsing. On help, version, or parse failure, the
+  ///   function returns `false`. If @p exit is `true`, the return value may be ignored
   bool parse(
     const std::vector<std::string>& args,
     nio::Sink& out = nio::out,

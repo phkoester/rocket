@@ -1,8 +1,6 @@
-/**
- * @file TracingString.h
- *
- * A tracing string.
- */
+/// @file TracingString.h
+///
+/// A tracing string.
 
 #pragma once
 
@@ -12,20 +10,16 @@
 
 namespace rocket::test {
 
-/**
- * A string that exactly traces which member functions were called.
- *
- * Useful for testing/debugging copy and move semantics.
- *
- * @NotThreadSafe
- */
+/// A string that exactly traces which member functions were called.
+///
+/// Useful for testing/debugging copy and move semantics.
+///
+/// @NotThreadSafe
 struct TracingString {
   /// The number of currently existing instances.
   static u64 NUM_INSTANCES;
 
-  /**
-   * Resets the ID counter. This may be called on test setup.
-   */
+  /// Resets the ID counter. This may be called on test setup.
   static void
   reset() {
     ID_COUNTER = 0;
@@ -47,11 +41,9 @@ struct TracingString {
   /// Counts how often the move-assignment operator was called for this instance.
   u64 opAsgmtMove = 0;
 
-  /**
-   * @ctor
-   *
-   * @param trace the string to append tracing messages to
-   */
+  /// @ctor
+  ///
+  /// @param trace the string to append tracing messages to
   explicit TracingString(std::string& trace) :
       trace_(&trace),
       id_(++ID_COUNTER) {
@@ -81,12 +73,10 @@ struct TracingString {
     ++ctorMove;
   }
 
-  /**
-   * @ctor
-   *
-   * @param trace the string to append tracing messages to
-   * @param p a pointer to a C string
-   */
+  /// @ctor
+  ///
+  /// @param trace the string to append tracing messages to
+  /// @param p a pointer to a C string
   TracingString(std::string& trace, const char* p) :
       trace_(&trace),
       id_(++ID_COUNTER),

@@ -1,8 +1,6 @@
-/**
- * @file functional.h
- *
- * Functional utilities.
- */
+/// @file functional.h
+///
+/// Functional utilities.
 
 #pragma once
 
@@ -19,9 +17,7 @@ namespace rocket {
 
 // `BoostHash` ----------------------------------------------------------------------------------------------
 
-/**
- * A hasher using `boost::hash`.
- */
+/// A hasher using `boost::hash`.
 struct BoostHash {
   /// @cond undocumented
   template<typename T>
@@ -34,9 +30,7 @@ struct BoostHash {
 
 // `StdCompare` ---------------------------------------------------------------------------------------------
 
-/**
- * A comparator using `std::compare_three_way`.
- */
+/// A comparator using `std::compare_three_way`.
 struct StdCompare {
   /// @cond undocumented
   template<typename T>
@@ -49,9 +43,7 @@ struct StdCompare {
 
 // `StdEqualTo` ---------------------------------------------------------------------------------------------
 
-/**
- * A comparator using #std::equal_to.
- */
+/// A comparator using #std::equal_to.
 struct StdEqualTo {
   /// @cond undocumented
   template<typename T>
@@ -64,9 +56,7 @@ struct StdEqualTo {
 
 // `StdHash` ------------------------------------------------------------------------------------------------
 
-/**
- * A hasher using #std::hash.
- */
+/// A hasher using #std::hash.
 struct StdHash {
   /// @cond undocumented
   template<typename T>

@@ -1,8 +1,6 @@
-/**
- * @file bimap-scan.h
- *
- * Scanning support for Bimaps.
- */
+/// @file bimap-scan.h
+///
+/// Scanning support for Bimaps.
 
 #pragma once
 
@@ -26,18 +24,16 @@ struct scn::range_format_kind<boost::bimaps::bimap<A, B>, C> :
 
 // `scn::scanner<boost::bimaps::bimap>` ---------------------------------------------------------------------
 
-/**
- * @spec_scn_scanner{boost::bimaps::bimap}
- *
- * The scanner scans the left view of the bimap, just as scnlib scans a #std::map: as `{k1: v1, k2: v2}`.
- * Whitespace is skipped before the braces, the commas, and the colons. Keys and values are scanned with
- * their default scanners, without format specifiers.
- *
- * Like inserting into a #std::map, an element is dropped if its key, or with a bimap also its value, is
- * already in the bimap.
- *
- * - Like for a #std::map, no format specifiers are accepted.
- */
+/// @spec_scn_scanner{boost::bimaps::bimap}
+///
+/// The scanner scans the left view of the bimap, just as scnlib scans a #std::map: as `{k1: v1, k2: v2}`.
+/// Whitespace is skipped before the braces, the commas, and the colons. Keys and values are scanned with
+/// their default scanners, without format specifiers.
+///
+/// Like inserting into a #std::map, an element is dropped if its key, or with a bimap also its value, is
+/// already in the bimap.
+///
+/// - Like for a #std::map, no format specifiers are accepted.
 template<typename A, typename B, typename C> requires rocket::IsChar<C>
 struct scn::scanner<boost::bimaps::bimap<A, B>, C> {
   /// @cond undocumented

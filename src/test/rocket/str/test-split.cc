@@ -1,6 +1,4 @@
-/*
- * test-split.cc
- */
+// test-split.cc
 
 #include "rocket-test/rocket-test.h"
 

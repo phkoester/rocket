@@ -1,6 +1,4 @@
-/*
- * test-hash.cc
- */
+// test-hash.cc
 
 #include "rocket-test/rocket-test.h"
 

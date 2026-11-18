@@ -1,6 +1,4 @@
-/*
- * main.cc
- */
+// main.cc
 
 #define ROCKET_TEST
 

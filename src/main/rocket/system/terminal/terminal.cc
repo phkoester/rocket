@@ -1,6 +1,4 @@
-/*
- * terminal.cc
- */
+// terminal.cc
 
 #include "terminal.h"
 
@@ -28,14 +26,12 @@ namespace {
 
 #ifndef ROCKET_OS_WINDOWS
 
-/**
- * Writes an ANSI escape sequence to a device and returns the response from `stdin`.
- *
- * @param out the sink to write to
- * @param sequence the ANSI escape sequence to write
- * @return the response from `stdin`
- * @throw #rocket::InputFailure if the response from `stdin` cannot be read
- */
+/// Writes an ANSI escape sequence to a device and returns the response from `stdin`.
+///
+/// @param out the sink to write to
+/// @param sequence the ANSI escape sequence to write
+/// @return the response from `stdin`
+/// @throw #rocket::InputFailure if the response from `stdin` cannot be read
 string
 sendAnsiRequest(nio::Sink& out, std::string_view sequence) {
   // Save current `stdin` settings

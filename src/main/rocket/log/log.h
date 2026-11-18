@@ -1,10 +1,8 @@
-/**
- * @file log.h
- *
- * A logging API.
- *
- * @ThreadSafe
- */
+/// @file log.h
+///
+/// A logging API.
+///
+/// @ThreadSafe
 
 #pragma once
 
@@ -22,9 +20,7 @@ namespace rocket::log {
 
 // `LogLevel` -----------------------------------------------------------------------------------------------
 
-/**
- * A log-level enum, sorted from lowest to highest level.
- */
+/// A log-level enum, sorted from lowest to highest level.
 enum class LogLevel : u8 {
   none = 0, ///< Log level `none`.
   error = 1, ///< Log level `error`.
@@ -115,20 +111,18 @@ const std::vector<cl::Option>& logOptions();
 
 // Functions ------------------------------------------------------------------------------------------------
 
-/**
- * Expands a log-output value.
- *
- * Useful for testing other processes’ log files.
- *
- * @param val `"-"`, `"stdout"`, `"stderr"`, or a log-output pattern. If it is a pattern, it may contain the
- *   placeholders `<date>`, `<dir>`, `<name>`, `<pid>`, `<utc>`, and `<zip>`.
- * @param dir the directory
- * @param name the process name
- * @param pid the process ID (PID)
- * @param time the time
- * @return the expanded value
- * @throw #rocket::InvalidState if @p val is invalid
- */
+/// Expands a log-output value.
+///
+/// Useful for testing other processes’ log files.
+///
+/// @param val `"-"`, `"stdout"`, `"stderr"`, or a log-output pattern. If it is a pattern, it may contain the
+///   placeholders `<date>`, `<dir>`, `<name>`, `<pid>`, `<utc>`, and `<zip>`.
+/// @param dir the directory
+/// @param name the process name
+/// @param pid the process ID (PID)
+/// @param time the time
+/// @return the expanded value
+/// @throw #rocket::InvalidState if @p val is invalid
 std::string expandLogOut(
   std::string_view val,
   const std::filesystem::path& dir,
@@ -140,31 +134,25 @@ std::string expandLogOut(
 
 // Macros ---------------------------------------------------------------------------------------------------
 
-/**
- * Declares the log ID @p id.
- *
- * @param id the log ID
- */
+/// Declares the log ID @p id.
+///
+/// @param id the log ID
 #define ROCKET_LOG_DECLARE(id) \
   namespace rocket::log::internal { \
     extern LogSettings ROCKET_LOG_ID__(id); \
   }
 
-/**
- * Defines the log ID @p id.
- *
- * @param id the log ID
- */
+/// Defines the log ID @p id.
+///
+/// @param id the log ID
 #define ROCKET_LOG_DEFINE(id) \
   namespace rocket::log::internal { \
     LogSettings ROCKET_LOG_ID__(id) = logDefine(&ROCKET_LOG_ID__(id), #id); \
   }
 
-/**
- * Enables logging in a function, using log ID @p id.
- *
- * @param id the log ID
- */
+/// Enables logging in a function, using log ID @p id.
+///
+/// @param id the log ID
 #define ROCKET_LOG(id) const ::std::unique_ptr<::rocket::log::internal::Log> rocketLog__ = \
   ::rocket::log::internal::makeLog( \
     &::rocket::log::internal::ROCKET_LOG_ID__(id), \
@@ -174,26 +162,20 @@ std::string expandLogOut(
     __LINE__)
 
 #ifdef NDEBUG
-/**
- * Only in debug code, where `NDEBUG` is not defined, enables logging in a function, using log ID @p id.
- *
- * @param id the log ID
- */
+/// Only in debug code, where `NDEBUG` is not defined, enables logging in a function, using log ID @p id.
+///
+/// @param id the log ID
 #define ROCKET_DEBUG_LOG(id)
 #else
-/**
- * Only in debug code, where `NDEBUG` is not defined, enables logging in a function, using log ID @p id.
- *
- * @param id the log ID
- */
+/// Only in debug code, where `NDEBUG` is not defined, enables logging in a function, using log ID @p id.
+///
+/// @param id the log ID
 #define ROCKET_DEBUG_LOG(id) ROCKET_LOG(id)
 #endif // NDEBUG
 
-/**
- * Logs a message, using log level #rocket::log::error.
- *
- * Usage: `ROCKET_LOG_ERROR(fmt, [args]...)`
- */
+/// Logs a message, using log level #rocket::log::error.
+///
+/// Usage: `ROCKET_LOG_ERROR(fmt, [args]...)`
 #define ROCKET_LOG_ERROR(fmt, ...) \
   if (rocketLog__ && rocketLog__->level_ >= ::rocket::log::LogLevel::error) { \
     ::rocket::log::internal::logMessage( \
@@ -201,26 +183,20 @@ std::string expandLogOut(
   }
 
 #ifdef NDEBUG
-/**
- * Only in debug code, where `NDEBUG` is not defined, logs a message, using log level #rocket::log::error.
- *
- * Usage: `ROCKET_DEBUG_LOG_ERROR(fmt, [args]...)`
- */
+/// Only in debug code, where `NDEBUG` is not defined, logs a message, using log level #rocket::log::error.
+///
+/// Usage: `ROCKET_DEBUG_LOG_ERROR(fmt, [args]...)`
 #define ROCKET_DEBUG_LOG_ERROR(fmt, ...)
 #else
-/**
- * Only in debug code, where `NDEBUG` is not defined, logs a message, using log level #rocket::log::error.
- *
- * Usage: `ROCKET_DEBUG_LOG_ERROR(fmt, [args]...)`
- */
+/// Only in debug code, where `NDEBUG` is not defined, logs a message, using log level #rocket::log::error.
+///
+/// Usage: `ROCKET_DEBUG_LOG_ERROR(fmt, [args]...)`
 #define ROCKET_DEBUG_LOG_ERROR(fmt, ...) ROCKET_LOG_ERROR(fmt __VA_OPT__(,) __VA_ARGS__)
 #endif // NDEBUG
 
-/**
- * Logs a message, using log level #rocket::log::warn.
- *
- * Usage: `ROCKET_LOG_WARN(fmt, [args]...)`
- */
+/// Logs a message, using log level #rocket::log::warn.
+///
+/// Usage: `ROCKET_LOG_WARN(fmt, [args]...)`
 #define ROCKET_LOG_WARN(fmt, ...) \
   if (rocketLog__ && rocketLog__->level_ >= ::rocket::log::LogLevel::warn) { \
     ::rocket::log::internal::logMessage( \
@@ -228,26 +204,20 @@ std::string expandLogOut(
   }
 
 #ifdef NDEBUG
-/**
- * Only in debug code, where `NDEBUG` is not defined, logs a message, using log level #rocket::log::warn.
- *
- * Usage: `ROCKET_DEBUG_LOG_WARN(fmt, [args]...)`
- */
+/// Only in debug code, where `NDEBUG` is not defined, logs a message, using log level #rocket::log::warn.
+///
+/// Usage: `ROCKET_DEBUG_LOG_WARN(fmt, [args]...)`
 #define ROCKET_DEBUG_LOG_WARN(fmt, ...)
 #else
-/**
- * Only in debug code, where `NDEBUG` is not defined, logs a message, using log level #rocket::log::warn.
- *
- * Usage: `ROCKET_DEBUG_LOG_WARN(fmt, [args]...)`
- */
+/// Only in debug code, where `NDEBUG` is not defined, logs a message, using log level #rocket::log::warn.
+///
+/// Usage: `ROCKET_DEBUG_LOG_WARN(fmt, [args]...)`
 #define ROCKET_DEBUG_LOG_WARN(fmt, ...) ROCKET_LOG_WARN(fmt __VA_OPT__(,) __VA_ARGS__)
 #endif // NDEBUG
 
-/**
- * Logs a message, using log level #rocket::log::info.
- *
- * Usage: `ROCKET_LOG_INFO(fmt, [args]...)`
- */
+/// Logs a message, using log level #rocket::log::info.
+///
+/// Usage: `ROCKET_LOG_INFO(fmt, [args]...)`
 #define ROCKET_LOG_INFO(fmt, ...) \
   if (rocketLog__ && rocketLog__->level_ >= ::rocket::log::LogLevel::info) { \
     ::rocket::log::internal::logMessage( \
@@ -255,26 +225,20 @@ std::string expandLogOut(
   }
 
 #ifdef NDEBUG
-/**
- * Only in debug code, where `NDEBUG` is not defined, logs a message, using log level #rocket::log::info.
- *
- * Usage: `ROCKET_DEBUG_LOG_INFO(fmt, [args]...)`
- */
+/// Only in debug code, where `NDEBUG` is not defined, logs a message, using log level #rocket::log::info.
+///
+/// Usage: `ROCKET_DEBUG_LOG_INFO(fmt, [args]...)`
 #define ROCKET_DEBUG_LOG_INFO(fmt, ...)
 #else
-/**
- * Only in debug code, where `NDEBUG` is not defined, logs a message, using log level #rocket::log::info.
- *
- * Usage: `ROCKET_DEBUG_LOG_INFO(fmt, [args]...)`
- */
+/// Only in debug code, where `NDEBUG` is not defined, logs a message, using log level #rocket::log::info.
+///
+/// Usage: `ROCKET_DEBUG_LOG_INFO(fmt, [args]...)`
 #define ROCKET_DEBUG_LOG_INFO(fmt, ...) ROCKET_LOG_INFO(fmt __VA_OPT__(,) __VA_ARGS__)
 #endif // NDEBUG
 
-/**
- * Logs a message, using log level #rocket::log::debug.
- *
- * Usage: `ROCKET_LOG_DEBUG(fmt, [args]...)`
- */
+/// Logs a message, using log level #rocket::log::debug.
+///
+/// Usage: `ROCKET_LOG_DEBUG(fmt, [args]...)`
 #define ROCKET_LOG_DEBUG(fmt, ...) \
   if (rocketLog__ && rocketLog__->level_ >= ::rocket::log::LogLevel::debug) { \
     ::rocket::log::internal::logMessage( \
@@ -282,26 +246,20 @@ std::string expandLogOut(
   }
 
 #ifdef NDEBUG
-/**
- * Only in debug code, where `NDEBUG` is not defined, logs a message, using log level #rocket::log::debug.
- *
- * Usage: `ROCKET_DEBUG_LOG_DEBUG(fmt, [args]...)`
- */
+/// Only in debug code, where `NDEBUG` is not defined, logs a message, using log level #rocket::log::debug.
+///
+/// Usage: `ROCKET_DEBUG_LOG_DEBUG(fmt, [args]...)`
 #define ROCKET_DEBUG_LOG_DEBUG(fmt, ...)
 #else
-/**
- * Only in debug code, where `NDEBUG` is not defined, logs a message, using log level #rocket::log::debug.
- *
- * Usage: `ROCKET_DEBUG_LOG_DEBUG(fmt, [args]...)`
- */
+/// Only in debug code, where `NDEBUG` is not defined, logs a message, using log level #rocket::log::debug.
+///
+/// Usage: `ROCKET_DEBUG_LOG_DEBUG(fmt, [args]...)`
 #define ROCKET_DEBUG_LOG_DEBUG(fmt, ...) ROCKET_LOG_DEBUG(fmt __VA_OPT__(,) __VA_ARGS__)
 #endif // NDEBUG
 
-/**
- * Logs a message, using log level #rocket::log::trace.
- *
- * Usage: `ROCKET_LOG_TRACE(fmt, [args]...)`
- */
+/// Logs a message, using log level #rocket::log::trace.
+///
+/// Usage: `ROCKET_LOG_TRACE(fmt, [args]...)`
 #define ROCKET_LOG_TRACE(fmt, ...) \
   if (rocketLog__ && rocketLog__->level_ >= ::rocket::log::LogLevel::trace) { \
     ::rocket::log::internal::logMessage( \
@@ -309,18 +267,14 @@ std::string expandLogOut(
   }
 
 #ifdef NDEBUG
-/**
- * Only in debug code, where `NDEBUG` is not defined, logs a message, using log level #rocket::log::trace.
- *
- * Usage: `ROCKET_DEBUG_LOG_TRACE(fmt, [args]...)`
- */
+/// Only in debug code, where `NDEBUG` is not defined, logs a message, using log level #rocket::log::trace.
+///
+/// Usage: `ROCKET_DEBUG_LOG_TRACE(fmt, [args]...)`
 #define ROCKET_DEBUG_LOG_TRACE(fmt, ...)
 #else
-/**
- * Only in debug code, where `NDEBUG` is not defined, logs a message, using log level #rocket::log::trace.
- *
- * Usage: `ROCKET_DEBUG_LOG_TRACE(fmt, [args]...)`
- */
+/// Only in debug code, where `NDEBUG` is not defined, logs a message, using log level #rocket::log::trace.
+///
+/// Usage: `ROCKET_DEBUG_LOG_TRACE(fmt, [args]...)`
 #define ROCKET_DEBUG_LOG_TRACE(fmt, ...) ROCKET_LOG_TRACE(fmt __VA_OPT__(,) __VA_ARGS__)
 #endif // NDEBUG
 

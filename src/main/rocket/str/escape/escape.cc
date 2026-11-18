@@ -1,6 +1,4 @@
-/*
- * escape.cc
- */
+// escape.cc
 
 #include "escape.h"
 
@@ -29,16 +27,14 @@ constexpr string_view REGEX_SPECIAL_CHARS = "$()*+.?[\\]^{|}";
 string escapeCStringCodePointHex(unicode::CodePoint cp, u64& column, const CStringConfig& config);
 string escapeCStringTab(u64& column, const CStringConfig& config);
 
-/**
- * Escapes a grapheme cluster that consists of several code points.
- *
- * A quote or a backslash may be part of such a cluster: it can be followed by combining marks, as in U+0022
- * U+0301, or preceded by a prepending character, as in U+0600 U+0022. These must be escaped, or the output
- * would be malformed. Everything else stays verbatim. In particular, ZERO WIDTH JOINER isn’t printable, but
- * must not be turned into a hexadecimal sequence, as that would tear emoji sequences apart.
- *
- * Working on bytes is safe here, because in UTF-8, ASCII bytes never occur inside a multi-byte sequence.
- */
+/// Escapes a grapheme cluster that consists of several code points.
+///
+/// A quote or a backslash may be part of such a cluster: it can be followed by combining marks, as in U+0022
+/// U+0301, or preceded by a prepending character, as in U+0600 U+0022. These must be escaped, or the output
+/// would be malformed. Everything else stays verbatim. In particular, ZERO WIDTH JOINER isn’t printable, but
+/// must not be turned into a hexadecimal sequence, as that would tear emoji sequences apart.
+///
+/// Working on bytes is safe here, because in UTF-8, ASCII bytes never occur inside a multi-byte sequence.
 string
 escapeCStringCluster(string_view cluster, const CStringConfig& config) {
   string ret;
@@ -154,13 +150,11 @@ escapeCStringTab(u64& column, const CStringConfig& config) {
   return ret;
 }
 
-/**
- * Escapes a grapheme cluster that consists of several code points.
- *
- * Like a quote in a C string, a special character may be part of such a cluster: it can be followed by
- * combining marks or preceded by a prepending character. These must be escaped, or the character would keep
- * its special meaning. Everything else stays verbatim. See also #escapeCStringCluster.
- */
+/// Escapes a grapheme cluster that consists of several code points.
+///
+/// Like a quote in a C string, a special character may be part of such a cluster: it can be followed by
+/// combining marks or preceded by a prepending character. These must be escaped, or the character would keep
+/// its special meaning. Everything else stays verbatim. See also #escapeCStringCluster.
 string
 escapeRegexCluster(string_view cluster) {
   string ret;
@@ -237,11 +231,9 @@ getChar(unicode::Iterator<char>& iter) {
   return unicode::CharacterView<char>(seg);
 }
 
-/**
- * Reads a grapheme cluster that must start with the ASCII character @p expected.
- *
- * @return the rest of the cluster. This is usually empty, but combining marks may follow @p expected
- */
+/// Reads a grapheme cluster that must start with the ASCII character @p expected.
+///
+/// @return the rest of the cluster. This is usually empty, but combining marks may follow @p expected
 string_view
 getChar(unicode::Iterator<char>& iter, char expected) {
   const u64 pos = iter.current();
@@ -292,14 +284,12 @@ getOptionalChar(unicode::Iterator<char>& iter) {
   return unicode::CharacterView<char>(seg);
 }
 
-/**
- * Reads the four hexadecimal digits following a JSON `\u`, combining a surrogate pair into one code point.
- *
- * @param iter the iterator, positioned after the `\u`
- * @param pos the position of the escape sequence
- * @return the code-point value
- * @throw #rocket::InputFailure if the digits are invalid or if a surrogate is unpaired
- */
+/// Reads the four hexadecimal digits following a JSON `\u`, combining a surrogate pair into one code point.
+///
+/// @param iter the iterator, positioned after the `\u`
+/// @param pos the position of the escape sequence
+/// @return the code-point value
+/// @throw #rocket::InputFailure if the digits are invalid or if a surrogate is unpaired
 u32
 getJsonCodePoint(unicode::Iterator<char>& iter, u64 pos) {
   const auto unpaired = [&] {
@@ -328,15 +318,13 @@ getJsonCodePoint(unicode::Iterator<char>& iter, u64 pos) {
   return 0x10000U + ((first - 0xD800U) << 10U) + (second - 0xDC00U);
 }
 
-/**
- * Converts the value of a hexadecimal escape sequence to a code point.
- *
- * @param iter the iterator, positioned after the escape sequence
- * @param pos the position of the escape sequence
- * @param value the value of the escape sequence
- * @return the code point
- * @throw #rocket::InputFailure if @p value is not a valid code-point value
- */
+/// Converts the value of a hexadecimal escape sequence to a code point.
+///
+/// @param iter the iterator, positioned after the escape sequence
+/// @param pos the position of the escape sequence
+/// @param value the value of the escape sequence
+/// @return the code point
+/// @throw #rocket::InputFailure if @p value is not a valid code-point value
 unicode::CodePoint
 toCodePoint(const unicode::Iterator<char>& iter, u64 pos, u32 value) {
   if (not unicode::CodePoint::valid(static_cast<char32>(value))) {

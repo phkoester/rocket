@@ -1,8 +1,6 @@
-/*
- * test-icu.cc
- *
- * Tests related to the ICU library.
- */
+// test-icu.cc
+//
+// Tests related to the ICU library.
 
 #define ROCKET_TEST_NO_USING_NAMESPACE
 

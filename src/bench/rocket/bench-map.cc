@@ -1,6 +1,4 @@
-/*
- * bench-map.cc
- */
+// bench-map.cc
 
 #include "rocket-bench/rocket-bench.h"
 

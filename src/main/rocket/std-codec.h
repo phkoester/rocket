@@ -1,8 +1,6 @@
-/**
- * @file std-codec.h
- *
- * Additional codec support for the standard library.
- */
+/// @file std-codec.h
+///
+/// Additional codec support for the standard library.
 
 #pragma once
 

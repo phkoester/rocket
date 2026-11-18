@@ -1,6 +1,4 @@
-/*
- * test-JsonCodec.cc
- */
+// test-JsonCodec.cc
 
 #include "rocket-test/rocket-test.h"
 

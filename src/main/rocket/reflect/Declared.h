@@ -1,8 +1,6 @@
-/**
- * @file Declared.h
- *
- * C++ reflection support: declared types.
- */
+/// @file Declared.h
+///
+/// C++ reflection support: declared types.
 
 #pragma once
 
@@ -12,9 +10,7 @@ namespace rocket::reflect {
 
 // `Declared` -----------------------------------------------------------------------------------------------
 
-/**
- * This template provides access to default member references of a declared type.
- */
+/// This template provides access to default member references of a declared type.
 template<typename T>
 struct Declared : std::false_type {};
 

@@ -1,8 +1,6 @@
-/*
- * test-std.cc
- *
- * Tests related to the STL.
- */
+// test-std.cc
+//
+// Tests related to the STL.
 
 #include "rocket-test/rocket-test.h"
 
@@ -36,14 +34,12 @@ TEST(MODULE, f32OpCmp) {
   static_assert((nan <=> nan) == std::partial_ordering::unordered); // NOLINT
 }
 
-/**
- * Segfaults on Windows with Clang 22.1.3.
- *
- * - https://github.com/llvm/llvm-project/issues/158302
- * - https://github.com/llvm/llvm-project/issues/191462
- *
- * The crash happens when #std::current_exception() is called inside a nested exception handler.
- */
+/// Segfaults on Windows with Clang 22.1.3.
+///
+/// - https://github.com/llvm/llvm-project/issues/158302
+/// - https://github.com/llvm/llvm-project/issues/191462
+///
+/// The crash happens when #std::current_exception() is called inside a nested exception handler.
 TEST(MODULE, rethrowException) {
   try {
     throw runtime_error("oops");

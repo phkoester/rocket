@@ -1,8 +1,6 @@
-/**
- * @file CborCodec.h
- *
- * A CBOR codec, using libcbor.
- */
+/// @file CborCodec.h
+///
+/// A CBOR codec, using libcbor.
 
 #pragma once
 
@@ -21,11 +19,9 @@ namespace internal::cbor {
 
 // `CborItem` -----------------------------------------------------------------------------------------------
 
-/**
- * A managed CBOR item with move semantics. It helps to avoid leaks when exceptions are thrown. More
- * generally, it serves as a bridge between a C API and the Rocket codec consumers and producers that make
- * use of exceptions.
- */
+/// A managed CBOR item with move semantics. It helps to avoid leaks when exceptions are thrown. More
+/// generally, it serves as a bridge between a C API and the Rocket codec consumers and producers that make
+/// use of exceptions.
 template<typename T>
 struct CborItem {
   explicit CborItem(cbor_item_t* ptr) : ptr_(ptr) {
@@ -94,10 +90,8 @@ std::string_view messageOf(cbor_error_code errorCode);
 
 u64 positionOf(std::span<const u8> cbor, u64 index);
 
-/**
- * Builds an unsigned integer item (major type 0) with the value @p val, using the shortest encoding
- * (RFC 8949, Section 4.2.1).
- */
+/// Builds an unsigned integer item (major type 0) with the value @p val, using the shortest encoding
+/// (RFC 8949, Section 4.2.1).
 inline cbor_item_t*
 buildUint(u64 val) {
   if (val <= 0xFFU) {
@@ -112,9 +106,7 @@ buildUint(u64 val) {
   return cbor_build_uint64(val);
 }
 
-/**
- * Builds a negative integer item (major type 1) with the value `-1 - val`, using the shortest encoding.
- */
+/// Builds a negative integer item (major type 1) with the value `-1 - val`, using the shortest encoding.
 inline cbor_item_t*
 buildNegint(u64 val) {
   if (val <= 0xFFU) {
@@ -129,11 +121,9 @@ buildNegint(u64 val) {
   return cbor_build_negint64(val);
 }
 
-/**
- * Builds a bignum item (RFC 8949, Section 3.4.3): tag 2 with the value @p val if @p negative is `false`,
- * tag 3 with the value `-1 - val` otherwise. The byte string holds @p val in big-endian order, without
- * leading zeros.
- */
+/// Builds a bignum item (RFC 8949, Section 3.4.3): tag 2 with the value @p val if @p negative is `false`,
+/// tag 3 with the value `-1 - val` otherwise. The byte string holds @p val in big-endian order, without
+/// leading zeros.
 inline cbor_item_t*
 buildBignum(bool negative, u128 val) {
   std::array<u8, 16> bytes {};
@@ -151,10 +141,8 @@ buildBignum(bool negative, u128 val) {
   return cbor_build_tag(negative ? 3 : 2, bytestring.ptr());
 }
 
-/**
- * Builds an integer item for @p val: an unsigned or negative integer if the value is in the 64-bit range, a
- * bignum otherwise.
- */
+/// Builds an integer item for @p val: an unsigned or negative integer if the value is in the 64-bit range, a
+/// bignum otherwise.
 template<typename I>
 cbor_item_t*
 buildInteger(I val) {
@@ -190,16 +178,14 @@ struct IntegerValue {
   u128 raw {};
 };
 
-/**
- * Reads an unsigned integer, a negative integer, or a bignum of any encoding width.
- *
- * @param item the item to read
- * @param state the decoder state, already advanced to @p item. A bignum advances it by one more item, the
- *   byte string
- * @param pos the position to report errors at
- * @return the integer value
- * @throw #rocket::InputFailure if @p item is not an integer, or if a bignum exceeds 128 bits
- */
+/// Reads an unsigned integer, a negative integer, or a bignum of any encoding width.
+///
+/// @param item the item to read
+/// @param state the decoder state, already advanced to @p item. A bignum advances it by one more item, the
+///   byte string
+/// @param pos the position to report errors at
+/// @return the integer value
+/// @throw #rocket::InputFailure if @p item is not an integer, or if a bignum exceeds 128 bits
 inline IntegerValue
 readInteger(cbor_item_t* item, DecoderState& state, u64 pos) {
   if (cbor_isa_uint(item)) {
@@ -228,11 +214,9 @@ readInteger(cbor_item_t* item, DecoderState& state, u64 pos) {
   throw InputFailure(pos, "expected an integer value");
 }
 
-/**
- * Converts an integer value to @p I, checking the range.
- *
- * @throw #rocket::InputFailure if the value does not fit into @p I
- */
+/// Converts an integer value to @p I, checking the range.
+///
+/// @throw #rocket::InputFailure if the value does not fit into @p I
 template<typename I>
 I
 toInteger(const IntegerValue& val, u64 pos) {
@@ -1251,34 +1235,30 @@ struct CborProducer {
 
 // `CborCodec` ----------------------------------------------------------------------------------------------
 
-/**
- * A CBOR codec.
- *
- * The encoder can serialize an arbitrary C++ data structure to a CBOR byte sequence.
- *
- * The decoder can deserialize a CBOR byte sequence to an arbitrary C++ data structure.
- *
- * Integer values are written as CBOR unsigned or negative integers (major types 0 and 1), using the shortest
- * encoding. 128-bit values outside the 64-bit range are written as bignums (tags 2 and 3). Characters are
- * unsigned: a `char` is written as its byte value in the range [0,255], a `char32` as its code-point value.
- * Durations, dates, and time points are written as integer counts, so negative values are negative integers.
- * The decoder accepts integers of any encoding width, including bignums, and reports a value that does not
- * fit into the target type as an error.
- *
- * Decoding to list views and forward lists is not supported. String views and character views, however, are
- * allowed. This is made possible by keeping real strings in a store bound to the decoder. Hence, decoded
- * string views and character views are valid, and valid only, for the lifetime of the decoder.
- */
+/// A CBOR codec.
+///
+/// The encoder can serialize an arbitrary C++ data structure to a CBOR byte sequence.
+///
+/// The decoder can deserialize a CBOR byte sequence to an arbitrary C++ data structure.
+///
+/// Integer values are written as CBOR unsigned or negative integers (major types 0 and 1), using the
+/// shortest encoding. 128-bit values outside the 64-bit range are written as bignums (tags 2 and 3).
+/// Characters are unsigned: a `char` is written as its byte value in the range [0,255], a `char32` as its
+/// code-point value. Durations, dates, and time points are written as integer counts, so negative values are
+/// negative integers. The decoder accepts integers of any encoding width, including bignums, and reports a
+/// value that does not fit into the target type as an error.
+///
+/// Decoding to list views and forward lists is not supported. String views and character views, however, are
+/// allowed. This is made possible by keeping real strings in a store bound to the decoder. Hence, decoded
+/// string views and character views are valid, and valid only, for the lifetime of the decoder.
 struct CborCodec : Codec<CborConsumer, CborProducer> {
   using Base = Codec<CborConsumer, CborProducer>; ///< @type_base
 
-  /**
-   * Encodes a value.
-   *
-   * @tparam T the type to encode
-   * @param val the value to encode
-   * @return a byte sequence, a binary representation of the value @p val
-   */
+  /// Encodes a value.
+  ///
+  /// @tparam T the type to encode
+  /// @param val the value to encode
+  /// @return a byte sequence, a binary representation of the value @p val
   template<typename T>
   [[nodiscard]] std::vector<u8>
   encode(const T& val) const {
@@ -1296,13 +1276,11 @@ struct CborCodec : Codec<CborConsumer, CborProducer> {
     return { buf, buf + bufSize };
   }
 
-  /**
-   * Decodes a value from a source.
-   *
-   * @tparam T the type to decode
-   * @param cbor the CBOR input byte sequence to decode
-   * @return the decoded value
-   */
+  /// Decodes a value from a source.
+  ///
+  /// @tparam T the type to decode
+  /// @param cbor the CBOR input byte sequence to decode
+  /// @return the decoded value
   template<typename T>
   [[nodiscard]] DecodeResult<T>
   decode(std::span<const u8> cbor) const {

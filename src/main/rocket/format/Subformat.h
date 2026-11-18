@@ -1,6 +1,4 @@
-/**
- * @file Subformat.h
- */
+/// @file Subformat.h
 
 #pragma once
 
@@ -17,11 +15,9 @@ namespace rocket::format {
 
 // `SubformatParams` ----------------------------------------------------------------------------------------
 
-/**
- * Parameters for the #rocket::format::Subformat class.
- *
- * @tparam C the character type
- */
+/// Parameters for the #rocket::format::Subformat class.
+///
+/// @tparam C the character type
 template<typename C> requires IsChar<C>
 struct SubformatParams {
   /// The formatted string.
@@ -29,68 +25,56 @@ struct SubformatParams {
   /// The tagged values.
   std::map<std::basic_string<C>, std::basic_string<C>, std::less<>> tagged_;
 
-  /**
-   * Sets the formatted string.
-   *
-   * @param formatted the formatted string
-   */
+  /// Sets the formatted string.
+  ///
+  /// @param formatted the formatted string
   void set(const std::basic_string<C>& formatted) {
     formatted_ = formatted;
   }
 
-  /**
-   * Sets the formatted string.
-   *
-   * @param fmt the format string
-   * @param args the arguments
-   */
+  /// Sets the formatted string.
+  ///
+  /// @param fmt the format string
+  /// @param args the arguments
   template<typename... T>
   void set(fmt::format_string<T...> fmt, T&&... args) {
     formatted_ = fmt::format(fmt, std::forward<T>(args)...);
   }
 
-  /**
-   * Sets the formatted string.
-   *
-   * @param locale the locale
-   * @param fmt the format string
-   * @param args the arguments
-   */
+  /// Sets the formatted string.
+  ///
+  /// @param locale the locale
+  /// @param fmt the format string
+  /// @param args the arguments
   template<typename... T>
   void set(const std::locale& locale, fmt::format_string<T...> fmt, T&&... args) {
     formatted_ = fmt::format(locale, fmt, std::forward<T>(args)...);
   }
 
-  /**
-   * Tags a value.
-   *
-   * @param tag the tag
-   * @param val the value
-   */
+  /// Tags a value.
+  ///
+  /// @param tag the tag
+  /// @param val the value
   void tag(std::basic_string_view<C> tag, const std::basic_string<C>& val) {
     tagged_.emplace(tag, val);
   }
 
-  /**
-   * Tags a value.
-   *
-   * @param tag the tag
-   * @param fmt the format string
-   * @param args the arguments
-   */
+  /// Tags a value.
+  ///
+  /// @param tag the tag
+  /// @param fmt the format string
+  /// @param args the arguments
   template<typename... T>
   void tag(std::basic_string_view<C> tag, fmt::format_string<T...> fmt, T&&... args) {
     tagged_.emplace(tag, fmt::format(fmt, std::forward<T>(args)...));
   }
 
-  /**
-   * Tags a value.
-   *
-   * @param tag the tag
-   * @param locale the locale
-   * @param fmt the format string
-   * @param args the arguments
-   */
+  /// Tags a value.
+  ///
+  /// @param tag the tag
+  /// @param locale the locale
+  /// @param fmt the format string
+  /// @param args the arguments
   template<typename... T>
   void tag(
     std::basic_string_view<C> tag,
@@ -102,45 +86,37 @@ struct SubformatParams {
 
 // `Subformat` ----------------------------------------------------------------------------------------------
 
-/**
- * A subformat that may be passed as an argument to `fmt::format`.
- *
- * @tparam C the character type
- */
+/// A subformat that may be passed as an argument to `fmt::format`.
+///
+/// @tparam C the character type
 template<typename C> requires IsChar<C>
 struct Subformat {
 
   /// A function that produces #rocket::format::SubformatParams.
   using SubformatParamsProducer = std::function<SubformatParams<C>()>;
 
-  /**
-   * Makes empty parameters, resulting in an empty string.
-   *
-   * @return parameters
-   */
+  /// Makes empty parameters, resulting in an empty string.
+  ///
+  /// @return parameters
   static SubformatParams<C> params() {
     return {};
   }
 
-  /**
-   * Makes parameters with an already formatted string.
-   *
-   * @param formatted the formatted string
-   * @return parameters
-   */
+  /// Makes parameters with an already formatted string.
+  ///
+  /// @param formatted the formatted string
+  /// @return parameters
   static SubformatParams<C> params(const std::basic_string<C>& formatted) {
     SubformatParams<C> ret;
     ret.set(formatted);
     return ret;
   }
 
-  /**
-   * Makes parameters with a format string and its arguments.
-   *
-   * @param fmt the format string
-   * @param args the arguments
-   * @return parameters
-   */
+  /// Makes parameters with a format string and its arguments.
+  ///
+  /// @param fmt the format string
+  /// @param args the arguments
+  /// @return parameters
   template<typename... T>
   static SubformatParams<C> params(fmt::format_string<T...> fmt, T&&... args) {
     SubformatParams<C> ret;
@@ -148,14 +124,12 @@ struct Subformat {
     return ret;
   }
 
-  /**
-   * Makes parameters with a locale, format string, and its arguments.
-   *
-   * @param locale the locale
-   * @param fmt the format string
-   * @param args the arguments
-   * @return parameters
-   */
+  /// Makes parameters with a locale, format string, and its arguments.
+  ///
+  /// @param locale the locale
+  /// @param fmt the format string
+  /// @param args the arguments
+  /// @return parameters
   template<typename... T>
   static SubformatParams<C> params(const std::locale& locale, fmt::format_string<T...> fmt, T&&... args) {
     SubformatParams<C> ret;
@@ -163,18 +137,14 @@ struct Subformat {
     return ret;
   }
 
-  /**
-   * @ctor
-   *
-   * @param fn a function that produces #rocket::format::SubformatParams
-   */
+  /// @ctor
+  ///
+  /// @param fn a function that produces #rocket::format::SubformatParams
   explicit Subformat(const SubformatParamsProducer& fn) : params_(fn()) {}
 
-  /**
-   * Returns the format’s parameters.
-   *
-   * @return the format’s parameters
-   */
+  /// Returns the format’s parameters.
+  ///
+  /// @return the format’s parameters
   [[nodiscard]] const SubformatParams<C>& get() const { return params_; }
 
 private:
@@ -186,16 +156,14 @@ private:
 
 // `fmt::formatter<rocket::format::Subformat>` --------------------------------------------------------------
 
-/**
- * @spec_fmt_formatter{#rocket::format::Subformat}
- *
- * Every occurrence of a tag in the formatted string is replaced with the tagged value. The replacement is
- * done in a single pass, so tags in the tagged values are not replaced in turn. If several tags occur at the
- * same position, then the longest one is replaced.
- *
- * This formatter uses the same format specifiers as the underlying string formatter; they apply to the whole
- * string after the replacement.
- */
+/// @spec_fmt_formatter{#rocket::format::Subformat}
+///
+/// Every occurrence of a tag in the formatted string is replaced with the tagged value. The replacement is
+/// done in a single pass, so tags in the tagged values are not replaced in turn. If several tags occur at
+/// the same position, then the longest one is replaced.
+///
+/// This formatter uses the same format specifiers as the underlying string formatter; they apply to the
+/// whole string after the replacement.
 template<typename C> requires rocket::IsChar<C>
 struct fmt::formatter<rocket::format::Subformat<C>, C> {
   /// @cond undocumented

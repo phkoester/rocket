@@ -1,8 +1,6 @@
-/**
- * @file enum-scan.h
- *
- * Scanning support for Rocket enums.
- */
+/// @file enum-scan.h
+///
+/// Scanning support for Rocket enums.
 
 #pragma once
 
@@ -17,13 +15,11 @@
 
 // `scn::scanner<rocket::Enum>` -----------------------------------------------------------------------------
 
-/**
- * @spec_scn_scanner{#rocket::Enum}
- *
- * This scanner uses the same format specifiers as the underlying string scanner. It scans a word and then
- * gives back the characters that follow the longest enum name the word starts with, so that, for example,
- * `Red,` scans as `Red` and leaves the comma in the input.
- */
+/// @spec_scn_scanner{#rocket::Enum}
+///
+/// This scanner uses the same format specifiers as the underlying string scanner. It scans a word and then
+/// gives back the characters that follow the longest enum name the word starts with, so that, for example,
+/// `Red,` scans as `Red` and leaves the comma in the input.
 template<typename E, typename C> requires rocket::Enum<E>::value && rocket::IsChar<C>
 struct scn::scanner<E, C> : scn::scanner<std::basic_string<C>, C> {
   /// @cond undocumented

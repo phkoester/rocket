@@ -1,41 +1,39 @@
-/**
- * @file time_zone.h
- *
- * Portability layer for #std::chrono::time_zone and companions.
- *
- * This header declares
- *
- * - #rocket::chrono::sys_info,
- * - #rocket::chrono::local_info,
- * - #rocket::chrono::choose,
- * - #rocket::chrono::ambiguous_local_time,
- * - #rocket::chrono::nonexistent_local_time,
- * - #rocket::chrono::time_zone,
- * - #rocket::chrono::locate_zone,
- * - #rocket::chrono::current_zone,
- * - #rocket::chrono::zoned_traits,
- * - #rocket::chrono::zoned_time, and
- * - #rocket::chrono::zoned_seconds.
- *
- * If the standard library provides the C++20 time-zone support, these are #std::chrono::sys_info,
- * #std::chrono::local_info, and so on. Otherwise, they are portable implementations that follow the
- * specification of these classes in the C++20 standard, reading the time-zone data from compiled TZif files
- * (RFC 8536) in the directory given by the environment variable `TZDIR`, which defaults to
- * `/usr/share/zoneinfo`. This is the case on macOS, whose libc++ is built without time-zone support.
- *
- * Differences of the portable implementation:
- *
- * - There is no `rocket::chrono::tzdb`; time zones are loaded on demand.
- * - Links (alternative names like `UTC` for `Etc/UTC`) are resolved via the file `tzdata.zi` in the
- *   time-zone directory. Without that file, #rocket::chrono::time_zone::name returns the name the zone was
- *   located by.
- * - The member `save` of #rocket::chrono::sys_info is derived from the UTC offsets, since TZif files do not
- *   record it.
- * - Time-zone files with leap seconds (`right/...`) are not supported.
- * - The formatter of #rocket::chrono::zoned_time does not support dynamic width or precision.
- *
- * If the time-zone directory does not exist, `UTC` and its aliases are still available.
- */
+/// @file time_zone.h
+///
+/// Portability layer for #std::chrono::time_zone and companions.
+///
+/// This header declares
+///
+/// - #rocket::chrono::sys_info,
+/// - #rocket::chrono::local_info,
+/// - #rocket::chrono::choose,
+/// - #rocket::chrono::ambiguous_local_time,
+/// - #rocket::chrono::nonexistent_local_time,
+/// - #rocket::chrono::time_zone,
+/// - #rocket::chrono::locate_zone,
+/// - #rocket::chrono::current_zone,
+/// - #rocket::chrono::zoned_traits,
+/// - #rocket::chrono::zoned_time, and
+/// - #rocket::chrono::zoned_seconds.
+///
+/// If the standard library provides the C++20 time-zone support, these are #std::chrono::sys_info,
+/// #std::chrono::local_info, and so on. Otherwise, they are portable implementations that follow the
+/// specification of these classes in the C++20 standard, reading the time-zone data from compiled TZif files
+/// (RFC 8536) in the directory given by the environment variable `TZDIR`, which defaults to
+/// `/usr/share/zoneinfo`. This is the case on macOS, whose libc++ is built without time-zone support.
+///
+/// Differences of the portable implementation:
+///
+/// - There is no `rocket::chrono::tzdb`; time zones are loaded on demand.
+/// - Links (alternative names like `UTC` for `Etc/UTC`) are resolved via the file `tzdata.zi` in the
+///   time-zone directory. Without that file, #rocket::chrono::time_zone::name returns the name the zone was
+///   located by.
+/// - The member `save` of #rocket::chrono::sys_info is derived from the UTC offsets, since TZif files do not
+///   record it.
+/// - Time-zone files with leap seconds (`right/...`) are not supported.
+/// - The formatter of #rocket::chrono::zoned_time does not support dynamic width or precision.
+///
+/// If the time-zone directory does not exist, `UTC` and its aliases are still available.
 
 #pragma once
 
@@ -80,20 +78,16 @@ using time_zone = std::chrono::time_zone;
 
 #ifdef ROCKET_DOXYGEN
 
-/**
- * Returns the current time zone of the computer.
- *
- * @return the current time zone, valid until the program ends
- */
+/// Returns the current time zone of the computer.
+///
+/// @return the current time zone, valid until the program ends
 const time_zone* current_zone();
 
-/**
- * Locates a time zone by name.
- *
- * @param name the name of the time zone, for example `Europe/Berlin`
- * @return the time zone, valid until the program ends
- * @throw #std::runtime_error if the time zone cannot be located
- */
+/// Locates a time zone by name.
+///
+/// @param name the name of the time zone, for example `Europe/Berlin`
+/// @return the time zone, valid until the program ends
+/// @throw #std::runtime_error if the time zone cannot be located
 const time_zone* locate_zone(std::string_view name);
 
 #else
@@ -118,9 +112,7 @@ using zoned_seconds = std::chrono::zoned_time<std::chrono::seconds>;
 
 // `sys_info` -----------------------------------------------------------------------------------------------
 
-/**
- * Information about a time zone at a certain point in time, equivalent to C++20’s #std::chrono::sys_info.
- */
+/// Information about a time zone at a certain point in time, equivalent to C++20’s #std::chrono::sys_info.
 struct sys_info {
   /// The beginning of the period these values apply to.
   std::chrono::sys_seconds begin;
@@ -134,13 +126,11 @@ struct sys_info {
   std::string abbrev;
 };
 
-/**
- * Writes a #rocket::chrono::sys_info to an output stream.
- *
- * @param os the output stream
- * @param val the value to write
- * @return @p os
- */
+/// Writes a #rocket::chrono::sys_info to an output stream.
+///
+/// @param os the output stream
+/// @param val the value to write
+/// @return @p os
 template<typename CharT, typename Traits>
 std::basic_ostream<CharT, Traits>&
 operator<<(std::basic_ostream<CharT, Traits>& os, const sys_info& val) {
@@ -154,9 +144,7 @@ operator<<(std::basic_ostream<CharT, Traits>& os, const sys_info& val) {
 
 // `local_info` ---------------------------------------------------------------------------------------------
 
-/**
- * Information about a local time in a time zone, equivalent to C++20’s #std::chrono::local_info.
- */
+/// Information about a local time in a time zone, equivalent to C++20’s #std::chrono::local_info.
 struct local_info {
   static constexpr int unique = 0; ///< The local time maps to exactly one UTC time.
   static constexpr int nonexistent = 1; ///< The local time is in a gap, for example when DST starts.
@@ -167,13 +155,11 @@ struct local_info {
   sys_info second; ///< The period after the gap, or the second period for an ambiguous time.
 };
 
-/**
- * Writes a #rocket::chrono::local_info to an output stream.
- *
- * @param os the output stream
- * @param val the value to write
- * @return @p os
- */
+/// Writes a #rocket::chrono::local_info to an output stream.
+///
+/// @param os the output stream
+/// @param val the value to write
+/// @return @p os
 template<typename CharT, typename Traits>
 std::basic_ostream<CharT, Traits>&
 operator<<(std::basic_ostream<CharT, Traits>& os, const local_info& val) {
@@ -223,17 +209,13 @@ enum class choose {
 
 // `ambiguous_local_time` -----------------------------------------------------------------------------------
 
-/**
- * The exception thrown when a local time is ambiguous, equivalent to C++20’s
- * #std::chrono::ambiguous_local_time.
- */
+/// The exception thrown when a local time is ambiguous, equivalent to C++20’s
+/// #std::chrono::ambiguous_local_time.
 struct ambiguous_local_time : std::runtime_error {
-  /**
-   * @ctor
-   *
-   * @param tp the local time
-   * @param info the information about @p tp; its `result` must be #rocket::chrono::local_info::ambiguous
-   */
+  /// @ctor
+  ///
+  /// @param tp the local time
+  /// @param info the information about @p tp; its `result` must be #rocket::chrono::local_info::ambiguous
   template<typename Duration>
   ambiguous_local_time(const std::chrono::local_time<Duration>& tp, const local_info& info) :
     std::runtime_error(internal::ambiguousMessage(tp, info)) {}
@@ -241,17 +223,13 @@ struct ambiguous_local_time : std::runtime_error {
 
 // `nonexistent_local_time` ---------------------------------------------------------------------------------
 
-/**
- * The exception thrown when a local time does not exist, equivalent to C++20’s
- * #std::chrono::nonexistent_local_time.
- */
+/// The exception thrown when a local time does not exist, equivalent to C++20’s
+/// #std::chrono::nonexistent_local_time.
 struct nonexistent_local_time : std::runtime_error {
-  /**
-   * @ctor
-   *
-   * @param tp the local time
-   * @param info the information about @p tp; its `result` must be #rocket::chrono::local_info::nonexistent
-   */
+  /// @ctor
+  ///
+  /// @param tp the local time
+  /// @param info the information about @p tp; its `result` must be #rocket::chrono::local_info::nonexistent
   template<typename Duration>
   nonexistent_local_time(const std::chrono::local_time<Duration>& tp, const local_info& info) :
     std::runtime_error(internal::nonexistentMessage(tp, info)) {}
@@ -267,14 +245,12 @@ struct ZoneData; // Defined in `chrono.cc`
 
 } // namespace internal
 
-/**
- * A time zone, equivalent to C++20’s #std::chrono::time_zone.
- *
- * Instances cannot be constructed. They are obtained from #rocket::chrono::locate_zone and
- * #rocket::chrono::current_zone, which keep them alive until the program ends.
- *
- * @ThreadSafe
- */
+/// A time zone, equivalent to C++20’s #std::chrono::time_zone.
+///
+/// Instances cannot be constructed. They are obtained from #rocket::chrono::locate_zone and
+/// #rocket::chrono::current_zone, which keep them alive until the program ends.
+///
+/// @ThreadSafe
 struct time_zone {
   /// @ctor_move
   time_zone(time_zone&& rhs) = default;
@@ -285,43 +261,35 @@ struct time_zone {
   /// @member_op_asgmt_move
   time_zone& operator=(time_zone&& rhs) = default;
 
-  /**
-   * Returns the information about this time zone at a UTC time point.
-   *
-   * @param tp the UTC time point
-   * @return the information
-   */
+  /// Returns the information about this time zone at a UTC time point.
+  ///
+  /// @param tp the UTC time point
+  /// @return the information
   template<typename Duration>
   [[nodiscard]] sys_info
   get_info(const std::chrono::sys_time<Duration>& tp) const {
     return getSysInfo(std::chrono::floor<std::chrono::seconds>(tp));
   }
 
-  /**
-   * Returns the information about a local time in this time zone.
-   *
-   * @param tp the local time
-   * @return the information
-   */
+  /// Returns the information about a local time in this time zone.
+  ///
+  /// @param tp the local time
+  /// @return the information
   template<typename Duration>
   [[nodiscard]] local_info
   get_info(const std::chrono::local_time<Duration>& tp) const {
     return getLocalInfo(std::chrono::floor<std::chrono::seconds>(tp));
   }
 
-  /**
-   * Returns the name of this time zone.
-   *
-   * @return the name, for example `Europe/Berlin`
-   */
+  /// Returns the name of this time zone.
+  ///
+  /// @return the name, for example `Europe/Berlin`
   [[nodiscard]] std::string_view name() const noexcept { return name_; }
 
-  /**
-   * Converts a UTC time point to the local time in this time zone.
-   *
-   * @param tp the UTC time point
-   * @return the local time
-   */
+  /// Converts a UTC time point to the local time in this time zone.
+  ///
+  /// @param tp the UTC time point
+  /// @return the local time
   template<typename Duration>
   [[nodiscard]] std::chrono::local_time<std::common_type_t<Duration, std::chrono::seconds>>
   to_local(const std::chrono::sys_time<Duration>& tp) const {
@@ -329,14 +297,12 @@ struct time_zone {
     return Ret(tp.time_since_epoch()) + get_info(tp).offset;
   }
 
-  /**
-   * Converts a local time in this time zone to UTC.
-   *
-   * @param tp the local time
-   * @return the UTC time point
-   * @throw nonexistent_local_time if @p tp does not exist
-   * @throw ambiguous_local_time if @p tp is ambiguous
-   */
+  /// Converts a local time in this time zone to UTC.
+  ///
+  /// @param tp the local time
+  /// @return the UTC time point
+  /// @throw nonexistent_local_time if @p tp does not exist
+  /// @throw ambiguous_local_time if @p tp is ambiguous
   template<typename Duration>
   [[nodiscard]] std::chrono::sys_time<std::common_type_t<Duration, std::chrono::seconds>>
   to_sys(const std::chrono::local_time<Duration>& tp) const {
@@ -351,13 +317,11 @@ struct time_zone {
     return Ret(tp.time_since_epoch()) - info.first.offset;
   }
 
-  /**
-   * Converts a local time in this time zone to UTC, resolving nonexistent and ambiguous local times.
-   *
-   * @param tp the local time
-   * @param c how to resolve an ambiguous local time
-   * @return the UTC time point. If @p tp does not exist, this is the UTC time point of the gap
-   */
+  /// Converts a local time in this time zone to UTC, resolving nonexistent and ambiguous local times.
+  ///
+  /// @param tp the local time
+  /// @param c how to resolve an ambiguous local time
+  /// @return the UTC time point. If @p tp does not exist, this is the UTC time point of the gap
   template<typename Duration>
   [[nodiscard]] std::chrono::sys_time<std::common_type_t<Duration, std::chrono::seconds>>
   to_sys(const std::chrono::local_time<Duration>& tp, choose c) const {
@@ -402,72 +366,60 @@ private:
 
 // Functions ------------------------------------------------------------------------------------------------
 
-/**
- * Returns the current time zone of the computer, equivalent to C++20’s #std::chrono::current_zone.
- *
- * The time zone is taken from the symbolic link `/etc/localtime`, or the file `/etc/timezone`, in this
- * order. If none of these yields a time zone, the result is `UTC`.
- *
- * @ThreadSafe
- *
- * @return the current time zone, valid until the program ends
- */
+/// Returns the current time zone of the computer, equivalent to C++20’s #std::chrono::current_zone.
+///
+/// The time zone is taken from the symbolic link `/etc/localtime`, or the file `/etc/timezone`, in this
+/// order. If none of these yields a time zone, the result is `UTC`.
+///
+/// @ThreadSafe
+///
+/// @return the current time zone, valid until the program ends
 const time_zone* current_zone();
 
-/**
- * Locates a time zone by name, equivalent to C++20’s #std::chrono::locate_zone.
- *
- * @ThreadSafe
- *
- * @param name the name of the time zone, for example `Europe/Berlin`
- * @return the time zone, valid until the program ends
- * @throw #std::runtime_error if the time zone cannot be located
- */
+/// Locates a time zone by name, equivalent to C++20’s #std::chrono::locate_zone.
+///
+/// @ThreadSafe
+///
+/// @param name the name of the time zone, for example `Europe/Berlin`
+/// @return the time zone, valid until the program ends
+/// @throw #std::runtime_error if the time zone cannot be located
 const time_zone* locate_zone(std::string_view name);
 
 // `zoned_traits` -------------------------------------------------------------------------------------------
 
-/**
- * The traits of a time-zone pointer used by #rocket::chrono::zoned_time, equivalent to C++20’s
- * #std::chrono::zoned_traits.
- *
- * Specializations provide the static member functions `default_zone()` and `locate_zone(std::string_view)`.
- *
- * @tparam TimeZonePtr the time-zone pointer
- */
+/// The traits of a time-zone pointer used by #rocket::chrono::zoned_time, equivalent to C++20’s
+/// #std::chrono::zoned_traits.
+///
+/// Specializations provide the static member functions `default_zone()` and `locate_zone(std::string_view)`.
+///
+/// @tparam TimeZonePtr the time-zone pointer
 template<typename TimeZonePtr>
 struct zoned_traits {};
 
 /// @spec{#rocket::chrono::zoned_traits, const #rocket::chrono::time_zone*}
 template<>
 struct zoned_traits<const time_zone*> {
-  /**
-   * Returns the default time zone.
-   *
-   * @return the time zone `UTC`
-   */
+  /// Returns the default time zone.
+  ///
+  /// @return the time zone `UTC`
   static const time_zone* default_zone() { return ::rocket::chrono::locate_zone("UTC"); }
 
-  /**
-   * Locates a time zone by name.
-   *
-   * @param name the name of the time zone
-   * @return the time zone, valid until the program ends
-   * @throw #std::runtime_error if the time zone cannot be located
-   */
+  /// Locates a time zone by name.
+  ///
+  /// @param name the name of the time zone
+  /// @return the time zone, valid until the program ends
+  /// @throw #std::runtime_error if the time zone cannot be located
   static const time_zone* locate_zone(std::string_view name) { return ::rocket::chrono::locate_zone(name); }
 };
 
 // `zoned_time` ---------------------------------------------------------------------------------------------
 
-/**
- * A time point together with a time zone, equivalent to C++20’s #std::chrono::zoned_time.
- *
- * @tparam Duration the duration of the time point
- * @tparam TimeZonePtr the time-zone pointer
- *
- * @NotThreadSafe
- */
+/// A time point together with a time zone, equivalent to C++20’s #std::chrono::zoned_time.
+///
+/// @tparam Duration the duration of the time point
+/// @tparam TimeZonePtr the time-zone pointer
+///
+/// @NotThreadSafe
 template<typename Duration, typename TimeZonePtr = const time_zone*>
 struct zoned_time {
   /// The duration of the time point, at least as fine as seconds.
@@ -505,150 +457,122 @@ public:
   /// @ctor_copy
   zoned_time(const zoned_time& rhs) = default;
 
-  /**
-   * @ctor
-   *
-   * @param st the UTC time point; the time zone is the default zone
-   */
+  /// @ctor
+  ///
+  /// @param st the UTC time point; the time zone is the default zone
   zoned_time(const SysTime<Duration>& st) requires HasDefaultZone : // NOLINT(*-explicit-*)
     zone_(Traits::default_zone()),
     tp_(st) {}
 
-  /**
-   * @ctor
-   *
-   * @param zone the time zone
-   */
+  /// @ctor
+  ///
+  /// @param zone the time zone
   explicit zoned_time(TimeZonePtr zone) : zone_(std::move(zone)) {}
 
-  /**
-   * @ctor
-   *
-   * @param name the name of the time zone
-   */
+  /// @ctor
+  ///
+  /// @param name the name of the time zone
   explicit zoned_time(std::string_view name) requires HasLocateZone :
     zone_(Traits::locate_zone(name)) {}
 
-  /**
-   * @ctor
-   *
-   * @param rhs the zoned time to convert
-   */
+  /// @ctor
+  ///
+  /// @param rhs the zoned time to convert
   template<typename Duration2> requires std::is_convertible_v<SysTime<Duration2>, SysTime<Duration>>
   zoned_time(const zoned_time<Duration2, TimeZonePtr>& rhs) : // NOLINT(*-explicit-*)
     zone_(rhs.get_time_zone()),
     tp_(rhs.get_sys_time()) {}
 
-  /**
-   * @ctor
-   *
-   * @param zone the time zone
-   * @param st the UTC time point
-   */
+  /// @ctor
+  ///
+  /// @param zone the time zone
+  /// @param st the UTC time point
   zoned_time(TimeZonePtr zone, const SysTime<Duration>& st) :
     zone_(std::move(zone)),
     tp_(st) {}
 
-  /**
-   * @ctor
-   *
-   * @param name the name of the time zone
-   * @param st the UTC time point
-   */
+  /// @ctor
+  ///
+  /// @param name the name of the time zone
+  /// @param st the UTC time point
   zoned_time(std::string_view name, const SysTime<Duration>& st) requires HasLocateZone :
     zoned_time(Traits::locate_zone(name), st) {}
 
-  /**
-   * @ctor
-   *
-   * @param zone the time zone
-   * @param tp the local time
-   * @throw nonexistent_local_time if @p tp does not exist
-   * @throw ambiguous_local_time if @p tp is ambiguous
-   */
+  /// @ctor
+  ///
+  /// @param zone the time zone
+  /// @param tp the local time
+  /// @throw nonexistent_local_time if @p tp does not exist
+  /// @throw ambiguous_local_time if @p tp is ambiguous
   zoned_time(TimeZonePtr zone, const LocalTime<Duration>& tp) requires HasToSys :
     zone_(std::move(zone)),
     tp_(zone_->to_sys(tp)) {}
 
-  /**
-   * @ctor
-   *
-   * @param name the name of the time zone
-   * @param tp the local time
-   * @throw nonexistent_local_time if @p tp does not exist
-   * @throw ambiguous_local_time if @p tp is ambiguous
-   */
+  /// @ctor
+  ///
+  /// @param name the name of the time zone
+  /// @param tp the local time
+  /// @throw nonexistent_local_time if @p tp does not exist
+  /// @throw ambiguous_local_time if @p tp is ambiguous
   zoned_time(std::string_view name, const LocalTime<Duration>& tp) requires HasLocateZone && HasToSys :
     zoned_time(Traits::locate_zone(name), tp) {}
 
-  /**
-   * @ctor
-   *
-   * @param zone the time zone
-   * @param tp the local time
-   * @param c how to resolve an ambiguous local time
-   */
+  /// @ctor
+  ///
+  /// @param zone the time zone
+  /// @param tp the local time
+  /// @param c how to resolve an ambiguous local time
   zoned_time(TimeZonePtr zone, const LocalTime<Duration>& tp, choose c) requires HasToSysChoose :
     zone_(std::move(zone)),
     tp_(zone_->to_sys(tp, c)) {}
 
-  /**
-   * @ctor
-   *
-   * @param name the name of the time zone
-   * @param tp the local time
-   * @param c how to resolve an ambiguous local time
-   */
+  /// @ctor
+  ///
+  /// @param name the name of the time zone
+  /// @param tp the local time
+  /// @param c how to resolve an ambiguous local time
   zoned_time(std::string_view name, const LocalTime<Duration>& tp, choose c) requires
     HasLocateZone && HasToSysChoose :
     zoned_time(Traits::locate_zone(name), tp, c) {}
 
-  /**
-   * @ctor
-   *
-   * @param zone the time zone
-   * @param rhs the zoned time whose UTC time point to use
-   */
+  /// @ctor
+  ///
+  /// @param zone the time zone
+  /// @param rhs the zoned time whose UTC time point to use
   template<typename Duration2, typename TimeZonePtr2> requires
     std::is_convertible_v<SysTime<Duration2>, SysTime<Duration>>
   zoned_time(TimeZonePtr zone, const zoned_time<Duration2, TimeZonePtr2>& rhs) :
     zone_(std::move(zone)),
     tp_(rhs.get_sys_time()) {}
 
-  /**
-   * @ctor
-   *
-   * The argument @p c has no effect; it exists for compatibility with #std::chrono::zoned_time.
-   *
-   * @param zone the time zone
-   * @param rhs the zoned time whose UTC time point to use
-   * @param c ignored
-   */
+  /// @ctor
+  ///
+  /// The argument @p c has no effect; it exists for compatibility with #std::chrono::zoned_time.
+  ///
+  /// @param zone the time zone
+  /// @param rhs the zoned time whose UTC time point to use
+  /// @param c ignored
   template<typename Duration2, typename TimeZonePtr2>
     requires std::is_convertible_v<SysTime<Duration2>, SysTime<Duration>>
   zoned_time(TimeZonePtr zone, const zoned_time<Duration2, TimeZonePtr2>& rhs, [[maybe_unused]] choose c) :
     zoned_time(std::move(zone), rhs) {}
 
-  /**
-   * @ctor
-   *
-   * @param name the name of the time zone
-   * @param rhs the zoned time whose UTC time point to use
-   */
+  /// @ctor
+  ///
+  /// @param name the name of the time zone
+  /// @param rhs the zoned time whose UTC time point to use
   template<typename Duration2, typename TimeZonePtr2> requires
     HasLocateZone && std::is_convertible_v<SysTime<Duration2>, SysTime<Duration>>
   zoned_time(std::string_view name, const zoned_time<Duration2, TimeZonePtr2>& rhs) :
     zoned_time(Traits::locate_zone(name), rhs) {}
 
-  /**
-   * @ctor
-   *
-   * The argument @p c has no effect; it exists for compatibility with #std::chrono::zoned_time.
-   *
-   * @param name the name of the time zone
-   * @param rhs the zoned time whose UTC time point to use
-   * @param c ignored
-   */
+  /// @ctor
+  ///
+  /// The argument @p c has no effect; it exists for compatibility with #std::chrono::zoned_time.
+  ///
+  /// @param name the name of the time zone
+  /// @param rhs the zoned time whose UTC time point to use
+  /// @param c ignored
   template<typename Duration2, typename TimeZonePtr2>
     requires HasLocateZone && std::is_convertible_v<SysTime<Duration2>, SysTime<Duration>>
   zoned_time(
@@ -663,26 +587,22 @@ public:
   /// @member_op_asgmt_copy
   zoned_time& operator=(const zoned_time& rhs) = default;
 
-  /**
-   * Sets the local time, keeping the time zone.
-   *
-   * @param lt the local time
-   * @return this instance
-   * @throw nonexistent_local_time if @p lt does not exist
-   * @throw ambiguous_local_time if @p lt is ambiguous
-   */
+  /// Sets the local time, keeping the time zone.
+  ///
+  /// @param lt the local time
+  /// @return this instance
+  /// @throw nonexistent_local_time if @p lt does not exist
+  /// @throw ambiguous_local_time if @p lt is ambiguous
   zoned_time&
   operator=(const LocalTime<Duration>& lt) {
     tp_ = zone_->to_sys(lt);
     return *this;
   }
 
-  /**
-   * Sets the UTC time point, keeping the time zone.
-   *
-   * @param st the UTC time point
-   * @return this instance
-   */
+  /// Sets the UTC time point, keeping the time zone.
+  ///
+  /// @param st the UTC time point
+  /// @return this instance
   zoned_time&
   operator=(const SysTime<Duration>& st) {
     tp_ = st;
@@ -695,32 +615,24 @@ public:
   /// Returns the UTC time point.
   operator SysTime<duration>() const { return get_sys_time(); } // NOLINT(*-explicit-*)
 
-  /**
-   * Returns the information about the time zone at the time point.
-   *
-   * @return the information
-   */
+  /// Returns the information about the time zone at the time point.
+  ///
+  /// @return the information
   [[nodiscard]] sys_info get_info() const { return zone_->get_info(tp_); }
 
-  /**
-   * Returns the local time.
-   *
-   * @return the local time
-   */
+  /// Returns the local time.
+  ///
+  /// @return the local time
   [[nodiscard]] LocalTime<duration> get_local_time() const { return zone_->to_local(tp_); }
 
-  /**
-   * Returns the UTC time point.
-   *
-   * @return the UTC time point
-   */
+  /// Returns the UTC time point.
+  ///
+  /// @return the UTC time point
   [[nodiscard]] SysTime<duration> get_sys_time() const { return tp_; }
 
-  /**
-   * Returns the time zone.
-   *
-   * @return the time zone
-   */
+  /// Returns the time zone.
+  ///
+  /// @return the time zone
   [[nodiscard]] TimeZonePtr get_time_zone() const { return zone_; }
 
 private:
@@ -771,26 +683,22 @@ zoned_time(TimeZonePtrOrName&&, zoned_time<Duration, TimeZonePtr2>, choose = cho
 
 /// @endcond
 
-/**
- * Compares two zoned times for equality.
- *
- * @param lhs the first zoned time
- * @param rhs the second zoned time
- * @return if both the time zones and the UTC time points are equal
- */
+/// Compares two zoned times for equality.
+///
+/// @param lhs the first zoned time
+/// @param rhs the second zoned time
+/// @return if both the time zones and the UTC time points are equal
 template<typename Duration1, typename Duration2, typename TimeZonePtr>
 bool
 operator==(const zoned_time<Duration1, TimeZonePtr>& lhs, const zoned_time<Duration2, TimeZonePtr>& rhs) {
   return lhs.get_time_zone() == rhs.get_time_zone() && lhs.get_sys_time() == rhs.get_sys_time();
 }
 
-/**
- * Writes a zoned time to an output stream, using the format `{:L%F %T %Z}`.
- *
- * @param os the output stream
- * @param val the value to write
- * @return @p os
- */
+/// Writes a zoned time to an output stream, using the format `{:L%F %T %Z}`.
+///
+/// @param os the output stream
+/// @param val the value to write
+/// @return @p os
 template<typename CharT, typename Traits, typename Duration, typename TimeZonePtr>
 std::basic_ostream<CharT, Traits>&
 operator<<(std::basic_ostream<CharT, Traits>& os, const zoned_time<Duration, TimeZonePtr>& val) {

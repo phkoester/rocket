@@ -1,8 +1,6 @@
-/**
- * @file Iterator.h
- *
- * A Unicode-aware string iterator.
- */
+/// @file Iterator.h
+///
+/// A Unicode-aware string iterator.
 
 #pragma once
 
@@ -33,73 +31,55 @@ enum class IteratorType : u8 {
 
 // `Iterator` -----------------------------------------------------------------------------------------------
 
-/**
- * A Unicode-aware string iterator.
- *
- * @tparam C the character type
- */
+/// A Unicode-aware string iterator.
+///
+/// @tparam C the character type
 template<typename C> requires IsChar<C>
 struct Iterator {
-  /**
-   * @ctor
-   *
-   * @param type the type of iterator
-   * @param input the input string to iterate over. It must remain valid for the lifetime of the iterator
-   */
+  /// @ctor
+  ///
+  /// @param type the type of iterator
+  /// @param input the input string to iterate over. It must remain valid for the lifetime of the iterator
   Iterator(IteratorType type, std::basic_string_view<C> input) : Iterator(type, input, std::locale()) {}
 
-  /**
-   * @ctor
-   *
-   * @param type the type of iterator
-   * @param input the input string to iterate over. It must remain valid for the lifetime of the iterator
-   * @param loc the locale to use
-   */
+  /// @ctor
+  ///
+  /// @param type the type of iterator
+  /// @param input the input string to iterate over. It must remain valid for the lifetime of the iterator
+  /// @param loc the locale to use
   Iterator(IteratorType type, std::basic_string_view<C> input, const std::locale& loc);
 
   /// @dtor
   ~Iterator() = default;
 
-  /**
-   * Returns the current position in the input string.
-   *
-   * @return the current position
-   */
+  /// Returns the current position in the input string.
+  ///
+  /// @return the current position
   u64 current() const; // NOLINT
 
-  /**
-   * Sets the iterator to the first position in the input string.
-   *
-   * @return the first position
-   */
+  /// Sets the iterator to the first position in the input string.
+  ///
+  /// @return the first position
   u64 first(); // NOLINT
 
-  /**
-   * Returns the input string.
-   *
-   * @return the input string
-   */
+  /// Returns the input string.
+  ///
+  /// @return the input string
   [[nodiscard]] std::basic_string_view<C> input() const { return input_; }
 
-  /**
-   * Sets the iterator to the last position in the input string.
-   *
-   * @return the last position
-   */
+  /// Sets the iterator to the last position in the input string.
+  ///
+  /// @return the last position
   u64 last(); // NOLINT
 
-  /**
-   * Advances the iterator to the next position in the input string.
-   *
-   * @return the next position
-   */
+  /// Advances the iterator to the next position in the input string.
+  ///
+  /// @return the next position
   u64 next(); // NOLINT
 
-  /**
-   * Returns the next segment in the input string.
-   *
-   * @return the next segment. If it is empty, the iterator is exhausted
-   */
+  /// Returns the next segment in the input string.
+  ///
+  /// @return the next segment. If it is empty, the iterator is exhausted
   [[nodiscard]] std::basic_string_view<C>
   nextSegment()  {
     auto current = this->current();
@@ -110,11 +90,9 @@ struct Iterator {
     return input_.substr(current, next - current);
   }
 
-  /**
-   * Returns the next segments in the input string.
-   *
-   * @return the next segments
-   */
+  /// Returns the next segments in the input string.
+  ///
+  /// @return the next segments
   [[nodiscard]] std::vector<std::basic_string_view<C>>
   nextSegments() {
     std::vector<std::basic_string_view<C>> ret;
@@ -124,18 +102,14 @@ struct Iterator {
     return ret;
   }
 
-  /**
-   * Advances the iterator to the previous position in the input string.
-   *
-   * @return the previous position
-   */
+  /// Advances the iterator to the previous position in the input string.
+  ///
+  /// @return the previous position
   u64 previous(); // NOLINT
 
-  /**
-   * Returns the previous segment in the input string.
-   *
-   * @return the previous segment. If it is empty, the iterator is exhausted
-   */
+  /// Returns the previous segment in the input string.
+  ///
+  /// @return the previous segment. If it is empty, the iterator is exhausted
   [[nodiscard]] std::basic_string_view<C>
   previousSegment() {
     auto current = this->current();
@@ -146,11 +120,9 @@ struct Iterator {
     return input_.substr(previous, current - previous);
   }
 
-  /**
-   * Returns the previous segments in the input string.
-   *
-   * @return the previous segments
-   */
+  /// Returns the previous segments in the input string.
+  ///
+  /// @return the previous segments
   [[nodiscard]] std::vector<std::basic_string_view<C>>
   previousSegments() {
     std::vector<std::basic_string_view<C>> ret;
@@ -171,33 +143,27 @@ private:
   std::basic_string_view<C> input_;
   /// The ICU break iterator.
   std::unique_ptr<UBreakIterator, BreakIteratorCloser> iter_;
-  /**
-   * UTF-32 only: The input converted to UTF-16. A #std::vector is used because its move operations keep the
-   * buffer address stable, which the break iterator refers to.
-   */
+  /// UTF-32 only: The input converted to UTF-16. A #std::vector is used because its move operations keep the
+  /// buffer address stable, which the break iterator refers to.
   std::vector<char16_t> u16_;
   /// UTF-32 only: The sorted UTF-16 indices of all supplementary code points (surrogate pairs) in `u16_`
   std::vector<i32> supplementaries_;
 
-  /**
-   * Maps an ICU break position to a position in the input string.
-   *
-   * @param pos the ICU break position, possibly `UBRK_DONE`
-   * @return the input position, or #rocket::NPOS if @p pos is `UBRK_DONE`
-   */
+  /// Maps an ICU break position to a position in the input string.
+  ///
+  /// @param pos the ICU break position, possibly `UBRK_DONE`
+  /// @return the input position, or #rocket::NPOS if @p pos is `UBRK_DONE`
   [[nodiscard]] u64 toInput(i32 pos) const;
 };
 
 // Functions ------------------------------------------------------------------------------------------------
 
-/**
- * Concatenates a vector of segments into a single string.
- *
- * @param segments the segments to concatenate
- * @param pos the position to start concatenating from
- * @param n the number of segments to concatenate
- * @return the concatenated string
- */
+/// Concatenates a vector of segments into a single string.
+///
+/// @param segments the segments to concatenate
+/// @param pos the position to start concatenating from
+/// @param n the number of segments to concatenate
+/// @return the concatenated string
 template<typename C> requires IsChar<C>
 [[nodiscard]] std::basic_string<C>
 concat(const std::vector<std::basic_string_view<C>>& segments, u64 pos = 0, u64 n = NPOS) {

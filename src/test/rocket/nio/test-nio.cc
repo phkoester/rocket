@@ -1,6 +1,4 @@
-/*
- * test-nio.cc
- */
+// test-nio.cc
 
 #include "rocket-test/rocket-test.h"
 #include "rocket/SystemError.h"
@@ -38,10 +36,8 @@ struct FileCloser {
   void operator()(FILE* file) const { fclose(file); }
 };
 
-/**
- * Opens @p path for reading with @p buffer as its buffer, or returns null on error. @p buffer must outlive
- * the file. glibc ignores the size if the buffer is null, so the caller provides it.
- */
+/// Opens @p path for reading with @p buffer as its buffer, or returns null on error. @p buffer must outlive
+/// the file. glibc ignores the size if the buffer is null, so the caller provides it.
 unique_ptr<FILE, FileCloser>
 openWithBuffer(const std::filesystem::path& path, span<char> buffer) {
   unique_ptr<FILE, FileCloser> ret(fopen(path.string().c_str(), "rb"));
@@ -158,12 +154,10 @@ struct TestNumpunct : numpunct<char> {
 // Local functions ------------------------------------------------------------------------------------------
 
 #ifndef ROCKET_OS_WINDOWS
-/**
- * Returns a `FILE` reading @p input from a pipe, which cannot seek, or null on error. If @p buffer is not
- * empty, it is used as the buffer of the file and must outlive it.
- *
- * The input is written in full before reading starts, so it must fit into the pipe.
- */
+/// Returns a `FILE` reading @p input from a pipe, which cannot seek, or null on error. If @p buffer is not
+/// empty, it is used as the buffer of the file and must outlive it.
+///
+/// The input is written in full before reading starts, so it must fit into the pipe.
 unique_ptr<FILE, FileCloser>
 openPipe(string_view input, span<char> buffer = {}) {
   array<i32, 2> fds {};
@@ -203,10 +197,8 @@ testString(u64 n, i32 add = 0) {
   return ret;
 }
 
-/**
- * Returns a matcher for the #rocket::SystemError thrown when opening a file that does not exist. Its message
- * is @p msg, followed by the message of the error code.
- */
+/// Returns a matcher for the #rocket::SystemError thrown when opening a file that does not exist. Its
+/// message is @p msg, followed by the message of the error code.
 auto
 throwsDoesNotExist(const string& msg) {
   const auto ec = errorCode(errc::no_such_file_or_directory);
@@ -231,11 +223,9 @@ expectTell(Source& in, u64 expected) {
   }
 }
 
-/**
- * Calls @p fn with each sink that keeps its output, and expects the output to equal @p expected.
- *
- * @p fn returns `false` if any print operation failed.
- */
+/// Calls @p fn with each sink that keeps its output, and expects the output to equal @p expected.
+///
+/// @p fn returns `false` if any print operation failed.
 template<typename Fn>
 void
 forEachSink(string_view expected, Fn fn) { // NOLINT(*-complexity)
@@ -309,13 +299,11 @@ forEachSource(string_view input, Fn fn) {
   }
 }
 
-/**
- * Calls @p fn with each kind of source over @p input: contiguous, seekable, and nonseekable, and files with
- * a tiny buffer, which scnlib refills during a scan.
- *
- * Nonseekable sources report no position from `tell`, so @p fn checks the position with #expectRest or
- * #expectTell.
- */
+/// Calls @p fn with each kind of source over @p input: contiguous, seekable, and nonseekable, and files with
+/// a tiny buffer, which scnlib refills during a scan.
+///
+/// Nonseekable sources report no position from `tell`, so @p fn checks the position with #expectRest or
+/// #expectTell.
 template<typename Fn>
 void
 forEachScanSource(string_view input, Fn fn) {

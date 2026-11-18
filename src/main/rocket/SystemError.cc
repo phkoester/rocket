@@ -1,6 +1,4 @@
-/*
- * SystemError.cc
- */
+// SystemError.cc
 
 #include "rocket/SystemError.h"
 #include "rocket/str/message/message.h"

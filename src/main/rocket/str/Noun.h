@@ -1,8 +1,6 @@
-/**
- * @file Noun.h
- *
- * Nouns with singular and plural forms.
- */
+/// @file Noun.h
+///
+/// Nouns with singular and plural forms.
 
 #pragma once
 
@@ -14,36 +12,26 @@ namespace rocket::str {
 
 // `Noun` ---------------------------------------------------------------------------------------------------
 
-/**
- * A noun that knows its singular and plural form, in US English.
- */
+/// A noun that knows its singular and plural form, in US English.
 struct Noun {
-  /**
-   * The singular form.
-   */
+  /// The singular form.
   std::string_view singular;
-  /**
-   * The plural form.
-   */
+  /// The plural form.
   std::string_view plural;
 
-  /**
-   * Text expansion function, returns either the singular or the plural form.
-   *
-   * @param n the number
-   * @return if @p n is -1 or 1, the singular, otherwise the plural
-   */
+  /// Text expansion function, returns either the singular or the plural form.
+  ///
+  /// @param n the number
+  /// @return if @p n is -1 or 1, the singular, otherwise the plural
   std::string_view
   operator()(i64 n) const {
     return n == 1 || n == -1 ? singular : plural;
   }
 
-  /**
-   * Text expansion function, returns @p n, followed by either the singular or the plural form.
-   *
-   * @param n the number
-   * @return @p n, followed by either the singular or the plural
-   */
+  /// Text expansion function, returns @p n, followed by either the singular or the plural form.
+  ///
+  /// @param n the number
+  /// @return @p n, followed by either the singular or the plural
   [[nodiscard]] std::string amount(i64 n) const;
 };
 

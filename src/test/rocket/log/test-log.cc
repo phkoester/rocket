@@ -1,10 +1,8 @@
-/*
- * test-log.cc
- *
- * Run this test with
- *
- *   TESTS="rocket-log-log" make tests ARGS="--log test_log=info"
- */
+// test-log.cc
+//
+// Run this test with
+//
+//   TESTS="rocket-log-log" make tests ARGS="--log test_log=info"
 
 #include "rocket-test/rocket-test.h"
 

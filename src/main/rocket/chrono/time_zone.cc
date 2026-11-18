@@ -1,6 +1,4 @@
-/*
- * time_zone.cc
- */
+// time_zone.cc
 
 #include "time_zone.h"
 

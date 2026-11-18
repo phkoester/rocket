@@ -1,6 +1,4 @@
-/*
- * test-codec.cc
- */
+// test-codec.cc
 
 #include "rocket-test/rocket-test.h"
 

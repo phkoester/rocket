@@ -1,8 +1,6 @@
-/**
- * @file chrono-format.h
- *
- * {fmt} formatters for chrono types.
- */
+/// @file chrono-format.h
+///
+/// {fmt} formatters for chrono types.
 
 #pragma once
 
@@ -20,17 +18,15 @@
 
 // `fmt::formatter<rocket::chrono::zoned_time>` -------------------------------------------------------------
 
-/**
- * Formats a #rocket::chrono::zoned_time.
- *
- * {fmt} does not provide this formatter. The format specification is that of #std::chrono::local_time, plus
- * `%Z` (the abbreviation of the time zone), `%z` (the UTC offset as `+hhmm`), and `%Ez` and `%Oz` (the UTC
- * offset as `+hh:mm`). Without conversion specifications, the format is `%F %T %Z`.
- *
- * @tparam Duration the duration of the time point
- * @tparam TimeZonePtr the time-zone pointer
- * @tparam C the character type
- */
+/// Formats a #rocket::chrono::zoned_time.
+///
+/// {fmt} does not provide this formatter. The format specification is that of #std::chrono::local_time, plus
+/// `%Z` (the abbreviation of the time zone), `%z` (the UTC offset as `+hhmm`), and `%Ez` and `%Oz` (the UTC
+/// offset as `+hh:mm`). Without conversion specifications, the format is `%F %T %Z`.
+///
+/// @tparam Duration the duration of the time point
+/// @tparam TimeZonePtr the time-zone pointer
+/// @tparam C the character type
 template<typename Duration, typename TimeZonePtr, typename C> requires rocket::IsChar<C>
 struct fmt::formatter<rocket::chrono::zoned_time<Duration, TimeZonePtr>, C> {
   /// @cond undocumented
@@ -188,20 +184,18 @@ private:
 
 // `fmt::formatter<std::chrono::hh_mm_ss>` ------------------------------------------------------------------
 
-/**
- * Formats a #std::chrono::hh_mm_ss.
- *
- * {fmt} does not provide this formatter, and the `%T` of a duration wraps the hours to 0 through 23. This
- * formatter writes `[-]HH:MM:SS`, where the hours have at least two digits and are not wrapped, followed by
- * a dot and the subseconds if the precision is finer than seconds, with as many digits as the precision
- * needs. Example values: `01:02:03`, `01:02:03.005`, `-111:02:03.123456789`.
- *
- * This formatter uses the same format specifiers as the underlying string formatter; they apply to the whole
- * string.
- *
- * @tparam Duration the duration of the #std::chrono::hh_mm_ss
- * @tparam C the character type
- */
+/// Formats a #std::chrono::hh_mm_ss.
+///
+/// {fmt} does not provide this formatter, and the `%T` of a duration wraps the hours to 0 through 23. This
+/// formatter writes `[-]HH:MM:SS`, where the hours have at least two digits and are not wrapped, followed by
+/// a dot and the subseconds if the precision is finer than seconds, with as many digits as the precision
+/// needs. Example values: `01:02:03`, `01:02:03.005`, `-111:02:03.123456789`.
+///
+/// This formatter uses the same format specifiers as the underlying string formatter; they apply to the
+/// whole string.
+///
+/// @tparam Duration the duration of the #std::chrono::hh_mm_ss
+/// @tparam C the character type
 template<typename Duration, typename C> requires rocket::IsChar<C>
 struct fmt::formatter<std::chrono::hh_mm_ss<Duration>, C> {
   /// @cond undocumented
@@ -241,19 +235,17 @@ private:
 
 // `fmt::formatter<std::chrono::year_month_day>` ------------------------------------------------------------
 
-/**
- * Formats a #std::chrono::year_month_day with {fmt}.
- *
- * {fmt} only provides this formatter if `__cpp_lib_chrono >= 201907L`; otherwise it formats its own
- * `fmt::year_month_day`. This is a copy of {fmt}’s formatter from `fmt/chrono.h`. Without a format
- * specification, the format is `%F`.
- *
- * If {fmt} provides its own formatter, the two do not collide: both are partial specializations for the same
- * arguments, but this one is constrained by #rocket::IsChar, so partial ordering makes it the more
- * specialized one, and it is always picked.
- *
- * @tparam C the character type
- */
+/// Formats a #std::chrono::year_month_day with {fmt}.
+///
+/// {fmt} only provides this formatter if `__cpp_lib_chrono >= 201907L`; otherwise it formats its own
+/// `fmt::year_month_day`. This is a copy of {fmt}’s formatter from `fmt/chrono.h`. Without a format
+/// specification, the format is `%F`.
+///
+/// If {fmt} provides its own formatter, the two do not collide: both are partial specializations for the
+/// same arguments, but this one is constrained by #rocket::IsChar, so partial ordering makes it the more
+/// specialized one, and it is always picked.
+///
+/// @tparam C the character type
 template<typename C> requires rocket::IsChar<C>
 struct fmt::formatter<std::chrono::year_month_day, C> : private fmt::formatter<std::tm, C> {
   /// @cond undocumented

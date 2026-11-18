@@ -1,6 +1,4 @@
-/**
- * @file EqualToEncoder.h
- */
+/// @file EqualToEncoder.h
 
 #pragma once
 
@@ -457,11 +455,9 @@ struct EqualToConsumerImpl<DataType::Character, T, Eq> {
 
 // `EqualToConsumer`-----------------------------------------------------------------------------------------
 
-/**
- * The consumer for the #EqualToEncoder.
- *
- * @tparam Eq the comparator to use
- */
+/// The consumer for the #EqualToEncoder.
+///
+/// @tparam Eq the comparator to use
 template<typename Eq>
 struct EqualToConsumer {
   /// @type_alias
@@ -471,24 +467,20 @@ struct EqualToConsumer {
 
 // `EqualToEncoder` -----------------------------------------------------------------------------------------
 
-/**
- * An equal-to encoder.
- *
- * @tparam Eq the comparator to use. The comparator must be able to compare all primitive data types,
- *   including 128-bit data types, and strings.
- */
+/// An equal-to encoder.
+///
+/// @tparam Eq the comparator to use. The comparator must be able to compare all primitive data types,
+///   including 128-bit data types, and strings.
 template<typename Eq = StdEqualTo>
 struct EqualToEncoder : Encoder<EqualToConsumer<Eq>> {
   using Base = Encoder<EqualToConsumer<Eq>>; ///< @type_alias
 
-  /**
-   * Encodes a value.
-   *
-   * @tparam T the type to encode
-   * @param lhs the left value
-   * @param rhs the right value
-   * @return the encoded value
-   */
+  /// Encodes a value.
+  ///
+  /// @tparam T the type to encode
+  /// @param lhs the left value
+  /// @param rhs the right value
+  /// @return the encoded value
   template<typename T>
   [[nodiscard]] bool
   encode(const T& lhs, const T& rhs) const {

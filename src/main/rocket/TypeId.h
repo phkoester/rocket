@@ -1,8 +1,6 @@
-/**
- * @file TypeId.h
- *
- * A wrapper for #std::type_index that can be formatted with a human-readable type name.
- */
+/// @file TypeId.h
+///
+/// A wrapper for #std::type_index that can be formatted with a human-readable type name.
 
 #pragma once
 
@@ -16,55 +14,45 @@ namespace rocket {
 
 // `TypeId` -------------------------------------------------------------------------------------------------
 
-/**
- * A wrapper for #std::type_index.
- *
- * The type can be given either as an object, whose dynamic type is used if it is polymorphic, or as a type
- * alone:
- *
- * ```
- * const TypeId a(ex);                        // Like `typeid(ex)`
- * const TypeId b(std::type_identity<Foo>()); // Like `typeid(Foo)`
- * const TypeId c = TypeId::of<Foo>();        // The same
- * ```
- *
- * @ThreadSafe
- */
+/// A wrapper for #std::type_index.
+///
+/// The type can be given either as an object, whose dynamic type is used if it is polymorphic, or as a type
+/// alone:
+///
+/// ```
+/// const TypeId a(ex);                        // Like `typeid(ex)`
+/// const TypeId b(std::type_identity<Foo>()); // Like `typeid(Foo)`
+/// const TypeId c = TypeId::of<Foo>();        // The same
+/// ```
+///
+/// @ThreadSafe
 struct TypeId {
-  /**
-   * Returns the type ID of a type.
-   *
-   * @tparam T the type
-   * @return the type ID
-   */
+  /// Returns the type ID of a type.
+  ///
+  /// @tparam T the type
+  /// @return the type ID
   template<typename T>
   [[nodiscard]] static TypeId of() { return TypeId(std::type_identity<T>()); }
 
   /// @ctor_copy
   TypeId(const TypeId& rhs) = default;
 
-  /**
-   * @ctor
-   *
-   * @param val the object whose type to use. If the type of @p val is polymorphic, this is the dynamic type
-   */
+  /// @ctor
+  ///
+  /// @param val the object whose type to use. If the type of @p val is polymorphic, this is the dynamic type
   template<typename T>
   explicit TypeId(const T& val) : type_(typeid(val)) {}
 
-  /**
-   * @ctor
-   *
-   * @tparam T the type to use
-   * @param type a type identity
-   */
+  /// @ctor
+  ///
+  /// @tparam T the type to use
+  /// @param type a type identity
   template<typename T>
   explicit TypeId([[maybe_unused]] std::type_identity<T> type) : type_(typeid(T)) {}
 
-  /**
-   * @ctor
-   *
-   * @param type the type information
-   */
+  /// @ctor
+  ///
+  /// @param type the type information
   explicit TypeId(const std::type_info& type) : type_(type) {}
 
   /// @member_op_cmp_strong_ordering
@@ -73,21 +61,17 @@ struct TypeId {
   /// @member_fn_hash
   [[nodiscard]] u64 hash() const noexcept { return type_.hash_code(); }
 
-  /**
-   * Returns the implementation-defined name of the type, as returned by #std::type_info::name.
-   *
-   * @return the name, which may be mangled
-   */
+  /// Returns the implementation-defined name of the type, as returned by #std::type_info::name.
+  ///
+  /// @return the name, which may be mangled
   [[nodiscard]] const char* name() const noexcept { return type_.name(); }
 
-  /**
-   * Returns the human-readable demangled name of the type.
-   *
-   * If the name cannot be demangled, or if the platform’s names are not mangled (MSVC), this returns the
-   * result of #name.
-   *
-   * @return the demangled name, for example `rocket::InvalidArgument`
-   */
+  /// Returns the human-readable demangled name of the type.
+  ///
+  /// If the name cannot be demangled, or if the platform’s names are not mangled (MSVC), this returns the
+  /// result of #name.
+  ///
+  /// @return the demangled name, for example `rocket::InvalidArgument`
   [[nodiscard]] std::string prettyName() const;
 
 private:

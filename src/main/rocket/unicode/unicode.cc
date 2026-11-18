@@ -1,6 +1,4 @@
-/*
- * unicode.cc
- */
+// unicode.cc
 
 #include "unicode.h"
 

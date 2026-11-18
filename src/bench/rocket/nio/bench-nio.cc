@@ -1,6 +1,4 @@
-/*
- * bench-nio.cc
- */
+// bench-nio.cc
 
 #include "rocket-bench/rocket-bench.h"
 

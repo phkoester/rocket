@@ -1,6 +1,4 @@
-/*
- * CborCodec.cc
- */
+// CborCodec.cc
 
 #include "rocket/codec/CborCodec.h"
 

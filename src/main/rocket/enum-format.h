@@ -1,8 +1,6 @@
-/**
- * @file enum-format.h
- *
- * Formatting support for Rocket enums.
- */
+/// @file enum-format.h
+///
+/// Formatting support for Rocket enums.
 
 #pragma once
 
@@ -14,11 +12,9 @@
 
 // `fmt::formatter<rocket::Enum>` ---------------------------------------------------------------------------
 
-/**
- * @spec_fmt_formatter{#rocket::Enum}
- *
- * This formatter uses the same format specifiers as the underlying string formatter.
- */
+/// @spec_fmt_formatter{#rocket::Enum}
+///
+/// This formatter uses the same format specifiers as the underlying string formatter.
 template<typename E, typename C> requires rocket::Enum<E>::value && rocket::IsChar<C>
 struct fmt::formatter<E, C> : rocket::format::internal::StringFormatter<C> {
   /// @cond undocumented

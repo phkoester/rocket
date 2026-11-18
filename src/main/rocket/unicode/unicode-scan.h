@@ -1,11 +1,9 @@
-/**
- * @file unicode-scan.h
- *
- * Scanning support for the Unicode API.
- *
- * scnlib has no counterpart to the `format_as` customization point of {fmt}, so the scanners are written out
- * here.
- */
+/// @file unicode-scan.h
+///
+/// Scanning support for the Unicode API.
+///
+/// scnlib has no counterpart to the `format_as` customization point of {fmt}, so the scanners are written
+/// out here.
 
 #pragma once
 
@@ -24,15 +22,13 @@
 
 // `scn::scanner<rocket::unicode::CodePoint>` ---------------------------------------------------------------
 
-/**
- * @spec_scn_scanner{#rocket::unicode::CodePoint}
- *
- * The scanner reads what the formatter writes: `U+` followed by hexadecimal digits, for example `U+00E4` or
- * `U+1F600`. Upper- and lowercase digits are accepted, and whitespace before the `U+` is skipped. The value
- * must be a valid code point, see #rocket::unicode::CodePoint.
- *
- * - No format specifiers are accepted.
- */
+/// @spec_scn_scanner{#rocket::unicode::CodePoint}
+///
+/// The scanner reads what the formatter writes: `U+` followed by hexadecimal digits, for example `U+00E4` or
+/// `U+1F600`. Upper- and lowercase digits are accepted, and whitespace before the `U+` is skipped. The value
+/// must be a valid code point, see #rocket::unicode::CodePoint.
+///
+/// - No format specifiers are accepted.
 template<typename C> requires rocket::IsChar<C>
 struct scn::scanner<rocket::unicode::CodePoint, C> {
   /// @cond undocumented
@@ -111,16 +107,14 @@ private:
 
 // `scn::scanner<rocket::unicode::Character>` ---------------------------------------------------------------
 
-/**
- * @spec_scn_scanner{#rocket::unicode::Character}
- *
- * The scanner reads one grapheme cluster, which is what the formatter writes, for example `a`, `€`, or
- * `👨‍👩‍👦`. Whitespace before the character is skipped, so a whitespace character cannot be scanned.
- *
- * Like the enum scanner in `rocket/enum-scan.h`, this scanner uses the same format specifiers as the
- * underlying string scanner. It scans a word and then gives back the characters that follow its first
- * grapheme cluster so that, for example, `ab` scans as `a` and leaves `b` in the input.
- */
+/// @spec_scn_scanner{#rocket::unicode::Character}
+///
+/// The scanner reads one grapheme cluster, which is what the formatter writes, for example `a`, `€`, or
+/// `👨‍👩‍👦`. Whitespace before the character is skipped, so a whitespace character cannot be scanned.
+///
+/// Like the enum scanner in `rocket/enum-scan.h`, this scanner uses the same format specifiers as the
+/// underlying string scanner. It scans a word and then gives back the characters that follow its first
+/// grapheme cluster so that, for example, `ab` scans as `a` and leaves `b` in the input.
 template<typename C> requires rocket::IsChar<C>
 struct scn::scanner<rocket::unicode::Character<C>, C> : scn::scanner<std::basic_string<C>, C> {
   /// @cond undocumented

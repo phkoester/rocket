@@ -1,6 +1,4 @@
-/*
- * test-cl.cc
- */
+// test-cl.cc
 
 #include "rocket-test/rocket-test.h"
 
@@ -34,10 +32,8 @@ vector<string> parseCommandArgs; // Remaining arguments after the command
 vector<string> parseCommandListFiles; // CL 2 files
 optional<vector<string>> parseCommandShowArgs; // CL 2 args
 
-/**
- * Usage: cmd [-o | -?] list [-? | -l] FILE...
- *   or   cmd [-o | -?] show [-? | -s | -t] [ARG]...
- */
+/// Usage: cmd [-o | -?] list [-? | -l] FILE...
+///   or   cmd [-o | -?] show [-? | -s | -t] [ARG]...
 void
 parseCommand(const vector<string>& args, nio::Sink& out = nio::out, nio::Sink& err = nio::err) {
   // Reset
@@ -162,10 +158,8 @@ parseCommand(const vector<string>& args, nio::Sink& out = nio::out, nio::Sink& e
 
 // Tests ====================================================================================================
 
-/**
- * Usage: cmd [-o | -?] list [-? | -l] FILE...
- *   or   cmd [-o | -?] show [-? | -s | -t] [ARG]...
- */
+/// Usage: cmd [-o | -?] list [-? | -l] FILE...
+///   or   cmd [-o | -?] show [-? | -s | -t] [ARG]...
 TEST(MODULE, parseCommand) {
   // Test invalid option
   {

@@ -1,6 +1,4 @@
-/*
- * test-assert.cc
- */
+// test-assert.cc
 
 #include "rocket-test/rocket-test.h"
 

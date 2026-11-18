@@ -1,11 +1,9 @@
-/**
- * @file reflect-scan.h
- *
- * Scanning support for C++ reflection: declared objects and instances.
- *
- * The scanners read what the formatters in `rocket/reflect/reflect-format.h` write. Variable references
- * (#rocket::reflect::VarRef) cannot be scanned, just as #rocket::codec::FormattedCodec cannot decode them.
- */
+/// @file reflect-scan.h
+///
+/// Scanning support for C++ reflection: declared objects and instances.
+///
+/// The scanners read what the formatters in `rocket/reflect/reflect-format.h` write. Variable references
+/// (#rocket::reflect::VarRef) cannot be scanned, just as #rocket::codec::FormattedCodec cannot decode them.
 
 #pragma once
 
@@ -29,26 +27,22 @@ namespace rocket::internal::scan::reflect {
 
 // `IteratorSource` -----------------------------------------------------------------------------------------
 
-/**
- * A #rocket::nio::Source that reads the input of a scnlib scanner, given as an iterator and a sentinel.
- *
- * Positions are counted from the iterator the source was constructed with. Seeking is supported within the
- * input, but not relative to its end.
- *
- * @tparam It the iterator type
- * @tparam Sent the sentinel type
- */
+/// A #rocket::nio::Source that reads the input of a scnlib scanner, given as an iterator and a sentinel.
+///
+/// Positions are counted from the iterator the source was constructed with. Seeking is supported within the
+/// input, but not relative to its end.
+///
+/// @tparam It the iterator type
+/// @tparam Sent the sentinel type
 template<typename It, typename Sent>
 struct IteratorSource : nio::Source {
   using Source::read;
   using Source::seek;
 
-  /**
-   * @ctor
-   *
-   * @param begin the start of the input
-   * @param end the end of the input
-   */
+  /// @ctor
+  ///
+  /// @param begin the start of the input
+  /// @param end the end of the input
   IteratorSource(It begin, Sent end) : begin_(begin), it_(begin), end_(end) {
     seekable_ = true; // NOLINT(cppcoreguidelines-prefer-member-initializer): a member of the base class
   }
@@ -189,18 +183,16 @@ private:
 
 // `Scanner` ------------------------------------------------------------------------------------------------
 
-/**
- * A scnlib scanner for types that are decoded with #rocket::codec::FormattedCodec.
- *
- * - If the `t` format specifier is used, then the name of @p Named must precede the value, as written by the
- *   formatter with the `t` format specifier. Whitespace before the name is skipped.
- *
- * Whitespace before the value is skipped. The `i` format specifier is not needed: indented and unindented
- * input are read alike.
- *
- * @tparam T the type to scan
- * @tparam Named the type whose name is read if the `t` format specifier is used
- */
+/// A scnlib scanner for types that are decoded with #rocket::codec::FormattedCodec.
+///
+/// - If the `t` format specifier is used, then the name of @p Named must precede the value, as written by
+///   the formatter with the `t` format specifier. Whitespace before the name is skipped.
+///
+/// Whitespace before the value is skipped. The `i` format specifier is not needed: indented and unindented
+/// input are read alike.
+///
+/// @tparam T the type to scan
+/// @tparam Named the type whose name is read if the `t` format specifier is used
 template<typename T, typename Named>
 struct Scanner {
   /// @cond undocumented
@@ -278,31 +270,27 @@ private:
 
 // `scn::scanner<rocket::reflect::Declared>` ----------------------------------------------------------------
 
-/**
- * @spec_scn_scanner{#rocket::reflect::Declared}
- *
- * The value is decoded with #rocket::codec::FormattedCodec, e.g., `(x=1, y="a")`. Members may appear in any
- * order, and missing members keep their default values.
- *
- * - If the `t` format specifier is used, then the type name must precede the value, e.g., `MyStruct(x=1)`.
- *   The name must be that of the scanned type.
- * - The `i` format specifier is not needed: whitespace, including line breaks, is skipped.
- */
+/// @spec_scn_scanner{#rocket::reflect::Declared}
+///
+/// The value is decoded with #rocket::codec::FormattedCodec, e.g., `(x=1, y="a")`. Members may appear in any
+/// order, and missing members keep their default values.
+///
+/// - If the `t` format specifier is used, then the type name must precede the value, e.g., `MyStruct(x=1)`.
+///   The name must be that of the scanned type.
+/// - The `i` format specifier is not needed: whitespace, including line breaks, is skipped.
 template<typename T, typename C> requires rocket::reflect::Declared<T>::value && rocket::IsChar<C>
 struct scn::scanner<T, C> : rocket::internal::scan::reflect::Scanner<T, T> {};
 
 // `scn::scanner<rocket::reflect::Instance>` ----------------------------------------------------------------
 
-/**
- * @spec_scn_scanner{#rocket::reflect::Instance}
- *
- * The value is decoded with #rocket::codec::FormattedCodec, e.g., `(x=1, y="a")`. Members may appear in any
- * order, and missing members keep their default values.
- *
- * - If the `t` format specifier is used, then the name of the instance type must precede the value, e.g.,
- *   `MyStruct(x=1)`.
- * - The `i` format specifier is not needed: whitespace, including line breaks, is skipped.
- */
+/// @spec_scn_scanner{#rocket::reflect::Instance}
+///
+/// The value is decoded with #rocket::codec::FormattedCodec, e.g., `(x=1, y="a")`. Members may appear in any
+/// order, and missing members keep their default values.
+///
+/// - If the `t` format specifier is used, then the name of the instance type must precede the value, e.g.,
+///   `MyStruct(x=1)`.
+/// - The `i` format specifier is not needed: whitespace, including line breaks, is skipped.
 template<typename T, typename Inner, typename C> requires rocket::IsChar<C>
 struct scn::scanner<rocket::reflect::Instance<T, Inner>, C> :
   rocket::internal::scan::reflect::Scanner<rocket::reflect::Instance<T, Inner>, T> {};

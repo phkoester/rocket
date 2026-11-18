@@ -1,6 +1,4 @@
-/*
- * Iterator.cc
- */
+// Iterator.cc
 
 #include "Iterator.h"
 

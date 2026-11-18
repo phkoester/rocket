@@ -1,6 +1,4 @@
-/*
- * JsonCodec.cc
- */
+// JsonCodec.cc
 
 #include "rocket/codec/JsonCodec.h"
 

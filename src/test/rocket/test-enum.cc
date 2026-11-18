@@ -1,6 +1,4 @@
-/*
- * test-enum.cc
- */
+// test-enum.cc
 
 #include "rocket-test/rocket-test.h"
 

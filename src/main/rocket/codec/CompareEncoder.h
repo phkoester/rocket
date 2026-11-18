@@ -1,6 +1,4 @@
-/**
- * @file CompareEncoder.h
- */
+/// @file CompareEncoder.h
 
 #pragma once
 
@@ -462,11 +460,9 @@ struct CompareConsumerImpl<DataType::Character, T, Cmp> {
 
 // `CompareConsumer` ----------------------------------------------------------------------------------------
 
-/**
- * The consumer for the #CompareEncoder.
- *
- * @tparam Cmp the comparator to use
- */
+/// The consumer for the #CompareEncoder.
+///
+/// @tparam Cmp the comparator to use
 template<typename Cmp>
 struct CompareConsumer {
   /// @type_alias
@@ -476,29 +472,25 @@ struct CompareConsumer {
 
 // `CompareEncoder` -----------------------------------------------------------------------------------------
 
-/**
- * A three-way-comparison encoder.
- *
- * Comparing unordered containers is not supported. #rocket::codec::EqualToEncoder can be used to compare
- * unordered containers for equality.
- *
- * @tparam Cmp the comparator to use. The comparator must be able to compare all primitive data types,
- *   including 128-bit data types, and strings. The result type must be any of #std::strong_ordering,
- *   #std::weak_ordering, or #std::partial_ordering.
- */
+/// A three-way-comparison encoder.
+///
+/// Comparing unordered containers is not supported. #rocket::codec::EqualToEncoder can be used to compare
+/// unordered containers for equality.
+///
+/// @tparam Cmp the comparator to use. The comparator must be able to compare all primitive data types,
+///   including 128-bit data types, and strings. The result type must be any of #std::strong_ordering,
+///   #std::weak_ordering, or #std::partial_ordering.
 template<typename Cmp = StdCompare>
 struct CompareEncoder : Encoder<CompareConsumer<Cmp>> {
   using Base = Encoder<CompareConsumer<Cmp>>; ///< @type_alias
 
-  /**
-   * Encodes a value.
-   *
-   * @tparam T the type to encode
-   * @param lhs the left value
-   * @param rhs the right value
-   * @return the encoded value, which is either of type #std::strong_ordering, #std::weak_ordering, or
-   *   #std::partial_ordering
-   */
+  /// Encodes a value.
+  ///
+  /// @tparam T the type to encode
+  /// @param lhs the left value
+  /// @param rhs the right value
+  /// @return the encoded value, which is either of type #std::strong_ordering, #std::weak_ordering, or
+  ///   #std::partial_ordering
   template<typename T>
   [[nodiscard]] auto
   encode(const T& lhs, const T& rhs) const {

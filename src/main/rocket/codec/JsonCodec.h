@@ -1,214 +1,212 @@
-/**
- * @file JsonCodec.h
- *
- * Reads and writes JSON (JavaScript Object Notation).
- *
- * # The JSON Codec
- *
- * This codec is generous when decoding, but strict when encoding. This means that when reading, it will
- * accept a variety of formats, but it will be canonical and consistent when writing.
- *
- * The encoder writes standard JSON, except for the floating-point values `-Infinity`, `Infinity`, and `NaN`.
- * The decoder accepts those same floating-point literals, C-style comments, and a trailing comma after the
- * last element of an array or object.
- *
- * For detailed information on the supported data types and how they map to C++, see @ref codec_type_system.
- *
- * ## Text-File Encoding, Line Breaks
- *
- * JSON is a text format. It must always be encoded in UTF-8 to work with this codec.
- *
- * When reading, both Unix-style and Windows-style line breaks are accepted. When writing, Unix-style line
- * breaks are used.
- *
- * ## Comments
- *
- * When reading, C-style single-line and multi-line comments are accepted. Single-line comments start with
- * `//` and continue to the end of the line. Multi-line comments start with <code>/</code><code>*</code> and
- * end with <code>*</code><code>/</code>.
- *
- * Comments are never written.
- *
- * ## Trailing Comma
- *
- * When reading, a trailing comma after the last element of an array or object is allowed and ignored. When
- * writing, no trailing comma is added.
- *
- * ## Boolean Values
- *
- * Boolean values are read and written as `true` or `false`.
- *
- * ## Characters {#json_char}
- *
- * Characters are JSON strings of length one. Example values: `"a"`, `"\t"`, `"€"`, `"\u20AC"`.
- *
- * One-byte characters must be valid ASCII characters in the range [0,127]. Four-byte characters must be
- * valid Unicode code points in the ranges [U+0000,U+D7FF] and [U+E000,U+10FFFF].
- *
- * When reading, escape sequences as well as the prefixes `\x` (two hexadecimal digits), `\u` (four
- * hexadecimal digits), and `\U` (eight hexadecimal digits) are accepted. `\/` is accepted as well. A `\u`
- * high surrogate must be followed by a `\u` low surrogate; together, they yield a single code point.
- *
- * When writing, the escape sequences `\b`, `\t`, `\n`, `\f`, `\r`, <code>\\\"</code>, and `\\` are used. If
- * a character is classified as printable by the Unicode standard, it appears verbatim in the output, e.g.,
- * as `"a"` or `"€"`. Otherwise, it is written in hexadecimal notation, using the prefix `\u` (four
- * hexadecimal digits). A character greater than U+FFFF is then written as a `\u` high surrogate followed by
- * a `\u` low surrogate.
- *
- * ## Enumerations
- *
- * Enumerations are JSON strings. Example values: `"Red"`, `"GREEN"`, `"powder_blue"`.
- *
- * ## Integer Values
- *
- * Example values: `+42`, `-42`, `0xABCD` (hexadecimal), `077` (octal), `0o123` (octal), `0b1010101`
- * (binary).
- *
- * Integer values are always written in decimal notation, without any leading `+`.
- *
- * ## Floating-Point Values
- *
- * Example values: `.1`, `0.1`, `+2.`, `-2.0`, `1e3`, `-1e3`, `1.23e-4`, `1.23e+4`, `-Infinity`, `Infinity`,
- * `+Infinity`, `NaN`.
- *
- * Floating-point values are always written in their canonical form, without any leading `+`. For nonfinite
- * values, `-Infinity`, `Infinity`, and `NaN` are used.
- *
- * ## Pointers
- *
- * The null pointer is notated as `null`. Other pointers are hexadecimal JSON strings starting with `0x`.
- *
- * ## Strings
- *
- * Strings always appear surrounded by double quotes (`"`). Example values: `"Hello"`, `"Hello\nWorld"`,
- * `"3 \u20AC"`. Any well-formed UTF-8 string is a valid JSON string.
- *
- * When writing, the writing rules for @ref json_char "characters" apply. Grapheme clusters are recognized
- * and written verbatim, except that a quote or backslash inside a cluster is escaped.
- *
- * ## Optional Values
- *
- * Optional values appear just like normal values, with one exception: null options are notated as `null`.
- *
- * ## Tuples
- *
- * Tuples are JSON arrays. Example values: `[1, 2, 3]`, `["Answer", 42, true]`.
- *
- * ## Lists
- *
- * Lists are JSON arrays. Example values: `[1, 2, 3]`, `["one", "two", "three"]`.
- *
- * ## Sets
- *
- * Sets are JSON arrays. Example values: `[1, 2, 3]`, `["one", "two", "three"]`.
- *
- * Duplicate elements are discouraged but allowed. If an element appears multiple times, the first one wins.
- *
- * ## Maps
- *
- * Maps are JSON objects. Keys are always JSON strings surrounded by double quotes (`"`). Example:
- * `{ "alpha": 1, "beta": 2 }`.
- *
- * Duplicate keys are discouraged but allowed. If a key appears multiple times, the last one wins.
- *
- * ## Bidirectional Maps
- *
- * Bidirectional maps appear just like normal maps. Only the left side is notated. The right side is the
- * implicit opposite.
- *
- * Duplicate keys are discouraged but allowed. If a key appears multiple times, the last one wins.
- *
- * ## Durations
- *
- * Durations are JSON strings in the notation of {fmt}: a count, directly followed by a unit. Example values:
- * `"5ns"`, `"1700µs"`, `"90min"`, `"2[604800]s"` (two weeks).
- *
- * Unit       | Meaning
- * :--------- | :------
- * `ns`       | Nanoseconds
- * `µs`       | Microseconds
- * `us`       | Microseconds (reading only)
- * `ms`       | Milliseconds
- * `s`        | Seconds
- * `min`      | Minutes
- * `h`        | Hours
- * `d`        | Days
- * `[n]s`     | Units of `n` seconds, e.g., `[604800]s` for weeks
- * `[n/d]s`   | Units of `n/d` seconds
- *
- * Other SI prefixes that {fmt} writes, such as `ps` or `ks`, are accepted, too. When reading, the value is
- * converted to the target type. A value that is not exactly representable in the target type, or that does
- * not fit into it, is an error.
- *
- * ## Hours, Minutes, Seconds
- *
- * Example values: `"01:02:03"`, `"01:02:03.123"`, `"-111:02:03.123456789"`.
- *
- * ## Dates
- *
- * Example values: `"1970-01-02"`, `"-100-01-02"`.
- *
- * Dates are written by {fmt} and read with the scnlib format `%F`. Years from -32767 through 9999 can be
- * read; a nonnegative year has exactly four digits.
- *
- * ## Time Zones
- *
- * Time zones are JSON strings. Example values: `"Europe/Berlin"`, `"UTC"`.
- *
- * ## Times
- *
- * Example value: `"2026-10-07T09:05:26.529594325Z"`.
- *
- * ## Times with Time Zone
- *
- * Example value: `"2026-10-07T11:21:00.561378057+02:00 (Europe/Berlin)"`.
- *
- * The UTC offset is `Z` for +00:00. When reading, the offset must be one that the time zone has at that
- * local time; it selects between the two meanings of an ambiguous local time.
- *
- * ## Intervals
- *
- * Intervals are JSON strings: `∅` for an empty interval, otherwise the two bounds separated by a comma,
- * enclosed in `[` or `]` for a closed bound and `(` or `)` for an open bound. A missing bound is notated as
- * `-∞` or `∞`.
- *
- * Example values: `"∅"`, `"[-1.2,3.4]"`, `"(-1.2,3.4)"`, `"(-∞,-12]"`, `"[12,∞)"`.
- *
- * ## Declared Objects
- *
- * Members appear as a JSON object, where each entry is a name-value pair. Example:
- * `{"x_": 11, "y_": 12, "name_": "A"}`.
- *
- * Duplicate member names are discouraged but allowed. If a name appears multiple times, the last one wins.
- *
- * ## Instances
- *
- * Instances appear just like declared objects. They only display a different set of members, most probably
- * a subset.
- *
- * Duplicate member names are discouraged but allowed. If a name appears multiple times, the last one wins.
- *
- * ## Members
- *
- * See declared objects.
- *
- * ## Variables
- *
- * Variables appear as a JSON object, where each entry is a name-value pair. Example:
- * `{"x": 11, "y": 12, "name": "A"}`.
- *
- * They cannot be decoded.
- *
- * ## Code Points
- *
- * Code points appear as JSON strings in the typical Unicode notation, e.g., `"U+0041"` or `"U+10FFFF"`.
- *
- * A JSON string of a single character is also accepted when reading.
- *
- * ## Grapheme Clusters
- *
- * Grapheme clusters appear just like strings.
- */
+/// @file JsonCodec.h
+///
+/// Reads and writes JSON (JavaScript Object Notation).
+///
+/// # The JSON Codec
+///
+/// This codec is generous when decoding, but strict when encoding. This means that when reading, it will
+/// accept a variety of formats, but it will be canonical and consistent when writing.
+///
+/// The encoder writes standard JSON, except for the floating-point values `-Infinity`, `Infinity`, and
+/// `NaN`. The decoder accepts those same floating-point literals, C-style comments, and a trailing comma
+/// after the last element of an array or object.
+///
+/// For detailed information on the supported data types and how they map to C++, see @ref codec_type_system.
+///
+/// ## Text-File Encoding, Line Breaks
+///
+/// JSON is a text format. It must always be encoded in UTF-8 to work with this codec.
+///
+/// When reading, both Unix-style and Windows-style line breaks are accepted. When writing, Unix-style line
+/// breaks are used.
+///
+/// ## Comments
+///
+/// When reading, C-style single-line and multi-line comments are accepted. Single-line comments start with
+/// `//` and continue to the end of the line. Multi-line comments start with <code>/</code><code>*</code> and
+/// end with <code>*</code><code>/</code>.
+///
+/// Comments are never written.
+///
+/// ## Trailing Comma
+///
+/// When reading, a trailing comma after the last element of an array or object is allowed and ignored. When
+/// writing, no trailing comma is added.
+///
+/// ## Boolean Values
+///
+/// Boolean values are read and written as `true` or `false`.
+///
+/// ## Characters {#json_char}
+///
+/// Characters are JSON strings of length one. Example values: `"a"`, `"\t"`, `"€"`, `"\u20AC"`.
+///
+/// One-byte characters must be valid ASCII characters in the range [0,127]. Four-byte characters must be
+/// valid Unicode code points in the ranges [U+0000,U+D7FF] and [U+E000,U+10FFFF].
+///
+/// When reading, escape sequences as well as the prefixes `\x` (two hexadecimal digits), `\u` (four
+/// hexadecimal digits), and `\U` (eight hexadecimal digits) are accepted. `\/` is accepted as well. A `\u`
+/// high surrogate must be followed by a `\u` low surrogate; together, they yield a single code point.
+///
+/// When writing, the escape sequences `\b`, `\t`, `\n`, `\f`, `\r`, <code>\\\"</code>, and `\\` are used. If
+/// a character is classified as printable by the Unicode standard, it appears verbatim in the output, e.g.,
+/// as `"a"` or `"€"`. Otherwise, it is written in hexadecimal notation, using the prefix `\u` (four
+/// hexadecimal digits). A character greater than U+FFFF is then written as a `\u` high surrogate followed by
+/// a `\u` low surrogate.
+///
+/// ## Enumerations
+///
+/// Enumerations are JSON strings. Example values: `"Red"`, `"GREEN"`, `"powder_blue"`.
+///
+/// ## Integer Values
+///
+/// Example values: `+42`, `-42`, `0xABCD` (hexadecimal), `077` (octal), `0o123` (octal), `0b1010101`
+/// (binary).
+///
+/// Integer values are always written in decimal notation, without any leading `+`.
+///
+/// ## Floating-Point Values
+///
+/// Example values: `.1`, `0.1`, `+2.`, `-2.0`, `1e3`, `-1e3`, `1.23e-4`, `1.23e+4`, `-Infinity`, `Infinity`,
+/// `+Infinity`, `NaN`.
+///
+/// Floating-point values are always written in their canonical form, without any leading `+`. For nonfinite
+/// values, `-Infinity`, `Infinity`, and `NaN` are used.
+///
+/// ## Pointers
+///
+/// The null pointer is notated as `null`. Other pointers are hexadecimal JSON strings starting with `0x`.
+///
+/// ## Strings
+///
+/// Strings always appear surrounded by double quotes (`"`). Example values: `"Hello"`, `"Hello\nWorld"`,
+/// `"3 \u20AC"`. Any well-formed UTF-8 string is a valid JSON string.
+///
+/// When writing, the writing rules for @ref json_char "characters" apply. Grapheme clusters are recognized
+/// and written verbatim, except that a quote or backslash inside a cluster is escaped.
+///
+/// ## Optional Values
+///
+/// Optional values appear just like normal values, with one exception: null options are notated as `null`.
+///
+/// ## Tuples
+///
+/// Tuples are JSON arrays. Example values: `[1, 2, 3]`, `["Answer", 42, true]`.
+///
+/// ## Lists
+///
+/// Lists are JSON arrays. Example values: `[1, 2, 3]`, `["one", "two", "three"]`.
+///
+/// ## Sets
+///
+/// Sets are JSON arrays. Example values: `[1, 2, 3]`, `["one", "two", "three"]`.
+///
+/// Duplicate elements are discouraged but allowed. If an element appears multiple times, the first one wins.
+///
+/// ## Maps
+///
+/// Maps are JSON objects. Keys are always JSON strings surrounded by double quotes (`"`). Example:
+/// `{ "alpha": 1, "beta": 2 }`.
+///
+/// Duplicate keys are discouraged but allowed. If a key appears multiple times, the last one wins.
+///
+/// ## Bidirectional Maps
+///
+/// Bidirectional maps appear just like normal maps. Only the left side is notated. The right side is the
+/// implicit opposite.
+///
+/// Duplicate keys are discouraged but allowed. If a key appears multiple times, the last one wins.
+///
+/// ## Durations
+///
+/// Durations are JSON strings in the notation of {fmt}: a count, directly followed by a unit. Example
+/// values: `"5ns"`, `"1700µs"`, `"90min"`, `"2[604800]s"` (two weeks).
+///
+/// Unit       | Meaning
+/// :--------- | :------
+/// `ns`       | Nanoseconds
+/// `µs`       | Microseconds
+/// `us`       | Microseconds (reading only)
+/// `ms`       | Milliseconds
+/// `s`        | Seconds
+/// `min`      | Minutes
+/// `h`        | Hours
+/// `d`        | Days
+/// `[n]s`     | Units of `n` seconds, e.g., `[604800]s` for weeks
+/// `[n/d]s`   | Units of `n/d` seconds
+///
+/// Other SI prefixes that {fmt} writes, such as `ps` or `ks`, are accepted, too. When reading, the value is
+/// converted to the target type. A value that is not exactly representable in the target type, or that does
+/// not fit into it, is an error.
+///
+/// ## Hours, Minutes, Seconds
+///
+/// Example values: `"01:02:03"`, `"01:02:03.123"`, `"-111:02:03.123456789"`.
+///
+/// ## Dates
+///
+/// Example values: `"1970-01-02"`, `"-100-01-02"`.
+///
+/// Dates are written by {fmt} and read with the scnlib format `%F`. Years from -32767 through 9999 can be
+/// read; a nonnegative year has exactly four digits.
+///
+/// ## Time Zones
+///
+/// Time zones are JSON strings. Example values: `"Europe/Berlin"`, `"UTC"`.
+///
+/// ## Times
+///
+/// Example value: `"2026-10-07T09:05:26.529594325Z"`.
+///
+/// ## Times with Time Zone
+///
+/// Example value: `"2026-10-07T11:21:00.561378057+02:00 (Europe/Berlin)"`.
+///
+/// The UTC offset is `Z` for +00:00. When reading, the offset must be one that the time zone has at that
+/// local time; it selects between the two meanings of an ambiguous local time.
+///
+/// ## Intervals
+///
+/// Intervals are JSON strings: `∅` for an empty interval, otherwise the two bounds separated by a comma,
+/// enclosed in `[` or `]` for a closed bound and `(` or `)` for an open bound. A missing bound is notated as
+/// `-∞` or `∞`.
+///
+/// Example values: `"∅"`, `"[-1.2,3.4]"`, `"(-1.2,3.4)"`, `"(-∞,-12]"`, `"[12,∞)"`.
+///
+/// ## Declared Objects
+///
+/// Members appear as a JSON object, where each entry is a name-value pair. Example:
+/// `{"x_": 11, "y_": 12, "name_": "A"}`.
+///
+/// Duplicate member names are discouraged but allowed. If a name appears multiple times, the last one wins.
+///
+/// ## Instances
+///
+/// Instances appear just like declared objects. They only display a different set of members, most probably
+/// a subset.
+///
+/// Duplicate member names are discouraged but allowed. If a name appears multiple times, the last one wins.
+///
+/// ## Members
+///
+/// See declared objects.
+///
+/// ## Variables
+///
+/// Variables appear as a JSON object, where each entry is a name-value pair. Example:
+/// `{"x": 11, "y": 12, "name": "A"}`.
+///
+/// They cannot be decoded.
+///
+/// ## Code Points
+///
+/// Code points appear as JSON strings in the typical Unicode notation, e.g., `"U+0041"` or `"U+10FFFF"`.
+///
+/// A JSON string of a single character is also accepted when reading.
+///
+/// ## Grapheme Clusters
+///
+/// Grapheme clusters appear just like strings.
 
 #pragma once
 
@@ -245,11 +243,9 @@ endContainer(nio::Sink& out, JsonConsumerConfig& config, u64 size, char c) {
   rocket::codec::internal::endContainer(out, config.indent, config.level, size, c);
 }
 
-/**
- * Reports whether @p T is a tuple of member or variable references.
- *
- * Such a tuple is a JSON object. Every other tuple is a JSON array.
- */
+/// Reports whether @p T is a tuple of member or variable references.
+///
+/// Such a tuple is a JSON object. Every other tuple is a JSON array.
 template<typename T, std_size_t... Index>
 constexpr bool
 isObjectTuple([[maybe_unused]] std::index_sequence<Index...> seq) {
@@ -257,14 +253,12 @@ isObjectTuple([[maybe_unused]] std::index_sequence<Index...> seq) {
            DataTypes<std::tuple_element_t<Index, T>>::Value == DataType::VarRef) && ...);
 }
 
-/**
- * Translates an offset in the unescaped content of a JSON string to a position in the enclosing input.
- *
- * @param pos the position of the opening quote of the string, or an empty optional if it is unknown
- * @param unescapedOffset the offset in the unescaped content
- * @param positions the positions recorded while unescaping
- * @return the position in the enclosing input, or an empty optional if @p pos is empty
- */
+/// Translates an offset in the unescaped content of a JSON string to a position in the enclosing input.
+///
+/// @param pos the position of the opening quote of the string, or an empty optional if it is unknown
+/// @param unescapedOffset the offset in the unescaped content
+/// @param positions the positions recorded while unescaping
+/// @return the position in the enclosing input, or an empty optional if @p pos is empty
 std::optional<u64> jsonStringOffset(std::optional<u64> pos, u64 unescapedOffset, const Positions& positions);
 
 inline void
@@ -274,15 +268,13 @@ nextElem(nio::Sink& out, JsonConsumerConfig& config, u64 index) {
 
 std::string readJsonString(nio::Source& in, Positions& positions);
 
-/**
- * Checks that an inner source over the content of a JSON string has been consumed, apart from whitespace.
- *
- * @tparam InPos the type of @p inPos
- * @param inner the inner source
- * @param size the size of the content of the inner source
- * @param inPos a function that translates a position in @p inner to a position in the outer source
- * @throw #rocket::InputFailure if unconsumed input remains
- */
+/// Checks that an inner source over the content of a JSON string has been consumed, apart from whitespace.
+///
+/// @tparam InPos the type of @p inPos
+/// @param inner the inner source
+/// @param size the size of the content of the inner source
+/// @param inPos a function that translates a position in @p inner to a position in the outer source
+/// @throw #rocket::InputFailure if unconsumed input remains
 template<typename InPos>
 void
 expectEndOfString(nio::ContiguousSource& inner, u64 size, const InPos& inPos) {
@@ -709,10 +701,8 @@ readJsonKey(Key& key, nio::Source& in) {
   }
 }
 
-/**
- * Produces a single member of @p instance if the name of the member reference @p ref matches @p name.
- * Returns whether the name matched, so callers can fold over a tuple of member references.
- */
+/// Produces a single member of @p instance if the name of the member reference @p ref matches @p name.
+/// Returns whether the name matched, so callers can fold over a tuple of member references.
 template<typename Ref, typename C>
 bool
 produceMember(const Ref& ref, std::string_view name, C& instance, nio::Source& in) {
@@ -725,14 +715,12 @@ produceMember(const Ref& ref, std::string_view name, C& instance, nio::Source& i
   return true;
 }
 
-/**
- * Produces the members of @p instance from a JSON object of `"name": value` entries, using the member
- * references in @p refs to look up each name.
- *
- * Unlike the tuple producer, the entries may appear in any order, and entries may be missing altogether, in
- * which case the corresponding members of @p instance are left untouched. An entry whose name does not match
- * any member reference is an error.
- */
+/// Produces the members of @p instance from a JSON object of `"name": value` entries, using the member
+/// references in @p refs to look up each name.
+///
+/// Unlike the tuple producer, the entries may appear in any order, and entries may be missing altogether, in
+/// which case the corresponding members of @p instance are left untouched. An entry whose name does not
+/// match any member reference is an error.
 template<typename Refs, typename C>
 void
 produceMembers(const Refs& refs, C& instance, nio::Source& in) {
@@ -1516,43 +1504,39 @@ struct JsonProducer {
 
 // `JsonCodec` ----------------------------------------------------------------------------------------------
 
-/**
- * A codec for JSON I/O.
- *
- * The encoder can serialize an arbitrary C++ data structure to a sink. The output is standard JSON, except
- * for the floating-point values `Infinity`, `-Infinity`, and `NaN`. Tuples, lists, and sets are JSON arrays.
- * Maps, declared objects, and instances are JSON objects. If a configuration is provided, the output may be
- * indented and formatted as a tree.
- *
- * The decoder can scan such a JSON input from a source and construct an arbitrary C++ data structure from
- * it. While scanning, any irrelevant whitespace, including line breaks, is ignored. The decoder skips
- * single-line C-style comments starting with <code>//</code> and multi-line C-style comments starting with
- * <code>/</code><code>*</code>. A trailing comma after the last element of an array or object is allowed.
- *
- * When decoding a declared type or a #rocket::reflect::Instance, the `"name": value` entries may appear in
- * any order, and entries may be missing altogether; missing members keep their default values. An entry
- * whose name does not match any member is an error.
- *
- * Decoding to list views and forward lists is not supported. String views and character views, however, are
- * allowed. This is made possible by keeping real strings in a store bound to the decoder. Hence, decoded
- * string views and character views are valid, and valid only, for the lifetime of the decoder.
- *
- * There are various optimizations for decoding from contiguous sources.
- *
- * @see #rocket::codec::JsonConsumerConfig
- */
+/// A codec for JSON I/O.
+///
+/// The encoder can serialize an arbitrary C++ data structure to a sink. The output is standard JSON, except
+/// for the floating-point values `Infinity`, `-Infinity`, and `NaN`. Tuples, lists, and sets are JSON
+/// arrays. Maps, declared objects, and instances are JSON objects. If a configuration is provided, the
+/// output may be indented and formatted as a tree.
+///
+/// The decoder can scan such a JSON input from a source and construct an arbitrary C++ data structure from
+/// it. While scanning, any irrelevant whitespace, including line breaks, is ignored. The decoder skips
+/// single-line C-style comments starting with <code>//</code> and multi-line C-style comments starting with
+/// <code>/</code><code>*</code>. A trailing comma after the last element of an array or object is allowed.
+///
+/// When decoding a declared type or a #rocket::reflect::Instance, the `"name": value` entries may appear in
+/// any order, and entries may be missing altogether; missing members keep their default values. An entry
+/// whose name does not match any member is an error.
+///
+/// Decoding to list views and forward lists is not supported. String views and character views, however, are
+/// allowed. This is made possible by keeping real strings in a store bound to the decoder. Hence, decoded
+/// string views and character views are valid, and valid only, for the lifetime of the decoder.
+///
+/// There are various optimizations for decoding from contiguous sources.
+///
+/// @see #rocket::codec::JsonConsumerConfig
 struct JsonCodec : Codec<JsonConsumer, JsonProducer> {
   using Base = Codec<JsonConsumer, JsonProducer>; ///< @type_base
 
-  /**
-   * Encodes a value.
-   *
-   * @tparam T the type to encode
-   * @param val the value to encode
-   * @param out the output sink
-   * @param config the configuration
-   * @return whatever the consumer returns
-   */
+  /// Encodes a value.
+  ///
+  /// @tparam T the type to encode
+  /// @param val the value to encode
+  /// @param out the output sink
+  /// @param config the configuration
+  /// @return whatever the consumer returns
   template<typename T>
   auto
   encode(const T& val, nio::Sink& out, const JsonConsumerConfig& config = {}) const {
@@ -1561,13 +1545,11 @@ struct JsonCodec : Codec<JsonConsumer, JsonProducer> {
     return Base::encode(val, out, localConfig);
   }
 
-  /**
-   * Decodes a value from a source.
-   *
-   * @tparam T the type to decode
-   * @param in the input source
-   * @return the decoded value
-   */
+  /// Decodes a value from a source.
+  ///
+  /// @tparam T the type to decode
+  /// @param in the input source
+  /// @return the decoded value
   template<typename T>
   [[nodiscard]] DecodeResult<T>
   decode(nio::Source& in) const {

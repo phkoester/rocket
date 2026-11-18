@@ -1,6 +1,4 @@
-/**
- * @file nio-utils.h
- */
+/// @file nio-utils.h
 
 #pragma once
 
@@ -16,238 +14,208 @@ namespace rocket::nio {
 
 // Functions ------------------------------------------------------------------------------------------------
 
-/**
- * Throws if the next character in the source is not the expected character @p c, advances the source only
- * on success.
- *
- * @param in the source to read from
- * @param c the character to read
- * @throw #rocket::InputFailure if the next character in the source is not @p c
- * @throw #rocket::SystemError if @p in is bad, e.g., after an I/O error
- */
+/// Throws if the next character in the source is not the expected character @p c, advances the source only
+/// on success.
+///
+/// @param in the source to read from
+/// @param c the character to read
+/// @throw #rocket::InputFailure if the next character in the source is not @p c
+/// @throw #rocket::SystemError if @p in is bad, e.g., after an I/O error
 void expectChar(nio::Source& in, char c);
 
-/**
- * Throws if there is no colon, advances the source only on success.
- *
- * @param in the source to read from
- * @throw #rocket::InputFailure if there is no colon
- * @throw #rocket::SystemError if @p in is bad, e.g., after an I/O error
- */
+/// Throws if there is no colon, advances the source only on success.
+///
+/// @param in the source to read from
+/// @throw #rocket::InputFailure if there is no colon
+/// @throw #rocket::SystemError if @p in is bad, e.g., after an I/O error
 void expectColon(nio::Source& in);
 
-/**
- * Throws if there is no comma, advances the source only on success.
- *
- * @param in the source to read from
- * @throw #rocket::InputFailure if there is no comma
- * @throw #rocket::SystemError if @p in is bad, e.g., after an I/O error
- */
+/// Throws if there is no comma, advances the source only on success.
+///
+/// @param in the source to read from
+/// @throw #rocket::InputFailure if there is no comma
+/// @throw #rocket::SystemError if @p in is bad, e.g., after an I/O error
 void expectComma(nio::Source& in);
 
-/**
- * Reads a single expected character, advances the source only on success.
- *
- * This also works with sources that cannot seek, such as pipes.
- *
- * @param in the source to read from
- * @param c the character to read
- * @return if the character was read
- * @throw #rocket::SystemError if @p in is bad, e.g., after an I/O error
- */
+/// Reads a single expected character, advances the source only on success.
+///
+/// This also works with sources that cannot seek, such as pipes.
+///
+/// @param in the source to read from
+/// @param c the character to read
+/// @return if the character was read
+/// @throw #rocket::SystemError if @p in is bad, e.g., after an I/O error
 [[nodiscard]] bool readChar(nio::Source& in, char c);
 
-/**
- * Tries to read a character, i.e., an extended grapheme cluster, from a source, advances the source only on
- * success.
- *
- * At the end of the input, the result is empty. If the first code point of the character is invalid UTF-8,
- * #rocket::InputFailure is thrown at the position where the character should have started, and the source
- * is not advanced. Invalid UTF-8 after the first code point ends the character, and stays in the source. An
- * I/O error throws #rocket::SystemError; the source is bad then, and its position is unspecified.
- *
- * ASCII characters are checked by peeking. Any other code point must be read as a whole. If it does not
- * continue the character, the source must go back over it, which a source that cannot seek cannot do.
- *
- * @param in the source to read from
- * @return the character read, or an empty optional at the end of the input
- * @throw #rocket::InputFailure on invalid UTF-8 at the start of the character
- * @throw #rocket::InvalidState if the source must go back, but @p in cannot report its position or seek
- * @throw #rocket::SystemError if @p in is bad, e.g., after an I/O error
- */
+/// Tries to read a character, i.e., an extended grapheme cluster, from a source, advances the source only on
+/// success.
+///
+/// At the end of the input, the result is empty. If the first code point of the character is invalid UTF-8,
+/// #rocket::InputFailure is thrown at the position where the character should have started, and the source
+/// is not advanced. Invalid UTF-8 after the first code point ends the character, and stays in the source. An
+/// I/O error throws #rocket::SystemError; the source is bad then, and its position is unspecified.
+///
+/// ASCII characters are checked by peeking. Any other code point must be read as a whole. If it does not
+/// continue the character, the source must go back over it, which a source that cannot seek cannot do.
+///
+/// @param in the source to read from
+/// @return the character read, or an empty optional at the end of the input
+/// @throw #rocket::InputFailure on invalid UTF-8 at the start of the character
+/// @throw #rocket::InvalidState if the source must go back, but @p in cannot report its position or seek
+/// @throw #rocket::SystemError if @p in is bad, e.g., after an I/O error
 [[nodiscard]] std::optional<unicode::Character<char>> readCharacter(nio::Source& in);
 
-/**
- * Tries to read the longest of a set of expected strings, advances the source only on success.
- *
- * Bytes are only consumed while they continue an expected string, so a source that cannot seek works if the
- * first byte already does not match, or if the source stops right after the match. Otherwise, the source
- * must go back: on any other failure, if a longer expected string fails after a shorter one has matched, or
- * if checking the word boundary requires reading a non-ASCII code point.
- *
- * @param in the source to read from
- * @param values the set of expected strings, all elements must not be empty
- * @param ignoreCase whether to ignore case. Only ASCII letters are folded, `A` to `Z` matching `a` to `z`.
- *   Any other character, including a non-ASCII letter such as `Ä`, must match exactly
- * @param endOfWord whether to check if the end of the returned string matches a word boundary
- * @return the read string, or null if no string was read
- * @throw #rocket::InvalidState if the source must go back, but @p in cannot report its position or seek
- * @throw #rocket::SystemError if @p in is bad, e.g., after an I/O error
- */
+/// Tries to read the longest of a set of expected strings, advances the source only on success.
+///
+/// Bytes are only consumed while they continue an expected string, so a source that cannot seek works if the
+/// first byte already does not match, or if the source stops right after the match. Otherwise, the source
+/// must go back: on any other failure, if a longer expected string fails after a shorter one has matched, or
+/// if checking the word boundary requires reading a non-ASCII code point.
+///
+/// @param in the source to read from
+/// @param values the set of expected strings, all elements must not be empty
+/// @param ignoreCase whether to ignore case. Only ASCII letters are folded, `A` to `Z` matching `a` to `z`.
+///   Any other character, including a non-ASCII letter such as `Ä`, must match exactly
+/// @param endOfWord whether to check if the end of the returned string matches a word boundary
+/// @return the read string, or null if no string was read
+/// @throw #rocket::InvalidState if the source must go back, but @p in cannot report its position or seek
+/// @throw #rocket::SystemError if @p in is bad, e.g., after an I/O error
 [[nodiscard]] std::optional<std::string_view> readChoice(
   nio::Source& in,
   const std::set<std::string_view>& values,
   bool ignoreCase = false,
   bool endOfWord = true);
 
-/**
- * Tries to read a valid UTF-8 encoded code point from a source, advances the source only on success.
- *
- * At the end of the input, the result is empty. A truncated or otherwise malformed sequence throws
- * #rocket::InputFailure at the position where the code point should have started, and the source is not
- * advanced. An I/O error throws #rocket::SystemError; the source is bad then, and its position is
- * unspecified.
- *
- * The first byte is checked by peeking, so a source that cannot seek works unless a sequence of several
- * bytes turns out to be malformed. Then, the source must go back over the bytes read.
- *
- * There is an optimization for contiguous sources.
- *
- * @param in the source to read from
- * @return the code point read, or an empty optional at the end of the input
- * @throw #rocket::InputFailure on invalid UTF-8
- * @throw #rocket::InvalidState if the source must go back over invalid UTF-8, but @p in cannot report its
- *   position or seek
- * @throw #rocket::SystemError if @p in is bad, e.g., after an I/O error
- */
+/// Tries to read a valid UTF-8 encoded code point from a source, advances the source only on success.
+///
+/// At the end of the input, the result is empty. A truncated or otherwise malformed sequence throws
+/// #rocket::InputFailure at the position where the code point should have started, and the source is not
+/// advanced. An I/O error throws #rocket::SystemError; the source is bad then, and its position is
+/// unspecified.
+///
+/// The first byte is checked by peeking, so a source that cannot seek works unless a sequence of several
+/// bytes turns out to be malformed. Then, the source must go back over the bytes read.
+///
+/// There is an optimization for contiguous sources.
+///
+/// @param in the source to read from
+/// @return the code point read, or an empty optional at the end of the input
+/// @throw #rocket::InputFailure on invalid UTF-8
+/// @throw #rocket::InvalidState if the source must go back over invalid UTF-8, but @p in cannot report its
+///   position or seek
+/// @throw #rocket::SystemError if @p in is bad, e.g., after an I/O error
 [[nodiscard]] std::optional<unicode::CodePoint> readCodePoint(nio::Source& in);
 
-/**
- * Tries to read a C++ identifier from @p in, advances the source only on success.
- *
- * The first code point must have Unicode property `XID_Start`, or be `_` or `$`. Each following code point
- * must have Unicode property `XID_Continue`, or be `$`. Reading stops before the first code point that is
- * not part of the identifier, and that code point stays in the source.
- *
- * ASCII characters are checked by peeking, so a source that cannot seek works unless a non-ASCII code point
- * must be read and gone back over: at the start, where it cannot start an identifier, or after the
- * identifier.
- *
- * @param in the source to read from
- * @return the identifier, or null if the next code point cannot start an identifier
- * @throw #rocket::InvalidState if the source must go back over a non-ASCII code point, but @p in cannot
- *   report its position or seek
- * @throw #rocket::SystemError if @p in is bad, e.g., after an I/O error
- */
+/// Tries to read a C++ identifier from @p in, advances the source only on success.
+///
+/// The first code point must have Unicode property `XID_Start`, or be `_` or `$`. Each following code point
+/// must have Unicode property `XID_Continue`, or be `$`. Reading stops before the first code point that is
+/// not part of the identifier, and that code point stays in the source.
+///
+/// ASCII characters are checked by peeking, so a source that cannot seek works unless a non-ASCII code point
+/// must be read and gone back over: at the start, where it cannot start an identifier, or after the
+/// identifier.
+///
+/// @param in the source to read from
+/// @return the identifier, or null if the next code point cannot start an identifier
+/// @throw #rocket::InvalidState if the source must go back over a non-ASCII code point, but @p in cannot
+///   report its position or seek
+/// @throw #rocket::SystemError if @p in is bad, e.g., after an I/O error
 [[nodiscard]] std::optional<std::string> readIdentifier(nio::Source& in);
 
-/**
- * Reads an expected string, advances the source only on success.
- *
- * There is an optimization for contiguous sources.
- *
- * @param in the source to read from
- * @param str the string to read, must not be empty
- * @param ignoreCase whether to ignore case. Only ASCII letters are folded, `A` to `Z` matching `a` to `z`.
- *   Any other character, including a non-ASCII letter such as `Ä`, must match exactly
- * @param endOfWord whether to check if the end of the returned string matches a word boundary
- * @return if the string was read
- * @throw #rocket::InvalidState if the source must go back, i.e., on any mismatch, at the end of the input, or
- *   if the word boundary is missing or requires reading a non-ASCII code point, but @p in cannot report its
- *   position or seek. A contiguous source never needs to go back
- * @throw #rocket::SystemError if @p in is bad, e.g., after an I/O error
- */
+/// Reads an expected string, advances the source only on success.
+///
+/// There is an optimization for contiguous sources.
+///
+/// @param in the source to read from
+/// @param str the string to read, must not be empty
+/// @param ignoreCase whether to ignore case. Only ASCII letters are folded, `A` to `Z` matching `a` to `z`.
+///   Any other character, including a non-ASCII letter such as `Ä`, must match exactly
+/// @param endOfWord whether to check if the end of the returned string matches a word boundary
+/// @return if the string was read
+/// @throw #rocket::InvalidState if the source must go back, i.e., on any mismatch, at the end of the input,
+///   or if the word boundary is missing or requires reading a non-ASCII code point, but @p in cannot report
+///   its position or seek. A contiguous source never needs to go back
+/// @throw #rocket::SystemError if @p in is bad, e.g., after an I/O error
 [[nodiscard]] bool readString(
   nio::Source& in,
   std::string_view str,
   bool ignoreCase = false,
   bool endOfWord = true);
 
-/**
- * If the next character in the source is `'.'`, reads a subsecond string and returns it as nanoseconds.
- *
- * If the next character is not `'.'`, returns zero nanoseconds and leaves the source unchanged.
- *
- * @param in the source to read from
- * @return the read subseconds as nanoseconds
- * @throw #rocket::InputFailure if the input is invalid
- * @throw #rocket::SystemError if @p in is bad, e.g., after an I/O error
- */
+/// If the next character in the source is `'.'`, reads a subsecond string and returns it as nanoseconds.
+///
+/// If the next character is not `'.'`, returns zero nanoseconds and leaves the source unchanged.
+///
+/// @param in the source to read from
+/// @return the read subseconds as nanoseconds
+/// @throw #rocket::InputFailure if the input is invalid
+/// @throw #rocket::SystemError if @p in is bad, e.g., after an I/O error
 [[nodiscard]] std::chrono::nanoseconds readSubseconds(nio::Source& in);
 
-/**
- * Reads until an expected character is found, advances the source only on success.
- *
- * The expected character is not included in the returned string, but is consumed from the source.
- *
- * There is an optimization for contiguous sources.
- *
- * @param in the source to read from
- * @param c the character to read until
- * @return the read string, not including @p c, or null if no string was read
- * @throw #rocket::InvalidState if @p c is not found, so that the source must go back, but @p in cannot report
- *   its position or seek
- * @throw #rocket::SystemError if @p in is bad, e.g., after an I/O error
- */
+/// Reads until an expected character is found, advances the source only on success.
+///
+/// The expected character is not included in the returned string, but is consumed from the source.
+///
+/// There is an optimization for contiguous sources.
+///
+/// @param in the source to read from
+/// @param c the character to read until
+/// @return the read string, not including @p c, or null if no string was read
+/// @throw #rocket::InvalidState if @p c is not found, so that the source must go back, but @p in cannot
+///   report its position or seek
+/// @throw #rocket::SystemError if @p in is bad, e.g., after an I/O error
 [[nodiscard]] std::optional<std::string> readUntilChar(nio::Source& in, char c);
 
-/**
- * Reads until an expected character not preceded by an escaping backslash is found, advances the source only
- * on success.
- *
- * The expected character is not included in the returned string, but is consumed from the source.
- *
- * There is an optimization for contiguous sources.
- *
- * @param in the source to read from
- * @param c the character to read until
- * @return the read string, not including @p c, or null if no string was read
- * @throw #rocket::InvalidState if @p c is not found, so that the source must go back, but @p in cannot report
- *   its position or seek
- * @throw #rocket::SystemError if @p in is bad, e.g., after an I/O error
- */
+/// Reads until an expected character not preceded by an escaping backslash is found, advances the source
+/// only on success.
+///
+/// The expected character is not included in the returned string, but is consumed from the source.
+///
+/// There is an optimization for contiguous sources.
+///
+/// @param in the source to read from
+/// @param c the character to read until
+/// @return the read string, not including @p c, or null if no string was read
+/// @throw #rocket::InvalidState if @p c is not found, so that the source must go back, but @p in cannot
+///   report its position or seek
+/// @throw #rocket::SystemError if @p in is bad, e.g., after an I/O error
 [[nodiscard]] std::optional<std::string> readUntilUnescapedChar(nio::Source& in, char c);
 
-/**
- * Reads characters from a source while @p predicate yields `true`, advances the source only as long as the
- * predicate holds.
- *
- * This also works with sources that cannot seek, such as pipes. There is an optimization for contiguous
- * sources.
- *
- * @param in the source to read from
- * @param predicate the predicate to call
- * @return the read string
- * @throw #rocket::SystemError if @p in is bad, e.g., after an I/O error
- */
+/// Reads characters from a source while @p predicate yields `true`, advances the source only as long as the
+/// predicate holds.
+///
+/// This also works with sources that cannot seek, such as pipes. There is an optimization for contiguous
+/// sources.
+///
+/// @param in the source to read from
+/// @param predicate the predicate to call
+/// @return the read string
+/// @throw #rocket::SystemError if @p in is bad, e.g., after an I/O error
 std::string readWhilePredicate(nio::Source& in, const std::function<bool(char)>& predicate);
 
-/**
- * Skips whitespace and comments.
- *
- * @param in the source to read from
- * @param cComments whether to skip C-style comments
- * @param shellComments whether to skip Shell-style comments
- * @throw #rocket::InputFailure if a C-style comment is not terminated. The source is not advanced then
- * @throw #rocket::InvalidState if the source must go back, but @p in cannot report its position or seek.
- *   This happens at the first character that is not skipped, unless the input ends before
- * @throw #rocket::SystemError if @p in is bad, e.g., after an I/O error
- */
+/// Skips whitespace and comments.
+///
+/// @param in the source to read from
+/// @param cComments whether to skip C-style comments
+/// @param shellComments whether to skip Shell-style comments
+/// @throw #rocket::InputFailure if a C-style comment is not terminated. The source is not advanced then
+/// @throw #rocket::InvalidState if the source must go back, but @p in cannot report its position or seek.
+///   This happens at the first character that is not skipped, unless the input ends before
+/// @throw #rocket::SystemError if @p in is bad, e.g., after an I/O error
 void skip(nio::Source& in, bool cComments, bool shellComments);
 
-/**
- * Skips until an expected string is found, advances the source in any case.
- *
- * If the expected string @p str is not found, the source is advanced to its end. Otherwise, the source is
- * advanced until after the first occurrence of @p str.
- *
- * There is an optimization for contiguous sources.
- *
- * @param in the source to read from
- * @param str the expected string
- * @return if the expected string was found
- * @throw #rocket::SystemError if @p in is bad, e.g., after an I/O error
- */
+/// Skips until an expected string is found, advances the source in any case.
+///
+/// If the expected string @p str is not found, the source is advanced to its end. Otherwise, the source is
+/// advanced until after the first occurrence of @p str.
+///
+/// There is an optimization for contiguous sources.
+///
+/// @param in the source to read from
+/// @param str the expected string
+/// @return if the expected string was found
+/// @throw #rocket::SystemError if @p in is bad, e.g., after an I/O error
 bool skipUntilString(nio::Source& in, std::string_view str);
 
 } // namespace rocket::nio

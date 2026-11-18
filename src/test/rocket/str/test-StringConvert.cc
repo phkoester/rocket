@@ -1,6 +1,4 @@
-/*
- * test-StringConvert.cc
- */
+// test-StringConvert.cc
 
 #include "rocket-test/rocket-test.h"
 

@@ -1,8 +1,6 @@
-/*
- * icu.h
- *
- * ICU-specific definitions.
- */
+// icu.h
+//
+// ICU-specific definitions.
 
 #pragma once
 

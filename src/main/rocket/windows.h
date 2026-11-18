@@ -1,8 +1,6 @@
-/*
- * windows.h
- *
- * Windows-specific definitions.
- */
+// windows.h
+//
+// Windows-specific definitions.
 
 #pragma once
 

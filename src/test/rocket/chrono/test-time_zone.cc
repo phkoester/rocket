@@ -1,6 +1,4 @@
-/*
- * test-time_zone.cc
- */
+// test-time_zone.cc
 
 #include "rocket-test/rocket-test.h"
 

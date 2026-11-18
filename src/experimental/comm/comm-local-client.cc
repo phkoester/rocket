@@ -1,6 +1,4 @@
-/*
- * comm-local-client.cc
- */
+// comm-local-client.cc
 
 #include "Message.h"
 

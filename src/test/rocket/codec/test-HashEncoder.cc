@@ -1,6 +1,4 @@
-/*
- * test-HashEncoder.cc
- */
+// test-HashEncoder.cc
 
 #include "rocket-test/rocket-test.h"
 

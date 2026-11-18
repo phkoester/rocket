@@ -1,6 +1,4 @@
-/*
- * Message.cc
- */
+// Message.cc
 
 #include "Message.h"
 

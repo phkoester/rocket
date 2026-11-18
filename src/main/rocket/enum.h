@@ -1,8 +1,6 @@
-/**
- * @file enum.h
- *
- * Rich enums: automatic declarations and definitions.
- */
+/// @file enum.h
+///
+/// Rich enums: automatic declarations and definitions.
 
 #pragma once
 
@@ -18,31 +16,27 @@
 
 // Macros ---------------------------------------------------------------------------------------------------
 
-/**
- * Provides all the declarations for the enum @p type needed for full Rocket interoperability.
- *
- * In particular, this provides a #rocket::Enum specialization.
- *
- * @note This macro must be called in the global namespace.
- *
- * @param ns the namespace of the enum, e.g., `mynamespace`. May be left empty if the enum is in the global
- *   namespace
- * @param type the type of the enum, without namespace, e.g., `MyClass::MyEnum`
- * @param name the name to use for generated identifiers, e.g., `MyClass_MyEnum`
- */
+/// Provides all the declarations for the enum @p type needed for full Rocket interoperability.
+///
+/// In particular, this provides a #rocket::Enum specialization.
+///
+/// @note This macro must be called in the global namespace.
+///
+/// @param ns the namespace of the enum, e.g., `mynamespace`. May be left empty if the enum is in the global
+///   namespace
+/// @param type the type of the enum, without namespace, e.g., `MyClass::MyEnum`
+/// @param name the name to use for generated identifiers, e.g., `MyClass_MyEnum`
 #define ROCKET_ENUM_DECLARE(ns, type, name) ROCKET_ENUM_DECLARE__(ns, type, name)
 
-/**
- * Provides all the definitions for the enum @p type needed for full Rocket interoperability.
- *
- * This macro must be called in the enum’s local namespace.
- *
- * @param ns the namespace of the enum, e.g., `mynamespace`. May be left empty if the enum is in the global
- *   namespace
- * @param type the type of the enum, without namespace, e.g., `MyClass::MyEnum`
- * @param name the name to use for generated identifiers, e.g., `MyClass_MyEnum`
- * @param seq a sequence for the enum values, e.g., `(red)(green)(blue)`
- */
+/// Provides all the definitions for the enum @p type needed for full Rocket interoperability.
+///
+/// This macro must be called in the enum’s local namespace.
+///
+/// @param ns the namespace of the enum, e.g., `mynamespace`. May be left empty if the enum is in the global
+///   namespace
+/// @param type the type of the enum, without namespace, e.g., `MyClass::MyEnum`
+/// @param name the name to use for generated identifiers, e.g., `MyClass_MyEnum`
+/// @param seq a sequence for the enum values, e.g., `(red)(green)(blue)`
 #define ROCKET_ENUM_DEFINE(ns, type, name, seq) ROCKET_ENUM_DEFINE__(ns, type, name, seq)
 
 // Internal macros ------------------------------------------------------------------------------------------

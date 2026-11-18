@@ -1,6 +1,4 @@
-/*
- * test-unicode.cc
- */
+// test-unicode.cc
 
 #include "rocket-test/rocket-test.h"
 

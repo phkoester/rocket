@@ -1,40 +1,30 @@
-/**
- * @file codec.h
- *
- * Encoding and decoding of arbitrary C++ data structures for various purposes, such as comparisons, hashing,
- * formatting, scanning, serialization, deserialization, etc.
- *
- * # The Codec Type System {#codec_type_system}
- *
- * Value Class             | `DataType`         | C++ Mapping
- * :---------------------- | :----------------- | :----------
- * Boolean values          | `Bool`             | `bool`
- * Characters              | `Char`             | `char`, `char32`
- * Enumerations            | `Enum`             | `enum` values
- * Integer values          | `Integer`          | `i8`, `i16`, `i32`, `i64`, `i128`, `u8`, `u16`, `u32`, `u64`, `u128`
- * Floating-point values   | `Float`            | `f32`, `f64`
- * Pointers                | `Pointer`          | C++ pointers
- * Strings                 | `String`           | #std::string, #std::string_view, #std::u32string, #std::u32string_view
- * Optional values         | `Optional`         | #std::optional
- * Tuples                  | `Tuple`            | #std::pair, #std::tuple
- * Lists                   | `List`             | #std::array, #std::forward_list, #std::list, #std::span, #std::vector
- * Sets                    | `Set`              | #std::set, #std::unordered_set
- * Maps                    | `Map`              | #std::map, #std::unordered_map
- * Bidirectional maps      | `Bimap`            | #rocket::bimap (more specifically `boost::bimaps::bimap`)
- * Durations               | `Duration`         | #std::chrono::duration
- * Hours, minutes, seconds | `HourMinuteSecond` | #std::chrono::hh_mm_ss
- * Dates                   | `Date`             | #std::chrono::year_month_day
- * Time zones              | `TimeZone`         | #rocket::chrono::time_zone
- * Times                   | `Time`             | #std::chrono::time_point
- * Times with time zone    | `ZonedTime`        | #rocket::chrono::zoned_time
- * Intervals               | `Interval`         | #rocket::math::Interval
- * Declared objects        | `Declared`         | #rocket::reflect::Declared
- * Instances               | `Instance`         | #rocket::reflect::Instance
- * Members                 | `MemberRef`        | #rocket::reflect::MemberRef
- * Variables               | `VarRef`           | #rocket::reflect::VarRef
- * Code points             | `CodePoint`        | #rocket::unicode::CodePoint
- * Grapheme clusters       | `Character`        | #rocket::unicode::Character, #rocket::unicode::CharacterView
- */
+/// @file codec.h
+///
+/// Encoding and decoding of arbitrary C++ data structures for various purposes, such as comparisons,
+/// hashing, formatting, scanning, serialization, deserialization, etc.
+///
+/// # The Codec Type System {#codec_type_system}
+///
+/// Value Class             | `DataType`         | C++ Mapping
+/// :---------------------- | :----------------- | :----------
+/// Boolean values          | `Bool`             | `bool`
+/// Characters              | `Char`             | `char`, `char32`
+/// Enumerations            | `Enum`             | `enum` values
+/// Integer values | `Integer` | `i8`, `i16`, `i32`, `i64`, `i128`, `u8`, `u16`, `u32`, `u64`, `u128`
+/// Floating-point values | `Float` | `f32`, `f64` Pointers | `Pointer` | C++ pointers Strings |
+/// `String` | #std::string, #std::string_view, #std::u32string, #std::u32string_view Optional values |
+/// `Optional` | #std::optional Tuples | `Tuple` | #std::pair, #std::tuple Lists |
+/// `List` | #std::array, #std::forward_list, #std::list, #std::span, #std::vector Sets |
+/// `Set` | #std::set, #std::unordered_set Maps | `Map` | #std::map, #std::unordered_map Bidirectional maps |
+/// `Bimap` | #rocket::bimap (more specifically `boost::bimaps::bimap`) Durations |
+/// `Duration` | #std::chrono::duration Hours, minutes, seconds | `HourMinuteSecond` | #std::chrono::hh_mm_ss
+/// Dates | `Date` | #std::chrono::year_month_day Time zones | `TimeZone` | #rocket::chrono::time_zone
+/// Times | `Time` | #std::chrono::time_point Times with time zone |
+/// `ZonedTime` | #rocket::chrono::zoned_time Intervals | `Interval` | #rocket::math::Interval Declared
+/// objects | `Declared` | #rocket::reflect::Declared Instances | `Instance` | #rocket::reflect::Instance
+/// Members | `MemberRef` | #rocket::reflect::MemberRef Variables | `VarRef` | #rocket::reflect::VarRef Code
+/// points | `CodePoint` | #rocket::unicode::CodePoint Grapheme clusters |
+/// `Character` | #rocket::unicode::Character, #rocket::unicode::CharacterView
 
 #pragma once
 
@@ -73,11 +63,9 @@ namespace rocket::codec {
 
 // `DataType` -----------------------------------------------------------------------------------------------
 
-/**
- * Data types that consumers and producers may handle.
- *
- * Not all value types are supported by all consumers and producers.
- */
+/// Data types that consumers and producers may handle.
+///
+/// Not all value types are supported by all consumers and producers.
 enum class DataType : u8 {
   // Basic types ............................................................................................
 
@@ -151,13 +139,11 @@ enum class DataType : u8 {
 
 // `DataTypes` ----------------------------------------------------------------------------------------------
 
-/**
- * The #rocket::codec::DataTypes template maps a C++ type to a #rocket::codec::DataType enum value, both for
- * encoding and decoding, at compile time.
- *
- * This is the central logic of the #rocket::codec type system. The encoders and decoders all rely on the
- * data types provided here.
- */
+/// The #rocket::codec::DataTypes template maps a C++ type to a #rocket::codec::DataType enum value, both for
+/// encoding and decoding, at compile time.
+///
+/// This is the central logic of the #rocket::codec type system. The encoders and decoders all rely on the
+/// data types provided here.
 template<typename T>
 struct DataTypes;
 
@@ -305,12 +291,10 @@ struct DataTypes<std::chrono::year_month_day> {
   static constexpr auto Value = DataType::Date; ///< The data type.
 };
 
-/**
- * The specific time-zone type that can be encoded and decoded.
- *
- * This is a pointer because #rocket::chrono::time_zone can’t be constructed. Its instances are completely
- * managed by #rocket::chrono::locate_zone and #rocket::chrono::current_zone.
- */
+/// The specific time-zone type that can be encoded and decoded.
+///
+/// This is a pointer because #rocket::chrono::time_zone can’t be constructed. Its instances are completely
+/// managed by #rocket::chrono::locate_zone and #rocket::chrono::current_zone.
 using TimeZone = const rocket::chrono::time_zone*;
 
 /// @spec{#rocket::codec::DataTypes, #rocket::chrono::time_zone}
@@ -383,10 +367,8 @@ namespace internal {
 
 // `DecoderStore` -------------------------------------------------------------------------------------------
 
-/**
- * A store for intermediate decoder values, such as decoded string views. These are valid for the lifetime
- * of the decoder.
- */
+/// A store for intermediate decoder values, such as decoded string views. These are valid for the lifetime
+/// of the decoder.
 struct DecoderStore {
   static DecoderStore* get();
 
@@ -416,27 +398,23 @@ void store(DecoderStore* val);
 
 // Functions ------------------------------------------------------------------------------------------------
 
-/**
- * Takes care of indentation.
- *
- * @param out the sink to write to
- * @param indent whether to indent the output
- * @param level the current indentation level
- * @param c the character to write
- */
+/// Takes care of indentation.
+///
+/// @param out the sink to write to
+/// @param indent whether to indent the output
+/// @param level the current indentation level
+/// @param c the character to write
 void beginContainer(nio::Sink& out, bool indent, u64& level, char c);
 
-/**
- * Converts a count of @p Unit to the duration type @p To, checking the range.
- *
- * Like #std::chrono::duration_cast, this truncates toward zero. Unlike #std::chrono::duration_cast, an
- * integer result that does not fit into `To::rep` is reported instead of overflowing.
- *
- * @tparam To the target duration type
- * @tparam Unit the duration type that @p count is given in
- * @param count the number of units
- * @return the converted duration, or null if it is out of range
- */
+/// Converts a count of @p Unit to the duration type @p To, checking the range.
+///
+/// Like #std::chrono::duration_cast, this truncates toward zero. Unlike #std::chrono::duration_cast, an
+/// integer result that does not fit into `To::rep` is reported instead of overflowing.
+///
+/// @tparam To the target duration type
+/// @tparam Unit the duration type that @p count is given in
+/// @param count the number of units
+/// @return the converted duration, or null if it is out of range
 template<typename To, typename Unit>
 std::optional<To>
 checkedDurationCast(typename To::rep count) {
@@ -457,25 +435,21 @@ checkedDurationCast(typename To::rep count) {
   }
 }
 
-/**
- * Takes care of indentation.
- *
- * @param out the sink to write to
- * @param indent whether to indent the output
- * @param level the current indentation level
- * @param size the size of the container
- * @param c the character to write
- */
+/// Takes care of indentation.
+///
+/// @param out the sink to write to
+/// @param indent whether to indent the output
+/// @param level the current indentation level
+/// @param size the size of the container
+/// @param c the character to write
 void endContainer(nio::Sink& out, bool indent, u64& level, u64 size, char c);
 
-/**
- * Makes a date from scanned values.
- *
- * @param y the year
- * @param m the month
- * @param d the day
- * @return the date, or null if the values do not form a valid date
- */
+/// Makes a date from scanned values.
+///
+/// @param y the year
+/// @param m the month
+/// @param d the day
+/// @return the date, or null if the values do not form a valid date
 inline std::optional<std::chrono::year_month_day>
 makeDate(std_int y, std_unsigned m, std_unsigned d) {
   using namespace std::chrono;
@@ -491,27 +465,23 @@ makeDate(std_int y, std_unsigned m, std_unsigned d) {
   return ret;
 }
 
-/**
- * Takes care of indentation.
- *
- * @param out the sink to write to
- * @param indent whether to indent the output
- * @param level the current indentation level
- * @param index the index of the element
- */
+/// Takes care of indentation.
+///
+/// @param out the sink to write to
+/// @param indent whether to indent the output
+/// @param level the current indentation level
+/// @param index the index of the element
 void nextElem(nio::Sink& out, bool indent, u64 level, u64 index);
 
-/**
- * Unescapes the content of a quoted literal, reporting failures relative to the enclosing input.
- *
- * @param input the content of the literal, without its quotes
- * @param quotePos the position of the opening quote in the enclosing input, or an empty optional if it is
- *   unknown. In the latter case, failures have no position
- * @param config the configuration
- * @param positions if nonnull, receives the positions, which are relative to @p input
- * @return the unescaped string
- * @throw #rocket::InputFailure if @p input is malformed
- */
+/// Unescapes the content of a quoted literal, reporting failures relative to the enclosing input.
+///
+/// @param input the content of the literal, without its quotes
+/// @param quotePos the position of the opening quote in the enclosing input, or an empty optional if it is
+///   unknown. In the latter case, failures have no position
+/// @param config the configuration
+/// @param positions if nonnull, receives the positions, which are relative to @p input
+/// @return the unescaped string
+/// @throw #rocket::InputFailure if @p input is malformed
 inline std::string
 unescapeLiteral(
   std::string_view input,
@@ -526,12 +496,10 @@ unescapeLiteral(
   }
 }
 
-/**
- * Returns the message for a failed scan of a duration.
- *
- * @param error the scan error
- * @return the message
- */
+/// Returns the message for a failed scan of a duration.
+///
+/// @param error the scan error
+/// @return the message
 inline std::string_view
 durationError(const scn::scan_error& error) {
   using namespace std::string_view_literals;
@@ -549,12 +517,10 @@ durationError(const scn::scan_error& error) {
   return "expected a duration"sv;
 }
 
-/**
- * Returns the message for a failed scan of a date.
- *
- * @param error the scan error
- * @return the message
- */
+/// Returns the message for a failed scan of a date.
+///
+/// @param error the scan error
+/// @return the message
 inline std::string_view
 dateError(const scn::scan_error& error) {
   using namespace std::string_view_literals;
@@ -566,12 +532,10 @@ dateError(const scn::scan_error& error) {
   return "expected a date"sv;
 }
 
-/**
- * Returns the message for a failed scan of a #rocket::chrono::zoned_time.
- *
- * @param error the scan error
- * @return the message
- */
+/// Returns the message for a failed scan of a #rocket::chrono::zoned_time.
+///
+/// @param error the scan error
+/// @return the message
 inline std::string_view
 zonedTimeError(const scn::scan_error& error) {
   using namespace std::string_view_literals;
@@ -592,12 +556,10 @@ zonedTimeError(const scn::scan_error& error) {
   return "expected a time point with time zone"sv;
 }
 
-/**
- * Returns the message for a failed scan of a #std::chrono::hh_mm_ss.
- *
- * @param error the scan error
- * @return the message
- */
+/// Returns the message for a failed scan of a #std::chrono::hh_mm_ss.
+///
+/// @param error the scan error
+/// @return the message
 inline std::string_view
 hourMinuteSecondError(const scn::scan_error& error) {
   using namespace std::string_view_literals;
@@ -612,13 +574,11 @@ hourMinuteSecondError(const scn::scan_error& error) {
   return "expected an hour, minute, and second"sv;
 }
 
-/**
- * Checks if scanned values form a valid UTC offset, which is at most 23:59 in magnitude, as in RFC 3339.
- *
- * @param h the hour
- * @param m the minute
- * @return if the values are valid
- */
+/// Checks if scanned values form a valid UTC offset, which is at most 23:59 in magnitude, as in RFC 3339.
+///
+/// @param h the hour
+/// @param m the minute
+/// @return if the values are valid
 inline bool
 validUtcOffset(u32 h, u32 m) {
   return h < 24 && m < 60;
@@ -628,23 +588,19 @@ validUtcOffset(u32 h, u32 m) {
 
 // `Encoder` ------------------------------------------------------------------------------------------------
 
-/**
- * An encoder needs a consumer that supports a set of value types.
- *
- * @tparam Consumer the consumer to use
- */
+/// An encoder needs a consumer that supports a set of value types.
+///
+/// @tparam Consumer the consumer to use
 template<typename Consumer>
 struct Encoder {
-  /**
-   * Encodes a value.
-   *
-   * @tparam T the type to encode
-   * @tparam U the type the consumer actually consumes for `T`
-   * @tparam Args types of additional arguments to pass to the consumer
-   * @param val the value to encode
-   * @param args additional arguments to pass to the consumer
-   * @return whatever the consumer returns
-   */
+  /// Encodes a value.
+  ///
+  /// @tparam T the type to encode
+  /// @tparam U the type the consumer actually consumes for `T`
+  /// @tparam Args types of additional arguments to pass to the consumer
+  /// @param val the value to encode
+  /// @param args additional arguments to pass to the consumer
+  /// @return whatever the consumer returns
   template<typename T, typename U = T, typename... Args>
   auto // NOLINT
   encode(const T& val, Args&&... args) const {
@@ -672,42 +628,36 @@ namespace internal {
 
 // Functions ------------------------------------------------------------------------------------------------
 
-/**
- * Moves the position and the ranges of a decode error to the starts of their grapheme clusters.
- *
- * Producers that read a source byte by byte can fail inside a cluster, for example between a digit and a
- * combining mark. Such a position is not a character boundary, which #rocket::str::location::locations
- * requires.
- *
- * This reads the entire source again, so it is meant for the error path only. The source is left where it
- * was. The error is left as it is if the source cannot seek or does not hold valid UTF-8.
- *
- * @param error the error to adjust
- * @param in the source the error refers to
- */
+/// Moves the position and the ranges of a decode error to the starts of their grapheme clusters.
+///
+/// Producers that read a source byte by byte can fail inside a cluster, for example between a digit and a
+/// combining mark. Such a position is not a character boundary, which #rocket::str::location::locations
+/// requires.
+///
+/// This reads the entire source again, so it is meant for the error path only. The source is left where it
+/// was. The error is left as it is if the source cannot seek or does not hold valid UTF-8.
+///
+/// @param error the error to adjust
+/// @param in the source the error refers to
 void snapToClusterStarts(DecodeError& error, nio::Source& in);
 
 } // namespace internal
 
 // `Decoder` ------------------------------------------------------------------------------------------------
 
-/**
- * A decoder needs a producer that supports a set of value types.
- *
- * @tparam Producer the producer to use
-*/
+/// A decoder needs a producer that supports a set of value types.
+///
+/// @tparam Producer the producer to use
 template<typename Producer>
 struct Decoder {
-  /**
-   * Decodes a value.
-   *
-   * @tparam T the type to decode
-   * @tparam U the type the producer actually produces for `T`
-   * @tparam Args types of additional arguments to pass to the producer
-   * @param val the initial value to decode into
-   * @param args additional arguments to pass to the producer
-   * @return the decoded value
-   */
+  /// Decodes a value.
+  ///
+  /// @tparam T the type to decode
+  /// @tparam U the type the producer actually produces for `T`
+  /// @tparam Args types of additional arguments to pass to the producer
+  /// @param val the initial value to decode into
+  /// @param args additional arguments to pass to the producer
+  /// @return the decoded value
   template<typename T, typename U = T, typename... Args>
   [[nodiscard]] DecodeResult<U>
   decode(U& val, Args&&... args) const {
@@ -731,12 +681,10 @@ private:
 
 // `Codec` --------------------------------------------------------------------------------------------------
 
-/**
- * A codec is both an encoder and a decoder.
- *
- * @tparam Consumer the consumer type to use
- * @tparam Producer the producer type to use
- */
+/// A codec is both an encoder and a decoder.
+///
+/// @tparam Consumer the consumer type to use
+/// @tparam Producer the producer type to use
 template<typename Consumer, typename Producer>
 struct Codec : Encoder<Consumer>, Decoder<Producer> {};
 

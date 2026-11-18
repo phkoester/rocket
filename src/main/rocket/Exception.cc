@@ -1,6 +1,4 @@
-/*
- * Exception.cc
- */
+// Exception.cc
 
 #include "Exception.h"
 

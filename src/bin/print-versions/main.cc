@@ -1,6 +1,4 @@
-/*
- * main.cc
- */
+// main.cc
 
 #include "rocket/Process.h"
 #include "rocket/icu.h"
@@ -57,9 +55,7 @@ icuVersion() {
 
 #ifdef ROCKET_ICU_CMAKE
 
-/**
- * Returns the ICU version shipped with the Windows SDK.
- */
+/// Returns the ICU version shipped with the Windows SDK.
 string
 icuVersionWindowsSdk() {
   using UGetVersion = decltype(&u_getVersion);

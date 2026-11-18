@@ -1,6 +1,4 @@
-/*
- * system.cc
- */
+// system.cc
 
 #include "system.h"
 
@@ -45,9 +43,7 @@ namespace {
 
 // `ConsoleModeGuard` ---------------------------------------------------------------------------------------
 
-/**
- * A guard that restores the console mode of `stdin` and `stdout`.
- */
+/// A guard that restores the console mode of `stdin` and `stdout`.
 struct ConsoleModeGuard {
   ConsoleModeGuard() {
     for (auto& entry : entries_) {
@@ -101,9 +97,7 @@ private:
 
 // `Handle` -------------------------------------------------------------------------------------------------
 
-/**
- * Windows: A handle that closes itself.
- */
+/// Windows: A handle that closes itself.
 struct Handle {
   Handle() = default;
 
@@ -145,9 +139,7 @@ private:
 
 // `Fd` -----------------------------------------------------------------------------------------------------
 
-/**
- * Linux, macOS: A file descriptor that closes itself.
- */
+/// Linux, macOS: A file descriptor that closes itself.
 struct Fd {
   Fd() = default;
 
@@ -199,20 +191,16 @@ envMutex() {
 
 #ifdef ROCKET_OS_WINDOWS
 
-/**
- * Windows: Returns the error of the last failed system call.
- */
+/// Windows: Returns the error of the last failed system call.
 error_code
 lastError() {
   return { static_cast<i32>(GetLastError()), system_category() };
 }
 
-/**
- * Windows: Returns the path of `cmd.exe` in the system directory.
- *
- * Taking it from there rather than searching for it keeps a `cmd.exe` in the current directory from being
- * run.
- */
+/// Windows: Returns the path of `cmd.exe` in the system directory.
+///
+/// Taking it from there rather than searching for it keeps a `cmd.exe` in the current directory from being
+/// run.
 error_code
 cmdPath(string& path) {
   array<char, MAX_PATH> buf {};
@@ -227,11 +215,9 @@ cmdPath(string& path) {
   return {};
 }
 
-/**
- * Windows: Returns whether @p program names a batch file.
- *
- * Windows ignores trailing dots and spaces in file names, so `a.bat. ` names a batch file as well.
- */
+/// Windows: Returns whether @p program names a batch file.
+///
+/// Windows ignores trailing dots and spaces in file names, so `a.bat. ` names a batch file as well.
 bool
 isBatchFile(string_view program) {
   while (not program.empty() && (program.back() == '.' || program.back() == ' ')) {
@@ -245,9 +231,7 @@ isBatchFile(string_view program) {
   return ext == ".bat" || ext == ".cmd";
 }
 
-/**
- * Windows: Creates a pipe whose write end a command can inherit, but not its read end.
- */
+/// Windows: Creates a pipe whose write end a command can inherit, but not its read end.
 error_code
 makePipe(Handle& readEnd, Handle& writeEnd) {
   SECURITY_ATTRIBUTES sa {
@@ -268,12 +252,10 @@ makePipe(Handle& readEnd, Handle& writeEnd) {
   return {};
 }
 
-/**
- * Windows: Creates an inheritable handle for the stdin of a command.
- *
- * This is a duplicate of the own stdin, so the command reads from the same source as `popen` would let it.
- * Without an own stdin, as in a GUI application, it is the null device.
- */
+/// Windows: Creates an inheritable handle for the stdin of a command.
+///
+/// This is a duplicate of the own stdin, so the command reads from the same source as `popen` would let it.
+/// Without an own stdin, as in a GUI application, it is the null device.
 error_code
 makeStdin(Handle& handle) {
   const HANDLE in = GetStdHandle(STD_INPUT_HANDLE);
@@ -300,12 +282,10 @@ makeStdin(Handle& handle) {
   return {};
 }
 
-/**
- * Windows: Quotes an argument such that the C runtime of the called program reads it back unchanged.
- *
- * Backslashes are only special in front of a quotation mark: there, they must be doubled. This includes the
- * closing quotation mark. A quotation mark inside the argument is escaped with one more backslash.
- */
+/// Windows: Quotes an argument such that the C runtime of the called program reads it back unchanged.
+///
+/// Backslashes are only special in front of a quotation mark: there, they must be doubled. This includes the
+/// closing quotation mark. A quotation mark inside the argument is escaped with one more backslash.
 string
 quoteArg(string_view arg) {
   string ret = "\"";
@@ -326,16 +306,14 @@ quoteArg(string_view arg) {
   return ret;
 }
 
-/**
- * Windows: Converts arguments to a command line for `CreateProcess` that passes each argument literally.
- *
- * No shell is involved, so only the quoting rules of the C runtime apply. They differ for the program, the
- * first argument: it ends at the next quotation mark, and backslashes have no special meaning in it. It is
- * therefore just enclosed in quotation marks, and may not contain one itself.
- *
- * A batch file is refused: `CreateProcess` would hand it to `cmd.exe`, which applies its own rules to the
- * arguments. No quoting is known to make them safe there.
- */
+/// Windows: Converts arguments to a command line for `CreateProcess` that passes each argument literally.
+///
+/// No shell is involved, so only the quoting rules of the C runtime apply. They differ for the program, the
+/// first argument: it ends at the next quotation mark, and backslashes have no special meaning in it. It is
+/// therefore just enclosed in quotation marks, and may not contain one itself.
+///
+/// A batch file is refused: `CreateProcess` would hand it to `cmd.exe`, which applies its own rules to the
+/// arguments. No quoting is known to make them safe there.
 string
 makeCl(const vector<string_view>& args) {
   string ret;
@@ -359,11 +337,9 @@ makeCl(const vector<string_view>& args) {
   return ret;
 }
 
-/**
- * Windows: Reads from @p pipe until the writing side closes it, and closes it then.
- *
- * On a read error, the pipe is closed as well, so the command fails to write rather than block.
- */
+/// Windows: Reads from @p pipe until the writing side closes it, and closes it then.
+///
+/// On a read error, the pipe is closed as well, so the command fails to write rather than block.
 error_code
 readPipe(Handle& pipe, string& out) {
   array<char, 4'096> buf {};
@@ -382,14 +358,12 @@ readPipe(Handle& pipe, string& out) {
   }
 }
 
-/**
- * Windows: Runs a command line and captures its output.
- *
- * @param app the full path of the program to run, or null to take the program from @p cl and search
- *   for it
- * @param cl the command line, starting with the program
- * @param combined whether to capture the output to stderr together with that to stdout
- */
+/// Windows: Runs a command line and captures its output.
+///
+/// @param app the full path of the program to run, or null to take the program from @p cl and search
+///   for it
+/// @param cl the command line, starting with the program
+/// @param combined whether to capture the output to stderr together with that to stdout
 ExecResult
 execImpl(const char* app, string cl, bool combined) {
   ExecResult ret;
@@ -519,19 +493,15 @@ execImpl(const char* app, string cl, bool combined) {
 
 #else
 
-/**
- * Linux, macOS: Returns the error of the last failed system call.
- */
+/// Linux, macOS: Returns the error of the last failed system call.
 error_code
 lastError() {
   return { errno, system_category() };
 }
 
-/**
- * Linux, macOS: Creates a pipe whose ends are closed when a command is executed.
- *
- * The caller must hold `envMutex()` until it has started the command, see `execImpl`.
- */
+/// Linux, macOS: Creates a pipe whose ends are closed when a command is executed.
+///
+/// The caller must hold `envMutex()` until it has started the command, see `execImpl`.
 error_code
 makePipe(Fd& readEnd, Fd& writeEnd) {
   array<i32, 2> fds {};
@@ -571,13 +541,11 @@ makePipe(Fd& readEnd, Fd& writeEnd) {
   return {};
 }
 
-/**
- * Linux, macOS: Reads from the pipes @p out and @p err until the writing side closes them, and closes them
- * then.
- *
- * Both pipes are read at the same time. Otherwise, the command could block writing to one of them, while we
- * wait for the other one. A pipe that is not open is skipped.
- */
+/// Linux, macOS: Reads from the pipes @p out and @p err until the writing side closes them, and closes them
+/// then.
+///
+/// Both pipes are read at the same time. Otherwise, the command could block writing to one of them, while we
+/// wait for the other one. A pipe that is not open is skipped.
 error_code
 readPipes(Fd& out, string& outStr, Fd& err, string& errStr) {
   array<char, 4'096> buf {};
@@ -619,13 +587,11 @@ readPipes(Fd& out, string& outStr, Fd& err, string& errStr) {
   return {};
 }
 
-/**
- * Linux, macOS: Runs a command and captures its output.
- *
- * @param path the path of the program to run, or `nullptr` to search for `args[0]` in the `PATH`
- * @param args the arguments, starting with the program name
- * @param combined whether to capture the output to stderr together with that to stdout
- */
+/// Linux, macOS: Runs a command and captures its output.
+///
+/// @param path the path of the program to run, or `nullptr` to search for `args[0]` in the `PATH`
+/// @param args the arguments, starting with the program name
+/// @param combined whether to capture the output to stderr together with that to stdout
 ExecResult
 execImpl(const char* path, vector<string> args, bool combined) {
   ExecResult ret;

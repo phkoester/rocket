@@ -1,6 +1,4 @@
-/*
- * test-InputFailure.cc
- */
+// test-InputFailure.cc
 
 #include "rocket-test/rocket-test.h"
 

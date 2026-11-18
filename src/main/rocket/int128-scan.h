@@ -1,8 +1,6 @@
-/**
- * @file int128-scan.h
- *
- * scnlib scanners for 128-bit integers.
- */
+/// @file int128-scan.h
+///
+/// scnlib scanners for 128-bit integers.
 
 #pragma once
 
@@ -22,18 +20,16 @@ namespace rocket::internal::scan::int128 {
 
 // `Scanner` ------------------------------------------------------------------------------------------------
 
-/**
- * A scnlib scanner for a 128-bit integer type that scnlib does not support natively.
- *
- * The scanner accepts the same format specifications as the scnlib scanners of built-in integers, reports
- * the same errors, and consumes the same input. It mirrors the integer reader of scnlib, including fill,
- * alignment, width (the minimum field width), precision (the maximum field width), base prefixes, and
- * localized digit grouping.
- *
- * @tparam T the integer type
- * @tparam U the unsigned integer type corresponding to `T`
- * @tparam C the character type
- */
+/// A scnlib scanner for a 128-bit integer type that scnlib does not support natively.
+///
+/// The scanner accepts the same format specifications as the scnlib scanners of built-in integers, reports
+/// the same errors, and consumes the same input. It mirrors the integer reader of scnlib, including fill,
+/// alignment, width (the minimum field width), precision (the maximum field width), base prefixes, and
+/// localized digit grouping.
+///
+/// @tparam T the integer type
+/// @tparam U the unsigned integer type corresponding to `T`
+/// @tparam C the character type
 template<typename T, typename U, typename C>
 struct Scanner {
   /// @cond undocumented
@@ -187,11 +183,9 @@ private:
 
   enum class Sign : u8 { minus, plus };
 
-  /**
-   * A position in the input, optionally limited to a field width, as `scn::impl::counted_width_iterator`.
-   *
-   * Like scnlib, a code point counts with its display width, and a negative limit is never reached.
-   */
+  /// A position in the input, optionally limited to a field width, as `scn::impl::counted_width_iterator`.
+  ///
+  /// Like scnlib, a code point counts with its display width, and a negative limit is never reached.
   template<typename It, typename Sent>
   struct Cursor {
     It it;
@@ -351,12 +345,10 @@ private:
     return width;
   }
 
-  /**
-   * Skips whitespace, as `scn::impl::read_while_classic_space`.
-   *
-   * scnlib reads narrow whitespace either with a fast algorithm that ends at invalid code units, or code
-   * point by code point, skipping invalid code units; `fast` selects the former.
-   */
+  /// Skips whitespace, as `scn::impl::read_while_classic_space`.
+  ///
+  /// scnlib reads narrow whitespace either with a fast algorithm that ends at invalid code units, or code
+  /// point by code point, skipping invalid code units; `fast` selects the former.
   template<typename Cur>
   static void
   skipWhitespace(Cur& cur, bool fast) {
@@ -612,11 +604,9 @@ private:
     return ReadResult<It> { cur.it, cur.count };
   }
 
-  /**
-   * Parses digits, skipping leading zeros and checking for overflow, as `scn::impl::parse_integer_value`.
-   *
-   * @return the number of code units consumed
-   */
+  /// Parses digits, skipping leading zeros and checking for overflow, as `scn::impl::parse_integer_value`.
+  ///
+  /// @return the number of code units consumed
   template<typename DigitIt>
   static scn::scan_expected<std::ptrdiff_t>
   parseValue(DigitIt begin, DigitIt end, T& val, bool negative, int base) {
@@ -657,22 +647,18 @@ private:
 
 // `scn::scanner<rocket::i128>` -----------------------------------------------------------------------------
 
-/**
- * @spec_scn_scanner{#rocket::i128}
- *
- * This scanner supports the same format specifications as the scnlib scanners of built-in integers.
- */
+/// @spec_scn_scanner{#rocket::i128}
+///
+/// This scanner supports the same format specifications as the scnlib scanners of built-in integers.
 template<typename C> requires rocket::IsChar<C>
 struct scn::scanner<rocket::i128, C> :
   rocket::internal::scan::int128::Scanner<rocket::i128, rocket::u128, C> {};
 
 // `scn::scanner<rocket::u128>` -----------------------------------------------------------------------------
 
-/**
- * @spec_scn_scanner{#rocket::u128}
- *
- * This scanner supports the same format specifications as the scnlib scanners of built-in integers.
- */
+/// @spec_scn_scanner{#rocket::u128}
+///
+/// This scanner supports the same format specifications as the scnlib scanners of built-in integers.
 template<typename C> requires rocket::IsChar<C>
 struct scn::scanner<rocket::u128, C> :
   rocket::internal::scan::int128::Scanner<rocket::u128, rocket::u128, C> {};

@@ -1,6 +1,4 @@
-/*
- * test-FormattedCodec-MyStruct.ron
- */
+// test-FormattedCodec-MyStruct.ron
 
 (
   ärger   = 0x10,

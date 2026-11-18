@@ -1,8 +1,6 @@
-/**
- * @file split.h
- *
- * An iterator for splitting strings into tokens.
- */
+/// @file split.h
+///
+/// An iterator for splitting strings into tokens.
 
 #include "rocket/assert.h"
 #include "rocket/type-traits.h"
@@ -16,11 +14,9 @@ namespace rocket::str {
 
 // `SplitIterator` ------------------------------------------------------------------------------------------
 
-/**
- * The iterator used by #rocket::str::SplitResult.
- *
- * @tparam C the character type
- */
+/// The iterator used by #rocket::str::SplitResult.
+///
+/// @tparam C the character type
 template<typename C> requires IsChar<C>
 struct SplitIterator {
   /// @cond undocumented
@@ -81,17 +77,13 @@ private:
 
   /// The input string to split.
   std::basic_string_view<C> str_;
-  /**
-   * The current position in the string.
-   *
-   * If this is #rocket::NPOS, the iterator is exhausted.
-   */
+  /// The current position in the string.
+  ///
+  /// If this is #rocket::NPOS, the iterator is exhausted.
   size_t pos_;
-  /**
-   * The end of the current token.
-   *
-   * If #pos_ is #rocket::NPOS, this is also #rocket::NPOS.
-   */
+  /// The end of the current token.
+  ///
+  /// If #pos_ is #rocket::NPOS, this is also #rocket::NPOS.
   size_t end_;
   /// The separator.
   std::basic_string<C> sep_;
@@ -99,11 +91,9 @@ private:
 
 // `SplitResult` --------------------------------------------------------------------------------------------
 
-/**
- * An object returned by #split that can be used to iterate over the string-view tokens.
- *
- * @tparam C the character type
- */
+/// An object returned by #split that can be used to iterate over the string-view tokens.
+///
+/// @tparam C the character type
 template<typename C> requires IsChar<C>
 struct SplitResult {
   /// @cond undocumented
@@ -126,19 +116,17 @@ private:
 
 // Functions ------------------------------------------------------------------------------------------------
 
-/**
- * Splits a string into tokens.
- *
- * No strings are ever allocated, except for the separator, so this is a very efficient way to split a string
- * into tokens.
- *
- * The underlying string of @p str must remain valid for the lifetime of the returned result.
- *
- * @tparam C the character type
- * @param str the string to split
- * @param sep the separator to use
- * @return a result object that can be used to iterate over the tokens
- */
+/// Splits a string into tokens.
+///
+/// No strings are ever allocated, except for the separator, so this is a very efficient way to split a
+/// string into tokens.
+///
+/// The underlying string of @p str must remain valid for the lifetime of the returned result.
+///
+/// @tparam C the character type
+/// @param str the string to split
+/// @param sep the separator to use
+/// @return a result object that can be used to iterate over the tokens
 template<typename C> requires IsChar<C>
 [[nodiscard]] SplitResult<C>
 split(std::basic_string_view<C> str, std::basic_string_view<C> sep) {

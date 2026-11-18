@@ -1,8 +1,6 @@
-/**
- * @file StringConvert.h
- *
- * String-to-type and type-to-string conversions.
- */
+/// @file StringConvert.h
+///
+/// String-to-type and type-to-string conversions.
 
 #pragma once
 
@@ -125,27 +123,23 @@ struct StringConvert<std::string_view> {
 
 // Functions ------------------------------------------------------------------------------------------------
 
-/**
- * Converts a string to a value of type @p T.
- *
- * @tparam T the type to convert to
- * @param str the string to convert
- * @return a value of type @p T
- * @throw #rocket::InvalidState if @p str cannot be scanned
- */
+/// Converts a string to a value of type @p T.
+///
+/// @tparam T the type to convert to
+/// @param str the string to convert
+/// @return a value of type @p T
+/// @throw #rocket::InvalidState if @p str cannot be scanned
 template<typename T>
 [[nodiscard]] Result<T>
 toType(std::string_view str) {
   return internal::StringConvert<T>::toType(str);
 }
 
-/**
- * Converts a value of type @p T to a string.
- *
- * @tparam T the type to convert from
- * @param val the value to convert
- * @return a string
- */
+/// Converts a value of type @p T to a string.
+///
+/// @tparam T the type to convert from
+/// @param val the value to convert
+/// @return a string
 template<typename T>
 [[nodiscard]] std::string
 toString(T val) {

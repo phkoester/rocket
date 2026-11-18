@@ -1,6 +1,4 @@
-/*
- * Noun.cc
- */
+// Noun.cc
 
 #include "Noun.h"
 

@@ -1,19 +1,17 @@
-/**
- * @file spanstream.h
- *
- * Portability layer for #std::spanstream and companions.
- *
- * This header declares
- *
- * - #rocket::io::basic_spanbuf,
- * - #rocket::io::basic_ispanstream,
- * - #rocket::io::basic_ospanstream, and
- * - #rocket::io::basic_spanstream.
- *
- * If the standard library provides `<spanstream>` (C++23), these are #std::basic_spanbuf and so on.
- * Otherwise, they are portable implementations that follow the specification of these classes in the C++23
- * standard.
- */
+/// @file spanstream.h
+///
+/// Portability layer for #std::spanstream and companions.
+///
+/// This header declares
+///
+/// - #rocket::io::basic_spanbuf,
+/// - #rocket::io::basic_ispanstream,
+/// - #rocket::io::basic_ospanstream, and
+/// - #rocket::io::basic_spanstream.
+///
+/// If the standard library provides `<spanstream>` (C++23), these are #std::basic_spanbuf and so on.
+/// Otherwise, they are portable implementations that follow the specification of these classes in the C++23
+/// standard.
 
 #pragma once
 
@@ -61,16 +59,14 @@ using basic_spanstream = std::basic_spanstream<CharT, Traits>;
 
 // `basic_spanbuf` ------------------------------------------------------------------------------------------
 
-/**
- * A stream buffer for a fixed character buffer, equivalent to C++23’s `std::basic_spanbuf`.
- *
- * The buffer is never reallocated. Writing past its end fails, as does reading past its end.
- *
- * @tparam CharT the character type
- * @tparam Traits the character traits
- *
- * @NotThreadSafe
- */
+/// A stream buffer for a fixed character buffer, equivalent to C++23’s `std::basic_spanbuf`.
+///
+/// The buffer is never reallocated. Writing past its end fails, as does reading past its end.
+///
+/// @tparam CharT the character type
+/// @tparam Traits the character traits
+///
+/// @NotThreadSafe
 template<typename CharT, typename Traits = std::char_traits<CharT>>
 struct basic_spanbuf : std::basic_streambuf<CharT, Traits> {
   /// @type_base
@@ -90,19 +86,15 @@ struct basic_spanbuf : std::basic_streambuf<CharT, Traits> {
   /// @ctor
   basic_spanbuf() : basic_spanbuf(std::ios_base::in | std::ios_base::out) {}
 
-  /**
-   * @ctor
-   *
-   * @param which the open mode
-   */
+  /// @ctor
+  ///
+  /// @param which the open mode
   explicit basic_spanbuf(std::ios_base::openmode which) : basic_spanbuf(std::span<CharT>(), which) {}
 
-  /**
-   * @ctor
-   *
-   * @param s the buffer
-   * @param which the open mode
-   */
+  /// @ctor
+  ///
+  /// @param s the buffer
+  /// @param which the open mode
   explicit basic_spanbuf(
     std::span<CharT> s,
     std::ios_base::openmode which = std::ios_base::in | std::ios_base::out) :
@@ -112,11 +104,10 @@ struct basic_spanbuf : std::basic_streambuf<CharT, Traits> {
 
   basic_spanbuf(const basic_spanbuf&) = delete;
 
-  /**
-   * @ctor_move
-   *
-   * The sequence pointers of the new instance are those of @p rhs, which keeps referring to the same buffer.
-   */
+  /// @ctor_move
+  ///
+  /// The sequence pointers of the new instance are those of @p rhs, which keeps referring to the same
+  /// buffer.
   basic_spanbuf(basic_spanbuf&& rhs) : Base(rhs), mode_(rhs.mode_), buf_(rhs.buf_) {}
 
   ~basic_spanbuf() override = default;
@@ -131,11 +122,9 @@ struct basic_spanbuf : std::basic_streambuf<CharT, Traits> {
     return *this;
   }
 
-  /**
-   * Returns the buffer.
-   *
-   * @return if opened for output, the part of the buffer written so far, otherwise the whole buffer
-   */
+  /// Returns the buffer.
+  ///
+  /// @return if opened for output, the part of the buffer written so far, otherwise the whole buffer
   [[nodiscard]] std::span<CharT>
   span() const noexcept {
     if (mode_ & std::ios_base::out) {
@@ -144,13 +133,11 @@ struct basic_spanbuf : std::basic_streambuf<CharT, Traits> {
     return buf_;
   }
 
-  /**
-   * Sets a new buffer, resetting the input and output positions.
-   *
-   * If opened with `std::ios_base::ate`, the output position is set to the end of the buffer.
-   *
-   * @param s the buffer
-   */
+  /// Sets a new buffer, resetting the input and output positions.
+  ///
+  /// If opened with `std::ios_base::ate`, the output position is set to the end of the buffer.
+  ///
+  /// @param s the buffer
   void
   span(std::span<CharT> s) noexcept {
     buf_ = s;
@@ -280,14 +267,12 @@ concept ReadOnlySpan =
 
 } // namespace internal
 
-/**
- * A stream for reading from a fixed character buffer, equivalent to C++23’s `std::basic_ispanstream`.
- *
- * @tparam CharT the character type
- * @tparam Traits the character traits
- *
- * @NotThreadSafe
- */
+/// A stream for reading from a fixed character buffer, equivalent to C++23’s `std::basic_ispanstream`.
+///
+/// @tparam CharT the character type
+/// @tparam Traits the character traits
+///
+/// @NotThreadSafe
 template<typename CharT, typename Traits = std::char_traits<CharT>>
 struct basic_ispanstream : std::basic_istream<CharT, Traits> {
   /// @type_base
@@ -304,25 +289,21 @@ struct basic_ispanstream : std::basic_istream<CharT, Traits> {
   /// @type_alias
   using traits_type = Traits;
 
-  /**
-   * @ctor
-   *
-   * @param s the buffer
-   * @param which the open mode; `std::ios_base::in` is always added
-   */
+  /// @ctor
+  ///
+  /// @param s the buffer
+  /// @param which the open mode; `std::ios_base::in` is always added
   explicit basic_ispanstream(std::span<CharT> s, std::ios_base::openmode which = std::ios_base::in) :
     Base(std::addressof(sb_)), // Only stores the pointer; `sb_` is constructed next
     sb_(s, which | std::ios_base::in) {}
 
-  /**
-   * @ctor
-   *
-   * Reads from a read-only range, such as a #std::string_view or a #std::span of `const` characters. The
-   * range is never written to.
-   *
-   * @tparam ROS the range type
-   * @param s the range
-   */
+  /// @ctor
+  ///
+  /// Reads from a read-only range, such as a #std::string_view or a #std::span of `const` characters. The
+  /// range is never written to.
+  ///
+  /// @tparam ROS the range type
+  /// @param s the range
   template<typename ROS> requires internal::ReadOnlySpan<ROS, CharT>
   explicit basic_ispanstream(ROS&& s) : basic_ispanstream(unconst(std::forward<ROS>(s))) {}
 
@@ -340,36 +321,28 @@ struct basic_ispanstream : std::basic_istream<CharT, Traits> {
   /// @member_op_asgmt_move
   basic_ispanstream& operator=(basic_ispanstream&& rhs) = default;
 
-  /**
-   * Returns the stream buffer.
-   *
-   * @return the stream buffer
-   */
+  /// Returns the stream buffer.
+  ///
+  /// @return the stream buffer
   [[nodiscard]] basic_spanbuf<CharT, Traits>*
   rdbuf() const noexcept {
     return const_cast<basic_spanbuf<CharT, Traits>*>(std::addressof(sb_));
   }
 
-  /**
-   * Returns the buffer.
-   *
-   * @return the buffer
-   */
+  /// Returns the buffer.
+  ///
+  /// @return the buffer
   [[nodiscard]] std::span<const CharT> span() const noexcept { return rdbuf()->span(); }
 
-  /**
-   * Sets a new buffer, resetting the input position.
-   *
-   * @param s the buffer
-   */
+  /// Sets a new buffer, resetting the input position.
+  ///
+  /// @param s the buffer
   void span(std::span<CharT> s) noexcept { rdbuf()->span(s); }
 
-  /**
-   * Sets a new read-only buffer, resetting the input position.
-   *
-   * @tparam ROS the range type
-   * @param s the range
-   */
+  /// Sets a new read-only buffer, resetting the input position.
+  ///
+  /// @tparam ROS the range type
+  /// @param s the range
   template<typename ROS> requires internal::ReadOnlySpan<ROS, CharT>
   void
   span(ROS&& s) noexcept {
@@ -405,14 +378,12 @@ swap(basic_ispanstream<CharT, Traits>& lhs, basic_ispanstream<CharT, Traits>& rh
 
 // `basic_ospanstream` --------------------------------------------------------------------------------------
 
-/**
- * A stream for writing to a fixed character buffer, equivalent to C++23’s `std::basic_ospanstream`.
- *
- * @tparam CharT the character type
- * @tparam Traits the character traits
- *
- * @NotThreadSafe
- */
+/// A stream for writing to a fixed character buffer, equivalent to C++23’s `std::basic_ospanstream`.
+///
+/// @tparam CharT the character type
+/// @tparam Traits the character traits
+///
+/// @NotThreadSafe
 template<typename CharT, typename Traits = std::char_traits<CharT>>
 struct basic_ospanstream : std::basic_ostream<CharT, Traits> {
   /// @type_base
@@ -429,12 +400,10 @@ struct basic_ospanstream : std::basic_ostream<CharT, Traits> {
   /// @type_alias
   using traits_type = Traits;
 
-  /**
-   * @ctor
-   *
-   * @param s the buffer
-   * @param which the open mode; `std::ios_base::out` is always added
-   */
+  /// @ctor
+  ///
+  /// @param s the buffer
+  /// @param which the open mode; `std::ios_base::out` is always added
   explicit basic_ospanstream(std::span<CharT> s, std::ios_base::openmode which = std::ios_base::out) :
     Base(std::addressof(sb_)), // Only stores the pointer; `sb_` is constructed next
     sb_(s, which | std::ios_base::out) {}
@@ -453,28 +422,22 @@ struct basic_ospanstream : std::basic_ostream<CharT, Traits> {
   /// @member_op_asgmt_move
   basic_ospanstream& operator=(basic_ospanstream&& rhs) = default;
 
-  /**
-   * Returns the stream buffer.
-   *
-   * @return the stream buffer
-   */
+  /// Returns the stream buffer.
+  ///
+  /// @return the stream buffer
   [[nodiscard]] basic_spanbuf<CharT, Traits>*
   rdbuf() const noexcept {
     return const_cast<basic_spanbuf<CharT, Traits>*>(std::addressof(sb_));
   }
 
-  /**
-   * Returns the buffer.
-   *
-   * @return the part of the buffer written so far
-   */
+  /// Returns the buffer.
+  ///
+  /// @return the part of the buffer written so far
   [[nodiscard]] std::span<CharT> span() const noexcept { return rdbuf()->span(); }
 
-  /**
-   * Sets a new buffer, resetting the output position.
-   *
-   * @param s the buffer
-   */
+  /// Sets a new buffer, resetting the output position.
+  ///
+  /// @param s the buffer
   void span(std::span<CharT> s) noexcept { rdbuf()->span(s); }
 
 
@@ -499,15 +462,13 @@ swap(basic_ospanstream<CharT, Traits>& lhs, basic_ospanstream<CharT, Traits>& rh
 
 // `basic_spanstream` ---------------------------------------------------------------------------------------
 
-/**
- * A stream for reading from and writing to a fixed character buffer, equivalent to C++23’s
- * `std::basic_spanstream`.
- *
- * @tparam CharT the character type
- * @tparam Traits the character traits
- *
- * @NotThreadSafe
- */
+/// A stream for reading from and writing to a fixed character buffer, equivalent to C++23’s
+/// `std::basic_spanstream`.
+///
+/// @tparam CharT the character type
+/// @tparam Traits the character traits
+///
+/// @NotThreadSafe
 template<typename CharT, typename Traits = std::char_traits<CharT>>
 struct basic_spanstream : std::basic_iostream<CharT, Traits> {
   /// @type_base
@@ -524,12 +485,10 @@ struct basic_spanstream : std::basic_iostream<CharT, Traits> {
   /// @type_alias
   using traits_type = Traits;
 
-  /**
-   * @ctor
-   *
-   * @param s the buffer
-   * @param which the open mode
-   */
+  /// @ctor
+  ///
+  /// @param s the buffer
+  /// @param which the open mode
   explicit basic_spanstream(
     std::span<CharT> s,
     std::ios_base::openmode which = std::ios_base::out | std::ios_base::in) :
@@ -550,28 +509,22 @@ struct basic_spanstream : std::basic_iostream<CharT, Traits> {
   /// @member_op_asgmt_move
   basic_spanstream& operator=(basic_spanstream&& rhs) = default;
 
-  /**
-   * Returns the stream buffer.
-   *
-   * @return the stream buffer
-   */
+  /// Returns the stream buffer.
+  ///
+  /// @return the stream buffer
   [[nodiscard]] basic_spanbuf<CharT, Traits>*
   rdbuf() const noexcept {
     return const_cast<basic_spanbuf<CharT, Traits>*>(std::addressof(sb_));
   }
 
-  /**
-   * Returns the buffer.
-   *
-   * @return the part of the buffer written so far if opened for output, otherwise the whole buffer
-   */
+  /// Returns the buffer.
+  ///
+  /// @return the part of the buffer written so far if opened for output, otherwise the whole buffer
   [[nodiscard]] std::span<CharT> span() const noexcept { return rdbuf()->span(); }
 
-  /**
-   * Sets a new buffer, resetting the input and output positions.
-   *
-   * @param s the buffer
-   */
+  /// Sets a new buffer, resetting the input and output positions.
+  ///
+  /// @param s the buffer
   void span(std::span<CharT> s) noexcept { rdbuf()->span(s); }
 
 

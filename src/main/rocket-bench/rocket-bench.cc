@@ -1,6 +1,4 @@
-/*
- * rocket-bench.cc
- */
+// rocket-bench.cc
 
 #include "rocket-bench.h"
 

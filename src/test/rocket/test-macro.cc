@@ -1,6 +1,4 @@
-/*
- * test-macro.cc
- */
+// test-macro.cc
 
 #include "rocket-test/rocket-test.h"
 

@@ -1,6 +1,4 @@
-/*
- * cl.cc
- */
+// cl.cc
 
 #include "cl.h"
 
@@ -29,14 +27,12 @@ struct ArgFile {
 
 // Local functions ------------------------------------------------------------------------------------------
 
-/**
- * Adds @p arg to @p out, expanding it recursively if it names an argument file.
- *
- * @param out the expanded arguments
- * @param arg the argument
- * @param openFiles the argument files being expanded, from the outermost to the innermost. A file may be
- *   expanded any number of times, but not while it is being expanded already, which would be a cycle
- */
+/// Adds @p arg to @p out, expanding it recursively if it names an argument file.
+///
+/// @param out the expanded arguments
+/// @param arg the argument
+/// @param openFiles the argument files being expanded, from the outermost to the innermost. A file may be
+///   expanded any number of times, but not while it is being expanded already, which would be a cycle
 void
 addArg(vector<string>& out, const string& arg, vector<ArgFile>& openFiles) { // NOLINT(*-complexity,*-recursion)
   if (arg.starts_with("@")) {
@@ -544,9 +540,7 @@ CommandLine::printHelpOpts(nio::Sink& out, bool verbose, u64 width) const { // N
   }
 }
 
-/**
- * Parameters appear in the order they are declared.
- */
+/// Parameters appear in the order they are declared.
 void
 CommandLine::printHelpParams(nio::Sink& out, bool verbose, u64 width) const {
   // Loop through parameters

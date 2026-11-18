@@ -1,8 +1,6 @@
-/**
- * @file Interval.h
- *
- * Mathematical intervals: closed, open, left-open, and right-open.
- */
+/// @file Interval.h
+///
+/// Mathematical intervals: closed, open, left-open, and right-open.
 
 #pragma once
 
@@ -367,12 +365,10 @@ struct IntervalTraits<LeftClosed<T>, RightOpen<T>> {
 
 // `Interval` -----------------------------------------------------------------------------------------------
 
-/**
- * A mathematical interval for either integer or noninteger types.
- *
- * @tparam Left the type of the lower-bound traits
- * @tparam Right the type of the upper-bound traits
- */
+/// A mathematical interval for either integer or noninteger types.
+///
+/// @tparam Left the type of the lower-bound traits
+/// @tparam Right the type of the upper-bound traits
 template<typename Left, typename Right>
 struct Interval {
   static_assert(std::same_as<typename Left::Type, typename Right::Type>);
@@ -399,85 +395,69 @@ struct Interval {
   /// The type of the upper bound.
   using B = Right::BoundType;
 
-  /**
-   * The interval’s lower bound.
-   *
-   * If this is null, then the interval has no lower bound and no size and is nonempty.
-   */
+  /// The interval’s lower bound.
+  ///
+  /// If this is null, then the interval has no lower bound and no size and is nonempty.
   A a;
-  /**
-   * The interval’s upper bound.
-   *
-   * If this is null, then the interval has no upper bound and no size and is nonempty.
-   */
+  /// The interval’s upper bound.
+  ///
+  /// If this is null, then the interval has no upper bound and no size and is nonempty.
   B b;
 
-  /**
-   * @ctor_default
-   *
-   * Constructs an empty interval.
-   */
+  /// @ctor_default
+  ///
+  /// Constructs an empty interval.
   constexpr Interval() : a(static_cast<Type>(1)), b(static_cast<Type>(0)) {}
 
-  /**
-   * @ctor
-   *
-   * Constructs an interval.
-   *
-   * If @p b is less than @p a, then the interval is empty.
-   *
-   * @param a the lower bound. If null, then there is no lower bound
-   * @param b the upper bound. If null, then there is no upper bound
-   */
+  /// @ctor
+  ///
+  /// Constructs an interval.
+  ///
+  /// If @p b is less than @p a, then the interval is empty.
+  ///
+  /// @param a the lower bound. If null, then there is no lower bound
+  /// @param b the upper bound. If null, then there is no upper bound
   constexpr Interval(A a, B b) : a(a), b(b) {}
 
-  /**
-   * Returns the cardinality of the interval.
-   *
-   * If either #a or #b is null, then the cardinality is null, meaning "infinite". Otherwise, the
-   * cardinality is calculated as appropriate.
-   *
-   * Empty intervals have a cardinality of 0.
-   *
-   * A floating-point interval has a cardinality of 1 if, and only if, it is a closed interval and #a equals
-   * #b.
-   *
-   * @return the cardinality of the interval, or null if the cardinality is infinite
-   */
+  /// Returns the cardinality of the interval.
+  ///
+  /// If either #a or #b is null, then the cardinality is null, meaning "infinite". Otherwise, the
+  /// cardinality is calculated as appropriate.
+  ///
+  /// Empty intervals have a cardinality of 0.
+  ///
+  /// A floating-point interval has a cardinality of 1 if, and only if, it is a closed interval and #a equals
+  /// #b.
+  ///
+  /// @return the cardinality of the interval, or null if the cardinality is infinite
   [[nodiscard]] constexpr Traits::CardinalityType cardinality() const { return Traits::cardinality(a, b); }
 
-  /**
-   * Tests if @p val is contained in the interval.
-   *
-   * @param val a value of type #Type
-   * @return if @p val is contained in the interval
-   */
+  /// Tests if @p val is contained in the interval.
+  ///
+  /// @param val a value of type #Type
+  /// @return if @p val is contained in the interval
   [[nodiscard]] constexpr bool
   contains(Type val) const {
     return Left::matches(a, val) && Right::matches(b, val);
   }
 
-  /**
-   * Tests if the interval is empty.
-   *
-   * If either #a or #b is null, meaning "infinite", then the interval is nonempty.
-   *
-   * @return if the interval is empty
-   */
+  /// Tests if the interval is empty.
+  ///
+  /// If either #a or #b is null, meaning "infinite", then the interval is nonempty.
+  ///
+  /// @return if the interval is empty
   [[nodiscard]] constexpr bool empty() const { return Traits::empty(a, b); }
 
-  /**
-   * Returns the size of the interval.
-   *
-   * If either #a or #b are null, then the size of the interval is null, meaning "infinite". Otherwise, the
-   * size is calculated as @f$b -a@f$.
-   *
-   * @attention A size of 0 doesn’t necessarily mean an interval is empty. For instance, the closed interval
-   * @f$[2,2]@f$ has a size of 0, but a cardinality of 1, hence it is nonempty. To check if an interval is
-   * empty, use #empty instead.
-   *
-   * @return the size of the interval, or null if the interval size is infinite
-   */
+  /// Returns the size of the interval.
+  ///
+  /// If either #a or #b are null, then the size of the interval is null, meaning "infinite". Otherwise, the
+  /// size is calculated as @f$b -a@f$.
+  ///
+  /// @attention A size of 0 doesn’t necessarily mean an interval is empty. For instance, the closed interval
+  /// @f$[2,2]@f$ has a size of 0, but a cardinality of 1, hence it is nonempty. To check if an interval is
+  /// empty, use #empty instead.
+  ///
+  /// @return the size of the interval, or null if the interval size is infinite
   [[nodiscard]] constexpr Traits::SizeType size() const { return Traits::size(a, b); }
 };
 
@@ -491,16 +471,14 @@ operator==(const Interval<Left, Right>& lhs, const Interval<Left, Right>& rhs) {
   return lhs.a == rhs.a && lhs.b == rhs.b;
 }
 
-/**
- * Returns the intersection of the intervals @p lhs and @p rhs.
- *
- * @tparam Left the type of the lower-bound traits
- * @tparam Right the type of the upper-bound traits
- * @param_lhs
- * @param_rhs
- * @return an interval representing the intersection of @p lhs and @p rhs if such intersection exists,
- *   otherwise an empty interval
- */
+/// Returns the intersection of the intervals @p lhs and @p rhs.
+///
+/// @tparam Left the type of the lower-bound traits
+/// @tparam Right the type of the upper-bound traits
+/// @param_lhs
+/// @param_rhs
+/// @return an interval representing the intersection of @p lhs and @p rhs if such intersection exists,
+///   otherwise an empty interval
 template<typename Left, typename Right>
 Interval<Left, Right>
 operator&(const Interval<Left, Right>& lhs, const Interval<Left, Right>& rhs) {
@@ -509,33 +487,29 @@ operator&(const Interval<Left, Right>& lhs, const Interval<Left, Right>& rhs) {
   return Interval<Left, Right>(a, b);
 }
 
-/**
- * `operator&=` for type #rocket::math::Interval.
- *
- * @tparam Left the type of the lower-bound traits
- * @tparam Right the type of the upper-bound traits
- * @param_lhs
- * @param_rhs
- * @return @p lhs
- */
+/// `operator&=` for type #rocket::math::Interval.
+///
+/// @tparam Left the type of the lower-bound traits
+/// @tparam Right the type of the upper-bound traits
+/// @param_lhs
+/// @param_rhs
+/// @return @p lhs
 template<typename Left, typename Right>
 inline Interval<Left, Right>&
 operator&=(Interval<Left, Right>& lhs, const Interval<Left, Right>& rhs) {
   return lhs = lhs & rhs;
 }
 
-/**
- * Returns the union of the intervals @p lhs and @p rhs.
- *
- * If the intervals @p lhs and @p rhs are disjoint, a vector with two elements is returned. Otherwise, a
- * vector with one element is returned, which may be empty.
- *
- * @tparam Left the type of the lower-bound traits
- * @tparam Right the type of the upper-bound traits
- * @param_lhs
- * @param_rhs
- * @return a vector of intervals representing the union of @p lhs and @p rhs
- */
+/// Returns the union of the intervals @p lhs and @p rhs.
+///
+/// If the intervals @p lhs and @p rhs are disjoint, a vector with two elements is returned. Otherwise, a
+/// vector with one element is returned, which may be empty.
+///
+/// @tparam Left the type of the lower-bound traits
+/// @tparam Right the type of the upper-bound traits
+/// @param_lhs
+/// @param_rhs
+/// @return a vector of intervals representing the union of @p lhs and @p rhs
 template<typename Left, typename Right>
 std::vector<Interval<Left, Right>>
 operator|(const Interval<Left, Right>& lhs, const Interval<Left, Right>& rhs) {
@@ -598,35 +572,27 @@ operator|(const Interval<Left, Right>& lhs, const Interval<Left, Right>& rhs) {
 
 // `Interval` types -----------------------------------------------------------------------------------------
 
-/**
- * A closed interval @f$[a,b]@f$ contains all elements @f$x@f$ such that @f$a <= x <= b@f$.
- *
- * @tparam T the element type
- */
+/// A closed interval @f$[a,b]@f$ contains all elements @f$x@f$ such that @f$a <= x <= b@f$.
+///
+/// @tparam T the element type
 template<typename T>
 using ClosedInterval = Interval<internal::interval::LeftClosed<T>, internal::interval::RightClosed<T>>;
 
-/**
- * An open interval @f$(a,b)@f$ contains all elements @f$x@f$ such that @f$a < x < b@f$.
- *
- * @tparam T the element type
- */
+/// An open interval @f$(a,b)@f$ contains all elements @f$x@f$ such that @f$a < x < b@f$.
+///
+/// @tparam T the element type
 template<typename T>
 using OpenInterval = Interval<internal::interval::LeftOpen<T>, internal::interval::RightOpen<T>>;
 
-/**
- * A left-open interval @f$(a,b]@f$ contains all elements @f$x@f$ such that @f$a < x <= b@f$.
- *
- * @tparam T the element type
- */
+/// A left-open interval @f$(a,b]@f$ contains all elements @f$x@f$ such that @f$a < x <= b@f$.
+///
+/// @tparam T the element type
 template<typename T>
 using LeftOpenInterval = Interval<internal::interval::LeftOpen<T>, internal::interval::RightClosed<T>>;
 
-/**
- * A right-open interval @f$[a,b)@f$ contains all elements @f$x@f$ such that @f$a <= x < b@f$.
- *
- * @tparam T the element type
- */
+/// A right-open interval @f$[a,b)@f$ contains all elements @f$x@f$ such that @f$a <= x < b@f$.
+///
+/// @tparam T the element type
 template<typename T>
 using RightOpenInterval = Interval<internal::interval::LeftClosed<T>, internal::interval::RightOpen<T>>;
 
@@ -636,16 +602,14 @@ using RightOpenInterval = Interval<internal::interval::LeftClosed<T>, internal::
 template<typename Left, typename Right>
 using Intervals = std::vector<Interval<Left, Right>>;
 
-/**
- * Returns the intersection of the interval vector @p val.
- *
- * @tparam Left the type of the lower-bound traits
- * @tparam Right the type of the upper-bound traits
- * @param val the vector of intervals, which may contain an arbitrary number of arbitrary intervals, empty or
- *   nonempty
- * @return an interval representing the intersection of all elements of @p val if such intersection exists,
- *   otherwise an empty interval
- */
+/// Returns the intersection of the interval vector @p val.
+///
+/// @tparam Left the type of the lower-bound traits
+/// @tparam Right the type of the upper-bound traits
+/// @param val the vector of intervals, which may contain an arbitrary number of arbitrary intervals, empty
+///   or nonempty
+/// @return an interval representing the intersection of all elements of @p val if such intersection exists,
+///   otherwise an empty interval
 template<typename Left, typename Right>
 Interval<Left, Right>
 intersectionOf(const Intervals<Left, Right>& val) {
@@ -667,16 +631,14 @@ intersectionOf(const Intervals<Left, Right>& val) {
   return ret.value_or(Type());
 }
 
-/**
- * Returns the union of the interval vector @p val.
- *
- * @tparam Left the type of the lower-bound traits
- * @tparam Right the type of the upper-bound traits
- * @param val the vector of intervals, which may contain an arbitrary number of arbitrary intervals, empty or
- *   nonempty
- * @return a vector of intervals representing the union of all elements of @p val. The elements in the vector
- *   are sorted by the lower bound, adjacent intervals are collapsed into a single interval
- */
+/// Returns the union of the interval vector @p val.
+///
+/// @tparam Left the type of the lower-bound traits
+/// @tparam Right the type of the upper-bound traits
+/// @param val the vector of intervals, which may contain an arbitrary number of arbitrary intervals, empty
+///   or nonempty
+/// @return a vector of intervals representing the union of all elements of @p val. The elements in the
+///   vector are sorted by the lower bound, adjacent intervals are collapsed into a single interval
 template<typename Left, typename Right>
 Intervals<Left, Right>
 unionOf(const Intervals<Left, Right>& val) {
@@ -715,27 +677,19 @@ unionOf(const Intervals<Left, Right>& val) {
 
 // `Intervals` types ----------------------------------------------------------------------------------------
 
-/**
- * A vector of #rocket::math::ClosedInterval%s.
- */
+/// A vector of #rocket::math::ClosedInterval%s.
 template<typename T>
 using ClosedIntervals = Intervals<internal::interval::LeftClosed<T>, internal::interval::RightClosed<T>>;
 
-/**
- * A vector of #rocket::math::OpenInterval%s.
- */
+/// A vector of #rocket::math::OpenInterval%s.
 template<typename T>
 using OpenIntervals = Intervals<internal::interval::LeftOpen<T>, internal::interval::RightOpen<T>>;
 
-/**
- * A vector of #rocket::math::LeftOpenInterval%s.
- */
+/// A vector of #rocket::math::LeftOpenInterval%s.
 template<typename T>
 using LeftOpenIntervals = Intervals<internal::interval::LeftOpen<T>, internal::interval::RightClosed<T>>;
 
-/**
- * A vector of #rocket::math::RightOpenInterval%s.
- */
+/// A vector of #rocket::math::RightOpenInterval%s.
 template<typename T>
 using RightOpenIntervals = Intervals<internal::interval::LeftClosed<T>, internal::interval::RightOpen<T>>;
 

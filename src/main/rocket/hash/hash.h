@@ -1,8 +1,6 @@
-/**
- * @file hash.h
- *
- * Hashing utilities.
- */
+/// @file hash.h
+///
+/// Hashing utilities.
 
 #pragma once
 
@@ -14,12 +12,10 @@ namespace rocket::hash {
 
 // Functions ------------------------------------------------------------------------------------------------
 
-/**
- * Combines two hash values.
- *
- * @param seed the seed value, which is modified
- * @param hash the hash value to combine
- */
+/// Combines two hash values.
+///
+/// @param seed the seed value, which is modified
+/// @param hash the hash value to combine
 inline void
 combine(u64& seed, u64 hash) {
   std::size_t s = seed;

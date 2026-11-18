@@ -1,8 +1,6 @@
-/**
- * @file Result.h
- *
- * A general-purpose result.
- */
+/// @file Result.h
+///
+/// A general-purpose result.
 
 #pragma once
 
@@ -13,20 +11,16 @@ namespace rocket {
 
 // `Error` --------------------------------------------------------------------------------------------------
 
-/**
- * A general-purpose error, carrying a message.
- *
- * This may serve as a base class for more specific errors.
- */
+/// A general-purpose error, carrying a message.
+///
+/// This may serve as a base class for more specific errors.
 struct Error {
   /// The error message.
   std::string message;
 
-  /**
-   * @ctor
-   *
-   * @param message the error message
-   */
+  /// @ctor
+  ///
+  /// @param message the error message
   explicit Error(std::string_view message) : message(message) {}
 
   /// @dtor

@@ -1,11 +1,9 @@
-/**
- * @file literal.h
- *
- * Literal operators for all basic Rocket data types.
- *
- * The generalized integer implementation is based on Jim Apple’s wonderful work from `128-bit-literals` on
- * GitHub, see `README.md`.
- */
+/// @file literal.h
+///
+/// Literal operators for all basic Rocket data types.
+///
+/// The generalized integer implementation is based on Jim Apple’s wonderful work from `128-bit-literals` on
+/// GitHub, see `README.md`.
 
 #pragma once
 
@@ -42,20 +40,16 @@ charValue(char c) {
     ((c >= 'a' && c <= 'f') ? (10 + (c - 'a')) : (10 + (c - 'A'))); // NOLINT
 }
 
-/**
- * Checks whether c_n + ... + c_2 * BASE^(n-2) + c_1 * BASE^(n-1) + val * BASE^n is a valid number when
- * interpreted in base @p BASE.
- */
+/// Checks whether c_n + ... + c_2 * BASE^(n-2) + c_1 * BASE^(n-1) + val * BASE^n is a valid number when
+/// interpreted in base @p BASE.
 template<typename T, int BASE>
 constexpr bool
 validateUnsignedImpl([[maybe_unused]] T val) {
   return true;
 }
 
-/**
- * Checks whether c_n + ... + c_2 * BASE^(n-2) + c_1 * BASE^(n-1) + val * BASE^n is a valid number when
- * interpreted in base @p BASE.
- */
+/// Checks whether c_n + ... + c_2 * BASE^(n-2) + c_1 * BASE^(n-1) + val * BASE^n is a valid number when
+/// interpreted in base @p BASE.
 template<typename T, int BASE, char C, char... Chars>
 constexpr bool
 validateUnsignedImpl(T acc) {
@@ -66,10 +60,8 @@ validateUnsignedImpl(T acc) {
       validateUnsignedImpl<T, BASE, Chars...>(acc * BASE + charValue<T>(C));
 }
 
-/**
- * Checks whether c_n + ... + c_2 * BASE^(n-2) + c_1 * BASE^(n-1) is a valid unsigned number when interpreted
- * in base @p BASE.
- */
+/// Checks whether c_n + ... + c_2 * BASE^(n-2) + c_1 * BASE^(n-1) is a valid unsigned number when
+/// interpreted in base @p BASE.
 template<typename T, int BASE, char... Chars>
 constexpr bool validateUnsigned() {
   static_assert(not std::numeric_limits<T>::is_signed);
@@ -212,11 +204,9 @@ struct UnsignedInteger<T, '0', Chars...> {
 
 } // namespace internal::literal
 
-/**
- * 8-bit signed integer literal.
- *
- * @return the parsed value
- */
+/// 8-bit signed integer literal.
+///
+/// @return the parsed value
 template<char... Chars>
 constexpr i8
 operator""_i8() {
@@ -225,11 +215,9 @@ operator""_i8() {
   return type::payload;
 }
 
-/**
- * 8-bit unsigned integer literal.
- *
- * @return the parsed value
- */
+/// 8-bit unsigned integer literal.
+///
+/// @return the parsed value
 template<char... Chars>
 constexpr u8
 operator""_u8() {
@@ -238,11 +226,9 @@ operator""_u8() {
   return type::payload;
 }
 
-/**
- * 16-bit signed integer literal.
- *
- * @return the parsed value
- */
+/// 16-bit signed integer literal.
+///
+/// @return the parsed value
 template<char... Chars>
 constexpr i16
 operator""_i16() {
@@ -251,11 +237,9 @@ operator""_i16() {
   return type::payload;
 }
 
-/**
- * 16-bit unsigned integer literal.
- *
- * @return the parsed value
- */
+/// 16-bit unsigned integer literal.
+///
+/// @return the parsed value
 template<char... Chars>
 constexpr u16
 operator""_u16() {
@@ -264,11 +248,9 @@ operator""_u16() {
   return type::payload;
 }
 
-/**
- * 32-bit signed integer literal.
- *
- * @return the parsed value
- */
+/// 32-bit signed integer literal.
+///
+/// @return the parsed value
 template<char... Chars>
 constexpr i32
 operator""_i32() {
@@ -277,11 +259,9 @@ operator""_i32() {
   return type::payload;
 }
 
-/**
- * 32-bit unsigned integer literal.
- *
- * @return the parsed value
- */
+/// 32-bit unsigned integer literal.
+///
+/// @return the parsed value
 template<char... Chars>
 constexpr u32
 operator""_u32() {
@@ -290,11 +270,9 @@ operator""_u32() {
   return type::payload;
 }
 
-/**
- * 64-bit signed integer literal.
- *
- * @return the parsed value
- */
+/// 64-bit signed integer literal.
+///
+/// @return the parsed value
 template<char... Chars>
 constexpr i64
 operator""_i64() {
@@ -303,11 +281,9 @@ operator""_i64() {
   return type::payload;
 }
 
-/**
- * 64-bit unsigned integer literal.
- *
- * @return the parsed value
- */
+/// 64-bit unsigned integer literal.
+///
+/// @return the parsed value
 template<char... Chars>
 constexpr u64
 operator""_u64() {
@@ -316,11 +292,9 @@ operator""_u64() {
   return type::payload;
 }
 
-/**
- * 128-bit signed integer literal.
- *
- * @return the parsed value
- */
+/// 128-bit signed integer literal.
+///
+/// @return the parsed value
 template<char... Chars>
 constexpr i128
 operator""_i128() {
@@ -329,11 +303,9 @@ operator""_i128() {
   return type::payload;
 }
 
-/**
- * 128-bit unsigned integer literal.
- *
- * @return the parsed value
- */
+/// 128-bit unsigned integer literal.
+///
+/// @return the parsed value
 template<char... Chars>
 constexpr u128
 operator""_u128() {
@@ -342,50 +314,40 @@ operator""_u128() {
   return type::payload;
 }
 
-/**
- * 32-bit floating point literal.
- *
- * @param val the value
- * @return a value of the desired type
- */
+/// 32-bit floating point literal.
+///
+/// @param val the value
+/// @return a value of the desired type
 f32 operator""_f32(std_unsigned_long_long val);
 
- /**
- * 32-bit floating point literal.
- *
- * @param val the value
- * @return a value of the desired type
- * @throw #rocket::Underflow if a nonzero value is too small to be represented, even as a subnormal value
- * @throw #rocket::Overflow on type overflow
- */
+/// 32-bit floating point literal.
+///
+/// @param val the value
+/// @return a value of the desired type
+/// @throw #rocket::Underflow if a nonzero value is too small to be represented, even as a subnormal value
+/// @throw #rocket::Overflow on type overflow
 f32 operator""_f32(std_long_double val);
 
-/**
- * 64-bit floating point literal.
- *
- * @param val the value
- * @return a value of the desired type
- */
+/// 64-bit floating point literal.
+///
+/// @param val the value
+/// @return a value of the desired type
 f64 operator""_f64(std_unsigned_long_long val);
 
-/**
- * 64-bit floating point literal.
- *
- * @param val the value
- * @return a value of the desired type
- * @throw #rocket::Underflow if a nonzero value is too small to be represented, even as a subnormal value
- * @throw #rocket::Overflow on type overflow
- */
+/// 64-bit floating point literal.
+///
+/// @param val the value
+/// @return a value of the desired type
+/// @throw #rocket::Underflow if a nonzero value is too small to be represented, even as a subnormal value
+/// @throw #rocket::Overflow on type overflow
 f64 operator""_f64(std_long_double val);
 
 // `LiteralString` ------------------------------------------------------------------------------------------
 
-/**
- * A literal string for both `char` and `char32`.
- *
- * @tparam C the character type
- * @tparam Chars the characters
- */
+/// A literal string for both `char` and `char32`.
+///
+/// @tparam C the character type
+/// @tparam Chars the characters
 template<typename C, C... Chars> requires IsChar<C>
 struct LiteralString {
   /// The value, as an array of characters.
@@ -396,11 +358,9 @@ struct LiteralString {
     return { value.data(), value.size() };
   }
 
-  /**
-   * Returns the size of the string.
-   *
-   * @return the size of the string
-   */
+  /// Returns the size of the string.
+  ///
+  /// @return the size of the string
   [[nodiscard]] consteval u64 size() const { return value.size(); }
 };
 

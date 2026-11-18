@@ -1,8 +1,6 @@
-/*
- * test-Cxx.cc
- *
- * Tests related to the C++ language itself.
- */
+// test-Cxx.cc
+//
+// Tests related to the C++ language itself.
 
 #include "rocket-test/rocket-test.h"
 

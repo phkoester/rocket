@@ -1,6 +1,4 @@
-/*
- * archive.cc
- */
+// archive.cc
 
 #include "rocket/SystemError.h"
 #include "rocket/archive/archive.h"
@@ -46,13 +44,11 @@ using ArchiveEntryPtr = unique_ptr<archive_entry, ArchiveEntryDeleter>;
 
 // Local functions ------------------------------------------------------------------------------------------
 
-/**
- * Throws #rocket::SystemError for the last error of @p a.
- *
- * As far as possible, libarchive reports `errno` values. For an error without one, it reports the negative
- * `ARCHIVE_ERRNO_MISC`. The error code is @p fallback then, and libarchive’s error string is added to the
- * message.
- */
+/// Throws #rocket::SystemError for the last error of @p a.
+///
+/// As far as possible, libarchive reports `errno` values. For an error without one, it reports the negative
+/// `ARCHIVE_ERRNO_MISC`. The error code is @p fallback then, and libarchive’s error string is added to the
+/// message.
 [[noreturn]] void
 throwError(struct archive* a, errc fallback, string_view what, const fs::path& path) {
   const i32 err = archive_errno(a);

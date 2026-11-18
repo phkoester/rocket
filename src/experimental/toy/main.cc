@@ -1,8 +1,6 @@
-/*
- * main.cc
- *
- * The `toy` executable links to Rocket and is a playground for quick and dirty experiments.
- */
+// main.cc
+//
+// The toy executable links to Rocket and is a playground for quick and dirty experiments.
 
 #include "rocket/Process.h"
 #include "rocket/bimap-format.h"

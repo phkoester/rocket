@@ -1,12 +1,10 @@
-/**
- * @file rocket-test.h
- *
- * This header must always be the first included file in a test.
- *
- * Parameters:
- *
- * - `ROCKET_TEST_NO_USING_NAMESPACE`: If defined, the `using namespace` directives are not included.
- */
+/// @file rocket-test.h
+///
+/// This header must always be the first included file in a test.
+///
+/// Parameters:
+///
+/// - `ROCKET_TEST_NO_USING_NAMESPACE`: If defined, the `using namespace` directives are not included.
 
 #pragma once
 
@@ -54,35 +52,29 @@ using namespace ::testing;
   #define ABORTED() ::testing::KilledBySignal(SIGABRT)
 #endif // ROCKET_OS_WINDOWS
 
-/**
- * Checks the state of a #std::istream.
- *
- * @param is the input stream
- * @param _fail the expected value of `is.fail()`
- * @param _eof the expected value of `is.eof()`
- * @param _tell the expected value of `rocket::io::stream::tell(is)`
- */
+/// Checks the state of a #std::istream.
+///
+/// @param is the input stream
+/// @param _fail the expected value of `is.fail()`
+/// @param _eof the expected value of `is.eof()`
+/// @param _tell the expected value of `rocket::io::stream::tell(is)`
 #define EXPECT_ISTREAM(is, _fail, _eof, _tell) \
   EXPECT_EQ(is.fail(), _fail); \
   EXPECT_EQ(is.eof(), _eof); \
   EXPECT_EQ(::rocket::io::stream::tell(is), _tell)
 
-/**
- * Checks if an environment variable is set to `true`. If it is not, the test is skipped.
- *
- * @param name the name of the environment variable
- */
+/// Checks if an environment variable is set to `true`. If it is not, the test is skipped.
+///
+/// @param name the name of the environment variable
 #define REQUIRE_ENV(name) { \
   if (not ::rocket::system::env::get<bool>(name).value_or(false)) { \
     GTEST_SKIP_("Skipping test because `" name "` is not set to `true`\n"); \
   } \
 }
 
-/**
- * Checks if an environment variable is set to `true`. If it is not, the current function is exited.
- *
- * @param name the name of the environment variable
- */
+/// Checks if an environment variable is set to `true`. If it is not, the current function is exited.
+///
+/// @param name the name of the environment variable
 #define INQUIRE_ENV(name) { \
   if (not ::rocket::system::env::get<bool>(name).value_or(false)) { \
     static bool info = false; \
@@ -98,40 +90,32 @@ namespace rocket::test {
 
 // Functions ------------------------------------------------------------------------------------------------
 
-/**
- * Returns the path to a project-specific `bin` executable.
- *
- * @param name the name of the executable (without the extension)
- * @return the path to the executable
- * @throw #rocket::InvalidState if the executable is not found
- */
+/// Returns the path to a project-specific `bin` executable.
+///
+/// @param name the name of the executable (without the extension)
+/// @return the path to the executable
+/// @throw #rocket::InvalidState if the executable is not found
 std::filesystem::path binExecutable(std::string_view name);
 
-/**
- * Returns the path to a project-specific test executable.
- *
- * @param name the name of the executable (without the extension)
- * @return the path to the executable
- * @throw #rocket::InvalidState if the executable is not found
- */
+/// Returns the path to a project-specific test executable.
+///
+/// @param name the name of the executable (without the extension)
+/// @return the path to the executable
+/// @throw #rocket::InvalidState if the executable is not found
 std::filesystem::path testExecutable(std::string_view name);
 
-/**
- * Returns the path to a project-specific test source.
- *
- * @param name the name of the source
- * @return the path to the source
- * @throw #rocket::InvalidState if the source is not found
- */
+/// Returns the path to a project-specific test source.
+///
+/// @param name the name of the source
+/// @return the path to the source
+/// @throw #rocket::InvalidState if the source is not found
 std::filesystem::path testSource(std::string_view name);
 
-/**
- * Returns whether terminal functionality is tested, that is, whether tests are run that require standard
- * devices to be connected to a terminal. This is controlled by the `ROCKET_TEST_TERMINAL` environment
- * variable.
- *
- * @return the value of `ROCKET_TEST_TERMINAL`, or `false` if it is not set
- */
+/// Returns whether terminal functionality is tested, that is, whether tests are run that require standard
+/// devices to be connected to a terminal. This is controlled by the `ROCKET_TEST_TERMINAL` environment
+/// variable.
+///
+/// @return the value of `ROCKET_TEST_TERMINAL`, or `false` if it is not set
 bool testTerminal();
 
 } // namespace rocket::test

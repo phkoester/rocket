@@ -1,8 +1,6 @@
-/**
- * @file int128.h
- *
- * Provides 128-bit integer types.
- */
+/// @file int128.h
+///
+/// Provides 128-bit integer types.
 
 #pragma once
 

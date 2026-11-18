@@ -1,6 +1,4 @@
-/*
- * test-terminal.cc
- */
+// test-terminal.cc
 
 #include "rocket-test/rocket-test.h"
 
@@ -13,9 +11,7 @@ using namespace rocket::system::terminal;
 
 // Tests ====================================================================================================
 
-/**
- * This test requires `ROCKET_TEST_TERMINAL=1`.
- */
+/// This test requires `ROCKET_TEST_TERMINAL=1`.
 TEST(MODULE, position) {
   REQUIRE_ENV("ROCKET_TEST_TERMINAL");
 
@@ -36,9 +32,7 @@ TEST(MODULE, position) {
   EXPECT_EQ(position(out), make_pair(4UL, 7UL));
 }
 
-/**
- * This test requires `ROCKET_TEST_TERMINAL=1`.
- */
+/// This test requires `ROCKET_TEST_TERMINAL=1`.
 TEST(MODULE, size) { // NOLINT(*-complexity)
   REQUIRE_ENV("ROCKET_TEST_TERMINAL");
 

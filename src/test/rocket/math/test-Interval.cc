@@ -1,6 +1,4 @@
-/*
- * test-Interval.cc
- */
+// test-Interval.cc
 
 #include "rocket-test/rocket-test.h"
 

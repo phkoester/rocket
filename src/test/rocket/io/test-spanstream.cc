@@ -1,6 +1,4 @@
-/*
- * test-spanstream.cc
- */
+// test-spanstream.cc
 
 #include "rocket-test/rocket-test.h"
 

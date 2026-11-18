@@ -1,6 +1,4 @@
-/*
- * nio-utils.cc
- */
+// nio-utils.cc
 
 #include "rocket/InputFailure.h"
 #include "rocket/SystemError.h"
@@ -34,12 +32,10 @@ void rewindTo(Source& in, optional<u64> pos, u64 offset = 0);
 
 bool isWordCodePoint(unicode::CodePoint cp);
 
-/**
- * Returns whether @p lhs and @p rhs are equal, ignoring the case of ASCII letters.
- *
- * Only `A` to `Z` are folded, so the result does not depend on the C locale, and the bytes of a UTF-8 sequence
- * are never folded, which `tolower` might do in a single-byte locale such as ISO 8859-1.
- */
+/// Returns whether @p lhs and @p rhs are equal, ignoring the case of ASCII letters.
+///
+/// Only `A` to `Z` are folded, so the result does not depend on the C locale, and the bytes of a UTF-8
+/// sequence are never folded, which `tolower` might do in a single-byte locale such as ISO 8859-1.
 constexpr bool
 equalsIgnoreAsciiCase(char lhs, char rhs) {
   const auto fold = [](char c) { return c >= 'A' && c <= 'Z' ? static_cast<char>(c - 'A' + 'a') : c; };
@@ -77,14 +73,12 @@ isEndOfWord(string_view str, u64 pos) {
   }
 }
 
-/**
- * Returns whether the source is at a word boundary. The source is not advanced.
- *
- * An ASCII character decides this by itself, so peeking suffices. Before any other character, the whole code
- * point must be read and gone back over.
- *
- * @throw InvalidState if the next character is not ASCII and @p in cannot go back
- */
+/// Returns whether the source is at a word boundary. The source is not advanced.
+///
+/// An ASCII character decides this by itself, so peeking suffices. Before any other character, the whole
+/// code point must be read and gone back over.
+///
+/// @throw InvalidState if the next character is not ASCII and @p in cannot go back
 bool
 isEndOfWord(Source& in) {
   const auto c = peekChar(in);
@@ -106,10 +100,8 @@ isEndOfWord(Source& in) {
   return not result || not isWordCodePoint(*result);
 }
 
-/**
- * Checks if the character at position @p pos in @p str is escaped, that is, if it is preceded by an odd
- * number of backslashes.
- */
+/// Checks if the character at position @p pos in @p str is escaped, that is, if it is preceded by an odd
+/// number of backslashes.
 bool
 isEscaped(string_view str, u64 pos) {
   u64 count = 0;
@@ -125,13 +117,11 @@ isWordCodePoint(unicode::CodePoint cp) {
   return cp.isAlnum() || cp == '_' || cp == '$';
 }
 
-/**
- * Returns the next character of @p in without consuming it, like #rocket::nio::Source#peek, but tells an I/O
- * error from the end of the input.
- *
- * @return the next character, or an empty optional at the end of the input
- * @throw #rocket::SystemError if @p in is bad
- */
+/// Returns the next character of @p in without consuming it, like #rocket::nio::Source#peek, but tells an
+/// I/O error from the end of the input.
+///
+/// @return the next character, or an empty optional at the end of the input
+/// @throw #rocket::SystemError if @p in is bad
 optional<char>
 peekChar(Source& in) {
   const auto ret = in.peek();
@@ -141,12 +131,10 @@ peekChar(Source& in) {
   return ret;
 }
 
-/**
- * Reads a single character from @p in into @p c, but tells an I/O error from the end of the input.
- *
- * @return if a character was read, i.e., `false` at the end of the input
- * @throw #rocket::SystemError if @p in is bad
- */
+/// Reads a single character from @p in into @p c, but tells an I/O error from the end of the input.
+///
+/// @return if a character was read, i.e., `false` at the end of the input
+/// @throw #rocket::SystemError if @p in is bad
 bool
 readOne(Source& in, char& c) {
   if (in.read(c) == 1) {
@@ -158,10 +146,8 @@ readOne(Source& in, char& c) {
   return false;
 }
 
-/**
- * Reads a code point like #rocket::nio::readCodePoint, but returns an empty optional for invalid UTF-8
- * instead of throwing. The source is not advanced in that case.
- */
+/// Reads a code point like #rocket::nio::readCodePoint, but returns an empty optional for invalid UTF-8
+/// instead of throwing. The source is not advanced in that case.
 optional<unicode::CodePoint>
 readValidCodePoint(Source& in) {
   try {
@@ -171,12 +157,10 @@ readValidCodePoint(Source& in) {
   }
 }
 
-/**
- * Seeks @p in to the absolute position @p pos plus @p offset, where @p pos was obtained from `in.tell()`.
- *
- * @throw InvalidState if @p pos is empty, i.e., @p in cannot report its position and therefore cannot go back,
- *   or if seeking fails, which would leave @p in at an unknown position
- */
+/// Seeks @p in to the absolute position @p pos plus @p offset, where @p pos was obtained from `in.tell()`.
+///
+/// @throw InvalidState if @p pos is empty, i.e., @p in cannot report its position and therefore cannot go
+///   back, or if seeking fails, which would leave @p in at an unknown position
 void
 rewindTo(Source& in, optional<u64> pos, u64 offset) {
   if (not pos) {
@@ -187,9 +171,7 @@ rewindTo(Source& in, optional<u64> pos, u64 offset) {
   }
 }
 
-/**
- * Returns whether @p s starts with @p prefix, optionally ignoring the case of ASCII letters.
- */
+/// Returns whether @p s starts with @p prefix, optionally ignoring the case of ASCII letters.
 bool
 startsWith(string_view s, string_view prefix, bool ignoreCase) {
   if (not ignoreCase) {

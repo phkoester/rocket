@@ -1,8 +1,6 @@
-/**
- * @file unicode-format.h
- *
- * Formatting support for the Unicode API.
- */
+/// @file unicode-format.h
+///
+/// Formatting support for the Unicode API.
 
 #pragma once
 
@@ -15,15 +13,13 @@
 
 // `fmt::formatter<rocket::unicode::CodePoint>` -------------------------------------------------------------
 
-/**
- * @spec_fmt_formatter{#rocket::unicode::CodePoint}
- *
- * The code point is formatted as `U+` followed by at least four uppercase hexadecimal digits, for example
- * `U+00E4`.
- *
- * This formatter uses the same format specifiers as the underlying string formatter; they apply to the whole
- * string including the `U+`.
- */
+/// @spec_fmt_formatter{#rocket::unicode::CodePoint}
+///
+/// The code point is formatted as `U+` followed by at least four uppercase hexadecimal digits, for example
+/// `U+00E4`.
+///
+/// This formatter uses the same format specifiers as the underlying string formatter; they apply to the
+/// whole string including the `U+`.
 template<typename C> requires rocket::IsChar<C>
 struct fmt::formatter<rocket::unicode::CodePoint, C> : rocket::format::internal::StringFormatter<C> {
   /// @cond undocumented

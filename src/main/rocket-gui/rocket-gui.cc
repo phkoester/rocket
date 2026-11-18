@@ -1,6 +1,4 @@
-/*
- * rocket-gui.cc
- */
+// rocket-gui.cc
 
 #include "rocket-gui.h"
 
