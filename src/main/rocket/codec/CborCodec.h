@@ -303,7 +303,7 @@ struct CborConsumerImpl<DataType::Float, F> {
     } else if constexpr (sizeof(F) == 8) {
       return CborItem<F>(cbor_build_float8(static_cast<f64>(val)));
     } else {
-      ROCKET_TERMINATE("cannot consume float of type {}", TypeId::of<F>());
+      static_assert(false, "floating-point type must be 32 or 64 bits");
     }
   }
 };
@@ -743,7 +743,7 @@ struct CborProducerImpl<DataType::Float, F> {
         return;
       }
     } else {
-      ROCKET_TERMINATE("cannot produce floating-point value of type {}", TypeId::of<F>());
+      static_assert(false, "floating-point type must be 32 or 64 bits");
     }
 
     throw InputFailure(state.index, "expected a floating-point value");

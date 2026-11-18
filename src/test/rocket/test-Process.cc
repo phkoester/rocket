@@ -9,7 +9,10 @@
 #include "rocket/nio/nio.h"
 #include "rocket/system/system.h"
 
+#include <boost/preprocessor/cat.hpp>
+
 #define MODULE rocketProcess
+#define MODULE_DEATH_TEST BOOST_PP_CAT(MODULE, DeathTest)
 
 // Tests ====================================================================================================
 
@@ -19,13 +22,13 @@ TEST(MODULE, error0) {
   EXPECT_EQ(buf.str(), "test-rocket-Process: error: test error\n");
 }
 
-TEST(rocketProcessDeathTest, error2) {
+TEST(MODULE_DEATH_TEST, error2) { // NOLINT(*-underscore-*)
   EXPECT_EXIT(
     { process().error(nio::err, 2, "test error"); },
     ExitedWithCode(2), "test-rocket-Process: fatal error: test error\n");
 }
 
-TEST(rocketProcessDeathTest, exit) {
+TEST(MODULE_DEATH_TEST, exit) { // NOLINT(*-underscore-*)
   EXPECT_EXIT(
     { process().error(nio::err, 7, "exiting ..."); },
     ExitedWithCode(7), "test-rocket-Process: fatal error: exiting ...\n");

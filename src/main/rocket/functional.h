@@ -9,6 +9,9 @@
 #include "rocket/rocket.h"
 
 #include <boost/functional/hash.hpp>
+#ifndef ROCKET_HAS_INT128
+  #include <boost/int128/hash.hpp>
+#endif
 
 #include <functional>
 

@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <rocket/functional.h>
 #include <rocket/hash/hash.h>
 
 #include <wx/wxprec.h>

@@ -5,7 +5,6 @@
 #include "rocket-test/rocket-test.h"
 
 #include "rocket/functional.h"
-#include "rocket/hash/hash.h"
 
 using namespace rocket;
 
@@ -23,7 +22,7 @@ TEST(MODULE, BoostHash128) {
 
 TEST(MODULE, StdHash128) {
   EXPECT_EQ(StdHash()(1_i128), StdHash()(1_i128));
-  EXPECT_NE(StdHash()(1_i128), StdHash()(2_i128));
+  EXPECT_NE(StdHash()(1_u128), StdHash()(2_u128));
 }
 
 // EOF
