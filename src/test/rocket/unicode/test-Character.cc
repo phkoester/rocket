@@ -19,7 +19,7 @@ namespace {
 template<typename C> requires IsChar<C>
 void
 testCharacter(const CharacterView<C>& c) {
-  INQUIRE_ENV(ROCKET_TEST_TERMINAL);
+  INQUIRE_ENV("ROCKET_TEST_TERMINAL");
 
   auto& out = nio::out;
   out.print("[{}]", ConvertTo<char>::apply(static_cast<basic_string_view<C>>(c)));

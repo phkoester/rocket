@@ -23,7 +23,6 @@
 #include <span>
 #include <string>
 #include <string_view>
-#include <typeinfo>
 #include <utility>
 
 namespace rocket::internal::scan::reflect {

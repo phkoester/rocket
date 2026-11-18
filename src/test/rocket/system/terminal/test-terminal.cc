@@ -17,7 +17,7 @@ using namespace rocket::system::terminal;
  * This test requires `ROCKET_TEST_TERMINAL=1`.
  */
 TEST(MODULE, position) {
-  REQUIRE_ENV(ROCKET_TEST_TERMINAL);
+  REQUIRE_ENV("ROCKET_TEST_TERMINAL");
 
   const Ansi ansi(true);
 
@@ -40,7 +40,7 @@ TEST(MODULE, position) {
  * This test requires `ROCKET_TEST_TERMINAL=1`.
  */
 TEST(MODULE, size) { // NOLINT(*-complexity)
-  REQUIRE_ENV(ROCKET_TEST_TERMINAL);
+  REQUIRE_ENV("ROCKET_TEST_TERMINAL");
 
   auto size = system::terminal::size(nio::out);
   EXPECT_EQ(static_cast<bool>(size), true);

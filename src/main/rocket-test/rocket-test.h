@@ -46,13 +46,6 @@ using namespace ::testing;
 
 // Macros ---------------------------------------------------------------------------------------------------
 
-// `ROCKET_TEST_...` ........................................................................................
-
-/// An environment variable indicating whether terminal functionality is tested.
-#define ROCKET_TEST_TERMINAL "ROCKET_TEST_TERMINAL"
-
-// Others ...................................................................................................
-
 #ifdef ROCKET_OS_WINDOWS
   /// To be used with `ASSERT_EXIT` or `EXPECT_EXIT`.
   #define ABORTED() ::testing::ExitedWithCode(3)
@@ -103,23 +96,10 @@ using namespace ::testing;
 
 namespace rocket::test {
 
-// Constants ------------------------------------------------------------------------------------------------
-
-/// Value of the environment variable.
-extern const std::optional<std::string> BINARY_DIR;
-/// Value of the environment variable.
-extern const std::optional<std::string> CONFIG;
-/// Value of the environment variable.
-extern const std::optional<std::string> CONFIGS;
-/// Value of the environment variable.
-extern const std::optional<std::string> SOURCE_DIR;
-/// Value of the environment variable.
-extern const bool TEST_TERMINAL;
-
 // Functions ------------------------------------------------------------------------------------------------
 
 /**
- * Returns the path to a project-specific executable. Its sources reside in the `src/bin` directory.
+ * Returns the path to a project-specific `bin` executable.
  *
  * @param name the name of the executable (without the extension)
  * @return the path to the executable
@@ -128,7 +108,7 @@ extern const bool TEST_TERMINAL;
 std::filesystem::path binExecutable(std::string_view name);
 
 /**
- * Returns the path to a project-specific test executable. Its sources reside in the `src/test` directory.
+ * Returns the path to a project-specific test executable.
  *
  * @param name the name of the executable (without the extension)
  * @return the path to the executable
@@ -137,13 +117,22 @@ std::filesystem::path binExecutable(std::string_view name);
 std::filesystem::path testExecutable(std::string_view name);
 
 /**
- * Returns the path to a project-specific test source. It resides in the `src/test` directory.
+ * Returns the path to a project-specific test source.
  *
  * @param name the name of the source
  * @return the path to the source
  * @throw #rocket::InvalidState if the source is not found
  */
 std::filesystem::path testSource(std::string_view name);
+
+/**
+ * Returns whether terminal functionality is tested, that is, whether tests are run that require standard
+ * devices to be connected to a terminal. This is controlled by the `ROCKET_TEST_TERMINAL` environment
+ * variable.
+ *
+ * @return the value of `ROCKET_TEST_TERMINAL`, or `false` if it is not set
+ */
+bool testTerminal();
 
 } // namespace rocket::test
 

@@ -229,7 +229,7 @@ TEST(MODULE, printLocations) { // NOLINT(*-complexity)
       "oops3",
       "Watch out!");
     nio::StringSink out;
-    if (TEST_TERMINAL) {
+    if (testTerminal()) {
       printLocations(nio::out, nullopt, result, { .styled=true });
     }
     printLocations(out, nullopt, result, {});
@@ -257,7 +257,7 @@ TEST(MODULE, printLocations) { // NOLINT(*-complexity)
     const string line = input.substr(loc.lineRange.a, *loc.lineRange.b - loc.lineRange.a);
     EXPECT_EQ(line, input);
     nio::StringSink out;
-    if (TEST_TERMINAL) {
+    if (testTerminal()) {
       printLocations(nio::out, input, result, { .styled=true });
     }
     printLocations(out, input, result, {});
@@ -277,7 +277,7 @@ TEST(MODULE, printLocations) { // NOLINT(*-complexity)
     // Test a range that spans the entire line
     EXPECT_LOCATION(loc, note, 16, ({ { 0, 16 } }), 1, 12, ({ 0, 16 }), nullopt, "oops", nullopt);
     nio::StringSink out;
-    if (TEST_TERMINAL) {
+    if (testTerminal()) {
       printLocations(nio::out, input, result, { .styled=true });
     }
     printLocations(out, input, result, {});

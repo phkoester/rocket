@@ -4,6 +4,8 @@
 
 #include "time_zone.h"
 
+#include "rocket/macro.h"
+
 #include <algorithm>
 #include <cstdint>
 #include <cstdlib>
