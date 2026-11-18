@@ -79,8 +79,9 @@ concept NotSameAs = not std::same_as<T, U>;
 /// @NotThreadSafe
 template<typename EF>
 struct [[nodiscard]] scope_exit {
-  /// Constructs from an lvalue, or from an rvalue that cannot be moved without throwing. If copying the
-  /// function throws, @p fn is called before the exception propagates.
+  /// Constructs from an lvalue, or from an rvalue that cannot be moved without throwing.
+  ///
+  /// If copying the function throws, @p fn is called before the exception propagates.
   ///
   /// @param fn the exit function
   template<typename EFP> requires
@@ -111,8 +112,9 @@ struct [[nodiscard]] scope_exit {
     rhs.release();
   }
 
-  /// Constructs by copying the exit function of @p rhs, as it cannot be moved without throwing. @p rhs is
-  /// then released.
+  /// Constructs by copying the exit function of @p rhs, as it cannot be moved without throwing.
+  ///
+  /// @p rhs is then released.
   ///
   /// @param rhs the guard to move from
   scope_exit(scope_exit&& rhs) noexcept(std::is_nothrow_copy_constructible_v<EF>)
@@ -157,8 +159,9 @@ scope_exit(EF) -> scope_exit<EF>;
 /// @NotThreadSafe
 template<typename EF>
 struct [[nodiscard]] scope_fail {
-  /// Constructs from an lvalue, or from an rvalue that cannot be moved without throwing. If copying the
-  /// function throws, @p fn is called before the exception propagates.
+  /// Constructs from an lvalue, or from an rvalue that cannot be moved without throwing.
+  ///
+  /// If copying the function throws, @p fn is called before the exception propagates.
   ///
   /// @param fn the exit function
   template<typename EFP>
@@ -190,8 +193,9 @@ struct [[nodiscard]] scope_fail {
     rhs.release();
   }
 
-  /// Constructs by copying the exit function of @p rhs, as it cannot be moved without throwing. @p rhs is
-  /// then released.
+  /// Constructs by copying the exit function of @p rhs, as it cannot be moved without throwing.
+  ///
+  /// @p rhs is then released.
   ///
   /// @param rhs the guard to move from
   scope_fail(scope_fail&& rhs) noexcept(std::is_nothrow_copy_constructible_v<EF>) requires
@@ -239,8 +243,9 @@ scope_fail(EF) -> scope_fail<EF>;
 /// @NotThreadSafe
 template<typename EF>
 struct [[nodiscard]] scope_success {
-  /// Constructs from an lvalue, or from an rvalue that cannot be moved without throwing. Unlike the other
-  /// guards, @p fn is not called if copying it throws.
+  /// Constructs from an lvalue, or from an rvalue that cannot be moved without throwing.
+  ///
+  /// Unlike the other guards, @p fn is not called if copying it throws.
   ///
   /// @param fn the exit function
   template<typename EFP> requires
@@ -268,8 +273,9 @@ struct [[nodiscard]] scope_success {
     rhs.release();
   }
 
-  /// Constructs by copying the exit function of @p rhs, as it cannot be moved without throwing. @p rhs is
-  /// then released.
+  /// Constructs by copying the exit function of @p rhs, as it cannot be moved without throwing.
+  ///
+  /// @p rhs is then released.
   ///
   /// @param rhs the guard to move from
   scope_success(scope_success&& rhs) noexcept(std::is_nothrow_copy_constructible_v<EF>) requires

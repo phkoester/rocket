@@ -27,8 +27,8 @@ namespace rocket::archive {
 ///   @p dest is empty, a directory, equal to @p srce, or located inside @p srce
 /// @throw #rocket::SystemError if @p srce does not exist or cannot be accessed, if reading from @p srce or
 ///   writing to @p dest fails, or if libarchive does not support the archive format or gzip compression. The
-///   error code is the `errno` value of the failing operation, if any, and #std::errc::io_error or
-///   #std::errc::not_supported otherwise
+///   error code is the `errno` value of the failing operation, if any, and `std::errc::io_error` or
+///   `std::errc::not_supported` otherwise
 /// @throw std::bad_alloc if libarchive cannot allocate memory
 void gzip(const std::filesystem::path& srce, const std::filesystem::path& dest);
 

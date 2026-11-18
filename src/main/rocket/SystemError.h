@@ -53,7 +53,7 @@ errorCode(std::errc errc) {
   return std::make_error_code(errc);
 }
 
-/// Returns the error code for @p errno__, or #std::errc::io_error if @p errno__ is not set.
+/// Returns the error code for @p errno__, or `std::errc::io_error` if @p errno__ is not set.
 ///
 /// @param errno__ the error number
 /// @return an error code
@@ -68,7 +68,7 @@ errorCode(int errno__) {
 ///
 /// Only a #std::filebuf leaves a meaningful `errno` behind. Any other stream buffer may have thrown, and the
 /// stream swallowed it, and the exception runtime may have left a stale `errno` then, so this is
-/// #std::errc::io_error.
+/// `std::errc::io_error`.
 ///
 /// @param s the stream
 /// @return an error code

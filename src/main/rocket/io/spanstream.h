@@ -1,6 +1,6 @@
 /// @file spanstream.h
 ///
-/// Portability layer for #std::spanstream and companions.
+/// Portability layer for `std::spanstream` and companions.
 ///
 /// This header declares
 ///
@@ -9,7 +9,7 @@
 /// - #rocket::io::basic_ospanstream, and
 /// - #rocket::io::basic_spanstream.
 ///
-/// If the standard library provides `<spanstream>` (C++23), these are #std::basic_spanbuf and so on.
+/// If the standard library provides `<spanstream>` (C++23), these are `std::basic_spanbuf` and so on.
 /// Otherwise, they are portable implementations that follow the specification of these classes in the C++23
 /// standard.
 

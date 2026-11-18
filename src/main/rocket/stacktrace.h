@@ -1,6 +1,6 @@
 /// @file stacktrace.h
 ///
-/// Portability layer for #std::stacktrace.
+/// Portability layer for `std::stacktrace`.
 ///
 /// This header declares #rocket::stacktrace.
 ///
