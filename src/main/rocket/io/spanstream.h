@@ -1,47 +1,38 @@
 /**
  * @file spanstream.h
  *
- * Streams reading from and writing to a fixed buffer, given as a #std::span.
+ * Portability layer for #std::spanstream and companions.
  *
- * If the standard library provides `<spanstream>` (C++23), #rocket::io::basic_spanbuf,
- * #rocket::io::basic_ispanstream, #rocket::io::basic_ospanstream, and #rocket::io::basic_spanstream are
- * `std::basic_spanbuf`, `std::basic_ispanstream`, `std::basic_ospanstream`, and `std::basic_spanstream`.
+ * This header declares
+ *
+ * - #rocket::io::basic_spanbuf,
+ * - #rocket::io::basic_ispanstream,
+ * - #rocket::io::basic_ospanstream, and
+ * - #rocket::io::basic_spanstream.
+ *
+ * If the standard library provides `<spanstream>` (C++23), these are #std::basic_spanbuf and so on.
  * Otherwise, they are portable implementations that follow the specification of these classes in the C++23
  * standard.
  */
 
 #pragma once
 
-#include <version>
-
-#if defined(ROCKET_OS_MACOS) && defined(ROCKET_CXX_COMPILER_LLVM)
-  #ifdef __cpp_lib_spanstream
-    #error This C++ version supports span streams
-  #endif
-#else
-  #ifndef __cpp_lib_spanstream
-    #error This C++ version does not support span streams
-  #endif
-  #define ROCKET_HAS_STD_SPANSTREAM
-#endif
-
 #include "rocket/rocket.h"
+
+#include <climits>
+#include <cstddef>
+#include <ios>
+#include <istream>
+#include <memory>
+#include <ostream>
+#include <ranges>
+#include <span>
+#include <streambuf>
+#include <string>
+#include <utility>
 
 #ifdef ROCKET_HAS_STD_SPANSTREAM
   #include <spanstream>
-#else
-  #include <climits>
-  #include <concepts>
-  #include <cstddef>
-  #include <ios>
-  #include <istream>
-  #include <memory>
-  #include <ostream>
-  #include <ranges>
-  #include <span>
-  #include <streambuf>
-  #include <string>
-  #include <utility>
 #endif
 
 namespace rocket::io {

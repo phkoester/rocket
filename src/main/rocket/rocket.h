@@ -51,6 +51,8 @@
 
 #pragma once
 
+#include <version> // This must be the first include
+
 #include "rocket/int128.h"
 
 #include <bit> // `std::endian`

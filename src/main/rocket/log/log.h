@@ -10,6 +10,7 @@
 
 #include "rocket/enum.h"
 #include "rocket/macro.h"
+#include "rocket/chrono/chrono.h"
 #include "rocket/cl/cl.h"
 
 #include <boost/preprocessor/seq/cat.hpp>
@@ -114,12 +115,6 @@ const std::vector<cl::Option>& logOptions();
 
 // Functions ------------------------------------------------------------------------------------------------
 
-/// The system clock.
-using Clock = std::chrono::system_clock;
-
-/// A time point on the system clock.
-using TimePoint = std::chrono::time_point<Clock>;
-
 /**
  * Expands a log-output value.
  *
@@ -139,7 +134,7 @@ std::string expandLogOut(
   const std::filesystem::path& dir,
   std::string_view name,
   u32 pid,
-  const TimePoint& time);
+  const rocket::chrono::SystemTimePoint& time);
 
 } // namespace rocket::log
 

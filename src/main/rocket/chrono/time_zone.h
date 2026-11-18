@@ -1,17 +1,27 @@
 /**
  * @file time_zone.h
  *
- * This header declares #rocket::chrono::time_zone and #rocket::chrono::zoned_time, together with their
- * companions #rocket::chrono::sys_info, #rocket::chrono::local_info, #rocket::chrono::choose,
- * #rocket::chrono::zoned_traits, #rocket::chrono::zoned_seconds, #rocket::chrono::nonexistent_local_time,
- * #rocket::chrono::ambiguous_local_time, #rocket::chrono::locate_zone, and #rocket::chrono::current_zone.
+ * Portability layer for #std::chrono::time_zone and companions.
  *
- * If the standard library provides the C++20 time-zone support, these are #std::chrono::time_zone,
- * #std::chrono::zoned_time, and so on, brought into `rocket::chrono` by using-declarations. Otherwise, they
- * are portable implementations that follow the specification of these classes in the C++20 standard,
- * reading the time-zone data from compiled TZif files (RFC 8536) in the directory given by the environment
- * variable `TZDIR`, which defaults to `/usr/share/zoneinfo`. This is the case on macOS, whose libc++ is
- * built without time-zone support.
+ * This header declares
+ *
+ * - #rocket::chrono::sys_info,
+ * - #rocket::chrono::local_info,
+ * - #rocket::chrono::choose,
+ * - #rocket::chrono::ambiguous_local_time,
+ * - #rocket::chrono::nonexistent_local_time,
+ * - #rocket::chrono::time_zone,
+ * - #rocket::chrono::locate_zone,
+ * - #rocket::chrono::current_zone,
+ * - #rocket::chrono::zoned_traits,
+ * - #rocket::chrono::zoned_time, and
+ * - #rocket::chrono::zoned_seconds.
+ *
+ * If the standard library provides the C++20 time-zone support, these are #std::chrono::sys_info,
+ * #std::chrono::local_info, and so on. Otherwise, they are portable implementations that follow the
+ * specification of these classes in the C++20 standard, reading the time-zone data from compiled TZif files
+ * (RFC 8536) in the directory given by the environment variable `TZDIR`, which defaults to
+ * `/usr/share/zoneinfo`. This is the case on macOS, whose libc++ is built without time-zone support.
  *
  * Differences of the portable implementation:
  *
@@ -35,7 +45,6 @@
 
 #include <chrono>
 #include <compare>
-#include <concepts>
 #include <memory>
 #include <ostream>
 #include <sstream>
@@ -47,26 +56,9 @@
 
 namespace rocket::chrono {
 
-// Functions ------------------------------------------------------------------------------------------------
-
-/**
- * Returns the abbreviation the standard library uses for a time zone.
- *
- * Microsoft’s STL takes the abbreviations from the system ICU (`icu.dll`), localized for the user’s default
- * locale, so on a German system, `CET` and `CEST` are `MEZ` and `MESZ`. We ask the same ICU for the
- * abbreviation. Other implementations use the abbreviations from the time-zone database, which are not
- * localized.
- *
- * @param name the name of the time zone, in UTF-8, e.g., `Europe/Berlin`
- * @param dst whether to return the abbreviation for daylight saving time
- * @param fallback the abbreviation from the time-zone database
- * @return the abbreviation
- */
-std::string abbreviation(std::string_view name, bool dst, std::string_view fallback);
-
 #ifdef ROCKET_HAS_STD_CHRONO_TIME_ZONE
 
-// Time-zone-related declarations ---------------------------------------------------------------------------
+// Using declarations ---------------------------------------------------------------------------------------
 
 /// Information about a time zone at a certain point in time.
 using sys_info = std::chrono::sys_info;
@@ -813,41 +805,6 @@ operator<<(std::basic_ostream<CharT, Traits>& os, const zoned_time<Duration, Tim
 using zoned_seconds = zoned_time<std::chrono::seconds>;
 
 #endif // ROCKET_HAS_STD_CHRONO_TIME_ZONE
-
-// Functions ------------------------------------------------------------------------------------------------
-
-/**
- * Checks if @p name is an unambiguous time-zone name, which input must use.
- *
- * Such a name contains a `/`, as in `Europe/Berlin` or `Etc/GMT+5`, or is `UTC` or `GMT`. This rejects the
- * legacy names of the time-zone database that look like abbreviations but stand for a single zone, such as
- * `CET` (`Europe/Brussels`), `EST` (`America/Panama`), or `EST5EDT`, as well as names such as `Japan`. Real
- * abbreviations, such as `CEST` or `CST`, are not names at all; they are ambiguous.
- *
- * @param name the name
- * @return if @p name is an unambiguous time-zone name
- */
-constexpr bool
-isUnambiguousZoneName(std::string_view name) {
-  return name.find('/') != std::string_view::npos || name == "UTC" || name == "GMT";
-}
-
-/**
- * Locates a time zone by an unambiguous name, see #rocket::chrono::isUnambiguousZoneName.
- *
- * @param name the name of the time zone, for example `Europe/Berlin`
- * @return the time zone, valid until the program ends
- * @throw #std::runtime_error if the time zone cannot be located or @p name is not unambiguous
- */
-inline const time_zone*
-locateUnambiguousZone(std::string_view name) {
-  // Locate first, so that an unknown name is reported as such
-  const auto* ret = locate_zone(name);
-  if (not isUnambiguousZoneName(name)) {
-    throw std::runtime_error("ambiguous time-zone name `" + std::string(name) + '`');
-  }
-  return ret;
-}
 
 } // namespace rocket::chrono
 

@@ -6,20 +6,16 @@
 
 #pragma once
 
-#include "rocket/rocket.h"
-
 #include "rocket/type-traits.h"
 
 #include <fmt/format.h>
 
 #include <climits>
-#include <limits>
 #include <locale>
 #include <string>
 #include <string_view>
-#include <type_traits>
 
-#ifndef ROCKET_HAS_FMT_FORMATTER_INT128
+#ifndef ROCKET_HAS_INT128
 
 namespace rocket::internal::format::int128 {
 
@@ -534,6 +530,6 @@ template<typename C> requires rocket::IsChar<C>
 struct fmt::formatter<rocket::u128, C> :
   rocket::internal::format::int128::Formatter<rocket::u128, rocket::u128, C> {};
 
-#endif // ROCKET_HAS_FMT_FORMATTER_INT128
+#endif // ROCKET_HAS_INT128
 
 // EOF

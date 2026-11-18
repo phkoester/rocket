@@ -23,9 +23,9 @@
 /**
  * Formats a #rocket::chrono::zoned_time.
  *
- * The format specification is that of #std::chrono::local_time, plus `%Z` (the abbreviation of the time
- * zone), `%z` (the UTC offset as `+hhmm`), and `%Ez` and `%Oz` (the UTC offset as `+hh:mm`). Without
- * conversion specifications, the format is `%F %T %Z`.
+ * {fmt} does not provide this formatter. The format specification is that of #std::chrono::local_time, plus
+ * `%Z` (the abbreviation of the time zone), `%z` (the UTC offset as `+hhmm`), and `%Ez` and `%Oz` (the UTC
+ * offset as `+hh:mm`). Without conversion specifications, the format is `%F %T %Z`.
  *
  * @tparam Duration the duration of the time point
  * @tparam TimeZonePtr the time-zone pointer
@@ -239,8 +239,6 @@ private:
   fmt::formatter<std::basic_string_view<C>, C> formatter_;
 };
 
-#ifndef ROCKET_HAS_FMT_FORMATTER_STD_CHRONO_YEAR_MONTH_DAY
-
 // `fmt::formatter<std::chrono::year_month_day>` ------------------------------------------------------------
 
 /**
@@ -249,6 +247,10 @@ private:
  * {fmt} only provides this formatter if `__cpp_lib_chrono >= 201907L`; otherwise it formats its own
  * `fmt::year_month_day`. This is a copy of {fmt}’s formatter from `fmt/chrono.h`. Without a format
  * specification, the format is `%F`.
+ *
+ * If {fmt} provides its own formatter, the two do not collide: both are partial specializations for the same
+ * arguments, but this one is constrained by #rocket::IsChar, so partial ordering makes it the more
+ * specialized one, and it is always picked.
  *
  * @tparam C the character type
  */
@@ -286,7 +288,5 @@ private:
 
   bool useTmFormatter_ = false;
 };
-
-#endif // ROCKET_HAS_FMT_FORMATTER_STD_CHRONO_YEAR_MONTH_DAY
 
 // EOF

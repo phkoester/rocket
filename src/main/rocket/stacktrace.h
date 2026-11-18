@@ -1,29 +1,17 @@
 /**
  * @file stacktrace.h
  *
- * A portable stack-trace type and a macro for capturing the current stack trace.
+ * Portability layer for #std::stacktrace.
+ *
+ * This header declares #rocket::stacktrace.
  *
  * If the standard library provides `<stacktrace>` (C++23), #rocket::stacktrace is `std::stacktrace`.
- * Otherwise, #rocket::stacktrace is `boost::stacktrace::stacktrace`.
+ * Otherwise, it is `boost::stacktrace::stacktrace`.
  */
 
 #pragma once
 
-#include <version>
-
-#ifdef ROCKET_OS_MACOS
-  #ifdef __cpp_lib_stacktrace
-    #error This C++ version supports stack traces
-  #endif
-#else
-  #ifndef __cpp_lib_stacktrace
-    #error This C++ version does not support stack traces
-  #endif
-  /// Defined if the standard library provides `std::stacktrace`.
-  #define ROCKET_HAS_STD_STACK_TRACE
-#endif
-
-#ifdef ROCKET_HAS_STD_STACK_TRACE
+#ifdef ROCKET_HAS_STD_STACKTRACE
   #include <stacktrace>
 #else
   #include <boost/stacktrace/stacktrace.hpp>
@@ -33,7 +21,7 @@ namespace rocket {
 
 // `stacktrace` ---------------------------------------------------------------------------------------------
 
-#ifdef ROCKET_HAS_STD_STACK_TRACE
+#ifdef ROCKET_HAS_STD_STACKTRACE
 
 /// Returns the current stack trace.
 #define ROCKET_STACK_TRACE_CURRENT() ::std::stacktrace::current()
@@ -49,7 +37,7 @@ using stacktrace = std::stacktrace;
 /// A stack trace.
 using stacktrace = boost::stacktrace::stacktrace;
 
-#endif // ROCKET_HAS_STD_STACK_TRACE
+#endif // ROCKET_HAS_STD_STACKTRACE
 
 } // namespace rocket
 

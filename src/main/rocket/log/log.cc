@@ -23,6 +23,9 @@ using namespace std;
 
 namespace fs = std::filesystem;
 
+using rocket::chrono::SystemClock;
+using rocket::chrono::SystemTimePoint;
+
 namespace {
 
 using rocket::log::internal::LogSettings;
@@ -53,7 +56,7 @@ struct Entry {
   const char* file_;
   i32 line_;
   optional<string> begin_; // Log entry from `logBegin` that is flushed only if necessary
-  TimePoint time_;
+  SystemTimePoint time_;
 
   Entry(
     LogSettings* logId,
@@ -62,7 +65,7 @@ struct Entry {
     const char* file,
     i32 line,
     const string& begin,
-    const TimePoint& time) :
+    const SystemTimePoint& time) :
     logId_(logId),
     function_(function),
     prettyFunction_(prettyFunction),
@@ -149,7 +152,7 @@ struct Out {
     const fs::path& dir,
     string_view name,
     u32 pid,
-    const TimePoint& time);
+    const SystemTimePoint& time);
 
   void flushOnExit() {
     if (out_ != nullptr) {
@@ -159,9 +162,9 @@ struct Out {
     }
   }
 
-  nio::Sink& get(const TimePoint& time);
+  nio::Sink& get(const SystemTimePoint& time);
 
-  void set(string_view val, const TimePoint& time);
+  void set(string_view val, const SystemTimePoint& time);
 
 private:
 
@@ -177,7 +180,7 @@ private:
 
   // Must be static and stateless
   static std::chrono::year_month_day
-  localYmd(const TimePoint& time) {
+  localYmd(const SystemTimePoint& time) {
     auto localTime = rocket::chrono::zoned_time(rocket::chrono::current_zone(), time);
     auto localDays = std::chrono::floor<std::chrono::days>(localTime.get_local_time());
     return std::chrono::year_month_day(localDays); // NOLINT
@@ -198,7 +201,7 @@ private:
 
   // Must be static and stateless
   static std::chrono::year_month_day
-  utcYmd(const TimePoint& time) {
+  utcYmd(const SystemTimePoint& time) {
     auto utcDays = std::chrono::floor<std::chrono::days>(time);
     return std::chrono::year_month_day(utcDays); // NOLINT
   }
@@ -230,7 +233,12 @@ private:
 };
 
 Out::ExpandResult
-Out::expand(string_view pattern, const fs::path& dir, string_view name, u32 pid, const TimePoint& time) {
+Out::expand(
+  string_view pattern,
+  const fs::path& dir,
+  string_view name,
+  u32 pid,
+  const SystemTimePoint& time) {
   Out::ExpandResult ret;
   ret.out = pattern;
 
@@ -288,7 +296,7 @@ Out::expand(string_view pattern, const fs::path& dir, string_view name, u32 pid,
 }
 
 nio::Sink&
-Out::get(const TimePoint& time) {
+Out::get(const SystemTimePoint& time) {
   if (fileOut_ && ymd_) {
     // Writing to a file, with a date in the pattern: has the date changed?
     auto newYmd = utc_ ? utcYmd(time) : localYmd(time);
@@ -327,7 +335,7 @@ Out::nameRegex(const fs::path& name) {
 }
 
 void
-Out::set(string_view val, const TimePoint& time) {
+Out::set(string_view val, const SystemTimePoint& time) {
   out_ = nullptr;
 
   if (val == "-" || val == "stdout") {
@@ -597,7 +605,7 @@ applyLogOut(optional<string_view> val) {
 
 // @ThreadSafe
 string
-formatExecTime(const TimePoint& t1, const TimePoint& t2) {
+formatExecTime(const SystemTimePoint& t1, const SystemTimePoint& t2) {
   const auto ns = std::chrono::duration_cast<std::chrono::nanoseconds>(t2 - t1).count();
   if (ns < 1'000) {
     // Display in nanoseconds
@@ -619,7 +627,7 @@ formatExecTime(const TimePoint& t1, const TimePoint& t2) {
 
 // @NotThreadSafe
 string
-formatTimePoint(const TimePoint& tp) {
+formatTimePoint(const SystemTimePoint& tp) {
   const auto formatImpl = [](const auto& ctp) { // ctp = cast time point
     if (logFmt.useUtc) {
       return fmt::format("{:%FT%TZ} ", ctp);
@@ -672,7 +680,7 @@ logImpl(
   LogSettings* logId,
   LogLevel level,
   u64 stackLevel,
-  const TimePoint& time,
+  const SystemTimePoint& time,
   string_view msg) {
   // Item: time point
   const string str = formatTimePoint(time); // Formats with a trailing space
@@ -884,7 +892,7 @@ void
 log(LogLevel level, string_view msg) {
   ROCKET_MUTEX_LOCK(logMutex());
 
-  auto time = chrono::now<Clock>();
+  auto time = chrono::now();
   auto& out = logOut.get(time);
   logFlush(out);
   logImpl(out, logStack.back().logId_, level, logStack.size(), time, msg);
@@ -902,7 +910,7 @@ logBegin(LogSettings* logId, const char* function, const char* prettyFunction, c
   }
   msg += " {";
   nio::StringSink buf;
-  auto time = chrono::now<Clock>();
+  const auto time = chrono::now();
   logImpl(buf, logId, LogLevel::none, logStack.size(), time, msg);
   logStack.emplace_back(logId, function, prettyFunction, file, line, buf.str(), time);
 
@@ -937,7 +945,7 @@ logEnd() {
       if (logFmt.withSourceLocation) {
         msg += fmt::format(" {}:{}", entry.file_, entry.line_);
       }
-      auto time = chrono::now<Clock>();
+      const auto time = chrono::now();
       if (logFmt.withExecTimes) {
         msg += " [";
         msg += formatExecTime(entry.time_, time);
@@ -986,7 +994,12 @@ const vector<cl::Option>& logOptions() { return CL_OPTIONS; }
 
 // Needs no mutex log, calls static functions only
 string
-expandLogOut(string_view val, const fs::path& dir, string_view name, u32 pid, const TimePoint& time) {
+expandLogOut(
+  string_view val,
+  const fs::path& dir,
+  string_view name,
+  u32 pid,
+  const SystemTimePoint& time) {
   if (val == "-" || val == "stdout" || val == "stderr") {
     return string(val);
   }

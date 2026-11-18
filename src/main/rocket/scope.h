@@ -1,7 +1,13 @@
 /**
  * @file scope.h
  *
- * Scope guards: #rocket::scope_exit, #rocket::scope_success, and #rocket::scope_fail.
+ * Portability layer for `<experimental/scope>`.
+ *
+ * This header declares
+ *
+ * - #rocket::scope_exit,
+ * - #rocket::scope_success, and
+ * - #rocket::scope_fail.
  *
  * If the standard library provides `std::experimental::scope_exit` and friends (Library Fundamentals TS v3,
  * header `<experimental/scope>`), these are used. Otherwise, a portable implementation following the same
@@ -16,30 +22,15 @@
 
 #pragma once
 
-#include <version>
-
-#if (defined(ROCKET_OS_MACOS) && defined(ROCKET_CXX_COMPILER_LLVM)) || defined(ROCKET_OS_WINDOWS)
-  #if __has_include(<experimental/scope>)
-    #error This C++ version supports experimental scope guards
-  #endif
-#else
-  #if not __has_include(<experimental/scope>)
-    #error This C++ version does not support experimental scope guards
-  #endif
-  /// Defined if the standard library provides `<experimental/scope>`.
-  #define ROCKET_HAS_STD_EXPERIMENTAL_SCOPE
-#endif
-
-#include "rocket/macro.h"
+#include "rocket/macro.h" // `ROCKET_ID`
 
 #ifdef ROCKET_HAS_STD_EXPERIMENTAL_SCOPE
   #include <experimental/scope>
-#else
-  #include <concepts>
-  #include <exception>
-  #include <type_traits>
-  #include <utility>
 #endif
+
+#include <exception>
+#include <type_traits>
+#include <utility>
 
 namespace rocket {
 

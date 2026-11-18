@@ -11,7 +11,6 @@
 
 #include <scn/scan.h>
 
-#include <limits>
 #include <optional>
 #include <string_view>
 

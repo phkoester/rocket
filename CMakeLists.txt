@@ -6,6 +6,7 @@ cmake_minimum_required(VERSION 4.2)
 
 include(${CMAKE_CURRENT_LIST_DIR}/cmake/rocket-functions.cmake)
 
+include(CheckCXXSourceCompiles)
 include(FetchContent)
 
 # Project ---------------------------------------------------------------------------------------------------
@@ -24,13 +25,13 @@ project(rocket VERSION 0.3.6)
 
 set(ROCKET_BENCHMARK_VERSION 1.9.5)
 set(ROCKET_BOOST_VERSION 1.92.0)
+set(ROCKET_BOOST_INT128_VERSION 4.1.0)
 set(ROCKET_FMT_VERSION 12.2.0)
 set(ROCKET_GAIA_VERSION 1.2.5)
 set(ROCKET_GTEST_VERSION 1.18.0)
 set(ROCKET_ICU_VERSION 72.1)
 set(ROCKET_ICU_CMAKE_VERSION 0.1.4)
 set(ROCKET_ICU_CMAKE_ICU_VERSION 79.1)
-set(ROCKET_INT128_VERSION 4.1.0)
 set(ROCKET_LIBARCHIVE_VERSION 3.8.11)
 set(ROCKET_LIBCBOR_VERSION 0.14.0)
 set(ROCKET_SCNLIB_VERSION 4b8a7400ce34208fa47b9abec492a6497a7ab48c) # `master` as of 2026-11-14
@@ -72,6 +73,85 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS OFF)
 
 set(FETCHCONTENT_QUIET FALSE)
+
+# Feature detection -----------------------------------------------------------------------------------------
+
+# 128-bit integers
+if(GAIA_OS_WINDOWS)
+  # Windows: the MSVC toolchain has no support, and even though the LLVM toolchain does have a builtin
+  # `__int128` type, it will not work with {fmt}. So we don't use `__int128` at any rate
+  set(ROCKET_HAS_INT128 0)
+else()
+  check_cxx_source_compiles([[
+    int main() {
+      __int128 i = 1;
+      unsigned __int128 u = 2;
+      return static_cast<int>(i + static_cast<__int128>(u)) - 3;
+    }
+  ]] ROCKET_HAS_INT128)
+endif()
+GaiaStatus("ROCKET_HAS_INT128: ${ROCKET_HAS_INT128}")
+
+# C++23 span streams
+check_cxx_source_compiles([[
+  #include <span>
+  #include <spanstream>
+
+  int main() {
+    char buf[8] = "42";
+    std::ispanstream in(std::span<char>(buf, 2));
+    int i = 0;
+    in >> i;
+    return i == 42 ? 0 : 1;
+  }
+]] ROCKET_HAS_STD_SPANSTREAM)
+GaiaStatus("ROCKET_HAS_STD_SPANSTREAM: ${ROCKET_HAS_STD_SPANSTREAM}")
+
+# C++23 stack traces. On Linux, libstdc++ keeps `std::stacktrace` in `libstdc++exp`, which `rocket` links,
+# too
+block()
+  if(GAIA_OS_LINUX)
+    set(CMAKE_REQUIRED_LIBRARIES stdc++exp)
+  endif()
+  check_cxx_source_compiles([[
+    #include <stacktrace>
+    #include <string>
+
+    int main() {
+      return std::to_string(std::stacktrace::current()).empty() ? 1 : 0;
+    }
+  ]] ROCKET_HAS_STD_STACKTRACE)
+endblock()
+GaiaStatus("ROCKET_HAS_STD_STACKTRACE: ${ROCKET_HAS_STD_STACKTRACE}")
+
+# C++20 time zones: `std::chrono::time_zone` and `std::chrono::zoned_time`. This links, too, so the time-zone
+# database must be present in the standard library
+check_cxx_source_compiles([[
+  #include <chrono>
+
+  int main() {
+    const std::chrono::time_zone* tz = std::chrono::locate_zone("UTC");
+    std::chrono::zoned_time zt(tz, std::chrono::sys_seconds());
+    return zt.get_time_zone()->name().empty() ? 1 : 0;
+  }
+]] ROCKET_HAS_STD_CHRONO_TIME_ZONE)
+GaiaStatus("ROCKET_HAS_STD_CHRONO_TIME_ZONE: ${ROCKET_HAS_STD_CHRONO_TIME_ZONE}")
+
+# Experimental scope guards (Library Fundamentals TS v3)
+check_cxx_source_compiles([[
+  #include <experimental/scope>
+
+  int main() {
+    int i = 0;
+    {
+      std::experimental::scope_exit exit([&] { ++i; });
+      std::experimental::scope_fail fail([&] { i += 10; });
+      std::experimental::scope_success success([&] { ++i; });
+    }
+    return i == 2 ? 0 : 1;
+  }
+]] ROCKET_HAS_STD_EXPERIMENTAL_SCOPE)
+GaiaStatus("ROCKET_HAS_STD_EXPERIMENTAL_SCOPE: ${ROCKET_HAS_STD_EXPERIMENTAL_SCOPE}")
 
 # Configuration ---------------------------------------------------------------------------------------------
 
@@ -152,7 +232,7 @@ set(ROCKET_BOOST_COMPONENTS
   preprocessor
 )
 
-if(GAIA_OS_MACOS)
+if(NOT ROCKET_HAS_STD_STACKTRACE)
   list(APPEND ROCKET_BOOST_COMPONENTS stacktrace)
 endif()
 
@@ -266,13 +346,13 @@ endif()
 
 # Boost.Int128 ..............................................................................................
 
-if(GAIA_OS_WINDOWS)
+if(NOT ROCKET_HAS_INT128)
   list(APPEND ROCKET_BOOST_COMPONENTS int128)
 
   FetchContent_Declare(
     int128
     GIT_REPOSITORY https://github.com/boostorg/int128.git
-    GIT_TAG        v${ROCKET_INT128_VERSION}
+    GIT_TAG        v${ROCKET_BOOST_INT128_VERSION}
     GIT_PROGRESS   TRUE
     SYSTEM
     EXCLUDE_FROM_ALL

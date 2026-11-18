@@ -15,10 +15,8 @@
 #include <cassert>
 #include <chrono>
 #include <cmath>
-#include <concepts>
 #include <cstdint>
 #include <exception>
-#include <limits>
 #include <ratio>
 #include <string>
 #include <string_view>
@@ -768,8 +766,6 @@ struct scn::scanner<std::chrono::hh_mm_ss<Duration>, C> {
   /// @endcond
 };
 
-#ifndef ROCKET_HAS_SCN_SCANNER_STD_CHRONO_YEAR_MONTH_DAY
-
 // `scn::scanner<std::chrono::year_month_day>` --------------------------------------------------------------
 
 /**
@@ -778,6 +774,10 @@ struct scn::scanner<std::chrono::hh_mm_ss<Duration>, C> {
  * scnlib only provides this scanner if `__cpp_lib_chrono >= 201907L`; otherwise it scans its own
  * `scn::year_month_day`. This is a copy of scnlib’s scanner from `scn/chrono.h`. Like there, there is no
  * default format, so a format specification such as `%F` is required.
+ *
+ * If scnlib provides its own scanner, the two do not collide: both are partial specializations for the same
+ * arguments, but this one is constrained by #rocket::IsChar, so partial ordering makes it the more
+ * specialized one, and it is always picked.
  *
  * @tparam C the character type
  */
@@ -805,7 +805,5 @@ struct scn::scanner<std::chrono::year_month_day, C> : scn::detail::chrono_compon
 
   /// @endcond
 };
-
-#endif // ROCKET_HAS_SCN_SCANNER_STD_CHRONO_YEAR_MONTH_DAY
 
 // EOF

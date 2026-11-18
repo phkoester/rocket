@@ -11,14 +11,12 @@
 #include <scn/scan.h>
 
 #include <cstddef>
-#include <limits>
 #include <locale>
 #include <ranges>
 #include <string>
 #include <string_view>
-#include <type_traits>
 
-#ifndef ROCKET_HAS_SCN_SCANNER_INT128
+#ifndef ROCKET_HAS_INT128
 
 namespace rocket::internal::scan::int128 {
 
@@ -679,6 +677,6 @@ template<typename C> requires rocket::IsChar<C>
 struct scn::scanner<rocket::u128, C> :
   rocket::internal::scan::int128::Scanner<rocket::u128, rocket::u128, C> {};
 
-#endif // ROCKET_HAS_SCN_SCANNER_INT128
+#endif // ROCKET_HAS_INT128
 
 // EOF

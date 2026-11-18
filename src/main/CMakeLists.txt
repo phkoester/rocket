@@ -38,11 +38,30 @@ if(BUILD_SHARED_LIBS)
   list(APPEND ROCKET_COMPILE_DEFS ROCKET_SHARED_LIBS)
 endif()
 
+# C++ features
+if(ROCKET_HAS_INT128)
+  list(APPEND ROCKET_COMPILE_DEFS ROCKET_HAS_INT128)
+endif()
+if(ROCKET_HAS_STD_SPANSTREAM)
+  list(APPEND ROCKET_COMPILE_DEFS ROCKET_HAS_STD_SPANSTREAM)
+endif()
+if(ROCKET_HAS_STD_STACKTRACE)
+  list(APPEND ROCKET_COMPILE_DEFS ROCKET_HAS_STD_STACKTRACE)
+endif()
+if(ROCKET_HAS_STD_CHRONO_TIME_ZONE)
+  list(APPEND ROCKET_COMPILE_DEFS ROCKET_HAS_STD_CHRONO_TIME_ZONE)
+endif()
+if(ROCKET_HAS_STD_EXPERIMENTAL_SCOPE)
+  list(APPEND ROCKET_COMPILE_DEFS ROCKET_HAS_STD_EXPERIMENTAL_SCOPE)
+endif()
+
+# icu-cmake
 list(APPEND ROCKET_COMPILE_DEFS "ROCKET_ICU_VERSION=\"${ROCKET_ICU_VERSION}\"")
 if(ROCKET_ICU_CMAKE)
   list(APPEND ROCKET_COMPILE_DEFS ROCKET_ICU_CMAKE)
 endif()
 
+# libarchive
 list(APPEND ROCKET_COMPILE_DEFS LIBARCHIVE_STATIC)
 
 # Link targets ..............................................................................................
@@ -137,7 +156,6 @@ target_sources(rocket
       rocket/TypeId.h
       rocket/TypeId-format.h
       rocket/assert.h
-      rocket/configure.h
       rocket/enum.h
       rocket/enum-format.h
       rocket/enum-fwd.h

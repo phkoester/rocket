@@ -10,7 +10,7 @@
 
 #include <boost/functional/hash.hpp>
 
-#ifdef ROCKET_HAS_BOOST_INT128
+#ifndef ROCKET_HAS_INT128
   #include <boost/int128/hash.hpp>
 #endif
 

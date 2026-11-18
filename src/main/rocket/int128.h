@@ -6,25 +6,23 @@
 
 #pragma once
 
-#include "rocket/configure.h"
-
-// Boost.Int128 defines `std::numeric_limits`, so include `<limits>` here for the sake of symmetry
-#include <limits>
-
-#ifdef ROCKET_HAS_BOOST_INT128
+#ifndef ROCKET_HAS_INT128
   #include <boost/int128/int128.hpp>
 #endif
+
+// Boost.Int128 defines `std::numeric_limits`, so we include `<limits>` here for the sake of symmetry
+#include <limits>
 
 namespace rocket {
 
 // `i128` and `u128` ----------------------------------------------------------------------------------------
 
 #if defined(ROCKET_HAS_INT128) || defined(ROCKET_DOXYGEN)
-using i128 = __int128; ///< A signed 128-bit integer type.
-using u128 = unsigned __int128; ///< An unsigned 128-bit integer type.
-#elifdef ROCKET_HAS_BOOST_INT128
-using i128 = boost::int128::int128; ///< A signed 128-bit integer type.
-using u128 = boost::int128::uint128; ///< An unsigned 128-bit integer type.
+  using i128 = __int128; ///< A signed 128-bit integer type.
+  using u128 = unsigned __int128; ///< An unsigned 128-bit integer type.
+#else
+  using i128 = boost::int128::int128; ///< A signed 128-bit integer type.
+  using u128 = boost::int128::uint128; ///< An unsigned 128-bit integer type.
 #endif
 
 } // namespace rocket

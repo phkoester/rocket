@@ -10,7 +10,6 @@
 
 #include <gmock/gmock.h>
 
-#include <concepts>
 #include <regex>
 
 namespace rocket::test::matcher {
