@@ -17,9 +17,9 @@ namespace rocket::archive {
 /**
  * Compresses a file or a directory with gzip.
  *
- * - If @p srce is a regular file, @p dest is a plain gzip file containing the file's contents.
+ * - If @p srce is a regular file, @p dest is a plain gzip file containing the file’s contents.
  * - If @p srce is a directory, @p dest is a gzip-compressed tar archive (POSIX pax format) of the directory.
- *   The entries are stored relative to the parent of @p srce, so the archive's single top-level entry is the
+ *   The entries are stored relative to the parent of @p srce, so the archive’s single top-level entry is the
  *   directory itself. Symbolic links are stored as links and not followed.
  *
  * An existing @p dest is overwritten. If the function fails, a partially written @p dest is removed.

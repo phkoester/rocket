@@ -78,7 +78,7 @@ set(FETCHCONTENT_QUIET FALSE)
 
 # 128-bit integers
 # Windows: the MSVC toolchain has no support, and even though the LLVM toolchain does have a builtin
-# `__int128` type, it will not work with {fmt}. So we don't use `__int128` at any rate
+# `__int128` type, it will not work with {fmt}. So we don’t use `__int128` at any rate
 if(NOT GAIA_OS_WINDOWS)
   check_cxx_source_compiles([[
     int main() {
@@ -375,11 +375,11 @@ FetchContent_Declare(
 
 block()
   set(BUILD_SHARED_LIBS OFF)
-  # libarchive's test setup references `${CMAKE_SOURCE_DIR}/build/cmake/...`, which breaks when it is not the
-  # top-level project. We don't need its tests anyway
+  # libarchive’s test setup references `${CMAKE_SOURCE_DIR}/build/cmake/...`, which breaks when it is not the
+  # top-level project. We don’t need its tests anyway
   set(ENABLE_TEST OFF)
-  # libarchive adds `-Werror` in Debug builds, so deprecations in newer system libraries (e.g., lz4) break the
-  # build
+  # libarchive adds `-Werror` in Debug builds, so deprecations in newer system libraries (e.g., lz4) break
+  # the build
   set(ENABLE_WERROR OFF)
   FetchContent_MakeAvailable(libarchive)
 endblock()

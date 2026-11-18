@@ -52,7 +52,7 @@ jobs:
         with:
           path: rocket
 
-      # Rocket uses `GAIA_DIR` as Gaia's source instead of fetching the tag `v${ROCKET_GAIA_VERSION}`
+      # Rocket uses `GAIA_DIR` as Gaia’s source instead of fetching the tag `v${ROCKET_GAIA_VERSION}`
       - name: Check out Gaia
         uses: actions/checkout@v7
         with:
@@ -106,7 +106,7 @@ jobs:
         with:
           path: rocket
 
-      # Rocket uses `GAIA_DIR` as Gaia's source instead of fetching the tag `v${ROCKET_GAIA_VERSION}`
+      # Rocket uses `GAIA_DIR` as Gaia’s source instead of fetching the tag `v${ROCKET_GAIA_VERSION}`
       - name: Check out Gaia
         uses: actions/checkout@v7
         with:
@@ -149,7 +149,7 @@ jobs:
       CXX: cl
       GAIA_DIR: ${{ github.workspace }}/gaia
 
-    # PowerShell rather than Git Bash, whose `link.exe` would hide MSVC's linker
+    # PowerShell rather than Git Bash, whose `link.exe` would hide MSVC’s linker
     defaults:
       run:
         shell: pwsh
@@ -166,7 +166,7 @@ jobs:
         with:
           path: rocket
 
-      # Rocket uses `GAIA_DIR` as Gaia's source instead of fetching the tag `v${ROCKET_GAIA_VERSION}`
+      # Rocket uses `GAIA_DIR` as Gaia’s source instead of fetching the tag `v${ROCKET_GAIA_VERSION}`
       - name: Check out Gaia
         uses: actions/checkout@v7
         with:

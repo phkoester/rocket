@@ -62,7 +62,7 @@ struct fmt::formatter<boost::bimaps::bimap<A, B>, C> {
       ctx.advance_to(it);
     }
     keyFormatter_.parse(ctx);
-    // fmt's fallback overload of `maybe_set_debug_format` is a C-style vararg function
+    // {fmt}’s fallback overload of `maybe_set_debug_format` is a C-style vararg function
     detail::maybe_set_debug_format(keyFormatter_, true); // NOLINT(cppcoreguidelines-pro-type-vararg)
     valueFormatter_.parse(ctx);
     detail::maybe_set_debug_format(valueFormatter_, true); // NOLINT(cppcoreguidelines-pro-type-vararg)

@@ -968,7 +968,7 @@ StreamSource::peek() {
     return nullopt;
   }
 
-  // If the stream buffer throws, the MSVC STL's `peek` sets `badbit` but returns 0 instead of EOF, so check
+  // If the stream buffer throws, the MSVC STL’s `peek` sets `badbit` but returns 0 instead of EOF, so check
   // `bad()` as well
   auto c = istream::traits_type::eof();
   runStreamOp(in(), ec_, [&] { c = in().peek(); });
