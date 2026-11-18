@@ -127,7 +127,7 @@ optional<pair<u64, u64>>
 position(nio::Sink& out) { // NOLINT
   const i32 fd = out.handle();
   if (fd == -1 || ROCKET_ISATTY(fd) == 0) {
-    return {};
+    return nullopt;
   }
 
 #ifdef ROCKET_OS_WINDOWS
@@ -136,15 +136,17 @@ position(nio::Sink& out) { // NOLINT
   // out of the window has no position in it
 
   auto handle = getHandle(fd);
-  ROCKET_ASSERT(handle != INVALID_HANDLE_VALUE);
+  if (handle == INVALID_HANDLE_VALUE || handle == nullptr) {
+    return nullopt;
+  }
   CONSOLE_SCREEN_BUFFER_INFO csbi;
   if (not GetConsoleScreenBufferInfo(handle, &csbi)) {
-    return {};
+    return nullopt;
   }
   const auto& win = csbi.srWindow;
   const auto& cursor = csbi.dwCursorPosition;
   if (cursor.X < win.Left || cursor.X > win.Right || cursor.Y < win.Top || cursor.Y > win.Bottom) {
-    return {};
+    return nullopt;
   }
   return make_pair(static_cast<u64>(cursor.X - win.Left + 1), static_cast<u64>(cursor.Y - win.Top + 1));
 #else
@@ -152,7 +154,7 @@ position(nio::Sink& out) { // NOLINT
   // unrelated input or block forever
 
   if (ROCKET_ISATTY(STDIN_FILENO) == 0) {
-    return {};
+    return nullopt;
   }
 
   // Send the ANSI code requesting cursor position
@@ -175,7 +177,7 @@ optional<pair<u64, u64>>
 size(nio::Device& device) {
   const i32 fd = device.handle();
   if (fd == -1 || ROCKET_ISATTY(fd) == 0) {
-    return {};
+    return nullopt;
   }
 
 #ifdef ROCKET_OS_WINDOWS
@@ -184,10 +186,12 @@ size(nio::Device& device) {
   // coordinates within that buffer
 
   auto handle = getHandle(fd);
-  ROCKET_ASSERT(handle != INVALID_HANDLE_VALUE);
+  if (handle == INVALID_HANDLE_VALUE || handle == nullptr) {
+    return nullopt;
+  }
   CONSOLE_SCREEN_BUFFER_INFO csbi;
   if (not GetConsoleScreenBufferInfo(handle, &csbi)) {
-    return {};
+    return nullopt;
   }
   const auto& win = csbi.srWindow;
   return make_pair(static_cast<u64>(win.Right - win.Left + 1), static_cast<u64>(win.Bottom - win.Top + 1));
@@ -197,7 +201,7 @@ size(nio::Device& device) {
   winsize ws; // NOLINT;
   const i32 res = ioctl(fd, TIOCGWINSZ, &ws); // NOLINT
   if (res != 0) {
-    return {};
+    return nullopt;
   }
   return make_pair(static_cast<u64>(ws.ws_col), static_cast<u64>(ws.ws_row));
 #endif

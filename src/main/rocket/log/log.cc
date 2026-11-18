@@ -403,7 +403,7 @@ Out::zipOlderFiles(const fs::path& current) {
   error_code ec;
   fs::directory_iterator it(currentDir, fs::directory_options::skip_permission_denied, ec);
   if (ec) {
-    process().error(nio::err, 0, "cannot scan directory `{}`: {}", currentDir, ec.message());
+    process().error(nio::err, 0, "cannot scan directory `{}`: {:s}", currentDir, ec);
     return;
   }
   for (; it != fs::directory_iterator(); it.increment(ec)) {
@@ -435,7 +435,7 @@ Out::zipOlderFiles(const fs::path& current) {
       error_code ec;
       fs::remove(entry, ec);
       if (ec) {
-        process().error(nio::err, 0, "cannot remove log file `{}`: {}", entry, ec.message());
+        process().error(nio::err, 0, "cannot remove log file `{}`: {:s}", entry, ec);
       }
     } catch (const Exception& ex) {
       process().error(nio::err, 0, "cannot zip log file `{}`: {}", entry, ex.message());
@@ -559,7 +559,7 @@ void setLogOut(string_view val);
  */
 bool
 applyLog(optional<string_view> val) {
-  ROCKET_EXPECT(val);
+  ROCKET_ASSERT(val);
 
   string_view lhs, rhs;
   if (auto eq = val->find('='); eq == string::npos) {
@@ -582,7 +582,7 @@ applyLog(optional<string_view> val) {
  */
 bool
 applyLogFmt(optional<string_view> val) {
-  ROCKET_EXPECT(val);
+  ROCKET_ASSERT(val);
 
   // Use public API from here
   setLogFmt(*val);
@@ -596,7 +596,7 @@ applyLogFmt(optional<string_view> val) {
  */
 bool
 applyLogOut(optional<string_view> val) {
-  ROCKET_EXPECT(val);
+  ROCKET_ASSERT(val);
 
   // Use public API from here
   setLogOut(*val);

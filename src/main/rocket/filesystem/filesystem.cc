@@ -52,7 +52,7 @@ tempDir() {
     error_code ec;
     remove_all(ret, ec);
     if (ec) {
-      process().error(nio::err, 0, "cannot remove temporary directory `{}`: {}", ret, ec.message());
+      process().error(nio::err, 0, "cannot remove temporary directory `{}`: {:s}", ret, ec);
     }
   }, false);
 
@@ -75,7 +75,7 @@ tempFile() {
     error_code ec;
     remove(ret, ec);
     if (ec) {
-      process().error(nio::err, 0, "cannot remove temporary file `{}`: {}", ret, ec.message());
+      process().error(nio::err, 0, "cannot remove temporary file `{}`: {:s}", ret, ec);
     }
   }, true);
 

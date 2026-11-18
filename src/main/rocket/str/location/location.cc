@@ -231,7 +231,7 @@ printLocations( // NOLINT(*-complexity)
 
       // 2. Translate line position to escaped-line position
       auto leftIt = escapePositions.left.find(pos);
-      ROCKET_EXPECT(leftIt != escapePositions.left.end());
+      ROCKET_ASSERT(leftIt != escapePositions.left.end());
       pos = leftIt->second;
 
       // 3. Translate escaped-line position to escaped-line character position. Escaping can merge characters
@@ -242,7 +242,7 @@ printLocations( // NOLINT(*-complexity)
       while (rightIt == escapedLinePositions.right.end() && pos > 0) {
         rightIt = escapedLinePositions.right.find(--pos);
       }
-      ROCKET_EXPECT(rightIt != escapedLinePositions.right.end());
+      ROCKET_ASSERT(rightIt != escapedLinePositions.right.end());
       pos = rightIt->second;
 
       // 4. Translate escaped-line character position to `indicators` position
@@ -272,7 +272,7 @@ printLocations( // NOLINT(*-complexity)
     if (caretPos < indicators.size()) {
       indicators[caretPos] = '^';
     } else {
-      ROCKET_EXPECT(caretPos == indicators.size());
+      ROCKET_ASSERT(caretPos == indicators.size());
       indicators.push_back('^');
     }
 

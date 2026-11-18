@@ -81,22 +81,6 @@ myTerminate() {
 
 void
 toy() {
-  unordered_map<int, string> m1 {{ 1, "one" }, {2, "two" }, { 3, "three" }};
-  const unordered_map<int, string> m2 {{ 1, "one" }, {2, "two" }, { 3, "three" }};
-
-  if (m1 == m2) {
-
-  }
-  fmt::println("m1: {}", m1);
-
-  bimap<int, string> b1 = make_bimap<int, string>( { { 1, "one" }, {2, "two" }, { 3, "three" } });
-  const bimap<int, string> b2 = make_bimap<int, string>( { { 1, "one" }, {2, "two" }, { 3, "three" } });
-
-  if (b1 == b2) {
-  }
-
-  fmt::println("b1: {}", b1);
-
   ROCKET_SCOPE_EXIT([] { nio::out.println("Hello from ROCKET_SCOPE_EXIT"); });
 
   nio::out.println("Hello from toy");

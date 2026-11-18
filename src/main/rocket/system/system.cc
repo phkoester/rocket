@@ -5,6 +5,7 @@
 #include "system.h"
 
 #include "rocket/InputFailure.h"
+#include "rocket/SystemError.h"
 #include "rocket/assert.h"
 #include "rocket/scope.h"
 
@@ -220,7 +221,7 @@ cmdPath(string& path) {
     return lastError();
   }
   if (n >= buf.size()) {
-    return make_error_code(errc::filename_too_long);
+    return errorCode(errc::filename_too_long);
   }
   path.assign(buf.data(), n).append("\\cmd.exe");
   return {};

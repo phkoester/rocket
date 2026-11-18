@@ -451,7 +451,7 @@ checkedDurationCast(typename To::rep count) {
     // overflow
     const i128 val = static_cast<i128>(count) * Ratio::num / Ratio::den;
     if (val < std::numeric_limits<Rep>::min() || val > std::numeric_limits<Rep>::max()) {
-      return {};
+      return std::nullopt;
     }
     return To(static_cast<Rep>(val));
   }
@@ -482,11 +482,11 @@ makeDate(std_int y, std_unsigned m, std_unsigned d) {
 
   // Check the ranges first, because `year`, `month`, and `day` truncate their arguments
   if (y < static_cast<std_int>(year::min()) || y > static_cast<std_int>(year::max()) || m > 12 || d > 31) {
-    return {};
+    return std::nullopt;
   }
   const year_month_day ret { year(y), month(m), day(d) };
   if (not ret.ok()) {
-    return {};
+    return std::nullopt;
   }
   return ret;
 }

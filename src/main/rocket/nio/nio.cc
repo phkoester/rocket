@@ -4,9 +4,9 @@
 
 #include "nio.h"
 
+#include "rocket/SystemError.h"
 #include "rocket/assert.h"
 #include "rocket/io/io.h"
-#include "rocket/io/IoError.h"
 
 #include <fmt/ostream.h>
 #include <fmt/std.h>
@@ -31,10 +31,9 @@ namespace {
 
 // `FileLock` -----------------------------------------------------------------------------------------------
 
-/**
- * Holds the lock of a `FILE`, so that several characters can be read with #getcUnlocked, without locking and
- * unlocking the `FILE` for each of them. The lock is recursive, so the `FILE` can still be used otherwise.
- */
+/// Holds the lock of a `FILE`, so that several characters can be read with #getcUnlocked, without locking
+/// and unlocking the `FILE` for each of them. The lock is recursive, so the `FILE` can still be used
+/// otherwise.
 struct FileLock {
   explicit FileLock(FILE* file) : file_(file) {
 #ifdef ROCKET_OS_WINDOWS
@@ -92,12 +91,10 @@ toVoid(const scn::scan_expected<T>& result) {
   return {};
 }
 
-/**
- * Checks the result of scanning from @p file, a `scn::scan_file` over @p in.
- *
- * Afterwards, `scn::scan_file` puts unread input back into its `FILE`. Input it could not put back is left
- * in its prelude, which would be lost. If @p in can seek, it seeks back over that input instead.
- */
+/// Checks the result of scanning from @p file, a `scn::scan_file` over @p in.
+///
+/// Afterwards, `scn::scan_file` puts unread input back into its `FILE`. Input it could not put back is left
+/// in its prelude, which would be lost. If @p in can seek, it seeks back over that input instead.
 template<typename T>
 scn::scan_expected<void>
 checkFileScan(Source& in, const scn::scan_file& file, const scn::scan_expected<T>& result) {
@@ -118,6 +115,18 @@ checkFileScan(Source& in, const scn::scan_file& file, const scn::scan_expected<T
 span<const u8>
 bytes(const fmt::memory_buffer& buf) {
   return { reinterpret_cast<const u8*>(buf.data()), buf.size() };
+}
+
+/**
+ * Clears the state of @p s. This throws only if @p s has no stream buffer, which sets `badbit`, and `badbit`
+ * is in the exception mask. This is ignored here, @p s stays bad then.
+ */
+void
+clearState(ios& s) noexcept {
+  try {
+    s.clear();
+  } catch (const ios::failure&) { // NOLINT(bugprone-empty-catch)
+  }
 }
 
 /**
@@ -170,39 +179,24 @@ formatToBuffer(const locale& locale, fmt::string_view fmt, fmt::format_args args
   return ret;
 }
 
-std::error_code
-genericErrorCode(int error) {
-  return { error, generic_category() };
-}
-
-/// Returns the error code for `errno`, or `errc::io_error` if `errno` is not set.
-std::error_code
-errnoCode() {
-  return errno != 0 ? genericErrorCode(errno) : make_error_code(errc::io_error);
-}
-
-/// Returns the error code for a failure of the stream buffer of @p s. Only a `std::filebuf` leaves a
-/// meaningful `errno` behind. Any other stream buffer may have thrown, and the stream swallowed it, and the
-/// exception runtime may have left a stale `errno` then, so this is `errc::io_error`.
-std::error_code
-streamBufferErrorCode(const ios& s) {
-  return dynamic_cast<const filebuf*>(s.rdbuf()) != nullptr ? errnoCode() : make_error_code(errc::io_error);
-}
-
-/// Clears the state of @p s. This throws only if @p s has no stream buffer, which sets `badbit`, and `badbit`
-/// is in the exception mask. This is ignored here, @p s stays bad then.
-void
-clearState(ios& s) noexcept {
-  try {
-    s.clear();
-  } catch (const ios::failure&) { // NOLINT(bugprone-empty-catch)
-  }
-}
-
 /// Returns the scan error for an I/O error.
 scn::scan_expected<void>
 ioScanError() {
   return scn::unexpected(scn::scan_error(scn::scan_error::invalid_source_state, "I/O error"));
+}
+
+void
+removeTrailingCr(string& line) {
+  if (line.ends_with('\r')) {
+    line.pop_back();
+  }
+}
+
+void
+removeTrailingCr(string_view& line) {
+  if (line.ends_with('\r')) {
+    line.remove_suffix(1);
+  }
 }
 
 /// Sets `badbit` on @p s. This throws if `badbit` is in the exception mask of @p s, which is ignored here.
@@ -242,31 +236,17 @@ runStreamOp(ios& s, error_code& ec, F op) {
     throw;
   } catch (const bad_alloc&) {
     if (s.bad()) {
-      ec = make_error_code(errc::not_enough_memory);
+      ec = errorCode(errc::not_enough_memory);
     }
     throw;
   } catch (const exception&) {
     // Throwing leaves `errno` meaningless, the exception runtime may have touched it
     setBad(s);
-    ec = make_error_code(errc::io_error);
+    ec = errorCode(errc::io_error);
     return;
   }
   if (s.bad()) {
-    ec = streamBufferErrorCode(s);
-  }
-}
-
-void
-removeTrailingCr(string& line) {
-  if (line.ends_with('\r')) {
-    line.pop_back();
-  }
-}
-
-void
-removeTrailingCr(string_view& line) {
-  if (line.ends_with('\r')) {
-    line.remove_suffix(1);
+    ec = errorCode(s);
   }
 }
 
@@ -312,17 +292,17 @@ FileSink::FileSink(FILE* file) :
   closeOnDestroy_(false) {
   ROCKET_CHECK(file, file != nullptr);
   if (bad()) {
-    ec_ = make_error_code(errc::io_error);
+    ec_ = errorCode(errc::io_error);
   }
   seekable_ = io::file::seekable(file_);
 }
 
 FileSink::FileSink(const fs::path& path, bool append, bool binary) :
-  file_(io::file::open(path, writeMode(append, binary))),
   closeOnDestroy_(true) {
+  errno = 0;
+  file_ = io::file::open(path, writeMode(append, binary));
   if (file_ == nullptr) {
-    const auto ec = genericErrorCode(errno);
-    throw io::IoError(ec, fmt::format("cannot open file `{}` for writing", path));
+    throw SystemError(errorCode(errno), fmt::format("cannot open file `{}` for writing", path));
   }
   seekable_ = io::file::seekable(file_);
 }
@@ -354,7 +334,7 @@ FileSink::flush() {
   errno = 0;
   if (fflush(file_) != 0) {
     if (bad()) {
-      ec_ = errnoCode();
+      ec_ = errorCode(errno);
     }
     return false;
   }
@@ -382,7 +362,7 @@ FileSink::vprint(fmt::string_view fmt, fmt::format_args args) {
     return false;
   }
   if (bad()) {
-    ec_ = errnoCode();
+    ec_ = errorCode(errno);
     return false;
   }
   return true;
@@ -402,7 +382,7 @@ FileSink::vprint(fmt::text_style style, fmt::string_view fmt, fmt::format_args a
     return false;
   }
   if (bad()) {
-    ec_ = errnoCode();
+    ec_ = errorCode(errno);
     return false;
   }
   return true;
@@ -428,7 +408,7 @@ FileSink::write(span<const u8> in) {
   errno = 0;
   const auto ret = fwrite(in.data(), 1, in.size(), file_);
   if (bad()) {
-    ec_ = errnoCode();
+    ec_ = errorCode(errno);
   }
   return ret;
 }
@@ -478,7 +458,7 @@ SpanSink::write(span<const u8> in) {
 StreamSink::StreamSink(ostream& os) :
   ptr_(&os) {
   if (bad()) {
-    ec_ = make_error_code(errc::io_error);
+    ec_ = errorCode(errc::io_error);
   }
   seekable_ = io::stream::seekable(out());
 }
@@ -488,7 +468,7 @@ StreamSink::StreamSink(const fs::path& path, bool append, bool binary) {
   errno = 0;
   owned_.open(path, (append ? ios::app : ios::trunc) | (binary ? ios::binary : ios::openmode {}));
   if (not owned_.is_open()) {
-    throw io::IoError(errnoCode(), fmt::format("cannot open file `{}` for writing", path));
+    throw SystemError(errorCode(errno), fmt::format("cannot open file `{}` for writing", path));
   }
   seekable_ = io::stream::seekable(out());
 }
@@ -714,17 +694,17 @@ FileSource::FileSource(FILE* file) :
   closeOnDestroy_(false) {
   ROCKET_CHECK(file, file != nullptr);
   if (bad()) {
-    ec_ = make_error_code(errc::io_error);
+    ec_ = errorCode(errc::io_error);
   }
   seekable_ = io::file::seekable(file_);
 }
 
 FileSource::FileSource(const fs::path& path, bool binary) :
-  file_(io::file::open(path, binary ? "rb" : "r")),
   closeOnDestroy_(true) {
+  errno = 0;
+  file_ = io::file::open(path, binary ? "rb" : "r");
   if (file_ == nullptr) {
-    const auto ec = genericErrorCode(errno);
-    throw io::IoError(ec, fmt::format("cannot open file `{}` for reading", path));
+    throw SystemError(errorCode(errno), fmt::format("cannot open file `{}` for reading", path));
   }
   seekable_ = io::file::seekable(file_);
 }
@@ -762,7 +742,7 @@ FileSource::peek() {
   const i32 c = getcUnlocked(file_);
   if (c == EOF) {
     if (bad()) {
-      ec_ = errnoCode();
+      ec_ = errorCode(errno);
     }
     return nullopt;
   }
@@ -781,7 +761,7 @@ FileSource::read(span<u8> out) {
   errno = 0;
   const auto ret = fread(out.data(), 1, out.size(), file_);
   if (bad()) {
-    ec_ = errnoCode();
+    ec_ = errorCode(errno);
   }
   return ret;
 }
@@ -799,7 +779,7 @@ FileSource::readln() {
   i32 c = getcUnlocked(file_);
   if (c == EOF) {
     if (bad()) {
-      ec_ = errnoCode();
+      ec_ = errorCode(errno);
     }
     return nullopt;
   }
@@ -816,7 +796,7 @@ FileSource::readln() {
   // `getc` also returns `EOF` on an I/O error. The line read so far is incomplete then, so it is dropped, as
   // with `StreamSource`, where `getline` fails once `badbit` is set
   if (bad()) {
-    ec_ = errnoCode();
+    ec_ = errorCode(errno);
     return nullopt;
   }
   return ret;
@@ -839,12 +819,12 @@ FileSource::seek(i64 offset, SeekMode mode) { // NOLINT
   errno = 0;
   if (not seekable()) {
     errno = ESPIPE;
-    ec_ = genericErrorCode(errno);
+    ec_ = errorCode(errno);
     return false;
   }
   const auto ret = io::file::seek(file_, offset, origin);
   if (bad()) {
-    ec_ = errnoCode();
+    ec_ = errorCode(errno);
     return false;
   }
   return ret;
@@ -873,7 +853,7 @@ FileSource::vscan(string_view fmt, scn::scan_args args) {
   const auto result = scn::vscan(file, fmt, args);
   if (bad()) {
     // Do not put back unread input, a seek would restore the device
-    ec_ = errnoCode();
+    ec_ = errorCode(errno);
     return ioScanError();
   }
   return checkFileScan(*this, file, result);
@@ -890,7 +870,7 @@ FileSource::vscan(const locale& locale, string_view fmt, scn::scan_args args) {
   const auto result = scn::vscan(locale, file, fmt, args);
   if (bad()) {
     // Do not put back unread input, a seek would restore the device
-    ec_ = errnoCode();
+    ec_ = errorCode(errno);
     return ioScanError();
   }
   return checkFileScan(*this, file, result);
@@ -939,17 +919,18 @@ SpanSource::seek(i64 offset, SeekMode mode) {
 StreamSource::StreamSource(std::istream& is) :
   ptr_(&is) {
   if (bad()) {
-    ec_ = make_error_code(errc::io_error);
+    ec_ = errorCode(errc::io_error);
   }
   seekable_ = io::stream::seekable(in());
 }
 
 StreamSource::StreamSource(const fs::path& path, bool binary) {
-  // A failing `open` sets `failbit`, not `badbit`. The exception mask of `owned_` is empty, so it does not throw
+  // A failing `open` sets `failbit`, not `badbit`. The exception mask of `owned_` is empty, so it does not
+  // throw
   errno = 0;
   owned_.open(path, binary ? ios::binary : ios::openmode {});
   if (not owned_.is_open()) {
-    throw io::IoError(errnoCode(), fmt::format("cannot open file `{}` for reading", path));
+    throw SystemError(errorCode(errno), fmt::format("cannot open file `{}` for reading", path));
   }
   seekable_ = io::stream::seekable(in());
 }
@@ -1039,13 +1020,13 @@ StreamSource::seek(i64 offset, SeekMode mode) { // NOLINT
   clearState(in());
   ec_.clear();
   if (bad()) { // Without a stream buffer
-    ec_ = make_error_code(errc::io_error);
+    ec_ = errorCode(errc::io_error);
     return false;
   }
   errno = 0;
   if (not seekable()) {
     errno = ESPIPE;
-    ec_ = genericErrorCode(errno);
+    ec_ = errorCode(errno);
     return false;
   }
 

@@ -22,7 +22,7 @@ jsonStringOffset(optional<u64> pos, u64 unescapedOffset, const Positions& positi
   while (it == positions.right.end() && unescapedOffset > 0) {
     it = positions.right.find(--unescapedOffset);
   }
-  ROCKET_EXPECT(it != positions.right.end());
+  ROCKET_ASSERT(it != positions.right.end());
 
   // Need to add 1 because of the opening quote
   return *pos + 1 + it->second;

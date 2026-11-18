@@ -155,9 +155,8 @@ ExecResult exec(const std::vector<std::string_view>& args, bool combined = false
  */
 consteval std::string_view
 executableSuffix() {
-  using namespace std;
 #ifdef ROCKET_OS_WINDOWS
-  return ".exe"sv;
+  return ".exe";
 #else
   return {};
 #endif

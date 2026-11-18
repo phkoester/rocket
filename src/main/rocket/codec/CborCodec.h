@@ -29,7 +29,7 @@ namespace internal::cbor {
 template<typename T>
 struct CborItem {
   explicit CborItem(cbor_item_t* ptr) : ptr_(ptr) {
-    ROCKET_CHECK(ptr, ptr != nullptr);
+    ROCKET_EXPECT(ptr != nullptr, "cannot allocate CBOR item");
     ROCKET_ASSERT(cbor_refcount(ptr) > 0);
   }
 

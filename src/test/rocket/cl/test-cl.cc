@@ -8,6 +8,8 @@
 #include "rocket/filesystem/filesystem.h"
 #include "rocket/log/log.h"
 
+#include <fmt/std.h>
+
 #include <fstream>
 
 using namespace rocket::cl;
@@ -620,7 +622,7 @@ TEST(MODULE, argFiles) { // NOLINT(*-complexity)
 
   // A file that includes itself
   {
-    const string self = writeFile("self.txt", fmt::format("x\n@{}\n", (dir / "self.txt").string()));
+    const string self = writeFile("self.txt", fmt::format("x\n@{}\n", dir / "self.txt"));
     vector<string> args;
     nio::StringSink buf;
     EXPECT_FALSE(parse({ "@" + self }, args, buf));

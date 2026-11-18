@@ -3,21 +3,23 @@
  */
 
 #include "rocket-test/rocket-test.h"
+#include "rocket/SystemError.h"
 
 #include "rocket/enum-scan.h"
 #include "rocket/chrono/chrono-scan.h"
 #include "rocket/filesystem/filesystem.h"
-#include "rocket/io/IoError.h"
 #include "rocket/io/io.h"
 #include "rocket/log/log.h"
 #include "rocket/nio/nio.h"
+
+#include <fmt/std.h>
 
 #include <fstream>
 #include <functional>
 #include <utility>
 
 #ifndef ROCKET_OS_WINDOWS
-#include <unistd.h> // `pipe`, `write`, `close`
+  #include <unistd.h> // `pipe`, `write`, `close`
 #endif
 
 using namespace rocket::nio;
@@ -202,15 +204,15 @@ testString(u64 n, i32 add = 0) {
 }
 
 /**
- * Returns a matcher for the #rocket::io::IoError thrown when opening a file that does not exist. Its message
+ * Returns a matcher for the #rocket::SystemError thrown when opening a file that does not exist. Its message
  * is @p msg, followed by the message of the error code.
  */
 auto
 throwsDoesNotExist(const string& msg) {
-  const auto ec = make_error_code(errc::no_such_file_or_directory);
-  return Throws<io::IoError>(AllOf(
-    Property(&io::IoError::code, Eq(ec)),
-    Property(&io::IoError::message, Eq(fmt::format("{}: {}", msg, ec.message())))));
+  const auto ec = errorCode(errc::no_such_file_or_directory);
+  return Throws<rocket::SystemError>(AllOf(
+    Property(&rocket::SystemError::code, Eq(ec)),
+    Property(&rocket::SystemError::message, Eq(fmt::format("{}: {:s}", msg, ec)))));
 }
 
 // Local test functions -------------------------------------------------------------------------------------
@@ -492,7 +494,7 @@ TEST(MODULE, StreamSinkBufferThrows) { // NOLINT(*-complexity)
     int_type
     overflow(int_type /*ch*/) override {
       if (system) {
-        throw system_error(make_error_code(errc::no_space_on_device));
+        throw system_error(errorCode(errc::no_space_on_device));
       }
       throw runtime_error("simulated I/O error");
     }

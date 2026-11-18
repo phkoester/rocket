@@ -353,7 +353,7 @@ struct FileSink final : Sink {
    * @param path a path to a file
    * @param append whether to append to the file instead of overwriting it
    * @param binary whether to open the file in binary or text mode
-   * @throw #rocket::io::IoError if the file cannot be opened
+   * @throw #rocket::SystemError if the file cannot be opened
    */
   explicit FileSink(const std::filesystem::path& path, bool append = false, bool binary = true);
 
@@ -387,7 +387,7 @@ protected:
 
 ROCKET_TEST_PRIVATE:
 
-  FILE* file_; ///< The `FILE` pointer, never null.
+  FILE* file_ = nullptr; ///< The `FILE` pointer, never null.
   bool closeOnDestroy_; ///< Whether to close the file on destruction.
 };
 
@@ -494,7 +494,7 @@ struct StreamSink final : Sink {
    * @param path a path to a file
    * @param append whether to append to the file instead of overwriting it
    * @param binary whether to open the file in binary or text mode
-   * @throw #rocket::io::IoError if the file cannot be opened
+   * @throw #rocket::SystemError if the file cannot be opened
    */
   explicit StreamSink(const std::filesystem::path& path, bool append = false, bool binary = true);
 
@@ -869,7 +869,7 @@ struct FileSource final : Source {
    *
    * @param path a path to a file
    * @param binary whether to open the file in binary or text mode
-   * @throw #rocket::io::IoError if the file cannot be opened
+   * @throw #rocket::SystemError if the file cannot be opened
    */
   explicit FileSource(const std::filesystem::path& path, bool binary = true);
 
@@ -905,7 +905,7 @@ protected:
 
 ROCKET_TEST_PRIVATE:
 
-  FILE* file_; ///< The `FILE` pointer, never null.
+  FILE* file_ = nullptr; ///< The `FILE` pointer, never null.
   bool closeOnDestroy_; ///< Whether to close the file on destruction.
 };
 
@@ -1036,7 +1036,7 @@ struct StreamSource final : Source {
    *
    * @param path a path to a file
    * @param binary whether to open the file in binary or text mode
-   * @throw #rocket::io::IoError if the file cannot be opened
+   * @throw #rocket::SystemError if the file cannot be opened
    */
   explicit StreamSource(const std::filesystem::path& path, bool binary = true);
 

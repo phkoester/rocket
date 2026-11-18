@@ -7,6 +7,8 @@
 #include "rocket/assert.h"
 #include "rocket/system/system.h"
 
+#include <fmt/std.h>
+
 namespace fs = std::filesystem;
 
 namespace {
@@ -32,10 +34,13 @@ const bool TEST_TERMINAL = system::env::get<bool>("ROCKET_TEST_TERMINAL").value_
 
 fs::path
 binaryDir() {
-  if (not BINARY_DIR || BINARY_DIR->empty()) {
-    ROCKET_FAIL("`BINARY_DIR` is not set");
-  }
-  return *BINARY_DIR;
+  const static fs::path ret = [] {
+    if (not BINARY_DIR || BINARY_DIR->empty()) {
+      ROCKET_FAIL("`BINARY_DIR` is not set");
+    }
+    return *BINARY_DIR;
+  }();
+  return ret;
 }
 
 /// Returns the path to the executable @p name in @p dir.
@@ -43,7 +48,7 @@ fs::path
 executable(const fs::path& dir, string_view name) {
   fs::path ret = dir / fmt::format("{}{}", name, system::executableSuffix());
   if (not is_regular_file(ret)) {
-    ROCKET_FAIL("cannot find executable `{}`", ret.string());
+    ROCKET_FAIL("cannot find executable `{}`", ret);
   }
   return ret;
 }
@@ -51,15 +56,19 @@ executable(const fs::path& dir, string_view name) {
 /// Returns if the build uses a multi-config generator.
 bool
 isMultiConfig() {
-  return CONFIGS && not CONFIGS->empty();
+  const static bool ret = CONFIGS && not CONFIGS->empty();
+  return ret;
 }
 
 fs::path
 sourceDir() {
-  if (not SOURCE_DIR || SOURCE_DIR->empty()) {
-    ROCKET_FAIL("`SOURCE_DIR` is not set");
-  }
-  return *SOURCE_DIR;
+  const static fs::path ret = [] {
+    if (not SOURCE_DIR || SOURCE_DIR->empty()) {
+      ROCKET_FAIL("`SOURCE_DIR` is not set");
+    }
+    return *SOURCE_DIR;
+  }();
+  return ret;
 }
 
 /// Returns @p dir, followed by the configuration subdirectory if the build uses a multi-config generator.

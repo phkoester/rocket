@@ -157,7 +157,7 @@ tryLocale(const string& name) {
   try {
     return locale(name);
   } catch (const runtime_error&) {
-    return {};
+    return nullopt;
   }
 }
 

@@ -43,7 +43,7 @@ open(const filesystem::path& path, std::string_view modes) {
 
 bool
 seek(FILE* file, i64 offset, i32 origin) {
-  ROCKET_ASSERT(file != nullptr);
+  ROCKET_CHECK(file, file != nullptr);
 
 #ifdef ROCKET_OS_WINDOWS
   const auto result = _fseeki64(file, offset, origin);
@@ -62,7 +62,7 @@ seek(FILE* file, i64 offset, i32 origin) {
 
 bool
 seekable(FILE* file) {
-  ROCKET_ASSERT(file != nullptr);
+  ROCKET_CHECK(file, file != nullptr);
 
   const i32 fd = ROCKET_FILENO(file);
 #ifdef ROCKET_OS_WINDOWS
@@ -94,7 +94,7 @@ seekable(FILE* file) {
 
 u64
 tell(FILE* file) {
-  ROCKET_ASSERT(file != nullptr);
+  ROCKET_CHECK(file, file != nullptr);
 
 #ifdef ROCKET_OS_WINDOWS
   const auto result = _ftelli64(file); // `__int64`

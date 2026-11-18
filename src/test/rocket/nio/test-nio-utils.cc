@@ -4,11 +4,11 @@
 
 #include "rocket-test/rocket-test.h"
 
+#include "rocket/SystemError.h"
 #include "rocket/filesystem/filesystem.h"
-#include "rocket/io/IoError.h"
 #include "rocket/io/io.h"
-#include "rocket/nio/nio-utils.h"
 #include "rocket/nio/nio.h"
+#include "rocket/nio/nio-utils.h"
 
 using namespace rocket::nio;
 
@@ -51,10 +51,11 @@ forEachSource(string_view input, Fn fn) {
   }
 }
 
-/// Returns a matcher for the #rocket::io::IoError thrown when a #rocket::nio::testing::FailingSource fails.
+/// Returns a matcher for the #rocket::SystemError thrown when a #rocket::nio::testing::FailingSource fails.
 auto
 throwsIoError() {
-  return Throws<io::IoError>(Property(&io::IoError::code, Eq(make_error_code(errc::io_error))));
+  return Throws<rocket::SystemError>(
+    Property(&rocket::SystemError::code, Eq(errorCode(errc::io_error))));
 }
 
 // Local test functions -------------------------------------------------------------------------------------
@@ -612,7 +613,7 @@ TEST(MODULE, skipCCommentsUnterminated) {
   });
 }
 
-// `rocket::io::IoError` ....................................................................................
+// `rocket::SystemError` ....................................................................................
 
 TEST(MODULE, ioErrors) {
   // Each function reads the given input, and then the device fails

@@ -228,7 +228,7 @@ struct BasicCharacter {
     if (pos == str_.size()) {
       return CodePoint(cp);
     }
-    return {};
+    return std::nullopt;
   }
 
   /**

@@ -3,8 +3,8 @@
  */
 
 #include "rocket/InputFailure.h"
+#include "rocket/SystemError.h"
 #include "rocket/assert.h"
-#include "rocket/io/IoError.h"
 #include "rocket/nio/nio-utils.h"
 #include "rocket/unicode/Iterator.h"
 #include "rocket/unicode/unicode.h"
@@ -130,13 +130,13 @@ isWordCodePoint(unicode::CodePoint cp) {
  * error from the end of the input.
  *
  * @return the next character, or an empty optional at the end of the input
- * @throw #rocket::io::IoError if @p in is bad
+ * @throw #rocket::SystemError if @p in is bad
  */
 optional<char>
 peekChar(Source& in) {
   const auto ret = in.peek();
   if (not ret && in.bad()) {
-    throw io::IoError(in.code());
+    throw SystemError(in.code());
   }
   return ret;
 }
@@ -145,7 +145,7 @@ peekChar(Source& in) {
  * Reads a single character from @p in into @p c, but tells an I/O error from the end of the input.
  *
  * @return if a character was read, i.e., `false` at the end of the input
- * @throw #rocket::io::IoError if @p in is bad
+ * @throw #rocket::SystemError if @p in is bad
  */
 bool
 readOne(Source& in, char& c) {
@@ -153,7 +153,7 @@ readOne(Source& in, char& c) {
     return true;
   }
   if (in.bad()) {
-    throw io::IoError(in.code());
+    throw SystemError(in.code());
   }
   return false;
 }
@@ -167,7 +167,7 @@ readValidCodePoint(Source& in) {
   try {
     return readCodePoint(in);
   } catch (const InputFailure&) {
-    return {}; // Invalid UTF-8
+    return nullopt; // Invalid UTF-8
   }
 }
 
@@ -340,7 +340,7 @@ readChoice( // NOLINT(*-complexity)
     if (not seen.empty()) {
       rewindTo(in, start);
     }
-    return {};
+    return nullopt;
   };
 
   if (not ret) {
@@ -369,7 +369,7 @@ readCodePoint(Source& in) {
 
     const auto str = contiguous->str();
     if (str.empty()) {
-      return {}; // `nextCodePoint` would throw for an empty string
+      return nullopt; // `nextCodePoint` would throw for an empty string
     }
 
     try {
@@ -390,7 +390,7 @@ readCodePoint(Source& in) {
   // a lead byte, nothing is consumed
   const auto first = peekChar(in);
   if (not first) {
-    return {};
+    return nullopt;
   }
   const auto len = unicode::utf8::lengthFromByte(*first, unicode::InvalidUnicodePolicy::Continue);
   if (len == NPOS) {
@@ -400,7 +400,7 @@ readCodePoint(Source& in) {
   string s(len, '\0');
   const u64 n = in.read(s);
   if (n != len && in.bad()) {
-    throw io::IoError(in.code()); // The position is unspecified
+    throw SystemError(in.code()); // The position is unspecified
   }
 
   // Decode the code point. On failure, go back over the bytes read
@@ -428,16 +428,16 @@ readIdentifier(Source& in) {
   // character must be read as a whole code point, and gone back over on failure
   const auto firstByte = peekChar(in);
   if (not firstByte || (static_cast<u8>(*firstByte) < 0x80 && not isStart(static_cast<char32>(*firstByte)))) {
-    return {};
+    return nullopt;
   }
   const auto start = in.tell();
   const auto first = readValidCodePoint(in);
   if (not first) {
-    return {}; // Invalid UTF-8. `readCodePoint` has not advanced the source
+    return nullopt; // Invalid UTF-8. `readCodePoint` has not advanced the source
   }
   if (not isStart(*first)) {
     rewindTo(in, start);
-    return {};
+    return nullopt;
   }
 
   string ret { static_cast<string>(*first) };
@@ -551,7 +551,7 @@ readUntilChar(Source& in, char c) {
     const auto remaining = contiguous->str();
     const u64 pos = remaining.find(c);
     if (pos == NPOS) {
-      return {};
+      return nullopt;
     }
     in.seek(static_cast<i64>(pos + 1), SeekMode::cur);
     return string(remaining.substr(0, pos));
@@ -589,7 +589,7 @@ readUntilUnescapedChar(Source& in, char c) {
     while (true) {
       pos = remaining.find(c, pos);
       if (pos == NPOS) {
-        return {};
+        return nullopt;
       }
       if (not isEscaped(remaining, pos)) {
         in.seek(static_cast<i64>(pos + 1), SeekMode::cur);
