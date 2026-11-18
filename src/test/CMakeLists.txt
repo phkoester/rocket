@@ -1,6 +1,4 @@
-#
 # CMakeLists.txt
-#
 
 include(GoogleTest)
 

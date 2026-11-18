@@ -1,6 +1,4 @@
-#
 # CMakeLists.txt
-#
 
 set(GENERATED_DIR ${CMAKE_CURRENT_BINARY_DIR}/generated)
 

@@ -1,4 +1,3 @@
-#
 # apply-patch.cmake
 #
 # Applies a patch to the Git checkout in the current directory. Meant as the `PATCH_COMMAND` of
@@ -10,7 +9,6 @@
 # of it is applied already, as happens when the patch changes. Local changes in the checkout are lost. Pass
 # the hash of the patch as `PATCH_HASH` to make a changed patch change the command, which makes
 # `FetchContent` run the command again; the script itself ignores it.
-#
 
 if(NOT DEFINED PATCH)
   message(FATAL_ERROR "`PATCH` is not set")

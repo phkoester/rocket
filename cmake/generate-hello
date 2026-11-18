@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 #
 # generate-hello
-#
 
 """
 Usage: generate-hello

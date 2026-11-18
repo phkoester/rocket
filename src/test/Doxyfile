@@ -1,6 +1,4 @@
-#
 # Doxyfile
-#
 
 @INCLUDE = $(GAIA_DIR)/src/main/doxygen/Doxyfile-gaia
 

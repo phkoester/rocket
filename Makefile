@@ -1,4 +1,3 @@
-#
 # Makefile
 #
 # Parameters:
@@ -8,7 +7,6 @@
 # Targets:
 #
 # - test-terminal
-#
 
 DEFAULT_RUN_TARGET := toy
 

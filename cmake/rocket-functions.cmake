@@ -1,8 +1,6 @@
-#
 # rocket-functions.cmake
 #
 # Helper functions for Rocket.
-#
 
 # Private functions -----------------------------------------------------------------------------------------
 
