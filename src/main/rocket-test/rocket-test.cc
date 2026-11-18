@@ -26,6 +26,8 @@ const optional<string> SOURCE_DIR = system::env::get<string>("SOURCE_DIR").
   transform([](string val) { return optional<string>(std::move(val)); }).
   value_or(nullopt);
 
+const bool TEST_TERMINAL = system::env::get<bool>("ROCKET_TEST_TERMINAL").value_or(false);
+
 // Local functions ------------------------------------------------------------------------------------------
 
 fs::path
@@ -101,7 +103,7 @@ testSource(string_view name) {
 
 bool
 testTerminal() {
-  return system::env::get<bool>("ROCKET_TEST_TERMINAL").value_or(false);
+  return TEST_TERMINAL;
 }
 
 } // namespace rocket::test
