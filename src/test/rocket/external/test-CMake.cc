@@ -26,7 +26,7 @@ TEST(MODULE, generated) {
 }
 
 TEST(MODULE, version) {
-  EXPECT_GT(ROCKET_VERSION, 0);
+  EXPECT_GT(rocket::VERSION, 0);
 }
 
 // EOF

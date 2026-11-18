@@ -132,7 +132,7 @@ MyApp::OnInit() {
   const cl::OptionGroup general("General control");
   const cl::CommandLineConfig config {
     .usages={ "[OPTION]... [FILE]..." },
-    .version=fmt::format("{} {}\n\n{}", "Rocket", ROCKET_VERSION_NAME, COPYRIGHT)
+    .version=fmt::format("{} {}\n\n{}", "Rocket", rocket::VERSION_NAME, COPYRIGHT)
   };
   cl::CommandLine cl({
     cl::Option::help(&general, pcl.help),
@@ -254,7 +254,7 @@ MyFrame::onAbout([[maybe_unused]] wxCommandEvent& ev) {
   info.SetCopyright(COPYRIGHT);
   info.SetDescription(description);
   info.SetName(process().name());
-  info.SetVersion(fmt::format("Version {}", ROCKET_VERSION_NAME));
+  info.SetVersion(fmt::format("Version {}", rocket::VERSION_NAME));
   info.SetWebSite("https://github.com/phkoester/rocket");
 
   const wxBitmapBundle logo = loadLogo();

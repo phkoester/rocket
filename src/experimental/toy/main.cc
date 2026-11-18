@@ -141,7 +141,7 @@ main(i32 argc, char **argv) {
   const cl::OptionGroup general("General control");
   const cl::CommandLineConfig config {
     .usages={ "[OPTION]... [ARG]..." },
-    .version=fmt::format("{} {}\n\n{}", "Rocket", ROCKET_VERSION_NAME, COPYRIGHT)
+    .version=fmt::format("{} {}\n\n{}", "Rocket", rocket::VERSION_NAME, COPYRIGHT)
   };
   cl::CommandLine cl({
     cl::Option::custom({

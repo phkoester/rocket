@@ -9,6 +9,7 @@
 
 #pragma once
 
+#include "rocket/type-traits.h"
 #include "rocket/unicode/Iterator.h"
 #include "rocket/unicode/Character.h"
 #include "rocket/unicode/unicode.h"
@@ -32,8 +33,8 @@
  *
  * - No format specifiers are accepted.
  */
-template<>
-struct scn::scanner<rocket::unicode::CodePoint, char> {
+template<typename C> requires rocket::IsChar<C>
+struct scn::scanner<rocket::unicode::CodePoint, C> {
   /// @cond undocumented
 
   template<typename ParseContext>
@@ -52,7 +53,7 @@ struct scn::scanner<rocket::unicode::CodePoint, char> {
     auto it = *skipped;
     const auto end = ctx.end();
 
-    for (const char c : { 'U', '+' }) {
+    for (const C c : { C('U'), C('+') }) {
       if (it == end) {
         return unexpected(scan_error(scan_error::end_of_input, "expected a code point"));
       }
@@ -94,7 +95,7 @@ struct scn::scanner<rocket::unicode::CodePoint, char> {
 private:
 
   static constexpr int
-  hexDigit(char c) {
+  hexDigit(C c) {
     if (c >= '0' && c <= '9') {
       return c - '0';
     }
@@ -120,24 +121,24 @@ private:
  * underlying string scanner. It scans a word and then gives back the characters that follow its first
  * grapheme cluster so that, for example, `ab` scans as `a` and leaves `b` in the input.
  */
-template<>
-struct scn::scanner<rocket::unicode::Character<char>, char> : scn::scanner<std::string, char> {
+template<typename C> requires rocket::IsChar<C>
+struct scn::scanner<rocket::unicode::Character<C>, C> : scn::scanner<std::basic_string<C>, C> {
   /// @cond undocumented
 
   template<typename Context>
   scan_expected<typename Context::iterator>
-  scan(rocket::unicode::Character<char>& val, Context& ctx) const {
+  scan(rocket::unicode::Character<C>& val, Context& ctx) const {
     // This must scan a #std::string, not a #std::string_view, because the latter does not work when scanning
     // from a #std::istream
-    std::string str;
-    auto result = scn::scanner<std::string, char>::scan(str, ctx);
+    std::basic_string<C> str;
+    auto result = scn::scanner<std::basic_string<C>, C>::scan(str, ctx);
     if (not result) {
       return unexpected(result.error());
     }
 
-    std::string_view first;
+    std::basic_string_view<C> first;
     try {
-      auto iter = rocket::unicode::Iterator<char>(rocket::unicode::IteratorType::Character, str);
+      auto iter = rocket::unicode::Iterator<C>(rocket::unicode::IteratorType::Character, str);
       first = iter.nextSegment();
     } catch (const std::exception&) {
       return unexpected(scan_error(scan_error::invalid_scanned_value, "invalid character"));
@@ -145,7 +146,7 @@ struct scn::scanner<rocket::unicode::Character<char>, char> : scn::scanner<std::
     if (first.empty()) {
       return unexpected(scan_error(scan_error::invalid_scanned_value, "expected a character"));
     }
-    val = rocket::unicode::Character<char>(first);
+    val = rocket::unicode::Character<C>(first);
 
     // Give back what follows the first grapheme cluster. The iterators of scnlib are bidirectional
     auto it = *result;

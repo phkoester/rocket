@@ -2,9 +2,9 @@
  * main.cc
  */
 
-#include <rocket/Process.h>
-#include <rocket/icu.h>
-#include <rocket/version.h>
+#include "rocket/Process.h"
+#include "rocket/icu.h"
+#include "rocket/version.h"
 
 #ifdef ROCKET_OS_WINDOWS
   #include <rocket/windows.h>
@@ -14,11 +14,16 @@
 
 #include <fmt/format.h>
 
+#ifdef ROCKET_ICU_CMAKE
+  #include <icu-cmake/version.h>
+#endif
+
 #ifdef ROCKET_GUI
   #include <wx/version.h>
 #endif
 
 #include <archive.h>
+
 #include <cbor.h>
 
 #include <algorithm>
@@ -106,7 +111,7 @@ main(i32 argc, char **argv) {
 
   // Rocket
 
-  rows.emplace_back("Rocket", ROCKET_VERSION_NAME);
+  rows.emplace_back("Rocket", rocket::VERSION_NAME);
 
   // Boost
 
@@ -123,6 +128,12 @@ main(i32 argc, char **argv) {
   #endif
 #else
   rows.emplace_back("ICU", U_ICU_VERSION);
+#endif
+
+  // icu-cmake
+
+#ifdef ROCKET_ICU_CMAKE
+  rows.emplace_back("icu-cmake", icu_cmake::VERSION_NAME);
 #endif
 
   // {fmt}
@@ -147,7 +158,8 @@ main(i32 argc, char **argv) {
   // wxWidgets
 
 #ifdef ROCKET_GUI
-  rows.emplace_back("wxWidgets", fmt::format("{}.{}.{}", wxMAJOR_VERSION, wxMINOR_VERSION, wxRELEASE_NUMBER));
+  rows.emplace_back("wxWidgets", fmt::format("{}.{}.{}",
+    wxMAJOR_VERSION, wxMINOR_VERSION, wxRELEASE_NUMBER));
 #endif
 
   printTable(rows);

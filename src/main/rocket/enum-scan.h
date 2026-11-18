@@ -7,6 +7,7 @@
 #pragma once
 
 #include "rocket/enum-fwd.h"
+#include "rocket/type-traits.h"
 
 #include <scn/scan.h>
 
@@ -23,8 +24,8 @@
  * gives back the characters that follow the longest enum name the word starts with, so that, for example,
  * `Red,` scans as `Red` and leaves the comma in the input.
  */
-template<typename E> requires rocket::Enum<E>::value
-struct scn::scanner<E, char> : scn::scanner<std::string, char> {
+template<typename E, typename C> requires rocket::Enum<E>::value && rocket::IsChar<C>
+struct scn::scanner<E, C> : scn::scanner<std::basic_string<C>, C> {
   /// @cond undocumented
 
   template<typename Context>
@@ -32,8 +33,8 @@ struct scn::scanner<E, char> : scn::scanner<std::string, char> {
   scan(E& val, Context& ctx) const {
     // This must scan a #std::string, not a #std::string_view, because the latter does not work when scanning
     // from a #std::istream
-    std::string str;
-    auto scanResult = scn::scanner<std::string, char>::scan(str, ctx);
+    std::basic_string<C> str;
+    auto scanResult = scn::scanner<std::basic_string<C>, C>::scan(str, ctx);
     if (not scanResult) {
       return scn::unexpected(scanResult.error());
     }

@@ -77,11 +77,9 @@ set(FETCHCONTENT_QUIET FALSE)
 # Feature detection -----------------------------------------------------------------------------------------
 
 # 128-bit integers
-if(GAIA_OS_WINDOWS)
-  # Windows: the MSVC toolchain has no support, and even though the LLVM toolchain does have a builtin
-  # `__int128` type, it will not work with {fmt}. So we don't use `__int128` at any rate
-  set(ROCKET_HAS_INT128 0)
-else()
+# Windows: the MSVC toolchain has no support, and even though the LLVM toolchain does have a builtin
+# `__int128` type, it will not work with {fmt}. So we don't use `__int128` at any rate
+if(NOT GAIA_OS_WINDOWS)
   check_cxx_source_compiles([[
     int main() {
       __int128 i = 1;
@@ -90,7 +88,7 @@ else()
     }
   ]] ROCKET_HAS_INT128)
 endif()
-GaiaStatus("ROCKET_HAS_INT128: ${ROCKET_HAS_INT128}")
+gaiaStatus("ROCKET_HAS_INT128: ${ROCKET_HAS_INT128}")
 
 # C++23 span streams
 check_cxx_source_compiles([[
@@ -105,7 +103,7 @@ check_cxx_source_compiles([[
     return i == 42 ? 0 : 1;
   }
 ]] ROCKET_HAS_STD_SPANSTREAM)
-GaiaStatus("ROCKET_HAS_STD_SPANSTREAM: ${ROCKET_HAS_STD_SPANSTREAM}")
+gaiaStatus("ROCKET_HAS_STD_SPANSTREAM: ${ROCKET_HAS_STD_SPANSTREAM}")
 
 # C++23 stack traces. On Linux, libstdc++ keeps `std::stacktrace` in `libstdc++exp`, which `rocket` links,
 # too
@@ -122,7 +120,7 @@ block()
     }
   ]] ROCKET_HAS_STD_STACKTRACE)
 endblock()
-GaiaStatus("ROCKET_HAS_STD_STACKTRACE: ${ROCKET_HAS_STD_STACKTRACE}")
+gaiaStatus("ROCKET_HAS_STD_STACKTRACE: ${ROCKET_HAS_STD_STACKTRACE}")
 
 # C++20 time zones: `std::chrono::time_zone` and `std::chrono::zoned_time`. This links, too, so the time-zone
 # database must be present in the standard library
@@ -135,7 +133,7 @@ check_cxx_source_compiles([[
     return zt.get_time_zone()->name().empty() ? 1 : 0;
   }
 ]] ROCKET_HAS_STD_CHRONO_TIME_ZONE)
-GaiaStatus("ROCKET_HAS_STD_CHRONO_TIME_ZONE: ${ROCKET_HAS_STD_CHRONO_TIME_ZONE}")
+gaiaStatus("ROCKET_HAS_STD_CHRONO_TIME_ZONE: ${ROCKET_HAS_STD_CHRONO_TIME_ZONE}")
 
 # Experimental scope guards (Library Fundamentals TS v3)
 check_cxx_source_compiles([[
@@ -151,7 +149,7 @@ check_cxx_source_compiles([[
     return i == 2 ? 0 : 1;
   }
 ]] ROCKET_HAS_STD_EXPERIMENTAL_SCOPE)
-GaiaStatus("ROCKET_HAS_STD_EXPERIMENTAL_SCOPE: ${ROCKET_HAS_STD_EXPERIMENTAL_SCOPE}")
+gaiaStatus("ROCKET_HAS_STD_EXPERIMENTAL_SCOPE: ${ROCKET_HAS_STD_EXPERIMENTAL_SCOPE}")
 
 # Configuration ---------------------------------------------------------------------------------------------
 
@@ -160,10 +158,10 @@ if(ROCKET_MASTER_PROJECT)
   set(defaultComponents gui)
 endif()
 
-GaiaAddVar(ROCKET_BUILD_BENCH              BOOL   "${ROCKET_MASTER_PROJECT}" "Build benchmarks")
-GaiaAddVar(ROCKET_BUILD_TEST               BOOL   "${ROCKET_MASTER_PROJECT}" "Build tests")
-GaiaAddVar(ROCKET_COMPONENTS               STRING "${defaultComponents}"     "Additional components to enable: `gui`")
-GaiaAddVar(ROCKET_ICU_CMAKE                BOOL   OFF                        "Use icu-cmake to build ICU")
+gaiaAddVar(ROCKET_BUILD_BENCH BOOL   "${ROCKET_MASTER_PROJECT}" "Build benchmarks")
+gaiaAddVar(ROCKET_BUILD_TEST  BOOL   "${ROCKET_MASTER_PROJECT}" "Build tests")
+gaiaAddVar(ROCKET_COMPONENTS  STRING "${defaultComponents}"     "Additional components to enable: `gui`")
+gaiaAddVar(ROCKET_ICU_CMAKE   BOOL   OFF                        "Use icu-cmake to build ICU")
 
 # Set compiler and linker options ---------------------------------------------------------------------------
 
@@ -198,7 +196,7 @@ if(index__ GREATER_EQUAL 0)
 else()
   set(ROCKET_GUI OFF)
 endif()
-GaiaStatus("ROCKET_GUI: ${ROCKET_GUI}")
+gaiaStatus("ROCKET_GUI: ${ROCKET_GUI}")
 
 # Dependencies ----------------------------------------------------------------------------------------------
 
@@ -238,7 +236,7 @@ endif()
 
 find_package(Boost ${ROCKET_BOOST_VERSION} QUIET COMPONENTS ${ROCKET_BOOST_COMPONENTS})
 if(NOT Boost_FOUND)
-  GaiaStatus("Boost ${ROCKET_BOOST_VERSION} not found; fetching it")
+  gaiaStatus("Boost ${ROCKET_BOOST_VERSION} not found; fetching it")
 
   # This works with Boost 1.87.0 or higher
   FetchContent_Declare(

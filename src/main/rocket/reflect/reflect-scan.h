@@ -289,8 +289,8 @@ private:
  *   The name must be that of the scanned type.
  * - The `i` format specifier is not needed: whitespace, including line breaks, is skipped.
  */
-template<typename T> requires rocket::reflect::Declared<T>::value
-struct scn::scanner<T, char> : rocket::internal::scan::reflect::Scanner<T, T> {};
+template<typename T, typename C> requires rocket::reflect::Declared<T>::value && rocket::IsChar<C>
+struct scn::scanner<T, C> : rocket::internal::scan::reflect::Scanner<T, T> {};
 
 // `scn::scanner<rocket::reflect::Instance>` ----------------------------------------------------------------
 
@@ -304,8 +304,8 @@ struct scn::scanner<T, char> : rocket::internal::scan::reflect::Scanner<T, T> {}
  *   `MyStruct(x=1)`.
  * - The `i` format specifier is not needed: whitespace, including line breaks, is skipped.
  */
-template<typename T, typename Inner>
-struct scn::scanner<rocket::reflect::Instance<T, Inner>, char> :
+template<typename T, typename Inner, typename C> requires rocket::IsChar<C>
+struct scn::scanner<rocket::reflect::Instance<T, Inner>, C> :
   rocket::internal::scan::reflect::Scanner<rocket::reflect::Instance<T, Inner>, T> {};
 
 // EOF

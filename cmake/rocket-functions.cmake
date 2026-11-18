@@ -6,8 +6,8 @@
 
 # Private functions -----------------------------------------------------------------------------------------
 
-# RocketParseTestArgs__(outSrcFiles outEnv srcFile... [ENVIRONMENT name=value]...)
-function(RocketParseTestArgs__ outSrcFiles outEnv)
+# rocketParseTestArgs__(outSrcFiles outEnv srcFile... [ENVIRONMENT name=value]...)
+function(rocketParseTestArgs__ outSrcFiles outEnv)
   set(srcFiles)
   set(env)
   set(appendTo srcFiles)
@@ -25,16 +25,16 @@ endfunction()
 
 # Functions -------------------------------------------------------------------------------------------------
 
-# RocketAddBench(name dir srcFile... [ENVIRONMENT name=value...])
+# rocketAddBench(name dir srcFile... [ENVIRONMENT name=value...])
 #
 # Each benchmark sees the environment variables `BINARY_DIR`, `CONFIG`, `CONFIGS`, and `SOURCE_DIR`.
 # `SOURCE_DIR` is `dir` in the source directory of the calling `CMakeLists.txt`, where the source files
 # are. So it is also right when Rocket is a subproject or the function is called from another project.
-function(RocketAddBench name dir)
-  RocketParseTestArgs__(srcFiles env ${ARGN})
+function(rocketAddBench name dir)
+  rocketParseTestArgs__(srcFiles env ${ARGN})
 
   list(TRANSFORM srcFiles PREPEND "${dir}/")
-  GaiaAddExecutable(${name} ${srcFiles})
+  gaiaAddExecutable(${name} ${srcFiles})
   target_link_libraries(${name} PRIVATE benchmark::benchmark_main Rocket::rocket-bench)
 
   add_test(
@@ -54,16 +54,16 @@ function(RocketAddBench name dir)
   )
 endfunction()
 
-# RocketAddTest(name dir srcFile... [ENVIRONMENT name=value...])
+# rocketAddTest(name dir srcFile... [ENVIRONMENT name=value...])
 #
 # Each test sees the environment variables `BINARY_DIR`, `CONFIG`, `CONFIGS`, and `SOURCE_DIR`. `SOURCE_DIR`
 # is `dir` in the source directory of the calling `CMakeLists.txt`, where the source files are. So it is also
 # right when Rocket is a subproject or the function is called from another project.
-function(RocketAddTest name dir)
-  RocketParseTestArgs__(srcFiles env ${ARGN})
+function(rocketAddTest name dir)
+  rocketParseTestArgs__(srcFiles env ${ARGN})
 
   list(TRANSFORM srcFiles PREPEND "${dir}/")
-  GaiaAddExecutable(${name} ${srcFiles})
+  gaiaAddExecutable(${name} ${srcFiles})
   target_link_libraries(${name} PRIVATE Rocket::rocket-test-main Rocket::rocket-test)
 
   string(JOIN " " configs ${CMAKE_CONFIGURATION_TYPES})
