@@ -12,7 +12,14 @@ if(ROCKET_GUI)
   endif()
 
   set(xrc_files ${CMAKE_CURRENT_SOURCE_DIR}/guy/resource.xrc)
-  set(resource_cc ${CMAKE_CURRENT_BINARY_DIR}/resource.cc)
+  # The output depends on the configuration through `wxrc`. With a multi-config generator, a shared output
+  # would be regenerated on every switch of the configuration.
+  get_property(isMultiConfig GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
+  if(isMultiConfig)
+    set(resource_cc ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/resource.cc)
+  else()
+    set(resource_cc ${CMAKE_CURRENT_BINARY_DIR}/resource.cc)
+  endif()
   set(wxrc $<TARGET_FILE:wxrc>)
 
   add_custom_command(

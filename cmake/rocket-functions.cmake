@@ -71,8 +71,11 @@ function(rocketAddTest name dir)
     list(APPEND envProps PROPERTIES ENVIRONMENT "${it}")
   endforeach()
 
+  # `PRE_TEST` rather than `POST_BUILD`: with a multi-config generator, `POST_BUILD` writes one test list for
+  # all configurations, so switching the configuration relinks every test, and CTest may run the binaries of
+  # the wrong configuration
   gtest_discover_tests(${name}
-    DISCOVERY_MODE POST_BUILD
+    DISCOVERY_MODE PRE_TEST
     EXTRA_ARGS --gtest_catch_exceptions=0
     PROPERTIES ENVIRONMENT "BINARY_DIR=${CMAKE_CURRENT_BINARY_DIR}"
     PROPERTIES ENVIRONMENT "CONFIG=$<CONFIG>"

@@ -5,7 +5,7 @@
 PROJECT_NAME      = Rocket
 INPUT             = src/main $(BUILD_DIR)/src/main/generated
 FILE_PATTERNS     = *.h
-OUTPUT_DIRECTORY  = $(BUILD_DIR)/src/main/doc
+OUTPUT_DIRECTORY  = $(MAIN_DIR)/doc
 PREDEFINED       += ROCKET_DOXYGEN ROCKET_TEST
 
 # EOF
