@@ -9,14 +9,6 @@ include(FetchContent)
 
 # Project ---------------------------------------------------------------------------------------------------
 
-# Is this the master project?
-if(NOT DEFINED ROCKET_MASTER_PROJECT)
-  set(ROCKET_MASTER_PROJECT OFF)
-  if(NOT DEFINED PROJECT_NAME)
-    set(ROCKET_MASTER_PROJECT ON)
-  endif()
-endif()
-
 project(rocket VERSION 0.3.6)
 
 # Versions --------------------------------------------------------------------------------------------------
@@ -74,7 +66,8 @@ set(FETCHCONTENT_QUIET FALSE)
 
 # Feature detection -----------------------------------------------------------------------------------------
 
-# 128-bit integers
+# 128-bit integers ..........................................................................................
+
 # Windows: the MSVC toolchain has no support, and even though the LLVM toolchain does have a builtin
 # `__int128` type, it will not work with {fmt}. So we don’t use `__int128` at any rate
 if(NOT GAIA_OS_WINDOWS)
@@ -88,7 +81,8 @@ if(NOT GAIA_OS_WINDOWS)
 endif()
 gaiaStatus("ROCKET_HAS_INT128: ${ROCKET_HAS_INT128}")
 
-# C++23 span streams
+# C++23 span streams ........................................................................................
+
 check_cxx_source_compiles([[
   #include <span>
   #include <spanstream>
@@ -103,9 +97,10 @@ check_cxx_source_compiles([[
 ]] ROCKET_HAS_STD_SPANSTREAM)
 gaiaStatus("ROCKET_HAS_STD_SPANSTREAM: ${ROCKET_HAS_STD_SPANSTREAM}")
 
-# C++23 stack traces. On Linux, libstdc++ keeps `std::stacktrace` in `libstdc++exp`, which `rocket` links,
-# too
+# C++23 stack traces ........................................................................................
+
 block()
+  # On Linux, libstdc++ keeps `std::stacktrace` in `libstdc++exp`, which `rocket` links, too
   if(GAIA_OS_LINUX)
     set(CMAKE_REQUIRED_LIBRARIES stdc++exp)
   endif()
@@ -120,8 +115,9 @@ block()
 endblock()
 gaiaStatus("ROCKET_HAS_STD_STACKTRACE: ${ROCKET_HAS_STD_STACKTRACE}")
 
-# C++20 time zones: `std::chrono::time_zone` and `std::chrono::zoned_time`. This links, too, so the time-zone
-# database must be present in the standard library
+# C++20 time zones: `std::chrono::time_zone` and `std::chrono::zoned_time` ..................................
+
+# This links, too, so the time-zone database must be present in the standard library
 check_cxx_source_compiles([[
   #include <chrono>
 
@@ -133,7 +129,8 @@ check_cxx_source_compiles([[
 ]] ROCKET_HAS_STD_CHRONO_TIME_ZONE)
 gaiaStatus("ROCKET_HAS_STD_CHRONO_TIME_ZONE: ${ROCKET_HAS_STD_CHRONO_TIME_ZONE}")
 
-# Experimental scope guards (Library Fundamentals TS v3)
+# Experimental scope guards (Library Fundamentals TS v3) ....................................................
+
 check_cxx_source_compiles([[
   #include <experimental/scope>
 
@@ -151,15 +148,14 @@ gaiaStatus("ROCKET_HAS_STD_EXPERIMENTAL_SCOPE: ${ROCKET_HAS_STD_EXPERIMENTAL_SCO
 
 # Configuration ---------------------------------------------------------------------------------------------
 
-set(defaultComponents)
-if(ROCKET_MASTER_PROJECT)
-  set(defaultComponents gui)
+if(PROJECT_IS_TOP_LEVEL)
+  set(ROCKET_COMPONENTS_DEFAULT gui)
 endif()
 
-gaiaAddVar(ROCKET_BUILD_BENCH BOOL   "${ROCKET_MASTER_PROJECT}" "Build benchmarks")
-gaiaAddVar(ROCKET_BUILD_TEST  BOOL   "${ROCKET_MASTER_PROJECT}" "Build tests")
-gaiaAddVar(ROCKET_COMPONENTS  STRING "${defaultComponents}"     "Additional components to enable: `gui`")
-gaiaAddVar(ROCKET_ICU_CMAKE   BOOL   OFF                        "Use icu-cmake to build ICU")
+gaiaAddVar(ROCKET_BUILD_BENCH BOOL   "${PROJECT_IS_TOP_LEVEL}"      "Build benchmarks")
+gaiaAddVar(ROCKET_BUILD_TEST  BOOL   "${PROJECT_IS_TOP_LEVEL}"      "Build tests")
+gaiaAddVar(ROCKET_COMPONENTS  STRING "${ROCKET_COMPONENTS_DEFAULT}" "Additional components to enable: `gui`")
+gaiaAddVar(ROCKET_ICU_CMAKE   BOOL   OFF                            "Use icu-cmake to build ICU")
 
 # Set compiler and linker options ---------------------------------------------------------------------------
 
@@ -252,6 +248,26 @@ if(NOT Boost_FOUND)
   endblock()
 endif()
 
+# Boost.Int128 ..............................................................................................
+
+if(NOT ROCKET_HAS_INT128)
+  list(APPEND ROCKET_BOOST_COMPONENTS int128)
+
+  FetchContent_Declare(
+    int128
+    GIT_REPOSITORY https://github.com/boostorg/int128.git
+    GIT_TAG        v${ROCKET_BOOST_INT128_VERSION}
+    GIT_PROGRESS   TRUE
+    SYSTEM
+    EXCLUDE_FROM_ALL
+  )
+
+  block()
+    set(BUILD_SHARED_LIBS OFF)
+    FetchContent_MakeAvailable(int128)
+  endblock()
+endif()
+
 # {fmt} .....................................................................................................
 
 FetchContent_Declare(
@@ -338,26 +354,6 @@ else()
   if(NOT GAIA_OS_WINDOWS)
     find_package(ICU ${ROCKET_ICU_VERSION} REQUIRED COMPONENTS i18n uc)
   endif()
-endif()
-
-# Boost.Int128 ..............................................................................................
-
-if(NOT ROCKET_HAS_INT128)
-  list(APPEND ROCKET_BOOST_COMPONENTS int128)
-
-  FetchContent_Declare(
-    int128
-    GIT_REPOSITORY https://github.com/boostorg/int128.git
-    GIT_TAG        v${ROCKET_BOOST_INT128_VERSION}
-    GIT_PROGRESS   TRUE
-    SYSTEM
-    EXCLUDE_FROM_ALL
-  )
-
-  block()
-    set(BUILD_SHARED_LIBS OFF)
-    FetchContent_MakeAvailable(int128)
-  endblock()
 endif()
 
 # libarchive ................................................................................................
@@ -459,7 +455,7 @@ if(BUILD_TESTING AND ROCKET_BUILD_BENCH)
   add_subdirectory(src/bench)
 endif()
 add_subdirectory(src/bin)
-if(ROCKET_MASTER_PROJECT)
+if(PROJECT_IS_TOP_LEVEL)
   add_subdirectory(src/experimental)
 endif()
 add_subdirectory(src/main)

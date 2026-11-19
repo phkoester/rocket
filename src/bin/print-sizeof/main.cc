@@ -9,7 +9,7 @@
 #include <algorithm>
 #include <ranges>
 #include <string>
-#include <utility>
+#include <tuple>
 #include <vector>
 
 using namespace rocket;
@@ -19,22 +19,29 @@ namespace {
 
 // Local types ----------------------------------------------------------------------------------------------
 
-using Row = pair<string, string>;
+using Row = tuple<string, string, string>;
 
 // Local functions ------------------------------------------------------------------------------------------
 
 template<typename T>
-void addSize(vector<Row>& rows) {
-  rows.emplace_back(fmt::format("{}", TypeId::of<T>()),
+void
+addRow(vector<Row>& rows, string_view name) {
+  rows.emplace_back(
+    fmt::format("{}", name),
+    fmt::format("{}", TypeId::of<T>()),
     fmt::format("{:>2} {}", sizeof(T), str::noun::byte(sizeof(T))));
 }
 
-void printTable(const vector<Row>& rows) {
-  const size_t leftColumnWidth = rows.empty() ?
+void
+printTable(const vector<Row>& rows) {
+  const u64 col0w = rows.empty() ?
     0 :
-    ranges::max(rows | views::transform([](const Row& row) { return row.first.size(); }));
-  for (const auto& [left, right] : rows) {
-    nio::out.println("{: <{}} | {}", left, leftColumnWidth, right);
+    ranges::max(rows | views::transform([](const Row& row) { return std::get<0>(row).size(); }));
+  const u64 col1w = rows.empty() ?
+    0 :
+    ranges::max(rows | views::transform([](const Row& row) { return std::get<1>(row).size(); }));
+  for (const auto& [col0, col1, col2] : rows) {
+    nio::out.println("{: <{}} | {: <{}} | {}", col0, col0w, col1, col1w, col2);
   }
 }
 
@@ -47,17 +54,17 @@ main(i32 argc, char **argv) {
   process().init(argc, argv, "print-sizeof");
 
   vector<Row> rows;
-  addSize<bool>(rows);
-  addSize<wchar_t>(rows);
-  addSize<short>(rows);
-  addSize<int>(rows);
-  addSize<long>(rows);
-  addSize<long long>(rows);
-  addSize<i128>(rows);
-  addSize<float>(rows);
-  addSize<double>(rows);
-  addSize<long double>(rows);
-  addSize<void*>(rows);
+  addRow<bool>(rows, "bool");
+  addRow<wchar_t>(rows, "wchar_t");
+  addRow<short>(rows, "short");
+  addRow<int>(rows, "int");
+  addRow<long>(rows, "long");
+  addRow<long long>(rows, "long long");
+  addRow<i128>(rows, "i128");
+  addRow<float>(rows, "float");
+  addRow<double>(rows, "double");
+  addRow<long double>(rows, "long double");
+  addRow<void*>(rows, "void*");
 
   printTable(rows);
 

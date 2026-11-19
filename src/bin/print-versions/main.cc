@@ -28,7 +28,7 @@
 #include <array>
 #include <ranges>
 #include <string>
-#include <utility>
+#include <utility> // `std::pair`
 #include <vector>
 
 using namespace rocket;
@@ -87,11 +87,11 @@ icuVersionWindowsSdk() {
 
 void
 printTable(const vector<Row>& rows) {
-  const size_t leftColumnWidth = rows.empty() ?
+  const u64 col0w = rows.empty() ?
     0 :
     ranges::max(rows | views::transform([](const Row& row) { return row.first.size(); }));
-  for (const auto& [left, right] : rows) {
-    nio::out.println("{: <{}} | {}", left, leftColumnWidth, right);
+  for (const auto& [col0, col1] : rows) {
+    nio::out.println("{: <{}} | {}", col0, col0w, col1);
   }
 }
 

@@ -41,9 +41,9 @@ All of the following may be supplied either as defined CMake variables or as env
 | `BUILD_SHARED_LIBS`               | `BOOL`   | `OFF`                             | Build shared libraries
 | `BUILD_TESTING`                   | `BOOL`   | `ON`                              | Enable testing: benchmarks and tests
 | `CMAKE_BUILD_TYPE`                | `STRING` | `Release` if single configuration | The build type (`Debug` or `Release`)
-| `ROCKET_BUILD_BENCH`              | `BOOL`   | `ON` if master project            | Build benchmarks
-| `ROCKET_BUILD_TEST`               | `BOOL`   | `ON` if master project            | Build tests
-| `ROCKET_COMPONENTS`               | `STRING` | `gui` if master project           | Additional components to enable: `gui`. Set this to `none` to disable additional components
+| `ROCKET_BUILD_BENCH`              | `BOOL`   | `ON` if top-level project         | Build benchmarks
+| `ROCKET_BUILD_TEST`               | `BOOL`   | `ON` if top-level project         | Build tests
+| `ROCKET_COMPONENTS`               | `STRING` | `gui` if top-level project        | Additional components to enable: `gui`. Set this to `none` to disable additional components
 | `ROCKET_ICU_CMAKE`                | `BOOL`   | `OFF`                             | Use icu-cmake to build ICU
 
 ## Environment Variables
