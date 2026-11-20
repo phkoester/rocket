@@ -45,6 +45,7 @@ All of the following may be supplied either as defined CMake variables or as env
 | `ROCKET_BUILD_TEST`               | `BOOL`   | `ON` if top-level project         | Build tests
 | `ROCKET_COMPONENTS`               | `STRING` | `gui` if top-level project        | Additional components to enable: `gui`. Set this to `none` to disable additional components
 | `ROCKET_ICU_CMAKE`                | `BOOL`   | `OFF`                             | Use icu-cmake to build ICU
+| `ROCKET_WERROR`                   | `BOOL`   | `ON` if top-level project         | Enable `-Werror`
 
 ## Environment Variables
 

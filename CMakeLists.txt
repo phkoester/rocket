@@ -156,6 +156,7 @@ gaiaAddVar(ROCKET_BUILD_BENCH BOOL   "${PROJECT_IS_TOP_LEVEL}"      "Build bench
 gaiaAddVar(ROCKET_BUILD_TEST  BOOL   "${PROJECT_IS_TOP_LEVEL}"      "Build tests")
 gaiaAddVar(ROCKET_COMPONENTS  STRING "${ROCKET_COMPONENTS_DEFAULT}" "Additional components to enable: `gui`")
 gaiaAddVar(ROCKET_ICU_CMAKE   BOOL   OFF                            "Use icu-cmake to build ICU")
+gaiaAddVar(ROCKET_WERROR      BOOL   "${PROJECT_IS_TOP_LEVEL}"      "Enable `-Werror`")
 
 # Set compiler and linker options ---------------------------------------------------------------------------
 
@@ -166,15 +167,21 @@ set(LINK_FLAGS)
 
 if(GAIA_OS_LINUX OR GAIA_OS_MACOS)
   # Linux/macOS
-  list(APPEND COMPILE_FLAGS -Wall -Werror -Wextra)
+  list(APPEND COMPILE_FLAGS -Wall -Wextra)
+  if(ROCKET_WERROR)
+    list(APPEND COMPILE_FLAGS -Werror)
+  endif()
 elseif(GAIA_OS_WINDOWS)
   # Windows
   # Windows 10, needed by `<icu.h>` from the Windows SDK, which only declares its API for Windows 10
   list(APPEND COMPILE_DEFS _WIN32_WINNT=0x0A00)
   if(GAIA_CXX_COMPILER_LLVM)
     # Windows, LLVM
-    list(APPEND COMPILE_FLAGS -Werror -Wextra # No `-Wall` on Windows
+    list(APPEND COMPILE_FLAGS -Wextra # No `-Wall` on Windows
       -Wno-unknown-attributes)
+    if(ROCKET_WERROR)
+      list(APPEND COMPILE_FLAGS -Werror)
+    endif()
   elseif(GAIA_CXX_COMPILER_MSVC)
     # Windows, MSVC
     # `/utf-8`: The sources are UTF-8 without a BOM. MSVC would read them in the ANSI code page
