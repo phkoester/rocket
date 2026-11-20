@@ -38,23 +38,23 @@ All of the following may be supplied either as defined CMake variables or as env
 
 | Name                              | Type     | Default                           | Description
 | :-------------------------------- | :------- | :-------------------------------- | :----------
-| `BUILD_SHARED_LIBS`               | `BOOL`   | `OFF`                             | Build shared libraries
-| `BUILD_TESTING`                   | `BOOL`   | `ON`                              | Enable testing: benchmarks and tests
-| `CMAKE_BUILD_TYPE`                | `STRING` | `Release` if single configuration | The build type (`Debug` or `Release`)
-| `ROCKET_BUILD_BENCH`              | `BOOL`   | `ON` if top-level project         | Build benchmarks
-| `ROCKET_BUILD_TEST`               | `BOOL`   | `ON` if top-level project         | Build tests
-| `ROCKET_COMPONENTS`               | `STRING` | `gui` if top-level project        | Additional components to enable: `gui`. Set this to `none` to disable additional components
-| `ROCKET_ICU_CMAKE`                | `BOOL`   | `OFF`                             | Use icu-cmake to build ICU
-| `ROCKET_WERROR`                   | `BOOL`   | `ON` if top-level project         | Enable `-Werror`
+| `BUILD_SHARED_LIBS`               | `BOOL`   | `OFF`                             | build shared libraries
+| `BUILD_TESTING`                   | `BOOL`   | `ON`                              | enable testing: benchmarks and tests
+| `CMAKE_BUILD_TYPE`                | `STRING` | `Release` if single configuration | the build type (`Debug` or `Release`)
+| `ROCKET_BUILD_BENCH`              | `BOOL`   | `ON` if top-level project         | build benchmarks
+| `ROCKET_BUILD_TEST`               | `BOOL`   | `ON` if top-level project         | build tests
+| `ROCKET_COMPONENTS`               | `STRING` | `gui` if top-level project        | additional components to enable: `gui`. Set this to `none` to disable additional components
+| `ROCKET_ICU_CMAKE`                | `BOOL`   | `OFF`                             | use icu-cmake to build ICU
+| `ROCKET_WERROR`                   | `BOOL`   | `ON` if top-level project         | enable `-Werror`
 
 ## Environment Variables
 
 | Name                   | Type     | Stage   | Description
 | :--------------------- | :------- | :------ | :----------
-| `ROCKET_EXIT`          | `bool`   | Runtime | If true, `std::exit` is called rather than `std::quick_exit`
-| `ROCKET_LOG`           | `string` | Runtime | Default log options, e.g., `--log all=trace`
-| `ROCKET_QUICK_EXIT`    | `bool`   | Runtime | If true, `std::quick_exit` is called rather than `std::exit`
-| `ROCKET_TEST_TERMINAL` | `bool`   | Test    | If true, tests are run that require standard devices to be connected to a terminal
+| `ROCKET_EXIT`          | `bool`   | runtime | if true, `std::exit` is called rather than `std::quick_exit`
+| `ROCKET_LOG`           | `string` | runtime | default log options, e.g., `--log all=trace`
+| `ROCKET_QUICK_EXIT`    | `bool`   | runtime | if true, `std::quick_exit` is called rather than `std::exit`
+| `ROCKET_TEST_TERMINAL` | `bool`   | test    | if true, tests are run that require standard devices to be connected to a terminal
 
 ## License
 

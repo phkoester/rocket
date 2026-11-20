@@ -9,15 +9,15 @@
 /// | Type          | Linux | macOS   | Windows | Unstable?
 /// | :------------ | ----: | ------: | ------: | :--------
 /// | `bool`        |     1 |       1 |       1 |
-/// | `wchar_t`     |     4 |       4 |       2 | Yes!
+/// | `wchar_t`     |     4 |       4 |       2 | yes!
 /// | `short`       |     2 |       2 |       2 |
 /// | `int`         |     4 |       4 |       4 |
-/// | `long`        |     8 |       8 |       4 | Yes!
+/// | `long`        |     8 |       8 |       4 | yes!
 /// | `long long`   |     8 |       8 |       8 |
 /// | `i128`        |    16 |      16 |      16 |
 /// | `float`       |     4 |       4 |       4 |
 /// | `double`      |     8 |       8 |       8 |
-/// | `long double` |    16 |       8 |       8 | Yes!
+/// | `long double` |    16 |       8 |       8 | yes!
 /// | `void*`       |     8 |       8 |       8 |
 ///
 /// Basic data types used in Rocket, stable across all platforms:

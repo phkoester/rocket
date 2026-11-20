@@ -560,7 +560,7 @@ CommandLine::printHelpParams(nio::Sink& out, bool verbose, u64 width) const {
     const auto description = verbose && param.verboseDescription ?
       param.verboseDescription : param.description;
     if (description) {
-      out.writeln(str::wrap(*description, 10, width));
+      out.writeln(str::wrap(*description, 4, width));
     }
   }
 }
