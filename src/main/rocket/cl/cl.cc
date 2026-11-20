@@ -332,7 +332,7 @@ CommandLine::parse(const vector<string>& args, nio::Sink& out, nio::Sink& err, b
         // 4. Not an option, but a positional argument: assign
 
         if (paramIndex >= params_.size()) {
-          ROCKET_FAIL("extraneous argument `{}`", arg);
+          ROCKET_FAIL("stray argument `{}`", arg);
         }
         const Parameter* param = &params_[paramIndex];
         if (paramOccurs == param->maxOccurs) {
@@ -340,7 +340,7 @@ CommandLine::parse(const vector<string>& args, nio::Sink& out, nio::Sink& err, b
           ++paramIndex;
           paramOccurs = 0;
           if (paramIndex >= params_.size()) {
-            ROCKET_FAIL("extraneous argument `{}`", arg);
+            ROCKET_FAIL("stray argument `{}`", arg);
           }
           param = &params_[paramIndex];
         }

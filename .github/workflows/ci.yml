@@ -70,13 +70,13 @@ jobs:
           restore-keys: ccache-linux-release-
 
       - name: Configure
-        run: cmake --preset config-Release -DROCKET_BUILD_BENCH=ON -DROCKET_BUILD_TEST=ON
+        run: cmake --preset multi -DROCKET_BUILD_BENCH=ON -DROCKET_BUILD_TEST=ON
 
       - name: Build
-        run: cmake --build --preset config-Release
+        run: cmake --build --preset multi-Release
 
       - name: Test
-        run: ctest --preset config-Release --test-dir build --output-on-failure --parallel "$(nproc)"
+        run: ctest --preset multi-Release --test-dir build --output-on-failure --parallel "$(nproc)"
 
       - name: Show ccache statistics
         if: always()
@@ -125,13 +125,13 @@ jobs:
           restore-keys: ccache-macos-release-
 
       - name: Configure
-        run: cmake --preset config-Release -DROCKET_BUILD_BENCH=ON -DROCKET_BUILD_TEST=ON
+        run: cmake --preset multi -DROCKET_BUILD_BENCH=ON -DROCKET_BUILD_TEST=ON
 
       - name: Build
-        run: cmake --build --preset config-Release
+        run: cmake --build --preset multi-Release
 
       - name: Test
-        run: ctest --preset config-Release --test-dir build --output-on-failure --parallel "$(sysctl -n hw.ncpu)"
+        run: ctest --preset multi-Release --test-dir build --output-on-failure --parallel "$(sysctl -n hw.ncpu)"
 
       - name: Show ccache statistics
         if: always()
@@ -186,12 +186,12 @@ jobs:
 
       # Rocket uses the ICU that comes with Windows through `<icu.h>` from the Windows SDK
       - name: Configure
-        run: cmake --preset config-Release -DROCKET_BUILD_BENCH=ON -DROCKET_BUILD_TEST=ON
+        run: cmake --preset multi -DROCKET_BUILD_BENCH=ON -DROCKET_BUILD_TEST=ON
 
       - name: Build
-        run: cmake --build --preset config-Release
+        run: cmake --build --preset multi-Release
 
       - name: Test
-        run: ctest --preset config-Release --test-dir build --output-on-failure --parallel $env:NUMBER_OF_PROCESSORS
+        run: ctest --preset multi-Release --test-dir build --output-on-failure --parallel $env:NUMBER_OF_PROCESSORS
 
 # EOF
