@@ -114,6 +114,8 @@ main(i32 argc, char **argv) {
   rows.emplace_back("Boost", fmt::format("{}.{}.{}",
     BOOST_VERSION / 100'000, BOOST_VERSION / 100 % 1'000, BOOST_VERSION % 100));
 
+  // Boost.int128 has no version header
+
   // ICU
 
 #ifdef ROCKET_OS_WINDOWS
