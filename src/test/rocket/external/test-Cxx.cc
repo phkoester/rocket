@@ -109,6 +109,8 @@ bool MODULE::Member::dtorCalled = false;
 // Tests ====================================================================================================
 
 TEST_F(MODULE, assignLvalueToOptional) {
+  // Assigning an lvalue to an empty `std::optional` copy-constructs the value in place. There is no default
+  // construction followed by a copy assignment, and the source stays untouched
   string trace;
   {
     optional<TracingString> dest;
@@ -124,6 +126,8 @@ TEST_F(MODULE, assignLvalueToOptional) {
 }
 
 TEST_F(MODULE, assignLvalueToOptionalWithMove) {
+  // Assigning an rvalue (`std::move`) to an empty `std::optional` move-constructs the value in place. The
+  // moved-from source is left in a valid but unspecified state
   string trace;
   {
     optional<TracingString> dest;
@@ -139,6 +143,8 @@ TEST_F(MODULE, assignLvalueToOptionalWithMove) {
 }
 
 TEST_F(MODULE, divideByZeroF64) {
+  // The standard leaves floating-point division by zero undefined, but on IEEE 754 platforms (`is_iec559`)
+  // it yields positive or negative infinity, depending on the sign of the dividend
   using type = f64;
   const type zero = 0;
 
@@ -150,6 +156,8 @@ TEST_F(MODULE, divideByZeroF64) {
 }
 
 TEST_F(MODULE, optionalEmplace) {
+  // `std::optional::emplace` constructs the value directly from the constructor arguments, without a
+  // temporary, a copy, or a move
   string trace;
   {
     optional<TracingString> dest;
@@ -162,6 +170,9 @@ TEST_F(MODULE, optionalEmplace) {
 }
 
 TEST_F(MODULE, utf8Identifier) {
+  // Identifiers may contain non-ASCII letters (standardized in C++23 via Unicode `XID_Start` and
+  // `XID_Continue`, P1949). The test passes if it compiles
+
   // German
   [[maybe_unused]] i32 _blöße; // NOLINT
 
@@ -176,6 +187,8 @@ TEST_F(MODULE, utf8Identifier) {
 }
 
 TEST_F(MODULE, utf8StringLiteral) {
+  // An ordinary string literal is stored in the literal encoding, which is UTF-8 here: `ä` takes the two
+  // bytes C3 A4, and `size` counts bytes, not characters
   const auto sv = "ä"sv;
   EXPECT_EQ(sv, "\xc3\xa4");
   ASSERT_EQ(sv.size(), 2);
@@ -184,6 +197,7 @@ TEST_F(MODULE, utf8StringLiteral) {
 }
 
 TEST_F(MODULE, vectorPushBackLvalue) {
+  // `std::vector::push_back(const T&)` copy-constructs the element; the source stays untouched
   string trace;
   {
     vector<TracingString> vec;
@@ -199,6 +213,8 @@ TEST_F(MODULE, vectorPushBackLvalue) {
 }
 
 TEST_F(MODULE, vectorPushBackLvalueWithMove) {
+  // `std::vector::push_back(T&&)` move-constructs the element, leaving the moved-from source in a valid but
+  // unspecified state
   string trace;
   {
     vector<TracingString> vec;
@@ -214,6 +230,8 @@ TEST_F(MODULE, vectorPushBackLvalueWithMove) {
 }
 
 TEST_F(MODULE, vectorEmplaceBack) {
+  // `std::vector::emplace_back` constructs the element in place from the constructor arguments, without a
+  // temporary, a copy, or a move
   string trace;
   {
     vector<TracingString> vec;
@@ -226,6 +244,8 @@ TEST_F(MODULE, vectorEmplaceBack) {
 }
 
 TEST_F(MODULE, forwardWithBar) {
+  // In a function template, `T&&` is a forwarding reference, and `std::forward<T>` preserves the argument's
+  // value category: lvalues reach `foo(const i32&)`, rvalues reach `foo(i32&&)`
   const i32 lvalue = 0;
   bar(lvalue);
   EXPECT_EQ(fooLvalue, 1);
@@ -235,6 +255,8 @@ TEST_F(MODULE, forwardWithBar) {
 }
 
 TEST_F(MODULE, forwardWithBaz) {
+  // Like `forwardWithBar`, but with a C++20 abbreviated function template (`auto&&`), which forwards with
+  // `std::forward<decltype(val)>`
   const i32 lvalue = 0;
   baz(lvalue);
   EXPECT_EQ(fooLvalue, 1);
@@ -244,6 +266,8 @@ TEST_F(MODULE, forwardWithBaz) {
 }
 
 TEST_F(MODULE, implicitVirtualDtor) {
+  // A destructor is virtual if the base class destructor is, even if the derived class does not declare one.
+  // Deleting through a base pointer runs the implicit destructor of `B`, which destroys its member `m`
   A* p = new B; // NOLINT
   EXPECT_FALSE(Member::dtorCalled);
   delete p; // NOLINT
@@ -252,6 +276,8 @@ TEST_F(MODULE, implicitVirtualDtor) {
 }
 
 TEST(MODULE_DEATH_TEST, exceptionThroughNoexceptCallsTerminate) { // NOLINT(*-underscore-*)
+  // An exception escaping a `noexcept` function calls `std::terminate`. A `catch` further up the call stack
+  // is never reached
   EXPECT_EXIT(
     {
       std::set_terminate(markingTerminateHandler);
