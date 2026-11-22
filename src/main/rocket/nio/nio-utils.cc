@@ -133,7 +133,7 @@ peekChar(Source& in) {
 
 /// Reads a single character from @p in into @p c, but tells an I/O error from the end of the input.
 ///
-/// @return if a character was read, i.e., `false` at the end of the input
+/// @return whether a character was read, i.e., `false` at the end of the input
 /// @throw #rocket::SystemError if @p in is bad
 bool
 readOne(Source& in, char& c) {

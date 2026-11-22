@@ -177,7 +177,7 @@ openPipe(string_view input, span<char> buffer = {}) {
   }
   return ret;
 }
-#endif // !ROCKET_OS_WINDOWS
+#endif // ROCKET_OS_WINDOWS
 
 /// Returns a locale using #TestNumpunct, independent of the locales installed on the system.
 const locale&
@@ -359,7 +359,7 @@ forEachScanSource(string_view input, Fn fn) {
     FileSource in(file.get());
     fn(in);
   }
-#endif
+#endif // ROCKET_OS_WINDOWS
 
   {
     SCOPED_TRACE("StreamSource (istringstream)");
@@ -562,7 +562,7 @@ TEST(MODULE, seekableSinks) {
   const unique_ptr<FILE, FileCloser> pipeFile(fdopen(fds[1], "wb"));
   ASSERT_NE(pipeFile, nullptr);
   EXPECT_FALSE(FileSink(pipeFile.get()).seekable());
-#endif
+#endif // ROCKET_OS_WINDOWS
 
   EXPECT_FALSE(NullSink().seekable());
 

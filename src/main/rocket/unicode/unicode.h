@@ -33,14 +33,14 @@ struct CodePoint {
   /// [U+E000,U+10FFFF].
   ///
   /// @param val the code point to check
-  /// @return if the code point is valid
+  /// @return whether the code point is valid
   [[nodiscard]] static constexpr bool
-  valid(char32 val) {
+  valid(char32 val) noexcept {
     return val <= 0x10FFFFU && (val < 0xD800U || val > 0xDFFFU);
   }
 
   /// @ctor_default
-  constexpr CodePoint() : val_(0) {}
+  constexpr CodePoint() noexcept : val_(0) {}
 
   /// @ctor
   ///
@@ -74,7 +74,7 @@ struct CodePoint {
   }
 
   /// @member_op_cast{#char32}
-  constexpr operator char32() const { return val_; } // NOLINT
+  constexpr operator char32() const noexcept { return val_; } // NOLINT
 
   /// @member_op_cast{#std::string}
   explicit operator std::string() const;
@@ -84,45 +84,45 @@ struct CodePoint {
 
   /// Checks if the code point is an ASCII character.
   ///
-  /// @return if the code point is an ASCII character
-  [[nodiscard]] constexpr bool ascii() const { return val_ < 0x80; }
+  /// @return whether the code point is an ASCII character
+  [[nodiscard]] constexpr bool ascii() const noexcept { return val_ < 0x80; }
 
   /// Checks if the code point equals the specified ASCII character.
   ///
   /// @param c the ASCII character to check
-  /// @return if the code point equals the specified ASCII character
+  /// @return whether the code point equals the specified ASCII character
   [[nodiscard]] constexpr bool
-  eq(char c) const {
+  eq(char c) const noexcept {
     return ascii() && val_ == static_cast<char32>(c);
   }
 
   /// Checks if the code point is alphanumeric.
   ///
-  /// @return if the code point is alphanumeric
+  /// @return whether the code point is alphanumeric
   [[nodiscard]] bool isAlnum() const;
 
   /// Checks if the code point has Unicode property `XID_Continue`.
   ///
   /// `_` and the ASCII digits have this property.
   ///
-  /// @return if the code point has Unicode property `XID_Continue`
+  /// @return whether the code point has Unicode property `XID_Continue`
   [[nodiscard]] bool isIdContinue() const;
 
   /// Checks if the code point has Unicode property `XID_Start`.
   ///
   /// C++ also allows `_` to start an identifier. `_` does not have this property.
   ///
-  /// @return if the code point has Unicode property `XID_Start`
+  /// @return whether the code point has Unicode property `XID_Start`
   [[nodiscard]] bool isIdStart() const;
 
   /// Checks if the code point is printable.
   ///
-  /// @return if the code point is printable
+  /// @return whether the code point is printable
   [[nodiscard]] bool isPrint() const;
 
   /// Checks if the code point is whitespace.
   ///
-  /// @return if the code point is whitespace
+  /// @return whether the code point is whitespace
   [[nodiscard]] bool isWhitespace() const;
 
   /// Returns a lowercase code point for this code point.
@@ -276,7 +276,7 @@ struct std::hash<rocket::unicode::CodePoint> {
   /// @param val the value to hash
   /// @return a hash value
   rocket::std_size_t
-  operator()(rocket::unicode::CodePoint val) const {
+  operator()(rocket::unicode::CodePoint val) const noexcept {
     return std::hash<rocket::char32>()(static_cast<rocket::char32>(val));
   }
 };

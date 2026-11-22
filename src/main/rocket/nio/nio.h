@@ -46,7 +46,7 @@ struct Device {
   ///
   /// This is taken from the underlying device, e.g., `ferror` for a `FILE` pointer or `bad()` for a stream.
   ///
-  /// @return if the device is bad
+  /// @return whether the device is bad
   [[nodiscard]] virtual bool bad() const = 0;
 
   /// Returns the error code of the device: the I/O error that made the device #bad.
@@ -65,7 +65,7 @@ struct Device {
   /// This is taken from the underlying device, e.g., `feof` for a `FILE` pointer, `eof()` for a stream, or
   /// the position for a contiguous source.
   ///
-  /// @return if the device is exhausted
+  /// @return whether the device is exhausted
   [[nodiscard]] virtual bool eof() const = 0;
 
   /// Returns the handle of the instance.
@@ -80,7 +80,7 @@ struct Device {
   ///
   /// This is determined once, at construction, as this may take a system call.
   ///
-  /// @return if the device is seekable
+  /// @return whether the device is seekable
   [[nodiscard]] bool seekable() const { return seekable_; }
 
 protected:
@@ -101,7 +101,7 @@ protected:
 struct Sink : Device {
   /// Flushes the sink.
   ///
-  /// @return if the operation succeeded
+  /// @return whether the operation succeeded
   virtual bool flush() = 0;
 
   // `fmt::make_format_args` binds its arguments to lvalue references, so `args` cannot be forwarded
@@ -111,7 +111,7 @@ struct Sink : Device {
   ///
   /// @param fmt the format string
   /// @param args the arguments
-  /// @return if the operation succeeded
+  /// @return whether the operation succeeded
   template<typename... T>
   bool
   print(fmt::format_string<T...> fmt, T&&... args) {
@@ -123,7 +123,7 @@ struct Sink : Device {
   /// @param style the style to use
   /// @param fmt the format string
   /// @param args the arguments
-  /// @return if the operation succeeded
+  /// @return whether the operation succeeded
   template<typename... T>
   bool
   print(fmt::text_style style, fmt::format_string<T...> fmt, T&&... args) {
@@ -135,7 +135,7 @@ struct Sink : Device {
   /// @param locale the locale
   /// @param fmt the format string
   /// @param args the arguments
-  /// @return if the operation succeeded
+  /// @return whether the operation succeeded
   template<typename... T>
   bool
   print(const std::locale& locale, fmt::format_string<T...> fmt, T&&... args) {
@@ -146,7 +146,7 @@ struct Sink : Device {
   ///
   /// @param fmt the format string
   /// @param args the arguments
-  /// @return if the operation succeeded
+  /// @return whether the operation succeeded
   template<typename... T>
   bool
   println(fmt::format_string<T...> fmt, T&&... args) {
@@ -158,7 +158,7 @@ struct Sink : Device {
   /// @param style the style to use
   /// @param fmt the format string
   /// @param args the arguments
-  /// @return if the operation succeeded
+  /// @return whether the operation succeeded
   template<typename... T>
   bool
   println(fmt::text_style style, fmt::format_string<T...> fmt, T&&... args) {
@@ -170,7 +170,7 @@ struct Sink : Device {
   /// @param locale the locale
   /// @param fmt the format string
   /// @param args the arguments
-  /// @return if the operation succeeded
+  /// @return whether the operation succeeded
   template<typename... T>
   bool
   println(const std::locale& locale, fmt::format_string<T...> fmt, T&&... args) {
@@ -255,7 +255,7 @@ protected:
   ///
   /// @param fmt the format string
   /// @param args the arguments
-  /// @return if the operation succeeded
+  /// @return whether the operation succeeded
   virtual bool vprint(fmt::string_view fmt, fmt::format_args args) = 0;
 
   /// Prints a formatted message to the sink. This is the type-erased backend of #print.
@@ -263,7 +263,7 @@ protected:
   /// @param style the style to use
   /// @param fmt the format string
   /// @param args the arguments
-  /// @return if the operation succeeded
+  /// @return whether the operation succeeded
   virtual bool vprint(fmt::text_style style, fmt::string_view fmt, fmt::format_args args) = 0;
 
   /// Prints a formatted message to the sink. This is the type-erased backend of #print.
@@ -271,7 +271,7 @@ protected:
   /// @param locale the locale
   /// @param fmt the format string
   /// @param args the arguments
-  /// @return if the operation succeeded
+  /// @return whether the operation succeeded
   virtual bool vprint(const std::locale& locale, fmt::string_view fmt, fmt::format_args args) = 0;
 };
 
@@ -645,14 +645,14 @@ struct Source : Device {
   /// Seeks a new position in the source, using #rocket::nio::SeekMode::beg.
   ///
   /// @param offset the offset to seek to
-  /// @return if the operation succeeded
+  /// @return whether the operation succeeded
   bool seek(i64 offset) { return seek(offset, SeekMode::beg); }
 
   /// Seeks a new position in the source.
   ///
   /// @param offset the offset to seek to
   /// @param mode the seek mode
-  /// @return if the operation succeeded
+  /// @return whether the operation succeeded
   virtual bool seek(i64 offset, SeekMode mode) = 0;
 
   /// Returns the current input position.
@@ -863,7 +863,7 @@ struct SpanSource : ContiguousSource {
   ///
   /// @param offset the offset to seek to
   /// @param mode the seek mode
-  /// @return if the position was in range
+  /// @return whether the position was in range
   bool seek(i64 offset, SeekMode mode) override;
 
   [[nodiscard]] std::string_view
@@ -994,7 +994,7 @@ struct StringSource : ContiguousSource {
   ///
   /// @param offset the offset to seek to
   /// @param mode the seek mode
-  /// @return if the position was in range
+  /// @return whether the position was in range
   bool seek(i64 offset, SeekMode mode) override;
 
   [[nodiscard]] std::string_view str() const override { return in_.substr(pos_); }

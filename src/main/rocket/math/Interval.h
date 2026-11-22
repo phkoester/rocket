@@ -435,7 +435,7 @@ struct Interval {
   /// Tests if @p val is contained in the interval.
   ///
   /// @param val a value of type #Type
-  /// @return if @p val is contained in the interval
+  /// @return whether @p val is contained in the interval
   [[nodiscard]] constexpr bool
   contains(Type val) const {
     return Left::matches(a, val) && Right::matches(b, val);
@@ -445,7 +445,7 @@ struct Interval {
   ///
   /// If either #a or #b is null, meaning "infinite", then the interval is nonempty.
   ///
-  /// @return if the interval is empty
+  /// @return whether the interval is empty
   [[nodiscard]] constexpr bool empty() const { return Traits::empty(a, b); }
 
   /// Returns the size of the interval.

@@ -22,7 +22,7 @@ struct BoostHash {
   /// @cond undocumented
   template<typename T>
   [[nodiscard]] u64
-  operator()(const T& val) const {
+  operator()(const T& val) const noexcept(noexcept(boost::hash<T>()(val))) {
     return boost::hash<T>()(val);
   }
   /// @endcond
@@ -61,7 +61,7 @@ struct StdHash {
   /// @cond undocumented
   template<typename T>
   [[nodiscard]] std_size_t
-  operator()(const T& val) const {
+  operator()(const T& val) const noexcept(noexcept(std::hash<T>()(val))) {
     return std::hash<T>()(val);
   }
   /// @endcond

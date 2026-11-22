@@ -101,7 +101,7 @@ private:
 struct Handle {
   Handle() = default;
 
-  explicit Handle(HANDLE handle) : handle_(handle) {}
+  explicit Handle(HANDLE handle) noexcept : handle_(handle) {}
 
   Handle(const Handle&) = delete;
 
@@ -120,10 +120,10 @@ struct Handle {
     return *this;
   }
 
-  [[nodiscard]] HANDLE get() const { return handle_; }
+  [[nodiscard]] HANDLE get() const noexcept { return handle_; }
 
   void
-  reset() {
+  reset() noexcept {
     if (handle_ != nullptr && handle_ != INVALID_HANDLE_VALUE) {
       CloseHandle(handle_);
     }
@@ -143,7 +143,7 @@ private:
 struct Fd {
   Fd() = default;
 
-  explicit Fd(i32 fd) : fd_(fd) {}
+  explicit Fd(i32 fd) noexcept : fd_(fd) {}
 
   Fd(const Fd&) = delete;
 
@@ -162,12 +162,12 @@ struct Fd {
     return *this;
   }
 
-  explicit operator bool() const { return fd_ >= 0; }
+  explicit operator bool() const noexcept { return fd_ >= 0; }
 
-  [[nodiscard]] i32 get() const { return fd_; }
+  [[nodiscard]] i32 get() const noexcept { return fd_; }
 
   void
-  reset() {
+  reset() noexcept {
     if (fd_ >= 0) {
       ::close(fd_);
       fd_ = -1;

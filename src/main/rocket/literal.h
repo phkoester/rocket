@@ -40,7 +40,7 @@ charValue(char c) {
     ((c >= 'a' && c <= 'f') ? (10 + (c - 'a')) : (10 + (c - 'A'))); // NOLINT
 }
 
-/// Checks whether c_n + ... + c_2 * BASE^(n-2) + c_1 * BASE^(n-1) + val * BASE^n is a valid number when
+/// Checks if c_n + ... + c_2 * BASE^(n-2) + c_1 * BASE^(n-1) + val * BASE^n is a valid number when
 /// interpreted in base @p BASE.
 template<typename T, int BASE>
 constexpr bool
@@ -48,7 +48,7 @@ validateUnsignedImpl([[maybe_unused]] T val) {
   return true;
 }
 
-/// Checks whether c_n + ... + c_2 * BASE^(n-2) + c_1 * BASE^(n-1) + val * BASE^n is a valid number when
+/// Checks if c_n + ... + c_2 * BASE^(n-2) + c_1 * BASE^(n-1) + val * BASE^n is a valid number when
 /// interpreted in base @p BASE.
 template<typename T, int BASE, char C, char... Chars>
 constexpr bool
@@ -60,7 +60,7 @@ validateUnsignedImpl(T acc) {
       validateUnsignedImpl<T, BASE, Chars...>(acc * BASE + charValue<T>(C));
 }
 
-/// Checks whether c_n + ... + c_2 * BASE^(n-2) + c_1 * BASE^(n-1) is a valid unsigned number when
+/// Checks if c_n + ... + c_2 * BASE^(n-2) + c_1 * BASE^(n-1) is a valid unsigned number when
 /// interpreted in base @p BASE.
 template<typename T, int BASE, char... Chars>
 constexpr bool validateUnsigned() {

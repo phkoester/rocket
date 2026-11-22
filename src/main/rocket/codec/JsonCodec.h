@@ -243,7 +243,7 @@ endContainer(nio::Sink& out, JsonConsumerConfig& config, u64 size, char c) {
   rocket::codec::internal::endContainer(out, config.indent, config.level, size, c);
 }
 
-/// Reports whether @p T is a tuple of member or variable references.
+/// Reports if @p T is a tuple of member or variable references.
 ///
 /// Such a tuple is a JSON object. Every other tuple is a JSON array.
 template<typename T, std_size_t... Index>
@@ -702,7 +702,8 @@ readJsonKey(Key& key, nio::Source& in) {
 }
 
 /// Produces a single member of @p instance if the name of the member reference @p ref matches @p name.
-/// Returns whether the name matched, so callers can fold over a tuple of member references.
+///
+/// @return whether the name matched, so callers can fold over a tuple of member references
 template<typename Ref, typename C>
 bool
 produceMember(const Ref& ref, std::string_view name, C& instance, nio::Source& in) {

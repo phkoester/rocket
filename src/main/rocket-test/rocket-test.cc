@@ -51,7 +51,7 @@ executable(const fs::path& dir, string_view name) {
   return ret;
 }
 
-/// Returns if the build uses a multi-config generator.
+/// Returns whether the build uses a multi-config generator.
 bool
 isMultiConfig() {
   const static bool ret = CONFIGS && not CONFIGS->empty();

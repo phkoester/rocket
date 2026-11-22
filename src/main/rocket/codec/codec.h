@@ -578,7 +578,7 @@ hourMinuteSecondError(const scn::scan_error& error) {
 ///
 /// @param h the hour
 /// @param m the minute
-/// @return if the values are valid
+/// @return whether the values are valid
 inline bool
 validUtcOffset(u32 h, u32 m) {
   return h < 24 && m < 60;

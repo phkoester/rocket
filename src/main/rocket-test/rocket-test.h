@@ -63,15 +63,6 @@ using namespace ::testing;
   EXPECT_EQ(is.eof(), _eof); \
   EXPECT_EQ(::rocket::io::stream::tell(is), _tell)
 
-/// Checks if an environment variable is set to `true`. If it is not, the test is skipped.
-///
-/// @param name the name of the environment variable
-#define REQUIRE_ENV(name) { \
-  if (not ::rocket::system::env::get<bool>(name).value_or(false)) { \
-    GTEST_SKIP_("Skipping test because `" name "` is not set to `true`\n"); \
-  } \
-}
-
 /// Checks if an environment variable is set to `true`. If it is not, the current function is exited.
 ///
 /// @param name the name of the environment variable
@@ -83,6 +74,15 @@ using namespace ::testing;
       info = true; \
     } \
     return; \
+  } \
+}
+
+/// Checks if an environment variable is set to `true`. If it is not, the test is skipped.
+///
+/// @param name the name of the environment variable
+#define REQUIRE_ENV(name) { \
+  if (not ::rocket::system::env::get<bool>(name).value_or(false)) { \
+    GTEST_SKIP_("Skipping test because `" name "` is not set to `true`\n"); \
   } \
 }
 

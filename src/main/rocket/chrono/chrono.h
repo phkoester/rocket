@@ -94,7 +94,7 @@ std::string abbreviation(std::string_view name, bool dst, std::string_view fallb
 /// abbreviations, such as `CEST` or `CST`, are not names at all; they are ambiguous.
 ///
 /// @param name the name
-/// @return if @p name is an unambiguous time-zone name
+/// @return whether @p name is an unambiguous time-zone name
 constexpr bool
 isUnambiguousZoneName(std::string_view name) {
   return name.find('/') != std::string_view::npos || name == "UTC" || name == "GMT";

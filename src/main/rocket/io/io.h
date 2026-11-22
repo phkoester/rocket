@@ -54,7 +54,7 @@ FILE* open(const std::filesystem::path& path, std::string_view modes);
 /// @param file a `FILE` pointer, may not be null
 /// @param offset the offset to seek to
 /// @param origin the origin to seek from
-/// @return if the operation succeeded. On failure, `errno` is set
+/// @return whether the operation succeeded. On failure, `errno` is set
 bool seek(FILE* file, i64 offset, i32 origin);
 
 /// Checks if the stream referenced by @p file is seekable.
@@ -70,7 +70,7 @@ bool seek(FILE* file, i64 offset, i32 origin);
 /// `open_memstream`, are checked by querying the stream position instead.
 ///
 /// @param file a `FILE` pointer, may not be null
-/// @return if the stream is seekable
+/// @return whether the stream is seekable
 bool seekable(FILE* file);
 
 /// Returns the current position in the stream referenced by @p file.
@@ -106,7 +106,7 @@ inline std::istringstream is(std::string_view str) { return std::istringstream(s
 /// This is a portable implementation that works on Linux, macOS, and Windows.
 ///
 /// @param is the input stream
-/// @return if the stream is seekable
+/// @return whether the stream is seekable
 bool seekable(std::istream& is) noexcept;
 
 /// Checks if the output stream @p os is seekable.
@@ -122,7 +122,7 @@ bool seekable(std::istream& is) noexcept;
 /// This is a portable implementation that works on Linux, macOS, and Windows.
 ///
 /// @param os the output stream
-/// @return if the stream is seekable
+/// @return whether the stream is seekable
 bool seekable(std::ostream& os) noexcept;
 
 /// Returns the current read position of the input stream @p is.

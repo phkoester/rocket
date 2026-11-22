@@ -43,7 +43,7 @@ void expectComma(nio::Source& in);
 ///
 /// @param in the source to read from
 /// @param c the character to read
-/// @return if the character was read
+/// @return whether the character was read
 /// @throw #rocket::SystemError if @p in is bad, e.g., after an I/O error
 [[nodiscard]] bool readChar(nio::Source& in, char c);
 
@@ -132,7 +132,7 @@ void expectComma(nio::Source& in);
 /// @param ignoreCase whether to ignore case. Only ASCII letters are folded, `A` to `Z` matching `a` to `z`.
 ///   Any other character, including a non-ASCII letter such as `Ä`, must match exactly
 /// @param endOfWord whether to check if the end of the returned string matches a word boundary
-/// @return if the string was read
+/// @return whether the string was read
 /// @throw #rocket::InvalidState if the source must go back, i.e., on any mismatch, at the end of the input,
 ///   or if the word boundary is missing or requires reading a non-ASCII code point, but @p in cannot report
 ///   its position or seek. A contiguous source never needs to go back
@@ -214,7 +214,7 @@ void skip(nio::Source& in, bool cComments, bool shellComments);
 ///
 /// @param in the source to read from
 /// @param str the expected string
-/// @return if the expected string was found
+/// @return whether the expected string was found
 /// @throw #rocket::SystemError if @p in is bad, e.g., after an I/O error
 bool skipUntilString(nio::Source& in, std::string_view str);
 

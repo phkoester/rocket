@@ -77,7 +77,7 @@ struct BasicCharacter {
 
   /// Checks if the character is an ASCII character.
   ///
-  /// @return if the character is an ASCII character
+  /// @return whether the character is an ASCII character
   [[nodiscard]] bool
   constexpr ascii() const {
     return str_.size() == 1 && static_cast<u32>(str_[0]) < 0x80;
@@ -101,7 +101,7 @@ struct BasicCharacter {
 
   /// Checks if the character is a carriage return / line feed sequence (CR/LF).
   ///
-  /// @return if the character is a carriage return / line feed sequence
+  /// @return whether the character is a carriage return / line feed sequence
   [[nodiscard]] constexpr bool
   crLf() const {
     return str_.size() == 2 && str_[0] == '\r' && str_[1] == '\n';
@@ -109,7 +109,7 @@ struct BasicCharacter {
 
   /// Checks if the character is an end of line (EOL).
   ///
-  /// @return if the character is an end of line
+  /// @return whether the character is an end of line
   [[nodiscard]] constexpr bool
   eol() const {
     return lf() || crLf();
@@ -118,7 +118,7 @@ struct BasicCharacter {
   /// Checks if the character equals the specified ASCII character.
   ///
   /// @param c the ASCII character to check
-  /// @return if the character equals the specified ASCII character
+  /// @return whether the character equals the specified ASCII character
   [[nodiscard]] constexpr bool
   eq(char c) const {
     return ascii() && str_[0] == c;
@@ -126,7 +126,7 @@ struct BasicCharacter {
 
   /// Checks if the character is whitespace.
   ///
-  /// @return if the character is whitespace
+  /// @return whether the character is whitespace
   [[nodiscard]] bool
   isWhitespace() const {
     for (u64 pos = 0; pos < str_.size(); /* Empty */) {
@@ -140,7 +140,7 @@ struct BasicCharacter {
 
   /// Checks if the character is a hexadecimal digit.
   ///
-  /// @return if the character is a hexadecimal digit
+  /// @return whether the character is a hexadecimal digit
   [[nodiscard]] bool
   isXdigit() const {
     return str_.size() == 1 && std::isxdigit(static_cast<u8>(str_[0]));
@@ -148,7 +148,7 @@ struct BasicCharacter {
 
   /// Checks if the character is a line feed (LF).
   ///
-  /// @return if the character is a line feed
+  /// @return whether the character is a line feed
   [[nodiscard]] constexpr bool
   lf() const {
     return str_.size() == 1 && str_[0] == '\n';
@@ -156,7 +156,7 @@ struct BasicCharacter {
 
   /// Checks if the character is a no-break space
   ///
-  /// @return if the character is a no-break space
+  /// @return whether the character is a no-break space
   [[nodiscard]] bool
   nbsp() const {
     u64 pos = 0;
@@ -174,7 +174,7 @@ struct BasicCharacter {
 
   /// Checks if the character is a tab.
   ///
-  /// @return if the character is a tab
+  /// @return whether the character is a tab
   [[nodiscard]] constexpr bool
   tab() const {
     return str_.size() == 1 && str_[0] == '\t';

@@ -6,7 +6,40 @@
 
 #include "rocket-test/TracingString.h"
 
+#include <boost/preprocessor/cat.hpp>
+
+#include <cstdio>
+#include <cstdlib>
+#include <exception>
+#include <stdexcept>
+
 #define MODULE rocketExternalCxx
+#define MODULE_DEATH_TEST BOOST_PP_CAT(MODULE, DeathTest)
+
+namespace {
+
+// Local functions ------------------------------------------------------------------------------------------
+
+// A terminate handler that leaves a marker on `stderr`, proving that `std::terminate` was called
+[[noreturn]] void
+markingTerminateHandler() {
+  std::fputs("`std::terminate` called\n", stderr);
+  std::abort();
+}
+
+[[noreturn]] void
+throwRuntimeError() {
+  throw std::runtime_error("oops");
+}
+
+// Lets an exception escape although declared `noexcept`. The `throw` is in a separate function so that the
+// compiler does not reject or warn about it (`-Wterminate`)
+void
+throwThroughNoexcept() noexcept { // NOLINT(bugprone-exception-escape): this is the point of the test
+  throwRuntimeError();
+}
+
+} // namespace
 
 // `MODULE` -------------------------------------------------------------------------------------------------
 
@@ -216,6 +249,21 @@ TEST_F(MODULE, implicitVirtualDtor) {
   delete p; // NOLINT
   // Class `B` needs not declare an overriding destructor---it is there implicitly
   EXPECT_TRUE(Member::dtorCalled);
+}
+
+TEST(MODULE_DEATH_TEST, exceptionThroughNoexceptCallsTerminate) { // NOLINT(*-underscore-*)
+  EXPECT_EXIT(
+    {
+      std::set_terminate(markingTerminateHandler);
+      try {
+        throwThroughNoexcept();
+      } catch (...) {
+        // Never reached: the exception must not leave the `noexcept` function
+        std::fputs("exception caught\n", stderr);
+        std::_Exit(0);
+      }
+    },
+    ABORTED(), "`std::terminate` called");
 }
 
 // EOF

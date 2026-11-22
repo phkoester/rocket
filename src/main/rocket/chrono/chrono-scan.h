@@ -24,7 +24,7 @@ namespace rocket::chrono::internal::scan {
 
 // Utilities ------------------------------------------------------------------------------------------------
 
-/// Whether a code unit is whitespace in the classic locale.
+/// Returns whether a code unit is whitespace in the classic locale.
 template<typename C>
 constexpr bool
 isSpace(C c) {

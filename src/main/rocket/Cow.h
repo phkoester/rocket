@@ -6,6 +6,7 @@
 
 #include "rocket/assert.h"
 
+#include <type_traits>
 #include <variant>
 
 namespace rocket {
@@ -32,13 +33,13 @@ struct Cow {
   Cow(const Cow& rhs) = delete;
 
   /// @ctor_move
-  Cow(Cow&& rhs) noexcept = default;
+  Cow(Cow&& rhs) = default;
 
   /// @member_op_asgmt_copy
   Cow& operator=(const Cow& rhs) = delete;
 
   /// @member_op_asgmt_move
-  Cow& operator=(Cow&& rhs) noexcept = default;
+  Cow& operator=(Cow&& rhs) = default;
 
   /// Assigns an owned value to the #Cow, rendering the instance as "modified".
   ///
@@ -59,7 +60,7 @@ struct Cow {
   /// @param rhs the value to assign
   /// @return_this
   Cow&
-  operator=(U&& rhs) noexcept {
+  operator=(U&& rhs) noexcept(std::is_nothrow_move_constructible_v<U>) {
     choice_.template emplace<U>(std::move(rhs));
     return *this;
   }
@@ -84,7 +85,7 @@ struct Cow {
 
   /// Checks if the #Cow has been assigned an owned value.
   ///
-  /// @return if the #Cow has been assigned an owned value
+  /// @return whether the #Cow has been assigned an owned value
   [[nodiscard]] bool modified() const { return choice_.index() == 1; }
 
   /// Returns a nonconst reference to the owned value.

@@ -687,7 +687,7 @@ zoned_time(TimeZonePtrOrName&&, zoned_time<Duration, TimeZonePtr2>, choose = cho
 ///
 /// @param lhs the first zoned time
 /// @param rhs the second zoned time
-/// @return if both the time zones and the UTC time points are equal
+/// @return whether both the time zones and the UTC time points are equal
 template<typename Duration1, typename Duration2, typename TimeZonePtr>
 bool
 operator==(const zoned_time<Duration1, TimeZonePtr>& lhs, const zoned_time<Duration2, TimeZonePtr>& rhs) {
