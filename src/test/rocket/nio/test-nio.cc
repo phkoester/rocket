@@ -231,7 +231,7 @@ void
 forEachSink(string_view expected, Fn fn) { // NOLINT(*-complexity)
   {
     SCOPED_TRACE("FileSink");
-    const auto temp = rocket::filesystem::tempFile();
+    const auto temp = rocket::filesystem::newTempFile();
     {
       FileSink out(temp);
       EXPECT_TRUE(fn(out));
@@ -289,7 +289,7 @@ forEachSource(string_view input, Fn fn) {
 
   {
     SCOPED_TRACE("FileSource");
-    const auto temp = rocket::filesystem::tempFile();
+    const auto temp = rocket::filesystem::newTempFile();
     {
       FileSink out(temp);
       out.write(input);
@@ -321,7 +321,7 @@ forEachScanSource(string_view input, Fn fn) {
     fn(in);
   }
 
-  const auto temp = rocket::filesystem::tempFile();
+  const auto temp = rocket::filesystem::newTempFile();
   {
     FileSink out(temp);
     out.write(input);
@@ -552,7 +552,7 @@ TEST(MODULE, StringSink) {
 }
 
 TEST(MODULE, seekableSinks) {
-  const auto temp = rocket::filesystem::tempFile();
+  const auto temp = rocket::filesystem::newTempFile();
   EXPECT_TRUE(FileSink(temp).seekable());
 
 #ifndef ROCKET_OS_WINDOWS
@@ -764,7 +764,7 @@ TEST(MODULE, StreamSourceBufferThrows) { // NOLINT(*-complexity)
 
 TEST(MODULE, FileSourceCodeAtEndOfInput) {
   // Reading to the end of the input does not set the code
-  const auto temp = rocket::filesystem::tempFile();
+  const auto temp = rocket::filesystem::newTempFile();
   {
     FileSink out(temp);
     out.write("abc");
@@ -779,16 +779,16 @@ TEST(MODULE, FileSourceCodeAtEndOfInput) {
 }
 
 TEST(MODULE, FileSourceReadAll) {
-  const auto temp = rocket::filesystem::tempFile();
+  const auto temp = rocket::filesystem::newTempFile();
 
   const vector<u8> data { 0, 0, 0, 0 };
 
   {
-    FileSink out(temp.string()); // Auto-close
+    FileSink out(temp); // Auto-close
     out.write(data);
   }
 
-  FileSource in(temp.string());
+  FileSource in(temp);
   auto bytes = in.readAll();
   EXPECT_FALSE(in.bad());
   EXPECT_TRUE(in.eof());
@@ -801,14 +801,14 @@ TEST(MODULE, FileSourceReadAll) {
 }
 
 TEST(MODULE, FileSourceReadString) {
-  const auto temp = rocket::filesystem::tempFile();
+  const auto temp = rocket::filesystem::newTempFile();
 
   {
-    FileSink out(temp.string()); // Auto-close
+    FileSink out(temp); // Auto-close
     out.writeln("Hey there");
   }
 
-  FileSource in(temp.string());
+  FileSource in(temp);
   auto str = in.readString();
   EXPECT_FALSE(in.bad());
   EXPECT_TRUE(in.eof());
@@ -841,7 +841,7 @@ TEST(MODULE, FileSourceScan) {
 // earlier buffer. Without the scnlib patch, this returned input from the current buffer twice
 
 TEST(MODULE, FileSourceScanBacktrackAcrossBufferRefill) {
-  const auto temp = rocket::filesystem::tempFile();
+  const auto temp = rocket::filesystem::newTempFile();
   {
     FileSink out(temp);
     out.write("12e+x rest");
@@ -860,7 +860,7 @@ TEST(MODULE, FileSourceScanBacktrackAcrossBufferRefill) {
 }
 
 TEST(MODULE, FileSourceScanFailureAcrossBufferRefill) {
-  const auto temp = rocket::filesystem::tempFile();
+  const auto temp = rocket::filesystem::newTempFile();
   {
     FileSink out(temp);
     out.write("abcdefgh rest");
@@ -911,7 +911,7 @@ TEST(MODULE, SpanSource) {
 }
 
 TEST(MODULE, StreamSourceReadAll) {
-  auto temp = rocket::filesystem::tempFile();
+  auto temp = rocket::filesystem::newTempFile();
 
   const vector<u8> data { 0, 0, 0, 0 };
 
@@ -934,7 +934,7 @@ TEST(MODULE, StreamSourceReadAll) {
 }
 
 TEST(MODULE, StreamSourceReadString) {
-  auto temp = rocket::filesystem::tempFile();
+  auto temp = rocket::filesystem::newTempFile();
 
   {
     ofstream os(temp.c_str(), ios::binary);
@@ -1101,7 +1101,7 @@ TEST(MODULE, standardStreamsOverPipes) { // NOLINT(*-complexity)
 #endif // ROCKET_OS_WINDOWS
 
 TEST(MODULE, seekableSources) {
-  const auto temp = rocket::filesystem::tempFile();
+  const auto temp = rocket::filesystem::newTempFile();
   {
     FileSink out(temp);
     out.write("abc");

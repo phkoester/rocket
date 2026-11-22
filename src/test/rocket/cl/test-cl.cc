@@ -583,7 +583,7 @@ TEST(MODULE, parseParametersMaxOccurs) {
 TEST(MODULE, argFiles) { // NOLINT(*-complexity)
   namespace fs = std::filesystem;
 
-  const fs::path dir = rocket::filesystem::tempDir();
+  const fs::path dir = rocket::filesystem::newTempDir();
   const auto writeFile = [&](const string& name, const string& contents) {
     const fs::path path = dir / name;
     std::ofstream(path, std::ios::binary) << contents;

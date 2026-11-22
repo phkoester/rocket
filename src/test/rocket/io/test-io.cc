@@ -24,7 +24,7 @@ using FilePtr = unique_ptr<FILE, FileCloser>;
 // Tests ====================================================================================================
 
 TEST(MODULE, open) {
-  const auto temp = rocket::filesystem::tempFile();
+  const auto temp = rocket::filesystem::newTempFile();
 
   {
     const FilePtr file(io::file::open(temp, "wb"));
@@ -59,7 +59,7 @@ TEST(MODULE, open) {
 }
 
 TEST(MODULE, seekAndTellFile) {
-  const auto temp = rocket::filesystem::tempFile();
+  const auto temp = rocket::filesystem::newTempFile();
   {
     const FilePtr file(io::file::open(temp, "wb"));
     ASSERT_NE(file, nullptr);

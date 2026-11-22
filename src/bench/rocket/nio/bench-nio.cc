@@ -21,7 +21,7 @@ const string CHUNK(CHUNK_SIZE, ' ');
 
 void
 nio_FileSink(benchmark::State& state) { // NOLINT(*-internal-linkage)
-  const auto temp = rocket::filesystem::tempFile();
+  const auto temp = rocket::filesystem::newTempFile();
   for (auto _ : state) { // NOLINT
     FileSink out(temp);
     for (u64 i = 0; i < N; ++i) {
@@ -34,7 +34,7 @@ BENCHMARK(nio_FileSink);
 
 void
 nio_StreamSink(benchmark::State& state) { // NOLINT(*-internal-linkage)
-  const auto temp = rocket::filesystem::tempFile();
+  const auto temp = rocket::filesystem::newTempFile();
   for (auto _ : state) { // NOLINT
     ofstream os(temp.c_str());
     StreamSink out(os);

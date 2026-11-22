@@ -4,6 +4,9 @@
 
 gaiaAddExecutable(bare bare/main.cc)
 
+gaiaAddExecutable(print-env print-env/main.cc)
+target_link_libraries(print-env PRIVATE Rocket::rocket)
+
 gaiaAddExecutable(print-sizeof print-sizeof/main.cc)
 target_link_libraries(print-sizeof PRIVATE Rocket::rocket)
 

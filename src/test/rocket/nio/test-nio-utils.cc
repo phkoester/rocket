@@ -39,7 +39,7 @@ forEachSource(string_view input, Fn fn) {
 
   {
     SCOPED_TRACE("FileSource");
-    const auto temp = rocket::filesystem::tempFile();
+    const auto temp = rocket::filesystem::newTempFile();
     {
       FileSink out(temp);
       out.write(input);
