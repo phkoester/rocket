@@ -113,7 +113,7 @@ onTerminate() {
     }
     nio::err.println("{}: aborting", process().name());
   } catch (...) {
-    ROCKET_PROCESS_ERROR(0, "`onTerminate` failed");
+    process().error(nio::err, 0, "`onTerminate` failed");
   }
 
   flushStandardSinks();
@@ -128,10 +128,6 @@ namespace rocket {
 
 namespace internal::process {
 
-thread_local string threadName;
-
-ROCKET_INIT([&] { threadName = "main"; });
-
 locale
 localeFromEnvironment(nio::Sink& err) {
   if (auto ret = tryLocale("")) {
@@ -139,15 +135,6 @@ localeFromEnvironment(nio::Sink& err) {
   }
   rocket::process().warn(err, "cannot use the locale from the environment; using the classic locale instead");
   return locale::classic();
-}
-
-/// @ThreadSafe
-const string&
-setThreadName(string_view name) {
-  if (not name.empty()) {
-    threadName = name;
-  }
-  return threadName;
 }
 
 optional<locale>

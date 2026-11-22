@@ -10,7 +10,7 @@
 #include <scn/scan.h>
 
 #ifdef ROCKET_OS_WINDOWS
-  #include "rocket/windows.h"
+  #include "rocket/windows/windows.h"
 #else
   #include <sys/ioctl.h>
   #include <termios.h>

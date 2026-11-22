@@ -5,7 +5,7 @@
 #include "rocket/assert.h"
 
 #ifdef ROCKET_OS_WINDOWS
-  #include "rocket/windows.h"
+  #include "rocket/windows/windows.h"
   #include <share.h> // `_SH_DENYNO`
 #else
   #include <sys/stat.h>

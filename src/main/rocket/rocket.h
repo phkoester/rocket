@@ -61,19 +61,19 @@
 // Check operating system and C/C++ compiler ----------------------------------------------------------------
 
 #if not defined(ROCKET_OS_LINUX) && not defined(ROCKET_OS_MACOS) && not defined(ROCKET_OS_WINDOWS)
-  #error Unknown OS
+  #error unsupported operating system
 #endif
 
 #if not defined(ROCKET_C_COMPILER_GNU) && \
   not defined(ROCKET_C_COMPILER_LLVM) && \
   not defined(ROCKET_C_COMPILER_MSVC)
-  #error Unknown C compiler
+  #error unsupported C compiler
 #endif
 
 #if not defined(ROCKET_CXX_COMPILER_GNU) && \
   not defined(ROCKET_CXX_COMPILER_LLVM) && \
   not defined(ROCKET_CXX_COMPILER_MSVC)
-  #error Unknown C++ compiler
+  #error unsupported C++ compiler
 #endif
 
 // Macros ---------------------------------------------------------------------------------------------------

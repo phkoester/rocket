@@ -169,6 +169,16 @@ operator""_cp(char32 val) {
 
 namespace utf8 {
 
+/// Returns the UTF-8 string @p str cut to at most @p maxSize bytes, without splitting a UTF-8 byte sequence.
+///
+/// If the byte at @p maxSize is a trail byte, the result is shortened further to end before the lead byte of
+/// that sequence. Trail bytes in @p str that precede the cut are not checked.
+///
+/// @param str a UTF-8 string
+/// @param maxSize the maximum size of the result, in bytes
+/// @return a view to the leading part of @p str
+std::string_view cut(std::string_view str, u64 maxSize);
+
 /// Returns the length of the UTF-8 byte sequence starting with the byte @p c.
 ///
 /// @param c the first byte

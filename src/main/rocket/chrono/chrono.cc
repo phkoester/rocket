@@ -6,7 +6,7 @@
 #include "rocket/scope.h"
 
 #ifdef ROCKET_OS_WINDOWS
-  #include "rocket/windows.h"
+  #include "rocket/windows/windows.h"
 #endif
 
 #include <array>

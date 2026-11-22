@@ -150,6 +150,19 @@ convertUtf32To8(u32string_view str, InvalidUnicodePolicy policy) {
 
 namespace utf8 {
 
+string_view
+cut(string_view str, u64 maxSize) {
+  if (str.size() <= maxSize) {
+    return str;
+  }
+  u64 size = maxSize;
+  // Back off while the first byte cut off is a trail byte
+  while (size > 0 && U8_IS_TRAIL(str[size])) {
+    --size;
+  }
+  return str.substr(0, size);
+}
+
 u64
 lengthFromByte(char c, InvalidUnicodePolicy policy) {
   if (U8_IS_SINGLE(c)) {

@@ -16,7 +16,7 @@
   #include <unicode/utypes.h>
   #include <unicode/uversion.h>
 #elifdef ROCKET_OS_WINDOWS
-  #include "windows.h" // Must come first, defines `NTDDI_VERSION`
+  #include "rocket/windows/windows.h" // Must come first, defines `NTDDI_VERSION`
   #include <icu.h>
 #endif
 

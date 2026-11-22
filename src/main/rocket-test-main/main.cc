@@ -8,7 +8,7 @@
 #include <cstdlib>
 
 #ifdef ROCKET_OS_WINDOWS
-  #include <rocket/windows.h>
+  #include <rocket/windows/windows.h>
   #include <crtdbg.h>
 #endif
 

@@ -152,6 +152,47 @@ TEST(MODULE, conversions) {
 
 // `rocket::unicode::utf8` ----------------------------------------------------------------------------------
 
+TEST(MODULE, utf8Cut) {
+  // No cut needed
+  EXPECT_EQ(utf8::cut("", 0), "");
+  EXPECT_EQ(utf8::cut("", 5), "");
+  EXPECT_EQ(utf8::cut("abc", 3), "abc");
+  EXPECT_EQ(utf8::cut("abc", 10), "abc");
+  EXPECT_EQ(utf8::cut("ä€😀", 9), "ä€😀");
+
+  // ASCII
+  EXPECT_EQ(utf8::cut("abc", 0), "");
+  EXPECT_EQ(utf8::cut("abc", 2), "ab");
+
+  // Two-byte sequence `ä`
+  EXPECT_EQ(utf8::cut("aä", 1), "a");
+  EXPECT_EQ(utf8::cut("aä", 2), "a"); // Would split `ä`
+
+  // Three-byte sequence `€`
+  EXPECT_EQ(utf8::cut("a€b", 2), "a");
+  EXPECT_EQ(utf8::cut("a€b", 3), "a");
+  EXPECT_EQ(utf8::cut("a€b", 4), "a€");
+
+  // Four-byte sequence `😀`
+  for (u64 i = 0; i < 4; ++i) {
+    EXPECT_EQ(utf8::cut("😀b", i), "") << "i = " << i;
+  }
+  EXPECT_EQ(utf8::cut("😀b", 4), "😀");
+
+  // Mixed: `ä` (2), `€` (3), `😀` (4)
+  EXPECT_EQ(utf8::cut("ä€😀", 4), "ä");
+  EXPECT_EQ(utf8::cut("ä€😀", 5), "ä€");
+  EXPECT_EQ(utf8::cut("ä€😀", 8), "ä€");
+
+  // The result is a view to the input
+  const string str = "ä€😀";
+  EXPECT_EQ(utf8::cut(str, 5).data(), str.data());
+
+  // Only trail bytes: backs off to the start
+  const string conts { CONT, CONT, CONT };
+  EXPECT_EQ(utf8::cut(conts, 2), "");
+}
+
 TEST(MODULE, utf8Validate) {
   Positions pos;
 

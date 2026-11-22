@@ -18,53 +18,6 @@
 #include <thread>
 #include <vector>
 
-// Macros ---------------------------------------------------------------------------------------------------
-
-/// Calls #rocket::Process::error.
-///
-/// This may be used even if the process isn’t initialized yet.
-///
-/// Usage: `ROCKET_PROCESS_ERROR(status, fmt, [args]...])`
-#define ROCKET_PROCESS_ERROR(status, fmt, ...) { \
-  ::rocket::nio::StringSink msg; \
-  msg.print("{}:{}: ", ROCKET_SRC_FILE, __LINE__); \
-  msg.print(fmt __VA_OPT__(,) __VA_ARGS__); \
-  ::rocket::process().error(::rocket::nio::err, status, "{}", msg.str()); \
-}
-
-/// Calls #rocket::Process::info.
-///
-/// This may be used even if the process isn’t initialized yet.
-///
-/// Usage: `ROCKET_PROCESS_INFO(fmt, [args]...])`
- #define ROCKET_PROCESS_INFO(fmt, ...) { \
-  ::rocket::nio::StringSink msg; \
-  msg.print("{}:{}: ", ROCKET_SRC_FILE, __LINE__); \
-  msg.print(fmt __VA_OPT__(,) __VA_ARGS__); \
-  ::rocket::process().info(::rocket::nio::out, "{}", msg.str()); \
-}
-
-/// Calls #rocket::Process::warn.
-///
-/// This may be used even if the process isn’t initialized yet.
-///
-/// Usage: `ROCKET_PROCESS_WARN(fmt, [args]...])`
- #define ROCKET_PROCESS_WARN(fmt, ...) { \
-  ::rocket::nio::StringSink msg; \
-  msg.print("{}:{}: ", ROCKET_SRC_FILE, __LINE__); \
-  msg.print(fmt __VA_OPT__(,) __VA_ARGS__); \
-  ::rocket::process().warn(::rocket::nio::err, "{}", msg.str()); \
-}
-
-/// Sets or returns the name of the current thread.
-///
-/// The Rocket logging API considers the thread name for logging.
-///
-/// Usage: `ROCKET_THREAD_NAME([name])`
-///
-/// @return the current thread name
-#define ROCKET_THREAD_NAME(...) ::rocket::internal::process::setThreadName(__VA_ARGS__)
-
 namespace rocket {
 
 // Internal -------------------------------------------------------------------------------------------------
@@ -78,8 +31,6 @@ namespace internal::process {
 /// @param err the sink to write a warning to if the locale is not available
 /// @return the locale from the environment, or the classic locale if it is not available
 std::locale localeFromEnvironment(nio::Sink& err);
-
-const std::string& setThreadName(std::string_view name = "");
 
 /// Creates a locale by name.
 ///

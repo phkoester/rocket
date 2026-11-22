@@ -10,6 +10,7 @@
 #include "rocket/str/str.h"
 #include "rocket/str/escape/escape.h"
 #include "rocket/system/system.h"
+#include "rocket/thread/thread.h"
 
 #include <fmt/std.h>
 
@@ -74,11 +75,12 @@ struct Entry {
 // `Fmt` ----------------------------------------------------------------------------------------------------
 
 struct Fmt {
+  // Default format: "FLs6X"
   bool usePrettyFunction = true; // f, F
   bool logStackImmediately = false; // i, I
   bool withSourceLocation = true; // l, L
   u8 secondsRez = 6; // s0, s3, s6, s9
-  bool withThreadIds = false; // t, T
+  bool withThreads = false; // t, T
   bool withExecTimes = true; // x, X
   bool useUtc = false; // z, Z
 
@@ -105,8 +107,8 @@ struct Fmt {
           }
           break;
         }
-        case 't': withThreadIds = false; break;
-        case 'T': withThreadIds = true; break;
+        case 't': withThreads = false; break;
+        case 'T': withThreads = true; break;
         case 'x': withExecTimes = false; break;
         case 'X': withExecTimes = true; break;
         case 'z': useUtc = false; break;
@@ -668,10 +670,10 @@ logImpl(
   u64 indent = str.size();
 
   // Item: thread ID/name
-  if (logFmt.withThreadIds) {
+  if (logFmt.withThreads) {
     auto threadId = this_thread::get_id();
     string str;
-    auto name = ROCKET_THREAD_NAME();
+    auto name = rocket::thread::currentThreadName();
     if (not name.empty()) {
       // Use thread name
       str = name;
@@ -930,9 +932,9 @@ logEnd() {
       logImpl(logOut.get(time), entry.logId_, LogLevel::none, logStack.size() - 1, time, msg);
     }
   } catch (const exception& ex) {
-    ROCKET_PROCESS_ERROR(0, "cannot log message: {}", what(ex));
+    process().error(nio::err, 0, "cannot log message: {}", what(ex));
   } catch (...) {
-    ROCKET_PROCESS_ERROR(0, "cannot log message");
+    process().error(nio::err, 0, "cannot log message");
   }
   // After catching anything, we can safely pop from the stack
   logStack.pop_back();
@@ -953,7 +955,8 @@ logInit() {
   try {
     args = system::makeArgs(val);
   } catch (const Exception& ex) {
-    ROCKET_PROCESS_ERROR(EXIT_SERIOUS_FAILURE, "cannot parse `ROCKET_LOG`, which is {:?}: {}", val, ex.message());
+    process().error(nio::err, EXIT_SERIOUS_FAILURE,
+      "cannot parse `ROCKET_LOG`, which is {:?}: {}", val, ex.message());
   }
   if (not args.empty()) {
     cl::CommandLine cl(CL_OPTIONS, {}, { .rocketOpts = false });

@@ -103,7 +103,7 @@ toy() {
 
 i32
 main(i32 argc, char **argv) {
-  ROCKET_PROCESS_ERROR(0, "testing error before `process().init` ...");
+  process().error(nio::err, 0, "testing error before `process().init` ...");
 
   process().atExit(myExit);
   process().atExit(myTerminate, true);
@@ -163,6 +163,8 @@ main(i32 argc, char **argv) {
   toy();
 
   // throwInvalidState();
+
+  static_assert(not std::is_same<char32, wchar_t>::value, "char32 and wchar_t must be different types");
 
   nio::out.println("Exiting ...");
   process().exit(EXIT_SUCCESS);

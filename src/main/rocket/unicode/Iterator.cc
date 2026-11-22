@@ -58,7 +58,7 @@ Iterator<C>::Iterator(IteratorType type, basic_string_view<C> input, const local
   // ICU break positions are `int32_t`
   ROCKET_CHECK(input, input.size() <= static_cast<u64>(numeric_limits<i32>::max()), "input too long");
 
-  // 1. Validate the input and, for UTF-32, convert it to UTF-16
+  // 1. Validate the input, and for UTF-32, convert it to UTF-16
 
   const auto inputLength = static_cast<i32>(input.size());
   if constexpr (same_as<C, char>) {
@@ -125,7 +125,11 @@ Iterator<C>::Iterator(IteratorType type, basic_string_view<C> input, const local
     ubrk_setUText(iter_.get(), text, &status);
     utext_close(text);
   } else {
-    ubrk_setText(iter_.get(), reinterpret_cast<const UChar*>(u16_.data()), static_cast<i32>(u16_.size()), &status);
+    ubrk_setText(
+      iter_.get(),
+      reinterpret_cast<const UChar*>(u16_.data()),
+      static_cast<i32>(u16_.size()),
+      &status);
   }
   ROCKET_EXPECT(U_SUCCESS(status));
 }

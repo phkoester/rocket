@@ -8,7 +8,7 @@
 #include "rocket/scope.h"
 
 #ifdef ROCKET_OS_WINDOWS
-  #include "rocket/windows.h"
+  #include "rocket/windows/windows.h"
   #include <thread>
 #else
   #include <fcntl.h>
