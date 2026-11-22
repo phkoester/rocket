@@ -393,7 +393,10 @@ FetchContent_Declare(
 
 block()
   set(BUILD_SHARED_LIBS OFF)
-  set(SANITIZE OFF) #
+  # libcbor requires CMake 3.5, so without CMP0077, `option()` ignores `SANITIZE` on a fresh configure and
+  # builds libcbor with ASan in Debug mode, leaving the ASan runtime unresolved when linking
+  set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
+  set(SANITIZE OFF)
   FetchContent_MakeAvailable(libcbor)
 endblock()
 
