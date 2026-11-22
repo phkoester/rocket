@@ -42,8 +42,10 @@ main(i32 argc, char **argv) {
   process().init(argc, argv, "print-env");
 
   vector<Row> rows;
-  rows.emplace_back("`filesystem::systemTempDir`", fmt::format("{}", rocket::filesystem::systemTempDir()));
-  rows.emplace_back("`filesystem::userTempDir`", fmt::format("{}", rocket::filesystem::userTempDir()));
+  rows.emplace_back(
+    "rocket.filesystem.systemTempDir", fmt::format("{}", rocket::filesystem::systemTempDir()));
+  rows.emplace_back(
+    "rocket.filesystem.userTempDir", fmt::format("{}", rocket::filesystem::userTempDir()));
 
   printTable(rows);
 

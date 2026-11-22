@@ -10,7 +10,7 @@ using namespace std;
 
 int
 main() {
-  puts("This is bare");
+  printf("This is bare\n");
   return 0;
 }
 
