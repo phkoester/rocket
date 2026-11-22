@@ -3,6 +3,7 @@
 #include "log.h"
 
 #include "rocket/Process.h"
+#include "rocket/SystemError.h"
 #include "rocket/enum.h"
 #include "rocket/macro.h"
 #include "rocket/archive/archive.h"
@@ -673,7 +674,10 @@ logImpl(
   if (logFmt.withThreads) {
     auto threadId = this_thread::get_id();
     string str;
-    auto name = rocket::thread::currentThreadName();
+    string name;
+    try {
+      name = rocket::thread::currentThreadName();
+    } catch (const SystemError&) {}
     if (not name.empty()) {
       // Use thread name
       str = name;
