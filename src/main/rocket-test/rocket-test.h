@@ -70,7 +70,7 @@ using namespace ::testing;
   if (not ::rocket::system::env::get<bool>(name).value_or(false)) { \
     static bool info = false; \
     if (not info) { \
-      ::rocket::process().info(::rocket::nio::err, \
+      ::rocket::process().info(::rocket::nio::out, \
         "exiting function because `" name "` is not set to `true`"); \
       info = true; \
     } \
