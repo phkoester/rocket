@@ -46,11 +46,6 @@ else()
 endif()
 FetchContent_MakeAvailable(gaia)
 
-# CMPs ------------------------------------------------------------------------------------------------------
-
-# Get rid of a warning from libcbor
-set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
-
 # General settings ------------------------------------------------------------------------------------------
 
 set(CMAKE_CXX_EXTENSIONS ON)
