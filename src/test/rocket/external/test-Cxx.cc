@@ -23,13 +23,13 @@ namespace {
 // A terminate handler that leaves a marker on `stderr`, proving that `std::terminate` was called
 [[noreturn]] void
 markingTerminateHandler() {
-  std::fputs("`std::terminate` called\n", stderr);
-  std::abort();
+  fputs("`std::terminate` called\n", stderr);
+  abort();
 }
 
 [[noreturn]] void
 throwRuntimeError() {
-  throw std::runtime_error("oops");
+  throw runtime_error("oops");
 }
 
 // Lets an exception escape although declared `noexcept`. The `throw` is in a separate function so that the
@@ -280,13 +280,13 @@ TEST(MODULE_DEATH_TEST, exceptionThroughNoexceptCallsTerminate) { // NOLINT(*-un
   // is never reached
   EXPECT_EXIT(
     {
-      std::set_terminate(markingTerminateHandler);
+      set_terminate(markingTerminateHandler);
       try {
         throwThroughNoexcept();
       } catch (...) {
         // Never reached: the exception must not leave the `noexcept` function
-        std::fputs("exception caught\n", stderr);
-        std::_Exit(0);
+        fputs("exception caught\n", stderr);
+        _Exit(0);
       }
     },
     ABORTED(), "`std::terminate` called");
