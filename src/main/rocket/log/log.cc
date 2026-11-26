@@ -73,10 +73,10 @@ struct Entry {
     time_(time) {}
 };
 
-// `Fmt` ----------------------------------------------------------------------------------------------------
+// `Format` -------------------------------------------------------------------------------------------------
 
-struct Fmt {
-  // Default format: "FLs6X"
+/// The default log format is `FiLs6tXz`.
+struct Format {
   bool usePrettyFunction = true; // f, F
   bool logStackImmediately = false; // i, I
   bool withSourceLocation = true; // l, L
@@ -86,8 +86,8 @@ struct Fmt {
   bool useUtc = false; // z, Z
 
   void
-  set(string_view fmt) {
-    for (auto it = fmt.begin(), end = fmt.end(); it != end; ++it) {
+  set(string_view val) {
+    for (auto it = val.begin(), end = val.end(); it != end; ++it) {
       switch (*it) {
         case 'f': usePrettyFunction = false; break;
         case 'F': usePrettyFunction = true; break;
@@ -120,7 +120,7 @@ struct Fmt {
   }
 };
 
-Fmt logFmt;
+Format logFormat;
 
 // `Out` ----------------------------------------------------------------------------------------------------
 
@@ -444,7 +444,7 @@ Out::zipOlderFiles(const fs::path& current) {
 const cl::OptionGroup logging { "Logging control" };
 
 bool applyLog(optional<string_view> val);
-bool applyLogFmt(optional<string_view> val);
+bool applyLogFormat(optional<string_view> val);
 bool applyLogOut(optional<string_view> val);
 
 #define NBSP "\u00A0"
@@ -467,13 +467,13 @@ const vector<cl::Option> CL_OPTIONS {
   }, applyLog),
   cl::Option::of(cl::OptionType::Custom, {
     .description="set log format",
-    .format="FMT",
+    .format="FORMAT",
     .group=&logging,
     .minOccurs=0,
-    .name="log-fmt",
+    .name="log-format",
     .takesValue=true,
     .verboseDescription=
-      "set log format. FMT is a string of format specifiers, e.g., `fs3Z`. Valid specifiers are:\n"
+      "set log format. FORMAT is a string of format specifiers, e.g., `fs3Z`. Valid specifiers are:\n"
       NBSP NBSP "f" NBSP NBSP NBSP "display function names\n"
       NBSP NBSP "F" NBSP NBSP NBSP "display pretty function names (*)\n"
       NBSP NBSP "i" NBSP NBSP NBSP "do not log function stack immediately (*)\n"
@@ -491,7 +491,7 @@ const vector<cl::Option> CL_OPTIONS {
       NBSP NBSP "z" NBSP NBSP NBSP "display local time (*)\n"
       NBSP NBSP "Z" NBSP NBSP NBSP "display UTC time\n"
       "An asterisk (*) indicates that the setting is enabled by default",
-  }, applyLogFmt),
+  }, applyLogFormat),
   cl::Option::of(cl::OptionType::Custom, {
     .description="log to system device or file",
     .format="OUT",
@@ -539,7 +539,7 @@ thread_local vector<Entry> logStack;
 
 // Local functions ------------------------------------------------------------------------------------------
 
-void setLogFmt(string_view val);
+void setLogFormat(string_view val);
 void setLogLevel(string_view id, string_view val);
 void setLogOut(string_view val);
 
@@ -564,15 +564,15 @@ applyLog(optional<string_view> val) {
   return true;
 }
 
-/// Handles the `--log-fmt` option.
+/// Handles the `--log-format` option.
 ///
 /// @ThreadSafe
 bool
-applyLogFmt(optional<string_view> val) {
+applyLogFormat(optional<string_view> val) {
   ROCKET_ASSERT(val);
 
   // Use public API from here
-  setLogFmt(*val);
+  setLogFormat(*val);
   return true;
 }
 
@@ -614,20 +614,20 @@ formatExecTime(const SystemTimePoint& t1, const SystemTimePoint& t2) {
 string
 formatTimePoint(const SystemTimePoint& tp) {
   const auto formatImpl = [](const auto& ctp) { // ctp = cast time point
-    if (logFmt.useUtc) {
+    if (logFormat.useUtc) {
       return fmt::format("{:%FT%TZ} ", ctp);
     }
     rocket::chrono::zoned_time zt { rocket::chrono::current_zone(), ctp };
     return fmt::format("{:%FT%T%Ez} ", zt);
   };
 
-  if (logFmt.secondsRez == 0) {
+  if (logFormat.secondsRez == 0) {
     return formatImpl(time_point_cast<std::chrono::seconds>(tp));
   }
-  if (logFmt.secondsRez == 3) {
+  if (logFormat.secondsRez == 3) {
     return formatImpl(time_point_cast<std::chrono::milliseconds>(tp));
   }
-  if (logFmt.secondsRez == 6) {
+  if (logFormat.secondsRez == 6) {
     return formatImpl(time_point_cast<std::chrono::microseconds>(tp));
   }
   return formatImpl(time_point_cast<std::chrono::nanoseconds>(tp));
@@ -671,7 +671,7 @@ logImpl(
   u64 indent = str.size();
 
   // Item: thread ID/name
-  if (logFmt.withThreads) {
+  if (logFormat.withThreads) {
     auto threadId = this_thread::get_id();
     string str;
     string name;
@@ -741,10 +741,10 @@ logImpl(
 
 // @ThreadSafe
 void
-setLogFmt(string_view val) {
+setLogFormat(string_view val) {
   ROCKET_MUTEX_LOCK(logMutex());
 
-  logFmt.set(val);
+  logFormat.set(val);
 }
 
 /// Sets the log level for the log ID @p id to @p val.
@@ -886,8 +886,8 @@ logBegin(LogSettings* logId, const char* function, const char* prettyFunction, c
   ROCKET_MUTEX_LOCK(logMutex());
 
   // Begin log entry will be flushed later if necessary
-  string msg = logFmt.usePrettyFunction ? prettyFunction : function;
-  if (logFmt.withSourceLocation) {
+  string msg = logFormat.usePrettyFunction ? prettyFunction : function;
+  if (logFormat.withSourceLocation) {
     msg += fmt::format(" {}:{}", file, line);
   }
   msg += " {";
@@ -897,7 +897,7 @@ logBegin(LogSettings* logId, const char* function, const char* prettyFunction, c
   logStack.emplace_back(logId, function, prettyFunction, file, line, buf.str(), time);
 
   // If requested, log function stack immediately
-  if (logFmt.logStackImmediately) {
+  if (logFormat.logStackImmediately) {
     logFlush(logOut.get(time));
   }
 }
@@ -923,12 +923,12 @@ logEnd() {
     if (not entry.begin_) {
       ROCKET_MUTEX_LOCK(logMutex());
       string msg = "} ";
-      msg += logFmt.usePrettyFunction ? entry.prettyFunction_ : entry.function_;
-      if (logFmt.withSourceLocation) {
+      msg += logFormat.usePrettyFunction ? entry.prettyFunction_ : entry.function_;
+      if (logFormat.withSourceLocation) {
         msg += fmt::format(" {}:{}", entry.file_, entry.line_);
       }
       const auto time = chrono::now();
-      if (logFmt.withExecTimes) {
+      if (logFormat.withExecTimes) {
         msg += " [";
         msg += formatExecTime(entry.time_, time);
         msg += ']';
