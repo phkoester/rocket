@@ -514,8 +514,8 @@ TEST(MODULE, StreamSinkExceptionMask) { // NOLINT(*-complexity)
     int sync() override { return -1; }
   };
 
-  // With `badbit` in the exception mask, a failure throws `ios_base::failure`. Every operation reports it as a
-  // failure instead
+  // With `badbit` in the exception mask, a failure throws `ios_base::failure`. Every operation reports it as
+  // a failure instead
   const vector<pair<string, function<bool(Sink&)>>> cases {
     { "print", [](Sink& out) { return out.print("Hi {}", "there"); } },
     { "print style", [](Sink& out) { return out.print(fmt::fg(fmt::color::red), "Hi {}", "there"); } },
@@ -1181,8 +1181,8 @@ TEST(MODULE, readln) { // NOLINT(*-complexity)
 }
 
 TEST(MODULE, readlnIoError) {
-  // A complete line before the error is returned. The incomplete line at the error is dropped, and the source
-  // is bad
+  // A complete line before the error is returned. The incomplete line at the error is dropped, and the
+  // source is bad
 
 #ifdef ROCKET_TEST_HAS_FAILING_FILE
   {

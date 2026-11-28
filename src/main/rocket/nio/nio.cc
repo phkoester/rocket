@@ -457,7 +457,8 @@ StreamSink::StreamSink(ostream& os) :
 }
 
 StreamSink::StreamSink(const fs::path& path, bool append, bool binary) {
-  // A failing `open` sets `failbit`, not `badbit`. The exception mask of `owned_` is empty, so it does not throw
+  // A failing `open` sets `failbit`, not `badbit`. The exception mask of `owned_` is empty, so it does not
+  // throw
   errno = 0;
   owned_.open(path, (append ? ios::app : ios::trunc) | (binary ? ios::binary : ios::openmode {}));
   if (not owned_.is_open()) {
@@ -974,9 +975,9 @@ StreamSource::readln() {
   }
 
   // `getline` does nothing while `failbit` is set, which a previous operation may have left behind. It fails
-  // if it extracts nothing, i.e., at the end of the input. Otherwise, it sets `eofbit` only if it hit the end,
-  // so `eof()` tells whether the line had a line feed. If the exception mask makes it throw, the state is set
-  // all the same
+  // if it extracts nothing, i.e., at the end of the input. Otherwise, it sets `eofbit` only if it hit the
+  // end, so `eof()` tells whether the line had a line feed. If the exception mask makes it throw, the state
+  // is set all the same
   string ret;
   runStreamOp(in(), ec_, [&] {
     clearState(in());

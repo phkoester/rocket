@@ -414,7 +414,10 @@ escapeCString(string_view input, const CStringConfig& config, Positions* positio
 }
 
 string
-unescapeCString(string_view input, const CStringConfig& config, Positions* positions) { // NOLINT(*-complexity)
+unescapeCString( // NOLINT(*-complexity)
+  string_view input,
+  const CStringConfig& config,
+  Positions* positions) {
   ROCKET_CHECK(config, config.quote == '\0' || config.quote == '"' || config.quote == '\'');
 
   string ret;

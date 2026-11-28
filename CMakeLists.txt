@@ -321,7 +321,8 @@ FetchContent_Declare(
 block()
   set(BUILD_SHARED_LIBS OFF)
   set(BENCHMARK_DOWNLOAD_DEPENDENCIES OFF)
-  # Benchmark registers its own tests with CTest, which are excluded from the build and thus fail as "Not Run"
+  # Benchmark registers its own tests with CTest, which are excluded from the build and thus fail as
+  # "Not Run"
   set(BENCHMARK_ENABLE_TESTING OFF)
   FetchContent_MakeAvailable(benchmark)
 endblock()

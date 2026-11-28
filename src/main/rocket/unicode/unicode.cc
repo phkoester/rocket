@@ -139,7 +139,9 @@ convertUtf32To8(u32string_view str, InvalidUnicodePolicy policy) {
     i32 i = 0;
     [[maybe_unused]] UBool error = 0;
     U8_APPEND(buf.data(), i, 4, c, error); // NOLINT
-    ROCKET_DEBUG_ASSERT(error == 0, "`U8_APPEND` failed for code-point value 0x{:X} at position {}", static_cast<u32>(c), pos);
+    ROCKET_DEBUG_ASSERT(
+      error == 0,
+      "`U8_APPEND` failed for code-point value 0x{:X} at position {}", static_cast<u32>(c), pos);
     ret.append(buf.data(), i); // NOLINT
   }
 

@@ -293,7 +293,11 @@ ruleInfo(const PosixRule& rule, sys_seconds tp) {
   const auto endOf = [&](i32 i) { return toSys(localTransition(rule.end, year(i)), dst.offset); };
   const i32 refYear = clamp(y, static_cast<i32>(year::min()), static_cast<i32>(year::max()) - 1);
   if (endOf(refYear) == startOf(refYear + 1)) {
-    return { MIN_TIME, MAX_TIME, dst.offset, duration_cast<minutes>(dst.offset - rule.std.offset), dst.abbrev };
+    return {
+      MIN_TIME,
+      MAX_TIME,
+      dst.offset, duration_cast<minutes>(dst.offset - rule.std.offset), dst.abbrev
+    };
   }
   if (startOf(refYear) == endOf(refYear)) {
     return { MIN_TIME, MAX_TIME, rule.std.offset, 0min, rule.std.abbrev };
@@ -472,7 +476,14 @@ struct Header {
 
   [[nodiscard]] size_t
   dataSize(size_t timeSize) const {
-    return timecnt * timeSize + timecnt + typecnt * 6 + charcnt + leapcnt * (timeSize + 4) + isstdcnt + isutcnt;
+    return
+      timecnt * timeSize +
+      timecnt +
+      typecnt * 6 +
+      charcnt +
+      leapcnt * (timeSize + 4) +
+      isstdcnt +
+      isutcnt;
   }
 };
 
@@ -683,7 +694,9 @@ makeUtcData() {
 // Time-zone database ---------------------------------------------------------------------------------------
 
 constexpr string_view UtcName = "Etc/UTC";
-constexpr string_view UtcAliases[] = { "UTC", "Etc/UCT", "UCT", "Etc/Universal", "Universal", "Etc/Zulu", "Zulu" };
+constexpr string_view UtcAliases[] = {
+  "UTC", "Etc/UCT", "UCT", "Etc/Universal", "Universal", "Etc/Zulu", "Zulu"
+};
 
 bool
 isValidName(string_view name) {

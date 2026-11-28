@@ -409,7 +409,8 @@ readIdentifier(Source& in) {
   // Check the first code point. An ASCII character decides by itself, so peeking suffices. Any other
   // character must be read as a whole code point, and gone back over on failure
   const auto firstByte = peekChar(in);
-  if (not firstByte || (static_cast<u8>(*firstByte) < 0x80 && not isStart(static_cast<char32>(*firstByte)))) {
+  if (not firstByte ||
+      (static_cast<u8>(*firstByte) < 0x80 && not isStart(static_cast<char32>(*firstByte)))) {
     return nullopt;
   }
   const auto start = in.tell();

@@ -384,7 +384,14 @@ TEST(MODULE, execArgsBackslashes) {
   const string executable = testExecutable("print-args").string();
 
   // Windows treats backslashes specially in front of quotation marks, which includes the closing one
-  const vector<string_view> values { R"(a\ b)", R"(a\)", R"(a\\)", R"(\\server\share)", R"(a\"b)", R"(a\\"b)" };
+  const vector<string_view> values {
+    R"(a\ b)",
+    R"(a\)",
+    R"(a\\)",
+    R"(\\server\share)",
+    R"(a\"b)",
+    R"(a\\"b)"
+  };
 
   for (const string_view val : values) {
     SCOPED_TRACE(string(val));

@@ -63,7 +63,9 @@ jobs:
         run: cmake --build --preset multi-Release
 
       - name: Test
-        run: ctest --preset multi-Release --test-dir build --output-on-failure --parallel "$(sysctl -n hw.ncpu)"
+        run: >-
+          ctest --preset multi-Release --test-dir build --output-on-failure
+          --parallel "$(sysctl -n hw.ncpu)"
 
       - name: Show ccache statistics
         if: always()

@@ -240,7 +240,8 @@ TEST(MODULE, Time) {
 TEST(MODULE, ZonedTime) {
   using namespace std::chrono;
 
-  const auto val = rocket::chrono::zoned_time(rocket::chrono::current_zone(), rocket::chrono::now<system_clock>());
+  const auto val = rocket::chrono::zoned_time(
+    rocket::chrono::current_zone(), rocket::chrono::now<system_clock>());
   const HashEncoder<> encoder;
   EXPECT_NE(encoder.encode(val), 0);
 }

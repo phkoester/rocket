@@ -260,8 +260,11 @@ TEST(MODULE, zonedTime) {
 
   const auto fromLocal = zoned_time("Europe/Berlin", local_days(2024y / July / 1) + 14h);
   EXPECT_EQ(fromLocal.get_sys_time(), utc);
-  EXPECT_THROW(zoned_time("Europe/Berlin", local_days(2024y / March / 31) + 2h + 30min), nonexistent_local_time);
-  const auto latest = zoned_time("Europe/Berlin", local_days(2024y / October / 27) + 2h + 30min, choose::latest);
+  EXPECT_THROW(
+    zoned_time("Europe/Berlin", local_days(2024y / March / 31) + 2h + 30min),
+    nonexistent_local_time);
+  const auto latest = zoned_time(
+    "Europe/Berlin", local_days(2024y / October / 27) + 2h + 30min, choose::latest);
   EXPECT_EQ(latest.get_info().abbrev, CET);
 
   // Another zone, same time point

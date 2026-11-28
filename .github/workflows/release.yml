@@ -36,7 +36,8 @@ jobs:
             if [ -z "$prev" ]; then
               echo "Initial release."
             else
-              changes=$(git log --no-merges --format='- %s' "$prev..$TAG" | grep -vxF -- '- (No commit message.)' || true)
+              changes=$(git log --no-merges --format='- %s' "$prev..$TAG" |
+                grep -vxF -- '- (No commit message.)' || true)
               if [ -n "$changes" ]; then
                 printf '## Changes\n\n%s\n\n' "$changes"
               fi

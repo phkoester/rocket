@@ -34,7 +34,10 @@ struct ArgFile {
 /// @param openFiles the argument files being expanded, from the outermost to the innermost. A file may be
 ///   expanded any number of times, but not while it is being expanded already, which would be a cycle
 void
-addArg(vector<string>& out, const string& arg, vector<ArgFile>& openFiles) { // NOLINT(*-complexity,*-recursion)
+addArg( // NOLINT(*-complexity,*-recursion)
+  vector<string>& out,
+  const string& arg,
+  vector<ArgFile>& openFiles) {
   if (arg.starts_with("@")) {
     if (arg.size() == 1) {
       // "@" is just a regular argument
@@ -239,7 +242,11 @@ CommandLine::name(const Option& opt, bool nameFlag) {
 }
 
 bool
-CommandLine::parse(const vector<string>& args, nio::Sink& out, nio::Sink& err, bool exit) { // NOLINT(*-complexity)
+CommandLine::parse( // NOLINT(*-complexity)
+  const vector<string>& args,
+  nio::Sink& out,
+  nio::Sink& err,
+  bool exit) {
   try {
     parserState_ = ParserState();
 

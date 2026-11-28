@@ -65,7 +65,10 @@ jobs:
       - name: Set up MSVC
         shell: cmd
         run: |
-          for /f "usebackq delims=" %%i in (`"%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath`) do set "VS_DIR=%%i"
+          set "VSWHERE=%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe"
+          set "VSWHERE_ARGS=-latest -products * -property installationPath"
+          set "VSWHERE_ARGS=%VSWHERE_ARGS% -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64"
+          for /f "usebackq delims=" %%i in (`"%VSWHERE%" %VSWHERE_ARGS%`) do set "VS_DIR=%%i"
           call "%VS_DIR%\VC\Auxiliary\Build\vcvars64.bat" || exit /b 1
           set >> "%GITHUB_ENV%"
 
@@ -84,7 +87,9 @@ jobs:
         run: cmake --build --preset multi-Release
 
       - name: Test
-        run: ctest --preset multi-Release --test-dir build --output-on-failure --parallel $env:NUMBER_OF_PROCESSORS
+        run: >-
+          ctest --preset multi-Release --test-dir build --output-on-failure
+          --parallel $env:NUMBER_OF_PROCESSORS
 
       - name: Show ccache statistics
         if: always()

@@ -49,8 +49,12 @@ TEST(MODULE, MyEnumToType) {
 TEST(MODULE, MyEnumClassToType) {
   EXPECT_EQ(Enum<MyEnumClass>::toType("hürxer", true), make_pair(7_u64, MyEnumClass::hürxer));
 
-  EXPECT_EQ(Enum<MyEnumClass>::toType("foo", true).error().message, "cannot scan \"foo\" as `MyEnumClass`");
-  EXPECT_EQ(Enum<MyEnumClass>::toType("hürxerx", true).error().message, "cannot scan \"hürxerx\" as `MyEnumClass`");
+  EXPECT_EQ(
+    Enum<MyEnumClass>::toType("foo", true).error().message,
+    "cannot scan \"foo\" as `MyEnumClass`");
+  EXPECT_EQ(
+    Enum<MyEnumClass>::toType("hürxerx", true).error().message,
+    "cannot scan \"hürxerx\" as `MyEnumClass`");
 }
 
 // EOF

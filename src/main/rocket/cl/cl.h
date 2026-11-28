@@ -335,7 +335,8 @@ struct Option {
       .name="verbose",
       .shortName=unicode::Character<char>("v"),
       .takesValue=false,
-      .verboseDescription=fmt::format("increase level of verbosity (may be supplied up to {} times)", maxOccurs)
+      .verboseDescription=
+        fmt::format("increase level of verbosity (may be supplied up to {} times)", maxOccurs)
     };
     const Apply apply = [&](std::string_view val) { return internal::applyToInteger(out, val); };
     return of(OptionType::Verbose, config, apply);

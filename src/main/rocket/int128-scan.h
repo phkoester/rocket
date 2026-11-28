@@ -50,7 +50,9 @@ struct Scanner {
 
     // As in `scn::detail::scanner_parse_for_builtin_type`
     using Setter = scn::detail::specs_setter;
-    constexpr auto type = isSigned ? scn::detail::arg_type::int128_type : scn::detail::arg_type::uint128_type;
+    constexpr auto type = isSigned ?
+      scn::detail::arg_type::int128_type :
+      scn::detail::arg_type::uint128_type;
     auto checker = scn::detail::specs_checker<Setter>(Setter(specs_), type);
     const auto it =
       scn::detail::parse_format_specs(scn::detail::to_address(begin), scn::detail::to_address(end), checker);

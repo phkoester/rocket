@@ -450,7 +450,9 @@ TEST(MODULE, rocketChronoZonedTime) {
   EXPECT_EQ(
     fmt::format("{:*<12%H:%M %Z}", rocket::chrono::zoned_time(berlin, summer)),
     fmt::format("{:*<12}", "12:00 " + CEST));
-  EXPECT_EQ(fmt::format("{:*^12%Z}", rocket::chrono::zoned_time(berlin, summer)), fmt::format("{:*^12}", CEST));
+  EXPECT_EQ(
+    fmt::format("{:*^12%Z}", rocket::chrono::zoned_time(berlin, summer)),
+    fmt::format("{:*^12}", CEST));
 
   // Localization, literal text, and other character types
   EXPECT_EQ(fmt::format("{:L%H:%M %Z}", rocket::chrono::zoned_time(berlin, summer)), "12:00 " + CEST);

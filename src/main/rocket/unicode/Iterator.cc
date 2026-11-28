@@ -53,7 +53,10 @@ namespace rocket::unicode {
 // `Iterator` -----------------------------------------------------------------------------------------------
 
 template<typename C> requires IsChar<C>
-Iterator<C>::Iterator(IteratorType type, basic_string_view<C> input, const locale& loc) : // NOLINT(*-complexity)
+Iterator<C>::Iterator( // NOLINT(*-complexity)
+  IteratorType type,
+  basic_string_view<C> input,
+  const locale& loc) :
   input_(input) {
   // ICU break positions are `int32_t`
   ROCKET_CHECK(input, input.size() <= static_cast<u64>(numeric_limits<i32>::max()), "input too long");

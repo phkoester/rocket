@@ -24,7 +24,10 @@ namespace rocket::str::location {
 // Functions ------------------------------------------------------------------------------------------------
 
 LocationsResult
-locations(string_view input, const vector<Position>& positions, const LocationsConfig& config) { // NOLINT(*-complexity)
+locations( // NOLINT(*-complexity)
+  string_view input,
+  const vector<Position>& positions,
+  const LocationsConfig& config) {
   ROCKET_CHECK(config, not config.tabSize || *config.tabSize > 0, "tab size may not be 0");
 
   // Prepare result
@@ -260,7 +263,11 @@ printLocations( // NOLINT(*-complexity)
         const u64 lower = indicatorPos(inter.a);
         const u64 upper = indicatorPos(*inter.b);
         // Place the range
-        indicators.replace(indicators.begin() + lower, indicators.begin() + upper, upper - lower, '~'); // NOLINT
+        indicators.replace(
+          indicators.begin() + lower,
+          indicators.begin() + upper,
+          upper - lower,
+          '~');
       }
     }
 
