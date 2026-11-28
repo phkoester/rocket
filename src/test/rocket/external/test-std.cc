@@ -13,6 +13,8 @@
 
 using namespace rocket;
 
+namespace fs = std::filesystem;
+
 #define MODULE rocketExternalStd
 
 // Tests ====================================================================================================
@@ -63,8 +65,6 @@ TEST(MODULE, rethrowException) {
 }
 
 TEST(MODULE, filesystemPath) {
-  namespace fs = std::filesystem;
-
   const fs::path unixPath("/path/to/file");
   EXPECT_EQ(unixPath.filename(), fs::path("file"));
   EXPECT_EQ(unixPath.parent_path(), fs::path("/path/to"));
@@ -82,37 +82,37 @@ TEST(MODULE, filesystemPath) {
 }
 
 TEST(MODULE, istreamDefaultExceptions) {
-  auto is = io::testing::is();
-  EXPECT_EQ(is.exceptions(), 0);
+  auto in = io::testing::in();
+  EXPECT_EQ(in.exceptions(), 0);
 }
 
 TEST(MODULE, istreamEof) {
   {
-    auto is = io::testing::is();
+    auto in = io::testing::in();
     // Check 'tellg()' once
-    EXPECT_EQ(is.tellg(), 0);
+    EXPECT_EQ(in.tellg(), 0);
     // Check 'tellg()' twice
-    EXPECT_EQ(is.tellg(), 0);
-    is.setstate(ios::eofbit);
+    EXPECT_EQ(in.tellg(), 0);
+    in.setstate(ios::eofbit);
     // Setting 'eofbit' doesn’t immediately affect 'fail()'
-    EXPECT_FALSE(is.fail());
+    EXPECT_FALSE(in.fail());
     // 'tellg()' affects() 'fail()' when 'eofbit' is set
-    EXPECT_EQ(is.tellg(), -1);
-    EXPECT_TRUE(is.fail());
+    EXPECT_EQ(in.tellg(), -1);
+    EXPECT_TRUE(in.fail());
   }
 
   {
-    auto is = io::testing::is();
+    auto in = io::testing::in();
     char c = '\0';
-    is >> c;
-    EXPECT_TRUE(is.eof());
+    in >> c;
+    EXPECT_TRUE(in.eof());
     // 'eof()' implies 'fail()'
-    EXPECT_TRUE(is.fail());
-    EXPECT_EQ(is.tellg(), -1);
+    EXPECT_TRUE(in.fail());
+    EXPECT_EQ(in.tellg(), -1);
     // 'seekg' resets 'eof()', but not 'fail()'
-    is.seekg(0);
-    EXPECT_FALSE(is.eof());
-    EXPECT_TRUE(is.fail());
+    in.seekg(0);
+    EXPECT_FALSE(in.eof());
+    EXPECT_TRUE(in.fail());
   }
 }
 
@@ -120,27 +120,27 @@ TEST(MODULE, istreamBool) {
   using type = bool;
 
   {
-    auto is = io::testing::is("tru");
+    auto in = io::testing::in("tru");
     type val = false;
-    is >> boolalpha >> val;
+    in >> boolalpha >> val;
     EXPECT_EQ(val, false);
     // After reading an incomplete 'bool', there is a failure and an EOF
-    EXPECT_ISTREAM(is, true, true, 3);
-    EXPECT_EQ(is.tellg(), -1);
+    EXPECT_ISTREAM(in, true, true, 3);
+    EXPECT_EQ(in.tellg(), -1);
   }
 
   {
-    auto is = io::testing::is("true");
+    auto in = io::testing::in("true");
     type val = false;
-    is >> boolalpha >> val;
+    in >> boolalpha >> val;
     EXPECT_EQ(val, true);
   }
 }
 
 TEST(MODULE, istreamChar) {
-  auto is = io::testing::is("a");
+  auto in = io::testing::in("a");
   char c = '\0';
-  is >> c;
+  in >> c;
   EXPECT_EQ(c, 'a');
 }
 
@@ -148,55 +148,55 @@ TEST(MODULE, istreamI32) {
   using type = i32;
 
   {
-    auto is = io::testing::is();
+    auto in = io::testing::in();
     type val = 0;
-    is >> val;
+    in >> val;
     EXPECT_EQ(val, 0);
-    EXPECT_ISTREAM(is, true, true, 0);
+    EXPECT_ISTREAM(in, true, true, 0);
   }
 
   {
-    auto is = io::testing::is("a");
+    auto in = io::testing::in("a");
     type val = 0;
-    is >> val;
+    in >> val;
     EXPECT_EQ(val, 0);
-    EXPECT_ISTREAM(is, true, false, 0);
+    EXPECT_ISTREAM(in, true, false, 0);
   }
 
   {
-    auto is = io::testing::is("-");
+    auto in = io::testing::in("-");
     type val = 0;
-    is >> val;
+    in >> val;
     EXPECT_EQ(val, 0);
     // After reading an incomplete 'i32', there is a failure and an EOF
-    EXPECT_ISTREAM(is, true, true, 1);
+    EXPECT_ISTREAM(in, true, true, 1);
   }
 
   {
-    auto is = io::testing::is("-12");
+    auto in = io::testing::in("-12");
     type val = 0;
-    is >> val;
+    in >> val;
     EXPECT_EQ(val, -12);
     // After reading a complete 'i32', there is no failure but an EOF
-    EXPECT_ISTREAM(is, false, true, 3);
-    EXPECT_EQ(is.tellg(), -1);
+    EXPECT_ISTREAM(in, false, true, 3);
+    EXPECT_EQ(in.tellg(), -1);
   }
 
   {
     nio::StringSink buf;
     buf.print("{}", numeric_limits<i32>::max() + static_cast<i64>(1));
-    auto is = io::testing::is(buf.str());
+    auto in = io::testing::in(buf.str());
     type val = 0;
-    is >> val;
+    in >> val;
 #ifdef ROCKET_OS_WINDOWS
     // Windows: If the value is greater than the maximum value, there is a failure
-    EXPECT_ISTREAM(is, true, true, 10);
-    EXPECT_EQ(is.tellg(), -1);
+    EXPECT_ISTREAM(in, true, true, 10);
+    EXPECT_EQ(in.tellg(), -1);
 #else
     // Linux, macOS: If the value is greater than the maximum value, then the result is capped
     EXPECT_EQ(val, numeric_limits<i32>::max());
-    EXPECT_ISTREAM(is, true, true, 10);
-    EXPECT_EQ(is.tellg(), -1);
+    EXPECT_ISTREAM(in, true, true, 10);
+    EXPECT_EQ(in.tellg(), -1);
 #endif
   }
 }
@@ -210,9 +210,9 @@ TEST(MODULE, istreamF64) {
 
   {
     // Reading symbols doesn’t work
-    auto is = io::testing::is("-inf");
+    auto in = io::testing::in("-inf");
     type val = 0;
-    is >> val;
+    in >> val;
     EXPECT_EQ(val, 0);
   }
 }

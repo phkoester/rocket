@@ -230,13 +230,13 @@ protected:
 /// Makes an empty input stream.
 ///
 /// @return an empty input stream
-inline std::istringstream is() { return {}; }
+inline std::istringstream in() { return {}; }
 
 /// Makes an input stream that reads from the string @p str.
 ///
 /// @param str the string to read from
 /// @return an input stream that reads from the string @p str
-inline std::istringstream is(std::string_view str) { return std::istringstream(std::string(str)); }
+inline std::istringstream in(std::string_view str) { return std::istringstream(std::string(str)); }
 
 } // namespace testing
 
