@@ -6,6 +6,7 @@
 
 #include "rocket/rocket.h"
 #include "rocket/io/io.h"
+#include "rocket/nio/nio-fwd.h"
 
 #include <fmt/color.h> // `fmt::text_style`
 
@@ -1006,15 +1007,6 @@ private:
   std::string_view in_;
   u64 pos_ = 0;
 };
-
-// Variables ------------------------------------------------------------------------------------------------
-
-/// The source connected to stdin.
-ROCKET_PUBLIC extern Source& in; // NOLINT
-/// The sink connected to stdout.
-ROCKET_PUBLIC extern Sink& out; // NOLINT
-/// The sink connected to stderr.
-ROCKET_PUBLIC extern Sink& err; // NOLINT
 
 #ifdef ROCKET_TEST
 

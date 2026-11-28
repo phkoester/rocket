@@ -57,7 +57,9 @@ parseCommand(const vector<string>& args, nio::Sink& out = nio::out, nio::Sink& e
   const CommandLineConfig config {
     .usages={ "[OPTION]... list [OPTION]... FILE...", "[OPTION]... show [OPTION]... [ARG]..." },
     .prolog="List FILEs or show ARGs.\n\nThis is yet another paragraph.",
-    .epilog="Gallia est omnis divisa in partes tres, quarum unam incolunt Belgae, aliam Aquitani, tertiam qui ipsorum lingua Celtae, nostra Galli appellantur. Hi omnes lingua, institutis, legibus inter se differunt. Gallos ab Aquitanis Garunna flumen, a Belgis Matrona et Sequana dividit."
+    .epilog="Gallia est omnis divisa in partes tres, quarum unam incolunt Belgae, aliam Aquitani, tertiam"
+      " qui ipsorum lingua Celtae, nostra Galli appellantur. Hi omnes lingua, institutis, legibus inter se"
+      " differunt. Gallos ab Aquitanis Garunna flumen, a Belgis Matrona et Sequana dividit."
   };
 
   auto command = Parameter::make({
@@ -456,7 +458,9 @@ TEST(MODULE, parseOptionI32) {
     args = nullopt;
     nio::StringSink buf;
     EXPECT_FALSE(cl.parse({ "a", "-n", "hello" }, buf, buf, false));
-    EXPECT_EQ(buf.str(), "test-rocket-cl: error: option `-n`: cannot scan \"hello\" as `int`; expected number\n");
+    EXPECT_EQ(
+      buf.str(),
+      "test-rocket-cl: error: option `-n`: cannot scan \"hello\" as `int`; expected number\n");
   }
 }
 
@@ -483,7 +487,9 @@ TEST(MODULE, parseOptionEnum) {
     level = log::LogLevel::none; // NOLINT
     nio::StringSink buf;
     EXPECT_FALSE(cl.parse({ "a", "-l", "nonsense" }, buf, buf, false));
-    EXPECT_EQ(buf.str(), "test-rocket-cl: error: option `-l`: cannot scan \"nonsense\" as `rocket::log::LogLevel`\n");
+    EXPECT_EQ(
+      buf.str(),
+      "test-rocket-cl: error: option `-l`: cannot scan \"nonsense\" as `rocket::log::LogLevel`\n");
   }
 }
 
@@ -501,7 +507,12 @@ TEST(MODULE, parseOptionVector) {
   {
     names.clear();
     args.clear();
-    EXPECT_TRUE(cl.parse({ "a", "--name", "Shirley", "-n", "Deborah", "--name=Julie", "-n=Jane", "b" }, nio::out, nio::err, false));
+    EXPECT_TRUE(
+      cl.parse(
+        { "a", "--name", "Shirley", "-n", "Deborah", "--name=Julie", "-n=Jane", "b" },
+        nio::out,
+        nio::err,
+        false));
     EXPECT_EQ(names, (vector<string> { "Shirley", "Deborah", "Julie", "Jane" }));
     EXPECT_EQ(args, (vector<string> { "a", "b" }));
   }
@@ -641,21 +652,22 @@ TEST(MODULE, argFiles) { // NOLINT(*-complexity)
 }
 
 TEST(MODULE, helpUngroupedOptions) {
-  const OptionGroup named { "Named" };
-  const OptionGroup untitled { "" };
+  const OptionGroup namedGroup { "Named" };
+  const OptionGroup untitledGroup { "" };
+
   optional<bool> help;
-  optional<bool> inNamed;
-  optional<bool> inUntitled;
+  optional<bool> named;
+  optional<bool> untitled;
 
   // The group order matters! Ungrouped options come first, even if they are declared later
   CommandLine cl({
-    Option::custom({ .description="an option in a named group", .group=&named, .name="named" }, inNamed),
+    Option::custom({ .description="an option in a named group", .group=&namedGroup, .name="named" }, named),
     Option::help(nullptr, help),
     Option::custom({
       .description="an option in an untitled group",
-      .group=&untitled,
+      .group=&untitledGroup,
       .name="untitled"
-    }, inUntitled)
+    }, untitled)
   }, {}, { .rocketOpts=false });
 
   nio::StringSink buf;

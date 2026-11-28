@@ -3,7 +3,6 @@
 // The toy executable links to Rocket and is a playground for quick and dirty experiments.
 
 #include "rocket/Process.h"
-#include "rocket/bimap-format.h"
 #include "rocket/enum-format.h"
 #include "rocket/enum.h"
 #include "rocket/scope.h"
@@ -163,8 +162,6 @@ main(i32 argc, char **argv) {
   toy();
 
   // throwInvalidState();
-
-  static_assert(not std::is_same<char32, wchar_t>::value, "char32 and wchar_t must be different types");
 
   nio::out.println("Exiting ...");
   process().exit(EXIT_SUCCESS);

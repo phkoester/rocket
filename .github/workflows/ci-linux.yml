@@ -1,0 +1,85 @@
+# ci-linux.yml
+
+name: Linux
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+# A new push to the same branch or PR cancels the run in progress
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  linux:
+    name: Linux (GCC, Release)
+    runs-on: ubuntu-latest
+    # Ubuntu 26.04 ships GCC 15, CMake 4.2, and ICU 78, which the hosted runner images do not
+    container: ubuntu:26.04
+    timeout-minutes: 120
+
+    env:
+      CCACHE_DIR: ${{ github.workspace }}/.ccache
+      CCACHE_MAXSIZE: 2G
+      CMAKE_C_COMPILER_LAUNCHER: ccache
+      CMAKE_CXX_COMPILER_LAUNCHER: ccache
+      DEBIAN_FRONTEND: noninteractive
+      GAIA_DIR: ${{ github.workspace }}/gaia
+      LANG: C.UTF-8
+
+    defaults:
+      run:
+        working-directory: rocket
+
+    steps:
+      # Git must be installed before checkout, otherwise `actions/checkout` downloads a tarball without
+      # `.git`
+      - name: Install packages
+        working-directory: .
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends \
+            ca-certificates ccache cmake g++ git libgtk-3-dev libicu-dev libwebkit2gtk-4.1-dev ninja-build \
+            python3 tzdata
+
+      - name: Check out
+        uses: actions/checkout@v7
+        with:
+          path: rocket
+
+      # Rocket uses `GAIA_DIR` as Gaia’s source instead of fetching the tag `v${ROCKET_GAIA_VERSION}`
+      - name: Check out Gaia
+        uses: actions/checkout@v7
+        with:
+          repository: phkoester/gaia
+          ref: main
+          path: gaia
+
+      # The container runs as root, but the workspace belongs to the runner user
+      - name: Mark the workspace safe for Git
+        run: git config --global --add safe.directory '*'
+
+      - name: Restore ccache
+        uses: actions/cache@v6
+        with:
+          path: .ccache
+          key: ccache-linux-release-${{ github.sha }}
+          restore-keys: ccache-linux-release-
+
+      - name: Configure
+        run: cmake --preset multi -DROCKET_BUILD_BENCH=ON -DROCKET_BUILD_TEST=ON
+
+      - name: Build
+        run: cmake --build --preset multi-Release
+
+      - name: Test
+        run: ctest --preset multi-Release --test-dir build --output-on-failure --parallel "$(nproc)"
+
+      - name: Show ccache statistics
+        if: always()
+        run: ccache --show-stats
+
+# EOF

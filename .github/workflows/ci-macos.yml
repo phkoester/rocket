@@ -1,0 +1,72 @@
+# ci-macos.yml
+
+name: macOS
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+# A new push to the same branch or PR cancels the run in progress
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  macos:
+    name: macOS (LLVM, Release)
+    runs-on: macos-latest
+    timeout-minutes: 120
+
+    env:
+      CCACHE_DIR: ${{ github.workspace }}/.ccache
+      CCACHE_MAXSIZE: 2G
+      CMAKE_C_COMPILER_LAUNCHER: ccache
+      CMAKE_CXX_COMPILER_LAUNCHER: ccache
+      GAIA_DIR: ${{ github.workspace }}/gaia
+
+    defaults:
+      run:
+        working-directory: rocket
+
+    steps:
+      - name: Check out
+        uses: actions/checkout@v7
+        with:
+          path: rocket
+
+      # Rocket uses `GAIA_DIR` as Gaia’s source instead of fetching the tag `v${ROCKET_GAIA_VERSION}`
+      - name: Check out Gaia
+        uses: actions/checkout@v7
+        with:
+          repository: phkoester/gaia
+          ref: main
+          path: gaia
+
+      # Installing an outdated formula upgrades it, so this also makes sure CMake is 4.2 or higher. Rocket
+      # finds the keg-only `icu4c` through `brew --prefix icu4c`
+      - name: Install packages
+        run: brew install ccache cmake icu4c ninja
+
+      - name: Restore ccache
+        uses: actions/cache@v6
+        with:
+          path: .ccache
+          key: ccache-macos-release-${{ github.sha }}
+          restore-keys: ccache-macos-release-
+
+      - name: Configure
+        run: cmake --preset multi -DROCKET_BUILD_BENCH=ON -DROCKET_BUILD_TEST=ON
+
+      - name: Build
+        run: cmake --build --preset multi-Release
+
+      - name: Test
+        run: ctest --preset multi-Release --test-dir build --output-on-failure --parallel "$(sysctl -n hw.ncpu)"
+
+      - name: Show ccache statistics
+        if: always()
+        run: ccache --show-stats
+
+# EOF

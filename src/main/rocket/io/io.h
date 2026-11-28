@@ -87,17 +87,6 @@ namespace stream {
 
 // Functions working with streams ---------------------------------------------------------------------------
 
-/// Makes an empty input stream.
-///
-/// @return an empty input stream
-inline std::istringstream is() { return {}; }
-
-/// Makes an input stream that reads from the string @p str.
-///
-/// @param str the string to read from
-/// @return an input stream that reads from the string @p str
-inline std::istringstream is(std::string_view str) { return std::istringstream(std::string(str)); }
-
 /// Checks if the input stream @p is is seekable.
 ///
 /// The stream is seekable if #rocket::io::stream::tell reports a position for it. Like
@@ -235,6 +224,19 @@ protected:
     return {static_cast<off_type>(-1)};
   }
 };
+
+// Functions ------------------------------------------------------------------------------------------------
+
+/// Makes an empty input stream.
+///
+/// @return an empty input stream
+inline std::istringstream is() { return {}; }
+
+/// Makes an input stream that reads from the string @p str.
+///
+/// @param str the string to read from
+/// @return an input stream that reads from the string @p str
+inline std::istringstream is(std::string_view str) { return std::istringstream(std::string(str)); }
 
 } // namespace testing
 

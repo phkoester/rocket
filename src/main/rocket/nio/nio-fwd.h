@@ -21,9 +21,9 @@ struct NullSource;
 struct SpanSource;
 struct StringSource;
 
-ROCKET_PUBLIC extern Source& in; // NOLINT
-ROCKET_PUBLIC extern Sink& out; // NOLINT
-ROCKET_PUBLIC extern Sink& err; // NOLINT
+ROCKET_PUBLIC extern Source& in; ///< stdin
+ROCKET_PUBLIC extern Sink& out; ///< stdout
+ROCKET_PUBLIC extern Sink& err; ///< stderr
 
 } // namespace rocket::nio
 
