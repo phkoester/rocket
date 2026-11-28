@@ -1,0 +1,49 @@
+# release.yml
+#
+# Creates a GitHub release when a tag `v*` is pushed. The release notes consist of the subjects of the
+# commits since the previous tag, except the placeholder `(No commit message.)`, and a link comparing both
+# tags. The first tag is noted as the initial release. The tag message is never used.
+
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      # The full history and all tags are needed to find the previous tag
+      - name: Check out
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          prev=$(git describe --tags --abbrev=0 "$TAG^" 2>/dev/null || true)
+          {
+            if [ -z "$prev" ]; then
+              echo "Initial release."
+            else
+              changes=$(git log --no-merges --format='- %s' "$prev..$TAG" | grep -vxF -- '- (No commit message.)' || true)
+              if [ -n "$changes" ]; then
+                printf '## Changes\n\n%s\n\n' "$changes"
+              fi
+              echo "**Full Changelog**: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/compare/$prev...$TAG"
+            fi
+          } > notes.md
+          cat notes.md
+          gh release create "$TAG" --verify-tag --title "$TAG" --notes-file notes.md
+
+# EOF
